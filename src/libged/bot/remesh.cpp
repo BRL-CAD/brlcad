@@ -33,16 +33,10 @@
 
 #include "manifold/manifold.h"
 
-#include "geogram/basic/process.h"
-#include <geogram/basic/command_line.h>
-#include <geogram/basic/command_line_args.h>
-#include "geogram/mesh/mesh.h"
-#include "geogram/mesh/mesh_geometry.h"
-#include "geogram/mesh/mesh_preprocessing.h"
-#include "geogram/mesh/mesh_remesh.h"
-
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
+#include "bg/trimesh.h"
 #include "rt/db5.h"
 #include "rt/db_internal.h"
 #include "rt/db_io.h"
@@ -174,140 +168,66 @@ bot_remesh_vdb(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNU
 
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
-static void
-geogram_to_manifold(manifold::MeshGL *gmm, GEO::Mesh &gm)
-{
-    for (GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
-	const double *p = gm.vertices.point_ptr(v);
-	for (int i = 0; i < 3; i++)
-	    gmm->vertProperties.insert(gmm->vertProperties.end(), p[i]);
-    }
-    for (GEO::index_t f = 0; f < gm.facets.nb(); f++) {
-	for (int i = 0; i < 3; i++) {
-	    // TODO - CW vs CCW orientation handling?
-	    gmm->triVerts.insert(gmm->triVerts.end(), gm.facets.vertex(f, i));
-	}
-    }
-}
-
 static int
 bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bot_internal *bot)
 {
-    // Geogram libraries like to print a lot - shut down
-    // the I/O channels until we can clear the logger
-    int serr = -1;
-    int sout = -1;
-    int stderr_stashed = -1;
-    int stdout_stashed = -1;
-    int fnull = open("/dev/null", O_WRONLY);
-    if (fnull == -1) {
-	/* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
-	fnull = open("nul", O_WRONLY);
-    }
-    if (fnull != -1) {
-	serr = fileno(stderr);
-	sout = fileno(stdout);
-	stderr_stashed = dup(serr);
-	stdout_stashed = dup(sout);
-	dup2(fnull, serr);
-	dup2(fnull, sout);
-	close(fnull);
-    }
+    int *ifaces = bot->faces;
+    int n_ifaces = (int)bot->num_faces;
+    point_t *ipnts = (point_t *)bot->vertices;
+    int n_ipnts = (int)bot->num_vertices;
 
-    // Make sure geogram is initialized
-    GEO::initialize();
+    struct bg_trimesh_remesh_opts opts = BG_TRIMESH_REMESH_OPTS_DEFAULT;
 
-    // Quell logging messages
-    GEO::Logger::instance()->unregister_all_clients();
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    point_t *opnts = NULL;
+    int n_opnts = 0;
 
-    // Put I/O channels back where they belong
-    if (fnull != -1) {
-	fflush(stderr);
-	dup2(stderr_stashed, serr);
-	close(stderr_stashed);
-	fflush(stdout);
-	dup2(stdout_stashed, sout);
-	close(stdout_stashed);
+    int ret = bg_trimesh_remesh(&ofaces, &n_ofaces, &opnts, &n_opnts,
+				ifaces, n_ifaces, ipnts, n_ipnts, &opts);
+    if (ret != 0 || !ofaces || !opnts) {
+	bu_free(ofaces, "ofaces");
+	bu_free(opnts, "opnts");
+	bu_vls_printf(gedp->ged_result_str, "Remesh failed\n");
+	return BRLCAD_ERROR;
     }
 
-    GEO::CmdLine::import_arg_group("standard");
-    GEO::CmdLine::import_arg_group("algo");
-    GEO::CmdLine::import_arg_group("remesh");
+    /* Check if the remeshed result is a solid. */
 
-    // Target ten times the original vert count
-    fastf_t nb_pts = bot->num_vertices * 10;
-    std::string nbpts = std::to_string(nb_pts);
-    GEO::CmdLine::set_arg("remesh:nb_pts", nbpts.c_str());
-
-    // Initialize the Geogram mesh
-    GEO::Mesh gm;
-    gm.vertices.assign_points((double *)bot->vertices, 3, bot->num_vertices);
-    for (size_t i = 0; i < bot->num_faces; i++) {
-	GEO::index_t f = gm.facets.create_polygon(3);
-	gm.facets.set_vertex(f, 0, bot->faces[3*i+0]);
-	gm.facets.set_vertex(f, 1, bot->faces[3*i+1]);
-	gm.facets.set_vertex(f, 2, bot->faces[3*i+2]);
-    }
-
-    // After the initial raw load, do a repair pass to set up
-    // Geogram's internal mesh data
-    double bbox_diag = GEO::bbox_diagonal(gm);
-    double epsilon = 1e-6 * (0.01 * bbox_diag);
-    GEO::mesh_repair(gm, GEO::MeshRepairMode(GEO::MESH_REPAIR_DEFAULT), epsilon);
-
-    // https://github.com/BrunoLevy/geogram/wiki/Remeshing
-    GEO::compute_normals(gm);
-    set_anisotropy(gm, 2*0.02);
-    GEO::Mesh remesh;
-    GEO::remesh_smooth(gm, remesh, nb_pts);
-
-    // See if we have a solid
-    manifold::MeshGL gmm;
-    geogram_to_manifold(&gmm, gm);
-    manifold::Manifold gmanifold(gmm);
-    int bmode = RT_BOT_SURFACE;
-    if (gmanifold.Status() == manifold::Manifold::Error::NoError)
-	bmode = RT_BOT_SOLID;
 
     struct rt_bot_internal *nbot;
     BU_GET(nbot, struct rt_bot_internal);
     nbot->magic = RT_BOT_INTERNAL_MAGIC;
-    nbot->mode = bmode;
     nbot->orientation = RT_BOT_CCW;
     nbot->thickness = NULL;
     nbot->face_mode = (struct bu_bitv *)NULL;
     nbot->bot_flags = 0;
-    nbot->num_vertices = (int)remesh.vertices.nb();
-    nbot->num_faces = (int)remesh.facets.nb();
-    nbot->vertices = (double *)calloc(nbot->num_vertices*3, sizeof(double));
-    nbot->faces = (int *)calloc(nbot->num_faces*3, sizeof(int));
+    nbot->num_vertices = n_opnts;
+    nbot->num_faces = n_ofaces;
+    nbot->vertices = (double *)calloc((size_t)n_opnts * 3, sizeof(double));
+    nbot->faces = (int *)calloc((size_t)n_ofaces * 3, sizeof(int));
 
-    int j = 0;
-    for(GEO::index_t v = 0; v < remesh.vertices.nb(); v++) {
-	double gm_v[3];
-	const double *p = remesh.vertices.point_ptr(v);
-	for (int i = 0; i < 3; i++)
-	    gm_v[i] = p[i];
-	nbot->vertices[3*j] = gm_v[0];
-	nbot->vertices[3*j+1] = gm_v[1];
-	nbot->vertices[3*j+2] = gm_v[2];
-	j++;
-    }
+    // Remeshing shouldn't change the mode - that's a modeling intent question.
+    // If we explicitly tag a non-solid remesh as surface, then bot repair
+    // won't try to work on it by default - that may not be what we want if the
+    // original input was supposed to be a solid.  For the flip side, if a
+    // surface bot is supposed to graduate to solid, that needs to be an
+    // explicit type change - a topologically closed mesh may still be intended
+    // as a surface or plate mode BoT.
+    nbot->mode = bot->mode;
 
-    j = 0;
-    for (GEO::index_t f = 0; f < remesh.facets.nb(); f++) {
-	double tri_verts[3];
-	for (int i = 0; i < 3; i++)
-	    tri_verts[i] = remesh.facets.vertex(f, i);
-	// TODO - CW vs CCW orientation handling?
-	nbot->faces[3*j] = tri_verts[0];
-	nbot->faces[3*j+1] = tri_verts[1];
-	nbot->faces[3*j+2] = tri_verts[2];
-	j++;
+    for (int i = 0; i < n_opnts; i++) {
+	nbot->vertices[3*i+0] = opnts[i][X];
+	nbot->vertices[3*i+1] = opnts[i][Y];
+	nbot->vertices[3*i+2] = opnts[i][Z];
     }
+    for (int i = 0; i < n_ofaces * 3; i++)
+	nbot->faces[i] = ofaces[i];
+
+    bu_free(ofaces, "ofaces");
+    bu_free(opnts, "opnts");
 
     *obot = nbot;
-
     bu_vls_sprintf(gedp->ged_result_str, "remeshed\n");
     return BRLCAD_OK;
 }

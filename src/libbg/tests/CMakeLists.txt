@@ -363,6 +363,18 @@ brlcad_addexec(bg_trimesh_area trimesh_area.c "libbg;libbn;libbu" TEST)
 
 #BRLCAD_ADD_TEST(NAME bg_trimesh_area  COMMAND bg_trimesh_area)
 
+#  ************ trimesh_repair tests ***********
+
+brlcad_addexec(bg_trimesh_repair trimesh_repair.cpp "libbg;libbn;libbu" TEST)
+
+brlcad_add_test(NAME bg_trimesh_repair  COMMAND bg_trimesh_repair)
+
+#  ************ trimesh_remesh tests ***********
+
+brlcad_addexec(bg_trimesh_remesh trimesh_remesh.cpp "libbg;libbn;libbu" TEST)
+
+brlcad_add_test(NAME bg_trimesh_remesh  COMMAND bg_trimesh_remesh)
+
 cmakefiles(
   bg_test.c.in
   plane_dist.c

@@ -1,0 +1,1838 @@
+In geogram's remeshing algorithms, Newton iterations are set up to use HLBFGS if available, which is presumed to be better than Lloyd iterations.  What is the advantage of HLBFGS, and do any liberally licensed versions of HLBFGS exist?  (The one present in geogram proper is not liberally licensed, last time I looked.)
+￼
+￼
+
+ChatGPT said:
+You’re essentially looking at two layers here:
+
+Why Geogram prefers HLBFGS over Lloyd iterations
+
+Whether you can actually use it legally (or replace it)
+
+Let’s separate those cleanly.
+
+1) Why HLBFGS beats Lloyd (in remeshing / CVT contexts)
+Lloyd = first-order fixed-point iteration
+Lloyd iterations (for centroidal Voronoi tessellation / CVT) are:
+
+Equivalent to gradient descent with a very crude step rule
+
+No curvature information
+
+Linear convergence at best (often painfully slow near optimum)
+
+In practice:
+
+Very robust
+
+But iteration count explodes as you approach a high-quality mesh
+
+HLBFGS = quasi-Newton (second-order-ish)
+HLBFGS is a hybrid L-BFGS framework:
+
+Uses gradients like first-order methods
+
+But builds an approximate inverse Hessian
+
+So it captures curvature of the energy landscape 
+Wikipedia
+
+Key consequences:
+
+(A) Much faster convergence
+Quasi-Newton methods typically show superlinear convergence
+
+Lloyd = linear convergence (slow tail)
+
+In CVT problems, this is very noticeable
+
+→ You get far fewer iterations for high-quality meshes
+
+(B) Better step directions
+Instead of “move toward centroid,” you get:
+
+Preconditioned directions using curvature
+
+Effectively “warped” gradient descent that avoids zig-zagging
+
+This matters because CVT energy is:
+
+Ill-conditioned in anisotropic meshes
+
+Sensitive to point clustering
+
+(C) Scale well to large problems
+L-BFGS (and thus HLBFGS):
+
+Avoids storing full Hessian (O(n²))
+
+Uses only a few past gradients (O(n)) 
+Wikipedia
+
+So you get:
+
+Near-Newton behavior
+
+At gradient-descent cost
+
+(D) HLBFGS specifically adds hybridization
+HLBFGS mixes:
+
+L-BFGS
+
+Preconditioned conjugate gradient
+
+Optional Hessian usage
+
+So it can behave like:
+
+Gradient descent (robust)
+
+CG (cheap improvement)
+
+Quasi-Newton (fast convergence)
+
+→ This flexibility is why it performs well on CVT energy minimization 
+Dr. Yang Liu
+
+Net effect in remeshing
+In Geogram-style CVT remeshing:
+
+Lloyd: good for initialization, stalls near optimum
+
+HLBFGS: pushes to high-quality energy minimum efficiently
+
+Practical takeaway:
+
+Lloyd = robustness
+
+HLBFGS = performance + final quality
+
+2) Why Geogram’s HLBFGS is problematic (licensing)
+You’re correct:
+
+The canonical HLBFGS implementation is not liberally licensed
+
+Often restricted to non-commercial use
+
+This is the main blocker.
+
+3) Drop-in liberal alternatives (realistic options)
+✅ Option 1 — Use standard L-BFGS (recommended)
+You do not need HLBFGS specifically.
+
+A good L-BFGS implementation gets you ~90–95% of the benefit.
+
+Liberal implementations:
+libLBFGS (Naoaki Okazaki)
+
+License: MIT
+
+Widely used, stable
+
+Eigen + LBFGS wrappers (LBFGS++ )
+
+License: MIT
+
+SciPy / Optim.jl (reference behavior) 
+Wikipedia
+
+👉 This is the cleanest replacement.
+
+✅ Option 2 — Write your own L-BFGS (very feasible)
+L-BFGS is:
+
+~200–400 lines of core logic
+
+No heavy dependencies
+
+Just:
+
+gradient callback
+
+line search
+
+2-loop recursion
+
+The algorithm is explicitly published and standard.
+
+⚠️ Option 3 — Recreate “HLBFGS-like” behavior
+HLBFGS = L-BFGS + extras:
+
+You can approximate it by combining:
+
+L-BFGS
+
+fallback to gradient descent when unstable
+
+optional diagonal preconditioning
+
+This reproduces most of the “hybrid” behavior without license issues.
+
+🚫 Option 4 — Use original HLBFGS
+Non-commercial license
+
+Not safe for redistribution in OSS or commercial code
+
+4) Subtle but important insight (for your use case)
+In remeshing / CVT:
+
+The line search strategy often matters more than the optimizer name
+
+Because:
+
+Energy landscapes are irregular
+
+Poor line search = instability or slow convergence
+
+So if you replace HLBFGS:
+
+👉 prioritize:
+
+Wolfe line search
+
+or strong backtracking
+
+Over chasing exact algorithm parity.
+
+Bottom line
+Why HLBFGS is better than Lloyd:
+Uses curvature → far faster convergence
+
+Avoids zig-zagging
+
+Scales to large meshes efficiently
+
+Hybrid behavior improves robustness
+
+What you should do instead:
+Use MIT-licensed L-BFGS (libLBFGS or LBFGS++)
+
+Add:
+
+good line search
+
+optional fallback to gradient descent
+
+You’ll retain essentially all the practical benefits without licensing risk.
+
+map Geogram’s exact energy formulation (CVT / anisotropic CVT) to a minimal L-BFGS implementation structure
+￼
+￼
+
+ChatGPT said:
+￼
+Thought for 43s
+Yes. Geogram’s remeshing objective can be mapped very cleanly to a minimal L-BFGS loop.
+
+The key point is that the “Newton”/optimizer side is not special to Geogram. What is special is the objective callback: Geogram computes the CVT objective on a restricted Voronoi diagram over the input surface, and in anisotropic mode it does that after embedding the surface into a higher-dimensional Euclidean space so the anisotropic problem becomes an isotropic CVT problem there. Geogram’s docs describe the remesher as minimizing the quantization noise power, and the low-level API exposes compute_CVT_func_grad(...) specifically for Newton-style optimization. 
+GitHub
++2
+GitHub
++2
+
+For standard CVT, the energy is
+
+𝐹
+(
+𝑋
+)
+=
+∑
+𝑖
+∫
+Ω
+𝑖
+𝜌
+(
+𝑥
+)
+ 
+∥
+𝑥
+−
+𝑥
+𝑖
+∥
+2
+ 
+𝑑
+𝜎
+F(X)= 
+i
+∑
+​
+ ∫ 
+Ω 
+i
+​
+ 
+​
+ ρ(x)∥x−x 
+i
+​
+ ∥ 
+2
+ dσ
+where 
+Ω
+𝑖
+Ω 
+i
+​
+  is the Voronoi region/restricted Voronoi cell of seed 
+𝑥
+𝑖
+x 
+i
+​
+ . The gradient is
+
+∂
+𝐹
+∂
+𝑥
+𝑖
+=
+2
+ 
+𝑚
+𝑖
+ 
+(
+𝑥
+𝑖
+−
+𝑐
+𝑖
+)
+∂x 
+i
+​
+ 
+∂F
+​
+ =2m 
+i
+​
+ (x 
+i
+​
+ −c 
+i
+​
+ )
+with cell mass 
+𝑚
+𝑖
+=
+∫
+Ω
+𝑖
+𝜌
+(
+𝑥
+)
+ 
+𝑑
+𝜎
+m 
+i
+​
+ =∫ 
+Ω 
+i
+​
+ 
+​
+ ρ(x)dσ and centroid 
+𝑐
+𝑖
+c 
+i
+​
+ . Those are exactly the quantities Geogram also exposes on the Lloyd side via “mass times centroid” and “mass”. 
+Department of Computer Science, HKU
++2
+Department of Computer Science, HKU
++2
+
+So the mapping is:
+
+variables: seed coordinates 
+𝑋
+=
+(
+𝑥
+1
+,
+…
+,
+𝑥
+𝑛
+)
+X=(x 
+1
+​
+ ,…,x 
+n
+​
+ )
+
+objective: CVT quantization-noise energy over restricted Voronoi cells
+
+gradient: per seed, 
+𝑔
+𝑖
+=
+2
+𝑚
+𝑖
+(
+𝑥
+𝑖
+−
+𝑐
+𝑖
+)
+g 
+i
+​
+ =2m 
+i
+​
+ (x 
+i
+​
+ −c 
+i
+​
+ )
+
+Lloyd step: replace 
+𝑥
+𝑖
+←
+𝑐
+𝑖
+x 
+i
+​
+ ←c 
+i
+​
+ 
+
+L-BFGS step: keep the same 
+𝐹
+F and 
+𝑔
+g, but let L-BFGS choose the search direction and line search
+
+That is why L-BFGS/HLBFGS beats Lloyd here: Lloyd is just using the centroid fixed-point update, while quasi-Newton methods use the same gradient information but accumulate curvature information from past iterates. The original CVT paper by Liu et al. reports very large speedups over Lloyd on these energies, and Bruno Lévy’s 2024 Geogram discussion specifically points to an LBFGS implementation for current CVT optimization. 
+Department of Computer Science, HKU
++1
+
+Minimal implementation structure
+A minimal replacement looks like this:
+
+C++
+￼
+struct CVTProblem {
+    int dim;      // 3 for ordinary surface CVT, 6+ for anisotropic embedded CVT
+    int n;        // number of seeds
+    SurfaceDomain domain;   // mesh + acceleration structures
+
+    // x is a flat array of size dim * n
+    double evaluate(const double* x, double* g) {
+        zero(g, dim * n);
+        double F = 0.0;
+
+        // 1. Build/update Delaunay/Voronoi structure from seed positions x
+        VoronoiData vd = build_restricted_voronoi(domain, x, n, dim);
+
+        // 2. For each restricted Voronoi cell Ω_i, accumulate mass and centroid
+        for (int i = 0; i < n; ++i) {
+            double mi = 0.0;
+            VecD gi = VecD::Zero(dim);   // stores ∫_{Ω_i} ρ(x) x dσ
+
+            for (const Simplex& s : vd.cell_simplices(i)) {
+                // integrate over simplex contribution
+                // returns:
+                //   mass contribution m_s = ∫_s ρ(x) dσ
+                //   first moment q_s = ∫_s ρ(x) x dσ
+                //   energy contribution e_s = ∫_s ρ(x) ||x - x_i||^2 dσ
+                SimplexIntegrals I = integrate_simplex(s, x + dim*i);
+
+                mi += I.mass;
+                gi += I.first_moment;
+                F  += I.energy;
+            }
+
+            VecD ci = gi / mi;
+
+            // 3. Gradient of CVT energy
+            VecD xi = load_vec(x + dim*i, dim);
+            VecD grad_i = 2.0 * mi * (xi - ci);
+            store_vec(g + dim*i, grad_i);
+        }
+
+        return F;
+    }
+};
+Then the optimizer wrapper is the standard L-BFGS shape:
+
+C++
+￼
+LBFGSOptimizer opt;
+opt.set_memory(10);               // e.g. 5..20
+opt.set_gradient_tolerance(1e-6);
+opt.set_max_iterations(100);
+
+std::vector<double> x = initial_sampling(domain, n, dim);
+opt.minimize(
+    x.data(),
+    x.size(),
+    [&](const double* x, double* g) {
+        return problem.evaluate(x, g);
+    }
+);
+What Geogram-specific code has to do inside evaluate()
+This is the part that corresponds to Geogram’s compute_CVT_func_grad(...) and compute_integration_simplex_func_grad(...). 
+GitHub
+
+1. Build the restricted Voronoi diagram
+For surface remeshing, the cells are not full volumetric Voronoi cells; they are Voronoi cells restricted to the input surface:
+
+Ω
+𝑖
+=
+Ω
+∩
+V
+o
+r
+(
+𝑥
+𝑖
+)
+Ω 
+i
+​
+ =Ω∩Vor(x 
+i
+​
+ )
+and Lévy/Bonneel describe computing these by intersecting the surface with Voronoi half-spaces. 
+LIRIS
+
+2. Decompose each restricted cell into integration simplices
+Geogram’s low-level API makes this explicit: it has a hook for computing an objective over Voronoi cells “decomposed into simplices.” That means the geometry code reduces each cell contribution to a sum over triangles/simplexes where closed-form or simple numerical integration is practical. 
+GitHub
+
+3. Accumulate mass, first moment, and energy
+For each simplex 
+𝑠
+⊂
+Ω
+𝑖
+s⊂Ω 
+i
+​
+ , compute:
+
+𝑚
+𝑠
+=
+∫
+𝑠
+𝜌
+(
+𝑥
+)
+ 
+𝑑
+𝜎
+,
+𝑞
+𝑠
+=
+∫
+𝑠
+𝜌
+(
+𝑥
+)
+ 
+𝑥
+ 
+𝑑
+𝜎
+,
+𝑒
+𝑠
+=
+∫
+𝑠
+𝜌
+(
+𝑥
+)
+ 
+∥
+𝑥
+−
+𝑥
+𝑖
+∥
+2
+ 
+𝑑
+𝜎
+m 
+s
+​
+ =∫ 
+s
+​
+ ρ(x)dσ,q 
+s
+​
+ =∫ 
+s
+​
+ ρ(x)xdσ,e 
+s
+​
+ =∫ 
+s
+​
+ ρ(x)∥x−x 
+i
+​
+ ∥ 
+2
+ dσ
+then sum them:
+
+𝑚
+𝑖
+=
+∑
+𝑠
+𝑚
+𝑠
+,
+𝑞
+𝑖
+=
+∑
+𝑠
+𝑞
+𝑠
+,
+𝑐
+𝑖
+=
+𝑞
+𝑖
+/
+𝑚
+𝑖
+,
+𝐹
+=
+∑
+𝑖
+∑
+𝑠
+⊂
+Ω
+𝑖
+𝑒
+𝑠
+m 
+i
+​
+ = 
+s
+∑
+​
+ m 
+s
+​
+ ,q 
+i
+​
+ = 
+s
+∑
+​
+ q 
+s
+​
+ ,c 
+i
+​
+ =q 
+i
+​
+ /m 
+i
+​
+ ,F= 
+i
+∑
+​
+  
+s⊂Ω 
+i
+​
+ 
+∑
+​
+ e 
+s
+​
+ 
+and finally
+
+𝑔
+𝑖
+=
+2
+𝑚
+𝑖
+(
+𝑥
+𝑖
+−
+𝑐
+𝑖
+)
+g 
+i
+​
+ =2m 
+i
+​
+ (x 
+i
+​
+ −c 
+i
+​
+ )
+That is the minimal mathematically faithful structure.
+
+Surface CVT vs anisotropic CVT
+For ordinary isotropic remeshing, dim = 3 and distances are Euclidean in the ambient space, with the cells restricted back to the mesh surface. Geogram’s remeshing page describes exactly that setup. 
+GitHub
++1
+
+For anisotropic remeshing, Lévy/Bonneel’s method transforms the 3D anisotropic problem into an isotropic CVT in a higher-dimensional embedding—typically 6D or higher. Their paper states that the 3D anisotropic space is transformed into a higher-dimensional isotropic one, and then the mesh is optimized there by minimizing the same 
+𝐶
+2
+C 
+2
+  quantization-noise objective. 
+LIRIS
+
+So your implementation structure does not fundamentally change. Only these pieces change:
+
+dim becomes the embedding dimension, often 6
+
+the seed coordinates x live in embedded space
+
+the surface triangles are embedded by 
+Φ
+Φ
+
+Voronoi/restricted-cell construction and integration happen in that embedded space
+
+after optimization, you use the restricted Delaunay dual / back-mapped geometry to build the output mesh
+
+Algorithmically, it is still:
+
+𝐹
+(
+𝑋
+)
+=
+∑
+𝑖
+∫
+Ω
+𝑖
+Φ
+𝜌
+(
+𝑦
+)
+ 
+∥
+𝑦
+−
+𝑥
+𝑖
+∥
+2
+ 
+𝑑
+𝜎
+Φ
+F(X)= 
+i
+∑
+​
+ ∫ 
+Ω 
+i
+Φ
+​
+ 
+​
+ ρ(y)∥y−x 
+i
+​
+ ∥ 
+2
+ dσ 
+Φ
+​
+ 
+just with 
+𝑦
+y and 
+𝑥
+𝑖
+x 
+i
+​
+  in embedding space.
+
+The most practical simplification
+If you do not want to reproduce Geogram’s exact integration machinery, the cleanest approximation is:
+
+keep the same seed variable layout
+
+approximate each restricted Voronoi cell by sample points or clipped polygons
+
+accumulate
+
+𝑚
+𝑖
+m 
+i
+​
+ 
+
+𝑞
+𝑖
+q 
+i
+​
+ 
+
+𝐹
+F
+
+feed exact or approximate gradient 
+2
+𝑚
+𝑖
+(
+𝑥
+𝑖
+−
+𝑐
+𝑖
+)
+2m 
+i
+​
+ (x 
+i
+​
+ −c 
+i
+​
+ ) to L-BFGS
+
+That already gives you the correct optimizer architecture. The hard part is the restricted Voronoi geometry, not L-BFGS.
+
+Important implementation notes
+A few details matter in practice:
+
+Use a line search with Wolfe or strong backtracking conditions. On CVT energies, the optimizer quality is often dominated by line search behavior rather than by whether you call it “L-BFGS” or “HLBFGS.”
+
+Project or constrain seeds if your variant requires seeds to remain on the surface. Geogram’s API includes projection-on-surface operations for this reason. 
+GitHub
+
+Warm start with a few Lloyd iterations if initialization is rough. Lévy/Bonneel explicitly describe Lloyd relaxation and then note that convergence can be significantly accelerated by replacing it with quasi-Newton optimization. 
+LIRIS
+
+Be careful with anisotropic mode: if you try to “fake” anisotropy by merely weighting coordinates in 3D, that is not the same thing as Geogram’s embedding-based anisotropic formulation. The paper’s point is precisely that the anisotropic problem is recast as isotropic CVT in high dimension. 
+LIRIS
+
+One subtle update
+Since you asked earlier about HLBFGS specifically: current Geogram discussion from April 2024 points to LBFGS for CVT optimization, so if your goal is a modern Geogram-like structure, targeting a plain liberal-licensed L-BFGS is consistent with the maintainer’s public guidance. 
+GitHub
+
+The shortest faithful mental model is:
+
+Geogram remeshing
+=
+restricted Voronoi geometry + simplex integration
+⏟
+problem-specific
++
+L-BFGS on 
+𝐹
+(
+𝑋
+)
+,
+∇
+𝐹
+(
+𝑋
+)
+⏟
+generic optimizer
+Geogram remeshing= 
+problem-specific
+restricted Voronoi geometry + simplex integration
+​
+ 
+​
+ + 
+generic optimizer
+L-BFGS on F(X),∇F(X)
+​
+ 
+​
+ 
+If you want, I can turn this into a concrete C++ skeleton with libLBFGS-style callbacks and the exact data structures I would use for mass, first_moment, and cell accumulation.
+
+￼
+￼
+￼
+￼
+￼
+￼
+
+You said:
+turn this into a concrete C++ skeleton with libLBFGS-style callbacks and the exact data structures I would use for mass, first_moment, and cell accumulation
+￼
+￼
+
+ChatGPT said:
+￼
+Thought for 16s
+Below is a concrete C++ skeleton that matches the libLBFGS callback model and keeps the Geogram-specific part isolated in a CVTEvaluator. The important structural point is that libLBFGS expects an evaluation callback of the form (x, g) -> f, and Geogram’s low-level CVT API is already organized around “compute value and gradient” over Voronoi cells / integration simplices. 
+GitHub
++1
+
+Geogram’s remeshing page says the remesher is based on CVT and uses a Newton-style solver on the smooth quantization-noise objective; the low-level API exposes compute_CVT_func_grad() and an integration-simplex path used by Newton optimization. Bruno Lévy also pointed, in April 2024, to an LBFGS component as part of the current CVT optimization stack. 
+GitHub
++2
+GitHub
++2
+
+libLBFGS itself is a good fit here because it is callback-based, designed for problems where you can provide f(x) and g(x), and it is MIT-licensed. 
+GitHub
++1
+
+Design goals
+Use four layers:
+
+Flat optimizer state: x is a flat double[] of size n_sites * dim.
+
+Per-cell accumulation: for each Voronoi cell, accumulate
+
+mass
+
+first moment
+
+energy
+
+Geometry backend: builds / traverses restricted Voronoi cells and their simplices
+
+libLBFGS bridge: static callbacks forwarding to your evaluator object
+
+The exact geometry operations are placeholders, because that part depends on whether you are using Geogram internals, your own clipped-RVD code, or a sampled approximation. The skeleton below is about the correct data layout and callback structure.
+
+Core math/data types
+C++
+￼
+// cvt_lbfgs_skeleton.h
+#pragma once
+
+#include <lbfgs.h>
+
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
+namespace cvt {
+
+using Real = double;
+
+// Small fixed-capacity vector for dim <= 8 or so.
+// For a production system, replace with Eigen::Matrix<Real,Dynamic,1>
+// or a custom small-vector if you prefer.
+struct Vec {
+    std::vector<Real> v;
+
+    Vec() = default;
+    explicit Vec(int dim) : v(static_cast<size_t>(dim), Real(0)) {}
+
+    void resize(int dim) { v.assign(static_cast<size_t>(dim), Real(0)); }
+    int dim() const { return static_cast<int>(v.size()); }
+
+    Real& operator[](int i) { return v[static_cast<size_t>(i)]; }
+    const Real& operator[](int i) const { return v[static_cast<size_t>(i)]; }
+
+    void set_zero() {
+        std::fill(v.begin(), v.end(), Real(0));
+    }
+
+    Vec& operator+=(const Vec& rhs) {
+        assert(dim() == rhs.dim());
+        for (int i = 0; i < dim(); ++i) v[static_cast<size_t>(i)] += rhs[i];
+        return *this;
+    }
+
+    Vec& operator-=(const Vec& rhs) {
+        assert(dim() == rhs.dim());
+        for (int i = 0; i < dim(); ++i) v[static_cast<size_t>(i)] -= rhs[i];
+        return *this;
+    }
+
+    Vec& operator*=(Real s) {
+        for (auto& x : v) x *= s;
+        return *this;
+    }
+};
+
+inline Vec operator+(Vec a, const Vec& b) { a += b; return a; }
+inline Vec operator-(Vec a, const Vec& b) { a -= b; return a; }
+inline Vec operator*(Vec a, Real s) { a *= s; return a; }
+inline Vec operator*(Real s, Vec a) { a *= s; return a; }
+
+inline Real dot(const Vec& a, const Vec& b) {
+    assert(a.dim() == b.dim());
+    Real out = 0;
+    for (int i = 0; i < a.dim(); ++i) out += a[i] * b[i];
+    return out;
+}
+
+inline Real norm2(const Vec& a) {
+    return dot(a, a);
+}
+
+inline Vec load_vec(const Real* x, int dim, int offset) {
+    Vec out(dim);
+    for (int d = 0; d < dim; ++d) {
+        out[d] = x[offset + d];
+    }
+    return out;
+}
+
+inline void store_vec(Real* x, int dim, int offset, const Vec& v) {
+    assert(v.dim() == dim);
+    for (int d = 0; d < dim; ++d) {
+        x[offset + d] = v[d];
+    }
+}
+Per-simplex and per-cell accumulators
+This is the part you asked for most directly.
+
+What to store
+For each integration simplex contribution, store:
+
+mass = ∫ rho dσ
+
+first_moment = ∫ rho p dσ
+
+energy = ∫ rho ||p - x_i||² dσ
+
+For each Voronoi cell, sum those into a cell accumulator. Then recover centroid as:
+
+𝑐
+𝑖
+=
+first_moment
+𝑖
+mass
+𝑖
+c 
+i
+​
+ = 
+mass 
+i
+​
+ 
+first_moment 
+i
+​
+ 
+​
+ 
+and gradient:
+
+𝑔
+𝑖
+=
+2
+ 
+𝑚
+𝑖
+ 
+(
+𝑥
+𝑖
+−
+𝑐
+𝑖
+)
+g 
+i
+​
+ =2m 
+i
+​
+ (x 
+i
+​
+ −c 
+i
+​
+ )
+That mirrors the usual CVT structure and matches Geogram’s “compute objective and gradient over simplices” organization. 
+GitHub
++1
+
+C++
+￼
+namespace cvt {
+
+struct SimplexContribution {
+    Real mass = 0.0;
+    Vec first_moment;   // ∫ rho(p) * p dσ
+    Real energy = 0.0;  // ∫ rho(p) * ||p - x_i||^2 dσ
+
+    explicit SimplexContribution(int dim = 0)
+        : first_moment(dim) {}
+};
+
+struct CellAccumulator {
+    Real mass = 0.0;
+    Vec first_moment;   // Σ simplex first moments
+    Real energy = 0.0;  // Σ simplex energies
+
+    explicit CellAccumulator(int dim = 0)
+        : first_moment(dim) {}
+
+    void reset(int dim) {
+        mass = 0.0;
+        first_moment.resize(dim);
+        first_moment.set_zero();
+        energy = 0.0;
+    }
+
+    void add(const SimplexContribution& s) {
+        if (first_moment.dim() == 0) {
+            first_moment.resize(s.first_moment.dim());
+        }
+        mass += s.mass;
+        first_moment += s.first_moment;
+        energy += s.energy;
+    }
+
+    bool valid(Real eps = 1e-30) const {
+        return mass > eps;
+    }
+
+    Vec centroid() const {
+        assert(valid());
+        Vec c = first_moment;
+        c *= (Real(1) / mass);
+        return c;
+    }
+};
+
+} // namespace cvt
+Site layout and indexing helpers
+C++
+￼
+namespace cvt {
+
+struct SiteSpan {
+    const Real* x = nullptr;
+    int n_sites = 0;
+    int dim = 0;
+
+    Vec site(int i) const {
+        assert(i >= 0 && i < n_sites);
+        return load_vec(x, dim, i * dim);
+    }
+};
+
+struct GradientSpan {
+    Real* g = nullptr;
+    int n_sites = 0;
+    int dim = 0;
+
+    void zero_all() {
+        std::fill(g, g + static_cast<std::ptrdiff_t>(n_sites) * dim, Real(0));
+    }
+
+    void set_site(int i, const Vec& grad) {
+        assert(grad.dim() == dim);
+        store_vec(g, dim, i * dim, grad);
+    }
+};
+
+} // namespace cvt
+Geometry-facing interfaces
+This is the seam where your actual RVD implementation plugs in.
+
+You need:
+
+a way to iterate each cell’s integration simplices
+
+a way to compute a simplex contribution for a given site position
+
+I would isolate that behind two interfaces.
+
+C++
+￼
+namespace cvt {
+
+// Opaque simplex record. Replace with your actual clipped polygon / triangle / tetra type.
+struct IntegrationSimplex {
+    // Example placeholders:
+    // int primitive_id;
+    // std::array<Vec, K> vertices;
+    // weight / area / jacobian data
+};
+
+class RestrictedVoronoiBackend {
+public:
+    virtual ~RestrictedVoronoiBackend() = default;
+
+    virtual int dim() const = 0;
+    virtual int n_sites() const = 0;
+
+    // Rebuild or update the restricted Voronoi structure for current sites x.
+    virtual void update_sites(const Real* x_flat) = 0;
+
+    // Enumerate simplices that belong to Voronoi cell i.
+    virtual void for_each_cell_simplex(
+        int site_index,
+        const std::function<void(const IntegrationSimplex&)>& fn
+    ) const = 0;
+
+    // Optional: if your variant needs projection back onto the surface.
+    virtual void project_sites_in_place(Real* x_flat) const = 0;
+};
+
+// Computes exact or approximate integrals over one simplex.
+class SimplexIntegrator {
+public:
+    virtual ~SimplexIntegrator() = default;
+
+    virtual int dim() const = 0;
+
+    virtual SimplexContribution integrate(
+        const IntegrationSimplex& simplex,
+        const Vec& site_position
+    ) const = 0;
+};
+
+} // namespace cvt
+CVT evaluator object
+This is the central object used by libLBFGS’s evaluate callback.
+
+C++
+￼
+namespace cvt {
+
+struct CVTEvaluationResult {
+    Real energy = 0.0;
+    std::vector<CellAccumulator> cells;
+
+    explicit CVTEvaluationResult(int n_sites = 0, int dim = 0)
+        : cells(static_cast<size_t>(n_sites), CellAccumulator(dim)) {}
+
+    void reset(int n_sites, int dim) {
+        if (static_cast<int>(cells.size()) != n_sites) {
+            cells.assign(static_cast<size_t>(n_sites), CellAccumulator(dim));
+        }
+        for (auto& c : cells) c.reset(dim);
+        energy = 0.0;
+    }
+};
+
+class CVTEvaluator {
+public:
+    CVTEvaluator(
+        RestrictedVoronoiBackend& backend,
+        const SimplexIntegrator& integrator
+    )
+        : backend_(backend), integrator_(integrator) {
+        assert(backend_.dim() == integrator_.dim());
+    }
+
+    int dim() const { return backend_.dim(); }
+    int n_sites() const { return backend_.n_sites(); }
+    int n_variables() const { return n_sites() * dim(); }
+
+    // Main callback payload: fills gradient and returns energy.
+    Real evaluate(const Real* x, Real* g) {
+        const int D = dim();
+        const int N = n_sites();
+
+        SiteSpan xs { x, N, D };
+        GradientSpan gs { g, N, D };
+        gs.zero_all();
+
+        result_.reset(N, D);
+
+        // Rebuild / update restricted Voronoi cells for current site positions.
+        backend_.update_sites(x);
+
+        // Accumulate mass / first moment / energy per cell.
+        for (int i = 0; i < N; ++i) {
+            CellAccumulator& cell = result_.cells[static_cast<size_t>(i)];
+
+            backend_.for_each_cell_simplex(i, [&](const IntegrationSimplex& s) {
+                const Vec xi = xs.site(i);
+                SimplexContribution contrib = integrator_.integrate(s, xi);
+                cell.add(contrib);
+            });
+
+            result_.energy += cell.energy;
+        }
+
+        // Convert cell accumulators to gradient.
+        for (int i = 0; i < N; ++i) {
+            const CellAccumulator& cell = result_.cells[static_cast<size_t>(i)];
+            const Vec xi = xs.site(i);
+
+            Vec grad_i(D);
+
+            if (!cell.valid()) {
+                // Degenerate / empty cell. Conservative choice:
+                // leave gradient zero or add a penalty in a real implementation.
+                grad_i.set_zero();
+            } else {
+                const Vec ci = cell.centroid();
+                grad_i = (xi - ci);
+                grad_i *= (2.0 * cell.mass);
+            }
+
+            gs.set_site(i, grad_i);
+        }
+
+        return result_.energy;
+    }
+
+    const CVTEvaluationResult& last_result() const {
+        return result_;
+    }
+
+private:
+    RestrictedVoronoiBackend& backend_;
+    const SimplexIntegrator& integrator_;
+    CVTEvaluationResult result_;
+};
+
+} // namespace cvt
+libLBFGS bridge
+libLBFGS expects exactly the two callback types shown in its header: evaluate and progress. 
+GitHub
+
+C++
+￼
+namespace cvt {
+
+struct LBFGSDriverConfig {
+    int memory = 10;
+    int max_iterations = 100;
+    Real epsilon = 1e-6;
+    Real delta = 1e-9;
+    int past = 3;
+    bool project_after_step = false; // optional policy
+};
+
+class LBFGSDriver {
+public:
+    LBFGSDriver(CVTEvaluator& evaluator, LBFGSDriverConfig cfg = {})
+        : evaluator_(evaluator), cfg_(cfg) {}
+
+    int solve(std::vector<Real>& x, Real* out_fx = nullptr) {
+        assert(static_cast<int>(x.size()) == evaluator_.n_variables());
+
+        lbfgs_parameter_t param;
+        lbfgs_parameter_init(&param);
+        param.m = cfg_.memory;
+        param.max_iterations = cfg_.max_iterations;
+        param.epsilon = cfg_.epsilon;
+        param.delta = cfg_.delta;
+        param.past = cfg_.past;
+
+        // For standard differentiable minimization.
+        param.orthantwise_c = 0.0;
+
+        lbfgsfloatval_t fx = 0.0;
+
+        // If using SSE build, libLBFGS may require lbfgs_malloc.
+        // To keep the skeleton simple, copy into a libLBFGS-owned buffer.
+        lbfgsfloatval_t* xbuf = lbfgs_malloc(static_cast<int>(x.size()));
+        if (!xbuf) {
+            std::cerr << "lbfgs_malloc failed\n";
+            return -1;
+        }
+
+        for (size_t i = 0; i < x.size(); ++i) {
+            xbuf[i] = static_cast<lbfgsfloatval_t>(x[i]);
+        }
+
+        int status = lbfgs(
+            static_cast<int>(x.size()),
+            xbuf,
+            &fx,
+            &LBFGSDriver::evaluate_cb,
+            &LBFGSDriver::progress_cb,
+            this,
+            &param
+        );
+
+        x.assign(xbuf, xbuf + x.size());
+        lbfgs_free(xbuf);
+
+        if (out_fx) *out_fx = static_cast<Real>(fx);
+        return status;
+    }
+
+private:
+    static lbfgsfloatval_t evaluate_cb(
+        void* instance,
+        const lbfgsfloatval_t* x,
+        lbfgsfloatval_t* g,
+        const int n,
+        const lbfgsfloatval_t /*step*/
+    ) {
+        auto* self = static_cast<LBFGSDriver*>(instance);
+        assert(n == self->evaluator_.n_variables());
+
+        const Real fx = self->evaluator_.evaluate(x, g);
+        return static_cast<lbfgsfloatval_t>(fx);
+    }
+
+    static int progress_cb(
+        void* instance,
+        const lbfgsfloatval_t* x,
+        const lbfgsfloatval_t* g,
+        const lbfgsfloatval_t fx,
+        const lbfgsfloatval_t xnorm,
+        const lbfgsfloatval_t gnorm,
+        const lbfgsfloatval_t step,
+        int n,
+        int k,
+        int ls
+    ) {
+        auto* self = static_cast<LBFGSDriver*>(instance);
+        (void)x;
+        (void)g;
+        (void)n;
+
+        std::cout
+            << "iter=" << k
+            << " fx=" << fx
+            << " xnorm=" << xnorm
+            << " gnorm=" << gnorm
+            << " step=" << step
+            << " ls=" << ls
+            << "\n";
+
+        // Optional projection hook would go here if you drive optimization manually.
+        // libLBFGS does not expose an in-place "post-step but pre-evaluate" transform,
+        // so hard projection should usually be folded into the evaluator/backend model.
+
+        return 0;
+    }
+
+private:
+    CVTEvaluator& evaluator_;
+    LBFGSDriverConfig cfg_;
+};
+
+} // namespace cvt
+A concrete simplex integrator example
+Here is a simple example for a sampled cell contribution, which is easier than exact clipped-simplex integration and often good for bringing the optimizer structure up first.
+
+Interpret one IntegrationSimplex as holding quadrature points and weights already mapped into the working dimension. Then:
+
+𝑚
+𝑠
+=
+∑
+𝑞
+𝑤
+𝑞
+𝜌
+(
+𝑝
+𝑞
+)
+,
+𝑞
+𝑠
+=
+∑
+𝑞
+𝑤
+𝑞
+𝜌
+(
+𝑝
+𝑞
+)
+ 
+𝑝
+𝑞
+,
+𝑒
+𝑠
+=
+∑
+𝑞
+𝑤
+𝑞
+𝜌
+(
+𝑝
+𝑞
+)
+∥
+𝑝
+𝑞
+−
+𝑥
+𝑖
+∥
+2
+m 
+s
+​
+ = 
+q
+∑
+​
+ w 
+q
+​
+ ρ(p 
+q
+​
+ ),q 
+s
+​
+ = 
+q
+∑
+​
+ w 
+q
+​
+ ρ(p 
+q
+​
+ )p 
+q
+​
+ ,e 
+s
+​
+ = 
+q
+∑
+​
+ w 
+q
+​
+ ρ(p 
+q
+​
+ )∥p 
+q
+​
+ −x 
+i
+​
+ ∥ 
+2
+ 
+C++
+￼
+namespace cvt {
+
+struct QuadraturePoint {
+    Vec p;
+    Real w = 0.0;
+
+    explicit QuadraturePoint(int dim = 0) : p(dim) {}
+};
+
+struct SampledSimplex : public IntegrationSimplex {
+    std::vector<QuadraturePoint> qps;
+};
+
+class DensityField {
+public:
+    virtual ~DensityField() = default;
+    virtual Real rho(const Vec& p) const = 0;
+};
+
+class UnitDensityField final : public DensityField {
+public:
+    Real rho(const Vec&) const override { return 1.0; }
+};
+
+class SampledSimplexIntegrator final : public SimplexIntegrator {
+public:
+    SampledSimplexIntegrator(int dim, const DensityField& density)
+        : dim_(dim), density_(density) {}
+
+    int dim() const override { return dim_; }
+
+    SimplexContribution integrate(
+        const IntegrationSimplex& simplex_base,
+        const Vec& site_position
+    ) const override {
+        auto const& simplex = static_cast<SampledSimplex const&>(simplex_base);
+
+        SimplexContribution out(dim_);
+
+        for (const auto& qp : simplex.qps) {
+            const Real rho = density_.rho(qp.p);
+            const Real w = qp.w * rho;
+
+            out.mass += w;
+            out.first_moment += qp.p * w;
+
+            Vec d = qp.p - site_position;
+            out.energy += w * norm2(d);
+        }
+
+        return out;
+    }
+
+private:
+    int dim_;
+    const DensityField& density_;
+};
+
+} // namespace cvt
+A concrete backend example shape
+This backend is still schematic, but now the required storage is explicit:
+
+current flattened site positions
+
+for each cell, a vector of simplices
+
+C++
+￼
+namespace cvt {
+
+class ExampleRestrictedVoronoiBackend final : public RestrictedVoronoiBackend {
+public:
+    ExampleRestrictedVoronoiBackend(int dim, int n_sites)
+        : dim_(dim), n_sites_(n_sites), cells_(static_cast<size_t>(n_sites)) {}
+
+    int dim() const override { return dim_; }
+    int n_sites() const override { return n_sites_; }
+
+    void update_sites(const Real* x_flat) override {
+        current_sites_.assign(x_flat, x_flat + static_cast<size_t>(n_sites_) * dim_);
+
+        // This is where you:
+        // 1. build/update Delaunay or RVD structure
+        // 2. clip Voronoi cells to the domain/surface
+        // 3. decompose each cell into integration simplices
+        //
+        // For now, we just call a placeholder.
+        rebuild_cells_from_geometry();
+    }
+
+    void for_each_cell_simplex(
+        int site_index,
+        const std::function<void(const IntegrationSimplex&)>& fn
+    ) const override {
+        assert(site_index >= 0 && site_index < n_sites_);
+        for (const auto& s : cells_[static_cast<size_t>(site_index)]) {
+            fn(s);
+        }
+    }
+
+    void project_sites_in_place(Real* x_flat) const override {
+        // Optional:
+        // project points onto your input surface if your method represents
+        // x in ambient coordinates but requires surface-constrained sites.
+        //
+        // Left empty in the skeleton.
+        (void)x_flat;
+    }
+
+private:
+    void rebuild_cells_from_geometry() {
+        // Placeholder implementation.
+        // Replace this with your actual RVD traversal / clipping.
+        for (auto& cell : cells_) {
+            cell.clear();
+        }
+
+        // Example only: each cell gets one fake sampled simplex around the site.
+        for (int i = 0; i < n_sites_; ++i) {
+            SampledSimplex s;
+            // In a real implementation, qps come from clipped simplex quadrature.
+            for (int q = 0; q < 4; ++q) {
+                QuadraturePoint qp(dim_);
+                for (int d = 0; d < dim_; ++d) {
+                    qp.p[d] = current_sites_[static_cast<size_t>(i * dim_ + d)];
+                }
+                qp.w = 0.25;
+                s.qps.push_back(std::move(qp));
+            }
+            cells_[static_cast<size_t>(i)].push_back(std::move(s));
+        }
+    }
+
+private:
+    int dim_;
+    int n_sites_;
+    std::vector<Real> current_sites_;
+
+    // Per-cell simplex lists.
+    std::vector<std::vector<SampledSimplex>> cells_;
+};
+
+} // namespace cvt
+Example usage
+C++
+￼
+// main.cpp
+#include "cvt_lbfgs_skeleton.h"
+
+int main() {
+    constexpr int dim = 3;
+    constexpr int n_sites = 100;
+
+    cvt::ExampleRestrictedVoronoiBackend backend(dim, n_sites);
+    cvt::UnitDensityField density;
+    cvt::SampledSimplexIntegrator integrator(dim, density);
+    cvt::CVTEvaluator evaluator(backend, integrator);
+
+    std::vector<cvt::Real> x(static_cast<size_t>(dim * n_sites), 0.0);
+
+    // Initialize sites somehow.
+    for (int i = 0; i < n_sites; ++i) {
+        x[3 * i + 0] = 0.01 * i;
+        x[3 * i + 1] = 0.0;
+        x[3 * i + 2] = 0.0;
+    }
+
+    cvt::LBFGSDriverConfig cfg;
+    cfg.memory = 10;
+    cfg.max_iterations = 50;
+    cfg.epsilon = 1e-6;
+
+    cvt::LBFGSDriver solver(evaluator, cfg);
+
+    cvt::Real fx = 0.0;
+    const int status = solver.solve(x, &fx);
+
+    std::cout << "status = " << status << "\n";
+    std::cout << "final fx = " << fx << "\n";
+    return 0;
+}
+What your exact Geogram-style implementation would replace
+The placeholders above correspond to these real pieces:
+
+1. RestrictedVoronoiBackend::update_sites()
+This is where Geogram would be doing the restricted Voronoi computation on the surface, or in the anisotropic lifted space for the anisotropic mesher. Geogram’s remeshing docs describe isotropic CVT on the surface and a 6D anisotropic construction for anisotropic remeshing. 
+GitHub
+
+2. for_each_cell_simplex()
+This is the analog of Geogram’s “Voronoi cells decomposed into simplices” path. 
+GitHub
++1
+
+3. SimplexIntegrator::integrate()
+This is where your exact formulas for
+
+simplex mass
+
+simplex first moment
+
+simplex energy
+
+would live. If you are staying very close to Geogram, this is the conceptual slot corresponding to its integration-simplex objective/gradient machinery. 
+GitHub
++1
+
+Recommended exact data structures
+If you want the shortest route to something robust, I would keep these exact structures:
+
+C++
+￼
+struct CellAccumulator {
+    double mass;
+    Vec first_moment;  // same dimension as optimization space
+    double energy;
+};
+
+struct CVTEvaluationResult {
+    double energy;
+    std::vector<CellAccumulator> cells;
+};
+and I would not store centroids permanently. Compute centroid on demand from first_moment / mass. That keeps accumulation numerically cleaner and avoids an extra state variable that can go stale.
+
+For simplices:
+
+C++
+￼
+struct SimplexContribution {
+    double mass;
+    Vec first_moment;
+    double energy;
+};
+That is enough for CVT/L-BFGS. You only need second moments if you later decide to assemble a true Hessian or a stronger preconditioner.
+
+Practical notes
+If a cell goes empty, do not silently divide by zero. Either:
+
+leave gradient zero and rely on line search / future iterations,
+
+add a repulsion or empty-cell penalty,
+
+or rebuild from a better initialization.
+
+If your sites must remain on the surface, the cleanest architecture is usually to let the backend own that constraint logic instead of trying to bolt a projection step into libLBFGS’s callback cycle.
+
+For anisotropic CVT, keep first_moment in the optimization space dimension. If you optimize in lifted 6D, the accumulator is 6D too; the projection back to a 3D output mesh is a separate step. Geogram’s anisotropic remeshing docs explicitly describe that higher-dimensional formulation. 
+GitHub
+
