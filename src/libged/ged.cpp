@@ -398,6 +398,7 @@ ged_clbk_exec(struct bu_vls *log, struct ged *gedp, int limit, bu_clbk_t f, int 
     Ged_Internal *gedip = gedp->i->i;
     int rlimit = (limit > 0) ? limit : 1;
 
+    // check depth count before we run clbk
     gedip->clbk_recursion_depth_cnt[f]++;
 
     if (gedip->clbk_recursion_depth_cnt[f] > rlimit) {
@@ -418,7 +419,8 @@ ged_clbk_exec(struct bu_vls *log, struct ged *gedp, int limit, bu_clbk_t f, int 
     // Checks complete - actually run the callback
     int ret = (*f)(ac, av, u1, u2);
 
-    gedip->clbk_recursion_depth_cnt[f]++;
+    // clbk has returned, pop the depth count
+    gedip->clbk_recursion_depth_cnt[f]--;
 
     return ret;
 }
