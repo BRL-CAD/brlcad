@@ -31,13 +31,14 @@
 #include <QByteArray>
 #include <QHostAddress>
 #include <QObject>
+#include <QSocketNotifier>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <iostream>
 
 #include "dm/fbserv.h"
 
-// Per client info
+// Per client info (TCP path)
 class QFBSocket : public QObject
 {
     Q_OBJECT
@@ -55,6 +56,23 @@ class QFBSocket : public QObject
 
     private:
         QByteArray buff;
+};
+
+// Per client info (IPC path — pipe/socketpair instead of TCP)
+class QFBIPCSocket : public QObject
+{
+    Q_OBJECT
+
+    public:
+	QSocketNotifier *notifier = nullptr;
+	int ind = -1;
+	struct fbserv_obj *fbsp = nullptr;
+
+    signals:
+	void updated();
+
+    public slots:
+	void ipc_handler();
 };
 
 // Overall server that sets up clients
@@ -88,11 +106,17 @@ qdm_close_server_handler(struct fbserv_obj *fbsp);
 #ifdef BRLCAD_OPENGL
 extern void
 qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+extern void
+qdm_open_ipc_client_handler(struct fbserv_obj *fbsp, int i, void *data);
 #endif
 extern void
 qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data);
 extern void
+qdm_open_ipc_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+extern void
 qdm_close_client_handler(struct fbserv_obj *fbsp, int sub);
+extern void
+qdm_close_ipc_client_handler(struct fbserv_obj *fbsp, int sub);
 
 __END_DECLS
 

@@ -39,8 +39,12 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
 #include <time.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* sometimes includes <time.h> */
@@ -49,7 +53,10 @@
 #include "bresource.h"
 #include "bsocket.h"
 #include "bu/app.h"
+#include "bu/env.h"
 #include "bu/interrupt.h"
+#include "bu/time.h"
+#include "bu/vls.h"
 
 /* decls for strict c90 */
 
@@ -63,7 +70,20 @@ extern pid_t vfork(void);
 extern int fchmod(int fd, mode_t mode);
 #endif
 #if !defined(HAVE_DECL_GETTIMEOFDAY) && !defined(gettimeofday)
+#  ifdef HAVE_WINDOWS_H
+/* Windows does not provide gettimeofday; implement via bu_gettime() */
+static int
+gettimeofday(struct timeval *tp, void *tzp)
+{
+    int64_t t = bu_gettime();
+    (void)tzp;
+    tp->tv_sec  = (long)(t / 1000000);
+    tp->tv_usec = (long)(t % 1000000);
+    return 0;
+}
+#  else
 extern int gettimeofday(struct timeval *, void *);
+#  endif
 #endif
 
 /* FIXME: is this basically FD_COPY()? */
@@ -86,6 +106,12 @@ extern int gettimeofday(struct timeval *, void *);
 #include "../rt/rtuif.h"
 #include "./protocol.h"
 #include "./ihost.h"
+/* Enable generate/verify functions — only the dispatcher (remrt) needs them */
+#define REMRT_AUTH_IMPL
+#include "./auth.h"
+/* Enable TLS server-side functions */
+#define REMRT_TLS_IMPL
+#include "./tls_wrap.h"
 #include "brlcad_ident.h"
 
 
@@ -99,13 +125,35 @@ extern int gettimeofday(struct timeval *, void *);
 
 #define REMRT_TCP_DEFAULT_PORT 4446
 
-#define TARDY_SERVER_INTERVAL	(900*60)	/* max seconds of silence */
+#define TARDY_SERVER_INTERVAL	120		/* max seconds of silence after pixel assignment */
+#define SETUP_TIMEOUT_INTERVAL	120		/* max seconds for dirbuild/gettrees setup */
 #define N_SERVER_ASSIGNMENTS	1		/* desired # of assignments */
 #define MIN_ASSIGNMENT_TIME	5		/* desired seconds/result */
 #define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
-#ifndef RSH
-#  define RSH "/usr/ucb/rsh"
+#ifndef SSH
+#  define SSH "ssh"
 #endif
+
+/*
+ * Session authentication token.  Generated once at startup.
+ * Passed to auto-launched rtsrv workers via "-S <token>".
+ * An empty string means authentication is disabled.
+ */
+static char session_token[REMRT_AUTH_TOKEN_LEN + 1] = {0};
+
+/*
+ * When non-zero, ALL connecting workers must supply a valid token.
+ * When zero (the default), workers without a token are still accepted
+ * (backward compatibility for passive/manually-started servers).
+ */
+static int require_auth = 0;
+
+/* Pending helper processes launched to start remote rtsrv workers.
+ * Reaped lazily from check_input() to avoid blocking. */
+#define MAX_HELPER_PROCS 64
+#include "bu/process.h"
+static struct bu_process *helper_procs[MAX_HELPER_PROCS];
+static int helper_proc_count = 0;
 
 
 /*
@@ -228,6 +276,17 @@ int detached = 0;		/* continue after EOF */
 fd_set clients;
 int print_on = 1;
 
+/* Count of active server connections using pipe/socket IPC transport.
+ * These cannot be tracked in the clients fd_set when pkc_tx_kind is
+ * PKG_TX_IPC (read/write fd are a private pair, not a select-able socket).
+ * Used by the "done" checks to know when all workers have disconnected.    */
+static int n_pipe_servers = 0;
+/* Cumulative count: incremented each time a pipe server is added via
+ * addclient_ipc().  Never decremented.  Used by do_work() to detect
+ * "a pipe server was launched but already died before prev_serv was ever
+ * set positive" so the break-on-all-down logic can fire correctly.            */
+static int n_pipe_servers_ever = 0;
+
 
 /*
  * Scan the ihost table.  For all eligible hosts that don't
@@ -333,8 +392,27 @@ struct frame *FreeFrame;
 /* --- */
 #define SERVERS_NULL ((struct servers *)0)
 
+
+/*
+ * Look up the servers[] slot that owns a given pkg_conn.
+ * Used by message handlers instead of the fd-as-index idiom
+ * (servers[pc->pkc_fd]), which breaks on Windows because WinSock
+ * socket handles are not small sequential integers and can easily
+ * exceed MAXSERVERS (FD_SETSIZE).
+ */
+static struct servers *
+get_server_by_pc(struct pkg_conn *pc)
+{
+    int i;
+    for (i = 0; i < (int)MAXSERVERS; i++) {
+	if (servers[i].sr_pc == pc)
+	    return &servers[i];
+    }
+    return SERVERS_NULL;
+}
+
 /* variables shared with viewing model */
-extern double AmbientIntensity;
+/* AmbientIntensity is declared (with correct DLL-import on Windows) via optical/defines.h */
 extern fastf_t azimuth, elevation;
 extern int lightmodel;
 extern int use_air;
@@ -368,14 +446,21 @@ char file_basename[128];	/* contains last component of file name */
 char file_fullname[128];	/* contains full file name */
 char object_list[512];	/* contains list of "MGED" objects */
 
-FILE *helper_fp;		/* pipe to rexec helper process */
-
 char *our_hostname;
 
 int tcp_listen_fd;
-extern int pkg_permport;	/* libpkg/pkg_permserver() listen port */
+pkg_listener_t *tcp_listener = NULL;
+/* tcp_listener stores the listener; use pkg_get_listener_port(tcp_listener) to get the TCP port */
 
 int rem_debug;		/* dispatcher debugging flag */
+
+#ifdef HAVE_OPENSSL_SSL_H
+/*
+ * TLS server context.  Initialized at startup.  Shared by all worker
+ * connections accepted during this session.
+ */
+static SSL_CTX *remrt_ssl_ctx = NULL;
+#endif
 
 #define OPT_FRAME 0	/* Free for all */
 #define OPT_LOAD 1	/* 10% per server per frame */
@@ -406,6 +491,9 @@ stamp(void)
 
     return buf;
 }
+
+/* Forward declaration: defined later in this file */
+static void reap_helpers(void);
 
 
 /*
@@ -499,12 +587,16 @@ drop_server(struct servers *sp, char *why)
     }
 
     /* Clear the bits from "clients" now, to prevent further select()s */
-    fd = pc->pkc_fd;
-    if (fd <= 3 || fd >= (int)MAXSERVERS) {
+    fd = pkg_get_read_fd(pc);
+    if (pkg_is_stdio_mode(pc)) {
+	/* Pipe-based IPC connection: tracked outside the clients fd_set. */
+	if (n_pipe_servers > 0) n_pipe_servers--;
+    } else if (fd < 0) {
 	bu_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
 	return;
+    } else {
+	FD_CLR(fd, &clients);
     }
-    FD_CLR(sp->sr_pc->pkc_fd, &clients);
 
     if (oldstate != SRST_READY && oldstate != SRST_NEED_TREE) return;
 
@@ -599,7 +691,7 @@ addclient(struct pkg_conn *pc)
     struct sockaddr_in from;
     int fd;
 
-    fd = pc->pkc_fd;
+    fd = pkg_get_read_fd(pc);
 
     fromlen = (socklen_t) sizeof (from);
 
@@ -620,9 +712,109 @@ addclient(struct pkg_conn *pc)
     }
     if (rem_debug) bu_log("%s addclient(%s)\n", stamp(), ihp->ht_name);
 
+#ifdef HAVE_OPENSSL_SSL_H
+    /* Upgrade connection to TLS before any PKG messages are exchanged.
+     * If the handshake fails we still accept the connection as plaintext
+     * to remain compatible with rtsrv workers built without OpenSSL. */
+    if (remrt_ssl_ctx) {
+	if (remrt_tls_accept(remrt_ssl_ctx, pc) == REMRT_TLS_OK) {
+	    if (rem_debug)
+		bu_log("%s TLS established with %s\n", stamp(), ihp->ht_name);
+	} else {
+	    bu_log("%s WARNING: TLS handshake failed for %s; "
+		   "connection accepted as plaintext\n",
+		   stamp(), ihp->ht_name);
+	}
+    }
+#endif
+
     FD_SET(fd, &clients);
 
-    sp = &servers[fd];
+    /* Find the first unused server slot.
+     * The legacy code used &servers[fd] (socket fd as array index), but on
+     * Windows, WinSock socket handles are not small sequential integers and
+     * can easily exceed MAXSERVERS (FD_SETSIZE), causing an out-of-bounds
+     * write.  Use a free-slot search instead. */
+    {
+	int slot = -1, j;
+	for (j = 0; j < (int)MAXSERVERS; j++) {
+	    if (servers[j].sr_pc == PKC_NULL) {
+		slot = j;
+		break;
+	    }
+	}
+	if (slot < 0) {
+	    bu_log("addclient: no free server slots (max=%d)\n", (int)MAXSERVERS);
+	    pkg_close(pc);
+	    return;
+	}
+	sp = &servers[slot];
+    }
+    memset((char *)sp, 0, sizeof(*sp));
+    sp->sr_pc = pc;
+    BU_LIST_INIT(&sp->sr_work);
+    sp->sr_curframe = FRAME_NULL;
+    sp->sr_lump = 32;
+    sp->sr_host = ihp;
+    statechange(sp, SRST_NEW);
+
+    /* Clear any frame state that may remain from an earlier server */
+    for (fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw) {
+	CHECK_FRAME(fr);
+    }
+}
+
+
+/*
+ * Register a pre-connected IPC channel as a new server.
+ *
+ * This is the IPC-transport counterpart to addclient().  Because the
+ * pkg_conn was created from a socketpair or pipe fd rather than an
+ * accepted TCP socket, we already know which ihost it belongs to — so
+ * getpeername() and host_lookup_by_addr() are skipped.
+ *
+ * The caller must supply the ihost pointer directly.  All other
+ * bookkeeping (FD_SET into `clients`, servers[] slot allocation, state
+ * initialisation) is identical to addclient().
+ */
+static void
+addclient_ipc(struct pkg_conn *pc, struct ihost *ihp)
+{
+    struct servers *sp;
+    struct frame *fr;
+    int fd;
+    int slot, j;
+
+    if (!pc || !ihp) return;
+
+    fd = pkg_get_read_fd(pc);
+
+    if (rem_debug)
+	bu_log("%s addclient_ipc(%s, fd=%d)\n", stamp(), ihp->ht_name, fd);
+
+    if (pkg_is_stdio_mode(pc)) {
+	/* Pipe-based connection: cannot use FD_SET with -3.
+	 * Track separately so done-checks remain accurate.  */
+	n_pipe_servers++;
+	n_pipe_servers_ever++;
+    } else {
+	FD_SET(fd, &clients);
+    }
+
+    /* Find the first unused server slot. */
+    slot = -1;
+    for (j = 0; j < (int)MAXSERVERS; j++) {
+	if (servers[j].sr_pc == PKC_NULL) {
+	    slot = j;
+	    break;
+	}
+    }
+    if (slot < 0) {
+	bu_log("addclient_ipc: no free server slots (max=%d)\n", (int)MAXSERVERS);
+	pkg_close(pc);
+	return;
+    }
+    sp = &servers[slot];
     memset((char *)sp, 0, sizeof(*sp));
     sp->sr_pc = pc;
     BU_LIST_INIT(&sp->sr_work);
@@ -648,62 +840,12 @@ input_error(const char *str)
 static void
 check_input(int waittime)
 {
-    static fd_set ifdset;
     int i;
     struct pkg_conn *pc;
-    static struct timeval tv;
     int val;
 
-    /* First, handle any packages waiting in internal buffers */
-    for (i = 0; i <(int)MAXSERVERS; i++) {
-	pc = servers[i].sr_pc;
-	if (pc == PKC_NULL) continue;
-	val = pkg_process(pc);
-	if (val < 0)
-	    drop_server(&servers[i], "pkg_process() error");
-    }
-
-    /* Second, hang in select() waiting for something to happen */
-    tv.tv_sec = waittime;
-    tv.tv_usec = 0;
-
-    FD_MOVE(&ifdset, &clients);	/* ibits = clients */
-    FD_SET(tcp_listen_fd, &ifdset);	/* ibits |= tcp_listen_fd */
-    val = select(32, &ifdset, (fd_set *)0, (fd_set *)0, &tv);
-    if (val < 0) {
-	perror("select");
-	return;
-    }
-    if (val == 0) {
-	/* At this point, ibits==0 */
-	if (rem_debug>1) bu_log("%s select timed out after %d seconds\n", stamp(), waittime);
-	return;
-    }
-
-    /* Third, accept any pending connections */
-    if (FD_ISSET(tcp_listen_fd, &ifdset)) {
-	pc = pkg_getclient(tcp_listen_fd, pkgswitch, input_error, 1);
-	if (pc != PKC_NULL && pc != PKC_ERROR)
-	    addclient(pc);
-	FD_CLR(tcp_listen_fd, &ifdset);
-    }
-
-    /* Fourth, get any new traffic off the network into libpkg buffers */
-    for (i = 0; i < (int)MAXSERVERS; i++) {
-	if (!feof(stdin) && i == fileno(stdin)) continue;
-	if (!FD_ISSET(i, &ifdset)) continue;
-	pc = servers[i].sr_pc;
-	if (pc == PKC_NULL) continue;
-	val = pkg_suckin(pc);
-	if (val < 0) {
-	    drop_server(&servers[i], "pkg_suckin() error");
-	} else if (val == 0) {
-	    drop_server(&servers[i], "EOF");
-	}
-	FD_CLR(i, &ifdset);
-    }
-
-    /* Fifth, handle any new packages now waiting in internal buffers */
+    /* Step 1: Drain any packages already buffered in libpkg */
+    reap_helpers();
     for (i = 0; i < (int)MAXSERVERS; i++) {
 	pc = servers[i].sr_pc;
 	if (pc == PKC_NULL) continue;
@@ -711,12 +853,92 @@ check_input(int waittime)
 	    drop_server(&servers[i], "pkg_process() error");
     }
 
-    /* Finally, handle any command input (This can recurse via "read") */
-    if (waittime>0 &&
-	!feof(stdin) &&
-	FD_ISSET(fileno(stdin), &ifdset)) {
-	interactive_cmd(stdin);
+    /* Step 2: Build the readiness mux.
+     *
+     * For each server connection we watch the "readable" fd returned by
+     * pkg_get_read_fd().  We still have to discriminate pipe vs socket
+     * underneath because Windows requires the WaitForMultipleObjects()
+     * vs. WSAEventSelect() split.  pkg_is_stdio_mode() reports which.
+     *
+     * On POSIX pkg_mux wraps select(); on Windows it uses
+     * WaitForMultipleObjects() for pipe handles and WSAEventSelect()
+     * for WinSock sockets — callers need not know which.               */
+    pkg_mux_t *mux = pkg_mux_create();
+    pkg_mux_add_fd(mux, tcp_listen_fd, 1);
+
+    for (i = 0; i < (int)MAXSERVERS; i++) {
+	pc = servers[i].sr_pc;
+	if (pc == PKC_NULL) continue;
+	{
+	    int rfd = pkg_get_read_fd(pc);
+	    if (rfd < 0)
+		continue;
+	    if (pkg_is_stdio_mode(pc)) {
+		/* Pipe: rfd is a real CRT fd — safe for pkg_mux_add_fd() */
+		pkg_mux_add_fd(mux, rfd, 0);
+	    } else {
+		/* Socket: rfd is a WinSock SOCKET cast to int */
+		pkg_mux_add_fd(mux, rfd, 1);
+	    }
+	}
     }
+
+    /* Track stdin for interactive mode. */
+    int stdin_fd = -1;
+    if (waittime > 0 && !feof(stdin) && FD_ISSET(fileno(stdin), &clients)) {
+	stdin_fd = fileno(stdin);
+	pkg_mux_add_fd(mux, stdin_fd, 0);
+    }
+
+    /* Step 3: Wait */
+    int timeout_ms = (waittime > 0) ? waittime * 1000 : 0;
+    val = pkg_mux_wait(mux, timeout_ms);
+
+    if (val < 0) {
+	bu_log("check_input: pkg_mux_wait error\n");
+	pkg_mux_destroy(mux);
+	return;
+    }
+    if (val == 0) {
+	if (rem_debug > 1)
+	    bu_log("%s check_input: timed out after %d s\n", stamp(), waittime);
+	pkg_mux_destroy(mux);
+	return;
+    }
+
+    /* Step 4: Accept pending TCP connections */
+    if (pkg_mux_is_ready_fd(mux, tcp_listen_fd)) {
+	pc = pkg_accept(tcp_listener, pkgswitch, input_error, 1);
+	if (pc != PKC_NULL && pc != PKC_ERROR)
+	    addclient(pc);
+    }
+
+    /* Step 5: Read from active server connections */
+    for (i = 0; i < (int)MAXSERVERS; i++) {
+	struct pkg_conn *spc = servers[i].sr_pc;
+	if (spc == PKC_NULL) continue;
+	int rfd = pkg_get_read_fd(spc);
+	if (rfd < 0 || !pkg_mux_is_ready_fd(mux, rfd)) continue;
+	val = pkg_suckin(spc);
+	if (val < 0)
+	    drop_server(&servers[i], "pkg_suckin() error");
+	else if (val == 0)
+	    drop_server(&servers[i], "EOF");
+    }
+
+    /* Step 6: Process newly buffered packages */
+    for (i = 0; i < (int)MAXSERVERS; i++) {
+	pc = servers[i].sr_pc;
+	if (pc == PKC_NULL) continue;
+	if (pkg_process(pc) < 0)
+	    drop_server(&servers[i], "pkg_process() error");
+    }
+
+    /* Step 7: Handle interactive stdin commands */
+    if (stdin_fd >= 0 && pkg_mux_is_ready_fd(mux, stdin_fd))
+	interactive_cmd(stdin);
+
+    pkg_mux_destroy(mux);
 }
 
 
@@ -741,8 +963,7 @@ static void
 read_rc_file(void)
 {
     FILE *fp;
-    char *home;
-    char path[128];
+    char home_dir[MAXPATHLEN] = {0};
 
     if ((fp = fopen(".remrtrc", "r")) != NULL) {
 	source(fp);
@@ -750,13 +971,19 @@ read_rc_file(void)
 	return;
     }
 
-    if ((home = getenv("HOME")) != NULL) {
-	snprintf(path, 128, "%s/.remrtrc", home);
-	if ((fp = fopen(path, "r")) != NULL) {
+    /* Use bu_dir for portable home-directory lookup (handles HOME on
+     * POSIX, USERPROFILE/SHGetKnownFolderPath on Windows, etc.). */
+    bu_dir(home_dir, sizeof(home_dir), BU_DIR_HOME, NULL);
+    if (!BU_STR_EMPTY(home_dir)) {
+	struct bu_vls path = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&path, "%s/.remrtrc", home_dir);
+	if ((fp = fopen(bu_vls_cstr(&path), "r")) != NULL) {
 	    source(fp);
 	    fclose(fp);
+	    bu_vls_free(&path);
 	    return;
 	}
+	bu_vls_free(&path);
     }
 }
 
@@ -787,11 +1014,19 @@ build_start_cmd(const int argc, const char **argv, const int startc)
 
     bu_strlcpy(file_fullname, argv[startc], sizeof(file_fullname));
 
+    /* Normalize path separators to forward slash.  bu_argv_from_string()
+     * on the receiving end (ph_dirbuild in rtsrv) treats backslash as an
+     * escape character and strips it, mangling Windows paths.  Windows
+     * accepts forward slashes in all file API calls (fopen, chdir, etc.)
+     * so this conversion is safe and portable.                           */
+    for (cp = file_fullname; *cp; cp++)
+	if (*cp == '\\') *cp = '/';
+
     /* Save last component of file name */
-    if ((cp = strrchr(argv[startc], '/')) != (char *)0) {
+    if ((cp = strrchr(file_fullname, '/')) != (char *)0) {
 	bu_strlcpy(file_basename, cp+1, sizeof(file_basename));
     } else {
-	bu_strlcpy(file_basename, argv[startc], sizeof(file_basename));
+	bu_strlcpy(file_basename, file_fullname, sizeof(file_basename));
     }
 
     /* Build new object_list[] string */
@@ -977,7 +1212,7 @@ scan_frame_for_finished_pixels(struct frame *fr)
 
     bu_log("%s Scanning %s for non-black pixels\n", stamp(),
 	   fr->fr_filename);
-    if ((fp = fopen(fr->fr_filename, "r")) == NULL) {
+    if ((fp = fopen(fr->fr_filename, "rb")) == NULL) {
 	perror(fr->fr_filename);
 	return -1;
     }
@@ -1058,8 +1293,15 @@ create_outputfilename(struct frame *fr)
      * from work-to-do queue
      */
     if (!bu_file_exists(fr->fr_filename, NULL)) {
-	/* File does not yet exist */
+	/* File does not yet exist.
+	 * Use only _S_IREAD|_S_IWRITE on Windows: _creat() validates
+	 * pmode strictly and rejects bits outside that pair (POSIX
+	 * group/other bits such as those in 0644 trigger FAST_FAIL). */
+#ifdef HAVE_WINDOWS_H
+	if ((fd = creat(fr->fr_filename, _S_IREAD|_S_IWRITE)) < 0) {
+#else
 	if ((fd = creat(fr->fr_filename, 0644)) < 0) {
+#endif
 	    /* Unable to create new file */
 	    perror(fr->fr_filename);
 	    return -1;		/* skip this frame */
@@ -1086,41 +1328,267 @@ create_outputfilename(struct frame *fr)
 
 
 /*
- * There are two message formats:
- * HT_CD host, port, rem_dir
- * HT_CONVERT host, port, rem_dir, loc_db, rem_db
+ * Reap any helper processes that have already finished, freeing their
+ * resources.  Called from check_input() to avoid zombie accumulation.
+ * Does not kill running processes.
  */
+static void
+reap_helpers(void)
+{
+    int i, j;
+
+    for (i = 0, j = 0; i < helper_proc_count; i++) {
+	if (helper_procs[i] == NULL)
+	    continue;
+	if (!bu_process_alive(helper_procs[i])) {
+	    /* Process has already exited.  Wait with a 1 ms timeout —
+	     * since the process is already done, waitpid() returns
+	     * immediately, so the timeout is never reached. */
+	    bu_process_wait_n(&helper_procs[i], 1);
+	    /* bu_process_wait_n sets the pointer to NULL */
+	} else {
+	    /* Still running — keep it in the list */
+	    helper_procs[j++] = helper_procs[i];
+	}
+    }
+    helper_proc_count = j;
+}
+
+
+/*
+ * Launch rtsrv on a remote host so that it connects back to our TCP
+ * listen port.  Replaces the old pipe()+fork()+execl(rsh, ...) pattern
+ * with bu_process_create(), which is portable to Windows as well.
+ *
+ * HT_CD:      ssh -f -n <host> "cd <path> && rtsrv <ctrl> <port> [-S <tok>]"
+ * HT_CONVERT: /bin/sh -c "g2asc<db | ssh <host> 'cd <path>; asc2g><rem>; rtsrv ...'"
+ *
+ * For HT_CD, "ssh -f" returns as soon as it has forked the remote
+ * command to the background, so the helper process exits quickly.
+ *
+ * NOTE: auto-launching workers requires SSH to be installed and the
+ * controlling host to have key-based (passwordless) access to each
+ * worker host.  Passive workers (HT_PASSIVE / HT_PASSRS) connect in
+ * by themselves and do not require SSH.
+ */
+
+/* Forward declaration — add_host_local() is defined just after add_host(). */
+static void add_host_local(struct ihost *ihp);
+
 static void
 add_host(struct ihost *ihp)
 {
-    if (ihp->ht_flags & HT_HOLD) return;	/* Not allowed to use */
-    /* Send message to helper process */
+    char cmd[1024];
+    char port_str[32];
+    const char *argv[8];
+    struct bu_process *p = NULL;
+
+    if (ihp->ht_flags & HT_HOLD) return;
+
+    /* HT_LOCAL uses a completely different code path — delegate and return. */
+    if (ihp->ht_where == HT_LOCAL) {
+	add_host_local(ihp);
+	return;
+    }
+
+    if (helper_proc_count >= MAX_HELPER_PROCS) {
+	reap_helpers();
+	if (helper_proc_count >= MAX_HELPER_PROCS) {
+	    bu_log("add_host: too many pending helper processes\n");
+	    return;
+	}
+    }
+
+    snprintf(port_str, sizeof(port_str), "%d", pkg_get_listener_port(tcp_listener));
+
     switch (ihp->ht_where) {
 	case HT_CD:
-	    fprintf(helper_fp,
-		    "%s %d %s\n",
-		    ihp->ht_name, pkg_permport, ihp->ht_path);
+	    /* Build the remote command string */
+	    if (session_token[0] != '\0') {
+		snprintf(cmd, sizeof(cmd),
+			 "cd %s && rtsrv %s %s -S %s",
+			 ihp->ht_path, our_hostname, port_str,
+			 session_token);
+	    } else {
+		snprintf(cmd, sizeof(cmd),
+			 "cd %s && rtsrv %s %s",
+			 ihp->ht_path, our_hostname, port_str);
+	    }
+	    argv[0] = SSH;
+	    argv[1] = "-f";  /* fork to background after auth */
+	    argv[2] = "-n";  /* redirect stdin from /dev/null  */
+	    argv[3] = ihp->ht_name;
+	    argv[4] = cmd;
+	    argv[5] = NULL;
+	    if (rem_debug)
+		bu_log("%s %s -f -n %s '%s'\n",
+		       stamp(), SSH, ihp->ht_name, cmd);
 	    break;
+
 	case HT_CONVERT:
+	    /* Transfer database via SSH, then start rtsrv */
 	    if (file_fullname[0] == '\0') {
 		bu_log("unable to add CONVERT host %s until database given\n",
 		       ihp->ht_name);
 		return;
 	    }
-	    fprintf(helper_fp,
-		    "%s %d %s %s %s\n",
-		    ihp->ht_name, pkg_permport, ihp->ht_path,
-		    file_fullname, file_basename);
+	    if (session_token[0] != '\0') {
+		snprintf(cmd, sizeof(cmd),
+			 "g2asc<%s | %s %s "
+			 "\"cd %s; asc2g>%s; rtsrv %s %s -S %s\"",
+			 file_fullname, SSH, ihp->ht_name,
+			 ihp->ht_path, file_basename,
+			 our_hostname, port_str, session_token);
+	    } else {
+		snprintf(cmd, sizeof(cmd),
+			 "g2asc<%s | %s %s "
+			 "\"cd %s; asc2g>%s; rtsrv %s %s\"",
+			 file_fullname, SSH, ihp->ht_name,
+			 ihp->ht_path, file_basename,
+			 our_hostname, port_str);
+	    }
+	    argv[0] = "/bin/sh";
+	    argv[1] = "-c";
+	    argv[2] = cmd;
+	    argv[3] = NULL;
+	    if (rem_debug)
+		bu_log("%s sh -c '%s'\n", stamp(), cmd);
 	    break;
-	default:
-	    bu_log("add_host:  ht_where=%d?\n", ihp->ht_where);
-	    break;
-    }
-    fflush(helper_fp);
 
-    /* Wait briefly to try and catch the incoming connection,
-     * in case there are several of these spawned in a row.
-     */
+	default:
+	    bu_log("add_host: ht_where=%d?\n", ihp->ht_where);
+	    return;
+    }
+
+    bu_process_create(&p, argv, BU_PROCESS_DEFAULT);
+    if (p != NULL)
+	helper_procs[helper_proc_count++] = p;
+
+    /* Give the new connection a moment to arrive */
+    check_input(1);
+}
+
+
+/*
+ * Launch a local rtsrv worker connected to remrt via a pkg IPC channel.
+ *
+ * Called from add_host() when ht_where == HT_LOCAL.  Separated out so
+ * the HT_LOCAL path can return early on error without interfering with
+ * the common bu_process_create() tail of add_host().
+ *
+ * Transport selection:
+ *   pkg_pair_prefer(PKG_TRANSPORT_PIPE) tries: anonymous pipe → socketpair
+ *   (POSIX) → TCP loopback.  check_input() uses pkg_mux which
+ *   handles all three transports on all platforms via platform-native
+ *   wait APIs (select on POSIX; WaitForMultipleObjects + WSAEventSelect
+ *   on Windows), so no platform-specific transport override is needed.
+ *
+ * The child-end IPC address is communicated to rtsrv via the -I flag and
+ * also via the PKG_ADDR environment variable (PKG_ADDR_ENVVAR).
+ */
+static void
+add_host_local(struct ihost *ihp)
+{
+    struct pkg_conn *pe = NULL, *ce = NULL;
+    char rtsrv_path[MAXPATHLEN];
+    /* Slots: exe, -I, addr, [-S, token,] NULL — 6 entries minimum. */
+    const char *argv[8];
+    int argc = 0;
+    struct bu_process *p = NULL;
+    struct pkg_conn *pc;
+
+    if (ihp->ht_flags & HT_HOLD) return;
+
+    /* Locate the rtsrv binary next to our own executable. */
+    bu_dir(rtsrv_path, sizeof(rtsrv_path), BU_DIR_BIN, "rtsrv", BU_DIR_EXT, NULL);
+    if (rtsrv_path[0] == '\0' || !bu_file_exists(rtsrv_path, NULL)) {
+	bu_log("add_host_local: cannot find rtsrv binary (tried '%s')\n", rtsrv_path);
+	return;
+    }
+
+    /* Create an IPC channel between remrt (parent) and rtsrv (child).
+     * Transport selection:
+     *   pkg_pair_prefer(PKG_TRANSPORT_PIPE) tries: anonymous pipe → socketpair
+     *   (POSIX) → TCP loopback.  check_input() uses pkg_mux which
+     *   handles all three transports on all platforms via platform-native
+     *   wait APIs (select on POSIX; WaitForMultipleObjects + WSAEventSelect
+     *   on Windows), so no platform-specific transport override is needed. */
+    if (pkg_pair_prefer(&pe, &ce, pkgswitch, remrt_log, PKG_TRANSPORT_PIPE) != 0) {
+	bu_log("add_host_local: pkg_pair failed for %s — "
+	       "falling back to TCP host\n", ihp->ht_name);
+	/* Nothing to clean up; fall through to the normal TCP path. */
+	ihp->ht_where = HT_CD;
+	add_host(ihp);
+	return;
+    }
+
+    /* Move the child-end fd above bu_process_create()'s close(3..19) sweep
+     * so that the fd is still open when rtsrv inherits it after exec().    */
+    if (pkg_move_high_fd(ce, 64) != 0) {
+	bu_log("add_host_local: pkg_move_high_fd failed for %s\n", ihp->ht_name);
+	pkg_close(ce);
+	pkg_close(pe);
+	return;
+    }
+
+    /* Advertise the child-end IPC address via the environment so rtsrv
+     * can find it without a -I command-line argument.  fork() inside
+     * bu_process_create() gives the child its own copy of the environment,
+     * so clearing the var in the parent after the call is race-free.       */
+    bu_setenv(PKG_ADDR_ENVVAR, "", 1);
+    { const char *ae = pkg_child_addr_env(ce); const char *eq = ae ? strchr(ae, '=') : NULL; bu_setenv(PKG_ADDR_ENVVAR, eq ? eq+1 : "", 1); }
+
+    /* Build rtsrv argv.  Always pass the IPC address explicitly via -I so
+     * that rtsrv has at least one flag argument and passes the argc<2 guard
+     * in its main().  Also set the environment variable as a fallback for
+     * platforms where argv passing is unavailable.  Save the address string
+     * before we close ce (which would free the internal buffer).           */
+    char ipc_addr_buf[256];
+    bu_strlcpy(ipc_addr_buf, pkg_child_addr(ce), sizeof(ipc_addr_buf));
+
+    argv[argc++] = rtsrv_path;
+    argv[argc++] = "-I";
+    argv[argc++] = ipc_addr_buf;
+    if (session_token[0] != '\0') {
+	argv[argc++] = "-S";
+	argv[argc++] = session_token;
+    }
+    argv[argc] = NULL;
+
+    if (rem_debug)
+	bu_log("%s local rtsrv %s (%s=%s)\n",
+	       stamp(), rtsrv_path, PKG_ADDR_ENVVAR, pkg_child_addr(ce));
+
+    bu_process_create(&p, argv, BU_PROCESS_DEFAULT);
+
+    /* Clear the env var now that the fork has captured it.  The child
+     * already has its own independent copy so this cannot affect it.       */
+    bu_setenv(PKG_ADDR_ENVVAR, "", 1);
+
+    /* Parent closes its copy of the child end — only the child needs it. */
+    pkg_close(ce);
+    ce = NULL;
+
+    if (p == NULL) {
+	bu_log("add_host_local: failed to spawn rtsrv for %s\n", ihp->ht_name);
+	pkg_close(pe);
+	return;
+    }
+
+    if (helper_proc_count < MAX_HELPER_PROCS)
+	helper_procs[helper_proc_count++] = p;
+
+    /* pe is already a pkg_conn; use it directly as the parent-end connection. */
+    pc = pe;
+    pe = NULL;
+    if (pc == PKC_ERROR || pc == PKC_NULL) {
+	bu_log("add_host_local: IPC parent-end conn invalid for %s\n", ihp->ht_name);
+	return;
+    }
+
+    addclient_ipc(pc, ihp);
+
+    /* Let the new connection's first message (MSG_VERSION) arrive. */
     check_input(1);
 }
 
@@ -1259,7 +1727,7 @@ repaint_fb(struct frame *fr)
     /* Draw the accumulated image */
     nby = 3*fr->fr_width;
     line = (unsigned char *)bu_malloc(nby, "scanline");
-    if ((fp = fopen(fr->fr_filename, "r")) == NULL) {
+    if ((fp = fopen(fr->fr_filename, "rb")) == NULL) {
 	perror(fr->fr_filename);
 	bu_free((char *)line, "scanline");
 	return;
@@ -1443,6 +1911,7 @@ send_dirbuild(struct servers *sp)
 
     ihp = sp->sr_host;
     switch (ihp->ht_where) {
+	case HT_LOCAL:  /* fall through — same as HT_CD: send MSG_CD then MSG_DIRBUILD */
 	case HT_CD:
 	    if (rem_debug > 1) bu_log("%s MSG_CD %s\n", stamp(), ihp->ht_path);
 	    if (pkg_send(MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc) < 0)
@@ -1465,6 +1934,7 @@ send_dirbuild(struct servers *sp)
 	return;
     }
     statechange(sp, SRST_DOING_DIRBUILD);
+    (void)gettimeofday(&sp->sr_sendtime, (struct timezone *)0);
 }
 
 
@@ -1534,11 +2004,11 @@ frame_is_done(struct frame *fr)
 	    perror(fr->fr_filename);
     } else {
 	FILE *fp;
-	if ((fp = fopen(fr->fr_filename, "r")) == NULL) {
+	if ((fp = fopen(fr->fr_filename, "rb")) == NULL) {
 	    perror(fr->fr_filename);
 	} else {
-	    /* Write-protect file, to prevent re-computation */
-	    if (fchmod(fileno(fp), 0444) < 0) {
+	    /* Write-protect the file to prevent re-computation */
+	    if (bu_fchmod(fileno(fp), 0444) < 0) {
 		perror(fr->fr_filename);
 	    }
 	    (void)fclose(fp);
@@ -1580,6 +2050,7 @@ send_gettrees(struct servers *sp, struct frame *fr)
 	return;
     }
     statechange(sp, SRST_DOING_GETTREES);
+    (void)gettimeofday(&sp->sr_sendtime, (struct timezone *)0);
 }
 
 
@@ -1806,10 +2277,28 @@ schedule(struct timeval *nowp)
 		    send_dirbuild(sp);
 		break;
 
+	    case SRST_DOING_DIRBUILD:
+	    case SRST_DOING_GETTREES:
+		/* Drop the server if the setup phase takes too long.
+		 * Without this check, a hung rt_dirbuild() or
+		 * rt_gettrees() inside rtsrv would leave remrt waiting
+		 * forever for MSG_DIRBUILD_REPLY / MSG_GETTREES_REPLY. */
+		if (sp->sr_sendtime.tv_sec > 0 &&
+		    tvdiff(nowp, &sp->sr_sendtime) > SETUP_TIMEOUT_INTERVAL) {
+		    bu_log("%s %s: setup phase *TIMEOUT*\n",
+			   stamp(), sp->sr_host->ht_name);
+		    drop_server(sp, "setup timeout");
+		}
+		break;
+
 	    case SRST_CLOSING:
 		/* Handle final closing */
 		if (rem_debug>1) bu_log("%s Final close on %s\n", stamp(), sp->sr_host->ht_name);
-		FD_CLR(sp->sr_pc->pkc_fd, &clients);
+		if (pkg_is_stdio_mode(sp->sr_pc)) {
+		    if (n_pipe_servers > 0) n_pipe_servers--;
+		} else {
+		    FD_CLR(pkg_get_read_fd(sp->sr_pc), &clients);
+		}
 		pkg_close(sp->sr_pc);
 
 		sp->sr_pc = PKC_NULL;
@@ -2471,7 +2960,7 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
     bu_log("%s Printing of remote messages is %s\n",
 	   s, print_on?"ON":"Off");
     bu_log("%s Listening at %s, port %d\n",
-	   s, our_hostname, pkg_permport);
+	   s, our_hostname, pkg_get_listener_port(tcp_listener));
 
     /* Print work assignments */
     bu_log("%s Worker assignment interval=%d seconds:\n",
@@ -2479,7 +2968,7 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
     for (sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++) {
 	if (sp->sr_pc == PKC_NULL) continue;
 	bu_log("  %2d  %s %s",
-	       sp->sr_pc->pkc_fd, sp->sr_host->ht_name,
+	       pkg_get_read_fd(sp->sr_pc), sp->sr_host->ht_name,
 	       state_to_string(sp->sr_state));
 	if (sp->sr_curframe != FRAME_NULL) {
 	    CHECK_FRAME(sp->sr_curframe);
@@ -2564,6 +3053,7 @@ cd_wait(const int UNUSED(argc), const char **UNUSED(argv))
 	while (!done && FrameHead.fr_forw != &FrameHead) {
 	    for (i = 0, done = 1; i < (int)FD_SETSIZE; i++)
 		if (FD_ISSET(i, &clients)) { done = 0; break; }
+	    if (done && n_pipe_servers > 0) done = 0;
 	    check_input(30);	/* delay up to 30 secs */
 
 	    (void)gettimeofday(&now, (struct timezone *)0);
@@ -2643,6 +3133,9 @@ cd_host(const int argc, const char **argv)
 		case HT_CONVERT:
 		    bu_log("convert %s\n", ihp->ht_path);
 		    break;
+		case HT_LOCAL:
+		    bu_log("local %s\n", ihp->ht_path);
+		    break;
 		default:
 		    bu_log("?where?\n");
 		    break;
@@ -2691,8 +3184,20 @@ cd_host(const int argc, const char **argv)
     } else if (BU_STR_EQUAL(argv[argpoint], "use")) {
 	ihp->ht_where = HT_USE;
 	ihp->ht_path = bu_strdup(argv[argpoint+1]);
+    } else if (BU_STR_EQUAL(argv[argpoint], "local")) {
+	/* Spawn rtsrv directly on this machine via pkg IPC (no SSH).
+	 * The path argument gives the directory where the geometry file
+	 * lives (same role as the path argument for "cd").             */
+	ihp->ht_where = HT_LOCAL;
+	ihp->ht_path = bu_strdup(argv[argpoint+1]);
     } else {
 	bu_log("unknown 'where' string '%s'\n", argv[argpoint]);
+    }
+    /* Strip any trailing whitespace (e.g. from newlines in .remrtrc) */
+    if (ihp->ht_path) {
+	char *p = ihp->ht_path + strlen(ihp->ht_path);
+	while (p > ihp->ht_path && isspace((unsigned char)p[-1]))
+	    *--p = '\0';
     }
     return 0;
 }
@@ -2887,12 +3392,15 @@ eat_script(FILE *fp)
     /* A "start" command has been seen, and is saved in buf[] */
     while (!feof(fp)) {
 	int needtree;
+	int found_end;
 	needtree = 0;
+	found_end = 0;
 	/* Gobble until "end" keyword seen */
 	while ((ebuf = rt_read_cmd(fp)) != NULL) {
 	    if (bu_strncmp(ebuf, "end", 3) == 0) {
 		bu_free(ebuf, "end line");
 		ebuf = NULL;
+		found_end = 1;
 		break;
 	    }
 	    if (bu_strncmp(ebuf, "clean", 5) == 0) {
@@ -2905,7 +3413,7 @@ eat_script(FILE *fp)
 	    bu_vls_strcat(&body, ";");
 	    bu_free(ebuf, "script body line");
 	}
-	if (ebuf == (char *)0) {
+	if (!found_end) {
 	    bu_log("unexpected EOF while reading script for frame %d\n", frame);
 	    break;
 	}
@@ -3052,16 +3560,17 @@ ph_dirbuild_reply(struct pkg_conn *pc, char *buf)
 {
     struct servers *sp;
 
-    sp = &servers[pc->pkc_fd];
+    sp = get_server_by_pc(pc);
+    if (sp == SERVERS_NULL) {
+	bu_log("MSG_DIRBUILD_REPLY from unknown connection fd %d\n", pkg_get_read_fd(pc));
+	if (buf) (void)free(buf);
+	return;
+    }
     bu_log("%s %s dirbuild OK (%s)\n",
 	   stamp(),
 	   sp->sr_host->ht_name,
 	   buf);
     if (buf) (void)free(buf);
-    if (sp->sr_pc != pc) {
-	bu_log("unexpected MSG_DIRBUILD_REPLY from fd %d\n", pc->pkc_fd);
-	return;
-    }
     if (sp->sr_state != SRST_DOING_DIRBUILD) {
 	bu_log("MSG_DIRBUILD_REPLY in state %d?\n", sp->sr_state);
 	drop_server(sp, "wrong state");
@@ -3081,16 +3590,17 @@ ph_gettrees_reply(struct pkg_conn *pc, char *buf)
 {
     struct servers *sp;
 
-    sp = &servers[pc->pkc_fd];
+    sp = get_server_by_pc(pc);
+    if (sp == SERVERS_NULL) {
+	bu_log("MSG_GETTREES_REPLY from unknown connection fd %d\n", pkg_get_read_fd(pc));
+	if (buf) (void)free(buf);
+	return;
+    }
     bu_log("%s %s gettrees OK (%s)\n",
 	   stamp(),
 	   sp->sr_host->ht_name,
 	   buf);
     if (buf) (void)free(buf);
-    if (sp->sr_pc != pc) {
-	bu_log("unexpected MSG_GETTREES_REPLY from fd %d\n", pc->pkc_fd);
-	return;
-    }
     if (sp->sr_state != SRST_DOING_GETTREES) {
 	bu_log("MSG_GETTREES_REPLY in state %s?\n",
 	       state_to_string(sp->sr_state));
@@ -3105,9 +3615,11 @@ static void
 ph_print(struct pkg_conn *pc, char *buf)
 {
     if (print_on) {
+	struct servers *sp = get_server_by_pc(pc);
+	const char *name = (sp && sp->sr_host) ? sp->sr_host->ht_name : "(unknown)";
 	bu_log("%s %s: %s",
 	       stamp(),
-	       servers[pc->pkc_fd].sr_host->ht_name,
+	       name,
 	       buf);
 	if (buf[strlen(buf)-1] != '\n')
 	    bu_log("\n");
@@ -3120,21 +3632,61 @@ static void
 ph_version(struct pkg_conn *pc, char *buf)
 {
     struct servers *sp;
+    const char *tok_prefix;
+    const char *recv_token = NULL;
 
-    sp = &servers[pc->pkc_fd];
-    if (!BU_STR_EQUAL(PROTOCOL_VERSION, buf)) {
+    sp = get_server_by_pc(pc);
+    if (sp == SERVERS_NULL) {
+	bu_log("MSG_VERSION from unknown connection fd %d\n", pkg_get_read_fd(pc));
+	if (buf) (void)free(buf);
+	return;
+    }
+
+    /* Check protocol version (must be exact prefix match) */
+    if (bu_strncmp(PROTOCOL_VERSION, buf, strlen(PROTOCOL_VERSION)) != 0) {
 	bu_log("ERROR %s: protocol version mismatch\n",
 	       sp->sr_host->ht_name);
 	bu_log("  local='%s'\n", PROTOCOL_VERSION);
 	bu_log(" remote='%s'\n", buf);
 	drop_server(sp, "version mismatch");
-    } else {
-	if (sp->sr_state != SRST_NEW) {
-	    bu_log("NOTE %s:  VERSION message unexpected\n",
-		   sp->sr_host->ht_name);
-	}
-	statechange(sp, SRST_VERSOK);
+	if (buf) (void)free(buf);
+	return;
     }
+
+    /* Extract optional session token from the version string */
+    tok_prefix = buf + strlen(PROTOCOL_VERSION);
+    if (bu_strncmp(tok_prefix, REMRT_AUTH_TOKEN_PREFIX,
+		   strlen(REMRT_AUTH_TOKEN_PREFIX)) == 0) {
+	recv_token = tok_prefix + strlen(REMRT_AUTH_TOKEN_PREFIX);
+    }
+
+    /* Authenticate if a session token was generated at startup */
+    if (session_token[0] != '\0') {
+	if (recv_token != NULL) {
+	    /* Worker sent a token — verify it */
+	    if (!remrt_verify_token(recv_token, session_token)) {
+		bu_log("ERROR %s: session token mismatch — rejecting\n",
+		       sp->sr_host->ht_name);
+		drop_server(sp, "session token mismatch");
+		if (buf) (void)free(buf);
+		return;
+	    }
+	} else if (require_auth) {
+	    /* Strict mode: reject workers that don't authenticate */
+	    bu_log("ERROR %s: no session token provided (strict auth)\n",
+		   sp->sr_host->ht_name);
+	    drop_server(sp, "no session token (strict auth)");
+	    if (buf) (void)free(buf);
+	    return;
+	}
+	/* else: passive/manual worker without token — accepted (compat) */
+    }
+
+    if (sp->sr_state != SRST_NEW) {
+	bu_log("NOTE %s: VERSION message unexpected\n",
+	       sp->sr_host->ht_name);
+    }
+    statechange(sp, SRST_VERSOK);
     if (buf) (void)free(buf);
 }
 
@@ -3144,7 +3696,13 @@ ph_cmd(struct pkg_conn *pc, char *buf)
 {
     struct servers *sp;
 
-    sp = &servers[pc->pkc_fd];
+    sp = get_server_by_pc(pc);
+    if (sp == SERVERS_NULL) {
+	bu_log("MSG_CMD from unknown connection fd %d: '%s'\n", pkg_get_read_fd(pc), buf);
+	(void)rt_do_cmd((struct rt_i *)0, buf, cmd_tab);
+	if (buf) (void)free(buf);
+	return;
+    }
     bu_log("%s %s: cmd '%s'\n", stamp(), sp->sr_host->ht_name, buf);
     (void)rt_do_cmd((struct rt_i *)0, buf, cmd_tab);
     if (buf) (void)free(buf);
@@ -3171,7 +3729,12 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 
     (void)gettimeofday(&tvnow, (struct timezone *)0);
 
-    sp = &servers[pc->pkc_fd];
+    sp = get_server_by_pc(pc);
+    if (sp == SERVERS_NULL) {
+	bu_log("%s Ignoring MSG_PIXELS from unknown connection fd %d\n",
+	       stamp(), pkg_get_read_fd(pc));
+	goto out;
+    }
     if (sp->sr_state != SRST_READY && sp->sr_state != SRST_NEED_TREE &&
 	sp->sr_state != SRST_DOING_GETTREES) {
 	bu_log("%s Ignoring MSG_PIXELS from %s\n",
@@ -3264,7 +3827,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     }
     /* Write pixels into file */
     /* Later, can implement FD cache here */
-    if ((fd = open(fr->fr_filename, 2)) < 0) {
+    if ((fd = open(fr->fr_filename, O_RDWR | O_BINARY)) < 0) {
 	/* open failed */
 	perror(fr->fr_filename);
     } else if (bu_lseek(fd, info.li_startpix*3, 0) < 0) {
@@ -3372,149 +3935,6 @@ out:
 }
 
 
-/*
- * This loop runs in the child process of the real REMRT, and is directed
- * to initiate contact with new hosts via a one-way pipe from the parent.
- * In some cases, starting RTSRV on the indicated host is sufficient;
- * in other cases, the portable version of the database needs to be
- * sent first.
- *
- * For now, a limitation is that the local and remote databases are
- * given the same name.  If relative path names are used, this should
- * not be a problem, but this could be changed later.
- */
-static void
-host_helper(FILE *fp)
-{
-    char line[1024];
-    char cmd[553];
-    char host[128];
-    char loc_db[128];
-    char rem_db[128];
-    char rem_dir[128];
-    int port;
-    int cnt;
-    int i;
-    int pid;
-
-    while (1) {
-	line[0] = '\0';
-	(void)bu_fgets(line, sizeof(line), fp);
-	if (feof(fp)) break;
-
-	loc_db[0] = '\0';
-	rem_db[0] = '\0';
-	rem_dir[0] = '\0';
-	cnt = sscanf(line, "%127s %d %127s %127s %127s",
-		     host, &port, rem_dir, loc_db, rem_db);
-	if (cnt != 3 && cnt != 5) {
-	    bu_log("host_helper: cnt=%d, aborting\n", cnt);
-	    break;
-	}
-
-	if (cnt == 3) {
-	    snprintf(cmd, sizeof(cmd),
-		     "cd %s; rtsrv %s %d",
-		     rem_dir, our_hostname, port);
-	    if (rem_debug) {
-		bu_log("%s %s\n", stamp(), cmd);
-		fflush(stdout);
-	    }
-
-	    pid = fork();
-	    if (pid == 0) {
-		/* 1st level child */
-		(void)close(0);
-		for (i=3; i<40; i++)  (void)close(i);
-		if (vfork() == 0) {
-		    /* worker Child */
-
-		    /* First, try direct exec. */
-		    execl(RSH, "rsh", host, "-n", cmd, NULL);
-
-		    /* Second, try $PATH exec */
-		    execlp("rsh", "rsh", host, "-n", cmd, NULL);
-		    perror("rsh execl");
-		    bu_exit(0, NULL);
-		}
-		bu_exit(0, NULL);
-	    } else if (pid < 0) {
-		perror("fork");
-	    } else {
-		(void)wait(0);
-	    }
-	} else {
-	    snprintf(cmd, sizeof(cmd),
-		     "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
-		     loc_db,
-		     RSH, host,
-		     rem_dir, rem_db,
-		     our_hostname, port);
-	    if (rem_debug) {
-		bu_log("%s %s\n", stamp(), cmd);
-		fflush(stdout);
-	    }
-
-	    pid = fork();
-	    if (pid == 0) {
-		/* 1st level child */
-		(void)close(0);
-		for (i=3; i<40; i++)  (void)close(i);
-
-		if (vfork() == 0) {
-		    /* worker Child */
-		    execl("/bin/sh", "remrt_sh", "-c", cmd, NULL);
-		    perror("/bin/sh");
-		    bu_exit(0, NULL);
-		}
-		bu_exit(0, NULL);
-	    } else if (pid < 0) {
-		perror("fork");
-	    } else {
-		(void)wait(0);
-	    }
-	}
-    }
-}
-
-
-static void
-start_helper(void)
-{
-    int fds[2];
-    int pid;
-
-    if (pipe(fds) < 0) {
-	perror("pipe");
-	bu_exit(1, NULL);
-    }
-
-    pid = fork();
-    if (pid == 0) {
-	/* Child process */
-	FILE *fp;
-
-	(void)close(fds[1]);
-	if ((fp = fdopen(fds[0], "r")) == (FILE *)NULL) {
-	    perror("fdopen");
-	    bu_exit(3, NULL);
-	}
-	host_helper(fp);
-	/* No more commands from parent */
-	bu_exit(0, NULL);
-    } else if (pid < 0) {
-	perror("fork");
-	bu_exit(2, NULL);
-    }
-    /* Parent process */
-    if ((helper_fp = fdopen(fds[1], "w")) == (FILE *)NULL) {
-	perror("fdopen");
-	bu_exit(4, NULL);
-    }
-    (void)close(fds[0]);
-}
-
-
 static void
 do_work(int auto_start)
 {
@@ -3539,13 +3959,20 @@ do_work(int auto_start)
 	    int done, i;
 	    for (i = 0, done = 1; i < (int)FD_SETSIZE; i++)
 		if (FD_ISSET(i, &clients)) { done = 0; break; }
+	    if (done && n_pipe_servers > 0) done = 0;
 	    if (done) break;
 	}
 
-	check_input(30);	/* delay up to 30 secs */
-
 	(void)gettimeofday(&now, (struct timezone *)0);
 	schedule(&now);
+
+	/* If schedule() just finished the last frame (FrameHead is now
+	 * empty), break immediately instead of blocking in check_input()
+	 * for 30 seconds waiting for data that will never arrive.       */
+	if (FrameHead.fr_forw == &FrameHead)
+	    break;
+
+	check_input(30);	/* delay up to 30 secs */
 
 	/* Count servers */
 	cur_serv = 0;
@@ -3553,9 +3980,15 @@ do_work(int auto_start)
 	    if (sp->sr_pc == PKC_NULL) continue;
 	    cur_serv++;
 	}
-	if (cur_serv == 0 && prev_serv > cur_serv) {
+	if (cur_serv == 0 && (prev_serv > 0 || n_pipe_servers_ever > 0)) {
 	    bu_log("%s *** All servers down\n", stamp());
 	    fflush(stdout);
+	    /* In non-interactive mode remrt never auto-starts passive
+	     * workers, so no new connections can ever arrive.  Break
+	     * immediately rather than spinning in check_input(30) for
+	     * the full timeout (which would show up as a 500-second
+	     * hang in the regression test).                           */
+	    if (auto_start) break;
 	}
 	prev_serv = cur_serv;
     }
@@ -3570,6 +4003,13 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
+#ifdef SIGPIPE
+    /* Ignore SIGPIPE early so that a closed pipe in the test harness (or any
+     * other caller that closes remrt's stdout/stderr read ends) does not kill
+     * the process before the normal startup flow installs the handler.      */
+    (void)signal(SIGPIPE, SIG_IGN);
+#endif
+
     /* Random inits */
     our_hostname = get_our_hostname();
     fprintf(stderr, "%s %s %s\n", stamp(), our_hostname, brlcad_ident("Network-Distributed RT (REMRT)"));
@@ -3577,7 +4017,30 @@ main(int argc, char *argv[])
 
     width = height = 512;			/* same size as RT */
 
-    start_helper();
+    /* Generate a session authentication token so that auto-launched
+     * rtsrv workers can prove they belong to this session.
+     * Print it so operators can pass it manually to passive workers. */
+    remrt_generate_token(session_token);
+    fprintf(stderr, "%s Session token: %s\n", stamp(), session_token);
+    fflush(stderr);
+
+#ifdef HAVE_OPENSSL_SSL_H
+    /* Set up TLS server context.  Environment variables allow sites to
+     * supply their own certificate/key files; otherwise a self-signed
+     * cert is generated in memory. */
+    {
+	const char *certfile = getenv("REMRT_TLS_CERT");
+	const char *keyfile  = getenv("REMRT_TLS_KEY");
+	remrt_ssl_ctx = remrt_tls_server_ctx(certfile, keyfile);
+	if (remrt_ssl_ctx)
+	    fprintf(stderr, "%s TLS enabled (%s)\n", stamp(),
+		    (certfile && keyfile) ? certfile : "self-signed cert");
+	else
+	    fprintf(stderr, "%s WARNING: TLS context creation failed; "
+		    "connections will be unencrypted\n", stamp());
+	fflush(stderr);
+    }
+#endif
 
     BU_LIST_INIT(&FreeList);
     FrameHead.fr_forw = FrameHead.fr_back = &FrameHead;
@@ -3589,27 +4052,30 @@ main(int argc, char *argv[])
 
     /* Listen for our PKG connections */
     int tcp_num = 0;
-    if ((tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, remrt_log)) < 0) {
+    if ((tcp_listener = pkg_listen("rtsrv", NULL, 8, remrt_log)) == NULL) {
 	char num[128];
 	/* Do it by the numbers */
 	for (i = 0; i < 10; i++) {
 	    tcp_num = REMRT_TCP_DEFAULT_PORT+i;
 	    snprintf(num, sizeof(num), "%d", tcp_num);
-	    if ((tcp_listen_fd = pkg_permserver(num, "tcp", 8, remrt_log)) < 0)
+	    if ((tcp_listener = pkg_listen(num, NULL, 8, remrt_log)) == NULL)
 		continue;
 	    break;
 	}
 	if (i >= 10)
 	    bu_exit(1, "Unable to find a port to listen on\n");
     }
-    /* Now, pkg_permport has tcp port number */
+    tcp_listen_fd = pkg_get_listener_fd(tcp_listener);
+    /* Now, pkg_get_listener_port(tcp_listener) has tcp port number */
 
+#ifdef SIGPIPE
     (void)signal(SIGPIPE, SIG_IGN);
+#endif
 
     if (argc <= 1) {
 	(void)signal(SIGINT, SIG_IGN);
 	bu_log("%s Interactive REMRT on %s\n", stamp(), our_hostname);
-	bu_log("%s Assigned LIBPKG permport %d\n", stamp(), pkg_permport);
+	bu_log("%s Assigned LIBPKG port %d\n", stamp(), pkg_get_listener_port(tcp_listener));
 	if (tcp_num > 0) {
 	    bu_log("%s Listening at TCP port %d\n", stamp(), tcp_num);
 	}
@@ -3623,9 +4089,11 @@ main(int argc, char *argv[])
 /* Aargh.  We really need a FD_ISZERO macro. */
 	for (i = 0, done = 1; i < (int)FD_SETSIZE; i++)
 	    if (FD_ISSET(i, &clients)) { done = 0; break; }
+	if (done && n_pipe_servers > 0) done = 0;
 	while (!done) {
 	    for (i = 0, done = 1; i < (int)FD_SETSIZE; i++)
 		if (FD_ISSET(i, &clients)) { done = 0; break; }
+	    if (done && n_pipe_servers > 0) done = 0;
 	    do_work(0);	/* no auto starting of servers */
 	}
 	/*
@@ -3635,7 +4103,7 @@ main(int argc, char *argv[])
 	bu_log("%s Out of clients\n", stamp());
     } else {
 	bu_log("%s Automatic REMRT on %s\n", stamp(), our_hostname);
-	bu_log("%s Assigned LIBPKG permport %d\n", stamp(), pkg_permport);
+	bu_log("%s Assigned LIBPKG port %d\n", stamp(), pkg_get_listener_port(tcp_listener));
 	if (tcp_num > 0) {
 	    bu_log("%s Listening at TCP port %d\n", stamp(), tcp_num);
 	}
@@ -3691,6 +4159,14 @@ main(int argc, char *argv[])
 	do_work(1);		/* auto start servers */
 	bu_log("%s Task accomplished\n", stamp());
     }
+
+#ifdef HAVE_OPENSSL_SSL_H
+    if (remrt_ssl_ctx) {
+	SSL_CTX_free(remrt_ssl_ctx);
+	remrt_ssl_ctx = NULL;
+    }
+#endif
+
     return 0;			/* bu_exit(0, NULL; */
 }
 

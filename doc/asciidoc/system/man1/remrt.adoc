@@ -32,7 +32,9 @@ remrt [options]... model.g objects...
 
 where "###" is the image resolution desired.
 
-*remrt* depends on the Berkeley _rsh (1)_ remote shell command and the user's corresponding ".rhosts" file to automatically initiate remote computation.
+*remrt* uses *ssh*(1) to automatically initiate remote computation. The SSH client binary name defaults to *ssh* and can be overridden at compile time via the *SSH* preprocessor macro. Public-key (or other password-less) authentication must be configured between the controlling machine and each worker host so that *remrt* can launch *rtsrv* workers without interactive prompting.
+
+At startup *remrt* generates a 256-bit random session authentication token and prints it to standard error. When *remrt* auto-launches an *rtsrv* worker via SSH it appends *-S _token_* to the worker command line. The worker includes the token in its version handshake; *remrt* verifies the token before accepting the worker into the session. Workers that were started manually and do not carry the token are still accepted by default (backward compatibility). Operators who need to ensure that _all_ connecting workers are authenticated can pass the session token manually to each *rtsrv* invocation via its *-S* flag.
 
 *remrt* requires a control file called ".remrtrc" which specifies a few essential parameters of the server machines (network hosts) that are to participate in the distributed computation. The ".remrtrc" file contains a list of normal *remrt* commands which are to be executed before distributed processing is to begin. This can be useful for establishing a variety of user-specific defaults. However, the most important command to provide is a "host" command to describe each of the remote hosts that will (or may) participate in the distributed computation. Here is a sample ".remrt" file:
 
@@ -45,7 +47,7 @@ where "###" is the image resolution desired.
   
 ....
 
-The first argument to the "host" command is the name of the server machine. It will be converted to a fully qualified name by calling *gethostbyname*(3) and *gethostbyaddr*(3).
+The first argument to the "host" command is the name of the server machine. It will be resolved to a fully qualified name using *getaddrinfo*(3) and *getnameinfo*(3).
 
 The second argument to the "host" command describes "when" this machine should be used.
 
@@ -66,6 +68,14 @@ indicates that the machine is owned by a late-night "hacker", and can be used wh
 indicates that *remrt* should never attempt to initiate an _rtsrv_ process on this machine, but if the user should happen to start _rtsrv_ manually on the machine and direct it to join the computational fray, then the necessary information will be available.
 
 
+*rs* [_rays/sec_]::
+behaves like *always* but also records an optional performance hint (rays per second) for this host, which *remrt* uses to weight work allocation. If the value is omitted, performance is measured dynamically.
+
+
+*passrs* [_rays/sec_]::
+behaves like *passive* but records an optional performance hint (rays per second) for this host.
+
+
 If an unlisted machine should join the fray, it will be added::
 with a "when" value of *passive* and a "where" value of *convert*. When an _rtsrv_ passes from night into day, it is automatically terminated by *remrt* at the appointed time.
 
@@ -84,7 +94,7 @@ indicates that *remrt* should send across an ASCII machine-independent version o
 
 ....
 
-	  asc2g < file.g | rsh host 'cd directory; g2asc > file.g'
+	  asc2g < file.g | ssh host 'cd directory; g2asc > file.g'
 	
 ....
 
@@ -121,7 +131,7 @@ would send the command "status" to the *remrt* process running on the machine ca
 .Performing a Basic remrt/rtsrv Raytrace
 [example]
 ====
-The following steps will set up a local (single machine) example remrt session. This does not utilize the full power of the remrt system, but will illustrate how the individual pieces relate to each other. Rather than use rsh, each process will be launched manually.
+The following steps will set up a local (single machine) example remrt session. This does not utilize the full power of the remrt system, but will illustrate how the individual pieces relate to each other. Rather than use ssh, each process will be launched manually.
 
 Launch an *fbserv* instance on the desired port and with the desired type (we will use port 0 and /dev/X for a Linux-based X11 rendering - windows users can try /dev/wgl.) For a somewhat larger render we specify a size of 2048 pixels square.
 
@@ -248,10 +258,60 @@ The framebuffer started in the beginning will now hold the image results. To sav
 ====
 
 
+[[security]]
+== SECURITY
+
+[[session_token]]
+=== Session Authentication Token
+
+Each time *remrt* starts it generates a 256-bit random session token and prints it to standard error, for example:
+
+
+....
+
+    08/22 21:51:41 Session token: 3f8a1c...
+  
+....
+
+When *remrt* auto-launches an *rtsrv* worker via SSH it appends "-S _token_" to the worker command line. The worker sends the token as part of its protocol version handshake; *remrt* verifies the token and rejects any worker that presents a mismatched token.
+
+Workers started manually (passive connections) that do not supply a token are still accepted by default, preserving backward compatibility with older *rtsrv* binaries. To manually start a worker with authentication, pass the printed token via:
+
+
+....
+
+    rtsrv -S <token> server_host 4446
+  
+....
+
+
+[[tls]]
+=== Transport Layer Security (TLS)
+
+When *remrt* and *rtsrv* are built with OpenSSL support, all protocol traffic between the dispatcher and its workers is automatically encrypted using TLS 1.2 or later.
+
+*remrt* acts as the TLS server. By default it generates an RSA-2048 self-signed certificate in memory at startup — no external PKI infrastructure is required. Certificate verification is disabled on the *rtsrv* client side because there is no shared certificate authority; the session token (see above) provides application-level authentication instead.
+
+Sites that need to use pre-provisioned certificates can supply them via the following environment variables before starting *remrt*:
+
+
+`REMRT_TLS_CERT`::
+Path to a PEM-format certificate chain file (or a single certificate). Must be set together with `REMRT_TLS_KEY`.
+
+
+`REMRT_TLS_KEY`::
+Path to the PEM-format private key file corresponding to `REMRT_TLS_CERT`.
+
+
+
+If OpenSSL was not available at build time, all connections fall back to unencrypted plain TCP, which is the same behavior as earlier releases.
+
+
+
 [[see_also]]
 == SEE ALSO
 
-*rtsrv*(1), *rt*(1), *scriptsort*(1), *brlcad*(1), *mged*(1), *pix-fb*(1), *rtray*(1), *rtpp*(1), *librt*(3), *ray*(5V), *pix*(5)
+*rtsrv*(1), *rt*(1), *ssh*(1), *scriptsort*(1), *brlcad*(1), *mged*(1), *pix-fb*(1), *rtray*(1), *rtpp*(1), *librt*(3), *ray*(5V), *pix*(5)
 
 
 [[diagnostics]]
@@ -288,3 +348,5 @@ This software is Copyright (c) 1994-2026 by the United States Government as repr
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+
+

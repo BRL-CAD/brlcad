@@ -332,6 +332,7 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    const char *ipc_env = NULL;
 
     if (fbop->fbo_fbs.fbs_fbp == FB_NULL) {
 	bu_log("%s listen: framebuffer not open!\n", argv[0]);
@@ -344,6 +345,24 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
     }
 
     if (argc == 3) {
+	if (BU_STR_EQUAL(argv[2], "ipc")) {
+	    if (fbop->fbo_fbs.fbs_listener.fbsl_port >= 0)
+		fbs_close(&fbop->fbo_fbs);
+	    if (tclcad_listen_ipc(&fbop->fbo_fbs, fbop->fbo_interp) != BRLCAD_OK) {
+		bu_log("listen: failed to start IPC listener\n");
+		return BRLCAD_ERROR;
+	    }
+	    ipc_env = fbs_ipc_child_addr_env(&fbop->fbo_fbs);
+	    if (ipc_env) {
+		const char *eq = strchr(ipc_env, '=');
+		const char *addr = eq ? eq + 1 : ipc_env;
+		bu_vls_printf(&vls, "%s", addr);
+	    }
+	    Tcl_AppendResult(fbop->fbo_interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
+	    return BRLCAD_OK;
+	}
+
 	int port;
 
 	if (sscanf(argv[2], "%d", &port) != 1) {
@@ -359,11 +378,23 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
 	    fbop->fbo_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
 	    fbop->fbo_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
 	    fbop->fbo_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
+#ifndef USE_TCL_CHAN
+	    /* IPC client handlers reuse the same fd-based callbacks on POSIX */
+	    fbop->fbo_fbs.fbs_open_ipc_client_handler  = &tclcad_open_client_handler;
+	    fbop->fbo_fbs.fbs_close_ipc_client_handler = &tclcad_close_client_handler;
+#endif
 	    fbs_open(&fbop->fbo_fbs, port);
 	} else {
 	    fbs_close(&fbop->fbo_fbs);
 	}
-	bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
+	ipc_env = fbs_ipc_child_addr_env(&fbop->fbo_fbs);
+	if (ipc_env) {
+	    const char *eq = strchr(ipc_env, '=');
+	    const char *addr = eq ? eq + 1 : ipc_env;
+	    bu_vls_printf(&vls, "%s", addr);
+	} else {
+	    bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
+	}
 	Tcl_AppendResult(fbop->fbo_interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -372,7 +403,14 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
 
     /* return the port number */
     /* argc == 2 */
-    bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
+    ipc_env = fbs_ipc_child_addr_env(&fbop->fbo_fbs);
+    if (ipc_env) {
+	const char *eq = strchr(ipc_env, '=');
+	const char *addr = eq ? eq + 1 : ipc_env;
+	bu_vls_printf(&vls, "%s", addr);
+    } else {
+	bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
+    }
     Tcl_AppendResult(fbop->fbo_interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -1057,11 +1095,36 @@ to_listen(struct ged *gedp,
 
     /* return the port number */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
+	const char *ipc_env = fbs_ipc_child_addr_env(&tvd->gdv_fbs);
+	if (ipc_env) {
+	    const char *eq = strchr(ipc_env, '=');
+	    const char *addr = eq ? eq + 1 : ipc_env;
+	    bu_vls_printf(gedp->ged_result_str, "%s", addr);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
+	}
 	return BRLCAD_OK;
     }
 
     if (argc == 3) {
+	if (BU_STR_EQUAL(argv[2], "ipc")) {
+	    if (tvd->gdv_fbs.fbs_listener.fbsl_port >= 0)
+		fbs_close(&tvd->gdv_fbs);
+	    if (tclcad_listen_ipc(&tvd->gdv_fbs, gedp->ged_interp) != BRLCAD_OK) {
+		bu_vls_printf(gedp->ged_result_str, "listen: failed to start IPC listener\n");
+		return BRLCAD_ERROR;
+	    }
+	    {
+		const char *ipc_env = fbs_ipc_child_addr_env(&tvd->gdv_fbs);
+		if (ipc_env) {
+		    const char *eq = strchr(ipc_env, '=');
+		    const char *addr = eq ? eq + 1 : ipc_env;
+		    bu_vls_printf(gedp->ged_result_str, "%s", addr);
+		}
+	    }
+	    return BRLCAD_OK;
+	}
+
 	int port;
 
 	if (bu_sscanf(argv[2], "%d", &port) != 1) {
@@ -1077,11 +1140,25 @@ to_listen(struct ged *gedp,
 	    tvd->gdv_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
 	    tvd->gdv_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
 	    tvd->gdv_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
+#ifndef USE_TCL_CHAN
+	    /* IPC client handlers reuse the same fd-based callbacks on POSIX */
+	    tvd->gdv_fbs.fbs_open_ipc_client_handler  = &tclcad_open_client_handler;
+	    tvd->gdv_fbs.fbs_close_ipc_client_handler = &tclcad_close_client_handler;
+#endif
 	    fbs_open(&tvd->gdv_fbs, port);
 	} else {
 	    fbs_close(&tvd->gdv_fbs);
 	}
-	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
+	{
+	    const char *ipc_env = fbs_ipc_child_addr_env(&tvd->gdv_fbs);
+	    if (ipc_env) {
+		const char *eq = strchr(ipc_env, '=');
+		const char *addr = eq ? eq + 1 : ipc_env;
+		bu_vls_printf(gedp->ged_result_str, "%s", addr);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
+	    }
+	}
 	return BRLCAD_OK;
     }
 

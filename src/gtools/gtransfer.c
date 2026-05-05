@@ -42,6 +42,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/interrupt.h"
+/* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/units.h"
 #include "bu/snooze.h"
 #include "raytrace.h"
@@ -265,15 +266,24 @@ server_ciao(struct pkg_conn* connection, char *buf)
 
 
 /** start up a server that listens for a single client.
+ *
+ * When ipc_addr is non-NULL, connect to the IPC channel at that address
+ * (pipe fd pair or socketpair) instead of binding a TCP listen socket.
+ * The parent creates a pkg_pair(), passes the child-end address here
+ * via PKG_ADDR_ENVVAR (or directly), and uses the parent end itself.
+ * When ipc_addr is NULL (the normal case), fall back to TCP on the given
+ * port number as before.
  */
 void
 run_server(int port)
 {
-    struct pkg_conn *client;
-    int netfd;
+    struct pkg_conn *client = NULL;
+    pkg_listener_t *listener = NULL;
     char portname[MAX_DIGITS] = {0};
     int pkg_result  = 0;
     char *title;
+    /* check for inherited IPC address */
+    const char *ipc_addr = getenv(PKG_ADDR_ENVVAR);
 
     struct pkg_switch callbacks[] = {
 	{MSG_HELO, server_helo, "HELO", NULL},
@@ -283,17 +293,50 @@ run_server(int port)
 	{0, 0, NULL, NULL}
     };
 
+    /* IPC fast path — when PKG_ADDR is set, connect to the
+     * inherited channel instead of binding a TCP listen socket.            */
+    if (ipc_addr && ipc_addr[0] != '\0') {
+	bu_log("run_server: using IPC channel %s\n", ipc_addr);
+
+	client = pkg_connect_addr(ipc_addr, callbacks, NULL);
+	if (client == PKC_ERROR || client == PKC_NULL) {
+	    bu_log("run_server: pkg_connect_addr('%s') failed\n", ipc_addr);
+	    bu_exit(EXIT_FAILURE, "IPC connect failed");
+	}
+
+	/* process the single connection */
+	do {
+	    pkg_result = pkg_process(client);
+	    if (pkg_result < 0)
+		bu_log("Unable to process packets? Weird.\n");
+	    pkg_result = pkg_suckin(client);
+	    if (pkg_result < 0) {
+		bu_log("Trouble reading from IPC channel.\n");
+		break;
+	    } else if (pkg_result == 0) {
+		bu_log("Client closed the IPC connection.\n");
+		break;
+	    }
+	    pkg_result = pkg_process(client);
+	    if (pkg_result < 0)
+		bu_log("Unable to process packets? Weird.\n");
+	} while (client != NULL);
+
+	pkg_close(client);
+	return;
+    }
+
     validate_port(port);
 
     /* start up the server on the given port */
     snprintf(portname, MAX_DIGITS - 1, "%d", port);
-    netfd = pkg_permserver(portname, "tcp", 0, 0);
-    if (netfd < 0)
+    listener = pkg_listen(portname, NULL, 0, NULL);
+    if (!listener)
 	bu_exit(EXIT_FAILURE, "Unable to start the server");
 
     /* listen for a good client indefinitely */
     do {
-	client = pkg_getclient(netfd, callbacks, NULL, 0);
+	client = pkg_accept(listener, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
 	    bu_log("Connection seems to be busy, waiting...\n");
 	    bu_snooze(BU_SEC2USEC(10));
@@ -356,6 +399,7 @@ run_server(int port)
 
     /* shut down the server */
     pkg_close(client);
+    if (listener) pkg_listener_close(listener);
 }
 
 
@@ -405,6 +449,12 @@ send_to_server(struct db_i *dbip, struct directory *dp, void *connection)
  * start up a client that connects to the given server, and sends
  * serialized .g data.  if the user specified geometry, only that
  * geometry is sent via send_to_server().
+ *
+ * When PKG_ADDR is set in the environment (put there by a parent that
+ * called pkg_pair and set PKG_ADDR_ENVVAR to the child-end address),
+ * use that IPC channel instead of a TCP connection.  When the environment
+ * variable is absent (or server is a non-local hostname), fall through to
+ * the normal TCP pkg_open() path.
  */
 void
 run_client(const char *server, int port, struct db_i *dbip, int geomc, const char **geomv)
@@ -414,9 +464,30 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     struct directory *dp;
     char s_port[MAX_DIGITS] = {0};
     int bytes_sent = 0;
+    const char *ipc_addr;
 
     RT_CK_DBI(dbip);
 
+    /* IPC fast path — when PKG_ADDR is set in the environment,
+     * connect to the inherited IPC channel instead of opening a TCP socket.
+     * parent calls pkg_pair(), sets PKG_ADDR to child-end addr,
+     * spawns this process, then uses the parent end directly.               */
+    ipc_addr = getenv(PKG_ADDR_ENVVAR);
+    if (ipc_addr && ipc_addr[0] != '\0') {
+	bu_log("run_client: using IPC channel %s\n", ipc_addr);
+
+	stash.connection = pkg_connect_addr(ipc_addr, NULL, NULL);
+	if (stash.connection == PKC_ERROR || stash.connection == PKC_NULL) {
+	    bu_log("run_client: pkg_connect_addr('%s') failed; falling back to TCP\n",
+		   ipc_addr);
+	    goto use_tcp;
+	}
+	stash.server = "IPC";
+	stash.port = -1;
+	goto connection_open;
+    }
+
+use_tcp:
     /* open a connection to the server */
     validate_port(port);
 
@@ -429,6 +500,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     stash.server = server;
     stash.port = port;
 
+connection_open:
     /* let the server know we're cool.  also, send the database title
      * along with the MAGIC ident just because we can.
      */

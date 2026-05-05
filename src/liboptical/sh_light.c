@@ -27,6 +27,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -1644,6 +1645,18 @@ light_maker(int num, mat_t v2m)
 	MAT4X3PNT(lsp->lt_pos, v2m, temp);
 	VMOVE(lsp->lt_vec, lsp->lt_pos);
 	VUNITIZE(lsp->lt_vec);
+
+	/* Diagnostic: print light positions when RT_SETUP_DEBUG is set.
+	 * Comparing this output between rt and rtsrv reveals whether the
+	 * view2model used for lighting matches the one used for ray setup. */
+	{
+	    const char *_dbg = getenv("RT_SETUP_DEBUG");
+	    if (_dbg && _dbg[0] != '0')
+		bu_log("RT_SETUP_DEBUG light_maker i=%d:"
+		       " lt_pos=(%.17g %.17g %.17g)"
+		       " lt_vec=(%.17g %.17g %.17g)\n",
+		       i, V3ARGS(lsp->lt_pos), V3ARGS(lsp->lt_vec));
+	}
 
 	sprintf(name, "Implicit light %d", i);
 	lsp->lt_name = bu_strdup(name);

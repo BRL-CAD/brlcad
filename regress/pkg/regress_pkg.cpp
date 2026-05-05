@@ -85,7 +85,7 @@ int
 server_main(int UNUSED(argc), const char *UNUSED(argv)) {
     int port = 2000;
     struct pkg_conn *client;
-    int netfd;
+    pkg_listener_t *listener;
     char portname[MAX_PORT_DIGITS + 1] = {0};
     /* int pkg_result  = 0; */
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
@@ -106,8 +106,8 @@ server_main(int UNUSED(argc), const char *UNUSED(argv)) {
 
     /* start up the server on the given port */
     snprintf(portname, MAX_PORT_DIGITS, "%d", port);
-    netfd = pkg_permserver(portname, "tcp", 0, 0);
-    if (netfd < 0) {
+    listener = pkg_listen(portname, NULL, 0, NULL);
+    if (!listener) {
 	bu_exit(-1, "Unable to start the server");
     }
 
@@ -118,10 +118,11 @@ server_main(int UNUSED(argc), const char *UNUSED(argv)) {
     int64_t timer = bu_gettime();
     bu_log("Listening on port %d\n", port);
     do {
-	client = pkg_getclient(netfd, callbacks, NULL, 1);
+	client = pkg_accept(listener, callbacks, NULL, 1);
 	if (client == PKC_NULL) {
 	    int wait_time = 5;
 	    if ((bu_gettime() - timer) > BU_SEC2USEC(wait_time)) {
+		pkg_listener_close(listener);
 		bu_log("Connection inactive for > %d seconds, quitting.\n", wait_time);
 		bu_exit(1, "Timeout - inactive");
 	    }
@@ -132,8 +133,8 @@ server_main(int UNUSED(argc), const char *UNUSED(argv)) {
 	    pkg_close(client);
 	    client = PKC_NULL;
 	    bu_log("ERROR: client == PKC_ERROR\n");
+	    pkg_listener_close(listener);
 	    bu_exit(-1, "Server exiting\n");
-	    continue;
 	}
 
 	// Something happened - reset idle timer
@@ -185,10 +186,12 @@ server_main(int UNUSED(argc), const char *UNUSED(argv)) {
 
     /* shut down the server, one-time use */
     pkg_close(client);
+    pkg_listener_close(listener);
     return 0;
 
 failure:
     pkg_close(client);
+    pkg_listener_close(listener);
     bu_vls_free(&buffer);
     bu_exit(-1, "Unable to successfully send message.\n");
 

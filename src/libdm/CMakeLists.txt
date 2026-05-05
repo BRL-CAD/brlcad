@@ -49,6 +49,12 @@ brlcad_addlib(libdm "${LIBDM_SRCS}" "${libdm_deps};${PNG_LIBRARIES}" "${DM_INCLU
   UNITY_BUILD_SKIP dm_init.cpp
   )
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
+# Optional: TLS support for if_remote.c (remote framebuffer client)
+find_package(OpenSSL QUIET)
+if(OpenSSL_FOUND OR OPENSSL_FOUND)
+  target_link_libraries(libdm PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+  target_compile_definitions(libdm PRIVATE HAVE_OPENSSL_SSL_H=1)
+endif()
 if(TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif(TARGET profont_ProFont_ttf_cp)
