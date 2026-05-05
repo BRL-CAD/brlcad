@@ -294,7 +294,7 @@ init_defaults(void)
     option("Advanced", "-U #", "Turn on air region rendering (default: 0 - off)", 100);
     option("Advanced", "-V #", "View (pixel) aspect ratio (width/height)", 100);
     option("Advanced", "-j xmin, xmax, ymin, ymax", "Only render pixels within the specified sub-rectangle", 100);
-    option("Advanced", "-k xdir, ydir, zdir, dist", "Specify a cutting plane for the entire render scene", 100);
+    option("Advanced", "-k xdir,ydir,zdir,dist | x,y,z,nx,ny,nz", "Specify a cutting plane for the entire render scene", 100);
 
     option("Developer", "-v [#]", "Specify or increase RT verbosity", 100);
     option("Developer", "-X #", "Specify RT debugging flags", 100);

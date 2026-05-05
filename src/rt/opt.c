@@ -34,6 +34,7 @@
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/units.h"
@@ -304,28 +305,54 @@ rt_opt_subgrid(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(
 }
 
 
-/* -k / --cut-plane  xd,yd,zd,dist */
+/* -k / --cut-plane  xd,yd,zd,dist OR x,y,z,nx,ny,nz */
 static int
 rt_opt_cut_plane(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     fastf_t f;
-    double scan[4];
+    point_t pt;
+    vect_t nrml;
+    const char *arg = argv[0];
+    char *scan_arg;
+    double scan[6];
     int n;
+    size_t i, j, len;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "cut-plane");
     do_kut_plane = 1;
-    n = sscanf(argv[0], "%lg,%lg,%lg,%lg",
-	       &scan[0], &scan[1], &scan[2], &scan[3]);
-    if (n != 4) {
-	/* try with spaces after commas */
-	n = sscanf(argv[0], "%lg, %lg, %lg, %lg",
-		   &scan[0], &scan[1], &scan[2], &scan[3]);
+
+    len = strlen(arg);
+    scan_arg = (char *)bu_malloc(len + 1, "cut-plane parse buffer");
+    for (i = 0, j = 0; i < len; i++) {
+	if (!isspace((unsigned char)arg[i]))
+	    scan_arg[j++] = arg[i];
     }
+    scan_arg[j] = '\0';
+
+    n = sscanf(scan_arg, "%lg,%lg,%lg,%lg,%lg,%lg",
+	       &scan[0], &scan[1], &scan[2], &scan[3], &scan[4], &scan[5]);
+    if (n == 6) {
+	VSET(pt, scan[0], scan[1], scan[2]);
+	VSET(nrml, scan[3], scan[4], scan[5]);
+	f = MAGNITUDE(nrml);
+	if (f <= SMALL)
+	    bu_exit(EXIT_FAILURE, "ERROR: bad normal for cutting plane, length=%g\n", f);
+	VUNITIZE(nrml);
+	VMOVE(kut_plane, nrml);
+	/* Plane form is N . X = d, so derive d from the supplied point. */
+	kut_plane[W] = VDOT(pt, nrml);
+	bu_free(scan_arg, "cut-plane parse buffer");
+	return 1;
+    }
+
+    n = sscanf(scan_arg, "%lg,%lg,%lg,%lg",
+	       &scan[0], &scan[1], &scan[2], &scan[3]);
+    bu_free(scan_arg, "cut-plane parse buffer");
     if (n != 4)
-	bu_exit(EXIT_FAILURE, "ERROR: bad cutting plane\n");
+	bu_exit(EXIT_FAILURE, "ERROR: bad cutting plane, expected xdir,ydir,zdir,dist or x,y,z,nx,ny,nz\n");
     HMOVE(kut_plane, scan); /* double to fastf_t */
     f = MAGNITUDE(kut_plane);
     if (f <= SMALL)
-	bu_exit(EXIT_FAILURE, "Bad normal for cutting plane, length=%g\n", f);
+	bu_exit(EXIT_FAILURE, "ERROR: bad normal for cutting plane, length=%g\n", f);
     f = 1.0 / f;
     VSCALE(kut_plane, kut_plane, f);
     kut_plane[W] *= f;
@@ -925,7 +952,7 @@ static struct bu_opt_desc opt_defs[] = {
      "Grid cell height in mm"},
     {"j",  "subgrid",         "xmin,ymin,xmax,ymax", rt_opt_subgrid, NULL,
      "Raytrace only a sub-rectangle of the view"},
-    {"k",  "cut-plane",       "xd,yd,zd,dist", rt_opt_cut_plane, NULL,
+    {"k",  "cut-plane",       "xdir,ydir,zdir,dist | x,y,z,nx,ny,nz", rt_opt_cut_plane, NULL,
      "Apply a cutting plane (equivalent to subtracting a halfspace)"},
 
     /* --- Rendering parameters ------------------------------------------ */
