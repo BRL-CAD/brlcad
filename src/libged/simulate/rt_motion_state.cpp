@@ -29,7 +29,7 @@
 
 #ifdef HAVE_BULLET
 
-
+#include "rt/tree.h"
 #include "rt_motion_state.hpp"
 #include "utility.hpp"
 
