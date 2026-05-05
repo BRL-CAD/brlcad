@@ -243,7 +243,7 @@ usage(const char *argv0, int verbose)
 	}
     }
     if (verbose < max_verbosity) {
-	bu_log("\nType \"%s -?\" for a complete list of options.\n", argv0);
+	bu_log("\nType \"%s -?\" for a complete list of options.  See rt(1) man page for long options.\n", argv0);
     }
     bu_log("\n");
 }

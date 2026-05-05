@@ -875,11 +875,6 @@ rt_opt_plus(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set
  * Option descriptor table
  *
  * Each row is:  { shortopt, longopt, arg_helpstr, callback, set_var, help }
- *
- * Options marked "DEPRECATED SHORT FORM" use a letter whose conventional
- * meaning in other Unix tools differs from rt's meaning.  They remain fully
- * functional for now for backward compatibility; callers should prefer the
- * long form.
  * ======================================================================= */
 
 static struct bu_opt_desc opt_defs[] = {
@@ -919,7 +914,7 @@ static struct bu_opt_desc opt_defs[] = {
     {"E",  "eye-backoff",     "#",       bu_opt_fastf_t,       &eye_backoff,
      "Distance from eye to model center (default sqrt(2))"},
     {"V",  "view-aspect",     "#[:#]",   rt_opt_view_aspect,   NULL,
-     "View aspect ratio width/height (e.g. 1.33 or 4:3)"},  /* DEPRECATED SHORT FORM: -V commonly means --version */
+     "View aspect ratio width/height (e.g. 1.33 or 4:3)"},
     {"M",  "read-matrix",     "",        NULL,       &matflag,
      "Read model2view matrix (+ animation script) from stdin"},
 
@@ -949,7 +944,7 @@ static struct bu_opt_desc opt_defs[] = {
     {"H",  "hypersample",     "#",       rt_opt_hypersample,   NULL,
      "Number of extra rays per pixel (also enables -J 1)"},
     {"J",  "jitter",          "#",       rt_opt_jitter,        NULL,
-     "Ray jitter bit vector (1=cell jitter, 2=frame shift, 3=both)"},  /* DEPRECATED SHORT FORM: -J commonly means --jobs */
+     "Ray jitter bit vector (1=cell jitter, 2=frame shift, 3=both)"},
     {"u",  "units",           "units",   rt_opt_units,         NULL,
      "Display units (\"model\" uses model-space units)"},
     {"U",  "use-air",         "#",       bu_opt_int, &use_air,
@@ -965,7 +960,7 @@ static struct bu_opt_desc opt_defs[] = {
     {"d",  "density-file",    "file",    bu_opt_str, &densityfile,
      "Density definitions file"},
     {"D",  "start-frame",     "#",       bu_opt_int, &desiredframe,
-     "Starting frame number for animation"},  /* DEPRECATED SHORT FORM: -D typically means --define or --debug */
+     "Starting frame number for animation"},
     {"K",  "end-frame",       "#",       bu_opt_int, &finalframe,
      "Ending (kill-after) frame number for animation"},
 
@@ -973,7 +968,7 @@ static struct bu_opt_desc opt_defs[] = {
     {"b",  "single-pixel",    "\"x y\"", rt_opt_single_pixel,  NULL,
      "Shoot one debug ray at pixel (x, y); forces serial execution"},
     {"Q",  "query-pixel",     "x,y",     rt_opt_query_pixel,   NULL,
-     "Compute full image but enable debug for pixel (x,y)"},  /* DEPRECATED SHORT FORM: -Q sometimes means --quiet */
+     "Compute full image but enable debug for pixel (x,y)"},
 
     /* --- Object input -------------------------------------------------- */
     {"I",  "objects-file",    "file",    rt_opt_objects_file,  NULL,
@@ -1001,7 +996,7 @@ static struct bu_opt_desc opt_defs[] = {
     {"P",  "cpus",            "#",       rt_opt_cpus,          NULL,
      "Max processor cores to use (negative = all but N)"},
     {"B",  "benchmark",       "",        rt_opt_benchmark,     NULL,
-     "Benchmark mode: disable all intentional randomness (dither, etc.)"},  /* DEPRECATED SHORT FORM: -B commonly means --binary or --batch */
+     "Benchmark mode: disable all intentional randomness (dither, etc.)"},
 
     /* --- Space partition (temporarily disabled) ------------------------ */
     {",",  "",                "",        rt_opt_comma_disabled,NULL,
