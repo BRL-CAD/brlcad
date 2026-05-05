@@ -40,6 +40,18 @@ extern "C" {
 #include "./include/private.h"
 }
 
+static int
+gl_swrast_database_wireframe(struct dm *dmp, struct bv_scene_obj *s)
+{
+    if (!dmp || !s || !dm_get_dm_name(dmp) || !BU_STR_EQUAL(dm_get_dm_name(dmp), "swrast"))
+	return 0;
+
+    if (!(s->s_type_flags & BV_DB_OBJS))
+	return 0;
+
+    return (s->s_os->s_dmode == 0 || s->s_os->s_dmode == 3);
+}
+
 static void
 dlist_free_callback(struct bv_scene_obj *s)
 {
@@ -548,6 +560,9 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 extern "C"
 int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 {
+    GLint originalShadeModel = 0;
+    int restoreShadeModel = 0;
+
     if (s->s_type_flags & BV_MESH_LOD) {
 	struct bv_mesh_lod *lod = (struct bv_mesh_lod *)s->draw_data;
 	return gl_draw_tri(dmp, lod);
@@ -559,11 +574,20 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 
     // "Standard" vlist object drawing
     if (bu_list_len(&s->s_vlist)) {
+	if (gl_swrast_database_wireframe(dmp, s)) {
+	    glGetIntegerv(GL_SHADE_MODEL, &originalShadeModel);
+	    if (originalShadeModel != GL_FLAT) {
+		glShadeModel(GL_FLAT);
+		restoreShadeModel = 1;
+	    }
+	}
 	if (s->s_os->s_dmode == 4) {
 	    dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
 	} else {
 	    dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);
 	}
+	if (restoreShadeModel)
+	    glShadeModel((GLenum)originalShadeModel);
 	return BRLCAD_OK;
     }
 
