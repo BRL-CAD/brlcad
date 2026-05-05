@@ -249,6 +249,30 @@ When using *rt* to create an animation sequence destined for NTSC video, it is u
 [[examples]]
 == EXAMPLES
 
+.Render directly to an *fbserv* IPC endpoint
+[example]
+====
+**fbserv -F /dev/wgl -I C:\\Users\\you\\AppData\\Local\\Temp\\brl-fb.sock**
+
+**rt -F ipc:C:\\Users\\you\\AppData\\Local\\Temp\\brl-fb.sock model.g object**
+
+The first command starts *fbserv* in IPC mode. The second command renders directly to that framebuffer server using an IPC address via *-F*.
+====
+
+.Render to authenticated/TLS-enabled *fbserv* over TCP
+[example]
+====
+**set FBSERV_TOKEN=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef**
+
+**set FBSERV_TLS=1**
+
+**fbserv -T -A -p 0 -F /dev/wgl**
+
+**rt -F 0 model.g object**
+
+With matching *FBSERV_TOKEN* in both environments, *rt* sends authentication before opening the framebuffer. If both programs were built with OpenSSL and *FBSERV_TLS* is set, the connection attempts TLS.
+====
+
 .Render a very high-quality, high-resolution image, very slowly
 [example]
 ====

@@ -65,6 +65,20 @@ extern uint32_t ntohl(uint32_t);
 #  endif
 #endif
 
+/* INADDR_* constants come from <netinet/in.h> on POSIX and <winsock2.h> on
+ * Windows.  Some strict-mode builds or Unity-build ordering issues can leave
+ * them undefined even when the underlying header was nominally processed;
+ * provide safe fallbacks so callers that include bnetwork.h always have them. */
+#ifndef INADDR_ANY
+#  define INADDR_ANY       ((uint32_t)0x00000000)
+#endif
+#ifndef INADDR_LOOPBACK
+#  define INADDR_LOOPBACK  ((uint32_t)0x7f000001)
+#endif
+#ifndef INADDR_BROADCAST
+#  define INADDR_BROADCAST ((uint32_t)0xffffffff)
+#endif
+
 #endif /* BNETWORK_H */
 
 /** @} */

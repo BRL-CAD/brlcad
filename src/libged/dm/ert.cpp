@@ -38,6 +38,7 @@
 #include "bresource.h"
 
 #include "bu/app.h"
+#include "bu/env.h"
 #include "bu/process.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -91,9 +92,18 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     // framebuffer server.
     struct fbserv_obj *fbs = gedp->ged_fbs;
     fbs->fbs_fbp = fbp;
-    if (!fbs->fbs_is_listening || fbs_open(fbs, 0) != BRLCAD_OK) {
-	bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
-	return BRLCAD_ERROR;
+
+    /* Phase 3: Try the IPC fast path first (anonymous pipe / socketpair).
+     * This avoids TCP port binding, firewall traversal, and port collisions.
+     * Fall back to the traditional TCP listen path when IPC is unavailable.  */
+    bool using_ipc = false;
+    if (fbs->fbs_open_ipc_client_handler && fbs_open_ipc(fbs) == BRLCAD_OK) {
+	using_ipc = true;
+    } else {
+	if (!fbs->fbs_is_listening || fbs_open(fbs, 0) != BRLCAD_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
+	    return BRLCAD_ERROR;
+	}
     }
 
     // Assemble the arguments
@@ -104,7 +114,13 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     bu_dir(rt, MAXPATHLEN, BU_DIR_BIN, "rt", BU_DIR_EXT, NULL);
     args.push_back(std::string(rt));
     args.push_back(std::string("-F"));
-    args.push_back(std::to_string(fbs->fbs_listener.fbsl_port));
+    if (using_ipc) {
+	/* Any numeric framebuffer spec routes through if_remote.c, which will
+	 * detect PKG_ADDR and use the IPC channel instead of TCP.         */
+	args.push_back(std::string("0"));
+    } else {
+	args.push_back(std::to_string(fbs->fbs_listener.fbsl_port));
+    }
     args.push_back(std::string("-M"));
 
     int width = dm_get_width(dmp);
@@ -162,7 +178,27 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     // We need to know the pid of the rt command that has been launched
     int rt_pid = -1;
 
+    /* When using IPC, advertise the child-end address via the process
+     * environment immediately before forking.  bu_process_create() inherits
+     * all open file descriptors (the child-end fds have been moved high by
+     * fbs_open_ipc to survive any descriptor sweep), and the child reads
+     * PKG_ADDR via getenv() in if_remote.c::rem_open().
+     * We clear the variable right after the fork because the child already
+     * has its own independent copy of the environment.                       */
+    if (using_ipc) {
+	const char *addr_env = fbs_ipc_child_addr_env(fbs);
+	if (addr_env) {
+	    /* addr_env is "PKG_ADDR=pipe:4,7" — strip the "KEY=" prefix */
+	    const char *eq = strchr(addr_env, '=');
+	    if (eq)
+		bu_setenv(PKG_ADDR_ENVVAR, eq + 1, 1);
+	}
+    }
+
     ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), 0, &rt_pid, clbk, u2);
+
+    if (using_ipc)
+	bu_setenv(PKG_ADDR_ENVVAR, "", 1); /* clear parent's env copy */
 
     clbk = NULL;
     u1 = (void *)&rt_pid;

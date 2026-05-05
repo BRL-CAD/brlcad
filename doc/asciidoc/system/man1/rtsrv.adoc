@@ -1,0 +1,226 @@
+= RTSRV(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtsrv - remote ray-tracing worker for the remrt distributed renderer
+
+== SYNOPSIS
+
+[source]
+----
+rtsrv [-d] [-S token] control-host tcp-port [cmd]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtsrv* is the worker process of the *remrt*(1) distributed ray-tracing
+system.  It connects to a running *remrt* dispatcher, receives geometry and
+view-parameter data over the network via *libpkg*(3), ray-traces the assigned
+pixel ranges using *librt*(3), and sends the resulting pixel data back to the
+dispatcher.  Any number of *rtsrv* instances can be active simultaneously;
+*remrt* assigns non-overlapping work to each and reassembles the results into
+the final image.
+
+*rtsrv* is normally launched automatically by *remrt* on remote hosts via
+*ssh*(1), but it can also be started manually to allow machines that cannot be
+reached by SSH — or local machines on the same system — to participate in a
+distributed render.
+
+When launched, *rtsrv* connects to _control-host_ on the TCP port given by
+_tcp-port_.  It then waits for *remrt* to send it a series of protocol
+messages:
+
+* A `MSG_CD` message (if the host entry in *.remrtrc* uses `cd` mode),
+  directing *rtsrv* to change to the directory containing the geometry
+  database.
+* A `MSG_DIRBUILD` message with the filename of the BRL-CAD `.g` database.
+  *rtsrv* opens and parses the database locally.
+* A `MSG_GETTREES` message listing the object tree(s) to prepare.
+* Repeated `MSG_MATRIX` and `MSG_DO_LINES` messages distributing pixel
+  scan-line work assignments until the frame is complete.
+
+*rtsrv* returns each completed scan-line block to *remrt* via a
+`MSG_PIXELS` message.  When all work is done *remrt* closes the connection and
+*rtsrv* exits.
+
+By default (without the *-d* flag) *rtsrv* daemonizes itself on POSIX systems
+after successfully connecting: it forks, redirects standard I/O to `/dev/null`,
+and drops to the lowest scheduling priority.  On Windows the daemonization
+steps that require POSIX-specific APIs are skipped.
+
+If the optional _cmd_ argument is supplied, *rtsrv* sends that string as a
+command to the *remrt* dispatcher and then exits immediately.  This is useful
+for passing interactive-mode commands to a running *remrt* session; for
+example:
+
+....
+
+    rtsrv server_host 4446 status
+
+....
+
+sends the *status* command to the *remrt* instance listening on port 4446 of
+*server_host* and exits.
+
+
+[[options]]
+== OPTIONS
+
+*-d*::
+Debug mode.  Disables daemonization; *rtsrv* remains in the foreground with
+standard I/O connected to the terminal.  Also enables verbose protocol
+tracing to standard error.  This flag is required when *rtsrv* is launched
+by automated scripts or regression tests that need to wait for the process
+to finish.
+
+*-S* _token_::
+Session authentication token.  Supply the 256-bit hex token printed to
+standard error by *remrt* at startup (e.g. from the line "Session token:
+3f8a1c...").  The token is sent to *remrt* as part of the version handshake;
+*remrt* rejects workers whose token does not match the session token.  If
+this option is omitted the worker is accepted without authentication,
+preserving backward compatibility with older *remrt* versions.
+
+*-x* _hex_flags_::
+Set the *librt* debug flags (same meaning as the *-x* flag of *rt*(1)).
+
+*-X* _hex_flags_::
+Set the optical shader debug flags (same meaning as the *-X* flag of *rt*(1)).
+
+_control-host_::
+Hostname or IP address of the machine running *remrt*.
+
+_tcp-port_::
+TCP port number on which *remrt* is listening.  The default first port used
+by *remrt* is 4446; if that port is taken *remrt* tries 4447, 4448, and so
+on up to 4455.  The actual port in use is printed by *remrt* to standard
+error ("Listening at TCP port NNNNN").
+
+_cmd_::
+An optional single command string to send to the *remrt* dispatcher.  If
+supplied, *rtsrv* sends the command and then exits without performing any
+ray-tracing work.  This is equivalent to issuing an interactive *remrt*
+command remotely.
+
+
+[[authentication]]
+== AUTHENTICATION
+
+Starting with BRL-CAD 7.44, *remrt* generates a 256-bit random session token
+at startup.  When *remrt* auto-launches *rtsrv* workers via *ssh*(1) it appends
+*-S* _token_ to each worker's command line automatically.  Workers started
+manually must be given the token explicitly via *-S* if authentication is
+required.
+
+Workers that do not supply a token are still accepted by default.  To restrict
+access to authenticated workers only, the *remrt* dispatcher can be patched or
+rebuilt with strict-token mode enabled (see the *remrt*(1) source for details).
+
+
+[[examples]]
+== EXAMPLES
+
+.Connecting a manual rtsrv to a local remrt session
+[example]
+====
+Start *remrt* first (it will print its port and session token):
+
+....
+
+    remrt -M -s512 -o output.pix scene.g all.g < scene.rt
+
+....
+
+Note the port number (e.g. 4446) and session token printed to standard error,
+then — on the same or any reachable machine — start *rtsrv* in debug (foreground)
+mode:
+
+....
+
+    rtsrv -d -S 3f8a1c... localhost 4446
+
+....
+
+Multiple *rtsrv* instances may be started against the same *remrt* session to
+increase parallelism.
+====
+
+.Querying remrt status
+[example]
+====
+....
+
+    rtsrv remrt-host 4446 status
+
+....
+
+Sends the "status" command to the *remrt* process on *remrt-host* and exits.
+====
+
+
+[[security]]
+== SECURITY
+
+All session token handling is performed by *remrt* and *rtsrv* automatically
+when built with OpenSSL support; see the SECURITY section of *remrt*(1) for
+details.  Without OpenSSL, a fallback random-number source (`/dev/urandom` on
+POSIX or `CryptGenRandom` on Windows) is used.
+
+When *remrt* and *rtsrv* are built with OpenSSL, all protocol traffic between
+the dispatcher and its workers is automatically encrypted using TLS 1.2 or
+later.
+
+
+[[see_also]]
+== SEE ALSO
+
+*remrt*(1), *rt*(1), *ssh*(1), *brlcad*(1), *mged*(1), *librt*(3), *libpkg*(3),
+*pix*(5)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+....
+
+    rtsrv: unable to contact <host>, port <port>
+
+....
+
+The TCP connection to the *remrt* dispatcher failed.  Verify that *remrt* is
+running, the port number is correct, and that firewalls allow the connection.
+
+....
+
+    ph_dirbuild: rt_dirbuild(m35.g) failure
+
+....
+
+The geometry database file could not be opened in the current working
+directory.  Ensure *rtsrv* is started from the directory containing the
+`.g` file, or that *remrt* has been configured with `cd <path>` in its
+*.remrtrc* so it sends a `MSG_CD` before `MSG_DIRBUILD`.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1985-2025 by the United States Government as
+represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to
+devs@brlcad.org

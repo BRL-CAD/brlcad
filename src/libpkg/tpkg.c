@@ -138,7 +138,7 @@ server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 void
 run_server(int port) {
     struct pkg_conn *client;
-    int netfd;
+    pkg_listener_t *listener;
     char portname[MAX_DIGITS + 1] = {0};
     int pkg_result  = 0;
     char *buffer;
@@ -155,8 +155,8 @@ run_server(int port) {
 
     /* start up the server on the given port */
     snprintf(portname, MAX_DIGITS, "%d", port);
-    netfd = pkg_permserver(portname, "tcp", 0, 0);
-    if (netfd < 0) {
+    listener = pkg_listen(portname, NULL, 0, NULL);
+    if (!listener) {
 	bu_bomb("Unable to start the server");
     }
 
@@ -165,7 +165,7 @@ run_server(int port) {
      * doesn't get one, the server continues to wait.
      */
     do {
-	client = pkg_getclient(netfd, callbacks, NULL, 0);
+	client = pkg_accept(listener, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
 	    bu_log("Connection seems to be busy, waiting...\n");
 	    sleep(10);
@@ -227,6 +227,7 @@ run_server(int port) {
 
     /* shut down the server, one-time use */
     pkg_close(client);
+    pkg_listener_close(listener);
 }
 
 

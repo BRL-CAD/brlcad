@@ -51,11 +51,6 @@
 extern "C" {
 #endif
 
-#define PKG_STDIO_MODE -3
-
-/* ?? used in remrt */
-PKG_EXPORT extern int pkg_permport;
-
 struct pkg_conn;
 
 typedef void (*pkg_callback)(struct pkg_conn*, char*);
@@ -85,17 +80,8 @@ struct pkg_header {
 #define	PKG_STREAMLEN	(32*1024)
 struct pkg_conn {
     int	pkc_fd;					/**< @brief TCP connection fd */
-
-    // TODO - these were added to support PKG_STDIO_MODE back in 5/2021 as an
-    // experiment to test whether we could use stdout/stderr piping on Windows
-    // to enable local pkg support without TCP/IP. That didn't work, so look at
-    // replacing/repurposing these to use with libuv, which supplies a cross
-    // platform uv_pipe_t.  The places in the code checking for PKG_STDIO_MODE
-    // are a good start for where we will need logic to support a uv_pipe_t
-    // version, although the need for pipe names will most likely require
-    // further changes.
-    int pkc_in_fd;                              /**< @brief input connection fd */
-    int pkc_out_fd;                             /**< @brief output connection fd */
+    int pkc_in_fd;                              /**< @brief input fd for split-fd (pipe) transports */
+    int pkc_out_fd;                             /**< @brief output fd for split-fd (pipe) transports */
 
     const struct pkg_switch *pkc_switch;	/**< @brief Array of message handlers */
     pkg_errlog pkc_errlog;			/**< @brief Error message logger */
@@ -118,6 +104,33 @@ struct pkg_conn {
     char *pkc_buf;				/**< @brief start of dynamic buf */
     char *pkc_curpos;				/**< @brief current position in pkg_buf */
     void *pkc_server_data;			/**< @brief used to hold server data for callbacks */
+
+    /**
+     * Pluggable I/O layer for TLS (or any other stream cipher / framing).
+     *
+     * When pkc_tls_read / pkc_tls_write are non-NULL they completely
+     * replace the raw fd reads/writes inside pkg_suckin(), pkg_send(),
+     * pkg_2send(), and pkg_flush().  pkc_tls_ctx is the opaque context
+     * pointer forwarded as the first argument to both callbacks.
+     *
+     * pkc_tls_free (if non-NULL) is called by pkg_close() before
+     * closing the socket, giving the TLS layer a chance to send a
+     * clean close_notify and free its own state.
+     *
+     * All four fields are zero-initialized by _pkg_makeconn().
+     *
+     * The callback signatures use ptrdiff_t (always defined via
+     * <stddef.h>) rather than ssize_t to avoid POSIX-only header
+     * dependencies in this public header.
+     */
+    void *pkc_tls_ctx;							/**< @brief opaque TLS state (e.g. SSL *) */
+    ptrdiff_t (*pkc_tls_read)(void *ctx, void *buf, size_t n);		/**< @brief TLS read callback; NULL = use raw fd */
+    ptrdiff_t (*pkc_tls_write)(void *ctx, const void *buf, size_t n);	/**< @brief TLS write callback; NULL = use raw fd */
+    void (*pkc_tls_free)(void *ctx);					/**< @brief called by pkg_close() to free TLS state */
+    char pkc_addr[128];        /**< @brief transport address string (populated by future phases) */
+    char pkc_addr_env[160];    /**< @brief PKG_ADDR=... env string for child spawn (future phases) */
+    int  pkc_tx_kind;          /**< @brief transport kind: 0=socket/TCP, 1=pipe pair */
+    int  pkc_listen_fd;        /**< @brief listening socket fd for lazy-accept (TCP, future phases) */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
@@ -265,53 +278,228 @@ PKG_EXPORT extern char *pkg_bwaitfor(int type, struct pkg_conn* pc);
  */
 PKG_EXPORT extern int pkg_block(struct pkg_conn* pc);
 
-/**
- * Become a transient network server
- *
- * Become a one-time server on a given open connection.  A client has
- * already called and we have already answered.  This will be a
- * servers starting condition if he was created by a process like the
- * UNIX inetd.
- *
- * Returns PKC_ERROR or a pointer to a pkg_conn structure.
- */
-PKG_EXPORT extern struct pkg_conn *pkg_transerver(const struct pkg_switch* switchp, pkg_errlog errlog);
+/****************************
+ * Transport accessors      *
+ ****************************/
 
 /**
- * Create a network server, and listen for connection.
+ * Return the file descriptor a caller should pass to select(), poll(),
+ * QSocketNotifier, libuv, etc. for read-readiness notification.
  *
- * We are now going to be a server for the indicated service.  Hang a
- * LISTEN, and return the fd to select() on waiting for new
- * connections.
+ * Hides the distinction between bidirectional sockets (where read and
+ * write share a single fd) and pipe-pair connections (where the read
+ * end is a separate fd kept internally as pkc_in_fd).  Callers should
+ * use this in preference to looking at pkc_fd / pkc_in_fd directly.
  *
- * Returns fd to listen on (>=0), -1 on error.
+ * Returns -1 on error.
  */
-PKG_EXPORT extern int pkg_permserver(const char *service, const char *protocol, int backlog, pkg_errlog);
+PKG_EXPORT extern int pkg_get_read_fd(const struct pkg_conn *pc);
 
 /**
- * Create network server from IP address, and listen for connection.
+ * Return the file descriptor used for write-readiness notification.
+ * Equal to pkg_get_read_fd() for bidirectional transports (TCP /
+ * socketpair); for pipe-pair connections this is the write fd.
  *
- * We are now going to be a server for the indicated service.  Hang a
- * LISTEN, and return the fd to select() on waiting for new
- * connections.
- *
- * Returns fd to listen on (>=0), -1 on error.
+ * Returns -1 on error.
  */
-PKG_EXPORT extern int pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, pkg_errlog errlog);
+PKG_EXPORT extern int pkg_get_write_fd(const struct pkg_conn *pc);
 
 /**
- * As permanent network server, accept a new connection
- *
- * Given an fd with a listen outstanding, accept the connection.  When
- * poll == 0, accept is allowed to block.  When poll != 0, accept will
- * not block.
- *
- * Returns -
- *	       >0 ptr to pkg_conn block of new connection
- *	 PKC_NULL accept would block, try again later
- *	PKC_ERROR fatal error
+ * Return non-zero if the connection uses split read/write fds (i.e.
+ * the unidirectional pipe transport; pkc_in_fd != pkc_out_fd).
+ * Use this in preference to inspecting pkc_fd / pkc_in_fd / pkc_out_fd
+ * directly so future transport changes remain source-compatible.
  */
-PKG_EXPORT extern struct pkg_conn *pkg_getclient(int fd, const struct pkg_switch *switchp, pkg_errlog errlog, int nodelay);
+PKG_EXPORT extern int pkg_is_stdio_mode(const struct pkg_conn *pc);
+
+/**
+ * Set the kernel send-buffer size on the underlying socket
+ * (equivalent to setsockopt(SOL_SOCKET, SO_SNDBUF)).
+ *
+ * Silently succeeds (returns 0) for transports where send-buffer
+ * tuning is not applicable (pipe / split-fd connections).
+ *
+ * Returns 0 on success, -1 on error.
+ */
+PKG_EXPORT extern int pkg_set_send_buffer(struct pkg_conn *pc, size_t bytes);
+
+/**
+ * Set the kernel receive-buffer size on the underlying socket
+ * (equivalent to setsockopt(SOL_SOCKET, SO_RCVBUF)).
+ *
+ * Silently succeeds (returns 0) for transports where receive-buffer
+ * tuning is not applicable.  Returns 0 on success, -1 on error.
+ */
+PKG_EXPORT extern int pkg_set_recv_buffer(struct pkg_conn *pc, size_t bytes);
+
+/**
+ * Set TCP_NODELAY on the underlying socket.  No-op on non-TCP
+ * transports.  Returns 0 on success, -1 on error.
+ */
+PKG_EXPORT extern int pkg_set_nodelay(struct pkg_conn *pc, int on);
+
+/**
+ * Install a TLS / framing-cipher I/O shim on the connection.
+ *
+ * When @p tls_read / @p tls_write are non-NULL they completely replace
+ * the raw read()/write() calls inside pkg_suckin(), pkg_send(),
+ * pkg_2send(), and pkg_flush().  @p tls_ctx is the opaque context
+ * pointer forwarded as the first argument to both callbacks.
+ *
+ * @p tls_free (if non-NULL) is invoked by pkg_close() before closing
+ * the underlying transport, giving the TLS layer a chance to send a
+ * clean close_notify and free its own state.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+PKG_EXPORT extern int pkg_set_tls(struct pkg_conn *pc,
+				  void *tls_ctx,
+				  ptrdiff_t (*tls_read)(void *ctx, void *buf, size_t n),
+				  ptrdiff_t (*tls_write)(void *ctx, const void *buf, size_t n),
+				  void (*tls_free)(void *ctx));
+
+/**
+ * Wrap an already-connected socket fd in a pkg_conn without performing
+ * any network connect/accept.
+ *
+ * Replaces the historical pattern of allocating a pkg_conn and
+ * hand-initialising pkc_magic / pkc_fd / pkc_switch / pkc_left etc.
+ * Used by callers that obtain a connected socket from another framework
+ * (Tcl/Qt) and want to drive it through libpkg's framing protocol.
+ *
+ * On Windows this also performs WinSock initialisation if necessary.
+ *
+ * Returns a pkg_conn handle on success, PKC_ERROR on failure.
+ */
+PKG_EXPORT extern struct pkg_conn *pkg_adopt_socket(int fd,
+						    const struct pkg_switch *switchp,
+						    pkg_errlog errlog);
+
+
+/****************************
+ * Transport constants       *
+ ****************************/
+
+/** Environment variable read by a child to find its IPC channel address. */
+#define PKG_ADDR_ENVVAR "PKG_ADDR"
+
+/** Optional transport preference hint for pkg_pair(). */
+#define PKG_TRANSPORT_PREFER_ENVVAR "PKG_TRANSPORT_PREFER"
+
+/** Transport type for probing preference. */
+typedef enum {
+    PKG_TRANSPORT_AUTO   = 0, /**< @brief Use default probe order */
+    PKG_TRANSPORT_PIPE   = 1, /**< @brief Anonymous pipe transport */
+    PKG_TRANSPORT_SOCKET = 2, /**< @brief POSIX socketpair transport */
+    PKG_TRANSPORT_TCP    = 3  /**< @brief TCP loopback transport */
+} pkg_transport_t;
+
+
+/****************************
+ * Pair / connect API        *
+ ****************************/
+
+/**
+ * Create a connected pair of pkg_conn handles.
+ *
+ * Probe order: pipe -> socketpair -> TCP loopback (or use preferred).
+ * Returns 0 on success, -1 on failure.
+ */
+PKG_EXPORT extern int pkg_pair(struct pkg_conn **parent_end,
+			       struct pkg_conn **child_end,
+			       const struct pkg_switch *switchp,
+			       pkg_errlog errlog);
+
+PKG_EXPORT extern int pkg_pair_prefer(struct pkg_conn **parent_end,
+				      struct pkg_conn **child_end,
+				      const struct pkg_switch *switchp,
+				      pkg_errlog errlog,
+				      pkg_transport_t preferred);
+
+/**
+ * Return a "KEY=VALUE" env string for passing to a spawned child.
+ * The pointer is valid until pkg_close().  Format: "PKG_ADDR=<addr>".
+ */
+PKG_EXPORT extern const char *pkg_child_addr_env(struct pkg_conn *pc);
+
+/**
+ * Return just the raw address string (e.g. "pipe:4,7" or "socket:5")
+ * for use in argv["-I addr"] style arguments to a child process.
+ * The pointer is valid until pkg_close().
+ */
+PKG_EXPORT extern const char *pkg_child_addr(struct pkg_conn *pc);
+
+/**
+ * Connect the child side from an address string.
+ * Returns pkg_conn* on success, PKC_ERROR on failure.
+ */
+PKG_EXPORT extern struct pkg_conn *pkg_connect_addr(const char *addr,
+						    const struct pkg_switch *switchp,
+						    pkg_errlog errlog);
+
+/**
+ * Connect using the PKG_ADDR env var (child side).
+ */
+PKG_EXPORT extern struct pkg_conn *pkg_connect_env(const struct pkg_switch *switchp,
+						   pkg_errlog errlog);
+
+/**
+ * Wrap an already-open fd pair into a pkg_conn.
+ */
+PKG_EXPORT extern struct pkg_conn *pkg_adopt_fds(int rfd, int wfd,
+						  const struct pkg_switch *switchp,
+						  pkg_errlog errlog);
+
+/**
+ * Wrap stdin(0)/stdout(1) as a pkg connection (inetd/pipe mode).
+ */
+PKG_EXPORT extern struct pkg_conn *pkg_adopt_stdio(const struct pkg_switch *switchp,
+						   pkg_errlog errlog);
+
+/**
+ * Move the connection's fds above min_fd.
+ * Returns 0 on success, -1 on error.
+ */
+PKG_EXPORT extern int pkg_move_high_fd(struct pkg_conn *pc, int min_fd);
+
+
+/****************************
+ * Listener API              *
+ ****************************/
+
+struct pkg_listener;
+typedef struct pkg_listener pkg_listener_t;
+
+PKG_EXPORT extern pkg_listener_t *pkg_listen(const char *service,
+					     const char *iface_or_null,
+					     int backlog,
+					     pkg_errlog errlog);
+PKG_EXPORT extern struct pkg_conn *pkg_accept(pkg_listener_t *L,
+					      const struct pkg_switch *switchp,
+					      pkg_errlog errlog,
+					      int nonblocking);
+PKG_EXPORT extern int pkg_get_listener_fd(const pkg_listener_t *L);
+PKG_EXPORT extern int pkg_get_listener_port(const pkg_listener_t *L);
+PKG_EXPORT extern void pkg_listener_close(pkg_listener_t *L);
+
+
+/****************************
+ * Multiplexer API           *
+ ****************************/
+
+struct pkg_mux;
+typedef struct pkg_mux pkg_mux_t;
+
+PKG_EXPORT extern pkg_mux_t *pkg_mux_create(void);
+PKG_EXPORT extern void pkg_mux_destroy(pkg_mux_t *m);
+PKG_EXPORT extern int pkg_mux_add_conn(pkg_mux_t *m, const struct pkg_conn *pc);
+PKG_EXPORT extern int pkg_mux_add_listener(pkg_mux_t *m, const pkg_listener_t *L);
+PKG_EXPORT extern int pkg_mux_add_fd(pkg_mux_t *m, int fd, int is_socket);
+PKG_EXPORT extern void pkg_mux_remove_fd(pkg_mux_t *m, int fd);
+PKG_EXPORT extern int pkg_mux_wait(pkg_mux_t *m, int timeout_ms);
+PKG_EXPORT extern int pkg_mux_is_ready_conn(const pkg_mux_t *m, const struct pkg_conn *pc);
+PKG_EXPORT extern int pkg_mux_is_ready_listener(const pkg_mux_t *m, const pkg_listener_t *L);
+PKG_EXPORT extern int pkg_mux_is_ready_fd(const pkg_mux_t *m, int fd);
 
 
 /****************************

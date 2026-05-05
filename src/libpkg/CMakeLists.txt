@@ -1,4 +1,4 @@
-set(LIBPKG_SOURCES pkg.c vers.c)
+set(LIBPKG_SOURCES pkg.c pkg_transport.cpp vers.c)
 
 # Note - libpkg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(PKG_LIBS

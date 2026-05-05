@@ -76,7 +76,7 @@ int
 main(void) {
     int port = 2000;
     struct pkg_conn *client;
-    int netfd;
+    pkg_listener_t *listener;
     char portname[MAX_DIGITS + 1] = {0};
     /* int pkg_result  = 0; */
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
@@ -97,8 +97,8 @@ main(void) {
 
     /* start up the server on the given port */
     snprintf(portname, MAX_DIGITS, "%d", port);
-    netfd = pkg_permserver(portname, "tcp", 0, 0);
-    if (netfd < 0) {
+    listener = pkg_listen(portname, NULL, 0, NULL);
+    if (!listener) {
 	bu_bomb("Unable to start the server");
     }
 
@@ -108,7 +108,7 @@ main(void) {
      */
     bu_log("Listening on port %d\n", port);
     do {
-	client = pkg_getclient(netfd, callbacks, NULL, 0);
+	client = pkg_accept(listener, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
 	    bu_log("Connection seems to be busy, waiting...\n");
 	    bu_snooze(BU_SEC2USEC(10));
@@ -166,9 +166,11 @@ main(void) {
 
     /* shut down the server, one-time use */
     pkg_close(client);
+    pkg_listener_close(listener);
     return 0;
 failure:
     pkg_close(client);
+    pkg_listener_close(listener);
     bu_log("Unable to successfully send message");
     bu_vls_free(&buffer);
     return 0;

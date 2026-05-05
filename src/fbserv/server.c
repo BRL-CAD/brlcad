@@ -37,9 +37,14 @@
 
 #include "bu/color.h"
 #include "bu/log.h"
+#include "bu/str.h"
 #include "dm.h"
 #include "vmath.h"
 #include "pkg.h"
+
+/* Enable token verification for the standalone fbserv */
+#define FBSERV_AUTH_IMPL
+#include "./auth.h"
 
 
 #define NET_LONG_LEN 4 /* # bytes to network long */
@@ -55,6 +60,67 @@ int fb_server_got_fb_free = 0;	/* !0 => we have received an fb_free */
 int fb_server_refuse_fb_free = 0;	/* !0 => don't accept fb_free() */
 int fb_server_retain_on_close = 0;	/* !0 => we are holding a reusable FB open */
 
+/* Auth helpers provided by fbserv.c */
+extern int fbserv_require_auth(void);
+extern const char *fbserv_session_token(void);
+extern int fbserv_conn_idx(struct pkg_conn *pcp);
+extern void fbserv_drop_client(int sub);
+extern void fbserv_request_drop(int sub);
+extern int fbserv_client_auth_ok(int idx);
+extern void fbserv_set_client_auth(int idx, int val);
+
+
+/**
+ * Check that a client is authenticated (when strict mode is active) and
+ * that fb_server_fbp is not NULL.  On failure, send a -1 error reply,
+ * schedule the client for a deferred drop, free buf, and return -1 so
+ * the caller can immediately "return".  Returns 0 when all checks pass.
+ *
+ * read_handlers that return variable-length data can still use this: an
+ * error reply of NET_LONG_LEN bytes is always intelligible to the client
+ * as a failure indication, and the connection will be torn down anyway.
+ */
+static int
+fbserv_guard(struct pkg_conn *pcp, char *buf)
+{
+    char erbuf[NET_LONG_LEN+1];
+
+    if (fbserv_require_auth()) {
+	int idx = fbserv_conn_idx(pcp);
+	if (idx < 0) {
+	    /* Connection not in clients[] table — should not happen in normal
+	     * operation, but guard defensively.  fbserv_request_drop(-1) is a
+	     * no-op so skip it; just send the error reply and return. */
+	    fb_log("fbserv: request type %d from unregistered connection\n",
+		   pcp ? pcp->pkc_type : -1);
+	    (void)pkg_plong(erbuf, -1);
+	    pkg_send(MSG_RETURN, erbuf, NET_LONG_LEN, pcp);
+	    if (buf) (void)free(buf);
+	    return -1;
+	}
+	if (!fbserv_client_auth_ok(idx)) {
+	    fb_log("fbserv: unauthenticated request type %d rejected\n",
+		   pcp ? pcp->pkc_type : -1);
+	    (void)pkg_plong(erbuf, -1);
+	    pkg_send(MSG_RETURN, erbuf, NET_LONG_LEN, pcp);
+	    fbserv_request_drop(idx);
+	    if (buf) (void)free(buf);
+	    return -1;
+	}
+    }
+
+    if (fb_server_fbp == FB_NULL) {
+	fb_log("fbserv: request type %d on null framebuffer\n",
+	       pcp ? pcp->pkc_type : -1);
+	(void)pkg_plong(erbuf, -1);
+	pkg_send(MSG_RETURN, erbuf, NET_LONG_LEN, pcp);
+	if (buf) (void)free(buf);
+	return -1;
+    }
+
+    return 0;
+}
+
 
 /*
  * This is where we go for message types we don't understand.
@@ -69,6 +135,58 @@ fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
     fb_log("fb_server_fb_unknown: message type %d not part of remote LIBFB protocol, ignored.\n",
 	   pcp->pkc_type);
     (void)free(buf);
+}
+
+
+/**
+ * MSG_FBAUTH handler — session token authentication.
+ *
+ * Client sends a FBSERV_AUTH_TOKEN_LEN-byte hex token string.
+ * If it matches the server's session token the connection is marked
+ * authenticated.  If the token is wrong the connection is closed.
+ *
+ * Old clients that do not send MSG_FBAUTH are still accepted unless
+ * the server was started with -A (strict mode).
+ */
+static void
+fb_server_fb_auth(struct pkg_conn *pcp, char *buf)
+{
+    int idx;
+    char provided[FBSERV_AUTH_TOKEN_LEN + 1] = {0};
+    const char *expected = fbserv_session_token();
+
+    if (pcp == PKC_NULL) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
+    idx = fbserv_conn_idx(pcp);
+    if (idx < 0) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
+    if (!expected || expected[0] == '\0') {
+	/* No token configured; mark as authenticated */
+	fbserv_set_client_auth(idx, 1);
+	if (buf) (void)free(buf);
+	return;
+    }
+
+    if (buf && pcp->pkc_len >= FBSERV_AUTH_TOKEN_LEN)
+	bu_strlcpy(provided, buf, sizeof(provided));
+
+    if (fbserv_verify_token(provided, expected)) {
+	fbserv_set_client_auth(idx, 1);
+    } else {
+	fb_log("fbserv: MSG_FBAUTH token mismatch from client — dropping\n");
+	/* Request a deferred drop: main_loop will call fbserv_drop_client()
+	 * after pkg_process() returns, so we never free the pkg_conn while
+	 * pkg_process is still iterating over it. */
+	fbserv_request_drop(idx);
+    }
+
+    if (buf) (void)free(buf);
 }
 
 
@@ -89,6 +207,30 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
        	return;
     if (pcp == PKC_NULL)
        	return;
+
+    /* Auth check: if strict mode, reject unauthenticated clients. */
+    if (fbserv_require_auth()) {
+	int idx = fbserv_conn_idx(pcp);
+	if (idx < 0 || !fbserv_client_auth_ok(idx)) {
+	    fb_log("fbserv: unauthenticated MSG_FBOPEN rejected (strict mode)\n");
+	    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);
+	    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], 0);
+	    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], 0);
+	    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], 0);
+	    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], 0);
+	    pkg_send(MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp);
+	    /* Use deferred drop rather than pkg_close() directly: this handler
+	     * is called from pkg_process() which still holds a reference to pcp.
+	     * Freeing pcp here causes a use-after-free in pkg_process's loop. */
+	    if (idx >= 0) {
+		fbserv_request_drop(idx);
+	    } else {
+		pkg_close(pcp);
+	    }
+	    (void)free(buf);
+	    return;
+	}
+    }
 
     width = pkg_glong(&buf[0*NET_LONG_LEN]);
     height = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -134,17 +276,36 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 {
     char rbuf[NET_LONG_LEN+1];
 
+    if (pcp == PKC_NULL) { if (buf) (void)free(buf); return; }
+
+    if (fbserv_require_auth()) {
+	int idx = fbserv_conn_idx(pcp);
+	if (idx < 0 || !fbserv_client_auth_ok(idx)) {
+	    fb_log("fbserv: unauthenticated MSG_FBCLOSE rejected\n");
+	    (void)pkg_plong(rbuf, -1);
+	    (void)pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
+	    fbserv_request_drop(idx);
+	    if (buf) (void)free(buf);
+	    return;
+	}
+    }
+
     if (fb_server_retain_on_close) {
 	/*
 	 * We are playing FB server so we don't really close the
 	 * frame buffer.  We should flush output however.
 	 */
-	(void)fb_flush(fb_server_fbp);
+	if (fb_server_fbp != FB_NULL)
+	    (void)fb_flush(fb_server_fbp);
 	(void)pkg_plong(&rbuf[0], 0);		/* return success */
     } else {
-	(void)fb_clear_fd(fb_server_fbp, fb_server_select_list);
-	(void)pkg_plong(&rbuf[0], fb_close(fb_server_fbp));
-	fb_server_fbp = FB_NULL;
+	if (fb_server_fbp != FB_NULL) {
+	    (void)fb_clear_fd(fb_server_fbp, fb_server_select_list);
+	    (void)pkg_plong(&rbuf[0], fb_close(fb_server_fbp));
+	    fb_server_fbp = FB_NULL;
+	} else {
+	    (void)pkg_plong(&rbuf[0], 0);	/* already closed */
+	}
     }
     /* Don't check for errors, SGI linger mode or other events
      * may have already closed down all the file descriptors.
@@ -170,6 +331,9 @@ static void
 fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 {
     char rbuf[NET_LONG_LEN+1];
+
+    if (pcp == PKC_NULL) { if (buf) (void)free(buf); return; }
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     if (fb_server_refuse_fb_free) {
 	(void)pkg_plong(&rbuf[0], -1);
@@ -197,6 +361,7 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     bg[RED] = buf[0];
     bg[GRN] = buf[1];
@@ -223,10 +388,16 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
-    num = pkg_glong(&buf[2*NET_LONG_LEN]);
+    num = (size_t)(long)pkg_glong(&buf[2*NET_LONG_LEN]);
+    /* Clamp absurd requests to avoid runaway allocation */
+    if (num > (size_t)8192 * 8192) {
+	fb_log("fb_read: unreasonably large pixel count %zu, clamping\n", num);
+	num = 0;
+    }
 
     if (num*sizeof(RGBpixel) > buflen) {
 	if (scanbuf != NULL)
@@ -243,7 +414,7 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 	}
     }
 
-    ret = fb_read(fb_server_fbp, x, y, scanbuf, num);
+    ret = num ? fb_read(fb_server_fbp, x, y, scanbuf, num) : 0;
     V_MAX(ret, 0);		/* map error indications */
 
     /* sending a 0-length package indicates error */
@@ -269,6 +440,7 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -299,6 +471,7 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -347,6 +520,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -380,6 +554,7 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
        	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -428,6 +603,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
        	return;
     if (pcp == PKC_NULL)
        	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -461,6 +637,7 @@ fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
        	return;
     if (pcp == PKC_NULL)
        	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -481,6 +658,7 @@ fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
     char rbuf[4*NET_LONG_LEN+1];
 
     if (pcp == PKC_NULL) return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     ret = fb_getcursor(fb_server_fbp, &mode, &x, &y);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -504,6 +682,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
     if (buf == NULL)
 	return;
     if (pcp == PKC_NULL) return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     xbits = pkg_glong(&buf[0*NET_LONG_LEN]);
     ybits = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -535,6 +714,7 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -560,6 +740,7 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -584,6 +765,7 @@ fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -606,6 +788,7 @@ fb_server_fb_view(struct pkg_conn *pcp, char *buf)
 	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     xcenter = pkg_glong(&buf[0*NET_LONG_LEN]);
     ycenter = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -628,6 +811,7 @@ fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
     char rbuf[5*NET_LONG_LEN+1];
 
     if (pcp == PKC_NULL) return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     ret = fb_getview(fb_server_fbp, &xcenter, &ycenter, &xzoom, &yzoom);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -650,6 +834,7 @@ fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
     unsigned char cm[256*2*3];
 
     if (pcp == PKC_NULL) return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], fb_rmap(fb_server_fbp, &map));
     for (i = 0; i < 256; i++) {
@@ -682,6 +867,7 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
        	return;
     if (pcp == PKC_NULL)
 	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     if (pcp->pkc_len == 0)
 	ret = fb_wmap(fb_server_fbp, COLORMAP_NULL);
@@ -707,6 +893,7 @@ fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
 
     if (pcp == PKC_NULL) return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     ret = fb_flush(fb_server_fbp);
 
@@ -724,6 +911,7 @@ static void
 fb_server_fb_poll(struct pkg_conn *pcp, char *buf)
 {
     if (pcp == PKC_NULL) return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     (void)fb_poll(fb_server_fbp);
     if (buf)
@@ -745,6 +933,7 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
        	return;
     if (buf == NULL)
        	return;
+    if (fbserv_guard(pcp, buf) < 0) return;
 
     (void)pkg_glong(&buf[0*NET_LONG_LEN]);
 
@@ -755,7 +944,8 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 	(void)free(buf);
 }
 
-const struct pkg_switch pkg_switch[] = {
+struct pkg_switch pkg_switch[] = {
+    { MSG_FBAUTH,                       fb_server_fb_auth,        "Session Authentication", NULL },
     { MSG_FBOPEN,                       fb_server_fb_open,        "Open Framebuffer", NULL },
     { MSG_FBCLOSE,                      fb_server_fb_close,       "Close Framebuffer", NULL },
     { MSG_FBCLEAR,                      fb_server_fb_clear,       "Clear Framebuffer", NULL },

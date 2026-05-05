@@ -21,6 +21,9 @@
  *
  * Internal host table routines.
  *
+ * Uses getaddrinfo()/getnameinfo() (POSIX.1-2001, available on all
+ * modern platforms including Windows Vista+) instead of the deprecated
+ * gethostbyname()/gethostbyaddr() functions.
  */
 
 #include "common.h"
@@ -40,9 +43,6 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
 #include "bnetwork.h"
 #include "bio.h"
 
@@ -52,104 +52,31 @@
 
 #include "./ihost.h"
 
+#ifndef NI_MAXHOST
+#  define NI_MAXHOST 1025
+#endif
+
 #if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
 extern int gethostname(char *name, size_t len);
 #endif
 
-#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
-extern struct hostent *gethostbyname(const char *);
-#endif
-
-#if defined(HAVE_GETHOSTBYADDR) && !defined(HAVE_DECL_GETHOSTBYADDR) && !defined(_WINSOCKAPI_)
-extern struct hostent *gethostbyaddr(const void *, socklen_t, int);
-#endif
-
 struct bu_list	HostHead;
 
-/*
- * There is a problem in some hosts that gethostname() will only
- * return the host name and *not* the fully qualified host name
- * with domain name.
- *
- * gethostbyname() will return a host table (nameserver) entry
- * where h_name is the "official name", i.e. fully qualified.
- * Therefore the following piece of code.
- */
-char *
-get_our_hostname(void)
-{
-    char temp[512];
-    struct hostent *hp;
-
-    /* Init list head here */
-    BU_LIST_INIT( &HostHead );
-
-    gethostname(temp, sizeof(temp));
-
-    hp = gethostbyname(temp);
-
-    return bu_strdup(hp->h_name);
-}
 
 /*
- *  We have a hostent structure, of which, the only thing of interest is
- *  the host name.  Go from name to address back to name, to get formal name.
- *
- *  Used by host_lookup_by_addr, too.
+ * Add a new host entry to the list of known hosts with default
+ * parameters.  Used to handle unexpected volunteers.
  */
 struct ihost *
-host_lookup_by_hostent(const struct hostent * addr, int enter)
+make_default_host(const char *name)
 {
-    struct ihost	*ihp;
-    const struct hostent *	addr2;
-    const struct hostent *	addr3;
-
-    addr2 = gethostbyname(addr->h_name);
-    if ( addr != addr2 )  {
-	bu_log("host_lookup_by_hostent(%s) got %s?\n",
-	       addr->h_name, addr2 ? addr2->h_name : "NULL" );
-	return IHOST_NULL;
-    }
-    addr3 = gethostbyaddr(addr2->h_addr_list[0],
-			  sizeof(struct in_addr), addr2->h_addrtype);
-    if ( addr != addr3 )  {
-	bu_log("host_lookup_by_hostent(%s) got %s?\n",
-	       addr->h_name, addr3 ? addr3->h_name : "NULL" );
-	return IHOST_NULL;
-    }
-    /* Now addr->h_name points to the "formal" name of the host */
-
-    /* Search list for existing instance */
-    for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
-	CK_IHOST(ihp);
-
-	if ( !BU_STR_EQUAL( ihp->ht_name, addr->h_name ) )
-	    continue;
-	return ihp;
-    }
-    if ( enter == 0 )
-	return IHOST_NULL;
-
-    /* If not found and enter==1, enter in host table w/defaults */
-    /* Note: gethostbyxxx() routines keep stuff in a static buffer */
-    return make_default_host( addr->h_name );
-}
-
-/*
- *  Add a new host entry to the list of known hosts, with
- *  default parameters.
- *  This routine is used to handle unexpected volunteers.
- */
-struct ihost *
-make_default_host(const char* name)
-{
-    struct ihost	*ihp;
+    struct ihost *ihp;
 
     BU_ALLOC(ihp, struct ihost);
     ihp->l.magic = IHOST_MAGIC;
 
-    /* Make private copy of host name -- callers have static buffers */
-    ihp->ht_name = bu_strdup( name );
+    /* Make private copy of host name */
+    ihp->ht_name = bu_strdup(name);
 
     /* Default host parameters */
     ihp->ht_flags = 0x0;
@@ -158,76 +85,202 @@ make_default_host(const char* name)
     ihp->ht_path = "/tmp";
 
     /* Add to linked list of known hosts */
-    BU_LIST_INSERT( &HostHead, &ihp->l );
+    BU_LIST_INSERT(&HostHead, &ihp->l);
 
     return ihp;
 }
 
-struct ihost *
-host_lookup_by_addr(const struct sockaddr_in * from, int enter)
-{
-    struct ihost	*ihp;
-    struct hostent	*addr;
-    unsigned long	addr_tmp;
-    char		name[64];
 
-    addr_tmp = from->sin_addr.s_addr;
-    addr = gethostbyaddr( (char *)&from->sin_addr, sizeof (struct in_addr),
-			  from->sin_family);
-    if ( addr != NULL )  {
-	ihp = host_lookup_by_hostent( addr, enter );
-	if ( ihp )  return ihp;
+/*
+ * Return the fully-qualified canonical hostname of the local machine.
+ * Uses getaddrinfo() with AI_CANONNAME for portability.
+ * Initialises HostHead as a side-effect (called once at startup).
+ */
+char *
+get_our_hostname(void)
+{
+    char temp[512] = {0};
+    struct addrinfo hints;
+    struct addrinfo *res = NULL;
+    char *result;
+
+    /* Init list head here */
+    BU_LIST_INIT(&HostHead);
+
+    gethostname(temp, sizeof(temp) - 1);
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family   = AF_UNSPEC;
+    hints.ai_flags    = AI_CANONNAME;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (getaddrinfo(temp, NULL, &hints, &res) == 0 && res != NULL) {
+	result = bu_strdup(res->ai_canonname ? res->ai_canonname : temp);
+	freeaddrinfo(res);
+    } else {
+	result = bu_strdup(temp);
+    }
+    return result;
+}
+
+
+/*
+ * Resolve a canonical hostname from a connected socket's peer address.
+ * Falls back to numeric dotted-quad / colon-hex notation if name
+ * resolution fails.
+ *
+ * Replaces the old gethostbyaddr()-based approach.
+ *
+ * Loopback special-case: on many CI / container hosts getnameinfo() on
+ * 127.0.0.1 returns the machine's FQDN or "127.0.0.1" rather than
+ * "localhost".  If the peer is in 127.0.0.0/8 and the resolved name is
+ * not already in HostHead, we also check for a registered "localhost"
+ * entry so that the HT_CD path configured in .remrtrc is honoured
+ * regardless of the local resolver behaviour.
+ */
+struct ihost *
+host_lookup_by_addr(const struct sockaddr_in *from, int enter)
+{
+    struct ihost *ihp;
+    char name[NI_MAXHOST];
+    int ret;
+    int is_loopback = 0;
+
+    /* Detect 127.0.0.0/8 loopback addresses */
+    if (from->sin_family == AF_INET) {
+	unsigned long a = ntohl(from->sin_addr.s_addr);
+	is_loopback = ((a >> 24) == 127);
     }
 
-    /* Host name is not known */
-    addr_tmp = ntohl(addr_tmp);
-    sprintf( name, "%ld.%ld.%ld.%ld",
-	     (addr_tmp>>24) & 0xff,
-	     (addr_tmp>>16) & 0xff,
-	     (addr_tmp>> 8) & 0xff,
-	     (addr_tmp    ) & 0xff );
-    if ( enter == 0 )  {
+    /* Try to get a human-readable hostname */
+    ret = getnameinfo((const struct sockaddr *)from,
+		      (socklen_t)sizeof(*from),
+		      name, (socklen_t)sizeof(name),
+		      NULL, 0,
+		      0 /* NI_NAMEREQD would fail fast on unresolvable addrs */);
+    if (ret == 0) {
+	/* Check whether this resolved name is already in the table */
+	for (BU_LIST_FOR(ihp, ihost, &HostHead)) {
+	    CK_IHOST(ihp);
+	    if (BU_STR_EQUAL(ihp->ht_name, name))
+		return ihp;
+	}
+	/* For loopback peers, also accept a registered "localhost" entry
+	 * when the resolver returned a different (but equivalent) name. */
+	if (is_loopback) {
+	    for (BU_LIST_FOR(ihp, ihost, &HostHead)) {
+		CK_IHOST(ihp);
+		if (BU_STR_EQUAL(ihp->ht_name, "localhost"))
+		    return ihp;
+	    }
+	}
+	if (enter)
+	    return make_default_host(name);
 	bu_log("%s: unknown host\n", name);
 	return IHOST_NULL;
     }
 
-    /* See if this host has been previously entered by number */
-    for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
+    /* Fall back to numeric form */
+    ret = getnameinfo((const struct sockaddr *)from,
+		      (socklen_t)sizeof(*from),
+		      name, (socklen_t)sizeof(name),
+		      NULL, 0,
+		      NI_NUMERICHOST);
+    if (ret != 0) {
+	/* Last resort — manual dotted-quad from raw IPv4 address */
+	unsigned long addr_tmp = ntohl(from->sin_addr.s_addr);
+	snprintf(name, sizeof(name), "%lu.%lu.%lu.%lu",
+		 (addr_tmp >> 24) & 0xff, (addr_tmp >> 16) & 0xff,
+		 (addr_tmp >>  8) & 0xff, (addr_tmp      ) & 0xff);
+    }
+
+    if (enter == 0) {
+	bu_log("%s: unknown host\n", name);
+	return IHOST_NULL;
+    }
+
+    /* Check whether this numeric address was previously entered */
+    for (BU_LIST_FOR(ihp, ihost, &HostHead)) {
 	CK_IHOST(ihp);
-	if ( BU_STR_EQUAL( ihp->ht_name, name ) )
+	if (BU_STR_EQUAL(ihp->ht_name, name))
 	    return ihp;
     }
 
-    /* Create a new hostent structure */
-    return make_default_host( name );
+    /* For loopback numeric addresses (127.x.x.x), also accept a
+     * registered "localhost" entry — same reasoning as above.     */
+    if (is_loopback) {
+	for (BU_LIST_FOR(ihp, ihost, &HostHead)) {
+	    CK_IHOST(ihp);
+	    if (BU_STR_EQUAL(ihp->ht_name, "localhost"))
+		return ihp;
+	}
+    }
+
+    return make_default_host(name);
 }
 
-struct ihost *
-host_lookup_by_name(const char* name, int enter)
-{
-    struct sockaddr_in	sockhim;
-    struct hostent		*addr;
 
-    /* Determine name to be found */
-    if ( isdigit( (int)*name ) )  {
-	/* Numeric */
+/*
+ * Look up a host by name, resolving to canonical form via getaddrinfo().
+ * Numeric dotted-quad addresses are also accepted and forwarded to
+ * host_lookup_by_addr().
+ */
+struct ihost *
+host_lookup_by_name(const char *name, int enter)
+{
+    struct ihost *ihp;
+    struct addrinfo hints;
+    struct addrinfo *res = NULL;
+    char canon[NI_MAXHOST];
+    int ret;
+
+    if (isdigit((int)*name)) {
+	/* Numeric address — build a sockaddr_in and look up by address */
+	struct sockaddr_in sockhim;
+	memset(&sockhim, 0, sizeof(sockhim));
 	sockhim.sin_family = AF_INET;
 	sockhim.sin_addr.s_addr = inet_addr(name);
-	return host_lookup_by_addr( &sockhim, enter );
-    } else {
-	addr = gethostbyname(name);
+	return host_lookup_by_addr(&sockhim, enter);
     }
-    if ( addr == NULL )  {
-	bu_log("%s:  bad host\n", name);
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family   = AF_INET;   /* IPv4 for compat with sockaddr_in API */
+    hints.ai_flags    = AI_CANONNAME;
+    hints.ai_socktype = SOCK_STREAM;
+
+    ret = getaddrinfo(name, NULL, &hints, &res);
+    if (ret != 0) {
+	bu_log("%s: bad host (%s)\n", name, gai_strerror(ret));
 	return IHOST_NULL;
     }
-    return host_lookup_by_hostent( addr, enter );
+
+    /* Use canonical name if available */
+    if (res->ai_canonname && res->ai_canonname[0] != '\0')
+	bu_strlcpy(canon, res->ai_canonname, sizeof(canon));
+    else
+	bu_strlcpy(canon, name, sizeof(canon));
+    freeaddrinfo(res);
+
+    /* Search existing table */
+    for (BU_LIST_FOR(ihp, ihost, &HostHead)) {
+	CK_IHOST(ihp);
+	if (BU_STR_EQUAL(ihp->ht_name, canon))
+	    return ihp;
+    }
+
+    if (enter == 0) {
+	bu_log("%s: bad host\n", name);
+	return IHOST_NULL;
+    }
+
+    return make_default_host(canon);
 }
+
 
 struct ihost *
 host_lookup_of_fd(int fd)
 {
-    socklen_t	fromlen;
+    socklen_t fromlen;
     struct sockaddr_in from;
 
     fromlen = sizeof(from);
@@ -236,7 +289,7 @@ host_lookup_of_fd(int fd)
 	return IHOST_NULL;
     }
 
-    return host_lookup_by_addr( &from, 1 );
+    return host_lookup_by_addr(&from, 1);
 }
 
 /*

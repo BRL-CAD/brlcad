@@ -166,6 +166,7 @@ set(
   rtweight.adoc
   rtwizard.adoc
   rtxray.adoc
+  rtsrv.adoc
   showshot.adoc
   stl-g.adoc
   sun-pix.adoc
