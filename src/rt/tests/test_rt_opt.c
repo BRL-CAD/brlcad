@@ -667,6 +667,24 @@ test_opt_cut_plane(void)
     CHECK_DBL("-k diagonal point+normal kut_plane[1]", inv_sqrt3, kut_plane[1]);
     CHECK_DBL("-k diagonal point+normal kut_plane[2]", inv_sqrt3, kut_plane[2]);
     CHECK_DBL("-k diagonal point+normal kut_plane[W]", sqrt3, kut_plane[W]);
+
+    reset_globals();
+    MAKE_ARGV(av6, "rt", "-k", "-500,0,0");
+    CALL_GET_ARGS(av6, 1);
+    CHECK_INT("-k point-vector shorthand", 1, do_kut_plane);
+    CHECK_DBL("-k point-vector shorthand kut_plane[0]", -1.0, kut_plane[0]);
+    CHECK_DBL("-k point-vector shorthand kut_plane[1]", 0.0, kut_plane[1]);
+    CHECK_DBL("-k point-vector shorthand kut_plane[2]", 0.0, kut_plane[2]);
+    CHECK_DBL("-k point-vector shorthand kut_plane[W]", 500.0, kut_plane[W]);
+
+    reset_globals();
+    MAKE_ARGV(av7, "rt", "--cut-plane", "0, 6, 8");
+    CALL_GET_ARGS(av7, 1);
+    CHECK_INT("--cut-plane point-vector shorthand", 1, do_kut_plane);
+    CHECK_DBL("--cut-plane point-vector shorthand kut_plane[0]", 0.0, kut_plane[0]);
+    CHECK_DBL("--cut-plane point-vector shorthand kut_plane[1]", 0.6, kut_plane[1]);
+    CHECK_DBL("--cut-plane point-vector shorthand kut_plane[2]", 0.8, kut_plane[2]);
+    CHECK_DBL("--cut-plane point-vector shorthand kut_plane[W]", 10.0, kut_plane[W]);
 }
 
 

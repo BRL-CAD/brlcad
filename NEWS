@@ -18,7 +18,7 @@ include/rt/db_instance.h header have now been made properly private,
 and an obsolete entry was removed from the rt_bot_internal struct -
 these are ABI breaking changes.
 
-* added pt + nrml plane specification to rt -k option - Cliff Yapp
+* added support for alternate plane forms to rt -k option - Cliff Yapp
 * added loadview manual page - Sean Morrison
 * expanded tops and saveview manpages with more detail - Sean Morrison
 * fixed bug in gqa material object lookup - Cliff Yapp

@@ -305,7 +305,7 @@ rt_opt_subgrid(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(
 }
 
 
-/* -k / --cut-plane  xd,yd,zd,dist OR x,y,z,nx,ny,nz */
+/* -k / --cut-plane  xd,yd,zd,dist OR x,y,z,nx,ny,nz OR x,y,z */
 static int
 rt_opt_cut_plane(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
@@ -346,9 +346,21 @@ rt_opt_cut_plane(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSE
 
     n = sscanf(scan_arg, "%lg,%lg,%lg,%lg",
 	       &scan[0], &scan[1], &scan[2], &scan[3]);
+    if (n == 3) {
+	VSET(pt, scan[0], scan[1], scan[2]);
+	VSET(nrml, scan[0], scan[1], scan[2]);
+	f = MAGNITUDE(nrml);
+	if (f <= SMALL)
+	    bu_exit(EXIT_FAILURE, "ERROR: bad normal for cutting plane, length=%g\n", f);
+	VUNITIZE(nrml);
+	VMOVE(kut_plane, nrml);
+	kut_plane[W] = VDOT(pt, nrml);
+	bu_free(scan_arg, "cut-plane parse buffer");
+	return 1;
+    }
     bu_free(scan_arg, "cut-plane parse buffer");
     if (n != 4)
-	bu_exit(EXIT_FAILURE, "ERROR: bad cutting plane, expected xdir,ydir,zdir,dist or x,y,z,nx,ny,nz\n");
+	bu_exit(EXIT_FAILURE, "ERROR: bad cutting plane, expected xdir,ydir,zdir,dist or x,y,z,nx,ny,nz or x,y,z\n");
     HMOVE(kut_plane, scan); /* double to fastf_t */
     f = MAGNITUDE(kut_plane);
     if (f <= SMALL)
@@ -952,7 +964,7 @@ static struct bu_opt_desc opt_defs[] = {
      "Grid cell height in mm"},
     {"j",  "subgrid",         "xmin,ymin,xmax,ymax", rt_opt_subgrid, NULL,
      "Raytrace only a sub-rectangle of the view"},
-    {"k",  "cut-plane",       "xdir,ydir,zdir,dist | x,y,z,nx,ny,nz", rt_opt_cut_plane, NULL,
+    {"k",  "cut-plane",       "xdir,ydir,zdir,dist | x,y,z,nx,ny,nz | x,y,z", rt_opt_cut_plane, NULL,
      "Apply a cutting plane (equivalent to subtracting a halfspace)"},
 
     /* --- Rendering parameters ------------------------------------------ */
