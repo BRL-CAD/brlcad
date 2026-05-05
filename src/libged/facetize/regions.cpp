@@ -41,6 +41,7 @@
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/env.h"
+#include "bu/time.h"
 #include "bg/trimesh.h"
 #include "rt/db_io.h"
 #include "rt/search.h"
@@ -50,6 +51,8 @@
 #include "./ged_facetize.h"
 
 static const double FACETIZE_RT_EMPTY_TOL = 1.0e-9;
+static const size_t FACETIZE_PROGRESS_INTERVAL = 25;
+static const double FACETIZE_USEC_TO_SEC_DIVISOR = 1.0e6;
 
 /* Minimum Crofton crossing count for a statistically meaningful SA
  * comparison.  Below this threshold (~1/sqrt(N) noise > 14 %) the
@@ -489,6 +492,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     int ret = BRLCAD_OK;
     struct db_i *dbip = s->dbip;
     struct bu_list *vlfree = &rt_vlfree;
+    int64_t region_start = bu_gettime();
 
     /* Convert percentage thresholds (0–100) to fractions (0–1) once. */
     const double perturb_sa_frac  = s->perturb_sa_tol  / 100.0;
@@ -505,6 +509,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     int vcnt_p2_topoflip  = 0; /* P2: Crofton-zero/few after perturb (perturb shifted topology) */
     int vcnt_p2_warn      = 0; /* P2 persistent validation mismatch */
     int vcnt_unavail      = 0; /* validation unavailable (metric/prep failure) */
+    std::set<std::string> inspect_regions;
 
     /* Used the libged tolerances */
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -796,6 +801,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    }
 	}
     }
+    size_t eval_total = BU_PTBL_LEN(&eval_roots);
+    if (s->verbosity == 0)
+	facetize_log(s, 0, "Evaluating %zu roots...\n", eval_total);
 
     FacetizeVariantPlan *vplan = (FacetizeVariantPlan *)s->variant_plan;
     bool variant_meshes_ready = false;
@@ -810,8 +818,11 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     for (size_t i = 0; i < BU_PTBL_LEN(&eval_roots); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(&eval_roots, i);
-
-	facetize_log(s, 0, "Processing %s\n", dpw[0]->d_namep);
+	if (s->verbosity >= 1) {
+	    facetize_log(s, 1, "Processing %s\n", dpw[0]->d_namep);
+	} else if (((i + 1) % FACETIZE_PROGRESS_INTERVAL == 0) || (i + 1 == eval_total)) {
+	    facetize_log(s, 0, "  processed %zu/%zu roots\n", i + 1, eval_total);
+	}
 
 	// Get a name for the region's output BoT
 	if (s->make_nmg) {
@@ -862,7 +873,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			&sa_err_pct, &vol_err_pct);
 		if (vret == 1) {
 		    vcnt_p1_pass++;
-		    bu_log("FACETIZE: %s CSG vs BoT MATCH (SA_err=%.2f%% VOL_err=%.2f%%) - skipping perturb\n",
+		    facetize_log(s, 1, "FACETIZE: %s CSG vs BoT MATCH (SA_err=%.2f%% VOL_err=%.2f%%) - skipping perturb\n",
 			    dpw[0]->d_namep, sa_err_pct, vol_err_pct);
 		}
 		/* Return code 2: Crofton found a few crossings (1 to
@@ -871,7 +882,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		 * but very small.  Accept the BoT and skip perturb retry.    */
 		if (vret == 2) {
 		    vcnt_few_hit++;
-		    bu_log("FACETIZE NOTE: %s Crofton found very few ray intersections with CSG geometry (sub-mm or near-degenerate); BoT accepted - verify modeling intent\n",
+		    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (few ray hits)");
+		    facetize_log(s, 1, "FACETIZE NOTE: %s Crofton found very few ray intersections with CSG geometry (sub-mm or near-degenerate); BoT accepted - verify modeling intent\n",
 			    dpw[0]->d_namep);
 		}
 		/* Return code 3: Crofton found zero crossings for a non-empty
@@ -881,14 +893,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		 * one to match the expected raytrace behavior.                   */
 		if (vret == 3) {
 		    vcnt_zero_hit++;
-		    bu_log("FACETIZE: %s Crofton found zero ray intersections with CSG geometry; Boolean eval likely empty - replacing BoT with empty\n",
+		    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (zero CSG ray hits)");
+		    facetize_log(s, 1, "FACETIZE: %s Crofton found zero ray intersections with CSG geometry; Boolean eval likely empty - replacing BoT with empty\n",
 			    dpw[0]->d_namep);
 		    if (!s->no_empty)
 			_write_empty_bot(wdbip, bu_vls_cstr(&bname), s->verbosity);
 		}
 		if (vret == 0) {
 		    vcnt_p1_trigger++;
-		    bu_log("FACETIZE: %s CSG vs BoT MISMATCH (SA_err=%.2f%% VOL_err=%.2f%%) - triggering perturb\n",
+		    facetize_log(s, 1, "FACETIZE: %s CSG vs BoT MISMATCH (SA_err=%.2f%% VOL_err=%.2f%%) - triggering perturb\n",
 			    dpw[0]->d_namep, sa_err_pct, vol_err_pct);
 		    bool reopened_wdb = false;
 		    if (vplan && !variant_meshes_ready) {
@@ -944,7 +957,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			if (perturb_dbip) db_close(perturb_dbip);
 			if (vret2 == 1) {
 			    vcnt_p2_pass++;
-			    bu_log("FACETIZE: %s perturbed CSG vs BoT MATCH (SA_err=%.2f%% VOL_err=%.2f%%) - perturb successful\n",
+			    facetize_log(s, 1, "FACETIZE: %s perturbed CSG vs BoT MATCH (SA_err=%.2f%% VOL_err=%.2f%%) - perturb successful\n",
 				    dpw[0]->d_namep, sa_err2, vol_err2);
 			}
 			/* Return code 2 at P2: few Crofton crossings for
@@ -953,7 +966,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			 * (topology may have shifted slightly).                 */
 			if (vret2 == 2) {
 			    vcnt_p2_topoflip++;
-			    bu_log("FACETIZE NOTE: %s Crofton found very few crossings for perturbed CSG; perturb may have shifted geometry - check output\n",
+			    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (few perturbed CSG crossings)");
+			    facetize_log(s, 1, "FACETIZE NOTE: %s Crofton found very few crossings for perturbed CSG; perturb may have shifted geometry - check output\n",
 				    dpw[0]->d_namep);
 			}
 			/* Return code 3 at P2: zero Crofton crossings for
@@ -963,14 +977,16 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			 * BoT with an empty one to match raytrace behaviour.   */
 			if (vret2 == 3) {
 			    vcnt_zero_hit++;
-			    bu_log("FACETIZE: %s Crofton found zero crossings for perturbed CSG; Boolean eval likely empty after perturb - replacing BoT with empty\n",
+			    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (zero perturbed CSG crossings)");
+			    facetize_log(s, 1, "FACETIZE: %s Crofton found zero crossings for perturbed CSG; Boolean eval likely empty after perturb - replacing BoT with empty\n",
 				    dpw[0]->d_namep);
 			    if (!s->no_empty)
 				_write_empty_bot(wdbip, bu_vls_cstr(&bname), s->verbosity);
 			}
 			if (vret2 == 0) {
 			    vcnt_p2_warn++;
-			    bu_log("FACETIZE WARNING: %s persistent validation mismatch after perturb retry (SA_err=%.2f%% VOL_err=%.2f%%) - check output geometry with 'lint'\n",
+			    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (persistent mismatch after perturb)");
+			    facetize_log(s, 1, "FACETIZE WARNING: %s persistent validation mismatch after perturb retry (SA_err=%.2f%% VOL_err=%.2f%%) - check output geometry with 'lint'\n",
 				    dpw[0]->d_namep, sa_err2, vol_err2);
 			}
 			if (vret2 < 0) {
@@ -982,6 +998,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		}
 		if (vret < 0) {
 		    vcnt_unavail++;
+		    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (validation unavailable)");
 		    if (s->verbosity > 0)
 			bu_log("FACETIZE: validation unavailable for %s (crofton/metric prep failure)\n", dpw[0]->d_namep);
 		}
@@ -1061,36 +1078,26 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_free(ir, "ir table");
     s->use_variant_plan = 1;
 
-    /* Print a validation summary when any regions went through the check. */
+    /* Print a concise validation summary when any regions went through the check. */
     if ((vcnt_total > 0 || vcnt_skip > 0) && !s->make_nmg && !s->nmg_booleval) {
-	bu_log("\nFACETIZE conversion validation summary:\n");
-	if (vcnt_skip > 0)
-	    bu_log("  %d region%s skipped validation (no perturbable leaf primitives)\n",
-		    vcnt_skip, vcnt_skip == 1 ? "" : "s");
-	if (vcnt_p1_pass > 0)
-	    bu_log("  %d region%s passed P1 check (CSG-BoT within tolerance, no perturb needed)\n",
-		    vcnt_p1_pass, vcnt_p1_pass == 1 ? "" : "s");
-	if (vcnt_few_hit > 0)
-	    bu_log("  %d region%s accepted with note: Crofton found very few ray intersections (sub-mm or near-degenerate geometry; verify modeling intent)\n",
-		    vcnt_few_hit, vcnt_few_hit == 1 ? "" : "s");
-	if (vcnt_zero_hit > 0)
-	    bu_log("  %d region%s replaced with empty BoT: zero Crofton ray intersections (Boolean eval likely empty; use 'lint' to verify if unexpected)\n",
-		    vcnt_zero_hit, vcnt_zero_hit == 1 ? "" : "s");
-	if (vcnt_p1_trigger > 0) {
-	    bu_log("  %d region%s triggered perturb retry:\n",
-		    vcnt_p1_trigger, vcnt_p1_trigger == 1 ? "" : "s");
-	    if (vcnt_p2_pass > 0)
-		bu_log("    %d passed P2 check after perturb\n", vcnt_p2_pass);
-	    if (vcnt_p2_topoflip > 0)
-		bu_log("    %d accepted with note: Crofton-zero/few after perturb (perturb may have shifted topology; check output geometry)\n",
-			vcnt_p2_topoflip);
-	    if (vcnt_p2_warn > 0)
-		bu_log("    %d persistent validation mismatch after perturb (check output geometry with 'lint')\n",
-			vcnt_p2_warn);
+	double elapsed_s = (bu_gettime() - region_start) / FACETIZE_USEC_TO_SEC_DIVISOR;
+	facetize_log(s, 0, "\nFACETIZE summary:\n");
+	facetize_log(s, 0, "  %-40s %8zu\n", "Total roots evaluated", eval_total);
+	facetize_log(s, 0, "  %-40s %8.2f s\n", "Runtime", elapsed_s);
+	facetize_log(s, 0, "  %-40s %8d\n", "Validation skipped (no perturbable leaves)", vcnt_skip);
+	facetize_log(s, 0, "  %-40s %8d\n", "Validation pass (P1)", vcnt_p1_pass);
+	facetize_log(s, 0, "  %-40s %8d\n", "Perturb retries triggered", vcnt_p1_trigger);
+	facetize_log(s, 0, "  %-40s %8d\n", "Perturb retries passed (P2)", vcnt_p2_pass);
+	facetize_log(s, 0, "  %-40s %8d\n", "Few-hit notes (pre-perturb)", vcnt_few_hit);
+	facetize_log(s, 0, "  %-40s %8d\n", "Few-hit notes (post-perturb)", vcnt_p2_topoflip);
+	facetize_log(s, 0, "  %-40s %8d\n", "Zero-hit empty replacements", vcnt_zero_hit);
+	facetize_log(s, 0, "  %-40s %8d\n", "Persistent mismatches", vcnt_p2_warn);
+	facetize_log(s, 0, "  %-40s %8d\n", "Validation unavailable", vcnt_unavail);
+	if (!inspect_regions.empty()) {
+	    facetize_log(s, 0, "\n  Regions to inspect manually:\n");
+	    for (const auto &iname : inspect_regions)
+		facetize_log(s, 0, "    %s\n", iname.c_str());
 	}
-	if (vcnt_unavail > 0)
-	    bu_log("  %d region%s had validation unavailable (metric/prep failure)\n",
-		    vcnt_unavail, vcnt_unavail == 1 ? "" : "s");
     }
 
     // Report on the primitive processing
@@ -1231,7 +1238,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     if (s->variant_plan) {
 	FacetizeVariantPlan *vp = (FacetizeVariantPlan *)s->variant_plan;
 	if (vp->n_adjusted_instances > 0) {
-	    bu_log("FACETIZE: variant summary: %d adjusted instance(s) "
+	    facetize_log(s, 0, "FACETIZE: variant summary: %d adjusted instance(s) "
 		   "(%d subtractive), %d fallback(s), %d tess failure(s)\n",
 		   vp->n_adjusted_instances,
 		   vp->n_sub_variants,

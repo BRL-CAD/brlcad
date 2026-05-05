@@ -309,10 +309,12 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    manifold::Manifold *lm = (manifold::Manifold *)odata;
 	    leaf_sa = lm->SurfaceArea();
 	}
-	bu_log("[LEAF_TESS] name=%-30s  role=%s  mesh_SA=%.6f mm^2\n",
-	       dp->d_namep,
-	       is_sub_ctx ? "SUB " : "BASE",
-	       leaf_sa);
+	if (s && s->verbosity > 1) {
+	    bu_log("[LEAF_TESS] name=%-30s  role=%s  mesh_SA=%.6f mm^2\n",
+		   dp->d_namep,
+		   is_sub_ctx ? "SUB " : "BASE",
+		   leaf_sa);
+	}
     }
 
     BU_GET(curtree, union tree);
@@ -323,7 +325,8 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     curtree->tr_d.td_d = odata;
     curtree->tr_d.td_i = NULL;
 
-    if (RT_G_DEBUG&RT_DEBUG_TREEWALK)
+    bool should_log_treewalk = (s && s->verbosity > 1 && (RT_G_DEBUG & RT_DEBUG_TREEWALK));
+    if (should_log_treewalk)
 	bu_log("_booltree_leaf_tess(%s) OK\n", dp->d_namep);
 
     return curtree;
@@ -450,10 +453,12 @@ manifold_do_bool(
 
 	static const char *op_names[] = {"ADD","INTERSECT","SUBTRACT","ADD"};
 	int opidx = (op == OP_INTERSECT) ? 1 : (op == OP_SUBTRACT) ? 2 : 0;
-	bu_log("[BOOL_OP] %-8s L=%-30s SA=%.4f  R=%-30s SA=%.4f\n",
-	       op_names[opidx],
-	       tl->tr_d.td_name, lm->SurfaceArea(),
-	       tr->tr_d.td_name, rm->SurfaceArea());
+	if (s->verbosity > 1) {
+	    bu_log("[BOOL_OP] %-8s L=%-30s SA=%.4f  R=%-30s SA=%.4f\n",
+		   op_names[opidx],
+		   tl->tr_d.td_name, lm->SurfaceArea(),
+		   tr->tr_d.td_name, rm->SurfaceArea());
+	}
 
 	manifold::Manifold bool_out;
 	try {
@@ -475,10 +480,12 @@ manifold_do_bool(
 	}
 
 	if (!failed) {
-	    bu_log("[BOOL_OP] %-8s L=%-30s  R=%-30s  result_SA=%.4f\n",
-		   op_names[opidx],
-		   tl->tr_d.td_name, tr->tr_d.td_name,
-		   bool_out.SurfaceArea());
+	    if (s->verbosity > 1) {
+		bu_log("[BOOL_OP] %-8s L=%-30s  R=%-30s  result_SA=%.4f\n",
+		       op_names[opidx],
+		       tl->tr_d.td_name, tr->tr_d.td_name,
+		       bool_out.SurfaceArea());
+	    }
 	    result = new manifold::Manifold(bool_out);
 	}
 
@@ -587,11 +594,11 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt,
     facetize_log(s, 2, "%s\n", bu_vls_cstr(&cmd));
     bu_vls_free(&cmd);
 
-    // If we're not being verbose, just report how many objects we're working on
+    // Verbose progress line showing how many objects we're working on
     if (ocnt == 1)
-	facetize_log(s, 0, "Attempting to triangulate %s...", tess_cmd[tess_cmd_cnt-ocnt]);
+	facetize_log(s, 1, "Attempting to triangulate %s...", tess_cmd[tess_cmd_cnt-ocnt]);
     if (ocnt > 1)
-	facetize_log(s, 0, "Attempting to triangulate %d solids...", ocnt);
+	facetize_log(s, 1, "Attempting to triangulate %d solids...", ocnt);
 
     int64_t start = bu_gettime();
     int64_t elapsed = 0;
@@ -691,7 +698,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt,
     subprocess_destroy(&p);
 
     if (w_rc == BRLCAD_OK) {
-	facetize_log(s, 0, " Success.\n");
+	facetize_log(s, 1, " Success.\n");
     } else {
 	facetize_log(s, 0, " FAILED.\n");
     }
@@ -1158,7 +1165,8 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     if (!dbip || !wdbp || !argv || !oname)
 	return BRLCAD_ERROR;
 
-    if (s->verbosity == 0) {
+    /* Per-object booleval status is shown only in verbose mode. */
+    if (s->verbosity >= 1) {
 	if (argc == 1) {
 	    bu_log("%s: evaluating booleans...\n", argv[0]);
 	} else {
@@ -1269,11 +1277,13 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    return BRLCAD_ERROR;
 	}
 
-	bu_log("[FINAL_BOOL] obj=%s  final_mesh_SA=%.6f mm^2  num_verts=%zu  num_faces=%zu\n",
-	       (argc > 0 && argv && argv[0]) ? argv[0] : "?",
-	       om->SurfaceArea(),
-	       (size_t)om->GetMeshGL64().vertProperties.size() / 3,
-	       (size_t)om->GetMeshGL64().triVerts.size() / 3);
+	if (s->verbosity > 1) {
+	    bu_log("[FINAL_BOOL] obj=%s  final_mesh_SA=%.6f mm^2  num_verts=%zu  num_faces=%zu\n",
+		   (argc > 0 && argv && argv[0]) ? argv[0] : "?",
+		   om->SurfaceArea(),
+		   (size_t)om->GetMeshGL64().vertProperties.size() / 3,
+		   (size_t)om->GetMeshGL64().triVerts.size() / 3);
+	}
 
 	manifold::MeshGL64 rmesh = om->GetMeshGL64();
 	struct rt_bot_internal *bot;

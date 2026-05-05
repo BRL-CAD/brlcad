@@ -479,7 +479,7 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
 
     struct db_i *dbip = s->dbip;
 
-    bu_log("\nPrimitive tessellation summary:\n\n");
+    facetize_log(s, 0, "\nPrimitive tessellation summary:\n");
     std::map<std::string, std::set<std::string>> method_sets;
     std::map<std::string, std::set<std::string>>::iterator m_it;
     std::set<std::string>::iterator s_it;
@@ -488,27 +488,39 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
 	db_dirbuild(cdbip);
 	db_update_nref(cdbip);
 	method_scan(&method_sets, cdbip);
+	size_t total = 0;
+	size_t fail_cnt = 0;
+	size_t repair_cnt = 0;
+	size_t plate_cnt = 0;
+	for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
+	    total += m_it->second.size();
+	    if (m_it->first == std::string("FAIL")) fail_cnt += m_it->second.size();
+	    if (m_it->first == std::string("REPAIR")) repair_cnt += m_it->second.size();
+	    if (m_it->first == std::string("PLATE")) plate_cnt += m_it->second.size();
+	}
+	facetize_log(s, 0, "  %-33s %8zu\n", "Total solids evaluated", total);
+	facetize_log(s, 0, "  %-33s %8zu\n", "Failed tessellation", fail_cnt);
+	facetize_log(s, 0, "  %-33s %8zu\n", "Plate extrusions", plate_cnt);
+	facetize_log(s, 0, "  %-33s %8zu\n", "BoT repair closures", repair_cnt);
+	facetize_log(s, 0, "\n  Method breakdown:\n");
 	for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
 	    if (m_it->first == std::string("REPAIR")) {
-		bu_log("%zd BoT(s) closed to form manifolds using 'bot repair'%s\n",
-			m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
+		facetize_log(s, 0, "    %-28s %8zu\n", "bot repair", m_it->second.size());
 	    } else if (m_it->first == std::string("PLATE")) {
-		bu_log("%zd plate mode BoT(s) extruded to form manifold volumes%s\n",
-			m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
+		facetize_log(s, 0, "    %-28s %8zu\n", "plate extrusion", m_it->second.size());
 	    } else if (m_it->first == std::string("FAIL")) {
-		bu_log("%zd object(s) failed%s\n",
-			m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
+		facetize_log(s, 0, "    %-28s %8zu\n", "failed", m_it->second.size());
 	    } else {
-		bu_log("%zd object(s) succeeded using the %s method%s\n",
-			m_it->second.size(), m_it->first.c_str(), (s->verbosity > 0 && m_it->first != std::string("NMG")) ? ":" : ".");
+		std::string mlabel = std::string("success: ") + m_it->first;
+		facetize_log(s, 0, "    %-28s %8zu\n", mlabel.c_str(), m_it->second.size());
 	    }
-	    if (s->verbosity > 0) {
+	    if (s->verbosity > 1) {
 		// If we used NMG to facetize, that's considered normal - don't
 		// bother listing those primitives
 		if (m_it->first == std::string("NMG"))
 		    continue;
 		for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
-		    bu_log("\t%s\n", (*s_it).c_str());
+		    facetize_log(s, 1, "\t%s\n", (*s_it).c_str());
 		}
 	    }
 	}
@@ -543,4 +555,3 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

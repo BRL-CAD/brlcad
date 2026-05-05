@@ -261,6 +261,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     int quiet = 0;
+    long verbosity = 0;
     method_options_t *method_options = new method_options_t;
     std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
@@ -271,7 +272,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     /* General options */
     struct bu_opt_desc d[23];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
-    BU_OPT(d[ 1], "v", "verbose",                                   "",            &_ged_vopt,       &(s->verbosity), "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[ 1], "v", "verbose",                                   "",  &bu_opt_incr_long,       &verbosity, "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
     BU_OPT(d[ 3], "n", "nmg-output",                                "",                  NULL,        &(s->make_nmg), "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh).  Note that this will disable most other processing options and may reduce the conversion success rate.");
     BU_OPT(d[ 4], "r", "regions",                                   "",                  NULL,         &(s->regions), "For combs, walk the trees and create new copies of the hierarchies with each region's CSG tree replaced by a facetized evaluation of that region. (Default is to create one facetized object.)");
@@ -314,6 +315,8 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
     bu_vls_free(&omsg);
+
+    s->verbosity = (int)verbosity;
 
     // If we got a max-time top level arg, override any times that aren't specifically set
     // by method options
