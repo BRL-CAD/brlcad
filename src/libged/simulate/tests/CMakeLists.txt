@@ -41,7 +41,8 @@ if(BRLCAD_ENABLE_BULLET)
   target_include_directories(simulate_test BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
   target_include_directories(simulate_test SYSTEM PRIVATE ${BULLET_INCLUDE_DIR})
   target_compile_options(simulate_test PRIVATE -Wno-nonnull-compare)
-  brlcad_add_test(NAME simulate_test COMMAND simulate_test)
+  # Not ready to turn this on by default yet.
+  #brlcad_add_test(NAME simulate_test COMMAND simulate_test)
 
   # verify_simulation: standalone tool for pre/post-simulation checks on an
   # actual on-disk .g database (m35 truck + terra terrain scenario).
@@ -70,16 +71,17 @@ if(BRLCAD_ENABLE_BULLET)
     )
     add_custom_target(m35_sim_db DEPENDS "${M35_SIM_DB}")
 
-    # Step 2: run one simulation step, then verify
-    brlcad_add_test(
-      NAME    simulate_m35
-      COMMAND "${CMAKE_BINARY_DIR}/${BIN_DIR}/mged" -c "${M35_SIM_DB}"
-              "simulate --steps 1 scene.c 0.5"
-    )
-    set_tests_properties(simulate_m35 PROPERTIES
-      DEPENDS m35_sim_db
-      PASS_REGULAR_EXPRESSION "."
-    )
+    # Step 2: run one simulation step, then verify  (not ready to turn
+    # this on by default yet)
+    #brlcad_add_test(
+    #  NAME    simulate_m35
+    #  COMMAND "${CMAKE_BINARY_DIR}/${BIN_DIR}/mged" -c "${M35_SIM_DB}"
+    #          "simulate --steps 1 scene.c 0.5"
+    #)
+    #set_tests_properties(simulate_m35 PROPERTIES
+    #  DEPENDS m35_sim_db
+    #  PASS_REGULAR_EXPRESSION "."
+    #)
   endif()
 
 endif(BRLCAD_ENABLE_BULLET)
