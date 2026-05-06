@@ -287,7 +287,11 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     /* TODO: investigate removing exclusion of INMEM flag, added by
      * mike in c13285 when in-mem support was originally added
      */
-    dp->d_flags = flags & ~(RT_DIR_INMEM);
+    /* Preserve RT_DIR_INMEM flag if database is in-memory */
+	if (dbip->i->dbi_fp == NULL)
+		dp->d_flags = flags | RT_DIR_INMEM;
+	else
+		dp->d_flags = flags & ~(RT_DIR_INMEM);
     dp->d_len = len;
     dp->d_forw = *headp;
     BU_LIST_INIT(&dp->d_use_hd);
