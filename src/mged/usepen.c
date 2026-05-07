@@ -537,9 +537,14 @@ f_mouse(
 		return TCL_OK;
 	    }
 
-	case ST_S_VPICK:
-	    sedit_vpick(s, mousevec);
-	    return TCL_OK;
+	/* ST_S_VPICK was a separate state in vanilla MGED for NURBS vertex
+	 * picking.  In the reworked architecture, VPICK is handled entirely
+	 * within the ft_edit_xy callback (ECMD_SPLINE_VPICK case in
+	 * rt_edit_bspline_edit_xy): it stores the cursor position in b->v_pos
+	 * and then ft_edit calls sedit_vpick() internally.  The ST_S_VPICK
+	 * state is no longer needed and the code below is retained only for
+	 * historical reference. */
+	/* case ST_S_VPICK:  sedit_vpick(MEDIT(s)); return TCL_OK; */
 
 	case ST_O_EDIT:
 	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')

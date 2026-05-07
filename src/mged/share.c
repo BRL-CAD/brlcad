@@ -69,7 +69,10 @@
     } while (0)
 
 
-// FIXME: Globals
+/* These vparse arrays are defined in set.c and cmd.c.  They are exposed as
+ * extern declarations here because share.c needs to iterate over them when
+ * sharing/unsharing resources between display managers.  Moving them to a
+ * header is a future clean-up task; for now the explicit externs suffice. */
 extern struct bu_structparse axes_vparse[];
 extern struct bu_structparse color_scheme_vparse[];
 extern struct bu_structparse grid_vparse[];
@@ -283,6 +286,7 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
  * EXAMPLES
  *	rset c bg 0 0 50	--->	sets the background color to dark blue
  */
+// TODO - is e_type actually used here?
 int
 f_rset (ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
