@@ -289,6 +289,16 @@ main(int ac, char *av[]) {
     v->gv_base2local = gedp->dbip->dbi_base2local;
     v->gv_local2base = gedp->dbip->dbi_local2base;
 
+    // The default (fast) wireframe has some differences from
+    // the slower full OpenGL draw path - disable it for the
+    // purposes of these tests.
+    s_av[0] = "dm";
+    s_av[1] = "set";
+    s_av[2] = "fast_wireframe";
+    s_av[3] = "0";
+    s_av[4] = NULL;
+    ged_exec_dm(gedp, 4, s_av);
+
     /***** Basic wireframe draw *****/
     bu_log("Testing basic db wireframe draw...\n");
     s_av[0] = "draw";

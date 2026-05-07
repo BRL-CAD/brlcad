@@ -478,7 +478,6 @@ main(int ac, char *av[]) {
 	s_av[5] = bu_vls_cstr(&dm_name);
 	s_av[6] = NULL;
 	ged_exec_dm(gedp, 6, s_av);
-	bu_vls_free(&dm_name);
 
 	struct dm *dmp = (struct dm *)v->dmp;
 	dm_set_width(dmp, 512);
@@ -497,6 +496,21 @@ main(int ac, char *av[]) {
 	v->gv_height = dm_get_height(dmp);
 	v->gv_base2local = gedp->dbip->dbi_base2local;
 	v->gv_local2base = gedp->dbip->dbi_local2base;
+
+	// The default (fast) wireframe has some differences from
+	// the slower full OpenGL draw path - disable it for the
+	// purposes of these tests.
+	s_av[0] = "dm";
+	s_av[1] = "set";
+	s_av[2] = "--dm";
+	s_av[3] = bu_vls_cstr(&dm_name);
+	s_av[4] = "fast_wireframe";
+	s_av[5] = "0";
+	s_av[6] = NULL;
+	ged_exec_dm(gedp, 6, s_av);
+
+	// Done with dm name
+	bu_vls_free(&dm_name);
     }
 
     /* Set distinct view az/el for each of the four quad views */

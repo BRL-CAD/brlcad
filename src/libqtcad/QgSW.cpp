@@ -376,7 +376,11 @@ void QgSW::save_image() {
 	return;
     }
     QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBX8888);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     image.flipped(Qt::Vertical).save("file.png");
+#else
+    image.mirrored(false, true).save("file.png");
+#endif
 }
 
 void QgSW::aet(double a, double e, double t)

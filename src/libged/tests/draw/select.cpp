@@ -144,6 +144,16 @@ main(int ac, char *av[]) {
     s_av[3] = NULL;
     ged_exec_ae(gedp, 3, s_av);
 
+    // The default (fast) wireframe has some differences from
+    // the slower full OpenGL draw path - disable it for the
+    // purposes of these tests.
+    s_av[0] = "dm";
+    s_av[1] = "set";
+    s_av[2] = "fast_wireframe";
+    s_av[3] = "0";
+    s_av[4] = NULL;
+    ged_exec_dm(gedp, 4, s_av);
+
     /***** Basic CSG wireframe ****/
     bu_log("Sanity - basic wireframe, no selection...\n");
 
