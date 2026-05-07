@@ -112,7 +112,8 @@ swrast_draw_line_rgba(struct swrast_vars_fast *pv, int w, int h, int x0, int y0,
 static int
 clip_line_to_win(int *x0, int *y0, int *x1, int *y1, int w, int h)
 {
-    const int LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8;
+    enum { LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8 };
+
     auto code = [w, h](int x, int y) {
 	int c = 0;
 	if (x < 0) c |= LEFT;
