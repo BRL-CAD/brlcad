@@ -113,7 +113,7 @@ static int
 clip_line_to_win(int *x0, int *y0, int *x1, int *y1, int w, int h)
 {
     const int LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8;
-    auto code = [w, h, LEFT, RIGHT, BOTTOM, TOP](int x, int y) {
+    auto code = [w, h](int x, int y) {
 	int c = 0;
 	if (x < 0) c |= LEFT;
 	else if (x >= w) c |= RIGHT;
