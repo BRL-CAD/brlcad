@@ -35,6 +35,7 @@ extern "C" {
 
 #include <vector>
 #include <QBoxLayout>
+#include <QImage>
 #include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
@@ -65,6 +66,10 @@ class QTCAD_EXPORT QgView : public QWidget
 	bool diff_hashes();  // Set dmp dirty flag if current hashes != stashed hashes.  (Does not update   stored hash values - use stash_hashes for that operation.)
 
 	void save_image(int quad = 0);
+	void render_to_file(const QString &filename);
+	/* Render the current view and return the raw DM pixel data.
+	 * Returns a null QImage (check with isNull()) on failure. */
+	void get_viewport_image(QImage &img);
 
 	bool isValid();
 

@@ -128,6 +128,22 @@ QgView::save_image(int UNUSED(quad))
 }
 
 void
+QgView::render_to_file(const QString &filename)
+{
+    if (canvas_sw)
+	canvas_sw->render_to_file(filename);
+}
+
+void
+QgView::get_viewport_image(QImage &img)
+{
+    if (canvas_sw)
+	canvas_sw->get_viewport_image(img);
+    else
+	img = QImage();
+}
+
+void
 QgView::do_view_changed()
 {
     QTCAD_SLOT("QgView::do_view_changed", 1);

@@ -19,6 +19,7 @@ set(
   QgSW.h
   QgSelectFilter.h
   QgSignalFlags.h
+  QgSketchFilter.h
   QgToolPalette.h
   QgTreeSelectionModel.h
   QgTreeView.h
