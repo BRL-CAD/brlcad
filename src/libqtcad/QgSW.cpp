@@ -170,14 +170,14 @@ void QgSW::paintEvent(QPaintEvent *e)
 
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;
-    if (dm_get_display_image(dmp, &dm_image, 1, 1)) {
+    if (dm_get_display_image(dmp, &dm_image, 0, 1)) {
 	return;
     }
-    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBA8888);
-    QImage img32 = image.convertToFormat(QImage::Format_RGB32);
+    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBX8888);
     QPainter painter(this);
-    painter.drawImage(this->rect(), img32);
-    bu_free(dm_image, "copy of backend image");
+    painter.translate(0, height());
+    painter.scale(1.0, -1.0);
+    painter.drawImage(QRect(0, 0, width(), height()), image);
     QWidget::paintEvent(e);
 }
 
@@ -282,20 +282,23 @@ void QgSW::mouseMoveEvent(QMouseEvent *e)
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADmouseMoveEvent(v, x_prev, y_prev, e, lmouse_mode)) {
+    int mret = CADmouseMoveEvent(v, x_prev, y_prev, e, lmouse_mode);
+    if (mret > 0) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();
     }
 
     // Current positions are the new previous positions
+    if (mret != -1) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    x_prev = e->x();
-    y_prev = e->y();
+        x_prev = e->x();
+        y_prev = e->y();
 #else
-    x_prev = e->position().x();
-    y_prev = e->position().y();
+        x_prev = e->position().x();
+        y_prev = e->position().y();
 #endif
+    }
 
     QWidget::mouseMoveEvent(e);
 }
@@ -369,12 +372,11 @@ bool QgSW::diff_hashes()
 void QgSW::save_image() {
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;
-    if (dm_get_display_image(dmp, &dm_image, 1, 1)) {
+    if (dm_get_display_image(dmp, &dm_image, 0, 1)) {
 	return;
     }
-    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBA8888);
-    QImage img32 = image.convertToFormat(QImage::Format_RGB32);
-    img32.save("file.png");
+    QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBX8888);
+    image.flipped(Qt::Vertical).save("file.png");
 }
 
 void QgSW::aet(double a, double e, double t)
@@ -447,4 +449,3 @@ QgSW::set_lmouse_move_default(int mm)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

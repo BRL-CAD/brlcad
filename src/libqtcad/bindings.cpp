@@ -25,6 +25,8 @@
 
 #include "common.h"
 #include <QtGlobal>
+#include <chrono>
+#include <unordered_map>
 
 extern "C" {
 #include "bn/str.h"
@@ -34,6 +36,37 @@ extern "C" {
 
 #include "qtcad/defines.h"
 #include "bindings.h"
+
+typedef void (*bounds_update_t)(struct bview *);
+static std::unordered_map<struct bview *, bounds_update_t> drag_bounds_updates;
+static std::unordered_map<struct bview *, long long> drag_update_ts;
+static const long long drag_update_interval_ms = 16;
+
+static void
+suspend_drag_bounds_update(struct bview *v)
+{
+    if (!v || !v->gv_bounds_update)
+	return;
+    if (drag_bounds_updates.find(v) == drag_bounds_updates.end()) {
+	drag_bounds_updates[v] = v->gv_bounds_update;
+	v->gv_bounds_update = NULL;
+    }
+}
+
+static void
+restore_drag_bounds_update(struct bview *v, int refresh_bounds)
+{
+    if (!v)
+	return;
+    std::unordered_map<struct bview *, bounds_update_t>::iterator it = drag_bounds_updates.find(v);
+    if (it == drag_bounds_updates.end())
+	return;
+    v->gv_bounds_update = it->second;
+    if (refresh_bounds && v->gv_bounds_update)
+	(*(v->gv_bounds_update))(v);
+    drag_bounds_updates.erase(it);
+    drag_update_ts.erase(v);
+}
 
 // TODO - look into QShortcut, see if it might be a better way
 // to manage this
@@ -159,6 +192,8 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
     if (!v)
 	return 0;
 
+    restore_drag_bounds_update(v, 1);
+
     // If we're intending the mouse motion to do the work,
     // then the release has to be a no-op.  If we're going
     // to do configurable key bindings, this will take some
@@ -269,6 +304,13 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
     if (!e->buttons().testFlag(Qt::LeftButton))
 	return 0;
 
+    long long now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+	std::chrono::steady_clock::now().time_since_epoch()).count();
+    std::unordered_map<struct bview *, long long>::iterator ts_it = drag_update_ts.find(v);
+    if (ts_it != drag_update_ts.end() && (now_ms - ts_it->second) < drag_update_interval_ms)
+	return -1;
+    drag_update_ts[v] = now_ms;
+
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     int dx = e->x() - x_prev;
     int dy = e->y() - y_prev;
@@ -300,6 +342,10 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
     // do the correct math.
     point_t center;
     MAT_DELTAS_GET_NEG(center, v->gv_center);
+
+    if (view_flags & (BV_ROT | BV_TRANS | BV_SCALE))
+	suspend_drag_bounds_update(v);
+
     return bv_adjust(v, dx, dy, center, 0, view_flags);
 
 }
@@ -330,4 +376,3 @@ int CADwheelEvent(struct bview *v, QWheelEvent *e)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

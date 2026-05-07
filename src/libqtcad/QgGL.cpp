@@ -288,20 +288,23 @@ void QgGL::mouseMoveEvent(QMouseEvent *e)
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADmouseMoveEvent(v, x_prev, y_prev, e, lmouse_mode)) {
+    int mret = CADmouseMoveEvent(v, x_prev, y_prev, e, lmouse_mode);
+    if (mret > 0) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();
     }
 
     // Current positions are the new previous positions
+    if (mret != -1) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    x_prev = e->x();
-    y_prev = e->y();
+        x_prev = e->x();
+        y_prev = e->y();
 #else
-    x_prev = e->position().x();
-    y_prev = e->position().y();
+        x_prev = e->position().x();
+        y_prev = e->position().y();
 #endif
+    }
 
     QOpenGLWidget::mouseMoveEvent(e);
 }
@@ -444,4 +447,3 @@ QgGL::set_lmouse_move_default(int mm)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

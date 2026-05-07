@@ -266,6 +266,8 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->fastfog = 1;
     mvars->fogdensity = 1.0;
     mvars->lighting_on = 1;
+    mvars->fast_wireframe = 1;
+    mvars->fast_wireframe_active = 1;
     mvars->zbuffer_on = 1;
     mvars->zclipping_on = 0;
     mvars->bound = 1.0;
@@ -568,7 +570,6 @@ swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alph
 
     int width = dmp->i->dm_width;
     int height = dmp->i->dm_height;
-    int bytes_per_pixel = alpha ? 4 : 3;
 
     /* Get the raw RGBA render buffer directly from OSMesa.  This is the os_b
      * buffer that OSMesaMakeCurrent was called with, which receives all drawing
@@ -584,26 +585,29 @@ swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alph
 	return BRLCAD_ERROR;
     }
 
-    /* cbuf is RGBA unsigned byte, row-major from bottom-left */
+    /* cbuf is RGBA unsigned byte, row-major. */
     unsigned char *src = (unsigned char *)cbuf;
-    unsigned char *idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel,
-						       sizeof(unsigned char), "swrast image");
-    if (alpha) {
-	/* copy RGBA directly */
-	memcpy(idata, src, (size_t)width * height * 4);
+    if (alpha && !flip) {
+	*image = src;
     } else {
-	/* convert RGBA → RGB */
-	for (int i = 0; i < width * height; i++) {
-	    idata[i * 3 + 0] = src[i * 4 + 0];
-	    idata[i * 3 + 1] = src[i * 4 + 1];
-	    idata[i * 3 + 2] = src[i * 4 + 2];
+	int bytes_per_pixel = alpha ? 4 : 3;
+	unsigned char *idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel,
+						       sizeof(unsigned char), "swrast image");
+	if (alpha) {
+	    memcpy(idata, src, (size_t)width * height * 4);
+	} else {
+	    for (int i = 0; i < width * height; i++) {
+		idata[i * 3 + 0] = src[i * 4 + 0];
+		idata[i * 3 + 1] = src[i * 4 + 1];
+		idata[i * 3 + 2] = src[i * 4 + 2];
+	    }
 	}
+
+	*image = idata;
+
+	if (flip)
+	    flip_display_image_vertically(*image, width, height, alpha);
     }
-
-    *image = idata;
-
-    if (flip)
-	flip_display_image_vertically(*image, width, height, alpha);
 
     /* Restore the previously active OSMesa context */
     if (need_restore)
@@ -761,4 +765,3 @@ COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

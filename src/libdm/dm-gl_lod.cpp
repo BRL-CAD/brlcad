@@ -40,16 +40,234 @@ extern "C" {
 #include "./include/private.h"
 }
 
+struct swrast_vars_fast {
+    struct bview *v;
+    void *ctx;
+    void *os_b;
+};
+
 static int
 gl_swrast_database_wireframe(struct dm *dmp, struct bv_scene_obj *s)
 {
-    if (!dmp || !s || !dm_get_dm_name(dmp) || !BU_STR_EQUAL(dm_get_dm_name(dmp), "swrast"))
+    if (!dmp || !s)
+	return 0;
+
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    if (!mvars || !mvars->fast_wireframe_active)
 	return 0;
 
     if (!(s->s_type_flags & BV_DB_OBJS))
 	return 0;
 
     return (s->s_os->s_dmode == 0 || s->s_os->s_dmode == 3);
+}
+
+static int
+gl_swrast_wireframe_obj(struct dm *dmp, struct bv_scene_obj *s)
+{
+    if (!dmp || !s || !dm_get_dm_name(dmp) || !BU_STR_EQUAL(dm_get_dm_name(dmp), "swrast"))
+	return 0;
+    if (!(s->s_type_flags & BV_DB_OBJS))
+	return 0;
+    return (s->s_os->s_dmode == 0 || s->s_os->s_dmode == 3);
+}
+
+static inline void
+swrast_put_pixel_rgba(struct swrast_vars_fast *pv, int w, int h, int x, int y, const unsigned char *fg)
+{
+    if (!pv || !pv->os_b || x < 0 || y < 0 || x >= w || y >= h)
+	return;
+    unsigned char *pix = ((unsigned char *)pv->os_b) + (((h - 1 - y) * w + x) * 4);
+    pix[0] = fg[0];
+    pix[1] = fg[1];
+    pix[2] = fg[2];
+    pix[3] = 255;
+}
+
+static void
+swrast_draw_line_rgba(struct swrast_vars_fast *pv, int w, int h, int x0, int y0, int x1, int y1, const unsigned char *fg)
+{
+    int dx = abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy;
+
+    for (;;) {
+	swrast_put_pixel_rgba(pv, w, h, x0, y0, fg);
+	if (x0 == x1 && y0 == y1)
+	    break;
+	int e2 = 2 * err;
+	if (e2 >= dy) {
+	    err += dy;
+	    x0 += sx;
+	}
+	if (e2 <= dx) {
+	    err += dx;
+	    y0 += sy;
+	}
+    }
+}
+
+static int
+clip_line_to_win(int *x0, int *y0, int *x1, int *y1, int w, int h)
+{
+    const int LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8;
+    auto code = [w, h, LEFT, RIGHT, BOTTOM, TOP](int x, int y) {
+	int c = 0;
+	if (x < 0) c |= LEFT;
+	else if (x >= w) c |= RIGHT;
+	if (y < 0) c |= BOTTOM;
+	else if (y >= h) c |= TOP;
+	return c;
+    };
+
+    int c0 = code(*x0, *y0);
+    int c1 = code(*x1, *y1);
+    while (1) {
+	if (!(c0 | c1)) return 1;
+	if (c0 & c1) return 0;
+
+	int c = c0 ? c0 : c1;
+	int x = 0, y = 0;
+	if (c & TOP) {
+	    y = h - 1;
+	    x = *x0 + (*x1 - *x0) * (y - *y0) / ((*y1 - *y0) ? (*y1 - *y0) : 1);
+	} else if (c & BOTTOM) {
+	    y = 0;
+	    x = *x0 + (*x1 - *x0) * (y - *y0) / ((*y1 - *y0) ? (*y1 - *y0) : 1);
+	} else if (c & RIGHT) {
+	    x = w - 1;
+	    y = *y0 + (*y1 - *y0) * (x - *x0) / ((*x1 - *x0) ? (*x1 - *x0) : 1);
+	} else {
+	    x = 0;
+	    y = *y0 + (*y1 - *y0) * (x - *x0) / ((*x1 - *x0) ? (*x1 - *x0) : 1);
+	}
+
+	if (c == c0) {
+	    *x0 = x;
+	    *y0 = y;
+	    c0 = code(*x0, *y0);
+	} else {
+	    *x1 = x;
+	    *y1 = y;
+	    c1 = code(*x1, *y1);
+	}
+    }
+}
+
+static int
+swrast_drawVList_fast(struct dm *dmp, struct bv_vlist *vp)
+{
+    if (!dmp || !vp)
+	return BRLCAD_ERROR;
+
+    struct swrast_vars_fast *pv = (struct swrast_vars_fast *)dmp->i->dm_vars.priv_vars;
+    if (!pv || !pv->os_b || !pv->v)
+	return BRLCAD_ERROR;
+
+    int w = dmp->i->dm_width;
+    int h = dmp->i->dm_height;
+    if (w <= 0 || h <= 0)
+	return BRLCAD_ERROR;
+
+    fastf_t *xmat = pv->v->gv_model2view;
+    point_t lpnt, pnt;
+    int have_lpnt = 0;
+    point_t *pt_prev = NULL;
+    fastf_t dist_prev = 1.0;
+    fastf_t delta = xmat[15] * 0.0001;
+    if (delta < 0.0)
+	delta = -delta;
+    if (delta < SQRT_SMALL_FASTF)
+	delta = SQRT_SMALL_FASTF;
+
+    const unsigned char *fg = dmp->i->dm_fg;
+    struct bv_vlist *tvp;
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
+	int *cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
+	for (size_t i = 0; i < tvp->nused; i++, cmd++, pt++) {
+	    switch (*cmd) {
+		case BV_VLIST_MODEL_MAT:
+		    xmat = pv->v->gv_model2view;
+		    continue;
+		case BV_VLIST_DISPLAY_MAT:
+		    xmat = pv->v->gv_model2view;
+		    continue;
+		case BV_VLIST_POLY_START:
+		case BV_VLIST_POLY_VERTNORM:
+		case BV_VLIST_TRI_START:
+		case BV_VLIST_TRI_VERTNORM:
+		    continue;
+		case BV_VLIST_POLY_MOVE:
+		case BV_VLIST_LINE_MOVE:
+		case BV_VLIST_TRI_MOVE: {
+		    if (dmp->i->dm_perspective > 0) {
+			fastf_t dist = VDOT(*pt, &xmat[12]) + xmat[15];
+			if (dist <= 0.0) {
+			    pt_prev = pt;
+			    dist_prev = dist;
+			    continue;
+			}
+			dist_prev = dist;
+			pt_prev = pt;
+		    }
+		    MAT4X3PNT(lpnt, xmat, *pt);
+		    lpnt[0] *= 2047;
+		    lpnt[1] *= 2047 * dmp->i->dm_aspect;
+		    have_lpnt = 1;
+		    continue;
+		}
+		case BV_VLIST_POLY_DRAW:
+		case BV_VLIST_POLY_END:
+		case BV_VLIST_LINE_DRAW:
+		case BV_VLIST_TRI_DRAW:
+		case BV_VLIST_TRI_END: {
+		    if (!have_lpnt)
+			continue;
+		    if (dmp->i->dm_perspective > 0) {
+			fastf_t dist = VDOT(*pt, &xmat[12]) + xmat[15];
+			if (dist <= 0.0 && dist_prev <= 0.0) {
+			    dist_prev = dist;
+			    pt_prev = pt;
+			    continue;
+			}
+			if (dist <= 0.0 && pt_prev) {
+			    vect_t diff;
+			    point_t tmp_pt;
+			    fastf_t alpha = (dist_prev - delta) / (dist_prev - dist);
+			    VSUB2(diff, *pt, *pt_prev);
+			    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+			    MAT4X3PNT(pnt, xmat, tmp_pt);
+			} else {
+			    MAT4X3PNT(pnt, xmat, *pt);
+			}
+			dist_prev = dist;
+			pt_prev = pt;
+		    } else {
+			MAT4X3PNT(pnt, xmat, *pt);
+		    }
+		    pnt[0] *= 2047;
+		    pnt[1] *= 2047 * dmp->i->dm_aspect;
+
+		    int x0 = GED_TO_Xx(dmp, lpnt[0]);
+		    int y0 = GED_TO_Xy(dmp, lpnt[1]);
+		    int x1 = GED_TO_Xx(dmp, pnt[0]);
+		    int y1 = GED_TO_Xy(dmp, pnt[1]);
+		    if (clip_line_to_win(&x0, &y0, &x1, &y1, w, h)) {
+			swrast_draw_line_rgba(pv, w, h, x0, y0, x1, y1, fg);
+		    }
+		    VMOVE(lpnt, pnt);
+		    continue;
+		}
+		default:
+		    continue;
+	    }
+	}
+    }
+
+    return BRLCAD_OK;
 }
 
 static void
@@ -562,6 +780,8 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 {
     GLint originalShadeModel = 0;
     int restoreShadeModel = 0;
+    GLboolean lightingWasEnabled = GL_FALSE;
+    int restoreLighting = 0;
 
     if (s->s_type_flags & BV_MESH_LOD) {
 	struct bv_mesh_lod *lod = (struct bv_mesh_lod *)s->draw_data;
@@ -574,7 +794,19 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 
     // "Standard" vlist object drawing
     if (bu_list_len(&s->s_vlist)) {
-	if (gl_swrast_database_wireframe(dmp, s)) {
+	if (gl_swrast_wireframe_obj(dmp, s)) {
+	    lightingWasEnabled = glIsEnabled(GL_LIGHTING);
+	    if (lightingWasEnabled) {
+		unsigned char *fg = dm_get_fg(dmp);
+		glDisable(GL_LIGHTING);
+		glColor3ub((GLubyte)fg[0], (GLubyte)fg[1], (GLubyte)fg[2]);
+		restoreLighting = 1;
+	    }
+	    if (gl_swrast_database_wireframe(dmp, s) && swrast_drawVList_fast(dmp, (struct bv_vlist *)&s->s_vlist) == BRLCAD_OK) {
+		if (restoreLighting)
+		    glEnable(GL_LIGHTING);
+		return BRLCAD_OK;
+	    }
 	    glGetIntegerv(GL_SHADE_MODEL, &originalShadeModel);
 	    if (originalShadeModel != GL_FLAT) {
 		glShadeModel(GL_FLAT);
@@ -588,6 +820,8 @@ int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 	}
 	if (restoreShadeModel)
 	    glShadeModel((GLenum)originalShadeModel);
+	if (restoreLighting)
+	    glEnable(GL_LIGHTING);
 	return BRLCAD_OK;
     }
 
