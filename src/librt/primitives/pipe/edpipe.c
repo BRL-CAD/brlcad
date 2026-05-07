@@ -56,6 +56,31 @@
 #define ECMD_PIPE_PT_RADIUS	15073
 #define ECMD_PIPE_SCALE_RADIUS	15074
 
+static enum rt_constraint_edit_policy
+pipe_edit_policy(void)
+{
+    return RT_CONSTRAINT_EDIT_SNAP;
+}
+
+static int
+pipe_apply_cedit(struct rt_edit *s, const struct rt_constraint_edit_op *op)
+{
+    struct rt_constraint_edit_ctx ctx;
+    struct rt_constraint_edit_result res;
+    int ret;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.policy = pipe_edit_policy();
+    rt_constraint_edit_result_init(&res);
+    ret = rt_pipe_project_apply(&res, &s->es_int, op, &ctx);
+    if (ret != BRLCAD_OK) {
+        if (bu_vls_strlen(&res.summary) > 0)
+            bu_vls_printf(s->log_str, "%s\n", bu_vls_addr(&res.summary));
+    }
+    rt_constraint_edit_result_free(&res);
+    return ret;
+}
+
 void *
 rt_edit_pipe_prim_edit_create(struct rt_edit *UNUSED(s))
 {
@@ -937,6 +962,8 @@ int
 ecmd_pipe_pt_od(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    struct rt_constraint_edit_op op;
+    int seg_i;
 
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -956,9 +983,12 @@ ecmd_pipe_pt_od(struct rt_edit *s)
 	else
 	    s->es_scale = (-s->e_para[0] * s->e_mat[15]);
     }
-    pipe_seg_scale_od(s, p->es_pipe_pnt, s->es_scale);
-
-    return 0;
+    seg_i = rt_pipe_get_i_seg((struct rt_pipe_internal *)s->es_int.idb_ptr, p->es_pipe_pnt);
+    memset(&op, 0, sizeof(op));
+    op.kind = RT_CONSTRAINT_EDIT_OP_SET_OD;
+    op.point_index = seg_i;
+    op.proposed_scalar = p->es_pipe_pnt->pp_od * s->es_scale;
+    return pipe_apply_cedit(s, &op);
 }
 
 /* scale ID of one pipe segment */
@@ -966,6 +996,8 @@ int
 ecmd_pipe_pt_id(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    struct rt_constraint_edit_op op;
+    int seg_i;
 
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -986,9 +1018,12 @@ ecmd_pipe_pt_id(struct rt_edit *s)
 	    s->es_scale = (-s->e_para[0] * s->e_mat[15]);
     }
 
-    pipe_seg_scale_id(s, p->es_pipe_pnt, s->es_scale);
-
-    return 0;
+    seg_i = rt_pipe_get_i_seg((struct rt_pipe_internal *)s->es_int.idb_ptr, p->es_pipe_pnt);
+    memset(&op, 0, sizeof(op));
+    op.kind = RT_CONSTRAINT_EDIT_OP_SET_ID;
+    op.point_index = seg_i;
+    op.proposed_scalar = p->es_pipe_pnt->pp_id * s->es_scale;
+    return pipe_apply_cedit(s, &op);
 }
 
 /* scale bend radius at selected point */
@@ -996,6 +1031,8 @@ int
 ecmd_pipe_pt_radius(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    struct rt_constraint_edit_op op;
+    int seg_i;
 
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -1016,15 +1053,19 @@ ecmd_pipe_pt_radius(struct rt_edit *s)
 	    s->es_scale = (-s->e_para[0] * s->e_mat[15]);
     }
 
-    pipe_seg_scale_radius(s, p->es_pipe_pnt, s->es_scale);
-
-    return 0;
+    seg_i = rt_pipe_get_i_seg((struct rt_pipe_internal *)s->es_int.idb_ptr, p->es_pipe_pnt);
+    memset(&op, 0, sizeof(op));
+    op.kind = RT_CONSTRAINT_EDIT_OP_SET_BEND;
+    op.point_index = seg_i;
+    op.proposed_scalar = p->es_pipe_pnt->pp_bendradius * s->es_scale;
+    return pipe_apply_cedit(s, &op);
 }
 
 /* scale entire pipe OD */
 int
 ecmd_pipe_scale_od(struct rt_edit *s)
 {
+    struct rt_constraint_edit_op op;
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
@@ -1056,15 +1097,18 @@ ecmd_pipe_scale_od(struct rt_edit *s)
 	}
     }
 
-    pipe_scale_od(s, &s->es_int, s->es_scale);
-
-    return 0;
+    memset(&op, 0, sizeof(op));
+    op.kind = RT_CONSTRAINT_EDIT_OP_SCALE_OD;
+    op.point_index = -1;
+    op.proposed_scalar = s->es_scale;
+    return pipe_apply_cedit(s, &op);
 }
 
 /* scale entire pipe ID */
 int
 ecmd_pipe_scale_id(struct rt_edit *s)
 {
+    struct rt_constraint_edit_op op;
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
 	s->e_inpara = 0;
@@ -1094,15 +1138,18 @@ ecmd_pipe_scale_id(struct rt_edit *s)
 		s->es_scale = s->e_para[0] * s->e_mat[15]/ps->pp_id;
 	}
     }
-    pipe_scale_id(s, &s->es_int, s->es_scale);
-
-    return 0;
+    memset(&op, 0, sizeof(op));
+    op.kind = RT_CONSTRAINT_EDIT_OP_SCALE_ID;
+    op.point_index = -1;
+    op.proposed_scalar = s->es_scale;
+    return pipe_apply_cedit(s, &op);
 }
 
 /* scale entire pipe bend radius */
 int
 ecmd_pipe_scale_radius(struct rt_edit *s)
 {
+    struct rt_constraint_edit_op op;
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
 	s->e_inpara = 0;
@@ -1133,9 +1180,11 @@ ecmd_pipe_scale_radius(struct rt_edit *s)
 	}
     }
 
-    pipe_scale_radius(s, &s->es_int, s->es_scale);
-
-    return 0;
+    memset(&op, 0, sizeof(op));
+    op.kind = RT_CONSTRAINT_EDIT_OP_SCALE_BEND;
+    op.point_index = -1;
+    op.proposed_scalar = s->es_scale;
+    return pipe_apply_cedit(s, &op);
 }
 
 void ecmd_pipe_pick(struct rt_edit *s)
@@ -1269,7 +1318,14 @@ void ecmd_pipe_pt_move(struct rt_edit *s)
 	return;
     }
 
-    pipe_move_pnt(s, pipeip, p->es_pipe_pnt, new_pt);
+    {
+	struct rt_constraint_edit_op op;
+	memset(&op, 0, sizeof(op));
+	op.kind = RT_CONSTRAINT_EDIT_OP_MOVE_POINT;
+	op.point_index = rt_pipe_get_i_seg(pipeip, p->es_pipe_pnt);
+	VMOVE(op.proposed_coord, new_pt);
+	(void)pipe_apply_cedit(s, &op);
+    }
 }
 
 void ecmd_pipe_pt_add(struct rt_edit *s)

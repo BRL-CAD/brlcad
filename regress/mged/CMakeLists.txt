@@ -42,6 +42,7 @@ set(
   mv.mged
   oed.mged
   orientation.mged
+  prim_edit.mged
   orot.mged
   oscale.mged
   overlay.mged

@@ -4346,107 +4346,435 @@ rt_pipe_ifree(struct rt_db_internal *ip)
  * sections are collinear.  Inner diameter must be less than outer
  * diameter.
  */
-int
-rt_pipe_ck(const struct bu_list *headp)
+static void
+rt_pipe_violation_append(struct bu_ptbl *violations,
+    int code,
+    enum rt_constraint_edit_severity severity,
+    int idx0,
+    int idx1,
+    fastf_t val_a,
+    fastf_t val_b,
+    const char *msg)
+{
+    struct rt_constraint_edit_violation *v;
+
+    if (!violations)
+        return;
+
+    BU_ALLOC(v, struct rt_constraint_edit_violation);
+    rt_constraint_edit_violation_init(v);
+    v->code = code;
+    v->severity = severity;
+    v->a.name = "pipe";
+    v->a.index0 = idx0;
+    v->a.index1 = -1;
+    v->b.name = "pipe";
+    v->b.index0 = idx1;
+    v->b.index1 = -1;
+    v->value_a = val_a;
+    v->value_b = val_b;
+    if (msg)
+        bu_vls_strcpy(&v->msg, msg);
+
+    bu_ptbl_ins(violations, (long *)v);
+}
+
+
+static int
+rt_pipe_validate_impl(struct bu_ptbl *violations, const struct bu_list *headp, int do_log)
 {
     int error_count = 0;
+    int seg_i = 0;
     struct wdb_pipe_pnt *cur, *prev, *next;
     fastf_t old_bend_dist = 0.0;
     fastf_t new_bend_dist;
     fastf_t v2_len = 0.0;
 
+    if (BU_LIST_IS_EMPTY(headp)) {
+        if (do_log)
+            bu_log("Pipe has no points\n");
+        rt_pipe_violation_append(violations, RT_PIPE_V_NUM_POINTS_LT_2, RT_CONSTRAINT_EDIT_ERROR, -1, -1, 0.0, 0.0, "pipe has no points");
+        return 1;
+    }
+
+    {
+        struct wdb_pipe_pnt *fpt = BU_LIST_FIRST(wdb_pipe_pnt, headp);
+        struct wdb_pipe_pnt *npt = BU_LIST_NEXT(wdb_pipe_pnt, &fpt->l);
+        if (BU_LIST_IS_HEAD(&npt->l, headp)) {
+            if (do_log)
+                bu_log("Pipe has fewer than 2 points\n");
+            rt_pipe_violation_append(violations, RT_PIPE_V_NUM_POINTS_LT_2, RT_CONSTRAINT_EDIT_ERROR, -1, -1, 0.0, 0.0, "pipe has fewer than 2 points");
+            return 1;
+        }
+    }
+
     prev = BU_LIST_FIRST(wdb_pipe_pnt, headp);
 
     if (prev->pp_id >= prev->pp_od) {
-	bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
-	       prev->pp_id, prev->pp_od);
-	error_count++;
+        if (do_log)
+            bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n", prev->pp_id, prev->pp_od);
+        rt_pipe_violation_append(violations, RT_PIPE_V_ID_GE_OD, RT_CONSTRAINT_EDIT_ERROR, 0, -1, prev->pp_id, prev->pp_od, "inner diameter has to be less than outer diameter");
+        error_count++;
     }
 
     if (prev->pp_bendradius < prev->pp_od * 0.5) {
-	bu_log("Bend radius (%gmm) is less than outer radius at (%g %g %g)\n",
-	       prev->pp_bendradius, V3ARGS(prev->pp_coord));
-	error_count++;
+        if (do_log)
+            bu_log("Bend radius (%gmm) is less than outer radius at (%g %g %g)\n", prev->pp_bendradius, V3ARGS(prev->pp_coord));
+        rt_pipe_violation_append(violations, RT_PIPE_V_BEND_LT_OR, RT_CONSTRAINT_EDIT_ERROR, 0, -1, prev->pp_bendradius, prev->pp_od * 0.5, "bend radius is less than outer radius");
+        error_count++;
     }
 
     cur = BU_LIST_NEXT(wdb_pipe_pnt, &prev->l);
     next = BU_LIST_NEXT(wdb_pipe_pnt, &cur->l);
+    seg_i = 1;
     while (BU_LIST_NOT_HEAD(&next->l, headp)) {
-	vect_t v1, v2, norm;
-	fastf_t v1_len;
-	fastf_t angle;
-	fastf_t local_vdot;
+        vect_t v1, v2, norm;
+        fastf_t v1_len;
+        fastf_t angle;
+        fastf_t local_vdot;
 
-	if (cur->pp_id >= cur->pp_od) {
-	    bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
-		   cur->pp_id, cur->pp_od);
-	    error_count++;
-	}
+        if (cur->pp_id >= cur->pp_od) {
+            if (do_log)
+                bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n", cur->pp_id, cur->pp_od);
+            rt_pipe_violation_append(violations, RT_PIPE_V_ID_GE_OD, RT_CONSTRAINT_EDIT_ERROR, seg_i, -1, cur->pp_id, cur->pp_od, "inner diameter has to be less than outer diameter");
+            error_count++;
+        }
 
-	if (cur->pp_bendradius < cur->pp_od * 0.5) {
-	    bu_log("Bend radius (%gmm) is less than outer radius at (%g %g %g)\n",
-		   cur->pp_bendradius, V3ARGS(cur->pp_coord));
-	    error_count++;
-	}
+        if (cur->pp_bendradius < cur->pp_od * 0.5) {
+            if (do_log)
+                bu_log("Bend radius (%gmm) is less than outer radius at (%g %g %g)\n", cur->pp_bendradius, V3ARGS(cur->pp_coord));
+            rt_pipe_violation_append(violations, RT_PIPE_V_BEND_LT_OR, RT_CONSTRAINT_EDIT_ERROR, seg_i, -1, cur->pp_bendradius, cur->pp_od * 0.5, "bend radius is less than outer radius");
+            error_count++;
+        }
 
-	VSUB2(v1, prev->pp_coord, cur->pp_coord);
-	v1_len = MAGNITUDE(v1);
-	VUNITIZE(v1);
+        VSUB2(v1, prev->pp_coord, cur->pp_coord);
+        v1_len = MAGNITUDE(v1);
+        VUNITIZE(v1);
 
-	VSUB2(v2, next->pp_coord, cur->pp_coord);
-	v2_len = MAGNITUDE(v2);
-	VUNITIZE(v2);
+        VSUB2(v2, next->pp_coord, cur->pp_coord);
+        v2_len = MAGNITUDE(v2);
+        VUNITIZE(v2);
 
-	VCROSS(norm, v1, v2);
-	if (VNEAR_ZERO(norm, SQRT_SMALL_FASTF)) {
-	    new_bend_dist = 0.0;
-	    goto next_pt;
-	}
+        VCROSS(norm, v1, v2);
+        if (VNEAR_ZERO(norm, SQRT_SMALL_FASTF)) {
+            new_bend_dist = 0.0;
+            rt_pipe_violation_append(violations, RT_PIPE_V_DEGENERATE_SEGMENT, RT_CONSTRAINT_EDIT_WARN, seg_i, -1, 0.0, 0.0, "collinear or degenerate bend point");
+            goto next_pt;
+        }
 
-	local_vdot = VDOT(v1, v2);
-	/* protect against fuzzy overflow/underflow, clamp unitized
-	 * vectors in order to prevent acos() from throwing an
-	 * exception (or crashing).
-	 */
-	CLAMP(local_vdot, -1.0, 1.0);
+        local_vdot = VDOT(v1, v2);
+        CLAMP(local_vdot, -1.0, 1.0);
 
-	angle = M_PI - acos(local_vdot);
-	new_bend_dist = cur->pp_bendradius * tan(angle / 2.0);
+        angle = M_PI - acos(local_vdot);
+        new_bend_dist = cur->pp_bendradius * tan(angle / 2.0);
 
-	if (new_bend_dist + old_bend_dist > v1_len) {
-	    fastf_t vdot;
-	    error_count++;
-	    bu_log("Bend radii (%gmm) at (%g %g %g) and (%gmm) at (%g %g %g) are too large\n",
-		   prev->pp_bendradius, V3ARGS(prev->pp_coord),
-		   cur->pp_bendradius, V3ARGS(cur->pp_coord));
-	    bu_log("for pipe segment between (%g %g %g) and (%g %g %g)\n",
-		   V3ARGS(prev->pp_coord), V3ARGS(cur->pp_coord));
-	    bu_log("failed test: %g + %g > %g\n", new_bend_dist, old_bend_dist, v1_len);
-	    vdot = VDOT(v1, v2);
-	    bu_log("angle(%g) = M_PI(%g) - acos(VDOT(v1, v2)(%g))(%g)\n", angle, M_PI, vdot, acos(vdot));
-	    bu_log("v1: (%g %g %g)\n", V3ARGS(v1));
-	    bu_log("v2: (%g %g %g)\n", V3ARGS(v2));
-	}
-    next_pt:
-	old_bend_dist = new_bend_dist;
-	prev = cur;
-	cur = next;
-	next = BU_LIST_NEXT(wdb_pipe_pnt, &cur->l);
+        if (new_bend_dist + old_bend_dist > v1_len) {
+            fastf_t vdot;
+            error_count++;
+            if (do_log) {
+                bu_log("Bend radii (%gmm) at (%g %g %g) and (%gmm) at (%g %g %g) are too large\n", prev->pp_bendradius, V3ARGS(prev->pp_coord), cur->pp_bendradius, V3ARGS(cur->pp_coord));
+                bu_log("for pipe segment between (%g %g %g) and (%g %g %g)\n", V3ARGS(prev->pp_coord), V3ARGS(cur->pp_coord));
+                bu_log("failed test: %g + %g > %g\n", new_bend_dist, old_bend_dist, v1_len);
+            }
+            rt_pipe_violation_append(violations, RT_PIPE_V_BEND_OVERLAP_SEGMENT, RT_CONSTRAINT_EDIT_ERROR, seg_i - 1, seg_i, new_bend_dist + old_bend_dist, v1_len, "adjacent bend radii consume more than segment length");
+            vdot = VDOT(v1, v2);
+            if (do_log) {
+                bu_log("angle(%g) = M_PI(%g) - acos(VDOT(v1, v2)(%g))(%g)\n", angle, M_PI, vdot, acos(vdot));
+                bu_log("v1: (%g %g %g)\n", V3ARGS(v1));
+                bu_log("v2: (%g %g %g)\n", V3ARGS(v2));
+            }
+        }
+next_pt:
+        old_bend_dist = new_bend_dist;
+        prev = cur;
+        cur = next;
+        next = BU_LIST_NEXT(wdb_pipe_pnt, &cur->l);
+        seg_i++;
     }
 
     if (cur->pp_id >= cur->pp_od) {
-	bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
-	       cur->pp_id, cur->pp_od);
-	error_count++;
+        if (do_log)
+            bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n", cur->pp_id, cur->pp_od);
+        rt_pipe_violation_append(violations, RT_PIPE_V_ID_GE_OD, RT_CONSTRAINT_EDIT_ERROR, seg_i, -1, cur->pp_id, cur->pp_od, "inner diameter has to be less than outer diameter");
+        error_count++;
     }
 
     if (old_bend_dist > v2_len) {
-	error_count++;
-	bu_log("last segment (%g %g %g) to (%g %g %g) is too short to allow\n",
-	       V3ARGS(prev->pp_coord), V3ARGS(cur->pp_coord));
-	bu_log("bend radius of %gmm\n", prev->pp_bendradius);
+        error_count++;
+        if (do_log) {
+            bu_log("last segment (%g %g %g) to (%g %g %g) is too short to allow\n", V3ARGS(prev->pp_coord), V3ARGS(cur->pp_coord));
+            bu_log("bend radius of %gmm\n", prev->pp_bendradius);
+        }
+        rt_pipe_violation_append(violations, RT_PIPE_V_LAST_SEGMENT_TOO_SHORT, RT_CONSTRAINT_EDIT_ERROR, seg_i - 1, seg_i, old_bend_dist, v2_len, "last segment is too short for preceding bend radius");
     }
+
     return error_count;
+}
+
+
+static fastf_t
+rt_pipe_corner_bend_dist(struct wdb_pipe_pnt *prev, struct wdb_pipe_pnt *cur, struct wdb_pipe_pnt *next)
+{
+    vect_t v1, v2, norm;
+    fastf_t local_vdot;
+    fastf_t angle;
+
+    VSUB2(v1, prev->pp_coord, cur->pp_coord);
+    VSUB2(v2, next->pp_coord, cur->pp_coord);
+    VUNITIZE(v1);
+    VUNITIZE(v2);
+    VCROSS(norm, v1, v2);
+    if (VNEAR_ZERO(norm, SQRT_SMALL_FASTF))
+        return 0.0;
+
+    local_vdot = VDOT(v1, v2);
+    CLAMP(local_vdot, -1.0, 1.0);
+    angle = M_PI - acos(local_vdot);
+    return cur->pp_bendradius * tan(angle / 2.0);
+}
+
+
+static void
+rt_pipe_snap_bend_overlap(struct rt_pipe_internal *pip)
+{
+    int pass;
+
+    for (pass = 0; pass < 4; pass++) {
+        struct wdb_pipe_pnt *prev, *cur, *next;
+        struct wdb_pipe_pnt *old_corner = NULL;
+        fastf_t old_dist = 0.0;
+        int changed = 0;
+
+        prev = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
+        cur = BU_LIST_NEXT(wdb_pipe_pnt, &prev->l);
+        if (BU_LIST_IS_HEAD(&cur->l, &pip->pipe_segs_head))
+            break;
+        next = BU_LIST_NEXT(wdb_pipe_pnt, &cur->l);
+
+        while (BU_LIST_NOT_HEAD(&next->l, &pip->pipe_segs_head)) {
+            vect_t segv;
+            fastf_t seg_len;
+            fastf_t cur_dist;
+            fastf_t total;
+
+            VSUB2(segv, prev->pp_coord, cur->pp_coord);
+            seg_len = MAGNITUDE(segv);
+            cur_dist = rt_pipe_corner_bend_dist(prev, cur, next);
+            total = old_dist + cur_dist;
+
+            if (total > seg_len && total > SQRT_SMALL_FASTF) {
+                fastf_t s = seg_len / total;
+                if (old_corner) {
+                    fastf_t min_br = old_corner->pp_od * 0.5;
+                    old_corner->pp_bendradius *= s;
+                    if (old_corner->pp_bendradius < min_br)
+                        old_corner->pp_bendradius = min_br;
+                }
+                {
+                    fastf_t min_br = cur->pp_od * 0.5;
+                    cur->pp_bendradius *= s;
+                    if (cur->pp_bendradius < min_br)
+                        cur->pp_bendradius = min_br;
+                }
+                changed = 1;
+                cur_dist = rt_pipe_corner_bend_dist(prev, cur, next);
+            }
+
+            old_corner = cur;
+            old_dist = cur_dist;
+            prev = cur;
+            cur = next;
+            next = BU_LIST_NEXT(wdb_pipe_pnt, &cur->l);
+        }
+
+        if (!changed)
+            break;
+    }
+}
+
+
+int
+rt_pipe_validate(struct bu_ptbl *violations, const struct rt_pipe_internal *pip, int UNUSED(flags))
+{
+    RT_PIPE_CK_MAGIC(pip);
+    return rt_pipe_validate_impl(violations, &pip->pipe_segs_head, 0);
+}
+
+
+int
+rt_pipe_ck(const struct bu_list *headp)
+{
+    return rt_pipe_validate_impl(NULL, headp, 1);
+}
+
+
+int
+rt_pipe_project_apply(
+    struct rt_constraint_edit_result *out,
+    struct rt_db_internal *ip,
+    const struct rt_constraint_edit_op *op,
+    const struct rt_constraint_edit_ctx *ctx)
+{
+    struct bu_list saved_head;
+    struct wdb_pipe_pnt *ps, *sp, *dp;
+    struct rt_pipe_internal *pip;
+    int vcnt_before, vcnt_after;
+    int snap_applied = 0;
+    const fastf_t eps = SQRT_SMALL_FASTF;
+
+    if (!out || !ip || !ctx)
+        return BRLCAD_ERROR;
+
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_PIPE)
+        return BRLCAD_ERROR;
+
+    pip = (struct rt_pipe_internal *)ip->idb_ptr;
+    RT_PIPE_CK_MAGIC(pip);
+
+    rt_constraint_edit_result_clear(out);
+    vcnt_before = rt_pipe_validate(NULL, pip, 0);
+    out->violation_count_before = vcnt_before;
+
+    BU_LIST_INIT(&saved_head);
+    for (BU_LIST_FOR(sp, wdb_pipe_pnt, &pip->pipe_segs_head)) {
+        BU_ALLOC(dp, struct wdb_pipe_pnt);
+        *dp = *sp;
+        BU_LIST_APPEND(&saved_head, &dp->l);
+    }
+
+    if (op) {
+        int pi = op->point_index;
+        struct wdb_pipe_pnt *tp = (pi >= 0) ? rt_pipe_get_seg_i(pip, pi) : NULL;
+        switch (op->kind) {
+            case RT_CONSTRAINT_EDIT_OP_MOVE_POINT:
+                if (tp) VMOVE(tp->pp_coord, op->proposed_coord);
+                break;
+            case RT_CONSTRAINT_EDIT_OP_SET_OD:
+                if (tp) tp->pp_od = op->proposed_scalar;
+                break;
+            case RT_CONSTRAINT_EDIT_OP_SET_ID:
+                if (tp) tp->pp_id = op->proposed_scalar;
+                break;
+            case RT_CONSTRAINT_EDIT_OP_SET_BEND:
+                if (tp) tp->pp_bendradius = op->proposed_scalar;
+                break;
+            case RT_CONSTRAINT_EDIT_OP_SCALE_OD:
+                for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pip->pipe_segs_head))
+                    ps->pp_od *= op->proposed_scalar;
+                break;
+            case RT_CONSTRAINT_EDIT_OP_SCALE_ID:
+                for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pip->pipe_segs_head))
+                    ps->pp_id *= op->proposed_scalar;
+                break;
+            case RT_CONSTRAINT_EDIT_OP_SCALE_BEND:
+                for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pip->pipe_segs_head))
+                    ps->pp_bendradius *= op->proposed_scalar;
+                break;
+            default:
+                break;
+        }
+    }
+
+    vcnt_after = rt_pipe_validate(NULL, pip, 0);
+
+    switch (ctx->policy) {
+        case RT_CONSTRAINT_EDIT_WARN_ONLY:
+            out->accepted = 1;
+            out->violation_count_after = vcnt_after;
+            (void)rt_pipe_validate(&out->violations, pip, 0);
+            bu_vls_printf(&out->summary, "warn-only policy: %d violations", vcnt_after);
+            while (BU_LIST_NON_EMPTY(&saved_head)) {
+                sp = BU_LIST_FIRST(wdb_pipe_pnt, &saved_head);
+                BU_LIST_DEQUEUE(&sp->l);
+                bu_free(sp, "pipe list item");
+            }
+            return BRLCAD_OK;
+        case RT_CONSTRAINT_EDIT_REJECT:
+            out->accepted = (vcnt_after == 0) ? 1 : 0;
+            out->violation_count_after = vcnt_after;
+            if (vcnt_after != 0) {
+                dp = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
+                for (BU_LIST_FOR(sp, wdb_pipe_pnt, &saved_head)) {
+                    if (BU_LIST_IS_HEAD(&dp->l, &pip->pipe_segs_head))
+                        break;
+                    VMOVE(dp->pp_coord, sp->pp_coord);
+                    dp->pp_od = sp->pp_od;
+                    dp->pp_id = sp->pp_id;
+                    dp->pp_bendradius = sp->pp_bendradius;
+                    dp = BU_LIST_NEXT(wdb_pipe_pnt, &dp->l);
+                }
+                (void)rt_pipe_validate(&out->violations, pip, 0);
+            }
+            bu_vls_printf(&out->summary, "reject policy: %d violations", vcnt_after);
+            while (BU_LIST_NON_EMPTY(&saved_head)) {
+                sp = BU_LIST_FIRST(wdb_pipe_pnt, &saved_head);
+                BU_LIST_DEQUEUE(&sp->l);
+                bu_free(sp, "pipe list item");
+            }
+            return (vcnt_after == 0) ? BRLCAD_OK : BRLCAD_ERROR;
+        case RT_CONSTRAINT_EDIT_SNAP:
+        case RT_CONSTRAINT_EDIT_SNAP_IF_WITHIN_TOL:
+            if (vcnt_after != 0) {
+                for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pip->pipe_segs_head)) {
+                    if (ps->pp_od <= eps)
+                        ps->pp_od = 10.0 * eps;
+                    if (ps->pp_id < 0.0)
+                        ps->pp_id = 0.0;
+                    if (ps->pp_id >= ps->pp_od)
+                        ps->pp_id = 0.0;
+                    if (ps->pp_id < 0.0)
+                        ps->pp_id = 0.0;
+                    if (ps->pp_bendradius < ps->pp_od * 0.5)
+                        ps->pp_bendradius = ps->pp_od * 0.5;
+                }
+                rt_pipe_snap_bend_overlap(pip);
+                snap_applied = 1;
+                vcnt_after = rt_pipe_validate(NULL, pip, 0);
+            }
+            out->accepted = (vcnt_after == 0) ? 1 : 0;
+            out->snapped = snap_applied;
+            out->violation_count_after = vcnt_after;
+            if (vcnt_after != 0) {
+                dp = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
+                for (BU_LIST_FOR(sp, wdb_pipe_pnt, &saved_head)) {
+                    if (BU_LIST_IS_HEAD(&dp->l, &pip->pipe_segs_head))
+                        break;
+                    VMOVE(dp->pp_coord, sp->pp_coord);
+                    dp->pp_od = sp->pp_od;
+                    dp->pp_id = sp->pp_id;
+                    dp->pp_bendradius = sp->pp_bendradius;
+                    dp = BU_LIST_NEXT(wdb_pipe_pnt, &dp->l);
+                }
+                (void)rt_pipe_validate(&out->violations, pip, 0);
+            }
+            bu_vls_printf(&out->summary, "snap policy: %d violations", vcnt_after);
+            while (BU_LIST_NON_EMPTY(&saved_head)) {
+                sp = BU_LIST_FIRST(wdb_pipe_pnt, &saved_head);
+                BU_LIST_DEQUEUE(&sp->l);
+                bu_free(sp, "pipe list item");
+            }
+            return (vcnt_after == 0) ? BRLCAD_OK : BRLCAD_ERROR;
+        default:
+            out->accepted = 0;
+            bu_vls_strcpy(&out->summary, "unknown policy");
+            dp = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
+            for (BU_LIST_FOR(sp, wdb_pipe_pnt, &saved_head)) {
+                if (BU_LIST_IS_HEAD(&dp->l, &pip->pipe_segs_head))
+                    break;
+                VMOVE(dp->pp_coord, sp->pp_coord);
+                dp->pp_od = sp->pp_od;
+                dp->pp_id = sp->pp_id;
+                dp->pp_bendradius = sp->pp_bendradius;
+                dp = BU_LIST_NEXT(wdb_pipe_pnt, &dp->l);
+            }
+            while (BU_LIST_NON_EMPTY(&saved_head)) {
+                sp = BU_LIST_FIRST(wdb_pipe_pnt, &saved_head);
+                BU_LIST_DEQUEUE(&sp->l);
+                bu_free(sp, "pipe list item");
+            }
+            return BRLCAD_ERROR;
+    }
 }
 
 

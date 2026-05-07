@@ -722,6 +722,106 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	       V3ARGS(pmid->pp_coord), pmid->pp_od, pmid->pp_id);
     }
 
+    /* ================================================================
+     * rt_pipe_project_apply policy checks.
+     * ================================================================*/
+    pipe_full_reset(s, pe);
+    {
+	struct rt_constraint_edit_ctx ctx = {};
+	struct rt_constraint_edit_result res;
+	struct rt_constraint_edit_op op = {};
+	struct wdb_pipe_pnt *p1 = pipe_first(s);
+
+	ctx.policy = RT_CONSTRAINT_EDIT_REJECT;
+	op.kind = RT_CONSTRAINT_EDIT_OP_SET_OD;
+	op.point_index = 0;
+	op.proposed_scalar = 0.4;
+	rt_constraint_edit_result_init(&res);
+	if (rt_pipe_project_apply(&res, &s->es_int, &op, &ctx) == BRLCAD_OK)
+	    bu_exit(1, "ERROR: REJECT policy unexpectedly accepted invalid pipe edit\n");
+	if (!NEAR_EQUAL(p1->pp_od, 2.0, VUNITIZE_TOL) || !NEAR_EQUAL(p1->pp_id, 1.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: REJECT policy changed geometry on failure\n");
+	rt_constraint_edit_result_free(&res);
+
+	ctx.policy = RT_CONSTRAINT_EDIT_SNAP;
+	rt_constraint_edit_result_init(&res);
+	if (rt_pipe_project_apply(&res, &s->es_int, &op, &ctx) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: SNAP policy failed to project invalid pipe edit\n");
+	if (!(p1->pp_id < p1->pp_od) || p1->pp_bendradius < p1->pp_od * 0.5)
+	    bu_exit(1, "ERROR: SNAP policy did not project to valid local constraints\n");
+	bu_log("rt_pipe_project_apply SUCCESS: SNAP projected od=%g id=%g bend=%g\n",
+	       p1->pp_od, p1->pp_id, p1->pp_bendradius);
+	rt_constraint_edit_result_free(&res);
+    }
+
+    /* ================================================================
+     * Targeted SNAP overlap test:
+     * build a 4-point U-shape with bend radii too large for segment
+     * lengths, then verify SNAP projects to valid geometry.
+     * ================================================================*/
+    pipe_full_reset(s, pe);
+    {
+	struct rt_pipe_internal *pip =
+	    (struct rt_pipe_internal *)s->es_int.idb_ptr;
+	struct wdb_pipe_pnt *p1 = pipe_first(s);
+	struct wdb_pipe_pnt *p2 = pipe_second(s);
+	point_t p3c = {5, 5, 0};
+	point_t p4c = {0, 5, 0};
+	struct wdb_pipe_pnt *p3, *p4;
+	struct rt_constraint_edit_ctx ctx = {};
+	struct rt_constraint_edit_result res;
+	struct rt_constraint_edit_op op = {};
+
+	/* Canonical first two points */
+	VSET(p1->pp_coord, 0, 0, 0);
+	VSET(p2->pp_coord, 5, 0, 0);
+	p1->pp_od = p2->pp_od = 2.0;
+	p1->pp_id = p2->pp_id = 0.5;
+	p1->pp_bendradius = p2->pp_bendradius = 2.5;
+
+	/* Add point 3: (5,5,0), then set large bend radius */
+	p3 = rt_pipe_add_pnt(pip, p2, p3c);
+	if (!p3 || p3 == p2)
+	    bu_exit(1, "ERROR: failed to add p3 for overlap SNAP test\n");
+	p3->pp_od = 2.0;
+	p3->pp_id = 0.5;
+	p3->pp_bendradius = 2.5;
+
+	/* Add point 4: (0,5,0) */
+	p4 = rt_pipe_add_pnt(pip, p3, p4c);
+	if (!p4 || p4 == p3)
+	    bu_exit(1, "ERROR: failed to add p4 for overlap SNAP test\n");
+	p4->pp_od = 2.0;
+	p4->pp_id = 0.5;
+	p4->pp_bendradius = 2.5;
+
+	/* Force invalid bend overlap: both interior corners too large */
+	p2->pp_bendradius = 8.0;
+	p3->pp_bendradius = 8.0;
+
+	if (rt_pipe_ck(&pip->pipe_segs_head) == 0)
+	    bu_exit(1, "ERROR: overlap SNAP test setup is unexpectedly valid\n");
+
+	ctx.policy = RT_CONSTRAINT_EDIT_SNAP;
+	op.kind = RT_CONSTRAINT_EDIT_OP_SET_BEND;
+	op.point_index = rt_pipe_get_i_seg(pip, p2);
+	op.proposed_scalar = p2->pp_bendradius;
+
+	rt_constraint_edit_result_init(&res);
+	if (rt_pipe_project_apply(&res, &s->es_int, &op, &ctx) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: SNAP policy failed overlap projection\n");
+
+	if (rt_pipe_ck(&pip->pipe_segs_head) != 0)
+	    bu_exit(1, "ERROR: SNAP overlap projection did not produce valid pipe\n");
+
+	if (!(p2->pp_bendradius < 8.0 || p3->pp_bendradius < 8.0))
+	    bu_exit(1, "ERROR: SNAP overlap projection did not reduce bend radii\n");
+
+	bu_log("rt_pipe_project_apply OVERLAP SNAP SUCCESS: p2.bend=%g p3.bend=%g\n",
+	       p2->pp_bendradius, p3->pp_bendradius);
+	rt_constraint_edit_result_free(&res);
+    }
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;
