@@ -213,7 +213,7 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     privars->v = (struct bview *)ctx;
     // Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend
     // was switched to RGBA to make it easier to display the output
-    privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);
+    privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 32, 0, 0, NULL);
     int width = (!privars->v->gv_width) ? 512 : privars->v->gv_width;
     int height = (!privars->v->gv_height) ? 512 : privars->v->gv_height;
     privars->v->gv_width = width;
