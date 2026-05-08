@@ -28,6 +28,11 @@
 #include <set>
 #include <map>
 #include <cmath>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <sstream>
+#include <iomanip>
 
 #include <float.h>
 #include <locale.h>
@@ -42,6 +47,38 @@
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "bg/chull.h"
+
+static std::string
+_chull3d_point_key(const fastf_t x, const fastf_t y, const fastf_t z)
+{
+    std::ostringstream pkey;
+    pkey << std::setprecision(17) << x << "|" << y << "|" << z;
+    return pkey.str();
+}
+
+static int
+_chull3d_find_input_idx(const point_t *input_points_3d, int num_input_pnts, const quickhull::Vector3<fastf_t> &v, std::unordered_map<std::string, std::vector<int>> &input_idx_map)
+{
+    /* Fast path for exact coordinate matches */
+    std::string key = _chull3d_point_key(v.x, v.y, v.z);
+    auto m_it = input_idx_map.find(key);
+    if (m_it != input_idx_map.end() && !m_it->second.empty()) {
+	int idx = m_it->second.back();
+	m_it->second.pop_back();
+	return idx;
+    }
+
+    /* Fallback for near-equal comparisons */
+    for (int i = 0; i < num_input_pnts; i++) {
+	if (NEAR_EQUAL(input_points_3d[i][0], v.x, BN_TOL_DIST)
+		&& NEAR_EQUAL(input_points_3d[i][1], v.y, BN_TOL_DIST)
+		&& NEAR_EQUAL(input_points_3d[i][2], v.z, BN_TOL_DIST)) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
 
 extern "C" int
 bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
@@ -92,6 +129,70 @@ bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 	int itmp = (*faces)[3*i+1];
 	(*faces)[3*i+1] = (*faces)[3*i+2];
 	(*faces)[3*i+2] = itmp;
+    }
+
+    return 3;
+}
+
+extern "C" int
+bg_3d_chull2(int **faces, int *num_faces, int **vertices, int *num_vertices,
+	     const point_t *input_points_3d, int num_input_pnts)
+{
+    int f_ind = 0;
+    if (!faces || !num_faces || !vertices || !num_vertices || !input_points_3d) return 0;
+
+    /* TODO - handle non-3d cases */
+    if (num_input_pnts < 4) return 0;
+
+    quickhull::QuickHull<fastf_t> qh;
+    std::vector<quickhull::Vector3<fastf_t>> pc;
+    for (int i = 0; i < num_input_pnts; i++) {
+	quickhull::Vector3<fastf_t> p(input_points_3d[i][0], input_points_3d[i][1], input_points_3d[i][2]);
+	pc.push_back(p);
+    }
+    auto hull = qh.getConvexHull(&pc[0].x, pc.size(), true, false, BN_TOL_DIST);
+
+    auto indexBuffer = hull.getIndexBuffer();
+    auto vertexBuffer = hull.getVertexBuffer();
+
+    std::unordered_map<std::string, std::vector<int>> input_idx_map;
+    for (int i = 0; i < num_input_pnts; i++) {
+	input_idx_map[_chull3d_point_key(input_points_3d[i][0], input_points_3d[i][1], input_points_3d[i][2])].push_back(i);
+    }
+
+    std::vector<int> vmap;
+    vmap.reserve(vertexBuffer.size());
+    std::set<int> unique_input_indices;
+    for (auto it = vertexBuffer.begin(); it != vertexBuffer.end(); it++) {
+	int input_idx = _chull3d_find_input_idx(input_points_3d, num_input_pnts, *it, input_idx_map);
+	if (input_idx < 0) {
+	    bu_log("bg_3d_chull2: failed to map hull vertex (%g, %g, %g) back to input point\n", it->x, it->y, it->z);
+	    return 0;
+	}
+	vmap.push_back(input_idx);
+	unique_input_indices.insert(input_idx);
+    }
+
+    (*num_faces) = (int)(indexBuffer.size() / 3);
+    (*faces) = (int *)bu_calloc(indexBuffer.size(), sizeof(int), "new face array");
+    for (auto it = indexBuffer.begin(); it != indexBuffer.end(); it++) {
+	(*faces)[f_ind] = vmap[(size_t)(*it)];
+	f_ind++;
+    }
+
+    /* Flip faces */
+    for (int i = 0; i < (*num_faces); i++) {
+	int itmp = (*faces)[3*i+1];
+	(*faces)[3*i+1] = (*faces)[3*i+2];
+	(*faces)[3*i+2] = itmp;
+    }
+
+    (*num_vertices) = (int)unique_input_indices.size();
+    (*vertices) = (int *)bu_calloc(*num_vertices, sizeof(int), "new hull vertex index array");
+    int vi = 0;
+    for (auto it = unique_input_indices.begin(); it != unique_input_indices.end(); it++) {
+	(*vertices)[vi] = *it;
+	vi++;
     }
 
     return 3;

@@ -146,6 +146,25 @@ BG_EXPORT int bg_3d_coplanar_chull2(int** hull, const point_t* points_3d, int n)
 BG_EXPORT int bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 			  const point_t *input_points_3d, int num_input_pnts);
 
+/**
+ * @brief
+ * Find 3D point convex hull for unordered point sets using index arrays.
+ *
+ * @param[out]	faces set of faces in the convex hull as integer indices into the
+ *              input_points_3d array.  The first three indices are the first
+ *              face, the second three define the second face, and so forth.
+ * @param[out]  num_faces the number of faces in the faces array
+ * @param[out]  vertices set of input_points_3d indices corresponding to
+ *              vertices used by the convex hull.
+ * @param[out]  num_vertices number of entries in the vertices array.
+ * @param	input_points_3d The input points for which a convex hull will be built
+ * @param	num_input_pnts the number of points in the input set
+ * @return dimension of output (3 is three dimensional faces and hulls, 2 is a
+ *         polygon hull in a plane, etc.)
+ */
+BG_EXPORT int bg_3d_chull2(int **faces, int *num_faces, int **vertices, int *num_vertices,
+			   const point_t *input_points_3d, int num_input_pnts);
+
 
 __END_DECLS
 
