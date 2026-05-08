@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/glob.h"
 #include "bu/path.h"
 #include "bu/vls.h"
 #include "raytrace.h"
@@ -125,10 +126,6 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
 	}
 	if (*start == '\0')
 	    break;
-	/* Next, advance "end" pointer to the end of the word, while
-	 * adding each character to the "word" vls.  Also make a note
-	 * of any unbackslashed wildcard characters.
-	 */
 
 	end = start;
 	bu_vls_trunc(&word, 0);
@@ -154,35 +151,39 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
 	    is_fnmatch = 0;
 	}
 
-	/* Now, if the word was suspected of being a wildcard, try to
-	 * match it to the database.
-	 */
-	/* Now, if the word was suspected of being a wildcard, try to
-	 * match it to the database.
-	 */
 	if (is_fnmatch) {
-	    int num = 0;
-	    struct directory *dp;
-	    bu_vls_trunc(&temp, 0);
-	    FOR_ALL_DIRECTORY_START(dp, dbip)
-		if (bu_path_match(bu_vls_addr(&word), dp->d_namep, 0) != 0) continue;
-		if (!(flags & _GED_GLOB_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) continue;
-		if (!(flags & _GED_GLOB_NON_GEOM) && (dp->d_flags & RT_DIR_NON_GEOM)) continue;
-		if (num == 0)
-		    bu_vls_strcat(&temp, dp->d_namep);
-		else {
-		    bu_vls_strcat(&temp, " ");
-		    bu_vls_strcat(&temp, dp->d_namep);
-		}
-		match_cnt++;
-		++num;
-	    FOR_ALL_DIRECTORY_END;
+	    /* Use db_path_glob for pattern expansion against the database */
+	    struct bu_glob_context *gp = bu_glob_ctx_create();
+	    int i;
 
-	    if (num == 0) {
+	    db_path_glob(gp, bu_vls_addr(&word), BU_GLOB_NOSORT, dbip);
+
+	    bu_vls_trunc(&temp, 0);
+	    for (i = 0; i < gp->gl_pathc; i++) {
+		struct directory *dp;
+		const char *name = bu_vls_cstr(gp->gl_pathv[i]);
+
+		/* Apply hidden/non-geom filters */
+		dp = db_lookup(dbip, name, LOOKUP_QUIET);
+		if (dp != RT_DIR_NULL) {
+		    if (!(flags & _GED_GLOB_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) continue;
+		    if (!(flags & _GED_GLOB_NON_GEOM) && (dp->d_flags & RT_DIR_NON_GEOM)) continue;
+		}
+
+		if (bu_vls_strlen(&temp) > 0)
+		    bu_vls_strcat(&temp, " ");
+		bu_vls_strcat(&temp, name);
+		match_cnt++;
+	    }
+
+	    bu_glob_ctx_destroy(gp);
+
+	    if (match_cnt == 0 || bu_vls_strlen(&temp) == 0) {
 		_debackslash(&temp, &word);
 		_backslash_specials(dest, &temp);
-	    } else
+	    } else {
 		bu_vls_vlscat(dest, &temp);
+	    }
 	} else {
 	    _debackslash(dest, &word);
 	}
@@ -240,7 +241,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 
 #define GED_GLOB_COMMANDS(X, XID) \
     X(db_glob, ged_glob_core, GED_CMD_DEFAULT) \
-    X(glob, ged_glob_core, GED_CMD_DEFAULT) \
+    X(glob, ged_glob_core, GED_CMD_DEFAULT)
 
 GED_DECLARE_COMMAND_SET(GED_GLOB_COMMANDS)
 GED_DECLARE_PLUGIN_MANIFEST("libged_glob", 1, GED_GLOB_COMMANDS)
