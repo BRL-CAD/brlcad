@@ -278,10 +278,6 @@ MGED overlay command
 
 7.28
 ----
-include/vmath.h
-        VCOMB3, VCOMB3N, VJOIN4
-        Removed as inconsistent and unused API [deprecated 7.28]
-
 MGED commands
 	?devel, ?lib, aproposdevel, aproposlib, %, animmate, db_glob,
 	debugbu, debugdir, debuglib, debugmem, debugnmg, expand,
@@ -332,10 +328,6 @@ mged
 include/raytrace.h librt
 	RT_DBHASH and RT_DBNHASH [deprecated 7.24]
 
-7.22
-----
-include/raytrace.h librt
-	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecation 7.22]
 
 7.20
 ----
@@ -438,6 +430,15 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+
+7.44.0
+------
+include/raytrace.h librt
+	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecated 7.22]
+
+include/vmath.h
+        VCOMB3, VCOMB3N, VJOIN4
+        Removed as inconsistent and unused API [deprecated 7.28]
 
 7.42.2
 ------

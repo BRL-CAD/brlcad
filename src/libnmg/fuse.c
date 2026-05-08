@@ -1872,13 +1872,6 @@ nmg_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct b
 }
 
 
-/* DEPRECATED: use nmg_break_e_on_v() */
-int
-nmg_model_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
-{
-    return nmg_break_e_on_v(magic_p, vlfree, tol);
-}
-
 /**
  * This is the primary application interface to the geometry fusing support.
  * Fuse together all data structures that are equal to each other,
