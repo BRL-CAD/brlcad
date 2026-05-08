@@ -419,11 +419,11 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    type = 0;
 	    if (dir[curve]->form == 1) {
 		/* Ellipse */
-		if (fabs(E) < SMALL)
+		if (fabs(E) < SQRT_SMALL_FASTF)
 		    E = 0.0;
-		if (fabs(B) < SMALL)
+		if (fabs(B) < SQRT_SMALL_FASTF)
 		    B = 0.0;
-		if (fabs(D) < SMALL)
+		if (fabs(D) < SQRT_SMALL_FASTF)
 		    D = 0.0;
 
 		if (ZERO(B) && ZERO(D) && ZERO(E))

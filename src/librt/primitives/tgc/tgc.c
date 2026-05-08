@@ -265,9 +265,9 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Validate that both ends are not degenerate */
-    if (prod_ab <= SMALL) {
+    if (prod_ab <= SQRT_SMALL_FASTF) {
 	/* AB end is degenerate */
-	if (prod_cd <= SMALL) {
+	if (prod_cd <= SQRT_SMALL_FASTF) {
 	    bu_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
 	    return 1;		/* BAD */
 	}
@@ -289,7 +289,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;		/* BAD */
     }
 
-    if (prod_ab > SMALL) {
+    if (prod_ab > SQRT_SMALL_FASTF) {
 	/* Validate that A.B == 0 */
 	f = VDOT(tip->a, tip->b) / prod_ab;
 	if (! NEAR_ZERO(f, RT_DOT_TOL)) {
@@ -300,7 +300,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    return 1;		/* BAD */
 	}
     }
-    if (prod_cd > SMALL) {
+    if (prod_cd > SQRT_SMALL_FASTF) {
 	/* Validate that C.D == 0 */
 	f = VDOT(tip->c, tip->d) / prod_cd;
 	if (! NEAR_ZERO(f, RT_DOT_TOL)) {
@@ -312,7 +312,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	}
     }
 
-    if (mag_a * mag_c > SMALL) {
+    if (mag_a * mag_c > SQRT_SMALL_FASTF) {
 	/* Validate that A || C */
 	f = 1.0 - VDOT(tip->a, tip->c) / (mag_a * mag_c);
 	if (! NEAR_ZERO(f, RT_DOT_TOL)) {
@@ -322,7 +322,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	}
     }
 
-    if (mag_b * mag_d > SMALL) {
+    if (mag_b * mag_d > SQRT_SMALL_FASTF) {
 	/* Validate that B || D, for parallel planes */
 	f = 1.0 - VDOT(tip->b, tip->d) / (mag_b * mag_d);
 	if (! NEAR_ZERO(f, RT_DOT_TOL)) {

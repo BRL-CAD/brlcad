@@ -241,7 +241,7 @@ ecmd_eto_r(struct rt_edit *s)
     } else {
 	newrad = eto->eto_r * s->es_scale;
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
     VMOVE(Nu, eto->eto_N);
     VUNITIZE(Nu);
     /* get horiz and vert components of C and Rd */
@@ -271,7 +271,7 @@ ecmd_eto_rd(struct rt_edit *s)
     } else {
 	newrad = eto->eto_rd * s->es_scale;
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
     work = MAGNITUDE(eto->eto_C);
     if (newrad <= work) {
 	VMOVE(Nu, eto->eto_N);

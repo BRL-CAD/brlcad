@@ -541,7 +541,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		hitp->hit_vpriv[Y] = angle;
 		if (i+1 < rev->skt->vert_count && rev->ends[i+1] != -1 &&
 		    NEAR_EQUAL(rev->skt->verts[rev->ends[i]][Y],
-			       rev->skt->verts[rev->ends[i+1]][Y], SMALL)) {
+			       rev->skt->verts[rev->ends[i+1]][Y], SQRT_SMALL_FASTF)) {
 		    hitp->hit_vpriv[Z] = rev->skt->verts[rev->ends[i+1]][X];
 		    i++;
 		    if (fabs(hit2d[X]) < fabs(hitp->hit_vpriv[Z])) {

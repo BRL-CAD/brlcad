@@ -892,7 +892,7 @@ read_arbn(char *name)
 	eqn[cur_eq][Z] = getdouble(scard, 10+2*10, 10);
 	eqn[cur_eq][W] = getdouble(scard, 10+3*10, 10);
 	scale = MAGNITUDE(eqn[cur_eq]);
-	if (scale < SMALL) {
+	if (scale < SQRT_SMALL_FASTF) {
 	    printf("arbn plane normal too small\n");
 	    continue;
 	}

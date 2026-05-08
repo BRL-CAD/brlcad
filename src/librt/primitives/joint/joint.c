@@ -338,7 +338,7 @@ rt_joint_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
 
     /* Verify that vector1 has unit length */
     double f = MAGNITUDE(jv1);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_joint_mat:  bad vector1, len=%g\n", f);
 	return -1;		/* BAD */
     }
@@ -350,7 +350,7 @@ rt_joint_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
     }
     /* Verify that vector2 has unit length */
     f = MAGNITUDE(jv2);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_joint_mat:  bad vector2, len=%g\n", f);
 	return -1;		/* BAD */
     }

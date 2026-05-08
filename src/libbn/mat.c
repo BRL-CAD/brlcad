@@ -1357,7 +1357,7 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
     mat_t t1, t2;
     point_t sheared_eye;
 
-    if (eye[Z] < SMALL) {
+    if (eye[Z] < SQRT_SMALL_FASTF) {
 	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
 	return;
     }

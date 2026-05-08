@@ -334,7 +334,7 @@ rt_opt_cut_plane(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSE
 	VSET(pt, scan[0], scan[1], scan[2]);
 	VSET(nrml, scan[3], scan[4], scan[5]);
 	f = MAGNITUDE(nrml);
-	if (f <= SMALL)
+	if (f <= SQRT_SMALL_FASTF)
 	    bu_exit(EXIT_FAILURE, "ERROR: bad normal for cutting plane, length=%g\n", f);
 	VUNITIZE(nrml);
 	VMOVE(kut_plane, nrml);
@@ -350,7 +350,7 @@ rt_opt_cut_plane(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSE
 	VSET(pt, scan[0], scan[1], scan[2]);
 	VSET(nrml, scan[0], scan[1], scan[2]);
 	f = MAGNITUDE(nrml);
-	if (f <= SMALL)
+	if (f <= SQRT_SMALL_FASTF)
 	    bu_exit(EXIT_FAILURE, "ERROR: bad normal for cutting plane, length=%g\n", f);
 	VUNITIZE(nrml);
 	VMOVE(kut_plane, nrml);
@@ -363,7 +363,7 @@ rt_opt_cut_plane(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSE
 	bu_exit(EXIT_FAILURE, "ERROR: bad cutting plane, expected xdir,ydir,zdir,dist or x,y,z,nx,ny,nz or x,y,z\n");
     HMOVE(kut_plane, scan); /* double to fastf_t */
     f = MAGNITUDE(kut_plane);
-    if (f <= SMALL)
+    if (f <= SQRT_SMALL_FASTF)
 	bu_exit(EXIT_FAILURE, "ERROR: bad normal for cutting plane, length=%g\n", f);
     f = 1.0 / f;
     VSCALE(kut_plane, kut_plane, f);

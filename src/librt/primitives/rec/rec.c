@@ -226,7 +226,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
     /* 1st end ellipse (no Z part) */
     tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -235,7 +235,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* 2nd end ellipse */
     z = w1[Z] * mag_h;		/* Z part */
     tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -249,7 +249,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
     /* 1st end ellipse (no Z part) */
     tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -258,7 +258,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* 2nd end ellipse */
     z = w1[Z] * mag_h;		/* Z part */
     tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -272,7 +272,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
     /* 1st end ellipse (no Z part) */
     tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -281,7 +281,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* 2nd end ellipse */
     z = w1[Z] * mag_h;		/* Z part */
     tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;

@@ -290,7 +290,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Verify that normal has unit length */
     f = MAGNITUDE(gip->normal);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_grp_import4:  bad normal, len=%g\n", f);
 	return -1;		/* BAD */
     }
@@ -359,7 +359,7 @@ rt_grp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 
     /* Verify that normal has unit length */
     double f = MAGNITUDE(top->normal);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_grp_mat:  bad normal, len=%g\n", f);
 	return -1;		/* BAD */
     }

@@ -283,7 +283,7 @@ ecmd_tor_r1(struct rt_edit *s)
     } else {
 	newrad = tor->r_a * s->es_scale;
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
     if (tor->r_h <= newrad)
 	tor->r_a = newrad;
 }
@@ -303,7 +303,7 @@ ecmd_tor_r2(struct rt_edit *s)
     } else {
 	newrad = tor->r_h * s->es_scale;
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
     if (newrad <= tor->r_a)
 	tor->r_h = newrad;
 }

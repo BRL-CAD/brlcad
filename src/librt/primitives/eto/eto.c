@@ -1734,7 +1734,7 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     tip->eto_r  = v1[X] / mat[15];
     tip->eto_rd = v1[Y] / mat[15];
 
-    if (tip->eto_r <= SMALL || tip->eto_rd <= SMALL) {
+    if (tip->eto_r <= SQRT_SMALL_FASTF || tip->eto_rd <= SQRT_SMALL_FASTF) {
 	bu_log("rt_eto_import4:  zero length R or Rd vector\n");
 	return -1;
     }
