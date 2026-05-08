@@ -40,6 +40,7 @@ set(
   str.c
   str_isprint.c
   temp_filename.c
+  glob.c
   vls.c
   vls_vprintf.c
 )
@@ -133,6 +134,8 @@ brlcad_add_test(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_dir_core   COMMAN
 #      bu_path_match (i.e. fnmatch) testing    #
 ################################################
 brlcad_add_test(NAME bu_path_match COMMAND bu_test path_match ${CMAKE_CURRENT_SOURCE_DIR}/path_match.in) # runs OpenBSD fnmatch tests
+
+brlcad_add_test(NAME bu_glob  COMMAND bu_test glob)
 
 #############################
 #      bu_file_* testing    #

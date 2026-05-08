@@ -29,17 +29,19 @@
 __BEGIN_DECLS
 
 
-/** @addtogroup bu_experimental
- *
- * NOTE - the glob API below is a work in progress - until this notice is
- * removed it should not be considered functional, much less stable!
- *
- * TODO: test whether leveraging a modern glob implementation might be
- * worthwhile and portable, or unnecessary complexity.  For example:
- *  https://github.com/openbsd/src/blob/master/lib/libc/gen/glob.c
+/** @addtogroup bu_glob
  *
  *  @brief Routines and structures for getting a list of entities that
  *  match a given pattern.
+ *
+ *  The bu_glob API is a portable, callback-based glob implementation
+ *  modelled on POSIX glob(3) and inspired by OpenBSD's glob.c.  By
+ *  supplying custom opendir/readdir/closedir/lstat/stat callbacks any
+ *  hierarchical namespace (filesystem, BRL-CAD .g database, etc.) can
+ *  be searched.  The default callbacks use the system filesystem.
+ *
+ *  See also: src/librt/db_glob.c for the geometry-database backend
+ *  (db_path_glob) which plugs into this API.
  *
  */
 /** @{ */
@@ -47,87 +49,122 @@ __BEGIN_DECLS
 
 
 /**
- * representation of a path element, for use with bu_glob() callbacks.
+ * Representation of a single directory entry returned by gl_readdir.
+ * The caller allocates bu_dirent and sets @a name to point at a caller-owned
+ * bu_vls; gl_readdir fills that vls with the entry name on each call.
  */
 struct bu_dirent {
-    struct bu_vls *name;
-    void *data;
+    struct bu_vls *name;   /**< entry name (caller-supplied vls, filled by gl_readdir) */
+    void *data;            /**< backend-specific per-entry data */
 };
 
 /**
- * information about a path element (file, directory, object, etc),
- * for use with bu_glob() callbacks.
+ * Stat information about a path element, filled by gl_lstat / gl_stat.
  */
 struct bu_stat {
-    struct bu_vls name;
-    b_off_t size;
-    void *data;
+    b_off_t size;    /**< object size (meaning is backend-defined) */
+    int is_dir;      /**< non-zero if path is a container (directory / combination) */
+    void *data;      /**< backend-specific data */
 };
 
 
 /**
- * main structure used by bu_glob() to specify behavior, callbacks,
- * and return results.
+ * Main context structure used by bu_glob() to specify behavior,
+ * supply custom callbacks, and accumulate results.
+ *
+ * Initialise with bu_glob_ctx_create() and release with bu_glob_ctx_destroy().
  */
+/** Opaque implementation type; defined in glob.c.  API consumers must not
+ *  access this structure directly.
+ */
+struct bu_glob_ctx_impl;
 struct bu_glob_context {
 
 #define BU_GLOB_APPEND     0x0001  /**< Append to output from previous call. */
-#define BU_GLOB_NOSORT     0x0020  /**< Don't sort. */
-#define BU_GLOB_NOESCAPE   0x2000  /**< Disable backslash escaping. */
-#define BU_GLOB_ALTDIRFUNC 0x0040  /**< use alternate functions. */
-    int gl_flags;                /**< flags customizing globbing behavior */
+#define BU_GLOB_NOSORT     0x0020  /**< Do not sort results. */
+#define BU_GLOB_NOESCAPE   0x2000  /**< Treat backslash as ordinary character. */
+    int gl_flags;                  /**< flags customising globbing behaviour */
 
-    /* Return values */
+    /* --- Return values (filled by bu_glob) --- */
 
-    int gl_pathc;                /**< count of total paths so far */
-    int gl_matchc;               /**< count of paths matching pattern */
-    struct bu_vls **gl_pathv;    /**< list of paths matching pattern */
+    int gl_pathc;                  /**< total number of matched paths */
+    int gl_matchc;                 /**< number of paths matched by this call */
+    struct bu_vls **gl_pathv;      /**< NULL-terminated array of matched paths */
 
-    /* Callback functions */
+    /* --- Optional callback functions ---
+     *
+     * When NULL the default POSIX filesystem implementation is used.
+     * The @a data member is passed as the last argument to lstat, stat,
+     * errfunc, and as the second argument to opendir, allowing backends
+     * to carry private state without globals.
+     */
 
-    struct bu_glob_context *(*gl_opendir)(const char *);
-    int (*gl_readdir)(struct bu_dirent *, struct bu_glob_context *);
-    void (*gl_closedir)(struct bu_glob_context *);
+    /**
+     * Open the directory at @a path using backend-specific data @a data.
+     * Returns an opaque handle passed back to gl_readdir / gl_closedir,
+     * or NULL on failure.
+     */
+    void *(*gl_opendir)(const char *path, void *data);
 
-    int (*gl_lstat)(const char *, struct bu_stat *, struct bu_glob_context *);
-    int (*gl_stat)(const char *, struct bu_stat *, struct bu_glob_context *);
+    /**
+     * Read the next entry from a directory handle obtained via gl_opendir.
+     * Fills de->name with the entry name.  Returns 0 on success, non-zero
+     * when there are no more entries.
+     */
+    int (*gl_readdir)(struct bu_dirent *de, void *dirhandle);
 
-#define BU_GLOB_NOMATCH (-1)     /**< No match. */
-#define BU_GLOB_ABORTED (-2)     /**< Unignored error. */
-    int (*gl_errfunc)(const char *, int, struct bu_glob_context *);
+    /**
+     * Close and free a directory handle obtained via gl_opendir.
+     */
+    void (*gl_closedir)(void *dirhandle);
 
-    /* For caller use */
+    /**
+     * Stat a path (do not follow symlinks, i.e. lstat semantics).
+     * Returns 0 on success, -1 on failure.
+     */
+    int (*gl_lstat)(const char *path, struct bu_stat *sb, void *data);
 
-    void *data;                  /**< data passed to all callbacks */
+    /**
+     * Stat a path (follow symlinks, i.e. stat semantics).
+     * Returns 0 on success, -1 on failure.
+     */
+    int (*gl_stat)(const char *path, struct bu_stat *sb, void *data);
 
-    /* Private */
+#define BU_GLOB_NOMATCH (-1)       /**< Returned by bu_glob when there are no matches. */
+#define BU_GLOB_ABORTED (-2)       /**< Returned by bu_glob after an unignored error. */
 
-    void *priv;               /**< For internal use only */
+    /**
+     * Called on directory-open errors.  Receives the path, errno value,
+     * and the context data pointer.  Return non-zero to abort the glob.
+     */
+    int (*gl_errfunc)(const char *path, int errnum, void *data);
+
+    /* --- For caller use --- */
+
+    void *data;   /**< Passed verbatim to every callback as described above. */
+
+    /* --- Private --- */
+
+    struct bu_glob_ctx_impl *i;  /**< Implementation details; do not use directly. */
 };
 typedef struct bu_glob_context bu_glob_t;
 
 
 /**
- * declaration statement initialization of a bu_glob struct
+ * Create a globbing context
  */
-#define BU_GLOB_INIT_ZERO {0, 0, 0, NULL, (struct bu_glob_context *(*)(const char *))NULL, (int(*)(struct bu_dirent *, struct bu_glob_context *))NULL, (void(*)(struct bu_glob_context *))NULL, (int(*)(const char *, struct bu_stat *, struct bu_glob_context *))NULL, (int(*)(const char *, struct bu_stat *, struct bu_glob_context *))NULL, (int(*)(const char *, int, struct bu_glob_context *))NULL, NULL, NULL}
-
-
-/**
- * initialize a globbing context for use prior to calling bu_glob()
- */
-BU_EXPORT struct bu_glob_context *bu_glob_init(void);
+BU_EXPORT struct bu_glob_context *bu_glob_ctx_create(void);
 
 
 /**
  * release any resources allocated during bu_glob(), including any
  * returned paths
  */
-BU_EXPORT extern void bu_glob_free(struct bu_glob_context *);
+BU_EXPORT extern void bu_glob_ctx_destroy(struct bu_glob_context *);
 
 
 /**
- * match a pattern against a set of elements.
+ * Match a pattern against a set of elements.
  *
  * This interface is a somewhat simplified and abstracted version of
  * UNIX glob matching, based loosely on the interface specified in
@@ -136,7 +173,7 @@ BU_EXPORT extern void bu_glob_free(struct bu_glob_context *);
  * globbing will map to the local filesystem.
  *
  * Function takes an input pattern, a set of flags, and a globbing
- * context from bu_glob_alloc().
+ * context from bu_glob_ctx_create().
  *
  * Returns zero on success, non-zero on failure.
  *
