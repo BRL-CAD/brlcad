@@ -105,6 +105,7 @@ set(
   cache_lz4.c
   cmd.c
   cyclic.c
+  db_glob.c
   comb/comb.c
   comb/comb_brep.cpp
   comb/comb_mirror.c

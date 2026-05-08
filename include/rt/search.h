@@ -29,6 +29,7 @@
 
 #include "common.h"
 
+#include "bu/glob.h"
 #include "bu/list.h"
 #include "bu/ptbl.h"
 
@@ -183,6 +184,34 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
  * for the cyclic paths found.
  */
 RT_EXPORT extern int db_cyclic_paths(struct bu_ptbl *cyclic_paths, const struct db_i *dbip, struct directory *sdp);
+
+
+/**
+ * Expand a glob pattern against the geometry database.
+ *
+ * Uses the bu_glob callback API with a geometry-database backend so
+ * that patterns such as "*.s" or "vehicle*\/wheel*" are matched against
+ * object names in the database rather than the filesystem.
+ *
+ * Matching results accumulate in @a gp->gl_pathv / @a gp->gl_pathc.
+ * The context must be initialised with bu_glob_ctx_create() before the first
+ * call and released with bu_glob_ctx_destroy() after the last.  Passing
+ * BU_GLOB_APPEND in @a flags appends to any results already in @a gp.
+ *
+ * Flat patterns (no '/') match all objects in the database by name.
+ * Hierarchical patterns ('/' separated) walk the combination tree
+ * starting from the top-level objects in the database.
+ *
+ * @param[in,out] gp     Initialised glob context.
+ * @param[in]     pattern Glob pattern string.
+ * @param[in]     flags   BU_GLOB_* flags (see bu/glob.h).
+ * @param[in]     dbip    Geometry database instance.
+ * @return 0 on success (possibly with no matches), negative on error.
+ */
+RT_EXPORT extern int db_path_glob(struct bu_glob_context *gp,
+				  const char *pattern,
+				  int flags,
+				  const struct db_i *dbip);
 
 
 /* Deprecated */
