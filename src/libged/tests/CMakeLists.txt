@@ -4,6 +4,16 @@ if(TARGET ged_test_tops)
 endif(TARGET ged_test_tops)
 brlcad_add_test(NAME ged_test_tops_moss COMMAND ged_test_tops "${CMAKE_CURRENT_SOURCE_DIR}/ged_tests.g")
 
+brlcad_addexec(ged_test_rm ged_test_rm.c "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_rm)
+  add_dependencies(ged_test_rm ged_plugins)
+endif(TARGET ged_test_rm)
+brlcad_add_test(NAME ged_test_rm COMMAND ged_test_rm)
+if(TARGET ged_test_rm)
+  set_property(TEST ged_test_rm APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_rm)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_test_rm.g)
+
 brlcad_addexec(ged_test_list test_list.c libged TEST)
 if(TARGET ged_test_list)
   add_dependencies(ged_test_list ged_plugins)
@@ -67,6 +77,7 @@ cmakefiles(
   obb_tests.g
   ged_tests.g
   pnts_in_out.g
+  ged_test_rm.c
 )
 
 cmakefiles(CMakeLists.txt)

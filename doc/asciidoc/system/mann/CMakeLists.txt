@@ -205,6 +205,7 @@ set(
   release.adoc
   relos.adoc
   remat.adoc
+  remove.adoc
   rfarb.adoc
   rm.adoc
   rmater.adoc

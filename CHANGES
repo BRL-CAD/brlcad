@@ -315,9 +315,6 @@ librt, fast4-g
 mged
 	kill, killtree, killall, killrefs - replaced with rm command [deprecated 7.26]
 
-	rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
-	original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
-
 	expand -> replaced by search -name <pattern> (previous docs indicating matching of
 	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
 
@@ -439,6 +436,11 @@ include/raytrace.h librt
 include/vmath.h
         VCOMB3, VCOMB3N, VJOIN4
         Removed as inconsistent and unused API [deprecated 7.28]
+
+mged
+	rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
+	original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
+	NOTE: old rm behavior is available via "remove".
 
 7.42.2
 ------

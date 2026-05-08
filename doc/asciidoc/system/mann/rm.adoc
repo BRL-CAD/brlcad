@@ -4,35 +4,120 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-rm - Deletes all occurrences of the listed members from the specified combination.
+rm - safely delete database objects, force-delete objects, or remove a child from a combination path
 
 == SYNOPSIS
 
 [source]
 ----
-rm {combination} {members}
+rm [-f | --force] [-r | --recursive] [-n | --dry-run] {object-or-path}...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Deletes all occurrences of the listed members from the specified _combination_. The *red, r, comb, c,* and *g* commands provide other _combination_ editing capabilities.
+The *rm* command is the preferred general-purpose removal command for BRL-CAD
+database editing.
+
+Each operand may be:
+
+* an _object_ name
+* a simple parent/child _path_ of the form _comb/member_
+* a shell-style glob pattern expanded against the current database
+
+Without options, *rm* performs a safe delete:
+
+* primitives are deleted only if they are not referenced by other objects
+* combinations are deleted only if they are unreferenced and empty
+* non-empty combinations are rejected unless *-r* or *-f* is used
+
+If an operand contains a slash, *rm* treats it as a combination/member path and
+removes only that child reference from the parent combination. This edits the
+combination tree but does not delete the child object itself.
+
+Unlike the legacy *remove* command, *rm* also supports direct object deletion,
+dry-run reporting, and glob expansion.
+
+The current implementation recognizes the following options:
+
+*-f*::
+*--force*::
+Force deletion. For object operands this uses the same direct-delete behavior as
+*kill*: the named object is removed immediately, even if it is referenced
+elsewhere. For path operands, a missing parent combination is ignored when
+*--force* is used, but a found parent combination is still updated only if the
+named child member is present.
+
+*-r*::
+*--recursive*::
+Recursive deletion. Walk the hierarchy below each named object and delete
+unshared members. Objects still referenced outside the walked subtree are left
+in place. If *-f* is also supplied, the top-level object is deleted even if it
+remains referenced elsewhere after the recursive pass.
+
+*-n*::
+*--dry-run*::
+Dry run. Report what would be deleted or which combination/member path would be
+edited, but do not modify the database.
+
+All database changes made by *rm* update reference counts and remove affected
+names or paths from active display lists.
 
 
 [[examples]]
 == EXAMPLES
 
-The example shows the use of the *rm* command to delete all occurrences of specified members of a given combination.
+The examples below show the primary *rm* modes.
 
-.Delete members of a given combination.
+.Safely delete an unreferenced primitive.
 [example]
 ====
-mged>**rm group1 regiona**
-
-Deletes _regiona_ from _group1_.
+mged> **rm bolt.s**::
+Deletes _bolt.s_ if it exists and is not referenced elsewhere.
 
 ====
+
+.Remove one child reference from a combination.
+[example]
+====
+mged> **rm assembly.c/bolt.s**::
+Removes the _bolt.s_ member from _assembly.c_ without deleting _bolt.s_ from the
+database.
+
+====
+
+.Force-delete an object.
+[example]
+====
+mged> **rm -f old_part.r**::
+Deletes _old_part.r_ directly, even if other objects still reference it.
+
+====
+
+.Preview a globbed delete.
+[example]
+====
+mged> **rm -n temp***::
+Lists matching database objects or paths that would be removed.
+
+====
+
+.Recursively delete an unshared hierarchy.
+[example]
+====
+mged> **rm -r scratch_group.c**::
+Deletes _scratch_group.c_ and any members that are only referenced within that
+hierarchy. Shared children referenced elsewhere are preserved.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*remove*(nged), *kill*(nged), *killall*(nged), *killrefs*(nged),
+*killtree*(nged)
 
 
 [[author]]

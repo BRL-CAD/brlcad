@@ -37,6 +37,8 @@
 #include "bu/vls.h"
 #include "bn/poly.h"
 #include "rt/defines.h"
+#include "rt/db_instance.h"
+#include "rt/rt_instance.h"
 
 __BEGIN_DECLS
 
