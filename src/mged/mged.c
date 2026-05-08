@@ -2488,6 +2488,15 @@ main(int argc, char *argv[])
     if (cl.attach)
 	attach = (char *)cl.attach;
 
+    /*
+     * In classic mode, -a directly controls the attach target.
+     * In GUI mode, the startup scripts choose the DM from
+     * mged_default(dm_type), so mirror -a into dm_type unless the
+     * user explicitly supplied --dm-type.
+     */
+    if (cl.attach && !cl.dm_type)
+	cl.dm_type = cl.attach;
+
     /* -d / --display */
     if (cl.dpy_string)
 	s->dpy_string = (char *)cl.dpy_string;
