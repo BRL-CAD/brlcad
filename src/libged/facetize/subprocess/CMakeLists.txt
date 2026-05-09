@@ -1,7 +1,5 @@
 brlcad_find_package(manifold REQUIRED)
-brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
-set(TESS_INCLUDE_DIRS ${Geogram_INCLUDE_DIR})
-set(TESS_LIBS libged manifold::manifold ${Geogram_LIBRARY})
+set(TESS_LIBS libged manifold::manifold)
 
 set(
   GED_TESS_SRCS
@@ -16,7 +14,6 @@ set(
 
 ged_subprocess_library(facetize_process
   ${GED_TESS_SRCS}
-  SYSTEM_INCLUDES ${TESS_INCLUDE_DIRS}
   LIBS ${TESS_LIBS}
 )
 
