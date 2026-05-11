@@ -9,6 +9,7 @@ set(
   brep.cpp
   facetize.cpp
   nmg.cpp
+  plan.cpp
   regions.cpp
   tri.cpp
   util.cpp

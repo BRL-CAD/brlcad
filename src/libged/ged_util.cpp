@@ -518,17 +518,6 @@ _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
-// TODO - replace with bu_opt_incr_long
-int
-_ged_vopt(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
-{
-    int *v_set = (int *)set_var;
-    if (v_set) {
-	(*v_set) = (*v_set) + 1;
-    }
-    return 0;
-}
-
 /* Sort the argv array to list existing objects first and everything else at
  * the end.  Returns the number of argv entries where db_lookup failed */
 int

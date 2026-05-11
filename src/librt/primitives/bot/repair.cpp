@@ -423,9 +423,9 @@ manifold_to_bot(manifold::MeshGL *omesh)
 }
 
 int
-rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct rt_bot_repair_info *settings)
+rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct rt_bot_repair_info *rinfo)
 {
-    if (!bot || !obot || !settings)
+    if (!bot || !obot || !rinfo)
 	return -1;
 
     // Unless we produce something, obot will be NULL
@@ -473,8 +473,8 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 
     // Call bg_trimesh_repair for the GTE-based repair.
     struct bg_trimesh_repair_opts opts;
-    opts.max_hole_area         = settings->max_hole_area;
-    opts.max_hole_area_percent = settings->max_hole_area_percent;
+    opts.max_hole_area         = rinfo->max_hole_area;
+    opts.max_hole_area_percent = rinfo->max_hole_area_percent;
 
     int *rfaces = NULL;
     int n_rfaces = 0;
@@ -517,26 +517,17 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 
     manifold::Manifold gmanifold(gmm);
     if (gmanifold.Status() != manifold::Manifold::Error::NoError) {
-	bu_log("rt_bot_repair: repaired mesh is not manifold\n");
+	rinfo->output_nonmanifold = 1;
 	return -1;
     }
-    if (gmanifold.Volume() < 0) {
-	bu_log("rt_bot_repair: repaired mesh has negative volume, rejecting\n");
+    rinfo->output_volume = gmanifold.Volume();
+    if (rinfo->output_volume < 0)
 	return -1;
-    }
 
-    bu_log("rt_bot_repair: gmanifold volume=%.6g\n", gmanifold.Volume());
     manifold::MeshGL omesh = gmanifold.GetMeshGL();
     struct rt_bot_internal *nbot = manifold_to_bot(&omesh);
-
-    if (settings->strict) {
-	int lint_ret = bot_repair_lint(nbot);
-	if (lint_ret) {
-	    bu_log("Warning - repaired BoT has lint unexpected-miss on some faces "
-		   "(manifold solid confirmed; likely raytracer precision issue "
-		   "for thin/curved triangles - proceeding with manifold result)\n");
-	}
-    }
+    if (rinfo->strict)
+	rinfo->output_lint_fail = bot_repair_lint(nbot);
 
     *obot = nbot;
     return 0;

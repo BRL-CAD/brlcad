@@ -516,9 +516,6 @@ tc4_child_blocks_parent(void)
     return pass ? 0 : 1;
 }
 
-// TODO - turn this on once facetize is updated to not report failure in
-// this case
-#if 0
 /* ------------------------------------------------------------------ */
 /* TC5 - empty comb should be valid                                   */
 /* ------------------------------------------------------------------ */
@@ -585,7 +582,6 @@ tc5_empty_comb_valid(void)
     bu_file_delete(gfile.c_str());
     return pass ? 0 : 1;
 }
-#endif
 
 /* ------------------------------------------------------------------ */
 /* main                                                                 */
@@ -605,8 +601,7 @@ main(int argc, char *argv[])
     if (tc_select < 0 || tc_select == 2) failures += tc2_simple_comb();
     if (tc_select < 0 || tc_select == 3) failures += tc3_halfspace();
     if (tc_select < 0 || tc_select == 4) failures += tc4_child_blocks_parent();
-    // TODO - re-enable once facetize is updated
-    // if (tc_select < 0 || tc_select == 5) failures += tc5_empty_comb_valid();
+    if (tc_select < 0 || tc_select == 5) failures += tc5_empty_comb_valid();
 
     bu_log("\nRegress-lint-raytrace: %s (%d failure(s))\n",
 	   failures == 0 ? "PASS" : "FAIL", failures);

@@ -11,6 +11,16 @@ if(TARGET libged)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_push.log")
   distclean("${CMAKE_CURRENT_BINARY_DIR}/ged_push.g")
 
+  # Phase D regression: coplanar window-frame subtraction pattern.
+  # Exercises the instance-aware variant planning pass in the Manifold
+  # facetize pipeline (plan.cpp + _booltree_leaf_tess variant resolution).
+  brlcad_addexec(regress_facetize regress_facetize.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
+  if(TARGET regress_facetize)
+    add_dependencies(regress_facetize ged_plugins)
+  endif(TARGET regress_facetize)
+  brlcad_regression_test(regress-ged_facetize "regress_facetize;ged-facetize;ged_exec" EXEC regress_facetize)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_facetize.log")
+
   # lint --raytrace regression: Crofton vs analytic / BoT validation pass.
   # Exercises the raytrace validation pipeline in lint/raytrace.cpp:
   brlcad_addexec(regress_lint_raytrace regress_lint_raytrace.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
@@ -25,6 +35,7 @@ cmakefiles(
   CMakeLists.txt
   mater.c
   push.cpp
+  regress_facetize.cpp
   regress_lint_raytrace.cpp
   d2push_tests.g
   dpush_tests.g
@@ -33,6 +44,7 @@ cmakefiles(
   push_tests.g
   regress-ged_mater.cmake.in
   regress-ged_push.cmake.in
+  regress-ged_facetize.cmake.in
   regress-ged_lint_raytrace.cmake.in
   rpush_tests.g
   xpush_tests.g
