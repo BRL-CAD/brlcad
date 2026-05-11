@@ -252,7 +252,6 @@ function(BRLCAD_Summary)
 
   ext_report("Asset Import Library" ASSIMP_STATUS REQUIRED_VARS "BRLCAD_ENABLE_ASSETIMPORT")
   ext_report("Eigen" EIGEN3_INCLUDE_DIR)
-  ext_report("Geogram" GEOGRAM_STATUS)
   ext_report("Geospatial Data Abstraction Library" GDAL_STATUS REQUIRED_VARS "BRLCAD_ENABLE_GDAL")
   ext_report("Lightning Memory-Mapped Database" LMDB_STATUS)
   ext_report("Manifold" MANIFOLD_STATUS)
