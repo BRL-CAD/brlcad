@@ -30,6 +30,32 @@
 #include "QgEdMainWindow.h"
 #include "QgEdApp.h"
 
+static int
+qged_dm_during_clbk(int ac, const char **av, void *u1, void *u2)
+{
+    (void)u1;
+    (void)u2;
+    if (ac < 2 || !av)
+        return BRLCAD_OK;
+
+    const char *dbg = getenv("GED_DM_DURING_DEBUG");
+    if (dbg && BU_STR_EQUAL(dbg, "1")) {
+        bu_log("qged dm during callback: ");
+        for (int i = 0; i < ac; i++) {
+            bu_log("%s%s", av[i], (i + 1 < ac) ? " " : "\n");
+        }
+    }
+
+    if (!BU_STR_EQUAL(av[1], "set") && !BU_STR_EQUAL(av[1], "bg") && !BU_STR_EQUAL(av[1], "attach"))
+        return BRLCAD_OK;
+
+    QgEdApp *ap = (QgEdApp *)qApp;
+    if (ap)
+        emit ap->view_update(QG_VIEW_REFRESH);
+
+    return BRLCAD_OK;
+}
+
 QgEdMainWindow::QgEdMainWindow(int canvas_type, int quad_view)
 {
     QgEdApp *ap = (QgEdApp *)qApp;
@@ -348,6 +374,8 @@ QgEdMainWindow::do_dm_init()
     QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
 
+    (void)ged_clbk_set(gedp, "dm", BU_CLBK_DURING, qged_dm_during_clbk, NULL);
+
     ///////////////////////////////////////////////////////////////////////////
     // DEBUG - turn on some of the bells and whistles by default, since they
     // won't normally be tested in other ways.  We need fully set up views and
@@ -502,4 +530,3 @@ QgEdMainWindow::InteractionMode(QPoint &gpos)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

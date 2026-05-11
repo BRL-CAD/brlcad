@@ -52,6 +52,31 @@ struct _ged_dm_info {
     struct bu_opt_desc *gopts;
 };
 
+static void
+_dm_cmd_during_clbk(struct _ged_dm_info *gd, int argc, const char **argv)
+{
+    if (!gd || !gd->gedp || argc < 1 || !argv)
+        return;
+
+    bu_clbk_t clbk = NULL;
+    void *u2 = NULL;
+    if (ged_clbk_get(&clbk, &u2, gd->gedp, "dm", BU_CLBK_DURING) != BRLCAD_OK || !clbk)
+        return;
+
+    const char *dbg = getenv("GED_DM_DURING_DEBUG");
+    if (dbg && BU_STR_EQUAL(dbg, "1")) {
+        bu_log("ged dm during callback: ");
+        for (int i = 0; i < argc; i++) {
+            bu_log("%s%s", argv[i], (i + 1 < argc) ? " " : "\n");
+        }
+    }
+
+    int cbret = ged_clbk_exec(gd->gedp->ged_result_str, gd->gedp, GED_CMD_RECURSION_LIMIT, clbk, argc, argv, (void *)gd->gedp, u2);
+    if (cbret != BRLCAD_OK) {
+        bu_vls_printf(gd->gedp->ged_result_str, "\nwarning: dm during callback returned %d", cbret);
+    }
+}
+
 static int
 _ged_dm_log_to_vls(void *data, void *str)
 {
@@ -207,6 +232,9 @@ _dm_cmd_bg(void *ds, int argc, const char **argv)
     }
 
     dm_set_bg(cdmp, n_bg1[0], n_bg1[1], n_bg1[2], n_bg2[0], n_bg2[1], n_bg2[2]);
+
+    const char *cbav[4] = {"dm", "bg", argv[0], NULL};
+    _dm_cmd_during_clbk(gd, 3, cbav);
 
     return BRLCAD_OK;
 }
@@ -450,15 +478,17 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     }
 
     if (!ac) {
-	for (const struct bu_structparse *sdp = dmparse; sdp->sp_fmt[0] != '\0'; sdp++) {
-	    if (!sdp->sp_name)
-		continue;
-	    if (gd->verbosity) {
-		bu_vls_printf(gd->gedp->ged_result_str, "%s (%s)\n", sdp->sp_name, sdp->sp_fmt);
-	    } else {
-		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", sdp->sp_name);
-	    }
-	}
+	/* MGED-compatible behavior: "dm set" reports all current values. */
+	struct bu_vls rstr = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&rstr, "Display Manager %s (type %s) internal variables", bu_vls_cstr(dm_get_pathname(cdmp)), dm_get_dm_name(cdmp));
+	bu_vls_struct_print2(gd->gedp->ged_result_str, bu_vls_addr(&rstr), dmparse, (const char *)mvars);
+	bu_vls_free(&rstr);
+	return BRLCAD_OK;
+    }
+
+    if (ac == 1) {
+	/* MGED-compatible behavior: "dm set <key>" reports current value. */
+	bu_vls_struct_item_named(gd->gedp->ged_result_str, dmparse, argv[0], (const char *)mvars, COMMA);
 	return BRLCAD_OK;
     }
 
@@ -501,6 +531,9 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
 	    bu_vls_struct_item_named(gd->gedp->ged_result_str, dmparse, argv[0], (const char *)mvars, COMMA);
 	}
     }
+
+    const char *cbav[4] = {"dm", "set", argv[0], argv[1]};
+    _dm_cmd_during_clbk(gd, 4, cbav);
 
     return BRLCAD_OK;
 }
@@ -669,6 +702,9 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 
     // We have the dmp - let the view know
     target_view->dmp = dmp;
+
+    const char *cbav[4] = {"dm", "attach", argv[0], bu_vls_cstr(&dm_name)};
+    _dm_cmd_during_clbk(gd, 4, cbav);
 
     bu_vls_free(&dm_name);
     bu_vls_free(&view_name);

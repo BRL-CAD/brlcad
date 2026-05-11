@@ -641,17 +641,6 @@ f_dm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 	return TCL_OK;
     }
 
-    if (BU_STR_EQUAL(argv[1], "type")) {
-	if (argc != 2) {
-	    bu_vls_printf(&vls, "help dm");
-	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	}
-	Tcl_AppendResult(interpreter, dm_get_type(DMP), (char *)NULL);
-	return TCL_OK;
-    }
-
     if (!cmd_hook) {
 	const char *dm_name = dm_get_dm_name(DMP);
 	if (dm_name) {

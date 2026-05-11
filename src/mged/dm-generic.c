@@ -244,6 +244,16 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	return status;
     }
 
+    if (BU_STR_EQUAL(argv[0], "motion")) {
+	if (argc < 3) {
+	    Tcl_AppendResult(s->interp, "dm motion: need more parameters\n",
+			     "dm motion xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	return mged_dm_motion(s, atoi(argv[1]), atoi(argv[2]));
+    }
+
     if (BU_STR_EQUAL(argv[0], "am")) {
 	if (argc < 4) {
 	    Tcl_AppendResult(s->interp, "dm am: need more parameters\n",
@@ -650,52 +660,29 @@ dm_commands(int argc, const char *argv[], void *data)
 {
     struct mged_state *s = (struct mged_state *)data;
     MGED_CK_STATE(s);
-    struct dm_hook_data mged_dm_hook;
-    if (BU_STR_EQUAL(argv[0], "set")) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-	struct bu_structparse *dmparse = dm_get_vparse(DMP);
-	void *mvars = dm_get_mvars(DMP);
-	if (dmparse && mvars) {
-	    if (argc < 2) {
-		struct bu_vls report_str = BU_VLS_INIT_ZERO;
+    if (BU_STR_EQUAL(argv[0], "set") || BU_STR_EQUAL(argv[0], "bg") ||
+        BU_STR_EQUAL(argv[0], "debug") || BU_STR_EQUAL(argv[0], "get") ||
+        BU_STR_EQUAL(argv[0], "height") || BU_STR_EQUAL(argv[0], "initmsg") ||
+        BU_STR_EQUAL(argv[0], "list") || BU_STR_EQUAL(argv[0], "type") ||
+        BU_STR_EQUAL(argv[0], "types") ||
+        BU_STR_EQUAL(argv[0], "width")) {
+        if (!s->gedp->ged_gvp)
+            s->gedp->ged_gvp = view_state->vs_gvp;
+        if (s->gedp->ged_gvp)
+            s->gedp->ged_gvp->dmp = (void *)s->mged_curr_dm->dm_dmp;
 
-		bu_vls_sprintf(&report_str, "Display Manager (type %s) internal variables", dm_get_dm_name(DMP));
-		/* Bare set command, print out current settings */
-		bu_vls_struct_print2(&vls, bu_vls_addr(&report_str), dmparse, (const char *)mvars);
-		bu_vls_free(&report_str);
-	    } else if (argc == 2) {
-		/* TODO - need to add hook func support to this func, since the
-		 * one in the libdm structparse isn't enough by itself */
-		if (dm_get_mvars(DMP) && dm_get_vparse(DMP)) {
-		    bu_vls_struct_item_named(&vls, dmparse, argv[1], (const char *)mvars, COMMA);
-		}
-	    } else {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-		int ret;
-		struct mged_view_hook_state global_hs;
-		void *hdata = set_hook_data(s, &global_hs);
+        const char **av = (const char **)bu_calloc((size_t)argc + 2, sizeof(char *), "dm forward argv");
+        av[0] = "dm";
+        for (int i = 0; i < argc; i++)
+            av[i + 1] = argv[i];
+        int ret = ged_exec(s->gedp, argc + 1, av);
+        bu_free((void *)av, "dm forward argv");
 
-		ret = dm_set_hook(vparse_map, argv[1], hdata, &mged_dm_hook);
-		if (ret < 0) {
-		    bu_log("Warning - failed to set dm hook - dm-generic.c:%d\n", __LINE__);
-		}
-
-		bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-		bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-		bu_vls_putc(&tmp_vls, '\"');
-		ret = bu_struct_parse(&tmp_vls, dmparse, (char *)mvars, (void *)(&mged_dm_hook));
-		bu_vls_free(&tmp_vls);
-		if (ret < 0) {
-		    bu_vls_free(&vls);
-		    return TCL_ERROR;
-		}
-	    }
-	}
-
-	Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	return TCL_OK;
+        if (bu_vls_strlen(s->gedp->ged_result_str)) {
+            Tcl_AppendResult(s->interp, bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
+            bu_vls_trunc(s->gedp->ged_result_str, 0);
+        }
+        return (ret == BRLCAD_OK || (ret & GED_HELP)) ? TCL_OK : TCL_ERROR;
     }
 
     return common_dm(s, argc, argv);

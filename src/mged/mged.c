@@ -350,6 +350,44 @@ new_mats(struct mged_state *s)
     bv_update(view_state->vs_gvp);
 }
 
+static int
+mged_dm_during_clbk(int ac, const char **av, void *UNUSED(u1), void *u2)
+{
+    struct mged_state *s = (struct mged_state *)u2;
+    if (!s || ac < 2 || !av)
+        return BRLCAD_OK;
+
+    const char *dbg = getenv("GED_DM_DURING_DEBUG");
+    if (dbg && BU_STR_EQUAL(dbg, "1")) {
+        bu_log("mged dm during callback: ");
+        for (int i = 0; i < ac; i++) {
+            bu_log("%s%s", av[i], (i + 1 < ac) ? " " : "\n");
+        }
+    }
+
+    if (BU_STR_EQUAL(av[1], "set")) {
+        if (ac > 2 && BU_STR_EQUAL(av[2], "zclip") && DMP && view_state && view_state->vs_gvp && view_state->vs_gvp->gv_s) {
+            view_state->vs_gvp->gv_s->gv_zclip = dm_get_zclip(DMP);
+        }
+        if (view_state)
+            view_state->vs_flag = 1;
+        DMP_dirty = 1;
+        if (DMP)
+            dm_set_dirty(DMP, 1);
+        return BRLCAD_OK;
+    }
+
+    if (BU_STR_EQUAL(av[1], "bg") || BU_STR_EQUAL(av[1], "attach")) {
+        if (view_state)
+            view_state->vs_flag = 1;
+        DMP_dirty = 1;
+        if (DMP)
+            dm_set_dirty(DMP, 1);
+    }
+
+    return BRLCAD_OK;
+}
+
 
 /*
  * Sentinel values used by struct mged_cli_overrides to distinguish "not
@@ -1778,6 +1816,7 @@ refresh(struct mged_state *s)
 	 * Otherwise, we are happy with the view we have
 	 */
 	set_curr_dm(s, p);
+	(void)dm_configure_win(DMP, 0);
 	if (mapped && DMP_dirty) {
 	    int restore_zbuffer = 0;
 
@@ -2699,6 +2738,7 @@ main(int argc, char *argv[])
     /* prepare mged, adjust our path, get set up to use Tcl */
 
     mged_setup(s);
+    (void)ged_clbk_set(s->gedp, "dm", BU_CLBK_DURING, mged_dm_during_clbk, (void *)s);
     new_mats(s);
 
     mmenu_init(s);
@@ -2836,7 +2876,12 @@ main(int argc, char *argv[])
 #endif
 
 	    if (old_mged_gui) {
-		bu_vls_strcpy(&vls, "gui");
+		if (attach && strlen(attach) > 0) {
+		    Tcl_SetVar2(s->interp, "mged_default", "dm_type", attach, TCL_GLOBAL_ONLY);
+			bu_vls_printf(&vls, "gui -dt %s", attach);
+		} else {
+		    bu_vls_strcpy(&vls, "gui");
+		}
 		status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;

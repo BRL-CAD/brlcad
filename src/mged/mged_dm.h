@@ -538,6 +538,7 @@ extern void dm_var_init(struct mged_state *s, struct mged_dm *target_dm);
 
 /* defined in dm-generic.c */
 extern int common_dm(struct mged_state *s, int argc, const char *argv[]);
+extern int mged_dm_motion(struct mged_state *s, int x, int y);
 extern void view_state_flag_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
 extern void dirty_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
 extern void zclip_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
