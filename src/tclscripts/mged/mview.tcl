@@ -298,19 +298,25 @@ proc setmv { id } {
     global mged_gui
 
     if { $mged_gui($id,multi_pane) } {
-	# insure that the weight is not exaggerated
+	# Restore equal 2x2 weighting for all pane rows/columns.
 	grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
+	grid columnconfigure $mged_gui($id,dmc) 1 -weight 1
+	grid rowconfigure $mged_gui($id,dmc) 0 -weight 1
+	grid rowconfigure $mged_gui($id,dmc) 1 -weight 1
 
 	unpackmv $id
 	packmv $id
     } else {
-	# exaggerate the weight so that the single display manager window
-	# will grow to completely fill the container window
-	grid columnconfigure $mged_gui($id,dmc) 0 -weight 1000
+	# In single-pane mode, have the selected pane occupy the whole
+	# container rather than only row 0 / column 0 of the 2x2 layout.
+	grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
+	grid columnconfigure $mged_gui($id,dmc) 1 -weight 0
+	grid rowconfigure $mged_gui($id,dmc) 0 -weight 1
+	grid rowconfigure $mged_gui($id,dmc) 1 -weight 0
 
 	unpackmv $id
 	grid $mged_gui($id,dmc).$mged_gui($id,dm_loc)\F -in $mged_gui($id,dmc) \
-	    -sticky "nsew" -row 0 -column 0
+	    -sticky "nsew" -row 0 -column 0 -rowspan 2 -columnspan 2
     }
 }
 
