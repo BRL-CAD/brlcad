@@ -126,6 +126,10 @@ struct gl_vars {
     struct bu_vls log;
     double bound;
     int boundFlag;
+    int adaptive_zclip;
+    double adaptive_zclip_factor;
+    double adaptive_zclip_min;
+    double adaptive_zclip_max;
     struct gl_internal_vars i;
 };
 

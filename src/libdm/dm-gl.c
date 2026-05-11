@@ -138,6 +138,43 @@ void glvars_init(struct dm *dmp)
     mvars->transparency_on = 1;
     mvars->fast_wireframe = 0;
     mvars->fast_wireframe_active = 0;
+    mvars->adaptive_zclip = 0;
+    mvars->adaptive_zclip_factor = 2.0;
+    mvars->adaptive_zclip_min = 100.0;
+    mvars->adaptive_zclip_max = 5000.0;
+}
+
+static void
+gl_adaptive_zclip_update(struct dm *dmp)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    if (!mvars || !mvars->adaptive_zclip || mvars->zclipping_on)
+        return;
+    if (!dmp->i->dm_vp)
+        return;
+
+    fastf_t scale = *(dmp->i->dm_vp);
+    if (scale < 0.0)
+        scale = -scale;
+    if (scale < SMALL_FASTF)
+        scale = 1.0;
+
+    fastf_t z = scale * mvars->adaptive_zclip_factor;
+    if (z < mvars->adaptive_zclip_min)
+        z = mvars->adaptive_zclip_min;
+    if (z > mvars->adaptive_zclip_max)
+        z = mvars->adaptive_zclip_max;
+
+    if (NEAR_EQUAL(dmp->i->dm_clipmin[2], -z, SMALL_FASTF) &&
+        NEAR_EQUAL(dmp->i->dm_clipmax[2], z, SMALL_FASTF))
+        return;
+
+    fastf_t bounds[6] = {
+        dmp->i->dm_clipmin[0], dmp->i->dm_clipmax[0],
+        dmp->i->dm_clipmin[1], dmp->i->dm_clipmax[1],
+        -z, z
+    };
+    (void)dm_set_win_bounds(dmp, bounds);
 }
 
 void gl_fogHint(struct dm *dmp, int fastfog)
@@ -306,6 +343,8 @@ int gl_drawBegin(struct dm *dmp)
     if (dm_make_current(dmp) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
+
+    gl_adaptive_zclip_update(dmp);
 
     /* clear back buffer */
     if (!dmp->i->dm_clearBufferAfter && mvars->doublebuffer) {
@@ -1798,6 +1837,10 @@ struct bu_structparse gl_vparse[] = {
     {"%V",  1, "log",              gl_MV_O(log),             gl_logfile_hook, NULL, NULL },
     {"%g",  1, "bound",            gl_MV_O(bound),           gl_bound_hook, NULL, NULL },
     {"%d",  1, "useBound",         gl_MV_O(boundFlag),       gl_bound_flag_hook, NULL, NULL },
+    {"%d",  1, "adaptive_zclip",   gl_MV_O(adaptive_zclip),  dm_generic_hook, NULL, NULL },
+    {"%g",  1, "adaptive_zclip_factor", gl_MV_O(adaptive_zclip_factor), dm_generic_hook, NULL, NULL },
+    {"%g",  1, "adaptive_zclip_min", gl_MV_O(adaptive_zclip_min), dm_generic_hook, NULL, NULL },
+    {"%g",  1, "adaptive_zclip_max", gl_MV_O(adaptive_zclip_max), dm_generic_hook, NULL, NULL },
     {"",    0, (char *)0,          0,                        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
