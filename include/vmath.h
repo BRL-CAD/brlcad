@@ -106,7 +106,9 @@
 #include "common.h"
 
 /* needed for additional math defines on Windows when including math.h */
-#define _USE_MATH_DEFINES 1
+#ifndef _USE_MATH_DEFINES
+#  define _USE_MATH_DEFINES 1
+#endif
 
 /* for sqrt(), sin(), cos(), rint(), M_PI, INFINITY (HUGE_VAL), and more */
 #include <math.h>
