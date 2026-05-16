@@ -89,7 +89,7 @@ if(NOT COMMAND add_asciidoc)
     # Normalize file names
     set(adoc_files_full)
     foreach(adoc_file ${adoc_files})
-      if (EXISTS ${adoc_file})
+      if (IS_ABSOLUTE "${adoc_file}")
 	set(src "${adoc_file}")
       else()
 	set(src "${CMAKE_CURRENT_SOURCE_DIR}/${adoc_file}")
