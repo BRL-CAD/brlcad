@@ -1,0 +1,49 @@
+= GET_DBIP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+get_dbip - Alternate command name for *dbip*.
+
+== SYNOPSIS
+
+[source]
+----
+get_dbip
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *get_dbip* command shares its core implementation with *dbip*.
+It prints the current database pointer and is mainly intended for diagnostic
+use.
+
+See *dbip* for the detailed behavior.
+
+
+[[examples]]
+== EXAMPLES
+
+.Use the alternate command name.
+[example]
+====
+mged> **get_dbip**
+
+Performs the same operation as *dbip*.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
