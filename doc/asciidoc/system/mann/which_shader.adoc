@@ -10,7 +10,7 @@ which_shader - Lists all the regions that use one of the _shaders_ specified.
 
 [source]
 ----
-which_shader {shaders}
+which_shader [-s] {shaders}
 ----
 
 
@@ -18,6 +18,15 @@ which_shader {shaders}
 == DESCRIPTION
 
 Lists all the regions that use one of the _shaders_ specified.
+
+If *-s* is supplied, the output is formatted more compactly for scripting.
+
+
+[[options]]
+== OPTIONS
+
+*-s*::
+Use compact script-oriented output formatting.
 
 
 [[examples]]
