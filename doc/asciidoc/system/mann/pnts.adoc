@@ -54,7 +54,11 @@ tri spsr
 [[description]]
 == DESCRIPTION
 
-Allows the user to create/write/generate "pnts" primitives. See also the *make_pnts* command.
+Allows the user to create/write/generate "pnts" primitives. See also the
+*make_pnts* command.
+
+Most *pnts* subcommands accept *-h* or *--help* to print subcommand-specific
+usage details.
 
 
 [[subcommands]]
