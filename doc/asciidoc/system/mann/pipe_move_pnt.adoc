@@ -1,0 +1,60 @@
+= PIPE_MOVE_PNT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pipe_move_pnt - Move a control point of a PIPE primitive.
+
+== SYNOPSIS
+
+[source]
+----
+pipe_move_pnt pipe seg_i {x y z}
+pipe_move_pnt -r pipe seg_i {dx dy dz}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *pipe_move_pnt* command moves the control point at index _seg_i_ in the
+specified PIPE primitive.
+
+Without *-r*, the supplied point is interpreted as an absolute location in the
+database's local units. With *-r*, the supplied point is treated as a relative
+offset from the current control-point location.
+
+The alternate command name *mouse_move_pipe_pnt* is also available.
+
+
+[[examples]]
+== EXAMPLES
+
+.Move an existing pipe point by a relative offset.
+[example]
+====
+mged> **pipe_move_pnt -r fuel_line.s 3 {0 0 25}**
+
+Moves point index `3` of _fuel_line.s_ 25 local units in the positive Z
+direction.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*mouse_move_pipe_pnt*(nged), *pipe_append_pnt*(nged), *pipe_prepend_pnt*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
