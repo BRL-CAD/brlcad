@@ -1,0 +1,64 @@
+= PATHSUM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pathsum - shared path-evaluation command related to *paths* and *listeval*
+
+== SYNOPSIS
+
+[source]
+----
+pathsum {path}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *pathsum* implementation is shared by three related commands:
+*pathsum*, *paths*, and *listeval*. All three commands accept a model
+path specified either as slash-separated components or as space-separated
+components, but not both in the same invocation.
+
+For interactive use, *paths* is usually the best choice when the goal is
+to enumerate all primitive paths below a starting point, and *listeval*
+is the best choice when the goal is to print the fully evaluated leaf
+primitive parameters for a path.
+
+The shared implementation also recognizes the *-t* option when invoked as
+*listeval*. That option requests a terse primitive report for shapes with
+long parameter lists, such as BoTs.
+
+
+[[examples]]
+== EXAMPLES
+
+.Use the shared path-evaluation logic through *listeval* for a terse report.
+[example]
+====
+mged>**listeval -t vehicle.r/turret.r/bolt.s**
+
+Evaluates the full transform stack along the specified path and prints a concise description of the resulting primitive.
+====
+
+.Enumerate all leaf paths below a subassembly.
+[example]
+====
+mged>**paths vehicle.r/turret.r**
+
+Lists every primitive path that begins at _vehicle.r/turret.r_, which is useful before selecting one specific path for *listeval* or *copyeval*.
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
