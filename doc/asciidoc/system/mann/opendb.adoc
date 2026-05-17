@@ -4,87 +4,90 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-opendb - Closes the current database file and opens _database.g_.
+opendb - Open a BRL-CAD database and make it current.
 
 == SYNOPSIS
 
 [source]
 ----
-opendb [-f] [database.g]
+opendb
+opendb [-c] [-f] [-h] [-o] filename
+opendb [--create] [--flip-endian] [--help] [--open] filename
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Closes the current database file and opens _database.g_. If _database.g_ is not found, the user is prompted to create a new database of that name. If _database.g_ is not specified on the command line, the name of the current database file is returned.
+With no filename argument, *opendb* reports the currently open database path.
+If no database is open, it reports that state instead.
 
-If the -f option is specified and the database.g is a v4 geometry database, the file will be read with a flipped binary endianness encoding. This is useful for binary-incompatible v4 geometry files that were created on a different platform type.
+When a _filename_ is supplied, *opendb* closes any currently open database and
+opens the requested database file.
 
-Binary-incompatible v4 geometry database files that can be auto-detected will be automatically converted if all resulting matrices are valid.
+By default, *opendb* is willing to create a new database if the requested file
+does not already exist. Use *-o* or *--open* to require that the file already
+exist.
 
-The *opendb* command will look in the current working directory for the file. If the file is in another directory, use the relative or full path to the file or use the *pwd* and *cd* commands to navigate to the file's directory.
+If *-f* or *--flip-endian* is supplied and the target file is a v4 database,
+the file is treated as a binary-incompatible database and opened with flipped
+endianness. This is useful for legacy v4 databases created on incompatible
+platforms. When such flipping is applied, the database is made read-only.
+
+
+[[options]]
+== OPTIONS
+
+*-c*, *--create*::
+Allow creation of a new database if _filename_ does not already exist. This is
+the default behavior and overrides *-o*.
+
+*-f*, *--flip-endian*::
+Treat a v4 database as a binary-incompatible file and flip its endianness on
+open. Ignored for non-v4 databases.
+
+*-h*, *--help*::
+Print command help.
+
+*-o*, *--open*::
+Require that _filename_ already exist and open only that file.
 
 
 [[examples]]
 == EXAMPLES
 
-The first example shows the use of the *opendb* command to close the current database file and open the one specified. The second example shows the use of the command with no database name, which returns the name of the current database file.
-
-.Close the current database and open another one.
+.Open an existing database.
 [example]
 ====
-mged>**opendb model.g**
+mged> **opendb -o model.g**
 
-Closes the current database file and opens _model.g_.
+Closes the current database, if any, and opens the existing _model.g_ file.
 
 ====
 
-.Return the name of the current database file.
+.Report the currently open database path.
 [example]
 ====
-mged>**opendb**
+mged> **opendb**
 
 Returns the name of the current database file.
 
 ====
 
-.Open and upgrade a binary-incompatible v4 file.
+.Open a legacy v4 database with forced endian flipping.
 [example]
 ====
+mged> **opendb -f legacy_v4.g**
 
-
-
-....
-
-mged> opendb -f model.g
-mged> dbupgrade
-    
-....
-
-
-
-Closes any currently open database and opens _model.g_ as a binary-incompatible v4 geometry database.
+Opens _legacy_v4.g_ as a binary-incompatible v4 database. If flipping is
+applied, the database is opened read-only.
 
 ====
 
-.Open a database using the full path to the file.
-[example]
-====
+[[see_also]]
+== SEE ALSO
 
-
-
-....
-
-  mged> opendb C:/cad_work/model.g
-    
-....
-
-
-
-Closes any currently open database and opens _model.g_ located at C:\cad_work\.
-
-====
+*open*(nged), *closedb*(nged), *reopen*(nged), *dbupgrade*(nged)
 
 
 [[author]]
