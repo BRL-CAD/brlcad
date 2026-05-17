@@ -1,0 +1,53 @@
+= RSELECT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rselect - Returns displayed items or BOT vertices within the previously defined selection rectangle.
+
+== SYNOPSIS
+
+[source]
+----
+rselect [-b bot] [-p] [-z vminz]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Returns the displayed items inside the previously defined view selection rectangle.
+
+The implementation supports the following options:
+
+* *-b bot* - Return BOT vertex indices from the specified BOT instead of displayed object paths.
+* *-p* - Use partial-overlap selection.
+* *-z vminz* - Ignore candidates with view-space Z values below _vminz_.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows one way to invoke *rselect* after a rectangle has been defined in the current view.
+
+.Select from the current rectangle.
+[example]
+====
+mged>**rselect**
+
+Returns the displayed items contained by the current selection rectangle.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
