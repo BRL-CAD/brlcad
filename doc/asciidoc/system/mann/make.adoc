@@ -10,7 +10,7 @@ make - Creates a __new_shape__ of the indicated type.
 
 [source]
 ----
-make [-t] [new_shape type]
+make [-h] [-t] [-o "x y z"] [-s scale] new_shape type
 ----
 
 
@@ -18,6 +18,10 @@ make [-t] [new_shape type]
 == DESCRIPTION
 
 Creates a __new_shape__ of the indicated type. The __new_shape__ is sized according to the current view size and is dependent on the _type_. The possible values for _type_ are:
+
+The *-h* option prints usage help. The *-o* option specifies the origin for the
+new primitive and the *-s* option sets the initial size scale used when
+building the primitive.
 
 
 * arb8 -- ARB (eight vertices)
