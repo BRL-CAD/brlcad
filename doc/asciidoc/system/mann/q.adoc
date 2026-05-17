@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-q - Ends the MGED process.
+q - Short command name for *quit*.
 
 == SYNOPSIS
 
@@ -17,7 +17,10 @@ q
 [[description]]
 == DESCRIPTION
 
-Ends the MGED process. Note that there is no write database command in MGED. All changes are made to the database as the user performs them. Therefore, a *q* command will not restore the database to its pre-edited state. This is a synonym for the *quit* command.
+The *q* command shares its core implementation with *quit*.
+It ends the current MGED session.
+
+See *quit* for the detailed behavior.
 
 
 [[examples]]
@@ -25,12 +28,12 @@ Ends the MGED process. Note that there is no write database command in MGED. All
 
 The example shows the use of the *q* command to quit a current MGED session.
 
-.Quit MGED
+.Quit MGED using the short command.
 [example]
 ====
-mged>**q**
+mged> **q**
 
-The current MGED session is ended.
+Performs the same operation as *quit*.
 
 ====
 
