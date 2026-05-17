@@ -50,6 +50,10 @@ d2.r
 == OPTIONS
 
 
+*-h*::
+Print help and exit.
+
+
 *-a*::
 Overrides the hidden flag when assembling path lists, if a generic toplevel path has been specified.
 
@@ -794,5 +798,4 @@ Bugs resulting from incorrect parsing of shell pattern expressions are the resul
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
-
 
