@@ -17,13 +17,27 @@ area [tolerance]
 [[description]]
 == DESCRIPTION
 
-Calculates an approximate presented area of one region in the mged display. For this command to work properly, a single BRL-CAD region must be displayed using the *E* command. The _tolerance_ is the distance required between two vertices in order for them to be recognized as distinct vertices. This calculation considers only the minimum bounding polygon of the region and ignores holes.
+Calculates an approximate presented area of one region in the mged
+display. For this command to work properly, a single BRL-CAD region
+must be displayed using the *E* command. The _tolerance_ is the
+distance required between two vertices in order for them to be
+recognized as distinct vertices. This calculation considers only the
+minimum bounding polygon of the region and ignores holes.
 
 
 [[examples]]
 == EXAMPLES
 
-****need working example here***
+.Report the approximate presented area of a displayed region.
+[example]
+====
+mged> # Displays _wheel.r_ as the single evaluated region for use by *area*.
+mged> **E wheel.r**
+mged> # Calculates approximate presented area using a 0.01 local-unit vertex tolerance.
+mged> **area 0.01**
+
+
+====
 
 
 [[author]]
