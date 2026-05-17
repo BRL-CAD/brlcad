@@ -10,7 +10,8 @@ garbage_collect - Eliminates unused space in a BRL-CAD database file.
 
 [source]
 ----
-garbage_collect
+garbage_collect [-h | --help]
+garbage_collect [-c | --confirm]
 ----
 
 
@@ -18,6 +19,20 @@ garbage_collect
 == DESCRIPTION
 
 Eliminates unused space in a BRL-CAD database file.
+
+The operation is intentionally guarded: the actual rewrite is performed only
+when *-c* or *--confirm* is supplied. Invoking the command with no arguments
+prints the help text.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+Print help and exit.
+
+*-c*, *--confirm*::
+Execute the garbage-collection operation.
 
 
 [[examples]]
@@ -29,7 +44,7 @@ The example shows the use of the *garbage_collect* command to delete unused spac
 [example]
 ====
 
-mged> **garbage_collect**::
+mged> **garbage_collect**:: -c
 Cleans out unused space in the database.
 
 
