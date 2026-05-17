@@ -11,13 +11,61 @@ man - Opens the graphical man page viewer.
 [source]
 ----
 man [cmdname]
+man [-g | --gui] [cmdname]
+man [--no-gui] [-L language] [-S section] [cmdname]
+man [-h | --help]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Launches a graphical manual page viewer with a page documenting the specified command name.
+Launches the BRL-CAD manual page viewer for the specified command name.
+
+By default, *man* starts the GUI viewer when possible. It can also force GUI or
+non-GUI mode and can select a manual language or manual section before
+launching `brlman`.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+Print help and exit.
+
+*-g*, *--gui*::
+Force use of the graphical manual page viewer.
+
+*--no-gui*::
+Force command-line viewer mode.
+
+*-L*, *--language* _lang_::
+Select the manual language to request from `brlman`.
+
+*-S*, *--section* _section_::
+Select the manual section to request from `brlman`.
+
+
+[[examples]]
+== EXAMPLES
+
+.Open the *view* manual page in the default viewer mode.
+[example]
+====
+mged> **man view**
+
+Launches the BRL-CAD manual page viewer on the `view` command page.
+
+====
+
+.Open a specific section in command-line mode.
+[example]
+====
+mged> **man --no-gui -S 1 rt**
+
+Launches `brlman` in non-GUI mode and requests section `1` for `rt`.
+
+====
 
 
 [[author]]
