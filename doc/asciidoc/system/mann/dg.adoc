@@ -20,6 +20,23 @@ dg
 Exits gr grouper mode.  See gr man page.
 
 
+[[examples]]
+== EXAMPLES
+
+.Exit grouper mode after starting it with *gr*.
+[example]
+====
+mged> **gr hull_parts.c + 25**
+
+Starts grouper mode for adding selected objects to _hull_parts.c_.
+
+mged> **dg**
+
+Exits grouper mode after the desired display selections have been made.
+
+====
+
+
 [[author]]
 == AUTHOR
 

@@ -24,6 +24,28 @@ Starting with v5, the geometry file format is platform independent. For v4 .g fi
 The older process of running *g2asc*(1) and *asc2g*(1) on a database to preserve a text version as a work-around for platform specific binary files is no longer necessary.
 
 
+[[examples]]
+== EXAMPLES
+
+.Start an interactive database upgrade.
+[example]
+====
+mged> **dbupgrade**
+
+Prompts to upgrade the currently open database and writes a backup with the original pre-upgrade file contents.
+
+====
+
+.Request upgrade help.
+[example]
+====
+mged> **dbupgrade help**
+
+Prints the upgrade explanation and command usage without changing the database.
+
+====
+
+
 [[see_also]]
 == SEE ALSO
 
