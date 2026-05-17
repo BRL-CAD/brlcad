@@ -17,7 +17,15 @@ mirror [-p "point"] [-d "dir"] [-x|-y-|-z] [-o offset] {from_object to_object}
 [[description]]
 == DESCRIPTION
 
-Mirrors an object (shape or combination) across a given axis (_x_ by default). If __from_object__ is a shape, then it is copied to a new shape named __to_object__ that is mirrored across the given axis. If __from_object__ is a combination, then a new combination is created that contains exactly the same members naned __to_object__. Transformation matrices are added to mirror it across the requested axis. The _-x, -y, & -z_ options tell the command which axis to mirror the object. The _-p_ can be used to specify a point to mirror about, and the _-d_ can be used to specify a direction vector to mirror about.
+Mirrors an object (shape or combination) across a given axis (_x_ by default).
+If __from_object__ is a shape, then it is copied to a new shape named
+__to_object__ that is mirrored across the given axis. If __from_object__ is a
+combination, then a new combination is created that contains exactly the same
+members named __to_object__. Transformation matrices are added to mirror it
+across the requested axis. The _-x, -y, & -z_ options tell the command which
+axis to mirror the object. The _-p_ can be used to specify a point to mirror
+about, and the _-d_ can be used to specify a direction vector to mirror about.
+The *-h* option prints usage help.
 
 
 [[examples]]
