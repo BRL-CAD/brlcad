@@ -10,14 +10,14 @@ kill - Deletes specified _objects_ from the current database.
 
 [source]
 ----
-kill [-f] {objects}
+kill [-f] [-n] [-q] {objects}
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Deletes the specified _objects_ from the current database. This command affects only the _objects_ actually listed on the command line. If a combination is killed, its members are not affected. If the _-f_ option is specified, then kill will not complain if some, or all, of the _objects_ specified do not actually exist in the database. Note that the _objects_ are killed immediately. There is no need for a *write file* command in MGED, and there is no *undo* command. *Use this command with caution.* Other commands that remove objects from the database are *killall* and *killtree*.
+Deletes the specified _objects_ from the current database. This command affects only the _objects_ actually listed on the command line. If a combination is killed, its members are not affected. If the _-f_ option is specified, then kill will not complain if some, or all, of the _objects_ specified do not actually exist in the database. The _-n_ option performs a dry-run style report of the supplied object list instead of deleting it. Note that the _objects_ are killed immediately. There is no need for a *write file* command in MGED, and there is no *undo* command. *Use this command with caution.* Other commands that remove objects from the database are *killall* and *killtree*.
 
 The *-q* option may be added to suppress database object lookup messages reporting failure, which will otherwise let the user know an invalid object was specified.
 
