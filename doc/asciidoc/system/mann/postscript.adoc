@@ -17,7 +17,33 @@ postscript [-f font] [-t title] [-c creator] [-s size_in_inches] [-l line_width]
 [[description]]
 == DESCRIPTION
 
-Temporarily attaches the _Postscript_ display manager and outputs the current MGED display to the specified __output_file__ in _PostScript_ format. The _-f_ option allows the _font_ to be user- specified. The _-t_ option allows the user to provide a title (the default is No Title). The _-c_ option allows the user to specify the creator of the file (the default is LIBDM dm-ps). The _s_ specifies the size of the drawing in inches. The _l_ specifies the width of the lines drawn.
+Temporarily attaches the _PostScript_ display manager and outputs the current
+MGED display to the specified __output_file__ in _PostScript_ format. The
+following options control the generated output:
+
+*-a* _author_::
+Set the PostScript creator/author string.
+
+*-b*::
+Draw a border around the output.
+
+*-c* _r/g/b_::
+Set the border color.
+
+*-f* _font_::
+Set the PostScript font.
+
+*-s* _size_in_inches_::
+Set the drawing size in inches.
+
+*-t* _title_::
+Set the PostScript title string.
+
+*-x* _offset_::
+Set the X offset in inches.
+
+*-y* _offset_::
+Set the Y offset in inches.
 
 
 [[examples]]
