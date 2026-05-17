@@ -1,0 +1,99 @@
+= TIRE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+tire - Generate tire and optional wheel geometry from tire dimensions.
+
+== SYNOPSIS
+
+[source]
+----
+tire [options]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *tire* command generates tire geometry, and optionally wheel geometry,
+using either ISO-style tire dimensions or explicit dimensional parameters.
+
+The command accepts explicit ISO inputs via *-d* or *--dimensions* and also
+accepts the synonymous long form *--ISO*.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*, *--help*::
+Print help and exit.
+
+*-n*, *--obj-name* _name_::
+Set the top-level object name.
+
+*-w*, *--wheel* _bool_::
+Enable or disable wheel generation.
+
+*-d*, *--dimensions* _ISO_tire_spec_::
+Specify tire dimensions using ISO-style inputs.
+
+*--ISO* _ISO_tire_spec_::
+Synonym for *--dimensions*.
+
+*-W*, *--width* _mm_::
+Set tire width in millimeters. Overrides ISO dimensions.
+
+*-R*, *--aspect-ratio* _ratio_::
+Set aspect ratio as `ratio/100`. Overrides ISO dimensions.
+
+*-D*, *--rim-diameter* _inches_::
+Set rim diameter in inches. Overrides ISO dimensions.
+
+*-g*, *--tread-depth* _value_::
+Set tread depth in 1/32 inch units.
+
+*-j*, *--hub-width* _inches_::
+Set rim width.
+
+*-s*, *--max-sidewall-radius* _mm_::
+Set the maximum sidewall radius.
+
+*-u*, *--tire-thickness* _mm_::
+Set tire thickness.
+
+*-p*, *--tread-pattern* _id_::
+Set the tread pattern identifier.
+
+*-c*, *--tread-pattern-cnt* _count_::
+Set the number of tread patterns around the tire.
+
+*-t*, *--tread-shape* _id_::
+Set the tread shape profile identifier.
+
+
+[[examples]]
+== EXAMPLES
+
+.Create a tire from ISO dimensions.
+[example]
+====
+mged> **tire --obj-name tire_235_75r15 --dimensions 235/75R15**
+
+Generates tire geometry named _tire_235_75r15_ using the specified ISO tire
+size.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
