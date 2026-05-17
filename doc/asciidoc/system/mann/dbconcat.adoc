@@ -10,7 +10,8 @@ dbconcat - Concatenates an existing BRL-CAD database to the database currently b
 
 [source]
 ----
-dbconcat [-t] [-u] [-c] [-s|-p] [-L] [-O] {database_file} [affix]
+dbconcat [-h] [-t] [-u] [-c] [-s|-p] [-L] [-O] {database_file} [affix]
+dbconcat [--help] [--lazy-affix] [--overwrite] [--prefix] [--suffix] {database_file} [affix]
 ----
 
 
@@ -30,11 +31,15 @@ Other options are used to indicate whether or not to preserve incoming metadata 
 == OPTIONS
 
 
-*-L*::
+*-h*, *--help*::
+Print help and exit.
+
+
+*-L*, *--lazy-affix*::
 Apply the affix (either as a prefix or suffix) only when trying to resolve name conflicts.
 
 
-*-O*::
+*-O*, *--overwrite*::
 Overwrite objects in the current .g file in cases where incoming object names conflict. (WARNING: this option is destructive - old data is replaced by new.)
 
 
@@ -42,11 +47,11 @@ Overwrite objects in the current .g file in cases where incoming object names co
 Indicates that the region color table of the currently edited database should be replaced with that of __database_file__.
 
 
-*-p*::
+*-p*, *--prefix*::
 Use the supplied _affix_ string as a prefix when reading in object names. (Default.)
 
 
-*-s*::
+*-s*, *--suffix*::
 Use the supplied _affix_ string as a suffix when reading in object names.
 
 
