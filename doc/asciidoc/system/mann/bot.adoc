@@ -117,7 +117,23 @@ sync {objname}
 [[description]]
 == DESCRIPTION
 
-The *bot* command allows the user to initiate and number of subcommands on BoT primitives. The -v command turns on verbose output. The -V command visualizes the results. The -C command sets the RGB plotting color.
+The *bot* command allows the user to initiate and number of subcommands on BoT primitives.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+Print help.
+
+*-v*, *--verbose*::
+Turn on verbose output.
+
+*-V*, *--visualize*::
+Visualize results when supported by the selected subcommand.
+
+*-C* _r/g/b_, *--color* _r/g/b_::
+Set the RGB plotting color used by visualization-oriented subcommands.
 
 
 [[subcommands]]
