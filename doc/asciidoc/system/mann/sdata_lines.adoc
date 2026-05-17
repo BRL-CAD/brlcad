@@ -1,0 +1,75 @@
+= SDATA_LINES(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+sdata_lines - Manage the secondary arbitrary line set attached to the current view.
+
+== SYNOPSIS
+
+[source]
+----
+sdata_lines draw [0|1]
+sdata_lines color [r g b]
+sdata_lines line_width [width]
+sdata_lines points [{{x y z} {x y z} ...}]
+sdata_lines snap [0|1]
+view sdata_lines draw [0|1]
+view sdata_lines color [r g b]
+view sdata_lines line_width [width]
+view sdata_lines points [{{x y z} {x y z} ...}]
+view sdata_lines snap [0|1]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *sdata_lines* command manages a second view-associated line set that is not
+tied to database geometry. It accepts the same subcommands as *data_lines*:
+*draw*, *color*, *line_width*, *points*, and *snap*.
+
+Each subcommand reports the current value when invoked without a new setting.
+For *points*, the supplied Tcl-style point list must contain an even number of
+3D points because lines are defined in endpoint pairs.
+
+The same functionality is also available through the `view sdata_lines ...`
+command form.
+
+The related *data_lines* command edits a separate line set in the same view.
+
+
+[[examples]]
+== EXAMPLES
+
+.Create a highlighted secondary guide line set through the `view` command form.
+[example]
+====
+mged> **view sdata_lines points {{0 -1000 0} {0 1000 0} {-1000 10 0} {1000 10 0}}**
+mged> **view sdata_lines color 255 0 0**
+mged> **view sdata_lines line_width 100**
+mged> **view sdata_lines draw 1**
+
+Defines two guide lines in the secondary line set, colors them red, widens
+them, and enables drawing.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*data_lines*(nged), *view*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
