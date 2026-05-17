@@ -21,6 +21,17 @@ Reverse (i.e. flip) all the facet normals within a BOT primitive. When viewing a
 
 Note: using the *bot_flip* will toggle the orientation of right and left-handed BOT primitives. The orientation of unoriented BOT primitives will not change.
 
+[[examples]]
+== EXAMPLES
+
+.Flip a BoT whose outward-facing normals are reversed.
+[example]
+====
+mged>**bot_flip imported_shell.bot**
+
+Reverses every facet normal in _imported_shell.bot_, which is a common follow-up after finding that the model's outside faces render as backfaces in shaded mode.
+====
+
 
 [[author]]
 == AUTHOR
