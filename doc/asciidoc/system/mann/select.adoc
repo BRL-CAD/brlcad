@@ -1,0 +1,53 @@
+= SELECT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+select - Returns displayed items or BOT vertices within a specified screen-space region.
+
+== SYNOPSIS
+
+[source]
+----
+select [-b bot] [-p] [-z vminz] vx vy {vr | vw vh}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Returns the displayed items within a specified selection area. The area may be given either as a circle with center `vx vy` and radius `vr`, or as a rectangle with origin `vx vy` and width/height `vw vh`.
+
+The implementation supports the following options:
+
+* *-b bot* - Return BOT vertex indices from the specified BOT instead of displayed object paths.
+* *-p* - Use partial-overlap selection instead of requiring full containment.
+* *-z vminz* - Ignore candidates with view-space Z values below _vminz_.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows a circular selection.
+
+.Select displayed items around a screen-space point.
+[example]
+====
+mged>**select 0.1 0.2 0.05**
+
+Returns the displayed items inside the specified circular selection region.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
