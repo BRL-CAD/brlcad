@@ -20,17 +20,20 @@ ls [-A -o -a -c -r -s -p -l -q -H -S] [objects]
 The command with no _object_ argument lists the name of every object in the database (in alphabetical order) except for those marked as hidden with the *hide* command. If the _object_ argument is supplied, only those _objects_ are listed. The _object_ argument may include regular expressions. If the _-A_ option is used, then the arguments are expected to be a list of attribute name/value pairs, and objects having attributes that match the provided list are listed. By default, an object must match all the specified attributes in order to be listed; however, the _-o_ flag indicates that an object matching at least one attribute name/value pair should be listed. See the *attr* command for information on how to set or get attributes. Regular expressions are not supported for attributes. The following options are also allowed:
 
 
-* a -- List all objects in the database.
-* c -- List all non-hidden combinations in the database.
-* r -- List all non-hidden regions in the database.
-* s -- List all non-hidden primitives in the database.
-* p -- List all non-hidden primitives in the database.
-* l -- Use long format showing object name, object type, major type, minor type, and length.
-* H -- When printing using long format, use human readable sizes for object size.
-* S -- Sort using object size rather than object name.
-* q -- Suppress informational output messages during database lookup process
+* `-h`, `--help` -- Print help and exit.
+* `-a`, `--all` -- List all objects in the database.
+* `-c`, `--combs` -- List all non-hidden combinations in the database.
+* `-r`, `--regions` -- List all non-hidden regions in the database.
+* `-s`, `-p`, `--primitives` -- List all non-hidden primitives in the database.
+* `-l` -- Use long format showing object name, object type, major type, minor type, and length.
+* `-H`, `--human-readable` -- When printing in long format, use human-readable sizes.
+* `-S`, `--sort` -- Sort using object size rather than object name.
+* `-A`, `--attributes` -- List objects having all of the specified attribute name/value pairs.
+* `-o`, `--or` -- In attribute mode, match objects having at least one listed attribute pair.
+* `-q`, `--quiet` -- Suppress informational output messages during database lookup.
 
-The *ls* command is a synonym for the *t* command. Note that when any of the above options are used, the output is not formatted.
+The same listing behavior is also exposed by the separate *t* entry. Note that
+when any of the above options are used, the output is not formatted.
 
 
 [[examples]]
