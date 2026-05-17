@@ -1,40 +1,50 @@
-= bigE(nged)
+= E(nged)
 :doctype: manpage
 :mansource: BRL-CAD
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bigE - Displays _objects_ in an evaluated form.
+E - Display objects in evaluated form.
 
 == SYNOPSIS
 
 [source]
 ----
-E {object} [-s]
+E [-s] object [object ...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Displays objects in an evaluated form. All the Boolean operations indicated in each object in _objects_ will be performed, and a resulting faceted approximation of the actual objects will be displayed. Note that this is usually much slower than using the usual *draw* command. The _-s_ option provides a more accurate, but slower, approximation. See also: the *ev* command.
+The *E* command evaluates the specified object trees and displays a faceted
+approximation of the resulting geometry. Unlike *draw* or *e*, which display
+objects using the normal display-list pipeline, *E* shows the evaluated boolean
+result. This is useful when checking what a tree actually resolves to, but it
+is usually slower than ordinary drawing.
+
+The *-s* option requests a slower, more accurate approximation.
+
+Historically this command has also been referred to informally as "bigE".
 
 
 [[examples]]
 == EXAMPLES
 
-Display faceted approximation of an object.
-
-.Display _objects_ in an evaluated form
+.Display the evaluated result of a region tree.
 [example]
 ====
+mged> **E -s suspension.r**
 
-mged> **E some_object**::
-Displays a faceted approximation of __some_object__.
-
-
-
+Evaluates the booleans in _suspension.r_ and displays a more accurate faceted
+approximation of the resulting volume.
 ====
+
+
+[[see_also]]
+== SEE ALSO
+
+*draw*(nged), *e*(nged), *ev*(nged)
 
 
 [[author]]
