@@ -57,6 +57,16 @@ Specifies sort column 1, 2, 3, 4, 5, or 6 (referring to columns listed in the de
 *-f FileName*::
 Identifies output should be to a file and specifies the file name. If the path is not included as part of the 'FileName' the path will be the 'current directory'.
 
+[[examples]]
+== EXAMPLES
+
+.Find regions that share a region id but disagree on other code settings.
+[example]
+====
+mged>**lc -m vehicle.c**
+
+Lists only the regions below _vehicle.c_ that share a region id while disagreeing on material, LOS, or aircode values, which is useful before normalizing region attributes with *edcodes*.
+====
 
 
 
