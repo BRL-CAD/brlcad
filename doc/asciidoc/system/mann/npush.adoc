@@ -10,8 +10,18 @@ npush - push matrices down a tree hierarchy
 
 [source]
 ----
-npush [-h] [-?] [-v] [-f] [-x] [-r] [-s] [-d max_depth] {arg1 [arg2]...}
+npush [-h] [-?] [-v] [-f] [-x] [-r] [-s] [-d max_depth] [-L] [-D] {arg1 [arg2]...}
 ----
+
+
+[[description]]
+== DESCRIPTION
+
+The *npush* command moves matrices down a combination hierarchy while preserving
+the apparent placement of the affected geometry. Depending on the selected
+options, it can perform a full push, halt at regions or solids, stop at a
+specified depth, confine changes to the named trees, or preview the changes
+without writing them.
 
 
 [[npush_background]]
@@ -492,28 +502,42 @@ A region-halted push does not modify regions or primitives inside them. Objects 
 == OPTIONS
 
 
-*-h or -?*::
+*-h*, *-?*, *--help*::
 Print help and exit.
 
 
-*-v*::
+*-v*, *--verbosity*::
 Verbose processing output (primarily used for debugging).
 
 
-*-f or -x*::
-Force creation of new objects if necessary to avoid conflicts while fully pushing matrices. (A.k.a "xpush" mode).
+*-f*, *--force*::
+Force creation of new objects if necessary to avoid conflicts while pushing
+matrices.
 
 
-*-r*::
+*-x*, *--xpush*::
+Enable xpush behavior explicitly. This is equivalent to the force-copying push
+mode used by *-f*.
+
+
+*-r*, *--regions*::
 Halt push operations at the hierarchy level above regions. See <<npush_region_push_props,the region-halted push>> discussion of the properties of this mode.
 
 
-*-s*::
+*-s*, *--solids*::
 Halt push operations at the hierarchy level above solids.
 
 
-*-d max_depth*::
+*-d max_depth*, *--max-depth max_depth*::
 Halt push operations at the hierarchy level specified by __max_depth__. See <<npush_depth_properties,the depth limited push section>> for a description of the properties of depth-limited push that are worth understanding before using this option.
+
+
+*-L*, *--local*::
+Ensure that the push does not change geometry outside the specified trees.
+
+
+*-D*, *--dry-run*::
+Calculate the changes but do not apply them.
 
 
 
@@ -550,5 +574,4 @@ Push all matrices under given group down to the solid level (matrices will sit b
 ....
 
 ====
-
 
