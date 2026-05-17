@@ -90,6 +90,16 @@ Specify the acceleration due to gravity as a vector. This attribute can only be 
 Specify the number of rays along the radii of the circular grids of rays fired during collision detection. This attribute can only be applied to the topmost object under _path_. The default value is `10`.
 
 
+== EXAMPLES
+
+.Simulate a falling rigid body for one second.
+[example]
+====
+mged>**attr set drop_test.r simulate::mass 2.5**
+mged>**simulate drop_test.r 1.0**
+
+Assigns a mass to _drop_test.r_ and runs a one-second Bullet simulation using the current geometry hierarchy and default gravity.
+====
 
 
 [[author]]
