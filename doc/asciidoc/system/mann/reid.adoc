@@ -10,7 +10,7 @@ reid - Sequentially renumber the 'region_id' attribute of all regions within a g
 
 [source]
 ----
-reid [-n | {num}] {comb} {regionID}
+reid [-n {num}] {comb} {regionID}
 ----
 
 
@@ -35,6 +35,27 @@ Name of the combination to search for regions.
 *regionID*::
 Region ID to start re-numbering with.
 
+
+[[examples]]
+== EXAMPLES
+
+.Renumber regions below a combination.
+[example]
+====
+mged> **reid vehicle.c 1000**
+
+Sets the first region below _vehicle.c_ to region ID 1000 and increments each following region by 1.
+
+====
+
+.Renumber regions with a larger increment.
+[example]
+====
+mged> **reid -n 10 vehicle.c 2000**
+
+Sets region IDs below _vehicle.c_ beginning at 2000 and incrementing by 10 for each subsequent region.
+
+====
 
 
 
