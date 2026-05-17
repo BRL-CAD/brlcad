@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD MGED Commands
 
 == NAME
-whichair - Reports information relating to usag of air codes on regions.
+whichair - Reports information relating to usage of air codes on regions.
 
 == SYNOPSIS
 
@@ -17,7 +17,11 @@ whichair [options ...] {air_codes}
 [[description]]
 == DESCRIPTION
 
-Reports information about the usage of the __air_codes__ property by regions in a .g file. Its default mode is to report which regions in a .g file are using one or a range of region_id values. If a root object is specified, it will report that result only for the regions in the tree of the root object. If the *U* is specified, the reporting is inverted and the command will report the ranges of _unused_ aircodes rather than the regions using various aircodes.
+Reports information about the usage of the __air_codes__ property by regions in
+a `.g` file. Its default mode is to report which regions are using one or more
+specified air-code values or ranges. If a root object is specified, it reports
+only for regions in that object's tree. If *-U* or *--unused* is specified, the
+report is inverted and the command lists unused air-code ranges instead.
 
 The *eac* command will perform a similar search, but will draw the qualifying regions in the MGED display rather than listing them.
 
@@ -26,9 +30,17 @@ The *eac* command will perform a similar search, but will draw the qualifying re
 == OPTIONS
 
 
-*-U*::
-Report unused aircode ranges.
+*-h*, *-?*, *--help*::
+Print help and exit.
 
+*-s*, *--script*::
+Use script-oriented output formatting.
+
+*-V*::
+List all active air codes even when no associated regions are found.
+
+*-U*, *--unused*::
+Report unused air-code ranges.
 
 *--root objname*::
 Limit reporting to regions in the CSG tree below _objname_.

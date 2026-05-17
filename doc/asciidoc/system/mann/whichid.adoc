@@ -24,9 +24,17 @@ Reports information about the usage of the __region_id__ property by regions in 
 == OPTIONS
 
 
-*-U*::
-Report unused id ranges.
+*-h*, *-?*, *--help*::
+Print help and exit.
 
+*-s*, *--script*::
+Use script-oriented output formatting.
+
+*-V*::
+List all active ids even when no associated regions are found.
+
+*-U*, *--unused*::
+Report unused id ranges.
 
 *--root objname*::
 Limit reporting to regions in the CSG tree below _objname_.
