@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-exit - Ends the MGED process.
+exit - Alternate command name for *quit*.
 
 == SYNOPSIS
 
@@ -17,7 +17,10 @@ exit
 [[description]]
 == DESCRIPTION
 
-Ends the MGED process. It is a synonym for the *quit* command.
+The *exit* command shares its core implementation with *quit*.
+It ends the current MGED session.
+
+See *quit* for the detailed behavior.
 
 
 [[examples]]
@@ -25,15 +28,12 @@ Ends the MGED process. It is a synonym for the *quit* command.
 
 The example shows the use of the *exit* command to stop MGED.
 
-.Using the *exit* command to end MGED.
+.End MGED using the alternate command name.
 [example]
 ====
+mged> **exit**
 
-mged> **exit**::
-MGED stops.
-
-
-
+Performs the same operation as *quit*.
 ====
 
 
