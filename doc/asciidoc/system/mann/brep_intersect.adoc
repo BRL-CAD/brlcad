@@ -10,7 +10,7 @@ brep intersect - Intersect components of specified BRep solids.
 
 [source]
 ----
-brep {obj}intersect [append|translate] [arguments]
+brep {obj} intersect {obj2} {i} {j} [PP|PC|PS|CC|CS|SS]
 ----
 
 
@@ -46,6 +46,18 @@ Intersect a curve from the first object with a surface from the second
 SS::
 Intersect a surface from the first object with a surface from the second.
 
+
+[[examples]]
+== EXAMPLES
+
+.Visualize a surface/surface intersection.
+[example]
+====
+mged> **brep hull.brep intersect cutter.brep 0 0 SS**
+
+Intersects surface 0 from _hull.brep_ with surface 0 from _cutter.brep_ and draws the resulting intersection curves.
+
+====
 
 
 
