@@ -43,6 +43,28 @@ As primitives/parents are selected using a selection box, the names of the selec
 Places the parent of the selected primitives in the group instead of the primitives. With the '-p' option, if the primitive does not have a parent (i.e. is in the root) it will be ignored.
 
 
+[[examples]]
+== EXAMPLES
+
+.Add selected primitive parents to a group.
+[example]
+====
+mged> **gr hull_parts.c + 25 -p**
+
+Starts grouper mode, lists up to 25 selected entries, and adds the selected primitives' parent combinations to _hull_parts.c_.
+
+====
+
+.Remove selected primitives from a group.
+[example]
+====
+mged> **gr hull_parts.c - 10**
+
+Starts grouper mode for removing selected primitives from _hull_parts.c_, listing up to 10 selected entries.
+
+====
+
+
 
 
 [[author]]
