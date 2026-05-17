@@ -170,6 +170,28 @@ a/R
 
 
 
+[[examples]]
+== EXAMPLES
+
+.Launch the overlaps menu.
+[example]
+====
+mged> **overlaps_tool**
+
+Opens the overlaps menu GUI for the currently open database so a new overlap check can be configured.
+
+====
+
+.Open an existing overlaps file in first-solid mode.
+[example]
+====
+mged> **overlaps_tool -F model.g.ck/overlaps**
+
+Launches the checker GUI directly on _model.g.ck/overlaps_ and enables first-solid assumptions for automatic subtraction.
+
+====
+
+
 [[author]]
 == AUTHOR
 
