@@ -17,7 +17,13 @@ quit
 [[description]]
 == DESCRIPTION
 
-Ends the MGED process. Note that there is no write database command in MGED. All changes are made to the database as the user performs them. Therefore, a *quit* command will not restore the database to its pre-edited state. This is a synonym for the *q* command.
+Ends the MGED process.
+
+MGED does not queue edits for a later save step. Changes are written to the
+database as they are made, so *quit* does not restore the database to an
+earlier pre-edited state.
+
+MGED also accepts *q* and *exit* for the same operation.
 
 
 [[examples]]
@@ -28,11 +34,17 @@ The example shows the use of the *quit* command to end the current MGED session.
 .End the current MGED session.
 [example]
 ====
-mged>**quit**
+mged> **quit**
 
 Quits the current MGED session.
 
 ====
+
+
+[[see_also]]
+== SEE ALSO
+
+*q*(nged), *exit*(nged)
 
 
 [[author]]
