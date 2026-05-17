@@ -1,0 +1,60 @@
+= METABALL_MOVE_PNT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+metaball_move_pnt - Move a control point of a METABALL primitive.
+
+== SYNOPSIS
+
+[source]
+----
+metaball_move_pnt metaball pt_i {x y z}
+metaball_move_pnt -r metaball pt_i {dx dy dz}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *metaball_move_pnt* command moves the control point at index _pt_i_ in the
+specified METABALL primitive.
+
+Without *-r*, the supplied point is interpreted as an absolute location in the
+database's local units. With *-r*, the supplied point is treated as a relative
+offset from the current control-point location.
+
+The alternate command name *mouse_move_metaball_pnt* is also available.
+
+
+[[examples]]
+== EXAMPLES
+
+.Move a metaball control point upward relative to its current position.
+[example]
+====
+mged> **metaball_move_pnt -r blob.s 2 {0 0 5}**
+
+Moves point index `2` of _blob.s_ five local units in the positive Z direction.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*mouse_move_metaball_pnt*(nged), *mouse_add_metaball_pnt*(nged),
+*metaball_delete_pnt*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

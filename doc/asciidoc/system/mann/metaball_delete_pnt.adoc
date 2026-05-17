@@ -1,0 +1,47 @@
+= METABALL_DELETE_PNT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+metaball_delete_pnt - libged command
+
+== SYNOPSIS
+
+[source]
+----
+metaball_delete_pnt metaball pt_i
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *metaball_delete_pnt* command is implemented in _src/libged/metaball/metaball.c_ and accepts the arguments shown in the synopsis.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows one way to invoke the *metaball_delete_pnt* command.
+
+.Invoke the *metaball_delete_pnt* command.
+[example]
+====
+mged>**metaball_delete_pnt metaball pt i**
+
+Invokes *metaball_delete_pnt* using the syntax shown in the synopsis.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
