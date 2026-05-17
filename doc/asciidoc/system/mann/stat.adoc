@@ -10,8 +10,16 @@ stat - report information about objects in a BRL-CAD database
 
 [source]
 ----
-stat [-h] [-?] [-r] [-F string] [-C type1[,type2]...] [-S type1[,type2]...] [-o filename] {glob pattern}
+stat [-h] [-?] [-v] [-q] [-r] [-F string] [-C type1[,type2]...] [-S type1[,type2]...] [-o filename] {glob pattern}
 ----
+
+
+[[description]]
+== DESCRIPTION
+
+The GED *stat* command reports information about objects in a BRL-CAD `.g`
+file. It produces a configurable table and can filter, sort, and redirect the
+reported results.
 
 
 [[stat_overview]]
@@ -52,27 +60,35 @@ In addition to the above standard keys, attributes may also be specified. If the
 == OPTIONS
 
 
-*-h or -?*::
+*-h*, *-?*, *--help*::
 Print help and exit.
 
 
-*-r*::
+*-v*, *--verbosity*::
+Increase output verbosity. Repeating *-v* increases it further.
+
+
+*-q*, *--quiet*::
+Decrease output verbosity. Repeating *-q* decreases it further.
+
+
+*-r*, *--raw*::
 Print raw values, instead of human friendly strings (for example, 5195952 for a size instead of 5.0M).
 
 
-*-F*::
+*-F*, *--filter*::
 Specify *search* style filters to trim down what is reported in *stat* output.
 
 
-*-C*::
+*-C*, *--columns*::
 Supply a comma separated list of column specifiers or attribute keys to define the table layout for *stat*.
 
 
-*-S*::
+*-S*, *--sort-order*::
 Supply a comma separated list of column specifiers or attribute keys to specify a sorting priority for *stat*. Priority is left to right - sorting will be performed first based on the leftmost specifier, and subsequent specifiers will be used to resolve any ties. To reverse the ordering decisions for a given column, prefix the specifier with a "!" character.
 
 
-*-o*::
+*-o*, *--output-file*::
 Write output to _filename_ instead of the command prompt.
 
 
