@@ -28,6 +28,13 @@ The pattern keyword may appear anywhere on the command line; option
 position relative to it does not matter. Omitting the keyword is
 identical to using *lin*.
 
+== DESCRIPTION
+
+The *clone* command creates new database objects by copying an existing
+object hierarchy and placing the copies in a regular spatial pattern.
+It can produce a simple linear series, a rectangular grid, or radial
+layouts on spherical and cylindrical coordinate systems.
+
 == AXIS-AWARE OPTIONS
 
 Each pattern publishes a fixed list of axes that any of the four
@@ -156,6 +163,14 @@ Mirror the source about the plane perpendicular to _axis_ (x, y, or z)
 at distance _d_.
 
 == EXAMPLES
+
+.Clone an object into a rectangular 4x3 array.
+[example]
+====
+mged>**clone rect -n x=4 -d x=9000 -n y=3 -d y=6000 rib.s**
+
+Creates twelve copies of _rib.s_ arranged in a 4 by 3 grid, which is useful for repeated structural parts, bolt patterns, or ribs.
+====
 
 Linear (the original behaviour):
 
