@@ -1,43 +1,38 @@
 = PS(nged)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD MGED Commands
+:manmanual: BRL-CAD User Commands
 
 == NAME
-ps - List currently running subprocesses.
+ps - Alternate command name for *postscript*.
 
 == SYNOPSIS
 
 [source]
 ----
-ps
+ps [-a author] [-b] [-c r/g/b] [-f font] [-s size] [-t title] [-x offset] [-y offset] file
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-List currently running sub-processes (typically these will be some form of asynchronously launched *rt* render.)
+The *ps* command shares its core implementation with *postscript*.
+It writes the current display to a PostScript output file.
+
+See *postscript* for the detailed behavior and option meanings.
 
 
 [[examples]]
 == EXAMPLES
 
-.List Currently Running Processes
+.Write the current display to a PostScript file using the short command name.
 [example]
 ====
-mged>**ps**
+mged> **ps -t "Wheel View" wheel.ps**
 
-
-....
-
-    PID CMD
-5524692 rt -M -u model /home/user/test.g
-6515118 rtcheck -M /home/user/test.g obj
-      
-....
-
-
+Performs the same operation as *postscript* and writes the current display to
+_wheel.ps_.
 
 ====
 
