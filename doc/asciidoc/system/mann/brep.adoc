@@ -23,83 +23,85 @@ A number of the problems these commands attempt to address are known to be extre
 
 The available subcommands are:
 
-
+*bool*::
 Attempt to peform a BRep boolean evaluation and produce a new BRep object. Supported ops are _u_ (union), _-_ (subtract), _i_ (intersect), and _x_ (exclusive or).
 
-
-
-
+*bot*::
 Attempt to produce a triangle mesh from the object. Unlike the visualization triangulation, this algorithm spends more time attempting to produce a solid, clean mesh. Outputs the result in an object called _obj.bot_ where _obj_ is the original BRep object name.
 
-
-
-
+*bots*::
 Attempt to produce triangle meshes for multiple objects that don't overlap. Experimental.
 
-
-
-
+*brep*::
 Attempt to produce a brep object to represent the specified CSG object. Generally only useful for solid objects. Outputs the result in an object called _obj.brep_ where _obj_ is the original CSG object name.
 
-
-
-
+*csg*::
 Attempt to produce a CSG hierarchy that reproduces the shape of the brep object. Objects will use the root of the original obj name to generate solid names. If a BRep can't be fully represented as CSG, it will be broken down into a combination of simplified BReps and CSG solids.
 
-
-
-
+*flip*::
 Flip all face normals on the specified BRep. Can be useful if a conversion results in importing faces with the normals reversed.
 
-
-
-
+*info*::
 Report textual information about a BRep. See the brep_info man page for more detail.
 
-
-
-
+*intersect*::
 Calculate intersections between BRep object components. Primarly an option for low level testing of *bool* routines. See the brep_intersect man page for more detail.
 
-
-
-
+*pick*::
 Select the closest edge, face or vertex to either the specified ray, or to the currently defined GED view center and direction. (NOTE: for faces this actually a rather difficult problem, requiring a solution to the closest NURBS surface point to a line problem. Not sure that even the LIBRT ray intersection code has what's needed to do this right - current method implemented as of 2022 probably won't reliably give us the actual closest face.)
 
-
-
-
+*plate_mode*::
 Report and set plate mode properties of BRep objects. Will not work on a solid BRep - to generate a plate mode BRep, see *split*. If a number is supplied the plate thickness is set. Passing cos or nocos will toggle how an interseting ray should interpret the thickness as a function of ray hit angle - nocos reports the same thickness for all angles, while cos attempts to adjust for shallow ray hits. If no options are supplied, just report the current thickness and cos/nocos setting.
 
-
-
-
+*plot*::
 Visualize components and data associated with a BRep. See the brep_plot man page for more detail.
 
-
-
-
+*selection*::
 Manipulate elements of a BRep. See the brep_selection man page for more detail.
 
-
-
-
+*solid*::
 Report if the BRep object is solid (i.e. defines a closed volume in space, within tolerance.) In the general case this is a hard problem - this report is helpful but may not catch all potential problems.
 
-
-
-
+*shrink_surfaces*::
 Uses an opennurbs routine to tightening the definition of face surfaces to more closely match the uv paramater space of the trimming loops. typically this isn't something users will need to worry about too much, but it can occasionally improve the visualization behavior of an oddly defined brep.
 
-
-
-
+*tikz*::
 Generates plotting output for the object using the TikZ plotting language. The output is intended for incorporation into documents being typeset with LaTeX and the PGF plotting package.
 
-
-
-
+*valid*::
 Report if the BRep object is topologically valid.
+
+== OPTIONS
+
+*-h*, *--help*::
+Print help for the selected *brep* subcommand.
+
+*-v*, *--verbose*::
+Increase reporting verbosity for subcommands that support additional diagnostic output.
+
+*-C*, *--color* _r/g/b_::
+Set the color used by subcommands that create plotted or highlighted output.
+
+*--plotres* _#_::
+Set plotting resolution for subcommands that sample curves or surfaces for display output.
+
+== EXAMPLES
+
+.Inspect a few specific faces of a BRep object.
+[example]
+====
+mged>**brep hull.brep info F 0-3**
+
+Prints textual information for faces 0 through 3 of _hull.brep_, which is useful when checking face orientation, trims, or surface indexing before a repair step.
+====
+
+.Split selected faces into plate-mode BReps with an explicit thickness.
+[example]
+====
+mged>**brep hull.brep split -t 1.5 -o hull_plate 4 5 6**
+
+Creates plate-mode output from faces 4, 5, and 6 of _hull.brep_ with a default thickness of 1.5 model units, writing the result under the _hull_plate_ naming root.
+====
 
 
 
