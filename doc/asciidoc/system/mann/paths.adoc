@@ -17,7 +17,12 @@ paths {path_start}
 [[description]]
 == DESCRIPTION
 
-Lists all existing paths that start from the specified __path_start__ and end at a primitive shape. The __path_start__ may be specified by / separated components, or they may be separated by spaces (but not both).
+Lists all existing paths that start from the specified __path_start__ and end at
+a primitive shape. The __path_start__ may be specified by "/" separated
+components, or they may be separated by spaces (but not both).
+
+The shared implementation also recognizes a *-t* terse-output option when
+invoked as *listeval*; *paths* itself does not use that option.
 
 
 [[examples]]
