@@ -118,6 +118,11 @@ Do not write out empty BoT objects when a Boolean evaluation results in an empty
 Specify a log file in which to store the full verbose output of a facetization process. This is recommended for large or long running facetize runs to allow users to better understand what steps were taken and what problems might have arisen.
 
 
+*--nmg-booleval*::
+Use the libnmg boolean evaluation algorithm even when producing BoT output.
+This can be less robust, but may yield cleaner results for some coplanar cases.
+
+
 *--disable-fixup*::
 By default, BoT facetization will attempt to clear certain categories of undesirable triangles from outputs. Specifying this option will skip that repair attempt.
 
@@ -129,6 +134,15 @@ Surface-area percentage threshold (0–100) that triggers the coplanarity-avoida
 
 *--perturb-vol-tol #*::
 Volume percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the per-region Crofton-sampled CSG volume differs from the initial facetized BoT volume by more than this amount. Default is 10 (percent).
+
+
+*-B*::
+Experimental non-overlapping facetization to BoT objects for union-only brep
+comb trees.
+
+
+*-t* _threshold_, *--threshold* _threshold_::
+Experimental overlap-threshold length used by *-B* mode.
 
 
 
