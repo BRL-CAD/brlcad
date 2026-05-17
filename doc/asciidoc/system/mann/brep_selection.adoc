@@ -10,7 +10,7 @@ brep selection - Operate on components of a specified BRep solid.
 
 [source]
 ----
-brep {obj}selection [append|translate] [arguments]
+brep {obj} selection {append|translate} {selection_name} {startx starty startz dirx diry dirz}
 ----
 
 
@@ -22,6 +22,18 @@ If _obj_ is not a brep object, then *brep* will quit and report that fact. Other
 
 Translate a surface control vertex
 
+
+[[examples]]
+== EXAMPLES
+
+.Append a ray-defined selection.
+[example]
+====
+mged> **brep hull.brep selection append leading_edge 0 0 0 0 0 1**
+
+Creates or extends the _leading_edge_ selection on _hull.brep_ using a ray that starts at the model origin and points in the positive Z direction.
+
+====
 
 
 
