@@ -10,14 +10,21 @@ keep - Copies the _objects_ specified to the __keep_file__.
 
 [source]
 ----
-keep {keep_file} {objects}
+keep [-R] {keep_file} {objects}
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Copies the _objects_ specified to the __keep_file__. If __keep_file__ does not exist, it is created. If __keep_file__ does exist, the _objects_ are appended to it. The __keep_file__ is a _BRL-CAD_ database file. The _objects_ in the list must exist in the current database.
+Copies the _objects_ specified to the __keep_file__. If __keep_file__ does not
+exist, it is created. If __keep_file__ does exist, the _objects_ are appended
+to it. The __keep_file__ is a _BRL-CAD_ database file. The _objects_ in the
+list must exist in the current database.
+
+By default, *keep* recursively follows references below the named objects and
+writes the supporting geometry as needed. The *-R* option disables that
+recursive traversal and keeps only the named objects themselves.
 
 
 [[examples]]
