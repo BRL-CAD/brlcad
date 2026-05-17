@@ -34,6 +34,53 @@ The *-w*, *-n*, and *-S* options are used to specify image size for formats such
 By default, images are displayed in the framebuffer using their original size. If the users wishes to use all available space in the image window to display an image, the *-z* may be specified to focus the framebuffer on the image. The *-i* option may be used to invert an image's display in the y (vertical) direction.
 
 
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+Print help and exit.
+
+*-F*, *--fb*::
+Interpret the input as an image to be drawn in the framebuffer rather than as a
+UNIX plot file.
+
+*-s*, *--size* _size_::
+Set plot character size when drawing plot overlays.
+
+*-N*, *--view-obj* _name_::
+Set the base view-object name used for plot overlay objects.
+
+*-i*, *--inverse*::
+Draw framebuffer images upside-down.
+
+*-c*, *--clear*::
+Clear the framebuffer before drawing a new image.
+
+*-v*, *--verbose*::
+Enable verbose framebuffer reporting.
+
+*-z*, *--zoom*::
+Zoom the framebuffer image to fill the available screen area.
+
+*-X*, *--scr_xoff* _offset_::
+Set the framebuffer X offset.
+
+*-Y*, *--scr_yoff* _offset_::
+Set the framebuffer Y offset.
+
+*-w*, *--width* _pixels_::
+Set the image width for raw formats that do not encode dimensions.
+
+*-n*, *--height* _pixels_::
+Set the image height for raw formats that do not encode dimensions.
+
+*-S*, *--square* _pixels_::
+Set both image width and height for square raw images.
+
+*--format* _fmt_::
+Explicitly specify the framebuffer image format.
+
+
 [[examples]]
 == EXAMPLES
 
