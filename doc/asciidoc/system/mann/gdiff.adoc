@@ -28,32 +28,60 @@ Users will want to pay careful attention to grid size. By default gdiff will try
 == OPTIONS
 
 
-*-h*::
-Prints help.
+*-h*, *--help*::
+Print help.
 
 
-*-g #*::
-Controls grid spacing. Units are mm.
+*-g* _spacing_, *--grid-spacing* _spacing_::
+Control the spacing of the test-ray grid in millimeters.
 
 
-*-l*::
+*-l*, *--view-left*::
 Visualize solid segments occurring only in the left object.
 
 
-*-r*::
+*-r*, *--view-right*::
 Visualize solid segments occurring only in the right object.
 
 
-*-b*::
-Visualize solid segments occurring in both the left and right object (i.e. common or shared volume).
+*-b*, *--view-both*::
+Visualize solid segments occurring in both the left and right objects.
 
 
-*-G*::
-Report differences in grazing hits. By default, differences are reported only when they can be verified by shooting parallel rays offset around the original shotline reporting a difference. This options disables that filter.
+*-G*, *--grazing*::
+Report differences in grazing hits. By default, grazing-hit differences are
+reported only when nearby offset rays confirm a difference; this option disables
+that filter.
 
 
-*-S*::
-The "S" option enables a completely different difference testing mode - rather than using rays to interrogate geometries, it checks tree structures, boolean operations, matrices and leaf objects. It deliberately does _not_ check object names, in order to compare the actual volumetric definitions of the trees. Since there is no ray sampling, this option will not currently produce any visual output.
+*-S*, *--structure*::
+Enable structure-diff mode. Instead of raytracing, *gdiff* compares tree
+structure, matrices, boolean operators, and leaf geometry while ignoring object
+names. This mode does not currently produce visual output.
+
+
+[[examples]]
+== EXAMPLES
+
+.Compare two region trees and visualize only their differing volume.
+[example]
+====
+mged> **gdiff --grid-spacing 1.0 left.r right.r**
+
+Shoots a comparison grid across _left.r_ and _right.r_ and displays segments
+that appear only in one object or the other.
+
+====
+
+.Compare tree structure without raytracing.
+[example]
+====
+mged> **gdiff --structure left.r right.r**
+
+Checks whether the two trees differ in matrices, booleans, or leaf geometry
+without generating view output.
+
+====
 
 
 
