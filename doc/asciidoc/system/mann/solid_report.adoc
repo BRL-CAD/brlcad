@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD MGED Commands
 
 == NAME
-solid_report - Lists all the primitive shapes currently drawn in the MGED display.
+solid_report - Compatibility alias for the detailed displayed-solid report.
 
 == SYNOPSIS
 
@@ -17,20 +17,22 @@ solid_report [level]
 [[description]]
 == DESCRIPTION
 
-Lists all the primitive shapes currently drawn in the MGED display. The _level_ determines how much detail should be included in the list. For _level_ zero (the default), only a list of paths to shapes in the display list is produced. If _level_ is greater than zero, the center, size, ident number, RGB color assigned to the region, and the actual color used to draw the shape are also listed. If _level_ is greater than one, the number of vlist structures and the number of points in each vlist structure are also listed for each shape. If _level_ is greater than two, then the actual lines drawn for each shape are also listed. The *who* command performs a similar function, but lists only the top-level objects that are displayed.
+Lists all the primitive shapes currently drawn in the MGED display. The _level_ determines how much detail should be included in the list. For _level_ zero (the default), only a list of paths to shapes in the display list is produced. If _level_ is greater than zero, the center, size, ident number, RGB color assigned to the region, and the actual color used to draw the shape are also listed. If _level_ is greater than one, the number of vlist structures and the number of points in each vlist structure are also listed for each shape. If _level_ is greater than two, then the actual lines drawn for each shape are also listed.
+
+This command is a compatibility alias for *who solids*. New scripts and interactive usage should prefer *who solids* so the detailed solid listing stays grouped with the broader *who* display-reporting command family.
 
 
 [[examples]]
 == EXAMPLES
 
-The example shows the use of the *solid_report* command with no arguments to list the paths to the displayed shapes.
+The example shows the compatibility form and also points users toward the preferred *who solids* spelling for the same report.
 
-.List the paths to the displayed shapes.
+.List the displayed solid paths with the compatibility alias.
 [example]
 ====
-mged>**solid_report**
+mged>**solid_report -1**
 
-Lists the paths to the displayed shapes.
+Lists the full paths to the displayed solid shapes. The equivalent preferred form is *who solids -1*.
 
 ====
 
