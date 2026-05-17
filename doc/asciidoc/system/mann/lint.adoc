@@ -27,8 +27,11 @@ The *--raytrace* mode is a special, mutually exclusive operating mode that disab
 == OPTIONS
 
 
-*-h*::
+*-h*, *--help*::
 Print help message.
+
+*-v*, *--verbose*::
+Increase reporting verbosity. Repeating the flag increases the amount of diagnostic detail.
 
 
 *-C*, *--cyclic*::
@@ -39,12 +42,27 @@ Check for full paths that are cyclic - i.e. a situation where a high level objec
 Check for references to objects or files that are missing (not present in the database or on the file system.) Primarily this is a check for comb objects referring to missing objects, but it will also check for and report invalid object and file references in extrude and dsp primitives.
 
 
-*-I*, *--invalid*::
+*-I*, *--invalid-shape* [check [check ...]]::
 Check for shapes in the database that do not satisfy one or more properties required for them to be valid definitions, where correcting the problem requires a change to the object's definition. (As of this writing the only implemented check is for BoT object solidity, but many more are possible and planned.) (Objects invalid due to missing objects are potentially valid without the necessity of changing the object's own definition - e.g. the missing object/file can be added. That category of error can be searched for with the *-M* check.)
 
 
 *-F*, *--filter*::
 Apply search command style filters to the set of objects to be tested. Allows, (for example) a user to test only brep objects and not BoT objects or only objects matching a particular name pattern. Does not impact the checks for missing or cylic geometry - the underlying search mechanism assumes inputs do not have those particular categories of problem and thus can't be reliably applied in those cases.
+
+*-j*, *--json-file* _fname_::
+Write the full lint report data to a JSON file.
+
+*-V*, *--visualize*::
+When a detected problem has a visual representation, draw that representation in the current display.
+
+*-t*, *--tol* _#_::
+Override the numerical tolerance used by checks that depend on tolerances. Defaults to *VUNITIZE_TOL* when unspecified.
+
+*-g*, *--group* _name_::
+Create or update a combination named _name_ containing shape objects that reported issues. Cyclic paths and missing references are not added to this grouping object.
+
+*--min-tri-area* _#_::
+Units are mm^2. If specified, *lint* will not report sampling problems whose seed triangle is smaller than the supplied area threshold.
 
 
 *--raytrace*::
@@ -681,4 +699,3 @@ BRL-CAD Team
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
-
