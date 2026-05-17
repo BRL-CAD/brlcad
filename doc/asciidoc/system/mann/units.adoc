@@ -10,14 +10,24 @@ units - Sets the units being used in _mged_. Without arguments, returns the curr
 
 [source]
 ----
-units [units_type]
+units [-s] [units_type]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Without arguments, returns the current type of units that _mged_ is using. If a __units_type__ is specified, _mged_ switches to editing in the indicated units. The actual database is always stored in millimeters, and the display is adjusted to the user's choice of units. If the __units_type__ specified on the command line is one of the types allowed, it will be written to the database file as the preferred units and succeeding invocations will use those units. The __units_type__ strings that will be remembered as the preferred editing unit are as follows:
+Without arguments, returns the current type of units that _mged_ is using. If
+the *-s* option is supplied, the current unit name is reported tersely without
+the surrounding explanatory sentence.
+
+If a __units_type__ is specified, _mged_ switches to editing in the indicated
+units. The actual database is always stored in millimeters, and the display is
+adjusted to the user's choice of units. If the __units_type__ specified on the
+command line is one of the types allowed, it will be written to the database
+file as the preferred units and succeeding invocations will use those units.
+The __units_type__ strings that will be remembered as the preferred editing
+unit are as follows:
 
 
 * mm -- millimeters
