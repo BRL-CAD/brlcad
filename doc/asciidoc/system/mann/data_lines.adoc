@@ -1,0 +1,90 @@
+= DATA_LINES(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+data_lines - Manage an arbitrary line set attached to the current view.
+
+== SYNOPSIS
+
+[source]
+----
+data_lines draw [0|1]
+data_lines color [r g b]
+data_lines line_width [width]
+data_lines points [{{x y z} {x y z} ...}]
+data_lines snap [0|1]
+view data_lines draw [0|1]
+view data_lines color [r g b]
+view data_lines line_width [width]
+view data_lines points [{{x y z} {x y z} ...}]
+view data_lines snap [0|1]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *data_lines* command manages a view-associated line set that is not tied to
+database geometry. It is useful for temporary guide lines, annotations, and
+other visual overlays.
+
+The command accepts the following subcommands:
+
+*draw*::
+Report or set whether the line set should be drawn.
+
+*color*::
+Report or set the RGB color used for the line set.
+
+*line_width*::
+Report or set the line width.
+
+*points*::
+Report or set the Tcl-style list of line endpoints. Points are consumed in
+pairs, so the list must contain an even number of 3D points.
+
+*snap*::
+Report or set the current view's line-snapping flag.
+
+The same functionality is also available through the `view data_lines ...`
+command form.
+
+The related *sdata_lines* command uses the same subcommands on a separate line
+set maintained by the current view.
+
+
+[[examples]]
+== EXAMPLES
+
+.Create and display red guide lines in the current view.
+[example]
+====
+mged> **data_lines points {{0 -1000 0} {0 1000 0} {100 -1000 0} {100 1000 0}}**
+mged> **data_lines color 255 0 0**
+mged> **data_lines line_width 100**
+mged> **data_lines draw 1**
+
+Defines two vertical guide lines, colors them red, sets a wider line width, and
+turns drawing on for the line set.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*sdata_lines*(nged), *view*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
