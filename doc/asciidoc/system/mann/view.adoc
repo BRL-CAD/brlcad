@@ -10,7 +10,7 @@ view - Gets/sets the view parameters (local units).
 
 [source]
 ----
-view {subcommand}
+view [-h] [-v] [-V view_name] {subcommand}
 ----
 
 
@@ -18,6 +18,19 @@ view {subcommand}
 == DESCRIPTION
 
 Gets/sets view parameters in local units. The *view* command accepts the following subcommands:
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+Print help.
+
+*-v*, *--verbose*::
+Increase command verbosity.
+
+*-V*, *--view* _name_::
+Operate on the specified view instead of the current GED view.
 
 
 [[subcommands]]
