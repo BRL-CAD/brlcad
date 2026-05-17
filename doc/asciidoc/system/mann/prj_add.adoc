@@ -23,7 +23,14 @@ Appends information to the specified _shaderfile_. The information appended is i
 [[examples]]
 == EXAMPLES
 
-!--There are no examples.-->
+.Append projection shader parameters for the current view.
+[example]
+====
+mged> **prj_add -t projection.shader panel.pix 1024 768**
+
+Appends projection-shader settings for _panel.pix_ to _projection.shader_, using the current MGED view and enabling through-object projection.
+
+====
 
 
 [[author]]
