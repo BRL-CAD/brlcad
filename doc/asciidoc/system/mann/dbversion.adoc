@@ -1,0 +1,55 @@
+= DBVERSION(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dbversion - Print the version of the currently open BRL-CAD database.
+
+== SYNOPSIS
+
+[source]
+----
+dbversion
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *dbversion* command prints the integer database format version for the
+currently open `.g` file. An open database is required.
+
+MGED also accepts the alternate command name *version* for this same database
+query.
+
+
+[[examples]]
+== EXAMPLES
+
+.Report the current database format version.
+[example]
+====
+mged> **dbversion**
+
+Prints the version number of the open database, such as `5`.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*version*(nged), *opendb*(nged), *dbupgrade*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
