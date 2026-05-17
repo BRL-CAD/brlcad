@@ -61,7 +61,23 @@ Prints the help message.
 [[examples]]
 == EXAMPLES
 
-There were no examples given for this command.
+.Open a separate graphics and command GUI.
+[example]
+====
+mged> **gui -id inspect -s**
+
+Creates a separate command window and graphics window identified as _inspect_.
+
+====
+
+.Open only the graphics portion of the GUI.
+[example]
+====
+mged> **gui -config g -id view_only**
+
+Creates a GUI instance named _view_only_ with the graphics window enabled.
+
+====
 
 
 [[author]]
