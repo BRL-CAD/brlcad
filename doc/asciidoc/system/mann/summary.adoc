@@ -10,14 +10,36 @@ summary - The *summary* command with no arguments lists the number of primitive 
 
 [source]
 ----
-summary [p] [r] [g]
+summary
+summary [prg]*
+summary [-o | --obj] {object}
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *summary* command with no arguments lists the number of primitive shapes, regions, and nonregion combinations in the current database. If the _p_ argument is supplied, then the name of each _primitive shape_ is also listed. Similarly, the _r_ flag asks for the _region_ names, and _g_ asks for the names of all the combinations (including _region_). The flags may be concatenated to get combined output.
+With no arguments, *summary* lists the number of primitive shapes,
+regions, and non-region combinations in the current database.
+
+The historical single-token letters `p`, `r`, and `g` remain supported
+for reporting primitives, regions, and/or groups. They may be
+concatenated to request combinged listing(s) of primitive names,
+region names, and combination names respectively.
+
+Modern usage can also summarize one specific database object either by
+naming it directly as the lone argument or by supplying *-o* or
+*--obj*.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*, *--help*::
+Print help and exit.
+
+*-o*, *--obj* _name_::
+Summarize the named database object.
 
 
 [[examples]]
@@ -31,6 +53,15 @@ The example shows the use of the *summary* command with an argument to list a su
 mged>**summary pr**
 
 Lists a summary of primitive shapes and regions for the current database.
+
+====
+
+.Summarize one object explicitly.
+[example]
+====
+mged> **summary --obj turret.r**
+
+Reports the summary information for _turret.r_.
 
 ====
 
