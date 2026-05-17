@@ -10,7 +10,7 @@ rm - safely delete database objects, force-delete objects, or remove a child fro
 
 [source]
 ----
-rm [-f | --force] [-r | --recursive] [-n | --dry-run] {object-or-path}...
+rm [-h | --help | -?] [-f | --force] [-r | --recursive] [-n | --dry-run] {object-or-path}...
 ----
 
 
@@ -40,6 +40,11 @@ Unlike the legacy *remove* command, *rm* also supports direct object deletion,
 dry-run reporting, and glob expansion.
 
 The current implementation recognizes the following options:
+
+*-h*::
+*--help*::
+*-?*::
+Print help and exit.
 
 *-f*::
 *--force*::
