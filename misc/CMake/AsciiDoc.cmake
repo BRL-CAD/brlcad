@@ -141,7 +141,7 @@ if(NOT COMMAND add_asciidoc)
 	    -o "${_outfile}"
 	    "${_src}"
 	    DEPENDS "${_src}" asciiquack
-	    COMMENT "asciiquack: ${_stem} (${_FMT})"
+	    COMMENT "asciiquack: ${_stem} (ADOC -> ${_FMT})"
 	    VERBATIM
 	  )
 	  install(FILES "${_outfile}" DESTINATION "${_install_dir}")
@@ -174,7 +174,7 @@ if(NOT COMMAND add_asciidoc)
 	    -o "${_outfile}"
 	    "${_src}"
 	    DEPENDS "${_src}" asciiquack
-	    COMMENT "asciiquack: ${_stem} (${_FMT})"
+	    COMMENT "asciiquack: ${_stem} (ADOC -> ${_FMT})"
 	    VERBATIM
 	  )
 	  install(FILES "${_outfile}" DESTINATION "${_install_dir}")
@@ -193,7 +193,7 @@ if(NOT COMMAND add_asciidoc)
 	    -o "${_outfile}"
 	    "${_src}"
 	    DEPENDS "${_src}" asciiquack
-	    COMMENT "asciiquack: ${_stem} (HTML ${_FMT})"
+	    COMMENT "asciiquack: ${_stem} (${_FMT} -> HTML)"
 	    VERBATIM
 	  )
 	  install(FILES "${_outfile}" DESTINATION "${_install_dir}")
