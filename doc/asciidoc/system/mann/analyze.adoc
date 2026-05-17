@@ -10,43 +10,64 @@ analyze - Report and/or compute analytical information about the listed objects.
 
 [source]
 ----
-analyze [options]... [subcommand]
+analyze [options] [subcommand] [subcmd_options]...
 ----
-
 
 
 [source]
 ----
-summarize {obj}...
+summarize {obj1 [...]}
 ----
-
 
 
 [source]
 ----
-intersect [options]... {obj1 obj2 [...]}...
+intersect [-o output_obj] [-h] {obj1 obj2 [...]}
 ----
-
 
 
 [source]
 ----
-subtract [options]... {obj1 obj2 [...]}...
+subtract [-o output_obj] [-h] {obj1 obj2 [...]}
 ----
 
 
+[source]
+----
+inside {obj1} {x} {y} {z}
+----
 
 
 [[description]]
 == DESCRIPTION
 
-The *analyze* command provides an array of reporting and shape generation capabilities. The classic behavior (and the behavior users will see if calling without specifying a subcommand) is a report summarizing geometric information about the specified solid(s). This behavior may also be explicitly invoked by the *summarize* subcommand.
+The *analyze* command provides an array of reporting and shape
+generation capabilities. The classic behavior (and the behavior users
+will see if calling without specifying a subcommand) is a report
+summarizing geometric information about the specified solid(s). This
+behavior may also be explicitly invoked by the *summarize* subcommand.
 
-The *inside* will take an object and the x y z coordinates of a point, and report whether the point is inside or outside the object in question (returning 1 if inside and 0 otherwise.)
+The *inside* subcommand will take an object and the x y z coordinates
+of a point, and report whether the point is inside or outside the
+object in question (returning 1 if inside and 0 otherwise.)
 
-The *intersect* will take the first object specified and intersect it with any subsequently specified objects - in effect, building up a new object with the geoemtry common to all objects specified.
+The *intersect* subcommand will take the first object specified and
+intersect it with any subsequently specified objects - in effect,
+building up a new object with the geoemtry common to all objects
+specified.
 
-The *subtract* will take the first object specified and subtract from it any subsequently specified objects.
+The *subtract* subcommand will take the first object specified and
+subtract from it any subsequently specified objects.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+Print help.
+
+*-v*, *--verbose*::
+Increase reporting verbosity for the top-level analyze reporting mode.
 
 
 [[examples]]
