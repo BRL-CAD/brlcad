@@ -1,0 +1,57 @@
+= CLOSEDB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+closedb - Close the current database and clear displayed geometry.
+
+== SYNOPSIS
+
+[source]
+----
+closedb
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *closedb* command closes the currently open database, clears any displayed
+geometry, and tears down related GED state associated with that database.
+
+If no database is open, *closedb* succeeds as a no-op.
+
+MGED also accepts the alternate command name *close* for the same operation.
+
+
+[[examples]]
+== EXAMPLES
+
+.Close the current database after opening a model.
+[example]
+====
+mged> **opendb model.g**
+mged> **closedb**
+
+Closes _model.g_ and removes any geometry from the current display.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*close*(nged), *opendb*(nged), *reopen*(nged), *zap*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
