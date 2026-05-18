@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-rtwizard - run the rtwizard graphical interface
+rtwizard - launch the RtWizard GUI or render using the rtwizard subprocess
 
 == SYNOPSIS
 
@@ -13,26 +13,40 @@ rtwizard - run the rtwizard graphical interface
 rtwizard [options]
 ----
 
+
 [[description]]
 == DESCRIPTION
 
-The *rtwizard* command is used to run the rtwizard graphical interface.
+The *rtwizard* command launches the `rtwizard` rendering application as a subprocess. It automatically passes the current view parameters — including view size, orientation, and eye point — to the subprocess.
+
+When called from MGED, *rtwizard* runs in `--no_gui` (non-interactive) mode, using the current session's view state and the open database. All options are passed through to the `rtwizard` subprocess unchanged.
+
+For interactive GUI use of RtWizard, launch the `rtwizard` application directly from the command line rather than through MGED.
+
+NOTE: *rtwizard* runs asynchronously. Use *rtabort* to terminate an active rtwizard subprocess.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *rtwizard* command.
+.Launch rtwizard with current view
 [example]
 ====
-mged> **rtwizard**
+mged> **rtwizard -o output.png**
 
-Runs the rtwizard graphical interface.
+Renders the current view using the `rtwizard` subprocess and writes the result to `output.png`.
 ====
+
+[[see_also]]
+== SEE ALSO
+
+*rt*(nged), *ert*(nged), *rtabort*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
