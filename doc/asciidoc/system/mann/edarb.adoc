@@ -4,50 +4,115 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-edarb - edit an arb
+edarb - edit ARB primitive faces, edges, and vertices
 
 == SYNOPSIS
 
 [source]
 ----
-edarb [subcommand] [arb] [args]
+edarb edgedir  arb edge delta_x delta_y delta_z
+edarb edgedir  arb edge rot fb
+edarb extrude  arb face distance
+edarb facedef  arb face [a|b|c|d parameters]
+edarb mirface  arb face axis
+edarb permute  arb tuple
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *edarb* command is used to edit and manipulate the geometric properties of ARB (Arbitrary Polyhedron) primitives. It operates via several distinct subcommands:
+The *edarb* command provides subcommands for directly editing ARB (arbitrary polyhedron) primitives by moving edges, extruding or redefining faces, mirroring faces, or permuting vertex numbering. The `arb` argument names the ARB object to edit.
 
-* *edgedir* _arb_ _edge_ _rot_ _fb_ : Moves an ARB edge by defining its new direction using rotation and fallback angles.
-* *edgedir* _arb_ _edge_ _dx_ _dy_ _dz_ : Moves an ARB edge by defining its new direction using a delta vector.
-* *extrude* _arb_ _face_ _distance_ : Extrudes the specified face of an ARB outward by the given distance.
-* *mirface* _arb_ _face_ _axis_ : Mirrors a specific face of the ARB across the specified axis.
-* *permute* _arb_ _tuple_ : Permutes the vertex labels of the ARB.
-* *facedef* _arb_ _face_ _method_ _[args]_ : Redefines the defining plane for a face. The _method_ can be `a` (supply A B C D of plane equation), `b` (supply three X Y Z points), `c` (supply rot, fb angles and a fixed point), or `d` (keep the same plane but translate it through a new fixed point).
+=== Subcommands
+
+*edgedir arb edge delta_x delta_y delta_z*::
+Move the specified `edge` of `arb` by the given delta vector in model coordinates. The edge is identified by its 1-based index number. All planes affected by moving the edge are recalculated to remain planar.
+
+*edgedir arb edge rot fb*::
+Set the direction of the specified `edge` using rotation angle `rot` and front-back angle `fb` (both in degrees). The edge is moved in the computed direction.
+
+*extrude arb face distance*::
+Project the specified `face` of `arb` outward by `distance` (in current working units) along the face normal, extruding the ARB shape. Only available for ARB4, ARB6, and ARB8 types.
+
+*facedef arb face [a|b|c|d parameters]*::
+Redefine the specified `face` of `arb` by providing a new plane definition. The face is identified by the product of its vertex numbers (e.g., face 1234 uses product 24). The plane definition method is selected by a letter:
+
+* *a* — planar equation: `A B C D` (normal vector components and offset)
+* *b* — three points: `X1 Y1 Z1 X2 Y2 Z2 X3 Y3 Z3`
+* *c* — rotation/front-back angles plus a fixed point or vertex
+* *d* — same plane normal direction, but shifted through a new fixed point
+
+If fewer arguments than needed are provided for the chosen method, the command prompts for the missing values (interactive mode).
+
+*mirface arb face axis*::
+Mirror the specified `face` of `arb` across the specified `axis` (`x`, `y`, or `z`).
+
+*permute arb tuple*::
+Permute the vertex numbering of `arb` according to the specified `tuple`, which specifies the new vertex ordering. The minimum tuple length varies by ARB type (ARB4: 3, ARB5/6: 2, ARB7: 1, ARB8: 3).
 
 [[examples]]
 == EXAMPLES
 
-.Extrude an ARB face
+.Move an edge using a delta vector
 [example]
 ====
-mged> **edarb extrude arb8.s 1 50**
+mged> **edarb edgedir arb8_1 12 10 0 0**
 
-Extrudes face 1 of `arb8.s` outward by 50 units.
+Moves edge 12 (between vertices 1 and 2) of `arb8_1` by +10 units in X. All affected face planes are recalculated.
 ====
 
-.Change an ARB edge direction
+.Move an edge using rotation angles
 [example]
 ====
-mged> **edarb edgedir arb8.s 2 10 0 0**
+mged> **edarb edgedir arb8_1 12 45 0**
 
-Moves edge 2 of `arb8.s` by defining a new delta direction vector of (10, 0, 0).
+Sets the direction of edge 12 using azimuth 45°, elevation 0°.
 ====
+
+.Extrude a face
+[example]
+====
+mged> **edarb extrude arb8_1 1234 50**
+
+Projects face 1234 (vertices 1, 2, 3, 4) of `arb8_1` outward by 50 units.
+====
+
+.Redefine a face by plane equation
+[example]
+====
+mged> **edarb facedef arb8_1 1234 a 0 0 1 100**
+
+Redefines face 1234 of `arb8_1` to be the plane with normal (0,0,1) at offset 100 (i.e., Z=100 plane).
+====
+
+.Mirror a face
+[example]
+====
+mged> **edarb mirface arb8_1 1234 z**
+
+Mirrors face 1234 of `arb8_1` across the Z axis.
+====
+
+.Permute vertex numbering
+[example]
+====
+mged> **edarb permute arb8_1 321**
+
+Permutes the vertex numbering of `arb8_1` according to the tuple `321`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*arb*(nged), *sed*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
