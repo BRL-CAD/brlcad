@@ -4,37 +4,67 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-copy - copy an 'evaluated' path solid
+copy, cp - copy a database object to a new name
 
 == SYNOPSIS
 
 [source]
 ----
-copy old_solid new_solid
+copy from to
+cp from to
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *copy* command creates a duplicate of an existing database object, `old_solid`, and saves it as `new_solid`.
+The *copy* command (also available as *cp*) duplicates the database object named `from` and stores the copy under the name `to`. The copy is an exact binary duplicate of the source object, preserving its type, geometry, and all attributes.
 
-Unlike the `copyeval` command, `copy` does *not* evaluate or apply any transformation matrices along a path. If a path is provided instead of a single object name, it simply locates the leaf object at the end of the path and duplicates its raw, un-transformed geometry into the new solid.
+Exactly two arguments are required. The source object `from` must exist in the database. The destination name `to` must not already exist — attempting to copy to an existing name returns an error.
+
+All object types can be copied: primitive shapes, combinations, regions, and external objects.
+
+NOTE: *copy* performs a shallow copy. If `from` is a combination, the copy has the same tree structure and references the same member objects. Members themselves are not duplicated. Use *xpush* or manual reconstruction to deep-copy a hierarchy.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *copy* command.
+.Copy a primitive shape
 [example]
 ====
-mged> **copy old_solid new_solid**
+mged> **copy sph.s sph_copy.s**
 
-Creates a duplicate of `old_solid` and saves it as `new_solid` without applying any transformations.
+Creates an exact duplicate of `sph.s` named `sph_copy.s`.
 ====
+
+.Copy a combination
+[example]
+====
+mged> **cp vehicle.c vehicle_backup.c**
+
+Duplicates the combination `vehicle.c` as `vehicle_backup.c`. The new combination references the same member objects as the original.
+====
+
+.Copy then modify the copy
+[example]
+====
+mged> **copy hull.r hull_modified.r**
+mged> **sed hull_modified.r**
+
+Copies `hull.r` to `hull_modified.r`, then opens the copy in the solid editor for modification without affecting the original.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*move*(nged), *rename*(nged), *xpush*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
