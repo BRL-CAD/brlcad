@@ -4,35 +4,65 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-match - returns all database objects matching the given expression
+match - list database objects whose names match a wildcard expression
 
 == SYNOPSIS
 
 [source]
 ----
-match exp
+match expression [expression ...]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *match* command is used to return all database objects matching the given expression.
+The *match* command lists all database objects whose names match one or more wildcard `expression` patterns. Each expression is matched independently against all object names in the database using standard path-matching wildcard rules (as used by *bu_path_match*):
+
+* `*` — matches any sequence of characters (including none)
+* `?` — matches any single character
+* `[...]` — matches any character in the set
+
+The names of all matching objects are printed. If multiple expressions are given, the union of all matches is returned.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *match* command.
+.List all objects starting with "hull"
 [example]
 ====
-mged> **match *.s**
+mged> **match hull***
 
-Returns all database objects matching the *.s expression.
+Lists all objects whose names begin with `hull`, for example: `hull.r`, `hull.s`, `hull_backup.r`.
 ====
+
+.Match by suffix
+[example]
+====
+mged> **match *.r**
+
+Lists all objects whose names end in `.r` (typically regions).
+====
+
+.Multiple patterns
+[example]
+====
+mged> **match hull* turret***
+
+Lists all objects matching either `hull*` or `turret*`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*ls*(nged), *search*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
