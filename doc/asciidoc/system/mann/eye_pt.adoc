@@ -10,30 +10,38 @@ eye_pt - Positions the _eye point_ to the given _x, y,_ and _z_ coordinates. Wit
 
 [source]
 ----
-eye_pt [x y z]
+eye_pt
+eye_pt mx my mz
+eye_pt "mx my mz"
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-Positions the _eye point_ to the given _x, y,_ and _z_ coordinates (in local units). If no options are provided, returns the current eye point. See also the *view* command.
+The *eye_pt* command is an alias for the *eye* command. It positions the view's "eye" point (the camera location) at the specified model coordinates. 
 
+The command supports three modes of operation:
+* If no arguments are provided, it returns the current model coordinates of the eye point.
+* If three numerical arguments (`mx my mz`) are provided, the eye point is translated to those exact coordinates.
+* If a single string containing three space-separated numbers (`"mx my mz"`) is provided, it parses the string and moves the eye point to those coordinates.
 
 [[examples]]
 == EXAMPLES
 
-The example shows the use of the *eye_pt* command to situate the eye point at a specified coordinate position.
-
-.Situate the eye point at a specified coordinate position.
+.Query the current eye location
 [example]
 ====
+mged> **eye_pt**
 
-mged> **eye_pt 100 0 0**::
-The eye point is located at 100 mm along the _x_ axis.
+Returns the current X, Y, and Z model coordinates of the eye point.
+====
 
+.Move the eye to a specific coordinate
+[example]
+====
+mged> **eye_pt 100 0 0**
 
-
+Positions the camera eye point precisely at the model's (100, 0, 0) coordinates.
 ====
 
 
