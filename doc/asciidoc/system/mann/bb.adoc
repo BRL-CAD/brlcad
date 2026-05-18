@@ -10,7 +10,7 @@ bb - Report dimensional information about objects using Bounding Boxes
 
 [source]
 ----
-bb [options]... objects...
+bb [-c] [-q] [-v] object1 [object2 object3 ...]
 ----
 
 
