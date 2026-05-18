@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-cc - create a constraint based on a specified constraint expression
+cc - create a new constraint object in the database
 
 == SYNOPSIS
 
@@ -13,42 +13,50 @@ cc - create a constraint based on a specified constraint expression
 cc name constraint_expression
 ----
 
+
 [[description]]
 == DESCRIPTION
 
-The *cc* command is used to create a dedicated constraint object based on a specified constraint expression. These constraint expressions define explicit geometric or parametric relationships between objects or values in the database.
+The *cc* command (create constraint) creates a new constraint object named `name` in the database, storing `constraint_expression` as its parametric expression. Constraint objects are non-geometry database objects of type `ID_CONSTRAINT`.
 
-Constraint expressions generally take the form of an operation followed by the target entities or a formula. Some common constraint types include:
-* *coincident* _entity1 entity2_ : Specified entities (points, edges) stay connected.
-* *collinear* _line1 line2_ : Straight edges are aligned along the same line.
-* *parallel* _entity1 entity2_ : Specified entities (edges, faces, objects) are parallel to each other.
-* *perpendicular* _entity1 entity2_ : Specified entities are at a 90-degree angle to each other.
-* *formula* _relationship_ : General parametric relationships using formulas (e.g., `formula sph.R[0]=10.0`).
-* *tangent* _entity1 entity2_ : Specified entities maintain contact (overlap without intersecting).
+Exactly two arguments are required: the name for the new constraint object and the constraint expression string. The command fails if either `name` or `constraint_expression` already exists as an object name in the database — both are checked against existing object names before creation proceeds. On success, the message `Constraint saved` is printed.
+
+The constraint expression is stored within the new object and can later be retrieved or evaluated using the *constraint* command.
+
+NOTE: *cc* requires a writable (non-read-only) database and requires the database to be open.
+
+NOTE: *cc* is a low-level object creator. For the full constraint management interface — including setting attributes on existing constraint objects, querying, displaying, and evaluating — use the *constraint* command instead.
 
 [[examples]]
 == EXAMPLES
 
-.Creating a constraint based on a formula.
+.Create a constraint object with a formula expression
 [example]
 ====
-mged> **cc my_constraint "formula ell.R[0]=10.0"**
+mged> **cc p0 "formula ell.R[0]=10.0"**
 
-Creates a constraint object named 'my_constraint' enforcing the parametric formula `ell.R[0]=10.0`.
+Creates a new constraint object named `p0` storing the expression `formula ell.R[0]=10.0`. Fails if either `p0` or `formula ell.R[0]=10.0` already exists as an object name.
 ====
 
-.Creating a geometric constraint.
+.Create a geometric constraint
 [example]
 ====
-mged> **cc my_coincidence "coincident ell.V arb8.P[4]"**
+mged> **cc c1 "coincident ell.V arb8.P[4]"**
 
-Creates a constraint object named 'my_coincidence' enforcing a geometric coincidence between the vertex of an ellipsoid and the 5th point of an arb8.
+Creates a new constraint object `c1` with a coincident point constraint expression.
 ====
+
+[[see_also]]
+== SEE ALSO
+
+*constraint*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

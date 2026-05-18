@@ -4,78 +4,174 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-constraint - manage constraint evaluation and display
+constraint - manage parametric geometric constraints stored on database objects
 
 == SYNOPSIS
 
 [source]
 ----
-constraint set constraint_object constraint_type [expression]
-constraint {get|show|eval} constraint_object1 [constraint_object2 ...]
+constraint set constraint_name key [expression_parts ...]
+constraint get constraint_name1 [constraint_name2 ...]
+constraint show constraint_name1 [constraint_name2 ...]
+constraint eval constraint_name1 [constraint_name2 ...]
+constraint help [command]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *constraint* command is used to manage, evaluate, and display dimensional and geometric constraints. These constraints and their specified parameters define explicit relationships between geometry objects. Parametric constraints are enforced during geometry editing when they are included in the boolean recipe for a combination.
+The *constraint* command manages parametric constraint data stored as attributes on database objects. Constraints represent dimensional and geometric relationships between geometry objects, such as coincidence, collinearity, tangency, or parametric formulas.
 
-Constraint objects (which can be created using the `cc` command) hold these rules as attributes. The `constraint` command has the following subcommands:
+Constraints are stored as named attributes on database objects. The *constraint* command requires a database version 5 or later; older databases must be upgraded with `dbupgrade` first.
 
-* *set* _constraint_object constraint_type [expression]_ : Adds or modifies a constraint rule on an existing constraint object. The _constraint_type_ defines the relationship, and the _expression_ provides the target entities or formula.
-* *get* _constraint_object(s)_ : Retrieves and prints all raw constraint attributes associated with the specified objects.
-* *show* _constraint_object(s)_ : Neatly formats and displays the constraints associated with the specified objects.
-* *eval* _constraint_object(s)_ : Evaluates the constraints to resolve the geometric or parametric rules.
+=== Subcommands
 
-=== Constraint Types and Expressions
-The following geometric and parametric constraint types are supported:
-* *coincident* _entity1 entity2_ : Specified entities (e.g., `{point point}`, `{point edge}`, `{edge edge}`) stay connected.
-* *collinear* _line1 line2_ : Straight edges are aligned along the same line.
-* *concentric* _circle1 circle2_ : Circle/arc curves maintain the same center point.
-* *fixed* _{point|edge|face|object}_ : The specified entity is immutable with respect to the global coordinate system.
-* *parallel* _entity1 entity2_ : Specified entities are parallel to each other.
-* *perpendicular* _entity1 entity2_ : Specified entities are at a 90-degree angle to each other.
-* *horizontal* / *vertical* _entity_ : Forces X/Y or Z values to match.
-* *tangent* _entity1 entity2_ : Specified entities maintain contact (overlap without intersecting).
-* *symmetric* _entity1 entity2 axis_ : Specified symmetry about an axis.
-* *equal* _entity1 entity2_ : Magnitudes, lengths, or areas are forced to be equal.
-* *formula* _relationship_ : General parametric relationships using entity functions, variables, and values (e.g., `ell.R[0]=10.0`).
+*set constraint_name key [expression_parts ...]*::
+Add or update the constraint attribute named `key` on the existing database object `constraint_name`. The expression value is assembled from all remaining arguments `expression_parts`. The `constraint_name` object must already exist in the database.
+
+*get constraint_name1 [constraint_name2 ...]*::
+Print the raw constraint attributes for one or more named objects. Output format per attribute: `object_name attribute_name value`.
+
+*show constraint_name1 [constraint_name2 ...]*::
+Print the constraint attributes for one or more objects in a labeled, human-readable format. Each object name is printed as a header, followed by indented `attribute = value` pairs.
+
+*eval constraint_name1 [constraint_name2 ...]*::
+Evaluate (attempt to solve) the constraint attributes stored on the named objects. Requires a writable database.
+
+*help [command]*::
+Print extended help, including the full list of supported constraint expression types and entity functions.
+
+=== Constraint Expressions
+
+The following geometric constraint types are supported in expressions:
+
+[cols="1,3"]
+|===
+|Type |Description
+
+|`coincident {point point\|point edge\|edge edge}`
+|Specified entities stay connected.
+
+|`collinear {line line}`
+|Straight edges are aligned along the same line.
+
+|`concentric {circle circle}`
+|Circle/arc curves maintain the same center point.
+
+|`fixed {point\|edge\|face\|object}`
+|Specified entity is immutable with respect to the global coordinate system.
+
+|`parallel {edge edge\|edge face\|face face\|object object}`
+|Specified entities are parallel to each other.
+
+|`perpendicular {edge edge\|edge face\|face face\|object object}`
+|Specified entities are perpendicular (90° to each other).
+
+|`horizontal {point point\|edge\|vector}`
+|Specified entities have X/Y values set to match each other.
+
+|`vertical {point point\|edge\|vector}`
+|Specified entities have Z values set to match each other.
+
+|`tangent entity entity`
+|Specified entities maintain contact (point sets overlap without intersecting).
+
+|`symmetric {point point\|curve curve} line`
+|Specified symmetry about an axis.
+
+|`equal entity entity`
+|Specified values are set equal in magnitude, length, or area.
+
+|`formula relationship`
+|General parametric relationship using functions, variables, and values.
+
+|===
 
 === Entity and Value Functions
-Expressions can utilize built-in functions:
-* *Entity Functions*: `bisect(curve)`, `center(surface)`, `centroid(object)`, `curvature(curve, t)`
-* *Value Functions*: `angle(curve1, curve2)`, `area(surface)`, `diameter(arccurve)`, `distance(ent1, ent2)`, `length(curve)`, `magnitude(vector)`, `radius(arccurve)`
+
+[cols="1,2"]
+|===
+|Function |Returns
+
+|`bisect(curve)` |point
+|`center(surface)` |point
+|`centroid(object)` |point
+|`angle(curve1, curve2)` |value
+|`area(surface)` |value
+|`diameter(arccurve)` |value
+|`distance(entity, entity)` |value
+|`hdistance(entity, entity)` |value
+|`length(curve)` |value
+|`magnitude(vector)` |value
+|`radius(arccurve)` |value
+|`vdistance(entity, entity)` |value
+
+|===
 
 [[examples]]
 == EXAMPLES
 
-.Setting a geometric coincidence constraint.
+.Set a constraint attribute on an existing object
 [example]
 ====
-mged> **constraint set c1 coincident ell.V arb8.P[4]**
+mged> **constraint set c1 coincident_expr "coincident ell.V arb8.P[4]"**
 
-Assigns a `coincident` constraint to the object `c1`, forcing the vertex of `ell` to stay connected to the 5th point of `arb8`.
+Stores a `coincident_expr` attribute on the existing database object `c1`.
 ====
 
-.Setting a parametric formula constraint.
+.Set a formula constraint
 [example]
 ====
-mged> **constraint set p0 formula ell.R[0]=10.0**
+mged> **constraint set p0 formula_expr "formula ell.R[0]=10.0"**
 
-Assigns a `formula` constraint to the object `p0`, explicitly defining the X-radius of the ellipsoid `ell`.
+Stores a parametric formula on object `p0`.
 ====
 
-.Showing constraints.
+.Get the constraints on an object
 [example]
 ====
-mged> **constraint show c1 p0**
+mged> **constraint get c1**
 
-Displays the constraint rules currently assigned to the `c1` and `p0` constraint objects.
+Prints the raw constraint attributes of `c1` in the form:
+`c1 attribute_name value`
 ====
+
+.Show constraints in readable form
+[example]
+====
+mged> **constraint show c1 c2 c3**
+
+Prints the constraint attributes for `c1`, `c2`, and `c3` with labeled headers and `attribute = value` format.
+====
+
+.Evaluate a constraint
+[example]
+====
+mged> **constraint eval c3**
+
+Evaluates the constraint expression stored on `c3`.
+====
+
+.Get help
+[example]
+====
+mged> **constraint help**
+
+Prints the full help text including all expression types, entity functions, and value functions.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*cc*(nged), *attr*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
