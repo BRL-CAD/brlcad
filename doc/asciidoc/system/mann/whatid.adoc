@@ -1,38 +1,52 @@
 = WHATID(nged)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD MGED Commands
+:manmanual: BRL-CAD User Commands
 
 == NAME
-whatid - Lists the ident number of the specified _region_.
+whatid - report the region identifier (ident) of a region
 
 == SYNOPSIS
 
 [source]
 ----
-whatid {region_name}
+whatid region
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Lists the ident number of the specified _region_.
+The *whatid* command returns the region identifier number (`ident`) of the specified `region`. Exactly one region name must be provided. The named object must exist in the database and must be a region (a combination with the region flag set).
 
+The result is returned as an integer. If the named object does not exist or is not a region, an error is reported.
+
+This is the inverse of *whichid*, which takes a region ID and returns the regions that use it.
 
 [[examples]]
 == EXAMPLES
 
-The example shows the use of the *whatid* command to list the ident number of a specified region.
-
-.List the ident number of a specified region.
+.Get the region ID of a named region
 [example]
 ====
-mged>**whatid regiona**
+mged> **whatid hull.r**
 
-Gets the ident number for regiona.
-
+Returns the integer region ID assigned to `hull.r`, for example: `1001`.
 ====
+
+.Use the result in a Tcl variable
+[example]
+====
+mged> **set id [whatid turret.r]**
+mged> **whichid $id**
+
+Retrieves the region ID of `turret.r` into a variable, then uses `whichid` to verify which regions share that ID.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*whichid*(nged), *whichair*(nged), *idents*(nged)
 
 
 [[author]]
