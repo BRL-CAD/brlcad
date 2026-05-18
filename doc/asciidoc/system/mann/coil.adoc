@@ -1,0 +1,40 @@
+= COIL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+coil - make a coil shape
+
+== SYNOPSIS
+
+[source]
+----
+coil [options] object
+----
+
+[[description]]
+== DESCRIPTION
+
+The *coil* command is used to make a coil shape.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *coil* command.
+[example]
+====
+mged> **coil model.s**
+
+Makes a coil shape from model.s.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

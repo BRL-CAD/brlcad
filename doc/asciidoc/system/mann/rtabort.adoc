@@ -1,0 +1,40 @@
+= RTABORT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rtabort - abort the associated raytraces
+
+== SYNOPSIS
+
+[source]
+----
+rtabort [options]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *rtabort* command is used to abort the associated raytraces.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *rtabort* command.
+[example]
+====
+mged> **rtabort**
+
+Aborts the associated raytraces.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

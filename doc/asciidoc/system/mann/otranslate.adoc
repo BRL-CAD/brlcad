@@ -1,0 +1,62 @@
+= OTRANSLATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+otranslate - translate a database object by a displacement vector
+
+== SYNOPSIS
+
+[source]
+----
+otranslate obj dx dy dz
+----
+
+[[description]]
+== DESCRIPTION
+
+The *otranslate* command translates the database object `obj` by the displacement vector `(dx, dy, dz)` in local units. The object's geometry is modified and written back to the database.
+
+The displacement vector is converted from local units to base units (millimeters) internally via `dbi_local2base` before the translation matrix is constructed. This means the values supplied must always be in the current database local unit (e.g. inches, millimeters).
+
+The translation matrix (`dmat`) is built using `MAT_DELTAS_VEC` and then composed with the object's path transform so that the displacement is applied correctly in model space regardless of any parent combination transformations. The transform pipeline used is: `emat = invXform × dmat × xform`.
+
+The resulting effective matrix is applied to the object's internal representation via `GED_DB_GET_INTERN` and the modified object is written back with `GED_DB_PUT_INTERN`. Unlike `translate`, *otranslate* applies the displacement to the object directly, not to the path matrix.
+
+[[examples]]
+== EXAMPLES
+
+.Translate an object along the X axis
+[example]
+====
+mged> **otranslate box.s 50 0 0**
+
+Moves `box.s` 50 local units in the positive X direction.
+====
+
+.Translate diagonally
+[example]
+====
+mged> **otranslate part.s 10 -5 20**
+
+Displaces `part.s` by the vector (10, -5, 20) in local units, moving it simultaneously along all three axes.
+====
+
+.Move an object back to the origin neighborhood
+[example]
+====
+mged> **otranslate widget.s 0 0 -100**
+
+Moves `widget.s` 100 local units in the negative Z direction.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

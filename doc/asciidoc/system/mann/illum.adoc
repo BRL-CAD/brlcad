@@ -1,0 +1,50 @@
+= ILLUM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+illum - illuminate object
+
+== SYNOPSIS
+
+[source]
+----
+illum [-n] object
+----
+
+[[description]]
+== DESCRIPTION
+
+The *illum* command illuminates (highlights) the specified `object` in the MGED display. The command searches the current display list for the given object and flags it for highlighting. 
+
+If the optional `-n` flag is provided, the command performs the reverse operation, un-illuminating (de-highlighting) the specified object. If the object is not currently in the display list, the command will return an error indicating it was not found.
+
+[[examples]]
+== EXAMPLES
+
+.Highlight an object in the display
+[example]
+====
+mged> **illum region1.r**
+
+Highlights `region1.r` in the current display.
+====
+
+.Un-highlight an object
+[example]
+====
+mged> **illum -n region1.r**
+
+Removes the highlight from `region1.r` in the current display.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

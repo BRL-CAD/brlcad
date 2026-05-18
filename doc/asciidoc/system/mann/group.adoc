@@ -1,0 +1,40 @@
+= GROUP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+group - group the specified objects into a combination
+
+== SYNOPSIS
+
+[source]
+----
+group gname object(s)
+----
+
+[[description]]
+== DESCRIPTION
+
+The *group* command is used to group the specified objects into a combination.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *group* command.
+[example]
+====
+mged> **group new_group.c model.s**
+
+Groups model.s into the combination new_group.c.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

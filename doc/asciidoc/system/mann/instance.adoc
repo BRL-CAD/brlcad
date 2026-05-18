@@ -1,0 +1,40 @@
+= INSTANCE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+instance - instantiate an object
+
+== SYNOPSIS
+
+[source]
+----
+instance obj comb [op]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *instance* command is used to instantiate an object.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *instance* command.
+[example]
+====
+mged> **instance model.s group.c +**
+
+Instantiates model.s into group.c with the + operator.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

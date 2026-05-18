@@ -1,0 +1,122 @@
+= RECT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rect - manage the rubber band selection rectangle in the view
+
+== SYNOPSIS
+
+[source]
+----
+rect vname subcommand [args]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *rect* command manages a rubber band rectangle overlay drawn on the current view. The rectangle can be positioned, sized, and styled interactively or programmatically. It is primarily used for marquee selection and for raytracing a sub-region of the view.
+
+The first argument is always the view name (`vname`). The second argument is the subcommand. Each subcommand either gets the current value (no extra args) or sets it (with extra args).
+
+=== Subcommands
+
+*rect vname bg [r g b]*::
+Get or set the rectangle's background fill color as RGB integers (0–255). With no extra args, returns `r g b`. With three args, sets the color.
+
+*rect vname color [r g b]*::
+Get or set the rectangle's border/line color as RGB integers. With no extra args, returns `r g b`. With three args, sets the color.
+
+*rect vname cdim [w h]*::
+Get or set the canvas dimensions (the full window/display size in pixels). Used to compute normalized view coordinates for the rectangle. With no extra args, returns `w h`. With two args, sets the canvas size and recalculates the rectangle's normalized position and dimensions.
+
+*rect vname dim [w h]*::
+Get or set the rectangle's dimensions in pixels. With no extra args, returns `w h`. With two args, sets the width and height and recalculates the normalized position.
+
+*rect vname draw [0|1]*::
+Get or set whether the rectangle is drawn. `0` hides, `1` shows. With no extra args, returns the current draw flag.
+
+*rect vname lstyle [0|1]*::
+Get or set the line style. `0` = solid (default), `1` = dashed. With no extra args, returns the current style. Non-zero values set dashed; zero or negative values set solid.
+
+*rect vname lwidth [w]*::
+Get or set the line width in pixels. With no extra args, returns the current width. Non-positive values set the width to 0.
+
+*rect vname pos [x y]*::
+Get or set the rectangle's anchor position in pixels (origin at top-left). With no extra args, returns `x y`. With two args, sets the position and recalculates the normalized coordinates.
+
+*rect vname rt port*::
+Raytrace the geometry within the current rectangle area, sending output to the framebuffer at the given `port` number. Requires exactly one argument. Has no effect if the rectangle has zero size.
+
+*rect vname zoom*::
+Zoom the view to fill the screen with the area enclosed by the rectangle. Adjusts the rectangle to match the window aspect ratio before zooming. Has no effect if the rectangle has zero size.
+
+*rect vname vars*::
+Print all current rectangle parameters as `variable = value` pairs. Useful for inspecting the complete rectangle state.
+
+*rect vname help*::
+Print the usage summary for all subcommands.
+
+[[examples]]
+== EXAMPLES
+
+.Show the rectangle
+[example]
+====
+mged> **rect default draw 1**
+
+Enables display of the rubber band rectangle on the `default` view.
+====
+
+.Position and size the rectangle
+[example]
+====
+mged> **rect default cdim 1024 768**
+mged> **rect default pos 200 100**
+mged> **rect default dim 400 300**
+
+Sets the canvas to 1024×768 pixels, anchors the rectangle at pixel (200, 100), and gives it a 400×300 pixel size. The normalized view coordinates are calculated automatically.
+====
+
+.Set the rectangle color to red
+[example]
+====
+mged> **rect default color 255 0 0**
+
+Sets the border color of the rectangle to red.
+====
+
+.Use dashed lines
+[example]
+====
+mged> **rect default lstyle 1**
+
+Switches the rectangle border to a dashed line style.
+====
+
+.Zoom to the rectangle area
+[example]
+====
+mged> **rect default zoom**
+
+Adjusts the view so that the area within the rectangle fills the display.
+====
+
+.Inspect all rectangle parameters
+[example]
+====
+mged> **rect default vars**
+
+Prints all current rectangle settings, e.g. position, dimensions, colors, draw flag, line style, and line width.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

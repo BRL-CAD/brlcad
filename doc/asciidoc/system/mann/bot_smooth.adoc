@@ -1,0 +1,46 @@
+= BOT_SMOOTH(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_smooth - calculate vertex normals for bot primitive
+
+== SYNOPSIS
+
+[source]
+----
+bot_smooth [-t norm_tolerance_degrees] new_bot old_bot
+----
+
+[[description]]
+== DESCRIPTION
+
+The *bot_smooth* command is used to calculate vertex normals for bot primitive.
+
+[[options]]
+== OPTIONS
+
+*-t* _norm_tolerance_degrees_::
+Specify the normal tolerance in degrees. This sets the threshold angle for smoothing between adjacent triangle normals.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *bot_smooth* command.
+[example]
+====
+mged> **bot_smooth -t 15.0 new_bot.s old_bot.s**
+
+Calculates vertex normals for old_bot.s with a tolerance of 15.0 and saves as new_bot.s.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

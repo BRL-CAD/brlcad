@@ -1,0 +1,56 @@
+= CC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+cc - create a constraint based on a specified constraint expression
+
+== SYNOPSIS
+
+[source]
+----
+cc name constraint_expression
+----
+
+[[description]]
+== DESCRIPTION
+
+The *cc* command is used to create a dedicated constraint object based on a specified constraint expression. These constraint expressions define explicit geometric or parametric relationships between objects or values in the database.
+
+Constraint expressions generally take the form of an operation followed by the target entities or a formula. Some common constraint types include:
+* *coincident* _entity1 entity2_ : Specified entities (points, edges) stay connected.
+* *collinear* _line1 line2_ : Straight edges are aligned along the same line.
+* *parallel* _entity1 entity2_ : Specified entities (edges, faces, objects) are parallel to each other.
+* *perpendicular* _entity1 entity2_ : Specified entities are at a 90-degree angle to each other.
+* *formula* _relationship_ : General parametric relationships using formulas (e.g., `formula sph.R[0]=10.0`).
+* *tangent* _entity1 entity2_ : Specified entities maintain contact (overlap without intersecting).
+
+[[examples]]
+== EXAMPLES
+
+.Creating a constraint based on a formula.
+[example]
+====
+mged> **cc my_constraint "formula ell.R[0]=10.0"**
+
+Creates a constraint object named 'my_constraint' enforcing the parametric formula `ell.R[0]=10.0`.
+====
+
+.Creating a geometric constraint.
+[example]
+====
+mged> **cc my_coincidence "coincident ell.V arb8.P[4]"**
+
+Creates a constraint object named 'my_coincidence' enforcing a geometric coincidence between the vertex of an ellipsoid and the 5th point of an arb8.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,54 @@
+= MODEL2VIEW_LU(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+model2view_lu - convert model xyz to view coordinates (local units)
+
+== SYNOPSIS
+
+[source]
+----
+model2view_lu x y z
+----
+
+[[description]]
+== DESCRIPTION
+
+The *model2view_lu* command converts a 3D model-space point (in local units) into 3D view-space coordinates (also in local units). The three arguments `x y z` are model-space coordinates expressed in the database's local units.
+
+The conversion pipeline: the input is scaled from local to base units, transformed by the `gv_model2view` matrix to get normalized view-space coordinates, then scaled by `gv_scale × base2local` to produce local-unit view-space coordinates. The result is a space-separated 3-element vector.
+
+This differs from `m2v_point`, which works in normalized view space rather than local-unit view space.
+
+The inverse operation is `view2model_lu`.
+
+[[examples]]
+== EXAMPLES
+
+.Convert the model origin to local-unit view coordinates
+[example]
+====
+mged> **model2view_lu 0 0 0**
+
+Returns the view-space position of the model origin in local units. The result reflects the current view rotation and zoom level.
+====
+
+.Convert an off-origin model point
+[example]
+====
+mged> **model2view_lu 100 0 0**
+
+Returns the local-unit view-space coordinates of the model point 100 units along the X axis.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

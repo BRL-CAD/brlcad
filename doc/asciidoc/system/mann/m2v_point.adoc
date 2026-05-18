@@ -1,0 +1,68 @@
+= M2V_POINT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+m2v_point - convert xyz in model space to xyz in view space
+
+== SYNOPSIS
+
+[source]
+----
+m2v_point x y z
+m2v_point "x y z"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *m2v_point* command converts a point in model space to its equivalent position in view space, using the current view's model-to-view transformation matrix (`gv_model2view`). The result is returned as a space-separated string of three floating-point view coordinates.
+
+The point may be specified in two forms:
+
+* *Three separate arguments*: `m2v_point x y z` — the X, Y, and Z model coordinates are given as three individual numbers.
+* *A single quoted vector*: `m2v_point "x y z"` — all three coordinates are provided as one space-separated string, which is decoded using `bn_decode_vect`.
+
+The command requires an active view to be present. The returned view coordinates are in BRL-CAD's normalized view space, where (0, 0, 0) is the view center and the extents are determined by the current view size.
+
+The inverse operation (view to model) is provided by the `v2m_point` command.
+
+[[examples]]
+== EXAMPLES
+
+.Convert the model origin to view coordinates
+[example]
+====
+mged> **m2v_point 0 0 0**
+
+`0 0 0`
+
+When the view is looking straight at the model origin with no rotation, the origin maps to view center (0, 0, 0).
+====
+
+.Convert an offset model point
+[example]
+====
+mged> **m2v_point 100 0 0**
+
+Returns the view-space position of the model point 100 units along the X axis, accounting for any current view rotation and zoom.
+====
+
+.Using a quoted vector string
+[example]
+====
+mged> **m2v_point "50 25 10"**
+
+Equivalent to `m2v_point 50 25 10`. Converts model point (50, 25, 10) to view coordinates.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

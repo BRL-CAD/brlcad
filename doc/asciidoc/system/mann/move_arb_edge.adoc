@@ -1,0 +1,66 @@
+= MOVE_ARB_EDGE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+move_arb_edge - move an arb's edge through pt
+
+== SYNOPSIS
+
+[source]
+----
+move_arb_edge [-r] arb edge "x y z"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *move_arb_edge* command moves a specified edge of an ARB (Arbitrary Rectangular Box) solid by repositioning it so that one of its defining vertices passes through the given point. The point is specified as a quoted, space-separated `"x y z"` triple in local units.
+
+The `arb` argument may be a full database path (e.g. `comb/sub/arb.s`); the object at the end of the path is used and the path's transformation matrix is applied.
+
+The command supports all ARB subtypes. Edge indices are 1-based and the valid range depends on the ARB type:
+
+[cols="1,1", options="header"]
+|===
+| ARB type | Valid edge indices
+| ARB4     | 1–5
+| ARB5     | 1–9
+| ARB6     | 1–10
+| ARB7     | 1–12
+| ARB8     | 1–12
+|===
+
+=== Options
+
+* *-r* : Relative mode. Treats the given point as an *offset* from the current position of the edge's first vertex, rather than as an absolute model-space coordinate. The offset is added to the existing vertex position before the move is performed.
+
+[[examples]]
+== EXAMPLES
+
+.Move edge 5 of an ARB8 to an absolute point
+[example]
+====
+mged> **move_arb_edge arb8.s 5 "10 20 30"**
+
+Moves edge 5 of `arb8.s` so that its first vertex passes through model point (10, 20, 30) in local units.
+====
+
+.Move an edge by a relative offset
+[example]
+====
+mged> **move_arb_edge -r arb8.s 5 "0 0 10"**
+
+Shifts edge 5 of `arb8.s` upward by 10 local units along Z, relative to its current position.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

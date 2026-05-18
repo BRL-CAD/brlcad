@@ -1,0 +1,75 @@
+= QUAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+quat - get or set the view orientation as a quaternion
+
+== SYNOPSIS
+
+[source]
+----
+quat
+quat a b c d
+----
+
+[[description]]
+== DESCRIPTION
+
+The *quat* command gets or sets the current view rotation as a unit quaternion with components ordered `(a, b, c, d)` — that is, `(x, y, z, w)` where `(x, y, z)` is the vector part and `w` is the scalar part.
+
+* *No arguments*: Returns the current view rotation matrix as a quaternion, formatted as four space-separated floating-point values with 12 significant digits: `a b c d`.
+
+* *Four arguments `a b c d`*: Sets the view rotation from the given quaternion. Each component is provided as a separate argument. The quaternion is converted to a rotation matrix and the view is updated immediately.
+
+The *quat* command is closely related to `orient` / `orientation`, which accepts the same quaternion but as either four separate values or a single quoted string. `quat` always uses four separate arguments.
+
+To set the view by azimuth/elevation angles instead of a quaternion, use `ae`.
+
+[[examples]]
+== EXAMPLES
+
+.Get the current view quaternion
+[example]
+====
+mged> **quat**
+
+Returns the current view rotation as a quaternion, e.g. `0.5 -0.5 -0.5 0.5` for a typical isometric view. The four values are the `x y z w` components.
+====
+
+.Set the view to look down the -Z axis (top view)
+[example]
+====
+mged> **quat 0.707107 0 0 0.707107**
+
+Sets the view orientation to a 90° rotation about the X axis — a top-down view. The quaternion `(sin(45°), 0, 0, cos(45°))` encodes this rotation.
+====
+
+.Set the view to the identity (front view, no rotation)
+[example]
+====
+mged> **quat 0 0 0 1**
+
+Sets the view to the identity quaternion — the default front-facing orientation with no rotation applied.
+====
+
+.Round-trip: capture and restore orientation
+[example]
+====
+mged> **set q [quat]**
+mged> **ae 35 25**
+mged> **quat {*}$q**
+
+Saves the current quaternion, changes to a 35/25 azimuth-elevation view, then restores the original orientation using Tcl list expansion.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

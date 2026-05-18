@@ -1,0 +1,49 @@
+= LOG(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+log - used to control logging
+
+== SYNOPSIS
+
+[source]
+----
+log get|start|stop
+----
+
+[[description]]
+== DESCRIPTION
+
+The *log* command controls the capture of `bu_log` output (BRL-CAD's internal logging system) to an internal buffer associated with the current session.
+
+The three subcommands are:
+
+* *start* : Installs a hook into the `bu_log` system that intercepts all subsequent log messages and appends them to an internal buffer (`ged_log`). After calling `log start`, log messages will accumulate silently in the buffer rather than being printed immediately.
+* *stop* : Removes the logging hook, restoring normal `bu_log` output behavior. Messages are no longer captured to the buffer.
+* *get* : Retrieves and clears the contents of the accumulated log buffer, returning all captured messages since the last `log start`. The buffer is emptied after this call.
+
+[[examples]]
+== EXAMPLES
+
+.Capture and retrieve log output
+[example]
+====
+mged> **log start**
+mged> **draw some_object.r**
+mged> **log stop**
+mged> **log get**
+
+Starts capturing log output, draws an object (which may produce internal log messages), stops capturing, then retrieves and prints all log messages that were generated during the draw operation.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

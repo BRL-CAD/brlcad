@@ -1,0 +1,66 @@
+= ORIENT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+orient, orientation - set the view rotation from a quaternion
+
+== SYNOPSIS
+
+[source]
+----
+orient x y z w
+orient "x y z w"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *orient* command (also available as *orientation*) sets the current view's rotation matrix directly from a unit quaternion. The quaternion components are ordered `(x, y, z, w)` where `(x, y, z)` is the vector part and `w` is the scalar part.
+
+The quaternion may be provided in two forms:
+
+* *Four separate arguments*: `orient x y z w` — each component as a separate number.
+* *A single quoted string*: `orient "x y z w"` — all four components space-separated in one argument, decoded by `bn_decode_quat`.
+
+Internally, the quaternion is converted to a 4×4 rotation matrix using `quat_quat2mat` and stored in the view's `gv_rotation` field. The view is then updated via `bv_update`.
+
+This command directly sets the absolute view orientation. It does not apply a relative rotation — to rotate the view by an angle about an axis, use `ae` (azimuth/elevation) instead.
+
+[[examples]]
+== EXAMPLES
+
+.Set the view to look straight down the -Z axis (top view)
+[example]
+====
+mged> **orient 0.707107 0 0 0.707107**
+
+Sets the view orientation to a 90° rotation about the X axis (unit quaternion for a top-down view). The `w` scalar is approximately `cos(45°)` and the X vector component is `sin(45°)`.
+====
+
+.Use the orientation alias
+[example]
+====
+mged> **orientation 0 0 0 1**
+
+Sets the view to the identity quaternion — the default front-facing orientation with no rotation. `orient` and `orientation` are equivalent.
+====
+
+.Set orientation from a quoted quaternion string
+[example]
+====
+mged> **orient "0 0 1 0"**
+
+Sets the view using a 180° rotation about the Z axis (quaternion `(0, 0, 1, 0)`).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

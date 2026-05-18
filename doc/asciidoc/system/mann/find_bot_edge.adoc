@@ -1,0 +1,48 @@
+= FIND_BOT_EDGE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+find_bot_edge - find and identify a BOT (Bag of Triangles) edge
+
+== SYNOPSIS
+
+[source]
+----
+find_bot_edge bot "view_x view_y view_z"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *find_bot_edge* command searches a BOT (Bag of Triangles) primitive and identifies the edge that is closest to a given view coordinate. 
+
+If successful, the command returns two integers:
+1. The numeric ID of the first vertex (`vi1`) forming the edge.
+2. The numeric ID of the second vertex (`vi2`) forming the edge.
+
+The arguments are:
+* *bot* : The name of the BOT primitive to search.
+* *"view_x view_y view_z"* : A single quoted string containing the X, Y, and Z coordinates (in view space) to test against.
+
+[[examples]]
+== EXAMPLES
+
+.Identify a BOT edge near a view coordinate
+[example]
+====
+mged> **find_bot_edge bot.s "0 0 1"**
+
+Searches `bot.s` for an edge that is closest to the view coordinate `(0, 0, 1)` and returns the IDs of the two vertices forming that edge.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

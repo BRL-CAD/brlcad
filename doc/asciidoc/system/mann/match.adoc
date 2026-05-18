@@ -1,0 +1,40 @@
+= MATCH(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+match - returns all database objects matching the given expression
+
+== SYNOPSIS
+
+[source]
+----
+match exp
+----
+
+[[description]]
+== DESCRIPTION
+
+The *match* command is used to return all database objects matching the given expression.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *match* command.
+[example]
+====
+mged> **match *.s**
+
+Returns all database objects matching the *.s expression.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

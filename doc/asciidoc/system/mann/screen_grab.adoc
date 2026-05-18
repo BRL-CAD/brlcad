@@ -1,0 +1,21 @@
+= SCREEN_GRAB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+screen_grab - grab the current screen or view and save it to a file
+
+== DESCRIPTION
+
+The *screen_grab* command is an alias for the *screengrab* command. See *screengrab*(nged) for full documentation.
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

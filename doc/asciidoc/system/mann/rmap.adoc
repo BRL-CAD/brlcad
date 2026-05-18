@@ -1,0 +1,66 @@
+= RMAP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rmap - return a mapping of region IDs and air codes to region names
+
+== SYNOPSIS
+
+[source]
+----
+rmap
+----
+
+[[description]]
+== DESCRIPTION
+
+The *rmap* command scans all non-hidden regions in the current database and returns a mapping from region ID (or air code) to region names. This command takes no arguments and requires a database open in version 5 format or later.
+
+The output is a space-separated list of entries, each in the form:
+
+----
+id { name1 name2 ... }
+----
+
+Where `id` is the region ID or air code identifier, and the braced list contains all region names that share that ID. Regions with the same `region_id` are grouped together. Air codes are represented as negative values (`-aircode`) in the output, allowing them to be distinguished from positive region IDs.
+
+Hidden regions (flagged with `RT_DIR_HIDDEN`) are silently excluded from the output.
+
+This command is useful for auditing ID assignments, detecting conflicts where multiple regions share the same region ID, and scripting region-ID-based operations.
+
+[[examples]]
+== EXAMPLES
+
+.List all region ID mappings
+[example]
+====
+mged> **rmap**
+
+----
+1000 { hull.r } 1001 { bow.r stern.r } -5 { waterline_air.r } 1002 { keel.r }
+----
+
+Returns a mapping of all non-hidden region IDs (and air codes as negative values) to the region names that use them. In this example, region ID 1001 is shared by two regions, and `-5` is an air region.
+====
+
+.Find regions sharing a region ID
+[example]
+====
+mged> **set m [rmap]**
+mged> **array set ids $m**
+mged> **set ids(1001)**
+
+Uses the Tcl-list output as an array to look up which regions share ID 1001. Since the output is formatted as Tcl key-value pairs, it can be consumed directly with `array set`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

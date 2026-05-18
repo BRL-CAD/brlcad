@@ -1,0 +1,77 @@
+= SAVEKEY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+savekey - append current view as a keyframe to an animation script file
+
+== SYNOPSIS
+
+[source]
+----
+savekey file [time]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *savekey* command saves the current view state as a keyframe entry to `file`, which is opened in *append* mode. If the file does not exist it is created; if it exists, the new keyframe is appended to the end.
+
+The optional `time` argument is a floating-point number that is written as a timestamp on the first line of the keyframe entry. If omitted, no timestamp line is written and the view data follows immediately. Multiple keyframes can be accumulated in the same file by calling `savekey` repeatedly with increasing time values.
+
+=== Output format
+
+Each keyframe entry consists of the following lines written in the RT animation script format:
+
+. (Optional) `time` — the floating-point time value, if provided.
+. `size` — the view size (a single floating-point value).
+. `ex ey ez` — the model-space eye position (three floating-point values), computed from the current view-to-model transform at the conventional eye position (view-space `[0, 0, 1]`).
+. A 4×4 rotation matrix — the current view rotation, written as four rows of four space-separated floating-point values.
+. A blank line terminating the entry.
+
+This format is compatible with RT's `-M` option for animated rendering.
+
+To save the *complete* view state (including eye point, orientation, and size in a single operation), use `saveview`. To restore a view saved with `savekey`, use `loadview`.
+
+[[examples]]
+== EXAMPLES
+
+.Save the current view as a keyframe at time 0
+[example]
+====
+mged> **savekey anim.key 0**
+
+Appends the current view as a keyframe at time 0.0 to `anim.key`. The file is created if it does not exist.
+====
+
+.Accumulate multiple keyframes for animation
+[example]
+====
+mged> **ae 0 0**
+mged> **savekey anim.key 0**
+mged> **ae 90 0**
+mged> **savekey anim.key 1**
+mged> **ae 180 0**
+mged> **savekey anim.key 2**
+
+Sets three view orientations and saves them as keyframes at times 0, 1, and 2 in `anim.key`, building an animation that rotates the view 180° over 2 seconds.
+====
+
+.Save without a timestamp
+[example]
+====
+mged> **savekey view.key**
+
+Appends the current view to `view.key` with no timestamp. Useful when time-stamping will be handled externally.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

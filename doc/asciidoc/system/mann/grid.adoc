@@ -1,0 +1,40 @@
+= GRID(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+grid - convert grid xy to view coordinates (local units)
+
+== SYNOPSIS
+
+[source]
+----
+grid x y
+----
+
+[[description]]
+== DESCRIPTION
+
+The *grid* command is used to convert grid xy to view coordinates (local units).
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *grid* command.
+[example]
+====
+mged> **grid 10 20**
+
+Converts grid (10, 20) to view coordinates.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

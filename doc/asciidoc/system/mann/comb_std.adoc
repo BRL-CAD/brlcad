@@ -1,0 +1,49 @@
+= COMB_STD(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+comb_std - standardize the combination tree of an object
+
+== SYNOPSIS
+
+[source]
+----
+comb_std [-c | -r] comb_name <boolean_expr>
+----
+
+[[description]]
+== DESCRIPTION
+
+The *comb_std* command is used to standardize the combination tree of an object.
+
+[[options]]
+== OPTIONS
+
+*-c*::
+Explicitly specifies that the combination should NOT be created as a region. If the combination already exists and neither *-c* nor *-r* is supplied, its region flag is left unchanged. If the combination is new, it defaults to not being a region. The *-g* flag is a synonym for *-c*.
+
+*-r*::
+Explicitly specifies that the combination should be created as a region. If creating a new region or flagging an existing combination as a region, its region-specific attributes (e.g., region ID, air code, LOS, material ID) will be assigned using current database defaults.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *comb_std* command.
+[example]
+====
+mged> **comb_std -r my_region.r u model.s**
+
+Standardizes the combination tree of my_region.r with model.s, ensuring it is created as a region.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

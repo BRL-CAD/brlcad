@@ -1,0 +1,42 @@
+= NMG_FIX_NORMALS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg_fix_normals - fix surface normals of an NMG solid
+
+== SYNOPSIS
+
+[source]
+----
+nmg_fix_normals nmg_prim
+----
+
+[[description]]
+== DESCRIPTION
+
+The *nmg_fix_normals* command attempts to repair inconsistent or inverted surface normals in the NMG solid `nmg_prim`. It ensures that all face normals point consistently outward from the solid, which is required for correct rendering, raytrace hits, and Boolean operations.
+
+This is useful after manual NMG editing operations (such as adding faces with `nmg_cmface` or `nmg cmface`) where the winding order or normal direction may not be consistent across the mesh.
+
+[[examples]]
+== EXAMPLES
+
+.Fix normals on an edited NMG solid
+[example]
+====
+mged> **nmg_fix_normals my_nmg.s**
+
+Repairs any inconsistent face normals in `my_nmg.s`, ensuring all normals point outward.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

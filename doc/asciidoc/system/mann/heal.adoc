@@ -1,0 +1,42 @@
+= HEAL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+heal - perform mesh healing operations to fix gaps, overlaps, or inconsistencies in polygonal meshes
+
+== SYNOPSIS
+
+[source]
+----
+heal bot_solid [zipper_tol]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *heal* command analyzes and performs mesh healing operations on the specified BOT (Bag of Triangles) primitive (`bot_solid`). It attempts to fix gaps, overlaps, or structural inconsistencies in the polygonal mesh.
+
+An optional zipper tolerance (`zipper_tol`) can be provided as a floating point value. If omitted, the tolerance defaults to 0.
+
+[[examples]]
+== EXAMPLES
+
+.Heal a BOT mesh with a specific tolerance
+[example]
+====
+mged> **heal my_mesh.bot 0.5**
+
+Performs mesh healing operations on `my_mesh.bot` using a zipper tolerance of 0.5.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

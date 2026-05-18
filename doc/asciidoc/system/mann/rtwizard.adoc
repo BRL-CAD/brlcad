@@ -1,0 +1,40 @@
+= RTWIZARD(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rtwizard - run the rtwizard graphical interface
+
+== SYNOPSIS
+
+[source]
+----
+rtwizard [options]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *rtwizard* command is used to run the rtwizard graphical interface.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *rtwizard* command.
+[example]
+====
+mged> **rtwizard**
+
+Runs the rtwizard graphical interface.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

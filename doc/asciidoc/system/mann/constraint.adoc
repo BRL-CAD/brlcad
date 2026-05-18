@@ -1,0 +1,83 @@
+= CONSTRAINT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+constraint - manage constraint evaluation and display
+
+== SYNOPSIS
+
+[source]
+----
+constraint set constraint_object constraint_type [expression]
+constraint {get|show|eval} constraint_object1 [constraint_object2 ...]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *constraint* command is used to manage, evaluate, and display dimensional and geometric constraints. These constraints and their specified parameters define explicit relationships between geometry objects. Parametric constraints are enforced during geometry editing when they are included in the boolean recipe for a combination.
+
+Constraint objects (which can be created using the `cc` command) hold these rules as attributes. The `constraint` command has the following subcommands:
+
+* *set* _constraint_object constraint_type [expression]_ : Adds or modifies a constraint rule on an existing constraint object. The _constraint_type_ defines the relationship, and the _expression_ provides the target entities or formula.
+* *get* _constraint_object(s)_ : Retrieves and prints all raw constraint attributes associated with the specified objects.
+* *show* _constraint_object(s)_ : Neatly formats and displays the constraints associated with the specified objects.
+* *eval* _constraint_object(s)_ : Evaluates the constraints to resolve the geometric or parametric rules.
+
+=== Constraint Types and Expressions
+The following geometric and parametric constraint types are supported:
+* *coincident* _entity1 entity2_ : Specified entities (e.g., `{point point}`, `{point edge}`, `{edge edge}`) stay connected.
+* *collinear* _line1 line2_ : Straight edges are aligned along the same line.
+* *concentric* _circle1 circle2_ : Circle/arc curves maintain the same center point.
+* *fixed* _{point|edge|face|object}_ : The specified entity is immutable with respect to the global coordinate system.
+* *parallel* _entity1 entity2_ : Specified entities are parallel to each other.
+* *perpendicular* _entity1 entity2_ : Specified entities are at a 90-degree angle to each other.
+* *horizontal* / *vertical* _entity_ : Forces X/Y or Z values to match.
+* *tangent* _entity1 entity2_ : Specified entities maintain contact (overlap without intersecting).
+* *symmetric* _entity1 entity2 axis_ : Specified symmetry about an axis.
+* *equal* _entity1 entity2_ : Magnitudes, lengths, or areas are forced to be equal.
+* *formula* _relationship_ : General parametric relationships using entity functions, variables, and values (e.g., `ell.R[0]=10.0`).
+
+=== Entity and Value Functions
+Expressions can utilize built-in functions:
+* *Entity Functions*: `bisect(curve)`, `center(surface)`, `centroid(object)`, `curvature(curve, t)`
+* *Value Functions*: `angle(curve1, curve2)`, `area(surface)`, `diameter(arccurve)`, `distance(ent1, ent2)`, `length(curve)`, `magnitude(vector)`, `radius(arccurve)`
+
+[[examples]]
+== EXAMPLES
+
+.Setting a geometric coincidence constraint.
+[example]
+====
+mged> **constraint set c1 coincident ell.V arb8.P[4]**
+
+Assigns a `coincident` constraint to the object `c1`, forcing the vertex of `ell` to stay connected to the 5th point of `arb8`.
+====
+
+.Setting a parametric formula constraint.
+[example]
+====
+mged> **constraint set p0 formula ell.R[0]=10.0**
+
+Assigns a `formula` constraint to the object `p0`, explicitly defining the X-radius of the ellipsoid `ell`.
+====
+
+.Showing constraints.
+[example]
+====
+mged> **constraint show c1 p0**
+
+Displays the constraint rules currently assigned to the `c1` and `p0` constraint objects.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

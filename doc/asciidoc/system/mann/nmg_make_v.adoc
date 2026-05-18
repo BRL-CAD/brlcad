@@ -1,0 +1,52 @@
+= NMG_MAKE_V(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg_make_v - create one or more vertices in an NMG solid
+
+== SYNOPSIS
+
+[source]
+----
+nmg_make_v nmg_name V x0 y0 z0 [x1 y1 z1 ...]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *nmg_make_v* command creates one or more new vertices in the NMG solid `nmg_name`. The literal token `V` must appear as the second argument. Each group of three coordinate values defines the model-space location of one new vertex. At least one vertex (three coordinate values) must be provided. Additional vertices may be specified in the same call. The total number of coordinate values must be a multiple of 3.
+
+New vertices created with *nmg_make_v* exist as free (unconnected) vertices in the NMG model until they are incorporated into edges and faces.
+
+The *nmg_make_v* command is the standalone form of the `nmg <object> make V` subcommand.
+
+[[examples]]
+== EXAMPLES
+
+.Create a single vertex
+[example]
+====
+mged> **nmg_make_v my_nmg.s V 10 20 30**
+
+Creates a new vertex at model point (10, 20, 30) in `my_nmg.s`.
+====
+
+.Create multiple vertices at once
+[example]
+====
+mged> **nmg_make_v my_nmg.s V 0 0 0 50 0 0 50 50 0**
+
+Creates three new vertices at (0,0,0), (50,0,0), and (50,50,0) in one command.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

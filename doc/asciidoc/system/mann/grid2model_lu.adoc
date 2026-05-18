@@ -1,0 +1,44 @@
+= GRID2MODEL_LU(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+grid2model_lu - convert grid xy to model coordinates (local units)
+
+== SYNOPSIS
+
+[source]
+----
+grid2model_lu x y
+----
+
+[[description]]
+== DESCRIPTION
+
+The *grid2model_lu* command converts a 2D grid offset (in local units) into 3D model-space coordinates (also in local units). The two arguments `u` and `v` are the horizontal and vertical grid offsets from the model origin projected into the current view's grid plane. The Z component is treated as 0.
+
+The command works by projecting the model origin into view space, adding the scaled grid offset, then inverse-transforming back through the view-to-model matrix. The result is a 3-component model-space point in local units. All scale factors use the current view's `gv_scale` and the database unit conversions.
+
+The inverse operation is `model2grid_lu`.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a grid offset to model coordinates
+[example]
+====
+mged> **grid2model_lu 50 25**
+
+Returns the 3D model-space coordinates (in local units) corresponding to a 2D grid position 50 units right and 25 units up from the projected model origin.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

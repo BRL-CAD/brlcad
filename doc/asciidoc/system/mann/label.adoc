@@ -1,0 +1,40 @@
+= LABEL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+label - label objects
+
+== SYNOPSIS
+
+[source]
+----
+label object(s)
+----
+
+[[description]]
+== DESCRIPTION
+
+The *label* command is used to label objects.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *label* command.
+[example]
+====
+mged> **label model.s**
+
+Labels model.s in the view.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

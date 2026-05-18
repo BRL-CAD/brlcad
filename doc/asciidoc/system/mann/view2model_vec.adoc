@@ -1,0 +1,54 @@
+= VIEW2MODEL_VEC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+view2model_vec - transform a direction vector from view space to model space
+
+== SYNOPSIS
+
+[source]
+----
+view2model_vec x y z
+----
+
+[[description]]
+== DESCRIPTION
+
+The *view2model_vec* command applies the inverse of the current view rotation to a direction vector and returns the result as a space-separated `x y z` triplet in model space.
+
+This command transforms a *direction vector*, not a point. Direction vectors represent orientation or displacement — they have no fixed position in space, so translation does not apply. Only the rotational component of the view transform is inverted and applied. This distinguishes `view2model_vec` from `v2m_point`, which transforms a *position* using the full view-to-model mapping including translation and scale.
+
+Exactly three separate floating-point arguments are required. Unlike `v2m_point`, a single quoted triplet form is not accepted — the argument count must be exactly 4 (command plus three values).
+
+Use this command when converting a direction expressed in screen/view orientation (such as a movement delta, a surface normal, or an axis direction) back into model-space orientation.
+
+[[examples]]
+== EXAMPLES
+
+.Convert the view's forward direction to model space
+[example]
+====
+mged> **view2model_vec 0 0 -1**
+
+Transforms the view-space vector pointing into the screen `(0, 0, -1)` into model-space coordinates. The result is the model-space direction corresponding to "into the screen" in the current view.
+====
+
+.Convert a view-space displacement direction
+[example]
+====
+mged> **view2model_vec 1 0 0**
+
+Returns the model-space direction corresponding to "right" in the current view. Useful for computing model-space movements aligned with the screen axes.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,68 @@
+= SLEW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+slew - shift the view center by a vector in view space
+
+== SYNOPSIS
+
+[source]
+----
+slew x y [z]
+slew "x y [z]"
+sv x y [z]
+vslew x y [z]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *slew* command (also available as *sv* and *vslew*) shifts the view center by a displacement vector specified in view coordinates. The view is panned by the given amounts in X, Y, and optionally Z. This is distinct from setting an absolute view position — the displacement is relative to the current view center.
+
+The vector may be specified as two or three separate floating-point arguments, or as a single quoted space-separated string. In all cases, if the Z component is omitted or not provided in the string, it defaults to 0.0.
+
+View coordinates are in normalized view space: `(0, 0)` is the view center, and the extents are typically `±1` in each axis depending on the current view scale. Slewing by `(1, 0)` pans the view by one view-space unit to the right.
+
+=== Input forms
+
+* *`slew x y`* or *`slew x y z`*: Three (or two) separate floating-point arguments.
+* *`slew "x y"`* or *`slew "x y z"`*: A single quoted space-separated string of two or three values.
+
+[[examples]]
+== EXAMPLES
+
+.Pan the view right and up
+[example]
+====
+mged> **slew 0.5 0.25**
+
+Shifts the view center 0.5 units to the right and 0.25 units upward in view space. Z defaults to 0.
+====
+
+.Slew using the sv alias
+[example]
+====
+mged> **sv -0.1 0 0.05**
+
+Pans the view left by 0.1 and shifts it slightly toward the viewer (+Z in view space) by 0.05. Uses the short `sv` alias.
+====
+
+.Slew using a quoted triplet
+[example]
+====
+mged> **slew "0.2 -0.3 0"**
+
+Shifts the view center using a single quoted string input — convenient for scripting.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,55 @@
+= WHICH(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+which - alias for whichid; list regions using specified region identifier(s)
+
+== SYNOPSIS
+
+[source]
+----
+which [options] region_id(s)
+----
+
+[[description]]
+== DESCRIPTION
+
+The *which* command lists all regions that use the specified `region_id(s)`. This command is an alias for the `whichid` command. ID numbers can be specified individually or as a range (e.g., 100-200).
+
+[[options]]
+== OPTIONS
+
+*-s*, *--script*::
+Use a space-separated output format that is easier to parse in scripts.
+
+*-V*::
+List all active IDs in the given range, even if no associated regions are found.
+
+*-U*, *--unused*::
+Report unused IDs in the specified range.
+
+*--root* _root_name_::
+Search only in the tree below the specified `root_name`.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *which* command.
+[example]
+====
+mged> **which 1000**
+
+Lists all regions in the database that have a region ID of 1000.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

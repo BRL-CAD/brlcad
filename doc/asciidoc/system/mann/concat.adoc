@@ -1,0 +1,67 @@
+= CONCAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+concat - concatenate 'file' onto end of present database
+
+== SYNOPSIS
+
+[source]
+----
+concat [options] file.g [affix]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *concat* command is used to concatenate another database file (`file.g`) into the currently open database. By default, name conflicts are resolved by incrementing the conflicting names.
+
+[[options]]
+== OPTIONS
+
+*-O*, *--overwrite*::
+Overwrite existing objects if their names conflict with incoming objects.
+
+*-c*::
+Use the incoming region colortable instead of the current database's colortable.
+
+*-p*, *--prefix*::
+Apply the optional `affix` string to the beginning of incoming object names (default behavior if neither `-p` nor `-s` is specified but an `affix` is provided).
+
+*-s*, *--suffix*::
+Apply the optional `affix` string to the end of incoming object names.
+
+*-L*, *--lazy-affix*::
+Lazily apply the affix to incoming objects. The affix is only applied when needed to avoid a name conflict with an existing object in the target database.
+
+*-t*::
+Update the current database's title to match the incoming database's title.
+
+*-u*::
+Update the current database's local units to match the incoming database's local units.
+
+*-h*, *--help*::
+Print help and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *concat* command.
+[example]
+====
+mged> **concat -p incoming_model.g "new_"**
+
+Concatenates the contents of `incoming_model.g` into the current database, prefixing all incoming objects with the string `new_`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

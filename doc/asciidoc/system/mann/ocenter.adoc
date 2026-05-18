@@ -1,0 +1,40 @@
+= OCENTER(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ocenter - get/set center for obj
+
+== SYNOPSIS
+
+[source]
+----
+ocenter obj [x y z]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *ocenter* command is used to get or set center for obj.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *ocenter* command.
+[example]
+====
+mged> **ocenter obj 0 0 0**
+
+Sets the center for obj to (0, 0, 0).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

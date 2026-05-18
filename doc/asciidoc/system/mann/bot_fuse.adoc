@@ -1,0 +1,40 @@
+= BOT_FUSE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_fuse - eliminate duplicate points in a bot
+
+== SYNOPSIS
+
+[source]
+----
+bot_fuse new_bot old_bot
+----
+
+[[description]]
+== DESCRIPTION
+
+The *bot_fuse* command is used to eliminate duplicate points in a bot.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *bot_fuse* command.
+[example]
+====
+mged> **bot_fuse new_bot.s old_bot.s**
+
+Eliminates duplicate points between old_bot.s and saves as new_bot.s.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,56 @@
+= JOINT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+joint - process animation edit commands for joints
+
+== SYNOPSIS
+
+[source]
+----
+joint subcommand [options]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *joint* command is used to process animation edit commands for joints. It operates as a complex state machine that can load, save, manipulate, and evaluate constrained articulation systems.
+
+The available subcommands are:
+
+* *accept [joints]* : Accept a series of joint moves and update their current configurations.
+* *debug [hex_code]* : Show or set the debugging bit vector for the joint system.
+* *help [commands]* : Give usage messages for the specified joint commands.
+* *holds [names]* : List the constraints (holds) currently active in the system.
+* *list [names]* : List the joints currently loaded in the system.
+* *load file_name* : Load a joint/constraint file from disk into the system.
+* *mesh* : Build or rebuild the grip mesh used to visualize the joints.
+* *move joint_name p1 [p2...p6]* : Manually adjust a joint's rotation and direction by specifying up to 6 parameters (3 rotation angles, 3 directional translations).
+* *reject [joint_names]* : Reject joint motions, restoring them to their previously accepted state.
+* *save file_name* : Save the current joints and constraints to disk.
+* *solve constraint* : Solve a specific constraint or all constraints in the system to satisfy hold conditions.
+* *unload* : Unload any joints and constraints that are currently loaded, resetting the system.
+
+[[examples]]
+== EXAMPLES
+
+.Load and list joints
+[example]
+====
+mged> **joint load arm_joints.txt**
+mged> **joint list**
+
+Loads a predefined joint system from `arm_joints.txt` and then lists the loaded joints.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

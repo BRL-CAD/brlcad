@@ -1,0 +1,71 @@
+= REGION(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+region - create or modify a region combination with boolean operations
+
+== SYNOPSIS
+
+[source]
+----
+region reg_name op obj [op obj ...]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *region* command (also available as *r*) creates a new region combination named `reg_name`, or adds members to an existing one. Members are specified as operator/object pairs: each pair consists of a boolean operator and the name of an object to include.
+
+The command requires at least three arguments (`reg_name`, one operator, and one object). The total number of arguments after `reg_name` must be even — each operator must be paired with an object. Any operator/object pair where the object is not found in the database is skipped with a warning; processing continues with remaining pairs.
+
+=== Arguments
+
+* *reg_name* — Name of the region to create or modify. If the region does not already exist, it is created. If it does exist, the new members are appended to it.
+* *op* — Boolean operator for the following object. Must be one of:
+** `u` — union
+** `-` — subtraction
+** `+` — intersection
+* *obj* — Name of the object to add as a member. If `obj` is itself a region, a warning note is printed but it is still added.
+
+=== Item ID auto-increment
+
+When creating a new region and the database has a non-zero default item number (`wdb_item_default`), the item number is automatically incremented and reported. If creation fails after the increment, the item number is decremented back.
+
+[[examples]]
+== EXAMPLES
+
+.Create a region by unioning and subtracting primitives
+[example]
+====
+mged> **region hull.r u body.s u bow.s - keel.s**
+
+Creates the region `hull.r` as the union of `body.s` and `bow.s` with `keel.s` subtracted.
+====
+
+.Create a region using the short alias
+[example]
+====
+mged> **r engine.r u block.s u piston.s**
+
+Using the `r` alias, creates `engine.r` as the union of `block.s` and `piston.s`.
+====
+
+.Add a member to an existing region
+[example]
+====
+mged> **region hull.r u propeller.s**
+
+Appends `propeller.s` (union) to the existing region `hull.r`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

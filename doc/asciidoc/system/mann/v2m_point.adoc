@@ -1,0 +1,64 @@
+= V2M_POINT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+v2m_point - transform a point from view space to model space
+
+== SYNOPSIS
+
+[source]
+----
+v2m_point x y z
+v2m_point "x y z"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *v2m_point* command applies the current view-to-model transformation matrix to the given point and returns the result as a space-separated `x y z` triplet in model space.
+
+The input point is in view space, where `(0, 0, 0)` is the view center and the axes correspond to the screen orientation. The output is the equivalent position in model coordinates.
+
+The transformation incorporates rotation, scale, and translation — the complete view-to-model mapping, not just rotation. This makes `v2m_point` the inverse of `m2v_point`.
+
+The input may be provided as three separate floating-point arguments or as a single quoted space-separated string. Any other number of arguments returns a usage error.
+
+[[examples]]
+== EXAMPLES
+
+.Convert the view center to model space
+[example]
+====
+mged> **v2m_point 0 0 0**
+
+Returns the model-space coordinates of the current view center — the point at `(0, 0, 0)` in view space.
+====
+
+.Convert a view-space point using a quoted string
+[example]
+====
+mged> **v2m_point "0.5 -0.25 0"**
+
+Returns the model-space coordinates of the view-space point `(0.5, -0.25, 0)`. The single quoted string form is accepted for scripting convenience.
+====
+
+.Round-trip check with m2v_point
+[example]
+====
+mged> **set vp [m2v_point 100 0 0]**
+mged> **v2m_point $vp**
+
+Converts the model point (100, 0, 0) to view space, then converts it back. The result should be approximately `100 0 0` (within floating-point precision).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

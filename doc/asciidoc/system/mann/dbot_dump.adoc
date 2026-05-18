@@ -1,0 +1,70 @@
+= DBOT_DUMP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dbot_dump - dump the displayed bots
+
+== SYNOPSIS
+
+[source]
+----
+dbot_dump [options]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *dbot_dump* command is used to export the currently displayed BoT (Bag of Triangles) primitives to external file formats.
+
+[[options]]
+== OPTIONS
+
+*-b*::
+Use binary version of output format.
+
+*-n*, *--normals*::
+If supported by the format, write out vertex normals.
+
+*-m*, *--output-directory* _dir_::
+Output multiple files into this directory.
+
+*-o*, *--output-file* _file_::
+Specify a single output filename.
+
+*-t* _dxf|obj|sat|stl|gltf_::
+Specify the output format type.
+
+*-u* _units_::
+Specify an output unit (e.g., mm, m, in, ft).
+
+*-F*, *--full-precision*::
+Write full floating point precision (non-standard for formats like glTF).
+
+*--viewdata*::
+Write out non-geometry view data.
+
+*--materials*::
+Write out material information.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *dbot_dump* command.
+[example]
+====
+mged> **dbot_dump -b -m /tmp/dump -o model.g -t dxf**
+
+Dumps displayed BoTs to /tmp/dump and model.g in dxf format.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

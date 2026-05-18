@@ -1,0 +1,46 @@
+= BLAST(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+blast - clear screen, draw objects
+
+== SYNOPSIS
+
+[source]
+----
+blast [-C#/#/#] object(s)
+----
+
+[[description]]
+== DESCRIPTION
+
+The *blast* command is used to clear screen, draw objects.
+
+[[options]]
+== OPTIONS
+
+*-C*::
+Specify a color to draw the objects with, formatted as R/G/B (e.g. 255/0/0).
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *blast* command.
+[example]
+====
+mged> **blast -C255/0/0 group.c**
+
+Clears the screen and draws group.c with the color 255/0/0.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

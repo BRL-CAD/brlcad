@@ -1,0 +1,61 @@
+= ROT_POINT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rot_point - transform a point by the inverse of the current view rotation
+
+== SYNOPSIS
+
+[source]
+----
+rot_point x y z
+rot_point "x y z"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *rot_point* command applies the inverse of the current view rotation matrix to the given point and returns the transformed point as a space-separated triplet.
+
+The input point may be specified as three separate floating-point arguments, or as a single quoted space-separated triplet. The output is a space-separated `x y z` string of the resulting point coordinates.
+
+Note: the command applies the *inverse* of the view rotation matrix (not the forward rotation). This transforms a point from view-rotated space back into unrotated model space orientation — effectively "un-rotating" the point by the amount the view has been rotated. This is distinct from `model2view`, which applies the full model-to-view transform including scale and translation.
+
+[[examples]]
+== EXAMPLES
+
+.Transform a point using three separate arguments
+[example]
+====
+mged> **rot_point 10 0 0**
+
+Transforms the point (10, 0, 0) by the inverse of the current view rotation and returns the result as three space-separated values.
+====
+
+.Transform a point using a quoted triplet
+[example]
+====
+mged> **rot_point "10 0 0"**
+
+Equivalent to the above — the single quoted string form is accepted for scripting convenience.
+====
+
+.Use in a scripting context
+[example]
+====
+mged> **set rp [rot_point 0 0 100]**
+
+Stores the inverse-rotation-transformed version of (0, 0, 100) in the Tcl variable `rp` for use in subsequent calculations.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

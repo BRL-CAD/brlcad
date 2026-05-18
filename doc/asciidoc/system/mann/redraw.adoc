@@ -1,0 +1,65 @@
+= REDRAW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+redraw - refresh the display geometry for currently displayed objects
+
+== SYNOPSIS
+
+[source]
+----
+redraw
+redraw path [path ...]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *redraw* command regenerates the view geometry for objects that are already in the display list, without re-adding or re-evaluating them from scratch. This is useful after geometry has been modified in the database and the display needs to be refreshed to show the updated shape.
+
+* *No arguments*: Redraws all objects currently in the display list. Every displayed path has its visual representation regenerated.
+
+* *One or more paths*: Redraws only the specified paths. Each path must already be displayed (i.e. added via `draw` or `e`); if a path is valid but not currently displayed, an error is returned. The path matching uses prefix matching — if a display list entry begins with or is a prefix of the specified path, it is redrawn.
+
+The *redraw* command does not change what is displayed (no objects are added or removed), does not accept drawing options (such as color or shading mode), and does not trigger an autoview. It only regenerates the plot vectors for objects already in the scene using their current database state.
+
+To add a new object to the display, use `draw` or `e`. To force an update with different display options, use `draw` again (which first erases then re-draws the object).
+
+[[examples]]
+== EXAMPLES
+
+.Redraw all displayed geometry
+[example]
+====
+mged> **redraw**
+
+Regenerates the display for all objects currently shown in the view. Useful after batch database edits to refresh all visible geometry at once.
+====
+
+.Redraw a specific object after editing
+[example]
+====
+mged> **redraw component/part.s**
+
+Redraws only `component/part.s`, which must already be displayed. If the object's geometry was modified since it was last drawn, the view is updated to reflect the changes.
+====
+
+.Redraw multiple paths
+[example]
+====
+mged> **redraw body.s wing.s engine.s**
+
+Refreshes the display for three separately named objects simultaneously.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

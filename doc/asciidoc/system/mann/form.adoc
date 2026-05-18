@@ -1,0 +1,42 @@
+= FORM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+form - returns form of objtype
+
+== SYNOPSIS
+
+[source]
+----
+form type
+----
+
+[[description]]
+== DESCRIPTION
+
+The *form* command returns the argument format (the "form" or syntax) required to create or edit a specific BRL-CAD geometric object type. 
+
+The `type` argument can be any valid geometric primitive type recognized by BRL-CAD (e.g., `arb8`, `sph`, `tor`, `tgc`, `bot`, etc.). The command queries the internal geometry function table (`rt_get_functab_by_label`) to determine the expected structure for the given primitive type.
+
+[[examples]]
+== EXAMPLES
+
+.Query the format for a Sphere (sph)
+[example]
+====
+mged> **form sph**
+
+Returns the expected arguments and syntax needed to define a sphere primitive.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

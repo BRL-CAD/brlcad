@@ -1,0 +1,40 @@
+= AET(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+aet - set/get the azimuth, elevation and twist
+
+== SYNOPSIS
+
+[source]
+----
+aet [az el tw]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *aet* command is used to set or get the azimuth, elevation and twist.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *aet* command.
+[example]
+====
+mged> **aet 35 25 0**
+
+Sets the azimuth, elevation, and twist to 35, 25, and 0 degrees respectively.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

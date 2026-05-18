@@ -1,0 +1,45 @@
+= NMG_KILL_F(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg_kill_f - remove a face from an NMG solid by index
+
+== SYNOPSIS
+
+[source]
+----
+nmg_kill_f nmg_name F id
+----
+
+[[description]]
+== DESCRIPTION
+
+The *nmg_kill_f* command removes the face with the given index `id` from the NMG solid `nmg_name`, deleting its faceuse and face geometry. The literal token `F` must appear as the second argument.
+
+Face indices can be displayed by running `labelface nmg_name` before calling this command. The indices shown by `labelface` correspond directly to the `id` values accepted by *nmg_kill_f*.
+
+The *nmg_kill_f* command is the standalone form of the `nmg <object> kill F` subcommand.
+
+[[examples]]
+== EXAMPLES
+
+.Remove face 3 from an NMG solid
+[example]
+====
+mged> **labelface my_nmg.s**
+mged> **nmg_kill_f my_nmg.s F 3**
+
+First displays face index labels on `my_nmg.s`, then removes face 3.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,68 @@
+= MODEL2VIEW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+model2view - convert model coordinates to view (screen) coordinates
+
+== SYNOPSIS
+
+[source]
+----
+model2view
+model2view x y z
+----
+
+[[description]]
+== DESCRIPTION
+
+The *model2view* command has two distinct behaviors depending on whether arguments are provided:
+
+* *No arguments*: Returns the current model-to-view transformation matrix (`gv_model2view`) as a 16-element space-separated floating-point string (encoded by `bn_encode_mat`). This is the raw 4×4 matrix used by BRL-CAD's view system to transform geometry from model space into normalized view space.
+
+* *Three arguments `x y z`*: Treats the arguments as a model-space point *in millimeters* (not local units) and transforms it through the `gv_model2view` matrix using `MAT4X3PNT`, returning the resulting 3-element normalized view-space vector. Note that the input is expected in base (mm) units, not local units.
+
+The matrix form is the mathematical inverse of the `view2model` matrix.
+
+For point conversion *with local-unit scaling* applied (the more common case for interactive use), prefer `model2view_lu` or `m2v_point`.
+
+[[examples]]
+== EXAMPLES
+
+.Retrieve the current model-to-view matrix
+[example]
+====
+mged> **model2view**
+
+Returns the 16-element `gv_model2view` matrix as a space-separated string reflecting the current view rotation and zoom.
+====
+
+.Transform a model point to view space (in mm)
+[example]
+====
+mged> **model2view 0 0 0**
+
+`0 0 0`
+
+Transforms the model origin (in mm) into normalized view space. Returns the view-space position of the model origin.
+====
+
+.Capture matrix for use with mat4x3pnt
+[example]
+====
+mged> **set m2v [model2view]**
+mged> **mat4x3pnt $m2v "25.4 0 0"**
+
+Retrieves the model-to-view matrix and manually applies it to the model point (25.4 mm = 1 inch along X), yielding the normalized view-space position of that point.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

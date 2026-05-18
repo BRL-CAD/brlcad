@@ -1,0 +1,45 @@
+= MAT_AE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mat_ae - compute a rotation matrix from azimuth and elevation angles
+
+== SYNOPSIS
+
+[source]
+----
+mat_ae azimuth elevation
+----
+
+[[description]]
+== DESCRIPTION
+
+The *mat_ae* command computes a 4x4 rotation matrix from an azimuth and elevation angle pair (both in degrees). The result is returned as a 16-element space-separated matrix string, encoded by `bn_encode_mat`. It is the GED wrapper for `bn_mat_ae`.
+
+Arguments:
+
+* *azimuth* : The azimuth angle in degrees (rotation around the Z-axis).
+* *elevation* : The elevation angle in degrees (rotation above/below the XY plane).
+
+[[examples]]
+== EXAMPLES
+
+.Generate a rotation matrix from azimuth and elevation
+[example]
+====
+mged> **mat_ae 35 20**
+
+Returns the 4x4 rotation matrix corresponding to azimuth 35° and elevation 20° as a 16-element string.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

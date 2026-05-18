@@ -1,0 +1,40 @@
+= EYE_POS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+eye_pos - set eye position to given model coordinates
+
+== SYNOPSIS
+
+[source]
+----
+eye_pos mx my mz
+----
+
+[[description]]
+== DESCRIPTION
+
+The *eye_pos* command is used to set eye position to given model coordinates.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *eye_pos* command.
+[example]
+====
+mged> **eye_pos mx my mz**
+
+Sets the eye position to the specified model coordinates.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

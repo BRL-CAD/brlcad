@@ -1,0 +1,58 @@
+= MAT4X3PNT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mat4x3pnt - transform a 3D point by a 4x4 matrix
+
+== SYNOPSIS
+
+[source]
+----
+mat4x3pnt matrix "x y z"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *mat4x3pnt* command applies a 4x4 homogeneous transformation matrix to a 3D point, returning the resulting transformed point. It uses the `MAT4X3PNT` macro, which performs the full 4x4 matrix multiplication but discards the homogeneous `w` component, yielding a 3D Cartesian output point.
+
+Arguments:
+
+* *matrix* : A 4x4 transformation matrix provided as a 16-element space-separated string (as produced by `bn_encode_mat` or commands like `mat_ae`, `mat_mul`).
+* *"x y z"* : The 3D point to transform, provided as a space-separated string decoded by `bn_decode_vect`.
+
+The result is returned as a space-separated 3-element vector string.
+
+[[examples]]
+== EXAMPLES
+
+.Transform the origin by an identity matrix
+[example]
+====
+mged> **mat4x3pnt "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1" "10 20 30"**
+
+`10 20 30`
+
+The identity matrix leaves the point unchanged.
+====
+
+.Apply a rotation matrix to a point
+[example]
+====
+mged> **set rot [mat_ae 90 0]**
+mged> **mat4x3pnt $rot "100 0 0"**
+
+Rotates the point (100, 0, 0) by 90° in azimuth, which places it on the Y axis.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,40 @@
+= FBCLEAR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+fbclear - clear the active framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fbclear [rgb]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *fbclear* command is used to clear the active framebuffer.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *fbclear* command.
+[example]
+====
+mged> **fbclear 255/0/0**
+
+Clears the framebuffer to red (255/0/0).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

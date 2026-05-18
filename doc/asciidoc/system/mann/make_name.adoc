@@ -1,0 +1,87 @@
+= MAKE_NAME(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+make_name - make a unique name
+
+== SYNOPSIS
+
+[source]
+----
+make_name template | -s [num]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *make_name* command generates a unique object name by substituting an auto-incrementing integer counter into the provided `template` string. The counter starts at 0 and increments each time a name is generated. Before returning a name, *make_name* verifies the name does not already exist in the database, incrementing the counter further if necessary until an unused name is found.
+
+The `template` string uses the `@` character as a placeholder, which is replaced by the current counter value:
+
+* *prefix@suffix* : The `@` is replaced by the current counter value. For example, `part@.s` might produce `part0.s`, `part1.s`, etc.
+* *name with no @* : If no `@` is present, the counter value is appended directly to the end of the template.
+* *@@* : A literal `@@` in the template is treated as an escaped `@` and is passed through unchanged (not replaced by the counter).
+
+The counter is shared across all calls within the same session and persists until reset with `-s`.
+
+[[options]]
+== OPTIONS
+
+*-s [num]*::
+Set the internal counter to `num`. If `num` is omitted, the counter is reset to 0.
+
+[[examples]]
+== EXAMPLES
+
+.Generate unique names with a prefix template
+[example]
+====
+mged> **make_name part@.s**
+mged> **make_name part@.s**
+mged> **make_name part@.s**
+
+----
+part0.s
+part1.s
+part2.s
+----
+
+Each call increments the internal counter, producing a new unique name. If `part0.s` already existed in the database, the first call would return `part1.s` instead.
+====
+
+.Generate a name with no @ placeholder
+[example]
+====
+mged> **make_name widget**
+
+`widget0`
+
+With no `@` in the template, the counter is appended to the end of the string.
+====
+
+.Reset the counter and restart numbering
+[example]
+====
+mged> **make_name part@.s**
+mged> **make_name -s 100**
+mged> **make_name part@.s**
+
+----
+part3.s
+part100.s
+----
+
+After generating `part3.s`, the counter is set to 100 with `-s 100`. The next call then produces `part100.s`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

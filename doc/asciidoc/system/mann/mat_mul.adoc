@@ -1,0 +1,52 @@
+= MAT_MUL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mat_mul - multiply two 4x4 matrices
+
+== SYNOPSIS
+
+[source]
+----
+mat_mul matA matB
+----
+
+[[description]]
+== DESCRIPTION
+
+The *mat_mul* command multiplies two 4x4 homogeneous transformation matrices together, computing `result = matA * matB`. Both `matA` and `matB` must be provided as 16-element space-separated floating-point strings (as produced by `bn_encode_mat`). The result is returned in the same 16-element encoded format.
+
+The operation is the standard 4x4 matrix product; it is the GED wrapper for `bn_mat_mul`. Note that matrix multiplication is not commutative — the order of operands matters.
+
+[[examples]]
+== EXAMPLES
+
+.Multiply two identity matrices
+[example]
+====
+mged> **mat_mul "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1" "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"**
+
+Returns the identity matrix `1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1`, since the product of two identity matrices is the identity.
+====
+
+.Chain two rotation matrices
+[example]
+====
+mged> **set m1 [mat_ae 45 0]**
+mged> **set m2 [mat_ae 0 30]**
+mged> **mat_mul $m1 $m2**
+
+Composes the azimuth rotation matrix `$m1` with the elevation rotation matrix `$m2`, returning their combined transformation.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

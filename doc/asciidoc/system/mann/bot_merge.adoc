@@ -1,0 +1,40 @@
+= BOT_MERGE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_merge - merge the specified bots into bot_dest
+
+== SYNOPSIS
+
+[source]
+----
+bot_merge bot_dest bot1_src [botn_src]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *bot_merge* command is used to merge the specified bots into bot_dest.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *bot_merge* command.
+[example]
+====
+mged> **bot_merge combined.s part1.s part2.s**
+
+Merges part1.s and part2.s into combined.s.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,66 @@
+= MOVE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+move, mv - rename a database object
+
+== SYNOPSIS
+
+[source]
+----
+move from to
+mv from to
+----
+
+[[description]]
+== DESCRIPTION
+
+The *move* command (also available as *mv*) renames an existing database object from `from` to `to`. It is a pure rename operation — the object's geometry is unchanged; only its name in the database directory is updated.
+
+The command performs the following steps:
+
+1. Looks up `from` in the database; returns an error if it does not exist.
+2. Verifies that `to` does not already exist; returns an error if it does.
+3. Reads the object's internal data, renames it in the in-memory directory via `db_rename`, then writes it back under the new name.
+4. Updates the current display list: if the top-level path element of any displayed object matches `from`, it is updated to `to` so the display remains consistent.
+
+[[examples]]
+== EXAMPLES
+
+.Rename an object
+[example]
+====
+mged> **move old_name.s new_name.s**
+
+Renames the solid `old_name.s` to `new_name.s` in the database.
+====
+
+.Using the mv alias
+[example]
+====
+mged> **mv wing_left.r wing.r**
+
+Renames `wing_left.r` to `wing.r`. The `mv` alias is equivalent to `move`.
+====
+
+.Attempting to rename to an existing name
+[example]
+====
+mged> **move box.s sphere.s**
+
+`sphere.s: already exists`
+
+Returns an error if `sphere.s` already exists in the database. The original `box.s` is left unchanged.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

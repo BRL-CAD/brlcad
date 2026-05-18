@@ -1,0 +1,40 @@
+= ISIZE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+isize - set or get the inverse of the view size
+
+== SYNOPSIS
+
+[source]
+----
+isize [options]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *isize* command is used to set or get the inverse of the view size.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *isize* command.
+[example]
+====
+mged> **isize**
+
+Sets or gets the inverse of the view size.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

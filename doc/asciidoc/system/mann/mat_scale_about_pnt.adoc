@@ -1,0 +1,55 @@
+= MAT_SCALE_ABOUT_PNT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mat_scale_about_pnt - generate a uniform scale matrix centered on a point
+
+== SYNOPSIS
+
+[source]
+----
+mat_scale_about_pnt "x y z" scale
+----
+
+[[description]]
+== DESCRIPTION
+
+The *mat_scale_about_pnt* command generates a 4x4 homogeneous transformation matrix that performs a uniform scale by `scale` centered on the 3D point `"x y z"`. Scaling about a non-origin point is equivalent to translating to the origin, scaling, then translating back; this command computes that combined matrix in one step.
+
+The result is returned as a 16-element space-separated matrix string via `bn_encode_mat`. It is the GED wrapper for `bn_mat_scale_about_pnt`.
+
+Arguments:
+
+* *"x y z"* : The center point for the scaling operation, as a space-separated string decoded by `bn_decode_vect`.
+* *scale* : The uniform scale factor (a floating-point number).
+
+[[examples]]
+== EXAMPLES
+
+.Scale by 2x about a specific point
+[example]
+====
+mged> **mat_scale_about_pnt "10 10 0" 2.0**
+
+Returns a 4x4 matrix that scales geometry by a factor of 2 relative to the point (10, 10, 0). Objects at that point remain fixed while all other geometry moves away from it proportionally.
+====
+
+.Scale down by half about the origin
+[example]
+====
+mged> **mat_scale_about_pnt "0 0 0" 0.5**
+
+Returns a uniform 0.5x scale matrix centered at the origin, equivalent to a standard scale-by-half transformation.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

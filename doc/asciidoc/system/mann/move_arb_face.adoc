@@ -1,0 +1,66 @@
+= MOVE_ARB_FACE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+move_arb_face - move an arb's face through pt
+
+== SYNOPSIS
+
+[source]
+----
+move_arb_face [-r] arb face "x y z"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *move_arb_face* command moves a specified face of an ARB (Arbitrary Rectangular Box) solid so that it passes through the given point. The face is translated parallel to itself — the plane's normal direction is preserved and only the plane's distance constant (D in the equation `N·P = D`) is updated. The other vertices of the ARB are then recomputed to maintain the overall ARB shape.
+
+The point is specified as a quoted, space-separated `"x y z"` triple in local units. The `arb` argument may be a full database path (e.g. `comb/sub/arb.s`); the object at the end of the path is used and the path's transformation matrix is applied.
+
+Face indices are 1-based and the valid range depends on the ARB type:
+
+[cols="1,1", options="header"]
+|===
+| ARB type | Valid face indices
+| ARB4     | 1–4
+| ARB5     | 1–5
+| ARB6     | 1–5
+| ARB7     | 1–5
+| ARB8     | 1–6
+|===
+
+=== Options
+
+* *-r* : Relative mode. Treats the given point as an *offset* from the current position of the face's first vertex, rather than as an absolute model-space coordinate. The offset is added to the existing vertex before updating the plane equation.
+
+[[examples]]
+== EXAMPLES
+
+.Move face 1 of an ARB8 to an absolute point
+[example]
+====
+mged> **move_arb_face arb8.s 1 "0 0 50"**
+
+Moves face 1 of `arb8.s` so that the plane of that face passes through model point (0, 0, 50) in local units. The face slides parallel to itself; the ARB vertices are updated accordingly.
+====
+
+.Move a face by a relative offset
+[example]
+====
+mged> **move_arb_face -r arb8.s 3 "5 0 0"**
+
+Shifts face 3 of `arb8.s` by 5 local units along X relative to the face's current first-vertex position.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,42 @@
+= COPY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+copy - copy an 'evaluated' path solid
+
+== SYNOPSIS
+
+[source]
+----
+copy old_solid new_solid
+----
+
+[[description]]
+== DESCRIPTION
+
+The *copy* command creates a duplicate of an existing database object, `old_solid`, and saves it as `new_solid`.
+
+Unlike the `copyeval` command, `copy` does *not* evaluate or apply any transformation matrices along a path. If a path is provided instead of a single object name, it simply locates the leaf object at the end of the path and duplicates its raw, un-transformed geometry into the new solid.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *copy* command.
+[example]
+====
+mged> **copy old_solid new_solid**
+
+Creates a duplicate of `old_solid` and saves it as `new_solid` without applying any transformations.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

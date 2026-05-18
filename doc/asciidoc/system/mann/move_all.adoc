@@ -1,0 +1,83 @@
+= MOVE_ALL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+move_all, mvall - rename an object and update all references throughout the database
+
+== SYNOPSIS
+
+[source]
+----
+move_all [-n] from to
+move_all [-n] -f mapping_file
+mvall [-n] from to
+mvall [-n] -f mapping_file
+----
+
+[[description]]
+== DESCRIPTION
+
+The *move_all* command (also available as *mvall*) renames a database object from `from` to `to` and propagates the rename throughout the entire database, updating every combination that references the old name. This makes it a more thorough alternative to the basic `move`/`mv` command, which only renames the object itself.
+
+The full set of operations performed:
+
+1. *Object rename*: Renames `from` to `to` in the database directory and on disk (equivalent to `move from to`).
+2. *Combination propagation*: Scans every combination (`comb`) in the database and replaces all leaf references to `from` with `to` via `db_comb_mvall`.
+3. *Sketch/extrude cross-reference*: If `from` is a sketch primitive, all extrude objects referencing it by name are also updated.
+4. *Display list update*: Scans the current display list and updates any path component that matches `from` — at any depth in the hierarchy, not just the top level (unlike the basic `move` command).
+
+=== Options
+
+* *-n* : Dry-run mode. Instead of performing the rename, prints a list of all combination names that currently reference `from`. No changes are made to the database.
+* *-f mapping_file* : Read rename pairs from a file instead of the command line. Each line of the file must contain two whitespace-separated names (`from to`). Lines beginning with `#` are treated as comments and ignored.
+
+=== Notes
+
+* Returns an error if `to` already exists in the database.
+* In version 4 (v4) databases, the new name is limited to `NAMESIZE` characters.
+
+[[examples]]
+== EXAMPLES
+
+.Rename and propagate throughout the database
+[example]
+====
+mged> **move_all old_part.s new_part.s**
+
+Renames `old_part.s` to `new_part.s` and updates every combination in the database that referenced `old_part.s`.
+====
+
+.Dry-run: find all references before renaming
+[example]
+====
+mged> **move_all -n wing.r fuselage_wing.r**
+
+Prints the names of all combinations that reference `wing.r` without making any changes. Useful for previewing the impact of the rename.
+====
+
+.Batch rename from a mapping file
+[example]
+====
+mged> **move_all -f renames.txt**
+
+Reads `renames.txt` and applies each rename pair listed. Example file contents:
+
+----
+# Rename all parts for new revision
+old_hub.s      new_hub.s
+old_spoke.s    new_spoke.s
+# old_rim.s skipped intentionally
+----
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

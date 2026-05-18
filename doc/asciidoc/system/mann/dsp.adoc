@@ -1,0 +1,51 @@
+= DSP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dsp - work with dsp primitives
+
+== SYNOPSIS
+
+[source]
+----
+dsp obj [subcommand]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *dsp* command is used to query or compare Displacement Map (DSP) primitives. It accepts the following subcommands:
+
+* *xy* _x y_ : Reports the raw height (elevation) value at the specified _x,y_ coordinates on the DSP grid.
+* *diff* _obj2_ : Compares the current DSP object against _obj2_ and reports all height differences at matching _x,y_ coordinates. The two DSP objects must have the same grid dimensions.
+
+[[examples]]
+== EXAMPLES
+
+.Query a specific coordinate height.
+[example]
+====
+mged> **dsp terrain.dsp xy 10 20**
+
+Reports the height value at grid coordinate (10, 20) for the `terrain.dsp` object.
+====
+
+.Compare two DSP objects.
+[example]
+====
+mged> **dsp terrain.dsp diff terrain_new.dsp**
+
+Prints out the coordinates and the absolute difference in height wherever the two DSP objects differ.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

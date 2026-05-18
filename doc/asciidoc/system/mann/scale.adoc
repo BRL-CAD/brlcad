@@ -1,0 +1,65 @@
+= SCALE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+scale - scale the current view by a uniform factor
+
+== SYNOPSIS
+
+[source]
+----
+scale sf
+sca sf
+----
+
+[[description]]
+== DESCRIPTION
+
+The *scale* command (also available as *sca*) multiplies the current view scale by the given scale factor `sf`. A value greater than 1 zooms out (makes objects appear smaller); a value less than 1 zooms in (makes objects appear larger).
+
+The scale factor must be a positive, finite number. Zero, negative, and infinite values are silently ignored. The resulting view scale is clamped at a minimum value (`BV_MINVIEWSIZE`) to prevent the view from collapsing to zero.
+
+This command scales the *view* only — it does not modify any geometry in the database. To scale a primitive's attributes directly, use `pscale`.
+
+Only a single (uniform) scale factor is accepted. Providing three separate XYZ scale factors returns an error: "Can not scale xyz independently on a view." Per-axis independent scaling is only available in MGED object-edit mode via the `sca` Tcl binding.
+
+[[examples]]
+== EXAMPLES
+
+.Zoom in by a factor of 2
+[example]
+====
+mged> **scale 0.5**
+
+Halves the view scale, making objects appear twice as large (zooming in).
+====
+
+.Zoom out by a factor of 4
+[example]
+====
+mged> **sca 4**
+
+Multiplies the view scale by 4, making objects appear four times smaller (zooming out). Uses the short `sca` alias.
+====
+
+.Restore a zoom after inspecting detail
+[example]
+====
+mged> **set s [view size]**
+mged> **scale 0.1**
+mged> **view size $s**
+
+Saves the current view size, zooms in to 10% of original scale for detail inspection, then restores the original view size.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

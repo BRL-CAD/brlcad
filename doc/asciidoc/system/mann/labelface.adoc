@@ -1,0 +1,54 @@
+= LABELFACE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+labelface - label the faces of an NMG (Non-Manifold Geometry) object
+
+== SYNOPSIS
+
+[source]
+----
+labelface object(s)
+----
+
+[[description]]
+== DESCRIPTION
+
+The *labelface* command overlays the face index numbers on the wireframe display of one or more NMG (Non-Manifold Geometry) solid primitives. The labels are drawn in the view at the centroid of each face and are stored in an internal overlay named `_LABELFACE_`.
+
+The command requires that the specified `object(s)` be NMG solids that are already drawn in the display. If an object is not NMG, the command returns an error. One or more NMG solid names may be provided.
+
+The face index numbers shown by *labelface* correspond to the indices used by the `nmg kill F` subcommand. This makes *labelface* the standard companion tool for selecting and removing specific faces from an NMG model via their index.
+
+[[examples]]
+== EXAMPLES
+
+.Label faces of an NMG solid
+[example]
+====
+mged> **draw my_nmg.s**
+mged> **labelface my_nmg.s**
+
+Draws `my_nmg.s` and then overlays its face index numbers in the display. Each face is labeled with its integer index number, which can then be used as the argument to `nmg kill F`.
+====
+
+.Use labelface to find and kill a face
+[example]
+====
+mged> **labelface my_nmg.s**
+mged> **nmg my_nmg.s kill F 4**
+
+First labels the faces of `my_nmg.s` to identify their indices, then removes face index 4 from the model.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

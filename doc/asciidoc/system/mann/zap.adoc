@@ -1,0 +1,60 @@
+= ZAP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+zap - erase all displayed objects from the graphics window
+
+== SYNOPSIS
+
+[source]
+----
+zap
+Z
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *zap* command (also available as *Z*) removes all objects from the current display. The geometry remains in the database — only the display list is cleared. After running `zap`, the graphics window will be empty. Use `draw` or `e` to display objects again.
+
+No arguments are accepted. Providing any argument returns a usage error.
+
+[[examples]]
+== EXAMPLES
+
+.Clear the display
+[example]
+====
+mged> **zap**
+
+Removes all currently displayed objects from the graphics window. The database is not modified.
+====
+
+.Clear and redisplay a specific object
+[example]
+====
+mged> **zap**
+mged> **draw hull.c**
+
+Clears the entire display, then draws only `hull.c`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*draw*(nged), *erase*(nged), *who*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

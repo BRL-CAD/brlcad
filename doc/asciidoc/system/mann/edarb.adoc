@@ -1,0 +1,55 @@
+= EDARB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+edarb - edit an arb
+
+== SYNOPSIS
+
+[source]
+----
+edarb [subcommand] [arb] [args]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *edarb* command is used to edit and manipulate the geometric properties of ARB (Arbitrary Polyhedron) primitives. It operates via several distinct subcommands:
+
+* *edgedir* _arb_ _edge_ _rot_ _fb_ : Moves an ARB edge by defining its new direction using rotation and fallback angles.
+* *edgedir* _arb_ _edge_ _dx_ _dy_ _dz_ : Moves an ARB edge by defining its new direction using a delta vector.
+* *extrude* _arb_ _face_ _distance_ : Extrudes the specified face of an ARB outward by the given distance.
+* *mirface* _arb_ _face_ _axis_ : Mirrors a specific face of the ARB across the specified axis.
+* *permute* _arb_ _tuple_ : Permutes the vertex labels of the ARB.
+* *facedef* _arb_ _face_ _method_ _[args]_ : Redefines the defining plane for a face. The _method_ can be `a` (supply A B C D of plane equation), `b` (supply three X Y Z points), `c` (supply rot, fb angles and a fixed point), or `d` (keep the same plane but translate it through a new fixed point).
+
+[[examples]]
+== EXAMPLES
+
+.Extrude an ARB face
+[example]
+====
+mged> **edarb extrude arb8.s 1 50**
+
+Extrudes face 1 of `arb8.s` outward by 50 units.
+====
+
+.Change an ARB edge direction
+[example]
+====
+mged> **edarb edgedir arb8.s 2 10 0 0**
+
+Moves edge 2 of `arb8.s` by defining a new delta direction vector of (10, 0, 0).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

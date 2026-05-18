@@ -1,0 +1,47 @@
+= NMG_KILL_V(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg_kill_v - remove a vertex from an NMG solid by coordinates
+
+== SYNOPSIS
+
+[source]
+----
+nmg_kill_v nmg_name V x y z
+----
+
+[[description]]
+== DESCRIPTION
+
+The *nmg_kill_v* command removes the vertex at model-space coordinates `(x, y, z)` from the NMG solid `nmg_name`. The literal token `V` must appear as the second argument. The vertex is located by matching its stored coordinates to the provided values.
+
+Removing a vertex also removes its vertexuse, vertex geometry, and all higher-order topological elements (edges, loops, faces) that depend on it.
+
+Use `labelvert nmg_name` to display the model-space coordinates of all vertices in the solid before running this command.
+
+The *nmg_kill_v* command is the standalone form of the `nmg <object> kill V` subcommand.
+
+[[examples]]
+== EXAMPLES
+
+.Remove a vertex at known coordinates
+[example]
+====
+mged> **labelvert my_nmg.s**
+mged> **nmg_kill_v my_nmg.s V 50 100 0**
+
+First displays all vertex coordinates in `my_nmg.s`, then removes the vertex at (50, 100, 0).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

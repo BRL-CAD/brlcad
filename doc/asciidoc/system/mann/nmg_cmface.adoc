@@ -1,0 +1,52 @@
+= NMG_CMFACE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg_cmface - create a manifold face in an NMG solid
+
+== SYNOPSIS
+
+[source]
+----
+nmg_cmface nmg_name x0 y0 z0 x1 y1 z1 x2 y2 z2 [x3 y3 z3 ...]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *nmg_cmface* command creates a manifold face in the first shell of the NMG solid `nmg_name`. The face is defined by three or more vertices, each specified as a coordinate triplet. The vertices are listed in the order that defines the face's winding direction — the outward surface normal is determined by the right-hand rule applied to the vertex sequence.
+
+At least three vertices (nine coordinate values) must be provided. Additional vertices may be appended to create polygonal faces with more than three sides. The total number of coordinate values (after the object name) must be a multiple of 3.
+
+The `nmg_cmface` command is the standalone form of the `nmg <object> cmface` subcommand.
+
+[[examples]]
+== EXAMPLES
+
+.Create a triangular face in an NMG solid
+[example]
+====
+mged> **nmg_cmface my_nmg.s 0 0 0 100 0 0 50 100 0**
+
+Adds a triangular face with vertices at (0,0,0), (100,0,0), and (50,100,0) to `my_nmg.s`.
+====
+
+.Create a quadrilateral face
+[example]
+====
+mged> **nmg_cmface my_nmg.s 0 0 0 100 0 0 100 100 0 0 100 0**
+
+Adds a four-sided face (square) to `my_nmg.s` with vertices at the four corners on the Z=0 plane.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

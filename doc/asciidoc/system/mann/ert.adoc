@@ -1,0 +1,49 @@
+= ERT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ert - evaluate and execute a raytrace
+
+== SYNOPSIS
+
+[source]
+----
+ert [rt_options] [--] [objects]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *ert* command is used to raytrace the current view and display the results in the current embedded framebuffer. It accepts standard options for the `rt` command.
+
+[[options]]
+== OPTIONS
+
+*rt_options*::
+Any valid option for the `rt` command. Use `--` to stop option processing if object names begin with a hyphen.
+
+*-u* _units_::
+Specify the local units (defaults to "model" if not provided).
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *ert* command.
+[example]
+====
+mged> **ert -s512**
+
+Raytraces the current view at a resolution of 512x512 and displays it in the embedded framebuffer.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

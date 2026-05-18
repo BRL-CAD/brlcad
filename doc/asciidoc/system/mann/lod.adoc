@@ -1,0 +1,81 @@
+= LOD(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+lod - configure Level of Detail (LOD) drawing
+
+== SYNOPSIS
+
+[source]
+----
+lod
+lod (on|off|enabled)
+lod scale (points|curves) [factor]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *lod* command configures the Level of Detail (LoD) drawing behavior for the current view. When LoD drawing is enabled, BRL-CAD adapts the rendering complexity of wireframe geometry based on view conditions, improving performance for complex models.
+
+When called with no arguments, *lod* prints the current LoD configuration, including:
+
+* Whether adaptive LoD drawing is currently enabled or disabled.
+* The current *point scale* factor.
+* The current *curve scale* factor.
+* The current *BoT face threshold* (the number of faces at which a BoT switches to simplified display).
+
+=== Subcommands
+
+* *on* : Enable adaptive LoD drawing.
+* *off* : Disable adaptive LoD drawing.
+* *enabled* : Print `1` if LoD is currently enabled, `0` if disabled. Suitable for scripting.
+* *scale points [factor]* : If `factor` is given, sets the point density scale. If omitted, prints the current point scale value.
+* *scale curves [factor]* : If `factor` is given, sets the curve complexity scale. If omitted, prints the current curve scale value.
+
+[[examples]]
+== EXAMPLES
+
+.Query current LoD state
+[example]
+====
+mged> **lod**
+
+----
+LoD drawing: enabled
+Point scale: 1.000000
+Curve scale: 1.000000
+BoT face threshold: 32768
+----
+
+Prints the current LoD configuration.
+====
+
+.Enable LoD and reduce curve complexity
+[example]
+====
+mged> **lod on**
+mged> **lod scale curves 0.5**
+
+Enables LoD drawing and halves the curve complexity scale, reducing the number of line segments used to approximate curves.
+====
+
+.Check LoD status for scripting
+[example]
+====
+mged> **lod enabled**
+
+Returns `1` if LoD is enabled, `0` if disabled. Useful in scripts or Tcl procedures.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,40 @@
+= SOLIDS_ON_RAY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+solids_on_ray - return a list of solids that intersect a given ray
+
+== SYNOPSIS
+
+[source]
+----
+solids_on_ray [h v]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *solids_on_ray* command is used to return a list of solids that intersect a given ray.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *solids_on_ray* command.
+[example]
+====
+mged> **solids_on_ray 512 512**
+
+Lists solids intersecting a ray at (512, 512).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

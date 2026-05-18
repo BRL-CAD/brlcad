@@ -1,0 +1,40 @@
+= LIST(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+list - list objects and elements in the database
+
+== SYNOPSIS
+
+[source]
+----
+list [-r] [-t] [-v] <objects>
+----
+
+[[description]]
+== DESCRIPTION
+
+The *list* command is used to list objects and elements in the database.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *list* command.
+[example]
+====
+mged> **list -r -t -v model.s**
+
+Lists objects and elements for model.s.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

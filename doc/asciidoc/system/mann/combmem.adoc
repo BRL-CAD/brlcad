@@ -1,0 +1,53 @@
+= COMBMEM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+combmem - set/get comb members
+
+== SYNOPSIS
+
+[source]
+----
+combmem comb_name [op name az el tw tx ty tz sa sx sy sz kx ky kz]...
+----
+
+[[description]]
+== DESCRIPTION
+
+The *combmem* command is used to set or get comb members. When no arguments are provided after the combination name, it returns the current members and their transformation matrices. When a full set of transformation parameters is provided, it modifies the specified combination by adding or updating the given member.
+
+[[options]]
+== OPTIONS
+
+The transformation parameters must be provided in exactly this order:
+
+* *op*: The boolean operator to use (`u` for union, `-` for subtract, `+` for intersect).
+* *name*: The name of the member being added or updated.
+* *az*, *el*, *tw*: The rotation angles (azimuth, elevation, twist) in degrees.
+* *tx*, *ty*, *tz*: The translation offsets along the X, Y, and Z axes.
+* *sa*: A uniform scale factor (Scale-All).
+* *sx*, *sy*, *sz*: Individual scale factors for the X, Y, and Z axes.
+* *kx*, *ky*, *kz*: The keypoint coordinates used as the center for scaling and rotation operations.
+
+[[examples]]
+== EXAMPLES
+
+.Modifying a member with a specific transformation.
+[example]
+====
+mged> **combmem group.c u part.s 35 25 0 10 20 30 1.0 1.0 1.0 1.0 0 0 0**
+
+Adds or updates the member 'part.s' in 'group.c' using the union operator (u), with an azimuth of 35°, elevation of 25°, translated by (10, 20, 30), and with a uniform scale of 1.0 around the keypoint (0, 0, 0).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,49 @@
+= ANNOTATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+annotate - annotate objects
+
+== SYNOPSIS
+
+[source]
+----
+annotate [object(s)] [-n name] [-p x y z]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *annotate* command is used to annotate objects.
+
+[[options]]
+== OPTIONS
+
+*-n* _name_::
+Specifies the name of the annotation object to be created.
+
+*-p* _x y z_::
+Specifies the position of the annotation in 3D space using x, y, and z coordinates.
+
+[[examples]]
+== EXAMPLES
+
+.Basic usage of the *annotate* command.
+[example]
+====
+mged> **annotate model.s -n my_constraint -p 0 0 0**
+
+Annotates model.s with the name 'my_constraint' at position (0, 0, 0).
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,65 @@
+= OROTATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+orotate - rotate a database object about a keypoint
+
+== SYNOPSIS
+
+[source]
+----
+orotate obj rX rY rZ
+orotate obj rX rY rZ kX kY kZ
+----
+
+[[description]]
+== DESCRIPTION
+
+The *orotate* command rotates the database object `obj` in place by the Euler angles `rX`, `rY`, `rZ` (in degrees), applied about a keypoint. The object's geometry is modified and written back to the database.
+
+The two forms differ only in how the rotation keypoint is determined:
+
+* *Without keypoint (`rX rY rZ` only)*: The keypoint is automatically computed as the center of the object's bounding box (the midpoint of `rpp_min` and `rpp_max`). The bounding box is computed by tracing the object's full hierarchy.
+
+* *With explicit keypoint (`kX kY kZ`)*: The keypoint is the given model-space coordinate in local units. The object is looked up directly by name and the identity matrix is used for the path transform.
+
+The rotation is built from the three Euler angles via `bn_mat_angles(rmat, rX, rY, rZ)` and then transformed about the keypoint using `bn_mat_xform_about_pnt`. The resulting matrix is applied to the object's internal representation and written back to the database.
+
+[[examples]]
+== EXAMPLES
+
+.Rotate an object about its own center
+[example]
+====
+mged> **orotate wheel.s 0 0 45**
+
+Rotates `wheel.s` by 45° about the Z axis, using the object's bounding box center as the keypoint.
+====
+
+.Rotate about an explicit keypoint
+[example]
+====
+mged> **orotate arm.s 0 30 0 0 0 0**
+
+Rotates `arm.s` by 30° about the Y axis, pivoting about the model origin (0, 0, 0) as the keypoint.
+====
+
+.Rotate about an off-center pivot point
+[example]
+====
+mged> **orotate blade.s 15 0 0 0 50 100**
+
+Rotates `blade.s` by 15° about the X axis, using the point (0, 50, 100) in local units as the pivot.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

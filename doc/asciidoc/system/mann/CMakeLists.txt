@@ -8,8 +8,9 @@ set(
   adjust.adoc
   ae.adoc
   ae2dir.adoc
+  aet.adoc
   analyze.adoc
-  animmate.adoc
+  annotate.adoc
   apropos.adoc
   aproposdevel.adoc
   aproposlib.adoc
@@ -24,17 +25,22 @@ set(
   bb.adoc
   bev.adoc
   bigE.adoc
+  blast.adoc
   bo.adoc
   bot.adoc
   bot_check.adoc
   bot_condense.adoc
   bot_decimate.adoc
+  bot_dump.adoc
   bot_exterior.adoc
   bot_extrude.adoc
   bot_face_fuse.adoc
   bot_face_sort.adoc
   bot_flip.adoc
+  bot_fuse.adoc
+  bot_merge.adoc
   bot_repair.adoc
+  bot_smooth.adoc
   bot_split.adoc
   bot_sync.adoc
   bot_vertex_fuse.adoc
@@ -46,25 +52,37 @@ set(
   build_region.adoc
   c.adoc
   cat.adoc
+  cc.adoc
   cd.adoc
   center.adoc
   check.adoc
   clear.adoc
   clone.adoc
+  closedb.adoc
+  coil.adoc
   color.adoc
   comb.adoc
   comb_color.adoc
+  comb_std.adoc
+  combmem.adoc
+  concat.adoc
+  constraint.adoc
+  copy.adoc
   copyeval.adoc
   copymat.adoc
   cp.adoc
   cpi.adoc
   d.adoc
+  data_lines.adoc
   db.adoc
   db_glob.adoc
   dbconcat.adoc
   dbfind.adoc
   dbfindtree.adoc
+  dbip.adoc
+  dbot_dump.adoc
   dbupgrade.adoc
+  dbversion.adoc
   debug.adoc
   debugbu.adoc
   debugdir.adoc
@@ -75,13 +93,16 @@ set(
   dg.adoc
   dir2ae.adoc
   dm.adoc
+  dplot.adoc
   draw.adoc
+  dsp.adoc
   dump.adoc
   dup.adoc
   e.adoc
   e_id.adoc
   eac.adoc
   echo.adoc
+  edarb.adoc
   edcodes.adoc
   edcolor.adoc
   edcomb.adoc
@@ -90,39 +111,65 @@ set(
   edit_rotate.adoc
   edit_scale.adoc
   edit_translate.adoc
+  editit.adoc
   edmater.adoc
   env.adoc
   eqn.adoc
   erase.adoc
+  ert.adoc
   ev.adoc
   exists.adoc
   exit.adoc
   expand.adoc
   extrude.adoc
+  eye.adoc
+  eye_pos.adoc
   eye_pt.adoc
   facedef.adoc
   facetize.adoc
+  fb2pix.adoc
+  fbclear.adoc
+  find.adoc
+  find_arb_edge.adoc
+  find_bot_edge.adoc
+  find_bot_pnt.adoc
+  find_pipe_pnt.adoc
+  form.adoc
   fracture.adoc
   g.adoc
   garbage_collect.adoc
   gdiff.adoc
   get.adoc
+  glob.adoc
   gqa.adoc
   gr.adoc
   graph.adoc
+  grid.adoc
+  grid2model_lu.adoc
+  grid2view_lu.adoc
+  group.adoc
   gui.adoc
+  heal.adoc
   help.adoc
   helpdevel.adoc
   helplib.adoc
   hide.adoc
   history.adoc
+  how.adoc
+  human.adoc
   i.adoc
   idents.adoc
   igraph.adoc
   ill.adoc
+  illum.adoc
+  importFg4Section.adoc
   in.adoc
   inside.adoc
+  instance.adoc
+  isize.adoc
   item.adoc
+  joint.adoc
+  joint2.adoc
   journal.adoc
   keep.adoc
   keypoint.adoc
@@ -132,51 +179,100 @@ set(
   killtree.adoc
   knob.adoc
   l.adoc
+  label.adoc
+  labelface.adoc
   labelvert.adoc
   lc.adoc
   lint.adoc
+  list.adoc
   listeval.adoc
   loadtk.adoc
   loadview.adoc
+  lod.adoc
+  log.adoc
   lookat.adoc
   ls.adoc
   lt.adoc
+  m2v_point.adoc
   make.adoc
+  make_name.adoc
   make_pnts.adoc
   man.adoc
+  mat4x3pnt.adoc
+  mat_ae.adoc
+  mat_mul.adoc
+  mat_scale_about_pnt.adoc
+  match.adoc
   mater.adoc
   material.adoc
   matpick.adoc
+  metaball_delete_pnt.adoc
+  metaball_move_pnt.adoc
   mirface.adoc
   mirror.adoc
+  model2grid_lu.adoc
+  model2view.adoc
+  model2view_lu.adoc
+  move.adoc
+  move_all.adoc
+  move_arb_edge.adoc
+  move_arb_face.adoc
   mrot.adoc
   mv.adoc
   mvall.adoc
   nirt.adoc
+  nmg.adoc
+  nmg_cmface.adoc
   nmg_collapse.adoc
+  nmg_fix_normals.adoc
+  nmg_kill_f.adoc
+  nmg_kill_v.adoc
+  nmg_make_v.adoc
+  nmg_mm.adoc
+  nmg_move_v.adoc
   nmg_simplify.adoc
   npush.adoc
+  ocenter.adoc
   oed.adoc
   opendb.adoc
+  orient.adoc
   orientation.adoc
   orot.adoc
+  orotate.adoc
   oscale.adoc
+  otranslate.adoc
   overlaps_tool.adoc
   overlay.adoc
   p.adoc
   pathlist.adoc
   paths.adoc
+  pathsum.adoc
   permute.adoc
+  perspective.adoc
+  pipe_append_pnt.adoc
+  pipe_delete_pnt.adoc
+  pipe_move_pnt.adoc
+  pipe_prepend_pnt.adoc
+  pix2fb.adoc
   plot.adoc
+  pmat.adoc
+  pmodel2view.adoc
+  png.adoc
+  png2fb.adoc
   pnts.adoc
   postscript.adoc
   prcolor.adoc
   prefix.adoc
   press.adoc
   preview.adoc
+  print.adoc
   prj_add.adoc
   process.adoc
+  protate.adoc
   ps.adoc
+  pscale.adoc
+  pset.adoc
+  ptranslate.adoc
   pull.adoc
   push.adoc
   put.adoc
@@ -186,6 +282,7 @@ set(
   q.adoc
   qorot.adoc
   qray.adoc
+  quat.adoc
   query_ray.adoc
   quit.adoc
   qvrot.adoc
@@ -196,34 +293,50 @@ set(
   rcc-tor.adoc
   rcodes.adoc
   reair.adoc
+  rect.adoc
   red.adoc
+  redraw.adoc
   refresh.adoc
   regdebug.adoc
   regdef.adoc
+  region.adoc
   regions.adoc
   reid.adoc
   release.adoc
   relos.adoc
-  remat.adoc
   remove.adoc
+  remat.adoc
   rfarb.adoc
   rm.adoc
+  rmap.adoc
+  rmat.adoc
   rmater.adoc
   rot.adoc
+  rot_about.adoc
+  rot_point.adoc
+  rotate_arb_face.adoc
   rotobj.adoc
   rpp-arch.adoc
   rpp-cap.adoc
   rrt.adoc
+  rselect.adoc
   rt.adoc
+  rtabort.adoc
   rtarea.adoc
   rtcheck.adoc
   rtedge.adoc
   rtweight.adoc
+  rtwizard.adoc
+  savekey.adoc
   saveview.adoc
   sca.adoc
+  scale.adoc
+  screen_grab.adoc
   screengrab.adoc
+  sdata_lines.adoc
   search.adoc
   sed.adoc
+  select.adoc
   setview.adoc
   shaded_mode.adoc
   shader.adoc
@@ -231,17 +344,22 @@ set(
   showmats.adoc
   simulate.adoc
   size.adoc
+  slew.adoc
   solid_report.adoc
   solids.adoc
+  solids_on_ray.adoc
   source.adoc
   sph-part.adoc
+  sphgroup.adoc
   stat.adoc
   status.adoc
   summary.adoc
   sv.adoc
   sync.adoc
   t.adoc
+  tables.adoc
   ted.adoc
+  tire.adoc
   title.adoc
   tol.adoc
   tops.adoc
@@ -252,9 +370,15 @@ set(
   tree.adoc
   unhide.adoc
   units.adoc
+  v2m_point.adoc
   vars.adoc
   vdraw.adoc
   view.adoc
+  view2grid_lu.adoc
+  view2model.adoc
+  view2model_lu.adoc
+  view2model_vec.adoc
+  view_func.adoc
   viewdir.adoc
   viewsize.adoc
   vnirt.adoc
@@ -263,12 +387,16 @@ set(
   vrot.adoc
   wcodes.adoc
   whatid.adoc
+  which.adoc
   which_shader.adoc
   whichair.adoc
   whichid.adoc
   who.adoc
   wmater.adoc
+  x.adoc
   xpush.adoc
+  ypr.adoc
+  zap.adoc
   zoom.adoc
 )
 

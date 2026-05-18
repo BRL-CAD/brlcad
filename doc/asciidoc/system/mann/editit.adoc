@@ -1,0 +1,48 @@
+= EDITIT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+editit - edit the specified object or file
+
+== SYNOPSIS
+
+[source]
+----
+editit [-h|-?] [-e <editstring>] [-f <file>] [<filename>]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *editit* command is used to launch the user's preferred text editor (defined by environmental variables such as `$EDITOR`) on the specified file. If no file is provided via the `-f` option, it will attempt to use the first positional argument.
+
+The options are:
+
+* *-h* or *-?* : Print help and exit.
+* *-f <file>* : Specify the file to edit.
+* *-e <editstring>* : Specify an edit string (deprecated).
+
+This command is typically used internally by other commands like `red` or `edcodes` which dump object properties to a temporary text file, invoke `editit` so the user can modify them, and then read the modified values back into the database.
+
+[[examples]]
+== EXAMPLES
+
+.Edit a text file using the system editor
+[example]
+====
+mged> **editit script.tcl**
+
+Launches the configured text editor (e.g., `vi` or `nano`) to edit the `script.tcl` file.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,46 @@
+= FIND_BOT_PNT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+find_bot_pnt - find and identify a BOT point
+
+== SYNOPSIS
+
+[source]
+----
+find_bot_pnt bot "view_x view_y view_z"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *find_bot_pnt* command searches a BOT (Bag of Triangles) primitive and identifies the vertex that is closest to a given view coordinate. 
+
+If successful, the command returns a single integer representing the numeric ID of the closest vertex.
+
+The arguments are:
+* *bot* : The name of the BOT primitive to search.
+* *"view_x view_y view_z"* : A single quoted string containing the X, Y, and Z coordinates (in view space) to test against.
+
+[[examples]]
+== EXAMPLES
+
+.Identify a BOT vertex near a view coordinate
+[example]
+====
+mged> **find_bot_pnt bot.s "0 0 1"**
+
+Searches `bot.s` for a vertex that is closest to the view coordinate `(0, 0, 1)` and returns the numeric ID of that vertex.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
