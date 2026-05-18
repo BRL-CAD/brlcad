@@ -4,22 +4,38 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-screengrab - Save the current MGED display visual or framebuffer contents to an image file.
+screengrab, screen_grab - Save the current MGED display visual or framebuffer contents to an image file.
 
 == SYNOPSIS
 
 [source]
 ----
-screengrab [-F] [--format fmt] {image_file}
+screengrab [-F] [-D name] [--format fmt] image_file
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Generates an image file containing either the current application display manager's visual representation of the current scene or (when the *-F* option is specified) the contents of the current application embedded framebuffer.
+Generates an image file containing the current display manager's rendered scene. When `-F` is specified, captures the embedded framebuffer instead.
 
-The output format of the image file will be deduced from the filename, but if the caller wishes to ensure a specific format the *--format* may be used.
+`image_file` is required. The output format is inferred from the file extension; use `--format` to override.
+
+This command is also available as *screen_grab* (with an underscore). Both names invoke identical behavior.
+
+=== Options
+
+*-F*, *--fb*::
+Capture the embedded framebuffer instead of the display manager scene.
+
+*-D name*, *--dm name*::
+Specify the name of the display manager to capture. If omitted, the active display manager is used.
+
+*--format fmt*::
+Force the output image format (e.g. `png`, `jpg`). If not specified, the format is inferred from the file extension.
+
+*-h*::
+Print usage help.
 
 
 [[examples]]
@@ -28,10 +44,33 @@ The output format of the image file will be deduced from the filename, but if th
 .Write a PNG image file of the MGED framebuffer contents.
 [example]
 ====
-mged>**screengrab -F fb.png**
+mged> **screengrab -F fb.png**
 
 Writes the contents of the active MGED framebuffer to the image file _fb.png_.
+====
 
+.Capture a specific named display manager
+[example]
+====
+mged> **screengrab -D Mged0 output.png**
+
+Captures the display manager named `Mged0` to _output.png_.
+====
+
+.Capture the scene display (default, no flags needed)
+[example]
+====
+mged> **screengrab scene.png**
+
+Writes the current display manager's rendered scene to _scene.png_.
+====
+
+.Force JPEG format regardless of extension
+[example]
+====
+mged> **screengrab --format jpg view.img**
+
+Writes the display manager scene to _view.img_ in JPEG format.
 ====
 
 
