@@ -394,6 +394,11 @@ function(brlcad_ext_setup)
     -DUSE_APPLESEED=${BEXT_USE_APPLESEED} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}
     )
+  if(BEXT_ENABLE_ALL)
+    # Some bext projects cache empty ENABLE_<pkg> entries, which prevents
+    # bext's ENABLE_ALL checks from forcing these dependencies on.
+    list(APPEND CMAKE_CMD_ARGS -DENABLE_EIGEN=ON -DENABLE_OPENCV=ON -DENABLE_ZLIB=ON)
+  endif(BEXT_ENABLE_ALL)
 
   # If we're doing a components build, add the component list to the
   # CMake arguments
