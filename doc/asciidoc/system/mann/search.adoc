@@ -10,7 +10,7 @@ search - find and list objects in a BRL-CAD database
 
 [source]
 ----
-search [options]... [path1] [path2]... [search plan]...
+search [-a] [-v] [-Q] [-h] [path] [expressions...]
 ----
 
 
