@@ -10,12 +10,7 @@ overlay - Plots the specified UNIX __plot_file__ in the MGED display.
 
 [source]
 ----
-overlay [-s #] [-N viewobj_name] {plot_file} [viewobj_name]
-----
-
-
-[source]
-----
+overlay [options] file
 overlay -F [-i] [-c] [-z] [-X #] [-Y #] [-w #] [-n #] [-S #] [--format fmt] {img_file}
 ----
 
@@ -23,7 +18,7 @@ overlay -F [-i] [-c] [-z] [-X #] [-Y #] [-w #] [-n #] [-S #] [--format fmt] {img
 [[description]]
 == DESCRIPTION
 
-Plots the specified UNIX __plot_file__ in the current application display or the specified _image file_ in the current application embedded framebuffer. When displaying plot files, multiple files may be specified using a pattern match (e.g., *overlay* _*.plot_).
+Plots the specified UNIX __plot_file__ in the current application display or the specified _image file_ in the current application embedded framebuffer. When displaying plot files, multiple files may be specified using a pattern match (e.g., *overlay* _*.plot3_).
 
 When displaying plot files, phony object names are created for each part of the plot file(s) with a unique color. The names are created by adding a color to the specified __viewobj_name__, or to _PLOT_OVERLAY_ if no name is provided. The color suffix is built by converting the RGB color to a six-digit hex number. Each color corresponds to 2 hex digits, so that white becomes "ffffff," red becomes "ff0000," green is "00ff00," etc.
 
@@ -87,9 +82,9 @@ Explicitly specify the framebuffer image format.
 .Plot a UNIX plot file in the MGED display.
 [example]
 ====
-mged>**overlay plot.upl tmp**
+mged>**overlay file.plot3 tmp**
 
-Plots the UNIX plot file _plot.upl_ in the MGED display, using _tmp_ as the base for the phony object names.
+Plots the UNIX plot file _file.plot3_ in the MGED display, using _tmp_ as the base for the phony object names.
 
 ====
 
