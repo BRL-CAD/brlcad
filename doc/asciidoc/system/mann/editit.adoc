@@ -4,43 +4,63 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-editit - edit the specified object or file
+editit - open a file in an external text editor
 
 == SYNOPSIS
 
 [source]
 ----
-editit [-h|-?] [-e <editstring>] [-f <file>] [<filename>]
+editit [opts] <filename>
+editit -f <file>
+editit -e <editstring> <filename>
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *editit* command is used to launch the user's preferred text editor (defined by environmental variables such as `$EDITOR`) on the specified file. If no file is provided via the `-f` option, it will attempt to use the first positional argument.
+The *editit* command opens a file in an external text editor. The editor used is determined by the current environment (typically the `EDITOR` environment variable or a system default).
 
-The options are:
+The file to edit can be specified as a positional argument or via the `-f` option. Only one file specification is allowed per invocation.
 
-* *-h* or *-?* : Print help and exit.
-* *-f <file>* : Specify the file to edit.
-* *-e <editstring>* : Specify an edit string (deprecated).
+=== Options
 
-This command is typically used internally by other commands like `red` or `edcodes` which dump object properties to a temporary text file, invoke `editit` so the user can modify them, and then read the modified values back into the database.
+*-f file*::
+Specify the file to edit. Equivalent to providing `filename` as a positional argument.
+
+*-e editstring*::
+Specify an edit string to pass to the editor (deprecated; prefer specifying the editor via the environment).
 
 [[examples]]
 == EXAMPLES
 
-.Edit a text file using the system editor
+.Open a file in the editor
 [example]
 ====
-mged> **editit script.tcl**
+mged> **editit /tmp/myconfig.tcl**
 
-Launches the configured text editor (e.g., `vi` or `nano`) to edit the `script.tcl` file.
+Opens `/tmp/myconfig.tcl` in the system's default text editor.
 ====
+
+.Use the -f flag
+[example]
+====
+mged> **editit -f /tmp/notes.txt**
+
+Opens `/tmp/notes.txt` using the `-f` flag form.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*saveview*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
