@@ -1,47 +1,74 @@
 = WHICH_SHADER(nged)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD MGED Commands
+:manmanual: BRL-CAD User Commands
 
 == NAME
-which_shader - Lists all the regions that use one of the _shaders_ specified.
+which_shader - list all combinations using a given shader
 
 == SYNOPSIS
 
 [source]
 ----
-which_shader [-s] {shaders}
+which_shader [-s] shader_name(s)
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Lists all the regions that use one of the _shaders_ specified.
+The *which_shader* command searches every combination in the database and reports those whose shader string contains one or more of the specified `shader_name` values. The search is a substring match — a combination is included if its shader field contains the given name anywhere within it.
 
-If *-s* is supplied, the output is formatted more compactly for scripting.
+Only combinations are scanned. Primitive shapes do not have shaders and are not checked.
 
+Multiple shader names may be given; the database is scanned once for each.
 
-[[options]]
-== OPTIONS
+=== Options
 
 *-s*::
-Use compact script-oriented output formatting.
-
+Script mode. Outputs matching combination names separated by spaces on a single line, without headers. Without this flag, output is grouped under a heading for each shader name, with each matching combination on its own indented line.
 
 [[examples]]
 == EXAMPLES
 
-The example shows the use of the *which_shader* command to list all the regions that use the specified shaders.
-
-.List the regions that use the specified shaders.
+.List all combinations using the plastic shader
 [example]
 ====
-mged>**which_shader plastic light**
+mged> **which_shader plastic**
 
-Lists all regions in the current database that use the _plastic_ or _light_ shaders.
+Reports all combinations whose shader string contains `plastic`, with a heading line and one name per line.
 
+Example output:
+----
+Combination[s] with shader plastic:
+   hull.c
+   turret.c
+----
 ====
+
+.Script-mode output for use in automation
+[example]
+====
+mged> **which_shader -s plastic**
+
+Returns the matching names space-separated without a header, for use in scripts:
+----
+ hull.c turret.c
+----
+====
+
+.Search for multiple shaders at once
+[example]
+====
+mged> **which_shader plastic glass**
+
+Scans for combinations using `plastic` and then separately for those using `glass`, reporting results under separate headings.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*wmater*(nged), *rmater*(nged)
 
 
 [[author]]
