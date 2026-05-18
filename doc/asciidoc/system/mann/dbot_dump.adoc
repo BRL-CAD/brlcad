@@ -4,65 +4,87 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-dbot_dump - dump the displayed bots
+dbot_dump - export currently displayed BOT objects to a mesh file format
 
 == SYNOPSIS
 
 [source]
 ----
-dbot_dump [options]
+dbot_dump [-b] [-n|--normals] [-F|--full-precision]
+          [-m|--output-directory dir] [-o|--output-file file]
+          [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *dbot_dump* command is used to export the currently displayed BoT (Bag of Triangles) primitives to external file formats.
+The *dbot_dump* command exports the currently *displayed* BOT (Bag-of-Triangles) objects to an external mesh file. Unlike *bot_dump*, which takes explicit object names or operates on all BOTs in the database, *dbot_dump* operates on the set of objects currently drawn in the MGED display.
 
-[[options]]
-== OPTIONS
+It automatically passes `--displayed`, `--viewdata`, and `--materials` to the underlying bot_dump implementation:
+
+* *--displayed* — restricts export to currently drawn objects.
+* *--viewdata* — writes view-related metadata alongside the geometry output.
+* *--materials* — includes material property information in the output.
+
+No BOT names are taken as arguments; the set of objects to export is determined by the display list.
+
+All other options are identical to *bot_dump*.
+
+=== Options
 
 *-b*::
-Use binary version of output format.
+Write output in binary format where supported.
 
 *-n*, *--normals*::
-If supported by the format, write out vertex normals.
-
-*-m*, *--output-directory* _dir_::
-Output multiple files into this directory.
-
-*-o*, *--output-file* _file_::
-Specify a single output filename.
-
-*-t* _dxf|obj|sat|stl|gltf_::
-Specify the output format type.
-
-*-u* _units_::
-Specify an output unit (e.g., mm, m, in, ft).
+Write per-vertex normals if the output format supports them.
 
 *-F*, *--full-precision*::
-Write full floating point precision (non-standard for formats like glTF).
+Write full floating-point precision for coordinate values.
 
-*--viewdata*::
-Write out non-geometry view data.
+*-m dir*, *--output-directory dir*::
+Write each BOT to a separate file in the specified directory `dir`. Mutually exclusive with `-o`.
 
-*--materials*::
-Write out material information.
+*-o file*, *--output-file file*::
+Write all output to the single specified `file`. Mutually exclusive with `-m`.
+
+*-t fmt*::
+Specify the output format type: `dxf`, `glb`, `gltf`, `obj`, `sat`, or `stl` (default: `stl`).
+
+*-u unit*::
+Output coordinate units (e.g., `mm`, `cm`, `in`, `ft`).
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *dbot_dump* command.
+.Export all currently displayed BOTs to STL
 [example]
 ====
-mged> **dbot_dump -b -m /tmp/dump -o model.g -t dxf**
+mged> **draw hull.bot turret.bot**
+mged> **dbot_dump -o displayed.stl**
 
-Dumps displayed BoTs to /tmp/dump and model.g in dxf format.
+Draws two BOTs, then exports them both (with view data and material info) to `displayed.stl`.
 ====
+
+.Export displayed geometry to OBJ format
+[example]
+====
+mged> **dbot_dump -t obj -o scene.obj**
+
+Exports all currently drawn BOT objects to Wavefront OBJ format, including material properties.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*bot_dump*(nged), *who*(nged), *draw*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

@@ -4,35 +4,61 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-eye_pos - set eye position to given model coordinates
+eye_pos - alias for eye; get or set the camera eye point position
 
 == SYNOPSIS
 
 [source]
 ----
-eye_pos mx my mz
+eye_pos
+eye_pos x y z
+eye_pos "x y z"
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *eye_pos* command is used to set eye position to given model coordinates.
+The *eye_pos* command is an alias for the *eye* command. Both names invoke identical behavior: getting or setting the camera eye point position in model coordinates.
+
+With no arguments, *eye_pos* returns the current eye point as a space-separated `x y z` triplet in the current working units.
+
+With arguments, *eye_pos* sets the eye point to the specified position. The position may be given as three separate floating-point values or as a single quoted space-separated string.
+
+The eye point defines where the virtual camera is positioned in model space. Moving the eye point pans and zooms the view simultaneously.
+
+See *eye*(nged) for full documentation.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *eye_pos* command.
+.Get the current eye point
 [example]
 ====
-mged> **eye_pos mx my mz**
+mged> **eye_pos**
 
-Sets the eye position to the specified model coordinates.
+Returns the current camera eye position in model coordinates, for example: `0 0 1000`.
 ====
+
+.Set the eye point
+[example]
+====
+mged> **eye_pos 0 -500 500**
+
+Positions the camera eye point at (0, -500, 500) in model coordinates.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*eye*(nged), *center*(nged), *lookat*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

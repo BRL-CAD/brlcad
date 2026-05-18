@@ -4,35 +4,69 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-ocenter - get/set center for obj
+ocenter - get or set the center point of an object's bounding box
 
 == SYNOPSIS
 
 [source]
 ----
-ocenter obj [x y z]
+ocenter object
+ocenter object x y z
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *ocenter* command is used to get or set center for obj.
+The *ocenter* command gets or sets the bounding-box center of the specified `object`.
+
+With one argument, *ocenter* computes the axis-aligned bounding box of `object` and returns the center point as a space-separated `x y z` triplet in the current working units.
+
+With four arguments (`object x y z`), *ocenter* moves the object so that its bounding-box center coincides with the specified point `(x, y, z)` in model coordinates. The move is applied by modifying the object's own geometry, not by adding a transformation to a parent combination. The object is updated directly in the database.
+
+Coordinates are in the current working units.
+
+NOTE: The bounding-box center is computed from the axis-aligned bounding box of the object, which may not coincide with the geometric centroid for asymmetric shapes.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *ocenter* command.
+.Get the bounding-box center of an object
 [example]
 ====
-mged> **ocenter obj 0 0 0**
+mged> **ocenter hull.s**
 
-Sets the center for obj to (0, 0, 0).
+Returns the center of `hull.s`'s bounding box in working units, for example: `0 0 250`.
 ====
+
+.Move an object's center to the origin
+[example]
+====
+mged> **ocenter wheel.s 0 0 0**
+
+Moves `wheel.s` so its bounding-box center is at the model origin `(0, 0, 0)`.
+====
+
+.Center an object on an axis
+[example]
+====
+mged> **set c [ocenter part.s]**
+mged> **ocenter part.s 0 0 [lindex $c 2]**
+
+Retrieves the current center, then moves `part.s` so its center is on the Z axis (X=0, Y=0) without changing its Z position.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*center*(nged), *translate*(nged), *bb*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

@@ -4,35 +4,94 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-aet - set/get the azimuth, elevation and twist
+aet, ae - get or set the view orientation as azimuth, elevation, and twist
 
 == SYNOPSIS
 
 [source]
 ----
-aet [az el tw]
+aet
+aet [-i] az el [tw]
+aet [-i] "az el [tw]"
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *aet* command is used to set or get the azimuth, elevation and twist.
+The *aet* command (also available as *ae*) gets or sets the current view orientation expressed as azimuth, elevation, and optional twist angles in degrees.
+
+With no arguments, *aet* returns the current view orientation as three space-separated floating-point values: `az el tw`.
+
+With arguments, *aet* sets the view rotation to the specified azimuth and elevation (and optional twist), then updates the display.
+
+* *Azimuth* (`az`) — horizontal rotation about the vertical axis, in degrees. 0° looks from the front; 90° looks from the right.
+* *Elevation* (`el`) — vertical angle above or below the horizontal plane, in degrees. 90° looks straight down.
+* *Twist* (`tw`) — roll rotation about the viewing axis, in degrees. Optional; defaults to 0° if omitted.
+
+=== Options
+
+*-i*::
+Treat the given angles as *incremental* offsets added to the current azimuth, elevation, and twist rather than as absolute values.
+
+=== Input forms
+
+Angles may be given as two or three separate arguments (`az el` or `az el tw`), or as a single quoted space-separated string (`"az el"` or `"az el tw"`). In all forms, if twist is omitted it defaults to 0.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *aet* command.
+.Get the current view orientation
 [example]
 ====
-mged> **aet 35 25 0**
+mged> **aet**
 
-Sets the azimuth, elevation, and twist to 35, 25, and 0 degrees respectively.
+Returns the current azimuth, elevation, and twist in degrees, for example: `35 25 0`.
 ====
+
+.Set the view to azimuth 35, elevation 25
+[example]
+====
+mged> **aet 35 25**
+
+Sets the view to azimuth 35°, elevation 25°, twist 0°.
+====
+
+.Set azimuth, elevation, and twist together
+[example]
+====
+mged> **aet 45 30 15**
+
+Sets the view to azimuth 45°, elevation 30°, twist 15°.
+====
+
+.Rotate the view incrementally
+[example]
+====
+mged> **aet -i 10 0**
+
+Adds 10° to the current azimuth without changing elevation or twist.
+====
+
+.Set orientation using a quoted string
+[example]
+====
+mged> **aet "270 0"**
+
+Sets the view to look from the left side (azimuth 270°, elevation 0°).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*ypr*(nged), *quat*(nged), *ae2dir*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

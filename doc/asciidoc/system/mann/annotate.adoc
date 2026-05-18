@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-annotate - annotate objects
+annotate - attach annotation objects to geometry
 
 == SYNOPSIS
 
@@ -13,35 +13,55 @@ annotate - annotate objects
 annotate [object(s)] [-n name] [-p x y z]
 ----
 
+
 [[description]]
 == DESCRIPTION
 
-The *annotate* command is used to annotate objects.
+The *annotate* command creates or manages annotation objects associated with the specified geometry `objects`. Annotations are non-geometry database objects that attach labels, notes, leaders, or dimension indicators to model elements.
 
-[[options]]
-== OPTIONS
+If no objects are given, the command displays usage information.
 
-*-n* _name_::
-Specifies the name of the annotation object to be created.
+Annotation types supported include:
 
-*-p* _x y z_::
-Specifies the position of the annotation in 3D space using x, y, and z coordinates.
+* *label* / *leader* — text label with optional leader line
+* *angular* / *radial* / *dimension* — dimensional annotations
+* *note* — free-form note
+* *box* — boxed text region
+* *axes* / *plane* — coordinate system or plane indicators
+* *table* — tabular annotation data
+
+Annotations can be aligned to the view (always facing the screen) or to the model (fixed in 3D space).
+
+=== Options
+
+*-n name*::
+Assign the specified `name` to the new annotation object instead of using an automatically generated name.
+
+*-p x y z*::
+Place the annotation at model coordinates `(x, y, z)`.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *annotate* command.
+.Annotate an object with a label
 [example]
 ====
-mged> **annotate model.s -n my_constraint -p 0 0 0**
+mged> **annotate hull.r -n hull_note -p 0 0 500**
 
-Annotates model.s with the name 'my_constraint' at position (0, 0, 0).
+Creates a label annotation named `hull_note` associated with `hull.r`, positioned at model coordinate (0, 0, 500).
 ====
+
+[[see_also]]
+== SEE ALSO
+
+*label*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

@@ -4,35 +4,89 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-list - list objects and elements in the database
+list, l - list the attributes and parameters of database objects
 
 == SYNOPSIS
 
 [source]
 ----
-list [-r] [-t] [-v] <objects>
+list [-r] [-t] [-v] object(s)
+l [-r] [-t] [-v] object(s)
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *list* command is used to list objects and elements in the database.
+The *list* command (also available as *l*) reports the attributes and parameters of one or more database objects. For primitive shapes, the geometric parameters are displayed in the current working units. For combinations, the Boolean tree of members is shown.
+
+If a path (containing `/`) is given, the parameters of the primitive at the end of the path are displayed with the accumulated transformation matrices along the path applied — equivalent to the output of *listeval*.
+
+=== Options
+
+*-r*::
+Recursively evaluate paths. Each named object is resolved through the hierarchy and the parameters of the primitives at the leaves are displayed with all transformations applied. Equivalent to calling *listeval* for each object.
+
+*-t*::
+Terse mode. Suppresses verbose parameter output. When combined with `-r`, produces a compact listing of evaluated paths without parameter detail.
+
+*-v*::
+Extra verbose mode. Increases the detail of the output (may be specified multiple times).
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *list* command.
+.List the parameters of a primitive
 [example]
 ====
-mged> **list -r -t -v model.s**
+mged> **l sph.s**
 
-Lists objects and elements for model.s.
+Displays the sphere's center, radius, and other geometric parameters in the current working units.
 ====
+
+.List the Boolean tree of a combination
+[example]
+====
+mged> **list hull.c**
+
+Shows the combination tree for `hull.c`, listing all members and their Boolean operators.
+====
+
+.List evaluated parameters via a path
+[example]
+====
+mged> **l vehicle.c/hull.r/hull.s**
+
+Displays the parameters of `hull.s` with the cumulative transformation matrices from `vehicle.c` through `hull.r` applied.
+====
+
+.List recursively with all transformations
+[example]
+====
+mged> **l -r assembly.c**
+
+Recursively evaluates all primitives under `assembly.c` and displays their parameters with all transformations applied.
+====
+
+.Terse recursive listing
+[example]
+====
+mged> **list -r -t vehicle.c**
+
+Lists all evaluated paths under `vehicle.c` in compact form without detailed parameter output.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*listeval*(nged), *ls*(nged), *db*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

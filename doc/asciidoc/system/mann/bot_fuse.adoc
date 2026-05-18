@@ -4,35 +4,65 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_fuse - eliminate duplicate points in a bot
+bot_fuse - fuse duplicate vertices and faces in a BOT mesh
 
 == SYNOPSIS
 
 [source]
 ----
-bot_fuse new_bot old_bot
+bot_fuse [-s|-p] new_bot old_bot
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *bot_fuse* command is used to eliminate duplicate points in a bot.
+The *bot_fuse* command removes duplicate vertices and faces from the BOT (Bag-of-Triangles) primitive named `old_bot` and writes the result as a new BOT named `new_bot`. The original object is not modified.
+
+Duplicate vertices that are within the database tolerance are merged into a single vertex. Duplicate faces (triangles with the same three vertex indices) are similarly fused.
+
+After fusing, open edges (edges shared by only one face) may be detected. The optional `-s` and `-p` flags control how open edges are reported:
+
+=== Options
+
+*-s*::
+Show open edges by drawing them in the display as colored lines after the operation.
+
+*-p*::
+Plot open edges to a temporary plot file for subsequent inspection.
+
+Without either flag, open edge detection runs silently and results are not visualized.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *bot_fuse* command.
+.Fuse a BOT and save to a new name
 [example]
 ====
-mged> **bot_fuse new_bot.s old_bot.s**
+mged> **bot_fuse clean_hull.bot raw_hull.bot**
 
-Eliminates duplicate points between old_bot.s and saves as new_bot.s.
+Fuses duplicate vertices and faces in `raw_hull.bot` and writes the cleaned result to `clean_hull.bot`.
 ====
+
+.Fuse and display open edges
+[example]
+====
+mged> **bot_fuse -s clean_hull.bot raw_hull.bot**
+
+Fuses the BOT and then highlights any open edges in the display.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*bot_merge*(nged), *bot_smooth*(nged), *bot_dump*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

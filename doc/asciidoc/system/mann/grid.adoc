@@ -4,35 +4,126 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-grid - convert grid xy to view coordinates (local units)
+grid - control the display grid and snap-to-grid behavior
 
 == SYNOPSIS
 
 [source]
 ----
-grid x y
+grid vname parameter [value]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *grid* command is used to convert grid xy to view coordinates (local units).
+The *grid* command controls the view grid: a regular overlay of horizontal and vertical lines drawn on the display to aid in alignment and measurement. It also controls snap-to-grid behavior, which constrains view center movement to the nearest grid intersection.
+
+The first argument `vname` is the name of the view to configure. The second argument `parameter` specifies which grid attribute to get or set. If a value is provided it sets the attribute; if omitted the current value is returned.
+
+=== Parameters
+
+[cols="1,1,4"]
+|===
+|Parameter |Value |Description
+
+|`color`
+|`r g b`
+|Get or set the grid line color as three integers (0–255). With no value, returns current color.
+
+|`draw`
+|`0` or `1`
+|Enable (`1`) or disable (`0`) grid display. With no value, returns current draw state.
+
+|`snap`
+|`0` or `1`
+|Enable (`1`) or disable (`0`) snap-to-grid. With no value, returns current snap state.
+
+|`rh`
+|float
+|Get or set the horizontal grid resolution (spacing) in the current working units.
+
+|`rv`
+|float
+|Get or set the vertical grid resolution (spacing) in the current working units.
+
+|`mrh`
+|integer
+|Get or set the major grid line interval (horizontal): a major line is drawn every N minor lines.
+
+|`mrv`
+|integer
+|Get or set the major grid line interval (vertical).
+
+|`vsnap`
+|(none)
+|Snap the current view center to the nearest grid intersection. Takes no value argument.
+
+|===
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *grid* command.
+.Enable the grid
 [example]
 ====
-mged> **grid 10 20**
+mged> **grid default draw 1**
 
-Converts grid (10, 20) to view coordinates.
+Turns on grid display for the view named `default`.
 ====
+
+.Set grid spacing to 10 mm
+[example]
+====
+mged> **grid default rh 10**
+mged> **grid default rv 10**
+
+Sets horizontal and vertical grid spacing to 10 units in the current working units.
+====
+
+.Enable snap-to-grid
+[example]
+====
+mged> **grid default snap 1**
+
+Enables snap-to-grid for the `default` view. The view center will snap to the nearest grid point during interactive navigation.
+====
+
+.Set grid color to green
+[example]
+====
+mged> **grid default color 0 200 0**
+
+Sets the grid line color to green (R=0, G=200, B=0).
+====
+
+.Get the current horizontal resolution
+[example]
+====
+mged> **grid default rh**
+
+Returns the current horizontal grid resolution in working units, for example: `10`.
+====
+
+.Snap view center to nearest grid point
+[example]
+====
+mged> **grid default vsnap**
+
+Moves the view center to the nearest grid intersection.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*view*(nged), *center*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

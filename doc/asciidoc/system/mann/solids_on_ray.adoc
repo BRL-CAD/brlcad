@@ -4,35 +4,57 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-solids_on_ray - return a list of solids that intersect a given ray
+solids_on_ray - list all primitives intersected by a ray through a display point
 
 == SYNOPSIS
 
 [source]
 ----
-solids_on_ray [h v]
+solids_on_ray h v
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *solids_on_ray* command is used to return a list of solids that intersect a given ray.
+The *solids_on_ray* command fires a ray through the current view from the screen position (`h`, `v`) expressed in normalized display coordinates (where 0,0 is the view center) and reports all primitive solids intersected by that ray.
+
+The ray originates from the current view center and travels in the viewing direction at the specified screen offset. All currently displayed objects are tested for intersection.
+
+Both `h` and `v` arguments are required; omitting them returns a usage error. Values must be within the valid display bounds.
+
+The output lists the full paths of all primitives hit, in the order they are encountered along the ray.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *solids_on_ray* command.
+.Find solids at the center of the view
 [example]
 ====
-mged> **solids_on_ray 512 512**
+mged> **solids_on_ray 0 0**
 
-Lists solids intersecting a ray at (512, 512).
+Fires a ray through the center of the current view and lists all primitive solids along that ray.
 ====
+
+.Find solids at an offset position
+[example]
+====
+mged> **solids_on_ray 100 50**
+
+Fires a ray 100 units right and 50 units up from the view center and lists the intersected primitives.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*nirt*(nged), *who*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

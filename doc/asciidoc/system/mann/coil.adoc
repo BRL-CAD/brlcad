@@ -4,35 +4,95 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-coil - make a coil shape
+coil - create a coil spring geometry object
 
 == SYNOPSIS
 
 [source]
 ----
-coil [options] object
+coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle]
+     [-p pitch] [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]
+     [-S coil_data_structure] [-l overall_length] [-L] [name]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *coil* command is used to make a coil shape.
+The *coil* command creates a coil spring geometry as a combination of pipe and cylindrical primitives in the database. An optional `name` may be provided; if omitted, the object is named `coil`.
+
+All dimensional parameters are in the current working units unless otherwise noted.
+
+=== Options
+
+*-d mean_outer_diameter*::
+Mean outer diameter of the coil. Defaults to 10× the wire diameter if unspecified. If both are zero, defaults to 1000 (with wire diameter defaulting to 100).
+
+*-w wire_diameter*::
+Diameter of the coil wire. Defaults to 1/10 of the mean outer diameter if unspecified.
+
+*-H helix_angle*::
+Helix angle of the coil in degrees. Affects the pitch of the winding relative to the axis. (Unsupported when `-l` is used.)
+
+*-p pitch*::
+Distance between adjacent turns along the coil axis. Must be ≥ wire diameter; if smaller, it is automatically set to the wire diameter.
+
+*-n number_of_turns*::
+Number of full coil turns.
+
+*-s start_cap_type*::
+End cap style at the start of the coil: `0` = open (no cap), `1` = squared, `2` = squared and ground.
+
+*-e end_cap_type*::
+End cap style at the end of the coil. Same values as `-s`.
+
+*-l overall_length*::
+Constrain the coil to a total axial length. When set, pitch and/or number of turns are adjusted automatically to fit. Caps are forced to open (0) and helix angles are ignored.
+
+*-L*::
+Use left-hand winding (default is right-hand).
+
+*-S coil_data_structure*::
+Advanced: provide an explicit section data structure to override the automatic coil generation.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *coil* command.
+.Create a default coil
 [example]
 ====
-mged> **coil model.s**
+mged> **coil**
 
-Makes a coil shape from model.s.
+Creates a coil spring named `coil` using default dimensions.
 ====
+
+.Create a named coil with specific dimensions
+[example]
+====
+mged> **coil -d 50 -w 5 -p 6 -n 10 spring1**
+
+Creates a 10-turn coil spring named `spring1` with a mean outer diameter of 50 units, wire diameter of 5 units, and pitch of 6 units per turn.
+====
+
+.Create a left-hand wound coil with caps
+[example]
+====
+mged> **coil -d 100 -w 10 -n 8 -s 2 -e 2 -L lh_spring**
+
+Creates a left-hand wound coil with squared-and-ground end caps.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*pipe*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

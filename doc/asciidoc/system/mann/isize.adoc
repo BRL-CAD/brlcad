@@ -4,35 +4,57 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-isize - set or get the inverse of the view size
+isize - return the inverse of the current view size
 
 == SYNOPSIS
 
 [source]
 ----
-isize [options]
+isize
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *isize* command is used to set or get the inverse of the view size.
+The *isize* command returns the reciprocal of the current view size in the current working units. This is a read-only getter — no arguments are accepted.
+
+The inverse view size is related to the current zoom level. It equals `1 / view_size`, where `view_size` is the value returned by the *size* command. A larger `isize` value corresponds to a more zoomed-in view (smaller view size); a smaller `isize` value corresponds to a more zoomed-out view.
+
+This value is primarily useful in scripts that compute view-space to model-space scaling factors.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *isize* command.
+.Get the inverse view size
 [example]
 ====
 mged> **isize**
 
-Sets or gets the inverse of the view size.
+Returns the reciprocal of the current view size in working units, for example: `0.001` when the view size is 1000 mm.
 ====
+
+.Use isize in a calculation
+[example]
+====
+mged> **set inv [isize]**
+mged> **set sz [size]**
+mged> **expr {$inv * $sz}**
+
+Retrieves both `isize` and `size` and verifies their product equals 1.0.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*size*(nged), *zoom*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

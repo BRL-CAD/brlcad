@@ -4,35 +4,57 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-fbclear - clear the active framebuffer
+fbclear - clear the framebuffer display to a background color
 
 == SYNOPSIS
 
 [source]
 ----
-fbclear [rgb]
+fbclear [r g b]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *fbclear* command is used to clear the active framebuffer.
+The *fbclear* command clears the framebuffer (overlay image plane) associated with the current display manager to a specified background color. If no color is given, the framebuffer is cleared to black.
+
+The optional `r g b` arguments specify the fill color as three integers in the range 0–255.
+
+Only one optional argument is accepted in addition to the command name: providing more than one argument (but less than three) returns a usage error. You must specify all three values or none.
+
+NOTE: This command operates on the *framebuffer* layer — the raster image layer used by raytrace output and PNG display, not the vector display list. Use *zap* to clear the vector display.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *fbclear* command.
+.Clear the framebuffer to black
 [example]
 ====
-mged> **fbclear 255/0/0**
+mged> **fbclear**
 
-Clears the framebuffer to red (255/0/0).
+Clears the framebuffer to black (0, 0, 0).
 ====
+
+.Clear the framebuffer to a specific color
+[example]
+====
+mged> **fbclear 128 128 128**
+
+Fills the framebuffer with a 50% gray background.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*png2fb*(nged), *zap*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

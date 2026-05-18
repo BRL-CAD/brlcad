@@ -4,35 +4,64 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-group - group the specified objects into a combination
+group, g - create or extend a non-region combination with specified members
 
 == SYNOPSIS
 
 [source]
 ----
 group gname object(s)
+g gname object(s)
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *group* command is used to group the specified objects into a combination.
+The *group* command (also available as *g*) creates a new non-region combination named `gname` containing the specified `objects` as union members. If `gname` already exists, the listed objects are appended to it as additional union members.
+
+All members are added with the union (`u`) Boolean operator and no transformation matrix. At least one object name must be provided in addition to `gname`.
+
+To create a region (rather than a plain combination), use the *region* or *r* command instead. To create a combination with specific Boolean operators, use *comb* or *c*.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *group* command.
+.Create a new group from two objects
 [example]
 ====
-mged> **group new_group.c model.s**
+mged> **group vehicle.c hull.r turret.r**
 
-Groups model.s into the combination new_group.c.
+Creates a new combination `vehicle.c` with `hull.r` and `turret.r` as union members.
 ====
+
+.Use the short alias
+[example]
+====
+mged> **g assembly.c part1.r part2.r part3.r**
+
+Creates `assembly.c` containing three union members using the short `g` alias.
+====
+
+.Append to an existing group
+[example]
+====
+mged> **group vehicle.c wheels.r**
+
+Adds `wheels.r` as a union member to the existing combination `vehicle.c`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*comb*(nged), *region*(nged), *r*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

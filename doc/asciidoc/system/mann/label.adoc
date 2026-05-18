@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-label - label objects
+label - attach a text label to displayed objects (not yet implemented)
 
 == SYNOPSIS
 
@@ -13,26 +13,36 @@ label - label objects
 label object(s)
 ----
 
+
 [[description]]
 == DESCRIPTION
 
-The *label* command is used to label objects.
+The *label* command is intended to attach a text label to one or more displayed geometry objects. It accepts one or more `object` names as arguments.
+
+NOTE: This command is not yet fully implemented. Invoking it returns a "Not yet implemented" message. Use the *annotate* command for attaching annotations to geometry.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *label* command.
+.Attempt to label an object (not yet implemented)
 [example]
 ====
-mged> **label model.s**
+mged> **label hull.r**
 
-Labels model.s in the view.
+Returns: `Not yet implemented!`
 ====
+
+[[see_also]]
+== SEE ALSO
+
+*annotate*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

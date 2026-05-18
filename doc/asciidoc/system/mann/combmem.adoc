@@ -4,48 +4,71 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-combmem - set/get comb members
+combmem - get or set combination member transformation matrices in decomposed form
 
 == SYNOPSIS
 
 [source]
 ----
-combmem comb_name [op name az el tw tx ty tz sa sx sy sz kx ky kz]...
+combmem [-i type] [-r type] comb [op1 name1 az1 el1 tw1 x1 y1 z1 sa1 sx1 sy1 sz1 ...]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *combmem* command is used to set or get comb members. When no arguments are provided after the combination name, it returns the current members and their transformation matrices. When a full set of transformation parameters is provided, it modifies the specified combination by adding or updating the given member.
+The *combmem* command gets or sets the per-member transformation matrices of a combination, expressed in a decomposed form: azimuth (`az`), elevation (`el`), twist (`tw`) rotation angles, translation (`x`, `y`, `z`), and scale factors (uniform `sa`, and per-axis `sx`, `sy`, `sz`).
 
-[[options]]
-== OPTIONS
+With only the combination name and no member arguments, *combmem* returns the current transformation for each member in the decomposed form.
 
-The transformation parameters must be provided in exactly this order:
+With member arguments, it sets the transformation for each listed member, constructing the full 4×4 matrix from the decomposed parameters.
 
-* *op*: The boolean operator to use (`u` for union, `-` for subtract, `+` for intersect).
-* *name*: The name of the member being added or updated.
-* *az*, *el*, *tw*: The rotation angles (azimuth, elevation, twist) in degrees.
-* *tx*, *ty*, *tz*: The translation offsets along the X, Y, and Z axes.
-* *sa*: A uniform scale factor (Scale-All).
-* *sx*, *sy*, *sz*: Individual scale factors for the X, Y, and Z axes.
-* *kx*, *ky*, *kz*: The keypoint coordinates used as the center for scaling and rotation operations.
+=== Options
+
+*-i type*::
+Set the input format type for interpreting transformation data. Affects how the `az el tw x y z sa sx sy sz` parameters are parsed and assembled into a matrix.
+
+*-r type*::
+Set the representation type for matrix output when reading.
+
+=== Member specification
+
+Each member is described by 12 values following the Boolean operator (`u`, `+`, or `-`) and the member name:
+
+`op name az el tw x y z sa sx sy sz`
+
+where `az`, `el`, `tw` are azimuth, elevation, and twist in degrees; `x`, `y`, `z` are translation; and `sa`, `sx`, `sy`, `sz` are uniform and per-axis scale factors.
 
 [[examples]]
 == EXAMPLES
 
-.Modifying a member with a specific transformation.
+.Read the transformation of combination members
 [example]
 ====
-mged> **combmem group.c u part.s 35 25 0 10 20 30 1.0 1.0 1.0 1.0 0 0 0**
+mged> **combmem vehicle.c**
 
-Adds or updates the member 'part.s' in 'group.c' using the union operator (u), with an azimuth of 35°, elevation of 25°, translated by (10, 20, 30), and with a uniform scale of 1.0 around the keypoint (0, 0, 0).
+Returns the Boolean operator, name, and decomposed transformation (az/el/tw, x/y/z, sa/sx/sy/sz) for each member of `vehicle.c`.
 ====
+
+.Set member transformations
+[example]
+====
+mged> **combmem vehicle.c u hull.r 0 0 0 100 0 0 1 1 1 1 u turret.r 45 0 0 100 0 200 1 1 1 1**
+
+Sets `hull.r` with no rotation and a translation of (100, 0, 0), and `turret.r` with 45° azimuth rotation, no elevation, and translation of (100, 0, 200).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*comb*(nged), *matrix*(nged), *aet*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

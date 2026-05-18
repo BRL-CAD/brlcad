@@ -4,35 +4,56 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_merge - merge the specified bots into bot_dest
+bot_merge - merge multiple BOT meshes into a single BOT object
 
 == SYNOPSIS
 
 [source]
 ----
-bot_merge bot_dest bot1_src [botn_src]
+bot_merge bot_dest bot1_src [botn_src ...]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *bot_merge* command is used to merge the specified bots into bot_dest.
+The *bot_merge* command combines two or more BOT (Bag-of-Triangles) primitive objects into a single new BOT named `bot_dest`. All source BOTs (`bot1_src`, `botn_src`, ...) are merged by concatenating their vertex and face lists. The source objects are not modified or deleted.
+
+At least one source BOT must be specified in addition to the destination name.
+
+NOTE: *bot_merge* concatenates vertex lists without fusing shared vertices. If the input BOTs share vertices at the same position, those vertices will be duplicated in the result. Use *bot_fuse* afterward to merge duplicate vertices.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *bot_merge* command.
+.Merge two BOTs
 [example]
 ====
-mged> **bot_merge combined.s part1.s part2.s**
+mged> **bot_merge combined.bot left_half.bot right_half.bot**
 
-Merges part1.s and part2.s into combined.s.
+Creates `combined.bot` by merging the vertex and face lists from `left_half.bot` and `right_half.bot`.
 ====
+
+.Merge multiple BOTs and clean up
+[example]
+====
+mged> **bot_merge raw_merged.bot part1.bot part2.bot part3.bot**
+mged> **bot_fuse fused_merged.bot raw_merged.bot**
+
+Merges three BOTs into one, then fuses duplicate vertices to produce a clean mesh.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*bot_fuse*(nged), *bot_dump*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS

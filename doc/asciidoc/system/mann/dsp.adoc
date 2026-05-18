@@ -4,46 +4,78 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-dsp - work with dsp primitives
+dsp - query or compare DSP (Displacement Map Surface) primitive objects
 
 == SYNOPSIS
 
 [source]
 ----
-dsp obj [subcommand]
+dsp object xy x y
+dsp object diff obj2 [min_diff_val]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *dsp* command is used to query or compare Displacement Map (DSP) primitives. It accepts the following subcommands:
+The *dsp* command provides two subcommands for inspecting DSP (Displacement Map Surface) primitive objects. A DSP primitive represents a height-field terrain surface derived from a 2D raster data source with integer height values on a uniform grid.
 
-* *xy* _x y_ : Reports the raw height (elevation) value at the specified _x,y_ coordinates on the DSP grid.
-* *diff* _obj2_ : Compares the current DSP object against _obj2_ and reports all height differences at matching _x,y_ coordinates. The two DSP objects must have the same grid dimensions.
+Both subcommands require the database to be open. The `object` argument must name an existing DSP primitive.
+
+=== Subcommands
+
+*xy x y*::
+Report the integer height value stored at grid coordinates `(x, y)` within the DSP object `object`. The coordinates are zero-based grid indices. Returns an error if the coordinate is outside the bounds of the DSP grid.
+
+*diff obj2 [min_diff_val]*::
+Compare the height values of `object` and `obj2` at every grid coordinate. The two DSP objects must have the same grid dimensions. Prints each `(x,y)` position and the magnitude of the height difference where values differ. If `min_diff_val` is specified, only differences greater than or equal to that value are reported.
 
 [[examples]]
 == EXAMPLES
 
-.Query a specific coordinate height.
+.Query the height at a grid coordinate
 [example]
 ====
-mged> **dsp terrain.dsp xy 10 20**
+mged> **dsp terrain.dsp xy 50 30**
 
-Reports the height value at grid coordinate (10, 20) for the `terrain.dsp` object.
+Returns the height value stored at grid position (50, 30) in `terrain.dsp`, for example: `1024`.
 ====
 
-.Compare two DSP objects.
+.Query a coordinate at the grid origin
 [example]
 ====
-mged> **dsp terrain.dsp diff terrain_new.dsp**
+mged> **dsp terrain.dsp xy 0 0**
 
-Prints out the coordinates and the absolute difference in height wherever the two DSP objects differ.
+Returns the height at grid position (0, 0).
 ====
+
+.Compare two DSP objects
+[example]
+====
+mged> **dsp terrain.dsp diff terrain_modified.dsp**
+
+Reports all grid positions where `terrain.dsp` and `terrain_modified.dsp` have different height values, with the magnitude of each difference.
+====
+
+.Compare with a minimum difference threshold
+[example]
+====
+mged> **dsp terrain.dsp diff terrain_modified.dsp 10**
+
+Reports only grid positions where the height difference between the two DSP objects is 10 or greater.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*in*(nged), *make*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
