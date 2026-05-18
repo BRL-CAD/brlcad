@@ -3,6 +3,7 @@ set(PLUGIN_LIBS libged libbu)
 set(WHO_SRCS
   who.c
   who2.cpp
+  who_solids.cpp
 )
 
 ged_plugin_library(ged-who

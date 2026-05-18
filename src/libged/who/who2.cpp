@@ -32,12 +32,16 @@
 #include "ged.h"
 
 #include "../dbi.h"
+#include "../ged_private.h"
+
+extern "C" int ged_who_solids_core(struct ged *gedp, int argc, const char *argv[]);
 
 /*
  * List the db objects currently drawn
  *
  * Usage:
- * who
+ * who [options]
+ * who solids [level]
  *
  * TODO - like draw2, this needs to be aware of whether we're using local or shared
  * grp sets - if we're adaptive plotting, for example.
@@ -45,6 +49,9 @@
 extern "C" int
 ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 {
+    if (argc > 1 && (BU_STR_EQUAL(argv[1], "solids") || BU_STR_EQUAL(argv[1], "report")))
+	return ged_who_solids_core(gedp, argc, argv);
+
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -52,19 +59,33 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     int expand = 0;
+    int print_help = 0;
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc vd[4];
+    static const char *usage =
+	"Usage:\n"
+	"  who [options]\n"
+	"  who solids [-V view] [-m #] [level]\n";
+    struct bu_opt_desc vd[6];
     int mode = -1;
-    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to work with");
-    BU_OPT(vd[1],  "m", "mode",    "#",         &bu_opt_int, &mode,   "only report paths drawn in the specified drawing mode");
-    BU_OPT(vd[2],  "E", "expand",  "",          NULL,        &expand, "report individual drawn objects");
-    BU_OPT_NULL(vd[3]);
+    BU_OPT(vd[0],  "h", "help",    "",          NULL,        &print_help, "Print help and exit");
+    BU_OPT(vd[1],  "?", "",        "",          NULL,        &print_help, "");
+    BU_OPT(vd[2],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to work with");
+    BU_OPT(vd[3],  "m", "mode",    "#",         &bu_opt_int, &mode,   "only report paths drawn in the specified drawing mode");
+    BU_OPT(vd[4],  "E", "expand",  "",          NULL,        &expand, "report individual drawn objects");
+    BU_OPT_NULL(vd[5]);
     int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
     if (opt_ret < 0) {
-	bu_vls_printf(gedp->ged_result_str, "who cmd: option parsing error\n");
+	_ged_cmd_help(gedp, usage, vd);
 	bu_vls_free(&cvls);
 	return BRLCAD_ERROR;
     }
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, vd);
+	bu_vls_free(&cvls);
+	return BRLCAD_OK;
+    }
+
     struct bview *v = gedp->ged_gvp;
     if (bu_vls_strlen(&cvls)) {
 	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
@@ -100,4 +121,3 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
