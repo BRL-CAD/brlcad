@@ -10,7 +10,7 @@ lc - Lists codes (i.e. region attributes) 'region_id', 'material_id', 'los', 'ai
 
 [source]
 ----
-lc [-d | -m | -s] [-r] [-z] [-0 | -1 | -2 | -3 | -4 | -5 | -6] [-f | {FileName}] {GroupName}
+lc [-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}
 ----
 
 
