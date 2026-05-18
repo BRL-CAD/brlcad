@@ -4,68 +4,110 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-bot_dump - dump the specified bots
+bot_dump - export Bag-of-Triangles (BOT) geometry to a mesh file format
 
 == SYNOPSIS
 
 [source]
 ----
-bot_dump [options] [bot1 bot2 ...]
+bot_dump [-b] [-n|--normals] [-F|--full-precision]
+         [-m|--output-directory dir] [-o|--output-file file]
+         [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
+         [bot1 bot2 ...]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *bot_dump* command is used to export the specified BoT (Bag of Triangles) primitives to external file formats.
+The *bot_dump* command exports one or more BOT (Bag-of-Triangles) primitives from the current database to an external mesh file. If no BOT names are specified, all BOT objects in the database are exported.
 
-[[options]]
-== OPTIONS
+Output formats supported:
+
+* *stl* — STL (Stereolithography), the default. Binary or ASCII.
+* *dxf* — AutoCAD DXF format.
+* *obj* — Wavefront OBJ format (with an accompanying `.mtl` material file).
+* *sat* — ACIS SAT format.
+* *glb* — glTF binary format.
+* *gltf* — glTF JSON format.
+
+=== Options
 
 *-b*::
-Use binary version of output format.
+Write output in binary format where supported (e.g., binary STL, binary glTF/GLB).
 
 *-n*, *--normals*::
-If supported by the format, write out vertex normals.
-
-*-m*, *--output-directory* _dir_::
-Output multiple files into this directory.
-
-*-o*, *--output-file* _file_::
-Specify a single output filename.
-
-*-t* _dxf|obj|sat|stl|gltf_::
-Specify the output format type.
-
-*-u* _units_::
-Specify an output unit (e.g., mm, m, in, ft).
+Write per-vertex normals if the output format supports them.
 
 *-F*, *--full-precision*::
-Write full floating point precision (non-standard for formats like glTF).
+Write full floating-point precision for coordinate values. Non-standard for glTF output.
 
-*--displayed*::
-Write out displayed geometry.
+*-m dir*, *--output-directory dir*::
+Write each BOT to a separate file in the specified directory `dir`. Mutually exclusive with `-o`.
 
-*--viewdata*::
-Write out non-geometry view data.
+*-o file*, *--output-file file*::
+Write all output to the single specified `file`. Mutually exclusive with `-m`.
 
-*--materials*::
-Write out material information.
+*-t fmt*::
+Specify the output format type. Accepted values: `dxf`, `glb`, `gltf`, `obj`, `sat`, `stl`. Default is `stl`.
+
+*-u unit*::
+Specify the output units for coordinate values (e.g., `mm`, `cm`, `in`, `ft`). Defaults to the database's native units.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *bot_dump* command.
+.Export all BOTs to a single STL file
 [example]
 ====
-mged> **bot_dump -b -m /tmp/dump -t dxf**
+mged> **bot_dump -o scene.stl**
 
-Dumps the specified bots to /tmp/dump directory dxf format.
+Exports all BOT primitives in the database to `scene.stl` in ASCII STL format.
 ====
+
+.Export a specific BOT as binary STL
+[example]
+====
+mged> **bot_dump -b -o hull_mesh.stl hull.bot**
+
+Exports `hull.bot` to `hull_mesh.stl` in binary STL format.
+====
+
+.Export to OBJ format with named per-object files
+[example]
+====
+mged> **bot_dump -t obj --output-directory ./export/**
+
+Exports each BOT in the database to its own `.obj` file in the `./export/` directory.
+====
+
+.Export in glTF binary format with full precision
+[example]
+====
+mged> **bot_dump -t glb -F -o scene.glb**
+
+Exports all BOTs to `scene.glb` in binary glTF format with full floating-point precision.
+====
+
+.Export in DXF format with unit conversion
+[example]
+====
+mged> **bot_dump -t dxf -u in -o scene.dxf**
+
+Exports all BOTs to `scene.dxf` in DXF format, with coordinates converted to inches.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*dbot_dump*(nged), *bot*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
