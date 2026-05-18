@@ -4,35 +4,86 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-solids - Lists a summary of all the primitive shapes used in regions referenced by the list of _objects_.
+solids - write a full region and primitive parameter summary table to a file
 
 == SYNOPSIS
 
 [source]
 ----
-solids {file} {objects}
+solids file object(s)
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Lists a summary of all the primitive shapes used in regions referenced by the list of _objects_. The summary is written to the specified _file_. The summary is similar to that produced by the *regions* command, but with the addition of primitive shape parameters. The shape parameters listed will have the accumulated transformation matrices along the path from the listed _objects_ to the primitive shape applied (as would be listed by the *listeval* command). The *showmats* command may be used to see the actual transformation matrices.
+The *solids* command traverses the hierarchy of one or more `objects` and writes a complete summary of all regions and their component primitives to `file`. The file is opened in write mode and overwritten if it already exists.
 
+*solids* is one of four related commands that all share the same underlying logic but produce different levels of detail:
+
+[cols="1,4"]
+|===
+|Command |Output detail
+
+|`idents`
+|Region-level summary only: region count, ident, air code, material code, LOS, and path. No primitives listed.
+
+|`regions`
+|Region-level summary with the Boolean formula (member names and operators) for each region.
+
+|`solids`
+|Full summary down to primitives: same as `regions`, plus the evaluated parameters of each primitive shape with accumulated transformation matrices applied.
+
+|`tables`
+|Not a valid standalone command. Invoking `tables` directly returns an input error. Use one of the three specific commands above.
+
+|===
+
+=== Output format
+
+The output file is a fixed-width text table. Each region entry includes the following fields in order:
+
+. *Region count* — sequential index of the region as encountered.
+. *Region ID* (`ident`) — the region's identifier number.
+. *Air code* — air region code (0 if not an air region).
+. *Material code* (`GIFTmater`) — GIFT material code.
+. *LOS* — line-of-sight percentage (0–100).
+. *Path* — the full path from the listed object to the region.
+. *Boolean members* — the list of member primitives and Boolean operators forming the region. For each *new* primitive (one not yet seen earlier in the table at this transformation), the full primitive parameters are appended, with all transformation matrices along the path from the input object to the primitive applied (equivalent to the output of `listeval`). Previously-seen primitive instances (same name and same accumulated matrix) are listed by number only, without repeating their parameters.
+
+A header is written at the top of the file containing the command name, database filename, username, database title, units, and the list of objects processed.
+
+After the table, a summary line is appended: `Number Primitives = N  Number Regions = N`.
+
+=== Primitive uniqueness and numbering
+
+Each primitive instance is assigned a unique solid number in brackets (e.g. `[3]`). The same primitive is considered a new instance if its accumulated transformation matrix differs from a previous use — even if the name is the same. This allows detecting when the same primitive is placed multiple times at different positions or orientations. The uniqueness tracking uses a temporary file at `/tmp/mged_discr`.
+
+Use `showmats` to view the actual accumulated transformation matrices along any given path.
 
 [[examples]]
 == EXAMPLES
 
-The example shows the use of the *solids* command to list a summary of all the primitive shapes used in regions referenced by a list of objects.
-
-.List a summary of all the regions in a group.
+.Write a full solids summary for a group
 [example]
 ====
-mged>**solids shapes_summary group1 regiona**
+mged> **solids shapes_summary group1**
 
-Writes a summary of all the regions in _group1_ and includes the region named _regiona_. The summary includes detailed shape parameters for the shapes used in the regions.
-
+Writes a complete region and primitive parameter summary for all regions reachable from `group1` to `shapes_summary`. The result string reports how many primitives and regions were processed.
 ====
+
+.Include a specific region alongside a group
+[example]
+====
+mged> **solids report.txt assembly.c extra.r**
+
+Writes the solids table for all regions under `assembly.c` and for the specific region `extra.r` to `report.txt`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*idents*(nged), *regions*(nged), *listeval*(nged), *showmats*(nged)
 
 
 [[author]]
