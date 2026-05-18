@@ -531,6 +531,7 @@ init_repo_config(RepoConfig &cfg)
     {
 	const char *sp_exempt[] = {
 	    "brledit.cpp",
+	    "check_mann_docs.cpp",
 	    "debug2c.cpp",
 	    "env2c.cpp",
 	    "embedded_check.cpp",
