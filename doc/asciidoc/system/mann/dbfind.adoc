@@ -10,30 +10,31 @@ dbfind - Displays all combinations that have any of the _objects_ specified as a
 
 [source]
 ----
-dbfind {objects}
+dbfind [-a] <objects>
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-Displays all combinations that have any of the _objects_ specified as a member.
+The *dbfind* command searches the BRL-CAD database and displays a list of all combination objects (regions, assemblies, etc.) that have any of the specified _objects_ as a member.
 
+Note that this command only searches through non-hidden combination nodes unless the `-a` option is used. The *dbfind* command is an exact alias of the *find* command.
+
+[[options]]
+== OPTIONS
+
+*-a*::
+Include hidden objects in the search.
 
 [[examples]]
 == EXAMPLES
 
-The example shows the use of the *dbfind* command to display all combinations that refer to the specified object.
-
-.Display all combinations that refer to a specified object.
+.Display all combinations that refer to a specified object
 [example]
 ====
+mged> **dbfind shapea**
 
-mged> **dbfind shapea**::
-Lists all combinations that refer to _shapea_.
-
-
-
+Lists the names of all non-hidden combinations that refer to _shapea_ as a member.
 ====
 
 
