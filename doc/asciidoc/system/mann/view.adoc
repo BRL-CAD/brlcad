@@ -10,7 +10,7 @@ view - Gets/sets the view parameters (local units).
 
 [source]
 ----
-view [-h] [-v] [-V view_name] {subcommand}
+view ae|aet|auto|center|eye|knob|lookat|print|quat|save|size|ypr [args]
 ----
 
 
