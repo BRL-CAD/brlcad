@@ -4,20 +4,27 @@
 :manmanual: BRL-CAD MGED Commands
 
 == NAME
-zoom - Changes the size of the viewing cube for the MGED display, resulting in a zoom in or zoom out effect.
+zoom - zoom the view in or out by a scale factor
 
 == SYNOPSIS
 
 [source]
 ----
-zoom {scale_factor}
+zoom scale_factor
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Changes the size of the viewing cube for the MGED display, resulting in a zoom in or zoom out effect. A __scale_factor__ greater than one reduces the size of the viewing cube (zoom in). A __scale_factor__ of less than one increases the size of the viewing cube (zoom out).
+The *zoom* command multiplies the apparent size of displayed objects by dividing the current view scale by the given `scale_factor`.
+
+* A `scale_factor` *greater than 1* zooms **in** — objects appear larger.
+* A `scale_factor` *between 0 and 1* zooms **out** — objects appear smaller.
+
+The view scale is clamped at a minimum value to prevent the view from collapsing to zero. `scale_factor` must be a positive, finite number; values that are zero, negative, or infinite return an error.
+
+Exactly one argument is required.
 
 
 [[examples]]
