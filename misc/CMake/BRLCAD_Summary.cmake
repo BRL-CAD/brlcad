@@ -276,7 +276,7 @@ function(BRLCAD_Summary)
   ext_report("STEPcode" STEPCODE_STATUS REQUIRED_VARS "BRLCAD_ENABLE_STEP")
   ext_report("Tcl" TCL_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_TCL")
   ext_report("Tk" TK_LIBRARY REQUIRED_VARS "BRLCAD_ENABLE_TCL")
-  ext_report("Zlib" ZLIB_LIBRARY)
+  ext_report("Zlib" ZLIB_STATUS)
 
   # Find the maximum label length
   set(LABEL_LENGTH 0)
