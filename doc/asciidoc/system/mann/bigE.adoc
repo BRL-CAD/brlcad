@@ -10,22 +10,24 @@ E - Display objects in evaluated form.
 
 [source]
 ----
-E [-s] object [object ...]
+E [-C r/g/b] [-s] object(s)
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *E* command evaluates the specified object trees and displays a faceted
-approximation of the resulting geometry. Unlike *draw* or *e*, which display
-objects using the normal display-list pipeline, *E* shows the evaluated boolean
-result. This is useful when checking what a tree actually resolves to, but it
-is usually slower than ordinary drawing.
+The *E* command draws one or more objects using Boolean evaluation. Unlike *draw* (which displays each primitive as a wireframe regardless of Boolean operators), *E* evaluates the Boolean tree of the object hierarchy using NMG (Non-Manifold Geometry) operations and displays only the resulting evaluated solid regions. This makes *E* significantly more computationally intensive than *draw* for complex hierarchies.
 
-The *-s* option requests a slower, more accurate approximation.
+=== Options
 
-Historically this command has also been referred to informally as "bigE".
+*-C r/g/b*::
+Override the display color for all drawn objects using the specified RGB values (each 0–255), separated by `/`.
+
+*-s*::
+Enable shading on the evaluated result display.
+
+NOTE: *E* is distinct from the lowercase *e* command (which erases objects from the display). On case-insensitive filesystems this page is stored as `bigE.adoc` to avoid collision with `e.adoc`.
 
 
 [[examples]]
