@@ -483,7 +483,9 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 
     bu_vls_printf(&str, " space_partition_type %s n_cutnode %zu n_boxnode %zu n_empty %zu",
 		  rtip->rti_space_partition == RT_PART_NUBSPT ?
-		  "NUBSP" : "unknown",
+		  "NUBSP" :
+		  rtip->rti_space_partition == RT_PART_NULL ?
+		  "NULL" : "unknown",
 		  rtip->stats.rti_ncut_by_type[CUT_CUTNODE],
 		  rtip->stats.rti_ncut_by_type[CUT_BOXNODE],
 		  rtip->stats.nempty_cells);

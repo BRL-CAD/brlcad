@@ -39,6 +39,11 @@ struct rt_piecelist;  /* forward declaration */
 /**
  * Structures for space subdivision.
  *
+ * RT_PART_NUBSPT uses CUT_CUTNODE interior nodes and CUT_BOXNODE leaves.
+ * RT_PART_NULL intentionally uses one CUT_BOXNODE leaf covering the whole
+ * model so the ray shooting path can evaluate a no-op spatial partitioning
+ * baseline without a separate primitive-list traversal.
+ *
  * cut_type is an integer for efficiency of access in rt_shootray() on
  * non-word addressing machines.
  *

@@ -179,9 +179,9 @@ fastf_t rt_perp_tol = (fastf_t)0.0;     /* Value for rti_tol.perp */
 char *framebuffer = NULL;       /* desired framebuffer */
 
 /**
- * space partitioning algorithm to use.  previously had experimental
- * grid support, but now only uses a Non-uniform Binary Spatial
- * Partitioning (BSP) tree.
+ * Space partitioning algorithm to use.  The default is the
+ * non-uniform binary spatial partitioning tree; librt prep may override
+ * this at runtime via LIBRT_SPACE_PARTITION.
  */
 int space_partition = RT_PART_NUBSPT;
 

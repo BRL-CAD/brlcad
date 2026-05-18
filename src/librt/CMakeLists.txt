@@ -116,6 +116,8 @@ set(
   edit_constraint.c
   cut.c
   cut_hlbvh.c
+  cut_null.c
+  cut_nubsp.c
   db5_alloc.c
   db5_attr.c
   db5_attr_registry.cpp
@@ -320,6 +322,7 @@ set(
 set(
   librt_ignored_files
   cache.h
+  cut_private.h
   librt_private.h
   material/materialX.cpp
   material/materialX.h

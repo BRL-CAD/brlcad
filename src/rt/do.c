@@ -772,7 +772,9 @@ do_prep(struct rt_i *rtip)
     if (rt_verbosity & VERBOSE_STATS) {
 	bu_log("%s: %zu cut, %zu box (%zu empty)\n",
 	       rtip->rti_space_partition == RT_PART_NUBSPT ?
-	       "NUBSP" : "unknown",
+	       "NUBSP" :
+	       rtip->rti_space_partition == RT_PART_NULL ?
+	       "NULL" : "unknown",
 	       rtip->stats.rti_ncut_by_type[CUT_CUTNODE],
 	       rtip->stats.rti_ncut_by_type[CUT_BOXNODE],
 	       rtip->stats.nempty_cells);
