@@ -430,6 +430,14 @@ include/raytrace.h
 
 7.44.0
 ------
+include/rt/geom.h
+        removed 'tie' void pointer from rt_bot_internal as TIE
+        obsoleted as of 7.42) [deprecated N/A]
+
+include/rt/db_instance.h
+        PRIVATE-labeled members of db_i struct made actually private
+        [deprecated N/A]
+
 include/raytrace.h librt
 	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecated 7.22]
 
