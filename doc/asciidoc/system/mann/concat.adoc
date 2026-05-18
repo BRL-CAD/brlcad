@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-concat - concatenate 'file' onto end of present database
+concat - merge objects from an external database file into the current database
 
 == SYNOPSIS
 
@@ -13,53 +13,94 @@ concat - concatenate 'file' onto end of present database
 concat [options] file.g [affix]
 ----
 
+
 [[description]]
 == DESCRIPTION
 
-The *concat* command is used to concatenate another database file (`file.g`) into the currently open database. By default, name conflicts are resolved by incrementing the conflicting names.
+The *concat* command reads geometry objects from the external BRL-CAD database `file.g` and merges them into the current open database. If a name collision exists between an incoming object and an existing object, *concat* automatically generates a unique name for the incoming object, unless `-O` is used to overwrite.
 
-[[options]]
-== OPTIONS
+An optional `affix` string may be provided to add a prefix or suffix to incoming object names. The `-p` and `-s` flags control whether the affix is applied to the beginning or end of each name. By default (with `-L`), the affix is only applied lazily to names that conflict; without `-L`, the affix is applied to every incoming name.
 
-*-O*, *--overwrite*::
-Overwrite existing objects if their names conflict with incoming objects.
-
-*-c*::
-Use the incoming region colortable instead of the current database's colortable.
-
-*-p*, *--prefix*::
-Apply the optional `affix` string to the beginning of incoming object names (default behavior if neither `-p` nor `-s` is specified but an `affix` is provided).
-
-*-s*, *--suffix*::
-Apply the optional `affix` string to the end of incoming object names.
-
-*-L*, *--lazy-affix*::
-Lazily apply the affix to incoming objects. The affix is only applied when needed to avoid a name conflict with an existing object in the target database.
-
-*-t*::
-Update the current database's title to match the incoming database's title.
-
-*-u*::
-Update the current database's local units to match the incoming database's local units.
+=== Options
 
 *-h*, *--help*::
 Print help and exit.
 
+*-O*, *--overwrite*::
+Overwrite existing objects when names conflict instead of generating a new unique name.
+
+*-c*::
+Use the incoming database's region color table instead of the current database's.
+
+*-p*, *--prefix*::
+Apply the `affix` string to the *beginning* of incoming object names (prefix mode).
+
+*-s*, *--suffix*::
+Apply the `affix` string to the *end* of incoming object names (suffix mode).
+
+*-L*, *--lazy-affix*::
+Apply the `affix` only when needed to resolve name conflicts, not to every incoming name. Without this flag, the affix is applied to all names when an affix is provided.
+
+*-t*::
+Use the incoming database's title string instead of the current database's title.
+
+*-u*::
+Use the incoming database's unit settings instead of the current database's units.
+
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *concat* command.
+.Merge a database without renaming
 [example]
 ====
-mged> **concat -p incoming_model.g "new_"**
+mged> **concat other.g**
 
-Concatenates the contents of `incoming_model.g` into the current database, prefixing all incoming objects with the string `new_`.
+Merges all objects from `other.g` into the current database. Any name collisions are resolved by automatically incrementing names.
 ====
+
+.Merge with a prefix applied to all incoming names
+[example]
+====
+mged> **concat -p other.g imported_**
+
+Merges all objects from `other.g`, prefixing every incoming name with `imported_`. For example, `hull.r` becomes `imported_hull.r`.
+====
+
+.Merge with a suffix applied lazily on conflict only
+[example]
+====
+mged> **concat -s -L other.g _v2**
+
+Merges objects from `other.g`, appending `_v2` only to names that collide with existing objects.
+====
+
+.Overwrite on conflict
+[example]
+====
+mged> **concat -O other.g**
+
+Merges `other.g`, silently overwriting any existing objects with the same name.
+====
+
+.Merge and use the incoming color table and units
+[example]
+====
+mged> **concat -c -u other.g**
+
+Merges `other.g` and adopts its color table and unit settings.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*dbconcat*(nged), *keep*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
