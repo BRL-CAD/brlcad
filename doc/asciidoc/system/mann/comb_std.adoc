@@ -4,44 +4,62 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-comb_std - standardize the combination tree of an object
+comb_std, c - create or modify a combination using standard Boolean notation
 
 == SYNOPSIS
 
 [source]
 ----
-comb_std [-c | -r] comb_name <boolean_expr>
+comb_std comb_name [op1 object1 [op2 object2 ...]]
+c comb_name [op1 object1 [op2 object2 ...]]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *comb_std* command is used to standardize the combination tree of an object.
+The *comb_std* command (also available as *c*) creates or modifies a combination using standard Boolean operators. The combination `comb_name` is created if it does not exist; if it does exist, the new members are appended to it.
 
-[[options]]
-== OPTIONS
+Each member is specified as an operator-object pair:
 
-*-c*::
-Explicitly specifies that the combination should NOT be created as a region. If the combination already exists and neither *-c* nor *-r* is supplied, its region flag is left unchanged. If the combination is new, it defaults to not being a region. The *-g* flag is a synonym for *-c*.
+* `u` or `+` — union
+* `-` — subtraction
+* `+` — intersection (use `+` only in contexts where it is unambiguous)
 
-*-r*::
-Explicitly specifies that the combination should be created as a region. If creating a new region or flagging an existing combination as a region, its region-specific attributes (e.g., region ID, air code, LOS, material ID) will be assigned using current database defaults.
+Members are listed in order: the first operator applies between the combination and the first object; subsequent operators apply between successive objects.
+
+The *comb_std* command (alias *c*) is a simplified alternative to *comb* that uses infix Boolean expression parsing similar to traditional MGED syntax.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *comb_std* command.
+.Create a combination with union and subtraction
 [example]
 ====
-mged> **comb_std -r my_region.r u model.s**
+mged> **c vehicle.c u hull.r u engine.r - hole.r**
 
-Standardizes the combination tree of my_region.r with model.s, ensuring it is created as a region.
+Creates `vehicle.c` with `hull.r` and `engine.r` unioned, then `hole.r` subtracted.
 ====
+
+.Use the c alias
+[example]
+====
+mged> **c plate.c u top.s u bottom.s**
+
+Creates `plate.c` as the union of `top.s` and `bottom.s` using the short alias.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*comb*(nged), *group*(nged), *region*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
