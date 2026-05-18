@@ -501,7 +501,7 @@ detect_alias_target(const std::string &txt)
 static bool
 has_detailed_invocation(const std::string &txt)
 {
-    std::regex inv_re(R"(mged>\s*\*{0, 2}([^\*\n]+)\*{0, 2})");
+    std::regex inv_re(R"(mged>\s*\*{0,2}([^\*\n]+)\*{0,2})");
     for (auto it = std::sregex_iterator(txt.begin(), txt.end(), inv_re); it != std::sregex_iterator(); ++it) {
 	std::string inv = trim((*it)[1].str());
 	if (inv.find("[args]") != std::string::npos)
