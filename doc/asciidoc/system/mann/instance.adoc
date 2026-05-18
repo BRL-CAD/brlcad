@@ -4,35 +4,68 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-instance - instantiate an object
+instance, i - add an object instance to a combination with a Boolean operator
 
 == SYNOPSIS
 
 [source]
 ----
 instance obj comb [op]
+i obj comb [op]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *instance* command is used to instantiate an object.
+The *instance* command (also available as *i*) adds `obj` as a member of the combination `comb` using the specified Boolean operator `op`. No transformation matrix is applied — the object is instanced at the identity position.
+
+The optional `op` argument specifies the Boolean relationship:
+
+* `u` — union (default if `op` is omitted)
+* `-` — subtraction
+* `+` — intersection
+
+The combination `comb` must already exist. To create a new combination at the same time, use *group*, *comb*, or *region*.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *instance* command.
+.Add an object to a combination as a union member
 [example]
 ====
-mged> **instance model.s group.c +**
+mged> **instance wheel.r vehicle.c**
 
-Instantiates model.s into group.c with the + operator.
+Adds `wheel.r` to `vehicle.c` as a union member (default operator).
 ====
+
+.Add an object as a subtracted member
+[example]
+====
+mged> **i hole.s main_body.r -**
+
+Subtracts `hole.s` from `main_body.r` using the short `i` alias.
+====
+
+.Add an intersecting member
+[example]
+====
+mged> **instance clipping_box.s hull.r +**
+
+Intersects `clipping_box.s` with `hull.r`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*group*(nged), *comb*(nged), *region*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
