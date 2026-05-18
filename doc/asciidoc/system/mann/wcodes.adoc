@@ -1,38 +1,60 @@
 = WCODES(nged)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD MGED Commands
+:manmanual: BRL-CAD User Commands
 
 == NAME
-wcodes - Writes ident, air code, material code, LOS, and name of all the regions in the list of _objects_ to the specified _file._
+wcodes - write region attribute codes to a file
 
 == SYNOPSIS
 
 [source]
 ----
-wcodes {file} {objects}
+wcodes filename object(s)
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Writes ident, air code, material code, LOS, and name of all the regions in the list of _objects_ to the specified _file._ The format used is compatible with the *rcodes* command.
+The *wcodes* command traverses the hierarchy of one or more `objects` and writes the attribute codes for every region found to `filename`. The output file is opened in write mode and overwritten if it already exists.
 
+For each region encountered, the following fields are written on a single line:
+
+. *Region ID* — the region identifier (`ident`) number.
+. *Air code* — the air region code (0 if not an air region).
+. *Material code* — the GIFT material code.
+. *LOS* — the line-of-sight percentage (0–100).
+. *Path* — the full path from one of the input `objects` to the region.
+
+Only objects flagged as regions (combinations with the region flag set) are listed. Non-region combinations are traversed but not output. At least one object argument is required in addition to the filename.
+
+The output format is compatible with the *rcodes* command, which can be used to restore the attribute values from the file.
 
 [[examples]]
 == EXAMPLES
 
-The example shows the use of the *wcodes* command to write region data for all the regions in specified objects to a specified file.
-
-.Write region data of objects to a file.
+.Write region codes for all regions in two groups
 [example]
 ====
-mged>**wcodes code_file group1 group2**
+mged> **wcodes codes.txt group1 group2**
 
-Writes region data for all the regions in _group1_ and _group2_ to __code_file.__
-
+Writes the region_id, aircode, material code, LOS, and path for every region reachable from `group1` and `group2` to the file `codes.txt`.
 ====
+
+.Write codes and restore them after editing
+[example]
+====
+mged> **wcodes saved_codes.txt vehicle.c**
+mged> **rcodes saved_codes.txt**
+
+Saves all region codes from `vehicle.c` to `saved_codes.txt`, then restores them from the file using `rcodes`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*rcodes*(nged), *idents*(nged), *wmater*(nged)
 
 
 [[author]]
