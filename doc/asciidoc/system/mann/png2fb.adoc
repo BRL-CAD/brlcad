@@ -4,35 +4,98 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-png2fb - send PNG (Portable Network Graphics) files to a framebuffer
+png2fb - load a PNG image into the current display framebuffer
 
 == SYNOPSIS
 
 [source]
 ----
-png2fb [options]
+png2fb [-H -i -c -v -z -1] [-m lines] [-g screen_gamma]
+       [-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]
+       [-S squarescrsize] [file.png]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *png2fb* command is used to send PNG (Portable Network Graphics) files to a framebuffer.
+The *png2fb* command reads a PNG (Portable Network Graphics) image file and displays it in the framebuffer of the current display manager. This overlays the rendered image on top of the MGED display.
+
+If no `file.png` is given, *png2fb* reads from standard input.
+
+This command requires the current display manager to have an associated framebuffer. If no framebuffer is available, an error is returned.
+
+=== Options
+
+*-H*::
+Use the framebuffer's hardware size rather than the PNG image's size for display dimensions.
+
+*-i*::
+Invert the image (flip vertically when reading from file).
+
+*-c*::
+Clear the framebuffer to black before displaying the image.
+
+*-v*::
+Verbose mode: print additional information while loading.
+
+*-z*::
+Zoom the image to fill the framebuffer.
+
+*-1*::
+Use a single line at a time for I/O (slower but uses less memory).
+
+*-m lines*::
+Read `lines` lines at a time from the PNG file (default: vary).
+
+*-g screen_gamma*::
+Apply the specified gamma correction value to the display.
+
+*-x file_xoff*::
+Horizontal offset (in pixels) into the PNG file to start reading.
+
+*-y file_yoff*::
+Vertical offset (in pixels) into the PNG file to start reading.
+
+*-X scr_xoff*::
+Horizontal offset on the framebuffer screen to begin writing.
+
+*-Y scr_yoff*::
+Vertical offset on the framebuffer screen to begin writing.
+
+*-S squarescrsize*::
+Set both the screen width and height to `squarescrsize` pixels.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *png2fb* command.
+.Display a PNG image in the framebuffer
 [example]
 ====
-mged> **png2fb**
+mged> **png2fb render.png**
 
-Sends a PNG file to the framebuffer.
+Loads `render.png` into the current display framebuffer.
 ====
+
+.Clear framebuffer and display at an offset
+[example]
+====
+mged> **png2fb -c -X 100 -Y 50 overlay.png**
+
+Clears the framebuffer, then displays `overlay.png` starting at screen position (100, 50).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*fbclear*(nged), *screengrab*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
