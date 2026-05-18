@@ -4,35 +4,50 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-rtabort - abort the associated raytraces
+rtabort - terminate all active raytrace subprocess(es)
 
 == SYNOPSIS
 
 [source]
 ----
-rtabort [options]
+rtabort
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-The *rtabort* command is used to abort the associated raytraces.
+The *rtabort* command terminates any currently running raytrace subprocesses launched from the current MGED session. This includes processes started by *rt*, *rtwizard*, *art*, and *rtcheck*.
+
+The command takes no arguments. It scans the list of active subprocesses, identifies those whose executable name matches one of the raytrace programs, and sends a termination signal to each one. Each process is also marked as aborted in the session state.
+
+If no raytrace subprocesses are currently running, *rtabort* returns without error.
+
+NOTE: *rtabort* only affects raytrace subprocesses started in the current session. It does not affect rt processes started from a separate shell or another MGED session.
 
 [[examples]]
 == EXAMPLES
 
-.Basic usage of the *rtabort* command.
+.Abort an active raytrace
 [example]
 ====
+mged> **rt -o output.png scene.g assembly.c**
 mged> **rtabort**
 
-Aborts the associated raytraces.
+Launches an `rt` raytrace in the background, then immediately terminates it with `rtabort`.
 ====
+
+[[see_also]]
+== SEE ALSO
+
+*rt*(nged), *rtwizard*(nged), *rtcheck*(nged)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
 
 [[bug_reports]]
 == BUG REPORTS
