@@ -1493,6 +1493,9 @@ OVERLAP TOOLS
 
 * implement an overlap reporting function (boolean and volume)
 
+* implement adjacent object detection in gqa -- find objects that are
+  within a specified tolerance of optionally specified object(s).
+
 * have gqa calculate the volume of overlapping regions, not just
   shotline overlap distances.  that will allow output to be sorted by
   volumetrically significant regions and should eliminate a common
