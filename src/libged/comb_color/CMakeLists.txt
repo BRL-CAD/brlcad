@@ -7,7 +7,6 @@ ged_plugin_library(ged-comb_color
 
 cmakefiles(
   CMakeLists.txt
-  comb_color.c
 )
 
 # Local Variables:

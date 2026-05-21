@@ -7,7 +7,6 @@ ged_plugin_library(ged-set_output_script
 
 cmakefiles(
   CMakeLists.txt
-  set_output_script.c
 )
 
 # Local Variables:

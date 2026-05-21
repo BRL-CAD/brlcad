@@ -7,7 +7,6 @@ ged_plugin_library(ged-color
 
 cmakefiles(
   CMakeLists.txt
-  color.c
 )
 
 # Local Variables:

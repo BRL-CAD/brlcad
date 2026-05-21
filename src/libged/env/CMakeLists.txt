@@ -25,7 +25,6 @@ ged_plugin_library(ged-env
 
 cmakefiles(
   CMakeLists.txt
-  env.c
 )
 
 # Local Variables:

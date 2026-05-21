@@ -7,7 +7,6 @@ ged_plugin_library(ged-scale
 
 cmakefiles(
   CMakeLists.txt
-  scale.c
 )
 
 # Local Variables:

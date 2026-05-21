@@ -7,7 +7,6 @@ ged_plugin_library(ged-attr
 
 cmakefiles(
   CMakeLists.txt
-  attr.cpp
 )
 
 # Local Variables:

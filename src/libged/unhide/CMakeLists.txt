@@ -7,7 +7,6 @@ ged_plugin_library(ged-unhide
 
 cmakefiles(
   CMakeLists.txt
-  unhide.c
 )
 
 # Local Variables:

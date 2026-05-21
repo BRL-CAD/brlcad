@@ -7,7 +7,6 @@ ged_plugin_library(ged-bev
 
 cmakefiles(
   CMakeLists.txt
-  bev.c
 )
 
 # Local Variables:

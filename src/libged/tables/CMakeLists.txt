@@ -7,7 +7,6 @@ ged_plugin_library(ged-tables
 
 cmakefiles(
   CMakeLists.txt
-  tables.c
 )
 
 # Local Variables:

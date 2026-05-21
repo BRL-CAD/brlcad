@@ -7,7 +7,6 @@ ged_plugin_library(ged-orotate
 
 cmakefiles(
   CMakeLists.txt
-  orotate.c
 )
 
 # Local Variables:

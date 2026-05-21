@@ -7,7 +7,6 @@ ged_plugin_library(ged-pathsum
 
 cmakefiles(
   CMakeLists.txt
-  pathsum.c
 )
 
 # Local Variables:

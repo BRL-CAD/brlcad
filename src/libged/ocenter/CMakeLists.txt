@@ -7,7 +7,6 @@ ged_plugin_library(ged-ocenter
 
 cmakefiles(
   CMakeLists.txt
-  ocenter.c
 )
 
 # Local Variables:

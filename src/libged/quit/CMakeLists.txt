@@ -7,7 +7,6 @@ ged_plugin_library(ged-quit
 
 cmakefiles(
   CMakeLists.txt
-  quit.cpp
 )
 
 # Local Variables:

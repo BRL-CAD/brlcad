@@ -8,7 +8,6 @@ ged_plugin_library(ged-solid_report
 
 cmakefiles(
   CMakeLists.txt
-  solid_report.c
 )
 
 # Local Variables:

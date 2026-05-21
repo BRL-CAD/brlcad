@@ -7,7 +7,6 @@ ged_plugin_library(ged-decompose
 
 cmakefiles(
   CMakeLists.txt
-  decompose.c
 )
 
 # Local Variables:

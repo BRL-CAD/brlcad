@@ -7,7 +7,6 @@ ged_plugin_library(ged-solids_on_ray
 
 cmakefiles(
   CMakeLists.txt
-  solids_on_ray.c
 )
 
 # Local Variables:

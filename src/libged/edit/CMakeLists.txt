@@ -37,7 +37,6 @@ ged_plugin_library(ged-edit
 
 cmakefiles(
   CMakeLists.txt
-  ${edit_srcs}
   ged_edit.h
   uri.hh
 )

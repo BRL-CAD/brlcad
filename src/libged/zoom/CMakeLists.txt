@@ -7,7 +7,6 @@ ged_plugin_library(ged-zoom
 
 cmakefiles(
   CMakeLists.txt
-  zoom.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-pathlist
 
 cmakefiles(
   CMakeLists.txt
-  pathlist.c
 )
 
 # Local Variables:

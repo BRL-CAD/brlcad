@@ -7,7 +7,6 @@ ged_plugin_library(ged-gqa
 
 cmakefiles(
   CMakeLists.txt
-  gqa.cpp
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-coil
 
 cmakefiles(
   CMakeLists.txt
-  coil.c
 )
 
 # Local Variables:

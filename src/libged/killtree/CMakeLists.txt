@@ -7,7 +7,6 @@ ged_plugin_library(ged-killtree
 
 cmakefiles(
   CMakeLists.txt
-  killtree.c
 )
 
 # Local Variables:

@@ -39,7 +39,6 @@ ged_plugin_library(ged-view
 
 cmakefiles(
   CMakeLists.txt
-  ${VIEW_SRCS}
   ged_view.h
   faceplate/faceplate.h
 )

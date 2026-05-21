@@ -7,7 +7,6 @@ ged_plugin_library(ged-rtwizard
 
 cmakefiles(
   CMakeLists.txt
-  rtwizard.c
 )
 
 # Local Variables:

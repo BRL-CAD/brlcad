@@ -7,7 +7,6 @@ ged_plugin_library(ged-garbage_collect
 
 cmakefiles(
   CMakeLists.txt
-  garbage_collect.cpp
 )
 
 # Local Variables:

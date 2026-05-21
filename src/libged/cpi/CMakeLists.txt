@@ -7,7 +7,6 @@ ged_plugin_library(ged-cpi
 
 cmakefiles(
   CMakeLists.txt
-  cpi.c
 )
 
 # Local Variables:

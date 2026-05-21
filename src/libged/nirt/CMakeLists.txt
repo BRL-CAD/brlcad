@@ -7,7 +7,6 @@ ged_plugin_library(ged-nirt
 
 cmakefiles(
   CMakeLists.txt
-  nirt.cpp
 )
 
 # Local Variables:

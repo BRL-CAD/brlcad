@@ -7,7 +7,6 @@ ged_plugin_library(ged-dir2ae
 
 cmakefiles(
   CMakeLists.txt
-  dir2ae.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-metaball
 
 cmakefiles(
   CMakeLists.txt
-  metaball.c
 )
 
 # Local Variables:

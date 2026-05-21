@@ -12,8 +12,6 @@ ged_plugin_library(ged-erase
 
 cmakefiles(
   CMakeLists.txt
-  erase.c
-  erase2.cpp
 )
 
 # Local Variables:

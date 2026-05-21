@@ -7,7 +7,6 @@ ged_plugin_library(ged-vdraw
 
 cmakefiles(
   CMakeLists.txt
-  vdraw.c
 )
 
 # Local Variables:

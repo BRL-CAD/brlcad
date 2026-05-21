@@ -7,7 +7,6 @@ ged_plugin_library(ged-bb
 
 cmakefiles(
   CMakeLists.txt
-  bb.c
 )
 
 # Local Variables:

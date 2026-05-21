@@ -17,7 +17,6 @@ ged_plugin_library(ged-draw
 cmakefiles(
   CMakeLists.txt
   ged_draw.h
-  ${DRAW_SRCS}
 )
 
 # Local Variables:

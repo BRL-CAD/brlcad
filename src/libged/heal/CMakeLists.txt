@@ -7,7 +7,6 @@ ged_plugin_library(ged-heal
 
 cmakefiles(
   CMakeLists.txt
-  heal.c
 )
 
 # Local Variables:

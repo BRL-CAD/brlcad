@@ -7,7 +7,6 @@ ged_plugin_library(ged-mirror
 
 cmakefiles(
   CMakeLists.txt
-  mirror.c
 )
 
 # Local Variables:

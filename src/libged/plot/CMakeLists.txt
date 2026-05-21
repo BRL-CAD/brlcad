@@ -7,7 +7,6 @@ ged_plugin_library(ged-plot
 
 cmakefiles(
   CMakeLists.txt
-  plot.c
 )
 
 # Local Variables:

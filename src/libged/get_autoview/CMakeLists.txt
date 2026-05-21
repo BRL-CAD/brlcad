@@ -7,7 +7,6 @@ ged_plugin_library(ged-get_autoview
 
 cmakefiles(
   CMakeLists.txt
-  get_autoview.c
 )
 
 # Local Variables:

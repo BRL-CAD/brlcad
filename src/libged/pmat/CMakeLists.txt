@@ -7,7 +7,6 @@ ged_plugin_library(ged-pmat
 
 cmakefiles(
   CMakeLists.txt
-  pmat.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-edcodes
 
 cmakefiles(
   CMakeLists.txt
-  edcodes.c
 )
 
 # Local Variables:

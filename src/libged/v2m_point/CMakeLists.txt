@@ -7,7 +7,6 @@ ged_plugin_library(ged-v2m_point
 
 cmakefiles(
   CMakeLists.txt
-  v2m_point.c
 )
 
 # Local Variables:

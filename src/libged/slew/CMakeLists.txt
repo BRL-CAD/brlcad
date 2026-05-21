@@ -7,7 +7,6 @@ ged_plugin_library(ged-slew
 
 cmakefiles(
   CMakeLists.txt
-  slew.c
 )
 
 # Local Variables:

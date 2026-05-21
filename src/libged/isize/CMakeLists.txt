@@ -7,7 +7,6 @@ ged_plugin_library(ged-isize
 
 cmakefiles(
   CMakeLists.txt
-  isize.c
 )
 
 # Local Variables:

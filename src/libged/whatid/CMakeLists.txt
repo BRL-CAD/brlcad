@@ -7,7 +7,6 @@ ged_plugin_library(ged-whatid
 
 cmakefiles(
   CMakeLists.txt
-  whatid.c
 )
 
 # Local Variables:

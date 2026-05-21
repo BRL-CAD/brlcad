@@ -7,7 +7,6 @@ ged_plugin_library(ged-grid2view_lu
 
 cmakefiles(
   CMakeLists.txt
-  grid2view_lu.c
 )
 
 # Local Variables:

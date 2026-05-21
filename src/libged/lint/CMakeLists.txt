@@ -18,7 +18,6 @@ ged_plugin_library(ged-lint
 
 cmakefiles(
   CMakeLists.txt
-  ${LINT_SRCS}
   ged_lint.h
 )
 

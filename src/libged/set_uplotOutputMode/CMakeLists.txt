@@ -7,7 +7,6 @@ ged_plugin_library(ged-set_uplotOutputMode
 
 cmakefiles(
   CMakeLists.txt
-  set_uplotOutputMode.c
 )
 
 # Local Variables:

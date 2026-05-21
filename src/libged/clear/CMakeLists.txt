@@ -7,7 +7,6 @@ ged_plugin_library(ged-clear
 
 cmakefiles(
   CMakeLists.txt
-  clear.cpp
 )
 
 # Local Variables:

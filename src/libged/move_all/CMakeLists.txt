@@ -7,7 +7,6 @@ ged_plugin_library(ged-move_all
 
 cmakefiles(
   CMakeLists.txt
-  move_all.c
 )
 
 # Local Variables:

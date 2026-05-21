@@ -7,7 +7,6 @@ ged_plugin_library(ged-overlay
 
 cmakefiles(
   CMakeLists.txt
-  overlay.c
 )
 
 # Local Variables:

@@ -74,7 +74,6 @@ endif()
 
 cmakefiles(
   CMakeLists.txt
-  ${BREP_SRCS}
   dplot_parser.lemon
   dplot_reader.c
   dplot_reader.h

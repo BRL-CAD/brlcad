@@ -7,7 +7,6 @@ ged_plugin_library(ged-edcomb
 
 cmakefiles(
   CMakeLists.txt
-  edcomb.c
 )
 
 # Local Variables:

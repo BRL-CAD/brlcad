@@ -12,7 +12,6 @@ ged_plugin_library(ged-zap
 
 cmakefiles(
   CMakeLists.txt
-  ${ZAP_SRCS}
 )
 
 # Local Variables:

@@ -11,7 +11,6 @@ ged_plugin_library(ged-stat
 
 cmakefiles(
   CMakeLists.txt
-  stat.cpp
 )
 
 # Local Variables:

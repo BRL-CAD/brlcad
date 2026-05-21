@@ -7,7 +7,6 @@ ged_plugin_library(ged-move_arb_face
 
 cmakefiles(
   CMakeLists.txt
-  move_arb_face.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-tire
 
 cmakefiles(
   CMakeLists.txt
-  tire.c
 )
 
 # Local Variables:

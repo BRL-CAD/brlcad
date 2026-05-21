@@ -7,7 +7,6 @@ ged_plugin_library(ged-oscale
 
 cmakefiles(
   CMakeLists.txt
-  oscale.c
 )
 
 # Local Variables:

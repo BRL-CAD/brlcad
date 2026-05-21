@@ -12,8 +12,6 @@ ged_plugin_library(ged-rtcheck
 
 cmakefiles(
   CMakeLists.txt
-  rtcheck.c
-  rtcheck2.cpp
 )
 
 # Local Variables:

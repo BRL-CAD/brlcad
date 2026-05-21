@@ -7,7 +7,6 @@ ged_plugin_library(ged-keypoint
 
 cmakefiles(
   CMakeLists.txt
-  keypoint.c
 )
 
 # Local Variables:

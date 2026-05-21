@@ -7,7 +7,6 @@ ged_plugin_library(ged-fb2pix
 
 cmakefiles(
   CMakeLists.txt
-  fb2pix.c
 )
 
 # Local Variables:

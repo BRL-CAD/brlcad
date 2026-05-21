@@ -27,7 +27,6 @@ ged_plugin_library(ged-graph
 
 cmakefiles(
   CMakeLists.txt
-  graph.cpp
 )
 
 # Local Variables:

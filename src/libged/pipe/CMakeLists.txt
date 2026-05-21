@@ -7,7 +7,6 @@ ged_plugin_library(ged-pipe
 
 cmakefiles(
   CMakeLists.txt
-  pipe.c
 )
 
 # Local Variables:

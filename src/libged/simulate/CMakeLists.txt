@@ -66,7 +66,6 @@ ged_plugin_library(ged-simulate
 
 cmakefiles(
   CMakeLists.txt
-  ${bullet_srcs}
   NOTES
   rt_collision_algorithm.hpp
   rt_collision_shape.hpp

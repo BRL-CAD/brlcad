@@ -7,7 +7,6 @@ ged_plugin_library(ged-typein
 
 cmakefiles(
   CMakeLists.txt
-  typein.c
 )
 
 # Local Variables:

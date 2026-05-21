@@ -7,7 +7,6 @@ ged_plugin_library(ged-rot_point
 
 cmakefiles(
   CMakeLists.txt
-  rot_point.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-importFg4Section
 
 cmakefiles(
   CMakeLists.txt
-  importFg4Section.c
 )
 
 # Local Variables:

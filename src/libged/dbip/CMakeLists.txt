@@ -7,7 +7,6 @@ ged_plugin_library(ged-dbip
 
 cmakefiles(
   CMakeLists.txt
-  dbip.c
 )
 
 # Local Variables:

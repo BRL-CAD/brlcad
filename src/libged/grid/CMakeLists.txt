@@ -7,7 +7,6 @@ ged_plugin_library(ged-grid
 
 cmakefiles(
   CMakeLists.txt
-  grid.c
 )
 
 # Local Variables:

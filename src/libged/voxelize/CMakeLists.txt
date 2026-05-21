@@ -7,7 +7,6 @@ ged_plugin_library(ged-voxelize
 
 cmakefiles(
   CMakeLists.txt
-  voxelize.c
 )
 
 # Local Variables:

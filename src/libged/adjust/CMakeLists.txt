@@ -7,7 +7,6 @@ ged_plugin_library(ged-adjust
 
 cmakefiles(
   CMakeLists.txt
-  adjust.c
 )
 
 # Local Variables:

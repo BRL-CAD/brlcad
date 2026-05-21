@@ -7,7 +7,6 @@ ged_plugin_library(ged-human
 
 cmakefiles(
   CMakeLists.txt
-  human.c
 )
 
 # Local Variables:

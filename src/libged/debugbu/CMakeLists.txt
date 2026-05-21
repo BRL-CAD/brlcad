@@ -7,7 +7,6 @@ ged_plugin_library(ged-debugbu
 
 cmakefiles(
   CMakeLists.txt
-  debugbu.c
 )
 
 # Local Variables:

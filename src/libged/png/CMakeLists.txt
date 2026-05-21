@@ -7,7 +7,6 @@ ged_plugin_library(ged-png
 
 cmakefiles(
   CMakeLists.txt
-  png.c
 )
 
 # Local Variables:

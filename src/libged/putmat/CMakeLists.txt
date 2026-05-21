@@ -7,7 +7,6 @@ ged_plugin_library(ged-putmat
 
 cmakefiles(
   CMakeLists.txt
-  putmat.c
 )
 
 # Local Variables:

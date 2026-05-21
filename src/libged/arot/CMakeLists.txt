@@ -7,7 +7,6 @@ ged_plugin_library(ged-arot
 
 cmakefiles(
   CMakeLists.txt
-  arot.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-shaded_mode
 
 cmakefiles(
   CMakeLists.txt
-  shaded_mode.c
 )
 
 # Local Variables:

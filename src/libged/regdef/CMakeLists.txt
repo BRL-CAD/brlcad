@@ -7,7 +7,6 @@ ged_plugin_library(ged-regdef
 
 cmakefiles(
   CMakeLists.txt
-  regdef.c
 )
 
 # Local Variables:

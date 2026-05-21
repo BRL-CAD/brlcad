@@ -7,7 +7,6 @@ ged_plugin_library(ged-sync
 
 cmakefiles(
   CMakeLists.txt
-  sync.c
 )
 
 # Local Variables:

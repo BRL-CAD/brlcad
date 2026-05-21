@@ -7,7 +7,6 @@ ged_plugin_library(ged-dsp
 
 cmakefiles(
   CMakeLists.txt
-  dsp.c
 )
 
 # Local Variables:

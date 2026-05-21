@@ -21,7 +21,6 @@ ged_plugin_library(ged-nmg
 
 cmakefiles(
   CMakeLists.txt
-  ${NMG_SRCS}
 )
 
 # Local Variables:

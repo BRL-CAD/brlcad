@@ -7,7 +7,6 @@ ged_plugin_library(ged-edmater
 
 cmakefiles(
   CMakeLists.txt
-  edmater.c
 )
 
 # Local Variables:

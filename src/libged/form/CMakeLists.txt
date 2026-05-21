@@ -7,7 +7,6 @@ ged_plugin_library(ged-form
 
 cmakefiles(
   CMakeLists.txt
-  form.c
 )
 
 # Local Variables:

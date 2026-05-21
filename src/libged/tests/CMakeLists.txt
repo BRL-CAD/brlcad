@@ -80,7 +80,6 @@ cmakefiles(
   obb_tests.g
   ged_tests.g
   pnts_in_out.g
-  ged_test_rm.c
 )
 
 cmakefiles(CMakeLists.txt)

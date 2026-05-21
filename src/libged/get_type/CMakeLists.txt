@@ -7,7 +7,6 @@ ged_plugin_library(ged-get_type
 
 cmakefiles(
   CMakeLists.txt
-  get_type.c
 )
 
 # Local Variables:

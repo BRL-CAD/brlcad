@@ -7,7 +7,6 @@ ged_plugin_library(ged-setview
 
 cmakefiles(
   CMakeLists.txt
-  setview.c
 )
 
 # Local Variables:

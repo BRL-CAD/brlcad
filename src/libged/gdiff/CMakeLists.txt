@@ -7,7 +7,6 @@ ged_plugin_library(ged-gdiff
 
 cmakefiles(
   CMakeLists.txt
-  gdiff.c
 )
 
 # Local Variables:

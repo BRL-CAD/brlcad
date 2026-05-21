@@ -12,8 +12,6 @@ ged_plugin_library(ged-lod
 
 cmakefiles(
   CMakeLists.txt
-  lod.c
-  lod2.cpp
 )
 
 # Local Variables:

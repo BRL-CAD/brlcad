@@ -20,7 +20,6 @@ ged_plugin_library(ged-analyze
 
 cmakefiles(
   CMakeLists.txt
-  ${analyze_srcs}
   ged_analyze.h
 )
 

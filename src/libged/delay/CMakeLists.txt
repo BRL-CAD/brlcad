@@ -7,7 +7,6 @@ ged_plugin_library(ged-delay
 
 cmakefiles(
   CMakeLists.txt
-  delay.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-rtabort
 
 cmakefiles(
   CMakeLists.txt
-  rtabort.c
 )
 
 # Local Variables:

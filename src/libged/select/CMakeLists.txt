@@ -12,7 +12,6 @@ ged_plugin_library(ged-select
 
 cmakefiles(
   CMakeLists.txt
-  ${SELECT_SRCS}
 )
 
 # Local Variables:

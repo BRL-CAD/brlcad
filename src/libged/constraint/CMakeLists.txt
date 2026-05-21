@@ -7,7 +7,6 @@ ged_plugin_library(ged-constraint
 
 cmakefiles(
   CMakeLists.txt
-  constraint.c
 )
 
 # Local Variables:

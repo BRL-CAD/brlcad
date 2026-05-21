@@ -7,7 +7,6 @@ ged_plugin_library(ged-showmats
 
 cmakefiles(
   CMakeLists.txt
-  showmats.c
 )
 
 # Local Variables:

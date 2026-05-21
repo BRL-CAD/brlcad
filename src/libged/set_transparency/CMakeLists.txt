@@ -7,7 +7,6 @@ ged_plugin_library(ged-set_transparency
 
 cmakefiles(
   CMakeLists.txt
-  set_transparency.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-sphgroup
 
 cmakefiles(
   CMakeLists.txt
-  sphgroup.c
 )
 
 # Local Variables:

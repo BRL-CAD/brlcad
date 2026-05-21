@@ -7,7 +7,6 @@ ged_plugin_library(ged-illum
 
 cmakefiles(
   CMakeLists.txt
-  illum.c
 )
 
 # Local Variables:

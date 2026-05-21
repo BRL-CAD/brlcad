@@ -7,7 +7,6 @@ ged_plugin_library(ged-concat
 
 cmakefiles(
   CMakeLists.txt
-  concat.cpp
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-tops
 
 cmakefiles(
   CMakeLists.txt
-  tops.c
 )
 
 # Local Variables:

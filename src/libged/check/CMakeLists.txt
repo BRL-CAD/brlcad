@@ -22,7 +22,6 @@ ged_plugin_library(ged-check
 
 cmakefiles(
   CMakeLists.txt
-  ${CHECK_SRCS}
 )
 
 # Local Variables:

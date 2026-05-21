@@ -7,7 +7,6 @@ ged_plugin_library(ged-combmem
 
 cmakefiles(
   CMakeLists.txt
-  combmem.c
 )
 
 # Local Variables:

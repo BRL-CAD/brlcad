@@ -7,7 +7,6 @@ ged_plugin_library(ged-blast
 
 cmakefiles(
   CMakeLists.txt
-  blast.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-vrot
 
 cmakefiles(
   CMakeLists.txt
-  vrot.c
 )
 
 # Local Variables:

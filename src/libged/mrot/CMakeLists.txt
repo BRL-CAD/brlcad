@@ -7,7 +7,6 @@ ged_plugin_library(ged-mrot
 
 cmakefiles(
   CMakeLists.txt
-  mrot.c
 )
 
 # Local Variables:

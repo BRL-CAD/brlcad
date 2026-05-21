@@ -13,7 +13,6 @@ ged_plugin_library(ged-dm
 
 cmakefiles(
   CMakeLists.txt
-  ${DM_SRCS}
 )
 
 # Local Variables:

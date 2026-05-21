@@ -7,7 +7,6 @@ ged_plugin_library(ged-perspective
 
 cmakefiles(
   CMakeLists.txt
-  perspective.c
 )
 
 # Local Variables:

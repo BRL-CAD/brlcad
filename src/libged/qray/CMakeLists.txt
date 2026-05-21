@@ -7,7 +7,6 @@ ged_plugin_library(ged-qray
 
 cmakefiles(
   CMakeLists.txt
-  qray.c
 )
 
 # Local Variables:

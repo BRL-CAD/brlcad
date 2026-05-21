@@ -7,7 +7,6 @@ ged_plugin_library(ged-get_eyemodel
 
 cmakefiles(
   CMakeLists.txt
-  get_eyemodel.c
 )
 
 # Local Variables:

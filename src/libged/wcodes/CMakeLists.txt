@@ -7,7 +7,6 @@ ged_plugin_library(ged-wcodes
 
 cmakefiles(
   CMakeLists.txt
-  wcodes.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-copymat
 
 cmakefiles(
   CMakeLists.txt
-  copymat.c
 )
 
 # Local Variables:

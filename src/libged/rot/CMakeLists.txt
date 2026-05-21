@@ -12,7 +12,6 @@ ged_plugin_library(ged-rot
 
 cmakefiles(
   CMakeLists.txt
-  ${rot_srcs}
 )
 
 # Local Variables:

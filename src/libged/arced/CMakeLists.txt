@@ -7,7 +7,6 @@ ged_plugin_library(ged-arced
 
 cmakefiles(
   CMakeLists.txt
-  arced.c
 )
 
 # Local Variables:

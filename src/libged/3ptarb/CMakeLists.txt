@@ -8,7 +8,6 @@ ged_plugin_library(ged-3ptarb
 
 cmakefiles(
   CMakeLists.txt
-  3ptarb.c
 )
 
 # Local Variables:

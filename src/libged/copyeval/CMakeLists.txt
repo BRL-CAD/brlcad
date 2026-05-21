@@ -7,7 +7,6 @@ ged_plugin_library(ged-copyeval
 
 cmakefiles(
   CMakeLists.txt
-  copyeval.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-otranslate
 
 cmakefiles(
   CMakeLists.txt
-  otranslate.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-material
 
 cmakefiles(
   CMakeLists.txt
-  material.c
 )
 
 # Local Variables:

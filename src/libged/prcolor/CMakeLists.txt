@@ -7,7 +7,6 @@ ged_plugin_library(ged-prcolor
 
 cmakefiles(
   CMakeLists.txt
-  prcolor.c
 )
 
 # Local Variables:

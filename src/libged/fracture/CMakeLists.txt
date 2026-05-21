@@ -7,7 +7,6 @@ ged_plugin_library(ged-fracture
 
 cmakefiles(
   CMakeLists.txt
-  fracture.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-wmater
 
 cmakefiles(
   CMakeLists.txt
-  wmater.c
 )
 
 # Local Variables:

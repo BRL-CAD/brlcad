@@ -13,7 +13,6 @@ ged_plugin_library(ged-who
 
 cmakefiles(
   CMakeLists.txt
-  ${WHO_SRCS}
 )
 
 # Local Variables:

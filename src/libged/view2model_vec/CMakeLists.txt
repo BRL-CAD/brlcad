@@ -7,7 +7,6 @@ ged_plugin_library(ged-view2model_vec
 
 cmakefiles(
   CMakeLists.txt
-  view2model_vec.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-killall
 
 cmakefiles(
   CMakeLists.txt
-  killall.c
 )
 
 # Local Variables:

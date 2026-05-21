@@ -7,7 +7,6 @@ ged_plugin_library(ged-label
 
 cmakefiles(
   CMakeLists.txt
-  label.c
 )
 
 # Local Variables:

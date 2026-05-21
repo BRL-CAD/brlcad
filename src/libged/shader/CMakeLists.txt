@@ -7,7 +7,6 @@ ged_plugin_library(ged-shader
 
 cmakefiles(
   CMakeLists.txt
-  shader.c
 )
 
 # Local Variables:

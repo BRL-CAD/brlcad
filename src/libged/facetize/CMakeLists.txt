@@ -44,8 +44,6 @@ cmakefiles(
   old_facetize.h
   subprocess.h
   TODO
-  ${FACETIZE_SRCS}
-  ${OLD_FACETIZE_SRCS}
 )
 
 # Local Variables:

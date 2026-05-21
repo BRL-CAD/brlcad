@@ -7,7 +7,6 @@ ged_plugin_library(ged-fbclear
 
 cmakefiles(
   CMakeLists.txt
-  fbclear.c
 )
 
 # Local Variables:

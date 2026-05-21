@@ -7,7 +7,6 @@ ged_plugin_library(ged-killrefs
 
 cmakefiles(
   CMakeLists.txt
-  killrefs.c
 )
 
 # Local Variables:

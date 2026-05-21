@@ -35,7 +35,6 @@ ged_plugin_library(ged-debug
 
 cmakefiles(
   CMakeLists.txt
-  debug.cpp
 )
 
 # Local Variables:

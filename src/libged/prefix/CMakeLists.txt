@@ -7,7 +7,6 @@ ged_plugin_library(ged-prefix
 
 cmakefiles(
   CMakeLists.txt
-  prefix.c
 )
 
 # Local Variables:

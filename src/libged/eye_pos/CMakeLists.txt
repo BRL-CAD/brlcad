@@ -7,7 +7,6 @@ ged_plugin_library(ged-eye_pos
 
 cmakefiles(
   CMakeLists.txt
-  eye_pos.c
 )
 
 # Local Variables:

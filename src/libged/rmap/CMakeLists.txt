@@ -7,7 +7,6 @@ ged_plugin_library(ged-rmap
 
 cmakefiles(
   CMakeLists.txt
-  rmap.c
 )
 
 # Local Variables:

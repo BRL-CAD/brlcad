@@ -7,7 +7,6 @@ ged_plugin_library(ged-orient
 
 cmakefiles(
   CMakeLists.txt
-  orient.c
 )
 
 # Local Variables:

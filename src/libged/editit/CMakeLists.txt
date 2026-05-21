@@ -7,7 +7,6 @@ ged_plugin_library(ged-editit
 
 cmakefiles(
   CMakeLists.txt
-  editit.c
 )
 
 # Local Variables:

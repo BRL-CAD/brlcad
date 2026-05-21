@@ -7,7 +7,6 @@ ged_plugin_library(ged-pnts
 
 cmakefiles(
   CMakeLists.txt
-  pnts.cpp
 )
 
 # Local Variables:

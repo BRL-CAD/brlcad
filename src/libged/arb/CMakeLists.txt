@@ -9,7 +9,6 @@ ged_plugin_library(ged-arb
 
 cmakefiles(
   CMakeLists.txt
-  ${arb_srcs}
 )
 
 # Local Variables:

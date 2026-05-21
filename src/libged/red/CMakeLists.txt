@@ -7,7 +7,6 @@ ged_plugin_library(ged-red
 
 cmakefiles(
   CMakeLists.txt
-  red.c
 )
 
 # Local Variables:

@@ -7,7 +7,6 @@ ged_plugin_library(ged-hide
 
 cmakefiles(
   CMakeLists.txt
-  hide.c
 )
 
 # Local Variables:
