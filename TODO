@@ -51,6 +51,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* write meshing/remeshing/decimation guide
+
 * fix libanalyze.  it has turned into a seeming dumping ground with no
   design or naming consistency evident or documented, or at least
   extensive violations from the prevailing analyze_* naming prefix and
