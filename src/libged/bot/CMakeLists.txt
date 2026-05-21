@@ -85,6 +85,8 @@ ged_plugin_library(ged-bot
 
 cmakefiles(
   CMakeLists.txt
+  bot_flood_exterior.cpp
+  bot_openvdb.cpp
   bot_openvdb.h
   concurrentqueue.h
   dump/ged_bot_dump.h

@@ -161,7 +161,7 @@ function(ged_plugin_library name)
       _libged_accumulate_global(GED_COMMAND_ALL_SRCS "${wsf}")
 
       # If it exists, tell CMake about it
-      cmakefiles(${wsf})
+      cmakefiles(${sf})
     endif()
   endforeach()
 
