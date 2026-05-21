@@ -494,6 +494,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu;
     struct bu_ptbl kill_fus;
     int bad_ars = 0;
+    int open_seam_ars = 0;
     struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
@@ -540,25 +541,26 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 						 ELEMENTS_PER_VECT];
 	    if (!VNEAR_EQUAL(first_pt, last_pt, tol->dist)) {
 		bu_log("ARS: curve #%zu is not closed in 3D "
-		       "(first=(%g %g %g) last=(%g %g %g) dist=%g > tol=%g).\n"
-		       "\tThis ARS solid cannot be tessellated into a closed "
-		       "manifold mesh.\n"
-		       "\tThe source data has a seam discontinuity that makes "
-		       "it unsuitable for tessellation.\n",
+		       "(first=(%g %g %g) last=(%g %g %g) dist=%g > tol=%g).\n",
 		       i,
 		       V3ARGS(first_pt), V3ARGS(last_pt),
 		       DIST_PNT_PNT(first_pt, last_pt), tol->dist);
-		bad_ars = 1;
+		open_seam_ars = 1;
 	    }
 	}
     }
 
     if (bad_ars) {
 	bu_log("ARS tessellation skipped: solid has non-manifold geometry "
-	       "(backtracking curve or non-closed ring seam).\n"
+	       "(backtracking curve).\n"
 	       "\tThis ARS solid cannot produce a valid closed mesh and will "
 	       "not be tessellated.\n");
 	return -1;
+    }
+    if (open_seam_ars) {
+	bu_log("WARNING: This ARS solid has non-closed 3D ring seams.\n"
+		"\tTessellation will be attempted, but the result may not be a "
+		"closed manifold mesh (and incorrect).\n");
     }
 
     bu_ptbl_init(&kill_fus, 64, " &kill_fus");
