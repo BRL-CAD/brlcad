@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* document rt_db_get_internal() and any others like that in CHANGES.
+  will required careful consideration whether it's minimally-impacting
+  (or if we need to restore arg as a no-op to not break builds).
+
 * settle on sane gist quality defaults and/or implement quality knob
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
