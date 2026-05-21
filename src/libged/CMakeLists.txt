@@ -148,6 +148,8 @@ function(ged_plugin_library name)
     set(wsf ${sf})
     if(NOT EXISTS ${wsf})
       set(wsf ${CMAKE_CURRENT_SOURCE_DIR}/${sf})
+      file(REAL_PATH ${wsf} wsfr)
+      set(wsf ${wsfr})
     endif()
     if (EXISTS ${wsf})
       # Only files that exist at configure time can define libged commands for
@@ -157,6 +159,9 @@ function(ged_plugin_library name)
 	_libged_accumulate_global(GED_COMMAND_STATIC_SRCS "${wsf}")
       endif()
       _libged_accumulate_global(GED_COMMAND_ALL_SRCS "${wsf}")
+
+      # If it exists, tell CMake about it
+      cmakefiles(${wsf})
     endif()
   endforeach()
 
