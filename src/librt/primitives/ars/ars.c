@@ -625,15 +625,15 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		if ((fu = nmg_cmface(s, corners, 3)) == (struct faceuse *)0) {
 		    bu_log("rt_ars_tess() nmg_cmface failed, skipping face a[%zu][%zu]\n",
 			   i, j);
-		}
-
-		/* Associate vertex geometry, if new */
-		ASSOC_GEOM(0, 0, 0);
-		ASSOC_GEOM(1, 0, 1);
-		ASSOC_GEOM(2, 1, 1);
-		if (nmg_calc_face_g(fu, vlfree)) {
-		    bu_log("Degenerate face created, will kill it later\n");
-		    bu_ptbl_ins(&kill_fus, (long *)fu);
+		} else {
+		    /* Associate vertex geometry, if new */
+		    ASSOC_GEOM(0, 0, 0);
+		    ASSOC_GEOM(1, 0, 1);
+		    ASSOC_GEOM(2, 1, 1);
+		    if (nmg_calc_face_g(fu, vlfree)) {
+			bu_log("Degenerate face created, will kill it later\n");
+			bu_ptbl_ins(&kill_fus, (long *)fu);
+		    }
 		}
 	    }
 
@@ -656,15 +656,15 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		if ((fu = nmg_cmface(s, corners, 3)) == (struct faceuse *)0) {
 		    bu_log("rt_ars_tess() nmg_cmface failed, skipping face b[%zu][%zu]\n",
 			   i, j);
-		}
-
-		/* Associate vertex geometry, if new */
-		ASSOC_GEOM(0, 1, 0);
-		ASSOC_GEOM(1, 0, 0);
-		ASSOC_GEOM(2, 1, 1);
-		if (nmg_calc_face_g(fu, vlfree)) {
-		    bu_log("Degenerate face created, will kill it later\n");
-		    bu_ptbl_ins(&kill_fus, (long *)fu);
+		} else {
+		    /* Associate vertex geometry, if new */
+		    ASSOC_GEOM(0, 1, 0);
+		    ASSOC_GEOM(1, 0, 0);
+		    ASSOC_GEOM(2, 1, 1);
+		    if (nmg_calc_face_g(fu, vlfree)) {
+			bu_log("Degenerate face created, will kill it later\n");
+			bu_ptbl_ins(&kill_fus, (long *)fu);
+		    }
 		}
 	    }
 	}
@@ -678,6 +678,9 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	NMG_CK_FACEUSE(fu);
 	(void)nmg_kfu(fu);
     }
+
+    /* cleanup memory */
+    bu_ptbl_free(&kill_fus);
 
     /* ARS solids are often built with incorrect face normals.  Don't
      * depend on them to be correct.
