@@ -313,7 +313,8 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	if (P_GT_V(p, np)) continue;
 	break;
     }
-    BU_LIST_INSERT(&p->l, &np->l);
+    if (p)
+        BU_LIST_INSERT(&p->l, &np->l);
 
     if (nmg_debug & NMG_DEBUG_TRI && flatten_debug)
 	bu_log("transforming other vertexuses...\n");
@@ -1956,7 +1957,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, struct bu_li
      * find an existing vertex.
      */
     if (0) {
-	bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 0x%lx no cut found\n", (unsigned long)lu1);
+	bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 0x%lx no cut found\n", (unsigned long)(uintptr_t)lu1);
 	for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
 	    for (BU_LIST_FOR(eu_tmp, edgeuse, &lu_tmp->down_hd)) {
 		bu_log("nmg_triangulate_rm_holes(): lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
