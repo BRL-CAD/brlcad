@@ -85,7 +85,13 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
     /* don't return to ensure consistent null-termination behavior in following */
     (void)strlcat(dst, src, size);
 #else
-    (void)strncat(dst, src, size - dstsize - 1);
+    if (dstsize < size) {
+	size_t avail = size - dstsize - 1;
+	size_t copylen = (srcsize < avail) ? srcsize : avail;
+	if (copylen > 0) {
+	    memcpy(dst + dstsize, src, copylen);
+	}
+    }
 #endif
 
     /* be sure to null-terminate, contrary to strncat behavior */
