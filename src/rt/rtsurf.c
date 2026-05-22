@@ -20,7 +20,7 @@
  */
 /** @file rt/rtsurf.c
  *
- * Calculate exterior surface areas.
+ * Calculate exterior surface areas and volume.
  *
  * The general method involves generating a set of random points on
  * the bounding sphere, and sampling through those points via ray
@@ -36,12 +36,16 @@
  *
  * With this method, we could use hit points to estimate surface area
  * or solid segments to estimate volume.  Here, we're using the first
- * and last hit points to estimate exterior surface area.
+ * and last hit points to estimate exterior surface area and inner segments
+ * to estimate volume.
  *
  * = Examples =
  *
  * # Calculate area within 0.1% convergence (after 3+ iterations):
  * rtsurf file.g object
+ * 
+ * # Calculate area and volume within 0.1% convergence (after 3+ iterations):
+ * rtsurf -v file.g object
  *
  * # Calculate area using precisely 1M samples (1 iteration only):
  * rtsurf -n 1000000 file.g object
@@ -83,8 +87,6 @@
  *
  * Write command manual page
  *
- * Calculate volume
- *
  * Calculate exterior mesh (shrinkwrap)
  *
  * Integrate into libanalyze
@@ -120,6 +122,7 @@ struct options
     int makeGeometry; /** whether to write out geometry script to stdout */
     int printRegions; /** whether to print the full list of regions */
     int printGroups;  /** whether to print the full list of regions */
+    int volume;       /** whether to calculate the volume of the objects */
 };
 
 
@@ -332,6 +335,8 @@ points_on_sphere(size_t count, point_t pnts[], double radius, point_t center)
 }
 
 
+
+
 #if 0
 /* This is the former method that shot rays through the bounding
  * sphere center.  this attenuated areas based on the solid angle and
@@ -365,22 +370,52 @@ shuffle_points(point_t *points, size_t n)
 
 
 static void
-rays_through_point_pairs(struct ray *rays, size_t count, point_t pnts[])
+rays_through_point_pairs(struct ray *rays, size_t count, point_t pnts[], struct options* opts, double * total_hits_bs)
 {
     /* generate N/2 rays from an array of N points */
     shuffle_points(pnts, count);
 
     for (size_t i = 0; i < count; i += 2) {
-	/* from one point through another */
-	VMOVE(rays[i / 2].r_pt, pnts[i]);
-	VSUB2(rays[i / 2].r_dir, pnts[i + 1], pnts[i]);
+	    /* from one point through another */
+	    VMOVE(rays[i / 2].r_pt, pnts[i]);
+	    VSUB2(rays[i / 2].r_dir, pnts[i + 1], pnts[i]);
+
+
+        /*
+         * If we are estimating the volume, compute
+         * the length of the segment between the two points
+         * inside the bounding sphere.
+         */
+        if (opts->volume) {
+	        fastf_t curr_dist = DIST_PNT_PNT(pnts[i], pnts[i + 1]);
+            *total_hits_bs += curr_dist;
+        }
     }
 }
 
+// Function to generate sample points on the bounding sphere and shoot rays through them
+static struct ray*
+bounding_sphere_sampling(size_t samples, double radius, point_t center, struct options* opts, double* total_hits_bs)
+{
+    /* get sample points */
+    point_t* points = (point_t*)bu_calloc(samples, sizeof(point_t), "points");
+    points_on_sphere(samples, points, radius, center);
+
+    struct ray* rays = (struct ray*)bu_calloc(samples, sizeof(struct ray), "rays");
+
+    /* use the sample points twice to generate our set of sample rays */
+    rays_through_point_pairs(rays, samples, points, opts, total_hits_bs);
+    rays_through_point_pairs(rays + (samples / 2), samples, points, opts, total_hits_bs);
+
+    /* done with points, loaded into rays */
+    bu_free(points, "points");
+
+    return rays;
+}
 
 // Function to compute surface area using the Cauchy-Crofton formula
 static double
-compute_surface_area(int intersections, int lines, double radius)
+compute_surface_area(double intersections, double lines, double radius)
 {
     // surface area of sphere = 4*PI*r^2
     const double PROPORTIONALITY_CONSTANT = 4.0 * M_PI * radius * radius;
@@ -395,9 +430,29 @@ compute_surface_area(int intersections, int lines, double radius)
      * so we divide by 2 so it becomes a ratio of shots that hit to
      * shots that miss.
      */
-    double area = PROPORTIONALITY_CONSTANT * (double)intersections / ((double)lines * 2.0);
+    double area = PROPORTIONALITY_CONSTANT * intersections / (lines * 2.0);
 
     return area;
+}
+
+// Function to compute volume
+static double
+compute_volume(double segments_intersection, double all_segments, double radius)
+{
+    // volume of sphere = 4/3*PI*r^3
+    const double PROPORTIONALITY_CONSTANT = (4.0 / 3.0) * M_PI * radius * radius * radius;
+
+    if (all_segments == 0) {
+        return 0.0;
+    }
+
+    /*
+     * The volume is calculated taking the proportion of the segments inside the object
+     * over all the segments generated with Monte Carlo inside the bounding sphere.
+     */
+    double volume = PROPORTIONALITY_CONSTANT * (double)segments_intersection / (double)all_segments;
+
+    return volume;
 }
 
 
@@ -409,6 +464,7 @@ struct rtsurf_shootray_data {
     double hitrad;
     int makeGeometry;
     size_t *hitpairs;
+    int is_volume;
 };
 
 
@@ -421,25 +477,47 @@ sample_in_parallel(int id, void *data)
     double hitrad = pdata->hitrad;
     int makeGeometry = pdata->makeGeometry;
     size_t *hitpairs = pdata->hitpairs;
+    int is_volume = pdata->is_volume;
 
     // keep track of this iteration
     for (size_t i = pdata->start; i < pdata->end; ++i) {
-	/* can't struct copy because our ray is smaller than xray */
-	VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
-	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
+        /* can't struct copy because our ray is smaller than xray */
+        VMOVE(ap->a_ray.r_pt, rays[i].r_pt);
+        VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
 
-	if (makeGeometry) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
-	    printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
+        if (makeGeometry) {
+            bu_semaphore_acquire(BU_SEM_SYSCALL);
+            printf("in pnt.%zu.%zu.sph sph %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), hitrad * 1.25);
+            printf("in dir.%zu.%zu.rcc rcc %lf %lf %lf %lf %lf %lf %lf\nZ\n", (size_t)ap->a_dist, i, V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir), hitrad / 1.5);
+            bu_semaphore_release(BU_SEM_SYSCALL);
+        }
 
-	/* unitize before firing */
-	VUNITIZE(ap->a_ray.r_dir);
+        /* unitize before firing */
+        VUNITIZE(ap->a_ray.r_dir);
 
-	/* Shoot the ray. */
-	size_t hitit = rt_shootray(ap);
+        size_t hitit = 0;
+        struct partition* part;
+
+        /* Shoot the ray.
+         * If we are estimating the volume, retrieve the partition list
+         * containing the segments inside the volume of the object.
+         */
+        if (is_volume) {
+            part = rt_shootray_simple(ap, ap->a_ray.r_pt, ap->a_ray.r_dir);
+
+            // calculate the length of the segments
+            if (part != NULL) {
+                do {
+                    size_t length = part->pt_outhit->hit_dist - part->pt_inhit->hit_dist;
+                    hitit += length;
+
+                    part = part->pt_forw;
+                } while (part != NULL);
+            }
+        }
+        else {
+            hitit = rt_shootray(ap);
+        }
 
 	bu_semaphore_acquire(BU_SEM_GENERAL);
 	*hitpairs += hitit;
@@ -471,6 +549,7 @@ do_samples_in_parallel(struct application *ap, size_t samples, struct ray *rays,
         pdata[i].hitrad = hitrad;
         pdata[i].makeGeometry = makeGeometry;
         pdata[i].hitpairs = hitpairs;
+        pdata[i].is_volume = opts->volume;
     }
 
     // Execute in parallel
@@ -485,31 +564,19 @@ do_samples_in_parallel(struct application *ap, size_t samples, struct ray *rays,
 
 
 static size_t
-do_one_iteration(struct application *ap, size_t samples, point_t center, double radius, struct options *opts)
+do_one_iteration(struct application *ap, size_t samples, point_t center, double radius, struct options *opts, double * total_hits_bs)
 {
     int makeGeometry = opts->makeGeometry;
-
-    /* get sample points */
-    point_t *points = (point_t *)bu_calloc(samples, sizeof(point_t), "points");
-    points_on_sphere(samples, points, radius, center);
-
-    struct ray *rays = (struct ray *)bu_calloc(samples, sizeof(struct ray), "rays");
-
-    /* use the sample points twice to generate our set of sample rays */
-    rays_through_point_pairs(rays, samples, points);
-    rays_through_point_pairs(rays+(samples/2), samples, points);
-
-    /* done with points, loaded into rays */
-    bu_free(points, "points");
+    struct ray* rays = bounding_sphere_sampling(samples, radius, center, opts, total_hits_bs);
 
     // FIXME: for uniquely naming our hit spheres, but makes this not
     // threadsafe or isolated.
-    static size_t total_hitpairs = 0;
+    static size_t total_hits = 0;
 
     // DO IT.
-    size_t hitpairs = 0;
-    do_samples_in_parallel(ap, samples, rays, radius, opts, &hitpairs);
-    total_hitpairs += hitpairs;
+    size_t hits = 0;
+    do_samples_in_parallel(ap, samples, rays, radius, opts, &hits);
+    total_hits += hits;
 
     /* group them all for performance */
     if (makeGeometry) {
@@ -523,7 +590,7 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
 	    bu_vls_printf(&pntvp, " pnt.%zu.%zu.sph", (size_t)ap->a_dist, i);
 	    bu_vls_printf(&dirvp, " dir.%zu.%zu.rcc", (size_t)ap->a_dist, i);
 	}
-	for (size_t i = (total_hitpairs-hitpairs)*2; i < total_hitpairs*2; i++) {
+	for (size_t i = (total_hits-hits)*2; i < total_hits*2; i++) {
 	    bu_vls_printf(&hitvp, " hit.%zu.%zu.sph", (size_t)ap->a_dist, i);
 	}
 	printf("%s\nZ\n", bu_vls_cstr(&pntvp));
@@ -535,13 +602,20 @@ do_one_iteration(struct application *ap, size_t samples, point_t center, double 
     }
 
     /* sanity */
-    if (hitpairs > samples)
-	bu_log("WARNING: ray hitpairs (%zu) > samples (%zu)\n", hitpairs, samples);
+    if (opts->volume == 0) {
+        if (hits > samples)
+            bu_log("WARNING: ray hits (%zu) > samples (%zu)\n", hits, samples);
+    }
 
     /* done with our rays */
     bu_free(rays, "rays");
 
-    return hitpairs * 2; /* return # in + out hits */
+    if (opts->volume) {
+        return hits;
+    }
+    else {
+        return hits * 2; /* return # in + out hits */
+    }
 }
 
 
@@ -557,7 +631,9 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
     size_t iteration = 0;
 
     size_t total_samples = 0;
-    size_t total_hits = 0;
+    double total_hits = 0;          // if opts->volume is on, total_hits is the sum of lengths of each segment inside the inner object
+    double total_hits_bs = 0;   // if opts->volume is on, total_line_volume is the sum of lengths of each segment inside the bounding sphere 
+
 
     /* do exact count requested or start at 1000 and iterate */
     size_t curr_samples = (opts->samples > 0) ? (size_t)opts->samples : 1000;
@@ -576,36 +652,45 @@ do_iterations(struct application *ap, point_t center, double radius, struct opti
 
     /* run the loop assessment */
     do {
-	if (opts->samples > 0) {
-	    // do what we're told
-	    curr_samples = opts->samples;
-	} else {
-	    // increase samples every iteration by uneven factor to avoid sampling patterns
-	    curr_samples *= pow(1.5, iteration);
-	}
+        if (opts->samples > 0) {
+            // do what we're told
+            curr_samples = opts->samples;
+        }
+        else {
+            // increase samples every iteration by uneven factor to avoid sampling patterns
+            curr_samples *= pow(1.5, iteration);
+        }
 
-	/* we keep track of total hits and total lines so we don't
-	 * ignore previous work in the estimate calculation.  the hit
-	 * count includes both the in-hit and the out-hit separately.
-	 */
-	ap->a_dist = (fastf_t)iteration;
-	size_t hits = do_one_iteration(ap, curr_samples, center, radius, opts);
-	total_samples += curr_samples;
-	total_hits += hits;
+        /* we keep track of total hits and total lines so we don't
+         * ignore previous work in the estimate calculation.  the hit
+         * count includes both the in-hit and the out-hit separately.
+         */
+        ap->a_dist = (fastf_t)iteration;
+        size_t hits = do_one_iteration(ap, curr_samples, center, radius, opts, &total_hits_bs);
+        if (opts->volume == 0) {
+            total_samples += curr_samples;
+        }
+        total_hits += hits;
 
-	curr_estimate = compute_surface_area(total_hits, (double)total_samples, radius);
-	bu_log("Cauchy-Crofton Surface Area Estimate: (%zu hits / %zu lines) = %g mm^2\n", total_hits, (size_t)((double)total_samples), curr_estimate);
+        if (opts->volume) {
+            curr_estimate = compute_volume(total_hits, total_hits_bs, radius);
+            bu_log("Cauchy-Crofton Volume Estimate: (%zu hits length segments / %zu total length segments) = %g mm^3\n", (size_t)total_hits, (size_t)total_hits_bs, curr_estimate);
+        }
+        else {
+            curr_estimate = compute_surface_area(total_hits, (double)total_samples, radius);
+            bu_log("Cauchy-Crofton Surface Area Estimate: (%zu hits / %zu lines) = %g mm^2\n", (size_t)total_hits, (size_t)total_samples, curr_estimate);
+        }
 
-	// threshold-based exit checks for convergence after 3 iterations
-	curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
-	prev_percent = fabs((prev1_estimate - prev2_estimate) / prev2_estimate) * 100.0;
+        // threshold-based exit checks for convergence after 3 iterations
+        curr_percent = fabs((curr_estimate - prev1_estimate) / prev1_estimate) * 100.0;
+        prev_percent = fabs((prev1_estimate - prev2_estimate) / prev2_estimate) * 100.0;
 
-	// bu_log("cur%%=%g, prev%%=%g, iter=%zu\n", curr_percent, prev_percent, iteration);
+        // bu_log("cur%%=%g, prev%%=%g, iter=%zu\n", curr_percent, prev_percent, iteration);
 
-	// prep next iteration
-	prev2_estimate = prev1_estimate;
-	prev1_estimate = curr_estimate;
-	iteration++;
+        // prep next iteration
+        prev2_estimate = prev1_estimate;
+        prev1_estimate = curr_estimate;
+        iteration++;
 
     } while (threshold > 0 && (curr_percent > threshold || prev_percent > threshold));
 
@@ -643,7 +728,7 @@ regions_callback(const char *name, size_t hits, size_t lines, void* data)
     struct region_callback_data *rdata = (struct region_callback_data *)data;
     BU_ASSERT(rdata);
 
-    double area = compute_surface_area(hits, lines, rdata->radius);
+    double area = compute_surface_area((double)hits, (double)lines, rdata->radius);
 
     bu_log("\t%s\t(%zu hits / %zu lines) = %.1lf mm^2\n", name, hits, lines, area);
 }
@@ -655,23 +740,25 @@ materials_callback(int id, size_t hits, size_t lines, void* data)
     struct material_callback_data *mdata = (struct material_callback_data *)data;
     BU_ASSERT(mdata);
 
-    double area = compute_surface_area(hits, lines, mdata->radius);
+    double area = compute_surface_area((double)hits, (double)lines, mdata->radius);
 
     if (mdata->densities) {
-	const char *name = analyze_densities_name(mdata->densities, id);
-	if (name) {
-	    bu_log("\t%s\t(%zu hits / %zu lines) = %.1lf mm^2\n", name, hits, lines, area);
-	} else {
-	    bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
-	}
-    } else {
-	bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
+        const char* name = analyze_densities_name(mdata->densities, id);
+        if (name) {
+            bu_log("\t%s\t(%zu hits / %zu lines) = %.1lf mm^2\n", name, hits, lines, area);
+        }
+        else {
+            bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
+        }
+    }
+    else {
+        bu_log("\tMaterial %d\t(%zu hits / %zu lines) = %.1lf mm^2\n", id, hits, lines, area);
     }
 }
 
 
 static double
-estimate_surface_area(const char *db, const char *obj[], struct options *opts)
+estimate_geometry(const char *db, const char *obj[], struct options *opts)
 {
     BU_ASSERT(db && obj && opts);
 
@@ -692,40 +779,43 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 
     /* iterate until we converge on a solution */
     double area = do_iterations(&ap, center, radius, opts);
+    
+    /* Options only for surface estimate */
+    if (opts->volume == 0) {
+        if (opts->printRegions) {
+	        /* print out all regions */
+            bu_log("Area Estimate By Region:\n");
+	        struct region_callback_data rdata = {opts->samples, radius};
+	        rtsurf_iterate_regions(context, &regions_callback, &rdata);
+        }
 
-    if (opts->printRegions) {
-	/* print out all regions */
-	bu_log("Area Estimate By Region:\n");
-	struct region_callback_data rdata = {opts->samples, radius};
-	rtsurf_iterate_regions(context, &regions_callback, &rdata);
-    }
+        if (opts->printGroups) {
+	        /* print out all combs above regions */
+            bu_log("Area Estimate By Combination:\n");
+	        struct region_callback_data rdata = {opts->samples, radius};
+	        rtsurf_iterate_groups(context, &regions_callback, &rdata);
+        }
 
-    if (opts->printGroups) {
-	/* print out all combs above regions */
-	bu_log("Area Estimate By Combination:\n");
-	struct region_callback_data rdata = {opts->samples, radius};
-	rtsurf_iterate_groups(context, &regions_callback, &rdata);
-    }
+        /* print out areas per-region material */
+        if (opts->materials) {
+	        struct analyze_densities *densities = NULL;
+	        struct bu_mapped_file *dfile = NULL;
 
-    /* print out areas per-region material */
-    if (opts->materials) {
-	struct analyze_densities *densities = NULL;
-	struct bu_mapped_file *dfile = NULL;
+            bu_log("Area Estimate By Material:\n");
 
-	bu_log("Area Estimate By Material:\n");
+	        dfile = bu_open_mapped_file(opts->materials, "densities file");
+	        if (!dfile || !dfile->buf) {
+	            bu_log("WARNING: could not open density file [%s]\n", opts->materials);
+	        } else {
+	            (void)analyze_densities_create(&densities);
+	            (void)analyze_densities_load(densities, (const char *)dfile->buf, NULL, NULL);
+	            bu_close_mapped_file(dfile);
+	        }
 
-	dfile = bu_open_mapped_file(opts->materials, "densities file");
-	if (!dfile || !dfile->buf) {
-	    bu_log("WARNING: could not open density file [%s]\n", opts->materials);
-	} else {
-	    (void)analyze_densities_create(&densities);
-	    (void)analyze_densities_load(densities, (const char *)dfile->buf, NULL, NULL);
-	    bu_close_mapped_file(dfile);
-	}
-
-	struct material_callback_data mdata = {densities, opts->samples, radius};
-	rtsurf_iterate_materials(context, &materials_callback, &mdata);
-	analyze_densities_destroy(densities);
+	        struct material_callback_data mdata = {densities, opts->samples, radius};
+	        rtsurf_iterate_materials(context, &materials_callback, &mdata);
+	        analyze_densities_destroy(densities);
+        }
     }
 
     /* release our raytracing instance and counters */
@@ -740,7 +830,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 static void
 get_options(int argc, char *argv[], struct options *opts)
 {
-    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] [-o] model.g objects...\n";
+    static const char *usage = "Usage: %s [-g] [-r] [-v] [-n #samples] [-t %%threshold] [-m density.txt] [-o] model.g objects...\n";
 
     const char *argv0 = argv[0];
     const char *db = NULL;
@@ -756,7 +846,7 @@ get_options(int argc, char *argv[], struct options *opts)
     bu_optind = 1;
 
     int c;
-    while ((c = bu_getopt(argc, (char * const *)argv, "grcn:t:m:oh?")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "vgrcn:t:m:oh?")) != -1) {
 	if (bu_optopt == '?')
 	    c = 'h';
 
@@ -785,6 +875,10 @@ get_options(int argc, char *argv[], struct options *opts)
 		if (opts)
 		    opts->samples = (size_t)strtol(bu_optarg, NULL, 10);
 		break;
+        case 'v':
+        if (opts)
+            opts->volume = 1;
+        break;
 	    case '?':
 	    case 'h':
 		/* asking for help */
@@ -831,6 +925,7 @@ main(int argc, char *argv[])
     opts.printRegions = 0;
     opts.printGroups = 0;
     opts.radius = 0.0;
+    opts.volume = 0;
 
     char *db = NULL;
     char **obj = NULL;
@@ -844,9 +939,22 @@ main(int argc, char *argv[])
     bu_log(" db is %s\n", db);
     bu_log(" obj[0] is %s\n", obj[0]);
 
-    double estimate = estimate_surface_area(db, (const char **)obj, &opts);
+    /* Save the option of calculating volume for later */
+    int volume = opts.volume;
+    opts.volume = 0;
 
+    /* Calculate surface area */
+    double estimate = estimate_geometry(db, (const char **)obj, &opts);
     bu_log("Estimated exterior surface area: %.1lf\n", estimate);
+
+    /* Calculate volume */
+    if (volume) {
+        opts.volume = 1;
+
+        double estimate = estimate_geometry(db, (const char**)obj, &opts);
+        bu_log("Estimated volume: %.1lf\n", estimate);
+    }
+
 
     return 0;
 }
