@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+* new mged 'near' command to find proximity objects - Sean Morrison
 * fixed sketch/view polygon coordinate offsets - Cliff Yapp
 * added new manual pages for over 110 GED commands - Sean Morrison
 * improved facetize tolerance and coplanar face handling - Cliff Yapp
