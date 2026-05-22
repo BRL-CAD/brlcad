@@ -108,6 +108,8 @@ set(
   docker/dev/Dockerfile
   docker/dev/README.md
   docker/dev/startup
+  example/cmake_consumer/CMakeLists.txt
+  example/cmake_consumer/main.c
   flawfinder
   hawaii_islands.sh
   jove.emacs

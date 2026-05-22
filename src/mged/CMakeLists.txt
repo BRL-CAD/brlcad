@@ -69,6 +69,7 @@ set(
   libwdb
   libdm
   libnmg
+  Threads::Threads
   ${WS2_32_LIBRARY}
   ${OPENGL32_LIBRARY}
 )

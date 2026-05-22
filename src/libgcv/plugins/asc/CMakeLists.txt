@@ -1,7 +1,7 @@
 set(ASC_SRCS asc.cpp asc_v4.cpp asc_v5.cpp)
 
 gcv_plugin_library(gcv-asc SHARED ${ASC_SRCS})
-target_link_libraries(gcv-asc libwdb librt libbu)
+target_link_libraries(gcv-asc libwdb librt libbu ${WINSOCK_LIB})
 set_property(TARGET gcv-asc APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 validate_style(gcv-asc "${ASC_SRCS}")
 plugin_setup(gcv-asc gcv)

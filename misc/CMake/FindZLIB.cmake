@@ -78,6 +78,11 @@ set(
   zlib
   zdll
   zlib1
+)
+set(
+  ZLIB_NAMES_DEBUG
+  z_brld
+  zd
   zlibd
   zlibd1
 )
@@ -85,10 +90,49 @@ set(
 # Try each search configuration.
 foreach(search ${_ZLIB_SEARCHES})
   find_path(ZLIB_INCLUDE_DIR NAMES zlib.h ${${search}} PATH_SUFFIXES include)
-  find_library(ZLIB_LIBRARY NAMES ${ZLIB_NAMES} ${${search}} PATH_SUFFIXES lib)
 endforeach()
 
-mark_as_advanced(ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
+if(NOT ZLIB_LIBRARY)
+  if(WIN32)
+    if(DEFINED CMAKE_FIND_LIBRARY_PREFIXES)
+      set(_zlib_orig_prefixes "${CMAKE_FIND_LIBRARY_PREFIXES}")
+    else()
+      set(_zlib_orig_prefixes)
+    endif()
+    if(DEFINED CMAKE_FIND_LIBRARY_SUFFIXES)
+      set(_zlib_orig_suffixes "${CMAKE_FIND_LIBRARY_SUFFIXES}")
+    else()
+      set(_zlib_orig_suffixes)
+    endif()
+    list(APPEND CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
+    list(APPEND CMAKE_FIND_LIBRARY_SUFFIXES ".dll.a")
+  endif()
+
+  foreach(search ${_ZLIB_SEARCHES})
+    find_library(ZLIB_LIBRARY_RELEASE NAMES ${ZLIB_NAMES} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
+    find_library(ZLIB_LIBRARY_DEBUG NAMES ${ZLIB_NAMES_DEBUG} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
+  endforeach()
+
+  if(WIN32)
+    if(DEFINED _zlib_orig_suffixes)
+      set(CMAKE_FIND_LIBRARY_SUFFIXES "${_zlib_orig_suffixes}")
+    else()
+      set(CMAKE_FIND_LIBRARY_SUFFIXES)
+    endif()
+    if(DEFINED _zlib_orig_prefixes)
+      set(CMAKE_FIND_LIBRARY_PREFIXES "${_zlib_orig_prefixes}")
+    else()
+      set(CMAKE_FIND_LIBRARY_PREFIXES)
+    endif()
+    unset(_zlib_orig_prefixes)
+    unset(_zlib_orig_suffixes)
+  endif()
+
+  include(SelectLibraryConfigurations)
+  select_library_configurations(ZLIB)
+endif()
+
+mark_as_advanced(ZLIB_LIBRARY ZLIB_LIBRARY_RELEASE ZLIB_LIBRARY_DEBUG ZLIB_INCLUDE_DIR)
 
 if(ZLIB_INCLUDE_DIR AND EXISTS "${ZLIB_INCLUDE_DIR}/zlib.h")
   file(STRINGS "${ZLIB_INCLUDE_DIR}/zlib.h" ZLIB_H REGEX "^#define ZLIB_VERSION \"[^\"]*\"$")
@@ -117,13 +161,30 @@ find_package_handle_standard_args(ZLIB REQUIRED_VARS ZLIB_LIBRARY ZLIB_INCLUDE_D
 
 if(ZLIB_FOUND)
   set(ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR})
-  set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
+  if(NOT ZLIB_LIBRARIES)
+    set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
+  endif()
 
   if(NOT TARGET ZLIB::ZLIB)
-    add_library(ZLIB::ZLIB UNKNOWN IMPORTED)
+    add_library(ZLIB::ZLIB UNKNOWN IMPORTED GLOBAL)
     set_target_properties(
       ZLIB::ZLIB
-      PROPERTIES IMPORTED_LOCATION "${ZLIB_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${ZLIB_INCLUDE_DIRS}"
+      PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${ZLIB_INCLUDE_DIRS}"
     )
+
+    if(ZLIB_LIBRARY_RELEASE)
+      set_property(TARGET ZLIB::ZLIB APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+      set_target_properties(ZLIB::ZLIB PROPERTIES IMPORTED_LOCATION_RELEASE "${ZLIB_LIBRARY_RELEASE}")
+    endif()
+
+    if(ZLIB_LIBRARY_DEBUG)
+      set_property(TARGET ZLIB::ZLIB APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+      set_target_properties(ZLIB::ZLIB PROPERTIES IMPORTED_LOCATION_DEBUG "${ZLIB_LIBRARY_DEBUG}")
+    endif()
+
+    if(NOT ZLIB_LIBRARY_RELEASE AND NOT ZLIB_LIBRARY_DEBUG)
+      set_target_properties(ZLIB::ZLIB PROPERTIES IMPORTED_LOCATION "${ZLIB_LIBRARY}")
+    endif()
   endif()
 endif()

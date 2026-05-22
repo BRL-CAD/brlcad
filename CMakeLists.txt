@@ -604,6 +604,36 @@ if(MSVC)
   set(HIDE_INTERNAL_SYMBOLS_EXT 1)
 endif(MSVC)
 
+# Link-time checks used by BRL-CAD library validation.  These must be probed
+# before use so platforms without GNU/LLVM-style linker options are skipped.
+brlcad_check_linker_flag(C "LINKER:--no-undefined" BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND)
+brlcad_check_linker_flag(CXX "LINKER:--no-undefined" BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND)
+if(BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND AND BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND)
+  set(BRLCAD_LINKER_NO_UNDEFINED_FLAG "LINKER:--no-undefined" CACHE STRING "Linker flag requiring resolved shared library symbols" FORCE)
+endif()
+brlcad_check_linker_flags(C BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_C_FLAG_FOUND "LINKER:--whole-archive" "LINKER:--no-whole-archive")
+brlcad_check_linker_flags(CXX BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_CXX_FLAG_FOUND "LINKER:--whole-archive" "LINKER:--no-whole-archive")
+if(
+  BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_C_FLAG_FOUND
+  AND BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_CXX_FLAG_FOUND
+  AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang"
+)
+  # BRL-CAD's minimum CMake version is 3.22; CMake introduced
+  # LINK_LIBRARY:WHOLE_ARCHIVE in 3.24.  The option group is probed with
+  # CMake's LINKER: spelling above, but stored as raw link items so
+  # BRLCAD_ADDLIB can bracket one static archive on an executable link line.
+  # This branch is deliberately guarded to GNU/LLVM drivers, where LINKER:
+  # expands to -Wl, arguments.  When BRL-CAD raises its minimum CMake to 3.24+,
+  # this should be replaced with LINK_LIBRARY:WHOLE_ARCHIVE.
+  set(BRLCAD_LINKER_WHOLE_ARCHIVE_LINK_ITEM "-Wl,--whole-archive" CACHE STRING "Link item enabling whole-archive resolution" FORCE)
+  set(BRLCAD_LINKER_NO_WHOLE_ARCHIVE_LINK_ITEM "-Wl,--no-whole-archive" CACHE STRING "Link item disabling whole-archive resolution" FORCE)
+endif()
+mark_as_advanced(
+  BRLCAD_LINKER_NO_UNDEFINED_FLAG
+  BRLCAD_LINKER_WHOLE_ARCHIVE_LINK_ITEM
+  BRLCAD_LINKER_NO_WHOLE_ARCHIVE_LINK_ITEM
+)
+
 # check for -fno-strict-aliasing
 # XXX - THIS FLAG IS REQUIRED if any level of optimization is
 # enabled with GCC as we do use aliasing and type-punning.

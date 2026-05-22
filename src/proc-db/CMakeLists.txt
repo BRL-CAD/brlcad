@@ -5,28 +5,32 @@
 # until they reach a state where they provide some conceivable value
 # to an end user.  if a tool is fully developed, it should migrate to
 # src/shapes or some similar location.
-brlcad_addexec(bottest bottest.c libwdb NO_INSTALL)
-brlcad_addexec(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-brlcad_addexec(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
+set(PROC_DB_WDB_LIBS "libwdb;${M_LIBRARY}")
+set(PROC_DB_WDB_NMG_LIBS "libwdb;libnmg;${M_LIBRARY}")
+set(PROC_DB_WDB_OPENNURBS_LIBS "libwdb;OPENNURBS::OPENNURBS;${M_LIBRARY}")
+
+brlcad_addexec(bottest bottest.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
+brlcad_addexec(brep_cobb brep_cobb.cpp "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
+brlcad_addexec(brep_cube "brep_cube.cpp;twistedcube.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
 target_include_directories(brep_cube BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-brlcad_addexec(brep_invalid "brep_invalid.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-brlcad_addexec(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL) # NOTE: has manual page
+brlcad_addexec(brep_invalid "brep_invalid.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
+brlcad_addexec(brep_simple "brep_simple.cpp;twistedcube.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL) # NOTE: has manual page
 target_include_directories(brep_simple BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-brlcad_addexec(brep_surface "brep_surface.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-brlcad_addexec(brep_trimmed "brep_trimmed.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-brlcad_addexec(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-brlcad_addexec(csgbrep csgbrep.cpp "libwdb;libnmg" NO_STRICT NO_INSTALL)
-brlcad_addexec(donuts donuts.c "libwdb" NO_STRICT NO_INSTALL)
+brlcad_addexec(brep_surface "brep_surface.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
+brlcad_addexec(brep_trimmed "brep_trimmed.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
+brlcad_addexec(breplicator breplicator.cpp "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
+brlcad_addexec(csgbrep csgbrep.cpp "${PROC_DB_WDB_NMG_LIBS}" NO_STRICT NO_INSTALL)
+brlcad_addexec(donuts donuts.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(gtimes gtimes.c "libged;librt;libbu" NO_INSTALL)
-brlcad_addexec(nmgmodel nmgmodel.c "libwdb;libnmg" NO_INSTALL)
-brlcad_addexec(pipetest pipetest.c libwdb NO_INSTALL)
-brlcad_addexec(spltest spltest.c "libwdb;libnmg" NO_INSTALL)
-brlcad_addexec(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
+brlcad_addexec(nmgmodel nmgmodel.c "${PROC_DB_WDB_NMG_LIBS}" NO_INSTALL)
+brlcad_addexec(pipetest pipetest.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
+brlcad_addexec(spltest spltest.c "${PROC_DB_WDB_NMG_LIBS}" NO_INSTALL)
+brlcad_addexec(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
 target_include_directories(surfaceintersect BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-brlcad_addexec(tea_nmg tea_nmg.c "libwdb;libnmg" NO_INSTALL)
+brlcad_addexec(tea_nmg tea_nmg.c "${PROC_DB_WDB_NMG_LIBS}" NO_INSTALL)
 target_include_directories(tea_nmg BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 brlcad_addexec(tube tube.c "libwdb;libnmg;${M_LIBRARY}" NO_INSTALL)
-brlcad_addexec(wdb_example wdb_example.c libwdb NO_INSTALL) # NOTE: has manual page
+brlcad_addexec(wdb_example wdb_example.c "${PROC_DB_WDB_LIBS}" NO_INSTALL) # NOTE: has manual page
 
 # MORE THAN DEVELOPMENT TESTING
 #
@@ -38,31 +42,31 @@ brlcad_addexec(wdb_example wdb_example.c libwdb NO_INSTALL) # NOTE: has manual p
 # we still DO NOT INSTALL them because they do not have documentation
 # and impact our perceived quality and complexity.
 
-brlcad_addexec(brickwall brickwall.c libwdb NO_INSTALL)
+brlcad_addexec(brickwall brickwall.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(cchannel cchannel.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(clutter "clutter.c;common.c" "libwdb;${M_LIBRARY}" NO_INSTALL)
-brlcad_addexec(globe globe.c libwdb NO_INSTALL)
+brlcad_addexec(globe globe.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(kurt kurt.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(lens lens.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(masonry masonry.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(menger menger.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(metaball metaball.c "libwdb;${M_LIBRARY}" NO_INSTALL)
-brlcad_addexec(mkbuilding "mkbuilding.c;makebuilding/makebuilding.c" libwdb NO_INSTALL)
+brlcad_addexec(mkbuilding "mkbuilding.c;makebuilding/makebuilding.c" "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 target_include_directories(mkbuilding BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-brlcad_addexec(molecule molecule.c libwdb NO_INSTALL)
-brlcad_addexec(pdb-g pdb-g.cpp libwdb NO_INSTALL)
+brlcad_addexec(molecule molecule.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
+brlcad_addexec(pdb-g pdb-g.cpp "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(pipe pipe.c "libwdb;${M_LIBRARY}" NO_INSTALL)
-brlcad_addexec(pix2g pix2g.c libwdb NO_INSTALL)
+brlcad_addexec(pix2g pix2g.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(pyramid pyramid.c "libwdb;${M_LIBRARY}" NO_INSTALL)
-brlcad_addexec(ringworld ringworld.c libwdb NO_INSTALL)
-brlcad_addexec(sketch sketch.c libwdb NO_INSTALL)
+brlcad_addexec(ringworld ringworld.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
+brlcad_addexec(sketch sketch.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(sphflake sphflake.c "libwdb;${M_LIBRARY}" NO_INSTALL)
-brlcad_addexec(tea tea.c "libwdb;libnmg" NO_INSTALL)
+brlcad_addexec(tea tea.c "${PROC_DB_WDB_NMG_LIBS}" NO_INSTALL)
 target_include_directories(tea BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-brlcad_addexec(torii torii.c libwdb NO_INSTALL)
+brlcad_addexec(torii torii.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(vegetation vegetation.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 target_include_directories(vegetation BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-brlcad_addexec(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
+brlcad_addexec(wavy wavy.c "${PROC_DB_WDB_NMG_LIBS}" NO_INSTALL)
 
 set(proc-db_ignore_files
   3NN4.pdb

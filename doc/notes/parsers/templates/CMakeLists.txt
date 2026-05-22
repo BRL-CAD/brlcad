@@ -14,7 +14,9 @@ set(SOURCES ${PERPLEX_${PARSER}_scanner_OUTPUTS} ${LEMON_${PARSER}_parser_OUTPUT
 
 set(LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
-brlcad_addlib(lib${READER} "${SOURCES}" "librt;libbn;libbu" "" "${LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(lib${READER} "${SOURCES}" "" "${LOCAL_INCLUDE_DIRS}"
+  PUBLIC_LIBS librt libbn libbu
+)
 
 # Local Variables:
 # tab-width: 8

@@ -12,7 +12,11 @@ set(
 )
 
 # Note - libgcv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-brlcad_addlib(libgcv "${LIBGCV_SOURCES}" "${libgcv_deps}" "" "" SHARED_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
+brlcad_addlib(libgcv "${LIBGCV_SOURCES}" "" ""
+  SHARED_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}"
+  PUBLIC_LIBS ${libgcv_deps}
+  PRIVATE_LIBS ${M_LIBRARY}
+)
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set_property(
   SOURCE gcv.c

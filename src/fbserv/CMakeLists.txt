@@ -6,6 +6,7 @@ include_directories(${DM_INCLUDE_DIRS})
 find_package(OpenSSL QUIET)
 
 brlcad_addexec(fbserv "fbserv.c;server.c" libdm)
+target_link_libraries(fbserv ${WINSOCK_LIB})
 add_target_deps(fbserv dm_plugins)
 if(OpenSSL_FOUND OR OPENSSL_FOUND)
   target_link_libraries(fbserv OpenSSL::SSL OpenSSL::Crypto)

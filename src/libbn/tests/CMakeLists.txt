@@ -34,7 +34,7 @@ endforeach(srcfile ${bn_test_srcs})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
 configure_file(bn_test.c.in "${CMAKE_CURRENT_BINARY_DIR}/bn_test.c" @ONLY)
 distclean("${CMAKE_CURRENT_BINARY_DIR}/bn_test.c")
-brlcad_addexec(bn_test "${CMAKE_CURRENT_BINARY_DIR}/bn_test.c" libbn TEST)
+brlcad_addexec(bn_test "${CMAKE_CURRENT_BINARY_DIR}/bn_test.c" "libbn;${M_LIBRARY}" TEST)
 
 # Housekeeping for included source files
 cmakefiles(${bn_test_srcs})

@@ -1,7 +1,7 @@
 find_package_eigen(REQUIRED)
 brlcad_find_package(manifold REQUIRED)
 
-set(BOT_LIBS libged libbg libbu manifold::manifold)
+set(BOT_LIBS libged libbg libbu manifold::manifold ${WINSOCK_LIB})
 
 
 if(BRLCAD_ENABLE_OPENVDB)

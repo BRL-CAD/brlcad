@@ -35,7 +35,10 @@
 ###
 
 include(CheckCCompilerFlag)
+include(CheckCSourceCompiles)
 include(CheckCXXCompilerFlag)
+include(CheckCXXSourceCompiles)
+include(CheckLinkerFlag)
 include(CMakeParseArguments)
 include(CMakePushCheckState)
 
@@ -120,6 +123,40 @@ if(NOT COMMAND CHECK_COMPILER_FLAG)
     endif("${FLAG_LANG}" STREQUAL "CXX")
   endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 endif(NOT COMMAND CHECK_COMPILER_FLAG)
+
+# Purpose: test one linker flag using CMake's check_linker_flag helper and
+# return the supported/unsupported result to the caller.
+#   FLAG_LANG - C or CXX
+#   NEW_FLAG  - CMake LINK_OPTIONS spelling, for example LINKER:--no-undefined
+#   RESULTVAR - parent-scope variable receiving the boolean test result
+function(BRLCAD_CHECK_LINKER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
+  if("${FLAG_LANG}" STREQUAL "C")
+    check_linker_flag(C ${NEW_FLAG} ${RESULTVAR})
+  elseif("${FLAG_LANG}" STREQUAL "CXX")
+    check_linker_flag(CXX ${NEW_FLAG} ${RESULTVAR})
+  else()
+    message(FATAL_ERROR "Unsupported linker flag test language: ${FLAG_LANG}")
+  endif()
+  set(${RESULTVAR} ${${RESULTVAR}} PARENT_SCOPE)
+endfunction(BRLCAD_CHECK_LINKER_FLAG)
+
+# Test linker option groups that must be used together.
+#   FLAG_LANG - C or CXX
+#   RESULTVAR - parent-scope variable receiving the boolean test result
+#   ARGN      - linker options to test as a group, one option per argument
+function(BRLCAD_CHECK_LINKER_FLAGS FLAG_LANG RESULTVAR)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_LINK_OPTIONS ${ARGN})
+  if("${FLAG_LANG}" STREQUAL "C")
+    check_c_source_compiles("int main(void) { return 0; }" ${RESULTVAR})
+  elseif("${FLAG_LANG}" STREQUAL "CXX")
+    check_cxx_source_compiles("int main() { return 0; }" ${RESULTVAR})
+  else()
+    message(FATAL_ERROR "Unsupported linker flag group test language: ${FLAG_LANG}")
+  endif()
+  cmake_pop_check_state()
+  set(${RESULTVAR} ${${RESULTVAR}} PARENT_SCOPE)
+endfunction(BRLCAD_CHECK_LINKER_FLAGS)
 
 # Synopsis:  CHECK_FLAG(LANG flag [BUILD_TYPES type1 type2 ...] [GROUPS group1 group2 ...] [VARS var1 var2 ...] )
 #

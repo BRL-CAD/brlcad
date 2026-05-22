@@ -12,7 +12,7 @@
 
 if(TARGET fbserv AND TARGET libpkg AND TARGET libbu)
 
-  brlcad_addexec(fbserv_stress fbserv_stress.cpp "libpkg;libbu;Threads::Threads" TEST)
+  brlcad_addexec(fbserv_stress fbserv_stress.cpp "libpkg;libbu;Threads::Threads;${WINSOCK_LIB}" TEST)
   if(TARGET fbserv_stress)
     set_target_properties(fbserv_stress PROPERTIES FOLDER "BRL-CAD Regression Tests/fbserv")
 

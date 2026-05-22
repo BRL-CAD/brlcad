@@ -58,17 +58,23 @@ if(BRLCAD_ENABLE_TCL)
   endif(BRLCAD_ENABLE_X11)
 
   # Note - libtclcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-  set(TCLCAD_LIBS ${libtclcad_deps} ${TCL_LIBRARY} ${TCLCAD_XLIBS})
+  set(TCLCAD_PUBLIC_LIBS ${libtclcad_deps} ${TCL_LIBRARY})
+  set(TCLCAD_PRIVATE_LIBS ${TCLCAD_XLIBS} PNG::PNG)
   if(TK_LIBRARY)
-    set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})
+    set(TCLCAD_PUBLIC_LIBS ${TCLCAD_PUBLIC_LIBS} ${TK_LIBRARY})
   endif(TK_LIBRARY)
 
-  brlcad_addlib(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_LIBS}" "${TCLCAD_INCLUDE_DIRS}" "${TCLCAD_LOCAL_INCLUDE_DIRS}"
+  brlcad_addlib(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_INCLUDE_DIRS}" "${TCLCAD_LOCAL_INCLUDE_DIRS}"
+    PUBLIC_LIBS ${TCLCAD_PUBLIC_LIBS}
+    PRIVATE_LIBS ${TCLCAD_PRIVATE_LIBS}
     # refresh.c defines DM_WITH_RT before including dm/view.h to expose
     # dm_draw_viewobjs; when batched after draw.c the DM_VIEW_H guard fires
     # without DM_WITH_RT set and the declaration is lost.
     # bu.c and dm.c both define a non-static register_cmds function.
     UNITY_BUILD_SKIP view/refresh.c bu.c dm.c
+    # The full static library link is too large for some testing environments -
+    # disable this test
+    NO_STATIC_LINK_TEST
   )
   set(ptargets libtclcad)
   if(TARGET libtclcad-obj)

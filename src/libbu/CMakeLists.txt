@@ -131,7 +131,7 @@ endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
 # Note - libbu_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(
-  BU_LIBS
+  BU_PRIVATE_LIBS
   ${Foundation_LIBRARIES}
   Threads::Threads
   ${libbu_deps}
@@ -139,7 +139,7 @@ set(
   ${WINSOCK_LIB}
   ${PSAPI_LIB}
   ${BSON_LIBRARIES}
-  ${LMDB_LIBRARIES}
+  LMDB::LMDB
   ${UUID_LIBRARIES}
   ${M_LIBRARY}
 )
@@ -150,7 +150,8 @@ set(BU_INCLUDE_DIRS ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
 
-brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}"
+brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}"
+  PRIVATE_LIBS ${BU_PRIVATE_LIBS}
   UNITY_BUILD_SKIP
   backtrace.c
   bu_init.cpp
@@ -201,7 +202,9 @@ endforeach(bt ${bu_atgts})
 if(${BRLCAD_OPTIMIZED} MATCHES "ON")
   check_c_compiler_flag(-Wno-stringop-overflow HAVE_NO_STRINGOP_OVERFLOW)
   if(HAVE_NO_STRINGOP_OVERFLOW)
-    target_link_options(libbu PRIVATE -Wno-stringop-overflow)
+    foreach(bt ${bu_atgts})
+      target_link_options(${bt} PRIVATE -Wno-stringop-overflow)
+    endforeach()
   endif(HAVE_NO_STRINGOP_OVERFLOW)
 endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 

@@ -29,7 +29,10 @@ set(
 )
 
 # Note - libwdb_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-brlcad_addlib(libwdb "${LIBWDB_SOURCES}" "${libwdb_deps};${OPENNURBS_LIBRARIES}" "" "")
+brlcad_addlib(libwdb "${LIBWDB_SOURCES}" "" ""
+  PUBLIC_LIBS ${libwdb_deps}
+  PRIVATE_LIBS OPENNURBS::OPENNURBS
+)
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 cmakefiles(CMakeLists.txt)

@@ -5,6 +5,8 @@
 # Revised: 3/22/2023                                                   #
 #----------------------------------------------------------------------#
 
+brlcad_find_package(REGEX REQUIRED)
+
 # Establish the list of Source files - this is needed
 # both for the plugin build and the main BRL-CAD build
 set(
@@ -437,7 +439,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   add_library(creo-brl SHARED ${CREO2BRL_SOURCES})
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
+  target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${BRLCAD_STATIC_LIBS} REGEX::REGEX)
   install(TARGETS creo-brl RUNTIME DESTINATION ${CREO_OBJ_REL})
   set(DAT_STARTUP "dll")
   set(DAT_EXEC_FILE "${CREO_OBJ_DIR}/creo-brl.dll")
@@ -454,7 +456,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
   if(DEFINED CREO_EXEC_PLUGIN)
     add_executable(creo-brl-exe ${CREO2BRL_SOURCES})
-    target_link_libraries(creo-brl-exe ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
+    target_link_libraries(creo-brl-exe ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS} REGEX::REGEX)
     set(DAT_STARTUP "spawn")
     set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-exe.exe")
     set(DAT_TEXT_DIR ${CREO_MSG_DIR})
@@ -560,6 +562,8 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     libbv
     libbn
     libbu
+    REGEX::REGEX
+    ${WINSOCK_LIB}
   )
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
   if(HIDE_INTERNAL_SYMBOLS)

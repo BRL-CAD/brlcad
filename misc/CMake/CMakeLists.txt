@@ -18,6 +18,7 @@ set(
   BRLCAD_Test_Wrappers.cmake
   BRLCAD_User_Options.cmake
   BRLCAD_Util.cmake
+  BRLCADConfig.cmake.in
   CMakeLists.txt
   CheckCInline.cmake
   CheckCSourceRuns.cmake
@@ -70,6 +71,7 @@ set(
   RPath_Setup.cmake
   ResetCache.cmake
   TrackFiles.cmake
+  static_link_test_main.cpp
   compat/README
   compat/README.compat
   compat/README.compat.c99

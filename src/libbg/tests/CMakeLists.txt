@@ -21,17 +21,18 @@ endforeach(srcfile ${bg_test_srcs})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
 configure_file(bg_test.c.in "${CMAKE_CURRENT_BINARY_DIR}/bg_test.c" @ONLY)
 distclean("${CMAKE_CURRENT_BINARY_DIR}/bg_test.c")
-brlcad_addexec(bg_test "${CMAKE_CURRENT_BINARY_DIR}/bg_test.c" libbg TEST)
+set(BG_TEST_LIBS "libbg;libbn;libbu;${M_LIBRARY}")
+brlcad_addexec(bg_test "${CMAKE_CURRENT_BINARY_DIR}/bg_test.c" "${BG_TEST_LIBS}" TEST)
 
 # TODO - convert this into the scheme used by other tests below
-brlcad_addexec(bgtester bgtester.c "libbu;libbn;libbg" TEST)
+brlcad_addexec(bgtester bgtester.c "${BG_TEST_LIBS}" TEST)
 
 # Temporary testing program
-brlcad_addexec(bgpoly2tri poly2tri.c "libbu;libbn;libbg" TEST)
+brlcad_addexec(bgpoly2tri poly2tri.c "${BG_TEST_LIBS}" TEST)
 
 #  ************ obr.c tests *************
 
-brlcad_addexec(bg_obr obr.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_obr obr.c "${BG_TEST_LIBS}" TEST)
 
 #BRLCAD_ADD_TEST(NAME bg_obr_simple			COMMAND bg_obr) # Default points
 
@@ -243,33 +244,33 @@ brlcad_add_test(NAME bg_plane_isect_lseg3_lseg3_case0_3    COMMAND bg_test plane
 brlcad_add_test(NAME bg_plane_isect_lseg3_lseg3_case1_1    COMMAND bg_test plane_isect 2 0,0,0 0,1,1 0,1,0 0,-1,1 1 0.5 0.5)
 
 #  ************ polygon.c tests ***********
-brlcad_addexec(bg_polygon_triangulate polygon_triangulate.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_polygon_triangulate polygon_triangulate.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_polygon_triangulate	    COMMAND bg_polygon_triangulate)
 
 #  ************ chull.c tests ***********
 # 2D Convex Hull tests
-brlcad_addexec(bg_chull chull.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_chull chull.c "${BG_TEST_LIBS}" TEST)
 cmakefiles(chull_test003_bot.asc)
 cmakefiles(chull_test004_bot.asc)
 
 #  ************ 3D Hull tests ***********
 
 # 3D Convex Hull tests
-brlcad_addexec(bg_chull3d chull3d.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_chull3d chull3d.c "${BG_TEST_LIBS}" TEST)
 
 # Ball Pivot
-brlcad_addexec(bg_ballpivot ballpivot.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_ballpivot ballpivot.c "${BG_TEST_LIBS}" TEST)
 
 #  ************ lseg_lseg.c tests ***********
 
-brlcad_addexec(bg_lseg_lseg_dist lseg_lseg.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_lseg_lseg_dist lseg_lseg.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
 
 #  ************ lseg_lseg.c tests ***********
 
-brlcad_addexec(bg_lseg_pt_dist lseg_pt.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_lseg_pt_dist lseg_pt.c "${BG_TEST_LIBS}" TEST)
 brlcad_add_test(NAME bg_lseg_pt_dist_case0  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 0,0,0 0,0,0 0)
 brlcad_add_test(NAME bg_lseg_pt_dist_case1  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 -5,-5,-5 -5,-5,-5, 0)
 brlcad_add_test(NAME bg_lseg_pt_dist_case2  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,5,5 5,5,5 5,5,5, 0)
@@ -279,7 +280,7 @@ brlcad_add_test(NAME bg_lseg_pt_dist_case5  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,
 
 #  ************ tri_ray.c tests ***********
 
-brlcad_addexec(bg_tri_ray_isect tri_ray_isect.cpp "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_tri_ray_isect tri_ray_isect.cpp "${BG_TEST_LIBS}" TEST)
 
 #  ************ tri_tri.c tests ***********
 
@@ -292,7 +293,7 @@ brlcad_addexec(bg_tri_ray_isect tri_ray_isect.cpp "libbg;libbn;libbu" TEST)
 # flag tells the function whether or not to require non-zero area for an
 # overlap in coplanar cases.
 
-brlcad_addexec(bg_tri_tri_isect_coplanar tri_tri_isect_coplanar.cpp "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_tri_tri_isect_coplanar tri_tri_isect_coplanar.cpp "${BG_TEST_LIBS}" TEST)
 
 # TODO - need some tests with floating point vertices that are down around the EPSILON threshold - that's
 # where the NEAR_ZERO components of the bg_tri_tri_isect_coplanar logic become important.
@@ -316,7 +317,7 @@ brlcad_add_test(NAME bg_tri_tri_isect_coplanar_full_area   COMMAND bg_tri_tri_is
 # where P and Q are the two triangles in question.  An individual point
 # is three integer or floating point numbers separated by commas.
 
-brlcad_addexec(bg_tri_tri_isect tri_tri_isect.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_tri_tri_isect tri_tri_isect.c "${BG_TEST_LIBS}" TEST)
 
 # Test coplanar triangles
 brlcad_add_test(NAME bg_tri_tri_isect_cp_null   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0)
@@ -329,49 +330,49 @@ brlcad_add_test(NAME bg_tri_tri_isect_null   COMMAND bg_tri_tri_isect  0,0,0 1,0
 
 #  ************ tri_closest_pt.c tests ***********
 
-brlcad_addexec(bg_tri_closest_pt tri_closest_pt.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_tri_closest_pt tri_closest_pt.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_closest_pt  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
 brlcad_add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
 
 #  ************ polygon_op.cpp tests ***********
 
-brlcad_addexec(bg_polygon_op polygon_op.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_polygon_op polygon_op.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
 
 #  ************ sat.c Separating Axis Theorem based intersection tests ***********
 
-brlcad_addexec(bg_sat sat.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_sat sat.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_sat_basic   COMMAND bg_sat)
 
 #  ************ trimesh_sync.cpp tests ***********
 
-brlcad_addexec(bg_trimesh_sync trimesh_sync.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_trimesh_sync trimesh_sync.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
 
 #  ************ triangle area tests ***********
 
-brlcad_addexec(bg_tri_area tri_area.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_tri_area tri_area.c "${BG_TEST_LIBS}" TEST)
 
 
 #BRLCAD_ADD_TEST(NAME bg_tri_area  COMMAND bg_tri_area)
 
-brlcad_addexec(bg_trimesh_area trimesh_area.c "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_trimesh_area trimesh_area.c "${BG_TEST_LIBS}" TEST)
 
 #BRLCAD_ADD_TEST(NAME bg_trimesh_area  COMMAND bg_trimesh_area)
 
 #  ************ trimesh_repair tests ***********
 
-brlcad_addexec(bg_trimesh_repair trimesh_repair.cpp "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_trimesh_repair trimesh_repair.cpp "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_repair  COMMAND bg_trimesh_repair)
 
 #  ************ trimesh_remesh tests ***********
 
-brlcad_addexec(bg_trimesh_remesh trimesh_remesh.cpp "libbg;libbn;libbu" TEST)
+brlcad_addexec(bg_trimesh_remesh trimesh_remesh.cpp "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_remesh  COMMAND bg_trimesh_remesh)
 

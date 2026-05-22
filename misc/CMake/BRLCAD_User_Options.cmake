@@ -47,6 +47,11 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 # Build static libs by default.
 option(BUILD_STATIC_LIBS "Build static libraries" ON)
 
+# Link static-library validation executables when the platform supports the
+# linker options needed to force archive member resolution.
+option(BRLCAD_VALIDATE_STATIC_LINKS "Validate static library dependency closure with link tests" ON)
+mark_as_advanced(BRLCAD_VALIDATE_STATIC_LINKS)
+
 # Global third party controls - these options enable and disable ALL bext
 # copies of libraries.
 if(MSVC)

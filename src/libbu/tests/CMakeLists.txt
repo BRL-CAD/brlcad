@@ -67,7 +67,7 @@ endforeach(srcfile ${bu_test_srcs})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
 configure_file(bu_test.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp" @ONLY)
 distclean("${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp")
-brlcad_addexec(bu_test "${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp" libbu TEST)
+brlcad_addexec(bu_test "${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp" "libbu;Threads::Threads" TEST)
 
 # The uuid code doesn't mix with C++ compilers - make a separate
 # C-only executable for this case

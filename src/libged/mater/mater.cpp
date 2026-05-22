@@ -1083,7 +1083,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     /* Parse argv density arguments */
     std::regex d_reg("([0-9]+)[\\s, ]+([-+]?[0-9]*[\\.]?[0-9eE+-]*)[\\s, ]+(.*)");
     for (size_t i = 1; i < argc; i++) {
-	long int id;
+	long int id = 0;
 	fastf_t density;
 	std::smatch sm;
 	std::string dstr(argv[i]);

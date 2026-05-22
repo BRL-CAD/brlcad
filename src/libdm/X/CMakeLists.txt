@@ -1,6 +1,7 @@
 set(X_SRCS dm-X.c color.c if_X24.c)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+
   find_package(X11)
 
   set(TCL_ENABLE_TK ON)
@@ -31,6 +32,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
       dm-X
       libdm
       libbu
+      PNG::PNG
       ${TCL_LIBRARY}
       ${TK_LIBRARY}
       ${X11_LIBRARIES}

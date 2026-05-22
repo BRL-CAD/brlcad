@@ -418,13 +418,12 @@ if(BRLCAD_ENABLE_SPR)
 endif(BRLCAD_ENABLE_SPR)
 
 # Note - librt_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+set(LIBRT_PUBLIC_LIBS ${librt_deps} OPENNURBS::OPENNURBS)
 set(
-  LIBRT_LIBS
+  LIBRT_PRIVATE_LIBS
   ${OPENCL_LIBS}
-  ${librt_deps}
-  ${OPENNURBS_LIBRARIES}
   mmesh::mmesh
-  ${REGEX_LIBRARIES}
+  REGEX::REGEX
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
@@ -447,7 +446,9 @@ set(
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
 
-brlcad_addlib(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}"
+brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}"
+  PUBLIC_LIBS ${LIBRT_PUBLIC_LIBS}
+  PRIVATE_LIBS ${LIBRT_PRIVATE_LIBS}
   # Files that cannot be safely batched into unity translation units:
   # - search.cpp and search_old.cpp both define enumerators N_ABOVE, N_AND, etc.
   #   in their respective (differently-named) enums; those clashing enumerator
@@ -491,7 +492,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${R
 )
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
-# BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+# BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}" PUBLIC_LIBS libbrep libnmg libbg libbv libbn libbu PRIVATE_LIBS ${MATERIALX_LIBS} ${OPENCL_LIBS} ${OPENNURBS_LIBRARIES} ${REGEX_LIBRARIES} ${WINSOCK_LIB} ${RPCRT_LIB} ${STDCXX_LIBRARIES})
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)

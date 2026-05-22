@@ -6,7 +6,9 @@ set(PKG_LIBS
   ${WINSOCK_LIB}
   )
 
-brlcad_addlib(libpkg "${LIBPKG_SOURCES}" "${PKG_LIBS}" "" "")
+brlcad_addlib(libpkg "${LIBPKG_SOURCES}" "" ""
+  PRIVATE_LIBS ${PKG_LIBS}
+)
 set_target_properties(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 brlcad_adddata(tpkg.c sample_applications)

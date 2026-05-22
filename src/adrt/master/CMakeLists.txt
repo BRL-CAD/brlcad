@@ -9,7 +9,7 @@ set(
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../librender)
 
-brlcad_addexec(adrt_master "${ADRT_MASTER_SOURCES}" "librt;${ZLIB_LIBRARIES}")
+brlcad_addexec(adrt_master "${ADRT_MASTER_SOURCES}" "librt;ZLIB::ZLIB;${WINSOCK_LIB}")
 
 set(
   adrt_master_ignore_files

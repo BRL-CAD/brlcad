@@ -100,7 +100,9 @@ if(BRLCAD_ENABLE_OSL)
     ${OPENIMAGEIO_INCLUDES}
   )
 
-  brlcad_addlib(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS}" "" "${OSL_LOCAL_INCLUDE_DIRS}")
+  brlcad_addlib(liboslrend "${OSLRT_SOURCES}" "" "${OSL_LOCAL_INCLUDE_DIRS}"
+    PRIVATE_LIBS ${OSLRT_LIBS}
+  )
 
   ##########################################
   # Build OSL Shader
@@ -111,15 +113,19 @@ if(BRLCAD_ENABLE_OSL)
 endif(BRLCAD_ENABLE_OSL)
 
 # Note - liboptical_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(olibs "${liboptical_deps}")
+set(olibs_public ${liboptical_deps})
+set(olibs_private ${M_LIBRARY})
 if(TARGET liboslrend)
-  set(olibs "${olibs};liboslrend")
+  set(olibs_private ${olibs_private} liboslrend)
 endif(TARGET liboslrend)
 if(BRLCAD_ENABLE_TCL)
-  set(olibs "${olibs};${TCL_LIBRARY}")
+  set(olibs_private ${olibs_private} ${TCL_LIBRARY})
 endif(BRLCAD_ENABLE_TCL)
 
-brlcad_addlib(liboptical "${LIBOPTICAL_SOURCES}" "${olibs}" "" "${LOCAL_OPTICAL_INCLUDE_DIRS}")
+brlcad_addlib(liboptical "${LIBOPTICAL_SOURCES}" "" "${LOCAL_OPTICAL_INCLUDE_DIRS}"
+  PUBLIC_LIBS ${olibs_public}
+  PRIVATE_LIBS ${olibs_private}
+)
 
 cmakefiles(
   CMakeLists.txt

@@ -35,38 +35,74 @@
 ###
 # @file FindBRLCAD.cmake
 #
-#  Try to find brlcad libraries.
-#  Once done, this will define:
+# Compatibility shim: try the modern Config-file package first, then
+# fall back to the legacy probe-based search for older installs.
 #
-#   BRLCAD_FOUND - system has BRL-CAD
-#   BRLCAD_VERSION - the BRL-CAD version string
-#   BRLCAD_INCLUDE_DIRS - the BRL-CAD include directories
-#   BRLCAD_LIBRARIES - link these to use the BRL-CAD Libraries
+# Defines on success:
+#   BRLCAD_FOUND            - TRUE
+#   BRLCAD_VERSION          - version string "MAJOR.MINOR.PATCH"
+#   BRLCAD_INCLUDE_DIRS     - include directories
+#   BRLCAD_LIBRARIES        - aggregate link target (BRLCAD::brlcad)
+#   BRLCAD_<UPPER>_LIBRARY  - per-lib imported target, e.g. BRLCAD_RT_LIBRARY
 #
-#   BRLCAD_ANALYZE_LIBRARY - BRL-CAD Analysis library
-#   BRLCAD_BG_LIBRARY - BRL-CAD Geometry Algorithms library
-#   BRLCAD_BN_LIBRARY - BRL-CAD Numerical library
-#   BRLCAD_BV_LIBRARY - BRL-CAD View management library
-#   BRLCAD_BREP_LIBRARY - BRL-CAD NURBS Brep Algorithms library
-#   BRLCAD_BU_LIBRARY - BRL-CAD Utility library
-#   BRLCAD_DM_LIBRARY - BRL-CAD Display Manager/Framebuffer library
-#   BRLCAD_FFT_LIBRARY - BRL-CAD FFT library
-#   BRLCAD_GCV_LIBRARY - BRL-CAD Geometry Conversion library
-#   BRLCAD_GED_LIBRARY - BRL-CAD Geometry Editing library
-#   BRLCAD_ICV_LIBRARY - BRL-CAD Image Conversion library
-#   BRLCAD_NMG_LIBRARY - BRL-CAD N-Manifold Generation library
-#   BRLCAD_OPTICAL_LIBRARY - BRL-CAD optical library
-#   BRLCAD_PKG_LIBRARY - BRL-CAD libpkg
-#   BRLCAD_QTCAD_LIBRARY - BRL-CAD libqtcad (currently optional)
-#   BRLCAD_RENDER_LIBRARY - librender
-#   BRLCAD_RT_LIBRARY - BRL-CAD Raytracing library
-#   BRLCAD_TCLCAD_LIBRARY - libtclcad
-#   BRLCAD_WDB_LIBRARY - BRL-CAD Write Database library
+# Modern target surface (preferred):
+#   BRLCAD::bu  BRLCAD::bn  BRLCAD::bg  BRLCAD::bv  BRLCAD::nmg
+#   BRLCAD::brep  BRLCAD::rt  BRLCAD::wdb  BRLCAD::ged  BRLCAD::analyze
+#   BRLCAD::gcv  BRLCAD::icv  BRLCAD::dm  BRLCAD::fft  BRLCAD::optical
+#   BRLCAD::pkg  BRLCAD::render  BRLCAD::brlcad (aggregate)
 #
-#   NOTE: customized version needed for BRL-CAD NURBS support
-#   BRLCAD_OPENNURBS_LIBRARY - OpenNURBS library
+# DEPRECATED: This Find module exists for compatibility with projects
+#   that install FindBRLCAD.cmake into their own source tree.  New
+#   projects should use find_package(BRLCAD CONFIG ...) directly so
+#   that CMake locates BRLCADConfig.cmake from the BRL-CAD install.
+#   This shim will be removed in BRL-CAD 8.0.
 #
 #########################################################################
+
+# ------------------------------------------------------------------
+# 1.  Try the Config-file package first (BRLCADConfig.cmake installed
+#     under <prefix>/lib/cmake/BRLCAD/).
+# ------------------------------------------------------------------
+
+# Build a list of hints so we honour BRLCAD_ROOT if set
+set(_brlcad_config_hints)
+if(BRLCAD_ROOT)
+  list(APPEND _brlcad_config_hints "${BRLCAD_ROOT}")
+elseif(DEFINED ENV{BRLCAD_ROOT})
+  list(APPEND _brlcad_config_hints "$ENV{BRLCAD_ROOT}")
+endif()
+
+# Propagate COMPONENTS and version requirement to the Config search
+set(_brlcad_ver_req)
+if(BRLCAD_FIND_VERSION)
+  set(_brlcad_ver_req ${BRLCAD_FIND_VERSION})
+endif()
+
+find_package(
+  BRLCAD ${_brlcad_ver_req}
+  CONFIG QUIET
+  HINTS ${_brlcad_config_hints}
+  # Also look under the versioned /usr/brlcad/* directories
+  PATHS
+    /usr/brlcad
+    /usr/local/brlcad
+  PATH_SUFFIXES
+    rel-${BRLCAD_FIND_VERSION}
+    rel-${_brlcad_ver_req}
+)
+
+if(BRLCAD_FOUND)
+  # Config package succeeded - all variables and targets are already set
+  # by BRLCADConfig.cmake.  Just forward QUIET/REQUIRED handling.
+  if(NOT BRLCAD_FIND_QUIETLY)
+    message(STATUS "Found BRLCAD ${BRLCAD_VERSION} (Config) at ${BRLCAD_LIB_DIR}")
+  endif()
+  return()
+endif()
+
+# ------------------------------------------------------------------
+# 2.  Legacy probe-based fallback for pre-Config BRL-CAD installs
+# ------------------------------------------------------------------
 
 if(NOT DEFINED BRLCAD_ROOT)
   set(BRLCAD_ROOT "$ENV{BRLCAD_ROOT}")
@@ -379,37 +415,47 @@ if(BRLCAD_FOUND)
   set(libtargets)
   foreach(brl_lib ${BRLCAD_REQ_LIB_NAMES})
     string(TOUPPER ${brl_lib} LIBCORE)
-    add_library(BRLCAD::${LIBCORE} UNKNOWN IMPORTED)
-    set_target_properties(
-      BRLCAD::${LIBCORE}
-      PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${BRLCAD_INCLUDE_DIR}"
-        IMPORTED_LOCATION ${BRLCAD_${LIBCORE}_LIBRARY}
-        IMPORTED_LOCATION_DEBUG ${BRLCAD_${LIBCORE}_LIBRARY}
-    )
-    set(libtargets ${libtargets} BRLCAD::${LIBCORE})
-  endforeach(brl_lib ${BRL-CAD_LIBS_SEARCH_LIST})
-  # For the optional libs, add them IFF they are present
-  foreach(brl_lib ${BRLCAD_OPT_LIB_NAMES})
-    string(TOUPPER ${brl_lib} LIBCORE)
-    if(BRLCAD_${LIBCORE}_LIBRARY)
-      add_library(BRLCAD::${LIBCORE} UNKNOWN IMPORTED)
+    if(NOT TARGET BRLCAD::${brl_lib})
+      add_library(BRLCAD::${brl_lib} UNKNOWN IMPORTED)
       set_target_properties(
-        BRLCAD::${LIBCORE}
+        BRLCAD::${brl_lib}
         PROPERTIES
           INTERFACE_INCLUDE_DIRECTORIES "${BRLCAD_INCLUDE_DIR}"
           IMPORTED_LOCATION ${BRLCAD_${LIBCORE}_LIBRARY}
           IMPORTED_LOCATION_DEBUG ${BRLCAD_${LIBCORE}_LIBRARY}
       )
-      set(libtargets ${libtargets} BRLCAD::${LIBCORE})
+    endif()
+    # Also set the legacy uppercase variable for compatibility
+    set(BRLCAD_${LIBCORE}_LIBRARY BRLCAD::${brl_lib})
+    set(libtargets ${libtargets} BRLCAD::${brl_lib})
+  endforeach(brl_lib ${BRLCAD_REQ_LIB_NAMES})
+  # For the optional libs, add them IFF they are present
+  foreach(brl_lib ${BRLCAD_OPT_LIB_NAMES})
+    string(TOUPPER ${brl_lib} LIBCORE)
+    if(BRLCAD_${LIBCORE}_LIBRARY)
+      if(NOT TARGET BRLCAD::${brl_lib})
+        add_library(BRLCAD::${brl_lib} UNKNOWN IMPORTED)
+        set_target_properties(
+          BRLCAD::${brl_lib}
+          PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${BRLCAD_INCLUDE_DIR}"
+            IMPORTED_LOCATION ${BRLCAD_${LIBCORE}_LIBRARY}
+            IMPORTED_LOCATION_DEBUG ${BRLCAD_${LIBCORE}_LIBRARY}
+        )
+      endif()
+      set(BRLCAD_${LIBCORE}_LIBRARY BRLCAD::${brl_lib})
+      set(libtargets ${libtargets} BRLCAD::${brl_lib})
     endif(BRLCAD_${LIBCORE}_LIBRARY)
   endforeach(brl_lib ${BRLCAD_OPT_LIB_NAMES})
   # Overall "kitchen sink" target
-  add_library(BRLCAD::BRLCAD INTERFACE IMPORTED)
-  set_property(
-    TARGET BRLCAD::BRLCAD
-    PROPERTY INTERFACE_LINK_LIBRARIES ${libtargets}
-  )
+  if(NOT TARGET BRLCAD::brlcad)
+    add_library(BRLCAD::brlcad INTERFACE IMPORTED)
+    set_property(
+      TARGET BRLCAD::brlcad
+      PROPERTY INTERFACE_LINK_LIBRARIES ${libtargets}
+    )
+  endif()
+  set(BRLCAD_LIBRARIES BRLCAD::brlcad)
 endif()
 
 # Local Variables:
@@ -418,4 +464,3 @@ endif()
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

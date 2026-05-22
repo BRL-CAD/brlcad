@@ -26,7 +26,9 @@ set(
 set(BV_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Note - libbv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-brlcad_addlib(libbv "${LIBBV_SRCS}" "${libbv_deps}" "" "${BV_LOCAL_INCLUDE_DIRS}"
+brlcad_addlib(libbv "${LIBBV_SRCS}" "" "${BV_LOCAL_INCLUDE_DIRS}"
+  PUBLIC_LIBS ${libbv_deps}
+  PRIVATE_LIBS ${WINSOCK_LIB}
   # vlist.c defines PLOT3_IMPLEMENTATION before including bv/plot3.h, which
   # causes the plot3_* function bodies to be compiled into this translation
   # unit.  If vlist.c is batched with files that include bv/plot3.h first,

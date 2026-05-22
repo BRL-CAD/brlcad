@@ -1,6 +1,16 @@
 find_package_zlib(REQUIRED)
 
-is_subpath("${CMAKE_BINARY_DIR}" "${ZLIB_LIBRARY}" LOCAL_TEST)
+set(_zlib_location "")
+if(TARGET ZLIB::ZLIB)
+  get_target_property(_zlib_location ZLIB::ZLIB IMPORTED_LOCATION)
+  if(NOT _zlib_location)
+    get_target_property(_zlib_location ZLIB::ZLIB IMPORTED_LOCATION_RELEASE)
+  endif()
+  if(NOT _zlib_location)
+    get_target_property(_zlib_location ZLIB::ZLIB IMPORTED_LOCATION_DEBUG)
+  endif()
+endif()
+is_subpath("${CMAKE_BINARY_DIR}" "${_zlib_location}" LOCAL_TEST)
 if(LOCAL_TEST OR TARGET ZLIB_BLD)
   add_definitions(-DZ_PREFIX)
 endif(LOCAL_TEST OR TARGET ZLIB_BLD)
@@ -42,7 +52,9 @@ set(
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
 )
 
-brlcad_addlib(librender "${LIBRENDER_SRCS}" "libgcv;${ZLIB_LIBRARIES}" "" "${ADRT_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(librender "${LIBRENDER_SRCS}" "" "${ADRT_LOCAL_INCLUDE_DIRS}"
+  PRIVATE_LIBS libgcv ZLIB::ZLIB ${M_LIBRARY}
+)
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_dependencies(librender gcv_plugins)
 
@@ -76,7 +88,8 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
     ${IMM32_LIBRARY}
     ${COMCTL32_LIBRARY}
     ${OPENGL32_LIBRARY}
-  )
+    ${M_LIBRARY}
+    )
 
   brlcad_adddata(isst.tcl tclscripts/isst)
   brlcad_addexec(isst isst.c "${isst_libs}" GUI)

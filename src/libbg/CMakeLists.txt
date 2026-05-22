@@ -84,9 +84,10 @@ set(
 )
 
 # Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(BG_LIBS ${libbg_deps})
+set(BG_PUBLIC_LIBS ${libbg_deps})
+set(BG_PRIVATE_LIBS)
 if(UNIX)
-  list(APPEND BG_LIBS pthread dl)
+  list(APPEND BG_PRIVATE_LIBS pthread dl)
 endif()
 
 set(BG_INCLUDE_DIRS
@@ -103,7 +104,9 @@ set(BG_INCLUDE_DIRS
   ${GEOGRAM_AMGCL_INCLUDE_DIR}
   )
 
-brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}"
+brlcad_addlib(libbg "${LIBBG_SOURCES}" "" "${BG_INCLUDE_DIRS}"
+  PUBLIC_LIBS ${BG_PUBLIC_LIBS}
+  PRIVATE_LIBS ${BG_PRIVATE_LIBS}
   # These files define macros that conflict when batched into the same unity TU:
   # - polygon.c, polygon_triangulate.cpp, trimesh_isect.cpp, trimesh_plot3.cpp:
   #   all define PLOT_PREFIX_STR to remap plot3 function names, causing
