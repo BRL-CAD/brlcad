@@ -220,6 +220,7 @@ set(
   mrot.adoc
   mv.adoc
   mvall.adoc
+  near.adoc
   nirt.adoc
   nmg.adoc
   nmg_cmface.adoc
