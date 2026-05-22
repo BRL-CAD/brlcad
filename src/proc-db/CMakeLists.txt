@@ -37,7 +37,7 @@ brlcad_addexec(wdb_example wdb_example.c libwdb NO_INSTALL) # NOTE: has manual p
 #
 # we still DO NOT INSTALL them because they do not have documentation
 # and impact our perceived quality and complexity.
-
+brlcad_addexec(random_csg random_csg.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(brickwall brickwall.c libwdb NO_INSTALL)
 brlcad_addexec(cchannel cchannel.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(clutter "clutter.c;common.c" "libwdb;${M_LIBRARY}" NO_INSTALL)
@@ -64,6 +64,7 @@ brlcad_addexec(vegetation vegetation.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 target_include_directories(vegetation BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 brlcad_addexec(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
 
+
 set(proc-db_ignore_files
   3NN4.pdb
   CMakeLists.txt
@@ -79,6 +80,7 @@ set(proc-db_ignore_files
   water.pdb
 )
 cmakefiles(${proc-db_ignore_files})
+
 
 # Local Variables:
 # tab-width: 8
