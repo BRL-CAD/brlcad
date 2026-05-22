@@ -31,6 +31,38 @@
 
 include(CMakeParseArguments)
 
+# Try to locate a usable git executable. On Windows, Visual Studio may
+# provide git in non-standard locations; try common Program Files and
+# Visual Studio paths as a fallback when find_program() fails.
+function(brlcad_find_git)
+  # brlcad_find_git() sets GIT_EXEC in parent scope; make local copy
+  if(NOT DEFINED GIT_EXEC)
+    set(GIT_EXEC "")
+  endif()
+  if(NOT GIT_EXEC AND WIN32)
+    set(_git_candidates)
+    if(DEFINED ENV{ProgramFiles})
+      list(APPEND _git_candidates "$ENV{ProgramFiles}/Git/cmd/git.exe" "$ENV{ProgramFiles}/Git/bin/git.exe")
+    endif()
+    if(DEFINED ENV{VSINSTALLDIR})
+      list(APPEND _git_candidates "$ENV{VSINSTALLDIR}/Common7/IDE/CommonExtensions/Microsoft/TeamFoundation/Team Explorer/Git/cmd/git.exe")
+      list(APPEND _git_candidates "$ENV{VSINSTALLDIR}/Common7/IDE/CommonExtensions/Microsoft/TeamFoundation/Team Explorer/Git/mingw64/bin/git.exe")
+    endif()
+    foreach(_c ${_git_candidates})
+      if(EXISTS "${_c}")
+        set(GIT_EXEC "${_c}" PARENT_SCOPE)
+        return()
+      endif()
+    endforeach()
+  endif()
+  # If find_program found it, propagate to parent scope
+  if(GIT_EXEC)
+    set(GIT_EXEC "${GIT_EXEC}" PARENT_SCOPE)
+  else()
+    set(GIT_EXEC "" PARENT_SCOPE)
+  endif()
+endfunction()
+
 
 # Preliminary setup and variable population
 function(brlcad_bext_init BEXT_SHA1)
