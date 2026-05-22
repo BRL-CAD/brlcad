@@ -52,6 +52,7 @@ set(
   mike.tcl
   mouse.tcl
   mview.tcl
+  near.tcl
   openw.tcl
   plot.tcl
   points.tcl

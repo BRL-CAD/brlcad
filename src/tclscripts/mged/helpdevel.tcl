@@ -50,6 +50,7 @@ set mged_helpdevel_data(model2grid_lu)	{{mx my mz}	{convert point in model coord
     to grid coords (local units)}}
 set mged_helpdevel_data(model2view)	{{mx my mz}	{convert point in model coords (mm) to view coords}}
 set mged_helpdevel_data(model2view_lu)	{{mx my mz}	{convert point in model coords (local units) to view coords (local units)}}
+set mged_helpdevel_data(near)	{{?options? object [distance]}	{find regions within proximity to a specified object using bbox screening plus ray-grid sampling}}
 set mged_helpdevel_data(oed_reset)	{{}	{reset the parameters for the currently edited matrix}}
 set mged_helpdevel_data(output_hook)	{{[hook_cmd]}	{set up to have output from bu_log sent to hook_cmd}}
 set mged_helpdevel_data(put_comb)	{{comb_name color shader inherit boolean_expr is_region regionID airID materialID los%} {set combination}}
