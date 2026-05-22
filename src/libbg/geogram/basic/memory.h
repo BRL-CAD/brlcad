@@ -564,7 +564,7 @@ namespace GEOBRL {
              * \brief Conversion operator to different aligned_allocator
              * \details Required when compiling under MSVC version <= 2010
              */
-            template <class T2, int A2> operator aligned_allocator<T2, A2>() const {
+            template <class T2, int A2> operator aligned_allocator<T2, A2>() const noexcept {
                 return aligned_allocator<T2,A2>();
             }
         };
