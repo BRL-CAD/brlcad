@@ -26,6 +26,7 @@
 
 #include "bu.h"
 #include "../bitv.h"
+#include "../bitv_private.h"
 
 
 typedef enum {
@@ -972,6 +973,54 @@ test_bu_hexstr_to_binstr(int argc, char **argv)
 }
 
 
+static int
+test_bu_bitv_macros(void)
+{
+    struct bu_bitv *bv;
+    size_t i;
+    int test_results = BRLCAD_OK;
+    size_t len = 100;
+
+    bv = bu_bitv_new(len);
+
+    /* Test that it starts all zeroes */
+    for (i = 0; i < len; ++i) {
+        if (BU_BITTEST(bv, i)) {
+            bu_log("test_bu_bitv_macros FAILED: bit %zu is initially 1\n", i);
+            test_results = BRLCAD_ERROR;
+        }
+    }
+
+    /* Test BU_BITSET */
+    for (i = 0; i < len; i += 2) {
+        BU_BITSET(bv, i);
+    }
+    
+    for (i = 0; i < len; ++i) {
+        int expected = (i % 2 == 0);
+        if ((BU_BITTEST(bv, i) != 0) != expected) {
+            bu_log("test_bu_bitv_macros FAILED: bit %zu state incorrect after BU_BITSET\n", i);
+            test_results = BRLCAD_ERROR;
+        }
+    }
+
+    /* Test BU_BITCLR */
+    for (i = 0; i < len; i += 2) {
+        BU_BITCLR(bv, i);
+    }
+
+    for (i = 0; i < len; ++i) {
+        if (BU_BITTEST(bv, i)) {
+            bu_log("test_bu_bitv_macros FAILED: bit %zu state incorrect after BU_BITCLR\n", i);
+            test_results = BRLCAD_ERROR;
+        }
+    }
+
+    bu_bitv_free(bv);
+    return test_results;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1034,7 +1083,9 @@ main(int argc, char *argv[])
 	case 14:
 	    return test_bu_binstr_to_hexstr_empty_input(argc, argv);
 	    break;
-
+	case 15:
+	    return test_bu_bitv_macros();
+	    break;
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);
