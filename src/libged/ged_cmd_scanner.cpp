@@ -58,9 +58,6 @@ std::vector<std::string> load_file_list(const std::string& path) {
     return files;
 }
 
-// Map ged_cmd_impl struct names to their command name strings, for robust lookup
-using ImplNameToCmdMap = std::map<std::string, std::string>;
-
 int main(int argc, const char *argv[])
 {
     if (argc < 2) {
@@ -125,15 +122,7 @@ int main(int argc, const char *argv[])
 
     // ========= Static registration extraction ==========
     std::set<std::string> static_cmd_symbols;
-    std::regex reg_cmd_macro(R"(REGISTER_GED_COMMAND\s*\(\s*([A-Za-z0-9_]+)\s*\))");
-    std::regex reg_label_macro(R"(LABEL_GED_COMMAND\s*\(\s*([A-Za-z0-9_]+)\s*\))");
-
-    /* Phase 3: detect generalized registration macro with string command names */
     std::set<std::string> cmd_names;
-    std::regex reg_bu_cmd_macro(R"(REGISTER_BU_PLUGIN_COMMAND\s*\(\s*\"([^\"]+)\"\s*,)");
-
-    /* Phase 4: detect bu_plugin_cmd arrays used by the new plugin manifest pattern */
-    std::regex reg_pcmd_name(R"(\{\s*\"([A-Za-z0-9?_]+)\"\s*,)");
 
     /* Phase 5: detect canonical TU-local command lists (token-based X-macro form)
      *
@@ -221,156 +210,7 @@ int main(int argc, const char *argv[])
 	fs.close();
     }
 
-    /* Existing Phase 1–4 parsing pass (legacy heuristics; kept for backwards compatibility) */
-    for (const auto &fname : input_files) {
-	std::ifstream fs(fname);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open file " << fname << "\n";
-	    continue;
-	}
-	std::string sline;
-	while (std::getline(fs, sline)) {
-	    std::smatch mm;
-	    if (std::regex_search(sline, mm, reg_cmd_macro)) {
-		static_cmd_symbols.insert(mm[1]);
-	    }
-	    std::smatch lm;
-	    if (std::regex_search(sline, lm, reg_label_macro)) {
-		static_cmd_symbols.insert(lm[1]);
-	    }
-	    /* Phase 3: capture command names from REGISTER_BU_PLUGIN_COMMAND */
-	    std::smatch bm;
-	    if (std::regex_search(sline, bm, reg_bu_cmd_macro)) {
-		std::string cname = bm[1];
-		if (!cname.empty() && cname.find('?') == std::string::npos)
-		    cmd_names.insert(cname);
-	    }
-	    /* Phase 4: capture command names from bu_plugin_cmd initializers */
-	    std::smatch pm;
-	    if (std::regex_search(sline, pm, reg_pcmd_name)) {
-		std::string cname = pm[1];
-		if (!cname.empty() && cname.find('?') == std::string::npos)
-		    cmd_names.insert(cname);
-	    }
-	}
-	fs.close();
-    }
 
-    // ========= Wrapper API command name extraction =========
-    // NOTE: cmd_names may already contain entries found via REGISTER_BU_PLUGIN_COMMAND or Phase 5.
-    // We now supplement it with names found via ged_cmd_impl initializers.
-
-    // Multi-line struct initializer support (`ged_cmd_impl` detection)
-    std::regex reg_impl_begin(R"(struct\s+ged_cmd_impl\s+([A-Za-z0-9_]+)\s*=\s*\{)");
-    std::regex reg_impl_cmd_str("\"([A-Za-z0-9?_]+)\"");
-
-    for (const auto &fname : input_files) {
-	std::ifstream fs(fname);
-	if (!fs.is_open()) continue;
-	std::string sline;
-	bool in_cmd_impl = false;
-	// After finding ged_cmd_impl, scan for first quoted string
-	while (std::getline(fs, sline)) {
-	    if (!in_cmd_impl) {
-		if (std::regex_search(sline, reg_impl_begin)) {
-		    in_cmd_impl = true;
-		}
-	    } else {
-		std::smatch m;
-		if (std::regex_search(sline, m, reg_impl_cmd_str)) {
-		    std::string cmd = m[1];
-		    if (cmd.find('?') == std::string::npos) {
-			cmd_names.insert(cmd);
-		    }
-		    in_cmd_impl = false; // Only first quoted string used
-		}
-		// If struct ends without finding command, abort scanning
-		if (sline.find("};") != std::string::npos || sline.find("}") != std::string::npos) {
-		    in_cmd_impl = false;
-		}
-	    }
-	}
-	fs.close();
-    }
-
-    // Fallback for classic single-line initializers
-    std::regex cmd_impl_regex(".*ged_cmd_impl.*");
-    std::regex cmd_str_regex(".*\"([A-Za-z0-9?_]+)\".*");
-    for (const auto &fname : input_files) {
-	std::ifstream fs(fname);
-	if (!fs.is_open()) continue;
-	std::string sline;
-	bool in_cmd_impl = false;
-	while (std::getline(fs, sline)) {
-	    if (in_cmd_impl) {
-		std::smatch parsevar;
-		if (std::regex_search(sline, parsevar, cmd_str_regex)) {
-		    std::string cmd = parsevar.str(1);
-		    if (cmd.find('?') != std::string::npos)
-			continue;
-		    cmd_names.insert(cmd);
-		    in_cmd_impl = false;
-		}
-	    } else {
-		if (std::regex_match(sline, cmd_impl_regex)) {
-		    std::smatch parsevar;
-		    if (std::regex_search(sline, parsevar, cmd_str_regex)) {
-			std::string cmd = parsevar.str(1);
-			if (cmd.find('?') != std::string::npos)
-			    continue;
-			cmd_names.insert(cmd);
-		    } else {
-			in_cmd_impl = true;
-		    }
-		}
-	    }
-	}
-	fs.close();
-    }
-
-    // Supplement from macro+impl lookup for edge cases
-    // Map ged_cmd_impl struct names to their command name strings, for robust lookup
-    ImplNameToCmdMap impl_to_cmd;
-    for (const auto &fname : input_files) {
-	std::ifstream fs(fname);
-	if (!fs.is_open()) continue;
-	std::string sline;
-	bool in_cmd_impl = false;
-	std::string awaiting_cmdimpl_name;
-	while (std::getline(fs, sline)) {
-	    if (!in_cmd_impl) {
-		std::smatch impl_begin;
-		if (std::regex_search(sline, impl_begin, reg_impl_begin)) {
-		    awaiting_cmdimpl_name = impl_begin[1];
-		    in_cmd_impl = true;
-		}
-	    } else {
-		std::smatch cmd_str_match;
-		if (std::regex_search(sline, cmd_str_match, reg_impl_cmd_str)) {
-		    std::string cmd_str = cmd_str_match[1];
-		    if (cmd_str.find('?') == std::string::npos) // skip weird names
-			impl_to_cmd[awaiting_cmdimpl_name] = cmd_str;
-		    in_cmd_impl = false;
-		}
-		if (sline.find("};") != std::string::npos || sline.find("}") != std::string::npos) {
-		    in_cmd_impl = false;
-		}
-	    }
-	}
-	fs.close();
-    }
-    for (const auto &macro_arg : static_cmd_symbols) {
-	std::string suffix = "_cmd";
-	if (macro_arg.size() > suffix.size() &&
-		macro_arg.compare(macro_arg.size()-suffix.size(), suffix.size(), suffix) == 0)
-	{
-	    std::string impl_name = macro_arg + "_impl";
-	    auto it = impl_to_cmd.find(impl_name);
-	    if (it != impl_to_cmd.end()) {
-		cmd_names.insert(it->second);
-	    }
-	}
-    }
 
     // Sorted output for deterministic builds
     std::vector<std::string> static_cmd_sorted(static_cmd_symbols.begin(), static_cmd_symbols.end());
