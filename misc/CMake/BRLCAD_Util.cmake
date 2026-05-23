@@ -50,6 +50,72 @@ include(TrackFiles)
 get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
 
 #-----------------------------------------------------------------------------
+# Cross-platform binary/library text dump helper used for light-weight
+# introspection tasks in Find*.cmake and dependency setup logic.
+function(brlcad_binary_dump out_var bin_path)
+  set(_out "")
+  if(NOT bin_path OR NOT EXISTS "${bin_path}")
+    set(${out_var} "" PARENT_SCOPE)
+    return()
+  endif()
+
+  if(APPLE)
+    find_program(_tool_otool NAMES otool NO_CACHE)
+    if(_tool_otool)
+      execute_process(
+        COMMAND "${_tool_otool}" -L "${bin_path}"
+        OUTPUT_VARIABLE _out
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
+  elseif(WIN32)
+    find_program(_tool_dumpbin NAMES dumpbin NO_CACHE)
+    if(_tool_dumpbin)
+      execute_process(
+        COMMAND "${_tool_dumpbin}" /IMPORTS "${bin_path}"
+        OUTPUT_VARIABLE _out
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    else()
+      find_program(_tool_objdump NAMES objdump NO_CACHE)
+      if(_tool_objdump)
+        execute_process(
+          COMMAND "${_tool_objdump}" -p "${bin_path}"
+          OUTPUT_VARIABLE _out
+          ERROR_QUIET
+          OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif()
+    endif()
+  else()
+    if(CMAKE_NM)
+      execute_process(
+        COMMAND "${CMAKE_NM}" -D "${bin_path}"
+        OUTPUT_VARIABLE _out
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+      if(NOT _out)
+        execute_process(
+          COMMAND "${CMAKE_NM}" -C "${bin_path}"
+          OUTPUT_VARIABLE _out
+          ERROR_QUIET
+          OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif()
+    else()
+      find_program(_tool_nm NAMES nm NO_CACHE)
+      if(_tool_nm)
+        execute_process(
+          COMMAND "${_tool_nm}" -D "${bin_path}"
+          OUTPUT_VARIABLE _out
+          ERROR_QUIET
+          OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif()
+    endif()
+  endif()
+
+  set(${out_var} "${_out}" PARENT_SCOPE)
+endfunction(brlcad_binary_dump)
+
+#-----------------------------------------------------------------------------
 # Use a variation on Fraser's approach for capturing command line args from
 # http://stackoverflow.com/questions/10205986/how-to-capture-cmake-command-line-arguments
 # to log what variables have been passed in from the user via -D arguments - haven't

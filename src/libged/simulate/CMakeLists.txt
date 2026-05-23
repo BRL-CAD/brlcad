@@ -1,6 +1,5 @@
 if(BRLCAD_ENABLE_BULLET)
-  set(BULLET_ROOT ${PROJECT_BINARY_DIR})
-  brlcad_find_package(Bullet)
+  find_package_bullet()
   if (NOT BULLET_LIBRARIES)
     message(WARNING "BRLCAD_ENABLE_BULLET=ON, but Bullet3 not found - disabling")
     set(BRLCAD_ENABLE_BULLET OFF)
@@ -10,8 +9,7 @@ endif()
 if(BRLCAD_ENABLE_BULLET)
   if(BULLET_LIBRARIES)
     add_definitions(-DHAVE_BULLET=1)
-    # We build double precision
-    if (BULLET_INCLUDE_DIR MATCHES "${PROJECT_BINARY_DIR}/.*")
+    if(BULLET_BT_USE_DOUBLE_PRECISION)
       add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
     endif()
 
@@ -30,6 +28,7 @@ if(BRLCAD_ENABLE_BULLET)
       message(FATAL_ERROR "Invalid Bullet include directory: ${BULLET_INCLUDE_DIRS}")
     endif()
     set(BULLET_INCLUDE_DIRS "${BULLET_INCLUDE_DIRS}")
+
   endif()
 endif()
 

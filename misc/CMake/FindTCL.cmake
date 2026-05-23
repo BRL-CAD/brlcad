@@ -465,32 +465,156 @@ if(TCL_ENABLE_TK)
     )
   endif()
 
-  # IFF we have TCL_TK_SYSTEM_GRAPHICS set and have a system TK_WISH, check that the
-  # windowing system matches the specified type
-  if(NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
+  set(TK_WINDOWING_SYSTEM "")
+  set(TK_WINDOWING_SYSTEM_NOTFOUND "wm-NOTFOUND")
+  if(TK_WISH AND NOT TARGET "${TK_WISH}")
     set(
       tkwin_script
       "
-    set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
-    set fileId [open $filename \"w\"]
-    set windowingsystem [tk windowingsystem]
-    puts $fileId $windowingsystem
-    close $fileId
-    exit
-    "
+      set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
+      set fileId [open $filename \"w\"]
+      set windowingsystem \"${TK_WINDOWING_SYSTEM_NOTFOUND}\"
+      if {![catch {tk windowingsystem} tkwm]} {
+        set windowingsystem $tkwm
+      }
+      puts $fileId $windowingsystem
+      close $fileId
+      exit
+      "
     )
     set(tkwin_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
-    set(WSYS "wm-NOTFOUND")
     file(WRITE ${tkwin_scriptfile} ${tkwin_script})
-    execute_process(COMMAND ${TK_WISH} ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+    execute_process(
+      COMMAND ${TK_WISH} ${tkwin_scriptfile}
+      OUTPUT_QUIET
+      ERROR_QUIET
+    )
     if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
       file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM" readresultvar)
-      string(REGEX REPLACE "\n" "" WSYS "${readresultvar}")
-    endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
+      string(REGEX REPLACE "\n" "" TK_WINDOWING_SYSTEM "${readresultvar}")
+    else()
+      set(TK_WINDOWING_SYSTEM "${TK_WINDOWING_SYSTEM_NOTFOUND}")
+    endif()
+  endif()
 
+  # Headless fallbacks: when the wish probe could not determine the windowing system
+  # (no active display, wish not available, etc.), try static analysis of the Tk library.
+  if(TK_LIBRARY
+     AND ("${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
+          OR "${TK_WINDOWING_SYSTEM}" STREQUAL ""))
+
+    # Fallback 1: parse tkConfig.sh - Tk always installs this alongside the library.
+    # TK_XLIBSW and TK_LIBS record the X/platform libraries the build was linked against.
+    get_filename_component(_tk_lib_dir "${TK_LIBRARY}" DIRECTORY)
+    foreach(_tkconfig IN ITEMS
+        "${_tk_lib_dir}/tkConfig.sh"
+        "${_tk_lib_dir}/../lib/tkConfig.sh")
+      if(NOT EXISTS "${_tkconfig}")
+        continue()
+      endif()
+      file(STRINGS "${_tkconfig}" _tkconfig_lines REGEX "^TK_XLIBSW=|^TK_LIBS=")
+      foreach(_tkline IN LISTS _tkconfig_lines)
+        if("${_tkline}" MATCHES "-lX11")
+          set(TK_WINDOWING_SYSTEM "x11")
+        elseif("${_tkline}" MATCHES "-framework Cocoa|-framework AppKit")
+          set(TK_WINDOWING_SYSTEM "aqua")
+        endif()
+        if(NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
+           AND NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "")
+          break()
+        endif()
+      endforeach()
+      unset(_tkconfig_lines)
+      unset(_tkline)
+      if(NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
+         AND NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "")
+        break()
+      endif()
+    endforeach()
+    unset(_tk_lib_dir)
+    unset(_tkconfig)
+
+    # Fallback 2: inspect the Tk shared library binary to determine the windowing
+    # system.  The tool and technique must vary by platform because the binary
+    # formats and available tools differ:
+    #
+    #   macOS (Mach-O .dylib): use "otool -L" to list linked frameworks and shared
+    #     libraries.  otool is always present on macOS as part of Xcode Command Line
+    #     Tools and understands Mach-O natively.  "nm -D" is a GNU binutils extension
+    #     for ELF dynamic symbol tables; macOS's nm does not recognise -D and either
+    #     ignores it silently or errors, so nm is not reliable here.  An Aqua (native
+    #     macOS) Tk links against Cocoa.framework or AppKit.framework; an X11 Tk on
+    #     macOS (e.g. from XQuartz) links against /opt/X11/lib/libX11 or
+    #     /usr/X11R6/lib/libX11.
+    #
+    #   Windows (PE/COFF .dll or import .lib): inspect the DLL import table to
+    #     distinguish a native win32 Tk (imports gdi32.dll, user32.dll) from a
+    #     Cygwin/X11 Tk (imports cygX11-6.dll or a similarly-named X11 DLL).
+    #     "dumpbin /IMPORTS" (MSVC toolchain) is tried first; "objdump -p" (MinGW /
+    #     binutils) is the fallback.  Both list the DLLs the binary imports from,
+    #     which is sufficient to identify the windowing system.
+    #
+    #   Linux / other ELF Unix: "nm -D" reads the ELF dynamic symbol table
+    #     (SHT_DYNSYM section).  The -D flag (long form: --dynamic) is a GNU
+    #     binutils extension universally available on Linux/BSD.  It works correctly
+    #     even on stripped shared libraries because SHT_DYNSYM is not stripped.
+    #     Fingerprints: XOpenDisplay appears as an undefined reference (type U) in
+    #     x11 builds; Tk_MacOSXSetEmbedHandler / TkMacOSXGetDrawablePort appear in
+    #     aqua builds; Tk_GetHINSTANCE / Tk_GetHWND appear in win32 builds.
+    if(("${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
+       OR "${TK_WINDOWING_SYSTEM}" STREQUAL "")
+       AND COMMAND brlcad_binary_dump)
+      brlcad_binary_dump(_tk_sym_output "${TK_LIBRARY}")
+      if(APPLE)
+        if("${_tk_sym_output}" MATCHES "Cocoa\\.framework|AppKit\\.framework")
+          set(TK_WINDOWING_SYSTEM "aqua")
+        elseif("${_tk_sym_output}" MATCHES "libX11")
+          set(TK_WINDOWING_SYSTEM "x11")
+        endif()
+      elseif(WIN32)
+        string(TOLOWER "${_tk_sym_output}" _tk_sym_lc)
+        if("${_tk_sym_lc}" MATCHES "x11\\.dll|cygx11|libx11")
+          set(TK_WINDOWING_SYSTEM "x11")
+        elseif("${_tk_sym_lc}" MATCHES "gdi32|user32")
+          set(TK_WINDOWING_SYSTEM "win32")
+        endif()
+        unset(_tk_sym_lc)
+      else()
+        if("${_tk_sym_output}" MATCHES "Tk_GetHINSTANCE|Tk_GetHWND")
+          set(TK_WINDOWING_SYSTEM "win32")
+        elseif("${_tk_sym_output}" MATCHES "Tk_MacOSXSetEmbedHandler|TkMacOSXGetDrawablePort")
+          set(TK_WINDOWING_SYSTEM "aqua")
+        elseif("${_tk_sym_output}" MATCHES " U XOpenDisplay")
+          set(TK_WINDOWING_SYSTEM "x11")
+        endif()
+      endif()
+      unset(_tk_sym_output)
+    endif()
+
+    # Fallback 3: last-resort inference from CMake platform variables.
+    if("${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
+       OR "${TK_WINDOWING_SYSTEM}" STREQUAL "")
+      if(WIN32)
+        set(TK_WINDOWING_SYSTEM "win32")
+      elseif(APPLE)
+        set(TK_WINDOWING_SYSTEM "aqua")
+      else()
+        set(TK_WINDOWING_SYSTEM "x11")
+      endif()
+    endif()
+
+  endif()
+
+  # IFF we have TCL_TK_SYSTEM_GRAPHICS set and have a system TK_WISH, check that the
+  # windowing system matches the specified type
+  if(NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
     # If we have no information about the windowing system or it does not match
     # a specified system, the find_package detection has failed
-    if(NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
+    if(
+      NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
+      AND NOT "${TK_WINDOWING_SYSTEM}" STREQUAL ""
+      AND NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}"
+    )
       unset(TCL_LIBRARY CACHE)
       unset(TCL_STUB_LIBRARY CACHE)
       unset(TK_LIBRARY CACHE)
@@ -508,8 +632,9 @@ if(TCL_ENABLE_TK)
       unset(TCL_STUB_LIBRARY CACHE)
       unset(TK_STUB_LIBRARY CACHE)
       unset(TTK_STUB_LIBRARY CACHE)
-    endif(NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
-  endif(NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
+      unset(TK_WINDOWING_SYSTEM)
+    endif()
+  endif()
 endif(TCL_ENABLE_TK)
 
 include(FindPackageHandleStandardArgs)
@@ -548,10 +673,6 @@ mark_as_advanced(
 
 # Create imported targets so downstream CMakeLists.txt can use
 # target-based link syntax (which produces relocatable exports).
-# Use SHARED IMPORTED with IMPORTED_SONAME so CMake links with the
-# soname (-ltcl8.6) rather than the full build-tree path; this
-# prevents a relative DT_NEEDED entry that the runtime loader can't
-# resolve via RUNPATH.
 if(TCL_FOUND AND NOT TARGET TCL::TCL)
   add_library(TCL::TCL SHARED IMPORTED GLOBAL)
   get_filename_component(_tcl_soname "${TCL_LIBRARY}" NAME)
