@@ -2615,7 +2615,6 @@ DOCUMENTATION
 
     archer
     bombardier
-    bot_fuse (ged)
     damdf
     dauto
     dauto2
@@ -2658,47 +2657,19 @@ DOCUMENTATION
     window_frame
     wire
 
-  User-facing commands reported by 'help' needing docs.  some are
-  implemented as Tcl, others to consolidate, but still need docs:
-
-    adjust
-    bot_smooth
-    cc
-    closedb
-    dbversion
-    dmtype
-    dsp
-    dump
-    e_id
-    form
-    joint
-    labelface
-    loadview
-    lod
-    match
-    mirror
-    nmg_fix_normals
-    png
-    put
-    relos
-    remat
-    reset
-    rmats
-    rt_gettrees
-    rtabort
-    rtedge
-    rtweight
-    savekey
-    shaded_mode
-    unhide
-
   Need to revisit utility of spherical mapping, used by sh_spm and
   sh_points, used for environment mapping (e.g., stars):
 
     pix-spm
     spm-fb
 
-  3rd party tools we control / bundle, but need docs if anyone else is
+  These are mged commands that either need to be migrated to libged or replaced/merged with other commands:
+
+    reset        : resets view to 270/90
+    rmats        : read matrixes from a savekey(n) file
+    rt_gettrees  : full rti command for shooting rays and inspecting geometry, creates new named command object
+
+3rd party tools we control / bundle, but need docs if anyone else is
   to use them or contribute:
 
     perplex
