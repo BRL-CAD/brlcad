@@ -18,6 +18,17 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* update change policy to 1) expand definition of minimally impacting
+  to allow an assuption of non-embedding in function calls (i.e., no
+  function or macro calls as function arguments), 2) migrate change
+  tracking to a doc subfolder, 3) split deprecation from minimally
+  impacting to separate docs, 4) invert minimally impacting list to be
+  a functional description of the change (e.g., "rename A -> B", "drop
+  arg 3 C", etc), 5) auto-generate and publish robust regular
+  expressions from the functional descriptions, 6) publish an
+  auto-update script that warns about deprecated use and/or applies
+  minimally impacting changes to a given file.
+
 * document rt_db_get_internal() and any others like that in CHANGES.
   will required careful consideration whether it's minimally-impacting
   (or if we need to restore arg as a no-op to not break builds).
