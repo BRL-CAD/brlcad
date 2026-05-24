@@ -136,29 +136,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   all bundled dependencies, except when we still need Find*.cmake
   to locate system installs that don't provide them.
 
-* Investigate viability of providing EXPORT installs and *Config.cmake
-  files for BRL-CAD targets - that's the "modern" way to support
-  CMake's find_package mechanism.
-
-* Look into CMinx CMake documentation system to see if it might be
-  useful for documenting the build system.
-  https://github.com/CMakePP/CMinx
-
 * Windows installer does not respect the "add to path" checkbox
   and always adds BRL-CAD to the system path
 
-* Add a "perturb" callback function to librt's primitive tables, that
-  will accept a primitive definition and return a version that has been
-  slightly increased or decreased in size.  For example, a "perturbed"
-  TGC would have its base and height planes bumped slightly in or out
-  and its radius slightly increased or decreased.  The intent would be
-  to see if we can automatically perturb primitives just slightly out
-  of numerical co-planarity for facetize.  For union (and probably
-  intersection) we would bump out slightly, and for subtraction bump
-  in slightly.  Probably want to do this at the implicit level, rather
-  than after triangles have been produced, so it's easier to understand
-  what happens.  For things like pipes especially, getting the intended
-  effect post-triangulation might be tricky.
+* Look into https://www.kitware.com/really-fast-isocontouring/ to see
+  if those algorithms could be useful for BRL-CAD
 
 * There are probably a number of algorithms in our code where
   we should check to see if the GTE implementation would be better
