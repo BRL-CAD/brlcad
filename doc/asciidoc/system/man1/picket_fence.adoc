@@ -10,23 +10,16 @@ picket_fence - Creates a BRL-CAD .g file containing picket fences.
 
 [source]
 ----
-picket_fence [filename] [prefix] [height] [spacing] [x0] [y0] [z0] []... [xn] [yn] [zn] [-r]
+picket_fence [filename] [prefix] [height] [spacing] [-r] [x0] [y0] [z0] ... [xn] [yn] [zn]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*picket_fence* creates a geometry file in _filename_ of a picket fence. All parameters for the fence are in mm. If more than two points are specified, it will generate a fence with multiple sections connecting the points. Parts of the fence are created starting at the origin. The two backing boards are created in the negative x halfspace. The pickets are created in the positive x halfspace and translated down the y-axis to their proper positions. The entire segment is then rotated and translated to the position specified by the user. To create a box of fence with the pickets on the outside, the points must be specified in a counter-clockwise order. Parts of the model are named according to the format
+*picket_fence* generates a BRL-CAD database containing a picket fence. All dimensions are in millimeters. The fence is constructed by specifying two or more 3D coordinate waypoints. The program generates fence sections connecting these waypoints. Fence geometry is initially constructed at the origin—with backing boards in the negative x halfspace and pickets in the positive x halfspace—before being rotated and translated into the specified positions. To create a closed boundary with pickets facing outward, waypoints must be specified in counter-clockwise order.
 
-
-....
-
-<prefix><partname><sec_name><[>part_num<].<obj_type>
-    
-....
-
-The _<prefix>_ above is the second argument to the program. The _spacing_ parameter specifies the amount of space (in mm) between pickets. The *-r* option specifies round fronts for the pickets.
+The generated geometry parts are named using the provided _prefix_. The _spacing_ parameter controls the gap between individual pickets in millimeters. The optional *-r* flag generates fence posts (round cylinders) at the waypoints.
 
 
 [[examples]]
