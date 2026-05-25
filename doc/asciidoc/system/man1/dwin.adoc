@@ -1,0 +1,69 @@
+= DWIN(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dwin - Extract sliding windows of double-precision values and optionally apply window functions
+
+== SYNOPSIS
+
+[source]
+----
+dwin [options] [width] [step] < input.doubles > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dwin* reads a continuous stream of double-precision floating-point numbers from standard input, extracts sliding windows of data, and writes the windowed data to standard output. It can optionally apply various mathematical window functions (such as Hamming or Bartlett) to the extracted data to taper the edges, which is typically done prior to spectral analysis (e.g., FFT).
+
+The _width_ parameter specifies the number of samples in each window (defaults to 1024). The _step_ parameter determines how far the window slides forward for each iteration. If _step_ is less than 1.0, it is treated as a fraction of the window width (e.g., 0.5 means the window slides by half its width). If _step_ is 1.0 or greater, it specifies the absolute number of samples to advance. By default, the step size is equal to the window width (i.e., non-overlapping windows).
+
+[[options]]
+== OPTIONS
+
+*-w*::
+Apply an 80% split Cosine window to the extracted data.
+
+*-H*::
+Apply a Hamming window.
+
+*-b*::
+Apply a Bartlett (triangle) window.
+
+*-B*::
+Apply a bias window (half triangle).
+
+*-e*::
+Start the first window such that the first sample corresponds to the end of the input buffer (effectively starting with the window trailing behind the initial data point).
+
+*-m*::
+Start the first window such that the first sample corresponds to the middle of the input buffer.
+
+[[examples]]
+== EXAMPLES
+
+.Overlapping Hamming Windows
+[example]
+====
+**dwin -H 1024 0.5 < signal.raw > windowed.raw**
+
+Extracts 1024-sample windows from _signal.raw_, advancing by 512 samples (0.5 overlap) each time, applies a Hamming window to each segment, and writes the result to _windowed.raw_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

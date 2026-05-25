@@ -1,0 +1,54 @@
+= BOMBARDIER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bombardier - BRL-CAD Crash Reporter
+
+== SYNOPSIS
+
+[source]
+----
+bombardier logfile...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bombardier* is the BRL-CAD crash reporter utility. It is designed to take one or more log files generated during an unexpected application crash and present a graphical interface to the user. This interface displays the crash details and system information, allowing the user to review the data, provide additional context about what they were doing when the crash occurred, and optionally submit the crash report to the BRL-CAD development team for analysis.
+
+If multiple log files are specified, their contents are concatenated and presented together in the report.
+
+[[options]]
+== OPTIONS
+
+*logfile...*::
+One or more text log files containing crash diagnostic information or stack traces.
+
+[[examples]]
+== EXAMPLES
+
+.Reviewing and submitting a crash log
+[example]
+====
+**bombardier mged-crash.log**
+
+Opens the crash reporter GUI and loads the contents of _mged-crash.log_ for review and submission.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2007-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,56 @@
+= DCONV(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dconv - Fast FFT-based convolution of a double-precision data stream
+
+== SYNOPSIS
+
+[source]
+----
+dconv filterfile < input.doubles > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dconv* performs a fast Fourier transform (FFT) based convolution of a continuous stream of double-precision floating-point numbers with a specified filter kernel. It reads the data stream from standard input and writes the convolved data to standard output, both in double-precision format.
+
+The convolution is performed using the overlap-save method, which correctly computes the linear convolution of the input sequence with the filter, avoiding the circular convolution artifacts typical of straightforward block-based FFT methods.
+
+*WARNING*: The kernel size (the number of elements in the filter file) must be 2^i - 1 (e.g., 127, 255, 511), and the current implementation is compiled to handle filter kernels up to a maximum size of `BU_PAGE_SIZE` (typically 4096).
+
+[[options]]
+== OPTIONS
+
+*filterfile*::
+A file containing the filter kernel (impulse response) stored as double-precision floating-point numbers.
+
+[[examples]]
+== EXAMPLES
+
+.Basic *dconv* Usage
+[example]
+====
+**dconv lowpass.kernel < signal.raw > filtered.raw**
+
+Convolves the double-precision data in _signal.raw_ with the filter defined in _lowpass.kernel_ and writes the result to _filtered.raw_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

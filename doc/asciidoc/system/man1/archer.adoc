@@ -1,0 +1,59 @@
+= ARCHER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+archer - Graphical User Interface for BRL-CAD
+
+== SYNOPSIS
+
+[source]
+----
+archer [file.g]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*archer* is a developmental graphical user interface for BRL-CAD. It provides a modern, integrated environment for solid modeling, ray tracing, and geometry manipulation, serving as an alternative to *mged*(1).
+
+If a BRL-CAD geometry database file (_file.g_) is specified on the command line, *archer* will automatically open it upon startup. Otherwise, *archer* will launch with an empty workspace, allowing the user to create a new database or open an existing one via the File menu.
+
+[[options]]
+== OPTIONS
+
+*file.g*::
+An optional BRL-CAD geometry database file to open upon startup.
+
+[[examples]]
+== EXAMPLES
+
+.Launching *archer* with a Specific Database
+[example]
+====
+**archer my_model.g**
+
+Starts the *archer* graphical user interface and automatically opens the _my_model.g_ geometry database.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2005-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[see_also]]
+== SEE ALSO
+
+mged(1)
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

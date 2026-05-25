@@ -1,0 +1,80 @@
+= DSEL(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dsel - Selectively extract or skip sequences of doubles from a data stream
+
+== SYNOPSIS
+
+[source]
+----
+dsel keep < input.doubles > output.doubles
+----
+
+[source]
+----
+dsel skip keep [skip keep ...] < input.doubles > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dsel* reads a stream of double-precision floating-point numbers from standard input, selectively copies or discards specific numbers of elements based on the provided command-line arguments, and writes the kept elements to standard output.
+
+If a single argument is provided, *dsel* will copy exactly that many _keep_ elements to the output and then exit.
+
+If two or more arguments are provided, they are treated as alternating _skip_ and _keep_ counts. The tool will first read and discard _skip_ elements, then read and copy _keep_ elements to the output, and repeat this pattern for any additional arguments. If an odd number of arguments greater than one is provided (e.g., `dsel skip keep skip`), the final _keep_ count is implicitly treated as infinity, meaning all remaining data in the stream will be copied to the output.
+
+[[options]]
+== OPTIONS
+
+*keep*::
+The number of double-precision elements to copy to the output.
+
+*skip*::
+The number of double-precision elements to read and discard before copying.
+
+[[examples]]
+== EXAMPLES
+
+.Extracting the First N Elements
+[example]
+====
+**dsel 1024 < data.raw > first1024.raw**
+
+Reads the first 1024 double-precision elements from _data.raw_ and writes them to _first1024.raw_, ignoring the rest of the file.
+====
+
+.Skipping a Header and Keeping a Chunk
+[example]
+====
+**dsel 512 1024 < data.raw > chunk.raw**
+
+Skips the first 512 elements in _data.raw_, then copies the next 1024 elements to _chunk.raw_, and exits.
+====
+
+.Multiple Skip/Keep Intervals
+[example]
+====
+**dsel 100 200 50 < data.raw > filtered.raw**
+
+Skips the first 100 elements, keeps the next 200 elements, skips another 50 elements, and then keeps all remaining elements in the file.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

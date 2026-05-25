@@ -1,0 +1,74 @@
+= DDISP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ddisp - Data Display utility for plotting doubles on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+ddisp [-v] [-b] [-p] [-c] [width] < input.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ddisp* is a visualization tool that reads a continuous stream of double-precision floating-point numbers from standard input and plots them onto a BRL-CAD framebuffer. It maps the numerical values to a 512x512 framebuffer window in one of several visual formats.
+
+By default, *ddisp* processes the input in records of _width_ elements (or a default internal page size if not specified) and draws a grayscale intensity map. Each input element is scaled to a grayscale pixel (magnitude 0.0 to 1.0 mapped to 0-255 intensity) and drawn as a horizontal line. The drawing moves down the screen row by row, wrapping around to the top when the bottom of the screen is reached.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+Enables "vertical" point plotting mode. For each record, the data is plotted as a single green pixel at coordinates (X, Y) where X corresponds to the element's index in the record and Y is proportional to its value (+/- 1.0 maps to +/- 128 pixels from the vertical center).
+
+*-b*::
+Enables bar graph mode. Similar to the *-v* mode, but draws a solid green vertical bar from the center line to the value's Y-coordinate.
+
+*-p*::
+Enables pause mode. The program will pause for 3 seconds after drawing each record.
+
+*-c*::
+Enables clear mode. The framebuffer is cleared before drawing each record. This is most useful when combined with the *-v* or *-b* options to animate the data frames.
+
+*width*::
+Specifies the number of elements to read per record. If not specified, a default internal buffer size is used. Note: The maximum plotted width is constrained by the framebuffer width (512 pixels).
+
+[[examples]]
+== EXAMPLES
+
+.Default Intensity Map
+[example]
+====
+**ddisp 512 < signal.raw**
+
+Reads 512 double-precision values at a time from _signal.raw_ and draws them as consecutive horizontal grayscale lines on the framebuffer.
+====
+
+.Animated Bar Graph
+[example]
+====
+**ddisp -b -c -p 512 < signal.raw**
+
+Reads 512 double-precision values per record, clears the screen, draws them as a green bar graph, and pauses for 3 seconds before moving to the next record.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

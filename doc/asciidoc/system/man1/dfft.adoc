@@ -1,0 +1,80 @@
+= DFFT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dfft - Compute Fast Fourier Transforms (FFT) of a stream of doubles
+
+== SYNOPSIS
+
+[source]
+----
+dfft [options] < input.doubles > output.data
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dfft* computes the Fast Fourier Transform (FFT) of a stream of double-precision floating-point numbers read from standard input. It processes the data in discrete windows (fixed at 1024 samples) and outputs the resulting spectrum to standard output.
+
+By default, the program outputs the log-magnitude (in decibels) of the spectrum (512 values per 1024-sample record) as double-precision floating-point numbers. Various options are available to modify the output, including returning the phase, applying a critical band filter, using a logarithmic frequency scale, normalizing the output, or generating human-readable ASCII text.
+
+[[options]]
+== OPTIONS
+
+*-d* _dB_::
+Set the minimum dB cutoff for the output magnitude. The default is 120 (interpreted as -120 dB).
+
+*-l*::
+Interpolate the output to a logarithmic frequency scale.
+
+*-c*::
+Apply a critical band filter (3rd octave) to the magnitudes.
+
+*-p*::
+Output the phase (in units of pi) instead of the magnitude.
+
+*-N*::
+Normalize the Power Spectral Density (PSD) so that the maximum magnitude is 0 dB (or 1.0 if using linear output).
+
+*-L*::
+Output the linear magnitude instead of the log-magnitude (dB).
+
+*-A*::
+Generate ASCII text output instead of binary double-precision floating-point numbers. In ASCII mode, the output consists of pairs of (frequency_fraction, magnitude) separated by spaces, with one pair per line.
+
+[[examples]]
+== EXAMPLES
+
+.Default Log-Magnitude Output
+[example]
+====
+**dfft < signal.raw > spectrum.raw**
+
+Reads double-precision data from _signal.raw_, computes the FFT, and writes the log-magnitude spectrum to _spectrum.raw_.
+====
+
+.ASCII Phase Output
+[example]
+====
+**dfft -p -A < signal.raw > phase.txt**
+
+Computes the FFT phase of the input signal and writes the result as human-readable ASCII text to _phase.txt_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
