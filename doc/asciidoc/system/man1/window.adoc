@@ -17,7 +17,9 @@ window [options]...
 [[description]]
 == DESCRIPTION
 
-*window* is a program to create a BRL-CAD database of windows. Up to twenty-six windows of the same size may be created. The windows are made with rounded corners. *window* uses libwdb to create a BRL-CAD database. The windows are composed of two arb8s and four cylinders. This program may be run interactively or the user may specify options on a command line. If the user chooses to run the program interactively, he answers the questions as the program prompts him. Below are the options that can be used on the command line.
+*window* creates a BRL-CAD database containing window models. Up to 256 windows of the same size may be generated per run. *window* uses libwdb to create the database file, with each window composed of two arb8s and four cylinders to produce rounded corners.
+
+If run without arguments, the program enters interactive mode and prompts for all required parameters. Alternatively, options may be specified directly on the command line.
 
 
 [[options]]
@@ -29,7 +31,7 @@ BRL-CAD file name.
 
 
 *-n #*::
-The number of windows to be created (must be less than or equal to 26).
+The number of windows to be created (must be less than or equal to 256).
 
 
 *-H #*::
