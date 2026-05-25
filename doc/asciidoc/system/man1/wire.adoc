@@ -10,14 +10,14 @@ wire - Creates a BRL-CAD .g file containing wiring or fuel lines.
 
 [source]
 ----
-wire [options]...
+wire
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*wire* is a program to create a BRL-CAD database of solid wires or fuel lines. The user enters the coordinates of the starting and ending points of the different segments of wires along with the radius at each of these points. Currently the program is limited to 10 segments. This number may be changed by changing the variable MAXSEG. MAXSEG may be no greater than 100 without changing other parts of the program. The wires are composed of cones and spheres. This program is designed to be run interactively.
+*wire* creates a BRL-CAD database of solid wires or fuel lines. This program is designed to be run strictly interactively. The user is prompted to enter the target database name, the number of wire segments, the coordinates of the starting and ending points for each segment, and the radius at each point. The program is limited to a maximum of 100 segments. The resulting wires are constructed as combinations of truncated cones (tgc) for the straight segments and spheres to produce rounded joints.
 
 
 [[examples]]
@@ -33,7 +33,7 @@ wire [options]...
 
 Enter mged file name (25 char max).
 	wire.g
-Enter the number of segments (maximum of 10).
+Enter the number of segments (maximum of 100).
 	3
 Enter starting point of segment # 1.
 	0 0 0
