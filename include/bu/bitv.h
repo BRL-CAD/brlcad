@@ -244,6 +244,12 @@ BU_EXPORT extern void bu_bitv_foreach(const struct bu_bitv *bv, void (*callback)
  * Allocate storage for a new bit vector of at least 'nbits' in
  * length.  The bit vector itself is guaranteed to be initialized to
  * all zero.
+ *
+ * Because @c struct bu_bitv embeds one full machine word (@c bitv_t,
+ * currently 64 bits) inline, requests for fewer than 64 bits are
+ * silently rounded up to 64 and require no extra heap allocation
+ * beyond the struct itself.  Requesting exactly 0 bits is valid and
+ * results in a usable 64-bit vector.
  */
 BU_EXPORT extern struct bu_bitv *bu_bitv_new(size_t nbits);
 
