@@ -244,15 +244,14 @@ release(struct mged_state *s, char *name, int need_close)
     bu_ptbl_rm(&active_dm_set, (long *)s->mged_curr_dm);
     mged_slider_free_vls(s->mged_curr_dm);
     bu_free((void *)s->mged_curr_dm, "release: s->mged_curr_dm");
+    s->mged_curr_dm = MGED_DM_NULL;
 
-    if (save_dm_list != MGED_DM_NULL)
+    if (save_dm_list != MGED_DM_NULL) {
 	set_curr_dm(s, save_dm_list);
-    else {
-	if (BU_PTBL_LEN(&active_dm_set) > 0) {
-	    set_curr_dm(s, (struct mged_dm *)BU_PTBL_GET(&active_dm_set, 0));
-	} else {
-	    set_curr_dm(s, MGED_DM_NULL);
-	}
+    } else if (BU_PTBL_LEN(&active_dm_set) > 0) {
+	set_curr_dm(s, (struct mged_dm *)BU_PTBL_GET(&active_dm_set, 0));
+    } else {
+        set_curr_dm(s, MGED_DM_NULL);
     }
     return TCL_OK;
 }
