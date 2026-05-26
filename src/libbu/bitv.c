@@ -33,6 +33,7 @@
 #include "bu/vls.h"
 #include "./bitv.h"
 
+
 /**
  * Private 32-bit recursive reduction using "SIMD Within A Register"
  * (SWAR) to count the number of one bits in a given integer. The
@@ -92,13 +93,12 @@ bu_bitv_new(size_t nbits)
 {
     struct bu_bitv *bv;
     size_t bv_bytes;
-    size_t total_bytes;
-
     bv_bytes = BU_BITS2BYTES(nbits);
-    total_bytes = sizeof(struct bu_bitv) - 2*sizeof(bitv_t) + bv_bytes;
 
     /* allocate bigger than struct, bits array extends past the end */
-    bv = (struct bu_bitv *)bu_malloc(total_bytes, "struct bu_bitv");
+    bv = (struct bu_bitv *)bu_calloc(1, sizeof(struct bu_bitv) + (bv_bytes - sizeof(bitv_t)), "struct bu_bitv");
+    BU_BITV_INIT(bv);
+    bv->nbits = nbits;
 
     /* manually initialize */
     BU_LIST_INIT_MAGIC(&(bv->l), BU_BITV_MAGIC);
@@ -124,7 +124,9 @@ bu_bitv_clear(struct bu_bitv *bv)
 {
     BU_CK_BITV(bv);
 
-    BU_BITV_ZEROALL(bv);
+    if (bv->nbits != 0) {
+        memset(bv->bits, 0, BU_BITS2BYTES(bv->nbits));
+    }
 }
 
 
@@ -133,14 +135,13 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
     bitv_t *out;
     const bitv_t *in;
+    size_t min_words;
     size_t words;
-
-    if (UNLIKELY(ov->nbits != iv->nbits))
-	bu_bomb("bu_bitv_or: length mismatch");
 
     out = ov->bits;
     in = iv->bits;
-    words = BU_BITS2WORDS(iv->nbits);
+    min_words = BU_BITS2WORDS(iv->nbits < ov->nbits ? iv->nbits : ov->nbits);
+    words = min_words;
 #ifdef VECTORIZE
     for (--words; words >= 0; words--)
 	out[words] |= in[words];
@@ -156,21 +157,152 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
     bitv_t *out;
     const bitv_t *in;
+    size_t min_words;
+    size_t max_words;
     size_t words;
-
-    if (UNLIKELY(ov->nbits != iv->nbits))
-	bu_bomb("bu_bitv_and: length mismatch");
 
     out = ov->bits;
     in = iv->bits;
-    words = BU_BITS2WORDS(iv->nbits);
+    min_words = BU_BITS2WORDS(iv->nbits < ov->nbits ? iv->nbits : ov->nbits);
+    max_words = BU_BITS2WORDS(ov->nbits);
+
+    words = min_words;
 #ifdef VECTORIZE
+    for (size_t i = min_words; i < max_words; i++)
+        out[i] = 0;
     for (--words; words >= 0; words--)
 	out[words] &= in[words];
 #else
     while (words-- > 0)
 	*out++ &= *in++;
+    
+    /* Zero out remaining bits in ov if iv was shorter */
+    for (size_t i = min_words; i < max_words; i++)
+        *out++ = 0;
 #endif
+}
+
+
+void
+bu_bitv_not(struct bu_bitv *ov)
+{
+    bitv_t *out;
+    size_t words;
+    size_t i;
+    size_t rem;
+
+    BU_CK_BITV(ov);
+    
+    out = ov->bits;
+    words = BU_BITS2WORDS(ov->nbits);
+    
+    for (i = 0; i < words; ++i) {
+        out[i] = ~out[i];
+    }
+    
+    /* Clear unused bits in the last word */
+    rem = ov->nbits & BU_BITV_MASK;
+    if (rem > 0) {
+        out[words - 1] &= (((bitv_t)1) << rem) - 1;
+    }
+}
+
+
+void
+bu_bitv_xor(struct bu_bitv *ov, const struct bu_bitv *iv)
+{
+    bitv_t *out;
+    const bitv_t *in;
+    size_t min_words;
+    size_t words;
+
+    BU_CK_BITV(ov);
+    BU_CK_BITV(iv);
+
+    out = ov->bits;
+    in = iv->bits;
+    min_words = BU_BITS2WORDS(iv->nbits < ov->nbits ? iv->nbits : ov->nbits);
+    words = min_words;
+    
+    for (size_t i = 0; i < words; i++) {
+        out[i] ^= in[i];
+    }
+    
+    /* Extra bits in ov remain unchanged since XORing with 0 does nothing */
+}
+
+
+void
+bu_bitv_shift_vector(struct bu_bitv *ov, int shift)
+{
+    size_t word_shift, bit_shift, words, i, rem;
+
+    BU_CK_BITV(ov);
+
+    if (shift == 0 || ov->nbits == 0) return;
+    
+    words = BU_BITS2WORDS(ov->nbits);
+    
+    /* A positive shift means shifting left (towards higher indices), negative means right */
+    if (shift > 0) {
+        word_shift = shift / (sizeof(bitv_t) * BITS_PER_BYTE);
+        bit_shift = shift % (sizeof(bitv_t) * BITS_PER_BYTE);
+        
+        if (word_shift >= words) {
+            bu_bitv_clear(ov);
+            return;
+        }
+        
+        /* Shift words */
+        for (i = words - 1; i >= word_shift; i--) {
+            bitv_t val = ov->bits[i - word_shift];
+            if (bit_shift > 0) {
+                val <<= bit_shift;
+                if (i - word_shift > 0) {
+                    val |= (ov->bits[i - word_shift - 1] >> ((sizeof(bitv_t) * BITS_PER_BYTE) - bit_shift));
+                }
+            }
+            ov->bits[i] = val;
+            if (i == word_shift) break; /* Avoid underflow */
+        }
+        
+        /* Clear vacated words */
+        for (i = 0; i < word_shift; i++) {
+            ov->bits[i] = 0;
+        }
+        
+        /* Clear unused bits in the last word */
+        rem = ov->nbits & BU_BITV_MASK;
+        if (rem > 0) {
+            ov->bits[words - 1] &= (((bitv_t)1) << rem) - 1;
+        }
+    } else {
+        shift = -shift;
+        word_shift = shift / (sizeof(bitv_t) * BITS_PER_BYTE);
+        bit_shift = shift % (sizeof(bitv_t) * BITS_PER_BYTE);
+        
+        if (word_shift >= words) {
+            bu_bitv_clear(ov);
+            return;
+        }
+        
+        /* Shift words */
+        for (i = 0; i < words - word_shift; i++) {
+            bitv_t val = ov->bits[i + word_shift];
+            if (bit_shift > 0) {
+                val >>= bit_shift;
+                if (i + word_shift + 1 < words) {
+                    val |= (ov->bits[i + word_shift + 1] << ((sizeof(bitv_t) * BITS_PER_BYTE) - bit_shift));
+                }
+            }
+            ov->bits[i] = val;
+        }
+        
+        /* Clear vacated words */
+        for (i = words - word_shift; i < words; i++) {
+            ov->bits[i] = 0;
+        }
+    }
 }
 
 
@@ -862,6 +994,87 @@ ERROR_RETURN:
 
 }
 
+
+size_t
+bu_bitv_count_set(const struct bu_bitv *bv)
+{
+    size_t count = 0;
+    size_t words;
+    size_t w;
+    bitv_t val;
+
+    if (!bv || bv->nbits == 0)
+        return 0;
+
+    words = BU_BITS2WORDS(bv->nbits);
+    for (w = 0; w < words; w++) {
+        val = bv->bits[w];
+        while (val) {
+            val &= val - 1; /* clear the lowest set bit */
+            count++;
+        }
+    }
+    return count;
+}
+
+
+void
+bu_bitv_foreach(const struct bu_bitv *bv, void (*callback)(size_t bit, void *data), void *data)
+{
+    size_t words;
+    size_t w;
+    bitv_t val;
+    int bit;
+
+    if (!bv || bv->nbits == 0 || !callback)
+        return;
+
+    words = BU_BITS2WORDS(bv->nbits);
+    for (w = 0; w < words; w++) {
+        val = bv->bits[w];
+        while (val) {
+#if defined(__GNUC__) || defined(__clang__)
+            bit = __builtin_ctzll((unsigned long long)val);
+            val &= val - 1; /* clear the lowest set bit */
+#else
+            /* fallback */
+            bit = 0;
+            bitv_t temp = val;
+            while ((temp & 1) == 0) {
+                bit++;
+                temp >>= 1;
+            }
+            val &= val - 1; /* clear the lowest set bit */
+#endif
+            callback(w * (sizeof(bitv_t) * BITS_PER_BYTE) + bit, data);
+        }
+    }
+}
+
+
+void
+bu_bitv_set(struct bu_bitv *bv, size_t bit)
+{
+    bv->bits[bit >> BU_BITV_SHIFT] |= ((bitv_t)1) << (bit & BU_BITV_MASK);
+}
+
+void
+bu_bitv_clear_bit(struct bu_bitv *bv, size_t bit)
+{
+    bv->bits[bit >> BU_BITV_SHIFT] &= ~(((bitv_t)1) << (bit & BU_BITV_MASK));
+}
+
+int
+bu_bitv_test(const struct bu_bitv *bv, size_t bit)
+{
+    return (bv->bits[bit >> BU_BITV_SHIFT] & (((bitv_t)1) << (bit & BU_BITV_MASK))) != 0;
+}
+
+size_t
+bu_bitv_length(const struct bu_bitv *bv)
+{
+    return bv->nbits;
+}
 
 /*
  * Local Variables:
