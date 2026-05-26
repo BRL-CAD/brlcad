@@ -93,20 +93,28 @@ bu_bitv_new(size_t nbits)
 {
     struct bu_bitv *bv;
     size_t bv_bytes;
+    size_t extra;
+
+    /* Round up to at least one full machine word so the embedded bits[1]
+     * member in struct bu_bitv is always fully usable without any extra
+     * dynamic allocation.  Callers that request 0 bits still get a valid,
+     * usable 64-bit vector. */
+    if (nbits < sizeof(bitv_t) * BITS_PER_BYTE)
+        nbits = sizeof(bitv_t) * BITS_PER_BYTE;
+
     bv_bytes = BU_BITS2BYTES(nbits);
 
-    /* allocate bigger than struct, bits array extends past the end */
-    bv = (struct bu_bitv *)bu_calloc(1, sizeof(struct bu_bitv) + (bv_bytes - sizeof(bitv_t)), "struct bu_bitv");
-    BU_BITV_INIT(bv);
-    bv->nbits = nbits;
+    /* bits[1] already contributes sizeof(bitv_t) bytes inside the struct.
+     * Only allocate beyond the struct when the request exceeds one word. */
+    extra = (bv_bytes > sizeof(bitv_t)) ? (bv_bytes - sizeof(bitv_t)) : 0;
 
-    /* manually initialize */
+    bv = (struct bu_bitv *)bu_calloc(1, sizeof(struct bu_bitv) + extra, "struct bu_bitv");
     BU_LIST_INIT_MAGIC(&(bv->l), BU_BITV_MAGIC);
     bv->nbits = bv_bytes * BITS_PER_BYTE;
-    BU_BITV_ZEROALL(bv);
 
     return bv;
 }
+
 
 
 void
