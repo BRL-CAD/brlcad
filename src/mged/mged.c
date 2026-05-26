@@ -2041,6 +2041,9 @@ mged_finish(struct mged_state *s, int exitcode)
     Tcl_Eval(s->interp, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
     Tcl_Release((ClientData)s->interp);
 
+    /* let Tcl know we're done */
+    Tcl_Finalize();
+
     struct tclcad_io_data *giod = (struct tclcad_io_data *)s->gedp->ged_io_data;
     ged_close(s->gedp);
     s->gedp = GED_NULL;
@@ -2074,7 +2077,10 @@ mged_finish(struct mged_state *s, int exitcode)
     }
 #endif
 
-    Tcl_Exit(exitcode);
+    /* Avoid calling Tcl_Exit here as it may touch channels and OS handles
+     * that were already torn down, leading to crash-on-exit.
+     */
+    exit(exitcode);
 }
 
 /*
