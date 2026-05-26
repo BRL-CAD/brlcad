@@ -96,8 +96,16 @@
 #define MGED_STATE_MAGIC 0x4D474553 /**< MGEDS*/
 #define MGED_CK_STATE(_bp) BU_CKMAG(_bp, MGED_STATE_MAGIC , "mged_state")
 
-/* Forward declaration */
+/* Forward declarations */
 struct mged_state;
+struct stdio_data;
+
+enum mged_shutdown_state {
+    MGED_SHUTDOWN_RUNNING = 0,
+    MGED_SHUTDOWN_REQUESTED,
+    MGED_SHUTDOWN_IN_PROGRESS,
+    MGED_SHUTDOWN_FINALIZED
+};
 
 /* Tolerances */
 struct mged_tol {
@@ -247,6 +255,15 @@ struct mged_state {
     int cmd_running;
     Tcl_TimerToken log_drain_timer;
 
+    /* Staged shutdown state.  Tcl callbacks request shutdown and return; the
+     * outer MGED event loop performs final teardown after Tcl has unwound. */
+    int shutdown_state;
+    int shutdown_exitcode;
+    Tcl_Channel stdin_chan;
+    Tcl_Channel stdout_chan;
+    Tcl_Channel stderr_chan;
+    struct stdio_data *stdin_data;
+
     /* When non-zero, a machine-readable "MGED_CMD_DONE <status>" sentinel
      * line is written to stdout after every command completes in the
      * non-interactive (piped) stdin path.  Enabled by the -p flag so that
@@ -279,8 +296,11 @@ extern jmp_buf jmp_env;
 
 extern void mged_setup(struct mged_state *s);
 extern void mged_global_variable_teardown(struct mged_state *s); /* cmd.c */
+extern void mged_variable_teardown(struct mged_state *s); /* set.c */
 extern void dozoom(struct mged_state *s, int which_eye);
 extern void mged_finish(struct mged_state *s, int exitcode);
+extern void mged_request_shutdown(struct mged_state *s, int exitcode);
+extern int mged_shutting_down(struct mged_state *s);
 extern void slewview(struct mged_state *s, vect_t view_pos);
 extern void moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp, matp_t xlate);
 extern void moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate);

@@ -147,7 +147,7 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
      * timer installed by mged_start_log_drain_timer() fires during these
      * Tcl_DoOneEvent calls, streaming intermediate bu_log output to the
      * command prompt as it arrives. */
-    while (!done.load(std::memory_order_acquire)) {
+    while (!done.load(std::memory_order_acquire) && !mged_shutting_down(s)) {
 	Tcl_DoOneEvent(TCL_ALL_EVENTS | TCL_DONT_WAIT);
 	mged_pr_output(s->interp);
 	bu_snooze(10000); /* 10 ms — keeps CPU low while staying responsive */
@@ -188,6 +188,10 @@ log_drain_callback(ClientData clientData)
 {
     struct mged_state *s = (struct mged_state *)clientData;
     MGED_CK_STATE(s);
+    /* Defensive guard for a timer already dispatched before shutdown
+     * quiescence deletes the pending timer token. */
+    if (mged_shutting_down(s))
+	return;
     mged_pr_output(s->interp);
     /* Reschedule: 50 ms gives good responsiveness without unnecessary CPU use. */
     s->log_drain_timer = Tcl_CreateTimerHandler(50, log_drain_callback, clientData);
@@ -1637,6 +1641,9 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
     const char *result = "";
 
     BU_CK_VLS(vp);
+
+    if (mged_shutting_down(s))
+	return CMD_OK;
 
     if (bu_vls_strlen(vp) <= 0)
 	return CMD_OK;
