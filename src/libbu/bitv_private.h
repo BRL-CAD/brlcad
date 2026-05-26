@@ -9,6 +9,8 @@
  * version 2.1 as published by the Free Software Foundation.
  */
 
+#ifndef BU_BITV_H
+
 #ifndef LIBBU_BITV_PRIVATE_H
 #define LIBBU_BITV_PRIVATE_H
 
@@ -24,6 +26,8 @@ struct bu_bitv {
 };
 
 #endif /* LIBBU_BITV_PRIVATE_H */
+
+#endif
 
 /*
  * Local Variables:
