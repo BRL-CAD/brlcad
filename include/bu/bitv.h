@@ -23,8 +23,6 @@
 
 #include "common.h"
 
-#include <limits.h> /* for CHAR_BIT */
-
 #include "bu/defines.h"
 #include "bu/magic.h"
 #include "bu/list.h"
@@ -227,15 +225,16 @@ BU_EXPORT extern size_t bu_bitv_count_set(const struct bu_bitv *bv);
 
 /**
  * Iterate over all set bits in the bit vector efficiently.
- * 
- * This function quickly skips over large blocks of zeroes using machine-word level
- * operations, making it significantly faster than a bit-by-bit test loop when
- * the bit vector is sparse. For each bit that is set to 1, the provided callback
- * function is invoked with the index of the set bit and the user-provided data pointer.
+ *
+ * This function quickly skips over large blocks of zeroes using
+ * machine-word level operations, making it significantly faster than
+ * a bit-by-bit test loop when the bit vector is sparse. For each bit
+ * that is set to 1, the provided callback function is invoked with
+ * the index of the set bit and the user-provided data pointer.
  *
  * @param bv The bit vector to iterate over.
  * @param callback The function to call for each set bit.
- * @param data User-provided context pointer passed directly to the callback.
+ * @param data User-provided context passed directly to the callback.
  */
 BU_EXPORT extern void bu_bitv_foreach(const struct bu_bitv *bv, void (*callback)(size_t bit, void *data), void *data);
 
@@ -272,10 +271,11 @@ BU_EXPORT extern void bu_bitv_clear(struct bu_bitv *bv);
 
 /**
  * Performs an in-place bitwise OR operation on a bit vector.
- * Result is stored in 'ov' (ov = ov | iv).
- * If the vectors are of differing lengths, the operation will safely process
- * up to the bounds of the overlapping arrays. Any excess bits in 'ov' 
- * that do not exist in 'iv' are preserved as-is.
+ *
+ * Result is stored in 'ov' (ov = ov | iv).  If the vectors are of
+ * differing lengths, the operation will safely process up to the
+ * bounds of the overlapping arrays. Any excess bits in 'ov' that do
+ * not exist in 'iv' are preserved as-is.
  *
  * @param ov Destination and first operand bit vector.
  * @param iv Source bit vector operand.
@@ -284,10 +284,11 @@ BU_EXPORT extern void bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv);
 
 /**
  * Performs an in-place bitwise AND operation on a bit vector.
- * Result is stored in 'ov' (ov = ov & iv).
- * If the vectors are of differing lengths, the operation will safely process
- * up to the bounds of the overlapping arrays. For an AND operation, any 
- * excess bits in 'ov' that do not exist in 'iv' are cleared to 0.
+ *
+ * Result is stored in 'ov' (ov = ov & iv).  If the vectors are of
+ * differing lengths, the operation will safely process up to the
+ * bounds of the overlapping arrays. For an AND operation, any excess
+ * bits in 'ov' that do not exist in 'iv' are cleared to 0.
  *
  * @param ov Destination and first operand bit vector.
  * @param iv Source bit vector operand.
@@ -296,8 +297,9 @@ BU_EXPORT extern void bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv);
 
 /**
  * Performs an in-place bitwise NOT operation on a bit vector.
- * Flips all bits in the vector (ov = ~ov). Safely preserves the unused
- * trailing padding bits in the final machine word.
+ *
+ * Flips all bits in the vector (ov = ~ov). Safely preserves the
+ * unused trailing padding bits in the final machine word.
  *
  * @param ov The bit vector to invert.
  */
@@ -305,9 +307,10 @@ BU_EXPORT extern void bu_bitv_not(struct bu_bitv *ov);
 
 /**
  * Performs an in-place bitwise XOR (exclusive OR) operation on a bit vector.
- * Result is stored in 'ov' (ov = ov ^ iv).
- * If the vectors are of differing lengths, the operation processes up to the bounds
- * of the overlapping arrays. Excess bits in 'ov' remain unchanged.
+ *
+ * Result is stored in 'ov' (ov = ov ^ iv).  If the vectors are of
+ * differing lengths, the operation processes up to the bounds of the
+ * overlapping arrays. Excess bits in 'ov' remain unchanged.
  *
  * @param ov Destination and first operand bit vector.
  * @param iv Source bit vector operand.
@@ -315,11 +318,13 @@ BU_EXPORT extern void bu_bitv_not(struct bu_bitv *ov);
 BU_EXPORT extern void bu_bitv_xor(struct bu_bitv *ov, const struct bu_bitv *iv);
 
 /**
- * Shifts the entire bit vector left or right across machine word boundaries.
- * A positive shift value shifts the bits left (towards higher indices), effectively
- * moving bit N to N+shift. A negative shift value shifts the bits right 
- * (towards lower indices), moving bit N to N-|shift|.
- * Bits shifted out of bounds are discarded. Vacated bits are zeroed.
+ * Shifts entire bit vector left or right across word boundaries.
+ *
+ * A positive shift value shifts the bits left (towards higher
+ * indices), effectively moving bit N to N+shift. A negative shift
+ * value shifts the bits right (towards lower indices), moving bit N
+ * to N-|shift|.  Bits shifted out of bounds are discarded. Vacated
+ * bits are zeroed.
  *
  * @param ov The bit vector to shift.
  * @param shift The number of bits to shift.
@@ -397,8 +402,8 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
  * which case the resulting binary string will be prefixed with '0b'.
  *
  * The input string is expected to represent an integral number of
- * bytes but will have leading zeroes prepended as necessary to fulfill
- * that requirement.
+ * bytes but will have leading zeroes prepended as necessary to
+ * fulfill that requirement.
  *
  * Returns BRLCAD_OK for success, BRLCAD_ERROR for errors.
  */
@@ -413,8 +418,8 @@ BU_EXPORT extern int bu_hexstr_to_binstr(const char *hexstr, struct bu_vls *b);
  * in which case the resulting hex string will be prefixed with '0x'.
  *
  * The input string is expected to represent an integral number of
- * bytes but will have leading zeroes prepended as necessary to fulfill
- * that requirement.
+ * bytes but will have leading zeroes prepended as necessary to
+ * fulfill that requirement.
  *
  * Returns BRLCAD_OK for success, BRLCAD_ERROR for errors.
  *

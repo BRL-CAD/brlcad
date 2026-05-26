@@ -116,7 +116,6 @@ bu_bitv_new(size_t nbits)
 }
 
 
-
 void
 bu_bitv_free(struct bu_bitv *bv)
 {
@@ -231,11 +230,11 @@ bu_bitv_xor(struct bu_bitv *ov, const struct bu_bitv *iv)
     in = iv->bits;
     min_words = BU_BITS2WORDS(iv->nbits < ov->nbits ? iv->nbits : ov->nbits);
     words = min_words;
-    
+
     for (size_t i = 0; i < words; i++) {
         out[i] ^= in[i];
     }
-    
+
     /* Extra bits in ov remain unchanged since XORing with 0 does nothing */
 }
 
@@ -247,20 +246,21 @@ bu_bitv_shift_vector(struct bu_bitv *ov, int shift)
 
     BU_CK_BITV(ov);
 
-    if (shift == 0 || ov->nbits == 0) return;
-    
+    if (shift == 0 || ov->nbits == 0)
+	return;
+
     words = BU_BITS2WORDS(ov->nbits);
-    
+
     /* A positive shift means shifting left (towards higher indices), negative means right */
     if (shift > 0) {
         word_shift = shift / (sizeof(bitv_t) * BITS_PER_BYTE);
         bit_shift = shift % (sizeof(bitv_t) * BITS_PER_BYTE);
-        
+
         if (word_shift >= words) {
             bu_bitv_clear(ov);
             return;
         }
-        
+
         /* Shift words */
         for (i = words - 1; i >= word_shift; i--) {
             bitv_t val = ov->bits[i - word_shift];
@@ -273,12 +273,12 @@ bu_bitv_shift_vector(struct bu_bitv *ov, int shift)
             ov->bits[i] = val;
             if (i == word_shift) break; /* Avoid underflow */
         }
-        
+
         /* Clear vacated words */
         for (i = 0; i < word_shift; i++) {
             ov->bits[i] = 0;
         }
-        
+
         /* Clear unused bits in the last word */
         rem = ov->nbits & BU_BITV_MASK;
         if (rem > 0) {
@@ -288,12 +288,12 @@ bu_bitv_shift_vector(struct bu_bitv *ov, int shift)
         shift = -shift;
         word_shift = shift / (sizeof(bitv_t) * BITS_PER_BYTE);
         bit_shift = shift % (sizeof(bitv_t) * BITS_PER_BYTE);
-        
+
         if (word_shift >= words) {
             bu_bitv_clear(ov);
             return;
         }
-        
+
         /* Shift words */
         for (i = 0; i < words - word_shift; i++) {
             bitv_t val = ov->bits[i + word_shift];
@@ -305,7 +305,7 @@ bu_bitv_shift_vector(struct bu_bitv *ov, int shift)
             }
             ov->bits[i] = val;
         }
-        
+
         /* Clear vacated words */
         for (i = words - word_shift; i < words; i++) {
             ov->bits[i] = 0;
@@ -678,7 +678,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	    /* parsing was successful */
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)ulval  << (chunksize * BITS_PER_BYTE);
+	    bv->bits[word_count] |= (bitv_t)ulval << (chunksize * BITS_PER_BYTE);
 	}
 	chunksize = BVS;
     }
@@ -1066,11 +1066,13 @@ bu_bitv_set(struct bu_bitv *bv, size_t bit)
     bv->bits[bit >> BU_BITV_SHIFT] |= ((bitv_t)1) << (bit & BU_BITV_MASK);
 }
 
+
 void
 bu_bitv_clear_bit(struct bu_bitv *bv, size_t bit)
 {
     bv->bits[bit >> BU_BITV_SHIFT] &= ~(((bitv_t)1) << (bit & BU_BITV_MASK));
 }
+
 
 int
 bu_bitv_test(const struct bu_bitv *bv, size_t bit)
@@ -1078,11 +1080,13 @@ bu_bitv_test(const struct bu_bitv *bv, size_t bit)
     return (bv->bits[bit >> BU_BITV_SHIFT] & (((bitv_t)1) << (bit & BU_BITV_MASK))) != 0;
 }
 
+
 size_t
 bu_bitv_length(const struct bu_bitv *bv)
 {
     return bv->nbits;
 }
+
 
 /*
  * Local Variables:
