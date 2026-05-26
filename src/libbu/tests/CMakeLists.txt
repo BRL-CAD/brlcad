@@ -4,6 +4,7 @@
 set(
   bu_test_srcs
   argv.c
+  test_avs.c
   b64.c
   backtrace.c
   badmagic.c
@@ -11,11 +12,13 @@ set(
   bitv.c
   booleanize.c
   cache.cpp
+  test_cmd.c
   color.c
   datetime.c
   dir.c
   dirname.c
   encode.c
+  test_endian.c
   env.c
   escape.c
   file.c
@@ -25,6 +28,7 @@ set(
   humanize_number.c
   list.c
   mappedfile.c
+  test_observer.c
   opt.c
   parallel.c
   path_component.c
@@ -40,6 +44,8 @@ set(
   str.c
   str_isprint.c
   temp_filename.c
+  test_units.c
+  test_vlb.c
   glob.c
   vls.c
   vls_vprintf.c
@@ -140,7 +146,7 @@ brlcad_add_test(NAME bu_glob  COMMAND bu_test glob)
 #############################
 #      bu_file_* testing    #
 #############################
-brlcad_add_test(NAME bu_file  COMMAND bu_test file) # tests bu/file.h API
+brlcad_add_test(NAME bu_file  COMMAND bu_test file)
 
 # NOTE: these test numbers correspond with the bu_mime_t enum values in include/bu/mime.h
 brlcad_add_test(NAME bu_file_mime_dxf   COMMAND bu_test file_mime dxf 5 BU_MIME_MODEL_DXF) # tests dxf extension in model context
@@ -159,6 +165,7 @@ brlcad_add_test(NAME bu_temp_filename  COMMAND bu_test temp_filename "single")
 #  ************ bitv.c tests *************
 #
 include(tests_bitv.cmake)
+# brlcad_addexec(test_bitv_benchmark "test_bitv_benchmark.c" libbu TEST)
 
 #
 #  ************ booleanize.c tests *************
@@ -807,12 +814,23 @@ brlcad_add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 brlcad_add_test(NAME bu_snooze COMMAND bu_test snooze)
 
 #
+#  *********** more public API coverage ************
+#
+brlcad_add_test(NAME bu_test_avs COMMAND bu_test test_avs)
+brlcad_add_test(NAME bu_test_cmd COMMAND bu_test test_cmd)
+brlcad_add_test(NAME bu_test_observer COMMAND bu_test test_observer)
+brlcad_add_test(NAME bu_test_vlb COMMAND bu_test test_vlb)
+brlcad_add_test(NAME bu_test_units COMMAND bu_test test_units)
+brlcad_add_test(NAME bu_test_endian COMMAND bu_test test_endian)
+
+#
 #  *********** bu_dlopen/bu_dlsym test ************
 #
 add_subdirectory(dylib)
 
 cmakefiles(
   CMakeLists.txt
+  test_api.h
   bu_test.cpp.in
   dylib/CMakeLists.txt
   dylib/README.txt
