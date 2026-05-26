@@ -217,7 +217,6 @@ set(
   bu_ignore_files
   CMakeLists.txt
   bitv.h
-  bitv_private.h
   bu_plugin.h
   charclass.h
   date.h
