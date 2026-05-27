@@ -130,10 +130,10 @@ void
 bu_bitv_clear(struct bu_bitv *bv)
 {
     BU_CK_BITV(bv);
-
-    if (bv->nbits != 0) {
-        memset(bv->bits, 0, BU_BITS2BYTES(bv->nbits));
-    }
+    memset(bv->bits, 0, BU_BITS2BYTES(bv->nbits));
+    bv->bits[0] = 0; /* ensure embedded word is always cleared; a no-op
+                      * for nbits>=64 (memset already covered it), but
+                      * necessary when nbits==0 and memset size is 0 */
 }
 
 
