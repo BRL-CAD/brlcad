@@ -228,10 +228,10 @@ BU_EXPORT extern size_t bu_bitv_length(const struct bu_bitv *bv);
 
 
 /**
- * Macros to efficiently find all the ONE bits in a bit vector.
- * Counts words down, counts bits in words going up, for speed &
- * portability.  It does not matter if the shift causes the sign bit
- * to smear to the right.
+ * DEPRECATED: Macros to efficiently find all the ONE bits in a bit
+ * vector.  Counts words down, counts bits in words going up, for
+ * speed & portability.  It does not matter if the shift causes the
+ * sign bit to smear to the right.
  *
  * @par Example:
  * @code
@@ -243,6 +243,24 @@ BU_EXPORT extern size_t bu_bitv_length(const struct bu_bitv *bv);
  * @endcode
  *
  */
+#define BU_BITV_LOOP_START(_bv)	\
+    { \
+    int _wd;	/* Current word number */  \
+    BU_CK_BITV(_bv); \
+    for (_wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd--) {  \
+    int _b;	/* Current bit-in-word number */  \
+    bitv_t _val;	/* Current word value */  \
+    if ((_val = (_bv)->bits[_wd])==0) continue;  \
+    for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1) { \
+    if (!(_val & 1)) continue;
+
+/**
+ * DEPRECATED: Paired with BU_BITV_LOOP_START()
+ */
+#define BU_BITV_LOOP_END } /* end for (_b) */ \
+	} /* end for (_wd) */ \
+	} /* end block */
+
 /**
  * Count the number of set bits.
  */
