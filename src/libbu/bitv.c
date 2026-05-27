@@ -361,26 +361,50 @@ bu_pr_bitv(const char *str, const struct bu_bitv *bv)
 void
 bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
 {
-    size_t word_count = 0;
-    size_t chunksize  = 0;
-    /* necessarily volatile to keep the compiler from complaining
-     * about unreachable code during optimization.
+    /* two hex digits per byte, MSB first to match the documented
+     * "most significant byte first" external representation.
      */
-    volatile size_t BVS = sizeof(bitv_t);
+    static const char hex_digits[16] = "0123456789abcdef";
+
+    size_t nbytes;
+    size_t nchars;
+    char  *buf;
+    char  *p;
+    size_t word_count;
+    size_t w;
 
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    word_count = bv->nbits / BITS_PER_BYTE / BVS;
-    bu_vls_extend(v, word_count * BVS * 2 + 1);
+    nbytes     = BU_BITS2BYTES(bv->nbits);  /* total bytes in the bits array */
+    nchars     = nbytes * 2;                /* two hex chars per byte        */
+    word_count = BU_BITS2WORDS(bv->nbits);  /* number of bitv_t words        */
 
-    while (word_count--) {
-	chunksize = BVS;
-	while (chunksize--) {
-	    unsigned long val = (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(chunksize * BITS_PER_BYTE))) >> (chunksize * BITS_PER_BYTE)) & (bitv_t)0xff;
-	    bu_vls_printf(v, "%02lx", val);
-	}
+    if (word_count == 0 || nbytes == 0)
+        return;
+
+    /* allocate the output buffer once */
+    buf = (char *)bu_malloc(nchars + 1, "bu_bitv_to_hex buf");
+    p   = buf;
+
+    /* emit words most-significant to least-significant (high index
+     * first) to produce the desired MSB-first hex representation.
+     * within each word, emit bytes from the MSB downward.
+     */
+    for (w = word_count; w-- > 0;) {
+        bitv_t word = bv->bits[w];
+        int    b;
+        /* sizeof(bitv_t) bytes per word, MSB first */
+        for (b = (int)(sizeof(bitv_t)) - 1; b >= 0; --b) {
+            unsigned int byte = (unsigned int)((word >> (b * 8)) & 0xff);
+            *p++ = hex_digits[byte >> 4];
+            *p++ = hex_digits[byte & 0x0f];
+        }
     }
+    *p = '\0';
+
+    bu_vls_strncat(v, buf, nchars);
+    bu_free(buf, "bu_bitv_to_hex buf");
 }
 
 
@@ -821,8 +845,8 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
      * an integral number of bytes */
     if (len < BITS_PER_BYTE || len % BITS_PER_BYTE) {
 	size_t new_len, leading_zeroes;
-	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes,\n", len);
-	bu_log("          padding with leading zeroes to ensure such.\n");
+	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes.\n", len);
+	bu_log("          Padding with leading zeros to ensure.\n");
 	if (len < BITS_PER_BYTE)
 	    new_len = BITS_PER_BYTE;
 	else
@@ -936,8 +960,8 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
      * an integral number of bytes */
     if (len < HEXCHARS_PER_BYTE || len % HEXCHARS_PER_BYTE) {
 	size_t new_len, leading_zeroes;
-	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes,\n", len);
-	bu_log("          padding with leading zeroes to ensure such.\n");
+	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes.\n", len);
+	bu_log("          Padding with leading zeros.\n");
 	if (len < HEXCHARS_PER_BYTE)
 	    new_len = HEXCHARS_PER_BYTE;
 	else
