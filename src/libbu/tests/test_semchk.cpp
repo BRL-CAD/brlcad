@@ -338,4 +338,4 @@ main(int argc, const char *argv[])
 // indent-tabs-mode: t
 // c-file-style: "stroustrup"
 // End:
-// ex: shiftwidth=4 tabstop=8
+// ex: shiftwidth=4 tabstop=8 cino=N-s

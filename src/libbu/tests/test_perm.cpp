@@ -1,4 +1,4 @@
-/*                     T E S T _ P E R M . C P P
+/*                   T E S T _ P E R M . C P P
  * BRL-CAD
  *
  * Published in 2024 by the United States Government.
@@ -114,4 +114,4 @@ main(int argc, const char **argv)
 // indent-tabs-mode: t
 // c-file-style: "stroustrup"
 // End:
-// ex: shiftwidth=4 tabstop=8
+// ex: shiftwidth=4 tabstop=8 cino=N-s

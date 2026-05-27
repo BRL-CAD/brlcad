@@ -1,5 +1,7 @@
-/*               T E S T _ P A T H _ M A T C H . C P P
- *
+/*             T E S T _ P A T H _ M A T C H . C P P
+ * BRL-CAD
+ */
+ /** @file test_path_match.cpp
  * Public domain, 2008, Todd C. Miller <millert@openbsd.org>
  */
 
@@ -73,4 +75,4 @@ main(int argc, char **argv)
 // indent-tabs-mode: t
 // c-file-style: "stroustrup"
 // End:
-// ex: shiftwidth=4 tabstop=8
+// ex: shiftwidth=4 tabstop=8 cino=N-s
