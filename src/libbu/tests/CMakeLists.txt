@@ -844,6 +844,7 @@ cmakefiles(
   tests_bitv.cmake
   tests_vls.cmake
   test_perm.cpp
+  test_semchk.cpp
 )
 
 # Local Variables:
