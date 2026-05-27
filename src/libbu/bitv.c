@@ -317,24 +317,46 @@ void
 bu_bitv_vls(struct bu_vls *v, const struct bu_bitv *bv)
 {
     int seen = 0;
-    size_t i;
-    size_t len;
+    size_t words;
+    size_t w;
+    bitv_t val;
+    int bit;
 
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    len = bv->nbits;
-
     bu_vls_strcat(v, "(");
 
-    /* Visit all the bits in ascending order */
-    for (i = 0; i < len; i++) {
-	if (BU_BITTEST(bv, i) == 0)
-	    continue;
-	if (seen)
-	    bu_vls_strcat(v, ", ");
-	bu_vls_printf(v, "%zu", i);
-	seen = 1;
+    if (bv->nbits > 0) {
+        words = BU_BITS2WORDS(bv->nbits);
+        for (w = 0; w < words; w++) {
+            val = bv->bits[w];
+            /* Mask out bits beyond bv->nbits in the final word */
+            if (w == words - 1 && (bv->nbits % (sizeof(bitv_t) * BITS_PER_BYTE)) != 0) {
+                bitv_t mask = ((bitv_t)1 << (bv->nbits % (sizeof(bitv_t) * BITS_PER_BYTE))) - 1;
+                val &= mask;
+            }
+
+            while (val) {
+#if defined(__GNUC__) || defined(__clang__)
+                bit = __builtin_ctzll((unsigned long long)val);
+                val &= val - 1; /* clear the lowest set bit */
+#else
+                /* fallback */
+                bit = 0;
+                bitv_t temp = val;
+                while ((temp & 1) == 0) {
+                    bit++;
+                    temp >>= 1;
+                }
+                val &= val - 1;
+#endif
+                if (seen)
+                    bu_vls_strcat(v, ", ");
+                bu_vls_printf(v, "%zu", w * (sizeof(bitv_t) * BITS_PER_BYTE) + bit);
+                seen = 1;
+            }
+        }
     }
     bu_vls_strcat(v, ")");
 }
