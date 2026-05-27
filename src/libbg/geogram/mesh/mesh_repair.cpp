@@ -65,7 +65,7 @@ namespace {
     bool facet_is_degenerate(const Mesh& M, index_t f) {
         index_t nb_vertices = M.facets.nb_vertices(f);
         if(nb_vertices != 3) {
-            index_t* vertices = (index_t*)alloca(nb_vertices*sizeof(index_t));
+            index_t* vertices = (index_t*)BRLCAD_ALLOCA(nb_vertices*sizeof(index_t));
             for(index_t lv=0; lv<nb_vertices; ++lv) {
                 vertices[lv] = M.facets.vertex(f,lv);
             }
@@ -117,7 +117,7 @@ namespace {
         );
 
         // Assign corner-to-vertex links
-        index_t* f_vertex = (index_t*) alloca(sizeof(index_t) * d);
+        index_t* f_vertex = (index_t*) BRLCAD_ALLOCA(sizeof(index_t) * d);
         {
             index_t c = c_min;
             for(index_t i = 0; i < d; i++) {
@@ -138,8 +138,8 @@ namespace {
         // P[i]:     from where we fetch the attributes of the i-th corner
         // P_inv[i]: where we want to put the attributes of the i-th corner
 
-        index_t* P     = (index_t*) alloca(sizeof(index_t) * d);
-        index_t* P_inv = (index_t*) alloca(sizeof(index_t) * d);
+        index_t* P     = (index_t*) BRLCAD_ALLOCA(sizeof(index_t) * d);
+        index_t* P_inv = (index_t*) BRLCAD_ALLOCA(sizeof(index_t) * d);
         {
             index_t cur = c_min - c0;
             for(index_t i=0; i<d; ++i) {

@@ -161,7 +161,7 @@ namespace GEOBRL {
         geo_debug_assert(i < cached_size_);
         geo_debug_assert(j < cached_size_);
 	size_t item_size = element_size_ * dimension_;
-        void* temp = alloca(item_size);
+        void* temp = BRLCAD_ALLOCA(item_size);
         Memory::copy(
             temp,
             cached_base_addr_+i*item_size,

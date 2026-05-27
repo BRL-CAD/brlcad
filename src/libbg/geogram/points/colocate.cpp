@@ -90,8 +90,8 @@ namespace {
             // allocated on the stack, more multithread-friendly
             // and no need to deallocate (and VC++ does not support
             // int neighbors[nb] where nb is a variable)
-            index_t* neighbors = (index_t*) alloca(sizeof(index_t) * nb);
-            double* dist = (double*) alloca(sizeof(double) * nb);
+            index_t* neighbors = (index_t*) BRLCAD_ALLOCA(sizeof(index_t) * nb);
+            double* dist = (double*) BRLCAD_ALLOCA(sizeof(double) * nb);
 
             NN_->get_nearest_neighbors(
                 nb, NN_->point_ptr(i), neighbors, dist

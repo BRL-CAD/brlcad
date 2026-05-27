@@ -40,6 +40,7 @@
 #ifndef GEOBRLCAD_BASIC_PERMUTATION
 #define GEOBRLCAD_BASIC_PERMUTATION
 
+#include "common.h"
 #include <geogram/basic/geogram_common.h>
 #include <geogram/basic/numeric.h>
 #include <geogram/basic/memory.h>
@@ -163,7 +164,7 @@ namespace GEOBRL {
             vector<index_t>& permutation =
                 const_cast<vector<index_t>&>(permutation_in);
             geo_debug_assert(is_valid(permutation));
-            Memory::byte* temp = static_cast<Memory::byte*>(alloca(elemsize));
+            Memory::byte* temp = static_cast<Memory::byte*>(BRLCAD_ALLOCA(elemsize));
             for(index_t k = 0; k < permutation.size(); k++) {
                 if(is_marked(permutation, k)) {
                     continue;

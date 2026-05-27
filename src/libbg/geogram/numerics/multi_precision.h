@@ -328,18 +328,18 @@ namespace GEOBRL {
     /**
      * \brief Allocates an expansion on the stack.
      * \details It can only be a macro (and not an inline function)
-     *  since alloca() cannot be called from inline functions.
+     *  since BRLCAD_ALLOCA() cannot be called from inline functions.
      * \arg capa required capacity of the expansion.
      * \relates GEOBRL::expansion
      */
 #ifdef CPPCHECK
     // cppcheck does not understand that the result
-    // of alloca() is passed to the placement syntax
+    // of BRLCAD_ALLOCA() is passed to the placement syntax
     // of operator new.
     expansion& new_expansion_on_stack(index_t capa);
 #else
 #define new_expansion_on_stack(capa)                                    \
-    (new (alloca(expansion::bytes_on_stack(capa)))expansion(capa))
+    (new (BRLCAD_ALLOCA(expansion::bytes_on_stack(capa)))expansion(capa))
 #endif
 
     /**

@@ -171,8 +171,8 @@ namespace GEOBRL {
         // compute the distance between the query point and the
         // bbox of the current node.
         double box_dist = 0.0;
-        double* bbox_min = (double*) (alloca(dimension() * sizeof(double)));
-        double* bbox_max = (double*) (alloca(dimension() * sizeof(double)));
+        double* bbox_min = (double*) (BRLCAD_ALLOCA(dimension() * sizeof(double)));
+        double* bbox_max = (double*) (BRLCAD_ALLOCA(dimension() * sizeof(double)));
         init_bbox_and_bbox_dist_for_traversal(
             bbox_min, bbox_max, box_dist, query_point
         );
@@ -180,8 +180,8 @@ namespace GEOBRL {
             nb_neighbors,
             neighbors,
             neighbors_sq_dist,
-            (index_t*)alloca(sizeof(index_t) * (nb_neighbors+1)),
-            (double*)alloca(sizeof(double) * (nb_neighbors+1))
+            (index_t*)BRLCAD_ALLOCA(sizeof(index_t) * (nb_neighbors+1)),
+            (double*)BRLCAD_ALLOCA(sizeof(double) * (nb_neighbors+1))
         );
         get_nearest_neighbors_recursive(
             root_, 0, nb_points(), bbox_min, bbox_max, box_dist, query_point, NN
@@ -206,8 +206,8 @@ namespace GEOBRL {
         // are necessary to compute the distance between the query point and the
         // bbox of the current node.
         double box_dist = 0.0;
-        double* bbox_min = (double*) (alloca(dimension() * sizeof(double)));
-        double* bbox_max = (double*) (alloca(dimension() * sizeof(double)));
+        double* bbox_min = (double*) (BRLCAD_ALLOCA(dimension() * sizeof(double)));
+        double* bbox_max = (double*) (BRLCAD_ALLOCA(dimension() * sizeof(double)));
         init_bbox_and_bbox_dist_for_traversal(
             bbox_min, bbox_max, box_dist, query_point
         );
@@ -215,8 +215,8 @@ namespace GEOBRL {
             nb_neighbors,
             neighbors,
             neighbors_sq_dist,
-            (index_t*)alloca(sizeof(index_t) * (nb_neighbors+1)),
-            (double*)alloca(sizeof(double) * (nb_neighbors+1))
+            (index_t*)BRLCAD_ALLOCA(sizeof(index_t) * (nb_neighbors+1)),
+            (double*)BRLCAD_ALLOCA(sizeof(double) * (nb_neighbors+1))
         );
         NN.copy_from_user();
         get_nearest_neighbors_recursive(
@@ -568,8 +568,8 @@ namespace GEOBRL {
     index_t AdaptiveKdTree::build_tree() {
         // Create kd-tree. Local copy of the bbox is used, because it
         // is modified during traversal.
-        double* bbox_min = (double*) (alloca(dimension() * sizeof(double)));
-        double* bbox_max = (double*) (alloca(dimension() * sizeof(double)));
+        double* bbox_min = (double*) (BRLCAD_ALLOCA(dimension() * sizeof(double)));
+        double* bbox_max = (double*) (BRLCAD_ALLOCA(dimension() * sizeof(double)));
         for(coord_index_t c = 0; c < dimension(); ++c) {
             bbox_min[c] = bbox_min_[c];
             bbox_max[c] = bbox_max_[c];
