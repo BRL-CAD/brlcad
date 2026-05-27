@@ -1333,25 +1333,14 @@ macro(find_package_bullet)
     set(_bullet_double ON)
 
     if(BULLET_STATUS STREQUAL "System")
-      if(CMAKE_NM AND EXISTS "${_bullet_lib0}")
-        execute_process(
-          COMMAND "${CMAKE_NM}" -C "${_bullet_lib0}"
-          OUTPUT_VARIABLE _bullet_dump
-          ERROR_QUIET)
-      elseif(COMMAND brlcad_binary_dump)
-        brlcad_binary_dump(_bullet_dump "${_bullet_lib0}")
+      if("${BULLET_DEFINITIONS}" MATCHES "BT_USE_DOUBLE_PRECISION")
+        set(_bullet_double ON)
+      else()
+        # if system Bullet does not explicitly define double, we'll
+        # default to OFF as many/most system packages default to float
+        # and/or install the double version adjacent in ad hoc ways.
+        set(_bullet_double OFF)
       endif()
-      if(_bullet_dump)
-	# see if dump mentions float or (for msvc) indicates a name-mangled float 
-        string(REGEX MATCH "setMassProps[^\\n]*float" _has_float "${_bullet_dump}")
-        string(FIND "${_bullet_dump}" "QEAAXMAEBVbtVector3" _has_float_m64)
-        string(FIND "${_bullet_dump}" "QAEXMABVbtVector3" _has_float_m32)
-        if(_has_float GREATER -1 OR _has_float_m64 GREATER -1 OR _has_float_m32 GREATER -1)
-          set(_bullet_double OFF)
-        endif()
-      endif()
-      unset(_bullet_dump)
-      unset(_has_float)
     endif()
 
     if(_bullet_double)
