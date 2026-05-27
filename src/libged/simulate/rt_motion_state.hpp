@@ -53,6 +53,7 @@
 #if defined(__clang__)
 #    pragma clang diagnostic ignored "-Wfloat-equal"
 #    pragma clang diagnostic ignored "-Wundef"
+#    pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 
 #include <btBulletDynamicsCommon.h>
