@@ -372,7 +372,6 @@ main(int argc, char **argv)
     char *buf;			/* ptr to dynamic buffer */
     int buflen = 1024;		/* length of buffer */
     int nbuf = 1024;		/* number of buffers to send in sinkmode */
-    unsigned long addr_tmp;
     int cnt;
 #ifdef USE_WINSOCK
     WSADATA wsaData;
@@ -476,7 +475,8 @@ main(int argc, char **argv)
             if (addr == NULL)
                 err("bad hostname");
             sinhim.sin_family = addr->h_addrtype;
-            memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
+	    unsigned long addr_tmp;
+	    memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
             sinhim.sin_addr.s_addr = addr_tmp;
 #else
             fprintf(stderr, "No hostname resolution available\n");

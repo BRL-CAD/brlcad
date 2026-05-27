@@ -2045,6 +2045,27 @@ if(HAVE_GETCURRENTPROCESSID)
   config_h_append(BRLCAD "#define HAVE_GETCURRENTPROCESSID 1\n")
 endif(HAVE_GETCURRENTPROCESSID)
 
+
+if(HAVE_NETDB_H)
+  check_c_source_compiles("
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+int main(void) {
+struct addrinfo hints = {0};
+hints.ai_family = AF_UNSPEC;
+hints.ai_socktype = SOCK_STREAM;
+struct addrinfo *res = NULL;
+return getaddrinfo(\"localhost\", NULL, &hints, &res);
+}
+  " HAVE_GETADDRINFO)
+  if(HAVE_GETADDRINFO)
+    config_h_append(BRLCAD "#define HAVE_GETADDRINFO 1\n")
+  endif(HAVE_GETADDRINFO)
+endif()
+
 # functionality tests for lrint
 set(lrint_test "long int lrint(double); int main(void) {return lrint(3.14);}")
 set(lrint_test_negative "long int lrint(double); int main(void) {return lrint(-1);}")
