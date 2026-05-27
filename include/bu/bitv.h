@@ -233,7 +233,7 @@ BU_EXPORT extern size_t bu_bitv_length(const struct bu_bitv *bv);
  * speed & portability.  It does not matter if the shift causes the
  * sign bit to smear to the right.
  *
- * @par Example:
+ * Example:
  * @code
  *
  * BU_BITV_LOOP_START(bv) {
