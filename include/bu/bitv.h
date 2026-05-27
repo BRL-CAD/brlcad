@@ -106,20 +106,45 @@ typedef struct bu_bitv bu_bitv_t;
 #define BU_CK_BITV(_bp) BU_CKMAG(_bp, BU_BITV_MAGIC, "bu_bitv")
 
 /**
- * initializes a bu_bitv struct without allocating any memory.  this
- * macro is not suitable for initializing a head list node.
+ * Initializes a bu_bitv struct without allocating any memory.
+ * This macro is not suitable for initializing a head list node.
+ *
+ * Because struct bu_bitv embeds one full @c bitv_t word (currently
+ * 64 bits) inline, a stack-allocated instance already provides 64
+ * usable bits without any heap allocation.  Callers that need at most
+ * 64 bits can avoid bu_bitv_new() entirely:
+ *
+ * @code
+ * struct bu_bitv bv;
+ * BU_BITV_INIT(&bv);
+ * BU_BITSET(&bv, 3);
+ * if (BU_BITTEST(&bv, 3)) { ... }
+ * // no bu_bitv_free() needed -- stack memory
+ * @endcode
+ *
+ * nbits is set to sizeof(bitv_t)*8 (64) to reflect the capacity
+ * actually available in the embedded bits[1] field.
  */
 #define BU_BITV_INIT(_bp) { \
 	BU_LIST_INIT_MAGIC(&(_bp)->l, BU_BITV_MAGIC); \
-	(_bp)->nbits = 0; \
+	(_bp)->nbits = sizeof(bitv_t) * 8; \
 	(_bp)->bits[0] = 0; \
     }
 
 /**
- * macro suitable for declaration statement initialization of a bu_bitv
- * struct.  does not allocate memory.  not suitable for a head node.
+ * Macro suitable for declaration-statement initialization of a bu_bitv
+ * struct on the stack or as a static/global.  Does not allocate memory
+ * and is not suitable for a head node.
+ *
+ * The initialized vector has 64 bits of usable capacity matching the
+ * embedded bits[1] storage.  Example:
+ *
+ * @code
+ * struct bu_bitv bv = BU_BITV_INIT_ZERO;
+ * BU_BITSET(&bv, 7);
+ * @endcode
  */
-#define BU_BITV_INIT_ZERO { {BU_BITV_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, {0} }
+#define BU_BITV_INIT_ZERO { {BU_BITV_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, sizeof(bitv_t)*8, {0} }
 
 /**
  * returns truthfully whether a bu_bitv has been initialized
