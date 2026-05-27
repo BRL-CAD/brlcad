@@ -384,7 +384,7 @@ bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
 {
     /* Two hex digits per byte, MSB (highest word) first to match the
      * documented "most significant byte first" external representation. */
-    static const char hex_digits[17] = "0123456789abcdef";
+    static const char hex_digits[16+1] = "0123456789abcdef";
 
     size_t exact_bytes;
     size_t nchars;
