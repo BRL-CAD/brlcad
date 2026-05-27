@@ -94,15 +94,14 @@ bu_bitv_new(size_t nbits)
     struct bu_bitv *bv;
     size_t bv_bytes;
     size_t extra;
+    size_t alloc_bits = nbits;
 
-    /* Round up to at least one full machine word so the embedded bits[1]
-     * member in struct bu_bitv is always fully usable without any extra
-     * dynamic allocation.  Callers that request 0 bits still get a valid,
-     * usable 64-bit vector. */
-    if (nbits < sizeof(bitv_t) * BITS_PER_BYTE)
-        nbits = sizeof(bitv_t) * BITS_PER_BYTE;
+    /* Round up allocation to at least one full machine word so the embedded
+     * bits[1] member is always fully usable without extra dynamic allocation. */
+    if (alloc_bits < sizeof(bitv_t) * BITS_PER_BYTE)
+        alloc_bits = sizeof(bitv_t) * BITS_PER_BYTE;
 
-    bv_bytes = BU_BITS2BYTES(nbits);
+    bv_bytes = BU_BITS2BYTES(alloc_bits);
 
     /* bits[1] already contributes sizeof(bitv_t) bytes inside the struct.
      * Only allocate beyond the struct when the request exceeds one word. */
@@ -110,7 +109,7 @@ bu_bitv_new(size_t nbits)
 
     bv = (struct bu_bitv *)bu_calloc(1, sizeof(struct bu_bitv) + extra, "struct bu_bitv");
     BU_LIST_INIT_MAGIC(&(bv->l), BU_BITV_MAGIC);
-    bv->nbits = bv_bytes * BITS_PER_BYTE;
+    bv->nbits = nbits; /* MUST be the exact requested size, not the padded alloc size */
 
     return bv;
 }
@@ -361,45 +360,37 @@ bu_pr_bitv(const char *str, const struct bu_bitv *bv)
 void
 bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
 {
-    /* two hex digits per byte, MSB first to match the documented
-     * "most significant byte first" external representation.
-     */
+    /* Two hex digits per byte, MSB (highest word) first to match the
+     * documented "most significant byte first" external representation. */
     static const char hex_digits[16] = "0123456789abcdef";
 
-    size_t nbytes;
+    size_t exact_bytes;
     size_t nchars;
     char  *buf;
     char  *p;
-    size_t word_count;
-    size_t w;
+    size_t i;
 
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    nbytes     = BU_BITS2BYTES(bv->nbits);  /* total bytes in the bits array */
-    nchars     = nbytes * 2;                /* two hex chars per byte        */
-    word_count = BU_BITS2WORDS(bv->nbits);  /* number of bitv_t words        */
-
-    if (word_count == 0 || nbytes == 0)
+    exact_bytes = bv->nbits / BITS_PER_BYTE;
+    if (exact_bytes == 0)
         return;
 
-    /* allocate the output buffer once */
+    nchars = exact_bytes * 2;
+
+    /* Allocate the output buffer once -- no per-byte VLS operations */
     buf = (char *)bu_malloc(nchars + 1, "bu_bitv_to_hex buf");
     p   = buf;
 
-    /* emit words most-significant to least-significant (high index
-     * first) to produce the desired MSB-first hex representation.
-     * within each word, emit bytes from the MSB downward.
-     */
-    for (w = word_count; w-- > 0;) {
-        bitv_t word = bv->bits[w];
-        int    b;
-        /* sizeof(bitv_t) bytes per word, MSB first */
-        for (b = (int)(sizeof(bitv_t)) - 1; b >= 0; --b) {
-            unsigned int byte = (unsigned int)((word >> (b * 8)) & 0xff);
-            *p++ = hex_digits[byte >> 4];
-            *p++ = hex_digits[byte & 0x0f];
-        }
+    /* Emit bytes from most-significant to least-significant (high index first)
+     * to produce the documented MSB-first hex representation. */
+    for (i = exact_bytes; i-- > 0;) {
+        size_t word_idx = i / sizeof(bitv_t);
+        size_t byte_idx = i % sizeof(bitv_t);
+        unsigned int byte = (unsigned int)((bv->bits[word_idx] >> (byte_idx * 8)) & 0xff);
+        *p++ = hex_digits[byte >> 4];
+        *p++ = hex_digits[byte & 0x0f];
     }
     *p = '\0';
 
