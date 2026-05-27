@@ -547,7 +547,7 @@ bu_binary_to_bitv(const char *str)
      *
      *   Example 1: "  0b00110100 " ('b' may be 'B' if desired)
      *
-     * Note that only the zeroes and ones are actually tested and any
+     * Note that only the zeros and ones are actually tested and any
      * other character will ignored.  So one can ease producing the
      * binary input string by using spaces or other characters to
      * group the bits as shown in Examples 2, 3, and 4:
@@ -578,7 +578,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
      *
      *   Example 1: "  0b00110100 " ('b' may be 'B' if desired)
      *
-     * Note that only the zeroes and ones are actually tested and any
+     * Note that only the zeros and ones are actually tested and any
      * other character will ignored.  So one can ease producing the
      * binary input string by using spaces or other characters
      * to group the bits as shown in Examples 2, 3, and 4:
@@ -632,7 +632,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	bu_exit(1, "Incorrect binary format '%s' (should be '0b<binary digits>').\n", str);
 
     /* zero-length input is okay, but we always need to add leading
-     * zeroes to get a bit-length which is a multiple of eight
+     * zeros to get a bit-length which is a multiple of eight
      */
     vlen = bu_vls_strlen(&v2);
     new_vlen = nbits > vlen ? nbits : vlen;
@@ -644,15 +644,15 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     }
 
     if (new_vlen > vlen) {
-	size_t needed_zeroes = new_vlen - vlen;
-	for (i = 0; i < needed_zeroes; ++i) {
+	size_t needed_zeros = new_vlen - vlen;
+	for (i = 0; i < needed_zeros; ++i) {
 	    bu_vls_prepend(&v2, "0");
 	}
 	vlen = new_vlen;
     }
 
     len = vlen;
-    bv = bu_bitv_new(len); /* note it is initialized to all zeroes */
+    bv = bu_bitv_new(len); /* note it is initialized to all zeros */
     BU_CK_BITV(bv);
 
     /* note the final length of the bitv may be greater due to word sizes, etc. */
@@ -841,18 +841,18 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
     }
     len = bu_vls_strlen(&b);
 
-    /* check valid length, pad with leading zeroes if necessary to get
+    /* check valid length, pad with leading zeros if necessary to get
      * an integral number of bytes */
     if (len < BITS_PER_BYTE || len % BITS_PER_BYTE) {
-	size_t new_len, leading_zeroes;
+	size_t new_len, leading_zeros;
 	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes.\n", len);
 	bu_log("          Padding with leading zeros to ensure.\n");
 	if (len < BITS_PER_BYTE)
 	    new_len = BITS_PER_BYTE;
 	else
 	    new_len = (len/BITS_PER_BYTE) * BITS_PER_BYTE + BITS_PER_BYTE;
-	leading_zeroes = new_len - len;
-	for (i = 0; i < leading_zeroes; ++i)
+	leading_zeros = new_len - len;
+	for (i = 0; i < leading_zeros; ++i)
 	    bu_vls_prepend(&b, "0");
 	len = bu_vls_strlen(&b);
     }
@@ -956,18 +956,18 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
     }
     len = bu_vls_strlen(&h);
 
-    /* check valid length, pad with leading zeroes if necessary to get
+    /* check valid length, pad with leading zeros if necessary to get
      * an integral number of bytes */
     if (len < HEXCHARS_PER_BYTE || len % HEXCHARS_PER_BYTE) {
-	size_t new_len, leading_zeroes;
+	size_t new_len, leading_zeros;
 	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes.\n", len);
 	bu_log("          Padding with leading zeros.\n");
 	if (len < HEXCHARS_PER_BYTE)
 	    new_len = HEXCHARS_PER_BYTE;
 	else
 	    new_len = (len/HEXCHARS_PER_BYTE) * HEXCHARS_PER_BYTE + HEXCHARS_PER_BYTE;
-	leading_zeroes = new_len - len;
-	for (i = 0; i < leading_zeroes; ++i)
+	leading_zeros = new_len - len;
+	for (i = 0; i < leading_zeros; ++i)
 	    bu_vls_prepend(&h, "0");
 	len = bu_vls_strlen(&h);
     }
