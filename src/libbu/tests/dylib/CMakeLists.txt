@@ -5,12 +5,12 @@ if(BUILD_TESTING)
     PROPERTY COMPILE_DEFINITIONS "DYLIB_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
   )
 
-  add_library(plugin_1 SHARED plugin_1.cpp)
-  target_link_libraries(plugin_1 libbu)
-  add_library(plugin_2 SHARED plugin_2.cpp)
-  target_link_libraries(plugin_2 libbu)
+  add_library(test_plugin_1 SHARED plugin_1.cpp)
+  target_link_libraries(test_plugin_1 libbu)
+  add_library(test_plugin_2 SHARED plugin_2.cpp)
+  target_link_libraries(test_plugin_2 libbu)
 
-  set(plugin_targets plugin_1 plugin_2)
+  set(plugin_targets test_plugin_1 test_plugin_2)
   set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
 
   # Override the output directories to put the plugins in LIBEXEC_DIR
@@ -33,14 +33,14 @@ if(BUILD_TESTING)
   add_library(libdylib SHARED dylib.c)
   set_target_properties(libdylib PROPERTIES PREFIX "")
   if(HIDE_INTERNAL_SYMBOLS)
-    set_property(TARGET plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
-    set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
+    set_property(TARGET test_plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
+    set_property(TARGET test_plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
     set_property(TARGET libdylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
   endif(HIDE_INTERNAL_SYMBOLS)
   target_link_libraries(libdylib libbu)
   set_target_properties(libdylib PROPERTIES FOLDER "BRL-CAD Executables/Test Programs/dylib")
 
-  add_executable(bu_dylib run.c)
+  add_executable(bu_dylib test_dylib_run.c)
   target_link_libraries(bu_dylib libdylib libbu)
   set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   if(HIDE_INTERNAL_SYMBOLS)
@@ -49,7 +49,7 @@ if(BUILD_TESTING)
   set_target_properties(bu_dylib PROPERTIES FOLDER "BRL-CAD Executables/Test Programs/dylib")
 
   # As a build convenience, make bu_dylib depend on everything
-  add_dependencies(bu_dylib plugin_1 plugin_2)
+  add_dependencies(bu_dylib test_plugin_1 test_plugin_2)
 
   brlcad_add_test(NAME bu_dylib COMMAND bu_dylib)
 endif(BUILD_TESTING)
