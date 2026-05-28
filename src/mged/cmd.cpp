@@ -168,8 +168,6 @@ extern "C" {
  * Initialise the dedicated MGED log-buffer semaphore.
  *
  * Must be called once, early in mged_setup(), before any parallel code runs.
- * Uses bu_semaphore_register() (the correct BRL-CAD application semaphore API)
- * rather than bu/tc.h primitives.
  */
 void
 mged_sem_log_init(void)
