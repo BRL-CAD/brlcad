@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+#include <exception>
+#include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -69,7 +72,7 @@ typedef struct assetimport_write_state {
     }
 } assetimport_write_state_t;
 
-static char* 
+static char*
 strip_at_char(char* str, char token)
 {
     char* ret = strrchr(str, token);
@@ -77,6 +80,85 @@ strip_at_char(char* str, char token)
 	return &ret[1];
 
     return NULL;
+}
+
+static bool
+validate_assimp_scene(const aiScene *scene)
+{
+    if (!scene) {
+	bu_log("ERROR: Assimp export scene is NULL\n");
+	return false;
+    }
+
+    if (!scene->mRootNode) {
+	bu_log("ERROR: Assimp export scene has no root node\n");
+	return false;
+    }
+
+    if (scene->mNumMeshes && !scene->mMeshes) {
+	bu_log("ERROR: Assimp export scene has mesh count but no mesh array\n");
+	return false;
+    }
+
+    for (unsigned int mi = 0; mi < scene->mNumMeshes; mi++) {
+	const aiMesh *mesh = scene->mMeshes[mi];
+	if (!mesh) {
+	    bu_log("ERROR: Assimp export scene mesh[%u] is NULL\n", mi);
+	    return false;
+	}
+	if (mesh->mMaterialIndex >= scene->mNumMaterials) {
+	    bu_log("ERROR: Assimp export mesh[%u] references material %u, but only %u material(s) exist\n",
+		    mi, mesh->mMaterialIndex, scene->mNumMaterials);
+	    return false;
+	}
+	if (mesh->mNumVertices && !mesh->mVertices) {
+	    bu_log("ERROR: Assimp export mesh[%u] has vertex count but no vertex array\n", mi);
+	    return false;
+	}
+	if (mesh->mNumFaces && !mesh->mFaces) {
+	    bu_log("ERROR: Assimp export mesh[%u] has face count but no face array\n", mi);
+	    return false;
+	}
+    }
+
+    if (scene->mNumMaterials && !scene->mMaterials) {
+	bu_log("ERROR: Assimp export scene has material count but no material array\n");
+	return false;
+    }
+
+    for (unsigned int mi = 0; mi < scene->mNumMaterials; mi++) {
+	const aiMaterial *mat = scene->mMaterials[mi];
+	if (!mat) {
+	    bu_log("ERROR: Assimp export material[%u] is NULL\n", mi);
+	    return false;
+	}
+	if (mat->mNumProperties && !mat->mProperties) {
+	    bu_log("ERROR: Assimp export material[%u] has property count but no property array\n", mi);
+	    return false;
+	}
+	for (unsigned int pi = 0; pi < mat->mNumProperties; pi++) {
+	    const aiMaterialProperty *prop = mat->mProperties[pi];
+	    if (!prop) {
+		bu_log("ERROR: Assimp export material[%u] property[%u] is NULL\n", mi, pi);
+		return false;
+	    }
+	    if (prop->mKey.length >= sizeof(prop->mKey.data)) {
+		bu_log("ERROR: Assimp export material[%u] property[%u] has invalid key length %u\n",
+			mi, pi, prop->mKey.length);
+		return false;
+	    }
+	    if (prop->mKey.data[prop->mKey.length] != '\0') {
+		bu_log("ERROR: Assimp export material[%u] property[%u] key is not NUL terminated\n", mi, pi);
+		return false;
+	    }
+	    if (prop->mDataLength && !prop->mData) {
+		bu_log("ERROR: Assimp export material[%u] property[%u] has data length but no data\n", mi, pi);
+		return false;
+	    }
+	}
+    }
+
+    return true;
 }
 
 static void
@@ -188,7 +270,7 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
 
 		/* if we have a triangle, we're good to add the face */
 		curr_face->mNumIndices = 3;
-		/* it may be worth for time complexity allocating faces to a worst 
+		/* it may be worth for time complexity allocating faces to a worst
 		 * case 'numverts' up-front rather than using push_back
 		 */
 		faces.push_back(curr_face);
@@ -254,42 +336,46 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
 	    aiMaterial* mat = new aiMaterial();
 
 	    /* for brlcad shaders, a space means we have additional shader params
-	    * in the form "shader_name param1=x .."
-	    */
+	     * in the form "shader_name param1=x .."
+	     */
 	    size_t space = raw_shader.find(" ");
-	    std::string mat_args = "";
+	    std::string mat_args;
 	    if (space != std::string::npos)
 		mat_args = raw_shader.substr(space + 1);
 
 	    /* 'plastic' defaults */
 	    std::map<std::string, float> def_args = {
-							{"tr", 0.0},
-							{"re", 0.0},
-							{"sp", 0.7},
-							{"di", 0.3},
-							{"ri", 1.0},
-							{"ex", 0.0},
-							{"sh", 10.0},
-							{"em", 0.0}
-						    };
-	    
+		{"tr", 0.0f},
+		{"re", 0.0f},
+		{"sp", 0.7f},
+		{"di", 0.3f},
+		{"ri", 1.0f},
+		{"ex", 0.0f},
+		{"sh", 10.0f},
+		{"em", 0.0f}
+	    };
+
 	    /* parse pairs, updating values in def_args map */
-	    size_t pos;
-	    while ((pos = mat_args.find(" ")) != std::string::npos) {
-		std::string curr = mat_args.substr(0, pos);
-		size_t eq;
-		if ((eq = curr.find("=")) != std::string::npos) {
-		    def_args[curr.substr(0, eq)] = std::stof(curr.substr(eq + 1));
+	    std::istringstream arg_stream(mat_args);
+	    std::string curr_arg;
+	    while (arg_stream >> curr_arg) {
+		size_t eq = curr_arg.find("=");
+		if (eq == std::string::npos)
+		    continue;
+
+		try {
+		    def_args[curr_arg.substr(0, eq)] = std::stof(curr_arg.substr(eq + 1));
+		} catch (const std::exception &) {
+		    bu_log("WARNING: invalid shader parameter '%s' ignored\n", curr_arg.c_str());
 		}
-		mat_args.erase(0, pos + 1);
 	    }
 
 	    /* assign shader properties
-             * NOTE: all these attributes are not guaranteed to survive the export 
-             * depending on the output format 
+             * NOTE: all these attributes are not guaranteed to survive the export
+             * depending on the output format
              */
-	    aiString* str_to_aistr = new aiString(raw_shader);
-	    mat->AddProperty(str_to_aistr, AI_MATKEY_NAME);
+	    aiString mat_name(raw_shader);
+	    mat->AddProperty(&mat_name, AI_MATKEY_NAME);
 
             /* exporter seems to prefer opacity over transparency matkey */
             float opacity = 1 - def_args["tr"];
@@ -305,10 +391,11 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
             aiColor3D col(tsp->ts_mater.ma_color[0] * 255, tsp->ts_mater.ma_color[1] * 255, tsp->ts_mater.ma_color[2] * 255);
             mat->AddProperty<aiColor3D>(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
 
-	    /* add new material to map */
+	    /* add new material to map. Scene material slot 0 is reserved for the default material. */
 	    pstate->mats.push_back(mat);
-	    curr_mesh->mMaterialIndex = pstate->mats.size();
-	    pstate->mat_names.emplace(raw_shader, pstate->mats.size());
+	    size_t scene_mat_index = pstate->mats.size();
+	    curr_mesh->mMaterialIndex = scene_mat_index;
+	    pstate->mat_names.emplace(raw_shader, scene_mat_index);
 	}
     } else {
 	curr_mesh->mMaterialIndex = 0;
@@ -318,8 +405,8 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     aiString name(db_path_to_string(pathp));
     curr_node->mName = name;
 
-    /* set node transformation 
-     * NOTE: facetize takes into account transformation, so we set identity matrix 
+    /* set node transformation
+     * NOTE: facetize takes into account transformation, so we set identity matrix
      */
     aiMatrix4x4 trans;
     curr_node->mTransformation = trans;
@@ -377,8 +464,8 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     state.gcv_options = gcv_options;
     state.assetimport_write_options = (assetimport_write_options_t*)options_data;
 
-    /* check and validate the specified output file type against ai 
-     * checks using file extension if no --format is supplied 
+    /* check and validate the specified output file type against ai
+     * checks using file extension if no --format is supplied
      * this is likely all a 'can_write' function would need
      */
     const char* outext = strip_at_char((char*)dest_path, '.');
@@ -444,29 +531,33 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     state.scene->mRootNode->addChildren(state.children.size(), conv_children);
 
     state.scene->mMeshes = new aiMesh*[state.meshes.size()];
-    for (size_t i = 0; i < state.meshes.size(); i++) 
+    for (size_t i = 0; i < state.meshes.size(); i++)
 	state.scene->mMeshes[i] = state.meshes[i];
     state.scene->mNumMeshes = state.meshes.size();
 
     /* index 0 assigns 'plastic' to any region without a shader set */
-    state.scene->mMaterials = new aiMaterial*[state.mats.size() +1];
-    aiMaterial def;
+    state.scene->mNumMaterials = state.mats.size() + 1;
+    state.scene->mMaterials = new aiMaterial*[state.scene->mNumMaterials]();
+
+    aiMaterial *def = new aiMaterial();
     aiString def_name("plastic");
-    def.AddProperty(&def_name, AI_MATKEY_NAME);
-    state.scene->mMaterials[0] = &def;
+    def->AddProperty(&def_name, AI_MATKEY_NAME);
+    state.scene->mMaterials[0] = def;
+
     for (size_t i = 0; i < state.mats.size(); i++)
 	state.scene->mMaterials[i+1] = state.mats[i];
-    state.scene->mNumMaterials = state.mats.size() + 1;
 
-    aiMetadata meta_null;
-    meta_null.mNumProperties = 0;
-    state.scene->mMetaData = &meta_null;
+    state.scene->mMetaData = NULL;
 
-    /* export */
-    aiReturn airet = exporter.Export(state.scene, fmt_desc->id, dest_path, state.scene->mFlags);
-    if (airet != AI_SUCCESS) {
-	bu_log("ERROR: %s\n", exporter.GetErrorString());
+    if (!validate_assimp_scene(state.scene)) {
 	ret = 0;
+    } else {
+	/* export. The fourth argument is an Assimp postprocess flag mask, not scene->mFlags. */
+	aiReturn airet = exporter.Export(state.scene, fmt_desc->id, dest_path, 0);
+	if (airet != AI_SUCCESS) {
+	    bu_log("ERROR: %s\n", exporter.GetErrorString());
+	    ret = 0;
+	}
     }
 
     /* Release dynamic storage */
