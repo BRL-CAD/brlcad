@@ -132,6 +132,10 @@ removed at any time.
 7.44
 ----
 
+include/bu/tc.h - fully removed, header and all contents
+	Code should either use bu/parallel.h APIs or C++11 threading
+	rather than the low level tc.h portability wrappers.
+
 include/nmg/nurb.h - fully removed, header and all contents
 
 	NURBS support in BRL-CAD is focused on libbrep/OpenNURBS now,
