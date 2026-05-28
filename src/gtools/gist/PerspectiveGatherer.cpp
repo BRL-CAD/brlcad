@@ -20,6 +20,12 @@
 
 #include "PerspectiveGatherer.h"
 
+/* Default rendering parameters.
+ * These will be made configurable via a quality option in a future change.
+ */
+static const char *GIST_DEFAULT_RENDER_SIZE = "1024";
+static const char *GIST_DEFAULT_AMB_SAMPLES_CMD = "set ambSamples=8";
+
 std::map<char, FaceDetails>
 getFaceDetails()
 {
@@ -80,7 +86,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     // reset the av to their needs
     const char* av[22] = { NULL,                    // [00]: cmd
                            "-s",                    // [01]
-                           "1024",                  // [02]
+                           GIST_DEFAULT_RENDER_SIZE, // [02]
                            "-W",                    // [03]
                            "-R",                    // [04]
                            "-a",                    // [05]
@@ -171,7 +177,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             outputname += "_detailed.png";
 
             av[0] = cmd.c_str();
-            av[1] = "-s"; av[2] = "1024";
+            av[1] = "-s"; av[2] = GIST_DEFAULT_RENDER_SIZE;
             av[3] = "-W";
             av[4] = "-R";
             av[5] = "-a";  av[6] = "45";
@@ -179,7 +185,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[9] = "-C";  av[10] = "255/255/255";
             av[13] = "-A"; av[14] = "1.2";
 	    /* FIXME: this needs to be user-configurable, at least low/high quality (along with image sizes)*/
-            av[15] = "-c"; av[16] = "set ambSamples=8";
+            av[15] = "-c"; av[16] = GIST_DEFAULT_AMB_SAMPLES_CMD;
             av[17] = "-o"; av[18] = outputname.c_str();
             av[19] = pathToInput.c_str();
             av[20] = component.c_str();
@@ -190,7 +196,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             outputname += "_ghost.png";
 
             av[0] = cmd.c_str();
-            av[1] = "-s";  av[2] = "1024";
+            av[1] = "-s";  av[2] = GIST_DEFAULT_RENDER_SIZE;
             av[3] = "-a";  av[4] = "35";
             av[5] = "-e";  av[6] = "25";
             av[7] = "-i";  av[8] = pathToInput.c_str();
