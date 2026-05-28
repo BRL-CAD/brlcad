@@ -132,6 +132,11 @@ removed at any time.
 7.44
 ----
 
+include/bu/vfont.h - fully removed, header and all contents
+	We only use this in fblabel, and there are many other
+	modern options when it comes to fonts - remove vfont
+	as public facing API.
+
 include/bu/tc.h - fully removed, header and all contents
 	Code should either use bu/parallel.h APIs or C++11 threading
 	rather than the low level tc.h portability wrappers.
