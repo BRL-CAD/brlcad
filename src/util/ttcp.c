@@ -155,6 +155,8 @@ mread(socket_t fd, char *bufp, unsigned n)
     while (count < n) {
         nread = READSOCKET(fd, bufp, n-count);
         if (nread < 0) {
+            if (count > 0)
+                return (int)count;
             perror_sock("ttcp_mread");
             return -1;
         }
@@ -605,7 +607,14 @@ main(int argc, char **argv)
     }
     if (!udp && trans)
 #ifdef USE_WINSOCK
+    {
+        char drainbuf[1024];
         (void)shutdown(fd, SD_SEND);
+        /* Drain until receiver closes its side, ensuring clean TCP teardown
+         * before WSACleanup() - without this, WSACleanup() may abort the
+         * connection with RST before the receiver has read all buffered data */
+        while (READSOCKET(fd, drainbuf, sizeof(drainbuf)) > 0) {}
+    }
 #else
         (void)shutdown(fd, SHUT_WR);
 #endif
