@@ -62,5 +62,5 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 
-file:/src/libbu/tests/humanize_number.c
+file:/src/libbu/tests/test_humanize_number.c
 
