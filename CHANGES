@@ -131,6 +131,53 @@ removed at any time.
 
 7.44
 ----
+
+include/nmg/nurb.h - fully removed, header and all contents
+
+	NURBS support in BRL-CAD is focused on libbrep/OpenNURBS now,
+	libnmg will be simplified to planar geometry only.  Other related
+	changes to libnmg include:
+
+include/nmg/edge.h - remove:
+
+	GET_EDGE_G_CNURB
+	FREE_EDGE_G_CNURB
+
+include/nmg/face.h - remove:
+
+	NMG_CK_FACE_G_SNURB
+	NMG_CK_FACE_G_EITHER
+	GET_FACE_G_SNURB
+	FREE_FACE_G_SNURB
+
+include/nmg/index.h - remove:
+
+	nmg_struct_counts.face_g_snurb
+	nmg_struct_counts.edge_g_cnurb
+	nmg_struct_counts.vertexuse_a_cnurb
+
+include/nmg/plot.h - remove:
+
+	nmg_snurb_fu_to_vlist
+	nmg_snurb_to_vlist
+	nmg_cnurb_to_vlist
+
+include/nmg/vertex.h - remove:
+
+	GET_VERTEXUSE_A_CNURB
+	FREE_VERTEXUSE_A_CNURB
+
+include/nmg/topology.h - remove:
+
+	vertexuse.curb_p
+	edgeuse.cnurb_p
+	face.snurb_p
+	struct knot_vector
+	struct edge_g_cnurb
+	struct face_g_snurb
+	struct vertexuse_a_cnurb
+
+
 include/rt/mater.h librt
 	global-state rt_* material api replaced by per-database db_mater_* api:
 	rt_material_head()      -> db_mater_head(dbip)
