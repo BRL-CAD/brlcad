@@ -16,5 +16,5 @@ one or more of these licenses.
 
 Thanks Baptiste Lepilleur for the licensing idea.
 
-file:/include/RTree.h
+file:/src/libbg/RTree.h
 
