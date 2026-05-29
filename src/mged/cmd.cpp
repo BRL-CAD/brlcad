@@ -1628,15 +1628,11 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
 int
 cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 {
-    int status;
     struct bu_vls globbed = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct bu_vls save_vp = BU_VLS_INIT_ZERO;
-    int64_t start;
-    int64_t finish;
     size_t len;
     const char *cp;
-    const char *result = "";
 
     BU_CK_VLS(vp);
 
@@ -1684,10 +1680,10 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 	bu_vls_vlscat(&globbed, vp);
     }
 
-    start = bu_gettime();
-    status = Tcl_Eval(s->interp, bu_vls_addr(&globbed));
-    finish = bu_gettime();
-    result = Tcl_GetStringResult(s->interp);
+    int64_t start = bu_gettime();
+    int status = Tcl_Eval(s->interp, bu_vls_addr(&globbed));
+    int64_t finish = bu_gettime();
+    const char *result = Tcl_GetStringResult(s->interp);
 
     /* Contemplate the result reported by the Tcl interpreter. */
 

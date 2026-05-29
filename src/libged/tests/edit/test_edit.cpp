@@ -431,6 +431,7 @@ static void
 test_p0_hrt_descriptor_ops(struct ged *gedp)
 {
     struct rt_hrt_internal h;
+    VSETALL(h.v, 0.0);
 
     {
         const char *av[] = {"edit", "hrt", "--list-ops", NULL};
