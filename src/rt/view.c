@@ -56,7 +56,7 @@
 #include "bu/cv.h"
 #include "dm.h"
 #include "bv/plot3.h"
-#include "photonmap.h"
+#include "optical/photonmap.h"
 #include "scanline.h"
 
 #include "./rtuif.h"

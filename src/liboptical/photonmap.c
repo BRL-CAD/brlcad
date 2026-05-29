@@ -34,7 +34,7 @@
 #endif
 #include "bu/interrupt.h"
 #include "bu/parallel.h"
-#include "photonmap.h"
+#include "optical/photonmap.h"
 
 #if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
 extern void srand48(long int seedval);
