@@ -67,7 +67,6 @@ set(
   conf/PATCH
   conf/make.vbs
   config_win.h.in
-  RTree.h
 )
 cmakefiles(${include_misc})
 

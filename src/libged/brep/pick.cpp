@@ -27,7 +27,7 @@
 
 #include <set>
 
-#include "RTree.h"
+#include "../../libbg/RTree.h"
 #include "bu/cmd.h"
 #include "brep/defines.h"
 #include "./ged_brep.h"

@@ -31,7 +31,7 @@
 #include <utility>
 #include <vector>
 
-#include "RTree.h"
+#include "../../libbg/RTree.h"
 #include "bu/cmd.h"
 #include "bg/plane.h"
 #include "bg/tri_ray.h"

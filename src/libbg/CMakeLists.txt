@@ -165,6 +165,7 @@ set(
   GTE/Mathematics/MeshQuality.h
   GTE/Mathematics/MeshRepair.h
   GTE/Mathematics/MeshValidation.h
+  RTree.h
 )
 
 cmakefiles(${bg_ignore})
