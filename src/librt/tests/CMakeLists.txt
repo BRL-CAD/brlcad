@@ -79,6 +79,7 @@ brlcad_addexec(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv;${M_LIBRARY}" TES
 # arb8 testing
 brlcad_addexec(rt_arb8 arb8_tests.c "librt;libwdb;libbg;libbu;${M_LIBRARY}" TEST)
 #brlcad_add_test(NAME rt_arb8_tests COMMAND rt_arb8)
+brlcad_addexec(rt_inmem inmem_tests.c "librt;libwdb;libbg;libbu" TEST)
 
 # search stress and correctness testing
 brlcad_addexec(rt_search_stress search_stress.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)

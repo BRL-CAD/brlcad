@@ -119,7 +119,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     baselen = dp->d_len;
 
     if (dp->d_flags & RT_DIR_INMEM) {
-	if (dp->d_un.ptr) {
+	if (dp->d_un.ptr && dp->d_addr != RT_DIR_PHONY_ADDR) {
 	    if (RT_G_DEBUG&RT_DEBUG_DB)
 		bu_log("db5_realloc(%s) bu_realloc()ing memory resident object\n", dp->d_namep);
 	    dp->d_un.ptr = bu_realloc(dp->d_un.ptr,
@@ -133,13 +133,19 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	return 0;
     }
 
-    /* make sure the database directory is initialized */
-    if (dbip->i->dbi_eof == RT_DIR_PHONY_ADDR) {
-	int ret = db_dirbuild(dbip);
-	if (ret) {
-	    return -1;
+	/* make sure the database directory is initialized */
+	if (dbip->i->dbi_eof == RT_DIR_PHONY_ADDR) {
+		if (!dbip->i->dbi_fp) {
+			/* in-memory database has no file pointer - directory
+			* is already in memory, just mark it as initialized */
+			dbip->i->dbi_eof = 0;
+		} else {
+			int ret = db_dirbuild(dbip);
+			if (ret) {
+				return -1;
+			}
+		}
 	}
-    }
 
     if (dbip->dbi_read_only) {
 	bu_log("db5_realloc(%s) on READ-ONLY file\n", dp->d_namep);
