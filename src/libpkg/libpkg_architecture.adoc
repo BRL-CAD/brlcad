@@ -1,0 +1,134 @@
+= LIBPKG Architecture & Design Document
+
+== 1. Executive Summary
+
+*LIBPKG* is a robust message-passing abstraction library designed for communicating between cooperating processes. It handles multiplexing and de-multiplexing of synchronous and asynchronous messages over stream connections (TCP, pipes, or domain sockets). By abstracting away the low-level network and IPC buffer management, it provides a simple interface where application code registers message type codes mapped to handler functions, allowing an event-driven or blocked-wait paradigm for inter-process communication.
+
+== 2. Core Architectural Concepts
+
+LIBPKG abstracts the underlying byte-stream transport into a structured, type-length-value (TLV) packet transport. 
+
+=== 2.1 The Connection State (`pkg_conn`)
+At the heart of the system is the `pkg_conn` structure. It serves as the context for an active session between two endpoints. 
+* *Transport Abstraction*: It tracks the underlying file descriptors (`pkc_fd`, or split `pkc_in_fd`/`pkc_out_fd` for pipes).
+* *Buffer Management*: It manages multi-level buffers. Data is ingested from the OS in large chunks (`pkc_inbuf`) for efficiency, then sliced into dynamic user buffers (`pkc_buf`). A separate stream buffer (`pkc_stream`) exists for packing short outbound messages together before flushing.
+* *Pluggable TLS / Framing*: The library provides function pointers (`pkc_tls_read`, `pkc_tls_write`) to allow an overlay like TLS/SSL to wrap the raw I/O transparently.
+
+=== 2.2 Message Dispatching (`pkg_switch`)
+Multiplexing is achieved through a routing table array called the `pkg_switch`. When a connection receives a message, it extracts the message type and looks up the corresponding `pkg_callback` in the switch table. 
+* Unknown types are gracefully ignored/discarded.
+* This decouples the network polling loop from the application logic.
+
+=== 2.3 The Wire Protocol (`pkg_header`)
+Messages are prepended with a lightweight, 8-byte network-order header:
+. *Magic Number* (2 bytes): Identifies the start of a valid PKG message (`0x41FE`).
+. *Type Code* (2 bytes): A user-defined application instruction/message type.
+. *Length* (4 bytes): The size of the payload following the header.
+
+== 3. Structural Boundary Relationships
+
+The boundaries in LIBPKG are defined by how objects aggregate and how independent memory spaces (processes) communicate.
+
+=== 3.1 Class & Data Structure Boundaries
+
+[source,mermaid]
+----
+classDiagram
+    class pkg_conn {
+        +int pkc_fd
+        +int pkc_in_fd
+        +int pkc_out_fd
+        +char* pkc_stream
+        +char* pkc_inbuf
+        +pkg_process()
+        +pkg_send()
+    }
+    class pkg_switch {
+        +unsigned short pks_type
+        +pkg_callback pks_handler
+    }
+    class pkg_header {
+        +byte magic[2]
+        +byte type[2]
+        +byte len[4]
+    }
+    class pkg_mux {
+        +pkg_mux_wait()
+    }
+    class pkg_listener {
+        +pkg_accept()
+    }
+
+    pkg_conn "1" -- "*" pkg_switch : dispatches via
+    pkg_conn "1" *-- "1" pkg_header : decodes
+    pkg_mux "1" o-- "*" pkg_conn : polls
+    pkg_mux "1" o-- "*" pkg_listener : polls
+----
+
+* `pkg_conn` <-> `pkg_switch`: The connection context is completely generic; it does not know the application logic. It delegates all behavioral actions to the `pkg_switch` array provided upon initialization.
+* `pkg_mux` <-> `pkg_conn` / `pkg_listener`: The multiplexer object manages multiple connections and listeners simultaneously, functioning as a high-level `poll()` or `select()` wrapper to wait for activity on any file descriptor.
+
+=== 3.2 Process and IPC Boundaries (Client-Server over Network)
+
+For disparate processes (potentially on different machines), LIBPKG utilizes TCP sockets.
+
+[source,mermaid]
+----
+sequenceDiagram
+    participant Client (Process A)
+    participant Server (Process B)
+
+    Server->>Server: pkg_listen() -> pkg_listener
+    Client->>Server: pkg_open(host, port)
+    Server->>Server: pkg_accept(listener) -> pkg_conn
+    Client->>Client: returns pkg_conn
+
+    Note over Client, Server: TCP Stream Established
+    
+    Client->>Client: pkg_send(type=REQUEST, data)
+    Note over Client, Server: [Header: Magic|Type|Len] + Data
+    Server->>Server: pkg_get() -> Reads network buffer
+    Server->>Server: pkg_switch[REQUEST].handler(conn, data)
+    
+    Server->>Client: pkg_send(type=REPLY, data)
+    Client->>Client: pkg_waitfor(type=REPLY) -> unblocks
+----
+
+* *Asynchronous vs Synchronous*: The server typically runs `pkg_process()` or `pkg_block()` in an event loop to handle requests asynchronously. The client may act synchronously using `pkg_waitfor()`, which blocks until a specific message type arrives, queuing or processing other asynchronous types in the background.
+
+=== 3.3 Subprocess Worker Boundary (IPC via Pipes/Adopted FDs)
+
+A common architectural pattern in LIBPKG applications involves offloading work to a local subprocess to utilize multiple CPU cores or isolate memory.
+
+[source,mermaid]
+----
+sequenceDiagram
+    participant Parent Process
+    participant Worker Subprocess
+    
+    Parent->>Parent: pkg_pair(&parent_conn, &child_conn)
+    Note over Parent: Generates a connected socketpair/pipe pair
+    Parent->>Worker Subprocess: fork() & exec() 
+    Note over Parent, Worker Subprocess: Passes PKG_ADDR via Environment Variable
+    
+    Parent->>Parent: pkg_close(child_conn)
+    Worker Subprocess->>Worker Subprocess: pkg_connect_env() -> active_conn
+    
+    Parent->>Worker Subprocess: pkg_send(WORK_START, task_data)
+    Worker Subprocess->>Worker Subprocess: pkg_block() -> invokes handler
+    
+    Note over Worker Subprocess: Worker performs heavy computation...
+    
+    Worker Subprocess->>Parent: pkg_send(WORK_RESULT, result_data)
+    Parent->>Parent: pkg_process() or pkg_mux_wait()
+----
+
+* *Transport Negotiation*: `pkg_pair()` intelligently probes for the best local IPC transport (anonymous pipes, POSIX socketpairs, or TCP loopbacks) and sets up the paired `pkg_conn` objects.
+* *Environment Handoff*: The parent configures the child process's environment using `pkg_child_addr_env()` so the child can seamlessly discover its read/write file descriptors without command-line argument parsing.
+* *Split-FD Architecture*: If pipes are used, LIBPKG handles the unidirectional nature internally by assigning `pkc_in_fd` for reading and `pkc_out_fd` for writing, presenting the application with a unified bidirectional interface.
+
+== 4. API Design Intentions
+
+* *Piggybacking (`pkg_stream` vs `pkg_send`)*: To reduce syscall overhead, `pkg_stream` allows the application to append small payloads into `pkc_stream`. It buffers data locally and only triggers a network transmission when the buffer is full or when `pkg_flush()` is explicitly called.
+* *Memory Efficiency (`pkg_bwaitfor` and `pkg_2send`)*: `pkg_2send` allows sending two disjoint buffers (e.g., a custom metadata header struct followed by a large data blob) using OS-level scatter-gather I/O (`writev`). This eliminates the need for the user to dynamically allocate memory just to concatenate them. `pkg_bwaitfor` dynamically allocates memory for incoming variables so the developer doesn't need to guess payload sizes.
+* *Pluggability*: With `pkg_adopt_socket` and `pkg_adopt_stdio`, LIBPKG can wrap an existing file descriptor, such as a connection already initialized by an inetd super-server or an external GUI framework.

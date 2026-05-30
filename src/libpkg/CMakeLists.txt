@@ -18,7 +18,10 @@ endif()
 
 add_subdirectory(example)
 add_subdirectory(example_qt)
-cmakefiles(CMakeLists.txt)
+cmakefiles(
+  CMakeLists.txt
+  libpkg_architecture.adoc
+)
 
 # Local Variables:
 # tab-width: 8
