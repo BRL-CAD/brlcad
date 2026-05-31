@@ -61,11 +61,9 @@ set(
   CMakeLists.txt
   brlcad_ident.h.in
   brlcad_version.h.in
-  conf/BrlcadConfig.tmpl
   conf/MAJOR
   conf/MINOR
   conf/PATCH
-  conf/make.vbs
   config_win.h.in
 )
 cmakefiles(${include_misc})

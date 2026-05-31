@@ -11,16 +11,6 @@ if(NOT BRLCAD_COMPONENTS)
 
   add_subdirectory(opencl-raytracer-tests)
 
-  configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
-  file(
-    COPY ${CMAKE_BINARY_DIR}/misc/brlcad-config
-    DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-  )
-  distclean(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlcad-config)
-  file(REMOVE ${CMAKE_BINARY_DIR}/misc/brlcad-config)
-  install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${BIN_DIR})
-
   brlcad_adddata(fortran_example.f sample_applications)
 endif(NOT BRLCAD_COMPONENTS)
 
@@ -85,7 +75,6 @@ set(
   auto-man-page/README.auto-man-page-handling
   auto-man-page/auto-man-progs.txt
   batch-indent-region.el
-  brlcad-config.in
   brlcad.spec.in
   bugs/CMakeLists.txt
   check/adj_air.sh

@@ -199,7 +199,6 @@ set(
 
 if(BRLCAD_EXTRADOCS)
   add_asciidoc("MAN1" benchmark.adoc man1 "" REQUIRED "rt")
-  add_asciidoc("MAN1" brlcad-config.adoc man1 "" REQUIRED "rt")
   add_asciidoc("MAN1" brlcad.adoc man1 "" REQUIRED "mged")
   add_asciidoc("MAN1" dbclean.adoc man1 "" REQUIRED "asc2g")
 
@@ -222,7 +221,6 @@ endif(BRLCAD_EXTRADOCS)
 cmakefiles(
   ${man1_EN}
   benchmark.adoc
-  brlcad-config.adoc
   brlcad.adoc
   dbclean.adoc
   CMakeLists.txt

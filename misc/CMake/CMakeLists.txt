@@ -30,7 +30,6 @@ set(
   FindAdaptagrams.cmake
   FindAppleseed.cmake
   FindBlosc.cmake
-  FindBRLCAD.cmake
   FindBSON.cmake
   FindGECODE.cmake
   FindGTE.cmake
