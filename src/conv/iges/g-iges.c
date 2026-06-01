@@ -402,6 +402,8 @@ main(int argc, char *argv[])
 
     if (!multi_file) {
 	/* Copy the parameter section from the temporary file to the output file */
+	if (!fp_param)
+	    bu_exit(1, "Missing temporary parameter file\n");
 	if ((bu_fseek(fp_param, 0, 0))) {
 	    perror("g-iges");
 	    bu_exit(1, "Cannot seek to start of temporary file\n");

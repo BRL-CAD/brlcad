@@ -730,10 +730,6 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
 
     //Gather source file
-    std::size_t last1 = opt->getInFile().find_last_of("/");
-    std::size_t last2 = opt->getInFile().find_last_of("\\");
-    last = last1 < last2 ? last1 : last2;
-
     std::string file = opt->getInFile();
 
     infoMap.insert(std::pair < std::string, std::string>("file", file));

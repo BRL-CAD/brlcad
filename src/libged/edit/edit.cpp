@@ -946,7 +946,6 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	    /* No positional angles: check for a -d angle */
 	    if (have_d_angle) {
 		angles[Z] = d_angle;
-		n_angle_vals = 1;
 	    } else {
 		bu_vls_printf(gedp->ged_result_str,
 		    "rotate: missing angle(s)\n");

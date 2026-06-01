@@ -122,7 +122,6 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 		d->obj.v_offset = 1;
 
 		fprintf(d->fp, "mtllib %s\n", bu_vls_addr(&d->obj.obj_materials_file));
-		fp = d->fp;
 		if (!pathp) {
 		    obj_write_bot(d, bot, d->fp, dp->d_namep);
 		} else {

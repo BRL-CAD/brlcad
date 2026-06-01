@@ -235,7 +235,7 @@ _ntc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     struct near_tol_info *ninfo = (struct near_tol_info *)ap->a_uptr;
 
-    struct seg *s = (struct seg *)segs->l.forw;
+    struct seg *s;
     for (BU_LIST_FOR(s, seg, &(segs->l))) {
 	/* Only examine segments whose entrance is near the surface.
 	 * The ray starts at centroid + n*RT_BOT_CHECK_TOL (= BN_TOL_DIST), so

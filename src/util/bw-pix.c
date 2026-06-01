@@ -160,6 +160,8 @@ main(int argc, char **argv)
 		bu_exit(EXIT_FAILURE, "bw-pix: can't open \"%s\"\n", bu_vls_addr(&out_fname));
 	    }
 	}
+	if (!in_std || !out_std)
+	    bu_exit(EXIT_FAILURE, "%s", usage);
 	while ((num = fread(ibuf, sizeof(char), 1024, in_std)) > 0) {
 	    size_t ret;
 	    for (in = out = 0; in < num; in++, out += 3) {
@@ -190,6 +192,8 @@ main(int argc, char **argv)
 	open_file(&rfp, rfile);
 	open_file(&gfp, gfile);
 	open_file(&bfp, bfile);
+	if (!out_std)
+	    bu_exit(EXIT_FAILURE, "%s", usage);
 
 	while (1) {
 	    unsigned char obuf[3*1024];

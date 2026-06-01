@@ -670,7 +670,7 @@ rt_opt_light_model(struct bu_vls *msg, size_t argc, const char **argv, void *UNU
     if (lightmodel == 7) {
 	char *buf = bu_strdup(argv[0]); /* strtok modifies its input */
 	char *item;
-	item = strtok(buf, ", "); /* consume the model number itself */
+	(void)strtok(buf, ", "); /* consume the model number itself */
 	/* Photon mapping arguments */
 	item = strtok(NULL, ", ");
 	pmargs[0] = item ? atoi(item) : 16384;  /* Number of Global Photons */
@@ -1117,6 +1117,8 @@ get_args(int argc, const char *argv[])
 			    /* Emit "-X" as a fresh string and VALUE as a pointer into tok */
 			    char *flag = (char *)bu_malloc(3, "rt short opt split");
 			    flag[0] = '-'; flag[1] = tok[1]; flag[2] = '\0';
+			    if (!split_flags)
+				bu_bomb("rt short option split bookkeeping missing");
 			    split_flags[n_split_used++] = flag;
 			    opt_argv[out++] = flag;
 			    opt_argv[out++] = tok + 2;

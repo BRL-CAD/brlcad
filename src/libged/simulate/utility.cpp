@@ -40,6 +40,18 @@ namespace
 {
 
 
+static directory &
+current_dir(const db_full_path &path)
+{
+    RT_CK_FULL_PATH(&path);
+
+    if (path.fp_len <= 0)
+	bu_bomb("empty simulation path");
+
+    return *DB_FULL_PATH_CUR_DIR(&path);
+}
+
+
 static void
 set_region(db_i &db, directory &dir, const bool is_region)
 {
@@ -88,7 +100,7 @@ namespace simulate
 TemporaryRegionHandle::TemporaryRegionHandle(db_i &db,
 					     const db_full_path &path) :
     m_db(db),
-    m_dir(*DB_FULL_PATH_CUR_DIR(&path)),
+    m_dir(current_dir(path)),
     m_dir_modified(false),
     m_parent_regions()
 {

@@ -1552,7 +1552,6 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 	/* i is the actual count of rings built */
 	nell = (size_t)i;
-	nseg = (nell > 0) ? (size_t)segs_per_ell[nell - 1] : 0;
     }
 
     if (nell < 1) {

@@ -72,12 +72,16 @@ make_brep_sphere(struct rt_wdb *wdbp)
     BU_ALLOC(bi, struct rt_brep_internal);
     bi->magic = RT_BREP_INTERNAL_MAGIC;
     bi->brep  = ON_BrepSphere(sph);
+    if (!bi->brep)
+	bu_exit(1, "ERROR: unable to create brep sphere\n");
 
     /* ON_BrepSphere creates analytic (ON_RevSurface) surfaces.
      * Convert every non-NURBS surface in m_S[] to its NURBS form so
      * that CV editing commands (which require ON_NurbsSurface) work. */
     for (int i = 0; i < bi->brep->m_S.Count(); i++) {
 	ON_Surface *old_srf = bi->brep->m_S[i];
+	if (!old_srf)
+	    bu_exit(1, "ERROR: brep sphere has null surface\n");
 	if (!dynamic_cast<ON_NurbsSurface *>(old_srf)) {
 	    ON_NurbsSurface *ns = new ON_NurbsSurface;
 	    if (old_srf->GetNurbForm(*ns, 0.0) > 0) {
