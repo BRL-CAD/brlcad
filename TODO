@@ -18,6 +18,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* Add APIs to create/destroy both struct rt_i and struct resource from librt
+  and document in CHANGES that code will need to use those to initialize
+  non-public parts of the structs.   Note all but a couple resource struct
+  entries (re_cpu, re_randptr, whatever the bigE code is using) as scheduled
+  to become private.  As much as possible we want resource to become an
+  implementation detail.
+
 * verify MGED exit behavior on Windows - reports of non-zero exit
   being returned.
 
