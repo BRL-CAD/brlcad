@@ -891,7 +891,7 @@ x24_setup(struct fb *ifp, int width, int height)
     switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint32_t), sratio*width*height)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *) calloc(sratio*width*height, sizeof(uint32_t))) == NULL) {
 		fb_log("X24_open: pix24 malloc failed\n");
 		return -1;
 	    }
@@ -904,7 +904,7 @@ x24_setup(struct fb *ifp, int width, int height)
 
 	case FLG_VD16:
 	case FLG_VT16:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint16_t), width*height)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *) calloc(width*height, sizeof(uint16_t))) == NULL) {
 		fb_log("X24_open: pix16 malloc failed\n");
 		return -1;
 	    }
@@ -1210,13 +1210,13 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 			 * X servers red, green and blue masks.
 			 */
 			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
-			    a_pixel  = (line_irgb[RED] << red_shift) & mask_red;
-			    a_pixel |= (line_irgb[GRN] << green_shift) & mask_green;
-			    a_pixel |= (line_irgb[BLU] << blue_shift) & mask_blue;
+			    a_pixel  = ((red_shift >= 0) ? (line_irgb[RED] << red_shift) : (line_irgb[RED] >> -red_shift)) & mask_red;
+			    a_pixel |= ((green_shift >= 0) ? (line_irgb[GRN] << green_shift) : (line_irgb[GRN] >> -green_shift)) & mask_green;
+			    a_pixel |= ((blue_shift >= 0) ? (line_irgb[BLU] << blue_shift) : (line_irgb[BLU] >> -blue_shift)) & mask_blue;
 			} else {
-			    a_pixel  = (red[line_irgb[RED]] << red_shift) & mask_red;
-			    a_pixel |= (grn[line_irgb[GRN]] << green_shift) & mask_green;
-			    a_pixel |= (blu[line_irgb[BLU]] << blue_shift) & mask_blue;
+			    a_pixel  = ((red_shift >= 0) ? (red[line_irgb[RED]] << red_shift) : (red[line_irgb[RED]] >> -red_shift)) & mask_red;
+			    a_pixel |= ((green_shift >= 0) ? (grn[line_irgb[GRN]] << green_shift) : (grn[line_irgb[GRN]] >> -green_shift)) & mask_green;
+			    a_pixel |= ((blue_shift >= 0) ? (blu[line_irgb[BLU]] << blue_shift) : (blu[line_irgb[BLU]] >> -blue_shift)) & mask_blue;
 			}
 			/* take out the safety put in above. */
 			a_pixel = a_pixel >> 6;
@@ -2601,7 +2601,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffer and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint32_t), sratio*xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *)calloc(sratio*xi->xi_xwidth*xi->xi_xheight, sizeof(uint32_t))) == NULL) {
 		fb_log("X24: pix24 malloc failed in resize!\n");
 		return 1;
 	    }
@@ -2618,7 +2618,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffer and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint16_t), xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *)calloc(xi->xi_xwidth*xi->xi_xheight, sizeof(uint16_t))) == NULL) {
 		fb_log("X24: pix16 malloc failed in resize!\n");
 		return 1;
 	    }

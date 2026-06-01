@@ -133,6 +133,7 @@ QFBServer::on_Connect()
     if (pc == PKC_ERROR) {
 	bu_log("new connection failed (pkg_adopt_socket)");
 	tcps->close();
+	delete fs;
 	return;
     }
 
@@ -141,6 +142,7 @@ QFBServer::on_Connect()
 	bu_log("new connection failed");
 	pkg_close(pc);
 	tcps->close();
+	delete fs;
     }
 }
 

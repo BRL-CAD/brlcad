@@ -367,7 +367,7 @@ rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *
     // Done with internal contents
     rt_db_free_internal(&intern);
 
-    return BRLCAD_OK;
+    return ret;
 }
 
 /*

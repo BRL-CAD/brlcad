@@ -629,6 +629,8 @@ WalkIntersection(
     ON_BezierCurve *bezier2 = new ON_BezierCurve((ON_2dPointArray) intersectionPoints2);
     out1 = ON_NurbsCurve::New(*bezier1);
     out2 = ON_NurbsCurve::New(*bezier2);
+    delete bezier1;
+    delete bezier2;
 }
 
 

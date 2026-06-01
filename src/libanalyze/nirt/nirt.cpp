@@ -1392,7 +1392,6 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		    vhead = bv_vlblock_find(nss->i->segs, ovlp_rgb[RED], ovlp_rgb[GRN], ovlp_rgb[BLU]);
 		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_MOVE);
 		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->out_point, BV_VLIST_LINE_DRAW);
-		    seg_ovlps.erase(op);
 		    VMOVE(curr_pnt, op->out_point);
 		    curr_dist = op->out_dist;
 		    seg_ovlps.erase(op);

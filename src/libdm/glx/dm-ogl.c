@@ -1329,7 +1329,10 @@ ogl_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 		dbyte3 = dbyte0 + 3;
 
 		*dbyte0 = (pixel & ximage_p->red_mask) >> red_shift;
-		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		if (0 <= green_shift)
+		    *dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		else
+		    *dbyte1 = (pixel & ximage_p->green_mask) << -green_shift;
 		*dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
 		*dbyte3 = 255;
 	    }
@@ -1355,7 +1358,10 @@ ogl_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 		else
 		    *dbyte0 = (pixel & ximage_p->red_mask) << -red_shift;
 
-		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		if (0 <= green_shift)
+		    *dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		else
+		    *dbyte1 = (pixel & ximage_p->green_mask) << -green_shift;
 
 		if (0 <= blue_shift)
 		    *dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
