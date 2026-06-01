@@ -221,6 +221,7 @@ namespace GEOBRL {
     void set_length(index_t new_length) {
         geo_debug_assert(new_length <= capacity());
         length_ = new_length;
+        x_[new_length] = 0.0;
     }
 
     /**
@@ -284,7 +285,7 @@ namespace GEOBRL {
         // an entry past the end (without using it).
         return
             sizeof(expansion) - 2 * sizeof(double) +
-            (capa + 1) * sizeof(double);
+            std::max(capa + 1, index_t(2)) * sizeof(double);
     }
 
     /**

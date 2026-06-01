@@ -96,6 +96,9 @@ namespace {
      */
     void normalize_facet_vertices_order(Mesh& M, index_t f) {
         index_t d = M.facets.nb_vertices(f);
+        if(d < 2) {
+            return;
+        }
 
         // Step 1: corner-to-vertex connections
         // ------------------------------------
@@ -896,7 +899,7 @@ namespace {
         for(index_t f: M.facets) {
             for(index_t c: M.facets.corners(f)) {
                 if(!c_is_visited[c]) {
-                    index_t cur_f = f;
+                    index_t cur_f;
                     index_t cur_c = c;
                     index_t old_v = M.facet_corners.vertex(c);
                     index_t new_v = old_v;

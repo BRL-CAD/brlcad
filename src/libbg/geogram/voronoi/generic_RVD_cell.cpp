@@ -302,8 +302,8 @@ namespace GEOBRLGen {
         }
 
         for(index_t v = 0; v < mesh->vertices.nb(); ++v) {
-            index_t fi[3];
-            index_t va[3];
+            index_t fi[3] = { GEOBRL::NO_INDEX, GEOBRL::NO_INDEX, GEOBRL::NO_INDEX };
+            index_t va[3] = { GEOBRL::NO_INDEX, GEOBRL::NO_INDEX, GEOBRL::NO_INDEX };
             index_t cur = 0;
             GEOBRL::MeshHalfedges::Halfedge H = v2h[v];
             do {
@@ -320,6 +320,10 @@ namespace GEOBRLGen {
                 geo_assert(ok);
                 ++cur;
             } while(H != v2h[v]);
+
+            if(cur != 3) {
+                continue;
+            }
 
             // Note: va[] order is different, because of
             //   Mesh numbering -> Triangulation numbering

@@ -566,6 +566,10 @@ namespace GEOBRL {
     }
 
     index_t AdaptiveKdTree::build_tree() {
+        if(dimension() == 0 || nb_points() == 0) {
+            return NO_INDEX;
+        }
+
         // Create kd-tree. Local copy of the bbox is used, because it
         // is modified during traversal.
         double* bbox_min = (double*) (BRLCAD_ALLOCA(dimension() * sizeof(double)));
@@ -588,7 +592,7 @@ namespace GEOBRL {
         index_t b, index_t e,
         double* bbox_min, double* bbox_max
     ) {
-        if(e - b <= MAX_LEAF_SIZE) {
+        if(dimension() == 0 || e - b <= MAX_LEAF_SIZE) {
             return NO_INDEX;
         }
 
