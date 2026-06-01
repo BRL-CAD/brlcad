@@ -186,6 +186,9 @@ include/nmg/topology.h - remove:
 	struct face_g_snurb
 	struct vertexuse_a_cnurb
 
+include/rt/geom.h
+	struct rt_nurb_internal will be removed - bspline loading will
+	use the modern rt_brep_internal container instead.
 
 include/rt/mater.h librt
 	global-state rt_* material api replaced by per-database db_mater_* api:
