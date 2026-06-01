@@ -92,7 +92,7 @@ rt_i_internal_create(void)
 /**
  * Release the private internal state for an rt_i.  All dynamic fields
  * inside rt_i_internal must have been freed by rt_clean() before this
- * is called (rt_free_rti() guarantees that ordering).
+ * is called (rt_i_destroy() guarantees that ordering).
  */
 void
 rt_i_internal_destroy(struct rt_i_internal *i)
@@ -117,20 +117,11 @@ rt_solidhead_ptr(struct rt_i *rtip, int idx)
     return &(rtip->i->rti_solidheads[idx]);
 }
 
-
-/**
- * Given a db_i database instance, create an rt_i instance.  If caller
- * just called db_open, they need to do a db_close(), because we have
- * cloned our own instance of the db_i.
- */
-struct rt_i *
-rt_new_rti(struct db_i *dbip)
+void
+rt_i_init(struct rt_i *rtip, struct db_i *dbip)
 {
-    struct rt_i *rtip;
-
     RT_CK_DBI(dbip);
 
-    BU_ALLOC(rtip, struct rt_i);
     rtip->rti_magic = RTI_MAGIC;
 
     /* Allocate private internal state */
@@ -189,10 +180,28 @@ rt_new_rti(struct db_i *dbip)
 	    dp->d_uses = 0;
 	FOR_ALL_DIRECTORY_END;
     }
+}
 
+/**
+ * Given a db_i database instance, create an rt_i instance.  If caller
+ * just called db_open, they need to do a db_close(), because we have
+ * cloned our own instance of the db_i.
+ */
+struct rt_i *
+rt_i_create(struct db_i *dbip)
+{
+    RT_CK_DBI(dbip);
+    struct rt_i *rtip = NULL;
+    BU_ALLOC(rtip, struct rt_i);
+    rt_i_init(rtip, dbip);
     return rtip;
 }
 
+struct rt_i *
+rt_new_rti(struct db_i *dbip)
+{
+    return rt_i_create(dbip);
+}
 
 /**
  * Release all the dynamic storage acquired by rt_dirbuild() and any
@@ -202,7 +211,7 @@ rt_new_rti(struct db_i *dbip)
  * that the rt_g structure needs to be cleaned separately.
  */
 void
-rt_free_rti(struct rt_i *rtip)
+rt_i_clear(struct rt_i *rtip)
 {
     RT_CK_RTI(rtip);
 
@@ -216,10 +225,20 @@ rt_free_rti(struct rt_i *rtip)
 
     rt_i_internal_destroy(rtip->i);
     rtip->i = NULL;
+}
 
+void
+rt_i_destroy(struct rt_i *rtip)
+{
+    rt_i_clear(rtip);
     bu_free((char *)rtip, "struct rt_i");
 }
 
+void
+rt_free_rti(struct rt_i *rtip)
+{
+    rt_i_destroy(rtip);
+}
 
 /**
  * This routine should be called just before the first call to
@@ -1251,7 +1270,7 @@ rt_clean(struct rt_i *rtip)
 
     /*
      * Re-initialize everything important.
-     * This duplicates the code in rt_new_rti().
+     * This duplicates the code in rt_i_create().
      */
 
     rtip->i->rti_inf_box.bn.bn_type = CUT_BOXNODE;

@@ -257,7 +257,7 @@ op_pnts_vol(
     BU_GET(ap, struct application);
     RT_APPLICATION_INIT(ap);
     BU_GET(resp, struct resource);
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     rt_init_resource(resp, 0, rtip);
     ap->a_rt_i = rtip;
     ap->a_resource = resp;
@@ -409,7 +409,7 @@ op_pnts_vol(
 
 pnts_internal_memfree:
     rt_clean_resource(rtip, resp);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     rt_db_free_internal(&tpnts_intern);
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct application);
@@ -436,7 +436,7 @@ pnt_inside_vol(
     BU_GET(ap, struct application);
     RT_APPLICATION_INIT(ap);
     BU_GET(resp, struct resource);
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     rt_init_resource(resp, 0, rtip);
     ap->a_rt_i = rtip;
     ap->a_resource = resp;
@@ -454,7 +454,7 @@ pnt_inside_vol(
     int ret = _pnt_in_vol(p, ap);
 
     rt_clean_resource(rtip, resp);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct application);
 

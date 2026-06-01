@@ -458,7 +458,7 @@ rt_gen_obj_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, struct d
 
     oldtime = bu_gettime();
 
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
 
     for (i = 0; i < ncpus+1; i++) {
 	/* standard */
@@ -730,7 +730,7 @@ memfree:
     for (i = 0; i < ncpus+1; i++) {
 	rt_clean_resource(rtip, &resp[i]);
     }
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     bu_free(state, "free state containers");
     bu_free(resp, "free resources array");
     return ret;

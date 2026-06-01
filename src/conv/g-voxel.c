@@ -161,7 +161,7 @@ main(int argc, char **argv)
 	voxelize(rtip, dataValues.voxelSize, levelOfDetail, printToFile, callBackData);
     }
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 
     return 0;
 }

@@ -153,7 +153,7 @@ analyze_obj_inside(struct db_i *dbip, const char *outside_candidate, const char 
 
     if (tol <= 0) tol = BN_TOL_DIST;
 
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
     if (rt_gettree(rtip, outside_candidate) < 0) return 0;
     if (rt_gettree(rtip, inside_candidate) < 0) return 0;
     rt_prep_parallel(rtip, 1);

@@ -228,17 +228,17 @@ crofton_estimate(const char *gfile, const char *obj_name,
     if (db_dirbuild(dbip) < 0) { db_close(dbip); return BRLCAD_ERROR; }
     db_update_nref(dbip);
 
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip) { db_close(dbip); return BRLCAD_ERROR; }
     if (rt_gettree(rtip, obj_name) != 0) {
-rt_free_rti(rtip); db_close(dbip); return BRLCAD_ERROR;
+	rt_i_destroy(rtip); db_close(dbip); return BRLCAD_ERROR;
     }
     rt_prep_parallel(rtip, 1);
 
     /* REGRESS_CROFTON_SAMPLES rays, REGRESS_CROFTON_PCT% convergence threshold */
     struct rt_crofton_params p = { REGRESS_CROFTON_SAMPLES, REGRESS_CROFTON_STABLE_TARGET, 0.0};
     int ret = rt_crofton_shoot(rtip, &p, sa, vol);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     db_close(dbip);
     return (ret == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
@@ -272,10 +272,10 @@ rt_db_free_internal(&intern); db_close(dbip); return -1;
 rt_db_free_internal(&intern); db_close(dbip); return 0;
     }
 
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip) { rt_db_free_internal(&intern); db_close(dbip); return -1; }
     if (rt_gettree(rtip, bot_name) != 0) {
-rt_free_rti(rtip); rt_db_free_internal(&intern); db_close(dbip); return -1;
+	rt_i_destroy(rtip); rt_db_free_internal(&intern); db_close(dbip); return -1;
     }
     rt_prep_parallel(rtip, 1);
 
@@ -283,7 +283,7 @@ rt_free_rti(rtip); rt_db_free_internal(&intern); db_close(dbip); return -1;
     int have_thin = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
     int n_thin = (int)BU_PTBL_LEN(&tfaces);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     bu_ptbl_free(&tfaces);
     rt_db_free_internal(&intern);
     db_close(dbip);
@@ -325,10 +325,10 @@ bot_csg_miss_lint(const char *gfile, const char *bot_name)
 	rt_db_free_internal(&intern); db_close(dbip); return 0;
     }
 
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip) { rt_db_free_internal(&intern); db_close(dbip); return -1; }
     if (rt_gettree(rtip, bot_name) != 0) {
-	rt_free_rti(rtip); rt_db_free_internal(&intern); db_close(dbip); return -1;
+	rt_i_destroy(rtip); rt_db_free_internal(&intern); db_close(dbip); return -1;
     }
     rt_prep_parallel(rtip, 1);
 
@@ -336,7 +336,7 @@ bot_csg_miss_lint(const char *gfile, const char *bot_name)
     int have_near_tol = rt_bot_csg_miss_check(&nfaces, bot, rtip, 0);
     int n_near_tol = (int)BU_PTBL_LEN(&nfaces);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     bu_ptbl_free(&nfaces);
     rt_db_free_internal(&intern);
     db_close(dbip);
@@ -774,7 +774,7 @@ nirt_shoot(const char *gfile, const char *obj_name,
     }
     if (rt_gettree(rtip, obj_name) < 0) {
 	bu_log("[regress_facetize] nirt_shoot: rt_gettree(%s) failed\n", obj_name);
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1;
     }
     rt_prep_parallel(rtip, 1);
@@ -792,7 +792,7 @@ nirt_shoot(const char *gfile, const char *obj_name,
 
     rt_shootray(&ap);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     return nhits;
 }
 

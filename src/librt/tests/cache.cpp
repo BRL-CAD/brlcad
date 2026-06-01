@@ -297,12 +297,12 @@ test_subprocess(int ac, char *av[])
     }
 
     rt_clean(rtip_stage_1);
-    rt_free_rti(rtip_stage_1);
+    rt_i_destroy(rtip_stage_1);
 
     /*** Now, do it again with the cache definitely in place */
     rtip_stage_2 = build_rtip(test_num, gfile, cname, process_num*1000 + 2, 1, (int)ncpus, resp);
     rt_clean(rtip_stage_2);
-    rt_free_rti(rtip_stage_2);
+    rt_i_destroy(rtip_stage_2);
 
     bu_log("Test %ld(process %ld): PASSED\n", test_num, process_num);
 
@@ -474,12 +474,12 @@ test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int d
 	}
 
 	rt_clean(rtip_stage_1);
-	rt_free_rti(rtip_stage_1);
+	rt_i_destroy(rtip_stage_1);
 
 	/*** Now, do it again with the cache in place */
 	rtip_stage_2 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 2, do_parallel, (int)ncpus, resp);
 	rt_clean(rtip_stage_2);
-	rt_free_rti(rtip_stage_2);
+	rt_i_destroy(rtip_stage_2);
 	bu_free(resp, "resp");
     } else {
 	long int expected = (different_content) ? obj_cnt : 1;

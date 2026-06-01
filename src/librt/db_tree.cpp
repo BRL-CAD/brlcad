@@ -2334,7 +2334,7 @@ rt_shader_mat(
 	 * walker routines which just build up the RPP of the region.
 	 * For now we just reuse rt_rpp_region() with a scratch rtip.
 	 */
-	my_rtip = rt_new_rti(rtip->rti_dbip);
+	my_rtip = rt_i_create(rtip->rti_dbip);
 	my_rtip->useair = rtip->useair;
 
 	/* XXX Should have our own semaphore here */

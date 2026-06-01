@@ -119,11 +119,11 @@ _crofton_on_obj(struct db_i *dbip, const char *obj_name, double &out_sa, double 
 {
     out_sa = out_vol = -1.0;
 
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip) return -1L;
 
     if (rt_gettree(rtip, obj_name) != 0) {
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1L;
     }
     rt_prep_parallel(rtip, 1);
@@ -134,7 +134,7 @@ _crofton_on_obj(struct db_i *dbip, const char *obj_name, double &out_sa, double 
     crp.time_ms = 2000.0;
 
     int cr = rt_crofton_shoot(rtip, &crp, &out_sa, &out_vol);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     return (cr >= 0) ? (long)cr : -1L;
 }
 

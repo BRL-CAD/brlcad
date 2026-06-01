@@ -963,12 +963,12 @@ _bot_cmd_strip(void *bs, int argc, const char **argv)
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
-    struct rt_i *rtip = rt_new_rti(gb->gedp->dbip);
+    struct rt_i *rtip = rt_i_create(gb->gedp->dbip);
     rt_gettree(rtip, argv[0]);
     rt_prep(rtip);
     struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
     int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, gb->verbosity);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     if (have_thin_faces) {
 	struct rt_bot_internal *nbot = rt_bot_remove_faces(&tfaces, bot);
 	struct rt_db_internal intern;

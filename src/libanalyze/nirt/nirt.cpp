@@ -442,10 +442,10 @@ _nirt_get_rtip(struct nirt_state *nss)
 
     if (nss->i->use_air) {
 	if (nss->i->rtip_air == RTI_NULL) {
-	    nss->i->rtip_air = rt_new_rti(nss->i->dbip); /* clones dbip, so we can operate on the copy */
+	    nss->i->rtip_air = rt_i_create(nss->i->dbip); /* clones dbip, so we can operate on the copy */
 	    nss->i->rtip_air->rti_dbip->i->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
 	    if (nss->i->rtip_air->rti_dbip->i->dbi_fp == NULL) {
-		rt_free_rti(nss->i->rtip_air);
+		rt_i_destroy(nss->i->rtip_air);
 		nss->i->rtip_air = RTI_NULL;
 		return RTI_NULL;
 	    }
@@ -457,10 +457,10 @@ _nirt_get_rtip(struct nirt_state *nss)
     }
 
     if (nss->i->rtip == RTI_NULL) {
-	nss->i->rtip = rt_new_rti(nss->i->dbip); /* clones dbip, so we can operate on the copy */
+	nss->i->rtip = rt_i_create(nss->i->dbip); /* clones dbip, so we can operate on the copy */
 	nss->i->rtip->rti_dbip->i->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
 	if (nss->i->rtip->rti_dbip->i->dbi_fp == NULL) {
-	    rt_free_rti(nss->i->rtip);
+	    rt_i_destroy(nss->i->rtip);
 	    nss->i->rtip = RTI_NULL;
 	    return RTI_NULL;
 	}
@@ -3052,8 +3052,8 @@ nirt_destroy(struct nirt_state *ns)
     bv_vlist_cleanup(&(ns->i->s_vlist));
     bv_vlblock_free(ns->i->segs);
 
-    if (ns->i->rtip != RTI_NULL) rt_free_rti(ns->i->rtip);
-    if (ns->i->rtip_air != RTI_NULL) rt_free_rti(ns->i->rtip_air);
+    if (ns->i->rtip != RTI_NULL) rt_i_destroy(ns->i->rtip);
+    if (ns->i->rtip_air != RTI_NULL) rt_i_destroy(ns->i->rtip_air);
 
     db_close(ns->i->dbip);
 

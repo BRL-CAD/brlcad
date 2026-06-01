@@ -346,12 +346,12 @@ bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *b
     }
 
     // Have faces, test with raytracer
-    struct rt_i *rtip = rt_new_rti(wdbip);
+    struct rt_i *rtip = rt_i_create(wdbip);
     rt_gettree(rtip, bname);
     rt_prep(rtip);
     struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
     int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 
     // No problematic faces reported, nothing to do
     if (!have_thin_faces) {
@@ -444,12 +444,12 @@ bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *b
 	return NULL;
     }
 
-    struct rt_i *crtip = rt_new_rti(wdbip);
+    struct rt_i *crtip = rt_i_create(wdbip);
     rt_gettree(crtip, test_name);
     rt_prep(crtip);
     bu_ptbl_reset(&tfaces);
     have_thin_faces = rt_bot_thin_check(&tfaces, rbot, crtip, VUNITIZE_TOL, 0);
-    rt_free_rti(crtip);
+    rt_i_destroy(crtip);
     // Win or lose, delete the test obj
     odp = db_lookup(wdbip, test_name, LOOKUP_QUIET);
     if (odp) {

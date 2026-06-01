@@ -733,7 +733,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 
     /* release our raytracing instance and counters */
     rtsurf_context_destroy(context);
-    rt_free_rti(ap.a_rt_i);
+    rt_i_destroy(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
     return area;

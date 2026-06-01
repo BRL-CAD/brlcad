@@ -137,9 +137,9 @@ _ged_get_obj_bounds2(struct ged *gedp,
     GED_DB_GET_INTERN(gedp, &intern, dp, gtdp->gtd_xform, BRLCAD_ERROR);
 
     /* Make a new rt_i instance from the existing db_i structure */
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     if (rtip == RTI_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s", gedp->dbip->dbi_filename);
+	bu_vls_printf(gedp->ged_result_str, "rt_i_create failure for %s", gedp->dbip->dbi_filename);
 	return BRLCAD_ERROR;
     }
 
@@ -160,7 +160,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
     VMOVE(rpp_min, st.st_min);
     VMOVE(rpp_max, st.st_max);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;

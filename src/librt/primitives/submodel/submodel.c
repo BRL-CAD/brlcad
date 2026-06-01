@@ -147,7 +147,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	}
     }
 
-    sub_rtip = rt_new_rti(sub_dbip);	/* does db_clone_dbi() */
+    sub_rtip = rt_i_create(sub_dbip);	/* does db_clone_dbi() */
     RT_CK_RTI(sub_rtip);
 
     /* Set search term before leaving critical section */
@@ -188,7 +188,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     argv[1] = NULL;
     if (rt_gettrees(sub_rtip, 1, (const char **)argv, 1) < 0) {
 	bu_log("submodel(%s) rt_gettrees(%s) failed\n", stp->st_name, argv[0]);
-	/* Can't call rt_free_rti(sub_rtip) because it may have
+	/* Can't call rt_i_destroy(sub_rtip) because it may have
 	 * already been instanced!
 	 */
 	return -2;
@@ -197,7 +197,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     if (sub_rtip->stats.nsolids <= 0) {
 	bu_log("rt_submodel_prep(%s): %s No primitives found\n",
 	       stp->st_dp->d_namep, bu_vls_addr(&sip->file));
-	/* Can't call rt_free_rti(sub_rtip) because it may have
+	/* Can't call rt_i_destroy(sub_rtip) because it may have
 	 * already been instanced!
 	 */
 	return -3;
@@ -599,7 +599,7 @@ rt_submodel_free(struct soltab *stp)
     }
     /* Keep the ptbl allocated. */
 
-    rt_free_rti(submodel->rtip);
+    rt_i_destroy(submodel->rtip);
 
     BU_PUT(submodel, struct submodel_specific);
 }

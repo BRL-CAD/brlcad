@@ -161,10 +161,20 @@ struct rt_i {
 /* Applications interface */
 /**************************/
 
-/* Prepare for raytracing */
+RT_EXPORT extern struct rt_i *rt_i_create(struct db_i *dbip);
+RT_EXPORT extern void rt_i_destroy(struct rt_i *rtip);
 
-RT_EXPORT extern struct rt_i *rt_new_rti(struct db_i *dbip);
-RT_EXPORT extern void rt_free_rti(struct rt_i *rtip);
+/* Use these if working with an rt_i not being managed by the
+ * rt_i_create/rt_i_destroy pairing. */
+RT_EXPORT extern void rt_i_init(struct rt_i *rtip, struct db_i *dbip);
+RT_EXPORT extern void rt_i_clear(struct rt_i *rtip);
+
+// Old names - use rt_i_create and rt_i_destroy instead.
+DEPRECATED RT_EXPORT extern struct rt_i *rt_new_rti(struct db_i *dbip);
+DEPRECATED RT_EXPORT extern void rt_free_rti(struct rt_i *rtip);
+
+
+/* Prepare for raytracing */
 RT_EXPORT extern void rt_prep(struct rt_i *rtip);
 RT_EXPORT extern void rt_prep_parallel(struct rt_i *rtip,
 				       int ncpu);

@@ -184,11 +184,11 @@ csg_crofton_volume(struct db_i *dbip, const char *obj_name, double *out_vol)
 	return BRLCAD_ERROR;
 
     *out_vol = -1.0;
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip)
 	return BRLCAD_ERROR;
     if (rt_gettree(rtip, obj_name) != 0) {
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return BRLCAD_ERROR;
     }
     rt_prep_parallel(rtip, 1);
@@ -196,7 +196,7 @@ csg_crofton_volume(struct db_i *dbip, const char *obj_name, double *out_vol)
     double sa = 0.0, vol = 0.0;
     struct rt_crofton_params crp = {FACETIZE_EMPTY_CHECK_CROFTON_RAYS, 0.0, 0.0};
     int rc = rt_crofton_shoot(rtip, &crp, &sa, &vol);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     if (rc < 0)
 	return BRLCAD_ERROR;
     *out_vol = vol;

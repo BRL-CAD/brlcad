@@ -1336,15 +1336,15 @@ comb_crofton_sample(const struct rt_db_internal *ip, double *out_sa, double *out
 
     RT_CK_DBI(comb->src_dbip);
 
-    struct rt_i *rtip = rt_new_rti((struct db_i *)comb->src_dbip);
+    struct rt_i *rtip = rt_i_create((struct db_i *)comb->src_dbip);
     if (!rtip) {
-	bu_log("rt_comb_volume/surf_area: rt_new_rti() failed\n");
+	bu_log("rt_comb_volume/surf_area: rt_i_create() failed\n");
 	return -1;
     }
 
     if (rt_gettree(rtip, comb->src_objname) < 0) {
 	bu_log("rt_comb_volume/surf_area: rt_gettree() failed for '%s'\n", comb->src_objname);
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1;
     }
 
@@ -1358,7 +1358,7 @@ comb_crofton_sample(const struct rt_db_internal *ip, double *out_sa, double *out
     if (out_sa)  *out_sa  = sa;
     if (out_vol) *out_vol = vol;
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     return 0;
 }
 

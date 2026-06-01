@@ -97,7 +97,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     if (tsp->ts_rtip == NULL)
-	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
+	tsp->ts_rtip = rt_i_create(tsp->ts_dbip);
 
     count += nmg_mc_evaluate (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
 

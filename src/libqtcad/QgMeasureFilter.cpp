@@ -376,10 +376,10 @@ QMeasure3DFilter::get_point()
 	    ap->a_logoverlap = NULL;
 	}
 	if (rtip) {
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	}
-	rtip = rt_new_rti(dbip);
+	rtip = rt_i_create(dbip);
 	struct resource *resp = NULL;
 	BU_GET(resp, struct resource);
 	rt_init_resource(resp, 0, rtip);
@@ -393,7 +393,7 @@ QMeasure3DFilter::get_point()
 	}
 	if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
 	    bu_free(objs, "objs");
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    BU_PUT(resp, struct resource);
 	    bu_ptbl_free(&sset);

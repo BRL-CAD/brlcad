@@ -132,10 +132,10 @@ get_aabb(db_i &db, const db_full_path &path)
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    const simulate::AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&db));
+    const simulate::AutoPtr<rt_i, rt_i_destroy> rti(rt_i_create(&db));
 
     if (!rti.ptr)
-	bu_bomb("rt_new_rti() failed");
+	bu_bomb("rt_i_create() failed");
 
     const simulate::AutoPtr<char> path_str(db_path_to_string(&path));
 

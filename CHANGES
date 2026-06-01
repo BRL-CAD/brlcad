@@ -136,21 +136,25 @@ include/bu/vfont.h - fully removed, header and all contents
 	We only use this in fblabel, and there are many other
 	modern options when it comes to fonts - remove vfont
 	as public facing API.
+	[deprecated 7.44]
 
 include/bu/tc.h - fully removed, header and all contents
 	Code should either use bu/parallel.h APIs or C++11 threading
 	rather than the low level tc.h portability wrappers.
+	[deprecated 7.44]
 
 include/nmg/nurb.h - fully removed, header and all contents
 
 	NURBS support in BRL-CAD is focused on libbrep/OpenNURBS now,
 	libnmg will be simplified to planar geometry only.  Other related
 	changes to libnmg include:
+	[deprecated 7.44]
 
 include/nmg/edge.h - remove:
 
 	GET_EDGE_G_CNURB
 	FREE_EDGE_G_CNURB
+	[deprecated 7.44]
 
 include/nmg/face.h - remove:
 
@@ -158,23 +162,27 @@ include/nmg/face.h - remove:
 	NMG_CK_FACE_G_EITHER
 	GET_FACE_G_SNURB
 	FREE_FACE_G_SNURB
+	[deprecated 7.44]
 
 include/nmg/index.h - remove:
 
 	nmg_struct_counts.face_g_snurb
 	nmg_struct_counts.edge_g_cnurb
 	nmg_struct_counts.vertexuse_a_cnurb
+	[deprecated 7.44]
 
 include/nmg/plot.h - remove:
 
 	nmg_snurb_fu_to_vlist
 	nmg_snurb_to_vlist
 	nmg_cnurb_to_vlist
+	[deprecated 7.44]
 
 include/nmg/vertex.h - remove:
 
 	GET_VERTEXUSE_A_CNURB
 	FREE_VERTEXUSE_A_CNURB
+	[deprecated 7.44]
 
 include/nmg/topology.h - remove:
 
@@ -185,6 +193,7 @@ include/nmg/topology.h - remove:
 	struct edge_g_cnurb
 	struct face_g_snurb
 	struct vertexuse_a_cnurb
+	[deprecated 7.44]
 
 include/rt/geom.h
 	struct rt_nurb_internal will be removed - bspline loading will
@@ -213,6 +222,10 @@ include/rt/primitives/rhc.h  librt
 	deprecated in favor of rt_mk_hyperbola(pts, r, b, c, dtol, ntol, min_abs).
 	The old form is still available as rt_mk_hyperbola_old() during the
 	deprecation period. [deprecated 7.44]
+
+include/rt/rt_instance.h  librt
+	rt_new_rti -> rt_i_create [deprecated 7.44]
+	rt_free_rti -> rt_i_destroy [deprecated 7.44]
 
 7.42
 ----

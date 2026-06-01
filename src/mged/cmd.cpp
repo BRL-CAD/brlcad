@@ -2187,7 +2187,7 @@ wdb_deleteProc_rt(void *clientData)
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
 
     bu_free((void *)ap, "struct application");
@@ -2220,7 +2220,7 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
         return TCL_ERROR;
     }
 
-    rtip = rt_new_rti(s->wdbp->dbip);
+    rtip = rt_i_create(s->wdbp->dbip);
     newprocname = argv[1];
 
     /* Delete previous proc (if any) to release all that memory, first */
@@ -2251,7 +2251,7 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
     if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
         Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp,
                          "rt_gettrees() returned error", (char *)NULL);
-        rt_free_rti(rtip);
+        rt_i_destroy(rtip);
         return TCL_ERROR;
     }
 

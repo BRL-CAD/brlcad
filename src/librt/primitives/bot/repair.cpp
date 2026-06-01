@@ -334,7 +334,7 @@ bot_repair_lint(struct rt_bot_internal *bot)
 
     // Note that these tests won't work as expected if the BoT is
     // self-intersecting...
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
 
@@ -390,7 +390,7 @@ bot_lint_cleanup:
 	delete d;
     }
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     bu_free(state, "state");
     bu_free(resp, "resp");
     db_close(dbip);
