@@ -54,6 +54,35 @@ _gcv_cleanup(int state, union tree *tp)
 }
 
 
+static void
+_gcv_clear_region_ref(union tree *tp, const struct nmgregion *r)
+{
+    if (!tp || !r)
+	return;
+
+    switch (tp->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    _gcv_clear_region_ref(tp->tr_b.tb_left, r);
+	    _gcv_clear_region_ref(tp->tr_b.tb_right, r);
+	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    _gcv_clear_region_ref(tp->tr_b.tb_left, r);
+	    break;
+	case OP_TESS:
+	    if (tp->tr_d.td_r == r)
+		tp->tr_d.td_r = (struct nmgregion *)NULL;
+	    break;
+	default:
+	    break;
+    }
+}
+
+
 union tree *
 gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
@@ -204,6 +233,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     nmg_kr(r);
+    _gcv_clear_region_ref(tp, r);
 
     return _gcv_cleanup(NMG_debug_state, tp);
 }

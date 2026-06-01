@@ -170,7 +170,7 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     struct vertex *v;
     struct bu_ptbl verts = BU_PTBL_INIT_ZERO;
     struct bu_ptbl norms = BU_PTBL_INIT_ZERO;
-    std::vector<aiFace*> faces = {};
+    std::vector<aiFace> faces = {};
     aiMesh* curr_mesh = new aiMesh();
     aiNode* curr_node = new aiNode();
     size_t numverts = 0;		                /* Number of vertices to output */
@@ -217,13 +217,12 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
 		int vert_count=0;
-		aiFace* curr_face = new aiFace();
-		curr_face->mIndices = new unsigned int[3];
+		aiFace curr_face;
+		curr_face.mIndices = new unsigned int[3];
 
 		NMG_CK_LOOPUSE(lu);
 
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-		    delete curr_face;
 		    continue;
 		}
 
@@ -242,14 +241,13 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
 			 */
 			bu_ptbl_free(&verts);
 			bu_log("ERROR: bad vertex location (%zu)!\n", loc);
-			delete curr_face;
 			delete curr_mesh;
 			delete curr_node;
 			return;
 		    }
 
 		    /* store vertex data and match index to face data */
-		    curr_face->mIndices[vert_count] = loc;
+		    curr_face.mIndices[vert_count] = loc;
 		    curr_mesh->mVertices[loc].x = v->vg_p->coord[0] * pstate->gcv_options->scale_factor;
 		    curr_mesh->mVertices[loc].y = v->vg_p->coord[1] * pstate->gcv_options->scale_factor;
 		    curr_mesh->mVertices[loc].z = v->vg_p->coord[2] * pstate->gcv_options->scale_factor;
@@ -259,17 +257,15 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
 		// TODO ai handles polygons
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
-		    delete curr_face;
 		    bu_log("ERROR: LU is not a triangle -- ");
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    return;
 		} else if (vert_count < 3) {     // TODO same here
-		    delete curr_face;
 		    continue;
 		}
 
 		/* if we have a triangle, we're good to add the face */
-		curr_face->mNumIndices = 3;
+		curr_face.mNumIndices = 3;
 		/* it may be worth for time complexity allocating faces to a worst
 		 * case 'numverts' up-front rather than using push_back
 		 */
@@ -279,9 +275,13 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     }
 
     /* generate mesh */
-    char* region_name = strip_at_char(db_path_to_string(pathp), '/');
-    if (!region_name)
-	sprintf(region_name, "region_%zu", pstate->meshes.size());
+    char fallback_region_name[64] = {0};
+    char *path_name = db_path_to_string(pathp);
+    char *region_name = strip_at_char(path_name, '/');
+    if (!region_name) {
+	snprintf(fallback_region_name, sizeof(fallback_region_name), "region_%zu", pstate->meshes.size());
+	region_name = fallback_region_name;
+    }
     curr_mesh->mName = aiString(region_name);
     curr_mesh->mPrimitiveTypes |= aiPrimitiveType_TRIANGLE;
     curr_mesh->mNumVertices = numverts;
@@ -290,7 +290,7 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     /* add faces to mesh */
     curr_mesh->mFaces = new aiFace[faces.size()];     /* convert vector to arr */
     for (i = 0; i < faces.size(); i++) {
-	curr_mesh->mFaces[i] = *faces[i];
+	curr_mesh->mFaces[i] = faces[i];
     }
 
     /* add normals to mesh */
@@ -310,7 +310,7 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     }
 
     /* set color data at mesh level */
-    curr_mesh->mColors[0] = static_cast<aiColor4D *>(bu_calloc(numverts, sizeof(aiColor4D), "color array"));
+    curr_mesh->mColors[0] = new aiColor4D[numverts]();
     /* default color is white */
     for (size_t ci = 0; ci < numverts; ci++) {
 	curr_mesh->mColors[0][ci].r = 1;
@@ -388,8 +388,8 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
 	    mat->AddProperty<float>(&def_args["sh"], 1, AI_MATKEY_SHININESS);
 	    mat->AddProperty<float>(&def_args["em"], 1, AI_MATKEY_EMISSIVE_INTENSITY);
 
-            aiColor3D col(tsp->ts_mater.ma_color[0] * 255, tsp->ts_mater.ma_color[1] * 255, tsp->ts_mater.ma_color[2] * 255);
-            mat->AddProperty<aiColor3D>(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
+	    aiColor4D col(tsp->ts_mater.ma_color[0], tsp->ts_mater.ma_color[1], tsp->ts_mater.ma_color[2], 1.0f);
+	    mat->AddProperty(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
 
 	    /* add new material to map. Scene material slot 0 is reserved for the default material. */
 	    pstate->mats.push_back(mat);
@@ -402,8 +402,9 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     }
 
     /* generate node */
-    aiString name(db_path_to_string(pathp));
+    aiString name(path_name);
     curr_node->mName = name;
+    bu_free(path_name, "db_path_to_string");
 
     /* set node transformation
      * NOTE: facetize takes into account transformation, so we set identity matrix
