@@ -235,7 +235,7 @@ ext_focused2_worker(struct ext_focused2_worker_data *wd)
     const bool threshold_mode = (wd->vis_threshold > 0.0);
 
     struct application ap;
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     ap.a_rt_i         = wd->rtip;
     ap.a_hit          = ext_focused2_hit;
     ap.a_miss         = ext_focused2_miss;
@@ -858,7 +858,7 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
 
     /* Build the raytrace context. */
     struct application  ap;
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     ap.a_rt_i = rt_i_create(gb->gedp->dbip);
 
     if (rt_gettree(ap.a_rt_i, input_name)) {

@@ -255,7 +255,7 @@ op_pnts_vol(
     struct rt_i *rtip;
     size_t ncpus;
     BU_GET(ap, struct application);
-    RT_APPLICATION_INIT(ap);
+    rt_thread_worker_data_init(ap, 0);
     BU_GET(resp, struct resource);
     rtip = rt_i_create(gedp->dbip);
     rt_init_resource(resp, 0, rtip);
@@ -434,7 +434,7 @@ pnt_inside_vol(
     struct rt_i *rtip;
     size_t ncpus;
     BU_GET(ap, struct application);
-    RT_APPLICATION_INIT(ap);
+    rt_thread_worker_data_init(ap, 0);
     BU_GET(resp, struct resource);
     rtip = rt_i_create(gedp->dbip);
     rt_init_resource(resp, 0, rtip);

@@ -830,7 +830,7 @@ main(int argc, char **argv)
     /*
      * Initialize the application structure
      */
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     ap.a_hit = (control.glc_what_to_report & ~G_LINT_OVLP) ? rpt_hit : no_op_hit;
     ap.a_miss = no_op_miss;
     ap.a_resource = RESOURCE_NULL;

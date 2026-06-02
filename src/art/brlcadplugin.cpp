@@ -216,7 +216,7 @@ BrlcadObject:: BrlcadObject(
     if (this->rtip->needprep)
         rt_prep_parallel(this->rtip, 1);
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
 
     /* configure raytrace application */
     ap.a_rt_i = this->rtip;
@@ -422,7 +422,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 {
     // FIXME: This current implementation below is untested and likely out of sync. It needs to be reworked for plugin use.
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
 
     /* configure raytrace application */
     ap.a_rt_i = this->rtip;
@@ -468,7 +468,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 	rt_prep_parallel(rtip, 1);
 
     /* Initialize values in application struct */
-    //RT_APPLICATION_INIT(ap);
+    //rt_thread_worker_data_init(&ap, 0);
 
     /* configure raytrace application */
     //ap->a_onehit = -1;

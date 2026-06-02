@@ -143,7 +143,7 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 
     // Set up the raytrace
     struct application ap;
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     ap.a_rt_i = rtip;     /* application uses this instance */
     ap.a_hit = _tc_hit;    /* where to go on a hit */
     ap.a_miss = _tc_miss;  /* where to go on a miss */
@@ -289,7 +289,7 @@ rt_bot_csg_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struc
     ninfo.verbose = verbose;
 
     struct application ap;
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     ap.a_rt_i = rtip;
     ap.a_hit = _ntc_hit;
     ap.a_miss = _ntc_miss;

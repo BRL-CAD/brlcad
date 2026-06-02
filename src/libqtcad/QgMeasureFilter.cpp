@@ -368,7 +368,7 @@ QMeasure3DFilter::get_point()
     if (need_prep) {
 	if (!ap) {
 	    BU_GET(ap, struct application);
-	    RT_APPLICATION_INIT(ap);
+	    rt_thread_worker_data_init(ap, 0);
 	    ap->a_onehit = 1;
 	    ap->a_hit = _cpnt_hit;
 	    ap->a_miss = NULL;

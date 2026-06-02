@@ -68,7 +68,7 @@ struct lint_worker_vars {
 namespace {
     class lint_worker_data {
 	public:
-	    lint_worker_data(struct rt_i *rtip, struct resource *res);
+	    lint_worker_data(struct rt_i *rtip, struct resource *res, size_t cpu_id);
 	    ~lint_worker_data();
 	    void shoot(int ind, bool reverse);
 
@@ -147,9 +147,9 @@ bot_repair_lint_worker(int cpu, void *ptr)
     }
 }
 
-lint_worker_data::lint_worker_data(struct rt_i *rtip, struct resource *res)
+lint_worker_data::lint_worker_data(struct rt_i *rtip, struct resource *res, size_t cpu_id)
 {
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu_id);
     ap.a_onehit = 0;
     ap.a_rt_i = rtip;             /* application uses this instance */
     ap.a_hit = _hit_noop;         /* where to go on a hit */
@@ -358,7 +358,7 @@ bot_repair_lint(struct rt_bot_internal *bot)
 	//bu_log("%d: tri_state: %d, tri_end %d\n", (int)i, state[i].tri_start, state[i].tri_end);
 	state[i].reverse = false;
 
-	lint_worker_data *d = new lint_worker_data(rtip, state[i].resp);
+	lint_worker_data *d = new lint_worker_data(rtip, state[i].resp, i);
 	d->bot = bot;
 	d->ttol = VUNITIZE_TOL;
 	state[i].ptr = (void *)d;

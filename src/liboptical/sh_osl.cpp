@@ -595,7 +595,7 @@ static int osl_render(struct application *ap, const struct partition *pp,
     if ((info.out_ray_type & RAY_REFLECT) || (info.out_ray_type & RAY_TRANSMIT)) {
 
 	struct application new_ap;
-	RT_APPLICATION_INIT(&new_ap);
+	rt_thread_worker_data_init(&new_ap, 0);
 
 	new_ap = *ap;                     /* struct copy */
 	new_ap.a_onehit = 1;

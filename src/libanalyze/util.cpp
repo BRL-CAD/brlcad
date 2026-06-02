@@ -42,7 +42,7 @@ analyze_gen_worker(int cpu, void *ptr)
     size_t start_ind, end_ind, i;
     int state_jmp = 0;
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_rt_i = state->rtip;
     ap.a_hit = state->fhit;
     ap.a_miss = state->fmiss;
@@ -373,7 +373,7 @@ segfilter_gen_worker(int cpu, void *ptr)
     /* If test is NULL in state or it's zero length, just return. */
     if (!state->test || !BU_PTBL_LEN(state->test)) return;
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_rt_i = s->rtip;
     ap.a_hit = s->fhit;
     ap.a_miss = s->fmiss;

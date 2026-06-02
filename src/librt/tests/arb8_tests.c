@@ -664,7 +664,7 @@ main(int ac, char *av[])
             printf("  Testing Ray: %s\n", ray->label);
 
             struct application ap;
-	    RT_APPLICATION_INIT(&ap);
+	    rt_thread_worker_data_init(&ap, 0);
             VSET(ap.a_ray.r_pt, ray->origin[X], ray->origin[Y], ray->origin[Z]);
             VSET(ap.a_ray.r_dir, ray->direction[X], ray->direction[Y], ray->direction[Z]);
 	    ap.a_ray.magic = RT_RAY_MAGIC;

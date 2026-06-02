@@ -171,7 +171,7 @@ rt_gen_worker(int cpu, void *ptr)
     size_t start_ind, end_ind, i;
     int state_jmp = 0;
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_rt_i = state->rtip;
     ap.a_hit = state->fhit;
     ap.a_miss = state->fmiss;
@@ -362,7 +362,7 @@ prand_pnt_worker(int cpu, void *ptr)
     struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
     size_t i;
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_rt_i = state->rtip;
     ap.a_hit = state->fhit;
     ap.a_miss = state->fmiss;

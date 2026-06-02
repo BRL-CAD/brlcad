@@ -341,7 +341,7 @@ main(int argc, char **argv)
     }
 
     /* initialize the application structure to all zeros */
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
 
     ap.a_rt_i = rtip;	/* your application uses this instance */
 

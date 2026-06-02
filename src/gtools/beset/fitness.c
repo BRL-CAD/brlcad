@@ -303,13 +303,13 @@ get_next_row(struct fitness_state *fstate)
  * raytraces an object in parallel and stores or compares it to source
  */
 void
-rt_worker(int UNUSED(cpu), void *g)
+rt_worker(int cpu, void *g)
 {
     struct application ap;
     struct fitness_state *fstate = (struct fitness_state *)g;
     int u, v;
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_rt_i = fstate->rtip;
     if (fstate->capture) {
 	ap.a_hit = capture_hit;
@@ -319,6 +319,8 @@ rt_worker(int UNUSED(cpu), void *g)
 	ap.a_miss = compare_miss;
     }
 
+    // TODO - if we're raytracing in parallel we shouldn't be using
+    // rt_uniresource!!
     ap.a_resource = &rt_uniresource;/*fstate->resource[cpu];*/
 
     ap.a_ray.r_dir[X] = ap.a_ray.r_dir[Y] = 0.0;

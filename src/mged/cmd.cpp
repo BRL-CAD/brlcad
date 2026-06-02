@@ -2488,14 +2488,15 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
      * And the "overwrite" sequence in Tcl is to create the new
      * proc before running the Tcl_CmdDeleteProc on the old one,
      * which in this case would trash rt_uniresource. (TODO - is this still true?)
-     * Once on the rti_resources list, rt_clean() will clean 'em up.
+     *
+     * TODO - How is all the memory getting cleaned up here?
      */
     BU_ALLOC(resp, struct resource);
     rt_init_resource(resp, 0, rtip);
     BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, 0) != NULL);
 
     BU_ALLOC(ap, struct application);
-    RT_APPLICATION_INIT(ap);
+    rt_thread_worker_data_init(ap, 0);
     ap->a_magic = RT_AP_MAGIC;
     ap->a_resource = resp;
     ap->a_rt_i = rtip;

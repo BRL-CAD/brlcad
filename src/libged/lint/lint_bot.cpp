@@ -155,7 +155,7 @@ _overlap_noop(struct application *UNUSED(ap),
 namespace {
     class lint_worker_data {
 	public:
-	    lint_worker_data(struct rt_i *rtip, struct resource *res);
+	    lint_worker_data(struct rt_i *rtip, struct resource *res, int cpu);
 	    ~lint_worker_data();
 	    void shoot(int ind, bool reverse);
 	    void plot_bad_tris(struct bv_vlblock *vbp, struct bu_list *vhead, struct bu_list *vlfree);
@@ -181,9 +181,9 @@ namespace {
     };
 }
 
-lint_worker_data::lint_worker_data(struct rt_i *rtip, struct resource *res)
+lint_worker_data::lint_worker_data(struct rt_i *rtip, struct resource *res, int cpu)
 {
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_onehit = 0;
     ap.a_rt_i = rtip;             /* application uses this instance */
     ap.a_hit = _hit_noop;         /* where to go on a hit */
@@ -609,7 +609,7 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
 	//bu_log("%d: tri_state: %d, tri_end %d\n", (int)i, state[i].tri_start, state[i].tri_end);
 	state[i].reverse = false;
 
-	lint_worker_data *d = new lint_worker_data(rtip, state[i].resp);
+	lint_worker_data *d = new lint_worker_data(rtip, state[i].resp, i);
 	d->ldata = bdata;
 	d->pname = std::string(dp->d_namep);
 	d->bot = bot;

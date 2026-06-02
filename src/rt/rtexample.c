@@ -280,7 +280,7 @@ main(int argc, char **argv)
     rt_prep_parallel(rtip, 1);
 
     /* initialize all values in application structure to zero */
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
 
     /* your application uses the raytrace instance containing the
      * geometry we loaded.  this describes what we're shooting at.

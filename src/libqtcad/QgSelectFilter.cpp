@@ -301,7 +301,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
     // librt intersection test.
     struct application *ap;
     BU_GET(ap, struct application);
-    RT_APPLICATION_INIT(ap);
+    rt_thread_worker_data_init(ap, 0);
     ap->a_onehit = 0;
     ap->a_hit = _obj_record;
     ap->a_miss = NULL;

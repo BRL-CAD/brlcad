@@ -148,7 +148,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
     /*
      * Initialize the application
      */
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     ap.a_magic = RT_AP_MAGIC;
     ap.a_ray.magic = RT_RAY_MAGIC;
     ap.a_hit = rpt_hits;

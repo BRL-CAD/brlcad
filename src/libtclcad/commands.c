@@ -6555,7 +6555,7 @@ to_rt_gettrees_application(struct ged *gedp,
     BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, 0) != NULL);
 
     BU_ALLOC(ap, struct application);
-    RT_APPLICATION_INIT(ap);
+    rt_thread_worker_data_init(ap, 0);
     ap->a_magic = RT_AP_MAGIC;
     ap->a_resource = &resp;
     ap->a_rt_i = rtip;

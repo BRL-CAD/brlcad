@@ -781,7 +781,7 @@ analyze_polygonize(
 
     /* Set up raytracing */
     BU_GET(ap, struct application);
-    RT_APPLICATION_INIT(ap);
+    rt_thread_worker_data_init(ap, 0);
     BU_GET(resp, struct resource);
     rtip = rt_i_create(dbip);
     rt_init_resource(resp, 0, rtip);
