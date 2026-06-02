@@ -56,12 +56,18 @@ __BEGIN_DECLS
  * Applications are responsible for calling rt_init_resource() on each
  * resource structure before letting LIBRT use them.
  *
+ * Unless marked PUBLIC explicitly below, the details of struct resource should
+ * be considered internal implementation details.  (If we can do so without
+ * performance penalty, the plan is to make most of them actually hidden.  The
+ * rt_init_resource() contract already required historically gives us a way to
+ * set up a hypothetical rt_resource_internal.)
+ *
  * Per-processor statistics are initially collected in here, and then
  * posted to rt_i by rt_add_res_stats().
  */
 struct resource {
-    uint32_t            re_magic;       /**< @brief  Magic number */
-    int                 re_cpu;         /**< @brief  processor number, for ID */
+    uint32_t            re_magic;       /**< @brief  PUBLIC: Magic number */
+    int                 re_cpu;         /**< @brief  PUBLIC: processor number, for ID */
     struct bu_list      re_seg;         /**< @brief  Head of segment freelist */
     struct bu_ptbl      re_seg_blocks;  /**< @brief  Table of malloc'ed blocks of segs */
     long                re_seglen;
@@ -76,7 +82,7 @@ struct resource {
     struct bu_list      re_nmgfree;     /**< @brief  head of NMG hitmiss freelist */
     union tree **       re_boolstack;   /**< @brief  Stack for rt_booleval() */
     long                re_boolslen;    /**< @brief  # elements in re_boolstack[] */
-    float *             re_randptr;     /**< @brief  ptr into random number table */
+    float *             re_randptr;     /**< @brief  PUBLIC: ptr into random number table */
     /* Statistics.  Only for examination by rt_add_res_stats() */
     long                re_nshootray;   /**< @brief  Calls to rt_shootray() */
     long                re_nmiss_model; /**< @brief  Rays pruned by model RPP */

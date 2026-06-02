@@ -238,8 +238,9 @@ include/rt/primitives/rhc.h  librt
 
 include/rt/resource.h  librt
 
-	Other than re_magic, re_cpu and re_randptr the struct resource entries
-	should be considered private implementation details subject to change.
+	Other than those explicitly marked PUBLIC (re_magic, re_cpu and
+	re_randptr so far) the struct resource entries should be considered
+	private implementation details subject to change.
 	They may not actually end up hidden (struct resource has the potential
 	to be performance sensitive) but once the deprecation period is
 	complete they shouldn't be relied upon by user programs.  (We would
