@@ -223,6 +223,17 @@ include/rt/primitives/rhc.h  librt
 	The old form is still available as rt_mk_hyperbola_old() during the
 	deprecation period. [deprecated 7.44]
 
+include/rt/resource.h  librt
+
+	Other than re_magic, re_cpu and re_randptr the struct resource entries
+	should be considered private implementation details subject to change.
+	They may not actually end up hidden (struct resource has the potential
+	to be performance sensitive) but once the deprecation period is
+	complete they shouldn't be relied upon by user programs.  (We would
+	like to make struct resource a fully internal implementation detail,
+	but it's not clear yet how practical that will end up being.)
+	[deprecated 7.44]
+
 include/rt/rt_instance.h  librt
 	rt_new_rti -> rt_i_create [deprecated 7.44]
 	rt_free_rti -> rt_i_destroy [deprecated 7.44]
