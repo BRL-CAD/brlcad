@@ -158,9 +158,7 @@ rt_i_init(struct rt_i *rtip, struct db_i *dbip)
     rtip->rti_ttol.norm = 0;
 
     /* This sets the space partitioning algorithm to Mike's original
-     * non-uniform binary space partitioning tree.  If you change this
-     * to anything else, you must also modify "rt_find_backing_dist()"
-     * (in shoot.c), to handle the different algorithm -JRA
+     * non-uniform binary space partitioning tree.
      */
     rtip->rti_space_partition = RT_PART_NUBSPT;
 
@@ -2016,18 +2014,6 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	VSETALL(bb, INFINITY);
 	VSETALL(&bb[3], -INFINITY);
 	nfill_out_bsp(rtip, &rtip->i->rti_CutHead, bb);
-    }
-
-    if (BU_PTBL_LEN(&rtip->rti_resources)) {
-	for (i=0; i<BU_PTBL_LEN(&rtip->rti_resources); i++) {
-	    struct resource *re;
-
-	    re = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, i);
-	    if (re && rtip->i->rti_nsolids_with_pieces)
-		_res_pieces_init(re, rtip);
-	}
-    } else if (rtip->i->rti_nsolids_with_pieces) {
-	_res_pieces_init(&rt_uniresource, rtip);
     }
 
     return 0;

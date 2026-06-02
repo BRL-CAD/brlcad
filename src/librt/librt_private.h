@@ -147,6 +147,8 @@ struct rt_i_internal {
     /* rt_submodel parameters */
     char *              rti_treetop;            /**< @brief  bu_strduped, for rt_submodel rti's only */
     size_t              rti_uses;               /**< @brief  for rt_submodel */
+    struct resource *   rti_submodel_resources[MAX_PSW]; /**< @brief private per-cpu resources for rt_submodel */
+    size_t              rti_submodel_resource_refs;       /**< @brief number of rt_submodel users sharing the resource cache */
 
     /* Dynamic geometry */
     int                 rti_add_to_new_solids_list;

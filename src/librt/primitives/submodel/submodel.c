@@ -66,6 +66,42 @@ struct submodel_specific {
 #define RT_SUBMODEL_SPECIFIC_MAGIC 0x73756253	/* subS */
 #define RT_CK_SUBMODEL_SPECIFIC(_p) BU_CKMAG(_p, RT_SUBMODEL_SPECIFIC_MAGIC, "submodel_specific")
 
+static struct resource *
+rt_submodel_resource_get(struct rt_i *rtip, size_t cpu)
+{
+    struct resource *resp;
+
+    RT_CK_RTI(rtip);
+    BU_ASSERT(cpu < MAX_PSW);
+
+    resp = rtip->i->rti_submodel_resources[cpu];
+    if (!resp) {
+	BU_ALLOC(resp, struct resource);
+	rt_init_resource(resp, (int)cpu, NULL);
+	rtip->i->rti_submodel_resources[cpu] = resp;
+    }
+
+    RT_CK_RESOURCE(resp);
+    return resp;
+}
+
+static void
+rt_submodel_resources_free(struct rt_i *rtip)
+{
+    RT_CK_RTI(rtip);
+
+    for (size_t i = 0; i < MAX_PSW; i++) {
+	struct resource *resp = rtip->i->rti_submodel_resources[i];
+	if (!resp)
+	    continue;
+
+	RT_CK_RESOURCE(resp);
+	rt_clean_resource_basic(rtip, resp);
+	bu_free(resp, "struct resource (submodel)");
+	rtip->i->rti_submodel_resources[i] = NULL;
+    }
+}
+
 
 /**
  * Given a pointer to a GED database record, and a transformation matrix,
@@ -87,7 +123,6 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     struct submodel_specific *submodel;
     struct rt_i *sub_rtip;
     struct db_i *sub_dbip;
-    struct resource *resp;
     vect_t radvec;
     vect_t diam;
     char *argv[2];
@@ -134,6 +169,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	    /* Re-cycle an already prepped rti */
 	    sub_rtip = *rtipp;
 	    sub_rtip->i->rti_uses++;
+	    sub_rtip->i->rti_submodel_resource_refs++;
 
 	    bu_semaphore_release(RT_SEM_MODEL);
 
@@ -152,6 +188,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* Set search term before leaving critical section */
     sub_rtip->i->rti_treetop = bu_vls_strdup(&sip->treetop);
+    sub_rtip->i->rti_submodel_resource_refs = 1;
 
     bu_semaphore_release(RT_SEM_MODEL);
 
@@ -159,17 +196,6 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	bu_log("rt_submodel_prep(%s): Opened database %s\n",
 	       stp->st_dp->d_namep, sub_dbip->dbi_filename);
     }
-
-    /*
-     * Initialize per-processor resources for the submodel.
-     * We treewalk here with only one processor (CPU 0).
-     * db_walk_tree() as called from
-     * rt_gettrees() will pluck the 0th resource out of the rtip table.
-     * rt_submodel_shot() will get additional resources as needed.
-     */
-    BU_ALLOC(resp, struct resource);
-    BU_PTBL_SET(&sub_rtip->rti_resources, 0, resp);
-    rt_init_resource(resp, 0, sub_rtip);
 
     /* Propagate some important settings downward */
     sub_rtip->useair = rtip->useair;
@@ -206,9 +232,6 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     /* OK, it's going to work.  Prep the submodel. */
     /* Stay on 1 CPU because we're already multi-threaded at this point. */
     rt_prep_parallel(sub_rtip, 1);
-
-    /* Ensure bu_ptbl rti_resources is full size.  Ptrs will be null */
-    bu_ptbl_trunc(&sub_rtip->rti_resources, sub_rtip->rti_resources.blen);
 
     if (RT_G_DEBUG) rt_pr_cut_info(sub_rtip, stp->st_name);
 
@@ -443,7 +466,6 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     struct submodel_gobetween gb;
     vect_t vdiff;
     int code;
-    struct bu_ptbl *restbl;
     struct resource *resp;
     size_t cpu;
 
@@ -469,20 +491,8 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 	if (sub_ap.a_onehit&1) sub_ap.a_onehit++;
     }
 
-    /*
-     * Obtain the resource structure for this CPU.
-     * No need to semaphore because there is one pointer per cpu already.
-     */
-    restbl = &submodel->rtip->rti_resources;	/* a ptbl */
     cpu = ap->a_resource->re_cpu;
-    BU_ASSERT(cpu < BU_PTBL_LEN(restbl));
-    if ((resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL) {
-	/* First ray for this cpu for this submodel, alloc up */
-	BU_ALLOC(resp, struct resource);
-	BU_PTBL_SET(restbl, cpu, resp);
-	rt_init_resource(resp, cpu, submodel->rtip);
-    }
-    RT_CK_RESOURCE(resp);
+    resp = rt_submodel_resource_get(submodel->rtip, cpu);
     sub_ap.a_resource = resp;
 
     /* shootray already computed a_ray.r_min & r_max for us */
@@ -578,27 +588,19 @@ rt_submodel_free(struct soltab *stp)
 {
     struct submodel_specific *submodel =
 	(struct submodel_specific *)stp->st_specific;
-    struct resource **rpp;
     struct rt_i *rtip;
 
     RT_CK_SUBMODEL_SPECIFIC(submodel);
     rtip = submodel->rtip;
     RT_CK_RTI(rtip);
 
-    /* Specifically free resource structures here */
-    BU_CK_PTBL(&rtip->rti_resources);
-    for (BU_PTBL_FOR(rpp, (struct resource **), &rtip->rti_resources)) {
-	if (*rpp == NULL) continue;
-	if (*rpp == &rt_uniresource) continue;
-	RT_CK_RESOURCE(*rpp);
-	/* Cleans but does not free the resource struct */
-	rt_clean_resource(rtip, *rpp);
-	bu_free(*rpp, "struct resource (submodel)");
-	/* Forget remembered ptr */
-	*rpp = NULL;
+    if (rtip->i->rti_submodel_resource_refs > 1) {
+	rtip->i->rti_submodel_resource_refs--;
+	BU_PUT(submodel, struct submodel_specific);
+	return;
     }
-    /* Keep the ptbl allocated. */
 
+    rt_submodel_resources_free(rtip);
     rt_i_destroy(submodel->rtip);
 
     BU_PUT(submodel, struct submodel_specific);
