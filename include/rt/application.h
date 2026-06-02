@@ -144,6 +144,7 @@ struct application {
     fastf_t             a_cumlen;       /**< @brief  cumulative length of ray */
     int                 a_flag;         /**< @brief  application-specific flag */
     int                 a_zero2;        /**< @brief  must be zero (sanity check) */
+    int			a_cpuid;	/**< @brief  CPU number - corresponds to the resource number. <0 means user managed resources. */
 };
 
 /**
@@ -191,9 +192,11 @@ struct application_bundle
 #define RT_AFN_NULL     ((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
 #define RT_CK_AP(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
+
 #define RT_APPLICATION_INIT(_p) { \
 	memset((char *)(_p), 0, sizeof(struct application)); \
 	(_p)->a_magic = RT_AP_MAGIC; \
+	(_p)->a_cpuid = -1; \
     }
 
 
@@ -204,6 +207,20 @@ struct application_bundle
     {if ((_ap)->a_zero1||(_ap)->a_zero2) \
 	    bu_bomb("corrupt application struct"); }
 #endif
+
+
+
+// EXPERIMENTAL - still working out how this would need to function.  If this
+// matures rt_thread_worker_data_init will replace RT_APPLICATION_INIT
+
+RT_EXPORT extern struct application *rt_thread_worker_data_create(int cpu_num);
+RT_EXPORT extern void rt_thread_worker_data_destroy(struct application *ap);
+
+/* Use these if working with an rt_thread_worker_data not being managed by the
+ * rt_thread_worker_data_create/rt_thread_worker_data_destroy pairing. */
+RT_EXPORT extern void rt_thread_worker_data_init(struct application *ap, int cpu_num);
+RT_EXPORT extern void rt_thread_worker_data_clear(struct application *ap);
+
 
 __END_DECLS
 

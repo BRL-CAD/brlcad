@@ -389,14 +389,14 @@ rt_crofton_shoot(struct rt_i                      *rtip,
 
     /* ---- Set up application template ---- */
     struct application ap;
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     ap.a_rt_i         = rtip;
     ap.a_hit          = crofton_hit;
     ap.a_miss         = crofton_miss;
     ap.a_overlap      = NULL;
     ap.a_multioverlap = NULL;
     ap.a_logoverlap   = rt_silent_logoverlap;
-    ap.a_resource     = resources;
+    ap.a_resource     = NULL;
     ap.a_onehit       = 0;
 
     /* ---- Shared accumulator ---- */

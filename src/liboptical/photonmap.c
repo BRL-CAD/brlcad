@@ -1028,7 +1028,7 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
     double theta, phi, Coef;
 
     BU_ALLOC(lap, struct application);
-    RT_APPLICATION_INIT(lap);
+    rt_thread_worker_data_init(lap, pid);
     lap->a_rt_i = ap->a_rt_i;
     lap->a_hit = ap->a_hit;
     lap->a_miss = ap->a_miss;

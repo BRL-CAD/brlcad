@@ -4930,7 +4930,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 	/* need to do raytracing, do prepping */
 	rtip = rt_i_create(dbip);
 
-	RT_APPLICATION_INIT(&ap);
+	rt_thread_worker_data_init(&ap, 0);
 	ap.a_rt_i = rtip;
 	ap.a_hit = bot_smooth_hit;
 	ap.a_miss = bot_smooth_miss;

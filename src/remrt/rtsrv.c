@@ -443,7 +443,7 @@ main(int argc, char **argv)
     bu_log("using %zd of %zu cpus\n", npsw, avail_cpus);
 
     /* Before option processing, do application-specific initialization */
-    RT_APPLICATION_INIT(&APP);
+    rt_thread_worker_data_init(&APP, 0);
     application_init();
 
     /* excessive overlap reporting can saturate remrt */

@@ -32,6 +32,47 @@
 #include "librt_private.h"
 
 
+struct application *rt_thread_worker_data_create(int cpu_num)
+{
+    struct application *ap = NULL;
+    BU_GET(ap, struct application);
+    rt_thread_worker_data_init(ap, cpu_num);
+    return ap;
+}
+
+void rt_thread_worker_data_destroy(struct application *ap)
+{
+    if (!ap)
+	return;
+    rt_thread_worker_data_clear(ap);
+    BU_PUT(ap, struct application);
+}
+
+void rt_thread_worker_data_init(struct application *ap, int cpu_num)
+{
+    if (!ap)
+	return;
+    memset((char *)ap, 0, sizeof(struct application));
+    ap->a_magic = RT_AP_MAGIC;
+    ap->a_cpuid = cpu_num;
+
+    // Application is managing their own resources if cpu_id < 0
+    if (ap->a_cpuid < 0)
+	return;
+}
+
+void rt_thread_worker_data_clear(struct application *ap)
+{
+    ap->a_magic = 0;
+
+    // Application is managing their own resources if cpu_id < 0
+    if (ap->a_cpuid < 0)
+	return;
+
+}
+
+
+
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt)			\
     PT_DEPARTING_RPP(_step, _lo, _hi, (_pt)[X], (_pt)[Y], (_pt)[Z])
 #define PT_DEPARTING_RPP(_step, _lo, _hi, _px, _py, _pz)	\

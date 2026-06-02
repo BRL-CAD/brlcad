@@ -1851,7 +1851,6 @@ _db_walk_subtree(
     struct combined_tree_state **region_start_statepp,
     union tree *(*leaf_func)(struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *),
     void *client_data,
-    struct resource *resp,
     void *cmap)
 {
     struct combined_tree_state *ctsp;
@@ -1917,7 +1916,7 @@ _db_walk_subtree(
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp, cmap);
+	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, cmap);
 	    return;
 
 	case OP_UNION:
@@ -1925,8 +1924,8 @@ _db_walk_subtree(
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* This node is known to be a binary op */
-	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp, cmap);
-	    _db_walk_subtree(tp->tr_b.tb_right, region_start_statepp, leaf_func, client_data, resp, cmap);
+	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, cmap);
+	    _db_walk_subtree(tp->tr_b.tb_right, region_start_statepp, leaf_func, client_data, cmap);
 	    return;
 
 	case OP_DB_LEAF:
@@ -1956,19 +1955,11 @@ _db_walk_dispatcher(int cpu, void *arg)
     int mine;
     union tree *curtree;
     struct db_walk_parallel_state *wps = (struct db_walk_parallel_state *)arg;
-    struct resource *resp;
 
     DB_CK_WPS(wps);
 
-    if (wps->rtip == NULL || cpu == 0) {
-	resp = &rt_uniresource;
-    } else {
+    if (wps->rtip != NULL || cpu != 0)
 	RT_CK_RTI(wps->rtip);
-
-	resp = (struct resource *)BU_PTBL_GET(&wps->rtip->rti_resources, cpu);
-	if (resp == NULL)
-	    resp = &rt_uniresource;
-    }
 
     struct db_i *dbip = (wps->rtip) ? wps->rtip->rti_dbip : NULL;
 
@@ -1992,9 +1983,9 @@ _db_walk_dispatcher(int cpu, void *arg)
 
 	if (UNLIKELY(dbip && dbip->i->dbi_use_comb_instance_ids)) {
 	    std::unordered_map<std::string, int> c_inst_map;
-	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, (void *)&c_inst_map);
+	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, (void *)&c_inst_map);
 	} else {
-	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, NULL);
+	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, NULL);
 	}
 
 	/* curtree->tr_op may be OP_NOP here.

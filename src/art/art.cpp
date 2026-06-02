@@ -1169,6 +1169,7 @@ main(int argc, char **argv)
     }
 
 
+    // TODO - are these being used?
     resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
     char title[1024] = { 0 };
 
@@ -1190,7 +1191,7 @@ main(int argc, char **argv)
     }
 
     /* initialize values in application struct */
-    RT_APPLICATION_INIT(&APP);
+    rt_thread_worker_data_init(&APP, 0);
 
     /* configure raytrace application */
     APP.a_rt_i = rtip;

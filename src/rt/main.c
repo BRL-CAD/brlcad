@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
     initialize_option_defaults();
 
     /* global application context */
-    RT_APPLICATION_INIT(&APP);
+    rt_thread_worker_data_init(&APP, 0);
 
     /* Before option processing, do RTUIF app-specific init */
     application_init();

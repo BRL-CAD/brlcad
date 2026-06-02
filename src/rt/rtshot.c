@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
 
     argc--;
     argv++;

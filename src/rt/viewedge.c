@@ -494,7 +494,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 							  "occlusion application structure array");
 	for (i=0; i<(size_t)npsw; ++i) {
 	    BU_ALLOC(occlusion_apps[i], struct application);
-	    RT_APPLICATION_INIT(occlusion_apps[i]);
+	    rt_thread_worker_data_init(occlusion_apps[i], i);
 
 	    occlusion_apps[i]->a_rt_i = occlusion_rtip;
 	    occlusion_apps[i]->a_resource = &occlusion_resources[i];
@@ -1083,7 +1083,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
     struct cell *DL = &grid[3][1];
     struct cell *DR = &grid[3][2];
 
-    RT_APPLICATION_INIT(&aaap);
+    rt_thread_worker_data_init(&aaap, ap->a_resource->re_cpu);
     memset(&grid, 0, sizeof(struct cell) * 16);
 
     /* 4x4 sub-pixel grid, dx gets to inner cells */
@@ -1372,7 +1372,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
     RGBpixel col;
 
-    RT_APPLICATION_INIT(&a2);
+    rt_thread_worker_data_init(&a2, ap->a_resource->re_cpu);
     memset(&me, 0, sizeof(struct cell));
     memset(&below, 0, sizeof(struct cell));
     memset(&left, 0, sizeof(struct cell));

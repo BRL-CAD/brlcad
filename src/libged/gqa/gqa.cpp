@@ -1286,7 +1286,7 @@ plane_worker(int cpu, void *ptr)
     if (aborted)
 	return;
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_rt_i = (struct rt_i *)state->rtip;	/* application uses this instance */
     ap.a_hit = _gqa_hit;    /* where to go on a hit */
     ap.a_miss = _gqa_miss;  /* where to go on a miss */

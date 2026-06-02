@@ -115,7 +115,7 @@ rayio_gen_worker(int cpu, void *ptr)
 	if (state->rays_cnt - end_ind < 3) end_ind = state->rays_cnt - 1;
     }
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_rt_i = state->rtip;
     ap.a_hit = rayio_hit;
     ap.a_miss = rayio_miss;

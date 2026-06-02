@@ -2992,7 +2992,7 @@ nirt_init_dbip(struct nirt_state *ns, struct db_i *dbip)
     ns->i->dbip = db_clone_dbi(dbip, NULL);
 
     /* initialize the application structure */
-    RT_APPLICATION_INIT(ns->i->ap);
+    rt_thread_worker_data_init(ns->i->ap, 0);
     ns->i->ap->a_hit = _nirt_if_hit;        /* branch to if_hit routine */
     ns->i->ap->a_miss = _nirt_if_miss;      /* branch to if_miss routine */
     ns->i->ap->a_overlap = _nirt_if_overlap;/* branch to if_overlap routine */

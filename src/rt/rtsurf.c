@@ -284,7 +284,7 @@ initialize(struct application *ap, const char *db, const char *obj[])
     resources = (struct resource *)bu_calloc(MAX_PSW, sizeof(struct resource), "resources");
     initialize_resources(1, resources, rtip);
 
-    RT_APPLICATION_INIT(ap);
+    rt_thread_worker_data_init(ap, 0);
     ap->a_rt_i = rtip;
     ap->a_hit = hit;
     ap->a_miss = miss;

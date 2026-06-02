@@ -90,7 +90,7 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 
     RT_AP_CHECK(ap);
 
-    RT_APPLICATION_INIT(&appl);
+    rt_thread_worker_data_init(&appl, 0);
 
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)
 	if (pp->pt_outhit->hit_dist > 0.0) break;
@@ -366,7 +366,7 @@ rr_render(register struct application *ap,
 
     RT_AP_CHECK(ap);
 
-    RT_APPLICATION_INIT(&sub_ap);
+    rt_thread_worker_data_init(&sub_ap, 0);
 
 
     /*

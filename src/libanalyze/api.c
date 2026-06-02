@@ -789,7 +789,7 @@ analyze_worker(int cpu, void *ptr)
     if (state->aborted)
 	return;
 
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, cpu);
     ap.a_rt_i = (struct rt_i *)state->rtip;	/* application uses this instance */
     ap.a_hit = analyze_hit;    /* where to go on a hit */
     ap.a_miss = analyze_miss;  /* where to go on a miss */

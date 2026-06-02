@@ -303,7 +303,7 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
     RT_CHECK_PT(pp);
     CK_AIR_SP(air_sp);
 
-    RT_APPLICATION_INIT(&my_ap);
+    rt_thread_worker_data_init(&my_ap, 0);
 
     /* Get entry point */
     if (pp->pt_inhit->hit_dist < 0.0) {

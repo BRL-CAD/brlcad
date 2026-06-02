@@ -133,7 +133,7 @@ RtInstance::get_overlaps(const db_full_path &path_a, const db_full_path &path_b,
 
     MultiOverlapHandlerArgs handler_args = {result, path_a_str.ptr, path_b_str.ptr};
     application app;
-    RT_APPLICATION_INIT(&app);
+    rt_thread_worker_data_init(&app, 0);
     app.a_rt_i = rti.ptr;
     app.a_logoverlap = rt_silent_logoverlap;
     app.a_multioverlap = multioverlap_handler;

@@ -383,7 +383,7 @@ rt_rtip_to_occupancy_grid(struct rt_i *rtip, double voxel_size,
     ctx.voxel_size = voxel_size;
 
     struct application ap;
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     ap.a_rt_i   = rtip;
     ap.a_hit    = occ_hit;
     ap.a_miss   = occ_miss;

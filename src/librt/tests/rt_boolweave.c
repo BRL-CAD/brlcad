@@ -65,7 +65,7 @@ test_rt_boolweave(void)
     struct partition partp;
 
     /* alas, raytrace instance is required for weaving */
-    RT_APPLICATION_INIT(&ap);
+    rt_thread_worker_data_init(&ap, 0);
     rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
     ap.a_rt_i = rtip;
     ap.a_resource = &rt_uniresource;

@@ -196,7 +196,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 	for (j = 0; j < numVoxel[1]; ++j) {
 	    struct application ap;
 
-	    RT_APPLICATION_INIT(&ap);
+	    rt_thread_worker_data_init(&ap, 0);
 	    ap.a_rt_i   = rtip;
 	    ap.a_onehit = 0;
 	    VSET(ap.a_ray.r_dir, 1., 0., 0.);

@@ -679,7 +679,7 @@ fire_row(int cpu, void * ptr)
     fastf_t x, y, z;
     unsigned long count = 0;
 
-    RT_APPLICATION_INIT(&a);
+    rt_thread_worker_data_init(&a, cpu);
     a.a_rt_i = m->rtip;
     a.a_rt_i->useair = 1;
     a.a_hit = bangbang;
