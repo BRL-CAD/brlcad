@@ -198,6 +198,19 @@ include/nmg/topology.h - remove:
 include/rt/geom.h
 	struct rt_nurb_internal will be removed - bspline loading will
 	use the modern rt_brep_internal container instead.
+	[deprecated 7.44]
+
+include/rt/db_io.h
+	rt_db_put_internal5 - second to last parameter (resource) will
+	be removed.  New function form is currently available as
+	rt_db_put_internal_v5, which will become the new rt_db_put_internal5
+
+	db_alloc_directory_block -> db_alloc_dir_block
+
+	[deprecated 7.44]
+
+include/rt/directory.h
+	RT_GET_DIRECTORY -> RT_GET_DIR [deprecated 7.44]
 
 include/rt/mater.h librt
 	global-state rt_* material api replaced by per-database db_mater_* api:
@@ -237,6 +250,16 @@ include/rt/resource.h  librt
 include/rt/rt_instance.h  librt
 	rt_new_rti -> rt_i_create [deprecated 7.44]
 	rt_free_rti -> rt_i_destroy [deprecated 7.44]
+	rt_clean_resource_complete -> rt_clean_resource_basic [deprecated 7.44]
+
+include/rt/shoot.h librt
+	rt_res_pieces_clean removed (implementation detail) [deprecated 7.44]
+	rt_res_pieces_init removed (implementation detail) [deprecated 7.44]
+
+include/rt/tree.h librt
+	db_tree_del_dbleaf -> db_tree_rm_dbleaf [deprecated 7.44]
+	db_functree - resource parameter removal.  New form is available as
+	db_treewalk_basic until deprecation is complete.  [deprecated 7.44]
 
 7.42
 ----
@@ -519,7 +542,26 @@ include/rt/geom.h
 
 include/rt/db_instance.h
         PRIVATE-labeled members of db_i struct made actually private
-        [deprecated N/A]
+
+include/rt - struct resource param removals
+	The following functions had struct resource * being passed in
+	as their last parameter, but it was unused - we simplify the
+	signature to not require it.  On most platforms this will be
+	ABI compatible.
+
+	rt/calc.h: rt_matrix_transform
+	rt/comb.h: rt_comb_import4, rt_comb_export4, rt_comb_import5
+	rt/db_internal.h: rt_db_get_internal, rt_db_put_internal,
+			  rt_db_lookup_internal
+	rt/db_io.h: rt_db_external5_to_internal5, rt_db_get_internal5
+	rt/func.h: rt_obj_import, rt_obj_export
+	rt/nmg_conv.h: nmg_booltree_evaluate, nmg_boolean
+	rt/primitives/pg.h: rt_pg_to_bot
+	rt/rt_instance.h: rt_plot_solid, rt_del_regtree
+	rt/tree.h: db_init_db_tree_state, db_tree_del_lhs, db_tree_del_rhs,
+		   db_dup_subtree, db_free_tree, db_non_union_push,
+		   db_tree_parse, rt_tree_elim_nops, db_flatten_tree,
+		   db_mkbool_tree, db_mkgift_tree
 
 include/raytrace.h librt
 	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecated 7.22]
