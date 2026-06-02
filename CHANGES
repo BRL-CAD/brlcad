@@ -200,6 +200,21 @@ include/rt/geom.h
 	use the modern rt_brep_internal container instead.
 	[deprecated 7.44]
 
+include/rt/application.h
+
+	Rename: Change struct application and include/rt/application.h
+	to rt_thread_worker_data to reflect that it is a per-thread
+	working container (not a global qApp-style state holder).
+
+	Resource Ownership:
+	rt_i_destroy no longer handles resource bookkeeping.
+	rt_thread_worker_data_create and _init now set up a default a_resource.
+	a_resource remains public to allow swapping. However, callers who swap
+	it must manage the custom resource's lifetime and either restore the
+	default resource or free the custom resource (and set a_resource to NULL)
+	before calling cleanup/destroy. Callers are responsible for freeing the
+	rt_thread_worker_data struct itself.
+
 include/rt/db_io.h
 	rt_db_put_internal5 - second to last parameter (resource) will
 	be removed.  New function form is currently available as
