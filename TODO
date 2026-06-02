@@ -39,8 +39,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   auto-update script that warns about deprecated use and/or applies
   minimally impacting changes to a given file.
 
-* settle on sane gist quality defaults and/or implement quality knob
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
