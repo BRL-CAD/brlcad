@@ -1,0 +1,71 @@
+• I found no fundamental design blocker to making struct application own an explicit resource, but there are two constraints we have to preserve:
+  2. Per-resource stats may need to survive until callers post them with rt_add_res_stats(): include/rt/resource.h:65. Today only the main rt paths appear to post these explicitly: src/
+     rt/do.c:730, src/rt/worker.c:614.
+
+  Current Coupling
+
+  That registration is also still asserted by ray shooting if a non-rt_uniresource resource is used: src/librt/shoot.c:644. So before removing discovery, rt_shootray()/
+  rt_shootray_bundle() need to stop treating registration as part of the validity contract.
+
+  Callers Currently Relying On Registered Cleanup
+
+  These allocate/init resources with rtip, then largely rely on rt_i_destroy() or rt_clean() to clean internals:
+
+  - Main render/server paths: src/rt/main.c:208, src/remrt/rtsrv.c:640, src/rt/rtsurf.c:238, src/rt/viewedge.c:469.
+  - Analysis/GED worker arrays: src/libanalyze/api.c:1320, src/libanalyze/raydiff.c:224, src/libanalyze/inside.c:262, src/libanalyze/util.cpp:622, src/libanalyze/
+    find_subtracted_shapes.cpp:411, src/libged/gqa/gqa.cpp:2580, src/libged/lint/lint_bot.cpp:606, src/librt/primitives/bot/repair.cpp:355, src/librt/primitives/nmg/nmg_tri_mc.c:751.
+
+  - ART/renderer/plugin paths: src/art/art.cpp:1184, src/art/brlcadplugin.cpp:211, src/art/brlcadplugin.cpp:446, src/liboptical/photonmap.c:1475.
+  - Tests/fuzz using registered cleanup: src/librt/tests/cache.cpp:257, src/libanalyze/tests/solid_partitions.c:78, regress/fuzz/fuzz_shootray.cpp:146.
+
+  These are not blockers, but they need explicit owners. For worker arrays, the owner should be the render/analysis job context, not a single shared struct application.
+
+  Long-Lived Application Containers
+
+  These are the clearest targets for app-owned resources. They create a struct application, assign one resource, and delete the app later. Today cleanup is implicit via rt_i_destroy():
+
+  - TclCAD command app: init src/libtclcad/commands.c:6560, delete src/libtclcad/commands.c:5196.
+  - MGED command app with heap resource, likely leaking the resource container itself today: init src/mged/cmd.cpp:2271, delete src/mged/cmd.cpp:2190.
+  - MGED WDB Tcl command app: init src/mged/wdb_obj.c:1382, delete src/mged/wdb_obj.c:1304.
+  - NIRT owns long-lived app/rtip/resource pairs and resets/destroys them: src/libanalyze/nirt/nirt.cpp:453, src/libanalyze/nirt/nirt.cpp:468.
+
+  These should move to “app owns resource; app destructor cleans with rt_clean_resource_basic() and frees storage if heap allocated.”
+
+  Already Close To Clean Design
+
+  These already demonstrate the pattern we want, or can be converted with minimal behavioral risk:
+
+  - Independent resource owner: src/libged/dbi_state.cpp:429 cleans explicitly with rt_clean_resource_basic(NULL, res): src/libged/dbi_state.cpp:459.
+  - Submodel private cache from the recent simplification uses rt_init_resource(..., NULL) and explicit cleanup.
+  - Crofton/exterior already clean and null rti_resources slots to avoid dangling cleanup discovery: src/librt/primitives/crofton.cpp:533, src/libged/bot/exterior.cpp:645.
+  - Some local analysis paths explicitly clean before destroy, but still use registered cleanup and rt_clean_resource() reinitialization: src/librt/primitives/sample_pnts.cpp:730, src/
+    libanalyze/obj_to_pnts.cpp:559, src/libanalyze/polygonizer.c:928, src/libged/analyze/op_pnts_vol.cpp:411.
+
+  Those should become rt_init_resource(resp, cpu, NULL) plus rt_clean_resource_basic(rtip_or_NULL, resp) once ray-shooting no longer asserts rti_resources registration.
+
+  rt_uniresource Replacement Sites
+
+  The primary rt_uniresource blockers are fallback behavior, not unavoidable design needs:
+
+  - rt_shootray() defaults missing a_resource to rt_uniresource: src/librt/shoot.c:603.
+  - rt_shootray_bundle() does the same: src/librt/bundle.c:105.
+  - rt_vshootray() does the same: src/librt/vshoot.c:140.
+  - rt_cell_n_on_ray() has the same fallback: src/librt/shoot.c:1055.
+  - Parallel prep still treats slot 0 / rt_uniresource as a special validity check: src/librt/prep.cpp:272.
+
+  Direct users needing explicit local or app-owned resources if rt_uniresource goes away include beset, bigE, wireframe_eval, fortray, sh_wood, BOT sampling checks, arb8_tests,
+  rt_boolweave, and the fuzz shooter.
+
+  Conclusion
+
+  The migration looks achievable. I do not see a feature requirement that forces rt_i cleanup discovery to remain. The required replacement is explicit ownership:
+
+  - struct application should own one resource for single-thread/local app cases.
+  - Parallel jobs should own resource arrays and hand each worker app its resource.
+  - Long-lived Tcl/MGED/NIRT app containers should clean their resource in the app delete path.
+  - Stats-producing render jobs must post stats before resource cleanup.
+  - rt_shootray() and bundle/vshoot/cell helpers need to validate/init ap->a_resource without registering it in rtip->rti_resources.
+
+  The first practical refactor target should be the long-lived application containers plus the shoot-path registration assertion. That removes the most important dependency on
+  rti_resources discovery without disturbing the more complicated worker-array callers.
+
