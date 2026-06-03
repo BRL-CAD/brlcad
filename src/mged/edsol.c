@@ -71,7 +71,6 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(MEDIT(s)->log_str), (char *)NULL);
 	    bu_vls_trunc(MEDIT(s)->log_str, 0);
 	}
-	return BRLCAD_OK;
     } else {
 	VMOVE(MEDIT(s)->curr_e_axes_pos, MEDIT(s)->e_keypoint);
     }
