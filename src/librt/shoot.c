@@ -646,16 +646,10 @@ rt_shootray(register struct application *ap)
 	bu_log("rt_shootray() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
-	 * with only a magic number and a cpu number filled in.  Init
-	 * it and add it to the table.  This is how
-	 * application-provided resource structures are remembered for
-	 * later cleanup by the library.
+	 * with only a magic number and a cpu number filled in.
 	 */
 	rt_init_resource(resp, resp->re_cpu, rtip);
     }
-    /* Ensure that this CPU's resource structure is registered */
-    if (resp != &rt_uniresource)
-	BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
 
     solidbits = rt_get_solidbitv(rtip->stats.nsolids, resp);
 
@@ -1083,14 +1077,9 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
 	 * with only a magic number and a cpu number filled in.
-	 * Init it and add it to the table.
-	 * This is how application-provided resource structures
-	 * are remembered for later cleanup by the library.
 	 */
 	rt_init_resource(resp, resp->re_cpu, rtip);
     }
-    /* Ensure that this CPU's resource structure is registered */
-    BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
 
     /* Verify that direction vector has unit length */
     if (RT_G_DEBUG) {

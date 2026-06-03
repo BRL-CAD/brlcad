@@ -2850,6 +2850,9 @@ aborted:
 	_gd_densities_source = NULL;
     }
 
+    for (i = 0; i < MAX_PSW; i++) {
+	rt_clean_resource_basic(rtip, &resp[i]);
+    }
     rt_i_destroy(rtip);
 
     return BRLCAD_OK;

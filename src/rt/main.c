@@ -741,6 +741,10 @@ rt_cleanup:
     }
 
     /* Release the ray-tracer instance */
+    for (i = 0; i < MAX_PSW; i++) {
+	if (resource[i].re_magic == RESOURCE_MAGIC)
+	    rt_clean_resource_basic(APP.a_rt_i, &resource[i]);
+    }
     rt_i_destroy(APP.a_rt_i);
     APP.a_rt_i = NULL;
 

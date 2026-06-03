@@ -541,8 +541,8 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree        *tp,
  * If ncpu > 1, the caller is responsible for making sure that
  * RTG.rtg_parallel is non-zero.
  *
- * Plucks per-cpu resources out of rtip->rti_resources[].  They need
- * to have been initialized first.
+ * Uses caller-supplied per-cpu resources.  They need to have been
+ * initialized first.
  *
  * Returns -
  * -1 Failure to prepare even a single sub-tree

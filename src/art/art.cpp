@@ -1225,7 +1225,9 @@ main(int argc, char **argv)
 	    if (nret < 0)
 		break;
 	}
-	bu_free(resources, "appleseed");
+		for (int ic = 0; ic < MAX_PSW; ic++)
+		    rt_clean_resource_basic(rtip, &resources[ic]);
+		bu_free(resources, "appleseed");
 	return 0;
     }
 
@@ -1297,6 +1299,8 @@ main(int argc, char **argv)
         renderer.reset();
     }
     // clean up resources
+    for (int ic = 0; ic < MAX_PSW; ic++)
+	rt_clean_resource_basic(rtip, &resources[ic]);
     bu_free(resources, "appleseed");
 
     return 0;

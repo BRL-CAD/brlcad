@@ -728,7 +728,7 @@ memfree:
     if (sobol_pnts) bu_free(sobol_pnts, "free state containers");
 
     for (i = 0; i < ncpus+1; i++) {
-	rt_clean_resource(rtip, &resp[i]);
+	rt_clean_resource_basic(rtip, &resp[i]);
     }
     rt_i_destroy(rtip);
     bu_free(state, "free state containers");
@@ -744,4 +744,3 @@ memfree:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

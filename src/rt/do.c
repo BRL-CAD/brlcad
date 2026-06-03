@@ -505,6 +505,10 @@ int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
  */
 int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
 {
+    for (int i = 0; i < MAX_PSW; i++) {
+	if (resource[i].re_magic == RESOURCE_MAGIC)
+	    rt_clean_resource_basic(APP.a_rt_i, &resource[i]);
+    }
     rt_i_destroy(APP.a_rt_i);
     APP.a_rt_i = RTI_NULL;
 

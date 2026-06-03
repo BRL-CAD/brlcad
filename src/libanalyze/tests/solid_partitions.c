@@ -76,14 +76,21 @@ main(int argc, char **argv)
     state.rtip = rtip;
     state.resp = &resp;
     rt_init_resource(state.resp, 0, rtip);
-    if (rt_gettree(rtip, argv[2]) < 0)
+    if (rt_gettree(rtip, argv[2]) < 0) {
+	rt_clean_resource_basic(rtip, state.resp);
+	rt_i_destroy(rtip);
 	return -1;
+    }
     rt_prep_parallel(rtip, 1);
 
     count = analyze_get_bbox_rays(&rays, rtip->mdl_min, rtip->mdl_max, &rtol);
 
     analyze_get_solid_partitions(&results, NULL, rays, count, dbip, argv[2], &tol, ncpus, 1);
 
+    rt_clean_resource_basic(rtip, state.resp);
+    rt_i_destroy(rtip);
+    if (rays)
+	bu_free(rays, "rays");
     db_close(dbip);
     return 0;
 }

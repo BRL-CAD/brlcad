@@ -554,20 +554,11 @@ rt_crofton_shoot(double                         *out_surf_area,
     if (out_surf_area) *out_surf_area = curr_est_sa;
     if (out_volume)    *out_volume    = curr_est_v;
 
-    /* Clean each resource and NULL out its slot in rtip->rti_resources.
-     * This is necessary because crofton_from_ip calls rt_i_destroy(rtip)
-     * after we return.  rt_i_destroy → rt_clean iterates rti_resources and
-     * calls rt_clean_resource (which calls rt_init_resource) on every
-     * non-NULL entry.  If we free the resources array first, those entries
-     * become dangling pointers and rt_init_resource reads garbage re_cpu
-     * values that may exceed MAX_PSW, triggering a BU_ASSERT.
-     *
-     * By setting the slot to NULL we let rt_i_destroy's cleanup skip it,
-     * and then we can safely bu_free the resources array.                */
+    /* This function owns the resources array and frees it here, so clean
+     * the resource internals without reinitializing them. */
     for (int i = 0; i < MAX_PSW; i++) {
 	if (resources[i].re_magic == RESOURCE_MAGIC) {
 	    rt_clean_resource_basic(rtip, &resources[i]);
-	    BU_PTBL_SET(&rtip->rti_resources, i, NULL);
 	}
     }
     bu_free(resources, "crofton resources");

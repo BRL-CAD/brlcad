@@ -145,14 +145,8 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
 	 * with only a magic number and a cpu number filled in.
-	 * Init it and add it to the table.
-	 * This is how application-provided resource structures
-	 * are remembered for later cleanup by the library.
 	 */
 	rt_init_resource(resp, resp->re_cpu, rtip);
-
-	/* Ensure that this CPU's resource structure is registered */
-	BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
     }
 
     solidbits = rt_get_solidbitv(rtip->stats.nsolids, resp);

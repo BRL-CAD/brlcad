@@ -388,6 +388,7 @@ bot_lint_cleanup:
     for (size_t i = 0; i < ncpus; i++) {
 	lint_worker_data *d = (lint_worker_data *)state[i].ptr;
 	delete d;
+	rt_clean_resource_basic(rtip, &resp[i]);
     }
 
     rt_i_destroy(rtip);

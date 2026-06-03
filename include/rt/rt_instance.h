@@ -130,7 +130,6 @@ struct rt_i {
 
     /* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
     struct bu_list      HeadRegion;     /**< @brief  ptr of list of regions in model */
-    struct bu_ptbl      rti_resources;  /**< @brief  list of 'struct resource's encountered */
 
     /* PRIVATE librt-internal state; see src/librt/librt_private.h */
     struct rt_i_internal *i;
@@ -266,9 +265,8 @@ RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
  *
  * a given resource structure is prepared for use and marked as the
  * resource for a given thread of execution (indicated by 'cpu_num').
- * if an 'rtip' ray tracing instance pointer is provided, the resource
- * structure will be stored within so that it's available to threads
- * of execution during parallel ray tracing.
+ * The caller owns the resource structure and is responsible for
+ * cleaning it explicitly.
  *
  * This routine should initialize all the same resources that
  * rt_clean_resource() releases.  It shouldn't (but currently does for

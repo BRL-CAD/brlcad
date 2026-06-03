@@ -252,12 +252,12 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 #endif
 #if 1
     if (rt_gettree(rtip, left) < 0) {
-	rt_i_destroy(rtip);
-	return -1;
+	ret = -1;
+	goto memfree;
     }
     if (rt_gettree(rtip, right) < 0) {
-	rt_i_destroy(rtip);
-	return -1;
+	ret = -1;
+	goto memfree;
     }
 #endif
 
@@ -351,7 +351,7 @@ memfree:
 	}
 	if (local_state[i].left_name)  bu_free((void *)local_state[i].left_name, "left name");
 	if (local_state[i].right_name) bu_free((void *)local_state[i].right_name, "right name");
-	/*BU_PUT(state[i].resp, struct resource);*/
+	rt_clean_resource_basic(rtip, &resp[i]);
     }
 
     if (rays) {

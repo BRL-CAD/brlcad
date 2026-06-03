@@ -532,6 +532,8 @@ main(int argc, char **argv)
     bu_hash_destroy(imd->tbl);
     BU_PUT(imd, struct inv_mat_data);
 
+    rt_clean_resource_basic(rtip, &res);
+
     return 0;
 }
 

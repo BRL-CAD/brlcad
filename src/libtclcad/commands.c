@@ -5187,6 +5187,7 @@ to_deleteProc_rt(ClientData clientData)
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
+    rt_clean_resource_basic(rtip, ap->a_resource);
     rt_i_destroy(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
 
@@ -6548,11 +6549,10 @@ to_rt_gettrees_application(struct ged *gedp,
      * bit vector lengths depend on # of solids.  And the "overwrite"
      * sequence in Tcl is to create the new proc before running the
      * Tcl_CmdDeleteProc on the old one, which in this case would
-     * trash rt_uniresource.  Once on the rti_resources list,
-     * rt_clean() will clean 'em up.
+     * trash rt_uniresource.  The application delete callback cleans
+     * this resource explicitly.
      */
     rt_init_resource(&resp, 0, rtip);
-    BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, 0) != NULL);
 
     BU_ALLOC(ap, struct application);
     rt_thread_worker_data_init(ap, 0);

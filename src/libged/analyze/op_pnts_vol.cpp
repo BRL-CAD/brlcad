@@ -408,7 +408,7 @@ op_pnts_vol(
     }
 
 pnts_internal_memfree:
-    rt_clean_resource(rtip, resp);
+    rt_clean_resource_basic(rtip, resp);
     rt_i_destroy(rtip);
     rt_db_free_internal(&tpnts_intern);
     BU_PUT(resp, struct resource);
@@ -453,7 +453,7 @@ pnt_inside_vol(
 
     int ret = _pnt_in_vol(p, ap);
 
-    rt_clean_resource(rtip, resp);
+    rt_clean_resource_basic(rtip, resp);
     rt_i_destroy(rtip);
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct application);
