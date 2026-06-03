@@ -556,6 +556,30 @@ RT_EXPORT extern int rt_arb_check_points(struct rt_arb_internal *arb,
 RT_EXPORT extern int rt_arb_nonstandard_encoding(const struct rt_arb_internal *arb,
 						 fastf_t tol_sq);
 
+/**
+ * ARB validation issue flags returned by rt_arb_validate().
+ */
+#define RT_ARB_VALIDATE_NONSTANDARD 0x1 /**< Non-standard vertex ordering/encoding */
+#define RT_ARB_VALIDATE_NONCOPLANAR 0x2 /**< One or more faces are non-coplanar */
+#define RT_ARB_VALIDATE_CONCAVE     0x4 /**< Planar faces form a concave ARB volume */
+#define RT_ARB_VALIDATE_TWISTED     0x8 /**< Vertex ordering causes face self-intersection */
+
+/**
+ * Check an ARB for invalid shape conditions.
+ *
+ * If issues is non-NULL, it will be set to a bitwise OR of RT_ARB_VALIDATE_*
+ * flags.  If error_msg_ret is non-NULL, a short diagnostic is appended for
+ * each detected condition.
+ *
+ * Returns -
+ * 0 no issues detected
+ * non-zero one or more RT_ARB_VALIDATE_* issues detected
+ */
+RT_EXPORT extern int rt_arb_validate(struct bu_vls *error_msg_ret,
+				     const struct rt_arb_internal *arb,
+				     const struct bn_tol *tol,
+				     int *issues);
+
 
 /**
  * Finds the intersection point of three faces of an ARB.
