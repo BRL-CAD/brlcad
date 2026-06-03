@@ -279,7 +279,7 @@ rt_edit_bot_keypoint(
     struct rt_db_internal *ip = &s->es_int;
     const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
     // If we're editing, use that position instead
-    if (b->bot_verts[0] > -1) {
+    if (b && b->bot_verts[0] > -1) {
 	point_t mpt = VINIT_ZERO;
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
