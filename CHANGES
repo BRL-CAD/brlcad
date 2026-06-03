@@ -210,6 +210,16 @@ include/rt/geom.h
 	use the modern rt_brep_internal container instead.
 	[deprecated 7.44]
 
+	We'll be renaming the following structs:
+	struct line_seg -> struct rt_line_seg
+	struct carc_seg -> struct rt_circ_arc_seg
+	struct seg_knot_vector -> struct rt_seg_knot_vec
+	struct nurb_seg -> struct rt_nurbs_curve_seg
+	struct bezier_seg -> struct rt_bezier_curve_seg
+	struct rt_ant -> struct rt_annot
+	struct txt_seg -> struct rt_annot_text_seg
+	[deprecated 7.44]
+
 include/rt/application.h
 
 	Rename: Change struct application and include/rt/application.h
