@@ -2187,9 +2187,11 @@ wdb_deleteProc_rt(void *clientData)
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
+    rt_clean_resource_basic(rtip, ap->a_resource);
     rt_i_destroy(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
 
+    bu_free((void *)ap->a_resource, "struct resource");
     bu_free((void *)ap, "struct application");
 }
 
@@ -2270,7 +2272,6 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
      */
     BU_ALLOC(resp, struct resource);
     rt_init_resource(resp, 0, rtip);
-    BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, 0) != NULL);
 
     BU_ALLOC(ap, struct application);
     rt_thread_worker_data_init(ap, 0);

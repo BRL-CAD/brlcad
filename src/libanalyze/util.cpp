@@ -677,6 +677,9 @@ memfree:
     bu_free(ray_results, "free state");
     bu_free(local_state, "free state");
     if (!pstate) {
+	for (i = 0; i < ncpus+1; i++) {
+	    rt_clean_resource_basic(rtip, &resp[i]);
+	}
 	bu_free(state, "free state");
 	bu_free(resp, "free state");
     }
@@ -691,4 +694,3 @@ memfree:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -132,10 +132,6 @@ rt_i_init(struct rt_i *rtip, struct db_i *dbip)
     rtip->rti_dbip = db_clone_dbi(dbip, (long *)rtip);
     rtip->needprep = 1;
 
-    /* This table is used for discovering the per-cpu resource structures */
-    bu_ptbl_init(&rtip->rti_resources, MAX_PSW, "rti_resources ptbl");
-    bu_ptbl_trunc(&rtip->rti_resources, MAX_PSW); /* Make 'em all available */
-
     rt_uniresource.re_magic = RESOURCE_MAGIC;
 
     /* Zero-initialize user data and clbk */
@@ -217,9 +213,6 @@ rt_i_clear(struct rt_i *rtip)
 
     db_close_client(rtip->rti_dbip, (long *)rtip);
     rtip->rti_dbip = (struct db_i *)NULL;
-
-    /* Freeing the actual resource structures' memory is the app's job */
-    bu_ptbl_free(&rtip->rti_resources);
 
     rt_i_internal_destroy(rtip->i);
     rtip->i = NULL;
@@ -892,11 +885,6 @@ rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip)
 
     if (resp == &rt_uniresource) {
 	cpu_num = 0;
-    } else {
-	if (rtip != NULL && rtip->i->rti_treetop) {
-	    /* this is a submodel */
-	    BU_ASSERT(cpu_num < (long)rtip->rti_resources.blen);
-	}
     }
 
     /* point to the random number table so we can draw.  set to
@@ -931,21 +919,7 @@ rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip)
     resp->re_cpu = cpu_num;
     resp->re_magic = RESOURCE_MAGIC;
 
-    if (rtip == NULL)
-	return;	/* only in rt_uniresource case */
-
-    /* Ensure that this CPU's resource structure is registered in rt_i */
-    /* It may already be there when we're called from rt_clean_resource */
-    if (resp != &rt_uniresource) {
-	struct resource *ores = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, cpu_num);
-	if (ores != NULL && ores != resp) {
-	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
-		   cpu_num,
-		   (void *)ores,
-		   (void *)resp);
-	}
-	BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
-    }
+    (void)rtip;
 }
 
 
@@ -1136,8 +1110,7 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 
 /**
  * Release all the dynamic storage associated with a particular rt_i
- * structure, except for the database instance information (dir, etc.)
- * and the rti_resources ptbl.
+ * structure, except for the database instance information (dir, etc.).
  *
  * Note that an animation script can invoke a "clean" operation before
  * anything has been prepped.
@@ -1220,35 +1193,6 @@ rt_clean(struct rt_i *rtip)
     if (rtip->i->rti_Solids) {
 	bu_free((char *)rtip->i->rti_Solids, "rtip->i->rti_Solids[]");
 	rtip->i->rti_Solids = (struct soltab **)0;
-    }
-
-    /*
-     * Clean out every cpu's "struct resource".  These are provided by
-     * the caller's application (or are defaulted to rt_uniresource)
-     * and can't themselves be freed.  rt_shootray() saved a table of
-     * them for us to use here.  rt_uniresource may or may not be in
-     * this table.
-     */
-    if (BU_LIST_MAGIC_EQUAL(&rtip->rti_resources.l, BU_PTBL_MAGIC)) {
-	struct resource **rpp;
-	BU_CK_PTBL(&rtip->rti_resources);
-	for (BU_PTBL_FOR(rpp, (struct resource **), &rtip->rti_resources)) {
-	    /* After using a submodel, some entries may be NULL
-	     * while others are not NULL
-	     */
-	    if (*rpp == NULL)
-		continue;
-
-	    /* Clean but do not free the resource struct */
-	    rt_clean_resource(rtip, *rpp);
-#if 0
-/* XXX Can't do this, or 'clean' command in RT animation script will dump core. */
-/* rt expects them to stay inited and remembered, forever. */
-/* Submodels will clean up after themselves */
-	    /* Forget remembered ptr, but keep ptbl allocated */
-	    *rpp = NULL;
-#endif
-	}
     }
 
     if (rt_uniresource.re_magic) {

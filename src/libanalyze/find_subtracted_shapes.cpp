@@ -415,7 +415,11 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 #if 0
     if (rt_gettree(ccomb_rtip, curr_comb) < 0) {
 #endif
-	// TODO - free memory
+	for (i = 0; i < ncpus+1; i++)
+	    rt_clean_resource_basic(ccomb_rtip, &ccomb_resp[i]);
+	rt_i_destroy(ccomb_rtip);
+	bu_free(ccomb_vars, "free vars");
+	bu_free(ccomb_resp, "free resp");
 	return 0;
     }
     rt_prep_parallel(ccomb_rtip, ncpus);
@@ -570,7 +574,16 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 #if 0
 	    if (rt_gettree(candidate_rtip, dp->d_namep) < 0) {
 #endif
-		// TODO - free memory
+		for (size_t k = 0; k < ncpus+1; k++)
+		    rt_clean_resource_basic(candidate_rtip, &candidate_resp[k]);
+		rt_i_destroy(candidate_rtip);
+		bu_free(candidate_vars, "free vars");
+		bu_free(candidate_resp, "free resp");
+		for (i = 0; i < ncpus+1; i++)
+		    rt_clean_resource_basic(ccomb_rtip, &ccomb_resp[i]);
+		rt_i_destroy(ccomb_rtip);
+		bu_free(ccomb_vars, "free vars");
+		bu_free(ccomb_resp, "free resp");
 		return 0;
 	    }
 	    rt_prep_parallel(candidate_rtip, ncpus);
@@ -578,7 +591,9 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    bu_log("candidate test ray cnt: %d\n", ray_cnt);
 	    analyze_get_solid_partitions(&candidate_results, candidate_vars, candidate_rays, ray_cnt, wdbp->dbip, dp->d_namep, &tol, pcpus, 0);
 
-	    //rt_clean(candidate_rtip);
+	    for (size_t k = 0; k < ncpus+1; k++)
+		rt_clean_resource_basic(candidate_rtip, &candidate_resp[k]);
+	    rt_i_destroy(candidate_rtip);
 	    bu_free(candidate_vars, "free vars");
 	    bu_free(candidate_resp, "free resp");
 
@@ -656,6 +671,9 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	}
     }
 
+    for (i = 0; i < ncpus+1; i++)
+	rt_clean_resource_basic(ccomb_rtip, &ccomb_resp[i]);
+    rt_i_destroy(ccomb_rtip);
     bu_free(ccomb_vars, "free vars");
     bu_free(ccomb_resp, "free resp");
 
@@ -671,4 +689,3 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

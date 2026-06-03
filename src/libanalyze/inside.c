@@ -274,6 +274,7 @@ analyze_obj_inside(struct db_i *dbip, const char *outside_candidate, const char 
 
 	/* Free memory */
 	for (i = 0; i < ncpus+1; i++) {
+	    rt_clean_resource_basic(rtip, state[i].resp);
 	    bu_free((void *)state[i].left_name, "left name");
 	    bu_free((void *)state[i].right_name, "right name");
 	    BU_PUT(state[i].resp, struct resource);

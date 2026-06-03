@@ -1295,6 +1295,7 @@ int
 perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[], int num_objects, int flags)
 {
     int i;
+    int j;
     struct rt_i *rtip;
 
     struct region *regp;
@@ -1328,6 +1329,9 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     for(i = 0; i < state->num_objects; i++) {
 	if(rt_gettree(rtip, names[i]) < 0) {
 	    bu_log("Loading geometry for [%s] FAILED", names[i]);
+	    for(j = 0; j < MAX_PSW; j++) {
+		rt_clean_resource_basic(rtip, &resp[j]);
+	    }
 	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
@@ -1339,6 +1343,9 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     /* setup azimuth and elevation angles in case of single grid */
     if (state->use_single_grid && !state->use_view_information) {
 	if (analyze_setup_ae(state)) {
+	    for(j = 0; j < MAX_PSW; j++) {
+		rt_clean_resource_basic(rtip, &resp[j]);
+	    }
 	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
@@ -1398,6 +1405,10 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 
     if (options_set(state) != ANALYZE_OK) {
 	bu_log("Couldn't set up the options correctly!\n");
+	for(j = 0; j < MAX_PSW; j++) {
+	    rt_clean_resource_basic(rtip, &resp[j]);
+	}
+	rt_i_destroy(rtip);
 	return ANALYZE_ERROR;
     }
 
@@ -1459,6 +1470,9 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	state->densities = NULL;
     }
 
+    for(j = 0; j < MAX_PSW; j++) {
+	rt_clean_resource_basic(rtip, &resp[j]);
+    }
     rt_i_destroy(rtip);
     return ANALYZE_OK;
 }

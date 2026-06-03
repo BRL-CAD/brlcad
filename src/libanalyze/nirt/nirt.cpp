@@ -3029,8 +3029,14 @@ nirt_clear_dbip(struct nirt_state *ns)
     ns->i->dbip = NULL;
 
     /* clear relevant parts of the application structure */
-    if (ns->i->rtip) rt_clean(ns->i->rtip);
-    if (ns->i->rtip_air) rt_clean(ns->i->rtip_air);
+    if (ns->i->rtip) {
+	rt_clean_resource(ns->i->rtip, ns->i->res);
+	rt_clean(ns->i->rtip);
+    }
+    if (ns->i->rtip_air) {
+	rt_clean_resource(ns->i->rtip_air, ns->i->res_air);
+	rt_clean(ns->i->rtip_air);
+    }
     ns->i->ap->a_rt_i = NULL;
     ns->i->ap->a_resource = NULL;
 
@@ -3052,8 +3058,14 @@ nirt_destroy(struct nirt_state *ns)
     bv_vlist_cleanup(&(ns->i->s_vlist));
     bv_vlblock_free(ns->i->segs);
 
-    if (ns->i->rtip != RTI_NULL) rt_i_destroy(ns->i->rtip);
-    if (ns->i->rtip_air != RTI_NULL) rt_i_destroy(ns->i->rtip_air);
+    if (ns->i->rtip != RTI_NULL) {
+	rt_clean_resource_basic(ns->i->rtip, ns->i->res);
+	rt_i_destroy(ns->i->rtip);
+    }
+    if (ns->i->rtip_air != RTI_NULL) {
+	rt_clean_resource_basic(ns->i->rtip_air, ns->i->res_air);
+	rt_i_destroy(ns->i->rtip_air);
+    }
 
     db_close(ns->i->dbip);
 

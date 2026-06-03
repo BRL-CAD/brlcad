@@ -733,6 +733,12 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 
     /* release our raytracing instance and counters */
     rtsurf_context_destroy(context);
+    struct resource *resources = ap.a_resource;
+    for (size_t i = 0; i < MAX_PSW; i++) {
+	if (resources[i].re_magic == RESOURCE_MAGIC)
+	    rt_clean_resource_basic(ap.a_rt_i, &resources[i]);
+    }
+    bu_free(resources, "resources");
     rt_i_destroy(ap.a_rt_i);
     ap.a_rt_i = NULL;
 

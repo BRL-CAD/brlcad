@@ -761,6 +761,9 @@ nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *p
 
     bu_parallel(fire_row, m.ncpu, &m);
 
+    for (i = 0; i < MAX_PSW; i++)
+	rt_clean_resource_basic(rtip, &m.resources[i]);
+
     return m.count;
 }
 

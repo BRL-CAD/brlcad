@@ -376,6 +376,9 @@ QMeasure3DFilter::get_point()
 	    ap->a_logoverlap = NULL;
 	}
 	if (rtip) {
+	    rt_clean_resource_basic(rtip, ap->a_resource);
+	    BU_PUT(ap->a_resource, struct resource);
+	    ap->a_resource = NULL;
 	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	}
@@ -393,9 +396,11 @@ QMeasure3DFilter::get_point()
 	}
 	if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
 	    bu_free(objs, "objs");
+	    rt_clean_resource_basic(rtip, resp);
 	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    BU_PUT(resp, struct resource);
+	    ap->a_resource = NULL;
 	    bu_ptbl_free(&sset);
 	    return false;
 	}

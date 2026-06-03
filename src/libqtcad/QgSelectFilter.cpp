@@ -321,6 +321,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
     }
     if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
 	bu_free(objs, "objs");
+	rt_clean_resource_basic(rtip, resp);
 	rt_i_destroy(rtip);
 	BU_PUT(resp, struct resource);
 	BU_PUT(ap, struct application);
@@ -356,6 +357,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
 
     (void)rt_shootray(ap);
     bu_free(objs, "objs");
+    rt_clean_resource_basic(rtip, resp);
     rt_i_destroy(rtip);
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct application);

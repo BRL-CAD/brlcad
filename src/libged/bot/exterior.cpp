@@ -638,12 +638,11 @@ bot_exterior_classify_crofton(struct rt_i *rtip,
 	}
     }
 
-    /* Clean up resources: null out rti_resources slots first so that the
-     * caller's rt_i_destroy() does not try to re-clean already-freed memory. */
+    /* This function owns the resources array and frees it here, so clean
+     * the resource internals without reinitializing them. */
     for (int i = 0; i < MAX_PSW; i++) {
 	if (resources[i].re_magic == RESOURCE_MAGIC) {
 	    rt_clean_resource_basic(rtip, &resources[i]);
-	    BU_PTBL_SET(&rtip->rti_resources, i, NULL);
 	}
     }
     bu_free(resources, "ext resources");

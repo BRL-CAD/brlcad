@@ -925,7 +925,7 @@ analyze_polygonizer_memfree:
     bu_free(p.edges, "edgelist");
 
     /* LIBRT memory */
-    rt_clean_resource(rtip, resp);
+    rt_clean_resource_basic(rtip, resp);
     rt_i_destroy(rtip);
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct application);
@@ -943,4 +943,3 @@ analyze_polygonizer_memfree:
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
