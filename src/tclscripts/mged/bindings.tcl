@@ -335,6 +335,7 @@ proc default_mouse_bindings { w } {
     }
 
     bind $w <ButtonRelease> "winset $w; dm idle; break"
+    bind $w <Motion> "winset $w; if {\[dm type\] == \"tkswrast\"} {dm motion %x %y}; break"
     bind $w <KeyRelease-Control_L> "winset $w; dm idle; break"
     bind $w <KeyRelease-Control_R> "winset $w; dm idle; break"
     bind $w <KeyRelease-Shift_L> "winset $w; dm idle; break"
