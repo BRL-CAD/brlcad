@@ -38,9 +38,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * fix ARB8 promotion to BoT, so calls between prep and shot don't get
   inconsistent data (soltab needs to match).
 
-* Adjust bext patching to use file copying for cases where we are
-  adding our own files wholesale
-
 * verify arb6 editing in cheese wedge tutorial
 
 * rtarea is sometimes missing regions on summary reporting, at least
