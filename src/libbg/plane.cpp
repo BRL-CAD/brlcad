@@ -2379,7 +2379,7 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%g, %g, %g, %g)\n",
 
 
 int
-bg_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fastf_t *e_in, fastf_t *pt1, fastf_t *pt2)
+bg_distsq_line3_line3(fastf_t *dist, const fastf_t *P, const fastf_t *d_in, const fastf_t *Q, const fastf_t *e_in, fastf_t *pt1, fastf_t *pt2)
 {
     fastf_t de, denom;
     vect_t diff, PmQ, tmp;
@@ -2567,7 +2567,7 @@ bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
 
 // Use PCA fit a plane to vertex points
 extern "C" int
-bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
+bg_fit_plane(point_t *c, vect_t *n, size_t npnts, const point_t *pnts)
 {
     if (!c || !n || npnts == 0 || !pnts) {
 	return -1;

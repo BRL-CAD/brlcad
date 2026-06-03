@@ -61,7 +61,7 @@ bg_ray_invdir(vect_t *invdir, vect_t dir)
 
 int
 bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
-	point_t opt,
+	const point_t opt,
 	const fastf_t *invdir, /* inverses of dir[] */
 	const fastf_t *aabb_min,
 	const fastf_t *aabb_max)

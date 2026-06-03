@@ -78,7 +78,7 @@ static inline gte::OrientedBox3<GTF> make_obb(
 extern "C" {
 
 int
-bg_sat_line_aabb(point_t origin, vect_t ldir, point_t aabb_center, vect_t aabb_extent)
+bg_sat_line_aabb(const point_t origin, const vect_t ldir, const point_t aabb_center, const vect_t aabb_extent)
 {
     gte::Line3<GTF> line;
     line.origin = v3_from_array(origin);
@@ -96,8 +96,8 @@ bg_sat_line_aabb(point_t origin, vect_t ldir, point_t aabb_center, vect_t aabb_e
 }
 
 int
-bg_sat_line_obb(point_t origin, vect_t ldir, point_t obb_center,
-		vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
+bg_sat_line_obb(const point_t origin, const vect_t ldir, const point_t obb_center,
+		const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3)
 {
     gte::Line3<GTF> line;
     line.origin = v3_from_array(origin);
@@ -111,8 +111,8 @@ bg_sat_line_obb(point_t origin, vect_t ldir, point_t obb_center,
 }
 
 int
-bg_sat_tri_aabb(point_t v1, point_t v2, point_t v3,
-		point_t center, vect_t extent)
+bg_sat_tri_aabb(const point_t v1, const point_t v2, const point_t v3,
+		const point_t center, const vect_t extent)
 {
     gte::OrientedBox3<GTF> obb;
     obb.center = v3_from_array(center);
@@ -132,8 +132,8 @@ bg_sat_tri_aabb(point_t v1, point_t v2, point_t v3,
 }
 
 int
-bg_sat_tri_obb(point_t v1, point_t v2, point_t v3,
-	       point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
+bg_sat_tri_obb(const point_t v1, const point_t v2, const point_t v3,
+	       const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3)
 {
     auto obb = make_obb(obb_center, obb_extent1, obb_extent2, obb_extent3);
 
@@ -148,8 +148,8 @@ bg_sat_tri_obb(point_t v1, point_t v2, point_t v3,
 }
 
 int
-bg_sat_aabb_obb(point_t aabb_min, point_t aabb_max,
-		point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
+bg_sat_aabb_obb(const point_t aabb_min, const point_t aabb_max,
+		const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3)
 {
     gte::AlignedBox3<GTF> abox;
     abox.min = v3_from_array(aabb_min);
@@ -163,8 +163,8 @@ bg_sat_aabb_obb(point_t aabb_min, point_t aabb_max,
 }
 
 int
-bg_sat_obb_obb(point_t obb1_center, vect_t obb1_extent1, vect_t obb1_extent2, vect_t obb1_extent3,
-	       point_t obb2_center, vect_t obb2_extent1, vect_t obb2_extent2, vect_t obb2_extent3)
+bg_sat_obb_obb(const point_t obb1_center, const vect_t obb1_extent1, const vect_t obb1_extent2, const vect_t obb1_extent3,
+	       const point_t obb2_center, const vect_t obb2_extent1, const vect_t obb2_extent2, const vect_t obb2_extent3)
 {
     auto obb0 = make_obb(obb1_center, obb1_extent1, obb1_extent2, obb1_extent3);
     auto obb1 = make_obb(obb2_center, obb2_extent1, obb2_extent2, obb2_extent3);

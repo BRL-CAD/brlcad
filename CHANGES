@@ -143,6 +143,16 @@ include/bu/tc.h - fully removed, header and all contents
 	rather than the low level tc.h portability wrappers.
 	[deprecated 7.44]
 
+include/bg/plane.h
+
+	For the following functions, we will trigger pedantic
+	compiler warnings introducing const to plane_t/point_t
+	input ptrs :
+
+	bg_plane_closest_pt -> inputs will become const
+	bg_plane_pt_at -> inputs will become const
+	[deprecated 7.44]
+
 include/nmg/nurb.h - fully removed, header and all contents
 
 	NURBS support in BRL-CAD is focused on libbrep/OpenNURBS now,

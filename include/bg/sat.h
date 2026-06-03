@@ -45,8 +45,8 @@ __BEGIN_DECLS
  */
 BG_EXPORT extern int
 bg_sat_line_aabb(
-	point_t origin, vect_t ldir,
-	point_t aabb_center, vect_t aabb_extent
+	const point_t origin, const vect_t ldir,
+	const point_t aabb_center, const vect_t aabb_extent
 	);
 
 /**
@@ -56,8 +56,8 @@ bg_sat_line_aabb(
  */
 BG_EXPORT extern int
 bg_sat_line_obb(
-	point_t origin, vect_t ldir,
-	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
+	const point_t origin, const vect_t ldir,
+	const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3
 	);
 
 /**
@@ -67,8 +67,8 @@ bg_sat_line_obb(
  */
 BG_EXPORT extern int
 bg_sat_tri_aabb(
-	point_t v1, point_t v2, point_t v3,
-	point_t aabb_center, vect_t aabb_extent
+	const point_t v1, const point_t v2, const point_t v3,
+	const point_t aabb_center, const vect_t aabb_extent
 	);
 
 /**
@@ -78,8 +78,8 @@ bg_sat_tri_aabb(
  */
 BG_EXPORT extern int
 bg_sat_tri_obb(
-	point_t v1, point_t v2, point_t v3,
-	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
+	const point_t v1, const point_t v2, const point_t v3,
+	const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3
 	);
 
 /**
@@ -92,8 +92,8 @@ bg_sat_tri_obb(
  */
 BG_EXPORT extern int
 bg_sat_aabb_obb(
-	point_t aabb_min, point_t aabb_max,
-	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
+	const point_t aabb_min, const point_t aabb_max,
+	const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3
 	);
 
 /**
@@ -105,8 +105,8 @@ bg_sat_aabb_obb(
  */
 BG_EXPORT extern int
 bg_sat_obb_obb(
-	point_t obb1_center, vect_t obb1_extent1, vect_t obb1_extent2, vect_t obb1_extent3,
-	point_t obb2_center, vect_t obb2_extent1, vect_t obb2_extent2, vect_t obb2_extent3
+	const point_t obb1_center, const vect_t obb1_extent1, const vect_t obb1_extent2, const vect_t obb1_extent3,
+	const point_t obb2_center, const vect_t obb2_extent1, const vect_t obb2_extent2, const vect_t obb2_extent3
 	);
 
 

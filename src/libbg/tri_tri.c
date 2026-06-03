@@ -177,8 +177,8 @@
 	}                                         \
     }
 
-int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
-			      point_t U0, point_t U1, point_t U2, int area_flag)
+int bg_tri_tri_isect_coplanar(const point_t V0, const point_t V1, const point_t V2,
+			      const point_t U0, const point_t U1, const point_t U2, int area_flag)
 {
     int ret;
     fastf_t A[3];
@@ -245,7 +245,7 @@ int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
 }
 
 static int
-_bg_point_in_tri(short i0, short i1, point_t V0, point_t U0, point_t U1, point_t U2) {
+_bg_point_in_tri(short i0, short i1, const point_t V0, const point_t U0, const point_t U1, const point_t U2) {
     fastf_t a, b, c, d0, d1, d2;
     /* is T1 completely inside T2? */
     /* check if V0 is inside tri(U0, U1, U2) */
@@ -270,8 +270,8 @@ _bg_point_in_tri(short i0, short i1, point_t V0, point_t U0, point_t U1, point_t
     return 0;
 }
 
-int bg_tri_tri_isect_coplanar2(point_t V0, point_t V1, point_t V2,
-			      point_t U0, point_t U1, point_t U2, int area_flag)
+int bg_tri_tri_isect_coplanar2(const point_t V0, const point_t V1, const point_t V2,
+			      const point_t U0, const point_t U1, const point_t U2, int area_flag)
 {
     int ret;
     fastf_t A[3];
@@ -354,8 +354,8 @@ int bg_tri_tri_isect_coplanar2(point_t V0, point_t V1, point_t V2,
 /* Internal coplanar test used by more general routines.  Separate from
  * the external function because this version of the test can assume
  * coplanar and does not need to test for area-only intersections. */
-int coplanar_tri_tri(point_t N, point_t V0, point_t V1, point_t V2,
-		     point_t U0, point_t U1, point_t U2)
+int coplanar_tri_tri(const point_t N, const point_t V0, const point_t V1, const point_t V2,
+		     const point_t U0, const point_t U1, const point_t U2)
 {
     fastf_t A[3];
     short i0, i1;
@@ -420,8 +420,8 @@ int coplanar_tri_tri(point_t N, point_t V0, point_t V1, point_t V2,
     }
 
 
-int bg_tri_tri_isect(point_t V0, point_t V1, point_t V2,
-		     point_t U0, point_t U1, point_t U2)
+int bg_tri_tri_isect(const point_t V0, const point_t V1, const point_t V2,
+		     const point_t U0, const point_t U1, const point_t U2)
 {
     point_t E1, E2;
     point_t N1, N2;
@@ -535,7 +535,7 @@ int bg_tri_tri_isect(point_t V0, point_t V1, point_t V2,
 }
 
 
-void calc_isect2(point_t VTX0, point_t VTX1, point_t VTX2, fastf_t VV0, fastf_t VV1,
+void calc_isect2(const point_t VTX0, const point_t VTX1, const point_t VTX2, fastf_t VV0, fastf_t VV1,
 		 fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2, fastf_t *isect0,
 		 fastf_t *isect1, point_t isectpoint0, point_t isectpoint1)
 {
@@ -553,7 +553,7 @@ void calc_isect2(point_t VTX0, point_t VTX1, point_t VTX2, fastf_t VV0, fastf_t 
 }
 
 
-int compute_intervals_isectline(point_t VERT0, point_t VERT1, point_t VERT2,
+int compute_intervals_isectline(const point_t VERT0, const point_t VERT1, const point_t VERT2,
 				fastf_t VV0, fastf_t VV1, fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2,
 				fastf_t D0D1, fastf_t D0D2, fastf_t *isect0, fastf_t *isect1,
 				point_t isectpoint0, point_t isectpoint1)
@@ -580,8 +580,8 @@ int compute_intervals_isectline(point_t VERT0, point_t VERT1, point_t VERT2,
 }
 
 
-int bg_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
-			       point_t U0, point_t U1, point_t U2,
+int bg_tri_tri_isect_with_line(const point_t V0, const point_t V1, const point_t V2,
+			       const point_t U0, const point_t U1, const point_t U2,
 			       int *coplanar, point_t *isectpt1, point_t *isectpt2)
 {
     point_t E1, E2;

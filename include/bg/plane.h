@@ -119,10 +119,10 @@ typedef struct tri_float_specific tri_specific_float;
  * simultaneous equations
  */
 BG_EXPORT extern int bg_distsq_line3_line3(fastf_t dist[3],
-					   point_t P,
-					   vect_t d,
-					   point_t Q,
-					   vect_t e,
+					   const point_t P,
+					   const vect_t d,
+					   const point_t Q,
+					   const vect_t e,
 					   point_t pt1,
 					   point_t pt2);
 
@@ -1152,7 +1152,7 @@ BG_EXPORT extern int bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
  *
  * Returns a center point and a normal direction for the plane
  */
-BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts);
+BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, size_t npnts, const point_t *pnts);
 
 /**
  * @brief
