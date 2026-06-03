@@ -565,6 +565,11 @@ RT_EXPORT extern int rt_arb_nonstandard_encoding(const struct rt_arb_internal *a
 #define RT_ARB_VALIDATE_TWISTED     0x8 /**< Vertex ordering causes face self-intersection */
 
 /**
+ * ARB repair behavior flags.
+ */
+#define RT_ARB_REPAIR_SNAP_VERTICES 0x1 /**< Try best-fit face planes and snap vertices to plane intersections */
+
+/**
  * Check an ARB for invalid shape conditions.
  *
  * If issues is non-NULL, it will be set to a bitwise OR of RT_ARB_VALIDATE_*
@@ -579,6 +584,27 @@ RT_EXPORT extern int rt_arb_validate(struct bu_vls *error_msg_ret,
 				     const struct rt_arb_internal *arb,
 				     const struct bn_tol *tol,
 				     int *issues);
+
+/**
+ * Attempt to repair an invalid or non-canonical ARB by reassembling its input
+ * points into a standard ARB4-ARB8 vertex ordering.
+ *
+ * The repair is intentionally conservative: it succeeds only if a candidate
+ * rebuilt ARB validates cleanly with rt_arb_validate().  On success, out_arb is
+ * filled with the repaired ARB and the returned value is its ARB type (4..8).
+ * If RT_ARB_REPAIR_SNAP_VERTICES is set, repair may also fit planes to
+ * recoverable non-coplanar candidate faces and snap vertices to their plane
+ * intersections when the convex hull volume is preserved.
+ *
+ * Returns -
+ * 4..8 repaired ARB type
+ * 0    no repair was necessary; out_arb is a copy of arb
+ * -1   repair failed or no valid ARB4-ARB8 candidate was found
+ */
+RT_EXPORT extern int rt_arb_repair(struct rt_arb_internal *out_arb,
+				   const struct rt_arb_internal *arb,
+				   const struct bn_tol *tol,
+				   int flags);
 
 
 /**

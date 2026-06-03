@@ -25,11 +25,13 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "bu.h"
 #include "vmath.h"
+#include "bg.h"
 #include "wdb.h"
 #include "raytrace.h"
 
@@ -324,6 +326,277 @@ run_validation_tests(void)
 }
 
 
+typedef struct {
+    const char *label;
+    point_t vertices[8];
+    int arb_type;
+} arb8_intersect_case_t;
+
+
+static const arb8_intersect_case_t arb8_intersect_cases[] = {
+    {"ARB4",
+     {{0, 0, 0}, {0, 1000, 0}, {0, 1000, 1000}, {0, 0, 0},
+      {1000, 1000, 0}, {1000, 1000, 0}, {1000, 1000, 0}, {1000, 1000, 0}},
+     4},
+    {"ARB5",
+     {{0, 0, 0}, {0, 1000, 0}, {0, 1000, 1000}, {0, 0, 1000},
+      {1000, 500, 500}, {1000, 500, 500}, {1000, 500, 500}, {1000, 500, 500}},
+     5},
+    {"ARB6",
+     {{0, 0, 0}, {0, 1000, 0}, {0, 1000, 1000}, {0, 0, 500},
+      {1000, 500, 0}, {1000, 500, 0}, {1000, 500, 1000}, {1000, 500, 1000}},
+     6},
+    {"ARB7",
+     {{0, 0, 0}, {0, 1000, 0}, {0, 1000, 1000}, {0, 0, 500},
+      {1000, 0, 0}, {1000, 1000, 0}, {1000, 1000, 500}, {1000, 0, 0}},
+     7},
+    {"ARB8",
+     {{0, 0, 0}, {1000, 0, 0}, {1000, 1000, 0}, {0, 1000, 0},
+      {100, 200, 1000}, {1100, 200, 1000}, {1100, 1200, 1000}, {100, 1200, 1000}},
+     8}
+};
+
+
+static int
+run_3face_intersect_tests(void)
+{
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    int failures = 0;
+
+    tol.dist = 1.0e-6;
+    tol.dist_sq = tol.dist * tol.dist;
+
+    bu_log("ARB 3-face intersection tests:\n");
+    for (size_t i = 0; i < sizeof(arb8_intersect_cases) / sizeof(arb8_intersect_case_t); i++) {
+	const arb8_intersect_case_t *tc = &arb8_intersect_cases[i];
+	struct rt_arb_internal arb;
+	plane_t planes[6];
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	fastf_t max_delta = 0.0;
+	int failed = 0;
+
+	memset(&arb, 0, sizeof(arb));
+	arb.magic = RT_ARB_INTERNAL_MAGIC;
+	memcpy(arb.pt, tc->vertices, sizeof(point_t) * 8);
+
+	if (rt_arb_calc_planes(&msg, &arb, tc->arb_type, planes, &tol) < 0) {
+	    bu_log("  FAIL %s: plane calculation failed: %s\n", tc->label, bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    failures++;
+	    continue;
+	}
+
+	for (int v = 0; v < 8; v++) {
+	    point_t ipt;
+	    fastf_t delta;
+
+	    if (rt_arb_3face_intersect(ipt, (const plane_t *)planes, tc->arb_type, v*3) < 0) {
+		bu_log("  FAIL %s: vertex %d intersection failed\n", tc->label, v + 1);
+		failed = 1;
+		break;
+	    }
+	    if (!isfinite(ipt[X]) || !isfinite(ipt[Y]) || !isfinite(ipt[Z])) {
+		bu_log("  FAIL %s: vertex %d produced a non-finite point\n", tc->label, v + 1);
+		failed = 1;
+		break;
+	    }
+
+	    delta = DIST_PNT_PNT(ipt, arb.pt[v]);
+	    if (delta > max_delta)
+		max_delta = delta;
+	    if (delta > tol.dist * 100.0) {
+		bu_log("  FAIL %s: vertex %d delta %.17g exceeds tolerance\n", tc->label, v + 1, delta);
+		failed = 1;
+		break;
+	    }
+	}
+
+	if (!failed) {
+	    point_t ipt;
+	    if (rt_arb_3face_intersect(ipt, (const plane_t *)planes, 3, 0) >= 0 ||
+		rt_arb_3face_intersect(ipt, (const plane_t *)planes, tc->arb_type, 24) >= 0) {
+		bu_log("  FAIL %s: invalid type/loc was accepted\n", tc->label);
+		failed = 1;
+	    }
+	}
+
+	if (failed) {
+	    failures++;
+	} else {
+	    bu_log("  PASS %s (max delta %.17g)\n", tc->label, max_delta);
+	}
+	bu_vls_free(&msg);
+    }
+
+    return failures;
+}
+
+
+static int
+run_bg_3plane_intersection_tests(void)
+{
+    int failures = 0;
+    point_t pt;
+    point_t expected = {123, 456, 789};
+    plane_t x123 = {1, 0, 0, 123};
+    plane_t y456 = {0, 1, 0, 456};
+    plane_t z789 = {0, 0, 1, 789};
+    plane_t y0 = {0, 1, 0, 0};
+    plane_t y1 = {0, 1, 0, 1};
+    fastf_t eps = 1.0e-8;
+    fastf_t nmag = sqrt(1.0 + eps * eps);
+    plane_t near_yz = {0, 1.0 / nmag, eps / nmag, (456.0 + eps * 789.0) / nmag};
+
+    bu_log("BG 3-plane intersection tests:\n");
+    if (bg_make_pnt_3planes(pt, x123, y456, z789) < 0 ||
+	!VNEAR_EQUAL(pt, expected, 1.0e-9)) {
+	bu_log("  FAIL orthogonal planes: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    } else {
+	bu_log("  PASS orthogonal planes\n");
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y0, y1) >= 0) {
+	bu_log("  FAIL parallel planes accepted\n");
+	failures++;
+    } else {
+	bu_log("  PASS parallel rejection\n");
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y456, near_yz) < 0 ||
+	DIST_PNT_PNT(pt, expected) > 1.0e-4) {
+	bu_log("  FAIL near-singular planes: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    } else {
+	bu_log("  PASS near-singular solvable planes\n");
+    }
+
+    return failures;
+}
+
+
+typedef struct {
+    const char *label;
+    point_t vertices[8];
+    int expected_type;
+    int flags;
+    int check_volume;
+} arb8_repair_case_t;
+
+
+static const arb8_repair_case_t arb8_repair_cases[] = {
+    {"ValidUnitCube",
+     {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}},
+     0,
+     0,
+     0},
+    {"ScrambledUnitCube",
+     {{0, 0, 0}, {1, 1, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 1}, {0, 0, 1}, {0, 1, 1}, {1, 0, 1}},
+     8,
+     0,
+     0},
+    {"ConcavePlanarToHull",
+     {{0.0, 0.0, 0.0},
+      {1.0, 0.0, 0.0},
+      {1.0, 1.0, 0.0},
+      {0.6, 0.4, 0.0},
+      {0.0, 0.0, 1.0},
+      {1.0, 0.0, 1.0},
+      {1.0, 1.0, 1.0},
+      {0.6, 0.4, 1.0}},
+     6,
+     0,
+     0},
+    {"NearNonCoplanarCubeNoSnap",
+     {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1.01}, {1, 1, 1}, {0, 1, 1}},
+     -1,
+     0,
+     0},
+    {"NearNonCoplanarCubeSnap",
+     {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1.01}, {1, 1, 1}, {0, 1, 1}},
+     8,
+     RT_ARB_REPAIR_SNAP_VERTICES,
+     1}
+};
+
+
+static int
+arb8_test_hull_volume(fastf_t *volume, const point_t vertices[8])
+{
+    int *faces = NULL;
+    int num_faces = 0;
+    point_t *verts = NULL;
+    int num_verts = 0;
+    fastf_t signed_vol = 0.0;
+    int dim;
+
+    dim = bg_3d_chull(&faces, &num_faces, &verts, &num_verts, (const point_t *)vertices, 8);
+    if (dim < 3 || !faces || !verts || num_faces <= 0) {
+	bu_free(faces, "arb8 test hull faces");
+	bu_free(verts, "arb8 test hull verts");
+	return -1;
+    }
+
+    for (int fi = 0; fi < num_faces; fi++) {
+	vect_t cross;
+	VCROSS(cross, verts[faces[3*fi+1]], verts[faces[3*fi+2]]);
+	signed_vol += VDOT(verts[faces[3*fi+0]], cross);
+    }
+
+    *volume = fabs(signed_vol) / 6.0;
+    bu_free(faces, "arb8 test hull faces");
+    bu_free(verts, "arb8 test hull verts");
+    return 0;
+}
+
+
+static int
+run_repair_tests(void)
+{
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    int failures = 0;
+
+    bu_log("ARB repair tests:\n");
+    for (size_t i = 0; i < sizeof(arb8_repair_cases) / sizeof(arb8_repair_case_t); i++) {
+	const arb8_repair_case_t *tc = &arb8_repair_cases[i];
+	struct rt_arb_internal arb;
+	struct rt_arb_internal repaired;
+	int issues = 0;
+	int repair_type;
+
+	memset(&arb, 0, sizeof(arb));
+	memset(&repaired, 0, sizeof(repaired));
+	arb.magic = RT_ARB_INTERNAL_MAGIC;
+	memcpy(arb.pt, tc->vertices, sizeof(point_t) * 8);
+
+	repair_type = rt_arb_repair(&repaired, &arb, &tol, tc->flags);
+	if (repair_type >= 0)
+	    (void)rt_arb_validate(NULL, &repaired, &tol, &issues);
+	if (repair_type != tc->expected_type || issues) {
+	    failures++;
+	    bu_log("  FAIL %s: expected type %d, got %d, repaired issues 0x%x\n",
+		   tc->label, tc->expected_type, repair_type, issues);
+	} else if (tc->check_volume) {
+	    fastf_t input_vol = 0.0;
+	    fastf_t repair_vol = 0.0;
+	    if (arb8_test_hull_volume(&input_vol, (const point_t *)arb.pt) < 0 ||
+		arb8_test_hull_volume(&repair_vol, (const point_t *)repaired.pt) < 0 ||
+		fabs(input_vol - repair_vol) / input_vol > 0.02) {
+		failures++;
+		bu_log("  FAIL %s: repaired volume differs from input hull volume (%g vs %g)\n",
+		       tc->label, repair_vol, input_vol);
+	    } else {
+		bu_log("  PASS %s\n", tc->label);
+	    }
+	} else {
+	    bu_log("  PASS %s\n", tc->label);
+	}
+    }
+
+    return failures;
+}
+
+
 // Main execution and validation
 int
 main(int ac, char *av[])
@@ -363,6 +636,9 @@ main(int ac, char *av[])
     }
 
     failures += run_validation_tests();
+    failures += run_3face_intersect_tests();
+    failures += run_bg_3plane_intersection_tests();
+    failures += run_repair_tests();
 
     /* test them by shooting rays */
     for (size_t i = 0; i < sizeof(arb8_configs) / sizeof(arb8_config_t); i++) {

@@ -2344,6 +2344,514 @@ arb_chull_compute(const struct rt_arb_internal *arb, fastf_t tol_sq,
 }
 
 
+static int
+arb_collect_unique_points(const struct rt_arb_internal *arb, fastf_t tol_sq, point_t unique_pts[8])
+{
+    int equiv_pts[8];
+    int num_unique = 0;
+
+    arb_build_equiv_pts(arb, tol_sq, equiv_pts);
+
+    for (int i = 0; i < 8; i++) {
+	if (equiv_pts[i] == i) {
+	    VMOVE(unique_pts[num_unique], arb->pt[i]);
+	    num_unique++;
+	}
+    }
+
+    return num_unique;
+}
+
+
+static void
+arb_make_candidate(struct rt_arb_internal *candidate, const point_t src[8], int nsrc, const int perm[8])
+{
+    candidate->magic = RT_ARB_INTERNAL_MAGIC;
+
+    switch (nsrc) {
+	case 4:
+	    VMOVE(candidate->pt[0], src[perm[0]]);
+	    VMOVE(candidate->pt[1], src[perm[1]]);
+	    VMOVE(candidate->pt[2], src[perm[2]]);
+	    VMOVE(candidate->pt[3], src[perm[0]]);
+	    VMOVE(candidate->pt[4], src[perm[3]]);
+	    VMOVE(candidate->pt[5], src[perm[3]]);
+	    VMOVE(candidate->pt[6], src[perm[3]]);
+	    VMOVE(candidate->pt[7], src[perm[3]]);
+	    break;
+	case 5:
+	    for (int i = 0; i < 5; i++)
+		VMOVE(candidate->pt[i], src[perm[i]]);
+	    VMOVE(candidate->pt[5], src[perm[4]]);
+	    VMOVE(candidate->pt[6], src[perm[4]]);
+	    VMOVE(candidate->pt[7], src[perm[4]]);
+	    break;
+	case 6:
+	    VMOVE(candidate->pt[0], src[perm[0]]);
+	    VMOVE(candidate->pt[1], src[perm[1]]);
+	    VMOVE(candidate->pt[2], src[perm[2]]);
+	    VMOVE(candidate->pt[3], src[perm[3]]);
+	    VMOVE(candidate->pt[4], src[perm[4]]);
+	    VMOVE(candidate->pt[5], src[perm[4]]);
+	    VMOVE(candidate->pt[6], src[perm[5]]);
+	    VMOVE(candidate->pt[7], src[perm[5]]);
+	    break;
+	case 7:
+	    for (int i = 0; i < 7; i++)
+		VMOVE(candidate->pt[i], src[perm[i]]);
+	    VMOVE(candidate->pt[7], src[perm[4]]);
+	    break;
+	case 8:
+	    for (int i = 0; i < 8; i++)
+		VMOVE(candidate->pt[i], src[perm[i]]);
+	    break;
+	default:
+	    break;
+    }
+}
+
+
+static fastf_t
+arb_repair_score(const struct rt_arb_internal *candidate, const struct rt_arb_internal *arb)
+{
+    fastf_t score = 0.0;
+
+    for (int i = 0; i < 8; i++) {
+	vect_t diff;
+	VSUB2(diff, candidate->pt[i], arb->pt[i]);
+	score += MAGSQ(diff);
+    }
+
+    return score;
+}
+
+
+static int
+arb_try_permutations(struct rt_arb_internal *best_arb, fastf_t *best_score,
+		     const point_t src[8], int nsrc, const struct rt_arb_internal *arb,
+		     const struct bn_tol *tol, int depth, int used[8], int perm[8])
+{
+    int found = 0;
+
+    if (depth == nsrc) {
+	struct rt_arb_internal candidate;
+	int issues = 0;
+
+	arb_make_candidate(&candidate, src, nsrc, perm);
+	(void)rt_arb_validate(NULL, &candidate, tol, &issues);
+	if (!issues) {
+	    fastf_t score = arb_repair_score(&candidate, arb);
+	    if (score < *best_score) {
+		memcpy(best_arb, &candidate, sizeof(struct rt_arb_internal));
+		*best_score = score;
+	    }
+	    return 1;
+	}
+	return 0;
+    }
+
+    for (int i = 0; i < nsrc; i++) {
+	if (used[i])
+	    continue;
+	used[i] = 1;
+	perm[depth] = i;
+	if (arb_try_permutations(best_arb, best_score, src, nsrc, arb, tol, depth + 1, used, perm))
+	    found = 1;
+	used[i] = 0;
+    }
+
+    return found;
+}
+
+
+static int
+arb_try_repair_points(struct rt_arb_internal *out_arb, const point_t src[8], int nsrc,
+		      const struct rt_arb_internal *arb, const struct bn_tol *tol)
+{
+    int used[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    int perm[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    fastf_t best_score = INFINITY;
+
+    if (nsrc < 4 || nsrc > 8)
+	return -1;
+
+    if (!arb_try_permutations(out_arb, &best_score, src, nsrc, arb, tol, 0, used, perm))
+	return -1;
+
+    return nsrc;
+}
+
+
+static fastf_t
+arb_point_span(const point_t pts[8], int npts)
+{
+    point_t min, max;
+
+    if (npts <= 0)
+	return 0.0;
+
+    VMOVE(min, pts[0]);
+    VMOVE(max, pts[0]);
+    for (int i = 1; i < npts; i++)
+	VMINMAX(min, max, pts[i]);
+
+    return DIST_PNT_PNT(min, max);
+}
+
+
+static int
+arb_hull_volume_points(fastf_t *volume, const point_t pts[8], int npts, fastf_t tol_sq)
+{
+    int *faces = NULL;
+    int num_faces = 0;
+    point_t *verts = NULL;
+    int num_verts = 0;
+    fastf_t signed_vol = 0.0;
+    int dim;
+
+    *volume = 0.0;
+
+    if (npts < 4 || npts > 8)
+	return -1;
+
+    dim = bg_3d_chull(&faces, &num_faces, &verts, &num_verts, (const point_t *)pts, npts);
+    if (dim < 3 || !faces || !verts || num_faces <= 0 || num_verts < 4) {
+	bu_free(faces, "arb repair volume hull faces");
+	bu_free(verts, "arb repair volume hull verts");
+	return -1;
+    }
+
+    for (int fi = 0; fi < num_faces; fi++) {
+	vect_t cross;
+	VCROSS(cross, verts[faces[3*fi+1]], verts[faces[3*fi+2]]);
+	signed_vol += VDOT(verts[faces[3*fi+0]], cross);
+    }
+
+    *volume = fabs(signed_vol) / 6.0;
+
+    bu_free(faces, "arb repair volume hull faces");
+    bu_free(verts, "arb repair volume hull verts");
+
+    if (*volume <= sqrt(tol_sq) * sqrt(tol_sq) * sqrt(tol_sq))
+	return -1;
+
+    return 0;
+}
+
+
+static int
+arb_fit_candidate_planes(plane_t planes[6], const struct rt_arb_internal *candidate, int cgtype, const struct bn_tol *tol)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    int type = cgtype - ARB4;
+
+    if (type < 0 || type > 4)
+	return -1;
+
+    for (int f = 0; f < 6; f++) {
+	const int *face = &arb_faces[type][f*4];
+	point_t pts[4];
+	point_t center;
+	vect_t normal;
+	int npts = 0;
+
+	if (face[0] == -1)
+	    break;
+
+	for (int i = 0; i < 4; i++) {
+	    int dup = 0;
+	    if (face[i] < 0)
+		continue;
+	    for (int j = 0; j < npts; j++) {
+		if (VNEAR_EQUAL(candidate->pt[face[i]], pts[j], tol->dist)) {
+		    dup = 1;
+		    break;
+		}
+	    }
+	    if (!dup) {
+		VMOVE(pts[npts], candidate->pt[face[i]]);
+		npts++;
+	    }
+	}
+
+	if (npts < 3)
+	    return -1;
+
+	if (npts == 3) {
+	    if (bg_make_plane_3pnts(planes[f], pts[0], pts[1], pts[2], tol) < 0)
+		return -1;
+	    continue;
+	}
+
+	if (bg_fit_plane(&center, &normal, npts, pts) < 0)
+	    return -1;
+	if (MAGNITUDE(normal) <= SMALL_FASTF)
+	    return -1;
+	VUNITIZE(normal);
+	VMOVE(planes[f], normal);
+	planes[f][W] = VDOT(normal, center);
+    }
+
+    return 0;
+}
+
+
+static int
+arb_calc_points_quiet(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol)
+{
+    point_t pt[8];
+
+    for (int i = 0; i < 8; i++) {
+	if (rt_arb_3face_intersect(pt[i], planes, cgtype, i*3) < 0)
+	    return -1;
+
+	for (int j = 0; j < 3; j++) {
+	    int pidx = rt_arb_planes[cgtype - ARB4][i*3 + j];
+	    if (!NEAR_ZERO(DIST_PNT_PLANE(pt[i], planes[pidx]), tol->dist * 100.0))
+		return -1;
+	}
+    }
+
+    for (int i = 0; i < 8; i++)
+	VMOVE(arb->pt[i], pt[i]);
+
+    if (rt_arb_check_points(arb, cgtype, tol) < 0)
+	return -1;
+
+    return 0;
+}
+
+
+static void
+arb_candidate_unique_points(point_t unique_pts[8], int *num_unique, const struct rt_arb_internal *arb, fastf_t tol_sq)
+{
+    int equiv_pts[8];
+
+    *num_unique = 0;
+    arb_build_equiv_pts(arb, tol_sq, equiv_pts);
+    for (int i = 0; i < 8; i++) {
+	if (equiv_pts[i] == i) {
+	    VMOVE(unique_pts[*num_unique], arb->pt[i]);
+	    (*num_unique)++;
+	}
+    }
+}
+
+
+static int
+arb_snap_candidate(struct rt_arb_internal *snapped, const struct rt_arb_internal *candidate,
+		   const struct rt_arb_internal *source, int cgtype,
+		   fastf_t source_volume, fastf_t source_span, const struct bn_tol *tol,
+		   fastf_t *score)
+{
+    plane_t planes[6];
+    point_t snapped_unique[8];
+    fastf_t snapped_volume = 0.0;
+    fastf_t max_move = 0.0;
+    fastf_t max_allowed_move;
+    fastf_t rel_volume_delta;
+    int num_snapped_unique = 0;
+    int issues = 0;
+
+    if (arb_fit_candidate_planes(planes, candidate, cgtype, tol) < 0)
+	return -1;
+
+    memcpy(snapped, candidate, sizeof(struct rt_arb_internal));
+    if (arb_calc_points_quiet(snapped, cgtype, (const plane_t *)planes, tol) < 0)
+	return -1;
+
+    (void)rt_arb_validate(NULL, snapped, tol, &issues);
+    if (issues)
+	return -1;
+
+    for (int i = 0; i < 8; i++) {
+	fastf_t move = DIST_PNT_PNT(snapped->pt[i], source->pt[i]);
+	if (move > max_move)
+	    max_move = move;
+    }
+
+    max_allowed_move = source_span * 0.05;
+    if (tol->dist * 100.0 > max_allowed_move)
+	max_allowed_move = tol->dist * 100.0;
+    if (max_move > max_allowed_move)
+	return -1;
+
+    arb_candidate_unique_points(snapped_unique, &num_snapped_unique, snapped, tol->dist_sq);
+    if (arb_hull_volume_points(&snapped_volume, (const point_t *)snapped_unique, num_snapped_unique, tol->dist_sq) < 0)
+	return -1;
+
+    rel_volume_delta = fabs(snapped_volume - source_volume) / source_volume;
+    if (rel_volume_delta > 0.02)
+	return -1;
+
+    *score = max_move + rel_volume_delta * source_span;
+    return 0;
+}
+
+
+static int
+arb_try_snap_permutations(struct rt_arb_internal *best_arb, fastf_t *best_score,
+			  const point_t src[8], int nsrc, const struct rt_arb_internal *arb,
+			  fastf_t source_volume, fastf_t source_span, const struct bn_tol *tol,
+			  int depth, int used[8], int perm[8])
+{
+    int found = 0;
+
+    if (depth == nsrc) {
+	struct rt_arb_internal candidate;
+	struct rt_arb_internal snapped;
+	fastf_t score = INFINITY;
+
+	arb_make_candidate(&candidate, src, nsrc, perm);
+	if (arb_snap_candidate(&snapped, &candidate, arb, nsrc, source_volume, source_span, tol, &score) == 0) {
+	    if (score < *best_score) {
+		memcpy(best_arb, &snapped, sizeof(struct rt_arb_internal));
+		*best_score = score;
+	    }
+	    return 1;
+	}
+	return 0;
+    }
+
+    for (int i = 0; i < nsrc; i++) {
+	if (used[i])
+	    continue;
+	used[i] = 1;
+	perm[depth] = i;
+	if (arb_try_snap_permutations(best_arb, best_score, src, nsrc, arb,
+				      source_volume, source_span, tol, depth + 1, used, perm))
+	    found = 1;
+	used[i] = 0;
+    }
+
+    return found;
+}
+
+
+static int
+arb_try_snap_points(struct rt_arb_internal *out_arb, const point_t src[8], int nsrc,
+		    const struct rt_arb_internal *arb, fastf_t source_volume,
+		    fastf_t source_span, const struct bn_tol *tol)
+{
+    int used[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    int perm[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    fastf_t best_score = INFINITY;
+
+    if (nsrc < 4 || nsrc > 8)
+	return -1;
+
+    if (!arb_try_snap_permutations(out_arb, &best_score, src, nsrc, arb,
+				   source_volume, source_span, tol, 0, used, perm))
+	return -1;
+
+    return nsrc;
+}
+
+
+static int
+arb_collect_hull_points(point_t hull_pts[8], const point_t src[8], int nsrc, fastf_t tol_sq)
+{
+    int *faces = NULL;
+    int num_faces = 0;
+    point_t *verts = NULL;
+    int num_verts = 0;
+    int nhull = 0;
+    int dim;
+
+    dim = bg_3d_chull(&faces, &num_faces, &verts, &num_verts, (const point_t *)src, nsrc);
+    if (dim < 3 || !verts || num_verts < 4 || num_verts > 8) {
+	bu_free(faces, "arb repair hull faces");
+	bu_free(verts, "arb repair hull verts");
+	return -1;
+    }
+
+    for (int i = 0; i < num_verts; i++) {
+	int dup = 0;
+	for (int j = 0; j < nhull; j++) {
+	    vect_t diff;
+	    VSUB2(diff, hull_pts[j], verts[i]);
+	    if (MAGSQ(diff) < tol_sq) {
+		dup = 1;
+		break;
+	    }
+	}
+	if (!dup) {
+	    VMOVE(hull_pts[nhull], verts[i]);
+	    nhull++;
+	}
+    }
+
+    bu_free(faces, "arb repair hull faces");
+    bu_free(verts, "arb repair hull verts");
+
+    return nhull;
+}
+
+
+int
+rt_arb_repair(struct rt_arb_internal *out_arb, const struct rt_arb_internal *arb, const struct bn_tol *tol, int flags)
+{
+    static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    point_t unique_pts[8];
+    point_t hull_pts[8];
+    fastf_t source_volume = 0.0;
+    fastf_t source_span = 0.0;
+    int issues = 0;
+    int nsrc;
+    int unique_count;
+    int repaired_type;
+
+    if (!out_arb || !arb)
+	return -1;
+
+    RT_ARB_CK_MAGIC(arb);
+
+    if (!tol)
+	tol = &default_tol;
+    BN_CK_TOL(tol);
+
+    (void)rt_arb_validate(NULL, arb, tol, &issues);
+    if (!issues) {
+	memcpy(out_arb, arb, sizeof(struct rt_arb_internal));
+	return 0;
+    }
+
+    nsrc = arb_collect_unique_points(arb, tol->dist_sq, unique_pts);
+    unique_count = nsrc;
+    repaired_type = arb_try_repair_points(out_arb, (const point_t *)unique_pts, nsrc, arb, tol);
+    if (repaired_type > 0)
+	return repaired_type;
+
+    if (flags & RT_ARB_REPAIR_SNAP_VERTICES) {
+	source_span = arb_point_span((const point_t *)unique_pts, unique_count);
+	if (source_span > tol->dist && arb_hull_volume_points(&source_volume, (const point_t *)unique_pts, unique_count, tol->dist_sq) == 0) {
+	    repaired_type = arb_try_snap_points(out_arb, (const point_t *)unique_pts, nsrc, arb,
+						source_volume, source_span, tol);
+	    if (repaired_type > 0)
+		return repaired_type;
+	}
+    }
+
+    nsrc = arb_collect_hull_points(hull_pts, (const point_t *)unique_pts, nsrc, tol->dist_sq);
+    repaired_type = arb_try_repair_points(out_arb, (const point_t *)hull_pts, nsrc, arb, tol);
+    if (repaired_type > 0)
+	return repaired_type;
+
+    if (flags & RT_ARB_REPAIR_SNAP_VERTICES) {
+	if (source_volume <= 0.0 && arb_hull_volume_points(&source_volume, (const point_t *)unique_pts, unique_count, tol->dist_sq) < 0)
+	    return -1;
+	if (source_span <= 0.0)
+	    source_span = arb_point_span((const point_t *)unique_pts, unique_count);
+	repaired_type = arb_try_snap_points(out_arb, (const point_t *)hull_pts, nsrc, arb,
+					    source_volume, source_span, tol);
+	if (repaired_type > 0)
+	    return repaired_type;
+    }
+
+    return -1;
+}
+
+
 /**
  * "Tessellate" an ARB into an NMG data structure.  Purely a
  * mechanical transformation of one faceted object into another.
@@ -2767,14 +3275,27 @@ rt_arb_3face_intersect(
 {
     int j;
     int i1, i2, i3;
+    int ret;
 
-    j = type - 4;
+    j = type - ARB4;
+    if (j < 0 || j > 4 || loc < 0 || loc + 2 >= 24)
+	return -1;
 
     i1 = rt_arb_planes[j][loc];
     i2 = rt_arb_planes[j][loc+1];
     i3 = rt_arb_planes[j][loc+2];
 
-    return bg_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
+    if (i1 < 0 || i1 >= 6 || i2 < 0 || i2 >= 6 || i3 < 0 || i3 >= 6)
+	return -1;
+
+    ret = bg_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
+    if (ret < 0)
+	return ret;
+
+    if (!isfinite(point[X]) || !isfinite(point[Y]) || !isfinite(point[Z]))
+	return -1;
+
+    return 0;
 }
 
 

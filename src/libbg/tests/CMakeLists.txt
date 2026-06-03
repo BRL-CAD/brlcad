@@ -162,6 +162,8 @@ brlcad_add_test(NAME bg_plane_pts_coplanar_5  COMMAND bg_test plane_pt 7
 0
 )
 
+brlcad_add_test(NAME bg_plane_make_pnt_3planes COMMAND bg_test plane_pt 8)
+
 # For COMMAND bg_test plane_dist, the input format is as follows:
 #
 # COMMAND bg_test plane_dist <function number> <args>

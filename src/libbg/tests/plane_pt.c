@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -243,12 +244,63 @@ test_bg_coplanar_pts(int argc, char **argv)
     return 0;
 }
 
+
+static int
+test_bg_make_pnt_3planes(void)
+{
+    int failures = 0;
+    point_t pt;
+    point_t expected = {123, 456, 789};
+    plane_t x123 = {1, 0, 0, 123};
+    plane_t y456 = {0, 1, 0, 456};
+    plane_t z789 = {0, 0, 1, 789};
+    plane_t y0 = {0, 1, 0, 0};
+    plane_t y1 = {0, 1, 0, 1};
+    plane_t bad = {NAN, 0, 0, 0};
+    fastf_t eps = 1.0e-8;
+    fastf_t nmag = sqrt(1.0 + eps * eps);
+    plane_t near_yz = {0, 1.0 / nmag, eps / nmag, (456.0 + eps * 789.0) / nmag};
+    fastf_t tiny_eps = 1.0e-14;
+    fastf_t tiny_nmag = sqrt(1.0 + tiny_eps * tiny_eps);
+    plane_t near_singular = {0, 1.0 / tiny_nmag, tiny_eps / tiny_nmag, (456.0 + tiny_eps * 789.0) / tiny_nmag};
+
+    if (bg_make_pnt_3planes(pt, x123, y456, z789) < 0 ||
+	!VNEAR_EQUAL(pt, expected, 1.0e-9)) {
+	bu_log("orthogonal plane intersection failed: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y0, y1) >= 0) {
+	bu_log("parallel plane intersection was accepted\n");
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y456, near_yz) < 0 ||
+	DIST_PNT_PNT(pt, expected) > 1.0e-4) {
+	bu_log("near-singular solvable plane intersection failed: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y456, near_singular) >= 0) {
+	bu_log("ill-conditioned plane intersection was accepted\n");
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, bad, y456, z789) >= 0) {
+	bu_log("non-finite plane input was accepted\n");
+	failures++;
+    }
+
+    return failures;
+}
+
+
 int
 plane_pt_main(int argc, char *argv[])
 {
     int function_num = 0;
 
-    if (argc < 3) {
+    if (argc < 2) {
 	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
     }
 
@@ -269,6 +321,8 @@ plane_pt_main(int argc, char *argv[])
 	    return test_bg_plane_closest_pt(argc, argv);
 	case 7:
 	    return test_bg_coplanar_pts(argc, argv);
+	case 8:
+	    return test_bg_make_pnt_3planes();
 	default:
 	    return 1;
 

@@ -238,6 +238,22 @@ bg_make_pnt_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf
 {
     vect_t v1;
     fastf_t dot;
+    fastf_t amag, bmag, cmag;
+    fastf_t det_tol;
+
+    if (!pt || !a || !b || !c)
+	return -1;
+
+    if (!isfinite(a[X]) || !isfinite(a[Y]) || !isfinite(a[Z]) || !isfinite(a[H]) ||
+	!isfinite(b[X]) || !isfinite(b[Y]) || !isfinite(b[Z]) || !isfinite(b[H]) ||
+	!isfinite(c[X]) || !isfinite(c[Y]) || !isfinite(c[Z]) || !isfinite(c[H]))
+	return -1;
+
+    amag = MAGNITUDE(a);
+    bmag = MAGNITUDE(b);
+    cmag = MAGNITUDE(c);
+    if (amag <= SMALL_FASTF || bmag <= SMALL_FASTF || cmag <= SMALL_FASTF)
+	return -1;
 
     /* Find a vector perpendicular to vectors b and c (parallel to planes B
      * and C).
@@ -253,11 +269,13 @@ bg_make_pnt_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf
      */
     dot = VDOT(a, v1);
 
-    if (ZERO(dot)) {
+    det_tol = 1.0e-12 * amag * bmag * cmag;
+    if (fabs(dot) <= det_tol) {
 	return -1;
     } else {
 	vect_t v2, v3;
 	fastf_t det, aH, bH, cH;
+	fastf_t residual_tol;
 
 	VCROSS(v2, a, c);
 	VCROSS(v3, a, b);
@@ -281,6 +299,15 @@ bg_make_pnt_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf
 	pt[X] = det * (aH * v1[X] - bH * v2[X] + cH * v3[X]);
 	pt[Y] = det * (aH * v1[Y] - bH * v2[Y] + cH * v3[Y]);
 	pt[Z] = det * (aH * v1[Z] - bH * v2[Z] + cH * v3[Z]);
+
+	if (!isfinite(pt[X]) || !isfinite(pt[Y]) || !isfinite(pt[Z]))
+	    return -1;
+
+	residual_tol = 1.0e-9 * (fabs(aH) + fabs(bH) + fabs(cH) + 1.0);
+	if (fabs(VDOT(pt, a) - aH) > residual_tol ||
+	    fabs(VDOT(pt, b) - bH) > residual_tol ||
+	    fabs(VDOT(pt, c) - cH) > residual_tol)
+	    return -1;
     }
     return 0;
 }
