@@ -121,7 +121,8 @@ static const struct rt_edit_cmd_desc tor_cmds[] = {
 	1,                    /* nparam       */
 	tor_r1_params,        /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_TOR_R2,          /* cmd_id       */
@@ -130,7 +131,8 @@ static const struct rt_edit_cmd_desc tor_cmds[] = {
 	1,                    /* nparam       */
 	tor_r2_params,        /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -138,7 +140,9 @@ static const struct rt_edit_prim_desc tor_prim_desc = {
     "tor",                /* prim_type    */
     "Torus",              /* prim_label   */
     2,                    /* ncmd         */
-    tor_cmds              /* cmds         */
+    tor_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

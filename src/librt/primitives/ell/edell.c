@@ -152,7 +152,8 @@ static const struct rt_edit_cmd_desc ell_cmds[] = {
 	1,                    /* nparam       */
 	ell_a_params,         /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10,                   /* display_order */
+	"ell"                 /* req_types */
     },
     {
 	ECMD_ELL_SCALE_B,     /* cmd_id       */
@@ -161,7 +162,8 @@ static const struct rt_edit_cmd_desc ell_cmds[] = {
 	1,                    /* nparam       */
 	ell_b_params,         /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20,                   /* display_order */
+	"ell"                 /* req_types */
     },
     {
 	ECMD_ELL_SCALE_C,     /* cmd_id       */
@@ -170,7 +172,8 @@ static const struct rt_edit_cmd_desc ell_cmds[] = {
 	1,                    /* nparam       */
 	ell_c_params,         /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30,                   /* display_order */
+	"ell"                 /* req_types */
     },
     {
 	ECMD_ELL_SCALE_ABC,   /* cmd_id       */
@@ -179,7 +182,17 @@ static const struct rt_edit_cmd_desc ell_cmds[] = {
 	1,                    /* nparam       */
 	ell_abc_params,       /* params       */
 	1,                    /* interactive  */
-	40                    /* display_order */
+	40,                   /* display_order */
+	"ell,sph"             /* req_types */
+    }
+};
+
+static const struct rt_edit_opt_desc ell_opts[] = {
+    {
+	"type",
+	"Geometry Type",
+	"Force treatment as a specific ellipsoid type (ell or sph)",
+	RT_EDIT_PARAM_STRING
     }
 };
 
@@ -187,7 +200,9 @@ static const struct rt_edit_prim_desc ell_prim_desc = {
     "ell",                /* prim_type    */
     "Ellipsoid",          /* prim_label   */
     4,                    /* ncmd         */
-    ell_cmds              /* cmds         */
+    ell_cmds              /* cmds         */,
+    1,                    /* nopt         */
+    ell_opts              /* opts         */
 };
 
 const struct rt_edit_prim_desc *

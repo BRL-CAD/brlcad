@@ -135,7 +135,8 @@ static const struct rt_edit_cmd_desc epa_cmds[] = {
 	1,                    /* nparam       */
 	epa_h_params,         /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_EPA_R1,          /* cmd_id       */
@@ -144,7 +145,8 @@ static const struct rt_edit_cmd_desc epa_cmds[] = {
 	1,                    /* nparam       */
 	epa_r1_params,        /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_EPA_R2,          /* cmd_id       */
@@ -153,7 +155,8 @@ static const struct rt_edit_cmd_desc epa_cmds[] = {
 	1,                    /* nparam       */
 	epa_r2_params,        /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -161,7 +164,9 @@ static const struct rt_edit_prim_desc epa_prim_desc = {
     "epa",                /* prim_type    */
     "Elliptical Paraboloid", /* prim_label */
     3,                    /* ncmd         */
-    epa_cmds              /* cmds         */
+    epa_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

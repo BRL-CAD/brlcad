@@ -306,14 +306,16 @@ static const struct rt_edit_param_desc annot_vert_move_params[] = {
 };
 
 static const struct rt_edit_cmd_desc annot_cmds[] = {
-    { ECMD_ANNOT_SET_TEXT,          "Set Text",            "text",   1, annot_text_param,        1, 10 },
-    { ECMD_ANNOT_SET_POS,           "Set Anchor Position", "layout", 1, annot_pos_param,          1, 20 },
-    { ECMD_ANNOT_SET_TSEG_TXT_SIZE, "Set Text Size",       "text",   1, annot_txtsize_param,      1, 30 },
-    { ECMD_ANNOT_VERT_MOVE,         "Move Vertex",         "layout", 2, annot_vert_move_params,   1, 40 }
+    { ECMD_ANNOT_SET_TEXT,          "Set Text",            "text",   1, annot_text_param,        1, 10, NULL },
+    { ECMD_ANNOT_SET_POS,           "Set Anchor Position", "layout", 1, annot_pos_param,          1, 20, NULL },
+    { ECMD_ANNOT_SET_TSEG_TXT_SIZE, "Set Text Size",       "text",   1, annot_txtsize_param,      1, 30, NULL },
+    { ECMD_ANNOT_VERT_MOVE,         "Move Vertex",         "layout", 2, annot_vert_move_params,   1, 40, NULL }
 };
 
 static const struct rt_edit_prim_desc annot_prim_desc = {
-    "annot", "Annotation", 4, annot_cmds
+    "annot", "Annotation", 4, annot_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

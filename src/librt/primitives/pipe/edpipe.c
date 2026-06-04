@@ -300,7 +300,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_point_params,    /* params       */
 	1,                    /* interactive  */
-	5                     /* display_order */
+	5                     /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_NEXT_PT,    /* cmd_id       */
@@ -309,7 +310,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	0,                    /* nparam       */
 	NULL,                 /* params       */
 	0,                    /* interactive  */
-	6                     /* display_order */
+	6                     /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_PREV_PT,    /* cmd_id       */
@@ -318,7 +320,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	0,                    /* nparam       */
 	NULL,                 /* params       */
 	0,                    /* interactive  */
-	7                     /* display_order */
+	7                     /* display_order */,
+	NULL                  /* req_types */
     },
     /* --- point geometry manipulation --------------------------------- */
     {
@@ -328,7 +331,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_point_params,    /* params       */
 	1,                    /* interactive  */
-	8                     /* display_order */
+	8                     /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_PT_DEL,     /* cmd_id       */
@@ -337,7 +341,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	0,                    /* nparam       */
 	NULL,                 /* params       */
 	0,                    /* interactive  */
-	9                     /* display_order */
+	9                     /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_PT_ADD,     /* cmd_id       */
@@ -346,7 +351,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_point_params,    /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_PT_INS,     /* cmd_id       */
@@ -355,7 +361,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_point_params,    /* params       */
 	1,                    /* interactive  */
-	11                    /* display_order */
+	11                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_SPLIT,      /* cmd_id       */
@@ -364,7 +371,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_point_params,    /* params       */
 	1,                    /* interactive  */
-	12                    /* display_order */
+	12                    /* display_order */,
+	NULL                  /* req_types */
     },
     /* --- per-point cross-section dimensions -------------------------- */
     {
@@ -374,7 +382,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_od_params,    /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_PT_ID,      /* cmd_id       */
@@ -383,7 +392,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_id_params,    /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_PT_RADIUS,  /* cmd_id       */
@@ -392,7 +402,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_radius_params, /* params      */
 	1,                    /* interactive  */
-	40                    /* display_order */
+	40                    /* display_order */,
+	NULL                  /* req_types */
     },
     /* --- whole-pipe cross-section dimensions ------------------------- */
     {
@@ -402,7 +413,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_od_params,    /* params       */
 	1,                    /* interactive  */
-	50                    /* display_order */
+	50                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_SCALE_ID,   /* cmd_id       */
@@ -411,7 +423,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_id_params,    /* params       */
 	1,                    /* interactive  */
-	60                    /* display_order */
+	60                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PIPE_SCALE_RADIUS, /* cmd_id     */
@@ -420,7 +433,8 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_radius_params, /* params      */
 	1,                    /* interactive  */
-	70                    /* display_order */
+	70                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -428,7 +442,9 @@ static const struct rt_edit_prim_desc pipe_prim_desc = {
     "pipe",               /* prim_type    */
     "Pipe",               /* prim_label   */
     14,                   /* ncmd         */
-    pipe_cmds             /* cmds         */
+    pipe_cmds             /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

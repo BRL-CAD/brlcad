@@ -74,6 +74,7 @@
 #include "vmath.h"
 #include "bn/mat.h"
 #include "bu/parse.h"
+#include "bu/avs.h"
 #include "bv/defines.h"
 #include "rt/defines.h"
 #include "rt/db_internal.h"
@@ -211,6 +212,11 @@ struct rt_edit {
     // application level drawing code to figure out which solids in the comb need
     // to be visualized as part of the active editing geometry.
     struct bu_ptbl comb_insts;
+
+    // Dynamic configuration options (key-value pairs)
+    // used to pass settings from calling code down into primitive edit logic
+    // (e.g., "raw_mode" to bypass simplification).
+    struct bu_attribute_value_set options;
 
     // Tolerance for calculations
     const struct bn_tol *tol;
@@ -394,6 +400,20 @@ rt_edit_reset(struct rt_edit *s);
 RT_EXPORT extern int
 rt_edit_reinit(struct rt_edit *s, struct db_full_path *dfp, struct db_i *dbip,
                struct bn_tol *tol, struct bview *v);
+
+/**
+ * Set a dynamic option for this editing session.
+ * These options are available to primitive-specific editing logic.
+ */
+RT_EXPORT extern int
+rt_edit_set_opt(struct rt_edit *s, const char *key, const char *val);
+
+/**
+ * Retrieve a dynamic option for this editing session.
+ * Returns NULL if the option is not set.
+ */
+RT_EXPORT extern const char *
+rt_edit_get_opt(struct rt_edit *s, const char *key);
 
 /**
  * Set a string parameter in the edit struct's e_str[] array.
@@ -595,6 +615,18 @@ struct rt_edit_cmd_desc {
     /** Suggested display order within the category group.  Lower values
      *  appear first.  Ties are broken by array order. */
     int          display_order;
+    /** Comma-separated list of types this cmd is valid for (e.g. "sph" or "arb4"). NULL means all. */
+    const char  *req_types;
+};
+
+/**
+ * Describes a dynamically toggleable option for a primitive.
+ */
+struct rt_edit_opt_desc {
+    const char *name;      /**< machine-readable id, e.g. "raw_mode" */
+    const char *label;     /**< human-readable widget label */
+    const char *desc;      /**< description of option behavior */
+    int type;              /**< RT_EDIT_PARAM_* type code */
 };
 
 /**
@@ -606,6 +638,8 @@ struct rt_edit_prim_desc {
     const char                    *prim_label; /**< "Torus", "Ellipsoid", ...         */
     int                            ncmd;
     const struct rt_edit_cmd_desc *cmds;       /**< array of ncmd entries             */
+    int                            nopt;       /**< number of entries in opts[]       */
+    const struct rt_edit_opt_desc *opts;       /**< array of nopt entries             */
 };
 
 /**

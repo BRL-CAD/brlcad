@@ -229,7 +229,8 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 	1,                    /* nparam       */
 	dsp_fname_params,     /* params       */
 	0,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_DSP_SCALE_X,     /* cmd_id       */
@@ -238,7 +239,8 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 	1,                    /* nparam       */
 	dsp_scale_x_params,   /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_DSP_SCALE_Y,     /* cmd_id       */
@@ -247,7 +249,8 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 	1,                    /* nparam       */
 	dsp_scale_y_params,   /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_DSP_SCALE_ALT,   /* cmd_id       */
@@ -256,7 +259,8 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 	1,                    /* nparam       */
 	dsp_scale_alt_params, /* params       */
 	1,                    /* interactive  */
-	40                    /* display_order */
+	40                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_DSP_SET_SMOOTH,  /* cmd_id       */
@@ -265,7 +269,8 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 	1,                    /* nparam       */
 	dsp_smooth_params,    /* params       */
 	0,                    /* interactive  */
-	50                    /* display_order */
+	50                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_DSP_FSIZE,       /* cmd_id       */
@@ -274,7 +279,8 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 	2,                    /* nparam       */
 	dsp_fsize_params,     /* params       */
 	0,                    /* interactive  */
-	15                    /* display_order */
+	15                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_DSP_SET_DATASRC, /* cmd_id       */
@@ -283,7 +289,8 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 	1,                    /* nparam       */
 	dsp_datasrc_params,   /* params       */
 	0,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -291,7 +298,9 @@ static const struct rt_edit_prim_desc dsp_prim_desc = {
     "dsp",                /* prim_type    */
     "Displacement Map",   /* prim_label   */
     7,                    /* ncmd         */
-    dsp_cmds              /* cmds         */
+    dsp_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

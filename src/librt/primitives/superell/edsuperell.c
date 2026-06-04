@@ -151,7 +151,8 @@ static const struct rt_edit_cmd_desc superell_cmds[] = {
 	1,                    /* nparam       */
 	superell_a_params,    /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_SUPERELL_SCALE_B, /* cmd_id      */
@@ -160,7 +161,8 @@ static const struct rt_edit_cmd_desc superell_cmds[] = {
 	1,                    /* nparam       */
 	superell_b_params,    /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_SUPERELL_SCALE_C, /* cmd_id      */
@@ -169,7 +171,8 @@ static const struct rt_edit_cmd_desc superell_cmds[] = {
 	1,                    /* nparam       */
 	superell_c_params,    /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_SUPERELL_SCALE_ABC, /* cmd_id    */
@@ -178,7 +181,8 @@ static const struct rt_edit_cmd_desc superell_cmds[] = {
 	1,                    /* nparam       */
 	superell_abc_params,  /* params       */
 	1,                    /* interactive  */
-	40                    /* display_order */
+	40                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -186,7 +190,9 @@ static const struct rt_edit_prim_desc superell_prim_desc = {
     "superell",           /* prim_type    */
     "Super-Ellipsoid",    /* prim_label   */
     4,                    /* ncmd         */
-    superell_cmds         /* cmds         */
+    superell_cmds         /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

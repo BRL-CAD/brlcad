@@ -127,18 +127,20 @@ static const struct rt_edit_param_desc extr_skt_name_params[] = {
 };
 
 static const struct rt_edit_cmd_desc extr_cmds[] = {
-    { ECMD_EXTR_SCALE_H, "Set H",              "geometry", 1, extr_h_params,        1, 10 },
-    { ECMD_EXTR_MOV_H,   "Move End H",         "move",     1, extr_endpoint_params, 1, 20 },
-    { ECMD_EXTR_ROT_H,   "Rotate H",           "rotation", 1, extr_rot_deg_params,  1, 30 },
-    { ECMD_EXTR_SCALE_A, "Set A",              "geometry", 1, extr_a_params,        1, 40 },
-    { ECMD_EXTR_ROT_A,   "Rotate A",           "rotation", 1, extr_rot_deg_params,  1, 50 },
-    { ECMD_EXTR_SCALE_B, "Set B",              "geometry", 1, extr_b_params,        1, 60 },
-    { ECMD_EXTR_ROT_B,   "Rotate B",           "rotation", 1, extr_rot_deg_params,  1, 70 },
-    { ECMD_EXTR_SKT_NAME, "Referenced Sketch", "reference",1, extr_skt_name_params, 1, 80 },
+    { ECMD_EXTR_SCALE_H, "Set H",              "geometry", 1, extr_h_params,        1, 10, NULL },
+    { ECMD_EXTR_MOV_H,   "Move End H",         "move",     1, extr_endpoint_params, 1, 20, NULL },
+    { ECMD_EXTR_ROT_H,   "Rotate H",           "rotation", 1, extr_rot_deg_params,  1, 30, NULL },
+    { ECMD_EXTR_SCALE_A, "Set A",              "geometry", 1, extr_a_params,        1, 40, NULL },
+    { ECMD_EXTR_ROT_A,   "Rotate A",           "rotation", 1, extr_rot_deg_params,  1, 50, NULL },
+    { ECMD_EXTR_SCALE_B, "Set B",              "geometry", 1, extr_b_params,        1, 60, NULL },
+    { ECMD_EXTR_ROT_B,   "Rotate B",           "rotation", 1, extr_rot_deg_params,  1, 70, NULL },
+    { ECMD_EXTR_SKT_NAME, "Referenced Sketch", "reference",1, extr_skt_name_params, 1, 80, NULL },
 };
 
 static const struct rt_edit_prim_desc extr_prim_desc = {
-    "extrude", "Extrusion", 8, extr_cmds
+    "extrude", "Extrusion", 8, extr_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

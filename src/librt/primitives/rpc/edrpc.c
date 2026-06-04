@@ -134,7 +134,8 @@ static const struct rt_edit_cmd_desc rpc_cmds[] = {
 	1,                    /* nparam       */
 	rpc_b_params,         /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_RPC_H,           /* cmd_id       */
@@ -143,7 +144,8 @@ static const struct rt_edit_cmd_desc rpc_cmds[] = {
 	1,                    /* nparam       */
 	rpc_h_params,         /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_RPC_R,           /* cmd_id       */
@@ -152,7 +154,8 @@ static const struct rt_edit_cmd_desc rpc_cmds[] = {
 	1,                    /* nparam       */
 	rpc_r_params,         /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -160,7 +163,9 @@ static const struct rt_edit_prim_desc rpc_prim_desc = {
     "rpc",                /* prim_type    */
     "Right Parabolic Cylinder", /* prim_label */
     3,                    /* ncmd         */
-    rpc_cmds              /* cmds         */
+    rpc_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

@@ -151,7 +151,8 @@ static const struct rt_edit_cmd_desc rhc_cmds[] = {
 	1,                    /* nparam       */
 	rhc_b_params,         /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_RHC_H,           /* cmd_id       */
@@ -160,7 +161,8 @@ static const struct rt_edit_cmd_desc rhc_cmds[] = {
 	1,                    /* nparam       */
 	rhc_h_params,         /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_RHC_R,           /* cmd_id       */
@@ -169,7 +171,8 @@ static const struct rt_edit_cmd_desc rhc_cmds[] = {
 	1,                    /* nparam       */
 	rhc_r_params,         /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_RHC_C,           /* cmd_id       */
@@ -178,7 +181,8 @@ static const struct rt_edit_cmd_desc rhc_cmds[] = {
 	1,                    /* nparam       */
 	rhc_c_params,         /* params       */
 	1,                    /* interactive  */
-	40                    /* display_order */
+	40                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -186,7 +190,9 @@ static const struct rt_edit_prim_desc rhc_prim_desc = {
     "rhc",                /* prim_type    */
     "Right Hyperbolic Cylinder", /* prim_label */
     4,                    /* ncmd         */
-    rhc_cmds              /* cmds         */
+    rhc_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

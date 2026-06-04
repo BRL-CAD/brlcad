@@ -151,7 +151,8 @@ static const struct rt_edit_cmd_desc ehy_cmds[] = {
 	1,                    /* nparam       */
 	ehy_h_params,         /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_EHY_R1,          /* cmd_id       */
@@ -160,7 +161,8 @@ static const struct rt_edit_cmd_desc ehy_cmds[] = {
 	1,                    /* nparam       */
 	ehy_r1_params,        /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_EHY_R2,          /* cmd_id       */
@@ -169,7 +171,8 @@ static const struct rt_edit_cmd_desc ehy_cmds[] = {
 	1,                    /* nparam       */
 	ehy_r2_params,        /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_EHY_C,           /* cmd_id       */
@@ -178,7 +181,8 @@ static const struct rt_edit_cmd_desc ehy_cmds[] = {
 	1,                    /* nparam       */
 	ehy_c_params,         /* params       */
 	1,                    /* interactive  */
-	40                    /* display_order */
+	40                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -186,7 +190,9 @@ static const struct rt_edit_prim_desc ehy_prim_desc = {
     "ehy",                /* prim_type    */
     "Elliptical Hyperboloid", /* prim_label */
     4,                    /* ncmd         */
-    ehy_cmds              /* cmds         */
+    ehy_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

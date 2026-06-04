@@ -456,24 +456,26 @@ static const struct rt_edit_param_desc nmg_extrude_dir_param[] = {
 };
 
 static const struct rt_edit_cmd_desc nmg_cmds[] = {
-    { ECMD_NMG_EPICK,      "Pick Edge",                "selection", 1, nmg_index_param,       1, 10 },
-    { ECMD_NMG_EMOVE,      "Move Edge",                "movement",  1, nmg_point_param,       1, 20 },
-    { ECMD_NMG_ESPLIT,     "Split Edge",               "topology",  0, NULL,                  0, 30 },
-    { ECMD_NMG_EKILL,      "Delete Edge",              "topology",  0, NULL,                  0, 40 },
-    { ECMD_NMG_FORW,       "Next EU",                  "selection", 0, NULL,                  0, 50 },
-    { ECMD_NMG_BACK,       "Prev EU",                  "selection", 0, NULL,                  0, 60 },
-    { ECMD_NMG_RADIAL,     "Radial EU",                "selection", 0, NULL,                  0, 70 },
-    { ECMD_NMG_LEXTRU,     "Extrude Loop",             "topology",  1, nmg_extrude_param,     1, 80 },
-    { ECMD_NMG_LEXTRU_DIR, "Extrude Loop (dir+dist)",  "topology",  2, nmg_extrude_dir_param, 1, 90 },
-    { ECMD_NMG_EDEBUG,     "Debug Edge",               "debug",     0, NULL,                  0, 100 },
-    { ECMD_NMG_VPICK,      "Pick Vertex",              "selection", 1, nmg_index_param,       1, 110 },
-    { ECMD_NMG_VMOVE,      "Move Vertex",              "movement",  1, nmg_point_param,       1, 120 },
-    { ECMD_NMG_FPICK,      "Pick Face",                "selection", 1, nmg_index_param,       1, 130 },
-    { ECMD_NMG_FMOVE,      "Move Face",                "movement",  1, nmg_point_param,       1, 140 }
+    { ECMD_NMG_EPICK,      "Pick Edge",                "selection", 1, nmg_index_param,       1, 10, NULL },
+    { ECMD_NMG_EMOVE,      "Move Edge",                "movement",  1, nmg_point_param,       1, 20, NULL },
+    { ECMD_NMG_ESPLIT,     "Split Edge",               "topology",  0, NULL,                  0, 30, NULL },
+    { ECMD_NMG_EKILL,      "Delete Edge",              "topology",  0, NULL,                  0, 40, NULL },
+    { ECMD_NMG_FORW,       "Next EU",                  "selection", 0, NULL,                  0, 50, NULL },
+    { ECMD_NMG_BACK,       "Prev EU",                  "selection", 0, NULL,                  0, 60, NULL },
+    { ECMD_NMG_RADIAL,     "Radial EU",                "selection", 0, NULL,                  0, 70, NULL },
+    { ECMD_NMG_LEXTRU,     "Extrude Loop",             "topology",  1, nmg_extrude_param,     1, 80, NULL },
+    { ECMD_NMG_LEXTRU_DIR, "Extrude Loop (dir+dist)",  "topology",  2, nmg_extrude_dir_param, 1, 90, NULL },
+    { ECMD_NMG_EDEBUG,     "Debug Edge",               "debug",     0, NULL,                  0, 100, NULL },
+    { ECMD_NMG_VPICK,      "Pick Vertex",              "selection", 1, nmg_index_param,       1, 110, NULL },
+    { ECMD_NMG_VMOVE,      "Move Vertex",              "movement",  1, nmg_point_param,       1, 120, NULL },
+    { ECMD_NMG_FPICK,      "Pick Face",                "selection", 1, nmg_index_param,       1, 130, NULL },
+    { ECMD_NMG_FMOVE,      "Move Face",                "movement",  1, nmg_point_param,       1, 140, NULL }
 };
 
 static const struct rt_edit_prim_desc nmg_prim_desc = {
-    "nmg", "NMG", 14, nmg_cmds
+    "nmg", "NMG", 14, nmg_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

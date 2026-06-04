@@ -106,14 +106,16 @@ static const struct rt_edit_param_desc eto_rot_deg_params[] = {
 };
 
 static const struct rt_edit_cmd_desc eto_cmds[] = {
-    { ECMD_ETO_R,       "Set r",       "geometry", 1, eto_r_params,       1, 10 },
-    { ECMD_ETO_RD,      "Set D",       "geometry", 1, eto_rd_params,      1, 20 },
-    { ECMD_ETO_SCALE_C, "Set C",       "geometry", 1, eto_c_params,       1, 30 },
-    { ECMD_ETO_ROT_C,   "Rotate C",    "rotation", 1, eto_rot_deg_params, 1, 40 },
+    { ECMD_ETO_R,       "Set r",       "geometry", 1, eto_r_params,       1, 10, NULL },
+    { ECMD_ETO_RD,      "Set D",       "geometry", 1, eto_rd_params,      1, 20, NULL },
+    { ECMD_ETO_SCALE_C, "Set C",       "geometry", 1, eto_c_params,       1, 30, NULL },
+    { ECMD_ETO_ROT_C,   "Rotate C",    "rotation", 1, eto_rot_deg_params, 1, 40, NULL },
 };
 
 static const struct rt_edit_prim_desc eto_prim_desc = {
-    "eto", "Elliptical Torus", 4, eto_cmds
+    "eto", "Elliptical Torus", 4, eto_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

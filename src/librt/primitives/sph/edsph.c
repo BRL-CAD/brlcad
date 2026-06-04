@@ -86,7 +86,8 @@ static const struct rt_edit_cmd_desc sph_cmds[] = {
 	1,                          /* nparam */
 	sph_v_params,               /* params */
 	0,                          /* interactive */
-	10                          /* display_order */
+	10                          /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_SPH_SCALE_R,           /* cmd_id */
@@ -95,7 +96,8 @@ static const struct rt_edit_cmd_desc sph_cmds[] = {
 	1,                          /* nparam */
 	sph_r_params,               /* params */
 	0,                          /* interactive */
-	20                          /* display_order */
+	20                          /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -103,7 +105,9 @@ static const struct rt_edit_prim_desc sph_prim_desc = {
     "sph",                          /* prim_type */
     "Sphere",                       /* prim_label */
     2,                              /* ncmd */
-    sph_cmds                        /* cmds */
+    sph_cmds                        /* cmds */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

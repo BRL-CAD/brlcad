@@ -242,7 +242,8 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
 	1,                    /* nparam       */
 	vol_fname_params,     /* params       */
 	0,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_VOL_FSIZE,       /* cmd_id       */
@@ -251,7 +252,8 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
 	3,                    /* nparam       */
 	vol_fsize_params,     /* params       */
 	0,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_VOL_CSIZE,       /* cmd_id       */
@@ -260,7 +262,8 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
 	3,                    /* nparam       */
 	vol_csize_params,     /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_VOL_THRESH_LO,   /* cmd_id       */
@@ -269,7 +272,8 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
 	1,                    /* nparam       */
 	vol_thresh_lo_params, /* params       */
 	1,                    /* interactive  */
-	40                    /* display_order */
+	40                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_VOL_THRESH_HI,   /* cmd_id       */
@@ -278,7 +282,8 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
 	1,                    /* nparam       */
 	vol_thresh_hi_params, /* params       */
 	1,                    /* interactive  */
-	50                    /* display_order */
+	50                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -286,7 +291,9 @@ static const struct rt_edit_prim_desc vol_prim_desc = {
     "vol",                /* prim_type    */
     "Volumetric Data",    /* prim_label   */
     5,                    /* ncmd         */
-    vol_cmds              /* cmds         */
+    vol_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

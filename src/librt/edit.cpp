@@ -96,6 +96,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     RT_DB_INTERNAL_INIT(&s->es_int);
 
     bu_ptbl_init(&s->comb_insts, 8, "comb inst tbl");
+    bu_avs_init_empty(&s->options);
 
     MAT_IDN(s->acc_rot_sol);
     MAT_IDN(s->e_invmat);
@@ -203,6 +204,7 @@ rt_edit_destroy(struct rt_edit *s)
     }
 
     bu_ptbl_free(&s->comb_insts);
+    bu_avs_free(&s->options);
 
     rt_db_free_internal(&s->es_int);
     bu_free_external(&s->es_ckpt);
@@ -239,6 +241,8 @@ rt_edit_reset(struct rt_edit *s)
     bu_free_external(&s->es_ckpt);
     BU_EXTERNAL_INIT(&s->es_ckpt);
     bu_ptbl_reset(&s->comb_insts);
+    bu_avs_free(&s->options);
+    bu_avs_init_empty(&s->options);
 
     /* Clear the edit-callback map (will be repopulated by
      * mged_edit_clbk_sync() at the next init_sedit call) */
@@ -1455,8 +1459,21 @@ rt_edit_type_to_json(struct bu_vls *out, int prim_type_id)
     return BRLCAD_ERROR;
 }
 
+int
+rt_edit_set_opt(struct rt_edit *s, const char *key, const char *val)
+{
+    if (!s || !key || !val) return BRLCAD_ERROR;
+    return bu_avs_add(&s->options, key, val);
+}
 
+const char *
+rt_edit_get_opt(struct rt_edit *s, const char *key)
+{
+    if (!s || !key) return NULL;
+    return bu_avs_get(&s->options, key);
+}
 
+// Local Variables:
 // tab-width: 8
 // mode: C++
 // c-basic-offset: 4

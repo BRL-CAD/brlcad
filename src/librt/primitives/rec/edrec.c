@@ -135,7 +135,8 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
 	1,                          /* nparam */
 	rec_v_params,               /* params */
 	0,                          /* interactive */
-	10                          /* display_order */
+	10                          /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_REC_SET_H,             /* cmd_id */
@@ -144,7 +145,8 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
 	1,                          /* nparam */
 	rec_h_params,               /* params */
 	0,                          /* interactive */
-	20                          /* display_order */
+	20                          /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_REC_SCALE_R1,          /* cmd_id */
@@ -153,7 +155,8 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
 	1,                          /* nparam */
 	rec_r1_params,              /* params */
 	0,                          /* interactive */
-	30                          /* display_order */
+	30                          /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_REC_SCALE_R2,          /* cmd_id */
@@ -162,7 +165,8 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
 	1,                          /* nparam */
 	rec_r2_params,              /* params */
 	0,                          /* interactive */
-	40                          /* display_order */
+	40                          /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_REC_SCALE_R,           /* cmd_id */
@@ -171,7 +175,8 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
 	1,                          /* nparam */
 	rec_r_params,               /* params */
 	0,                          /* interactive */
-	50                          /* display_order */
+	50                          /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -179,7 +184,9 @@ static const struct rt_edit_prim_desc rec_prim_desc = {
     "rec",                          /* prim_type */
     "Right Elliptic Cylinder",      /* prim_label */
     5,                              /* ncmd */
-    rec_cmds                        /* cmds */
+    rec_cmds                        /* cmds */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

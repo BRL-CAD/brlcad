@@ -42,7 +42,10 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bn/rand.h"
+#include "rt/db4.h"
 #include "rt/edit.h"
+#include "rt/primitives/arb8.h"
+#include "rt/primitives/tgc.h"
 
 #include "../ged_private.h"
 #include "../dbi.h"
@@ -162,6 +165,22 @@ _edit_cli_view_init(struct bview *v)
     MAT_IDN(v->gv_center);
 }
 
+static int
+_parse_ged_edit_opt(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+{
+    if (argc < 1 || !argv || !argv[0]) return 0;
+    std::vector<std::pair<std::string, std::string>> *opts = 
+        (std::vector<std::pair<std::string, std::string>> *)set_var;
+    std::string arg(argv[0]);
+    size_t pos = arg.find('=');
+    if (pos == std::string::npos) {
+        opts->push_back(std::make_pair(arg, "1"));
+    } else {
+        opts->push_back(std::make_pair(arg.substr(0, pos), arg.substr(pos + 1)));
+    }
+    return 1;
+}
+
 
 /**
  * Return the world-space keypoint of a named top-level primitive by
@@ -205,11 +224,13 @@ _edit_get_obj_keypoint(point_t *kp, const char *name, struct ged *gedp)
  *      flag_i != 0: leave the entry in the buffer for a future operation.
  */
 static int
-_edit_xform_apply(struct ged *gedp,
-		  struct directory *dp,
-		  int flag_i,
+_edit_xform_apply(struct ged_edit_ctx *ctx,
 		  std::function<int(struct rt_edit *)> do_edit)
 {
+    struct ged *gedp = ctx->gedp;
+    struct directory *dp = ctx->dp;
+    int flag_i = ctx->flag_i;
+
     if (!gedp || !dp)
 	return BRLCAD_ERROR;
 
@@ -241,6 +262,11 @@ _edit_xform_apply(struct ged *gedp,
 	/* Refresh the tolerance pointer on reused entries so that any
 	 * handler that dereferences s->tol gets a valid object.       */
 	s->tol = &tol;
+    }
+
+    /* Apply any dynamic options passed from the command line */
+    for (const auto& opt : ctx->options) {
+	rt_edit_set_opt(s, opt.first.c_str(), opt.second.c_str());
     }
 
     /* Temporarily install a minimal CLI bview (stack-allocated) */
@@ -431,11 +457,10 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    int  flag_i    = ctx->flag_i;
     int  n_coord_flags = x_only + y_only + z_only;
     bool do_abs    = (abs_flag && !rel_flag);
 
-    return _edit_xform_apply(gedp, ctx->dp, flag_i,
+    return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
 	{
 	    /* Resolve FROM position (k) */
@@ -555,7 +580,7 @@ cmd_tra::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    return _edit_xform_apply(gedp, ctx->dp, ctx->flag_i,
+    return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
 	{
 	    vect_t target;
@@ -870,7 +895,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	else if (have_angle_origin) VMOVE(rot_center, angle_origin);
 	/* center_is_self: resolved inside lambda from s->e_keypoint */
 
-	return _edit_xform_apply(gedp, ctx->dp, ctx->flag_i,
+	return _edit_xform_apply(ctx,
 	    [&](struct rt_edit *s) -> int
 	    {
 		/* Resolve actual rotation center */
@@ -1000,7 +1025,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     }
     /* center_is_self: resolved inside lambda */
 
-    return _edit_xform_apply(gedp, ctx->dp, ctx->flag_i,
+    return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
 	{
 	    if (center_is_self) {
@@ -1215,7 +1240,7 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	return _edit_xform_apply(gedp, ctx->dp, ctx->flag_i,
+	return _edit_xform_apply(ctx,
 	    [&](struct rt_edit *s) -> int
 	    {
 		if (center_is_self) {
@@ -1254,7 +1279,7 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
      * needed for the uniform branch */
     (void)vec_to_factor;
 
-    return _edit_xform_apply(gedp, ctx->dp, ctx->flag_i,
+    return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
 	{
 	    struct rt_db_internal *ip = &s->es_int;
@@ -1454,7 +1479,7 @@ cmd_mat::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	}
     }
 
-    return _edit_xform_apply(gedp, ctx->dp, ctx->flag_i,
+    return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
 	{
 	    struct rt_db_internal *ip = &s->es_int;
@@ -1680,7 +1705,7 @@ _prim_type_id_from_str(const char *type_str)
  * Print category-grouped help for a primitive descriptor to ged_result_str.
  */
 static void
-_print_prim_help(struct ged *gedp, const struct rt_edit_prim_desc *desc)
+_print_prim_help(struct ged *gedp, const struct rt_edit_prim_desc *desc, const char *req_type = NULL)
 {
     if (!gedp || !desc)
 	return;
@@ -1716,6 +1741,12 @@ _print_prim_help(struct ged *gedp, const struct rt_edit_prim_desc *desc)
 	    });
 
 	for (const struct rt_edit_cmd_desc *cmd : cmds_in_cat) {
+	    if (req_type && cmd->req_types) {
+		std::string req(cmd->req_types);
+		std::string rt(req_type);
+		if (req.find(rt) == std::string::npos)
+		    continue;
+	    }
 	    std::string slug = _prim_cmd_slug(cmd->label);
 	    bu_vls_printf(gedp->ged_result_str, "    %-24s %s",
 		slug.c_str(), cmd->label);
@@ -1830,6 +1861,47 @@ _exec_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		       const struct rt_edit_cmd_desc *cmd_desc,
 		       int argc, const char **argv)
 {
+    if (cmd_desc->req_types) {
+        const char *type_opt = rt_edit_get_opt(s, "type");
+        std::string t;
+        if (type_opt) {
+            t = type_opt;
+        } else {
+            struct bn_tol tol = BN_TOL_INIT_TOL;
+            if (s->es_int.idb_type == ID_ARB8) {
+                int nat = rt_arb_std_type(&s->es_int, &tol);
+                switch(nat) {
+                    case ARB8: t = "arb8"; break;
+                    case ARB7: t = "arb7"; break;
+                    case ARB6: t = "arb6"; break;
+                    case ARB5: t = "arb5"; break;
+                    case ARB4: t = "arb4"; break;
+                }
+            } else if (s->es_int.idb_type == ID_TGC || s->es_int.idb_type == ID_REC) {
+                int nat = rt_tgc_std_type(&s->es_int, &tol);
+                switch(nat) {
+                    case TGC: t = "tgc"; break;
+                    case TRC: t = "trc"; break;
+                    case RCC: t = "rcc"; break;
+                    case REC: t = "rec"; break;
+                    case TEC: t = "tec"; break;
+                }
+            }
+        }
+        
+        if (!t.empty()) {
+            std::string req(cmd_desc->req_types);
+            /* simple substring check works because types are distinct (sph, ell, etc.) */
+            if (req.find(t) == std::string::npos) {
+                if (gedp)
+                    bu_vls_printf(gedp->ged_result_str,
+                        "edit: command '%s' is not valid for geometry type '%s'\n",
+                        cmd_desc->label, t.c_str());
+                return BRLCAD_ERROR;
+            }
+        }
+    }
+
     /* skip the subcommand name */
     argc--; argv++;
 
@@ -1991,7 +2063,7 @@ _exec_desc_cmd(struct ged *gedp, struct ged_edit_ctx *ctx,
     if (!gedp || !ctx || !cmd_desc || ctx->dp == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
-    return _edit_xform_apply(gedp, ctx->dp, ctx->flag_i,
+    return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int {
 	    return _exec_desc_cmd_on_edit(s, gedp, cmd_desc, argc, argv);
 	});
@@ -2055,7 +2127,8 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[5], "i", "intermediate", "",  NULL, &ctx.flag_i,  "Intermediate: apply to temp buffer only (no disk write)");
     BU_OPT(d[6], "", "list-all-prim-ops", "", NULL, &list_all_prim_ops, "List all available primitive edit operations");
     BU_OPT(d[7], "", "list-all-prim-ops=json", "", NULL, &list_all_prim_ops_json, "List all primitive edit operations as JSON");
-    BU_OPT_NULL(d[8]);
+    BU_OPT(d[8], "O", "option",       "key=value", &_parse_ged_edit_opt, &ctx.options, "Pass dynamic option to edit session");
+    BU_OPT_NULL(d[9]);
 
     const char *bargs_help = "[options] <geometry_specifier> subcommand [args]";
 
@@ -2377,6 +2450,41 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    std::string res_t;
+    for (const auto &opt : ctx.options) {
+        if (opt.first == "type") {
+            res_t = opt.second;
+            break;
+        }
+    }
+    if (res_t.empty() && ctx.dp) {
+        struct rt_db_internal in;
+        if (rt_db_get_internal(&in, ctx.dp, gedp->dbip, (matp_t)NULL) >= 0) {
+            struct bn_tol tol = BN_TOL_INIT_TOL;
+            if (in.idb_type == ID_ARB8) {
+                int nat = rt_arb_std_type(&in, &tol);
+                switch(nat) {
+                    case ARB8: res_t = "arb8"; break;
+                    case ARB7: res_t = "arb7"; break;
+                    case ARB6: res_t = "arb6"; break;
+                    case ARB5: res_t = "arb5"; break;
+                    case ARB4: res_t = "arb4"; break;
+                }
+            } else if (in.idb_type == ID_TGC || in.idb_type == ID_REC) {
+                int nat = rt_tgc_std_type(&in, &tol);
+                switch(nat) {
+                    case TGC: res_t = "tgc"; break;
+                    case TRC: res_t = "trc"; break;
+                    case RCC: res_t = "rcc"; break;
+                    case REC: res_t = "rec"; break;
+                    case TEC: res_t = "tec"; break;
+                }
+            }
+            rt_db_free_internal(&in);
+        }
+    }
+    const char *resolved_type = res_t.empty() ? NULL : res_t.c_str();
+
     std::string cmd_str(argv[0]);
     auto e_it = edit_cmds.find(cmd_str);
     if (e_it == edit_cmds.end()) {
@@ -2386,7 +2494,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	    int type_id = _get_prim_type_for_dp(ctx.dp, gedp->dbip);
 	    if (type_id >= 0 && EDOBJ[type_id].ft_edit_desc) {
 		const struct rt_edit_prim_desc *desc = (*EDOBJ[type_id].ft_edit_desc)();
-		_print_prim_help(gedp, desc);
+		_print_prim_help(gedp, desc, resolved_type);
 		return BRLCAD_OK;
 	    }
 	    bu_vls_printf(gedp->ged_result_str,
@@ -2412,7 +2520,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 		    "Unknown operation '%s' for %s.\n",
 		    argv[0], desc->prim_label);
-		_print_prim_help(gedp, desc);
+		_print_prim_help(gedp, desc, resolved_type);
 		return BRLCAD_ERROR;
 	    }
 	}

@@ -306,14 +306,16 @@ static const struct rt_edit_param_desc datum_w_param[] = {
 };
 
 static const struct rt_edit_cmd_desc datum_cmds[] = {
-    { ECMD_DATUM_SET_TYPE, "Set Type",      "datum", 1, datum_type_param, 1, 10 },
-    { ECMD_DATUM_SET_PNT,  "Set Point",     "datum", 1, datum_pnt_param,  1, 20 },
-    { ECMD_DATUM_SET_DIR,  "Set Direction", "datum", 1, datum_dir_param,  1, 30 },
-    { ECMD_DATUM_SET_W,    "Set W",         "datum", 1, datum_w_param,    1, 40 }
+    { ECMD_DATUM_SET_TYPE, "Set Type",      "datum", 1, datum_type_param, 1, 10, NULL },
+    { ECMD_DATUM_SET_PNT,  "Set Point",     "datum", 1, datum_pnt_param,  1, 20, NULL },
+    { ECMD_DATUM_SET_DIR,  "Set Direction", "datum", 1, datum_dir_param,  1, 30, NULL },
+    { ECMD_DATUM_SET_W,    "Set W",         "datum", 1, datum_w_param,    1, 40, NULL }
 };
 
 static const struct rt_edit_prim_desc datum_prim_desc = {
-    "datum", "Datum", 4, datum_cmds
+    "datum", "Datum", 4, datum_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

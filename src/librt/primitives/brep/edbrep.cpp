@@ -455,7 +455,8 @@ static const struct rt_edit_cmd_desc brep_cmds[] = {
 	3,                              /* nparam        */
 	brep_select_params,             /* params        */
 	0,                              /* interactive   */
-	10                              /* display_order */
+	10                              /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_BREP_SRF_CV_MOVE,
@@ -464,7 +465,8 @@ static const struct rt_edit_cmd_desc brep_cmds[] = {
 	1,
 	brep_vector_param,
 	1,
-	20
+	20,
+	NULL
     },
     {
 	ECMD_BREP_SRF_CV_SET,
@@ -473,7 +475,8 @@ static const struct rt_edit_cmd_desc brep_cmds[] = {
 	1,
 	brep_point_param,
 	1,
-	30
+	30,
+	NULL
     }
 };
 
@@ -481,7 +484,9 @@ static const struct rt_edit_prim_desc brep_prim_desc = {
     "brep",         /* prim_type  */
     "BREP",         /* prim_label */
     3,              /* ncmd       */
-    brep_cmds       /* cmds       */
+    brep_cmds       /* cmds       */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 extern "C" const struct rt_edit_prim_desc *

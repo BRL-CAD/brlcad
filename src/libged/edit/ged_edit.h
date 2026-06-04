@@ -230,6 +230,9 @@ struct ged_edit_ctx {
     int flag_F;  /**< @brief -F: abandon: discard intermediate state, use on-disk   */
     int flag_i;  /**< @brief -i: intermediate: apply to temp buf only (no disk write)*/
 
+    /* Options passed to rt_edit */
+    std::vector<std::pair<std::string, std::string>> options;
+
     /* Resolved geometry specifiers (populated by Pass 2) */
     std::vector<ged_edit_geom_spec> geom_specs;
     bool from_selection; /**< @brief true if geom_specs came from selection fallback */

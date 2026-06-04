@@ -106,7 +106,8 @@ static const struct rt_edit_cmd_desc half_cmds[] = {
 	1,                      /* nparam */
 	half_d_params,          /* params */
 	0,                      /* interactive */
-	10                      /* display_order */
+	10                      /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -114,7 +115,9 @@ static const struct rt_edit_prim_desc half_prim_desc = {
     "half",                     /* prim_type */
     "Halfspace",                /* prim_label */
     1,                          /* ncmd */
-    half_cmds                   /* cmds */
+    half_cmds                   /* cmds */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

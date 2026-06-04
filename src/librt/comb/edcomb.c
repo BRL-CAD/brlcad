@@ -1070,7 +1070,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	2,                        /* nparam       */
 	comb_add_member_params,   /* params       */
 	0,                        /* interactive  */
-	10                        /* display_order */
+	10                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_DEL_MEMBER,     /* cmd_id       */
@@ -1079,7 +1080,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_del_member_params,   /* params       */
 	0,                        /* interactive  */
-	20                        /* display_order */
+	20                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_OP,         /* cmd_id       */
@@ -1088,7 +1090,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	2,                        /* nparam       */
 	comb_set_op_params,       /* params       */
 	0,                        /* interactive  */
-	30                        /* display_order */
+	30                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_REGION,     /* cmd_id       */
@@ -1097,7 +1100,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_set_region_params,   /* params       */
 	0,                        /* interactive  */
-	10                        /* display_order */
+	10                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_COLOR,      /* cmd_id       */
@@ -1106,7 +1110,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_set_color_params,    /* params       */
 	0,                        /* interactive  */
-	20                        /* display_order */
+	20                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_SHADER,     /* cmd_id       */
@@ -1115,7 +1120,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_set_shader_params,   /* params       */
 	0,                        /* interactive  */
-	30                        /* display_order */
+	30                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_MATERIAL,   /* cmd_id       */
@@ -1124,7 +1130,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_set_material_params, /* params       */
 	0,                        /* interactive  */
-	40                        /* display_order */
+	40                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_REGION_ID,  /* cmd_id       */
@@ -1133,7 +1140,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_set_region_id_params, /* params      */
 	0,                        /* interactive  */
-	50                        /* display_order */
+	50                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_AIRCODE,    /* cmd_id       */
@@ -1142,7 +1150,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_set_aircode_params,  /* params       */
 	0,                        /* interactive  */
-	60                        /* display_order */
+	60                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_GIFTMATER,  /* cmd_id       */
@@ -1151,7 +1160,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_set_giftmater_params, /* params      */
 	0,                        /* interactive  */
-	70                        /* display_order */
+	70                        /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_COMB_SET_LOS,        /* cmd_id       */
@@ -1160,7 +1170,8 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
 	1,                        /* nparam       */
 	comb_set_los_params,      /* params       */
 	0,                        /* interactive  */
-	80                        /* display_order */
+	80                        /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -1168,7 +1179,9 @@ static const struct rt_edit_prim_desc comb_prim_desc = {
     "comb",               /* prim_type    */
     "Combination / Region", /* prim_label */
     11,                   /* ncmd         */
-    comb_cmds             /* cmds         */
+    comb_cmds             /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

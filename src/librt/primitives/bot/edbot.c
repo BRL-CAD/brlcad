@@ -1309,27 +1309,29 @@ static const struct rt_edit_param_desc bot_flags_params[] = {
 };
 
 static const struct rt_edit_cmd_desc bot_cmds[] = {
-    { ECMD_BOT_PICKV,       "Select Vertex",       "selection", 1, bot_pickv_params,  0, 10 },
-    { ECMD_BOT_PICKE,       "Select Edge",         "selection", 2, bot_picke_params,  0, 20 },
-    { ECMD_BOT_PICKT,       "Select Face",         "selection", 3, bot_pickt_params,  0, 30 },
-    { ECMD_BOT_MOVEV,       "Move Vertex",         "movement",  1, bot_point_params,  1, 40 },
-    { ECMD_BOT_MOVEE,       "Move Edge",           "movement",  1, bot_point_params,  1, 50 },
-    { ECMD_BOT_MOVET,       "Move Face",           "movement",  1, bot_point_params,  1, 60 },
-    { ECMD_BOT_MOVEV_LIST,  "Move Vertex List",    "movement",  1, bot_delta_params,  1, 70 },
-    { ECMD_BOT_ESPLIT,      "Split Edge",          "topology",  0, NULL,              0, 80 },
-    { ECMD_BOT_FSPLIT,      "Split Face",          "topology",  0, NULL,              0, 90 },
-    { ECMD_BOT_FDEL,        "Delete Face",         "topology",  0, NULL,              0, 100 },
-    { ECMD_BOT_VERTEX_FUSE, "Fuse Vertices",       "topology",  0, NULL,              0, 110 },
-    { ECMD_BOT_FACE_FUSE,   "Fuse Faces",          "topology",  0, NULL,              0, 120 },
-    { ECMD_BOT_MODE,        "Set Mode",            "properties",1, bot_mode_params,   1, 130 },
-    { ECMD_BOT_ORIENT,      "Set Orientation",     "properties",1, bot_orient_params, 1, 140 },
-    { ECMD_BOT_THICK,       "Set Face Thickness",  "properties",1, bot_thick_params,  1, 150 },
-    { ECMD_BOT_FMODE,       "Set Face Mode",       "properties",1, bot_fmode_params,  1, 160 },
-    { ECMD_BOT_FLAGS,       "Set Flags",           "properties",1, bot_flags_params,  1, 170 }
+    { ECMD_BOT_PICKV,       "Select Vertex",       "selection", 1, bot_pickv_params,  0, 10, NULL },
+    { ECMD_BOT_PICKE,       "Select Edge",         "selection", 2, bot_picke_params,  0, 20, NULL },
+    { ECMD_BOT_PICKT,       "Select Face",         "selection", 3, bot_pickt_params,  0, 30, NULL },
+    { ECMD_BOT_MOVEV,       "Move Vertex",         "movement",  1, bot_point_params,  1, 40, NULL },
+    { ECMD_BOT_MOVEE,       "Move Edge",           "movement",  1, bot_point_params,  1, 50, NULL },
+    { ECMD_BOT_MOVET,       "Move Face",           "movement",  1, bot_point_params,  1, 60, NULL },
+    { ECMD_BOT_MOVEV_LIST,  "Move Vertex List",    "movement",  1, bot_delta_params,  1, 70, NULL },
+    { ECMD_BOT_ESPLIT,      "Split Edge",          "topology",  0, NULL,              0, 80, NULL },
+    { ECMD_BOT_FSPLIT,      "Split Face",          "topology",  0, NULL,              0, 90, NULL },
+    { ECMD_BOT_FDEL,        "Delete Face",         "topology",  0, NULL,              0, 100, NULL },
+    { ECMD_BOT_VERTEX_FUSE, "Fuse Vertices",       "topology",  0, NULL,              0, 110, NULL },
+    { ECMD_BOT_FACE_FUSE,   "Fuse Faces",          "topology",  0, NULL,              0, 120, NULL },
+    { ECMD_BOT_MODE,        "Set Mode",            "properties",1, bot_mode_params,   1, 130, NULL },
+    { ECMD_BOT_ORIENT,      "Set Orientation",     "properties",1, bot_orient_params, 1, 140, NULL },
+    { ECMD_BOT_THICK,       "Set Face Thickness",  "properties",1, bot_thick_params,  1, 150, NULL },
+    { ECMD_BOT_FMODE,       "Set Face Mode",       "properties",1, bot_fmode_params,  1, 160, NULL },
+    { ECMD_BOT_FLAGS,       "Set Flags",           "properties",1, bot_flags_params,  1, 170, NULL }
 };
 
 static const struct rt_edit_prim_desc bot_prim_desc = {
-    "bot", "BOT", 17, bot_cmds
+    "bot", "BOT", 17, bot_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

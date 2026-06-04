@@ -445,16 +445,18 @@ static const struct rt_edit_param_desc arbn_plane_param[] = {
 };
 
 static const struct rt_edit_cmd_desc arbn_cmds[] = {
-    { ECMD_ARBN_PLANE_SELECT,   "Select Plane",      "plane", 1, arbn_index_param,  0, 10 },
-    { ECMD_ARBN_PLANE_SET_DIST, "Set Plane Distance","plane", 1, arbn_dist_param,   1, 20 },
-    { ECMD_ARBN_PLANE_SET_NORM, "Set Plane Normal",  "plane", 1, arbn_normal_param, 1, 30 },
-    { ECMD_ARBN_PLANE_ROTATE,   "Rotate Plane Normal","plane",1, arbn_angles_param, 1, 40 },
-    { ECMD_ARBN_PLANE_ADD,      "Add Plane",         "plane", 4, arbn_plane_param,  1, 50 },
-    { ECMD_ARBN_PLANE_DEL,      "Delete Plane",      "plane", 0, NULL,              0, 60 }
+    { ECMD_ARBN_PLANE_SELECT,   "Select Plane",      "plane", 1, arbn_index_param,  0, 10, NULL },
+    { ECMD_ARBN_PLANE_SET_DIST, "Set Plane Distance","plane", 1, arbn_dist_param,   1, 20, NULL },
+    { ECMD_ARBN_PLANE_SET_NORM, "Set Plane Normal",  "plane", 1, arbn_normal_param, 1, 30, NULL },
+    { ECMD_ARBN_PLANE_ROTATE,   "Rotate Plane Normal","plane",1, arbn_angles_param, 1, 40, NULL },
+    { ECMD_ARBN_PLANE_ADD,      "Add Plane",         "plane", 4, arbn_plane_param,  1, 50, NULL },
+    { ECMD_ARBN_PLANE_DEL,      "Delete Plane",      "plane", 0, NULL,              0, 60, NULL }
 };
 
 static const struct rt_edit_prim_desc arbn_prim_desc = {
-    "arbn", "ARBN", 6, arbn_cmds
+    "arbn", "ARBN", 6, arbn_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

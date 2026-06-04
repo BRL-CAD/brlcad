@@ -362,7 +362,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	1,                    /* nparam       */
 	metaball_threshold_params, /* params  */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_METABALL_SET_METHOD,    /* cmd_id  */
@@ -371,7 +372,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	1,                    /* nparam       */
 	metaball_method_params, /* params     */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     /* --- point selection / navigation -------------------------------- */
     {
@@ -381,7 +383,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	1,                    /* nparam       */
 	metaball_point_params, /* params      */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_METABALL_PT_NEXT,       /* cmd_id  */
@@ -390,7 +393,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	0,                    /* nparam       */
 	NULL,                 /* params       */
 	0,                    /* interactive  */
-	31                    /* display_order */
+	31                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_METABALL_PT_PREV,       /* cmd_id  */
@@ -399,7 +403,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	0,                    /* nparam       */
 	NULL,                 /* params       */
 	0,                    /* interactive  */
-	32                    /* display_order */
+	32                    /* display_order */,
+	NULL                  /* req_types */
     },
     /* --- point geometry manipulation --------------------------------- */
     {
@@ -409,7 +414,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	1,                    /* nparam       */
 	metaball_point_params, /* params      */
 	1,                    /* interactive  */
-	40                    /* display_order */
+	40                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_METABALL_PT_ADD,        /* cmd_id  */
@@ -418,7 +424,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	1,                    /* nparam       */
 	metaball_point_params, /* params      */
 	1,                    /* interactive  */
-	50                    /* display_order */
+	50                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_METABALL_PT_DEL,        /* cmd_id  */
@@ -427,7 +434,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	0,                    /* nparam       */
 	NULL,                 /* params       */
 	0,                    /* interactive  */
-	60                    /* display_order */
+	60                    /* display_order */,
+	NULL                  /* req_types */
     },
     /* --- per-point scalar parameters --------------------------------- */
     {
@@ -437,7 +445,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	1,                    /* nparam       */
 	metaball_field_strength_params, /* params */
 	1,                    /* interactive  */
-	70                    /* display_order */
+	70                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_METABALL_PT_SCALE_BLOBBINESS, /* cmd_id */
@@ -446,7 +455,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	1,                    /* nparam       */
 	metaball_blobbiness_params, /* params */
 	1,                    /* interactive  */
-	80                    /* display_order */
+	80                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_METABALL_PT_SET_BLOBBINESS, /* cmd_id */
@@ -455,7 +465,8 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
 	1,                    /* nparam       */
 	metaball_blobbiness_params, /* params */
 	1,                    /* interactive  */
-	90                    /* display_order */
+	90                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -463,7 +474,9 @@ static const struct rt_edit_prim_desc metaball_prim_desc = {
     "metaball",           /* prim_type    */
     "Metaball",           /* prim_label   */
     11,                   /* ncmd         */
-    metaball_cmds         /* cmds         */
+    metaball_cmds         /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

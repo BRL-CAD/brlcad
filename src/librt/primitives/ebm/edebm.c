@@ -143,7 +143,8 @@ static const struct rt_edit_cmd_desc ebm_cmds[] = {
 	1,                    /* nparam       */
 	ebm_fname_params,     /* params       */
 	0,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_EBM_FSIZE,       /* cmd_id       */
@@ -152,7 +153,8 @@ static const struct rt_edit_cmd_desc ebm_cmds[] = {
 	2,                    /* nparam       */
 	ebm_fsize_params,     /* params       */
 	0,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_EBM_HEIGHT,      /* cmd_id       */
@@ -161,7 +163,8 @@ static const struct rt_edit_cmd_desc ebm_cmds[] = {
 	1,                    /* nparam       */
 	ebm_height_params,    /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -169,7 +172,9 @@ static const struct rt_edit_prim_desc ebm_prim_desc = {
     "ebm",                /* prim_type    */
     "Extruded Bitmap",    /* prim_label   */
     3,                    /* ncmd         */
-    ebm_cmds              /* cmds         */
+    ebm_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

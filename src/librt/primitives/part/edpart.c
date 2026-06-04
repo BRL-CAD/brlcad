@@ -134,7 +134,8 @@ static const struct rt_edit_cmd_desc part_cmds[] = {
 	1,                    /* nparam       */
 	part_h_params,        /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	10                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PART_VRAD,       /* cmd_id       */
@@ -143,7 +144,8 @@ static const struct rt_edit_cmd_desc part_cmds[] = {
 	1,                    /* nparam       */
 	part_vrad_params,     /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	20                    /* display_order */,
+	NULL                  /* req_types */
     },
     {
 	ECMD_PART_HRAD,       /* cmd_id       */
@@ -152,7 +154,8 @@ static const struct rt_edit_cmd_desc part_cmds[] = {
 	1,                    /* nparam       */
 	part_hrad_params,     /* params       */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	30                    /* display_order */,
+	NULL                  /* req_types */
     }
 };
 
@@ -160,7 +163,9 @@ static const struct rt_edit_prim_desc part_prim_desc = {
     "part",               /* prim_type    */
     "Particle",           /* prim_label   */
     3,                    /* ncmd         */
-    part_cmds             /* cmds         */
+    part_cmds             /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
 };
 
 const struct rt_edit_prim_desc *

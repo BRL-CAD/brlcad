@@ -474,8 +474,8 @@ arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int 
  * affected points are calculated by intersecting planes.  This keeps
  * ALL faces planar.
  */
-RT_EXPORT extern int
-arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge, vect_t pos_model, const struct bn_tol *tol);
+struct rt_edit;
+RT_EXPORT extern int arb_edit(struct rt_edit *s, struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge, vect_t pos_model, const struct bn_tol *tol);
 
 
 
