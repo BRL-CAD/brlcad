@@ -1140,6 +1140,27 @@ arb_unpack_index_param(struct rt_edit *s, int *idx_out)
     s->e_inpara--;
 }
 
+static int
+edarb_canonicalize(struct rt_edit *s, struct rt_arb_internal *arb)
+{
+    struct rt_arb_internal repaired_arb;
+    int repair_ret;
+
+    /* Attempt to repair the edited points into a valid ARB4-ARB8 */
+    repair_ret = rt_arb_repair(&repaired_arb, arb, s->tol, RT_ARB_REPAIR_SNAP_VERTICES);
+    if (repair_ret < 0) {
+        if (s && s->log_str) {
+            bu_vls_printf(s->log_str, "Error: edit produced an invalid ARB that could not be repaired.\n");
+        }
+        return BRLCAD_ERROR;
+    }
+
+    /* Update points with the repaired/canonicalized ones */
+    memcpy(arb->pt, repaired_arb.pt, sizeof(point_t) * 8);
+
+    return BRLCAD_OK;
+}
+
 int
 ecmd_arb_move_face(struct rt_edit *s)
 {
@@ -1183,6 +1204,10 @@ ecmd_arb_move_face(struct rt_edit *s)
 	int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
 	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
+	
+	if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
+	}
     }
 
     return 0;
@@ -1374,6 +1399,10 @@ ecmd_arb_rotate_face(struct rt_edit *s)
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
     (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
+    
+    if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
+    }
     MAT_IDN(s->incr_change);
 
     /* no need to calc_planes again */
@@ -1479,6 +1508,11 @@ edarb_move_face_mousevec(struct rt_edit *s, const vect_t mousevec)
 	int arb_type = rt_arb_std_type(&s->es_int, s->tol);
 
 	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
+	
+	if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	    /* We don't have a return value for this function, so just return */
+	    return;
+	}
     }
 }
 
@@ -1541,6 +1575,10 @@ rt_edit_arb_edit(struct rt_edit *s)
     }
 
 arb_planecalc:
+
+    if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
+    }
 
     /* must re-calculate the face plane equations for arbs */
     arb_type = rt_arb_std_type(&s->es_int, s->tol);
@@ -2382,6 +2420,10 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
 	    for (i=5; i<8; i++)
 		VMOVE(arb->pt[i], arb->pt[4]);
 	    break;
+    }
+
+    if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	goto err;
     }
 
     return 0;		/* OK */
