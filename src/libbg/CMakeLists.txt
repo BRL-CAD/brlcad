@@ -10,13 +10,13 @@ include(CheckCXXCompilerFlag)
 include(CheckLinkerFlag)
 function(compiler_flag_chk cflag flag_list)
   string(TOUPPER "${cflag}" cflagup)
-  check_c_compiler_flag("-${cflag}" HAVE_${cflagup}))
+  check_c_compiler_flag("-${cflag}" HAVE_${cflagup})
   check_cxx_compiler_flag("-${cflag}" HAVE_CXX_${cflagup})
-  if(HAVE_${cflagup} AND HAVE_CXX_${cflagup}))
+  if(HAVE_${cflagup} AND HAVE_CXX_${cflagup})
     list(APPEND ${flag_list} "-${cflag}")
     set(${flag_list} ${${flag_list}} PARENT_SCOPE)
   endif()
-endif()
+endfunction()
 
 set(chk_geo_flags
   frounding-math
@@ -27,7 +27,7 @@ set(chk_geo_flags
   )
 set(_geo_flags)
 foreach(cgf ${chk_geo_flags})
-  compiler_flag_ck(${cgf} _geo_flags)
+  compiler_flag_chk(${cgf} _geo_flags)
 endforeach()
 
 # This is for a different compiler, so different invocation pattern
