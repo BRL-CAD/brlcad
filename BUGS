@@ -101,8 +101,6 @@ Recent Bugs
   unintuitive.  specifying gqa -p"" annoyingly outputs ""exp_air.plot3
   with quotes embedded in the name.
 
-* rtweight reports nan,nan,nan centroid when density is 0
-
 * rtweight/gqa volumes seem wrong with simple sphere test case, with
   values consistently and quickly converging less than the actual
   volume regardless of the grid size.

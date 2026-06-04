@@ -95,6 +95,32 @@ $RTWEIGHT -o $LOGFILE2 test.g rpp.r
 if grep -q 'Total mass = 7819.98 kg' $LOGFILE2; then STATUS=1; fi
 cat $LOGFILE2 >> $LOGFILE
 
+rm -f `pwd`/test.g
+
+# Test 3: zero-density region must report a real centroid, not nan
+# (a zero total mass previously caused a divide-by-zero centroid)
+log "... making sure a zero-density region reports a centroid and not nan"
+cat > `pwd`/zero.density << DENSITY_EOF
+1 0.0 Vacuum
+DENSITY_EOF
+$MGED -c test.g >> $LOGFILE 2>&1 << EOF
+make rpp rpp
+r rpp.r u rpp
+material import --name `pwd`/zero.density
+material assign rpp.r "Vacuum"
+EOF
+
+$RTWEIGHT -o $LOGFILE2 test.g rpp.r
+
+# a centroid must actually be reported (rtweight must not have aborted) ...
+if ! grep -q 'Centroid' $LOGFILE2; then STATUS=1; fi
+# ... and it must not be nan (matches nan, -nan, nan(ind), etc.)
+if grep -qi 'nan' $LOGFILE2; then STATUS=1; fi
+cat $LOGFILE2 >> $LOGFILE
+
+rm -f `pwd`/zero.density
+rm -f `pwd`/test.g
+
 if [ X$STATUS = X0 ] ; then
     log "-> rt-weight.sh succeeded"
 else

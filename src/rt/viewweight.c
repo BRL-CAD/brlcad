@@ -747,9 +747,17 @@ view_end(struct application *ap)
     }
 
     volume *= (dbp->dbi_base2local*dbp->dbi_base2local*dbp->dbi_base2local);
-    sum_x *= (conversion / total_weight) * dbp->dbi_base2local;
-    sum_y *= (conversion / total_weight) * dbp->dbi_base2local;
-    sum_z *= (conversion / total_weight) * dbp->dbi_base2local;
+    if (ZERO(total_weight)) {
+	/* No mass was accumulated (e.g. all densities are zero), so the
+	 * mass-weighted centroid is undefined.  Report a zero centroid
+	 * rather than dividing by zero and printing nan,nan,nan.
+	 */
+	sum_x = sum_y = sum_z = 0.0;
+    } else {
+	sum_x *= (conversion / total_weight) * dbp->dbi_base2local;
+	sum_y *= (conversion / total_weight) * dbp->dbi_base2local;
+	sum_z *= (conversion / total_weight) * dbp->dbi_base2local;
+    }
 
     fprintf(outfp, "RT Weight Program Output:\n");
     fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
