@@ -40,9 +40,18 @@
 
 #include <stdio.h>
 
-/* strict mode may not declare fileno() */
-# if !defined(fileno) && !defined(__cplusplus)
-extern int fileno(FILE *stream);
+/* strict mode may not declare fileno().  Ensure a consistent C linkage
+ * declaration for both C and C++ consumers, but do not attempt to add
+ * any project-specific dll-export/import attributes here so this header
+ * remains a standalone portability shim. */
+# if !defined(fileno)
+#  ifdef __cplusplus
+extern "C" {
+#  endif
+int fileno(FILE *stream);
+#  ifdef __cplusplus
+}
+#  endif
 # endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
