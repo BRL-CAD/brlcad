@@ -38,6 +38,7 @@ __BEGIN_DECLS
 
 /* Wrappers for using subprocess execution */
 struct bu_process;
+struct bu_vls;
 
 typedef enum {
     BU_PROCESS_STDIN,
@@ -55,6 +56,36 @@ typedef enum {
 // have a consistent 'aborted' return code on cross-platforms
 #define ERROR_PROCESS_ABORTED 1067L
 #endif
+
+/**
+ * Callback type used by bu_process_func().
+ *
+ * The callback runs in a subprocess.  On POSIX platforms this is
+ * implemented using fork(), so the callback should restrict itself to
+ * fork-safe operations.
+ *
+ * @param[in] data - opaque pointer supplied to bu_process_func()
+ *
+ * @return
+ * integer exit status for the subprocess
+ */
+typedef int (*bu_process_func_t)(void *data);
+
+/**
+ * Status and optional capture buffers for bu_process_func().
+ *
+ * If out and/or err are non-NULL, they must point to initialized
+ * bu_vls containers.  bu_process_func() truncates any supplied capture
+ * buffers before appending child process output.
+ */
+struct bu_process_func_info {
+    int exit_code;
+    int signaled;
+    int signal_num;
+    int timed_out;
+    struct bu_vls *out;
+    struct bu_vls *err;
+};
 
 /**
  * @brief Wrapper for executing a sub-process
@@ -76,6 +107,36 @@ DEPRECATED BU_EXPORT extern void bu_process_exec(struct bu_process **info, const
  * does not guarantee child process started successfully. use bu_process_wait() to check exit status
  */
 BU_EXPORT extern void bu_process_create(struct bu_process **pinfo, const char **argv, int process_creation_opts);
+
+/**
+ * @brief Run a callback in a subprocess and wait for it to complete.
+ *
+ * The callback runs in an isolated child process.  On POSIX
+ * platforms this is implemented using fork(), so the callback should
+ * limit itself to fork-safe operations and communicate results back to
+ * the parent via its return code and any captured output.
+ *
+ * If info is non-NULL, the status fields are populated on return.  If
+ * info->out and/or info->err are non-NULL, those initialized bu_vls
+ * buffers are truncated and filled with captured child output.  When
+ * BU_PROCESS_OUT_EQ_ERR is supplied, stderr is merged into the stdout
+ * capture buffer; if no stdout buffer is supplied, the merged stream is
+ * captured in info->err when available.
+ *
+ * @param[in,out] info - status record and optional capture buffers.  May be NULL
+ * @param[in] func - callback to run in the subprocess
+ * @param[in] data - opaque pointer supplied to func
+ * @param[in] timeout_ms - maximum wait time in milliseconds before forcibly
+ * stopping the subprocess.  A value of 0 waits indefinitely
+ * @param[in] flags - subprocess behavior flags.  BU_PROCESS_OUT_EQ_ERR is
+ * currently supported; on non-POSIX platforms this API is not yet supported
+ *
+ * @return
+ * callback return code if the subprocess exits normally;
+ * ERROR_PROCESS_ABORTED if it is terminated by a signal or times out;
+ * -1 on setup failure or unsupported platforms
+ */
+BU_EXPORT extern int bu_process_func(struct bu_process_func_info *info, bu_process_func_t func, void *data, int timeout_ms, int flags);
 
 
 /**
