@@ -19,10 +19,20 @@ function(compiler_flag_chk cflag flag_list)
   endif()
 endfunction()
 
+function(compiler_warning_suppress_chk warning flag_list)
+  string(MAKE_C_IDENTIFIER "${warning}" warning_id)
+  string(TOUPPER "${warning_id}" warningup)
+  check_c_compiler_flag("-Wno-error=${warning}" BG_GEO_C_WARN_${warningup})
+  check_cxx_compiler_flag("-Wno-error=${warning}" BG_GEO_CXX_WARN_${warningup})
+  if(BG_GEO_C_WARN_${warningup} AND BG_GEO_CXX_WARN_${warningup})
+    list(APPEND ${flag_list} "-Wno-${warning}")
+    set(${flag_list} ${${flag_list}} PARENT_SCOPE)
+  endif()
+endfunction()
+
 set(chk_geo_flags
   frounding-math
   ffp-contract=off
-  Wno-error=float-equal
   Wno-error=shadow
   Wno-error=unused-parameter
   )
@@ -30,6 +40,7 @@ set(_geo_flags)
 foreach(cgf ${chk_geo_flags})
   compiler_flag_chk(${cgf} _geo_flags)
 endforeach()
+compiler_warning_suppress_chk(float-equal _geo_flags)
 
 # This is for a different compiler, so different invocation pattern
 check_c_compiler_flag("/fp:precise" BG_C_FP_PRECISE)
