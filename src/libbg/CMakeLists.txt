@@ -1,44 +1,67 @@
 add_subdirectory(geogram)
 
-# Apply geogram-specific compile flags and definitions.
-# These must be set in the parent scope (libbg) since set_source_files_properties
-# is scoped to the directory where it is called and is not inherited by parents.
-#
+# Check for and apply geogram-specific compile flags and definitions.
 # -frounding-math and -ffp-contract=off are required to preserve the correctness
 # of exact-arithmetic predicates.  -Wno-float-equal suppresses comparisons that
 # are intrinsic to geogram's exact arithmetic.  The other suppressed warnings
 # reflect code patterns in this third-party subset that do not indicate defects.
-foreach(_src ${GEOGRAM_SRCS})
-    set_source_files_properties(${_src} PROPERTIES
-        COMPILE_DEFINITIONS "BRLCAD_GEOGRAM_EMBED;NL_WITH_AMGCL"
-    )
+include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+include(CheckLinkerFlag)
+function(compiler_flag_chk cflag flag_list)
+  string(TOUPPER "${cflag}" cflagup)
+  check_c_compiler_flag("-${cflag}" HAVE_${cflagup}))
+  check_cxx_compiler_flag("-${cflag}" HAVE_CXX_${cflagup})
+  if(HAVE_${cflagup} AND HAVE_CXX_${cflagup}))
+    list(APPEND ${flag_list} "-${cflag}")
+    set(${flag_list} ${${flag_list}} PARENT_SCOPE)
+  endif()
+endif()
+
+set(chk_geo_flags
+  frounding-math
+  ffp-contract=off
+  Wno-error=float-equal
+  Wno-error=shadow
+  Wno-error=unused-parameter
+  )
+set(_geo_flags)
+foreach(cgf ${chk_geo_flags})
+  compiler_flag_ck(${cgf} _geo_flags)
 endforeach()
-if(NOT MSVC)
-    set(_geo_flags
-        -frounding-math
-        -ffp-contract=off
-        -Wno-float-equal
-        -Wno-shadow
-        -Wno-unused-parameter
-    )
+
+# This is for a different compiler, so different invocation pattern
+check_c_compiler_flag("/fp:precise" BG_C_FP_PRECISE)
+check_cxx_compiler_flag("/fp:precise" BG_CXX_FP_PRECISE)
+if(BG_C_FP_PRECISE AND BG_CXX_FP_PRECISE)
+    list(APPEND _geo_flags "/fp:precise")
+endif()
+
+# This flag is only needed in a specific amgcl case
+check_cxx_compiler_flag("-Wno-error=unknown-pragmas" BG_CXX_WNO_UNKNOWN_PRAGMAS)
+set(_geo_amgcl_flags ${_geo_flags})
+if(BG_CXX_WNO_UNKNOWN_PRAGMAS)
+    list(APPEND _geo_amgcl_flags "-Wno-unknown-pragmas")
+endif()
+
+# These must be set in the parent scope (libbg) since set_source_files_properties
+# is scoped to the directory where it is called and is not inherited by parents.
+foreach(_src ${GEOGRAM_SRCS})
+    set_source_files_properties(${_src} PROPERTIES COMPILE_DEFINITIONS "BRLCAD_GEOGRAM_EMBED;NL_WITH_AMGCL")
+endforeach()
+if(_geo_flags)
     foreach(_src ${GEOGRAM_SRCS})
-        set_source_files_properties(${_src} PROPERTIES
-            COMPILE_OPTIONS "${_geo_flags}"
-        )
-    endforeach()
-    # nl_amgcl.cpp includes AMGCL headers that use #pragma omp; suppress the
-    # resulting -Wunknown-pragmas diagnostic (OpenMP is not required here).
-    set_source_files_properties(${GEOGRAM_AMGCL_SRC} PROPERTIES
-        COMPILE_OPTIONS "${_geo_flags};-Wno-unknown-pragmas"
-    )
-    unset(_geo_flags)
-else()
-    foreach(_src ${GEOGRAM_SRCS})
-        set_source_files_properties(${_src} PROPERTIES
-            COMPILE_OPTIONS "/fp:precise"
-        )
+        set_source_files_properties(${_src} PROPERTIES COMPILE_OPTIONS "${_geo_flags}")
     endforeach()
 endif()
+# nl_amgcl.cpp includes AMGCL headers that use #pragma omp; suppress the
+# resulting -Wunknown-pragmas diagnostic when that warning group is available
+# (OpenMP is not required here).
+if(_geo_amgcl_flags)
+    set_source_files_properties(${GEOGRAM_AMGCL_SRC} PROPERTIES COMPILE_OPTIONS "${_geo_amgcl_flags}")
+endif()
+unset(_geo_amgcl_flags)
+unset(_geo_flags)
 
 find_package_eigen(REQUIRED)
 find_package_gte(REQUIRED)
@@ -122,6 +145,10 @@ brlcad_addlib(libbg "${LIBBG_SOURCES}" "" "${BG_INCLUDE_DIRS}"
     ${GEOGRAM_SRCS}
 )
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
+check_linker_flag("CXX" "-Wno-error=maybe-uninitialized" BG_LINKER_WNO_MAYBE_UNINITIALIZED)
+if(BG_LINKER_WNO_MAYBE_UNINITIALIZED)
+  target_link_options(libbg PRIVATE -Wno-maybe-uninitialized)
+endif()
 
 # enable /bigobj for spsr.cpp if we can
 # spsr has a lot of templates and inlines that will exceed (MSVC in particular)

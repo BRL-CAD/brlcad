@@ -260,7 +260,10 @@ test_bg_make_pnt_3planes(void)
     fastf_t eps = 1.0e-8;
     fastf_t nmag = sqrt(1.0 + eps * eps);
     plane_t near_yz = {0, 1.0 / nmag, eps / nmag, (456.0 + eps * 789.0) / nmag};
-    fastf_t tiny_eps = 1.0e-14;
+    fastf_t fallback_eps = 1.0e-11;
+    fastf_t fallback_nmag = sqrt(1.0 + fallback_eps * fallback_eps);
+    plane_t svd_yz = {0, 1.0 / fallback_nmag, fallback_eps / fallback_nmag, (456.0 + fallback_eps * 789.0) / fallback_nmag};
+    fastf_t tiny_eps = 1.0e-16;
     fastf_t tiny_nmag = sqrt(1.0 + tiny_eps * tiny_eps);
     plane_t near_singular = {0, 1.0 / tiny_nmag, tiny_eps / tiny_nmag, (456.0 + tiny_eps * 789.0) / tiny_nmag};
 
@@ -278,6 +281,12 @@ test_bg_make_pnt_3planes(void)
     if (bg_make_pnt_3planes(pt, x123, y456, near_yz) < 0 ||
 	DIST_PNT_PNT(pt, expected) > 1.0e-4) {
 	bu_log("near-singular solvable plane intersection failed: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y456, svd_yz) < 0 ||
+	DIST_PNT_PNT(pt, expected) > 1.0e-2) {
+	bu_log("SVD fallback plane intersection failed: %.17g %.17g %.17g\n", V3ARGS(pt));
 	failures++;
     }
 

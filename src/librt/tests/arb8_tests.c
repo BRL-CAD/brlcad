@@ -446,6 +446,9 @@ run_bg_3plane_intersection_tests(void)
     fastf_t eps = 1.0e-8;
     fastf_t nmag = sqrt(1.0 + eps * eps);
     plane_t near_yz = {0, 1.0 / nmag, eps / nmag, (456.0 + eps * 789.0) / nmag};
+    fastf_t fallback_eps = 1.0e-11;
+    fastf_t fallback_nmag = sqrt(1.0 + fallback_eps * fallback_eps);
+    plane_t svd_yz = {0, 1.0 / fallback_nmag, fallback_eps / fallback_nmag, (456.0 + fallback_eps * 789.0) / fallback_nmag};
 
     bu_log("BG 3-plane intersection tests:\n");
     if (bg_make_pnt_3planes(pt, x123, y456, z789) < 0 ||
@@ -469,6 +472,14 @@ run_bg_3plane_intersection_tests(void)
 	failures++;
     } else {
 	bu_log("  PASS near-singular solvable planes\n");
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y456, svd_yz) < 0 ||
+	DIST_PNT_PNT(pt, expected) > 1.0e-2) {
+	bu_log("  FAIL SVD fallback planes: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    } else {
+	bu_log("  PASS SVD fallback planes\n");
     }
 
     return failures;
