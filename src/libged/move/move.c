@@ -60,6 +60,15 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    /* The destination is an object name, not a path - reject slashes so
+     * we don't end up creating an object whose name contains the path
+     * separator (which produces broken, unlistable hierarchies).
+     */
+    if (strchr(argv[2], '/') != NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: destination name may not contain slashes", argv[2]);
+	return BRLCAD_ERROR;
+    }
+
     if ((dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 

@@ -47,6 +47,15 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     /* check the old_name source and new_name target */
 
+    /* The destination is an object name, not a path - reject slashes so
+     * we don't end up creating an object whose name contains the path
+     * separator (which produces broken, unlistable hierarchies).
+     */
+    if (strchr(new_name, '/') != NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: destination name may not contain slashes", new_name);
+	return BRLCAD_ERROR;
+    }
+
     dp = db_lookup(gedp->dbip, old_name, LOOKUP_NOISY);
 
     if (dp && db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
