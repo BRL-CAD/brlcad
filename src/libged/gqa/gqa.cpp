@@ -2566,7 +2566,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	ged_gqa_plot.vhead = bv_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     rtip->useair = use_air;
 
     start_objs = arg_count;
@@ -2794,7 +2794,7 @@ aborted:
 	_gd_densities_source = NULL;
     }
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 
     return BRLCAD_OK;
 }

@@ -226,7 +226,6 @@ set(
   parallel.h
   parallel_cpp11thread.cpp
   process.h
-  tests/semchk.cpp
   sha1.h
   vfont.h
   vls_vprintf.h

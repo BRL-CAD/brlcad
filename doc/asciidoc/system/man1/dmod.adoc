@@ -1,0 +1,74 @@
+= DMOD(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dmod - Modify a stream of doubles with mathematical operations
+
+== SYNOPSIS
+
+[source]
+----
+dmod [options]... [input.doubles] > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dmod* reads a stream of double-precision floating-point numbers and applies a sequence of mathematical operations to them, writing the modified double-precision values to standard output. 
+
+Any number of addition, subtraction, multiplication, division, absolute value, or exponentiation operations may be specified on the command line. The operations are applied to each number sequentially in the order they are provided.
+
+If the optional _input.doubles_ file is specified, *dmod* reads from it; otherwise, it reads from standard input.
+
+[[options]]
+== OPTIONS
+
+*-a* _val_::
+Add _val_ to each number.
+
+*-s* _val_::
+Subtract _val_ from each number.
+
+*-m* _val_::
+Multiply each number by _val_.
+
+*-d* _val_::
+Divide each number by _val_. Division by zero will cause the program to abort.
+
+*-A*::
+Compute the absolute value of each number.
+
+*-e* _val_::
+Raise each number to the power of _val_ (exponentiation).
+
+*-r* _val_::
+Compute the _val_-th root of each number (equivalent to raising to the power of 1/_val_). A zero root will cause the program to abort.
+
+[[examples]]
+== EXAMPLES
+
+.Sequential Mathematical Operations
+[example]
+====
+**dmod -a 5.0 -m 2.0 -A < data.raw > out.raw**
+
+Reads double-precision numbers from _data.raw_. For each number, it adds 5.0, then multiplies the result by 2.0, and finally takes the absolute value, writing the output to _out.raw_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1511,7 +1511,6 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 	/* i now holds the actual number of rings built (may be < nell). */
 	nell = i;
-	nseg = (nell > 0) ? segs_per_ell[nell - 1] : 0;
     }
 
     if (nell < 1) {

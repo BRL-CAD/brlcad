@@ -1,0 +1,59 @@
+= DAUTO(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dauto - Compute the unbiased autocorrelation function of doubles
+
+== SYNOPSIS
+
+[source]
+----
+dauto [window_size] < input.doubles > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dauto* reads a stream of double-precision floating-point numbers from standard input, computes an unbiased estimate of the autocorrelation function in overlapping windows, and writes the resulting double-precision values to standard output. 
+
+The input data is processed in chunks of size _window_size_ (default 512). Given _L_ elements at a time, it estimates the autocorrelation at lag 0 through lag _L_-1. The estimation is unbiased by applying a weighting factor inversely proportional to the number of overlapping samples at each lag. Zeros are assumed outside of the range of an input record.
+
+[[options]]
+== OPTIONS
+
+*window_size*::
+The number of samples per processing window. Defaults to 512 if not specified.
+
+[[examples]]
+== EXAMPLES
+
+.Basic *dauto* Usage
+[example]
+====
+**dauto 1024 < signal.raw > autocor.raw**
+
+Computes the unbiased autocorrelation of the double-precision values in _signal.raw_ using a window size of 1024 samples, and writes the output to _autocor.raw_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[see_also]]
+== SEE ALSO
+
+dauto2(1), damdf(1)
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

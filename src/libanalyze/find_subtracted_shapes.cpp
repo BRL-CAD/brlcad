@@ -404,7 +404,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     // diff validation processing, but that needs more thought
     ccomb_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "ccomb state");
     ccomb_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "ccomb resources");
-    ccomb_rtip = rt_new_rti(wdbp->dbip);
+    ccomb_rtip = rt_i_create(wdbp->dbip);
     for (i = 0; i < ncpus+1; i++) {
 	ccomb_vars[i].rtip = ccomb_rtip;
 	ccomb_vars[i].resp = &ccomb_resp[i];
@@ -560,7 +560,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    // Set up some resources
 	    candidate_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "candidate state");
 	    candidate_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "candidate resources");
-	    candidate_rtip = rt_new_rti(wdbp->dbip);
+	    candidate_rtip = rt_i_create(wdbp->dbip);
 	    for (size_t k = 0; k < ncpus+1; k++) {
 		candidate_vars[k].rtip = candidate_rtip;
 		candidate_vars[k].resp = &candidate_resp[k];

@@ -581,7 +581,6 @@
 ** ../../man1/en/bot_dump.php[Bot Dump]
 ** ../../man1/en/brep_simple.php[Brep Simple]
 ** ../../man1/en/brlcad.php[Brlcad]
-** ../../man1/en/brlcad-config.php[BrlCad Config]
 ** ../../man1/en/buffer.php[Buffer]
 ** ../../man1/en/bw3-pix.php[BW 3 Pix]
 ** ../../man1/en/bwcrop.php[BwCrop]

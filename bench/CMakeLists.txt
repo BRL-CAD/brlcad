@@ -4,7 +4,7 @@ add_definitions(-DCONSOLE)
 
 brlcad_addexec(pixcmp pixcmp.c libbu)
 set(BARK_SOURCES benchmark.c compute.c run.c clean.c)
-brlcad_addexec(bark "${BARK_SOURCES}" libbu NO_STRICT NO_INSTALL TEST_USESDATA)
+brlcad_addexec(bark "${BARK_SOURCES}" "libbu;${M_LIBRARY}" NO_STRICT NO_INSTALL TEST_USESDATA)
 
 if(BUILD_TESTING)
   configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/benchmark" COPYONLY)

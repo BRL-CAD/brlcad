@@ -8,7 +8,7 @@ set(TTCP_CLEAN_FILES
   ${CMAKE_CURRENT_BINARY_DIR}/ttcp_transmitter.err
   )
 
-brlcad_regression_test(regress-ttcp "ttcp" EXEC ttcp)
+brlcad_regression_test(regress-ttcp "ttcp" EXEC ttcp STAND_ALONE)
 
 distclean(${LOG_FILE})
 distclean(${TTCP_CLEAN_FILES})

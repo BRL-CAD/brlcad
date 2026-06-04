@@ -112,7 +112,7 @@ namespace GEOBRLGen {
             // Sanity check: make sure that the facet is not
             // adjacent to the same facet twice.
             index_t n = mesh->facets.nb_vertices(facet);
-            signed_index_t* adj = (signed_index_t*) alloca(
+            signed_index_t* adj = (signed_index_t*) BRLCAD_ALLOCA(
                 sizeof(signed_index_t) * n
             );
             GEOBRL::Memory::clear(adj, sizeof(signed_index_t) * n);

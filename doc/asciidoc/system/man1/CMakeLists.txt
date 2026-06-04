@@ -3,11 +3,13 @@ set(
   3dm-g.adoc
   alias-pix.adoc
   ap-pix.adoc
+  archer.adoc
   asc-nmg.adoc
   asc-plot3.adoc
   asc2dsp.adoc
   asc2g.adoc
   bolt.adoc
+  bombardier.adoc
   bot_dump.adoc
   brep_simple.adoc
   brlman.adoc
@@ -35,9 +37,20 @@ set(
   comgeom-g.adoc
   conv-vg2g.adoc
   cv.adoc
+  damdf.adoc
+  dauto.adoc
+  dauto2.adoc
   dbupgrade.adoc
+  dconv.adoc
+  ddisp.adoc
   decimate.adoc
+  dfft.adoc
+  dmod.adoc
+  dpeak.adoc
   dpix-pix.adoc
+  dsel.adoc
+  dstats.adoc
+  dwin.adoc
   dxf-g.adoc
   enf-g.adoc
   fast4-g.adoc
@@ -61,6 +74,7 @@ set(
   fbserv.adoc
   fbstretch.adoc
   fbzoom.adoc
+  fence.adoc
   g-acad.adoc
   g-dot.adoc
   g-dxf.adoc
@@ -88,6 +102,7 @@ set(
   gqa.adoc
   halftone.adoc
   handle.adoc
+  human.adoc
   icv.adoc
   iges-g.adoc
   imgdims.adoc
@@ -184,7 +199,6 @@ set(
 
 if(BRLCAD_EXTRADOCS)
   add_asciidoc("MAN1" benchmark.adoc man1 "" REQUIRED "rt")
-  add_asciidoc("MAN1" brlcad-config.adoc man1 "" REQUIRED "rt")
   add_asciidoc("MAN1" brlcad.adoc man1 "" REQUIRED "mged")
   add_asciidoc("MAN1" dbclean.adoc man1 "" REQUIRED "asc2g")
 
@@ -207,7 +221,6 @@ endif(BRLCAD_EXTRADOCS)
 cmakefiles(
   ${man1_EN}
   benchmark.adoc
-  brlcad-config.adoc
   brlcad.adoc
   dbclean.adoc
   CMakeLists.txt

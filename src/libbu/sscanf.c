@@ -68,7 +68,7 @@
 #define SIZET		0x02000	/* z: size_t */
 #define SHORTSHORT	0x04000	/* hh: char */
 #define UNSIGNED	0x08000	/* %[oupxX] conversions */
-#define ALTERNATE	0x40000	/* # flag for alternate behavior */
+#define ALTERNATE_B	0x40000	/* # flag for alternate behavior */
 
 /*
  * The following are used in integral conversions only:
@@ -216,7 +216,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		flags |= SUPPRESS;
 		goto again;
 	    case '#':
-		flags |= ALTERNATE;
+		flags |= ALTERNATE_B;
 		goto again;
 	    case 'j':
 		flags |= INTMAXT;
@@ -478,7 +478,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		     * conversion specification is preceded by at least one whitespace
 		     * character.
 		     */
-		    if (isspace((int)(*bu_vls_addr(&partFmt))) || flags & ALTERNATE) {
+		    if (isspace((int)(*bu_vls_addr(&partFmt))) || flags & ALTERNATE_B) {
 			while (1) {
 			    c = src[numCharsConsumed];
 			    if (c == '\0' || !isspace(c)) {
@@ -509,7 +509,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 			    if (c == '\0') {
 				break;
 			    }
-			    if ((flags & ALTERNATE) && isspace(c)) {
+			    if ((flags & ALTERNATE_B) && isspace(c)) {
 				break;
 			    }
 			    ++partConsumed;
@@ -523,7 +523,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 			    if (c == '\0') {
 				break;
 			    }
-			    if ((flags & ALTERNATE) && isspace(c)) {
+			    if ((flags & ALTERNATE_B) && isspace(c)) {
 				break;
 			    }
 
@@ -707,7 +707,7 @@ bu_sscanf(const char *src, const char *fmt, ...)
 #undef SIZET
 #undef SHORTSHORT
 #undef UNSIGNED
-#undef ALTERNATE
+#undef ALTERNATE_B
 #undef SIGNOK
 #undef NDIGITS
 #undef PFXOK

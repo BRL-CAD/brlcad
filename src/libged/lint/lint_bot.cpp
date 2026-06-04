@@ -580,7 +580,7 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
     // TODO check for flipped bot
 
     // Note that these won't work as expected if the BoT is self-intersecting.
-    struct rt_i *rtip = rt_new_rti(bdata->gedp->dbip);
+    struct rt_i *rtip = rt_i_create(bdata->gedp->dbip);
     rt_gettree(rtip, dp->d_namep);
     rt_prep(rtip);
 
@@ -669,7 +669,7 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
 	delete d;
     }
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     bu_free(resp, "resp");
 }
 

@@ -4928,7 +4928,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 
     if (bot->orientation == RT_BOT_UNORIENTED) {
 	/* need to do raytracing, do prepping */
-	rtip = rt_new_rti(dbip);
+	rtip = rt_i_create(dbip);
 
 	RT_APPLICATION_INIT(&ap);
 	ap.a_rt_i = rtip;
@@ -4972,7 +4972,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 	    ap.a_user = i;
 	    (void) rt_shootray(&ap);
 	}
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
     } else {
 	/* calculate normals */
 	for (i = 0; i < bot->num_faces; i++) {

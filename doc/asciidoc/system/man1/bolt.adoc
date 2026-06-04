@@ -17,7 +17,9 @@ bolt [options]...
 [[description]]
 == DESCRIPTION
 
-*bolt* is a program to create a BRL-CAD data base of one of four different kinds of bolts. Up to twenty-six bolts of one type and size may be created. *bolt* uses libwdb to create a database file. This program may be run interactively or the user may specify options on a command line. If the user chooses to run the program interactively he answers the questions as the program prompts him. Below are the options that can be used on the command line.
+*bolt* creates a BRL-CAD database containing one of four different kinds of bolts. Up to 256 bolts of a single type and size may be generated per run. *bolt* uses libwdb to create the database file. 
+
+If run without arguments, the program enters interactive mode and prompts for all required parameters. Alternatively, options may be specified directly on the command line.
 
 
 [[options]]
@@ -33,7 +35,7 @@ BRL-CAD file name.
 
 
 *-n #*::
-The number of bolts to be created. This number must be less than or equal to 26 (or it will be set to 26).
+The number of bolts to be created. This number must be less than or equal to 256.
 
 
 *-hd #*::

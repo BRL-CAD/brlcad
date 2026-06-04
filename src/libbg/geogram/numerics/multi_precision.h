@@ -221,6 +221,7 @@ namespace GEOBRL {
     void set_length(index_t new_length) {
         geo_debug_assert(new_length <= capacity());
         length_ = new_length;
+        x_[new_length] = 0.0;
     }
 
     /**
@@ -284,7 +285,7 @@ namespace GEOBRL {
         // an entry past the end (without using it).
         return
             sizeof(expansion) - 2 * sizeof(double) +
-            (capa + 1) * sizeof(double);
+            std::max(capa + 1, index_t(2)) * sizeof(double);
     }
 
     /**
@@ -328,18 +329,18 @@ namespace GEOBRL {
     /**
      * \brief Allocates an expansion on the stack.
      * \details It can only be a macro (and not an inline function)
-     *  since alloca() cannot be called from inline functions.
+     *  since BRLCAD_ALLOCA() cannot be called from inline functions.
      * \arg capa required capacity of the expansion.
      * \relates GEOBRL::expansion
      */
 #ifdef CPPCHECK
     // cppcheck does not understand that the result
-    // of alloca() is passed to the placement syntax
+    // of BRLCAD_ALLOCA() is passed to the placement syntax
     // of operator new.
     expansion& new_expansion_on_stack(index_t capa);
 #else
 #define new_expansion_on_stack(capa)                                    \
-    (new (alloca(expansion::bytes_on_stack(capa)))expansion(capa))
+    (new (BRLCAD_ALLOCA(expansion::bytes_on_stack(capa)))expansion(capa))
 #endif
 
     /**

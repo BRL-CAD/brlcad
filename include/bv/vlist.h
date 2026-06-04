@@ -119,7 +119,7 @@ struct bv_vlist  {
 	struct bv_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bv_vlist, (_dest_hd)); \
-	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BV_VLIST_CHUNK) { \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || (_vp && _vp->nused >= BV_VLIST_CHUNK)) { \
 	    BV_GET_VLIST(_free_hd, _vp); \
 	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
@@ -132,7 +132,7 @@ struct bv_vlist  {
 	struct bv_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bv_vlist, (_dest_hd)); \
-	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BV_VLIST_CHUNK) { \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || (_vp && _vp->nused >= BV_VLIST_CHUNK)) { \
 	    BV_GET_VLIST(_free_hd, _vp); \
 	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
@@ -145,7 +145,7 @@ struct bv_vlist  {
 	struct bv_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bv_vlist, (_dest_hd)); \
-	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BV_VLIST_CHUNK) { \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || (_vp && _vp->nused >= BV_VLIST_CHUNK)) { \
 	    BV_GET_VLIST(_free_hd, _vp); \
 	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
@@ -157,7 +157,7 @@ struct bv_vlist  {
 	struct bv_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bv_vlist, (_dest_hd)); \
-	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BV_VLIST_CHUNK) { \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || (_vp && _vp->nused >= BV_VLIST_CHUNK)) { \
 	    BV_GET_VLIST(_free_hd, _vp); \
 	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
@@ -170,7 +170,7 @@ struct bv_vlist  {
 	struct bv_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bv_vlist, (_dest_hd)); \
-	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BV_VLIST_CHUNK) { \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || (_vp && _vp->nused >= BV_VLIST_CHUNK)) { \
 	    BV_GET_VLIST(_free_hd, _vp); \
 	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \

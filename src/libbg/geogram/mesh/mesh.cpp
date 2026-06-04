@@ -821,10 +821,10 @@ namespace GEOBRL {
         // Allocated on the stack (more multithread-friendly
         // and no need to free)
         index_t* corner_vertex_index =
-            (index_t*) alloca(sizeof(index_t) * d);
+            (index_t*) BRLCAD_ALLOCA(sizeof(index_t) * d);
 
         index_t* corner_adjacent_facet =
-            (index_t*) alloca(sizeof(index_t) * d);
+            (index_t*) BRLCAD_ALLOCA(sizeof(index_t) * d);
 
         index_t c0 = corners_begin(f);
         for(index_t i = 0; i < d; i++) {

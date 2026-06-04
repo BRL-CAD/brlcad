@@ -1,0 +1,56 @@
+= DPEAK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dpeak - Find the peak value in a stream of doubles
+
+== SYNOPSIS
+
+[source]
+----
+dpeak [window_size] < input.doubles > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dpeak* is an experimental signal processing utility that reads a stream of double-precision floating-point numbers from standard input, searches for local maximums (peaks) within discrete windows, and writes the sample index of the largest peak found to standard output. The output is written as a double-precision floating-point value.
+
+A "peak" is defined as a negative second difference (i.e., a local maximum where the data value is greater than both its immediate predecessor and the value before that). The search ignores the first 5 samples of each window.
+
+The input data is processed in chunks of size _window_size_ (default 512). For each window, the program identifies all local peaks and then outputs the sample index (relative to the start of the window) of the single highest peak. 
+
+[[options]]
+== OPTIONS
+
+*window_size*::
+The number of samples per processing window. Defaults to 512 if not specified.
+
+[[examples]]
+== EXAMPLES
+
+.Finding the Peak in a Signal
+[example]
+====
+**dpeak 1024 < signal.raw > peak_indices.raw**
+
+Processes the double-precision data in _signal.raw_ using a window size of 1024. For each window, it finds the index of the highest peak and writes that index (as a double) to _peak_indices.raw_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

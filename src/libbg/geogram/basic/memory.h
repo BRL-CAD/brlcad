@@ -40,6 +40,7 @@
 #ifndef GEOBRLCAD_BASIC_MEMORY
 #define GEOBRLCAD_BASIC_MEMORY
 
+#include "common.h"
 #include <geogram/basic/geogram_common.h>
 #include <geogram/basic/assert.h>
 #include <geogram/basic/numeric.h>
@@ -392,7 +393,7 @@ namespace GEOBRL {
          * \return An aligned pointer to a memory block of \p size bytes.
          */
 #define geo_aligned_alloca(size)                                        \
-        GEOBRL::Memory::align(alloca(size + GEOBRL_MEMORY_ALIGNMENT - 1))
+        GEOBRL::Memory::align(BRLCAD_ALLOCA(size + GEOBRL_MEMORY_ALIGNMENT - 1))
 
         /**
          * \brief An allocator that performs aligned memory allocations
@@ -564,7 +565,7 @@ namespace GEOBRL {
              * \brief Conversion operator to different aligned_allocator
              * \details Required when compiling under MSVC version <= 2010
              */
-            template <class T2, int A2> operator aligned_allocator<T2, A2>() {
+            template <class T2, int A2> operator aligned_allocator<T2, A2>() const noexcept {
                 return aligned_allocator<T2,A2>();
             }
         };

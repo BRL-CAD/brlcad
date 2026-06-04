@@ -430,7 +430,7 @@ test_p0_perturb(struct ged *gedp)
 static void
 test_p0_hrt_descriptor_ops(struct ged *gedp)
 {
-    struct rt_hrt_internal h;
+    struct rt_hrt_internal h = {};
 
     {
         const char *av[] = {"edit", "hrt", "--list-ops", NULL};

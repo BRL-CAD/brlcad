@@ -524,6 +524,7 @@ mged_setup(struct mged_state *s)
 	bu_log("tclcad_init error:\n%s\n", bu_vls_addr(&tlog));
     }
     bu_vls_free(&tlog);
+    Tcl_SetVar(s->interp, "mged_shutting_down", "0", TCL_GLOBAL_ONLY);
 
     mged_global_db_ctx.s = s;
 

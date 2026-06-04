@@ -1297,11 +1297,21 @@ macro(find_package_bullet)
   cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
 
   find_package_reset(Bullet RESET_TP)
+  find_package_reset(BULLET RESET_TP)
+  unset(BULLET_DYNAMICS_LIBRARY CACHE)
+  unset(BULLET_DYNAMICS_LIBRARY_DEBUG CACHE)
+  unset(BULLET_COLLISION_LIBRARY CACHE)
+  unset(BULLET_COLLISION_LIBRARY_DEBUG CACHE)
+  unset(BULLET_MATH_LIBRARY CACHE)
+  unset(BULLET_MATH_LIBRARY_DEBUG CACHE)
+  unset(BULLET_SOFTBODY_LIBRARY CACHE)
+  unset(BULLET_SOFTBODY_LIBRARY_DEBUG CACHE)
   unset(BULLET_STATUS CACHE)
   unset(BULLET_BT_USE_DOUBLE_PRECISION CACHE)
 
-  # Prefer bundled/noinstall external deps when available.
-  set(Bullet_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
+  # Bullet is staged from bext's install tree into the build directory,
+  # so prefer that location rather than noinstall.
+  set(Bullet_ROOT "${CMAKE_BINARY_DIR}")
   if(F_REQUIRED)
     find_package(Bullet REQUIRED)
   else()
@@ -1310,39 +1320,37 @@ macro(find_package_bullet)
 
   if(BULLET_LIBRARIES)
     list(GET BULLET_LIBRARIES 0 _bullet_lib0)
-    set(_bullet_double OFF)
-    if(CMAKE_NM AND EXISTS "${_bullet_lib0}")
-      execute_process(
-        COMMAND "${CMAKE_NM}" -C "${_bullet_lib0}"
-        OUTPUT_VARIABLE _bullet_dump
-        ERROR_QUIET)
-    elseif(COMMAND brlcad_binary_dump)
-      brlcad_binary_dump(_bullet_dump "${_bullet_lib0}")
+
+    is_subpath("${CMAKE_BINARY_DIR}" "${_bullet_lib0}" BULLET_LOCAL_TEST)
+    is_subpath("${BRLCAD_EXT_INSTALL_DIR}" "${_bullet_lib0}" BULLET_EXT_INSTALL_TEST)
+    is_subpath("${BRLCAD_EXT_NOINSTALL_DIR}" "${_bullet_lib0}" BULLET_EXT_TEST)
+    if(BULLET_LOCAL_TEST OR BULLET_EXT_INSTALL_TEST OR BULLET_EXT_TEST)
+      set(BULLET_STATUS "Bundled" CACHE STRING "Bullet bundled status" FORCE)
+    else()
+      set(BULLET_STATUS "System" CACHE STRING "Bullet bundled status" FORCE)
     endif()
-    if(_bullet_dump)
-      string(FIND "${_bullet_dump}" "btRigidBody::setMassProps(double, btVector3 const&)" _has_double)
-      if(_has_double GREATER -1)
+
+    set(_bullet_double ON)
+
+    if(BULLET_STATUS STREQUAL "System")
+      if("${BULLET_DEFINITIONS}" MATCHES "BT_USE_DOUBLE_PRECISION")
         set(_bullet_double ON)
+      else()
+        # if system Bullet does not explicitly define double, we'll
+        # default to OFF as many/most system packages default to float
+        # and/or install the double version adjacent in ad hoc ways.
+        set(_bullet_double OFF)
       endif()
     endif()
-    unset(_bullet_dump)
-    unset(_has_double)
+
     if(_bullet_double)
       set(BULLET_BT_USE_DOUBLE_PRECISION ON CACHE BOOL "Bullet btScalar is double" FORCE)
     else()
       set(BULLET_BT_USE_DOUBLE_PRECISION OFF CACHE BOOL "Bullet btScalar is double" FORCE)
     endif()
-
-    is_subpath("${CMAKE_BINARY_DIR}" "${_bullet_lib0}" BULLET_LOCAL_TEST)
-    is_subpath("${BRLCAD_EXT_NOINSTALL_DIR}" "${_bullet_lib0}" BULLET_EXT_TEST)
-    if(BULLET_LOCAL_TEST OR BULLET_EXT_TEST)
-      set(BULLET_STATUS "Bundled" CACHE STRING "Bullet bundled status" FORCE)
-    else()
-      set(BULLET_STATUS "System" CACHE STRING "Bullet bundled status" FORCE)
-    endif()
   elseif(Bullet_FOUND)
     set(BULLET_STATUS "System" CACHE STRING "Bullet bundled status" FORCE)
-    set(BULLET_BT_USE_DOUBLE_PRECISION OFF CACHE BOOL "Bullet btScalar is double" FORCE)
+    set(BULLET_BT_USE_DOUBLE_PRECISION ON CACHE BOOL "Bullet btScalar is double" FORCE)
   else()
     set(BULLET_STATUS "NotFound" CACHE STRING "Bullet bundled status" FORCE)
   endif()

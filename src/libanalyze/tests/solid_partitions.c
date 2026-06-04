@@ -72,7 +72,7 @@ main(int argc, char **argv)
     /* TODO: call rt_bound_internal instead of prep directly to get
      * the bounding box.
      */
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
     state.rtip = rtip;
     state.resp = &resp;
     rt_init_resource(state.resp, 0, rtip);

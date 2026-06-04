@@ -109,12 +109,19 @@ draw_wireframe_box(FILE *fp, const point_t min_pt, const point_t max_pt)
 }
 
 
-static std::string
-error_at(const std::string &message, const db_full_path &path)
+static const char *
+path_name_or_empty(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
 
-    return message + " at '" + DB_FULL_PATH_CUR_DIR(&path)->d_namep + "'";
+    return (path.fp_len > 0) ? DB_FULL_PATH_CUR_DIR(&path)->d_namep : "<empty path>";
+}
+
+
+static std::string
+error_at(const std::string &message, const db_full_path &path)
+{
+    return message + " at '" + path_name_or_empty(path) + "'";
 }
 
 
@@ -125,10 +132,10 @@ get_aabb(db_i &db, const db_full_path &path)
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    const simulate::AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&db));
+    const simulate::AutoPtr<rt_i, rt_i_destroy> rti(rt_i_create(&db));
 
     if (!rti.ptr)
-	bu_bomb("rt_new_rti() failed");
+	bu_bomb("rt_i_create() failed");
 
     const simulate::AutoPtr<char> path_str(db_path_to_string(&path));
 
@@ -523,7 +530,7 @@ Simulation::Region::Region(db_i &db, const db_full_path &path,
     if (NEAR_ZERO(mass, SMALL_FASTF) && roi_proxy) {
 	// Static body with ROI proxy enabled
 	m_roi_collision_shape = new RtRoiCollisionShape(aabb.first, aabb.second,
-							DB_FULL_PATH_CUR_DIR(&path)->d_namep);
+							path_name_or_empty(path));
 	shape = m_roi_collision_shape;
 
 	// Set initial transform to ROI center (starts at global AABB center)
@@ -536,7 +543,7 @@ Simulation::Region::Region(db_i &db, const db_full_path &path,
 	// Dynamic body or static body with ROI disabled - use standard collision shape
 	m_collision_shape = new RtCollisionShape(aabb.second - aabb.first,
 						 (aabb.first + aabb.second) / 2.0 - center_of_mass,
-						 DB_FULL_PATH_CUR_DIR(&path)->d_namep);
+						 path_name_or_empty(path));
 	shape = m_collision_shape;
     }
 
@@ -805,7 +812,7 @@ Simulation::saveState()
 	    continue;
 
 	const db_full_path &path = region->getPath();
-	const char * const name = DB_FULL_PATH_CUR_DIR(&path)->d_namep;
+	const char * const name = path_name_or_empty(path);
 
 	const std::string linear_vel_str = serialize_vector(body->getLinearVelocity());
 	const std::string angular_vel_str = serialize_vector(body->getAngularVelocity());

@@ -473,8 +473,8 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     VSETALL(rpp_min, MAX_FASTF);
     VREVERSE(rpp_max, rpp_min);
 
-    if ((rtip=rt_new_rti(dbip)) == RTI_NULL) {
-	bu_log("rt_bound_internal: rt_new_rti() failure while getting bb for %s\n", dp->d_namep);
+    if ((rtip=rt_i_create(dbip)) == RTI_NULL) {
+	bu_log("rt_bound_internal: rt_i_create() failure while getting bb for %s\n", dp->d_namep);
 	return -1;
     }
 
@@ -483,14 +483,14 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
      */
     if (rt_gettree(rtip, dp->d_namep) < 0) {
 	bu_log("rt_bound_internal: rt_gettree('%s') failed\n", dp->d_namep);
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1;
     }
 
 
     if (!rt_db_lookup_internal(dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY)) {
 	bu_exit(1, "rt_bound_internal: rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1;
     }
 
@@ -520,7 +520,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     if (rt_traverse_tree(rtip, combp->tree, tree_min, tree_max)) {
 	bu_log("rt_bound_internal: rt_bound_tree() failed\n");
 	rt_db_free_internal(&intern);
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1;
     }
 
@@ -542,7 +542,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     }
 
     rt_db_free_internal(&intern);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     return 0;
 }
 
@@ -562,10 +562,10 @@ rt_obj_bounds(struct bu_vls *msgs,
     struct region *regp;
 
     /* Make a new rt_i instance from the existing db_i structure */
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
     if (rtip == RTI_NULL) {
 	if (msgs)
-	    bu_vls_printf(msgs, "rt_new_rti failure for %s\n", dbip->dbi_filename);
+	    bu_vls_printf(msgs, "rt_i_create failure for %s\n", dbip->dbi_filename);
 	return BRLCAD_ERROR;
     }
 
@@ -580,7 +580,7 @@ rt_obj_bounds(struct bu_vls *msgs,
 	if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
 	    if (msgs)
 		bu_vls_printf(msgs, "db_string_to_path failed for %s\n", argv[i]);
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    return BRLCAD_ERROR;
 	}
 
@@ -593,7 +593,7 @@ rt_obj_bounds(struct bu_vls *msgs,
 	    if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
 		if (msgs)
 		    bu_vls_printf(msgs, "db_string_to_path failed for %s\n", regp->reg_name);
-		rt_free_rti(rtip);
+		rt_i_destroy(rtip);
 		db_free_full_path(&path);
 		return BRLCAD_ERROR;
 	    }
@@ -608,7 +608,7 @@ rt_obj_bounds(struct bu_vls *msgs,
 	if (!gottree && rt_gettree(rtip, argv[i])) {
 	    if (msgs)
 		bu_vls_printf(msgs, "rt_gettree failed for %s\n", argv[i]);
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    db_free_full_path(&path);
 	    return BRLCAD_ERROR;
 	}
@@ -638,7 +638,7 @@ rt_obj_bounds(struct bu_vls *msgs,
 		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		    if (msgs)
 			bu_vls_printf(msgs, "rt_bound_tree failed for %s\n", regp->reg_name);
-		    rt_free_rti(rtip);
+		    rt_i_destroy(rtip);
 		    return BRLCAD_ERROR;
 		}
 		VMINMAX(rpp_min, rpp_max, reg_min);
@@ -664,7 +664,7 @@ rt_obj_bounds(struct bu_vls *msgs,
 	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		if (msgs)
 		    bu_vls_printf(msgs, "rt_bound_tree failed for %s\n", regp->reg_name);
-		rt_free_rti(rtip);
+		rt_i_destroy(rtip);
 		return BRLCAD_ERROR;
 	    }
 	    VMINMAX(rpp_min, rpp_max, reg_min);
@@ -674,7 +674,7 @@ rt_obj_bounds(struct bu_vls *msgs,
     found:;
     }
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 
     return BRLCAD_OK;
 }

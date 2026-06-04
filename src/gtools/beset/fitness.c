@@ -364,7 +364,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
      rt_db_free_internal(&in);
     */
 
-    fstate->rtip = rt_new_rti(db);
+    fstate->rtip = rt_i_create(db);
     fstate->row = 0;
 
     if (rt_gettree(fstate->rtip, obj) < 0)
@@ -455,7 +455,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
       for (i = 0; i < fstate->max_cpus; i++)
       rt_clean_resource(fstate->rtip, &fstate->resource[i]);
     */
-    rt_free_rti(fstate->rtip);
+    rt_i_destroy(fstate->rtip);
 
 
 }

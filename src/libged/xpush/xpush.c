@@ -263,9 +263,9 @@ Copy_solid(struct ged *gedp,
     RT_CK_DIR(dp);
 
     /*
-    struct rt_i *rtip = rt_new_rti(gedp->dbip);
+    struct rt_i *rtip = rt_i_create(gedp->dbip);
     if (rt_gettree(rtip, dp->d_namep) < 0) return NULL;
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     */
 
     if (!(dp->d_flags & RT_DIR_SOLID)) {

@@ -211,7 +211,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 
     oldtime = bu_gettime();
 
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
 
     for (i = 0; i < ncpus+1; i++) {
 	/* standard */
@@ -252,11 +252,11 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 #endif
 #if 1
     if (rt_gettree(rtip, left) < 0) {
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1;
     }
     if (rt_gettree(rtip, right) < 0) {
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1;
     }
 #endif
@@ -359,7 +359,7 @@ memfree:
     }
 
     if (rtip) {
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
     }
 
     bu_free(state, "free state containers");

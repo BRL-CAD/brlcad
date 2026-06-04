@@ -67,6 +67,7 @@
 #include "bu/str.h"
 #include "bu/env.h"
 #include "bu/snooze.h"
+#include "bu/vls.h"
 #include "dm/fbserv.h"
 #include "tclcad/misc.h"  /* tclcad_listen_ipc() */
 #include "pkg.h"
@@ -736,8 +737,9 @@ main(int argc, const char **argv)
             BU_STR_EQUAL(argv[i], "-v"))
             g_verbose = true;
 
-    const char *fbserv_bin = getenv("FBSERV_BIN");
-    if (!fbserv_bin) {
+    struct bu_vls fbserv_bin = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fbserv_bin, "%s", getenv("FBSERV_BIN"));
+    if (!bu_vls_strlen(&fbserv_bin)) {
         /* Try to find fbserv relative to this test binary's directory.
          * CMake sets the build dir; fall back to a common path.        */
         static char fbserv_path[1024];
@@ -756,23 +758,22 @@ main(int argc, const char **argv)
             if (slash) {
                 *slash = '\0';
                 /* Check sibling bin/ from test build dir */
-                char candidate[1024];
-                snprintf(candidate, sizeof(candidate),
-                         "%s/../bin/fbserv", fbserv_path);
-                if (access(candidate, X_OK) == 0) {
-                    fbserv_bin = candidate;
-                }
+                struct bu_vls candidate = BU_VLS_INIT_ZERO;
+                bu_vls_sprintf(&candidate, "%s/../bin/fbserv", fbserv_path);
+                if (access(bu_vls_cstr(&candidate), X_OK) == 0)
+                    bu_vls_sprintf(&fbserv_bin, "%s", bu_vls_cstr(&candidate));
+		bu_vls_free(&candidate);
             }
         }
     }
-    if (!fbserv_bin)
-        fbserv_bin = "fbserv";   /* rely on PATH */
+    if (!bu_vls_strlen(&fbserv_bin))
+        bu_vls_sprintf(&fbserv_bin, "%s", "fbserv");   /* rely on PATH */
 
     if (g_verbose) {
         fprintf(stdout, "\n==============================================\n");
         fprintf(stdout, "  pkg IPC / fbs_open_ipc Regression Tests\n");
         fprintf(stdout, "==============================================\n");
-        fprintf(stdout, "  fbserv binary: %s\n\n", fbserv_bin);
+        fprintf(stdout, "  fbserv binary: %s\n\n", bu_vls_cstr(&fbserv_bin));
     }
 
     test_pkg_pair_basics();
@@ -783,9 +784,8 @@ main(int argc, const char **argv)
 #ifndef _WIN32
     test_tcl_file_handler();
     test_tcl_fbserv_var();
-    test_fbserv_minus_I(fbserv_bin);
+    test_fbserv_minus_I(bu_vls_cstr(&fbserv_bin));
 #else
-    (void)fbserv_bin;
     if (g_verbose)
         fprintf(stdout, "\n[Group 6] SKIPPED (Tcl_CreateFileHandler not available on Windows)\n");
     test_tcl_listen_ipc_win();  /* Group 7: Windows timer-IPC path */
@@ -796,6 +796,8 @@ main(int argc, const char **argv)
     fprintf(stdout, "\n==============================================\n");
     fprintf(stdout, "  Results: %d / %d passed\n", g_tests_pass, g_tests_run);
     fprintf(stdout, "==============================================\n\n");
+
+    bu_vls_free(&fbserv_bin);
 
     return (g_tests_pass == g_tests_run) ? 0 : 1;
 }

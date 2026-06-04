@@ -29,6 +29,7 @@
 
 #ifdef HAVE_BULLET
 
+#include <random>
 
 #include "rt_debug_draw.hpp"
 #include "utility.hpp"
@@ -54,8 +55,10 @@ make_name(const db_i &db, const std::string &base)
     std::ostringstream stream;
     stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
-    unsigned long object_number = static_cast<unsigned long>
-    (drand48() * std::numeric_limits<unsigned long>::max() + 0.5);
+
+    std::mt19937_64 rng(std::random_device{}());
+    std::uniform_int_distribution<unsigned long> dist;
+    unsigned long object_number = dist(rng);
 
     do {
 	stream.str("");

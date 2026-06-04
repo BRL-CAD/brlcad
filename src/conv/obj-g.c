@@ -3202,7 +3202,7 @@ main(int argc, char **argv)
 
     /* the raytracer tolerance values (rtip->rti_tol) need to match
      * these otherwise raytrace errors will result. the defaults for
-     * the rti_tol are set in the function rt_new_rti.  either use
+     * the rti_tol are set in the function rt_i_create.  either use
      * here the rti_tol defaults or when raytracing change the
      * raytracer values to these.
      */

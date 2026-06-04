@@ -276,7 +276,7 @@ run_convergence_case(struct db_i *dbip,
 	double run_sec = 0.0;
 	int cr = -1;
 
-	struct rt_i *rtip = rt_new_rti(dbip);
+	struct rt_i *rtip = rt_i_create(dbip);
 	if (!rtip) {
 	    printf("  %-24s  target=%.1f%%  init-fail\n", label, target_pct);
 	    failures++;
@@ -285,7 +285,7 @@ run_convergence_case(struct db_i *dbip,
 
 	if (rt_gettree(rtip, objname) != 0) {
 	    printf("  %-24s  target=%.1f%%  gettree-fail\n", label, target_pct);
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    failures++;
 	    continue;
 	}
@@ -296,7 +296,7 @@ run_convergence_case(struct db_i *dbip,
 	int64_t t0 = bu_gettime();
 	cr = rt_crofton_shoot(rtip, &p, &sa, &vol);
 	run_sec = (double)(bu_gettime() - t0) / 1000000.0;
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 
 	if (elapsed_total_sec)
 	    *elapsed_total_sec += run_sec;

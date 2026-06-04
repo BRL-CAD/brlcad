@@ -231,7 +231,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(7eaec4272310a7a741817c8f680d8db49abe2387)
+brlcad_bext_init(949b394e8bd4492662bb19fb7082b2fbbc27f07d)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -2044,6 +2044,27 @@ return 0;
 if(HAVE_GETCURRENTPROCESSID)
   config_h_append(BRLCAD "#define HAVE_GETCURRENTPROCESSID 1\n")
 endif(HAVE_GETCURRENTPROCESSID)
+
+
+if(HAVE_NETDB_H)
+  check_c_source_compiles("
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+int main(void) {
+struct addrinfo hints = {0};
+hints.ai_family = AF_UNSPEC;
+hints.ai_socktype = SOCK_STREAM;
+struct addrinfo *res = NULL;
+return getaddrinfo(\"localhost\", NULL, &hints, &res);
+}
+  " HAVE_GETADDRINFO)
+  if(HAVE_GETADDRINFO)
+    config_h_append(BRLCAD "#define HAVE_GETADDRINFO 1\n")
+  endif(HAVE_GETADDRINFO)
+endif()
 
 # functionality tests for lrint
 set(lrint_test "long int lrint(double); int main(void) {return lrint(3.14);}")

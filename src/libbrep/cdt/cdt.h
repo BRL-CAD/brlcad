@@ -39,7 +39,7 @@
 #include <set>
 #include <utility>
 
-#include "RTree.h"
+#include "../../libbg/RTree.h"
 
 #include "assert.h"
 

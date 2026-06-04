@@ -84,7 +84,7 @@ __BEGIN_DECLS
  * @return BRLCAD_ERROR if inputs are invalid or calculation fails
  *
  */
-BG_EXPORT extern int bg_pca(point_t *c, vect_t *xaxis, vect_t *yaxis, vect_t *zaxis, size_t npnts, point_t *pnts);
+BG_EXPORT extern int bg_pca(point_t *c, vect_t *xaxis, vect_t *yaxis, vect_t *zaxis, size_t npnts, const point_t *pnts);
 
 __END_DECLS
 

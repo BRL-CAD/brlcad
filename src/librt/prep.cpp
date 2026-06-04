@@ -92,7 +92,7 @@ rt_i_internal_create(void)
 /**
  * Release the private internal state for an rt_i.  All dynamic fields
  * inside rt_i_internal must have been freed by rt_clean() before this
- * is called (rt_free_rti() guarantees that ordering).
+ * is called (rt_i_destroy() guarantees that ordering).
  */
 void
 rt_i_internal_destroy(struct rt_i_internal *i)
@@ -117,20 +117,11 @@ rt_solidhead_ptr(struct rt_i *rtip, int idx)
     return &(rtip->i->rti_solidheads[idx]);
 }
 
-
-/**
- * Given a db_i database instance, create an rt_i instance.  If caller
- * just called db_open, they need to do a db_close(), because we have
- * cloned our own instance of the db_i.
- */
-struct rt_i *
-rt_new_rti(struct db_i *dbip)
+void
+rt_i_init(struct rt_i *rtip, struct db_i *dbip)
 {
-    struct rt_i *rtip;
-
     RT_CK_DBI(dbip);
 
-    BU_ALLOC(rtip, struct rt_i);
     rtip->rti_magic = RTI_MAGIC;
 
     /* Allocate private internal state */
@@ -167,9 +158,7 @@ rt_new_rti(struct db_i *dbip)
     rtip->rti_ttol.norm = 0;
 
     /* This sets the space partitioning algorithm to Mike's original
-     * non-uniform binary space partitioning tree.  If you change this
-     * to anything else, you must also modify "rt_find_backing_dist()"
-     * (in shoot.c), to handle the different algorithm -JRA
+     * non-uniform binary space partitioning tree.
      */
     rtip->rti_space_partition = RT_PART_NUBSPT;
 
@@ -189,10 +178,28 @@ rt_new_rti(struct db_i *dbip)
 	    dp->d_uses = 0;
 	FOR_ALL_DIRECTORY_END;
     }
+}
 
+/**
+ * Given a db_i database instance, create an rt_i instance.  If caller
+ * just called db_open, they need to do a db_close(), because we have
+ * cloned our own instance of the db_i.
+ */
+struct rt_i *
+rt_i_create(struct db_i *dbip)
+{
+    RT_CK_DBI(dbip);
+    struct rt_i *rtip = NULL;
+    BU_ALLOC(rtip, struct rt_i);
+    rt_i_init(rtip, dbip);
     return rtip;
 }
 
+struct rt_i *
+rt_new_rti(struct db_i *dbip)
+{
+    return rt_i_create(dbip);
+}
 
 /**
  * Release all the dynamic storage acquired by rt_dirbuild() and any
@@ -202,7 +209,7 @@ rt_new_rti(struct db_i *dbip)
  * that the rt_g structure needs to be cleaned separately.
  */
 void
-rt_free_rti(struct rt_i *rtip)
+rt_i_clear(struct rt_i *rtip)
 {
     RT_CK_RTI(rtip);
 
@@ -216,10 +223,20 @@ rt_free_rti(struct rt_i *rtip)
 
     rt_i_internal_destroy(rtip->i);
     rtip->i = NULL;
+}
 
+void
+rt_i_destroy(struct rt_i *rtip)
+{
+    rt_i_clear(rtip);
     bu_free((char *)rtip, "struct rt_i");
 }
 
+void
+rt_free_rti(struct rt_i *rtip)
+{
+    rt_i_destroy(rtip);
+}
 
 /**
  * This routine should be called just before the first call to
@@ -235,7 +252,8 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     struct region *regp;
     struct soltab *stp;
     int i;
-    struct resource *resp;
+    struct resource prep_res = RT_RESOURCE_INIT_ZERO;
+    struct resource *resp = &prep_res;
     vect_t diag;
 
     RT_CK_RTI(rtip);
@@ -245,20 +263,6 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 					 rtip->rti_dbip->i->dbi_uses, ncpu);
 
     bu_semaphore_acquire(RT_SEM_RESULTS);	/* start critical section */
-
-    /*
-     * Check if we're going to try using rt_uniresource.  If we're also asking
-     * for more than one CPU, that's not gonna fly.
-     */
-    resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
-    if (!resp)
-	resp = &rt_uniresource;
-
-    if (ncpu > 1 && resp == &rt_uniresource) {
-	bu_log("ERROR: attempting a parallel prep, but the resource being used is rt_uniresource.  Caller will need to allocate their own resource structures for parallel raytracing.\n");
-	bu_semaphore_release(RT_SEM_RESULTS);
-	return;
-    }
 
     if (!rtip->needprep) {
 	bu_log("WARNING: rt_prep_parallel(%s, %d) invoked a second time, ignored",
@@ -313,7 +317,8 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
     rtip->rti_radius = 0.5 * MAGNITUDE(diag);
 
-    /* Check our resource struct. */
+    /* Init and check our resource struct. */
+    rt_init_resource(resp, 0, NULL);
     RT_CK_RESOURCE(resp);
 
     /* Build array of region pointers indexed by reg_bit.  Optimize
@@ -475,6 +480,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 	}
     }
     rtip->needprep = 0;		/* prep is done */
+    rt_clean_resource_basic(NULL, resp);
     bu_semaphore_release(RT_SEM_RESULTS);	/* end critical section */
 
     if (RT_G_DEBUG&RT_DEBUG_REGIONS) {
@@ -1251,7 +1257,7 @@ rt_clean(struct rt_i *rtip)
 
     /*
      * Re-initialize everything important.
-     * This duplicates the code in rt_new_rti().
+     * This duplicates the code in rt_i_create().
      */
 
     rtip->i->rti_inf_box.bn.bn_type = CUT_BOXNODE;
@@ -1997,18 +2003,6 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	VSETALL(bb, INFINITY);
 	VSETALL(&bb[3], -INFINITY);
 	nfill_out_bsp(rtip, &rtip->i->rti_CutHead, bb);
-    }
-
-    if (BU_PTBL_LEN(&rtip->rti_resources)) {
-	for (i=0; i<BU_PTBL_LEN(&rtip->rti_resources); i++) {
-	    struct resource *re;
-
-	    re = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, i);
-	    if (re && rtip->i->rti_nsolids_with_pieces)
-		_res_pieces_init(re, rtip);
-	}
-    } else if (rtip->i->rti_nsolids_with_pieces) {
-	_res_pieces_init(&rt_uniresource, rtip);
     }
 
     return 0;

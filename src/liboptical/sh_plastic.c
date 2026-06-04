@@ -36,7 +36,7 @@
 #include "optical.h"
 #include "optical/light.h"
 #include "optical/plastic.h"
-#include "photonmap.h"
+#include "optical/photonmap.h"
 
 
 

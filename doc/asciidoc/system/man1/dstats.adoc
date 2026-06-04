@@ -1,0 +1,62 @@
+= DSTATS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dstats - Compute basic statistics of a stream of doubles
+
+== SYNOPSIS
+
+[source]
+----
+dstats [input.doubles]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dstats* reads a stream of double-precision floating-point numbers and calculates several basic statistical properties of the data. The results are printed to standard output in a human-readable text format.
+
+The computed statistics include:
+* *Values*: The total number of double-precision elements read.
+* *Min*: The minimum value in the dataset.
+* *Max*: The maximum value in the dataset.
+* *Mean*: The arithmetic mean (average) of the values.
+* *s.d.*: The standard deviation.
+* *Var*: The variance.
+
+If the optional _input.doubles_ file is specified, *dstats* reads from it; otherwise, it reads from standard input.
+
+[[options]]
+== OPTIONS
+
+*input.doubles*::
+An optional file containing double-precision floating-point numbers to be processed. If not provided, standard input is used.
+
+[[examples]]
+== EXAMPLES
+
+.Computing Statistics from a File
+[example]
+====
+**dstats data.raw**
+
+Reads the double-precision values from _data.raw_ and prints the statistical summary to standard output.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

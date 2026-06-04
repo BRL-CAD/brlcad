@@ -61,6 +61,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "bg.h"
+#include "bg/tri_tri.h"
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
@@ -780,7 +781,7 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 static fastf_t
-arb_concave_eps(const point_t v[8])
+arb_concave_eps(const point_t v[8], const struct bn_tol *tol)
 {
     fastf_t minx = v[0][X];
     fastf_t maxx = v[0][X];
@@ -802,7 +803,7 @@ arb_concave_eps(const point_t v[8])
     if (maxz - minz > span) span = maxz - minz;
 
     const struct bn_tol default_tol = BN_TOL_INIT_TOL;
-    fastf_t eps = default_tol.dist; /* distance units */
+    fastf_t eps = tol ? tol->dist : default_tol.dist; /* distance units */
     fastf_t scale_eps = span * 1.0e-4; /* 1e-4 of span */
     if (scale_eps > eps)
 	eps = scale_eps;
@@ -844,7 +845,7 @@ point_inside_face(const point_t v[8], const int f[4], const point_t P, const poi
  * outward facing planes.  If it lies outside any, it's concave.
  */
 static bool
-arb_is_concave(const struct rt_arb_internal *aip)
+arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
 {
     register const point_t *v = aip->pt;
 
@@ -855,7 +856,7 @@ arb_is_concave(const struct rt_arb_internal *aip)
     }
     VSCALE(centroid, centroid, 1.0 / 8.0);
 
-    const fastf_t eps = arb_concave_eps(v);
+    const fastf_t eps = arb_concave_eps(v, tol);
 
     /* every vertex‑pair midpoint must stay inside */
     for (size_t i = 0; i < 8; ++i) {
@@ -900,6 +901,313 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
       }
     }
     return true; /* all coplanar */
+}
+
+
+static int
+arb_face_label(struct bu_vls *label, const int face[4])
+{
+    bu_vls_trunc(label, 0);
+    for (int i = 0; i < 4; i++) {
+	if (face[i] < 0)
+	    continue;
+	bu_vls_printf(label, "%d", face[i] + 1);
+    }
+    return bu_vls_strlen(label) ? 0 : -1;
+}
+
+
+static int
+arb_face_plane(plane_t plane, const point_t v[8], const int face[4], const struct bn_tol *tol)
+{
+    int uniq[4];
+    int nuniq = 0;
+
+    for (int i = 0; i < 4; i++) {
+	int dup = 0;
+
+	if (face[i] < 0)
+	    continue;
+
+	for (int j = 0; j < nuniq; j++) {
+	    if (VNEAR_EQUAL(v[face[i]], v[uniq[j]], tol->dist)) {
+		dup = 1;
+		break;
+	    }
+	}
+
+	if (!dup)
+	    uniq[nuniq++] = face[i];
+    }
+
+    if (nuniq < 3)
+	return -1;
+
+    for (int i = 0; i < nuniq - 2; i++) {
+	for (int j = i + 1; j < nuniq - 1; j++) {
+	    for (int k = j + 1; k < nuniq; k++) {
+		if (bg_make_plane_3pnts(plane, v[uniq[i]], v[uniq[j]], v[uniq[k]], tol) == 0)
+		    return 0;
+	    }
+	}
+    }
+
+    return -1;
+}
+
+
+static int
+arb_face_is_coplanar(const point_t v[8], const int face[4], const struct bn_tol *tol)
+{
+    point_t pts[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    int npts = 0;
+
+    for (int i = 0; i < 4; i++) {
+	if (face[i] < 0)
+	    continue;
+	VMOVE(pts[npts], v[face[i]]);
+	npts++;
+    }
+
+    return bg_coplanar_pts((const point_t *)pts, npts, tol);
+}
+
+
+static int
+arb_face_unique(int uniq[4], const point_t v[8], const int face[4], const struct bn_tol *tol)
+{
+    int nuniq = 0;
+
+    for (int i = 0; i < 4; i++) {
+	int dup = 0;
+
+	if (face[i] < 0)
+	    continue;
+
+	for (int j = 0; j < nuniq; j++) {
+	    if (VNEAR_EQUAL(v[face[i]], v[uniq[j]], tol->dist)) {
+		dup = 1;
+		break;
+	    }
+	}
+
+	if (!dup)
+	    uniq[nuniq++] = face[i];
+    }
+
+    return nuniq;
+}
+
+
+static int
+arb_faces_share_edge(const int *f1, int n1, const int *f2, int n2)
+{
+    int shared = 0;
+
+    for (int i = 0; i < n1; i++) {
+	for (int j = 0; j < n2; j++) {
+	    if (f1[i] == f2[j])
+		shared++;
+	}
+    }
+
+    return shared >= 2;
+}
+
+
+static int
+arb_tri_uses_shared_vertex(const int t1[3], const int t2[3])
+{
+    for (int i = 0; i < 3; i++) {
+	for (int j = 0; j < 3; j++) {
+	    if (t1[i] == t2[j])
+		return 1;
+	}
+    }
+
+    return 0;
+}
+
+
+static int
+arb_add_face_tris(int tris[12][3], int tcnt, const int face[4], int nface)
+{
+    if (nface == 3) {
+	tris[tcnt][0] = face[0];
+	tris[tcnt][1] = face[1];
+	tris[tcnt][2] = face[2];
+	return tcnt + 1;
+    }
+
+    tris[tcnt][0] = face[0];
+    tris[tcnt][1] = face[1];
+    tris[tcnt][2] = face[2];
+    tcnt++;
+
+    tris[tcnt][0] = face[0];
+    tris[tcnt][1] = face[2];
+    tris[tcnt][2] = face[3];
+    return tcnt + 1;
+}
+
+
+static int
+arb_face_cycle_is_twisted(const point_t v[8], const int face[4], const struct bn_tol *tol)
+{
+    int uniq[4];
+    int nuniq = arb_face_unique(uniq, v, face, tol);
+
+    if (nuniq < 4)
+	return 0;
+
+    return bg_tri_tri_isect_coplanar((fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[2]],
+				     (fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[2]], (fastf_t *)v[uniq[3]], 1) ? 0 :
+	bg_tri_tri_isect_coplanar((fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[3]],
+				  (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[2]], (fastf_t *)v[uniq[3]], 1);
+}
+
+
+static int
+arb_is_twisted(const struct rt_arb_internal *arb, int cgtype, const struct bn_tol *tol)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    const point_t *v = arb->pt;
+    int face_verts[6][4];
+    int face_vert_cnt[6];
+    int tris[12][3];
+    int tri_faces[12];
+    int tcnt = 0;
+    int nfaces = 0;
+    int type = cgtype - ARB4;
+
+    for (int i = 0; i < 6; i++) {
+	const int *face = &arb_faces[type][i*4];
+	plane_t plane;
+	int ntcnt;
+
+	if (face[0] == -1)
+	    break;
+	if (arb_face_plane(plane, v, face, tol) < 0)
+	    return 1;
+
+	face_vert_cnt[nfaces] = arb_face_unique(face_verts[nfaces], v, face, tol);
+	if (face_vert_cnt[nfaces] < 3)
+	    return 1;
+	if (arb_face_cycle_is_twisted(v, face, tol))
+	    return 1;
+
+	ntcnt = arb_add_face_tris(tris, tcnt, face_verts[nfaces], face_vert_cnt[nfaces]);
+	for (int t = tcnt; t < ntcnt; t++)
+	    tri_faces[t] = nfaces;
+	tcnt = ntcnt;
+	nfaces++;
+    }
+
+    for (int i = 0; i < tcnt; i++) {
+	for (int j = i + 1; j < tcnt; j++) {
+	    int fi = tri_faces[i];
+	    int fj = tri_faces[j];
+
+	    if (fi == fj)
+		continue;
+	    if (arb_faces_share_edge(face_verts[fi], face_vert_cnt[fi], face_verts[fj], face_vert_cnt[fj]))
+		continue;
+	    if (arb_tri_uses_shared_vertex(tris[i], tris[j]))
+		continue;
+	    if (bg_tri_tri_isect((fastf_t *)v[tris[i][0]], (fastf_t *)v[tris[i][1]], (fastf_t *)v[tris[i][2]],
+				 (fastf_t *)v[tris[j][0]], (fastf_t *)v[tris[j][1]], (fastf_t *)v[tris[j][2]])) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+
+int
+rt_arb_validate(struct bu_vls *error_msg_ret, const struct rt_arb_internal *arb, const struct bn_tol *tol, int *issues)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    int ret = 0;
+    int nonplanar_faces[6] = {0, 0, 0, 0, 0, 0};
+    static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    struct rt_arb_internal arb_copy;
+    int uvec[8], svec[11];
+    int cgtype = 0;
+    int type = 0;
+
+    RT_ARB_CK_MAGIC(arb);
+
+    if (!tol)
+	tol = &default_tol;
+    BN_CK_TOL(tol);
+
+    memcpy(&arb_copy, arb, sizeof(struct rt_arb_internal));
+    if (rt_arb_get_cgtype(&cgtype, &arb_copy, tol, uvec, svec) == 0) {
+	ret |= RT_ARB_VALIDATE_TWISTED;
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "invalid ARB vertex equivalence pattern\n");
+	if (issues)
+	    *issues = ret;
+	return ret;
+    }
+    type = cgtype - ARB4;
+
+    if (rt_arb_nonstandard_encoding(arb, tol->dist_sq)) {
+	ret |= RT_ARB_VALIDATE_NONSTANDARD;
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "non-standard vertex ordering/encoding\n");
+    }
+
+    for (int f = 0; f < 6; f++) {
+	const int *face = &arb_faces[type][f*4];
+
+	if (face[0] == -1)
+	    break;
+	if (!arb_face_is_coplanar(arb->pt, face, tol)) {
+	    ret |= RT_ARB_VALIDATE_NONCOPLANAR;
+	    nonplanar_faces[f] = 1;
+	}
+    }
+
+    if (ret & RT_ARB_VALIDATE_NONCOPLANAR) {
+	if (error_msg_ret) {
+	    int first = 1;
+	    bu_vls_printf(error_msg_ret, "non-coplanar face(s):");
+	    for (int f = 0; f < 6; f++) {
+		const int *face = &arb_faces[type][f*4];
+		struct bu_vls label = BU_VLS_INIT_ZERO;
+
+		if (face[0] == -1)
+		    break;
+		if (!nonplanar_faces[f])
+		    continue;
+		if (arb_face_label(&label, face) == 0)
+		    bu_vls_printf(error_msg_ret, "%s %s", first ? "" : ",", bu_vls_cstr(&label));
+		bu_vls_free(&label);
+		first = 0;
+	    }
+	    bu_vls_printf(error_msg_ret, "\n");
+	}
+    }
+
+    if (!(ret & RT_ARB_VALIDATE_NONCOPLANAR) && cgtype == ARB8 && arb_is_concave(arb, tol)) {
+	ret |= RT_ARB_VALIDATE_CONCAVE;
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "concave ARB volume\n");
+    }
+
+    if (arb_is_twisted(arb, cgtype, tol)) {
+	ret |= RT_ARB_VALIDATE_TWISTED;
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "twisted/self-intersecting ARB face definition\n");
+    }
+
+    if (issues)
+	*issues = ret;
+
+    return ret;
 }
 
 
@@ -1068,7 +1376,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	}
     }
 
-    if (pa.pa_faces == 6 && arb_is_concave(aip)) {
+    if (pa.pa_faces == 6 && arb_is_concave(aip, rtip ? &rtip->rti_tol : NULL)) {
 	if (UNLIKELY(RT_G_DEBUG & RT_DEBUG_ARB8)) {
 	    bu_log("ARB8(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
 	    rt_arb_print(stp);

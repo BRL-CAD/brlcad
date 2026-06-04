@@ -639,7 +639,7 @@ bot_exterior_classify_crofton(struct rt_i *rtip,
     }
 
     /* Clean up resources: null out rti_resources slots first so that the
-     * caller's rt_free_rti() does not try to re-clean already-freed memory. */
+     * caller's rt_i_destroy() does not try to re-clean already-freed memory. */
     for (int i = 0; i < MAX_PSW; i++) {
 	if (resources[i].re_magic == RESOURCE_MAGIC) {
 	    rt_clean_resource_basic(rtip, &resources[i]);
@@ -859,12 +859,12 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
     /* Build the raytrace context. */
     struct application  ap;
     RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = rt_new_rti(gb->gedp->dbip);
+    ap.a_rt_i = rt_i_create(gb->gedp->dbip);
 
     if (rt_gettree(ap.a_rt_i, input_name)) {
 	bu_vls_printf(gb->gedp->ged_result_str,
 		      "Unable to load %s for raytracing\n", input_name);
-	rt_free_rti(ap.a_rt_i);
+	rt_i_destroy(ap.a_rt_i);
 	bu_vls_free(&output_name);
 	return BRLCAD_ERROR;
     }
@@ -890,7 +890,7 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
 					    (double)voxel_size);
 	if (n_ext < 0) {
 	    bu_free(face_exterior, "face_exterior");
-	    rt_free_rti(ap.a_rt_i);
+	    rt_i_destroy(ap.a_rt_i);
 	    bu_vls_free(&output_name);
 	    bu_vls_printf(gb->gedp->ged_result_str,
 			  "Flood-fill exterior classification failed\n");
@@ -908,7 +908,7 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
 	n_ext = bot_exterior_classify_crofton(ap.a_rt_i, bot, &face_exterior, &opts);
     }
 
-    rt_free_rti(ap.a_rt_i);
+    rt_i_destroy(ap.a_rt_i);
 
     /* ----------------------------------------------------------------
      * Handle degenerate classification results.

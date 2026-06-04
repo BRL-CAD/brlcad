@@ -70,6 +70,7 @@ bn_decode_mat(mat_t mat, const char *str)
 
     if (BU_STR_EQUAL(str, "I")) {
 	MAT_IDN(m);
+	MAT_COPY(mat, m);
 	return 16;
     }
     if (*str == '{') str++;

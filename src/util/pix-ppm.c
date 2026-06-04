@@ -189,6 +189,9 @@ main(int argc, char *argv[])
 	bu_exit (1, "%s\n", usage);
     }
 
+    if (!infp)
+	bu_exit (1, "pix-ppm: null infp\n");
+
     size = file_width * file_height * pixbytes;
 
     /* autosize input? */

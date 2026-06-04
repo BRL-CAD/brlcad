@@ -2847,14 +2847,16 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	fd = fopen(bu_vls_addr(&str), "w");
 	bu_vls_free(&str);
 
-	/* plot the ray */
-	pl_color(fd, 255, 0, 0);
-	pdv_3line(fd, rp->r_pt, hitp->hit_point);
+	if (fd) {
+	    /* plot the ray */
+	    pl_color(fd, 255, 0, 0);
+	    pdv_3line(fd, rp->r_pt, hitp->hit_point);
 
-	/* plot the normal we started with */
-	pl_color(fd, 0, 255, 0);
-	VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
-	pdv_3line(fd, hitp->hit_point, tmp);
+	    /* plot the normal we started with */
+	    pl_color(fd, 0, 255, 0);
+	    VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
+	    pdv_3line(fd, hitp->hit_point, tmp);
+	}
 
     }
 
@@ -2935,7 +2937,7 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     }
     VMOVE(hitp->hit_normal, N);
 
-    if (RT_G_DEBUG & RT_DEBUG_HF) {
+    if ((RT_G_DEBUG & RT_DEBUG_HF) && fd) {
 	pl_color(fd, 255, 255, 255);
 	VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
 	pdv_3line(fd, hitp->hit_point, tmp);

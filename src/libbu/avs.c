@@ -203,6 +203,7 @@ int
 bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 {
     struct bu_attribute_value_pair *app, *epp;
+    int removed = 0;
 
     BU_CK_AVS(avsp);
 
@@ -233,9 +234,10 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 	/* sanity */
 	epp->name = NULL;
 	epp->value = NULL;
+	removed = 1;
     }
 
-    return 0;
+    return removed ? 0 : -1;
 }
 
 

@@ -23,8 +23,6 @@
 
 #include "common.h"
 
-#include <limits.h> /* for CHAR_BIT */
-
 #include "bu/defines.h"
 #include "bu/magic.h"
 #include "bu/list.h"
@@ -59,7 +57,8 @@ __BEGIN_DECLS
  *
  * THE SIZE OF bitv_t MUST MATCH BU_BITV_SHIFT.
  */
-typedef unsigned char bitv_t;
+#include <stdint.h>
+typedef uint64_t bitv_t;
 
 /**
  * Bit vector shift size
@@ -72,19 +71,7 @@ typedef unsigned char bitv_t;
  *
  * (8-bit type: 3, 16-bit type: 4, 32-bit type: 5, 64-bit type: 6)
  */
-#ifdef CHAR_BIT
-#  if CHAR_BIT == 8
-#    define BU_BITV_SHIFT 3
-#  elif CHAR_BIT == 16
-#    define BU_BITV_SHIFT 4
-#  elif CHAR_BIT == 32
-#    define BU_BITV_SHIFT 5
-#  elif CHAR_BIT == 64
-#    define BU_BITV_SHIFT 6
-#  endif
-#else
-#  define BU_BITV_SHIFT bu_bitv_shift()
-#endif
+#define BU_BITV_SHIFT 6
 
 /** Bit vector mask */
 #define BU_BITV_MASK ((1<<BU_BITV_SHIFT)-1)
@@ -108,7 +95,7 @@ typedef unsigned char bitv_t;
 struct bu_bitv {
     struct bu_list l;		/**< linked list for caller's use */
     size_t nbits;		/**< actual size of bits[], in bits */
-    bitv_t bits[2];	/**< variable size array */
+    bitv_t bits[1];	/**< variable size array */
 };
 typedef struct bu_bitv bu_bitv_t;
 #define BU_BITV_NULL ((struct bu_bitv *)0)
@@ -119,21 +106,45 @@ typedef struct bu_bitv bu_bitv_t;
 #define BU_CK_BITV(_bp) BU_CKMAG(_bp, BU_BITV_MAGIC, "bu_bitv")
 
 /**
- * initializes a bu_bitv struct without allocating any memory.  this
- * macro is not suitable for initializing a head list node.
+ * Initializes a bu_bitv struct without allocating any memory.
+ * This macro is not suitable for initializing a head list node.
+ *
+ * Because struct bu_bitv embeds one full @c bitv_t word (currently
+ * 64 bits) inline, a stack-allocated instance already provides 64
+ * usable bits without any heap allocation.  Callers that need at most
+ * 64 bits can avoid bu_bitv_new() entirely:
+ *
+ * @code
+ * struct bu_bitv bv;
+ * BU_BITV_INIT(&bv);
+ * BU_BITSET(&bv, 3);
+ * if (BU_BITTEST(&bv, 3)) { ... }
+ * // no bu_bitv_free() needed -- stack memory
+ * @endcode
+ *
+ * nbits is set to sizeof(bitv_t)*8 (64) to reflect the capacity
+ * actually available in the embedded bits[1] field.
  */
 #define BU_BITV_INIT(_bp) { \
 	BU_LIST_INIT_MAGIC(&(_bp)->l, BU_BITV_MAGIC); \
-	(_bp)->nbits = 0; \
+	(_bp)->nbits = sizeof(bitv_t) * 8; \
 	(_bp)->bits[0] = 0; \
-	(_bp)->bits[1] = 0; \
     }
 
 /**
- * macro suitable for declaration statement initialization of a bu_bitv
- * struct.  does not allocate memory.  not suitable for a head node.
+ * Macro suitable for declaration-statement initialization of a bu_bitv
+ * struct on the stack or as a static/global.  Does not allocate memory
+ * and is not suitable for a head node.
+ *
+ * The initialized vector has 64 bits of usable capacity matching the
+ * embedded bits[1] storage.  Example:
+ *
+ * @code
+ * struct bu_bitv bv = BU_BITV_INIT_ZERO;
+ * BU_BITSET(&bv, 7);
+ * @endcode
  */
-#define BU_BITV_INIT_ZERO { {BU_BITV_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, {0, 0} }
+#define BU_BITV_INIT_ZERO { {BU_BITV_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, sizeof(bitv_t)*8, {0} }
 
 /**
  * returns truthfully whether a bu_bitv has been initialized
@@ -166,41 +177,30 @@ BU_EXPORT extern size_t bu_bitv_shift(void);
  */
 #define BU_BITS2BYTES(_nb)	(BU_BITS2WORDS(_nb)*sizeof(bitv_t))
 
+BU_EXPORT extern void bu_bitv_set(struct bu_bitv *bv, size_t bit);
+BU_EXPORT extern void bu_bitv_clear_bit(struct bu_bitv *bv, size_t bit);
+BU_EXPORT extern int bu_bitv_test(const struct bu_bitv *bv, size_t bit);
+BU_EXPORT extern size_t bu_bitv_length(const struct bu_bitv *bv);
 
-#if 1
-#define BU_BITTEST(_bv, bit)	\
-    (((_bv)->bits[(bit)>>BU_BITV_SHIFT] & (((bitv_t)1)<<((bit)&BU_BITV_MASK)))!=0)
-#else
-static __inline__ int BU_BITTEST(volatile void * addr, int nr)
-{
-    int oldbit;
-
-    __asm__ __volatile__(
-	"btl %2, %1\n\tsbbl %0, %0"
-	:"=r" (oldbit)
-	:"m" (addr), "Ir" (nr));
-    return oldbit;
-}
-#endif
-
+/* Set bit.  bitv_t is an unsigned integer.
+ * NOTE: assumes user has performed bounds checking
+ */
 #define BU_BITSET(_bv, bit)	\
     ((_bv)->bits[(bit)>>BU_BITV_SHIFT] |= (((bitv_t)1)<<((bit)&BU_BITV_MASK)))
+
 #define BU_BITCLR(_bv, bit)	\
     ((_bv)->bits[(bit)>>BU_BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BU_BITV_MASK)))
+
+/* True if bit is set.
+ * NOTE: assumes user has performed bounds checking
+ */
+#define BU_BITTEST(_bv, bit)	\
+    (((_bv)->bits[(bit)>>BU_BITV_SHIFT] & (((bitv_t)1)<<((bit)&BU_BITV_MASK)))!=0)
 
 /**
  * zeros all of the internal storage bytes in a bit vector array
  */
-#define BU_BITV_ZEROALL(_bv)	\
-    { \
-	if (LIKELY((_bv) && (_bv)->nbits != 0)) { \
-	    unsigned char *bvp = (unsigned char *)(_bv)->bits; \
-	    size_t nbytes = BU_BITS2BYTES((_bv)->nbits); \
-	    do { \
-		*bvp++ = (unsigned char)0; \
-	    } while (--nbytes != 0); \
-	} \
-    }
+#define BU_BITV_ZEROALL(_bv) bu_bitv_clear(_bv)
 
 
 /* This is not done by default for performance reasons */
@@ -228,12 +228,12 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 
 
 /**
- * Macros to efficiently find all the ONE bits in a bit vector.
- * Counts words down, counts bits in words going up, for speed &
- * portability.  It does not matter if the shift causes the sign bit
- * to smear to the right.
+ * DEPRECATED: Macros to efficiently find all the ONE bits in a bit
+ * vector.  Counts words down, counts bits in words going up, for
+ * speed & portability.  It does not matter if the shift causes the
+ * sign bit to smear to the right.
  *
- * @par Example:
+ * Example:
  * @code
  *
  * BU_BITV_LOOP_START(bv) {
@@ -255,22 +255,43 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
     if (!(_val & 1)) continue;
 
 /**
- * This macro is valid only between a BU_BITV_LOOP_START/LOOP_END
- * pair, and gives the bit number of the current iteration.
- */
-#define BU_BITV_LOOP_INDEX ((_wd << BU_BITV_SHIFT) | _b)
-
-/**
- * Paired with BU_BITV_LOOP_START()
+ * DEPRECATED: Paired with BU_BITV_LOOP_START()
  */
 #define BU_BITV_LOOP_END } /* end for (_b) */ \
 	} /* end for (_wd) */ \
 	} /* end block */
 
 /**
+ * Count the number of set bits.
+ */
+BU_EXPORT extern size_t bu_bitv_count_set(const struct bu_bitv *bv);
+
+/**
+ * Iterate over all set bits in the bit vector efficiently.
+ *
+ * This function quickly skips over large blocks of zeroes using
+ * machine-word level operations, making it significantly faster than
+ * a bit-by-bit test loop when the bit vector is sparse. For each bit
+ * that is set to 1, the provided callback function is invoked with
+ * the index of the set bit and the user-provided data pointer.
+ *
+ * @param bv The bit vector to iterate over.
+ * @param callback The function to call for each set bit.
+ * @param data User-provided context passed directly to the callback.
+ */
+BU_EXPORT extern void bu_bitv_foreach(const struct bu_bitv *bv, void (*callback)(size_t bit, void *data), void *data);
+
+
+/**
  * Allocate storage for a new bit vector of at least 'nbits' in
  * length.  The bit vector itself is guaranteed to be initialized to
  * all zero.
+ *
+ * Because @c struct bu_bitv embeds one full machine word (@c bitv_t,
+ * currently 64 bits) inline, requests for fewer than 64 bits are
+ * silently rounded up to 64 and require no extra heap allocation
+ * beyond the struct itself.  Requesting exactly 0 bits is valid and
+ * results in a usable 64-bit vector.
  */
 BU_EXPORT extern struct bu_bitv *bu_bitv_new(size_t nbits);
 
@@ -292,14 +313,66 @@ BU_EXPORT extern void bu_bitv_free(struct bu_bitv *bv);
 BU_EXPORT extern void bu_bitv_clear(struct bu_bitv *bv);
 
 /**
- * TBD
+ * Performs an in-place bitwise OR operation on a bit vector.
+ *
+ * Result is stored in 'ov' (ov = ov | iv).  If the vectors are of
+ * differing lengths, the operation will safely process up to the
+ * bounds of the overlapping arrays. Any excess bits in 'ov' that do
+ * not exist in 'iv' are preserved as-is.
+ *
+ * @param ov Destination and first operand bit vector.
+ * @param iv Source bit vector operand.
  */
-BU_EXPORT extern void bu_bitv_or(struct bu_bitv *ov,  const struct bu_bitv *iv);
+BU_EXPORT extern void bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv);
 
 /**
- * TBD
+ * Performs an in-place bitwise AND operation on a bit vector.
+ *
+ * Result is stored in 'ov' (ov = ov & iv).  If the vectors are of
+ * differing lengths, the operation will safely process up to the
+ * bounds of the overlapping arrays. For an AND operation, any excess
+ * bits in 'ov' that do not exist in 'iv' are cleared to 0.
+ *
+ * @param ov Destination and first operand bit vector.
+ * @param iv Source bit vector operand.
  */
 BU_EXPORT extern void bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv);
+
+/**
+ * Performs an in-place bitwise NOT operation on a bit vector.
+ *
+ * Flips all bits in the vector (ov = ~ov). Safely preserves the
+ * unused trailing padding bits in the final machine word.
+ *
+ * @param ov The bit vector to invert.
+ */
+BU_EXPORT extern void bu_bitv_not(struct bu_bitv *ov);
+
+/**
+ * Performs an in-place bitwise XOR (exclusive OR) operation on a bit vector.
+ *
+ * Result is stored in 'ov' (ov = ov ^ iv).  If the vectors are of
+ * differing lengths, the operation processes up to the bounds of the
+ * overlapping arrays. Excess bits in 'ov' remain unchanged.
+ *
+ * @param ov Destination and first operand bit vector.
+ * @param iv Source bit vector operand.
+ */
+BU_EXPORT extern void bu_bitv_xor(struct bu_bitv *ov, const struct bu_bitv *iv);
+
+/**
+ * Shifts entire bit vector left or right across word boundaries.
+ *
+ * A positive shift value shifts the bits left (towards higher
+ * indices), effectively moving bit N to N+shift. A negative shift
+ * value shifts the bits right (towards lower indices), moving bit N
+ * to N-|shift|.  Bits shifted out of bounds are discarded. Vacated
+ * bits are zeroed.
+ *
+ * @param ov The bit vector to shift.
+ * @param shift The number of bits to shift.
+ */
+BU_EXPORT extern void bu_bitv_shift_vector(struct bu_bitv *ov, int shift);
 
 /**
  * Print the bits set in a bit vector.
@@ -372,8 +445,8 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
  * which case the resulting binary string will be prefixed with '0b'.
  *
  * The input string is expected to represent an integral number of
- * bytes but will have leading zeroes prepended as necessary to fulfill
- * that requirement.
+ * bytes but will have leading zeroes prepended as necessary to
+ * fulfill that requirement.
  *
  * Returns BRLCAD_OK for success, BRLCAD_ERROR for errors.
  */
@@ -388,8 +461,8 @@ BU_EXPORT extern int bu_hexstr_to_binstr(const char *hexstr, struct bu_vls *b);
  * in which case the resulting hex string will be prefixed with '0x'.
  *
  * The input string is expected to represent an integral number of
- * bytes but will have leading zeroes prepended as necessary to fulfill
- * that requirement.
+ * bytes but will have leading zeroes prepended as necessary to
+ * fulfill that requirement.
  *
  * Returns BRLCAD_OK for success, BRLCAD_ERROR for errors.
  *

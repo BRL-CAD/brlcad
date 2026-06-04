@@ -1815,7 +1815,7 @@ draw_m3(struct bv_scene_obj *s)
 
     bu_ptbl_init(&dgcdp.leaf_list, 8, "leaf_list");
 
-    dgcdp.rtip = rt_new_rti(dgcdp.dbip);
+    dgcdp.rtip = rt_i_create(dgcdp.dbip);
     dgcdp.rtip->rti_tol = *dgcdp.tol;	/* struct copy */
     dgcdp.rtip->useair = 1;
     dgcdp.ap->a_rt_i = dgcdp.rtip;
@@ -1833,7 +1833,7 @@ draw_m3(struct bv_scene_obj *s)
     if (!path || rt_gettrees(dgcdp.rtip, 1, (const char **)&path, 1)) {
 	bu_ptbl_free(&dgcdp.leaf_list);
 
-	rt_free_rti(dgcdp.rtip);
+	rt_i_destroy(dgcdp.rtip);
 	return BRLCAD_ERROR;
     }
 
@@ -1852,7 +1852,7 @@ draw_m3(struct bv_scene_obj *s)
 	bu_ptbl_reset(&dgcdp.leaf_list);
     }
 
-    rt_free_rti(dgcdp.rtip);
+    rt_i_destroy(dgcdp.rtip);
 
     /* free leaf_list */
     bu_ptbl_free(&dgcdp.leaf_list);

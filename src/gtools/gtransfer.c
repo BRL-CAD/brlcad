@@ -145,7 +145,7 @@ do_something(server_data *stash)
     }
 
     RT_APPLICATION_INIT(&ap);
-    rtip = rt_new_rti(stash->DBIP); /* clone dbip */
+    rtip = rt_i_create(stash->DBIP); /* clone dbip */
     if (!rtip) {
 	bu_log("Unable to create a database instance off of the raytrace instance\n");
 	return;
@@ -168,7 +168,7 @@ do_something(server_data *stash)
 	(void)rt_shootray(&ap);
 	rt_clean(rtip);
     }
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 }
 
 

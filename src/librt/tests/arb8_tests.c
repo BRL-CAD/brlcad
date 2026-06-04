@@ -261,10 +261,75 @@ releaseRays(ray_input_t *rays)
 }
 
 
+typedef struct {
+    const char *label;
+    point_t vertices[8];
+    int expected_issues;
+} arb8_validation_case_t;
+
+
+static const arb8_validation_case_t arb8_validation_cases[] = {
+    {"ValidUnitCube",
+     {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}},
+     0},
+    {"ConcavePlanar",
+     {{0.0, 0.0, 0.0},
+      {1.0, 0.0, 0.0},
+      {1.0, 1.0, 0.0},
+      {0.6, 0.4, 0.0},
+      {0.0, 0.0, 1.0},
+      {1.0, 0.0, 1.0},
+      {1.0, 1.0, 1.0},
+      {0.6, 0.4, 1.0}},
+     RT_ARB_VALIDATE_CONCAVE},
+    {"TwistedTopOrder",
+     {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1}, {1, 0, 1}, {0, 1, 1}},
+     RT_ARB_VALIDATE_NONCOPLANAR | RT_ARB_VALIDATE_TWISTED},
+    {"NonCoplanarFace",
+     {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1.2}, {1, 1, 1}, {0, 1, 1}},
+     RT_ARB_VALIDATE_NONCOPLANAR}
+};
+
+
+static int
+run_validation_tests(void)
+{
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    int failures = 0;
+
+    bu_log("ARB validation tests:\n");
+    for (size_t i = 0; i < sizeof(arb8_validation_cases) / sizeof(arb8_validation_case_t); i++) {
+	const arb8_validation_case_t *tc = &arb8_validation_cases[i];
+	struct rt_arb_internal arb;
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	int issues = 0;
+
+	memset(&arb, 0, sizeof(arb));
+	arb.magic = RT_ARB_INTERNAL_MAGIC;
+	memcpy(arb.pt, tc->vertices, sizeof(point_t) * 8);
+
+	(void)rt_arb_validate(&msg, &arb, &tol, &issues);
+	if (issues != tc->expected_issues) {
+	    failures++;
+	    bu_log("  FAIL %s: expected 0x%x, got 0x%x (%s)\n",
+		   tc->label, tc->expected_issues, issues, bu_vls_cstr(&msg));
+	} else {
+	    bu_log("  PASS %s\n", tc->label);
+	}
+
+	bu_vls_free(&msg);
+    }
+
+    return failures;
+}
+
+
 // Main execution and validation
 int
 main(int ac, char *av[])
 {
+    int failures = 0;
+
     bu_setprogname(av[0]);
 
     if (ac != 1 && ac != 3) {
@@ -296,6 +361,8 @@ main(int ac, char *av[])
 
 	wdb_close(wdbp);
     }
+
+    failures += run_validation_tests();
 
     /* test them by shooting rays */
     for (size_t i = 0; i < sizeof(arb8_configs) / sizeof(arb8_config_t); i++) {
@@ -380,7 +447,7 @@ main(int ac, char *av[])
 	releaseRays(rays);
     }
 
-    return 0;
+    return failures ? 1 : 0;
 }
 
 

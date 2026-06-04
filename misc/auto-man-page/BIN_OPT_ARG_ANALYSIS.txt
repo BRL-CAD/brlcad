@@ -574,40 +574,6 @@ Usage: (noname)   [ -u units ] [ -s(tandalone) ] [-t tolerance ]
 
 ----- end usage -----------------------------------
 ***** end brickwall ***********************************
-***** begin brlcad-config ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-Usage: brlcad-config [OPTIONS] [LIBRARIES]
-
-Options:
-    [ --help ]
-    [ --version ]
-    [ --cflags ]
-    [ --ldflags ]
-    [ --libs ]
-    [ --prefix[=DIR] ]
-    [ --libdir[=DIR] ]
-    [ --includedir[=DIR] ]
-
-Libraries:
-    analyze
-    bn
-    brlcad (default)
-    bu
-    dm
-    fb
-    fft
-    gcv
-    ged
-    optical
-    pkg
-    rt
-    wdb
-
------ end usage -----------------------------------
-***** end brlcad-config ***********************************
 ***** begin brlman ***********************************
 	result : (UNKNOWN)
 	file(s):

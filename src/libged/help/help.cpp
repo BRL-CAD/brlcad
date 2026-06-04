@@ -73,12 +73,18 @@ help_files(const char *dir, char ***files)
 	    }
 
 	    if (!bu_file_directory(bu_vls_cstr(&filepath))) {
-		if (count > max_count-1) {
+		if (count >= max_count-1) {
 		    max_count *= 2;
 		    entries = *files = (char **)bu_realloc(*files, sizeof(char *) * max_count, "increase entries");
+		    dirs = (char **)bu_realloc(dirs, sizeof(char *) * max_count, "increase dirs");
 		}
 		entries[count++] = bu_vls_strdup(&filepath);
 	    } else {
+		if (dir_count >= max_count-1) {
+		    max_count *= 2;
+		    entries = *files = (char **)bu_realloc(*files, sizeof(char *) * max_count, "increase entries");
+		    dirs = (char **)bu_realloc(dirs, sizeof(char *) * max_count, "increase dirs");
+		}
 		dirs[dir_count] = bu_strdup(bu_vls_cstr(&filepath));
 		dir_count++;
 	    }
@@ -90,6 +96,7 @@ help_files(const char *dir, char ***files)
 	dirs[dir_count] = NULL;
     }
 
+    bu_free(dirs, "free dirs");
     bu_argv_free(listing_count, listing);
 
     return count;
@@ -110,7 +117,7 @@ help_tokenize(size_t count, const char **files)
 #else
     struct bu_hash_tbl *hash = NULL;
 #endif
-    size_t cnt[MAX_WORDS] = {0};
+    size_t *cnt = (size_t *)bu_calloc(MAX_WORDS, sizeof(size_t), "word counts");
     size_t words = 0;
 
 #if !USE_ARRAY
@@ -187,6 +194,10 @@ help_tokenize(size_t count, const char **files)
 /*		    bu_log("found existing %s\n", (char *)wordbytes); */
 		    (*cntptr)++;
 		} else {
+		    if (words >= MAX_WORDS) {
+			bu_log("Too many unique words, truncating.\n");
+			break;
+		    }
 		    int ret = bu_hash_set(hash, wordbytes, wordbyteslen, &cnt[words]);
 /*		    bu_log("adding %s\n", (char *)wordbytes); */
 		    if (ret != 1)
@@ -228,6 +239,8 @@ help_tokenize(size_t count, const char **files)
     }
     bu_hash_destroy(hash);
 #endif
+
+    bu_free(cnt, "free cnt");
 
     return words;
 }

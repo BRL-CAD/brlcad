@@ -454,80 +454,99 @@ int main(void) {
 endfunction(BRLCAD_HEADER_SYS_WAIT)
 
 ###
-# Undocumented.
-# Based on AC_FUNC_ALLOCA
-###
 function(BRLCAD_ALLOCA)
-  set(
-    ALLOCA_HEADER_SRC
-    "
-#include <alloca.h>
-int main(void) {
-   char *p = (char *) alloca (2 * sizeof (int));
-   if (p) return 0;
-   ;
-   return 0;
-}"
-  )
-  set(
-    ALLOCA_TEST_SRC
-    "
-#ifdef __GNUC__
-# define alloca __builtin_alloca
-#else
-# ifdef _MSC_VER
-#  include <malloc.h>
-#  define alloca _alloca
-# else
-#  ifdef HAVE_ALLOCA_H
-#   include <alloca.h>
-#  else
-#   ifdef _AIX
- #pragma alloca
-#   else
-#    ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#    endif
-#   endif
-#  endif
-# endif
-#endif
 
-int main(void) {
-   char *p = (char *) alloca (1);
-   if (p) return 0;
-   ;
-   return 0;
-}"
-  )
-  if(WORKING_ALLOC_H STREQUAL "")
+  include(CheckCSourceRuns)
+  include(CheckCXXSourceRuns)
+
+  set(ALLOCA_TEST_TEMPLATE "
+#include <stdlib.h>
+@ALLOCA_IMPL@
+int main(void)
+{
+    size_t i;
+    unsigned char *p = (unsigned char *)BRLCAD_ALLOCA(4096);
+    if (!p)
+        return 1;
+    for (i = 0; i < 4096; i++)
+        p[i] = (unsigned char)(i & 0xff);
+    for (i = 0; i < 4096; i++)
+        if (p[i] != (unsigned char)(i & 0xff))
+            return 1;
+    return 0;
+}
+")
+
+  if(MSVC)
+    set(ALLOCA_IMPL "
+#include <malloc.h>
+#define BRLCAD_ALLOCA(size) _alloca(size)
+")
+    string(CONFIGURE "${ALLOCA_TEST_TEMPLATE}" TEST_SRC @ONLY)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     if(ENABLE_ALL_CXX_COMPILE)
-      check_cxx_source_runs("${ALLOCA_HEADER_SRC}" WORKING_ALLOCA_H)
-    else(ENABLE_ALL_CXX_COMPILE)
-      check_c_source_runs("${ALLOCA_HEADER_SRC}" WORKING_ALLOCA_H)
-    endif(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${TEST_SRC}" HAVE_WORKING_ALLOCA)
+    else()
+      check_c_source_runs("${TEST_SRC}" HAVE_WORKING_ALLOCA)
+    endif()
     cmake_pop_check_state()
-    set(WORKING_ALLOCA_H ${WORKING_ALLOCA_H} CACHE INTERNAL "alloca_h test")
-  endif(WORKING_ALLOC_H STREQUAL "")
-  if(WORKING_ALLOCA_H)
-    config_h_append(BRLCAD "#define HAVE_ALLOCA_H 1\n")
-    set(FILE_RUN_DEFINITIONS "-DHAVE_ALLOCA_H")
-  endif(WORKING_ALLOCA_H)
-  if(NOT DEFINED WORKING_ALLOCA)
+    if(HAVE_WORKING_ALLOCA)
+      config_h_append(BRLCAD "
+#define HAVE_ALLOCA 1
+#include <malloc.h>
+#define BRLCAD_ALLOCA(size) _alloca(size)
+")
+      return()
+    endif()
+  endif()
+
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang"
+      OR CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(ALLOCA_IMPL "
+#define BRLCAD_ALLOCA(size) __builtin_alloca(size)
+")
+    string(CONFIGURE "${ALLOCA_TEST_TEMPLATE}" TEST_SRC @ONLY)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     if(ENABLE_ALL_CXX_COMPILE)
-      check_cxx_source_runs("${ALLOCA_TEST_SRC}" WORKING_ALLOCA)
-    else(ENABLE_ALL_CXX_COMPILE)
-      check_c_source_runs("${ALLOCA_TEST_SRC}" WORKING_ALLOCA)
-    endif(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${TEST_SRC}" HAVE_WORKING_BUILTIN_ALLOCA)
+    else()
+      check_c_source_runs("${TEST_SRC}" HAVE_WORKING_BUILTIN_ALLOCA)
+    endif()
     cmake_pop_check_state()
-  endif(NOT DEFINED WORKING_ALLOCA)
-  if(WORKING_ALLOCA)
-    config_h_append(BRLCAD "#define HAVE_ALLOCA 1\n")
-  endif(WORKING_ALLOCA)
+    if(HAVE_WORKING_BUILTIN_ALLOCA)
+      config_h_append(BRLCAD "
+#define HAVE_ALLOCA 1
+#define BRLCAD_ALLOCA(size) __builtin_alloca(size)
+")
+      return()
+    endif()
+  endif()
+
+  # Fallback: alloca.h
+  set(ALLOCA_IMPL "
+#include <alloca.h>
+#define BRLCAD_ALLOCA(size) alloca(size)
+")
+  string(CONFIGURE "${ALLOCA_TEST_TEMPLATE}" TEST_SRC @ONLY)
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+  if(ENABLE_ALL_CXX_COMPILE)
+    check_cxx_source_runs("${TEST_SRC}" HAVE_WORKING_ALLOCA_H)
+  else()
+    check_c_source_runs("${TEST_SRC}" HAVE_WORKING_ALLOCA_H)
+  endif()
+  cmake_pop_check_state()
+  if(HAVE_WORKING_ALLOCA_H)
+    config_h_append(BRLCAD "
+#define HAVE_ALLOCA 1
+#define HAVE_ALLOCA_H 1
+#include <alloca.h>
+#define BRLCAD_ALLOCA(size) alloca(size)
+")
+    return()
+  endif()
 endfunction(BRLCAD_ALLOCA)
 
 ###

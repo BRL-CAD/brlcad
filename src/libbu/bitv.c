@@ -33,6 +33,7 @@
 #include "bu/vls.h"
 #include "./bitv.h"
 
+
 /**
  * Private 32-bit recursive reduction using "SIMD Within A Register"
  * (SWAR) to count the number of one bits in a given integer. The
@@ -92,18 +93,23 @@ bu_bitv_new(size_t nbits)
 {
     struct bu_bitv *bv;
     size_t bv_bytes;
-    size_t total_bytes;
+    size_t extra;
+    size_t alloc_bits = nbits;
 
-    bv_bytes = BU_BITS2BYTES(nbits);
-    total_bytes = sizeof(struct bu_bitv) - 2*sizeof(bitv_t) + bv_bytes;
+    /* Round up allocation to at least one full machine word so the embedded
+     * bits[1] member is always fully usable without extra dynamic allocation. */
+    if (alloc_bits < sizeof(bitv_t) * BITS_PER_BYTE)
+        alloc_bits = sizeof(bitv_t) * BITS_PER_BYTE;
 
-    /* allocate bigger than struct, bits array extends past the end */
-    bv = (struct bu_bitv *)bu_malloc(total_bytes, "struct bu_bitv");
+    bv_bytes = BU_BITS2BYTES(alloc_bits);
 
-    /* manually initialize */
+    /* bits[1] already contributes sizeof(bitv_t) bytes inside the struct.
+     * Only allocate beyond the struct when the request exceeds one word. */
+    extra = (bv_bytes > sizeof(bitv_t)) ? (bv_bytes - sizeof(bitv_t)) : 0;
+
+    bv = (struct bu_bitv *)bu_calloc(1, sizeof(struct bu_bitv) + extra, "struct bu_bitv");
     BU_LIST_INIT_MAGIC(&(bv->l), BU_BITV_MAGIC);
-    bv->nbits = bv_bytes * BITS_PER_BYTE;
-    BU_BITV_ZEROALL(bv);
+    bv->nbits = nbits; /* MUST be the exact requested size, not the padded alloc size */
 
     return bv;
 }
@@ -123,8 +129,10 @@ void
 bu_bitv_clear(struct bu_bitv *bv)
 {
     BU_CK_BITV(bv);
-
-    BU_BITV_ZEROALL(bv);
+    memset(bv->bits, 0, BU_BITS2BYTES(bv->nbits));
+    bv->bits[0] = 0; /* ensure embedded word is always cleared; a no-op
+                      * for nbits>=64 (memset already covered it), but
+                      * necessary when nbits==0 and memset size is 0 */
 }
 
 
@@ -133,14 +141,13 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
     bitv_t *out;
     const bitv_t *in;
+    size_t min_words;
     size_t words;
-
-    if (UNLIKELY(ov->nbits != iv->nbits))
-	bu_bomb("bu_bitv_or: length mismatch");
 
     out = ov->bits;
     in = iv->bits;
-    words = BU_BITS2WORDS(iv->nbits);
+    min_words = BU_BITS2WORDS(iv->nbits < ov->nbits ? iv->nbits : ov->nbits);
+    words = min_words;
 #ifdef VECTORIZE
     for (--words; words >= 0; words--)
 	out[words] |= in[words];
@@ -156,21 +163,153 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
     bitv_t *out;
     const bitv_t *in;
+    size_t min_words;
+    size_t max_words;
     size_t words;
-
-    if (UNLIKELY(ov->nbits != iv->nbits))
-	bu_bomb("bu_bitv_and: length mismatch");
 
     out = ov->bits;
     in = iv->bits;
-    words = BU_BITS2WORDS(iv->nbits);
+    min_words = BU_BITS2WORDS(iv->nbits < ov->nbits ? iv->nbits : ov->nbits);
+    max_words = BU_BITS2WORDS(ov->nbits);
+
+    words = min_words;
 #ifdef VECTORIZE
+    for (size_t i = min_words; i < max_words; i++)
+        out[i] = 0;
     for (--words; words >= 0; words--)
 	out[words] &= in[words];
 #else
     while (words-- > 0)
 	*out++ &= *in++;
+    
+    /* Zero out remaining bits in ov if iv was shorter */
+    for (size_t i = min_words; i < max_words; i++)
+        *out++ = 0;
 #endif
+}
+
+
+void
+bu_bitv_not(struct bu_bitv *ov)
+{
+    bitv_t *out;
+    size_t words;
+    size_t i;
+    size_t rem;
+
+    BU_CK_BITV(ov);
+    
+    out = ov->bits;
+    words = BU_BITS2WORDS(ov->nbits);
+    
+    for (i = 0; i < words; ++i) {
+        out[i] = ~out[i];
+    }
+    
+    /* Clear unused bits in the last word */
+    rem = ov->nbits & BU_BITV_MASK;
+    if (rem > 0) {
+        out[words - 1] &= (((bitv_t)1) << rem) - 1;
+    }
+}
+
+
+void
+bu_bitv_xor(struct bu_bitv *ov, const struct bu_bitv *iv)
+{
+    bitv_t *out;
+    const bitv_t *in;
+    size_t min_words;
+    size_t words;
+
+    BU_CK_BITV(ov);
+    BU_CK_BITV(iv);
+
+    out = ov->bits;
+    in = iv->bits;
+    min_words = BU_BITS2WORDS(iv->nbits < ov->nbits ? iv->nbits : ov->nbits);
+    words = min_words;
+
+    for (size_t i = 0; i < words; i++) {
+        out[i] ^= in[i];
+    }
+
+    /* Extra bits in ov remain unchanged since XORing with 0 does nothing */
+}
+
+
+void
+bu_bitv_shift_vector(struct bu_bitv *ov, int shift)
+{
+    size_t word_shift, bit_shift, words, i, rem;
+
+    BU_CK_BITV(ov);
+
+    if (shift == 0 || ov->nbits == 0)
+	return;
+
+    words = BU_BITS2WORDS(ov->nbits);
+
+    /* A positive shift means shifting left (towards higher indices), negative means right */
+    if (shift > 0) {
+        word_shift = shift / (sizeof(bitv_t) * BITS_PER_BYTE);
+        bit_shift = shift % (sizeof(bitv_t) * BITS_PER_BYTE);
+
+        if (word_shift >= words) {
+            bu_bitv_clear(ov);
+            return;
+        }
+
+        /* Shift words */
+        for (i = words - 1; i >= word_shift; i--) {
+            bitv_t val = ov->bits[i - word_shift];
+            if (bit_shift > 0) {
+                val <<= bit_shift;
+                if (i - word_shift > 0) {
+                    val |= (ov->bits[i - word_shift - 1] >> ((sizeof(bitv_t) * BITS_PER_BYTE) - bit_shift));
+                }
+            }
+            ov->bits[i] = val;
+            if (i == word_shift) break; /* Avoid underflow */
+        }
+
+        /* Clear vacated words */
+        for (i = 0; i < word_shift; i++) {
+            ov->bits[i] = 0;
+        }
+
+        /* Clear unused bits in the last word */
+        rem = ov->nbits & BU_BITV_MASK;
+        if (rem > 0) {
+            ov->bits[words - 1] &= (((bitv_t)1) << rem) - 1;
+        }
+    } else {
+        shift = -shift;
+        word_shift = shift / (sizeof(bitv_t) * BITS_PER_BYTE);
+        bit_shift = shift % (sizeof(bitv_t) * BITS_PER_BYTE);
+
+        if (word_shift >= words) {
+            bu_bitv_clear(ov);
+            return;
+        }
+
+        /* Shift words */
+        for (i = 0; i < words - word_shift; i++) {
+            bitv_t val = ov->bits[i + word_shift];
+            if (bit_shift > 0) {
+                val >>= bit_shift;
+                if (i + word_shift + 1 < words) {
+                    val |= (ov->bits[i + word_shift + 1] << ((sizeof(bitv_t) * BITS_PER_BYTE) - bit_shift));
+                }
+            }
+            ov->bits[i] = val;
+        }
+
+        /* Clear vacated words */
+        for (i = words - word_shift; i < words; i++) {
+            ov->bits[i] = 0;
+        }
+    }
 }
 
 
@@ -178,24 +317,46 @@ void
 bu_bitv_vls(struct bu_vls *v, const struct bu_bitv *bv)
 {
     int seen = 0;
-    size_t i;
-    size_t len;
+    size_t words;
+    size_t w;
+    bitv_t val;
+    int bit;
 
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    len = bv->nbits;
-
     bu_vls_strcat(v, "(");
 
-    /* Visit all the bits in ascending order */
-    for (i = 0; i < len; i++) {
-	if (BU_BITTEST(bv, i) == 0)
-	    continue;
-	if (seen)
-	    bu_vls_strcat(v, ", ");
-	bu_vls_printf(v, "%zu", i);
-	seen = 1;
+    if (bv->nbits > 0) {
+        words = BU_BITS2WORDS(bv->nbits);
+        for (w = 0; w < words; w++) {
+            val = bv->bits[w];
+            /* Mask out bits beyond bv->nbits in the final word */
+            if (w == words - 1 && (bv->nbits % (sizeof(bitv_t) * BITS_PER_BYTE)) != 0) {
+                bitv_t mask = ((bitv_t)1 << (bv->nbits % (sizeof(bitv_t) * BITS_PER_BYTE))) - 1;
+                val &= mask;
+            }
+
+            while (val) {
+#if defined(__GNUC__) || defined(__clang__)
+                bit = __builtin_ctzll((unsigned long long)val);
+                val &= val - 1; /* clear the lowest set bit */
+#else
+                /* fallback */
+                bit = 0;
+                bitv_t temp = val;
+                while ((temp & 1) == 0) {
+                    bit++;
+                    temp >>= 1;
+                }
+                val &= val - 1;
+#endif
+                if (seen)
+                    bu_vls_strcat(v, ", ");
+                bu_vls_printf(v, "%zu", w * (sizeof(bitv_t) * BITS_PER_BYTE) + bit);
+                seen = 1;
+            }
+        }
     }
     bu_vls_strcat(v, ")");
 }
@@ -221,26 +382,42 @@ bu_pr_bitv(const char *str, const struct bu_bitv *bv)
 void
 bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
 {
-    size_t word_count = 0;
-    size_t chunksize  = 0;
-    /* necessarily volatile to keep the compiler from complaining
-     * about unreachable code during optimization.
-     */
-    volatile size_t BVS = sizeof(bitv_t);
+    /* Two hex digits per byte, MSB (highest word) first to match the
+     * documented "most significant byte first" external representation. */
+    static const char hex_digits[16+1] = "0123456789abcdef";
+
+    size_t exact_bytes;
+    size_t nchars;
+    char  *buf;
+    char  *p;
+    size_t i;
 
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    word_count = bv->nbits / BITS_PER_BYTE / BVS;
-    bu_vls_extend(v, word_count * BVS * 2 + 1);
+    exact_bytes = bv->nbits / BITS_PER_BYTE;
+    if (exact_bytes == 0)
+        return;
 
-    while (word_count--) {
-	chunksize = BVS;
-	while (chunksize--) {
-	    unsigned long val = (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(chunksize * BITS_PER_BYTE))) >> (chunksize * BITS_PER_BYTE)) & (bitv_t)0xff;
-	    bu_vls_printf(v, "%02lx", val);
-	}
+    nchars = exact_bytes * 2;
+
+    /* Allocate the output buffer once -- no per-byte VLS operations */
+    buf = (char *)bu_malloc(nchars + 1, "bu_bitv_to_hex buf");
+    p   = buf;
+
+    /* Emit bytes from most-significant to least-significant (high index first)
+     * to produce the documented MSB-first hex representation. */
+    for (i = exact_bytes; i-- > 0;) {
+        size_t word_idx = i / sizeof(bitv_t);
+        size_t byte_idx = i % sizeof(bitv_t);
+        unsigned int byte = (unsigned int)((bv->bits[word_idx] >> (byte_idx * 8)) & 0xff);
+        *p++ = hex_digits[byte >> 4];
+        *p++ = hex_digits[byte & 0x0f];
     }
+    *p = '\0';
+
+    bu_vls_strncat(v, buf, nchars);
+    bu_free(buf, "bu_bitv_to_hex buf");
 }
 
 
@@ -383,7 +560,7 @@ bu_binary_to_bitv(const char *str)
      *
      *   Example 1: "  0b00110100 " ('b' may be 'B' if desired)
      *
-     * Note that only the zeroes and ones are actually tested and any
+     * Note that only the zeros and ones are actually tested and any
      * other character will ignored.  So one can ease producing the
      * binary input string by using spaces or other characters to
      * group the bits as shown in Examples 2, 3, and 4:
@@ -414,7 +591,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
      *
      *   Example 1: "  0b00110100 " ('b' may be 'B' if desired)
      *
-     * Note that only the zeroes and ones are actually tested and any
+     * Note that only the zeros and ones are actually tested and any
      * other character will ignored.  So one can ease producing the
      * binary input string by using spaces or other characters
      * to group the bits as shown in Examples 2, 3, and 4:
@@ -468,7 +645,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	bu_exit(1, "Incorrect binary format '%s' (should be '0b<binary digits>').\n", str);
 
     /* zero-length input is okay, but we always need to add leading
-     * zeroes to get a bit-length which is a multiple of eight
+     * zeros to get a bit-length which is a multiple of eight
      */
     vlen = bu_vls_strlen(&v2);
     new_vlen = nbits > vlen ? nbits : vlen;
@@ -480,15 +657,15 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     }
 
     if (new_vlen > vlen) {
-	size_t needed_zeroes = new_vlen - vlen;
-	for (i = 0; i < needed_zeroes; ++i) {
+	size_t needed_zeros = new_vlen - vlen;
+	for (i = 0; i < needed_zeros; ++i) {
 	    bu_vls_prepend(&v2, "0");
 	}
 	vlen = new_vlen;
     }
 
     len = vlen;
-    bv = bu_bitv_new(len); /* note it is initialized to all zeroes */
+    bv = bu_bitv_new(len); /* note it is initialized to all zeros */
     BU_CK_BITV(bv);
 
     /* note the final length of the bitv may be greater due to word sizes, etc. */
@@ -538,7 +715,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	    /* parsing was successful */
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)ulval  << (chunksize * BITS_PER_BYTE);
+	    bv->bits[word_count] |= (bitv_t)ulval << (chunksize * BITS_PER_BYTE);
 	}
 	chunksize = BVS;
     }
@@ -677,18 +854,18 @@ bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
     }
     len = bu_vls_strlen(&b);
 
-    /* check valid length, pad with leading zeroes if necessary to get
+    /* check valid length, pad with leading zeros if necessary to get
      * an integral number of bytes */
     if (len < BITS_PER_BYTE || len % BITS_PER_BYTE) {
-	size_t new_len, leading_zeroes;
-	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes,\n", len);
-	bu_log("          padding with leading zeroes to ensure such.\n");
+	size_t new_len, leading_zeros;
+	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes.\n", len);
+	bu_log("          Padding with leading zeros to ensure.\n");
 	if (len < BITS_PER_BYTE)
 	    new_len = BITS_PER_BYTE;
 	else
 	    new_len = (len/BITS_PER_BYTE) * BITS_PER_BYTE + BITS_PER_BYTE;
-	leading_zeroes = new_len - len;
-	for (i = 0; i < leading_zeroes; ++i)
+	leading_zeros = new_len - len;
+	for (i = 0; i < leading_zeros; ++i)
 	    bu_vls_prepend(&b, "0");
 	len = bu_vls_strlen(&b);
     }
@@ -792,18 +969,18 @@ bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
     }
     len = bu_vls_strlen(&h);
 
-    /* check valid length, pad with leading zeroes if necessary to get
+    /* check valid length, pad with leading zeros if necessary to get
      * an integral number of bytes */
     if (len < HEXCHARS_PER_BYTE || len % HEXCHARS_PER_BYTE) {
-	size_t new_len, leading_zeroes;
-	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes,\n", len);
-	bu_log("          padding with leading zeroes to ensure such.\n");
+	size_t new_len, leading_zeros;
+	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes.\n", len);
+	bu_log("          Padding with leading zeros.\n");
 	if (len < HEXCHARS_PER_BYTE)
 	    new_len = HEXCHARS_PER_BYTE;
 	else
 	    new_len = (len/HEXCHARS_PER_BYTE) * HEXCHARS_PER_BYTE + HEXCHARS_PER_BYTE;
-	leading_zeroes = new_len - len;
-	for (i = 0; i < leading_zeroes; ++i)
+	leading_zeros = new_len - len;
+	for (i = 0; i < leading_zeros; ++i)
 	    bu_vls_prepend(&h, "0");
 	len = bu_vls_strlen(&h);
     }
@@ -860,6 +1037,91 @@ ERROR_RETURN:
 
     return results;
 
+}
+
+
+size_t
+bu_bitv_count_set(const struct bu_bitv *bv)
+{
+    size_t count = 0;
+    size_t words;
+    size_t w;
+    bitv_t val;
+
+    if (!bv || bv->nbits == 0)
+        return 0;
+
+    words = BU_BITS2WORDS(bv->nbits);
+    for (w = 0; w < words; w++) {
+        val = bv->bits[w];
+        while (val) {
+            val &= val - 1; /* clear the lowest set bit */
+            count++;
+        }
+    }
+    return count;
+}
+
+
+void
+bu_bitv_foreach(const struct bu_bitv *bv, void (*callback)(size_t bit, void *data), void *data)
+{
+    size_t words;
+    size_t w;
+    bitv_t val;
+    int bit;
+
+    if (!bv || bv->nbits == 0 || !callback)
+        return;
+
+    words = BU_BITS2WORDS(bv->nbits);
+    for (w = 0; w < words; w++) {
+        val = bv->bits[w];
+        while (val) {
+#if defined(__GNUC__) || defined(__clang__)
+            bit = __builtin_ctzll((unsigned long long)val);
+            val &= val - 1; /* clear the lowest set bit */
+#else
+            /* fallback */
+            bit = 0;
+            bitv_t temp = val;
+            while ((temp & 1) == 0) {
+                bit++;
+                temp >>= 1;
+            }
+            val &= val - 1; /* clear the lowest set bit */
+#endif
+            callback(w * (sizeof(bitv_t) * BITS_PER_BYTE) + bit, data);
+        }
+    }
+}
+
+
+void
+bu_bitv_set(struct bu_bitv *bv, size_t bit)
+{
+    bv->bits[bit >> BU_BITV_SHIFT] |= ((bitv_t)1) << (bit & BU_BITV_MASK);
+}
+
+
+void
+bu_bitv_clear_bit(struct bu_bitv *bv, size_t bit)
+{
+    bv->bits[bit >> BU_BITV_SHIFT] &= ~(((bitv_t)1) << (bit & BU_BITV_MASK));
+}
+
+
+int
+bu_bitv_test(const struct bu_bitv *bv, size_t bit)
+{
+    return (bv->bits[bit >> BU_BITV_SHIFT] & (((bitv_t)1) << (bit & BU_BITV_MASK))) != 0;
+}
+
+
+size_t
+bu_bitv_length(const struct bu_bitv *bv)
+{
+    return bv->nbits;
 }
 
 

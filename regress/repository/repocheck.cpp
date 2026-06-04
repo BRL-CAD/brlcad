@@ -491,7 +491,7 @@ init_repo_config(RepoConfig &cfg)
 	    cfg.api.exemptions.emplace_back(std::make_pair(std::regex(pattern), std::string(fname)));
 	};
 	add_func_ex(".*/bomb[.]c$", "abort");
-	add_func_ex(".*/tests/dirname[.]c$", "dirname");
+	add_func_ex(".*/tests/test_dirname[.]c$", "dirname");
 	add_func_ex(".*/file[.]c$", "remove");
 	add_func_ex(".*/libtermio[.]h$", "strncmp");
 
@@ -542,7 +542,7 @@ init_repo_config(RepoConfig &cfg)
 	    "misc/",
 	    "mt19937ar.c",
 	    "other_check.cpp",
-	    "perm_test.cpp",
+	    "test_perm.cpp",
 	    "rt_ecmd_scanner.cpp",
 	    "sha1.c",
 	    "stb_truetype.h",

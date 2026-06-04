@@ -60,7 +60,7 @@ rt_dirbuild(const char *filename, char *buf, int len)
 	return RTI_NULL;		/* FAIL */
     }
 
-    rtip = rt_new_rti(dbip);		/* clones dbip */
+    rtip = rt_i_create(dbip);		/* clones dbip */
     db_close(dbip);				/* releases original dbip */
 
     if (buf != (char *)NULL)
@@ -98,7 +98,7 @@ rt_dirbuild_inmem(const void *data, b_off_t data_size, char *buf, int len)
 	}
     }
 
-    rtip = rt_new_rti(dbip);		/* clones dbip */
+    rtip = rt_i_create(dbip);		/* clones dbip */
     db_close(dbip);				/* releases original dbip */
 
     if (buf != (char *)NULL)

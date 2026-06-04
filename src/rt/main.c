@@ -708,7 +708,7 @@ rt_cleanup:
     }
 
     /* Release the ray-tracer instance */
-    rt_free_rti(APP.a_rt_i);
+    rt_i_destroy(APP.a_rt_i);
     APP.a_rt_i = NULL;
 
     return ret;

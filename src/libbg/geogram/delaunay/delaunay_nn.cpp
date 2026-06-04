@@ -66,7 +66,7 @@ namespace GEOBRL {
         if(nb > neighbors_.array_size(v)) {
             // Allocated on the stack (more thread-friendly and no need
             // to deallocate)
-            index_t* neighbors = (index_t*) alloca(
+            index_t* neighbors = (index_t*) BRLCAD_ALLOCA(
                 sizeof(index_t) * nb
             );
             nb = get_neighbors_internal(v, nb, neighbors);
@@ -82,7 +82,7 @@ namespace GEOBRL {
         nb = std::min(nb, nb_vertices() - 1);
         // Allocated on the stack (more thread-friendly and no need
         // to deallocate)
-        index_t* neighbors = (index_t*) alloca(
+        index_t* neighbors = (index_t*) BRLCAD_ALLOCA(
             sizeof(index_t) * nb
         );
         nb = get_neighbors_internal(v, nb, neighbors);
@@ -115,8 +115,8 @@ namespace GEOBRL {
 
         // Allocated on the stack (more multithread-friendly
         // and no need to free)
-        index_t* closest_pt_ix = (index_t*) alloca(sizeof(index_t) * nb_neigh);
-        double* closest_pt_dist = (double*) alloca(sizeof(double) * nb_neigh);
+        index_t* closest_pt_ix = (index_t*) BRLCAD_ALLOCA(sizeof(index_t) * nb_neigh);
+        double* closest_pt_dist = (double*) BRLCAD_ALLOCA(sizeof(double) * nb_neigh);
         NN_->get_nearest_neighbors(
             nb_neigh, i, closest_pt_ix, closest_pt_dist
         );

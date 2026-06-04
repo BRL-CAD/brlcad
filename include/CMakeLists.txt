@@ -35,7 +35,6 @@ brlcad_manage_files("mcpcad.h" ${INCLUDE_DIR}/brlcad REQUIRED libmcpcad)
 brlcad_manage_files("nmg.h" ${INCLUDE_DIR}/brlcad REQUIRED libnmg)
 brlcad_manage_files("optical.h" ${INCLUDE_DIR}/brlcad REQUIRED liboptical)
 brlcad_manage_files("pc.h" ${INCLUDE_DIR}/brlcad REQUIRED librt)
-brlcad_manage_files("photonmap.h" ${INCLUDE_DIR}/brlcad REQUIRED liboptical)
 brlcad_manage_files("pinttypes.h" ${INCLUDE_DIR}/brlcad)
 brlcad_manage_files("pkg.h" ${INCLUDE_DIR}/brlcad REQUIRED libpkg)
 brlcad_manage_files("pstdint.h" ${INCLUDE_DIR}/brlcad)
@@ -63,13 +62,10 @@ set(
   CMakeLists.txt
   brlcad_ident.h.in
   brlcad_version.h.in
-  conf/BrlcadConfig.tmpl
   conf/MAJOR
   conf/MINOR
   conf/PATCH
-  conf/make.vbs
   config_win.h.in
-  RTree.h
 )
 cmakefiles(${include_misc})
 

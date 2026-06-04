@@ -275,7 +275,7 @@ static int NL_FORTRAN_WRAP(lsame)(const char *ca, const char *cb)
         iy = (-(*n) + 1) * *incy + 1;
     }
     i__1 = *n;
-    for (i = 1; i <= *n; ++i) {
+    for (i = 1; i <= i__1; ++i) {
         DY(iy) += *da * DX(ix);
         ix += *incx;
         iy += *incy;
@@ -294,7 +294,7 @@ L20:
         goto L40;
     }
     i__1 = m;
-    for (i = 1; i <= m; ++i) {
+    for (i = 1; i <= i__1; ++i) {
         DY(i) += *da * DX(i);
 /* L30: */
     }
@@ -304,7 +304,7 @@ L20:
 L40:
     mp1 = m + 1;
     i__1 = *n;
-    for (i = mp1; i <= *n; i += 4) {
+    for (i = mp1; i <= i__1; i += 4) {
         DY(i) += *da * DX(i);
         DY(i + 1) += *da * DX(i + 1);
         DY(i + 2) += *da * DX(i + 2);
@@ -365,7 +365,7 @@ static doublereal NL_FORTRAN_WRAP(ddot)(integer *n, doublereal *dx, integer *inc
         iy = (-(*n) + 1) * *incy + 1;
     }
     i__1 = *n;
-    for (i = 1; i <= *n; ++i) {
+    for (i = 1; i <= i__1; ++i) {
         dtemp += DX(ix) * DY(iy);
         ix += *incx;
         iy += *incy;
@@ -385,7 +385,7 @@ L20:
         goto L40;
     }
     i__1 = m;
-    for (i = 1; i <= m; ++i) {
+    for (i = 1; i <= i__1; ++i) {
         dtemp += DX(i) * DY(i);
 /* L30: */
     }
@@ -395,7 +395,7 @@ L20:
 L40:
     mp1 = m + 1;
     i__1 = *n;
-    for (i = mp1; i <= *n; i += 5) {
+    for (i = mp1; i <= i__1; i += 5) {
         dtemp = dtemp + DX(i) * DY(i) + DX(i + 1) * DY(i + 1) + DX(i + 2) *
             DY(i + 2) + DX(i + 3) * DY(i + 3) + DX(i + 4) * DY(i + 4);
 /* L50: */
@@ -448,7 +448,7 @@ L60:
     nincx = *n * *incx;
     i__1 = nincx;
     i__2 = *incx;
-    for (i = 1; *incx < 0 ? i >= nincx : i <= nincx; i += *incx) {
+    for (i = 1; i__2 < 0 ? i >= i__1 : i <= i__1; i += i__2) {
         DX(i) = *da * DX(i);
 /* L10: */
     }
@@ -465,7 +465,7 @@ L20:
         goto L40;
     }
     i__2 = m;
-    for (i = 1; i <= m; ++i) {
+    for (i = 1; i <= i__2; ++i) {
         DX(i) = *da * DX(i);
 /* L30: */
     }
@@ -475,7 +475,7 @@ L20:
 L40:
     mp1 = m + 1;
     i__2 = *n;
-    for (i = mp1; i <= *n; i += 5) {
+    for (i = mp1; i <= i__2; i += 5) {
         DX(i) = *da * DX(i);
         DX(i + 1) = *da * DX(i + 1);
         DX(i + 2) = *da * DX(i + 2);
@@ -617,7 +617,7 @@ static doublereal NL_FORTRAN_WRAP(dnrm2)(integer *n, doublereal *x, integer *inc
         iy = (-(*n) + 1) * *incy + 1;
     }
     i__1 = *n;
-    for (i = 1; i <= *n; ++i) {
+    for (i = 1; i <= i__1; ++i) {
         DY(iy) = DX(ix);
         ix += *incx;
         iy += *incy;
@@ -636,7 +636,7 @@ L20:
         goto L40;
     }
     i__1 = m;
-    for (i = 1; i <= m; ++i) {
+    for (i = 1; i <= i__1; ++i) {
         DY(i) = DX(i);
 /* L30: */
     }
@@ -646,7 +646,7 @@ L20:
 L40:
     mp1 = m + 1;
     i__1 = *n;
-    for (i = mp1; i <= *n; i += 7) {
+    for (i = mp1; i <= i__1; i += 7) {
         DY(i) = DX(i);
         DY(i + 1) = DX(i + 1);
         DY(i + 2) = DX(i + 2);
@@ -844,13 +844,13 @@ L40:
         if (*incy == 1) {
             if (*beta == 0.) {
                 i__1 = leny;
-                for (i = 1; i <= leny; ++i) {
+                for (i = 1; i <= i__1; ++i) {
                     Y(i) = 0.;
 /* L10: */
                 }
             } else {
                 i__1 = leny;
-                for (i = 1; i <= leny; ++i) {
+                for (i = 1; i <= i__1; ++i) {
                     Y(i) = *beta * Y(i);
 /* L20: */
                 }
@@ -859,14 +859,14 @@ L40:
             iy = ky;
             if (*beta == 0.) {
                 i__1 = leny;
-                for (i = 1; i <= leny; ++i) {
+                for (i = 1; i <= i__1; ++i) {
                     Y(iy) = 0.;
                     iy += *incy;
 /* L30: */
                 }
             } else {
                 i__1 = leny;
-                for (i = 1; i <= leny; ++i) {
+                for (i = 1; i <= i__1; ++i) {
                     Y(iy) = *beta * Y(iy);
                     iy += *incy;
 /* L40: */

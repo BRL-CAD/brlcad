@@ -155,6 +155,8 @@ mread(socket_t fd, char *bufp, unsigned n)
     while (count < n) {
         nread = READSOCKET(fd, bufp, n-count);
         if (nread < 0) {
+            if (count > 0)
+                return (int)count;
             perror_sock("ttcp_mread");
             return -1;
         }
@@ -372,7 +374,6 @@ main(int argc, char **argv)
     char *buf;			/* ptr to dynamic buffer */
     int buflen = 1024;		/* length of buffer */
     int nbuf = 1024;		/* number of buffers to send in sinkmode */
-    unsigned long addr_tmp;
     int cnt;
 #ifdef USE_WINSOCK
     WSADATA wsaData;
@@ -476,7 +477,8 @@ main(int argc, char **argv)
             if (addr == NULL)
                 err("bad hostname");
             sinhim.sin_family = addr->h_addrtype;
-            memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
+	    unsigned long addr_tmp;
+	    memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
             sinhim.sin_addr.s_addr = addr_tmp;
 #else
             fprintf(stderr, "No hostname resolution available\n");
@@ -605,7 +607,14 @@ main(int argc, char **argv)
     }
     if (!udp && trans)
 #ifdef USE_WINSOCK
+    {
+        char drainbuf[1024];
         (void)shutdown(fd, SD_SEND);
+        /* Drain until receiver closes its side, ensuring clean TCP teardown
+         * before WSACleanup() - without this, WSACleanup() may abort the
+         * connection with RST before the receiver has read all buffered data */
+        while (READSOCKET(fd, drainbuf, sizeof(drainbuf)) > 0) {}
+    }
 #else
         (void)shutdown(fd, SHUT_WR);
 #endif

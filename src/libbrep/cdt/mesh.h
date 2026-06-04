@@ -40,7 +40,7 @@
 #include <vector>
 #include <set>
 #include <map>
-#include "RTree.h"
+#include "../../libbg/RTree.h"
 #include "bu/color.h"
 #include "bg/polygon.h"
 #include "bg/tri_tri.h"

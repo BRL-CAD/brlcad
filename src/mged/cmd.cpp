@@ -147,7 +147,7 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
      * timer installed by mged_start_log_drain_timer() fires during these
      * Tcl_DoOneEvent calls, streaming intermediate bu_log output to the
      * command prompt as it arrives. */
-    while (!done.load(std::memory_order_acquire)) {
+    while (!done.load(std::memory_order_acquire) && !mged_shutting_down(s)) {
 	Tcl_DoOneEvent(TCL_ALL_EVENTS | TCL_DONT_WAIT);
 	mged_pr_output(s->interp);
 	bu_snooze(10000); /* 10 ms — keeps CPU low while staying responsive */
@@ -168,8 +168,6 @@ extern "C" {
  * Initialise the dedicated MGED log-buffer semaphore.
  *
  * Must be called once, early in mged_setup(), before any parallel code runs.
- * Uses bu_semaphore_register() (the correct BRL-CAD application semaphore API)
- * rather than bu/tc.h primitives.
  */
 void
 mged_sem_log_init(void)
@@ -188,6 +186,10 @@ log_drain_callback(ClientData clientData)
 {
     struct mged_state *s = (struct mged_state *)clientData;
     MGED_CK_STATE(s);
+    /* Defensive guard for a timer already dispatched before shutdown
+     * quiescence deletes the pending timer token. */
+    if (mged_shutting_down(s))
+	return;
     mged_pr_output(s->interp);
     /* Reschedule: 50 ms gives good responsiveness without unnecessary CPU use. */
     s->log_drain_timer = Tcl_CreateTimerHandler(50, log_drain_callback, clientData);
@@ -1626,17 +1628,16 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
 int
 cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 {
-    int status;
     struct bu_vls globbed = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct bu_vls save_vp = BU_VLS_INIT_ZERO;
-    int64_t start;
-    int64_t finish;
     size_t len;
     const char *cp;
-    const char *result = "";
 
     BU_CK_VLS(vp);
+
+    if (mged_shutting_down(s))
+	return CMD_OK;
 
     if (bu_vls_strlen(vp) <= 0)
 	return CMD_OK;
@@ -1679,10 +1680,10 @@ cmdline(struct mged_state *s, struct bu_vls *vp, int record)
 	bu_vls_vlscat(&globbed, vp);
     }
 
-    start = bu_gettime();
-    status = Tcl_Eval(s->interp, bu_vls_addr(&globbed));
-    finish = bu_gettime();
-    result = Tcl_GetStringResult(s->interp);
+    int64_t start = bu_gettime();
+    int status = Tcl_Eval(s->interp, bu_vls_addr(&globbed));
+    int64_t finish = bu_gettime();
+    const char *result = Tcl_GetStringResult(s->interp);
 
     /* Contemplate the result reported by the Tcl interpreter. */
 
@@ -2186,7 +2187,7 @@ wdb_deleteProc_rt(void *clientData)
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
 
     bu_free((void *)ap, "struct application");
@@ -2219,7 +2220,7 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
         return TCL_ERROR;
     }
 
-    rtip = rt_new_rti(s->wdbp->dbip);
+    rtip = rt_i_create(s->wdbp->dbip);
     newprocname = argv[1];
 
     /* Delete previous proc (if any) to release all that memory, first */
@@ -2250,7 +2251,7 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
     if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
         Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp,
                          "rt_gettrees() returned error", (char *)NULL);
-        rt_free_rti(rtip);
+        rt_i_destroy(rtip);
         return TCL_ERROR;
     }
 

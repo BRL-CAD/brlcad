@@ -44,10 +44,6 @@ namespace
 // This is in Bullet units (meters)
 static const btScalar MIN_ROI_EXTENT = 0.1;
 
-// Maximum extents for Bullet collision detection
-// Based on Bullet's numeric precision limits
-static const btScalar MAX_EXTENT = 1000.0;
-
 
 static bool
 bullet_dimensions_valid(const btVector3 &extents)

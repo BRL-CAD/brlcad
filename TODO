@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* verify MGED exit behavior on Windows - reports of non-zero exit
+  being returned.
+
 * update change policy to 1) expand definition of minimally impacting
   to allow an assuption of non-embedding in function calls (i.e., no
   function or macro calls as function arguments), 2) migrate change
@@ -29,20 +32,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   auto-update script that warns about deprecated use and/or applies
   minimally impacting changes to a given file.
 
-* document rt_db_get_internal() and any others like that in CHANGES.
-  will required careful consideration whether it's minimally-impacting
-  (or if we need to restore arg as a no-op to not break builds).
-
-* settle on sane gist quality defaults and/or implement quality knob
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
 * fix ARB8 promotion to BoT, so calls between prep and shot don't get
   inconsistent data (soltab needs to match).
-
-* Adjust bext patching to use file copying for cases where we are
-  adding our own files wholesale
 
 * verify arb6 editing in cheese wedge tutorial
 
@@ -136,35 +130,15 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   all bundled dependencies, except when we still need Find*.cmake
   to locate system installs that don't provide them.
 
-* Investigate viability of providing EXPORT installs and *Config.cmake
-  files for BRL-CAD targets - that's the "modern" way to support
-  CMake's find_package mechanism.
-
-* Look into CMinx CMake documentation system to see if it might be
-  useful for documenting the build system.
-  https://github.com/CMakePP/CMinx
-
 * Windows installer does not respect the "add to path" checkbox
   and always adds BRL-CAD to the system path
 
-* Add a "perturb" callback function to librt's primitive tables, that
-  will accept a primitive definition and return a version that has been
-  slightly increased or decreased in size.  For example, a "perturbed"
-  TGC would have its base and height planes bumped slightly in or out
-  and its radius slightly increased or decreased.  The intent would be
-  to see if we can automatically perturb primitives just slightly out
-  of numerical co-planarity for facetize.  For union (and probably
-  intersection) we would bump out slightly, and for subtraction bump
-  in slightly.  Probably want to do this at the implicit level, rather
-  than after triangles have been produced, so it's easier to understand
-  what happens.  For things like pipes especially, getting the intended
-  effect post-triangulation might be tricky.
+* Look into https://www.kitware.com/really-fast-isocontouring/ to see
+  if those algorithms could be useful for BRL-CAD
 
 * There are probably a number of algorithms in our code where
   we should check to see if the GTE implementation would be better
   than ours (line/point distance functionality, for example).
-
-* validate imgdiff difference reporting
 
 * add a flag to prefix command to remove prefix on a group hierarchy.
 
@@ -256,14 +230,6 @@ lookup check to ensure none are missing.
 
 * integrate gen-registered-attributes-html output into website
 
-* brlcad-config build helper script is not working (not reporting
-  -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
-  $ /usr/brlcad/rel-7.18.0/bin/brlcad-config brlcad
-  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lbrlcad -lged -lwdb -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS -lanalyze
-
-  $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
-  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
-
 * OpenCL for enhanced performance boolweave sorting
 
 * create boolweave+boolfinal unit tests to validate weaving behavior
@@ -295,9 +261,6 @@ lookup check to ensure none are missing.
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
-
-* update code requiring lemon parser generator to support newest
-  upstream code.
 
 * consider user interface and usability implications of gchecker
   and/or overlap_tool as commands that kick off GUI.  need to consider
@@ -542,10 +505,6 @@ lookup check to ensure none are missing.
 
 * fully implement analyze for all geometry objects
 
-* implement general analyze estimate (perhaps just raytrace it) for
-  primitives where values like surface area, volume, or bb are very
-  difficult to calculate.
-
 * move analyze logic into libanalyze (with respective primitive logic
   into src/librt/primitives/*).
 
@@ -587,9 +546,6 @@ lookup check to ensure none are missing.
 * handling of geometry with names like "--_25" fails in archer
 
 * drawing with origin, axes, and overall dimensions for rt/rtedge/etc.
-
-* STIX 2.0 fonts are released, using OpenType - check to see whether
-  we can upgrade to these for our DocBook processing
 
 * Fedora doesn't have the old fonts mged assumes: dm-X: Can't open
   font '9x15' or
@@ -867,22 +823,6 @@ lookup check to ensure none are missing.
 * implement rt_volume() API for computing geometry volume (gqa style
   for complex, direct for primitives)
 
-* See if it is possible to simplify btclsh/bwish code when it comes to
-  relying on libtermio - linenoise can do the basics, and for fancier
-  keybinding/word based navigation see if launching in Emacs can
-  suffice:
-
-  ;; per https://emacs.stackexchange.com/q/18672
-  (defun btclsh ()
-    (interactive)
-    (require 'term)
-    (let* ((cmd "btclsh")
-           (termbuf (apply 'make-term "btclsh console" cmd nil nil)))
-      (set-buffer termbuf)
-      (term-mode)
-      (term-line-mode)
-      (switch-to-buffer termbuf))) 
-
 * decouple libwdb from librt, particularly the headers and relevant
   structures that cross over to both such as the rtgeom.h types.
 
@@ -909,8 +849,6 @@ lookup check to ensure none are missing.
   rt_shot(), rt_describe(), etc.).
 
 * review proc-db for promotion to src/shapes
-
-* provide a viable FindBRLCAD.cmake
 
 * fix nurbs_ssi and nurbs_tester unit tests
 
@@ -947,13 +885,6 @@ lookup check to ensure none are missing.
   in test_2.s sph 1, 2, 1 0.0007  (draws a sphere wireframe correctly)
   in test_1.s sph 10000 -15000 3000 0.0007 (incorrect wireframe)
 
-* use spatial partitioning during boolean processing of polygonal
-  meshes.  good approach might be to generalize TIE's kd-tree to
-  polygons or even create a new scheme (e.g., an integer-indexed grid
-  layout).  data coherence would be nice (but not essential).  current
-  approach is at least O(N^2) with large constant time.  New should be
-  O(N*log(N)).
-
 * rework the database object hash to push the iteration up into librt
   as API instead of expecting callers to use RT_DBNHASH and
   RT_DBHASH() manually.  consider using bu_hash or other container.
@@ -967,11 +898,6 @@ lookup check to ensure none are missing.
 
 * add option to rtedge to also show back-facing hidden edges
 
-* add option to push/xpush to stop at the region level, to stop before
-  primitives, to stop after N levels, to stop before N levels. (This
-  is at least partially accomplished in npush work - need to hammer
-  out any remaining issues with depth stoppage limits...)
-
 * convert teapot to use nurbs surfaces instead of bspline
 
 * create a FASTGEN sample geometry with all entities defined and a
@@ -983,9 +909,6 @@ lookup check to ensure none are missing.
 
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
-
-* replace use of libbu red-black trees with C++ containers (current
-  remaining uses appear to be pixcount and glint)
 
 * make libdm framebuffer parallel-safe.  use bu memory management.
   remove semaphore locks in src/rt/main.c and elsewhere.
@@ -1357,22 +1280,6 @@ lookup check to ensure none are missing.
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed:
   https://github.com/stager13/ngplant)
-
-* Literally days after I completed my initial extraction of the OSMesa
-  code for a software rendering fallback, a project for a compact C99
-  implementation of OpenGL 3.x first released some public code:
-  https://github.com/rswinkle/PortableGL The project shows current
-  activity, and it appears based on some code used there that TinyGL
-  itself has also gotten some fixes from the original author.  Based
-  on experiments with the other "cleaned up" fork, TinyGL on its own
-  doesn't have enough of OpenGL to support all of BRL-CAD's currently
-  used features, but it would be interesting to know if PortableGL
-  could be a viable alternative to libosmesa.  Given the latter works
-  and has been cleaned up quite a lot the question is not urgent, but
-  if PortableGL is actively maintained, gives us a similar capability
-  with a newer standard and similar independence from any third party
-  dependencies, it is of interest.  First question is how much of our
-  existing OpenGL would need to be updated to target 3.x...
 
 
 OVERLAP TOOLS
@@ -2177,9 +2084,6 @@ The following binaries are not yet available on Windows.  The reason
 is identified in parentheses.
 
 bombardier (possibly just a problem with the build logic)
-remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
-rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
-ttcp       (not ported)
 
 
 CONVERTERS
@@ -2705,20 +2609,6 @@ DOCUMENTATION
     step-g
     tgf-g
 
-* DocBook: create a DB index.xml to generate a doc listing (with
-  hot links) for the html and pdf collection
-
-* DocBook source: add xsl customizations for figure and table title
-  positions, float centering, etc.; add automatic figure, table, and
-  other similar references; add separate markup for html (role='html')
-  and pdf (role='fo') image sizing and placement; remove unnecessary
-  image markup; lift child namespaces to each document's root element.
-
-  Particular targets for improvement:
-
-    doc/docbook/presentations/en/brlcad-app-devel.xml
-    doc/docbook/presentations/en/intro-to-tcltk.xml
-    doc/docbook/specifications/en/BRL_CAD_g_format_V5.xml
 
 * write up some documentation on other build tools besides make -
   CMake supports other generators, wouldn't hurt to detail how to

@@ -1260,14 +1260,21 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
      * manager shows it.  This is the companion to removing the premature
      * wm deiconify from the toplevel creation above. We only want this if
      * the target window is in fact a top level window, so check first.*/
-    {
-	struct bu_vls deico = BU_VLS_INIT_ZERO;
-	const char *wpath = bu_vls_cstr(&dmp->i->dm_pathName);
-	bu_vls_printf(&deico, "if {%s eq [winfo toplevel %s]} { wm deiconify %s }", wpath, wpath, wpath);
-	if (Tcl_Eval(interp, bu_vls_cstr(&deico)) != BRLCAD_OK)
-	    bu_log("wgl_open: wm deiconify %s failed: %s\n",
-		   bu_vls_addr(&dmp->i->dm_pathName), Tcl_GetStringResult(interp));
-	bu_vls_free(&deico);
+	{
+    /*
+     * The window path may contain characters (such as leading dots)
+     * that the Tcl expression parser treats specially.  Quote the
+     * path values in the test and the wm command so the expression is
+     * evaluated as a string comparison rather than attempting to parse
+     * the path as a numeric or variable name.  This avoids runtime
+     * errors like: "invalid character "." in expression "...". */
+    struct bu_vls deico = BU_VLS_INIT_ZERO;
+    const char *wpath = bu_vls_cstr(&dmp->i->dm_pathName);
+    bu_vls_printf(&deico, "if {\"%s\" eq [winfo toplevel \"%s\"]} { wm deiconify \"%s\" }", wpath, wpath, wpath);
+    if (Tcl_Eval(interp, bu_vls_cstr(&deico)) != BRLCAD_OK)
+	bu_log("wgl_open: wm deiconify %s failed: %s\n",
+	       bu_vls_addr(&dmp->i->dm_pathName), Tcl_GetStringResult(interp));
+    bu_vls_free(&deico);
     }
 
     Tk_CreateEventHandler(pubvars->xtkwin, VisibilityChangeMask, WGLEventProc, (ClientData)dmp);

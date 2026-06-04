@@ -542,14 +542,15 @@ static void nlInitializeMSystem(void) {
 
 static void nlInitializeMCRSMatrixPattern(void) {
     NLuint n = nlCurrentContext->n;
-    nlCurrentContext->M = (NLMatrix)(NL_NEW(NLCRSMatrix));
+    NLCRSMatrix *M = NL_NEW(NLCRSMatrix);
+    nlCurrentContext->M = (NLMatrix)M;
     if(nlCurrentContext->symmetric) {
         nlCRSMatrixConstructPatternSymmetric(
-            (NLCRSMatrix*)(nlCurrentContext->M), n
+            M, n
         );
     } else {
         nlCRSMatrixConstructPattern(
-            (NLCRSMatrix*)(nlCurrentContext->M), n, n
+            M, n, n
         );
     }
     nlCurrentContext->has_matrix_pattern = NL_TRUE;
@@ -576,10 +577,9 @@ static void nlInitializeMSparseMatrix(void) {
         storage = (storage | NL_MATRIX_STORE_SYMMETRIC);
     }
 
-    nlCurrentContext->M = (NLMatrix)(NL_NEW(NLSparseMatrix));
-    nlSparseMatrixConstruct(
-        (NLSparseMatrix*)(nlCurrentContext->M), n, n, storage
-    );
+    NLSparseMatrix *M = NL_NEW(NLSparseMatrix);
+    nlCurrentContext->M = (NLMatrix)M;
+    nlSparseMatrixConstruct(M, n, n, storage);
 }
 
 static void nlEndMatrix(void) {
@@ -983,11 +983,9 @@ void nlMatrixMode(NLenum matrix) {
                     ++n;
                 }
             }
-            nlCurrentContext->B = (NLMatrix)(NL_NEW(NLSparseMatrix));
-            nlSparseMatrixConstruct(
-                (NLSparseMatrix*)(nlCurrentContext->B),
-                n, n, NL_MATRIX_STORE_ROWS
-            );
+            NLSparseMatrix *B = NL_NEW(NLSparseMatrix);
+            nlCurrentContext->B = (NLMatrix)B;
+            nlSparseMatrixConstruct(B, n, n, NL_MATRIX_STORE_ROWS);
         }
     } break ;
     default:

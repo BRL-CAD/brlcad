@@ -353,6 +353,9 @@ rays_from_points_to_center(struct ray *rays, size_t count, const point_t pnts[],
 static void
 shuffle_points(point_t *points, size_t n)
 {
+    if (n < 2)
+	return;
+
     for (size_t i = n - 1; i > 0; i--) {
         size_t j = rand() % (i + 1);
 
@@ -730,7 +733,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 
     /* release our raytracing instance and counters */
     rtsurf_context_destroy(context);
-    rt_free_rti(ap.a_rt_i);
+    rt_i_destroy(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
     return area;

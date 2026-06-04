@@ -119,11 +119,11 @@ _crofton_on_obj(struct db_i *dbip, const char *obj_name, double &out_sa, double 
 {
     out_sa = out_vol = -1.0;
 
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip) return -1L;
 
     if (rt_gettree(rtip, obj_name) != 0) {
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return -1L;
     }
     rt_prep_parallel(rtip, 1);
@@ -134,7 +134,7 @@ _crofton_on_obj(struct db_i *dbip, const char *obj_name, double &out_sa, double 
     crp.time_ms = 2000.0;
 
     int cr = rt_crofton_shoot(rtip, &crp, &out_sa, &out_vol);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     return (cr >= 0) ? (long)cr : -1L;
 }
 
@@ -248,110 +248,110 @@ _pcsg_copy_tree(PerturCsgCtx &ctx, union tree *tp, bool in_sub)
     nt->tr_op = tp->tr_op;
 
     switch (tp->tr_op) {
-    case OP_DB_LEAF: {
-	const char *leaf = tp->tr_l.tl_name;
-	struct directory *ldp = db_lookup(ctx.src_dbip, leaf, LOOKUP_QUIET);
-	std::string use_name = leaf;
+	case OP_DB_LEAF: {
+			     const char *leaf = tp->tr_l.tl_name;
+			     struct directory *ldp = db_lookup(ctx.src_dbip, leaf, LOOKUP_QUIET);
+			     std::string use_name = leaf;
 
-	if (ldp && (ldp->d_flags & RT_DIR_COMB)) {
-	    /* Intermediate comb: recurse, writing it into the inmem db. */
-	    _pcsg_make_comb(ctx, leaf, in_sub);
-	    /* Use the same name in the inmem db. */
-	} else {
-	    /* Solid leaf: check for a variant. */
-	    std::string path_key;
-	    for (const auto &seg : ctx.path_stack)
-		path_key += "/" + seg;
-	    path_key += "/" + std::string(leaf);
-	    std::string role_key = path_key + (in_sub ? "#sub" : "#base");
-	    auto it = ctx.vplan->inst_to_variant.find(role_key);
+			     if (ldp && (ldp->d_flags & RT_DIR_COMB)) {
+				 /* Intermediate comb: recurse, writing it into the inmem db. */
+				 _pcsg_make_comb(ctx, leaf, in_sub);
+				 /* Use the same name in the inmem db. */
+			     } else {
+				 /* Solid leaf: check for a variant. */
+				 std::string path_key;
+				 for (const auto &seg : ctx.path_stack)
+				     path_key += "/" + seg;
+				 path_key += "/" + std::string(leaf);
+				 std::string role_key = path_key + (in_sub ? "#sub" : "#base");
+				 auto it = ctx.vplan->inst_to_variant.find(role_key);
 
-	    if (it != ctx.vplan->inst_to_variant.end()) {
-		/* Variant exists: recreate the perturbed CSG from src_dbip. */
-		const std::string &vname = it->second;
-		use_name = vname;
-		if (ctx.written.find(vname) == ctx.written.end()) {
-		    auto rec_it = ctx.vplan->variant_recs.find(vname);
-		    if (rec_it != ctx.vplan->variant_recs.end() && ldp) {
-			struct rt_db_internal src_intern;
-			RT_DB_INTERNAL_INIT(&src_intern);
-			if (rt_db_get_internal(&src_intern, ldp, ctx.src_dbip,
-					       NULL) >= 0) {
-			    int ptype = src_intern.idb_type;
-			    struct rt_db_internal *var_intern = NULL;
-			    bool ok = false;
-			    if (OBJ[ptype].ft_perturb &&
-				OBJ[ptype].ft_perturb(&var_intern, &src_intern, 0,
-						      rec_it->second.factor) == BRLCAD_OK &&
-				var_intern) {
-				if (wdb_put_internal(ctx.inmem_wdbp, vname.c_str(),
-						     var_intern, 1.0) >= 0)
-				    ok = true;
-				/* wdb_put_internal frees var_intern's idb_ptr;
-				 * we still need to free the struct itself. */
-				BU_PUT(var_intern, struct rt_db_internal);
-			    }
-			    if (!ok) {
-				/* Fallback: write original CSG under variant name. */
-				if (wdb_put_internal(ctx.inmem_wdbp, vname.c_str(),
-						     &src_intern, 1.0) >= 0)
-				    ok = true;
-				/* src_intern freed by wdb_put_internal */
-			    } else {
-				rt_db_free_internal(&src_intern);
-			    }
-			    if (ok) ctx.written.insert(vname);
-			}
-		    } else {
-			/* No variant record — fall back to original name. */
-			use_name = leaf;
-		    }
-		}
-	    }
+				 if (it != ctx.vplan->inst_to_variant.end()) {
+				     /* Variant exists: recreate the perturbed CSG from src_dbip. */
+				     const std::string &vname = it->second;
+				     use_name = vname;
+				     if (ctx.written.find(vname) == ctx.written.end()) {
+					 auto rec_it = ctx.vplan->variant_recs.find(vname);
+					 if (rec_it != ctx.vplan->variant_recs.end() && ldp) {
+					     struct rt_db_internal src_intern;
+					     RT_DB_INTERNAL_INIT(&src_intern);
+					     if (rt_db_get_internal(&src_intern, ldp, ctx.src_dbip,
+							 NULL) >= 0) {
+						 int ptype = src_intern.idb_type;
+						 struct rt_db_internal *var_intern = NULL;
+						 bool ok = false;
+						 if (OBJ[ptype].ft_perturb &&
+							 OBJ[ptype].ft_perturb(&var_intern, &src_intern, 0,
+							     rec_it->second.factor) == BRLCAD_OK &&
+							 var_intern) {
+						     if (wdb_put_internal(ctx.inmem_wdbp, vname.c_str(),
+								 var_intern, 1.0) >= 0)
+							 ok = true;
+						     /* wdb_put_internal frees var_intern's idb_ptr;
+						      * we still need to free the struct itself. */
+						     BU_PUT(var_intern, struct rt_db_internal);
+						 }
+						 if (!ok) {
+						     /* Fallback: write original CSG under variant name. */
+						     if (wdb_put_internal(ctx.inmem_wdbp, vname.c_str(),
+								 &src_intern, 1.0) >= 0)
+							 ok = true;
+						     /* src_intern freed by wdb_put_internal */
+						 } else {
+						     rt_db_free_internal(&src_intern);
+						 }
+						 if (ok) ctx.written.insert(vname);
+					     }
+					 } else {
+					     /* No variant record — fall back to original name. */
+					     use_name = leaf;
+					 }
+				     }
+				 }
 
-	    /* Ensure the (possibly original) leaf exists in the inmem db. */
-	    if (ctx.written.find(use_name) == ctx.written.end()) {
-		struct directory *udp =
-		    db_lookup(ctx.src_dbip, use_name.c_str(), LOOKUP_QUIET);
-		if (udp) {
-		    struct rt_db_internal leaf_intern;
-		    RT_DB_INTERNAL_INIT(&leaf_intern);
-		    if (rt_db_get_internal(&leaf_intern, udp, ctx.src_dbip,
-					   NULL) >= 0) {
-			if (wdb_put_internal(ctx.inmem_wdbp, use_name.c_str(),
-					     &leaf_intern, 1.0) >= 0)
-			    ctx.written.insert(use_name);
-			/* leaf_intern freed by wdb_put_internal */
-		    }
-		}
-	    }
-	}
+				 /* Ensure the (possibly original) leaf exists in the inmem db. */
+				 if (ctx.written.find(use_name) == ctx.written.end()) {
+				     struct directory *udp =
+					 db_lookup(ctx.src_dbip, use_name.c_str(), LOOKUP_QUIET);
+				     if (udp) {
+					 struct rt_db_internal leaf_intern;
+					 RT_DB_INTERNAL_INIT(&leaf_intern);
+					 if (rt_db_get_internal(&leaf_intern, udp, ctx.src_dbip,
+						     NULL) >= 0) {
+					     if (wdb_put_internal(ctx.inmem_wdbp, use_name.c_str(),
+							 &leaf_intern, 1.0) >= 0)
+						 ctx.written.insert(use_name);
+					     /* leaf_intern freed by wdb_put_internal */
+					 }
+				     }
+				 }
+			     }
 
-	nt->tr_l.tl_name = bu_strdup(use_name.c_str());
-	if (tp->tr_l.tl_mat) {
-	    nt->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat cp");
-	    MAT_COPY(nt->tr_l.tl_mat, tp->tr_l.tl_mat);
-	}
-	break;
-    }
-    case OP_UNION:
-    case OP_INTERSECT:
-	nt->tr_b.tb_left  = _pcsg_copy_tree(ctx, tp->tr_b.tb_left,  in_sub);
-	nt->tr_b.tb_right = _pcsg_copy_tree(ctx, tp->tr_b.tb_right, in_sub);
-	break;
-    case OP_SUBTRACT:
-	/* Right child of subtraction is always subtractive, regardless of
-	 * the outer context, so pass in_sub=true for the right branch. */
-	nt->tr_b.tb_left  = _pcsg_copy_tree(ctx, tp->tr_b.tb_left,  in_sub);
-	nt->tr_b.tb_right = _pcsg_copy_tree(ctx, tp->tr_b.tb_right, true);
-	break;
-    case OP_NOT:
-    case OP_GUARD:
-    case OP_XNOP:
-	nt->tr_b.tb_left = _pcsg_copy_tree(ctx, tp->tr_b.tb_left, in_sub);
-	break;
-    default:
-	break;
+			     nt->tr_l.tl_name = bu_strdup(use_name.c_str());
+			     if (tp->tr_l.tl_mat) {
+				 nt->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat cp");
+				 MAT_COPY(nt->tr_l.tl_mat, tp->tr_l.tl_mat);
+			     }
+			     break;
+			 }
+	case OP_UNION:
+	case OP_INTERSECT:
+			 nt->tr_b.tb_left  = _pcsg_copy_tree(ctx, tp->tr_b.tb_left,  in_sub);
+			 nt->tr_b.tb_right = _pcsg_copy_tree(ctx, tp->tr_b.tb_right, in_sub);
+			 break;
+	case OP_SUBTRACT:
+			 /* Right child of subtraction is always subtractive, regardless of
+			  * the outer context, so pass in_sub=true for the right branch. */
+			 nt->tr_b.tb_left  = _pcsg_copy_tree(ctx, tp->tr_b.tb_left,  in_sub);
+			 nt->tr_b.tb_right = _pcsg_copy_tree(ctx, tp->tr_b.tb_right, true);
+			 break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+			 nt->tr_b.tb_left = _pcsg_copy_tree(ctx, tp->tr_b.tb_left, in_sub);
+			 break;
+	default:
+			 break;
     }
     return nt;
 }
@@ -391,7 +391,7 @@ _pcsg_make_comb(PerturCsgCtx &ctx, const char *comb_name, bool in_sub)
     new_intern.idb_meth       = &OBJ[ID_COMBINATION];
 
     bool ok = (wdb_put_internal(ctx.inmem_wdbp, comb_name,
-				&new_intern, 1.0) >= 0);
+		&new_intern, 1.0) >= 0);
     /* wdb_put_internal frees new_intern (including new_comb + new_tree). */
     if (ok) ctx.written.insert(std::string(comb_name));
     return ok;
@@ -412,7 +412,7 @@ _pcsg_make_comb(PerturCsgCtx &ctx, const char *comb_name, bool in_sub)
  */
 static struct db_i *
 _create_perturbed_csg_db(struct db_i *src_dbip, const char *region_name,
-			 const FacetizeVariantPlan *vplan)
+	const FacetizeVariantPlan *vplan)
 {
     if (!src_dbip || !region_name || !vplan) return NULL;
 
@@ -918,10 +918,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			if (reopened_wdb) {
 			    db_close(wdbip);
 			    wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-			    if (!wdbip) {
-				bret = BRLCAD_ERROR;
+			    if (!wdbip)
 				break;
-			    }
 			    db_dirbuild(wdbip);
 			    db_update_nref(wdbip);
 			    wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -940,63 +938,63 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
 			if (bret == BRLCAD_OK) {
 			    double sa_err2 = -1.0, vol_err2 = -1.0;
-			/* Compare the perturbed BoT (exact bg_trimesh metrics)
-			 * against a Crofton raytrace of the perturbed CSG: build
-			 * a fresh in-memory db whose leaves are ft_perturb-
-			 * generated parametric CSG copies from s->dbip (the
-			 * exact same factor stored in region_vplan->variant_recs).
-			 * Fall back to the original-CSG reference if the db
-			 * cannot be built (e.g. no region_vplan or all primitives lack
-			 * ft_perturb support). */
-			struct db_i *perturb_dbip = _create_perturbed_csg_db(
-			    s->dbip, dpw[0]->d_namep, region_vplan);
-			struct db_i *csg_ref_dbip =
-			    perturb_dbip ? perturb_dbip : s->dbip;
-			int vret2 = _validate_csg_vs_bot(
-			    csg_ref_dbip, dpw[0]->d_namep,
-			    wdbip, bu_vls_cstr(&bname),
-			    perturb_sa_frac, perturb_vol_frac,
-			    &sa_err2, &vol_err2);
-			if (perturb_dbip) db_close(perturb_dbip);
-			if (vret2 == 1) {
-			    vcnt_p2_pass++;
-			    facetize_log(s, 1, "FACETIZE: %s perturbed CSG vs BoT MATCH (SA_err=%.2f%% VOL_err=%.2f%%) - perturb successful\n",
-				    dpw[0]->d_namep, sa_err2, vol_err2);
-			}
-			/* Return code 2 at P2: few Crofton crossings for
-			 * perturbed CSG — too noisy to compare, but the sampler
-			 * found geometry.  Accept the perturbed BoT with a note
-			 * (topology may have shifted slightly).                 */
-			if (vret2 == 2) {
-			    vcnt_p2_topoflip++;
-			    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (few perturbed CSG crossings)");
-			    facetize_log(s, 1, "FACETIZE NOTE: %s Crofton found very few crossings for perturbed CSG; perturb may have shifted geometry - check output\n",
-				    dpw[0]->d_namep);
-			}
-			/* Return code 3 at P2: zero Crofton crossings for
-			 * perturbed CSG.  The perturb shifted the geometry so
-			 * the parametric CSG appears empty (subtractor likely
-			 * now fully engulfs the base).  Replace the perturbed
-			 * BoT with an empty one to match raytrace behaviour.   */
-			if (vret2 == 3) {
-			    vcnt_zero_hit++;
-			    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (zero perturbed CSG crossings)");
-			    facetize_log(s, 1, "FACETIZE: %s Crofton found zero crossings for perturbed CSG; Boolean eval likely empty after perturb - replacing BoT with empty\n",
-				    dpw[0]->d_namep);
-			    if (!s->no_empty)
-				_write_empty_bot(wdbip, bu_vls_cstr(&bname), s->verbosity);
-			}
-			if (vret2 == 0) {
-			    vcnt_p2_warn++;
-			    inspect_regions.insert(std::string(dpw[0]->d_namep) + " (persistent mismatch after perturb)");
-			    facetize_log(s, 1, "FACETIZE WARNING: %s persistent validation mismatch after perturb retry (SA_err=%.2f%% VOL_err=%.2f%%) - check output geometry with 'lint'\n",
-				    dpw[0]->d_namep, sa_err2, vol_err2);
-			}
-			if (vret2 < 0) {
-			    vcnt_unavail++;
-			    if (s->verbosity > 0)
-				bu_log("FACETIZE: validation unavailable after perturb retry for %s\n", dpw[0]->d_namep);
-			}
+			    /* Compare the perturbed BoT (exact bg_trimesh metrics)
+			     * against a Crofton raytrace of the perturbed CSG: build
+			     * a fresh in-memory db whose leaves are ft_perturb-
+			     * generated parametric CSG copies from s->dbip (the
+			     * exact same factor stored in region_vplan->variant_recs).
+			     * Fall back to the original-CSG reference if the db
+			     * cannot be built (e.g. no region_vplan or all primitives lack
+			     * ft_perturb support). */
+			    struct db_i *perturb_dbip = _create_perturbed_csg_db(
+				    s->dbip, dpw[0]->d_namep, region_vplan);
+			    struct db_i *csg_ref_dbip =
+				perturb_dbip ? perturb_dbip : s->dbip;
+			    int vret2 = _validate_csg_vs_bot(
+				    csg_ref_dbip, dpw[0]->d_namep,
+				    wdbip, bu_vls_cstr(&bname),
+				    perturb_sa_frac, perturb_vol_frac,
+				    &sa_err2, &vol_err2);
+			    if (perturb_dbip) db_close(perturb_dbip);
+			    if (vret2 == 1) {
+				vcnt_p2_pass++;
+				facetize_log(s, 1, "FACETIZE: %s perturbed CSG vs BoT MATCH (SA_err=%.2f%% VOL_err=%.2f%%) - perturb successful\n",
+					dpw[0]->d_namep, sa_err2, vol_err2);
+			    }
+			    /* Return code 2 at P2: few Crofton crossings for
+			     * perturbed CSG — too noisy to compare, but the sampler
+			     * found geometry.  Accept the perturbed BoT with a note
+			     * (topology may have shifted slightly).                 */
+			    if (vret2 == 2) {
+				vcnt_p2_topoflip++;
+				inspect_regions.insert(std::string(dpw[0]->d_namep) + " (few perturbed CSG crossings)");
+				facetize_log(s, 1, "FACETIZE NOTE: %s Crofton found very few crossings for perturbed CSG; perturb may have shifted geometry - check output\n",
+					dpw[0]->d_namep);
+			    }
+			    /* Return code 3 at P2: zero Crofton crossings for
+			     * perturbed CSG.  The perturb shifted the geometry so
+			     * the parametric CSG appears empty (subtractor likely
+			     * now fully engulfs the base).  Replace the perturbed
+			     * BoT with an empty one to match raytrace behaviour.   */
+			    if (vret2 == 3) {
+				vcnt_zero_hit++;
+				inspect_regions.insert(std::string(dpw[0]->d_namep) + " (zero perturbed CSG crossings)");
+				facetize_log(s, 1, "FACETIZE: %s Crofton found zero crossings for perturbed CSG; Boolean eval likely empty after perturb - replacing BoT with empty\n",
+					dpw[0]->d_namep);
+				if (!s->no_empty)
+				    _write_empty_bot(wdbip, bu_vls_cstr(&bname), s->verbosity);
+			    }
+			    if (vret2 == 0) {
+				vcnt_p2_warn++;
+				inspect_regions.insert(std::string(dpw[0]->d_namep) + " (persistent mismatch after perturb)");
+				facetize_log(s, 1, "FACETIZE WARNING: %s persistent validation mismatch after perturb retry (SA_err=%.2f%% VOL_err=%.2f%%) - check output geometry with 'lint'\n",
+					dpw[0]->d_namep, sa_err2, vol_err2);
+			    }
+			    if (vret2 < 0) {
+				vcnt_unavail++;
+				if (s->verbosity > 0)
+				    bu_log("FACETIZE: validation unavailable after perturb retry for %s\n", dpw[0]->d_namep);
+			    }
 			}
 		    } else {
 			vcnt_unavail++;
@@ -1061,7 +1059,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	} else {
 	    struct directory *bot_dp = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
 	    if (!bot_dp || db_delete(wdbip, wdp) != 0 || db_dirdelete(wdbip, wdp) != 0 ||
-		db_rename(wdbip, bot_dp, dpw[0]->d_namep) < 0) {
+		    db_rename(wdbip, bot_dp, dpw[0]->d_namep) < 0) {
 		if (s->verbosity >= 0)
 		    bu_log("regions.cpp:%d Failed to replace implicit root %s.\n", __LINE__, dpw[0]->d_namep);
 		db_close(wdbip);
@@ -1128,7 +1126,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	bu_ptbl_free(&eval_roots);
 	bu_ptbl_free(ir);
 	bu_free(ir, "ir table");
-    	bu_ptbl_free(ar);
+	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
 	return BRLCAD_ERROR;
@@ -1248,11 +1246,11 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     /* Print aggregate variant-plan summary and clean up (Manifold path only). */
     if (vcnt_adjusted_instances > 0) {
 	facetize_log(s, 0, "FACETIZE: variant summary: %d adjusted instance(s) "
-	       "(%d subtractive), %d fallback(s), %d tess failure(s)\n",
-	       vcnt_adjusted_instances,
-	       vcnt_sub_variants,
-	       vcnt_perturb_fallbacks,
-	       vcnt_tess_failures);
+		"(%d subtractive), %d fallback(s), %d tess failure(s)\n",
+		vcnt_adjusted_instances,
+		vcnt_sub_variants,
+		vcnt_perturb_fallbacks,
+		vcnt_tess_failures);
     }
 
     bu_ptbl_free(ar);

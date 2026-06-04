@@ -5193,7 +5193,7 @@ to_deleteProc_rt(ClientData clientData)
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
 
     bu_free((void *)ap, "struct application");
@@ -6521,7 +6521,7 @@ to_rt_gettrees_application(struct ged *gedp,
 	return RT_APPLICATION_NULL;
     }
 
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
 
     while (0 < argc && argv[0][0] == '-') {
 	if (BU_STR_EQUAL(argv[0], "-i")) {
@@ -6541,7 +6541,7 @@ to_rt_gettrees_application(struct ged *gedp,
 
     if (rt_gettrees(rtip, argc, (const char **)&argv[0], 1) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_gettrees() returned error");
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return RT_APPLICATION_NULL;
     }
 

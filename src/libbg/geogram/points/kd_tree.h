@@ -156,7 +156,7 @@ namespace GEOBRL {
              */
             double furthest_neighbor_sq_dist() const {
                 return
-                    nb_neighbors == nb_neighbors_max ?
+                    nb_neighbors != 0 && nb_neighbors == nb_neighbors_max ?
                     neighbors_sq_dist[nb_neighbors - 1] :
                     Numeric::max_float64()
                     ;

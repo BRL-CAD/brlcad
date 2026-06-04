@@ -49,7 +49,7 @@ get_line(char *cp, int buflen, char *title)
     c = bu_vls_gets(&str, infp);
     if (c > buflen)
 	printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
-		(unsigned long)cp, buflen, title);
+		(unsigned long)(uintptr_t)cp, buflen, title);
     int ret = bu_strlcpy(cp, bu_vls_addr(&str), buflen);
     bu_vls_free(&str);
     return ret;

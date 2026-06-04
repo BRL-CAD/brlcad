@@ -3,6 +3,7 @@ set(
   defines.h
   debug.h
   light.h
+  photonmap.h
   plastic.h
   shadework.h
   shadefuncs.h

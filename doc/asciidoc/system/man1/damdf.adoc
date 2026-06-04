@@ -1,0 +1,54 @@
+= DAMDF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+damdf - Compute the Average Magnitude Difference Function for a stream of doubles
+
+== SYNOPSIS
+
+[source]
+----
+damdf [window_size] < input.doubles > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*damdf* reads a stream of double-precision floating-point numbers from standard input, computes the Average Magnitude Difference Function (AMDF) in overlapping windows, and writes the resulting double-precision values to standard output. This is an experimental signal processing utility primarily used for pitch extraction algorithms.
+
+The input data is processed in chunks of size _window_size_ (default 512). For each window of length _L_, the tool calculates the sum of the absolute differences for various lag values, subtracts each sum from 1024, and outputs the result.
+
+[[options]]
+== OPTIONS
+
+*window_size*::
+The number of samples per processing window. Defaults to 512 if not specified.
+
+[[examples]]
+== EXAMPLES
+
+.Basic *damdf* Usage
+[example]
+====
+**damdf 1024 < signal.raw > amdf.raw**
+
+Computes the AMDF of the double-precision values in _signal.raw_ using a window size of 1024 samples, and writes the output to _amdf.raw_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

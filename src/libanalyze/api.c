@@ -1312,7 +1312,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     state->analysis_flags = flags;
 
     /* Get raytracing instance */
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
     rtip->useair = state->use_air;
 
     memset(resp, 0, sizeof(resp));
@@ -1328,7 +1328,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     for(i = 0; i < state->num_objects; i++) {
 	if(rt_gettree(rtip, names[i]) < 0) {
 	    bu_log("Loading geometry for [%s] FAILED", names[i]);
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
 	}
@@ -1339,7 +1339,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     /* setup azimuth and elevation angles in case of single grid */
     if (state->use_single_grid && !state->use_view_information) {
 	if (analyze_setup_ae(state)) {
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
 	}
@@ -1459,7 +1459,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	state->densities = NULL;
     }
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     return ANALYZE_OK;
 }
 

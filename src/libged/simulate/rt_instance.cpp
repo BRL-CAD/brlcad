@@ -114,10 +114,10 @@ RtInstance::get_overlaps(const db_full_path &path_a, const db_full_path &path_b,
     BU_CK_LIST_HEAD(&rays);
     RT_CK_RAY(&rays.ray);
 
-    const AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&m_db));
+    const AutoPtr<rt_i, rt_i_destroy> rti(rt_i_create(&m_db));
 
     if (!rti.ptr)
-	bu_bomb("rt_new_rti() failed");
+	bu_bomb("rt_i_create() failed");
 
     const TemporaryRegionHandle region_a(m_db, path_a), region_b(m_db, path_b);
     const AutoPtr<char> path_a_str(db_path_to_string(&path_a));
