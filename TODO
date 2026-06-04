@@ -305,17 +305,6 @@ lookup check to ensure none are missing.
 
 * default ls to undecorated, deprecate -n, add ls -p
 
-* make mv and mvall not accept slashes on destination:
-
-  mged> mv sph.r sph.r/R
-  db_lookup(R) failed: R does not exist
-  db_string_to_path() of 'sph.r/R' failed on 'R'
-  mged> tops
-  sph.r/R/R
-  mged> mv sph.r/R sph.r
-  mged> tops
-  sph.r/R
-
 * consider not using spaces in the default installer path on Windows
   for simplified scripting usage (e.g., when installed to C:\)
 
@@ -378,24 +367,6 @@ lookup check to ensure none are missing.
      and objects encountered (i.e., not reconstructed, but extracted)
 
 * RTAREA
-
-  * add an option to rtarea for onehit.  this is probably best as an
-    option that reports the requested objects only and then has a
-    verbose option for the more detailed hierarchical report that is
-    currently produced.
-
-  * verify rtarea.  There are reports that the rtarea
-    command may have a bug in its calculations.  This needs to be
-    investigated.
-
-  * review and fix rtarea's taxonomy for describing
-    presented/projected areas.  users expect presented area to
-    represent what is currently referred to as exposed area.  may make
-    more sense to introduce a different terms for other shotline
-    encounters.
-
-  * make rtarea display a cross-hair and perhaps coordinates for the
-    center of area if run from within mged.
 
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
@@ -789,8 +760,6 @@ lookup check to ensure none are missing.
   codes in the implementation is okay (as are library functions, but
   just don't rely on any).  name ideas: gdbg, dbadmin, dbtool, dbmaint
 
-* BU_SETJUMP/BU_UNSETJUMP into macros
-
 * convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
   logic layout using if/else.
 
@@ -803,8 +772,6 @@ lookup check to ensure none are missing.
 * investigate INFINITY spatial partitioning issue.
 
 * kill material_head static global in src/librt/mater.c
-
-* add an mk_extrude() routine to libwdb.
 
 * Teach CMake to respect and use user-defined CMAKE_C_FLAGS and other
   options supplied at the command line and in environment variables.
@@ -866,10 +833,6 @@ lookup check to ensure none are missing.
 
 * investigate integrating Pixar's OpenSubdiv for subdivision surfaces:
   http://graphics.pixar.com/opensubdiv/
-
-* the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
-  initialized. it looks like somebody has planned to extend the
-  function but never carried out
 
 * implement a null spatial partitioning method so we can determine
   what other intersection hits are being masked (and what impact a
@@ -997,8 +960,6 @@ lookup check to ensure none are missing.
   src/libged/glob.c code, very similar.
 
 * update g-xxx_facets to use libgcv
-
-* bu_cv_optimize() should be using bu_byteorder().
 
 * render annotated images to the OpenDocument format.  this is
   particularly useful for rtedge-style renderings with object
@@ -1588,9 +1549,6 @@ LIBGED
   cost: bot_split, killtree, and
   make s sph; make a arb8; sed a; e a; tra 0 0 500; r hemi u s - a; tol norm 1 ; facetize hemi.bot hemi
   # compared to tol norm 2, # triangles is up ~20% but facetize is >200%
-
-* translate lc command to libged (discovered in Feb. 2015 to have already
-  been done -- need information regarding when this was done and committed).
 
 * BoT mesh editing command.  Subtasks:
 
