@@ -54,11 +54,15 @@ editarb(struct mged_state *s, vect_t pos_model)
 {
     int ret = 0;
     struct rt_arb_internal *arb;
+    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
     arb = (struct rt_arb_internal *)MEDIT(s)->es_int.idb_ptr;
 
-    ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &s->tol.tol);
+    ret = rt_arb_edit(&error_msg, arb, NULL, 0, es_menu, newedge ? RT_ARB_EDIT_EDGE_DIR : RT_ARB_EDIT_DEFAULT, pos_model, (plane_t *)es_peqn, &s->tol.tol);
+    if (ret && bu_vls_strlen(&error_msg) > 0)
+	Tcl_AppendResult(s->interp, bu_vls_cstr(&error_msg), (char *)NULL);
+    bu_vls_free(&error_msg);
 
-    // arb_edit doesn't zero out our global any more as a library call, so
+    // rt_arb_edit doesn't zero out our global, so
     // reset once operation is complete.
     newedge = 0;
 

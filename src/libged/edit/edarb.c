@@ -55,7 +55,7 @@ editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
-    ret = arb_edit(NULL, arb, peqn, edge, newedge, pos_model, &wdbp->wdb_tol);
+    ret = rt_arb_edit(gedp->ged_result_str, arb, NULL, type, edge, newedge ? RT_ARB_EDIT_EDGE_DIR : RT_ARB_EDIT_DEFAULT, pos_model, (plane_t *)peqn, &wdbp->wdb_tol);
     if (!ret) {
 	return BRLCAD_OK;
     } else {

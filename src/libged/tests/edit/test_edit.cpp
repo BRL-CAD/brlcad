@@ -2833,6 +2833,26 @@ test_p5_arb8_move_vertex(struct ged *gedp)
 }
 
 /* ------------------------------------------------------------------ *
+ * arb8: type option reaches the primitive edit implementation        *
+ * ------------------------------------------------------------------ */
+static void
+test_p5_arb8_type_option(struct ged *gedp)
+{
+    const char *ok_av[] = { "edit", "-O", "type=arb8", "arb8.s", "move_vertex",
+                            "0", "-7", "-5", "-5", NULL };
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    CHECK(ged_exec(gedp, 9, ok_av) == BRLCAD_OK,
+          "arb8.s move_vertex with -O type=arb8 returns OK");
+
+    const char *bad_av[] = { "edit", "-O", "type=bogus", "arb8.s", "move_vertex",
+                             "0", "-8", "-5", "-5", NULL };
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    int ret = ged_exec(gedp, 9, bad_av);
+    CHECK(ret == BRLCAD_ERROR,
+          "arb8.s move_vertex with invalid -O type=bogus fails");
+}
+
+/* ------------------------------------------------------------------ *
  * arb8: --list-ops=json includes arb8                                *
  * ------------------------------------------------------------------ */
 static void
@@ -3372,6 +3392,7 @@ main(int ac, char *av[])
         test_p5_all_prim_ops_has_arb8(gedp);
         test_p5_arb8_move_face(gedp);
         test_p5_arb8_move_vertex(gedp);
+        test_p5_arb8_type_option(gedp);
         ged_close(gedp);
     }
     bu_vls_free(&p5_path);

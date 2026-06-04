@@ -208,7 +208,7 @@ bad_edge:
 	VADD2(pt, pt, arb->pt[arb_pt_index]);
     }
 
-    if (rt_arb_edit(gedp->ged_result_str, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
+    if (rt_arb_edit(gedp->ged_result_str, arb, NULL, arb_type, edge, RT_ARB_EDIT_DEFAULT, pt, planes, &wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;

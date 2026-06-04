@@ -475,7 +475,6 @@ arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int 
  * ALL faces planar.
  */
 struct rt_edit;
-RT_EXPORT extern int arb_edit(struct rt_edit *s, struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge, vect_t pos_model, const struct bn_tol *tol);
 
 
 
@@ -665,12 +664,17 @@ RT_EXPORT extern int rt_arb_move_edge(struct bu_vls             *error_msg_ret,
 				      const struct bn_tol       *tol);
 
 
+#define RT_ARB_EDIT_DEFAULT 0x0
+#define RT_ARB_EDIT_EDGE_DIR 0x1 /**< Treat pos_model as an edge direction, not a point. */
+
 RT_EXPORT extern int rt_arb_edit(struct bu_vls          *error_msg_ret,
 				 struct rt_arb_internal *arb,
+				 struct rt_edit         *s,
 				 int                    arb_type,
 				 int                    edit_type,
+				 int                    flags,
 				 vect_t                 pos_model,
-				 plane_t                        planes[6],
+				 plane_t                planes[6],
 				 const struct bn_tol    *tol);
 RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2, const struct rt_db_internal *ip, const point_t pt2, const mat_t mat, fastf_t ptol);
 
