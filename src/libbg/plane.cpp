@@ -2567,7 +2567,7 @@ bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
 
 // Use PCA fit a plane to vertex points
 extern "C" int
-bg_fit_plane(point_t *c, vect_t *n, size_t npnts, const point_t *pnts)
+bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
 {
     if (!c || !n || npnts == 0 || !pnts) {
 	return -1;

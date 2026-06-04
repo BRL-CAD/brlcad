@@ -151,6 +151,7 @@ include/bg/plane.h
 
 	bg_plane_closest_pt -> inputs will become const
 	bg_plane_pt_at -> inputs will become const
+	bg_fit_plane -> inputs will become const
 	[deprecated 7.44]
 
 include/nmg/nurb.h - fully removed, header and all contents
