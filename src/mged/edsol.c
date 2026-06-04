@@ -924,6 +924,9 @@ init_oedit_guts(struct mged_state *s)
     }
     RT_CK_DB_INTERNAL(&MEDIT(s)->es_int);
 
+    if (EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_create)
+	MEDIT(s)->ipe_ptr = (*EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_create)(MEDIT(s));
+
     /* Save aggregate path matrix */
     (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1);
 
@@ -1101,6 +1104,13 @@ oedit_accept(struct mged_state *s)
 void
 oedit_reject(struct mged_state *s)
 {
+    if (MEDIT(s)->ipe_ptr) {
+	if (MEDIT(s)->es_int.idb_type > 0 &&
+		EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_destroy)
+	    (*EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_destroy)(MEDIT(s)->ipe_ptr);
+	MEDIT(s)->ipe_ptr = NULL;
+    }
+
     rt_db_free_internal(&MEDIT(s)->es_int);
 }
 
