@@ -56,6 +56,34 @@
 #define PROCESS_FAIL  1
 #define PROCESS_PASS  0
 
+#ifndef _WIN32
+struct process_func_test_data {
+    const char *out;
+    const char *err;
+    int ret;
+    int sleep_ms;
+    int do_abort;
+};
+
+
+static int
+process_func_callback(void *data)
+{
+    struct process_func_test_data *tdata = (struct process_func_test_data *)data;
+
+    if (tdata->out)
+	(void)write(BU_PROCESS_STDOUT, tdata->out, strlen(tdata->out));
+    if (tdata->err)
+	(void)write(BU_PROCESS_STDERR, tdata->err, strlen(tdata->err));
+    if (tdata->sleep_ms > 0)
+	(void)bu_snooze((int64_t)tdata->sleep_ms * 1000);
+    if (tdata->do_abort)
+	abort();
+
+    return tdata->ret;
+}
+#endif
+
 
 /* tests:   single stdout and stderr reads - BLOCKING READS
  *  bu_process_read() [stdout and stderr]
@@ -87,6 +115,116 @@ test_read(const char* cmd)
     }
 
     return PROCESS_PASS;
+}
+
+
+static int
+test_func_capture(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    struct bu_vls err = BU_VLS_INIT_ZERO;
+    struct bu_process_func_info info = {-1, 0, 0, 0, &out, &err};
+    struct process_func_test_data data = {"Howdy stdout!\n", "Howdy stderr!\n", 7, 0, 0};
+    int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_DEFAULT);
+
+    if (ret != 7 || info.exit_code != 7 || info.signaled || info.signal_num || info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_capture\"] - bad status information\n");
+	bu_vls_free(&out);
+	bu_vls_free(&err);
+	return PROCESS_FAIL;
+    }
+    if (!BU_STR_EQUAL(bu_vls_addr(&out), "Howdy stdout!\n")) {
+	fprintf(stderr, "bu_process_test[\"func_capture\"] - stdout capture mismatch\n");
+	bu_vls_free(&out);
+	bu_vls_free(&err);
+	return PROCESS_FAIL;
+    }
+    if (!BU_STR_EQUAL(bu_vls_addr(&err), "Howdy stderr!\n")) {
+	fprintf(stderr, "bu_process_test[\"func_capture\"] - stderr capture mismatch\n");
+	bu_vls_free(&out);
+	bu_vls_free(&err);
+	return PROCESS_FAIL;
+    }
+
+    bu_vls_free(&out);
+    bu_vls_free(&err);
+    return PROCESS_PASS;
+#endif
+}
+
+
+static int
+test_func_merge(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    struct bu_process_func_info info = {-1, 0, 0, 0, &out, NULL};
+    struct process_func_test_data data = {"Howdy stdout!\n", "Howdy stderr!\n", 0, 0, 0};
+    int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_OUT_EQ_ERR);
+
+    if (ret != 0 || info.exit_code != 0 || info.signaled || info.signal_num || info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_merge\"] - bad status information\n");
+	bu_vls_free(&out);
+	return PROCESS_FAIL;
+    }
+    if (!BU_STR_EQUAL(bu_vls_addr(&out), "Howdy stdout!\nHowdy stderr!\n")) {
+	fprintf(stderr, "bu_process_test[\"func_merge\"] - merged capture mismatch\n");
+	bu_vls_free(&out);
+	return PROCESS_FAIL;
+    }
+
+    bu_vls_free(&out);
+    return PROCESS_PASS;
+#endif
+}
+
+
+static int
+test_func_abort(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_process_func_info info = {-1, 0, 0, 0, NULL, NULL};
+    struct process_func_test_data data = {NULL, NULL, 0, 0, 1};
+    int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_DEFAULT);
+
+    if (ret != ERROR_PROCESS_ABORTED || !info.signaled || info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_abort\"] - abort was not reported correctly\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+#endif
+}
+
+
+static int
+test_func_timeout(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_process_func_info info = {-1, 0, 0, 0, NULL, NULL};
+    struct process_func_test_data data = {NULL, NULL, 9, 250, 0};
+    int ret = bu_process_func(&info, process_func_callback, &data, 25, BU_PROCESS_DEFAULT);
+
+    if (ret != ERROR_PROCESS_ABORTED || !info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_timeout\"] - timeout was not reported correctly\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+#endif
 }
 
 
@@ -596,6 +734,10 @@ ProcessTest tests[] = {
     {"exec_wait", test_exec_wait},
     {"create_opts", test_create_opts},
     {"create_timeout", test_create_timeout},
+    {"func_capture", test_func_capture},
+    {"func_merge", test_func_merge},
+    {"func_abort", test_func_abort},
+    {"func_timeout", test_func_timeout},
     {"read", test_read},
     {"read_flood", test_read_flood},
     {"ids", test_ids},
