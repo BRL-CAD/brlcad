@@ -19,6 +19,9 @@ function(compiler_flag_chk cflag flag_list)
   endif()
 endfunction()
 
+# If we need to all-up suppress, we want the -Wno- form of
+# the flag, but the -Wno-error= form is the more reliable
+# test.  This function handles that pattern for testing.
 function(compiler_warning_suppress_chk warning flag_list)
   string(MAKE_C_IDENTIFIER "${warning}" warning_id)
   string(TOUPPER "${warning_id}" warningup)
@@ -33,7 +36,6 @@ endfunction()
 set(chk_geo_flags
   frounding-math
   ffp-contract=off
-  Wno-error=shadow
   Wno-error=unused-parameter
   )
 set(_geo_flags)
@@ -41,6 +43,7 @@ foreach(cgf ${chk_geo_flags})
   compiler_flag_chk(${cgf} _geo_flags)
 endforeach()
 compiler_warning_suppress_chk(float-equal _geo_flags)
+compiler_warning_suppress_chk(shadow _geo_flags)
 
 # This is for a different compiler, so different invocation pattern
 check_c_compiler_flag("/fp:precise" BG_C_FP_PRECISE)
