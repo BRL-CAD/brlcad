@@ -39,9 +39,8 @@ __BEGIN_DECLS
  * generally called either directly, via a signal handler, or through
  * bu_bomb() with the appropriate bu_debug flags set.
  *
- * the routine waits indefinitely (in a spin loop) until a signal
- * (SIGINT) is received, at which point execution continues, or until
- * some other signal is received that terminates the application.
+ * the implementation may use an in-process stack unwinder or an
+ * external debugger, depending on platform support.
  *
  * the stack backtrace will be written to the provided 'fp' file
  * pointer.  it's the caller's responsibility to open and close
