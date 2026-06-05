@@ -348,6 +348,10 @@ lookup check to ensure none are missing.
   3. Shoot rays from outside at exterior vertices, retain all mesh faces
      and objects encountered (i.e., not reconstructed, but extracted)
 
+* look into using Manifold::Hull() to replace our copy of QuickHull -
+  manifold made some robustness improvements and we rely on them anyway,
+  so we should probably just leverage them.
+
 * RTAREA
 
   * add an option to rtarea for onehit.  this is probably best as an
