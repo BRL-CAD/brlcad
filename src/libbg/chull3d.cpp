@@ -100,7 +100,17 @@ bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 	quickhull::Vector3<fastf_t> p(input_points_3d[i][0], input_points_3d[i][1], input_points_3d[i][2]);
 	pc.push_back(p);
     }
-    auto hull = qh.getConvexHull(&pc[0].x, pc.size(), true, false, BN_TOL_DIST);
+    fastf_t max_coord = 0.0;
+    for (int i = 0; i < num_input_pnts; i++) {
+	for (int j = 0; j < 3; j++) {
+	    if (std::abs(input_points_3d[i][j]) > max_coord) {
+		max_coord = std::abs(input_points_3d[i][j]);
+	    }
+	}
+    }
+    if (max_coord < 1e-10) max_coord = 1.0;
+
+    auto hull = qh.getConvexHull(&pc[0].x, pc.size(), true, false, BN_TOL_DIST / max_coord);
 
     /* Convert QuickHull data to BoT arrays */
     auto indexBuffer = hull.getIndexBuffer();
@@ -150,7 +160,17 @@ bg_3d_chull2(int **faces, int *num_faces, int **vertices, int *num_vertices,
 	quickhull::Vector3<fastf_t> p(input_points_3d[i][0], input_points_3d[i][1], input_points_3d[i][2]);
 	pc.push_back(p);
     }
-    auto hull = qh.getConvexHull(&pc[0].x, pc.size(), true, false, BN_TOL_DIST);
+    fastf_t max_coord = 0.0;
+    for (int i = 0; i < num_input_pnts; i++) {
+	for (int j = 0; j < 3; j++) {
+	    if (std::abs(input_points_3d[i][j]) > max_coord) {
+		max_coord = std::abs(input_points_3d[i][j]);
+	    }
+	}
+    }
+    if (max_coord < 1e-10) max_coord = 1.0;
+
+    auto hull = qh.getConvexHull(&pc[0].x, pc.size(), true, false, BN_TOL_DIST / max_coord);
 
     auto indexBuffer = hull.getIndexBuffer();
     auto vertexBuffer = hull.getVertexBuffer();
