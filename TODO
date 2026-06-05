@@ -44,14 +44,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   on Windows, possibly a threading issue setting up the results
   container.
 
-* Create EXPORT targets for BRL-CAD libraries to support newer CMake
-  find_package style.  If possible, try to also support older style
-  variables in FindBRLCAD.cmake
-
-* Wire arb lint check into edit as a preliminary step - if we have
-  non-standard point ordering, it's all too likely strange things
-  could happen editing the arb.
-
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
@@ -102,23 +94,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   worth considering whether shader related functionality should go
   under a "mater shader" subcommand.
 
-* user request for a way to scan arbs in a .g looking for invalid
-  definitions (non-convex, non-planar faces, etc.)
-
 * implement nirt flag to report a secondary ray fired in the direction
   of the hit point surface normal.
 
 * calculate maximum/minimum presented area az/el for a given model
 
-* optimize mged/libged init and exit performance.  profiling shows
-  over 90% of entire execution time to run a single command is
-  dominated by libged's dlopen/dlclose.  cumulatively about 1sec on
-  Mac, but likely extrapolates to all platforms.
-
 * convert non-planar arb's to brep objects for ray-tracing.  see how
   well it works to see if we can remove an arb limitation.
-
-* combine solid_report with the "who" command (subcommand options)
 
 * explore c++ fastf_t class.  compile-time support for using GMP or CLN
   for arbitrary exact precision arithmetic computation support
