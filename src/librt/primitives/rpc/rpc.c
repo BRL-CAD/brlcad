@@ -1495,6 +1495,8 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_RPC) return -1;
+    if (_rt_nonuniform_export4_check("rt_rpc_export4", ip) < 0)
+	return -1;
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
@@ -1540,9 +1542,27 @@ rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_rpc_internal *top = (struct rt_rpc_internal *)rop->idb_ptr;
     RT_RPC_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
 
     /* Sanity */
-    if (tip->rpc_r / mat[15] <= SMALL_FASTF) {
+    if (tip->rpc_r / effective_mat[15] <= SMALL_FASTF) {
 	bu_log("rt_rpc_mat: r is zero\n");
 	return BRLCAD_ERROR;
     }
@@ -1552,10 +1572,10 @@ rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     VMOVE(rV, tip->rpc_V);
     VMOVE(rH, tip->rpc_H);
     VMOVE(rB, tip->rpc_B);
-    MAT4X3PNT(top->rpc_V, mat, rV);
-    MAT4X3VEC(top->rpc_H, mat, rH);
-    MAT4X3VEC(top->rpc_B, mat, rB);
-    top->rpc_r = tip->rpc_r / mat[15];
+    MAT4X3PNT(top->rpc_V, effective_mat, rV);
+    MAT4X3VEC(top->rpc_H, effective_mat, rH);
+    MAT4X3VEC(top->rpc_B, effective_mat, rB);
+    top->rpc_r = tip->rpc_r / effective_mat[15];
 
     return BRLCAD_OK;
 }

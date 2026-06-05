@@ -1900,6 +1900,8 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EHY) return -1;
+    if (_rt_nonuniform_export4_check("rt_ehy_export4", ip) < 0)
+	return -1;
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(xip);
 
@@ -1957,23 +1959,42 @@ rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_ehy_internal *top = (struct rt_ehy_internal *)rop->idb_ptr;
     RT_EHY_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t eV, eH, eAu;
     double er1, er2, ec;
     VMOVE(eV, tip->ehy_V);
     VMOVE(eH, tip->ehy_H);
     VMOVE(eAu, tip->ehy_Au);
-    er1 = tip->ehy_r1 / mat[15];
-    er2 = tip->ehy_r2 / mat[15];
-    ec = tip->ehy_c / mat[15];
+    er1 = tip->ehy_r1 / effective_mat[15];
+    er2 = tip->ehy_r2 / effective_mat[15];
+    ec = tip->ehy_c / effective_mat[15];
 
     if (er1 <= SMALL_FASTF || er2 <= SMALL_FASTF || ec <= SMALL_FASTF) {
 	bu_log("rt_ehy_mat: r1, r2, or c are zero\n");
 	return BRLCAD_ERROR;
     }
 
-    MAT4X3PNT(top->ehy_V, mat, eV);
-    MAT4X3VEC(top->ehy_H, mat, eH);
-    MAT4X3VEC(top->ehy_Au, mat, eAu);
+    MAT4X3PNT(top->ehy_V, effective_mat, eV);
+    MAT4X3VEC(top->ehy_H, effective_mat, eH);
+    MAT4X3VEC(top->ehy_Au, effective_mat, eAu);
     VUNITIZE(top->ehy_Au);
     top->ehy_r1 = er1;
     top->ehy_r2 = er2;

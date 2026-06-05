@@ -656,15 +656,10 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 
     vol = area = -1.0;
 
-    if (OBJ[ip->idb_minor_type].ft_volume) {
-	OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
-    }
-    if (OBJ[ip->idb_minor_type].ft_surf_area) {
-	OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
-    }
+    rt_obj_volume(&vol, ip);
+    rt_obj_surf_area(&area, ip);
 
-    if (OBJ[ip->idb_minor_type].ft_centroid) {
-	OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
+    if (rt_obj_centroid(&centroid, ip) == 0) {
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
 		      centroid[X] * gedp->dbip->dbi_base2local,
 		      centroid[Y] * gedp->dbip->dbi_base2local,
@@ -694,4 +689,3 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

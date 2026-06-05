@@ -1756,6 +1756,8 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ETO) return -1;
+    if (_rt_nonuniform_export4_check("rt_eto_export4", ip) < 0)
+	return -1;
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(tip)) {
@@ -1791,6 +1793,25 @@ rt_eto_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_eto_internal *top = (struct rt_eto_internal *)rop->idb_ptr;
     RT_ETO_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t eV, eN, eC;
     double er, erd;
     VMOVE(eV, tip->eto_V);
@@ -1799,11 +1820,11 @@ rt_eto_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     er = tip->eto_r;
     erd = tip->eto_rd;
 
-    MAT4X3PNT(top->eto_V, mat, eV);
-    MAT4X3VEC(top->eto_N, mat, eN);
-    MAT4X3VEC(top->eto_C, mat, eC);
-    top->eto_r  = er / mat[15];
-    top->eto_rd = erd / mat[15];
+    MAT4X3PNT(top->eto_V, effective_mat, eV);
+    MAT4X3VEC(top->eto_N, effective_mat, eN);
+    MAT4X3VEC(top->eto_C, effective_mat, eC);
+    top->eto_r  = er / effective_mat[15];
+    top->eto_rd = erd / effective_mat[15];
 
     return BRLCAD_OK;
 }
@@ -1847,7 +1868,8 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    rt_eto_mat(ip, mat, ip);
+    if (rt_eto_mat(ip, mat, ip) < 0)
+	return -1;
 
     if (!eto_is_valid(tip))
 	return -1;

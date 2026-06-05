@@ -1582,6 +1582,8 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_PARTICLE) return -1;
+    if (_rt_nonuniform_export4_check("rt_part_export4", ip) < 0)
+	return -1;
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
@@ -1617,11 +1619,30 @@ rt_part_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     struct rt_part_internal *part = (struct rt_part_internal *)rop->idb_ptr;
     RT_PART_CK_MAGIC(part);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *part = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t part_V, part_H;
-    MAT4X3PNT(part_V, mat, tip->part_V);
-    MAT4X3VEC(part_H, mat, tip->part_H);
-    double vrad = tip->part_vrad / mat[15];
-    double hrad = tip->part_hrad / mat[15];
+    MAT4X3PNT(part_V, effective_mat, tip->part_V);
+    MAT4X3VEC(part_H, effective_mat, tip->part_H);
+    double vrad = tip->part_vrad / effective_mat[15];
+    double hrad = tip->part_hrad / effective_mat[15];
     double maxrad = (vrad > hrad) ? vrad : hrad;
     double minrad = (vrad < hrad) ? vrad : hrad;
 

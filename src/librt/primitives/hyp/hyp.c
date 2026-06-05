@@ -1317,15 +1317,34 @@ rt_hyp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_hyp_internal *top = (struct rt_hyp_internal *)rop->idb_ptr;
     RT_HYP_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t Vi, Hi, A;
     VMOVE(Vi, tip->hyp_Vi);
     VMOVE(Hi, tip->hyp_Hi);
     VMOVE(A, tip->hyp_A);
 
-    MAT4X3PNT(top->hyp_Vi, mat, Vi);
-    MAT4X3VEC(top->hyp_Hi, mat, Hi);
-    MAT4X3VEC(top->hyp_A, mat, A);
-    top->hyp_b = (!ZERO(mat[15])) ? tip->hyp_b / mat[15] : INFINITY;
+    MAT4X3PNT(top->hyp_Vi, effective_mat, Vi);
+    MAT4X3VEC(top->hyp_Hi, effective_mat, Hi);
+    MAT4X3VEC(top->hyp_A, effective_mat, A);
+    top->hyp_b = (!ZERO(effective_mat[15])) ? tip->hyp_b / effective_mat[15] : INFINITY;
 
     return BRLCAD_OK;
 }

@@ -1840,6 +1840,8 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EPA) return -1;
+    if (_rt_nonuniform_export4_check("rt_epa_export4", ip) < 0)
+	return -1;
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
 
@@ -1896,23 +1898,42 @@ rt_epa_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_epa_internal *top = (struct rt_epa_internal *)rop->idb_ptr;
     RT_EPA_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t eV, eH, eAu;
     double epa_r1, epa_r2;
 
     VMOVE(eV, tip->epa_V);
     VMOVE(eH, tip->epa_H);
     VMOVE(eAu, tip->epa_Au);
-    epa_r1 = tip->epa_r1 / mat[15];
-    epa_r2 = tip->epa_r2 / mat[15];
+    epa_r1 = tip->epa_r1 / effective_mat[15];
+    epa_r2 = tip->epa_r2 / effective_mat[15];
 
     if (epa_r1 <= SMALL_FASTF || epa_r2 <= SMALL_FASTF) {
 	bu_log("rt_epa_mat: r1 or r2 are zero\n");
 	return BRLCAD_ERROR;
     }
 
-    MAT4X3PNT(top->epa_V, mat, eV);
-    MAT4X3VEC(top->epa_H, mat, eH);
-    MAT4X3VEC(top->epa_Au, mat, eAu);
+    MAT4X3PNT(top->epa_V, effective_mat, eV);
+    MAT4X3VEC(top->epa_H, effective_mat, eH);
+    MAT4X3VEC(top->epa_Au, effective_mat, eAu);
     VUNITIZE(top->epa_Au);
     top->epa_r1 = epa_r1;
     top->epa_r2 = epa_r2;
@@ -1951,9 +1972,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Sanity */
     if (mat == NULL) mat = bn_mat_identity;
-    double epa_r1 = vec[3*3] / mat[15];
-    double epa_r2 = vec[3*3+1] / mat[15];
-    if (epa_r1 <= SMALL_FASTF || epa_r2 <= SMALL_FASTF) {
+    if (vec[3*3] <= SMALL_FASTF || vec[3*3+1] <= SMALL_FASTF) {
 	bu_log("rt_epa_import5: r1 or r2 are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_epa_import5: ip->idb_ptr");
 	return -1;
@@ -1968,20 +1987,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->epa_r2 = vec[3*3+1];
 
     /* Apply modeling transformations */
-    MAT4X3PNT(xip->epa_V, mat, &vec[0*3]);
-    MAT4X3VEC(xip->epa_H, mat, &vec[1*3]);
-    MAT4X3VEC(xip->epa_Au, mat, &vec[2*3]);
-    VUNITIZE(xip->epa_Au);
-    xip->epa_r1 = vec[3*3] / mat[15];
-    xip->epa_r2 = vec[3*3+1] / mat[15];
-
-    if (xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF) {
-	bu_log("rt_epa_import5: r1 or r2 are zero\n");
-	bu_free((char *)ip->idb_ptr, "rt_epa_import4: ip->idb_ptr");
-	return -1;
-    }
-
-    return 0;			/* OK */
+    return rt_epa_mat(ip, mat, ip);
 }
 
 

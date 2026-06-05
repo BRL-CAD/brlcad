@@ -60,7 +60,7 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 	    /* do scalar call, place results in segp array */
 	    ret = -1;
 	    if (OBJ[stp[i]->st_id].ft_shot) {
-		ret = OBJ[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
+		ret = _rt_nonuniform_shot(stp[i], rp[i], ap, &seghead);
 	    }
 	    if (ret <= 0) {
 		segp[i].seg_stp=(struct soltab *) 0;
@@ -69,6 +69,10 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 		BU_LIST_DEQUEUE(&(tmp_seg->l));
 		segp[i] = *tmp_seg; /* structure copy */
 		RT_FREE_SEG(tmp_seg, ap->a_resource);
+		while (BU_LIST_WHILE(tmp_seg, seg, &(seghead.l))) {
+		    BU_LIST_DEQUEUE(&(tmp_seg->l));
+		    RT_FREE_SEG(tmp_seg, ap->a_resource);
+		}
 	    }
 	}
     }
@@ -225,12 +229,15 @@ rt_vshootray(struct application *ap)
     /* For each type of solid to be shot at, assemble the vectors */
     for (id = 1; id <= ID_MAX_SOLID; id++) {
 	register int nsol;
+	int use_stub = 0;
 
 	if ((nsol = rtip->i->rti_nsol_by_type[id]) <= 0) continue;
 
 	/* For each instance of this solid type */
 	for (i = nsol-1; i >= 0; i--) {
 	    ary_stp[i] = rtip->i->rti_sol_by_type[id][i];
+	    if (ary_stp[i]->st_nu_inv_matp)
+		use_stub = 1;
 	    ary_rp[i] = &(ap->a_ray);	/* XXX, sb [ray] */
 	    ary_seg[i].seg_stp = SOLTAB_NULL;
 	    BU_LIST_INIT(&ary_seg[i].l);
@@ -239,7 +246,7 @@ rt_vshootray(struct application *ap)
 	/* bit vector per ray check */
 	/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
 	ap->a_rt_i->stats.nshots += nsol;	/* later: skipped ones */
-	if (OBJ[id].ft_vshot) {
+	if (!use_stub && OBJ[id].ft_vshot) {
 	    OBJ[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
 	} else {
 	    vshot_stub(ary_stp, ary_rp, ary_seg, nsol, ap);
