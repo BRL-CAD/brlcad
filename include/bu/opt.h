@@ -229,7 +229,7 @@ BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, size_t ac, const char **a
 /** Output format options for bu_opt documentation generation */
 typedef enum {
     BU_OPT_ASCII,
-    BU_OPT_DOCBOOK /* TODO */
+    BU_OPT_JSON
 } bu_opt_format_t;
 
 
@@ -445,6 +445,180 @@ BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **a
  */
 #define BRLCAD_MAN_SECTIONS {'1', '3', '5', 'n', '\0'}
 BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
+
+
+
+/***********************************************************
+ * EXPERIMENTAL - work on supporting a way to machine parse
+ * libbu options for increased flexibility with help,
+ * tab completion, etc.
+ *
+ * Still very much a work in progress, but don't want it to
+ * fall out of sync.
+ ***********************************************************/
+
+/** Machine readable option argument cardinality. */
+typedef enum {
+    BU_OPT_ARG_FLAG = 0,
+    BU_OPT_ARG_REQUIRED,
+    BU_OPT_ARG_OPTIONAL
+} bu_opt_arg_requirement_t;
+
+
+/** Machine readable option/operand value type hints. */
+typedef enum {
+    BU_OPT_VAL_UNKNOWN = 0,
+    BU_OPT_VAL_BOOL,
+    BU_OPT_VAL_INTEGER,
+    BU_OPT_VAL_NUMBER,
+    BU_OPT_VAL_VECTOR,
+    BU_OPT_VAL_COLOR,
+    BU_OPT_VAL_KEYWORD,
+    BU_OPT_VAL_STRING,
+    BU_OPT_VAL_DB_OBJECT,
+    BU_OPT_VAL_DB_PATH,
+    BU_OPT_VAL_FILE_PATH,
+    BU_OPT_VAL_RAW
+} bu_opt_value_type_t;
+
+
+/**
+ * Optional metadata for a bu_opt_desc entry.  Entries are matched to
+ * bu_opt_desc records by shortopt/longopt.  The array is terminated by
+ * BU_OPT_DESC_META_NULL.
+ */
+struct bu_opt_desc_meta {
+    const char *shortopt;
+    const char *longopt;
+    bu_opt_arg_requirement_t arg_requirement;
+    bu_opt_value_type_t arg_type;
+    int repeat;
+    const char * const *value_keywords;
+};
+
+
+#define BU_OPT_DESC_META_NULL {NULL, NULL, BU_OPT_ARG_FLAG, BU_OPT_VAL_UNKNOWN, 0, NULL}
+
+
+/** Optional positional operand metadata for a command. */
+struct bu_opt_operand_desc {
+    const char *name;
+    bu_opt_value_type_t type;
+    size_t min_count;
+    size_t max_count;
+    const char *help_string;
+    const char * const *value_keywords;
+};
+
+
+#define BU_OPT_OPERAND_DESC_NULL {NULL, BU_OPT_VAL_UNKNOWN, 0, 0, NULL, NULL}
+
+
+/** max_count value indicating that an operand may repeat without a fixed bound. */
+#define BU_OPT_COUNT_UNLIMITED ((size_t)-1)
+
+
+/** Command/subcommand schema for bu_opt metadata APIs. */
+struct bu_opt_cmd_desc {
+    const char *name;
+    const char *help_string;
+    const struct bu_opt_desc *options;
+    const struct bu_opt_desc_meta *option_meta;
+    const struct bu_opt_operand_desc *operands;
+    const struct bu_opt_cmd_desc *subcommands;
+};
+
+
+#define BU_OPT_CMD_DESC_NULL {NULL, NULL, NULL, NULL, NULL, NULL}
+
+
+/** Incremental validation result states. */
+typedef enum {
+    BU_OPT_VALIDATE_UNKNOWN = 0,
+    BU_OPT_VALIDATE_VALID,
+    BU_OPT_VALIDATE_INCOMPLETE,
+    BU_OPT_VALIDATE_INVALID
+} bu_opt_validate_state_t;
+
+
+/** Expected token classes for incremental validation. */
+typedef enum {
+    BU_OPT_EXPECT_NONE = 0,
+    BU_OPT_EXPECT_OPTION = 1,
+    BU_OPT_EXPECT_OPTION_ARG = 2,
+    BU_OPT_EXPECT_OPERAND = 4,
+    BU_OPT_EXPECT_SUBCOMMAND = 8
+} bu_opt_expected_t;
+
+
+/** Result container filled in by bu_opt_validate_* APIs. */
+struct bu_opt_validate_result {
+    bu_opt_validate_state_t state;
+    size_t token_start;
+    size_t token_end;
+    unsigned int expected;
+    const char *hint;
+    size_t completion_count;
+    const char **completion_candidates;
+    /**
+     * Dynamic completion type hint.  When completion_candidates is empty, this
+     * tells callers what kind of external completion source to query.  For
+     * example, BU_OPT_VAL_DB_OBJECT means the client should ask the geometry
+     * database for object names, BU_OPT_VAL_FILE_PATH means filesystem
+     * completion.  BU_OPT_VAL_UNKNOWN means static list candidates suffice or
+     * no completion hint is available.
+     */
+    bu_opt_value_type_t completion_type;
+    /**
+     * Byte offset of the token of interest in the original input string.
+     * Only populated by bu_opt_validate_string; zero otherwise.
+     */
+    size_t char_start;
+    /**
+     * Byte offset one past the end of the token of interest.
+     * Only populated by bu_opt_validate_string; zero otherwise.
+     */
+    size_t char_end;
+};
+
+
+#define BU_OPT_VALIDATE_RESULT_NULL {BU_OPT_VALIDATE_UNKNOWN, 0, 0, BU_OPT_EXPECT_NONE, NULL, 0, NULL, BU_OPT_VAL_UNKNOWN, 0, 0}
+
+
+/**
+ * Free any dynamically allocated completion-candidate data stored in a
+ * bu_opt_validate_result and reset it to the NULL initializer state.
+ */
+BU_EXPORT extern void bu_opt_validate_result_clear(struct bu_opt_validate_result *result);
+
+
+/**
+ * Generate a JSON command schema from optional side metadata and existing
+ * bu_opt_desc records.  The returned string must be released with bu_free.
+ */
+BU_EXPORT extern char *bu_opt_describe_json(const struct bu_opt_cmd_desc *cmd);
+
+
+/**
+ * Incrementally validate an argv array against a bu_opt command schema.
+ *
+ * @p cursor_arg identifies the token of interest; pass argc to validate the
+ * end-of-line position after the last argument.
+ */
+BU_EXPORT extern int bu_opt_validate_argv(const struct bu_opt_cmd_desc *cmd, size_t argc, const char **argv, size_t cursor_arg, struct bu_opt_validate_result *result);
+
+
+/**
+ * Incrementally validate a command string against a bu_opt command schema.
+ *
+ * @p cursor_pos identifies the character position of interest in @p input.
+ */
+BU_EXPORT extern int bu_opt_validate_string(const struct bu_opt_cmd_desc *cmd, const char *input, size_t cursor_pos, struct bu_opt_validate_result *result);
+
+/***********************************************************
+  END EXPERIMENTAL JSON output support
+ ***********************************************************/
 
 __END_DECLS
 

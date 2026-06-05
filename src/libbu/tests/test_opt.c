@@ -907,6 +907,259 @@ desc_3(int test_num)
 }
 
 
+static int
+desc_4(int test_num)
+{
+    static const char *pattern_keywords[] = {"alpha", "beta", NULL};
+    static const char *mode_keywords[] = {"fast", "slow", NULL};
+    int help = 0;
+    int verbose = 0;
+    const char *output = NULL;
+    const char *mode = NULL;
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    struct bu_opt_validate_result vr = BU_OPT_VALIDATE_RESULT_NULL;
+    int ret = 0;
+    char *json = NULL;
+    const char *expected_json =
+	"{\"schema\":\"bu_opt\",\"version\":1,\"command\":{\"name\":\"testcmd\",\"help\":\"Test command\","
+	"\"options\":[{\"short\":\"h\",\"long\":\"help\",\"argument\":\"flag\",\"argument_help\":\"\","
+	"\"argument_type\":\"bool\",\"repeat\":false,\"help\":\"Print help string and exit.\","
+	"\"completion\":\"none\",\"keywords\":[],\"aliases\":[\"h\",\"help\",\"?\",\"help-alt\"]},{\"short\":\"v\",\"long\":\"verbose\","
+	"\"argument\":\"optional\",\"argument_help\":\"[#]\",\"argument_type\":\"integer\",\"repeat\":true,"
+	"\"help\":\"Set verbosity\",\"completion\":\"none\",\"keywords\":[],\"aliases\":[\"v\",\"verbose\"]},{\"short\":\"o\",\"long\":\"output\","
+	"\"argument\":\"required\",\"argument_help\":\"file\",\"argument_type\":\"file_path\",\"repeat\":false,"
+	"\"help\":\"Output file\",\"completion\":\"file\",\"keywords\":[],\"aliases\":[\"o\",\"output\"]},{\"short\":\"C\",\"long\":\"color\","
+	"\"argument\":\"required\",\"argument_help\":\"r/g/b\",\"argument_type\":\"color\",\"repeat\":false,"
+	"\"help\":\"Set color\",\"completion\":\"none\",\"keywords\":[],\"aliases\":[\"C\",\"color\"]}],\"operands\":[{\"name\":\"object\","
+	"\"type\":\"db_object\",\"min\":1,\"max\":2,\"help\":\"Database object\",\"completion\":\"db_object\",\"keywords\":[]}],\"subcommands\":[{\"name\":\"list\","
+	"\"help\":\"List things\",\"options\":[{\"short\":\"l\",\"long\":\"long\",\"argument\":\"flag\","
+	"\"argument_help\":\"\",\"argument_type\":\"bool\",\"repeat\":false,\"help\":\"Long listing\","
+	"\"completion\":\"none\",\"keywords\":[],\"aliases\":[\"l\",\"long\"]}],\"operands\":[{\"name\":\"pattern\",\"type\":\"keyword\","
+	"\"min\":0,\"max\":1,\"help\":\"Optional pattern\",\"completion\":\"static\",\"keywords\":[\"alpha\",\"beta\"]}],\"subcommands\":[{\"name\":\"deep\","
+	"\"help\":\"Nested command\",\"options\":[{\"short\":\"m\",\"long\":\"mode\",\"argument\":\"required\","
+	"\"argument_help\":\"mode\",\"argument_type\":\"keyword\",\"repeat\":false,\"help\":\"Mode\",\"completion\":\"static\",\"keywords\":[\"fast\",\"slow\"],"
+	"\"aliases\":[\"m\",\"mode\"]}],\"operands\":[],\"subcommands\":[]}]}]}}";
+
+    struct bu_opt_desc root_opts[] = {
+	{"h", "help", "", NULL, (void *)&help, help_str},
+	{"?", "help-alt", "", NULL, (void *)&help, help_str},
+	{"v", "verbose", "[#]", &d1_verb, (void *)&verbose, "Set verbosity"},
+	{"o", "output", "file", &bu_opt_str, (void *)&output, "Output file"},
+	{"C", "color", "r/g/b", &dc_color, (void *)&color, "Set color"},
+	BU_OPT_DESC_NULL
+    };
+    struct bu_opt_desc_meta root_meta[] = {
+	{"h", "help", BU_OPT_ARG_FLAG, BU_OPT_VAL_BOOL, 0, NULL},
+	{"v", "verbose", BU_OPT_ARG_OPTIONAL, BU_OPT_VAL_INTEGER, 1, NULL},
+	{"o", "output", BU_OPT_ARG_REQUIRED, BU_OPT_VAL_FILE_PATH, 0, NULL},
+	{"C", "color", BU_OPT_ARG_REQUIRED, BU_OPT_VAL_COLOR, 0, NULL},
+	BU_OPT_DESC_META_NULL
+    };
+    struct bu_opt_operand_desc root_operands[] = {
+	{"object", BU_OPT_VAL_DB_OBJECT, 1, 2, "Database object", NULL},
+	BU_OPT_OPERAND_DESC_NULL
+    };
+    struct bu_opt_desc list_opts[] = {
+	{"l", "long", "", NULL, (void *)&help, "Long listing"},
+	BU_OPT_DESC_NULL
+    };
+    struct bu_opt_operand_desc list_operands[] = {
+	{"pattern", BU_OPT_VAL_KEYWORD, 0, 1, "Optional pattern", pattern_keywords},
+	BU_OPT_OPERAND_DESC_NULL
+    };
+    struct bu_opt_desc deep_opts[] = {
+	{"m", "mode", "mode", &bu_opt_str, (void *)&mode, "Mode"},
+	BU_OPT_DESC_NULL
+    };
+    struct bu_opt_desc_meta deep_meta[] = {
+	{"m", "mode", BU_OPT_ARG_REQUIRED, BU_OPT_VAL_KEYWORD, 0, mode_keywords},
+	BU_OPT_DESC_META_NULL
+    };
+    struct bu_opt_cmd_desc deep_cmds[] = {
+	{"deep", "Nested command", deep_opts, deep_meta, NULL, NULL},
+	BU_OPT_CMD_DESC_NULL
+    };
+    struct bu_opt_cmd_desc subcmds[] = {
+	{"list", "List things", list_opts, NULL, list_operands, deep_cmds},
+	BU_OPT_CMD_DESC_NULL
+    };
+    struct bu_opt_cmd_desc cmd = {"testcmd", "Test command", root_opts, root_meta, root_operands, subcmds};
+
+    switch (test_num) {
+	case 0:
+	    json = bu_opt_describe_json(&cmd);
+	    ret = (!json || !BU_STR_EQUAL(json, expected_json));
+	    if (ret) {
+		bu_log("JSON mismatch:\nexpected: %s\n     got: %s\n", expected_json, json ? json : "(null)");
+	    }
+	    bu_free(json, "json");
+	    break;
+	case 1:
+	{
+	    const char *av[] = {"-v", "2", "--output", "out.g", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 5, av, 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 2:
+	{
+	    const char *av[] = {"--bogus", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 2, av, 0, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID && vr.token_start == 0);
+	    break;
+	}
+	case 3:
+	{
+	    const char *av[] = {"--output"};
+	    (void)bu_opt_validate_argv(&cmd, 1, av, 1, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE && (vr.expected & BU_OPT_EXPECT_OPTION_ARG));
+	    break;
+	}
+	case 4:
+	{
+	    const char *av[] = {"--output", "out.g"};
+	    (void)bu_opt_validate_argv(&cmd, 2, av, 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE && (vr.expected & BU_OPT_EXPECT_OPERAND));
+	    break;
+	}
+	case 5:
+	{
+	    const char *av[] = {"obj1", "obj2", "obj3"};
+	    (void)bu_opt_validate_argv(&cmd, 3, av, 3, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID);
+	    break;
+	}
+	case 6:
+	{
+	    const char *av[] = {"--output", "a", "--output", "b", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 5, av, 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID);
+	    break;
+	}
+	case 7:
+	{
+	    const char *av[] = {"-v", "1", "-v", "2", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 5, av, 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 8:
+	{
+	    const char *av[] = {"list", "--long"};
+	    (void)bu_opt_validate_argv(&cmd, 2, av, 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 9:
+	{
+	    const char *av[] = {"list", "deep", "--mode", "fast"};
+	    (void)bu_opt_validate_argv(&cmd, 4, av, 4, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 10:
+	    (void)bu_opt_validate_string(&cmd, "--output", 8, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE && (vr.expected & BU_OPT_EXPECT_OPTION_ARG));
+	    break;
+	case 11:
+	    (void)bu_opt_validate_string(&cmd, "", 0, &vr);
+	    ret = !(vr.completion_count >= 2 && vr.completion_candidates
+		&& vr.state == BU_OPT_VALIDATE_INCOMPLETE);
+	    if (!ret) {
+		int have_output = 0;
+		int have_list = 0;
+		size_t i = 0;
+		for (i = 0; i < vr.completion_count; i++) {
+		    if (BU_STR_EQUAL(vr.completion_candidates[i], "--output"))
+			have_output = 1;
+		    if (BU_STR_EQUAL(vr.completion_candidates[i], "list"))
+			have_list = 1;
+		}
+		ret = !(have_output && have_list);
+	    }
+	    break;
+	case 12:
+	    (void)bu_opt_validate_string(&cmd, "--out", 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID && vr.completion_count == 1
+		&& vr.completion_candidates
+		&& BU_STR_EQUAL(vr.completion_candidates[0], "--output"));
+	    break;
+	case 13:
+	    (void)bu_opt_validate_string(&cmd, "li", 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID && vr.completion_count >= 1
+		&& vr.completion_candidates
+		&& BU_STR_EQUAL(vr.completion_candidates[0], "list"));
+	    break;
+	case 14:
+	    (void)bu_opt_validate_string(&cmd, "list deep --mode fa", 19, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID && vr.expected == BU_OPT_EXPECT_OPTION_ARG
+		&& vr.completion_count == 1 && vr.completion_candidates
+		&& BU_STR_EQUAL(vr.completion_candidates[0], "fast"));
+	    break;
+	case 15:
+	{
+	    const char *av[] = {"-hh", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 2, av, 0, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID);
+	    break;
+	}
+	case 16:
+	    /* completion_type: option needing a file path arg */
+	    (void)bu_opt_validate_string(&cmd, "--output", 8, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE
+		&& vr.completion_type == BU_OPT_VAL_FILE_PATH);
+	    break;
+	case 17:
+	    /* completion_type: db_object operand position */
+	    (void)bu_opt_validate_string(&cmd, "--help ", 7, &vr);
+	    ret = !(vr.completion_type == BU_OPT_VAL_DB_OBJECT);
+	    break;
+	case 18:
+	    /* completion_type: keyword option arg */
+	    (void)bu_opt_validate_string(&cmd, "list deep --mode ", 17, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE
+		&& vr.completion_type == BU_OPT_VAL_KEYWORD);
+	    break;
+	case 19:
+	{
+	    /* char_start/char_end: bad option highlighted at correct offset */
+	    /* "--out" starts at char 0, ends at char 5 */
+	    (void)bu_opt_validate_string(&cmd, "--out", 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID
+		&& vr.char_start == 0 && vr.char_end == 5);
+	    break;
+	}
+	case 20:
+	{
+	    /* char_start/char_end: bad option in the middle of a string */
+	    /* "obj --out" → bad option "--out" starts at byte 4, ends at 9 */
+	    (void)bu_opt_validate_string(&cmd, "obj --out", 9, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID
+		&& vr.char_start == 4 && vr.char_end == 9);
+	    break;
+	}
+	default:
+	    ret = -1;
+	    break;
+    }
+
+    if (ret) {
+	bu_log("bu_opt metadata test %d failed: state=%d start=%lu end=%lu "
+	    "expected=%u completions=%lu comp_type=%d char=[%lu,%lu) hint=%s\n",
+	    test_num, vr.state,
+	    (unsigned long)vr.token_start, (unsigned long)vr.token_end,
+	    vr.expected, (unsigned long)vr.completion_count,
+	    (int)vr.completion_type,
+	    (unsigned long)vr.char_start, (unsigned long)vr.char_end,
+	    vr.hint ? vr.hint : "(null)");
+    }
+
+    bu_opt_validate_result_clear(&vr);
+
+    return ret;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -953,6 +1206,8 @@ main(int argc, char *argv[])
 	case 3:
 	    return desc_3(test_num);
 	    break;
+	case 4:
+	    return desc_4(test_num);
     }
 
     return ret;

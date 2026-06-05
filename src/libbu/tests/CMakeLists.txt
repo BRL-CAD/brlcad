@@ -694,6 +694,28 @@ brlcad_add_test(NAME bu_opt_3_vect_02  COMMAND bu_test test_opt 3 V 2)
 brlcad_add_test(NAME bu_opt_3_vect_03  COMMAND bu_test test_opt 3 V 3)
 brlcad_add_test(NAME bu_opt_3_vect_04  COMMAND bu_test test_opt 3 V 4)
 
+brlcad_add_test(NAME bu_opt_4_json_schema       COMMAND bu_test test_opt 4 schema 0)
+brlcad_add_test(NAME bu_opt_4_validate_valid    COMMAND bu_test test_opt 4 schema 1)
+brlcad_add_test(NAME bu_opt_4_validate_bad_opt  COMMAND bu_test test_opt 4 schema 2)
+brlcad_add_test(NAME bu_opt_4_validate_need_arg COMMAND bu_test test_opt 4 schema 3)
+brlcad_add_test(NAME bu_opt_4_validate_operand  COMMAND bu_test test_opt 4 schema 4)
+brlcad_add_test(NAME bu_opt_4_validate_too_many COMMAND bu_test test_opt 4 schema 5)
+brlcad_add_test(NAME bu_opt_4_validate_repeat   COMMAND bu_test test_opt 4 schema 6)
+brlcad_add_test(NAME bu_opt_4_validate_repeated COMMAND bu_test test_opt 4 schema 7)
+brlcad_add_test(NAME bu_opt_4_validate_subcmd   COMMAND bu_test test_opt 4 schema 8)
+brlcad_add_test(NAME bu_opt_4_validate_nested   COMMAND bu_test test_opt 4 schema 9)
+brlcad_add_test(NAME bu_opt_4_validate_string   COMMAND bu_test test_opt 4 schema 10)
+brlcad_add_test(NAME bu_opt_4_complete_initial  COMMAND bu_test test_opt 4 schema 11)
+brlcad_add_test(NAME bu_opt_4_complete_option   COMMAND bu_test test_opt 4 schema 12)
+brlcad_add_test(NAME bu_opt_4_complete_subcmd   COMMAND bu_test test_opt 4 schema 13)
+brlcad_add_test(NAME bu_opt_4_complete_keyword  COMMAND bu_test test_opt 4 schema 14)
+brlcad_add_test(NAME bu_opt_4_grouped_repeat    COMMAND bu_test test_opt 4 schema 15)
+brlcad_add_test(NAME bu_opt_4_comptype_file    COMMAND bu_test test_opt 4 schema 16)
+brlcad_add_test(NAME bu_opt_4_comptype_dbo     COMMAND bu_test test_opt 4 schema 17)
+brlcad_add_test(NAME bu_opt_4_comptype_kw      COMMAND bu_test test_opt 4 schema 18)
+brlcad_add_test(NAME bu_opt_4_charspan_single  COMMAND bu_test test_opt 4 schema 19)
+brlcad_add_test(NAME bu_opt_4_charspan_middle  COMMAND bu_test test_opt 4 schema 20)
+
 #
 #  *********** test_datetime.c tests ************
 #
