@@ -132,6 +132,9 @@ removed at any time.
 7.44
 ----
 
+MGED commands
+	arb name rot fb -> arb create name rot fb [deprecated 7.44]
+
 include/bu/vfont.h - fully removed, header and all contents
 	We only use this in fblabel, and there are many other
 	modern options when it comes to fonts - remove vfont

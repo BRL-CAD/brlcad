@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+* added arb repair command to fix various ARB8 issues - Cliff Yapp
 * fixed convex hull tolerance handling for thin shapes - Cliff Yapp
 * fixed vdeck truncating/overflowing long region names - Sean Morrison
 * fixed rtweight nan centroid for zero-density regions - Sean Morrison

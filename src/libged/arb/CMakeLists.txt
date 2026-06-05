@@ -1,7 +1,6 @@
 set(PLUGIN_LIBS libged libbu)
 
-set(arb_srcs arb.c rotate_arb_face.c)
-
+set(arb_srcs arb.cpp repair.cpp rotate_arb_face.c)
 ged_plugin_library(ged-arb
   ${arb_srcs}
   LIBS ${PLUGIN_LIBS}
@@ -9,6 +8,7 @@ ged_plugin_library(ged-arb
 
 cmakefiles(
   CMakeLists.txt
+  ged_arb.h
 )
 
 # Local Variables:

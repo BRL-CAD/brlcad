@@ -331,7 +331,8 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     int visualize = 0;
     int do_raytrace = 0;
     int do_rt_perturb = 0;
-    fastf_t ftol = VUNITIZE_TOL;
+    struct bn_tol lint_default_tol = BN_TOL_INIT_TOL;
+    fastf_t ftol = lint_default_tol.dist;
     fastf_t min_tri_area = 0.0;
     fastf_t rt_tol_pct = 0.10;
     struct directory **dpa = NULL;

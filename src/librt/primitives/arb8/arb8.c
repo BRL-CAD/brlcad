@@ -1158,6 +1158,9 @@ rt_arb_validate(struct bu_vls *error_msg_ret, const struct rt_arb_internal *arb,
 	ret |= RT_ARB_VALIDATE_NONSTANDARD;
 	if (error_msg_ret)
 	    bu_vls_printf(error_msg_ret, "non-standard vertex ordering/encoding\n");
+	if (issues)
+	    *issues = ret;
+	return ret;
     }
 
     for (int f = 0; f < 6; f++) {
