@@ -207,7 +207,7 @@ write_primitive(struct rt_wdb *wdbp, const prim_case &pc, const char *name, cons
 }
 
 static int
-ged_cmd(struct ged *gedp, std::vector<const char *> av, const char *ctx)
+run_ged_cmd(struct ged *gedp, std::vector<const char *> av, const char *ctx)
 {
     int ret = ged_exec(gedp, (int)av.size(), av.data());
     if (ret != BRLCAD_OK) {
@@ -225,14 +225,14 @@ static int
 copy_obj(struct ged *gedp, const char *src, const char *dst)
 {
     std::vector<const char *> av = {"copy", src, dst};
-    return ged_cmd(gedp, av, "copy");
+    return run_ged_cmd(gedp, av, "copy");
 }
 
 static int
 facetize_obj(struct ged *gedp, const char *src, const char *dst)
 {
     std::vector<const char *> av = {"facetize", src, dst};
-    return ged_cmd(gedp, av, "facetize");
+    return run_ged_cmd(gedp, av, "facetize");
 }
 
 static void
@@ -261,7 +261,7 @@ static int
 npush_x(struct ged *gedp, const char *comb)
 {
     std::vector<const char *> av = {"npush", "-x", comb};
-    return ged_cmd(gedp, av, "npush -x");
+    return run_ged_cmd(gedp, av, "npush -x");
 }
 
 static int
