@@ -105,12 +105,12 @@
 /* Accessors in dsp.c (not in public headers).                         */
 /* ------------------------------------------------------------------ */
 extern void  dsp_query_terrain(struct soltab *stp,
-       const unsigned short **pbuf,
-       unsigned int *pxcnt,
-       unsigned int *pycnt,
-       fastf_t *stom16,
-       int *cuttype,
-       int *smooth);
+	const unsigned short **pbuf,
+	unsigned int *pxcnt,
+	unsigned int *pycnt,
+	fastf_t *stom16,
+	int *cuttype,
+	int *smooth);
 
 
 /* ------------------------------------------------------------------ */
@@ -142,7 +142,7 @@ extern void  dsp_query_terrain(struct soltab *stp,
  */
 static int
 cell_cuttype(const unsigned short *buf, unsigned int xcnt, unsigned int ycnt,
-	     unsigned int x, unsigned int y, int cuttype)
+	unsigned int x, unsigned int y, int cuttype)
 {
     if (cuttype != DSP_CUT_DIR_ADAPT)
 	return cuttype;
@@ -177,9 +177,9 @@ cell_cuttype(const unsigned short *buf, unsigned int xcnt, unsigned int ycnt,
 
 static void
 add_ref_triangle(double ax, double ay, double az,
-		 double bx, double by, double bz,
-		 double cx, double cy, double cz,
-		 double *sa, double *vol)
+	double bx, double by, double bz,
+	double cx, double cy, double cz,
+	double *sa, double *vol)
 {
     double abx = bx - ax, aby = by - ay, abz = bz - az;
     double acx = cx - ax, acy = cy - ay, acz = cz - az;
@@ -194,14 +194,14 @@ add_ref_triangle(double ax, double ay, double az,
 
 static void
 compute_grid_sa_vol(const unsigned short *buf,
-    unsigned int xcnt, unsigned int ycnt,
-    double dx, double dy, double dz, int cuttype,
-    double *sa_out, double *vol_out)
+	unsigned int xcnt, unsigned int ycnt,
+	double dx, double dy, double dz, int cuttype,
+	double *sa_out, double *vol_out)
 {
     if (!buf || xcnt < 2 || ycnt < 2) {
-if (sa_out)  *sa_out  = 0.0;
-if (vol_out) *vol_out = 0.0;
-return;
+	if (sa_out)  *sa_out  = 0.0;
+	if (vol_out) *vol_out = 0.0;
+	return;
     }
 
     const unsigned int nx = xcnt - 1;  /* cells wide */
@@ -211,23 +211,23 @@ return;
 
     /* --- Terrain top surface ------------------------------------------ */
     for (unsigned int y = 0; y < ny; y++) {
-for (unsigned int x = 0; x < nx; x++) {
-    /* corner heights in model-space Z */
-    double hA = buf[ y      * xcnt +  x    ] * dz;
-    double hB = buf[ y      * xcnt + (x+1) ] * dz;
-    double hC = buf[(y+1)   * xcnt +  x    ] * dz;
-    double hD = buf[(y+1)   * xcnt + (x+1) ] * dz;
+	for (unsigned int x = 0; x < nx; x++) {
+	    /* corner heights in model-space Z */
+	    double hA = buf[ y      * xcnt +  x    ] * dz;
+	    double hB = buf[ y      * xcnt + (x+1) ] * dz;
+	    double hC = buf[(y+1)   * xcnt +  x    ] * dz;
+	    double hD = buf[(y+1)   * xcnt + (x+1) ] * dz;
 
-    double x0 = x * dx, x1 = (x + 1) * dx;
-    double y0 = y * dy, y1 = (y + 1) * dy;
-    if (cell_cuttype(buf, xcnt, ycnt, x, y, cuttype) == DSP_CUT_DIR_ULlr) {
-	add_ref_triangle(x0, y0, hA, x1, y0, hB, x0, y1, hC, &sa, &vol);
-	add_ref_triangle(x1, y0, hB, x1, y1, hD, x0, y1, hC, &sa, &vol);
-    } else {
-	add_ref_triangle(x0, y0, hA, x1, y0, hB, x1, y1, hD, &sa, &vol);
-	add_ref_triangle(x0, y0, hA, x1, y1, hD, x0, y1, hC, &sa, &vol);
-    }
-}
+	    double x0 = x * dx, x1 = (x + 1) * dx;
+	    double y0 = y * dy, y1 = (y + 1) * dy;
+	    if (cell_cuttype(buf, xcnt, ycnt, x, y, cuttype) == DSP_CUT_DIR_ULlr) {
+		add_ref_triangle(x0, y0, hA, x1, y0, hB, x0, y1, hC, &sa, &vol);
+		add_ref_triangle(x1, y0, hB, x1, y1, hD, x0, y1, hC, &sa, &vol);
+	    } else {
+		add_ref_triangle(x0, y0, hA, x1, y0, hB, x1, y1, hD, &sa, &vol);
+		add_ref_triangle(x0, y0, hA, x1, y1, hD, x0, y1, hC, &sa, &vol);
+	    }
+	}
     }
 
     /* --- Four side walls ----------------------------------------------- */
@@ -239,27 +239,27 @@ for (unsigned int x = 0; x < nx; x++) {
      * (computed as 2D triangles in the y-z plane)
      */
     for (unsigned int y = 0; y < ny; y++) {
-double hA = buf[ y    * xcnt] * dz;
-double hC = buf[(y+1) * xcnt] * dz;
-sa += 0.5 * dy * (hA + hC);
+	double hA = buf[ y    * xcnt] * dz;
+	double hC = buf[(y+1) * xcnt] * dz;
+	sa += 0.5 * dy * (hA + hC);
     }
     /* XMAX wall (x=nx): */
     for (unsigned int y = 0; y < ny; y++) {
-double hB = buf[ y    * xcnt + nx] * dz;
-double hD = buf[(y+1) * xcnt + nx] * dz;
-sa += 0.5 * dy * (hB + hD);
+	double hB = buf[ y    * xcnt + nx] * dz;
+	double hD = buf[(y+1) * xcnt + nx] * dz;
+	sa += 0.5 * dy * (hB + hD);
     }
     /* YMIN wall (y=0): panels in the x-z plane */
     for (unsigned int x = 0; x < nx; x++) {
-double hA = buf[x    ] * dz;
-double hB = buf[x + 1] * dz;
-sa += 0.5 * dx * (hA + hB);
+	double hA = buf[x    ] * dz;
+	double hB = buf[x + 1] * dz;
+	sa += 0.5 * dx * (hA + hB);
     }
     /* YMAX wall (y=ny): */
     for (unsigned int x = 0; x < nx; x++) {
-double hC = buf[ny * xcnt +  x   ] * dz;
-double hD = buf[ny * xcnt + (x+1)] * dz;
-sa += 0.5 * dx * (hC + hD);
+	double hC = buf[ny * xcnt +  x   ] * dz;
+	double hD = buf[ny * xcnt + (x+1)] * dz;
+	sa += 0.5 * dx * (hC + hD);
     }
 
     /* --- Bottom face --------------------------------------------------- */
@@ -326,7 +326,7 @@ pct_err(double a, double b)
 {
     double ref = fabs(b);
     if (ref < SMALL_FASTF)
-return (fabs(a) < SMALL_FASTF) ? 0.0 : 100.0;
+	return (fabs(a) < SMALL_FASTF) ? 0.0 : 100.0;
     return fabs(a - b) / ref * 100.0;
 }
 
@@ -340,12 +340,12 @@ return (fabs(a) < SMALL_FASTF) ? 0.0 : 100.0;
  */
 static int
 compare_paths(const char  *label,
-      struct rt_i *rtip,
-      double       ref_sa,    /* mesh-ref SA,  -1 if unavailable */
-      double       ref_vol,   /* mesh-ref vol, -1 if unavailable */
-      double       ana_sa,    /* analytic SA,  -1 if unavailable */
-      double       ana_vol,   /* analytic vol, -1 if unavailable */
-      double       prep_sec)
+	struct rt_i *rtip,
+	double       ref_sa,    /* mesh-ref SA,  -1 if unavailable */
+	double       ref_vol,   /* mesh-ref vol, -1 if unavailable */
+	double       ana_sa,    /* analytic SA,  -1 if unavailable */
+	double       ana_vol,   /* analytic vol, -1 if unavailable */
+	double       prep_sec)
 {
     int failures = 0;
 
@@ -354,32 +354,32 @@ compare_paths(const char  *label,
 	printf("    Prep (DDA/HBB): %.3f s\n", prep_sec);
 
     struct crofton_result dda_acc = run_crofton(rtip,
-	0 /* n_rays: 0 → use convergence-based path (thresh_pct > 0) */,
-	CROFTON_ACCURACY_THRESH);
+	    0 /* n_rays: 0 → use convergence-based path (thresh_pct > 0) */,
+	    CROFTON_ACCURACY_THRESH);
     struct crofton_result dda_tim = run_crofton(rtip,
-	CROFTON_TIMING_RAYS, 0.0);
+	    CROFTON_TIMING_RAYS, 0.0);
 
     printf("\n    %-12s  %14s  %14s  %10s  %10s\n",
-	   "PATH", "SA", "VOL", "SA_err%", "VOL_err%");
+	    "PATH", "SA", "VOL", "SA_err%", "VOL_err%");
 
     if (ref_sa > 0.0)
 	printf("    %-12s  %14.6g  %14.6g\n",
-	       "Mesh-Ref", ref_sa, ref_vol);
+		"Mesh-Ref", ref_sa, ref_vol);
 
     if (ana_sa > 0.0) {
 	double asa_err  = pct_err(ref_sa,  ana_sa);
 	double avol_err = pct_err(ref_vol, ana_vol);
 	printf("    %-12s  %14.6g  %14.6g  %9.2f%%  %9.2f%%"
-	       "  (ref vs analytic)\n",
-	       "Analytic", ana_sa, ana_vol, asa_err, avol_err);
+		"  (ref vs analytic)\n",
+		"Analytic", ana_sa, ana_vol, asa_err, avol_err);
 	if (asa_err > 1.0) {
 	    printf("    FAIL: Mesh-Ref SA deviates from analytic by %.2f%%\n",
-	   asa_err);
+		    asa_err);
 	    failures++;
 	}
 	if (avol_err > 1.0) {
 	    printf("    FAIL: Mesh-Ref vol deviates from analytic by %.2f%%\n",
-	   avol_err);
+		    avol_err);
 	    failures++;
 	}
     }
@@ -389,18 +389,18 @@ compare_paths(const char  *label,
 
     if (dda_sa_err >= 0.0)
 	printf("    %-12s  %14.6g  %14.6g  %9.2f%%  %9.2f%%\n",
-	       "DDA", dda_acc.sa, dda_acc.vol, dda_sa_err, dda_vol_err);
+		"DDA", dda_acc.sa, dda_acc.vol, dda_sa_err, dda_vol_err);
     else
 	printf("    %-12s  %14.6g  %14.6g\n",
-	       "DDA", dda_acc.sa, dda_acc.vol);
+		"DDA", dda_acc.sa, dda_acc.vol);
 
     double dda_rps = (dda_tim.wall_sec > 1e-9)
 	? CROFTON_TIMING_RAYS / dda_tim.wall_sec : 0.0;
 
     printf("\n    %-12s  %8s  %12s  %12s\n",
-	   "PATH", "rays", "wall_sec", "rays/sec");
+	    "PATH", "rays", "wall_sec", "rays/sec");
     printf("    %-12s  %8u  %12.4f  %12.0f\n",
-	   "DDA", CROFTON_TIMING_RAYS, dda_tim.wall_sec, dda_rps);
+	    "DDA", CROFTON_TIMING_RAYS, dda_tim.wall_sec, dda_rps);
 
     const char *dsa  = (dda_sa_err  < 0.0 || dda_sa_err  <= DSP_DDA_MESHREF_PCT) ? "OK" : "FAIL";
     const char *dvol = (dda_vol_err < 0.0 || dda_vol_err <= DSP_DDA_MESHREF_PCT) ? "OK" : "FAIL";
@@ -409,12 +409,12 @@ compare_paths(const char  *label,
     if (ref_sa > 0.0) {
 	if (dda_sa_err  > DSP_DDA_MESHREF_PCT) {
 	    printf("    FAIL: DDA SA vs Mesh-Ref: %.2f%% > %.1f%%\n",
-		   dda_sa_err, DSP_DDA_MESHREF_PCT);
+		    dda_sa_err, DSP_DDA_MESHREF_PCT);
 	    failures++;
 	}
 	if (dda_vol_err > DSP_DDA_MESHREF_PCT) {
 	    printf("    FAIL: DDA vol vs Mesh-Ref: %.2f%% > %.1f%%\n",
-		   dda_vol_err, DSP_DDA_MESHREF_PCT);
+		    dda_vol_err, DSP_DDA_MESHREF_PCT);
 	    failures++;
 	}
     }
@@ -439,8 +439,8 @@ compare_paths(const char  *label,
  */
 static void
 flat_dsp_analytic(uint32_t xcnt, uint32_t ycnt, unsigned short h,
-  double dx, double dy, double dz,
-  double *sa_out, double *vol_out)
+	     double dx, double dy, double dz,
+	     double *sa_out, double *vol_out)
 {
     double nx  = xcnt - 1.0;
     double ny  = ycnt - 1.0;
@@ -482,9 +482,9 @@ first_dsp_soltab(struct rt_i *rtip)
 
 static int
 check_direct_ray(const char *label, struct soltab *stp, struct rt_i *rtip,
-		 const point_t origin, const vect_t direction,
-		 int expect_segments, double expect_in, double expect_out,
-		 int check_top_normal)
+	const point_t origin, const vect_t direction,
+	int expect_segments, double expect_in, double expect_out,
+	int check_top_normal)
 {
     int failures = 0;
     struct application ap;
@@ -517,26 +517,26 @@ check_direct_ray(const char *label, struct soltab *stp, struct rt_i *rtip,
 	segp = BU_LIST_FIRST(seg, &seghead.l);
 	if (expect_in >= 0.0 && fabs(segp->seg_in.hit_dist - expect_in) > DSP_RAY_CHECK_TOLERANCE) {
 	    printf("    FAIL: %s in dist %.9g != %.9g\n",
-		   label, segp->seg_in.hit_dist, expect_in);
+		    label, segp->seg_in.hit_dist, expect_in);
 	    failures++;
 	}
 	if (expect_out >= 0.0 && fabs(segp->seg_out.hit_dist - expect_out) > DSP_RAY_CHECK_TOLERANCE) {
 	    printf("    FAIL: %s out dist %.9g != %.9g\n",
-		   label, segp->seg_out.hit_dist, expect_out);
+		    label, segp->seg_out.hit_dist, expect_out);
 	    failures++;
 	}
 	if (check_top_normal) {
 	    struct hit nhit = segp->seg_in;
 	    if (nhit.hit_surfno != DSP_TEST_ZTOP) {
 		printf("    FAIL: %s expected ZTOP in-hit, got surfno %d\n",
-		       label, nhit.hit_surfno);
+			label, nhit.hit_surfno);
 		failures++;
 	    } else {
 		rt_obj_norm(&nhit, stp, &ap.a_ray);
 		double nmag = MAGNITUDE(nhit.hit_normal);
 		if (fabs(nmag - 1.0) > DSP_RAY_CHECK_TOLERANCE || nhit.hit_normal[Z] <= 0.0) {
 		    printf("    FAIL: %s normal invalid (%g %g %g), |N|=%g\n",
-			   label, V3ARGS(nhit.hit_normal), nmag);
+			    label, V3ARGS(nhit.hit_normal), nmag);
 		    failures++;
 		}
 	    }
@@ -579,7 +579,7 @@ check_smooth_normal(const struct dsp_case *tc, struct soltab *stp)
     double nmag = MAGNITUDE(hit.hit_normal);
     if (fabs(nmag - 1.0) > DSP_RAY_CHECK_TOLERANCE || hit.hit_normal[Z] <= 0.0) {
 	printf("    FAIL: smooth=%d synthetic ZTOP normal invalid (%g %g %g), |N|=%g\n",
-	       tc->smooth, V3ARGS(hit.hit_normal), nmag);
+		tc->smooth, V3ARGS(hit.hit_normal), nmag);
 	return 1;
     }
 
@@ -615,34 +615,34 @@ run_prepped_ray_checks(const struct dsp_case *tc, struct rt_i *rtip)
 	VSET(o, 0.5 * x_extent, 0.5 * y_extent, top_z + 10.0);
 	VSET(d, 0.0, 0.0, -1.0);
 	failures += check_direct_ray("vertical down flat DSP", stp, rtip,
-				     o, d, 1, expected_vertical_in,
-				     expected_vertical_out, tc->smooth);
+		o, d, 1, expected_vertical_in,
+		expected_vertical_out, tc->smooth);
 
 	VSET(o, -tc->dx, 0.5 * y_extent, 0.5 * top_z);
 	VSET(d, 1.0, 0.0, 0.0);
 	failures += check_direct_ray("side entry flat DSP", stp, rtip,
-				     o, d, 1, tc->dx, tc->dx + x_extent, 0);
+		o, d, 1, tc->dx, tc->dx + x_extent, 0);
 
 	VSET(o, 0.5 * x_extent, 0.5 * y_extent, 0.5 * top_z);
 	VSET(d, 1.0, 0.0, 0.0);
 	failures += check_direct_ray("inside start flat DSP", stp, rtip,
-				     o, d, 1, -0.5 * x_extent, 0.5 * x_extent, 0);
+		o, d, 1, -0.5 * x_extent, 0.5 * x_extent, 0);
 
 	VSET(o, -tc->dx, 0.25 * y_extent, top_z - DSP_RAY_CHECK_NEAR_TOP_OFFSET);
 	VSET(d, 1.0, 0.0, 0.0);
 	failures += check_direct_ray("near-top side entry flat DSP", stp, rtip,
-				     o, d, 1, tc->dx, tc->dx + x_extent, 0);
+		o, d, 1, tc->dx, tc->dx + x_extent, 0);
 
 	VSET(o, 0.5 * x_extent, 0.5 * y_extent, -10.0);
 	VSET(d, 0.0, 0.0, 1.0);
 	failures += check_direct_ray("vertical up flat DSP", stp, rtip,
-				     o, d, 1, expected_vertical_in,
-				     expected_vertical_out, 0);
+		o, d, 1, expected_vertical_in,
+		expected_vertical_out, 0);
     } else if (tc->ray_checks == 2) {
 	VSET(o, 0.5 * x_extent, 0.5 * y_extent, 10000.0);
 	VSET(d, 0.0, 0.0, -1.0);
 	failures += check_direct_ray("smooth-mode direct vertical shot", stp, rtip,
-				     o, d, 1, -1.0, -1.0, 0);
+		o, d, 1, -1.0, -1.0, 0);
 	failures += check_smooth_normal(tc, stp);
     }
 
@@ -663,11 +663,11 @@ run_inmem_case(const struct dsp_case *tc)
     const char *dsp_name  = "dsp_test.s";
 
     if (mk_binunif(wdbp, data_name,
-   (const void *)tc->buf,
-   WDB_BINUNIF_UINT16,
-   (long)(tc->xcnt * tc->ycnt)) < 0) {
-db_close(dbip);
-return 1;
+		(const void *)tc->buf,
+		WDB_BINUNIF_UINT16,
+		(long)(tc->xcnt * tc->ycnt)) < 0) {
+	db_close(dbip);
+	return 1;
     }
 
     /* Build DSP primitive with a diagonal stom derived from dx/dy/dz. */
@@ -700,13 +700,13 @@ return 1;
 
     db_update_nref(dbip);
 
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip) { db_close(dbip); return 1; }
 
     if (rt_gettree(rtip, dsp_name) != 0) {
-rt_free_rti(rtip);
-db_close(dbip);
-return 1;
+	rt_i_destroy(rtip);
+	db_close(dbip);
+	return 1;
     }
 
     int64_t t0 = bu_gettime();
@@ -716,16 +716,16 @@ return 1;
     /* Compute exact mesh reference from the raw height buffer. */
     double ref_sa = 0.0, ref_vol = 0.0;
     compute_grid_sa_vol(tc->buf, tc->xcnt, tc->ycnt,
-tc->dx, tc->dy, tc->dz, tc->cuttype,
-&ref_sa, &ref_vol);
+	    tc->dx, tc->dy, tc->dz, tc->cuttype,
+	    &ref_sa, &ref_vol);
 
     int failures = compare_paths(tc->label, rtip,
- ref_sa,  ref_vol,
- tc->analytic_sa, tc->analytic_vol,
- prep_sec);
+	    ref_sa,  ref_vol,
+	    tc->analytic_sa, tc->analytic_vol,
+	    prep_sec);
     failures += run_prepped_ray_checks(tc, rtip);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     db_close(dbip);
     return failures;
 }
@@ -743,19 +743,19 @@ run_file_case(const char *gfile, const char *objname)
 
     struct db_i *dbip = db_open(gfile, DB_OPEN_READONLY);
     if (!dbip) {
-printf("  FAIL: cannot open %s\n", gfile);
-return 1;
+	printf("  FAIL: cannot open %s\n", gfile);
+	return 1;
     }
     db_dirbuild(dbip);
 
-    struct rt_i *rtip = rt_new_rti(dbip);
+    struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip) { db_close(dbip); return 1; }
 
     if (rt_gettree(rtip, objname) != 0) {
-printf("  FAIL: rt_gettree('%s') failed in %s\n", objname, gfile);
-rt_free_rti(rtip);
-db_close(dbip);
-return 1;
+	printf("  FAIL: rt_gettree('%s') failed in %s\n", objname, gfile);
+	rt_i_destroy(rtip);
+	db_close(dbip);
+	return 1;
     }
 
     int64_t t0 = bu_gettime();
@@ -772,29 +772,29 @@ return 1;
 
     struct soltab *stp;
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-if (stp->st_id == ID_DSP && !buf) {
-    dsp_query_terrain(stp, &buf, &xcnt, &ycnt, stom, &cuttype, &smooth);
-}
+	if (stp->st_id == ID_DSP && !buf) {
+	    dsp_query_terrain(stp, &buf, &xcnt, &ycnt, stom, &cuttype, &smooth);
+	}
     } RT_VISIT_ALL_SOLTABS_END;
 
     double ref_sa = -1.0, ref_vol = -1.0;
     if (buf && xcnt >= 2 && ycnt >= 2) {
-double dx = stom[0], dy = stom[5], dz = stom[10];
-compute_grid_sa_vol(buf, xcnt, ycnt, dx, dy, dz, cuttype, &ref_sa, &ref_vol);
-printf("  Mesh-Ref (from %u x %u grid, "
-       "dx=%.4g dy=%.4g dz=%.4g cut=%d smooth=%d):\n"
-       "    SA = %.6g  Vol = %.6g\n",
-       xcnt, ycnt, dx, dy, dz, cuttype, smooth, ref_sa, ref_vol);
+	double dx = stom[0], dy = stom[5], dz = stom[10];
+	compute_grid_sa_vol(buf, xcnt, ycnt, dx, dy, dz, cuttype, &ref_sa, &ref_vol);
+	printf("  Mesh-Ref (from %u x %u grid, "
+		"dx=%.4g dy=%.4g dz=%.4g cut=%d smooth=%d):\n"
+		"    SA = %.6g  Vol = %.6g\n",
+		xcnt, ycnt, dx, dy, dz, cuttype, smooth, ref_sa, ref_vol);
     } else {
-printf("  WARNING: could not retrieve height buffer for mesh reference\n");
+	printf("  WARNING: could not retrieve height buffer for mesh reference\n");
     }
 
     int failures = compare_paths(label, rtip,
- ref_sa, ref_vol,
- -1.0, -1.0,
- prep_sec);
+	    ref_sa, ref_vol,
+	    -1.0, -1.0,
+	    prep_sec);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     db_close(dbip);
     return failures;
 }
@@ -813,210 +813,210 @@ test_synthetic(void)
 
     /* --- 1. Flat 5x5 grid (4x4 cells), height=100, identity stom --- */
     {
-const uint32_t GW = 5, GH = 5;
-unsigned short buf[25];
-for (int i = 0; i < 25; i++) buf[i] = 100;
+	const uint32_t GW = 5, GH = 5;
+	unsigned short buf[25];
+	for (int i = 0; i < 25; i++) buf[i] = 100;
 
-double asa, avol;
-flat_dsp_analytic(GW, GH, 100, 1.0, 1.0, 1.0, &asa, &avol);
+	double asa, avol;
+	flat_dsp_analytic(GW, GH, 100, 1.0, 1.0, 1.0, &asa, &avol);
 
-struct dsp_case tc = {
-    "flat 5x5 h=100 (4x4 cells, identity stom)",
-    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 1, 1.0, 1.0, 1.0, asa, avol
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "flat 5x5 h=100 (4x4 cells, identity stom)",
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 1, 1.0, 1.0, 1.0, asa, avol
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 2. Flat 10x10 grid (9x9 cells), height=200 --- */
     {
-const uint32_t GW = 10, GH = 10;
-unsigned short buf[100];
-for (int i = 0; i < 100; i++) buf[i] = 200;
+	const uint32_t GW = 10, GH = 10;
+	unsigned short buf[100];
+	for (int i = 0; i < 100; i++) buf[i] = 200;
 
-double asa, avol;
-flat_dsp_analytic(GW, GH, 200, 1.0, 1.0, 1.0, &asa, &avol);
+	double asa, avol;
+	flat_dsp_analytic(GW, GH, 200, 1.0, 1.0, 1.0, &asa, &avol);
 
-struct dsp_case tc = {
-    "flat 10x10 h=200 (9x9 cells)",
-    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, asa, avol
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "flat 10x10 h=200 (9x9 cells)",
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, asa, avol
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 3. Flat 10x10 grid with non-unit stom (dx=5, dy=5, dz=2) --- */
     {
-const uint32_t GW = 10, GH = 10;
-unsigned short buf[100];
-for (int i = 0; i < 100; i++) buf[i] = 50;
+	const uint32_t GW = 10, GH = 10;
+	unsigned short buf[100];
+	for (int i = 0; i < 100; i++) buf[i] = 50;
 
-double asa, avol;
-flat_dsp_analytic(GW, GH, 50, 5.0, 5.0, 2.0, &asa, &avol);
+	double asa, avol;
+	flat_dsp_analytic(GW, GH, 50, 5.0, 5.0, 2.0, &asa, &avol);
 
-struct dsp_case tc = {
-    "flat 10x10 h=50 (stom dx=5 dy=5 dz=2)",
-    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 1, 5.0, 5.0, 2.0, asa, avol
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "flat 10x10 h=50 (stom dx=5 dy=5 dz=2)",
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 1, 5.0, 5.0, 2.0, asa, avol
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 4. Linear ramp 9x9 grid --- */
     {
-const uint32_t GW = 9, GH = 9;
-unsigned short buf[81];
-for (uint32_t y = 0; y < GH; y++)
-    for (uint32_t x = 0; x < GW; x++)
-buf[y * GW + x] = (unsigned short)(100 + 20*x + 10*y);
+	const uint32_t GW = 9, GH = 9;
+	unsigned short buf[81];
+	for (uint32_t y = 0; y < GH; y++)
+	    for (uint32_t x = 0; x < GW; x++)
+		buf[y * GW + x] = (unsigned short)(100 + 20*x + 10*y);
 
-struct dsp_case tc = {
-    "ramp 9x9 (h=100+20x+10y)",
-    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "ramp 9x9 (h=100+20x+10y)",
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 5. Explicit ULlr cut on an asymmetric 5x5 terrain --- */
     {
-const uint32_t GW = 5, GH = 5;
-unsigned short buf[25];
-for (uint32_t y = 0; y < GH; y++)
-    for (uint32_t x = 0; x < GW; x++)
-	buf[y * GW + x] = (unsigned short)(80 + 35*x + 7*y + 11*x*y);
+	const uint32_t GW = 5, GH = 5;
+	unsigned short buf[25];
+	for (uint32_t y = 0; y < GH; y++)
+	    for (uint32_t x = 0; x < GW; x++)
+		buf[y * GW + x] = (unsigned short)(80 + 35*x + 7*y + 11*x*y);
 
-struct dsp_case tc = {
-    "asymmetric 5x5 explicit ULlr cut",
-    GW, GH, buf, DSP_CUT_DIR_ULlr, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "asymmetric 5x5 explicit ULlr cut",
+	    GW, GH, buf, DSP_CUT_DIR_ULlr, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 6. Adaptive cut on an asymmetric 5x5 terrain --- */
     {
-const uint32_t GW = 5, GH = 5;
-unsigned short buf[25];
-for (uint32_t y = 0; y < GH; y++)
-    for (uint32_t x = 0; x < GW; x++)
-	buf[y * GW + x] = (unsigned short)(120 + 60*((x + y) & 1) + 9*x*x + 5*y);
+	const uint32_t GW = 5, GH = 5;
+	unsigned short buf[25];
+	for (uint32_t y = 0; y < GH; y++)
+	    for (uint32_t x = 0; x < GW; x++)
+		buf[y * GW + x] = (unsigned short)(120 + 60*((x + y) & 1) + 9*x*x + 5*y);
 
-struct dsp_case tc = {
-    "asymmetric 5x5 adaptive cut",
-    GW, GH, buf, DSP_CUT_DIR_ADAPT, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "asymmetric 5x5 adaptive cut",
+	    GW, GH, buf, DSP_CUT_DIR_ADAPT, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 7. Smooth normal interpolation mode 1 --- */
     {
-const uint32_t GW = 5, GH = 5;
-unsigned short buf[25];
-for (uint32_t y = 0; y < GH; y++)
-    for (uint32_t x = 0; x < GW; x++)
-	buf[y * GW + x] = (unsigned short)(200 + 30*x + 10*y);
+	const uint32_t GW = 5, GH = 5;
+	unsigned short buf[25];
+	for (uint32_t y = 0; y < GH; y++)
+	    for (uint32_t x = 0; x < GW; x++)
+		buf[y * GW + x] = (unsigned short)(200 + 30*x + 10*y);
 
-struct dsp_case tc = {
-    "smooth=1 ramp normal check",
-    GW, GH, buf, DSP_CUT_DIR_llUR, 1, 2, 1.0, 1.0, 1.0, -1.0, -1.0
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "smooth=1 ramp normal check",
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 1, 2, 1.0, 1.0, 1.0, -1.0, -1.0
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 8. Smooth normal interpolation mode 2 --- */
     {
-const uint32_t GW = 5, GH = 5;
-unsigned short buf[25];
-for (uint32_t y = 0; y < GH; y++)
-    for (uint32_t x = 0; x < GW; x++)
-	buf[y * GW + x] = (unsigned short)(150 + 20*x + 25*y);
+	const uint32_t GW = 5, GH = 5;
+	unsigned short buf[25];
+	for (uint32_t y = 0; y < GH; y++)
+	    for (uint32_t x = 0; x < GW; x++)
+		buf[y * GW + x] = (unsigned short)(150 + 20*x + 25*y);
 
-struct dsp_case tc = {
-    "smooth=2 ramp normal check",
-    GW, GH, buf, DSP_CUT_DIR_llUR, 2, 2, 1.0, 1.0, 1.0, -1.0, -1.0
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "smooth=2 ramp normal check",
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 2, 2, 1.0, 1.0, 1.0, -1.0, -1.0
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 9. 16x16 sinusoidal terrain --- */
     {
-const uint32_t GW = 16, GH = 16;
-unsigned short buf[256];
-for (uint32_t y = 0; y < GH; y++)
-    for (uint32_t x = 0; x < GW; x++) {
-double fx = (double)x / (GW - 1) * M_PI;
-double fy = (double)y / (GH - 1) * M_PI;
-buf[y*GW + x] = (unsigned short)(int)(
-    300.0 + 150.0 * sin(fx) * sin(fy));
-    }
+	const uint32_t GW = 16, GH = 16;
+	unsigned short buf[256];
+	for (uint32_t y = 0; y < GH; y++)
+	    for (uint32_t x = 0; x < GW; x++) {
+		double fx = (double)x / (GW - 1) * M_PI;
+		double fy = (double)y / (GH - 1) * M_PI;
+		buf[y*GW + x] = (unsigned short)(int)(
+			300.0 + 150.0 * sin(fx) * sin(fy));
+	    }
 
-struct dsp_case tc = {
-    "sinusoidal 16x16",
-    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
-};
-failures += run_inmem_case(&tc);
+	struct dsp_case tc = {
+	    "sinusoidal 16x16",
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	};
+	failures += run_inmem_case(&tc);
     }
 
     /* --- 10. Complex 33x33 wave terrain --- */
     {
-const uint32_t GW = 33, GH = 33;
-unsigned short *buf = (unsigned short *)bu_calloc(
-    GW * GH, sizeof(unsigned short), "33x33 buf");
-for (uint32_t y = 0; y < GH; y++)
-    for (uint32_t x = 0; x < GW; x++) {
-double fx = (double)x / (GW - 1) * 6.2832;
-double fy = (double)y / (GH - 1) * 6.2832;
-buf[y*GW + x] = (unsigned short)(int)(
-    500.0 + 200.0*sin(fx) + 150.0*cos(2.0*fy));
-    }
+	const uint32_t GW = 33, GH = 33;
+	unsigned short *buf = (unsigned short *)bu_calloc(
+		GW * GH, sizeof(unsigned short), "33x33 buf");
+	for (uint32_t y = 0; y < GH; y++)
+	    for (uint32_t x = 0; x < GW; x++) {
+		double fx = (double)x / (GW - 1) * 6.2832;
+		double fy = (double)y / (GH - 1) * 6.2832;
+		buf[y*GW + x] = (unsigned short)(int)(
+			500.0 + 200.0*sin(fx) + 150.0*cos(2.0*fy));
+	    }
 
-struct dsp_case tc = {
-    "complex 33x33 wave",
-    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
-};
-failures += run_inmem_case(&tc);
-bu_free(buf, "33x33 buf");
+	struct dsp_case tc = {
+	    "complex 33x33 wave",
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	};
+	failures += run_inmem_case(&tc);
+	bu_free(buf, "33x33 buf");
     }
 
     /* --- 11. Larger terrain to keep the default DDA path under test --- */
     {
-const uint32_t grid_width = DSP_TEST_LARGE_GRID_DIM;
-const uint32_t grid_height = DSP_TEST_LARGE_GRID_DIM;
-const double ridge_height = 120.0;
-/* Different X/Y wave frequencies (12 vs. 8 cycles across the unit grid) avoid
- * a symmetric height field and produce rays that visit varied HBB/DDA child
- * paths across the power-of-two cell grid.
- */
-const double ridge_x_freq = 12.0;
-const double ridge_y_freq = 8.0;
-const double ramp_x_height = 300.0;
-const double ramp_y_height = 150.0;
-const double base_height = 700.0;
-unsigned short *buf = (unsigned short *)bu_calloc(
-    grid_width * grid_height, sizeof(unsigned short), "129x129 buf");
-double *sin_x = (double *)bu_malloc(grid_width * sizeof(double), "129x129 sin x");
-double *cos_y = (double *)bu_malloc(grid_height * sizeof(double), "129x129 cos y");
-for (uint32_t x = 0; x < grid_width; x++) {
-    double fx = (double)x / (grid_width - 1);
-    sin_x[x] = sin(ridge_x_freq * fx);
-}
-for (uint32_t y = 0; y < grid_height; y++) {
-    double fy = (double)y / (grid_height - 1);
-    cos_y[y] = cos(ridge_y_freq * fy);
-}
-for (uint32_t y = 0; y < grid_height; y++)
-    for (uint32_t x = 0; x < grid_width; x++) {
-double fx = (double)x / (grid_width - 1);
-double fy = (double)y / (grid_height - 1);
-double ridge = ridge_height * sin_x[x] * cos_y[y];
-double ramp = ramp_x_height * fx + ramp_y_height * fy;
-buf[y*grid_width + x] = (unsigned short)(base_height + ramp + ridge);
-    }
+	const uint32_t grid_width = DSP_TEST_LARGE_GRID_DIM;
+	const uint32_t grid_height = DSP_TEST_LARGE_GRID_DIM;
+	const double ridge_height = 120.0;
+	/* Different X/Y wave frequencies (12 vs. 8 cycles across the unit grid) avoid
+	 * a symmetric height field and produce rays that visit varied HBB/DDA child
+	 * paths across the power-of-two cell grid.
+	 */
+	const double ridge_x_freq = 12.0;
+	const double ridge_y_freq = 8.0;
+	const double ramp_x_height = 300.0;
+	const double ramp_y_height = 150.0;
+	const double base_height = 700.0;
+	unsigned short *buf = (unsigned short *)bu_calloc(
+		grid_width * grid_height, sizeof(unsigned short), "129x129 buf");
+	double *sin_x = (double *)bu_malloc(grid_width * sizeof(double), "129x129 sin x");
+	double *cos_y = (double *)bu_malloc(grid_height * sizeof(double), "129x129 cos y");
+	for (uint32_t x = 0; x < grid_width; x++) {
+	    double fx = (double)x / (grid_width - 1);
+	    sin_x[x] = sin(ridge_x_freq * fx);
+	}
+	for (uint32_t y = 0; y < grid_height; y++) {
+	    double fy = (double)y / (grid_height - 1);
+	    cos_y[y] = cos(ridge_y_freq * fy);
+	}
+	for (uint32_t y = 0; y < grid_height; y++)
+	    for (uint32_t x = 0; x < grid_width; x++) {
+		double fx = (double)x / (grid_width - 1);
+		double fy = (double)y / (grid_height - 1);
+		double ridge = ridge_height * sin_x[x] * cos_y[y];
+		double ramp = ramp_x_height * fx + ramp_y_height * fy;
+		buf[y*grid_width + x] = (unsigned short)(base_height + ramp + ridge);
+	    }
 
-struct dsp_case tc = {
-    "larger 129x129 mixed ramp/wave terrain",
-    grid_width, grid_height, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
-};
-failures += run_inmem_case(&tc);
-bu_free(sin_x, "129x129 sin x");
-bu_free(cos_y, "129x129 cos y");
-bu_free(buf, "129x129 buf");
+	struct dsp_case tc = {
+	    "larger 129x129 mixed ramp/wave terrain",
+	    grid_width, grid_height, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	};
+	failures += run_inmem_case(&tc);
+	bu_free(sin_x, "129x129 sin x");
+	bu_free(cos_y, "129x129 cos y");
+	bu_free(buf, "129x129 buf");
     }
 
     printf("\n=== Synthetic: %d failure(s) ===\n", failures);
@@ -1038,13 +1038,23 @@ main(int argc, char *argv[])
     failures += test_synthetic();
 
     if (argc == 3) {
-printf("\n=== Real terrain: %s  object: %s ===\n",
-       argv[1], argv[2]);
-failures += run_file_case(argv[1], argv[2]);
+	printf("\n=== Real terrain: %s  object: %s ===\n",
+		argv[1], argv[2]);
+	failures += run_file_case(argv[1], argv[2]);
     } else if (argc != 1) {
-bu_exit(1, "Usage: %s [<file.g> <object-name>]\n", argv[0]);
+	bu_exit(1, "Usage: %s [<file.g> <object-name>]\n", argv[0]);
     }
 
     printf("\n=== Overall: %d failure(s) ===\n", failures);
     return (failures > 0) ? 1 : 0;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
+ */

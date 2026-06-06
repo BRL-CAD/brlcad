@@ -97,7 +97,7 @@
 #endif
 
 #include "../../../libbg/detria.hpp"
-#include "RTree.h"
+#include "../../../libbg/RTree.h"
 
 namespace TerraScape {
 
