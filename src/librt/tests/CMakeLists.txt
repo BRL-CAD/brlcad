@@ -107,6 +107,10 @@ brlcad_add_test(NAME rt_crofton COMMAND rt_crofton)
 brlcad_addexec(rt_dsp_raytrace_check dsp_raytrace_check.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_dsp_raytrace_check COMMAND rt_dsp_raytrace_check)
 
+# in-memory test for primitives
+brlcad_addexec(test_invalid_in_memory test_invalid_in_memory.c "librt;libbn;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_test_invalid_in_memory COMMAND test_invalid_in_memory)
+
 set(
   distcheck_files
   CMakeLists.txt
@@ -125,6 +129,7 @@ set(
   sketch.g
   prim_tess.c
   tess_timing.c
+  test_invalid_in_memory.c
 )
 
 cmakefiles(${distcheck_files})

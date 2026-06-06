@@ -1126,6 +1126,46 @@ arb_is_twisted(const struct rt_arb_internal *arb, int cgtype, const struct bn_to
 
 
 int
+rt_arb_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_arb_internal *arb;
+    int issues = 0;
+    struct bu_vls arb_log = BU_VLS_INIT_ZERO;
+
+    RT_CK_DB_INTERNAL(ip);
+    arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    if (rt_arb_validate(&arb_log, arb, tol, &issues) == 0) {
+        bu_vls_free(&arb_log);
+        return 0; // valid
+    }
+
+    const char *comma = "";
+    bu_vls_printf(error_msg, "[");
+    if (issues & RT_ARB_VALIDATE_NONSTANDARD) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"non_standard_ordering\"}", comma);
+        comma = ",";
+    }
+    if (issues & RT_ARB_VALIDATE_NONCOPLANAR) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"non_coplanar_face\"}", comma);
+        comma = ",";
+    }
+    if (issues & RT_ARB_VALIDATE_CONCAVE) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"concave\"}", comma);
+        comma = ",";
+    }
+    if (issues & RT_ARB_VALIDATE_TWISTED) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"twisted\"}", comma);
+        comma = ",";
+    }
+    bu_vls_printf(error_msg, "]");
+
+    bu_vls_free(&arb_log);
+    return issues;
+}
+
+int
 rt_arb_validate(struct bu_vls *error_msg_ret, const struct rt_arb_internal *arb, const struct bn_tol *tol, int *issues)
 {
     const int arb_faces[5][24] = rt_arb_faces;

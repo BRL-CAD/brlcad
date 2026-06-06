@@ -323,6 +323,14 @@ struct rt_functab {
 		   const struct bview * /*v*/);
 #define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct directory *, struct db_i *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
 
+    /**
+     * Validate the geometry of a primitive.
+     * Returns 0 if the primitive is valid, or > 0 if invalid.
+     * Appends human-readable JSON descriptions of any issues to error_msg.
+     */
+    int (*ft_validate)(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define RTFUNCTAB_FUNC_VALIDATE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
 };
 
 /**
@@ -448,6 +456,13 @@ struct rt_edit_functab {
      */
     int (*ft_edit_get_params)(struct rt_edit *s, int cmd_id, fastf_t *vals);
 #define EDFUNCTAB_FUNC_GET_PARAMS_CAST(_func) ((int(*)(struct rt_edit *, int, fastf_t *))((void (*)(void))_func))
+
+    /**
+     * Attempt to repair an invalid primitive.
+     * Returns 0 on success, < 0 on failure.
+     */
+    int (*ft_repair)(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+#define EDFUNCTAB_FUNC_REPAIR_CAST(_func) ((int (*)(struct bu_vls *, struct rt_db_internal *, const struct bn_tol *, int, const char **))((void (*)(void))_func))
 
 };
 

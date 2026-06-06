@@ -31,6 +31,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
+#include "bu/opt.h"
 #include "wdb.h"
 
 #include "../edit_private.h"
@@ -1454,10 +1455,83 @@ rt_edit_bot_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
     }
 }
 
+int
+rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_bot_internal *bot;
+    struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
+    int print_help = 0;
+    (void)tol;
+    
+    RT_CK_DB_INTERNAL(ip);
+    bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    if (bot->mode != RT_BOT_SOLID) {
+        if (log_str) bu_vls_printf(log_str, "{\"status\":\"error\",\"message\":\"BoT must be solid for repair\"}");
+        return -1;
+    }
+
+    struct bu_opt_desc d[5];
+    int options_json = 0;
+    BU_OPT(d[0], "h",  "help",                "",             NULL,                     &print_help,  "Print help");
+    BU_OPT(d[1], "p",  "max-hole-percent",   "#",   bu_opt_fastf_t, &settings.max_hole_area_percent,  "Maximum hole area to repair (percentage of mesh surface area)");
+    BU_OPT(d[2], "a",  "max-hole-area",     " #",   bu_opt_fastf_t,         &settings.max_hole_area,  "Maximum hole area to repair in mm (overrides -p option)");
+    BU_OPT(d[3], "",   "options-json",        "",             NULL,                   &options_json,  "Return JSON of supported options");
+    BU_OPT_NULL(d[4]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[");
+            bu_vls_printf(log_str, "{\"name\":\"max-hole-percent\",\"type\":\"float\",\"description\":\"Maximum hole area to repair (percentage of mesh surface area)\"},");
+            bu_vls_printf(log_str, "{\"name\":\"max-hole-area\",\"type\":\"float\",\"description\":\"Maximum hole area to repair in mm (overrides max-hole-percent)\"}");
+            bu_vls_printf(log_str, "]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    if (NEAR_EQUAL(settings.max_hole_area_percent, 100, VUNITIZE_TOL)) {
+        settings.max_hole_area_percent = 0.0;
+    }
+
+    struct rt_bot_internal *obot = NULL;
+    int rep_ret = rt_bot_repair(&obot, bot, &settings);
+
+    if (rep_ret < 0) {
+        if (log_str) bu_vls_printf(log_str, "{\"status\":\"error\",\"message\":\"Unable to repair BoT\"}");
+        return -1;
+    }
+
+    if (rep_ret == 1 || obot == bot || !obot) {
+        if (log_str) bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"BoT is already manifold, no repair needed.\"}");
+        return 0; 
+    }
+
+    /* Free the old bot internals, assign the new one */
+    ip->idb_meth->ft_ifree(ip);
+    ip->idb_ptr = (void *)obot;
+
+    if (log_str) bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired BoT\"}");
+
+    return 0;
+}
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"

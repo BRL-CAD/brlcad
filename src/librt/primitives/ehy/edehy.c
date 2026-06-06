@@ -23,6 +23,8 @@
 
 #include "common.h"
 
+#include "bu/opt.h"
+
 #include <math.h>
 #include <string.h>
 
@@ -459,6 +461,77 @@ rt_edit_ehy_edit_xy(
     }
 }
 
+
+int
+rt_edit_ehy_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_ehy_internal *ehy;
+    fastf_t mag_h;
+    int repaired = 0;
+    int options_json = 0;
+    int print_help = 0;
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[2]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_h = MAGNITUDE(ehy->ehy_H);
+
+    if (!NEAR_EQUAL(MAGSQ(ehy->ehy_Au), 1.0, tol->dist)) {
+        fastf_t mag_au = MAGNITUDE(ehy->ehy_Au);
+        if (mag_au > SQRT_SMALL_FASTF) {
+            VSCALE(ehy->ehy_Au, ehy->ehy_Au, 1.0 / mag_au);
+            repaired++;
+        }
+    }
+
+    if (mag_h > SQRT_SMALL_FASTF) {
+        fastf_t f = VDOT(ehy->ehy_Au, ehy->ehy_H) / mag_h;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            vect_t proj;
+            VSCALE(proj, ehy->ehy_H, VDOT(ehy->ehy_Au, ehy->ehy_H) / MAGSQ(ehy->ehy_H));
+            VSUB2(ehy->ehy_Au, ehy->ehy_Au, proj);
+            VUNITIZE(ehy->ehy_Au);
+            repaired++;
+        }
+    }
+
+    if (repaired > 0 && log_str) {
+        bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired EHY\"}");
+    }
+
+    return repaired > 0 ? 0 : -1;
+}
 
 /*
  * Local Variables:

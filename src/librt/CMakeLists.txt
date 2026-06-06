@@ -330,6 +330,7 @@ set(
   prcomb.c
   primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp
+  primitives/bot/edbot.c
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/bot/tieprivate.h

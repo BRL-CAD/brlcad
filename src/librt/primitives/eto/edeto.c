@@ -23,6 +23,8 @@
 
 #include "common.h"
 
+#include "bu/opt.h"
+
 #include <math.h>
 #include <string.h>
 
@@ -458,6 +460,82 @@ rt_edit_eto_edit_xy(
     }
 }
 
+
+int
+rt_edit_eto_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_eto_internal *eto;
+    int repaired = 0;
+    int options_json = 0;
+    int print_help = 0;
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[2]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    if (!NEAR_EQUAL(MAGSQ(eto->eto_N), 1.0, tol->dist)) {
+        fastf_t mag_n = MAGNITUDE(eto->eto_N);
+        if (mag_n > SQRT_SMALL_FASTF) {
+            VSCALE(eto->eto_N, eto->eto_N, 1.0 / mag_n);
+            repaired++;
+        }
+    }
+
+    /* Check if C and N are perpendicular */
+    fastf_t mag_c = MAGNITUDE(eto->eto_C);
+    if (mag_c > SQRT_SMALL_FASTF) {
+        fastf_t f = VDOT(eto->eto_N, eto->eto_C) / mag_c;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            vect_t proj;
+            /* Project C onto the plane defined by normal N */
+            fastf_t dot = VDOT(eto->eto_C, eto->eto_N);
+            VSCALE(proj, eto->eto_N, dot);
+            VSUB2(eto->eto_C, eto->eto_C, proj);
+            /* Restore original magnitude of C */
+            fastf_t new_mag = MAGNITUDE(eto->eto_C);
+            if (new_mag > SQRT_SMALL_FASTF) {
+                VSCALE(eto->eto_C, eto->eto_C, mag_c / new_mag);
+                repaired++;
+            }
+        }
+    }
+
+    if (repaired > 0 && log_str) {
+        bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired ETO\"}");
+    }
+
+    return repaired > 0 ? 0 : -1;
+}
 
 /*
  * Local Variables:

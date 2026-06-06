@@ -90,6 +90,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "ae2dir", cmd_ged_plain_wrapper, ged_exec_ae2dir, NULL},
     {MGED_CMD_MAGIC, "aip", f_aip, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "analyze", cmd_ged_info_wrapper, ged_exec_analyze, NULL},
+    {MGED_CMD_MAGIC, "repair", cmd_ged_plain_wrapper, ged_exec_repair, NULL},
     {MGED_CMD_MAGIC, "annotate", cmd_ged_plain_wrapper, ged_exec_annotate, NULL},
     {MGED_CMD_MAGIC, "arb", cmd_ged_plain_wrapper, ged_exec_arb, NULL},
     {MGED_CMD_MAGIC, "arced", cmd_ged_plain_wrapper, ged_exec_arced, NULL},

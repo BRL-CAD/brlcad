@@ -458,6 +458,8 @@ _ged_sort_existing_objs(struct db_i *dbip, int argc, const char *argv[], struct 
 
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
+GED_EXPORT extern int ged_repair(struct ged *gedp, int argc, const char **argv);
+
 
 GED_EXPORT extern void ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp);
 GED_EXPORT extern struct bv_scene_obj *ged_pop_scene_obj(struct ged *gedp);

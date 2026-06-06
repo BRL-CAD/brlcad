@@ -40,6 +40,9 @@ __BEGIN_DECLS
 /** Execute plugin based command */
 #if !defined(GED_PLUGIN) && !defined(GED_EXEC_NORAW)
 GED_EXPORT extern int ged_exec(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_remove(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_repair(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_rfm(struct ged *gedp, int argc, const char *argv[]);
 #endif
 /** @} */
 
