@@ -2056,3 +2056,5 @@ s/rt_mk_hyperbola\(/rt_mk_hyperbola_old\(/g
         rt_mk_hyperbola() signature changed - old 6-arg callers use rt_mk_hyperbola_old() [7.44]
 s/(#[[:space:]]*include[[:space:]]+["<])photonmap\.h/\1optical\/photonmap.h/g
 	move liboptical photonmap.h to optical subdir [7.44]
+s/bu_process_create_opts/bu_process_opts/g
+        process option enum renamed for bu_process_func() reuse [7.44]
