@@ -2327,6 +2327,161 @@ verbose_add_subdirectory("" doc)
 # NOTE: misc/tools is added separately (earlier)
 verbose_add_subdirectory("" misc)
 
+#------------------------------------------------------------------------------
+# CMake package configuration files for modern find_package(BRLCAD CONFIG)
+#
+# BRLCAD_ADDLIB() attaches installed public library targets to the BRLCADTargets
+# and BRLCADStaticTargets export sets.  Generate the package files after all
+# subdirectories have had a chance to define their targets.
+include(CMakePackageConfigHelpers)
+
+set(BRLCAD_CMAKE_INSTALL_DIR "${LIB_DIR}/cmake/BRLCAD")
+set(BRLCAD_MODULE_INSTALL_DIR "${BRLCAD_CMAKE_INSTALL_DIR}/modules")
+set(BRLCAD_BUILD_MODULE_DIR "${BRLCAD_BINARY_DIR}/modules")
+
+set(
+  BRLCAD_PACKAGE_MODULE_FILES
+  "${BRLCAD_CMAKE_DIR}/FindLMDB.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindMANIFOLD.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindMMESH.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindNETPBM.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindOPENNURBS.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindPNG.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindREGEX.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindTCL.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindZLIB.cmake"
+)
+
+foreach(_brlcad_dep ZLIB LMDB MANIFOLD MMESH REGEX PNG NETPBM OPENNURBS)
+  if("${${_brlcad_dep}_STATUS}" STREQUAL "Bundled")
+    set(BRLCAD_FIND_DEP_${_brlcad_dep} "find_dependency(${_brlcad_dep} MODULE)")
+  else()
+    set(BRLCAD_FIND_DEP_${_brlcad_dep} "find_dependency(${_brlcad_dep})")
+  endif()
+endforeach()
+
+set(BRLCAD_FIND_DEP_JPEG "find_dependency(JPEG)")
+
+set(BRLCAD_HAVE_TCL FALSE)
+if(BRLCAD_ENABLE_TCL)
+  set(BRLCAD_HAVE_TCL TRUE)
+endif()
+
+set(BRLCAD_HAVE_QT FALSE)
+if(BRLCAD_ENABLE_QT)
+  set(BRLCAD_HAVE_QT TRUE)
+endif()
+
+set(BRLCAD_HAVE_STEP FALSE)
+if(BRLCAD_ENABLE_STEP)
+  set(BRLCAD_HAVE_STEP TRUE)
+endif()
+
+set(BRLCAD_HAVE_GDAL FALSE)
+if(BRLCAD_ENABLE_GDAL)
+  set(BRLCAD_HAVE_GDAL TRUE)
+endif()
+
+set(BRLCAD_HAVE_OPENCL FALSE)
+if(BRLCAD_ENABLE_OPENCL)
+  set(BRLCAD_HAVE_OPENCL TRUE)
+endif()
+
+set(BRLCAD_HAVE_OPENGL FALSE)
+if(BRLCAD_ENABLE_OPENGL)
+  set(BRLCAD_HAVE_OPENGL TRUE)
+endif()
+
+set(BRLCAD_HAVE_OSMESA FALSE)
+if(BRLCAD_ENABLE_OSMESA)
+  set(BRLCAD_HAVE_OSMESA TRUE)
+endif()
+
+# Build-tree package files support BRLCAD_DIR=<build_dir> consumers.
+set(BRLCAD_INCLUDE_INSTALL_DIR "${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}")
+set(BRLCAD_LIB_INSTALL_DIR "${BRLCAD_BINARY_DIR}/${LIB_DIR}")
+set(BRLCAD_DATA_INSTALL_DIR "${BRLCAD_BINARY_DIR}/${DATA_DIR}")
+configure_package_config_file(
+  "${BRLCAD_CMAKE_DIR}/BRLCADConfig.cmake.in"
+  "${BRLCAD_BINARY_DIR}/BRLCADConfig.cmake"
+  INSTALL_PREFIX "${BRLCAD_BINARY_DIR}"
+  INSTALL_DESTINATION "."
+  PATH_VARS
+    BRLCAD_INCLUDE_INSTALL_DIR
+    BRLCAD_LIB_INSTALL_DIR
+    BRLCAD_DATA_INSTALL_DIR
+)
+
+write_basic_package_version_file(
+  "${BRLCAD_BINARY_DIR}/BRLCADConfigVersion.cmake"
+  VERSION "${BRLCAD_VERSION}"
+  COMPATIBILITY SameMajorVersion
+)
+
+file(MAKE_DIRECTORY "${BRLCAD_BUILD_MODULE_DIR}")
+foreach(_brlcad_module_file ${BRLCAD_PACKAGE_MODULE_FILES})
+  get_filename_component(_brlcad_module_name "${_brlcad_module_file}" NAME)
+  configure_file(
+    "${_brlcad_module_file}"
+    "${BRLCAD_BUILD_MODULE_DIR}/${_brlcad_module_name}"
+    COPYONLY
+  )
+endforeach()
+
+export(
+  EXPORT BRLCADTargets
+  NAMESPACE BRLCAD::
+  FILE "${BRLCAD_BINARY_DIR}/BRLCADTargets.cmake"
+)
+if(BUILD_STATIC_LIBS)
+  export(
+    EXPORT BRLCADStaticTargets
+    NAMESPACE BRLCAD::
+    FILE "${BRLCAD_BINARY_DIR}/BRLCADStaticTargets.cmake"
+  )
+endif()
+
+# Install-tree package files use the final installation prefix.
+set(BRLCAD_INCLUDE_INSTALL_DIR "${INCLUDE_DIR}")
+set(BRLCAD_LIB_INSTALL_DIR "${LIB_DIR}")
+set(BRLCAD_DATA_INSTALL_DIR "${DATA_DIR}")
+configure_package_config_file(
+  "${BRLCAD_CMAKE_DIR}/BRLCADConfig.cmake.in"
+  "${BRLCAD_BINARY_DIR}/CMakeFiles/BRLCADConfig.cmake"
+  INSTALL_DESTINATION "${BRLCAD_CMAKE_INSTALL_DIR}"
+  PATH_VARS
+    BRLCAD_INCLUDE_INSTALL_DIR
+    BRLCAD_LIB_INSTALL_DIR
+    BRLCAD_DATA_INSTALL_DIR
+)
+
+install(
+  FILES
+    "${BRLCAD_BINARY_DIR}/CMakeFiles/BRLCADConfig.cmake"
+    "${BRLCAD_BINARY_DIR}/BRLCADConfigVersion.cmake"
+  DESTINATION "${BRLCAD_CMAKE_INSTALL_DIR}"
+)
+
+install(
+  EXPORT BRLCADTargets
+  NAMESPACE BRLCAD::
+  FILE BRLCADTargets.cmake
+  DESTINATION "${BRLCAD_CMAKE_INSTALL_DIR}"
+)
+
+if(BUILD_STATIC_LIBS)
+  install(
+    EXPORT BRLCADStaticTargets
+    NAMESPACE BRLCAD::
+    FILE BRLCADStaticTargets.cmake
+    DESTINATION "${BRLCAD_CMAKE_INSTALL_DIR}"
+  )
+endif()
+
+install(
+  FILES ${BRLCAD_PACKAGE_MODULE_FILES}
+  DESTINATION "${BRLCAD_MODULE_INSTALL_DIR}"
+)
 
 # Make sure we have the target dir
 file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")

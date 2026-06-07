@@ -381,6 +381,8 @@ if (LIBGED_STATIC_CORE)
   if (TARGET libged-static)
     target_link_libraries(libged-static PRIVATE libged_plugin_deps)
   endif()
+
+
   # On Windows, prevent the linker from stripping "unused" static command
   # registration symbols
   if(HAVE_WINDOWS_H)
@@ -672,6 +674,42 @@ execute_process(COMMAND ${GED_CMD_SCANNER} --input-list ${ged_plugins_static_src
 file(REMOVE ${ged_plugins_static_srcs})
 
 message("Generating plugin wrapper files... done.")
+
+
+if(LIBGED_STATIC_CORE)
+  # Static libged exposes libged_plugin_deps through its exported link closure.
+  # Keep the helper target exportable, but avoid leaking build-tree include dirs
+  # into installed package metadata.  Do this after plugin subdirectories have
+  # finished accumulating their requirements.
+  set_target_properties(libged_plugin_deps PROPERTIES EXPORT_NAME ged_plugin_deps)
+  get_target_property(_ged_plugin_iface_dirs libged_plugin_deps INTERFACE_INCLUDE_DIRECTORIES)
+  if(_ged_plugin_iface_dirs)
+    set_property(TARGET libged_plugin_deps PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+    foreach(_dir ${_ged_plugin_iface_dirs})
+      if(NOT _dir MATCHES "^\$<")
+        set_property(TARGET libged_plugin_deps APPEND PROPERTY
+          INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${_dir}>")
+      else()
+        set_property(TARGET libged_plugin_deps APPEND PROPERTY
+          INTERFACE_INCLUDE_DIRECTORIES "${_dir}")
+      endif()
+    endforeach()
+  endif()
+  get_target_property(_ged_plugin_sys_dirs libged_plugin_deps INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+  if(_ged_plugin_sys_dirs)
+    set_property(TARGET libged_plugin_deps PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+    foreach(_sdir ${_ged_plugin_sys_dirs})
+      if(NOT _sdir MATCHES "^\$<")
+        set_property(TARGET libged_plugin_deps APPEND PROPERTY
+          INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${_sdir}>")
+      else()
+        set_property(TARGET libged_plugin_deps APPEND PROPERTY
+          INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_sdir}")
+      endif()
+    endforeach()
+  endif()
+  install(TARGETS libged_plugin_deps EXPORT BRLCADStaticTargets)
+endif()
 
 set(
   ged_ignore_files
