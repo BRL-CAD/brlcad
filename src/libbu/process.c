@@ -552,7 +552,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     if (out_eql_err) opts |= BU_PROCESS_OUT_EQ_ERR;
     if (hide_window) opts |= BU_PROCESS_HIDE_WINDOW;
 
-    bu_process_create(p, av, (bu_process_create_opts)opts);
+    bu_process_create(p, av, (bu_process_opts)opts);
 }
 
 

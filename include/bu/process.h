@@ -47,10 +47,10 @@ typedef enum {
 } bu_process_io_t;
 
 typedef enum {
-    BU_PROCESS_DEFAULT = 0x0,	    // default creation: equiv to (bu_process_create_opts)0
+    BU_PROCESS_DEFAULT = 0x0,	    // default process options: equiv to (bu_process_opts)0
     BU_PROCESS_OUT_EQ_ERR = 0x1,    // stdout reads from stderr instead
     BU_PROCESS_HIDE_WINDOW = 0x2,   // (Windows only)hide creation window if process would normally spawn one
-} bu_process_create_opts;
+} bu_process_opts;
 
 #ifndef ERROR_PROCESS_ABORTED
 // have a consistent 'aborted' return code on cross-platforms
@@ -101,7 +101,7 @@ DEPRECATED BU_EXPORT extern void bu_process_exec(struct bu_process **info, const
  *
  * @param[out] pinfo - bu_process struct to be created
  * @param[in] argv - array of command line arguments to executed. Last element MUST be NULL
- * @param[in] process_creation_opts - bit field for bu_process_create_opts
+ * @param[in] process_creation_opts - bit field for bu_process_opts
  *
  * @note
  * does not guarantee child process started successfully. use bu_process_wait() to check exit status
