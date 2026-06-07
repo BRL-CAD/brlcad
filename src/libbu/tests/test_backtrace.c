@@ -1,7 +1,7 @@
-/*                T E S T _ B A C K T R A C E . C
+/*                 T E S T _ B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2026 United States Government as represented by
+ * Copyright (c) 2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,247 +35,176 @@
 
 #include "common.h"
 
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "test_api.h"
+
+
+#if defined(__clang__) || defined(__GNUC__)
+#  define TEST_BACKTRACE_NOINLINE __attribute__((noinline))
+#else
+#  define TEST_BACKTRACE_NOINLINE
 #endif
 
-#include "bu.h"
 
-// TODO - not portable to linux yet
-#if 0
-#undef HAVE_FMEMOPEN
-#define HAVE_FUNOPEN 1
+static volatile int test_backtrace_guard = 0;
 
 
-#if !defined(HAVE_FMEMOPEN) && defined(HAVE_FUNOPEN)
-
-struct memory {
-    size_t size;
-    size_t used;
-    uint8_t *data;
-};
-
-
-static int
-reader(void *buf, char *data, int size)
+static size_t
+backtrace_nonempty_line_cnt(const char *text)
 {
-    struct memory *mem = (struct memory *)buf;
-    bu_log("reader\n");
+    const char *line = text;
+    size_t count = 0;
 
-    while (mem->size - mem->used < (size_t)size) {
-	bu_log("reallocating to %zu\n", mem->size * mem->size);
-	mem->data = (uint8_t *)bu_realloc(mem->data, mem->size * 2, "fmemopen");
-	memset(mem->data + mem->size, 0, mem->size);
-	mem->size *= 2;
-    }
-    memcpy(data, mem->data + mem->used, size);
-    mem->used += size;
+    while (line && *line) {
+	const char *end = strchr(line, '\n');
+	const char *scan = line;
 
-    return size;
-}
+	if (!end) {
+	    end = line + strlen(line);
+	}
 
-
-static int
-writer(void *buf, const char *data, int size)
-{
-    struct memory *mem = (struct memory *)buf;
-    bu_log("writer\n");
-
-    while (mem->size - mem->used < (size_t)size) {
-	bu_log("reallocating to %zu\n", mem->size * mem->size);
-	mem->data = (uint8_t *)bu_realloc(mem->data, mem->size * 2, "realloc");
-	memset(mem->data + mem->size, 0, mem->size);
-	mem->size *= 2;
-    }
-    memcpy(mem->data + mem->used, data, size);
-    mem->used += size;
-
-    return size;
-}
-
-
-static fpos_t
-seeker(void *buf, fpos_t offset, int whence)
-{
-    size_t pos = 0;
-    struct memory *mem = (struct memory *)buf;
-    bu_log("seeking to %zd\n", (ssize_t)offset);
-
-    switch (whence) {
-	case SEEK_SET: {
-	    if (offset > 0) {
-		pos = (size_t)offset;
+	while (scan < end) {
+	    if (*scan != ' ' && *scan != '\t' && *scan != '\r') {
+		count++;
+		break;
 	    }
+	    scan++;
+	}
+
+	if (*end == '\0') {
 	    break;
 	}
-	case SEEK_CUR:
-	case SEEK_END: {
-	    if (offset > 0) {
-		pos = mem->used + (size_t)offset;
-	    } else if (offset < 0) {
-		pos = mem->used - (ssize_t)offset;
-	    }
-	    break;
-	}
-	default:
-	    return -1;
+
+	line = end + 1;
     }
 
-    if (pos > mem->size) {
-	return -1;
-    }
-
-    mem->used = pos;
-    return (fpos_t)pos;
+    return count;
 }
 
 
 static int
-closer(void *buf)
+backtrace_has_any_marker(const char *text, const char * const *markers, size_t marker_cnt)
 {
-    bu_free(buf, "fmemopen");
+    size_t i;
+
+    for (i = 0; i < marker_cnt; i++) {
+	if (test_api_text_contains(text, markers[i])) {
+	    return 1;
+	}
+    }
+
     return 0;
 }
 
 
-FILE *
-fmemopen(void *data, size_t size, const char *UNUSED(mode))
-{
-    struct memory* mem = (struct memory *)bu_malloc(sizeof(struct memory), "fmemopen");
-
-#  ifndef HAVE_DECL_FUNOPEN
-    extern FILE *funopen(const void *cookie,
-			 int (*reader)(void *, char *, int),
-			 int (*writer)(void *, const char *, int),
-			 fpos_t (*seeker)(void *, fpos_t, int),
-			 int (*closer)(void *));
-#  endif
-
-    mem->size = size;
-    mem->used = 0;
-    mem->data = (uint8_t *)data;
-
-    return funopen(mem, reader, writer, seeker, closer);
-}
-#  define HAVE_DECL_FMEMOPEN 1
-#endif
-
-#if defined(HAVE_FMEMOPEN) && !defined(HAVE_DECL_FMEMOPEN)
-extern FILE *fmemopen(void *, size_t, const char *);
-#endif
-
-
-/* should be at least a few lines with some words */
-#define BACKTRACE_MINIMUM 64
-
-
 static int
-go_deeper(int depth, FILE *fp)
+backtrace_read_file(FILE *fp, struct bu_vls *out)
 {
-    if (depth > 1)
-	return go_deeper(--depth, fp);
+    char buffer[512] = {0};
+    size_t got = 0;
 
+    if (!fp || !out) {
+	return 0;
+    }
+
+    rewind(fp);
+    while ((got = fread(buffer, 1, sizeof(buffer), fp)) > 0) {
+	bu_vls_strncat(out, buffer, got);
+    }
+
+    return ferror(fp) ? 0 : 1;
+}
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+static TEST_BACKTRACE_NOINLINE int
+test_backtrace_direct_leaf(FILE *fp)
+{
     return bu_backtrace(fp);
 }
 
 
-static int
-go_deep(int depth, FILE *fp)
+static TEST_BACKTRACE_NOINLINE int
+test_backtrace_direct_middle(FILE *fp)
 {
-    return go_deeper(depth, fp);
+    int (* volatile next)(FILE *) = test_backtrace_direct_leaf;
+    int ret = next(fp);
+    test_backtrace_guard += ret;
+    return ret;
 }
 
 
+static TEST_BACKTRACE_NOINLINE int
+test_backtrace_direct_entry(FILE *fp)
+{
+    int (* volatile next)(FILE *) = test_backtrace_direct_middle;
+    int ret = next(fp);
+    test_backtrace_guard += ret;
+    return ret;
+}
+#ifdef __cplusplus
+}
 #endif
+
+
+static int
+test_backtrace_capture_direct(void)
+{
+    int errors = 0;
+    FILE *fp = NULL;
+    struct bu_vls trace = BU_VLS_INIT_ZERO;
+    const char * const markers[] = {
+	"test_backtrace_direct_leaf",
+	"test_backtrace_direct_middle",
+	"test_backtrace_direct_entry"
+    };
+    int ret = 0;
+
+    fp = bu_temp_file(NULL, 0);
+    TEST_API_CHECK(fp != NULL, "bu_temp_file returned NULL");
+    if (!fp) {
+	return 1;
+    }
+
+    ret = test_backtrace_direct_entry(fp);
+    TEST_API_CHECK(ret == 1, "bu_backtrace should report success, got %d", ret);
+    fflush(fp);
+
+    TEST_API_CHECK(backtrace_read_file(fp, &trace), "unable to read captured backtrace output");
+    TEST_API_CHECK(bu_vls_strlen(&trace) > 0, "bu_backtrace produced no output");
+    TEST_API_CHECK(backtrace_nonempty_line_cnt(bu_vls_addr(&trace)) >= 3,
+		   "expected multiple stack frames, got output: %s", bu_vls_addr(&trace));
+    TEST_API_CHECK(backtrace_has_any_marker(bu_vls_addr(&trace), markers, ARRAY_LEN(markers)),
+		   "backtrace output did not include the active test call chain: %s",
+		   bu_vls_addr(&trace));
+
+    fclose(fp);
+    bu_vls_free(&trace);
+
+    return errors;
+}
+
 
 int
-main(int UNUSED(argc), char **UNUSED(argv))
+main(int argc, char *argv[])
 {
-    /* FIXME: need to ensure bu_backtrace() is returning something,
-     * however minimally, without triggering an error.
-     */
+    int errors = 0;
 
-#if 0
-
-    char *buffer = NULL;
-    const char *output = NULL;
-    FILE *fp = NULL;
-    int result;
-    size_t size = 0;
-
-    // Normally this file is part of bu_test, so only set this if it
-    // looks like the program name is still unset.
-    if (bu_getprogname()[0] == '\0')
-	bu_setprogname(av[0]);
-
-    if (argc > 2) {
-	fprintf(stderr, "Usage: %s [file]\n", argv[0]);
-	return 1;
+    if (bu_getprogname()[0] == '\0') {
+	bu_setprogname(argv[0]);
     }
 
-    if (argc > 1)
-	output = argv[1];
-    bu_file_delete(output);
-    if (bu_file_exists(output, NULL))
-	bu_exit(1, "ERROR: backtrace output [%s] already exists and couldn't be deleted\n", output);
-    if (!output) {
-	bu_log("Using a memory buffer\n");
-	buffer = (char *)bu_calloc(MAXPATHLEN, MAXPATHLEN, "memory buffer");
-	fp = fmemopen(buffer, MAXPATHLEN * MAXPATHLEN, "w");
-	output = "IN_MEMORY_BUFFER";
-	fprintf(fp, "this is a test\n");
-    } else {
-	fp = fopen(output, "w");
+    if (argc != 1) {
+	bu_exit(1, "Usage: %s\n", argv[0]);
     }
 
-    if (!fp)
-	bu_exit(2, "ERROR: Unable to open backtrace output [%s]\n", output);
+    errors += test_backtrace_capture_direct();
 
-    bu_debug |= BU_DEBUG_BACKTRACE;
-
-    result = go_deep(3, fp);
-    fclose(fp);
-
-    /* display the backtrace */
-    printf("BEGIN Backtrace {\n");
-    if (buffer) {
-	printf("%s\n", buffer);
-	size = strlen(buffer);
-    } else {
-	char fgetsbuf[MAXPATHLEN] = {0};
-	fp = fopen(output, "r");
-	while(bu_fgets(fgetsbuf, MAXPATHLEN, fp)) {
-	    printf("%s", fgetsbuf);
-	    size += strlen(fgetsbuf);
-	}
-	fclose(fp);
-    }
-    printf("} END Backtrace\n");
-
-    /* check the backtrace */
-    if (result != 1) {
-	printf("bu_backtrace: [FAILED] returned error [%d]\n", result);
-	return 1;
-    }
-    if (!buffer) {
-	if (!bu_file_exists(output, NULL)) {
-	    printf("bu_backtrace: [FAILED] expecting file\n");
-	    return 2;
-	}
-    }
-
-    if (size < (size_t)BACKTRACE_MINIMUM) {
-	printf("bu_backtrace: [FAILED] short trace (%zu < %zu bytes)\n", size, (size_t)BACKTRACE_MINIMUM);
-	return 4;
-    }
-    /* TODO: check trace for main+go_deep+go_deeper */
-
-    bu_free(buffer, "memory buffer");
-    printf("bu_backtrace: [PASSED]\n");
-
-    return 0;
-#endif
-    return -1;
+    return errors ? 1 : 0;
 }
 
 

@@ -71,7 +71,7 @@ payload_matches(FILE *fp, const char *payload)
 
 
 int
-main(int argc, const char **argv)
+main(int argc, char **argv)
 {
     int failures = 0;
     FILE *fp = NULL;

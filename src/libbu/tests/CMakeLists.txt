@@ -7,6 +7,7 @@ set(
   test_avs.c
   test_b64.c
   test_backtrace.c
+  test_bomb.c
   test_badmagic.c
   test_basename.c
   test_bitv.c
@@ -21,6 +22,7 @@ set(
   test_endian.c
   test_env.c
   test_escape.c
+  test_fchmod.cpp
   test_file.c
   test_file_mime.c
   test_heap.c
@@ -92,7 +94,8 @@ validate_style("${bu_test_srcs}" bu_test)
 brlcad_addexec(bu_sscanf test_sscanf.c libbu TEST)
 brlcad_addexec(bu_gethostname test_gethostname.c libbu TEST)
 brlcad_add_test(NAME bu_argv COMMAND bu_test test_argv)
-brlcad_add_test(NAME bu_backtrace COMMAND bu_test test_backtrace "$<TARGET_FILE:bu_test>")
+brlcad_add_test(NAME bu_backtrace COMMAND bu_test test_backtrace)
+brlcad_add_test(NAME bu_bomb COMMAND bu_test test_bomb "$<TARGET_FILE:bu_test>")
 brlcad_add_test(NAME bu_dir COMMAND bu_test test_dir)
 brlcad_add_test(NAME bu_list_empty COMMAND bu_test test_list 0)
 brlcad_add_test(NAME bu_list_single COMMAND bu_test test_list 1)
@@ -808,11 +811,6 @@ if(TARGET bu_mappedfile_parallel_16384)
   set_tests_properties(bu_mappedfile_parallel_16384 PROPERTIES TIMEOUT 3000)
 endif()
 
-if(BUILD_TESTING)
-  brlcad_addexec(perm_test test_perm.cpp libbu TEST)
-  set_target_properties(perm_test PROPERTIES FOLDER "BRL-CAD Executables/Test Programs")
-  brlcad_add_test(NAME bu_fchmod COMMAND perm_test)
-endif(BUILD_TESTING)
 
 #
 #  *********** test_realpath.c tests ************
@@ -854,7 +852,6 @@ cmakefiles(
   path_match.in
   tests_bitv.cmake
   tests_vls.cmake
-  test_perm.cpp
   test_semchk.cpp
 )
 
