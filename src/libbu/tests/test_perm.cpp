@@ -7,103 +7,138 @@
  */
 
 #include "common.h"
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <system_error>
 
+#include <cstring>
+#include <iostream>
+
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/file.h"
 
-void pprint(char lbl, std::filesystem::perms filep, std::filesystem::perms p)
+
+static bool
+write_payload(FILE *fp, const char *payload)
 {
-    std::cout << (std::filesystem::perms::none == (filep & p) ? '-' : lbl);
+    size_t payload_len = 0;
+
+    if (!fp || !payload) {
+	return false;
+    }
+
+    payload_len = std::strlen(payload);
+
+    clearerr(fp);
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+	return false;
+    }
+    if (fwrite(payload, 1, payload_len, fp) != payload_len) {
+	return false;
+    }
+    if (fflush(fp) != 0) {
+	return false;
+    }
+
+    return !ferror(fp);
 }
 
-void pout(std::filesystem::perms p)
+
+static bool
+payload_matches(FILE *fp, const char *payload)
 {
-    pprint('r', p, std::filesystem::perms::owner_read);
-    pprint('w', p, std::filesystem::perms::owner_write);
-    pprint('x', p, std::filesystem::perms::owner_exec);
-    pprint('r', p, std::filesystem::perms::group_read);
-    pprint('w', p, std::filesystem::perms::group_write);
-    pprint('x', p, std::filesystem::perms::group_exec);
-    pprint('r', p, std::filesystem::perms::others_read);
-    pprint('w', p, std::filesystem::perms::others_write);
-    pprint('x', p, std::filesystem::perms::others_exec);
+    char buffer[64] = {0};
+    size_t payload_len = 0;
+
+    if (!fp || !payload) {
+	return false;
+    }
+
+    payload_len = std::strlen(payload);
+    if (payload_len >= sizeof(buffer)) {
+	return false;
+    }
+
+    clearerr(fp);
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+	return false;
+    }
+    if (fread(buffer, 1, payload_len, fp) != payload_len) {
+	return false;
+    }
+
+    return !std::memcmp(buffer, payload, payload_len);
 }
+
 
 int
 main(int argc, const char **argv)
 {
-    std::error_code ec;
-    std::error_condition ok;
-    const char *f = "p.txt";
-    int perms = 0;
-    if (argc > 1)
-	perms = std::stoi(std::string(argv[1]), 0, 8);
-    std::filesystem::perms perms_mask = std::filesystem::perms::none;
-    std::filesystem::perms out_perms;
-    perms_mask = perms_mask | std::filesystem::perms::owner_all | std::filesystem::perms::group_all;
-    if (perms)
-	perms_mask = static_cast<std::filesystem::perms>(perms);
+    int failures = 0;
+    FILE *fp = NULL;
+    int fd = -1;
+    char filepath[MAXPATHLEN] = {0};
+    const char *payload = "bu_fchmod validation";
+    static const unsigned long modes[] = {0600, 0640, 0660};
 
-    std::ofstream fs(f); // create file
-    fs.close();
-
-    std::filesystem::perms initial_perms = std::filesystem::status(f).permissions();
-    std::cout << "Initial(" << std::oct << static_cast<int>(initial_perms) << "): ";
-    pout(initial_perms);
-    std::cout << "\n";
-
-    std::cout << "\tAdding ";
-    pout(perms_mask);
-    std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
-
-    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::add, ec);
-    if (ec != ok) {
-	std::cout << "Error setting permissions.  " <<  ec.category().name() << ", " << ec.message() << "\n";
-	return -1;
+    if (bu_getprogname()[0] == '\0') {
+	bu_setprogname(argv[0]);
     }
 
-    out_perms = std::filesystem::status(f).permissions();
-    std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
-    pout(out_perms);
-    std::cout << "\n";
-
-    std::cout << "\tRemoving ";
-    pout(perms_mask);
-    std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
-
-    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::remove, ec);
-    if (ec != ok) {
-	std::cout << "Error setting permissions.  " <<  ec.category().name() << ", " << ec.message() << "\n";
-	return -1;
+    if (argc != 1) {
+	std::cerr << "Usage: " << argv[0] << "\n";
+	return 1;
     }
 
-    out_perms = std::filesystem::status(f).permissions();
-    std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
-    pout(out_perms);
-    std::cout << "\n";
-
-    std::cout << "\tAll ";
-    perms_mask = std::filesystem::perms::all;
-    pout(perms_mask);
-    std::cout << " (" << std::oct << static_cast<int>(perms_mask) << ")\n";
-
-    std::filesystem::permissions(f, perms_mask, std::filesystem::perm_options::add, ec);
-    if (ec != ok) {
-	std::cout << "Error setting permissions.  " <<  ec.category().name() << ", " << ec.message() << "\n";
-	return -1;
+    fp = bu_temp_file(filepath, MAXPATHLEN);
+    if (!fp) {
+	std::cerr << "Unable to create a temporary file for bu_fchmod testing\n";
+	return 1;
     }
 
-    out_perms = std::filesystem::status(f).permissions();
-    std::cout << " Status(" << std::oct << static_cast<int>(out_perms) << "): ";
-    pout(out_perms);
-    std::cout << "\n";
+    fd = fileno(fp);
+    if (fd < 0) {
+	std::cerr << "Unable to obtain a file descriptor for bu_fchmod testing\n";
+	fclose(fp);
+	return 1;
+    }
 
-    bu_file_delete(f);
-    return 0;
+    if (bu_fchmod(-1, 0600) == 0) {
+	std::cerr << "bu_fchmod should fail for an invalid file descriptor\n";
+	failures++;
+    }
+
+    if (!write_payload(fp, payload) || !payload_matches(fp, payload)) {
+	std::cerr << "Unable to establish a readable/writable temp file baseline for bu_fchmod testing\n";
+	failures++;
+    }
+
+    for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+	if (bu_fchmod(fileno(fp), modes[i]) != 0) {
+	    std::cerr << "bu_fchmod failed for mode 0" << std::oct << modes[i] << std::dec << "\n";
+	    failures++;
+	    continue;
+	}
+
+	if (!bu_file_exists(filepath, NULL)) {
+	    std::cerr << "Temp file disappeared after bu_fchmod for mode 0" << std::oct << modes[i] << std::dec << "\n";
+	    failures++;
+	    continue;
+	}
+	if (!payload_matches(fp, payload)) {
+	    std::cerr << "Temp file contents were not preserved after bu_fchmod for mode 0"
+		      << std::oct << modes[i] << std::dec << "\n";
+	    failures++;
+	}
+    }
+
+    fclose(fp);
+    if (bu_fchmod(fd, 0600) == 0) {
+	std::cerr << "bu_fchmod should fail for a closed file descriptor\n";
+	failures++;
+    }
+    bu_file_delete(filepath);
+
+    return failures ? 1 : 0;
 }
 
 
