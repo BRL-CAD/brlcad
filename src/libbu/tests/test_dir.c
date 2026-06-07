@@ -134,8 +134,10 @@ main(int argc, char *argv[])
     int ret;
     int failures = 0;
     const char *cpath;
-    const char *initp;
-    const char *currp;
+    char initp[MAXPATHLEN] = {0};
+    char currp[MAXPATHLEN] = {0};
+    char workp[MAXPATHLEN] = {0};
+    char lpath[MAXPATHLEN] = {0};
     char path[MAXPATHLEN] = {0};
 
     // Normally this file is part of bu_test, so only set this if it
@@ -169,7 +171,7 @@ main(int argc, char *argv[])
     /* basic test, get the current directory */
 #ifdef HAVE_GETCWD
     memset(path, 0, MAXPATHLEN);
-    currp = bu_dir(NULL, 0, BU_DIR_CURR, NULL);
+    bu_dir(currp, MAXPATHLEN, BU_DIR_CURR, NULL);
     cpath = getcwd(path, MAXPATHLEN);
     if (cpath == NULL) {
 	perror("ERROR, getcwd");
@@ -181,14 +183,22 @@ main(int argc, char *argv[])
 
     /* each directory lookup should return something */
     for (type = BU_DIR_CURR; type != BU_DIR_END; type = (bu_dir_t)(type + 1)) {
+	int ok = 0;
+
 	memset(path, 0, MAXPATHLEN);
 
 	if (type == BU_DIR_EXT || type == BU_DIR_LIBEXT)
 	    continue;
 
 	bu_dir(path, MAXPATHLEN, type, NULL);
-	PRINT(type, path, !=, "");
-	check(!BU_STR_EMPTY(path), &failures);
+	if (type == BU_DIR_BIN) {
+	    ok = BU_STR_EMPTY(path) || bu_file_directory(path) || bu_file_exists(path, NULL);
+	    PRINT(type, path, resolves or is empty in an uninstalled tree, "");
+	} else {
+	    ok = !BU_STR_EMPTY(path);
+	    PRINT(type, path, !=, "");
+	}
+	check(ok, &failures);
     }
 
     /* test absolute composition */
@@ -222,7 +232,7 @@ main(int argc, char *argv[])
     }
 
     /* current dir <> init dir */
-    initp = bu_dir(NULL, 0, BU_DIR_INIT, NULL);
+    bu_dir(initp, MAXPATHLEN, BU_DIR_INIT, NULL);
     PRINT(BU_DIR_INIT, currp, !empty && ==, initp);
     check(!BU_STR_EMPTY(currp) && BU_STR_EQUAL(currp, initp), &failures);
     cpath = bu_dir(NULL, 0, currp, "..", NULL);
@@ -231,15 +241,15 @@ main(int argc, char *argv[])
 	perror("ERROR, chdir");
 	failures++;
     }
-    currp = bu_dir(NULL, 0, BU_DIR_CURR, NULL);
-    PRINT(BU_DIR_CURR, currp, !empty && !=, initp);
-    check(!BU_STR_EMPTY(currp) && !BU_STR_EQUAL(currp, initp), &failures);
+    bu_dir(workp, MAXPATHLEN, BU_DIR_CURR, NULL);
+    PRINT(BU_DIR_CURR, workp, !empty && !=, initp);
+    check(!BU_STR_EMPTY(workp) && !BU_STR_EQUAL(workp, initp), &failures);
     ret = chdir(initp);
     if (ret != 0) {
 	perror("ERROR, chdir");
 	failures++;
     }
-    currp = bu_dir(NULL, 0, BU_DIR_CURR, NULL);
+    bu_dir(currp, MAXPATHLEN, BU_DIR_CURR, NULL);
     PRINT(BU_DIR_CURR, currp, !empty && ==, initp);
     check(!BU_STR_EMPTY(currp) && BU_STR_EQUAL(currp, initp), &failures);
 
@@ -250,17 +260,19 @@ main(int argc, char *argv[])
     cpath = bu_dir(NULL, 0, BU_DIR_LIB, NULL);
     {
 	const char *extensions[4] = {".so", ".dylib", ".dll", NULL};
+	char libdir[MAXPATHLEN] = {0};
+
+	bu_strlcpy(libdir, cpath, MAXPATHLEN);
 	for (i = 0; i < sizeof(extensions) / sizeof(extensions[0]); i++) {
-	    snprintf(path, MAXPATHLEN, "%s/libbu%s", cpath, extensions[i]);
+	    snprintf(path, MAXPATHLEN, "%s/libbu%s", libdir, extensions[i]);
 	    if (bu_file_exists(path, NULL)) {
-		char lpath[MAXPATHLEN] = {0};
 		bu_dir(lpath, MAXPATHLEN, BU_DIR_LIB, "libbu", BU_DIR_LIBEXT, NULL);
 		PRINT(BU_DIR_LIBEXT, path, ==, lpath);
 		check(BU_STR_EQUAL(path, lpath), &failures);
 
 		memset(lpath, 0, MAXPATHLEN);
+		bu_dir(lpath, MAXPATHLEN, libdir, "libbu", BU_DIR_LIBEXT, NULL);
 		PRINT(BU_DIR_LIBEXT, path, ==, lpath);
-		bu_dir(lpath, MAXPATHLEN, cpath, "libbu", BU_DIR_LIBEXT, NULL);
 		check(BU_STR_EQUAL(path, lpath), &failures);
 	    }
 	}
@@ -332,16 +344,16 @@ main(int argc, char *argv[])
     /* input edge cases */
     cpath = bu_dir(NULL, 0, NULL);
     PRINT(BU_DIR_END, cpath, ==, "");
-    check((cpath == NULL), &failures);
+    check(cpath != NULL && BU_STR_EMPTY(cpath), &failures);
 
     cpath = bu_dir(NULL, MAXPATHLEN, NULL);
     PRINT(BU_DIR_END, cpath, ==, "");
-    check((cpath == NULL), &failures);
+    check(cpath != NULL && BU_STR_EMPTY(cpath), &failures);
 
     memset(path, 0, MAXPATHLEN);
     cpath = bu_dir(path, 0, NULL);
     PRINT(BU_DIR_END, cpath, ==, "");
-    check((cpath == NULL), &failures);
+    check(cpath != NULL && BU_STR_EMPTY(cpath), &failures);
 
     memset(path, 0, MAXPATHLEN);
     cpath = bu_dir(path, 1, ".", NULL);
@@ -363,8 +375,7 @@ main(int argc, char *argv[])
     PRINT(BU_DIR_END, cpath, !=, "");
     check(!BU_STR_EMPTY(cpath), &failures);
 
-    return 0;
-    /* return failures; */
+    return failures;
 }
 
 
