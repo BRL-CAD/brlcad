@@ -263,7 +263,6 @@ run_convergence_case(struct db_i *dbip,
 		     const char *label,
 		     double sa_exact,
 		     double v_exact,
-		     size_t min_samples,
 		     const double *targets,
 		     size_t ntargets,
 		     double *elapsed_total_sec)
@@ -291,8 +290,12 @@ run_convergence_case(struct db_i *dbip,
 	}
 	rt_prep_parallel(rtip, 1);
 
-	/* Use n_rays = min_samples; target_pct is informational only now */
-	struct rt_crofton_params p = { min_samples, 0.0, 0.0 };
+	/* Convergence-based stopping with a per-target wall-clock budget. */
+	struct rt_crofton_params p = { 0u, 0.05, 1000.0 };
+	if (target_pct <= 7.0)
+	    p.time_ms = 1500.0;
+	if (target_pct <= 5.0)
+	    p.time_ms = 2000.0;
 	int64_t t0 = bu_gettime();
 	cr = rt_crofton_shoot(rtip, &p, &sa, &vol);
 	run_sec = (double)(bu_gettime() - t0) / 1000000.0;
@@ -342,13 +345,13 @@ test_crofton_convergence_timing(void)
 	dbip, "cvg_sphere.s", "sphere r=25",
 	4.0 * M_PI * 25.0 * 25.0,
 	(4.0 / 3.0) * M_PI * 25.0 * 25.0 * 25.0,
-	3000, targets, 3, &elapsed_total);
+	targets, 3, &elapsed_total);
 
     failures += run_convergence_case(
 	dbip, "cvg_rcc.s", "rcc r=10 h=40",
 	2.0 * M_PI * 10.0 * (10.0 + 40.0),
 	M_PI * 10.0 * 10.0 * 40.0,
-	3000, targets, 3, &elapsed_total);
+	targets, 3, &elapsed_total);
 
     printf("  total convergence runtime: %.3fs\n", elapsed_total);
     if (elapsed_total > target_total) {

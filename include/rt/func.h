@@ -199,7 +199,8 @@ RT_EXPORT extern int rt_obj_prep_serialize(struct soltab *stp, const struct rt_d
  *                     iterations: r_sa = sqrt(SA / (4*pi)) for surface area
  *                     and r_v = cbrt(3*V / (4*pi)) for volume.  Sampling
  *                     stops when both |Δr_sa| and |Δr_v| (for whichever
- *                     outputs are requested) are < stability_mm.
+ *                     outputs are requested) remain < stability_mm for
+ *                     consecutive stable windows.
  *
  *   time_ms > 0       Stop once this many wall-clock milliseconds have
  *                     elapsed, returning the best estimate accumulated so far.
