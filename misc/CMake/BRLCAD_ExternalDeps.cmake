@@ -564,6 +564,135 @@ function(brlcad_bext_process)
   # Find the tool we use to scrub EXT paths from files
   find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR} REQUIRED)
 
+  set(BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT "${CMAKE_BINARY_DIR}/CMakeFiles/BRLCADInstallPostprocess.cmake")
+  set(BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/install-postprocess")
+  file(MAKE_DIRECTORY "${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}")
+  file(WRITE "${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}" [=[
+function(_brlcad_postprocess_stamp_path outvar stamp_dir source file signature)
+  file(MAKE_DIRECTORY "${stamp_dir}")
+  string(SHA256 _brlcad_stamp_key "${source}|${file}|${signature}")
+  set(${outvar} "${stamp_dir}/${_brlcad_stamp_key}.sha256" PARENT_SCOPE)
+endfunction()
+
+function(_brlcad_postprocess_needed outvar stamp_dir source file signature)
+  if(NOT EXISTS "${source}")
+    set(${outvar} FALSE PARENT_SCOPE)
+    return()
+  endif()
+
+  file(SHA256 "${source}" _brlcad_source_hash)
+  _brlcad_postprocess_stamp_path(_brlcad_stamp_file "${stamp_dir}" "${source}" "${file}" "${signature}")
+  if(EXISTS "${file}" AND EXISTS "${_brlcad_stamp_file}")
+    file(SHA256 "${file}" _brlcad_current_hash)
+    file(READ "${_brlcad_stamp_file}" _brlcad_stamp_contents)
+    string(REGEX MATCH "^([0-9a-fA-F]+)\n([0-9a-fA-F]+)" _brlcad_stamp_match "${_brlcad_stamp_contents}")
+    if(_brlcad_stamp_match)
+      set(_brlcad_stamped_source_hash "${CMAKE_MATCH_1}")
+      set(_brlcad_stamped_clean_hash "${CMAKE_MATCH_2}")
+      if("${_brlcad_source_hash}" STREQUAL "${_brlcad_stamped_source_hash}" AND "${_brlcad_current_hash}" STREQUAL "${_brlcad_stamped_clean_hash}")
+        set(${outvar} FALSE PARENT_SCOPE)
+        return()
+      endif()
+    endif()
+  endif()
+
+  set(${outvar} TRUE PARENT_SCOPE)
+endfunction()
+
+function(_brlcad_postprocess_finish stamp_dir source file signature)
+  if(NOT EXISTS "${source}" OR NOT EXISTS "${file}")
+    return()
+  endif()
+
+  file(SHA256 "${source}" _brlcad_source_hash)
+  file(SHA256 "${file}" _brlcad_clean_hash)
+  _brlcad_postprocess_stamp_path(_brlcad_stamp_file "${stamp_dir}" "${source}" "${file}" "${signature}")
+  file(WRITE "${_brlcad_stamp_file}" "${_brlcad_source_hash}\n${_brlcad_clean_hash}\n")
+endfunction()
+
+function(_brlcad_install_copy source file install_type)
+  get_filename_component(_brlcad_dest_dir "${file}" DIRECTORY)
+  file(MAKE_DIRECTORY "${_brlcad_dest_dir}")
+  file(INSTALL DESTINATION "${_brlcad_dest_dir}" TYPE ${install_type} FILES "${source}")
+endfunction()
+
+function(brlcad_install_strclear_replace stamp_dir strclear source file install_type from_path to_path)
+  set(_brlcad_signature "strclear-replace|${strclear}|${install_type}|${from_path}|${to_path}")
+  _brlcad_postprocess_needed(_brlcad_needed "${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
+  if(NOT _brlcad_needed)
+    return()
+  endif()
+
+  _brlcad_install_copy("${source}" "${file}" "${install_type}")
+  execute_process(
+    COMMAND "${strclear}" -v -r "${file}" "${from_path}" "${to_path}"
+    RESULT_VARIABLE _brlcad_result
+  )
+  if(_brlcad_result EQUAL 0)
+    _brlcad_postprocess_finish("${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
+  else()
+    message(WARNING "Post-install path replacement failed for ${file}")
+  endif()
+endfunction()
+
+function(brlcad_install_binary_postprocess stamp_dir strclear source file install_type mode rpath_tool install_rpath build_lib_path rel_rpath)
+  set(_brlcad_signature "binary-postprocess|${install_type}|${mode}|${rpath_tool}|${install_rpath}|${build_lib_path}|${rel_rpath}|${strclear}")
+  _brlcad_postprocess_needed(_brlcad_needed "${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
+  if(NOT _brlcad_needed)
+    return()
+  endif()
+
+  _brlcad_install_copy("${source}" "${file}" "${install_type}")
+  set(_brlcad_result 0)
+  if("${mode}" STREQUAL "RPATH_TOOL")
+    execute_process(
+      COMMAND "${rpath_tool}" --set-rpath "${install_rpath}" "${file}"
+      RESULT_VARIABLE _brlcad_result
+    )
+  elseif("${mode}" STREQUAL "APPLE")
+    execute_process(
+      COMMAND install_name_tool -delete_rpath "${build_lib_path}" "${file}"
+      RESULT_VARIABLE _brlcad_result
+      OUTPUT_VARIABLE _brlcad_output
+      ERROR_VARIABLE _brlcad_error
+    )
+    if(_brlcad_result EQUAL 0)
+      execute_process(
+        COMMAND install_name_tool -add_rpath "${rel_rpath}" "${file}"
+        RESULT_VARIABLE _brlcad_result
+      )
+    endif()
+  endif()
+
+  if(NOT _brlcad_result EQUAL 0)
+    message(WARNING "Post-install RPATH update failed for ${file}")
+    return()
+  endif()
+
+  execute_process(
+    COMMAND "${strclear}" -v -b -c "${file}" "${build_lib_path}"
+    RESULT_VARIABLE _brlcad_result
+  )
+  if(NOT _brlcad_result EQUAL 0)
+    message(WARNING "Post-install binary path cleanup failed for ${file}")
+    return()
+  endif()
+
+  if("${mode}" STREQUAL "APPLE")
+    execute_process(
+      COMMAND codesign --force -s - "${file}"
+      RESULT_VARIABLE _brlcad_result
+    )
+    if(NOT _brlcad_result EQUAL 0)
+      message(WARNING "Post-install codesign failed for ${file}")
+      return()
+    endif()
+  endif()
+
+  _brlcad_postprocess_finish("${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
+endfunction()
+]=])
+
   # If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to
   # expand it so we can spot the path that would have been used in
   # ${BRLCAD_EXT_DIR}/install files
@@ -852,81 +981,48 @@ function(brlcad_bext_process)
       message("Error - unexpected toplevel ext file: ${tf} ")
       continue()
     endif(NOT dir)
-    # If we know it's a binary file, treat it accordingly
+
+    # If we know it's a binary file, install it through the guarded
+    # postprocess helper.  The helper owns the copy step because the
+    # postprocessed install result intentionally differs from the raw
+    # build-tree source.
     if("${tf}" IN_LIST ALL_BINARY_FILES)
-      install(PROGRAMS "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
+      set(REL_RPATH)
+      find_relative_rpath("${tf}" REL_RPATH)
+      set(_brlcad_install_postprocess_mode "STRCLEAR_ONLY")
+      set(_brlcad_install_postprocess_tool "")
+      set(_brlcad_install_postprocess_rpath "")
+      if(P_RPATH_EXECUTABLE)
+        set(_brlcad_install_postprocess_mode "RPATH_TOOL")
+        set(_brlcad_install_postprocess_tool "${P_RPATH_EXECUTABLE}")
+        set(_brlcad_install_postprocess_rpath "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}")
+      elseif(APPLE)
+        set(_brlcad_install_postprocess_mode "APPLE")
+      endif(P_RPATH_EXECUTABLE)
+      install(
+        CODE
+          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_binary_postprocess(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"PROGRAM\" \"${_brlcad_install_postprocess_mode}\" \"${_brlcad_install_postprocess_tool}\" \"${_brlcad_install_postprocess_rpath}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"${REL_RPATH}\")"
+      )
       continue()
     endif("${tf}" IN_LIST ALL_BINARY_FILES)
+
     # BIN_DIR may contain scripts that aren't explicitly binary files
     # - catch those based on path
     if(${dir} MATCHES "${BIN_DIR}$")
       install(PROGRAMS "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
     else(${dir} MATCHES "${BIN_DIR}$")
-      install(FILES "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
       is_cmake_file(${tf} CMAKE_FILE)
       if(CMAKE_FILE)
-	message("Adding install rule for CMake find_package file ${CMAKE_INSTALL_PREFIX}/${tf}")
-	install(
-	  CODE
-	  "execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -r \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${CMAKE_BINARY_DIR}\" \"${CMAKE_INSTALL_PREFIX}\")"
-	  )
+        message("Adding install rule for CMake find_package file ${CMAKE_INSTALL_PREFIX}/${tf}")
+        install(
+          CODE
+          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_strclear_replace(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"FILE\" \"${CMAKE_BINARY_DIR}\" \"\${CMAKE_INSTALL_PREFIX}\")"
+          )
+      else(CMAKE_FILE)
+        install(FILES "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
       endif(CMAKE_FILE)
     endif(${dir} MATCHES "${BIN_DIR}$")
   endforeach(tf ${TP_FILES})
-
-  # When installing, need to fix the RPATH on binary files again,
-  # similarly to what we did when staging in the build directory.
-  # Again we don't process symlinks since following them will just
-  # result in re-processing the same file's RPATH multiple times.
-  # This time, in contrast to the build directory setup, our goal is
-  # to define an RPATH that will allow the binary files to work when
-  # the install directory is relocated.
-  foreach(bf ${ALL_BINARY_FILES})
-    if(IS_SYMLINK ${bf})
-      continue()
-    endif(IS_SYMLINK ${bf})
-    # Finalize the rpaths
-    set(REL_RPATH)
-    find_relative_rpath("${bf}" REL_RPATH)
-    if(P_RPATH_EXECUTABLE)
-      install(
-        CODE
-          "execute_process(COMMAND ${P_RPATH_EXECUTABLE} --set-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")"
-      )
-    elseif(APPLE)
-      install(
-        CODE
-          "execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)"
-      )
-      install(
-        CODE
-          "execute_process(COMMAND install_name_tool -add_rpath \"${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")"
-      )
-    endif(P_RPATH_EXECUTABLE)
-    # Overwrite any stale paths in the binary files with null chars,
-    # to make sure they're not interfering with the behavior of the
-    # final executables.  This is a little fraught in that there's no
-    # guarantee these changes aren't going to break something, but
-    # given that reliance on invalid full paths was going to break
-    # something in any case eventually doing this will let us find out
-    # about it sooner.  If the path is just a stale, unused leftover
-    # this should have no impact on functionality, and otherwise this
-    # offers a way to avoid "accidental success" where the program is
-    # using a build dir file to successfully run when we don't want it
-    # to see them.
-    install(
-      CODE
-        "execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")"
-    )
-    if(APPLE)
-      # As with the configure time processing, use codesign at install
-      # time to appease OSX:
-      # https://developer.apple.com/documentation/security/updating_mac_software
-      # https://developer.apple.com/documentation/xcode/embedding-nonstandard-code-structures-in-a-bundle
-      # https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
-      install(CODE "execute_process(COMMAND codesign --force -s - \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
-    endif(APPLE)
-  endforeach(bf ${ALL_BINARY_FILES})
 
   # Because ${BRLCAD_EXT_DIR}/install is handled at configure time
   # (and indeed MUST be handled at configure time so find_package
