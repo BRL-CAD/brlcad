@@ -283,7 +283,7 @@ test_exec_wait(const char* cmd)
 
 
 /* tests:   process creation with options
- *  bu_process_create() [bu_process_create_opts]
+ *  bu_process_create() [bu_process_opts]
  * also relies on
  *  bu_process_read()
  *  bu_process_wait()
