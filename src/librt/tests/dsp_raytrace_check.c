@@ -320,15 +320,10 @@ compare_paths(const char  *label,
     if (prep_sec > 0.0)
 	printf("    Prep (DDA/HBB): %.3f s\n", prep_sec);
 
-    /* Accuracy pass: fixed ray count for deterministic regression behavior. */
+    /* fixed ray count for deterministic regression behavior. */
     static const struct rt_crofton_params acc_p =
         { CROFTON_ACCURACY_RAYS, 0.0, 0.0 };
-    /* Timing pass: fixed ray count so the rays/sec figure is directly
-     * comparable across platforms and runs.                                  */
-    static const struct rt_crofton_params tim_p =
-        { CROFTON_TIMING_RAYS, 0.0, 0.0 };
     struct crofton_result dda_acc = run_crofton(rtip, &acc_p);
-    struct crofton_result dda_tim = run_crofton(rtip, &tim_p);
 
     printf("\n    %-12s  %14s  %14s  %10s  %10s\n",
 	    "PATH", "SA", "VOL", "SA_err%", "VOL_err%");
@@ -365,13 +360,8 @@ compare_paths(const char  *label,
 	printf("    %-12s  %14.6g  %14.6g\n",
 		"DDA", dda_acc.sa, dda_acc.vol);
 
-    double dda_rps = (dda_tim.wall_sec > 1e-9)
-	? CROFTON_TIMING_RAYS / dda_tim.wall_sec : 0.0;
-
     printf("\n    %-12s  %8s  %12s  %12s\n",
 	    "PATH", "rays", "wall_sec", "rays/sec");
-    printf("    %-12s  %8u  %12.4f  %12.0f\n",
-	    "DDA", CROFTON_TIMING_RAYS, dda_tim.wall_sec, dda_rps);
 
     const char *dsa  = (dda_sa_err  < 0.0 || dda_sa_err  <= DSP_DDA_MESHREF_PCT) ? "OK" : "FAIL";
     const char *dvol = (dda_vol_err < 0.0 || dda_vol_err <= DSP_DDA_MESHREF_PCT) ? "OK" : "FAIL";
