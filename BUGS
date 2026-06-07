@@ -105,8 +105,6 @@ Recent Bugs
   values consistently and quickly converging less than the actual
   volume regardless of the grid size.
 
-* gqa manpage has the wrong indentation on the options write-up.
-
 * raytracing a revolved sketch seems to work fine, but rtarea and gqa
   seem to be crashing on that same revolve.  curiously, the brep
   revolve from the csgbrep proc-db has the same failure as well as the
@@ -758,8 +756,6 @@ Recent Bugs
 
 Older Bugs
 ----------
-
-* several manpages are missing or out of date for various tools
 
 * X11 framebuffer often fails to display on certain middle bit depth
   displays. (e.g. 15 or 16 bit depth)
