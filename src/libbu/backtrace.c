@@ -40,6 +40,16 @@
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
+#if defined(__has_include)
+#  if __has_include(<execinfo.h>)
+#    include <execinfo.h>
+#    define BU_HAVE_EXECINFO_BACKTRACE 1
+#  endif
+#endif
+#if !defined(BU_HAVE_EXECINFO_BACKTRACE) && (defined(__APPLE__) || defined(__linux__) || defined(__GLIBC__) || defined(__FreeBSD__))
+#  include <execinfo.h>
+#  define BU_HAVE_EXECINFO_BACKTRACE 1
+#endif
 #include "bsocket.h"
 #include "bio.h"
 
@@ -99,6 +109,49 @@ static const char *locate_debugger = NULL;
 static int have_gdb = 0, have_lldb = 0;
 
 
+static int
+execinfo_backtrace(FILE *fp)
+{
+#ifdef BU_HAVE_EXECINFO_BACKTRACE
+    void *frames[64] = {0};
+    int frame_cnt = 0;
+    int fd = -1;
+
+    if (!fp) {
+	fp = stdout;
+    }
+
+    frame_cnt = backtrace(frames, (int)(sizeof(frames) / sizeof(frames[0])));
+    if (frame_cnt <= 1) {
+	return 0;
+    }
+
+    fd = fileno(fp);
+    if (fd >= 0) {
+	backtrace_symbols_fd(frames + 1, frame_cnt - 1, fd);
+	fflush(fp);
+	return 1;
+    }
+
+    {
+	char **symbols = backtrace_symbols(frames + 1, frame_cnt - 1);
+	if (!symbols) {
+	    return 0;
+	}
+	for (int i = 0; i < frame_cnt - 1; i++) {
+	    fprintf(fp, "%s\n", symbols[i]);
+	}
+	free(symbols);
+    }
+    fflush(fp);
+    return 1;
+#else
+    (void)fp;
+    return 0;
+#endif
+}
+
+
 /* SIGINT+SIGCHLD handler for backtrace() */
 static void
 backtrace_interrupt(int UNUSED(signum))
@@ -111,7 +164,7 @@ backtrace_interrupt(int UNUSED(signum))
  * backtrace from the output.
  */
 static void
-backtrace(int processid, char args[][MAXPATHLEN], int fd)
+debugger_backtrace(int processid, char args[][MAXPATHLEN], int fd)
 {
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] Invoking debugger: %s %s %s\n\n", args[0], args[1], args[2]);
@@ -126,7 +179,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
     /* capture our sub process PID pre-fork */
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() parent is %d\n", bu_pid());
+	bu_log("[BACKTRACE] debugger_backtrace() parent is %d\n", bu_pid());
     }
 
     pid2 = fork();
@@ -183,7 +236,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
     bu_snooze(BU_SEC2USEC(1));
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() sending debugger commands\n");
+	bu_log("[BACKTRACE] debugger_backtrace() sending debugger commands\n");
     }
 
     {
@@ -353,7 +406,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 #    ifdef SIGKILL
 	/* kill the debugger forcibly */
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] backtrace() sending KILL to debugger %d\n", pid2);
+	bu_log("[BACKTRACE] debugger_backtrace() sending KILL to debugger %d\n", pid2);
 	}
 	kill(pid2, SIGKILL);
 	bu_snooze(BU_SEC2USEC(1));
@@ -362,14 +415,14 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 #    ifdef SIGCHLD
 	/* preemptively send a SIGCHLD to parent */
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] backtrace() sending CHLD to parent %d\n", getppid());
+	    bu_log("[BACKTRACE] debugger_backtrace() sending CHLD to parent %d\n", getppid());
 	}
 	kill(getppid(), SIGCHLD);
 #    endif
 #    ifdef SIGINT
 	/* for good measure */
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] backtrace() sending INT to parent %d\n", getppid());
+	    bu_log("[BACKTRACE] debugger_backtrace() sending INT to parent %d\n", getppid());
 	}
 	kill(getppid(), SIGINT);
 #    endif
@@ -379,14 +432,14 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
     }
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() waiting for debugger %d to exit\n", pid2);
+	bu_log("[BACKTRACE] debugger_backtrace() waiting for debugger %d to exit\n", pid2);
     }
 #ifndef _WINSOCKAPI_
     wait(NULL);
 #endif
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() complete\n");
+	bu_log("[BACKTRACE] debugger_backtrace() complete\n");
     }
 
     exit(0);
@@ -400,6 +453,10 @@ bu_backtrace_app(FILE *fp, const char *argv0)
 	fp = stdout;
     }
     fflush(fp); /* sanity */
+
+    if (execinfo_backtrace(fp)) {
+	return 1;
+    }
 
     /* check if GNU debugger (gdb) exists */
     if ((locate_debugger = bu_which("gdb"))) {
@@ -469,7 +526,7 @@ bu_backtrace_app(FILE *fp, const char *argv0)
     pid = fork();
     if (pid == 0) {
 	/* child */
-	backtrace(process, debugger_args, fileno(fp));
+	debugger_backtrace(process, debugger_args, fileno(fp));
 	exit(0);
     } else if (pid == (pid_t) -1) {
 	/* failure */
