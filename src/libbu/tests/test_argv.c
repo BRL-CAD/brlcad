@@ -99,7 +99,7 @@ main(int UNUSED(argc), char *argv[])
     argv_test_limited("a0 a1 a2", 3, 3);
     argv_test_limited("a0 a1 a2", 3, 4);
 
-    return 1;
+    return 0;
 }
 
 
