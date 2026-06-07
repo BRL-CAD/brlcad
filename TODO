@@ -2442,10 +2442,6 @@ DOCUMENTATION
   docs and/or clean presentation layout with overview, tutorials, and
   reference.
 
-* "apropos man" does not exist
-
-* "help man" does not exist
-
 * Need ability to search manual pages
 
 * rename MGED Help->Apropos to Help->Search Commands (apropos)
@@ -2472,19 +2468,6 @@ DOCUMENTATION
 
 * Low-hanging fruit, add missing manual pages:
 
-    archer
-    bombardier
-    damdf
-    dauto
-    dauto2
-    dconv
-    ddisp
-    dfft
-    dmod
-    dpeak
-    dsel
-    dstats
-    dwin
     gcv
     ihist
     imod
