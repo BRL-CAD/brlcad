@@ -122,12 +122,9 @@ extern void  dsp_query_terrain(struct soltab *stp,
  * @param buf    Row-major height array, buf[y*xcnt + x].
  * @param xcnt   Number of grid columns (>= 2).
  * @param ycnt   Number of grid rows    (>= 2).
- * @param dx     Model-space width  of one cell (stom[0], mm if identity).
- * @param dy     Model-space height of one cell (stom[5]).
- * @param dz     Model-space scale  per height unit (stom[10]).
+ * @param x     Model-space width  of one cell (stom[0], mm if identity).
+ * @param y     Model-space height of one cell (stom[5]).
  * @param cuttype DSP_CUT_DIR_* triangulation selector.
- * @param sa_out Receives total surface area in model-space units^2.
- * @param vol_out Receives total volume in model-space units^3.
  */
 static int
 cell_cuttype(const unsigned short *buf, unsigned int xcnt, unsigned int ycnt,
