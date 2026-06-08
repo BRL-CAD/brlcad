@@ -1643,11 +1643,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 
     if (bot.face_mode) {
 	// check that all faces have a uniform face mode
-	std::size_t count = 0;
-	BU_BITV_LOOP_START(bot.face_mode) {
-	    ++count;
-	}
-	BU_BITV_LOOP_END;
+	std::size_t count = bu_bitv_count_set(bot.face_mode);
 
 	if (hex_grid_centered) {
 	    if (count)
