@@ -90,15 +90,21 @@ test_str_roundtrip(void)
     }
 
     ret = bn_decode_vect(vout, "{4 5 6}");
-    if (ret != 3 || !vect_close(vout, (vect_t){4.0, 5.0, 6.0}, SMALL_FASTF)) {
-	report_failure(test, "brace-tolerant vector decoding failed");
-	failures++;
+    {
+	vect_t exp_vout = {4.0, 5.0, 6.0};
+	if (ret != 3 || !vect_close(vout, exp_vout, SMALL_FASTF)) {
+	    report_failure(test, "brace-tolerant vector decoding failed");
+	    failures++;
+	}
     }
 
     ret = bn_decode_hvect(hout, "{1 2 3 4}");
-    if (ret != 4 || !hvect_close(hout, (hvect_t){1.0, 2.0, 3.0, 4.0}, SMALL_FASTF)) {
-	report_failure(test, "brace-tolerant hvect decoding failed");
-	failures++;
+    {
+	hvect_t exp_hout = {1.0, 2.0, 3.0, 4.0};
+	if (ret != 4 || !hvect_close(hout, exp_hout, SMALL_FASTF)) {
+	    report_failure(test, "brace-tolerant hvect decoding failed");
+	    failures++;
+	}
     }
 
     ret = bn_decode_mat(mout, "I");

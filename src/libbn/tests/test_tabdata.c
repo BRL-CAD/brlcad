@@ -179,7 +179,10 @@ test_tabdata_utils(void)
 
     shift_table = make_table(xs_shift, 4);
     shift_in = make_tabdata(shift_table, ys_shift);
-    shift_out = make_tabdata(shift_table, (fastf_t[]){0.0, 0.0, 0.0, 0.0});
+    {
+	fastf_t shift_zero[4] = {0.0, 0.0, 0.0, 0.0};
+	shift_out = make_tabdata(shift_table, shift_zero);
+    }
     expected_shift_td = make_tabdata(shift_table, expected_shift);
     bn_tabdata_freq_shift(shift_out, shift_in, 0.5);
     if (!tabdata_close(shift_out, expected_shift_td, 1.0e-12)) {
