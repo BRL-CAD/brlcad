@@ -99,6 +99,58 @@ facetize_failure(struct _ged_facetize_state *s, const char *fmt, ...)
     va_end(ap);
 }
 
+void
+facetize_tolerated_failure(struct _ged_facetize_state *s, const char *fmt, ...)
+{
+    va_list ap;
+    struct bu_vls detail = BU_VLS_INIT_ZERO;
+
+    if (!s || !s->tolerate_failures)
+	return;
+    if (UNLIKELY(!fmt || strlen(fmt) == 0))
+	return;
+
+    s->tolerated_failures++;
+
+    va_start(ap, fmt);
+    bu_vls_vprintf(&detail, fmt, ap);
+    va_end(ap);
+
+    if (s->lfile) {
+	fprintf(s->lfile, "TOLERATED FAILURE: %s\n", bu_vls_cstr(&detail));
+	fflush(s->lfile);
+    }
+
+    if (s->tolerated_failure_log) {
+	bu_vls_printf(s->tolerated_failure_log, "  - %s\n", bu_vls_cstr(&detail));
+	s->tolerated_failure_details++;
+    } else {
+	s->tolerated_failure_omitted++;
+    }
+
+    bu_vls_free(&detail);
+}
+
+void
+facetize_tolerated_summary(struct _ged_facetize_state *s)
+{
+    if (!s || !s->tolerate_failures || s->tolerated_failures <= 0)
+	return;
+
+    facetize_log(s, 0, "\nFACETIZE WARNING: --tolerate-failures generated partial output; %d component failure(s) were omitted from the result.\n", s->tolerated_failures);
+    facetize_log(s, 0, "Output is not a complete representation of the input.  Re-run without --tolerate-failures to stop at the first failure.\n");
+
+    if (s->tolerated_failure_log && bu_vls_strlen(s->tolerated_failure_log)) {
+	facetize_log(s, 0, "\nTolerated failure details:\n%s", bu_vls_cstr(s->tolerated_failure_log));
+    }
+
+    if (s->tolerated_failure_omitted > 0) {
+	facetize_log(s, 0, "  ... %d additional tolerated failure(s) omitted from this summary; see %s for full context.\n",
+		s->tolerated_failure_omitted,
+		(s->log_file && bu_vls_strlen(s->log_file)) ? bu_vls_cstr(s->log_file) : "the facetize log");
+    }
+}
+
 int
 _db_uniq_test(struct bu_vls *n, void *data)
 {

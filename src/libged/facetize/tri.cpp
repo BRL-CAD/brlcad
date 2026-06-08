@@ -369,7 +369,14 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     if (var_loaded)
 	rt_db_free_internal(&var_intern);
     if (ts_status < 0) {
-	// If we failed, return TREE_NULL
+	if (s && s->tolerate_failures) {
+	    facetize_tolerated_failure(s, "leaf '%s' omitted during boolean preparation: %s",
+		    dp->d_namep,
+		    (s->failure_msg && bu_vls_strlen(s->failure_msg)) ? bu_vls_cstr(s->failure_msg) : "unable to convert BoT to Manifold");
+	    facetize_failure_clear(s);
+	    return curtree;
+	}
+
 	if (s)
 	    s->error_flag = 1;
 	return TREE_NULL;
@@ -470,6 +477,12 @@ manifold_do_bool(
     if (tl->tr_d.td_i) {
 	facetize_failure(s, "unsupported boolean tree: left input '%s' to %s is a halfspace. Halfspaces must be used as right-side subtract/intersect operands for facetize Manifold evaluation.",
 		tl->tr_d.td_name ? tl->tr_d.td_name : "(unknown)", bool_op_name(op));
+	if (!s->tolerate_failures)
+	    s->error_flag = 1;
+	else {
+	    facetize_tolerated_failure(s, "boolean subtree omitted: %s", bu_vls_cstr(s->failure_msg));
+	    facetize_failure_clear(s);
+	}
 	return -1;
     }
 
@@ -487,6 +500,12 @@ manifold_do_bool(
 	if (tr->tr_d.td_i->idb_minor_type != ID_HALF) {
 	    facetize_failure(s, "unsupported boolean tree: right input '%s' to %s has internal type %d, expected halfspace",
 		    tr->tr_d.td_name ? tr->tr_d.td_name : "(unknown)", bool_op_name(op), tr->tr_d.td_i->idb_minor_type);
+	    if (!s->tolerate_failures)
+		s->error_flag = 1;
+	    else {
+		facetize_tolerated_failure(s, "boolean subtree omitted: %s", bu_vls_cstr(s->failure_msg));
+		facetize_failure_clear(s);
+	    }
 	    return -1;
 	}
 	if (!lm) {
@@ -610,7 +629,14 @@ manifold_do_bool(
     }
 
     if (failed) {
-	s->error_flag = 1;
+	if (!s->tolerate_failures) {
+	    s->error_flag = 1;
+	} else {
+	    facetize_tolerated_failure(s, "boolean %s subtree omitted: %s",
+		    bool_op_name(op),
+		    (s->failure_msg && bu_vls_strlen(s->failure_msg)) ? bu_vls_cstr(s->failure_msg) : "Manifold boolean evaluation failed");
+	    facetize_failure_clear(s);
+	}
 	tp->tr_d.td_d = NULL;
 	return -1;
     }
@@ -985,6 +1011,35 @@ class DpCompare
 	}
 };
 
+static void
+mark_failed_tessellations(struct _ged_facetize_state *s, const std::vector<std::string> &failed_dps)
+{
+    if (!s || failed_dps.empty())
+	return;
+
+    struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+    if (cdbip) {
+	db_dirbuild(cdbip);
+	db_update_nref(cdbip);
+	for (size_t i = 0; i < failed_dps.size(); i++) {
+	    struct directory *dp = db_lookup(cdbip, failed_dps[i].c_str(), LOOKUP_QUIET);
+	    if (!dp)
+		continue;
+	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	    db5_get_attributes(cdbip, &avs, dp);
+	    (void)bu_avs_add(&avs, FACETIZE_METHOD_ATTR, "FAIL");
+	    (void)db5_update_attributes(dp, &avs, cdbip);
+	    bu_avs_free(&avs);
+	}
+	db_close(cdbip);
+    }
+
+    if (s->tolerate_failures) {
+	for (size_t i = 0; i < failed_dps.size(); i++)
+	    facetize_tolerated_failure(s, "primitive tessellation failed for '%s'; leaf will be omitted from boolean evaluation", failed_dps[i].c_str());
+    }
+}
+
 #define CMD_LEN_MAX 8000
 
 int
@@ -1259,10 +1314,15 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 
 	int err_cnt = bisect_run(s, bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time * dps.size(), obj_cnt);
 	if (err_cnt) {
+	    for (size_t i = 0; i < bad_dps.size(); i++)
+		failed_dps.push_back(std::string(bad_dps[i]->d_namep));
 	    // If we couldn't handle the plate mode conversion, we can't do the
-	    // boolean evaluation
-	    facetize_log(s, 0, "Plate mode conversion wasn't able to complete\n");
-	    return BRLCAD_ERROR;
+	    // boolean evaluation unless partial output was explicitly requested.
+	    if (!s->tolerate_failures) {
+		mark_failed_tessellations(s, failed_dps);
+		facetize_log(s, 0, "Plate mode conversion wasn't able to complete\n");
+		return BRLCAD_ERROR;
+	    }
 	}
     }
 
@@ -1270,22 +1330,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	// As the parent process, we can know when we've run out of options
        // to try.  If we get there, flag the solid in the working copy so
        // the summary knows to report it.
-       struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-       if (cdbip) {
-           db_dirbuild(cdbip);
-           db_update_nref(cdbip);
-           for (size_t i = 0; i < failed_dps.size(); i++) {
-	       struct directory *dp = db_lookup(cdbip, failed_dps[i].c_str(), LOOKUP_QUIET);
-	       if (!dp)
-		   continue;
-               struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
-               db5_get_attributes(cdbip, &avs, dp);
-               (void)bu_avs_add(&avs, FACETIZE_METHOD_ATTR, "FAIL");
-               (void)db5_update_attributes(dp, &avs, cdbip);
-           }
-           db_close(cdbip);
-       }
-       return BRLCAD_ERROR;
+	mark_failed_tessellations(s, failed_dps);
+	if (s->tolerate_failures)
+	    return BRLCAD_OK;
+	return BRLCAD_ERROR;
     }
 
     return BRLCAD_OK;
@@ -1410,7 +1458,13 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 
     // Third stage is to execute the boolean operations
     ftree = rt_booltree_eval(s->facetize_tree, vlfree, &wdbp->wdb_tol, &manifold_do_bool, 0, (void *)s);
+    if (s->error_flag && !s->tolerate_failures) {
+	facetize_log_current_failure(s, "Boolean tree evaluation failed");
+	return BRLCAD_ERROR;
+    }
     if (!ftree) {
+	if (s->tolerate_failures && s->tolerated_failures > 0)
+	    facetize_failure(s, "all evaluated components were omitted after tolerated failures; no partial result could be generated");
 	facetize_log_current_failure(s, "Boolean tree evaluation did not produce a result");
 	return BRLCAD_ERROR;
     }

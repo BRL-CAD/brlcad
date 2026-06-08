@@ -90,6 +90,10 @@ _ged_facetize_state_create()
     s->no_fixup = 0;
     s->nmg_booleval = 0;
     s->use_variant_plan = 1;
+    s->tolerate_failures = 0;
+    s->tolerated_failures = 0;
+    s->tolerated_failure_details = 0;
+    s->tolerated_failure_omitted = 0;
     s->perturb_sa_tol  = 10.0;
     s->perturb_vol_tol = 10.0;
 
@@ -102,6 +106,9 @@ _ged_facetize_state_create()
 
     BU_GET(s->failure_msg, struct bu_vls);
     bu_vls_init(s->failure_msg);
+
+    BU_GET(s->tolerated_failure_log, struct bu_vls);
+    bu_vls_init(s->tolerated_failure_log);
 
     BU_GET(s->wfile, struct bu_vls);
     bu_vls_init(s->wfile);
@@ -163,6 +170,11 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
 	BU_PUT(s->failure_msg, struct bu_vls);
     }
 
+    if (s->tolerated_failure_log) {
+	bu_vls_free(s->tolerated_failure_log);
+	BU_PUT(s->tolerated_failure_log, struct bu_vls);
+    }
+
     if (s->wfile) {
 	bu_vls_free(s->wfile);
 	BU_PUT(s->wfile, struct bu_vls);
@@ -196,6 +208,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 {
     int ret = BRLCAD_ERROR;
     int newobj_cnt, i;
+    int ok_cnt = 0;
     const char *oname = NULL;
     const char *av[2];
     struct directory **dpa = NULL;
@@ -229,9 +242,16 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 		av[0] = argv[i];
 		av[1] = NULL;
 		ret = _ged_facetize_nmgeval(s, 1, av, av[0]);
+		if (ret == BRLCAD_ERROR && s->tolerate_failures) {
+		    facetize_tolerated_failure(s, "object '%s' failed during NMG boolean evaluation and was skipped", argv[i]);
+		    continue;
+		}
 		if (ret == BRLCAD_ERROR)
 		    goto booleval_cleanup;
+		ok_cnt++;
 	    }
+	    if (s->tolerate_failures && ok_cnt > 0)
+		ret = BRLCAD_OK;
 	    goto booleval_cleanup;
 	}
     }
@@ -244,9 +264,16 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	    idpa[0] = dpa[i];
 	    idpa[1] = NULL;
 	    ret = _ged_facetize_booleval(s, 1, (struct directory **)idpa, argv[i], false, false);
+	    if (ret == BRLCAD_ERROR && s->tolerate_failures) {
+		facetize_tolerated_failure(s, "object '%s' failed during BoT boolean evaluation and was skipped", argv[i]);
+		continue;
+	    }
 	    if (ret == BRLCAD_ERROR)
 		goto booleval_cleanup;
+	    ok_cnt++;
 	}
+	if (s->tolerate_failures && ok_cnt > 0)
+	    ret = BRLCAD_OK;
     }
 
     // Report on the primitive processing
@@ -280,7 +307,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     s->method_opts = method_options;
 
     /* General options */
-    struct bu_opt_desc d[24];
+    struct bu_opt_desc d[25];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",  &bu_opt_incr_long,       &verbosity, "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
@@ -304,7 +331,8 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[20], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
     BU_OPT(d[21],  "", "perturb-sa-tol",                           "#",       &bu_opt_fastf_t,   &s->perturb_sa_tol,  "Surface-area percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton SA differs from the BoT SA by more than this amount. Default is 10.");
     BU_OPT(d[22],  "", "perturb-vol-tol",                          "#",       &bu_opt_fastf_t,   &s->perturb_vol_tol, "Volume percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton volume differs from the BoT volume by more than this amount. Default is 10.");
-    BU_OPT_NULL(d[23]);
+    BU_OPT(d[23],  "", "tolerate-failures",                         "",                  NULL, &s->tolerate_failures, "Continue after failed primitive or subtree evaluations and generate a partial result.  The output will not be a complete representation of the input if any failures are tolerated.");
+    BU_OPT_NULL(d[24]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -440,6 +468,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 ged_facetize_memfree:
+    facetize_tolerated_summary(s);
     _ged_facetize_state_destroy(s);
     delete method_options;
 

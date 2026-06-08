@@ -55,6 +55,10 @@ struct _ged_facetize_state {
     int no_fixup;
     int no_perturb;
     int use_variant_plan;
+    int tolerate_failures;
+    int tolerated_failures;
+    int tolerated_failure_details;
+    int tolerated_failure_omitted;
 
     /* Perturb validation thresholds (percentage, 0–100).
      * Trigger the perturb retry when the CSG–BoT difference exceeds these
@@ -68,6 +72,7 @@ struct _ged_facetize_state {
     struct bu_vls *log_file;
     FILE *lfile;
     struct bu_vls *failure_msg;
+    struct bu_vls *tolerated_failure_log;
 
     // Processing
     int regions;
@@ -106,6 +111,12 @@ facetize_failure_clear(struct _ged_facetize_state *);
 
 extern void
 facetize_failure(struct _ged_facetize_state *, const char *, ...) _BU_ATTR_PRINTF23;
+
+extern void
+facetize_tolerated_failure(struct _ged_facetize_state *, const char *, ...) _BU_ATTR_PRINTF23;
+
+extern void
+facetize_tolerated_summary(struct _ged_facetize_state *);
 
 extern int
 _db_uniq_test(struct bu_vls *n, void *data);
