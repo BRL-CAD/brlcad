@@ -184,13 +184,15 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 
     if (info.largestComponents.size() > (size_t)N) {
 	// render the smaller sub components all in one
+	size_t omitted_components = info.largestComponents.size() - N;
 	std::string subcomponents = "";
 	for (size_t i = N; i < info.largestComponents.size(); i++) {
 	    subcomponents += info.largestComponents[i].name + " ";
 	}
+	std::string omitted_label = std::to_string(omitted_components) + " more";
 	render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
 	img.drawImageTransparentFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
-	img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, width, "...", TO_BOLD);
+	img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, width, omitted_label, TO_BOLD);
 	img.drawLine(offX + (N-1)*imgW + imgW/2, offY-100, offX + (N-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
 	img.drawCirc(offX + (N-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
 	// img.drawCirc(offX + (N-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
