@@ -65,16 +65,33 @@ struct process_func_test_data {
     int do_abort;
 };
 
+static int
+process_write_all(int fd, const char *buf)
+{
+    size_t len = strlen(buf);
+    while (len > 0) {
+       ssize_t nw = write(fd, buf, len);
+       if (nw < 0)
+           return -1;
+       if (nw == 0)
+           return -1;
+       buf += nw;
+       len -= (size_t)nw;
+    }
+
+    return 0;
+}
+
 
 static int
 process_func_callback(void *data)
 {
     struct process_func_test_data *tdata = (struct process_func_test_data *)data;
 
-    if (tdata->out)
-	(void)write(BU_PROCESS_STDOUT, tdata->out, strlen(tdata->out));
-    if (tdata->err)
-	(void)write(BU_PROCESS_STDERR, tdata->err, strlen(tdata->err));
+    if (tdata->out && process_write_all(BU_PROCESS_STDOUT, tdata->out) != 0)
+	return tdata->ret;
+    if (tdata->err && process_write_all(BU_PROCESS_STDERR, tdata->err) != 0)
+	return tdata->ret;
     if (tdata->sleep_ms > 0)
 	(void)bu_snooze((int64_t)tdata->sleep_ms * 1000);
     if (tdata->do_abort)
