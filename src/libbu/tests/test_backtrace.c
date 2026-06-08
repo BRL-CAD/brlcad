@@ -43,8 +43,21 @@
 
 #if defined(__clang__) || defined(__GNUC__)
 #  define TEST_BACKTRACE_NOINLINE __attribute__((noinline))
+#elif defined(_MSC_VER)
+#  define TEST_BACKTRACE_NOINLINE __declspec(noinline)
 #else
 #  define TEST_BACKTRACE_NOINLINE
+#endif
+
+/* These frames live in the bu_test executable, not libbu.  When the test is
+ * built against a DLL import view of libbu on Windows, BU_EXPORT expands to
+ * dllimport and MSVC rejects function definitions.  Export them from the test
+ * executable instead so symbol names remain visible to the backtrace logic.
+ */
+#if defined(_WIN32) && defined(BU_DLL_IMPORTS)
+#  define TEST_BACKTRACE_EXPORT COMPILER_DLLEXPORT
+#else
+#  define TEST_BACKTRACE_EXPORT BU_EXPORT
 #endif
 
 
@@ -121,14 +134,14 @@ backtrace_read_file(FILE *fp, struct bu_vls *out)
 #ifdef __cplusplus
 extern "C" {
 #endif
-BU_EXPORT TEST_BACKTRACE_NOINLINE int
+TEST_BACKTRACE_EXPORT TEST_BACKTRACE_NOINLINE int
 test_backtrace_direct_leaf(FILE *fp)
 {
     return bu_backtrace(fp);
 }
 
 
-BU_EXPORT TEST_BACKTRACE_NOINLINE int
+TEST_BACKTRACE_EXPORT TEST_BACKTRACE_NOINLINE int
 test_backtrace_direct_middle(FILE *fp)
 {
     int (* volatile next)(FILE *) = &test_backtrace_direct_leaf;
@@ -138,7 +151,7 @@ test_backtrace_direct_middle(FILE *fp)
 }
 
 
-BU_EXPORT TEST_BACKTRACE_NOINLINE int
+TEST_BACKTRACE_EXPORT TEST_BACKTRACE_NOINLINE int
 test_backtrace_direct_entry(FILE *fp)
 {
     int (* volatile next)(FILE *) = &test_backtrace_direct_middle;
