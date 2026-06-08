@@ -1388,6 +1388,13 @@ macro(find_package_qt)
   mark_as_advanced(Qt5Gui_DIR)
 endmacro(find_package_qt)
 
+macro(_check_bullet_double RESULT_VAR INCDIRS LIBS)
+  set(CMAKE_REQUIRED_INCLUDES ${INCDIRS})
+  set(CMAKE_REQUIRED_LIBRARIES ${LIBS})
+  set(CMAKE_REQUIRED_DEFINITIONS "-DBT_USE_DOUBLE_PRECISION")
+  check_cxx_source_compiles("${_bullet_check_src}" ${RESULT_VAR})
+endmacro()
+
 # Bullet - physics library
 macro(find_package_bullet)
   cmake_parse_arguments(F "REQUIRED" "" "" ${ARGN})
@@ -1403,7 +1410,6 @@ macro(find_package_bullet)
   unset(BULLET_SOFTBODY_LIBRARY CACHE)
   unset(BULLET_SOFTBODY_LIBRARY_DEBUG CACHE)
   unset(BULLET_STATUS CACHE)
-  unset(BULLET_BT_USE_DOUBLE_PRECISION CACHE)
 
   # Bullet is staged from bext's install tree into the build directory,
   # so prefer that location rather than noinstall.
@@ -1414,7 +1420,7 @@ macro(find_package_bullet)
     find_package(Bullet)
   endif()
 
-  if(BULLET_LIBRARIES)
+  if(BULLET_LIBRARIES OR Bullet_FOUND)
     list(GET BULLET_LIBRARIES 0 _bullet_lib0)
 
     is_subpath("${CMAKE_BINARY_DIR}" "${_bullet_lib0}" BULLET_LOCAL_TEST)
@@ -1426,27 +1432,66 @@ macro(find_package_bullet)
       set(BULLET_STATUS "System" CACHE STRING "Bullet bundled status" FORCE)
     endif()
 
-    set(_bullet_double ON)
-
     if(BULLET_STATUS STREQUAL "System")
-      if("${BULLET_DEFINITIONS}" MATCHES "BT_USE_DOUBLE_PRECISION")
-        set(_bullet_double ON)
-      else()
-        # if system Bullet does not explicitly define double, we'll
-        # default to OFF as many/most system packages default to float
-        # and/or install the double version adjacent in ad hoc ways.
-        set(_bullet_double OFF)
-      endif()
-    endif()
+      include(CheckCXXSourceCompiles)
 
-    if(_bullet_double)
-      set(BULLET_BT_USE_DOUBLE_PRECISION ON CACHE BOOL "Bullet btScalar is double" FORCE)
-    else()
-      set(BULLET_BT_USE_DOUBLE_PRECISION OFF CACHE BOOL "Bullet btScalar is double" FORCE)
+      set(_bullet_check_src "
+#include <btBulletDynamicsCommon.h>
+int main() {
+    btRigidBody::btRigidBodyConstructionInfo info(1.0, 0, 0);
+    btRigidBody body(info);
+    btVector3 inertia(0,0,0);
+    body.setMassProps(1.0, inertia);
+    return 0;
+}
+      ")
+
+      _check_bullet_double(BULLET_IS_DOUBLE "${BULLET_INCLUDE_DIRS}" "${BULLET_LIBRARIES}")
+
+      if(NOT BULLET_IS_DOUBLE)
+        message(STATUS "Found system Bullet, but it is not double-precision. BRL-CAD requires double-precision Bullet.")
+
+        # Try harder: pkg_search_module for bullet-float64 or bullet-dp
+        find_package(PkgConfig)
+        if(PKG_CONFIG_FOUND)
+          pkg_search_module(PC_BULLET bullet-float64 bullet-dp)
+          if(PC_BULLET_FOUND)
+            _check_bullet_double(BULLET_ALT_IS_DOUBLE "${PC_BULLET_INCLUDE_DIRS}" "${PC_BULLET_LINK_LIBRARIES}")
+            if(BULLET_ALT_IS_DOUBLE)
+              set(BULLET_INCLUDE_DIRS ${PC_BULLET_INCLUDE_DIRS})
+              set(BULLET_LIBRARIES ${PC_BULLET_LINK_LIBRARIES})
+              set(BULLET_IS_DOUBLE ON)
+            endif()
+          endif()
+        endif()
+
+        # Try harder: Homebrew double-precision directory on macOS
+        if(NOT BULLET_IS_DOUBLE AND APPLE)
+          find_library(BULLET_HOMEBREW_DYNAMICS_LIBRARY NAMES BulletDynamics HINTS /opt/homebrew/opt/bullet/lib/bullet/double /usr/local/opt/bullet/lib/bullet/double)
+          find_library(BULLET_HOMEBREW_COLLISION_LIBRARY NAMES BulletCollision HINTS /opt/homebrew/opt/bullet/lib/bullet/double /usr/local/opt/bullet/lib/bullet/double)
+          find_library(BULLET_HOMEBREW_MATH_LIBRARY NAMES LinearMath HINTS /opt/homebrew/opt/bullet/lib/bullet/double /usr/local/opt/bullet/lib/bullet/double)
+          if(BULLET_HOMEBREW_DYNAMICS_LIBRARY AND BULLET_HOMEBREW_COLLISION_LIBRARY AND BULLET_HOMEBREW_MATH_LIBRARY)
+            set(_hb_libs ${BULLET_HOMEBREW_DYNAMICS_LIBRARY} ${BULLET_HOMEBREW_COLLISION_LIBRARY} ${BULLET_HOMEBREW_MATH_LIBRARY})
+            _check_bullet_double(BULLET_HB_IS_DOUBLE "${BULLET_INCLUDE_DIRS}" "${_hb_libs}")
+            if(BULLET_HB_IS_DOUBLE)
+              set(BULLET_LIBRARIES ${_hb_libs})
+              set(BULLET_IS_DOUBLE ON)
+            endif()
+          endif()
+        endif()
+
+        if(NOT BULLET_IS_DOUBLE)
+          message(STATUS "Could not find a double-precision system Bullet. Falling back to bundled Bullet if possible.")
+          find_package_reset(Bullet RESET_TP)
+          find_package_reset(BULLET RESET_TP)
+          unset(BULLET_LIBRARIES CACHE)
+          unset(Bullet_FOUND CACHE)
+          set(BULLET_STATUS "NotFound" CACHE STRING "Bullet bundled status" FORCE)
+        endif()
+      endif()
+
+      unset(_bullet_check_src)
     endif()
-  elseif(Bullet_FOUND)
-    set(BULLET_STATUS "System" CACHE STRING "Bullet bundled status" FORCE)
-    set(BULLET_BT_USE_DOUBLE_PRECISION ON CACHE BOOL "Bullet btScalar is double" FORCE)
   else()
     set(BULLET_STATUS "NotFound" CACHE STRING "Bullet bundled status" FORCE)
   endif()
