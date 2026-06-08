@@ -29,6 +29,8 @@ build_cfg_hdr("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
 # failure if it hasn't been built yet.
 add_subdirectory(brledit)
 
+brlcad_check_library(EXECINFO execinfo backtrace)
+
 set(
   LIBBU_SOURCES
   affinity.c
@@ -141,6 +143,7 @@ set(
   ${BSON_LIBRARIES}
   LMDB::LMDB
   ${UUID_LIBRARIES}
+  ${EXECINFO_LIBRARY}
   ${M_LIBRARY}
 )
 
