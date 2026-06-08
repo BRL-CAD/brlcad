@@ -10,53 +10,58 @@
 
 [source]
 ----
-3dm-g [-r] [-v] [-h] {-o out.g} {file.3dm}
+3dm-g [-r] [-v] [-h] [-o output_file.g] input_file.3dm [output_file.g]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*3dm-g* converts the _file.3dm_ Rhino3D file to a BRL-CAD _file.g_ file.
+*3dm-g* converts the Rhino3D file _input_file.3dm_ to a BRL-CAD database _output_file.g_. 
 
-BRL-CAD utilizes the OpenNURBS library for reading and processing 3dm files. Since BRL-CAD also uses this library internally for NURBS support, 3dm-g import is generally a very direct and relatively problem free conversion path.
+Because BRL-CAD uses the OpenNURBS library to read and process .3dm files, and also uses it for its internal NURBS support, the conversion is typically direct and reliable.
 
 
 [[options]]
 == OPTIONS
 
-
-*-o*::
-Specify the output name of the .g file.
-
+*-o, --output* _output_file.g_::
+Specify the output BRL-CAD database name. This option is required if the output file is not specified as the last positional argument.
 
 *-r*::
 Randomize colors assigned to imported objects.
 
+*-v, --verbosity*::
+Increase verbosity of conversion progress reporting. Can be specified multiple times.
 
-*-v*::
-Verbose reporting of conversion progress.
+*-h, --help, -?*::
+Print help and exit.
 
 
+[[examples]]
+== EXAMPLES
 
-
-[[example]]
-== EXAMPLE
-
-.Verbose Reporting of Search Information
+.Standard Conversion
 [example]
 ====
-mged>**3dm-g -r -o nist.g NIST_MBE_PMI_7-10.3dm**
+$ *3dm-g model.3dm model.g*
 
-This example imports the BRL-CAD copy of NIST's MBE PMI models 7-10 to nist.g while randomizing the colors assigned to objects.
+Converts the Rhino3D file _model.3dm_ into a BRL-CAD database named _model.g_.
+====
 
+.Conversion with Randomized Colors and Verbose Output
+[example]
+====
+$ *3dm-g -r -v -o nist.g NIST_MBE_PMI_7-10.3dm*
+
+Imports the NIST MBE PMI 7-10 model into a BRL-CAD database named _nist.g_. Randomizes the colors assigned to imported objects and increases the verbosity level for detailed conversion progress reporting.
 ====
 
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-User will see OpenNURBS diagnostic reporting as the 3dm file is read.
+Users will see OpenNURBS diagnostic reporting as the 3dm file is read.
 
 
 [[author]]

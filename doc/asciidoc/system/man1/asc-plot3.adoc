@@ -10,24 +10,61 @@ asc-plot3 - produce Plot3 instructions from ASCII representation
 
 [source]
 ----
-asc-plot3 [ file.asc [unix_plot]]
+asc-plot3 [-h] [-?] [file.in [file.plot3]]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Reads a stream of ASCII data representing Plot3 instructions and converts it to *plot3*(5) format. *asc-plot3* reads from standard input and writes to standard output if file names are not supplied.
+*asc-plot3* reads a stream of ASCII data representing Plot3 instructions and converts it to binary *plot3*(5) format. Standard input is read and standard output is used if file names are not supplied.
 
-The input should consist of lines of the form
-
+The input should consist of lines of the form:
 
 ....
-
 c arg arg ...
 ....
 
-where _c_ is one of the single-character Plot3 command names, and it is followed by white-space-separated arguments of appropriate number and types for that command. Optional white space and lines beginning with the comment character `#' are ignored.
+where _c_ is one of the single-character Plot3 command names, followed by white-space-separated arguments of appropriate number and type for that command. Optional white space and lines beginning with the comment character `#' are ignored.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*::
+    Print a usage message and exit.
+
+_file.in_::
+    Input ASCII file containing plot3 instructions. If not specified or if '-' is specified, standard input is read.
+
+_file.plot3_::
+    Output file to write the binary plot3 data. If not specified, standard output is used. Note that *asc-plot3* will refuse to write binary plot data to a terminal.
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert an ASCII plot3 file to binary
+[example]
+====
+[source,bash]
+----
+$ asc-plot3 data.asc data.plot3
+----
+
+Converts the ASCII file `data.asc` into a binary *plot3*(5) file named `data.plot3`.
+====
+
+.Create a simple plot3 file from an ASCII command
+[example]
+====
+[source,bash]
+----
+$ echo "c 0 0 100" | asc-plot3 > circle.plot3
+----
+
+Creates a binary plot3 file containing a single circle instruction.
+====
 
 
 [[see_also]]

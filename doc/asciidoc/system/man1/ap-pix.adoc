@@ -19,7 +19,28 @@ ap-pix [-v] file.ap > file.pix
 
 *ap-pix* converts an Applicon drum plotter image file into a *pix*(5) file.
 
-The Applicon file is assumed to consist of a number lines each 3456 bits long; the resulting _pix_ file thus has scanlines of 3456 pixels.
+The Applicon file is assumed to consist of a number of lines each 3456 bits long. The resulting _pix_ file thus has scanlines of 3456 pixels.
+
+
+[[options]]
+== OPTIONS
+
+*-v*::
+Enable verbose output. Prints the line number to standard error as each line is written.
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert an Applicon image file to a pix file
+====
+[source,bash]
+----
+$ ap-pix image.ap > image.pix
+----
+
+Converts the Applicon drum plotter image file _image.ap_ into a _pix_ file named _image.pix_.
+====
 
 
 [[see_also]]

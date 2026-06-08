@@ -8,64 +8,54 @@ asc-nmg - ascii-to-NMG converter
 
 == SYNOPSIS
 
-[source]
-----
-asc-nmg ascii_file nmg.g
-----
-
+*asc-nmg* [_filein_] [_fileout_]
 
 [[description]]
 == DESCRIPTION
 
-*asc-nmg* converts the specified __ascii_file__ (not a .asc geometry database) to a binary BRL-CAD _nmg.g_ geometry database file containing NMG objects. The __ascii_file__ is expected to contain lines of the following forms:
+*asc-nmg* converts the specified _filein_ (an ASCII file, but not a standard BRL-CAD _.asc_ geometry database) to a binary BRL-CAD geometry database containing NMG objects. If _filein_ is not specified or is *-*, *asc-nmg* reads from standard input. If _fileout_ is not specified, a default output file named _nmg.g_ is created. 
+
+The resulting database will contain a solid named *s.nmg* inside a region named *r.nmg*.
+
+The ASCII input is expected to contain lines of the following forms:
 
 To start a new outer loop for a face:
-
-
 ....
-
-	l
+l
 ....
 
 To start a new "hole" loop in the current face:
-
-
+....
+l hole
 ....
 
-	l hole
+To indicate a vertex in the current loop, providing its coordinates:
 ....
-
-To indicate a vertex in the current loop:
-
-
+v# x y z
 ....
+where _#_ is an integer vertex number (e.g., *v0* or *v1*), and _x_, _y_, and _z_ are the coordinates of that vertex.
 
-	v# x y z
+To reuse a previously defined vertex in the current loop, omit the coordinates:
 ....
-
-where # is the vertex number and x, y, and z are the coordinates of that vertex.
+v#
+....
 
 To extrude a face:
-
-
 ....
-
-	e x y z
+e x y z
 ....
+where _x_, _y_, and _z_ compose the extrusion vector for the face.
 
-where x, y, and z compose the extrusion vector for the face.
-
-If an extrusion vector is specified, then the first face in the NMG objects list of faces will be extruded. This is intended for cases where only one face is described and then extruded to form a solid. Supplying an extrusion vector when more than one face is described may produce erroneous results. A solid may be built by extruding a face or by building enough faces to produce a closed shell. Each execution of *asc-nmg* will produce a single NMG object.
-
+If an extrusion vector is specified, the first face in the list of faces will be extruded. This is intended for cases where only one face is described and then extruded to form a solid. Supplying an extrusion vector when more than one face is described may produce erroneous results. A solid may be built by extruding a face or by building enough faces to produce a closed shell. Each execution of *asc-nmg* will produce a single NMG object.
 
 [[example]]
-== EXAMPLE
+== EXAMPLES
 
-If the file __ascii_file__ contains the following:
-
+.Extruding a Face into a Solid
+====
+If the file _filein.txt_ contains the following:
 
 ....
-
 l
 	e	-1 0 0
 	v0	1 -1 -1
@@ -78,32 +68,54 @@ l
 
 the command:
 
-
+[source,bash]
 ----
-
-$ asc-nmg ascii_file sample.g
+$ asc-nmg filein.txt sample.g
 ----
 
 will produce an 'L'-shaped NMG solid to the _sample.g_ database file.
+====
 
+.Creating a Face with a Hole
+====
+A face with an outer loop and an inner hole loop, reusing vertex numbers if needed.
+(Note that the vertices for the hole must be defined in the correct order to be an inner loop).
+
+....
+l
+    v0 0 0 0
+    v1 10 0 0
+    v2 10 10 0
+    v3 0 10 0
+l hole
+    v4 2 2 0
+    v5 8 2 0
+    v6 8 8 0
+    v7 2 8 0
+....
+
+[source,bash]
+----
+$ asc-nmg square_with_hole.txt square.g
+----
+
+This produces a single planar NMG face with a square hole.
+====
 
 [[diagnostics]]
 == DIAGNOSTICS
 
 Error messages are intended to be self-explanatory.
 
-
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1994-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

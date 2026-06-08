@@ -73,7 +73,7 @@ editor_tests(void)
     // First, check that we can find *something* - will select GUI
     // editor first, but should fall back on console editors if
     // GUI not found.
-    e = bu_editor(&eopts, 0, 0, NULL);
+    e = bu_editor(&eopts, 0, 0, (const char *)NULL);
     if (!e) {
 	bu_log("Failed to identify default editor.\n");
 	bu_ptbl_free(&eopts);
@@ -83,7 +83,7 @@ editor_tests(void)
 
     // Some environments may not have a graphical editor, but we should
     // *always* be able to find a console editor
-    e = bu_editor(&eopts, 1, 0, NULL);
+    e = bu_editor(&eopts, 1, 0, (const char *)NULL);
     if (!e) {
 	bu_log("Failed to identify default console editor.\n");
 	bu_ptbl_free(&eopts);
@@ -92,7 +92,7 @@ editor_tests(void)
     bu_log("Default console editor: %s\n", e);
 
     // Exercise the code path for GUI only, even though NULL is technically OK.
-    e = bu_editor(&eopts, 2, 0, NULL);
+    e = bu_editor(&eopts, 2, 0, (const char *)NULL);
     if (e)
 	bu_log("Default GUI editor: %s\n", e);
 
@@ -102,17 +102,17 @@ editor_tests(void)
     char btest_path[MAXPATHLEN] = {'\0'};
     const char *btest_exec = bu_getprogname();
     bu_strlcpy(btest_path, btest_exec, MAXPATHLEN);
-    if (!bu_file_exists(btest_path, NULL))
-	bu_dir(btest_path, MAXPATHLEN, btest_exec, BU_DIR_EXT, NULL);
-    if (!bu_file_exists(btest_path, NULL))
-	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, btest_exec, NULL);
-    if (!bu_file_exists(btest_path, NULL))
-	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, btest_exec, BU_DIR_EXT, NULL);
-    if (!bu_file_exists(btest_path, NULL))
-	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, "..", "src", "libbu", "tests", btest_exec, NULL);
-    if (!bu_file_exists(btest_path, NULL))
-	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, "..", "src", "libbu", "tests", btest_exec, BU_DIR_EXT, NULL);
-    if (!bu_file_exists(btest_path, NULL)) {
+    if (!bu_file_exists(btest_path, (const char *)NULL))
+	bu_dir(btest_path, MAXPATHLEN, btest_exec, BU_DIR_EXT, (const char *)NULL);
+    if (!bu_file_exists(btest_path, (const char *)NULL))
+	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, btest_exec, (const char *)NULL);
+    if (!bu_file_exists(btest_path, (const char *)NULL))
+	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, btest_exec, BU_DIR_EXT, (const char *)NULL);
+    if (!bu_file_exists(btest_path, (const char *)NULL))
+	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, "..", "src", "libbu", "tests", btest_exec, (const char *)NULL);
+    if (!bu_file_exists(btest_path, (const char *)NULL))
+	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, "..", "src", "libbu", "tests", btest_exec, BU_DIR_EXT, (const char *)NULL);
+    if (!bu_file_exists(btest_path, (const char *)NULL)) {
 	bu_log("Failed to locate bu_test executable\n");
 	bu_ptbl_free(&eopts);
 	return -1;
@@ -128,7 +128,7 @@ editor_tests(void)
     struct bu_vls check_path = BU_VLS_INIT_ZERO;
     shrink_path(&check_path, getenv("EDITOR"));
 
-    e = bu_editor(&eopts, 0, 0, NULL);
+    e = bu_editor(&eopts, 0, 0, (const char *)NULL);
     if (!e) {
 	bu_log("EDITOR value %s did not produce an editor path\n", getenv("EDITOR"));
 	bu_vls_free(&check_path);
@@ -153,12 +153,12 @@ editor_tests(void)
     struct bu_vls bp = BU_VLS_INIT_ZERO;
     if (bu_path_component(&bp , btest_path, BU_PATH_DIRNAME)) {
 	char epath[MAXPATHLEN] = {'\0'};
-	bu_dir(epath, MAXPATHLEN, bu_vls_cstr(&bp), "emacs", NULL);
+	bu_dir(epath, MAXPATHLEN, bu_vls_cstr(&bp), "emacs", (const char *)NULL);
 	FILE *fp = fopen(epath, "w");
 	fprintf(fp, "BRL-CAD");
 	fclose(fp);
 	bu_setenv("EDITOR", epath, 1);
-	e = bu_editor(&eopts, 1, 0, NULL);
+	e = bu_editor(&eopts, 1, 0, (const char *)NULL);
 	bu_file_delete(epath);
 	if (!e) {
 	    bu_log("EDITOR value %s did not produce an editor path\n", getenv("EDITOR"));
@@ -189,7 +189,7 @@ editor_tests(void)
 
     // Unset the EDITOR env var and prepare a list of "editors" to provide.
     bu_setenv("EDITOR", "", 1);
-    char *de = bu_strdup(bu_editor(&eopts, 0, 0, NULL));
+    char *de = bu_strdup(bu_editor(&eopts, 0, 0, (const char *)NULL));
     const char *elist[4] = {NULL};
     elist[0] = "non-existent-editor1";
     elist[1] = btest_path;
@@ -249,13 +249,13 @@ main(int ac, char *av[])
     if (ac > 1 && BU_STR_EQUAL(av[1], "-e"))
 	return editor_tests();
 
-    ssize_t all_mem = bu_mem(BU_MEM_ALL, NULL);
+    ssize_t all_mem = bu_mem(BU_MEM_ALL, (const char *)NULL);
     if (all_mem < 0)
 	return -1;
-    ssize_t avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
+    ssize_t avail_mem = bu_mem(BU_MEM_AVAIL, (const char *)NULL);
     if (avail_mem < 0)
 	return -2;
-    ssize_t page_mem = bu_mem(BU_MEM_PAGE_SIZE, NULL);
+    ssize_t page_mem = bu_mem(BU_MEM_PAGE_SIZE, (const char *)NULL);
     if (page_mem < 0)
 	return -3;
 

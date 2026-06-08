@@ -366,7 +366,7 @@ _bu_dir_join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, str
     }
 
     /* left-hand path should exist independent of right-hand path */
-    if (!bu_file_exists(lhs, NULL)) {
+    if (!bu_file_exists(lhs, (const char *)NULL)) {
 	if (searched && where) {
 	    bu_vls_strcat(searched, where);
 	}
@@ -404,7 +404,7 @@ _bu_dir_join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, str
 
     /* found a match */
     bu_strlcpy(result+llen, rhs, (size_t)(MAXPATHLEN - llen));
-    if (bu_file_exists(result, NULL)) {
+    if (bu_file_exists(result, (const char *)NULL)) {
 	return 1;
     }
 
@@ -470,7 +470,7 @@ _bu_dir_brlcad_root(const char *rhs, int fail_quietly)
 	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification (exec) [UNKNOWN]\n");
 	if (strlen(plhs)) {
 	    char *dirpath;
-	    char *real_path = bu_file_realpath(plhs, NULL);
+	    char *real_path = bu_file_realpath(plhs, (const char *)NULL);
 	    dirpath = bu_path_dirname(real_path);
 	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
 	    bu_free(dirpath, "free bu_path_dirname");
@@ -511,7 +511,7 @@ _bu_dir_brlcad_root(const char *rhs, int fail_quietly)
 	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [UNKNOWN]\n");
 	if (strlen(plhs)) {
 	    char *dirpath;
-	    char *real_path = bu_file_realpath(plhs, NULL);
+	    char *real_path = bu_file_realpath(plhs, (const char *)NULL);
 	    dirpath = bu_path_dirname(real_path);
 	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
 	    bu_free(dirpath, "free bu_path_dirname");
@@ -684,7 +684,7 @@ void
 bu_mkdir(const char *path)
 {
     // If there's already something there, we can't proceed.
-    if (bu_file_exists(path, NULL) || bu_file_directory(path))
+    if (bu_file_exists(path, (const char *)NULL) || bu_file_directory(path))
 	return;
 
     /* Make sure the target and any missing parents
@@ -701,7 +701,7 @@ bu_mkdir(const char *path)
     for (int i = (int)BU_PTBL_LEN(&ndirs) - 1; i >= 0; i--) {
 	char *npath = (char *)BU_PTBL_GET(&ndirs, i);
 #ifdef HAVE_WINDOWS_H
-	CreateDirectory(npath, NULL);
+	CreateDirectory(npath, (const char *)NULL);
 #else
 	/* mode: 775 */
 	mkdir(npath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -725,7 +725,7 @@ bu_dirclear(const char *d)
 	    if (BU_STR_EQUAL(filenames[i], ".."))
 		continue;
 	    char cdir[MAXPATHLEN] = {0};
-	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
+	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], (const char *)NULL);
 	    bu_dirclear((const char *)cdir);
 	}
 	bu_argv_free(nfiles, filenames);

@@ -10,24 +10,53 @@ btclsh - Tcl-based interactive shell for BRL-CAD
 
 [source]
 ----
-btclsh [script]...
+btclsh [script [arg ...]]
 ----
 
 
 == DESCRIPTION
 
-*btclsh* is a Tcl-based interactive shell for BRL-CAD. It provides command-line editing, command history, and scripting capabilities. It is particularly suited for text-based interactive scripting and automation in BRL-CAD environments.
+*btclsh* is a Tcl-based interactive shell for BRL-CAD. It provides command-line editing, command history, and scripting capabilities. It is particularly suited for text-based interactive scripting and automation.
 
 Unlike *bwish*, *btclsh* does not require a graphical interface and can be used in environments without a display server.
+
+When invoked without arguments, or if the first argument starts with a hyphen (`-`), *btclsh* runs interactively, reading commands from standard input. It will execute the startup file `~/.btclshrc` (or `~/.btclshrc.tcl` on Windows) if it exists. During interactive use, *btclsh* provides a few built-in commands for session management, such as `history` to view past commands, `hist` for maintaining command history, and `exit` or `q` to terminate the shell.
+
+If a _script_ is provided (and does not begin with a hyphen), *btclsh* executes the file and exits. Any remaining arguments are passed to the script.
 
 
 == OPTIONS
 
-
 _script_::
-Executes the provided Tcl script file and exits.
+Executes the provided Tcl script file and exits. If the filename begins with a hyphen, it must be prefixed with a path (e.g., `./-script.tcl`) to prevent it from being treated as an interactive invocation.
+
+_arg ..._::
+Optional arguments passed to the script. They will be available within the script in the Tcl `argv` variable, with the number of arguments in `argc` and the script name in `argv0`.
 
 
+== EXAMPLES
+
+.Running a script with arguments
+====
+[source,bash]
+----
+$ btclsh myscript.tcl arg1 arg2
+----
+Executes `myscript.tcl` with `arg1` and `arg2` passed to the script.
+====
+
+.Interactive mode
+====
+[source,bash]
+----
+$ btclsh
+btclsh> puts "Hello BRL-CAD"
+Hello BRL-CAD
+btclsh> q
+$
+----
+Starts the interactive shell, runs a simple Tcl command, and quits.
+====
 
 
 == SEE ALSO

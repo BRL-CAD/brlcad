@@ -10,18 +10,39 @@ bwhist - display a histogram of a black and white bw file on a framebuffer
 
 [source]
 ----
-bwhist [-v] [file.bw]
+bwhist [-h] [-?] [-v] [file.bw]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bwhist* displays a histogram of the pixel values in a *bw*(5) format file. If a file is not given, standard input is read. The output will be displayed on the frambuffer selected via the `FB_FILE` environment variable (see *libfb*(3)).
+*bwhist* calculates and displays a histogram of the pixel values in a *bw*(5) format file. If a file is not specified, standard input is read. The histogram is displayed on the framebuffer selected via the `FB_FILE` environment variable (see *libfb*(3)).
 
-The relative frequency is displayed on the x axis scaled so that the maximum is full screen. The value 0 is at the bottom of the screen, 255 is at the top.The output is overlaid on whatever is currently on the display.
+The relative frequency of each pixel value is displayed on the x-axis, scaled so that the maximum frequency spans the full width of the screen. The pixel values (0-255) correspond to the y-axis, with 0 (black) at the bottom of the screen and 255 (white) at the top. The histogram is drawn as a white overlay on whatever is currently displayed on the framebuffer.
 
-The *-v* flag will output the histogram values on the terminal.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+Print the calculated histogram values and their relative frequencies to standard output.
+
+*-h*, *-?*::
+Print a usage summary and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Display a histogram of a bw file
+====
+[source,bash]
+----
+$ bwhist -v image.bw
+----
+Displays the histogram of `image.bw` on the active framebuffer and prints the corresponding numerical values to the terminal.
+====
 
 
 [[see_also]]
@@ -33,7 +54,7 @@ The *-v* flag will output the histogram values on the terminal.
 [[bugs]]
 == BUGS
 
-This program assumes it has at least 512 lines in y to work with.
+This program assumes the framebuffer has at least 512 scanlines to display the full histogram (2 lines per pixel value).
 
 
 [[author]]

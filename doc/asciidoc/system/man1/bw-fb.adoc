@@ -10,34 +10,102 @@ bw-fb - display a black and white bw image on a framebuffer
 
 [source]
 ----
-bw-fb [-ahiczRGB] [-F framebuffer] [-s squarefilesize] [-w file_width] [-n file_height] [-S squarescrsize] [-W scr_width] [-N scr_height] [-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y src_yoff] [infile.bw]
+bw-fb [-aiczRGB] [-F framebuffer] [-s squarefilesize] [-w file_width] [-n file_height] [-S squarescrsize] [-W scr_width] [-N scr_height] [-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff] [infile.bw]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bw-fb* reads a *bw*(5) format file from standard input if an input file is not given, and displays the image on the currently selected framebuffer. The environment variable __FB_FILE__ specifies the current framebuffer; see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+*bw-fb* reads a *bw*(5) format file (from standard input if an input file is not given) and displays the image on the currently selected framebuffer. The environment variable __FB_FILE__ specifies the current framebuffer; see *brlcad*(1). 
 
-By default, the _bw_ file (and, automatically, the requested framebuffer size) is assumed to be 512x512 pixels. Specifying the *-a* flag causes the program to attempt to autosize. A table of common image sizes is consulted, and if any match the size of the input file, then the width and height values associated with that size will be used.
 
-If the *-i* flag is specified, the image is output from top to bottom. Customarily, _bw_ files are stored bottom to top, so this inverts the image.
+[[options]]
+== OPTIONS
 
-The *-c* flag causes the screen to be cleared before the image is displayed. The default behavior is to overwrite the current image with the new image without clearing the screen.
+*-F* _framebuffer_::
+Explicitly specify the framebuffer to use.
 
-The *-z* flag will zoom and center on the image being displayed to make it fill the display area.
+*-a*::
+Causes the program to attempt to autosize. A table of common image sizes is consulted, and if any match the size of the input file, then the width and height values associated with that size will be used. By default, the _bw_ file (and, automatically, the requested framebuffer size) is assumed to be 512x512 pixels.
 
-The flags *-R*, *-G*, and *-B* select individual color planes into which the image will be loaded. One or more can be given. By default all three colors are written with the _bw_ pixel value.
+*-i*::
+Output the image from top to bottom. Customarily, _bw_ files are stored bottom to top, so this inverts the image.
 
-The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels. The *-n* _file_height_ flag specifies the height in scanlines of the input file. Both are set to to the same value via *-s* _squarefilesize_. (*-W* _scr_width_, *-N* _scr_height_, and *-S* _squarescrsize_ perform these roles for the display device; if none of these three options are used, the display device uses the dimensions of the input file.)
+*-c*::
+Clear the screen before the image is displayed. The default behavior is to overwrite the current image with the new image without clearing the screen.
 
-*-x* _file_xoff_, *-y* _file_yoff_, *-X* _scr_xoff_, and *-y* _scr_yoff_ will offset into the file or onto the screen by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+*-z*::
+Zoom and center on the image being displayed to make it fill the display area.
+
+*-R*, *-G*, *-B*::
+Select individual color planes (red, green, or blue, respectively) into which the image will be loaded. One or more can be given. By default all three colors are written with the _bw_ pixel value.
+
+*-w* _file_width_::
+Specifies the width of each scanline in the input file, in pixels.
+
+*-n* _file_height_::
+Specifies the height in scanlines of the input file.
+
+*-s* _squarefilesize_::
+Sets both the file width and file height to the given size.
+
+*-W* _scr_width_::
+Specifies the width of the display device.
+
+*-N* _scr_height_::
+Specifies the height of the display device.
+
+*-S* _squarescrsize_::
+Sets both the display width and display height to the given size. If no display dimensions are provided, the display device uses the dimensions of the input file.
+
+*-x* _file_xoff_, *-y* _file_yoff_::
+Offset into the file by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+
+*-X* _scr_xoff_, *-Y* _scr_yoff_::
+Offset onto the screen by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
 
 
 [[format]]
 == FORMAT
 
 A *bw*(5) file contains sequences of pixels. Each pixel is stored as one *unsigned char*. The first pixel in a _bw_ file is the lower left corner of the image. The pixels proceed from left-to-right across each scanline, with scanlines being written from the bottom to the top of the image.
+
+
+[[examples]]
+== EXAMPLES
+
+The following examples demonstrate how to display a _bw_ format file on a framebuffer, including displaying a specific size, autosizing, and displaying only a specific color plane.
+
+.Displaying a 1024x1024 _bw_ file
+====
+[source,bash]
+----
+$ bw-fb -s 1024 image.bw
+----
+
+Displays the 1024x1024 file _image.bw_ on the currently selected framebuffer.
+====
+
+.Autosizing and zooming an image
+====
+[source,bash]
+----
+$ bw-fb -a -z image.bw
+----
+
+Attempts to automatically determine the image dimensions from the file size of _image.bw_ and displays it, zooming in and centering it to fill the display area.
+====
+
+.Displaying an image only in the red color plane
+====
+[source,bash]
+----
+$ bw-fb -R image.bw
+----
+
+Displays _image.bw_ in the red color plane of the framebuffer, leaving the green and blue planes unaffected.
+====
 
 
 [[see_also]]

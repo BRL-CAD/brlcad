@@ -10,14 +10,14 @@ alias-pix - convert an image from Alias(tm) pix format to BRL PIX(5) format
 
 [source]
 ----
-alias-pix [-v] ALIASpixfile BRLpixfile
+alias-pix [-v] < ALIASpixfile > BRLpixfile
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*alias-pix* converts the _Alias pix_ format file on the standard input to an _BRL PIX(5)_ format file on the standard output.
+*alias-pix* converts an Alias(tm) pix format file from standard input to a BRL PIX(5) format file on standard output.
 
 
 [[options]]
@@ -28,9 +28,41 @@ alias-pix [-v] ALIASpixfile BRLpixfile
 print a text summary of the Alias pix file header on standard error output.
 
 
+[[examples]]
+== EXAMPLES
+
+.Convert an Alias(tm) pix file to a BRL PIX(5) file
+====
+[source,bash]
+----
+$ alias-pix < image.alias > image.pix
+----
+Converts the Alias(tm) pix file `image.alias` and saves the output to the BRL PIX(5) file `image.pix`.
+====
+
+.Print file header summary while converting
+====
+[source,bash]
+----
+$ alias-pix -v < image.alias > image.pix
+----
+Converts `image.alias` to `image.pix` and prints a summary of the Alias pix file header to standard error.
+====
 
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2021 by the United States
+Government as represented by U.S. Army Research Laboratory.
+
+[[bug-reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.

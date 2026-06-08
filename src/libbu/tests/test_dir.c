@@ -96,7 +96,7 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
 
     /* make sure nothing in the way */
     bu_file_delete(path);
-    if (bu_file_exists(path, NULL)) {
+    if (bu_file_exists(path, (const char *)NULL)) {
 	bu_log("[ERROR]\nfile [%s] is in the way, could not be deleted\n", path);
 	(*count)++;
 	return;
@@ -105,17 +105,17 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
     /* see if we can write it! */
     fp = fopen(path, "w");
     fclose(fp);
-    check(bu_file_exists(path, NULL), count);
+    check(bu_file_exists(path, (const char *)NULL), count);
     bu_file_delete(path);
 
     /* get and write the test file (again) */
-    cpath = bu_dir(NULL, 0, type, file, NULL);
+    cpath = bu_dir(NULL, 0, type, file, (const char *)NULL);
     PRINT(type, cpath, is writable, "?");
     if (!BU_STR_EMPTY(cpath)) {
 	fp = fopen(cpath, "w");
 	fclose(fp);
     }
-    check(bu_file_exists(cpath, NULL), count);
+    check(bu_file_exists(cpath, (const char *)NULL), count);
     bu_file_delete(cpath);
 
     /* sanity */
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
     /* basic test, get the current directory */
 #ifdef HAVE_GETCWD
     memset(path, 0, MAXPATHLEN);
-    bu_dir(currp, MAXPATHLEN, BU_DIR_CURR, NULL);
+    bu_dir(currp, MAXPATHLEN, BU_DIR_CURR, (const char *)NULL);
     cpath = getcwd(path, MAXPATHLEN);
     if (cpath == NULL) {
 	perror("ERROR, getcwd");
@@ -190,9 +190,9 @@ main(int argc, char *argv[])
 	if (type == BU_DIR_EXT || type == BU_DIR_LIBEXT)
 	    continue;
 
-	bu_dir(path, MAXPATHLEN, type, NULL);
+	bu_dir(path, MAXPATHLEN, type, (const char *)NULL);
 	if (type == BU_DIR_BIN) {
-	    ok = BU_STR_EMPTY(path) || bu_file_directory(path) || bu_file_exists(path, NULL);
+	    ok = BU_STR_EMPTY(path) || bu_file_directory(path) || bu_file_exists(path, (const char *)NULL);
 	    PRINT(type, path, resolves or is empty in an uninstalled tree, "");
 	} else {
 	    ok = !BU_STR_EMPTY(path);
@@ -202,46 +202,46 @@ main(int argc, char *argv[])
     }
 
     /* test absolute composition */
-    if (bu_file_exists("/", NULL)) {
-	cpath = bu_dir(NULL, 0, "/", NULL);
+    if (bu_file_exists("/", (const char *)NULL)) {
+	cpath = bu_dir(NULL, 0, "/", (const char *)NULL);
 	PRINT(BU_DIR_END, cpath, ==, "/");
 	check(BU_STR_EQUAL(cpath, "/"), &failures);
-    } else if (bu_file_exists("C:\\", NULL)) {
-	cpath = bu_dir(NULL, 0, "C:\\", NULL);
+    } else if (bu_file_exists("C:\\", (const char *)NULL)) {
+	cpath = bu_dir(NULL, 0, "C:\\", (const char *)NULL);
 	PRINT(BU_DIR_END, cpath, ==, "C:\\");
 	check(BU_STR_EQUAL(cpath, "C:\\"), &failures);
     }
 
     /* slightly more complex bindir composition */
-    if (bu_file_exists("/bin/sh", NULL)) {
-	cpath = bu_dir(NULL, 0, "/", "bin", "sh", NULL);
+    if (bu_file_exists("/bin/sh", (const char *)NULL)) {
+	cpath = bu_dir(NULL, 0, "/", "bin", "sh", (const char *)NULL);
 	PRINT(BU_DIR_END, cpath, ==, "/bin/sh");
 	check(BU_STR_EQUAL(cpath, "/bin/sh"), &failures);
 
-	cpath = bu_dir(NULL, 0, "/", "bin", "sh", BU_DIR_EXT, NULL);
+	cpath = bu_dir(NULL, 0, "/", "bin", "sh", BU_DIR_EXT, (const char *)NULL);
 	PRINT(BU_DIR_EXT, cpath, ==, "/bin/sh");
 	check(BU_STR_EQUAL(cpath, "/bin/sh"), &failures);
-    } else if (bu_file_exists("C:\\Windows\\System32\\cmd.exe", NULL)) {
-	cpath = bu_dir(NULL, 0, "C:\\", "Windows", "System32", "cmd.exe", NULL);
+    } else if (bu_file_exists("C:\\Windows\\System32\\cmd.exe", (const char *)NULL)) {
+	cpath = bu_dir(NULL, 0, "C:\\", "Windows", "System32", "cmd.exe", (const char *)NULL);
 	PRINT(BU_DIR_END, cpath, ==, "C:\\Windows\\System32\\cmd.exe");
 	check(BU_STR_EQUAL(cpath, "C:\\Windows\\System32\\cmd.exe"), &failures);
 
-	cpath = bu_dir(NULL, 0, "C:\\", "Windows", "System32", "cmd", BU_DIR_EXT, NULL);
+	cpath = bu_dir(NULL, 0, "C:\\", "Windows", "System32", "cmd", BU_DIR_EXT, (const char *)NULL);
 	PRINT(BU_DIR_EXT, cpath, ==, "C:\\Windows\\System32\\cmd.exe");
 	check(BU_STR_EQUAL(cpath, "C:\\Windows\\System32\\cmd.exe"), &failures);
     }
 
     /* current dir <> init dir */
-    bu_dir(initp, MAXPATHLEN, BU_DIR_INIT, NULL);
+    bu_dir(initp, MAXPATHLEN, BU_DIR_INIT, (const char *)NULL);
     PRINT(BU_DIR_INIT, currp, !empty && ==, initp);
     check(!BU_STR_EMPTY(currp) && BU_STR_EQUAL(currp, initp), &failures);
-    cpath = bu_dir(NULL, 0, currp, "..", NULL);
+    cpath = bu_dir(NULL, 0, currp, "..", (const char *)NULL);
     ret = chdir(cpath);
     if (ret != 0) {
 	perror("ERROR, chdir");
 	failures++;
     }
-    bu_dir(workp, MAXPATHLEN, BU_DIR_CURR, NULL);
+    bu_dir(workp, MAXPATHLEN, BU_DIR_CURR, (const char *)NULL);
     PRINT(BU_DIR_CURR, workp, !empty && !=, initp);
     check(!BU_STR_EMPTY(workp) && !BU_STR_EQUAL(workp, initp), &failures);
     ret = chdir(initp);
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 	perror("ERROR, chdir");
 	failures++;
     }
-    bu_dir(currp, MAXPATHLEN, BU_DIR_CURR, NULL);
+    bu_dir(currp, MAXPATHLEN, BU_DIR_CURR, (const char *)NULL);
     PRINT(BU_DIR_CURR, currp, !empty && ==, initp);
     check(!BU_STR_EMPTY(currp) && BU_STR_EQUAL(currp, initp), &failures);
 
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
     /* TODO: need something to test, but nada installed yet */
 
     /* libdir and library extension expansion */
-    cpath = bu_dir(NULL, 0, BU_DIR_LIB, NULL);
+    cpath = bu_dir(NULL, 0, BU_DIR_LIB, (const char *)NULL);
     {
 	const char *extensions[4] = {".so", ".dylib", ".dll", NULL};
 	char libdir[MAXPATHLEN] = {0};
@@ -265,13 +265,13 @@ main(int argc, char *argv[])
 	bu_strlcpy(libdir, cpath, MAXPATHLEN);
 	for (i = 0; i < sizeof(extensions) / sizeof(extensions[0]); i++) {
 	    snprintf(path, MAXPATHLEN, "%s/libbu%s", libdir, extensions[i]);
-	    if (bu_file_exists(path, NULL)) {
-		bu_dir(lpath, MAXPATHLEN, BU_DIR_LIB, "libbu", BU_DIR_LIBEXT, NULL);
+	    if (bu_file_exists(path, (const char *)NULL)) {
+		bu_dir(lpath, MAXPATHLEN, BU_DIR_LIB, "libbu", BU_DIR_LIBEXT, (const char *)NULL);
 		PRINT(BU_DIR_LIBEXT, path, ==, lpath);
 		check(BU_STR_EQUAL(path, lpath), &failures);
 
 		memset(lpath, 0, MAXPATHLEN);
-		bu_dir(lpath, MAXPATHLEN, libdir, "libbu", BU_DIR_LIBEXT, NULL);
+		bu_dir(lpath, MAXPATHLEN, libdir, "libbu", BU_DIR_LIBEXT, (const char *)NULL);
 		PRINT(BU_DIR_LIBEXT, path, ==, lpath);
 		check(BU_STR_EQUAL(path, lpath), &failures);
 	    }
@@ -283,12 +283,12 @@ main(int argc, char *argv[])
 
     /* includedir */
     memset(path, 0, MAXPATHLEN);
-    bu_dir(path, MAXPATHLEN, BU_DIR_INCLUDE, "conf", NULL);
+    bu_dir(path, MAXPATHLEN, BU_DIR_INCLUDE, "conf", (const char *)NULL);
     PRINT(BU_DIR_INCLUDE, path, !=, "");
     check(!BU_STR_EMPTY(path), &failures);
 
     memset(path, 0, MAXPATHLEN);
-    bu_dir(path, MAXPATHLEN, BU_DIR_INCLUDE, "conf", "MAJOR", NULL);
+    bu_dir(path, MAXPATHLEN, BU_DIR_INCLUDE, "conf", "MAJOR", (const char *)NULL);
     PRINT(BU_DIR_INCLUDE, path, !=, "");
     check(!BU_STR_EMPTY(path), &failures);
 
@@ -303,7 +303,7 @@ main(int argc, char *argv[])
 
     /* tempdir, should be writable */
     memset(path, 0, MAXPATHLEN);
-    bu_dir(path, MAXPATHLEN, BU_DIR_TEMP, NULL);
+    bu_dir(path, MAXPATHLEN, BU_DIR_TEMP, (const char *)NULL);
     if (!BU_STR_EMPTY(path)) {
 	test_writable(BU_DIR_TEMP, path, &failures);
     } else {
@@ -313,7 +313,7 @@ main(int argc, char *argv[])
 
     /* homedir */
     memset(path, 0, MAXPATHLEN);
-    bu_dir(path, MAXPATHLEN, BU_DIR_HOME, NULL);
+    bu_dir(path, MAXPATHLEN, BU_DIR_HOME, (const char *)NULL);
     if (!BU_STR_EMPTY(path)) {
 	test_writable(BU_DIR_HOME, path, &failures);
     } else {
@@ -323,7 +323,7 @@ main(int argc, char *argv[])
 
     /* cachedir */
     memset(path, 0, MAXPATHLEN);
-    bu_dir(path, MAXPATHLEN, BU_DIR_CACHE, NULL);
+    bu_dir(path, MAXPATHLEN, BU_DIR_CACHE, (const char *)NULL);
     if (!BU_STR_EMPTY(path)) {
 	test_writable(BU_DIR_CACHE, path, &failures);
     } else {
@@ -333,7 +333,7 @@ main(int argc, char *argv[])
 
     /* configdir */
     memset(path, 0, MAXPATHLEN);
-    bu_dir(path, MAXPATHLEN, BU_DIR_CONFIG, NULL);
+    bu_dir(path, MAXPATHLEN, BU_DIR_CONFIG, (const char *)NULL);
     if (!BU_STR_EMPTY(path)) {
 	test_writable(BU_DIR_CONFIG, path, &failures);
     } else {
@@ -342,36 +342,36 @@ main(int argc, char *argv[])
     }
 
     /* input edge cases */
-    cpath = bu_dir(NULL, 0, NULL);
+    cpath = bu_dir(NULL, 0, (void*)NULL);
     PRINT(BU_DIR_END, cpath, ==, "");
     check(cpath != NULL && BU_STR_EMPTY(cpath), &failures);
 
-    cpath = bu_dir(NULL, MAXPATHLEN, NULL);
-    PRINT(BU_DIR_END, cpath, ==, "");
-    check(cpath != NULL && BU_STR_EMPTY(cpath), &failures);
-
-    memset(path, 0, MAXPATHLEN);
-    cpath = bu_dir(path, 0, NULL);
+    cpath = bu_dir(NULL, MAXPATHLEN, (void*)NULL);
     PRINT(BU_DIR_END, cpath, ==, "");
     check(cpath != NULL && BU_STR_EMPTY(cpath), &failures);
 
     memset(path, 0, MAXPATHLEN);
-    cpath = bu_dir(path, 1, ".", NULL);
+    cpath = bu_dir(path, 0, (void*)NULL);
+    PRINT(BU_DIR_END, cpath, ==, "");
+    check(cpath != NULL && BU_STR_EMPTY(cpath), &failures);
+
+    memset(path, 0, MAXPATHLEN);
+    cpath = bu_dir(path, 1, ".", (void*)NULL);
     PRINT(BU_DIR_END, cpath, ==, "");
     check(BU_STR_EMPTY(cpath), &failures);
 
     memset(path, 0, MAXPATHLEN);
-    cpath = bu_dir(path, 2, ".", NULL);
+    cpath = bu_dir(path, 2, ".", (void*)NULL);
     PRINT(BU_DIR_END, cpath, !=, "");
     check(!BU_STR_EMPTY(cpath), &failures);
 
     memset(path, 0, MAXPATHLEN);
-    cpath = bu_dir(path, 1, "/", NULL);
+    cpath = bu_dir(path, 1, "/", (void*)NULL);
     PRINT(BU_DIR_END, cpath, ==, "");
     check(BU_STR_EMPTY(cpath), &failures);
 
     memset(path, 0, MAXPATHLEN);
-    cpath = bu_dir(path, 2, "/", NULL);
+    cpath = bu_dir(path, 2, "/", (void*)NULL);
     PRINT(BU_DIR_END, cpath, !=, "");
     check(!BU_STR_EMPTY(cpath), &failures);
 
