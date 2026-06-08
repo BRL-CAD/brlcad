@@ -1353,7 +1353,7 @@ comb_crofton_sample(const struct rt_db_internal *ip, double *out_sa, double *out
     double sa  = 0.0;
     double vol = 0.0;
     /* Use default params (NULL → 2 000-ray convergence loop) */
-    (void)rt_crofton_shoot(rtip, NULL, &sa, &vol);
+    (void)rt_crofton_shoot(&sa, &vol, rtip, NULL, NULL, NULL);
 
     if (out_sa)  *out_sa  = sa;
     if (out_vol) *out_vol = vol;

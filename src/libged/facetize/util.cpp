@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <cmath>
 #include <string.h>
 
 #include <iostream>
@@ -34,6 +35,7 @@
 #include "bu/path.h"
 #include "bu/ptbl.h"
 #include "rt/search.h"
+#include "rt/calc.h"
 #include "rt/db_instance.h"
 #include "rt/primitives/bot.h"
 #include "wdb.h"
@@ -73,6 +75,32 @@ _db_uniq_test(struct bu_vls *n, void *data)
     struct db_i *dbip = (struct db_i *)data;
     if (db_lookup(dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
     return 0;
+}
+
+int
+_ged_facetize_csg_bbox(struct db_i *dbip, const char *obj_name, point_t rpp_min, point_t rpp_max)
+{
+    if (!dbip || !obj_name || !rpp_min || !rpp_max)
+	return BRLCAD_ERROR;
+
+    struct directory *dp = db_lookup(dbip, obj_name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    if (rt_bound_internal(dbip, dp, rpp_min, rpp_max) != 0)
+	return BRLCAD_ERROR;
+
+    vect_t d;
+    VSUB2(d, rpp_max, rpp_min);
+    if (d[X] <= 0.0 || d[Y] <= 0.0 || d[Z] <= 0.0)
+	return BRLCAD_ERROR;
+
+    for (int i = 0; i < 3; i++) {
+	if (!std::isfinite(rpp_min[i]) || !std::isfinite(rpp_max[i]))
+	    return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
 }
 
 int

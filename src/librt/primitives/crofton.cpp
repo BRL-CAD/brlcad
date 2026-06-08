@@ -314,20 +314,24 @@ do_one_iteration(struct application *ap_template,
  * and freeing (rt_i_destroy) @p rtip.  This function does NOT call
  * rt_i_destroy.
  *
+ * @param out_surf_area Receives the estimated surface area (mm^2).
+ * @param out_volume    Receives the estimated volume (mm^3).
  * @param rtip         Prepared raytrace instance (rt_prep_parallel must
  *                     have been called before this function).
  * @param params       Stopping criteria (see struct rt_crofton_params).
- *                     NULL or all-zero → 2 000-ray default behaviour.
- * @param out_surf_area Receives the estimated surface area (mm^2).
- * @param out_volume    Receives the estimated volume (mm^3).
+ *                     NULL or all-zero -> 2 000-ray default behaviour.
+ * @param bbox_min     Optional focused sampling bbox minimum, or NULL.
+ * @param bbox_max     Optional focused sampling bbox maximum, or NULL.
  * @return  The total number of ray-surface crossings accumulated during
  *          sampling (>= 0) on success; -1 on bad arguments.
  */
 int
-rt_crofton_shoot(struct rt_i                      *rtip,
-		 const struct rt_crofton_params   *params,
-		 double                           *out_surf_area,
-		 double                           *out_volume)
+rt_crofton_shoot(double                         *out_surf_area,
+		 double                         *out_volume,
+		 struct rt_i                    *rtip,
+		 const struct rt_crofton_params *params,
+		 const fastf_t                  *bbox_min,
+		 const fastf_t                  *bbox_max)
 {
     if (!rtip || (!out_surf_area && !out_volume))
 	return -1;
@@ -347,32 +351,39 @@ rt_crofton_shoot(struct rt_i                      *rtip,
      * and use their union RPP to build the Crofton sphere.  For large geometry
      * that already spans integer-mm boundaries the result is identical to the
      * old rti_radius / mdl_min / mdl_max path.                              */
-    point_t tight_min, tight_max;
-    VSETALL(tight_min,  MAX_FASTF);
-    VSETALL(tight_max, -MAX_FASTF);
-    {
-	struct soltab *stp;
-	RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-	    VMIN(tight_min, stp->st_min);
-	    VMAX(tight_max, stp->st_max);
-	} RT_VISIT_ALL_SOLTABS_END;
-    }
-
     double R;
     point_t center;
-    if (tight_min[X] < MAX_FASTF) {
-	/* Tight path: use actual object extents */
-	VADD2SCALE(center, tight_max, tight_min, 0.5);
-	vect_t tight_diag;
-	VSUB2(tight_diag, tight_max, tight_min);
-	R = 0.5 * MAGNITUDE(tight_diag);
-	/* Sanity: fall back if something degenerate slipped through */
-	if (R <= 0.0)
-	    R = rtip->rti_radius;
+    if (bbox_min && bbox_max) {
+	VADD2SCALE(center, bbox_max, bbox_min, 0.5);
+	vect_t bbox_diag;
+	VSUB2(bbox_diag, bbox_max, bbox_min);
+	R = 0.5 * MAGNITUDE(bbox_diag);
     } else {
-	/* No soltabs (unusual): fall back to the inflated rti values */
-	R = rtip->rti_radius;
-	VADD2SCALE(center, rtip->mdl_max, rtip->mdl_min, 0.5);
+	point_t tight_min, tight_max;
+	VSETALL(tight_min,  MAX_FASTF);
+	VSETALL(tight_max, -MAX_FASTF);
+	{
+	    struct soltab *stp;
+	    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+		VMIN(tight_min, stp->st_min);
+		VMAX(tight_max, stp->st_max);
+	    } RT_VISIT_ALL_SOLTABS_END;
+	}
+
+	/* Tight path: use actual object extents */
+	if (tight_min[X] < MAX_FASTF) {
+	    VADD2SCALE(center, tight_max, tight_min, 0.5);
+	    vect_t tight_diag;
+	    VSUB2(tight_diag, tight_max, tight_min);
+	    R = 0.5 * MAGNITUDE(tight_diag);
+	    /* Sanity: fall back if something degenerate slipped through */
+	    if (R <= 0.0)
+		R = rtip->rti_radius;
+	} else {
+	    /* No soltabs (unusual): fall back to the inflated rti values */
+	    R = rtip->rti_radius;
+	    VADD2SCALE(center, rtip->mdl_max, rtip->mdl_min, 0.5);
+	}
     }
 
     if (R <= 0.0) {
@@ -702,7 +713,7 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
     /* ---- Run Crofton estimator ---- */
     double sa  = 0.0;
     double vol = 0.0;
-    (void)rt_crofton_shoot(rtip, params, &sa, &vol);
+    (void)rt_crofton_shoot(&sa, &vol, rtip, params, NULL, NULL);
 
     if (out_sa)  *out_sa  = sa;
     if (out_vol) *out_vol = vol;

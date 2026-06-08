@@ -297,7 +297,7 @@ run_convergence_case(struct db_i *dbip,
 	if (target_pct <= 5.0)
 	    p.time_ms = 2000.0;
 	int64_t t0 = bu_gettime();
-	cr = rt_crofton_shoot(rtip, &p, &sa, &vol);
+	cr = rt_crofton_shoot(&sa, &vol, rtip, &p, NULL, NULL);
 	run_sec = (double)(bu_gettime() - t0) / 1000000.0;
 	rt_i_destroy(rtip);
 

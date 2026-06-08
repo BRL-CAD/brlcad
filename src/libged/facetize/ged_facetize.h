@@ -119,6 +119,9 @@ extern int
 _ged_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, int verbosity);
 
 extern int
+_ged_facetize_csg_bbox(struct db_i *dbip, const char *obj_name, point_t rpp_min, point_t rpp_max);
+
+extern int
 _ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *leaf_dps);
 
 extern int

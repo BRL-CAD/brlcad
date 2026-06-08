@@ -293,7 +293,7 @@ crofton_on_obj(struct db_i *dbip, const char *obj_name, size_t n_rays,
     }
 
     double sa = 0.0, vol = 0.0;
-    int cr = rt_crofton_shoot(rtip, &crp, &sa, &vol);
+    int cr = rt_crofton_shoot(&sa, &vol, rtip, &crp, NULL, NULL);
     rt_i_destroy(rtip);
 
     if (cr < 0) return -1;

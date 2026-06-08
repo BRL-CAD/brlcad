@@ -119,6 +119,9 @@ _crofton_on_obj(struct db_i *dbip, const char *obj_name, double &out_sa, double 
 {
     out_sa = out_vol = -1.0;
 
+    point_t focus_min, focus_max;
+    int have_focus = (_ged_facetize_csg_bbox(dbip, obj_name, focus_min, focus_max) == BRLCAD_OK);
+
     struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip) return -1L;
 
@@ -128,12 +131,14 @@ _crofton_on_obj(struct db_i *dbip, const char *obj_name, double &out_sa, double 
     }
     rt_prep_parallel(rtip, 1);
 
-    struct rt_crofton_params crp;
+    struct rt_crofton_params crp = {};
     crp.n_rays = 0;
     crp.stability_mm = 0.05;
     crp.time_ms = 2000.0;
 
-    int cr = rt_crofton_shoot(rtip, &crp, &out_sa, &out_vol);
+    int cr = rt_crofton_shoot(&out_sa, &out_vol, rtip, &crp,
+	    have_focus ? focus_min : NULL,
+	    have_focus ? focus_max : NULL);
     rt_i_destroy(rtip);
     return (cr >= 0) ? (long)cr : -1L;
 }

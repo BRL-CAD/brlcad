@@ -184,6 +184,9 @@ csg_crofton_volume(struct db_i *dbip, const char *obj_name, double *out_vol)
 	return BRLCAD_ERROR;
 
     *out_vol = -1.0;
+    point_t focus_min, focus_max;
+    int have_focus = (_ged_facetize_csg_bbox(dbip, obj_name, focus_min, focus_max) == BRLCAD_OK);
+
     struct rt_i *rtip = rt_i_create(dbip);
     if (!rtip)
 	return BRLCAD_ERROR;
@@ -194,8 +197,11 @@ csg_crofton_volume(struct db_i *dbip, const char *obj_name, double *out_vol)
     rt_prep_parallel(rtip, 1);
 
     double sa = 0.0, vol = 0.0;
-    struct rt_crofton_params crp = {FACETIZE_EMPTY_CHECK_CROFTON_RAYS, 0.0, 0.0};
-    int rc = rt_crofton_shoot(rtip, &crp, &sa, &vol);
+    struct rt_crofton_params crp = {};
+    crp.n_rays = FACETIZE_EMPTY_CHECK_CROFTON_RAYS;
+    int rc = rt_crofton_shoot(&sa, &vol, rtip, &crp,
+	    have_focus ? focus_min : NULL,
+	    have_focus ? focus_max : NULL);
     rt_i_destroy(rtip);
     if (rc < 0)
 	return BRLCAD_ERROR;

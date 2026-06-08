@@ -275,7 +275,7 @@ run_crofton(struct rt_i *rtip, const struct rt_crofton_params *p)
     memset(&r, 0, sizeof(r));
 
     int64_t t0 = bu_gettime();
-    r.ok = rt_crofton_shoot(rtip, p, &r.sa, &r.vol);
+    r.ok = rt_crofton_shoot(&r.sa, &r.vol, rtip, p, NULL, NULL);
     r.wall_sec = (double)(bu_gettime() - t0) / 1e6;
     return r;
 }
