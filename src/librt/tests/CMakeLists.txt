@@ -103,6 +103,12 @@ brlcad_addexec(rt_prim_tess prim_tess.c "librt;libnmg;libwdb;libbg;libbu;${M_LIB
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_crofton COMMAND rt_crofton)
 
+# standalone DSP surface area + volume checks
+brlcad_addexec(rt_dsp_sa_vol_check dsp_sa_vol_check.c "librt;libbu" TEST)
+brlcad_add_test(NAME rt_dsp_sa_vol_check COMMAND rt_dsp_sa_vol_check)
+# "-c" compares against Crofton
+brlcad_add_test(NAME rt_dsp_sa_vol_compare COMMAND rt_dsp_sa_vol_check -c)
+
 # DSP raytrace consistency + timing check (HBB+DDA path)
 brlcad_addexec(rt_dsp_raytrace_check dsp_raytrace_check.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_dsp_raytrace_check COMMAND rt_dsp_raytrace_check)
@@ -114,6 +120,7 @@ set(
   binary_attribute.c
   crofton.c
   dsp_raytrace_check.c
+  dsp_sa_vol_check.c
   brep_boolean_tests.g
   cyclic_tests.g
   extreme_ssi_test.g

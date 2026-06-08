@@ -35,6 +35,9 @@ RT_EXPORT extern int dsp_pos(point_t out,
 			     struct soltab *stp,
 			     point_t p);
 
+RT_EXPORT extern void rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip);
+
+RT_EXPORT extern void rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip);
 
 __END_DECLS
 
