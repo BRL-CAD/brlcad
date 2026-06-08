@@ -253,6 +253,18 @@ pnt_sampling_methods:
 
     bu_vls_sprintf(method_flag, "FAIL");
 
+    std::ostringstream methods;
+    for (std::set<std::string>::iterator it = mset.begin(); it != mset.end(); ++it) {
+	if (it != mset.begin())
+	    methods << ", ";
+	methods << *it;
+    }
+    std::string method_list = methods.str();
+    bu_log("FACETIZE_PROCESS: failed to tessellate %s (%s) with active method(s): %s. Try a different --methods list, increase the method max_time, or inspect the primitive with 'lint'.\n",
+	    dp->d_namep,
+	    intern.idb_meth ? intern.idb_meth->ft_label : "unknown",
+	    method_list.empty() ? "none" : method_list.c_str());
+
     if (pnts)
 	rt_pnts_free(pnts);
 
@@ -453,4 +465,3 @@ COMPILER_DLLEXPORT const struct ged_process_plugin *ged_process_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

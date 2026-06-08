@@ -69,6 +69,36 @@ facetize_log(struct _ged_facetize_state *s, int msg_level, const char *fmt, ...)
     bu_vls_free(&output);
 }
 
+void
+facetize_failure_clear(struct _ged_facetize_state *s)
+{
+    if (!s || !s->failure_msg)
+	return;
+
+    bu_vls_trunc(s->failure_msg, 0);
+}
+
+void
+facetize_failure(struct _ged_facetize_state *s, const char *fmt, ...)
+{
+    va_list ap;
+
+    if (!s || !s->failure_msg)
+	return;
+    if (UNLIKELY(!fmt || strlen(fmt) == 0))
+	return;
+
+    /* Preserve the first concrete failure cause.  Later cleanup/write errors
+     * are usually consequences, and replacing the first cause makes reports
+     * less actionable. */
+    if (bu_vls_strlen(s->failure_msg))
+	return;
+
+    va_start(ap, fmt);
+    bu_vls_vprintf(s->failure_msg, fmt, ap);
+    va_end(ap);
+}
+
 int
 _db_uniq_test(struct bu_vls *n, void *data)
 {

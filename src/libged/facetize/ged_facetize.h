@@ -67,6 +67,7 @@ struct _ged_facetize_state {
     struct bu_vls *bname;
     struct bu_vls *log_file;
     FILE *lfile;
+    struct bu_vls *failure_msg;
 
     // Processing
     int regions;
@@ -99,6 +100,12 @@ struct _ged_facetize_state {
 
 extern void
 facetize_log(struct _ged_facetize_state *, int msg_level, const char *, ...) _BU_ATTR_PRINTF34;
+
+extern void
+facetize_failure_clear(struct _ged_facetize_state *);
+
+extern void
+facetize_failure(struct _ged_facetize_state *, const char *, ...) _BU_ATTR_PRINTF23;
 
 extern int
 _db_uniq_test(struct bu_vls *n, void *data);

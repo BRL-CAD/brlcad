@@ -100,6 +100,9 @@ _ged_facetize_state_create()
 
     s->lfile = NULL;
 
+    BU_GET(s->failure_msg, struct bu_vls);
+    bu_vls_init(s->failure_msg);
+
     BU_GET(s->wfile, struct bu_vls);
     bu_vls_init(s->wfile);
 
@@ -153,6 +156,11 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
     if (s->log_file) {
 	bu_vls_free(s->log_file);
 	BU_PUT(s->log_file, struct bu_vls);
+    }
+
+    if (s->failure_msg) {
+	bu_vls_free(s->failure_msg);
+	BU_PUT(s->failure_msg, struct bu_vls);
     }
 
     if (s->wfile) {
