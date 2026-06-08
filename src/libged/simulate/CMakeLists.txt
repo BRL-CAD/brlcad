@@ -9,9 +9,7 @@ endif()
 if(BRLCAD_ENABLE_BULLET)
   if(BULLET_LIBRARIES)
     add_definitions(-DHAVE_BULLET=1)
-    if(BULLET_BT_USE_DOUBLE_PRECISION)
-      add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
-    endif()
+    add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
 
     get_filename_component(BULLET_INCLUDE_DIR_FULL "${BULLET_INCLUDE_DIR}" ABSOLUTE)
 
