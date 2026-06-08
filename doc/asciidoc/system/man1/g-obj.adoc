@@ -4,36 +4,158 @@
 :manmanual: User Commands
 
 == NAME
-g-obj - BRL-CAD to Wavefront Object File converter
+g-obj - Convert BRL-CAD geometry to Wavefront OBJ
 
 == SYNOPSIS
 
 [source]
 ----
-g-obj [-mviu] [-xX lvl] [-e error_file] [-D calculation_tolerance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P number_of_CPUs] [-o output.obj] database.g object(s)
+g-obj [-h] [-m] [-v] [-i] [-u] [-x rt_debug] [-X nmg_debug]
+      [-a abs_tol] [-r rel_tol] [-n norm_tol]
+      [-D calc_tolerance] [-P number_of_CPUs]
+      [-e error_file] [-o output.obj]
+      database.g object(s)
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*g-obj* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _Wavefront_ _OBJ_ file format. The *-x* option specifies an RT debug flag and the *-X* option specifies an NMG debug flag. The *-a* , *-r* , and *-n* options specify tessellation tolerances. The *-P* option specifies the number of CPUs. The *-D* option specifies a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex. The *-u* option specifies that vertex normals are desired. The *-v* option requests verbose output. The *-i* option requests the output file units to be inches (the default is mm). The *-o* option specifies the name of the file to receive the output (stdout is the default). When writing to a named OBJ file, *g-obj* also writes a companion _.mtl_ file and uses it to preserve effective BRL-CAD object and region colors. The *-m* option will result in 'usemtl' statements in the output file. When *-m* is used, the generated material names preserve the BRL-CAD aircode, LOS, and material code information, and append a color suffix when needed to keep distinct RGB assignments separate. The *-e* option specifies a file for receiving the error messages. If OBJ output is sent to stdout, no companion _.mtl_ file can be created and BRL-CAD colors are therefore not exported.
+*g-obj* converts the specified _object(s)_ from a BRL-CAD _database.g_
+ file to the Wavefront _OBJ_ format using NMG tessellation.
+
+OBJ output is written to _output.obj_ when the *-o* option is
+supplied. Otherwise the OBJ data is written to stdout. Output
+coordinates are written in millimeters by default; the *-i* option
+switches the output units to inches.
+
+When writing to a named OBJ file, *g-obj* also writes a companion
+_.mtl_ file. That material file is used to preserve effective BRL-CAD
+colors, including colors defined on geometry, inherited from
+combinations, or supplied by BRL-CAD region color mappings. If OBJ
+output is written to stdout, no companion _.mtl_ file can be created
+and BRL-CAD colors are therefore not exported.
 
 
-[[example]]
-== EXAMPLE
+[[options]]
+== OPTIONS
+
+*-h*, *-?*::
+Print a usage summary and exit.
 
 
-----
+*-a* _abs_tol_::
+Set the absolute tessellation tolerance.
 
+
+*-r* _rel_tol_::
+Set the relative tessellation tolerance.
+
+
+*-n* _norm_tol_::
+Set the surface-normal tessellation tolerance.
+
+
+*-D* _calc_tolerance_::
+Set the calculational distance tolerance, in millimeters. Vertices
+closer together than this distance are treated as the same vertex.
+
+
+*-e* _error_file_::
+Write diagnostics to _error_file_. By default, diagnostics are written
+to stderr.
+
+
+*-i*::
+Write output coordinates in inches. The default output unit is
+millimeters.
+
+
+*-m*::
+Emit `usemtl` statements. When a companion _.mtl_ file is being
+written, the generated material names preserve BRL-CAD aircode, LOS,
+and material identifiers, and append a color suffix when needed to
+distinguish different RGB assignments.
+
+
+*-o* _output.obj_::
+Write OBJ output to _output.obj_. When this option is used, *g-obj*
+also writes a companion _.mtl_ file with the same base name.
+
+
+*-P* _number_of_CPUs_::
+Request use of _number_of_CPUs_ CPUs during processing.
+
+
+*-u*::
+Write vertex normals.
+
+
+*-v*::
+Request verbose output.
+
+
+*-x* _rt_debug_::
+Set RT debug flags.
+
+
+*-X* _nmg_debug_::
+Set NMG debug flags.
+
+
+[[output_files]]
+== OUTPUT FILES
+
+When *-o* is used, *g-obj* writes both an OBJ file and a companion
+material file. For example, `-o sample.obj` produces _sample.obj_ and
+_sample.mtl_.
+
+When effective BRL-CAD colors are present, the companion _.mtl_ file
+contains matching material definitions and the OBJ output references
+them with `usemtl` statements. Without *-m*, color-driven materials
+use simple names such as `color_12_34_56`. With *-m*, the names retain
+BRL-CAD aircode, LOS, and material information and add a color suffix
+when needed.
+
+If OBJ output is written to stdout instead of a named file, no
+companion _.mtl_ file is created and BRL-CAD color assignments are
+omitted from the export.
+
+
+[[examples]]
+== EXAMPLES
+
+.Export an object to OBJ and MTL files
+[example]
+====
+....
 $ g-obj -o sample.obj sample.g sample_object
-----
+....
 
+Write _sample.obj_ and companion material definitions in _sample.mtl_.
+====
 
-[[diagnostics]]
-== DIAGNOSTICS
+.Export with vertex normals and `usemtl` statements
+[example]
+====
+....
+$ g-obj -m -u -o sample.obj sample.g sample_object
+....
 
-Error messages are intended to be self-explanatory.
+Write OBJ geometry with vertex normals and material references. The
+companion _.mtl_ file preserves BRL-CAD color information.
+====
+
+.Write OBJ output to stdout in inches
+[example]
+====
+....
+$ g-obj -i sample.g sample_object > sample.obj
+....
+
+Write OBJ geometry in inches to stdout. Since no named OBJ output file
+is used, no companion _.mtl_ file is created.
+====
 
 
 [[author]]
@@ -45,10 +167,12 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1997-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1997-2026 by the United States
+Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
 == BUG REPORTS
 
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+Reports of bugs or problems should be submitted via electronic mail to
+devs@brlcad.org
