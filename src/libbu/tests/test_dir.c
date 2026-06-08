@@ -96,7 +96,7 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
 
     /* make sure nothing in the way */
     bu_file_delete(path);
-    if (bu_file_exists(path, (const char *)NULL)) {
+    if (bu_file_exists(path, NULL)) {
 	bu_log("[ERROR]\nfile [%s] is in the way, could not be deleted\n", path);
 	(*count)++;
 	return;
@@ -105,7 +105,7 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
     /* see if we can write it! */
     fp = fopen(path, "w");
     fclose(fp);
-    check(bu_file_exists(path, (const char *)NULL), count);
+    check(bu_file_exists(path, NULL), count);
     bu_file_delete(path);
 
     /* get and write the test file (again) */
@@ -115,7 +115,7 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
 	fp = fopen(cpath, "w");
 	fclose(fp);
     }
-    check(bu_file_exists(cpath, (const char *)NULL), count);
+    check(bu_file_exists(cpath, NULL), count);
     bu_file_delete(cpath);
 
     /* sanity */
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 
 	bu_dir(path, MAXPATHLEN, type, (const char *)NULL);
 	if (type == BU_DIR_BIN) {
-	    ok = BU_STR_EMPTY(path) || bu_file_directory(path) || bu_file_exists(path, (const char *)NULL);
+	    ok = BU_STR_EMPTY(path) || bu_file_directory(path) || bu_file_exists(path, NULL);
 	    PRINT(type, path, resolves or is empty in an uninstalled tree, "");
 	} else {
 	    ok = !BU_STR_EMPTY(path);
@@ -202,18 +202,18 @@ main(int argc, char *argv[])
     }
 
     /* test absolute composition */
-    if (bu_file_exists("/", (const char *)NULL)) {
+    if (bu_file_exists("/", NULL)) {
 	cpath = bu_dir(NULL, 0, "/", (const char *)NULL);
 	PRINT(BU_DIR_END, cpath, ==, "/");
 	check(BU_STR_EQUAL(cpath, "/"), &failures);
-    } else if (bu_file_exists("C:\\", (const char *)NULL)) {
+    } else if (bu_file_exists("C:\\", NULL)) {
 	cpath = bu_dir(NULL, 0, "C:\\", (const char *)NULL);
 	PRINT(BU_DIR_END, cpath, ==, "C:\\");
 	check(BU_STR_EQUAL(cpath, "C:\\"), &failures);
     }
 
     /* slightly more complex bindir composition */
-    if (bu_file_exists("/bin/sh", (const char *)NULL)) {
+    if (bu_file_exists("/bin/sh", NULL)) {
 	cpath = bu_dir(NULL, 0, "/", "bin", "sh", (const char *)NULL);
 	PRINT(BU_DIR_END, cpath, ==, "/bin/sh");
 	check(BU_STR_EQUAL(cpath, "/bin/sh"), &failures);
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 	cpath = bu_dir(NULL, 0, "/", "bin", "sh", BU_DIR_EXT, (const char *)NULL);
 	PRINT(BU_DIR_EXT, cpath, ==, "/bin/sh");
 	check(BU_STR_EQUAL(cpath, "/bin/sh"), &failures);
-    } else if (bu_file_exists("C:\\Windows\\System32\\cmd.exe", (const char *)NULL)) {
+    } else if (bu_file_exists("C:\\Windows\\System32\\cmd.exe", NULL)) {
 	cpath = bu_dir(NULL, 0, "C:\\", "Windows", "System32", "cmd.exe", (const char *)NULL);
 	PRINT(BU_DIR_END, cpath, ==, "C:\\Windows\\System32\\cmd.exe");
 	check(BU_STR_EQUAL(cpath, "C:\\Windows\\System32\\cmd.exe"), &failures);
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
 	bu_strlcpy(libdir, cpath, MAXPATHLEN);
 	for (i = 0; i < sizeof(extensions) / sizeof(extensions[0]); i++) {
 	    snprintf(path, MAXPATHLEN, "%s/libbu%s", libdir, extensions[i]);
-	    if (bu_file_exists(path, (const char *)NULL)) {
+	    if (bu_file_exists(path, NULL)) {
 		bu_dir(lpath, MAXPATHLEN, BU_DIR_LIB, "libbu", BU_DIR_LIBEXT, (const char *)NULL);
 		PRINT(BU_DIR_LIBEXT, path, ==, lpath);
 		check(BU_STR_EQUAL(path, lpath), &failures);
