@@ -613,7 +613,7 @@ int
 rt_datum_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
-    bu_vls_printf(logstr, "data");
+    bu_vls_printf(logstr, "data { {point %%f %%f %%f} {line %%f %%f %%f %%f %%f %%f} {plane %%f %%f %%f %%f %%f %%f %%f} ...}");
     return BRLCAD_OK;
 }
 
