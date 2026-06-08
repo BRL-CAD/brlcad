@@ -26,7 +26,6 @@ changes made.  See document footer for additional details.
 * added new manual pages for over 110 GED commands - Sean Morrison
 * improved facetize tolerance and coplanar face handling - Cliff Yapp
 * added support for alternate plane forms to rt -k option - Cliff Yapp
-* added loadview manual page - Sean Morrison
 * improved ~85 manual page synopses, docs, & examples - Sean Morrison
 * fixed bug in gqa material object lookup - Cliff Yapp
 * fixed bug in rtweight material object lookup - Cliff Yapp
