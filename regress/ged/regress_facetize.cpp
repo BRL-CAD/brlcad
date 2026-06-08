@@ -237,7 +237,7 @@ crofton_estimate(const char *gfile, const char *obj_name,
 
     /* REGRESS_CROFTON_SAMPLES rays, REGRESS_CROFTON_PCT% convergence threshold */
     struct rt_crofton_params p = { REGRESS_CROFTON_SAMPLES, REGRESS_CROFTON_STABLE_TARGET, 0.0};
-    int ret = rt_crofton_shoot(rtip, &p, sa, vol);
+    int ret = rt_crofton_shoot(sa, vol, rtip, &p, NULL, NULL);
     rt_i_destroy(rtip);
     db_close(dbip);
     return (ret == 0) ? BRLCAD_OK : BRLCAD_ERROR;
