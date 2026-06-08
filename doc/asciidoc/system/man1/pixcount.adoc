@@ -1,0 +1,64 @@
+= PIXCOUNT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pixcount - Count and sort unique pixel color values in an image stream
+
+== SYNOPSIS
+
+[source]
+----
+pixcount [-# bytes_per_pixel] [input.pix [output.txt]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixcount* reads a stream of pixels (by default, 3-byte RGB pixels), identifies every unique color value present, and counts the number of occurrences of each. The results are printed as a formatted text list, with the colors sorted automatically (based on their internal byte representations).
+
+For each unique pixel, the output will list the individual byte values that make up the pixel, followed by the total count of how many times that pixel appeared in the input stream.
+
+If an _input.pix_ file is specified, *pixcount* reads from that file; otherwise, it reads from standard input. If an _output.txt_ file is specified as a second argument, the results are written to that file; otherwise, they are printed to standard output.
+
+[[options]]
+== OPTIONS
+
+*-#* _bytes_per_pixel_::
+Specify the number of bytes per pixel. The default is 3 (for standard RGB PIX files). For example, you can use `1` for grayscale (BW) images, or `4` for RGBA images.
+
+[[examples]]
+== EXAMPLES
+
+.Counting Unique Colors in an Image
+[example]
+====
+**pixcount image.pix color_counts.txt**
+
+Reads _image.pix_ (assuming standard 3-byte RGB pixels), tallies the occurrences of each unique color, and writes the sorted list to _color_counts.txt_.
+====
+
+.Processing a Grayscale Image
+[example]
+====
+**pixcount -# 1 < image.bw > counts.txt**
+
+Reads a 1-byte-per-pixel BW image from standard input, counts the occurrences of each grayscale value, and writes the results to _counts.txt_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

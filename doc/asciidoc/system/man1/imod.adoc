@@ -1,0 +1,74 @@
+= IMOD(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+imod - Modify a stream of short integers with mathematical operations
+
+== SYNOPSIS
+
+[source]
+----
+imod [options]... [input.shorts] > output.shorts
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*imod* reads a stream of 16-bit signed short integers and applies a sequence of mathematical operations to them, writing the modified 16-bit signed short integers to standard output. 
+
+Any number of addition, subtraction, multiplication, division, absolute value, or exponentiation operations may be specified on the command line. The operations are applied to each number sequentially in the order they are provided using an internal lookup table. Because the output format is constrained to 16-bit signed integers, values that fall outside the representable range (-32768 to 32767) are clipped to the nearest valid value, and a summary of the clipping instances is printed to standard error upon completion.
+
+If the optional _input.shorts_ file is specified, *imod* reads from it; otherwise, it reads from standard input.
+
+[[options]]
+== OPTIONS
+
+*-a* _val_::
+Add _val_ to each number.
+
+*-s* _val_::
+Subtract _val_ from each number.
+
+*-m* _val_::
+Multiply each number by _val_.
+
+*-d* _val_::
+Divide each number by _val_. Division by zero will cause the program to abort.
+
+*-A*::
+Compute the absolute value of each number.
+
+*-e* _val_::
+Raise each number to the power of _val_ (exponentiation).
+
+*-r* _val_::
+Compute the _val_-th root of each number (equivalent to raising to the power of 1/_val_). A zero root will cause the program to abort.
+
+[[examples]]
+== EXAMPLES
+
+.Sequential Mathematical Operations on Shorts
+[example]
+====
+**imod -a 5.0 -m 2.0 -A < data.shorts > out.shorts**
+
+Reads short integers from _data.shorts_. For each number, it adds 5.0, then multiplies the result by 2.0, and finally takes the absolute value, writing the output to _out.shorts_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

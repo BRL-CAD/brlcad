@@ -1,0 +1,62 @@
+= USTATS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ustats - Compute basic statistics of a stream of unsigned short integers
+
+== SYNOPSIS
+
+[source]
+----
+ustats [input.ushorts]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ustats* reads a stream of 16-bit unsigned short integers (0 to 65535) and calculates several basic statistical properties of the data. The results are printed to standard output in a formatted, human-readable text block.
+
+The computed statistics include:
+* *Num*: The total number of unsigned short integer elements read.
+* *Min*: The minimum value in the dataset.
+* *Max*: The maximum value in the dataset.
+* *Sum*: The sum total of all the values.
+* *Mean*: The arithmetic mean (average) of the values.
+* *SStdev*: The sample standard deviation.
+
+If the optional _input.ushorts_ file is specified, *ustats* reads from it; otherwise, it reads from standard input.
+
+[[options]]
+== OPTIONS
+
+*input.ushorts*::
+An optional file containing 16-bit unsigned short integers to be processed. If not provided, standard input is used.
+
+[[examples]]
+== EXAMPLES
+
+.Computing Statistics from a File
+[example]
+====
+**ustats data.ushorts**
+
+Reads the unsigned short integer values from _data.ushorts_ and prints the statistical summary to standard output.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

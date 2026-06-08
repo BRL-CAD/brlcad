@@ -93,6 +93,7 @@ set(
   g-x3d.adoc
   g2asc.adoc
   gastank.adoc
+  gcv.adoc
   gdiff.adoc
   gencolor.adoc
   gif-fb.adoc
@@ -105,8 +106,13 @@ set(
   human.adoc
   icv.adoc
   iges-g.adoc
+  ihist.adoc
   imgdims.adoc
+  imod.adoc
+  isst.adoc
+  istats.adoc
   loop.adoc
+  lowp.adoc
   mac-pix.adoc
   mged.adoc
   nastran-g.adoc
@@ -122,6 +128,7 @@ set(
   pix-ps.adoc
   pix-sun.adoc
   pix2asc.adoc
+  pix3filter.adoc
   pixautosize.adoc
   pixbackgnd.adoc
   pixbgstrip.adoc
@@ -131,8 +138,10 @@ set(
   pixclump.adoc
   pixcmp.adoc
   pixcolors.adoc
+  pixcount.adoc
   pixcrop.adoc
   pixdiff.adoc
+  pixembed.adoc
   pixfade.adoc
   pixfilter.adoc
   pixhalve.adoc
@@ -150,6 +159,7 @@ set(
   pixshrink.adoc
   pixstat.adoc
   pixsubst.adoc
+  pixelswap.adoc
   pixtile.adoc
   pixuntile.adoc
   plot3-asc.adoc
@@ -160,6 +170,7 @@ set(
   plot3getframe.adoc
   plot3line2.adoc
   plot3rot.adoc
+  plot3stat.adoc
   ply-g.adoc
   png-bw.adoc
   png-fb.adoc
@@ -178,17 +189,22 @@ set(
   rthide.adoc
   rtscale.adoc
   rtshot.adoc
+  rtsil.adoc
   rtweight.adoc
   rtwizard.adoc
   rtxray.adoc
   rtsrv.adoc
   showshot.adoc
+  smod.adoc
+  step-g.adoc
   stl-g.adoc
   sun-pix.adoc
   tankill-g.adoc
   terrain.adoc
   tire.adoc
   ug-g.adoc
+  umod.adoc
+  ustats.adoc
   vdeck.adoc
   wavelet.adoc
   wdb_example.adoc

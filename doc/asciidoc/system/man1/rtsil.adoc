@@ -1,0 +1,62 @@
+= RTSIL(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rtsil - Raytrace a Simple Intersection Lightmap (SIL) image
+
+== SYNOPSIS
+
+[source]
+----
+rtsil [options] model.g objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtsil* is a specialized BRL-CAD raytracer that computes a "Simple Intersection Lightmap". Instead of rendering a shaded color image, *rtsil* performs binary hit/miss testing for every ray and outputs a single-byte-per-pixel grayscale (BW) image. 
+
+In the resulting image, pixels where a ray intersected geometry are assigned a value of 1, and pixels where the ray missed all geometry are assigned a value of 255. This binary mapping provides a high-contrast matte or silhouette of the target objects without the overhead of shading, lighting, or material evaluation.
+
+*rtsil* accepts the standard options of the *rt*(1) program (e.g., *-s* for square resolution, *-o* for output file, *-a* for azimuth, *-e* for elevation). Note that *rtsil* currently operates in single-processor mode (it will automatically disable parallel processing if requested).
+
+[[options]]
+== OPTIONS
+
+*-o* _output.bw_::
+Specify the output file to write the BW (1 byte per pixel) image to. If no output file is specified, the image data is written to standard output.
+
+*model.g*::
+The BRL-CAD geometry database to render.
+
+*objects*::
+One or more objects within the database to be raytraced.
+
+[[examples]]
+== EXAMPLES
+
+.Generating a Silhouette Image
+[example]
+====
+**rtsil -s 1024 -o silhouette.bw sample.g all**
+
+Raytraces the object 'all' from 'sample.g' at a resolution of 1024x1024 and saves the binary intersection map to 'silhouette.bw'.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

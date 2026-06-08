@@ -1,0 +1,88 @@
+= PIX3FILTER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pix3filter - Apply a 3x3x3 3D convolution filter across a sequence of three PIX files
+
+== SYNOPSIS
+
+[source]
+----
+pix3filter [-f type] [-v] [-d divisor] [-o offset] [-s squaresize] [-w width] [-n height] { file1.pix file2.pix file3.pix | file.pix.N } > output.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix3filter* performs a 3D convolution filter across a temporal sequence of three RGB PIX files. The three input files represent consecutive frames in an animation or sequence, and the filter applies an arbitrary 3x3x3 kernel (operating spatially on the X and Y axes, and temporally across the three frames). The filtered result for the middle frame is written to standard output. 
+
+The tool expects the images to be 512x512 pixels by default, but this can be adjusted using command-line arguments. The outer border of the image (first and last scanlines, first and last pixels) is left untouched and passed through from the middle image directly to the output.
+
+You can specify the input files in two ways:
+1. Provide three separate filenames (e.g., `frame1.pix frame2.pix frame3.pix`).
+2. Provide a single filename ending in a dot and a number (e.g., `anim.pix.5`). The tool will automatically deduce and attempt to read the preceding and succeeding frames (e.g., `anim.pix.4` and `anim.pix.6`).
+
+[[options]]
+== OPTIONS
+
+*-f* _type_::
+Select the convolution kernel type to apply. The available types are:
+* *lo* : Low Pass filter (default)
+* *hi* : High Pass filter
+* *b* : Boxcar Average filter
+* *s* : Animation Smear filter
+
+*-v*::
+Enable verbose mode. The program will print the applied kernel values to standard error and may provide additional advice on scaling factors or out-of-bounds pixel warnings.
+
+*-d* _divisor_::
+Specify an alternate divisor for the convolution kernel. By default, each kernel has its own predefined divisor (e.g., 84 for the Low Pass filter). This option overrides the default.
+
+*-o* _offset_::
+Specify an alternate offset to be added to the result of the convolution before writing it to the output. The default offset is 0.
+
+*-w* _width_::
+Set the width of the input images in pixels. The default width is 512.
+
+*-n* _height_::
+Set the height (number of scanlines) of the input images. The default height is 512.
+
+*-s* _squaresize_::
+Set both the width and height of the input images to _squaresize_.
+
+[[examples]]
+== EXAMPLES
+
+.Basic Temporal Low-Pass Filter
+[example]
+====
+**pix3filter frame.pix.015 > smoothed.pix.015**
+
+Automatically reads `frame.pix.014`, `frame.pix.015`, and `frame.pix.016` (assuming 512x512 dimensions), applies a 3D low-pass filter, and writes the resulting frame to `smoothed.pix.015`.
+====
+
+.Applying a Boxcar Filter to Custom Size Images
+[example]
+====
+**pix3filter -f b -s 1024 a.pix b.pix c.pix > out.pix**
+
+Reads three explicit 1024x1024 PIX files, applies the Boxcar Average kernel, and writes the output to `out.pix`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

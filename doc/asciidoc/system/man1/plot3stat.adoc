@@ -1,0 +1,54 @@
+= PLOT3STAT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+plot3stat - Print statistics about a Plot3(5) format file
+
+== SYNOPSIS
+
+[source]
+----
+plot3stat [-v] [unix_plot.plot3]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3stat* reads a BRL-CAD 3D UNIX Plot file (typically denoted by a `.plot3` or `.plot` extension) and tallies the total usage of each drawing command. It prints a summary to standard error, detailing the human-readable command names and the frequency of their occurrence within the file.
+
+If no file is specified on the command line, *plot3stat* expects to read the plot3 format stream from standard input.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+Enable verbose mode. As the file is parsed, *plot3stat* will print the name of each individual plot command encountered directly to standard output, in sequence, separated by spaces. The final statistical summary is still printed to standard error.
+
+[[examples]]
+== EXAMPLES
+
+.Summarizing Plot3 Commands
+[example]
+====
+**plot3stat output.plot3**
+
+Reads _output.plot3_ and prints a summary of the drawing commands used (e.g., `3line`, `color`, `d_3move`) to standard error.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1990-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

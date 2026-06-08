@@ -1,0 +1,76 @@
+= STEP-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+step-g - Convert a STEP AP203/AP214 format file to a BRL-CAD geometry database
+
+== SYNOPSIS
+
+[source]
+----
+step-g [-v] [-D] [-S summary_file] [-o outfile.g | -O outfile.g] infile.stp
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*step-g* reads an ISO 10303 STEP (Standard for the Exchange of Product model data) file, typically an AP203 or AP214 format `.stp` or `.step` file, and translates the boundary representation (B-rep) geometry and assembly hierarchy into a BRL-CAD `.g` database.
+
+The translation maps STEP manifolds and boundary geometries into BRL-CAD Boundary Representation (BREP) objects, and preserves the structural hierarchy of assemblies and parts using BRL-CAD combinations.
+
+*step-g* tracks the elapsed load and convert times and outputs a brief summary of the translation progress to standard error.
+
+[[options]]
+== OPTIONS
+
+*-o* _outfile.g_::
+Specify the name of the BRL-CAD geometry database to create. If the specified file already exists, *step-g* will refuse to overwrite it and exit with an error.
+
+*-O* _outfile.g_::
+Specify the name of the BRL-CAD geometry database to create, forcibly overwriting the file if it already exists.
+
+*-S* _summary_file_::
+Specify an output file to write a detailed summary log of the STEP translation, including information about parsed entities, skipped unsupported types, and overall conversion statistics.
+
+*-v*::
+Enable verbose output. Prints detailed diagnostic messages to standard error during the parsing and conversion process.
+
+*-D*::
+Perform a dry run. The STEP file is loaded and parsed, and conversion steps are simulated, but no BRL-CAD `.g` file is actually written. This is useful for validating the integrity of a STEP file or timing the parsing phase.
+
+[[examples]]
+== EXAMPLES
+
+.Basic Conversion
+[example]
+====
+**step-g -o model.g input.stp**
+
+Converts the STEP file _input.stp_ to the BRL-CAD database _model.g_, refusing to overwrite _model.g_ if it already exists.
+====
+
+.Verbose Dry Run
+[example]
+====
+**step-g -v -D -o dummy.g model.step**
+
+Loads and parses _model.step_ with verbose diagnostics enabled, but does not write any geometry to _dummy.g_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1994-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

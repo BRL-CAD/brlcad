@@ -1,0 +1,88 @@
+= GCV(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+gcv - Geometry Converter
+
+== SYNOPSIS
+
+[source]
+----
+gcv [options]... [-i input_file] [-o output_file]
+----
+
+[source]
+----
+gcv [options]... [input_file] [output_file]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gcv* is the primary BRL-CAD Geometry Converter utility. It acts as a unified frontend for reading and writing various geometry formats, automatically selecting the appropriate filter plugins based on file extensions or explicit format specifiers.
+
+If the input and output files are not specified explicitly using the `-i` and `-o` flags, they must be the last two arguments provided on the command line. *gcv* will attempt to infer the file format automatically from the file extensions. If the formats cannot be inferred, or if you need to override the automatic detection, use the `--input-format` and `--output-format` options.
+
+[[options]]
+== OPTIONS
+
+*-h, -?, --help* [_format_]::
+Print help and exit. If a _format_ is specified (e.g., `step`, `iges`, `obj`), prints help specific to that geometry format.
+
+*-i, --input* _file_::
+Specify the input geometry file.
+
+*-o, --output* _file_::
+Specify the output geometry file. If the file already exists, the conversion output will be appended where applicable.
+
+*--input-format* _format_::
+Explicitly specify the MIME model format of the input file (e.g., `model/vrml`, `model/iges`). This overrides file extension detection.
+
+*--output-format* _format_::
+Explicitly specify the MIME model format of the output file.
+
+*-I, --input-only-opts* _opts_::
+Options to apply only while processing the input file. Accepts options until another top-level option is encountered.
+
+*-O, --output-only-opts* _opts_::
+Options to apply only while preparing the output file. Accepts options until another top-level option is encountered.
+
+*-B, --input-and-output-opts* _opts_::
+Options to apply both during input and output handling. Accepts options until another top-level option is encountered.
+
+[[examples]]
+== EXAMPLES
+
+.Basic Conversion
+[example]
+====
+**gcv input.obj output.g**
+
+Converts a Wavefront OBJ file (_input.obj_) into a BRL-CAD geometry database (_output.g_). The formats are inferred automatically from the `.obj` and `.g` extensions.
+====
+
+.Explicit Formats
+[example]
+====
+**gcv --input-format model/step -i in.step --output-format model/iges -o out.iges**
+
+Converts a STEP file to an IGES file using explicit format identifiers and file flags.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2015-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,62 @@
+= IHIST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ihist - Compute a histogram and statistics for a stream of short integers
+
+== SYNOPSIS
+
+[source]
+----
+ihist [-v] < input.shorts > output.txt
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ihist* reads a stream of 16-bit signed short integers from standard input and computes statistical information about the dataset, printing the results as formatted text to standard output.
+
+The tool calculates and displays the total number of values read, the minimum and maximum values encountered, and a bitwise distribution showing how often each of the 16 bits was set across the entire dataset. It also reports the total number of distinct levels (unique values) used out of the possible 65,536 combinations, providing a percentage of utilized levels.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+Enable verbose output. In addition to the summary statistics, the program will print a complete histogram detailing every unique value encountered and its corresponding frequency count.
+
+[[examples]]
+== EXAMPLES
+
+.Basic *ihist* Usage
+[example]
+====
+**ihist < data.shorts > stats.txt**
+
+Reads the short integer values from _data.shorts_ and writes the statistical summary to _stats.txt_.
+====
+
+.Verbose Histogram Output
+[example]
+====
+**ihist -v < data.shorts > histogram.txt**
+
+Reads the short integer values from _data.shorts_ and writes both the statistical summary and the complete frequency count for every unique value to _histogram.txt_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

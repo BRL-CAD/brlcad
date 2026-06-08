@@ -1,0 +1,61 @@
+= LOWP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+lowp - Perform a 3D low-pass filter across three sequential PIX files
+
+== SYNOPSIS
+
+[source]
+----
+lowp file1.pix file2.pix file3.pix [width] > out.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*lowp* reads three sequential PIX image files of identical dimensions and performs a 3D low-pass convolution filter across them, outputting a single smoothed PIX image to standard output.
+
+The three input images are treated as a sequence in time (or depth). The filter applies a 3x3x3 spatial-temporal convolution kernel, taking the weighted average of the surrounding pixels in the current image (`file2.pix`) as well as the corresponding pixels in the preceding (`file1.pix`) and succeeding (`file3.pix`) images.
+
+The images are assumed to be square with a dimension of 512x512 pixels by default. If the images have a different dimension, the optional _width_ parameter must be provided to specify the number of pixels per scanline (and the number of scanlines).
+
+The edges of the output image (the first and last scanlines, and the first and last pixels of each scanline) are not filtered and are set to black (0, 0, 0).
+
+[[options]]
+== OPTIONS
+
+*file1.pix*, *file2.pix*, *file3.pix*::
+The three input PIX files representing a sequence of images.
+
+*width*::
+The width (and height, as images are assumed square) of the input images in pixels. Defaults to 512 if not specified.
+
+[[examples]]
+== EXAMPLES
+
+.Filtering a Sequence of Images
+[example]
+====
+**lowp frame1.pix frame2.pix frame3.pix 1024 > smoothed_frame2.pix**
+
+Reads three 1024x1024 PIX images and produces a smoothed version of the middle frame, writing the result to _smoothed_frame2.pix_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,60 @@
+= PIXELSWAP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pixelswap - Interchange two specific pixel colors in a PIX image stream
+
+== SYNOPSIS
+
+[source]
+----
+pixelswap [-d pixeldepth] r g b R G B < input.pix > output.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixelswap* reads a stream of RGB PIX data from standard input, searches for two specific colors defined by the user on the command line, and swaps them. Any pixel matching the first color (_r g b_) is changed to the second color (_R G B_), and any pixel matching the second color (_R G B_) is changed to the first color (_r g b_). All other colors are passed through to standard output unmodified.
+
+Currently, *pixelswap* assumes that the image format consists of 3-byte RGB pixels, regardless of the _pixeldepth_ option provided.
+
+[[options]]
+== OPTIONS
+
+*-d* _pixeldepth_::
+Specify the number of bytes per pixel. (Note: Currently, this option is parsed but ignored; the tool always processes 3 bytes per pixel).
+
+*r g b*::
+The red, green, and blue integer values (0-255) of the first color to be swapped.
+
+*R G B*::
+The red, green, and blue integer values (0-255) of the second color to be swapped.
+
+[[examples]]
+== EXAMPLES
+
+.Swapping Red and Blue
+[example]
+====
+**pixelswap 255 0 0 0 0 255 < in.pix > out.pix**
+
+Reads the PIX image _in.pix_, changes all purely red pixels to purely blue, and all purely blue pixels to purely red, then writes the result to _out.pix_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

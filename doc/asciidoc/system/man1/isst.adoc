@@ -1,0 +1,57 @@
+= ISST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+isst - Interactive Spatialized Sensing Tool (Interactive Raytracing Viewer)
+
+== SYNOPSIS
+
+[source]
+----
+isst [file.g] [object]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*isst* is an interactive, Tcl/Tk and OpenGL-based viewer that utilizes the Advanced Distributed Raytracer (ADRT) infrastructure to provide real-time, interactive visualization of BRL-CAD geometry. It allows users to quickly inspect geometry, navigate around models (walk, strafe, rotate, float), and change rendering modes interactively.
+
+When launched with a specified BRL-CAD geometry database (_file.g_) and one or more target _object_s, *isst* initializes its graphical user interface, loads the geometry, and immediately begins rendering using the tie engine. If no arguments are provided, the graphical user interface will open but no geometry will be loaded until requested via the application's menu or console.
+
+[[options]]
+== OPTIONS
+
+*file.g*::
+The BRL-CAD geometry database file to open.
+
+*object*::
+The name of the object(s) within the database to load and render.
+
+[[examples]]
+== EXAMPLES
+
+.Interactive Rendering of a Model
+[example]
+====
+**isst model.g all**
+
+Opens _model.g_, loads the combination named _all_, and opens the interactive rendering window.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2005-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

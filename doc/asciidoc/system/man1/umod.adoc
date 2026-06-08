@@ -1,0 +1,76 @@
+= UMOD(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+umod - Perform mathematical operations on a stream of 16-bit unsigned short integers
+
+== SYNOPSIS
+
+[source]
+----
+umod [-a add_val] [-s sub_val] [-m mult_val] [-d div_val] [-A] [-e exp_val] [-r root_val] [input.ushorts] > output.ushorts
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*umod* reads a data stream consisting of 16-bit unsigned short integers, applies a sequence of specified mathematical operations to each value, and writes the modified stream to standard output. 
+
+Multiple mathematical operations can be chained together. They are evaluated in the exact order they appear on the command line. *umod* maintains an internal lookup table to optimize execution, calculating the resulting value for all possible 16-bit unsigned short integers (0 to 65535) before processing the file.
+
+If a mathematical operation yields a result that exceeds the maximum representable bounds of a 16-bit unsigned short integer, the value is clamped (clipped) to the maximum or minimum bound (65535 or 0). The total number of values clipped during the operation will be reported to standard error at the end of the execution.
+
+If an _input.ushorts_ file is not provided, *umod* will read from standard input.
+
+[[options]]
+== OPTIONS
+
+*-a* _add_val_::
+Add _add_val_ to each value.
+
+*-s* _sub_val_::
+Subtract _sub_val_ from each value.
+
+*-m* _mult_val_::
+Multiply each value by _mult_val_.
+
+*-d* _div_val_::
+Divide each value by _div_val_.
+
+*-A*::
+Compute the absolute value of each integer. (Note: Since the input consists of unsigned integers, this operation will only affect values if previous operations, such as subtraction, resulted in a negative intermediate value).
+
+*-e* _exp_val_::
+Raise each value to the power of _exp_val_.
+
+*-r* _root_val_::
+Take the _root_val_ root of each value (equivalent to raising to the power of 1/_root_val_).
+
+[[examples]]
+== EXAMPLES
+
+.Basic Math Scaling
+[example]
+====
+**umod -a 100 -m 3 data.ushorts > scaled.ushorts**
+
+Reads unsigned short integers from _data.ushorts_. For each value, it first adds 100, then multiplies the intermediate result by 3, and writes the final 16-bit unsigned shorts to _scaled.ushorts_.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
