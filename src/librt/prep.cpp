@@ -1004,11 +1004,12 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 
     /* The 'struct bu_bitv' guys on re_solid_bitv are individually malloc()ed */
     if (BU_LIST_IS_INITIALIZED(&resp->re_solid_bitv)) {
-	struct bu_bitv *bvp;
-	while (BU_LIST_WHILE(bvp, bu_bitv, &resp->re_solid_bitv)) {
+	struct bu_list *bl;
+	while (BU_LIST_WHILE(bl, bu_list, &resp->re_solid_bitv)) {
+            struct bu_bitv *bvp = (struct bu_bitv *)bl;
 	    BU_CK_BITV(bvp);
-	    BU_LIST_DEQUEUE(&bvp->l);
-	    bvp->nbits = 0;		/* sanity */
+	    BU_LIST_DEQUEUE(bl);
+	    bvp->nbits = 0; /* sanity */
 	    bu_free((void *)bvp, "struct bu_bitv");
 	}
 	resp->re_solid_bitv.forw = BU_LIST_NULL;
@@ -1117,15 +1118,17 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 	solidbits = bu_bitv_new((unsigned int)nbits);
     } else {
 	/* scan list for a reusable bitv */
-	for (BU_LIST_FOR(solidbits, bu_bitv, &resp->re_solid_bitv)) {
-	    if (solidbits->nbits >= nbits) {
-		BU_LIST_DEQUEUE(&solidbits->l);
+	struct bu_list *bl;
+	for (BU_LIST_FOR(bl, bu_list, &resp->re_solid_bitv)) {
+	    solidbits = (struct bu_bitv *)bl;
+	    if (bu_bitv_length(solidbits) >= nbits) {
+		BU_LIST_DEQUEUE(bl);
 		bu_bitv_clear(solidbits);
 		break;
 	    }
 	}
 	/* no match, allocate a new one */
-	if (solidbits == (struct bu_bitv *)&resp->re_solid_bitv) {
+	if (bl == &resp->re_solid_bitv) {
 	    solidbits = bu_bitv_new((unsigned int)nbits);
 	}
     }
