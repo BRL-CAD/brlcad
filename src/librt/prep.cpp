@@ -1108,7 +1108,7 @@ rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 struct bu_bitv *
 rt_get_solidbitv(size_t nbits, struct resource *resp)
 {
-    struct bu_bitv *solidbits;
+    struct bu_bitv *solidbits = NULL;
 
     if (resp && resp->re_solid_bitv.magic != BU_LIST_HEAD_MAGIC) {
 	bu_bomb("Bad magic number in re_solid_btiv list\n");
