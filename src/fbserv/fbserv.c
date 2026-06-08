@@ -96,6 +96,7 @@
 
 /* Enable TLS server-side functions */
 #define FBSERV_TLS_IMPL
+#define FBSERV_TLS_SERVER_CTX
 #include "./tls_wrap.h"
 
 

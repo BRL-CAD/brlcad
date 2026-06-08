@@ -183,6 +183,9 @@ set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTOR
 if(TARGET libbg-obj)
   set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
 endif(TARGET libbg-obj)
+if(TARGET libbg-brlcad-obj)
+  set_property(TARGET libbg-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+endif(TARGET libbg-brlcad-obj)
 
 add_subdirectory(tests)
 

@@ -81,6 +81,8 @@
 
 __BEGIN_DECLS
 
+struct db_full_path;
+
 // Settings used for both solid and matrix edits
 #define RT_EDIT_DEFAULT   -1
 #define RT_EDIT_IDLE       0

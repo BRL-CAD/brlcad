@@ -44,6 +44,7 @@
 #include <time.h>
 
 #include "QuickHull.hpp"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "bg/chull.h"

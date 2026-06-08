@@ -170,7 +170,7 @@ brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(bu_atgts)
-set(bu_targets libbu-obj libbu libbu-static)
+set(bu_targets libbu-obj libbu-brlcad-obj libbu libbu-static)
 foreach(bt ${bu_targets})
   if(TARGET ${bt})
     list(APPEND bu_atgts ${bt})

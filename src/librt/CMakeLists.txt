@@ -502,6 +502,10 @@ if(HIDE_INTERNAL_SYMBOLS)
     set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
     set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
   endif(TARGET librt-obj)
+  if(TARGET librt-brlcad-obj)
+    set_property(TARGET librt-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
+    set_property(TARGET librt-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
+  endif(TARGET librt-brlcad-obj)
 endif(HIDE_INTERNAL_SYMBOLS)
 
 # loudly append an underscore on musl so that we build by default but

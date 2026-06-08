@@ -1110,7 +1110,7 @@ to_listen(struct ged *gedp,
 	if (BU_STR_EQUAL(argv[2], "ipc")) {
 	    if (tvd->gdv_fbs.fbs_listener.fbsl_port >= 0)
 		fbs_close(&tvd->gdv_fbs);
-	    if (tclcad_listen_ipc(&tvd->gdv_fbs, gedp->ged_interp) != BRLCAD_OK) {
+	    if (tclcad_listen_ipc(&tvd->gdv_fbs, (Tcl_Interp *)gedp->ged_interp) != BRLCAD_OK) {
 		bu_vls_printf(gedp->ged_result_str, "listen: failed to start IPC listener\n");
 		return BRLCAD_ERROR;
 	    }

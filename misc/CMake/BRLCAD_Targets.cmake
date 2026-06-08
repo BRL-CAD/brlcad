@@ -43,6 +43,30 @@ define_property(
   FULL_DOCS "List of installed BRL-CAD binary programs"
 )
 
+# Installed BRL-CAD library targets and their object-library variants.  This
+# lets aggregate targets derive their contents from BRLCAD_ADDLIB declarations
+# instead of maintaining a separate, stale-prone library list.
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_LIB_TARGETS
+  BRIEF_DOCS "BRL-CAD libraries"
+  FULL_DOCS "List of installed BRL-CAD library targets"
+)
+
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_LIB_OBJECT_TARGETS
+  BRIEF_DOCS "BRL-CAD library object targets"
+  FULL_DOCS "List of installed BRL-CAD library object targets"
+)
+
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_LIB_EXTERNAL_LINK_LIBS
+  BRIEF_DOCS "BRL-CAD aggregate external link libraries"
+  FULL_DOCS "List of non-BRL-CAD link libraries needed by aggregate BRL-CAD targets"
+)
+
 
 # Need sophisticated option parsing
 include(CMakeParseArguments)
@@ -478,6 +502,173 @@ function(BRLCAD_ADD_STATIC_LINK_TEST libstatic)
 endfunction(BRLCAD_ADD_STATIC_LINK_TEST)
 
 
+# Register installed BRL-CAD library targets for aggregate outputs.
+function(BRLCAD_REGISTER_LIBRARY_TARGET libname)
+  if(NOT TARGET ${libname})
+    return()
+  endif()
+  set_property(GLOBAL APPEND PROPERTY BRLCAD_LIB_TARGETS "${libname}")
+  if(TARGET ${libname}-brlcad-obj)
+    set_property(GLOBAL APPEND PROPERTY BRLCAD_LIB_OBJECT_TARGETS "${libname}-brlcad-obj")
+  elseif(TARGET ${libname}-obj)
+    set_property(GLOBAL APPEND PROPERTY BRLCAD_LIB_OBJECT_TARGETS "${libname}-obj")
+  elseif(BRLCAD_ENABLE_BRLCAD_LIBRARY)
+    message(FATAL_ERROR "${libname} was registered for the aggregate brlcad library, but no object-library target exists for it")
+  endif()
+endfunction(BRLCAD_REGISTER_LIBRARY_TARGET)
+
+
+# Filter BRL-CAD targets out of a dependency list.  Aggregate object targets
+# compile all BRL-CAD libraries into one DLL, so they must not inherit internal
+# *_DLL_IMPORTS definitions from normal BRL-CAD target usage requirements.
+function(BRLCAD_FILTER_AGGREGATE_DEPS out_var)
+  set(_filtered)
+  foreach(_dep ${ARGN})
+    if("${_dep}" STREQUAL "" OR "${_dep}" STREQUAL "NONE")
+      continue()
+    endif()
+    set(_candidate "${_dep}")
+    if("${_candidate}" MATCHES "^\$<LINK_ONLY:([^>]+)>$")
+      set(_candidate "${CMAKE_MATCH_1}")
+    endif()
+    if(TARGET "${_candidate}")
+      get_target_property(_candidate_obj "${_candidate}" BRLCAD_LIBRARY_OBJECT_TARGET)
+      if(_candidate_obj)
+        continue()
+      endif()
+    endif()
+    list(APPEND _filtered "${_dep}")
+  endforeach()
+  set(${out_var} ${_filtered} PARENT_SCOPE)
+endfunction(BRLCAD_FILTER_AGGREGATE_DEPS)
+
+
+# Resolve external link items while package/imported targets are still visible
+# in the directory that declared the library.  Some find_package targets are not
+# global, so resolving them later from src/CMakeLists.txt can fail.
+function(BRLCAD_RESOLVE_AGGREGATE_LINK_ITEM out_var link_item)
+  set(_resolved "${link_item}")
+  if(TARGET "${link_item}")
+    get_target_property(_imported "${link_item}" IMPORTED)
+    if(_imported)
+      set(_locs)
+      if(COMMAND get_tgt_locs)
+        get_tgt_locs("${link_item}" _locs)
+      endif()
+      if(NOT _locs)
+        get_target_property(_loc "${link_item}" IMPORTED_LOCATION)
+        if(_loc)
+          list(APPEND _locs "${_loc}")
+        endif()
+      endif()
+      if(_locs)
+        set(_resolved ${_locs})
+      endif()
+    endif()
+  endif()
+  set(${out_var} ${_resolved} PARENT_SCOPE)
+endfunction(BRLCAD_RESOLVE_AGGREGATE_LINK_ITEM)
+
+
+# Record non-BRL-CAD link dependencies for aggregate outputs.  BRL-CAD object
+# code is added directly to aggregate libraries, so internal BRL-CAD target
+# links must be filtered out to avoid duplicate definitions and incorrect
+# Windows *_DLL_IMPORTS definitions.
+function(BRLCAD_REGISTER_AGGREGATE_LINK_LIBS)
+  set(_aggregate_libs)
+  foreach(_link ${ARGN})
+    set(_candidate "${_link}")
+    if("${_candidate}" MATCHES "^\$<LINK_ONLY:([^>]+)>$")
+      set(_candidate "${CMAKE_MATCH_1}")
+    endif()
+    if(TARGET "${_candidate}")
+      get_target_property(_candidate_obj "${_candidate}" BRLCAD_LIBRARY_OBJECT_TARGET)
+      if(_candidate_obj)
+        continue()
+      endif()
+    endif()
+    brlcad_resolve_aggregate_link_item(_resolved_link "${_link}")
+    list(APPEND _aggregate_libs ${_resolved_link})
+  endforeach()
+  if(_aggregate_libs)
+    set_property(GLOBAL APPEND PROPERTY BRLCAD_LIB_EXTERNAL_LINK_LIBS ${_aggregate_libs})
+  endif()
+endfunction(BRLCAD_REGISTER_AGGREGATE_LINK_LIBS)
+
+
+# Return the external link dependencies recorded when each BRL-CAD library was
+# declared.
+function(BRLCAD_AGGREGATE_LINK_LIBS out_var)
+  get_property(_aggregate_libs GLOBAL PROPERTY BRLCAD_LIB_EXTERNAL_LINK_LIBS)
+  if(_aggregate_libs)
+    list(REMOVE_DUPLICATES _aggregate_libs)
+  endif()
+  set(${out_var} ${_aggregate_libs} PARENT_SCOPE)
+endfunction(BRLCAD_AGGREGATE_LINK_LIBS)
+
+# Define the optional monolithic BRL-CAD library from the object libraries
+# produced by BRLCAD_ADDLIB.  This intentionally depends on USE_OBJECT_LIBS:
+# object targets preserve the source lists, compile definitions, and include
+# setup from the normal library declarations without platform-specific archive
+# extraction tricks.
+function(BRLCAD_ADD_AGGREGATE_LIBRARY)
+  if(NOT BRLCAD_ENABLE_BRLCAD_LIBRARY)
+    return()
+  endif()
+  if(NOT USE_OBJECT_LIBS)
+    message(FATAL_ERROR "BRLCAD_ENABLE_BRLCAD_LIBRARY requires USE_OBJECT_LIBS=ON")
+  endif()
+
+  get_property(_brlcad_obj_targets GLOBAL PROPERTY BRLCAD_LIB_OBJECT_TARGETS)
+  if(NOT _brlcad_obj_targets)
+    message(FATAL_ERROR "BRLCAD_ENABLE_BRLCAD_LIBRARY is ON, but no BRL-CAD object library targets were registered")
+  endif()
+
+  set(_brlcad_objs)
+  foreach(_obj_target ${_brlcad_obj_targets})
+    if(TARGET ${_obj_target})
+      list(APPEND _brlcad_objs $<TARGET_OBJECTS:${_obj_target}>)
+    endif()
+  endforeach()
+
+  add_library(libbrlcad SHARED ${_brlcad_objs})
+  set_target_properties(libbrlcad PROPERTIES
+    EXPORT_NAME brlcad
+    FOLDER "BRL-CAD Shared Libraries"
+    PREFIX ""
+    OUTPUT_NAME brlcad
+  )
+  target_compile_definitions(libbrlcad PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  if(BRLCAD_LINKER_NO_UNDEFINED_FLAG)
+    target_link_options(libbrlcad PRIVATE ${BRLCAD_LINKER_NO_UNDEFINED_FLAG})
+  endif()
+  include(CheckLinkerFlag)
+  check_linker_flag("CXX" "-Wno-error=maybe-uninitialized" BRLCAD_AGGREGATE_LINKER_WNO_MAYBE_UNINITIALIZED)
+  if(BRLCAD_AGGREGATE_LINKER_WNO_MAYBE_UNINITIALIZED)
+    target_link_options(libbrlcad PRIVATE -Wno-maybe-uninitialized)
+  endif()
+
+  foreach(_obj_target ${_brlcad_obj_targets})
+    if(TARGET ${_obj_target})
+      add_dependencies(libbrlcad ${_obj_target})
+    endif()
+  endforeach()
+
+  brlcad_aggregate_link_libs(_aggregate_libs)
+  if(_aggregate_libs)
+    target_link_libraries(libbrlcad PRIVATE ${_aggregate_libs})
+  endif()
+
+  install(
+    TARGETS libbrlcad
+    EXPORT BRLCADTargets
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}
+  )
+endfunction(BRLCAD_ADD_AGGREGATE_LIBRARY)
+
+
 #---------------------------------------------------------------------
 # Library function handles both shared and static libs, so one
 # "BRLCAD_ADDLIB" statement will cover both automatically
@@ -531,7 +722,9 @@ function(
   brlcad_collect_dep_includes(_priv_dep_includes ${SHARED_PRIVATE_LIBS})
   list(APPEND PRIVATE_HDRS ${_priv_dep_includes})
 
-  # If we need it, set up the OBJECT library build
+  # If we need it, set up the OBJECT library build used by the normal
+  # per-library shared/static targets.  Link the object target to its deps so
+  # Windows builds inherit required *_DLL_IMPORTS usage requirements.
   if(USE_OBJECT_LIBS)
     add_library(${libname}-obj OBJECT ${lsrcslist})
     if(${libname} MATCHES "^lib*")
@@ -551,20 +744,40 @@ function(
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
 
-    # Ensure object targets depend on other build targets, not just
-    # system libs, if compilation relies on actions performed by those
-    # targets (e.g., staging headers).  Failing to set those deps can
-    # cause very hard-to-debut intermittent build failures, especially
-    # with parallel builds, as build order is not guaranteed without
-    # explicit deps.
     set(_obj_deps ${SHARED_PUBLIC_LIBS} ${SHARED_PRIVATE_LIBS} ${SHARED_INTERFACE_LIBS})
+    if(NOT L_NO_INSTALL)
+      brlcad_register_aggregate_link_libs(${_obj_deps})
+    endif()
     if(_obj_deps)
+      target_link_libraries(${libname}-obj PRIVATE ${_obj_deps})
       foreach(ll ${_obj_deps})
         if(TARGET ${ll})
           add_dependencies(${libname}-obj ${ll})
         endif(TARGET ${ll})
       endforeach(ll ${_obj_deps})
     endif(_obj_deps)
+
+    # Aggregate objects are compiled separately from the normal object target.
+    # On Windows the normal object target must import symbols from dependent
+    # BRL-CAD DLLs, while the aggregate target must not import those symbols
+    # because they are linked into the same brlcad DLL.
+    if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND NOT L_NO_INSTALL)
+      add_library(${libname}-brlcad-obj OBJECT ${srcslist} ${L_SHARED_SRCS})
+      if(${libname} MATCHES "^lib*")
+        set_target_properties(${libname}-brlcad-obj PROPERTIES PREFIX "")
+      endif(${libname} MATCHES "^lib*")
+      set_target_properties(${libname}-brlcad-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries/Aggregate${SUBFOLDER}")
+      target_compile_definitions(${libname}-brlcad-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+      brlcad_include_dirs(${libname}-brlcad-obj PUBLIC_HDRS PUBLIC)
+      brlcad_include_dirs(${libname}-brlcad-obj PRIVATE_HDRS PRIVATE)
+      if(HIDE_INTERNAL_SYMBOLS)
+        set_property(TARGET ${libname}-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+      endif(HIDE_INTERNAL_SYMBOLS)
+      brlcad_filter_aggregate_deps(_aggregate_obj_deps ${_obj_deps})
+      if(_aggregate_obj_deps)
+        target_link_libraries(${libname}-brlcad-obj PRIVATE ${_aggregate_obj_deps})
+      endif(_aggregate_obj_deps)
+    endif()
 
     # Apply unity (jumbo) build batching to the object library when the global
     # option is enabled.  Any source files listed in UNITY_BUILD_SKIP are
@@ -848,6 +1061,11 @@ function(
       )
     endif(NOT L_NO_INSTALL)
   endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+
+  if(NOT L_NO_INSTALL)
+    set_target_properties(${libname} PROPERTIES BRLCAD_LIBRARY_OBJECT_TARGET "${libname}-obj")
+    brlcad_register_library_target(${libname})
+  endif()
 
   # Extra shared lib specific work
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))

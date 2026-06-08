@@ -57,7 +57,9 @@
  * functions are wrapped in `#ifdef FBSERV_TLS_IMPL`.  Define that
  * macro before including this header in exactly one translation unit
  * per binary.  The FBSERV_TLS_CLIENT define selects client-only paths;
- * without it the server-side functions are compiled.
+ * without it the server-side accept path is compiled.  Define
+ * FBSERV_TLS_SERVER_CTX when the translation unit also needs to create
+ * a server SSL_CTX.
  */
 
 #ifndef FBSERV_TLS_WRAP_H
@@ -152,6 +154,8 @@ _fbserv_tls_log_errors(const char *prefix)
  * --------------------------------------------------------------------- */
 
 #ifndef FBSERV_TLS_CLIENT
+
+#ifdef FBSERV_TLS_SERVER_CTX
 
 /* Private: generate a self-signed RSA-2048 certificate + key in-memory */
 static int
@@ -260,6 +264,8 @@ fbserv_tls_server_ctx(const char *certfile, const char *keyfile)
 
     return ctx;
 }
+
+#endif /* FBSERV_TLS_SERVER_CTX */
 
 
 /**

@@ -369,6 +369,7 @@ function(BRLCAD_Summary)
   set(BRLCAD_SMP_LABEL "Build SMP-capable release ")
   set(BUILD_STATIC_LIBS_LABEL "Build static libraries ")
   set(BUILD_SHARED_LIBS_LABEL "Build dynamic libraries ")
+  set(BRLCAD_ENABLE_BRLCAD_LIBRARY_LABEL "Build aggregate brlcad library ")
   set(BRLCAD_WARNINGS_LABEL "Print verbose compilation warnings ")
   set(BRLCAD_VERBOSE_LABEL "Print verbose compilation progress ")
   set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
@@ -388,6 +389,7 @@ function(BRLCAD_Summary)
     BRLCAD_OPTIMIZED
     BUILD_STATIC_LIBS
     BUILD_SHARED_LIBS
+    BRLCAD_ENABLE_BRLCAD_LIBRARY
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY
     BRLCAD_EXTRADOCS_BUILD
   )

@@ -102,7 +102,9 @@ endforeach(qh ${qth_names})
 
 # Note - libqtcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 if(BRLCAD_ENABLE_QT)
-  set(USE_OBJECT_LIBS OFF)
+  if(NOT BRLCAD_ENABLE_BRLCAD_LIBRARY)
+    set(USE_OBJECT_LIBS OFF)
+  endif()
   set(QTCAD_SRCS ${qtcad_srcs})
   set(QTCAD_PUBLIC_LIBS ${libqtcad_deps})
 
@@ -123,6 +125,12 @@ if(BRLCAD_ENABLE_QT)
   set_target_properties(libqtcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
   if(OPENGL_LIBS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
+    if(TARGET libqtcad-obj)
+      set_property(TARGET libqtcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
+    endif(TARGET libqtcad-obj)
+    if(TARGET libqtcad-brlcad-obj)
+      set_property(TARGET libqtcad-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
+    endif(TARGET libqtcad-brlcad-obj)
   endif(OPENGL_LIBS)
 
   distclean(qtcad_resources.qrc.depends)

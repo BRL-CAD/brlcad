@@ -65,6 +65,12 @@ set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET libbrep APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
+  if(TARGET libbrep-obj)
+    set_property(TARGET libbrep-obj APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
+  endif(TARGET libbrep-obj)
+  if(TARGET libbrep-brlcad-obj)
+    set_property(TARGET libbrep-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
+  endif(TARGET libbrep-brlcad-obj)
   # Anyone who needs to import libbrep will also need to import openNURBS
   set_property(TARGET libbrep APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
 endif(HIDE_INTERNAL_SYMBOLS)

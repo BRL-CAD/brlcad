@@ -496,6 +496,13 @@ endif(BRLCAD_PRINT_MSGS)
 
 include(BRLCAD_User_Options)
 
+# The aggregate brlcad shared library is built from object library targets.
+# Enable object libraries even on platforms where they are not the default.
+if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND NOT USE_OBJECT_LIBS)
+  set(USE_OBJECT_LIBS ON CACHE BOOL "Use OBJECT libraries" FORCE)
+  set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+endif()
+
 # global msvc-specific configuration setup
 if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   # Auto-reconfiguration - by default, a CMake generated build system

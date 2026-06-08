@@ -47,6 +47,12 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 # Build static libs by default.
 option(BUILD_STATIC_LIBS "Build static libraries" ON)
 
+# Build a monolithic BRL-CAD shared library from the normal library target
+# objects.  This requires USE_OBJECT_LIBS so the aggregate stays tied to the
+# current BRL-CAD library definitions rather than a manually maintained list.
+option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build aggregate brlcad shared library" OFF)
+mark_as_advanced(BRLCAD_ENABLE_BRLCAD_LIBRARY)
+
 # Link static-library validation executables when the platform supports the
 # linker options needed to force archive member resolution.
 option(BRLCAD_VALIDATE_STATIC_LINKS "Validate static library dependency closure with link tests" ON)
