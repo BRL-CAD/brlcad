@@ -1,4 +1,5 @@
 set(OGL_SRCS dm-ogl.c if_ogl.c)
+set(OGL_PROBE_SRCS dm_ogl_probe.c)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
 
@@ -67,6 +68,10 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
       set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS HAVE_GL_GLX_H)
       validate_style(dm-ogl "${OGL_SRCS}")
 
+      brlcad_addexec(dm_ogl_probe "${OGL_PROBE_SRCS}" "libbu;${X11_LIBRARIES};${XOPENGL_LIBS}")
+      set_property(TARGET dm_ogl_probe APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H HAVE_GL_GLX_H)
+      validate_style(dm_ogl_probe "${OGL_PROBE_SRCS}")
+
       plugin_setup(dm-ogl dm)
     endif(XOPENGL_gl_LIBRARY)
   endif(TCL_FOUND AND TK_FOUND)
@@ -78,6 +83,7 @@ cmakefiles(
   CMakeLists.txt
   FindGLX.cmake
   ${OGL_SRCS}
+  ${OGL_PROBE_SRCS}
   dm-ogl.h
   fb_ogl.h
 )

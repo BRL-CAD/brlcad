@@ -88,6 +88,8 @@
 
 #include "vmath.h"
 #include "bn.h"
+#include "bu/file.h"
+#include "bu/process.h"
 #include "bv/defines.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
@@ -109,6 +111,34 @@
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
 static XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+
+static int
+ogl_runtime_probe(const char *dpy_string)
+{
+#ifdef __APPLE__
+    const char *probe_path = bu_dir(NULL, 0, BU_DIR_BIN, "dm_ogl_probe", BU_DIR_EXT, NULL);
+    const char *probe_av[3] = {NULL, NULL, NULL};
+    struct bu_process *p = NULL;
+    int rc = 0;
+
+    if (!probe_path || !bu_file_executable(probe_path)) {
+	return 0;
+    }
+
+    probe_av[0] = probe_path;
+    if (dpy_string && dpy_string[0] != '\0') {
+	probe_av[1] = dpy_string;
+    }
+
+    bu_process_create(&p, probe_av, BU_PROCESS_DEFAULT);
+    rc = bu_process_wait_n(&p, 3000);
+
+    return (rc == 0) ? 1 : -1;
+#else
+    (void)dpy_string;
+    return 0;
+#endif
+}
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
@@ -519,6 +549,12 @@ ogl_viable(const char *dpy_string)
 {
     Display *dpy;
     int return_val;
+
+    return_val = ogl_runtime_probe(dpy_string);
+    if (return_val != 0) {
+	return return_val;
+    }
+
     if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
 	if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
 	    XCloseDisplay(dpy);
