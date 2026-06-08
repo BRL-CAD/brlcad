@@ -47,7 +47,7 @@
 #include "./datum.h"
 
 /* maximum number of values a datum may have (positioned plane case) */
-#define MAX_VALS (ELEMENTS_PER_POINT + ELEMENTS_PER_VECT + 1 ) /* for w */
+#define MAX_VALS (ELEMENTS_PER_POINT + ELEMENTS_PER_VECT + 1) /* for w */
 
 
 /**
@@ -285,6 +285,7 @@ datum_pack_double(unsigned char *buf, unsigned char *data, size_t count)
     return buf;
 }
 
+
 static unsigned char *
 datum_unpack_double(unsigned char *buf, unsigned char *data, size_t count)
 {
@@ -367,6 +368,7 @@ rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     return 0;
 }
+
 
 int
 rt_datum_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
@@ -544,6 +546,7 @@ rt_datum_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = NULL;	/* sanity */
 }
 
+
 const char *
 rt_datum_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
@@ -570,6 +573,151 @@ datum_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+
+int
+rt_datum_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
+{
+    struct rt_datum_internal *datum;
+
+    RT_CK_DB_INTERNAL(intern);
+    datum = (struct rt_datum_internal *)intern->idb_ptr;
+    RT_DATUM_CK_MAGIC(datum);
+
+    if (attr) {
+        bu_vls_printf(logstr, "datum has no attribute '%s'", attr);
+        return BRLCAD_ERROR;
+    }
+
+    bu_vls_strcpy(logstr, "datum data {");
+    while (datum) {
+        if (!ZERO(datum->w)) {
+            bu_vls_printf(logstr, " {plane %.25G %.25G %.25G %.25G %.25G %.25G %.25G}",
+                          V3ARGS(datum->pnt), V3ARGS(datum->dir), datum->w);
+        } else if (MAGNITUDE(datum->dir) > 0.0 && ZERO(datum->w)) {
+            bu_vls_printf(logstr, " {line %.25G %.25G %.25G %.25G %.25G %.25G}",
+                          V3ARGS(datum->pnt), V3ARGS(datum->dir));
+        } else {
+            bu_vls_printf(logstr, " {point %.25G %.25G %.25G}",
+                          V3ARGS(datum->pnt));
+        }
+        datum = datum->next;
+    }
+    bu_vls_strcat(logstr, "}");
+    return BRLCAD_OK;
+}
+
+
+int
+rt_datum_form(struct bu_vls *logstr, const struct rt_functab *ftp)
+{
+    RT_CK_FUNCTAB(ftp);
+    bu_vls_printf(logstr, "data");
+    return BRLCAD_OK;
+}
+
+
+int
+rt_datum_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
+{
+    struct rt_datum_internal *datum;
+    int i;
+
+    RT_CK_DB_INTERNAL(intern);
+    datum = (struct rt_datum_internal *)intern->idb_ptr;
+    RT_DATUM_CK_MAGIC(datum);
+
+    for (i = 0; i < argc; i += 2) {
+        if (BU_STR_EQUAL(argv[i], "data")) {
+            const char **list_argv;
+            int list_argc;
+            struct rt_datum_internal *head = NULL, *tail = NULL;
+            int j;
+
+            if (i + 1 >= argc) {
+                bu_vls_printf(logstr, "missing value for 'data' attribute");
+                return BRLCAD_ERROR;
+            }
+
+            if (bu_argv_from_tcl_list(argv[i+1], &list_argc, (const char ***)&list_argv) != 0) {
+                bu_vls_printf(logstr, "invalid data list");
+                return BRLCAD_ERROR;
+            }
+
+            for (j = 0; j < list_argc; j++) {
+                const char **elem_argv;
+                int elem_argc;
+                if (bu_argv_from_tcl_list(list_argv[j], &elem_argc, (const char ***)&elem_argv) != 0) {
+                    bu_vls_printf(logstr, "invalid datum element list");
+                    bu_free((char *)list_argv, "list_argv");
+                    return BRLCAD_ERROR;
+                }
+
+                if (elem_argc > 0) {
+                    struct rt_datum_internal *new_datum;
+                    BU_ALLOC(new_datum, struct rt_datum_internal);
+                    new_datum->magic = RT_DATUM_INTERNAL_MAGIC;
+                    new_datum->next = NULL;
+
+                    if (BU_STR_EQUAL(elem_argv[0], "point") && elem_argc == 4) {
+                        new_datum->pnt[X] = atof(elem_argv[1]);
+                        new_datum->pnt[Y] = atof(elem_argv[2]);
+                        new_datum->pnt[Z] = atof(elem_argv[3]);
+                        VSETALL(new_datum->dir, 0.0);
+                        new_datum->w = 0.0;
+                    } else if (BU_STR_EQUAL(elem_argv[0], "line") && elem_argc == 7) {
+                        new_datum->pnt[X] = atof(elem_argv[1]);
+                        new_datum->pnt[Y] = atof(elem_argv[2]);
+                        new_datum->pnt[Z] = atof(elem_argv[3]);
+                        new_datum->dir[X] = atof(elem_argv[4]);
+                        new_datum->dir[Y] = atof(elem_argv[5]);
+                        new_datum->dir[Z] = atof(elem_argv[6]);
+                        new_datum->w = 0.0;
+                    } else if (BU_STR_EQUAL(elem_argv[0], "plane") && elem_argc == 8) {
+                        new_datum->pnt[X] = atof(elem_argv[1]);
+                        new_datum->pnt[Y] = atof(elem_argv[2]);
+                        new_datum->pnt[Z] = atof(elem_argv[3]);
+                        new_datum->dir[X] = atof(elem_argv[4]);
+                        new_datum->dir[Y] = atof(elem_argv[5]);
+                        new_datum->dir[Z] = atof(elem_argv[6]);
+                        new_datum->w = atof(elem_argv[7]);
+                    } else {
+                        bu_vls_printf(logstr, "invalid datum element");
+                        bu_free((char *)elem_argv, "elem_argv");
+                        bu_free((char *)list_argv, "list_argv");
+                        if (head) {
+                            struct rt_db_internal dummy;
+                            dummy.idb_ptr = head;
+                            rt_datum_ifree(&dummy);
+                        }
+                        return BRLCAD_ERROR;
+                    }
+                    if (!head) {
+                        head = new_datum;
+                    } else {
+                        tail->next = new_datum;
+                    }
+                    tail = new_datum;
+                }
+                bu_free((char *)elem_argv, "elem_argv");
+            }
+            bu_free((char *)list_argv, "list_argv");
+
+            if (!head) {
+                bu_vls_printf(logstr, "datum must have at least one element");
+                return BRLCAD_ERROR;
+            }
+
+            rt_datum_ifree(intern);
+            intern->idb_ptr = head;
+        } else {
+            bu_vls_printf(logstr, "unknown attribute '%s'", argv[i]);
+            return BRLCAD_ERROR;
+        }
+    }
+
+    return BRLCAD_OK;
 }
 
 
