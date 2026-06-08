@@ -876,13 +876,13 @@ bn_read_table_and_tabdata(const char *filename) {
     }
 
     /* Allocate storage */
-    BN_GET_TABLE(tabp, count);
+    BN_GET_TABLE(tabp, count - 1);
     BN_GET_TABDATA(data, tabp);
 
     /* Second pass:  Read only as much data as storage was allocated for */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     fp = fopen(filename, "rb");
-    for (i=0; i < count; i++) {
+    for (i=0; i < tabp->nx; i++) {
 	double xval, yval;
 	int ret;
 
@@ -896,14 +896,27 @@ bn_read_table_and_tabdata(const char *filename) {
 	    bu_log("Malformatted table data encountered in %s\n", filename);
 	    break;
 	}
-	xval = tabp->x[i];
-	yval = data->y[i];
+	tabp->x[i] = xval;
+	data->y[i] = yval;
+    }
+    if (i == tabp->nx) {
+	double xval;
+	int ret;
+
+	buf[0] = '\0';
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  {
+	    bu_log("bn_read_table_and_tabdata(%s) unexpected EOF on final line\n", filename);
+	} else {
+	    ret = sscanf(buf, "%lf", &xval);
+	    if (ret != 1) {
+		bu_log("Malformatted final table endpoint encountered in %s\n", filename);
+	    } else {
+		tabp->x[tabp->nx] = xval;
+	    }
+	}
     }
     fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);
-
-    /* Complete final interval */
-    tabp->x[count] = 2 * tabp->x[count-1] - tabp->x[count-2];
 
     bn_ck_table(tabp);
 
@@ -1173,6 +1186,7 @@ bn_table_interval_num_samples(const struct bn_table *tabp, double low, double hi
 size_t
 bn_table_delete_sample_pnts(struct bn_table *tabp, size_t i, size_t j)
 {
+    size_t new_nx;
     size_t tokill;
     size_t k;
 
@@ -1191,11 +1205,12 @@ bn_table_delete_sample_pnts(struct bn_table *tabp, size_t i, size_t j)
     if (tokill >= tabp->nx)
 	bu_bomb("bn_table_delete_sample_pnts(): you can't kill 'em all!\n");
 
-    tabp->nx -= tokill;
+    new_nx = tabp->nx - tokill;
 
-    for (k = i; k < tabp->nx; k++)  {
+    for (k = i; k <= new_nx; k++)  {
 	tabp->x[k] = tabp->x[k+tokill];
     }
+    tabp->nx = new_nx;
     return tokill;
 }
 
