@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+* added g-obj color and .mtl material export support - Sean Morrison
 * improved DSP raytracing robustness - CLiff Yapp
 * added arb repair command to fix various ARB8 issues - Cliff Yapp
 * fixed convex hull tolerance handling for thin shapes - Cliff Yapp

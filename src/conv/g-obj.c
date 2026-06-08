@@ -38,6 +38,7 @@
 #include "bu/getopt.h"
 #include "bu/opt.h"
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -77,10 +78,13 @@ static char *output_file = NULL;	/* output filename */
 static char *error_file = NULL;		/* error filename */
 static FILE *fp;			/* Output file pointer */
 static FILE *fpe;			/* Error file pointer */
+static FILE *mtl_fp = NULL;		/* Companion material file pointer */
 static struct db_i *dbip;
 static struct bg_tess_tol ttol;
 static struct bn_tol tol;
 static struct model *the_model;
+static struct bu_list material_head;
+static struct bu_vls material_lib_name = BU_VLS_INIT_ZERO;
 
 static struct db_tree_state tree_state;	/* includes tol & model */
 
@@ -89,6 +93,280 @@ static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
 static int print_help = 0;
+static int warned_missing_mtl = 0;
+
+
+struct obj_material_entry {
+    struct bu_list l;
+    char *name;
+};
+
+
+static void
+obj_rgb_from_mater(unsigned char rgb[3], const struct mater_info *mater)
+{
+    size_t i;
+
+    for (i = 0; i < 3; ++i) {
+	int channel = (int)lrint(mater->ma_color[i] * 255.0);
+
+	if (channel < 0)
+	    channel = 0;
+	if (channel > 255)
+	    channel = 255;
+	rgb[i] = (unsigned char)channel;
+    }
+}
+
+
+static int
+obj_get_path_color(struct db_i *idbip, const struct db_full_path *pathp, unsigned char rgb[3])
+{
+    size_t i;
+    int found = 0;
+
+    if (!idbip || !pathp)
+	return 0;
+
+    for (i = 0; i < pathp->fp_len; ++i) {
+	struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	const char *color_val;
+	int inherit;
+
+	if (db5_get_attributes(idbip, &avs, pathp->fp_names[i]) != 0)
+	    continue;
+
+	inherit = BU_STR_EQUAL(bu_avs_get(&avs, "inherit"), "1");
+
+	if (db_mater_head(idbip)) {
+	    int region_id = -1;
+	    const char *region_id_val = bu_avs_get(&avs, "region_id");
+	    const struct mater *mp;
+
+	    if (region_id_val) {
+		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
+		region_id = 0;
+	    }
+
+	    if (region_id >= 0) {
+		for (mp = db_mater_head(idbip); mp != MATER_NULL; mp = mp->mt_forw) {
+		    if (region_id > mp->mt_high || region_id < mp->mt_low)
+			continue;
+		    rgb[0] = mp->mt_r;
+		    rgb[1] = mp->mt_g;
+		    rgb[2] = mp->mt_b;
+		    found = 1;
+		    break;
+		}
+		if (found && inherit) {
+		    bu_avs_free(&avs);
+		    return 1;
+		}
+		if (found) {
+		    bu_avs_free(&avs);
+		    continue;
+		}
+	    }
+	}
+
+	color_val = bu_avs_get(&avs, "color");
+	if (!color_val)
+	    color_val = bu_avs_get(&avs, "rgb");
+	if (color_val && bu_str_to_rgb(color_val, rgb))
+	    found = 1;
+
+	bu_avs_free(&avs);
+
+	if (found && inherit)
+	    return 1;
+    }
+
+    return found;
+}
+
+
+static int
+obj_get_export_color(struct db_i *idbip, int region_id, const struct mater_info *mater, unsigned char rgb[3])
+{
+    struct region reg;
+
+    if (mater->ma_color_valid) {
+	obj_rgb_from_mater(rgb, mater);
+	return 1;
+    }
+
+    if (!idbip)
+	return 0;
+
+    memset(&reg, 0, sizeof(reg));
+    reg.reg_regionid = region_id;
+    reg.reg_mater = *mater;
+    db_mater_color_region(idbip, &reg);
+
+    if (!reg.reg_mater.ma_color_valid)
+	return 0;
+
+    obj_rgb_from_mater(rgb, &reg.reg_mater);
+    return 1;
+}
+
+
+static int
+obj_material_name(struct bu_vls *name, int color_valid, const unsigned char rgb[3], int preserve_gift, int aircode, int los, int material_id)
+{
+    bu_vls_trunc(name, 0);
+
+    if (color_valid) {
+	if (preserve_gift) {
+	    bu_vls_sprintf(name, "mat_%d_%d_%d__color_%u_%u_%u",
+			   material_id, los, aircode, rgb[0], rgb[1], rgb[2]);
+	} else {
+	    bu_vls_sprintf(name, "color_%u_%u_%u", rgb[0], rgb[1], rgb[2]);
+	}
+	return 1;
+    }
+
+    if (preserve_gift) {
+	bu_vls_sprintf(name, "mat_%d_%d_%d", material_id, los, aircode);
+	return 1;
+    }
+
+    return 0;
+}
+
+
+static int
+obj_material_exists(const char *name)
+{
+    struct obj_material_entry *entry;
+
+    for (BU_LIST_FOR(entry, obj_material_entry, &material_head)) {
+	if (BU_STR_EQUAL(entry->name, name))
+	    return 1;
+    }
+
+    return 0;
+}
+
+
+static void
+obj_write_material_definition(const char *name, int color_valid, const unsigned char rgb[3])
+{
+    struct obj_material_entry *entry;
+    double kd[3] = {0.8, 0.8, 0.8};
+
+    if (!mtl_fp || !name || obj_material_exists(name))
+	return;
+
+    if (color_valid) {
+	kd[0] = ((double)rgb[0]) / 255.0;
+	kd[1] = ((double)rgb[1]) / 255.0;
+	kd[2] = ((double)rgb[2]) / 255.0;
+    }
+
+    fprintf(mtl_fp, "newmtl %s\n", name);
+    fprintf(mtl_fp, "Ka %.6f %.6f %.6f\n", kd[0], kd[1], kd[2]);
+    fprintf(mtl_fp, "Kd %.6f %.6f %.6f\n", kd[0], kd[1], kd[2]);
+    fprintf(mtl_fp, "Ks 0.000000 0.000000 0.000000\n");
+    fprintf(mtl_fp, "d 1.000000\n");
+    fprintf(mtl_fp, "illum 1\n\n");
+
+    BU_ALLOC(entry, struct obj_material_entry);
+    BU_LIST_INIT(&entry->l);
+    entry->name = bu_strdup(name);
+    BU_LIST_APPEND(&material_head, &entry->l);
+}
+
+
+static void
+obj_cleanup_materials(void)
+{
+    struct obj_material_entry *entry;
+
+    if (mtl_fp) {
+	fclose(mtl_fp);
+	mtl_fp = NULL;
+    }
+
+    while (BU_LIST_WHILE(entry, obj_material_entry, &material_head)) {
+	BU_LIST_DEQUEUE(&entry->l);
+	bu_free(entry->name, "obj material name");
+	bu_free(entry, "obj material entry");
+    }
+
+    bu_vls_free(&material_lib_name);
+}
+
+
+static void
+obj_open_material_file(const char *obj_path)
+{
+    struct bu_vls dir = BU_VLS_INIT_ZERO;
+    struct bu_vls base = BU_VLS_INIT_ZERO;
+    struct bu_vls mtl_path = BU_VLS_INIT_ZERO;
+
+    if (!obj_path || !strlen(obj_path))
+	goto cleanup;
+
+    if (!bu_path_component(&base, obj_path, BU_PATH_BASENAME_EXTLESS))
+	goto cleanup;
+
+    bu_vls_sprintf(&material_lib_name, "%s.mtl", bu_vls_addr(&base));
+
+    if (bu_path_component(&dir, obj_path, BU_PATH_DIRNAME) &&
+	    bu_vls_strlen(&dir) > 0 &&
+	    !BU_STR_EQUAL(bu_vls_addr(&dir), ".")) {
+	bu_vls_sprintf(&mtl_path, "%s/%s", bu_vls_addr(&dir), bu_vls_addr(&material_lib_name));
+    } else {
+	bu_vls_sprintf(&mtl_path, "%s", bu_vls_addr(&material_lib_name));
+    }
+
+    if ((mtl_fp = fopen(bu_vls_addr(&mtl_path), "wb")) == NULL) {
+	bu_log("Cannot open companion material file (%s) for writing\n", bu_vls_addr(&mtl_path));
+	perror("g-obj");
+	bu_vls_trunc(&material_lib_name, 0);
+	goto cleanup;
+    }
+
+    fprintf(mtl_fp, "# BRL-CAD generated Wavefront material file\n");
+
+cleanup:
+    bu_vls_free(&dir);
+    bu_vls_free(&base);
+    bu_vls_free(&mtl_path);
+}
+
+
+static void
+obj_write_region_material(const struct db_full_path *pathp, const struct db_tree_state *tsp)
+{
+    struct bu_vls material_name = BU_VLS_INIT_ZERO;
+    unsigned char rgb[3] = {0, 0, 0};
+    struct db_i *idbip = tsp->ts_dbip ? tsp->ts_dbip : dbip;
+    int color_valid = obj_get_path_color(idbip, pathp, rgb);
+
+    if (!color_valid)
+	color_valid = obj_get_export_color(idbip, tsp->ts_regionid, &tsp->ts_mater, rgb);
+
+    if (mtl_fp) {
+	if (obj_material_name(&material_name, color_valid, rgb, usemtl,
+		    tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater)) {
+	    obj_write_material_definition(bu_vls_addr(&material_name), color_valid, rgb);
+	    fprintf(fp, "usemtl %s\n", bu_vls_addr(&material_name));
+	}
+	bu_vls_free(&material_name);
+	return;
+    }
+
+    if (color_valid && !warned_missing_mtl) {
+	bu_log("g-obj: unable to export BRL-CAD colors without a companion .mtl file; continuing without color assignments\n");
+	warned_missing_mtl = 1;
+    }
+
+    if (usemtl)
+	fprintf(fp, "usemtl mat_%d_%d_%d\n", tsp->ts_gmater, tsp->ts_los, tsp->ts_aircode);
+}
 
 static int
 parse_tol_abs(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
@@ -199,6 +477,7 @@ main(int argc, const char **argv)
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
+    BU_LIST_INIT(&material_head);
 
     ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -238,6 +517,8 @@ main(int argc, const char **argv)
 	}
     }
 
+    obj_open_material_file(output_file);
+
     /* Open g-obj error log file */
     if (!error_file) {
 	fpe = stderr;
@@ -263,6 +544,8 @@ main(int argc, const char **argv)
 	fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units in)\n");
     else
 	fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
+    if (mtl_fp)
+	fprintf(fp, "mtllib %s\n", bu_vls_addr(&material_lib_name));
 
     fprintf(fp, "# BRL-CAD model: %s\n# BRL_CAD objects:", argv[0]);
 
@@ -289,6 +572,7 @@ main(int argc, const char **argv)
     }
 
     fclose(fp);
+    obj_cleanup_materials();
 
     /* Release dynamic storage */
     nmg_km(the_model);
@@ -300,7 +584,7 @@ main(int argc, const char **argv)
 
 
 static void
-nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id, struct bu_list *vlfree)
+nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, const struct db_tree_state *tsp, struct bu_list *vlfree)
 {
     struct model *m = NULL;
     struct shell *s = NULL;
@@ -394,8 +678,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     /* END CHECK SECTION */
     /* Write pertinent info for this region */
 
-    if (usemtl)
-	fprintf(fp, "usemtl %d_%d_%d\n", aircode, los, material_id);
+    obj_write_region_material(pathp, tsp);
 
     fprintf(fp, "g %s", pathp->fp_names[0]->d_namep);
     for (i=1; i<pathp->fp_len; i++)
@@ -526,7 +809,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* try */
 
 	/* Write the region to the TANKILL file */
-	nmg_to_obj(r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater, vlfree);
+	nmg_to_obj(r, pathp, tsp, vlfree);
 
     } else {
 	/* catch */
