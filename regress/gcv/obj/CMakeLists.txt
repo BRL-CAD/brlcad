@@ -8,6 +8,7 @@ endif(TARGET gcv-assetimport)
 
 gcv_regress_util("obj" "tetra.obj" ${dep_str})
 gcv_regress_util("obj" "tetra.g" ${dep_str} EXPORTER)
+distclean("${CMAKE_CURRENT_BINARY_DIR}/conv-tetra.mtl")
 
 cmakefiles(
   CMakeLists.txt
