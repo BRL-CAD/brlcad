@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * added gcv & g-obj color .mtl material export support - Sean Morrison
-* improved DSP raytracing robustness - CLiff Yapp
+* improved DSP raytrace consistency, robustness, & speed - Cliff Yapp
 * added arb repair command to fix various ARB8 issues - Cliff Yapp
 * fixed convex hull tolerance handling for thin shapes - Cliff Yapp
 * fixed vdeck truncating/overflowing long region names - Sean Morrison
