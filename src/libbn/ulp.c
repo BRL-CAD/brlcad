@@ -253,7 +253,7 @@ double
 bn_nextafter_up(double val)
 {
 #ifdef HAVE_NEXTAFTER
-    return nextafter(val, val+1.0);
+    return nextafter(val, INFINITY);
 #else
     union dbl_bits bits;
     int type = fpclassify(val);
@@ -278,7 +278,7 @@ double
 bn_nextafter_dn(double val)
 {
 #ifdef HAVE_NEXTAFTER
-    return nextafter(val, val-1.0);
+    return nextafter(val, -INFINITY);
 #else
     union dbl_bits bits;
     int type = fpclassify(val);
@@ -304,7 +304,7 @@ float
 bn_nextafterf_up(float val)
 {
 #ifdef HAVE_NEXTAFTERF
-    return nextafterf(val, val+1.0f);
+    return nextafterf(val, INFINITY);
 #else
     union flt_bits bits;
     int type = fpclassify(val);
@@ -328,7 +328,7 @@ float
 bn_nextafterf_dn(float val)
 {
 #ifdef HAVE_NEXTAFTERF
-    return nextafterf(val, val-1.0f);
+    return nextafterf(val, -INFINITY);
 #else
     union flt_bits bits;
     int type = fpclassify(val);
@@ -353,36 +353,26 @@ bn_nextafterf_dn(float val)
 double
 bn_ulp(double val)
 {
-    union dbl_bits bits;
-    int type = fpclassify(val);
+    double up;
 
-    if (type == FP_NAN || type == FP_INFINITE)
+    if (isnan(val) || isinf(val))
 	return val;
 
-    bits.d = val;
-    bits.u++; /* next "bigger" val */
-    if (type == FP_ZERO || val > 0.0) {
-	return bits.d - val;
-    }
-    return -bits.d + val;
+    up = bn_nextafter_up(val);
+    return fabs(up - val);
 }
 
 
 float
 bn_ulpf(float val)
 {
-    union flt_bits bits;
-    int type = fpclassify(val);
+    float up;
 
-    if (type == FP_NAN || type == FP_INFINITE)
+    if (isnan(val) || isinf(val))
 	return val;
 
-    bits.f = val;
-    bits.i++; /* next "bigger" val */
-    if (type == FP_ZERO || val > 0.0f) {
-	return bits.f - val;
-    }
-    return -bits.f + val;
+    up = bn_nextafterf_up(val);
+    return fabsf(up - val);
 }
 
 
