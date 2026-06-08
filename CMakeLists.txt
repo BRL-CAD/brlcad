@@ -498,8 +498,13 @@ include(BRLCAD_User_Options)
 
 # The aggregate brlcad shared library is built from object library targets.
 # Enable object libraries even on platforms where they are not the default.
+# cmake_dependent_option sets a plain (non-cache) local variable when its
+# condition is false (e.g. MSVC), which shadows any cache value.  We must
+# explicitly set the plain variable here as well to make the override visible
+# in the current scope and all subdirectory scopes that inherit from it.
 if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND NOT USE_OBJECT_LIBS)
   set(USE_OBJECT_LIBS ON CACHE BOOL "Use OBJECT libraries" FORCE)
+  set(USE_OBJECT_LIBS ON)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 endif()
 
