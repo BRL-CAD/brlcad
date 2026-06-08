@@ -46,24 +46,28 @@ endif(BRLCAD_ENABLE_OPENGL)
 # local includes
 set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${PNG_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/libbg)
 
+find_package(OpenSSL QUIET)
+
+# Optional TLS support for if_remote.c and fbserv/tls_wrap.h.
+set(LIBDM_PUBLIC_LIBS ${libdm_deps})
+if(OpenSSL_FOUND OR OPENSSL_FOUND)
+  list(APPEND LIBDM_PUBLIC_LIBS OpenSSL::SSL OpenSSL::Crypto)
+endif()
+
 # Note - libdm_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 brlcad_addlib(libdm "${LIBDM_SRCS}" "${DM_INCLUDE_DIRS}" "${DM_LOCAL_INCLUDE_DIRS}"
-  PUBLIC_LIBS ${libdm_deps}
+  PUBLIC_LIBS ${LIBDM_PUBLIC_LIBS}
   PRIVATE_LIBS PNG::PNG ${WINSOCK_LIB}
   UNITY_BUILD_SKIP dm_init.cpp
   )
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
-# Optional: TLS support for if_remote.c (remote framebuffer client)
-find_package(OpenSSL QUIET)
+
 if(OpenSSL_FOUND OR OPENSSL_FOUND)
-  target_link_libraries(libdm PUBLIC OpenSSL::SSL OpenSSL::Crypto)
   target_compile_definitions(libdm PRIVATE HAVE_OPENSSL_SSL_H=1)
   if(TARGET libdm-obj)
-    target_link_libraries(libdm-obj PRIVATE OpenSSL::SSL OpenSSL::Crypto)
     target_compile_definitions(libdm-obj PRIVATE HAVE_OPENSSL_SSL_H=1)
   endif(TARGET libdm-obj)
   if(TARGET libdm-brlcad-obj)
-    target_link_libraries(libdm-brlcad-obj PRIVATE OpenSSL::SSL OpenSSL::Crypto)
     target_compile_definitions(libdm-brlcad-obj PRIVATE HAVE_OPENSSL_SSL_H=1)
     brlcad_register_aggregate_link_libs(OpenSSL::SSL OpenSSL::Crypto)
   endif(TARGET libdm-brlcad-obj)
