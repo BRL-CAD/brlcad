@@ -110,6 +110,7 @@ public:
     void initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);
 
     std::vector<int> getCoordinates(int mapIndex);
+    bool centerAmbientImage();
 
     int getMapSize();
     char getMapChar(int index);

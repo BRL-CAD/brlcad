@@ -213,7 +213,7 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
 }
 
 int
-IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
+IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text, bool centerImage)
 {
     const int titleWidth = width;
     const int titleCenterX = x + titleWidth / 2;
@@ -245,10 +245,11 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
 	// image height is too large; bound on height
 	int newWidth = (int)(height * (double)imgWidth / imgHeight);
 	widthOffset = (width - newWidth) / 2;
-	widthOffset /= 2.5;
+	if (!centerImage) {
+	    widthOffset /= 2.5;
+	}
 	width = newWidth;
     }
-
     cv::Mat resized_image;
     resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 

@@ -533,6 +533,12 @@ LayoutChoice::getCoordinates(int mapIndex)
     return output;
 }
 
+bool
+LayoutChoice::centerAmbientImage()
+{
+    return (map == "LFRBTb\n....AA\n");
+}
+
 double
 LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 {
@@ -763,7 +769,8 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
     std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 
     std::string title = info.getInfo("title");
-    size_t countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
+    bool centerAmbient = bestLayout.centerAmbientImage();
+    size_t countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title, centerAmbient);
 
     if (countCharDisplayedTitle < title.length()) {
 	std::string continuation = title.substr(countCharDisplayedTitle);

@@ -60,7 +60,7 @@ public:
     void drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold = 255);
     void drawImageFitted(int x, int y, int width, int height, std::string imgPath);
     void drawImageTransparentFitted(int x, int y, int width, int height, std::string imgPath);
-    int drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text);
+    int drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text, bool centerImage = false);
     void drawText(int x, int y, int height, int width, std::string text, int flags = 0);
     void drawTextCentered(int x, int y, int height, int width, std::string text, int flags = 0);
     void drawTextRightAligned(int x, int y, int height, int width, std::string text, int flags);
