@@ -8,89 +8,36 @@ bwrot - rotate, invert, or reverse a black and white bw file
 
 == SYNOPSIS
 
-*bwrot* [*-rifb* | *-a* _angle_] [*-#* _bytes/pixel_] [*-s* _squaresize_] [*-w* _in_width_] [*-n* _in_height_] [*-o* _out.bw_] [_file.bw_] [> _out.bw_]
+[source]
+----
+bwrot [-rifb | -a angle] [-s squaresize] [-w in_width] [-n in_height] [-o out.bw] [file.bw] [ > out.bw]
+----
 
 
 [[description]]
 == DESCRIPTION
 
-*bwrot* rotates, vertically inverts, and horizontally reverses a black and white *bw*(5) format file. If no input file is specified, *bwrot* reads from standard input.
+*bwrot* will rotate, vertically invert, and horizontally reverse a black and white *bw*(5) format file or read from standard input if a file name is not given. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels (both values default to 512); they can be set to same value via *-s.*
 
-[[options]]
-== OPTIONS
+The *-r* flag reverses the scan lines left to right. The *-i* flag inverts the image top to bottom. The *-f* and *-b* flag will rotate the image ninety degrees forward or backward respectively. The sense of the rotation is relative to a first quadrant coordinate system, i.e. origin lower left, where "forward" means clockwise.
 
-*-a* _angle_::
-Rotate the image counterclockwise by the specified arbitrary angle (in degrees). This option overrides the orthogonal rotation, inversion, and reversal flags.
+Note that a 180 degree rotation can be obtained by both reversing and inverting.
 
-*-b*::
-Rotate the image 90 degrees backward (counterclockwise). The sense of the rotation is relative to a first-quadrant coordinate system (origin at the lower left).
+If the *-a* flag is used, the image will be rotated counterclockwise by the specified arbitrary angle (in degrees).
 
-*-f*::
-Rotate the image 90 degrees forward (clockwise).
-
-*-i*::
-Invert the image vertically (top to bottom). This flag is ignored if *-b* or *-f* are specified.
-
-*-r*::
-Reverse the scan lines horizontally (left to right). Note that a 180-degree rotation can be obtained by specifying both *-r* and *-i*.
-
-*-s*, *-S* _squaresize_::
-Set both the input file width and height to the given size in pixels.
-
-*-w*, *-W* _in_width_::
-Specify the input file width in pixels (default is 512).
-
-*-n*, *-N* _in_height_::
-Specify the input file height in scan lines in pixels (default is 512).
-
-*-#* _bytes_::
-Specify the number of bytes per pixel (default is 1). This allows the tool to process other data formats composed of fixed-size elements.
-
-*-o* _out.bw_::
-Specify an output file instead of redirecting standard output.
+The *-o* option can be used to specify an output file instead of redirecting standard out.
 
 
 [[method]]
 == METHOD
 
-A fairly large buffer is kept in memory so that, file size permitting, the entire rotation can occur without seeking on input or output. In any event, the algorithm is designed to process the input sequentially, so that if any seeking is required, it will happen on output only. If these seeks fail (e.g., the output is a pipe), the user will be told that it needs a file on output. A more general solution to this problem would be to see if seeks can be done on input instead, and switch the algorithm to seek on input only.
-
-
-[[examples]]
-== EXAMPLES
-
-.Rotate a Black and White Image 90 Degrees Clockwise
-====
-[source,bash]
-----
-$ bwrot -f -w 1024 -n 768 image.bw > rotated.bw
-----
-Rotates the 1024x768 image `image.bw` 90 degrees clockwise (forward) and saves the result to `rotated.bw`. Note that the output image dimensions will be swapped to 768x1024.
-====
-
-.Rotate an Image 180 Degrees
-====
-[source,bash]
-----
-$ bwrot -r -i -o rotated180.bw image.bw
-----
-Reverses and inverts a 512x512 image (the default dimensions), effectively rotating it 180 degrees. The output is written directly to `rotated180.bw`.
-====
-
-.Arbitrary Angle Rotation
-====
-[source,bash]
-----
-$ bwrot -a 45.5 -s 1024 input.bw > rotated.bw
-----
-Rotates a 1024x1024 image `input.bw` counterclockwise by 45.5 degrees.
-====
+A fairly large buffer is kept in memory so that, file size permitting, the entire rotation can occur without seeking on input or output. In any event, the algorithm is designed to process the input sequentially, so that if any seeking is required, it will happen on output only. If these seeks fail, e.g. the output is a pipe, the user will be told that it needs a file on output. A more general solution to this problem would be to see if seeks can be done on input instead, and switch the algorithm to seek on input only.
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pixrot*(1), *bwscale*(1), *bwrect*(1), *bw*(5)
+*brlcad*(1), *pixrot*(1), *bwscale*(5), *bwrect*(1), *bw*(5)
 
 
 [[bugs]]

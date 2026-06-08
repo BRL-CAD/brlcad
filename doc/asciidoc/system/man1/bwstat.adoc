@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD
 
 == NAME
-bwstat - display statistics of a black and white image
+bwstat - list statistics related to a black and white bw image.
 
 == SYNOPSIS
 
@@ -17,41 +17,15 @@ bwstat [-v] [file.bw]
 [[description]]
 == DESCRIPTION
 
-*bwstat* reads a *bw*(5) format file (or standard input) and computes statistics of its pixel intensities. These include the total number of pixels, the file dimensions (assuming the image is square), minimum and maximum values, mean, median, mode (and its pixel count), variance, standard deviation, and skew.
+*bwstat* will take the given *bw*(5) format file, or read from standard in. A collection of statistics related to the pixel intensities is produced. These include: The number of pixels (and the square root of this, yielding the file dimension if it's square); the max and min values; the mean; the median (dividing line where half the pixels are above this value, half below); the mode (most frequently occurring value) and the number of pixels at this value; the variance, standard deviation, and skew.
 
-
-[[options]]
-== OPTIONS
-
-*-v*::
-Print a histogram of the pixel values.
-
-_file.bw_::
-Optional input file. If not provided, *bwstat* reads from standard input.
-
-
-[[examples]]
-== EXAMPLES
-
-.Compute statistics for a single black and white image
-====
-[prompt]#bwstat image.bw#
-
-Displays statistics for the pixel intensities in `image.bw`.
-====
-
-.Compute statistics and print a histogram
-====
-[prompt]#bwstat -v image.bw#
-
-Displays statistics and prints a histogram of the pixel values in `image.bw`.
-====
+The *-v* flag will also dump a histogram of the pixel values.
 
 
 [[method]]
 == METHOD
 
-Since the pixel values are quantized (have discrete values from 0 to 255), the statistics can be computed from "lump sums" after building a histogram of the input. This results in a significant savings in computation while also making a single pass over the input file sufficient.
+Since the pixel values are quantized (have discrete values from 0 to 255), the statistics can be computed from "lump sums" after building a histogram of the input. This results in a fantastic savings in computation while also making a single pass over the input file sufficient.
 
 
 [[see_also]]

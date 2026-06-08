@@ -169,8 +169,6 @@ struct superell_specific {
     mat_t superell_SoR; /* matrix for local coordinate system, Scale(Rotate(V))*/
     mat_t superell_invRSSR; /* invR(Scale(Scale(Rot(V)))) */
     mat_t superell_invR; /* transposed rotation matrix */
-    double superell_invn; /* 2.0 / n */
-    double superell_inve; /* 2.0 / e */
 };
 #define SUPERELL_NULL ((struct superell_specific *)0)
 
@@ -183,11 +181,7 @@ struct clt_superell_specific {
     cl_double superell_invmsCu; /* 1.0 / |Cu|^2 */
     cl_double superell_SoR[16]; /* matrix for local coordinate system, Scale(Rotate(V))*/
     cl_double superell_invRSSR[16]; /* invR(Scale(Scale(Rot(V)))) */
-    cl_double superell_invR[16]; /* transposed rotation matrix */
     cl_double superell_e;
-    cl_double superell_n;
-    cl_double superell_inve;
-    cl_double superell_invn;
 };
 
 size_t
@@ -203,14 +197,10 @@ clt_superell_pack(struct bu_pool *pool, struct soltab *stp)
     VMOVE(args->superell_V, superell->superell_V);
     MAT_COPY(args->superell_SoR, superell->superell_SoR);
     MAT_COPY(args->superell_invRSSR, superell->superell_invRSSR);
-    MAT_COPY(args->superell_invR, superell->superell_invR);
     args->superell_invmsAu = superell->superell_invmsAu;
     args->superell_invmsBu = superell->superell_invmsBu;
     args->superell_invmsCu = superell->superell_invmsCu;
     args->superell_e = superell->superell_e;
-    args->superell_n = superell->superell_n;
-    args->superell_inve = superell->superell_inve;
-    args->superell_invn = superell->superell_invn;
     return size;
 }
 #endif /* USE_OPENCL */
@@ -362,8 +352,6 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     superell->superell_n = eip->n;
     superell->superell_e = eip->e;
-    superell->superell_invn = 2.0 / eip->n;
-    superell->superell_inve = 2.0 / eip->e;
 
     VMOVE(superell->superell_V, eip->v);
 
@@ -439,202 +427,170 @@ rt_superell_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-static double
-superell_eval(const struct superell_specific *superell, const vect_t P, const vect_t D, double t)
-{
-    double x = P[X] + t * D[X];
-    double y = P[Y] + t * D[Y];
-    double z = P[Z] + t * D[Z];
-
-    double ax = sqrt(x * x + 1e-12);
-    double ay = sqrt(y * y + 1e-12);
-    double az = sqrt(z * z + 1e-12);
-
-    double term_xy = pow(ax, superell->superell_inve) + pow(ay, superell->superell_inve);
-    return pow(term_xy, superell->superell_e / superell->superell_n) + pow(az, superell->superell_invn) - 1.0;
-}
-
-static void
-superell_grad(vect_t grad, const struct superell_specific *superell, const vect_t W)
-{
-    double ax = sqrt(W[X] * W[X] + 1e-12);
-    double ay = sqrt(W[Y] * W[Y] + 1e-12);
-    double az = sqrt(W[Z] * W[Z] + 1e-12);
-
-    double inve = superell->superell_inve;
-    double invn = superell->superell_invn;
-    double e_over_n = superell->superell_e / superell->superell_n;
-
-    double term_xy = pow(ax, inve) + pow(ay, inve);
-    if (term_xy < 1e-12) term_xy = 1e-12;
-
-    double df_dx = invn * pow(term_xy, e_over_n - 1.0) * pow(ax, inve - 1.0) * (W[X] / ax);
-    double df_dy = invn * pow(term_xy, e_over_n - 1.0) * pow(ay, inve - 1.0) * (W[Y] / ay);
-    double df_dz = invn * pow(az, invn - 1.0) * (W[Z] / az);
-
-    VSET(grad, df_dx, df_dy, df_dz);
-}
-
-static double
-superell_refine_root(const struct superell_specific *superell, const vect_t P, const vect_t D, double t0, double t1, double f0)
-{
-    double t = 0.5 * (t0 + t1);
-    int iter;
-    for (iter = 0; iter < 20; iter++) {
-        double f = superell_eval(superell, P, D, t);
-        if (fabs(f) < 1e-7) break;
-        
-        if (f * f0 < 0) {
-            t1 = t;
-        } else {
-            t0 = t;
-            f0 = f;
-        }
-        
-        vect_t W, grad;
-        VJOIN1(W, P, t, D);
-        superell_grad(grad, superell, W);
-        double df_dt = VDOT(grad, D);
-        
-        double t_next = t - f / df_dt;
-        if (t_next > t0 && t_next < t1) {
-            t = t_next;
-        } else {
-            t = 0.5 * (t0 + t1);
-        }
-    }
-    return t;
-}
-
 int
 rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    static int counter=10;
+
     struct superell_specific *superell = (struct superell_specific *)stp->st_specific;
-    vect_t translated;
-    vect_t P; /* P' */
-    vect_t D; /* D' */
-    double dp, dd, pp, disc;
-    double t_near, t_far;
-    int i, num_roots = 0;
+    bn_poly_t equation; /* equation of superell to be solved */
+    vect_t translated;  /* translated shot vector */
+    vect_t newShotPoint; /* P' */
+    vect_t newShotDir; /* D' */
+    vect_t normalizedShotPoint; /* P' with normalized dist from superell */
+    bn_complex_t complexRoot[4]; /* roots returned from poly solver */
+    double realRoot[4];  /* real ray distance values */
+    int i, j;
     struct seg *segp;
-    bn_poly_t equation;
-    bn_complex_t complexRoot[4];
-    double realRoot[6];
-    int poly_success = 0;
 
     /* translate ray point */
-    VSUB2(translated, rp->r_pt, superell->superell_V);
+    /* VSUB2(translated, rp->r_pt, superell->superell_V); */
+    (translated)[X] = (rp->r_pt)[X] - (superell->superell_V)[X];
+    (translated)[Y] = (rp->r_pt)[Y] - (superell->superell_V)[Y];
+    (translated)[Z] = (rp->r_pt)[Z] - (superell->superell_V)[Z];
 
     /* scale and rotate point to get P' */
-    MAT4X3VEC(P, superell->superell_SoR, translated);
 
-    /* translate ray direction vector (unnormalized in local space) */
-    MAT4X3VEC(D, superell->superell_SoR, rp->r_dir);
+    /* MAT4X3VEC(newShotPoint, superell->superell_SoR, translated); */
+    newShotPoint[X] = (superell->superell_SoR[0]*translated[X] + superell->superell_SoR[1]*translated[Y] + superell->superell_SoR[ 2]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+    newShotPoint[Y] = (superell->superell_SoR[4]*translated[X] + superell->superell_SoR[5]*translated[Y] + superell->superell_SoR[ 6]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+    newShotPoint[Z] = (superell->superell_SoR[8]*translated[X] + superell->superell_SoR[9]*translated[Y] + superell->superell_SoR[10]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
 
-    dp = VDOT(D, P);
-    dd = VDOT(D, D);
-    pp = VDOT(P, P);
+    /* translate ray direction vector */
+    MAT4X3VEC(newShotDir, superell->superell_SoR, rp->r_dir);
+    VUNITIZE(newShotDir);
 
-    /* Bounding sphere intersection */
-    disc = dp * dp - dd * (pp - 3.0);
-    if (disc < 0) return 0; /* Misses bounding sphere entirely */
-    
-    disc = sqrt(disc);
-    t_near = (-dp - disc) / dd;
-    t_far  = (-dp + disc) / dd;
+    /* normalize distance from the superell.  substitutes a corrected ray
+     * point, which contains a translation along the ray direction to the
+     * closest approach to vertex of the superell.  Translating the ray
+     * along the direction of the ray to the closest point near the
+     * primitive's center vertex.  New ray origin is hence, normalized.
+     */
+    VSCALE(normalizedShotPoint, newShotDir,
+	   VDOT(newShotPoint, newShotDir));
+    VSUB2(normalizedShotPoint, newShotPoint, normalizedShotPoint);
 
-    if (t_far < 0.0) return 0;
-    if (t_near < 0.0) t_near = 0.0;
+    /* Now generate the polynomial equation for passing to the root finder */
 
-    /* Try closed-form polynomial solvers for integer cases */
-    if (NEAR_EQUAL(superell->superell_n, 1.0, 1e-5) && NEAR_EQUAL(superell->superell_e, 1.0, 1e-5)) {
-        equation.dgr = 2;
-        equation.cf[2] = pp - 1.0;
-        equation.cf[1] = 2.0 * dp;
-        equation.cf[0] = dd;
-        if (rt_poly_roots(&equation, complexRoot, stp->st_dp->d_namep) == 2) poly_success = 1;
-    } else if (NEAR_EQUAL(superell->superell_n, 0.5, 1e-5) && NEAR_EQUAL(superell->superell_e, 0.5, 1e-5)) {
-        equation.dgr = 4;
-        equation.cf[4] = P[X]*P[X]*P[X]*P[X] + P[Y]*P[Y]*P[Y]*P[Y] + P[Z]*P[Z]*P[Z]*P[Z] - 1.0;
-        equation.cf[3] = 4.0 * (P[X]*P[X]*P[X]*D[X] + P[Y]*P[Y]*P[Y]*D[Y] + P[Z]*P[Z]*P[Z]*D[Z]);
-        equation.cf[2] = 6.0 * (P[X]*P[X]*D[X]*D[X] + P[Y]*P[Y]*D[Y]*D[Y] + P[Z]*P[Z]*D[Z]*D[Z]);
-        equation.cf[1] = 4.0 * (P[X]*D[X]*D[X]*D[X] + P[Y]*D[Y]*D[Y]*D[Y] + P[Z]*D[Z]*D[Z]*D[Z]);
-        equation.cf[0] = D[X]*D[X]*D[X]*D[X] + D[Y]*D[Y]*D[Y]*D[Y] + D[Z]*D[Z]*D[Z]*D[Z];
-        if (rt_poly_roots(&equation, complexRoot, stp->st_dp->d_namep) == 4) poly_success = 1;
-    } else if (NEAR_EQUAL(superell->superell_n, 0.5, 1e-5) && NEAR_EQUAL(superell->superell_e, 1.0, 1e-5)) {
-        double Pxy = P[X]*P[X] + P[Y]*P[Y];
-        double Dxy = D[X]*D[X] + D[Y]*D[Y];
-        double PDxy = P[X]*D[X] + P[Y]*D[Y];
-        equation.dgr = 4;
-        equation.cf[4] = Pxy*Pxy + P[Z]*P[Z]*P[Z]*P[Z] - 1.0;
-        equation.cf[3] = 4.0 * Pxy * PDxy + 4.0 * P[Z]*P[Z]*P[Z]*D[Z];
-        equation.cf[2] = 2.0 * Pxy * Dxy + 4.0 * PDxy * PDxy + 6.0 * P[Z]*P[Z]*D[Z]*D[Z];
-        equation.cf[1] = 4.0 * PDxy * Dxy + 4.0 * P[Z]*D[Z]*D[Z]*D[Z];
-        equation.cf[0] = Dxy*Dxy + D[Z]*D[Z]*D[Z]*D[Z];
-        if (rt_poly_roots(&equation, complexRoot, stp->st_dp->d_namep) == 4) poly_success = 1;
+    equation.dgr = 2;
+
+    /* (x^2 / A) + (y^2 / B) + (z^2 / C) - 1 */
+    equation.cf[0] = newShotPoint[X] * newShotPoint[X] * superell->superell_invmsAu + newShotPoint[Y] * newShotPoint[Y] * superell->superell_invmsBu + newShotPoint[Z] * newShotPoint[Z] * superell->superell_invmsCu - 1;
+    /* (2xX / A) + (2yY / B) + (2zZ / C) */
+    equation.cf[1] = 2 * newShotDir[X] * newShotPoint[X] * superell->superell_invmsAu + 2 * newShotDir[Y] * newShotPoint[Y] * superell->superell_invmsBu + 2 * newShotDir[Z] * newShotPoint[Z] * superell->superell_invmsCu;
+    /* (X^2 / A) + (Y^2 / B) + (Z^2 / C) */
+    equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
+
+    if ((i = rt_poly_roots(&equation, complexRoot, stp->st_dp->d_namep)) != 2) {
+	if (i > 0) {
+	    bu_log("rt_superell_shot():  poly roots %d != 2\n", i);
+	    bn_pr_roots(stp->st_name, complexRoot, i);
+	} else if (i < 0) {
+	    static int reported=0;
+	    bu_log("rt_superell_shot():  The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	    if (!reported) {
+		VPRINT("while shooting from:\t", rp->r_pt);
+		VPRINT("while shooting at:\t", rp->r_dir);
+		bu_log("rt_superell_shot():  Additional superellipsoid convergence failure details will be suppressed.\n");
+		reported=1;
+	    }
+	}
+	return 0; /* MISS */
     }
 
-    if (poly_success) {
-        for (i = 0; i < (int)equation.dgr; i++) {
-            if (NEAR_ZERO(complexRoot[i].im, 0.001)) {
-                realRoot[num_roots++] = complexRoot[i].re;
-            }
-        }
-    } else {
-        /* Numerical Solver */
-        int max_steps = 100;
-        double step = (t_far - t_near) / max_steps;
-        double t = t_near;
-        double f_prev = superell_eval(superell, P, D, t);
-        
-        for (i = 0; i < max_steps; i++) {
-            double t_next = t + step;
-            double f_next = superell_eval(superell, P, D, t_next);
-            
-            if (f_prev * f_next <= 0.0) {
-                double root = superell_refine_root(superell, P, D, t, t_next, f_prev);
-                if (num_roots < 6) {
-                    realRoot[num_roots++] = root;
-                }
-            }
-            t = t_next;
-            f_prev = f_next;
-        }
+    /* XXX BEGIN CUT */
+    /* Only real roots indicate an intersection in real space.
+     *
+     * Look at each root returned; if the imaginary part is zero
+     * or sufficiently close, then use the real part as one value
+     * of 't' for the intersections
+     */
+    for (j=0, i=0; j < 2; j++) {
+	if (NEAR_ZERO(complexRoot[j].im, 0.001))
+	    realRoot[i++] = complexRoot[j].re;
     }
 
-    if (num_roots < 2) return 0;
+    /* reverse above translation by adding distance to all 'k' values. */
+    /* for (j = 0; j < i; ++j)
+       realRoot[j] -= VDOT(newShotPoint, newShotDir);
+    */
 
-    /* Sort roots */
-    for (i = 0; i < num_roots - 1; i++) {
-        for (int j = 0; j < num_roots - i - 1; j++) {
-            if (realRoot[j] > realRoot[j+1]) {
-                double tmp = realRoot[j];
-                realRoot[j] = realRoot[j+1];
-                realRoot[j+1] = tmp;
-            }
-        }
+    /* Here, 'i' is number of points found */
+    switch (i) {
+	case 0:
+	    return 0;		/* No hit */
+
+	default:
+	    bu_log("rt_superell_shot():  reduced 4 to %d roots\n", i);
+	    bn_pr_roots(stp->st_name, complexRoot, 4);
+	    return 0;		/* No hit */
+
+	case 2:
+	    {
+		/* Sort most distant to least distant. */
+		fastf_t u;
+		if ((u=realRoot[0]) < realRoot[1]) {
+		    /* bubble larger towards [0] */
+		    realRoot[0] = realRoot[1];
+		    realRoot[1] = u;
+		}
+	    }
+	    break;
+	case 4:
+	    {
+		short n;
+		short lim;
+
+		/* Inline rt_pnt_sort().  Sorts realRoot[] into descending order. */
+		for (lim = i-1; lim > 0; lim--) {
+		    for (n = 0; n < lim; n++) {
+			fastf_t u;
+			if ((u=realRoot[n]) < realRoot[n+1]) {
+			    /* bubble larger towards [0] */
+			    realRoot[n] = realRoot[n+1];
+			    realRoot[n+1] = u;
+			}
+		    }
+		}
+	    }
+	    break;
     }
 
-    /* Remove duplicates */
-    int num_unique = 1;
-    for (i = 1; i < num_roots; i++) {
-        if (!NEAR_EQUAL(realRoot[i], realRoot[num_unique-1], 1e-4)) {
-            realRoot[num_unique++] = realRoot[i];
-        }
-    }
-    num_roots = num_unique;
-
-    /* Output segs */
-    for (i = 0; i + 1 < num_roots; i += 2) {
-        RT_GET_SEG(segp, ap->a_resource);
-        segp->seg_stp = stp;
-        segp->seg_in.hit_dist = realRoot[i];
-        segp->seg_out.hit_dist = realRoot[i+1];
-        segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
-        BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    if (counter > 0) {
+	bu_log("rt_superell_shot():  realroot in %f out %f\n", realRoot[1], realRoot[0]);
+	counter--;
     }
 
-    return num_roots;
+
+    /* Now, t[0] > t[npts-1] */
+    /* realRoot[1] is entry point, and realRoot[0] is farthest exit point */
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp;
+    segp->seg_in.hit_dist = realRoot[1];
+    segp->seg_out.hit_dist = realRoot[0];
+    /* segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0; */
+    /* Set aside vector for rt_superell_norm() later */
+    /* VJOIN1(segp->seg_in.hit_vpriv, newShotPoint, realRoot[1], newShotDir); */
+    /* VJOIN1(segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir); */
+    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+
+    if (i == 2) {
+	return 2;			/* HIT */
+    }
+
+    /* 4 points */
+    /* realRoot[3] is entry point, and realRoot[2] is exit point */
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp;
+    segp->seg_in.hit_dist = realRoot[3]*superell->superell_e;
+    segp->seg_out.hit_dist = realRoot[2]*superell->superell_e;
+    segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 1;
+    VJOIN1(segp->seg_in.hit_vpriv, newShotPoint, realRoot[3], newShotDir);
+    VJOIN1(segp->seg_out.hit_vpriv, newShotPoint, realRoot[2], newShotDir);
+    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    return 4;			/* HIT */
+    /* XXX END CUT */
+
 }
 
 
@@ -647,21 +603,12 @@ rt_superell_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     struct superell_specific *superell =
 	(struct superell_specific *)stp->st_specific;
 
-    vect_t xlated, P, grad;
+    vect_t xlated;
     fastf_t scale;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VSUB2(xlated, hitp->hit_point, superell->superell_V);
-    
-    /* Transform to local scaled coordinates */
-    MAT4X3VEC(P, superell->superell_SoR, xlated);
-    
-    /* Compute local gradient */
-    superell_grad(grad, superell, P);
-    
-    /* Transform gradient back to world space */
-    MAT4X3VEC(hitp->hit_normal, superell->superell_invR, grad);
-    
+    MAT4X3VEC(hitp->hit_normal, superell->superell_invRSSR, xlated);
     scale = 1.0 / MAGNITUDE(hitp->hit_normal);
     VSCALE(hitp->hit_normal, hitp->hit_normal, scale);
 

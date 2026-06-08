@@ -10,64 +10,30 @@ bwdiff - compare two black and white files
 
 [source]
 ----
-bwdiff [-b] [-m | -g | -l | -e | -n] file1 file2
+bwdiff [ - [mglen]] [-b] file1 file2
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bwdiff* compares two black and white *bw*(5) format files and writes the results to standard output. By default, *bwdiff* records the differences as offsets from a neutral, half-intensity grey (128). The written value is brighter than this neutral grey by an amount proportional to the signed difference between the pixels in _file1_ and _file2_. Pixels that are brighter in _file1_ than in _file2_ will be brighter than the neutral grey, while pixels that are dimmer in _file1_ than in _file2_ will be dimmer. This difference is divided by two to fit the 0 to 255 output range.
+*bwdiff* compares two black and white *bw*(5) format files in one of several ways, and writes the results on standard out. The default method of comparison is to record the differences as offsets from neutral, half-intensity grey (128). The value written will be brighter than this neutral grey by an amount proportional to the signed difference between the pixels in _file1_ and _file2_. That is, pixels which are brighter in _file1_ than in _file2_ will be brighter than the neutral grey, while pixels which are dimmer in _file1_ than in _file2_ will be dimmer. This difference is divided by two so that the results will fit in the 0->255 output range.
 
-*bwdiff* accepts ``*-*'' as a synonym for standard input, and ``*.*'' as a synonym for /dev/null. 
+The *-m* flag takes the magnitude of the difference, thus no offset or divide is necessary. Brighter pixels indicate larger differences in value. Black indicates no difference in value.
+
+The flags *-g -l -e* and *-n* are relational operations, standing for greater-than, less-than, equal-to, and not-equal-to respectively. Only one of these flags may be used at a time. In this mode the value of a pixel in the first file is compared to the corresponding pixel in the second, and if the relation is true, a full-white (255) pixel is output. This mode is useful for producing masks showing pixels which satisfy the given condition. The default background is black, unless the *-b* option is specified, is which case the background is _file1_, with a lowered intensity.
+
+*bwdiff* accepts ``*-*'' as a synonym for stdin, and ```.`'' as a synonym for /dev/null .
 
 Note that this program also produces useful results on color *pix*(5) files.
 
 
-[[options]]
-== OPTIONS
+[[example]]
+== EXAMPLE
 
-*-m*::
-Calculates the magnitude of the difference. No offset or division is applied. Brighter pixels indicate larger differences in value, and black indicates no difference.
+Suppose you ran *pixstat*(1) on a file and found the modes to be red=107, green=93, blue=70. You could display those pixels whose colors are at these values by:
 
-*-g*::
-Greater-than relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is greater than the corresponding pixel in _file2_. Cannot be combined with other relational flags.
-
-*-l*::
-Less-than relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is less than the corresponding pixel in _file2_. Cannot be combined with other relational flags.
-
-*-e*::
-Equal-to relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is equal to the corresponding pixel in _file2_. Cannot be combined with other relational flags.
-
-*-n*::
-Not-equal-to relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is not equal to the corresponding pixel in _file2_. Cannot be combined with other relational flags.
-
-*-b*::
-Sets the background to the corresponding pixels of _file1_ at a lowered intensity instead of the default black background. This option only applies when using one of the relational operation flags (*-g*, *-l*, *-e*, or *-n*).
-
-
-[[examples]]
-== EXAMPLES
-
-.Basic Difference
-====
-To find the difference between two black and white images:
-
-[source,bash]
-----
-bwdiff image1.bw image2.bw > diff.bw
-----
-====
-
-.Relational Operation on Color Images
-====
-Suppose you ran *pixstat*(1) on a file and found the modes to be red=107, green=93, blue=70. You can display those pixels whose colors are exactly at these values by comparing the file against a solid color stream:
-
-[source,bash]
-----
-gencolor 107 93 70 | bwdiff -e file.pix - | pix-fb
-----
-====
+gencolor 107 93 70 | bwdiff -e _file.pix_ - | pix-fb
 
 
 [[see_also]]

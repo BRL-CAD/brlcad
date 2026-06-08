@@ -4,59 +4,41 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-
-bwish - Tcl/Tk-based interactive windowing shell for BRL-CAD
+bwish - Tcl/Tk-based interactive shell for BRL-CAD
 
 == SYNOPSIS
 
-*bwish* [_script_] [_arg_...]
+[source]
+----
+bwish [script]...
+----
+
 
 == DESCRIPTION
 
-*bwish* is a Tcl/Tk-based interactive windowing shell for BRL-CAD. It operates similarly to the standard Tk *wish*(1) command, but is pre-configured to initialize BRL-CAD's specific Tcl extensions and libraries. This makes *bwish* well-suited for developing custom graphical interfaces, interactive scripting, and driving BRL-CAD tasks that require visual windows or dialogs.
+*bwish* is a Tcl/Tk-based interactive shell for BRL-CAD. It supports graphical user interface capabilities provided by Tk and includes command-line editing and history functionality. It is particularly suited for interactive scripting and development tasks in BRL-CAD.
 
-When started without arguments (or if the first argument begins with a `-`), *bwish* runs interactively. It reads commands from standard input, providing command-line editing and history, and automatically evaluates the `~/.bwishrc` (or `~/.bwishrc.tcl` on Windows) file if it exists.
+The shell initializes and integrates Tcl/Tk libraries along with BRL-CAD-specific commands and extensions, enabling users to execute scripts or interact with the system.
 
-If a _script_ file is provided as the first argument, *bwish* evaluates the contents of that file instead of opening an interactive prompt. Any subsequent arguments are made available to the Tcl script via the global `argv` and `argc` variables.
 
 == OPTIONS
 
+
 _script_::
-A Tcl/Tk script to execute. If specified as the first argument, *bwish* evaluates the script and exits when the script terminates.
+Executes the provided Tcl script file and exits.
 
-_arg_...::
-Optional arguments passed to the _script_. These are accessible within Tcl via the standard global `argv` list and `argc` count.
 
-== EXAMPLES
 
-.Running a Tk script with BRL-CAD extensions
-====
-Execute a Tcl/Tk script using *bwish* and pass arguments to it:
-
-[source,bash]
-----
-$ bwish draw_ui.tcl 800x600
-----
-====
-
-.Interactive usage
-====
-Launch the interactive graphical shell, which will automatically source `~/.bwishrc` if it exists:
-
-[source,bash]
-----
-$ bwish
-% pack [button .b -text "Exit" -command exit]
-----
-====
 
 == SEE ALSO
 
-*btclsh*(1), *mged*(1), *wish*(1)
+*btclsh*(1), *mged*(1)
+
 
 == AUTHOR
 
 BRL-CAD Team
+
 
 == COPYRIGHT
 

@@ -10,58 +10,31 @@ comgeom-g - convert GIFT COMGEOM model into MGED database
 
 [source]
 ----
-comgeom-g [-h] [-?] [-d debug_lvl] [-v version_num] [-s name_suffix] input_file output_file
+comgeom-g [-d debug_lvl] [-v version_num] [-s name_suffix] file.cg file.g \
+    
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*comgeom-g* reads a COMGEOM format model from a GIFT-style input file, converts the geometry into the internal form used by the BRL-CAD package, and writes an MGED-style binary database.
+Read a COMGEOM version 4 or version 5 format model from a GIFT-style input file, convert the geometry into the internal form used by the BRL-CAD package, and write an MGED-style binary database.
 
-Each solid is given the name s###, retaining the COMGEOM solid number. Each region is given the name r###, retaining the COMGEOM region number. Regions are grouped together into various groups g### based on their region-id numbers. Group g00 gets all regions with a region-id of zero, g0 gets ids 1 through 99, g1 gets ids 100 through 199, etc.
+Each solid is given the name s###, retaining the COMGEOM solid number. Each region is given the name r###, retaining the COMGEOM region number. Regions are grouped together into various groups g### based on the region-id numbers. Group g00 gets all regions with region-id of zero, g0 gets ids one through 99, g1 gets ids 100 through 199, etc.
 
-In the resulting database, a high-level group all.g is created. The units used in a COMGEOM file are specified on a header record, while the units of an MGED database are always millimeters. *comgeom-g* performs automatic units conversion using the built-in units conversion feature of *libwdb*(3).
+The default input is COMGEOM version 5. Version 4 can be converted by specifying the *-v4* flag. For the time being, the DoE MORSE/RAFFLE format (believed to be the original MAGIC format) can be converted by specifying the *-v1* flag.
 
+By default, the program *comgeom-g* operates silently. Because the program may require a minute or two to convert a large database, some users prefer to have various status reports that indicate the progress of the conversion. This can be selected by specifying the *-d1* flag (debug level 1).
 
-[[options]]
-== OPTIONS
+In the resulting .g file, high-level group all.g is created. If the *-s* option is used, its argument (without automatic supplying of leading period) is tacked onto the end of the names of all other items in the .g file.
 
-*-d* _debug_lvl_::
-Set the debug level. By default, the program operates silently. Specifying `-d 1` provides verbose status reports indicating the progress of the conversion, which can be useful for large databases.
-
-*-h*, *-?*::
-Print a usage summary and exit.
-
-*-s* _name_suffix_::
-Append the specified suffix to the names of all generated items in the output database (except for the top-level group). The user must supply any leading period if desired.
-
-*-v* _input_vers#_::
-Specify the COMGEOM input format version. The default is version 5. Version 4 is also supported. Additionally, the DoE MORSE/RAFFLE format (believed to be the original MAGIC format) can be converted by specifying version 1.
+The units used in a COMGEOM file are specified on a header record. The units of an MGED database are always millimeters. *comgeom-g* performs automatic units conversion using the built-in units conversion feature of *libwdb*(3).
 
 
-[[examples]]
-== EXAMPLES
+[[example]]
+== EXAMPLE
 
-.Convert a Version 4 COMGEOM file with verbose output
-[example]
-====
-....
-$ comgeom-g -d 1 -v 4 file.cg file.g
-....
-
-Converts the COMGEOM version 4 file _file.cg_ into a BRL-CAD database _file.g_, displaying status reports during the conversion.
-====
-
-.Convert a COMGEOM file and append a suffix to item names
-[example]
-====
-....
-$ comgeom-g -s .v1 file.cg file.g
-....
-
-Converts the COMGEOM version 5 file _file.cg_ into _file.g_, appending ".v1" to all generated solid and region names.
-====
+comgeom-g -d1 -v4 _file.cg file.g_
 
 
 [[diagnostics]]

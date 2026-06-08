@@ -17,37 +17,12 @@ bwshrink [-s squareinsize] [-w in_width] [-n in_height] [-f shrink_factor] [-u] 
 [[description]]
 == DESCRIPTION
 
-*bwshrink* reads a black and white *bw*(5) format file and produces a scaled-down version. The program reads the entire image into memory and then scales it down to 1/factor of the original size in both dimensions. By default, *bwshrink* uses boxcar averaging to produce the output pixels.
+*bwshrink* will take a black and white *bw*(5) format file of given dimensions and produce a smaller scaled version. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels. They can both be set to the same value via *-s.* Defaults of 512 are assumed for unspecified dimensions. The integer scaling factor is set with the *-f* flag. By default, the factor is 2.
 
-[[options]]
-== OPTIONS
+The program reads the entire image into memory, and then scales the image down to 1/factor the original size in both dimensions.
 
-*-u*::
-Use image undersampling instead of boxcar averaging.
+By default, *bwshrink* uses boxcar averaging to produce the output pixels from the input. The *-u* option causes *bwshrink* to use image undersampling instead.
 
-*-w in_width*::
-Specify the input file width in pixels. The default is 512.
-
-*-n in_height*::
-Specify the input file height (number of scanlines) in pixels. The default is 512.
-
-*-s squareinsize*::
-Set both the input file width and height to the given size in pixels.
-
-*-f shrink_factor*::
-Set the integer scaling factor. The default factor is 2.
-
-[[examples]]
-== EXAMPLES
-
-.Shrinking a 1024x1024 image
-====
-[source,bash]
-----
-$ bwshrink -s 1024 -f 4 image.bw > image_small.bw
-----
-Shrinks the 1024x1024 input file `image.bw` by a factor of 4, producing a 256x256 output file named `image_small.bw`.
-====
 
 [[see_also]]
 == SEE ALSO

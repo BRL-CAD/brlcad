@@ -4,22 +4,20 @@
 :manmanual: BRL-CAD
 
 == NAME
-bw-png - convert a BRL-CAD BW format image to a PNG (Portable Network Graphics) format image
+bw-png - convert a BRL BW(5) format image to a PNG (Portable Network Graphics) format image
 
 == SYNOPSIS
 
 [source]
 ----
-bw-png [-a] [-n file_height] [-w file_width] [-s squaresize] [file.bw] > file.png
+bw-png [-a] [-n file_height] [-w file_width] [-s squaresize] [BRLbwfile] > PNG_file
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bw-png* converts a BRL-CAD _BW(5)_ format file to a _PNG_ format file on the standard output. The created PNG file will be a grayscale image with a bit-depth of 8.
-
-If _file.bw_ is not specified, standard input is read. By default, the input image dimensions are assumed to be 512x512 pixels. This can be overridden using the size options.
+*bw-png* converts a _BRL BW(5)_ format file to a _PNG_ format file on the standard output. The PNG file created will be a Gray scale file with a bit-depth of 8 and a file gamma of 1.0.
 
 
 [[options]]
@@ -27,43 +25,21 @@ If _file.bw_ is not specified, standard input is read. By default, the input ima
 
 
 *-a*::
-Attempt to autosize the input file to determine the image height and width based on its file size.
+autosize the input file to determine file image height and width
 
 
 *-n file_height*::
-Tell *bw-png* that the input is _file_height_ scanlines tall.
+tells *bw-png* that the input is __file_height__ scanlines tall
 
 
 *-w file_width*::
-Tell *bw-png* that the input is _file_width_ pixels wide.
+tells *bw-png* that the input is __file_width__ pixels wide
 
 
 *-s squaresize*::
-Set both the width and the height for the input to be _squaresize_.
+sets both the width and the height for the input to be _squaresize_
 
 
-[[examples]]
-== EXAMPLES
-
-.Convert a 1024x1024 BW image to PNG
-====
-[source,bash]
-----
-$ bw-png -s 1024 image.bw > image.png
-----
-
-Converts the 1024x1024 BRL-CAD BW image file `image.bw` to a PNG image file named `image.png`.
-====
-
-.Autosize a BW image and convert it to PNG
-====
-[source,bash]
-----
-$ bw-png -a image.bw > image.png
-----
-
-Automatically determines the dimensions of the BRL-CAD BW image file `image.bw` (based on its file size) and converts it to a PNG image file named `image.png`.
-====
 
 
 [[author]]

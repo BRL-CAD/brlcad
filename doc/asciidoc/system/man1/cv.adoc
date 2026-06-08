@@ -17,57 +17,21 @@ cv in_pat out_pat [ [infile] outfile]
 [[description]]
 == DESCRIPTION
 
-*cv* converts a binary data file from one representation (format) to another. The data formats are expressed as a set of choices from the pattern: `[h|n][s|u][c|s|i|l|d|8|16|32|64]`.
+Convert a binary data file from one representation (format) to another. The particular representation desired is expressed as a set of choices from the pattern: [h|n][s|u] c|s|i|l|d|8|16|32|64. For example, "hui" is host unsigned int, "nl" is network (signed) long. The default is NETWORK format.
 
-* *h* or *n*: Host-specific (*h*) or network-independent (*n*) format. Host format uses the native internal number representation and byte ordering of the machine running *cv*. The network-independent format is big-endian (most significant bit first), two's complement. The network-independent double-precision floating point format is 64-bit IEEE 754, transmitted in big-endian order. The default is network format.
-* *s* or *u*: Signed (*s*) or unsigned (*u*) integer. This flag has no effect on double-precision formats.
-* *c*, *s*, *i*, *l*, *d*: C language types `char`, `short`, `int`, `long`, and `double`. These sizes map to their equivalents on the host processor.
-* *8*, *16*, *32*, *64*: Explicit bit sizes, commonly used with the *n* mode for precise specification of data sizes.
+Host specific format is the native internal number representation used inside the computer that *cv* is running on. There is great variation between vendors in the host-specific formats that they use. Especially for double-precision floating point, DEC, Cray, and IBM have peculiar formats and byte orderings. The network-independent byte orderings used within BRL-CAD is big-endian (most significant bit first, on the left side of the word), twos complement. The network-independent double-precision floating point format used within BRL-CAD is 64-bit IEEE 754, transmitted in big-endian order.
 
-For example, `hui` specifies host unsigned integer, and `nl` specifies network (signed) long.
+Signed or unsigned integer formats can be selected. This has no effect on the double-precision format.
 
-== OPTIONS
+"char", "short", "int", "long", and "double" provide their C language equivalent on this processor when used in "h" host-specific mode. "8", "16", "32", and "64" allow more precise specification of datum sizes for "n" network-independent mode.
 
-*in_pat*::
-The format pattern of the input data. If specified as an empty string (`""`), it defaults to `huc` (host unsigned char).
+For example, to change a file of host-specific (machine-specific) signed shorts to a file of network-independent 32-bit integers, the input format would be "hss", and the output format would be "n32".
 
-*out_pat*::
-The format pattern of the output data. If specified as an empty string (`""`), it defaults to `nuc` (network unsigned char).
-
-*infile*::
-The file to read input data from. If omitted, standard input is used.
-
-*outfile*::
-The file to write converted data to. If omitted, standard output is used. *cv* will refuse to write binary output directly to a terminal.
-
-== EXAMPLES
-
-.Convert host-specific signed shorts to network 32-bit integers
-[example]
-====
-[source,bash]
-----
-$ cv hss n32 data.short data.net
-----
-Converts the binary file `data.short` containing machine-specific signed shorts into network-independent 32-bit integers, saving the result to `data.net`.
-====
-
-.Convert network doubles to host doubles via standard streams
-[example]
-====
-[source,bash]
-----
-$ cat data.nd | cv nd hd > data.hd
-----
-Reads network-independent double-precision floats from standard input and converts them to host-specific doubles on standard output.
-====
 
 [[see_also]]
 == SEE ALSO
 
-*pix-bw*(1), *dpix-pix*(1), *bw-pix*(1)
-
-M. J. Muuss, _Workstations, Networking, Distributed Graphics, and Parallel Processing_ in Computer Graphics Techniques: Theory and Practice, edited by D. F. Rogers, R. A. Earnshaw, Springer-Verlag, 1990
+*pix-bw*(1), *dpix-pix*(1), *bw-pix*(1); M. J. Muuss, ``_Workstations, Networking, Distributed Graphics, and Parallel Processing_`` in Computer Graphics Techniques: Theory and Practice, edited by D. F. Rogers, R. A. Earnshaw, Springer-Verlag, 1990
 
 
 [[author]]

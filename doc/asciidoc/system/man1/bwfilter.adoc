@@ -10,81 +10,71 @@ bwfilter - apply a 3x3 filter to a black and white bw file
 
 [source]
 ----
-bwfilter [-v] [-f type] [-d div] [-O offset] [-s squaresize] [-w width] [-n height] [-o out_file.bw] [file.bw]
+bwfilter [-f type] [-v] [-d div] [-O offset] [-s squaresize] [-w width] [-n height] [-o out_file] [file.bw] > newfile.bw
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-*bwfilter* applies one of several 3x3 kernel filters to a black and white *bw*(5) format file. It reads from the specified _file.bw_ or from standard input if no file is provided. By default, the input image dimensions are assumed to be 512x512 pixels, and a low pass filter is applied. 
+*bwfilter* applies one of several 3x3 kernel filters to a black and white *bw*(5) format file. It will take a file name or else read from standard input. The input file size will be assumed to be 512x512 pixels unless the *-s*, *-w*, or *-n* flags are used to tell it otherwise (see *brlcad*(1)). By default a low pass filter is used. The *-f* _type_ flag can be used to specify a different type of filter.
 
-[[options]]
-== OPTIONS
+The _type_ choices include:
 
-*-f type*::
-Specify the filter type to apply. The default is *lo*. Choices include:
-+
---
-*lo*;; low pass
-*hi*;; high pass
-*vg*;; vertical gradient
-*hg*;; horizontal gradient
-*la*;; laplacian
-*b*;; boxcar low pass
---
 
-*-d div*::
-Change the divisor. Most filters divide the result of the kernel multiplication by a specific value to scale it back to a 0-255 range. For example, the boxcar filter divides by nine.
+*lo*::
+low pass, the default.
 
-*-O offset*::
-Change the offset. Some filters add an offset to their results. For example, the output of a laplacian is centered about zero, so it adds 128 to the answer to yield a difference from neutral grey.
 
-*-s squaresize*::
-Set both the width and height of the input image to _squaresize_.
+*hi*::
+high pass
 
-*-w width*::
-Set the width of the input image to _width_.
 
-*-n height*::
-Set the height of the input image to _height_.
+*vg*::
+vertical gradient
 
-*-o out_file.bw*::
-Write the filtered output to _out_file.bw_ instead of standard output.
 
-*-v*::
-Display the max and minimum values and the kernel information on standard error.
+*hg*::
+horizontal gradient
 
-[[examples]]
-== EXAMPLES
 
-Here is an example demonstrating the use of the *bwfilter* command to apply a laplacian filter to a 1024x1024 image.
+*la*::
+laplacian
 
-.Apply a laplacian filter and save to a file
-====
-**bwfilter -f la -s 1024 -o filtered.bw image.bw**
 
-Applies a laplacian filter to the 1024x1024 image _image.bw_ and saves the result to _filtered.bw_.
-====
+*b*::
+boxcar low pass
+
+
+
+Most filters divide the result of the kernel multiplication by some value about in order to scale it back to a 0->255 range. For example, the boxcar divides by nine. The *-d* flag can be used to change this divisor. Some filters also add an offset to their results. The output of a laplacian for example is "centered" about zero, thus it adds 128 to the answer to yield a difference from neutral grey. The *-O* flag can be used to change this offset.
+
+The *-v* flag displays the max and minimum values and the kernel information on standard error.
+
 
 [[bugs]]
 == BUGS
 
 This should allow any 3x3 kernel to be specified.
 
+
 [[see_also]]
 == SEE ALSO
 
 *brlcad*(1), *bwscale*(1), *bw*(5)
+
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
 
 [[bug_reports]]
 == BUG REPORTS

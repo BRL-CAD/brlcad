@@ -73,52 +73,40 @@ The use of `/dev/` before the __device_name__ is simply to distinguish them from
 
 A convention exists for the options used on most of the utilities provided. Random options are usually lower case. Options which could specify either a screen or file size are, by convention, lower case for file information, and upper case for screen information. Here's a list of some of the common options you may encounter:
 
-*-F* _framebuffer_::
-Specifies the framebuffer device or virtual framebuffer file to use, overriding the `FB_FILE` environment variable or system defaults.
 
 *-i*::
 Inverse flag. Pretend origin is in upper left corner of screen, for that good old-fashioned fourth-quadrant behavior.
 
+
 *-c*::
 Various. Typically means clear the screen first.
+
 
 *-z*::
 Various. Typically means zoom-in on current area of display.
 
+
 *-s* _square_file_size_::
-Specifies the file size for a square image.
 *WARNING:* Behavior is undefined when the *-s* flag is used in conjunction with the *-w* or *-n* flags.
 
-*-w* _file_width_::
-Specifies the width of the file to be processed.
 
-*-n* _file_height_::
-Specifies the height of the file to be processed.
-
+*-w* _file_width_
+*-n* _file_height_
 *-S* _square_screen_size_::
-Specifies the screen size for a square display.
 *WARNING:* Behavior is undefined when the *-S* flag is used in conjunction with the *-W* or *-N* flags.
 
-*-W* _screen_width_::
-Specifies the width of the screen display.
 
-*-N* _screen_height_::
-Specifies the height of the screen display.
-
-*-x* _file_x_offset_::
-Specifies the X-coordinate offset for the file.
-
-*-y* _file_y_offset_::
-Specifies the Y-coordinate offset for the file.
-
-*-X* _screen_x_offset_::
-Specifies the X-coordinate offset for the screen display.
-
-*-Y* _screen_y_offset_::
-Specifies the Y-coordinate offset for the screen display.
-
+*-W* _screen_width_
+*-N* _screen_height_
+*-x* _file_x_offset_
+*-y* _file_y_offset_
+*-X* _screen_x_offset_
+*-Y* _screen_y_offset_
 *-#* _bytes_per_sample_::
-Specifies the number of bytes per sample, where the *#* character is a literal "pound" or "sharp" sign character, typically found over the numeral "3" on ANSI keyboards. Several programs (like *pixrect*) can operate on data samples of arbitrary width. For example, a *pix*(5) format file can often be treated like a *bw*(5) format file with a width of three bytes per sample.
+specifies the number of bytes per sample, where the flag, where the *#* character is a literal "pound" or "sharp" sign character, typically found over the numeral "3" on ANSI keyboards. Several programs (like pixrect) can operate on data samples of arbitrary width. For example, a *pix*(5) format file can often be treated like a *bw*(5) format file with a width of three bytes per sample.
+
+
+
 
 [[tape_format]]
 == TAPE FORMAT
@@ -140,33 +128,6 @@ Density Resolution Frames/reel
 1600 1k 12
 
 1600 512 48
-
-
-
-[[examples]]
-== EXAMPLES
-
-The following examples demonstrate typical usage of some common BRL-CAD system features and environment variables.
-
-.Setting the default framebuffer
-====
-To set the default framebuffer device to a specific X11 window using an environment variable, which many BRL-CAD display utilities will then use automatically:
-
-[source,bash]
-----
-export FB_FILE=/dev/X
-----
-====
-
-.Viewing a rendered image
-====
-To display a rendered `pix` format file on the default framebuffer, scaling the image to a square screen size of 1024:
-
-[source,bash]
-----
-pix-fb -S 1024 image.pix
-----
-====
 
 
 [[author]]

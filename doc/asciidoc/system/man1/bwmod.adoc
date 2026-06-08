@@ -10,105 +10,38 @@ bwmod - arithmetically modify pixel values in black and white bw file
 
 [source]
 ----
-bwmod [-c] [-a val] [-s val] [-m val] [-d val] [-A] [-e val] [-r val] [-S val] [-M val] [-O val] [-X val] [-R] [-t] [file.bw] > file2.bw
+bwmod [-c] [ -a add -s sub -m mult -d div -A -e exp -r root -S shift -M and -O or -X xor -R -t] file.bw > file2.bw
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bwmod* performs a series of arithmetic operations on each 8-bit pixel of its input/output stream. The input and output are in the *bw*(5) file format. Pixel values initially range from 0 to 255 and are internally operated on as floating-point numbers (unless the *-c* option is specified) so that dynamic range, truncation, and sign are preserved. Upon output, values are converted back to 8-bit unsigned integers. Values less than 0 are clipped to 0, and values greater than 255 are clipped to 255. If any pixels are clipped, the total number of low and high clips is reported to standard error upon completion.
+*bwmod* will perform a series of arithmetic operations on each 8-bit pixel of its input/output stream. This is a *bw*(5) file format. The pixel values range from 0 to 255 and are internally operated on in floating point form (unless the *-c* option has been specified) so that dynamic range, truncation, and sign are not a problem. On output they are converted back to 8-bit unsigned values, with clipping to 0 and 255 for values less than 0 and greater than 255. If any pixels are clipped, the numbers of pixels clipped, low and high, are reported to standard error on completion.
 
-Any number of operations can be specified on the command line, and they are applied sequentially in the order given. All operation arguments can be floating-point values.
+If the *-c* option is specified, then intermediate results are stored as signed characters, though the command line arguments remain in floating point format. This is useful when one wishes to take advantage of wrap-around characteristics of binary mathematics.
 
-Note that this command can also be applied to color *pix*(5) files, but no distinction will be made between color planes (the same operation will be uniformly applied to all channels).
+Any number of operations can be given and they are applied in order. The choices are:*-a* _val_ to add a value. *-s* _val_ to subtract a value. *-m* _val_ to multiply by a value. *-d* _val_ to divide by a value. *-A* to take absolute value. *-e* _val_ to exponentiate, i.e. raise to the power _val_. *-r* _val_ to take the _val_ th root. *-S* _val_ to shift by _val_ bits. If _val_ is positive, this uses C-language "^<<" operator, doing left-shift; if _val_ is negative, this uses C-language ">>" operator, doing right-shift by -_val_ bits. This is a bitwise operation, and if it is about to be used, both the pixel value and _val_ are truncated to integer. Unless *-c* is in effect, the resulting new value will again be placed in floating-point. (So it's "user beware" if this option is applied to a non-integer value.) *-M* _val_ to do "and" operation with _val_. See *-S* for "user beware" about bitwise operation. *-O* _val_ to do (inclusive) "or" operation with _val_. See *-S* for "user beware" about bitwise operation. *-X* _val_ to do "exclusive or" operation with _val_. See *-S* for "user beware" about bitwise operation. *-R* to do rounding to the nearest integer. *-t* to do truncation to integer; notice the automatic use of truncation for the bitwise options (*-S*, *-M*, *-O*, and *-X*).
 
-
-[[options]]
-== OPTIONS
-
-*-c*::
-  Store intermediate results as signed characters. Command-line arguments remain in floating-point format. This is useful when one wishes to take advantage of the wrap-around characteristics of binary mathematics.
-
-*-a* _val_::
-  Add _val_.
-
-*-s* _val_::
-  Subtract _val_.
-
-*-m* _val_::
-  Multiply by _val_.
-
-*-d* _val_::
-  Divide by _val_.
-
-*-A*::
-  Take the absolute value.
-
-*-e* _val_::
-  Exponentiate (raise to the power of _val_).
-
-*-r* _val_::
-  Take the _val_-th root.
-
-*-S* _val_::
-  Shift by _val_ bits. If _val_ is positive, this performs a left-shift using the C `<<` operator; if _val_ is negative, this performs a right-shift using the C `>>` operator by -_val_ bits. This is a bitwise operation. Before it is applied, both the pixel value and _val_ are truncated to integers. Unless *-c* is in effect, the resulting new value will be placed back into a floating-point representation.
-
-*-M* _val_::
-  Perform a bitwise AND operation with _val_ (automatically truncates to integer before operation).
-
-*-O* _val_::
-  Perform a bitwise inclusive OR operation with _val_ (automatically truncates to integer before operation).
-
-*-X* _val_::
-  Perform a bitwise exclusive OR (XOR) operation with _val_ (automatically truncates to integer before operation).
-
-*-R*::
-  Round to the nearest integer.
-
-*-t*::
-  Truncate to integer. (Note: Truncation is automatically applied for the bitwise options *-S*, *-M*, *-O*, and *-X*).
+All arguments can be floating point values. Note that this command can be applied to color *pix*(5) files also, but no distinction can be made between color planes.
 
 
 [[examples]]
 == EXAMPLES
 
-.Produce the negative of an image
-====
-[source,bash]
-----
-bwmod -m-1 -a255 < file.bw > file2.bw
-----
-This will produce the negative of a file by first multiplying by minus one, and then adding 255 to shift the pixels back into the 0 to 255 range. (i.e., replacing each pixel value by 255 minus that value.)
-====
+The command**bwmod -m-1 -a255 < file.bw > file2.bw**
 
-.Apply a gamma factor to a file
-====
-[source,bash]
-----
-bwmod -d255 -r2.2 -m255 < file.bw > file2.bw
-----
-This first normalizes the pixel values (putting them into the 0 to 1 range), then takes the 2.2 root of each value, and finally scales the pixel values back to the 0 to 255 range. (Note: Applying gammas this way is not recommended for performance reasons, as it results in a function call per pixel.)
-====
+will produce the negative of a file by first multiplying by minus one, and then adding 255 to shift the pixels back into the 0->255 range. (I.e., replace each pixel value by 255 minus that value.)
 
-.Expand the range of intensities while preserving the mean
-====
-Suppose you ran *bwstat* on a file and found min=80, max=210, and mean=100. If you wish to expand the range of intensities while still preserving the mean, this can be done by:
+One can apply a gamma factor to a file as follows:**bwmod -d255 -r2.2 -m255 < file.bw > file2.bw**
 
-[source,bash]
-----
-bwmod -s100 -m1.409 -a100 < file.bw > file2.bw
-----
-The multiplier 1.409 results from `(255.0 - 100.0) / (210.0 - 100.0)`, which boosts the maximum value (210) to full scale (255) after subtracting the mean (100). Subtracting and adding 100 makes the multiply occur "about that point"; i.e., values less than 100 get smaller, and those above get higher.
+which will first normalize the pixel values (i.e., put them into 0->1, noting the internal use of floating point), then take the 2.2 root of each value, and finally scale the pixel values back to 0->255. [Note however that applying gammas this way is not recommended since a function call per pixel results!]
 
-A _file.bw_ for this example can be created with these three command lines:
-[source,bash]
-----
-gencolor -r 11 80 >file.bw
-gencolor -r 262131 100 >>file.bw
-gencolor -r 2 210 >>file.bw
-----
-====
+Suppose you ran *bwstat* on a file and found min=80, max=210, mean=100. If you wish to expand the range of intensities, while still preserving the mean, this can be done by: **bwmod -s100 -m1.409 -a100 < file.bw > file2.bw**
+
+where 1.409 results from (255.0-100.0)/(210.0-100.0), which is what one would use to boost the max value (210) to full scale (255) after subtracting the mean (100). Subtracting and adding 100 makes the multiply occur "about that point"; i.e., values less than 100 get smaller, and those above get higher. A _file.bw_ for this example can be created with these three command lines:
+
+**gencolor -r 11 80 >file.bw** **gencolor -r 262131 100 >>file.bw** **gencolor -r 2 210 >>file.bw**
 
 
 [[see_also]]

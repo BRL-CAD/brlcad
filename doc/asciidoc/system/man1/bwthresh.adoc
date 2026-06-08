@@ -10,61 +10,47 @@ bwthresh - threshold a black-and-white bw file
 
 [source]
 ----
-bwthresh [-h] [-?] val... < file.bw > output.bw
+bwthresh val... < file.bw
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-*bwthresh* reads a stream of black-and-white data in *bw*(5) format from standard input, quantizes the pixel values based on the provided threshold values, and writes the resulting *bw*(5) data to standard output.
+*bwthresh* reads from standard input a stream of black-and-white data in *bw*(5) format and thresholds it among the _val_ s, writing the resulting *bw*(5) data to standard output. The _val_ s must appear on the command line in strictly increasing order.
 
-The number of provided threshold values, _n_, determines the number of output bins (_n_+1). The output grayscale range (0-255) is divided evenly among these bins. Each input pixel is compared against the threshold values to determine its corresponding output bin. The maximum number of thresholds allowed is 255.
+The grey scale 0..255 is divided evenly into _n_+1 bins, and each pixel of input is compared to the _val_ s, to determine which of the _n_+1 grey levels should be output.
 
-[[options]]
-== OPTIONS
 
-*-h*, *-?*::
-Print a usage message and exit.
+[[example]]
+== EXAMPLE
 
-_val_...::
-Threshold values. These must be provided on the command line in strictly increasing order, and each must be an integer between 0 and 255 (inclusive).
+The command
 
-[[examples]]
-== EXAMPLES
+bwthresh 37 143 < _file.bw_ > _file2.bw_
 
-The following example shows how to use *bwthresh* to map input pixels into three output levels based on two threshold values.
+performs the following mapping:
 
-.Thresholding a black-and-white image into three intensity levels
-====
-[prompt]#bwthresh 37 143 < input.bw > output.bw#
+if (pixel_in < 37)pixel_out = 0else if (pixel_in < 143)pixel_out = 128elsepixel_out = 255
 
-This command performs the following mapping:
-
-[source, c]
-----
-if (pixel_in < 37)
-    pixel_out = 0;
-else if (pixel_in < 143)
-    pixel_out = 128;
-else
-    pixel_out = 255;
-----
-====
 
 [[see_also]]
 == SEE ALSO
 
 *bwmod*(1), *bwstat*(1), *bw*(5)
 
+
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
 
 [[bug_reports]]
 == BUG REPORTS

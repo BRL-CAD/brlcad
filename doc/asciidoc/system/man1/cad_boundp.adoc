@@ -10,35 +10,18 @@ cad_boundp - find bounding polygon of two-dimensional view
 
 [source]
 ----
-cad_boundp [-i input] [-o output] [-t tolerance] [-v] [-h] [-?]
+cad_boundp [ -i input] [ -o output] [ -t tolerance] [-v]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*cad_boundp* reads a series of 2D line segment endpoints from an input file (or standard input) and computes the bounding polygon. It writes the vertices of the resulting bounding polygon to an output file (or standard output) in counter-clockwise order, starting with the vertex having the smallest _y_ coordinate. The input data describes a two-dimensional view of the edges of a 3D object.
+*cad_boundp* reads from _input_ (standard input if not specified) a series of line segment endpoint (_x_,_y_) coordinate values describing a two-dimensional view of the edges of a (possibly transparent) three-dimensional object and writes to _output_ (standard output if not specified) the (_x_,_y_) coordinates of vertices of the bounding polygon in counter-clockwise order, starting with the vertex having the smallest _y_ coordinate. If the *-v* argument is used, instead of points the output will consist of line segment data suitable for input into another invocation of *cad_boundp* .
 
-Input lines that do not begin with a number are silently ignored, which allows for comments or additional control information to be interspersed with the data.
+Input lines not beginning with a number are silently skipped. This feature can be used to accommodate comments or additional control information in the data stream.
 
-
-[[options]]
-== OPTIONS
-
-*-i input*::
-Read line segment coordinate data from _input_. If not specified, standard input is used.
-
-*-o output*::
-Write the bounding polygon vertices to _output_. If not specified, standard output is used.
-
-*-t tolerance*::
-Specify a floating-point _tolerance_ for comparing point coordinates. A point is considered identical to a previously-input point if the Euclidean distance between them is less than or equal to _tolerance_. The algorithm groups points by matching against the first point encountered that satisfies the tolerance test. If not specified, point coordinates must match precisely. If the _tolerance_ is too tight, or if the input is incomplete, a degenerate or smaller-than-expected polygon may result.
-
-*-v*::
-Output the bounding polygon as line segment data (pairs of endpoints) rather than individual vertex points. This format is suitable for input into another invocation of *cad_boundp*.
-
-*-h*, *-?*::
-Print usage information and exit.
+When a _tolerance_ is specified, a point is considered to be identical to a previously-input point if its _x_ and _y_ coordinates are both within _tolerance_ of the first point encountered within a group passing the tolerance test. Otherwise, point coordinates must match precisely or the algorithm will produce erroneous results.
 
 
 [[restrictions]]
@@ -51,32 +34,15 @@ Holes within the view cannot be recognized.
 Silhouette thickness must everywhere exceed _tolerance_ (no narrow necking-down) or a portion of the silhouette will be "lost"; in particular, the view should not consist of disjoint parts.
 
 
-[[examples]]
-== EXAMPLES
+[[example]]
+== EXAMPLE
 
-The following example demonstrates computing the bounding polygon for a set of four line segments forming a square.
 
-.Using `cad_boundp` to find a bounding polygon
-====
-[source,sh]
-----
-$ cat square.txt
-# Bottom edge
-0.0 0.0 1.0 0.0
-# Right edge
-1.0 0.0 1.0 1.0
-# Top edge
-1.0 1.0 0.0 1.0
-# Left edge
-0.0 1.0 0.0 0.0
+[quote]
+____
+$ cad_boundp -t 0.1# _comment_ 0 2 0 1 3 2 3 1 2 0 1 0 0 2 3 2 0 2 3 1 0 1 3 2 2 2 2 0 1 0 1 2 2 2 1 2 0 1 3 1 _^D_ 1 0 2 0 2 1 3 1 3 2 2 2 1 2 0 2 0 1 1 1
 
-$ cad_boundp -t 0.01 -i square.txt
-0 0
-1 0
-1 1
-0 1
-----
-====
+____
 
 
 [[see_also]]
