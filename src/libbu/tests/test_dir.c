@@ -85,6 +85,12 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
     }
     bu_strlcat(file, ".txt", MAXPATHLEN);
 
+    /* Make sure the directory exists before testing writeability.
+     * This keeps the test portable on systems where the config/cache
+     * roots are not pre-created.
+     */
+    bu_mkdir(ipath);
+
     /* construct full path to test file */
     bu_strlcat(path, ipath, MAXPATHLEN);
     {
@@ -104,6 +110,11 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
 
     /* see if we can write it! */
     fp = fopen(path, "w");
+    if (!fp) {
+	bu_log("[FAILED]\nunable to open [%s] for writing\n", path);
+	(*count)++;
+	return;
+    }
     fclose(fp);
     check(bu_file_exists(path, NULL), count);
     bu_file_delete(path);
@@ -113,6 +124,11 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
     PRINT(type, cpath, is writable, "?");
     if (!BU_STR_EMPTY(cpath)) {
 	fp = fopen(cpath, "w");
+	if (!fp) {
+	    bu_log("[FAILED]\nunable to open [%s] for writing\n", cpath);
+	    (*count)++;
+	    return;
+	}
 	fclose(fp);
     }
     check(bu_file_exists(cpath, NULL), count);

@@ -208,5 +208,6 @@ static const struct bn_api_case rand_cases[] = {
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
     return bn_api_dispatch(argc, argv, rand_cases);
 }

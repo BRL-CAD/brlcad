@@ -137,7 +137,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 
 #define EXIT_DUE_TO_INPUT_FAILURE \
     FREE_FORMAT_PART; \
-    if (numFieldsAssigned == 0) { \
+    if (numCharsConsumed == 0) { \
 	return EOF; \
     } \
     return numFieldsAssigned;

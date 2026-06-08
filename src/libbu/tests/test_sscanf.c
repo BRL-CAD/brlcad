@@ -718,7 +718,9 @@ doErrorTests(void)
     /* Attempt to read 2 values and assign 1 value from src.  If src
      * includes 2 valid and 1 invalid input value, should return 0 to
      * indicate matching failure.  If src includes 2 valid values and
-     * terminates, should return EOF to indicate input failure.
+     * then terminates before the assigned conversion can complete, the
+     * prior suppressed conversions already consumed input, so standard
+     * scanf behavior is a matching failure (0), not EOF.
      */
 #define TEST_FAILURE_2(type, type_fmt, type_init, src, expected_err) \
     { \
@@ -740,7 +742,7 @@ doErrorTests(void)
 
     TEST_FAILURE_1(int, d, 0, "xx 34 56", EXPECT_MATCH_FAILURE);
     TEST_FAILURE_2(int, d, 0, "12 34 xx", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_INPUT_FAILURE);
+    TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_MATCH_FAILURE);
     TEST_FAILURE_1(int, d, 0, "", EXPECT_INPUT_FAILURE);
 
 // TODO - what is the intent here?  The 1[123] input seems to be

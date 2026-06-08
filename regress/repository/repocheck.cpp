@@ -491,6 +491,7 @@ init_repo_config(RepoConfig &cfg)
 	    cfg.api.exemptions.emplace_back(std::make_pair(std::regex(pattern), std::string(fname)));
 	};
 	add_func_ex(".*/bomb[.]c$", "abort");
+	add_func_ex(".*/test_process[.]c$", "abort");
 	add_func_ex(".*/tests/test_dirname[.]c$", "dirname");
 	add_func_ex(".*/file[.]c$", "remove");
 	add_func_ex(".*/libtermio[.]h$", "strncmp");
@@ -533,6 +534,7 @@ init_repo_config(RepoConfig &cfg)
 	    "brledit.cpp",
 	    "check_mann_docs.cpp",
 	    "debug2c.cpp",
+	    "dm_ogl_probe.c",
 	    "env2c.cpp",
 	    "embedded_check.cpp",
 	    "fftc.c",

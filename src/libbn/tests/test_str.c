@@ -139,5 +139,6 @@ test_str_roundtrip(void)
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
     return bn_api_single(argc, argv, "str", test_str_roundtrip);
 }

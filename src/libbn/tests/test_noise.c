@@ -75,5 +75,6 @@ test_noise_extended(void)
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
     return bn_api_single(argc, argv, "noise", test_noise_extended);
 }
