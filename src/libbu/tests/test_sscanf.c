@@ -736,8 +736,11 @@ doErrorTests(void)
      * includes 2 valid and 1 invalid input value, should return 0 to
      * indicate matching failure.  If src includes 2 valid values and
      * then terminates before the assigned conversion can complete, the
-     * prior suppressed conversions already consumed input.  Some C libraries
-     * report this as a matching failure (0), while others report EOF.
+     * return value is implementation-defined: C99/POSIX (e.g. glibc)
+     * treat the already-completed (suppressed) conversions as enough to
+     * avoid an input failure and so return 0 (matching failure), while
+     * the Microsoft C runtime returns EOF.  Each case below selects the
+     * value the host C library is documented to produce.
      */
 #define TEST_FAILURE_2(type, type_fmt, type_init, src, expected_err) \
     { \
