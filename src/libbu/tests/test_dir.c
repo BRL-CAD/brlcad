@@ -35,6 +35,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -64,6 +65,20 @@ check(int test, int *count)
 }
 
 
+static int
+write_denied_errno(int e)
+{
+    return e == EACCES
+#ifdef EPERM
+	|| e == EPERM
+#endif
+#ifdef EROFS
+	|| e == EROFS
+#endif
+	;
+}
+
+
 static void
 test_writable(bu_dir_t type, const char *ipath, int *count)
 {
@@ -75,8 +90,20 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
 
     PRINT(type, ipath, is writable, "?");
 
+    /* Make sure the directory exists before testing writability.
+     * Some writable roots, such as cache and config locations, may be
+     * resolved before their application subdirectory has been created.
+     */
+    bu_mkdir(ipath);
+
+    if (!bu_file_directory(ipath)) {
+	bu_log("[FAILED]\npath [%s] is not a directory\n", ipath);
+	(*count)++;
+	return;
+    }
+
     if (!bu_file_writable(ipath) || !bu_file_executable(ipath)) {
-	bu_log("[SKIPPED]\npath [%s] is not writable/executable in this environment\n", ipath);
+	bu_log("[SKIPPED]\npath [%s] is not writable/searchable by this process\n", ipath);
 	return;
     }
 
@@ -89,12 +116,6 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
 	bu_strlcat(file, randchar, MAXPATHLEN);
     }
     bu_strlcat(file, ".txt", MAXPATHLEN);
-
-    /* Make sure the directory exists before testing writeability.
-     * This keeps the test portable on systems where the config/cache
-     * roots are not pre-created.
-     */
-    bu_mkdir(ipath);
 
     /* construct full path to test file */
     bu_strlcat(path, ipath, MAXPATHLEN);
@@ -114,10 +135,15 @@ test_writable(bu_dir_t type, const char *ipath, int *count)
     }
 
     /* see if we can write it! */
+    errno = 0;
     fp = fopen(path, "w");
     if (!fp) {
-	bu_log("[FAILED]\nunable to open [%s] for writing\n", path);
-	(*count)++;
+	if (write_denied_errno(errno)) {
+	    bu_log("[SKIPPED]\npath [%s] does not permit file creation by this process\n", ipath);
+	} else {
+	    bu_log("[FAILED]\nunable to open [%s] for writing\n", path);
+	    (*count)++;
+	}
 	return;
     }
     fclose(fp);
@@ -336,7 +362,7 @@ main(int argc, char *argv[])
     memset(path, 0, MAXPATHLEN);
     bu_dir(path, MAXPATHLEN, BU_DIR_HOME, (const char *)NULL);
     if (!BU_STR_EMPTY(path)) {
-	bu_log("SKIPPED: HOME write test in sandboxed environment\n");
+	test_writable(BU_DIR_HOME, path, &failures);
     } else {
 	bu_log("ERROR: HOME directory could not be found\n");
 	failures++;
@@ -346,7 +372,7 @@ main(int argc, char *argv[])
     memset(path, 0, MAXPATHLEN);
     bu_dir(path, MAXPATHLEN, BU_DIR_CACHE, (const char *)NULL);
     if (!BU_STR_EMPTY(path)) {
-	bu_log("SKIPPED: CACHE write test in sandboxed environment\n");
+	test_writable(BU_DIR_CACHE, path, &failures);
     } else {
 	bu_log("ERROR: CACHE directory could not be found\n");
 	failures++;
@@ -356,7 +382,7 @@ main(int argc, char *argv[])
     memset(path, 0, MAXPATHLEN);
     bu_dir(path, MAXPATHLEN, BU_DIR_CONFIG, (const char *)NULL);
     if (!BU_STR_EMPTY(path)) {
-	bu_log("SKIPPED: CONFIG write test in sandboxed environment\n");
+	test_writable(BU_DIR_CONFIG, path, &failures);
     } else {
 	bu_log("ERROR: CONFIG directory could not be found\n");
 	failures++;
