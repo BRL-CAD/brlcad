@@ -1001,6 +1001,9 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 		    return BRLCAD_ERROR;
 		}
 	    }
+	} else {
+	    bu_vls_printf(logstr, "Unknown metaball attribute \"%s\" (see 'form metaball')\n", argv[0]);
+	    return BRLCAD_ERROR;
 	}
 
 	argc -= 2;
