@@ -54,6 +54,13 @@ Recent Bugs
   at allocation stack, rt_ct_get() appears to be allocating 10MB
   chunks.
 
+  [HARD] Superlinear growth (3 combs -> 18GB) points at an
+  integer/overflow interaction deep in the space-partitioning cut
+  allocator (rt_ct_get 10MB chunks), intertwined with bu memory.
+  Painful to isolate and validate at scale.
+  [FAN-OUT: poor -- one focused investigator with an allocator/profiler
+  trace; not parallelizable.]
+
 * rt from mged is not outputting overlap log messages or rt summary.
   Stops printing after opendb line. (Observed on Mac)
 
@@ -346,6 +353,12 @@ Recent Bugs
   64-bit linux system:
 
   rm -f terra.pix && valgrind bin/rt -o terra.pix -P1 -H3 -s1024 share/brlcad/7.21.0/db/terra.g all.g
+
+  [HARD] valgrind-confirmed 8-byte corruption after a build_spec_table()
+  realloc in find_spec_wgt(), where "bookkeeping seems okay" -- i.e.,
+  root cause is non-obvious.  Classic hard-to-pin data race.
+  [FAN-OUT: poor -- a single heisenbug needing one careful
+  investigator, not parallel coverage.]
 
 * mged 'joint' hold command isn't working. looks like the fp_names
   book-keeping is fuxored or the db_lookup is returning NULL (or isn't

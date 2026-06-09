@@ -65,6 +65,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   supported are dispatched.  currently supporting 64x64 threads and
   still with some potential for race conditions on the book-keeping.
 
+  [HARD] Concurrency heisenbug cluster: hard-coded 64x64 thread limits
+  plus ID/bookkeeping races (IDs exceeding MAX_PSW).  Fixes must be
+  provably correct under contention across pthreads/C++11/Windows.  See
+  BUGS "recursive bu_parallel() failure", "race condition causing bus
+  errors on exit", and the gqa semaphore-contention item.
+  [FAN-OUT: yes for the audit -- one agent per bu_parallel() call site
+  / semaphore user -- but the actual race fix needs one careful hand.]
+
 * Teach lint command to look for comb instance paths with non-uniform
   scaling matrices that have tor primitives as leaves - those will not
   raytrace as expected.  May be other primitives that should be
@@ -225,6 +233,13 @@ lookup check to ensure none are missing.
   simplified tree traversal with cyclic awareness.
 
   https://keramida.wordpress.com/2009/07/05/fts3-or-avoiding-to-reinvent-the-wheel/
+
+  [HARD] Needs a full-path-aware, stack-based replacement for the
+  recursive db_walk_tree with general-graph cycle detection; touches
+  every hierarchy-traversing command.  See BUGS "Recursive submodel
+  predictably goes infinite" and the clone-1M-never-returns case.
+  [FAN-OUT: yes -- audit all recursive-traversal call sites in
+  parallel; the new walker is written once and rolled out.]
 
 * bounding box reduction command
 
@@ -491,6 +506,13 @@ lookup check to ensure none are missing.
   routines gracefully from application code. A quick initial attempt
   at this didn't succeed very well (r71644 has what was tried).
 
+  [HARD] Safely interrupting arbitrary in-flight library code means
+  unwinding across allocations and held locks, cross-platform -- and it
+  was already attempted once without success (r71644).  One of the
+  hardest "small-sounding" items.
+  [FAN-OUT: poor -- a single mechanism needing one careful design, not
+  parallel coverage.]
+
 * cppclean audit
 
 * add a multiview rt script to regression testing (e.g., see rtwalk
@@ -529,6 +551,13 @@ lookup check to ensure none are missing.
   https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/include/glob.h
   https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/glob.c
 
+  [HARD] Foundational design whose decisions cascade everywhere; the
+  combs<->directories analogy breaks on boolean trees with no clean
+  answer.  Relates to the geometry-URL/VFS, symbolic-links, and
+  filesystem-backed-collections items.
+  [FAN-OUT: yes -- parallel survey of URI/VFS prior art plus a
+  use-case/edge-case catalog before committing to a spec.]
+
 * replace guts of bu_ptbl to see if we can improve performance -
   implications for removal if an appropriate substitute is found,
   needs to be deprecated if we remove all API but we can update guts.
@@ -566,6 +595,13 @@ lookup check to ensure none are missing.
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
+
+  [HARD] Numerically delicate primitive-intersection edge cases (t62
+  grazing, ae 0,0 hit/overlap -> miss).  Couples with "fix ARB8
+  promotion to BoT" (prep/shot soltab mismatch) and the global grazing
+  policy in the OVERLAP TOOLS section.
+  [FAN-OUT: partial -- a fan-out can generate the ray/primitive-pair
+  test matrix; the fix itself is serial and tolerance-sensitive.]
 
 * havoc.g s.nos5g reliably exhibits the grazing edge bug where only
   one hit point is being returned.  to reproduce: e s.nos5g ; ae 35 25
@@ -739,6 +775,13 @@ lookup check to ensure none are missing.
   (e.g., similar to preprocessing, compilation, AST reduction,
   optimization, encoding transformation, etc.).  name ideas: bcg, cg
 
+  [HARD] Two new subsystems (with the geometry debugger below).  The
+  compiler needs real CSG optimization (tree contraction, null-object
+  detection -- hard in itself); the debugger demands a dependency-free
+  re-implementation of .g parsing to inspect corrupt files.
+  [FAN-OUT: yes -- catalog candidate CSG optimizations and the on-disk
+  .g layout in parallel; the cores are then implemented serially.]
+
 * geometry debugger.  low-level geometry database tool with minimal/no
   run-time dependencies on our own libraries.  the idea is a tool that
   can inspect/repair a potentially corrupted/invalid .g file or help
@@ -778,6 +821,13 @@ lookup check to ensure none are missing.
 
 * decouple libwdb from librt, particularly the headers and relevant
   structures that cross over to both such as the rtgeom.h types.
+
+  [HARD] Untangling circular core dependencies without breaking ABI for
+  downstream; pairs with "refactor ... nmg processing ... into its own
+  library" below.  Measured blast radius: 671 files include raytrace.h;
+  231 reference nmg_*.
+  [FAN-OUT: yes -- parallel dependency mapping (per header/symbol)
+  first; the moves themselves must be serialized.]
 
 * Translate logic from clipper polygon clipping library
   (http://www.angusj.com/delphi/clipper.php) into libbg and use it as
@@ -913,6 +963,12 @@ lookup check to ensure none are missing.
 
 * struct rt_bot_internal should be using "size_t *" instead of "int *"
   for the faces and face_normals members
+
+  [HARD] Looks mechanical but touches BoT serialization, libtie, and
+  every converter, with subtle signedness/32-bit landmines on huge
+  meshes.  ~72 files reference the faces/face_normals members.
+  [FAN-OUT: yes -- per-file/per-converter sweep with a verification
+  pass.]
 
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb
@@ -1097,6 +1153,12 @@ lookup check to ensure none are missing.
 * remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
   macro.  refactor all callers as needed.
 
+  [HARD] Surgery on the hottest struct in the ray-tracer: ABI break,
+  perf-critical, every primitive's shot() must be re-audited.  Measured
+  blast radius: 107 files reference hit_normal/hit_point.
+  [FAN-OUT: yes -- strong mechanical sweep; one agent per
+  file/primitive to migrate to RT_HIT_POINT, then verify.]
+
 * make bombardier actually send the report somewhere
 
 * hook bombardier in for crash reporting
@@ -1179,6 +1241,13 @@ lookup check to ensure none are missing.
 * geometry viewing commands/visualizations of exploded levels
 
 * librt-based path tracer
+
+  [HARD] A global-illumination engine: importance sampling,
+  convergence/denoise, integration with the existing shader stack and
+  framebuffers.  Couples with "Integrate ADRT into Archer" and the
+  automatic-anti-aliasing item.  A whole rendering subsystem.
+  [FAN-OUT: partial -- parallel component research (samplers, denoise,
+  ADRT bridge); the integrator core is serial.]
 
 * system identifier application with sysctl-style information
   database, with some back-end functionality placed into libbu.
@@ -1320,6 +1389,15 @@ OVERLAP TOOLS
   grazing hits, but mark them as grazing, and let rt_shootray() sort
   it out by sampling a 3x3 pattern that determines if we're grazing
   the "top/left" or "bottom/right" side of a surface.
+
+  [HARD] Needs one grazing convention that is simultaneously solid,
+  deterministic, view-independent (bidirectional) and overlap-free
+  across every primitive; the text above concedes a valid edge/face
+  graze normal is "difficult for some objects."  Governs global
+  raytrace correctness; see also the s.nos5g grazing-edge bug and the
+  tgc/rec shot() item.  A fully-correct solution may not exist.
+  [FAN-OUT: yes -- one agent per primitive to characterize graze
+  behavior, plus an adversarial bank of bidirectional ray test cases.]
 
 * implement quasi-random unbiased iterative spherical ray sampling.
   requires devising an algorithm whereby we obtain a set of points on
@@ -2152,6 +2230,13 @@ BREP/NURBS
   the same subdivisions unnecessarily, but avoids locks entirely in
   the common case and minimizes lock contention.
 
+  [HARD] Combines lock-free concurrency (sentinel array fill), numeric
+  derivative-convergence heuristics, and a cache-coherent
+  kd-tree/extent-array layout -- all in the hot path at once.
+  Research-grade on all three fronts.
+  [FAN-OUT: poor for the core algorithm (one expert design); fan-out
+  only to prototype/benchmark competing subdivision heuristics.]
+
 * create a BC_Brep class that inherits from ON_Brep so we can cleanly
   extend and implement functions that were intentionally removed from
   openNURBS.
@@ -2170,6 +2255,14 @@ BREP/NURBS
   the old NURBS code.
 
 * implement boolean evaluation of nurbs surfaces
+
+  [HARD] The canonical open problem in solid modeling: robust
+  surface-surface intersection, trim-curve generation, and topology
+  stitching are what took ACIS/Parasolid teams decades.  No ground
+  truth, no shortcut; couples with "implement tessellation support" and
+  the trimmed-surface bbox item.
+  [FAN-OUT: design only -- a judge panel of independent SSI/trimming
+  approaches helps; the implementation itself is serial.]
 
 * NURBS editing command, let you interactively
   add/update/join/split/remove component points, edges, surfaces.
@@ -2206,6 +2299,14 @@ NMG/BoT
   on large BoT models) during prep.
 
 * ensure robust and fast nmg->bot conversion
+
+  [HARD] NMG is famously fragile; "make it robust" is a perennial that
+  resists closed-form fixes, and the tessellation crashes (ETO /
+  metaball / DSP infinite recursion + stack smashing in BUGS) are
+  geometry-dependent.  ~231 files reference nmg_*.  See also the NMG
+  ray-tracing malloc-per-shot item below.
+  [FAN-OUT: yes -- one agent per failing primitive/tess path to build a
+  reproducible failure corpus; repairs land serially.]
 
 * facetize creates BoTs crappily by only looking at first region,
   first shell, instead of the whole nmg model.
@@ -2304,6 +2405,13 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   coordinate system even after pushed matrices.  this also will allow
   primitives like the torus to support non-uniform scaling.
 
+  [HARD] On-disk format change rippling through every primitive's
+  import/export/xform/raytrace -- and the non-uniform-tor raytrace it
+  is meant to enable is itself unsolved.  Requires a v5->v6 migration
+  plus full revalidation.
+  [FAN-OUT: yes -- one agent per primitive for the import/export/xform
+  changes; the format/migration design stays central.]
+
 * change convention of using 'u', '+', and '-' for unions,
   intersections, and subtractions respectively to symbols that
   unambiguously describe the underlying CSG operation.
@@ -2343,6 +2451,13 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * add database support for constraints, expressions, parametric
   values, construction history, and timestamping.
 
+  [HARD] Effectively "make BRL-CAD parametric": a new
+  evaluation/dependency engine, construction history, and selectable
+  subtree representation baked into the format.  Enormous; assumes the
+  ambitious reading (a real parametric kernel, not just storage).
+  [FAN-OUT: poor for the kernel; useful only for parallel design
+  exploration of competing parametric/constraint models.]
+
 * see the CHANGES file for items that have been marked as deprecated
   or available to be removed as obsolete items.
 
@@ -2373,6 +2488,13 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   shortened/empty string, but record a larger attribute/object size,
   allowing for binary data beyond the attribute value '\0' termination.
 
+  [HARD] BSON/CBOR encoding smuggled into the v5 spec's size fields for
+  backward compat, plus (paired with the libbu mime-API retirement)
+  replacing the static enum mime API with a runtime-populated
+  libmagic-style engine.  Format + API redesign with compat traps.
+  [FAN-OUT: partial -- parallel survey of encodings and an audit of all
+  mime-enum users; the spec/compat work is central.]
+
 * change format of related programs (especially filters) so the
   input/output files are handled identically. two examples of
   different handling:
@@ -2385,6 +2507,14 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 -------------------------------------------
+
+  [HARD] Re-architecting the ray-primitive interface for bundled/SIMD
+  traversal means rewriting every primitive's intersection routine and
+  the partitioning core while preserving exact results -- broad,
+  perf-critical, and easy to get subtly wrong.  (Applies to this whole
+  section: merge shot/vshot, bundles, SIMD, SAH, kdtree.)
+  [FAN-OUT: yes -- one agent per primitive to convert shot()->bundle
+  with a result-equivalence harness; the kdtree core stays central.]
 
 * merge shot and vshot
 
