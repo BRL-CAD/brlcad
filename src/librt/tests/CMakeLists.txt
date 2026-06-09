@@ -92,6 +92,11 @@ brlcad_addexec(bot_match bot_match.cpp "librt;libbg;${M_LIBRARY}" TEST)
 # boolweave testing
 brlcad_addexec(rt_boolweave rt_boolweave.c "${RT_TEST_LIBS}" TEST)
 
+# ft_shot vs ft_vshot: validates the sph vectorized shot matches the
+# scalar shot, and times the vector callback (short 0.1s/phase budget)
+brlcad_addexec(rt_vshot vshot_test.cpp "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_vshot COMMAND rt_vshot 0.1)
+
 # Tests for primitive editing
 add_subdirectory(edit)
 
