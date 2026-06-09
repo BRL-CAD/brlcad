@@ -34,6 +34,7 @@
 #include "bnetwork.h"
 
 #include "bu/app.h" // bu_mkdir
+#include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
@@ -56,6 +57,111 @@
 #include "../ged_bot.h"
 #include "./ged_bot_dump.h"
 
+static int
+bot_path_color(struct bu_color *c, const struct db_full_path *pathp, struct db_i *dbip)
+{
+    if (!c || !pathp || !dbip)
+	return 0;
+
+    if (db_mater_head(dbip) != MATER_NULL) {
+	for (size_t i = 0; i < pathp->fp_len; i++) {
+	    int region_id = -1;
+	    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+	    db5_get_attributes(dbip, &c_avs, pathp->fp_names[i]);
+
+	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
+	    if (region_id_val) {
+		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
+		region_id = 0;
+	    }
+
+	    if (region_id >= 0) {
+		const struct mater *mp;
+		for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
+		    if (region_id > mp->mt_high || region_id < mp->mt_low)
+			continue;
+		    unsigned char mt[3] = {mp->mt_r, mp->mt_g, mp->mt_b};
+		    bu_color_from_rgb_chars(c, mt);
+		    bu_avs_free(&c_avs);
+		    return 1;
+		}
+	    }
+
+	    bu_avs_free(&c_avs);
+	}
+    }
+
+    for (size_t i = 0; i < pathp->fp_len; i++) {
+	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+	db5_get_attributes(dbip, &c_avs, pathp->fp_names[i]);
+	const char *inherit_val = bu_avs_get(&c_avs, "inherit");
+	int inherit = (inherit_val && BU_STR_EQUAL(inherit_val, "1")) ? 1 : 0;
+	const char *color_val = bu_avs_get(&c_avs, "color");
+	if (!color_val)
+	    color_val = bu_avs_get(&c_avs, "rgb");
+	if (inherit && color_val) {
+	    bu_opt_color(NULL, 1, &color_val, (void *)c);
+	    bu_avs_free(&c_avs);
+	    return 1;
+	}
+	bu_avs_free(&c_avs);
+    }
+
+    for (size_t i = pathp->fp_len; i > 0; i--) {
+	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+	db5_get_attributes(dbip, &c_avs, pathp->fp_names[i-1]);
+	const char *color_val = bu_avs_get(&c_avs, "color");
+	if (!color_val)
+	    color_val = bu_avs_get(&c_avs, "rgb");
+	if (color_val) {
+	    bu_opt_color(NULL, 1, &color_val, (void *)c);
+	    bu_avs_free(&c_avs);
+	    return 1;
+	}
+	bu_avs_free(&c_avs);
+    }
+
+    return 0;
+}
+
+static void
+bot_export_color(struct _ged_bot_dump_client_data *d, struct directory *dp, const struct db_full_path *pathp)
+{
+    struct db_full_path lpath;
+    const struct db_full_path *cpath = pathp;
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    unsigned char rgb[3] = {0, 0, 0};
+
+    d->curr_obj_color_valid = 0;
+    d->curr_obj_red = 0;
+    d->curr_obj_green = 0;
+    d->curr_obj_blue = 0;
+    d->curr_obj_alpha = 1.0;
+
+    if (!d->material_info || d->using_dbot_dump)
+	return;
+
+    if (d->output_type != OTYPE_OBJ && d->output_type != OTYPE_GLB && d->output_type != OTYPE_GLTF)
+	return;
+
+    if (!cpath) {
+	db_full_path_init(&lpath);
+	db_add_node_to_full_path(&lpath, dp);
+	cpath = &lpath;
+    }
+
+    if (bot_path_color(&c, cpath, d->gedp->dbip) && bu_color_to_rgb_chars(&c, rgb)) {
+	d->curr_obj_color_valid = 1;
+	d->curr_obj_red = rgb[0];
+	d->curr_obj_green = rgb[1];
+	d->curr_obj_blue = rgb[2];
+    }
+
+    if (!pathp)
+	db_free_full_path(&lpath);
+}
+
 void
 _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot)
 {
@@ -63,6 +169,8 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
     FILE *fp = d->fp;
     int fd = d->fd;
     const char *file_ext = d->file_ext;
+
+    bot_export_color(d, dp, pathp);
 
     if (bu_vls_strlen(&d->output_directory)) {
 	char *cp;
@@ -120,8 +228,6 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 		    return;
 
 		d->obj.v_offset = 1;
-
-		fprintf(d->fp, "mtllib %s\n", bu_vls_addr(&d->obj.obj_materials_file));
 		if (!pathp) {
 		    obj_write_bot(d, bot, d->fp, dp->d_namep);
 		} else {
@@ -260,7 +366,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     return curtree;
 }
 
-static char usage[] = "bot dump [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n\n";
+static char usage[] = "bot dump [-b] [-n] [-F] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials|--no-materials] [bot1 bot2 ...]\n\n";
 
 enum otype
 bot_fmt_type(const char *t)
@@ -454,11 +560,12 @@ dl_botdump(struct _ged_bot_dump_client_data *d)
 	    }
 
 	    /* Write out object color */
-	    if (d->output_type == OTYPE_OBJ) {
-		d->obj.curr_obj_red = sp->s_color[0];
-		d->obj.curr_obj_green = sp->s_color[1];
-		d->obj.curr_obj_blue = sp->s_color[2];
-		d->obj.curr_obj_alpha = sp->s_os->transparency;
+	    if (d->material_info) {
+		d->curr_obj_color_valid = 1;
+		d->curr_obj_red = sp->s_color[0];
+		d->curr_obj_green = sp->s_color[1];
+		d->curr_obj_blue = sp->s_color[2];
+		d->curr_obj_alpha = sp->s_os->transparency;
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
@@ -477,8 +584,13 @@ bot_client_data_init(struct _ged_bot_dump_client_data *d)
     d->gedp = NULL;
     d->binary = 0;
     d->cfactor = 1.0;
+    d->curr_obj_alpha = 1.0;
+    d->curr_obj_blue = 0;
+    d->curr_obj_color_valid = 0;
+    d->curr_obj_green = 0;
+    d->curr_obj_red = 0;
     d->full_precision = 0;
-    d->material_info = 0;
+    d->material_info = 1;
     d->normals = 0;
     d->output_type = OTYPE_UNSET;
     d->total_faces = 0;
@@ -507,6 +619,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     int i;
     int print_help = 0;
     int write_displayed = 0;
+    int no_material_info = 0;
     const char *cmd_name;
 
     struct _ged_bot_dump_client_data ld;
@@ -521,7 +634,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bu_opt_desc od[13];
+    struct bu_opt_desc od[14];
     BU_OPT(od[ 0], "h", "help",             "",      NULL,          &print_help,          "Print help and exit");
     BU_OPT(od[ 1], "?", "",                 "",      NULL,          &print_help,          "");
     BU_OPT(od[ 2], "b", "",                 "",      NULL,          &d->binary,           "Use binary version of output format");
@@ -535,8 +648,9 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     // rework dbot version to just construct a new argc/argv array and call this.
     BU_OPT(od[ 9], "",  "displayed",        "",      NULL,          &write_displayed,     "Write out displayed geometry");
     BU_OPT(od[10], "",  "viewdata",         "",      NULL,          &d->view_data,        "Write out non-geometry view data");
-    BU_OPT(od[11], "",  "materials",        "",      NULL,          &d->material_info,    "Write out material info");
-    BU_OPT_NULL(od[12]);
+    BU_OPT(od[11], "",  "materials",        "",      NULL,          &d->material_info,    "Write out material and color info (default when supported)");
+    BU_OPT(od[12], "",  "no-materials",     "",      NULL,          &no_material_info,    "Do not write out material or color info");
+    BU_OPT_NULL(od[13]);
 
     /* must be wanting help */
     if (!argc) {
@@ -558,6 +672,9 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc = opt_ret;
+
+    if (no_material_info)
+	d->material_info = 0;
 
     if (bu_vls_strlen(&d->output_file) && bu_vls_strlen(&d->output_directory)) {
 	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
@@ -751,7 +868,7 @@ _bot_cmd_dump(void* bs, int argc, const char** argv)
     struct _ged_bot_info* gb = (struct _ged_bot_info*)bs;
     struct ged* gedp = gb->gedp;
 
-    const char *usage_string = "bot dump [-b] [-n] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n\n";
+    const char *usage_string = "bot dump [-b] [-n] [-F] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials|--no-materials] [bot1 bot2 ...]\n\n";
     const char* purpose_string = "Export raw BoT information, without any processing.";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;

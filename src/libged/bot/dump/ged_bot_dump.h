@@ -62,10 +62,7 @@ struct bot_dump_obj {
     struct bu_vls obj_materials_file;
     FILE *obj_materials_fp;
     int num_obj_materials;
-    int curr_obj_red;
-    int curr_obj_green;
-    int curr_obj_blue;
-    fastf_t curr_obj_alpha;
+    int mtllib_written;
     int v_offset;
 };
 
@@ -94,6 +91,11 @@ struct _ged_bot_dump_client_data {
     int using_dbot_dump;
     int view_data;
     int material_info;
+    int curr_obj_color_valid;
+    int curr_obj_red;
+    int curr_obj_green;
+    int curr_obj_blue;
+    fastf_t curr_obj_alpha;
 
     enum otype output_type;
     int binary;

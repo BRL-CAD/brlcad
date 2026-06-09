@@ -205,6 +205,23 @@ gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot,
     primitive.attributes["POSITION"] = vert_accessor;
     primitive.indices = tri_accessor;
     primitive.mode = TINYGLTF_MODE_TRIANGLES;
+    if (d->curr_obj_color_valid) {
+	tinygltf::Material material;
+	material.name = std::string(name) + "_material";
+	material.pbrMetallicRoughness.baseColorFactor = {
+	    d->curr_obj_red / 255.0,
+	    d->curr_obj_green / 255.0,
+	    d->curr_obj_blue / 255.0,
+	    d->curr_obj_alpha
+	};
+	material.pbrMetallicRoughness.metallicFactor = 0.0;
+	material.pbrMetallicRoughness.roughnessFactor = 1.0;
+	if (d->curr_obj_alpha < 1.0) {
+	    material.alphaMode = "BLEND";
+	}
+	model.materials.push_back(material);
+	primitive.material = model.materials.size() - 1;
+    }
 
     tinygltf::Mesh mesh;
     mesh.name = name;
