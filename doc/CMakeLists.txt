@@ -16,6 +16,7 @@ set(
   README.VAX
   checklist.txt
   description.txt
+  optimization_ideas.adoc
   notes/TODO.BREP
   notes/TODO.shaded_displays
   notes/apitrace.txt
