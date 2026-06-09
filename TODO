@@ -1580,9 +1580,6 @@ LIBGED
 * add option to 'mirror' command to delete the source object.  support
   specification of a plane as the view plane, 3 points, XY, YZ, XZ.
 
-* killall command reports db_lookup failures if the target object
-  doesn't exist (maybe we only care about refs).  should keep quiet.
-
 * replace sed and oed commands: functionality provided by new 'edit'
   command, but requires testing (unit tests) to make sure it's working
   correctly.

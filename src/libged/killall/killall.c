@@ -82,9 +82,26 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* ALL references removed...now KILL the object[s] */
-    /* reuse argv[] */
-    argv[0] = "kill";
-    return ged_exec_kill(gedp, argc, argv);
+    /* Build a new argv that inserts the "-q" (quiet) flag so kill does
+     * not emit noisy db_lookup failures for objects that only exist as
+     * references.  Only the killall path is affected; standalone kill is
+     * unchanged. */
+    {
+	int i;
+	const char **kill_argv = (const char **)bu_calloc(argc + 2, sizeof(char *), "killall kill_argv");
+
+	kill_argv[0] = "kill";
+	kill_argv[1] = "-q";
+	for (i = 1; i < argc; i++)
+	    kill_argv[i + 1] = argv[i];
+	kill_argv[argc + 1] = NULL;
+
+	ret = ged_exec_kill(gedp, argc + 1, kill_argv);
+
+	bu_free((void *)kill_argv, "killall kill_argv");
+    }
+
+    return ret;
 }
 
 #include "../include/plugin.h"

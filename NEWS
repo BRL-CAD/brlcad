@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+* killall no longer outputs kill lookup failures - Sean Morrison
 * added new manual pages for over 30 tools & utilities - Sean Morrison
 * fixed mged/rt/gui apps on Mac w/ ogl device windows - Sean Morrison
 * modified gist long title printing to maximally fit - Sean Morrison
