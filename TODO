@@ -1054,8 +1054,6 @@ lookup check to ensure none are missing.
 
 * refactor mged/bwish/g_diff initialization to all use the same routine
 
-* deprecate either orot or rotobj
-
 * refactor mged's signal handling to make it possible to safely
   interrupt long-running commands
 

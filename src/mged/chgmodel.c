@@ -184,6 +184,15 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     int iflag = 0;
     vect_t argvect;
 
+    /* "rotobj" is a deprecated synonym for "orot"; warn once per session */
+    if (argc > 0 && BU_STR_EQUAL(argv[0], "rotobj")) {
+	static int rotobj_warned = 0;
+	if (!rotobj_warned) {
+	    bu_log("DEPRECATION WARNING: command 'rotobj' is deprecated; please use 'rot' instead.\n");
+	    rotobj_warned = 1;
+	}
+    }
+
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
