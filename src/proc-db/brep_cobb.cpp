@@ -286,18 +286,32 @@ main(int argc, char** argv)
     ON_3dPoint origin(0.0,0.0,0.0);
     const char* id_name = "B-Rep Cobb Sphere";
     const char* geom_name = "cobb.s";
+    const char* db_name = "brep_cobb.g";
 
     bu_setprogname(argv[0]);
 
-    if (argc > 1 || BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
-	return 0;
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+	    bu_log("Usage: %s [output.g]\n", argv[0]);
+	    return 0;
+	}
+	db_name = argv[1];
+    }
+    if (argc > 2) {
+	bu_log("Usage: %s [output.g]\n", argv[0]);
+	return 1;
     }
 
     ON::Begin();
 
     /* export brep to file */
-    bu_log("Writing a Cobb unit sphere b-rep...\n");
-    outfp = wdb_fopen("brep_cobb.g");
+    bu_log("Writing a Cobb unit sphere b-rep to %s...\n", db_name);
+    outfp = wdb_fopen(db_name);
+    if (!outfp) {
+	bu_log("ERROR: unable to open %s for writing\n", db_name);
+	ON::End();
+	return 1;
+    }
     mk_id(outfp, id_name);
 
 
