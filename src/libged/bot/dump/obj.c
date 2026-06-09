@@ -27,6 +27,8 @@
 
 #include <string.h>
 
+#include "bu/path.h"
+
 #include "./ged_bot_dump.h"
 
 static struct _ged_obj_material *
@@ -53,7 +55,14 @@ obj_get_material(struct _ged_bot_dump_client_data *d, FILE *fp, int red, int gre
     }
 
     if (fp && !o->mtllib_written) {
-	fprintf(fp, "mtllib %s\n", bu_vls_cstr(&o->obj_materials_file));
+	/* The mtllib directive must reference the material file by a name
+	 * resolvable relative to the .obj file (the .mtl is written
+	 * alongside it), not by the absolute output path.  Emitting the
+	 * absolute path produced non-portable .obj files that embedded the
+	 * build machine's directory layout.  Use just the basename. */
+	char mtl_base[MAXPATHLEN] = {0};
+	bu_path_basename(bu_vls_cstr(&o->obj_materials_file), mtl_base);
+	fprintf(fp, "mtllib %s\n", mtl_base);
 	o->mtllib_written = 1;
     }
 
