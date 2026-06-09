@@ -21,6 +21,24 @@
 #include "FactsHandler.h"
 #include "RenderHandler.h"
 
+static std::string
+fitHierarchyLabel(IFPainter& img, int textHeight, int width, const std::string& text, int flags)
+{
+    if (width <= 0 || img.getTextWidth(textHeight, width, text, flags) <= width) {
+	return text;
+    }
+
+    std::string fitted = text + " ...";
+    while (fitted.length() >= 5 && img.getTextWidth(textHeight, width, fitted, flags) > width) {
+	fitted.erase(fitted.length() - 5, 1);
+	while (fitted.length() >= 5 && fitted[fitted.length() - 5] == ' ') {
+	    fitted.erase(fitted.length() - 5, 1);
+	}
+    }
+
+    return fitted;
+}
+
 void
 makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
 {
@@ -146,12 +164,14 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
     int offX = offsetX + 5;
     int imgH = height / 2.6;
     int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
+    int hierarchyLabelWidth = std::max(imgW - 20, textHeight * 4);
 
     int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
 
     // main component
     //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
-    img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
+    std::string mainLabel = fitHierarchyLabel(img, textHeight, width - 20, info.largestComponents[0].name, TO_BOLD);
+    img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width - 20, mainLabel, TO_BOLD);
 
     img.drawLine(offX + imgW/2, offY - 100, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY - 100, 3, cv::Scalar(94, 58, 32));
     img.drawLine(centerPt, offY-100, centerPt, offY-130, 3, cv::Scalar(94, 58, 32));
@@ -175,7 +195,8 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 	render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
 	// std::cout << "INSIDE factshandler DBG: " << render << std::endl;
 	img.drawImageTransparentFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
-	img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, width, info.largestComponents[i].name, TO_BOLD);
+	std::string childLabel = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, info.largestComponents[i].name, TO_BOLD);
+	img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, hierarchyLabelWidth, childLabel, TO_BOLD);
 	img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
 	img.drawCirc(offX + (i-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
 	// img.drawCirc(offX + (i-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
@@ -192,7 +213,7 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 	std::string omitted_label = std::to_string(omitted_components) + " more";
 	render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
 	img.drawImageTransparentFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
-	img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, width, omitted_label, TO_BOLD);
+	img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, hierarchyLabelWidth, omitted_label, TO_BOLD);
 	img.drawLine(offX + (N-1)*imgW + imgW/2, offY-100, offX + (N-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
 	img.drawCirc(offX + (N-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
 	// img.drawCirc(offX + (N-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
