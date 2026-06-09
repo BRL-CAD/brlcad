@@ -52,6 +52,7 @@
 
 #define TS_STR_SIZE 128
 #define TS_STR_WIDTH "127"
+#define EXPECT_MATCH_OR_INPUT_FAILURE -2
 
 
 /* scanf specification summarized from Linux man page:
@@ -159,6 +160,21 @@ checkReturnVal(const char *funcStr, int actual, int expected)
 		actual, (actual == EOF) ? " (EOF)" : "",
 		expected, (expected == EOF) ? " (EOF)" : "");
     }
+}
+
+
+static void
+checkReturnValFailure(const char *funcStr, int actual, int expected)
+{
+    if (expected == EXPECT_MATCH_OR_INPUT_FAILURE) {
+	if (actual == 0 || actual == EOF) {
+	    return;
+	}
+	bu_exit(1, "\tError: %s returned %d. Expected 0 or EOF.\n",
+		funcStr, actual);
+    }
+
+    checkReturnVal(funcStr, actual, expected);
 }
 
 
@@ -703,8 +719,9 @@ doErrorTests(void)
 	type vals[3] = { type_init, type_init, type_init }; \
 	print_src_and_fmt(src, FMT_ASSIGN3(type_fmt)); \
 	ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
-	bu_ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
-	checkReturnVal("sscanf", ret, expected_err); \
+	bu_ret = bu_sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
+	checkReturnValFailure("sscanf", ret, expected_err); \
+	checkReturnValFailure("bu_sscanf", bu_ret, expected_err); \
 	checkReturnsEqual(ret, bu_ret); \
 	for (i = 0; i < 3; ++i) { \
 	    if (vals[i] != type_init) { \
@@ -719,17 +736,20 @@ doErrorTests(void)
      * includes 2 valid and 1 invalid input value, should return 0 to
      * indicate matching failure.  If src includes 2 valid values and
      * then terminates before the assigned conversion can complete, the
-     * prior suppressed conversions already consumed input, so standard
-     * scanf behavior is a matching failure (0), not EOF.
+     * prior suppressed conversions already consumed input.  Some C libraries
+     * report this as a matching failure (0), while others report EOF.
      */
 #define TEST_FAILURE_2(type, type_fmt, type_init, src, expected_err) \
     { \
 	type val = type_init; \
 	print_src_and_fmt(src, FMT_READ2_ASSIGN1(type_fmt)); \
 	ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
-	bu_ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
-	checkReturnVal("sscanf", ret, expected_err); \
-	checkReturnsEqual(ret, bu_ret); \
+	bu_ret = bu_sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
+	checkReturnValFailure("sscanf", ret, expected_err); \
+	checkReturnValFailure("bu_sscanf", bu_ret, expected_err); \
+	if (expected_err != EXPECT_MATCH_OR_INPUT_FAILURE) { \
+	    checkReturnsEqual(ret, bu_ret); \
+	} \
 	if (val != type_init) { \
 	    bu_exit(1, "\t[FAIL] No assignment expected, but val " \
 		    "changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
@@ -742,7 +762,7 @@ doErrorTests(void)
 
     TEST_FAILURE_1(int, d, 0, "xx 34 56", EXPECT_MATCH_FAILURE);
     TEST_FAILURE_2(int, d, 0, "12 34 xx", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_MATCH_FAILURE);
+    TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_MATCH_OR_INPUT_FAILURE);
     TEST_FAILURE_1(int, d, 0, "", EXPECT_INPUT_FAILURE);
 
 // TODO - what is the intent here?  The 1[123] input seems to be

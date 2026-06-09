@@ -49,16 +49,11 @@
 #  define TEST_BACKTRACE_NOINLINE
 #endif
 
-/* These frames live in the bu_test executable, not libbu.  When the test is
- * built against a DLL import view of libbu on Windows, BU_EXPORT expands to
- * dllimport and MSVC rejects function definitions.  Export them from the test
- * executable instead so symbol names remain visible to the backtrace logic.
+/* These frames live in the bu_test executable, not libbu.  Export them from
+ * the test executable so symbolizing backtrace implementations can report
+ * names for at least one active test frame.
  */
-#if defined(_WIN32) && defined(BU_DLL_IMPORTS)
-#  define TEST_BACKTRACE_EXPORT COMPILER_DLLEXPORT
-#else
-#  define TEST_BACKTRACE_EXPORT BU_EXPORT
-#endif
+#define TEST_BACKTRACE_EXPORT COMPILER_DLLEXPORT
 
 
 static volatile int test_backtrace_guard = 0;
