@@ -41,20 +41,25 @@
 char *options = "w:n:d:W:N:sB:t:Du:mc:C:h?";
 
 char *progname = "(noname)";
+/* standard modular brick: 8 x 2.25 x 3.625 inches (~203 x 57 x 92 mm) */
 double brick_width=8.0;
 double brick_height=2.25;
-double brick_depth=3.325;
-double wall_width=0.0;
-double wall_height=0.0;
+double brick_depth=3.625;
+/* default wall: 10 bricks wide x 12 courses high.  these dimensions are
+ * chosen so the residual space distributed as mortar yields a realistic
+ * ~3/8 inch (~9.5 mm) head joint and a ~3/16 inch bed joint.
+ */
+double wall_width=87.375;
+double wall_height=29.2;
 char *brick_name="brick";
 int standalone=0;
-int make_mortar=0;	/* put mortar between bricks */
+int make_mortar=1;	/* put mortar between bricks (on by default) */
 double tol=0.125;	/* minimum mortar thickness in in */
 double tol2;		/* minimum brick dimension allowed */
 int debug=0;
 double units_conv=25.4;	/* by default, units are converted internally from in to mm */
-char color[32] = "160 40 40";
-char mortar_color[32] = "190 190 190";
+char color[32] = "160 40 40";		/* brick red */
+char mortar_color[32] = "190 190 190";	/* mortar gray */
 
 
 static void
@@ -66,7 +71,7 @@ usage(char *s)
 		   "Usage: %s %s\n%s\n%s\n%s\n",
 		   progname,
 		   "  [ -u units ] [ -s(tandalone) ] [-t tolerance ]",
-		   "  [-m(ortar) ] [ -c R/G/B (brick) ] [ -C R/G/B (mortar)]",
+		   "  [-m (toggle mortar, ON by default) ] [ -c R/G/B (brick) ] [ -C R/G/B (mortar)]",
 		   "  -w brick_width -n brick_height -d brick_depth -B brick_name",
 		   "  -W wall_width -N wall_height\n  > mged_commands \n");
 
