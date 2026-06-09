@@ -42,7 +42,7 @@ is sometimes useful for debugging. A single ray is fired at the pixel coordinate
 *-c "script_command"*, *--command "script_command"*::
 is for specifying commands for rt to run prior to ray tracing. The "script_command" can be a single command or a semi-colon separated list of commands. The commands available are the same commands that may appear in a *-M* command script.
 +
-Some common script commands include start, viewsize, eye_pt, lookat_pt, viewrot, orientation, multiview, anim, tree, draw, erase, prep, clean, set, ae, start, and end. Running the *saveview* in MGED will produce an rt script for the current view.
+Some common script commands include start, viewsize, eye_pt, lookat_pt, viewrot, orientation, multiview, autoview, anim, tree, draw, erase, prep, clean, set, ae, start, and end. Running the *saveview* in MGED will produce an rt script for the current view.
 +
 Some common *set* variables include ambSamples, overlay, a_onehit, a_no_booleans. Running *-c "set"* will print values for all settable variables.
 
@@ -248,6 +248,22 @@ When using *rt* to create an animation sequence destined for NTSC video, it is u
 
 [[examples]]
 == EXAMPLES
+
+.Render a quick 256x256 preview to a file, with a little shading
+[example]
+====
+**rt -A0.9 -c "set ambSamples=4" -s256 -o file.png file.g object
+
+Renders to a PNG image with very minimal ambient occlusion (4 samples per ray).  We increase how bright the image will be with the *-A* ambient light option because of the occlusion option. 
+====
+
+.Render a scene but focusing on a specific part
+[example]
+====
+**rt -c "autoview headlight.r" car.g car**
+
+Renders a whole car object to a temporary window with a camera centered on a headlight.r object.
+====
 
 .Render directly to an *fbserv* IPC endpoint
 [example]
