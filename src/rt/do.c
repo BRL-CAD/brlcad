@@ -391,6 +391,38 @@ int cm_prep(const int UNUSED(argc), const char **UNUSED(argv))
     return 0;
 }
 
+/* Object list for the "autoview" command: render the full tree but
+ * auto-size the view to frame only these objects.  The object list is
+ * captured at -c parse time (when the rtip is not yet available) and
+ * consumed later in do_ae() after the database is open.
+ */
+static int autoview_argc = 0;
+static char **autoview_argv = NULL;
+
+int cm_autoview(const int argc, const char **argv)
+{
+    int i;
+
+    if (argc <= 1)
+	return -1;
+
+    /* free any prior list */
+    if (autoview_argv) {
+	for (i = 0; i < autoview_argc; i++)
+	    bu_free(autoview_argv[i], "autoview obj");
+	bu_free((void *)autoview_argv, "autoview_argv");
+	autoview_argv = NULL;
+    }
+    autoview_argc = 0;
+
+    autoview_argv = (char **)bu_calloc(argc - 1, sizeof(char *), "autoview_argv");
+    for (i = 1; i < argc; i++)
+	autoview_argv[i - 1] = bu_strdup(argv[i]);
+    autoview_argc = argc - 1;
+
+    return 0;
+}
+
 int cm_tree(const int argc, const char **argv)
 {
     int i = 0;
@@ -1289,6 +1321,7 @@ do_ae(double azim, double elev)
     vect_t temp;
     mat_t toEye;
     struct rt_i *rtip = APP.a_rt_i;
+    point_t view_min, view_max;
 
     if (rtip == NULL)
 	return;
@@ -1320,17 +1353,35 @@ do_ae(double azim, double elev)
     rtip->mdl_max[Y] = ceil(rtip->mdl_max[Y]);
     rtip->mdl_max[Z] = ceil(rtip->mdl_max[Z]);
 
+    /* By default, frame the whole model.  If the "autoview" command
+     * supplied a subset of objects, frame only that subset's bounding
+     * box (while still rendering the full prepped tree).
+     */
+    VMOVE(view_min, rtip->mdl_min);
+    VMOVE(view_max, rtip->mdl_max);
+    if (autoview_argc > 0) {
+	point_t sub_min, sub_max;
+	if (rt_obj_bounds(NULL, rtip->rti_dbip, autoview_argc,
+			  (const char **)autoview_argv, use_air,
+			  sub_min, sub_max) == BRLCAD_OK) {
+	    VMOVE(view_min, sub_min);
+	    VMOVE(view_max, sub_max);
+	} else {
+	    bu_log("do_ae: autoview bounds failed; framing whole model\n");
+	}
+    }
+
     MAT_IDN(Viewrotscale);
     bn_mat_angles(Viewrotscale, 270.0+elev, 0.0, 270.0-azim);
 
-    /* Look at the center of the model */
+    /* Look at the center of the (sub)view bounding box */
     MAT_IDN(toEye);
-    toEye[MDX] = -((rtip->mdl_max[X]+rtip->mdl_min[X])/2.0);
-    toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
-    toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
+    toEye[MDX] = -((view_max[X]+view_min[X])/2.0);
+    toEye[MDY] = -((view_max[Y]+view_min[Y])/2.0);
+    toEye[MDZ] = -((view_max[Z]+view_min[Z])/2.0);
 
-    /* determine global viewsize based on model size */
-    viewsize = autoviewsize(rtip->mdl_min, rtip->mdl_max, aspect);
+    /* determine global viewsize based on the (sub)view bounding box */
+    viewsize = autoviewsize(view_min, view_max, aspect);
 
     Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
@@ -1385,6 +1436,8 @@ struct command_tab rt_do_tab[] = {
      cm_anim,	4, 999},
     {"tree", 	"treetop(s)", "specify alternate list of tree tops",
      cm_tree,	1, 999},
+    {"autoview", "obj(s)", "auto-size view to fit named objects",
+     cm_autoview,	2, 999},
     {"draw", 	"obj", "add an object to the active list",
      cm_draw,	2, 999},
     {"erase", 	"obj", "remove an object from the active list",
