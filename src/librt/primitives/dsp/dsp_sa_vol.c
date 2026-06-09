@@ -108,7 +108,7 @@ rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	return;
     *vol = 0.0;
 
-    dsp = rt_dsp_internal(ip);
+    dsp = rt_dsp_internal_from_ip(ip);
     if (!dsp)
 	return;
 
@@ -158,7 +158,7 @@ rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	return;
     *area = 0.0;
 
-    dsp = rt_dsp_internal(ip);
+    dsp = rt_dsp_internal_from_ip(ip);
     if (!dsp)
 	return;
 

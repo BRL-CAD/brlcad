@@ -48,7 +48,7 @@ extern int
 rt_dsp_cell_cut(const struct rt_dsp_internal *dsp, size_t cx, size_t cy, size_t xsiz, size_t ysiz);
 
 extern struct rt_dsp_internal *
-rt_dsp_internal(const struct rt_db_internal *ip);
+rt_dsp_internal_from_ip(const struct rt_db_internal *ip);
 
 __END_DECLS
 

@@ -764,7 +764,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
  *  - (when object-backed) binunif count >= xcnt * ycnt
  */
 struct rt_dsp_internal *
-rt_dsp_internal(const struct rt_db_internal *ip)
+rt_dsp_internal_from_ip(const struct rt_db_internal *ip)
 {
     struct rt_dsp_internal *dsp;
 
@@ -804,7 +804,7 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     unsigned int x, y;
     point_t pt, bbpt;
 
-    dsp_ip = rt_dsp_internal(ip);
+    dsp_ip = rt_dsp_internal_from_ip(ip);
     if (!dsp_ip)
 	return 1; /* BAD */
     BU_CK_VLS(&dsp_ip->dsp_name);
@@ -901,7 +901,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (rtip) RT_CK_RTI(rtip);
 
-    dsp_ip = rt_dsp_internal(ip);
+    dsp_ip = rt_dsp_internal_from_ip(ip);
     if (!dsp_ip)
 	return 1; /* BAD */
     BU_CK_VLS(&dsp_ip->dsp_name);
@@ -3163,7 +3163,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	bu_log("rt_dsp_plot()\n");
 
     BU_CK_LIST_HEAD(vhead);
-    dsp_ip = rt_dsp_internal(ip);
+    dsp_ip = rt_dsp_internal_from_ip(ip);
     if (!dsp_ip)
 	return 0;
 

@@ -1,4 +1,23 @@
-/*                      T E S T _ D S P _ A R E A _ V O L U M E . C
+/*                      D S P _ S A _ V O L _ C H E C K . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file librt/tests/dsp_sa_vol_check.c
  *
  * Regression tests for DSP primitive surface area and volume.
  */
@@ -261,8 +280,7 @@ compare_with_crofton(const char *label,
 	return 0;
     }
 
-    rt_crofton_surf_area(&crofton_area, intern);
-    rt_crofton_volume(&crofton_volume, intern);
+    rt_crofton_sample(&crofton_area, &crofton_volume, intern, NULL);
 
     print_crofton_compare(label,
 			  direct_area,
