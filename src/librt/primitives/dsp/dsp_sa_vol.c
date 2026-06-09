@@ -33,9 +33,8 @@
  * - Surface area must be computed in model space (area does not scale
  * uniformly): every triangle vertex is pushed through dsp_stom and the 
  * triangle areas are summed.
- * These mirror the geometry that rt_dsp_shot() actually intersects (in
- * particular the adaptive cut-direction choice replicates permute_cell()
- * in dsp.c). So the values agree with the ray-traced solid.
+ * These mirror the geometry that rt_dsp_shot() actually intersects, so the
+ * values agree with the ray-traced solid.
  */
 
 #include "common.h"
@@ -47,80 +46,6 @@
 #include "rt/geom.h"
 
 #include "./dsp.h"
-
-/**
- * Decide which diagonal splits cell (cx, cy) -- the cell whose corners are
- *  (cx, cy+1)  (cx+1, cy+1)
- *      C---------D
- *      |         |
- *      |         |
- *      |         |
- *      A---------B
- *  (cx, cy)  (cx+1, cy)
- *
- * Returns DSP_CUT_DIR_llUR for the A-D diagonal or DSP_CUT_DIR_ULlr for the
- * B-C diagonal
- *
- * TODO/FIXME: this is redundant logic to dsp.c: permute_cell() / swap_cell_pts()
- *  but those functions rely on unpacking the dsp_specific* where we just care
- *  about the rt_dsp_internal*
- * For DSP_CUT_DIR_ADAPT: a discrete second-difference "curvature" along each
- * diagonal is compared using the diagonally-adjacent neighbor cells (with
- * the neighbor indices clamped to the grid), and the lower-curvature
- * diagonal wins.  The comparison is strict, so a tie selects B-C.
- */
-static int
-dsp_cell_cut(const struct rt_dsp_internal *dsp,
-	     size_t cx, size_t cy, size_t xsiz, size_t ysiz)
-{
-    size_t lox, loy, hix, hiy;
-    fastf_t A, B, C, D;
-    fastf_t h1, h2, h3, h4;
-    fastf_t cAD, cBC;
-
-    switch (dsp->dsp_cuttype) {
-	case DSP_CUT_DIR_llUR:
-	    return DSP_CUT_DIR_llUR;
-	case DSP_CUT_DIR_ULlr:
-	    return DSP_CUT_DIR_ULlr;
-	case DSP_CUT_DIR_ADAPT:
-	default:
-	    break;
-    }
-
-    /* neighbor cell indices, clamped to the grid (see dsp.c permute_cell).
-     * Indices are unsigned, so the low side clamps via a zero test rather
-     * than the signed "< 0" used by permute_cell.
-     */
-    lox = (cx > 0) ? cx - 1 : 0;
-    loy = (cy > 0) ? cy - 1 : 0;
-    hix = (cx + 1) + 1;
-    hiy = (cy + 1) + 1;
-    if (hix > xsiz) hix = xsiz;
-    if (hiy > ysiz) hiy = ysiz;
-
-    A = DSP(dsp, cx,     cy);
-    B = DSP(dsp, cx + 1, cy);
-    C = DSP(dsp, cx,     cy + 1);
-    D = DSP(dsp, cx + 1, cy + 1);
-
-    /* curvature along the A->D diagonal */
-    h1 = DSP(dsp, lox, loy);
-    h2 = A;
-    h3 = D;
-    h4 = DSP(dsp, hix, hiy);
-    cAD = fabs(h3 + h1 - 2.0 * h2) + fabs(h4 + h2 - 2.0 * h3);
-
-    /* curvature along the B->C diagonal */
-    h1 = DSP(dsp, hix, loy);
-    h2 = B;
-    h3 = C;
-    h4 = DSP(dsp, lox, hiy);
-    cBC = fabs(h3 + h1 - 2.0 * h2) + fabs(h4 + h2 - 2.0 * h3);
-
-    return (cAD < cBC) ? DSP_CUT_DIR_llUR : DSP_CUT_DIR_ULlr;
-}
-
 
 /**
  * Area, in model space, of the triangle whose vertices are given in solid
@@ -167,44 +92,6 @@ stom_volume_scale(const mat_t stom)
 
 
 /**
- * Safely unpack a dsp_internal* from db_internal* (or returns NULL)
- * checks:
- *  - internals
- *  - height buffer exists
- *  - xcnt and ycnt > 2
- *  - bip >= xcnt * ycnt
- */
-static struct rt_dsp_internal *
-dsp_internal(const struct rt_db_internal *ip)
-{
-    struct rt_dsp_internal* dsp;
-
-    if (!ip)
-	return NULL;
-    RT_CK_DB_INTERNAL(ip);
-
-    dsp = (struct rt_dsp_internal *)ip->idb_ptr;
-    if (!dsp)
-	return NULL;
-    RT_DSP_CK_MAGIC(dsp);
-
-    if (!dsp->dsp_buf || dsp->dsp_xcnt < 2 || dsp->dsp_ycnt < 2)
-	return NULL;
-
-    if (dsp->dsp_bip) {
-	size_t need = (size_t)dsp->dsp_xcnt * (size_t)dsp->dsp_ycnt;
-	const struct rt_binunif_internal *bip =
-	    (const struct rt_binunif_internal *)dsp->dsp_bip->idb_ptr;
-
-	if (bip && bip->magic == RT_BINUNIF_INTERNAL_MAGIC && bip->count < need)
-	    return NULL;
-    }
-
-    return dsp;
-}
-
-
-/**
  * Volume of a DSP primitive, in model-space
  *
  * Sums, over every cell, the prism volume of the height above z=0,
@@ -221,7 +108,7 @@ rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	return;
     *vol = 0.0;
 
-    dsp = dsp_internal(ip);
+    dsp = rt_dsp_internal(ip);
     if (!dsp)
 	return;
 
@@ -240,7 +127,7 @@ rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	     * heights, i.e. (sum of corners)/6.  The shared diagonal corners
 	     * therefore appear in both triangles and are doubled.
 	     */
-	    if (dsp_cell_cut(dsp, x, y, xsiz, ysiz) == DSP_CUT_DIR_llUR)
+	    if (rt_dsp_cell_cut(dsp, x, y, xsiz, ysiz) == DSP_CUT_DIR_llUR)
 		solid_vol += (2.0 * A + B + C + 2.0 * D) / 6.0;	/* A-D */
 	    else
 		solid_vol += (A + 2.0 * B + 2.0 * C + D) / 6.0;	/* B-C */
@@ -271,7 +158,7 @@ rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	return;
     *area = 0.0;
 
-    dsp = dsp_internal(ip);
+    dsp = rt_dsp_internal(ip);
     if (!dsp)
 	return;
 
@@ -289,7 +176,7 @@ rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    fastf_t x0 = (fastf_t)x,     y0 = (fastf_t)y;
 	    fastf_t x1 = (fastf_t)x + 1, y1 = (fastf_t)y + 1;
 
-	    if (dsp_cell_cut(dsp, x, y, xsiz, ysiz) == DSP_CUT_DIR_llUR) {
+	    if (rt_dsp_cell_cut(dsp, x, y, xsiz, ysiz) == DSP_CUT_DIR_llUR) {
 		/* A-D diagonal: triangles {A,B,D} and {A,C,D} */
 		total += tri_area_model(stom, x0, y0, A, x1, y0, B, x1, y1, D);
 		total += tri_area_model(stom, x0, y0, A, x0, y1, C, x1, y1, D);

@@ -756,6 +756,44 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 }
 
 /**
+ * Safely unpack a validated rt_dsp_internal from a db_internal (or return
+ * NULL).  Checks:
+ *  - the db_internal and dsp magics
+ *  - the height buffer exists
+ *  - xcnt and ycnt >= 2
+ *  - (when object-backed) binunif count >= xcnt * ycnt
+ */
+struct rt_dsp_internal *
+rt_dsp_internal(const struct rt_db_internal *ip)
+{
+    struct rt_dsp_internal *dsp;
+
+    if (!ip)
+	return NULL;
+    RT_CK_DB_INTERNAL(ip);
+
+    dsp = (struct rt_dsp_internal *)ip->idb_ptr;
+    if (!dsp)
+	return NULL;
+    RT_DSP_CK_MAGIC(dsp);
+
+    if (!dsp->dsp_buf || dsp->dsp_xcnt < 2 || dsp->dsp_ycnt < 2)
+	return NULL;
+
+    if (dsp->dsp_bip) {
+	size_t need = (size_t)dsp->dsp_xcnt * (size_t)dsp->dsp_ycnt;
+	const struct rt_binunif_internal *bip =
+	    (const struct rt_binunif_internal *)dsp->dsp_bip->idb_ptr;
+
+	if (bip && bip->magic == RT_BINUNIF_INTERNAL_MAGIC && bip->count < need)
+	    return NULL;
+    }
+
+    return dsp;
+}
+
+
+/**
  * Calculate the bounding box for a dsp.
  */
 int
@@ -766,9 +804,9 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     unsigned int x, y;
     point_t pt, bbpt;
 
-    RT_CK_DB_INTERNAL(ip);
-    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
-    RT_DSP_CK_MAGIC(dsp_ip);
+    dsp_ip = rt_dsp_internal(ip);
+    if (!dsp_ip)
+	return 1; /* BAD */
     BU_CK_VLS(&dsp_ip->dsp_name);
 
     switch (dsp_ip->dsp_datasrc) {
@@ -863,9 +901,9 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (rtip) RT_CK_RTI(rtip);
 
-    RT_CK_DB_INTERNAL(ip);
-    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
-    RT_DSP_CK_MAGIC(dsp_ip);
+    dsp_ip = rt_dsp_internal(ip);
+    if (!dsp_ip)
+	return 1; /* BAD */
     BU_CK_VLS(&dsp_ip->dsp_name);
 
     switch (dsp_ip->dsp_datasrc) {
@@ -1385,6 +1423,76 @@ isect_ray_triangle(struct isect_stuff *isect,
 
 
 /**
+ * Decide which diagonal splits cell (cx, cy) -- the cell whose corners are
+ *  (cx, cy+1)  (cx+1, cy+1)
+ *      C---------D
+ *      |         |
+ *      |         |
+ *      |         |
+ *      A---------B
+ *  (cx, cy)  (cx+1, cy)
+ *
+ * Returns DSP_CUT_DIR_llUR for the A-D diagonal or DSP_CUT_DIR_ULlr for the
+ * B-C diagonal.
+ *
+ * For DSP_CUT_DIR_ADAPT: a discrete second-difference "curvature" along each
+ * diagonal is compared using the diagonally-adjacent neighbor cells (with the
+ * neighbor indices clamped to the grid), and the lower-curvature diagonal
+ * wins. A tie selects B-C.
+ */
+int
+rt_dsp_cell_cut(const struct rt_dsp_internal *dsp,
+	     size_t cx, size_t cy, size_t xsiz, size_t ysiz)
+{
+    size_t lox, loy, hix, hiy;
+    fastf_t A, B, C, D;
+    fastf_t h1, h2, h3, h4;
+    fastf_t cAD, cBC;
+
+    switch (dsp->dsp_cuttype) {
+	case DSP_CUT_DIR_llUR:
+	    return DSP_CUT_DIR_llUR;
+	case DSP_CUT_DIR_ULlr:
+	    return DSP_CUT_DIR_ULlr;
+	case DSP_CUT_DIR_ADAPT:
+	default:
+	    break;
+    }
+
+    /* neighbor cell indices, clamped to the grid
+     * Indices are unsigned, so the low side clamps via a zero test
+     */
+    lox = (cx > 0) ? cx - 1 : 0;
+    loy = (cy > 0) ? cy - 1 : 0;
+    hix = (cx + 1) + 1;
+    hiy = (cy + 1) + 1;
+    if (hix > xsiz) hix = xsiz;
+    if (hiy > ysiz) hiy = ysiz;
+
+    A = DSP(dsp, cx,     cy);
+    B = DSP(dsp, cx + 1, cy);
+    C = DSP(dsp, cx,     cy + 1);
+    D = DSP(dsp, cx + 1, cy + 1);
+
+    /* curvature along the A->D diagonal */
+    h1 = DSP(dsp, lox, loy);
+    h2 = A;
+    h3 = D;
+    h4 = DSP(dsp, hix, hiy);
+    cAD = fabs(h3 + h1 - 2.0 * h2) + fabs(h4 + h2 - 2.0 * h3);
+
+    /* curvature along the B->C diagonal */
+    h1 = DSP(dsp, hix, loy);
+    h2 = B;
+    h3 = C;
+    h4 = DSP(dsp, lox, hiy);
+    cBC = fabs(h3 + h1 - 2.0 * h2) + fabs(h4 + h2 - 2.0 * h3);
+
+    return (cAD < cBC) ? DSP_CUT_DIR_llUR : DSP_CUT_DIR_ULlr;
+}
+
+
+/**
  * For adaptive diagonal selection or for Upper-Left to lower right
  * cell cut, we must permute the vertices of the cell before handing
  * them to the intersection algorithm.  That's what this function
@@ -1416,10 +1524,9 @@ permute_cell(point_t A,
 	    break;
 
 	case DSP_CUT_DIR_ADAPT: {
-	    int lo[2], hi[2];
 	    point_t tmp;
-	    fastf_t h1, h2, h3, h4;
-	    fastf_t cAD, cBC;  /* curvature in direction AD, and BC */
+	    size_t cx = (size_t)dsp_rpp->dsp_min[X];
+	    size_t cy = (size_t)dsp_rpp->dsp_min[Y];
 
 	    if (RT_G_DEBUG & RT_DEBUG_HF)
 		bu_log("cell %d, %d adaptive triangulation... ",
@@ -1445,38 +1552,16 @@ permute_cell(point_t A,
 	     *	*  *  *	 *
 	     */
 
-	    lo[X] = dsp_rpp->dsp_min[X] - 1;
-	    lo[Y] = dsp_rpp->dsp_min[Y] - 1;
-	    hi[X] = dsp_rpp->dsp_max[X] + 1;
-	    hi[Y] = dsp_rpp->dsp_max[Y] + 1;
+	    /* leaf-cell precondition: the rpp spans exactly one grid unit, so
+	     * (cx, cy) plus the cell counts fully describe the curvature
+	     * stencil that rt_dsp_cell_cut() recomputes.
+	     */
+	    BU_ASSERT(dsp_rpp->dsp_max[X] == dsp_rpp->dsp_min[X] + 1);
+	    BU_ASSERT(dsp_rpp->dsp_max[Y] == dsp_rpp->dsp_min[Y] + 1);
 
-	    /* a little bounds checking */
-	    if (lo[X] < 0) lo[X] = 0;
-	    if (lo[Y] < 0) lo[Y] = 0;
-	    if (hi[X] > dsp->xsiz)
-		hi[X] = dsp->xsiz;
-
-	    if (hi[Y] > dsp->ysiz)
-		hi[Y] = dsp->ysiz;
-
-	    /* compute curvature along the A->D direction */
-	    h1 = DSP(&dsp->dsp_i, lo[X], lo[Y]);
-	    h2 = A[Z];
-	    h3 = D[Z];
-	    h4 = DSP(&dsp->dsp_i, hi[X], hi[Y]);
-
-	    cAD = fabs(h3 + h1 - 2*h2) + fabs(h4 + h2 - 2*h3);
-
-
-	    /* compute curvature along the B->C direction */
-	    h1 = DSP(&dsp->dsp_i, hi[X], lo[Y]);
-	    h2 = B[Z];
-	    h3 = C[Z];
-	    h4 = DSP(&dsp->dsp_i, lo[X], hi[Y]);
-
-	    cBC = fabs(h3 + h1 - 2*h2) + fabs(h4 + h2 - 2*h3);
-
-	    if (cAD < cBC) {
+	    if (rt_dsp_cell_cut(&dsp->dsp_i, cx, cy,
+			     (size_t)dsp->xsiz, (size_t)dsp->ysiz)
+		== DSP_CUT_DIR_llUR) {
 		/* A-D cut is fine, no need to permute */
 		if (RT_G_DEBUG & RT_DEBUG_HF)
 		    bu_log("A-D cut\n");
@@ -3064,15 +3149,13 @@ int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
-    struct rt_dsp_internal *dsp_ip =
-	(struct rt_dsp_internal *)ip->idb_ptr;
+    struct rt_dsp_internal *dsp_ip;
     point_t m_pt;
     point_t s_pt;
     point_t o_pt;
     unsigned int x, y;
     int step;
-    unsigned int xlim = dsp_ip->dsp_xcnt - 1;
-    unsigned int ylim = dsp_ip->dsp_ycnt - 1;
+    unsigned int xlim, ylim;
     int xfudge, yfudge;
     int drawing;
 
@@ -3080,8 +3163,12 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	bu_log("rt_dsp_plot()\n");
 
     BU_CK_LIST_HEAD(vhead);
-    RT_CK_DB_INTERNAL(ip);
-    RT_DSP_CK_MAGIC(dsp_ip);
+    dsp_ip = rt_dsp_internal(ip);
+    if (!dsp_ip)
+	return 0;
+
+    xlim = dsp_ip->dsp_xcnt - 1;
+    ylim = dsp_ip->dsp_ycnt - 1;
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
@@ -4078,10 +4165,6 @@ swap_cell_pts(int A[3],
 	    return 0;
 
 	case DSP_CUT_DIR_ADAPT: {
-	    int lo[2], hi[2];
-	    fastf_t h1, h2, h3, h4;
-	    fastf_t cAD, cBC;  /* curvature in direction AD, and BC */
-
 
 	    /*
 	     * We look at the points in the diagonal next cells to
@@ -4102,39 +4185,10 @@ swap_cell_pts(int A[3],
 	     *	*  *  *	 *
 	     */
 
-	    lo[X] = A[X] - 1;
-	    lo[Y] = A[Y] - 1;
-	    hi[X] = D[X] + 1;
-	    hi[Y] = D[Y] + 1;
-
-	    /* a little bounds checking */
-	    if (lo[X] < 0) lo[X] = 0;
-	    if (lo[Y] < 0) lo[Y] = 0;
-	    if (hi[X] > dsp->xsiz)
-		hi[X] = dsp->xsiz;
-
-	    if (hi[Y] > dsp->ysiz)
-		hi[Y] = dsp->ysiz;
-
-	    /* compute curvature along the A->D direction */
-	    h1 = DSP(&dsp->dsp_i, lo[X], lo[Y]);
-	    h2 = A[Z];
-	    h3 = D[Z];
-	    h4 = DSP(&dsp->dsp_i, hi[X], hi[Y]);
-
-	    cAD = fabs(h3 + h1 - 2*h2) + fabs(h4 + h2 - 2*h3);
-
-
-	    /* compute curvature along the B->C direction */
-	    h1 = DSP(&dsp->dsp_i, hi[X], lo[Y]);
-	    h2 = B[Z];
-	    h3 = C[Z];
-	    h4 = DSP(&dsp->dsp_i, lo[X], hi[Y]);
-
-	    cBC = fabs(h3 + h1 - 2*h2) + fabs(h4 + h2 - 2*h3);
-
-	    if (cAD < cBC) {
-		/* A-D cut is fine, no need to permute */
+	    if (rt_dsp_cell_cut(&dsp->dsp_i, (size_t)A[X], (size_t)A[Y],
+			     (size_t)dsp->xsiz, (size_t)dsp->ysiz)
+		== DSP_CUT_DIR_llUR) {
+		/* A-D cut is fine, no need to swap */
 		if (RT_G_DEBUG & RT_DEBUG_HF)
 		    bu_log("A-D cut (no swap)\n");
 
