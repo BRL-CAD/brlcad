@@ -37,6 +37,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "../ged_private.h"
@@ -467,6 +468,8 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 
     FILE *ftabvls = NULL;
     FILE *test_f = NULL;
+    FILE *discr_fp = NULL;
+    char discr_file[MAXPATHLEN] = {0};
     char *timep;
     int flag;
     int status;
@@ -529,14 +532,26 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     fclose(test_f);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
-	/* temp file for discrimination of solids */
-	/* !!! this needs to be a bu_temp_file() */
-	if ((idfd = creat("/tmp/mged_discr", 0600)) < 0) {
-	    perror("/tmp/mged_discr");
+	/* Temp file for discrimination of solids.  bu_temp_file() may
+	 * arrange for the file to be removed as soon as its last open
+	 * handle is closed (see bu/app.h), so we must keep discr_fp
+	 * open for the duration rather than closing it and reopening by
+	 * path (which could race with the file's removal).  Obtain the
+	 * read and write descriptors by duplicating the descriptor
+	 * underlying discr_fp; both users re-seek before every read and
+	 * write, so sharing the file offset is harmless here.
+	 */
+	discr_fp = bu_temp_file(discr_file, MAXPATHLEN);
+	if (discr_fp == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Can't create temporary file\n", argv[0]);
 	    status = BRLCAD_ERROR;
 	    goto end;
 	}
-	rd_idfd = open("/tmp/mged_discr", 2);
+	if ((idfd = dup(fileno(discr_fp))) < 0 || (rd_idfd = dup(fileno(discr_fp))) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Can't duplicate temporary file handle\n", argv[0]);
+	    status = BRLCAD_ERROR;
+	    goto end;
+	}
     }
 
     (void)time(&now);
@@ -592,6 +607,23 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     (void)fclose(ftabvls);
 
 end:
+    /* Close the duplicated descriptors first, then the keeper handle -
+     * closing discr_fp last is what permits bu_temp_file()'s file to be
+     * removed.  Reset the static descriptors so a later invocation that
+     * does not use a temp file (e.g. "idents") won't close stale fds. */
+    if (idfd > 0) {
+	(void)close(idfd);
+	idfd = 0;
+    }
+    if (rd_idfd > 0) {
+	(void)close(rd_idfd);
+	rd_idfd = 0;
+    }
+    if (discr_fp != NULL) {
+	(void)fclose(discr_fp);
+	discr_fp = NULL;
+    }
+
     bu_vls_free(&cmd);
     bu_vls_free(&tmp_vls);
     bu_vls_free(&tabvls);

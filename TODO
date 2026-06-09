@@ -1483,9 +1483,6 @@ LIBGED
   needs to be handled in a generalized way so that most/all commands
   have a notion of operating on the currently 'selected' object(s).
 
-* fix !!! in src/libged/tables.c where a temporary file is getting
-  used.  needs to call bu_temp_file().
-
 * refactor the libtclcad go_*() functions and invocation wrappers
   (also in mged) into libged where appropriate. the 'png' command
   comes to mind.
