@@ -284,6 +284,62 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
     bu_file_delete(output_file);
 
+    // Add a color attribute and confirm it exports by default to OBJ material data
+    const char *attr_av[5] = {"attr", "set", "arb4.bot", "color", "10/20/30"};
+    if (ged_exec_attr(gedp, 5, attr_av) != BRLCAD_OK)
+	bu_exit(EXIT_FAILURE, "Unable to assign color attribute to arb4.bot");
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_color_out.obj", NULL);
+    s_av[0] = "bot";
+    s_av[1] = "dump";
+    s_av[2] = "-t";
+    s_av[3] = "obj";
+    s_av[4] = "-o";
+    s_av[5] = output_file;
+    s_av[6] = "arb4.bot";
+    ged_exec_bot(gedp, 7, s_av);
+
+    if (bu_vls_strlen(gedp->ged_result_str))
+	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_color.obj", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_color.mtl", NULL);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_color_out.mtl", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    bu_file_delete(output_file);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_color_out.obj", NULL);
+    bu_file_delete(output_file);
+
+    // Opting out should suppress the material sidecar and keep legacy OBJ output
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_nomtl_out.obj", NULL);
+    s_av[0] = "bot";
+    s_av[1] = "dump";
+    s_av[2] = "-t";
+    s_av[3] = "obj";
+    s_av[4] = "--no-materials";
+    s_av[5] = "-o";
+    s_av[6] = output_file;
+    s_av[7] = "arb4.bot";
+    ged_exec_bot(gedp, 8, s_av);
+
+    if (bu_vls_strlen(gedp->ged_result_str))
+	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4.obj", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    bu_file_delete(output_file);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_nomtl_out.mtl", NULL);
+    if (bu_file_exists(output_file, NULL))
+	bu_exit(EXIT_FAILURE, "Unexpected material file created for --no-materials export: %s", output_file);
+
     /* Next tests look at output in a directory.  The directory must already be
      * present, so create it up front. */
     const char *odir = "arbs_stl_output";
@@ -358,4 +414,3 @@ main(int ac, char *av[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
