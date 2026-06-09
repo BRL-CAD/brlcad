@@ -12,8 +12,9 @@
 #   2. IPC 64x64 quick render:
 #      Same local-worker mechanism, 64x64 pixels, output size check only.
 #
-# No TCP ports are used; no manual rtsrv invocation is needed.
-# The test therefore carries no RESOURCE_LOCK on any network port.
+# No TCP ports are used for the local-worker cases; no manual rtsrv
+# invocation is needed.  The test therefore carries no RESOURCE_LOCK on any
+# network port.
 
 if(TARGET remrt AND TARGET rtsrv)
 

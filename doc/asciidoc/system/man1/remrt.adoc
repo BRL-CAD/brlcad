@@ -34,6 +34,8 @@ where "###" is the image resolution desired.
 
 *remrt* uses *ssh*(1) to automatically initiate remote computation. The SSH client binary name defaults to *ssh* and can be overridden at compile time via the *SSH* preprocessor macro. Public-key (or other password-less) authentication must be configured between the controlling machine and each worker host so that *remrt* can launch *rtsrv* workers without interactive prompting.
 
+For local worker launches, *remrt* uses *libpkg*(3) inherited endpoint IPC transport instead of TCP. On POSIX this is normally an anonymous pipe or socketpair, and on Windows libpkg uses inherited Win32 pipe handles. In that mode no TCP listener is needed until a remote or passive host must connect back to the dispatcher.
+
 At startup *remrt* generates a 256-bit random session authentication token and prints it to standard error. When *remrt* auto-launches an *rtsrv* worker via SSH it appends *-S _token_* to the worker command line. The worker includes the token in its version handshake; *remrt* verifies the token before accepting the worker into the session. Workers that were started manually and do not carry the token are still accepted by default (backward compatibility). Operators who need to ensure that _all_ connecting workers are authenticated can pass the session token manually to each *rtsrv* invocation via its *-S* flag.
 
 *remrt* requires a control file called ".remrtrc" which specifies a few essential parameters of the server machines (network hosts) that are to participate in the distributed computation. The ".remrtrc" file contains a list of normal *remrt* commands which are to be executed before distributed processing is to begin. This can be useful for establishing a variety of user-specific defaults. However, the most important command to provide is a "host" command to describe each of the remote hosts that will (or may) participate in the distributed computation. Here is a sample ".remrt" file:
@@ -348,5 +350,3 @@ This software is Copyright (c) 1994-2026 by the United States Government as repr
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
-
-

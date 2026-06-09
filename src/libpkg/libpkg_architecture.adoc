@@ -123,9 +123,10 @@ sequenceDiagram
     Parent->>Parent: pkg_process() or pkg_mux_wait()
 ----
 
-* *Transport Negotiation*: `pkg_pair()` intelligently probes for the best local IPC transport (anonymous pipes, POSIX socketpairs, or TCP loopbacks) and sets up the paired `pkg_conn` objects.
-* *Environment Handoff*: The parent configures the child process's environment using `pkg_child_addr_env()` so the child can seamlessly discover its read/write file descriptors without command-line argument parsing.
+* *Transport Negotiation*: `pkg_pair()` intelligently probes for the best local IPC transport (anonymous pipes, POSIX socketpairs, or TCP loopbacks) and sets up the paired `pkg_conn` objects. On Windows the anonymous-pipe path is implemented with inherited Win32 pipe handles encoded as `pipe_win:` addresses.
+* *Environment Handoff*: The parent configures the child process's environment using `pkg_child_addr_env()` so the child can seamlessly discover its read/write file descriptors without command-line argument parsing. Parent-side address strings such as `pipe_parent:` and `socket_parent:` are also connectable when descendant helpers need the opposite end of the same inherited transport.
 * *Split-FD Architecture*: If pipes are used, LIBPKG handles the unidirectional nature internally by assigning `pkc_in_fd` for reading and `pkc_out_fd` for writing, presenting the application with a unified bidirectional interface.
+* *Reusable Local IPC Listeners*: Applications that need many short-lived local clients, such as a framebuffer server used by multiple rendering tools, should call `pkg_ipc_addr()` to obtain an opaque local address, pass it unchanged to `pkg_listen()`, and give clients the same string for `pkg_connect_addr()`. LIBPKG chooses the platform transport behind that address. On POSIX systems this may be a FIFO rendezvous transport or a UNIX-domain listener. On Windows, reusable listener addresses use local named pipes encoded as `npipe:` addresses. Platforms without a reusable local listener backend return failure from `pkg_ipc_addr()` while continuing to support inherited endpoint IPC through `pkg_pair()`.
 
 == 4. API Design Intentions
 

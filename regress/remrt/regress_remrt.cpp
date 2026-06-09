@@ -107,7 +107,7 @@ struct RemrtDetected {
     std::condition_variable cv;
     int port = 0;
     std::string token;
-    bool ready = false;   /* port AND token found */
+    bool ready = false;   /* token found */
 
     void reset() {
 	port = 0;
@@ -193,15 +193,10 @@ read_remrt_stderr(struct bu_process *proc, RemrtDetected *det, std::string *log_
 	    if (tok[0] != '\0') {
 		std::lock_guard<std::mutex> lk(det->mtx);
 		det->token = tok;
-	    }
-	}
-
-	/* Signal once both are available. */
-	{
-	    std::lock_guard<std::mutex> lk(det->mtx);
-	    if (det->port && !det->token.empty() && !det->ready) {
-		det->ready = true;
-		det->cv.notify_all();
+		if (!det->ready) {
+		    det->ready = true;
+		    det->cv.notify_all();
+		}
 	    }
 	}
     }
@@ -409,8 +404,9 @@ run_ipc_subtest(const TestOptions &opts,
 				  [&det] { return det.ready; });
 	if (!ok)
 	    fprintf(stderr,
-		    "regress_remrt [%s]: timeout waiting for remrt startup\n",
-		    label);
+		    "regress_remrt [%s]: timeout waiting for remrt startup\n"
+		    "  stderr so far:\n%s\n",
+		    label, remrt_stderr_log.c_str());
     }
 
     /* If using -M, pipe the view script to remrt's stdin now that remrt

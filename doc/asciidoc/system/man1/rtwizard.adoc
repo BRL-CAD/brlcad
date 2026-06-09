@@ -40,12 +40,12 @@ The name (and optionally the output image format) of the final image generated b
 
 *-d* _framebuffer_device_
 *--fbserv-device* _framebuffer_device_::
-Under the hood, *fbserv* is run to assist with processing. The *-d* option specifies the type of framebuffer *fbserv* should use in lieu of the default memory-only interface (/dev/mem). See *fbhelp* for a listing of available device options. Framebuffer servers started by *rtwizard* are automatically closed after image generation is complete.
+Under the hood, *fbserv* is run to assist with processing. By default, command-line *rtwizard* uses a per-run libpkg local IPC listener for that framebuffer server when the platform provides one, so multiple *rtwizard* instances can run in parallel without competing for TCP ports. On platforms where libpkg does not provide a reusable local listener backend, *rtwizard* keeps the existing TCP framebuffer behavior unless *-p* selects a specific port. The *-d* option specifies the type of framebuffer *fbserv* should use in lieu of the default memory-only interface (/dev/mem). See *fbhelp* for a listing of available device options. Framebuffer servers started by *rtwizard* are automatically closed after image generation is complete.
 
 
 *-p* _port_number_
 *--fbserv-port* _port_number_::
-The *-p* option specifies the framebuffer port number to use when running *fbserv* to establish a framebuffer. An existing framebuffer server port be specified. In the case of a pre-existing framebuffer servers, *rtwizard* will not close the framebuffer automatically after the raytracing process is complete.
+The *-p* option specifies the framebuffer port number to use when running *fbserv* to establish a framebuffer. Supplying this option selects the existing TCP framebuffer behavior. An existing framebuffer server port may be specified. In the case of a pre-existing framebuffer server, *rtwizard* will not close the framebuffer automatically after the raytracing process is complete.
 
 
 *--gui*::

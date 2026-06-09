@@ -29,8 +29,10 @@
 #include <stdlib.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
 #include <limits.h>
+#include <stddef.h>
 #include <time.h>
 #include <string.h>
+#include <fcntl.h>
 
 
 #ifdef HAVE_SYS_PARAM_H
@@ -168,6 +170,50 @@ static FILE *_pkg_debug = (FILE*)NULL;
 static int pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg));
 static struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg), int nodelay);
+
+#ifdef _WIN32
+static HANDLE
+pkg_create_named_pipe(const char *pipe_name)
+{
+    return CreateNamedPipeA(pipe_name,
+			    PIPE_ACCESS_DUPLEX,
+			    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+			    PIPE_UNLIMITED_INSTANCES,
+			    65536, 65536, 0, NULL);
+}
+
+static int
+pkg_named_pipe_fds(HANDLE pipe_h, int *rfd, int *wfd)
+{
+    HANDLE proc = GetCurrentProcess();
+    HANDLE hRead = INVALID_HANDLE_VALUE;
+    HANDLE hWrite = INVALID_HANDLE_VALUE;
+
+    if (!rfd || !wfd)
+	return -1;
+    *rfd = -1;
+    *wfd = -1;
+
+    if (!DuplicateHandle(proc, pipe_h, proc, &hRead, 0, FALSE, DUPLICATE_SAME_ACCESS) ||
+	    !DuplicateHandle(proc, pipe_h, proc, &hWrite, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
+	if (hRead != INVALID_HANDLE_VALUE) CloseHandle(hRead);
+	if (hWrite != INVALID_HANDLE_VALUE) CloseHandle(hWrite);
+	return -1;
+    }
+
+    *rfd = _open_osfhandle((intptr_t)hRead, _O_RDONLY | _O_BINARY);
+    *wfd = _open_osfhandle((intptr_t)hWrite, _O_WRONLY | _O_BINARY);
+    if (*rfd < 0 || *wfd < 0) {
+	if (*rfd >= 0) (void)close(*rfd); else CloseHandle(hRead);
+	if (*wfd >= 0) (void)close(*wfd); else CloseHandle(hWrite);
+	*rfd = -1;
+	*wfd = -1;
+	return -1;
+    }
+
+    return 0;
+}
+#endif
 
 
 /*
@@ -881,13 +927,48 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     memset((char *)&sinme, 0, sizeof(sinme));
 
 #  ifdef HAVE_SYS_UN_H
+    if (strncmp(service, "unix-abstract:", 14) == 0) {
+#    if defined(__linux__)
+	const char *name = service + 14;
+	size_t name_len = strlen(name);
+
+	if (name_len == 0 || name_len >= sizeof(sunme.sun_path) - 1) {
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
+		     "pkg_permserver(%s): abstract UNIX socket name too long\n", service);
+	    errlog(_pkg_errbuf);
+	    return -1;
+	}
+
+	memset((char *)&sunme, 0, sizeof(sunme));
+	sunme.sun_family = AF_UNIX;
+	sunme.sun_path[0] = '\0';
+	memcpy(sunme.sun_path + 1, name, name_len);
+	addr = (struct sockaddr *) &sunme;
+	addrlen = offsetof(struct sockaddr_un, sun_path) + 1 + name_len;
+	pkg_permport = -1;
+	goto ready;
+#    else
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
+		 "pkg_permserver(%s): abstract UNIX sockets are not available\n", service);
+	errlog(_pkg_errbuf);
+	return -1;
+#    endif
+    }
+
     if (service[0] == '/') {
 	/* UNIX Domain socket */
-	strncpy(sunme.sun_path, service, sizeof(sunme.sun_path));
-	sunme.sun_path[sizeof(sunme.sun_path) - 1] = '\0';
+	memset((char *)&sunme, 0, sizeof(sunme));
+	if (strlen(service) >= sizeof(sunme.sun_path)) {
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
+		     "pkg_permserver(%s): UNIX socket path too long\n", service);
+	    errlog(_pkg_errbuf);
+	    return -1;
+	}
+	snprintf(sunme.sun_path, sizeof(sunme.sun_path), "%s", service);
 	sunme.sun_family = AF_UNIX;
 	addr = (struct sockaddr *) &sunme;
-	addrlen = strlen(sunme.sun_path) + 2;
+	addrlen = offsetof(struct sockaddr_un, sun_path) + strlen(sunme.sun_path) + 1;
+	pkg_permport = -1;
 	goto ready;
     }
 #  endif /* HAVE_SYS_UN_H */
@@ -979,9 +1060,6 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
-#else
-    struct sockaddr_in from;
-    unsigned int fromlen = sizeof (from);
 #endif
 
     if (_pkg_debug) {
@@ -1018,7 +1096,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 #ifdef HAVE_WINSOCK_H
 	s2 = accept(fd, (struct sockaddr *)NULL, NULL);
 #else
-	s2 = accept(fd, (struct sockaddr *)&from, &fromlen);
+	s2 = accept(fd, (struct sockaddr *)NULL, NULL);
 #endif
 	if (s2 < 0) {
 	    if (errno == EINTR)
@@ -2222,8 +2300,16 @@ pkg_suckin(struct pkg_conn *pc)
 
 struct pkg_listener {
     int fd;
+    int hold_fd;
     int port;
+    int kind;
+#ifdef _WIN32
+    HANDLE pipe_h;
+#endif
     pkg_errlog errlog;
+    char path[MAXPATHLEN];
+    char pending[MAXPATHLEN * 4];
+    size_t pending_len;
 };
 
 pkg_listener_t *
@@ -2231,31 +2317,224 @@ pkg_listen(const char *service, const char *iface_or_null, int backlog, pkg_errl
 {
     int lfd;
     struct pkg_listener *L;
+    const char *listen_service = service;
+    int kind = 0;
+#ifdef _WIN32
+    HANDLE pipe_h = INVALID_HANDLE_VALUE;
+#endif
 
     /* iface_or_null is ignored for now - binds to INADDR_ANY */
     (void)iface_or_null;
-    lfd = pkg_permserver(service, "tcp", backlog, errlog);
+
+#ifdef _WIN32
+    if (service && strncmp(service, "npipe:", 6) == 0) {
+	listen_service = service + 6;
+	if (listen_service[0] == '\0')
+	    return NULL;
+	pipe_h = pkg_create_named_pipe(listen_service);
+	if (pipe_h == INVALID_HANDLE_VALUE)
+	    return NULL;
+	lfd = -1;
+	kind = 2;
+	goto have_lfd;
+    }
+#endif
+
+#ifndef _WIN32
+    if (service && strncmp(service, "fifo:", 5) == 0) {
+	listen_service = service + 5;
+	(void)remove(listen_service);
+	if (mkfifo(listen_service, 0600) < 0)
+	    return NULL;
+	lfd = open(listen_service, O_RDONLY | O_NONBLOCK);
+	if (lfd < 0) {
+	    (void)remove(listen_service);
+	    return NULL;
+	}
+	kind = 1;
+	goto have_lfd;
+    }
+#endif
+
+    if (service && strncmp(service, "unix:", 5) == 0)
+	listen_service = service + 5;
+
+    lfd = pkg_permserver(listen_service, "tcp", backlog, errlog);
     if (lfd < 0) return NULL;
 
+have_lfd:
     L = (struct pkg_listener *)malloc(sizeof(struct pkg_listener));
     if (!L) {
+#ifdef _WIN32
+	if (kind == 2 && pipe_h != INVALID_HANDLE_VALUE)
+	    CloseHandle(pipe_h);
+	else
+#endif
 #ifdef HAVE_WINSOCK_H
 	closesocket(lfd);
 #else
 	close(lfd);
 #endif
+	if (kind == 1)
+	    (void)remove(listen_service);
 	return NULL;
     }
     L->fd     = lfd;
-    L->port   = pkg_permport;   /* pkg_permserver() sets this global */
+    L->hold_fd = -1;
+    L->port   = (kind == 0) ? pkg_permport : -1;   /* pkg_permserver() sets this global */
+    L->kind   = kind;
+#ifdef _WIN32
+    L->pipe_h = pipe_h;
+#endif
     L->errlog = errlog;
+    L->path[0] = '\0';
+    L->pending[0] = '\0';
+    L->pending_len = 0;
+    if (listen_service && listen_service[0] == '/')
+	snprintf(L->path, sizeof(L->path), "%s", listen_service);
+#ifdef _WIN32
+    if (kind == 2)
+	snprintf(L->path, sizeof(L->path), "%s", listen_service);
+#endif
+#ifndef _WIN32
+    if (kind == 1)
+	L->hold_fd = open(listen_service, O_WRONLY | O_NONBLOCK);
+#endif
     return L;
 }
 
 struct pkg_conn *
 pkg_accept(pkg_listener_t *L, const struct pkg_switch *switchp, pkg_errlog errlog, int nonblocking)
 {
-    if (!L || L->fd < 0) return PKC_ERROR;
+    if (!L) return PKC_ERROR;
+#ifdef _WIN32
+    if (L->kind != 2 && L->fd < 0) return PKC_ERROR;
+#else
+    if (L->fd < 0) return PKC_ERROR;
+#endif
+
+#ifdef _WIN32
+    if (L && L->kind == 2) {
+	HANDLE connected_h;
+	HANDLE next_h;
+	struct pkg_conn *pc;
+	int rfd = -1;
+	int wfd = -1;
+	BOOL connected;
+	DWORD err;
+
+	if (nonblocking)
+	    return PKC_NULL;
+	if (L->pipe_h == INVALID_HANDLE_VALUE || L->path[0] == '\0')
+	    return PKC_ERROR;
+
+	connected = ConnectNamedPipe(L->pipe_h, NULL);
+	err = connected ? ERROR_SUCCESS : GetLastError();
+	if (!connected && err != ERROR_PIPE_CONNECTED)
+	    return PKC_ERROR;
+
+	connected_h = L->pipe_h;
+	next_h = pkg_create_named_pipe(L->path);
+	if (next_h == INVALID_HANDLE_VALUE) {
+	    DisconnectNamedPipe(connected_h);
+	    CloseHandle(connected_h);
+	    L->pipe_h = INVALID_HANDLE_VALUE;
+	    return PKC_ERROR;
+	}
+	L->pipe_h = next_h;
+
+	if (pkg_named_pipe_fds(connected_h, &rfd, &wfd) != 0) {
+	    DisconnectNamedPipe(connected_h);
+	    CloseHandle(connected_h);
+	    return PKC_ERROR;
+	}
+	CloseHandle(connected_h);
+
+	pc = pkg_open_fds(rfd, wfd, switchp, errlog);
+	if (pc == PKC_ERROR || pc == PKC_NULL) {
+	    (void)close(rfd);
+	    (void)close(wfd);
+	}
+	return pc;
+    }
+#endif
+
+#ifndef _WIN32
+    if (L && L->kind == 1) {
+	char *nl1 = NULL;
+	char *nl2 = NULL;
+	char c2s[MAXPATHLEN] = {0};
+	char s2c[MAXPATHLEN] = {0};
+	int rfd = -1;
+	int wfd = -1;
+
+	while (!(nl1 && nl2)) {
+	    ssize_t got;
+	    size_t avail;
+
+	    avail = sizeof(L->pending) - L->pending_len - 1;
+	    if (avail == 0)
+		return PKC_ERROR;
+
+	    got = read(L->fd, L->pending + L->pending_len, avail);
+	    if (got < 0) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+		    if (nonblocking)
+			return PKC_NULL;
+		    fd_set rfds;
+		    FD_ZERO(&rfds);
+		    FD_SET(L->fd, &rfds);
+		    if (select(L->fd + 1, &rfds, NULL, NULL, NULL) < 0) {
+			if (errno == EINTR)
+			    continue;
+			return PKC_ERROR;
+		    }
+		    continue;
+		}
+		return PKC_ERROR;
+	    }
+	    if (got == 0) {
+		if (nonblocking)
+		    return PKC_NULL;
+		continue;
+	    }
+
+	    L->pending_len += (size_t)got;
+	    L->pending[L->pending_len] = '\0';
+	    nl1 = strchr(L->pending, '\n');
+	    nl2 = nl1 ? strchr(nl1 + 1, '\n') : NULL;
+	}
+
+	if ((size_t)(nl1 - L->pending) >= sizeof(c2s) ||
+		(size_t)(nl2 - nl1 - 1) >= sizeof(s2c))
+	    return PKC_ERROR;
+
+	memcpy(c2s, L->pending, (size_t)(nl1 - L->pending));
+	c2s[nl1 - L->pending] = '\0';
+	memcpy(s2c, nl1 + 1, (size_t)(nl2 - nl1 - 1));
+	s2c[nl2 - nl1 - 1] = '\0';
+
+	{
+	    size_t used = (size_t)(nl2 - L->pending + 1);
+	    memmove(L->pending, L->pending + used, L->pending_len - used);
+	    L->pending_len -= used;
+	    L->pending[L->pending_len] = '\0';
+	}
+
+	rfd = open(c2s, O_RDONLY);
+	if (rfd < 0)
+	    return PKC_ERROR;
+	wfd = open(s2c, O_WRONLY);
+	if (wfd < 0) {
+	    close(rfd);
+	    return PKC_ERROR;
+	}
+	(void)remove(c2s);
+	(void)remove(s2c);
+	return pkg_open_fds(rfd, wfd, switchp, errlog);
+    }
+#endif
+
     return pkg_getclient(L->fd, switchp, errlog, nonblocking);
 }
 
@@ -2275,6 +2554,21 @@ void
 pkg_listener_close(pkg_listener_t *L)
 {
     if (!L) return;
+#ifdef _WIN32
+    if (L->kind == 2) {
+	if (L->pipe_h != INVALID_HANDLE_VALUE)
+	    CloseHandle(L->pipe_h);
+	free(L);
+	return;
+    }
+#endif
+    if (L->hold_fd >= 0) {
+#ifdef HAVE_WINSOCK_H
+	closesocket(L->hold_fd);
+#else
+	close(L->hold_fd);
+#endif
+    }
     if (L->fd >= 0) {
 #ifdef HAVE_WINSOCK_H
 	closesocket(L->fd);
@@ -2282,6 +2576,8 @@ pkg_listener_close(pkg_listener_t *L)
 	close(L->fd);
 #endif
     }
+    if (L->path[0] != '\0')
+	(void)remove(L->path);
     free(L);
 }
 

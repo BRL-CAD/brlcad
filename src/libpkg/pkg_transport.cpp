@@ -32,6 +32,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+#include <cstddef>
+#include <ctime>
 #include <vector>
 
 #ifdef HAVE_SYS_TYPES_H
@@ -52,6 +54,7 @@
 #ifndef _WIN32
 #  include <unistd.h>
 #  include <fcntl.h>
+#  include <sys/stat.h>
 #  ifdef HAVE_SYS_SELECT_H
 #    include <sys/select.h>
 #  endif
@@ -400,6 +403,116 @@ pkg_child_addr(struct pkg_conn *pc)
     return (pc->pkc_addr[0] != '\0') ? pc->pkc_addr : NULL;
 }
 
+int
+pkg_addr_is_ipc_listener(const char *addr)
+{
+    if (!addr) return 0;
+#ifdef _WIN32
+    if (strncmp(addr, "npipe:", 6) == 0)
+	return 1;
+#endif
+#ifndef _WIN32
+    if (strncmp(addr, "fifo:", 5) == 0)
+	return 1;
+#endif
+#if defined(HAVE_SYS_UN_H) && !defined(_WIN32)
+    if (strncmp(addr, "unix:", 5) == 0)
+	return 1;
+#  if defined(__linux__)
+    if (strncmp(addr, "unix-abstract:", 14) == 0)
+	return 1;
+#  endif
+#endif
+    return 0;
+}
+
+int
+pkg_ipc_addr(char *addr, size_t len, const char *name_hint)
+{
+    static unsigned long counter = 0;
+    const char *hint = (name_hint && name_hint[0]) ? name_hint : "brlcad-pkg";
+#ifndef _WIN32
+    const char *tmpdir = getenv("TMPDIR");
+    time_t now = time(NULL);
+    int need;
+
+    if (!addr || len == 0)
+	return -1;
+
+    if (!tmpdir || tmpdir[0] == '\0')
+	tmpdir = "/tmp";
+
+    need = snprintf(addr, len, "fifo:%s/%s-%ld-%lld-%lu",
+		    tmpdir, hint, (long)getpid(), (long long)now, counter++);
+    if (need >= 0 && (size_t)need < len)
+	return 0;
+
+#  if defined(HAVE_SYS_UN_H)
+#  if defined(__linux__)
+    need = snprintf(addr, len, "unix-abstract:%s-%ld-%lld-%lu",
+		    hint, (long)getpid(), (long long)now, counter++);
+    if (need >= 0 && (size_t)need < len &&
+	    strlen(addr + 14) < sizeof(((struct sockaddr_un *)0)->sun_path) - 1)
+	return 0;
+#  endif
+
+    need = snprintf(addr, len, "unix:%s/%s-%ld-%lld-%lu.sock",
+		    tmpdir, hint, (long)getpid(), (long long)now, counter++);
+    if (need < 0 || (size_t)need >= len) {
+	addr[0] = '\0';
+	return -1;
+    }
+
+    if (strlen(addr + 5) >= sizeof(((struct sockaddr_un *)0)->sun_path)) {
+	if (strcmp(tmpdir, "/tmp") != 0) {
+	    need = snprintf(addr, len, "unix:/tmp/%s-%ld-%lld-%lu.sock",
+			    hint, (long)getpid(), (long long)now, counter++);
+	    if (need < 0 || (size_t)need >= len ||
+		    strlen(addr + 5) >= sizeof(((struct sockaddr_un *)0)->sun_path)) {
+		addr[0] = '\0';
+		return -1;
+	    }
+	} else {
+	    addr[0] = '\0';
+	    return -1;
+	}
+    }
+    return 0;
+#  endif
+    addr[0] = '\0';
+    return -1;
+#else
+    char safe_hint[64] = {0};
+    time_t now = time(NULL);
+    size_t i, j = 0;
+    int need;
+
+    if (!addr || len == 0)
+	return -1;
+
+    for (i = 0; hint[i] != '\0' && j < sizeof(safe_hint) - 1; i++) {
+	char c = hint[i];
+	if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+		(c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.')
+	    safe_hint[j++] = c;
+	else
+	    safe_hint[j++] = '_';
+    }
+    safe_hint[j] = '\0';
+    if (safe_hint[0] == '\0')
+	snprintf(safe_hint, sizeof(safe_hint), "%s", "brlcad-pkg");
+
+    need = snprintf(addr, len, "npipe:\\\\.\\pipe\\%s-%lu-%lld-%lu",
+		    safe_hint, (unsigned long)GetCurrentProcessId(),
+		    (long long)now, counter++);
+    if (need < 0 || (size_t)need >= len) {
+	addr[0] = '\0';
+	return -1;
+    }
+    return 0;
+#endif
+}
+
 
 /* ================================================================== */
 /* pkg_connect_addr / pkg_connect_env                                   */
@@ -411,6 +524,60 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
     if (!addr) return PKC_ERROR;
 
 #ifdef _WIN32
+    if (strncmp(addr, "npipe:", 6) == 0) {
+	const char *pipe_name = addr + 6;
+	HANDLE h = INVALID_HANDLE_VALUE;
+	HANDLE hRead = INVALID_HANDLE_VALUE;
+	HANDLE hWrite = INVALID_HANDLE_VALUE;
+	HANDLE proc = GetCurrentProcess();
+	int rfd = -1;
+	int wfd = -1;
+	DWORD mode = PIPE_READMODE_BYTE;
+
+	if (!pipe_name || pipe_name[0] == '\0')
+	    return PKC_ERROR;
+
+	for (;;) {
+	    h = CreateFileA(pipe_name, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+			    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	    if (h != INVALID_HANDLE_VALUE)
+		break;
+	    if (GetLastError() != ERROR_PIPE_BUSY)
+		return PKC_ERROR;
+	    if (!WaitNamedPipeA(pipe_name, 5000))
+		return PKC_ERROR;
+	}
+
+	(void)SetNamedPipeHandleState(h, &mode, NULL, NULL);
+
+	if (!DuplicateHandle(proc, h, proc, &hRead, 0, FALSE, DUPLICATE_SAME_ACCESS) ||
+		!DuplicateHandle(proc, h, proc, &hWrite, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
+	    if (hRead != INVALID_HANDLE_VALUE) CloseHandle(hRead);
+	    if (hWrite != INVALID_HANDLE_VALUE) CloseHandle(hWrite);
+	    CloseHandle(h);
+	    return PKC_ERROR;
+	}
+	CloseHandle(h);
+
+	rfd = _open_osfhandle((intptr_t)hRead, _O_RDONLY | _O_BINARY);
+	wfd = _open_osfhandle((intptr_t)hWrite, _O_WRONLY | _O_BINARY);
+	if (rfd < 0 || wfd < 0) {
+	    if (rfd >= 0) _close(rfd); else CloseHandle(hRead);
+	    if (wfd >= 0) _close(wfd); else CloseHandle(hWrite);
+	    return PKC_ERROR;
+	}
+
+	struct pkg_conn *pc = pkg_adopt_fds(rfd, wfd, switchp, errlog);
+	if (pc != PKC_ERROR && pc != PKC_NULL) {
+	    snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
+	    _pkg_build_addr_env(pc);
+	} else {
+	    _close(rfd);
+	    _close(wfd);
+	}
+	return pc;
+    }
+
     if (strncmp(addr, "pipe_win:", 9) == 0) {
         unsigned __int64 hr64 = 0, hw64 = 0;
         if (sscanf(addr + 9, "%I64x,%I64x", &hr64, &hw64) == 2) {
@@ -446,9 +613,177 @@ pkg_connect_addr(const char *addr, const struct pkg_switch *switchp, pkg_errlog 
         return PKC_ERROR;
     }
 
+    if (strncmp(addr, "pipe_parent:", 12) == 0) {
+        int rfd = -1, wfd = -1;
+        if (sscanf(addr + 12, "%d,%d", &rfd, &wfd) == 2) {
+            struct pkg_conn *pc = pkg_adopt_fds(rfd, wfd, switchp, errlog);
+            if (pc != PKC_ERROR && pc != PKC_NULL) {
+                snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
+                _pkg_build_addr_env(pc);
+            }
+            return pc;
+        }
+        return PKC_ERROR;
+    }
+
+#ifndef _WIN32
+    if (strncmp(addr, "fifo:", 5) == 0) {
+	static unsigned long counter = 0;
+	const char *base = addr + 5;
+	time_t now = time(NULL);
+	char c2s[MAXPATHLEN] = {0};
+	char s2c[MAXPATHLEN] = {0};
+	char msg[MAXPATHLEN * 2 + 8] = {0};
+	int cfd = -1;
+	int rfd = -1;
+	int wfd = -1;
+	int need;
+
+	if (base[0] == '\0')
+	    return PKC_ERROR;
+
+	need = snprintf(c2s, sizeof(c2s), "%s.%ld.%lld.%lu.c2s",
+			base, (long)getpid(), (long long)now, counter);
+	if (need < 0 || (size_t)need >= sizeof(c2s))
+	    return PKC_ERROR;
+	need = snprintf(s2c, sizeof(s2c), "%s.%ld.%lld.%lu.s2c",
+			base, (long)getpid(), (long long)now, counter++);
+	if (need < 0 || (size_t)need >= sizeof(s2c))
+	    return PKC_ERROR;
+
+	if (mkfifo(c2s, 0600) < 0)
+	    return PKC_ERROR;
+	if (mkfifo(s2c, 0600) < 0) {
+	    (void)unlink(c2s);
+	    return PKC_ERROR;
+	}
+
+	cfd = open(base, O_WRONLY);
+	if (cfd < 0) {
+	    (void)unlink(c2s);
+	    (void)unlink(s2c);
+	    return PKC_ERROR;
+	}
+
+	need = snprintf(msg, sizeof(msg), "%s\n%s\n", c2s, s2c);
+	if (need < 0 || (size_t)need >= sizeof(msg) ||
+		write(cfd, msg, strlen(msg)) != (ssize_t)strlen(msg)) {
+	    close(cfd);
+	    (void)unlink(c2s);
+	    (void)unlink(s2c);
+	    return PKC_ERROR;
+	}
+	close(cfd);
+
+	wfd = open(c2s, O_WRONLY);
+	if (wfd < 0) {
+	    (void)unlink(c2s);
+	    (void)unlink(s2c);
+	    return PKC_ERROR;
+	}
+	rfd = open(s2c, O_RDONLY);
+	if (rfd < 0) {
+	    close(wfd);
+	    (void)unlink(c2s);
+	    (void)unlink(s2c);
+	    return PKC_ERROR;
+	}
+
+	(void)unlink(c2s);
+	(void)unlink(s2c);
+
+	struct pkg_conn *pc = pkg_adopt_fds(rfd, wfd, switchp, errlog);
+	if (pc != PKC_ERROR && pc != PKC_NULL) {
+	    snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
+	    _pkg_build_addr_env(pc);
+	}
+	return pc;
+    }
+#endif
+
+#if defined(HAVE_SYS_UN_H) && !defined(_WIN32)
+    if (strncmp(addr, "unix-abstract:", 14) == 0) {
+#  if defined(__linux__)
+	int csock;
+	struct sockaddr_un csa;
+	const char *name = addr + 14;
+	size_t name_len = strlen(name);
+
+	if (name_len == 0 || name_len >= sizeof(csa.sun_path) - 1)
+	    return PKC_ERROR;
+
+	csock = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (csock < 0)
+	    return PKC_ERROR;
+
+	memset(&csa, 0, sizeof(csa));
+	csa.sun_family = AF_UNIX;
+	csa.sun_path[0] = '\0';
+	memcpy(csa.sun_path + 1, name, name_len);
+
+	if (connect(csock, (struct sockaddr *)&csa,
+		    offsetof(struct sockaddr_un, sun_path) + 1 + name_len) < 0) {
+	    close(csock);
+	    return PKC_ERROR;
+	}
+
+	struct pkg_conn *pc = pkg_adopt_fds(csock, csock, switchp, errlog);
+	if (pc != PKC_ERROR && pc != PKC_NULL) {
+	    snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
+	    _pkg_build_addr_env(pc);
+	}
+	return pc;
+#  else
+	return PKC_ERROR;
+#  endif
+    }
+
+    if (strncmp(addr, "unix:", 5) == 0) {
+	int csock;
+	struct sockaddr_un csa;
+	const char *path = addr + 5;
+
+	if (path[0] == '\0' || strlen(path) >= sizeof(csa.sun_path))
+	    return PKC_ERROR;
+
+	csock = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (csock < 0)
+	    return PKC_ERROR;
+
+	memset(&csa, 0, sizeof(csa));
+	csa.sun_family = AF_UNIX;
+	snprintf(csa.sun_path, sizeof(csa.sun_path), "%s", path);
+
+	if (connect(csock, (struct sockaddr *)&csa, sizeof(csa)) < 0) {
+	    close(csock);
+	    return PKC_ERROR;
+	}
+
+	struct pkg_conn *pc = pkg_adopt_fds(csock, csock, switchp, errlog);
+	if (pc != PKC_ERROR && pc != PKC_NULL) {
+	    snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
+	    _pkg_build_addr_env(pc);
+	}
+	return pc;
+    }
+#endif
+
     if (strncmp(addr, "socket:", 7) == 0) {
         int sfd = -1;
         if (sscanf(addr + 7, "%d", &sfd) == 1) {
+            struct pkg_conn *pc = pkg_adopt_fds(sfd, sfd, switchp, errlog);
+            if (pc != PKC_ERROR && pc != PKC_NULL) {
+                snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);
+                _pkg_build_addr_env(pc);
+            }
+            return pc;
+        }
+        return PKC_ERROR;
+    }
+
+    if (strncmp(addr, "socket_parent:", 14) == 0) {
+        int sfd = -1;
+        if (sscanf(addr + 14, "%d", &sfd) == 1) {
             struct pkg_conn *pc = pkg_adopt_fds(sfd, sfd, switchp, errlog);
             if (pc != PKC_ERROR && pc != PKC_NULL) {
                 snprintf(pc->pkc_addr, sizeof(pc->pkc_addr), "%s", addr);

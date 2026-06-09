@@ -448,9 +448,10 @@ char object_list[512];	/* contains list of "MGED" objects */
 
 char *our_hostname;
 
-int tcp_listen_fd;
+int tcp_listen_fd = -1;
 pkg_listener_t *tcp_listener = NULL;
-/* tcp_listener stores the listener; use pkg_get_listener_port(tcp_listener) to get the TCP port */
+/* tcp_listener is created lazily when passive or remote hosts need it.
+ * Pure local IPC worker launches do not require it. */
 
 int rem_debug;		/* dispatcher debugging flag */
 
@@ -864,7 +865,8 @@ check_input(int waittime)
      * WaitForMultipleObjects() for pipe handles and WSAEventSelect()
      * for WinSock sockets — callers need not know which.               */
     pkg_mux_t *mux = pkg_mux_create();
-    pkg_mux_add_fd(mux, tcp_listen_fd, 1);
+    if (tcp_listen_fd >= 0)
+	pkg_mux_add_fd(mux, tcp_listen_fd, 1);
 
     for (i = 0; i < (int)MAXSERVERS; i++) {
 	pc = servers[i].sr_pc;
@@ -907,7 +909,7 @@ check_input(int waittime)
     }
 
     /* Step 4: Accept pending TCP connections */
-    if (pkg_mux_is_ready_fd(mux, tcp_listen_fd)) {
+    if (tcp_listen_fd >= 0 && pkg_mux_is_ready_fd(mux, tcp_listen_fd)) {
 	pc = pkg_accept(tcp_listener, pkgswitch, input_error, 1);
 	if (pc != PKC_NULL && pc != PKC_ERROR)
 	    addclient(pc);
@@ -1375,6 +1377,31 @@ reap_helpers(void)
 /* Forward declaration — add_host_local() is defined just after add_host(). */
 static void add_host_local(struct ihost *ihp);
 
+static int
+remrt_ensure_listener(void)
+{
+    char num[128];
+    int i;
+
+    if (tcp_listener != NULL)
+	return 1;
+
+    if ((tcp_listener = pkg_listen("rtsrv", NULL, 8, remrt_log)) == NULL) {
+	/* Do it by the numbers */
+	for (i = 0; i < 10; i++) {
+	    snprintf(num, sizeof(num), "%d", REMRT_TCP_DEFAULT_PORT+i);
+	    if ((tcp_listener = pkg_listen(num, NULL, 8, remrt_log)) == NULL)
+		continue;
+	    break;
+	}
+	if (i >= 10)
+	    return 0;
+    }
+
+    tcp_listen_fd = pkg_get_listener_fd(tcp_listener);
+    return 1;
+}
+
 static void
 add_host(struct ihost *ihp)
 {
@@ -1399,6 +1426,10 @@ add_host(struct ihost *ihp)
 	}
     }
 
+    if (!remrt_ensure_listener()) {
+	bu_log("add_host: no listener available for remote host %s\n", ihp->ht_name);
+	return;
+    }
     snprintf(port_str, sizeof(port_str), "%d", pkg_get_listener_port(tcp_listener));
 
     switch (ihp->ht_where) {
@@ -2959,8 +2990,11 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
 	bu_log("%s Output file: %s.###\n", s, outputfile);
     bu_log("%s Printing of remote messages is %s\n",
 	   s, print_on?"ON":"Off");
-    bu_log("%s Listening at %s, port %d\n",
-	   s, our_hostname, pkg_get_listener_port(tcp_listener));
+    if (tcp_listener)
+	bu_log("%s Listening at %s, port %d\n",
+	       s, our_hostname, pkg_get_listener_port(tcp_listener));
+    else
+	bu_log("%s No TCP listener active\n", s);
 
     /* Print work assignments */
     bu_log("%s Worker assignment interval=%d seconds:\n",
@@ -3198,6 +3232,12 @@ cd_host(const int argc, const char **argv)
 	char *p = ihp->ht_path + strlen(ihp->ht_path);
 	while (p > ihp->ht_path && isspace((unsigned char)p[-1]))
 	    *--p = '\0';
+    }
+
+    if ((ihp->ht_when == HT_PASSIVE || ihp->ht_when == HT_PASSRS) &&
+	!remrt_ensure_listener()) {
+	bu_log("cd_host: unable to create listener for passive host %s\n",
+	       ihp->ht_name);
     }
     return 0;
 }
@@ -4050,23 +4090,7 @@ main(int argc, char *argv[])
 	sp->sr_curframe = FRAME_NULL;
     }
 
-    /* Listen for our PKG connections */
-    int tcp_num = 0;
-    if ((tcp_listener = pkg_listen("rtsrv", NULL, 8, remrt_log)) == NULL) {
-	char num[128];
-	/* Do it by the numbers */
-	for (i = 0; i < 10; i++) {
-	    tcp_num = REMRT_TCP_DEFAULT_PORT+i;
-	    snprintf(num, sizeof(num), "%d", tcp_num);
-	    if ((tcp_listener = pkg_listen(num, NULL, 8, remrt_log)) == NULL)
-		continue;
-	    break;
-	}
-	if (i >= 10)
-	    bu_exit(1, "Unable to find a port to listen on\n");
-    }
-    tcp_listen_fd = pkg_get_listener_fd(tcp_listener);
-    /* Now, pkg_get_listener_port(tcp_listener) has tcp port number */
+    /* TCP listener is brought up lazily when passive or remote hosts need it. */
 
 #ifdef SIGPIPE
     (void)signal(SIGPIPE, SIG_IGN);
@@ -4075,15 +4099,17 @@ main(int argc, char *argv[])
     if (argc <= 1) {
 	(void)signal(SIGINT, SIG_IGN);
 	bu_log("%s Interactive REMRT on %s\n", stamp(), our_hostname);
-	bu_log("%s Assigned LIBPKG port %d\n", stamp(), pkg_get_listener_port(tcp_listener));
-	if (tcp_num > 0) {
-	    bu_log("%s Listening at TCP port %d\n", stamp(), tcp_num);
-	}
 	FD_ZERO(&clients);
 	FD_SET(fileno(stdin), &clients);
 
 	/* Read .remrtrc file to acquire server info */
 	read_rc_file();
+
+	if (tcp_listener) {
+	    bu_log("%s Assigned LIBPKG port %d\n", stamp(), pkg_get_listener_port(tcp_listener));
+	    bu_log("%s Listening for remote workers on TCP port %d\n",
+		   stamp(), pkg_get_listener_port(tcp_listener));
+	}
 
 	/* Go until no more clients */
 /* Aargh.  We really need a FD_ISZERO macro. */
@@ -4103,10 +4129,6 @@ main(int argc, char *argv[])
 	bu_log("%s Out of clients\n", stamp());
     } else {
 	bu_log("%s Automatic REMRT on %s\n", stamp(), our_hostname);
-	bu_log("%s Assigned LIBPKG port %d\n", stamp(), pkg_get_listener_port(tcp_listener));
-	if (tcp_num > 0) {
-	    bu_log("%s Listening at TCP port %d\n", stamp(), tcp_num);
-	}
 	bu_log("%s Reading script on stdin\n", stamp());
 	FD_ZERO(&clients);
 
@@ -4126,6 +4148,12 @@ main(int argc, char *argv[])
 
 	/* Read .remrtrc file to acquire servers */
 	read_rc_file();
+
+	if (tcp_listener) {
+	    bu_log("%s Assigned LIBPKG port %d\n", stamp(), pkg_get_listener_port(tcp_listener));
+	    bu_log("%s Listening for remote workers on TCP port %d\n",
+		   stamp(), pkg_get_listener_port(tcp_listener));
+	}
 
 	/* Collect up results of arg parsing */
 	/* automatic: outputfile, width, height */

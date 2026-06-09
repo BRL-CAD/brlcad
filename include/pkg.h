@@ -419,23 +419,53 @@ PKG_EXPORT extern int pkg_pair_prefer(struct pkg_conn **parent_end,
 /**
  * Return a "KEY=VALUE" env string for passing to a spawned child.
  * The pointer is valid until pkg_close().  Format: "PKG_ADDR=<addr>".
+ * For pair transports, the address may be a child-side or parent-side
+ * local IPC string, depending on which end is being exported.
  */
 PKG_EXPORT extern const char *pkg_child_addr_env(struct pkg_conn *pc);
 
 /**
  * Return just the raw address string (e.g. "pipe:4,7" or "socket:5")
  * for use in argv["-I addr"] style arguments to a child process.
+ * Pair transports may also return parent-side variants such as
+ * "pipe_parent:4,7" and "socket_parent:5".
  * The pointer is valid until pkg_close().
  */
 PKG_EXPORT extern const char *pkg_child_addr(struct pkg_conn *pc);
 
 /**
- * Connect the child side from an address string.
+ * Connect an IPC endpoint from an address string.
+ * Supports child-side and parent-side pair addresses, reusable local IPC
+ * listener addresses returned by pkg_ipc_addr(), plus TCP loopback.
+ * Callers should treat local IPC listener addresses as opaque strings.
  * Returns pkg_conn* on success, PKC_ERROR on failure.
  */
 PKG_EXPORT extern struct pkg_conn *pkg_connect_addr(const char *addr,
 						    const struct pkg_switch *switchp,
 						    pkg_errlog errlog);
+
+/**
+ * Create an opaque local IPC listener address suitable for this process.
+ *
+ * The resulting address string is for local same-host communication and is
+ * intended to be passed unchanged to a server's pkg_listen() and client-side
+ * pkg_connect_addr() calls.  It does not bind the listener itself.  The
+ * concrete transport is selected by libpkg for the current platform.
+ * Current implementations include POSIX FIFO/UNIX-domain transports and
+ * Windows named pipes; callers must not parse the returned address.
+ * Platforms may support inherited endpoint IPC via pkg_pair() even when
+ * they do not provide a reusable listener transport here.
+ *
+ * Returns 0 on success, -1 if no local listener transport is available.
+ */
+PKG_EXPORT extern int pkg_ipc_addr(char *addr, size_t len,
+				   const char *name_hint);
+
+/**
+ * Return non-zero when addr names a reusable listener-style IPC endpoint,
+ * as opposed to a single inherited connected endpoint.
+ */
+PKG_EXPORT extern int pkg_addr_is_ipc_listener(const char *addr);
 
 /**
  * Connect using the PKG_ADDR env var (child side).

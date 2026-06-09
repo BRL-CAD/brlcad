@@ -136,9 +136,10 @@ static int require_auth = 0;
 static int use_tls = 0;
 
 /*
- * When non-NULL (set by -I flag), connect to the inherited IPC address
- * instead of binding a TCP listen socket.  This mirrors the -I mode in
- * rtsrv and allows a parent process to bypass TCP for local connections.
+ * When non-NULL (set by -I flag), use a libpkg IPC address instead of
+ * binding a TCP listener.  Listener-capable IPC addresses accept multiple
+ * clients; inherited endpoint addresses keep their historical one-client
+ * behavior.
  */
 static const char *ipc_addr_flag = NULL;
 
@@ -218,11 +219,11 @@ Usage: fbserv port_num\n\
 	  (for a single-frame-buffer server)\n\
           (if '-p' and '-F' are both omitted, port_num and frame_buffer\n\
            must appear in that order)\n\
-   or  fbserv [-v] [-F frame_buffer] -I ipc_addr\n\
-	  (for an IPC inherited-fd mode; -p is ignored)\n\
+   or  fbserv [-v] [-A] [-F frame_buffer] -I ipc_addr\n\
+	  (for local IPC mode; -p is ignored)\n\
   -T  enable TLS encryption (requires OpenSSL build)\n\
   -A  strict auth: reject clients that do not send MSG_FBAUTH\n\
-  -I  connect to the IPC channel at ipc_addr instead of binding TCP\n\
+  -I  use the libpkg IPC address ipc_addr instead of binding TCP\n\
 \n\
 Token authentication (works with or without TLS):\n\
   Set FBSERV_TOKEN=<64-hex-chars> before starting fbserv to use a\n\
@@ -341,6 +342,9 @@ fbserv_setup_socket(int fd)
 {
     int on = 1;
 
+    if (!is_socket(fd))
+	return;
+
 #if defined(SO_KEEPALIVE)
     if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
 #  ifdef HAVE_SYSLOG_H
@@ -388,13 +392,13 @@ fbserv_drop_client(int sub)
     clients_pending_drop[sub] = 0;
 }
 
-static void
-fbserv_new_client(struct pkg_conn *pcp)
+static int
+fbserv_add_client(struct pkg_conn *pcp, int watch_fd)
 {
     int i;
 
     if (pcp == PKC_ERROR)
-	return;
+	return -1;
 
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
 	if (clients[i] != NULL) continue;
@@ -404,9 +408,11 @@ fbserv_new_client(struct pkg_conn *pcp)
 	clients_pending_drop[i] = 0;
 	{
 	    int rfd = pkg_get_read_fd(pcp);
-	    FD_SET(rfd, &select_list);
-	    V_MAX(max_fd, rfd);
-	    fbserv_setup_socket(rfd);
+	    if (watch_fd) {
+		FD_SET(rfd, &select_list);
+		V_MAX(max_fd, rfd);
+		fbserv_setup_socket(rfd);
+	    }
 	}
 
 #ifdef HAVE_OPENSSL_SSL_H
@@ -419,20 +425,72 @@ fbserv_new_client(struct pkg_conn *pcp)
 	    } else {
 		fprintf(stderr, "fbserv: TLS handshake failed for client %d; "
 			"dropping connection\n", i);
-		FD_CLR(pkg_get_read_fd(pcp), &select_list);
+		if (watch_fd)
+		    FD_CLR(pkg_get_read_fd(pcp), &select_list);
 		pkg_close(pcp);
 		clients[i] = PKC_NULL;
 		clients_auth[i] = 0;
-		return;
+		return -1;
 	    }
 	}
 #endif
 
-	return;
+	return i;
     }
     fprintf(stderr, "fbserv: too many clients\n");
     pkg_close(pcp);
+    return -1;
 }
+
+static void
+fbserv_new_client(struct pkg_conn *pcp)
+{
+    (void)fbserv_add_client(pcp, 1);
+}
+
+
+#ifdef _WIN32
+static void
+ipc_listener_loop(void)
+{
+    while (!fb_server_got_fb_free) {
+	struct pkg_conn *pcp;
+	int idx;
+
+	pcp = pkg_accept(netlistener, pkg_switch, communications_error, 0);
+	if (pcp == PKC_ERROR)
+	    break;
+	if (pcp == PKC_NULL)
+	    continue;
+
+	idx = fbserv_add_client(pcp, 0);
+	if (idx < 0)
+	    continue;
+
+	while (!fb_server_got_fb_free && clients[idx] != NULL) {
+	    int pkgr;
+
+	    pkgr = pkg_process(clients[idx]);
+	    if (pkgr < 0 || clients_pending_drop[idx]) {
+		fbserv_drop_client(idx);
+		break;
+	    }
+
+	    pkgr = pkg_suckin(clients[idx]);
+	    if (pkgr <= 0) {
+		fbserv_drop_client(idx);
+		break;
+	    }
+
+	    pkgr = pkg_process(clients[idx]);
+	    if (pkgr < 0 || clients_pending_drop[idx]) {
+		fbserv_drop_client(idx);
+		break;
+	    }
+	}
+    }
+}
+#endif
 
 
 
@@ -588,12 +646,29 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    /* Phase 7: IPC inherited-fd mode (-I <ipc_addr>).
-     * When the parent passes -I, connect to the IPC channel at the given
-     * address (pipe fd pair, socketpair, or TCP loopback port), register it
-     * as a single client, and run the main loop in once_only mode.
-     * This is analogous to the -I flag in rtsrv and allows the parent to
-     * avoid TCP port binding entirely for local fbserv instances.            */
+    /* Session authentication token.
+     * If FBSERV_TOKEN is already set in the environment, use that value
+     * so that the invoking script/app can pre-supply a known token and
+     * give the same value to client programs (e.g. rt, pix-fb).  This
+     * works for TCP and local IPC transports.
+     * If FBSERV_TOKEN is not set, generate a fresh random token. */
+    {
+	const char *env_token = getenv("FBSERV_TOKEN");
+	if (env_token && strlen(env_token) == FBSERV_AUTH_TOKEN_LEN) {
+	    bu_strlcpy(session_token, env_token, sizeof(session_token));
+	    fprintf(stderr, "fbserv: Using pre-supplied session token from FBSERV_TOKEN\n");
+	} else {
+	    fbserv_generate_token(session_token);
+	    fprintf(stderr, "fbserv: Session token: %s\n", session_token);
+	    fprintf(stderr, "fbserv: Set FBSERV_TOKEN=%s in client environment\n",
+		    session_token);
+	}
+    }
+
+    /* Local IPC mode (-I <ipc_addr>).
+     * Listener-capable libpkg IPC addresses use the normal multi-client
+     * fbserv loop.  Existing inherited endpoint addresses use the historical
+     * single-channel service loop. */
     if (ipc_addr_flag) {
 	struct pkg_conn *pcp;
 	int pkgr;
@@ -603,6 +678,22 @@ main(int argc, char **argv)
 		bu_exit(1, NULL);
 	    max_fd = fb_set_fd(fb_server_fbp, &select_list);
 	    fb_server_retain_on_close = 1;
+	}
+
+	if (pkg_addr_is_ipc_listener(ipc_addr_flag)) {
+	    netlistener = pkg_listen(ipc_addr_flag, NULL, 8, communications_error);
+	    if (!netlistener)
+		bu_exit(-1, NULL);
+#ifdef _WIN32
+	    ipc_listener_loop();
+#else
+	    netfd = pkg_get_listener_fd(netlistener);
+	    FD_SET(netfd, &select_list);
+	    V_MAX(max_fd, netfd);
+	    main_loop();
+#endif
+	    pkg_listener_close(netlistener);
+	    return 0;
 	}
 
 	pcp = pkg_connect_addr(ipc_addr_flag, pkg_switch, communications_error);
@@ -631,26 +722,6 @@ main(int argc, char **argv)
 	if (fb_server_fbp != FB_NULL)
 	    fb_close(fb_server_fbp);
 	return 0;
-    }
-
-    /* Session authentication token.
-     * If FBSERV_TOKEN is already set in the environment, use that value
-     * so that the invoking script/app can pre-supply a known token and
-     * give the same value to client programs (e.g. rt, pix-fb).  This
-     * works regardless of whether TLS is enabled — the token provides
-     * session isolation even on plain TCP connections.
-     * If FBSERV_TOKEN is not set, generate a fresh random token. */
-    {
-	const char *env_token = getenv("FBSERV_TOKEN");
-	if (env_token && strlen(env_token) == FBSERV_AUTH_TOKEN_LEN) {
-	    bu_strlcpy(session_token, env_token, sizeof(session_token));
-	    fprintf(stderr, "fbserv: Using pre-supplied session token from FBSERV_TOKEN\n");
-	} else {
-	    fbserv_generate_token(session_token);
-	    fprintf(stderr, "fbserv: Session token: %s\n", session_token);
-	    fprintf(stderr, "fbserv: Set FBSERV_TOKEN=%s in client environment\n",
-		    session_token);
-	}
     }
 
 #ifdef HAVE_OPENSSL_SSL_H

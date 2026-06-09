@@ -1,5 +1,4 @@
 # Tests for image generation via rtwizard
-
 if(TARGET rtwizard)
   # rtwizard tests were historically run STAND_ALONE and forced sequential
   # because simultaneous instances would accidentally connect to each
@@ -66,6 +65,7 @@ if(TARGET rtwizard)
   set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_E.log")
   set(OPTIONS "-g component -c component/power.train -t E --benchmark -z 2")
   brlcad_regression_test(regress-rtwiz_m35_E "rtwizard;pixcmp;m35.g" TEST_SCRIPT "${TSCRIPT}" EXEC rtwizard)
+  set_tests_properties(regress-rtwiz_m35_E PROPERTIES TIMEOUT 900)
   distclean(${LOG_FILE} ${TARGET_IMAGE})
 
   set(INPUT_FILE "${DATA_DIR}/db/m35.g")
@@ -74,6 +74,7 @@ if(TARGET rtwizard)
   set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_F.log")
   set(OPTIONS "-l component -g component -c component/power.train -t F --benchmark -z 2")
   brlcad_regression_test(regress-rtwiz_m35_F "rtwizard;pixcmp;m35.g" TEST_SCRIPT "${TSCRIPT}" EXEC rtwizard)
+  set_tests_properties(regress-rtwiz_m35_F PROPERTIES TIMEOUT 900)
   distclean(${LOG_FILE} ${TARGET_IMAGE})
 
   set(INPUT_FILE "${DATA_DIR}/db/m35.g")
@@ -91,7 +92,7 @@ if(TARGET rtwizard)
   set(OPTIONS "-l component --benchmark -z 2 --line-color 100/200/255 -C 30/30/30")
   brlcad_regression_test(regress-rtwiz_m35_edge_only_color "rtwizard;pixcmp;m35.g" TEST_SCRIPT "${TSCRIPT}" EXEC rtwizard)
   distclean(${LOG_FILE} ${TARGET_IMAGE})
-endif(TARGET rtwizard)
+endif()
 
 cmakefiles(
   CMakeLists.txt

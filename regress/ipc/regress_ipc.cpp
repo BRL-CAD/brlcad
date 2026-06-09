@@ -32,6 +32,7 @@
  *   Group 6: Tcl_CreateFileHandler callback path (POSIX only)
  *   Group 7: tclcad_listen_ipc() Tcl variable path / Windows timer path
  *   Group 8: fbserv -I <addr> flag
+ *   Group 9: reusable local IPC listener
  *
  * Tests are self-contained and headless (no display required).
  *
@@ -48,6 +49,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
+#include <thread>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -264,6 +266,50 @@ test_pkg_connect(void)
         }
     }
 
+    struct pkg_conn *pe2 = nullptr, *ce2 = nullptr;
+    if (pkg_pair_prefer(&pe2, &ce2, NULL, NULL, PKG_TRANSPORT_PIPE) != 0 || !pe2 || !ce2) {
+        TEST("pkg_pair_prefer for parent connect test", 0);
+        if (pe2) pkg_close(pe2);
+        if (ce2) pkg_close(ce2);
+        pkg_close(pe);
+        return;
+    }
+    TEST("pkg_pair_prefer for parent connect test", 1);
+
+    const char *parent_addr = pkg_child_addr(pe2);
+    TEST("parent addr non-NULL", parent_addr != nullptr);
+
+    if (parent_addr && (bu_strncmp(parent_addr, "tcp_server:", 11) != 0)) {
+        struct pkg_conn *parent_conn = pkg_connect_addr(parent_addr, NULL, NULL);
+        TEST("pkg_connect_addr via parent addr succeeds", parent_conn != nullptr && parent_conn != PKC_ERROR);
+
+        if (parent_conn && parent_conn != PKC_ERROR) {
+            int rfd = pkg_get_read_fd(parent_conn);
+            TEST("parent-connected channel read fd >= 0", rfd >= 0);
+
+            static const char msg[] = "PARENT_OK";
+            int pe2_wfd = pkg_get_write_fd(parent_conn);
+            ssize_t n = ipc_fd_write(pe2_wfd, msg, sizeof(msg)-1);
+            TEST("parent write succeeds", n == (ssize_t)(sizeof(msg)-1));
+
+            char buf[64]; memset(buf, 0, sizeof(buf));
+            int ce2_rfd = pkg_get_read_fd(ce2);
+            n = ipc_fd_read(ce2_rfd, buf, sizeof(msg)-1);
+            TEST("child-side read succeeds", n == (ssize_t)(sizeof(msg)-1));
+            TEST("parent-connected data matches", memcmp(buf, msg, sizeof(msg)-1) == 0);
+
+            /* parent_conn owns pe2's fds — close it and skip closing pe2 to avoid double-close */
+            pkg_close(parent_conn);
+            parent_conn = nullptr;
+            pe2 = nullptr;
+        }
+    } else if (g_verbose) {
+        fprintf(stdout, "  parent address fell back to TCP; skipping parent-addr connect test\n");
+    }
+
+    if (pe2) pkg_close(pe2);
+    if (ce2) pkg_close(ce2);
+
     pkg_close(pe);
     if (ce) pkg_close(ce);
 }
@@ -272,6 +318,95 @@ test_pkg_connect(void)
 /* ================================================================== */
 /* Group 4: fbs_open_ipc() smoke test                                  */
 /* ================================================================== */
+static int
+run_ipc_listener_child(const char *addr, const char *send_msg, const char *expect_msg)
+{
+    struct pkg_conn *pc = pkg_connect_addr(addr, NULL, NULL);
+    if (!pc || pc == PKC_ERROR)
+        return 2;
+
+    if (ipc_fd_write(pkg_get_write_fd(pc), send_msg, strlen(send_msg)) !=
+            (ssize_t)strlen(send_msg)) {
+        pkg_close(pc);
+        return 3;
+    }
+
+    char buf[64] = {0};
+    if (ipc_fd_read(pkg_get_read_fd(pc), buf, strlen(expect_msg)) !=
+            (ssize_t)strlen(expect_msg)) {
+        pkg_close(pc);
+        return 4;
+    }
+
+    int ok = (memcmp(buf, expect_msg, strlen(expect_msg)) == 0);
+    pkg_close(pc);
+    return ok ? 0 : 5;
+}
+
+#ifndef _WIN32
+static void
+test_pkg_ipc_listener(void)
+{
+    if (g_verbose) fprintf(stdout, "\n[Group 9] reusable local IPC listener\n");
+
+    char addr[MAXPATHLEN] = {0};
+    int rc = pkg_ipc_addr(addr, sizeof(addr), "regress-ipc");
+    TEST("pkg_ipc_addr succeeds", rc == 0);
+    TEST("pkg_ipc_addr returns listener address",
+         rc == 0 && pkg_addr_is_ipc_listener(addr));
+
+    if (rc != 0)
+        return;
+
+    pkg_listener_t *listener = pkg_listen(addr, NULL, 8, NULL);
+    TEST("pkg_listen on local IPC address succeeds", listener != NULL);
+    if (!listener)
+        return;
+
+    const char *client_msg[2] = {"IPC_CLIENT_ONE", "IPC_CLIENT_TWO"};
+    const char *server_msg[2] = {"IPC_ACK_ONE", "IPC_ACK_TWO"};
+
+    for (int i = 0; i < 2; i++) {
+        pid_t pid = fork();
+        if (pid < 0) {
+            TEST("fork client", 0);
+            continue;
+        }
+        if (pid == 0) {
+            _exit(run_ipc_listener_child(addr, client_msg[i], server_msg[i]));
+        }
+
+        struct pkg_conn *server = pkg_accept(listener, NULL, NULL, 0);
+        TEST("pkg_accept local IPC client succeeds",
+             server != NULL && server != PKC_ERROR);
+
+        if (server && server != PKC_ERROR) {
+            char buf[64] = {0};
+            ssize_t n = ipc_fd_read(pkg_get_read_fd(server), buf, strlen(client_msg[i]));
+            TEST("server reads local IPC client data",
+                 n == (ssize_t)strlen(client_msg[i]));
+            TEST("local IPC client data matches",
+                 memcmp(buf, client_msg[i], strlen(client_msg[i])) == 0);
+
+            n = ipc_fd_write(pkg_get_write_fd(server), server_msg[i], strlen(server_msg[i]));
+            TEST("server writes local IPC reply",
+                 n == (ssize_t)strlen(server_msg[i]));
+            pkg_close(server);
+        }
+
+        int status = 0;
+        if (waitpid(pid, &status, 0) < 0) {
+            TEST("wait for local IPC child", 0);
+        } else {
+            TEST("local IPC child exits cleanly",
+                 WIFEXITED(status) && WEXITSTATUS(status) == 0);
+        }
+    }
+
+    pkg_listener_close(listener);
+}
+#endif
+
 static void
 test_fbs_open_ipc_smoke(void)
 {
@@ -718,6 +853,64 @@ test_fbserv_minus_I(const char *fbserv_bin)
 }
 #endif /* !_WIN32 */
 
+#ifdef _WIN32
+static void
+test_pkg_ipc_listener_win(void)
+{
+    if (g_verbose) fprintf(stdout, "\n[Group 9] reusable local IPC listener (Windows named pipe)\n");
+
+    char addr[MAXPATHLEN] = {0};
+    int rc = pkg_ipc_addr(addr, sizeof(addr), "regress-ipc");
+    TEST("pkg_ipc_addr succeeds", rc == 0);
+    TEST("pkg_ipc_addr returns listener address",
+         rc == 0 && pkg_addr_is_ipc_listener(addr));
+    TEST("pkg_ipc_addr returns npipe address",
+         rc == 0 && bu_strncmp(addr, "npipe:", 6) == 0);
+
+    if (rc != 0)
+        return;
+
+    pkg_listener_t *listener = pkg_listen(addr, NULL, 8, NULL);
+    TEST("pkg_listen on npipe IPC address succeeds", listener != NULL);
+    if (!listener)
+        return;
+
+    const char *client_msg[2] = {"IPC_CLIENT_ONE", "IPC_CLIENT_TWO"};
+    const char *server_msg[2] = {"IPC_ACK_ONE", "IPC_ACK_TWO"};
+
+    for (int i = 0; i < 2; i++) {
+        int client_rc = -1;
+        std::thread client([&]() {
+            client_rc = run_ipc_listener_child(addr, client_msg[i], server_msg[i]);
+        });
+
+        struct pkg_conn *server = pkg_accept(listener, NULL, NULL, 0);
+        TEST("pkg_accept local IPC client succeeds",
+             server != NULL && server != PKC_ERROR);
+
+        if (server && server != PKC_ERROR) {
+            char buf[64] = {0};
+            ssize_t n = ipc_fd_read(pkg_get_read_fd(server), buf, strlen(client_msg[i]));
+            TEST("server reads local IPC client data",
+                 n == (ssize_t)strlen(client_msg[i]));
+            TEST("server local IPC client data matches",
+                 memcmp(buf, client_msg[i], strlen(client_msg[i])) == 0);
+
+            n = ipc_fd_write(pkg_get_write_fd(server),
+                             server_msg[i], strlen(server_msg[i]));
+            TEST("server writes local IPC reply",
+                 n == (ssize_t)strlen(server_msg[i]));
+            pkg_close(server);
+        }
+
+        client.join();
+        TEST("Windows npipe client round-trip succeeds", client_rc == 0);
+    }
+
+    pkg_listener_close(listener);
+}
+#endif /* _WIN32 */
+
 
 /* ================================================================== */
 /* main                                                               */
@@ -782,10 +975,12 @@ main(int argc, const char **argv)
     test_fbs_open_ipc_smoke();
     test_env_var_end_to_end();
 #ifndef _WIN32
+    test_pkg_ipc_listener();
     test_tcl_file_handler();
     test_tcl_fbserv_var();
     test_fbserv_minus_I(bu_vls_cstr(&fbserv_bin));
 #else
+    test_pkg_ipc_listener_win();
     if (g_verbose)
         fprintf(stdout, "\n[Group 6] SKIPPED (Tcl_CreateFileHandler not available on Windows)\n");
     test_tcl_listen_ipc_win();  /* Group 7: Windows timer-IPC path */

@@ -178,7 +178,7 @@ proc rtimage {rtimage_dict} {
 	set have_color_objects 0
 
 	# Put a blank image into the framebuffer
-	catch {exec [list [file join $binpath fbclear]] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
+	catch {exec [file join $binpath fbclear] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
     }
 
     set occlude_objects [lsort -unique [concat $_color_objects $_ghost_objects]]

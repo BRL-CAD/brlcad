@@ -41,6 +41,7 @@
 #include "bu/ptbl.h"
 #include "bu/opt.h"
 #include "bu/str.h"
+#include "pkg.h"
 #include "tclcad.h"
 
 #define RTWIZARD_HAVE_GUI 0
@@ -96,6 +97,20 @@ struct rtwizard_settings {
     vect_t center;
 
 };
+
+static int
+rtwizard_setup_ipc(Tcl_Interp *interp)
+{
+    char ipc_addr[MAXPATHLEN] = {0};
+
+    if (pkg_ipc_addr(ipc_addr, sizeof(ipc_addr), "brlcad-rtwizard") != 0)
+	return 0;
+
+    (void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", "fbserv_ipc_addr",
+		      ipc_addr, TCL_GLOBAL_ONLY);
+
+    return 1;
+}
 
 
 struct rtwizard_settings *
@@ -1181,6 +1196,9 @@ main(int argc, char **argv)
 	tclcad_set_argv(interp, 1, (const char **)&av0);
 
 	Init_RtWizard_Vars(interp, s);
+	if (s->port < 0) {
+	    (void)rtwizard_setup_ipc(interp);
+	}
 
 	/* If we have a .rtwizardrc file, get the previous size settings from it */
 	rtwizard_rc(interp);
