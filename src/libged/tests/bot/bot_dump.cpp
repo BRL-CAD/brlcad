@@ -46,22 +46,32 @@ txt_same(const char *f1, const char *f2)
     if (!s1.is_open() || !s2.is_open())
 	return false;
 
-    // Check line by line
+    // Check line by line.  Ignore generated mtllib paths, which are
+    // build-tree dependent, and version banners, which are expected to vary.
     std::regex version_regex(".*BRL-CAD[(][0-9.]+[)].*");
     std::string l1, l2;
-    while (std::getline(s1, l1) && std::getline(s2, l2)) {
-	// Skip lines with BRL-CAD version in them - differences are expected
-	if (std::regex_match(l1, version_regex) && std::regex_match(l2, version_regex)) {
-	    bu_log("Note - skipping lines with BRL-CAD version present:\n#1: %s\n#2: %s\n", l1.c_str(), l2.c_str());
-	    continue;
+    auto next_line = [&version_regex](std::ifstream &s, std::string &line) -> bool {
+	while (std::getline(s, line)) {
+	    if (std::regex_match(line, version_regex))
+		continue;
+	    if (line.rfind("mtllib ", 0) == 0)
+		continue;
+	    return true;
 	}
+	return false;
+    };
+
+    bool have1 = next_line(s1, l1);
+    bool have2 = next_line(s2, l2);
+    while (have1 && have2) {
         if (l1 != l2)
             return false;
+	have1 = next_line(s1, l1);
+	have2 = next_line(s2, l2);
     }
 
-    // Check if one file has more lines than the other
-    if (std::getline(s1, l1) || std::getline(s2, l2))
-        return false;
+    if (have1 != have2)
+	return false;
 
     // All checks passed - files are the same
     bu_log("%s and %s are the same\n", f1, f2);
@@ -172,9 +182,15 @@ main(int ac, char *av[])
 	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_dir(input_file, MAXPATHLEN, av[1], "arb4.obj", NULL);
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_color.obj", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_color.mtl", NULL);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.mtl", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    bu_file_delete(output_file);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.obj", NULL);
     bu_file_delete(output_file);
 
 

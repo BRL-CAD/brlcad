@@ -6,6 +6,8 @@ cmakefiles(
   arb4.dxf
   arb4.g
   arb4.obj
+  arb4_color.mtl
+  arb4_color.obj
   arb4.sat
   arb4.stl
   arb4_binary.stl
