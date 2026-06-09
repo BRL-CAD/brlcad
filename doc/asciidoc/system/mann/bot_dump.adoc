@@ -13,6 +13,7 @@ bot_dump - export Bag-of-Triangles (BOT) geometry to a mesh file format
 bot_dump [-b] [-n|--normals] [-F|--full-precision]
          [-m|--output-directory dir] [-o|--output-file file]
          [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
+         [--materials|--no-materials]
          [bot1 bot2 ...]
 ----
 
@@ -54,6 +55,12 @@ Specify the output format type. Accepted values: `dxf`, `glb`, `gltf`, `obj`, `s
 *-u unit*::
 Specify the output units for coordinate values (e.g., `mm`, `cm`, `in`, `ft`). Defaults to the database's native units.
 
+*--materials*::
+Export resolved color and material information when the selected format supports it. This is the default behavior for supported formats.
+
+*--no-materials*::
+Disable color and material export and write geometry only.
+
 [[examples]]
 == EXAMPLES
 
@@ -78,7 +85,7 @@ Exports `hull.bot` to `hull_mesh.stl` in binary STL format.
 ====
 mged> **bot_dump -t obj --output-directory ./export/**
 
-Exports each BOT in the database to its own `.obj` file in the `./export/` directory.
+Exports each BOT in the database to its own `.obj` file in the `./export/` directory, including color/material data when available.
 ====
 
 .Export in glTF binary format with full precision

@@ -13,6 +13,7 @@ dbot_dump - export currently displayed BOT objects to a mesh file format
 dbot_dump [-b] [-n|--normals] [-F|--full-precision]
           [-m|--output-directory dir] [-o|--output-file file]
           [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
+          [--no-materials]
 ----
 
 
@@ -25,11 +26,11 @@ It automatically passes `--displayed`, `--viewdata`, and `--materials` to the un
 
 * *--displayed* — restricts export to currently drawn objects.
 * *--viewdata* — writes view-related metadata alongside the geometry output.
-* *--materials* — includes material property information in the output.
+* *--materials* — includes displayed color/material information in the output.
 
 No BOT names are taken as arguments; the set of objects to export is determined by the display list.
 
-All other options are identical to *bot_dump*.
+All other options are identical to *bot_dump*, including `--no-materials` to explicitly suppress color/material export.
 
 === Options
 
@@ -63,7 +64,7 @@ Output coordinate units (e.g., `mm`, `cm`, `in`, `ft`).
 mged> **draw hull.bot turret.bot**
 mged> **dbot_dump -o displayed.stl**
 
-Draws two BOTs, then exports them both (with view data and material info) to `displayed.stl`.
+Draws two BOTs, then exports them both (with view data and displayed color/material info) to `displayed.stl`.
 ====
 
 .Export displayed geometry to OBJ format
@@ -71,7 +72,7 @@ Draws two BOTs, then exports them both (with view data and material info) to `di
 ====
 mged> **dbot_dump -t obj -o scene.obj**
 
-Exports all currently drawn BOT objects to Wavefront OBJ format, including material properties.
+Exports all currently drawn BOT objects to Wavefront OBJ format, including displayed color/material properties.
 ====
 
 [[see_also]]
