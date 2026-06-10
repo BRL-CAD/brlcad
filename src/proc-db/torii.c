@@ -137,16 +137,83 @@ create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position
 
 
 int
-output_torii(const char *fileName, int levels, const torusLevels_t UNUSED(torii), const char *name)
+output_torii(struct rt_wdb *db_fp, const char *fileName, int levels, const torusLevels_t *torii, const char *name)
 {
     char scratch[256];
+    struct wmember head;
+    unsigned char rgb[3];
+    int l;
+    unsigned long int t;
+    unsigned long int serial = 0;
 
-    bu_strlcpy(scratch, name, sizeof(scratch));
-    bu_strlcat(scratch, "_0", sizeof(scratch));
+    /* unit normals/offsets for each of the six flake directions, paired
+     * as +/- along the three principal axes so the resulting torii fan
+     * out into a recognizable three-dimensional cluster.
+     */
+    static const vect_t dirVec[6] = {
+	{ 1.0,  0.0,  0.0},
+	{-1.0,  0.0,  0.0},
+	{ 0.0,  1.0,  0.0},
+	{ 0.0, -1.0,  0.0},
+	{ 0.0,  0.0,  1.0},
+	{ 0.0,  0.0, -1.0}
+    };
 
-    bu_log("output_torii to file \"%s\" for %d levels using \"%s.c\" as the combination name", fileName, levels, name);
+    bu_log("output_torii to file \"%s\" for %d levels using \"%s\" as the combination name\n", fileName, levels, name);
 
-    /* TODO: actually write out the torii here. */
+    BU_LIST_INIT(&head.l);
+
+    /* walk every recursion level and emit each computed torus as a TOR
+     * primitive, then collect them all under a single region.
+     */
+    for (l = 0; l < levels; l++) {
+	const torusArray_t *ta = &torii->level[l];
+
+	for (t = 0; t < ta->count; t++) {
+	    const torus_t *to = &ta->torus[t];
+	    point_t center;
+	    vect_t normal;
+	    int dir = to->direction;
+
+	    if (dir < 0 || dir > 5)
+		dir = 0;
+
+	    /* offset the torus along its direction so siblings do not all
+	     * land on top of one another; spacing scales with depth so the
+	     * flake spreads outward as it recurses.
+	     */
+	    VSCALE(normal, dirVec[dir], 1.0);
+	    VJOIN1(center, to->position, to->majorRadius * 2.0 * (double)(l + 1), dirVec[dir]);
+
+	    snprintf(scratch, sizeof(scratch), "%s_%lu.s", name, serial);
+
+	    if (mk_tor(db_fp, scratch, center, normal, to->majorRadius, to->minorRadius) != 0) {
+		bu_log("Unable to write torus \"%s\" to the database\n", scratch);
+		return 1;
+	    }
+
+	    (void)mk_addmember(scratch, &head.l, NULL, WMOP_UNION);
+	    serial++;
+	}
+    }
+
+    if (serial == 0) {
+	bu_log("No torii were generated; nothing written to \"%s\"\n", fileName);
+	return 1;
+    }
+
+    /* a pleasant brassy color for the assembled flake of torii */
+    rgb[0] = 224;
+    rgb[1] = 160;
+    rgb[2] =  32;
+
+    /* assemble everything into a top-level region named "all" */
+    if (mk_lcomb(db_fp, "all", &head, 1, "plastic", "sh=8 sp=0.6 di=0.4", rgb, 0) != 0) {
+	bu_log("Unable to write the \"all\" region to the database\n");
+	return 1;
+    }
+
+    bu_log("wrote %lu torii into region \"all\"\n", serial);
 
     return 0;
 }
@@ -210,7 +277,7 @@ main(int ac, char *av[])
     create_torii(levels, 0, &torii, initialPosition, dirArray, direction);
 
     /* write out the biatch to disk */
-    output_torii(fileName, levels, torii, prototypeName);
+    output_torii(db_fp, fileName, levels, &torii, prototypeName);
 
     bu_log("\n...done! (see %s)\n", av[1]);
 
