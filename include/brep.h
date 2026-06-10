@@ -40,6 +40,7 @@ __BEGIN_DECLS
 #include "brep/edit.h"
 #include "brep/surfacetree.h"
 #include "brep/pullback.h"
+#include "brep/quality.h"
 #include "brep/intersect.h"
 #include "brep/boolean.h"
 #include "brep/cdt.h"

@@ -25,6 +25,8 @@ set(
   naca456-append.g
   naca456-demo.g
   naca456-demo-smooth.g
+  naca456-brep-matrix-ruled.g
+  naca456-brep-matrix-smooth.g
   naca456-sections.tsv
   naca456-section-2412.tsv
   naca456-section-23012.tsv

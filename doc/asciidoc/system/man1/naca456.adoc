@@ -23,10 +23,6 @@ NACA airfoil section definitions.  The output may be a closed Bag of Triangles
 (BoT) mesh or a boundary representation (BREP).  In both modes the generated
 object is written as a solid plus a region comb using the requested base name.
 
-The tool is currently built as a `NO_INSTALL` proc-db program.  It is intended
-for development and validation of procedural NACA wing geometry before deciding
-whether the interface and BREP quality are ready for an installed user command.
-
 [[airfoils]]
 == SUPPORTED AIRFOILS
 
@@ -90,8 +86,13 @@ edges.  `smooth` creates bicubic Hermite NURBS patches for each span/chord cell,
 using shared cubic edge curves and the same explicit trim topology and
 `IsValid()`/`IsSolid()` checks.
 
-*-s* _length_, *--span* _length_::
-Set the semi-span length.  The default is 1000.
+*-s* _length_, *--semi-span* _length_::
+Set the root-to-tip semi-span length of the generated half-wing.  The default
+is 1000.
+
+*--full-span* _length_::
+Set the full aircraft span.  The generated semi-span wing uses half this value.
+This option is mutually exclusive with *--semi-span*.
 
 *-r* _length_, *--root-chord* _length_::
 Set the root chord length.  The default is 250.
@@ -99,9 +100,15 @@ Set the root chord length.  The default is 250.
 *-t* _length_, *--tip-chord* _length_::
 Set the tip chord length.  The default is 125.
 
-*-w* _offset_, *--sweep* _offset_::
-Set the X offset of the tip leading edge relative to the root leading edge.
-Positive values sweep the tip back in the model X direction.  The default is 0.
+*-w* _degrees_, *--sweep-angle* _degrees_::
+Set the leading-edge sweep angle in degrees.  Positive values sweep the tip
+back in the model X direction.  Internally this is resolved to a tip
+leading-edge X offset using `tan(angle) * semi-span`.  The default is 0.
+
+*--sweep-offset* _length_::
+Set the tip leading-edge X offset directly.  This option is useful when exact
+model-space placement is more important than an angular planform description.
+It is mutually exclusive with *--sweep-angle*.
 
 *-d* _degrees_, *--dihedral* _degrees_::
 Set the tip dihedral angle in degrees.  The default is 0.
@@ -184,21 +191,25 @@ NACA456 `MeanLine6` equations.  6A-series mean lines use the NACA456 modified
 six-series mean line.
 
 The planform transform is then applied station by station.  Chord length,
-leading-edge sweep, dihedral, and twist are linearly interpolated from root to
-tip.  Twist is applied around the local quarter chord.  The model-space
+leading-edge sweep offset, dihedral, and twist are linearly interpolated from
+root to tip.  Twist is applied around the local quarter chord.  The model-space
 translation options are applied after the local section transform.
 
-In BoT mode, adjacent station outlines are triangulated into a closed mesh and
-root and tip caps are triangulated from section centroids.  The generated mesh
-is checked for finite coordinates, valid indices, and non-degenerate triangles
+In BoT mode, adjacent station outlines are triangulated into a closed mesh.
+Root and tip caps are triangulated as constrained polygons rather than centroid
+fans, avoiding poor triangles on concave or sharply cusped airfoil outlines.
+The generated mesh is checked for finite coordinates, valid indices,
+manifoldness, orientation, closure, self-intersection, and triangle quality
 before it is written as a solid BoT.
 
 In BREP mode, every outline vertex is represented explicitly.  Chordwise
 outline edges and spanwise edges are shared by adjacent faces.  The side skin is
 represented as ruled NURBS strips between neighboring chordwise outline edges,
 and root and tip caps are represented by triangulated planar faces.  The BREP is
-standardized, compacted, and checked with OpenNURBS `IsValid()` and `IsSolid()`
-before it is written.
+standardized, compacted, and checked with OpenNURBS `IsValid()` and `IsSolid()`,
+plus additional libbrep quality checks for duplicate vertices, zero-length
+edges and trims, edge trim pairing, face aspect ratio, and conservative
+self-intersection risk, before it is written.
 
 With `--brep-surface smooth`, the side skin uses bicubic Hermite NURBS patches
 for each station-to-station, chord-to-chord cell.  Tangents are estimated from
@@ -217,8 +228,9 @@ root/tip cases.
 Each generated solid and region receives `naca456::` attributes recording the
 inputs used to create it.  These include generator name, metadata version,
 algorithm source, geometry mode, BREP surface mode, root and tip airfoil
-designations, span, root and tip chord, sweep, dihedral, tip twist, 6-series loading parameter,
-station/sample counts, trailing-edge mode, and model-space offsets.
+designations, semi-span, full span, root and tip chord, sweep offset, sweep
+angle, dihedral, tip twist, 6-series loading parameter, station/sample counts,
+trailing-edge mode, and model-space offsets.
 
 For example:
 
@@ -254,9 +266,13 @@ The airfoil definitions are mathematical NACA sections produced from the
 referenced NACA456 equations and tables.  They are not guaranteed to match any
 particular manufactured, wind-tunnel, or proprietary derivative airfoil.
 
-All dimensions are unitless BRL-CAD model coordinates.  The `--span` option is
-the semi-span length, and `--sweep` is a tip leading-edge X offset rather than a
-sweep angle.
+All length inputs are BRL-CAD model-space values.  They are intentionally
+unitless at the command line: a value of 1000 means 1000 database model units,
+whatever unit system the receiving `.g` database is interpreted to use.  The
+generated shape is a semi-span wing; use *--semi-span* to specify that length
+directly, or *--full-span* when starting from a full aircraft span.  Sweep is
+available either as *--sweep-angle* for an aerodynamic planform description or
+as *--sweep-offset* for exact model-space placement.
 
 [[sources]]
 == ALGORITHM SOURCES
@@ -286,8 +302,8 @@ Create a BoT NACA 2412 semi-span wing:
 [source]
 ----
 naca456 --mode bot --force --output wing.g --name wing_2412 \
-  --airfoil 2412 --span 1000 --root-chord 250 --tip-chord 125 \
-  --sweep 80 --dihedral 5 --tip-twist -2 --stations 9 --samples 65
+  --airfoil 2412 --semi-span 1000 --root-chord 250 --tip-chord 125 \
+  --sweep-angle 4.6 --dihedral 5 --tip-twist -2 --stations 9 --samples 65
 ----
 
 Create a BREP wing interpolating from a 5-digit root section to a 6-series tip
@@ -296,8 +312,8 @@ section:
 [source]
 ----
 naca456 --mode brep --force --output wing-brep.g --name wing_brep \
-  --airfoil 23012 --tip-airfoil 65-210 --span 1000 \
-  --root-chord 280 --tip-chord 110 --sweep 120 \
+  --airfoil 23012 --tip-airfoil 65-210 --full-span 2000 \
+  --root-chord 280 --tip-chord 110 --sweep-offset 120 \
   --dihedral 4 --tip-twist -3 --stations 8 --samples 29
 ----
 
@@ -307,8 +323,8 @@ Create a BREP wing using smoother bicubic side patches:
 ----
 naca456 --mode brep --brep-surface smooth --force \
   --output wing-smooth-brep.g --name wing_smooth \
-  --airfoil 2412 --span 900 --root-chord 240 --tip-chord 120 \
-  --sweep 80 --dihedral 4 --tip-twist -2 --stations 8 --samples 29
+  --airfoil 2412 --semi-span 900 --root-chord 240 --tip-chord 120 \
+  --sweep-angle 5 --dihedral 4 --tip-twist -2 --stations 8 --samples 29
 ----
 
 Create a 6A-series BREP:
@@ -316,7 +332,7 @@ Create a 6A-series BREP:
 [source]
 ----
 naca456 --mode brep --force --output naca64a.g --name wing_64a \
-  --airfoil 64A210 --span 900 --root-chord 240 --tip-chord 120 \
+  --airfoil 64A210 --semi-span 900 --root-chord 240 --tip-chord 120 \
   --dihedral 4 --stations 7 --samples 25
 ----
 

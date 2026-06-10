@@ -1,8 +1,8 @@
 # NACA Procedural Wing Generator
 
-This directory contains the development version of `naca456`, a NO_INSTALL
-proc-db tool for generating semi-span NACA wing geometry as either BoT or
-BREP objects in `.g` databases.
+This directory contains the development version of `naca456`, a proc-db tool
+for generating semi-span NACA wing geometry as either BoT or BREP objects in
+`.g` databases.
 
 The implemented section math covers classic 4-digit NACA airfoils, 5-digit
 mean-line sections, 5-digit reflex mean-line sections, and the NACA 6/6A
@@ -31,8 +31,8 @@ https://www.pdas.com/naca456download.html
 - Optional sharp trailing edge coefficient for 4- and 5-digit thickness forms.
 - Root-to-tip airfoil interpolation with `-A`, including interpolation across
   different supported NACA families when the requested section topology matches.
-- Taper, sweep, dihedral, tip twist, spanwise station count, chordwise sample
-  count, and model placement offsets.
+- Taper, sweep angle or sweep offset, dihedral, tip twist, spanwise station
+  count, chordwise sample count, and model placement offsets.
 - Append mode for placing multiple wings in one `.g` database.
 
 The BREP model is solid and uses explicit topology. The default side skin is
@@ -40,18 +40,24 @@ represented as spanwise ruled NURBS strips between chordwise outline edges. The
 optional smooth side skin uses bicubic Hermite patches per span/chord cell. In
 both cases the root and tip caps are triangulated planar faces.
 
+Length inputs are BRL-CAD model-space values. The generator creates a semi-span
+wing: `-s`/`--semi-span` specifies the generated root-to-tip length directly,
+while `--full-span` specifies an aircraft full span and generates half of it.
+The `-w` short option is `--sweep-angle`; use `--sweep-offset` when an exact tip
+leading-edge X offset is desired instead.
+
 ## Examples
 
 Generate a BoT wing:
 
 ```sh
-naca456 -m bot -f -o naca456-wing.g -n wing_bot -a 2412 -s 1000 -r 250 -t 125 -w 80 -d 5 -T -2 -S 9 -c 65
+naca456 -m bot -f -o naca456-wing.g -n wing_bot -a 2412 -s 1000 -r 250 -t 125 -w 4.6 -d 5 -T -2 -S 9 -c 65
 ```
 
 Generate a BREP wing with root-to-tip section interpolation:
 
 ```sh
-naca456 -m brep -f -o naca456-wing-brep.g -n wing_brep -a 23012 -A 65-210 -s 1000 -r 280 -t 110 -w 120 -d 4 -T -3 -S 8 -c 29
+naca456 -m brep -f -o naca456-wing-brep.g -n wing_brep -a 23012 -A 65-210 -s 1000 -r 280 -t 110 --sweep-offset 120 -d 4 -T -3 -S 8 -c 29
 ```
 
 Generate a 6A-series BREP:
@@ -63,7 +69,7 @@ naca456 -m brep -f -o naca456-64a.g -n wing_64a -a 64A210 -s 900 -r 240 -t 120 -
 Generate a BREP with smoother side patches:
 
 ```sh
-naca456 -m brep --brep-surface smooth -f -o naca456-smooth.g -n wing_smooth -a 2412 -s 900 -r 240 -t 120 -w 80 -d 4 -T -2 -S 8 -c 29
+naca456 -m brep --brep-surface smooth -f -o naca456-smooth.g -n wing_smooth -a 2412 -s 900 -r 240 -t 120 -w 5 -d 4 -T -2 -S 8 -c 29
 ```
 
 Create a 36-wing sampler database:

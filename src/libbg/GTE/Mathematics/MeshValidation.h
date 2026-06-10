@@ -215,6 +215,38 @@ template <typename Real>
 	    result.isOriented = oriented;
 	}
 
+	static bool TriangleBoxesOverlap(
+		std::vector<Vector3<Real>> const& vertices,
+		std::array<int32_t, 3> const& tri1,
+		std::array<int32_t, 3> const& tri2)
+	{
+	    Vector3<Real> min1 = vertices[tri1[0]];
+	    Vector3<Real> max1 = vertices[tri1[0]];
+	    Vector3<Real> min2 = vertices[tri2[0]];
+	    Vector3<Real> max2 = vertices[tri2[0]];
+
+	    for (int i = 1; i < 3; ++i)
+	    {
+		for (int axis = 0; axis < 3; ++axis)
+		{
+		    min1[axis] = std::min(min1[axis], vertices[tri1[i]][axis]);
+		    max1[axis] = std::max(max1[axis], vertices[tri1[i]][axis]);
+		    min2[axis] = std::min(min2[axis], vertices[tri2[i]][axis]);
+		    max2[axis] = std::max(max2[axis], vertices[tri2[i]][axis]);
+		}
+	    }
+
+	    for (int axis = 0; axis < 3; ++axis)
+	    {
+		if (max1[axis] < min2[axis] || max2[axis] < min1[axis])
+		{
+		    return false;
+		}
+	    }
+
+	    return true;
+	}
+
 	// Check for self-intersecting triangles
 	static void CheckSelfIntersections(
 		std::vector<Vector3<Real>> const& vertices,
@@ -258,6 +290,11 @@ template <typename Real>
 		    if (shareVertex)
 		    {
 			continue;  // Adjacent triangles can touch at edges/vertices
+		    }
+
+		    if (!TriangleBoxesOverlap(vertices, tri1, tri2))
+		    {
+			continue;
 		    }
 
 		    // Check for intersection

@@ -10,6 +10,7 @@ set(
   edit.h
   intersect.h
   pullback.h
+  quality.h
   ray.h
   surfacetree.h
   util.h

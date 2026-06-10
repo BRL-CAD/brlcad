@@ -20,6 +20,7 @@ set(
   debug_plot.cpp
   edit.cpp
   intersect.cpp
+  quality.cpp
   tools/tools.cpp
   opennurbs_ext.cpp
   px_event.cpp
@@ -85,6 +86,7 @@ cmakefiles(
   cdt/cdt.h
   cdt/mesh.h
   debug_plot.h
+  quality.cpp
   shape_recognition/shape_recognition.h
   shape_recognition/torus.cpp
   tools/tools.h

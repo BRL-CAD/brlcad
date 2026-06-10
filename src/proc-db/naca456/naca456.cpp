@@ -31,10 +31,12 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cstdint>
 #include <cmath>
 #include <complex>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -43,8 +45,11 @@
 
 #include "bio.h"
 #include "brep/edit.h"
+#include "bg/polygon.h"
+#include "brep/quality.h"
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -52,6 +57,13 @@
 #include "rt/db_attr.h"
 #include "rt/geom.h"
 #include "wdb.h"
+
+#ifdef RAD2DEG
+#  undef RAD2DEG
+#endif
+#include <Mathematics/MeshQuality.h>
+#include <Mathematics/MeshValidation.h>
+#include <Mathematics/Vector3.h>
 
 
 struct point2d {
@@ -128,10 +140,12 @@ struct options {
     std::string section_file;
     output_mode mode = output_mode::bot;
     brep_surface_mode brep_surface = brep_surface_mode::ruled;
-    fastf_t span = 1000.0;
+    fastf_t semi_span = 1000.0;
+    fastf_t full_span = 2000.0;
     fastf_t root_chord = 250.0;
     fastf_t tip_chord = 125.0;
-    fastf_t sweep = 0.0;
+    fastf_t sweep_offset = 0.0;
+    fastf_t sweep_angle_deg = 0.0;
     fastf_t dihedral_deg = 0.0;
     fastf_t tip_twist_deg = 0.0;
     fastf_t six_a_param = 1.0;
@@ -155,6 +169,26 @@ usage(const char *argv0, struct bu_opt_desc *d)
 	bu_log("%s", option_help);
 	bu_free(option_help, "option help");
     }
+}
+
+
+static bool
+option_supplied(int argc, char **argv, char short_opt, const char *long_opt)
+{
+    const size_t long_len = std::strlen(long_opt);
+
+    for (int i = 1; i < argc; ++i) {
+	const char *arg = argv[i];
+	if (!arg)
+	    continue;
+	if (arg[0] == '-' && arg[1] == '-' && std::strncmp(arg + 2, long_opt, long_len) == 0 &&
+		(arg[2 + long_len] == '\0' || arg[2 + long_len] == '='))
+	    return true;
+	if (short_opt != '\0' && arg[0] == '-' && arg[1] == short_opt)
+	    return true;
+    }
+
+    return false;
 }
 
 
@@ -330,7 +364,7 @@ parse_airfoil(const std::string &code, double six_a_param)
 static struct bu_opt_desc *
 option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
 {
-    static struct bu_opt_desc d[26];
+    static struct bu_opt_desc d[28];
 
     BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help and exit");
     BU_OPT(d[1], "?", "", "", NULL, &help, "");
@@ -340,10 +374,10 @@ option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct b
     BU_OPT(d[5], "A", "tip-airfoil", "code", &bu_opt_vls, &tip_airfoil, "Tip NACA airfoil code");
     BU_OPT(d[6], "m", "mode", "bot|brep", &bu_opt_vls, &mode, "Output geometry type");
     BU_OPT(d[7], "", "brep-surface", "ruled|smooth", &bu_opt_vls, &brep_surface, "BREP side-surface construction mode");
-    BU_OPT(d[8], "s", "span", "length", &bu_opt_fastf_t, &opts.span, "Semi-span length");
+    BU_OPT(d[8], "s", "semi-span", "length", &bu_opt_fastf_t, &opts.semi_span, "Root-to-tip semi-span length");
     BU_OPT(d[9], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
     BU_OPT(d[10], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
-    BU_OPT(d[11], "w", "sweep", "offset", &bu_opt_fastf_t, &opts.sweep, "Tip leading-edge X offset");
+    BU_OPT(d[11], "w", "sweep-angle", "degrees", &bu_opt_fastf_t, &opts.sweep_angle_deg, "Tip leading-edge sweep angle");
     BU_OPT(d[12], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
     BU_OPT(d[13], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
     BU_OPT(d[14], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
@@ -357,7 +391,9 @@ option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct b
     BU_OPT(d[22], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
     BU_OPT(d[23], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
     BU_OPT(d[24], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
-    BU_OPT_NULL(d[25]);
+    BU_OPT(d[25], "", "full-span", "length", &bu_opt_fastf_t, &opts.full_span, "Full aircraft span; generated semi-span is half this value");
+    BU_OPT(d[26], "", "sweep-offset", "length", &bu_opt_fastf_t, &opts.sweep_offset, "Tip leading-edge X offset");
+    BU_OPT_NULL(d[27]);
 
     return d;
 }
@@ -442,8 +478,31 @@ parse_args(int argc, char **argv)
     } else {
 	throw std::runtime_error("BREP surface mode must be ruled or smooth");
     }
-    if (opts.span <= 0.0 || opts.root_chord <= 0.0 || opts.tip_chord <= 0.0) {
-	throw std::runtime_error("span and chord lengths must be positive");
+    const bool have_semi_span = option_supplied(argc, argv, 's', "semi-span");
+    const bool have_full_span = option_supplied(argc, argv, '\0', "full-span");
+    if (have_semi_span && have_full_span)
+	throw std::runtime_error("--semi-span and --full-span are mutually exclusive");
+    if (have_full_span)
+	opts.semi_span = 0.5 * opts.full_span;
+
+    const bool have_sweep_offset = option_supplied(argc, argv, '\0', "sweep-offset");
+    const bool have_sweep_angle = option_supplied(argc, argv, 'w', "sweep-angle");
+    if (have_sweep_offset && have_sweep_angle)
+	throw std::runtime_error("--sweep-offset and --sweep-angle are mutually exclusive");
+    if (have_sweep_angle) {
+	if (std::fabs(opts.sweep_angle_deg) >= 89.0)
+	    throw std::runtime_error("--sweep-angle must be between -89 and 89 degrees");
+	opts.sweep_offset = std::tan(opts.sweep_angle_deg * M_PI / 180.0) * opts.semi_span;
+    }
+
+    if (!std::isfinite(opts.semi_span) || !std::isfinite(opts.root_chord) || !std::isfinite(opts.tip_chord) ||
+	    !std::isfinite(opts.sweep_offset) || !std::isfinite(opts.dihedral_deg) ||
+	    !std::isfinite(opts.tip_twist_deg) || !std::isfinite(opts.six_a_param) ||
+	    !std::isfinite(opts.offset_x) || !std::isfinite(opts.offset_y) || !std::isfinite(opts.offset_z)) {
+	throw std::runtime_error("numeric options must be finite");
+    }
+    if (opts.semi_span <= 0.0 || opts.root_chord <= 0.0 || opts.tip_chord <= 0.0) {
+	throw std::runtime_error("semi-span and chord lengths must be positive");
     }
     if (opts.stations < 2) {
 	throw std::runtime_error("station count must be at least 2");
@@ -1102,8 +1161,8 @@ station_point(const point2d &section_pt, const options &opts, int station)
 {
     const double f = static_cast<double>(station) / static_cast<double>(opts.stations - 1);
     const double chord = opts.root_chord + f * (opts.tip_chord - opts.root_chord);
-    const double y = f * opts.span;
-    const double le_x = f * opts.sweep;
+    const double y = f * opts.semi_span;
+    const double le_x = f * opts.sweep_offset;
     const double dihedral = std::tan(opts.dihedral_deg * M_PI / 180.0) * y;
     const double twist = f * opts.tip_twist_deg * M_PI / 180.0;
 
@@ -1138,24 +1197,26 @@ finite_point(const point3d &p)
 }
 
 
-static double
-triangle_area2(const fastf_t *vertices, int a, int b, int c)
+static void
+validate_gte_triangle_mesh(const std::vector<gte::Vector3<double>> &vertices, const std::vector<std::array<int32_t, 3>> &triangles, const char *context, bool require_closed, bool check_self_intersections)
 {
-    const fastf_t *pa = vertices + 3 * a;
-    const fastf_t *pb = vertices + 3 * b;
-    const fastf_t *pc = vertices + 3 * c;
+    const auto validation = gte::MeshValidation<double>::Validate(vertices, triangles, check_self_intersections);
+    if (!validation.isManifold || !validation.isOriented || validation.hasSelfIntersections || (require_closed && !validation.isClosed)) {
+	throw std::runtime_error(std::string(context) + " failed GTE MeshValidation checks: manifold=" +
+		bool_name(validation.isManifold) + " oriented=" + bool_name(validation.isOriented) +
+		" closed=" + bool_name(validation.isClosed) + " self_intersections=" +
+		bool_name(validation.hasSelfIntersections) + " nonmanifold_edges=" +
+		num_string(static_cast<double>(validation.nonManifoldEdges)) + " boundary_edges=" +
+		num_string(static_cast<double>(validation.boundaryEdges)) + " intersecting_pairs=" +
+		num_string(static_cast<double>(validation.intersectingTrianglePairs)));
+    }
 
-    const double abx = pb[0] - pa[0];
-    const double aby = pb[1] - pa[1];
-    const double abz = pb[2] - pa[2];
-    const double acx = pc[0] - pa[0];
-    const double acy = pc[1] - pa[1];
-    const double acz = pc[2] - pa[2];
-
-    const double cx = aby * acz - abz * acy;
-    const double cy = abz * acx - abx * acz;
-    const double cz = abx * acy - aby * acx;
-    return std::sqrt(cx * cx + cy * cy + cz * cz);
+    const auto metrics = gte::MeshQuality<double>::ComputeMeshMetricsVec3(vertices, triangles);
+    if (metrics.totalTriangles != triangles.size() || metrics.invertedTriangles > 0 ||
+	    metrics.scaledJacobian.min_val <= 1.0e-10 || metrics.shape.min_val <= 1.0e-10 ||
+	    metrics.aspectRatio.max_val > 1.0e5 || metrics.edgeRatio.max_val > 1.0e5) {
+	throw std::runtime_error(std::string(context) + " failed GTE MeshQuality checks");
+    }
 }
 
 
@@ -1166,11 +1227,19 @@ validate_bot_mesh(const std::vector<fastf_t> &vertices, const std::vector<int> &
     if (vertices.empty() || faces.empty() || vertices.size() % 3 != 0 || faces.size() % 3 != 0)
 	throw std::runtime_error("internal BoT mesh assembly produced malformed arrays");
 
-    for (fastf_t v : vertices) {
-	if (!std::isfinite(static_cast<double>(v)))
+    std::vector<gte::Vector3<double>> gte_vertices;
+    gte_vertices.reserve(static_cast<size_t>(vertex_cnt));
+    for (size_t i = 0; i < vertices.size(); i += 3) {
+	const fastf_t x = vertices[i];
+	const fastf_t y = vertices[i + 1];
+	const fastf_t z = vertices[i + 2];
+	if (!std::isfinite(static_cast<double>(x)) || !std::isfinite(static_cast<double>(y)) || !std::isfinite(static_cast<double>(z)))
 	    throw std::runtime_error("internal BoT mesh assembly produced non-finite coordinates");
+	gte_vertices.push_back(gte::Vector3<double>{static_cast<double>(x), static_cast<double>(y), static_cast<double>(z)});
     }
 
+    std::vector<std::array<int32_t, 3>> gte_faces;
+    gte_faces.reserve(faces.size() / 3);
     for (size_t i = 0; i < faces.size(); i += 3) {
 	const int a = faces[i];
 	const int b = faces[i + 1];
@@ -1179,9 +1248,10 @@ validate_bot_mesh(const std::vector<fastf_t> &vertices, const std::vector<int> &
 	    throw std::runtime_error("internal BoT mesh assembly produced an invalid face index");
 	if (a == b || b == c || a == c)
 	    throw std::runtime_error("internal BoT mesh assembly produced a degenerate face");
-	if (triangle_area2(vertices.data(), a, b, c) <= SMALL_FASTF)
-	    throw std::runtime_error("internal BoT mesh assembly produced a near-zero-area face");
+	gte_faces.push_back({a, b, c});
     }
+
+    validate_gte_triangle_mesh(gte_vertices, gte_faces, "internal BoT mesh assembly", true, true);
 }
 
 
@@ -1205,6 +1275,60 @@ validate_station_outlines(const options &opts, const std::vector<std::vector<poi
 		throw std::runtime_error("generated non-finite wing coordinate");
 	}
     }
+}
+
+
+static std::vector<std::array<int32_t, 3>>
+cap_triangulation(const std::vector<point2d> &outline)
+{
+    std::vector<point2d_t> pnts(outline.size());
+    std::vector<int> index_map(outline.size());
+    for (size_t i = 0; i < outline.size(); ++i) {
+	V2SET(pnts[i], outline[i].x, outline[i].z);
+	index_map[i] = static_cast<int>(i);
+    }
+
+    const int dir = bg_polygon_direction(outline.size(), pnts.data(), NULL);
+    const bool reversed_input = dir == BG_CW;
+    if (reversed_input) {
+	std::reverse(pnts.begin(), pnts.end());
+	std::reverse(index_map.begin(), index_map.end());
+    } else if (dir != BG_CCW) {
+	throw std::runtime_error("airfoil cap outline is not a valid simple polygon");
+    }
+
+    int *faces = NULL;
+    int num_faces = 0;
+    if (bg_poly_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, pnts.data(), pnts.size(), TRI_CONSTRAINED_DELAUNAY) != 0 || !faces || num_faces <= 0) {
+	if (faces)
+	    bu_free(faces, "naca456 cap triangulation faces");
+	throw std::runtime_error("airfoil cap triangulation failed");
+    }
+
+    std::vector<std::array<int32_t, 3>> tris;
+    tris.reserve(static_cast<size_t>(num_faces));
+    for (int i = 0; i < num_faces; ++i) {
+	const int a = faces[3 * i];
+	const int b = faces[3 * i + 1];
+	const int c = faces[3 * i + 2];
+	if (a < 0 || b < 0 || c < 0 ||
+		static_cast<size_t>(a) >= index_map.size() ||
+		static_cast<size_t>(b) >= index_map.size() ||
+		static_cast<size_t>(c) >= index_map.size()) {
+	    bu_free(faces, "naca456 cap triangulation faces");
+	    throw std::runtime_error("airfoil cap triangulation produced an invalid index");
+	}
+	const int ma = index_map[static_cast<size_t>(a)];
+	const int mb = index_map[static_cast<size_t>(b)];
+	const int mc = index_map[static_cast<size_t>(c)];
+	if (reversed_input)
+	    tris.push_back({ma, mc, mb});
+	else
+	    tris.push_back({ma, mb, mc});
+    }
+    bu_free(faces, "naca456 cap triangulation faces");
+
+    return tris;
 }
 
 
@@ -1273,10 +1397,12 @@ write_metadata(struct rt_wdb *fp, const std::string &solid_name, const std::stri
 	set_attr(fp, obj_name, "naca456::brep_surface", brep_surface_name(opts.brep_surface));
 	set_attr(fp, obj_name, "naca456::root_airfoil", opts.airfoil);
 	set_attr(fp, obj_name, "naca456::tip_airfoil", tip_airfoil);
-	set_attr(fp, obj_name, "naca456::span", num_string(opts.span));
+	set_attr(fp, obj_name, "naca456::semi_span", num_string(opts.semi_span));
+	set_attr(fp, obj_name, "naca456::full_span", num_string(2.0 * opts.semi_span));
 	set_attr(fp, obj_name, "naca456::root_chord", num_string(opts.root_chord));
 	set_attr(fp, obj_name, "naca456::tip_chord", num_string(opts.tip_chord));
-	set_attr(fp, obj_name, "naca456::sweep", num_string(opts.sweep));
+	set_attr(fp, obj_name, "naca456::sweep_offset", num_string(opts.sweep_offset));
+	set_attr(fp, obj_name, "naca456::sweep_angle_deg", num_string(std::atan2(opts.sweep_offset, opts.semi_span) * 180.0 / M_PI));
 	set_attr(fp, obj_name, "naca456::dihedral_deg", num_string(opts.dihedral_deg));
 	set_attr(fp, obj_name, "naca456::tip_twist_deg", num_string(opts.tip_twist_deg));
 	set_attr(fp, obj_name, "naca456::six_a", num_string(opts.six_a_param));
@@ -1290,25 +1416,6 @@ write_metadata(struct rt_wdb *fp, const std::string &solid_name, const std::stri
 }
 
 
-static point3d
-station_center(const std::vector<point2d> &outline, const options &opts, int station)
-{
-    point3d center;
-    for (const point2d &pt : outline) {
-	const point3d p = station_point(pt, opts, station);
-	center.x += p.x;
-	center.y += p.y;
-	center.z += p.z;
-    }
-
-    const double scale = 1.0 / static_cast<double>(outline.size());
-    center.x *= scale;
-    center.y *= scale;
-    center.z *= scale;
-    return center;
-}
-
-
 static int
 write_bot(const options &opts, const std::vector<std::vector<point2d>> &outlines)
 {
@@ -1316,7 +1423,7 @@ write_bot(const options &opts, const std::vector<std::vector<point2d>> &outlines
     std::vector<int> faces;
     const int outline_cnt = static_cast<int>(outlines.front().size());
 
-    vertices.reserve(static_cast<size_t>(opts.stations * outline_cnt + 2) * 3);
+    vertices.reserve(static_cast<size_t>(opts.stations * outline_cnt) * 3);
     for (int s = 0; s < opts.stations; ++s) {
 	for (const point2d &pt : outlines[static_cast<size_t>(s)]) {
 	    const point3d p = station_point(pt, opts, s);
@@ -1326,20 +1433,8 @@ write_bot(const options &opts, const std::vector<std::vector<point2d>> &outlines
 	}
     }
 
-    point3d center = station_center(outlines.front(), opts, 0);
-
-    const int root_center = static_cast<int>(vertices.size() / 3);
-    vertices.push_back(static_cast<fastf_t>(center.x));
-    vertices.push_back(static_cast<fastf_t>(center.y));
-    vertices.push_back(static_cast<fastf_t>(center.z));
-
-    center = station_center(outlines.back(), opts, opts.stations - 1);
-    const int tip_center = static_cast<int>(vertices.size() / 3);
-    vertices.push_back(static_cast<fastf_t>(center.x));
-    vertices.push_back(static_cast<fastf_t>(center.y));
-    vertices.push_back(static_cast<fastf_t>(center.z));
-
-    faces.reserve(static_cast<size_t>((opts.stations - 1) * outline_cnt * 2 + outline_cnt * 2) * 3);
+    const std::vector<std::array<int32_t, 3>> cap_tris = cap_triangulation(outlines.front());
+    faces.reserve(static_cast<size_t>((opts.stations - 1) * outline_cnt * 2 + cap_tris.size() * 2) * 3);
     for (int s = 0; s < opts.stations - 1; ++s) {
 	for (int k = 0; k < outline_cnt; ++k) {
 	    const int kn = (k + 1) % outline_cnt;
@@ -1352,16 +1447,12 @@ write_bot(const options &opts, const std::vector<std::vector<point2d>> &outlines
 	}
     }
 
-    for (int k = 0; k < outline_cnt; ++k) {
-	const int kn = (k + 1) % outline_cnt;
-	add_face(faces, root_center, k, kn);
-    }
+    for (const std::array<int32_t, 3> &tri : cap_tris)
+	add_face(faces, tri[2], tri[1], tri[0]);
 
     const int tip_offset = (opts.stations - 1) * outline_cnt;
-    for (int k = 0; k < outline_cnt; ++k) {
-	const int kn = (k + 1) % outline_cnt;
-	add_face(faces, tip_center, tip_offset + kn, tip_offset + k);
-    }
+    for (const std::array<int32_t, 3> &tri : cap_tris)
+	add_face(faces, tip_offset + tri[0], tip_offset + tri[1], tip_offset + tri[2]);
 
     validate_bot_mesh(vertices, faces);
 
@@ -1807,22 +1898,25 @@ add_tri_face(brep_builder &builder, int v0, int v1, int v2)
 }
 
 
-static point3d
-outline_center(const std::vector<point2d> &outline, const options &opts, int station)
+static void
+validate_brep_cap_triangles(const brep_builder &builder, int outline_cnt, int stations, const std::vector<std::array<int32_t, 3>> &cap_tris)
 {
-    point3d center;
-    for (const point2d &pt : outline) {
-	const point3d p = station_point(pt, opts, station);
-	center.x += p.x;
-	center.y += p.y;
-	center.z += p.z;
-    }
+    std::vector<gte::Vector3<double>> vertices;
+    vertices.reserve(builder.points.size());
+    for (const ON_3dPoint &p : builder.points)
+	vertices.push_back(gte::Vector3<double>{p.x, p.y, p.z});
 
-    const double scale = 1.0 / static_cast<double>(outline.size());
-    center.x *= scale;
-    center.y *= scale;
-    center.z *= scale;
-    return center;
+    std::vector<std::array<int32_t, 3>> triangles;
+    triangles.reserve(cap_tris.size() * 2);
+
+    for (const std::array<int32_t, 3> &tri : cap_tris)
+	triangles.push_back({tri[2], tri[1], tri[0]});
+
+    const int tip_offset = (stations - 1) * outline_cnt;
+    for (const std::array<int32_t, 3> &tri : cap_tris)
+	triangles.push_back({tip_offset + tri[0], tip_offset + tri[1], tip_offset + tri[2]});
+
+    validate_gte_triangle_mesh(vertices, triangles, "BREP cap triangle mesh", false, true);
 }
 
 
@@ -1834,21 +1928,13 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
     builder.brep = ON_Brep::New();
 
     const int outline_cnt = static_cast<int>(outlines.front().size());
-    builder.points.reserve(static_cast<size_t>(opts.stations * outline_cnt + 2));
+    builder.points.reserve(static_cast<size_t>(opts.stations * outline_cnt));
     for (int s = 0; s < opts.stations; ++s) {
 	for (const point2d &pt : outlines[static_cast<size_t>(s)]) {
 	    const point3d p = station_point(pt, opts, s);
 	    builder.points.push_back(ON_3dPoint(p.x, p.y, p.z));
 	}
     }
-
-    point3d center = outline_center(outlines.front(), opts, 0);
-    const int root_center = static_cast<int>(builder.points.size());
-    builder.points.push_back(ON_3dPoint(center.x, center.y, center.z));
-
-    center = outline_center(outlines.back(), opts, opts.stations - 1);
-    const int tip_center = static_cast<int>(builder.points.size());
-    builder.points.push_back(ON_3dPoint(center.x, center.y, center.z));
 
     for (const ON_3dPoint &p : builder.points) {
 	ON_BrepVertex &v = builder.brep->NewVertex(p);
@@ -1876,16 +1962,15 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
 	}
     }
 
-    for (int k = 0; k < outline_cnt; ++k) {
-	const int kn = (k + 1) % outline_cnt;
-	add_tri_face(builder, root_center, k, kn);
-    }
+    const std::vector<std::array<int32_t, 3>> cap_tris = cap_triangulation(outlines.front());
+    validate_brep_cap_triangles(builder, outline_cnt, opts.stations, cap_tris);
+
+    for (const std::array<int32_t, 3> &tri : cap_tris)
+	add_tri_face(builder, tri[2], tri[1], tri[0]);
 
     const int tip_offset = (opts.stations - 1) * outline_cnt;
-    for (int k = 0; k < outline_cnt; ++k) {
-	const int kn = (k + 1) % outline_cnt;
-	add_tri_face(builder, tip_center, tip_offset + kn, tip_offset + k);
-    }
+    for (const std::array<int32_t, 3> &tri : cap_tris)
+	add_tri_face(builder, tip_offset + tri[0], tip_offset + tri[1], tip_offset + tri[2]);
 
     builder.brep->Standardize();
     builder.brep->Compact();
@@ -1902,6 +1987,19 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
 	delete builder.brep;
 	ON::End();
 	bu_exit(EXIT_FAILURE, "ERROR: generated BREP is valid but not classified as a solid\n");
+    }
+
+    struct bu_vls quality_log = BU_VLS_INIT_ZERO;
+    struct brep_quality_options quality_opts;
+    ON_Brep_Quality_Defaults(&quality_opts);
+    const int quality_errors = ON_Brep_Quality_Check(builder.brep, &quality_log, &quality_opts);
+    if (bu_vls_strlen(&quality_log) > 0)
+	bu_log("%s", bu_vls_cstr(&quality_log));
+    bu_vls_free(&quality_log);
+    if (quality_errors > 0) {
+	delete builder.brep;
+	ON::End();
+	bu_exit(EXIT_FAILURE, "ERROR: generated BREP failed libbrep quality checks\n");
     }
 
     const std::string solid_name = opts.name + ".brep";
@@ -1949,10 +2047,10 @@ struct demo_spec {
     const char *name = nullptr;
     const char *airfoil = nullptr;
     const char *tip_airfoil = nullptr;
-    double span = 900.0;
+    double semi_span = 900.0;
     double root_chord = 240.0;
     double tip_chord = 120.0;
-    double sweep = 0.0;
+    double sweep_offset = 0.0;
     double dihedral_deg = 0.0;
     double tip_twist_deg = 0.0;
     double six_a_param = 1.0;
@@ -1977,10 +2075,10 @@ demo_options(const options &demo_opts, const demo_spec &spec, int index)
 	opts.tip_airfoil = spec.tip_airfoil;
     opts.mode = spec.mode;
     opts.brep_surface = spec.mode == output_mode::brep ? demo_opts.brep_surface : brep_surface_mode::ruled;
-    opts.span = spec.span;
+    opts.semi_span = spec.semi_span;
     opts.root_chord = spec.root_chord;
     opts.tip_chord = spec.tip_chord;
-    opts.sweep = spec.sweep;
+    opts.sweep_offset = spec.sweep_offset;
     opts.dihedral_deg = spec.dihedral_deg;
     opts.tip_twist_deg = spec.tip_twist_deg;
     opts.six_a_param = spec.six_a_param;
