@@ -228,7 +228,7 @@ main(int ac, char *av[])
     char fileName[512];
     struct rt_wdb *db_fp;
     char scratch[518];
-    int levels=2;
+    int levels=3;
     int direction=4;
     point_t initialPosition = {0.0, 0.0, 0.0};
     int i;
@@ -250,6 +250,13 @@ main(int ac, char *av[])
     if (ac < 2) usage(progname);
 
     if (ac > 1) snprintf(fileName, 512, "%s", av[1]);
+
+    /* optional second argument overrides the recursion depth */
+    if (ac > 2) {
+	levels = atoi(av[2]);
+	if (levels < 1) levels = 1;
+	if (levels > 5) levels = 5;
+    }
 
     bu_log("Output file name is \"%s\"\n", fileName);
 
