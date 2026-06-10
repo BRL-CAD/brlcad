@@ -146,14 +146,22 @@ find_or_add_node(const point_t p)
     int i;
 
     /* quantize to collapse coincident vertices from adjacent faces */
-    qx = (long)floor(p[X] / QUANT + 0.5);
-    qy = (long)floor(p[Y] / QUANT + 0.5);
-    qz = (long)floor(p[Z] / QUANT + 0.5);
+    double fval;
+    fval = floor(p[X] / QUANT + 0.5);
+    qx = (long)fval;
+    fval = floor(p[Y] / QUANT + 0.5);
+    qy = (long)fval;
+    fval = floor(p[Z] / QUANT + 0.5);
+    qz = (long)fval;
 
     for (i = 0; i < num_nodes; i++) {
-	long nx = (long)floor(nodes[i][X] / QUANT + 0.5);
-	long ny = (long)floor(nodes[i][Y] / QUANT + 0.5);
-	long nz = (long)floor(nodes[i][Z] / QUANT + 0.5);
+	float nfval;
+	nfval = floor(nodes[i][X] / QUANT + 0.5);
+	long nx = (long)nfval;
+	nfval = floor(nodes[i][Y] / QUANT + 0.5);
+	long ny = (long)nfval;
+	nfval = floor(nodes[i][Z] / QUANT + 0.5);
+	long nz = (long)nfval;
 	if (nx == qx && ny == qy && nz == qz) {
 	    return i;
 	}

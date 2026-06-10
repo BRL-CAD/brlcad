@@ -311,7 +311,7 @@ main(int ac, char *av[])
 	    eqn[i][W] += VDOT(eqn[i], cen);
 	}
 
-	mk_arbn(db_fp, "arbn.s", (size_t)n, eqn);
+	mk_arbn(db_fp, "arbn.s", (size_t)n, (const plane_t *)eqn);
     }
     shelf_region(db_fp, &all_hd.l, "arbn.s", "arbn.r", 150, 90, 220);
 

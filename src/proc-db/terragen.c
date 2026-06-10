@@ -103,7 +103,7 @@ main(int ac, char *av[])
     double *hf = NULL;		/* working height field, row-major     */
     unsigned short *grid = NULL;	/* normalized 16-bit output       */
     double hmin, hmax, hrange;
-    int i, j, x, y;
+    int i, x, y;
 
     /* world extent of the terrain footprint, in mm */
     double world = 200000.0;	/* 200 m square */
