@@ -239,6 +239,7 @@ cmakefiles(
   benchmark.adoc
   brlcad.adoc
   dbclean.adoc
+  naca456.adoc
   CMakeLists.txt
 )
 

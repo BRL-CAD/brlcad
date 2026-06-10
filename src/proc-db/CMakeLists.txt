@@ -9,6 +9,8 @@ set(PROC_DB_WDB_LIBS "libwdb;${M_LIBRARY}")
 set(PROC_DB_WDB_NMG_LIBS "libwdb;libnmg;${M_LIBRARY}")
 set(PROC_DB_WDB_OPENNURBS_LIBS "libwdb;OPENNURBS::OPENNURBS;${M_LIBRARY}")
 
+add_subdirectory(naca456)
+
 brlcad_addexec(bottest bottest.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(brep_cobb brep_cobb.cpp "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(brep_cube "brep_cube.cpp;twistedcube.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)

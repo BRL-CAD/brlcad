@@ -1,0 +1,78 @@
+# NACA Procedural Wing Generator
+
+This directory contains the development version of `naca456`, a NO_INSTALL
+proc-db tool for generating semi-span NACA wing geometry as either BoT or
+BREP objects in `.g` databases.
+
+The implemented section math covers classic 4-digit NACA airfoils, 5-digit
+mean-line sections, 5-digit reflex mean-line sections, and the NACA 6/6A
+families covered by the public-domain NACA456 reference implementation from
+Public Domain Aeronautical Software:
+
+https://www.pdas.com/naca456download.html
+
+## Current Capabilities
+
+- BoT output with closed root and tip caps.
+- BREP output with explicit vertices, shared edges, loops, trims, and
+  `IsValid()`/`IsSolid()` checks before writing.
+- Spanwise ruled NURBS side strips for smoother BREP skins.
+- NACA 4-digit sections such as `0012`, `2412`, and `4415`.
+- NACA 5-digit sections such as `23012`, including reflex sections such as
+  `23112`.
+- NACA 6-series sections in the `63` through `67` families, such as `63-215`
+  and `65-210`.
+- NACA 6A-series sections in the `63A`, `64A`, and `65A` families, such as
+  `64A210`.
+- Optional 6-series mean-line loading parameter with `-u`; the default is
+  `1.0`. The 6A modified mean line uses the NACA456 fixed `a=0.8` behavior.
+- Optional sharp trailing edge coefficient for 4- and 5-digit thickness forms.
+- Root-to-tip airfoil interpolation with `-A`, including interpolation across
+  different supported NACA families when the requested section topology matches.
+- Taper, sweep, dihedral, tip twist, spanwise station count, chordwise sample
+  count, and model placement offsets.
+- Append mode for placing multiple wings in one `.g` database.
+
+The BREP model is solid and uses explicit topology. The side skin is represented
+as spanwise ruled NURBS strips between chordwise outline edges, while the root
+and tip caps are triangulated planar faces.
+
+## Examples
+
+Generate a BoT wing:
+
+```sh
+naca456 -m bot -f -o naca456-wing.g -n wing_bot -a 2412 -s 1000 -r 250 -t 125 -w 80 -d 5 -T -2 -S 9 -c 65
+```
+
+Generate a BREP wing with root-to-tip section interpolation:
+
+```sh
+naca456 -m brep -f -o naca456-wing-brep.g -n wing_brep -a 23012 -A 65-210 -s 1000 -r 280 -t 110 -w 120 -d 4 -T -3 -S 8 -c 29
+```
+
+Generate a 6A-series BREP:
+
+```sh
+naca456 -m brep -f -o naca456-64a.g -n wing_64a -a 64A210 -s 900 -r 240 -t 120 -d 4 -S 7 -c 25
+```
+
+Create a 36-wing sampler database:
+
+```sh
+naca456 --demo-file naca456-demo.g
+```
+
+## Validation
+
+`regress/naca456/naca456.sh` is the CTest-facing smoke/regression harness. It
+checks:
+
+- BoT creation and right-handed/counter-clockwise orientation reporting.
+- BREP creation and MGED recognition.
+- Sharp trailing edge BREP generation.
+- 5-digit, reflex 5-digit, 6-series, and 6A-series generation.
+- Append mode and object name collision rejection.
+- Root-to-tip airfoil interpolation.
+
+Run the test through CTest with `ctest -R regress-naca456`.

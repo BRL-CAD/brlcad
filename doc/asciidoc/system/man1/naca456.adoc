@@ -1,0 +1,333 @@
+= naca456(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+naca456 - generates BRL-CAD wing geometry from NACA 4-, 5-, and 6-series airfoils
+
+== SYNOPSIS
+
+[source]
+----
+naca456 [options]
+naca456 --demo-file sampler.g
+naca456 --airfoil 2412 --section-file section.tsv
+----
+
+[[description]]
+== DESCRIPTION
+
+*naca456* creates a semi-span wing model in a BRL-CAD `.g` database using
+NACA airfoil section definitions.  The output may be a closed Bag of Triangles
+(BoT) mesh or a boundary representation (BREP).  In both modes the generated
+object is written as a solid plus a region comb using the requested base name.
+
+The tool is currently built as a `NO_INSTALL` proc-db program.  It is intended
+for development and validation of procedural NACA wing geometry before deciding
+whether the interface and BREP quality are ready for an installed user command.
+
+[[airfoils]]
+== SUPPORTED AIRFOILS
+
+The `--airfoil` and `--tip-airfoil` options accept these NACA designations:
+
+* Four-digit sections such as `0012`, `2412`, and `4415`.
+* Five-digit sections such as `23012`.
+* Five-digit reflex sections such as `23112`.
+* Six-series sections in the `63`, `64`, `65`, `66`, and `67` families, such as
+  `63-215`, `63215`, and `65-210`.
+* Six-A-series sections in the `63A`, `64A`, and `65A` families, such as
+  `64A210`.
+
+The parser ignores whitespace and hyphens and accepts an optional `NACA` prefix.
+For example, `NACA 63-215`, `63-215`, and `63215` are equivalent.
+
+For 5-digit sections the first digit sets design lift coefficient, the second
+digit sets the camber-position family, the third digit selects normal (`0`) or
+reflex (`1`) mean-line behavior, and the last two digits set thickness percent.
+The supported camber-position families are those tabulated by the NACA456
+reference equations: 5, 10, 15, 20, and 25 percent chord for normal 5-digit
+sections, and 10, 15, 20, and 25 percent chord for reflex sections.
+
+For 6-series sections the first two characters select the profile family, the
+next digit is design lift coefficient in tenths, and the final two digits are
+thickness percent.  The `--six-a` option controls the loading parameter `a` for
+ordinary 6-series mean lines.  6A sections use the modified 6-series mean line
+behavior from NACA456, where `a` is fixed at 0.8.
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*, *--help*::
+Print option help and exit.
+
+*-o* _file.g_, *--output* _file.g_::
+Write a single generated wing to _file.g_.  The default is
+`naca456-wing.g`.
+
+*-n* _name_, *--name* _name_::
+Use _name_ as the base object name.  The solid is written as _name_`.bot` or
+_name_`.brep`, and the region is written as _name_`.r`.  The default is
+`naca456_wing`.
+
+*-a* _code_, *--airfoil* _code_::
+Set the root airfoil.  The default is `2412`.
+
+*-A* _code_, *--tip-airfoil* _code_::
+Set the tip airfoil.  If omitted, the root airfoil is used at the tip.
+When different root and tip airfoils are supplied, *naca456* samples both
+sections with the same chordwise parameterization and linearly interpolates
+their section coordinates along the span.
+
+*-m* _bot|brep_, *--mode* _bot|brep_::
+Select output geometry.  The default is `bot`.
+
+*-s* _length_, *--span* _length_::
+Set the semi-span length.  The default is 1000.
+
+*-r* _length_, *--root-chord* _length_::
+Set the root chord length.  The default is 250.
+
+*-t* _length_, *--tip-chord* _length_::
+Set the tip chord length.  The default is 125.
+
+*-w* _offset_, *--sweep* _offset_::
+Set the X offset of the tip leading edge relative to the root leading edge.
+Positive values sweep the tip back in the model X direction.  The default is 0.
+
+*-d* _degrees_, *--dihedral* _degrees_::
+Set the tip dihedral angle in degrees.  The default is 0.
+
+*-T* _degrees_, *--tip-twist* _degrees_::
+Set the tip twist angle in degrees.  Twist is linearly interpolated from zero
+at the root to this value at the tip.  The rotation pivot is the local
+quarter-chord point.
+
+*-u* _a_, *--six-a* _a_::
+Set the ordinary 6-series mean-line loading parameter.  The value must be in
+the interval [0, 1].  The default is 1.0.  This option does not alter the fixed
+modified mean line used by 6A sections.
+
+*-S* _count_, *--stations* _count_::
+Set the number of spanwise stations.  The minimum is 2 and the default is 9.
+
+*-c* _count_, *--samples* _count_::
+Set the number of chordwise samples per upper or lower surface.  The minimum is
+5 and the default is 65.
+
+*-x* _offset_, *--x-offset* _offset_::
+Set a model-space X translation.
+
+*-y* _offset_, *--y-offset* _offset_::
+Set a model-space Y translation.
+
+*-z* _offset_, *--z-offset* _offset_::
+Set a model-space Z translation.
+
+*-p*, *--sharp-te*::
+Use the sharp trailing-edge coefficient for 4- and 5-digit thickness forms.
+The NACA 6-series conformal-mapping thickness forms retain their mapped
+trailing-edge behavior.
+
+*-f*, *--force*::
+Overwrite an existing output file.
+
+*-j*, *--append*::
+Append objects to an existing output database.  Object name collisions are
+rejected.
+
+*--demo-file* _file.g_::
+Write a 36-wing sampler database to _file.g_ and exit.  The first 24 examples
+are BoT wings and the final 12 examples are BREP wings.  The sampler covers
+4-digit, 5-digit, 5-digit reflex, 6-series, 6A-series, sharp trailing-edge,
+sweep, taper, dihedral, twist, and mixed root/tip section cases.
+
+*--section-file* _file.tsv_::
+Write normalized root airfoil section coordinates to _file.tsv_ and exit.  This
+mode is intended for regression testing and reference comparison against the
+PDAS NACA456 combined-thickness-and-camber tables.  The output columns are
+airfoil designation, upper X, upper Y, lower X, and lower Y.  Use `--force` to
+replace an existing section file.
+
+[[algorithm]]
+== ALGORITHM
+
+For each requested airfoil, *naca456* creates cosine-spaced chordwise sample
+locations.  This concentrates points near the leading edge, where the curvature
+is highest.  It computes mean-line ordinate and slope, computes half-thickness,
+and offsets the section normal to form upper and lower surface points.
+
+Four-digit thickness uses the conventional polynomial form, with either the
+standard finite trailing-edge coefficient or the sharp trailing-edge coefficient
+selected by `--sharp-te`.  Four-digit camber uses the usual two-piece parabolic
+mean line.
+
+Five-digit normal and reflex mean lines use the tabulated `r`, `k1`, and
+`k2/k1` relationships from the NACA456 implementation.  Five-digit thickness
+uses the same polynomial thickness form as the four-digit family.
+
+Six-series and 6A-series thickness is generated from the epsilon/psi conformal
+mapping data embedded from NACA456.  The implementation evaluates the tabulated
+epsilon and psi functions, scales them for the requested thickness ratio, maps
+the circle to airfoil coordinates, and interpolates the resulting half-thickness
+curve at the requested chordwise samples.  Ordinary 6-series mean lines use the
+NACA456 `MeanLine6` equations.  6A-series mean lines use the NACA456 modified
+six-series mean line.
+
+The planform transform is then applied station by station.  Chord length,
+leading-edge sweep, dihedral, and twist are linearly interpolated from root to
+tip.  Twist is applied around the local quarter chord.  The model-space
+translation options are applied after the local section transform.
+
+In BoT mode, adjacent station outlines are triangulated into a closed mesh and
+root and tip caps are triangulated from section centroids.  The generated mesh
+is checked for finite coordinates, valid indices, and non-degenerate triangles
+before it is written as a solid BoT.
+
+In BREP mode, every outline vertex is represented explicitly.  Chordwise
+outline edges and spanwise edges are shared by adjacent faces.  The side skin is
+represented as ruled NURBS strips between neighboring chordwise outline edges,
+and root and tip caps are represented by triangulated planar faces.  The BREP is
+standardized, compacted, and checked with OpenNURBS `IsValid()` and `IsSolid()`
+before it is written.
+
+When either the root or tip section has a collapsed trailing edge, the lower
+trailing-edge duplicate is omitted for all interpolated stations.  This keeps
+the spanwise topology stable and avoids zero-length BREP edges in mixed
+root/tip cases.
+
+[[metadata]]
+== METADATA
+
+Each generated solid and region receives `naca456::` attributes recording the
+inputs used to create it.  These include generator name, metadata version,
+algorithm source, geometry mode, root and tip airfoil designations, span, root
+and tip chord, sweep, dihedral, tip twist, 6-series loading parameter,
+station/sample counts, trailing-edge mode, and model-space offsets.
+
+For example:
+
+[source]
+----
+mged wing.g "attr get wing_2412.r naca456::root_airfoil"
+mged wing.g "attr get wing_2412.r naca456::geometry_mode"
+----
+
+The attributes are intended to make generated models auditable.  They are not a
+parametric regeneration contract; future versions may add metadata fields or
+change BREP construction details.
+
+[[limitations]]
+== LIMITATIONS
+
+*naca456* is a geometric airfoil and wing-shape generator.  It does not perform
+aerodynamic analysis, structural analysis, aeroelastic analysis, certification
+checks, or optimization.
+
+The generated model is a semi-span wing only.  The tool does not currently
+generate wing-body blends, mirrored full-span assemblies, control surfaces,
+flaps, slats, spars, ribs, skins with physical thickness, fuel volumes,
+fasteners, or manufacturing features.
+
+The BREP output is checked with OpenNURBS `IsValid()` and `IsSolid()`, but it is
+not a general CAD healing pipeline.  Downstream Boolean operations may still be
+sensitive to extreme parameter combinations, very thin sections, aggressive
+twist, or highly tapered planforms.
+
+The airfoil definitions are mathematical NACA sections produced from the
+referenced NACA456 equations and tables.  They are not guaranteed to match any
+particular manufactured, wind-tunnel, or proprietary derivative airfoil.
+
+All dimensions are unitless BRL-CAD model coordinates.  The `--span` option is
+the semi-span length, and `--sweep` is a tip leading-edge X offset rather than a
+sweep angle.
+
+[[sources]]
+== ALGORITHM SOURCES
+
+The section mathematics are implemented from the public-domain NACA456 program
+by Ralph Carmichael, distributed by Public Domain Aeronautical Software (PDAS):
+
+....
+https://www.pdas.com/naca456download.html
+....
+
+The BRL-CAD implementation references the NACA456 source files `nacax.f90`,
+`epspsi.f90`, and `splprocs.f90`.  In particular, it uses the NACA456
+`MeanLine3`, `MeanLine3Reflex`, `MeanLine6`, `MeanLine6M`, `ScaleFactor`, and
+six-series epsilon/psi table logic as the basis for the local C++
+implementation.
+
+NACA456 itself identifies the relevant aerodynamics references in its comments,
+including Abbott and von Doenhoff for the 6-series mean-line equations and NACA
+Report 903 for the modified 6-series mean line used with 6A profiles.
+
+[[examples]]
+== EXAMPLES
+
+Create a BoT NACA 2412 semi-span wing:
+
+[source]
+----
+naca456 --mode bot --force --output wing.g --name wing_2412 \
+  --airfoil 2412 --span 1000 --root-chord 250 --tip-chord 125 \
+  --sweep 80 --dihedral 5 --tip-twist -2 --stations 9 --samples 65
+----
+
+Create a BREP wing interpolating from a 5-digit root section to a 6-series tip
+section:
+
+[source]
+----
+naca456 --mode brep --force --output wing-brep.g --name wing_brep \
+  --airfoil 23012 --tip-airfoil 65-210 --span 1000 \
+  --root-chord 280 --tip-chord 110 --sweep 120 \
+  --dihedral 4 --tip-twist -3 --stations 8 --samples 29
+----
+
+Create a 6A-series BREP:
+
+[source]
+----
+naca456 --mode brep --force --output naca64a.g --name wing_64a \
+  --airfoil 64A210 --span 900 --root-chord 240 --tip-chord 120 \
+  --dihedral 4 --stations 7 --samples 25
+----
+
+Create the built-in sampler:
+
+[source]
+----
+naca456 --demo-file naca456-demo.g
+----
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+*naca456* exits with a nonzero status if option parsing fails, if the requested
+NACA code is unsupported, if the output database cannot be opened, if appending
+would overwrite an existing object name, if BoT mesh validation fails, or if
+BREP validation or solid classification fails.
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *rt*(1), *libwdb*(3)
+
+[[author]]
+== AUTHORS
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2026 United States Government as represented by
+the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to
+devs@brlcad.org
