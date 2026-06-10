@@ -1027,9 +1027,42 @@ MakeTwistedCubeFaces2(ON_Brep& brep)
 }
 
 int
-main(int UNUSED(argc), const char **argv)
+main(int argc, const char **argv)
 {
+    const char *output = "surfaceintersect.g";
+    struct rt_wdb *db_fp;
+    struct wmember all;
+    unsigned char rgbA[] = {255, 64, 64};
+    unsigned char rgbB[] = {64, 64, 255};
+
+    int do_intersect = 0;
+    int i;
+
     bu_setprogname(argv[0]);
+
+    /* Parse args: the first non-flag argument is the output path; -x /
+     * --intersect enables the (experimental) surface-surface intersection.
+     */
+    for (i = 1; i < argc; i++) {
+	if (BU_STR_EQUAL(argv[i], "-x") || BU_STR_EQUAL(argv[i], "--intersect")) {
+	    do_intersect = 1;
+	} else {
+	    output = argv[i];
+	}
+    }
+
+    bu_log("surfaceintersect: writing two twisted-cube NURBS surfaces to %s\n", output);
+    if (do_intersect) {
+	bu_log("surfaceintersect: -x given; ATTEMPTING the experimental curve/curve and\n"
+	       "                  brep/brep intersection (this may crash -- under debug).\n");
+    } else {
+	bu_log("surfaceintersect: the surface-surface intersection is an experimental,\n"
+	       "                  crash-prone developer routine and is DISABLED by default.\n"
+	       "                  Pass -x (or --intersect) to attempt evaluating it.\n");
+    }
+
+    ON::Begin();
+
     ON_3dPointArray pts1, pts2;
     pts1.Append(ON_3dPoint(1.0, 1.0, 0.0));
     pts1.Append(ON_3dPoint(-1.0, -1.0, 0.0));
@@ -1040,19 +1073,52 @@ main(int UNUSED(argc), const char **argv)
     ON_Curve *curve1 = ON_NurbsCurve::New(*bezier1);
     ON_Curve *curve2 = ON_NurbsCurve::New(*bezier2);
     ON_SimpleArray<ON_X_EVENT> x;
-    CurveCurveIntersect(curve1, curve2, x, 1e-9);
-    ON_Brep brep1 = ON_Brep(), brep2 = ON_Brep();
+    if (do_intersect) {
+	/* experimental developer routine; may crash on these inputs */
+	CurveCurveIntersect(curve1, curve2, x, 1e-9);
+    }
+    ON_Brep brepA = ON_Brep(), brepB = ON_Brep();
     ON_Surface *surf1 = TwistedCubeSideSurface(ON_3dPoint(1, 1, 1), ON_3dPoint(-1, -1, 1), ON_3dPoint(-1, -1, -1), ON_3dPoint(1, 1, -1));
     ON_Surface *surf2 = TwistedCubeSideSurface(ON_3dPoint(1, -1, 1), ON_3dPoint(-1, 1, 1), ON_3dPoint(-1, 1, -1), ON_3dPoint(1, -1, -1));
 
-    brep1.Create(surf1);
-    brep2.Create(surf2);
-    BrepBrepIntersect(&brep1, &brep2, 1e-3, 1e-9);
+    brepA.Create(surf1);
+    brepB.Create(surf2);
+
+    if (do_intersect) {
+	/* The whole point of this developer test: intersect the two breps
+	 * in place.  It is experimental and may crash -- enabled only via
+	 * -x so it can be debugged without breaking the default demo. */
+	BrepBrepIntersect(&brepA, &brepB, 1e-3, 1e-9);
+    }
+
+    /* Write the two NURBS surfaces out to a geometry database so the
+     * result is renderable rather than discarded.
+     */
+    db_fp = wdb_fopen(output);
+    if (!db_fp) {
+	bu_exit(1, "ERROR: unable to open %s for writing\n", output);
+    }
+    mk_id_units(db_fp, "surface intersection", "mm");
+
+    mk_brep(db_fp, "surfA.s", (void *)&brepA);
+    mk_brep(db_fp, "surfB.s", (void *)&brepB);
+
+    mk_region1(db_fp, "surfA.r", "surfA.s", "plastic", "", rgbA);
+    mk_region1(db_fp, "surfB.r", "surfB.s", "plastic", "", rgbB);
+
+    BU_LIST_INIT(&all.l);
+    (void)mk_addmember("surfA.r", &all.l, NULL, WMOP_UNION);
+    (void)mk_addmember("surfB.r", &all.l, NULL, WMOP_UNION);
+    mk_lfcomb(db_fp, "all", &all, 0);
+
+    db_close(db_fp->dbip);
 
     delete curve1;
     delete curve2;
     delete bezier1;
     delete bezier2;
+
+    ON::End();
 
     return 0;
 }
