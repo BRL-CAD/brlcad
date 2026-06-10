@@ -113,6 +113,12 @@ enum class output_mode {
 };
 
 
+enum class brep_surface_mode {
+    ruled,
+    smooth
+};
+
+
 struct options {
     std::string outfile = "naca456-wing.g";
     std::string name = "naca456_wing";
@@ -121,6 +127,7 @@ struct options {
     std::string demo_file;
     std::string section_file;
     output_mode mode = output_mode::bot;
+    brep_surface_mode brep_surface = brep_surface_mode::ruled;
     fastf_t span = 1000.0;
     fastf_t root_chord = 250.0;
     fastf_t tip_chord = 125.0;
@@ -155,6 +162,13 @@ static std::string
 mode_name(output_mode mode)
 {
     return mode == output_mode::bot ? "bot" : "brep";
+}
+
+
+static std::string
+brep_surface_name(brep_surface_mode mode)
+{
+    return mode == brep_surface_mode::smooth ? "smooth" : "ruled";
 }
 
 
@@ -314,9 +328,9 @@ parse_airfoil(const std::string &code, double six_a_param)
 
 
 static struct bu_opt_desc *
-option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
+option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
 {
-    static struct bu_opt_desc d[25];
+    static struct bu_opt_desc d[26];
 
     BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help and exit");
     BU_OPT(d[1], "?", "", "", NULL, &help, "");
@@ -325,24 +339,25 @@ option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct b
     BU_OPT(d[4], "a", "airfoil", "code", &bu_opt_vls, &airfoil, "Root NACA airfoil code");
     BU_OPT(d[5], "A", "tip-airfoil", "code", &bu_opt_vls, &tip_airfoil, "Tip NACA airfoil code");
     BU_OPT(d[6], "m", "mode", "bot|brep", &bu_opt_vls, &mode, "Output geometry type");
-    BU_OPT(d[7], "s", "span", "length", &bu_opt_fastf_t, &opts.span, "Semi-span length");
-    BU_OPT(d[8], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
-    BU_OPT(d[9], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
-    BU_OPT(d[10], "w", "sweep", "offset", &bu_opt_fastf_t, &opts.sweep, "Tip leading-edge X offset");
-    BU_OPT(d[11], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
-    BU_OPT(d[12], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
-    BU_OPT(d[13], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
-    BU_OPT(d[14], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
-    BU_OPT(d[15], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
-    BU_OPT(d[16], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
-    BU_OPT(d[17], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
-    BU_OPT(d[18], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
-    BU_OPT(d[19], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
-    BU_OPT(d[20], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
-    BU_OPT(d[21], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
-    BU_OPT(d[22], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
-    BU_OPT(d[23], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
-    BU_OPT_NULL(d[24]);
+    BU_OPT(d[7], "", "brep-surface", "ruled|smooth", &bu_opt_vls, &brep_surface, "BREP side-surface construction mode");
+    BU_OPT(d[8], "s", "span", "length", &bu_opt_fastf_t, &opts.span, "Semi-span length");
+    BU_OPT(d[9], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
+    BU_OPT(d[10], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
+    BU_OPT(d[11], "w", "sweep", "offset", &bu_opt_fastf_t, &opts.sweep, "Tip leading-edge X offset");
+    BU_OPT(d[12], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
+    BU_OPT(d[13], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
+    BU_OPT(d[14], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
+    BU_OPT(d[15], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
+    BU_OPT(d[16], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
+    BU_OPT(d[17], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
+    BU_OPT(d[18], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
+    BU_OPT(d[19], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
+    BU_OPT(d[20], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
+    BU_OPT(d[21], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
+    BU_OPT(d[22], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
+    BU_OPT(d[23], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
+    BU_OPT(d[24], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
+    BU_OPT_NULL(d[25]);
 
     return d;
 }
@@ -357,10 +372,11 @@ parse_args(int argc, char **argv)
     struct bu_vls airfoil = BU_VLS_INIT_ZERO;
     struct bu_vls tip_airfoil = BU_VLS_INIT_ZERO;
     struct bu_vls mode = BU_VLS_INIT_ZERO;
+    struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
     struct bu_vls demo_file = BU_VLS_INIT_ZERO;
     struct bu_vls section_file = BU_VLS_INIT_ZERO;
     bool help = false;
-    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, demo_file, section_file, help);
+    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, demo_file, section_file, help);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     const int parsed = bu_opt_parse(&msg, argc - 1, (const char **)(argv + 1), d);
 
@@ -373,6 +389,7 @@ parse_args(int argc, char **argv)
 	bu_vls_free(&airfoil);
 	bu_vls_free(&tip_airfoil);
 	bu_vls_free(&mode);
+	bu_vls_free(&brep_surface);
 	bu_vls_free(&demo_file);
 	bu_vls_free(&section_file);
 	throw std::runtime_error(msg_str.empty() ? "option parsing failed" : msg_str);
@@ -397,12 +414,14 @@ parse_args(int argc, char **argv)
     if (bu_vls_strlen(&section_file) > 0)
 	opts.section_file = bu_vls_cstr(&section_file);
     std::string mode_str = bu_vls_strlen(&mode) > 0 ? bu_vls_cstr(&mode) : "bot";
+    std::string brep_surface_str = bu_vls_strlen(&brep_surface) > 0 ? bu_vls_cstr(&brep_surface) : "ruled";
 
     bu_vls_free(&outfile);
     bu_vls_free(&name);
     bu_vls_free(&airfoil);
     bu_vls_free(&tip_airfoil);
     bu_vls_free(&mode);
+    bu_vls_free(&brep_surface);
     bu_vls_free(&demo_file);
     bu_vls_free(&section_file);
 
@@ -415,6 +434,13 @@ parse_args(int argc, char **argv)
 	opts.mode = output_mode::brep;
     } else {
 	throw std::runtime_error("output mode must be bot or brep");
+    }
+    if (brep_surface_str == "ruled") {
+	opts.brep_surface = brep_surface_mode::ruled;
+    } else if (brep_surface_str == "smooth") {
+	opts.brep_surface = brep_surface_mode::smooth;
+    } else {
+	throw std::runtime_error("BREP surface mode must be ruled or smooth");
     }
     if (opts.span <= 0.0 || opts.root_chord <= 0.0 || opts.tip_chord <= 0.0) {
 	throw std::runtime_error("span and chord lengths must be positive");
@@ -1244,6 +1270,7 @@ write_metadata(struct rt_wdb *fp, const std::string &solid_name, const std::stri
 	set_attr(fp, obj_name, "naca456::metadata_version", "1");
 	set_attr(fp, obj_name, "naca456::algorithm_source", "PDAS NACA456 nacax.f90 epspsi.f90 splprocs.f90");
 	set_attr(fp, obj_name, "naca456::geometry_mode", mode_name(opts.mode));
+	set_attr(fp, obj_name, "naca456::brep_surface", brep_surface_name(opts.brep_surface));
 	set_attr(fp, obj_name, "naca456::root_airfoil", opts.airfoil);
 	set_attr(fp, obj_name, "naca456::tip_airfoil", tip_airfoil);
 	set_attr(fp, obj_name, "naca456::span", num_string(opts.span));
@@ -1412,6 +1439,27 @@ builder_edge(brep_builder &builder, int from, int to)
 }
 
 
+static int
+builder_edge_with_curve(brep_builder &builder, int from, int to, ON_Curve *curve)
+{
+    const std::pair<int, int> key = std::minmax(from, to);
+    auto e_it = builder.edges.find(key);
+    if (e_it != builder.edges.end()) {
+	delete curve;
+	return e_it->second;
+    }
+
+    const int c3i = builder.brep->m_C3.Count();
+    builder.brep->m_C3.Append(curve);
+    ON_BrepEdge &edge = builder.brep->NewEdge(builder.brep->m_V[from], builder.brep->m_V[to], c3i);
+    edge.m_tolerance = SMALL_FASTF;
+
+    const int ei = edge.m_edge_index;
+    builder.edges[key] = ei;
+    return ei;
+}
+
+
 static ON_NurbsCurve *
 linear_nurbs_curve(const std::vector<ON_3dPoint> &points)
 {
@@ -1429,6 +1477,25 @@ linear_nurbs_curve(const std::vector<ON_3dPoint> &points)
     for (int i = 0; i < knot_count; ++i)
 	curve->SetKnot(i, static_cast<double>(i) / static_cast<double>(knot_count - 1));
 
+    return curve;
+}
+
+
+static ON_NurbsCurve *
+cubic_bezier_curve(const ON_3dPoint &from, const ON_3dPoint &to, const ON_3dVector &from_tangent, const ON_3dVector &to_tangent)
+{
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, 4, 4);
+    curve->SetCV(0, from);
+    curve->SetCV(1, from + from_tangent / 3.0);
+    curve->SetCV(2, to - to_tangent / 3.0);
+    curve->SetCV(3, to);
+    curve->SetKnot(0, 0.0);
+    curve->SetKnot(1, 0.0);
+    curve->SetKnot(2, 0.0);
+    curve->SetKnot(3, 1.0);
+    curve->SetKnot(4, 1.0);
+    curve->SetKnot(5, 1.0);
+    curve->SetDomain(0.0, 1.0);
     return curve;
 }
 
@@ -1466,11 +1533,65 @@ builder_span_edge(brep_builder &builder, const std::vector<int> &verts)
 }
 
 
+static int
+builder_smooth_edge(brep_builder &builder, int from, int to, const ON_3dVector &from_tangent, const ON_3dVector &to_tangent)
+{
+    return builder_edge_with_curve(builder, from, to, cubic_bezier_curve(builder.points[static_cast<size_t>(from)],
+	    builder.points[static_cast<size_t>(to)], from_tangent, to_tangent));
+}
+
+
 static bool
 edge_reversed(const ON_Brep &brep, int edge_index, int trim_from, int trim_to)
 {
     const ON_BrepEdge &edge = brep.m_E[edge_index];
     return !(edge.m_vi[0] == trim_from && edge.m_vi[1] == trim_to);
+}
+
+
+static ON_3dVector
+point_delta(const ON_3dPoint &from, const ON_3dPoint &to)
+{
+    return to - from;
+}
+
+
+static int
+grid_vertex_index(int station, int chord, int outline_cnt)
+{
+    return station * outline_cnt + chord;
+}
+
+
+static ON_3dVector
+span_tangent(const brep_builder &builder, int station, int chord, int stations, int outline_cnt)
+{
+    const int vi = grid_vertex_index(station, chord, outline_cnt);
+    if (stations < 2)
+	return ON_3dVector::ZeroVector;
+    if (station == 0) {
+	const int vn = grid_vertex_index(station + 1, chord, outline_cnt);
+	return point_delta(builder.points[static_cast<size_t>(vi)], builder.points[static_cast<size_t>(vn)]);
+    }
+    if (station == stations - 1) {
+	const int vp = grid_vertex_index(station - 1, chord, outline_cnt);
+	return point_delta(builder.points[static_cast<size_t>(vp)], builder.points[static_cast<size_t>(vi)]);
+    }
+
+    const int vp = grid_vertex_index(station - 1, chord, outline_cnt);
+    const int vn = grid_vertex_index(station + 1, chord, outline_cnt);
+    return point_delta(builder.points[static_cast<size_t>(vp)], builder.points[static_cast<size_t>(vn)]) * 0.5;
+}
+
+
+static ON_3dVector
+chord_tangent(const brep_builder &builder, int station, int chord, int outline_cnt)
+{
+    const int kp = (chord + outline_cnt - 1) % outline_cnt;
+    const int kn = (chord + 1) % outline_cnt;
+    const int vp = grid_vertex_index(station, kp, outline_cnt);
+    const int vn = grid_vertex_index(station, kn, outline_cnt);
+    return point_delta(builder.points[static_cast<size_t>(vp)], builder.points[static_cast<size_t>(vn)]) * 0.5;
 }
 
 
@@ -1585,6 +1706,88 @@ add_ruled_strip_face(brep_builder &builder, const std::vector<int> &edge0_verts,
 }
 
 
+static ON_NurbsSurface *
+cubic_hermite_surface(const ON_3dPoint &p00, const ON_3dPoint &p10, const ON_3dPoint &p11, const ON_3dPoint &p01,
+    const ON_3dVector &du00, const ON_3dVector &du10, const ON_3dVector &du11, const ON_3dVector &du01,
+    const ON_3dVector &dv00, const ON_3dVector &dv10, const ON_3dVector &dv11, const ON_3dVector &dv01)
+{
+    ON_NurbsSurface *surface = ON_NurbsSurface::New(3, false, 4, 4, 4, 4);
+
+    surface->SetCV(0, 0, p00);
+    surface->SetCV(1, 0, p00 + du00 / 3.0);
+    surface->SetCV(2, 0, p10 - du10 / 3.0);
+    surface->SetCV(3, 0, p10);
+
+    surface->SetCV(0, 3, p01);
+    surface->SetCV(1, 3, p01 + du01 / 3.0);
+    surface->SetCV(2, 3, p11 - du11 / 3.0);
+    surface->SetCV(3, 3, p11);
+
+    surface->SetCV(0, 1, p00 + dv00 / 3.0);
+    surface->SetCV(0, 2, p01 - dv01 / 3.0);
+    surface->SetCV(3, 1, p10 + dv10 / 3.0);
+    surface->SetCV(3, 2, p11 - dv11 / 3.0);
+
+    surface->SetCV(1, 1, p00 + du00 / 3.0 + dv00 / 3.0);
+    surface->SetCV(2, 1, p10 - du10 / 3.0 + dv10 / 3.0);
+    surface->SetCV(1, 2, p01 + du01 / 3.0 - dv01 / 3.0);
+    surface->SetCV(2, 2, p11 - du11 / 3.0 - dv11 / 3.0);
+
+    for (int dir = 0; dir < 2; ++dir) {
+	surface->SetKnot(dir, 0, 0.0);
+	surface->SetKnot(dir, 1, 0.0);
+	surface->SetKnot(dir, 2, 0.0);
+	surface->SetKnot(dir, 3, 1.0);
+	surface->SetKnot(dir, 4, 1.0);
+	surface->SetKnot(dir, 5, 1.0);
+    }
+
+    return surface;
+}
+
+
+static void
+add_smooth_patch_face(brep_builder &builder, int station, int chord, int outline_cnt, int stations)
+{
+    const int kn = (chord + 1) % outline_cnt;
+    const int v00 = grid_vertex_index(station, chord, outline_cnt);
+    const int v10 = grid_vertex_index(station + 1, chord, outline_cnt);
+    const int v11 = grid_vertex_index(station + 1, kn, outline_cnt);
+    const int v01 = grid_vertex_index(station, kn, outline_cnt);
+
+    const ON_3dVector du00 = span_tangent(builder, station, chord, stations, outline_cnt);
+    const ON_3dVector du10 = span_tangent(builder, station + 1, chord, stations, outline_cnt);
+    const ON_3dVector du11 = span_tangent(builder, station + 1, kn, stations, outline_cnt);
+    const ON_3dVector du01 = span_tangent(builder, station, kn, stations, outline_cnt);
+
+    const ON_3dVector dv00 = chord_tangent(builder, station, chord, outline_cnt);
+    const ON_3dVector dv10 = chord_tangent(builder, station + 1, chord, outline_cnt);
+    const ON_3dVector dv11 = chord_tangent(builder, station + 1, kn, outline_cnt);
+    const ON_3dVector dv01 = chord_tangent(builder, station, kn, outline_cnt);
+
+    const int e0 = builder_smooth_edge(builder, v00, v10, du00, du10);
+    const int e1 = builder_smooth_edge(builder, v10, v11, dv10, dv11);
+    const int e2 = builder_smooth_edge(builder, v01, v11, du01, du11);
+    const int e3 = builder_smooth_edge(builder, v00, v01, dv00, dv01);
+
+    const int si = builder.brep->m_S.Count();
+    builder.brep->m_S.Append(cubic_hermite_surface(
+	    builder.points[static_cast<size_t>(v00)],
+	    builder.points[static_cast<size_t>(v10)],
+	    builder.points[static_cast<size_t>(v11)],
+	    builder.points[static_cast<size_t>(v01)],
+	    du00, du10, du11, du01,
+	    dv00, dv10, dv11, dv01));
+    ON_BrepFace &face = builder.brep->NewFace(si);
+    ON_BrepLoop &loop = builder.brep->NewLoop(ON_BrepLoop::outer, face);
+
+    add_trim_for_edge(builder, loop, e0, v00, v10, ON_2dPoint(0.0, 0.0), ON_2dPoint(1.0, 0.0), ON_Surface::S_iso);
+    add_trim_for_edge(builder, loop, e1, v10, v11, ON_2dPoint(1.0, 0.0), ON_2dPoint(1.0, 1.0), ON_Surface::E_iso);
+    add_trim_for_edge(builder, loop, e2, v11, v01, ON_2dPoint(1.0, 1.0), ON_2dPoint(0.0, 1.0), ON_Surface::N_iso);
+    add_trim_for_edge(builder, loop, e3, v01, v00, ON_2dPoint(0.0, 1.0), ON_2dPoint(0.0, 0.0), ON_Surface::W_iso);
+}
+
+
 static void
 add_tri_face(brep_builder &builder, int v0, int v1, int v2)
 {
@@ -1652,17 +1855,25 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
 	v.m_tolerance = SMALL_FASTF;
     }
 
-    for (int k = 0; k < outline_cnt; ++k) {
-	const int kn = (k + 1) % outline_cnt;
-	std::vector<int> edge0_verts;
-	std::vector<int> edge1_verts;
-	edge0_verts.reserve(static_cast<size_t>(opts.stations));
-	edge1_verts.reserve(static_cast<size_t>(opts.stations));
-	for (int s = 0; s < opts.stations; ++s) {
-	    edge0_verts.push_back(s * outline_cnt + k);
-	    edge1_verts.push_back(s * outline_cnt + kn);
+    if (opts.brep_surface == brep_surface_mode::smooth) {
+	for (int s = 0; s < opts.stations - 1; ++s) {
+	    for (int k = 0; k < outline_cnt; ++k) {
+		add_smooth_patch_face(builder, s, k, outline_cnt, opts.stations);
+	    }
 	}
-	add_ruled_strip_face(builder, edge0_verts, edge1_verts);
+    } else {
+	for (int k = 0; k < outline_cnt; ++k) {
+	    const int kn = (k + 1) % outline_cnt;
+	    std::vector<int> edge0_verts;
+	    std::vector<int> edge1_verts;
+	    edge0_verts.reserve(static_cast<size_t>(opts.stations));
+	    edge1_verts.reserve(static_cast<size_t>(opts.stations));
+	    for (int s = 0; s < opts.stations; ++s) {
+		edge0_verts.push_back(s * outline_cnt + k);
+		edge1_verts.push_back(s * outline_cnt + kn);
+	    }
+	    add_ruled_strip_face(builder, edge0_verts, edge1_verts);
+	}
     }
 
     for (int k = 0; k < outline_cnt; ++k) {
@@ -1711,7 +1922,7 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
     delete builder.brep;
     ON::End();
 
-    bu_log("Wrote %s as solid BREP with explicit topology\n", opts.outfile.c_str());
+    bu_log("Wrote %s as solid BREP with explicit %s topology\n", opts.outfile.c_str(), brep_surface_name(opts.brep_surface).c_str());
     return EXIT_SUCCESS;
 }
 
@@ -1752,19 +1963,20 @@ struct demo_spec {
 
 
 static options
-demo_options(const std::string &outfile, const demo_spec &spec, int index)
+demo_options(const options &demo_opts, const demo_spec &spec, int index)
 {
     const int cols = 6;
     const double dx = 650.0;
     const double dy = 1400.0;
 
     options opts;
-    opts.outfile = outfile;
+    opts.outfile = demo_opts.demo_file;
     opts.name = spec.name;
     opts.airfoil = spec.airfoil;
     if (spec.tip_airfoil)
 	opts.tip_airfoil = spec.tip_airfoil;
     opts.mode = spec.mode;
+    opts.brep_surface = spec.mode == output_mode::brep ? demo_opts.brep_surface : brep_surface_mode::ruled;
     opts.span = spec.span;
     opts.root_chord = spec.root_chord;
     opts.tip_chord = spec.tip_chord;
@@ -1784,7 +1996,7 @@ demo_options(const std::string &outfile, const demo_spec &spec, int index)
 
 
 static int
-write_demo_file(const std::string &outfile)
+write_demo_file(const options &demo_opts)
 {
     const std::vector<demo_spec> specs = {
 	{output_mode::bot, "bot_00_baseline_2412", "2412", nullptr, 900, 240, 120, 0, 0, 0, 1, 7, 33, false},
@@ -1826,14 +2038,14 @@ write_demo_file(const std::string &outfile)
     };
 
     for (size_t i = 0; i < specs.size(); ++i) {
-	options opts = demo_options(outfile, specs[i], static_cast<int>(i));
+	options opts = demo_options(demo_opts, specs[i], static_cast<int>(i));
 	bu_log("[%zu] %s %s\n", i, opts.mode == output_mode::bot ? "bot" : "brep", opts.name.c_str());
 	const int ret = write_single_wing(opts);
 	if (ret != EXIT_SUCCESS)
 	    return ret;
     }
 
-    bu_log("Wrote %s with %zu sample wings\n", outfile.c_str(), specs.size());
+    bu_log("Wrote %s with %zu sample wings\n", demo_opts.demo_file.c_str(), specs.size());
     return EXIT_SUCCESS;
 }
 
@@ -1848,7 +2060,7 @@ main(int argc, char **argv)
 	if (!opts.section_file.empty())
 	    return write_section_file(opts);
 	if (!opts.demo_file.empty())
-	    return write_demo_file(opts.demo_file);
+	    return write_demo_file(opts);
 	return write_single_wing(opts);
     } catch (const std::exception &e) {
 	bu_log("ERROR: %s\n", e.what());
@@ -1858,15 +2070,17 @@ main(int argc, char **argv)
 	struct bu_vls airfoil = BU_VLS_INIT_ZERO;
 	struct bu_vls tip_airfoil = BU_VLS_INIT_ZERO;
 	struct bu_vls mode = BU_VLS_INIT_ZERO;
+	struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
 	struct bu_vls demo_file = BU_VLS_INIT_ZERO;
 	struct bu_vls section_file = BU_VLS_INIT_ZERO;
 	bool help = false;
-	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, demo_file, section_file, help));
+	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, demo_file, section_file, help));
 	bu_vls_free(&outfile);
 	bu_vls_free(&name);
 	bu_vls_free(&airfoil);
 	bu_vls_free(&tip_airfoil);
 	bu_vls_free(&mode);
+	bu_vls_free(&brep_surface);
 	bu_vls_free(&demo_file);
 	bu_vls_free(&section_file);
 	return EXIT_FAILURE;

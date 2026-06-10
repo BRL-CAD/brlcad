@@ -121,9 +121,9 @@ fi
 
 log "=== TESTING naca456 procedural wing generation ==="
 
-rm -f naca456-bot.g naca456-five-bot.g naca456-sharp-brep.g
+rm -f naca456-bot.g naca456-five-bot.g naca456-sharp-brep.g naca456-smooth-brep.g
 rm -f naca456-five-reflex-brep.g naca456-six-bot.g naca456-sixa-brep.g
-rm -f naca456-append.g naca456-demo.g
+rm -f naca456-append.g naca456-demo.g naca456-demo-smooth.g
 rm -f naca456-sections.tsv naca456-section-2412.tsv naca456-section-23012.tsv
 rm -f naca456-section-23112.tsv naca456-section-63-206.tsv naca456-section-63a210.tsv
 
@@ -143,6 +143,12 @@ expect_grep "naca_five_23012.bot" "$LOGFILE"
 run "$NACA456" --mode brep --sharp-te --force --output naca456-sharp-brep.g --name naca_sharp_0012 --airfoil 0012 --span 500 --root-chord 180 --tip-chord 120 --stations 5 --samples 17
 run "$MGED" -c naca456-sharp-brep.g "l naca_sharp_0012.brep"
 expect_grep "Boundary Representation" "$LOGFILE"
+
+run "$NACA456" --mode brep --brep-surface smooth --force --output naca456-smooth-brep.g --name naca_smooth_2412 --airfoil 2412 --span 650 --root-chord 200 --tip-chord 100 --sweep 60 --dihedral 3 --tip-twist -2 --stations 6 --samples 21
+run "$MGED" -c naca456-smooth-brep.g "l naca_smooth_2412.brep"
+expect_grep "Boundary Representation" "$LOGFILE"
+run "$MGED" -c naca456-smooth-brep.g "attr get naca_smooth_2412.r naca456::brep_surface"
+expect_grep "smooth" "$LOGFILE"
 
 run "$NACA456" --mode brep --force --output naca456-five-reflex-brep.g --name naca_five_reflex_23112 --airfoil 23112 --span 560 --root-chord 190 --tip-chord 115 --sweep 40 --stations 5 --samples 21
 run "$MGED" -c naca456-five-reflex-brep.g "l naca_five_reflex_23112.brep"
@@ -172,6 +178,14 @@ expect_grep "bot_00_baseline_2412.r" "$LOGFILE"
 expect_grep "bot_23_compound.r" "$LOGFILE"
 expect_grep "brep_24_baseline_2412.r" "$LOGFILE"
 expect_grep "brep_35_high_resolution.r" "$LOGFILE"
+run "$MGED" -c naca456-demo.g "attr get brep_24_baseline_2412.r naca456::brep_surface"
+expect_grep "ruled" "$LOGFILE"
+
+run "$NACA456" --brep-surface smooth --demo-file naca456-demo-smooth.g
+run "$MGED" -c naca456-demo-smooth.g "attr get brep_24_baseline_2412.r naca456::brep_surface"
+expect_grep "smooth" "$LOGFILE"
+run "$MGED" -c naca456-demo-smooth.g "attr get bot_00_baseline_2412.r naca456::brep_surface"
+expect_grep "ruled" "$LOGFILE"
 
 run "$NACA456" --force --airfoil 2412 --section-file naca456-section-2412.tsv
 run "$NACA456" --force --airfoil 23012 --section-file naca456-section-23012.tsv

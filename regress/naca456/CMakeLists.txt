@@ -18,11 +18,13 @@ set(
   naca456-bot.g
   naca456-five-bot.g
   naca456-sharp-brep.g
+  naca456-smooth-brep.g
   naca456-five-reflex-brep.g
   naca456-six-bot.g
   naca456-sixa-brep.g
   naca456-append.g
   naca456-demo.g
+  naca456-demo-smooth.g
   naca456-sections.tsv
   naca456-section-2412.tsv
   naca456-section-23012.tsv

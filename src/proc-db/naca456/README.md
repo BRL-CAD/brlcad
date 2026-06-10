@@ -17,6 +17,8 @@ https://www.pdas.com/naca456download.html
 - BREP output with explicit vertices, shared edges, loops, trims, and
   `IsValid()`/`IsSolid()` checks before writing.
 - Spanwise ruled NURBS side strips for smoother BREP skins.
+- Optional `--brep-surface smooth` mode using bicubic Hermite NURBS side
+  patches with shared explicit edge curves and trims.
 - NACA 4-digit sections such as `0012`, `2412`, and `4415`.
 - NACA 5-digit sections such as `23012`, including reflex sections such as
   `23112`.
@@ -33,9 +35,10 @@ https://www.pdas.com/naca456download.html
   count, and model placement offsets.
 - Append mode for placing multiple wings in one `.g` database.
 
-The BREP model is solid and uses explicit topology. The side skin is represented
-as spanwise ruled NURBS strips between chordwise outline edges, while the root
-and tip caps are triangulated planar faces.
+The BREP model is solid and uses explicit topology. The default side skin is
+represented as spanwise ruled NURBS strips between chordwise outline edges. The
+optional smooth side skin uses bicubic Hermite patches per span/chord cell. In
+both cases the root and tip caps are triangulated planar faces.
 
 ## Examples
 
@@ -57,10 +60,22 @@ Generate a 6A-series BREP:
 naca456 -m brep -f -o naca456-64a.g -n wing_64a -a 64A210 -s 900 -r 240 -t 120 -d 4 -S 7 -c 25
 ```
 
+Generate a BREP with smoother side patches:
+
+```sh
+naca456 -m brep --brep-surface smooth -f -o naca456-smooth.g -n wing_smooth -a 2412 -s 900 -r 240 -t 120 -w 80 -d 4 -T -2 -S 8 -c 29
+```
+
 Create a 36-wing sampler database:
 
 ```sh
 naca456 --demo-file naca456-demo.g
+```
+
+Create the same sampler with smooth BREP rows:
+
+```sh
+naca456 --brep-surface smooth --demo-file naca456-demo-smooth.g
 ```
 
 ## Validation
@@ -70,6 +85,7 @@ checks:
 
 - BoT creation and right-handed/counter-clockwise orientation reporting.
 - BREP creation and MGED recognition.
+- Smooth BREP side-surface generation.
 - Sharp trailing edge BREP generation.
 - 5-digit, reflex 5-digit, 6-series, and 6A-series generation.
 - Append mode and object name collision rejection.

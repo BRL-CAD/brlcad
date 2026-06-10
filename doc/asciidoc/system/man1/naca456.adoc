@@ -83,6 +83,13 @@ their section coordinates along the span.
 *-m* _bot|brep_, *--mode* _bot|brep_::
 Select output geometry.  The default is `bot`.
 
+*--brep-surface* _ruled|smooth_::
+Select the BREP side-surface construction mode.  `ruled` is the default and
+creates one NURBS ruled strip between each pair of neighboring chordwise outline
+edges.  `smooth` creates bicubic Hermite NURBS patches for each span/chord cell,
+using shared cubic edge curves and the same explicit trim topology and
+`IsValid()`/`IsSolid()` checks.
+
 *-s* _length_, *--span* _length_::
 Set the semi-span length.  The default is 1000.
 
@@ -141,7 +148,8 @@ rejected.
 Write a 36-wing sampler database to _file.g_ and exit.  The first 24 examples
 are BoT wings and the final 12 examples are BREP wings.  The sampler covers
 4-digit, 5-digit, 5-digit reflex, 6-series, 6A-series, sharp trailing-edge,
-sweep, taper, dihedral, twist, and mixed root/tip section cases.
+sweep, taper, dihedral, twist, and mixed root/tip section cases.  The BREP
+sampler rows honor *--brep-surface*; BoT sampler rows are unchanged.
 
 *--section-file* _file.tsv_::
 Write normalized root airfoil section coordinates to _file.tsv_ and exit.  This
@@ -192,6 +200,12 @@ and root and tip caps are represented by triangulated planar faces.  The BREP is
 standardized, compacted, and checked with OpenNURBS `IsValid()` and `IsSolid()`
 before it is written.
 
+With `--brep-surface smooth`, the side skin uses bicubic Hermite NURBS patches
+for each station-to-station, chord-to-chord cell.  Tangents are estimated from
+neighboring spanwise and chordwise samples, and the patch boundary curves are
+shared as explicit BREP edges.  This produces smoother local side-surface
+geometry while preserving explicit loop and trim topology.
+
 When either the root or tip section has a collapsed trailing edge, the lower
 trailing-edge duplicate is omitted for all interpolated stations.  This keeps
 the spanwise topology stable and avoids zero-length BREP edges in mixed
@@ -202,8 +216,8 @@ root/tip cases.
 
 Each generated solid and region receives `naca456::` attributes recording the
 inputs used to create it.  These include generator name, metadata version,
-algorithm source, geometry mode, root and tip airfoil designations, span, root
-and tip chord, sweep, dihedral, tip twist, 6-series loading parameter,
+algorithm source, geometry mode, BREP surface mode, root and tip airfoil
+designations, span, root and tip chord, sweep, dihedral, tip twist, 6-series loading parameter,
 station/sample counts, trailing-edge mode, and model-space offsets.
 
 For example:
@@ -212,6 +226,7 @@ For example:
 ----
 mged wing.g "attr get wing_2412.r naca456::root_airfoil"
 mged wing.g "attr get wing_2412.r naca456::geometry_mode"
+mged wing.g "attr get wing_2412.r naca456::brep_surface"
 ----
 
 The attributes are intended to make generated models auditable.  They are not a
@@ -284,6 +299,16 @@ naca456 --mode brep --force --output wing-brep.g --name wing_brep \
   --airfoil 23012 --tip-airfoil 65-210 --span 1000 \
   --root-chord 280 --tip-chord 110 --sweep 120 \
   --dihedral 4 --tip-twist -3 --stations 8 --samples 29
+----
+
+Create a BREP wing using smoother bicubic side patches:
+
+[source]
+----
+naca456 --mode brep --brep-surface smooth --force \
+  --output wing-smooth-brep.g --name wing_smooth \
+  --airfoil 2412 --span 900 --root-chord 240 --tip-chord 120 \
+  --sweep 80 --dihedral 4 --tip-twist -2 --stations 8 --samples 29
 ----
 
 Create a 6A-series BREP:
