@@ -352,7 +352,7 @@ tcl_bu_dir(void *clientData,
  *
  * @param clientData	- associated data/state
  * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
+ * @param UNUSED_argv	- command name and arguments
  *
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */

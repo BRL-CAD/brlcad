@@ -37,6 +37,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -181,7 +182,7 @@ option_supplied(int argc, char **argv, char short_opt, const char *long_opt)
 	const char *arg = argv[i];
 	if (!arg)
 	    continue;
-	if (arg[0] == '-' && arg[1] == '-' && std::strncmp(arg + 2, long_opt, long_len) == 0 &&
+	if (arg[0] == '-' && arg[1] == '-' && bu_strncmp(arg + 2, long_opt, long_len) == 0 &&
 		(arg[2 + long_len] == '\0' || arg[2 + long_len] == '='))
 	    return true;
 	if (short_opt != '\0' && arg[0] == '-' && arg[1] == short_opt)
@@ -1281,25 +1282,35 @@ validate_station_outlines(const options &opts, const std::vector<std::vector<poi
 static std::vector<std::array<int32_t, 3>>
 cap_triangulation(const std::vector<point2d> &outline)
 {
-    std::vector<point2d_t> pnts(outline.size());
+    struct point2d_deleter {
+	void operator()(point2d_t *p) const {
+	    bu_free(p, "naca456 cap triangulation points");
+	}
+    };
+
+    std::unique_ptr<point2d_t, point2d_deleter> pnts(
+	static_cast<point2d_t *>(bu_calloc(outline.size(), sizeof(point2d_t), "naca456 cap triangulation points")));
     std::vector<int> index_map(outline.size());
     for (size_t i = 0; i < outline.size(); ++i) {
-	V2SET(pnts[i], outline[i].x, outline[i].z);
+	V2SET(pnts.get()[i], outline[i].x, outline[i].z);
 	index_map[i] = static_cast<int>(i);
     }
 
-    const int dir = bg_polygon_direction(outline.size(), pnts.data(), NULL);
+    const int dir = bg_polygon_direction(outline.size(), pnts.get(), NULL);
     const bool reversed_input = dir == BG_CW;
     if (reversed_input) {
-	std::reverse(pnts.begin(), pnts.end());
-	std::reverse(index_map.begin(), index_map.end());
+	for (size_t i = 0; i < outline.size(); ++i) {
+	    const size_t orig_i = outline.size() - i - 1;
+	    V2SET(pnts.get()[i], outline[orig_i].x, outline[orig_i].z);
+	    index_map[i] = static_cast<int>(orig_i);
+	}
     } else if (dir != BG_CCW) {
 	throw std::runtime_error("airfoil cap outline is not a valid simple polygon");
     }
 
     int *faces = NULL;
     int num_faces = 0;
-    if (bg_poly_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, pnts.data(), pnts.size(), TRI_CONSTRAINED_DELAUNAY) != 0 || !faces || num_faces <= 0) {
+    if (bg_poly_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, pnts.get(), outline.size(), TRI_CONSTRAINED_DELAUNAY) != 0 || !faces || num_faces <= 0) {
 	if (faces)
 	    bu_free(faces, "naca456 cap triangulation faces");
 	throw std::runtime_error("airfoil cap triangulation failed");
