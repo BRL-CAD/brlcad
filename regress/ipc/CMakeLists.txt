@@ -32,7 +32,7 @@ if(TARGET libbu AND TARGET libdm AND TARGET libpkg AND TARGET libtclcad AND TARG
       ENVIRONMENT "FBSERV_BIN=$<TARGET_FILE:fbserv>;LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib"
       TIMEOUT 120
     )
-    brlcad_regression_test(regress-ipc "regress_ipc;fbserv;libbu;libdm;libpkg;libtclcad" STAND_ALONE TEST_DEFINED)
+    brlcad_regression_test(regress-ipc "regress_ipc;fbserv;libbu;libdm;libpkg;libtclcad" TEST_DEFINED)
     distclean(${CMAKE_CURRENT_BINARY_DIR}/regress-ipc.log)
     distclean(${CMAKE_CURRENT_BINARY_DIR}/regress_ipc_fbserv.log)
 

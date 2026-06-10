@@ -108,8 +108,7 @@ brlcad_add_test(NAME bn_poly_multiply              COMMAND bn_test poly_multiply
 brlcad_add_test(NAME bn_poly_scale                 COMMAND bn_test poly_scale)
 brlcad_add_test(NAME bn_poly_add                   COMMAND bn_test poly_add)
 
-# failure encountered, no output to indicate why (disabled in prep for release)
-# BRLCAD_ADD_TEST(NAME bn_poly_sub                   COMMAND bn_test poly_sub)
+brlcad_add_test(NAME bn_poly_sub                   COMMAND bn_test poly_sub)
 
 brlcad_add_test(NAME bn_poly_synthetic_div               COMMAND bn_test poly_synthetic_div)
 

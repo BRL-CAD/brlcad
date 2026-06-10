@@ -3,7 +3,7 @@ if(TARGET libpkg)
   if(TARGET regress_pkg)
     set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/pkg")
 
-    brlcad_regression_test(regress-pkg "regress_pkg" EXEC regress_pkg STAND_ALONE)
+    brlcad_regression_test(regress-pkg "regress_pkg" EXEC regress_pkg)
     distclean(${CMAKE_CURRENT_BINARY_DIR}/regress-pkg.log)
   endif(TARGET regress_pkg)
 endif(TARGET libpkg)

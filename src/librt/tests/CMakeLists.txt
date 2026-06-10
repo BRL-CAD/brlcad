@@ -78,7 +78,7 @@ brlcad_addexec(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv;${M_LIBRARY}" TES
 
 # arb8 testing
 brlcad_addexec(rt_arb8 arb8_tests.c "librt;libwdb;libbg;libbu;${M_LIBRARY}" TEST)
-#brlcad_add_test(NAME rt_arb8_tests COMMAND rt_arb8)
+brlcad_add_test(NAME rt_arb8_tests COMMAND rt_arb8)
 
 # search stress and correctness testing
 brlcad_addexec(rt_search_stress search_stress.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
@@ -102,7 +102,7 @@ add_subdirectory(edit)
 
 # prim_tess: NMG tessellation quality tests
 brlcad_addexec(rt_prim_tess prim_tess.c "librt;libnmg;libwdb;libbg;libbu;${M_LIBRARY}" TEST)
-#brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
+brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
 
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)

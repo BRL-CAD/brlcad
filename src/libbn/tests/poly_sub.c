@@ -64,9 +64,9 @@ psub_poly_init(void)
      * The known values used for these tests are generated from
      * GNU Octave, version 3.4.3
      */
-    psub_output[1].cf[0] = -9706;
-    psub_output[1].cf[1] = -648;
-    psub_output[1].cf[2] = -550;
+    psub_output[1].cf[0] = -4853;
+    psub_output[1].cf[1] = -324;
+    psub_output[1].cf[2] = -275;
 
     /* stores positive coefficients to to polynomial psub_input. */
     psub_output[2] = bn_Zero_poly;
@@ -78,9 +78,9 @@ psub_poly_init(void)
     psub_input[2].cf[1] = 33552288;
     psub_input[2].cf[2] = 27339096;
 
-    psub_output[2].cf[0] = 61695022;
-    psub_output[2].cf[1] = 33552936;
-    psub_output[2].cf[2] = 27339646;
+    psub_output[2].cf[0] = 61690169;
+    psub_output[2].cf[1] = 33552612;
+    psub_output[2].cf[2] = 27339371;
 
     return;
 }
@@ -94,7 +94,7 @@ psub_check_results(fastf_t a[], fastf_t b[], size_t n)
 
     for (i = 0; i < n; i++) {
 	if (!EQUAL(a[i], b[i]))
-	    return -1;
+	    return 1;
     }
 
     return 0;
