@@ -360,6 +360,18 @@ main(int ac, char *av[])
     int blades = DEF_BLADES;
     int seed = DEF_SEED;
 
+    /* Track which floating-point tunables the caller explicitly set, so
+     * blade mode can substitute its own defaults only for the untouched
+     * ones.  (Comparing the doubles against their defaults would be both
+     * unreliable and a -Wfloat-equal violation.)
+     */
+    int set_span = 0;
+    int set_root_chord = 0;
+    int set_tip_chord = 0;
+    int set_twist = 0;
+    int set_sweep = 0;
+    int set_dihedral = 0;
+
     /* working storage */
     double *base_x = NULL;      /* unit-chord airfoil X coords */
     double *base_z = NULL;      /* unit-chord airfoil Z coords */
@@ -389,16 +401,22 @@ main(int ac, char *av[])
 	    points = atoi(av[++i]);
 	} else if (BU_STR_EQUAL(av[i], "--span") && i + 1 < ac) {
 	    span = atof(av[++i]);
+	    set_span = 1;
 	} else if (BU_STR_EQUAL(av[i], "--root-chord") && i + 1 < ac) {
 	    root_chord = atof(av[++i]);
+	    set_root_chord = 1;
 	} else if (BU_STR_EQUAL(av[i], "--tip-chord") && i + 1 < ac) {
 	    tip_chord = atof(av[++i]);
+	    set_tip_chord = 1;
 	} else if (BU_STR_EQUAL(av[i], "--twist") && i + 1 < ac) {
 	    twist_deg = atof(av[++i]);
+	    set_twist = 1;
 	} else if (BU_STR_EQUAL(av[i], "--sweep") && i + 1 < ac) {
 	    sweep_deg = atof(av[++i]);
+	    set_sweep = 1;
 	} else if (BU_STR_EQUAL(av[i], "--dihedral") && i + 1 < ac) {
 	    dihedral_deg = atof(av[++i]);
+	    set_dihedral = 1;
 	} else if (BU_STR_EQUAL(av[i], "--blades") && i + 1 < ac) {
 	    blades = atoi(av[++i]);
 	} else if (BU_STR_EQUAL(av[i], "--seed") && i + 1 < ac) {
@@ -421,19 +439,19 @@ main(int ac, char *av[])
      * defaults for visual punch when the caller did not override them.
      */
     if (mode == MODE_BLADE) {
-	if (NEAR_EQUAL(twist_deg, DEF_TWIST, SMALL_FASTF))
+	if (!set_twist)
 	    twist_deg = 38.0;       /* strong root-to-tip washout */
-	if (NEAR_EQUAL(sweep_deg, DEF_SWEEP, SMALL_FASTF))
+	if (!set_sweep)
 	    sweep_deg = 6.0;
-	if (NEAR_EQUAL(dihedral_deg, DEF_DIHEDRAL, SMALL_FASTF))
+	if (!set_dihedral)
 	    dihedral_deg = 0.0;
 	if (NEAR_EQUAL(naca, DEF_NACA, SMALL_FASTF))
 	    naca = 4412;            /* fatter, draggier propeller section */
-	if (NEAR_EQUAL(root_chord, DEF_ROOT_CHORD, SMALL_FASTF))
+	if (!set_root_chord)
 	    root_chord = 140.0;
-	if (NEAR_EQUAL(tip_chord, DEF_TIP_CHORD, SMALL_FASTF))
+	if (!set_tip_chord)
 	    tip_chord = 90.0;
-	if (NEAR_EQUAL(span, DEF_SPAN, SMALL_FASTF))
+	if (!set_span)
 	    span = 700.0;           /* blade length from hub to tip */
     }
 
