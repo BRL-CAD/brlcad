@@ -134,6 +134,18 @@ init_icosahedron(void)
 }
 
 
+/* Quantize a coordinate onto the fixed dedup grid.  The floor() result
+ * is stored before the cast so we are not casting a function-call value
+ * directly.
+ */
+static long
+quantize(double v)
+{
+    double q = floor(v / QUANT + 0.5);
+    return (long)q;
+}
+
+
 /*
  * Find (or insert) a node at the given unit-sphere position, returning
  * its index in the de-duplicated node table.  Sharing is detected by
@@ -146,22 +158,15 @@ find_or_add_node(const point_t p)
     int i;
 
     /* quantize to collapse coincident vertices from adjacent faces */
-    double fval;
-    fval = floor(p[X] / QUANT + 0.5);
-    qx = (long)fval;
-    fval = floor(p[Y] / QUANT + 0.5);
-    qy = (long)fval;
-    fval = floor(p[Z] / QUANT + 0.5);
-    qz = (long)fval;
+    qx = quantize(p[X]);
+    qy = quantize(p[Y]);
+    qz = quantize(p[Z]);
 
     for (i = 0; i < num_nodes; i++) {
-	float nfval;
-	nfval = floor(nodes[i][X] / QUANT + 0.5);
-	long nx = (long)nfval;
-	nfval = floor(nodes[i][Y] / QUANT + 0.5);
-	long ny = (long)nfval;
-	nfval = floor(nodes[i][Z] / QUANT + 0.5);
-	long nz = (long)nfval;
+	long nx = quantize(nodes[i][X]);
+	long ny = quantize(nodes[i][Y]);
+	long nz = quantize(nodes[i][Z]);
+
 	if (nx == qx && ny == qy && nz == qz) {
 	    return i;
 	}
