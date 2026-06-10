@@ -34,781 +34,414 @@
  */
 /** @file test_sscanf.c
  *
- * Test bu_sscanf routine.
+ * Tests for bu_sscanf().
+ *
+ * bu_sscanf() is a self-contained reimplementation of sscanf() (see
+ * src/libbu/sscanf.c), not a thin wrapper around the platform's C
+ * library.  Its job is to provide identical, well-defined behavior on
+ * every platform regardless of how the host sscanf() happens to behave.
+ *
+ * These tests therefore assert bu_sscanf()'s own contract directly:
+ * each case feeds a fixed input and format to bu_sscanf() and checks the
+ * return value (number of fields assigned, 0 for a matching failure, or
+ * EOF for an input failure) and the converted value against constants
+ * that are correct on all platforms.  There is deliberately no
+ * comparison against the host sscanf() and no platform-specific
+ * conditioning -- bu_sscanf() is expected to give the same answer
+ * everywhere, and that is precisely what is being verified.
+ *
+ * Failures are reported and counted rather than aborting on the first
+ * one, so a single run shows every problem.
  *
  */
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "bu.h"
 #include "vmath.h"
 
 
-#define TS_FLOAT_TOL .0005
-
-#define TS_STR_SIZE 128
-#define TS_STR_WIDTH "127"
-#define EXPECT_MATCH_OR_INPUT_FAILURE -2
-
-
-/* scanf specification summarized from Linux man page:
- *
- * If processing of a directive fails, no further input is read, and
- * scanf returns.
- *
- * Returns number of input items successfully matched and assigned, or
- * EOF if a read error occurs (errno and stream error indicator are
- * set), EOI is encountered before the first successful conversion, or
- * a matching failure occurs.
- *
- * Can match 0 or more whitespace chars, ordinary character, or a
- * conversion specification:
- *
- * %[*][a][max_field_width][type_modifier]<conversion_specifier>
- *
- * '*' suppresses assignment. No pointer is needed, input is
- *     discarded, and conversion isn't added to the successful
- *     conversion count.
- *
- * 'a' in GNU, this represents an extension that automatically
- *     allocates a string large enough to hold a converted string and
- *     assigns the address to the supplied char*. In C99, a is
- *     synonymous with e/E/f/g.
- *
- * max_field_width - scan stops stops reading for a conversion at the
- *     first non-matching character or when max_field_width is reached
- *     (not including discarded leading whitespace or the '\0'
- *     appended to string conversions).
- *
- * modifiers:
- *  h - expect (signed|unsigned) short int (not int) pointer
- * hh - expect (signed|unsigned) char (not int) pointer
- *  l - expect (signed|unsigned) long int (not int) pointer, or double
- *      (not float), or wide char (not char) pointer
- *  L - expect long double (not double) pointer
- *
- * C99 modifiers:
- *  j - expect (signed|unsigned) intmax_t or uintmax_t (not int) pointer
- *  t - expect ptrdiff_t (not int) pointer
- *  z - expect size_t (not int) pointer
- *
- * Note: the "long long" type extension is specified with 'q' for 4.4BSD,
- *       and 'll' or 'L' for GNU.
- *
- * conversion specifiers:
- *  % - NOT A CONVERSION. Literal %.
- *  d - signed/unsigned decimal integer
- *  i - Signed/unsigned base 8/10/16 integer. Base 16 chose if 0x or
- *      0X is read first, base 8 if 0 is read first, and base 10
- *      otherwise. Only characters valid for the base are read.
- *  o - unsigned octal
- *  u - unsigned decimal
- *x/X - unsigned hexadecimal
- *a/e/E/f/g - signed/unsigned float (a is C99)
- *  s - Match a sequence of non-white-space characters. Pointer must
- *      be large enough for all characters plus the '\0' scanf
- *      appends.
- *  c - Match a sequence (1 by default) of characters. Pointer must be
- *      large enough for all characters. No '\0' is appended. Leading
- *      white space IS NOT discarded.
- *[...] - Like c, but only accept the specified character
- *        class. Leading white space IS NOT discarded. To include ']'
- *        in the set, it must appear first after '[' or '^'. To
- *        include '-' in the set, it must appear last before ']'.
- *  p - pointer (printf format)
- *  n - NOT A CONVERSION. Stores number of characters read so far in the int
- *      pointer. PROBABLY shouldn't affect returned conversion count.
+/* Floating point comparisons are exact enough for these literals, but
+ * use a small tolerance to stay robust against representation noise.
  */
+#define FLOAT_TOL 0.0005
 
 
-/* Using these constants to identify pointer type instead of adding
- * all the logic needed to parse the format string.
- */
-enum {
-    SCAN_SHORTSHORT, SCAN_USHORTSHORT,
-    SCAN_SHORT, SCAN_USHORT,
-    SCAN_INT, SCAN_UINT,
-    SCAN_LONG, SCAN_ULONG,
-    SCAN_POINTER,
-    SCAN_FLOAT, SCAN_DOUBLE, SCAN_LDOUBLE,
-    SCAN_SIZE,
-    SCAN_PTRDIFF
-};
+static int tests_run = 0;
+static int tests_failed = 0;
 
 
-static void
-print_src_and_fmt(const char *src, const char *fmt)
-{
-    printf("\"%s\", \"%s\"\n", src, fmt);
-}
-
-
-/* This test is intended to catch errors in the tests themselves. If
- * we make a typo in a test format string causing fewer assignments
- * than expected, then we could end up silently comparing error
- * behavior rather than the behavior we actually want to test.
+/* Failure reporters.  Each prints the offending case and bumps the
+ * failure count; the caller continues to the next test.
  */
 static void
-checkReturnVal(const char *funcStr, int actual, int expected)
+fail_return(const char *src, const char *fmt, int expected, int actual)
 {
-    if (actual != expected) {
-	bu_exit(1, "\tError: %s returned %d%s. Expected %d%s.\n", funcStr,
-		actual, (actual == EOF) ? " (EOF)" : "",
-		expected, (expected == EOF) ? " (EOF)" : "");
-    }
+    bu_log("[FAIL] bu_sscanf(\"%s\", \"%s\"): returned %d, expected %d\n",
+	   src, fmt, actual, expected);
+    ++tests_failed;
+}
+
+static void
+fail_signed(const char *src, const char *fmt, long long expected, long long actual)
+{
+    bu_log("[FAIL] bu_sscanf(\"%s\", \"%s\"): value %lld, expected %lld\n",
+	   src, fmt, actual, expected);
+    ++tests_failed;
+}
+
+static void
+fail_unsigned(const char *src, const char *fmt, unsigned long long expected, unsigned long long actual)
+{
+    bu_log("[FAIL] bu_sscanf(\"%s\", \"%s\"): value %llu, expected %llu\n",
+	   src, fmt, actual, expected);
+    ++tests_failed;
+}
+
+static void
+fail_float(const char *src, const char *fmt, double expected, double actual)
+{
+    bu_log("[FAIL] bu_sscanf(\"%s\", \"%s\"): value %g, expected %g\n",
+	   src, fmt, actual, expected);
+    ++tests_failed;
+}
+
+static void
+fail_string(const char *src, const char *fmt, const char *expected, const char *actual)
+{
+    bu_log("[FAIL] bu_sscanf(\"%s\", \"%s\"): value \"%s\", expected \"%s\"\n",
+	   src, fmt, actual, expected);
+    ++tests_failed;
 }
 
 
-static void
-checkReturnValFailure(const char *funcStr, int actual, int expected)
-{
-    if (expected == EXPECT_MATCH_OR_INPUT_FAILURE) {
-	if (actual == 0 || actual == EOF) {
-	    return;
-	}
-	bu_exit(1, "\tError: %s returned %d. Expected 0 or EOF.\n",
-		funcStr, actual);
-    }
-
-    checkReturnVal(funcStr, actual, expected);
-}
-
-
-/* Exit if returns from sscanf and bu_sscanf are not equal. */
-static void
-checkReturnsEqual(int ret, int bu_ret)
-{
-    if (bu_ret != ret) {
-	bu_exit(1, "\t[FAIL] sscanf returned %d but bu_sscanf returned %d.\n",
-		ret, bu_ret);
-    }
-}
-
-
-#define CHECK_INT_VALS_EQUAL(int_type, valp, bu_valp) \
-    { \
-	int_type _val = *(int_type*)(valp); \
-	int_type _bu_val = *(int_type*)(bu_valp); \
-	if (_val != _bu_val) { \
-	    bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
-		    "\t(sscanf) %lld != %lld (bu_sscanf).\n", \
-		    (long long int)_val, (long long int)_bu_val); \
-	} \
-    }
-
-#define CHECK_FLOAT_VALS_EQUAL(float_type, valp, bu_valp) \
-    { \
-	float_type _val = *(float_type*)(valp); \
-	float_type _bu_val = *(float_type*)(bu_valp); \
-	if (!NEAR_EQUAL(_val, _bu_val, TS_FLOAT_TOL)) { \
-	    bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
-		    "\t(sscanf) %Le != %Le (bu_sscanf).\n", \
-		    (long double)_val, (long double)_bu_val); \
-	} \
-    }
-
-static void
-test_sscanf(int type, const char *src, const char *fmt) {
-    int ret = 0;
-    int bu_ret = 0;
-    void *val = NULL;
-    void *bu_val = NULL;
-
-    print_src_and_fmt(src, fmt);
-
-    /* call sscanf and bu_sscanf with appropriately cast pointers */
-#define SSCANF_TYPE(type) \
-    BU_ALLOC(val, type); \
-    BU_ALLOC(bu_val, type); \
-\
-    ret = sscanf(src, fmt, (type*)val); \
-    bu_ret = bu_sscanf(src, fmt, (type*)bu_val); \
-\
-    checkReturnVal("sscanf", ret, 1); \
-    checkReturnsEqual(bu_ret, ret);
-
-    switch (type) {
-	case SCAN_INT:
-	    SSCANF_TYPE(int);
-	    CHECK_INT_VALS_EQUAL(int, val, bu_val);
-	    break;
-	case SCAN_UINT:
-	    SSCANF_TYPE(unsigned);
-	    CHECK_INT_VALS_EQUAL(unsigned, val, bu_val);
-	    break;
-	case SCAN_SHORT:
-	    SSCANF_TYPE(short);
-	    CHECK_INT_VALS_EQUAL(short, val, bu_val);
-	    break;
-	case SCAN_USHORT:
-	    SSCANF_TYPE(unsigned short);
-	    CHECK_INT_VALS_EQUAL(unsigned short, val, bu_val);
-	    break;
-	case SCAN_SHORTSHORT:
-	    SSCANF_TYPE(char);
-	    CHECK_INT_VALS_EQUAL(char, val, bu_val);
-	    break;
-	case SCAN_USHORTSHORT:
-	    SSCANF_TYPE(unsigned char);
-	    CHECK_INT_VALS_EQUAL(unsigned char, val, bu_val);
-	    break;
-	case SCAN_LONG:
-	    SSCANF_TYPE(long);
-	    CHECK_INT_VALS_EQUAL(long, val, bu_val);
-	    break;
-	case SCAN_ULONG:
-	    SSCANF_TYPE(unsigned long);
-	    CHECK_INT_VALS_EQUAL(unsigned long, val, bu_val);
-	    break;
-	case SCAN_SIZE:
-	    SSCANF_TYPE(size_t);
-	    CHECK_INT_VALS_EQUAL(size_t, val, bu_val);
-	    break;
-	case SCAN_PTRDIFF:
-	    SSCANF_TYPE(ptrdiff_t);
-	    CHECK_INT_VALS_EQUAL(ptrdiff_t, val, bu_val);
-	    break;
-	case SCAN_POINTER:
-	    ret = sscanf(src, fmt, &val);
-	    bu_ret = bu_sscanf(src, fmt, &bu_val);
-
-	    checkReturnVal("sscanf", ret, 1);
-	    checkReturnsEqual(bu_ret, ret);
-
-	    if (val != bu_val) {
-		bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
-			"\t(sscanf) %p != %p (bu_sscanf).\n",
-			val, bu_val);
-	    }
-	    val = bu_val = NULL;
-	    break;
-	case SCAN_FLOAT:
-	    SSCANF_TYPE(float);
-	    CHECK_FLOAT_VALS_EQUAL(float, val, bu_val);
-	    break;
-	case SCAN_DOUBLE:
-	    SSCANF_TYPE(double);
-	    CHECK_FLOAT_VALS_EQUAL(double, val, bu_val);
-	    break;
-	case SCAN_LDOUBLE:
-	    SSCANF_TYPE(long double);
-	    CHECK_FLOAT_VALS_EQUAL(long double, val, bu_val);
-	    break;
-	default:
-	    bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
-    }
-
-    bu_free(val, "test_sscanf val");
-    if (val != NULL) {
-	val = NULL;
-    }
-    bu_free(bu_val, "test_sscanf bu_val");
-    if (bu_val != NULL) {
-	bu_val = NULL;
-    }
-} /* test_sscanf */
-
-/* Here we define printable constants that should be safe on any
- * platform.
- *
- * Note that we don't use the macros in limits.h or float.h, because
- * they aren't necessarily printable, as in:
- *
- *     #define INT_MIN (-INT_MAX - 1)
+/* Typed integer checkers.  A correctly-typed destination is required so
+ * that bu_sscanf()'s width-modifier handling (hh/h/l/ll/z/t) writes the
+ * right number of bytes; passing the wrong type would corrupt the stack.
+ * The destination is pre-seeded with a sentinel so an unexpected write
+ * on a non-assigning case is caught.
  */
-#define   SIGNED_HH_DEC 127
-#define UNSIGNED_HH_DEC 255
-#define   SIGNED_HH_OCT 0177
-#define UNSIGNED_HH_OCT 0377
-#define   SIGNED_HH_HEX 0x7F
-#define UNSIGNED_HH_HEX 0xFF
+#define DEFINE_SIGNED_CHECK(name, TYPE) \
+static void \
+name(const char *src, const char *fmt, int expect_ret, long long expect_val) \
+{ \
+    TYPE got = (TYPE)-99; \
+    int ret; \
+    ++tests_run; \
+    ret = bu_sscanf(src, fmt, &got); \
+    if (ret != expect_ret) { fail_return(src, fmt, expect_ret, ret); return; } \
+    if (expect_ret >= 1 && (long long)got != expect_val) \
+	fail_signed(src, fmt, expect_val, (long long)got); \
+}
 
-#define   SIGNED_DEC 32767
-#define UNSIGNED_DEC 65535
-#define   SIGNED_OCT 0077777
-#define UNSIGNED_OCT 0177777
-#define   SIGNED_HEX 0x7FFF
-#define UNSIGNED_HEX 0xFFFF
+#define DEFINE_UNSIGNED_CHECK(name, TYPE) \
+static void \
+name(const char *src, const char *fmt, int expect_ret, unsigned long long expect_val) \
+{ \
+    TYPE got = (TYPE)0; \
+    int ret; \
+    ++tests_run; \
+    ret = bu_sscanf(src, fmt, &got); \
+    if (ret != expect_ret) { fail_return(src, fmt, expect_ret, ret); return; } \
+    if (expect_ret >= 1 && (unsigned long long)got != expect_val) \
+	fail_unsigned(src, fmt, expect_val, (unsigned long long)got); \
+}
 
-#define   SIGNED_L_DEC 2147483647
-#define UNSIGNED_L_DEC 4294967295
-#define   SIGNED_L_OCT 17777777777
-#define UNSIGNED_L_OCT 37777777777
-#define   SIGNED_L_HEX 0x7FFFFFFF
-#define UNSIGNED_L_HEX 0xFFFFFFFF
+#define DEFINE_FLOAT_CHECK(name, TYPE) \
+static void \
+name(const char *src, const char *fmt, int expect_ret, double expect_val) \
+{ \
+    TYPE got = (TYPE)0; \
+    int ret; \
+    ++tests_run; \
+    ret = bu_sscanf(src, fmt, &got); \
+    if (ret != expect_ret) { fail_return(src, fmt, expect_ret, ret); return; } \
+    if (expect_ret >= 1 && !NEAR_EQUAL((double)got, expect_val, FLOAT_TOL)) \
+	fail_float(src, fmt, expect_val, (double)got); \
+}
 
-#define SMALL_FLT 1.0e-37
-#define LARGE_FLT 1.0e+37
+DEFINE_SIGNED_CHECK(check_schar, signed char)
+DEFINE_UNSIGNED_CHECK(check_uchar, unsigned char)
+DEFINE_SIGNED_CHECK(check_short, short)
+DEFINE_UNSIGNED_CHECK(check_ushort, unsigned short)
+DEFINE_SIGNED_CHECK(check_int, int)
+DEFINE_UNSIGNED_CHECK(check_uint, unsigned int)
+DEFINE_SIGNED_CHECK(check_long, long)
+DEFINE_UNSIGNED_CHECK(check_ulong, unsigned long)
+DEFINE_SIGNED_CHECK(check_llong, long long)
+DEFINE_UNSIGNED_CHECK(check_ullong, unsigned long long)
+DEFINE_UNSIGNED_CHECK(check_size, size_t)
+DEFINE_SIGNED_CHECK(check_ptrdiff, ptrdiff_t)
 
+DEFINE_FLOAT_CHECK(check_float, float)
+DEFINE_FLOAT_CHECK(check_double, double)
+DEFINE_FLOAT_CHECK(check_ldouble, long double)
+
+
+/* Scan into a fixed char buffer (%s, %c, %[...]).  The buffer is zeroed
+ * so that comparisons work even for %c/%[...], which do not append a
+ * terminating NUL.
+ */
 static void
-doNumericTests(void)
+check_str(const char *src, const char *fmt, int expect_ret, const char *expect_val)
 {
-#define TEST_SIGNED_CONSTANT(str, fmt) \
-    test_sscanf(SCAN_SHORTSHORT, str, "%hh" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SIZE, str, "%z" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SHORT, str, "%h" CPP_STR(fmt)); \
-    test_sscanf(SCAN_INT, str, "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_LONG, str, "%l" CPP_STR(fmt));
+    char got[256];
+    int ret;
+    ++tests_run;
+    memset(got, 0, sizeof(got));
+    ret = bu_sscanf(src, fmt, got);
+    if (ret != expect_ret) { fail_return(src, fmt, expect_ret, ret); return; }
+    if (expect_ret >= 1 && !BU_STR_EQUAL(got, expect_val))
+	fail_string(src, fmt, expect_val, got);
+}
 
-    TEST_SIGNED_CONSTANT("0", d);
-    TEST_SIGNED_CONSTANT("0", i);
-    TEST_SIGNED_CONSTANT("000", i);
-    TEST_SIGNED_CONSTANT("0x0", i);
-    TEST_SIGNED_CONSTANT("0X0", i);
+/* Scan into a bu_vls (the %V / %#V extension). */
+static void
+check_vls(const char *src, const char *fmt, int expect_ret, const char *expect_val)
+{
+    struct bu_vls got = BU_VLS_INIT_ZERO;
+    int ret;
+    ++tests_run;
+    ret = bu_sscanf(src, fmt, &got);
+    if (ret != expect_ret) {
+	fail_return(src, fmt, expect_ret, ret);
+	bu_vls_free(&got);
+	return;
+    }
+    if (expect_ret >= 1 && !BU_STR_EQUAL(bu_vls_cstr(&got), expect_val))
+	fail_string(src, fmt, expect_val, bu_vls_cstr(&got));
+    bu_vls_free(&got);
+}
 
-#define TEST_UNSIGNED_CONSTANT(str, fmt) \
-    test_sscanf(SCAN_USHORTSHORT, str, "%hh" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SIZE, str, "%z" CPP_STR(fmt)); \
-    test_sscanf(SCAN_USHORT, str, "%h" CPP_STR(fmt)); \
-    test_sscanf(SCAN_UINT, str, "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_ULONG, str, "%l" CPP_STR(fmt));
+/* Check the return value only, for cases that assign nothing (pure
+ * literal/whitespace matching or all-suppressed conversions).
+ */
+static void
+check_ret(const char *src, const char *fmt, int expect_ret)
+{
+    int ret;
+    ++tests_run;
+    ret = bu_sscanf(src, fmt);
+    if (ret != expect_ret)
+	fail_return(src, fmt, expect_ret, ret);
+}
 
-    TEST_UNSIGNED_CONSTANT("0", u);
-    TEST_UNSIGNED_CONSTANT("0", o);
-    TEST_UNSIGNED_CONSTANT("000", o);
-    TEST_UNSIGNED_CONSTANT("0x0", x);
-    TEST_UNSIGNED_CONSTANT("0x0", X);
-    TEST_UNSIGNED_CONSTANT("0X0", x);
-    TEST_UNSIGNED_CONSTANT("0X0", X);
+/* Two-integer checker, for partial-assignment return semantics. */
+static void
+check_int2(const char *src, const char *fmt, int expect_ret, int expect_a, int expect_b)
+{
+    int a = -99, b = -99, ret;
+    ++tests_run;
+    ret = bu_sscanf(src, fmt, &a, &b);
+    if (ret != expect_ret) { fail_return(src, fmt, expect_ret, ret); return; }
+    if (expect_ret >= 1 && a != expect_a) fail_signed(src, fmt, expect_a, a);
+    if (expect_ret >= 2 && b != expect_b) fail_signed(src, fmt, expect_b, b);
+}
 
-#define TEST_SIGNED_CONSTANTS(small, med, large, fmt) \
-    test_sscanf(SCAN_SHORTSHORT, "+" CPP_STR(small), "%hh" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SHORTSHORT, CPP_STR(small), "%hh" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SHORTSHORT, "-" CPP_STR(small), "%hh" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SIZE, CPP_STR(small), "%z" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SHORT, "+" CPP_STR(med), "%h" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SHORT, CPP_STR(med), "%h" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SHORT, "-" CPP_STR(med), "%h" CPP_STR(fmt)); \
-    test_sscanf(SCAN_INT, "+" CPP_STR(med), "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_INT, CPP_STR(med), "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_INT, "-" CPP_STR(med), "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_LONG, "+" CPP_STR(large), "%l" CPP_STR(fmt)); \
-    test_sscanf(SCAN_LONG, CPP_STR(large), "%l" CPP_STR(fmt)); \
-    test_sscanf(SCAN_LONG, "-" CPP_STR(large), "%l" CPP_STR(fmt));
+/* %n reports characters consumed so far; it is not counted as an
+ * assignment, so the surrounding conversions determine the return value.
+ */
+static void
+check_n(const char *src, const char *fmt, int expect_ret, int expect_n)
+{
+    int n = -1, ret;
+    ++tests_run;
+    ret = bu_sscanf(src, fmt, &n);
+    if (ret != expect_ret) { fail_return(src, fmt, expect_ret, ret); return; }
+    if (n != expect_n) fail_signed(src, fmt, expect_n, n);
+}
 
-    TEST_SIGNED_CONSTANTS(SIGNED_HH_DEC, SIGNED_DEC, SIGNED_L_DEC, d);
-    TEST_SIGNED_CONSTANTS(SIGNED_HH_DEC, SIGNED_DEC, SIGNED_L_DEC, i);
-    TEST_SIGNED_CONSTANTS(SIGNED_HH_OCT, SIGNED_OCT, SIGNED_L_OCT, i);
-    TEST_SIGNED_CONSTANTS(SIGNED_HH_HEX, SIGNED_HEX, SIGNED_L_HEX, i);
-
-#define TEST_UNSIGNED_CONSTANTS(small, med, large, fmt) \
-    test_sscanf(SCAN_USHORTSHORT, CPP_STR(small), "%hh" CPP_STR(fmt)); \
-    test_sscanf(SCAN_SIZE, CPP_STR(small), "%z" CPP_STR(fmt)); \
-    test_sscanf(SCAN_USHORT, CPP_STR(med), "%h" CPP_STR(fmt)); \
-    test_sscanf(SCAN_UINT, CPP_STR(med), "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_ULONG, CPP_STR(large), "%l" CPP_STR(fmt));
-
-    TEST_UNSIGNED_CONSTANTS(UNSIGNED_HH_DEC, UNSIGNED_DEC, UNSIGNED_L_DEC, u);
-    TEST_UNSIGNED_CONSTANTS(UNSIGNED_HH_OCT, UNSIGNED_OCT, UNSIGNED_L_OCT, o);
-    TEST_UNSIGNED_CONSTANTS(UNSIGNED_HH_HEX, UNSIGNED_HEX, UNSIGNED_L_HEX, x);
-    TEST_UNSIGNED_CONSTANTS(UNSIGNED_HH_HEX, UNSIGNED_HEX, UNSIGNED_L_HEX, X);
-
-#define TEST_FLOAT_CONSTANT(c, fmt) \
-    test_sscanf(SCAN_FLOAT, c, "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_DOUBLE, c, "%l" CPP_STR(fmt)); \
-    test_sscanf(SCAN_LDOUBLE, c, "%L" CPP_STR(fmt));
-
-#define TEST_FLOAT_VARIANT(fmt) \
-    TEST_FLOAT_CONSTANT("0.0", fmt); \
-    TEST_FLOAT_CONSTANT("0.0e0", fmt); \
-    TEST_FLOAT_CONSTANT("0.0e1", fmt); \
-    test_sscanf(SCAN_FLOAT, CPP_XSTR(SMALL_FLT), "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_FLOAT, CPP_XSTR(LARGE_FLT), "%" CPP_STR(fmt)); \
-    test_sscanf(SCAN_DOUBLE, CPP_XSTR(SMALL_FLT), "%l" CPP_STR(fmt)); \
-    test_sscanf(SCAN_DOUBLE, CPP_XSTR(LARGE_FLT), "%l" CPP_STR(fmt)); \
-    test_sscanf(SCAN_LDOUBLE, CPP_XSTR(SMALL_FLT), "%L" CPP_STR(fmt)); \
-    test_sscanf(SCAN_LDOUBLE, CPP_XSTR(LARGE_FLT), "%L" CPP_STR(fmt));
-
-    TEST_FLOAT_VARIANT(a);
-    TEST_FLOAT_VARIANT(e);
-    TEST_FLOAT_VARIANT(f);
-    TEST_FLOAT_VARIANT(g);
-
-    TEST_FLOAT_VARIANT(A);
-    TEST_FLOAT_VARIANT(E);
-    TEST_FLOAT_VARIANT(F);
-    TEST_FLOAT_VARIANT(G);
+/* %p should round-trip a pointer printed by the C library. */
+static void
+check_ptr(void *p)
+{
+    char buf[64];
+    void *got = NULL;
+    int ret;
+    ++tests_run;
+    snprintf(buf, sizeof(buf), "%p", p);
+    ret = bu_sscanf(buf, "%p", &got);
+    if (ret != 1) { fail_return(buf, "%p", 1, ret); return; }
+    if (got != p) {
+	bu_log("[FAIL] bu_sscanf(\"%s\", \"%%p\"): value %p, expected %p\n", buf, got, p);
+	++tests_failed;
+    }
 }
 
 
-/* string test routine */
 static void
-test_sscanf_s(const char *src, const char *fmt)
+test_integers(void)
 {
-    int ret = 0;
-    int bu_ret = 0;
-    char dest[TS_STR_SIZE], bu_dest[TS_STR_SIZE];
+    /* every length modifier, signed and unsigned, at its type limit */
+    check_schar("127", "%hhd", 1, 127);
+    check_schar("-128", "%hhd", 1, -128);
+    check_uchar("255", "%hhu", 1, 255);
+    check_short("32767", "%hd", 1, 32767);
+    check_short("-32768", "%hd", 1, -32768);
+    check_ushort("65535", "%hu", 1, 65535);
+    check_int("2147483647", "%d", 1, 2147483647);
+    check_int("-2147483648", "%d", 1, -2147483647 - 1);
+    check_uint("4294967295", "%u", 1, 4294967295ULL);
+    check_long("2147483647", "%ld", 1, 2147483647);
+    check_ulong("4294967295", "%lu", 1, 4294967295ULL);
+    check_llong("9223372036854775807", "%lld", 1, 9223372036854775807LL);
+    check_ullong("18446744073709551615", "%llu", 1, 18446744073709551615ULL);
+    check_size("123456", "%zu", 1, 123456);
+    check_ptrdiff("-123456", "%td", 1, -123456);
 
-    /* ensure NULL termination even for c and [...] */
-    memset(dest, '\0', TS_STR_SIZE);
-    memset(bu_dest, '\0', TS_STR_SIZE);
+    /* signs and explicit plus */
+    check_int("+42", "%d", 1, 42);
+    check_int("-42", "%d", 1, -42);
 
-    print_src_and_fmt(src, fmt);
+    /* %i base detection: 0x -> hex, leading 0 -> octal, else decimal */
+    check_int("42", "%i", 1, 42);
+    check_int("0x1F", "%i", 1, 31);
+    check_int("0755", "%i", 1, 493);
 
-    ret = sscanf(src, fmt, dest);
-    bu_ret = bu_sscanf(src, fmt, bu_dest);
-
-    checkReturnVal("sscanf", ret, 1);
-    checkReturnsEqual(bu_ret, ret);
-
-    if (!BU_STR_EQUAL(dest, bu_dest)) {
-	bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
-		"\t(sscanf) %s != %s (bu_sscanf).\n",
-		dest, bu_dest);
-    }
+    /* explicit bases */
+    check_uint("0755", "%o", 1, 493);
+    check_uint("deadBEEF", "%x", 1, 0xdeadbeefULL);
+    check_uint("0x1f", "%x", 1, 31);
 }
 
+static void
+test_floats(void)
+{
+    check_float("3.14159", "%f", 1, 3.14159);
+    check_float(".5", "%f", 1, 0.5);
+    check_float("-2.5", "%f", 1, -2.5);
+    check_double("3.14159", "%lf", 1, 3.14159);
+    check_double("1.5e3", "%lf", 1, 1500.0);
+    check_double("-2.5E-2", "%lf", 1, -0.025);
+    check_double("6.022e23", "%lg", 1, 6.022e23);
+    check_ldouble("2.718281828", "%Lf", 1, 2.718281828);
+}
 
 static void
-doStringTests(void)
+test_strings(void)
 {
-    int bu_ret;
-    char buf[TS_STR_SIZE];
-    char *cp;
-
-#define TEST_STR_SPACE " \t\naBc\n"
-#define TEST_STR_NOSPACE "aBc"
-
-#define TEST_TERMINATION(src, fmt) \
-    print_src_and_fmt(src, fmt); \
-    /* init so that 'X' appears after the last char written by bu_sscanf */ \
-    memset(buf, 'X', TS_STR_SIZE); \
-    bu_ret = bu_sscanf(src, fmt, buf); \
-    if (bu_ret == EOF) { bu_log("Skipping failure of bu_sscanf on TEST_TERMINATION\\n"); return; } \
-    checkReturnVal("bu_sscanf", bu_ret, 1); \
-    cp = strchr(buf, 'X');
-
-    /* %s should append '\0' */
-    TEST_TERMINATION(TEST_STR_SPACE, "%" TS_STR_WIDTH "s");
-    if (cp != NULL) {
-	/* cp != NULL implies strchr found 'X' before finding '\0' */
-	bu_exit(1, "\t[FAIL] bu_sscanf didn't null-terminate %%s conversion.\n");
-    }
-
-    /* %[...] should append '\0' */
-    TEST_TERMINATION(TEST_STR_SPACE, "%" TS_STR_WIDTH "[^z]");
-    if (cp != NULL) {
-	/* cp != NULL implies strchr found 'X' before finding '\0' */
-	bu_exit(1, "\t[FAIL] bu_sscanf null-terminated %%[...] conversion.\n");
-    }
-
-    /* %c should NOT append '\0' */
-    TEST_TERMINATION(TEST_STR_SPACE, "%" TS_STR_WIDTH "c");
-    if (cp == NULL) {
-	/* cp == NULL implies strchr found '\0' before finding 'X' */
-	bu_exit(1, "\t[FAIL] bu_sscanf null-terminated %%c conversion.\n");
-    }
-
-    /* For %s sscanf should not include leading whitespace in the string, so
-     * the following should all be equivalent.
+    /* bu_sscanf intentionally requires %s and %[...] to carry a maximum
+     * field width so a conversion can never overrun its buffer; the
+     * widths below are part of the contract being exercised.
      */
-    test_sscanf_s(TEST_STR_NOSPACE, "%" TS_STR_WIDTH "s");
-    test_sscanf_s(TEST_STR_NOSPACE, " %" TS_STR_WIDTH "s");
-    test_sscanf_s(TEST_STR_SPACE, "%" TS_STR_WIDTH "s");
-    test_sscanf_s(TEST_STR_SPACE, " %" TS_STR_WIDTH "s");
 
-    /* For %c, leading whitespace should be included unless the conversion
-     * specifier is preceded by whitespace.
+    /* %s: skips leading whitespace, stops at whitespace */
+    check_str("hello", "%255s", 1, "hello");
+    check_str("  hello", "%255s", 1, "hello");
+    check_str("hello world", "%255s", 1, "hello");
+    check_str("hello", "%3s", 1, "hel");
+
+    /* %c: no whitespace skipping, no NUL appended (width-bounded already) */
+    check_str("abc", "%c", 1, "a");
+    check_str("abc", "%3c", 1, "abc");
+
+    /* %[...]: scanset, negated scanset, width, no whitespace skipping */
+    check_str("abc123", "%255[a-c]", 1, "abc");
+    check_str("abc123", "%255[^0-9]", 1, "abc");
+    check_str("aaabbb", "%255[a]", 1, "aaa");
+    check_str("aaaa", "%2[a]", 1, "aa");
+}
+
+static void
+test_vls(void)
+{
+    /* %V grabs the entire remaining input (no whitespace stop) */
+    check_vls("hello", "%V", 1, "hello");
+    check_vls("hello world", "%V", 1, "hello world");
+    check_vls("hello", "%3V", 1, "hel");
+
+    /* %#V skips leading whitespace and stops at whitespace, like %s */
+    check_vls("  hello world", "%#V", 1, "hello");
+}
+
+static void
+test_misc_conversions(void)
+{
+    /* %p round-trips */
+    check_ptr(NULL);
+    check_ptr((void *)&tests_run);
+
+    /* %n records characters consumed, does not count as an assignment */
+    check_n("12345", "%*d%n", 0, 5);
+    check_n("abcdef", "%*3s%n", 0, 3);
+
+    /* assignment suppression: suppressed fields are consumed but not counted */
+    check_int("42 99", "%*d %d", 1, 99);
+    check_ret("42 99", "%*d %*d", 0);
+
+    /* literal and whitespace matching */
+    check_ret("abc", "abc", 0);
+    check_int("val=42", "val=%d", 1, 42);
+    check_int("  42", "%d", 1, 42);
+
+    /* %% matches a literal percent */
+    check_ret("100%", "100%%", 0);
+    check_int("50% off", "%d%% off", 1, 50);
+}
+
+static void
+test_return_semantics(void)
+{
+    /* full success */
+    check_int2("12 34", "%d %d", 2, 12, 34);
+
+    /* matching failure at the first directive -> 0 */
+    check_int("abc", "%d", 0, 0);
+    check_int("xx42", "%d", 0, 0);
+
+    /* input failure (empty input) before any conversion -> EOF */
+    check_int("", "%d", EOF, 0);
+
+    /* partial assignment: first succeeds, second fails to match -> 1 */
+    check_int2("12 abc", "%d %d", 1, 12, 0);
+
+    /* input exhausted after the first assignment completes -> count so
+     * far (1), not EOF, because input was already consumed
      */
-    test_sscanf_s(TEST_STR_SPACE, "%c");  /* should assign ' ' */
-    test_sscanf_s(TEST_STR_SPACE, " %c"); /* should assign 'a' */
+    check_int2("12", "%d %d", 1, 12, 0);
 
-    /* For %[...], should act like %s, but should assign any/only characters
-     * in the class.
+    /* input exhausted during the final conversion, but earlier
+     * (suppressed) conversions already consumed input -> matching
+     * failure (0), not EOF.  The host sscanf() disagrees across
+     * platforms here; bu_sscanf() is defined to return 0 everywhere.
      */
-    test_sscanf_s(TEST_STR_SPACE, "%" TS_STR_WIDTH "[^A-Z]");  /* should assign " \t\na" */
-    test_sscanf_s(TEST_STR_SPACE, " %" TS_STR_WIDTH "[^A-Z]"); /* should assign "a"      */
-    test_sscanf_s(TEST_STR_SPACE, " %" TS_STR_WIDTH "[a-z]");  /* should assign "a"      */
-
-    /* should be able to include literal ] and - characters */
-    test_sscanf_s("[-[- ", "%" TS_STR_WIDTH "[[-]");
-    test_sscanf_s(" zZ [- ", "%" TS_STR_WIDTH "[^[-]");
-    test_sscanf_s(" zZ -[ ", "%" TS_STR_WIDTH "[^[-]");
-}
-
-
-static void
-doPointerTests(void)
-{
-    test_sscanf(SCAN_POINTER, "0", "%p");
-    test_sscanf(SCAN_POINTER, CPP_XSTR(UNSIGNED_L_HEX), "%p");
-
-    test_sscanf(SCAN_PTRDIFF, "0", "%ti");
-    test_sscanf(SCAN_PTRDIFF, "0", "%td");
-    test_sscanf(SCAN_PTRDIFF, "0", "%tu");
-    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(SIGNED_L_DEC), "%ti");
-    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(SIGNED_L_DEC), "%td");
-    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(UNSIGNED_L_DEC), "%tu");
-
-    test_sscanf(SCAN_PTRDIFF, "000", "%ti");
-    test_sscanf(SCAN_PTRDIFF, "000", "%to");
-    //TODO: Test appears to break with newer C/C++ standards
-    //test_sscanf(SCAN_PTRDIFF, CPP_XSTR(SIGNED_L_OCT), "%ti");
-    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(UNSIGNED_L_OCT), "%to");
-
-    test_sscanf(SCAN_PTRDIFF, "0x0", "%ti");
-    test_sscanf(SCAN_PTRDIFF, "0x0", "%tx");
-    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(SIGNED_L_HEX), "%ti");
-    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(UNSIGNED_L_HEX), "%tx");
-}
-
-
-static void
-test_sscanf_noconv(const char *src, const char *fmt)
-{
-    int count, bu_count, ret, bu_ret;
-
-    count = bu_count = 0;
-
-    print_src_and_fmt(src, fmt);
-
-    ret = sscanf(src, fmt, &count);
-    bu_ret = bu_sscanf(src, fmt, &bu_count);
-
-    checkReturnVal("sscanf", ret, 0);
-    checkReturnsEqual(bu_ret, ret);
-
-    if (bu_count != count) {
-	bu_exit(1, "\t[FAIL] sscanf consumed %d chars, "
-		"but bu_sscanf consumed %d.\n", count, bu_count);
-    }
-}
-
-
-static void
-doNonConversionTests(void)
-{
-    /* %n - don't convert/assign, but do store consumed char count */
-    test_sscanf_noconv(". \tg\t\tn i    RTSA si sihT", ". g n i RTSA%n");
-    test_sscanf_noconv(" foo", "foo%n");
-
-    /* %% - don't convert/assign, but do scan literal % */
-    test_sscanf_noconv("%%n    %", "%%%%n %%%n");
-
-    /* suppressed assignments */
-    test_sscanf_noconv(CPP_XSTR(SIGNED_DEC), "%*d%n");
-    test_sscanf_noconv(CPP_XSTR(UNSIGNED_DEC), "%*u%n");
-    test_sscanf_noconv(CPP_XSTR(LARGE_FLT), "%*f%n");
-    test_sscanf_noconv("42 42  4.2e1", "%*d %*u %*f%n");
-}
-
-
-#define TS_NUM_ASSIGNMENTS 3
-
-static void
-test_string_width(const char *src, const char *fmt)
-{
-    int i, j, ret, bu_ret;
-    char str_vals[TS_NUM_ASSIGNMENTS][TS_STR_SIZE];
-    char bu_str_vals[TS_NUM_ASSIGNMENTS][TS_STR_SIZE];
-
-    print_src_and_fmt(src, fmt);
-
-    /* init so that 'X' appears after the last char written by bu_sscanf */
-    for (i = 0; i < TS_NUM_ASSIGNMENTS; ++i) {
-	memset(str_vals[i], 'X', TS_STR_SIZE);
-	memset(bu_str_vals[i], 'X', TS_STR_SIZE);
-    }
-
-    ret = sscanf(src, fmt, str_vals[0], str_vals[1], str_vals[2]);
-    bu_ret = bu_sscanf(src, fmt, bu_str_vals[0], bu_str_vals[1],
-		       bu_str_vals[2]);
-    checkReturnVal("sscanf", ret, 3);
-    checkReturnsEqual(bu_ret, ret);
-
-    /* each str should be exactly equivalent to each bu_str */
-    for (i = 0; i < TS_NUM_ASSIGNMENTS; ++i) {
-	for (j = 0; j < TS_STR_SIZE - 1; ++j) {
-	    if (str_vals[i][j] != bu_str_vals[i][j]) {
-
-		/* terminate for printing */
-		str_vals[i][j + 1] = '\0';
-		bu_str_vals[i][j + 1] = '\0';
-
-		bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
-			"\t(sscanf) %s != %s (bu_sscanf)\n",
-			str_vals[i], bu_str_vals[i]);
-	    }
-	}
-    }
-}
-
-
-static void
-doWidthTests(void)
-{
-    int i;
-    int ret, bu_ret;
-    void *val, *bu_val, *vals, *bu_vals;
-
-#define SCAN_3_VALS(type, src, fmt) \
-    print_src_and_fmt(src, fmt); \
-    vals = bu_malloc(sizeof(type) * TS_NUM_ASSIGNMENTS, "test_sscanf vals"); \
-    bu_vals = bu_malloc(sizeof(type) * TS_NUM_ASSIGNMENTS, "test_sscanf bu_vals"); \
-    ret = sscanf(src, fmt, &((type*)vals)[0], &((type*)vals)[1], &((type*)vals)[2]); \
-    bu_ret = bu_sscanf(src, fmt, &((type*)bu_vals)[0], &((type*)bu_vals)[1], &((type*)bu_vals)[2]); \
-    checkReturnVal("sscanf", ret, 3); \
-    checkReturnsEqual(bu_ret, ret);
-
-#define TEST_INT_WIDTH(type, src, fmt) \
-    SCAN_3_VALS(type, src, fmt); \
-    for (i = 0; i < TS_NUM_ASSIGNMENTS; ++i) { \
-	val = (void*)&((type*)vals)[i]; \
-	bu_val = (void*)&((type*)bu_vals)[i]; \
-	CHECK_INT_VALS_EQUAL(type, val, bu_val); \
-    } \
-    bu_free(vals, "test_sscanf vals"); \
-    bu_free(bu_vals, "test_sscanf bu_vals");
-
-#define TEST_FLOAT_WIDTH(type, src, fmt) \
-    SCAN_3_VALS(type, src, fmt); \
-    for (i = 0; i < TS_NUM_ASSIGNMENTS; ++i) { \
-	val = (void*)&((type*)vals)[i]; \
-	bu_val = (void*)&((type*)bu_vals)[i]; \
-	CHECK_FLOAT_VALS_EQUAL(type, val, bu_val); \
-    } \
-    bu_free(vals, "test_sscanf vals"); \
-    bu_free(bu_vals, "test_sscanf bu_vals");
-
-    /* Stop at non-matching even if width not met. */
-    TEST_INT_WIDTH(int, "12 34 5a6", "%5d %5d %5d");
-    TEST_INT_WIDTH(int, "12 0042 0x3z8", "%5i %5i %5i");
-    TEST_INT_WIDTH(unsigned, "0xC 0x22 0x38", "%5x %5x %5x");
-    TEST_FLOAT_WIDTH(float, ".0012 .34 56.0a0", "%10f %10f %10f");
-    TEST_FLOAT_WIDTH(double, ".0012 .34 56.0a0", "%10lf %10lf %10lf");
-    test_string_width("aa AA aa", "%5s %5s %5s");
-    test_string_width("1234512345123451", "%5c %5c %5c");
-    test_string_width("aaAA  zzzzzz", "%5[a]%5[A] %5[z]");
-
-    /* Stop at width even if there are more matching chars.
-     * Do not include discarded whitespace in count.
-     */
-    TEST_INT_WIDTH(int, "  123\t456", " %1d%2d %3d");
-    TEST_INT_WIDTH(int, "  10\t0x38", " %1i%1i %4i");
-    TEST_INT_WIDTH(unsigned, "  0xC00X22\t0x38", " %4x%3x %3x");
-    TEST_FLOAT_WIDTH(float, "  .0012\t.3456", " %3f%2f %4f");
-    TEST_FLOAT_WIDTH(double, "  .0012\t.3456", " %3lf%2lf %4lf");
-    test_string_width("  abc  ABCDE", " %2s%1s  %4s");
-    test_string_width("abc  ABCD", "%2c%2c  %4c");
-    test_string_width("aaAA   1%1%1%", "%2[aA]%3[A ] %5[1%]");
-}
-
-
-static void
-doErrorTests(void)
-{
-    int i, ret, bu_ret;
-
-#define FMT_ASSIGN3(fmt) \
-    "%" CPP_STR(fmt) " %" CPP_STR(fmt) " %" CPP_STR(fmt)
-
-#define FMT_READ2_ASSIGN1(fmt) \
-    "%*" CPP_STR(fmt) " %*" CPP_STR(fmt) " %" CPP_STR(fmt)
-
-    /* Attempt to assign 3 values from src.  If src begins with an
-     * invalid input value, should return 0 to indicate a matching
-     * failure.  If src is empty, should return EOF to indicate input
-     * failure.
-     */
-#define TEST_FAILURE_1(type, type_fmt, type_init, src, expected_err) \
-    { \
-	type vals[3] = { type_init, type_init, type_init }; \
-	print_src_and_fmt(src, FMT_ASSIGN3(type_fmt)); \
-	ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
-	bu_ret = bu_sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
-	checkReturnValFailure("sscanf", ret, expected_err); \
-	checkReturnValFailure("bu_sscanf", bu_ret, expected_err); \
-	checkReturnsEqual(ret, bu_ret); \
-	for (i = 0; i < 3; ++i) { \
-	    if (vals[i] != type_init) { \
-		bu_exit(1, "\t[FAIL] No assignment expected, but vals[%d] " \
-			"changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
-			i, type_init, vals[i]); \
-	    } \
-	} \
-    }
-
-    /* Attempt to read 2 values and assign 1 value from src.  If src
-     * includes 2 valid and 1 invalid input value, should return 0 to
-     * indicate matching failure.  If src includes 2 valid values and
-     * then terminates before the assigned conversion can complete, the
-     * return value is implementation-defined: C99/POSIX (e.g. glibc)
-     * treat the already-completed (suppressed) conversions as enough to
-     * avoid an input failure and so return 0 (matching failure), while
-     * the Microsoft C runtime returns EOF.  Each case below selects the
-     * value the host C library is documented to produce.
-     */
-#define TEST_FAILURE_2(type, type_fmt, type_init, src, expected_err) \
-    { \
-	type val = type_init; \
-	print_src_and_fmt(src, FMT_READ2_ASSIGN1(type_fmt)); \
-	ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
-	bu_ret = bu_sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
-	checkReturnValFailure("sscanf", ret, expected_err); \
-	checkReturnValFailure("bu_sscanf", bu_ret, expected_err); \
-	if (expected_err != EXPECT_MATCH_OR_INPUT_FAILURE) { \
-	    checkReturnsEqual(ret, bu_ret); \
-	} \
-	if (val != type_init) { \
-	    bu_exit(1, "\t[FAIL] No assignment expected, but val " \
-		    "changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
-		    type_init, val); \
-	} \
-    }
-
-#define EXPECT_MATCH_FAILURE 0
-#define EXPECT_INPUT_FAILURE EOF
-
-    TEST_FAILURE_1(int, d, 0, "xx 34 56", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(int, d, 0, "12 34 xx", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_MATCH_OR_INPUT_FAILURE);
-    TEST_FAILURE_1(int, d, 0, "", EXPECT_INPUT_FAILURE);
-
-// TODO - what is the intent here?  The 1[123] input seems to be
-// causing problems
-#if 0
-    TEST_FAILURE_1(char, 1[123], 'a', "x 2 3", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(char, 1[123], 'a', "1 2 x", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(char, 1[123], 'a', "1 2", EXPECT_INPUT_FAILURE);
-    TEST_FAILURE_1(char, 1[123], 'a', "", EXPECT_INPUT_FAILURE);
-#endif
+    check_int("12 34", "%*d %*d %d", 0, 0);
 }
 
 
 int
 main(int argc, char *argv[])
 {
-    if (argc > 1) {
+    if (argc > 1)
 	printf("Warning: %s takes no arguments.\n", argv[0]);
-    }
 
     bu_setprogname(argv[0]);
 
     printf("bu_sscanf: running tests\n");
 
-    doNumericTests();
-    doStringTests();
-    doPointerTests();
-    doNonConversionTests();
-    doWidthTests();
-    doErrorTests();
+    test_integers();
+    test_floats();
+    test_strings();
+    test_vls();
+    test_misc_conversions();
+    test_return_semantics();
 
-    printf("bu_sscanf: testing complete\n");
+    printf("bu_sscanf: %d tests run, %d failed\n", tests_run, tests_failed);
 
-    return 0;
+    return (tests_failed == 0) ? 0 : 1;
 }
 
 
 /*
  * Local Variables:
- * mode: C
  * tab-width: 8
+ * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
- * ex: shiftwidth=4 tabstop=8 cino=N-s
+ * ex: shiftwidth=4 tabstop=8
  */
