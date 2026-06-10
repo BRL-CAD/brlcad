@@ -73,6 +73,11 @@ main(int argc, char **argv)
     /* bezier */
     int ctrl_points[5] = {0, 0, 0, 0, 0};
 
+    /* extrusion parameters: lift the sketch profile into a solid */
+    vect_t h;
+    struct wmember all_head;
+    unsigned char rgb[3] = {32, 128, 192};
+
     bu_setprogname(argv[0]);
 
     if (argc > 1)
@@ -141,6 +146,30 @@ main(int argc, char **argv)
     outfp = wdb_fopen("sketch.g");
     mk_id(outfp, "sketch test");
     mk_sketch(outfp, "test_sketch", &skt);
+
+    /*
+     * A sketch by itself has no volume and renders empty.  Extrude the
+     * 2D profile into a solid so the demo produces renderable geometry.
+     * The extrusion reuses the sketch's embedding origin V and parameter
+     * space (u_vec/v_vec); h lifts the loop perpendicular to that plane
+     * (here +Z, since u/v span the XY plane).  keypoint 0 anchors at the
+     * first vertex.
+     */
+    VSET(h, 0.0, 0.0, 250.0);
+    if (mk_extrusion(outfp, "test_extrude.s", "test_sketch", V, h, u_vec, v_vec, 0) < 0)
+	bu_exit(1, "Failed to extrude sketch\n");
+
+    /* wrap the extrusion in a colored plastic region */
+    if (mk_region1(outfp, "test_extrude.r", "test_extrude.s",
+		   "plastic", "di=0.8 sp=0.2", rgb) < 0)
+	bu_exit(1, "Failed to make extrusion region\n");
+
+    /* collect everything under a single renderable top-level group */
+    BU_LIST_INIT(&all_head.l);
+    (void)mk_addmember("test_extrude.r", &all_head.l, NULL, WMOP_UNION);
+    if (mk_lcomb(outfp, "all", &all_head, 0,
+		 (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0) < 0)
+	bu_exit(1, "Failed to make top-level group 'all'\n");
 
     /* cleanup */
     db_close(outfp->dbip);
