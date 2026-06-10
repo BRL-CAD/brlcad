@@ -58,7 +58,15 @@ char *progname = "(noname)";
 char plotfilename[1024] = {0};
 char mfilename[1024] = {0};
 
-int manifold[4] = { 1, 1, 1, 1 };
+/* By default, build only the clean closed manifold solid (the
+ * holed/voided block) so the result raytraces.  The lower-tier
+ * "hairy" features (dangling/internal faces, wire edges, and the lone
+ * vertex) are deliberately non-manifold and crash rt during
+ * raytrace, so they are off unless explicitly requested.  Use the
+ * -123 flags to add them back in (see make_2manifold_bits(),
+ * make_1manifold_bits(), and make_0manifold_bits()).
+ */
+int manifold[4] = { 0, 0, 0, 1 };
 
 
 void
@@ -92,10 +100,15 @@ parse_args(int ac, char **av)
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
-	    case '3'	: manifold[3] = 0; break;
-	    case '2'	: manifold[2] = 0; break;
-	    case '1'	: manifold[1] = 0; break;
-	    case '0'	: manifold[0] = 0; break;
+	    /* The digit flags enable each manifold tier.  By default
+	     * only the clean 3-manifold solid is built so the result
+	     * raytraces; the lower (non-manifold, hairy) tiers must be
+	     * requested explicitly and will make the model crash rt.
+	     */
+	    case '3'	: manifold[3] = 1; break;
+	    case '2'	: manifold[2] = 1; break;
+	    case '1'	: manifold[1] = 1; break;
+	    case '0'	: manifold[0] = 1; break;
 	    default	: usage((char *)NULL); break;
 	}
 
