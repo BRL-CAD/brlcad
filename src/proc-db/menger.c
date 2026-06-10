@@ -49,7 +49,7 @@ usage(char *av0)
     bu_log("\t-{x|y|z}\tspecifies which axis to apply patterns along (default \"-xyz\")\n");
     bu_log("\t-o filename\tspecifies the output file name (default \"menger.g\")\n");
     bu_log("\t-p {o|i}...\tspecifies the inside/outside subtraction pattern (default \"i\")\n");
-    bu_log("\t-r repeat\tspecifies the number of times to repeat the pattern (default 1)\n\n");
+    bu_log("\t-r repeat\tspecifies the number of times to repeat the pattern (default 3)\n\n");
 }
 
 
@@ -354,10 +354,15 @@ main(int ac, char *av[])
 
     bu_optind = 1;
 
-    /* set up defaults */
+    /* set up defaults.  The "o" (exterior) pattern carves the recursive
+     * Menger cross out of the cube, which actually shows the fractal; the
+     * "i" (interior) pattern unions nested levels and is visually
+     * dominated by the coarsest one (so -r has little visible effect).
+     * Two repeats gives a clean, recognizable sponge that still renders
+     * quickly. */
     bu_vls_strcpy(&filename, "menger.g");
-    bu_vls_strcpy(&pattern, "i");
-    repeat = 1;
+    bu_vls_strcpy(&pattern, "o");
+    repeat = 2;
 
     /* process command-line options */
     while ((c = bu_getopt(ac, av, optstring)) != -1) {
