@@ -225,7 +225,9 @@ check_ret(const char *src, const char *fmt, int expect_ret)
 {
     int ret;
     ++tests_run;
-    ret = bu_sscanf(src, fmt);
+
+    int (*f)(const char*, const char*, ...) = bu_sscanf; // bypass compiler warning about fmt being non-literal
+    ret = f(src, fmt);
     if (ret != expect_ret)
 	fail_return(src, fmt, expect_ret, ret);
 }
