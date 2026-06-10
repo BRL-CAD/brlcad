@@ -36,9 +36,38 @@ if(TARGET libged AND BUILD_TESTING)
   endif(TARGET moss.g)
 endif(TARGET libged AND BUILD_TESTING)
 
+if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND TARGET libbrlcad AND BUILD_TESTING)
+  # Simulate a 3rd party application using the aggregate library: public
+  # headers only, no BRL-CAD internal build helpers, and link to libbrlcad only.
+  set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS "")
+  set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
+
+  add_executable(cad_user_aggregate cad_user_aggregate.c)
+  target_link_libraries(cad_user_aggregate libbrlcad)
+  add_dependencies(cad_user_aggregate managed_files)
+  if(TARGET gcv_plugins)
+    add_dependencies(cad_user_aggregate gcv_plugins)
+  endif(TARGET gcv_plugins)
+
+  target_include_directories(cad_user_aggregate BEFORE PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
+
+  set_target_properties(cad_user_aggregate PROPERTIES FOLDER "BRL-CAD Regression Tests/user")
+
+  set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-user-aggregate.log")
+  brlcad_regression_test(
+    regress-user-aggregate
+    "cad_user_aggregate;libbrlcad"
+    EXEC cad_user_aggregate
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-user-aggregate.cmake.in"
+  )
+  distclean(${LOG_FILE})
+endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND TARGET libbrlcad AND BUILD_TESTING)
+
 cmakefiles(
   CMakeLists.txt
   cad_user.c
+  cad_user_aggregate.c
+  regress-user-aggregate.cmake.in
   regress-user.cmake.in
 )
 

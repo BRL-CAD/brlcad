@@ -543,6 +543,45 @@ function(BRLCAD_FILTER_AGGREGATE_DEPS out_var)
 endfunction(BRLCAD_FILTER_AGGREGATE_DEPS)
 
 
+# Preserve non-BRL-CAD usage requirements from internal dependencies that are
+# filtered out of aggregate object targets.  For example, librt normally sees
+# OPENNURBS_IMPORTS through libbrep's interface, but the aggregate librt object
+# target cannot link to libbrep because libbrep's own object code is linked
+# directly into brlcad.dll.
+function(BRLCAD_AGGREGATE_DEP_COMPILE_DEFINITIONS out_var)
+  set(_defs)
+  foreach(_dep ${ARGN})
+    set(_candidate "${_dep}")
+    if("${_candidate}" MATCHES "^\\$<LINK_ONLY:([^>]+)>$")
+      set(_candidate "${CMAKE_MATCH_1}")
+    endif()
+    if(NOT TARGET "${_candidate}")
+      continue()
+    endif()
+    get_target_property(_candidate_obj "${_candidate}" BRLCAD_LIBRARY_OBJECT_TARGET)
+    if(NOT _candidate_obj)
+      continue()
+    endif()
+
+    get_target_property(_iface_defs "${_candidate}" INTERFACE_COMPILE_DEFINITIONS)
+    if(NOT _iface_defs)
+      continue()
+    endif()
+    get_target_property(_brlcad_import_def "${_candidate}" BRLCAD_LIBRARY_IMPORT_DEFINITION)
+    foreach(_def ${_iface_defs})
+      if(_brlcad_import_def AND "${_def}" STREQUAL "${_brlcad_import_def}")
+	continue()
+      endif()
+      list(APPEND _defs "${_def}")
+    endforeach()
+  endforeach()
+  if(_defs)
+    list(REMOVE_DUPLICATES _defs)
+  endif()
+  set(${out_var} ${_defs} PARENT_SCOPE)
+endfunction(BRLCAD_AGGREGATE_DEP_COMPILE_DEFINITIONS)
+
+
 # Resolve external link items while package/imported targets are still visible
 # in the directory that declared the library.  Some find_package targets are not
 # global, so resolving them later from src/CMakeLists.txt can fail.
@@ -798,6 +837,10 @@ function(
         set_property(TARGET ${libname}-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
       endif(HIDE_INTERNAL_SYMBOLS)
       brlcad_filter_aggregate_deps(_aggregate_obj_deps ${_obj_deps})
+      brlcad_aggregate_dep_compile_definitions(_aggregate_dep_defs ${_obj_deps})
+      if(_aggregate_dep_defs)
+        target_compile_definitions(${libname}-brlcad-obj PRIVATE ${_aggregate_dep_defs})
+      endif(_aggregate_dep_defs)
       if(_aggregate_obj_deps)
         target_link_libraries(${libname}-brlcad-obj PRIVATE ${_aggregate_obj_deps})
       endif(_aggregate_obj_deps)
@@ -911,6 +954,7 @@ function(
 
     if(HIDE_INTERNAL_SYMBOLS)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+      set_target_properties(${libname} PROPERTIES BRLCAD_LIBRARY_IMPORT_DEFINITION "${UPPER_CORE}_DLL_IMPORTS")
       # Use target_compile_definitions so the INTERFACE entry is exported via
       # install(EXPORT) and consumers automatically get the right import macro.
       target_compile_definitions(${libname} INTERFACE "${UPPER_CORE}_DLL_IMPORTS")
