@@ -41,6 +41,7 @@ brlcad_manage_files(lz4.txt                    ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(marching_cubes.txt         ${DOC_DIR}/legal/embedded TRIGGER librt)
 brlcad_manage_files(msinttypes.txt             ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(mt19937ar.txt              ${DOC_DIR}/legal/embedded TRIGGER libbn)
+brlcad_manage_files(naca.txt                   ${DOC_DIR}/legal/embedded TRIGGER naca456)
 brlcad_manage_files(nanoflann.txt              ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(netbsd_test.txt            ${DOC_DIR}/legal/embedded TRIGGER libged)
 brlcad_manage_files(normalize.txt              ${DOC_DIR}/legal/embedded TRIGGER libbu)
