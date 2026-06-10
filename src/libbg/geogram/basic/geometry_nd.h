@@ -410,10 +410,14 @@ namespace GEOBRL {
         ) {
             double l2 = distance2(V0,V1);
             double t = dot(point - V0, V1 - V0);
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
             if(t <= 0.0 || l2 == 0.0) {
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
                 closest_point = V0;
                 lambda0 = 1.0;
                 lambda1 = 0.0;

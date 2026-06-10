@@ -43,6 +43,12 @@ proc ::pid_wait { pid } {
 
 namespace eval cadwidgets {
 
+proc rtimage_exec_log {cmd log_file} {
+    if {[catch {exec {*}$cmd >& $log_file} msg]} {
+	return -code error "rtimage command failed: $cmd\n$msg"
+    }
+}
+
 proc rtimage {rtimage_dict} {
     global tcl_platform
     global env
@@ -95,17 +101,20 @@ proc rtimage {rtimage_dict} {
     if {[llength $_color_objects]} {
 	set have_color_objects 1
 
-	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
-	    -F $_port \
+	set cmd [list [file join $binpath rt] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {
+	    lappend cmd $_benchmark_mode
+	}
+	lappend cmd -F $_port \
 	    -V $ar \
 	    -R \
 	    -A 0.9 \
 	    -p $_perspective \
 	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-	    "-c {viewsize $_viewsize}" \
-	    "-c {orientation $_orientation}" \
-	    "-c {eye_pt $_eye_pt}" \
-	    [list $_dbfile]]
+	    -c "viewsize $_viewsize" \
+	    -c "orientation $_orientation" \
+	    -c "eye_pt $_eye_pt" \
+	    $_dbfile
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
@@ -116,7 +125,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the color insert
 	#
-	catch {eval exec $cmd >& $_log_file} curr_pid
+	rtimage_exec_log $cmd $_log_file
 
 	# Look for color objects that also get edges
 	if {[llength $_edge_objects] && [llength $_ecolor] == 3} {
@@ -145,19 +154,22 @@ proc rtimage {rtimage_dict} {
 		if {[llength $ce_objects]} {
 		    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 
-		    set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n $_benchmark_mode \
-		                 -F $_port \
-				 -V $ar \
-				 -R \
-				 -A 0.9 \
-				 -p $_perspective \
-				 "-c {$fgMode}" \
-				 "-c {$bgMode}" \
-				 "-c {set ov=1}" \
-				 "-c {viewsize $_viewsize}" \
-				 "-c {orientation $_orientation}" \
-				 "-c {eye_pt $_eye_pt}" \
-				 [list $_dbfile]]
+		    set cmd [list [file join $binpath rtedge] -w $_w -n $_n]
+		    if {$_benchmark_mode != ""} {
+			lappend cmd $_benchmark_mode
+		    }
+		    lappend cmd -F $_port \
+			-V $ar \
+			-R \
+			-A 0.9 \
+			-p $_perspective \
+			-c $fgMode \
+			-c $bgMode \
+			-c "set ov=1" \
+			-c "viewsize $_viewsize" \
+			-c "orientation $_orientation" \
+			-c "eye_pt $_eye_pt" \
+			$_dbfile
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -170,7 +182,7 @@ proc rtimage {rtimage_dict} {
 		#
 		# Run rtedge to generate the full-color with edges
 		#
-		catch {eval exec $cmd >& $_log_file} curr_pid
+		rtimage_exec_log $cmd $_log_file
 	    }
 	}
 
@@ -189,17 +201,20 @@ proc rtimage {rtimage_dict} {
 	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
 
 	set have_ghost_objects 1
-	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
-	             -o $tgi \
-		     -V $ar \
-		     -R \
-		     -A 0.9 \
-		     -p $_perspective \
-		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     "-c {viewsize $_viewsize}" \
-		     "-c {orientation $_orientation}" \
-		     "-c {eye_pt $_eye_pt}" \
-		     [list $_dbfile]]
+	set cmd [list [file join $binpath rt] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {
+	    lappend cmd $_benchmark_mode
+	}
+	lappend cmd -o $tgi \
+	    -V $ar \
+	    -R \
+	    -A 0.9 \
+	    -p $_perspective \
+	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+	    -c "viewsize $_viewsize" \
+	    -c "orientation $_orientation" \
+	    -c "eye_pt $_eye_pt" \
+	    $_dbfile
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
@@ -210,19 +225,22 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd >& $_log_file} curr_pid
+	rtimage_exec_log $cmd $_log_file
 
-	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
-	             -o $tgfci \
-		     -V $ar \
-		     -R \
-		     -A 0.9 \
-		     -p $_perspective \
-		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     "-c {viewsize $_viewsize}" \
-		     "-c {orientation $_orientation}" \
-		     "-c {eye_pt $_eye_pt}" \
-		     [list $_dbfile]]
+	set cmd [list [file join $binpath rt] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {
+	    lappend cmd $_benchmark_mode
+	}
+	lappend cmd -o $tgfci \
+	    -V $ar \
+	    -R \
+	    -A 0.9 \
+	    -p $_perspective \
+	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+	    -c "viewsize $_viewsize" \
+	    -c "orientation $_orientation" \
+	    -c "eye_pt $_eye_pt" \
+	    $_dbfile
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -233,7 +251,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
-	catch {eval exec $cmd >& $_log_file} curr_pid
+	rtimage_exec_log $cmd $_log_file
 
 	#
 	# Convert to ghost image
@@ -278,19 +296,25 @@ proc rtimage {rtimage_dict} {
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n $_benchmark_mode \
-	             -F $_port \
-		     -V $ar \
-		     -R \
-		     -A 0.9 \
-		     -p $_perspective \
-		     "-c {$fgMode}" \
-		     "-c {$bgMode}" \
-		     $coMode \
-	             "-c {viewsize $_viewsize}" \
-		     "-c {orientation $_orientation}" \
-		     "-c {eye_pt $_eye_pt}" \
-		     [list $_dbfile]]
+	set cmd [list [file join $binpath rtedge] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {
+	    lappend cmd $_benchmark_mode
+	}
+	lappend cmd -F $_port \
+	    -V $ar \
+	    -R \
+	    -A 0.9 \
+	    -p $_perspective \
+	    -c $fgMode \
+	    -c $bgMode
+	if {[llength $occlude_objects]} {
+	    lappend cmd -c "set om=$_occmode" -c "set oo=\"$occlude_objects\""
+	}
+	lappend cmd \
+	    -c "viewsize $_viewsize" \
+	    -c "orientation $_orientation" \
+	    -c "eye_pt $_eye_pt" \
+	    $_dbfile
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}
@@ -300,7 +324,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	# !!! manually write an rtedge log
-	catch {eval exec $cmd >& rtedge.log} curr_pid
+	rtimage_exec_log $cmd rtedge.log
     }
 
     catch {file delete -force $tgi}

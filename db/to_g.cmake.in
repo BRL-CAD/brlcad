@@ -22,6 +22,8 @@ file(MAKE_DIRECTORY "${LIBRT_CACHE}")
 get_filename_component(CEDIR "${CONV_EXEC}" DIRECTORY)
 set(BIN_DIR "@BIN_DIR@")
 string(REGEX REPLACE "${BIN_DIR}$" "" CROOT "${CEDIR}")
+file(TO_CMAKE_PATH "${CROOT}" CROOT)
+string(REGEX REPLACE "/$" "" CROOT "${CROOT}")
 set(ENV{BRLCAD_ROOT} "${CROOT}")
 
 # Now that we know the root, finalize the full path output file location and

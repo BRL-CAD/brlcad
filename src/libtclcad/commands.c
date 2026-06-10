@@ -955,7 +955,7 @@ struct to_cmdtab to_cmds[] = {
  * @brief create the Tcl command for to_open
  *
  */
-int
+TCLCAD_EXPORT int
 Ged_Init(Tcl_Interp *interp)
 {
 

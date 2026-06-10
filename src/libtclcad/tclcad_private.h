@@ -77,12 +77,12 @@ extern int tclcad_eval_noresult(Tcl_Interp *interp, const char *command, size_t 
 
 
 /* Tcl initialization routines */
-extern int Bu_Init(Tcl_Interp *interp);
-extern int Bn_Init(Tcl_Interp *interp);
-extern int Dm_Init(Tcl_Interp *interp);
-extern int Dmo_Init(Tcl_Interp *interp);
-extern int Fbo_Init(Tcl_Interp *interp);
-extern int Ged_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Bu_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Dm_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Dmo_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Fbo_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Ged_Init(Tcl_Interp *interp);
 
 /* Fb functions */
 extern int to_close_fbs(struct bview *gdvp);
@@ -475,7 +475,7 @@ extern void
 tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
 extern void
 tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub);
-extern int
+TCLCAD_EXPORT extern int
 tclcad_listen_ipc(struct fbserv_obj *fbsp, Tcl_Interp *interp);
 
 __END_DECLS

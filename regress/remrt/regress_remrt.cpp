@@ -397,6 +397,21 @@ run_ipc_subtest(const TestOptions &opts,
     std::thread stderr_read_thr(read_remrt_stderr, remrt_proc,
 				&det, &remrt_stderr_log);
 
+    /* If using -M, pipe the view script to remrt's stdin immediately.
+     * remrt reads it after startup reaches eat_script(); writing it now
+     * avoids a parent/child ordering dependency on any diagnostic banner
+     * arriving first through stderr. */
+    if (use_script) {
+	FILE *fin = bu_process_file_open(remrt_proc, BU_PROCESS_STDIN);
+	if (fin) {
+	    fputs(M35_SCRIPT, fin);
+	    bu_process_file_close(remrt_proc, BU_PROCESS_STDIN);
+	} else {
+	    fprintf(stderr, "regress_remrt [%s]: cannot open remrt stdin\n",
+		    label);
+	}
+    }
+
     {
 	std::unique_lock<std::mutex> lk(det.mtx);
 	bool ok = det.cv.wait_for(lk,
@@ -407,19 +422,6 @@ run_ipc_subtest(const TestOptions &opts,
 		    "regress_remrt [%s]: timeout waiting for remrt startup\n"
 		    "  stderr so far:\n%s\n",
 		    label, remrt_stderr_log.c_str());
-    }
-
-    /* If using -M, pipe the view script to remrt's stdin now that remrt
-     * has started.  This unblocks eat_script() so do_work() can begin.   */
-    if (use_script) {
-	FILE *fin = bu_process_file_open(remrt_proc, BU_PROCESS_STDIN);
-	if (fin) {
-	    fputs(M35_SCRIPT, fin);
-	    bu_process_file_close(remrt_proc, BU_PROCESS_STDIN);
-	} else {
-	    fprintf(stderr, "regress_remrt [%s]: cannot open remrt stdin\n",
-		    label);
-	}
     }
 
     /* Wait for remrt to complete the render and exit. */

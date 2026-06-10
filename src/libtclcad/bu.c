@@ -394,7 +394,7 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 }
 
 
-int
+TCLCAD_EXPORT int
 Bu_Init(Tcl_Interp *interp)
 {
     static struct bu_cmdtab cmds[] = {

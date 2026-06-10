@@ -28,6 +28,15 @@
 #  include <direct.h> /* For chdir */
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+__declspec(dllimport) void * __stdcall GetStdHandle(unsigned long);
+__declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, unsigned long);
+#  define RTWIZARD_STD_INPUT_HANDLE  ((unsigned long)-10)
+#  define RTWIZARD_STD_OUTPUT_HANDLE ((unsigned long)-11)
+#  define RTWIZARD_STD_ERROR_HANDLE  ((unsigned long)-12)
+#  define RTWIZARD_HANDLE_FLAG_INHERIT 0x00000001UL
+#endif
+
 #include "tcl.h"
 
 #include "vmath.h"
@@ -648,10 +657,53 @@ int rtwizard_imgformat_supported(int fmt) {
 }
 
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+static void
+rtwizard_disable_std_handle_inheritance(void)
+{
+    void *h = NULL;
+
+    h = GetStdHandle(RTWIZARD_STD_INPUT_HANDLE);
+    if (h)
+	(void)SetHandleInformation(h, RTWIZARD_HANDLE_FLAG_INHERIT, 0);
+
+    h = GetStdHandle(RTWIZARD_STD_OUTPUT_HANDLE);
+    if (h)
+	(void)SetHandleInformation(h, RTWIZARD_HANDLE_FLAG_INHERIT, 0);
+
+    h = GetStdHandle(RTWIZARD_STD_ERROR_HANDLE);
+    if (h)
+	(void)SetHandleInformation(h, RTWIZARD_HANDLE_FLAG_INHERIT, 0);
+}
+#endif
+
+
+static void
+rtwizard_set_state(Tcl_Interp *interp, const char *key, const char *value)
+{
+    (void)Tcl_SetVar2(interp, "::RtWizard::wizard_state", key, value, TCL_GLOBAL_ONLY);
+}
+
+
+static void
+rtwizard_set_state_ptbl(Tcl_Interp *interp, const char *key, struct bu_ptbl *ptbl)
+{
+    size_t i = 0;
+    Tcl_Obj *obj = Tcl_NewListObj(0, NULL);
+
+    Tcl_IncrRefCount(obj);
+    for (i = 0; i < BU_PTBL_LEN(ptbl); i++) {
+	const char *item = (const char *)BU_PTBL_GET(ptbl, i);
+	(void)Tcl_ListObjAppendElement(interp, obj, Tcl_NewStringObj(item, -1));
+    }
+    (void)Tcl_SetVar2Ex(interp, "::RtWizard::wizard_state", key, obj, TCL_GLOBAL_ONLY);
+    Tcl_DecrRefCount(obj);
+}
+
+
 void
 Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 {
-    size_t i = 0;
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 
     (void)Tcl_Eval(interp, "namespace eval RtWizard {}");
@@ -672,18 +724,15 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     }
 
     if (bu_vls_strlen(s->input_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(dbFile) [list %s]", bu_vls_addr(s->input_file));
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	rtwizard_set_state(interp, "dbFile", bu_vls_addr(s->input_file));
     }
 
     if (bu_vls_strlen(s->output_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(output_filename) [list %s]", bu_vls_addr(s->output_file));
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	rtwizard_set_state(interp, "output_filename", bu_vls_addr(s->output_file));
     }
 
     if (bu_vls_strlen(s->fb_dev)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(fbserv_device) %s", bu_vls_addr(s->fb_dev));
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	rtwizard_set_state(interp, "fbserv_device", bu_vls_addr(s->fb_dev));
     }
 
     if (s->port > -1) {
@@ -714,35 +763,9 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 	}
     }
 
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(color_objlist) {}");
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    if (BU_PTBL_LEN(s->color) > 0) {
-	for (i = 0; i < BU_PTBL_LEN(s->color); i++) {
-	    const char *obj = (const char *)BU_PTBL_GET(s->color, i);
-	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(color_objlist) %s", obj);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	}
-    }
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ghost_objlist) {}");
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    if (BU_PTBL_LEN(s->ghost) > 0) {
-	for (i = 0; i < BU_PTBL_LEN(s->ghost); i++) {
-	    const char *obj = (const char *)BU_PTBL_GET(s->ghost, i);
-	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(ghost_objlist) %s", obj);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	}
-    }
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(line_objlist) {}");
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    if (BU_PTBL_LEN(s->line) > 0) {
-	for (i = 0; i < BU_PTBL_LEN(s->line); i++) {
-	    const char *obj = (const char *)BU_PTBL_GET(s->line, i);
-	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(line_objlist) %s", obj);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	}
-    }
+    rtwizard_set_state_ptbl(interp, "color_objlist", s->color);
+    rtwizard_set_state_ptbl(interp, "ghost_objlist", s->ghost);
+    rtwizard_set_state_ptbl(interp, "line_objlist", s->line);
 
     {
 	unsigned char rgb[3];
@@ -825,13 +848,11 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     }
 
     if (bu_vls_strlen(s->log_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(log_file) [list %s]", bu_vls_addr(s->log_file));
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	rtwizard_set_state(interp, "log_file", bu_vls_addr(s->log_file));
     }
 
     if (bu_vls_strlen(s->pid_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(pid_filename) [list %s]", bu_vls_addr(s->pid_file));
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	rtwizard_set_state(interp, "pid_filename", bu_vls_addr(s->pid_file));
     }
 
 
@@ -1195,6 +1216,10 @@ main(int argc, char **argv)
 	 * because they can apparently cause problems with Tcl script execution. */
 	tclcad_set_argv(interp, 1, (const char **)&av0);
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	rtwizard_disable_std_handle_inheritance();
+#endif
+
 	Init_RtWizard_Vars(interp, s);
 	if (s->port < 0) {
 	    (void)rtwizard_setup_ipc(interp);
@@ -1212,8 +1237,13 @@ main(int argc, char **argv)
 	Tcl_DStringFree(&temp);
 
 	result = Tcl_GetStringResult(interp);
-	if (strlen(result) > 0 && status == TCL_ERROR) {
-	    bu_log("%s\n", result);
+	if (status != TCL_OK) {
+	    const char *error_info = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
+	    bu_log("rtwizard Tcl script returned status %d\n", status);
+	    if (strlen(result) > 0)
+		bu_log("%s\n", result);
+	    if (error_info && strlen(error_info) > 0)
+		bu_log("%s\n", error_info);
 	}
 
 	/*Tcl_DeleteInterp(interp);*/

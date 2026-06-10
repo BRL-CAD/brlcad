@@ -930,7 +930,7 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 }
 
 
-int
+TCLCAD_EXPORT int
 Fbo_Init(Tcl_Interp *interp)
 {
     if (fb_objs.capacity == 0) {

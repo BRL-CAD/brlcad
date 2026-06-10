@@ -1356,7 +1356,7 @@ tclcad_bn_setup(Tcl_Interp *interp)
 }
 
 
-int
+TCLCAD_EXPORT int
 Bn_Init(Tcl_Interp *interp)
 {
     tclcad_bn_setup(interp);

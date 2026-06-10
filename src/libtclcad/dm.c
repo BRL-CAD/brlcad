@@ -2771,7 +2771,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 }
 
 
-int
+TCLCAD_EXPORT int
 Dmo_Init(Tcl_Interp *interp)
 {
     BU_LIST_INIT(&HeadDMObj.l);
@@ -2892,7 +2892,7 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 }
 
 
-int
+TCLCAD_EXPORT int
 Dm_Init(Tcl_Interp *interp)
 {
     static struct bu_cmdtab cmdtab[] = {

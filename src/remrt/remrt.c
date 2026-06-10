@@ -4043,6 +4043,13 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    {
+	WSADATA wsaData;
+	(void)WSAStartup(MAKEWORD(2, 2), &wsaData);
+    }
+#endif
+
 #ifdef SIGPIPE
     /* Ignore SIGPIPE early so that a closed pipe in the test harness (or any
      * other caller that closes remrt's stdout/stderr read ends) does not kill

@@ -36,6 +36,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/cmd.h"
+#include "bu/env.h"
 #include "bu/path.h"
 #include "bu/vls.h"
 #include "bn.h"
@@ -78,6 +79,23 @@ tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
     }
 }
 
+static int
+tclcad_source_file(Tcl_Interp *interp, const char *filename)
+{
+    Tcl_Obj *cmd[2] = {NULL, NULL};
+    int ret = TCL_ERROR;
+
+    cmd[0] = Tcl_NewStringObj("source", -1);
+    cmd[1] = Tcl_NewStringObj(filename, -1);
+    Tcl_IncrRefCount(cmd[0]);
+    Tcl_IncrRefCount(cmd[1]);
+    ret = Tcl_EvalObjv(interp, 2, cmd, TCL_EVAL_GLOBAL);
+    Tcl_DecrRefCount(cmd[1]);
+    Tcl_DecrRefCount(cmd[0]);
+
+    return ret;
+}
+
 
 /* avoid including itcl.h/itk.h due to their usage of internal headers */
 extern int Itcl_Init(Tcl_Interp *);
@@ -95,27 +113,49 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
      * if we can.  Per the Tcl_Init() definition in generic/tclInterp.c in the
      * Tcl source code, setting tcl_library is the recommended way for embedding
      * applications to assist Tcl_Init in finding this file... */
+    char initfile[MAXPATHLEN] = {0};
     char libdir[MAXPATHLEN] = {0};
     bu_dir(libdir, MAXPATHLEN, BU_DIR_LIB, NULL);
     if (strlen(libdir)) {
-	struct bu_vls lib_path = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&lib_path, "%s%ctcl%s/init.tcl", libdir, BU_DIR_SEPARATOR, TCL_VERSION);
-	if (bu_file_exists(bu_vls_cstr(&lib_path), NULL)) {
-	    struct bu_vls initpath = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&lib_path, "%s%ctcl%s", libdir, BU_DIR_SEPARATOR, TCL_VERSION);
-	    bu_vls_printf(&initpath, "set tcl_library {%s}", bu_vls_cstr(&lib_path));
-	    if (Tcl_Eval(interp, bu_vls_addr(&initpath))) {
-		bu_log("Problem initializing tcl_library to init.tcl path: Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	char *src = libdir;
+	char *dst = libdir;
+	char prev = '\0';
+	while (*src) {
+	    char c = (*src == '\\') ? '/' : *src;
+	    if (c != '/' || prev != '/') {
+		*dst++ = c;
 	    }
-	    bu_vls_free(&initpath);
+	    prev = c;
+	    src++;
+	}
+	*dst = '\0';
+
+	struct bu_vls lib_path = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&lib_path, "%s/tcl%s/init.tcl", libdir, TCL_VERSION);
+	if (bu_file_exists(bu_vls_cstr(&lib_path), NULL)) {
+	    snprintf(initfile, MAXPATHLEN, "%s", bu_vls_cstr(&lib_path));
+	    bu_vls_sprintf(&lib_path, "%s/tcl%s", libdir, TCL_VERSION);
+	    bu_setenv("TCL_LIBRARY", bu_vls_cstr(&lib_path), 1);
+	    (void)Tcl_SetVar(interp, "tcl_library", bu_vls_cstr(&lib_path), TCL_GLOBAL_ONLY);
+	    (void)Tcl_SetVar2(interp, "env", "TCL_LIBRARY", bu_vls_cstr(&lib_path), TCL_GLOBAL_ONLY);
 	}
 	bu_vls_free(&lib_path);
     }
 
     if (Tcl_Init(interp) == TCL_ERROR) {
-	if (tlog)
-	    bu_vls_printf(tlog, "Tcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
+	struct bu_vls tcl_init_error = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&tcl_init_error, "%s", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+	if (!strlen(initfile) || tclcad_source_file(interp, initfile) == TCL_ERROR) {
+	    if (tlog) {
+		bu_vls_printf(tlog, "Tcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		if (bu_vls_strlen(&tcl_init_error))
+		    bu_vls_printf(tlog, "\nOriginal Tcl_Init ERROR:\n%s\n", bu_vls_cstr(&tcl_init_error));
+	    }
+	    bu_vls_free(&tcl_init_error);
+	    return TCL_ERROR;
+	}
+	bu_vls_free(&tcl_init_error);
     }
 
     if (init_gui) {

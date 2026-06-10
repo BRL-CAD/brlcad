@@ -181,10 +181,10 @@ if {[info exists ::use_gui]} {
    # Check whether the framebuffer already exists.  If it does, and if
    # it was specified on the command line, go with it.
    if {$use_ipc} {
-      if {[catch {exec {*}[rtwiz_fbserv_cmd] &} pid] == 0} {
+      if {[catch {exec {*}[rtwiz_fbserv_cmd] < NUL >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
 	set fbserv_pid $pid
 	set _fb_wait 0
-	while {[catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " "} _fb_err] && $_fb_wait < 30} {
+	while {[catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30} {
 	    after 100
 	    incr _fb_wait
 	}
@@ -196,8 +196,8 @@ if {[info exists ::use_gui]} {
 	if {$::RtWizard::wizard_state(verbose)} {puts "fbserv IPC launch failed: $pid"}
       }
    } else {
-      if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " "} error ] && $error == 12} {
-	 catch {exec {*}[rtwiz_fbserv_cmd] &} pid
+      if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} error ] && $error == 12} {
+	 catch {exec {*}[rtwiz_fbserv_cmd] < NUL >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid
 	 if {[info exists pid]} {
 	   set fbserv_pid $pid
 	   # Wait for fbserv to become ready.  Poll fblabel: if it fails because fbserv
@@ -205,7 +205,7 @@ if {[info exists ::use_gui]} {
 	   # Stop early if the failure reason changes to something other than connection-
 	   # refused (e.g. a token mismatch means another instance already owns the port).
 	   set _fb_wait 0
-	   while { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " "} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
+	   while { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
 	       after 300
 	       incr _fb_wait
 	   }
@@ -237,7 +237,7 @@ if {[info exists ::use_gui]} {
 		if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
 		incr ::RtWizard::wizard_state(fbserv_port)
 	   }
-	   if {[catch {exec {*}[rtwiz_fbserv_cmd] &} pid] == 0} {
+	   if {[catch {exec {*}[rtwiz_fbserv_cmd] < NUL >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
 	       set fbserv_pid $pid
 	   } else {
 	       if {$::RtWizard::wizard_state(verbose)} {puts "fbserv launch on port $::RtWizard::wizard_state(fbserv_port) failed: $pid"}
@@ -248,7 +248,7 @@ if {[info exists ::use_gui]} {
 	   # refused — e.g. a token mismatch means another instance already owns the port
 	   # and we should advance to the next candidate immediately.
 	   set _fb_wait 0
-	   while { [catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " "} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
+	   while { [catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
 	       after 300
 	       incr _fb_wait
 	   }
@@ -256,7 +256,7 @@ if {[info exists ::use_gui]} {
 	   # Verify that we actually own this fbserv: fblabel must succeed with our
 	   # FBSERV_TOKEN.  If it fails, another rtwizard won the race for this port
 	   # and our token was rejected — advance to the next candidate port and retry.
-	   if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " "}] == 0 } {
+	   if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1}] == 0 } {
 	       set fbserv_owned 1
 	   } else {
 	       if {$::RtWizard::wizard_state(verbose)} {
@@ -363,11 +363,11 @@ if {[info exists ::use_gui]} {
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-	 exec [file join [bu_dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename)
+	 exec [file join [bu_dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
 	 set output_generated 1
       }
       if {!$output_generated} {
-	 exec [file join [bu_dir bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename)
+	 exec [file join [bu_dir bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
 	 set output_generated 1
       }
 
@@ -391,7 +391,7 @@ if {[info exists ::use_gui]} {
 	      }
 	  }
 	  if {$kill_cmd != ""} {
-	      exec {*}$kill_args
+	      catch {exec {*}$kill_args}
 	  }
       }
    }
