@@ -63,7 +63,7 @@ struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
-extern const char title[] = "RT Depth";
+EXTERNVARINIT const char title[] = "RT Depth";
 
 /*
  *  Called at the start of a run.

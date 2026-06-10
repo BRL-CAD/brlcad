@@ -56,7 +56,7 @@ struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
-extern const char title[] = "RT Simple Intersection Lightmap";
+EXTERNVARINIT const char title[] = "RT Simple Intersection Lightmap";
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);

@@ -83,7 +83,7 @@ extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 #endif
 
 
-extern const char title[] = "The BRL-CAD Raytracer RT";
+EXTERNVARINIT const char title[] = "The BRL-CAD Raytracer RT";
 
 static struct scanline* scanline = NULL;
 static fastf_t* psum_buffer;            /* Buffer that keeps partial sums for multi-samples modes */

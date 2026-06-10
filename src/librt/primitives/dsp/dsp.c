@@ -296,7 +296,7 @@ const struct bu_structparse dsp_v4_parse[] = {
 
 
 /* only used on v5 database */
-extern const struct bu_structparse rt_dsp_parse[] = {
+EXTERNVARINIT const struct bu_structparse rt_dsp_parse[] = {
     {"%V",  1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
     {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },

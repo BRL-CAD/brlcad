@@ -105,7 +105,7 @@ hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
 }
 
 
-extern const struct bu_structparse rt_hyp_parse[] = {
+EXTERNVARINIT const struct bu_structparse rt_hyp_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_hyp_internal, hyp_Vi, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H",   bu_offsetofarray(struct rt_hyp_internal, hyp_Hi, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A",   bu_offsetofarray(struct rt_hyp_internal, hyp_A, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

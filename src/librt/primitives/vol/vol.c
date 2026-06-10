@@ -64,7 +64,7 @@ struct rt_vol_specific {
 
 #define VOL_O(m) bu_offsetof(struct rt_vol_internal, m)
 
-extern const struct bu_structparse rt_vol_parse[] = {
+EXTERNVARINIT const struct bu_structparse rt_vol_parse[] = {
     {"%s", RT_VOL_NAME_LEN, "file", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s", RT_VOL_NAME_LEN, "name", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c", 1, "src",	VOL_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
