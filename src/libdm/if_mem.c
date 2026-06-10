@@ -65,7 +65,7 @@ static struct modeflags {
     char c;
     long mask;
     long value;
-    char *help;
+    const char *help;
 } modeflags[] = {
     { 'w',	MODE_1MASK, MODE_1IMMEDIATE,
       "Write thru mode - pass writes directly to attached frame buffer" },

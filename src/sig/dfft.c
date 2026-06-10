@@ -38,13 +38,13 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
+#include "fft.h"
 
 #define MAXFFT BU_PAGE_SIZE
 
 
 /* functions specified elsewhere (these probably belong in a header) */
 void cbweights(double *filter, int window, int points); /* in butter.c */
-void rfft(double *dat, int N); /* in dfft.c */
 void LintoLog(double *in, double *out, int num); /* in interp.c */
 
 

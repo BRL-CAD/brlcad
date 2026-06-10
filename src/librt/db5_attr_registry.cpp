@@ -26,7 +26,7 @@
 #include "raytrace.h"
 
 #ifdef __cplusplus
-extern "C" {
+BRLCAD_CXX_BEGIN_C_LINKAGE
 #endif
     void db5_attr_registry_init(struct db5_registry *registry);
     void db5_attr_registry_free(struct db5_registry *registry);
@@ -45,7 +45,7 @@ extern "C" {
     struct db5_attr_ctype *db5_attr_get(struct db5_registry *registry, const char *name);
     struct db5_attr_ctype **db5_attr_dump(struct db5_registry *registry);
 #ifdef __cplusplus
-}
+BRLCAD_CXX_END_C_LINKAGE
 #endif
 
 #define attr_regmap_t std::map<std::string, struct db5_attr_ctype *>

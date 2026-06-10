@@ -160,9 +160,9 @@ int
 main(int argc, char **argv)
 {
     struct nmgregion *r;
-    char *id_name = "BRL-CAD t-NURBS NMG Example";
-    char *tea_name = "UtahTeapot";
-    char *uplot_name = "teapot.plot3";
+    const char *id_name = "BRL-CAD t-NURBS NMG Example";
+    const char *tea_name = "UtahTeapot";
+    const char *uplot_name = "teapot.plot3";
     struct bu_list vhead;
     FILE *fp;
     int i;

@@ -44,15 +44,15 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
+const char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
 
 int debug = 0;
-char *progname = "masonry";
-char *obj_name = "wall";
+const char *progname = "masonry";
+const char *obj_name = "wall";
 char sol_name[64];
 int sol_num = 0;
-char *type = "frame";
-char *units = "mm";
+const char *type = "frame";
+const char *units = "mm";
 double unit_conv = 1.0;
 matp_t trans_matrix = (matp_t)NULL;
 
@@ -83,7 +83,7 @@ double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
 unsigned char sheetrock_color[3] = { 200, 200, 200 };
 unsigned char stud_color[3] = { 250, 178, 108 };
 
-char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
+const char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
 
 struct opening {
     struct bu_list l;
@@ -106,7 +106,7 @@ struct boardseg {
 /**
  * tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void usage(const char *s)
 {
     if (s)
 	bu_log("%s\n", s);
@@ -123,7 +123,7 @@ void usage(char *s)
 
 
 void
-set_translate(char *s)
+set_translate(const char *s)
 {
     double dx, dy, dz;
 
@@ -199,7 +199,7 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
 
 
 void
-set_rotate(char *s)
+set_rotate(const char *s)
 {
     double rx, ry, rz;
 
@@ -340,7 +340,7 @@ parse_args(int ac, char **av)
 		units_lock = 1;
 		break;
 	    default:
-		usage((char *)NULL);
+		usage(NULL);
 		break;
 	}
     }
@@ -1002,7 +1002,7 @@ int main(int ac, char **av)
 	usage("excess command line arguments\n");
 
     if (ac < 2)
-	usage((char *)NULL);
+	usage(NULL);
 
     snprintf(sol_name, 64, "%s.g", progname);
     if ((db_fd = wdb_fopen(sol_name)) == (struct rt_wdb *)NULL) {

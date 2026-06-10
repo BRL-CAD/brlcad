@@ -95,8 +95,9 @@ rt_edit_bot_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 void
-rt_edit_bot_prim_edit_destroy(struct rt_bot_edit *b)
+rt_edit_bot_prim_edit_destroy(void *ptr)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)ptr;
     if (!b)
 	return;
 

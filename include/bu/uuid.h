@@ -38,7 +38,7 @@
 /** @file bu/uuid.h */
 
 
-#ifdef HAVE_STATIC_ARRAYS
+#if defined(HAVE_STATIC_ARRAYS) && !defined(__cplusplus)
 #  define STATIC_ARRAY(x) static (x)
 #else
 #  define STATIC_ARRAY(x) (x)

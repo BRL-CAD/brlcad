@@ -164,7 +164,7 @@ color_fix(const struct bu_structparse *sdp,
 
 
 static int
-setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_i *rtip, char *parameters, struct camo_specific *defaults)
+setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_i *rtip, const char *parameters, struct camo_specific *defaults)
 {
 /* pointer to reg_udata in *rp */
 

@@ -212,7 +212,7 @@ static int invisible = 0;
 #define MAX_LINE_SIZE 2050
 char line[MAX_LINE_SIZE];
 
-static char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
+static const char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
 
 static FILE *dxf;
 static struct rt_wdb *out_fp;

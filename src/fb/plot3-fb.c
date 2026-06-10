@@ -164,8 +164,10 @@ typedef char tiny;		/* for very small numbers */
 typedef short tiny;		/* for very small numbers */
 #endif
 
+#ifndef __cplusplus
 #define false 0
 #define true 1
+#endif
 
 RGBpixel cur_color = { 255, 255, 255 };
 
@@ -282,7 +284,7 @@ static struct vectorchar {
 static int Nscanlines = 512;
 static int Npixels = 512;
 static char *framebuffer = NULL;
-static char *filename = NULL;
+static const char *filename = NULL;
 
 struct band {
     stroke *first;

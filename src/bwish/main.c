@@ -297,7 +297,7 @@ main(int argc, char **argv)
 	bu_log("tclcad_init failure:\n%s\n", bu_vls_addr(&tlog));
 #endif
     } else {
-	/* register bwish/btclsh commands */
+	/* bwish/btclsh commands */
 	cmdInit(INTERP);
     }
     bu_vls_free(&tlog);

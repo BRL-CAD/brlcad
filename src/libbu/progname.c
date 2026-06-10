@@ -49,15 +49,33 @@ typedef void *rusage_info_t; /* BSD hack for POSIX-mode */
 
 
 #if !defined(HAVE_DECL_PROGRAM_INVOCATION_NAME)
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern char *program_invocation_name;
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 #if !defined(HAVE_DECL_GETPROGNAME) && !defined(getprogname)
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern const char *getprogname(void);
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 #if !defined(HAVE_DECL_WAIT) && !defined(wait)
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern pid_t wait(int *);
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 

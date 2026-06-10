@@ -37,7 +37,7 @@
 #include "dm.h"
 #include "pkg.h"
 
-char *options = "iHoF:h?";
+const char *options = "iHoF:h?";
 
 void checkgamma(double g);
 

@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-extern "C" {
+BRLCAD_CXX_BEGIN_C_LINKAGE
 #include "vds.h"
 
 #include "bv/vlist.h"
@@ -38,7 +38,7 @@ extern "C" {
 #include "rt/global.h"
 #include "rt/db_internal.h"
 #include "rt/primitives/bot.h"
-}
+BRLCAD_CXX_END_C_LINKAGE
 
 static vdsNode *
 build_vertex_tree(struct vdsState *s, struct rt_bot_internal *bot)
@@ -177,7 +177,7 @@ avg_sample_spacing(const struct bview *gvp)
     return avg_view_size / avg_view_samples;
 }
 
-extern "C" int
+BRLCAD_CXX_C_LINKAGE int
 rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t UNUSED(s_size))
 {
     double d1, d2, d3;
@@ -250,7 +250,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 // drawing routines as face and vert arrays for the hot drawing paths WITHOUT
 // making the vlist copies... this duplication results in massive additional
 // memory usage for large BoTs.
-extern "C" int
+BRLCAD_CXX_C_LINKAGE int
 rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *info)
 {
     struct rt_bot_internal *bot_ip;
@@ -286,7 +286,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 }
 
 
-extern "C" int
+BRLCAD_CXX_C_LINKAGE int
 rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_bot_internal *bot_ip;

@@ -36,10 +36,22 @@
 #include "bu/str.h"
 
 #ifndef HAVE_DECL_STRLCAT
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern size_t strlcat(char *, const char *, size_t);
+#ifdef __cplusplus
+}
+#endif
 #endif
 #ifndef HAVE_DECL_STRLCPY
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern size_t strlcpy(char *, const char *, size_t);
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 

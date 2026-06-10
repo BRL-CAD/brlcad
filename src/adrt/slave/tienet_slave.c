@@ -49,7 +49,9 @@
 
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+__BEGIN_DECLS
 extern struct hostent *gethostbyname(const char *);
+__END_DECLS
 #endif
 
 
@@ -97,15 +99,15 @@ void tienet_slave_free(void)
 
 
 void tienet_slave_worker(int port, char *host) {
-    tienet_buffer_t result = {0};
-    tienet_buffer_t buffer = {0};
-    struct sockaddr_in master = {0};
-    struct sockaddr_in slave = {0};
+    tienet_buffer_t result;
+    tienet_buffer_t buffer;
+    struct sockaddr_in master;
+    struct sockaddr_in slave;
     struct hostent h;
     short op = 0;
     uint32_t size = 0;
     int slave_socket = 0;
-    tienet_buffer_t buffer_comp = {0};
+    tienet_buffer_t buffer_comp;
     unsigned long dest_len = 0;
 
 
@@ -113,6 +115,8 @@ void tienet_slave_worker(int port, char *host) {
     TIENET_BUFFER_INIT(result);
     TIENET_BUFFER_INIT(buffer);
     TIENET_BUFFER_INIT(buffer_comp);
+    memset(&master, 0, sizeof(master));
+    memset(&slave, 0, sizeof(slave));
 
     if (gethostbyname(host)) {
 	h = gethostbyname(host)[0];

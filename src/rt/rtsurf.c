@@ -153,7 +153,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
     static size_t cnt = 0;
 
-    /* register the first and last hit */
+    /* the first and last hit */
     void *context = ap->a_uptr;
 
     /* keep track of all shots, hit or miss */
@@ -699,14 +699,14 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     if (opts->printRegions) {
 	/* print out all regions */
 	bu_log("Area Estimate By Region:\n");
-	struct region_callback_data rdata = {opts->samples, radius};
+	struct region_callback_data rdata = {(double)opts->samples, radius};
 	rtsurf_iterate_regions(context, &regions_callback, &rdata);
     }
 
     if (opts->printGroups) {
 	/* print out all combs above regions */
 	bu_log("Area Estimate By Combination:\n");
-	struct region_callback_data rdata = {opts->samples, radius};
+	struct region_callback_data rdata = {(double)opts->samples, radius};
 	rtsurf_iterate_groups(context, &regions_callback, &rdata);
     }
 
@@ -726,7 +726,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	    bu_close_mapped_file(dfile);
 	}
 
-	struct material_callback_data mdata = {densities, opts->samples, radius};
+	struct material_callback_data mdata = {densities, (double)opts->samples, radius};
 	rtsurf_iterate_materials(context, &materials_callback, &mdata);
 	analyze_densities_destroy(densities);
     }

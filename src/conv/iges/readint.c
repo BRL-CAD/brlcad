@@ -37,7 +37,7 @@
 
 
 void
-Readint(int *inum, char *id)
+Readint(int *inum, const char *id)
 {
     int i = 0, done = 0, lencard;
     char num[MAX_NUM] = {0};

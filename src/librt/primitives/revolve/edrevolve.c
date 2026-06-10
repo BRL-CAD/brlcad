@@ -241,7 +241,7 @@ rt_edit_revolve_edit(struct rt_edit *s)
 }
 
 int
-rt_edit_revolve_edit_xy(struct rt_edit *s, vect_t mousevec)
+rt_edit_revolve_edit_xy(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;
 

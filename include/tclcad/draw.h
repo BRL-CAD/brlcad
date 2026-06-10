@@ -35,7 +35,7 @@
 #include "ged.h"
 #include "tclcad/defines.h"
 
-__BEGIN_DECLS
+BRLCAD_CXX_BEGIN_C_LINKAGE
 
 // Data specific to an individual view rather than the geometry database
 // instance.
@@ -173,7 +173,7 @@ TCLCAD_EXPORT extern int go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 TCLCAD_EXPORT extern void fb_tcl_setup(void);
 
-__END_DECLS
+BRLCAD_CXX_END_C_LINKAGE
 
 #endif /* TCLCAD_MISC_H */
 

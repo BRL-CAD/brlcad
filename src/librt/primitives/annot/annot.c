@@ -105,7 +105,7 @@ rt_txt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 
 
 static int
-ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
+ant_check_pos(const struct txt_seg *tsg, const char **rel_pos)
 {
     switch (tsg->rel_pos) {
 	case RT_TXT_POS_BL:
@@ -1300,7 +1300,7 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 {
     struct rt_annot_internal *annot_ip =
 	(struct rt_annot_internal *)ip->idb_ptr;
-    char *rel_pos = NULL;
+    const char *rel_pos = NULL;
     size_t i;
     size_t seg_no;
     char buf[256];
@@ -1701,7 +1701,7 @@ static int
 ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 {
     size_t i, j;
-    char *rel_pos = NULL;
+    const char *rel_pos = NULL;
 
     bu_vls_printf(vls, " SL {");
     for (j=0; j<ant->count; j++) {

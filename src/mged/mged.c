@@ -2778,7 +2778,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&s->mged_curr_dm->dm_p_vlist);
     predictor_init(s);
 
-    /* register application provided routines */
+    /* application provided routines */
 
     DMP = dm_open(NULL, s->interp, "nu", 0, NULL);
     struct bu_vls *dpvp = dm_get_pathname(DMP);

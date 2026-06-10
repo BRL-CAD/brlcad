@@ -41,6 +41,14 @@
 
 /* Exposed as private function to librt, but not (currently) beyond librt -
  * see librt_private.h */
+#ifdef __cplusplus
+extern "C" {
+#endif
+int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
+#ifdef __cplusplus
+}
+#endif
+
 int
 tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset)
 {

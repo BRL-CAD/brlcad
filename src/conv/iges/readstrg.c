@@ -38,7 +38,7 @@
 
 
 void
-Readstrg(char *id)
+Readstrg(const char *id)
 {
     int i = 0, length = 0, done = 0, lencard;
     char num[MAX_NUM] = {0};

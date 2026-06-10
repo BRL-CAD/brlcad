@@ -250,13 +250,13 @@ __BEGIN_DECLS
 #define RADIAN(x) ((x) * DEG2RAD)
 
 
-extern void argumentHelp(FILE *fp, char *progname, char *message);
+extern void argumentHelp(FILE *fp, char *progname, const char *message);
 extern void argumentExamples(FILE *fp, char *progname);
 extern void defaultSettings(FILE *fp);
 extern int parseArguments(int argc, char *argv[]);
-extern void printMatrix(FILE *fp, char *n, mat_t m);
+extern void printMatrix(FILE *fp, const char *n, mat_t m);
 extern char *getName(const char *base, int id, const char *suffix);
-extern char *getPrePostName(char *prefix, char *base, char *suffix);
+extern char *getPrePostName(const char *prefix, const char *base, const char *suffix);
 
 extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startposition, point_t endposition);
 extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startposition, vect_t heightvector, vect_t widthvector);

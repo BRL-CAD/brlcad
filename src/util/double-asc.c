@@ -47,7 +47,8 @@
 #define usage1 "Usage: double-asc [-a] [-s squaresize] [-w width] [-n height]\n"
 #define usage2 "                  [-c] [-f format] [-# depth] [file.d]\n"
 
-static char *file_name;
+static const char *file_name;
+static char default_format[] = " %g";
 static char *format = 0;
 static int infd;
 
@@ -115,7 +116,7 @@ get_args(int argc, char **argv)
     }
 
     if (format == 0)
-	format = " %g";
+	format = default_format;
 
     /*
      * Establish the input stream

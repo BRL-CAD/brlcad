@@ -54,13 +54,13 @@ dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
 {
     struct directory *dp = NULL;
     struct display_list *gdlp = NULL;
-    char *cp = NULL;
+    const char *cp = NULL;
     int found_namepath = 0;
     struct db_full_path namepath;
 
     cp = strrchr(name, '/');
     if (!cp)
-        cp = (char *)name;
+        cp = name;
     else
         ++cp;
 

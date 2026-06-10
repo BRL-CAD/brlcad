@@ -31,7 +31,9 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/cv.h"
-#include "raytrace.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 
 char usage[] = "\

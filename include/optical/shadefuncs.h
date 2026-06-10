@@ -40,7 +40,7 @@
  */
 struct mfuncs {
     uint32_t mf_magic;		/**< @brief To validate structure */
-    char *mf_name;		/**< @brief Keyword for material */
+    const char *mf_name;	/**< @brief Keyword for material */
     struct mfuncs *mf_forw;	/**< @brief Forward link */
     int mf_inputs;		/**< @brief shadework inputs needed */
     int mf_flags;		/**< @brief Flags describing shader */

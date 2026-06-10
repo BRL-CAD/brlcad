@@ -44,7 +44,7 @@
 
 
 void
-Readtime(char *id)
+Readtime(const char *id)
 {
     int i = 0, length = 0, lencard, done = 0, year;
     char num[MAX_NUM] = {0};

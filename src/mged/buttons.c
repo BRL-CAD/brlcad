@@ -97,7 +97,7 @@ int doMotion = 0;
 
 struct buttons {
     int bu_code;	/* dm_values.dv_button */
-    char *bu_name;	/* keyboard string */
+    const char *bu_name;	/* keyboard string */
     int (*bu_func)(ClientData, Tcl_Interp *, int, char **);	/* function to call */
 }  button_table[] = {
     {BV_35_25,		"35,25",	bv_35_25},
@@ -312,7 +312,7 @@ f_press(ClientData clientData,
  * For a given GED button number, return the "press" ID string.
  * Useful for displays with programmable button labels, etc.
  */
-char *
+const char *
 label_button(struct mged_state *s, int bnum)
 {
     struct buttons *bp;
@@ -1003,7 +1003,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
  * Returns !0 and prints error message if state mismatch.
  */
 int
-not_state(struct mged_state *s, int desired, char *str)
+not_state(struct mged_state *s, int desired, const char *str)
 {
     if (s->global_editing_state != desired) {
 	Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[s->global_editing_state], " state.\n", (char *)NULL);
@@ -1053,7 +1053,7 @@ stateChange(struct mged_state *s, int UNUSED(oldstate), int newstate)
  * Returns !0 and prints error message if error.
  */
 int
-chg_state(struct mged_state *s, int from, int to, char *str)
+chg_state(struct mged_state *s, int from, int to, const char *str)
 {
     struct mged_dm *save_dm_list;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1086,7 +1086,7 @@ chg_state(struct mged_state *s, int from, int to, char *str)
 
 
 void
-state_err(struct mged_state *s, char *str)
+state_err(struct mged_state *s, const char *str)
 {
     Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[s->global_editing_state],
 		     " state.\n", (char *)NULL);

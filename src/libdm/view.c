@@ -20,13 +20,14 @@
 
 #include "common.h"
 
+#define DM_WITH_RT
+
 #include "bu/time.h"
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "bv/defines.h"
 #include "bv/lod.h"
 #include "bv/util.h"
-#define DM_WITH_RT
 #include "dm.h"
 
 void

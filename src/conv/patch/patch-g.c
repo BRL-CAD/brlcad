@@ -3300,7 +3300,7 @@ set_color(int color)
  * heade == linked list of over-all group
  */
 void
-proc_label(char *label_file)
+proc_label(const char *label_file)
 {
     char gname[NAMESIZE+1], mgname[NAMESIZE+1];	/* group, mirrored group names */
     static int cur_series = -1;

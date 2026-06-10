@@ -33,8 +33,16 @@
  */
 extern int parallel_set_affinity(int cpu);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void thread_set_cpu(int cpu);
 extern int thread_get_cpu(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBBU_PARALLEL_H */
 

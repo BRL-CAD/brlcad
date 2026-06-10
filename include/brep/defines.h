@@ -78,7 +78,54 @@ extern "C++" {
 // in OSX.  In the meantime add this as a temporary measure.
 #define _DARWIN_C_SOURCE
 
+#ifdef None
+#  pragma push_macro("None")
+#  undef None
+#  define BRLCAD_RESTORE_X11_NONE
+#endif
+#ifdef Status
+#  pragma push_macro("Status")
+#  undef Status
+#  define BRLCAD_RESTORE_X11_STATUS
+#endif
+#ifdef Bool
+#  pragma push_macro("Bool")
+#  undef Bool
+#  define BRLCAD_RESTORE_X11_BOOL
+#endif
+#ifdef DisplayString
+#  pragma push_macro("DisplayString")
+#  undef DisplayString
+#  define BRLCAD_RESTORE_X11_DISPLAYSTRING
+#endif
+#ifdef AddToList
+#  pragma push_macro("AddToList")
+#  undef AddToList
+#  define BRLCAD_RESTORE_X11_ADDTOLIST
+#endif
+
 #include "opennurbs.h"
+
+#ifdef BRLCAD_RESTORE_X11_ADDTOLIST
+#  pragma pop_macro("AddToList")
+#  undef BRLCAD_RESTORE_X11_ADDTOLIST
+#endif
+#ifdef BRLCAD_RESTORE_X11_DISPLAYSTRING
+#  pragma pop_macro("DisplayString")
+#  undef BRLCAD_RESTORE_X11_DISPLAYSTRING
+#endif
+#ifdef BRLCAD_RESTORE_X11_BOOL
+#  pragma pop_macro("Bool")
+#  undef BRLCAD_RESTORE_X11_BOOL
+#endif
+#ifdef BRLCAD_RESTORE_X11_STATUS
+#  pragma pop_macro("Status")
+#  undef BRLCAD_RESTORE_X11_STATUS
+#endif
+#ifdef BRLCAD_RESTORE_X11_NONE
+#  pragma pop_macro("None")
+#  undef BRLCAD_RESTORE_X11_NONE
+#endif
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop

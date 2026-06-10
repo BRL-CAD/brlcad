@@ -82,7 +82,7 @@ make_default_host(const char *name)
     ihp->ht_flags = 0x0;
     ihp->ht_when = HT_PASSIVE;
     ihp->ht_where = HT_CONVERT;
-    ihp->ht_path = "/tmp";
+    ihp->ht_path = bu_strdup("/tmp");
 
     /* Add to linked list of known hosts */
     BU_LIST_INSERT(&HostHead, &ihp->l);

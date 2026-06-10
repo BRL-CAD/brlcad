@@ -46,7 +46,7 @@
 #define SAT 1
 #define VAL 2
 
-static char *file_name;
+static const char *file_name;
 static FILE *infp;
 
 static int fileinput = 0;	/* Is input a file (not stdin)? */

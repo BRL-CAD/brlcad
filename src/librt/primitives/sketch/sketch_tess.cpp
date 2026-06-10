@@ -265,7 +265,7 @@ bezier_to_carcs(const ON_BezierCurve& bezier, const struct bn_tol *tol, std::vec
  *      each carc_seg, calculate the area for the polygon edges Start->End and
  *      the area of the circular segment
  */
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
 rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     int j;

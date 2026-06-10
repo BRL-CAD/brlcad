@@ -105,7 +105,7 @@ int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxer
     return 0;
 }
 
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
 rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_dsp_internal *dsp_ip;

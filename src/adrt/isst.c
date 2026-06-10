@@ -542,9 +542,9 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 static int
 open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *UNUSED(objv))
 {
-    char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
+    const char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = dm_open(NULL, (void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = dm_open(NULL, (void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, av);
 
     if (dmp == DM_NULL) {
 	printf("dm failed?\n");

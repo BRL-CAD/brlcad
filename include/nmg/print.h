@@ -40,54 +40,54 @@ __BEGIN_DECLS
 #define PLPRINT(_s, _pl) bu_log("%s %gx + %gy + %gz = %g\n", (_s), \
                                 (_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
 
-NMG_EXPORT extern char *nmg_orientation(int orientation);
+NMG_EXPORT extern const char *nmg_orientation(int orientation);
 NMG_EXPORT extern void nmg_pr_orient(int orientation,
 				     const char *h);
 NMG_EXPORT extern void nmg_pr_m(const struct model *m);
 NMG_EXPORT extern void nmg_pr_r(const struct nmgregion *r,
-				char *h);
+				const char *h);
 NMG_EXPORT extern void nmg_pr_sa(const struct shell_a *sa,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_lg(const struct loop_a *lg,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_fg(const uint32_t *magic,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_s(const struct shell *s,
-				char *h);
+				const char *h);
 NMG_EXPORT extern void  nmg_pr_s_briefly(const struct shell *s,
-					 char *h);
+					 const char *h);
 NMG_EXPORT extern void nmg_pr_f(const struct face *f,
-				char *h);
+				const char *h);
 NMG_EXPORT extern void nmg_pr_fu(const struct faceuse *fu,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_fu_briefly(const struct faceuse *fu,
-					 char *h);
+					 const char *h);
 NMG_EXPORT extern void nmg_pr_l(const struct loop *l,
-				char *h);
+				const char *h);
 NMG_EXPORT extern void nmg_pr_lu(const struct loopuse *lu,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_lu_briefly(const struct loopuse *lu,
-					 char *h);
+					 const char *h);
 NMG_EXPORT extern void nmg_pr_eg(const uint32_t *eg,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_e(const struct edge *e,
-				char *h);
+				const char *h);
 NMG_EXPORT extern void nmg_pr_eu(const struct edgeuse *eu,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_eu_briefly(const struct edgeuse *eu,
-					 char *h);
+					 const char *h);
 NMG_EXPORT extern void nmg_pr_eu_endpoints(const struct edgeuse *eu,
-					   char *h);
+					   const char *h);
 NMG_EXPORT extern void nmg_pr_vg(const struct vertex_g *vg,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_v(const struct vertex *v,
-				char *h);
+				const char *h);
 NMG_EXPORT extern void nmg_pr_vu(const struct vertexuse *vu,
-				 char *h);
+				 const char *h);
 NMG_EXPORT extern void nmg_pr_vu_briefly(const struct vertexuse *vu,
-					 char *h);
+					 const char *h);
 NMG_EXPORT extern void nmg_pr_vua(const uint32_t *magic_p,
-				  char *h);
+				  const char *h);
 NMG_EXPORT extern void nmg_euprint(const char *str,
 				   const struct edgeuse *eu);
 NMG_EXPORT extern void nmg_pr_ptbl(const char *title,

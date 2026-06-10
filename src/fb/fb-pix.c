@@ -42,7 +42,7 @@
 
 
 char *framebuffer = NULL;
-char *file_name;
+const char *file_name;
 FILE *outfp;
 
 static int crunch = 0;		/* Color map crunch? */

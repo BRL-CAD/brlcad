@@ -124,7 +124,7 @@ static int type_count[NO_OF_TYPES][2] = {
 };
 
 
-static char *type_label[NO_OF_TYPES] = {
+static const char *type_label[NO_OF_TYPES] = {
     "CopiusDa",
     "Line",
     "Point",
@@ -159,7 +159,7 @@ static char *type_label[NO_OF_TYPES] = {
 };
 
 
-static char *type_name[NO_OF_TYPES] = {
+static const char *type_name[NO_OF_TYPES] = {
     "Copious Data",
     "Line",
     "Point",

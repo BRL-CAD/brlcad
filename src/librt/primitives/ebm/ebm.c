@@ -62,7 +62,7 @@ struct rt_ebm_specific {
 
 #define RT_EBM_O(m) bu_offsetof(struct rt_ebm_internal, m)
 
-const struct bu_structparse rt_ebm_parse[] = {
+extern const struct bu_structparse rt_ebm_parse[] = {
     {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetof(struct rt_ebm_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s",	RT_EBM_NAME_LEN, "name", bu_offsetof(struct rt_ebm_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "src",	RT_EBM_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -647,7 +647,9 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 }
 
 
+__BEGIN_DECLS
 extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
+__END_DECLS
 extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 
 
@@ -748,7 +750,7 @@ get_obj_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 static int
 ebm_get_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 {
-    char *p;
+    const char *p;
 
     p = eip->name;
 

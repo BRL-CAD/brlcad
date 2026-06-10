@@ -1205,7 +1205,7 @@ extern "C" {
 	/* Validate manifest has commands */
 	if (!manifest->commands || manifest->cmd_count == 0) {
 	    bu_plugin_logf(BU_LOG_INFO, "Plugin %s has no commands", path);
-	    /* Not an error, just nothing to register */
+	    /* Not an error, just nothing to */
 #if defined(HAVE_WINDOWS_H)
 	    bu_plugin_impl::get_modules().push_back(handle);
 #else
@@ -1247,7 +1247,7 @@ extern "C" {
 		if (result == 0) {
 		    registered++;
 		}
-		/* result == 1 means duplicate (logged by register function) */
+		/* result == 1 means duplicate (logged by function) */
 	    }
 	}
 

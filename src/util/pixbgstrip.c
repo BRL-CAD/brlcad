@@ -41,7 +41,7 @@
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static size_t scanbytes;		/* # of bytes of scanline */
 
-static char *file_name;
+static const char *file_name;
 static FILE *infp;
 static int fileinput = 0;		/* file of pipe on input? */
 

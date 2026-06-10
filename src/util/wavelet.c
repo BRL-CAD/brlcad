@@ -43,6 +43,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "bio.h"
 
@@ -66,9 +67,9 @@
 #define RECONSTRUCT -1
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "W:S:s:w:n:t:#:D:12drR:h?";
+const char *options = "W:S:s:w:n:t:#:D:12drR:h?";
 
-char *progname = "(noname)";
+const char *progname = "(noname)";
 int img_space=1;
 int debug;
 size_t width = 512;
@@ -82,7 +83,7 @@ int decomp_recon;
 
 
 void
-usage(char *s)
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -98,7 +99,6 @@ int
 parse_args(int ac, char **av)
 {
     int c;
-    char *strrchr(const char *, int);
 
     if ((progname=strrchr(*av, '/')))
 	progname++;

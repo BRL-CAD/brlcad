@@ -64,7 +64,7 @@ struct rt_vol_specific {
 
 #define VOL_O(m) bu_offsetof(struct rt_vol_internal, m)
 
-const struct bu_structparse rt_vol_parse[] = {
+extern const struct bu_structparse rt_vol_parse[] = {
     {"%s", RT_VOL_NAME_LEN, "file", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s", RT_VOL_NAME_LEN, "name", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c", 1, "src",	VOL_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -81,7 +81,9 @@ const struct bu_structparse rt_vol_parse[] = {
 
 extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
 			 mat_t mat, struct bu_list *vlfree, struct bu_list *vhead, struct rt_vol_internal *vip);
+__BEGIN_DECLS
 extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
+__END_DECLS
 extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 /*
  * Codes to represent surface normals.

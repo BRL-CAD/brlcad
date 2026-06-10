@@ -130,9 +130,11 @@ struct dsp_bb_layer {
 
 
 /* FIXME: rename? */
+__BEGIN_DECLS
 extern int rt_retrieve_binunif(struct rt_db_internal *intern,
 			       const struct db_i *dbip,
 			       const char *name);
+__END_DECLS
 
 
 #define dlog if (RT_G_DEBUG & RT_DEBUG_HF) bu_log
@@ -294,7 +296,7 @@ const struct bu_structparse dsp_v4_parse[] = {
 
 
 /* only used on v5 database */
-const struct bu_structparse rt_dsp_parse[] = {
+extern const struct bu_structparse rt_dsp_parse[] = {
     {"%V",  1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
     {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },

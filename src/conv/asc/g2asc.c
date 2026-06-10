@@ -47,7 +47,7 @@
 
 const mat_t id_mat = MAT_INIT_IDN; /* identity matrix for pipes */
 
-char *strchop(char *str, size_t len);
+const char *strchop(char *str, size_t len);
 #define CH(x)	strchop(x, sizeof(x))
 
 int	combdump(void);
@@ -69,7 +69,7 @@ Usage: g2asc file.g file.asc\n\
 
 FILE	*ifp;
 FILE	*ofp;
-char	*iname = "-";
+const char *iname = "-";
 
 static char *tclified_name=NULL;
 static size_t tclified_name_buffer_len=0;
@@ -455,7 +455,7 @@ top:
  *  converting unprintable characters to something printable.
  *  Here we deal with names not being null-terminated.
  */
-char *encode_name(char *str)
+const char *encode_name(char *str)
 {
     static char buf[NAMESIZE+1];
     char *ip = str;
@@ -1184,7 +1184,7 @@ bsurfdump(void)	/* Print d-spline surface description record information */
  *  Take a string and a length, and null terminate,
  *  converting unprintable characters to something printable.
  */
-char *strchop(char *str, size_t len)
+const char *strchop(char *str, size_t len)
 {
     static char buf[10000] = {0};
     char *ip = str;

@@ -100,8 +100,9 @@ rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 void
-rt_edit_nmg_prim_edit_destroy(struct rt_nmg_edit *e)
+rt_edit_nmg_prim_edit_destroy(void *ptr)
 {
+    struct rt_nmg_edit *e = (struct rt_nmg_edit *)ptr;
     if (!e)
 	return;
 
@@ -155,7 +156,7 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    break;
 	case ECMD_NMG_EKILL:
 	    break;
-	case ECMD_NMG_EDEBUG:
+	case ECMD_NMG_EDEBUG: {
 	    if (!n->es_eu) {
 		bu_vls_printf(s->log_str, "nmg_ed: no edge selected yet\n");
 		return;
@@ -177,6 +178,7 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    if (f)
 		(*f)(0, NULL, d, &vs_flag);
 	    return;
+	}
 	case ECMD_NMG_FORW:
 	    if (!n->es_eu) {
 		bu_vls_printf(s->log_str, "nmg_ed: no edge selected yet\n");

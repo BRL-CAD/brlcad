@@ -773,8 +773,9 @@ rt_edit_comb_prim_edit_create(struct rt_edit *s)
 }
 
 void
-rt_edit_comb_prim_edit_destroy(struct rt_comb_edit *ce)
+rt_edit_comb_prim_edit_destroy(void *ptr)
 {
+    struct rt_comb_edit *ce = (struct rt_comb_edit *)ptr;
     if (!ce)
 	return;
     bu_vls_free(&ce->es_name);

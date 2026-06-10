@@ -32,9 +32,9 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-char **promp;
+const char **promp;
 
-char *p_arb3pt[] = {
+const char *p_arb3pt[] = {
     "Enter X, Y, Z for point 1: ",
     "Enter Y, Z: ",
     "Enter Z: ",
@@ -46,7 +46,7 @@ char *p_arb3pt[] = {
     "Enter Z: "
 };
 
-char *p_rfin[] = {
+const char *p_rfin[] = {
     "Enter X, Y, Z of the known point: ",
     "Enter Y, Z: ",
     "Enter Z: "

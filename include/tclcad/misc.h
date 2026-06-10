@@ -36,7 +36,7 @@
 #include "ged.h"
 #include "tclcad/defines.h"
 
-__BEGIN_DECLS
+BRLCAD_CXX_BEGIN_C_LINKAGE
 
 struct tclcad_ged_data {
     struct ged		*gedp;
@@ -196,7 +196,7 @@ tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_fun
 TCLCAD_EXPORT void
 tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d);
 
-__END_DECLS
+BRLCAD_CXX_END_C_LINKAGE
 
 #endif /* TCLCAD_MISC_H */
 

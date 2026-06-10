@@ -36,10 +36,10 @@
 #include "mged.h"
 
 struct scroll_item {
-    char *scroll_string;
+    const char *scroll_string;
     void (*scroll_func)(struct scroll_item *, double);
     int scroll_val;
-    char *scroll_cmd;
+    const char *scroll_cmd;
 };
 
 #ifndef COMMA
@@ -406,9 +406,9 @@ struct mged_dm {
 
 /* If we're changing the active DM, use this function so
  * libged also gets the word. */
-__BEGIN_DECLS
+BRLCAD_CXX_BEGIN_C_LINKAGE
 extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
-__END_DECLS
+BRLCAD_CXX_END_C_LINKAGE
 
 #define MGED_DM_NULL ((struct mged_dm *)NULL)
 #define DMP s->mged_curr_dm->dm_dmp

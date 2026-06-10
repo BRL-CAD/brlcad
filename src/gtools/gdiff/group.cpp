@@ -97,7 +97,7 @@
 #include <sstream>
 #include "tlsh.hpp"
 
-extern "C" {
+BRLCAD_CXX_BEGIN_C_LINKAGE
 #include "bu/app.h"
 #include "bu/hash.h"
 #include "bu/file.h"
@@ -106,8 +106,9 @@ extern "C" {
 #define ALPHANUM_IMPL
 #include "../../libged/alphanum.h"
 #include "rt/db_io.h"
+BRLCAD_CXX_END_C_LINKAGE
+
 #include "./gdiff.h"
-}
 
 #define TLSH_DEFAULT_THRESHOLD 30
 #define GDIFF_CACHE_FORMAT 1

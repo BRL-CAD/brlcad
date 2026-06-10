@@ -51,6 +51,12 @@
 #include "render_util.h"
 #include "tienet_slave.h"
 
+#if !defined(HAVE_DECL_GETLOADAVG) && defined(HAVE_GETLOADAVG)
+__BEGIN_DECLS
+extern int getloadavg(double loadavg[], int nelem);
+__END_DECLS
+#endif
+
 
 typedef struct adrt_slave_project_s {
     struct tie_s tie;
@@ -112,9 +118,6 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	case ADRT_WORK_STATUS:
 	{
-#ifndef HAVE_DECL_GETLOADAVG
-	    extern int getloadavg(double loadavg[], int nelem);
-#endif /* HAVE_DECL_GETLOADAVG */
 #ifdef HAVE_GETLOADAVG
 	    double loadavg = -1.0;
 	    getloadavg (&loadavg, 1);

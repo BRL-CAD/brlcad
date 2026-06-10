@@ -133,7 +133,7 @@ void FindLoops(ON_Brep **b) {
 }
 
 
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
 rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_sketch_internal *eip;

@@ -90,7 +90,9 @@ unsigned char *scanbuf = NULL;
 extern int grid_setup(struct bu_vls *err);
 extern void worker(int, void *);
 extern void application_init(void);
+__BEGIN_DECLS
 extern void light_cleanup(void); /* from liboptical/sh_light.c */
+__END_DECLS
 
 /***** variables shared with worker() ******/
 struct application APP;

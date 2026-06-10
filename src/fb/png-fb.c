@@ -49,7 +49,7 @@ static int scanpix;		/* # of pixels of scanline */
 static int multiple_lines = 0;	/* Streamlined operation */
 
 static char *framebuffer = NULL;
-static char *file_name;
+static const char *file_name;
 static FILE *fp_in;
 
 static int fileinput = 0;		/* file of pipe on input? */

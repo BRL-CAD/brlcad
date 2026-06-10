@@ -31,7 +31,7 @@
 #include "brep.h"
 
 
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
 rt_grp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_grip_internal *gip;

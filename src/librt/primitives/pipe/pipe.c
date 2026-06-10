@@ -5011,7 +5011,7 @@ rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 
 
 void
-rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
+rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct bu_list head;
     point_t min, max;
@@ -5027,7 +5027,7 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 
     BU_LIST_INIT(&head);
 
-    pipe_elements_calculate(&head, ip, &min, &max);
+    pipe_elements_calculate(&head, (struct rt_db_internal *)ip, &min, &max);
 
     /* The following calculation establishes if the last pipe segment
      * is in fact connected to the first one. The last end point is
@@ -5214,7 +5214,7 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 
 
 void
-rt_pipe_volume(fastf_t *vol, struct rt_db_internal *ip)
+rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct bu_list head;
     point_t min, max;
@@ -5222,7 +5222,7 @@ rt_pipe_volume(fastf_t *vol, struct rt_db_internal *ip)
 
     BU_LIST_INIT(&head);
 
-    pipe_elements_calculate(&head, ip, &min, &max);
+    pipe_elements_calculate(&head, (struct rt_db_internal *)ip, &min, &max);
 
     *vol = 0;
     for (BU_LIST_FOR(p, id_pipe, &head)) {
@@ -5234,7 +5234,7 @@ rt_pipe_volume(fastf_t *vol, struct rt_db_internal *ip)
 
 
 void
-rt_pipe_centroid(point_t *cent, struct rt_db_internal *ip)
+rt_pipe_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct bu_list head;
     point_t min, max;
@@ -5243,7 +5243,7 @@ rt_pipe_centroid(point_t *cent, struct rt_db_internal *ip)
 
     BU_LIST_INIT(&head);
 
-    pipe_elements_calculate(&head, ip, &min, &max);
+    pipe_elements_calculate(&head, (struct rt_db_internal *)ip, &min, &max);
 
     VSETALL(*cent, 0);
     vol = 0;

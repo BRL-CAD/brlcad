@@ -119,7 +119,7 @@ face_area(struct rt_bot_internal *bot, size_t face_num)
  *   Code for identifying semi-flat patches in bots
  *   and creating wireframe edges
  **********************************************************/
-extern "C" int
+BRLCAD_CXX_C_LINKAGE int
 rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(v), fastf_t UNUSED(s_size))
 {
     struct rt_bot_internal *bot;

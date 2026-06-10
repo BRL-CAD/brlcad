@@ -278,7 +278,7 @@ struct bu_structparse view_parse[] = {
 };
 
 
-const char title[] = "RT Hidden-Line Renderer";
+extern const char title[] = "RT Hidden-Line Renderer";
 
 
 int handle_main_ray(struct application *ap, register struct partition *PartHeadp, struct seg *segp);

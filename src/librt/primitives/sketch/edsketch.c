@@ -252,8 +252,9 @@ rt_edit_sketch_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 void
-rt_edit_sketch_prim_edit_destroy(struct rt_sketch_edit *se)
+rt_edit_sketch_prim_edit_destroy(void *ptr)
 {
+    struct rt_sketch_edit *se = (struct rt_sketch_edit *)ptr;
     if (!se)
 	return;
     BU_PUT(se, struct rt_sketch_edit);

@@ -37,6 +37,7 @@ int
 main(int ac, char *av[])
 {
     struct rt_wdb *db_filepointer;
+    const char *db_name = NULL;
 
     /* overall building footprint and heights, in millimeters */
     fastf_t wall_t = 6.0 * 25.4;	/* 6" thick walls */
@@ -57,19 +58,21 @@ main(int ac, char *av[])
     if (ac < 2) {
 	mkbdlg_usage();
 	fprintf(stderr, "       Program continues running:\n");
-	av[1]="mkbuilding.g";
+	db_name = "mkbuilding.g";
+    } else {
+	db_name = av[1];
     }
 
 /* Try to disallow file names starting with - . */
-    if (av[1][0] == '-') {
-	if (av[1][1] != 'h' && av[1][1] !='?')
+    if (db_name[0] == '-') {
+	if (db_name[1] != 'h' && db_name[1] !='?')
 	    fprintf(stderr,"mkbuilding accepts no options except h or ? for help\n");
 	mkbdlg_usage();
 	return 1;
     }
 
-    if ((db_filepointer = wdb_fopen(av[1])) == NULL) {
-	perror(av[1]);
+    if ((db_filepointer = wdb_fopen(db_name)) == NULL) {
+	perror(db_name);
 	mkbdlg_usage();
 	return 1;
     }

@@ -138,7 +138,7 @@ make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 }
 
 
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
 rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_pipe_internal *pip;

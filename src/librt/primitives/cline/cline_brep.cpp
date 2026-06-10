@@ -29,12 +29,18 @@
 #include "rt/geom.h"
 #include "brep.h"
 
-extern "C" {
+#ifndef BRLCAD_ALL_CXX_COMPILE
+BRLCAD_CXX_BEGIN_C_LINKAGE
+#endif
     int rt_cline_to_pipe(struct rt_pipe_internal *pipe, const struct rt_db_internal *ip);
     void rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol);
-}
+#ifndef BRLCAD_ALL_CXX_COMPILE
+BRLCAD_CXX_END_C_LINKAGE
 
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
+#else
+void
+#endif
 rt_cline_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_cline_internal *cip;

@@ -126,6 +126,8 @@ set(
   xdr.c
 )
 
+set_source_files_properties(bitv.c PROPERTIES BRLCAD_SKIP_ALL_CXX_COMPILE TRUE)
+
 if(NOT CMAKE_CXX_STANDARD EQUAL 98)
   set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
 else(NOT CMAKE_CXX_STANDARD EQUAL 98)

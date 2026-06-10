@@ -286,7 +286,7 @@ NMG_EXPORT extern struct edge_g_cnurb *nmg_nurb_new_cnurb(int order, int n_knots
 NMG_EXPORT extern void nmg_nurb_free_snurb(struct face_g_snurb *srf);
 NMG_EXPORT extern void nmg_nurb_free_cnurb(struct edge_g_cnurb * crv);
 NMG_EXPORT extern void nmg_nurb_c_print(const struct edge_g_cnurb *crv);
-NMG_EXPORT extern void nmg_nurb_s_print(char *c, const struct face_g_snurb *srf);
+NMG_EXPORT extern void nmg_nurb_s_print(const char *c, const struct face_g_snurb *srf);
 NMG_EXPORT extern void nmg_nurb_pr_kv(const struct knot_vector *kv);
 NMG_EXPORT extern void nmg_nurb_pr_mesh(const struct face_g_snurb *m);
 NMG_EXPORT extern void nmg_nurb_print_pnt_type(int c);

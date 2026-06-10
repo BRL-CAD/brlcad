@@ -41,7 +41,7 @@
 #include "./ged_private.h"
 
 
-static char *p_arb4[] = {
+static const char *p_arb4[] = {
     "Enter thickness for face 123: ",
     "Enter thickness for face 124: ",
     "Enter thickness for face 234: ",
@@ -49,7 +49,7 @@ static char *p_arb4[] = {
 };
 
 
-static char *p_arb5[] = {
+static const char *p_arb5[] = {
     "Enter thickness for face 1234: ",
     "Enter thickness for face 125: ",
     "Enter thickness for face 235: ",
@@ -58,7 +58,7 @@ static char *p_arb5[] = {
 };
 
 
-static char *p_arb6[] = {
+static const char *p_arb6[] = {
     "Enter thickness for face 1234: ",
     "Enter thickness for face 2356: ",
     "Enter thickness for face 1564: ",
@@ -67,7 +67,7 @@ static char *p_arb6[] = {
 };
 
 
-static char *p_arb7[] = {
+static const char *p_arb7[] = {
     "Enter thickness for face 1234: ",
     "Enter thickness for face 567: ",
     "Enter thickness for face 145: ",
@@ -77,7 +77,7 @@ static char *p_arb7[] = {
 };
 
 
-static char *p_arb8[] = {
+static const char *p_arb8[] = {
     "Enter thickness for face 1234: ",
     "Enter thickness for face 5678: ",
     "Enter thickness for face 1485: ",
@@ -87,19 +87,19 @@ static char *p_arb8[] = {
 };
 
 
-static char *p_tgcin[] = {
+static const char *p_tgcin[] = {
     "Enter thickness for base (AxB): ",
     "Enter thickness for top (CxD): ",
     "Enter thickness for side: ",
 };
 
 
-static char *p_partin[] = {
+static const char *p_partin[] = {
     "Enter thickness for body: ",
 };
 
 
-static char *p_rpcin[] = {
+static const char *p_rpcin[] = {
     "Enter thickness for front plate (contains V): ",
     "Enter thickness for back plate: ",
     "Enter thickness for top plate: ",
@@ -107,7 +107,7 @@ static char *p_rpcin[] = {
 };
 
 
-static char *p_rhcin[] = {
+static const char *p_rhcin[] = {
     "Enter thickness for front plate (contains V): ",
     "Enter thickness for back plate: ",
     "Enter thickness for top plate: ",
@@ -115,24 +115,24 @@ static char *p_rhcin[] = {
 };
 
 
-static char *p_epain[] = {
+static const char *p_epain[] = {
     "Enter thickness for top plate: ",
     "Enter thickness for body: ",
 };
 
 
-static char *p_ehyin[] = {
+static const char *p_ehyin[] = {
     "Enter thickness for top plate: ",
     "Enter thickness for body: ",
 };
 
 
-static char *p_etoin[] = {
+static const char *p_etoin[] = {
     "Enter thickness for body: ",
 };
 
 
-static char *p_nmgin[] = {
+static const char *p_nmgin[] = {
     "Enter thickness for shell: ",
 };
 
@@ -955,7 +955,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     switch (ip->idb_type) {
 
 	case ID_ARB8: {
-	    char **prompt = p_arb6;
+	    const char **prompt = p_arb6;
 	    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
 
 	    nface = 6;

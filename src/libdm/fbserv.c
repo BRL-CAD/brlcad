@@ -1195,7 +1195,7 @@ fbs_open_ipc(struct fbserv_obj *fbsp)
 
     pc = pe;
 
-    /* Find an empty client slot and register the pre-connected pkg_conn.
+    /* Find an empty client slot and the pre-connected pkg_conn.
      * The transport may be a unidirectional pipe pair internally, so the
      * fd to monitor for readability must come from pkg_get_read_fd(),
      * not from struct internals.  fbsc_fd is used by callers

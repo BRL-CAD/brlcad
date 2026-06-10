@@ -373,14 +373,14 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     if (mged_variables->mv_use_air) {
 	int insertArgc = 2;
-	char *insertArgv[3];
+	const char *insertArgv[3];
 	int newArgc;
 	char **newArgv;
 
 	insertArgv[0] = "-u";
 	insertArgv[1] = "1";
-	insertArgv[2] = (char *)0;
-	newArgv = bu_argv_dupinsert(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
+	insertArgv[2] = NULL;
+	newArgv = bu_argv_dupinsert(1, insertArgc, insertArgv, argc, (const char **)argv);
 	newArgc = argc + insertArgc;
 	ret = ged_exec(s->gedp, newArgc, (const char **)newArgv);
 	bu_argv_free(newArgc, newArgv);

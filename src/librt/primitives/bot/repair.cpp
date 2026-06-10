@@ -136,7 +136,7 @@ _miss_err(struct application *ap)
 }
 
 
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
 bot_repair_lint_worker(int cpu, void *ptr)
 {
     struct lint_worker_vars *state = &(((struct lint_worker_vars *)ptr)[cpu]);

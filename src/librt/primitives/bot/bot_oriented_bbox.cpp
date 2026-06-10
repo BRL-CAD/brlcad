@@ -27,7 +27,7 @@
 
 
 /* calc oriented bounding box using GTE */
-extern "C" int
+BRLCAD_CXX_C_LINKAGE int
 rt_bot_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t UNUSED(tol))
 {
     // make sure we have a bot

@@ -38,7 +38,7 @@
 #include "bu/malloc.h"
 #include "dm.h"
 
-char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
+const char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
 
 #define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
 	bu_exit(-1, NULL); }

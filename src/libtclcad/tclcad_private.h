@@ -34,7 +34,7 @@
 #include "ged/defines.h"
 #include "tclcad/defines.h"
 
-__BEGIN_DECLS
+BRLCAD_CXX_BEGIN_C_LINKAGE
 
 #define TO_UNLIMITED -1
 
@@ -478,7 +478,7 @@ tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub);
 TCLCAD_EXPORT extern int
 tclcad_listen_ipc(struct fbserv_obj *fbsp, Tcl_Interp *interp);
 
-__END_DECLS
+BRLCAD_CXX_END_C_LINKAGE
 
 #endif /* LIBTCLCAD_TCLCAD_PRIVATE_H */
 

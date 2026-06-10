@@ -197,8 +197,7 @@ extern int grid_setup(struct bu_vls *err);
 extern void grid_sync_dimensions(double vsize);
 
 /**
- * called by apps during application_init() to register
- * application-specific usage options.
+ * called by apps during application_init() to  * application-specific usage options.
  */
 extern void option(const char *option, const char *description, const char *category, int verbose);
 

@@ -105,8 +105,9 @@ rt_edit_bspline_prim_edit_create(struct rt_edit *s)
 }
 
 void
-rt_edit_bspline_prim_edit_destroy(struct rt_bspline_edit *e)
+rt_edit_bspline_prim_edit_destroy(void *ptr)
 {
+    struct rt_bspline_edit *e = (struct rt_bspline_edit *)ptr;
     if (!e)
 	return;
     BU_PUT(e, struct rt_bspline_edit);

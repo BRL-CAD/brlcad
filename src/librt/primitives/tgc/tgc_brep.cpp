@@ -29,7 +29,7 @@
 #include "rt/geom.h"
 #include "brep.h"
 
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
 rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_tgc_internal *eip;

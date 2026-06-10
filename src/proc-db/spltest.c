@@ -152,7 +152,7 @@ main(int argc, char *argv[])
     point_t a, b, c, d;
     struct rt_wdb *fp;
     struct rt_nurb_internal *si;
-    char *filename = "spltest.g";
+    const char *filename = "spltest.g";
     int helpflag;
 
     bu_setprogname(argv[0]);

@@ -146,12 +146,14 @@ brlcad_addlib(libbg "${LIBBG_SOURCES}" "" "${BG_INCLUDE_DIRS}"
   PUBLIC_LIBS ${BG_PUBLIC_LIBS}
   PRIVATE_LIBS ${BG_PRIVATE_LIBS}
   # These files define macros that conflict when batched into the same unity TU:
+  # - chull.c and chull2.cpp both define a same-named internal helper.
   # - polygon.c, polygon_triangulate.cpp, trimesh_isect.cpp, trimesh_plot3.cpp:
   #   all define PLOT_PREFIX_STR to remap plot3 function names, causing
   #   -Werror redefinition errors and unresolved bg_plot3_* symbols.
   # - geogram files need special rounding and fp-contract flags that must
   #   not affect the surrounding libbg unity TU.
   UNITY_BUILD_SKIP
+    chull.c
     polygon.c
     polygon_triangulate.cpp
     spsr.cpp

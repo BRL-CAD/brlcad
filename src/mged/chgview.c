@@ -730,9 +730,9 @@ edit_com(struct mged_state *s,
     bu_vls_strcpy(&vls, argv[0]);
 
     for (i = 1; i < (size_t)argc; i++) {
-	char *ptr_A = NULL;
-	char *ptr_o = NULL;
-	char *ptr_R = NULL;
+	const char *ptr_A = NULL;
+	const char *ptr_o = NULL;
+	const char *ptr_R = NULL;
 	const char *c;
 
 	if (*argv[i] != '-') {
@@ -914,11 +914,11 @@ edit_com(struct mged_state *s,
 	/* If we went from blank screen to non-blank, resize */
 	if (mged_variables->mv_autosize && initial_blank_screen && non_empty) {
 	    struct view_ring *vrp;
-	    char *av[2];
+	    const char *av[2];
 
 	    av[0] = "autoview";
-	    av[1] = (char *)0;
-	    ged_exec_autoview(s->gedp, 1, (const char **)av);
+	    av[1] = NULL;
+	    ged_exec_autoview(s->gedp, 1, av);
 
 	    (void)mged_svbase(s);
 
@@ -2006,7 +2006,7 @@ int
 mged_zoom(struct mged_state *s, double val)
 {
     int ret;
-    char *av[3];
+    const char *av[3];
     char buf[32];
     Tcl_DString ds;
 
@@ -2022,7 +2022,7 @@ mged_zoom(struct mged_state *s, double val)
     av[0] = "zoom";
     av[1] = buf;
 
-    ret = ged_exec_zoom(s->gedp, 2, (const char **)av);
+    ret = ged_exec_zoom(s->gedp, 2, av);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(s->interp, &ds);
@@ -2314,7 +2314,7 @@ setview(struct mged_state *s,
 	double a2,
 	double a3)		/* DOUBLE angles, in degrees */
 {
-    char *av[5];
+    const char *av[5];
     char xbuf[32];
     char ybuf[32];
     char zbuf[32];
@@ -2331,8 +2331,8 @@ setview(struct mged_state *s,
     av[1] = xbuf;
     av[2] = ybuf;
     av[3] = zbuf;
-    av[4] = (char *)0;
-    ged_exec_setview(s->gedp, 4, (const char **)av);
+    av[4] = NULL;
+    ged_exec_setview(s->gedp, 4, av);
 
     if (!ZERO(view_state->k.tra_v_abs[X])
 	|| !ZERO(view_state->k.tra_v_abs[Y])
@@ -2355,7 +2355,7 @@ slewview(struct mged_state *s, vect_t view_pos)
     point_t new_model_center;
     vect_t diff;
     mat_t delta;
-    char *av[5];
+    const char *av[5];
     char xbuf[32];
     char ybuf[32];
     char zbuf[32];
@@ -2375,8 +2375,8 @@ slewview(struct mged_state *s, vect_t view_pos)
     av[1] = xbuf;
     av[2] = ybuf;
     av[3] = zbuf;
-    av[4] = (char *)0;
-    ged_exec_slew(s->gedp, 4, (const char **)av);
+    av[4] = NULL;
+    ged_exec_slew(s->gedp, 4, av);
 
     /* all this for ModelDelta */
     MAT_DELTAS_GET_NEG(new_model_center, view_state->vs_gvp->gv_center);

@@ -42,7 +42,7 @@
 int done=0;
 int ncpu=1;
 
-char *progname ="pix2g";
+const char *progname ="pix2g";
 
 /* procedure variable start */
 struct rt_wdb *db_fp;

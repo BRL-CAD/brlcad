@@ -55,7 +55,7 @@ size_t file_width = 512; /* default input width */
 size_t file_height = 512; /* default input height */
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
-static char *file_name = (char *)NULL;
+static const char *file_name = NULL;
 
 
 /**

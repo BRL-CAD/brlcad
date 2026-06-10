@@ -29,6 +29,7 @@
 
 #include "vmath.h"
 #include "bn.h"
+#include "bu/malloc.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -235,7 +236,6 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct bv_scene_obj *sp;
-    char *cp;
     size_t j;
     int illum_only = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -271,23 +271,31 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     bdata = (struct ged_bv_data *)illump->s_u_data;
 
-    if ((cp = strchr(argv[1], '/')) != NULL) {
+    if (strchr(argv[1], '/') != NULL) {
 	struct directory *d0, *d1;
-	if ((d1 = db_lookup(s->dbip, cp+1, LOOKUP_NOISY)) == RT_DIR_NULL)
+	char *path_arg = bu_strdup(argv[1]);
+	char *cp = strchr(path_arg, '/');
+	if ((d1 = db_lookup(s->dbip, cp+1, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_free(path_arg, "matpick path argument");
 	    return TCL_ERROR;
-	*cp = '\0';		/* modifies argv[1] */
-	if ((d0 = db_lookup(s->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+	}
+	*cp = '\0';
+	if ((d0 = db_lookup(s->dbip, path_arg, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_free(path_arg, "matpick path argument");
 	    return TCL_ERROR;
+	}
 	/* Find arc on illump path which runs from d0 to d1 */
 	for (j=1; j < bdata->s_fullpath.fp_len; j++) {
 	    if (DB_FULL_PATH_GET(&bdata->s_fullpath, j-1) != d0) continue;
 	    if (DB_FULL_PATH_GET(&bdata->s_fullpath, j-0) != d1) continue;
 	    ipathpos = j;
+	    bu_free(path_arg, "matpick path argument");
 	    goto got;
 	}
 	Tcl_AppendResult(interp, "matpick: unable to find arc ", d0->d_namep,
 			 "/", d1->d_namep, " in current selection.  Re-specify.\n",
 			 (char *)NULL);
+	bu_free(path_arg, "matpick path argument");
 	return TCL_ERROR;
     } else {
 	ipathpos = atoi(argv[1]);

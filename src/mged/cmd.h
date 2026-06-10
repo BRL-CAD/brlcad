@@ -28,7 +28,7 @@
 
 #include "mged.h"
 
-__BEGIN_DECLS
+BRLCAD_CXX_BEGIN_C_LINKAGE
 
 extern int mged_db_search_callback(int, const char **, void *, void*);
 extern int mged_search_pre_clbk(int, const char **, void *, void*);
@@ -96,7 +96,7 @@ extern int cmd_vrot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_zap(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_zoom(ClientData, Tcl_Interp *, int, const char *[]);
 
-__END_DECLS
+BRLCAD_CXX_END_C_LINKAGE
 
 #endif /* MGED_CMD_H */
 

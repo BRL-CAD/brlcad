@@ -429,6 +429,7 @@ bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char 
     int i;
     static char bu_editor[MAXPATHLEN] = {0};
     const char *e_str = NULL;
+    const char *env_editor = NULL;
     const char **ncompat_list = NULL;
     // Arrays for internal editor checking, in priority order.
     // Note that this order may be changed arbitrarily and is
@@ -450,7 +451,7 @@ bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char 
 
     // BRLCAD_EDITOR_GUI takes precedence, if set and GUI is an option
     if (!etype || etype == 2) {
-	const char *env_editor = getenv("BRLCAD_EDITOR_GUI");
+	env_editor = getenv("BRLCAD_EDITOR_GUI");
 	if (env_editor && env_editor[0] != '\0') {
 	    if (editor_file_check(bu_editor, env_editor, ncompat_list))
 		goto do_opt;
@@ -459,7 +460,7 @@ bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char 
 
     // BRLCAD_EDITOR_CONSOLE takes precedence, if set and CONSOLE is an option
     if (!etype || etype == 1) {
-	const char *env_editor = getenv("BRLCAD_EDITOR_CONSOLE");
+	env_editor = getenv("BRLCAD_EDITOR_CONSOLE");
 	if (env_editor && env_editor[0] != '\0') {
 	    if (editor_file_check(bu_editor, env_editor, ncompat_list))
 		goto do_opt;
@@ -467,7 +468,7 @@ bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char 
     }
 
     // VISUAL/EDITOR environment variables take precedence, if set
-    const char *env_editor = getenv("VISUAL");
+    env_editor = getenv("VISUAL");
     if (env_editor && env_editor[0] != '\0') {
 	if (editor_file_check(bu_editor, env_editor, ncompat_list))
 	    goto do_opt;

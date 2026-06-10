@@ -323,7 +323,7 @@ attr_print(struct bu_vls *msg, struct bu_attribute_value_set *avs, int argc, con
 }
 
 
-extern "C" int
+BRLCAD_CXX_C_LINKAGE int
 rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;

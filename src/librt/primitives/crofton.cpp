@@ -772,7 +772,7 @@ rt_crofton_sample(fastf_t *area, fastf_t *vol,
 static const struct rt_crofton_params s_default_params  = { 0u,                        0.0, 0.0 };
 static const struct rt_crofton_params s_implicit_params = { RT_CROFTON_IMPLICIT_SAMPLES, 0.0, 0.0 };
 
-extern "C" {
+BRLCAD_CXX_BEGIN_C_LINKAGE
 
 RT_EXPORT void
 rt_crofton_surf_area(fastf_t *area, const struct rt_db_internal *ip)
@@ -798,7 +798,7 @@ rt_crofton_volume_implicit(fastf_t *vol, const struct rt_db_internal *ip)
     rt_crofton_sample(NULL, vol, ip, &s_implicit_params);
 }
 
-} /* extern "C" */
+BRLCAD_CXX_END_C_LINKAGE
 
 
 /*

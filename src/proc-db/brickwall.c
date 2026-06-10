@@ -38,9 +38,9 @@
 
 
 /* declarations to support use of bu_getopt() */
-char *options = "w:n:d:W:N:sB:t:Du:mc:C:h?";
+const char *options = "w:n:d:W:N:sB:t:Du:mc:C:h?";
 
-char *progname = "(noname)";
+const char *progname = "(noname)";
 /* standard modular brick: 8 x 2.25 x 3.625 inches (~203 x 57 x 92 mm) */
 double brick_width=8.0;
 double brick_height=2.25;
@@ -51,7 +51,7 @@ double brick_depth=3.625;
  */
 double wall_width=87.375;
 double wall_height=29.2;
-char *brick_name="brick";
+const char *brick_name="brick";
 int standalone=0;
 int make_mortar=1;	/* put mortar between bricks (on by default) */
 double tol=0.125;	/* minimum mortar thickness in in */
@@ -63,7 +63,7 @@ char mortar_color[32] = "190 190 190";	/* mortar gray */
 
 
 static void
-usage(char *s)
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -182,7 +182,7 @@ parse_args(int ac, char **av)
     if (wall_height < brick_height)
 	usage("wall height < brick height\n");
 
-    if (brick_name == (char *)NULL || *brick_name == '\0')
+    if (brick_name == NULL || *brick_name == '\0')
 	usage("bad or no brick name\n");
 
     return bu_optind;

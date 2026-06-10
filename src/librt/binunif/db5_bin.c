@@ -362,10 +362,18 @@ rt_binunif_ifree(struct rt_db_internal *ip)
 }
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
+#ifdef __cplusplus
+}
+#endif
+
 int
 rt_retrieve_binunif(struct rt_db_internal *intern,
-		    struct db_i	*dbip,
-		    char *name)
+		    const struct db_i *dbip,
+		    const char *name)
 {
     register struct directory	*dp;
     struct rt_binunif_internal	*bip;
@@ -526,7 +534,7 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 }
 
 int
-rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_binunif_internal *bip;
     size_t i;
@@ -538,7 +546,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
     while (argc >= 2) {
 	if (BU_STR_EQUAL(argv[0], "T")) {
 	    int new_type=-1;
-	    char *c;
+	    const char *c;
 	    int type_is_digit=1;
 
 	    c = argv[1];

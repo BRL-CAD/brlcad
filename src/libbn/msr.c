@@ -190,7 +190,7 @@ double
 bn_gauss_fill(struct bn_gauss *p)
 {
     register int i;
-    /* register */ double v1, v2, r, fac;
+    /* */ double v1, v2, r, fac;
 
     if (!p)
 	return 0.0;

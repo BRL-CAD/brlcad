@@ -20,11 +20,12 @@
 
 #include "common.h"
 
-extern "C" {
+BRLCAD_CXX_BEGIN_C_LINKAGE
 #include "bu/app.h"
 #include "bu/opt.h"
+BRLCAD_CXX_END_C_LINKAGE
+
 #include "./gdiff.h"
-}
 
 /*******************************************************************/
 /* Primary function for basic diff operation on two .g files */

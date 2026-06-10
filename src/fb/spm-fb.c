@@ -42,7 +42,7 @@ static char *framebuffer = NULL;
 static int scr_width = 0;
 static int scr_height = 0;
 
-static char *file_name;
+static const char *file_name;
 static int square = 0;
 static int vsize;
 

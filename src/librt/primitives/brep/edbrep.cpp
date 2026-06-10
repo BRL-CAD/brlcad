@@ -62,7 +62,7 @@ struct rt_brep_edit {
  * match the extern "C" { EDIT_DECLARE_INTERFACE(brep) } declarations
  * in edtable.cpp.
  * ------------------------------------------------------------------ */
-extern "C" {
+BRLCAD_CXX_BEGIN_C_LINKAGE
 
 void *
 rt_edit_brep_prim_edit_create(struct rt_edit *UNUSED(s))
@@ -321,9 +321,9 @@ ecmd_brep_srf_cv_set(struct rt_edit *s)
  * extern "C" { EDIT_DECLARE_INTERFACE(brep) } in edtable.cpp.      *
  * ================================================================== */
 
-} /* close the extern "C" block opened above */
+BRLCAD_CXX_END_C_LINKAGE
 
-extern "C" int
+BRLCAD_CXX_C_LINKAGE int
 rt_edit_brep_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -352,8 +352,8 @@ rt_edit_brep_edit(struct rt_edit *s)
 }
 
 
-extern "C" int
-rt_edit_brep_edit_xy(struct rt_edit *s, vect_t mousevec)
+BRLCAD_CXX_C_LINKAGE int
+rt_edit_brep_edit_xy(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;
 
@@ -489,7 +489,7 @@ static const struct rt_edit_prim_desc brep_prim_desc = {
     NULL                  /* opts         */
 };
 
-extern "C" const struct rt_edit_prim_desc *
+BRLCAD_CXX_C_LINKAGE const struct rt_edit_prim_desc *
 rt_edit_brep_edit_desc(void)
 {
     return &brep_prim_desc;
@@ -500,7 +500,7 @@ rt_edit_brep_edit_desc(void)
  * get_params: return the current value(s) for the given cmd_id
  * ------------------------------------------------------------------ */
 
-extern "C" int
+BRLCAD_CXX_C_LINKAGE int
 rt_edit_brep_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_brep_edit *b;

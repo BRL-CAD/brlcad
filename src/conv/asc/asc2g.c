@@ -72,8 +72,8 @@ static size_t ars_curve = 0;
 static size_t ars_pt = 0;
 static char *ars_name = NULL;
 static fastf_t **ars_curves = NULL;
-static char *slave_name = "safe_interp";
-static char *db_name = "_db";
+static const char *slave_name = "safe_interp";
+static const char *db_name = "_db";
 
 static int linecnt = 0;
 static char usage[] = "\
@@ -81,7 +81,7 @@ Usage: asc2g file.asc file.g\n\
  Convert an ASCII BRL-CAD database to binary form\n\
 ";
 
-char *aliases[] = {
+const char *aliases[] = {
     "attr",
     "color",
     "put",
@@ -90,7 +90,7 @@ char *aliases[] = {
     "find",
     "dbfind",
     "rm",
-    (char *)0
+    NULL
 };
 
 
@@ -1605,7 +1605,7 @@ main(int argc, char *argv[])
 	    av[1] = db_name;
 	    av[2] = "db";
 	    av[3] = argv[2];
-	    av[4] = (char *)0;
+	av[4] = NULL;
 
 	    if (to_open_tcl((ClientData)0, interp, ac, av) != TCL_OK) {
 		fclose(ifp);
@@ -1627,8 +1627,8 @@ main(int argc, char *argv[])
 	    int ac = 1;
 	    const char *av[2];
 
-	    av[1] = (char *)0;
-	    for (i = 0; aliases[i] != (char *)0; ++i) {
+	    av[1] = NULL;
+	    for (i = 0; aliases[i] != NULL; ++i) {
 		av[0] = aliases[i];
 		Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
 	    }

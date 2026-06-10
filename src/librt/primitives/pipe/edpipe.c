@@ -93,8 +93,9 @@ rt_edit_pipe_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 void
-rt_edit_pipe_prim_edit_destroy(struct rt_pipe_edit *p)
+rt_edit_pipe_prim_edit_destroy(void *ptr)
 {
+    struct rt_pipe_edit *p = (struct rt_pipe_edit *)ptr;
     if (!p)
 	return;
 

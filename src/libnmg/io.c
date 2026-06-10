@@ -369,7 +369,13 @@ const int nmg_disk_sizes[NMG_N_KINDS] = {
     0,
     0  /* disk_double_array, MUST BE ZERO */	/* 25: MUST BE ZERO */
 };
-const char nmg_kind_names[NMG_N_KINDS+2][18] = {
+#if defined(__GNUC__) || defined(__clang__)
+#  define NMG_UNUSED_DATA __attribute__((unused))
+#else
+#  define NMG_UNUSED_DATA
+#endif
+
+const char nmg_kind_names[NMG_N_KINDS+2][18] NMG_UNUSED_DATA = {
     "model",				/* 0 */
     "nmgregion",
     "nmgregion_a",
@@ -399,6 +405,8 @@ const char nmg_kind_names[NMG_N_KINDS+2][18] = {
     "k26-OFF_END",
     "k27-OFF_END"
 };
+
+#undef NMG_UNUSED_DATA
 
 
 /**

@@ -30,9 +30,9 @@
 #include "nmg.h"
 #include "brep.h"
 
-extern "C" {
+BRLCAD_CXX_BEGIN_C_LINKAGE
     extern void rt_sketch_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
-}
+BRLCAD_CXX_END_C_LINKAGE
 
 
 void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
@@ -141,7 +141,7 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
 }
 
 
-extern "C" void
+BRLCAD_CXX_C_LINKAGE void
 rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_db_internal *tmp_internal;

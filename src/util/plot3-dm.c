@@ -47,7 +47,7 @@
 
 
 struct cmdtab {
-    char *ct_name;
+    const char *ct_name;
     int (*ct_func)(void *, struct Tcl_Interp *, int, char **);
 };
 
@@ -1068,14 +1068,14 @@ static int
 Ogl_dmInit(void)
 {
     fastf_t windowbounds[6] = { -2048.0, 2047.0, -2048.0, 2047.0, -2048.0, 2047.0 };
-    char *av[4];
+    const char *av[4];
 
     av[0] = "Ogl_open";
     av[1] = "-i";
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = dm_open(NULL, INTERP, "ogl", 3, (const char **)av)) == DM_NULL) {
+    if ((dmp = dm_open(NULL, INTERP, "ogl", 3, av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }

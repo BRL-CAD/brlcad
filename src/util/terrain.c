@@ -39,6 +39,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "bio.h"
 
@@ -52,10 +53,10 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:n:s:L:H:O:S:V:D:f:co:vh?";
+const char *options = "w:n:s:L:H:O:S:V:D:f:co:vh?";
 
 int do_convert = 1;
-char *progname = "(noname)";
+const char *progname = "(noname)";
 size_t xdim = 512;
 size_t ydim = 512;
 
@@ -86,7 +87,7 @@ xform(point_t t, point_t pt)
  * Tell user how to invoke this program, then exit
  */
 void
-usage(char *s)
+usage(const char *s)
 {
     if (s)
 	bu_log("%s", s);
@@ -555,7 +556,6 @@ int
 parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
 {
     int c;
-    char *strrchr(const char *, int);
     double v;
 
     if (! (progname = strrchr(*av, '/')))

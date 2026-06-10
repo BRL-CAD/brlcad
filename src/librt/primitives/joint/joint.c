@@ -64,7 +64,7 @@ struct joint_specific {
 #define JOINT_NULL ((struct joint_specific *)0)
 #define JOINT_FLOAT_SIZE 10
 
-const struct bu_structparse rt_joint_parse[] = {
+extern const struct bu_structparse rt_joint_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_joint_internal, location, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%V", 1, "RP1", bu_offsetof(struct rt_joint_internal, reference_path_1), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%V", 1, "RP2", bu_offsetof(struct rt_joint_internal, reference_path_2), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

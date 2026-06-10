@@ -322,7 +322,7 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
     callbackdata.sem_stats = bu_semaphore_register("check_stats");
     callbackdata.sem_lists = bu_semaphore_register("check_lists");
 
-    /* register callback */
+    /* callback */
     analyze_register_overlaps_callback(state, overlap, &callbackdata);
 
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_OVERLAPS)) {

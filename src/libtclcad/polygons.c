@@ -1135,7 +1135,7 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
 		       const char *usage)
 {
     int ac;
-    char *av[4];
+    const char *av[4];
     int x, y;
     fastf_t fx, fy;
     point_t v_pt, m_pt;
@@ -1211,7 +1211,7 @@ to_poly_cont_build_func(Tcl_Interp *interp,
 			int doBind)
 {
     int ac;
-    char *av[7];
+    const char *av[7];
     int x, y;
     fastf_t fx, fy;
     point_t v_pt, m_pt;
@@ -1572,7 +1572,7 @@ to_poly_ell_mode_func(Tcl_Interp *interp,
 		      const char *usage)
 {
     int ac;
-    char *av[4];
+    const char *av[4];
     int x, y;
     fastf_t fx, fy;
     point_t v_pt, m_pt;
@@ -1731,7 +1731,7 @@ to_poly_rect_mode_func(Tcl_Interp *interp,
 		       const char *usage)
 {
     int ac;
-    char *av[4];
+    const char *av[4];
     int x, y;
     int sflag;
     fastf_t fx, fy;

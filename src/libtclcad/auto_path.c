@@ -39,7 +39,8 @@
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/ptbl.h"
-#include "tclcad.h"
+#include "bu/str.h"
+#include "tclcad/setup.h"
 
 #define MAX_BUF 2048
 

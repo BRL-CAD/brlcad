@@ -31,7 +31,7 @@
 
 #include "common.h"
 
-__BEGIN_DECLS
+BRLCAD_CXX_BEGIN_C_LINKAGE
 
 #ifndef TCLCAD_EXPORT
 #  if defined(TCLCAD_DLL_EXPORTS) && defined(TCLCAD_DLL_IMPORTS)
@@ -82,7 +82,7 @@ __BEGIN_DECLS
 /* Use fbserv */
 #define USE_FBSERV 1
 
-__END_DECLS
+BRLCAD_CXX_END_C_LINKAGE
 
 #endif /* TCLCAD_DEFINES_H */
 

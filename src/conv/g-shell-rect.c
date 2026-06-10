@@ -124,7 +124,7 @@ static char *output_file=(char *)NULL;
 static char *plotfile;
 static short vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
 static int debug=0;
-static char *token_seps=" \t, ;\n";
+static const char *token_seps=" \t, ;\n";
 static size_t cur_dir=0;
 static size_t cell_count[3];
 static fastf_t decimation_tol=0.0;

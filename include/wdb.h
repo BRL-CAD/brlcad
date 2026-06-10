@@ -773,7 +773,7 @@ WDB_EXPORT int mk_region1(
  *
  * @return -1 error, 0 OK
  */
-WDB_EXPORT extern int mk_conversion(char *units_string);
+WDB_EXPORT extern int mk_conversion(const char *units_string);
 
 /**
  * Establish a new conversion factor for LIBWDB routines.

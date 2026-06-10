@@ -594,8 +594,8 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 }
 
 
-extern "C" int draw_m3(struct bv_scene_obj *s);
-extern "C" int draw_points(struct bv_scene_obj *s);
+BRLCAD_CXX_C_LINKAGE int draw_m3(struct bv_scene_obj *s);
+BRLCAD_CXX_C_LINKAGE int draw_points(struct bv_scene_obj *s);
 
 /* This function is the master controller that decides, based on available settings
  * and data, which specific drawing routines need to be triggered. */
@@ -1048,4 +1048,3 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
