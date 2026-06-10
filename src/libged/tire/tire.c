@@ -40,15 +40,9 @@
 #include "ged.h"
 
 #define D2R(x) (x * DEG2RAD)
-#define R2D(x) (x / DEG2RAD)
-
-#define ROWS 5
-#define COLS 5
-
-
 /**
  * Return matrix needed to rotate an object around the y axis by theta
- * degrees
+ * radians
  */
 static void
 getYRotMat(mat_t (*t), fastf_t theta)
@@ -848,7 +842,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls str2 = BU_VLS_INIT_ZERO;
-    struct wmember treadpattern, tread, treadrotated;
+    struct wmember treadpattern, tread;
     fastf_t patternwidth1, patternwidth2;
     mat_t y;
     int i, j;
@@ -920,8 +914,6 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     mk_lcomb(file, bu_vls_addr(&str), &treadpattern, 0, NULL, NULL, NULL, 0);
 
     BU_LIST_INIT(&tread.l);
-    BU_LIST_INIT(&treadrotated.l);
-
     bu_vls_sprintf(&str2, "tire-tread-shape%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i = 1; i <= number_of_patterns; i++) {
@@ -946,7 +938,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls str2 = BU_VLS_INIT_ZERO;
-    struct wmember treadpattern, tread, treadrotated;
+    struct wmember treadpattern, tread;
     fastf_t patternwidth1, patternwidth2;
     mat_t y;
     int i, j;
@@ -1064,8 +1056,6 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     mk_lcomb(file, bu_vls_addr(&str), &treadpattern, 0, NULL, NULL, NULL, 0);
 
     BU_LIST_INIT(&tread.l);
-    BU_LIST_INIT(&treadrotated.l);
-
     bu_vls_sprintf(&str2, "tire-tread-shape%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i = 1; i <= number_of_patterns; i++) {
@@ -1088,12 +1078,16 @@ TreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	     fastf_t z_base, fastf_t ztire, int number_of_patterns,
 	     int patterntype)
 {
-    typedef void (* MakeTreadPattern)(struct rt_wdb (*), char *, fastf_t, fastf_t, fastf_t, int);
-    MakeTreadPattern TreadPatterns[2];
-    TreadPatterns[0] = &MakeTreadPattern1;
-    TreadPatterns[1] = &MakeTreadPattern2;
-    (*TreadPatterns[patterntype-1])(file, suffix, dwidth, z_base, ztire,
-				    number_of_patterns);
+    switch (patterntype) {
+	case 1:
+	    MakeTreadPattern1(file, suffix, dwidth, z_base, ztire, number_of_patterns);
+	    break;
+	case 2:
+	    MakeTreadPattern2(file, suffix, dwidth, z_base, ztire, number_of_patterns);
+	    break;
+	default:
+	    break;
+    }
 }
 
 
@@ -1415,7 +1409,7 @@ MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
 		fastf_t UNUSED(dyside1), int number_of_tread_patterns,
 		int patterntype)
 {
-    fastf_t **matrixelltred1, **matrixelltred2;
+    fastf_t **matrixelltred1;
     fastf_t ell1tredcoefficients[5];
     fastf_t ell1tredcadparams[5];
     fastf_t d1_intercept;
@@ -1429,12 +1423,6 @@ MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
 					   "matrixrows");
     for (i = 0; i < 5; i++)
 	matrixelltred1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),
-						 "matrixcols");
-
-    matrixelltred2 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),
-					   "matrixrows");
-    for (i = 0; i < 5; i++)
-	matrixelltred2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),
 						 "matrixcols");
 
     /* Find point on side where tread will start */
@@ -1516,27 +1504,9 @@ MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
 	bu_free((char *)matrixelltred1[i], "matrixell1 element");
     bu_free((char *)matrixelltred1, "matrixell1");
 
-    for (i = 0; i < 5; i++)
-	bu_free((char *)matrixelltred2[i], "matrixell2 element");
-    bu_free((char *)matrixelltred2, "matrixell2");
-
     bu_vls_free(&str);
 }
 
-
-typedef void (*MakeTreadProfile)
-(struct rt_wdb (*file),
- char *suffix,
- fastf_t *ell2coefficients,
- fastf_t ztire,
- fastf_t dztred,
- fastf_t d1,
- fastf_t dytred,
- fastf_t dyhub,
- fastf_t zhub,
- fastf_t dyside1,
- int number_of_tread_patterns,
- int patterntype);
 
 /**********************************************************************
  *                                                                    *
@@ -1556,7 +1526,7 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
 	 fastf_t dztred, fastf_t d1, fastf_t dyside1, fastf_t zside1,
 	 fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t thickness,
 	 int tread_type, int number_of_tread_patterns,
-	 fastf_t tread_depth, fastf_t patterntype)
+	 fastf_t tread_depth, int patterntype)
 {
     int i;
     fastf_t **matrixell1, **matrixell2, **matrixell3;
@@ -1571,10 +1541,8 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
     fastf_t cut_d1, cut_dyside1, cut_zside1, cut_ztire, 	cut_dyhub, cut_zhub;
     struct wmember tire;
     unsigned char rgb[3];
-    MakeTreadProfile TreadProfile[2];
 
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    struct bu_vls str2 = BU_VLS_INIT_ZERO;
 
     /* Set Tire color */
     VSET(rgb, 40, 40, 40);
@@ -1640,24 +1608,21 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
 		    ell3cadparams, ztire_with_offset, dztred, dytred, dyhub,
 		    zhub, dyside1, zside1);
 
-    TreadProfile[0] = &MakeTreadSolid;
-    TreadProfile[1] = &MakeTreadSolid1;
-
     /* Make Tread solid and call routine to create tread */
 
-    if (tread_type != 0) {
-	(*TreadProfile[tread_type - 1])(file,
-					suffix,
-					ell2coefficients,
-					ztire,
-					dztred,
-					d1,
-					dytred,
-					dyhub,
-					zhub,
-					dyside1,
-					number_of_tread_patterns,
-					patterntype);
+    switch (tread_type) {
+	case 1:
+	    MakeTreadSolid(file, suffix, ell2coefficients, ztire, dztred,
+			   d1, dytred, dyhub, zhub, dyside1,
+			   number_of_tread_patterns, patterntype);
+	    break;
+	case 2:
+	    MakeTreadSolid1(file, suffix, ell2coefficients, ztire, dztred,
+			    d1, dytred, dyhub, zhub, dyside1,
+			    number_of_tread_patterns, patterntype);
+	    break;
+	default:
+	    break;
     }
 
 
@@ -1728,6 +1693,9 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
     for (i = 0; i < 5; i++)
 	bu_free((char *)matrixell2[i], "matrixell2 element");
     bu_free((char *)matrixell2, "matrixell2");
+    for (i = 0; i < 5; i++)
+	bu_free((char *)matrixell3[i], "matrixell3 element");
+    bu_free((char *)matrixell3, "matrixell3");
 
     for (i = 0; i < 5; i++)
 	bu_free((char *)matrixcut1[i], "matrixcut1 element");
@@ -1735,9 +1703,11 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
     for (i = 0; i < 5; i++)
 	bu_free((char *)matrixcut2[i], "matrixell2 element");
     bu_free((char *)matrixcut2, "matrixell2");
+    for (i = 0; i < 5; i++)
+	bu_free((char *)matrixcut3[i], "matrixcut3 element");
+    bu_free((char *)matrixcut3, "matrixcut3");
 
     bu_vls_free(&str);
-    bu_vls_free(&str2);
 }
 
 
@@ -1791,7 +1761,7 @@ _opt_tire_iso(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
     sret = bu_sscanf(argv[0], "%d%c%d%c%d", &d1, &s1, &d2, &s2, &d3);
 
-    if (sret != 5) {
+    if (sret != 5 || s1 != '/' || (s2 != 'R' && s2 != 'r') || d1 <= 0 || d2 <= 0 || d3 <= 0) {
 	if (msg) bu_vls_printf(msg, "Invalid ISO specification string: %s\n", argv[0]);
 	return -1;
     }
@@ -1825,6 +1795,28 @@ _tire_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
     return;
 }
 
+static int
+_tire_validate_positive(struct ged *gedp, const char *name, fastf_t value)
+{
+    if (!isfinite(value) || value <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s must be greater than zero.\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+static int
+_tire_validate_nonnegative(struct ged *gedp, const char *name, fastf_t value)
+{
+    if (!isfinite(value) || value < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s must be non-negative.\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
 int
 ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -1849,8 +1841,10 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     int pattern_type = 0;
     fastf_t zside1 = 0;
     fastf_t tread_depth_float = 0.0;
+    fastf_t ztire_with_offset = 0.0;
     int print_help = 0;
     int ret_ac = 0;
+    struct rt_wdb *wdbp = NULL;
     const char *cmd_name = argv[0];
 
     struct bu_opt_desc d[17];
@@ -1892,10 +1886,51 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (_tire_validate_nonnegative(gedp, "width override", width) != BRLCAD_OK ||
+	_tire_validate_nonnegative(gedp, "aspect ratio override", aspect) != BRLCAD_OK ||
+	_tire_validate_nonnegative(gedp, "rim diameter override", rim_diam) != BRLCAD_OK ||
+	_tire_validate_nonnegative(gedp, "tread depth", tread_depth) != BRLCAD_OK ||
+	_tire_validate_nonnegative(gedp, "hub width", hub_width) != BRLCAD_OK ||
+	_tire_validate_nonnegative(gedp, "maximum sidewall radius", zside1) != BRLCAD_OK ||
+	_tire_validate_nonnegative(gedp, "tire thickness", tire_thickness) != BRLCAD_OK) {
+	bu_vls_free(&name);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
+    if (tread_type < 0 || tread_type > 2) {
+	bu_vls_printf(gedp->ged_result_str, "tread shape profile must be in range 0-2.\n");
+	bu_vls_free(&name);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
+    if (pattern_type < 0 || pattern_type > 2) {
+	bu_vls_printf(gedp->ged_result_str, "tread pattern must be in range 0-2.\n");
+	bu_vls_free(&name);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
+    if (num_tread_ptns <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "number of tread patterns must be greater than zero.\n");
+	bu_vls_free(&name);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
     /* Perform overrides, if we got them */
     if (width > 0) isoarray[0] = width;
     if (aspect > 0) isoarray[1] = aspect;
     if (rim_diam > 0) isoarray[2] = rim_diam;
+
+    if (_tire_validate_positive(gedp, "tire width", isoarray[0]) != BRLCAD_OK ||
+	_tire_validate_positive(gedp, "aspect ratio", isoarray[1]) != BRLCAD_OK ||
+	_tire_validate_positive(gedp, "rim diameter", isoarray[2]) != BRLCAD_OK) {
+	bu_vls_free(&name);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
 
     /* Calculate floating point value for tread depth */
     tread_depth_float = tread_depth/32.0;
@@ -1930,13 +1965,6 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     /* Use name to create a suffix for other object names. */
     bu_vls_sprintf(&dimen, "-%s", bu_vls_addr(&name));
 
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    mk_id(wdbp, "Tire");
-
-    bu_vls_printf(gedp->ged_result_str, "width = %f\n", isoarray[0]);
-    bu_vls_printf(gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
-    bu_vls_printf(gedp->ged_result_str, "radius = %f\n", isoarray[2]);
-
     /* Automatic conversion from std dimension info to geometry */
     width = isoarray[0];
     ratio = isoarray[1];
@@ -1962,12 +1990,64 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     if (ZERO(tire_thickness))
 	tire_thickness = dztred;
 
-    bu_vls_printf(gedp->ged_result_str, "radius of sidewall max: %f\n", zside1);
-
     if (tread_type == 1 && pattern_type == 0) pattern_type = 1;
     if (tread_type == 2 && pattern_type == 0) pattern_type = 2;
     if (pattern_type == 1 && tread_type == 0) tread_type = 1;
     if (pattern_type == 2 && tread_type == 0) tread_type = 2;
+
+    if (tread_type != 0 && num_tread_ptns < 3) {
+	bu_vls_printf(gedp->ged_result_str, "number of tread patterns must be at least 3 when tread is enabled.\n");
+	bu_vls_free(&name);
+	bu_vls_free(&dimen);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
+    ztire_with_offset = ztire;
+    if (tread_type != 0)
+	ztire_with_offset -= tread_depth_float * bu_units_conversion("in");
+
+    if (!isfinite(ztire) || !isfinite(zhub) || !isfinite(dytred) ||
+	!isfinite(dyhub) || !isfinite(zside1) || !isfinite(dztred) ||
+	!isfinite(tire_thickness) || !isfinite(ztire_with_offset)) {
+	bu_vls_printf(gedp->ged_result_str, "tire parameters produced non-finite geometry.\n");
+	bu_vls_free(&name);
+	bu_vls_free(&dimen);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
+    if (zside1 <= zhub || zside1 >= ztire) {
+	bu_vls_printf(gedp->ged_result_str, "maximum sidewall radius must be greater than the rim radius and less than the tire radius.\n");
+	bu_vls_free(&name);
+	bu_vls_free(&dimen);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
+    if (tread_type != 0 && ztire_with_offset <= zhub) {
+	bu_vls_printf(gedp->ged_result_str, "tread depth is too large for the specified tire dimensions.\n");
+	bu_vls_free(&name);
+	bu_vls_free(&dimen);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
+    if (tire_thickness <= 0 || tire_thickness >= dyside1 / 2 || tire_thickness >= dyhub / 2 || tire_thickness >= ztire_with_offset - zhub) {
+	bu_vls_printf(gedp->ged_result_str, "tire thickness is too large for the specified tire dimensions.\n");
+	bu_vls_free(&name);
+	bu_vls_free(&dimen);
+	bu_vls_free(&str);
+	return BRLCAD_ERROR;
+    }
+
+    wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    mk_id(wdbp, "Tire");
+
+    bu_vls_printf(gedp->ged_result_str, "width = %f\n", isoarray[0]);
+    bu_vls_printf(gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
+    bu_vls_printf(gedp->ged_result_str, "radius = %f\n", isoarray[2]);
+    bu_vls_printf(gedp->ged_result_str, "radius of sidewall max: %f\n", zside1);
 
     /* Make the tire region */
     MakeTire(wdbp, bu_vls_addr(&dimen), dytred, dztred,
