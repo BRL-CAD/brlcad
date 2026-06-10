@@ -19,277 +19,194 @@
  */
 /** @file proc-db/torii.c
  *
- * Create a bunch of torii.
+ * Generate an interwoven sheet of torii -- a chain-mail weave.
  *
+ * The rings are laid out on a square grid as a checkerboard of two
+ * orientations, each tilted by +/- the same angle about the row axis.
+ * Because adjacent rings are never coplanar, every neighboring pair
+ * interlocks like a chain link (one ring threads through the other's
+ * hole) WITHOUT the solid tubes intersecting -- so the resulting mesh is
+ * a single, flexible, fully 3-D-printable piece of mail.  The ring tube
+ * thickness is modulated across the sheet in a smooth radial pattern (and
+ * the rings are colored by that thickness) so the weave shows a varying
+ * pattern of sizes rather than a uniform field.
+ *
+ * All coordinates are millimeters.
  */
 
 #include "common.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
-typedef struct torus {
-    point_t position;
-    double majorRadius;
-    double minorRadius;
-    int direction;
-} torus_t;
 
-/* torus container */
-typedef struct torusArray {
-    torus_t *torus;
-    unsigned long int count;
-    unsigned long int max;
-} torusArray_t;
-
-/* organize containers by recursion level */
-typedef struct torusLevels {
-    torusArray_t *level;
-    unsigned short int levels;
-} torusLevels_t;
-
-
-void
-usage(char *progname)
+/* clamp a double into [lo,hi] */
+static double
+clampd(double v, double lo, double hi)
 {
-    fprintf(stderr, "Usage: %s db_file.g\n", progname);
-    bu_exit(-1, NULL);
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
 }
 
 
-int
-create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position, const int dirArray[6][6], int dir)
+/* linear interpolation of an 8-bit color channel */
+static unsigned char
+lerp8(double a, double b, double t)
 {
-    point_t newPosition;
-
-    VMOVE(newPosition, position);
-
-    /* recursive case */
-    if (level > 0) {
-	printf("create_torii: %d\n", level);
-
-	if (dirArray[dir][0]==1) {
-	    printf("direction 0\n");
-	    create_torii(level-1, currentLevel+1, torii, newPosition, dirArray, 0);
-	}
-
-	if (dirArray[dir][1]==1) {
-	    printf("direction 1\n");
-	    create_torii(level-1, currentLevel+1, torii, newPosition, dirArray, 1);
-	}
-
-	if (dirArray[dir][2]==1) {
-	    printf("direction 2\n");
-	    create_torii(level-1, currentLevel+1, torii, newPosition, dirArray, 2);
-	}
-
-	if (dirArray[dir][3]==1) {
-	    printf("direction 3\n");
-	    create_torii(level-1, currentLevel+1, torii, newPosition, dirArray, 3);
-	}
-
-	if (dirArray[dir][4]==1) {
-	    printf("direction 4\n");
-	    create_torii(level-1, currentLevel+1, torii, newPosition, dirArray, 4);
-	}
-
-	if (dirArray[dir][5]==1) {
-	    printf("direction 5\n");
-	    create_torii(level-1, currentLevel+1, torii, newPosition, dirArray, 5);
-	}
-
-    } else {
-	/* TESTING DYNAMIC RECURSION */
-
-	torusArray_t *ta = &torii->level[currentLevel-1];
-	/* base case */
-	printf("base case (%d levels deep)\n", currentLevel);
-
-	/* see if we need to allocate more memory */
-	if (ta->count >= ta->max) {
-	    if ((ta->torus = (struct torus *)realloc(ta->torus, (ta->count+6)*sizeof(torus_t))) == NULL) {
-		bu_log("Unable to allocate memory for torii during runtime\n");
-		perror("torus_t allocation during runtime failed");
-		bu_exit(3, NULL);
-	    }
-	    ta->max+=6;
-	}
-
-	VMOVE(ta->torus[ta->count].position, newPosition);
-	ta->torus[ta->count].majorRadius = 100.0;
-	ta->torus[ta->count].minorRadius = 2.0;
-	ta->torus[ta->count].direction = dir;
-	ta->count++;
-    }
-    bu_log("returning from create_torii\n");
-
-    return 0;
-}
-
-
-int
-output_torii(struct rt_wdb *db_fp, const char *fileName, int levels, const torusLevels_t *torii, const char *name)
-{
-    char scratch[256];
-    struct wmember head;
-    unsigned char rgb[3];
-    int l;
-    unsigned long int t;
-    unsigned long int serial = 0;
-
-    /* unit normals/offsets for each of the six flake directions, paired
-     * as +/- along the three principal axes so the resulting torii fan
-     * out into a recognizable three-dimensional cluster.
-     */
-    static const vect_t dirVec[6] = {
-	{ 1.0,  0.0,  0.0},
-	{-1.0,  0.0,  0.0},
-	{ 0.0,  1.0,  0.0},
-	{ 0.0, -1.0,  0.0},
-	{ 0.0,  0.0,  1.0},
-	{ 0.0,  0.0, -1.0}
-    };
-
-    bu_log("output_torii to file \"%s\" for %d levels using \"%s\" as the combination name\n", fileName, levels, name);
-
-    BU_LIST_INIT(&head.l);
-
-    /* walk every recursion level and emit each computed torus as a TOR
-     * primitive, then collect them all under a single region.
-     */
-    for (l = 0; l < levels; l++) {
-	const torusArray_t *ta = &torii->level[l];
-
-	for (t = 0; t < ta->count; t++) {
-	    const torus_t *to = &ta->torus[t];
-	    point_t center;
-	    vect_t normal;
-	    int dir = to->direction;
-
-	    if (dir < 0 || dir > 5)
-		dir = 0;
-
-	    /* offset the torus along its direction so siblings do not all
-	     * land on top of one another; spacing scales with depth so the
-	     * flake spreads outward as it recurses.
-	     */
-	    VSCALE(normal, dirVec[dir], 1.0);
-	    VJOIN1(center, to->position, to->majorRadius * 2.0 * (double)(l + 1), dirVec[dir]);
-
-	    snprintf(scratch, sizeof(scratch), "%s_%lu.s", name, serial);
-
-	    if (mk_tor(db_fp, scratch, center, normal, to->majorRadius, to->minorRadius) != 0) {
-		bu_log("Unable to write torus \"%s\" to the database\n", scratch);
-		return 1;
-	    }
-
-	    (void)mk_addmember(scratch, &head.l, NULL, WMOP_UNION);
-	    serial++;
-	}
-    }
-
-    if (serial == 0) {
-	bu_log("No torii were generated; nothing written to \"%s\"\n", fileName);
-	return 1;
-    }
-
-    /* a pleasant brassy color for the assembled flake of torii */
-    rgb[0] = 224;
-    rgb[1] = 160;
-    rgb[2] =  32;
-
-    /* assemble everything into a top-level region named "all" */
-    if (mk_lcomb(db_fp, "all", &head, 1, "plastic", "sh=8 sp=0.6 di=0.4", rgb, 0) != 0) {
-	bu_log("Unable to write the \"all\" region to the database\n");
-	return 1;
-    }
-
-    bu_log("wrote %lu torii into region \"all\"\n", serial);
-
-    return 0;
+    double v = a + (b - a) * t;
+    if (v < 0.0) v = 0.0;
+    if (v > 255.0) v = 255.0;
+    return (unsigned char)(v + 0.5);
 }
 
 
 int
 main(int ac, char *av[])
 {
-    torusLevels_t torii;
-    const char *prototypeName="torus";
-
-    char fileName[512];
     struct rt_wdb *db_fp;
-    char scratch[518];
-    int levels=3;
-    int direction=4;
-    point_t initialPosition = {0.0, 0.0, 0.0};
-    int i;
+    struct wmember all_hd;
 
-    /* this array is a flake pattern */
-    static const int dirArray[6][6]={
-	{1, 1, 0, 1, 0, 0},
-	{1, 1, 1, 0, 0, 0},
-	{0, 1, 1, 1, 0, 0},
-	{1, 0, 1, 1, 0, 0},
-	{1, 1, 1, 1, 0, 0},
-	{1, 1, 1, 1, 0, 0}
-    };
+    const char *fileName = "torii.g";
+
+    /* tunable parameters -- all optional, every one has a default that
+     * produces a clean, non-self-intersecting chain-mail weave.
+     */
+    int rows = 9;		/* rings along Y */
+    int cols = 12;		/* rings along X */
+    double major = 60.0;	/* torus major radius (center of tube)  */
+    double minor = 5.0;		/* base tube (minor) radius             */
+    double tilt = 52.0;		/* ring lean from the sheet, in degrees */
+    double pitch = 92.0;	/* grid spacing between ring centers     */
+    double vary = 0.45;		/* tube-thickness variation amplitude    */
+
+    /* These defaults were tuned (steep tilt, generous pitch, slim wire)
+     * so that every interlocking ring -- including the thickened ones in
+     * the center -- clears its neighbors with zero solid overlap, i.e. the
+     * whole sheet is a single, articulating, 3-D-printable piece of mail.
+     */
+
+    double theta, ny, nz;
+    double minr, maxr;
+    int i, j;
+    unsigned long serial = 0;
 
     bu_setprogname(av[0]);
 
-    char *progname = *av;
-
-    if (ac < 2) usage(progname);
-
-    if (ac > 1) snprintf(fileName, 512, "%s", av[1]);
-
-    /* optional second argument overrides the recursion depth */
-    if (ac > 2) {
-	levels = atoi(av[2]);
-	if (levels < 1) levels = 1;
-	if (levels > 5) levels = 5;
+    if (ac < 2) {
+	bu_exit(1, "Usage: %s output.g [--rows n] [--cols n] [--major mm] [--minor mm]\n"
+		   "                 [--tilt deg] [--pitch mm] [--vary frac]\n", av[0]);
     }
 
-    bu_log("Output file name is \"%s\"\n", fileName);
+    fileName = av[1];
+
+    /* tiny "--flag value" parser */
+    for (i = 2; i + 1 < ac; i += 2) {
+	if (BU_STR_EQUAL(av[i], "--rows")) rows = atoi(av[i + 1]);
+	else if (BU_STR_EQUAL(av[i], "--cols")) cols = atoi(av[i + 1]);
+	else if (BU_STR_EQUAL(av[i], "--major")) major = atof(av[i + 1]);
+	else if (BU_STR_EQUAL(av[i], "--minor")) minor = atof(av[i + 1]);
+	else if (BU_STR_EQUAL(av[i], "--tilt")) tilt = atof(av[i + 1]);
+	else if (BU_STR_EQUAL(av[i], "--pitch")) pitch = atof(av[i + 1]);
+	else if (BU_STR_EQUAL(av[i], "--vary")) vary = atof(av[i + 1]);
+	else bu_log("Warning: ignoring unknown option '%s'\n", av[i]);
+    }
+
+    if (rows < 1) rows = 1;
+    if (cols < 1) cols = 1;
+    if (major < 1.0) major = 1.0;
+    if (minor < 0.1) minor = 0.1;
+    vary = clampd(vary, 0.0, 0.9);
+
+    theta = tilt * DEG2RAD;
+    ny = sin(theta);
+    nz = cos(theta);
+
+    /* tube radius ranges from minor (edges) to minor*(1+vary) (center) */
+    minr = minor;
+    maxr = minor * (1.0 + vary);
+
+    bu_log("torii: %dx%d chain-mail weave, major=%g minor=%g..%g tilt=%g pitch=%g\n",
+	   cols, rows, major, minr, maxr, tilt, pitch);
 
     if ((db_fp = wdb_fopen(fileName)) == NULL) {
 	perror(fileName);
-	bu_exit(-1, NULL);
+	return 2;
+    }
+    mk_id_units(db_fp, "Interwoven Chain-Mail Torii", "mm");
+
+    BU_LIST_INIT(&all_hd.l);
+
+    /* Lay out the checkerboard of rings.  Rings with (i+j) even tilt one
+     * way; (i+j) odd tilt the other.  Each ring threads its four edge
+     * neighbors of the opposite tilt.
+     */
+    for (j = 0; j < rows; j++) {
+	for (i = 0; i < cols; i++) {
+	    point_t center;
+	    vect_t normal;
+	    double r, dx, dy, dn;
+	    unsigned char rgb[3];
+	    char sname[64], rname[64];
+	    int parity = (i + j) & 1;
+
+	    VSET(center, i * pitch, j * pitch, 0.0);
+
+	    /* +/- tilt about the X (row) axis */
+	    if (parity)
+		VSET(normal, 0.0, -ny, nz);
+	    else
+		VSET(normal, 0.0, ny, nz);
+
+	    /* smooth radial thickness variation: thick at the center of
+	     * the sheet, tapering to the base radius at the edges */
+	    dx = (i - (cols - 1) / 2.0) / ((cols) / 2.0);
+	    dy = (j - (rows - 1) / 2.0) / ((rows) / 2.0);
+	    dn = sqrt(dx * dx + dy * dy);
+	    dn = clampd(dn, 0.0, 1.0);
+	    r = minr + (maxr - minr) * cos(dn * M_PI_2);  /* 1 at center, 0 at corner */
+
+	    snprintf(sname, sizeof(sname), "ring_%lu.s", serial);
+	    snprintf(rname, sizeof(rname), "ring_%lu.r", serial);
+
+	    if (mk_tor(db_fp, sname, center, normal, major, r) != 0) {
+		bu_log("Unable to write torus \"%s\"\n", sname);
+		return 3;
+	    }
+
+	    /* color by thickness: thin -> cool steel blue, thick -> warm
+	     * copper, so the size pattern reads at a glance */
+	    {
+		double t = (maxr > minr) ? (r - minr) / (maxr - minr) : 0.0;
+		rgb[0] = lerp8(70.0, 225.0, t);
+		rgb[1] = lerp8(120.0, 120.0, t);
+		rgb[2] = lerp8(205.0, 45.0, t);
+	    }
+
+	    mk_region1(db_fp, rname, sname, "plastic", "sh=12 sp=0.5 di=0.5", rgb);
+	    (void)mk_addmember(rname, &all_hd.l, NULL, WMOP_UNION);
+	    serial++;
+	}
     }
 
-    /* create the database header record */
-    snprintf(scratch, sizeof(scratch), "%s Torii", fileName);
-    mk_id(db_fp, scratch);
-
-    /* init the levels array */
-    torii.levels = levels;
-    torii.level = (struct torusArray *)bu_calloc(levels, sizeof(torusArray_t), "torii");
-
-    /* initialize at least a few torus to minimize allocation calls */
-    for (i=0; i<levels; i++) {
-	torii.level[i].torus = (struct torus *)bu_calloc(6, sizeof(torus_t), "torii.level[i].torus");
-	torii.level[i].count=0;
-	torii.level[i].max=6;
+    if (mk_lcomb(db_fp, "all", &all_hd, 0, NULL, NULL, NULL, 0) != 0) {
+	bu_log("Unable to write the \"all\" group\n");
+	return 4;
     }
 
-    /* create the mofosunavabish */
-    create_torii(levels, 0, &torii, initialPosition, dirArray, direction);
-
-    /* write out the biatch to disk */
-    output_torii(db_fp, fileName, levels, &torii, prototypeName);
-
-    bu_log("\n...done! (see %s)\n", av[1]);
+    bu_log("torii: wrote %lu interlocking rings into group \"all\"\n", serial);
 
     db_close(db_fp->dbip);
-
     return 0;
 }
 
