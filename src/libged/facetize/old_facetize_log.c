@@ -65,13 +65,8 @@ _old_ged_facetize_log_nmg(struct _old_ged_facetize_opts *o)
 	return;
 
     /* Seriously, bu_bomb, we don't want you blathering
-     * to stderr... shut down stderr temporarily, assuming
-     * we can find /dev/null or something similar */
-    o->fnull = open("/dev/null", O_WRONLY);
-    if (o->fnull == -1) {
-	/* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
-	o->fnull = open("nul", O_WRONLY);
-    }
+     * to stderr... shut down stderr temporarily. */
+    o->fnull = open(bu_file_null(), O_WRONLY);
     if (o->fnull != -1) {
 	o->serr = fileno(stderr);
 	o->stderr_stashed = dup(o->serr);

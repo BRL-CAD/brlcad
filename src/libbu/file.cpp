@@ -59,6 +59,17 @@
 #endif
 
 
+const char *
+bu_file_null(void)
+{
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
+    return "NUL";
+#else
+    return "/dev/null";
+#endif
+}
+
+
 int
 bu_file_exists(const char *path, int *fd)
 {

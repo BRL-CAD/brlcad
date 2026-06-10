@@ -32,6 +32,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/opt.h"
@@ -47,7 +48,7 @@ open_file(FILE **fp, const char *name)
     if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
     } else if (BU_STR_EQUAL(name, ".")) {
-	*fp = fopen("/dev/null", "rb");
+	*fp = fopen(bu_file_null(), "rb");
     } else if ((*fp = fopen(name, "rb")) == NULL) {
 	bu_exit(2, "bw3-pix: Can't open \"%s\"\n", name);
     }

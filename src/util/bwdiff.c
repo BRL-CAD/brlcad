@@ -33,6 +33,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -52,7 +53,7 @@ int backgnd = 0;
 unsigned char ibuf1[512], ibuf2[512], obuf[512];
 
 static const char usage[] =
-    "Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw > diff.bw\n\t(use - for stdin, . for /dev/null)\n";
+    "Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw > diff.bw\n\t(use - for stdin, . for the null device)\n";
 
 void
 open_file(FILE **fp, char *name)
@@ -61,7 +62,7 @@ open_file(FILE **fp, char *name)
     if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
     } else if (BU_STR_EQUAL(name, ".")) {
-	*fp = fopen("/dev/null", "rb");
+	*fp = fopen(bu_file_null(), "rb");
     } else if ((*fp = fopen(name, "rb")) == NULL) {
 	bu_exit(2, "bwdiff: Can't open \"%s\"\n", name);
     }

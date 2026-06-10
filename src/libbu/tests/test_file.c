@@ -192,6 +192,24 @@ main(int ac, char *av[])
 	bu_exit(1, "%s [FAIL] %s is incorrectly identified as being a symbolic link\n", av[0], bu_vls_cstr(&fname));
     }
 
+    /* null device */
+    {
+	const char *null_file = bu_file_null();
+	if (BU_STR_EMPTY(null_file)) {
+	    bu_exit(1, "%s [FAIL] bu_file_null returned an empty path\n", av[0]);
+	}
+	fp = fopen(null_file, "rb");
+	if (!fp) {
+	    bu_exit(1, "%s [FAIL] bu_file_null path %s could not be opened for reading\n", av[0], null_file);
+	}
+	fclose(fp);
+	fp = fopen(null_file, "wb");
+	if (!fp) {
+	    bu_exit(1, "%s [FAIL] bu_file_null path %s could not be opened for writing\n", av[0], null_file);
+	}
+	fclose(fp);
+    }
+
     /* file list */
     {
 	const char *pattern = "bu_file_*";

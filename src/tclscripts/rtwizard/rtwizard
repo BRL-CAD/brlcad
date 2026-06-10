@@ -25,19 +25,11 @@
 #
 
 if {![info exists ::RtWizard::wizard_state(pid_filename)]} {
-    if {$::tcl_platform(platform) == "windows"} {
-	set ::RtWizard::wizard_state(pid_filename) "NUL"
-    } else {
-	set ::RtWizard::wizard_state(pid_filename) "/dev/null"
-    }
+    set ::RtWizard::wizard_state(pid_filename) [bu_file_null]
 }
 
 if {![info exists ::RtWizard::wizard_state(log_file)]} {
-    if {$::tcl_platform(platform) == "windows"} {
-	set ::RtWizard::wizard_state(log_file) "NUL"
-    } else {
-	set ::RtWizard::wizard_state(log_file) "/dev/null"
-    }
+    set ::RtWizard::wizard_state(log_file) [bu_file_null]
 }
 
 # Geometry Database
@@ -67,13 +59,6 @@ if {![info exists ::RtWizard::wizard_state(scanlines)]} { set ::RtWizard::wizard
 
 # Load the package that lets us output images
 package require cadwidgets::RtImage
-
-proc rtwiz_null_device {} {
-    if {$::tcl_platform(platform) == "windows"} {
-	return "NUL"
-    }
-    return "/dev/null"
-}
 
 # Generate a unique 64-hex-character session token for this rtwizard
 # instance.  Seeding Tcl's PRNG with the process ID XOR'd with a high-
@@ -188,7 +173,7 @@ if {[info exists ::use_gui]} {
    # Check whether the framebuffer already exists.  If it does, and if
    # it was specified on the command line, go with it.
    if {$use_ipc} {
-      if {[catch {exec {*}[rtwiz_fbserv_cmd] < [rtwiz_null_device] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
+      if {[catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
 	set fbserv_pid $pid
 	set _fb_wait 0
 	while {[catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30} {
@@ -204,7 +189,7 @@ if {[info exists ::use_gui]} {
       }
    } else {
       if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} error ] && $error == 12} {
-	 catch {exec {*}[rtwiz_fbserv_cmd] < [rtwiz_null_device] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid
+	 catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid
 	 if {[info exists pid]} {
 	   set fbserv_pid $pid
 	   # Wait for fbserv to become ready.  Poll fblabel: if it fails because fbserv
@@ -244,7 +229,7 @@ if {[info exists ::use_gui]} {
 		if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
 		incr ::RtWizard::wizard_state(fbserv_port)
 	   }
-	   if {[catch {exec {*}[rtwiz_fbserv_cmd] < [rtwiz_null_device] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
+	   if {[catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
 	       set fbserv_pid $pid
 	   } else {
 	       if {$::RtWizard::wizard_state(verbose)} {puts "fbserv launch on port $::RtWizard::wizard_state(fbserv_port) failed: $pid"}

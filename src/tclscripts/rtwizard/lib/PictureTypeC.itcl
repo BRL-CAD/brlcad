@@ -166,17 +166,8 @@ namespace eval RtWizard {
 	#
 	set perspective [$::mgedObj gedCmd perspective]
 
-	if {$::tcl_platform(platform) == "windows"} {
-	    set pid_filename "NUL"
-	} else {
-	    set pid_filename "/dev/null"
-	}
-
-	if {$::tcl_platform(platform) == "windows"} {
-	    set log_file "NUL"
-	} else {
-	    set log_file "/dev/null"
-	}
+	set pid_filename [bu_file_null]
+	set log_file [bu_file_null]
 
 	set rtimage_dict [dict create \
 	_dbfile $::RtWizard::wizard_state(dbFile) \

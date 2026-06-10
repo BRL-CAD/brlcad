@@ -1022,8 +1022,8 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 	    }
 
 	    # failed, so try to start one
-	    puts "exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-	    exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &
+	    puts "exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &"
+	    exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &
 	    exec sleep 1
 
 	    # keep track of the fact that we started this fbserv, so we have to clean up
@@ -1040,8 +1040,8 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 		incr _fbservPort
 
 		# still failing, try to start one again
-		puts "exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-		exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &
+		puts "exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &"
+		exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &
 		exec sleep 1
 
 		# try again
@@ -1054,8 +1054,8 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 		    incr _fbservPort
 
 		    # still failing, try to start one again
-		    puts "exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-		    exec $fbserv -S $size $_fbservPort $device > /dev/null &
+		    puts "exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &"
+		    exec $fbserv -S $size $_fbservPort $device > [bu_file_null] &
 		    exec sleep 1
 
 		    # last try

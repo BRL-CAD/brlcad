@@ -348,6 +348,29 @@ tcl_bu_dir(void *clientData,
 }
 
 /**
+ * A wrapper for bu_file_null.
+ *
+ * @param clientData	- associated data/state
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
+ */
+static int
+tcl_bu_file_null(void *clientData,
+		 int argc,
+		 const char **UNUSED(argv))
+{
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
+    if (argc != 1) {
+	bu_log("Usage: bu_file_null\n");
+	return BRLCAD_ERROR;
+    }
+    Tcl_AppendResult(interp, bu_file_null(), NULL);
+    return BRLCAD_OK;
+}
+
+/**
  * A wrapper for bu_units_conversion.
  *
  * @param clientData	- associated data/state
@@ -400,6 +423,7 @@ Bu_Init(Tcl_Interp *interp)
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
 	{"bu_dir",		        tcl_bu_dir},
+	{"bu_file_null",		tcl_bu_file_null},
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
 	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},

@@ -48,6 +48,13 @@ __BEGIN_DECLS
 /** @file bu/file.h */
 
 /**
+ * Return the platform's null device path.
+ *
+ * The returned pointer refers to static storage and must not be freed.
+ */
+BU_EXPORT extern const char *bu_file_null(void);
+
+/**
  * Returns truthfully whether the given file path exists or not.  An
  * empty or NULL path name is treated as a non-existent file and, as
  * such, will return false.  If fd is non-NULL, it will be set to a

@@ -46,6 +46,7 @@
 #include "bsocket.h"
 
 #include "bu/app.h"
+#include "bu/file.h"
 /* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/str.h"
 #include "bu/process.h"
@@ -378,17 +379,11 @@ main(int argc, char **argv)
 
 	/* Close off the world */
 
-#ifdef HAVE_WINDOWS_H
-#  define DEVNULL "\\\\.\\NUL"
-#else
-#  define DEVNULL "/dev/null"
-#endif
-
-	fp = freopen(DEVNULL, "r", stdin);
+	fp = freopen(bu_file_null(), "r", stdin);
 	if (fp == NULL)
 	    perror("freopen STDIN");
 
-	fp = freopen(DEVNULL, "w", stdout);
+	fp = freopen(bu_file_null(), "w", stdout);
 	if (fp == NULL)
 	    perror("freopen STDOUT");
 
@@ -402,7 +397,7 @@ main(int argc, char **argv)
 	}
 #endif
 
-	fp = freopen(DEVNULL, "w", stderr);
+	fp = freopen(bu_file_null(), "w", stderr);
 	if (fp == NULL)
 	    perror("freopen STDERR");
     }

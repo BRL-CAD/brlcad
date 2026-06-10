@@ -29,6 +29,7 @@
 
 #include "bio.h"
 
+#include "bu/file.h"
 #include "bu/hook.h"
 #include "bu/vls.h"
 #include "bu/log.h"
@@ -81,14 +82,9 @@ _facetize_log_nmg(struct _ged_facetize_state *o)
        return;
 
     /* Seriously, bu_bomb, we don't want you blathering
-     * to stderr... shut down stderr temporarily, assuming
-     * we can find /dev/null or something similar */
+     * to stderr... shut down stderr temporarily. */
     struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
-    log_s->fnull = open("/dev/null", O_WRONLY);
-    if (log_s->fnull == -1) {
-       /* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
-       log_s->fnull = open("nul", O_WRONLY);
-    }
+    log_s->fnull = open(bu_file_null(), O_WRONLY);
     if (log_s->fnull != -1) {
        log_s->serr = fileno(stderr);
        log_s->stderr_stashed = dup(log_s->serr);

@@ -29,6 +29,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/snooze.h"
@@ -42,7 +43,7 @@ open_file(FILE **fp, char *name)
 	*fp = stdin;
 	return;
     } else if (BU_STR_EQUAL(name, ".")) {
-	*fp = fopen("/dev/null", "r");
+	*fp = fopen(bu_file_null(), "r");
 	return;
     }
 
