@@ -1,10 +1,6 @@
 if(SH_EXEC AND TARGET mged AND TARGET asc2g)
-  if(NOT WIN32)
-    brlcad_add_test(NAME regress-iges COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/iges.sh" ${CMAKE_SOURCE_DIR})
-    brlcad_regression_test(regress-iges "iges-g;g-iges;mged;asc2g" TEST_DEFINED)
-  else(NOT WIN32)
-    message(WARNING "iges.sh doesn not currently pass on Windows - disabling")
-  endif(NOT WIN32)
+  brlcad_add_test(NAME regress-iges COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/iges.sh" ${CMAKE_SOURCE_DIR})
+  brlcad_regression_test(regress-iges "iges-g;g-iges;mged;asc2g" TEST_DEFINED)
 endif(SH_EXEC AND TARGET mged AND TARGET asc2g)
 
 cmakefiles(

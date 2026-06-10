@@ -114,6 +114,7 @@ fi
 
 # test G -> IGES via stdout (can't use 'run')
 output="iges.export.stdout.iges"
+norm_output="iges.export.stdout.norm.iges"
 rm -f "$output"
 log "... running $GIGES iges.g box.nmg > $output"
 $GIGES iges.g box.nmg > $output 2>> "$LOGFILE"
@@ -125,7 +126,8 @@ if [ ! -f "$output" ] ; then
 fi
 
 # test that the first g-iges -o output matches the stdout output
-files_match iges.export.iges iges.export.stdout.iges -I 'G'
+tr -d '\r' < "$output" > "$norm_output"
+files_match iges.export.iges "$norm_output" -I 'G'
 if test $? -ne 0 ; then
     STATUS="`expr $STATUS + 1`"
     export STATUS

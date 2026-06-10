@@ -92,7 +92,7 @@ run ( ) {
     ret=$?
     case "x$STATUS" in
 	'x'|*[!0-9]*)
-	    break;;
+	    :;;
 	*)
 	    if test $ret -ne 0 ; then
 		STATUS="`expr $STATUS + 1`"

@@ -1,11 +1,7 @@
-if(SH_EXEC AND TARGET mged)
-  if(NOT WIN32)
-    brlcad_add_test(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/red.sh" ${CMAKE_SOURCE_DIR})
-    brlcad_regression_test(regress-red mged TEST_DEFINED)
-  else(NOT WIN32)
-    message(WARNING "regress-red does not currently pass on Windows, disabling")
-  endif(NOT WIN32)
-endif(SH_EXEC AND TARGET mged)
+if(SH_EXEC AND TARGET mged AND TARGET brledit)
+  brlcad_add_test(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/red.sh" ${CMAKE_SOURCE_DIR})
+  brlcad_regression_test(regress-red "mged;brledit" TEST_DEFINED)
+endif(SH_EXEC AND TARGET mged AND TARGET brledit)
 
 cmakefiles(
   red.sh
@@ -32,8 +28,6 @@ set(
   red.color.safe.out.test
   red.color.unsafe.out
   red.color.unsafe.out.new
-  red.edit.sh
-  red.g
   red.hps.r.out
   red.log
   red.los.empty.out
