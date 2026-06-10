@@ -81,6 +81,7 @@ set(proc-db_ignore_files
   caffeine.pdb
   metaballs.pl
   mkbuilding.h
+  mol-cube.dat
   sgi.sh
   spiral.pl
   surfaceintersect.h
