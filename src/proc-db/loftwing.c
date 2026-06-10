@@ -421,19 +421,19 @@ main(int ac, char *av[])
      * defaults for visual punch when the caller did not override them.
      */
     if (mode == MODE_BLADE) {
-	if (twist_deg == DEF_TWIST)
+	if (NEAR_EQUAL(twist_deg, DEF_TWIST, SMALL_FASTF))
 	    twist_deg = 38.0;       /* strong root-to-tip washout */
-	if (sweep_deg == DEF_SWEEP)
+	if (NEAR_EQUAL(sweep_deg, DEF_SWEEP, SMALL_FASTF))
 	    sweep_deg = 6.0;
-	if (dihedral_deg == DEF_DIHEDRAL)
+	if (NEAR_EQUAL(dihedral_deg, DEF_DIHEDRAL, SMALL_FASTF))
 	    dihedral_deg = 0.0;
-	if (naca == DEF_NACA)
+	if (NEAR_EQUAL(naca, DEF_NACA, SMALL_FASTF))
 	    naca = 4412;            /* fatter, draggier propeller section */
-	if (root_chord == DEF_ROOT_CHORD)
+	if (NEAR_EQUAL(root_chord, DEF_ROOT_CHORD, SMALL_FASTF))
 	    root_chord = 140.0;
-	if (tip_chord == DEF_TIP_CHORD)
+	if (NEAR_EQUAL(tip_chord, DEF_TIP_CHORD, SMALL_FASTF))
 	    tip_chord = 90.0;
-	if (span == DEF_SPAN)
+	if (NEAR_EQUAL(span, DEF_SPAN, SMALL_FASTF))
 	    span = 700.0;           /* blade length from hub to tip */
     }
 
