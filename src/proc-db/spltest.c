@@ -49,21 +49,43 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     int i;
     int ki;
     int cur_kv;
-    int interior_pts = 2;
+    int ncpts;		/* control points per direction */
+    int nknots;		/* knots per direction */
+    int interior_pts;	/* interior (non-clamped) knot values */
     fastf_t *fp = NULL;
     struct face_g_snurb *srf = NULL;
+    point_t ab, bc, cd, da, center, lift;
+
+    /*
+     * Build an (order x order) clamped, uniform NURBS surface with a
+     * full, non-degenerate control mesh.  For a B-spline surface the
+     * fundamental relationship per parametric direction is:
+     *
+     *     #knots = #control_points + order
+     *
+     * We use a square mesh with one interior control point per
+     * direction (ncpts = order + 1), which yields a single interior
+     * knot value and a gently curved patch when the center point is
+     * lifted off the corner plane.  Filling EVERY control point is
+     * what keeps the mesh from being degenerate -- the previous
+     * version allocated a larger mesh but only set the four corners,
+     * leaving the rest at zero and causing rt prep to fail.
+     */
+    ncpts = order + 1;
+    interior_pts = ncpts - order;	/* == 1 */
+    nknots = ncpts + order;
 
     srf = nmg_nurb_new_snurb(order, order,
-			    2*order+interior_pts, 2*order+interior_pts,	/* # knots */
-			    2+interior_pts, 2+interior_pts,
+			    nknots, nknots,		/* # knots */
+			    ncpts, ncpts,		/* mesh rows/cols */
 			    RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT));
 
-    /* Build both knot vectors */
-
-    /* current knot value */
-    cur_kv = 0;
-    /* current knot index */
-    ki = 0;
+    /* Build both (identical) knot vectors: clamped at the ends with
+     * 'order' repeated knots, and a uniformly increasing sequence of
+     * interior values in between.
+     */
+    cur_kv = 0;		/* current knot value */
+    ki = 0;		/* current knot index */
 
     for (i=0; i<order; i++, ki++) {
 	srf->u.knots[ki] = srf->v.knots[ki] = cur_kv;
@@ -79,13 +101,40 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     nmg_nurb_pr_kv(&srf->u);
 
     /*
-     * The control mesh is stored in row-major order.
+     * The control mesh is stored in row-major order.  The four
+     * supplied corners (a, b, c, d) define the patch boundary; we
+     * derive edge-midpoint and center control points so the entire
+     * mesh is populated.  The center is lifted to give the patch a
+     * gentle bulge so it is visibly a curved surface rather than a
+     * flat quad.
      */
+    VADD2SCALE(ab, a, b, 0.5);
+    VADD2SCALE(bc, b, c, 0.5);
+    VADD2SCALE(cd, c, d, 0.5);
+    VADD2SCALE(da, d, a, 0.5);
 
+    /* center = average of the four corners */
+    VADD2(center, a, c);
+    VADD2(lift, b, d);
+    VADD2(center, center, lift);
+    VSCALE(center, center, 0.25);
+    /* lift the center upward (+Z) to create a gentle curvature */
+    center[Z] += 5.0;
+
+    /* corners */
     SSET(fp, srf, 0, 0, a);
-    SSET(fp, srf, 0, 1, b);
-    SSET(fp, srf, 1, 0, d);
-    SSET(fp, srf, 1, 1, c);
+    SSET(fp, srf, 0, (ncpts-1), b);
+    SSET(fp, srf, (ncpts-1), (ncpts-1), c);
+    SSET(fp, srf, (ncpts-1), 0, d);
+
+    /* edge midpoints */
+    SSET(fp, srf, 0, 1, ab);
+    SSET(fp, srf, 1, (ncpts-1), bc);
+    SSET(fp, srf, (ncpts-1), 1, cd);
+    SSET(fp, srf, 1, 0, da);
+
+    /* interior / center */
+    SSET(fp, srf, 1, 1, center);
 
     s->srfs[s->nsrf++] = srf;
 }
