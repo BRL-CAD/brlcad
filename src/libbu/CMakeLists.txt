@@ -88,6 +88,7 @@ set(
   observer.c
   opt.c
   parallel.c
+  parallel_cpp11thread.cpp
   parse.c
   path.c
   path_normalize.c
@@ -135,11 +136,6 @@ set_source_files_properties(bitv.c PROPERTIES NO_CXX_COMPILE TRUE)
 # that use it accordingly.
 set_source_files_properties(uuid.c PROPERTIES NO_CXX_COMPILE TRUE)
 set_source_files_properties(vls.c PROPERTIES NO_CXX_COMPILE TRUE)
-
-if(NOT CMAKE_CXX_STANDARD EQUAL 98)
-  set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
-else(NOT CMAKE_CXX_STANDARD EQUAL 98)
-endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
 # Note - libbu_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(
