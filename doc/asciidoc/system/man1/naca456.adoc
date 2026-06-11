@@ -30,6 +30,10 @@ Public Domain Aeronautical Software:
 
 https://www.pdas.com/naca456download.html
 
+NOTE: the models produced by naca456 are NOT suitable for any real-world
+aircraft/design usage - they are intended to be used as procedural generators
+of wing shapes for visual rendering.
+
 [[airfoils]]
 == SUPPORTED AIRFOILS
 
