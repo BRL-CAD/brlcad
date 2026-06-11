@@ -81,7 +81,9 @@ Set the root airfoil.  The default is `2412`.
 Set the tip airfoil.  If omitted, the root airfoil is used at the tip.
 When different root and tip airfoils are supplied, *naca456* samples both
 sections with the same chordwise parameterization and linearly interpolates
-their section coordinates along the span.
+their section coordinates along the span.  This supports interpolation across
+different supported NACA families when the generated section topology remains
+compatible.
 
 *-m* _bot|brep_, *--mode* _bot|brep_::
 Select output geometry.  The default is `bot`.
@@ -544,6 +546,13 @@ Create the built-in sampler:
 [source]
 ----
 naca456 --demo-file naca456-demo.g
+----
+
+Create the same sampler with smooth BREP rows:
+
+[source]
+----
+naca456 --brep-surface smooth --demo-file naca456-demo-smooth.g
 ----
 
 The sampler writes individual wing regions and a top-level `all` combination:

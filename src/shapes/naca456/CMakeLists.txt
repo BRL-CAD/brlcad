@@ -9,7 +9,6 @@ target_include_directories(naca456 BEFORE PRIVATE ${BRLCAD_SOURCE_DIR}/src/libbg
 
 cmakefiles(
   CMakeLists.txt
-  README.md
   naca456.cpp
   )
 
