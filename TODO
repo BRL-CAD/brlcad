@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* rm foo bar vs rm -C foo bar and a safety guard that prevents
+  deleting foo accidentially.
+
 * verify MGED exit behavior on Windows - reports of non-zero exit
   being returned.
 
