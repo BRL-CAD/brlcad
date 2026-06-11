@@ -453,6 +453,41 @@ rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt,
     return ray_index;
 }
 
+static int
+rt_pattern_sph_qrand(fastf_t **rays, size_t *ray_cnt, const point_t center_pt,
+	const long nrays, const unsigned long seed)
+{
+    long i;
+    point_t origin = VINIT_ZERO;
+    struct bn_soboldata *sobol;
+
+    if (!rays || !ray_cnt || nrays < 1)
+	return -1;
+
+    /* use bn sobol implementation */
+    sobol = bn_sobol_create(2, seed);
+    if (!sobol)
+	return -1;
+
+    *(rays) = (fastf_t *)bu_calloc(sizeof(fastf_t) * 6, nrays + 1, "rays");
+
+    for (i = 0; i < nrays; i++) {
+	vect_t dir;
+	bn_sobol_sph_sample(dir, origin, 1.0, sobol);
+	VUNITIZE(dir); /* sanity guard against round-off; sample should be unit by construction */
+	(*rays)[6*i]   = center_pt[0];
+	(*rays)[6*i+1] = center_pt[1];
+	(*rays)[6*i+2] = center_pt[2];
+	(*rays)[6*i+3] = dir[0];
+	(*rays)[6*i+4] = dir[1];
+	(*rays)[6*i+5] = dir[2];
+    }
+
+    bn_sobol_destroy(sobol);
+    *(ray_cnt) = (size_t)nrays;
+    return (int)nrays;
+}
+
 int
 rt_pattern(struct rt_pattern_data *data, rt_pattern_t type)
 {
@@ -471,6 +506,11 @@ rt_pattern(struct rt_pattern_data *data, rt_pattern_t type)
 	    if (data->pn < 4) return -1;
 	    return rt_pattern_circ_spiral(&(data->rays), &(data->ray_cnt), data->center_pt, data->center_dir,
 		    data->n_p[0], data->n_p[1], data->n_p[2], data->n_p[3]);
+	    break;
+	case RT_PATTERN_SPH_QRAND:
+	    if (data->pn < 1) return -1;
+	    return rt_pattern_sph_qrand(&(data->rays), &(data->ray_cnt), data->center_pt,
+		    (long)data->n_p[0], (data->pn > 1) ? (unsigned long)data->n_p[1] : 0);
 	    break;
 	default:
 	    bu_log("Error - unknown pattern type %d\n", type);

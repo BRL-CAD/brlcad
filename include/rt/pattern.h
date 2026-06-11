@@ -196,7 +196,17 @@ struct rt_pattern_data {
  *
  *   RT_PATTERN_SPH_QRAND:
  *   -----------------------------
- *      TODO - maybe start here?  http://mathworld.wolfram.com/SpherePointPicking.html
+ *      Make a bundle of rays that all emanate from a single point
+ *      (center_pt) with directions quasi-randomly distributed over the
+ *      entire unit sphere by Sobol data sequence
+ *      NOTE: center_dir is not used (the pattern covers all directions).
+ *
+ *      Param                 | Description
+ *      --------------------- | -----------
+ *      center_pt             | Common origin of all generated rays
+ *      n_p[0]                | Number of rays to generate (>= 1)
+ *      n_p[1]                | (Optional) sequence seed; 0 or absent (pn < 2)
+ *                              selects the default deterministic sequence
  *
  * return negative on error (data will be unmodified in error condition)
  *        ray count on success (>=0)
