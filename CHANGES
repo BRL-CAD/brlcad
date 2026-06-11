@@ -227,8 +227,9 @@ include/rt/geom.h
 include/rt/application.h
 
 	Rename: Change struct application and include/rt/application.h
-	to rt_ to reflect that it is a per-thread
-	working container (not a global qApp-style state holder).
+	to rt_shootray_context and include/rt/shootray_context.h to reflect
+	that it is a per-thread working container (not a global qApp-style
+	state holder).
 
 	Resource Ownership:
 	rt_i_destroy no longer handles resource bookkeeping.
