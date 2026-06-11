@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
-mtllib arb4_color_out.mtl
->>>>>>> 2133139acd (add missing ref geom)
+mtllib arb4_color.mtl
 usemtl matl_1
 g /arb4.bot
 v -1000.000000 1000.000000 -1000.000000
