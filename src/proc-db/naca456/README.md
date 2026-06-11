@@ -13,7 +13,7 @@ https://www.pdas.com/naca456download.html
 
 ## Current Capabilities
 
-- BoT output with closed root and tip caps.
+- BoT output with closed root and tip topology.
 - BREP output with explicit vertices, shared edges, loops, trims, and
   `IsValid()`/`IsSolid()` checks before writing.
 - Spanwise ruled NURBS side strips for smoother BREP skins.
@@ -33,12 +33,23 @@ https://www.pdas.com/naca456download.html
   different supported NACA families when the requested section topology matches.
 - Taper, sweep angle or sweep offset, dihedral, tip twist, spanwise station
   count, chordwise sample count, and model placement offsets.
+- `--tip-style rounded` by default, with `--tip-style flat` as a planar cap
+  fallback.
 - Append mode for placing multiple wings in one `.g` database.
 
 The BREP model is solid and uses explicit topology. The default side skin is
 represented as spanwise ruled NURBS strips between chordwise outline edges. The
 optional smooth side skin uses bicubic Hermite patches per span/chord cell. In
-both cases the root and tip caps are triangulated planar faces.
+both BREP surface modes, root caps and flat tip caps are triangulated planar
+faces, while rounded tips use refined closure stations and a small terminal cap.
+
+By default, the generator creates a rounded tip by placing the nominal tip
+section at a tip shoulder, adding elliptical-style closure stations, and closing
+with a small terminal cap. `--semi-span` remains the distance from root to the
+outer rounded closure. With `--tip-style flat`, the final section is placed at
+the semi-span station and closed with a planar cap. BoT output includes
+surface normals for smoother rounded-tip display, with root and terminal caps
+kept visually flat.
 
 Length inputs are BRL-CAD model-space values. The generator creates a semi-span
 wing: `-s`/`--semi-span` specifies the generated root-to-tip length directly,
@@ -72,6 +83,12 @@ Generate a BREP with smoother side patches:
 naca456 -m brep --brep-surface smooth -f -o naca456-smooth.g -n wing_smooth -a 2412 -s 900 -r 240 -t 120 -w 5 -d 4 -T -2 -S 8 -c 29
 ```
 
+Generate a BREP with the flat tip fallback:
+
+```sh
+naca456 -m brep --tip-style flat -f -o naca456-flat.g -n wing_flat -a 0012 -s 700 -r 220 -t 120 -S 6 -c 25
+```
+
 Create a 36-wing sampler database:
 
 ```sh
@@ -96,5 +113,6 @@ checks:
 - 5-digit, reflex 5-digit, 6-series, and 6A-series generation.
 - Append mode and object name collision rejection.
 - Root-to-tip airfoil interpolation.
+- Rounded and flat tip-style metadata and demo propagation.
 
 Run the test through CTest with `ctest -R regress-naca456`.

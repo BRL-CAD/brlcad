@@ -86,6 +86,15 @@ edges.  `smooth` creates bicubic Hermite NURBS patches for each span/chord cell,
 using shared cubic edge curves and the same explicit trim topology and
 `IsValid()`/`IsSolid()` checks.
 
+*--tip-style* _rounded|flat_::
+Select the wing-tip closure style.  `rounded` is the default and creates an
+elliptical planform-style closure beyond the nominal tip section.  `flat` uses
+the historical planar cap at the final section.
+With `rounded`, the requested tip airfoil and tip chord describe the shoulder
+section where the rounded closure begins; *--semi-span* and *--full-span* still
+measure to the outermost rounded closure.  With `flat`, the requested tip
+section is placed directly at the semi-span station.
+
 *-s* _length_, *--semi-span* _length_::
 Set the root-to-tip semi-span length of the generated half-wing.  The default
 is 1000.
@@ -156,7 +165,7 @@ Write a 36-wing sampler database to _file.g_ and exit.  The first 24 examples
 are BoT wings and the final 12 examples are BREP wings.  The sampler covers
 4-digit, 5-digit, 5-digit reflex, 6-series, 6A-series, sharp trailing-edge,
 sweep, taper, dihedral, twist, and mixed root/tip section cases.  The BREP
-sampler rows honor *--brep-surface*; BoT sampler rows are unchanged.
+sampler rows honor *--brep-surface*.  All sampler rows honor *--tip-style*.
 
 *--section-file* _file.tsv_::
 Write normalized root airfoil section coordinates to _file.tsv_ and exit.  This
@@ -192,24 +201,40 @@ six-series mean line.
 
 The planform transform is then applied station by station.  Chord length,
 leading-edge sweep offset, dihedral, and twist are linearly interpolated from
-root to tip.  Twist is applied around the local quarter chord.  The model-space
-translation options are applied after the local section transform.
+root to the nominal tip section.  Twist is applied around the local quarter
+chord.  The model-space translation options are applied after the local section
+transform.
+
+The default `--tip-style rounded` adds an elliptical closure beyond the nominal
+tip section.  The closure progressively scales the tip airfoil outline around
+mid-chord, giving the planform a rounded wing-tip outline while preserving
+closed, explicit BoT/BREP topology.  Both output modes add refined closure
+stations and close with a small terminal cap, avoiding the broad planar fan
+used by a simple pole closure.  BREP represents the rounded closure with the
+same NURBS side-surface mode selected by `--brep-surface`; BoT writes
+per-face-vertex normals for smoother display while preserving the refined mesh
+geometry.  The fallback `--tip-style flat` places the final section at the
+semi-span location and closes it with a planar triangulated cap.
 
 In BoT mode, adjacent station outlines are triangulated into a closed mesh.
-Root and tip caps are triangulated as constrained polygons rather than centroid
-fans, avoiding poor triangles on concave or sharply cusped airfoil outlines.
-The generated mesh is checked for finite coordinates, valid indices,
-manifoldness, orientation, closure, self-intersection, and triangle quality
-before it is written as a solid BoT.
+The root cap and flat tip caps are triangulated as constrained polygons rather
+than centroid fans, avoiding poor triangles on concave or sharply cusped
+airfoil outlines.  Rounded tips use the same side triangulation and close to a
+small terminal cap.  The generated mesh is checked for finite coordinates,
+valid indices, manifoldness, orientation, closure, self-intersection, and
+triangle quality before it is written as a solid BoT.  BoT output includes
+surface normals for smoother rounded-tip display; root and terminal cap normals
+are kept flat.
 
 In BREP mode, every outline vertex is represented explicitly.  Chordwise
 outline edges and spanwise edges are shared by adjacent faces.  The side skin is
-represented as ruled NURBS strips between neighboring chordwise outline edges,
-and root and tip caps are represented by triangulated planar faces.  The BREP is
-standardized, compacted, and checked with OpenNURBS `IsValid()` and `IsSolid()`,
-plus additional libbrep quality checks for duplicate vertices, zero-length
-edges and trims, edge trim pairing, face aspect ratio, and conservative
-self-intersection risk, before it is written.
+represented as ruled NURBS strips between neighboring chordwise outline edges.
+Root caps and flat tip caps are represented by triangulated planar faces;
+rounded tips use additional NURBS side/closure bands down to a small terminal
+triangulated cap.  The BREP is standardized, compacted, and checked with
+OpenNURBS `IsValid()` and `IsSolid()`, plus additional libbrep quality checks
+for duplicate vertices, zero-length edges and trims, edge trim pairing, face
+aspect ratio, and conservative self-intersection risk, before it is written.
 
 With `--brep-surface smooth`, the side skin uses bicubic Hermite NURBS patches
 for each station-to-station, chord-to-chord cell.  Tangents are estimated from
@@ -228,9 +253,9 @@ root/tip cases.
 Each generated solid and region receives `naca456::` attributes recording the
 inputs used to create it.  These include generator name, metadata version,
 algorithm source, geometry mode, BREP surface mode, root and tip airfoil
-designations, semi-span, full span, root and tip chord, sweep offset, sweep
-angle, dihedral, tip twist, 6-series loading parameter, station/sample counts,
-trailing-edge mode, and model-space offsets.
+designations, tip style, semi-span, full span, root and tip chord, sweep
+offset, sweep angle, dihedral, tip twist, 6-series loading parameter,
+station/sample counts, trailing-edge mode, and model-space offsets.
 
 For example:
 
@@ -239,6 +264,7 @@ For example:
 mged wing.g "attr get wing_2412.r naca456::root_airfoil"
 mged wing.g "attr get wing_2412.r naca456::geometry_mode"
 mged wing.g "attr get wing_2412.r naca456::brep_surface"
+mged wing.g "attr get wing_2412.r naca456::tip_style"
 ----
 
 The attributes are intended to make generated models auditable.  They are not a
@@ -256,6 +282,12 @@ The generated model is a semi-span wing only.  The tool does not currently
 generate wing-body blends, mirrored full-span assemblies, control surfaces,
 flaps, slats, spars, ribs, skins with physical thickness, fuel volumes,
 fasteners, or manufacturing features.
+
+The tip-style support intentionally covers the well-defined production cases
+implemented by this generator: a rounded elliptical-style closure and a flat
+section cap.  Raked tips, Hoerner tips, winglets, and blended tip devices are
+not single-parameter NACA-section closures; they require additional design
+dimensions and are outside the current scope of *naca456*.
 
 The BREP output is checked with OpenNURBS `IsValid()` and `IsSolid()`, but it is
 not a general CAD healing pipeline.  Downstream Boolean operations may still be
@@ -325,6 +357,15 @@ naca456 --mode brep --brep-surface smooth --force \
   --output wing-smooth-brep.g --name wing_smooth \
   --airfoil 2412 --semi-span 900 --root-chord 240 --tip-chord 120 \
   --sweep-angle 5 --dihedral 4 --tip-twist -2 --stations 8 --samples 29
+----
+
+Create a BREP wing with the flat tip fallback:
+
+[source]
+----
+naca456 --mode brep --tip-style flat --force --output wing-flat-brep.g \
+  --name wing_flat --airfoil 0012 --semi-span 700 \
+  --root-chord 220 --tip-chord 120 --stations 6 --samples 25
 ----
 
 Create a 6A-series BREP:

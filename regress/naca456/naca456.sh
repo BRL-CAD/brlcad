@@ -167,7 +167,7 @@ log "=== TESTING naca456 procedural wing generation ==="
 
 rm -f naca456-bot.g naca456-five-bot.g naca456-sharp-brep.g naca456-smooth-brep.g
 rm -f naca456-five-reflex-brep.g naca456-six-bot.g naca456-sixa-brep.g
-rm -f naca456-append.g naca456-demo.g naca456-demo-smooth.g
+rm -f naca456-append.g naca456-demo.g naca456-demo-smooth.g naca456-demo-flat.g
 rm -f naca456-brep-matrix-ruled.g naca456-brep-matrix-smooth.g
 rm -f naca456-sections.tsv naca456-section-2412.tsv naca456-section-23012.tsv
 rm -f naca456-section-23112.tsv naca456-section-63-206.tsv naca456-section-63a210.tsv
@@ -184,14 +184,18 @@ run "$MGED" -c naca456-bot.g "attr get naca_bot_2412.r naca456::semi_span"
 expect_grep "900" "$LOGFILE"
 run "$MGED" -c naca456-bot.g "attr get naca_bot_2412.r naca456::sweep_offset"
 expect_grep "80" "$LOGFILE"
+run "$MGED" -c naca456-bot.g "attr get naca_bot_2412.r naca456::tip_style"
+expect_grep "rounded" "$LOGFILE"
 
 run "$NACA456" --mode bot --force --output naca456-five-bot.g --name naca_five_23012 --airfoil 23012 --semi-span 650 --root-chord 200 --tip-chord 110 --sweep-offset 60 --dihedral 3 --stations 6 --samples 31
 run "$MGED" -c naca456-five-bot.g "l naca_five_23012.bot"
 expect_grep "naca_five_23012.bot" "$LOGFILE"
 
-run "$NACA456" --mode brep --sharp-te --force --output naca456-sharp-brep.g --name naca_sharp_0012 --airfoil 0012 --semi-span 500 --root-chord 180 --tip-chord 120 --stations 5 --samples 17
+run "$NACA456" --mode brep --tip-style flat --sharp-te --force --output naca456-sharp-brep.g --name naca_sharp_0012 --airfoil 0012 --semi-span 500 --root-chord 180 --tip-chord 120 --stations 5 --samples 17
 run "$MGED" -c naca456-sharp-brep.g "l naca_sharp_0012.brep"
 expect_grep "Boundary Representation" "$LOGFILE"
+run "$MGED" -c naca456-sharp-brep.g "attr get naca_sharp_0012.r naca456::tip_style"
+expect_grep "flat" "$LOGFILE"
 
 run "$NACA456" --mode brep --brep-surface smooth --force --output naca456-smooth-brep.g --name naca_smooth_2412 --airfoil 2412 --semi-span 650 --root-chord 200 --tip-chord 100 --sweep-offset 60 --dihedral 3 --tip-twist -2 --stations 6 --samples 21
 run "$MGED" -c naca456-smooth-brep.g "l naca_smooth_2412.brep"
@@ -235,6 +239,10 @@ run "$MGED" -c naca456-demo-smooth.g "attr get brep_24_baseline_2412.r naca456::
 expect_grep "smooth" "$LOGFILE"
 run "$MGED" -c naca456-demo-smooth.g "attr get bot_00_baseline_2412.r naca456::brep_surface"
 expect_grep "ruled" "$LOGFILE"
+
+run "$NACA456" --tip-style flat --demo-file naca456-demo-flat.g
+run "$MGED" -c naca456-demo-flat.g "attr get brep_24_baseline_2412.r naca456::tip_style"
+expect_grep "flat" "$LOGFILE"
 
 run_brep_matrix_surface ruled
 run_brep_matrix_surface smooth

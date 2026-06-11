@@ -132,6 +132,21 @@ enum class brep_surface_mode {
 };
 
 
+enum class tip_style_mode {
+    rounded,
+    flat
+};
+
+
+struct wing_station {
+    std::vector<point2d> outline;
+    double span_frac = 0.0;
+    double chord = 0.0;
+    double le_x = 0.0;
+    double twist_deg = 0.0;
+};
+
+
 struct options {
     std::string outfile = "naca456-wing.g";
     std::string name = "naca456_wing";
@@ -141,6 +156,7 @@ struct options {
     std::string section_file;
     output_mode mode = output_mode::bot;
     brep_surface_mode brep_surface = brep_surface_mode::ruled;
+    tip_style_mode tip_style = tip_style_mode::rounded;
     fastf_t semi_span = 1000.0;
     fastf_t full_span = 2000.0;
     fastf_t root_chord = 250.0;
@@ -204,6 +220,13 @@ static std::string
 brep_surface_name(brep_surface_mode mode)
 {
     return mode == brep_surface_mode::smooth ? "smooth" : "ruled";
+}
+
+
+static std::string
+tip_style_name(tip_style_mode mode)
+{
+    return mode == tip_style_mode::flat ? "flat" : "rounded";
 }
 
 
@@ -363,9 +386,9 @@ parse_airfoil(const std::string &code, double six_a_param)
 
 
 static struct bu_opt_desc *
-option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
+option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &tip_style, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
 {
-    static struct bu_opt_desc d[28];
+    static struct bu_opt_desc d[29];
 
     BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help and exit");
     BU_OPT(d[1], "?", "", "", NULL, &help, "");
@@ -375,26 +398,27 @@ option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct b
     BU_OPT(d[5], "A", "tip-airfoil", "code", &bu_opt_vls, &tip_airfoil, "Tip NACA airfoil code");
     BU_OPT(d[6], "m", "mode", "bot|brep", &bu_opt_vls, &mode, "Output geometry type");
     BU_OPT(d[7], "", "brep-surface", "ruled|smooth", &bu_opt_vls, &brep_surface, "BREP side-surface construction mode");
-    BU_OPT(d[8], "s", "semi-span", "length", &bu_opt_fastf_t, &opts.semi_span, "Root-to-tip semi-span length");
-    BU_OPT(d[9], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
-    BU_OPT(d[10], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
-    BU_OPT(d[11], "w", "sweep-angle", "degrees", &bu_opt_fastf_t, &opts.sweep_angle_deg, "Tip leading-edge sweep angle");
-    BU_OPT(d[12], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
-    BU_OPT(d[13], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
-    BU_OPT(d[14], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
-    BU_OPT(d[15], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
-    BU_OPT(d[16], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
-    BU_OPT(d[17], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
-    BU_OPT(d[18], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
-    BU_OPT(d[19], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
-    BU_OPT(d[20], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
-    BU_OPT(d[21], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
-    BU_OPT(d[22], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
-    BU_OPT(d[23], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
-    BU_OPT(d[24], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
-    BU_OPT(d[25], "", "full-span", "length", &bu_opt_fastf_t, &opts.full_span, "Full aircraft span; generated semi-span is half this value");
-    BU_OPT(d[26], "", "sweep-offset", "length", &bu_opt_fastf_t, &opts.sweep_offset, "Tip leading-edge X offset");
-    BU_OPT_NULL(d[27]);
+    BU_OPT(d[8], "", "tip-style", "rounded|flat", &bu_opt_vls, &tip_style, "Wing tip closure style");
+    BU_OPT(d[9], "s", "semi-span", "length", &bu_opt_fastf_t, &opts.semi_span, "Root-to-tip semi-span length");
+    BU_OPT(d[10], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
+    BU_OPT(d[11], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
+    BU_OPT(d[12], "w", "sweep-angle", "degrees", &bu_opt_fastf_t, &opts.sweep_angle_deg, "Tip leading-edge sweep angle");
+    BU_OPT(d[13], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
+    BU_OPT(d[14], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
+    BU_OPT(d[15], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
+    BU_OPT(d[16], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
+    BU_OPT(d[17], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
+    BU_OPT(d[18], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
+    BU_OPT(d[19], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
+    BU_OPT(d[20], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
+    BU_OPT(d[21], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
+    BU_OPT(d[22], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
+    BU_OPT(d[23], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
+    BU_OPT(d[24], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
+    BU_OPT(d[25], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
+    BU_OPT(d[26], "", "full-span", "length", &bu_opt_fastf_t, &opts.full_span, "Full aircraft span; generated semi-span is half this value");
+    BU_OPT(d[27], "", "sweep-offset", "length", &bu_opt_fastf_t, &opts.sweep_offset, "Tip leading-edge X offset");
+    BU_OPT_NULL(d[28]);
 
     return d;
 }
@@ -410,10 +434,11 @@ parse_args(int argc, char **argv)
     struct bu_vls tip_airfoil = BU_VLS_INIT_ZERO;
     struct bu_vls mode = BU_VLS_INIT_ZERO;
     struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
+    struct bu_vls tip_style = BU_VLS_INIT_ZERO;
     struct bu_vls demo_file = BU_VLS_INIT_ZERO;
     struct bu_vls section_file = BU_VLS_INIT_ZERO;
     bool help = false;
-    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, demo_file, section_file, help);
+    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, demo_file, section_file, help);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     const int parsed = bu_opt_parse(&msg, argc - 1, (const char **)(argv + 1), d);
 
@@ -427,6 +452,7 @@ parse_args(int argc, char **argv)
 	bu_vls_free(&tip_airfoil);
 	bu_vls_free(&mode);
 	bu_vls_free(&brep_surface);
+	bu_vls_free(&tip_style);
 	bu_vls_free(&demo_file);
 	bu_vls_free(&section_file);
 	throw std::runtime_error(msg_str.empty() ? "option parsing failed" : msg_str);
@@ -452,6 +478,7 @@ parse_args(int argc, char **argv)
 	opts.section_file = bu_vls_cstr(&section_file);
     std::string mode_str = bu_vls_strlen(&mode) > 0 ? bu_vls_cstr(&mode) : "bot";
     std::string brep_surface_str = bu_vls_strlen(&brep_surface) > 0 ? bu_vls_cstr(&brep_surface) : "ruled";
+    std::string tip_style_str = bu_vls_strlen(&tip_style) > 0 ? bu_vls_cstr(&tip_style) : "rounded";
 
     bu_vls_free(&outfile);
     bu_vls_free(&name);
@@ -459,6 +486,7 @@ parse_args(int argc, char **argv)
     bu_vls_free(&tip_airfoil);
     bu_vls_free(&mode);
     bu_vls_free(&brep_surface);
+    bu_vls_free(&tip_style);
     bu_vls_free(&demo_file);
     bu_vls_free(&section_file);
 
@@ -478,6 +506,13 @@ parse_args(int argc, char **argv)
 	opts.brep_surface = brep_surface_mode::smooth;
     } else {
 	throw std::runtime_error("BREP surface mode must be ruled or smooth");
+    }
+    if (tip_style_str == "rounded") {
+	opts.tip_style = tip_style_mode::rounded;
+    } else if (tip_style_str == "flat") {
+	opts.tip_style = tip_style_mode::flat;
+    } else {
+	throw std::runtime_error("tip style must be rounded or flat");
     }
     const bool have_semi_span = option_supplied(argc, argv, 's', "semi-span");
     const bool have_full_span = option_supplied(argc, argv, '\0', "full-span");
@@ -1129,8 +1164,40 @@ interpolate_section(const section4 &root, const section4 &tip, double f)
 }
 
 
-static std::vector<std::vector<point2d>>
-station_outlines(const options &opts)
+static wing_station
+make_wing_station(const std::vector<point2d> &outline, double span_frac, double chord, double le_x, double twist_deg)
+{
+    wing_station station;
+    station.outline = outline;
+    station.span_frac = span_frac;
+    station.chord = chord;
+    station.le_x = le_x;
+    station.twist_deg = twist_deg;
+    return station;
+}
+
+
+static point2d
+scaled_tip_point(const point2d &pt, double scale)
+{
+    const double center_x = 0.5;
+    return {center_x + scale * (pt.x - center_x), scale * pt.z};
+}
+
+
+static std::vector<point2d>
+scaled_tip_outline(const std::vector<point2d> &outline, double scale)
+{
+    std::vector<point2d> scaled;
+    scaled.reserve(outline.size());
+    for (const point2d &pt : outline)
+	scaled.push_back(scaled_tip_point(pt, scale));
+    return scaled;
+}
+
+
+static std::vector<wing_station>
+wing_stations(const options &opts)
 {
     const airfoil_spec root_af = parse_airfoil(opts.airfoil, opts.six_a_param);
     const airfoil_spec tip_af = parse_airfoil(opts.tip_airfoil.empty() ? opts.airfoil : opts.tip_airfoil, opts.six_a_param);
@@ -1138,34 +1205,55 @@ station_outlines(const options &opts)
     const section4 tip_section = airfoil_section(tip_af, opts.samples, opts.sharp_te);
     const bool omit_lower_te = opts.sharp_te || section_has_duplicate_te(root_section) || section_has_duplicate_te(tip_section);
 
-    std::vector<std::vector<point2d>> outlines;
-    outlines.reserve(static_cast<size_t>(opts.stations));
+    std::vector<wing_station> stations;
+    const int round_segments = opts.tip_style == tip_style_mode::rounded ? 5 : 0;
+    stations.reserve(static_cast<size_t>(opts.stations + round_segments));
 
     size_t outline_cnt = 0;
     for (int s = 0; s < opts.stations; ++s) {
 	const double f = static_cast<double>(s) / static_cast<double>(opts.stations - 1);
 	const section4 section = interpolate_section(root_section, tip_section, f);
-	outlines.push_back(airfoil_outline(section, omit_lower_te));
+	const std::vector<point2d> outline = airfoil_outline(section, omit_lower_te);
 	if (s == 0) {
-	    outline_cnt = outlines.back().size();
-	} else if (outlines.back().size() != outline_cnt) {
+	    outline_cnt = outline.size();
+	} else if (outline.size() != outline_cnt) {
 	    throw std::runtime_error("spanwise section interpolation changed outline topology");
+	}
+	const double shoulder_frac = opts.tip_style == tip_style_mode::rounded ?
+	    1.0 - std::min(0.25, std::max(0.05, 0.5 * opts.tip_chord / opts.semi_span)) : 1.0;
+	const double span_frac = f * shoulder_frac;
+	const double chord = opts.root_chord + f * (opts.tip_chord - opts.root_chord);
+	const double le_x = f * opts.sweep_offset;
+	const double twist = f * opts.tip_twist_deg;
+	stations.push_back(make_wing_station(outline, span_frac, chord, le_x, twist));
+    }
+
+    if (opts.tip_style == tip_style_mode::rounded) {
+	const double shoulder_frac = stations.back().span_frac;
+	const double round_frac = 1.0 - shoulder_frac;
+	const std::vector<point2d> tip_outline = stations.back().outline;
+	for (int i = 1; i <= round_segments; ++i) {
+	    const double t = static_cast<double>(i) / static_cast<double>(round_segments + 1);
+	    const double theta = 0.5 * M_PI * t;
+	    const double span_frac = shoulder_frac + round_frac * std::sin(theta);
+	    const double scale = std::max(0.18, std::cos(theta));
+	    stations.push_back(make_wing_station(scaled_tip_outline(tip_outline, scale),
+		    span_frac, opts.tip_chord, opts.sweep_offset, opts.tip_twist_deg));
 	}
     }
 
-    return outlines;
+    return stations;
 }
 
 
 static point3d
-station_point(const point2d &section_pt, const options &opts, int station)
+station_point(const point2d &section_pt, const options &opts, const wing_station &station)
 {
-    const double f = static_cast<double>(station) / static_cast<double>(opts.stations - 1);
-    const double chord = opts.root_chord + f * (opts.tip_chord - opts.root_chord);
-    const double y = f * opts.semi_span;
-    const double le_x = f * opts.sweep_offset;
+    const double chord = station.chord;
+    const double y = station.span_frac * opts.semi_span;
+    const double le_x = station.le_x;
     const double dihedral = std::tan(opts.dihedral_deg * M_PI / 180.0) * y;
-    const double twist = f * opts.tip_twist_deg * M_PI / 180.0;
+    const double twist = station.twist_deg * M_PI / 180.0;
 
     const double pivot = 0.25 * chord;
     const double sx = section_pt.x * chord;
@@ -1179,6 +1267,36 @@ station_point(const point2d &section_pt, const options &opts, int station)
     p.y = opts.offset_y + y;
     p.z = opts.offset_z + dihedral - dx * st + sz * ct;
     return p;
+}
+
+
+static std::vector<wing_station>
+refined_rounded_tip_stations(const options &opts, const std::vector<wing_station> &stations)
+{
+    if (opts.tip_style != tip_style_mode::rounded || stations.empty())
+	return stations;
+
+    std::vector<wing_station> refined_stations = stations;
+    const wing_station last = refined_stations.back();
+    const double remaining_span = 1.0 - last.span_frac;
+    if (remaining_span <= SMALL_FASTF)
+	return refined_stations;
+
+    const std::array<std::pair<double, double>, 3> closure = {{
+	{0.45, 0.55},
+	{0.75, 0.25},
+	{1.0, 0.08}
+    }};
+
+    for (const auto &step : closure) {
+	wing_station station = last;
+	station.span_frac = last.span_frac + remaining_span * std::sin(0.5 * M_PI * step.first);
+	station.outline = scaled_tip_outline(last.outline, step.second);
+	refined_stations.push_back(station);
+    }
+
+    refined_stations.back().span_frac = 1.0;
+    return refined_stations;
 }
 
 
@@ -1256,22 +1374,135 @@ validate_bot_mesh(const std::vector<fastf_t> &vertices, const std::vector<int> &
 }
 
 
-static void
-validate_station_outlines(const options &opts, const std::vector<std::vector<point2d>> &outlines)
+static point3d
+vertex_point(const std::vector<fastf_t> &vertices, int index)
 {
-    if (outlines.size() != static_cast<size_t>(opts.stations) || outlines.empty())
+    const size_t offset = static_cast<size_t>(index) * 3;
+    return {
+	static_cast<double>(vertices[offset]),
+	static_cast<double>(vertices[offset + 1]),
+	static_cast<double>(vertices[offset + 2])
+    };
+}
+
+
+static point3d
+point_subtract(const point3d &a, const point3d &b)
+{
+    return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+
+
+static point3d
+point_cross(const point3d &a, const point3d &b)
+{
+    return {
+	a.y * b.z - a.z * b.y,
+	a.z * b.x - a.x * b.z,
+	a.x * b.y - a.y * b.x
+    };
+}
+
+
+static double
+point_length(const point3d &a)
+{
+    return std::sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+}
+
+
+static point3d
+unit_point(const point3d &a)
+{
+    const double len = point_length(a);
+    if (len <= SMALL_FASTF)
+	return {0.0, 0.0, 1.0};
+    return {a.x / len, a.y / len, a.z / len};
+}
+
+
+static point3d
+face_normal(const std::vector<fastf_t> &vertices, int a, int b, int c)
+{
+    const point3d p0 = vertex_point(vertices, a);
+    const point3d p1 = vertex_point(vertices, b);
+    const point3d p2 = vertex_point(vertices, c);
+    return unit_point(point_cross(point_subtract(p1, p0), point_subtract(p2, p0)));
+}
+
+
+static void
+append_normal(std::vector<fastf_t> &normals, const point3d &normal)
+{
+    normals.push_back(static_cast<fastf_t>(normal.x));
+    normals.push_back(static_cast<fastf_t>(normal.y));
+    normals.push_back(static_cast<fastf_t>(normal.z));
+}
+
+
+static void
+build_bot_normals(const std::vector<fastf_t> &vertices, const std::vector<int> &faces, size_t smooth_face_count, std::vector<fastf_t> &normals, std::vector<int> &face_normals)
+{
+    const size_t vertex_cnt = vertices.size() / 3;
+    const size_t face_cnt = faces.size() / 3;
+    std::vector<point3d> accum(vertex_cnt);
+
+    smooth_face_count = std::min(smooth_face_count, face_cnt);
+    for (size_t i = 0; i < smooth_face_count; ++i) {
+	const int a = faces[3 * i];
+	const int b = faces[3 * i + 1];
+	const int c = faces[3 * i + 2];
+	const point3d n = face_normal(vertices, a, b, c);
+	const int vids[3] = {a, b, c};
+	for (int vi : vids) {
+	    point3d &sum = accum[static_cast<size_t>(vi)];
+	    sum.x += n.x;
+	    sum.y += n.y;
+	    sum.z += n.z;
+	}
+    }
+
+    normals.reserve(vertex_cnt * 3 + (face_cnt - smooth_face_count) * 3);
+    for (const point3d &normal : accum)
+	append_normal(normals, unit_point(normal));
+
+    face_normals.resize(faces.size());
+    for (size_t i = 0; i < face_cnt; ++i) {
+	if (i < smooth_face_count) {
+	    face_normals[3 * i] = faces[3 * i];
+	    face_normals[3 * i + 1] = faces[3 * i + 1];
+	    face_normals[3 * i + 2] = faces[3 * i + 2];
+	} else {
+	    const int ni = static_cast<int>(normals.size() / 3);
+	    append_normal(normals, face_normal(vertices, faces[3 * i], faces[3 * i + 1], faces[3 * i + 2]));
+	    face_normals[3 * i] = ni;
+	    face_normals[3 * i + 1] = ni;
+	    face_normals[3 * i + 2] = ni;
+	}
+    }
+}
+
+
+static void
+validate_wing_stations(const options &opts, const std::vector<wing_station> &stations)
+{
+    if (stations.empty())
 	throw std::runtime_error("internal station outline assembly failed");
 
-    const size_t outline_cnt = outlines.front().size();
+    const size_t outline_cnt = stations.front().outline.size();
     if (outline_cnt < 4)
 	throw std::runtime_error("airfoil outline must contain at least four vertices");
 
-    for (int s = 0; s < opts.stations; ++s) {
-	if (outlines[static_cast<size_t>(s)].size() != outline_cnt)
+    for (const wing_station &station : stations) {
+	if (station.outline.size() != outline_cnt)
 	    throw std::runtime_error("all station outlines must have identical topology");
+	if (!std::isfinite(station.span_frac) || !std::isfinite(station.chord) ||
+		!std::isfinite(station.le_x) || !std::isfinite(station.twist_deg) ||
+		station.span_frac < 0.0 || station.span_frac > 1.0 || station.chord <= 0.0)
+	    throw std::runtime_error("generated invalid wing station transform");
 
-	for (const point2d &pt : outlines[static_cast<size_t>(s)]) {
-	    const point3d p = station_point(pt, opts, s);
+	for (const point2d &pt : station.outline) {
+	    const point3d p = station_point(pt, opts, station);
 	    if (!finite_point(p))
 		throw std::runtime_error("generated non-finite wing coordinate");
 	}
@@ -1406,6 +1637,7 @@ write_metadata(struct rt_wdb *fp, const std::string &solid_name, const std::stri
 	set_attr(fp, obj_name, "naca456::algorithm_source", "PDAS NACA456 nacax.f90 epspsi.f90 splprocs.f90");
 	set_attr(fp, obj_name, "naca456::geometry_mode", mode_name(opts.mode));
 	set_attr(fp, obj_name, "naca456::brep_surface", brep_surface_name(opts.brep_surface));
+	set_attr(fp, obj_name, "naca456::tip_style", tip_style_name(opts.tip_style));
 	set_attr(fp, obj_name, "naca456::root_airfoil", opts.airfoil);
 	set_attr(fp, obj_name, "naca456::tip_airfoil", tip_airfoil);
 	set_attr(fp, obj_name, "naca456::semi_span", num_string(opts.semi_span));
@@ -1428,25 +1660,26 @@ write_metadata(struct rt_wdb *fp, const std::string &solid_name, const std::stri
 
 
 static int
-write_bot(const options &opts, const std::vector<std::vector<point2d>> &outlines)
+write_bot(const options &opts, const std::vector<wing_station> &stations)
 {
     std::vector<fastf_t> vertices;
     std::vector<int> faces;
-    const int outline_cnt = static_cast<int>(outlines.front().size());
+    const int outline_cnt = static_cast<int>(stations.front().outline.size());
+    const int station_cnt = static_cast<int>(stations.size());
 
-    vertices.reserve(static_cast<size_t>(opts.stations * outline_cnt) * 3);
-    for (int s = 0; s < opts.stations; ++s) {
-	for (const point2d &pt : outlines[static_cast<size_t>(s)]) {
-	    const point3d p = station_point(pt, opts, s);
+    vertices.reserve(static_cast<size_t>(station_cnt * outline_cnt) * 3);
+    for (const wing_station &station : stations) {
+	for (const point2d &pt : station.outline) {
+	    const point3d p = station_point(pt, opts, station);
 	    vertices.push_back(static_cast<fastf_t>(p.x));
 	    vertices.push_back(static_cast<fastf_t>(p.y));
 	    vertices.push_back(static_cast<fastf_t>(p.z));
 	}
     }
 
-    const std::vector<std::array<int32_t, 3>> cap_tris = cap_triangulation(outlines.front());
-    faces.reserve(static_cast<size_t>((opts.stations - 1) * outline_cnt * 2 + cap_tris.size() * 2) * 3);
-    for (int s = 0; s < opts.stations - 1; ++s) {
+    const std::vector<std::array<int32_t, 3>> cap_tris = cap_triangulation(stations.front().outline);
+    faces.reserve(static_cast<size_t>((station_cnt - 1) * outline_cnt * 2 + cap_tris.size() * 2) * 3);
+    for (int s = 0; s < station_cnt - 1; ++s) {
 	for (int k = 0; k < outline_cnt; ++k) {
 	    const int kn = (k + 1) % outline_cnt;
 	    const int a = s * outline_cnt + k;
@@ -1457,23 +1690,28 @@ write_bot(const options &opts, const std::vector<std::vector<point2d>> &outlines
 	    add_face(faces, a, c, b);
 	}
     }
+    const size_t smooth_face_count = faces.size() / 3;
 
     for (const std::array<int32_t, 3> &tri : cap_tris)
 	add_face(faces, tri[2], tri[1], tri[0]);
 
-    const int tip_offset = (opts.stations - 1) * outline_cnt;
+    const int tip_offset = (station_cnt - 1) * outline_cnt;
     for (const std::array<int32_t, 3> &tri : cap_tris)
 	add_face(faces, tip_offset + tri[0], tip_offset + tri[1], tip_offset + tri[2]);
 
     validate_bot_mesh(vertices, faces);
+    std::vector<fastf_t> normals;
+    std::vector<int> face_normals;
+    build_bot_normals(vertices, faces, smooth_face_count, normals, face_normals);
 
     const std::string solid_name = opts.name + ".bot";
     const std::string region_name = opts.name + ".r";
     struct rt_wdb *fp = open_output_database(opts);
     check_output_names_available(fp, solid_name, region_name);
-    if (mk_bot(fp, solid_name.c_str(), RT_BOT_SOLID, RT_BOT_CCW, 0,
+    if (mk_bot_w_normals(fp, solid_name.c_str(), RT_BOT_SOLID, RT_BOT_CCW,
+	    RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
 	    vertices.size() / 3, faces.size() / 3, vertices.data(), faces.data(),
-	    NULL, NULL) != 0) {
+	    NULL, NULL, normals.size() / 3, normals.data(), face_normals.data()) != 0) {
 	db_close(fp->dbip);
 	bu_exit(EXIT_FAILURE, "ERROR: unable to write BoT solid\n");
     }
@@ -1910,7 +2148,7 @@ add_tri_face(brep_builder &builder, int v0, int v1, int v2)
 
 
 static void
-validate_brep_cap_triangles(const brep_builder &builder, int outline_cnt, int stations, const std::vector<std::array<int32_t, 3>> &cap_tris)
+validate_brep_closure_triangles(const brep_builder &builder, int outline_cnt, int stations, const std::vector<std::array<int32_t, 3>> &cap_tris, int tip_pole)
 {
     std::vector<gte::Vector3<double>> vertices;
     vertices.reserve(builder.points.size());
@@ -1924,25 +2162,33 @@ validate_brep_cap_triangles(const brep_builder &builder, int outline_cnt, int st
 	triangles.push_back({tri[2], tri[1], tri[0]});
 
     const int tip_offset = (stations - 1) * outline_cnt;
-    for (const std::array<int32_t, 3> &tri : cap_tris)
-	triangles.push_back({tip_offset + tri[0], tip_offset + tri[1], tip_offset + tri[2]});
+    if (tip_pole >= 0) {
+	for (int k = 0; k < outline_cnt; ++k) {
+	    const int kn = (k + 1) % outline_cnt;
+	    triangles.push_back({tip_offset + k, tip_pole, tip_offset + kn});
+	}
+    } else {
+	for (const std::array<int32_t, 3> &tri : cap_tris)
+	    triangles.push_back({tip_offset + tri[0], tip_offset + tri[1], tip_offset + tri[2]});
+    }
 
-    validate_gte_triangle_mesh(vertices, triangles, "BREP cap triangle mesh", false, true);
+    validate_gte_triangle_mesh(vertices, triangles, "BREP closure triangle mesh", false, true);
 }
 
 
 static int
-write_brep(const options &opts, const std::vector<std::vector<point2d>> &outlines)
+write_brep(const options &opts, const std::vector<wing_station> &stations)
 {
     ON::Begin();
     brep_builder builder;
     builder.brep = ON_Brep::New();
 
-    const int outline_cnt = static_cast<int>(outlines.front().size());
-    builder.points.reserve(static_cast<size_t>(opts.stations * outline_cnt));
-    for (int s = 0; s < opts.stations; ++s) {
-	for (const point2d &pt : outlines[static_cast<size_t>(s)]) {
-	    const point3d p = station_point(pt, opts, s);
+    const int outline_cnt = static_cast<int>(stations.front().outline.size());
+    const int station_cnt = static_cast<int>(stations.size());
+    builder.points.reserve(static_cast<size_t>(station_cnt * outline_cnt));
+    for (const wing_station &station : stations) {
+	for (const point2d &pt : station.outline) {
+	    const point3d p = station_point(pt, opts, station);
 	    builder.points.push_back(ON_3dPoint(p.x, p.y, p.z));
 	}
     }
@@ -1953,9 +2199,9 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
     }
 
     if (opts.brep_surface == brep_surface_mode::smooth) {
-	for (int s = 0; s < opts.stations - 1; ++s) {
+	for (int s = 0; s < station_cnt - 1; ++s) {
 	    for (int k = 0; k < outline_cnt; ++k) {
-		add_smooth_patch_face(builder, s, k, outline_cnt, opts.stations);
+		add_smooth_patch_face(builder, s, k, outline_cnt, station_cnt);
 	    }
 	}
     } else {
@@ -1963,9 +2209,9 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
 	    const int kn = (k + 1) % outline_cnt;
 	    std::vector<int> edge0_verts;
 	    std::vector<int> edge1_verts;
-	    edge0_verts.reserve(static_cast<size_t>(opts.stations));
-	    edge1_verts.reserve(static_cast<size_t>(opts.stations));
-	    for (int s = 0; s < opts.stations; ++s) {
+	    edge0_verts.reserve(static_cast<size_t>(station_cnt));
+	    edge1_verts.reserve(static_cast<size_t>(station_cnt));
+	    for (int s = 0; s < station_cnt; ++s) {
 		edge0_verts.push_back(s * outline_cnt + k);
 		edge1_verts.push_back(s * outline_cnt + kn);
 	    }
@@ -1973,13 +2219,13 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
 	}
     }
 
-    const std::vector<std::array<int32_t, 3>> cap_tris = cap_triangulation(outlines.front());
-    validate_brep_cap_triangles(builder, outline_cnt, opts.stations, cap_tris);
+    const std::vector<std::array<int32_t, 3>> cap_tris = cap_triangulation(stations.front().outline);
+    validate_brep_closure_triangles(builder, outline_cnt, station_cnt, cap_tris, -1);
 
     for (const std::array<int32_t, 3> &tri : cap_tris)
 	add_tri_face(builder, tri[2], tri[1], tri[0]);
 
-    const int tip_offset = (opts.stations - 1) * outline_cnt;
+    const int tip_offset = (station_cnt - 1) * outline_cnt;
     for (const std::array<int32_t, 3> &tri : cap_tris)
 	add_tri_face(builder, tip_offset + tri[0], tip_offset + tri[1], tip_offset + tri[2]);
 
@@ -2039,14 +2285,14 @@ write_brep(const options &opts, const std::vector<std::vector<point2d>> &outline
 static int
 write_single_wing(const options &opts)
 {
-    const std::vector<std::vector<point2d>> outlines = station_outlines(opts);
-    validate_station_outlines(opts, outlines);
+    const std::vector<wing_station> stations = refined_rounded_tip_stations(opts, wing_stations(opts));
+    validate_wing_stations(opts, stations);
 
     switch (opts.mode) {
 	case output_mode::bot:
-	    return write_bot(opts, outlines);
+	    return write_bot(opts, stations);
 	case output_mode::brep:
-	    return write_brep(opts, outlines);
+	    return write_brep(opts, stations);
     }
 
     return EXIT_FAILURE;
@@ -2086,6 +2332,7 @@ demo_options(const options &demo_opts, const demo_spec &spec, int index)
 	opts.tip_airfoil = spec.tip_airfoil;
     opts.mode = spec.mode;
     opts.brep_surface = spec.mode == output_mode::brep ? demo_opts.brep_surface : brep_surface_mode::ruled;
+    opts.tip_style = demo_opts.tip_style;
     opts.semi_span = spec.semi_span;
     opts.root_chord = spec.root_chord;
     opts.tip_chord = spec.tip_chord;
@@ -2180,16 +2427,18 @@ main(int argc, char **argv)
 	struct bu_vls tip_airfoil = BU_VLS_INIT_ZERO;
 	struct bu_vls mode = BU_VLS_INIT_ZERO;
 	struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
+	struct bu_vls tip_style = BU_VLS_INIT_ZERO;
 	struct bu_vls demo_file = BU_VLS_INIT_ZERO;
 	struct bu_vls section_file = BU_VLS_INIT_ZERO;
 	bool help = false;
-	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, demo_file, section_file, help));
+	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, demo_file, section_file, help));
 	bu_vls_free(&outfile);
 	bu_vls_free(&name);
 	bu_vls_free(&airfoil);
 	bu_vls_free(&tip_airfoil);
 	bu_vls_free(&mode);
 	bu_vls_free(&brep_surface);
+	bu_vls_free(&tip_style);
 	bu_vls_free(&demo_file);
 	bu_vls_free(&section_file);
 	return EXIT_FAILURE;
