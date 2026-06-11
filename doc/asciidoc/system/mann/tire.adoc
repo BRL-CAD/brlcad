@@ -21,7 +21,8 @@ The *tire* command generates tire geometry, and optionally wheel geometry,
 using either ISO-style tire dimensions or explicit dimensional parameters.
 
 The command accepts explicit ISO inputs via *-d* or *--dimensions* and also
-accepts the synonymous long form *--ISO*.
+accepts the synonymous long form *--ISO*.  The supported ISO form is
+_width-mm_/_aspect-percent_R_rim-diameter-in_, for example _235/75R15_.
 
 
 [[options]]
@@ -63,14 +64,82 @@ Set the maximum sidewall radius.
 *-u*, *--tire-thickness* _mm_::
 Set tire thickness.
 
-*-p*, *--tread-pattern* _id_::
-Set the tread pattern identifier.
+*-p*, *--tread-pattern* _name_::
+Set the tread pattern preset name.  Legacy aliases _1_ and _2_ are accepted.
 
 *-c*, *--tread-pattern-cnt* _count_::
-Set the number of tread patterns around the tire.
+Override the number of tread patterns around the tire.  Named presets provide
+default counts.  Values must be between 3 and 512 when tread is enabled.
 
 *-t*, *--tread-shape* _id_::
 Set the tread shape profile identifier.
+
+*--tread-pattern-file* _file_::
+Read a custom JSON tread pattern definition.  The object must specify _type_
+and _symmetry_.  Supported optional fields are `$schema`, _schema_version_, _id_, _description_, _terrain_,
+_axle_, _void_, _grooves_, _groove_angle_, _block_, _pitch_, _pitch_seq_,
+_sipes_, _shoulder_, _center_, _tie_bars_, _shape_, _pattern_count_, and
+_sketches_.  Unknown fields are rejected.
+
+*--list-tread-patterns*::
+List available tread pattern presets and exit.
+
+
+[[custom_tread_json]]
+== CUSTOM TREAD JSON
+
+Files supplied with *--tread-pattern-file* are JSON objects.  The required
+fields are _type_ and _symmetry_.  Unknown fields are rejected.
+
+.Custom tread JSON field contract
+[source,json]
+----
+{
+  "$schema": "https://brlcad.org/schemas/tire-tread-pattern.schema.json",
+  "schema_version": 1,
+  "type": "rib | lug | block | hybrid",
+  "symmetry": "symmetric | directional | asymmetric",
+  "terrain": "HT | AT | MT",
+  "axle": "steer | drive | trailer | all",
+  "void": "number, 0.1 through 0.7",
+  "grooves": "integer, 1 through 8",
+  "groove_angle": "number, 0 through 60",
+  "block": "small | medium | large",
+  "pitch": "uniform | variable | {\"type\":\"variable\",\"count\":2..8}",
+  "pitch_seq": ["numbers, each 0.5 through 2.0, 2 through 16 entries"],
+  "sipes": "none | low | medium | dense",
+  "shoulder": "closed | semi-open | open",
+  "center": "continuous | broken | ribbed",
+  "tie_bars": false,
+  "shape": "integer, 1 or 2",
+  "pattern_count": "integer, 3 through 512",
+  "sketches": [
+    [[0.10, 0.20], [0.24, 0.20], [0.24, 0.80], [0.10, 0.80]]
+  ]
+}
+----
+
+If _sketches_ is supplied, the listed normalized cut polygons are used as the
+tread geometry instead of procedurally generated sketches.  The other pattern
+fields are retained as documented metadata for round-trip editing, but they do
+not alter the supplied polygons.  Each polygon must have at least three points,
+and each point is a two-number array.
+
+
+== GENERATED OBJECTS
+
+The requested tire name is used as the top-level assembly combination.  Generated
+child objects are named below that root using dotted subsystem names, for example
+_name.tire.r_, _name.air.r_, _name.wheel.r_, _name.tire.outer.c_, and
+_name.tread.master.c_.  Indexed tread, bolt, and hub-hole objects use
+zero-padded numeric suffixes so database listings sort in generation order.
+
+The top-level assembly combination stores the resolved generation settings as
+attributes with the _tire::_ prefix.  These include the normalized ISO size,
+wheel and tread enable flags, tread pattern source and count, tread depth,
+derived radii and widths, and tire thickness.  If tread is generated, the
+resolved tread pattern JSON is stored as _tire::tread_pattern_json_ so the
+pattern can be inspected, copied, and modified later.
 
 
 [[examples]]
@@ -83,6 +152,15 @@ mged> **tire --obj-name tire_235_75r15 --dimensions 235/75R15**
 
 Generates tire geometry named _tire_235_75r15_ using the specified ISO tire
 size.
+
+====
+
+.Create a mud-terrain treaded tire.
+[example]
+====
+mged> **tire --obj-name tire_mt --dimensions 235/75R15 --tread-pattern mud-terrain**
+
+Generates tire geometry using the built-in _mud-terrain_ tread preset.
 
 ====
 

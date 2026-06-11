@@ -40,13 +40,13 @@ There are actually a wide variety of standards used in practice to specify tire 
 [%noheader]
 |===
 |Width(mm)
-|separator
+|/
 |Ratio (#/100)
-|separator
+|R
 |Inner Diameter(in)
 |===
 
-Separators can be any non-numeric character, but normally are either "/", "-", or in the case of the latter separator a letter denoting tire structure. Only single character separators are allowed. footnote:[As yet BRL-CAD does not use the structural information (e.g. R = radial construction) in the tire building procedure when a valid structure character is supplied, but as it may do so in the future the "best practice" is to use the letter if available.] The ratio specifies the sidewall height in terms of the overall tire width - for example, if a tire is 100mm wide and the Ratio is 40, the sidewall height is 40mm. Examples of valid input strings for tire dimensions include:
+The supported ISO-style separator form is _width/ratioRdiameter_. The _R_ may be upper or lower case. footnote:[As yet BRL-CAD does not use the structural information (e.g. R = radial construction) in the tire building procedure when a valid structure character is supplied, but as it may do so in the future the "best practice" is to use the letter if available.] The ratio specifies the sidewall height in terms of the overall tire width - for example, if a tire is 100mm wide and the Ratio is 40, the sidewall height is 40mm. Examples of valid input strings for tire dimensions include:
 
 
 
@@ -55,9 +55,9 @@ Separators can be any non-numeric character, but normally are either "/", "-", o
 |===
 |255/40R18
 |Width=255mm, Ratio=40, Wheel Diameter=18in
-|250-50R17
+|250/50R17
 |Width=250mm, Ratio=50, Wheel Diameter=17in
-|180/100/15
+|180/100R15
 |Width=180mm, Ratio=100, Wheel Diameter=15in
 |===
 
@@ -71,9 +71,9 @@ All three values must be present to have a valid input string. Also note that at
 |255.0/40R18
 |First number is floating point rather than integer.
 |250-50RD17
-|Multiple characters in second separator.
-|185.65/15
-|"." has significance numerically and will not read correctly.
+|Unsupported separator form and multiple characters before the rim diameter.
+|185/65/15
+|Second separator is not R.
 |===
 
 If more precision is needed on any of these inputs, the *tire* tool offers other command-line options to use instead of (or even in combination with) the _d_ flag which accept floating point input. When used _with_ the _d_ flag, they override the value for their particular parameter supplied to the _d_ flag. They are the _W_ flag for maximum width, _R_ for the ratio, and _D_ for the diameter of the wheel. For example, if a width of 255.5mm was needed, the command could be:
@@ -101,32 +101,33 @@ image::../articles/images/tire_fig03.png[]
 [[Options_for_Tire]]
 == Options for Tire Tread Modeling
 
-Tread is the most difficult part of a tire to define in terms of the amount of input data required. At present it is not possible for a user to define tread on the command line - only built-in tread options are available.footnote:[Note that in most cases, BRL-CAD will not have pre-defined knowledge of specific real world tread patterns.]
+Tread is the most difficult part of a tire to define in terms of the amount of input data required. The tire tool provides several built-in tread presets and can also read a custom JSON tread pattern definition.footnote:[Note that in most cases, BRL-CAD will not have pre-defined knowledge of specific real world tread patterns.]
 
-Tread profile and tread pattern are the two factors to consider when specifying tread. Tread profile is the "shape" of the tread on the edges of the tread pattern. Many truck tires have a "squared off" tread, while automobile tires tend to have more rounded tread. Different patterns can be combined with different profiles.
+Tread profile and tread pattern are the two factors to consider when specifying tread. Tread profile is the "shape" of the tread on the edges of the tread pattern. Many truck tires have a "squared off" tread, while automobile tires tend to have more rounded tread. Named tread presets select a default profile and pattern count, and the legacy numeric aliases remain available.
 
-The _t_ flag controls the tread profile, and the _p_ flag controls the tread pattern. Currently, the following profiles and patterns are available:
+The _t_ flag controls the tread profile, and the _p_ flag controls the tread pattern preset. The following legacy aliases are available:
 
 [cols="4*"]
 [%noheader]
 |===
 |Profile #
 |Profile (t)
-|Pattern #
-|Pattern (p)
+|Alias
+|Preset
 |1
 |Curved
 |1
-|All-Weather
+|legacy-rib
 |2
 |Squared Off
 |2
-|Off-Road
+|legacy-block
 |===
 
+Use _--list-tread-patterns_ to list all built-in presets. Current presets include highway-rib, all-terrain, mud-terrain, winter-siped, commercial-rib, and the legacy aliases. Use _--tread-pattern-file_ to supply a custom JSON definition.
 
 
-Using either the _t_ or _p_ flags to the tire command will trigger tread generation. For each flag, a default on the other flag is assumed - if ONLY the _p_ flag is specified, the t value is assumed to be the same and vice versa. To override the assumption, both flags may be specified. Here is the default output for style one:
+Using either the _t_ or _p_ flags to the tire command will trigger tread generation. If a named preset is supplied, its default profile is used unless a _t_ profile is also supplied. Here is the default output for legacy style one:
 
 
 
@@ -142,7 +143,7 @@ image::../articles/images/tire_fig05.png[]
 
 
 
-Using _t_ in place of _p_ would also have produced the same model. Internally the *tire* command must use some pattern and profile for every tread it creates, and for ease of use it will select a default if a pattern or profile is specified by itself. Using the flags together can produce different results - for example, profile 2 with pattern 1:
+Using _t_ in place of _p_ with one of the legacy profiles also produces a treaded model. Internally the *tire* command must use some pattern and profile for every tread it creates, and for ease of use it will select a default if a pattern or profile is specified by itself. Using the flags together can produce different results - for example, profile 2 with the legacy-rib preset:
 
 
 
