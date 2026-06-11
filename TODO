@@ -51,6 +51,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Add two-tiered option handling to tire, propeller and naca456
+  For most uses we'll want a few pre-baked high level settings -
+  those can be command line flags.  For full control of the complex
+  settings, we should take a JSON file that holds detailed settings.
+  Idea is more general than those 3 tools, but they are low risk
+  experimental targets that would all benefit from the approach.
+
 * write meshing/remeshing/decimation guide
 
 * fix libanalyze.  it has turned into a seeming dumping ground with no
