@@ -11,6 +11,8 @@ cmakefiles(
   arb4.sat
   arb4.stl
   arb4_binary.stl
+  arb4_color.mtl
+  arb4_color.obj
   arb4_norm.obj
   arb4_units.stl
   arbs_stl/arb4_bot.stl
