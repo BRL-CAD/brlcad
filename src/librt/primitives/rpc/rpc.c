@@ -223,7 +223,7 @@ clt_rpc_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
-EXTERNVARINIT const struct bu_structparse rt_rpc_parse[] = {
+extern const struct bu_structparse rt_rpc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rpc_internal, rpc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_rpc_internal, rpc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_rpc_internal, rpc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

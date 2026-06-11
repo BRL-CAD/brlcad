@@ -175,7 +175,7 @@ struct epa_specific {
 };
 
 
-EXTERNVARINIT const struct bu_structparse rt_epa_parse[] = {
+extern const struct bu_structparse rt_epa_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_epa_internal, epa_V, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H",   bu_offsetofarray(struct rt_epa_internal, epa_H, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A",   bu_offsetofarray(struct rt_epa_internal, epa_Au, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

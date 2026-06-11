@@ -63,7 +63,7 @@
 #define HF_O(m) bu_offsetof(struct rt_hf_internal, m)
 
 /* All fields valid in string solid */
-EXTERNVARINIT const struct bu_structparse rt_hf_parse[] = {
+extern const struct bu_structparse rt_hf_parse[] = {
     {"%s",	128,	"cfile",	HF_O(cfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%s",	128,	"dfile",	HF_O(dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%s",	8,	"fmt",		HF_O(fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},

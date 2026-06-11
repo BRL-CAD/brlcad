@@ -60,7 +60,7 @@ struct bu_structparse view_parse[] = {
 };
 
 
-EXTERNVARINIT const char title[] = "RT Weight";
+extern const char title[] = "RT Weight";
 
 int noverlaps = 0;
 FILE *densityfp;

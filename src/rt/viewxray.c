@@ -72,7 +72,7 @@ struct bu_structparse view_parse[] = {
 static char *floatfilename=NULL;
 const char floatfileext[] = ".los";
 
-EXTERNVARINIT const char title[] = "RT X-Ray";
+extern const char title[] = "RT X-Ray";
 
 /*
  *  Called at the start of a run.

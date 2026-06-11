@@ -67,7 +67,6 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-__BEGIN_DECLS
 void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
 void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
@@ -76,7 +75,6 @@ extern void init_qray(void);			/* in qray.c */
 /* in tclsync.c */
 Tcl_Obj *BuildInterpSnapshot(Tcl_Interp *interp);
 int ReplayInterpSnapshot(Tcl_Interp *interp, Tcl_Obj *snapshot);
-__END_DECLS
 
 
 // FIXME: Globals

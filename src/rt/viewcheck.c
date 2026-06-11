@@ -62,7 +62,7 @@ struct bu_structparse view_parse[] = {
 extern FILE *outfp;
 
 
-EXTERNVARINIT const char title[] = "RT Check";
+extern const char title[] = "RT Check";
 
 
 static size_t noverlaps;		/* Number of overlaps seen */

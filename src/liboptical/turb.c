@@ -19,7 +19,7 @@
  * created this table so we could create a substantially bigger one
  * while retaining these 20x20x20 values for backwards-compatibility.
  */
-EXTERNVARINIT const fastf_t turb_table[20][20][20] = {
+extern const fastf_t turb_table[20][20][20] = {
     {{ 0.105489192064851520, -0.203732953406870370, -0.001023580785840750, -0.418433680199086670,
        0.019490496721118689, -0.494057352188974620,  0.379220851697027680, -0.381280504632741210,
        0.073469225782901049, -0.087082616984844208, -0.120197215583175420,  0.007280763704329729,

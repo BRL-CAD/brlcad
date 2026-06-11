@@ -70,7 +70,7 @@ struct bu_structparse view_parse[] = {
 };
 
 
-EXTERNVARINIT const char title[] = "RT Area";
+extern const char title[] = "RT Area";
 
 struct point_list {
     struct point_list * next;
