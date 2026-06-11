@@ -2,6 +2,8 @@ set(SHAPES_INCLUDE_DIRS ${GED_INCLUDE_DIRS} ${WDB_INCLUDE_DIRS} ${CMAKE_CURRENT_
 list(REMOVE_DUPLICATES SHAPES_INCLUDE_DIRS)
 include_directories(${SHAPES_INCLUDE_DIRS})
 
+add_subdirectory(naca456)
+
 brlcad_addexec(bolt bolt.c "libwdb;${M_LIBRARY}" FOLDER Shapes)
 brlcad_addexec(coil coil.c "libged;libwdb;${M_LIBRARY}" FOLDER Shapes)
 brlcad_addexec(fence fence.c "libwdb;${M_LIBRARY}" FOLDER Shapes)

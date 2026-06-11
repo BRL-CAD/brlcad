@@ -23,6 +23,13 @@ NACA airfoil section definitions.  The output may be a closed Bag of Triangles
 (BoT) mesh or a boundary representation (BREP).  In both modes the generated
 object is written as a solid plus a region comb using the requested base name.
 
+The implemented section math covers classic 4-digit NACA airfoils, 5-digit
+mean-line sections, 5-digit reflex mean-line sections, and the NACA 6/6A
+families covered by the public-domain NACA456 reference implementation from
+Public Domain Aeronautical Software:
+
+https://www.pdas.com/naca456download.html
+
 [[airfoils]]
 == SUPPORTED AIRFOILS
 
