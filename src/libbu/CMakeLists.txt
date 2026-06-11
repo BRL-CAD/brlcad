@@ -126,6 +126,10 @@ set(
   xdr.c
 )
 
+# bitv is C only - keep it that way even when we are compiling
+# the rest of the sources as C++
+set_source_files_properties(bitv.c PROPERTIES NO_CXX_COMPILE TRUE)
+
 if(NOT CMAKE_CXX_STANDARD EQUAL 98)
   set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
 else(NOT CMAKE_CXX_STANDARD EQUAL 98)
