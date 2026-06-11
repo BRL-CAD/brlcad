@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "style": "blended_winglet",
+  "height": 190.0,
+  "cant_angle": 68.0,
+  "toe_angle": 1.5,
+  "sweep_offset": 35.0,
+  "root_blend_length": 130.0,
+  "chord": 88.0,
+  "taper": 0.58,
+  "airfoil": "0010",
+  "twist_delta": -2.0,
+  "segments": 8,
+  "transition_segments": 5,
+  "curvature_profile": "cosine",
+  "cap_style": "flat",
+  "side": "up"
+}

@@ -10,6 +10,11 @@ cmakefiles(
   CMakeLists.txt
   naca456.sh
   pdas_sections.tsv
+  tip-blended-winglet.json
+  tip-hoerner.json
+  tip-raked.json
+  tip-rounded.json
+  tip-winglet.json
 )
 
 set(
@@ -22,6 +27,11 @@ set(
   naca456-five-reflex-brep.g
   naca456-six-bot.g
   naca456-sixa-brep.g
+  naca456-tip-rounded.g
+  naca456-tip-raked.g
+  naca456-tip-hoerner.g
+  naca456-tip-winglet.g
+  naca456-tip-blended-winglet.g
   naca456-append.g
   naca456-demo.g
   naca456-demo-smooth.g

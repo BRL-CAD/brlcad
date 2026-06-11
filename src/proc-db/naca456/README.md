@@ -16,7 +16,7 @@ https://www.pdas.com/naca456download.html
 - BoT output with closed root and tip topology.
 - BREP output with explicit vertices, shared edges, loops, trims, and
   `IsValid()`/`IsSolid()` checks before writing.
-- Spanwise ruled NURBS side strips for smoother BREP skins.
+- Local bilinear ruled NURBS side patches for robust BREP skins.
 - Optional `--brep-surface smooth` mode using bicubic Hermite NURBS side
   patches with shared explicit edge curves and trims.
 - NACA 4-digit sections such as `0012`, `2412`, and `4415`.
@@ -35,13 +35,19 @@ https://www.pdas.com/naca456download.html
   count, chordwise sample count, and model placement offsets.
 - `--tip-style rounded` by default, with `--tip-style flat` as a planar cap
   fallback.
+- `--tip-specification` JSON input for advanced rounded, raked, Hoerner,
+  winglet, and blended winglet parameters, with strict schema validation.
 - Append mode for placing multiple wings in one `.g` database.
+- `--demo-file` sampler output with a top-level `all` comb unioning all sample
+  wing regions.
 
 The BREP model is solid and uses explicit topology. The default side skin is
-represented as spanwise ruled NURBS strips between chordwise outline edges. The
-optional smooth side skin uses bicubic Hermite patches per span/chord cell. In
-both BREP surface modes, root caps and flat tip caps are triangulated planar
-faces, while rounded tips use refined closure stations and a small terminal cap.
+represented as local bilinear ruled NURBS patches per span/chord cell, avoiding
+global strip interpolation across sharp tip transitions. The optional smooth
+side skin uses bicubic Hermite patches per span/chord cell with limited
+tangents. In both BREP surface modes, root caps and flat tip caps are
+triangulated planar faces, while rounded tips use refined closure stations and
+a small terminal cap.
 
 By default, the generator creates a rounded tip by placing the nominal tip
 section at a tip shoulder, adding elliptical-style closure stations, and closing
@@ -50,6 +56,11 @@ outer rounded closure. With `--tip-style flat`, the final section is placed at
 the semi-span station and closed with a planar cap. BoT output includes
 surface normals for smoother rounded-tip display, with root and terminal caps
 kept visually flat.
+
+Advanced tip specifications are supplied as versioned JSON. Version 1 accepts
+`rounded`, `flat`, `raked`, `hoerner`, `winglet`, and `blended_winglet`. The
+Hoerner and winglet styles are procedural geometric approximations intended for
+model generation, not aerodynamic design or certification.
 
 Length inputs are BRL-CAD model-space values. The generator creates a semi-span
 wing: `-s`/`--semi-span` specifies the generated root-to-tip length directly,
@@ -89,7 +100,14 @@ Generate a BREP with the flat tip fallback:
 naca456 -m brep --tip-style flat -f -o naca456-flat.g -n wing_flat -a 0012 -s 700 -r 220 -t 120 -S 6 -c 25
 ```
 
-Create a 36-wing sampler database:
+Generate a BREP with a JSON raked tip:
+
+```sh
+naca456 -m brep -f -o naca456-raked.g -n wing_raked -a 2412 -s 780 -r 230 -t 110 --sweep-offset 70 --tip-specification regress/naca456/tip-raked.json -S 7 -c 25
+```
+
+Create a 36-wing sampler database. The generated `.g` includes individual wing
+regions and a top-level `all` comb:
 
 ```sh
 naca456 --demo-file naca456-demo.g
@@ -114,5 +132,7 @@ checks:
 - Append mode and object name collision rejection.
 - Root-to-tip airfoil interpolation.
 - Rounded and flat tip-style metadata and demo propagation.
+- JSON rounded/raked/Hoerner/winglet/blended winglet tip specifications and
+  mutual-exclusion validation.
 
 Run the test through CTest with `ctest -R regress-naca456`.

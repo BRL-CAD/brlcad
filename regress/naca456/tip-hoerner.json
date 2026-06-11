@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "style": "hoerner",
+  "closure_length": 105.0,
+  "tip_cut_angle": 22.0,
+  "droop": 14.0,
+  "terminal_scale": 0.14,
+  "segments": 8
+}

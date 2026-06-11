@@ -115,7 +115,6 @@ set(
   lowp.adoc
   mac-pix.adoc
   mged.adoc
-  naca456.adoc
   nastran-g.adoc
   nirt.adoc
   obj-g.adoc
@@ -240,6 +239,7 @@ cmakefiles(
   benchmark.adoc
   brlcad.adoc
   dbclean.adoc
+  naca456.adoc
   CMakeLists.txt
 )
 

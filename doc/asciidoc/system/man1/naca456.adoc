@@ -81,10 +81,10 @@ Select output geometry.  The default is `bot`.
 
 *--brep-surface* _ruled|smooth_::
 Select the BREP side-surface construction mode.  `ruled` is the default and
-creates one NURBS ruled strip between each pair of neighboring chordwise outline
-edges.  `smooth` creates bicubic Hermite NURBS patches for each span/chord cell,
-using shared cubic edge curves and the same explicit trim topology and
-`IsValid()`/`IsSolid()` checks.
+creates local bilinear ruled NURBS patches for each span/chord cell.  `smooth`
+creates bicubic Hermite NURBS patches for each span/chord cell, using shared
+cubic edge curves and the same explicit trim topology and `IsValid()`/
+`IsSolid()` checks.
 
 *--tip-style* _rounded|flat_::
 Select the wing-tip closure style.  `rounded` is the default and creates an
@@ -94,6 +94,11 @@ With `rounded`, the requested tip airfoil and tip chord describe the shoulder
 section where the rounded closure begins; *--semi-span* and *--full-span* still
 measure to the outermost rounded closure.  With `flat`, the requested tip
 section is placed directly at the semi-span station.
+
+*--tip-specification* _file.json_::
+Read an advanced versioned JSON tip specification.  This option is mutually
+exclusive with *--tip-style*.  Version 1 supports `rounded`, `flat`, `raked`,
+`hoerner`, `winglet`, and `blended_winglet` styles.
 
 *-s* _length_, *--semi-span* _length_::
 Set the root-to-tip semi-span length of the generated half-wing.  The default
@@ -164,8 +169,12 @@ rejected.
 Write a 36-wing sampler database to _file.g_ and exit.  The first 24 examples
 are BoT wings and the final 12 examples are BREP wings.  The sampler covers
 4-digit, 5-digit, 5-digit reflex, 6-series, 6A-series, sharp trailing-edge,
-sweep, taper, dihedral, twist, and mixed root/tip section cases.  The BREP
-sampler rows honor *--brep-surface*.  All sampler rows honor *--tip-style*.
+sweep, taper, dihedral, twist, mixed root/tip section cases, and the supported
+tip styles.  The BREP sampler rows honor *--brep-surface*.  If *--tip-style*
+or *--tip-specification* is supplied, all sampler rows use that explicit tip
+choice; otherwise the built-in rows use varied tip specifications.  The demo
+database also contains a top-level `all` combination that unions all generated
+wing regions.
 
 *--section-file* _file.tsv_::
 Write normalized root airfoil section coordinates to _file.tsv_ and exit.  This
@@ -173,6 +182,134 @@ mode is intended for regression testing and reference comparison against the
 PDAS NACA456 combined-thickness-and-camber tables.  The output columns are
 airfoil designation, upper X, upper Y, lower X, and lower Y.  Use `--force` to
 replace an existing section file.
+
+[[tip_specification_json]]
+== TIP SPECIFICATION JSON
+
+The *--tip-specification* file uses a strict JSON object schema.  Unknown keys
+are errors, the `version` field is required, and version 1 is the only version
+currently accepted.  Length values are model-space values in the same units as
+the other command-line dimensions.
+
+The `rounded` schema exposes the default rounded closure parameters:
+
+[source,json]
+----
+{
+  "version": 1,
+  "style": "rounded",
+  "closure_length": 95.0,
+  "terminal_scale": 0.10,
+  "center_chord_fraction": 0.5,
+  "segments": 7
+}
+----
+
+The `closure_length` field is optional; when omitted, *naca456* derives a
+conservative value from the tip chord and semi-span.  `terminal_scale` is the
+final cap scale relative to the nominal tip section, `center_chord_fraction`
+sets the normalized chord location about which the section shrinks, and
+`segments` controls closure refinement.
+
+The `raked` schema adds a spanwise extension inside the requested semi-span:
+
+[source,json]
+----
+{
+  "version": 1,
+  "style": "raked",
+  "extension": 120.0,
+  "rake_offset": 80.0,
+  "terminal_chord": 70.0,
+  "terminal_airfoil": "0008",
+  "twist_delta": -1.5,
+  "segments": 5,
+  "cap_style": "flat"
+}
+----
+
+For `raked`, the nominal tip section is placed at the start of the extension
+and the terminal section is placed at the semi-span.  `rake_offset` is the
+additional leading-edge X offset accumulated across the extension.
+`terminal_chord`, `terminal_airfoil`, and `twist_delta` define the outer section.
+The initial raked implementation supports `cap_style` value `flat`.
+
+The `hoerner` schema creates a clipped, drooped rounded closure:
+
+[source,json]
+----
+{
+  "version": 1,
+  "style": "hoerner",
+  "closure_length": 100.0,
+  "tip_cut_angle": 25.0,
+  "droop": 12.0,
+  "terminal_scale": 0.12,
+  "segments": 8
+}
+----
+
+`closure_length`, `terminal_scale`, and `segments` control the same closure
+refinement concepts used by `rounded`.  `tip_cut_angle` shears the shrinking
+sections in planform to approximate the Hoerner cut, and `droop` lowers the
+outer closure in model Z.
+
+The `winglet` schema creates an upright tip extension from the nominal tip
+section:
+
+[source,json]
+----
+{
+  "version": 1,
+  "style": "winglet",
+  "height": 220.0,
+  "cant_angle": 70.0,
+  "toe_angle": 2.0,
+  "sweep_offset": 30.0,
+  "chord": 75.0,
+  "taper": 0.55,
+  "airfoil": "0010",
+  "twist_delta": -1.5,
+  "segments": 8,
+  "cap_style": "flat",
+  "side": "up"
+}
+----
+
+`height` is the winglet rise, `cant_angle` controls how strongly the winglet
+rotates upward from the wing plane, `toe_angle` yaws the section, and
+`sweep_offset` shifts the outer winglet leading edge in X.  `chord`, `taper`,
+optional `airfoil`, and optional `twist_delta` define the outer winglet
+section.  `side` is `up` or `down`.  The current winglet cap support is
+`cap_style` value `flat`.
+
+The `blended_winglet` schema adds a root blend ahead of the upright winglet:
+
+[source,json]
+----
+{
+  "version": 1,
+  "style": "blended_winglet",
+  "height": 220.0,
+  "cant_angle": 68.0,
+  "toe_angle": 2.0,
+  "sweep_offset": 35.0,
+  "root_blend_length": 140.0,
+  "chord": 80.0,
+  "taper": 0.55,
+  "airfoil": "0010",
+  "twist_delta": -2.0,
+  "segments": 8,
+  "transition_segments": 5,
+  "curvature_profile": "cosine",
+  "cap_style": "flat",
+  "side": "up"
+}
+----
+
+`root_blend_length` reserves inboard span for the transition from the main
+wing to the winglet.  `transition_segments` refines that transition, and
+`curvature_profile` is `cosine` or `linear`.
 
 [[algorithm]]
 == ALGORITHM
@@ -228,7 +365,10 @@ are kept flat.
 
 In BREP mode, every outline vertex is represented explicitly.  Chordwise
 outline edges and spanwise edges are shared by adjacent faces.  The side skin is
-represented as ruled NURBS strips between neighboring chordwise outline edges.
+represented as local bilinear ruled NURBS patches between neighboring spanwise
+stations and chordwise outline edges.  Local patches avoid the span-curve
+overshoot that can occur when a single interpolated strip crosses a sharp
+wing-tip transition.
 Root caps and flat tip caps are represented by triangulated planar faces;
 rounded tips use additional NURBS side/closure bands down to a small terminal
 triangulated cap.  The BREP is standardized, compacted, and checked with
@@ -238,9 +378,11 @@ aspect ratio, and conservative self-intersection risk, before it is written.
 
 With `--brep-surface smooth`, the side skin uses bicubic Hermite NURBS patches
 for each station-to-station, chord-to-chord cell.  Tangents are estimated from
-neighboring spanwise and chordwise samples, and the patch boundary curves are
-shared as explicit BREP edges.  This produces smoother local side-surface
-geometry while preserving explicit loop and trim topology.
+neighboring spanwise and chordwise samples, then limited against each local
+edge direction and length to avoid overshoot at sharp tip transitions.  The
+patch boundary curves are shared as explicit BREP edges.  This produces
+smoother local side-surface geometry while preserving explicit loop and trim
+topology.
 
 When either the root or tip section has a collapsed trailing edge, the lower
 trailing-edge duplicate is omitted for all interpolated stations.  This keeps
@@ -255,7 +397,9 @@ inputs used to create it.  These include generator name, metadata version,
 algorithm source, geometry mode, BREP surface mode, root and tip airfoil
 designations, tip style, semi-span, full span, root and tip chord, sweep
 offset, sweep angle, dihedral, tip twist, 6-series loading parameter,
-station/sample counts, trailing-edge mode, and model-space offsets.
+station/sample counts, trailing-edge mode, and model-space offsets.  When
+a JSON tip specification is used, the compact JSON payload is recorded; when it
+comes from *--tip-specification*, the filename is recorded as well.
 
 For example:
 
@@ -283,11 +427,12 @@ generate wing-body blends, mirrored full-span assemblies, control surfaces,
 flaps, slats, spars, ribs, skins with physical thickness, fuel volumes,
 fasteners, or manufacturing features.
 
-The tip-style support intentionally covers the well-defined production cases
-implemented by this generator: a rounded elliptical-style closure and a flat
-section cap.  Raked tips, Hoerner tips, winglets, and blended tip devices are
-not single-parameter NACA-section closures; they require additional design
-dimensions and are outside the current scope of *naca456*.
+The simple *--tip-style* option intentionally exposes only the default rounded
+closure and flat fallback.  More parameterized tips are available through
+*--tip-specification*.  The Hoerner and winglet styles are geometric
+approximations intended for procedural model generation; they are not a
+substitute for aerodynamic design, load analysis, or manufacturer-specific
+tip-device geometry.
 
 The BREP output is checked with OpenNURBS `IsValid()` and `IsSolid()`, but it is
 not a general CAD healing pipeline.  Downstream Boolean operations may still be
@@ -368,6 +513,16 @@ naca456 --mode brep --tip-style flat --force --output wing-flat-brep.g \
   --root-chord 220 --tip-chord 120 --stations 6 --samples 25
 ----
 
+Create a BREP wing using a JSON raked-tip specification:
+
+[source]
+----
+naca456 --mode brep --force --output wing-raked-brep.g \
+  --name wing_raked --airfoil 2412 --semi-span 780 \
+  --root-chord 230 --tip-chord 110 --sweep-offset 70 \
+  --tip-specification tip-raked.json --stations 7 --samples 25
+----
+
 Create a 6A-series BREP:
 
 [source]
@@ -382,6 +537,13 @@ Create the built-in sampler:
 [source]
 ----
 naca456 --demo-file naca456-demo.g
+----
+
+The sampler writes individual wing regions and a top-level `all` combination:
+
+[source]
+----
+mged naca456-demo.g "l all"
 ----
 
 [[diagnostics]]

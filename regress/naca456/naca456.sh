@@ -167,6 +167,8 @@ log "=== TESTING naca456 procedural wing generation ==="
 
 rm -f naca456-bot.g naca456-five-bot.g naca456-sharp-brep.g naca456-smooth-brep.g
 rm -f naca456-five-reflex-brep.g naca456-six-bot.g naca456-sixa-brep.g
+rm -f naca456-tip-rounded.g naca456-tip-raked.g naca456-tip-hoerner.g
+rm -f naca456-tip-winglet.g naca456-tip-blended-winglet.g
 rm -f naca456-append.g naca456-demo.g naca456-demo-smooth.g naca456-demo-flat.g
 rm -f naca456-brep-matrix-ruled.g naca456-brep-matrix-smooth.g
 rm -f naca456-sections.tsv naca456-section-2412.tsv naca456-section-23012.tsv
@@ -203,6 +205,40 @@ expect_grep "Boundary Representation" "$LOGFILE"
 run "$MGED" -c naca456-smooth-brep.g "attr get naca_smooth_2412.r naca456::brep_surface"
 expect_grep "smooth" "$LOGFILE"
 
+run "$NACA456" --mode bot --force --output naca456-tip-rounded.g --name naca_tip_json_rounded --airfoil 2412 --semi-span 700 --root-chord 220 --tip-chord 110 --sweep-offset 50 --stations 6 --samples 25 --tip-specification "$1/regress/naca456/tip-rounded.json"
+run "$MGED" -c naca456-tip-rounded.g "l naca_tip_json_rounded.bot"
+expect_grep "with surface normals" "$LOGFILE"
+run "$MGED" -c naca456-tip-rounded.g "attr get naca_tip_json_rounded.r naca456::tip_style"
+expect_grep "rounded" "$LOGFILE"
+run "$MGED" -c naca456-tip-rounded.g "attr get naca_tip_json_rounded.r naca456::tip_specification_json"
+expect_grep "\"closure_length\":95.0" "$LOGFILE"
+
+run "$NACA456" --mode brep --force --output naca456-tip-raked.g --name naca_tip_json_raked --airfoil 2412 --semi-span 780 --root-chord 230 --tip-chord 110 --sweep-offset 70 --dihedral 3 --tip-twist -2 --stations 7 --samples 25 --tip-specification "$1/regress/naca456/tip-raked.json"
+run "$MGED" -c naca456-tip-raked.g "l naca_tip_json_raked.brep"
+expect_grep "Boundary Representation" "$LOGFILE"
+run "$MGED" -c naca456-tip-raked.g "attr get naca_tip_json_raked.r naca456::tip_style"
+expect_grep "raked" "$LOGFILE"
+
+run "$NACA456" --mode bot --force --output naca456-tip-hoerner.g --name naca_tip_json_hoerner --airfoil 2412 --semi-span 720 --root-chord 230 --tip-chord 115 --sweep-offset 60 --stations 7 --samples 25 --tip-specification "$1/regress/naca456/tip-hoerner.json"
+run "$MGED" -c naca456-tip-hoerner.g "attr get naca_tip_json_hoerner.r naca456::tip_style"
+expect_grep "hoerner" "$LOGFILE"
+
+run "$NACA456" --mode brep --force --output naca456-tip-winglet.g --name naca_tip_json_winglet --airfoil 2412 --semi-span 780 --root-chord 230 --tip-chord 110 --sweep-offset 70 --dihedral 3 --tip-twist -2 --stations 7 --samples 25 --tip-specification "$1/regress/naca456/tip-winglet.json"
+run "$MGED" -c naca456-tip-winglet.g "l naca_tip_json_winglet.brep"
+expect_grep "Boundary Representation" "$LOGFILE"
+run "$MGED" -c naca456-tip-winglet.g "attr get naca_tip_json_winglet.r naca456::tip_style"
+expect_grep "winglet" "$LOGFILE"
+
+run "$NACA456" --mode brep --brep-surface smooth --force --output naca456-tip-blended-winglet.g --name naca_tip_json_blended --airfoil 2412 --semi-span 820 --root-chord 240 --tip-chord 115 --sweep-offset 80 --dihedral 4 --tip-twist -2 --stations 8 --samples 25 --tip-specification "$1/regress/naca456/tip-blended-winglet.json"
+run "$MGED" -c naca456-tip-blended-winglet.g "l naca_tip_json_blended.brep"
+expect_grep "Boundary Representation" "$LOGFILE"
+run "$MGED" -c naca456-tip-blended-winglet.g "attr get naca_tip_json_blended.r naca456::tip_style"
+expect_grep "blended_winglet" "$LOGFILE"
+
+if "$NACA456" --mode bot --force --output naca456-tip-raked.g --name naca_tip_conflict --airfoil 0012 --semi-span 300 --root-chord 100 --tip-chord 60 --tip-style flat --tip-specification "$1/regress/naca456/tip-rounded.json" >> "$LOGFILE" 2>&1 ; then
+    fail "--tip-style and --tip-specification were accepted together"
+fi
+
 run "$NACA456" --mode brep --force --output naca456-five-reflex-brep.g --name naca_five_reflex_23112 --airfoil 23112 --semi-span 560 --root-chord 190 --tip-chord 115 --sweep-offset 40 --stations 5 --samples 21
 run "$MGED" -c naca456-five-reflex-brep.g "l naca_five_reflex_23112.brep"
 expect_grep "Boundary Representation" "$LOGFILE"
@@ -227,12 +263,20 @@ fi
 
 run "$NACA456" --demo-file naca456-demo.g
 run "$MGED" -c naca456-demo.g "tops -n"
+expect_grep "all" "$LOGFILE"
+run "$MGED" -c naca456-demo.g "l all"
 expect_grep "bot_00_baseline_2412.r" "$LOGFILE"
 expect_grep "bot_23_compound.r" "$LOGFILE"
 expect_grep "brep_24_baseline_2412.r" "$LOGFILE"
 expect_grep "brep_35_high_resolution.r" "$LOGFILE"
 run "$MGED" -c naca456-demo.g "attr get brep_24_baseline_2412.r naca456::brep_surface"
 expect_grep "ruled" "$LOGFILE"
+run "$MGED" -c naca456-demo.g "attr get brep_28_six_lowload.r naca456::tip_style"
+expect_grep "winglet" "$LOGFILE"
+run "$MGED" -c naca456-demo.g "attr get brep_28_six_lowload.r naca456::tip_specification_json"
+expect_grep "\"cant_angle\":64.0" "$LOGFILE"
+run "$MGED" -c naca456-demo.g "attr get brep_29_sixa_64a210.r naca456::tip_style"
+expect_grep "blended_winglet" "$LOGFILE"
 
 run "$NACA456" --brep-surface smooth --demo-file naca456-demo-smooth.g
 run "$MGED" -c naca456-demo-smooth.g "attr get brep_24_baseline_2412.r naca456::brep_surface"

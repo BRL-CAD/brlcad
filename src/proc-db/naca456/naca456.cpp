@@ -37,8 +37,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <memory>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -58,6 +60,8 @@
 #include "rt/db_attr.h"
 #include "rt/geom.h"
 #include "wdb.h"
+
+#include "../../libbu/json.hpp"
 
 #ifdef RAD2DEG
 #  undef RAD2DEG
@@ -134,7 +138,46 @@ enum class brep_surface_mode {
 
 enum class tip_style_mode {
     rounded,
-    flat
+    flat,
+    raked,
+    hoerner,
+    winglet,
+    blended_winglet
+};
+
+
+struct tip_specification {
+    tip_style_mode style = tip_style_mode::rounded;
+    bool from_file = false;
+    std::string file;
+    std::string json;
+
+    double closure_length = -1.0;
+    double terminal_scale = 0.08;
+    double center_chord_fraction = 0.5;
+    int segments = 8;
+
+    double extension = 0.0;
+    double rake_offset = 0.0;
+    double terminal_chord = -1.0;
+    std::string terminal_airfoil;
+    double twist_delta = 0.0;
+    std::string cap_style = "flat";
+
+    double tip_cut_angle = 0.0;
+    double droop = 0.0;
+
+    double height = 0.0;
+    double cant_angle = 90.0;
+    double toe_angle = 0.0;
+    double sweep_offset = 0.0;
+    double root_blend_length = 0.0;
+    double chord = -1.0;
+    double taper = 1.0;
+    std::string airfoil;
+    std::string side = "up";
+    int transition_segments = 4;
+    std::string curvature_profile = "cosine";
 };
 
 
@@ -144,6 +187,10 @@ struct wing_station {
     double chord = 0.0;
     double le_x = 0.0;
     double twist_deg = 0.0;
+    double y_offset = 0.0;
+    double z_offset = 0.0;
+    double roll_deg = 0.0;
+    double toe_deg = 0.0;
 };
 
 
@@ -154,9 +201,11 @@ struct options {
     std::string tip_airfoil;
     std::string demo_file;
     std::string section_file;
+    std::string tip_spec_file;
     output_mode mode = output_mode::bot;
     brep_surface_mode brep_surface = brep_surface_mode::ruled;
     tip_style_mode tip_style = tip_style_mode::rounded;
+    tip_specification tip_spec;
     fastf_t semi_span = 1000.0;
     fastf_t full_span = 2000.0;
     fastf_t root_chord = 250.0;
@@ -174,6 +223,7 @@ struct options {
     bool sharp_te = false;
     bool overwrite = false;
     bool append = false;
+    bool tip_style_explicit = false;
 };
 
 
@@ -226,7 +276,22 @@ brep_surface_name(brep_surface_mode mode)
 static std::string
 tip_style_name(tip_style_mode mode)
 {
-    return mode == tip_style_mode::flat ? "flat" : "rounded";
+    switch (mode) {
+	case tip_style_mode::rounded:
+	    return "rounded";
+	case tip_style_mode::flat:
+	    return "flat";
+	case tip_style_mode::raked:
+	    return "raked";
+	case tip_style_mode::hoerner:
+	    return "hoerner";
+	case tip_style_mode::winglet:
+	    return "winglet";
+	case tip_style_mode::blended_winglet:
+	    return "blended_winglet";
+    }
+
+    return "rounded";
 }
 
 
@@ -281,6 +346,225 @@ all_digits(const std::string &str)
     }
 
     return true;
+}
+
+
+static airfoil_spec
+parse_airfoil(const std::string &code, double six_a_param);
+
+
+static bool
+json_key_allowed(const std::string &key, const std::vector<std::string> &allowed)
+{
+    return std::find(allowed.begin(), allowed.end(), key) != allowed.end();
+}
+
+
+static void
+reject_unknown_json_keys(const nlohmann::json &j, const std::vector<std::string> &allowed)
+{
+    for (auto it = j.begin(); it != j.end(); ++it) {
+	if (!json_key_allowed(it.key(), allowed))
+	    throw std::runtime_error("tip specification contains unsupported key '" + it.key() + "'");
+    }
+}
+
+
+static double
+json_double(const nlohmann::json &j, const char *key, double default_value, bool required)
+{
+    if (!j.contains(key)) {
+	if (required)
+	    throw std::runtime_error(std::string("tip specification requires numeric key '") + key + "'");
+	return default_value;
+    }
+    if (!j.at(key).is_number())
+	throw std::runtime_error(std::string("tip specification key '") + key + "' must be numeric");
+    const double val = j.at(key).get<double>();
+    if (!std::isfinite(val))
+	throw std::runtime_error(std::string("tip specification key '") + key + "' must be finite");
+    return val;
+}
+
+
+static int
+json_int(const nlohmann::json &j, const char *key, int default_value, bool required)
+{
+    if (!j.contains(key)) {
+	if (required)
+	    throw std::runtime_error(std::string("tip specification requires integer key '") + key + "'");
+	return default_value;
+    }
+    if (!j.at(key).is_number_integer())
+	throw std::runtime_error(std::string("tip specification key '") + key + "' must be an integer");
+    return j.at(key).get<int>();
+}
+
+
+static std::string
+json_string(const nlohmann::json &j, const char *key, const std::string &default_value, bool required)
+{
+    if (!j.contains(key)) {
+	if (required)
+	    throw std::runtime_error(std::string("tip specification requires string key '") + key + "'");
+	return default_value;
+    }
+    if (!j.at(key).is_string())
+	throw std::runtime_error(std::string("tip specification key '") + key + "' must be a string");
+    return j.at(key).get<std::string>();
+}
+
+
+static std::string
+read_text_file(const std::string &path)
+{
+    std::ifstream in(path, std::ios::in | std::ios::binary);
+    if (!in)
+	throw std::runtime_error("unable to open tip specification file '" + path + "'");
+
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    if (!in.good() && !in.eof())
+	throw std::runtime_error("unable to read tip specification file '" + path + "'");
+    return ss.str();
+}
+
+
+static tip_specification
+parse_tip_specification_json(const std::string &raw, const std::string &source, const options &opts, bool from_file = false)
+{
+    nlohmann::json j;
+    try {
+	j = nlohmann::json::parse(raw);
+    } catch (const std::exception &e) {
+	throw std::runtime_error(std::string("unable to parse tip specification JSON: ") + e.what());
+    }
+
+    if (!j.is_object())
+	throw std::runtime_error("tip specification JSON root must be an object");
+
+    const int version = json_int(j, "version", 0, true);
+    if (version != 1)
+	throw std::runtime_error("tip specification version must be 1");
+
+    tip_specification spec;
+    spec.from_file = from_file;
+    if (from_file)
+	spec.file = source;
+    spec.json = j.dump();
+
+    const std::string style = json_string(j, "style", "", true);
+    if (style == "rounded") {
+	reject_unknown_json_keys(j, {"version", "style", "closure_length", "terminal_scale", "center_chord_fraction", "segments"});
+	spec.style = tip_style_mode::rounded;
+	spec.closure_length = json_double(j, "closure_length", -1.0, false);
+	spec.terminal_scale = json_double(j, "terminal_scale", 0.08, false);
+	spec.center_chord_fraction = json_double(j, "center_chord_fraction", 0.5, false);
+	spec.segments = json_int(j, "segments", 8, false);
+	if (j.contains("closure_length") && spec.closure_length <= 0.0)
+	    throw std::runtime_error("rounded tip closure_length must be positive");
+    } else if (style == "raked") {
+	reject_unknown_json_keys(j, {"version", "style", "extension", "rake_offset", "terminal_chord", "terminal_airfoil", "twist_delta", "segments", "cap_style"});
+	spec.style = tip_style_mode::raked;
+	spec.extension = json_double(j, "extension", 0.0, true);
+	spec.rake_offset = json_double(j, "rake_offset", 0.0, false);
+	spec.terminal_chord = json_double(j, "terminal_chord", opts.tip_chord, false);
+	spec.terminal_airfoil = json_string(j, "terminal_airfoil", "", false);
+	spec.twist_delta = json_double(j, "twist_delta", 0.0, false);
+	spec.segments = json_int(j, "segments", 6, false);
+	spec.cap_style = json_string(j, "cap_style", "flat", false);
+    } else if (style == "flat") {
+	reject_unknown_json_keys(j, {"version", "style"});
+	spec.style = tip_style_mode::flat;
+    } else if (style == "hoerner") {
+	reject_unknown_json_keys(j, {"version", "style", "closure_length", "tip_cut_angle", "droop", "terminal_scale", "segments"});
+	spec.style = tip_style_mode::hoerner;
+	spec.closure_length = json_double(j, "closure_length", -1.0, false);
+	spec.tip_cut_angle = json_double(j, "tip_cut_angle", 20.0, false);
+	spec.droop = json_double(j, "droop", 0.0, false);
+	spec.terminal_scale = json_double(j, "terminal_scale", 0.12, false);
+	spec.segments = json_int(j, "segments", 8, false);
+	if (j.contains("closure_length") && spec.closure_length <= 0.0)
+	    throw std::runtime_error("hoerner tip closure_length must be positive");
+    } else if (style == "winglet" || style == "blended_winglet") {
+	if (style == "winglet")
+	    reject_unknown_json_keys(j, {"version", "style", "height", "cant_angle", "toe_angle", "sweep_offset", "chord", "taper", "airfoil", "twist_delta", "segments", "cap_style", "side"});
+	else
+	    reject_unknown_json_keys(j, {"version", "style", "height", "cant_angle", "toe_angle", "sweep_offset", "root_blend_length", "chord", "taper", "airfoil", "twist_delta", "segments", "transition_segments", "curvature_profile", "cap_style", "side"});
+	spec.style = style == "winglet" ? tip_style_mode::winglet : tip_style_mode::blended_winglet;
+	spec.height = json_double(j, "height", 0.0, true);
+	spec.cant_angle = json_double(j, "cant_angle", 90.0, false);
+	spec.toe_angle = json_double(j, "toe_angle", 0.0, false);
+	spec.sweep_offset = json_double(j, "sweep_offset", 0.0, false);
+	spec.root_blend_length = json_double(j, "root_blend_length", 0.0, false);
+	spec.chord = json_double(j, "chord", opts.tip_chord, false);
+	spec.taper = json_double(j, "taper", 1.0, false);
+	spec.airfoil = json_string(j, "airfoil", "", false);
+	spec.twist_delta = json_double(j, "twist_delta", 0.0, false);
+	spec.segments = json_int(j, "segments", 8, false);
+	spec.transition_segments = json_int(j, "transition_segments", 4, false);
+	spec.curvature_profile = json_string(j, "curvature_profile", "cosine", false);
+	spec.cap_style = json_string(j, "cap_style", "flat", false);
+	spec.side = json_string(j, "side", "up", false);
+    } else {
+	throw std::runtime_error("tip specification style must be rounded, flat, raked, hoerner, winglet, or blended_winglet");
+    }
+
+    if (spec.segments < 1 || spec.segments > 32)
+	throw std::runtime_error("tip specification segments must be in [1, 32]");
+    if (spec.style == tip_style_mode::rounded) {
+	if (spec.terminal_scale <= 0.0 || spec.terminal_scale >= 1.0)
+	    throw std::runtime_error("rounded tip terminal_scale must be greater than 0 and less than 1");
+	if (spec.center_chord_fraction < 0.0 || spec.center_chord_fraction > 1.0)
+	    throw std::runtime_error("rounded tip center_chord_fraction must be in [0, 1]");
+	if (spec.closure_length > 0.0 && spec.closure_length >= opts.semi_span)
+	    throw std::runtime_error("rounded tip closure_length must be positive and less than semi-span");
+    }
+    if (spec.style == tip_style_mode::hoerner) {
+	if (spec.terminal_scale <= 0.0 || spec.terminal_scale >= 1.0)
+	    throw std::runtime_error("hoerner tip terminal_scale must be greater than 0 and less than 1");
+	if (spec.closure_length > 0.0 && spec.closure_length >= opts.semi_span)
+	    throw std::runtime_error("hoerner tip closure_length must be positive and less than semi-span");
+    }
+    if (spec.style == tip_style_mode::raked) {
+	if (spec.extension <= 0.0 || spec.extension >= opts.semi_span)
+	    throw std::runtime_error("raked tip extension must be positive and less than semi-span");
+	if (spec.terminal_chord <= 0.0)
+	    throw std::runtime_error("raked tip terminal_chord must be positive");
+	if (spec.cap_style != "flat")
+	    throw std::runtime_error("raked tip cap_style currently supports only 'flat'");
+	if (!spec.terminal_airfoil.empty())
+	    parse_airfoil(spec.terminal_airfoil, opts.six_a_param);
+    }
+    if (spec.style == tip_style_mode::winglet || spec.style == tip_style_mode::blended_winglet) {
+	if (spec.height <= 0.0)
+	    throw std::runtime_error("winglet height must be positive");
+	if (spec.style == tip_style_mode::blended_winglet && (spec.root_blend_length <= 0.0 || spec.root_blend_length >= opts.semi_span))
+	    throw std::runtime_error("blended winglet root_blend_length must be positive and less than semi-span");
+	if (spec.cant_angle <= 0.0 || spec.cant_angle > 120.0)
+	    throw std::runtime_error("winglet cant_angle must be in (0, 120]");
+	if (spec.chord <= 0.0 || spec.taper <= 0.0)
+	    throw std::runtime_error("winglet chord and taper must be positive");
+	if (spec.cap_style != "flat")
+	    throw std::runtime_error("winglet cap_style currently supports only 'flat'");
+	if (spec.side != "up" && spec.side != "down")
+	    throw std::runtime_error("winglet side must be up or down");
+	if (spec.transition_segments < 1 || spec.transition_segments > 32)
+	    throw std::runtime_error("winglet transition_segments must be in [1, 32]");
+	if (spec.curvature_profile != "cosine" && spec.curvature_profile != "linear")
+	    throw std::runtime_error("winglet curvature_profile must be cosine or linear");
+	if (!spec.airfoil.empty())
+	    parse_airfoil(spec.airfoil, opts.six_a_param);
+    }
+
+    return spec;
+}
+
+
+static tip_specification
+parse_tip_specification_file(const std::string &path, const options &opts)
+{
+    return parse_tip_specification_json(read_text_file(path), path, opts, true);
 }
 
 
@@ -386,9 +670,9 @@ parse_airfoil(const std::string &code, double six_a_param)
 
 
 static struct bu_opt_desc *
-option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &tip_style, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
+option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &tip_style, struct bu_vls &tip_spec_file, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
 {
-    static struct bu_opt_desc d[29];
+    static struct bu_opt_desc d[30];
 
     BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help and exit");
     BU_OPT(d[1], "?", "", "", NULL, &help, "");
@@ -399,26 +683,27 @@ option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct b
     BU_OPT(d[6], "m", "mode", "bot|brep", &bu_opt_vls, &mode, "Output geometry type");
     BU_OPT(d[7], "", "brep-surface", "ruled|smooth", &bu_opt_vls, &brep_surface, "BREP side-surface construction mode");
     BU_OPT(d[8], "", "tip-style", "rounded|flat", &bu_opt_vls, &tip_style, "Wing tip closure style");
-    BU_OPT(d[9], "s", "semi-span", "length", &bu_opt_fastf_t, &opts.semi_span, "Root-to-tip semi-span length");
-    BU_OPT(d[10], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
-    BU_OPT(d[11], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
-    BU_OPT(d[12], "w", "sweep-angle", "degrees", &bu_opt_fastf_t, &opts.sweep_angle_deg, "Tip leading-edge sweep angle");
-    BU_OPT(d[13], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
-    BU_OPT(d[14], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
-    BU_OPT(d[15], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
-    BU_OPT(d[16], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
-    BU_OPT(d[17], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
-    BU_OPT(d[18], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
-    BU_OPT(d[19], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
-    BU_OPT(d[20], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
-    BU_OPT(d[21], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
-    BU_OPT(d[22], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
-    BU_OPT(d[23], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
-    BU_OPT(d[24], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
-    BU_OPT(d[25], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
-    BU_OPT(d[26], "", "full-span", "length", &bu_opt_fastf_t, &opts.full_span, "Full aircraft span; generated semi-span is half this value");
-    BU_OPT(d[27], "", "sweep-offset", "length", &bu_opt_fastf_t, &opts.sweep_offset, "Tip leading-edge X offset");
-    BU_OPT_NULL(d[28]);
+    BU_OPT(d[9], "", "tip-specification", "file.json", &bu_opt_vls, &tip_spec_file, "Advanced JSON tip specification");
+    BU_OPT(d[10], "s", "semi-span", "length", &bu_opt_fastf_t, &opts.semi_span, "Root-to-tip semi-span length");
+    BU_OPT(d[11], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
+    BU_OPT(d[12], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
+    BU_OPT(d[13], "w", "sweep-angle", "degrees", &bu_opt_fastf_t, &opts.sweep_angle_deg, "Tip leading-edge sweep angle");
+    BU_OPT(d[14], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
+    BU_OPT(d[15], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
+    BU_OPT(d[16], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
+    BU_OPT(d[17], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
+    BU_OPT(d[18], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
+    BU_OPT(d[19], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
+    BU_OPT(d[20], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
+    BU_OPT(d[21], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
+    BU_OPT(d[22], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
+    BU_OPT(d[23], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
+    BU_OPT(d[24], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
+    BU_OPT(d[25], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
+    BU_OPT(d[26], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
+    BU_OPT(d[27], "", "full-span", "length", &bu_opt_fastf_t, &opts.full_span, "Full aircraft span; generated semi-span is half this value");
+    BU_OPT(d[28], "", "sweep-offset", "length", &bu_opt_fastf_t, &opts.sweep_offset, "Tip leading-edge X offset");
+    BU_OPT_NULL(d[29]);
 
     return d;
 }
@@ -435,10 +720,11 @@ parse_args(int argc, char **argv)
     struct bu_vls mode = BU_VLS_INIT_ZERO;
     struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
     struct bu_vls tip_style = BU_VLS_INIT_ZERO;
+    struct bu_vls tip_spec_file = BU_VLS_INIT_ZERO;
     struct bu_vls demo_file = BU_VLS_INIT_ZERO;
     struct bu_vls section_file = BU_VLS_INIT_ZERO;
     bool help = false;
-    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, demo_file, section_file, help);
+    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, tip_spec_file, demo_file, section_file, help);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     const int parsed = bu_opt_parse(&msg, argc - 1, (const char **)(argv + 1), d);
 
@@ -453,6 +739,7 @@ parse_args(int argc, char **argv)
 	bu_vls_free(&mode);
 	bu_vls_free(&brep_surface);
 	bu_vls_free(&tip_style);
+	bu_vls_free(&tip_spec_file);
 	bu_vls_free(&demo_file);
 	bu_vls_free(&section_file);
 	throw std::runtime_error(msg_str.empty() ? "option parsing failed" : msg_str);
@@ -472,6 +759,8 @@ parse_args(int argc, char **argv)
 	opts.airfoil = bu_vls_cstr(&airfoil);
     if (bu_vls_strlen(&tip_airfoil) > 0)
 	opts.tip_airfoil = bu_vls_cstr(&tip_airfoil);
+    if (bu_vls_strlen(&tip_spec_file) > 0)
+	opts.tip_spec_file = bu_vls_cstr(&tip_spec_file);
     if (bu_vls_strlen(&demo_file) > 0)
 	opts.demo_file = bu_vls_cstr(&demo_file);
     if (bu_vls_strlen(&section_file) > 0)
@@ -487,6 +776,7 @@ parse_args(int argc, char **argv)
     bu_vls_free(&mode);
     bu_vls_free(&brep_surface);
     bu_vls_free(&tip_style);
+    bu_vls_free(&tip_spec_file);
     bu_vls_free(&demo_file);
     bu_vls_free(&section_file);
 
@@ -509,11 +799,14 @@ parse_args(int argc, char **argv)
     }
     if (tip_style_str == "rounded") {
 	opts.tip_style = tip_style_mode::rounded;
+	opts.tip_spec.style = tip_style_mode::rounded;
     } else if (tip_style_str == "flat") {
 	opts.tip_style = tip_style_mode::flat;
+	opts.tip_spec.style = tip_style_mode::flat;
     } else {
 	throw std::runtime_error("tip style must be rounded or flat");
     }
+    opts.tip_style_explicit = option_supplied(argc, argv, '\0', "tip-style");
     const bool have_semi_span = option_supplied(argc, argv, 's', "semi-span");
     const bool have_full_span = option_supplied(argc, argv, '\0', "full-span");
     if (have_semi_span && have_full_span)
@@ -551,6 +844,13 @@ parse_args(int argc, char **argv)
     }
     if (opts.append && opts.overwrite) {
 	throw std::runtime_error("-j append and -f overwrite are mutually exclusive");
+    }
+    if (!opts.tip_spec_file.empty()) {
+	if (option_supplied(argc, argv, '\0', "tip-style"))
+	    throw std::runtime_error("--tip-style and --tip-specification are mutually exclusive");
+	opts.tip_spec = parse_tip_specification_file(opts.tip_spec_file, opts);
+	opts.tip_style = opts.tip_spec.style;
+	opts.tip_style_explicit = true;
     }
 
     if (!opts.demo_file.empty()) {
@@ -1177,21 +1477,29 @@ make_wing_station(const std::vector<point2d> &outline, double span_frac, double 
 }
 
 
-static point2d
-scaled_tip_point(const point2d &pt, double scale)
+static double
+smooth_fraction(double t, const std::string &profile)
 {
-    const double center_x = 0.5;
+    if (profile == "linear")
+	return t;
+    return 0.5 - 0.5 * std::cos(M_PI * t);
+}
+
+
+static point2d
+scaled_tip_point(const point2d &pt, double scale, double center_x)
+{
     return {center_x + scale * (pt.x - center_x), scale * pt.z};
 }
 
 
 static std::vector<point2d>
-scaled_tip_outline(const std::vector<point2d> &outline, double scale)
+scaled_tip_outline(const std::vector<point2d> &outline, double scale, double center_x)
 {
     std::vector<point2d> scaled;
     scaled.reserve(outline.size());
     for (const point2d &pt : outline)
-	scaled.push_back(scaled_tip_point(pt, scale));
+	scaled.push_back(scaled_tip_point(pt, scale, center_x));
     return scaled;
 }
 
@@ -1201,13 +1509,31 @@ wing_stations(const options &opts)
 {
     const airfoil_spec root_af = parse_airfoil(opts.airfoil, opts.six_a_param);
     const airfoil_spec tip_af = parse_airfoil(opts.tip_airfoil.empty() ? opts.airfoil : opts.tip_airfoil, opts.six_a_param);
+    const airfoil_spec terminal_af = parse_airfoil(opts.tip_spec.terminal_airfoil.empty() ? (opts.tip_airfoil.empty() ? opts.airfoil : opts.tip_airfoil) : opts.tip_spec.terminal_airfoil, opts.six_a_param);
+    const airfoil_spec winglet_af = parse_airfoil(opts.tip_spec.airfoil.empty() ? (opts.tip_airfoil.empty() ? opts.airfoil : opts.tip_airfoil) : opts.tip_spec.airfoil, opts.six_a_param);
     const section4 root_section = airfoil_section(root_af, opts.samples, opts.sharp_te);
     const section4 tip_section = airfoil_section(tip_af, opts.samples, opts.sharp_te);
-    const bool omit_lower_te = opts.sharp_te || section_has_duplicate_te(root_section) || section_has_duplicate_te(tip_section);
+    const section4 terminal_section = airfoil_section(terminal_af, opts.samples, opts.sharp_te);
+    const section4 winglet_section = airfoil_section(winglet_af, opts.samples, opts.sharp_te);
+    const bool omit_lower_te = opts.sharp_te || section_has_duplicate_te(root_section) || section_has_duplicate_te(tip_section) || section_has_duplicate_te(terminal_section) || section_has_duplicate_te(winglet_section);
 
     std::vector<wing_station> stations;
-    const int round_segments = opts.tip_style == tip_style_mode::rounded ? 5 : 0;
-    stations.reserve(static_cast<size_t>(opts.stations + round_segments));
+    stations.reserve(static_cast<size_t>(opts.stations + opts.tip_spec.segments));
+
+    double shoulder_frac = 1.0;
+    if (opts.tip_spec.style == tip_style_mode::rounded) {
+	const double closure_length = opts.tip_spec.closure_length > 0.0 ?
+	    opts.tip_spec.closure_length : std::min(0.25 * opts.semi_span, std::max(0.05 * opts.semi_span, 0.5 * opts.tip_chord));
+	shoulder_frac = 1.0 - closure_length / opts.semi_span;
+    } else if (opts.tip_spec.style == tip_style_mode::raked) {
+	shoulder_frac = 1.0 - opts.tip_spec.extension / opts.semi_span;
+    } else if (opts.tip_spec.style == tip_style_mode::hoerner) {
+	const double closure_length = opts.tip_spec.closure_length > 0.0 ?
+	    opts.tip_spec.closure_length : std::min(0.20 * opts.semi_span, std::max(0.04 * opts.semi_span, 0.35 * opts.tip_chord));
+	shoulder_frac = 1.0 - closure_length / opts.semi_span;
+    } else if (opts.tip_spec.style == tip_style_mode::blended_winglet) {
+	shoulder_frac = 1.0 - opts.tip_spec.root_blend_length / opts.semi_span;
+    }
 
     size_t outline_cnt = 0;
     for (int s = 0; s < opts.stations; ++s) {
@@ -1219,8 +1545,6 @@ wing_stations(const options &opts)
 	} else if (outline.size() != outline_cnt) {
 	    throw std::runtime_error("spanwise section interpolation changed outline topology");
 	}
-	const double shoulder_frac = opts.tip_style == tip_style_mode::rounded ?
-	    1.0 - std::min(0.25, std::max(0.05, 0.5 * opts.tip_chord / opts.semi_span)) : 1.0;
 	const double span_frac = f * shoulder_frac;
 	const double chord = opts.root_chord + f * (opts.tip_chord - opts.root_chord);
 	const double le_x = f * opts.sweep_offset;
@@ -1228,17 +1552,84 @@ wing_stations(const options &opts)
 	stations.push_back(make_wing_station(outline, span_frac, chord, le_x, twist));
     }
 
-    if (opts.tip_style == tip_style_mode::rounded) {
-	const double shoulder_frac = stations.back().span_frac;
-	const double round_frac = 1.0 - shoulder_frac;
+    if (opts.tip_spec.style == tip_style_mode::rounded) {
+	const double tip_shoulder_frac = stations.back().span_frac;
+	const double round_frac = 1.0 - tip_shoulder_frac;
 	const std::vector<point2d> tip_outline = stations.back().outline;
-	for (int i = 1; i <= round_segments; ++i) {
-	    const double t = static_cast<double>(i) / static_cast<double>(round_segments + 1);
+	for (int i = 1; i <= opts.tip_spec.segments; ++i) {
+	    const double t = static_cast<double>(i) / static_cast<double>(opts.tip_spec.segments);
 	    const double theta = 0.5 * M_PI * t;
-	    const double span_frac = shoulder_frac + round_frac * std::sin(theta);
-	    const double scale = std::max(0.18, std::cos(theta));
-	    stations.push_back(make_wing_station(scaled_tip_outline(tip_outline, scale),
+	    const double span_frac = tip_shoulder_frac + round_frac * std::sin(theta);
+	    const double scale = std::max(opts.tip_spec.terminal_scale, std::cos(theta));
+	    stations.push_back(make_wing_station(scaled_tip_outline(tip_outline, scale, opts.tip_spec.center_chord_fraction),
 		    span_frac, opts.tip_chord, opts.sweep_offset, opts.tip_twist_deg));
+	}
+	stations.back().span_frac = 1.0;
+    } else if (opts.tip_spec.style == tip_style_mode::raked) {
+	const double ext_frac = 1.0 - stations.back().span_frac;
+	for (int i = 1; i <= opts.tip_spec.segments; ++i) {
+	    const double t = static_cast<double>(i) / static_cast<double>(opts.tip_spec.segments);
+	    const section4 section = interpolate_section(tip_section, terminal_section, t);
+	    const std::vector<point2d> outline = airfoil_outline(section, omit_lower_te);
+	    if (outline.size() != outline_cnt)
+		throw std::runtime_error("raked tip section interpolation changed outline topology");
+	    stations.push_back(make_wing_station(outline,
+		    shoulder_frac + ext_frac * t,
+		    opts.tip_chord + t * (opts.tip_spec.terminal_chord - opts.tip_chord),
+		    opts.sweep_offset + t * opts.tip_spec.rake_offset,
+		    opts.tip_twist_deg + t * opts.tip_spec.twist_delta));
+	}
+	stations.back().span_frac = 1.0;
+    } else if (opts.tip_spec.style == tip_style_mode::hoerner) {
+	const double tip_shoulder_frac = stations.back().span_frac;
+	const double closure_frac = 1.0 - tip_shoulder_frac;
+	const std::vector<point2d> tip_outline = stations.back().outline;
+	for (int i = 1; i <= opts.tip_spec.segments; ++i) {
+	    const double t = static_cast<double>(i) / static_cast<double>(opts.tip_spec.segments);
+	    const double st = smooth_fraction(t, "cosine");
+	    const double cut = std::tan(opts.tip_spec.tip_cut_angle * M_PI / 180.0) * closure_frac * opts.semi_span * st / opts.tip_chord;
+	    std::vector<point2d> outline;
+	    outline.reserve(tip_outline.size());
+	    for (const point2d &pt : tip_outline) {
+		point2d hpt = scaled_tip_point(pt, std::max(opts.tip_spec.terminal_scale, 1.0 - st), 0.5);
+		hpt.x += cut * (hpt.x - 0.5);
+		outline.push_back(hpt);
+	    }
+	    wing_station station = make_wing_station(outline,
+		    tip_shoulder_frac + closure_frac * st,
+		    opts.tip_chord,
+		    opts.sweep_offset,
+		    opts.tip_twist_deg);
+	    station.z_offset = -opts.tip_spec.droop * st;
+	    stations.push_back(station);
+	}
+	stations.back().span_frac = 1.0;
+    } else if (opts.tip_spec.style == tip_style_mode::winglet || opts.tip_spec.style == tip_style_mode::blended_winglet) {
+	const int total_segments = opts.tip_spec.style == tip_style_mode::blended_winglet ?
+	    opts.tip_spec.transition_segments + opts.tip_spec.segments : opts.tip_spec.segments;
+	const double side_sign = opts.tip_spec.side == "down" ? -1.0 : 1.0;
+	const double cant = opts.tip_spec.cant_angle * M_PI / 180.0;
+	const double target_chord = opts.tip_spec.chord;
+	const double final_chord = target_chord * opts.tip_spec.taper;
+	for (int i = 1; i <= total_segments; ++i) {
+	    const double t = static_cast<double>(i) / static_cast<double>(total_segments);
+	    const double st = smooth_fraction(t, opts.tip_spec.curvature_profile);
+	    const section4 section = interpolate_section(tip_section, winglet_section, st);
+	    const std::vector<point2d> outline = airfoil_outline(section, omit_lower_te);
+	    if (outline.size() != outline_cnt)
+		throw std::runtime_error("winglet section interpolation changed outline topology");
+	    const double span_frac = opts.tip_spec.style == tip_style_mode::blended_winglet ?
+		shoulder_frac + (1.0 - shoulder_frac) * st : 1.0;
+	    wing_station station = make_wing_station(outline,
+		    span_frac,
+		    opts.tip_chord + st * (final_chord - opts.tip_chord),
+		    opts.sweep_offset + st * opts.tip_spec.sweep_offset,
+		    opts.tip_twist_deg + st * opts.tip_spec.twist_delta);
+	    station.y_offset = opts.tip_spec.height * std::cos(cant) * st;
+	    station.z_offset = side_sign * opts.tip_spec.height * std::sin(cant) * st;
+	    station.roll_deg = side_sign * opts.tip_spec.cant_angle * st;
+	    station.toe_deg = opts.tip_spec.toe_angle * st;
+	    stations.push_back(station);
 	}
     }
 
@@ -1254,6 +1645,8 @@ station_point(const point2d &section_pt, const options &opts, const wing_station
     const double le_x = station.le_x;
     const double dihedral = std::tan(opts.dihedral_deg * M_PI / 180.0) * y;
     const double twist = station.twist_deg * M_PI / 180.0;
+    const double roll = station.roll_deg * M_PI / 180.0;
+    const double toe = station.toe_deg * M_PI / 180.0;
 
     const double pivot = 0.25 * chord;
     const double sx = section_pt.x * chord;
@@ -1261,42 +1654,23 @@ station_point(const point2d &section_pt, const options &opts, const wing_station
     const double dx = sx - pivot;
     const double ct = std::cos(twist);
     const double st = std::sin(twist);
+    const double local_x = pivot + dx * ct + sz * st;
+    const double local_z = -dx * st + sz * ct;
+    const double cr = std::cos(roll);
+    const double sr = std::sin(roll);
+    const double rolled_y = -local_z * sr;
+    const double rolled_z = local_z * cr;
+    const double toe_dx = local_x - pivot;
+    const double ctoe = std::cos(toe);
+    const double stoe = std::sin(toe);
+    const double toed_x = pivot + toe_dx * ctoe - rolled_y * stoe;
+    const double toed_y = toe_dx * stoe + rolled_y * ctoe;
 
     point3d p;
-    p.x = opts.offset_x + le_x + pivot + dx * ct + sz * st;
-    p.y = opts.offset_y + y;
-    p.z = opts.offset_z + dihedral - dx * st + sz * ct;
+    p.x = opts.offset_x + le_x + toed_x;
+    p.y = opts.offset_y + y + station.y_offset + toed_y;
+    p.z = opts.offset_z + dihedral + station.z_offset + rolled_z;
     return p;
-}
-
-
-static std::vector<wing_station>
-refined_rounded_tip_stations(const options &opts, const std::vector<wing_station> &stations)
-{
-    if (opts.tip_style != tip_style_mode::rounded || stations.empty())
-	return stations;
-
-    std::vector<wing_station> refined_stations = stations;
-    const wing_station last = refined_stations.back();
-    const double remaining_span = 1.0 - last.span_frac;
-    if (remaining_span <= SMALL_FASTF)
-	return refined_stations;
-
-    const std::array<std::pair<double, double>, 3> closure = {{
-	{0.45, 0.55},
-	{0.75, 0.25},
-	{1.0, 0.08}
-    }};
-
-    for (const auto &step : closure) {
-	wing_station station = last;
-	station.span_frac = last.span_frac + remaining_span * std::sin(0.5 * M_PI * step.first);
-	station.outline = scaled_tip_outline(last.outline, step.second);
-	refined_stations.push_back(station);
-    }
-
-    refined_stations.back().span_frac = 1.0;
-    return refined_stations;
 }
 
 
@@ -1638,6 +2012,12 @@ write_metadata(struct rt_wdb *fp, const std::string &solid_name, const std::stri
 	set_attr(fp, obj_name, "naca456::geometry_mode", mode_name(opts.mode));
 	set_attr(fp, obj_name, "naca456::brep_surface", brep_surface_name(opts.brep_surface));
 	set_attr(fp, obj_name, "naca456::tip_style", tip_style_name(opts.tip_style));
+	set_attr(fp, obj_name, "naca456::tip_segments", num_string(opts.tip_spec.segments));
+	if (!opts.tip_spec.json.empty()) {
+	    if (opts.tip_spec.from_file)
+		set_attr(fp, obj_name, "naca456::tip_specification_file", opts.tip_spec.file);
+	    set_attr(fp, obj_name, "naca456::tip_specification_json", opts.tip_spec.json);
+	}
 	set_attr(fp, obj_name, "naca456::root_airfoil", opts.airfoil);
 	set_attr(fp, obj_name, "naca456::tip_airfoil", tip_airfoil);
 	set_attr(fp, obj_name, "naca456::semi_span", num_string(opts.semi_span));
@@ -1801,27 +2181,6 @@ builder_edge_with_curve(brep_builder &builder, int from, int to, ON_Curve *curve
 
 
 static ON_NurbsCurve *
-linear_nurbs_curve(const std::vector<ON_3dPoint> &points)
-{
-    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, 2, static_cast<int>(points.size()));
-    for (size_t i = 0; i < points.size(); ++i)
-	curve->SetCV(static_cast<int>(i), points[i]);
-
-    const int knot_count = static_cast<int>(points.size());
-    if (knot_count == 2) {
-	curve->SetKnot(0, 0.0);
-	curve->SetKnot(1, 1.0);
-	return curve;
-    }
-
-    for (int i = 0; i < knot_count; ++i)
-	curve->SetKnot(i, static_cast<double>(i) / static_cast<double>(knot_count - 1));
-
-    return curve;
-}
-
-
-static ON_NurbsCurve *
 cubic_bezier_curve(const ON_3dPoint &from, const ON_3dPoint &to, const ON_3dVector &from_tangent, const ON_3dVector &to_tangent)
 {
     ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, 4, 4);
@@ -1837,39 +2196,6 @@ cubic_bezier_curve(const ON_3dPoint &from, const ON_3dPoint &to, const ON_3dVect
     curve->SetKnot(5, 1.0);
     curve->SetDomain(0.0, 1.0);
     return curve;
-}
-
-
-static int
-builder_span_edge(brep_builder &builder, const std::vector<int> &verts)
-{
-    const int from = verts.front();
-    const int to = verts.back();
-    const std::pair<int, int> key = std::minmax(from, to);
-    auto e_it = builder.edges.find(key);
-    if (e_it != builder.edges.end())
-	return e_it->second;
-
-    std::vector<ON_3dPoint> points;
-    points.reserve(verts.size());
-    for (int vi : verts)
-	points.push_back(builder.points[static_cast<size_t>(vi)]);
-
-    int c3i = -1;
-    if (points.size() >= 4) {
-	c3i = brep_curve_interpCrv(builder.brep, points);
-    }
-    if (c3i < 0) {
-	c3i = builder.brep->m_C3.Count();
-	builder.brep->m_C3.Append(linear_nurbs_curve(points));
-    }
-
-    ON_BrepEdge &edge = builder.brep->NewEdge(builder.brep->m_V[from], builder.brep->m_V[to], c3i);
-    edge.m_tolerance = SMALL_FASTF;
-
-    const int ei = edge.m_edge_index;
-    builder.edges[key] = ei;
-    return ei;
 }
 
 
@@ -1893,6 +2219,40 @@ static ON_3dVector
 point_delta(const ON_3dPoint &from, const ON_3dPoint &to)
 {
     return to - from;
+}
+
+
+static double
+vector_dot(const ON_3dVector &a, const ON_3dVector &b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+
+static double
+vector_length(const ON_3dVector &v)
+{
+    return std::sqrt(vector_dot(v, v));
+}
+
+
+static ON_3dVector
+limited_tangent(const ON_3dVector &tangent, const ON_3dVector &edge)
+{
+    const double edge_len = vector_length(edge);
+    const double tangent_len = vector_length(tangent);
+    if (edge_len <= SMALL_FASTF || tangent_len <= SMALL_FASTF)
+	return edge;
+
+    const double min_aligned_dot = 0.5 * edge_len * tangent_len;
+    if (vector_dot(tangent, edge) < min_aligned_dot)
+	return edge;
+
+    const double max_len = 1.25 * edge_len;
+    if (tangent_len > max_len)
+	return tangent * (max_len / tangent_len);
+
+    return tangent;
 }
 
 
@@ -1935,57 +2295,6 @@ chord_tangent(const brep_builder &builder, int station, int chord, int outline_c
 }
 
 
-static ON_NurbsSurface *
-ruled_surface_from_edges(const ON_Brep &brep, int edge0, int edge1)
-{
-    const ON_Curve *c0 = brep.m_E[edge0].EdgeCurveOf();
-    const ON_Curve *c1 = brep.m_E[edge1].EdgeCurveOf();
-    if (!c0 || !c1)
-	return nullptr;
-
-    ON_NurbsCurve *nc0 = c0->NurbsCurve();
-    ON_NurbsCurve *nc1 = c1->NurbsCurve();
-    if (!nc0 || !nc1) {
-	delete nc0;
-	delete nc1;
-	return nullptr;
-    }
-
-    ON_NurbsSurface *surface = ON_NurbsSurface::New();
-    if (!surface->CreateRuledSurface(*nc0, *nc1)) {
-	delete nc0;
-	delete nc1;
-	delete surface;
-	return nullptr;
-    }
-
-    delete nc0;
-    delete nc1;
-    return surface;
-}
-
-
-static ON_NurbsSurface *
-polyline_ruled_surface(const brep_builder &builder, const std::vector<int> &edge0_verts, const std::vector<int> &edge1_verts)
-{
-    if (edge0_verts.size() != edge1_verts.size() || edge0_verts.size() < 2)
-	return nullptr;
-
-    const int u_cv_count = static_cast<int>(edge0_verts.size());
-    ON_NurbsSurface *surface = ON_NurbsSurface::New(3, false, 2, 2, u_cv_count, 2);
-    for (int i = 0; i < u_cv_count; ++i) {
-	surface->SetCV(i, 0, builder.points[static_cast<size_t>(edge0_verts[static_cast<size_t>(i)])]);
-	surface->SetCV(i, 1, builder.points[static_cast<size_t>(edge1_verts[static_cast<size_t>(i)])]);
-    }
-
-    for (int i = 0; i < u_cv_count; ++i)
-	surface->SetKnot(0, i, static_cast<double>(i) / static_cast<double>(u_cv_count - 1));
-    surface->SetKnot(1, 0, 0.0);
-    surface->SetKnot(1, 1, 1.0);
-    return surface;
-}
-
-
 static void
 add_trim(brep_builder &builder, ON_BrepLoop &loop, int from, int to, const ON_2dPoint &uv_from, const ON_2dPoint &uv_to, ON_Surface::ISO iso)
 {
@@ -2016,33 +2325,32 @@ add_trim_for_edge(brep_builder &builder, ON_BrepLoop &loop, int edge_index, int 
 
 
 static void
-add_ruled_strip_face(brep_builder &builder, const std::vector<int> &edge0_verts, const std::vector<int> &edge1_verts)
+add_ruled_patch_face(brep_builder &builder, int station, int chord, int outline_cnt)
 {
-    const int v0 = edge0_verts.front();
-    const int v1 = edge0_verts.back();
-    const int v2 = edge1_verts.back();
-    const int v3 = edge1_verts.front();
+    const int kn = (chord + 1) % outline_cnt;
+    const int v00 = grid_vertex_index(station, chord, outline_cnt);
+    const int v10 = grid_vertex_index(station + 1, chord, outline_cnt);
+    const int v11 = grid_vertex_index(station + 1, kn, outline_cnt);
+    const int v01 = grid_vertex_index(station, kn, outline_cnt);
 
-    const int e0 = builder_span_edge(builder, edge0_verts);
-    const int e2 = builder_span_edge(builder, edge1_verts);
-    const int e1 = builder_edge(builder, v1, v2);
-    const int e3 = builder_edge(builder, v3, v0);
-
-    ON_NurbsSurface *surface = ruled_surface_from_edges(*builder.brep, e0, e2);
-    if (!surface)
-	surface = polyline_ruled_surface(builder, edge0_verts, edge1_verts);
-    if (!surface)
-	throw std::runtime_error("unable to construct NURBS strip");
+    const int e0 = builder_edge(builder, v00, v10);
+    const int e1 = builder_edge(builder, v10, v11);
+    const int e2 = builder_edge(builder, v01, v11);
+    const int e3 = builder_edge(builder, v00, v01);
 
     const int si = builder.brep->m_S.Count();
-    builder.brep->m_S.Append(surface);
+    builder.brep->m_S.Append(quad_surface(
+	    builder.points[static_cast<size_t>(v00)],
+	    builder.points[static_cast<size_t>(v10)],
+	    builder.points[static_cast<size_t>(v11)],
+	    builder.points[static_cast<size_t>(v01)]));
     ON_BrepFace &face = builder.brep->NewFace(si);
     ON_BrepLoop &loop = builder.brep->NewLoop(ON_BrepLoop::outer, face);
 
-    add_trim_for_edge(builder, loop, e0, v0, v1, ON_2dPoint(0.0, 0.0), ON_2dPoint(1.0, 0.0), ON_Surface::S_iso);
-    add_trim_for_edge(builder, loop, e1, v1, v2, ON_2dPoint(1.0, 0.0), ON_2dPoint(1.0, 1.0), ON_Surface::E_iso);
-    add_trim_for_edge(builder, loop, e2, v2, v3, ON_2dPoint(1.0, 1.0), ON_2dPoint(0.0, 1.0), ON_Surface::N_iso);
-    add_trim_for_edge(builder, loop, e3, v3, v0, ON_2dPoint(0.0, 1.0), ON_2dPoint(0.0, 0.0), ON_Surface::W_iso);
+    add_trim_for_edge(builder, loop, e0, v00, v10, ON_2dPoint(0.0, 0.0), ON_2dPoint(1.0, 0.0), ON_Surface::S_iso);
+    add_trim_for_edge(builder, loop, e1, v10, v11, ON_2dPoint(1.0, 0.0), ON_2dPoint(1.0, 1.0), ON_Surface::E_iso);
+    add_trim_for_edge(builder, loop, e2, v11, v01, ON_2dPoint(1.0, 1.0), ON_2dPoint(0.0, 1.0), ON_Surface::N_iso);
+    add_trim_for_edge(builder, loop, e3, v01, v00, ON_2dPoint(0.0, 1.0), ON_2dPoint(0.0, 0.0), ON_Surface::W_iso);
 }
 
 
@@ -2095,15 +2403,20 @@ add_smooth_patch_face(brep_builder &builder, int station, int chord, int outline
     const int v11 = grid_vertex_index(station + 1, kn, outline_cnt);
     const int v01 = grid_vertex_index(station, kn, outline_cnt);
 
-    const ON_3dVector du00 = span_tangent(builder, station, chord, stations, outline_cnt);
-    const ON_3dVector du10 = span_tangent(builder, station + 1, chord, stations, outline_cnt);
-    const ON_3dVector du11 = span_tangent(builder, station + 1, kn, stations, outline_cnt);
-    const ON_3dVector du01 = span_tangent(builder, station, kn, stations, outline_cnt);
+    const ON_3dVector edge_u0 = point_delta(builder.points[static_cast<size_t>(v00)], builder.points[static_cast<size_t>(v10)]);
+    const ON_3dVector edge_u1 = point_delta(builder.points[static_cast<size_t>(v01)], builder.points[static_cast<size_t>(v11)]);
+    const ON_3dVector edge_v0 = point_delta(builder.points[static_cast<size_t>(v00)], builder.points[static_cast<size_t>(v01)]);
+    const ON_3dVector edge_v1 = point_delta(builder.points[static_cast<size_t>(v10)], builder.points[static_cast<size_t>(v11)]);
 
-    const ON_3dVector dv00 = chord_tangent(builder, station, chord, outline_cnt);
-    const ON_3dVector dv10 = chord_tangent(builder, station + 1, chord, outline_cnt);
-    const ON_3dVector dv11 = chord_tangent(builder, station + 1, kn, outline_cnt);
-    const ON_3dVector dv01 = chord_tangent(builder, station, kn, outline_cnt);
+    const ON_3dVector du00 = limited_tangent(span_tangent(builder, station, chord, stations, outline_cnt), edge_u0);
+    const ON_3dVector du10 = limited_tangent(span_tangent(builder, station + 1, chord, stations, outline_cnt), edge_u0);
+    const ON_3dVector du11 = limited_tangent(span_tangent(builder, station + 1, kn, stations, outline_cnt), edge_u1);
+    const ON_3dVector du01 = limited_tangent(span_tangent(builder, station, kn, stations, outline_cnt), edge_u1);
+
+    const ON_3dVector dv00 = limited_tangent(chord_tangent(builder, station, chord, outline_cnt), edge_v0);
+    const ON_3dVector dv10 = limited_tangent(chord_tangent(builder, station + 1, chord, outline_cnt), edge_v1);
+    const ON_3dVector dv11 = limited_tangent(chord_tangent(builder, station + 1, kn, outline_cnt), edge_v1);
+    const ON_3dVector dv01 = limited_tangent(chord_tangent(builder, station, kn, outline_cnt), edge_v0);
 
     const int e0 = builder_smooth_edge(builder, v00, v10, du00, du10);
     const int e1 = builder_smooth_edge(builder, v10, v11, dv10, dv11);
@@ -2205,17 +2518,10 @@ write_brep(const options &opts, const std::vector<wing_station> &stations)
 	    }
 	}
     } else {
-	for (int k = 0; k < outline_cnt; ++k) {
-	    const int kn = (k + 1) % outline_cnt;
-	    std::vector<int> edge0_verts;
-	    std::vector<int> edge1_verts;
-	    edge0_verts.reserve(static_cast<size_t>(station_cnt));
-	    edge1_verts.reserve(static_cast<size_t>(station_cnt));
-	    for (int s = 0; s < station_cnt; ++s) {
-		edge0_verts.push_back(s * outline_cnt + k);
-		edge1_verts.push_back(s * outline_cnt + kn);
+	for (int s = 0; s < station_cnt - 1; ++s) {
+	    for (int k = 0; k < outline_cnt; ++k) {
+		add_ruled_patch_face(builder, s, k, outline_cnt);
 	    }
-	    add_ruled_strip_face(builder, edge0_verts, edge1_verts);
 	}
     }
 
@@ -2285,7 +2591,7 @@ write_brep(const options &opts, const std::vector<wing_station> &stations)
 static int
 write_single_wing(const options &opts)
 {
-    const std::vector<wing_station> stations = refined_rounded_tip_stations(opts, wing_stations(opts));
+    const std::vector<wing_station> stations = wing_stations(opts);
     validate_wing_stations(opts, stations);
 
     switch (opts.mode) {
@@ -2314,7 +2620,17 @@ struct demo_spec {
     int stations = 7;
     int samples = 33;
     bool sharp_te = false;
+    const char *tip_spec_json = nullptr;
 };
+
+
+static const char *demo_tip_flat = R"({"version":1,"style":"flat"})";
+static const char *demo_tip_rounded_wide = R"({"version":1,"style":"rounded","closure_length":125.0,"terminal_scale":0.10,"center_chord_fraction":0.5,"segments":8})";
+static const char *demo_tip_raked = R"({"version":1,"style":"raked","extension":140.0,"rake_offset":90.0,"terminal_chord":70.0,"terminal_airfoil":"0008","twist_delta":-1.5,"segments":6,"cap_style":"flat"})";
+static const char *demo_tip_hoerner = R"({"version":1,"style":"hoerner","closure_length":105.0,"tip_cut_angle":22.0,"droop":14.0,"terminal_scale":0.14,"segments":8})";
+static const char *demo_tip_winglet = R"({"version":1,"style":"winglet","height":180.0,"cant_angle":82.0,"toe_angle":2.0,"sweep_offset":28.0,"chord":82.0,"taper":0.62,"airfoil":"0010","twist_delta":-1.5,"segments":8,"cap_style":"flat","side":"up"})";
+static const char *demo_tip_winglet_brep = R"({"version":1,"style":"winglet","height":120.0,"cant_angle":64.0,"toe_angle":0.75,"sweep_offset":18.0,"chord":96.0,"taper":0.82,"airfoil":"0010","twist_delta":-0.75,"segments":12,"cap_style":"flat","side":"up"})";
+static const char *demo_tip_blended = R"({"version":1,"style":"blended_winglet","height":190.0,"cant_angle":68.0,"toe_angle":1.5,"sweep_offset":35.0,"root_blend_length":130.0,"chord":88.0,"taper":0.58,"airfoil":"0010","twist_delta":-2.0,"segments":8,"transition_segments":5,"curvature_profile":"cosine","cap_style":"flat","side":"up"})";
 
 
 static options
@@ -2333,6 +2649,9 @@ demo_options(const options &demo_opts, const demo_spec &spec, int index)
     opts.mode = spec.mode;
     opts.brep_surface = spec.mode == output_mode::brep ? demo_opts.brep_surface : brep_surface_mode::ruled;
     opts.tip_style = demo_opts.tip_style;
+    opts.tip_spec = demo_opts.tip_spec;
+    opts.tip_spec_file = demo_opts.tip_spec_file;
+    opts.tip_style_explicit = demo_opts.tip_style_explicit;
     opts.semi_span = spec.semi_span;
     opts.root_chord = spec.root_chord;
     opts.tip_chord = spec.tip_chord;
@@ -2343,6 +2662,11 @@ demo_options(const options &demo_opts, const demo_spec &spec, int index)
     opts.stations = spec.stations;
     opts.samples = spec.samples;
     opts.sharp_te = spec.sharp_te;
+    if (spec.tip_spec_json && !demo_opts.tip_style_explicit) {
+	opts.tip_spec = parse_tip_specification_json(spec.tip_spec_json, spec.name, opts);
+	opts.tip_style = opts.tip_spec.style;
+	opts.tip_spec_file.clear();
+    }
     opts.offset_x = static_cast<double>(index % cols) * dx;
     opts.offset_y = static_cast<double>(index / cols) * dy;
     opts.overwrite = index == 0;
@@ -2355,16 +2679,16 @@ static int
 write_demo_file(const options &demo_opts)
 {
     const std::vector<demo_spec> specs = {
-	{output_mode::bot, "bot_00_baseline_2412", "2412", nullptr, 900, 240, 120, 0, 0, 0, 1, 7, 33, false},
-	{output_mode::bot, "bot_01_symmetric_0012", "0012", nullptr, 850, 230, 160, 0, 0, 0, 1, 7, 33, false},
+	{output_mode::bot, "bot_00_baseline_2412", "2412", nullptr, 900, 240, 120, 0, 0, 0, 1, 7, 33, false, demo_tip_rounded_wide},
+	{output_mode::bot, "bot_01_symmetric_0012", "0012", nullptr, 850, 230, 160, 0, 0, 0, 1, 7, 33, false, demo_tip_flat},
 	{output_mode::bot, "bot_02_high_camber_4415", "4415", nullptr, 820, 230, 130, 70, 0, 0, 1, 7, 33, false},
 	{output_mode::bot, "bot_03_sharp_te_2412", "2412", nullptr, 850, 230, 115, 60, 0, 0, 1, 7, 33, true},
 	{output_mode::bot, "bot_04_five_23012", "23012", nullptr, 850, 230, 120, 80, 0, 0, 1, 7, 33, false},
 	{output_mode::bot, "bot_05_five_reflex_23112", "23112", nullptr, 820, 220, 120, 60, 0, -2, 1, 7, 33, false},
-	{output_mode::bot, "bot_06_swept_taper", "2312", nullptr, 920, 260, 90, 220, 0, 0, 1, 8, 37, false},
-	{output_mode::bot, "bot_07_forward_sweep", "2412", nullptr, 820, 220, 130, -120, 0, 0, 1, 8, 37, false},
-	{output_mode::bot, "bot_08_dihedral", "2415", nullptr, 900, 240, 130, 0, 8, 0, 1, 8, 37, false},
-	{output_mode::bot, "bot_09_washout", "2412", nullptr, 900, 240, 120, 0, 0, -6, 1, 8, 37, false},
+	{output_mode::bot, "bot_06_swept_taper", "2312", nullptr, 920, 260, 90, 220, 0, 0, 1, 8, 37, false, demo_tip_raked},
+	{output_mode::bot, "bot_07_forward_sweep", "2412", nullptr, 820, 220, 130, -120, 0, 0, 1, 8, 37, false, demo_tip_hoerner},
+	{output_mode::bot, "bot_08_dihedral", "2415", nullptr, 900, 240, 130, 0, 8, 0, 1, 8, 37, false, demo_tip_winglet},
+	{output_mode::bot, "bot_09_washout", "2412", nullptr, 900, 240, 120, 0, 0, -6, 1, 8, 37, false, demo_tip_blended},
 	{output_mode::bot, "bot_10_six_63215", "63-215", nullptr, 860, 240, 115, 120, 0, 0, 1, 7, 33, false},
 	{output_mode::bot, "bot_11_six_lowload", "64-210", nullptr, 850, 230, 115, 90, 0, 0, 0.45, 7, 33, false},
 	{output_mode::bot, "bot_12_root_tip_sections", "2418", "0008", 900, 260, 105, 120, 4, -3, 1, 9, 41, false},
@@ -2376,15 +2700,15 @@ write_demo_file(const options &demo_opts)
 	{output_mode::bot, "bot_18_sixa_63a210", "63A210", nullptr, 820, 230, 120, 80, 0, 0, 1, 7, 33, false},
 	{output_mode::bot, "bot_19_sixa_64a210", "64A210", nullptr, 820, 230, 120, 80, 4, 0, 1, 7, 33, false},
 	{output_mode::bot, "bot_20_sixa_65a010", "65A010", nullptr, 860, 220, 100, 130, 0, -4, 1, 8, 37, false},
-	{output_mode::bot, "bot_21_long_slender", "0009", nullptr, 1150, 210, 80, 160, 0, -4, 1, 10, 45, false},
-	{output_mode::bot, "bot_22_thick_root_0024", "0024", nullptr, 780, 260, 170, 0, 0, 0, 1, 7, 33, false},
-	{output_mode::bot, "bot_23_compound", "2415", "63-212", 980, 260, 95, 180, 7, -5, 1, 10, 45, false},
-	{output_mode::brep, "brep_24_baseline_2412", "2412", nullptr, 850, 230, 120, 0, 0, 0, 1, 6, 21, false},
-	{output_mode::brep, "brep_25_five_23012", "23012", nullptr, 760, 220, 120, 70, 0, 0, 1, 6, 21, false},
-	{output_mode::brep, "brep_26_five_reflex", "23112", nullptr, 760, 220, 120, 70, 0, -2, 1, 6, 21, false},
-	{output_mode::brep, "brep_27_six_63215", "63-215", nullptr, 800, 230, 115, 100, 0, 0, 1, 6, 21, false},
-	{output_mode::brep, "brep_28_six_lowload", "64-210", nullptr, 800, 230, 115, 100, 0, 0, 0.45, 6, 21, false},
-	{output_mode::brep, "brep_29_sixa_64a210", "64A210", nullptr, 760, 220, 120, 0, 4, 0, 1, 6, 21, false},
+	{output_mode::bot, "bot_21_long_slender", "0009", nullptr, 1150, 210, 80, 160, 0, -4, 1, 10, 45, false, demo_tip_raked},
+	{output_mode::bot, "bot_22_thick_root_0024", "0024", nullptr, 780, 260, 170, 0, 0, 0, 1, 7, 33, false, demo_tip_hoerner},
+	{output_mode::bot, "bot_23_compound", "2415", "63-212", 980, 260, 95, 180, 7, -5, 1, 10, 45, false, demo_tip_blended},
+	{output_mode::brep, "brep_24_baseline_2412", "2412", nullptr, 850, 230, 120, 0, 0, 0, 1, 6, 21, false, demo_tip_rounded_wide},
+	{output_mode::brep, "brep_25_five_23012", "23012", nullptr, 760, 220, 120, 70, 0, 0, 1, 6, 21, false, demo_tip_flat},
+	{output_mode::brep, "brep_26_five_reflex", "23112", nullptr, 760, 220, 120, 70, 0, -2, 1, 6, 21, false, demo_tip_raked},
+	{output_mode::brep, "brep_27_six_63215", "63-215", nullptr, 800, 230, 115, 100, 0, 0, 1, 6, 21, false, demo_tip_hoerner},
+	{output_mode::brep, "brep_28_six_lowload", "64-210", nullptr, 800, 230, 115, 100, 0, 0, 0.45, 7, 29, false, demo_tip_winglet_brep},
+	{output_mode::brep, "brep_29_sixa_64a210", "64A210", nullptr, 760, 220, 120, 0, 4, 0, 1, 6, 21, false, demo_tip_blended},
 	{output_mode::brep, "brep_30_sharp_te", "0012", nullptr, 760, 220, 110, 0, 0, 0, 1, 6, 21, true},
 	{output_mode::brep, "brep_31_swept_twist", "2415", nullptr, 850, 240, 125, 160, 6, -4, 1, 7, 25, false},
 	{output_mode::brep, "brep_32_root_tip_thin", "2418", "0008", 850, 260, 95, 120, 4, -3, 1, 7, 25, false},
@@ -2401,7 +2725,35 @@ write_demo_file(const options &demo_opts)
 	    return ret;
     }
 
-    bu_log("Wrote %s with %zu sample wings\n", demo_opts.demo_file.c_str(), specs.size());
+    options all_opts = demo_opts;
+    all_opts.outfile = demo_opts.demo_file;
+    all_opts.append = true;
+    all_opts.overwrite = false;
+    struct rt_wdb *fp = open_output_database(all_opts);
+    if (db_lookup(fp->dbip, "all", LOOKUP_QUIET) != RT_DIR_NULL) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: object all already exists in output database\n");
+    }
+
+    struct wmember all_head = WMEMBER_INIT_ZERO;
+    BU_LIST_INIT(&all_head.l);
+    for (const demo_spec &spec : specs) {
+	const std::string region_name = std::string(spec.name) + ".r";
+	if (mk_addmember(region_name.c_str(), &all_head.l, NULL, WMOP_UNION) == WMEMBER_NULL) {
+	    db_close(fp->dbip);
+	    bu_exit(EXIT_FAILURE, "ERROR: unable to add %s to demo all comb\n", region_name.c_str());
+	}
+    }
+    if (mk_lcomb(fp, "all", &all_head, 0, NULL, NULL, NULL, 0) != 0) {
+	db_close(fp->dbip);
+	bu_exit(EXIT_FAILURE, "ERROR: unable to write demo all comb\n");
+    }
+    set_attr(fp, "all", "naca456::generator", "naca456");
+    set_attr(fp, "all", "naca456::metadata_version", "1");
+    set_attr(fp, "all", "naca456::demo_wing_count", std::to_string(specs.size()));
+    db_close(fp->dbip);
+
+    bu_log("Wrote %s with %zu sample wings and all comb\n", demo_opts.demo_file.c_str(), specs.size());
     return EXIT_SUCCESS;
 }
 
@@ -2428,10 +2780,11 @@ main(int argc, char **argv)
 	struct bu_vls mode = BU_VLS_INIT_ZERO;
 	struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
 	struct bu_vls tip_style = BU_VLS_INIT_ZERO;
+	struct bu_vls tip_spec_file = BU_VLS_INIT_ZERO;
 	struct bu_vls demo_file = BU_VLS_INIT_ZERO;
 	struct bu_vls section_file = BU_VLS_INIT_ZERO;
 	bool help = false;
-	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, demo_file, section_file, help));
+	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, tip_spec_file, demo_file, section_file, help));
 	bu_vls_free(&outfile);
 	bu_vls_free(&name);
 	bu_vls_free(&airfoil);
@@ -2439,6 +2792,7 @@ main(int argc, char **argv)
 	bu_vls_free(&mode);
 	bu_vls_free(&brep_surface);
 	bu_vls_free(&tip_style);
+	bu_vls_free(&tip_spec_file);
 	bu_vls_free(&demo_file);
 	bu_vls_free(&section_file);
 	return EXIT_FAILURE;
