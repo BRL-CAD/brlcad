@@ -2058,3 +2058,6 @@ s/(#[[:space:]]*include[[:space:]]+["<])photonmap\.h/\1optical\/photonmap.h/g
 	move liboptical photonmap.h to optical subdir [7.44]
 s/bu_process_create_opts/bu_process_opts/g
         process option enum renamed for bu_process_func() reuse [7.44]
+s/autoview([[:space:]]+)([[:digit:].]+)/autoview\1-s\2/g
+	autoview command scale parameter now requires a -s option [7.44]
+
