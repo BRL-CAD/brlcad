@@ -2519,6 +2519,7 @@ set(
   COPYING
   HACKING
   INSTALL
+  ISSUES.adoc
   NEWS
   README
 )
