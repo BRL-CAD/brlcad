@@ -1135,6 +1135,54 @@ light_miss(register struct application *ap)
 #define VF_BACKFACE 2
 
 /**
+ * Decide whether shadow (light-visibility) rays may use a cheap any-hit
+ * query (a_onehit = 1, stop at the first solid) instead of the full
+ * tree-to-the-light traversal (a_onehit = -2).
+ *
+ * Any-hit is only valid when every solid the ray could cross before the
+ * light is a fully opaque, light-blocking occluder.  If the model
+ * contains air regions (light passes through air), transmissive regions
+ * (reg_transmit != 0, e.g. glass/filter that attenuates rather than
+ * blocks), or procedural shaders (which may be transparent), the first
+ * hit is not a definitive occlusion answer and we must keep the full
+ * traversal that light_hit() relies on.
+ *
+ * The model is static during a frame, so the answer is computed once and
+ * cached.  Concurrent shadow rays may race to compute it, but all arrive
+ * at the same value and the write is idempotent.  LIBRT_NO_SHADOW_ANYHIT
+ * forces the conservative full-traversal path for debugging/comparison.
+ */
+static int shadow_anyhit_ok = -1;	/* -1 unknown, 0 no, 1 yes */
+
+static int
+shadow_anyhit_safe(struct application *ap)
+{
+    struct region *regp;
+    int ok = 1;
+
+    if (shadow_anyhit_ok >= 0)
+	return shadow_anyhit_ok;
+
+    if (getenv("LIBRT_NO_SHADOW_ANYHIT")) {
+	shadow_anyhit_ok = 0;
+	return 0;
+    }
+
+    RT_CK_RTI(ap->a_rt_i);
+    for (BU_LIST_FOR(regp, region, &(ap->a_rt_i->HeadRegion))) {
+	if (regp->reg_aircode != 0) { ok = 0; break; }	/* light traverses air */
+	if (regp->reg_transmit != 0) { ok = 0; break; }	/* transmissive/glass */
+	if (regp->reg_mfuncs) {
+	    struct mfuncs *mfp = (struct mfuncs *)regp->reg_mfuncs;
+	    if (mfp->mf_flags & MFF_PROC) { ok = 0; break; }	/* shader may transmit */
+	}
+    }
+
+    shadow_anyhit_ok = ok;
+    return ok;
+}
+
+/**
  * Compute 1 light visibility ray from a hit point to the light.
  * Called by light_obs() to determine light visibility.
  */
@@ -1403,7 +1451,15 @@ light_vis(struct light_obs_stuff *los, char *flags)
     sub_ap.a_level = 0;
     /* Will need entry & exit pts, for filter glass ==> 2 */
     /* Continue going through air ==> negative */
-    sub_ap.a_onehit = -2;
+    /* In an all-opaque, air-free, non-procedural model the first solid
+     * hit fully settles occlusion, so an any-hit query is sufficient and
+     * much cheaper than tracing the whole ray to the light.  Otherwise
+     * fall back to the full traversal that handles air/glass/filtering.
+     */
+    if (shadow_anyhit_safe(los->ap))
+	sub_ap.a_onehit = 1;
+    else
+	sub_ap.a_onehit = -2;
 
     VSETALL(sub_ap.a_color, 1);	/* vis intens so far */
     sub_ap.a_purpose = los->lsp->lt_name;	/* name of light shot at */
