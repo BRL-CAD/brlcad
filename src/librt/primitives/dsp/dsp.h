@@ -29,7 +29,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+__BEGIN_DECLS
 
 /* access to the DSP data array */
 # define DSP(_p, _x, _y) (						\
@@ -50,7 +50,7 @@ rt_dsp_cell_cut(const struct rt_dsp_internal *dsp, size_t cx, size_t cy, size_t 
 extern struct rt_dsp_internal *
 rt_dsp_internal_from_ip(const struct rt_db_internal *ip);
 
-BRLCAD_CXX_END_C_LINKAGE
+__END_DECLS
 
 #endif /* LIBRT_PRIMITIVES_DSP_DSP_H */
 

@@ -30,6 +30,8 @@
 #include <functional>
 #include <thread>
 
+extern "C" {
+
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
@@ -102,6 +104,8 @@ static struct bu_vls tcl_log_str = BU_VLS_INIT_ZERO;
  * themselves called bu_log (which also acquires BU_SEM_SYSCALL). */
 static int MGED_SEM_LOG = -1;
 
+}
+
 /* Internal C++ async helper.
  *
  * In GUI (non-classic, interactive) mode: runs 'func' in a std::thread while
@@ -158,7 +162,7 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
 }
 
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
 
 /**
  * Initialise the dedicated MGED log-buffer semaphore.
@@ -296,7 +300,7 @@ mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[])
     });
 }
 
-BRLCAD_CXX_END_C_LINKAGE
+} /* extern "C" */
 
 #define GED_OUTPUT do { \
     mged_pr_output(interpreter);\
@@ -307,7 +311,7 @@ BRLCAD_CXX_END_C_LINKAGE
 /* All remaining MGED command functions require C linkage because they are
  * called through Tcl command dispatch (function pointers stored with
  * Tcl_CreateCommand) and directly by name from other .c translation units. */
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
 
 
 /* Tcl command "_mged_ged_exec" registered inside search_interp.
@@ -3145,7 +3149,7 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 }
 
 
-BRLCAD_CXX_END_C_LINKAGE
+} /* extern "C" -- all MGED C-linkage command functions */
 
 
 /*

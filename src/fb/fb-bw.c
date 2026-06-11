@@ -50,7 +50,7 @@ int inverse;
 int scr_xoff, scr_yoff;
 
 char *framebuffer = NULL;
-const char *file_name;
+char *file_name;
 FILE *outfp;
 
 

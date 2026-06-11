@@ -38,7 +38,7 @@
 
 #define USE_OLD_MENUS 0
 
-const char *state_str[] = {
+char *state_str[] = {
     "-ZOT-",
     "VIEWING",
     "SOL PICK",

@@ -255,10 +255,10 @@ to_edit_redraw(struct ged *gedp,
 			struct bv_scene_obj *sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
 			struct bu_vls mflag = BU_VLS_INIT_ZERO;
 			struct bu_vls xflag = BU_VLS_INIT_ZERO;
-			const char *av[5] = {0};
+			char *av[5] = {0};
 			int arg = 0;
 
-			av[arg++] = argv[0];
+			av[arg++] = (char *)argv[0];
 			if (sp->s_os->s_dmode == 4) {
 			    av[arg++] = "-h";
 			} else {
@@ -271,7 +271,7 @@ to_edit_redraw(struct ged *gedp,
 
 			ret = ged_exec(gedp, arg + 1, (const char **)av);
 
-			bu_free((void *)av[arg], "to_edit_redraw");
+			bu_free(av[arg], "to_edit_redraw");
 			bu_vls_free(&mflag);
 			bu_vls_free(&xflag);
 

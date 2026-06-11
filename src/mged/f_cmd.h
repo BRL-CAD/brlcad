@@ -28,8 +28,6 @@
 
 #include <tcl.h>
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
-
 extern int f_adc(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_aip(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_amtrack(ClientData, Tcl_Interp *, int, const char *[]);
@@ -145,8 +143,6 @@ extern int f_bv_vrestore(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_vsave(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_zoomin(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_zoomout(ClientData, Tcl_Interp *, int, const char *[]);
-
-BRLCAD_CXX_END_C_LINKAGE
 
 #endif /* MGED_F_CMD_H */
 

@@ -49,9 +49,9 @@ static const char *usage="Usage:\n\trpatch [-D] [-3] < fastgen_input_file > file
 static int fast3;
 
 double
-get_ftn_float(char *str, unsigned int start_col, const char *format)
+get_ftn_float(char *str, unsigned int start_col, char *format)
 {
-    const char *ptr = format;
+    char *ptr = format;
     char tmp_str[MAXLINELEN] = {0};
     int width = 0;
     int precision = 0;
@@ -126,9 +126,9 @@ get_ftn_float(char *str, unsigned int start_col, const char *format)
 
 
 int
-get_ftn_int(char *str, unsigned int start_col, const char *format)
+get_ftn_int(char *str, unsigned int start_col, char *format)
 {
-    const char *ptr;
+    char *ptr;
     char tmp_str[MAXLINELEN];
     int leading_spaces=1;
     int width;

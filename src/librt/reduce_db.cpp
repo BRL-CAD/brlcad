@@ -506,7 +506,8 @@ Combination::write()
 }
 
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C"
+{
     void
     rt_reduce_db(db_i *db, size_t num_preserved_attributes,
 		 const char * const * preserved_attributes_array,
@@ -537,7 +538,7 @@ BRLCAD_CXX_BEGIN_C_LINKAGE
 	hierarchy.merge();
 	hierarchy.write();
     }
-BRLCAD_CXX_END_C_LINKAGE
+}
 
 
 // Local Variables:

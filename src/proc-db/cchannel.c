@@ -55,7 +55,7 @@ struct channel
 };
 
 static void
-usage(const char *s)
+usage(char *s)
 {
     if (s)
 	bu_log("%s\n", s);
@@ -152,7 +152,7 @@ addHoles(struct rt_wdb *db, struct channel parameters)
 }
 
 static void
-makeArb(struct rt_wdb *db, double a, double b, double c, double width, double height, double sublength, const char *name)
+makeArb(struct rt_wdb *db, double a, double b, double c, double width, double height, double sublength, char* name)
 {
     point_t pts[8];
     VSET(pts[0], a, b, c);

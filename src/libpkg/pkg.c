@@ -86,21 +86,7 @@
 #include "pkg.h"
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
-#ifdef __cplusplus
-extern "C" {
-#endif
 extern struct hostent *gethostbyname(const char *);
-#ifdef __cplusplus
-}
-#endif
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-struct pkg_conn *pkg_open_fds(int rfd, int wfd, const struct pkg_switch *switchp, void (*errlog)(const char *msg));
-#ifdef __cplusplus
-}
 #endif
 
 /* compatibility for pedantic bug/limitation in gcc 4.6.2, need to

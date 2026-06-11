@@ -55,8 +55,6 @@ struct diff_state {
     struct bu_vls *merge_file;
 };
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
-
 extern void diff_state_init(struct diff_state *state);
 extern void diff_state_free(struct diff_state *state);
 
@@ -84,8 +82,6 @@ diff3_merge(struct db_i *left_dbip,
 	    struct diff_state *state,
 	    struct bu_ptbl *results);
 
-BRLCAD_CXX_END_C_LINKAGE
-
 // Various options for grouping mode
 struct gdiff_group_opts {
     long filename_threshold; // editing distance below which we group based on filename
@@ -111,10 +107,8 @@ struct gdiff_group_opts {
 #define GDIFF_PATH_DISPLAY_ABSOLUTE 2
 #define GDIFF_GROUP_OPTS_DEFAULT {-1, 0, 0, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 1, 0, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 0, 0}
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
 extern int
 gdiff_group(int argc, const char **argv, struct gdiff_group_opts *o);
-BRLCAD_CXX_END_C_LINKAGE
 
 #endif
 

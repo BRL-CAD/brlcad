@@ -91,7 +91,7 @@
 #include "./rtuif.h"
 
 
-const char *progname = "(noname)";
+char *progname = "(noname)";
 
 /**
  * @struct shot
@@ -138,7 +138,7 @@ static const struct bu_structparse reg_sp[] = {
 
 
 void
-usage(const char *s)
+usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
     bu_exit(1, "Usage: %s geom.g obj [obj...] < rayfile \n", progname);

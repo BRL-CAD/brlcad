@@ -151,7 +151,7 @@ main(int argc, char **argv)
     struct comp_idents *ptr;
     char name[NAMESIZE+1];
     char input_file[START_ARRAY_SIZE] = {0};				/* input file name */
-    const char *output_file = "tankill.g";
+    char *output_file = "tankill.g";
     FILE *in_fp;					/* input file pointer */
     struct rt_wdb *out_fp;				/* output file pointer */
     int polysolids;					/* flag indicating polysolid output */

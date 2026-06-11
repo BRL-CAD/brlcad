@@ -38,8 +38,8 @@
 #define TOTAL_FILTERS 6
 
 struct kernels_info {
-    const char *name;
-    const char *uname;		/* What is needed to recognize it */
+    char *name;
+    char *uname;		/* What is needed to recognize it */
     ICV_FILTER filter;
 } kernel[] = {
     { "LOW PASS", "lo", ICV_FILTER_LOW_PASS },

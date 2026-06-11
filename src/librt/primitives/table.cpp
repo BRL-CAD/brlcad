@@ -39,9 +39,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
-#ifndef BRLCAD_ALL_CXX_COMPILE
-BRLCAD_CXX_BEGIN_C_LINKAGE
-#endif
+extern "C" {
 
 #define RT_DECLARE_INTERFACE(name) \
     extern int rt_##name##_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip); \
@@ -52,7 +50,7 @@ BRLCAD_CXX_BEGIN_C_LINKAGE
     extern void rt_##name##_norm(struct hit *hitp, struct soltab *stp, struct xray *rp); \
     extern void rt_##name##_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp); \
     extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
-    extern int rt_##name##_class(const struct soltab *, const fastf_t *, const fastf_t *, const struct bn_tol *); \
+    extern int rt_##name##_class(const struct soltab *, const vect_t *, const vect_t *, const struct bn_tol *); \
     extern void rt_##name##_free(struct soltab *stp); \
     extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *info); \
     extern int rt_##name##_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size); \
@@ -143,10 +141,12 @@ extern int rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, st
 
 /* from primitives/crofton.cpp - Cauchy-Crofton SA/volume functab callbacks
  * (internal to librt; not exported via the public header)              */
+extern "C" {
 extern void rt_crofton_surf_area(fastf_t *area, const struct rt_db_internal *ip);
 extern void rt_crofton_volume(fastf_t *vol, const struct rt_db_internal *ip);
 extern void rt_crofton_surf_area_implicit(fastf_t *area, const struct rt_db_internal *ip);
 extern void rt_crofton_volume_implicit(fastf_t *vol, const struct rt_db_internal *ip);
+}
 
 /* from primitives/poly/poly.c - analytic polysolid measure functions */
 extern void rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip);
@@ -2790,9 +2790,7 @@ rt_get_functab_by_label(const char *label)
 }
 
 
-#ifndef BRLCAD_ALL_CXX_COMPILE
-BRLCAD_CXX_END_C_LINKAGE
-#endif
+} /* end extern "C" */
 
 // Local Variables:
 // tab-width: 8

@@ -58,12 +58,12 @@
 #define NO	0
 
 extern int	debug;
-extern const char	*usage[], *cmd[];
+extern char	*usage[], *cmd[];
 extern mat_t	identity;
 
 extern void		abort_sig(int sig), quit(int sig);
 extern void		toc(void), list_toc(char **args);
-extern void		prompt(const char *fmt);
+extern void		prompt(char *fmt);
 
 extern int	curr_ct;
 extern char	*arg_list[];

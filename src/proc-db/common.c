@@ -34,7 +34,7 @@
 extern struct rt_wdb *outfp;
 
 struct colors {
-    const char *name;
+    char *name;
     unsigned char c_pixel[3];
 }colortab[] = {
     {"black",	{20, 20, 20}},
@@ -75,7 +75,7 @@ get_rgb(unsigned char *rgb)
 
 
 void
-do_light(const char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp)
+do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp)
 
 
 /* direction or aim point */

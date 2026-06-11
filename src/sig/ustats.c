@@ -27,7 +27,6 @@
 
 #include "common.h"
 
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -82,7 +81,7 @@ comp_stats(FILE *fd)
     unsigned short *buffer=(unsigned short *)NULL;
     unsigned short min = USHRT_MAX;
     unsigned short max = 0; /* sorry, did not find USHRT_MIN */
-    double doub, stdev;
+    double doub, stdev, sqrt(double);
     double sum = 0.0;
     double sum_sq = 0.0;
     double num = 0.0;

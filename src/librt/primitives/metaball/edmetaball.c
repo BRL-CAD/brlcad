@@ -63,9 +63,8 @@ rt_edit_metaball_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 void
-rt_edit_metaball_prim_edit_destroy(void *ptr)
+rt_edit_metaball_prim_edit_destroy(struct rt_metaball_edit *m)
 {
-    struct rt_metaball_edit *m = (struct rt_metaball_edit *)ptr;
     if (!m)
 	return;
 

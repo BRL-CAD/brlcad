@@ -32,7 +32,7 @@
 
 #include "opennurbs_sphere.h"
 
-BRLCAD_CXX_C_LINKAGE void
+extern "C" void
 rt_sph_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_ell_internal *tip;

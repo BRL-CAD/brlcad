@@ -31,12 +31,12 @@
 #include "rt/geom.h"
 #include "brep.h"
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
     extern int rt_hf_to_dsp(struct rt_db_internal *db_intern);
     extern void rt_dsp_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
-BRLCAD_CXX_END_C_LINKAGE
+}
 
-BRLCAD_CXX_C_LINKAGE void
+extern "C" void
 rt_hf_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_db_internal tmp_internal;

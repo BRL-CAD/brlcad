@@ -496,7 +496,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 
 
 static void
-print_seg_list(struct seg *seghead, int seg_count, const char *s)
+print_seg_list(struct seg *seghead, int seg_count, char *s)
 {
     struct seg *seg_p;
 
@@ -1645,7 +1645,7 @@ rt_nmg_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 
 int
 rt_nmg_import5(struct rt_db_internal *ip,
-	       const struct bu_external *ep,
+	       struct bu_external *ep,
 	       const mat_t mat,
 	       const struct db_i *dbip)
 {
@@ -2247,7 +2247,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     struct rt_db_internal intern;
     struct bu_external ext;
     int flags;
-    const char *name="error.s";
+    char *name="error.s";
 
     bu_log("nmg_stash_model_to_file('%s', %p, %s)\n", filename, (void *)m, title);
 

@@ -59,8 +59,8 @@ struct atoms  {
 #define MAX_ATOMS 50
 struct atoms atom_list[MAX_ATOMS];
 
-const char * matname = "plastic";
-const char * matparm = "shine=100.0 diffuse=.8 specular=.2";
+char * matname = "plastic";
+char * matparm = "shine=100.0 diffuse=.8 specular=.2";
 
 void read_data(void), process_sphere(int id, fastf_t *center, double rad, int sph_type);
 int make_bond(int sp1, int sp2);

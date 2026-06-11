@@ -70,7 +70,7 @@ to_mouse_append_pnt_common(struct ged *gedp,
 			   int UNUSED(maxargs))
 {
     int ret;
-    const char *av[4];
+    char *av[4];
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
 
@@ -363,7 +363,7 @@ to_mouse_constrain_rot(struct ged *gedp,
 {
     int ret;
     int ac;
-    const char *av[4];
+    char *av[4];
     fastf_t dx, dy;
     fastf_t sf;
     struct bu_vls rot_vls = BU_VLS_INIT_ZERO;
@@ -472,7 +472,7 @@ to_mouse_constrain_trans(struct ged *gedp,
     int width;
     int ret;
     int ac;
-    const char *av[4];
+    char *av[4];
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
@@ -580,7 +580,7 @@ to_mouse_find_arb_edge(struct ged *gedp,
 		       const char *usage,
 		       int UNUSED(maxargs))
 {
-    const char *av[6];
+    char *av[6];
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
 
@@ -643,7 +643,7 @@ to_mouse_find_bot_edge(struct ged *gedp,
 		       const char *usage,
 		       int UNUSED(maxargs))
 {
-    const char *av[6];
+    char *av[6];
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
 
@@ -705,7 +705,7 @@ to_mouse_find_bot_pnt(struct ged *gedp,
 		      const char *usage,
 		      int UNUSED(maxargs))
 {
-    const char *av[6];
+    char *av[6];
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
 
@@ -767,7 +767,7 @@ to_mouse_find_metaball_pnt(struct ged *gedp,
 			   const char *usage,
 			   int UNUSED(maxargs))
 {
-    const char *av[6];
+    char *av[6];
     point_t model;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
@@ -831,7 +831,7 @@ to_mouse_find_pipe_pnt(struct ged *gedp,
 		       const char *usage,
 		       int UNUSED(maxargs))
 {
-    const char *av[6];
+    char *av[6];
     point_t model;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
@@ -1154,7 +1154,7 @@ to_mouse_move_arb_edge(struct ged *gedp,
 {
     int width;
     int ret;
-    const char *av[6];
+    char *av[6];
     fastf_t dx, dy;
     fastf_t inv_width;
     point_t model;
@@ -1250,7 +1250,7 @@ to_mouse_move_arb_face(struct ged *gedp,
 {
     int width;
     int ret;
-    const char *av[6];
+    char *av[6];
     fastf_t dx, dy;
     fastf_t inv_width;
     point_t model;
@@ -1347,7 +1347,7 @@ to_mouse_move_bot_pnt(struct ged *gedp,
     int width;
     int ret;
     int rflag;
-    const char *av[6];
+    char *av[6];
     const char *cmd;
     fastf_t dx, dy, dz;
     fastf_t inv_width;
@@ -1429,10 +1429,10 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 	struct rt_bot_internal *botip;
 	mat_t mat;
 	size_t vertex_i;
-	const char *last;
+	char *last;
 
 	if ((last = strrchr(argv[2], '/')) == NULL)
-	    last = argv[2];
+	    last = (char *)argv[2];
 	else
 	    ++last;
 
@@ -1604,25 +1604,25 @@ to_mouse_move_bot_pnts(struct ged *gedp,
     {
 	register int i, j;
 	int ac = argc - 2;
-	const char **av = (const char **)bu_calloc(ac, sizeof(char *), "to_mouse_move_bot_pnts: av[]");
+	char **av = (char **)bu_calloc(ac, sizeof(char *), "to_mouse_move_bot_pnts: av[]");
 	av[0] = "bot_move_pnts";
 	// TODO - above is not a current GED command - broken
 
-	av[1] = argv[4];
+	av[1] = (char *)argv[4];
 	av[2] = bu_vls_addr(&pt_vls);
-	av[ac-1] = NULL;
+	av[ac-1] = (char *)0;
 
 	for (i=3, j=5; i < ac; ++i, ++j)
-	    av[i] = argv[j];
+	    av[i] = (char *)argv[j];
 
-	ret = ged_exec(gedp, ac, av);
+	ret = ged_exec(gedp, ac, (const char **)av);
 	bu_vls_free(&pt_vls);
 
 	if (ret == BRLCAD_OK) {
 	    av[0] = "draw";
-	    av[1] = argv[4];
-	    av[2] = NULL;
-	    to_edit_redraw(gedp, 2, av);
+	    av[1] = (char *)argv[4];
+	    av[2] = (char *)0;
+	    to_edit_redraw(gedp, 2, (const char **)av);
 	}
 
 	bu_free((void *)av, "to_mouse_move_bot_pnts: av[]");
@@ -1641,7 +1641,7 @@ to_mouse_move_pnt_common(struct ged *gedp,
 			 int UNUSED(maxargs))
 {
     int ret, width;
-    const char *av[6];
+    char *av[6];
     fastf_t dx, dy;
     fastf_t inv_width;
     point_t model;
@@ -1811,7 +1811,7 @@ to_mouse_orotate(struct ged *gedp,
 	args[3] = bu_vls_addr(&rot_z_vls);
 	tclcad_eval(current_top->to_interp, command, sizeof(args) / sizeof(args[0]), args);
     } else {
-	const char *av[6];
+	char *av[6];
 
 	av[0] = "orotate";
 	av[1] = (char *)argv[2];
@@ -1918,7 +1918,7 @@ to_mouse_oscale(struct ged *gedp,
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
 	bu_vls_free(&tcl_cmd);
     } else {
-	const char *av[6];
+	char *av[6];
 
 	av[0] = "oscale";
 	av[1] = (char *)argv[2];
@@ -2046,7 +2046,7 @@ to_mouse_otranslate(struct ged *gedp,
 
 	to_refresh_view(gdvp);
     } else {
-	const char *av[6];
+	char *av[6];
 
 	av[0] = "otranslate";
 	av[1] = (char *)argv[2];
@@ -2156,7 +2156,7 @@ to_mouse_poly_circ_func(Tcl_Interp *interp,
 			const char *usage)
 {
     int ac;
-    const char *av[5];
+    char *av[5];
     int x, y;
     fastf_t fx, fy;
     point_t v_pt, m_pt;
@@ -2332,7 +2332,7 @@ to_mouse_poly_cont_func(Tcl_Interp *interp,
 			const char *usage)
 {
     int ac;
-    const char *av[7];
+    char *av[7];
     int x, y;
     fastf_t fx, fy;
     point_t v_pt, m_pt;
@@ -2473,7 +2473,7 @@ to_mouse_poly_ell_func(Tcl_Interp *interp,
 		       const char *usage)
 {
     int ac;
-    const char *av[5];
+    char *av[5];
     int x, y;
     fastf_t fx, fy;
     point_t m_pt;
@@ -2659,7 +2659,7 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
 			const char *usage)
 {
     int ac;
-    const char *av[5];
+    char *av[5];
     int x, y;
     fastf_t fx, fy;
     point_t v_pt, m_pt;
@@ -2768,7 +2768,7 @@ to_mouse_rect(struct ged *gedp,
 {
     int ret;
     int ac;
-    const char *av[5];
+    char *av[5];
     int x, y;
     int dx, dy;
     struct bu_vls dx_vls = BU_VLS_INIT_ZERO;
@@ -2834,7 +2834,7 @@ to_mouse_rot(struct ged *gedp,
 {
     int ret;
     int ac;
-    const char *av[4];
+    char *av[4];
     fastf_t dx, dy;
     struct bu_vls rot_vls = BU_VLS_INIT_ZERO;
 
@@ -2920,7 +2920,7 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 			 int UNUSED(maxargs))
 {
     int ret;
-    const char *av[6];
+    char *av[6];
     fastf_t dx, dy;
     point_t model;
     point_t view;
@@ -3159,7 +3159,7 @@ to_mouse_data_scale(struct ged *gedp,
 		    int UNUSED(maxargs))
 {
     int ret;
-    const char *av[4];
+    char *av[4];
     struct bu_vls scale_vls = BU_VLS_INIT_ZERO;
     struct bview *gdvp;
 
@@ -3188,7 +3188,7 @@ to_mouse_scale(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     int ret;
-    const char *av[3];
+    char *av[3];
     struct bu_vls zoom_vls = BU_VLS_INIT_ZERO;
     struct bview *gdvp;
 
@@ -3223,7 +3223,7 @@ to_mouse_protate(struct ged *gedp,
 		 int UNUSED(maxargs))
 {
     int ret;
-    const char *av[6];
+    char *av[6];
     fastf_t dx, dy;
     point_t model;
     point_t view;
@@ -3314,7 +3314,7 @@ to_mouse_pscale(struct ged *gedp,
 		int UNUSED(maxargs))
 {
     int ret, width;
-    const char *av[6];
+    char *av[6];
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
@@ -3408,7 +3408,7 @@ to_mouse_ptranslate(struct ged *gedp,
 		    int UNUSED(maxargs))
 {
     int ret, width;
-    const char *av[6];
+    char *av[6];
     fastf_t dx, dy;
     point_t model;
     point_t view;
@@ -3504,7 +3504,7 @@ to_mouse_trans(struct ged *gedp,
 {
     int ret, width;
     int ac;
-    const char *av[4];
+    char *av[4];
     fastf_t dx, dy;
     fastf_t inv_width;
     struct bu_vls trans_vls = BU_VLS_INIT_ZERO;

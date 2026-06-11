@@ -40,7 +40,7 @@
 #include <map>
 #include <cstring>
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -48,7 +48,7 @@ BRLCAD_CXX_BEGIN_C_LINKAGE
 #include "rt/edit.h"
 #include "rt/func.h"
 #include "rt/functab.h"
-BRLCAD_CXX_END_C_LINKAGE
+}
 
 class RT_Edit_Map_Internal {
     public:
@@ -66,7 +66,7 @@ struct rt_edit_map {
     RT_Edit_Map_Internal *i;
 };
 
-BRLCAD_CXX_C_LINKAGE struct rt_edit_map *
+extern "C" struct rt_edit_map *
 rt_edit_map_create(void)
 {
     struct rt_edit_map *o = NULL;
@@ -75,7 +75,7 @@ rt_edit_map_create(void)
     return o;
 }
 
-BRLCAD_CXX_C_LINKAGE void
+extern "C" void
 rt_edit_map_destroy(struct rt_edit_map *o)
 {
     if (!o)

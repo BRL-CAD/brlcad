@@ -31,8 +31,8 @@ material_creation_test(struct ged *ged)
 {
     //Create test material with whatever you want it called.
     printf("Testing creating a material using the material command...");
-    const char* material_name = "Material";
-    const char* object_name = "TestMaterial";
+    char* material_name = "Material";
+    char* object_name = "TestMaterial";
     const char *av[4] = {"material", "create", object_name, material_name};
     ged_exec_material(ged, 4, (const char **)av);
     const char* argv2[] = {"ls"};
@@ -49,10 +49,10 @@ void
 property_set_test(struct ged *ged)
 {
     printf("Testing setting a property in a material object...\n");
-    const char* object_name = "TestMaterial";
-    const char* property_group = "physical";
-    const char* property_name = "density";
-    const char* property_value = "12.5";
+    char* object_name = "TestMaterial";
+    char* property_group = "physical";
+    char* property_name = "density";
+    char* property_value = "12.5";
     const char* argv[] = {"material", "set", object_name, property_group, property_name, property_value};
     ged_exec_material(ged, 6, argv);
     printf("Testing when there is not enough arguments (property group is not inputted):\n");
@@ -60,7 +60,7 @@ property_set_test(struct ged *ged)
     ged_exec_material(ged, 5, argv2);
     printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
     printf("Testing when property group is incorrect:\n");
-    const char* incorrect_property_group = "opticalProperties";
+    char* incorrect_property_group = "opticalProperties";
     const char* argv3[] = {"material", "set", object_name, incorrect_property_group, property_name, property_value};
     ged_exec_material(ged, 6, argv3);
     printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
@@ -70,14 +70,14 @@ property_set_test(struct ged *ged)
 void
 property_get_test(struct ged *ged) {
     printf("Testing retrieving a material property...\n");
-    const char* object_name = "TestMaterial";
-    const char* property_group = "physical";
-    const char* property_name = "density";
+    char* object_name = "TestMaterial";
+    char* property_group = "physical";
+    char* property_name = "density";
     const char* argv[] = {"material", "get", object_name, property_group, property_name};
     ged_exec_material(ged, 5, argv);
     printf("Should be 12.5: %s\n\n", bu_vls_cstr(ged->ged_result_str));
     printf("Testing when the property does not exist:\n");
-    const char* nonexistant_property = "meltingPoint";
+    char* nonexistant_property = "meltingPoint";
     const char* argv2[] = {"material", "get", object_name, property_group, nonexistant_property};
     ged_exec_material(ged, 5, argv2);
     printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
@@ -87,7 +87,7 @@ property_get_test(struct ged *ged) {
 void
 material_destroy_test(struct ged *ged) {
     printf("Testing destroying a material object...\n");
-    const char* object_name = "TestMaterial";
+    char* object_name = "TestMaterial";
     const char* argv[] = {"material", "destroy", object_name};
     ged_exec_material(ged, 3, argv);
     printf("ls should be empty: ");
@@ -101,14 +101,14 @@ void
 material_import_test(struct ged *ged)
 {
     printf("Testing importing a density table...\n");
-    const char* file_name = "TEST_DENSITIES";
+    char* file_name = "TEST_DENSITIES";
     const char* argv[] = {"material", "import", "--id", file_name};
     ged_exec_material(ged, 4, argv);
     const char* argv2[] = {"ls"};
     ged_exec_ls(ged, 1, argv2);
     printf("%s\n", bu_vls_cstr(ged->ged_result_str));
     printf("Testing when file does not exist:\n");
-    const char* fake_file = "EmptyFile.txt";
+    char* fake_file = "EmptyFile.txt";
     const char* argv3[] = {"material", "import", "--id", fake_file};
     ged_exec_material(ged, 4, argv3);
     printf("%s\n", bu_vls_cstr(ged->ged_result_str));

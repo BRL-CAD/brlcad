@@ -38,7 +38,7 @@
 
 
 void
-Readcnv(fastf_t *inum, const char *id)
+Readcnv(fastf_t *inum, char *id)
 {
     int i = 0, done = 0, lencard;
     char num[MAX_NUM] = {0};

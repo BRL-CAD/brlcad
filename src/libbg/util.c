@@ -23,7 +23,6 @@
 #include "vmath.h"
 #include "bg/plane.h"
 #include "bn/tol.h"
-#include "./bg_private.h"
 
 /* TODO - need routines for 2D and 3D point sets that check for degeneracy - (dimension < 2 for a 2D
  * set, dimension < 3 for a 3D set.  Probably want to use Eigen's matrix routines and a rank check:

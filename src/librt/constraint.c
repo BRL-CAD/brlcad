@@ -39,7 +39,7 @@
 #include "raytrace.h"
 
 
-extern const struct bu_structparse rt_constraint_parse[] = {
+const struct bu_structparse rt_constraint_parse[] = {
     {"%d", 1, "ID", bu_offsetof(struct rt_constraint_internal, id), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "N", bu_offsetof(struct rt_constraint_internal, type), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%V", 1, "Ex", bu_offsetof(struct rt_constraint_internal, expression), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},

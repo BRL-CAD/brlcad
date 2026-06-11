@@ -399,11 +399,6 @@ bu_sort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void *, voi
 
 }
 
-#undef SWAP
-#undef COPY
-#undef swapcode
-#undef swap
-#undef vecswap
 
 /*
  * Local Variables:

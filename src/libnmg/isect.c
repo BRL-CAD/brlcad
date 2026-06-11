@@ -345,7 +345,7 @@ ray_miss_vertex(struct nmg_ray_data *rd, struct vertexuse *vu_p)
  * Support routine for vertex_neighborhood()
  */
 static void
-get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Pole, fastf_t *Pole_prj_pt, double *Pole_dist, fastf_t *Pole_pca, fastf_t *pointA, fastf_t *leftA, fastf_t *pointB, fastf_t *leftB, fastf_t *polar_height_vect, const char *Pole_name)
+get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Pole, fastf_t *Pole_prj_pt, double *Pole_dist, fastf_t *Pole_pca, fastf_t *pointA, fastf_t *leftA, fastf_t *pointB, fastf_t *leftB, fastf_t *polar_height_vect, char *Pole_name)
 {
     vect_t pca_to_pole_vect;
     vect_t VtoPole_prj;

@@ -40,7 +40,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, const char *reg_name, const char *grp_name, struct bu_list *vlfree);
+static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, struct bu_list *vlfree);
 static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
 void
@@ -56,7 +56,7 @@ int
 main(int argc, char **argv)
 {
     char		*afile = NULL;
-    const char		*bfile = "nmg.g";
+    char		*bfile = "nmg.g";
     FILE		*fpin;
     struct rt_wdb	*fpout;
     struct bu_list *vlfree = &rt_vlfree;
@@ -109,7 +109,7 @@ main(int argc, char **argv)
  *	Write the nmg to a BRL-CAD style data base.
  */
 void
-create_brlcad_db(struct rt_wdb *fpout, struct model *m, const char *reg_name, const char *grp_name)
+create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)
 {
     char	*rname, *sname;
     int size = sizeof(reg_name) + 3;
@@ -132,7 +132,7 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, const char *reg_name, co
  *	Convert an ascii nmg description into a BRL-CAD data base.
  */
 static int
-ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, const char *reg_name, const char *grp_name, struct bu_list *vlfree)
+ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, struct bu_list *vlfree)
 {
     struct model	*m;
     struct nmgregion	*r;

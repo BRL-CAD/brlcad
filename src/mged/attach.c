@@ -106,7 +106,7 @@ mged_dm_init(
 
     dm_var_init(s, o_dm);
 
-    /* application provided routines */
+    /* register application provided routines */
     cmd_hook = dm_commands;
 
     /* In case the user wants swrast in headless mode, pass the view in the
@@ -496,12 +496,10 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
     mged_link_vars(s->mged_curr_dm);
 
     Tcl_ResetResult(s->interp);
-    {
-	const char *dm_name = dm_get_dm_name(DMP);
-	const char *dm_lname = dm_get_dm_lname(DMP);
-	if (dm_name && dm_lname) {
-	    Tcl_AppendResult(s->interp, "ATTACHING ", dm_name, " (", dm_lname,	")\n", (char *)NULL);
-	}
+    const char *dm_name = dm_get_dm_name(DMP);
+    const char *dm_lname = dm_get_dm_lname(DMP);
+    if (dm_name && dm_lname) {
+	Tcl_AppendResult(s->interp, "ATTACHING ", dm_name, " (", dm_lname,	")\n", (char *)NULL);
     }
 
     share_dlist(s->mged_curr_dm);

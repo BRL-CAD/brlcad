@@ -31,12 +31,6 @@
 #include "bu/parallel.h"
 #include "bu/exit.h"
 
-#ifdef __cplusplus
-extern "C" void semaphore_clear(void);
-#else
-extern void semaphore_clear(void);
-#endif
-
 static void
 sem_bomb(int eno) {
     switch (eno) {
@@ -209,6 +203,7 @@ void
 bu_semaphore_free(void)
 {
     unsigned int i;
+    extern void semaphore_clear(void);
     semaphore_clear();
 
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)

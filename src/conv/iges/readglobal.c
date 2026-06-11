@@ -32,7 +32,7 @@ fastf_t cnv[] = {
 #define NO_OF_VERSIONS 10
 #define COMMA ','
 
-const char *iges_version[NO_OF_VERSIONS] = {
+char *iges_version[NO_OF_VERSIONS] = {
     " ",
     "1.0",
     "ANSI Y14.26M - 1981",

@@ -252,7 +252,7 @@ subdivide_face(const point_t c0, const point_t c1, const point_t c2, int freq)
 	}
     }
 
-    /* the edges of every small triangle in the face grid */
+    /* register the edges of every small triangle in the face grid */
     for (i = 1; i <= freq; i++) {
 	for (j = 0; j < i; j++) {
 	    /* "upward" triangle: (i,j)-(i,j+1)-(i-1,j) */

@@ -57,7 +57,7 @@ void SimpleInput(void);
 char usage[] = "\
 Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initially]\n";
 
-static const char *help = "\
+static char *help = "\
 Char:   Command:                                                \r\n\
 h B	Left (1)\r\n\
 j N	Down (1)\r\n\

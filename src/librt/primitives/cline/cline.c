@@ -54,7 +54,7 @@ struct cline_specific {
 
 #define RT_CLINE_O(m) bu_offsetof(struct rt_cline_internal, m)
 
-extern const struct bu_structparse rt_cline_parse[] = {
+const struct bu_structparse rt_cline_parse[] = {
     { "%f", 3, "V", RT_CLINE_O(v),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", RT_CLINE_O(h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r", RT_CLINE_O(radius), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

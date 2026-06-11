@@ -38,8 +38,6 @@
 
 #include "common.h"
 
-#include "icv.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"

@@ -312,7 +312,7 @@ init_defaults(void)
 namespace asf = foundation;
 namespace asr = renderer;
 
-/* db_walk_tree() callback to all regions within the scene
+/* db_walk_tree() callback to register all regions within the scene
  * using either a disney shader with rgb color set on combination regions
  * or specified material OSL optical shader
  */
@@ -695,7 +695,7 @@ build_project(const char* file, const char* UNUSED(objects))
     // Materials
     //------------------------------------------------------------------------
 
-    // walk the db to all regions
+    // walk the db to register all regions
     struct db_tree_state state;
     RT_DBTS_INIT(&state);
     struct db_i* dbip = db_open(file, DB_OPEN_READONLY);

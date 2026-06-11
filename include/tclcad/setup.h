@@ -36,7 +36,7 @@
 #include "dm.h"
 #include "tclcad/defines.h"
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+__BEGIN_DECLS
 
 TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
@@ -99,7 +99,7 @@ TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const ch
  */
 TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog);
 
-BRLCAD_CXX_END_C_LINKAGE
+__END_DECLS
 
 #endif /* TCLCAD_SETUP_H */
 

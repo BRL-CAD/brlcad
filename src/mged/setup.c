@@ -582,7 +582,7 @@ mged_setup(struct mged_state *s)
     bu_ptbl_ins(&s->gedp->ged_free_views, (long *)view_state->vs_gvp);
     s->gedp->ged_gvp = view_state->vs_gvp;
 
-    /* commands */
+    /* register commands */
     cmd_setup(s);
 
     history_setup();

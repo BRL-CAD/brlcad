@@ -84,13 +84,13 @@ mat_t identity;
 int torus=0, sphere=0, mitre=0, nothing=0, cable=0;
 
 /* formats for solid and region names */
-const char *tor_out="%02d-out.tor", *tor_in="%02d-in.tor";
-const char *haf="%02d.haf";
-const char *sph_out="%02d-out.sph", *sph_in="%02d-in.sph";
-const char *rcc_out="%02d-out.rcc", *rcc_in="%02d-in.rcc";
-const char *tub_reg="%02d.tube", *tub_flu="%02d.tubflu";
-const char *elb_reg="%02d.elbow", *elb_flu="%02d.elbflu";
-const char *arb="%02d.arb";
+char *tor_out="%02d-out.tor", *tor_in="%02d-in.tor";
+char *haf="%02d.haf";
+char *sph_out="%02d-out.sph", *sph_in="%02d-in.sph";
+char *rcc_out="%02d-out.rcc", *rcc_in="%02d-in.rcc";
+char *tub_reg="%02d.tube", *tub_flu="%02d.tubflu";
+char *elb_reg="%02d.elbow", *elb_flu="%02d.elbflu";
+char *arb="%02d.arb";
 
 void Usage(void);
 
@@ -151,7 +151,7 @@ void
 Names(void)
 {
     struct points *ptr;
-    const char *inform=NULL, *outform=NULL, *cutform=NULL;
+    char *inform=NULL, *outform=NULL, *cutform=NULL;
     int nummer=0;
 
 
@@ -556,8 +556,8 @@ Groups(void)
 {
     struct points *ptr;
     char tag[NAMESIZE];
-    const char *pipe_group=".pipe";
-    const char *fluid_group=".fluid";
+    char *pipe_group=".pipe";
+    char *fluid_group=".fluid";
     int comblen=0;
     struct wmember head;
 

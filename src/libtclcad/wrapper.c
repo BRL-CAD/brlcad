@@ -38,14 +38,14 @@ to_autoview_func(struct ged *gedp,
 {
     size_t i;
     int ret;
-    const char *av[2];
+    char *av[2];
     int aflag = 0;
     int rflag = 0;
     struct bview *gdvp;
 
     av[0] = "who";
-    av[1] = NULL;
-    ret = ged_exec_who(gedp, 1, av);
+    av[1] = (char *)0;
+    ret = ged_exec_who(gedp, 1, (const char **)av);
 
     for (i = 1; i < (size_t)argc; ++i) {
 	if (argv[i][0] != '-') {
@@ -289,9 +289,9 @@ to_view_func_common(struct ged *gedp,
     if (gdvp->gv_s->adaptive_plot_csg &&
 	gdvp->gv_s->redraw_on_zoom)
     {
-	const char *gr_av[] = {"redraw", NULL};
+	char *gr_av[] = {"redraw", NULL};
 
-	ged_exec_redraw(gedp, 1, gr_av);
+	ged_exec_redraw(gedp, 1, (const char **)gr_av);
 
 	gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
 	gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);

@@ -30,7 +30,7 @@
 #include "brep.h"
 
 
-BRLCAD_CXX_C_LINKAGE void
+extern "C" void
 rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_rhc_internal *eip;

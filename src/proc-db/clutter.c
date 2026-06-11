@@ -64,10 +64,10 @@ double crystal_stack(char *cname, double xc, double yc, double size);
 double crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_t *min, double var, double ratio, int nsolids);
 
 void do_plate(char *name, double xc, double yc, double size);
-void do_rings(const char *ringname, fastf_t *center, double r1, double r2, double incr, int n);
+void do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int n);
 
 void get_rgb(unsigned char *rgb);
-void do_light(const char *name, point_t pos, vect_t dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp);
+void do_light(char *name, point_t pos, vect_t dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp);
 
 struct bn_unif *rbuf;
 
@@ -475,7 +475,7 @@ prim_stack(char *pname, double xc, double yc, double size)
 
 
 void
-do_rings(const char *ringname, fastf_t *center, double r1, double r2, double incr, int n)
+do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int n)
 {
     int i;
     vect_t normal;

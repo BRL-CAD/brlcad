@@ -135,7 +135,7 @@ struct cmdtab {
  * for the menu, and the remaining items are individual menu entries.
  */
 struct menu_item {
-    const char *menu_string;
+    char *menu_string;
     void (*menu_func)(struct mged_state *, int, int, int);
     int menu_arg;
 };
@@ -282,7 +282,7 @@ struct mged_state {
 };
 extern struct mged_state *MGED_STATE;
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+__BEGIN_DECLS
 
 
 /* defined in mged.c */
@@ -320,10 +320,10 @@ extern void mged_view_callback(struct bview *gvp, void *clientData);
 /* buttons.c */
 extern void button(struct mged_state *s, int bnum);
 extern void press(char *str);
-extern const char *label_button(struct mged_state *s, int bnum);
-extern int not_state(struct mged_state *s, int desired, const char *str);
-extern int chg_state(struct mged_state *s, int from, int to, const char *str);
-extern void state_err(struct mged_state *s, const char *str);
+extern char *label_button(struct mged_state *s, int bnum);
+extern int not_state(struct mged_state *s, int desired, char *str);
+extern int chg_state(struct mged_state *s, int from, int to, char *str);
+extern void state_err(struct mged_state *s, char *str);
 
 extern int invoke_db_wrapper(Tcl_Interp *interpreter, int argc, const char *argv[]);
 
@@ -352,7 +352,7 @@ extern int edobj; /* object editing options */
 /**
  * Editor States
  */
-extern const char *state_str[]; /* identifying strings */
+extern char *state_str[]; /* identifying strings */
 #define ST_VIEW		1 /* Viewing only */
 #define ST_S_PICK	2 /* Picking for Solid Edit */
 #define ST_S_EDIT	3 /* Solid Editing */
@@ -614,7 +614,7 @@ int Wdb_Init(Tcl_Interp *interp);
 int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
 void wdb_deleteProc(ClientData clientData);
 
-BRLCAD_CXX_END_C_LINKAGE
+__END_DECLS
 
 #endif  /* MGED_MGED_H */
 

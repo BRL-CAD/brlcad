@@ -48,7 +48,7 @@ main(int argc, char **argv)
     const char *output_path = NULL;
     const char *input_path = NULL;
     int separate = 0;
-    const char* type = "de";
+    char* type = "de";
     int c;
 
     bu_setprogname(argv[0]);

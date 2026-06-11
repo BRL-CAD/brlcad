@@ -50,7 +50,7 @@
 
 
 /** list of legal command line options for use with bu_getopt()  */
-const char *options = "hd:";
+char *options = "hd:";
 
 /** flag for printing names of objects as encountered */
 #define DEBUG_NAMES 1

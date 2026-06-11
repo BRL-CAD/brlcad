@@ -52,7 +52,7 @@ static long int file_width = 512L;
 static long int file_height = 512L;
 static long int squarefilesize = 512L;
 static int autosize = 0;
-static const char *file_name;
+static char *file_name;
 static FILE *infp;
 static int fileinput = 0;
 

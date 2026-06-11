@@ -224,7 +224,7 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 }
 
 
-BRLCAD_CXX_C_LINKAGE void
+extern "C" void
 rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct model *m;

@@ -29,7 +29,7 @@
 
 
 void
-mkbldg_makeWallSegment(const char *name, struct rt_wdb *db_fileptr, point_t bbp1, point_t bbp2)
+mkbldg_makeWallSegment(char *name, struct rt_wdb *db_fileptr, point_t bbp1, point_t bbp2)
 {
     struct bu_vls *newName = bu_vls_vlsinit();
 

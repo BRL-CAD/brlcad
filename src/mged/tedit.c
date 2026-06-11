@@ -167,7 +167,7 @@ writesolid(struct mged_state *s)
 {
     int i;
     FILE *fp;
-    const char *eol = "\n";
+    char *eol = "\n";
 
     CHECK_DBI_NULL;
 

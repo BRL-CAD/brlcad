@@ -225,7 +225,7 @@ clt_rhc_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
-extern const struct bu_structparse rt_rhc_parse[] = {
+const struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rhc_internal, rhc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_rhc_internal, rhc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_rhc_internal, rhc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

@@ -60,7 +60,7 @@ static int tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, co
  ************************************************************************/
 
 struct dbcmdstruct {
-    const char *cmdname;
+    char *cmdname;
     int (*cmdfunc)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 };
 
@@ -73,7 +73,7 @@ static struct dbcmdstruct tclcad_rt_cmds[] = {
     {"prep",		RT_FUNC_TCL_CAST(tclcad_rt_prep)},
     {"cutter",		RT_FUNC_TCL_CAST(tclcad_rt_cutter)},
     {"set",		RT_FUNC_TCL_CAST(tclcad_rt_set)},
-    {NULL,		RT_FUNC_TCL_CAST(0)}
+    {(char *)0,		RT_FUNC_TCL_CAST(0)}
 };
 
 

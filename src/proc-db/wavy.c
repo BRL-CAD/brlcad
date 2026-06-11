@@ -68,8 +68,8 @@ printusage(void)
 int
 main(int argc, char **argv)
 {
-    const char *id_name = "wavy database";
-    const char *nurb_name = "wavy";
+    char *id_name = "wavy database";
+    char *nurb_name = "wavy";
     int i, j;
     fastf_t hscale;
     struct rt_wdb *outfp;

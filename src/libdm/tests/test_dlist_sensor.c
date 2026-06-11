@@ -24,7 +24,7 @@
  *
  * Tests:
  *   1. register_fire   — register one sensor and verify the callback fires.
- *   2. multiple_fire   — three sensors and verify all three fire
+ *   2. multiple_fire   — register three sensors and verify all three fire
  *      in one dm_fire_dlist_sensors call.
  *   3. clear_no_fire   — after dm_dlist_sensors_clear, fire must invoke
  *      zero callbacks.
@@ -151,7 +151,7 @@ test_clear_no_fire(void)
     dm_close(dmp);
 }
 
-/* ---- Test 4: NULL guards ---------------------------------- */
+/* ---- Test 4: register NULL guards ---------------------------------- */
 static void
 test_register_null(void)
 {

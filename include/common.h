@@ -122,22 +122,6 @@ extern int snprintf(char *str, size_t size, const char *format, ...);
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 
-/* Internal implementation files that bridge C and C++ linkage need C
- * linkage in normal mixed-language builds, but C++ linkage when C sources
- * are deliberately compiled as C++.
- */
-#ifndef BRLCAD_CXX_C_LINKAGE
-#  if defined(__cplusplus) && !defined(BRLCAD_ALL_CXX_COMPILE)
-#    define BRLCAD_CXX_C_LINKAGE extern "C"
-#    define BRLCAD_CXX_BEGIN_C_LINKAGE extern "C" {
-#    define BRLCAD_CXX_END_C_LINKAGE }
-#  else
-#    define BRLCAD_CXX_C_LINKAGE
-#    define BRLCAD_CXX_BEGIN_C_LINKAGE
-#    define BRLCAD_CXX_END_C_LINKAGE
-#  endif
-#endif
-
 /* provide declaration markers for header externals */
 #ifndef __BEGIN_DECLS
 #  ifdef __cplusplus

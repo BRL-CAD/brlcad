@@ -114,7 +114,7 @@ extract_path(struct bu_vls *path, const char *input)
 {
     int ret = 0;
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
-    const char *colon_pos = NULL;
+    char *colon_pos = NULL;
 
     if (UNLIKELY(!input))
 	return 0;

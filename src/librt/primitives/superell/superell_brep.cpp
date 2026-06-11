@@ -29,11 +29,11 @@
 #include "rt/geom.h"
 #include "brep.h"
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
     void rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol);
-BRLCAD_CXX_END_C_LINKAGE
+}
 
-BRLCAD_CXX_C_LINKAGE void
+extern "C" void
 rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_superell_internal *sip;

@@ -43,8 +43,8 @@ struct db5_type {
     int major_code;
     int minor_code;
     int heed_minor;
-    const char *tag;
-    const char *description;
+    char *tag;
+    char *description;
 };
 
 /**
@@ -120,7 +120,7 @@ db5_type_tag_from_major(char **tag, const int major)
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
 	if ((tp->major_code == major) && !(tp->heed_minor)) {
-	    *tag = (char *)tp->tag;
+	    *tag = tp->tag;
 	    return 0;
 	}
     }
@@ -137,7 +137,7 @@ db5_type_descrip_from_major(char **descrip, const int major)
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
 	if ((tp->major_code == major) && !(tp->heed_minor)) {
-	    *descrip = (char *)tp->description;
+	    *descrip = tp->description;
 	    return 0;
 	}
     }
@@ -158,7 +158,7 @@ db5_type_tag_from_codes(char **tag, const int major, const int minor)
 	    if (tp->heed_minor)
 		found_minors = 1;
 	    if ((tp->minor_code == minor) || !found_minors) {
-		*tag = (char *)tp->tag;
+		*tag = tp->tag;
 		return 0;
 	    }
 	}
@@ -180,7 +180,7 @@ db5_type_descrip_from_codes(char **descrip, const int major, const int minor)
 	    if (tp->heed_minor)
 		found_minors = 1;
 	    if ((tp->minor_code == minor) || !found_minors) {
-		*descrip = (char *)tp->description;
+		*descrip = tp->description;
 		return 0;
 	    }
 	}

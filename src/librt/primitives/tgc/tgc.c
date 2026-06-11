@@ -109,7 +109,7 @@ void rt_pnt_sort(register fastf_t *t, int npts);
     }
 
 
-extern const struct bu_structparse rt_tgc_parse[] = {
+const struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_tgc_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_tgc_internal, h, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A", bu_offsetofarray(struct rt_tgc_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

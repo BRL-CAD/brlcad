@@ -1204,7 +1204,7 @@ dsp_tess_with_decimation(
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-BRLCAD_CXX_C_LINKAGE int
+extern "C" int
 rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_dsp_internal *dsp_ip;

@@ -21,7 +21,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-const char *
+char *
 iges_type(int type)
 {
     size_t i;

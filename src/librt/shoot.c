@@ -537,7 +537,7 @@ rt_shootray(register struct application *ap)
     fastf_t last_bool_start;
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
-    const char *status;
+    char *status;
     struct partition InitialPart;	/* Head of Initial Partitions */
     struct partition FinalPart;	/* Head of Final Partitions */
     struct soltab **stpp;

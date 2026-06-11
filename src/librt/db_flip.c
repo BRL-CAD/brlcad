@@ -31,9 +31,6 @@
 #include "vmath.h"
 #include "rt/db4.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef union {
     float f;
@@ -200,10 +197,6 @@ rt_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff)
 {
     flip_dbmat_mat(dbp, ff);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 
 /*

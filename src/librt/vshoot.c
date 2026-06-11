@@ -121,7 +121,7 @@ rt_vshootray(struct application *ap)
     vect_t inv_dir;	/* inverses of ap->a_ray.r_dir */
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_ptbl *regionbits;	/* bits for all involved regions */
-    const char *status;
+    char *status;
     struct partition InitialPart;	/* Head of Initial Partitions */
     struct partition FinalPart;	/* Head of Final Partitions */
     int nrays = 1;			/* for now */

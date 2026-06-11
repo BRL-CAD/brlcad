@@ -35,12 +35,12 @@ struct views_visible
 };
 
 
-static const char *default_drawing_name = "iges_drawing";
+static char *default_drawing_name = "iges_drawing";
 
 struct bu_list free_hd;
 
 void
-Getstrg(char **str, const char *id)
+Getstrg(char **str, char *id)
 {
     int i = (-1), length = 0, done = 0, lencard;
     char num[80];

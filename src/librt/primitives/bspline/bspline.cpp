@@ -58,7 +58,7 @@
 
 
 #ifdef __cplusplus
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
 #endif
 
 struct nurb_specific {
@@ -1468,7 +1468,7 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 #ifdef __cplusplus
-BRLCAD_CXX_END_C_LINKAGE
+}
 #endif
 
 // Local Variables:

@@ -31,7 +31,7 @@
 #include "brep.h"
 
 
-BRLCAD_CXX_C_LINKAGE void
+extern "C" void
 rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     int i, j, k;
@@ -101,7 +101,7 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 }
 
 
-BRLCAD_CXX_C_LINKAGE int
+extern "C" int
 rt_nurb_to_brep(struct rt_db_internal *ip)
 {
     struct rt_brep_internal *bi;

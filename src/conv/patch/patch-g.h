@@ -108,15 +108,15 @@ char space[2];
 int numobj = 0;
 int nflg = 1;
 int num_unions = 5;			/* number of unions per region */
-const char *title = "patch-g conversion";	/* database title */
-const char *top_level = "all";		/* top-level node name in the database */
+char *title = "patch-g conversion";	/* database title */
+char *top_level = "all";		/* top-level node name in the database */
 int rev_norms = 0;			/* reverse normals for plate mode triangles */
 int polysolid = 0;			/* convert triangle-facetted objects to polysolids */
 int arb6 = 0;				/* flag: convert plate-mode objects to arb6s */
 
-const char *patchfile = NULL;
-const char *labelfile = NULL;
-const char *matfile = NULL;
+char *patchfile = NULL;
+char *labelfile = NULL;
+char *matfile = NULL;
 
 struct patches *list = NULL;
 fastf_t *XVAL = NULL;

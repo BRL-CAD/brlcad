@@ -31,7 +31,7 @@
 #include "brep.h"
 
 
-BRLCAD_CXX_C_LINKAGE void
+extern "C" void
 rt_pnts_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_pnts_internal *pip;

@@ -252,9 +252,8 @@ rt_edit_arb_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 void
-rt_edit_arb_prim_edit_destroy(void *ptr)
+rt_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
 {
-    struct rt_arb8_edit *a = (struct rt_arb8_edit *)ptr;
     if (!a)
 	return;
     BU_PUT(a, struct rt_arb8_edit);
@@ -2294,7 +2293,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
     size_t face_size;	/* # vertices in THE face */
     int uvec[8], svec[11];
     int type;
-    const char **p;
+    char **p;
 
     /*
      * The Permutations
@@ -2305,7 +2304,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
      * Wherever the internal representation of the ARB as an ARB8
      * stores a redundant copy of a vertex, the string contains a '*'.
      */
-    static const char *perm4[4][7] = {
+    static char *perm4[4][7] = {
 	{"123*4***", "124*3***", "132*4***", "134*2***", "142*3***",
 	    "143*2***", 0},
 	{"213*4***", "214*3***", "231*4***", "234*1***", "241*3***",
@@ -2315,14 +2314,14 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
 	{"412*3***", "413*2***", "421*3***", "423*1***", "431*2***",
 	    "432*1***", 0}
     };
-    static const char *perm5[5][3] = {
+    static char *perm5[5][3] = {
 	{"12345***", "14325***", 0},
 	{"21435***", "23415***", 0},
 	{"32145***", "34125***", 0},
 	{"41235***", "43215***", 0},
 	{0, 0, 0}
     };
-    static const char *perm6[6][3] = {
+    static char *perm6[6][3] = {
 	{"12345*6*", "15642*3*", 0},
 	{"21435*6*", "25631*4*", 0},
 	{"34126*5*", "36524*1*", 0},
@@ -2330,7 +2329,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
 	{"51462*3*", "52361*4*", 0},
 	{"63254*1*", "64153*2*", 0}
     };
-    static const char *perm7[7][2] = {
+    static char *perm7[7][2] = {
 	{"1234567*", 0},
 	{0, 0},
 	{0, 0},
@@ -2339,7 +2338,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
 	{"6237514*", 0},
 	{"7326541*", 0}
     };
-    static const char *perm8[8][7] = {
+    static char *perm8[8][7] = {
 	{"12345678", "12654378", "14325876", "14852376",
 	    "15624873", "15842673", 0},
 	{"21436587", "21563487", "23416785", "23761485",

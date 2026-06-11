@@ -223,7 +223,7 @@ static int
 ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t *diameter, fastf_t *thickness, fastf_t *focal_length)
 {
     int c;
-    const char *options="T:r:d:t:f:h?";
+    char *options="T:r:d:t:f:h?";
     int ltype;
     float refractive, diam, thick, focal;
 

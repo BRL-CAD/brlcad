@@ -29,7 +29,7 @@
 #include "vmath.h"
 #include "./edit_private.h"
 
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
 
 #define EDIT_DECLARE_INTERFACE(name) \
     extern void rt_edit_##name##_labels(int *num_lines, point_t *lines, struct rt_point_labels *pl, int max_pl, const mat_t xform, struct rt_edit *s, struct bn_tol *); \
@@ -38,7 +38,7 @@ BRLCAD_CXX_BEGIN_C_LINKAGE
     extern void rt_edit_##name##_write_params(struct bu_vls *p, const struct rt_db_internal *ip, const struct bn_tol *tol, fastf_t base2local); \
     extern void rt_edit_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
     extern int rt_edit_##name##_edit(struct rt_edit *s); \
-    extern int rt_edit_##name##_edit_xy(struct rt_edit *s, const vect_t mousevec); \
+    extern int rt_edit_##name##_edit_xy(struct rt_edit *s, vect_t mousevec); \
     extern void *rt_edit_##name##_prim_edit_create(struct rt_edit *s); \
     extern void rt_edit_##name##_prim_edit_destroy(void *); \
     extern void rt_edit_##name##_prim_edit_reset(struct rt_edit *s); \
@@ -1115,7 +1115,7 @@ const struct rt_edit_functab EDOBJ[] = {
     }
 };
 
-BRLCAD_CXX_END_C_LINKAGE
+} /* end extern "C" */
 
 // Local Variables:
 // tab-width: 8

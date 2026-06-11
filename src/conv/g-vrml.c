@@ -98,7 +98,7 @@ static const char *usage =
     "[-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n"
     "(units default to mm)\n";
 
-static const char *tok_sep = " \t";
+static char *tok_sep = " \t";
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
 static int verbose = 0;
 static char *out_file = (char *)NULL; /* Output filename */
@@ -108,7 +108,7 @@ static struct bg_tess_tol ttol;
 static struct bn_tol tol;
 static struct model *the_model;
 
-static const char *units = "mm";
+static char *units = "mm";
 static fastf_t scale_factor = 1.0;
 
 static struct db_tree_state tree_state;	/* includes tol & model */

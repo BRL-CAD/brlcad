@@ -78,7 +78,7 @@
 /*
  * Sundry external references
  */
-extern const fastf_t turb_table[20][20][20];
+extern fastf_t turb_table[20][20][20];
 
 /*
  * Sundry routine declarations

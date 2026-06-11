@@ -33,7 +33,7 @@
 #include "./sedit.h"
 
 
-const char *p_rotfb[] = {
+char *p_rotfb[] = {
     "Enter rot, fb angles: ",
     "Enter fb angle: ",
     "Enter fixed vertex(v#) or point(X Y Z): ",
@@ -42,14 +42,14 @@ const char *p_rotfb[] = {
 };
 
 
-const char *p_3pts[] = {
+char *p_3pts[] = {
     "Enter X, Y, Z of point",
     "Enter Y, Z of point",
     "Enter Z of point"
 };
 
 
-const char *p_pleqn[] = {
+char *p_pleqn[] = {
     "Enter A, B, C, D of plane equation: ",
     "Enter B, C, D of plane equation: ",
     "Enter C, D of plane equation: ",
@@ -57,7 +57,7 @@ const char *p_pleqn[] = {
 };
 
 
-const char *p_nupnt[] = {
+char *p_nupnt[] = {
     "Enter X, Y, Z of fixed point: ",
     "Enter Y, Z of fixed point: ",
     "Enter Z of fixed point: "

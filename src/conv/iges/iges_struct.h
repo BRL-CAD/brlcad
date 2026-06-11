@@ -155,7 +155,7 @@ struct reglist
 struct types
 {
     int type;
-    const char *name;
+    char *name;
     int count;
 };
 
@@ -212,7 +212,7 @@ struct iges_edge_list
 };
 
 
-extern const char *iges_type(int type_no);
+extern char *iges_type(int type_no);
 extern char *Make_unique_brl_name(char *name);
 extern int Add_loop_to_face(struct shell *s, struct faceuse *fu, size_t entityno, int face_orient, struct bu_list *vlfree);
 extern int Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno);
@@ -280,12 +280,12 @@ extern void Get_att(void);
 extern void Convtree(void);
 extern void Convassem(void);
 extern int Readrec(int recno);
-extern void Readint(int *inum, const char *id);
-extern void Readflt(fastf_t *inum, const char *id);
-extern void Readdbl(double *inum, const char *id);
-extern void Readstrg(const char *id);
-extern void Readname(char **ptr, const char *id);
-extern void Readcnv(fastf_t *inum, const char *id);
+extern void Readint(int *inum, char *id);
+extern void Readflt(fastf_t *inum, char *id);
+extern void Readdbl(double *inum, char *id);
+extern void Readstrg(char *id);
+extern void Readname(char **ptr, char *id);
+extern void Readcnv(fastf_t *inum, char *id);
 extern void Assign_surface_to_fu(struct faceuse *fu, struct face_g_snurb *srf);
 extern void Assign_cnurb_to_eu(struct edgeuse *eu, struct edge_g_cnurb *crv);
 extern int Put_vertex(struct vertex *v, struct iges_edge_use *edge);
@@ -315,7 +315,7 @@ extern int revolve(size_t entityno);
 extern int extrude(size_t entityno, struct bu_list *vlfree);
 extern int ell(size_t entityno);
 extern int brep(size_t entityno, struct bu_list *vlfree);
-extern void Readtime(const char *id);
+extern void Readtime(char *id);
 extern void Readcols(char *id, int cols);
 extern void Readmatrix(int xform, mat_t rot);
 

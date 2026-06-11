@@ -43,7 +43,7 @@
 #include "dm.h"
 
 
-static const char *file_name;
+static char *file_name;
 static FILE *infp;
 
 static int fileinput = 0;	/* file or pipe on input? */

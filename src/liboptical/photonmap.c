@@ -346,7 +346,7 @@ Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2)
 
 
 int
-CheckMaterial(const char *cmp, char *MS)
+CheckMaterial(char *cmp, char *MS)
 {
     size_t i;
 
@@ -1126,7 +1126,7 @@ alarmhandler(int sig)
     bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %f%f",
 	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
 #define BAH(s, w) if (tl > (s)) { float d = floor(tl / (((s) == 0)?1.0:(float)(s))); \
-        tl -= d * (s); bu_log("%d " w, (int)d, d>1?"s":""); }
+	tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
     BAH(60*60*24, "day%s, ");
     BAH(60*60, "hour%s, ");
     BAH(60, "minute%s, ");

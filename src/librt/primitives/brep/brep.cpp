@@ -60,7 +60,7 @@
 
 
 #ifdef __cplusplus
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
 #endif
     int rt_brep_bbox(struct rt_db_internal* ip, point_t *min, point_t *max, const struct bn_tol *tol);
     int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
@@ -90,7 +90,7 @@ BRLCAD_CXX_BEGIN_C_LINKAGE
     void rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip);
     int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #ifdef __cplusplus
-BRLCAD_CXX_END_C_LINKAGE
+}
 #endif
 
 
@@ -2380,7 +2380,7 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 }
 
 
-BRLCAD_CXX_C_LINKAGE int
+extern "C" int
 rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;

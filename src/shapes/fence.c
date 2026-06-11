@@ -40,7 +40,7 @@
 
 /* command-line options are described in the parseArguments function
  */
-const char *options="IiDdVvO:o:N:n:U:u:K:k:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz?h";
+char *options="IiDdVvO:o:N:n:U:u:K:k:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz?h";
 
 /*
  * these variables control the "behavior" of this program's output if
@@ -124,7 +124,7 @@ size_t maxWireSegments=DEFAULT_MAXWIRESEGMENTS;
  * displayed when an invalid command line argument is entered or if
  * the user explicitly requests assistance.
  ***************************************/
-void argumentHelp(FILE *fp, char *progname, const char *message)
+void argumentHelp(FILE *fp, char *progname, char *message)
 {
 
     fflush(stdout);
@@ -581,7 +581,7 @@ int parseArguments(int argc, char **argv)
  * passed to some fp (usually DEFAULT_DEBUG_OUTPUT or
  * DEFAULT_VERBOSE_OUTPUT).
  *************************/
-void printMatrix(FILE *fp, const char *n, mat_t m)
+void printMatrix(FILE *fp, char *n, mat_t m)
 {
     int i = 0;
     fprintf(fp, "\n-----%s------\n", n);
@@ -622,7 +622,7 @@ char *getName(const char *base, int num, const char *paramstring)
  * comprise the base, prefix, and suffix of the name.  any three are
  * optional by sending a NULL parameter
  *****************************************/
-char *getPrePostName(const char *prefix, const char *base, const char *suffix)
+char *getPrePostName(char *prefix, char *base, char *suffix)
 {
     struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
     static char newname[DEFAULT_MAXNAMELENGTH];

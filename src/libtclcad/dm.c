@@ -2869,7 +2869,7 @@ fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
     }
 
     /* Signal error */
-    Tcl_SetObjResult(interp, Tcl_NewStringObj("0 0", 3));
+    Tcl_SetResult(interp, "0 0", TCL_STATIC);
     return TCL_OK;
 }
 
@@ -2902,7 +2902,7 @@ Dm_Init(Tcl_Interp *interp)
 	{(const char *)NULL, BU_CMD_NULL}
     };
 
-    /* commands */
+    /* register commands */
     register_cmds(interp, cmdtab);
 
     /* initialize display manager object code */

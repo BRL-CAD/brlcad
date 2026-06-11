@@ -843,7 +843,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     int light_visible = 0;
     int air_sols_seen = 0;
     int is_proc;
-    const char *reason = "???";
+    char *reason = "???";
 
     vect_t filter_color;
 

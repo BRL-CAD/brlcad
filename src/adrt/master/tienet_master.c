@@ -53,9 +53,7 @@
 
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
-__BEGIN_DECLS
 extern struct hostent *gethostbyname(const char *);
-__END_DECLS
 #endif
 
 
@@ -301,17 +299,14 @@ void tienet_master_wait(void)
 void tienet_master_connect_slaves(fd_set *readfds)
 {
     FILE *fh;
-    struct sockaddr_in tdaemon;
-    struct sockaddr_in slave;
+    struct sockaddr_in tdaemon = {0};
+    struct sockaddr_in slave = {0};
     struct hostent slave_ent;
     tienet_master_socket_t *tmp = NULL;
     short op = 0;
     char host[64] = {'\0'};
     char *temp = NULL;
     int slave_ver_key = 0;
-
-    memset(&tdaemon, 0, sizeof(tdaemon));
-    memset(&slave, 0, sizeof(slave));
 
     fh = fopen(tienet_master_list, "rb");
     if (fh) {

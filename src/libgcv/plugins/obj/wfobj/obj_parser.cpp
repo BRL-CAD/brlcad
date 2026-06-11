@@ -232,7 +232,7 @@ extern "C" WFOBJ_EXPORT int obj_parse(const char *filename, obj_parser_t parser,
 	destroyParser(&(state.parser));
 	destroyScanner(&scanner);
 
-	// FIXME: need to de-the FILE* we created
+	// FIXME: need to de-register the FILE* we created
 	// fclose(state.parser_state.file_stack.back().file);
 
 	if (err == 2) {

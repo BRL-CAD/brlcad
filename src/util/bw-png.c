@@ -48,7 +48,7 @@ static long int file_width = 512;		/* default input width */
 static long int file_height = 512;		/* default input height */
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
-static const char *file_name;
+static char *file_name;
 static FILE *infp;
 
 static char usage[] = "Usage: bw-png [-a] [-w file_width] [-n file_height]\n\

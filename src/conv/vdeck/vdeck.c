@@ -78,7 +78,7 @@
 
 int	debug = 0;
 
-const char *cmd[] = {
+char	*cmd[] = {
     "",
     "C O M M A N D                  D E S C R I P T I O N",
     "",
@@ -99,7 +99,7 @@ const char *cmd[] = {
     0
 };
 
-const char *usage[] = {
+char	*usage[] = {
     "",
     "v d e c k",
     "Make COMGEOM decks of objects from a \"mged\" file suitable as",
@@ -373,7 +373,7 @@ blank_fill(FILE *fp, size_t count)
  *  Print a non-newline-terminate string, and flush stdout
  */
 void
-prompt(const char *fmt)
+prompt(char *fmt)
 {
     fputs(fmt, stdout);
     fflush(stdout);
@@ -399,7 +399,7 @@ sortFunc(const void *a, const void *b, void *UNUSED(arg))
  * This routine turns a union tree into a flat string.
  */
 void
-flatten_tree(struct bu_vls *vls, union tree *tp, const char *op, int neg)
+flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
 {
     int	bit;
 
@@ -1581,9 +1581,9 @@ getcmd(char *args[], int ct)
  * Display menu stored at address 'addr'.
  */
 void
-menu(const char **addr)
+menu(char **addr)
 {
-    const char	**sbuf = addr;
+    char	**sbuf = addr;
     while (*sbuf)
 	(void) printf("%s\n", *sbuf++);
     (void) fflush(stdout);

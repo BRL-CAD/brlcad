@@ -32,13 +32,13 @@
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-BRLCAD_CXX_BEGIN_C_LINKAGE
+extern "C" {
 #include "bv/defines.h"
 #include "bv/lod.h"
 #include "dm.h"
 #include "./dm-gl.h"
 #include "./include/private.h"
-BRLCAD_CXX_END_C_LINKAGE
+}
 
 struct swrast_vars_fast {
     struct bview *v;
@@ -776,7 +776,7 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
     return BRLCAD_OK;
 }
 
-BRLCAD_CXX_C_LINKAGE
+extern "C"
 int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 {
     GLint originalShadeModel = 0;

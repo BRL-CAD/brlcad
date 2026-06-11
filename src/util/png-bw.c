@@ -41,7 +41,7 @@
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
 
-static const char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
+static char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
 
 int
 main(int argc, char **argv)

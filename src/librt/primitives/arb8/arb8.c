@@ -120,7 +120,7 @@ struct prep_arb {
  * (Although the cross product wants counter-clockwise order)
  */
 struct arb_info {
-    const char *ai_title;
+    char *ai_title;
     int ai_sub[4];
 };
 
@@ -167,7 +167,7 @@ static const int rt_arb_planes[5][24] = {
 
 #define ARB_AO(_t, _a, _i) offsetof(_t, _a) + sizeof(point_t) * _i + sizeof(point_t) / ELEMENTS_PER_POINT * X
 
-extern const struct bu_structparse rt_arb_parse[] = {
+const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", ARB_AO(struct rt_arb_internal, pt, 0), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V2", ARB_AO(struct rt_arb_internal, pt, 1), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V3", ARB_AO(struct rt_arb_internal, pt, 2), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

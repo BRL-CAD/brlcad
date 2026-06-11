@@ -74,7 +74,7 @@ static int greenflag = 0;
 static int blueflag  = 0;
 
 static char *framebuffer = NULL;
-static const char *file_name;
+static char *file_name;
 static int infd;
 static struct fb *fbp;
 

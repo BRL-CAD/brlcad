@@ -256,7 +256,7 @@ plants_this_cell(long int *cell, struct grass_specific *grass_sp)
 
 
 static void
-print_plant(const char *str, const struct plant *plant)
+print_plant(char *str, const struct plant *plant)
 {
     int blade, seg;
 
@@ -1223,7 +1223,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
      * the number of times we've made a full step in the X direction.
      */
     for (n=X; n < Z; n++) {
-	const char *s;
+	char *s;
 	if (n == X) s="X";
 	else s="Y";
 

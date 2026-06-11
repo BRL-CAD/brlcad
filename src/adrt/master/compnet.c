@@ -37,9 +37,7 @@
 #include "tienet.h"
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
-__BEGIN_DECLS
 extern struct hostent *gethostbyname(const char *);
-__END_DECLS
 #endif
 
 int master_compserv_socket;
@@ -64,13 +62,10 @@ int master_compserv_active;
  */
 void compnet_connect(char *host, int port) {
     struct hostent hostent;
-    struct sockaddr_in compserv;
-    struct sockaddr_in master;
+    struct sockaddr_in compserv = {0};
+    struct sockaddr_in master = {0};
 
     master_compserv_active = 0;
-
-    memset(&compserv, 0, sizeof(compserv));
-    memset(&master, 0, sizeof(master));
 
     /* If no host name is supplied then do nothing */
     if (!strlen(host))

@@ -986,7 +986,7 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
  * Invoked via OBJ[ID_COMBINATION].ft_adjust()
  */
 int
-rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
+rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_comb_internal *comb;
     char buf[1024] = {'\0'};

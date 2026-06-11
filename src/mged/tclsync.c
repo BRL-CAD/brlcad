@@ -24,7 +24,6 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <tcl.h>
 #include <string.h>
 #include <stdio.h>

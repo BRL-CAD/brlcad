@@ -159,7 +159,7 @@ bu_temp_file_name(char* filename, size_t len)
     memset(buf, 0, MAX_FILELEN);
 
     /* create name in form of prefix_procID_threadID */
-    const char* prefix = (filename && filename[0]) ? filename : PACKAGE_NAME;
+    char* prefix = (filename && filename[0]) ? filename : PACKAGE_NAME;
     int procID = bu_pid();
     int threadID = bu_thread_id();
     snprintf(buf, MAX_FILELEN, "%s_%d_%d", prefix, procID, threadID);

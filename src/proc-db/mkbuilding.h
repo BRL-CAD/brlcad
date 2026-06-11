@@ -39,7 +39,7 @@
 #define USE2X6   2
 
 
-void mkbldg_makeWallSegment(const char *name, struct rt_wdb *db_filepointer, point_t p1, point_t p2);
+void mkbldg_makeWallSegment(char *name, struct rt_wdb *db_filepointer, point_t p1, point_t p2);
 
 void mkbldg_makeframe(struct bu_vls *name, struct rt_wdb *db_fileptr, point_t p1, point_t p2, int thickness);
 

@@ -268,7 +268,7 @@ rt_rect_area(struct mged_state *s)
 void
 mged_center(struct mged_state *s, point_t center)
 {
-    const char *av[5];
+    char *av[5];
     char xbuf[32];
     char ybuf[32];
     char zbuf[32];
@@ -285,8 +285,8 @@ mged_center(struct mged_state *s, point_t center)
     av[1] = xbuf;
     av[2] = ybuf;
     av[3] = zbuf;
-    av[4] = NULL;
-    ged_exec_center(s->gedp, 4, av);
+    av[4] = (char *)0;
+    ged_exec_center(s->gedp, 4, (const char **)av);
     (void)mged_svbase(s);
     view_state->vs_flag = 1;
 }

@@ -60,7 +60,7 @@ struct bu_structparse view_parse[] = {
 };
 
 
-extern const char title[] = "RT Weight";
+const char title[] = "RT Weight";
 
 int noverlaps = 0;
 FILE *densityfp;
@@ -94,7 +94,6 @@ densities_prep(struct rt_i * rtip, int minus_o)
     struct bu_mapped_file *dfile = NULL;
     char *dbuff = NULL;
     int found_densities = 0;
-    int next_available_id = MAX_MATERIAL_ID - 1;
 
     if (!minus_o) {
 	outfp = stdout;
@@ -210,6 +209,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
     }
 
     // iterate through the db and find all materials
+    int next_available_id = MAX_MATERIAL_ID - 1;
     {
 	struct directory *dp;
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)

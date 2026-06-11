@@ -75,7 +75,7 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 }
 
 
-static const char *db_anim_matrix_strings[] = {
+static char *db_anim_matrix_strings[] = {
     "(nope)",
     "ANM_RSTACK",
     "ANM_RARC",

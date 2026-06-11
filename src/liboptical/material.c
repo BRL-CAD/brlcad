@@ -58,7 +58,7 @@ mlib_add_shader(struct mfuncs **headp, struct mfuncs *mfp1)
     register struct mfuncs *mfp;
 
     RT_CK_MF(mfp1);
-    for (mfp = mfp1; mfp && mfp->mf_name != NULL; mfp++) {
+    for (mfp = mfp1; mfp && mfp->mf_name != (char *)0; mfp++) {
 	RT_CK_MF(mfp);
 	mfp->mf_forw = *headp;
 	*headp = mfp;
@@ -112,7 +112,7 @@ try_load(const char *path, const char *material)
 	bu_log("%s_mfuncs table found\n", material);
 
     /* make sure the shader we were looking for is in the mfuncs table */
-    for (mfp = shader_mfuncs; mfp && mfp->mf_name != NULL; mfp++) {
+    for (mfp = shader_mfuncs; mfp && mfp->mf_name != (char *)NULL; mfp++) {
 	RT_CK_MF(mfp);
 
 	if (BU_STR_EQUAL(mfp->mf_name, material)) {

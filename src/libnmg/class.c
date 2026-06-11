@@ -112,7 +112,7 @@ nmg_class_status(int status)
 
 
 static void
-nmg_pr_class_status(const char *prefix, int status)
+nmg_pr_class_status(char *prefix, int status)
 {
     bu_log("%s has classification status %s\n",
 	   prefix, nmg_class_status(status));
@@ -784,7 +784,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, struct b
 {
     struct vertexuse *vup;
     pointp_t pt;
-    const char *reason;
+    char *reason;
     int status = 0;
     int nmg_class;
     struct vertex *sv;
@@ -916,7 +916,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, struct bu_l
     struct edgeuse *eup;
     point_t pt;
     pointp_t eupt, matept;
-    const char *reason = "Unknown";
+    char *reason = "Unknown";
     int nmg_class;
     vect_t e_min_pt;
     vect_t e_max_pt;
@@ -1513,7 +1513,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, struct bu_l
     struct loopuse *q_lu;
     struct vertexuse *vu;
     uint32_t magic1;
-    const char *reason = "Unknown";
+    char *reason = "Unknown";
     int seen_error = 0;
     int status = 0;
 
