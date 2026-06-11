@@ -54,6 +54,14 @@ BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
  */
 BV_EXPORT extern void bv_autoview(struct bview *v, fastf_t scale, int all_view_objs);
 
+/**
+ * Set up the view (center and size) to frame the supplied bounding box.
+ * Pass BV_AUTOVIEW_SCALE_DEFAULT as the scale argument to use the
+ * default scaling factor.  This is the back end bv_autoview() uses once
+ * a bounding box has been determined.
+ */
+BV_EXPORT extern void bv_autoview_bounds(struct bview *v, fastf_t scale, const point_t min, const point_t max);
+
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 

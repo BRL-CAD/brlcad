@@ -4,20 +4,38 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-autoview - Displays all objects within the view.
+autoview - Frames objects within the view.
 
 == SYNOPSIS
 
 [source]
 ----
-autoview
+autoview [-s scale] [object ...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Resets the view size and the view center such that all displayed objects are within the view.
+Resets the view size and the view center such that the framed objects are
+within the view. With no arguments, all currently displayed objects are
+framed. If a list of _object_ names (or full paths) is supplied, the view is
+instead centered and sized to frame only those objects; they need not be
+displayed. The objects' bounding box is computed directly from the database.
+
+
+[[options]]
+== OPTIONS
+
+*-s*, *--scale* _scale_::
+Set the view scale: the model scale relative to the view size. A smaller value
+zooms in, a larger value zooms out; the default is 0.5 model scale (so the
+model occupies half the view).
+
+For backward compatibility a bare leading numeric argument is also accepted as
+the scale, but only when *-s* is not given and no object of that name exists
+(an object with a purely numeric name always takes precedence). Use *-s* to
+avoid the ambiguity.
 
 
 [[examples]]
@@ -30,7 +48,23 @@ Resets the view size and the view center such that all displayed objects are wit
 mged> **autoview**::
 The view resets so that all objects displayed can be seen.
 
+====
 
+.Frame only the named objects.
+[example]
+====
+
+mged> **autoview engine.r wheel.r**::
+The view is centered and sized to frame just engine.r and wheel.r.
+
+====
+
+.Frame the named object using a specific scale.
+[example]
+====
+
+mged> **autoview -s 0.5 engine.r**::
+The view is centered on engine.r and sized using a scale of 0.5.
 
 ====
 

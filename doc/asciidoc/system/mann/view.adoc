@@ -45,8 +45,8 @@ Get (without arguments) or set the azimuth, elevation, and (optional) twist. If 
 Aligns the eye point with a desired point and the current center (eye -> pt -> center). The _-i_ flag can be used to align from the opposite direction (eye -> center -> pt). Align changes the eye point, azimuth, and elevation while keeping the center and view size static.
 
 
-*auto*::
-Resets the view size, center, and eye point such that all displayed objects are visible in the graphics window. Azimuth and elevation remain static.
+*auto* [_-s scale_] [_object ..._]::
+Resets the view size, center, and eye point such that the framed objects are visible in the graphics window. With no arguments, all displayed objects are framed; if a list of _object_ names (or full paths) is supplied, the view is instead sized to frame only those objects (which need not be displayed). The _-s_ (or _--scale_) option sets the view scale (model scale relative to view size). Azimuth and elevation remain static.
 
 
 *center* [_x y z_]::

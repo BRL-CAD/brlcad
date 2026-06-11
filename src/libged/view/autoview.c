@@ -24,15 +24,42 @@
  */
 
 #include "common.h"
+
+#include <stdlib.h>
+
+#include "bu/str.h"
 #include "dm.h"
 #include "../ged_private.h"
 
 extern int ged_autoview2_core(struct ged *gedp, int argc, const char *argv[]);
+
+/* Return 1 (and set *v) if the entire string parses as a number. */
+static int
+_autoview_arg_is_num(const char *s, double *v)
+{
+    char *endptr = NULL;
+    double d;
+
+    if (!s || *s == '\0')
+	return 0;
+
+    d = strtod(s, &endptr);
+    if (endptr == s || *endptr != '\0')
+	return 0;
+
+    if (v)
+	*v = d;
+    return 1;
+}
+
 /*
- * Auto-adjust the view so that all displayed geometry is in view
+ * Auto-adjust the view so that geometry is framed within the view.  By
+ * default all displayed geometry is framed, but if a list of objects
+ * (or full paths) is supplied the view is instead centered and sized to
+ * frame only those objects.
  *
  * Usage:
- * autoview
+ * autoview [-s scale] [object ...]
  *
  */
 int
@@ -41,14 +68,12 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
     if (gedp->new_cmd_forms)
        return ged_autoview2_core(gedp, argc, argv);
 
-    int is_empty = 1;
     vect_t min, max;
-    vect_t center = VINIT_ZERO;
-    vect_t radial;
-    vect_t sqrt_small;
 
     /* less than or near zero uses default, 0.5 model scale == 2.0 view factor */
     fastf_t factor = -1.0;
+    double scale = -1.0;
+    int got_scale = 0;
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -57,57 +82,60 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc > 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s [scale]", argv[0]);
-	return BRLCAD_ERROR;
+    /* Gather the object arguments, honoring an explicit -s/--scale option
+     * (which may appear anywhere). */
+    const char **objv = (const char **)bu_calloc(argc, sizeof(char *), "autoview objv");
+    int objc = 0;
+    for (int i = 1; i < argc; i++) {
+	if (BU_STR_EQUAL(argv[i], "-s") || BU_STR_EQUAL(argv[i], "--scale")) {
+	    if (i + 1 >= argc || !_autoview_arg_is_num(argv[i + 1], &scale)) {
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s [-s scale] [object ...]", argv[0]);
+		bu_free(objv, "autoview objv");
+		return BRLCAD_ERROR;
+	    }
+	    got_scale = 1;
+	    i++;
+	    continue;
+	}
+	objv[objc++] = argv[i];
     }
 
-    /* parse the optional scale argument */
-    if (argc > 1) {
-	double scale = 0.0;
-	int ret = sscanf(argv[1], "%lf", &scale);
-	if (ret != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ERROR: Expecting floating point scale value after %s\n", argv[0]);
+    /* Backward compatibility: a lone leading numeric argument historically
+     * set the view scale.  Honor that only when -s/--scale was not supplied
+     * and the token does not name an existing object, so an object with a
+     * numeric name still wins. */
+    const char **objs = objv;
+    if (!got_scale && objc > 0 && _autoview_arg_is_num(objs[0], &scale) &&
+	(!gedp->dbip || db_lookup(gedp->dbip, objs[0], LOOKUP_QUIET) == RT_DIR_NULL)) {
+	got_scale = 1;
+	objs++;
+	objc--;
+    }
+
+    if (got_scale && scale > 0.0)
+	factor = 1.0 / scale;
+
+    if (objc > 0) {
+	/* Frame only the named objects.  Bound them directly from the
+	 * database (they need not be displayed). */
+	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, objc, objs, 0, min, max) != BRLCAD_OK) {
+	    bu_free(objv, "autoview objv");
 	    return BRLCAD_ERROR;
 	}
-	if (scale > 0.0) {
-	    factor = 1.0 / scale;
+    } else {
+	/* Frame everything currently displayed. */
+	int is_empty = dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &min, &max, 1);
+	if (is_empty) {
+	    /* Nothing is in view - frame a default region centered on
+	     * the origin (equivalent to a radial extent of 1000). */
+	    VSETALL(min, -1000.0);
+	    VSETALL(max,  1000.0);
 	}
     }
 
-    /* set the default if unset or insane */
-    if (factor < SQRT_SMALL_FASTF) {
-	factor = 2.0; /* 2 is half the view */
-    }
+    bu_free(objv, "autoview objv");
 
-    VSETALL(sqrt_small, SQRT_SMALL_FASTF);
-
-    is_empty = dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &min, &max, 1);
-
-    if (is_empty) {
-	/* Nothing is in view */
-	VSETALL(radial, 1000.0);
-    } else {
-	VADD2SCALE(center, max, min, 0.5);
-	VSUB2(radial, max, center);
-    }
-
-    /* make sure it's not inverted */
-    VMAX(radial, sqrt_small);
-
-    /* make sure it's not too small */
-    if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-	VSETALL(radial, 1.0);
-
-    MAT_IDN(gedp->ged_gvp->gv_center);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    gedp->ged_gvp->gv_scale = radial[X];
-    V_MAX(gedp->ged_gvp->gv_scale, radial[Y]);
-    V_MAX(gedp->ged_gvp->gv_scale, radial[Z]);
-
-    gedp->ged_gvp->gv_size = factor * gedp->ged_gvp->gv_scale;
-    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    bv_update(gedp->ged_gvp);
+    bv_autoview_bounds(gedp->ged_gvp, factor, min, max);
 
     return BRLCAD_OK;
 }

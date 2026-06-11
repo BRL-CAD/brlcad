@@ -24,15 +24,40 @@
  */
 
 #include "common.h"
+
+#include <cstdlib>
+
 #include "bu/opt.h"
 #include "dm.h"
 #include "../ged_private.h"
 
+/* Return 1 (and set *v) if the entire string parses as a number. */
+static int
+_autoview_arg_is_num(const char *s, double *v)
+{
+    char *endptr = NULL;
+    double d;
+
+    if (!s || *s == '\0')
+	return 0;
+
+    d = strtod(s, &endptr);
+    if (endptr == s || *endptr != '\0')
+	return 0;
+
+    if (v)
+	*v = d;
+    return 1;
+}
+
 /*
- * Auto-adjust the view so that all displayed geometry is in view
+ * Auto-adjust the view so that geometry is framed within the view.  By
+ * default all displayed geometry is framed, but if a list of objects
+ * (or full paths) is supplied the view is instead centered and sized to
+ * frame only those objects.
  *
  * Usage:
- * autoview
+ * autoview [options] [object ...]
  *
  * TODO - like draw2, this needs to be aware of whether we're using local or shared
  * grp sets - if we're adaptive plotting, for example.
@@ -41,7 +66,7 @@
 extern "C" int
 ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[options] [scale]";
+    static const char *usage = "[options] [object ...]";
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
 
     /* default, 0.5 model scale == 2.0 view factor */
@@ -57,13 +82,15 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     int all_view_objs = 0;
     int print_help = 0;
+    fastf_t scale = -1.0;
     struct bview *v = gedp->ged_gvp;
 
-    struct bu_opt_desc d[4];
+    struct bu_opt_desc d[5];
     BU_OPT(d[0], "h", "help",      "",        NULL,     &print_help, "Print help and exit");
     BU_OPT(d[1], "",   "all-objs", "",        NULL,  &all_view_objs, "Bound all non-faceplate view objects");
-    BU_OPT(d[2], "V", "view",  "name", &bu_opt_vls,           &cvls, "Specify view to adjust");
-    BU_OPT_NULL(d[3]);
+    BU_OPT(d[2], "s", "scale",  "#", &bu_opt_fastf_t,         &scale, "Set view scale (model scale relative to view size)");
+    BU_OPT(d[3], "V", "view",  "name", &bu_opt_vls,           &cvls, "Specify view to adjust");
+    BU_OPT_NULL(d[4]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
@@ -76,11 +103,6 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     argc = opt_ret;
 
-    if (argc && argc != 1) {
-	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_ERROR;
-    }
-
     if (bu_vls_strlen(&cvls)) {
 	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
 	if (!v) {
@@ -92,21 +114,34 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&cvls);
 
 
-    /* parse the optional scale argument */
-    if (argc) {
-	double scale = 0.0;
-	int ret = sscanf(argv[0], "%lf", &scale);
-	if (ret != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "ERROR: Expecting floating point scale value\n");
-	    return BRLCAD_ERROR;
-	}
-	if (scale > 0.0) {
-	    factor = 1.0 / scale;
+    /* Backward compatibility: a lone leading numeric argument historically
+     * set the view scale.  Honor that only when -s/--scale was not supplied
+     * and the token does not name an existing object, so an object with a
+     * numeric name still wins. */
+    if (scale < 0.0 && argc > 0) {
+	double sval;
+	if (_autoview_arg_is_num(argv[0], &sval) &&
+	    (!gedp->dbip || db_lookup(gedp->dbip, argv[0], LOOKUP_QUIET) == RT_DIR_NULL)) {
+	    scale = sval;
+	    argc--;
+	    argv++;
 	}
     }
 
-    // libbv has the nuts and bolts
-    bv_autoview(v, factor, all_view_objs);
+    if (scale > 0.0)
+	factor = 1.0 / scale;
+
+    if (argc > 0) {
+	/* Frame only the named objects.  Bound them directly from the
+	 * database (they need not be displayed). */
+	point_t min, max;
+	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc, argv, 0, min, max) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+	bv_autoview_bounds(v, factor, min, max);
+    } else {
+	// libbv has the nuts and bolts
+	bv_autoview(v, factor, all_view_objs);
+    }
 
     return BRLCAD_OK;
 }

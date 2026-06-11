@@ -443,14 +443,11 @@ _bound_objs_view(int *is_empty, vect_t min, vect_t max, struct bu_ptbl *so, stru
 
 
 void
-bv_autoview(struct bview *v, double factor, int all_view_objs)
+bv_autoview_bounds(struct bview *v, double factor, const point_t min, const point_t max)
 {
-    vect_t min, max;
     vect_t center = VINIT_ZERO;
     vect_t radial;
     vect_t sqrt_small;
-    int is_empty = 1;
-    int have_geom_objs = 0;
 
     /* set the default if unset or insane */
     if (factor < SQRT_SMALL_FASTF) {
@@ -458,6 +455,34 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     }
 
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
+
+    VADD2SCALE(center, max, min, 0.5);
+    VSUB2(radial, max, center);
+
+    /* make sure it's not inverted */
+    VMAX(radial, sqrt_small);
+
+    /* make sure it's not too small */
+    if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
+	VSETALL(radial, 1.0);
+
+    MAT_IDN(v->gv_center);
+    MAT_DELTAS_VEC_NEG(v->gv_center, center);
+    v->gv_scale = radial[X];
+    V_MAX(v->gv_scale, radial[Y]);
+    V_MAX(v->gv_scale, radial[Z]);
+
+    v->gv_size = factor * v->gv_scale;
+    v->gv_isize = 1.0 / v->gv_size;
+    bv_update(v);
+}
+
+void
+bv_autoview(struct bview *v, double factor, int all_view_objs)
+{
+    vect_t min, max;
+    int is_empty = 1;
+    int have_geom_objs = 0;
 
     /* calculate the bounding for all solids and polygons being displayed */
     VSETALL(min,  INFINITY);
@@ -489,29 +514,13 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     }
 
     if (is_empty) {
-	/* Nothing is in view */
-	VSETALL(radial, 1000.0);
-    } else {
-	VADD2SCALE(center, max, min, 0.5);
-	VSUB2(radial, max, center);
+	/* Nothing is in view - frame a default region centered on the
+	 * origin (equivalent to the historical radial extent of 1000). */
+	VSETALL(min, -1000.0);
+	VSETALL(max,  1000.0);
     }
 
-    /* make sure it's not inverted */
-    VMAX(radial, sqrt_small);
-
-    /* make sure it's not too small */
-    if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-	VSETALL(radial, 1.0);
-
-    MAT_IDN(v->gv_center);
-    MAT_DELTAS_VEC_NEG(v->gv_center, center);
-    v->gv_scale = radial[X];
-    V_MAX(v->gv_scale, radial[Y]);
-    V_MAX(v->gv_scale, radial[Z]);
-
-    v->gv_size = factor * v->gv_scale;
-    v->gv_isize = 1.0 / v->gv_size;
-    bv_update(v);
+    bv_autoview_bounds(v, factor, min, max);
 }
 
 /**
