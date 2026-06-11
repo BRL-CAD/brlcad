@@ -21,6 +21,8 @@
 #ifndef LIBBU_PARALLEL_H
 #define LIBBU_PARALLEL_H
 
+#include "common.h"
+
 /**
  * Set affinity mask of current thread to the CPU set it is currently
  * running on. If it is not running on any CPUs in the set, it is
@@ -31,10 +33,16 @@
  * -1 on Failure
  *
  */
+__BEGIN_DECLS
+
 extern int parallel_set_affinity(int cpu);
 
 extern void thread_set_cpu(int cpu);
 extern int thread_get_cpu(void);
+
+extern void semaphore_clear(void);
+
+__END_DECLS
 
 #endif /* LIBBU_PARALLEL_H */
 

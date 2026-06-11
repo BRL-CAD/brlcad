@@ -130,6 +130,12 @@ set(
 # the rest of the sources as C++
 set_source_files_properties(bitv.c PROPERTIES NO_CXX_COMPILE TRUE)
 
+# UUID static arrays use C99 array-parameter syntax, which is not
+# valid C++. bu/uuid.h is thus C only - flag the two libbu files
+# that use it accordingly.
+set_source_files_properties(uuid.c PROPERTIES NO_CXX_COMPILE TRUE)
+set_source_files_properties(vls.c PROPERTIES NO_CXX_COMPILE TRUE)
+
 if(NOT CMAKE_CXX_STANDARD EQUAL 98)
   set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
 else(NOT CMAKE_CXX_STANDARD EQUAL 98)

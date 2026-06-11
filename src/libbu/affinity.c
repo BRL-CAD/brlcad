@@ -51,6 +51,8 @@
 
 #include "bu/parallel.h"
 
+#include "./parallel.h"
+
 int
 parallel_set_affinity(int cpu)
 {

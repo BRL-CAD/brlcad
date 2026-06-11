@@ -24,6 +24,7 @@
 
 #include "bu/str.h"
 #include "bu/parallel.h"
+#include "./parallel.h"
 
 /* #define DEBUGSEM 1 */
 #ifdef DEBUGSEM
