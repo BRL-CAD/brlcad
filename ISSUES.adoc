@@ -1,0 +1,3678 @@
+= BRL-CAD Issues
+:toc:
+
+This file is the project's informal issue *inbox*, merged from the
+former BUGS and TODO files. Items here are developer notes and
+half-formed tasks. As an item becomes well-formed, needs discussion,
+or grows complicated, it graduates to a GitHub issue at
+https://github.com/BRL-CAD/brlcad/issues and is removed from here.
+
+== Sub-note legend
+
+Items from the former BUGS file are prefixed `BUG:`; TODO items have no
+prefix (TODO is the default). Indented sub-notes annotate an item:
+
+  [DONE]    - appears already resolved in current sources; kept for review before removal.
+  [PARTIAL] - partly addressed; work remains.
+  [????]    - could not determine what code/feature this refers to; needs a human.
+  [DUP]     - a duplicate item folded into this one (the merged id is shown).
+  [HARD]    - (pre-existing) notably difficult; see note.
+  [FAN-OUT] - (pre-existing) parallelizability assessment.
+
+== Release blockers (before next release)
+
+* verify MGED exit behavior on Windows - reports of non-zero exit
+  being returned.
+  [PARTIAL] src/mged/mged.c:163,2063 has mged_request_shutdown/mged_finish exitcode plumbing but Windows verification task not closed
+
+* update change policy to 1) expand definition of minimally impacting
+  to allow an assuption of non-embedding in function calls (i.e., no
+  function or macro calls as function arguments), 2) migrate change
+  tracking to a doc subfolder, 3) split deprecation from minimally
+  impacting to separate docs, 4) invert minimally impacting list to be
+  a functional description of the change (e.g., "rename A -> B", "drop
+  arg 3 C", etc), 5) auto-generate and publish robust regular
+  expressions from the functional descriptions, 6) publish an
+  auto-update script that warns about deprecated use and/or applies
+  minimally impacting changes to a given file.
+
+
+== Near-term (within two release iterations)
+
+* fix ARB8 promotion to BoT, so calls between prep and shot don't get
+  inconsistent data (soltab needs to match).
+  [DONE] src/librt/primitives/arb8/arb8.c:1389-1400 arb_to_bot then sets st_id=ID_BOT, st_meth, st_specific=NULL, re-preps as BoT
+
+* verify arb6 editing in cheese wedge tutorial
+
+* rtarea is sometimes missing regions on summary reporting, at least
+  on Windows, possibly a threading issue setting up the results
+  container.
+
+
+== librt
+
+* BUG: raytracing a revolved sketch seems to work fine, but rtarea and gqa
+  seem to be crashing on that same revolve.  curiously, the brep
+  revolve from the csgbrep proc-db has the same failure as well as the
+  brep ehy.
+
+* BUG: Tessellating an ETO with a normal tolerance results in stack
+  smashing due to bad logic in recursive algorithm: set norm 2;
+  facetize my.eto my.bot;. Observed infinite recursion in both
+  make_ellipse4() in eto.c and (after adding max recursion test) in
+  paint_face() in manif.c:190
+  [DONE] src/librt/primitives/eto/eto.c:806 MAX_RECURSIONS=2048 + min_chord_sq guard; buggy ntol angle check removed (line 803,827)
+
+* BUG: annotation bugs:
+  in sph1.s sph 0 0 0 10
+  in ann1.s annot 0 0 0 test1 10 10 3 1
+  in ann2.s annot 30 30 30 test2 40 40 3 1
+  # ann2.s's label looks wrong, points at origin?
+  in ann3.s annot 0 0 0 1 10 10 3 1
+  # using numbers for a label results in no label
+
+* BUG: Recursive submodel predictably goes infinite, need stack-based
+  db_walk_tree(): mged> in submodel submodel submodel grid test.g
+
+* BUG: metaball tessellation enters either an infinite loop or an absurdly
+  long tessellation process - observed on Linux 64 bit system - quick
+  test:
+
+  rm -f metaball.g && mged -c metaball.g "make m.s metaball; facetize m.bot m.s"
+  [PARTIAL] src/librt/primitives/metaball/metaball_tri.c:104 V_MAX(mtol,tol->dist) guards zero step but naive triple-loop sampling remains (TODO:101)
+
+* BUG: raytracing rhc crashes (inside malloc, so previous memory badness)
+  with normal tolerance set to non-default value (e.g. tol norm 0.1);
+  also fails (non-crash) if absolute tolerance is changed (e.g., tol
+  abs 0.1)
+
+* BUG: revolve raytracing seems to be busted.. at least with the example
+  csgbrep revolve shape
+
+* BUG: torus with a near zero inner diameter results in zero-length edges
+  during tessellation.
+  [DONE] rt_tor_tess kills zero-length edgeuses via nmg_keu_zl(); src/librt/primitives/tor/tor.c:1609
+
+* BUG: infinite loop in rt_find_backing_dist() raytracing a BoT (without
+  pieces) for bot_smooth (i.e., rt_bot_smooth()).  encountered inf
+  loop on a jetski fastgen model that was solid but unoriented, with
+  about 8k faces.  NOTE: possibly already have a fix for this bug
+  pending review and testing.  --CSM
+  [DONE] rt_find_backing_dist no longer exists in source tree (only referenced in blocks.json); routine removed
+
+* BUG: hyp used in a boolean with other objects (even unions) does not
+  raytrace
+
+* BUG: the ray tracer fails to report LOS and sometimes even hits on a BoT
+  that is marked as unoriented or is inverted (even though it
+  sometimes will report the segments, just without LOS).  this seems
+  to happen for bots that are neither lh or rh (they're mixed) and
+  causes the raytrace to fail if they're set to anything other than
+  'no' for orientation.  this affects rt, nirt, et al.
+  [PARTIAL] rt_bot_unoriented_segs builds proper in/out segments (src/librt/primitives/bot/bot.c:1195); mixed lh/rh edge cases may remain
+
+* BUG: concave arbs give correct wireframe but do not raytrace correctly.
+  [DONE] concave detection added: arb_is_concave/arb_concave_eps flag invalid volume, arb8.c:1198-1201 (commit 7250d7a260)
+
+* BUG: sketches extruded with non-square AB vectors results in inner sketch
+  components not getting scaled properly.
+
+* convert non-planar arb's to brep objects for ray-tracing.  see how
+  well it works to see if we can remove an arb limitation.
+
+* explore c++ fastf_t class.  compile-time support for using GMP or CLN
+  for arbitrary exact precision arithmetic computation support
+
+* create boolweave+boolfinal unit tests to validate weaving behavior
+  and performance.
+  [PARTIAL] src/librt/tests/rt_boolweave.c exists (2025-2026) testing rt_boolweave behavior, but no performance/timer assertions present
+
+* add linear interpolation method for metaballs
+
+* optimize metaballs performance case where there are lots of single
+  points, no interpolation.
+
+* replace los references/terminology with span, len, dist, factor, etc
+  accordingly since los is ambiguous and a source of user confusion.
+
+* add unit tests for primitive callback routines (e.g., bbox).
+
+* implement make, ted, edsol, mirror, and analyze for revolve
+  primitive.  implement tess() too.
+  [DONE] table.cpp:2266 rt_revolve_make, :2250 rt_revolve_tess, :2259 xform; src/librt/primitives/revolve/edrevolve.c exists
+
+* finish implementing pnts:
+  - ray trace pnts
+  - make color and vectors on pnts work
+  [PARTIAL] pnts functab (table.cpp:2286) has no rt_pnts_shot; cannot raytrace pnts
+
+* sync tgc/rec shot() behavior, sort results for proper normal.
+  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
+  and z=1524 (was hit/overlap, now misses).
+
+  [HARD] Numerically delicate primitive-intersection edge cases (t62
+  grazing, ae 0,0 hit/overlap -> miss).  Couples with "fix ARB8
+  promotion to BoT" (prep/shot soltab mismatch) and the global grazing
+  policy in the OVERLAP TOOLS section.
+  [FAN-OUT: partial -- a fan-out can generate the ray/primitive-pair
+  test matrix; the fix itself is serial and tolerance-sensitive.]
+
+* air regions (aircode > 0) are removed/skipped during prep, but there
+  is no message to the user that this has occurred.  this can result
+  in unexpected behavior (bad usability) if/when air regions are the
+  only geometry being displayed (or are a substantial portion of the
+  current display.  prep needs to return a catalog so summary
+  reporting can be facilitated (of all objects, successful or not).
+
+* investigate INFINITY spatial partitioning issue.
+
+* kill material_head static global in src/librt/mater.c
+
+* investigate the possibility of allowing functions to define their
+  own custom filters for some version of the db_search API.  If we can
+  figure out a programmatic approach of some kind, why not allow code
+  to define their own "filters" that don't have a corresponding
+  mapping to the MGED command string?  As long as the functions
+  satisfy the API templates used by the db_plan structures, wouldn't
+  custom functions work?
+  [DONE] include/rt/search.h:218 db_search_callback_t + db_search_register_exec() provide programmatic filter callbacks
+
+* implement rt_volume() API for computing geometry volume (gqa style
+  for complex, direct for primitives)
+  [PARTIAL] per-primitive ft_volume in include/rt/functab.h:232 and rt_crofton_shoot exist, but no unified rt_volume() API
+
+* decouple libwdb from librt, particularly the headers and relevant
+  structures that cross over to both such as the rtgeom.h types.
+
+  [HARD] Untangling circular core dependencies without breaking ABI for
+  downstream; pairs with "refactor ... nmg processing ... into its own
+  library" below.  Measured blast radius: 671 files include raytrace.h;
+  231 reference nmg_*.
+  [FAN-OUT: yes -- parallel dependency mapping (per header/symbol)
+  first; the moves themselves must be serialized.]
+
+* refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
+
+* refactor rt_functab accessors to go through an api call or calls so
+  that the array is not accessed directly.  either an rt_eval() style
+  interface with data-driven keys to tell it with function(s) to call,
+  or simply have an rt_*() for each function (e.g., rt_mirror(),
+  rt_shot(), rt_describe(), etc.).
+
+* In tree.c line 531, the initialization of the local storage of the
+  full path in stp->st_path is conditionalized on the specifics of the
+  tree structure.  Why?  Could we get away with always initializing
+  (or never initializing, if it is not used) the st_path?  Current
+  behavior is odd - if a region has a solid unioned under it the
+  st_path is not set, but if it has a comb unioned in the path is set
+  - is this an optimization, and if so is it necessary?
+
+* implement a null spatial partitioning method so we can determine
+  what other intersection hits are being masked (and what impact a
+  given method has on performance)
+  [DONE] src/librt/cut_null.c implements 'Null spatial partitioning method' (copyright 2026)
+
+* rework the database object hash to push the iteration up into librt
+  as API instead of expecting callers to use RT_DBNHASH and
+  RT_DBHASH() manually.  consider using bu_hash or other container.
+
+* eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
+  shouldn't need to search.  we were told where the database was.
+
+* rendering of the 'part' primitive is wrong for cases where H is less
+  than r1 (i.e., smaller cap is partially or fully within the larger
+  cap's radius).  It ends up rendering the larger sphere.
+
+* struct rt_bot_internal should be using "size_t *" instead of "int *"
+  for the faces and face_normals members
+
+  [HARD] Looks mechanical but touches BoT serialization, libtie, and
+  every converter, with subtle signedness/32-bit landmines on huge
+  meshes.  ~72 files reference the faces/face_normals members.
+  [FAN-OUT: yes -- per-file/per-converter sweep with a verification
+  pass.]
+
+* investigate why epa primitive is so sensitive to coarse absolute
+  value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
+  [PARTIAL] epa tess reworked to chord-error driven segments (epa.c:1061-1076; commit f1603e488d) but investigation open
+
+* make db_open modes behave the same as the fopen() modes (i.e.,
+  create the .g if one doesn't exist when write mode)
+
+* inside support for ARS
+
+* make _plot() callbacks fill in plot objects instead of returning
+  line segments.
+
+* extend metaball control info beyond simple points (e.g., line
+  segments)
+  [PARTIAL] WDB_METABALLPT_TYPE_LINE + coord2 field defined (include/rt/geom.h:174,178) but unused in metaball.c impl
+
+* remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
+  macro.  refactor all callers as needed.
+
+  [HARD] Surgery on the hottest struct in the ray-tracer: ABI break,
+  perf-critical, every primitive's shot() must be re-audited.  Measured
+  blast radius: 107 files reference hit_normal/hit_point.
+  [FAN-OUT: yes -- strong mechanical sweep; one agent per
+  file/primitive to migrate to RT_HIT_POINT, then verify.]
+  [PARTIAL] Both fields still present, only marked DEPRECATED (include/rt/hit.h:64-65); RT_HIT_NORMAL exists but no RT_HIT_POINT macro defined
+
+* bezier extrusions need to be optimized, really should not be
+  performing dynamic memory allocation in the root solver
+
+* inside/outside point and voxel testing capability in librt
+  [PARTIAL] in/out point testing via ray sampling in src/libged/analyze/op_pnts_vol.cpp:66 (libged not librt)
+
+* make the DSP primitive use less memory when data is coming from
+  a binunif. allocating 160 times binunif size is a bit extravagant
+  (which comes from sizeof(struct dsp_bb)).
+
+* add dynamic geometry support. i.e. the ability to modify the parsed
+  in-memory geometry tree on the fly via api calls (e.g. to add holes)
+  [DONE] rt_unprep/rt_reprep dynamic geometry routines exist (include/rt/prep.h:56-59)
+
+* ovoid - a 3D rotated oval "egg" shape.  can be constructed as the
+  union of two separate ell.  very similar to our pill/particle
+  primitive except that an elliptical curve connects the two shapes
+  (and depending on which oval curvature is used) -- could probably
+  use eto+sph evaluation for shot().
+
+  http://www.mathematische-basteleien.de/eggcurves.htm
+  http://www.geocities.jp/nyjp07/Egg/index_egg_E.html
+  https://en.wikipedia.org/wiki/Oval
+
+* remove the bspline primitive
+
+* remove the poly primitive
+
+* remove the hf primitive
+
+* make struct rt_functab's ft_label bigger and/or dynamic (e.g., vls)
+
+* remove the storage of the never-implemented keypoint parameter for
+  extrude objects.
+
+* rename 'part' primitive to 'pill' or remove it entirely in favor of
+  a more generalized metaprimitive primitive.
+
+
+== libbu
+
+* BUG: report of LIBBU not working when accessed by a multithreaded
+  application on Windows.  reportedly due to some problem with the
+  debug memory queue.
+  [DONE] src/libbu/malloc.c has no memory-queue/linked-list; debug queue removed (commit ac6c6dd2b2), allocs guarded by BU_SEM_MALLOC
+
+* BUG: bu_log() with a width specifier does not align like printf().
+  Example: bu_log("%24s", str);
+  [DONE] field width parsed/applied (fieldlen, left_justify) and format specifier copied through; src/libbu/vls_vprintf.c:449-483
+
+* BUG: debugbu 2 immediately reports a bu_vls_free() error.. apparently
+  been a problem since 4.5 days.  this occurs because
+  bu_memdebug_add() is not called unless memory checking is enabled
+  via bu_debug.  so when bu_debug is set to 2 or 3, it ends up
+  reporting errors during bu_free() for items that were allocated and
+  were not yet being tracked.
+  [DONE] memory-tracking removed: no bu_memdebug_add in src; BU_DEBUG bit 2 now BU_DEBUG_UNUSED_0 in include/bu/debug.h:54
+
+* BUG: fbed is looking for /usr/lib/vfont/nonie.r.12
+  [DONE] vfont.c:50-56 now resolves font via bu_dir(BU_DIR_DATA, 'vfont') not hard-coded path
+
+* BUG: mk_lcomb fails on large combinations due to mk_tree_pure() building
+  a left-heavy tree and wdb_put_internal() then recursively performing
+  lookup and put calls.
+
+* fix libanalyze.  it has turned into a seeming dumping ground with no
+  design or naming consistency evident or documented, or at least
+  extensive violations from the prevailing analyze_* naming prefix and
+  binary interface to analytic routines.  notable outliers include
+  nirt_* (including CLI handling..), voxelize*, rt_gen*, rectangular*
+
+* fix recursive bu_parallel() to not have a hard-coded limit on the
+  number of threads or to more aggressively abort when more that
+  supported are dispatched.  currently supporting 64x64 threads and
+  still with some potential for race conditions on the book-keeping.
+
+  [HARD] Concurrency heisenbug cluster: hard-coded 64x64 thread limits
+  plus ID/bookkeeping races (IDs exceeding MAX_PSW).  Fixes must be
+  provably correct under contention across pthreads/C++11/Windows.  See
+  BUGS "recursive bu_parallel() failure", "race condition causing bus
+  errors on exit", and the gqa semaphore-contention item.
+  [FAN-OUT: yes for the audit -- one agent per bu_parallel() call site
+  / semaphore user -- but the actual race fix needs one careful hand.]
+  [DUP] merged BUGS:34: recursive bu_parallel() failure when IDs exceed MAX_PSW
+
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
+
+* move the rt_*_timer timing facilities to libbu and rework to allow
+  contexts, allowing for more than one timer to be active.  Make sure
+  the old librt API can be obsoleted cleanly.
+
+* put bu_num_print() to use
+
+* implement a bu_exec wrapper and investigate something like capnproto
+  to build up a process-isolated command execution system for libged.
+  Possibly useful resources:
+
+  - https://github.com/s-u/multicore/blob/master/src/forknt.c
+  - https://github.com/diacritic/BoxFort
+  - https://yuhui-lin.github.io/blog/2017/08/01/serialization
+
+* Implement a bu alarm(2)-style interface so we can abort library
+  routines gracefully from application code. A quick initial attempt
+  at this didn't succeed very well (r71644 has what was tried).
+
+  [HARD] Safely interrupting arbitrary in-flight library code means
+  unwinding across allocations and held locks, cross-platform -- and it
+  was already attempted once without success (r71644).  One of the
+  hardest "small-sounding" items.
+  [FAN-OUT: poor -- a single mechanism needing one careful design, not
+  parallel coverage.]
+
+* replace guts of bu_ptbl to see if we can improve performance -
+  implications for removal if an appropriate substitute is found,
+  needs to be deprecated if we remove all API but we can update guts.
+  Try moodycamel https://github.com/cameron314/concurrentqueue
+  [DUP] merged TODO:588: Use moodycamel as libbu queue/list/ptbl implementation
+
+* implement unit tests for bu dirent / stat API
+
+* Need to rethink libbu hash API - ideally should be much simpler and
+  expose much less to the user.
+
+* The current libbu mime API needs to be retired in favor of something
+  more powerful.  It was a mistake to use enums generated from the
+  mime types - they are static, cannot be enriched at runtime (say, by
+  icv plugins) and the separation of the context from the type itself
+  (image/png -> BU_MIME_IMAGE and BU_MIME_IMAGE_PNG for example) is
+  both cumbersome and unnecessary.  Instead, grab a subset of the
+  capabilities of libmagic (https://github.com/file/file) and define a
+  new libbu mime/data-typing subsystem that is runtime populated by a
+  default set of pseudo-libmagic style file definitions (may want to
+  adjust their format slightly, to require a mime type for each entry,
+  and we need an way to define entries where we don't (yet) know how
+  to inspect the file contents to identify them...)
+
+  This approach will let us define the types that are of interest to
+  BRL-CAD, while also letting plugins "educate" the system to support
+  processing of formats the base system (and the "standard" mime type
+  lists) know nothing about.
+
+* expand libbu parallelism with thread-level control, i.e., the
+  ability to start/stop/wait on individual threads in addition to the
+  existing bu_parallel() call.  bu_parallel() gets updated to call the
+  new thread-level control under the hood, but allows for more
+  expressive threading structures (e.g., a function similar to
+  bu_parallel() that is non-blocking).
+
+  One consideration would be to implement something similar to Intel's
+  Cilk API:
+
+  + bu_spawn() specifies that a function call to execute
+  asynchronously, without requiring the caller to wait for it to
+  return.  This allows for parallelism but does not mandate it (so
+  code will function as expected if it does block).
+
+  + bu_sync() specifies that all spawned calls must complete before
+  execution continues.  This allows for synchronization of data at
+  different phases of a computation.
+
+  + bu_for() specifies iterations of a loop body to be executed in
+  parallel.  This would be a way to easily parallelize existing code
+  without needing to create wrapper functions for bu_parallel().
+
+* convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
+  logic layout using if/else.
+
+* get bu_extern out of bu/parse.h into its own header file.
+
+* get rid of the -P#processors user option (except rt* tools) common
+  on utilities.  call bu_avail_cpus() and provide an environment
+  variable override used by the library.
+  [PARTIAL] bu_avail_cpus() exists (src/libbu/parallel.c:221) and non-rt utils lack ncpu, but no env-var override in parallel.c; rt tools still -P
+
+* [hn]to[hn]* conversion functions were usurped by windows 8 so we
+  need to either wrap them or undeprecate our xdr API or see if a
+  simple config header fix might work (ideal)
+  [DONE] Functions namespaced as bu_cv_htond/bu_cv_ntohd/bu_cv_htonf in include/bu/cv.h:369-385, avoiding collision; bnetwork.h wraps standard htonl/ntohl
+
+* investigate bu_vls_encode/decode failures on g-dot.c (see that
+  file for FIXME note); add tests for both functions (note only
+  g-dot.c wants to use the functions at the moment)
+  [DONE] g-dot.c FIXME no longer about encode/decode (only line 102 comb-list FIXME); reversibility test exists src/libbu/tests/test_encode.c:61-62
+
+* eliminate the need for bu_semaphore_init().  allocate up to the
+  index requested on demand (so we can retain O(1) lookups) and
+  reserve the first N semaphores for BRL-CAD library use.  change
+  index to a uint8_t or uint16_t type.
+
+* make bu_dirname not allocation memory.  have caller pass buffer in
+  as a parameter with size ala snprintf/memcpy.
+
+* vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
+  src/libged/glob.c code, very similar.
+
+* separation of stderr from stdout within libbu, particularly for
+  MGED, so that there is a clean separation of result output from
+  diagnostic output.  this is a fairly separate idea from having log
+  levels (ala syslog) but is somewhat related to the concept of having
+  definable output streams.  idea in mind is to have a bu facility to
+  obtain a bu_log()-style callback function returned from a logger
+  registration function.
+  [PARTIAL] include/bu/log.h:123 bu_log_add_hook callback exists, but bu_log still single-stream; MGED result/diagnostic separation not done
+
+* make sure there are no getenv() non-NULL assumptions within the
+  code.  might want to see if there's a pattern of variables being
+  checked such that a libbu interface would be warranted (e.g.,
+  instead of checking HOME, having a bu_find_directory(BU_USER_HOME)
+  routine or similar facility) for finding common resource locations.
+  [PARTIAL] bu_dir(...BU_DIR_HOME...) interface exists (include/bu/app.h:242/295) but full getenv audit not done
+
+* fix parallel crash report generation (multiple BU_MAPPED_FILE's
+  getting acquired)
+  [PARTIAL] mappedfile.c now guards with BU_SEM_MAPPEDFILE (src/libbu/mappedfile.c:163-206); locking added but race-free not certain
+
+* have libbu report memory allocation statistics so the exact amount
+  of memory requirements for a geometry database can be computed on
+  the fly via a pre-prep phase.
+  [PARTIAL] bu_n_malloc/free/realloc counters exist (include/bu/malloc.h:48-50) but no pre-prep DB memory estimation facility
+
+* getexecname, "/proc/self/cmdline", program_invocation_short_name.
+  separate out into new file.
+  [PARTIAL] progname.c uses program_invocation_name (src/libbu/progname.c:84) but not getexecname or /proc/self/cmdline
+
+* system identifier application with sysctl-style information
+  database, with some back-end functionality placed into libbu.
+
+* libbu's bu_opt is our option handling API that supports more
+  features than getopt - remaining features we need:
+
+  - need a way to consolidate documentation for options into one place
+    (DRY) that supports all of our various documentation styles.
+    Discussed with Sean in the past - initial thoughts:
+
+    + support printing out the options and documentation in formatted
+      structures that allow our build system to build the command and
+      have the command itself supply a generated block of text or
+      markup that could be incorporated into the final document.  For
+      example, the DocBook man page for a command would be set up to
+      expect the <command>_options.xml file generated by <command>
+      --print-options DocBook (or some other mechanism, that's just an
+      idea) and the CMake build could first build and then run the
+      command at compilation time to provide the most current option
+      listing and short descriptions for the other docs.
+
+
+== libbn
+
+* BUG: corruption/crash issue rendering terra.g without terra.dsp,
+  possibly/probably parallel-related in libbn/noise.c's
+  bn_noise_turb() function.  gdb eventually catches a segfault in
+  find_spec_wgt() loop with indications of corrupted memory.  valgrind
+  confirms corrupted memory (8 bytes) after a build_spec_table()
+  realloc within find_spec_wgt() but it's not clear why.  etbl
+  book-keeping seems okay..  corrupted read consistently detected on
+  spec_wgts = ep->spec_wgts line in bn_noise_turb().  observed on
+  64-bit linux system:
+
+  rm -f terra.pix && valgrind bin/rt -o terra.pix -P1 -H3 -s1024 share/brlcad/7.21.0/db/terra.g all.g
+
+  [HARD] valgrind-confirmed 8-byte corruption after a build_spec_table()
+  realloc in find_spec_wgt(), where "bookkeeping seems okay" -- i.e.,
+  root cause is non-obvious.  Classic hard-to-pin data race.
+  [FAN-OUT: poor -- a single heisenbug needing one careful
+  investigator, not parallel coverage.]
+  [DONE] src/libbn/noise.c:502-514 find_spec_wgt now fully sem_noise-guarded; comment documents the realloc data-race fix
+
+* BUG: wavelet isn't working correctly on a simple image decomposition &
+  reconstruction.
+  [DONE] round-trip decompose/reconstruct test added in src/libbn/tests/test_wavelet.c:47-125 (1d/2d)
+
+* evaluate replacing libfft with the KISS FFT library
+  (http://kissfft.sourceforge.net, BSD) or the OpenCL-based clFFT
+  (https://github.com/clMathLibraries/clFFT, Apache2).  we need to
+  test correctness, precision, and performance via dfft.
+
+  May also be worth looking at https://github.com/anthonix/ffts (has a
+  CMakeified version at https://github.com/henrygouk/ffts)
+
+  Priit Laes converted our tools to FFTW (circa 2010, see
+  brlcad-devel), but FFTW is not license-compatible.  there is an sf
+  patch containing this conversion, untested.
+
+* add support to rt tools and gtools for specifying az/el in radians
+  or degrees, propagate throughout mged commands that take angles too.
+  probably best implemented as a general libbn string to val function.
+  perhaps an explicit 'rad' suffix and an implicit 'deg' suffix, e.g.
+  rt -a 0.3rad -e 0.5rad and aet 0.3rad 45deg 0
+  [PARTIAL] bn_decode_angle (src/libbn/str.c:43, rad/deg suffix) used by rt opt.c, check, gqa; not propagated to mged aet or all gtools
+
+* investigate impact of using lookup tables for root solving.
+  implement lookup tables for a range of linear, quadratic, cubic, and
+  quartic polynomial coefficients.  compare performance to root
+  solving without lookups.  evaluate memory use.  non-imaginary roots
+  are relatively sparse, may need to consider linked lists, hash
+  tables, or some hybrid storage arrangement.  Idea inspired by:
+  http://math.ucr.edu/home/baez/roots/
+
+* MINOR: add tolerance parameters to the bn_*() functions that have
+  near-zero tests.
+
+* refactor and manage libbn tolerance uses by providing an interface
+  default (e.g., an init macro) and making everyone use that where it
+  is hardcoded to 0.0005 presently (and a few places where it's
+  inconsistently/incorrectly 0.005).
+
+* test homovulgaris' root solver patch that puts coefficients in the
+  right order
+  [????] ambiguous external patch; src/libbn/poly.c root solver exists but cannot map to specific patch
+
+* review librt polynomial root solver (cubic and quadratic case)
+
+* implement quasi-random unbiased iterative spherical ray sampling.
+  requires devising an algorithm whereby we obtain a set of points on
+  a sphere with rays randomly going through those points, so we sample
+  the volume evenly.  we need to be able to add additional sets of
+  points/rays (incrementally or step-wise) in order to evaluate
+  convergence and estimate error.  this feature is useful for checking
+  overlaps, surface area, volume, and moments of inertia.
+  [DONE] bn_sph_pnts() Marsaglia sphere sampling via Sobol/Halton qrand in include/bn/numgen.h:128, src/libbn/randsph.c
+
+* libbn's tri_specific structure requires user-provided memory for
+  normals.. this certainly saves memory if the triangles don't have
+  normals but at a rather expensive malloc cost (which is being seen
+  on large BoT models) during prep.
+  [PARTIAL] struct tri_specific still mallocs tri_normals (include/bg/plane.h:73) and is DEPRECATED 7.42.0; BoT prep now uses TIE/clt_tri_specific so the original BoT cost is largely sidestepped
+
+
+== libbg
+
+* There are probably a number of algorithms in our code where
+  we should check to see if the GTE implementation would be better
+  than ours (line/point distance functionality, for example).
+
+* look into using Manifold::Hull() to replace our copy of QuickHull -
+  manifold made some robustness improvements and we rely on them anyway,
+  so we should probably just leverage them.
+
+* Translate logic from clipper polygon clipping library
+  (http://www.angusj.com/delphi/clipper.php) into libbg and use it as
+  a pre-processing step for detria's algorithm along the lines of what
+  bitfighter did: https://github.com/raptor/clip2tri Some useful notes
+  here: http://stackoverflow.com/a/16115775
+  [DONE] src/libbg/clipper.cpp translated; polygon_triangulate.cpp uses Clipper to preprocess polygons before detria
+
+* Implement Shamos-Hoey test for checking whether a polygon is simple
+  in libbg: http://geomalgorithms.com/a09-_intersect-3.html
+
+* minkowski and hull operations/objects.  These would be
+  meta-combination objects similar to blending where objects are
+  specified and a resulting operation is run on them.  minkowski sum
+  provides an intuitive means to blend and hull a means to simplify.
+  [PARTIAL] bot chull exists (src/libged/bot/bot.cpp:449, bg_3d_chull); minkowski only internal in src/libbg/clipper.cpp, no meta-objects
+
+
+== libged
+
+* BUG: rtcheck_handler_cleanup() throws 'invalid handle specified' on Windows
+  in closing of STDOUT (see FIXME comment). Does not affect normal running,
+  but a debug build complains.
+
+* BUG: When run inside mged, invalid syntax reported on "gqa -p prefix"
+  despite it being documented as the correct form (and working outside
+  mged).  specifying gqa -pprefix appears to be workaround, though
+  unintuitive.  specifying gqa -p"" annoyingly outputs ""exp_air.plot3
+  with quotes embedded in the name.
+
+* BUG: killtree / crashes
+  [DONE] src/libged/killtree/killtree.c:214 db_lookup('/') returns NULL and continues; rewritten via db_treewalk_basic, no crash on '/'
+
+* BUG: killtree reports spurious db_lookup failures saying object does not
+  exist as it previously deleted it.  should keep track of what it
+  deletes to not output spuriously, or (better) delete transactionally
+  so it only attempts to lookup and delete once per object.
+  [DONE] killtree.c rewritten to walk live dirs via db_treewalk_basic + db_update_nref (6498596532); no re-lookup of deleted objects
+
+* BUG: object names with a / or \ in them make ls or underlying directory
+  parsing logic display them incorrectly.
+
+* BUG: search -exec results are inconsistent with search filtered
+  results. for example, "search . -attr ..." returns A B C, but
+  "search . -attr ... -exec attr show {} \;" results in attr show
+  output for A B C as well as subtracted repetitions.  For example,
+  say A contains - B - C, then it will show output for A B C B C.
+
+  adding -bool u gets closer to consistent but still appears to repeat
+  the last object
+
+* BUG: running 'put' on geometry that is already displayed results in a NaN
+  view (at least View and Eye_pos parameters are non) despite geometry
+  still being displayed.  this causes 'rt' to fly into an infinite
+  loop, presumably trying to increment rays from the eye position.
+
+* BUG: creating an object with a slashes in the name (e.g., cp foo foo/R)
+  results in an object that cannot be deleted/renamed.  bad behavior
+  presumably extends to any name with path separators.
+
+* BUG: screengrab on windows does not work
+
+* BUG: typing 'comb -f -r assembly_name' shuts down mged with the error:
+  ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
+  And on the mged command line:
+  rt_db_cvt_to_external5 expecting non-NULL name parameter
+  wdb_export((null)): solid export failure
+  [DONE] comb rewritten with validated -f/-r/-w/-l handling (src/libged/comb/comb.c:635-644); old parse.c crash path gone
+
+* BUG: overlay command reports an error when trying to load a file
+  names edges.pl, but succeeds when the file is called patches.pl
+  Need to see why edges.pl is not accepted.
+  [????] src/libged/overlay/overlay.c does no filename-based filtering; cause was plot-content parsing, unidentifiable in current code
+
+* BUG: mged 'joint' hold command isn't working. looks like the fp_names
+  book-keeping is fuxored or the db_lookup is returning NULL (or isn't
+  yet performed).
+
+* BUG: report that "keep" sometimes results in a .g file with unknown units;
+  dbconcat also is reported to set the units to unknown if concatting
+  a file with unknown units.
+  [DONE] keep sets ident units from src dbi_local2base (src/libged/keep/keep.c:203); concat has -u units handling (concat.cpp:359,449)
+
+* BUG: edcomb command seems to be busted similar to red, doesn't seem to do
+  anything.
+
+* BUG: running 'keep' on too many objects (hundreds is causing a usage
+  statement (and not doing the keep)
+  [DONE] ged_keep_core loops over argc; usage only when argc<2, no object-count limit (src/libged/keep/keep.c:152-216)
+
+* BUG: ls -A and/or e -A reportedly crashes on use, unverified
+  [PARTIAL] ls -A now implemented safely via BU_OPT/db_lookup_by_attr (src/libged/ls/ls.c:375,415); e -A unverified
+
+* BUG: xpush fails to properly create a hierarchy killing existing objects
+  resulting in dangling references. This may have been fixed by
+  r69256, but a model that exposes the issue has to be tested to be
+  sure.
+  [PARTIAL] xpush.c present (src/libged/xpush/xpush.c); item notes possible fix in r69256 but needs test model to confirm
+
+* Teach lint command to look for comb instance paths with non-uniform
+  scaling matrices that have tor primitives as leaves - those will not
+  raytrace as expected.  May be other primitives that should be
+  searched for as well.  Would be ideal if we could also have the comb
+  creation routines (group, comb, r...) reject any operation that
+  would result in such a configuration being created and reporting the
+  details of why it wouldn't work.  Maybe allow a -f forcing flag to
+  do it anyway, since it *can* be done currently in MGED, but it
+  definitely seems like a practice to discourage - if TOR did someday
+  get support for handling such raytraces, any users depending on it
+  NOT doing that would be caught by surprise.  Seems more likely
+  though that users would expect the TOR to be stretched (as it is in
+  comb editing wireframes) and be let down when it ultimately doesn't
+  work...
+
+* consider retiring the mater -d option in favor of a "mater density"
+  subcommand (which is really how it is being used anyway.)  Might be
+  worth considering whether shader related functionality should go
+  under a "mater shader" subcommand.
+  [DONE] src/libged/mater/mater.cpp:1708 dispatches both '-d' and 'density' to mater_density()
+
+* add a flag to prefix command to remove prefix on a group hierarchy.
+
+* restore libged commands that were only exposed via archer but lost
+  during libged ged_exec() refactoring.
+
+  see 5f8aa3204bd for a number of them, but need to check all of the
+  archer command mappings.
+
+* make saveview and loadview work with and output rt command scripts,
+  not shell scripts.  to work, rt command scripts will need to bake in
+  the entire view specification including perspective, ambient, and
+  append/overwrite properly when writing out to the same file
+  (currently appends additional invocations).  primary use case will
+  be to save out multiple view iterations that render the sequence to
+  multiple files.
+
+* ability to place/align/mate objects tangentially, e.g., having a
+  vehicle rest on a piece of terrain or putting one object next to
+  another object.
+
+* dbconcat corrupted database / failed. created a top-level comb with
+  invalid "1_[subcomb]/" to be created that result in error messages
+  during any db listing (e.g., tops).  workaround was to manually edit
+  the comb and remove the 1_ and / on the entries.
+  [????] concat rewritten to concat.cpp with affix handling; cannot confirm specific corruption fixed
+
+* metaball in command input needs sanity checks and better validation.
+  [PARTIAL] metaball libged cmd has validation (src/libged/metaball/metaball.c:140,277,294); creation path coverage uncertain
+
+* tree command shouldn't infinite loop when encountering a cyclic path
+  - need to print a warning and stop walking.  Requires full path
+  awareness in tree command walk.
+
+  Consider implementing a corollary to FTS instead of dirent for
+  simplified tree traversal with cyclic awareness.
+
+  https://keramida.wordpress.com/2009/07/05/fts3-or-avoiding-to-reinvent-the-wheel/
+
+  [HARD] Needs a full-path-aware, stack-based replacement for the
+  recursive db_walk_tree with general-graph cycle detection; touches
+  every hierarchy-traversing command.  See BUGS "Recursive submodel
+  predictably goes infinite" and the clone-1M-never-returns case.
+  [FAN-OUT: yes -- audit all recursive-traversal call sites in
+  parallel; the new walker is written once and rolled out.]
+
+* bounding box reduction command
+
+* consolidate dbconcat, clone, make_name, and any other .g I/O
+  routines that need to autogenerate names to use the new
+  bu_vls_incr/bu_vls_simplify functions.
+  [PARTIAL] clone.cpp and concat.cpp use bu_vls_incr but make_name/make_name.c does not; not consolidated to one routine
+
+* consider user interface and usability implications of gchecker
+  and/or overlap_tool as commands that kick off GUI.  need to consider
+  if there's a non-GUI output/utility and how the CLI pairs up with
+  other GUI-inducing commands like rtwizard, raytrace control panel,
+  geometree, etc.
+
+* automatic tops
+
+  db_ls with the DB_LS_TOPS flag can supply us with a list of top
+  level entities.  Implement a db_tops_default() to support automatic
+  default object loading for commands like rt* that typically work
+  with top-level objects.  let some commands default to an unspecified
+  object when there's an identifiable priority according to matching
+  criteria:
+
+  a) _GLOBAL has a tops_default attribute set, default to that object
+  b) there's only one object, default to that object
+  c) there's only one comb, default to that comb
+  d) there's only one comb (sans any ext) matching filename (sans ext)
+  e) there's only one comb with pattern matching '^(all|scene)*'
+
+  if _GLOBAL has a tops_default attribute set to empty/negative, then
+  this behavior will be disabled.
+
+  when there is not a match, the commands should report out the
+  available top-level objects by default.  that way the user doesn't
+  have to manually run mged to figure out what can be rendered.
+
+* automatic ground plane
+
+  Need ability to auto-calculate a ground plane default for a given
+  model.  Need render option to display the ground plane (e.g.,
+  auto-insert a half or arb8).  Need libged command for
+  creating/manipulating explicit ground objects.  Needs to work with
+  ground_plane_offset attribute on _GLOBAL.
+
+* audit support for slashes in object names and commands that expect
+  paths or can/should have meaningful behavior with paths
+
+* default tops to undecorated, deprecate -n, add tops -p
+  [PARTIAL] tops.c adds -p (pflag); but default no_decorate=0 (still decorates) and -n is not deprecated
+
+* default ls to undecorated, deprecate -n, add ls -p
+  [PARTIAL] ls.c:369 has -p (primitives) and -n removed, but ls.c:459 still passes no_decorate=0 (decorated by default)
+
+* idents command needs to have csv/xls output options and should
+  output a column header and optionally not export the comment header
+  for ease of import into spreadsheet programs.
+
+* add metaball scaling feature (presently in a tclscript)
+  [DONE] _ged_scale_metaball implemented in C; src/libged/edit/scale_metaball.c and pscale.c:153 dispatch metaball scaling
+
+* ability to visualize metaball centerpoints and with/without
+  translucency.
+
+* add script/command for changing metaball weights in masse
+
+* gdiff in mged appears to be broken?  get "no primitives found" on
+  second comb when specifying two combs (gdiff comb1 comb2).  UPDATE -
+  this appears to be a consequence of how gdiff internally implements
+  its raytrace diffing.  The "fix" would be to separately raytrace
+  each object and post-process the line segments, rather than drawing
+  up everything at once - the latter has problems if part or all of
+  comb2 is shared with comb1.  A workaround is to keep out comb2 and
+  dbconcat it back in, then gdiff comb1 with the imported tree.
+  [DONE] src/libged/gdiff/gdiff.c:182 uses db_diff_dp for solids and a non-raytrace structure-diff mode (line 222), avoiding the old raytrace-only approach
+
+* extract a skin or other exterior surface for a given model.  3 options:
+  1. Implement a "shrinkwrap" feature that calculates a concave hull
+  2. Shoot rays from outside, construct exterior mesh based on hits
+     (akin to marching cubes, a surface reconstruction)
+  3. Shoot rays from outside at exterior vertices, retain all mesh faces
+     and objects encountered (i.e., not reconstructed, but extracted)
+  [PARTIAL] bot exterior (src/libged/bot/exterior.cpp, ray-sampling + OpenVDB flood-fill) and src/rt/rtsurf.c implement options 2/3; concave-hull shrinkwrap (option 1) absent
+
+* bot -V check solid bot.s visualizations don't show up if bot.s is
+  first drawn in MGED - should properly "overlay" them so the user
+  doesn't have to first erase the solid from the scene visual.
+  [PARTIAL] src/libged/bot/check.cpp:297 uses additive _ged_cvt_vlblock_to_solids overlay (bot_check:: solids); specific draw-order symptom unverifiable statically
+
+* add bot plot and bot pick subcommands to mirror brep subcommands
+  and let us inspect individual aspects of a BoT's structure.
+  [DONE] src/libged/bot/bot.cpp:1287-1288 register both 'pick' (_bot_cmd_pick) and 'plot' (_bot_cmd_plot); pick.cpp present
+
+* enhance env command to handle debug variables, use sysctl style
+  groupings of variables, and in general make the setup simpler and
+  more uniform (ideally we'll fold the debug command's capabilities
+  into env in some form.)  Need to have a usability brainstorming
+  session, but after discussion with Sean general outlines are to:
+
+  Switch all debug variable management to staging through environment
+  variables rather than directly setting hex values on the globals,
+  but leave the globals as the low level mechanism for performance
+  reasons (getenv is much more expensive, don't want it in core code.)
+  Something like:
+
+  LIBRT_DEBUG_HF (env variable) -> debug.rt_hf (env cmd) -> rt_debug hex val (library)
+
+* overlay command needs to accept multiple file arguments
+  [PARTIAL] src/libged/overlay/overlay.c:165 rejects argc>2; only glob-pattern expansion of single arg (line 198 bu_file_list), not multiple explicit args
+
+* Bounding Boxes
+
+  * make the bb command default to calculating a tighter-fitting
+    bounding box using plot points and knowledge of the subtraction
+    objects (e.g., perform inside/outside test against arb8s).
+
+  * implement a faster raytraced AABB function that calls ft_plot(),
+    shoots a ray through each point, and computes the resulting box.
+
+  * g-shell-rect appears to be the only command that will give a
+    raytraced AABB.  we need to refactor that feature into either the
+    gqa -Ab (which merely reports the prep box) or the analyze command
+    (or both).
+
+  * add option(s) to 'bb' for reporting different types of boxes:
+
+    1) unevaluated, without subtractions (current fast result)
+    2) unevaluated, with subtractions
+    3) evaluated, coarse (use plot points)
+    4) evaluated, precise (use ray tracing)
+    5) evaluated, exact (requires Implicit+CSG->BREP+CSG->BREP-CSG)
+
+    option dimensionality #1: sphere v aabb v obb v 8dop v cxhull
+                          #2: unevaluated v evaluated booleans
+                          #3: without v with subtractions
+                          #4: coarse v precise v exact
+
+  * investigate why the new bbox() routines for ARS and BoT result in
+    bounding boxes that are way too big.
+
+  * implement prep optimization to the default fast bbox approximation
+    specifically for arb8/rpp since we know the exact extent of their
+    bounds and can chop away at a box with a box.
+
+  * make gqa -Ab use sample points for reporting an evaluated AABB.
+
+  * make bb report an evaluated AABB by default.
+
+  * provide option for displaying object bounding boxes while
+    rotating.  visualization feature to help with rotation operations,
+    showing global object alignment with respect to its own coordinate
+    space.
+
+  * Extract bounding box code from both autoview.c and get_autoview.c
+    into a general bounding rpp function in librt and use accordingly
+    (particularly in libged).  Should combine autoview.c with
+    get_autoview.c (perhaps as a flag) and utilize the general
+    function in lots of places (e.g., the ged_arb() function).
+  [PARTIAL] src/libged/bb/bb.c adds OBB (-o, ft_oriented_bbox:258) + AABB via rt_obj_bounds, but no evaluated/raytraced/sample-point box, no tighter default, no autoview.c extraction
+
+* fully implement analyze for all geometry objects
+  [PARTIAL] src/libged/analyze/analyze.cpp:206-210 TODO lists ehy/metaball/nmg still unimplemented; default case (line 290) errors on unhandled types
+
+* move analyze logic into libanalyze (with respective primitive logic
+  into src/librt/primitives/*).
+
+* extend analyze output formatting to user-specified formats ala nirt
+
+* calculate products of inertia in 'analyze' and/or gqa output
+  [DONE] products of inertia computed in src/libged/gqa/gqa.cpp (m_poi/o_poi, lines 165,185,1115,1472,1486)
+
+* calculate radii of gyration in 'analyze' and/or gqa output
+  [PARTIAL] gqa computes moments/products of inertia (src/libged/gqa/gqa.cpp:1471) but no 'gyration' radii output anywhere
+
+* go_open inmem to db command
+  [DONE] src/libged/ged.cpp:324 handles dbtype 'inmem' via db_open_inmem()
+
+* check state of adaptagrams work - turn on? if not, delete?
+  [DONE] src/libged/graph/CMakeLists.txt finds Adaptagrams and builds ged-graph plugin (HAVE_ADAPTAGRAMS)
+
+* add ability to capture any command's output to a file, ideally with
+  options for specifying stdout and/or stderr.  of priority are the
+  attr and rtcheck/gqa commands.  this should probably be handled by a
+  libged command wrapper so it's consistent and available to any
+  command.
+
+* mater command does not validate its arguments - fix that.  Also
+  properly document using "." to skip specifying something - not in
+  the man page currently.
+  [PARTIAL] src/libged/mater/mater.cpp validates colors/argc and handles '.' skip; man-page doc of '.' unverified
+
+* bullet integration - need to expose restitution as an
+  object parameter so we can configure behavior:
+  http://www.bulletphysics.org/Bullet/phpBB3/viewtopic.php?p=&f=&t=3248
+
+* get_eyemodel returns an eye_pt entry, but feeding the results to
+  archer's eye_pt command results in get_eyemodel returning a
+  different eye_pt, even when the units are all in mm.  is this
+  expected?  intuitively, I would expected feeding the results of
+  get_eyemodel to eye_pt to result in no change, modulo unit
+  conversions.
+
+* implement gdiff support for reporting the amount of spatial
+  difference between two objects.  primarily for calculating amount of
+  error introduced via bot, nmg, and brep nurbs format
+  conversion. also useful for knowing relative difference between two
+  versions (e.g., which is bigger).
+
+* rename the "joint2" articulation command (possibly also rename the
+  "joint" command) worked on when joint objects were implemented.
+  joint2 interfaces with the old text-file based articulation
+  interface, but conceivably should get updated when joint objects can
+  describe everything in the old text files.
+
+* need ability to report the smallest feature in a given hierarchy
+  (smallest edge?) and/or largest error in a given boundary model
+  (largest edge gap or distance between two points that should be
+  coincident).
+
+* make loadview still load the view if the database doesn't match the
+  currently open database, only load geometry as an option (and then
+  just ignore the db).
+  [PARTIAL] src/libged/draw/loadview.cpp:390-394 now warns and proceeds on mismatch, but no geometry-only option flag
+
+* consider adding an option to reid/remat and edcodes (and others?) to
+  ignore negative regions (regions subtracted from regions or
+  intersected with them) since, while bad practice, are valid
+  geometrically.
+
+* come up with a new tool that automatically generates "inside"
+  regions for a given model as a way to automatically model air.
+  particularly useful for bot models where the inside air compartment
+  is predominantly (but not entirely) a complex bot structure in
+  itself.  idea is to use some sort of marching cubes/tets to find
+  those volumes, perhaps use a libified gqa.
+
+* automatic geometry voxelizer (perhaps using arbs or vol primitive)
+  [DONE] ged_exec_voxelize command exists; src/libged/voxelize/voxelize.c, include/analyze/voxelize.h
+
+* add support for querying geometry properties to library including
+  computing surface area and weight/mass.
+  [DONE] analyze_surf_area, analyze_mass, analyze_volume in include/analyze/info.h:105,148
+
+* ability to "unpush" objects, translating them to a new position and
+  applying the correct matrix (using either bounding box or center of
+  mass, for example).  would be useful to optionally allow the
+  creation of a parent combination that contains the unpushed matrix
+  so you could return primitives to local coordinates.  See sf feature
+  request 2826720 from cericole.
+
+* optimize CSG structures automatically: automatic simplification,
+  tree contraction, null object detection.
+
+* geometry viewing commands/visualizations of exploded levels
+
+* implement some means (perhaps glint) to check a .g file for
+  duplicate region IDs and material inconsistencies.  perhaps exposed
+  as a new command, it should take an assembly/comb name as input,
+  walk the tree, and report duplicates.  if no arg, it walks all
+  top-level objects but processes them independently and only reports
+  sub-paths once (so you don't get the same object repeatedly reported
+  for all N top-level copies).  in the output, group together regions
+  with same and different material properties together:
+
+DUPLICATE ID NUMBERS
+comp.r1 ID 1234
+comp.r2 ID 1234
+
+DUPLICATE ID NUMBERS WITH DIFFERENT MATERIAL PROPERTIES
+comp.r3 ID 5678 material code 1 LOS 50
+comp.r4 ID 5678 material code 5 LOS 75
+  [DONE] lc command implements this: find_duplicates_flag, reports dup region_id w/ material/los (src/libged/lc/lc.c:154,397-455)
+
+* See src/libged/TODO for new command and subcommand ideas.
+
+* libged needs to support "temporary" objects that are in-memory only
+  and will disappear when the ged instance is destroyed, yet is
+  otherwise considered real objects in a given database.  this
+  supports temporary additions to the wireframe (e.g., plot data from
+  nirt from cvt_vlblock_to_solids()) and in-progress selections.
+  [PARTIAL] Ad-hoc tmp objects exist (analyze.cpp:472 '___analyze_cmd_intersect_tmp_obj__'); no general in-memory temp-object framework
+
+* restore libged axis/grid commands code made in r44153 but with
+  libged decoupled from libdm/libfb.
+  [PARTIAL] grid2model_lu/view2grid_lu helpers present in src/libged; no standalone decoupled axes command restored
+
+* the 'l' and 'analyze' commands now require an object be specified
+  and won't use the currently highlighted solid.  undoubtedly related
+  to libged refactoring.  this is related to sf request 2954409.  this
+  needs to be handled in a generalized way so that most/all commands
+  have a notion of operating on the currently 'selected' object(s).
+  [PARTIAL] Selection framework added (src/libged/select, struct ged_selection_set in defines.h:77) but generalized selected-object operation not wired into l/analyze
+
+* refactor the libtclcad go_*() functions and invocation wrappers
+  (also in mged) into libged where appropriate. the 'png' command
+  comes to mind.
+
+* refactor wdb_obj and view_obj in libged. they should disappear but
+  shouldn't have wdb_*() funcs in libged regardless.
+  [PARTIAL] wdb_/view references still appear in src/libged (draw2.cpp, view/*); legacy ged_selections still in defines.h:205-206
+
+* make ged command names aware of object arguments for automatic
+  globbing and regular expression expansion:
+	attr set [regex .*\.r] t 1
+	attr set [glob *.r] t 1
+	attr set *.r t 1
+
+* review adding support for infix and postfix CSG operators for
+  libged/mged.  be sure to revive or at least check out the previous
+  effort in src/mged/comb_bool_parse.y that already has support that
+  recognizes the classical infix notation.
+
+* use the globbing work needed for proper rm support to enhance the
+  ls command.  filesystem/URI work relates to this - in "flat" viewing
+  ls */* is meaningless, but in the hierarchy view it should do the
+  same glob resolution rm will need to do in that context.
+  [PARTIAL] rm/rm.c now uses db_path_glob (rm.c:208,314); ls/ls.c has no glob expansion
+
+* make the idents command not list subtracted objects by default,
+  optionally list everything
+
+* improve performance of these commands that seem to have exponential
+  cost: bot_split, killtree, and
+  make s sph; make a arb8; sed a; e a; tra 0 0 500; r hemi u s - a; tol norm 1 ; facetize hemi.bot hemi
+  # compared to tol norm 2, # triangles is up ~20% but facetize is >200%
+
+* BoT mesh editing command.  Subtasks:
+
+  - enumerate functions desirable
+  - catalog features of other mesh manipulation tools
+  - investigate mesh editing libraries and/or relying on NMG editing
+  - bind GUI editing to the BoT mesh editing command
+  [PARTIAL] Many bot edit subcmds exist (edbot.c, _bot_cmds[] in src/libged/bot/bot.cpp:1275) but no unified GUI-bound mesh editor; research subtasks unaddressed
+  [DUP] merged TODO:2342: Programmatic CLI to create/edit BoT meshes without get/put
+
+* implement a region anointment feature where the user can turn an
+  assembly into a region and change all lower or higher regions into
+  combinations.  basically consolidate or distribute region flags.
+  this is partially covered by the 'comb' command but it tries hard to
+  ensure geometry isn't left in a broken state.  needs to be a way to
+  do the simple consolidate/distribute operation regardless of
+  resulting state.
+
+* the 'comb' command both updates and creates combinations.  this is a
+  problem because it's not possible to infer an intended result from
+  the command string alone.  it should either append to an existing
+  combination and fail if it doesn't exist (with flag to create) OR it
+  should create a combination and fail if there is an existing
+  combination (with flag to append).
+
+* Update the comb "region lift" capability to handle automatic
+  duplication and substitution of the duplicate into the tree of combs
+  who can't have their definitions changed without impacting other
+  geometry in the .g file.
+
+* change 'mirror' command offset to be prior to mirror instead of
+  after, so that you can mirror intuitively over a specified point
+  along a given axis.
+
+* add option to 'mirror' command to delete the source object.  support
+  specification of a plane as the view plane, 3 points, XY, YZ, XZ.
+  [PARTIAL] mirror supports -p/-d/-x/-y/-z plane spec (mirror.c:35) but no view-plane/3-point spec and no delete-source option
+
+* make sure 'preview' works, particularly the 'tree' subcommand.
+  [DONE] preview tree subcommand implemented: ged_cm_tree and tree option in src/libged/draw/preview.cpp:188,229
+
+* add support for a custom unit conversion factor to the units command
+  (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
+
+* add a -color option to all mged commands that draw geometry (B, eid,
+  and E come to mind)
+  [PARTIAL] draw/e has -C/--color override (src/libged/draw/draw2.cpp:153) but blast(B) and E lack color option
+
+* implement 'analyze' command option to write output to a file
+
+* implement mged object name globbing similar to tclsh's globbing
+  (i.e. via a globbing command and quoting globs that use []).
+  testing shows db_glob doesn't seem to behave correctly, at least not
+  like glob.  hook globbing into all commands so glob_compat_mode
+  statefulness can go away.  a db_glob expression that doesn't match
+  anything should not return the expression.
+  [PARTIAL] db_glob command exists (src/libged/glob/glob.c via db_path_glob); but glob_compat_mode still present in src/mged/cmd.cpp:86,1656,2132 so it has not gone away
+
+* a cut feature edit.  implementation could be represented as the cube
+  that bounds a geometry object.  eight points somewhere on the edges
+  of the cube define an intersection volume on the object.  by
+  default, the eight points could be positioned at the corners of the
+  cube and would remain constrained to reside on one of the three
+  adjoining edges for their respective corner.  this would provide a
+  simple user interface where a face could be selected to move a cut
+  plane through an object (moving four points along four edges), or an
+  edge could be moved to move two points simultaneously, or each
+  individual point could be moved along their edges to define the
+  intersection object.  allowing the points to be deconstrained so
+  they can move into the interior of the bounding volume or into the
+  interior of a face could be an advanced option.
+
+
+== mged
+
+* BUG: mged running an rt with excessive overlaps ends up in a deadlock.
+  Backtrace indicates write buffer is full, likely because no output
+  is going to terminal. (Observed on Mac)
+  [DUP] merged BUGS:64: rt from mged not outputting overlap log or rt summary (Mac)
+
+* BUG: Running"mged -c test.g" exits automatically on default prompt:
+  ...
+  Create new database (y|n)[n]? 
+  Warning: no database is currently open!
+  morrison@Miniagua .build %
+
+* BUG: MGED on Mac hides the main command window on File->Open when you
+  cancel the open.  Presumably the withdraw is somehow getting routed
+  to the window and not just the open dialog.
+  [????] Mac-specific Tk withdraw routing on File->Open cancel; no identifiable code locus, unverifiable statically on obsolete platform
+
+* BUG: Visual error when drawing using -S -m1 of a region with the same solid
+  subtracted and then unioned.
+
+  make two boxes stacked on top of one another
+  > r boxes.r u box - box1 u box1
+  > e -S -m1 boxes.r
+  box1 is not drawn
+
+* BUG: in mged, running the 'attach' command (confirmed issues with X and
+  ogl), closing the window, and then issuing a 'draw' results in mged
+  crashing.
+  [????] X/ogl dm lifecycle crash on draw after window close; no specific fix commit found, hard to verify statically
+
+* BUG: make sph sph
+  clone -i 1 -t 1000 0 0 -n 100 sph
+  kill sph
+  g line sph*
+  clone -i 1 -t 0 1000 0 -n 100 line
+  kill line
+  g square line*
+  clone -i 1 -t 0 0 1000 -n 100 square
+  ... never returns ...
+
+  This should be merely 1M spheres, but something chokes.  Could be
+  somewhere in the Tk layer.  Maybe somewhere in the db layer.  Maybe
+  something is corrupted by clone when it
+
+* BUG: If we draw any form, then trace it using rt, then change of database
+  (by clicking file>open and selecting another database), badness
+  ensues.  One report has quitting the rt window causing a segfault.
+  Another (confirmed) hung mged (stuck/inf loop).
+
+* BUG: a character is (still) sometimes captured by the cursor box.  steps
+  to reproduce:
+    1) write a word on the mged command prompt ("e.g. hello")
+    2) select the word to end of line with mouse
+    3) paste the word (e.g., middle mouse) and press enter
+    4) type "hello" again and press enter
+
+  you should now see an "o" in the yellow cursor box.  sometimes
+  you'll see the "o" after step 3.  running "clear" resets the cursor.
+
+* BUG: get_regions tcl command doesn't respond well to situations where
+  child object names in combs have dashes (the "-" character) in
+  names.  It tries to interpret the dash as an argument delimiter.
+  Looks like this may be only in situations where the "-" is the
+  lead character and on Windows?  Been hard to reproduce...
+
+* BUG: report of mged command history not working with the down arrow key
+  in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
+  fine.
+
+* BUG: autoview [scale] isn't updating the wireframe when opening a
+  database, drawing geometry, then running autoview.  the status bar
+  shows the scale change, but the graphics window remains unaffected
+  unless you run "view size" to set it.
+
+* BUG: MGED on Mac OS X 10.6 mouse bindings fail to zoom in incrementally.
+  Pan, zoom out, and interactive zoom work.  Shift-grip bindings need
+  to be verified.
+  [DONE] Mac OS X 10.6 is long-obsolete platform; report no longer applicable to supported builds
+
+* BUG: mged/tcl "gets" command doesn't work if you run the "source" command
+  to read in a script that uses gets on stdin.  it just hangs until
+  multiple sigint's are received.
+
+* BUG: invoking mged from a system menu seems to be broken.  reported by a
+  reliable ArchLinux user.  probably exhibits cross-platform on KDE,
+  GNOME, or XFCE (but original environment is unknown).  the bug is
+  undoubtedly related to mged's interactive and stdin/stdout input
+  detection where mged thinks it's being scripted (beginning on or
+  about mged.c:1150)
+
+* BUG: Report of copy/paste not working with Tk on Windows Vista - does
+  work on Windows XP.
+  [????] Vista-era third-party Tk report, unverifiable in current tree; no related code identifiable
+
+* BUG: Update/create .mgedrc results in bogus qray lines if a db is not
+  open when the file is created.
+
+* BUG: MGED doesn't initialize multipane view to the documented multipane
+  defaults if you just open a db with multipane already enabled.
+
+* BUG: Creating an 'extrude' via MGED gui crashes MGED.
+  [????] one-line report with no reproducer; GUI extrude dialog code not pinpointable, cannot confirm
+
+* BUG: mged rrt command is not respecting the view size, just does
+  something similar to autoview but even gets az/el wrong too.
+
+* BUG: if you attach a display manager in tk-mged, kill the window, then
+  quit, mged crashes on exit.
+  [????] no matching crash-on-exit fix identified; display-manager teardown path not traceable statically
+
+* BUG: mged segfaults when drawing lots of solids at once (e.g. draw *.s)
+  [????] no specific draw-many-solids segfault fix found; cannot confirm without runtime test
+
+* BUG: mged command mode doesn't display the output of multiple
+  semicolon-separated commands.  Only the output of the very last mged
+  command is displayed.  Example:
+
+  mged -c moss.g "tops ; title"
+  mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
+
+  Note that this is consistent with doing the same thing on the MGED
+  Command Window's command prompt - if the above is a bug it is
+  apparently not restricted to command/classic mode.
+
+  Further investigation suggests that this is a consequence of
+  Tcl treating multiple commands in a single " " block as one command,
+  insofar as capturing the output is concerned.  It probably relates
+  to situations where Tcl_SetResult is called where (in this case)
+  Tcl_AppendResult would have been better, but it is not clear whether
+  changing this result setting approach would cause other breakage.
+
+* BUG: mged rotation halts after a few events and after zooming in/out at
+  least once (Mac OS X 10.5)
+  More info:  This problem appears to be specific to a particular
+  X11 version or versions - it has been observed with
+  xorg-server-1.4.2-apple33 on 10.5.  It does not occur with the
+  community XQuartz 2.5.0 (xorg-server 1.7.6), nor does it occur
+  when Tk 8.5.8 is compiled to use the Aqua backend. At least one other
+  (possibly earlier) version of X11 from Apple on a 10.5 Mac did not
+  exhibit bad rotate behavior. The problem is not specifically the
+  zooming action - rather, the zoom triggers
+  a Tk focus call on the display manager window (rather than the
+  Tk parent window) and the problem manifests when focus is on the
+  display manager window.  mged classic mode, where there is no
+  parent window, exhibits the bad rotate behavior immediately.
+
+* BUG: tab completion in classic/command mode sometimes doesn't work
+  (presumably if mged can't find tcl resources).  was finally able to
+  reproduce this with the result given as:
+
+  invalid command name "bind"
+
+* BUG: mged on Mac OS X will crash on an X11 call if compiled against
+  system Tcl/Tk (at least on 10.4 linking against 8.4), see TODO
+  [DONE] obsolete platform (OS X 10.4, Tk 8.4); BRL-CAD bundles modern Tcl/Tk, no longer applicable
+
+* BUG: Mouse cursor turns into a huge yellow-translucent arrow when running
+  MGED through remote X11.
+
+  Running this fixes the bug: .id_0t config -cursor "xterm black"
+
+* BUG: mged (on debian) is reporting this when the user presses tab:
+  Error in bgerror: invalid command name "::swidgets::togglearrow"
+  the second time they press tab, they get:
+  Error in bgerror: window name "_secErrorDialog" already exists in parent
+
+  The problem was noticed on 7.12.4 and happens regardless of there
+  being a db opened or not.  The problem does not occur in classic
+  mode.
+  [DONE] swidgets::togglearrow now defined (src/tclscripts/swidgets/scripts/togglearrow.itk); reported on ancient 7.12.4
+
+* BUG: mged command window is showing up as an empty 0x0 dimensioned window
+  on freebsd using xfce and metacity (single display, 1680x1050 res).
+  dm shows up just fine.
+
+* BUG: the graphics window does not acquire keybinding focus in mged on
+  ubuntu linux.  key events go to the command window even with the
+  graphics window has focus.
+
+* BUG: MGED File->Preferences->Fonts results in error "named font "button
+  _font" doesn't exist on Linux.
+  [????] src/tclscripts/mged/font.tcl:124 creates button_font; cannot confirm Linux error resolved statically
+
+* BUG: mged tab-completion doesn't work if the object names have spaces
+
+* BUG: Open dialog in MGED seems rather busted for scrolling and selection
+  (seems to be Mac OS X specific)
+
+* BUG: turning on Framebuffer->Rectangle Area in mged disables the
+  embedded framebuffer display on Mac OS X when you sweep a raytrace
+  rectangle.  sweeping still works if you leave it at All.
+
+* BUG: mged's plot tool (the gui one, not the 'plot' command) outputs a
+  plot file that has an erase as the last command, causing empty plots
+
+* BUG: interactive mouse edits in mged can go haywire on Mac OS X with
+  snap-to-grid enabled
+
+* BUG: permute (in mged) requires apply or save before 'new' vertex values
+  will function properly as keypoints.
+
+* BUG: facedef then move face undoes the facedef in mged
+
+* BUG: running any of the various mged commands (e.g. clicking the raytrace
+  button many times quickly, or running rtarea on a large model) that
+  output a lot of data will hang mged (idle cpu utilization).
+
+* BUG: mged View menu says I and O are keybindings for zoom in/out -- they
+  are apparently not.
+  [DONE] openw.tcl:930-937 Zoom In/Out use -underline 5, no I/O accelerator labels claimed
+
+* BUG: Create menu.. create "part" boo hiss..
+  [????] part primitive present in create menu solcreate.tcl:31,62; specific defect not identifiable from 'boo hiss'
+
+* BUG: mged doesn't check if html_dir does not exist when searching for
+  docs/browser.
+  [DONE] openw.tcl:55-58 / mged.tcl:55-58 now wrap html_dir in [file exists] check with fallback
+
+* BUG: permute then translate doesn't refresh the graphics window
+    permute 4378
+    translate menus
+    p 0 0 0
+    p 0 0 0
+
+* BUG: constrained axis translation bindings on OS X don't work
+    object/matrix edit
+    shift-alt mouse (left/mid/right for x/y/z respectively) should work
+
+* BUG: mged's solid illuminate doesn't work when Lighting is turned on
+
+* BUG: mged's matrix selection does not modify the correct matrix if there
+  are multiply referenced non-unique paths (e.g. referencing the same
+  object N times in a combination).
+
+* BUG: tra in console mode outputs a warning about mged_players
+
+* BUG: mged primitive editor doesn't accept/apply values to disk for
+  certain primitives (e.g. sph)
+
+* BUG: matrix edits on objects in mged require you to select a primitive
+  for a coordinate system reference.  this can be counterintuitive and
+  confusing.
+
+* BUG: there are frequently modality errors when entering edit mode as
+  control and middle mouse rebind to model edit instead of view edit.
+
+---
+Bugs should be reported to the bug tracker on the project website at
+http://sourceforge.net/tracker/?atid=640802&group_id=105292
+
+BUGS should be formatted to column 70 (M-q in emacs), no tabs.
+
+// Local Variables:
+// mode: Text
+// fill-column: 70
+// End:
+
+* The following will be removed from MGED's menu bar (unused
+  features, can be accomplished another way, or will be exposed
+  only as lower level settings when there are sensible defaults
+  that are seldom changed.)
+
+  Modes->Display Lists
+  Misc->Keystroke Forwarding
+  Misc->Depth Cueing
+  Misc->Z Buffer
+  Misc->Lighting
+
+* color management of objects in mged/archer so you can brighten dark
+  objects, darken bright objects, map objects to other colors, etc.
+  related to the luminance adjustments being done in the Creo export
+  plugin.
+
+* running mged geometry browser and selecting preview results in an
+  error.  code appears to be assuming both /dev/X framebuffer and uses
+  /dev/null redirect to sink output.
+
+* optimize mged interactive loop command processing.  creating 10k
+  objects: 40 sec, via inmem: 2 sec
+
+* brlman - need remote text display in MGED, maybe run non-graphical brlman
+  in MGED console mode?  A last resort fallback could be console text output
+  via mandoc...
+  [PARTIAL] src/tclscripts/mged/man.tcl execs brlman in classic/batch mode but no in-console text or mandoc fallback
+
+* change _mged_ command prefix to a simple '.' prefix to hide/protect
+  the built-in commands.
+
+* make mged work without a batch script
+  [????] vague one-liner; mged has .mgedrc and CLI opts (src/mged/mged.c:686+) but intended meaning unclear
+
+* figure out what in f_matpick (or possibly some other related
+  function) is causing ipathpos to get incremented to a number larger
+  than the number of objects in the full path it's supposed to be
+  referencing.
+
+* update mged to not call wdb_init_obj and wdb_create_cmd, trace down
+  other vestiges of wdb_obj for removal
+
+* make mged not have a garbled display manager window if the
+  framebuffer is enabled and the window is resized.  initialize and
+  refresh the new memory and zap the framebuffer.
+
+* make the right-hand path to oed optional
+
+* mged inconsistently ignores signals.  initially allowing mged to be
+  backgrounded, but then later ignores them.  needs to consistently
+  ignore or not ignore them, ideally the latter.
+
+* refactor mged/bwish/g_diff initialization to all use the same routine
+
+* refactor mged's signal handling to make it possible to safely
+  interrupt long-running commands
+
+* address the TODO items in src/mged/clone.c
+
+* make only closing BOTH the command window and graphics window shut
+  down mged (i.e., fix unintentional behavior), not either alone.
+
+* add keybinding to restore a command window if only the graphics
+  window remains.
+
+* replace sed and oed commands: functionality provided by new 'edit'
+  command, but requires testing (unit tests) to make sure it's working
+  correctly.
+
+* implement some sort of archive/backup command in mged in order to
+  save the currently open database out to a file.
+
+* have mged record a timestamped command history by default
+
+* rename MGED Help->Apropos to Help->Search Commands (apropos)
+
+
+== archer
+
+* BUG: Archer was observed to mangle the structure of a comb tree when assigning
+  a color from the dialog panel.  MGED is able to assign the color fine,
+  so there appears to be something specific to Archer's comb tree handling
+  that is flawed.  Not all combs are handled incorrectly. Issue appears to
+  be long standing - observed as far back as at least version 7.28.
+
+* BUG: running archer "" at least on windows results in a file type dialog
+  and errors with "can't read "_conv_log": no such variable
+  [????] _conv_log variable no longer exists (gui_conversion.tcl:51 uses conv_log_id); but archer "" empty-arg path not confirmed fixed
+
+* BUG: opening a database in archer with the same name as a command doesn't
+  work.
+  [????] no identifiable archer open-vs-command name-collision handling locus; not statically verifiable
+
+* Per discussion with Sean - look into whether the draw command
+  (probably the one in the qged draw stack) could be modified to do
+  async population of drawing structures, starting from fastest
+  possible and refining to greater detail.  Goal would be to make draw
+  a non-blocking operation for the GUI, getting up whatever info we
+  can quickly.  Might also be able to take into account metrics like
+  FPS and memory usage to decide when we're approaching the "too much
+  info for available resources" threshold.
+
+* fix pipe subtractions shaded display issue in archer
+
+* handling of geometry with names like "--_25" fails in archer
+
+* Integrate ADRT into Archer as a visualization mode.
+
+* See src/archer/TODO
+
+
+== libdm
+
+* BUG: ogl display manager still crashes on attach in mged on Mac OS X 10.5
+  [DONE] obsolete platform (OS X 10.5); legacy ogl dm attach crash no longer applicable on current supported builds
+
+* BUG: ogl display manager and framebuffer are creating windows with
+  transparent backgrounds (the glClear color is not being drawn) on
+  Linux.  Presumably a driver-related issue, alpha channel, or expose
+  event issue.  Inspecting further, it may be related to environments
+  where shmget() fails (or is requested via /dev/oglp) and we get
+  private memory -- looks like private memory is not initialized
+  (observed on Mac 10.6, Windows, and Ubuntu Linux using 7.26).
+  [DONE] legacy ogl dm/fb removed; libdm reorganized to dm-gl.c/glx/qtgl/swrast, no if_ogl in source (only in log)
+
+* BUG: X display manager (and probably others) will lock up mged if you Z/B
+  while the wireframe is being actively drawn (in X_drawVList()).
+  reproducible by cloning havoc a dozen or more times, getting
+  sub-1sec fps, Z/B after rotating wireframe but before update
+  finishes drawing.
+
+* BUG: enabling perspective mode horks shaded mode, also Z clipping
+  shouldn't be required to get the shading.
+
+* BUG: X11 framebuffer often fails to display on certain middle bit depth
+  displays. (e.g. 15 or 16 bit depth)
+
+* The embedded framebuffer for the X display manager is not working
+  with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
+  to XFlush after X24_blit.  Better solution is to replace the X dm/fb
+  with a cross platform software rasterizing solution of some sort.
+  [PARTIAL] X dm/fb (src/libdm/X/if_X24.c, X24_blit) still present, but recommended cross-platform software dm/fb now exists at src/libdm/swrast/
+
+* Fedora doesn't have the old fonts mged assumes: dm-X: Can't open
+  font '9x15' or
+  '-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1'
+
+* closing the graphics window brings down X11 on Mac due to a bad
+  context.  fix or revert recent close window behavior.
+  [????] Mac/X11 close-window bug; src/libdm/X/dm-X.c present but bug is runtime/platform-specific, cannot verify statically
+
+* make libdm framebuffer parallel-safe.  use bu memory management.
+  remove semaphore locks in src/rt/main.c and elsewhere.
+
+* Mac OS X SGI dial knobs support
+  - Note that we might do better here to focus on the 3Dconnexion
+    space navigator mouse, which is a lot more commonly available
+    nowadays...  spacenav.sourceforge.net is something to bear in
+    mind in this context.
+
+* Explore possibility of expanding dm command to accept object names
+  as a way of tweaking display manager specific properties (wireframe
+  vs solid drawing, shading on normals, etc.) that are currently
+  controlled only via the draw command.  Many of the undocumented (or
+  poorly documented) draw options are very specific and there are many
+  more possible similar options that aren't defined.  Initial thought
+  is to allow passing "dm" subcommands to draw (maybe --dm key=val or
+  some such) and using the dm command to offer display type aware
+  hooks (for example, solid drawing isn't a valid option in text mode
+  display, so options about how to shade normals don't make much
+  sense.  On the other hand, a full scene graph could have many
+  per-object display options the user (or application) would want to
+  tweak on a per object basis, e.g. dm obj.r transparency 0.3. Hard
+  wiring draw options isn't going to be flexible or user friendly;
+  need something similar to the new dm ability to supply dm-backend
+  specific options to the user.
+
+* See doc/notes/TODO.shaded_displays
+
+* view/camera objects.  non-geometry object type that encapsulates the
+  concepts handled by saveview/loadview including awareness of
+  orthogonal vs perspective, ambient lighting levels, and possibly
+  styling/render modes.
+
+  obviously need to be able to derive a homogeneous transformation
+  matrix, but may want to encode/preserve scale, translate, rotate
+  with prescribed ordering separately for proper reversibility.
+
+  vect_t: eye point
+  vect_t: view center point
+  vect_t: up vector
+  float: perspective angle (-1 ortho?)
+  float: ambient intensity
+  color_t: background / ambient color
+  uint[2]: size / pixel dimensions
+
+  vect_t: rotation vector
+  vect_t: scale vector
+  vect_t: translation vector
+  derivable (or vice-versa):
+  float[2]: grid cell (ortho-only)
+  float[6]: view frustum (implies perspective matrix)
+  float[4]: perspective projection (fov angle, aspect ratio, znear, zfar)
+  [PARTIAL] bview/bv_scene_obj view objects exist (include/bv/defines.h) but no DB-stored camera object type
+
+
+== libfb
+
+* BUG: fbclear -c appears to hang indefinitely inside pkg_bwaitfor,
+  possible protocol mismatch or capability removed/changed in fbserv.
+
+* BUG: icv dpix support is not cross-platform (it writes out native, reads
+  in assuming same encoding).  regression tests fail on big endian.
+
+* BUG: fblabel seems quite busted, at least talking to a /dev/X fbserv, in
+  that it only draws the first character and eventually displays
+  rem_read() failures when run in -d debug mode.
+
+* BUG: rtedge doesn't refresh a /dev/X fbserv (presumably double-buffered)
+  after doing an overlay render.  it does draw, though, as confirmed
+  by a forced fb-fb refresh.
+
+* BUG: wgl framebuffer is not lingering on windows (regardless of using
+  wgll or default) when it should
+
+* BUG: Detailed BoT model ray trace image had incorrect background pixel
+  values in framebuffer, off slightly by one.
+
+* BUG: rt is consuming 100% CPU in fb_close() on a lingering ogl
+  framebuffer waiting to close.  needs to sleep or select for a while.
+  [PARTIAL] libfb restructured (no if_ogl.c sleep/select); ogl fb path reworked but busy-wait fix not confirmed
+
+* BUG: /dev/oglb 'copy mode' fails to refresh the framebuffer
+
+* BUG: fbserv is receiving image data very slowly if the framebuffer is a
+  remote X24 interface.  could reproduce on mac with the following:
+
+  fbserv -s1024 1 /dev/X &
+  rt -F1 -s1024 db/moss.g all.g
+  rt -F1 -i -s1024 db/moss.g all.g  # 8x worse
+
+* BUG: libfb cannot utilize standard output/error "device" files without
+  path trickery.  it recognizes the /dev/ prefix and presumes it's a
+  libfb device instead of a filesystem device.
+
+   OK: rt -F/./dev/stdout
+  BAD: rt -F/dev/stdout
+
+* BUG: libfb cannot open a file descriptor when piping/redirecting output.
+
+   OK: rt -F/./dev/stdout moss.g all.g
+  BAD: rt -F/./dev/stdout moss.g all.g > test.pix
+
+* BUG: ray-tracers assume a seekable output stream.  libfb reports numerous
+  fseek errors and outputs slightly corrupted pix data.
+
+   OK: rt -o test.pix moss.g all.g && pix-png test.pix > test.png && rm -f test.pix
+  BAD: rt -o /dev/stdout moss.g all.g | pix-png > test.png
+
+* BUG: fbhelp sends some of the output to stdout and some to stderr...
+
+* BUG: raytrace of zoomed images (e.g., -s64) doesn't work for if_X24
+  framebuffers.  zooming logic seems to be broken (was crashing in
+  memcpy, but that was fixed) for at least -s96 and smaller:
+
+  ./libtool --mode=execute gdb --args src/rt/rt -F/dev/X -P1 -s64 db/moss.g all.g
+
+* BUG: an underlay framebuffer does not underlay with shaded mode
+
+* modify libfb's default memory buffer allocation to be dynamic
+  [DONE] if_mem.c:165 calloc(if_width*if_height,3) sized to framebuffer dimensions
+
+* investigate merging functionality from the sig tools into libicv
+  and removing the tools themselves.  Also, need some documentation
+  for the sig functionality (currently none??)
+
+* change fbserv usage to require a flag for its non-daemon mode, make
+  the device type optional for both daemon and non-daemon mode
+
+* investigate OpenEXR (BSD licensed HDE image format)
+
+* make fbclear and raytrace control panel obey a -F advanced option,
+  i.e., better remote framebuffer support.
+
+* add high dynamic range image support to the framebuffers
+
+* add alpha channel support to the framebuffers
+
+* remote framebuffer timeout support (perhaps as ::key=val;key=val)
+
+* libfb + font rendering (perhaps through libbn's plot interface) for
+  a posix terminal.
+
+
+== brep
+
+* BUG: mirror command rejects brep solids and turns faces inside-out when
+  mirroring a comb with brep solids below it.
+
+* explore whether we can write a command to replace bad brep
+  3d edge curves with ON_BezierCurve::Loft approximations of
+  3d points evaluated from a valid 2d parametric curve associated
+  with the same edge.  Hoping to use this to repair geometry
+  that has valid face and 2D parametric info but bad 3d edge curves.
+  Preliminary work is in the brep repair subcommand.
+  [PARTIAL] src/libged/brep/repair.cpp:148 lofts Bezier through 2D-derived points; preliminary
+
+* fix nurbs_ssi and nurbs_tester unit tests
+
+* investigate integrating Pixar's OpenSubdiv for subdivision surfaces:
+  http://graphics.pixar.com/opensubdiv/
+
+* optimize prep.  crazy slow building a surface tree deeply to ensure
+  surface evaluations will converge to proper hit points.  this uses a
+  lot of memory and requires cpu-costly derivative evaluations during
+  surface splitting.  it also uses classic object structures and
+  incoherent pointer chasing during construction and traversal.
+
+  among several optimization approaches discussed, one plan involves
+  making prep only minimally subdivide surfaces (e.g., only one
+  subdivision per surface initially) and letting ray tracing
+  dynamically evaluate surfaces as needed.  a heuristic that takes
+  volume and/or structural complexity into account (e.g., no
+  derivative changes across all encompassed knots) could result in a
+  better initial per-surface prep.  with knowledge of the prep
+  subdivision bounding volume sizes, it should be possible to
+  calculate static arrays per surface that will serve as coherent
+  book-keeping during shot.  instead of pre-calculating the depths
+  during prep, the static arrays get filled in on-demand during shot
+  and are used to track bounding box and UV extents as rays require
+  additional surface subdivision.  it should be possible to construct
+  an extents container such that for a given depth, a ray will only
+  calculate further depths as needed with minimal locking:
+
+  0) prep: organize surfaces into BSP container (kd-tree)
+  1) prep: calculate maximum possible subdivision depth
+  2) prep: allocate extent container array depths
+  3) prep: calculate initial required subdivision(s)
+  4) prep: fill initial subdivisions into array
+  5) shot: traverse BSP to find surfaces in proximity
+  6) shot: traverse subdivision array to lowest initialized level
+  7) shot: evaluate surface to determine need for further subdivision
+  8) shot: while subdivision needed, calculate subdivision and store
+  9) shot: evaluate and return surface hits
+
+  The way to do step 8 with minimal locking involves having an
+  initialization / sentinel value that is checked for non-zero and
+  only set after array values are already locked, written, and
+  unlocked.  Doing this, it is possible for multiple rays to evaluate
+  the same subdivisions unnecessarily, but avoids locks entirely in
+  the common case and minimizes lock contention.
+
+  [HARD] Combines lock-free concurrency (sentinel array fill), numeric
+  derivative-convergence heuristics, and a cache-coherent
+  kd-tree/extent-array layout -- all in the hot path at once.
+  Research-grade on all three fronts.
+  [FAN-OUT: poor for the core algorithm (one expert design); fan-out
+  only to prototype/benchmark competing subdivision heuristics.]
+
+* create a BC_Brep class that inherits from ON_Brep so we can cleanly
+  extend and implement functions that were intentionally removed from
+  openNURBS.
+
+* implement tessellation support.
+  [DONE] rt_brep_tess implemented: src/librt/primitives/brep/brep.cpp:2074 (uses bg_tess/cdt)
+
+* tighten up the bounding boxes around nurbs geometry.  seems to be
+  bounding the untrimmed surfaces instead of the trimmed edges
+  resulting in boxes (hopefully) larger than they need to be.
+  [PARTIAL] rt_brep_bbox still calls brep->GetBBox (untrimmed) at src/librt/primitives/brep/brep.cpp:480; trim-loop bounds only used in prep curve trees (opennurbs_ext.cpp initialLoopBBox)
+
+* update to openNURBS 5.0 (2011-02-02)
+  [DONE] openNURBS now a fetched external package (src/libbrep/CMakeLists.txt:1 brlcad_find_package OPENNURBS); long superseded, old vendored tree removed
+
+* identify useful concepts implemented in the old NURBS code that are
+  not present in openNURBS, and port that code to openNURBS data
+  structures and routines.  This will eventually allow us to remove
+  the old NURBS code.
+  [DONE] No rt_nurb_ symbols remain; bspline primitive now brep-based (src/librt/primitives/bspline/bspline_brep.cpp); old NURBS code removed
+
+* implement boolean evaluation of nurbs surfaces
+
+  [HARD] The canonical open problem in solid modeling: robust
+  surface-surface intersection, trim-curve generation, and topology
+  stitching are what took ACIS/Parasolid teams decades.  No ground
+  truth, no shortcut; couples with "implement tessellation support" and
+  the trimmed-surface bbox item.
+  [FAN-OUT: design only -- a judge panel of independent SSI/trimming
+  approaches helps; the implementation itself is serial.]
+  [PARTIAL] src/libbrep/boolean.cpp (4093 lines) + intersect.cpp (4572) and 'brep boolean' subcmd exist, but [HARD] robust SSI remains incomplete
+
+* NURBS editing command, let you interactively
+  add/update/join/split/remove component points, edges, surfaces.
+  [PARTIAL] brep cmd has split/weld/flip/shrink_surfaces/pick/selection subcmds in src/libged/brep/brep.cpp, but not full interactive point/edge/surface CRUD
+
+
+== nmg-bot
+
+* BUG: TGC tess fails when we have a near-zero c axis and a larger d
+  axis, or vice versa.
+
+* BUG: make eto eto
+  tol norm 1
+  facetize eto.bot eto
+  [crashes due to excessive recursion]
+
+* BUG: crash in rt_bot_xform() due to a bot being marked as having face
+  normals, but didn't.  bot probably written wrong via conversion
+  to/from obj or asc.  found importing teapot.
+
+* BUG: src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
+  calculating the bbox correctly
+  [DONE] rt_bot_bbox now delegates to bg_trimesh_aabb at src/librt/primitives/bot/bot.c:308; old g_bot_include.c removed
+
+* BUG: hyp tessellation routine creates bot that does not raytrace
+
+* BUG: fastgen plate mode bots are reporting invalid shotline segments.
+  depending on whether you shoot from the front or back can result in
+  bogus lists visible with nirt in mged, entirely missing the bot, or
+  mismatched entry/exit/overlap segments.
+
+* BUG: mged 'facetize -n' command is giving many errors:
+    ERROR: color index out of range (-128 > 255)
+  and it shouldn't.  seems to be happening on 3-manifold surfaces but
+  only for particular faces.  looks like the painting algorithm that is
+  being used is flawed (and an incomplete implementation).
+
+* BUG: triangulation of some pipe in toyjeep.g fails (rather reliably) on
+  some given bend.  fails in nmg_triangulate model().
+
+* BUG: facetize -t doesn't work (tnurb support)
+
+* getting some unexpected misses when testing facetization of havoc
+  regions.  If the issue is super-thin triangles in raytrace, see if
+  we can handle by solving the plane intersection to get a 3D point,
+  then returning that if we're within tol distance of the triangle
+  edges and we don't get any hits from topological neighbors.  If
+  the triangle is thin enough, that should be a reasonable answer
+  (at least for a 3D point - the normal may be something else again
+  if the 3 points aren't distinct enough to properly calc the plane.)
+
+* bot overlaps when unoriented, when clearly not overlapping
+
+* resolve bot bin sort optimization crash, disabled during release
+
+* rt moss.g facetize rt bot bug
+
+* implement a means to store per object, face, and vertex information
+  on BoT mesh geometry.  useful for per-face/vertex shading as well as
+  storing analytic information during conversion (e.g., per-face
+  fastgen material codes)
+  [PARTIAL] BoT struct now has num_normals/face_normals + num_uvs/face_uvs + flags (include/rt/geom.h:819-883); per-face fastgen material codes still not stored
+
+* bot bounding box size -- see below
+
+* ensure robust and fast nmg->bot conversion
+
+  [HARD] NMG is famously fragile; "make it robust" is a perennial that
+  resists closed-form fixes, and the tessellation crashes (ETO /
+  metaball / DSP infinite recursion + stack smashing in BUGS) are
+  geometry-dependent.  ~231 files reference nmg_*.  See also the NMG
+  ray-tracing malloc-per-shot item below.
+  [FAN-OUT: yes -- one agent per failing primitive/tess path to build a
+  reproducible failure corpus; repairs land serially.]
+
+* facetize creates BoTs crappily by only looking at first region,
+  first shell, instead of the whole nmg model.
+  [DONE] facetize rewritten; multi-region walk via _ged_facetize_regions (src/libged/facetize/facetize.cpp:464, regions.cpp)
+
+* nmg_bot() and nmg_from_bot() only work with shells.  verify that all
+  callers iterate over all shells or write a model version that does a
+  complete conversion correctly.
+  [PARTIAL] nmg_mdl_to_bot(model) added (include/rt/nmg_conv.h:159) for whole-model conversion; nmg_from_bot still absent
+
+* refactor all of the nmg processing (back) into its own library so
+  that external users can manage mesh geometry without needing to pull
+  in everything else in librt.  consider moving other polygonal
+  specific logic to libnmg, eventually moving all polygonal logic out
+  of librt, libtie, etc., and into libnmg.
+  [DONE] src/libnmg/ exists with bool.c, fuse.c, mesh.c, nurb_*, etc.; polygonal logic moved out of librt
+
+* enhance the bot data structure to contain a generic pointer that
+  could be used to point back to the NMG it was generated from.  This
+  could allow ALL raytracing of polygonal models to use libtie/BoT
+  raytracing routines, speeding up NMG raytracing and simplifying the
+  raytracing code.
+
+* implement a routine/command to convert from a bot to an nmg
+  (similar/related to the nmg-bot tool, but the reverse).
+
+
+== converters
+
+* BUG: obj-g and gcv converters choke and crash on obj with unnamed g line.
+  spec wording on whether that's valid is unclear, but encountered in
+  wild.
+
+* BUG: gcv on a glTF file (at least a binary .glb) crashes hard with a NULL
+  pointer bomb (workaround: gltf-g succeeds albeit incomplete
+  conversion).  Takes out the entire Terminal app on Mac for some
+  reason (consistently).
+
+* BUG: dbupgrade -r produces an invalid rhc with the default v5 rhc produced
+  by MGED with  "make rhc rhc"
+
+* BUG: pixdiff on Windows is reporting no differences with a pair of files
+  that pixcmp can see differences in.
+
+* BUG: pixborder doesn't account for an edge case where the right edge of
+  an image is expected to be colored (except for one pixel on the top
+  edge).  Example:
+
+  pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
+
+* BUG: report of g-iges crashing (on Windows) when exporting a 1.2MB BoT
+  mesh (presumably imported via stl-g).  worked for smaller models.
+
+* BUG: step-g crashing on mac with lazy symbol load failure missing:
+  brlcad::SurfaceTree::SurfaceTree(ON_BrepFace*, bool, int)
+  [DONE] src/libbrep/opennurbs_ext.cpp:1131 SurfaceTree ctor now (const ON_BrepFace*,bool,int,double); old symbol obsolete, stale-link issue
+
+* BUG: asc2g of a .asc file containing the first line as a "#" comment
+  results in a bu_malloc(0) bomb.  comment lines should be valid in
+  .asc files.
+  [DONE] asc2g detects/skips comment lines starting with '#'; src/conv/asc/asc2g.c:1566-1576
+
+* BUG: g-vrml ignores bots that are created with dxf-g
+  [DONE] g-vrml processes bots generically via rt_bot_internal regardless of source converter (src/conv/g-vrml.c:53-155)
+
+* BUG: g2asc of a v4 is apparently writing out the wrong s_cgtypes and
+  otherwise parsing v4 .g files incorrectly
+
+* BUG: the findfont directive in gv postscript is reporting font not found
+  [????] ps output uses standard 'Courier findfont' (plot3-ps.c:268); likely external gv/ghostscript config, not BRL-CAD
+
+* BUG: g2asc exports attr lines but will not grok them on asc2g
+  [DONE] g2asc emits 'attr set' (src/conv/asc/g2asc.c:272,355); asc2g aliases attr to ged (asc2g.c:85,1631)
+
+* BUG: vrml exporter (and probably others) doesn't export primitives
+  directly as one might expect like the ray-tracers, only regions.
+
+* BUG: bot-bldxf fails in db_walk_tree(), interface may have changed
+  [DONE] bot-bldxf removed in distillation effort, deprecated 7.26 per CHANGES:740; no bot-bldxf.c in src/conv/dxf
+
+* ensure datum objects convert out via g2asc and back (currently
+  writes "a Tcl output routine for this type of object has not yet
+  been implemented")
+  [DONE] rt_datum_get/rt_datum_adjust at src/librt/primitives/datum/datum.c:580,622; added in 96b0135b81
+
+* re-add support for vrml v1 to g-vrml so that users can select
+  whether they want v2 (default) or previous v1 output format via a
+  command-line switch.  see
+  http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
+
+* g-obj not exporting colors
+  [DONE] commit e925a81615 added color support; g-obj.c has obj_get_export_color/obj_write_material_definition/usemtl
+
+* pixscale doesn't seem to handle stdin (due to bu_seek) for very
+  long
+
+* V&V bwcrop, pixembed are behaving correctly, as documented
+
+* convert src/util/terrain.c to src/shapes/terrain.c writing out the
+  datafile to a binunif along with a referencing dsp.  perhaps add
+  command line option to skip .g to retain prior datafile capability.
+  need to review command line options to simplify complexity and
+  control randomization better.
+
+* teach pixdiff and other tools that can/should support the capability
+  to read/write (as appropriate) pixel index values or x,y coordinates
+  and reproduce the ray fired to create that pixel. currently does -l
+  index but not xy coordinates.
+  [PARTIAL] note says -l index works but not xy coordinates; pixdiff.c lacks xy-coord support, work remains
+
+* convert usages of Tcl_InitHashTable() and friends to libbu
+  containers (see src/conv/enf-g.c for example usage)
+  [PARTIAL] Tcl_InitHashTable still used in src/conv/enf-g.c and src/external/Unigraphics/*.c
+
+* import CTRI material information in fast4-g as per-face data.
+
+* merge conv-vg2g into dbupgrade
+
+* create a FASTGEN sample geometry with all entities defined and a
+  corresponding regression test to make sure outputs don't change.
+  [PARTIAL] FASTGEN regression test exists (regress/gcv/fastgen/regress-fastgen.cmake.in with gdiff), but 'all entities defined' coverage unverified
+
+* work on vdeck/comgeom-g converters needed:
+  - primitives recognized by comgeom-g but not vdeck:
+      ehy, epa, eto, rhc, rpc
+  - primitives recognized by comgeom-g (but not vdeck) but
+    with possible equivalent versions in BRL-CAD:
+      haf (half), rvw (right vertical wedge), raw (arb8), wed (DoE name
+      for 'raw'), wir (pipe), arw (arbitrary wedge [ERIM?])
+  - generate new comgeom-g tests with tgms from old GIFT docs
+  [PARTIAL] comgeom-g already handles ehy/epa/eto/rhc/rpc/haf/rvw/raw/wed/wir/arw (solid.c:600-741); vdeck still only TOR/ARB/ELL/ARBN (vdeck.c)
+
+* test tgf-g conversion with "ring-mode" geometry
+
+* pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
+  .bw input files.  cause is due to tool assuming input is rgb
+  triplets (even though output is bytes, wtf?).  should probably
+  report pixels and/or have a -b option for handling byte/bw input.
+
+* update g-xxx_facets to use libgcv
+
+* add an option to bot_dump for outputting surface normals.  Make sure
+  all supported dump formats (obj, dxf, etc.) optionally write out
+  normals.  Consider adding an option to smoothly interpolate normals
+  (per face or vertex).
+  [DONE] normals option added; src/libged/bot/dump/bot_dump.cpp:641 BU_OPT(..."normals"...), obj.c writes normals
+
+* give bot-bldxf the axe (reconcile and merge with bot_dump)
+  [DONE] no bldxf files exist; bot_dump present at src/conv/bot_dump.c and src/libged/bot/dump/bot_dump.cpp
+
+* enhance dxf-g to create more than just one combination per layer,
+  creating multiple objects for the individual objects in the dxf file
+  (instead of one conglomerate BoT)
+
+* review and merge in the rest of the GSI modifications
+  [????] no identifiable GSI code; 'GSI' matches are only V3ARGSIN macro substring in src/conv/g-obj.c
+
+* implement support for raw voxel data (g-voxel) where each position
+  in the binary array (unsigned 8-bit integer) corresponds to a voxel
+  coordinate given by X + Y x Nx + Z x Nx * Ny where Nx = grid width
+  and Ny = grid height.  this consequently happens to match our bw
+  format if you concatenated N bw image slices into one file.  for a
+  2x2 example, position=>coordinate: 0=>0,0,0; 1=>1,0,0; 2=>0,1,0;
+  3=>1,1,0; 4=>0,0,1; 5=>1,0,1; 6=>0,1,1; 7=>1,1,1. See
+  http://support.echoview.com/WebHelp/Reference/File_formats/
+  Export_file_formats/Volume_data_set_file_formats.htm
+
+* investigate why g-iges followed by iges-g on a single box results in
+  permuted vertex lists
+
+* add obj cstype/bezier/surf/curv/param/trim/etc import for nurbs
+  import/export support
+
+* add glTF exporter (.gltf and .glb file formats)
+  [PARTIAL] gltf importer exists (src/conv/gltf/gltf-g.cpp, plugins/gltf/gltf_read.cpp); export only via generic assimp plugin, no dedicated gltf exporter
+
+* add 3MF importer/exporter (3D printing file format like STL that
+  supports materials, colors, and other information.)
+  [PARTIAL] No dedicated 3mf plugin; assetimport (assimp, aiIsExtensionSupported) can read/write 3mf generically but not registered as distinct format
+
+* add gcv support for the Microstation file format (DGN), probably
+  leveraging http://dgnlib.maptools.org/ (MIT-licensed)
+
+* integrate the submitted x3d-g (Web3D, VRML successor) importer
+  (pending patch on sf)
+
+* add support to x3d-g for NURBS entities
+
+* compare libIGES (lgpl, https://github.com/cbernardo/libIGES) as
+  potential replacement for our complex IGES conversion logic.
+  appropriate time for review when IGES gets added to libGCV.
+
+* investigate the asset import library (assimp.sf.net) to see whether
+  we can replace a lot (but probably not all) of our bot-centric
+  importers/exports (ply, obj, stl, etc.) with the assimp library to
+  save us the time/effort of supporting those parser ourselves.
+  [DONE] assimp-based plugin present: src/libgcv/plugins/assetimport/assetimport_read.cpp uses aiIsExtensionSupported
+
+* make the converters export all top-level objects by default
+  [????] broad cross-converter policy; no single symbol to confirm; cannot verify per-converter default behavior statically
+
+* implement support for exporting sketch objects via g-iges
+  [DONE] sketch_to_iges dispatched for ID_SKETCH in src/conv/iges/g-iges.c:137,174
+
+* by default, only export valid (manifold, solid if 3d, etc) objects.
+  have option to override and export invalid entities.
+
+* add csv, xml, nff, bzw, pov, blend geometry import and export
+  support
+  [PARTIAL] only g-nff.c exists; blend handled via assetimport/assimp; csv/xml/bzw/pov absent
+
+* finish obj-g importer.  need to test more inputs and make sure all
+  geometry is preserved on import in some form.  make sure new libobj
+  parser works and is integrated with new front-end.
+  [PARTIAL] src/conv/obj-g.c and libgcv obj plugin exist/maintained (2026), but header still lists recommended improvements; no separate libobj parser dir
+
+* implement a g-step exporter (with NURBS, implicit CSG, and NMG/BoT
+  options)
+  [DONE] src/conv/step/g-step/ implemented (g-step.cpp, ON_Brep.cpp, ON_NurbsSurface.cpp, Comb.cpp)
+  [DUP] merged TODO:2187: Implement g-step exporter
+
+* implement a g-dae (Collada) exporter and dae-g importer
+  http://en.wikipedia.org/wiki/Collada
+  [PARTIAL] no dedicated dae converter, but .dae import/export available via assimp assetimport plugin keyed on extension
+
+* implement a g-nc (g-code) exporter.  ideally this converts geometry
+  to NURBS format, trims surfaces, evaluates boolean expressions, and
+  then generates tool paths on resulting surfaces and interior paths.
+  http://en.wikipedia.org/wiki/G-code
+
+* implement a u3d-g importer
+  http://en.wikipedia.org/wiki/Universal_3D
+  http://libharu.org/wiki/Main_Page
+
+* implement a g-pdf exporter and/or open source 3D PDF library
+  http://developer.techsoft3d.com/adobePDF/index.html
+
+* SVG renderer.  go straight from 3D model to a 2D vector image for a
+  given view.  similar to the plot/postscript wireframe view saves,
+  this would need to store projected contours (ala rtedge) and filled
+  color regions.
+
+* implement a g-sat (Solidworks) exporter and sat-g importer
+  http://local.wasp.uwa.edu.au/~pbourke/dataformats/sat/sat.pdf
+
+* implement a g-json exporter
+  http://www.json.org/
+
+* implement a g-xml exporter
+  http://en.wikipedia.org/wiki/XML
+
+* implement a ls-dyna "keyword" file format importer.  perhaps extract
+  as nmg/bot boundary representation meshes.  lots of great vehicle
+  datasets at http://www.ncac.gwu.edu/vml/models.html
+  Update - above link seems to be down as of 2020, see:
+  https://www.nhtsa.gov/crash-simulation-vehicle-models
+  https://www.ccsa.gmu.edu/models/
+  [DONE] k-g importer exists: src/conv/k-g/k_parser.cpp, bot.cpp
+  [DUP] merged TODO:695: Importer for LS-DYNA .k keyword files
+
+* add hierarchy preservation support to step-g
+
+* change format of related programs (especially filters) so the
+  input/output files are handled identically. two examples of
+  different handling:
+
+    png-pix   file.png > file.pix
+    pix-bw  < file.pix > file.bw
+
+  (desired style to be determined)
+
+* Categorize the entity types from STEP * IGES into geometry,
+  relationship definitions, metadata, etc., add any missing types
+  of interest (like, say, metaballs) - try to create a comprehensive
+  list of things we might need to consider when writing converters.
+
+
+== overlap
+
+* BUG: rtweight/gqa volumes seem wrong with simple sphere test case, with
+  values consistently and quickly converging less than the actual
+  volume regardless of the grid size.
+
+* BUG: fix checker.sh script and/or overlap GUI so that the latter will
+  read the resulting overlap pairings file from the prior.
+  alternatively, need to be able to run overlap check on server
+  without GUI, so could implement an overlaps file output option to be
+  run via mged -c.
+  [DONE] src/tclscripts/checker/OverlapFileTool.tcl creates/reads ck.<name>.overlaps; src/libged/check/check_overlaps.c:301 writes overlaps file
+
+* BUG: encountered a crash during rtarea on a (default) facetized version
+  of the hyp from the proc-db csgbrep tool.
+
+* BUG: overlap tool in mged encourages very inefficient CSG operations
+  (e.g. a simple bolt with an entire hull armor subtracted)
+
+* BUG: rtcheck is ignoring fastgen tagged geometry since no multioverlap
+  handler is set.
+
+* add an overlap depth reporting tolerance parameter to the
+  ray-tracers (similar to -R).
+  [DONE] gqa -t overlap_tol implemented; src/libged/gqa/gqa.cpp:792 'if (depth < overlap_tolerance)'
+
+* sort gqa/rtcheck/check/lint/analyze/g_lint functionality into
+  logical groupings (probably analyze - calculate properties and
+  lint - find problems). Come up with a command design that
+  lets us rationalize the features and reduce the command set.
+  [PARTIAL] separate check (src/libged/check/) and lint (src/libged/lint/) commands exist, but gqa/rtcheck/g_lint not unified
+
+* add support for custom and random views to gqa.  provide an option
+  to evaluate every N degrees for all unique az/el pairings, e.g.,
+  every 15 degrees.  should automatically discard duplicate views.
+
+  command line usage:
+  -a begin[:end[:count]][,...] -e begin[:end[:count]][,...]
+
+  the begin, end, and count can be any real or integer number or can
+  be a literal '#' to request a random integer number ranged [0,360]
+  inclusive.  examples:
+
+    Default 3 views (1 duplicate discarded): -a 0,90 -e 0,90
+    One specific view: -a 35.12 -e 25.6
+    360 orbital, every 30 degrees: -a 0,30,60,90,120,150
+    360 orbital, every 30 degrees: -a 0:180:6
+    10 random views: -a #:#:5 -e #:#:2
+    Up to 129600 random views: -a #:#:# -e #:#:#
+    Comprehensive "front" view, 1-degree increments: -a -90:90 -e -90:90
+    Comprehensive orbital, 1/2-degree increments: -a 0:360:720
+  [PARTIAL] gqa has -N nviews but -a/-e are stubs; src/libged/gqa/gqa.cpp:569 'azimuth not implemented', :576 'elevation not implemented'
+
+* implement an overlap reporting function (boolean and volume)
+  [DONE] gqa ANALYSIS_OVERLAPS and overlapList implemented; src/libged/gqa/gqa.cpp:62, :259, :815 add_unique_pair overlap reporting
+
+* implement adjacent object detection in gqa -- find objects that are
+  within a specified tolerance of optionally specified object(s).
+
+* have gqa calculate the volume of overlapping regions, not just
+  shotline overlap distances.  that will allow output to be sorted by
+  volumetrically significant regions and should eliminate a common
+  source of user misunderstanding.  It should eliminate the perception
+  that large overlaps are suddenly appearing when there are changes in
+  grid alignment/density.
+
+* fix gqa spewing of massive amounts of plot data with th -Av -v
+  options:
+  ../src/gtools/gqa -u m,m^3,kg -g 0.25m-0.5mm -p -Av -v gqa.g closed_box.r
+  -rw-rw-r--  1 morrison users 41572569618 Apr 23 15:14 volume.pl
+
+* make gqa overlap reporting suck less.  uselessly reports the same
+  objects multiple times instead of keeping track of uniquely
+  overlapping pairs of objects (rtcheck used to have this problem but
+  not now).  also reports overlaps even when not requested (e.g. -Aa)
+  [PARTIAL] add_unique_pair() dedups (src/libged/gqa/gqa.cpp:815) but else-branch still prints 'overlap' when ANALYSIS_OVERLAPS unset (gqa.cpp:825-827)
+
+* gqa needs to be more informative when it runs - needs a header
+  letting you know what it's doing, and if possible a "progress
+  report" for longer runs that provides some notion of how much of the
+  total job is done.
+
+* modify gqa to search for >1 region flag in a tree path.
+
+* modify default behavior of the overlap GUI to do what overlaps_tool
+  -F does or to supply some togglable means to enable that option in
+  the GUI.
+  [PARTIAL] new checker GUI exists (src/tclscripts/checker/OverlapFileTool.tcl) but overlaps_tool -F default toggle not evident
+
+* extend overlap GUI to report null/empty regions and regions not hit
+
+* need some means to control the runtime and/or density of the overlap
+  GUI sampling, ideally without exposing grid size options so that it
+  remains agnostic to future sampling methods.  a good solution would
+  be better status reporting of the current density sampled and a
+  means to interrupt the process cleanly (while retaining progress and
+  ability to pick up from that point)
+  [PARTIAL] checker has progressBar (OverlapFileTool.tcl:138) and check -g grid refinement (check.c:62) but exposes grid size, no resumable interrupt
+
+
+== attributes
+
+* BUG: mater -d information stored in the .g file doesn't survive a
+  garbage collection operation.
+  [DONE] src/libged/mater/mater.cpp:687 rt_mk_binunif stores density as named GED_DB_DENSITY_OBJECT db object that survives gc, not a dropped _GLOBAL attr
+
+* BUG: calling "attr set obj key value" should always result in key getting
+  set to value, no matter what, as it is the lowest-level attribute
+  management interface and what the command (correctly) documents.
+  example demonstrated to not work was: attr set obj rgb 123/123/123
+  [DONE] src/librt/attr.cpp:642 bu_avs_add() sets any key/value verbatim with no rejection in ATTR_SET path
+
+* BUG: setting src/librt/db5_io.c's AVS_ADD off in db5_import_attributes
+  causes bad things to happen and it really shouldn't.
+  [DONE] AVS_ADD symbol removed from source (only in BUGS); db5_import_attributes in src/librt/db5_io.c uses bu_avs_add directly
+
+* material infrastructure has regressions due to attr sync code that
+  needs to be resolved.
+
+* attribute normalization is drastically slowing down region creation
+  - need to fix or back out
+
+* See src/libbu/TODO.binary_attributes for more info about
+  bson based binary attribute work.
+  [DUP] merged TODO:1746: Implement binary attributes
+
+* attr command change to only output non-standard attributes
+
+* attr command change to have an optional object argument and to work
+  with multiple objects.  make output format scriptable.
+  [DONE] src/librt/attr.cpp uses db_ls glob (path_cnt) and loops over multiple paths in get/set/show/list (lines 384,508,574)
+
+* implement an attribute versioning system.  can hang attribute
+  version off of _GLOBAL (ideally) or per-object so application codes
+  (including our own tools) know whether they're compatible or whether
+  the attributes must be upgraded.
+
+* implement an "attr upgrade" subcommand that allows for forwards AND
+  backwards conversion of attributes.  the command will need two
+  function pointers per version that describes how to upgrade and
+  downgrade for that version transition.  this will allow new files to
+  be downgraded for use on older versions and obviously lets new files
+  be upgraded to the latest conventions.
+
+* implement namespacing for attributes as a means to group attributes
+  together.  examples: cad:color, cad:region_id, muves:component.
+  similar to svn properties, the namespace is predominantly (perhaps
+  entirely) a naming convention, but allows us to document and assert
+  requirements/conventions over a given prefix (e.g., 'cad:'), and
+  provides 3rd party applications with a sandbox to work with.
+
+* expose the list of internally recognized attributes via the man page
+  documentation and some internal method (e.g., an 'attr standards'
+  subcommand).
+  [PARTIAL] db5_standard_attribute() iterator exists (include/rt/db_attr.h:170) but no 'attr standards' subcommand and not surfaced in docs
+
+* clean up default attributes to be consistent and upgrade old
+  attributes to their new names.  includes likes of region, region_id,
+  material_id, air, los, rgb, oshader, and inherit.  see
+  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
+  [PARTIAL] attr standardize subcommand exists (src/libged/attr/attr.cpp:39) but broad attribute consistency cleanup not complete
+
+* implement an option to "attr upgrade" for reading upgrade/downgrade
+  plugins/instructions from an external file for 3rd party use.
+
+* add additional support for user-specified sorting for the attr
+  command when new attribute attributes are added (e.g., creation
+  date)
+
+* material objects (non-geometric attribute-only objects) for v5
+  geometry files.  instead of material attribute value becomes
+  material object name.  material object encompasses hierarchical
+  material traits.  some traits potentially of interest:
+    - density
+    - Young's modulus
+    - yield strength (in different dirs, e.g., rolling & transversal)
+    - ultimate tensile strength (also in different dirs)
+    - Poisson's ratio
+    - cost per ton?
+    - ...
+  [DONE] DB5_MINORTYPE_BRLCAD_MATERIAL=46 (include/rt/db5.h:176); rt_material_internal w/ parent+physical/mechanical props (include/rt/nongeom.h:170)
+
+* parametric material properties.  support the ability to define
+  material properties based on parametric values such as distance from
+  surface, distance from medial axis, distance from centroid, distance
+  from plane, etc.  this supports parametric descriptions of materials
+  that have highly variable densities (e.g., bone, certain alloys and
+  plastics, etc.).
+
+
+== raytrace
+
+* BUG: rt -H hypersample, -J jitter, and -j# for sub-grid-mode assumes a
+  framebuffer, causing pix data to get written to the -o file (e.g.,
+  even with -o file.png).  See view_pixel() near src/rt/view.c:472 for
+  problem area with -j but there are likely call sites..  Need to
+  scrub all fb_write() and ideally make this a non-issue via icv API.
+
+* BUG: rtsil command works if do what usage says and redirect output to
+  file, but mentions .pix when data is actually .bw; and using the -o
+  option results in a black image.  it is also inconsistent, writing a
+  black silhouette on a white background, instead of black on white
+  and missing background color options.
+
+* BUG: rtedge with perspective is wrong.  it fills in nearly entire faces,
+  vertically in particular.  it's worse on small sized renders, and
+  gets better the larger the render size (indicating there's some
+  neighbor distance coming into play that is not affected by
+  max_dist).  eoes not happen in non-perspective ray-traces.
+
+* BUG: running rt -s20 -F file.pix ... does not result in an 20x20 image
+  being written out.  it ends up being 512x512.
+
+* BUG: running rt -C255/0/0 -o file.pix ... does not result in the
+  background color getting used.  It does work with -F file.pix, going
+  through libfb instead of libicv.
+
+* BUG: rtxray crashes if you specify a -o *.bw output file due to
+  assumptions in the rt front-end that all output files are .pix
+  [DONE] viewxray.c:97-116 now uses icv/bu_file_mime, LGT_BW path supports .bw output; src/rt/viewxray.c:319 documents -o file.bw
+
+* BUG: rt -i -s4096 -H16 -F/dev/null boolean-ops.g all
+  [????] entry is only a command line with no described symptom; cannot identify the intended defect
+
+* BUG: report of rt aborting randomly on 64-bit with camo shader.
+  [????] sh_camo.c still present but unverifiable random-abort report with no reproducer
+
+* BUG: infinite light sources close to objects result in unexpected/bad
+  light behavior.  example is a 1m sph light about 5m from a box about
+  1k x 1k x 1k in size.  setting make each light be red, green, and
+  blue respectively, set to infinite (and fraction 10) and sides to
+  the cube will render sides with a fixed color (green, blue) and top
+  magenta.  On one test with all lights at fraction 1.0 and only one
+  inf, was getting interleaved partial flat/no color all around cube.
+
+* BUG: rtwizard won't display a line overlay if you line object is obscured
+  by another.  Example being to display a vehicle as ghost, crew as
+  solid, and crew as line.  confirmed even when using the other line
+  occlusion settings.
+
+* BUG: bump shader seems to be busted.  only renders as flat by itself and
+  stacked with phong it seems to ignore the uv settings.
+
+* BUG: invalid shaders result in an "Unable to locate where BRL-CAD ... is
+  installed" message that refers to being unable to find a
+  /lib/libSHADER.so file.  Quite a bogus message and probably not
+  something that should abort the ray-trace.
+  [DONE] src/liboptical/material.c:83 try_load now fails silently (debug-only bu_log) returning NULL; 'Unable to locate where BRL-CAD' message no longer in source
+
+* BUG: rtedge seems to get stuck in a loop at the end of rendering, never
+  terminates (unless you rtabort/kill the process); works with -P1
+
+* BUG: nirt/query_ray reports intersection messages in triplicate if the
+  shot routines miss but still print out messages
+
+* BUG: solids.sh regression test fails on Mac OS X with one pixel
+  off-by-many on the edge of the middle ARB8 when using an optimized
+  -O3 compile (-fno-unsafe-math-optimizations makes no difference)
+
+* BUG: raytracers report the wrong amount of cumulative time (reports as
+  0.0 seconds elapsed) on amd64 linux; most likely the same pthread
+  accounting bug visited a couple years ago.
+  [DONE] timer rewritten to std::chrono::steady_clock wall clock in src/librt/timer.cpp:38-80, no pthread accounting
+
+* BUG: rtwizard/rtedge creates incorrect "fuzzy" edge overlay when creating
+  a "Ghost Image with Insert and Lines" that includes a light source
+  and object close to surface (e.g. moss.g; select plane, light, and
+  cone for ghost; select cone for insert and lines.)
+
+* BUG: rtarea gives incorrect areas when using -H hypersample flag
+  [DONE] fixed: cell_area divided by (hypersample+1) src/rt/viewarea.c:1092; commit c1f66f918e
+
+* implement nirt flag to report a secondary ray fired in the direction
+  of the hit point surface normal.
+
+* calculate maximum/minimum presented area az/el for a given model
+
+* add rt* option to output reusable view specification similar to
+  saveview scripts, but perhaps just the command portion.  this would
+  be similar to what 'art' does, so a given rendering can be reloaded.
+
+* ability to draw lines, boxes, and text on rendered outputs/images.
+  we sort of have this ability through plot3 and composition tools
+  but end-user request was integration with rt* tools so, for
+  example, there could be a way to specify a coordinate frame overlay
+  on images output by rtwizard, using stippled lines.
+
+  some existing APIs with similar functionality include opencv,
+  matplotlib, matlab, and processing
+  [DUP] merged TODO:1172: Tool to apply text overlay (title, az/el, objects) to rendered image
+
+* implement uv-mapping callback so we can texture-map BoT, NMG, and
+  NURBS geometry
+  [PARTIAL] rt_bot_uv/rt_nurb_uv/rt_brep_uv implemented; rt_nmg_uv is empty stub (nmg.c:1436)
+
+* add regression test for directional light sources
+  [DONE] regress/lights/lights.sh tests infinite (i 1) directional light shader
+
+* mged> nirt -f fmt needs output cleanup. When run with -f csv there
+  are unexpected warnings and duplicate line prints
+
+* RTAREA
+
+  * add an option to rtarea for onehit.  this is probably best as an
+    option that reports the requested objects only and then has a
+    verbose option for the more detailed hierarchical report that is
+    currently produced.
+
+  * verify rtarea.  There are reports that the rtarea
+    command may have a bug in its calculations.  This needs to be
+    investigated.
+
+  * review and fix rtarea's taxonomy for describing
+    presented/projected areas.  users expect presented area to
+    represent what is currently referred to as exposed area.  may make
+    more sense to introduce a different terms for other shotline
+    encounters.
+
+  * make rtarea display a cross-hair and perhaps coordinates for the
+    center of area if run from within mged.
+  [DUP] merged TODO:1118: Fix/change naming convention for presented/exposed area
+
+* use bu_gettime() in rt -l8 heatgraph visualization mode
+
+* add a multiview rt script to regression testing (e.g., see rtwalk
+  output)
+
+* drawing with origin, axes, and overall dimensions for rt/rtedge/etc.
+  [PARTIAL] rtedge has draw_axes option (src/rt/viewedge.c:237); no dimensions, not generalized to rt
+
+* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce: e s.nos5g ; ae 35 25
+  ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
+* obsd stack crashers
+  [????] single-line note 'obsd stack crashers'; no identifiable symbol/file, platform-specific, unverifiable statically
+
+* make rt -b accept a pixel index in addition to x,y pixel coordinates
+
+* high-performance VOL for medical data visualization.  consider
+  leveraging OpenVDB, PCL, Paraview/VTK, etc.
+
+* temp colors and temp matrices during ray tracing, rt, rtwizard.
+  need a command-line and mged method to override parameters.
+
+* add option to rtedge to also show back-facing hidden edges
+
+* add support for a zoom/viewsize and twist options to rt so you can
+  adjust the image without having to feed a view script.
+  [PARTIAL] rt opt.c has -s size, -a azimuth, -e elevation (src/rt/opt.c:929-949) but no twist option
+
+* render annotated images to the OpenDocument format.  this is
+  particularly useful for rtedge-style renderings with object
+  annotations where we can leverage layout components and scalable
+  vector graphics.
+
+* automatic anti-aliasing as a second render pass on the edges
+  encountered (possibly using bilinear filtering scheme, improve upon
+  rtedge's current simple filter)
+  [PARTIAL] src/rt/viewedge.c:33 TODO 'antialiasing implementation is very poor'; basic sub-pixel antialias exists but unimproved
+
+* add a force option to the tracers to support overwriting the current
+  output file (so long as we're going to make it read-only by
+  default).
+
+* clean up new rt -l8 heat graph lighting model so that it works in
+  parallel and with no "splotches"
+
+* add a default phong 'metal' shader.  annoying to keep making plastic
+  more reflective or mirror less reflective when it's such a common
+  material appearance to want.
+
+* add support to 'rtxray' for outputting inverted pixel values so that
+  we have pixel values that are directly related to material thickness
+
+* implement a jitter-style option to rt that makes it average the ray
+  results to take a weighted light contribution for a given
+  resolution.  saves more memory over rendering at 2x/4x/8x/whatever
+  with or without jitter and then scaling down.  present jitter option
+  doesn't average.
+
+* re-enable RISE client in ADRT
+  [DONE] no RISE references remain anywhere in src/adrt; feature removed, task obsolete
+
+* fix rt parallel crash
+  (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
+
+* Implement an optical shader for the new "pixelated" military
+  camouflage style
+
+* librt-based path tracer
+
+  [HARD] A global-illumination engine: importance sampling,
+  convergence/denoise, integration with the existing shader stack and
+  framebuffers.  Couples with "Integrate ADRT into Archer" and the
+  automatic-anti-aliasing item.  A whole rendering subsystem.
+  [FAN-OUT: partial -- parallel component research (samplers, denoise,
+  ADRT bridge); the integrator core is serial.]
+  [PARTIAL] src/art is an external Appleseed-based path tracer (art.cpp:25), not a native librt GI engine
+
+* rtedge-style tracer that outputs tool paths (splines/segments, etc.)
+  for CNC/CAM style toolpath cutting descriptions (g-code files).
+
+* Need to mark or otherwise disambiguate grazing hit segments so we
+  can consistently retain or remove hits without introducing overlaps.
+  Consider the case of a tgc stacked on top of an arb8, perfectly
+  tangent, and shoot a ray at that point:
+
+                                   -----   z=2.0
+                                   |tgc|
+  shoot a ray through here --->   -------- z=1.0   <--- or here
+                                  | arb8 |
+                                  -------- z=0.0
+
+  Here are the primary concerns:
+
+  A) solidity: a ray should never pass through the two without one or
+  both evaluating to a hit,
+
+  B) usability: a convention that precludes forcing the user to
+  "nudge" them apart by some arbitrary epsilon is desired (it's
+  intuitive and common for users to model two objects with "perfect
+  tangency"),
+
+  C) deterministic: firing a ray should give the same result every
+  time that same ray is fired, and,
+
+  D) bidirectional: a ray fired in one direction should evaluate to
+  the same result if fired from the opposite direction along the same
+  path (view independence).
+
+  If we hit both, an overlap will ensue unless these objects are
+  unioned.  This is undesirable.  If we miss both, slipping through
+  the hairline "crack", it can be devastating for analysis and result
+  in raytrace speckling.
+
+  In order to only hit one, a consistent grazing policy must be
+  applied such that grazing points on one "side" of an object are
+  always kept and grazing hits on the other "side" are always thrown
+  away.  The proposed method, similar to handling special case
+  grazings with a Breseham line painter algorithm, is to consistently
+  consider grazes with a procedure:
+
+  1) Calculate the ray intersection, detect whether the hit is grazing
+  (defined as a hit being barely in/on the surface either through a
+  point, edge or even down a surface).
+
+  2) Calculate a hit normal.  It may be desirable to average both the
+  in/out hit points to get more of a "practical" surface normal.
+
+  3) Calculate the ray of reflection.  Use the surface normal and ray
+  of intersection to calculate our reflection direction.
+
+  4) Determine which plane of a globally bounding rpp the reflected
+  ray would intersect with.
+
+  5) If the reflected ray hits the front, right, or bottom face, the
+  grazing is kept, but if it reflects onto the back, left, or top
+  face, the grazing is ignored.  In ray-view projected 2D, this
+  corresponds with keeping the grazing if the reflection is pointing
+  up or to the left and discarding if pointing down or to the right.
+
+                                   discard top/left/rear
+                rear              keep bottom/right/front
+            .____________.
+            |\           |\ t              discard
+            | \          | \ o           ._________.
+          l |  \         |  \ p          |/////////|
+          e |   o____________o          d|//view// |
+          f |   |        |   |          i|//of///  |
+          t |   |        |   | r        s|//ray/   |k
+        b   .___|________.   | i        c|////+    |e
+         o  \   |         \  | g        a|////     |e
+          t  \  |          \ | h        r|///      |p
+           t  \ |           \| t        d|//       |
+            o  \o____________o           ./________.
+             m     front                     keep
+
+  This should result in consistent grazing behavior that addresses the
+  above case: we consistently hit the tgc but not the arb8 and there
+  are no overlaps requiring modeler intervention.  The main problem
+  with this approach, however, is calculating an appropriate surface
+  normal for edge and face grazings can be difficult for some objects.
+
+  In the case above, we do not get a hit on the tgc's bottom ellipse,
+  for example, instead getting two hits near the edge of the side.
+  Similarly, we hit the left and right arb8 faces, not the top face
+  even though that is what we are conceptually grazing through.
+
+  One possibility to address that difficulty is to simply report all
+  grazing hits, but mark them as grazing, and let rt_shootray() sort
+  it out by sampling a 3x3 pattern that determines if we're grazing
+  the "top/left" or "bottom/right" side of a surface.
+
+  [HARD] Needs one grazing convention that is simultaneously solid,
+  deterministic, view-independent (bidirectional) and overlap-free
+  across every primitive; the text above concedes a valid edge/face
+  graze normal is "difficult for some objects."  Governs global
+  raytrace correctness; see also the s.nos5g grazing-edge bug and the
+  tgc/rec shot() item.  A fully-correct solution may not exist.
+  [FAN-OUT: yes -- one agent per primitive to characterize graze
+  behavior, plus an adversarial bank of bidirectional ray test cases.]
+
+* a_logoverlap doesn't work with rt_shootrays because it overwrites
+  a_uptr
+
+* prevent nirt from outputting a trailing space after values when
+  there are no attributes to be displayed.  the problem is in the nirt
+  format strings where they use " %s" for displaying any attributes.
+  need to left-pad a space conditionally, perhaps by supporting %*s
+  and sizeof(var).
+  [DONE] nirt rewritten in src/libanalyze/nirt/nirt.cpp with width/precision format specifiers and nirt_print_key; old ' %s' format gone
+
+
+== raytrace-speed
+
+* BUG: very peculiar non-linear memory issue in rt when allocating a large
+  flat hierarchy of objects.  I have three combs, each with 10k
+  members unioned. Each member is an rcc.  Rendering with just one
+  comb results in about 2GB usage.  Two combs result in about 3.5GB
+  usage.  Three combs results in 18GB usage.  Four is killed after
+  24GB.  Suspect there is some 32-bit issue once we exceed 4GB that is
+  causing subsequent allocations to be bigger than necessary.  Looking
+  at allocation stack, rt_ct_get() appears to be allocating 10MB
+  chunks.
+
+  [HARD] Superlinear growth (3 combs -> 18GB) points at an
+  integer/overflow interaction deep in the space-partitioning cut
+  allocator (rt_ct_get 10MB chunks), intertwined with bu memory.
+  Painful to isolate and validate at scale.
+  [FAN-OUT: poor -- one focused investigator with an allocator/profiler
+  trace; not parallelizable.]
+  [PARTIAL] src/librt/cut.c:280-282 now allocates single union cutter (10MB chunk roundup commented out) but superlinear growth bug not validated as fixed
+
+* bundle primary rays in rt front end into postage stamps, shoot via
+  rt_shootrays(), modify to pass all rays down through the spatial
+  partitioning simultaneously
+  [DUP] merged TODO:2521: Implement bundle/array-of-rays shooting
+
+* OpenCL for enhanced performance boolweave sorting
+
+* rtedge shoots twice as many rays as it needs to (shoots the 'below'
+  ray for each primary, only reusing current scanline cells).
+
+* gqa semaphore locking on results is very slow and gets worse as the
+  number of cores and speed of cpu increases.  resource contention on
+  semaphores slows everything down substantially.
+
+* optimization of NMG ray tracing.  the hitmiss bookkeeping presently
+  used has a malloc/free occurring per shot().  allocations need to
+  occur during prep only.  the presently render more than an order of
+  magnitude slower than tracing that nmg converted to an equivalent
+  BoT due to malloc/free calls being made during shot(). Confirmable
+  with a simple test case of a sphere converted to an nmg:
+
+    make sph sph ; facetize -n sph.nmg sph
+
+* consider utilizing something like moodycamel::ConcurrentQueue for
+  handling ray dispatch: https://github.com/cameron314/concurrentqueue
+
+* merge shot and vshot
+  [PARTIAL] ft_shot and ft_vshot still distinct in functab.h:86,144; not merged
+
+* separate ray structs - make fit in cache line
+
+* refactor primitive data -  make fit in cache line
+
+* implement SIMD shots
+  [PARTIAL] no CPU SIMD intrinsics in primitives; 18 OpenCL *_shot.cl kernels provide GPU data-parallel shots only
+
+* implement SAH for all primitives (routine that fires a ray at each
+  primitive for initial estimate, caches result)
+
+* write and use kdtree - make traversal cache coherent
+
+* replace adrt's kdtree with one that builds faster
+
+
+== geometry-models
+
+* BUG: dsp does not facetize correctly with zero elevation areas in the
+  data - need robustness improvements
+
+* BUG: attempting to create a dsp using a binary object caused a crash on
+  Linux - need to figure out if this was caused by feeding it the wrong
+  kind of binary object or some other error...
+
+* BUG: run make to create all primitives at the origin.  there are raytrace
+  differences, crashes, and overall bad behavior between default
+  ungrouped "e *" view and adding all of those primitives to a single
+  region.  Script for creating all primitives via make command:
+
+  for i in `mged -c test.g make asdf asdf 2>&1 | awk '{print $12}' | sed 's/[<>|]/ /g'` ; do mged -c test.g make $i $i ; done
+  mged -c test.g "g primitives *"
+  mged -c test.g r primitives.r u primitives
+  rt -a 35 -e 25 test.g primitives
+  rt -a 35 -e 25 test.g primitives.r
+
+* BUG: dsp primitive is going into what seems to be an unbounded memory
+  allocation loop during prep, inside dsp_layers().
+  [PARTIAL] dsp.c:831 adds path that avoids calling dsp_layers() pyramid build; dsp_layers() at dsp.c:547 still used at line 953
+
+* Look into https://www.kitware.com/really-fast-isocontouring/ to see
+  if those algorithms could be useful for BRL-CAD
+
+* procedural studio box generation allowing for specification of size,
+  shape, material, and lighting characteristics
+  [DUP] merged TODO:2544: Create a studio box reference model
+
+* create a joint articulation (manually is good, automatic is better)
+  for the tin woodsman so he can move his arms, legs, neck, and head.
+
+* create a joint articulation (manually is good, automatic is probably
+  impossible) for ktank so the turret can spin and the gun barrel may
+  be raised up/down within a given range.
+
+* geometry compiler.  provides different levels of "optimization"
+  (ways of reducing the geometry complexity with or without
+  introducing 3D changes.  provides different stages of compilation
+  (e.g., similar to preprocessing, compilation, AST reduction,
+  optimization, encoding transformation, etc.).  name ideas: bcg, cg
+
+  [HARD] Two new subsystems (with the geometry debugger below).  The
+  compiler needs real CSG optimization (tree contraction, null-object
+  detection -- hard in itself); the debugger demands a dependency-free
+  re-implementation of .g parsing to inspect corrupt files.
+  [FAN-OUT: yes -- catalog candidate CSG optimizations and the on-disk
+  .g layout in parallel; the cores are then implemented serially.]
+
+* review proc-db for promotion to src/shapes
+  [PARTIAL] src/shapes/ populated with promoted shapes (bolt,coil,fence,tire,human...) but src/proc-db still has 38 files to review
+
+* The sph wireframe drawing routine doesn't seem to like drawing very
+  small spheres far from the origin:
+
+  in test_2.s sph 1, 2, 1 0.0007  (draws a sphere wireframe correctly)
+  in test_1.s sph 10000 -15000 3000 0.0007 (incorrect wireframe)
+  [PARTIAL] rt_ell_plot reworked with min_chord/theta_tol clamping for small shapes at src/librt/primitives/ell/ell.c:1084-1102 (commit 96e29bdb6a); far-from-origin case not explicitly confirmed
+
+* convert teapot to use nurbs surfaces instead of bspline
+
+* fix metaball/adjust.. wipes out all metaball values with:
+  adjust metaball 1 1 1
+  just gives usage with:
+  adjust metaball 1 1
+  [DONE] rt_metaball_adjust now rejects odd/unknown args (metaball.c:951,1004); fixed in 8af19b8e0d (no longer fails silently)
+
+* investigate the libngpcore and libngput libraries from the ngPlant
+  project as a possible means of procedurally generating plant models
+  in BRL-CAD (libraries are BSD licensed:
+  https://github.com/stager13/ngplant)
+
+* object error heuristic.  implement a function/command to report how
+  big of an error a given geometry object has.  the intent is to help
+  prioritize geometry modeling errors based on their spatial impact.
+  this is particularly relevant for nurbs/brep and nmg geometry where
+  there may be solidity gaps in the topology that need to be sealed or
+  dangling faces/surfaces of different sizes.  this is meant to be a
+  relative heuristic applicable across all geometry, not necessary an
+  exact measure.  this may make more sense added as an output option
+  to glint or as a warning category for a geometry debugger.
+
+* multi-region VOL objects.  this basically will either introduce a
+  notion of data-reuse where multiple regions reference the same VOL
+  and get different spatial results, or a single primitive reports
+  distinct material/region/spatial information that will get
+  propagated up into separate region hits.  the prior is probably
+  easier and less error-prone.
+
+* datum objects.  implement support for datum points, axes, planes,
+  and coordinate systems.  Nominal prioritized task decomposition with
+  time estimates:
+
+  2 day - stub in datum object into librt with sub-object types
+  1 day - implement typein support for datum axes
+  1 day - implement matrix pushing / verify rt_generic_xform()
+  1 day - implement listing / text / plot callbacks
+  1 day - implement adjust support for datum axes
+  1 day - update in.xml documentation on typein interface
+  2 day - add datum axis creation to archer GUI
+  2 day - implement datum axis option panel in archer GUI
+  2 day - implement datum axis mouse editing in archer GUI
+  3 day - write up documentation on datums (with example)
+  1 day - serialization+typein support for datum planes
+  1 day - serialization+typein support for datum point sets
+  1 day - serialization+typein support for datum coordinate systems
+  3 day - callbacks for planes, point sets, and coordinate systems
+  2 day - add datum plane to archer
+  2 day - add datum point sets to archer
+  2 day - add datum coordinate systems to archer
+  1 day - update in.xml documentation on typein
+  [DONE] datum primitive implemented (src/librt/primitives/datum/datum.c, ID_DATUM=44 in include/rt/defines.h:140)
+
+* annotation primitive.  specifically a means to create an object in
+  the database that can optionally be associated with another object
+  and/or position(s) that a label refers to.  there are various styles
+  such as a single line from a point to text and two lines (e.g.,
+  indicating measurement) to text.
+
+  the object should allow for different line styles including having
+  no lines.  there should also be support for view-fixed or
+  view-independent annotation placement (which requires a change to
+  plot()'s and possibly prep()'s signature).  it would also be useful
+  to allow an optional _annotation_ "thickness" so that the
+  annotations can represent physical geometry (so they raytrace).
+
+  the concept is nearly equivalent to a combined sketch+extrude object
+  but with options specific to annotations.  the underlying export
+  form should be fully generalized as much as possible with a
+  higher-level "in" command constraining available options into a
+  user-friendly form.  a new "annotate" command will similarly be
+  needed to support modification of existing annotations (as well as
+  creation ala the 'in' command).  see the web for tons of examples.
+
+  References:
+  http://en.wikipedia.org/wiki/Geometric_dimensioning_and_tolerancing
+  ASME Y14.5 2009
+  http://www.draftingzone.com/shoppingzone/6-1.pdf
+  http://www.wikistep.org/index.php/Recommended_Practices_for_the_Representation_of_GD%26T
+  http://www.wikistep.org/index.php/Recommended_Practices_for_the_Presentation_of_Dimensions,_Dimensional_and_Geometric_Tolerances
+  http://www.wikistep.org/index.php/Associative_Text_in_3D_recommended_practices
+  http://www.wikistep.org/index.php/Model_viewing,_basic_drawing_structure_and_dimensions_recommended_practices
+  http://www.iigdt.com/Products/Images/0f390980.jpg
+  openNURBS: opennurbs_annotation*
+
+  Types of annotations:
+	text:                   text.
+						   text --,
+	leader:                 text ---->.                \
+				      .            .        \           .        .         .  .
+	linear dimension:             |            |         .          |        |         |  |
+			    .         |<-- text -->|                --->|  text  |<--   -->|  |<---- text
+	angular dimension:   \  text
+			      \_____.
+
+  Annotation placement:
+	xyz position:             (1.0, 3.5, 2.1)
+	named reference(s):        hull.r
+	above/below/left/right:    below
+	offset:                    33.4
+		(e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc.)
+
+  Text:
+	user-defined string:     my awesome component -----> .
+
+	named/point reference:        hull.r1 -----> .
+						  .               .
+	automatic dimension (two points):         |_______________|
+				   .        .           5.4 mm
+	custom dimension label:    |<------>|<--.
+						 \ Length of hull.r1: 5.4mm
+
+	      (custom label specified via format specifier: "Length of %target: %size")
+
+  Point properties:
+       styles, for interface familiarity, provide option to describe
+       points as [empty] . + x * ! as well as all 6: in a circle, in a
+       box, and in a circle in a box.  that's 24 styles altogether.
+       non-arrow annotations that lead to/from a point should allow
+       source and target point styles to get set separately.
+
+  Text properties:
+       font name
+       font size (height)
+       font style: bold/italic/regular
+       font color
+       justification: left, center, right, bottom, middle, top
+         (combineable options, e.g., "top left")
+       placement: default, above, below, inline, interior, exterior
+
+  Line properties:
+       head style (point o-, arrow_to >-, arrow_from, <-, square #-)
+       tail style (point o-, arrow_to >-, arrow_from, <-, square #-)
+       line weight (thickness)                    .___.                     target        .---- text
+       2d points:               text  ._____.     |    \                    .     .      /
+					     \    |     .---> target        |     |     /
+					      .___.                      -->|     |<---.
+  Symbol type:
+       degree:   (superscript circle)
+       radius:   ('R', e.g., 'R10.5')
+       diameter: (circle with slash, null symbol)
+       ... several others
+       http://www.tec-ease.com/gdt-terms.php
+
+  Annotation properties:
+       scale: fixed size or proportional to view
+       alignment: to datum (plane or axis) or to view
+       draw bounding plane
+       draw target axes at uv offset position
+       draw feature control frame (characteristic tolerances in
+         symbolic form: www.draftingzone.com/shoppingzone/6-1.pdf)
+       3d thickness
+  [DONE] annot primitive (src/librt/primitives/annot) + annotate command (src/libged/annotate), ID_ANNOT=42
+
+* offset surfaces.  provide feature edit operation to create a solid
+  "level set" style object so you can represent degraded geometry
+  states (e.g., damage around a hole in a plate of metal might be
+  represented by the toroidal intersection with a cylinder some radius
+  larger than the hole, providing a separate region that can have
+  different material properties).
+
+  geometrically, this is simply a means to separate a given object
+  into multiple objects without changing the cumulative volume.  a
+  linear offset from a given surface or set of surfaces is usually
+  desired.
+
+* edge feature edit objects: highly related to feature edits, object
+  modifiers that add to or subtract from edges (e.g., smooth corners
+  or representing a weld):
+
+    ext    int      ext  ext           ext      int
+    rounds/fillets, cuts/chamfers, and scallops/beads  (original)
+      ------_        ------.           -----.          ----------
+             \              \               /                  /
+              |              \             |                  /
+             /                \             \                /
+            /                 /             /               /
+           /                 /             /               /
+
+* feature edits: support for adding holes (diameter+parameters),
+  hollowing out objects (specify thickness), and (maybe) bending or
+  twisting objects.
+
+* CSG blending: smooth union, smooth subtract, smooth intersect.
+  specify a k parameter that defines a blending radius between two
+  objects as an additive operation.
+
+* clone/grid/pattern/repetition objects: similar to aliases and the
+  existing clone command which creates actual copies of objects, this
+  entity represents copies of objects implicitly.  it maintains the
+  grid pattern as a parameterization allowing it to be easily changed
+  and more efficiently processed.
+
+* conical edge (cubic) - unsure of this one's practical utility except
+  as a means to construct a pinched tgc (unioning two halves).
+
+* apple (quartic) - this is basically a continuation of torus where
+  the ID > OD/2.
+
+* cushion (quartic) - bowl shape, related to elliptical torus with
+  filled interior.
+
+* eight/piriform (quartic) - a conic/ellipsoid blending shape.
+
+* goursat/tanglecube/tooth (quartic) - related to superellipsoid
+  surface, provides corner/edge blending and rounding shapes.
+
+* lemon (quartic) - elliptical nose cap (requested shape) shape.
+
+* lipschitz blend - means to procedurally blend surface edges based on
+  a blend function and sphere tracing. see "Combining CSG modeling
+  with soft blending using Lipschitz-based implicit surfaces".
+
+* SDF blending - likely requires defining per-prim distance functions,
+  but would then allow automatic implicit blending, chamfer/bevel,
+  rounding, and filleting.
+
+* CSG shaderball
+
+* solid teapot
+  [DONE] Teapot generator present: src/proc-db/tea.c, tea.h, tea_nmg.c (NMG TNURB teapot)
+
+* CSG lightcycle
+
+
+== db-format
+
+* BUG: MGED crashes trying to open the repository file
+  doc/docbook/resources/other/standard/xsl/images/important.tif
+  It is mis-identified as a v4 .g file due to the file header's
+  first character matching the v4 .g first character.
+
+* lay out filesystem and URI models for database storage and access -
+  these design decisions are fundamental and have broad implications
+  for many other design decisions.  Issues to consider include where
+  and how versioning, how to access attribute data from URIs, what the
+  filesystem analogies are (combs -> directories, objects -> hard
+  links, etc...), where they break down (comb boolean expressions
+  don't map cleanly to the notion of directory contents, for example)
+  and how to handle the various cases, how to present a "db_glob" API
+  etc.  Need a proper document laying all of this out.
+
+  Potentially relevant/useful links:
+  URI specification:  https://tools.ietf.org/html/rfc3986
+  Minimal URI parser:  https://github.com/cloderic/curi
+  Larger URI parser: https://github.com/bnoordhuis/uriparser2
+  Fast parser, has deps: https://github.com/toffaletti/libguri
+  OpenBSD glob with function callbacks (rework/simplify
+     to be *only* a callback API to make this properly generic,
+     then have OS or .g specific functions...):
+  https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/include/glob.h
+  https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/glob.c
+
+  [HARD] Foundational design whose decisions cascade everywhere; the
+  combs<->directories analogy breaks on boolean trees with no clean
+  answer.  Relates to the geometry-URL/VFS, symbolic-links, and
+  filesystem-backed-collections items.
+  [FAN-OUT: yes -- parallel survey of URI/VFS prior art plus a
+  use-case/edge-case catalog before committing to a spec.]
+  [DUP] merged TODO:590: Define geometry URL and VFS behavior
+
+* add support for filesystem-based geometry collections
+
+* develop a low-level tool for investigating, reporting statistics on,
+  and repairing geometry database files.  the tool should nominally
+  perform big/little endian conversions, report number and types of
+  objects, allow deletion/undeletion/hiding/unhiding, provide some
+  general means to manipulate the packed and unpacked .g file data for
+  performing low-level modifications
+  [PARTIAL] glint reports problems (src/gtools/glint.cpp) and lint exists, but no unified endian/undelete/low-level repair tool; admin-db.cpp referenced in TODO is absent
+  [DUP] merged TODO:785: Geometry debugger tool with no library deps to inspect/repair corrupt .g files
+
+* evaluate performance of using an SQL/XML store for BRL-CAD geometry,
+  particularly as it pertains to rt_dirbuild() run times on large
+  models and db_lookup() times.
+
+* multiple-representation geometry.  support storing different
+  "versions" of a given combination node, as selectable subtrees where
+  one selectable subtree is always marked active/selected.  the
+  selectable subtrees could generally be entirely different
+  configurations (e.g., different poses) or different geometry
+  structure (e.g., a blast, signature, or lethality version of a given
+  model).  These could be implemented as a modification to the union
+  tree and exposed to the user as a parametric selection on a comb.
+  Something perhaps like this:
+
+  union tree {
+    ...
+    struct tree_representation {
+      uint32_t magic;
+      int tr_op;
+      const char *tr_name;
+      union tree *tr_subtree;
+    } tr_r;
+    ...
+  };
+
+* Cache objects.  These are proper non-geometric geometry database
+  objects intended to store binary results that have a dependency on
+  other object(s).  A named hash (e.g. md5) is recorded for each
+  dependent object along with the computed results.
+
+  Three potential candidates for leveraging cache objects are 1) prep
+  objects containing the final prepped state of a given object
+  hierarchy (particularly useful for BoT and BREP geometry), 2)
+  raytrace objects containing the intersection results for a given
+  view (i.e., a grid of primary rays), and 3) rtgl point samples
+  (which is a variant of 2 but potentially view independent).
+
+  Considerations:
+    fast dictionary with expiration by time? (eviction during writes)
+    cache rate read/write / sec > 10k @ 500bytes
+    remain fast with millions of entries
+    immediate retrieval (consistency)
+    provide for concurrent access (concurrency), perhaps via sharding (N locks)
+  [PARTIAL] src/librt/cache.c implements prep-data caching (candidate #1) but not general in-DB cache-object infra w/ named dep hashes for raytrace/rtgl
+
+* alias objects.  this is an object handle in a geometry database that
+  refers to another geometry database object.  in effect, it
+  encapsulates the idea of a symbolic reference for database objects.
+
+  alias objects should be very lightweight, corresponding to basically
+  a simple named reference to another object.  this allows for
+  geometry objects to have multiple names, all referencing a given
+  primary name.  whenever an alias is referenced, it returns the
+  object pointed to instead of the alias object itself (this includes
+  the rt_db_internal()).  this prevents the creation of cyclic
+  references.
+
+  this directly supports geometry importers that contain object name
+  mappings (e.g., part numbers to engineering names) as well as
+  simply supporting multiple names per object that one might want to
+  persist.  there is an issue of whether aliases show as top-level
+  objects or even display by default without a listing option.
+  [DUP] merged TODO:799: Geometry symbolic links (hard and soft links)
+
+* image objects (tbd objects) for v5 geometry files.  not only the
+  ability to have images in the 3D space, but to view-align them for
+  image underlay modeling.
+
+* shader objects (non-geometric attribute-only objects) for v5
+  geometry files.  allow shader string to refer to said objects for
+  shader parameters.
+
+* 3D plot objects for v5 geometry files.  very closely related to
+  other ideas about having 3d wireframe objects, but these would
+  probably be non-geometric in nature.  basically the plot3 files that
+  are stored out to disk being stored as objects in the database with
+  support for the overlay command to import, export, display them.
+
+  minimally should probably support the basic drafting elements
+  (predominantly from collada, dxf, iges, and step specifications):
+
+	point := x, y, z
+	line := start point, end point
+	polyline := various (closed, open, paired, modified, etc.)
+	circle := center point, radius
+	ellipse := center point, major radius, minor radius
+	hyperbola := center point, major radius, minor radius
+	parabola := center point, focal length
+	arc := center point, radius, start angle, end angle
+	spline := degree, control points, knot values
+	text := string, insertion point, size, style, alignment
+
+* procedural geometry objects.  database objects that are described at
+  run-time by a scripted definition.  at core, this is a means to
+  define geometry via outboard descriptions that conform with a
+  particular syntax (e.g., tcl or python).
+
+  minimally, an object will need to define what parameters are
+  required, what parameters are optional, and what default values will
+  be used.  the object will also need to provide a procedural
+  definition (e.g., a function or set of functions/objects) that
+  receives parameter values in order to describe geometry on-demand.
+
+  similar to shader, material, and other object constructs, it'll
+  likely be desirable to support embedding of the procedural
+  definition within a .g file as well as the ability to reference an
+  external file that may be more conveniently edited.
+
+  care will need to be taken to avoid bad behavior when presented with
+  a malformed procedure (e.g., an infinite loop, fork bomb, syntax
+  error, thrashing condition, etc.).
+  [PARTIAL] DB5_MINORTYPE_BRLCAD_SCRIPT=45 registered but rt_script_internal is a stub (include/rt/primitives/script.h, geom.h:1112)
+
+* have all primitives record a matrix so they may retain a local
+  coordinate system even after pushed matrices.  this also will allow
+  primitives like the torus to support non-uniform scaling.
+
+  [HARD] On-disk format change rippling through every primitive's
+  import/export/xform/raytrace -- and the non-uniform-tor raytrace it
+  is meant to enable is itself unsolved.  Requires a v5->v6 migration
+  plus full revalidation.
+  [FAN-OUT: yes -- one agent per primitive for the import/export/xform
+  changes; the format/migration design stays central.]
+
+* change convention of using 'u', '+', and '-' for unions,
+  intersections, and subtractions respectively to symbols that
+  unambiguously describe the underlying CSG operation.
+
+  '+', 'x', and '-' are the dominant ASCII option or (better) using
+  unicode logic symbols for U and upside-down U.
+
+  Union/Disjunction: + ∨ v u (logical OR)
+  Intersection/Conjunction: x ∧ ^ . & n (logical AND)
+  Subtraction/Difference: - (logical AND NOT)
+  Negation/Complement: ! ¬ (logical NOT)
+
+* fix the database I/O writing to properly support the addition of new
+  primitive types.  this includes modifying the major/minor code or
+  combinations/regions and binary objects
+
+* add database support for constraints, expressions, parametric
+  values, construction history, and timestamping.
+
+  [HARD] Effectively "make BRL-CAD parametric": a new
+  evaluation/dependency engine, construction history, and selectable
+  subtree representation baked into the format.  Enormous; assumes the
+  ambitious reading (a real parametric kernel, not just storage).
+  [FAN-OUT: poor for the kernel; useful only for parallel design
+  exploration of competing parametric/constraint models.]
+
+* binary objects need to write out their minor type during export, not
+  relying on the raw wrapper to encode it, so that proper
+  import/export can be performed without relying on minor_type hacks
+  in the API.
+
+* implement support for binary attributes.  the general idea is to
+  allow collections of (at a minimum) 64-bit integer, 64-bit floating
+  point, and strings.  the type needs to be encoded when written out
+  to storage.  there is high-desirability towards using a binary
+  encoding format already defined and in popular use like BSON,
+  UBJSON, or CBOR.
+
+  It's highly likely that binary attributes can be implemented in a
+  backwards-compatible manner.  The v5 spec separately tracks the size
+  of attributes and objects from the size of the strings that are
+  serialized out into them.  It may be possible to store a
+  shortened/empty string, but record a larger attribute/object size,
+  allowing for binary data beyond the attribute value '\0' termination.
+
+  [HARD] BSON/CBOR encoding smuggled into the v5 spec's size fields for
+  backward compat, plus (paired with the libbu mime-API retirement)
+  replacing the static enum mime API with a runtime-populated
+  libmagic-style engine.  Format + API redesign with compat traps.
+  [FAN-OUT: partial -- parallel survey of encodings and an audit of all
+  mime-enum users; the spec/compat work is central.]
+
+
+== build
+
+* BUG: running pkgIndex and/or mkIndex during build appears to be randomly
+  crashing on Mac using bundled libs
+  [????] no pkgIndex/mkIndex crash locus found; build-time Tcl indexing on old Mac bundled libs, not statically verifiable
+
+* BUG: compilation reportedly fails when building Tcl if the path to the
+  source directory includes a space.
+  [DONE] Tcl no longer built from source in-tree (no src/other Tcl build); only include/tclcad, src/libtclcad consumers remain
+
+* BUG: Windows mged build is not generating tclIndex files with all
+  entries.  notably the pattern_gui.tcl file is not getting included
+  as well as a variety of others.  see missing entries in
+  tclscripts/mged/tclIndex for examples:
+  https://sourceforge.net/tracker/?func=detail&atid=640802&aid=2923199&group_id=105292
+  [????] no tclIndex file matched pattern_gui in tree; tclIndex now build-generated, status unverifiable statically
+
+* BUG: Mac OS X installer doesn't include the symbolic links, only
+  including the versioned installation directory.
+
+* BUG: on os x, the -fast option results in an odd optimization/aliasing
+  bug where rtip contents are lost in rt after returning from
+  rt_gettrees().
+  [DONE] obsolete Apple GCC -fast flag; no -fast in src/rt/opt.c; old toolchain no longer targeted
+
+* Update find_package uses to take advantage of EXPORT targets when
+  upstream packages have them available.  This should let us reduce
+  the number of Find*.cmake files we need to include.  Ultimately,
+  we may want to look at using the new *Config.cmake mechanism for
+  all bundled dependencies, except when we still need Find*.cmake
+  to locate system installs that don't provide them.
+
+* start making use of the CMakePushCheckState macros - we are doing
+  this manually in several places
+  [DONE] cmake_push_check_state() used in misc/CMake/BRLCAD_CheckFunctions.cmake and BRLCAD_API_Flag.cmake
+
+* re-do the sh/enumerate.sh script for CMake
+
+* Teach CMake to respect and use user-defined CMAKE_C_FLAGS and other
+  options supplied at the command line and in environment variables.
+  See whether we can pass a variable into CMAKE_C_FLAGS that will
+  allow specification of build flags at make time.  Relevant link:
+  https://cmake.org/Bug/view.php?id=12928
+  [DONE] misc/CMake/CompilerFlags.cmake:79 sets CMAKE_C_FLAGS from $ENV{CFLAGS}, CXXFLAGS, LDFLAGS then appends
+  [DUP] merged TODO:2396: Allow setting global CFLAGS/CPPFLAGS/LDFLAGS additive to auto-set flags
+
+* fix 64b detection across platforms. Fix rhel 32/64 confusion
+  [PARTIAL] CMake CMAKE_SIZEOF_VOID_P used (CMakeLists.txt:1800) and explicit 32-on-x86_64 handling in BRLCAD_CPack.cmake:122-126, but lingering workarounds suggest not fully clean
+
+* test for -msse3 requirement for __SSE.*__ definition
+
+* improve sse run-time detection so illegal instruction crashes are
+  avoided.  presently, adding -msse* to compilation will result in a
+  crash if that binary is run on non-sse hardware (e.g., Pentium M)
+  [DONE] msse flags disabled in CMakeLists.txt:675-677 and runtime detect bu_simd_level() in src/libbu/simd.c
+
+* integrate library tester into regression suite that validates
+  exported library symbols published in headers.  make sure they at
+  least exist and maybe even try to ensure they will run with null
+  arguments without crashing.  make sure headers compile as c++ (with
+  proper extern "C" wrapping).
+  [PARTIAL] regress/repository/repocheck.cpp checks API/platform symbols but not header-symbol/null-arg runtime validation
+
+* make Mac OS X universal binaries actually work.
+  [????] no CMAKE_OSX_ARCHITECTURES/universal handling in CMakeLists.txt; status of Mac universal build undeterminable from tree
+
+* ensure successful build on mingw
+  [????] MINGW handled in misc/CMake/BRLCAD_EXT_Setup.cmake but actual MinGW build success unverifiable statically
+
+* the binary windows installer is missing headers for our external
+  dependencies (Tcl, zlib, and OpenNURBS in particular as the likes of
+  bu.h and raytrace.h requires them)
+  [PARTIAL] bext staging copies entire ext install incl. headers into build (BRLCAD_ExternalDeps.cmake:293-325); installer coverage unverified
+
+* remove all of the MSVC sections in the CMakeLists.txt files.
+  perform proper library/function/flag tests where necessary.
+
+* ensure primary cmake option parity with summary option listing
+
+* investigate ignoring .hidden directories/files from dist packing so
+  that internal build directories can be used instead of external ones
+
+  -- is this needed?  what's not working with make package and
+     make package_source?
+
+* write up some documentation on other build tools besides make -
+  CMake supports other generators, wouldn't hurt to detail how to
+  trigger builds in them (MSVC is partially covered, make sure to
+  coverage is complete - others include Eclipse, XCode once we get the
+  kinks ironed out there, CodeBlocks.  Ninja build tool and its
+  CMake support are worth documenting too.
+
+
+== infrastructure
+
+* race condition causing bus errors on exit
+
+* create a BRL-CAD .g with all possible object types embedded.
+integrate into testing. e.g., scene with all object types plus a
+lookup check to ensure none are missing.
+
+* cppclean audit
+
+* afl on libged/mged/rt/...
+
+* establish the Basic Application Runtime (BAR), only consisting of
+  libbu and libbn, as a stand-alone self-contained project.  provide
+  an API that supports most C/C++ application development and
+  documents our facilities that help simplify code portability,
+  performance, and maintainability.  the scope is basic application
+  utility and numerics only.  this scope is particularly tailored
+  towards 3D and scientific application development.
+
+  the basic utility routines encapsulate platform-specific constructs
+  portably.  the basic numeric routines provide general math
+  facilities common to scientific application development with a
+  particular emphasis on being platform agnostic, high performance,
+  and validated.
+
+  the Apache Portable Runtime (APR) and GIMP Toolkit (GTK) are similar
+  alternatives (particularly to BAR's basic utility routines) but have
+  different emphases, scope, and development philosophies.
+
+  BAR API design aims to be minimally intrusive on application
+  developers, not requiring them to be aware of or adapt types or
+  functions until it provides some clear advantage (e.g., portability,
+  performance, and/or maintainability).
+
+* implement http network transfer tool for crash reports and benchmark
+  analyses (via libfetch)
+
+* reimplement benchmark suite in C/C++
+  [DONE] C implementation exists: bench/benchmark.c, run.c, compute.c, pixcmp.c
+
+* include defaults about the compiler in the benchmark suite output
+  including the compiler name and version at a minimum, plus hopefully
+  describing the CFLAGS that were used too.  ideally would include all
+  of the versioning details (such as described from "gcc -v" if we
+  compiled with gcc) too.
+
+* usage statistics.  similar to the eclipse Usage Data Collector, keep
+  track of which BRL-CAD command-line commands and MGED/libged
+  commands are run.  Give the user the option of uploading those
+  statistics (now, always, later, off).  Provide terms of use
+  explaining the ways that their data will be used and shared.
+  aggregate, this can help us focus development resources towards
+  improving workflows, documentation, robustness, and new development
+  areas.
+
+* make bombardier actually send the report somewhere
+
+* hook bombardier in for crash reporting
+
+* add verification and validation tests confirming behavior of the
+  ray-tracer and computations of area, mass, volume, etc.
+  [PARTIAL] regress/gqa, regress/nirt, regress/rtweight.sh exist but coverage incomplete
+
+* testing suite for all binaries:
+
+     for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat |\
+       perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | \
+       sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; \
+       do echo command: $cmd2 ; done
+  [PARTIAL] regress/ and CTest exist but no auto-enumeration of all PROGRAMS targets as the shell snippet envisioned
+
+* add callback data parameters to libpkg hook functions
+  [DONE] pks_user_data field present in struct pkg_switch (include/pkg.h:63)
+
+* see the CHANGES file for items that have been marked as deprecated
+  or available to be removed as obsolete items.
+
+
+== windows
+
+* BUG: fbserv as well as -F option handling (e.g., -F0 or -F/dev/wgls) that
+  is supported across myriad other tools appears to be broken on
+  Windows in a git bash shell (problem is not seen in Command Prompt.)
+  Something is concatenating EXEPATH and/or fbserv silently fails with
+  return codes (e.g., when not specifying -F, only giving the port.)
+
+* BUG: dsp primitives specifying data using Windows style file paths
+  don't work.
+
+* BUG: File->Export seems to not work on Windows
+
+* Windows installer does not respect the "add to path" checkbox
+  and always adds BRL-CAD to the system path
+  [DONE] NSIS.template.in:733 reads DO_NOT_ADD_TO_PATH option; :772 StrCmp skips path add
+
+* consider not using spaces in the default installer path on Windows
+  for simplified scripting usage (e.g., when installed to C:\)
+
+* verify all of the src/util utilities behave correctly on Windows
+  with respect to mode (i.e. correctly using setmode/O_BINARY when
+  performing file I/O.)
+  [PARTIAL] 64/86 src/util *.c use setmode/O_BINARY (~470 calls) but 813ab2d52 notes 'needs comprehensive audit'; not fully verified
+
+
+== docs
+
+* BUG: apparently all four BRL-CAD Tutorial Series volumes are missing from
+  our bibliography...
+
+* write meshing/remeshing/decimation guide
+
+* integrate gen-registered-attributes-html output into website
+
+* the mged tutorials apparently do not mention the tops command (even
+  once), but really should as it's the starting point for discovering
+  what is in databases that are opened or imported.
+
+* document rt script commands
+
+* Document a GUI feature list (prioritized).
+
+* Document a CLI feature list (prioritized).
+
+* HTML docs that display in MGED via menu are way out of date and look
+  bad per modern standards. Needs to be updated/replaced with doxygen
+  docs and/or clean presentation layout with overview, tutorials, and
+  reference.
+
+* Need ability to search manual pages
+
+* BRL-CAD Primitives
+	An overview of the various primitive object types in BRL-CAD,
+	their range of features, and a description of their input
+	parameters.
+
+        Create a catalog of all possible entity types.  Include
+        distinct parameterizations with sufficient variety that
+        conveys the object's parameterization options (e.g. ell as
+        sphere, flat disc, long spike, etc.).  this is necessarily
+        defined per object type and possibly programmable.  See
+        src/proc-db/csgbrep.cpp for a basic start.
+
+* update the rt* manual pages to note that they can all write out to
+  various image formats like png just by specifying an output file
+  extension.
+  [DONE] doc/asciidoc/system/man1/rt.adoc mentions png/extension output (6 hits)
+
+* document gqa centroid and moments of inertia options
+  [PARTIAL] doc/asciidoc/system/man1/gqa.adoc has 1 centroid/moment ref; coverage thin
+
+* document the new NURBS/BREP primitive, capabilities and limitations
+
+
+  Need to revisit utility of spherical mapping, used by sh_spm and
+  sh_points, used for environment mapping (e.g., stars):
+
+    pix-spm
+    spm-fb
+
+  These are mged commands that either need to be migrated to libged or replaced/merged with other commands:
+
+    reset        : resets view to 270/90
+    rmats        : read matrixes from a savekey(n) file
+    rt_gettrees  : full rti command for shooting rays and inspecting geometry, creates new named command object
+
+3rd party tools we control / bundle, but need docs if anyone else is
+  to use them or contribute:
+
+    perplex
+    re2c
+
+  Needs separate repo:
+
+    ttcp
+
+  Converters that belong in GCV:
+
+    3dm-g
+    g-dot
+    g-jack
+    g-off
+    g-step
+    g-voxel
+    jack-g
+    off-g
+    raw-g
+    shp-g
+    step-g
+    tgf-g
+
+* all of the rt* tracers share common code and common options, but do
+  not share common documentation.  refactor documentation to use
+  include directives so that there is one place where all of the
+  common options are documented.  update usage statements to reflect
+  commonality as well.
+
+* gather v&v docs on configuration management process, user manuals,
+  process documentation, software documentation, model descriptions.
+
+* BRL-CAD Overview Diagram
+	Completed, but not integrated
+
+* BRL-CAD Industry Diagram
+	Completed, but not integrated
+
+* BRL-CAD Architecture Diagram
+
+* Technical Papers
+	- Fast Malloc
+	- STEP Conversion
+	- GCV
+	- Solid Modeling
+	- Representation Methodology / Sensitivity
+	- NURBS Ray Tracing
+
+* BRL-CAD Commands Quick Reference
+	Partial
+  [PARTIAL] TODO self-annotates 'Partial'; no quick-reference doc found under doc/asciidoc
+
+* MGED Quick Reference
+	Completed, but not integrated
+
+* MGED Interface Reference
+	Keybindings, GUI elements, scripting
+
+* Introduction to BRL-CAD Tutorial
+	mged, rt, pix-png, rtcheck, rtarea, rtweight, gqa, fbserv,
+	nirt.  Succinct overview of less than 10% of the core
+	functionality in 10 pages or less (plus pictures).
+
+* Introduction to MGED Tutorial
+        This exists, but has not yet been added to the repo.
+
+* Technical Overview of BRL-CAD
+	Describes everything in the package succinctly yet
+	comprehensively.  Survey of all the major features,
+	methodologies, and tools implemented in BRL-CAD with coverage
+	on code maturity, library encapsulation, and tool aggregation.
+
+* BRL-CAD Validation and Verification
+	Overview of how contributions to BRL-CAD are reviewed and
+	tested including regression, performance, and system
+	integration testing as well as independent ARL configuration
+	review.  This specifically addresses the issue of world-wide
+	and potentially anonymous contributions to BRL-CAD and how
+	those changes are managed.
+
+* DoD V/L M&S Industry Diagram
+	Similar to existing Industry Diagram.  Survey of all the major
+	features, methodologies, and tools implemented in BRL-CAD with
+	coverage on code maturity, library encapsulation, and tool
+	aggregation.  This one is a particularly useful marketing and
+	educational visual aid for describing how the various M&S
+	codes interoperate in terms of features and scope.
+
+* Commercial CAD Comparison Diagram
+	Comparison of how BRL-CAD overlaps feature-wise with various
+	major commercial CAD systems.
+
+* Solid Geometry Representation Comparisons
+	Describe the implications, tradeoffs, and conversion issues
+	involved when converting between different geometry
+	representations.  Includes describing implicit geometry,
+	explicit polygonal boundary representations, explicit spline
+	surface representations, volumetric models, wireframes,
+	boolean operations, feature edit operations, and parametric
+	modeling.
+
+* BRL-CAD Open Source
+	An overview of how BRL-CAD is organized as an open source
+	project and community describing the developer meritocracy,
+	code reviews, development prioritization, and change
+	management.  This introduces and explains the concept and
+	philosophy of open source software, its fundamental tenets,
+	and the basic "why and how" it works.
+
+* History of BRL-CAD
+	Covers the 30-years development history of BRL-CAD, from 1979
+	to 2009, documenting the origins of the project, major
+	development achievements, the conversion to open source, and
+	lesson's learned.
+
+* BRL-CAD Manifesto
+	Vision & Scope
+
+* BRL-CAD Taxonomy
+	Description of the common terminology used throughout BRL-CAD,
+	conventions employed, and tool categorization.
+
+* Implementing a BRL-CAD Primitive
+	How-To for creating a new primitive in BRL-CAD that can be
+	ray-traced, tessellated, plotted, and transformed seamlessly.
+  [PARTIAL] only specific ebm_primitive.adoc exists; no general primitive-implementation guide
+
+* Procedural Geometry in BRL-CAD
+	How-To for creating new tools that create geometry.
+
+* Guide to Rendering with BRL-CAD
+        Basic overview of all the ray tracers and primary rendering
+        options supported.
+
+* BRL-CAD Ray Tracing Shaders
+	An overview of the various shaders and shader options
+	available in BRL-CAD.  Create a catalog of all
+	possible/distinct/useful shader settings.  See
+	regress/shaders.sh for a basic start.
+  [PARTIAL] shader.adoc/which_shader.adoc/camo_shader.adoc exist but no full catalog; regress/shaders.sh removed
+
+* BRL-CAD Ray Tracing Shader Development
+	How-To for creating new shaders.
+
+* Geometry Conversion with BRL-CAD
+	Overview of the various geometry conversion facilities in
+	BRL-CAD and how they related to solid geometry
+	representations.
+
+---
+See the feature request and bug trackers for more tasks and future
+planning efforts: https://sourceforge.net/tracker/?group_id=105292
+
+TODO items should be formatted to column 70 (M-q in emacs), no tabs.
+
+
+== other
+
+* rtwizard greys out the File->New and Open menu items when run with a
+  filename, which is very confusing.  Either menu should remain usable
+  or there should be some other indication that a file was specified
+  and is open.
+
+
+== libbv
+
+* make bv/plot3.h functions parallel-safe so callers do not have to
+  manually wrap with bu_semaphore_acquire().
+
