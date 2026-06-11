@@ -27,4 +27,4 @@ direct, indirect, special, incidental, or consequential damages arising out of
 any use of this software. In no case should the results of any computational
 scheme be used as a substitute for sound engineering practice and judgment.
 
-file:/src/proc-db/naca456/naca456.cpp
+file:/src/shapes/naca456/naca456.cpp
