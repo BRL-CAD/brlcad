@@ -121,6 +121,7 @@ set(
   obj-g.adoc
   patch-g.adoc
   picket_fence.adoc
+  propeller.adoc
   pix-alias.adoc
   pix-bw.adoc
   pix-fb.adoc

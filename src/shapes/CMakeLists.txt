@@ -3,6 +3,7 @@ list(REMOVE_DUPLICATES SHAPES_INCLUDE_DIRS)
 include_directories(${SHAPES_INCLUDE_DIRS})
 
 add_subdirectory(naca456)
+add_subdirectory(propeller)
 
 brlcad_addexec(bolt bolt.c "libwdb;${M_LIBRARY}" FOLDER Shapes)
 brlcad_addexec(coil coil.c "libged;libwdb;${M_LIBRARY}" FOLDER Shapes)
