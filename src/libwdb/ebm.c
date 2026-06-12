@@ -56,6 +56,29 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
 }
 
 
+int
+mk_ebm_obj(struct rt_wdb *fp, const char *name, const char *binunif, size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat)
+    /* name of database BINUNIF object containing bitmap */
+    /* X dimension of data (w cells) */
+    /* Y dimension of data (n cells) */
+    /* Z extrusion height (mm) */
+    /* convert local coords to model space */
+{
+    struct rt_ebm_internal *ebm;
+
+    BU_ALLOC(ebm, struct rt_ebm_internal);
+    ebm->magic = RT_EBM_INTERNAL_MAGIC;
+    bu_strlcpy(ebm->name, binunif, RT_EBM_NAME_LEN);
+    ebm->xdim = xdim;
+    ebm->ydim = ydim;
+    ebm->tallness = tallness;
+    ebm->datasrc = RT_EBM_SRC_OBJ;
+    MAT_COPY(ebm->mat, mat);
+
+    return wdb_export(fp, name, (void *)ebm, ID_EBM, mk_conv2mm);
+}
+
+
 /*
  * Local Variables:
  * mode: C
