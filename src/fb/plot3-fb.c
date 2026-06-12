@@ -282,7 +282,7 @@ static struct vectorchar {
 static int Nscanlines = 512;
 static int Npixels = 512;
 static char *framebuffer = NULL;
-static char *filename = NULL;
+static const char *filename = NULL;
 
 struct band {
     stroke *first;

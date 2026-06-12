@@ -44,15 +44,15 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
+const char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
 
 int debug = 0;
-char *progname = "masonry";
-char *obj_name = "wall";
+const char *progname = "masonry";
+const char *obj_name = "wall";
 char sol_name[64];
 int sol_num = 0;
-char *type = "frame";
-char *units = "mm";
+const char *type = "frame";
+const char *units = "mm";
 double unit_conv = 1.0;
 matp_t trans_matrix = (matp_t)NULL;
 
@@ -83,7 +83,7 @@ double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
 unsigned char sheetrock_color[3] = { 200, 200, 200 };
 unsigned char stud_color[3] = { 250, 178, 108 };
 
-char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
+const char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
 
 struct opening {
     struct bu_list l;
@@ -106,7 +106,7 @@ struct boardseg {
 /**
  * tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void usage(const char *s)
 {
     if (s)
 	bu_log("%s\n", s);

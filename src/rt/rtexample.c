@@ -86,7 +86,7 @@
  * The 'segs' segment list is unused in this example.
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* iterating over partitions, this will keep track of the current
      * partition we're working on.
@@ -200,7 +200,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
  * rt_shootray() if the ray encounters nothing.
  */
 int
-miss(struct application *UNUSED(ap))
+r_miss(struct application *UNUSED(ap))
 {
     bu_log("missed\n");
     return 0;
@@ -309,10 +309,10 @@ main(int argc, char **argv)
     VPRINT("Dir", ap.a_ray.r_dir);
 
     /* This is what callback to perform on a hit. */
-    ap.a_hit = hit;
+    ap.a_hit = r_hit;
 
     /* This is what callback to perform on a miss. */
-    ap.a_miss = miss;
+    ap.a_miss = r_miss;
 
     /* Shoot the ray. */
     (void)rt_shootray(&ap);

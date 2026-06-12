@@ -29,6 +29,8 @@
 #ifndef _GDIFF2_H
 #define _GDIFF2_H
 
+__BEGIN_DECLS
+
 /*******************************************************************/
 /*     Containers for holding various forms of diff information    */
 /*******************************************************************/
@@ -109,6 +111,8 @@ struct gdiff_group_opts {
 
 extern int
 gdiff_group(int argc, const char **argv, struct gdiff_group_opts *o);
+
+__END_DECLS
 
 #endif
 

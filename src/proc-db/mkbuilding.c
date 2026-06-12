@@ -34,7 +34,7 @@ void mkbdlg_usage(void)
 
 
 int
-main(int ac, char *av[])
+main(int ac, const char *av[])
 {
     struct rt_wdb *db_filepointer;
 

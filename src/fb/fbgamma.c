@@ -38,8 +38,7 @@
 #include "dm.h"
 #include "pkg.h"
 
-
-char *options = "iHoF:h?";
+const char *options = "iHoF:h?";
 
 unsigned char rampval[10] = { 255, 128, 64, 32, 16, 8, 4, 2, 1, 0 };
 int x, y, scr_width, scr_height, patch_width, patch_height;

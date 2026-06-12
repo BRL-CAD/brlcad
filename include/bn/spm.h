@@ -102,7 +102,7 @@ BN_EXPORT extern char *bn_spm_get(register bn_spm_map_t *mapp, double u, double 
  *
  * @return -1 on error, else 0.
  */
-BN_EXPORT extern int bn_spm_load(bn_spm_map_t *mapp, char *filename);
+BN_EXPORT extern int bn_spm_load(bn_spm_map_t *mapp, const char *filename);
 
 /**
  *@brief

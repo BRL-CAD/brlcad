@@ -164,7 +164,7 @@ extern "C" {
     extern void getTrans(mat_t *trans, int i, int j, fastf_t v);
     extern void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth);
     extern void usage(char *n);
-    extern void argumentHelp(FILE *fp, const char *progname, char *message);
+    extern void argumentHelp(FILE *fp, const char *progname, const char *message);
     extern void argumentExamples(FILE *fp, char *progname);
     extern void defaultSettings(FILE *fp);
     extern int parseArguments(int argc, char *argv[]);
@@ -809,7 +809,7 @@ parseArguments(int argc, char *argv[])
  * requests assistance.
  ***************************************/
 void
-argumentHelp(FILE *outfp, const char *progname, char *message)
+argumentHelp(FILE *outfp, const char *progname, const char *message)
 {
     if (message) {
 	fprintf(outfp, "%s\n", message);

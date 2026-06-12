@@ -117,8 +117,8 @@ int rays_per_ring = 0;
 int num_rings = 0;
 fastf_t bundle_radius = 0.0;
 
-extern int hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
-extern int miss(register struct application *ap);
+extern int r_hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
+extern int r_miss(register struct application *ap);
 
 int bundle_hit(register struct application_bundle *bundle, struct partition_bundle *PartBundlep);
 int bundle_miss(register struct application_bundle *bundle);
@@ -446,8 +446,8 @@ main(int argc, char **argv)
 
     /* Shoot Ray */
     ap.a_purpose = "main ray";
-    ap.a_hit = hit;
-    ap.a_miss = miss;
+    ap.a_hit = r_hit;
+    ap.a_miss = r_miss;
 
     if (rays_per_ring) {
 	vect_t avec, bvec;
@@ -513,7 +513,7 @@ main(int argc, char **argv)
 }
 
 
-int hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
+int r_hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
     register struct soltab *stp;
@@ -646,7 +646,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 }
 
 
-int miss(register struct application *ap)
+int r_miss(register struct application *ap)
 {
     bu_log("missed\n");
     if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {

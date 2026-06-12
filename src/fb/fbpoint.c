@@ -90,10 +90,10 @@ parse_positive_int_arg(const char *arg, int *value, const char *label)
     return 1;
 }
 
-char usage[] = "\
+const char usage[] = "\
 Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initially]\n";
 
-static char *help = "\
+static const char *help = "\
 Char:   Command:                                                \r\n\
 h B	Left (1)\r\n\
 j N	Down (1)\r\n\

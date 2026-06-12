@@ -38,7 +38,7 @@ double mk_conv2mm = 1.0;		/* Conversion factor to mm */
 
 
 int
-mk_conversion(char *str)
+mk_conversion(const char *str)
 {
     double d;
 

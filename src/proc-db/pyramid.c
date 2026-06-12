@@ -43,7 +43,7 @@ struct rt_wdb *outfp;
 
 /* Make a leaf node out of an ARB4 */
 void
-do_leaf(char *name)
+do_leaf(const char *name)
 {
     point_t pt[4];
 
@@ -86,11 +86,11 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 
 
 void
-do_tree(char *name, char *lname, int level)
+do_tree(const char *name, const char *lname, int level)
 {
     int i;
     char nm[64];
-    char *leafp;
+    const char *leafp;
     int scale;
     struct wmember head;
     struct wmember *wp;

@@ -164,7 +164,7 @@ bn_spm_get(register bn_spm_map_t *mapp, double u, double v)
 
 
 int
-bn_spm_load(bn_spm_map_t *mapp, char *filename)
+bn_spm_load(bn_spm_map_t *mapp, const char *filename)
 {
     int y, total;
     FILE *fp;

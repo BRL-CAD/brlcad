@@ -52,7 +52,7 @@ int inverse;
 int scr_xoff, scr_yoff;
 
 char *framebuffer = NULL;
-char *file_name;
+const char *file_name;
 FILE *outfp;
 
 static int

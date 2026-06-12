@@ -52,9 +52,9 @@ static struct vertex **f_vertl[256];
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "h?3210";
+const char *options = "h?3210";
 
-char *progname = "(noname)";
+const char *progname = "(noname)";
 char plotfilename[1024] = {0};
 char mfilename[1024] = {0};
 
@@ -70,7 +70,7 @@ int manifold[4] = { 0, 0, 0, 1 };
 
 
 void
-usage(char *str)
+usage(const char *str)
 {
     if (str) (void)fputs(str, stderr);
 

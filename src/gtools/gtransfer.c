@@ -119,14 +119,14 @@ validate_port(int port)
 
 
 int
-hit(struct application *UNUSED(ap), struct partition *UNUSED(p), struct seg *UNUSED(s))
+gt_hit(struct application *UNUSED(ap), struct partition *UNUSED(p), struct seg *UNUSED(s))
 {
     bu_log("HIT!\n");
     return 0;
 }
 
 int
-miss(struct application *UNUSED(ap))
+gt_miss(struct application *UNUSED(ap))
 {
     bu_log("MISSED!\n");
     return 0;
@@ -152,8 +152,8 @@ do_something(server_data *stash)
     }
     rt_ck(rtip); /* gratuitous sanity check, test for corruption */
     ap.a_rt_i = rtip;
-    ap.a_hit = hit;
-    ap.a_miss = miss;
+    ap.a_hit = gt_hit;
+    ap.a_miss = gt_miss;
     VSET(ap.a_ray.r_pt, 0, 0, 10000);
     VSET(ap.a_ray.r_dir, 0, 0, -1);
 

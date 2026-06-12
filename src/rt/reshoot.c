@@ -91,7 +91,7 @@
 #include "./rtuif.h"
 
 
-char *progname = "(noname)";
+const char *progname = "(noname)";
 
 /**
  * @struct shot
@@ -138,7 +138,7 @@ static const struct bu_structparse reg_sp[] = {
 
 
 void
-usage(char *s)
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
     bu_exit(1, "Usage: %s geom.g obj [obj...] < rayfile \n", progname);
@@ -156,7 +156,7 @@ usage(char *s)
  *	integer value, typically 1.  This value becomes the return value to rtshootray()
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* see raytrace.h for all of these guys */
     register struct partition *pp;
@@ -245,7 +245,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
  *	Typically 0, and becomes the return value from rt_shootray()
  */
 int
-miss(register struct application *UNUSED(ap))
+r_miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -285,8 +285,8 @@ do_shot(struct shot *sh, struct application *ap)
     VMOVE(ap->a_ray.r_dir, sh->dir);
     ap->a_uptr = (void *)sh;
 
-    ap->a_hit = hit;
-    ap->a_miss = miss;
+    ap->a_hit = r_hit;
+    ap->a_miss = r_miss;
     status = rt_shootray( ap );	/* do it */
 
     /* clean up */
