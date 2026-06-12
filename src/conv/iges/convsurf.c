@@ -51,7 +51,7 @@ Convsurfs(void)
 
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 128) {
-	    if (spline(i, &srf))
+	    if (iges_spline(i, &srf))
 		surfs[convsurf++] = srf;
 	}
     }

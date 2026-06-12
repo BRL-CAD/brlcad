@@ -149,7 +149,8 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_li
 	area = nmg_loop_plane_area(lu, pl);
 	if (area < 0.0) {
 	    bu_log("Could not calculate area for face (entityno = %zu)\n", entityno);
-	    nmg_pr_fu_briefly(fu, "");
+	    char estr[1] = {'\0'};
+	    nmg_pr_fu_briefly(fu, estr);
 	    nmg_kfu(fu);
 	    fu = (struct faceuse *)NULL;
 	    goto err;

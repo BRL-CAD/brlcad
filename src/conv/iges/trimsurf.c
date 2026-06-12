@@ -1389,7 +1389,8 @@ Convtrimsurfs(struct bu_list *vlfree)
 	BU_LIST_INIT(&hit_list);
 	if (Find_pt_in_fu(fu, mid_pt, ray_dir)) {
 	    bu_log("Convtrimsurfs: Cannot find a point in fu (%p)\n", (void *)fu);
-	    nmg_pr_fu(fu, " ");
+	    char nstr[2] = {' ', '\0'};
+	    nmg_pr_fu(fu, nstr);
 	    bu_exit(1, "Convtrimsurfs: Cannot find a point in fu\n");
 	}
 

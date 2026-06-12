@@ -80,23 +80,23 @@ int do_bots = 1;
 
 static char *iges_file = NULL;
 
-static char *msg1 =
+static const char *msg1 =
 "\nThis IGES file contains solid model entities, but your options do not permit\n\
 converting them to BRL-CAD. You may want to try 'iges-g -o file.g %s' to\n\
 convert the solid model elements\n";
 
-static char *msg2 =
+static const char *msg2 =
 "\nThis IGES file contains drawing entities, but no solid model entities. You may\n\
 convert the drawing to BRL-CAD by 'iges-g -d -o file.g %s'. Note that the resulting\n\
 BRL-CAD object will be a 2D drawing, not a solid object. You might also try the\n\
 '-3' option to get 3D drawings\n";
 
-static char *msg3 =
+static const char *msg3 =
 "\nThis IGES file contains spline surfaces, but no solid model entities. All the spline\n\
 surfaces in the IGES file may be combined into a single BRL-CAD spline solid by\n\
 'iges-g -n -o file.g %s'\n";
 
-static char *msg4 =
+static const char *msg4 =
 "\nThis IGES file contains trimmed surfaces, but no solid model entities.\n\
 Try the '-t' option to convert all the trimmed surfaces into one BRL-CAD solid.\n\
 'iges-g -t -o file.g %s'\n";
@@ -239,10 +239,19 @@ main(int argc, char *argv [])
     BU_LIST_INIT(&iges_list.l);
 
     BU_ALLOC(curr_file, struct file_list);
-    if (solid_name)
-	bu_strlcpy(curr_file->obj_name, Make_unique_brl_name(solid_name), NAMESIZE+1);
-    else
-	bu_strlcpy(curr_file->obj_name, Make_unique_brl_name("all"), NAMESIZE+1);
+
+
+    char dname[MAXPATHLEN] = "all";
+    int snull = 0;
+    if (!solid_name) {
+	solid_name = (char *)dname;
+	snull = 1;
+    }
+
+    bu_strlcpy(curr_file->obj_name, Make_unique_brl_name(solid_name), NAMESIZE+1);
+
+    if (snull)
+	solid_name = NULL;
 
     curr_file->file_name = (char *)bu_malloc(strlen(argv[0])+1, "iges-g: curr_file->file_name");
     bu_strlcpy(curr_file->file_name, argv[0], strlen(argv[0])+1);

@@ -485,7 +485,12 @@ if(BRLCAD_ENABLE_STEP)
     # build batches multiple entity files into one compilation unit.
     UNITY_BUILD_CODE_BEFORE_INCLUDE "#undef CLASSNAME\n#undef ENTITYNAME"
   )
+
+  if(ENABLE_ALL_CXX_COMPILE)
+    target_compile_definitions(step-g PRIVATE register=)
+  endif()
   target_precompile_headers(step-g PRIVATE "${PRECOMPILE_HEADER}")
+
   target_include_directories(step-g BEFORE PRIVATE ${AP203_INCLUDE_DIRS})
   add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
   set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")

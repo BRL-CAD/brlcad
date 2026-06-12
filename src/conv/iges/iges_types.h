@@ -21,6 +21,8 @@
 #ifndef CONV_IGES_IGES_TYPES_H
 #define CONV_IGES_IGES_TYPES_H
 
+#include "iges_types.h"
+
 #define NTYPES 78
 
 struct types typecount[NTYPES+1]={
