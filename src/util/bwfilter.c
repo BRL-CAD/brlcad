@@ -45,8 +45,8 @@
 
 /* The filter kernels */
 struct kernels {
-    char *name;
-    char *uname;		/* What is needed to recognize it */
+    const char *name;
+    const char *uname;		/* What is needed to recognize it */
     int kern[9];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
@@ -72,7 +72,7 @@ int verbose = 0;
 int dflag = 0;	/* Different divisor specified */
 int oflag = 0;	/* Different offset specified */
 
-void select_filter(char *str), dousage(void);
+void select_filter(const char *str), dousage(void);
 
 char usage[] = "\
 Usage: bwfilter [-f type] [-v] [-d div] [-O offset]\n\
@@ -117,7 +117,7 @@ parse_positive_int_arg(const char *arg, int *out_value, const char *label)
  * based on it.
  */
 void
-select_filter(char *str)
+select_filter(const char *str)
 {
     kernel_index = 0;
     while (kernel[kernel_index].name != NULL) {

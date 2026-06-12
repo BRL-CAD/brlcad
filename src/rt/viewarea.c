@@ -70,7 +70,7 @@ struct bu_structparse view_parse[] = {
 };
 
 
-const char title[] = "RT Area";
+extern const char title[] = "RT Area";
 
 struct point_list {
     struct point_list * next;
@@ -1065,7 +1065,7 @@ view_end(struct application *ap)
 		}
 	    }
 	    bu_free(cell, "view_end area free");
-	    cell = (void *)NULL;
+	    cell = NULL;
 	}
     }
 

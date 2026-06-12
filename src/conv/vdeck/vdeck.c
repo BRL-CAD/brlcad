@@ -373,7 +373,7 @@ blank_fill(FILE *fp, size_t count)
  *  Print a non-newline-terminate string, and flush stdout
  */
 void
-prompt(char *fmt)
+prompt(const char *fmt)
 {
     fputs(fmt, stdout);
     fflush(stdout);
@@ -399,7 +399,7 @@ sortFunc(const void *a, const void *b, void *UNUSED(arg))
  * This routine turns a union tree into a flat string.
  */
 void
-flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
+flatten_tree(struct bu_vls *vls, union tree *tp, const char *op, int neg)
 {
     int	bit;
 

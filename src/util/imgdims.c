@@ -77,7 +77,7 @@ static int pixel_size (char *buf)
 {
     char *ep;
     struct assoc {
-	char *ext;
+	const char *ext;
 	int size;
     }			*ap;
     static struct assoc a_tbl[] = {

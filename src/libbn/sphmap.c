@@ -198,7 +198,7 @@ bn_spm_load(bn_spm_map_t *mapp, const char *filename)
 
 
 int
-bn_spm_save(bn_spm_map_t *mapp, char *filename)
+bn_spm_save(bn_spm_map_t *mapp, const char *filename)
 {
     int i;
     int got;
@@ -244,7 +244,7 @@ bn_spm_save(bn_spm_map_t *mapp, char *filename)
 
 
 int
-bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny)
+bn_spm_pix_load(bn_spm_map_t *mapp, const char *filename, int nx, int ny)
 {
     int i, j;			/* index input file */
     int x, y;			/* index texture map */
@@ -319,7 +319,7 @@ bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny)
 
 
 int
-bn_spm_pix_save(bn_spm_map_t *mapp, char *filename, int nx, int ny)
+bn_spm_pix_save(bn_spm_map_t *mapp, const char *filename, int nx, int ny)
 {
     int x, y;
     FILE *fp;

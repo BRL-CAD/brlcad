@@ -70,7 +70,7 @@ static void print_usage (void)
 
 static void print_debug_usage (void)
 {
-    static char *flag_denotation[] = {
+    static const char *flag_denotation[] = {
 	"",
 	"color table",
 	"finding best pixel match",
@@ -164,7 +164,7 @@ main (int argc, char **argv)
 {
     char *cf_name = 0;	/* name of color file */
     char *inf_name;		/* name of input stream */
-    char *outf_name = NULL;	/*  "   "  output  "    */
+    const char *outf_name = NULL;	/*  "   "  output  "    */
     unsigned char pixbuf[3];	/* the current input pixel */
     FILE *infp = NULL;	/* input stream */
     FILE *outfp = NULL;	/* output  "    */

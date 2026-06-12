@@ -709,8 +709,6 @@ static void
 test_opt_light_model(void)
 {
     extern int lightmodel;
-    extern double pmargs[9];
-    extern char pmfile[255];
 
     /* Simple model selection */
     reset_globals();
@@ -1368,7 +1366,6 @@ test_opt_white_bg(void)
 static void
 test_opt_bgcolor(void)
 {
-    extern int default_background;
     /* We just check it doesn't crash and returns success */
     reset_globals();
     MAKE_ARGV(av, "rt", "-C", "255/0/0");
@@ -1416,7 +1413,6 @@ test_opt_unknown(void)
 static void
 test_optind_boundary(void)
 {
-    extern int matflag;
     /* Options + model.g + object: bu_optind should point at argv[3] */
     reset_globals();
     {

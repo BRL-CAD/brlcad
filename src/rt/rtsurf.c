@@ -143,7 +143,7 @@ struct material_callback_data {
 
 
 static int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     double radius = ap->a_user;
     int makeGeometry = ap->a_flag;
@@ -210,7 +210,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 
 static int
-miss(struct application *ap)
+r_miss(struct application *ap)
 {
     void *context = ap->a_uptr;
 
@@ -286,8 +286,8 @@ initialize(struct application *ap, const char *db, const char *obj[])
 
     RT_APPLICATION_INIT(ap);
     ap->a_rt_i = rtip;
-    ap->a_hit = hit;
-    ap->a_miss = miss;
+    ap->a_hit = r_hit;
+    ap->a_miss = r_miss;
     ap->a_overlap = NULL;
     ap->a_multioverlap = NULL;
     ap->a_logoverlap = rt_silent_logoverlap;
@@ -699,14 +699,14 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     if (opts->printRegions) {
 	/* print out all regions */
 	bu_log("Area Estimate By Region:\n");
-	struct region_callback_data rdata = {opts->samples, radius};
+	struct region_callback_data rdata = {(double)opts->samples, radius};
 	rtsurf_iterate_regions(context, &regions_callback, &rdata);
     }
 
     if (opts->printGroups) {
 	/* print out all combs above regions */
 	bu_log("Area Estimate By Combination:\n");
-	struct region_callback_data rdata = {opts->samples, radius};
+	struct region_callback_data rdata = {(double)opts->samples, radius};
 	rtsurf_iterate_groups(context, &regions_callback, &rdata);
     }
 
@@ -726,7 +726,7 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	    bu_close_mapped_file(dfile);
 	}
 
-	struct material_callback_data mdata = {densities, opts->samples, radius};
+	struct material_callback_data mdata = {densities, (double)opts->samples, radius};
 	rtsurf_iterate_materials(context, &materials_callback, &mdata);
 	analyze_densities_destroy(densities);
     }

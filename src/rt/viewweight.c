@@ -60,7 +60,7 @@ struct bu_structparse view_parse[] = {
 };
 
 
-const char title[] = "RT Weight";
+extern const char title[] = "RT Weight";
 
 int noverlaps = 0;
 FILE *densityfp;
@@ -94,6 +94,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
     struct bu_mapped_file *dfile = NULL;
     char *dbuff = NULL;
     int found_densities = 0;
+    int next_available_id = 0;
 
     if (!minus_o) {
 	outfp = stdout;
@@ -209,7 +210,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
     }
 
     // iterate through the db and find all materials
-    int next_available_id = MAX_MATERIAL_ID - 1;
+    next_available_id = MAX_MATERIAL_ID - 1;
     {
 	struct directory *dp;
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
@@ -358,7 +359,7 @@ densities_prep_rtweight_fail:
 
 
 static int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
+r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
     register struct xray *rp = &ap->a_ray;
@@ -431,7 +432,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 
 
 static int
-miss(register struct application *UNUSED(ap))
+r_miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -459,8 +460,8 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	bu_exit(-1, NULL);
     }
 
-    ap->a_hit = hit;
-    ap->a_miss = miss;
+    ap->a_hit = r_hit;
+    ap->a_miss = r_miss;
     ap->a_overlap = overlap;
     ap->a_onehit = 0;
 

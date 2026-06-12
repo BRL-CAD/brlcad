@@ -42,7 +42,7 @@ long bin[256];
 int verbose = 0;
 struct fb *fbp;
 
-static char *Usage = "Usage: bwhist [-v] [file.bw]\n";
+static const char *Usage = "Usage: bwhist [-v] [file.bw]\n";
 
 
 int

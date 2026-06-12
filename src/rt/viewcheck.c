@@ -62,7 +62,7 @@ struct bu_structparse view_parse[] = {
 extern FILE *outfp;
 
 
-const char title[] = "RT Check";
+extern const char title[] = "RT Check";
 
 
 static size_t noverlaps;		/* Number of overlaps seen */
@@ -89,7 +89,7 @@ static struct overlap_list *olist=NULL;	/* root of the list */
  */
 /*ARGSUSED*/
 int
-hit(struct application *UNUSED(ap), register struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segHeadp))
+r_hit(struct application *UNUSED(ap), register struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segHeadp))
 {
     return 1;
 }
@@ -100,7 +100,7 @@ hit(struct application *UNUSED(ap), register struct partition *UNUSED(PartHeadp)
  */
 /*ARGSUSED*/
 int
-miss(struct application *UNUSED(ap))
+r_miss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -212,8 +212,8 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 int
 view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
-    ap->a_hit = hit;
-    ap->a_miss = miss;
+    ap->a_hit = r_hit;
+    ap->a_miss = r_miss;
     ap->a_overlap = overlap;
     ap->a_logoverlap = rt_silent_logoverlap;
     ap->a_onehit = 0;

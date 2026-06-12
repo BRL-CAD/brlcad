@@ -42,7 +42,7 @@
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
 
-static char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
+static const char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
 
 static int
 parse_double_suffix_arg(const char *arg, double *out_value, const char *label)

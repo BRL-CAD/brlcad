@@ -109,7 +109,7 @@ BN_EXPORT extern int bn_spm_load(bn_spm_map_t *mapp, const char *filename);
  * Write a loaded sphere map to the given file ("-" for stdout).
  * Returns -1 on error, else 0.
  */
-BN_EXPORT extern int bn_spm_save(bn_spm_map_t *mapp, char *filename);
+BN_EXPORT extern int bn_spm_save(bn_spm_map_t *mapp, const char *filename);
 
 /**
  *@brief
@@ -118,14 +118,14 @@ BN_EXPORT extern int bn_spm_save(bn_spm_map_t *mapp, char *filename);
  *
  * @return -1 on error, else 0.
  */
-BN_EXPORT extern int bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny);
+BN_EXPORT extern int bn_spm_pix_load(bn_spm_map_t *mapp, const char *filename, int nx, int ny);
 
 /**
  *@brief
  * Save a sphere structure as an 'nx' by 'ny' pix file.
  * @return -1 on error, else 0.
  */
-BN_EXPORT extern int bn_spm_pix_save(bn_spm_map_t *mapp, char *filename, int nx, int ny);
+BN_EXPORT extern int bn_spm_pix_save(bn_spm_map_t *mapp, const char *filename, int nx, int ny);
 
 /**
  *@brief

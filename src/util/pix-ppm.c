@@ -44,7 +44,7 @@
 static int autosize = 0;		/* !0 to autosize input */
 
 static int fileinput = 0;		/* file of pipe on input? */
-static char *file_name = (char *)NULL;
+static const char *file_name = (char *)NULL;
 static FILE *infp = (FILE *)NULL;
 static FILE *outfp = (FILE *)NULL;
 

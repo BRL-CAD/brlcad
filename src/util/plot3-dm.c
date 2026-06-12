@@ -35,7 +35,6 @@
 #endif
 
 #include "tcl.h"
-#include "tk.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
@@ -45,9 +44,13 @@
 #include "bn.h"
 #include "dm.h"
 
+// raytrace.h pulls in OpenNURBS in C++, which defines None, which
+// conflicts with Tk's Xlib None.  Including tk.h after tclcad.h
+// to avoid the issue.
+#include "tk.h"
 
 struct cmdtab {
-    char *ct_name;
+    const char *ct_name;
     int (*ct_func)(void *, struct Tcl_Interp *, int, char **);
 };
 
@@ -1068,7 +1071,7 @@ static int
 Ogl_dmInit(void)
 {
     fastf_t windowbounds[6] = { -2048.0, 2047.0, -2048.0, 2047.0, -2048.0, 2047.0 };
-    char *av[4];
+    const char *av[4];
 
     av[0] = "Ogl_open";
     av[1] = "-i";
