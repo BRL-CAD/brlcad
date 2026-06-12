@@ -55,6 +55,10 @@ int main(int ac, char *av[])
     ged_init(&ged);
     ged.dbip = wdbp->dbip;
     bu_log("Building\n");
+    /* ged_exec() dispatches on argv[0]; ensure the registered command name
+     * ("human") is used rather than the program basename (e.g. "human.exe"
+     * on Windows), which would not match the command registry. */
+    av[0] = (char *)"human";
     ret = ged_exec_human(&ged, ac, (const char **)av);
     bu_log("Finished Building\n");
     db_close(wdbp->dbip);
