@@ -11,6 +11,7 @@ tire - Generate tire and optional wheel geometry from tire dimensions.
 [source]
 ----
 tire [options]
+tire --demo-file tire_demo.g
 ----
 
 
@@ -69,7 +70,8 @@ Set the tread pattern preset name.  Legacy aliases _1_ and _2_ are accepted.
 
 *-c*, *--tread-pattern-cnt* _count_::
 Override the number of tread patterns around the tire.  Named presets provide
-default counts.  Values must be between 3 and 512 when tread is enabled.
+default counts.  Each preset has a pattern-aware valid range so lug and block
+designs remain visually plausible; values outside that range are rejected.
 
 *-t*, *--tread-shape* _id_::
 Set the tread shape profile identifier.
@@ -83,6 +85,14 @@ _sketches_.  Unknown fields are rejected.
 
 *--list-tread-patterns*::
 List available tread pattern presets and exit.
+
+*--demo-file* _file.g_::
+Generate a sampler grid of varied tire examples.  When run from MGED, the
+sampler is written to the current database; when run as the standalone
+*tire*(1) program, the database filename is taken from _file.g_.  The sampler
+creates an `all` combination that arranges compact-car, sedan, performance,
+SUV, van, pickup, commercial truck, bus, farm tractor, wheel-loader, and mining
+haul-truck tire assemblies in rows by vehicle class and increasing scale.
 
 
 [[custom_tread_json]]
@@ -112,7 +122,7 @@ fields are _type_ and _symmetry_.  Unknown fields are rejected.
   "center": "continuous | broken | ribbed",
   "tie_bars": false,
   "shape": "integer, 1 or 2",
-  "pattern_count": "integer, 3 through 512",
+  "pattern_count": "integer within the selected pattern family's supported range",
   "sketches": [
     [[0.10, 0.20], [0.24, 0.20], [0.24, 0.80], [0.10, 0.80]]
   ]
@@ -141,6 +151,11 @@ derived radii and widths, and tire thickness.  If tread is generated, the
 resolved tread pattern JSON is stored as _tire::tread_pattern_json_ so the
 pattern can be inspected, copied, and modified later.
 
+When *--demo-file* is used, the generated `all` combination references the
+individual named tire assemblies with placement transforms for visual
+comparison.  The individual assemblies remain available by their vehicle-target
+names, such as _compact_car_, _pickup_truck_, and _mining_haul_truck_.
+
 
 [[examples]]
 == EXAMPLES
@@ -161,6 +176,16 @@ size.
 mged> **tire --obj-name tire_mt --dimensions 235/75R15 --tread-pattern mud-terrain**
 
 Generates tire geometry using the built-in _mud-terrain_ tread preset.
+
+====
+
+.Create the built-in tire sampler.
+[example]
+====
+mged> **tire --demo-file tire_demo.g**
+
+Generates the sampler objects and top-level `all` combination in the current
+database.
 
 ====
 

@@ -24,8 +24,11 @@
 
 #include "common.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <optional>
 #include <string>
 
@@ -98,6 +101,78 @@ check_comb_has_leaf(struct ged *gedp, const char *comb_name, const char *leaf_na
 }
 
 #define CHECK_COMB_HAS_LEAF(gedp, comb, leaf) check_comb_has_leaf((gedp), (comb), (leaf), __FILE__, __LINE__)
+
+static void
+check_eto_preppable(struct ged *gedp, const char *name, const char *file, int line)
+{
+    struct directory *dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	std::fprintf(stderr, "FAIL [%s:%d]: expected ETO '%s' to exist\n", file, line, name);
+	g_failures++;
+	return;
+    }
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
+	std::fprintf(stderr, "FAIL [%s:%d]: failed reading ETO '%s'\n", file, line, name);
+	g_failures++;
+	return;
+    }
+
+    if (intern.idb_type != ID_ETO) {
+	std::fprintf(stderr, "FAIL [%s:%d]: expected '%s' to be an ETO\n", file, line, name);
+	g_failures++;
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    auto *eto = static_cast<struct rt_eto_internal *>(intern.idb_ptr);
+    RT_ETO_CK_MAGIC(eto);
+
+    vect_t Nu;
+    VMOVE(Nu, eto->eto_N);
+    VUNITIZE(Nu);
+
+    const fastf_t c_mag = MAGNITUDE(eto->eto_C);
+    const fastf_t cv = VDOT(eto->eto_C, Nu);
+    const fastf_t ch_sq = MAGSQ(eto->eto_C) - cv * cv;
+    const fastf_t ch = std::sqrt(std::max<fastf_t>(0.0, ch_sq));
+    const fastf_t dh = (c_mag > RT_LEN_TOL) ? eto->eto_rd * cv / c_mag : std::numeric_limits<fastf_t>::infinity();
+    const fastf_t tol = 1.0e-6;
+
+    if (c_mag < RT_LEN_TOL || eto->eto_r < RT_LEN_TOL || eto->eto_rd < RT_LEN_TOL ||
+	!std::isfinite(ch) || !std::isfinite(dh) ||
+	eto->eto_rd > c_mag || ch > eto->eto_r + tol || dh > eto->eto_r + tol) {
+	std::fprintf(stderr,
+		"FAIL [%s:%d]: ETO '%s' will not prep cleanly (|C|=%g r=%g rd=%g ch=%g dh=%g)\n",
+		file, line, name, c_mag, eto->eto_r, eto->eto_rd, ch, dh);
+	g_failures++;
+    }
+
+    rt_db_free_internal(&intern);
+}
+
+#define CHECK_ETO_PREPPABLE(gedp, name) check_eto_preppable((gedp), (name), __FILE__, __LINE__)
+
+static void
+check_tire_surface_etos(struct ged *gedp, const char *top_name)
+{
+    const char *surfaces[] = {
+	"tread", "upper-left", "lower", "upper-right"
+    };
+    const char *surface_sets[] = {
+	"outer", "inner-cut"
+    };
+
+    for (const char *surface_set : surface_sets) {
+	for (const char *surface : surfaces) {
+	    char eto_name[256] = {0};
+	    std::snprintf(eto_name, sizeof(eto_name), "%s.tire.%s.surface.%s.s", top_name, surface_set, surface);
+	    CHECK_ETO_PREPPABLE(gedp, eto_name);
+	}
+    }
+}
 
 static bool
 object_has_attr(struct ged *gedp, const char *name, const char *attr_name, const char *expected_value)
@@ -211,6 +286,7 @@ run_success_case(const char *label, int argc, const char *argv[], const char *to
     CHECK_COMB_HAS_LEAF(gedp, tire_region, (std::string(top_name) + ".tire.inner-cut.c").c_str());
     if (expect_tread)
 	CHECK_COMB_HAS_LEAF(gedp, tire_region, tread_comb);
+    check_tire_surface_etos(gedp, top_name);
 
     CHECK_ATTR_EQ(gedp, top_name, "tire::generator", "ged tire");
     CHECK_ATTR_EQ(gedp, top_name, "tire::schema_version", "1");
@@ -283,6 +359,47 @@ run_stored_pattern_roundtrip_case()
     CHECK_PRESENT(gedp, "roundtrip_reused.tread.c");
     CHECK_ATTR_EQ(gedp, "roundtrip_reused", "tire::tread_pattern_source", "file");
     CHECK_ATTR_EQ(gedp, "roundtrip_reused", "tire::tread_pattern_id", "mud-terrain");
+
+    ged_close(gedp);
+}
+
+static void
+run_demo_file_case()
+{
+    const char *label = "demo file sampler generation";
+    struct ged *gedp = open_test_db();
+    if (!gedp) {
+	std::fprintf(stderr, "SKIP %s: open failed\n", label);
+	g_failures++;
+	return;
+    }
+
+    const char *demo_av[] = {"tire", "--demo-file", "tire_demo.g", nullptr};
+    int ret = ged_exec_tire(gedp, 3, demo_av);
+    if (ret != BRLCAD_OK)
+	std::fprintf(stderr, "%s\n", bu_vls_cstr(gedp->ged_result_str));
+    CHECK(ret == BRLCAD_OK, label);
+    CHECK_PRESENT(gedp, "all");
+    CHECK_ATTR_EQ(gedp, "all", "tire::demo", "1");
+    CHECK_ATTR_EQ(gedp, "all", "tire::demo_count", "11");
+    CHECK_ATTR_EQ(gedp, "all", "tire::demo_file", "tire_demo.g");
+
+    const char *sample_names[] = {
+	"compact_car", "family_sedan", "performance_coupe", "winter_suv",
+	"delivery_van", "pickup_truck", "semi_tractor", "city_bus",
+	"farm_tractor", "wheel_loader", "mining_haul_truck"
+    };
+    for (const char *name : sample_names) {
+	CHECK_PRESENT(gedp, name);
+	CHECK_COMB_HAS_LEAF(gedp, "all", name);
+	CHECK_ATTR_EQ(gedp, name, "tire::tread_enabled", "1");
+	check_tire_surface_etos(gedp, name);
+    }
+
+    CHECK_ATTR_EQ(gedp, "compact_car", "tire::iso", "175/65R14");
+    CHECK_ATTR_EQ(gedp, "compact_car", "tire::tread_pattern_id", "highway-rib");
+    CHECK_ATTR_EQ(gedp, "mining_haul_truck", "tire::iso", "1500/80R63");
+    CHECK_ATTR_EQ(gedp, "mining_haul_truck", "tire::tread_pattern_id", "mud-terrain");
 
     ged_close(gedp);
 }
@@ -442,9 +559,23 @@ main(int ac, char *av[])
 
     const char *profile1_av[] = {"tire", "-t", "1", "-p", "1", "-c", "12", "-n", "profile1_tire", nullptr};
     run_success_case("tread profile 1 generation", 9, profile1_av, "profile1_tire", true, true);
+    {
+	struct ged *gedp = open_test_db();
+	const char *legacy_pattern1_av[] = {"tire", "-t", "1", "-p", "1", "-n", "legacy_pattern1", nullptr};
+	CHECK(ged_exec_tire(gedp, 7, legacy_pattern1_av) == BRLCAD_OK, "legacy pattern 1 generation for sketch count");
+	CHECK_ATTR_EQ(gedp, "legacy_pattern1", "tire::tread_sketch_count", "9");
+	ged_close(gedp);
+    }
 
     const char *profile2_av[] = {"tire", "-t", "2", "-p", "2", "-c", "12", "-n", "profile2_tire", nullptr};
     run_success_case("tread profile 2 generation", 9, profile2_av, "profile2_tire", true, true);
+    {
+	struct ged *gedp = open_test_db();
+	const char *legacy_pattern2_av[] = {"tire", "-t", "2", "-p", "2", "-n", "legacy_pattern2", nullptr};
+	CHECK(ged_exec_tire(gedp, 7, legacy_pattern2_av) == BRLCAD_OK, "legacy pattern 2 generation for sketch count");
+	CHECK_ATTR_EQ(gedp, "legacy_pattern2", "tire::tread_sketch_count", "4");
+	ged_close(gedp);
+    }
 
     const char *named_pattern_av[] = {"tire", "--tread-pattern", "mud-terrain", "-n", "mud_tire", nullptr};
     run_success_case("named tread pattern generation", 5, named_pattern_av, "mud_tire", true, true);
@@ -486,6 +617,9 @@ main(int ac, char *av[])
     const char *high_count_av[] = {"tire", "-t", "1", "-c", "513", "-n", "high_count", nullptr};
     run_failure_case("excessive tread count", 7, high_count_av, "high_count");
 
+    const char *unrealistic_pattern_count_av[] = {"tire", "-p", "mud-terrain", "-c", "60", "-n", "unrealistic_count", nullptr};
+    run_failure_case("unrealistic tread count for pattern", 7, unrealistic_pattern_count_av, "unrealistic_count");
+
     const char *conflicting_pattern_av[] = {"tire", "-p", "highway-rib", "--tread-pattern-file", custom_pattern_file.c_str(), "-n", "conflicting_pattern", nullptr};
     run_failure_case("conflicting tread pattern options", 7, conflicting_pattern_av, "conflicting_pattern");
 
@@ -499,6 +633,7 @@ main(int ac, char *av[])
 
     run_partial_cleanup_case();
     run_stored_pattern_roundtrip_case();
+    run_demo_file_case();
 
     return g_failures ? 1 : 0;
 }

@@ -78,6 +78,37 @@ parallelogram_sketch(fastf_t x0, fastf_t y0, fastf_t x1, fastf_t y1, fastf_t shi
     return {{TreadPoint{x0, y0}, TreadPoint{x0 + shift, y0}, TreadPoint{x1 - shift, y1}, TreadPoint{x1, y1}}};
 }
 
+static std::vector<TreadSketch>
+legacy_pattern1_sketches()
+{
+    return {
+	{{TreadPoint{.9, 0}, TreadPoint{.6, .3}, TreadPoint{.94, .7}, TreadPoint{.45, 1},
+	  TreadPoint{.58, 1}, TreadPoint{1.07, .7}, TreadPoint{.73, .3}, TreadPoint{1.03, 0}}},
+	{{TreadPoint{.3, 0}, TreadPoint{.0, .3}, TreadPoint{.34, .7}, TreadPoint{-.15, 1},
+	  TreadPoint{.05, 1}, TreadPoint{.47, .7}, TreadPoint{.13, .3}, TreadPoint{.43, 0}}},
+	{{TreadPoint{-.1, .1}, TreadPoint{-.1, .12}, TreadPoint{1.1, .12}, TreadPoint{1.1, .1}}},
+	{{TreadPoint{-.1, .20}, TreadPoint{-.1, .23}, TreadPoint{1.1, .23}, TreadPoint{1.1, .20}}},
+	{{TreadPoint{-.1, .37}, TreadPoint{-.1, .4}, TreadPoint{1.1, .4}, TreadPoint{1.1, .37}}},
+	{{TreadPoint{-.1, .49}, TreadPoint{-.1, .51}, TreadPoint{1.1, .51}, TreadPoint{1.1, .49}}},
+	{{TreadPoint{-.1, .6}, TreadPoint{-.1, .63}, TreadPoint{1.1, .63}, TreadPoint{1.1, .6}}},
+	{{TreadPoint{-.1, .77}, TreadPoint{-.1, .80}, TreadPoint{1.1, .80}, TreadPoint{1.1, .77}}},
+	{{TreadPoint{-.1, .88}, TreadPoint{-.1, .9}, TreadPoint{1.1, .9}, TreadPoint{1.1, .88}}}
+    };
+}
+
+static std::vector<TreadSketch>
+legacy_pattern2_sketches()
+{
+    return {
+	{{TreadPoint{0, 0}, TreadPoint{0, .1}, TreadPoint{.66, .34}, TreadPoint{.34, .66},
+	  TreadPoint{1, .9}, TreadPoint{1, 1}, TreadPoint{1.4, 1}, TreadPoint{1.33, .9},
+	  TreadPoint{.66, .66}, TreadPoint{1, .34}, TreadPoint{.33, .1}, TreadPoint{.4, 0}}},
+	{{TreadPoint{.2, .13}, TreadPoint{-.6, .2}, TreadPoint{-.5, .27}, TreadPoint{.4, .2}}},
+	{{TreadPoint{.5, .45}, TreadPoint{-.5, .4}, TreadPoint{-.6, .5}, TreadPoint{.5, .55}}},
+	{{TreadPoint{.6, .73}, TreadPoint{-.3, .8}, TreadPoint{-.1, .87}, TreadPoint{.8, .8}}}
+    };
+}
+
 struct TreadGeometryModel {
     fastf_t void_ratio = 0.25;
     int grooves = 4;
@@ -102,33 +133,14 @@ block_pitch_for_size(const std::string &block)
 static std::vector<fastf_t>
 make_pitch_edges(const TreadPatternDefinition &def, fastf_t base_pitch)
 {
-    std::vector<fastf_t> weights;
-    if (!def.pitch_sequence.empty()) {
-	weights = def.pitch_sequence;
-    } else if (str_equal(def.pitch, "variable")) {
-	const int count = std::max(2, std::min(def.pitch_count ? def.pitch_count : 3, 8));
-	for (int i = 0; i < count; i++) {
-	    const fastf_t modifier = (i % 3 == 0) ? 1.15 : ((i % 3 == 1) ? 0.85 : 1.0);
-	    weights.push_back(modifier);
-	}
-    } else {
-	const int count = std::max(1, std::min(static_cast<int>(std::ceil(1.0 / base_pitch)), 8));
-	weights.assign(count, 1.0);
-    }
+    (void)def;
+    (void)base_pitch;
 
-    fastf_t total = 0.0;
-    for (fastf_t w : weights)
-	total += std::max(w, 0.05);
-
-    std::vector<fastf_t> edges;
-    edges.push_back(0.0);
-    fastf_t accum = 0.0;
-    for (fastf_t w : weights) {
-	accum += std::max(w, 0.05) / total;
-	edges.push_back(clamp_fastf(accum, 0.0, 1.0));
-    }
-    edges.back() = 1.0;
-    return edges;
+    /* The master pattern is rotated count times around the tire.  Keep one
+     * pitch cell in the master so count remains the actual circumferential
+     * tread pitch count instead of being multiplied by pitch_seq entries.
+     */
+    return {0.0, 1.0};
 }
 
 static TreadGeometryModel
@@ -153,8 +165,8 @@ resolve_tread_geometry(const TreadPatternDefinition &def)
     ret.groove_angle = clamp_fastf(def.groove_angle, 0.0, 60.0);
     ret.block_pitch = block_pitch_for_size(def.block);
     ret.primary_width = clamp_fastf(ret.void_ratio / (ret.grooves + 3.0), 0.022, 0.095);
-    ret.secondary_width = clamp_fastf(ret.primary_width * 0.48, 0.010, 0.045);
-    ret.sipe_width = str_equal(def.sipes, "dense") ? 0.007 : 0.005;
+    ret.secondary_width = clamp_fastf(ret.primary_width * 0.70, 0.020, 0.070);
+    ret.sipe_width = str_equal(def.sipes, "dense") ? 0.024 : 0.018;
     ret.pitch_edges = make_pitch_edges(def, ret.block_pitch);
     return ret;
 }
@@ -194,6 +206,22 @@ add_longitudinal_grooves(std::vector<TreadSketch> &sketches, const TreadPatternD
 }
 
 static void
+add_segmented_longitudinal_grooves(std::vector<TreadSketch> &sketches, const TreadPatternDefinition &def,
+				   const TreadGeometryModel &resolved)
+{
+    const fastf_t shoulder_margin = str_equal(def.shoulder, "closed") ? 0.11 : 0.08;
+	const fastf_t segment_gap = str_equal(def.terrain, "AT") ? 0.28 : 0.14;
+    for (int i = 1; i <= resolved.grooves; i++) {
+	const fastf_t y = shoulder_margin + (1.0 - 2.0 * shoulder_margin) *
+	    static_cast<fastf_t>(i) / static_cast<fastf_t>(resolved.grooves + 1);
+	const fastf_t width = resolved.primary_width * (str_equal(def.center, "broken") && NEAR_EQUAL(y, 0.5, 0.12) ? 0.70 : 1.0);
+	const fastf_t x0 = (i % 2) ? 0.00 : segment_gap;
+	const fastf_t x1 = (i % 2) ? 1.0 - segment_gap : 1.0;
+	sketches.push_back(rect_sketch(x0, y - width / 2.0, x1, y + width / 2.0));
+    }
+}
+
+static void
 add_lateral_block_grooves(std::vector<TreadSketch> &sketches, const TreadPatternDefinition &def,
 			  const TreadGeometryModel &resolved, fastf_t y0, fastf_t y1, fastf_t phase)
 {
@@ -204,7 +232,7 @@ add_lateral_block_grooves(std::vector<TreadSketch> &sketches, const TreadPattern
 	const fastf_t end = resolved.pitch_edges[i + 1];
 	const fastf_t span = end - start;
 	const fastf_t x = clamp_fastf(start + span * (0.5 + phase), start + span * 0.18, end - span * 0.18);
-	const fastf_t width = std::min(resolved.secondary_width * 1.4, span * 0.32);
+	const fastf_t width = std::min(resolved.secondary_width * 2.2, span * 0.40);
 	if (resolved.groove_angle > 3.0) {
 	    sketches.push_back(parallelogram_sketch(x - width / 2.0, y0, x + width / 2.0, y1, skew));
 	} else {
@@ -253,11 +281,11 @@ static void
 add_asymmetric_lugs(std::vector<TreadSketch> &sketches, const TreadPatternDefinition &def,
 		    const TreadGeometryModel &resolved)
 {
-    add_lateral_block_grooves(sketches, def, resolved, 0.05, 0.42, -0.12);
-    add_lateral_block_grooves(sketches, def, resolved, 0.58, 0.95, 0.15);
-    const fastf_t shift = clamp_fastf(resolved.groove_angle / 60.0, 0.0, 1.0) * 0.18;
-    sketches.push_back(parallelogram_sketch(0.05, 0.18, 0.95, 0.32, shift));
-    sketches.push_back(parallelogram_sketch(0.05, 0.68, 0.95, 0.82, -shift));
+    add_lateral_block_grooves(sketches, def, resolved, 0.03, 0.44, -0.12);
+    add_lateral_block_grooves(sketches, def, resolved, 0.56, 0.97, 0.15);
+    const fastf_t shift = clamp_fastf(resolved.groove_angle / 60.0, 0.0, 1.0) * 0.26;
+    sketches.push_back(parallelogram_sketch(0.02, 0.16, 0.98, 0.34, shift));
+    sketches.push_back(parallelogram_sketch(0.02, 0.66, 0.98, 0.84, -shift));
 }
 
 static void
@@ -329,7 +357,7 @@ add_shoulder_features(std::vector<TreadSketch> &sketches, const TreadPatternDefi
     if (str_equal(def.shoulder, "closed"))
 	return;
 
-    const fastf_t depth = str_equal(def.shoulder, "open") ? 0.16 : 0.09;
+    const fastf_t depth = str_equal(def.shoulder, "open") ? 0.18 : 0.13;
     for (size_t i = 0; i + 1 < resolved.pitch_edges.size(); i++) {
 	const fastf_t x0 = resolved.pitch_edges[i];
 	const fastf_t x1 = resolved.pitch_edges[i + 1];
@@ -363,10 +391,9 @@ generate_tread_sketches(const TreadPatternDefinition &def)
 	else
 	    add_asymmetric_lugs(sketches, def, resolved);
     } else if (str_equal(def.type, "block")) {
-	add_longitudinal_grooves(sketches, def, resolved);
+	add_segmented_longitudinal_grooves(sketches, def, resolved);
 	add_lateral_block_grooves(sketches, def, resolved, 0.08, 0.92, 0.0);
     } else {
-	add_longitudinal_grooves(sketches, def, resolved);
 	if (str_equal(def.symmetry, "asymmetric"))
 	    add_asymmetric_lugs(sketches, def, resolved);
 	else
@@ -384,13 +411,13 @@ static const std::vector<TreadPatternDefinition> &
 predefined_tread_patterns()
 {
     static const std::vector<TreadPatternDefinition> defs = {
-	{TREAD_PATTERN_SCHEMA_VERSION, "legacy-rib", "Approximation of the original ribbed visualization tread", "hybrid", "symmetric", "HT", "all", 0.30, 7, 8.0, "medium", "uniform", 0, {}, "low", "closed", "ribbed", false, 1, 30, {}},
-	{TREAD_PATTERN_SCHEMA_VERSION, "legacy-block", "Approximation of the original block/lug visualization tread", "block", "symmetric", "AT", "all", 0.36, 4, 18.0, "medium", "uniform", 0, {}, "none", "semi-open", "broken", false, 2, 30, {}},
-	{TREAD_PATTERN_SCHEMA_VERSION, "highway-rib", "Highway rib tread with closed shoulders", "rib", "symmetric", "HT", "steer", 0.23, 4, 3.0, "small", "uniform", 0, {}, "medium", "closed", "continuous", false, 1, 36, {}},
-	{TREAD_PATTERN_SCHEMA_VERSION, "all-terrain", "All-terrain hybrid tread with semi-open shoulders", "hybrid", "asymmetric", "AT", "all", 0.35, 4, 15.0, "medium", "variable", 3, {1.0, 1.12, 0.88}, "medium", "semi-open", "ribbed", true, 2, 28, {}},
-	{TREAD_PATTERN_SCHEMA_VERSION, "mud-terrain", "Mud-terrain directional lug tread", "lug", "directional", "MT", "drive", 0.46, 3, 30.0, "large", "variable", 4, {1.15, 0.85, 1.05, 0.95}, "low", "open", "broken", false, 2, 24, {}},
-	{TREAD_PATTERN_SCHEMA_VERSION, "winter-siped", "Winter block tread with dense sipes", "block", "symmetric", "HT", "all", 0.32, 5, 8.0, "small", "variable", 3, {0.9, 1.1, 1.0}, "dense", "closed", "broken", true, 1, 36, {}},
-	{TREAD_PATTERN_SCHEMA_VERSION, "commercial-rib", "Commercial trailer-style straight rib tread", "rib", "symmetric", "HT", "trailer", 0.20, 5, 0.0, "small", "uniform", 0, {}, "low", "closed", "continuous", true, 1, 40, {}}
+	{TREAD_PATTERN_SCHEMA_VERSION, "legacy-rib", "Original -p 1 ribbed visualization tread", "hybrid", "symmetric", "HT", "all", 0.30, 7, 8.0, "medium", "uniform", 0, {}, "low", "closed", "ribbed", false, 1, 30, legacy_pattern1_sketches()},
+	{TREAD_PATTERN_SCHEMA_VERSION, "legacy-block", "Original -p 2 block/lug visualization tread", "block", "symmetric", "AT", "all", 0.36, 4, 18.0, "medium", "uniform", 0, {}, "none", "semi-open", "broken", false, 2, 30, legacy_pattern2_sketches()},
+	{TREAD_PATTERN_SCHEMA_VERSION, "highway-rib", "Highway rib tread with closed shoulders", "rib", "symmetric", "HT", "steer", 0.23, 4, 3.0, "small", "uniform", 0, {}, "medium", "closed", "continuous", false, 1, 32, {}},
+	{TREAD_PATTERN_SCHEMA_VERSION, "all-terrain", "All-terrain hybrid tread with semi-open shoulders", "hybrid", "asymmetric", "AT", "all", 0.35, 2, 18.0, "medium", "variable", 3, {1.0, 1.12, 0.88}, "low", "semi-open", "broken", false, 2, 14, {}},
+	{TREAD_PATTERN_SCHEMA_VERSION, "mud-terrain", "Mud-terrain directional lug tread", "lug", "directional", "MT", "drive", 0.46, 3, 30.0, "large", "variable", 4, {1.15, 0.85, 1.05, 0.95}, "low", "open", "broken", false, 2, 16, {}},
+	{TREAD_PATTERN_SCHEMA_VERSION, "winter-siped", "Winter block tread with dense sipes", "block", "symmetric", "HT", "all", 0.32, 5, 8.0, "small", "variable", 3, {0.9, 1.1, 1.0}, "dense", "closed", "broken", true, 1, 28, {}},
+	{TREAD_PATTERN_SCHEMA_VERSION, "commercial-rib", "Commercial trailer-style straight rib tread", "rib", "symmetric", "HT", "trailer", 0.20, 5, 0.0, "small", "uniform", 0, {}, "low", "closed", "continuous", true, 1, 32, {}}
     };
     return defs;
 }
@@ -412,6 +439,43 @@ find_predefined_tread_pattern(const std::string &id)
     }
 
     return nullptr;
+}
+
+TreadPatternCountRange
+tread_pattern_count_range(const TreadPatternDefinition &def)
+{
+    TreadPatternCountRange range;
+
+    if (str_equal(def.type, "rib")) {
+	range.min = 12;
+	range.max = 64;
+    } else if (str_equal(def.type, "lug")) {
+	range.min = 6;
+	range.max = 30;
+    } else if (str_equal(def.type, "block")) {
+	range.min = 10;
+	range.max = 44;
+    } else {
+	range.min = 10;
+	range.max = 36;
+    }
+
+    if (str_equal(def.terrain, "MT")) {
+	range.min = std::max(range.min, 6);
+	range.max = std::min(range.max, 28);
+    } else if (str_equal(def.terrain, "AT")) {
+	range.max = std::min(range.max, 36);
+    }
+
+    if (str_equal(def.block, "large"))
+	range.max = std::min(range.max, 24);
+    else if (str_equal(def.block, "small"))
+	range.max = std::min(range.max, 56);
+
+    if (str_equal(def.sipes, "dense"))
+	range.max = std::min(range.max, 32);
+
+    return range;
 }
 
 static bool
@@ -448,6 +512,12 @@ validate_tread_definition(const TreadPatternDefinition &def, struct bu_vls *msg)
 	def.shape < 1 || def.shape > 2 ||
 	def.default_count < 3 || def.default_count > MAX_TREAD_PATTERN_COUNT) {
 	if (msg) bu_vls_printf(msg, "tread pattern numeric values are outside supported ranges.\n");
+	return false;
+    }
+    const TreadPatternCountRange count_range = tread_pattern_count_range(def);
+    if (def.default_count < count_range.min || def.default_count > count_range.max) {
+	if (msg) bu_vls_printf(msg, "tread pattern_count must be between %d and %d for this pattern.\n",
+			       count_range.min, count_range.max);
 	return false;
     }
     if (!valid_enum(def.pitch, {"uniform", "variable"})) {
@@ -533,6 +603,7 @@ load_tread_pattern_file(const char *path, TreadPatternDefinition &def, struct bu
 	def.center = j.value("center", def.center);
 	def.tie_bars = j.value("tie_bars", def.tie_bars);
 	def.shape = j.value("shape", def.shape);
+	const bool has_pattern_count = j.contains("pattern_count");
 	def.default_count = j.value("pattern_count", def.default_count);
 
 	if (j.contains("pitch")) {
@@ -572,6 +643,10 @@ load_tread_pattern_file(const char *path, TreadPatternDefinition &def, struct bu
 		}
 		def.sketches.push_back(sketch);
 	    }
+	}
+	if (!has_pattern_count) {
+	    const TreadPatternCountRange count_range = tread_pattern_count_range(def);
+	    def.default_count = std::max(count_range.min, std::min(def.default_count, count_range.max));
 	}
     } catch (const std::exception &e) {
 	if (msg) bu_vls_printf(msg, "failed to parse tread pattern file %s: %s\n", path, e.what());

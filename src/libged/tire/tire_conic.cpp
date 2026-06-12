@@ -97,11 +97,11 @@ create_tread_conic_system(fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t zt
 {
     ConicSystem sys;
 
-    append_conic_row(sys.matrix, sys.rhs, 0, dytred / 2, ztire - dztred, 1);
-    append_conic_row(sys.matrix, sys.rhs, 1, dytred / 2, ztire - (dztred + 2 * (d1 - dztred)), 1);
-    append_conic_row(sys.matrix, sys.rhs, 2, 0.0, ztire, 1);
-    append_conic_row(sys.matrix, sys.rhs, 3, 0.0, ztire - 2 * d1, 1);
-    append_conic_row(sys.matrix, sys.rhs, 4, -dytred / 2, ztire - dztred, 1);
+    append_conic_row(sys.matrix, sys.rhs, 0, dytred / 2, ztire - dztred, -1);
+    append_conic_row(sys.matrix, sys.rhs, 1, dytred / 2, ztire - (dztred + 2 * (d1 - dztred)), -1);
+    append_conic_row(sys.matrix, sys.rhs, 2, 0.0, ztire, -1);
+    append_conic_row(sys.matrix, sys.rhs, 3, 0.0, ztire - 2 * d1, -1);
+    append_conic_row(sys.matrix, sys.rhs, 4, -dytred / 2, ztire - dztred, -1);
 
     return sys;
 }
@@ -116,9 +116,9 @@ create_upper_side_conic_system(fastf_t dytred, fastf_t dztred,
     const fastf_t tread_z = ztire - dztred;
     const fastf_t mirror_z = 2 * zside1 - ztire + dztred;
 
-    append_conic_row(sys.matrix, sys.rhs, 0, dyside1 / 2, zside1, 1);
-    append_conic_row(sys.matrix, sys.rhs, 1, tread_y, tread_z, 1);
-    append_conic_row(sys.matrix, sys.rhs, 2, tread_y, mirror_z, 1);
+    append_conic_row(sys.matrix, sys.rhs, 0, dyside1 / 2, zside1, -1);
+    append_conic_row(sys.matrix, sys.rhs, 1, tread_y, tread_z, -1);
+    append_conic_row(sys.matrix, sys.rhs, 2, tread_y, mirror_z, -1);
     append_partial_row(sys.matrix, sys.rhs, 3, tread_y, tread_z, ell1partial);
     append_partial_row(sys.matrix, sys.rhs, 4, tread_y, mirror_z, -ell1partial);
 
@@ -132,11 +132,11 @@ create_lower_side_conic_system(fastf_t UNUSED(dytred), fastf_t UNUSED(dztred),
 {
     ConicSystem sys;
 
-    append_conic_row(sys.matrix, sys.rhs, 0, dyside1 / 2, zside1, 1);
-    append_conic_row(sys.matrix, sys.rhs, 1, dyhub / 2, zhub, 1);
-    append_conic_row(sys.matrix, sys.rhs, 2, dyhub / 2, 2 * zside1 - zhub, 1);
-    append_conic_row(sys.matrix, sys.rhs, 3, -dyside1 / 2, zside1, 1);
-    append_conic_row(sys.matrix, sys.rhs, 4, -dyhub / 2, zhub, 1);
+    append_conic_row(sys.matrix, sys.rhs, 0, dyside1 / 2, zside1, -1);
+    append_conic_row(sys.matrix, sys.rhs, 1, dyhub / 2, zhub, -1);
+    append_conic_row(sys.matrix, sys.rhs, 2, dyhub / 2, 2 * zside1 - zhub, -1);
+    append_conic_row(sys.matrix, sys.rhs, 3, -dyside1 / 2, zside1, -1);
+    append_conic_row(sys.matrix, sys.rhs, 4, -dyhub / 2, zhub, -1);
 
     return sys;
 }
@@ -190,7 +190,7 @@ conic_to_eto(const ConicEquation &conic)
     fastf_t x_0 = -(B * E - 2 * C * D) / denom;
     fastf_t y_0 = -(B * D - 2 * A * E) / denom;
     fastf_t Fp = 1 - y_0 * E - x_0 * D + y_0 * y_0 * C + x_0 * y_0 * B + x_0 * x_0 * A;
-    fastf_t theta = .5 * atan2(B, A - C);
+    fastf_t theta = .5 * atan(B / (A - C));
     fastf_t App = A * cos(theta) * cos(theta) + B * cos(theta) * sin(theta) + C * sin(theta) * sin(theta);
     fastf_t Cpp = A * sin(theta) * sin(theta) - B * sin(theta) * cos(theta) + C * cos(theta) * cos(theta);
 

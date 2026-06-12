@@ -33,10 +33,36 @@
 #endif
 
 #include "bu/app.h"
+#include "bu/str.h"
 #include "wdb.h"
 #include "ged.h"
 
 #define DEFAULT_TIRE_FILENAME "tire.g"
+
+static int
+demo_file_arg(int ac, char *av[], const char **filename)
+{
+    int i = 0;
+
+    for (i = 1; i < ac; i++) {
+	if (BU_STR_EQUAL(av[i], "--demo-file")) {
+	    if (i + 1 >= ac || !av[i + 1] || av[i + 1][0] == '\0')
+		return -1;
+	    *filename = av[i + 1];
+	    return 1;
+	}
+	if (BU_STR_EQUAL(av[i], "--demo-file="))
+	    return -1;
+	if (bu_strncmp(av[i], "--demo-file=", 12) == 0) {
+	    if (av[i][12] == '\0')
+		return -1;
+	    *filename = av[i] + 12;
+	    return 1;
+	}
+    }
+
+    return 0;
+}
 
 
 int main(int ac, char *av[])
@@ -49,8 +75,10 @@ int main(int ac, char *av[])
     bu_setprogname(av[0]);
 
     filename = DEFAULT_TIRE_FILENAME;
+    ret = demo_file_arg(ac, av, &filename);
+    if (ret < 0)
+	bu_exit(1, "ERROR - --demo-file requires an output file name.\n");
 
-    /* Just using "tire.g" for now. */
     if (bu_file_exists(filename, NULL))
 	bu_exit(1, "ERROR - refusing to overwrite existing [%s] file.", filename);
     wdbp = wdb_fopen(filename);
@@ -68,7 +96,7 @@ int main(int ac, char *av[])
 	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
     } else
-	bu_log("tire.g file created\n");
+	bu_log("%s file created\n", filename);
 
     /* release our ged instance memory */
     ged_free(&ged);

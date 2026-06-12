@@ -35,6 +35,7 @@
 #include <string>
 #include <string.h>
 #include <utility>
+#include <vector>
 
 #include "bu/avs.h"
 #include "bu/opt.h"
@@ -51,6 +52,7 @@ namespace {
 
 using tire_private::TireSpec;
 using tire_private::TreadSpec;
+using tire_private::TreadPatternCountRange;
 using tire_private::TreadPatternDefinition;
 using tire_private::WheelSpec;
 using tire_private::CsgTransaction;
@@ -62,7 +64,9 @@ using tire_private::make_air_region;
 using tire_private::make_tire;
 using tire_private::make_wheel_rims;
 using tire_private::make_wheel_and_tire;
+using tire_private::add_member;
 using tire_private::tread_pattern_json;
+using tire_private::tread_pattern_count_range;
 
 
 static int
@@ -107,6 +111,7 @@ _tire_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
     bu_vls_printf(&str, "\nStandard ISO formatting for tire dimensions is of the form %s, where <width> is in mm, <aspect> is a ratio, and <rim diameter> is in inches.\n",
     ISO_TIRE_FMT);
     bu_vls_printf(&str, "\nUse --list-tread-patterns to show named tread presets.  --tread-pattern accepts a preset name; legacy values 1 and 2 map to legacy-rib and legacy-block.\n");
+    bu_vls_printf(&str, "\nUse --demo-file file.g to generate a grid of varied tire examples.  When run from MGED, the sampler is written to the current database.\n");
 
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&str));
     bu_vls_free(&str);
@@ -301,6 +306,13 @@ build_validated_request(struct ged *gedp,
 	    tread_type = tread_def.shape;
 	if (num_tread_ptns == 0)
 	    num_tread_ptns = tread_def.default_count;
+	const TreadPatternCountRange count_range = tread_pattern_count_range(tread_def);
+	if (num_tread_ptns < count_range.min || num_tread_ptns > count_range.max) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "tread pattern count for '%s' must be between %d and %d.\n",
+			  tread_def.id.c_str(), count_range.min, count_range.max);
+	    return std::nullopt;
+	}
     }
 
     if (tread_type != 0 && num_tread_ptns < 3) {
@@ -385,17 +397,23 @@ public:
     int build(struct bu_vls *msg)
     {
 	CsgTransaction preflight_txn(wdbp_, true);
-	if (generate(preflight_txn) != BRLCAD_OK)
+	if (build_into(preflight_txn) != BRLCAD_OK)
 	    return fail(preflight_txn, msg, "generated object preflight failed");
 
 	CsgTransaction csg_txn(wdbp_);
-	if (generate(csg_txn) != BRLCAD_OK)
+	if (build_into(csg_txn) != BRLCAD_OK)
 	    return fail(csg_txn, msg, "failed to generate tire geometry");
-	if (write_top_attributes(csg_txn) != BRLCAD_OK)
-	    return fail(csg_txn, msg, "failed to document generated tire");
 
 	csg_txn.commit();
 	return BRLCAD_OK;
+    }
+
+    int build_into(CsgTransaction &csg_txn)
+    {
+	if (generate(csg_txn) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+
+	return write_top_attributes(csg_txn);
     }
 
 private:
@@ -502,6 +520,137 @@ private:
     int usewheel_ = 0;
 };
 
+struct DemoTire {
+    const char *name = nullptr;
+    const char *pattern = nullptr;
+    fastf_t width = 0.0;
+    fastf_t aspect = 0.0;
+    fastf_t rim_diameter = 0.0;
+    fastf_t tread_depth = 0.0;
+    fastf_t hub_width = 0.0;
+    int tread_count = 0;
+    fastf_t grid_x = 0.0;
+    fastf_t grid_y = 0.0;
+};
+
+static void
+add_attr(struct bu_attribute_value_set *avs, const char *name, const std::string &value)
+{
+    (void)bu_avs_add(avs, name, value.c_str());
+}
+
+static const std::vector<DemoTire> &
+demo_tires()
+{
+    static const std::vector<DemoTire> tires = {
+	{"compact_car", "highway-rib", 175.0, 65.0, 14.0, 9.0, 5.0, 28, -2600.0, -3200.0},
+	{"family_sedan", "highway-rib", 215.0, 55.0, 17.0, 10.0, 7.0, 32, -1100.0, -3200.0},
+	{"performance_coupe", "highway-rib", 275.0, 35.0, 20.0, 8.0, 9.0, 32, 500.0, -3200.0},
+	{"winter_suv", "winter-siped", 235.0, 60.0, 18.0, 12.0, 8.0, 28, 2200.0, -3200.0},
+	{"delivery_van", "commercial-rib", 225.0, 75.0, 16.0, 14.0, 7.0, 32, -3100.0, 0.0},
+	{"pickup_truck", "all-terrain", 265.0, 70.0, 17.0, 16.0, 8.0, 14, -1200.0, 0.0},
+	{"semi_tractor", "commercial-rib", 315.0, 80.0, 22.0, 20.0, 9.0, 32, 900.0, 0.0},
+	{"city_bus", "commercial-rib", 275.0, 70.0, 22.0, 18.0, 8.5, 32, 3100.0, 0.0},
+	{"farm_tractor", "mud-terrain", 650.0, 65.0, 38.0, 58.0, 22.0, 16, -3100.0, 4200.0},
+	{"wheel_loader", "mud-terrain", 875.0, 65.0, 29.0, 70.0, 26.0, 14, -800.0, 4200.0},
+	{"mining_haul_truck", "mud-terrain", 1500.0, 80.0, 63.0, 90.0, 44.0, 12, 2800.0, 4200.0}
+    };
+    return tires;
+}
+
+static int
+demo_fail(CsgTransaction &csg_txn, struct bu_vls *msg, const char *message)
+{
+    if (msg) {
+	if (csg_txn.error().empty())
+	    bu_vls_printf(msg, "%s.\n", message);
+	else
+	    bu_vls_printf(msg, "%s: %s.\n", message, csg_txn.error().c_str());
+    }
+    (void)csg_txn.rollback(msg);
+    return BRLCAD_ERROR;
+}
+
+static int
+write_demo_top(CsgTransaction &csg_txn, const std::vector<DemoTire> &samples, const char *demo_file)
+{
+    struct wmember all;
+    BU_LIST_INIT(&all.l);
+
+    for (const DemoTire &sample : samples) {
+	mat_t transform;
+	MAT_IDN(transform);
+	MAT_DELTAS(transform, sample.grid_x, sample.grid_y, 0.0);
+	add_member(sample.name, &all.l, transform, WMOP_UNION);
+    }
+
+    if (csg_txn.write_lcomb("all", &all, 0, NULL, NULL, NULL, 0) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    struct bu_attribute_value_set avs;
+    bu_avs_init_empty(&avs);
+    add_attr(&avs, "tire::generator", "ged tire");
+    add_attr(&avs, "tire::demo", "1");
+    add_attr(&avs, "tire::demo_file", demo_file ? demo_file : "");
+    add_attr(&avs, "tire::demo_layout", "rows by vehicle class, increasing tire scale left to right");
+    add_attr(&avs, "tire::demo_count", std::to_string(samples.size()));
+    return csg_txn.update_attributes("all", &avs);
+}
+
+static int
+generate_demo(struct ged *gedp, const char *demo_file)
+{
+    const std::vector<DemoTire> &samples = demo_tires();
+    std::vector<ValidatedTireRequest> requests;
+    requests.reserve(samples.size());
+
+    const char *empty_argv[] = {nullptr};
+    for (const DemoTire &sample : samples) {
+	std::array<fastf_t, 3> iso = {{sample.width, sample.aspect, sample.rim_diameter}};
+	std::optional<ValidatedTireRequest> request = build_validated_request(
+	    gedp, iso, 0.0, 0.0, 0.0, sample.name, 1, 0, sample.tread_count,
+	    sample.tread_depth, 0.0, sample.hub_width, sample.pattern, NULL, 0.0,
+	    0, empty_argv);
+	if (!request)
+	    return BRLCAD_ERROR;
+	requests.push_back(*request);
+    }
+
+    rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    CsgTransaction preflight_txn(wdbp, true);
+    for (size_t i = 0; i < requests.size(); i++) {
+	const ValidatedTireRequest &request = requests[i];
+	TireBuilder builder(wdbp, request.top_name, request.suffix, request.iso, request.dim,
+			    request.tread_spec, request.usewheel);
+	if (builder.build_into(preflight_txn) != BRLCAD_OK)
+	    return demo_fail(preflight_txn, gedp->ged_result_str, "generated tire demo preflight failed");
+    }
+    if (write_demo_top(preflight_txn, samples, demo_file) != BRLCAD_OK)
+	return demo_fail(preflight_txn, gedp->ged_result_str, "generated tire demo preflight failed");
+
+    CsgTransaction csg_txn(wdbp);
+    for (size_t i = 0; i < requests.size(); i++) {
+	const ValidatedTireRequest &request = requests[i];
+	TireBuilder builder(wdbp, request.top_name, request.suffix, request.iso, request.dim,
+			    request.tread_spec, request.usewheel);
+	if (builder.build_into(csg_txn) != BRLCAD_OK)
+	    return demo_fail(csg_txn, gedp->ged_result_str, "failed to generate tire demo");
+    }
+    if (write_demo_top(csg_txn, samples, demo_file) != BRLCAD_OK)
+	return demo_fail(csg_txn, gedp->ged_result_str, "failed to generate tire demo");
+
+    csg_txn.commit();
+    mk_id(wdbp, "Tire demo");
+
+    bu_vls_printf(gedp->ged_result_str, "generated tire demo sampler with %zu tires", samples.size());
+    if (demo_file && demo_file[0] != '\0')
+	bu_vls_printf(gedp->ged_result_str, " for %s", demo_file);
+    bu_vls_printf(gedp->ged_result_str, ".\n");
+
+    return BRLCAD_OK;
+}
+
 } /* namespace */
 
 int
@@ -521,13 +670,14 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     fastf_t hub_width = 0;
     const char *pattern_name = NULL;
     const char *pattern_file = NULL;
+    const char *demo_file = NULL;
     fastf_t zside1 = 0;
     int print_help = 0;
     int list_patterns = 0;
     int ret_ac = 0;
     const char *cmd_name = argv[0];
 
-    struct bu_opt_desc d[19];
+    struct bu_opt_desc d[20];
     BU_OPT(d[0],  "h", "help",                "",           NULL,             &print_help,     "Print help and exit");
     BU_OPT(d[1],  "?", "",                    "",           NULL,             &print_help,     "");
     BU_OPT(d[2],  "n", "obj-name",            "name",       &bu_opt_str,      &name_arg,       "Set top-level object name");
@@ -546,7 +696,8 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[15], "t", "tread-shape",         "#",          &bu_opt_int,      &tread_type,     "Tread shape profile (integer id, range 1 - 2)");
     BU_OPT(d[16], "",  "tread-pattern-file",  "file",       &bu_opt_str,      &pattern_file,   "Read a custom JSON tread pattern definition");
     BU_OPT(d[17], "",  "list-tread-patterns", "",           NULL,             &list_patterns,  "List available tread pattern presets and exit");
-    BU_OPT_NULL(d[18]);
+    BU_OPT(d[18], "",  "demo-file",            "file.g",     &bu_opt_str,      &demo_file,      "Generate a grid of varied sample tires");
+    BU_OPT_NULL(d[19]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -568,6 +719,13 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     if (list_patterns) {
 	list_tread_patterns(gedp->ged_result_str);
 	return BRLCAD_OK;
+    }
+    if (demo_file) {
+	if (ret_ac > 0) {
+	    bu_vls_sprintf(gedp->ged_result_str, "unknown args supplied.\n");
+	    return BRLCAD_ERROR;
+	}
+	return generate_demo(gedp, demo_file);
     }
 
     std::optional<ValidatedTireRequest> request = build_validated_request(

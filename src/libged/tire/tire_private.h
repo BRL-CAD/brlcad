@@ -110,6 +110,11 @@ struct TreadPatternDefinition {
     std::vector<TreadSketch> sketches;
 };
 
+struct TreadPatternCountRange {
+    int min = 3;
+    int max = MAX_TREAD_PATTERN_COUNT;
+};
+
 struct TireSpec {
     fastf_t dytred = 0.0;
     fastf_t dztred = 0.0;
@@ -191,6 +196,7 @@ std::optional<SurfaceEtos> surface_conics_to_etos(const SurfaceConics &conics);
 
 std::vector<TreadSketch> generate_tread_sketches(const TreadPatternDefinition &def);
 const TreadPatternDefinition *find_predefined_tread_pattern(const std::string &id);
+TreadPatternCountRange tread_pattern_count_range(const TreadPatternDefinition &def);
 bool load_tread_pattern_file(const char *path, TreadPatternDefinition &def, struct bu_vls *msg);
 std::string tread_pattern_json(const TreadPatternDefinition &def);
 void list_tread_patterns(struct bu_vls *out);
