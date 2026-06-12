@@ -24,6 +24,8 @@
 #include "bg/plane.h"
 #include "bn/tol.h"
 
+#include "./bg_private.h"
+
 /* TODO - need routines for 2D and 3D point sets that check for degeneracy - (dimension < 2 for a 2D
  * set, dimension < 3 for a 3D set.  Probably want to use Eigen's matrix routines and a rank check:
  * https://en.wikipedia.org/wiki/Coplanarity#Coplanarity_of_points_whose_coordinates_are_given
@@ -33,10 +35,6 @@
  * stability:
  * http://eigen.tuxfamily.org/dox/classEigen_1_1ColPivHouseholderQR.html
  * http://eigen.tuxfamily.org/dox/classEigen_1_1FullPivHouseholderQR.html
- *
- * Algorithms like QuickHull (which we need to implement to replace chull3d - that implementation has
- * been found to not be robust) need degeneracy checks, and we really should be using such checks generally
- * for all of these sorts of routines.
  *
  * See src/librt/test_bot2nurbs.cpp for an example of using Eigen to do calculations.  Probably
  * can make do with Matrix2d and Matrix3d rather than MatrixXd...

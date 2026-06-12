@@ -1,4 +1,4 @@
-/*                     G M _ P R I V A T E . H
+/*                     B G _ P R I V A T E . H
  * BRL-CAD
  *
  * Copyright (c) 2013-2026 United States Government as represented by
@@ -22,12 +22,12 @@
 /** @{ */
 /** @file bg_private.h
  *
- * Private header file for the BRL-CAD Geometry Library, LIBGM.
+ * Private header file for the BRL-CAD Geometry Library, LIBBG.
  *
  */
 
-#ifndef LIBGM_LIBGM_PRIVATE_H
-#define LIBGM_LIBGM_PRIVATE_H
+#ifndef LIBBG_LIBBG_PRIVATE_H
+#define LIBBG_LIBBG_PRIVATE_H
 
 #include "common.h"
 #include "vmath.h"
@@ -49,7 +49,7 @@ __BEGIN_DECLS
  * @param       n the number of points in the input set
  * @return 0 if successful
  */
-extern int
+BG_EXPORT extern int
 coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n);
 
 /**
@@ -64,7 +64,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
  * @param       n the number of points in the input set
  * @return 0 if successful
  */
-extern int
+BG_EXPORT extern int
 coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
 		  const vect_t *u_axis, const vect_t *v_axis,
 		  const point_t *points_3d, int n);
@@ -81,14 +81,14 @@ coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
  * @param       n the number of points in the input set
  * @return 0 if successful
  */
-extern int
+BG_EXPORT extern int
 coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
 		  const vect_t *u_axis, const vect_t *v_axis,
 		  const point2d_t *points_2d, int n);
 
 __END_DECLS
 
-#endif /* LIBGM_LIBGM_PRIVATE_H */
+#endif /* LIBBG_LIBBG_PRIVATE_H */
 
 /** @} */
 /*
