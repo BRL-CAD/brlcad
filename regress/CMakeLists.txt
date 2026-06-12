@@ -101,6 +101,9 @@ add_subdirectory(rtedge)
 # RtWizard Image Generation Regression Tests
 add_subdirectory(rtwizard)
 
+# per-primitive validity
+add_subdirectory(rt_primitives)
+
 # Simulation of a 3rd party BRL-CAD library client code
 add_subdirectory(user)
 

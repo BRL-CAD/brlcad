@@ -1,0 +1,40 @@
+# Values set at CMake configure time
+set(BIN_DIR "@BIN_DIR@")
+set(DATA_DIR "@DATA_DIR@")
+set(LOGFILE "@LOG_FILE@")
+
+file(WRITE "${LOGFILE}" "rt_primitives regression run\n")
+
+# The executable location isn't known at configure time; it arrives via -DEXEC.
+string(REPLACE "\\" "" RTP_EXEC "${EXEC}")
+if(NOT EXISTS "${RTP_EXEC}")
+  file(APPEND "${LOGFILE}" "rt_primitives not found at \"${RTP_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find rt_primitives, aborting.\nSee ${LOGFILE}.\n${LOG}")
+endif(NOT EXISTS "${RTP_EXEC}")
+
+# Reconstruct the build root from the EXEC path, and locate primitives.g.
+get_filename_component(BDIR "${RTP_EXEC}" DIRECTORY)
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(GFILE "${RDIR}/${DATA_DIR}/db/primitives.g")
+
+file(APPEND "${LOGFILE}" "Running ${RTP_EXEC} ${GFILE}\n")
+execute_process(
+  COMMAND "${RTP_EXEC}" "${GFILE}"
+  RESULT_VARIABLE rtp_result
+  OUTPUT_VARIABLE rtp_log
+  ERROR_VARIABLE rtp_log
+)
+file(APPEND "${LOGFILE}" "${rtp_log}")
+if(rtp_result)
+  file(APPEND "${LOGFILE}" "Failure: ${rtp_result}\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "rt_primitives regression failed, aborting.\nSee ${LOGFILE}.\n${LOG}")
+endif(rtp_result)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
