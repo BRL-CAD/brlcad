@@ -82,7 +82,9 @@ endif()
 
 # The uuid code doesn't mix with C++ compilers - make a separate
 # C-only executable for this case
+set_source_files_properties(test_uuid.c PROPERTIES NO_CXX_COMPILE TRUE)
 brlcad_addexec(bu_test_uuid "test_uuid.c" libbu TEST)
+
 # Benchmark-only target: build it, but don't schedule it under CTest.
 brlcad_addexec(test_bitv_benchmark "test_bitv_benchmark.c" libbu TEST)
 
