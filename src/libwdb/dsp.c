@@ -55,6 +55,30 @@ mk_dsp(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
 }
 
 
+int
+mk_dsp_obj(struct rt_wdb *fp, const char *name, const char *binunif, size_t xcnt, size_t ycnt, const matp_t stom)
+    /* name of database BINUNIF object containing elevation data */
+    /* X dimension of data (w cells) */
+    /* Y dimension of data (n cells) */
+    /* convert solid coords to model space */
+{
+    struct rt_dsp_internal *dsp;
+
+    BU_ALLOC(dsp, struct rt_dsp_internal);
+    dsp->magic = RT_DSP_INTERNAL_MAGIC;
+
+    bu_vls_init(&dsp->dsp_name);
+    bu_vls_strcat(&dsp->dsp_name, binunif);
+
+    dsp->dsp_xcnt = xcnt;
+    dsp->dsp_ycnt = ycnt;
+    dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
+    MAT_COPY(dsp->dsp_stom, stom);
+
+    return wdb_export(fp, name, (void *)dsp, ID_DSP, mk_conv2mm);
+}
+
+
 /*
  * Local Variables:
  * mode: C
