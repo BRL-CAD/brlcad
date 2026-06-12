@@ -421,14 +421,13 @@ vtk_read_field(struct vtk_state *s, int narr)
 }
 
 
-/*
- * Parse a POINT_DATA / CELL_DATA section.  We collect SCALARS and
- * VECTORS arrays (and skip FIELD/other constructs gracefully).  The
- * caller passes the announced tuple count.
- *
- * Returns via *scalars/*nscalars and *vectors/*nvectors growable
- * arrays the caller is responsible for freeing.
- */
+
+// Parse a POINT_DATA / CELL_DATA section.  We collect SCALARS and
+// VECTORS arrays (and skip FIELD/other constructs gracefully).  The
+// caller passes the announced tuple count.
+//
+// Returns via *scalars/*nscalars and *vectors/*nvectors growable
+// arrays the caller is responsible for freeing.
 static void
 vtk_read_data_arrays(struct vtk_state *s, size_t ntuple,
 		     struct vtk_darray **scalars, int *nscalars,
