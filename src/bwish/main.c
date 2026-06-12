@@ -29,9 +29,6 @@
 #include "common.h"
 #include <ctype.h>
 #include "tcl.h"
-#ifdef BWISH
-#include "tk.h"
-#endif
 #include <locale.h>
 #include "bio.h"
 
@@ -47,6 +44,12 @@
 #include "bu/app.h"
 #include "vmath.h"
 #include "tclcad.h"
+
+// Tclcad pulls in OpenNURBS in C++ compilation mode, which defines None, which
+// will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#ifdef BWISH
+#include "tk.h"
+#endif
 
 extern int cmdInit(Tcl_Interp *interp);
 

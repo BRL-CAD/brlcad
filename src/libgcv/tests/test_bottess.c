@@ -153,7 +153,7 @@ test_face_split_single(void)
 	urf[i] = find_tri(&s, &f, &t);                                      \
     }                                                                   \
     if (nsplt != 2 && urf[0] == -1 && urf[1] == -1) {                   \
-	printf("\033[1;31mFAILURE "name"\033[m\n");                       \
+	printf("\033[1;31mFAILURE " name "\033[m\n");                       \
 	printf("%lu faces now\n", s.nfaces);                               \
 	for (i = 0; i < s.nfaces; i++)                                    \
 	    printf("%03lu: % 2g, % 2g, % 2g | % 2g, % 2g, % 2g | % 2g, % 2g, % 2g\n", \
