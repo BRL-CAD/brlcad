@@ -2286,15 +2286,15 @@ const struct rt_functab OBJ[] = {
 	RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
 	0,
 	RTFUNCTAB_FUNC_PREP_CAST(rt_pnts_prep),
-	NULL, /* shot */
+	RTFUNCTAB_FUNC_SHOT_CAST(rt_pnts_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_pnts_print),
-	NULL, /* norm */
+	RTFUNCTAB_FUNC_NORM_CAST(rt_pnts_norm),
 	NULL, /* piece_shot */
 	NULL, /* piece_hitsegs */
-	NULL, /* uv */
+	RTFUNCTAB_FUNC_UV_CAST(rt_pnts_uv),
 	NULL, /* curve */
 	NULL, /* class */
-	NULL, /* free */
+	RTFUNCTAB_FUNC_FREE_CAST(rt_pnts_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pnts_plot),
 	NULL, /* adaptive_plot */
 	NULL, /* vshot */
