@@ -19,6 +19,7 @@ set(
   nmg.c
   nurb.c
   pipe.c
+  pnts.c
   reg.c
   sketch.c
   submodel.c
