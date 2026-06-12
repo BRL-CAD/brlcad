@@ -836,7 +836,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		VMOVE(point->v, v);
 
-		BU_LIST_PUSH(head, &point->l);
+		BU_LIST_INSERT(head, &point->l);
 	    }
 
 	    break;
@@ -865,7 +865,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 		VMOVE(cf, c);
 		bu_color_from_rgb_floats(&point->c, cf);
 
-		BU_LIST_PUSH(head, &point->l);
+		BU_LIST_INSERT(head, &point->l);
 	    }
 
 	    break;
@@ -892,7 +892,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
 		point->s = s[0];
 
-		BU_LIST_PUSH(head, &point->l);
+		BU_LIST_INSERT(head, &point->l);
 	    }
 
 	    break;
@@ -919,7 +919,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 		VMOVE(point->n, n);
 
-		BU_LIST_PUSH(head, &point->l);
+		BU_LIST_INSERT(head, &point->l);
 	    }
 
 	    break;
@@ -953,7 +953,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
 		point->s = s[0];
 
-		BU_LIST_PUSH(head, &point->l);
+		BU_LIST_INSERT(head, &point->l);
 	    }
 
 	    break;
@@ -987,7 +987,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 		VMOVE(point->n, n);
 
-		BU_LIST_PUSH(head, &point->l);
+		BU_LIST_INSERT(head, &point->l);
 	    }
 
 	    break;
@@ -1019,7 +1019,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 		VMOVE(point->n, n);
 
-		BU_LIST_PUSH(head, &point->l);
+		BU_LIST_INSERT(head, &point->l);
 	    }
 
 	    break;
@@ -1058,7 +1058,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 		VMOVE(point->n, n);
 
-		BU_LIST_PUSH(head, &point->l);
+		BU_LIST_INSERT(head, &point->l);
 	    }
 
 	    break;
