@@ -675,7 +675,7 @@ main(int ac, char *av[])
 	    BU_LIST_INIT(&(seghead.l));
 	    struct xray *rayp = &ap.a_ray;
 
-	    struct soltab st = {0};
+	    struct soltab st = RT_SOLTAB_INIT_ZERO;
 	    st.l.magic = RT_SOLTAB_MAGIC;
 	    st.l2.magic = RT_SOLTAB2_MAGIC;
 	    st.st_uses = 1;

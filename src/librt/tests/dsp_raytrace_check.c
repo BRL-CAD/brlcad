@@ -93,6 +93,7 @@
 /* ------------------------------------------------------------------ */
 /* Accessors in dsp.c (not in public headers).                         */
 /* ------------------------------------------------------------------ */
+__BEGIN_DECLS
 extern void  dsp_query_terrain(struct soltab *stp,
 	const unsigned short **pbuf,
 	unsigned int *pxcnt,
@@ -100,7 +101,7 @@ extern void  dsp_query_terrain(struct soltab *stp,
 	fastf_t *stom16,
 	int *cuttype,
 	int *smooth);
-
+__END_DECLS
 
 /* ------------------------------------------------------------------ */
 /* Exact mesh-reference SA and volume from a height grid               */

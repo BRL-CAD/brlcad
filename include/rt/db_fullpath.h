@@ -59,6 +59,9 @@ struct db_full_path {
     int	              * fp_bool;	/**< @brief array of boolean flags */
     int	              * fp_cinst;	/**< @brief array of comb tree instance specifiers */
 };
+
+#define DB_FULL_PATH_INIT_ZERO {DB_FULL_PATH_MAGIC, 0, 0, NULL, NULL, NULL}
+
 #define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 #define DB_FULL_PATH_CUR_DIR(_pp) (((_pp)->fp_len > 0) ? (_pp)->fp_names[(_pp)->fp_len-1] : NULL)

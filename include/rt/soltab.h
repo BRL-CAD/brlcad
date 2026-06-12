@@ -76,6 +76,9 @@ struct soltab {
     long                        st_piecestate_num; /**< @brief re_pieces[] subscript */
     struct bound_rpp *          st_piece_rpps;  /**< @brief bounding RPP of each piece of this solid */
 };
+
+#define RT_SOLTAB_INIT_ZERO {BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, NULL, 0, 0, VINIT_ZERO, 0.0, 0.0, NULL, NULL, VINIT_ZERO, VINIT_ZERO, 0, BU_PTBL_INIT_ZERO, NULL, DB_FULL_PATH_INIT_ZERO, 0, 0, NULL}
+
 #define st_name         st_dp->d_namep
 #define RT_SOLTAB_NULL  ((struct soltab *)0)
 #define SOLTAB_NULL     RT_SOLTAB_NULL          /**< @brief backwards compat */
