@@ -47,7 +47,7 @@ int validate_sph_qrand(struct rt_pattern_data* data) {
 	return 1;
     }
 
-    for (int i = 0; i < data->ray_cnt; i++) {
+    for (unsigned long int i = 0; i < data->ray_cnt; i++) {
 	point_t base;
 	vect_t dir;
 	VSET(base, data->rays[6*i], data->rays[6*i+1], data->rays[6*i+2]);
