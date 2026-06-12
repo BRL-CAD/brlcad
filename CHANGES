@@ -192,6 +192,36 @@ include/nmg/plot.h - remove:
 	nmg_cnurb_to_vlist
 	[deprecated 7.44]
 
+include/nmg/print.h - signature changes:
+	We'll switch the string container for nmg printing to a libbu vls.
+	In all these functions, char *h -> struct bu_vls *h
+	nmg_pr_r
+	nmg_pr_sa
+	nmg_pr_lg
+	nmg_pr_fg
+	nmg_pr_s
+	nmg_pr_s_briefly
+	nmg_pr_f
+	nmg_pr_fu
+	nmg_pr_fu_briefly
+	nmg_pr_l
+	nmg_pr_lu
+	nmg_pr_lu_briefly
+	nmg_pr_eg
+	nmg_pr_e
+	nmg_pr_eu
+	nmg_pr_eu_briefly
+	nmg_pr_eu_endpoints
+	nmg_pr_vg
+	nmg_pr_v
+	nmg_pr_vu
+	nmg_pr_vu_briefly
+	nmg_pr_vua
+
+	nmg_orientation will return a const char *
+	(NOTE:  It's actually doing this under the hood now...)
+
+
 include/nmg/vertex.h - remove:
 
 	GET_VERTEXUSE_A_CNURB

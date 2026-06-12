@@ -61,6 +61,7 @@ cmakefiles(
 brlcad_addlib(libnmg "${LIBNMG_SOURCES}" "" ""
   PUBLIC_LIBS ${libnmg_deps}
   PRIVATE_LIBS ${STDCXX_LIBRARIES} ${WINSOCK_LIB}
+  NO_CXX # For the moment, libnmg isn't ready to build as C++
 )
 
 add_subdirectory(tests)

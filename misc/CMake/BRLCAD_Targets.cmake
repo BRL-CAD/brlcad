@@ -74,7 +74,7 @@ include(CMakeParseArguments)
 
 # For BRL-CAD targets, use CXX as the language if the user requests it
 function(set_lang_cxx SRC_FILES cxx_enable)
-  if(ENABLE_ALL_CXX_COMPILE OR ${cxx_enable})
+  if(${cxx_enable})
     foreach(srcfile ${SRC_FILES})
       if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
 	get_property(_no_cxx SOURCE ${srcfile} PROPERTY NO_CXX_COMPILE)
@@ -256,7 +256,7 @@ endfunction(BRLCAD_INCLUDE_DIRS)
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 function(BRLCAD_ADDEXEC execname srcslist libslist)
-  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;ALL_CXX;NO_STRICT_CXX;GUI" "FOLDER;UNITY_BUILD_CODE_BEFORE_INCLUDE" "UNITY_BUILD_SKIP" ${ARGN})
+  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;ALL_CXX;NO_CXX;NO_STRICT_CXX;GUI" "FOLDER;UNITY_BUILD_CODE_BEFORE_INCLUDE" "UNITY_BUILD_SKIP" ${ARGN})
 
   # Let CMAKEFILES know what's going on
   cmakefiles(${srcslist})
@@ -270,6 +270,9 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Go all C++ if the settings request it
   set(all_cxx OFF)
+  if (ENABLE_ALL_CXX_COMPILE AND NOT E_NO_CXX)
+    set(all_cxx ON)
+  endif()
   if (E_ALL_CXX)
     set(all_cxx ON)
   endif()
@@ -750,7 +753,7 @@ function(
     include_dirs
     local_include_dirs
   )
-  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;ALL_CXX;NO_STRICT_CXX;NO_UNITY;NO_STATIC_LINK_TEST" "FOLDER" "SHARED_SRCS;STATIC_SRCS;UNITY_BUILD_SKIP;PUBLIC_LIBS;PRIVATE_LIBS;INTERFACE_LIBS" ${ARGN})
+  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;ALL_CXX;NO_CXX;NO_STRICT_CXX;NO_UNITY;NO_STATIC_LINK_TEST" "FOLDER" "SHARED_SRCS;STATIC_SRCS;UNITY_BUILD_SKIP;PUBLIC_LIBS;PRIVATE_LIBS;INTERFACE_LIBS" ${ARGN})
 
   # Let CMAKEFILES know what's going on
   cmakefiles(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
@@ -761,7 +764,10 @@ function(
   string(TOUPPER ${LOWERCORE} UPPER_CORE)
 
   # Go all C++ if the settings request it
-    set(all_cxx OFF)
+  set(all_cxx OFF)
+  if (ENABLL_ALL_CXX_COMPILE AND NOT L_NO_CXX)
+    set(all_cxx ON)
+  endif()
   if (L_ALL_CXX)
     set(all_cxx ON)
   endif()

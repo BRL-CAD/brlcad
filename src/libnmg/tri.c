@@ -3323,9 +3323,10 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, stru
  * nmg_tri_fu_bg is defined in tri_bg.cpp (C++17) so that it can use
  * std::unordered_map for O(1) edge-gluing lookups.
  */
+__BEGIN_DECLS
 extern int nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *vlfree,
 			 const struct bn_tol *tol);
-
+__END_DECLS
 
 /*
  * return 1 when faceuse is empty, otherwise return 0.
