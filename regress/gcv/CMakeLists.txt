@@ -238,6 +238,7 @@ add_subdirectory(rhino)
 add_subdirectory(stl)
 add_subdirectory(stp)
 add_subdirectory(vrml)
+add_subdirectory(vtk)
 add_subdirectory(x)
 add_subdirectory(x3d)
 
