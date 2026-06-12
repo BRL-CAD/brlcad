@@ -21,6 +21,12 @@ tire [options ...]... [name]
 
 *-a #* instructs *tire* to automatically add dimensional information to the toplevel object name used in the generated BRL-CAD database tree. Works with the *-n* option or as stand-alone. Output format uses '-' instead of '/' because the latter has significance in BRL-CAD object trees.
 
+NOTE: the generated models are intended for procedural geometry, visualization,
+inspection, and BRL-CAD workflow testing.  They are not validated for tire
+engineering design, roadworthiness assessment, load rating, traction or braking
+performance prediction, manufacturing, regulatory compliance, or vehicle safety
+use.
+
 
 [[tire_options]]
 == OPTIONS

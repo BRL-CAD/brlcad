@@ -28,11 +28,14 @@ mean-line sections, 5-digit reflex mean-line sections, and the NACA 6/6A
 families covered by the public-domain NACA456 reference implementation from
 Public Domain Aeronautical Software:
 
+....
 https://www.pdas.com/naca456download.html
+....
 
-NOTE: the models produced by naca456 are NOT suitable for any real-world
-aircraft/design usage - they are intended to be used as procedural generators
-of wing shapes for visual rendering.
+NOTE: the generated models are intended for procedural geometry, rendering,
+inspection, and BRL-CAD workflow testing.  They are not validated for aircraft
+engineering design, flight hardware development, aerodynamic or structural
+performance prediction, certification, or any other safety-critical flight use.
 
 [[airfoils]]
 == SUPPORTED AIRFOILS
@@ -382,6 +385,7 @@ represented as local bilinear ruled NURBS patches between neighboring spanwise
 stations and chordwise outline edges.  Local patches avoid the span-curve
 overshoot that can occur when a single interpolated strip crosses a sharp
 wing-tip transition.
+
 Root caps and flat tip caps are represented by triangulated planar faces;
 rounded tips use additional NURBS side/closure bands down to a small terminal
 triangulated cap.  The BREP is standardized, compacted, and checked with
@@ -480,9 +484,36 @@ The BRL-CAD implementation references the NACA456 source files `nacax.f90`,
 six-series epsilon/psi table logic as the basis for the local C++
 implementation.
 
-NACA456 itself identifies the relevant aerodynamics references in its comments,
-including Abbott and von Doenhoff for the 6-series mean-line equations and NACA
-Report 903 for the modified 6-series mean line used with 6A profiles.
+The NACA456 source package and PDAS reference page identify these principal
+references for the underlying airfoil coordinate algorithms and data:
+
+* Carmichael, Ralph L., "Algorithm for Calculating Coordinates of Cambered
+  NACA Airfoils At Specified Chord Locations," AIAA Paper 2001-5235, November
+  2001.
+* Ladson, Charles L., and Brooks, Cuyler W., Jr., "Development of a Computer
+  Program to Obtain Ordinates for NACA 6- and 6A-Series Airfoils," NASA
+  Technical Memorandum X-3069, September 1974.
+* Ladson, Charles L., and Brooks, Cuyler W., Jr., "Development of a Computer
+  Program to Obtain Ordinates for NACA 4-Digit, 4-Digit Modified, 5-Digit, and
+  16-Series Airfoils," NASA Technical Memorandum X-3284, November 1975.
+* Ladson, Charles L., Brooks, Cuyler W., Jr., Hill, Acquilla S., and Sproles,
+  Darrell W., "Computer Program to Obtain Ordinates for NACA Airfoils," NASA
+  Technical Memorandum 4741, December 1996.
+* Abbott, Ira H., and von Doenhoff, Albert E., _Theory of Airfoil Sections_,
+  Dover, 1952.
+* Abbott, Ira H., von Doenhoff, Albert E., and Stivers, Louis S., "Summary of
+  Airfoil Data," NACA Report 824, 1945.
+* Jacobs, Eastman N., and Pinkerton, Robert M., "Tests in the
+  Variable-density Wind Tunnel of Related Airfoils Having the Maximum Camber
+  Unusually Far Forward," NACA Report 537, 1935.
+* Loftin, Laurence K., Jr., "Theoretical and Experimental Data for a Number of
+  NACA 6A-series Airfoil Sections," NACA Report 903, 1948.
+
+The broader PDAS bibliography is maintained at:
+
+....
+https://www.pdas.com/naca456refs.html
+....
 
 [[examples]]
 == EXAMPLES
