@@ -1,0 +1,106 @@
+# gallery_manifest.cmake -- data table for the procedural geometry gallery.
+#
+# Pure-CMake data file consumed by generate_gallery.cmake.  ALL per-demo
+# knowledge lives here so the generator stays generic (no `mged tops` parsing,
+# no platform branches).
+#
+# Each demo is one bracket-argument string in GALLERY_DEMO_<i>, with fields
+# separated by '|'.  Bracket args ([=[ ... ]=]) preserve embedded quotes,
+# semicolons, and commas verbatim, so captions need no escaping.  The caption
+# is the LAST field; the generator takes everything after the 9th '|' as the
+# caption (so semicolons in captions are safe).
+#
+# Fields (in order):
+#   name      image basename -> gallery_<name>.png
+#   section   group heading (drives .adoc sections, in first-seen order)
+#   driver    exec | stdin:<inputfile> | tomged | mgedcmd:<cmd>
+#   exe       target/binary basename (resolved via ensearch)
+#   args      argument template; @OUT@ = chosen .g path, @IN:<file>@ = input data path
+#   gfile     database to render: @OUT@ (the chosen .g) or @GLOB@ (lone *.g in workdir)
+#   objects   space-separated render objects
+#   autoview  space-separated objects for `-c "autoview ..."`, or empty
+#   render    ao (default, adds -c "set ambSamples=64") | noao
+#   caption   one-line description
+
+set(GALLERY_DEMO_COUNT 59)
+
+# ---- New demonstrations -----------------------------------------------------
+set(GALLERY_DEMO_0  [=[terragen|New demonstrations|exec|terragen|@OUT@|@OUT@|all|terrain.r water.r|ao|Fractal DSP terrain island with reflective water and a cloud environment-map sky; rendered with the new rt autoview command framing terrain+water.]=])
+set(GALLERY_DEMO_1  [=[voxelize|New demonstrations|exec|voxelize|@OUT@|@OUT@|all||ao|Demonstrates BRL-CAD's "vol" (3-D volume) and "ebm" (extruded bitmap) primitives by sampling a procedural 3-D scalar field (a triply-periodic gyroid by default) over a regular grid. It writes sidecar .vol/.ebm data files and builds an orange voxel isosurface (with a cutaway box) plus a blue extruded height-field companion.]=])
+set(GALLERY_DEMO_2  [=[lattice|New demonstrations|exec|lattice|@OUT@|@OUT@|all||ao|A full geodesic-sphere space-frame built by instancing one unit strut prototype across every de-duplicated geodesic edge, with joint spheres.]=])
+set(GALLERY_DEMO_3  [=[loftwing|New demonstrations|exec|loftwing|@OUT@|@OUT@|all||ao|A lofted NACA 4-digit airfoil wing (ARS) with taper, twist, sweep, and dihedral and a full root section.]=])
+set(GALLERY_DEMO_4  [=[loftwing_prop|New demonstrations|exec|loftwing|@OUT@ --mode prop|@OUT@|all||ao|Propeller mode of loftwing: one strongly twisted NACA blade instanced around a central hub to form a 3-blade propeller.]=])
+set(GALLERY_DEMO_5  [=[gears|New demonstrations|exec|gears|@OUT@|@OUT@|all|ground.r|ao|Builds a meshing involute spur-gear train, demonstrating the sketch->extrude procedural-modeling workflow in libwdb: each gear is one extruded involute tooth profile unioned in rotated copies around a hub with a central bore, laid left-to-right so the teeth interlock, plus a ground plane and a light under a top group "all".]=])
+set(GALLERY_DEMO_6  [=[helicoil|New demonstrations|exec|helicoil|@OUT@|@OUT@|all|coil.r|ao|Procedurally builds helical pipe solids (spring, screw, or DNA double helix) swept along a helix centerline via mk_pipe(); the default "spring" mode renders a chrome coil spring on a ground plane with a light, assembled into a top-level group "all".]=])
+set(GALLERY_DEMO_7  [=[specimen|New demonstrations|exec|specimen|@OUT@|@OUT@|all|ground.r|ao|Analytic-primitive specimen shelf (rpc, rhc, epa, ehy, hyp, eto, hrt, arbn, particle, tor, tgc, ell); rt autoview frames the shelf.]=])
+
+# ---- Fractals & recursion ---------------------------------------------------
+set(GALLERY_DEMO_8  [=[sphflake|Fractals & recursion|exec|sphflake|-d 3 -f @OUT@|@OUT@|scene.r|depth0.r depth1.r depth2.r depth3.r|ao|Recursive mirror-sphere flake fractal; rendered with rt autoview framing the flake (depth0-3.r) over a checkered plane.]=])
+set(GALLERY_DEMO_9  [=[donuts|Fractals & recursion|exec|donuts|-o @OUT@|@OUT@|scene.r|depth0.r depth1.r depth2.r depth3.r|ao|Recursive torus "donut flake" fractal; rendered with rt autoview framing the flake regions.]=])
+set(GALLERY_DEMO_10 [=[menger|Fractals & recursion|exec|menger|-o @OUT@|@OUT@|menger|sponge.r|ao|A Menger sponge fractal carved from a cube with the recursive exterior (subtractive) pattern, on a ground plane with two lights.]=])
+set(GALLERY_DEMO_11 [=[pyramid|Fractals & recursion|exec|pyramid|5|@GLOB@|tree||ao|Generates a recursive 3-D Sierpinski-style pyramid built from ARB4 tetrahedra, subdividing each pyramid into 4 smaller ones per level (inspired by Glassner's SigGraph paper).]=])
+set(GALLERY_DEMO_12 [=[torii|Fractals & recursion|exec|torii|@OUT@|@OUT@|all||ao|An interwoven chain-mail weave of interlocking torii with a radial gradient of tube thickness (and color). Adjacent rings thread each other's holes without the solid tubes ever intersecting (verified 0 overlaps), so the whole sheet is a single, articulating, fully 3D-printable piece of mail.]=])
+
+# ---- Architecture & structural ----------------------------------------------
+set(GALLERY_DEMO_13 [=[masonry_frame|Architecture & structural|exec|masonry|-t frame -u ft -w 12,8 -o 3,0,5,7 -n wall|@GLOB@|r.wall.studs||ao|masonry wall generator, wood-frame wall type: studs, plates, and framing around a window opening.]=])
+set(GALLERY_DEMO_14 [=[masonry_sheetrock|Architecture & structural|exec|masonry|-t sheetrock -u ft -w 12,8 -o 3,0,5,7 -n wall|@GLOB@|r.wall.sr1||ao|masonry wall generator, sheetrock wall type.]=])
+set(GALLERY_DEMO_15 [=[masonry_brick|Architecture & structural|exec|masonry|-t brick -u in -w 96,48 -n wall|@GLOB@|r.wall.b||ao|masonry wall generator, brick wall type (prototype brick).]=])
+set(GALLERY_DEMO_16 [=[masonry_bm|Architecture & structural|exec|masonry|-t bm -u in -w 96,48 -m 0.25 -n wall|@GLOB@|r.wall.b||ao|masonry wall generator, mortar-brick wall type: brick with horizontal and vertical mortar joints.]=])
+set(GALLERY_DEMO_17 [=[brickwall|Architecture & structural|tomged|brickwall||@OUT@|g.brick||ao|Builds a brick wall: emits mged commands that create RPP brick solids arranged in rows (with optional mortar slabs between them) to fill a specified wall width and height. Output is a stream of mged commands on stdout, not a .g directly.]=])
+set(GALLERY_DEMO_18 [=[mkbuilding|Architecture & structural|exec|mkbuilding|@OUT@|@OUT@|all||ao|Procedurally builds a small building: a floor slab, four framed walls with openings, and an overhanging roof.]=])
+set(GALLERY_DEMO_19 [=[cchannel|Architecture & structural|exec|cchannel|-f @OUT@ -H 0.2|@OUT@|channel.r||ao|Creates a section of fully configurable C-channel (structural metal beam). Default is a 1" diameter by 12" long section of American standard C-channel, here generated with a row of drilled holes.]=])
+set(GALLERY_DEMO_20 [=[ringworld|Architecture & structural|exec|ringworld|-o @OUT@|@OUT@|all.g||ao|Generates a "ringworld" as imagined by Larry Niven: a central sun sphere and a large CSG ring (built from three RCCs) orbiting it, combined into a top-level group all.g.]=])
+
+# ---- Organic, molecular & scenery -------------------------------------------
+set(GALLERY_DEMO_21 [=[vegetation|Organic, molecular & scenery|exec|vegetation|@OUT@ 20 30000 300 0.1 42|@GLOB@|plant.r||ao|Procedurally generates plant-like geometry (trees/shrubbery) from particle primitives built recursively with random branching and growth parameters, including an optional repeatability seed.]=])
+set(GALLERY_DEMO_22 [=[clutter|Organic, molecular & scenery|exec|clutter||@GLOB@|clut||ao|Generates procedural "clutter" made of primitive geometric objects: a grid of detail cells on a ground plane, each holding a random stack of spheres, crystals, or mixed primitives (boxes, cylinders, cones, ellipsoids), all enclosed by concentric torus rings and lit by four corner lights.]=])
+set(GALLERY_DEMO_23 [=[metaball|Organic, molecular & scenery|exec|metaball|-o @OUT@|@OUT@|meatballs.r||ao|Programmatically creates and combines metaball ("blobby") primitives: it generates three sets of randomly-placed iso-method metaballs via libwdb, then reads them back and merges all their points into one combined "mega metaball" via librt.]=])
+set(GALLERY_DEMO_24 [=[molecule|Organic, molecular & scenery|stdin:mol-cube.dat|molecule|Cube|@GLOB@|molecule||ao|Ball-and-stick molecule (spheres for atoms, cylinders for bonds) read from a G. Adams .dat file -- here a bonded cube of atoms with a central hub.]=])
+set(GALLERY_DEMO_25 [=[pdb-g|Organic, molecular & scenery|exec|pdb-g|@IN:caffeine.pdb@ @OUT@|@OUT@|all_atoms.r||ao|Reads a Protein Data Bank (PDB) text file and converts each atom into a 1mm-radius sphere, grouping them into a single combination to produce a BRL-CAD geometry database of the molecule (caffeine).]=])
+
+# ---- Mechanical & engineering -----------------------------------------------
+set(GALLERY_DEMO_26 [=[pipe|Mechanical & engineering|stdin:pipe.stdin|pipe|-t demo @OUT@|@OUT@|demo.pipe demo.fluid||ao|Generates piping (fuel/hydraulic lines, etc.) in MGED format from a routed sequence of 3D points, building both tubing regions and inner fluid regions, with automatically generated elbow regions wherever the pipe changes direction.]=])
+set(GALLERY_DEMO_27 [=[pipetest|Mechanical & engineering|exec|pipetest||@GLOB@|p1 p2 p3 pipe1||ao|Generates a test database of pipe and particle primitives: three particle solids (spherical, cylindrical, and conical) plus a multi-segment straight pipe and a bent pipe traced around a cube's faces.]=])
+set(GALLERY_DEMO_28 [=[tube|Mechanical & engineering|stdin:tube.stdin|tube||@GLOB@|g0||ao|Generates a gun-tube (cannon barrel) as a procedural spline/cylinder whose core lies on the X axis, optionally deformed per-frame from projectile firing data. With no stdin data it emits the static frame-0 geometry from a built-in center-of-mass table.]=])
+set(GALLERY_DEMO_29 [=[lens|Mechanical & engineering|exec|lens|@OUT@|@OUT@|lens_DCX_f600.0_d200.0.r||ao|Generates basic optical lenses (plano/double convex or concave) by using the lensmaker's equation to derive the geometry from inputs like type, diameter, focal length, refractive index, and thickness.]=])
+
+# ---- NURBS, B-rep, splines & surfaces ---------------------------------------
+set(GALLERY_DEMO_30 [=[brep_simple|NURBS, B-rep, splines & surfaces|exec|brep_simple||@GLOB@|cube.r||ao|Creates a single twisted-cube B-Rep solid directly via the openNURBS API (8 vertices, 12 edges, 6 faces) and writes it to a BRL-CAD database, demonstrating NURBS B-Rep construction.]=])
+set(GALLERY_DEMO_31 [=[brep_cube|NURBS, B-rep, splines & surfaces|exec|brep_cube||@GLOB@|cube.r||ao|Creates a twisted-cube B-Rep solid (8 vertices, 12 edges, 6 faces) by directly using the openNURBS API, then writes it to a BRL-CAD database. Copied almost verbatim from the openNURBS example_brep.cpp to explore B-Rep creation.]=])
+set(GALLERY_DEMO_32 [=[brep_cobb|NURBS, B-rep, splines & surfaces|exec|brep_cobb|@OUT@|@OUT@|cobb.r||ao|A Cobb NURBS unit sphere tiled with six rational Bezier patches.]=])
+set(GALLERY_DEMO_33 [=[brep_surface|NURBS, B-rep, splines & surfaces|exec|brep_surface|-H 1.0|@GLOB@|brep_surface.r||ao|Creates a single plate-mode NURBS (B-Rep) surface with a given thickness, defined by four control points, and writes it as a region to a .g database.]=])
+set(GALLERY_DEMO_34 [=[brep_trimmed|NURBS, B-rep, splines & surfaces|exec|brep_trimmed||@GLOB@|brep_trimmed.r||ao|Generates a single B-rep NURBS surface (a flat 10x10 square patch) with both an outer trimming loop and an interior rectangular trim/hole, demonstrating ON_Brep construction of trimmed surfaces.]=])
+set(GALLERY_DEMO_35 [=[brep_invalid|NURBS, B-rep, splines & surfaces|exec|brep_invalid||@GLOB@|brep_invalid.r||ao|Creates a single trimmed NURBS B-rep surface (one face of a Cobb sphere) with a deliberately invalid inner trim loop, to test/demonstrate handling of invalid trim geometry.]=])
+set(GALLERY_DEMO_36 [=[breplicator|NURBS, B-rep, splines & surfaces|exec|breplicator||@GLOB@|brep||ao|breplicator is a test tool for the BREP (boundary representation) primitive in librt; it builds a single closed 6-faced NURBS solid (an arb8-shaped box) via mk_brep() and writes it to a database.]=])
+set(GALLERY_DEMO_37 [=[csgbrep|NURBS, B-rep, splines & surfaces|exec|csgbrep||@GLOB@|all.g||ao|A reference gallery of CSG/implicit primitives, each also converted to a brep, grouped under a single top object.]=])
+set(GALLERY_DEMO_38 [=[surfaceintersect|NURBS, B-rep, splines & surfaces|exec|surfaceintersect|@OUT@|@OUT@|all||ao|Writes the two twisted-cube NURBS B-rep surfaces (red and blue). The experimental surface-surface intersection is behind a -x flag (off by default, as it currently crashes).]=])
+set(GALLERY_DEMO_39 [=[spltest|NURBS, B-rep, splines & surfaces|exec|spltest|@OUT@|@OUT@|spltest||ao|A NURBS spline test: a valid order-2 B-spline surface built from a 3x3 control mesh with a gently lifted center.]=])
+set(GALLERY_DEMO_40 [=[tea|NURBS, B-rep, splines & surfaces|exec|tea||@GLOB@|UtahTeapot||ao|Converts the Utah Teapot description from the IEEE CG&A database into BRL-CAD spline (NURBS) format, producing the classic closed-bottom teapot as a B-spline solid.]=])
+set(GALLERY_DEMO_41 [=[wavy|NURBS, B-rep, splines & surfaces|exec|wavy||@GLOB@|wavy||ao|Creates a random wavy surface modeled as a B-spline (NURBS) surface, generating a 10x10 grid of points with randomized height and interpolating them into a spline solid.]=])
+set(GALLERY_DEMO_42 [=[kurt|NURBS, B-rep, splines & surfaces|exec|kurt||@GLOB@|all||ao|Builds a surface from a multi-valued cubic function sampled over an 18x18 grid, triangulated into a BoT height-field sheet.]=])
+set(GALLERY_DEMO_43 [=[sketch|NURBS, B-rep, splines & surfaces|exec|sketch||@GLOB@|all||noao|Builds a 2D sketch (line/arc/bezier segments) and extrudes it into a renderable solid via mk_extrusion.]=])
+
+# ---- Primitives, BoT & API basics -------------------------------------------
+set(GALLERY_DEMO_44 [=[wdb_example|Primitives, BoT & API basics|exec|wdb_example|@OUT@|@OUT@|box_n_ball.r||ao|Demonstrates creating a BRL-CAD geometry database from C code using the libwdb API: it writes a sphere (ball.s) and an rpp/box (box.s), then unions them into a green plastic region named box_n_ball.r.]=])
+set(GALLERY_DEMO_45 [=[globe|Primitives, BoT & API basics|exec|globe|@OUT@|@OUT@|globe.r land.c||ao|Creates a set of concentric spherical "shells" (like an onion) that together form a unified solid sphere: a green solid land core surrounded by progressively transparent blue air layers.]=])
+set(GALLERY_DEMO_46 [=[bottest|Primitives, BoT & API basics|exec|bottest|@OUT@|@OUT@|bot_u_surf bot_ccw_surf bot_cw_surf bot_u_solid bot_ccw_solid bot_cw_solid bot_u_plate bot_ccw_plate bot_cw_plate bot_solid_dup_vs bot_solid_dup_fs||ao|Generates a set of test BOT (Bag of Triangles) solids in a .g database, covering every BOT mode/orientation combination: surface, solid, and plate types in unoriented/CCW/CW orientations, plus BOTs with duplicate vertices and faces for fuse/condense testing.]=])
+set(GALLERY_DEMO_47 [=[pix2g|Primitives, BoT & API basics|exec|pix2g|@IN:moss64.pix@ @OUT@ 64 64|@OUT@|image.c||ao|pix2g generates geometry from a pixmap (.pix) image: it creates one colored sphere per pixel arranged on a grid, where each sphere's color matches the corresponding pixel's RGB value, producing a 3D point-cloud rendition of the image.]=])
+
+# ---- src/shapes -- parametric shape generators ------------------------------
+set(GALLERY_DEMO_48 [=[bolt|src/shapes -- parametric shape generators|exec|bolt|-o3 -fbolt.g -n1 -hd30 -hh20 -wd45 -wh4 -sd14 -sh90|@GLOB@|bolta||ao|bolt is a BRL-CAD libwdb program that creates a bolt (in mm). It can build four types: a bolt head, head + washer, head + washer + stem, or head + stem. The head is a hex (two arb8 solids), the washer and stem are RCCs.]=])
+set(GALLERY_DEMO_49 [=[coil|src/shapes -- parametric shape generators|mgedcmd:coil mycoil|coil||@OUT@|mycoil||ao|Coil Generator -- a program to create coils (helical springs) using the BRL-CAD pipe primitive.]=])
+set(GALLERY_DEMO_50 [=[fence|src/shapes -- parametric shape generators|exec|fence|-o @OUT@ -L 2000 -N 1200 -j 400 -R 30 -r 5 -a 30 -c "70 90 110"|@OUT@|fence.r||ao|A chain-link fence generator. Every parameter (height, length, pole radius/spacing, wire radius, mesh twist angle, materials/colors) can be adjusted; it builds vertical RCC poles plus a woven zig-zag wire mesh between them.]=])
+set(GALLERY_DEMO_51 [=[gastank|src/shapes -- parametric shape generators|exec|gastank|-fgastank.g -n1 -H800 -w1200 -d500 -r120|@GLOB@|tnka||ao|A solid gas tank with all edges and corners rounded, composed of 3 arb8s, 8 spheres, and 12 cylinders, centered at the origin (dimensions in mm). Introduced in BRL-CAD release 4.4.]=])
+set(GALLERY_DEMO_52 [=[handle|src/shapes -- parametric shape generators|exec|handle|-fhandle.g -n1 -l200 -H120 -r130 -r215|@GLOB@|hana||ao|handle is a BRL-CAD libwdb sample program that constructs a handle (in millimeters) from three cylinders, two tori, and two arb8s, with its base centered at (0,0,0) and its height extending in the +Z direction. Introduced in BRL-CAD release 4.4.]=])
+set(GALLERY_DEMO_53 [=[human|src/shapes -- parametric shape generators|exec|human|-A -n Body|@GLOB@|Body||ao|Generator for human models based on height (and other anthropometric parameters). It procedurally builds an articulated humanoid body assembled from primitives (head, neck, torso, arms with shoulder/elbow/wrist joints, hands, thighs/calves with knee joints, and feet), defaulting to a standing 50th-percentile man.]=])
+set(GALLERY_DEMO_54 [=[picket_fence|src/shapes -- parametric shape generators|exec|picket_fence|@OUT@ fence_ 1000 30 0 0 0 3000 0 0 4500 2000 0|@OUT@|fence_sec0.c fence_sec1.c||ao|picket_fence builds a wooden picket fence: vertical pointed-top pickets (arb8 posts with wedge-cut tops) joined by two horizontal stringer rails, laid out along a sequence of x/y/z waypoints so the fence can follow a multi-segment path. Rendered as brown plastic pickets with two rails across two fence sections.]=])
+set(GALLERY_DEMO_55 [=[tire|src/shapes -- parametric shape generators|mgedcmd:tire|tire||@OUT@|tire-215-55R17||ao|tire is BRL-CAD's Tire Generator, a program to create basic tire shapes (with an optional wheel). The rendered model is a default ISO 215/55R17 passenger tire mounted on a wheel hub.]=])
+set(GALLERY_DEMO_56 [=[window|src/shapes -- parametric shape generators|exec|window|-fwindow.g -n1 -H1618 -w1000 -d100 -r80|@GLOB@|wina||ao|window constructs a window with all edges and corners rounded, composed of two arb8s and four cylinders, built using libwdb in millimeters. The front of the window is centered at the origin and extends in the negative X-direction by the window depth.]=])
+set(GALLERY_DEMO_57 [=[window_frame|src/shapes -- parametric shape generators|exec|window_frame|-fwindow_frame.g -n1 -H1618 -w1000 -d100 -r80 -i120|@GLOB@|wfra||ao|window_frame constructs a window frame with all edges and corners rounded, composed of 4 arb8s and 8 cylinders (in millimeters). The front of the frame is centered at the origin and extends in the negative x-direction by its depth.]=])
+set(GALLERY_DEMO_58 [=[wire|src/shapes -- parametric shape generators|stdin:wire.stdin|wire||@GLOB@|wires||ao|wire creates wiring or fuel lines from user-supplied endpoint coordinates and line radii. It builds a continuous tube as a chain of truncated cones (segments) joined by spheres at the vertices, grouped under a "wires" combination -- here a four-turn helix.]=])
+
+# ---- Not rendered (documented in "Known limitations", no image) -------------
+set(GALLERY_NR_COUNT 3)
+set(GALLERY_NR_0 [=[nmgmodel|Intentionally non-manifold NMG exercising 3-, 2-, 1-, and 0-manifold features (a holed/voided block plus dangling faces, wires, and a lone vertex). It generates valid geometry, but the libnmg raytracer aborts on it (BU_ASSERT in isect.c), so it cannot be raytraced.]=])
+set(GALLERY_NR_1 [=[tea_nmg|Utah teapot as a t-NURBS NMG (closed bottom). The vertex-fuse fix lets it write geometry, but rt aborts importing the t-NURBS NMG (NMG_CK_DISKMAGIC) -- a librt limitation with t-NURBS NMG, not a usage issue.]=])
+set(GALLERY_NR_2 [=[gtimes|A ray-trace/database timing benchmark: it opens an existing .g repeatedly and prints timings for db_open, db_dirbuild, db_update_nref, tops, and db_close. It produces no geometry.]=])
