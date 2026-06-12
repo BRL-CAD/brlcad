@@ -28,6 +28,7 @@ add_subdirectory(rhino)
 add_subdirectory(stl)
 add_subdirectory(vol)
 add_subdirectory(vrml)
+add_subdirectory(vtk)
 
 cmakefiles(
   CMakeLists.txt
