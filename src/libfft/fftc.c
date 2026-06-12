@@ -26,30 +26,59 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
 
 #include "./fft.h"
+
+static int
+parse_fft_length(const char *arg, int *n)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	fprintf(stderr, "fftc: invalid length '%s' (expected a positive power of two)\n", arg);
+	return 0;
+    }
+    if (parsed <= 0) {
+	fprintf(stderr, "fftc: length must be greater than zero, got '%s'\n", arg);
+	return 0;
+    }
+    if (parsed > INT_MAX) {
+	fprintf(stderr, "fftc: length out of range '%s'\n", arg);
+	return 0;
+    }
+    if ((parsed & (parsed - 1)) != 0) {
+	fprintf(stderr, "fftc: length must be a power of two, got '%s'\n", arg);
+	return 0;
+    }
+
+    *n = (int)parsed;
+    return 1;
+}
 
 
 int
 main(int argc, char *argv[])
 {
-    int n, m;
+    int n, m, t;
 
     if ( argc != 2 ) {
 	fprintf( stderr, "Usage: fftc length > fftlength.c\n" );
 	return 1;
     }
 
-    n = atoi(argv[1]);
-    if (n < 0 || n >= INT32_MAX) {
-	fprintf( stderr, "fftc: bad length - %s\n", argv[1]);
+    if (!parse_fft_length(argv[1], &n)) {
 	return 1;
     }
 
-    m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
+    for (m = 0, t = n; t > 1; t >>= 1)
+	m++;
     splitdit( n, m );
     return 0;
 }
