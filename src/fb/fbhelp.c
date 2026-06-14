@@ -57,8 +57,10 @@ main(int argc, char **argv)
 		return 1;
 	}
     }
-    if (argc > ++bu_optind) {
-	fprintf(stderr, "fbhelp: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "fbhelp: excess argument(s) not supported\n");
+	(void)fputs(usage, stderr);
+	return 1;
     }
 
     printf("\
