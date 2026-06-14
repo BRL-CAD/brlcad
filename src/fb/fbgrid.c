@@ -184,17 +184,17 @@ oldflavor(void)
     int fb_sz;
     static RGBpixel black, white, red;
 
-    fbiop = fb_open(NULL, fbwidth, fbheight);
+    fbiop = fb_open(framebuffer, fbwidth, fbheight);
     if (fbiop == NULL) {
 	bu_exit(1, NULL);
     }
 
-    fb_sz = fb_getwidth(fbp);
+    fb_sz = fb_getwidth(fbiop);
     white[RED] = white[GRN] = white[BLU] = 255;
     black[RED] = black[GRN] = black[BLU] = 0;
     red[RED] = 255;
     middle = fb_sz/2;
-    fb_ioinit(fbp);
+    fb_ioinit(fbiop);
     if (fb_sz <= 512)
 	mask = 0x7;
     else
@@ -203,19 +203,19 @@ oldflavor(void)
     for (y = fb_sz-1; y >= 0; y--) {
 	for (x = 0; x < fb_sz; x++) {
 	    if (x == y || x == fb_sz - y) {
-		fb_wpixel(fbp, white);
+		fb_wpixel(fbiop, white);
 	    } else
 		if (x == middle || y == middle) {
-		    fb_wpixel(fbp, red);
+		    fb_wpixel(fbiop, red);
 		} else
 		    if ((x & mask) && (y & mask)) {
-			fb_wpixel(fbp, black);
+			fb_wpixel(fbiop, black);
 		    } else {
-			fb_wpixel(fbp, white);
+			fb_wpixel(fbiop, white);
 		    }
 	}
     }
-    fb_close(fbp);
+    fb_close(fbiop);
     bu_exit(0, NULL);
 }
 
