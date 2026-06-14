@@ -10,7 +10,7 @@ fbzoom - modify zoom and window parameters of a frame buffer
 
 [source]
 ----
-fbzoom [-T] [-F frame_buffer] [-s|S image_sqrsize] [-w|W image_width] [-n|N image_height]
+fbzoom [-T] [-F frame_buffer] [-s|S image_sqrsize] [-w|W image_width] [-n|N image_height] [xPan yPan xZoom yZoom]
 ----
 
 
@@ -38,7 +38,6 @@ displays the image _image_width_ pixels wide (default is 512).
 
 *-n* (or *-N*) _image_height_::
 displays the image _image_height_ pixels high (default is 512).
-
 
 
 *fbzoom* will display the image currently in the frame buffer and then act on commands entered by the user. Available commands are:
@@ -120,10 +119,24 @@ Exit
 Note that these commands change the way the frame buffer is viewed but not the image in the frame buffer.
 
 
+[[examples]]
+== EXAMPLES
+
+.Zoom and pan interactively on a 1024x1024 framebuffer image
+====
+[source,bash]
+----
+$ fbzoom -s 1024
+----
+Then press `b` to zoom in, `h`/`j`/`k`/`l` to pan, and `q` to
+exit.
+====
+
+
 [[see_also]]
 == SEE ALSO
 
-*bw-fb*(1), *gif-fb*(1), *pix-fb*(1), *plot3-fb*(1), *rle-fb*(1)
+*bw-fb*(1), *gif-fb*(1), *pix-fb*(1), *plot3-fb*(1)
 
 
 [[author]]
