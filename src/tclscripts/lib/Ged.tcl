@@ -6201,7 +6201,7 @@ package provide cadwidgets::Ged 1.0
 			Only uniform array binary objects (major_type=u) are currently supported}}
     $help add bot_condense	{{new_bot old_bot} {create a new bot by condensing the old bot}}
     $help add bot_decimate	{{[options] new_bot old_bot} {create a new bot by decimating the old bot}}
-    $help add bot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n} {dump the specified bots}}
+    $help add bot_dump	{{[-b] [-n] [-F] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials|--no-materials] [bot1 bot2 ...]\n} {dump the specified bots}}
     $help add bot_face_fuse	{{new_bot old_bot} {eliminate duplicate faces in a BOT}}
     $help add bot_face_sort	{{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece}}
     $help add bot_fuse		{{new_bot old_bot} {eliminate duplicate points in a BOT}}
@@ -6242,7 +6242,7 @@ package provide cadwidgets::Ged 1.0
     $help add dbconcat		{{[-L] [-O] [-t] [-u] [-c] [-s|-p] file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
-    $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}
+    $help add dbot_dump	{{[-b] [-n] [-F] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials|--no-materials]\n} {dump the displayed bots}}
     $help add dbversion		{{} {return the database version}}
     $help add debug  		{{[args]} {control BRL-CAD library debugging}}
     $help add debugbu		{{[hex_code]} {activate libbu debugging}}
