@@ -152,6 +152,7 @@ set(
 set(
   G_SAMPLE_MODELS
   aet.asc
+  arb8_showcase.asc
   annual_gift_man.asc
   axis.asc
   bearing.asc
