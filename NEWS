@@ -24,6 +24,7 @@ changes made.  See document footer for additional details.
 * fixed mged/rt/gui apps on Mac w/ ogl device windows - Sean Morrison
 * modified gist long title printing to maximally fit - Sean Morrison
 * modified gist hierarchy summary to include counts - Sean Morrison
+* gist hierarchy no longer displays air as black boxes - Sean Morrison
 * added get/put/adjust/g2asc support for datum objects - Sean Morrison
 * added gcv & g-obj color .mtl material export support - Sean Morrison
 * improved DSP raytrace consistency, robustness, & speed - Cliff Yapp
