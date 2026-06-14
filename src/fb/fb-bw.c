@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -53,6 +55,49 @@ char *framebuffer = NULL;
 char *file_name;
 FILE *outfp;
 
+static int
+parse_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < INT_MIN || parsed > INT_MAX) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    if (!parse_int_arg(arg, value, label))
+	return 0;
+    if (*value <= 0) {
+	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
+{
+    if (!parse_int_arg(arg, value, label))
+	return 0;
+    if (*value < 0) {
+	fprintf(stderr, "%s: %s must be zero or greater, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
 
 int
 get_args(int argc, char **argv)
@@ -68,20 +113,26 @@ get_args(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 'X':
-		scr_xoff = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_xoff, "screen x offset"))
+		    return 0;
 		break;
 	    case 'Y':
-		scr_yoff = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_yoff, "screen y offset"))
+		    return 0;
 		break;
 	    case 's':
 		/* square size */
-		height = width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &width, "image size"))
+		    return 0;
+		height = width;
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &width, "image width"))
+		    return 0;
 		break;
 	    case 'n':
-		height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &height, "image height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */
@@ -105,8 +156,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "fb-bw: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "fb-bw: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

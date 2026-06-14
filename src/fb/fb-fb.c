@@ -53,11 +53,13 @@ int
 get_args(int argc, char **argv)
 {
     int c;
+    int out_fb_from_flag = 0;
 
     while ((c = bu_getopt(argc, argv, "vF:h?")) != -1) {
 	switch (c) {
 	    case 'F':
 		out_fb_name = bu_optarg;
+		out_fb_from_flag = 1;
 		break;
 	    case 'v':
 		verbose++;
@@ -76,10 +78,16 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	return 1;	/* OK */
     }
+    if (out_fb_from_flag) {
+	fprintf(stderr, "fb-fb: output framebuffer specified by both -F and positional argument\n");
+	return 0;
+    }
     out_fb_name = argv[bu_optind++];
 
-    if (argc > bu_optind)
-	fprintf(stderr, "fb-fb: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "fb-fb: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

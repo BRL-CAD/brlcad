@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include "png.h"
@@ -57,6 +59,44 @@ double out_gamma = -1.0;	/* Gamma the image was created at */
 char *framebuffer = NULL;
 FILE *outfp;
 
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	bu_log("%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed <= 0) {
+	bu_log("%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed > INT_MAX) {
+	bu_log("%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
+static int
+parse_pixbytes_arg(const char *arg, int *value)
+{
+    if (!parse_positive_int_arg(arg, value, "bytes per pixel"))
+	return 0;
+    if (*value != 1 && *value != 3) {
+	bu_log("fb-png: only able to handle 1 and 3 byte pixels, got '%s'\n", arg);
+	return 0;
+    }
+
+    return 1;
+}
+
 
 int
 get_args(int argc, char **argv)
@@ -77,21 +117,24 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square size */
-		screen_height = screen_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &screen_width, "screen size"))
+		    return 0;
+		screen_height = screen_width;
 		break;
 	    case 'w':
-		screen_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &screen_width, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
-		screen_height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &screen_height, "screen height"))
+		    return 0;
 		break;
 	    case 'g':
 		out_gamma = atof(bu_optarg);
 		break;
 	    case '#':
-		pixbytes = atoi(bu_optarg);
-		if (pixbytes != 1 && pixbytes != 3)
-		    bu_exit(EXIT_FAILURE, "fb-png: Only able to handle 1 and 3 byte pixels\n");
+		if (!parse_pixbytes_arg(bu_optarg, &pixbytes))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */
@@ -113,8 +156,10 @@ get_args(int argc, char **argv)
 	(void)bu_fchmod(fileno(outfp), 0444);
     }
 
-    if (argc > ++bu_optind)
-	bu_log("fb-png: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	bu_log("fb-png: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }
