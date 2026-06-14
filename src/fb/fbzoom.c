@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -46,6 +48,40 @@
 
 int pars_Argv(int argc, char **argv);
 int doKeyPad(void);
+
+static int
+parse_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	bu_log("%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed < INT_MIN || parsed > INT_MAX) {
+	bu_log("%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    if (!parse_int_arg(arg, value, label))
+	return 0;
+    if (*value <= 0) {
+	bu_log("%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 /* Zoom rate and limits */
 #define MinZoom (1)
@@ -69,24 +105,41 @@ static struct fb *fbp;
 
 static char usage[] = "\
 Usage: fbzoom [-T] [-F framebuffer]\n\
-	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n";
+	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
+	[xPan yPan xZoom yZoom]\n";
 
 int
 main(int argc, char **argv)
 {
+    int remaining = 0;
+
     bu_setprogname(argv[0]);
     if (! pars_Argv(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
+
+    remaining = argc - bu_optind;
+    if (remaining != 0 && remaining != 4) {
+	bu_log("%s: expected either 0 or 4 positional arguments, got %d\n", bu_getprogname(), remaining);
+	(void)fputs(usage, stderr);
+	bu_exit(1, NULL);
+    }
+
+    if (remaining == 4) {
+	if (!parse_int_arg(argv[bu_optind+0], &xPan, "x pan")
+	    || !parse_int_arg(argv[bu_optind+1], &yPan, "y pan")
+	    || !parse_positive_int_arg(argv[bu_optind+2], &xZoom, "x zoom")
+	    || !parse_positive_int_arg(argv[bu_optind+3], &yZoom, "y zoom")) {
+	    (void)fputs(usage, stderr);
+	    bu_exit(1, NULL);
+	}
+    }
+
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL)
 	bu_exit(1, NULL);
 
-    if (bu_optind+4 == argc) {
-	xPan = atoi(argv[bu_optind+0]);
-	yPan = atoi(argv[bu_optind+1]);
-	xZoom = atoi(argv[bu_optind+2]);
-	yZoom = atoi(argv[bu_optind+3]);
+    if (remaining == 4) {
 	fb_view(fbp, xPan, yPan, xZoom, yZoom);
     }
 
@@ -315,15 +368,19 @@ pars_Argv(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_height, "screen height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */
