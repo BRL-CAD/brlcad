@@ -45,6 +45,8 @@
 #include "bn/noise.h"
 #include "bn/rand.h"
 
+extern void bn_ensure_initialized(void);
+
 
 /**
  * @brief interpolate smoothly from 0 .. 1
@@ -160,6 +162,7 @@ struct str_ht {
 };
 
 static struct str_ht ht;
+static int sem_noise = 0;
 
 #define MAGIC_STRHT1 1771561
 #define MAGIC_STRHT2 1651771
@@ -185,8 +188,13 @@ static struct str_ht ht;
 	    ]  ^ ((c) & 0xfff)				\
 	]
 
-
-static int sem_noise = 0;
+static int
+bn_noise_sem(void)
+{
+    if (UNLIKELY(sem_noise <= 0))
+	sem_noise = bu_semaphore_register("BN_SEM_NOISE");
+    return sem_noise;
+}
 
 
 void
@@ -194,14 +202,12 @@ bn_noise_init(void)
 {
     uint32_t i, j, k, temp;
     uint32_t rndtabi = BN_RAND_TABSIZE - 1;
+    const int sem_noise_id = bn_noise_sem();
 
-    if (!sem_noise)
-	sem_noise = bu_semaphore_register("SEM_NOISE");
-
-    bu_semaphore_acquire(sem_noise);
+    bu_semaphore_acquire(sem_noise_id);
 
     if (ht.hashTableValid) {
-	bu_semaphore_release(sem_noise);
+	bu_semaphore_release(sem_noise_id);
 	return;
     }
 
@@ -231,7 +237,7 @@ bn_noise_init(void)
 
     ht.hashTableValid = 1;
 
-    bu_semaphore_release(sem_noise);
+    bu_semaphore_release(sem_noise_id);
 
     CK_HT();
 }
@@ -249,6 +255,8 @@ bn_noise_perlin(point_t point)
     short m;
     point_t p, f;
     int ip[3];
+
+    bn_ensure_initialized();
 
     if (!ht.hashTableValid)
 	bn_noise_init();
@@ -326,6 +334,7 @@ bn_noise_vec(point_t point, point_t result)
     point_t p, f;
     int ip[3];
 
+    bn_ensure_initialized();
 
     if (! ht.hashTableValid) bn_noise_init();
 
@@ -510,8 +519,12 @@ find_spec_wgt(double h, double l, double o)
 {
     struct fbm_spec *ep = NULL;
     int i;
+    int sem_noise_id;
 
-    bu_semaphore_acquire(sem_noise);
+    bn_ensure_initialized();
+    sem_noise_id = bn_noise_sem();
+
+    bu_semaphore_acquire(sem_noise_id);
 
     for (i=0; i < etbl_next; i++) {
 	ep = &etbl[i];
@@ -521,14 +534,14 @@ find_spec_wgt(double h, double l, double o)
 	    && EQUAL(ep->h_val, h)
 	    && (ep->octaves > o || EQUAL(ep->octaves, o)))
 	{
-	    bu_semaphore_release(sem_noise);
+	    bu_semaphore_release(sem_noise_id);
 	    return ep;
 	}
     }
 
     ep = build_spec_tbl(h, l, o);
 
-    bu_semaphore_release(sem_noise);
+    bu_semaphore_release(sem_noise_id);
 
     return ep;
 }

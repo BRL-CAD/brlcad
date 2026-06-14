@@ -233,7 +233,6 @@ BU_EXPORT extern int BU_SEM_SYSCALL;
  */
 BU_EXPORT extern int BU_SEM_MAPPEDFILE;
 
-
 /*
  * Automatic restart capability in bu_bomb().  The return from
  * BU_SETJUMP is the return from the setjmp().  It is 0 on the first

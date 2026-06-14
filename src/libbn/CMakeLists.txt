@@ -1,6 +1,7 @@
 set(
   LIBBN_SOURCES
   anim.c
+  bn_init.cpp
   complex.c
   globals.c
   mat.c
@@ -34,6 +35,7 @@ add_subdirectory(tests)
 
 cmakefiles(
   CMakeLists.txt
+  bn_init.cpp
   README
   soboldata.h
   numgen.c

@@ -86,6 +86,8 @@ optical_shader_init(struct mfuncs **headp)
     DMFUNCS(gauss_mfuncs);
     DMFUNCS(prj_mfuncs);
     DMFUNCS(grass_mfuncs);
+    DMFUNCS(leaf_mfuncs);
+    DMFUNCS(tree_mfuncs);
     DMFUNCS(tthrm_mfuncs);
     DMFUNCS(flat_mfuncs);
     DMFUNCS(bbd_mfuncs);

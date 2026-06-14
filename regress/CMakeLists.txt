@@ -104,6 +104,9 @@ add_subdirectory(rtwizard)
 # Simulation of a 3rd party BRL-CAD library client code
 add_subdirectory(user)
 
+# Procedural tree shape generator Regression Tests
+add_subdirectory(tree)
+
 # solids Regression Tests
 add_subdirectory(solids)
 

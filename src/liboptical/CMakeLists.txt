@@ -15,6 +15,7 @@ set(
   sh_flat.c
   sh_gauss.c
   sh_grass.c
+  sh_leaf.c
   sh_light.c
   sh_noise.c
   sh_null.c
@@ -29,6 +30,7 @@ set(
   sh_text.c
   sh_toon.c
   sh_toyota.c
+  sh_tree.c
   sh_treetherm.c
   sh_wood.c
   sh_xxx.c

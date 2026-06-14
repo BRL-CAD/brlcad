@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "preset": "conifer",
+  "seed": 5150,
+  "scale": {
+    "height": 6000,
+    "trunk_radius": 170,
+    "age": 1.0
+  },
+  "skeleton": {
+    "levels": 3,
+    "branching": [5, 2],
+    "branch_angle_deg": [58, 82],
+    "length_decay": 0.48,
+    "radius_decay": 0.48,
+    "gravity_bias": 0.38,
+    "upward_bias": 0.16,
+    "twist_deg": 102.0
+  },
+  "canopy": {
+    "leaf_mode": "canopy",
+    "leaf_count": 120,
+    "leaf_length": 60,
+    "leaf_width": 20,
+    "cluster_radius": 120
+  },
+  "realization": {
+    "mode": "csg",
+    "branch_sides": 8,
+    "leaf_sides": 4,
+    "csg_max_branch_level": 1
+  },
+  "materials": {
+    "bark_rgb": [100, 74, 55],
+    "leaf_rgb": [34, 82, 57]
+  }
+}

@@ -36,6 +36,11 @@
  *    could be reading from old (freed) memory while another called
  *    bu_realloc inside build_spec_tbl.  The fix holds sem_noise for
  *    the entire table lookup, eliminating the unsynchronized first scan.
+ *
+ * 3. Concurrent first-use initialization race
+ *    libbn initialization must prepare the noise table and private noise
+ *    semaphore before worker threads first call bn_noise_fbm / bn_noise_turb.
+ *    This guards against first-use races in the private initialization path.
  */
 
 #include "common.h"
@@ -198,9 +203,35 @@ test_noise_concurrent(int UNUSED(argc), char **UNUSED(argv))
     return failures;
 }
 
+static int
+test_noise_concurrent_first_use(int UNUSED(argc), char **UNUSED(argv))
+{
+    int i;
+    int failures = 0;
+
+    for (i = 0; i < NOISE_NTHREADS; i++)
+	concurrent_results[i].failed = 0;
+
+    bu_parallel(noise_worker, NOISE_NTHREADS, NULL);
+
+    for (i = 0; i < NOISE_NTHREADS; i++) {
+	if (concurrent_results[i].failed) {
+	    bu_log("FAIL [noise_concurrent_first_use] thread %d had %d non-finite results\n",
+		   i + 1, concurrent_results[i].failed);
+	    failures += concurrent_results[i].failed;
+	}
+    }
+
+    if (!failures)
+	bu_log("  PASS concurrent first-use noise (%d threads x %d iters)\n",
+	       NOISE_NTHREADS, NOISE_ITERS);
+
+    return failures;
+}
+
 
 /* --------------------------------------------------------------------------
- * 3.  Basic perlin noise sanity check
+ * 4.  Basic perlin noise sanity check
  *     Values should be in a reasonable range for unit-scale inputs.
  * -------------------------------------------------------------------------- */
 static int
@@ -247,7 +278,8 @@ noise_main(int argc, char *argv[])
 	bu_exit(1, "Usage: bn_test noise <function_num>\n"
 		"  1 = large coordinate single-thread\n"
 		"  2 = concurrent multi-thread\n"
-		"  3 = basic perlin sanity\n");
+		"  3 = basic perlin sanity\n"
+		"  4 = concurrent first-use multi-thread\n");
     }
 
     sscanf(argv[1], "%d", &function_num);
@@ -259,9 +291,11 @@ noise_main(int argc, char *argv[])
 	    return test_noise_concurrent(argc, argv);
 	case 3:
 	    return test_noise_perlin_basic(argc, argv);
+	case 4:
+	    return test_noise_concurrent_first_use(argc, argv);
     }
 
-    bu_log("ERROR: function_num %d is not valid (expected 1-3) [%s]\n", function_num, argv[0]);
+    bu_log("ERROR: function_num %d is not valid (expected 1-4) [%s]\n", function_num, argv[0]);
     return 1;
 }
 

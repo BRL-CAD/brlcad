@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "preset": "broadleaf",
+  "seed": 4242,
+  "scale": {
+    "height": 5200,
+    "trunk_radius": 180,
+    "age": 0.85
+  },
+  "skeleton": {
+    "levels": 3,
+    "branching": [3, 2],
+    "branch_angle_deg": [30, 52],
+    "length_decay": 0.58,
+    "radius_decay": 0.52,
+    "gravity_bias": 0.18,
+    "upward_bias": 0.40,
+    "twist_deg": 137.5
+  },
+  "canopy": {
+    "leaf_mode": "simple",
+    "leaf_count": 90,
+    "leaf_length": 70,
+    "leaf_width": 28,
+    "cluster_radius": 130
+  },
+  "realization": {
+    "mode": "mesh",
+    "branch_sides": 8,
+    "leaf_sides": 4,
+    "csg_max_branch_level": 1
+  },
+  "materials": {
+    "bark_rgb": [105, 78, 52],
+    "leaf_rgb": [48, 118, 62]
+  }
+}

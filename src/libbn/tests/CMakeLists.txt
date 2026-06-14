@@ -1014,6 +1014,7 @@ cmakefiles(
 brlcad_add_test(NAME bn_noise_large_coords   COMMAND bn_test noise 1)
 brlcad_add_test(NAME bn_noise_concurrent     COMMAND bn_test noise 2)
 brlcad_add_test(NAME bn_noise_perlin_basic   COMMAND bn_test noise 3)
+brlcad_add_test(NAME bn_noise_concurrent_first_use COMMAND bn_test noise 4)
 
 # Local Variables:
 # tab-width: 8
