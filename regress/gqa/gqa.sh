@@ -48,6 +48,59 @@ if test "x$LOGFILE" = "x" ; then
 fi
 log "=== TESTING 'gqa' ==="
 
+run_capture ( ) {
+    outfile="$1"
+    shift
+    log "... running $@"
+    "$@" > "$outfile" 2>&1
+    ret=$?
+    cat "$outfile" >> "$LOGFILE"
+    case "x$STATUS" in
+	'x'|*[!0-9]*)
+	    :;;
+	*)
+	    if test $ret -ne 0 ; then
+		STATUS="`expr $STATUS + 1`"
+	    fi
+	    ;;
+    esac
+    return $ret
+}
+
+extract_last_number ( ) {
+    label="$1"
+    file="$2"
+    awk -v label="$label" '
+	index($0, label) {
+	    val = $(NF-1)
+	}
+	END {
+	    if (val == "") exit 1
+	    print val
+	}
+    ' "$file"
+}
+
+assert_close ( ) {
+    expected="$1"
+    actual="$2"
+    tolerance="$3"
+    desc="$4"
+
+    if awk -v expected="$expected" -v actual="$actual" -v tol="$tolerance" '
+	BEGIN {
+	    diff = actual - expected
+	    if (diff < 0) diff = -diff
+	    exit(diff <= tol ? 0 : 1)
+	}
+    '; then
+	log "PASS: $desc (expected=$expected actual=$actual tol=$tolerance)"
+    else
+	log "FAIL: $desc (expected=$expected actual=$actual tol=$tolerance)"
+	STATUS="`expr $STATUS + 1`"
+    fi
+}
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     log "Unable to find mged, aborting"
@@ -62,7 +115,7 @@ fi
 
 rm -f density_table.txt
 echo "5 1 stuff" > density_table.txt
-echo "2 1 gas" >> density_table.txt
+echo "2 0.001 gas" >> density_table.txt
 
 rm -f gqa.mged
 cat > gqa.mged <<EOF
@@ -109,6 +162,20 @@ g gap.g closed_box.r adj_air2.r
 r overlap_obj.r u box3.s
 adjust overlap_obj.r GIFTMater 5
 g overlaps closed_box.r overlap_obj.r
+
+g pure_air.g adj_air1.r
+
+in mass_solid.s rpp 0 1 0 1 0 1
+r mass_solid.r u mass_solid.s
+adjust mass_solid.r GIFTmater 5
+
+in mass_air.s rpp 1 2 0 1 0 1
+r mass_air.r u mass_air.s
+adjust mass_air.r air 2
+adjust mass_air.r GIFTmater 2
+
+g mass_air_only.g mass_air.r
+g mass_air_mix.g mass_solid.r mass_air.r
 
 q
 EOF
@@ -165,6 +232,24 @@ rm -f gqa.overlaps.plot3
 run $GQA -g 50mm -Ao gqa.g closed_box.r
 
 run $GQA -Am gqa.g closed_box.r
+
+run_capture gqa.mass_air.aw.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Aw gqa.g mass_air_only.g
+run_capture gqa.mass_air.am.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Am gqa.g mass_air_only.g
+run_capture gqa.mass_mix.aw.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Aw gqa.g mass_air_mix.g
+run_capture gqa.mass_mix.am.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Am gqa.g mass_air_mix.g
+run_capture gqa.mass_mix.u0.out $GQABIN -u m,m^3,kg -g 250mm-50mm -U 0 -Aw gqa.g mass_air_mix.g
+
+MASS_AIR_AW="`extract_last_number 'Average total weight:' gqa.mass_air.aw.out`"
+MASS_AIR_AM="`extract_last_number 'Average total weight:' gqa.mass_air.am.out`"
+MASS_MIX_AW="`extract_last_number 'Average total weight:' gqa.mass_mix.aw.out`"
+MASS_MIX_AM="`extract_last_number 'Average total weight:' gqa.mass_mix.am.out`"
+MASS_MIX_U0="`extract_last_number 'Average total weight:' gqa.mass_mix.u0.out`"
+
+assert_close 1 "$MASS_AIR_AW" 0.001 "pure modeled air weight with -Aw"
+assert_close "$MASS_AIR_AW" "$MASS_AIR_AM" 0.001 "-Aw and -Am agree on pure modeled air"
+assert_close 1001 "$MASS_MIX_AW" 0.001 "mixed solid+air modeled weight with -Aw"
+assert_close "$MASS_MIX_AW" "$MASS_MIX_AM" 0.001 "-Aw and -Am agree on mixed modeled air"
+assert_close 1000 "$MASS_MIX_U0" 0.001 "-U 0 excludes modeled air from weight"
 
 
 if [ $STATUS = 0 ] ; then
