@@ -20,6 +20,32 @@
 
 #include "PerspectiveGatherer.h"
 
+static bool
+renderIsUniformColor(const std::string &imgPath)
+{
+    if (imgPath.empty()) {
+	return true;
+    }
+
+    cv::Mat imageRaw = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
+    if (imageRaw.empty()) {
+	return true;
+    }
+
+    std::vector<cv::Mat> channels;
+    cv::split(imageRaw, channels);
+    for (const cv::Mat &channel : channels) {
+	double minVal = 0.0;
+	double maxVal = 0.0;
+	cv::minMaxLoc(channel, &minVal, &maxVal);
+	if (std::fabs(minVal - maxVal) > 0.5) {
+	    return false;
+	}
+    }
+
+    return true;
+}
+
 std::map<char, FaceDetails>
 getFaceDetails()
 {
@@ -211,6 +237,12 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             // reuse previous render
             if (opt.verbosePrinting())
                 bu_log("\tFound %s, skipping generation\n", outputname.c_str());
+            if (renderIsUniformColor(outputname)) {
+		if (opt.verbosePrinting())
+		    bu_log("\tSkipping %s: render contains only background color\n", outputname.c_str());
+		bu_file_delete(outputname.c_str());
+		return "";
+	    }
             return outputname;
         } else {
             // sanity delete
@@ -237,6 +269,12 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     if (!bu_file_exists(outputname.c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", outputname.c_str());
         bu_exit(BRLCAD_ERROR, "Rendering not generated, aborting.\n");
+    } else if (renderIsUniformColor(outputname)) {
+	if (opt.verbosePrinting()) {
+	    bu_log("\tSkipping %s: render contains only background color\n", outputname.c_str());
+	}
+	bu_file_delete(outputname.c_str());
+	return "";
     } else if (opt.verbosePrinting()) {
         bu_log("\tGenerated %s\n", outputname.c_str());
     }

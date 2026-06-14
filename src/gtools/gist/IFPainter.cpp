@@ -39,12 +39,22 @@ IFPainter::~IFPainter()
 std::pair<int, int>
 IFPainter::getCroppedImageDims(std::string imgPath)
 {
+    if (imgPath.empty()) {
+	return std::pair<int, int>(0, 0);
+    }
+
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+    if (imageRaw.empty()) {
+	return std::pair<int, int>(0, 0);
+    }
     // Convert the image to grayscale for creating the mask
     cv::Mat gray_image;
     cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
     // Create a mask of non-white pixels
     cv::Mat mask = gray_image < 255;
+    if (cv::countNonZero(mask) == 0) {
+	return std::pair<int, int>(0, 0);
+    }
     // Find the bounding rectangle of non-white pixels
     cv::Rect bounding_rect = boundingRect(mask);
     // Crop the image to the bounding rectangle
@@ -60,7 +70,14 @@ IFPainter::getCroppedImageDims(std::string imgPath)
 void
 IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
 {
+    if (imgPath.empty()) {
+	return;
+    }
+
     cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+    if (lilImage.empty()) {
+	return;
+    }
     cv::Mat resized_image;
     resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
@@ -78,6 +95,10 @@ IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
 void
 IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold)
 {
+    if (imgPath.empty()) {
+	return;
+    }
+
     cv::Mat imageRaw = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
     if (imageRaw.empty()) {
 	// read error
@@ -91,6 +112,9 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
     // threshold gray image to create mask
     cv::Mat mask;
     cv::threshold(gray_image, mask, threshold, 255, cv::THRESH_BINARY_INV);
+    if (cv::countNonZero(mask) == 0) {
+	return;
+    }
 
     // if image doesn't have alpha, manually try to mask out background
     cv::Mat alphaRaw(imageRaw.rows, imageRaw.cols, CV_8UC4);
@@ -159,12 +183,22 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
 void
 IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
+    if (imgPath.empty()) {
+	return;
+    }
+
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+    if (imageRaw.empty()) {
+	return;
+    }
     // Convert the image to grayscale for creating the mask
     cv::Mat gray_image;
     cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
     // Create a mask of non-white pixels
     cv::Mat mask = gray_image < 255;
+    if (cv::countNonZero(mask) == 0) {
+	return;
+    }
     // Find the bounding rectangle of non-white pixels
     cv::Rect bounding_rect = boundingRect(mask);
     // Crop the image to the bounding rectangle
@@ -219,12 +253,22 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     const int titleCenterX = x + titleWidth / 2;
     y += 65;
     height -= 65;
+    if (imgPath.empty()) {
+	return static_cast<int>(text.length());
+    }
+
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+    if (imageRaw.empty()) {
+	return static_cast<int>(text.length());
+    }
     // Convert the image to grayscale for creating the mask
     cv::Mat gray_image;
     cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
     // Create a mask of non-white pixels
     cv::Mat mask = gray_image < 255;
+    if (cv::countNonZero(mask) == 0) {
+	return static_cast<int>(text.length());
+    }
     // Find the bounding rectangle of non-white pixels
     cv::Rect bounding_rect = boundingRect(mask);
     // Crop the image to the bounding rectangle

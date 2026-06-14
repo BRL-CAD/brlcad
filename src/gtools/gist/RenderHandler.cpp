@@ -700,6 +700,9 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
     // get ambient occlusion render
     std::string aRender = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
     std::pair<int, int> ambientDims = img.getCroppedImageDims(aRender);
+    if (ambientDims.first <= 0 || ambientDims.second <= 0) {
+	ambientDims = std::pair<int, int>(1, 1);
+    }
 
     // select the layout
     LayoutChoice bestLayout = genLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
@@ -770,7 +773,10 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 
     std::string title = info.getInfo("title");
     bool centerAmbient = bestLayout.centerAmbientImage();
-    size_t countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title, centerAmbient);
+    size_t countCharDisplayedTitle = title.length();
+    if (!aRender.empty()) {
+	countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title, centerAmbient);
+    }
 
     if (countCharDisplayedTitle < title.length()) {
 	std::string continuation = title.substr(countCharDisplayedTitle);
