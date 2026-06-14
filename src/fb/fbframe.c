@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -42,6 +44,31 @@ char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N fr
 
 #define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
 	bu_exit(-1, NULL); }
+
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed <= 0) {
+	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed > INT_MAX) {
+	fprintf(stderr, "%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
 
 int
 main(int argc, char **argv)
@@ -69,21 +96,21 @@ main(int argc, char **argv)
 	    case 's':
 	    case 'S':
 		/* square file size */
-		if ((len=atoi(bu_optarg)) > 0)
+		if (parse_positive_int_arg(bu_optarg, &len, "square frame size"))
 		    xsize = ysize = len;
 		else
 		    USAGE_EXIT(*argv);
 		break;
 	    case 'w':
 	    case 'W':
-		if ((len=atoi(bu_optarg)) > 0)
+		if (parse_positive_int_arg(bu_optarg, &len, "frame width"))
 		    xsize = len;
 		else
 		    USAGE_EXIT(*argv);
 		break;
 	    case 'n':
 	    case 'N':
-		if ((len=atoi(bu_optarg)) > 0)
+		if (parse_positive_int_arg(bu_optarg, &len, "frame height"))
 		    ysize = len;
 		else
 		    USAGE_EXIT(*argv);
@@ -96,6 +123,10 @@ main(int argc, char **argv)
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	USAGE_EXIT(*argv);
+    if (argc > bu_optind) {
+	fprintf(stderr, "%s: excess argument(s) not supported\n", bu_getprogname());
+	USAGE_EXIT(*argv);
+    }
 
     if ((fbp = fb_open(framebuffer, xsize, ysize)) == FB_NULL)
 	bu_exit(1, NULL);

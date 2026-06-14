@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bu/app.h"
@@ -52,6 +54,52 @@ static int clear_and_reset = 0;
 static char usage[] = "Usage: fbclear [-c] [-F framebuffer]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height] [gray | r g b]\n";
 
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed <= 0) {
+	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed > INT_MAX) {
+	fprintf(stderr, "%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
+static int
+parse_color_arg(const char *arg, unsigned char *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed < 0 || parsed > 255) {
+	fprintf(stderr, "%s: %s must be between 0 and 255, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (unsigned char)parsed;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -68,15 +116,19 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_height, "screen height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */
@@ -90,8 +142,34 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    static RGBpixel pixel;
+    int remaining = 0;
+    int use_custom_pixel = 0;
+
     bu_setprogname(argv[0]);
     if (!get_args(argc, argv)) {
+	(void)fputs(usage, stderr);
+	bu_exit(1, NULL);
+    }
+
+    remaining = argc - bu_optind;
+    if (remaining == 3) {
+	if (!parse_color_arg(argv[bu_optind+0], &pixel[RED], "red value")
+	    || !parse_color_arg(argv[bu_optind+1], &pixel[GRN], "green value")
+	    || !parse_color_arg(argv[bu_optind+2], &pixel[BLU], "blue value")) {
+	    (void)fputs(usage, stderr);
+	    bu_exit(1, NULL);
+	}
+	use_custom_pixel = 1;
+    } else if (remaining == 1) {
+	if (!parse_color_arg(argv[bu_optind+0], &pixel[RED], "gray value")) {
+	    (void)fputs(usage, stderr);
+	    bu_exit(1, NULL);
+	}
+	pixel[GRN] = pixel[BLU] = pixel[RED];
+	use_custom_pixel = 1;
+    } else if (remaining != 0) {
+	fprintf(stderr, "fbclear: expected 0, 1, or 3 color arguments, got %d\n", remaining);
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
@@ -122,20 +200,9 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind+3 == argc) {
-	static RGBpixel pixel;
-	pixel[RED] = (u_char) atoi(argv[bu_optind+0]);
-	pixel[GRN] = (u_char) atoi(argv[bu_optind+1]);
-	pixel[BLU] = (u_char) atoi(argv[bu_optind+2]);
-	fb_clear(fbp, pixel);
-    } else if (bu_optind+1 == argc) {
-	static RGBpixel pixel;
-	pixel[RED] = pixel[GRN] = pixel[BLU]
-	    = (u_char) atoi(argv[bu_optind+0]);
+    if (use_custom_pixel) {
 	fb_clear(fbp, pixel);
     } else {
-	if (bu_optind != argc)
-	    fprintf(stderr, "fbclear: extra arguments ignored\n");
 	fb_clear(fbp, PIXEL_NULL);
     }
     (void)fb_close(fbp);
