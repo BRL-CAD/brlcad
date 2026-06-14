@@ -17,31 +17,64 @@ brlman [options]... [manpage]
 [[description]]
 == DESCRIPTION
 
-*brlman* provides manual page viewing capabilities for BRL-CAD's programs, commands, libraries, and conventions (such as file formats and attribute standards.) On Unix-type systems, its default behavior is to wrap the system *man* command with the appropriate path information to allow man to find and display BRL-CAD's man pages. On systems without a *man* command, *brlman* will instead launch a Tcl/Tk based graphical view that displays html versions of the manual pages. Both versions are generated from the same DocBook source files and contain the same information.
+*brlman* is a manual page viewer for BRL-CAD programs, libraries, file formats, and commands. By default, it wraps the system *man*(1) command on Unix-like systems, supplying the appropriate paths to find BRL-CAD's manual pages. On systems lacking a *man* command, or when the GUI is explicitly requested, *brlman* launches a graphical viewer that displays HTML versions of the documentation. Both the traditional terminal manual pages and the HTML pages are generated from the same DocBook source files and contain identical information.
 
 
 [[brlman_options]]
 == OPTIONS
 
 
-*-h*::
-Prints help.
+*-h, --help*::
+Print help and exit.
 
 
-*-g*::
-Instructs *brlman* to use its graphical man page viewer.
-
-
-*-L*::
-Specify a language to use when selecting man pages.
-
-
-*-S [1|3|5|n]*::
-Specify a particular section to use when searching for a man page. Useful when there are programs and MGED commands with the same names - the default man page returned will be that of the program (i.e., section 1), so *-S* can be used to specify the GED command (i.e., section n) page instead.  Allowed sections are 1 (programs), 3 (libraries), 5 (conventions/formats), and n (GED commands).
+*-g, --gui*::
+Force *brlman* to use its graphical man page viewer, even on systems where the traditional terminal *man* command is available.
 
 
 *--no-gui*::
-Instructs *brlman* _not_ to use its graphical man page viewer, even in situations where there is no command line option. Primarily useful in scripting situations.
+Instruct *brlman* not to use its graphical viewer. If the terminal *man* command is unavailable, *brlman* will fail. Primarily useful in scripting situations.
+
+
+*-L, --language lg*::
+Specify a two-letter language code (e.g., *en*) to use when selecting man pages. If not provided, *brlman* attempts to use the *LANG* environment variable, falling back to *en* by default.
+
+
+*-S, --section #*::
+Specify a particular section to use when searching for a man page. Useful when there are programs and MGED commands with the same names. The default man page returned will be that of the program (i.e., section 1). *-S* can be used to specify the GED command (i.e., section n) page instead. Allowed sections are 1 (programs), 3 (libraries), 5 (conventions/formats), and n (GED commands).
+
+
+[[examples]]
+== EXAMPLES
+
+The following examples demonstrate how to use *brlman* to view documentation for specific programs and commands, including how to disambiguate between sections.
+
+.Viewing a standard program manual
+====
+[source,bash]
+----
+$ brlman mged
+----
+Opens the manual page for the *mged* command (defaults to section 1).
+====
+
+.Viewing a graphical manual page
+====
+[source,bash]
+----
+$ brlman -g mged
+----
+Opens the HTML version of the *mged* manual page in the graphical viewer.
+====
+
+.Specifying a manual page section
+====
+[source,bash]
+----
+$ brlman -S n search
+----
+Opens the manual page for the MGED *search* command (section n) instead of the default search tool.
+====
 
 
 [[author]]
