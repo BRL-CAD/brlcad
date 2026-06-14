@@ -29,6 +29,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "vmath.h"
@@ -49,6 +51,31 @@ static char usage[] = "\
 Usage:	pixautosize [-b bytes_per_sample] [-f file_name]\n\
 or	pixautosize [-b bytes_per_sample] [-l file_length]\n";
 
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	fprintf(stderr, "pixautosize: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+    if (parsed <= 0) {
+	fprintf(stderr, "pixautosize: %s must be greater than zero, got '%s'\n", label, arg);
+	return 0;
+    }
+    if (parsed > INT_MAX) {
+	fprintf(stderr, "pixautosize: %s out of range '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -57,21 +84,25 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "b:f:l:h?")) != -1) {
 	switch (c) {
 	    case 'b':
-		bytes_per_sample = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &bytes_per_sample, "bytes_per_sample"))
+		    return 0;
 		break;
 	    case 'f':
 		file_name = bu_optarg;
 		break;
 	    case 'l':
-		file_length = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &file_length, "file_length"))
+		    return 0;
 		break;
 	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixautosize: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "pixautosize: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }
@@ -84,7 +115,13 @@ main(int argc, char **argv)
     int nsamp;
 
     bu_setprogname(argv[0]);
-    if (!get_args(argc, argv) || bytes_per_sample <= 0) {
+    if (!get_args(argc, argv)) {
+	(void)fputs(usage, stderr);
+	return 1;
+    }
+
+    if (file_name && file_length > 0) {
+	fprintf(stderr, "pixautosize: specify either -f file_name or -l file_length, not both\n");
 	(void)fputs(usage, stderr);
 	return 1;
     }
