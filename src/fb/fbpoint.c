@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,6 +55,40 @@ int oldX, oldY;		/* previous position */
 int Run = 1;		/* Tells when to stop the main loop */
 
 void SimpleInput(void);
+
+static int
+parse_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed < INT_MIN || parsed > INT_MAX) {
+	fprintf(stderr, "%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    if (!parse_int_arg(arg, value, label))
+	return 0;
+    if (*value <= 0) {
+	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 char usage[] = "\
 Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initially]\n";
@@ -163,13 +199,26 @@ main(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 's':
-		width = height = atoi(bu_optarg);
+	    case 'S':
+		if (!parse_positive_int_arg(bu_optarg, &width, "screen size")) {
+		    fprintf(stderr, "%s", usage);
+		    return 1;
+		}
+		height = width;
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+	    case 'W':
+		if (!parse_positive_int_arg(bu_optarg, &width, "screen width")) {
+		    fprintf(stderr, "%s", usage);
+		    return 1;
+		}
 		break;
 	    case 'n':
-		height = atoi(bu_optarg);
+	    case 'N':
+		if (!parse_positive_int_arg(bu_optarg, &height, "screen height")) {
+		    fprintf(stderr, "%s", usage);
+		    return 1;
+		}
 		break;
 	    case 'x':
 		xflag++;
@@ -197,18 +246,21 @@ main(int argc, char **argv)
      * Check for optional starting coordinate.
      * Test for bad flags while we're at it.
      */
-    if (argc > 1 && argv[1][0] != '-') {
-	curX = atoi(argv[1]);
-	argc--;
-	argv++;
+    if (argc > 2) {
+	fprintf(stderr, "%s: expected at most 2 positional arguments, got %d\n", bu_getprogname(), argc);
+	bu_exit(1, "%s", usage);
     }
-    if (argc > 1 && argv[1][0] != '-') {
-	curY = atoi(argv[1]);
-	argc--;
-	argv++;
+    if (argc > 0) {
+	if (!parse_int_arg(argv[0], &curX, "initial x")) {
+	    fprintf(stderr, "%s", usage);
+	    return 1;
+	}
     }
     if (argc > 1) {
-	bu_exit(1, "%s", usage);
+	if (!parse_int_arg(argv[1], &curY, "initial y")) {
+	    fprintf(stderr, "%s", usage);
+	    return 1;
+	}
     }
 
     /* fix up pointers for printf */
