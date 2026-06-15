@@ -36,6 +36,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -60,6 +61,23 @@ static char usage[] = "\
 Usage: bw-a [-a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.bw]\n";
 
+static int
+parse_positive_long_arg(const char *arg, long int *value, const char *label)
+{
+    char *end = NULL;
+    long int parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
+	fprintf(stderr, "bw-a: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = parsed;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -71,15 +89,18 @@ get_args(int argc, char **argv)
 		autosize = 1;
 		break;
 	    case 's':
-		squarefilesize = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &squarefilesize, "square size"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &file_height, "input height"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &file_width, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    default:		/* '?' */
@@ -93,6 +114,11 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    (void)fprintf(stderr, "bw-a: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    (void) fprintf(stderr,
 			   "bw-a: cannot open \"%s\" for reading\n",
@@ -102,8 +128,9 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind) {
-	(void) fprintf(stderr, "bw-a: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	(void)fprintf(stderr, "bw-a: excess argument(s) not supported\n");
+	return 0;
     }
     return 1;	/* OK */
 }

@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include "bio.h"
 
@@ -60,6 +61,36 @@ Usage: pixembed [-b border_inset] \n\
 
 char hyphen[] = "-";
 
+static int
+parse_nonnegative_size_arg(const char *arg, size_t *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < 0) {
+	fprintf(stderr, "pixembed: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = (size_t)parsed;
+    return 1;
+}
+
+static int
+parse_positive_size_arg(const char *arg, size_t *value, const char *label)
+{
+    if (!parse_nonnegative_size_arg(arg, value, label))
+	return 0;
+    if (*value == 0) {
+	fprintf(stderr, "pixembed: %s must be greater than zero, got '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -68,27 +99,36 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "b:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'b':
-		border_inset = atoi(bu_optarg);
+		if (!parse_nonnegative_size_arg(bu_optarg, &border_inset, "border inset"))
+		    return 0;
 		break;
 	    case 'S':
 		/* square size */
-		xout = yout = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &xout, "output size"))
+		    return 0;
+		yout = xout;
 		break;
 	    case 's':
 		/* square size */
-		xin = yin = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &xin, "input size"))
+		    return 0;
+		yin = xin;
 		break;
 	    case 'W':
-		xout = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &xout, "output width"))
+		    return 0;
 		break;
 	    case 'w':
-		xin = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &xin, "input width"))
+		    return 0;
 		break;
 	    case 'N':
-		yout = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &yout, "output height"))
+		    return 0;
 		break;
 	    case 'n':
-		yin = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &yin, "input height"))
+		    return 0;
 		break;
 
 	    default:		/* 'h' '?' */
@@ -103,6 +143,11 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "pixembed: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pixembed: cannot open \"%s\" for reading\n",
@@ -111,8 +156,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixembed: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "pixembed: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

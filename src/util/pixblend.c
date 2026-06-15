@@ -34,6 +34,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
@@ -69,6 +71,40 @@ int seed = 0;
 static char usage[] = "\
 Usage: pixblend [-{r|i} value] [-s seed] [-S] [-g gvalue] file1.pix file2.pix > out.pix\n";
 
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+    double parsed = 0.0;
+
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	fprintf(stderr, "pixblend: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = parsed;
+    return 1;
+}
+
+static int
+parse_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < INT_MIN || parsed > INT_MAX) {
+	fprintf(stderr, "pixblend: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)parsed;
+    return 1;
+}
+
 int
 timeseed(void)
 {
@@ -86,24 +122,27 @@ get_args(int argc, char **argv)
 	    case 'r':
 		if (iflg)
 		    return 0;
-		value = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &value, "blend value"))
+		    return 0;
 		++rflg;
 		break;
 	    case 'i':
 		if (rflg)
 		    return 0;
-    		if (gflg) {
-			fprintf(stderr, "The -g and -i options do not make sense together.\n");
-			return 0;
+		if (gflg) {
+		    fprintf(stderr, "The -g and -i options do not make sense together.\n");
+		    return 0;
 		}
-		value = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &value, "interpolate value"))
+		    return 0;
 		++iflg;
 		break;
 	    case 'S':
 		seed = timeseed();
 		break;
 	    case 's':
-		seed = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &seed, "seed"))
+		    return 0;
 		break;
 	    case 'g':
 		if (iflg) {
@@ -111,7 +150,8 @@ get_args(int argc, char **argv)
 		    return 0;
 		}
 		++gflg;
-		gvalue = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &gvalue, "glitter value"))
+		    return 0;
 		break;
 	    default:		/* 'h' '?' */
 		return 0;
@@ -120,6 +160,10 @@ get_args(int argc, char **argv)
 
     if (bu_optind+2 > argc)
 	return 0;
+    if (bu_optind+2 < argc) {
+	fprintf(stderr, "pixblend: excess argument(s) not supported\n");
+	return 0;
+    }
 
     f1_name = argv[bu_optind++];
     if (BU_STR_EQUAL(f1_name, "-"))
@@ -142,9 +186,6 @@ get_args(int argc, char **argv)
 		f2_name);
 	return 0;
     }
-
-    if (argc > bu_optind)
-	fprintf(stderr, "pixblend: excess argument(s) ignored\n");
 
     /* Adjust value upwards if glitterize option is used */
     value += gvalue * (1 - value);

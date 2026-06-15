@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <time.h>
@@ -364,6 +365,8 @@ int
 get_args(int argc, char **argv)
 {
     int c;
+    char *end = NULL;
+    double parsed = 0.0;
 
     while ((c = bu_getopt(argc, argv, "ecs:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
@@ -377,15 +380,36 @@ get_args(int argc, char **argv)
 	    case 'S':
 	    case 's':
 		/* square file size */
-		outheight = outwidth = atof(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed = strtod(bu_optarg, &end);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed <= 0.0) {
+		    fprintf(stderr, "plot3-ps: invalid output size '%s'\n", bu_optarg);
+		    return 0;
+		}
+		outheight = outwidth = parsed;
 		break;
 	    case 'W':
 	    case 'w':
-		outwidth = atof(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed = strtod(bu_optarg, &end);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed <= 0.0) {
+		    fprintf(stderr, "plot3-ps: invalid output width '%s'\n", bu_optarg);
+		    return 0;
+		}
+		outwidth = parsed;
 		break;
 	    case 'N':
 	    case 'n':
-		outheight = atof(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed = strtod(bu_optarg, &end);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed <= 0.0) {
+		    fprintf(stderr, "plot3-ps: invalid output height '%s'\n", bu_optarg);
+		    return 0;
+		}
+		outheight = parsed;
 		break;
 
 	    default:		/* 'h' '?' */
@@ -400,6 +424,11 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "plot3-ps: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "plot3-ps: cannot open \"%s\" for reading\n",
@@ -409,8 +438,10 @@ get_args(int argc, char **argv)
 	/*fileinput++;*/
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "plot3-ps: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "plot3-ps: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

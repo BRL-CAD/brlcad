@@ -42,6 +42,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -144,6 +145,8 @@ get_args(int argc, char **argv)
     int c;
     int seen_formula = 0;
     int i;
+    char *end = NULL;
+    long parsed_width = 0;
 
     while ((c = bu_getopt(argc, argv, "glenaw:h?")) != -1) {
 	switch (c) {
@@ -170,7 +173,12 @@ get_args(int argc, char **argv)
                  */
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_width = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0)
+		    usage("pixmatte: illegal width specified\n", 1);
+		width = (int)parsed_width;
 		if (width < 1 || width >= EL_WIDTH)
 		    usage("pixmatte: illegal width specified\n", 1);
 		break;
@@ -187,6 +195,8 @@ get_args(int argc, char **argv)
 
     if (bu_optind+NFILES > argc)
 	usage("insufficient number of input/output channels\n", 1);
+    if (bu_optind+NFILES < argc)
+	usage("pixmatte: excess argument(s) not supported\n", 1);
 
 
     for (i=0; i < NFILES; i++) {
@@ -200,10 +210,6 @@ get_args(int argc, char **argv)
  * in loop).
  */
     twoconstants = (fp[0] == NULL && fp[1] == NULL);
-
-    if (argc > bu_optind)
-	bu_log("pixmatte: excess argument(s) ignored\n");
-
 }
 
 

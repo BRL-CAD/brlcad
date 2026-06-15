@@ -167,6 +167,11 @@ get_args(int argc, char **argv)
 	fp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "sun-pix: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((fp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "sun-pix: cannot open \"%s\" for reading\n",
@@ -175,8 +180,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "sun-pix: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "sun-pix: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

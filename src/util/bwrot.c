@@ -39,6 +39,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -101,6 +102,9 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle, char **ou
     int c;
     char *in_file_name = NULL;
     char *of_name = NULL;
+    char *end = NULL;
+    long parsed_long = 0;
+    double parsed_double = 0.0;
 
     if (!ifp || !ofp || !angle || !out_file_name)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
@@ -123,23 +127,58 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle, char **ou
 		invert++;
 		break;
 	    case '#':
-		pixbytes = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_long = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
+		    bu_log("bwrot: invalid bytes-per-pixel '%s'\n", bu_optarg);
+		    return 0;
+		}
+		pixbytes = (size_t)parsed_long;
 		break;
 	    case 'S':
 	    case 's':
 		/* square size */
-		nxin = nyin = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_long = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
+		    bu_log("bwrot: invalid input size '%s'\n", bu_optarg);
+		    return 0;
+		}
+		nxin = nyin = (ssize_t)parsed_long;
 		break;
 	    case 'W':
 	    case 'w':
-		nxin = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_long = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
+		    bu_log("bwrot: invalid input width '%s'\n", bu_optarg);
+		    return 0;
+		}
+		nxin = (ssize_t)parsed_long;
 		break;
 	    case 'N':
 	    case 'n':
-		nyin = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_long = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
+		    bu_log("bwrot: invalid input height '%s'\n", bu_optarg);
+		    return 0;
+		}
+		nyin = (ssize_t)parsed_long;
 		break;
 	    case 'a':
-		*angle = atof(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_double = strtod(bu_optarg, &end);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0) {
+		    bu_log("bwrot: invalid angle '%s'\n", bu_optarg);
+		    return 0;
+		}
+		*angle = parsed_double;
 		break;
 	    case 'o':
 		of_name = bu_optarg;
@@ -160,14 +199,33 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle, char **ou
 
     /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
-	nxin = atoi(argv[bu_optind++]);
-	nyin = atoi(argv[bu_optind++]);
+	errno = 0;
+	end = NULL;
+	parsed_long = strtol(argv[bu_optind++], &end, 10);
+	if (end == NULL || end == argv[bu_optind-1] || *end != '\0' || errno != 0 || parsed_long <= 0) {
+	    bu_log("bwrot: invalid input width '%s'\n", argv[bu_optind-1]);
+	    return 0;
+	}
+	nxin = (ssize_t)parsed_long;
+	errno = 0;
+	end = NULL;
+	parsed_long = strtol(argv[bu_optind++], &end, 10);
+	if (end == NULL || end == argv[bu_optind-1] || *end != '\0' || errno != 0 || parsed_long <= 0) {
+	    bu_log("bwrot: invalid input height '%s'\n", argv[bu_optind-1]);
+	    return 0;
+	}
+	nyin = (ssize_t)parsed_long;
     }
 
     if (bu_optind >= argc) {
 	in_file_name = hyphen;
     } else {
 	in_file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("bwrot: excess argument(s) not supported\n");
+	    return 0;
+	}
     }
 
     if (BU_STR_EQUAL(in_file_name, "-")) {
@@ -190,8 +248,9 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle, char **ou
 	return 0;
     }
 
-    if (argc > ++bu_optind) {
-	bu_log("bwrot: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	bu_log("bwrot: excess argument(s) not supported\n");
+	return 0;
     }
 
     return 1;		/* OK */

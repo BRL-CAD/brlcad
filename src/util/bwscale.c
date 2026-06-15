@@ -33,6 +33,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -67,6 +68,23 @@ int outy = 512;
 static char usage[] = "\
 Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
+
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
+	fprintf(stderr, "bwscale: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
 
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
 
@@ -329,23 +347,31 @@ get_args(int argc, char **argv)
 		break;
 	    case 'S':
 		/* square size */
-		outx = outy = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &outx, "output size"))
+		    return 0;
+		outy = outx;
 		break;
 	    case 's':
 		/* square size */
-		inx = iny = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &inx, "input size"))
+		    return 0;
+		iny = inx;
 		break;
 	    case 'W':
-		outx = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &outx, "output width"))
+		    return 0;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &inx, "input width"))
+		    return 0;
 		break;
 	    case 'N':
-		outy = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &outy, "output height"))
+		    return 0;
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &iny, "input height"))
+		    return 0;
 		break;
 
 	    default:		/* 'h' , '?' */
@@ -360,10 +386,14 @@ get_args(int argc, char **argv)
 	    bu_log("bwscale: cannot open \"%s\" for reading\n",file_name);
 	    return 0;
 	}
-	inx = atoi(argv[bu_optind++]);
-	iny = atoi(argv[bu_optind++]);
-	outx = atoi(argv[bu_optind++]);
-	outy = atoi(argv[bu_optind++]);
+	if (!parse_positive_int_arg(argv[bu_optind++], &inx, "input width"))
+	    return 0;
+	if (!parse_positive_int_arg(argv[bu_optind++], &iny, "input height"))
+	    return 0;
+	if (!parse_positive_int_arg(argv[bu_optind++], &outx, "output width"))
+	    return 0;
+	if (!parse_positive_int_arg(argv[bu_optind++], &outy, "output height"))
+	    return 0;
 	return 1;
     }
     if ((bu_optind >= argc) ||
@@ -377,14 +407,21 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "bwscale: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("bwscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "bwscale: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "bwscale: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

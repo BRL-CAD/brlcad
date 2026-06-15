@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include "bio.h"
 
@@ -46,6 +47,23 @@
 static const char usage[] = "\
 Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
 	[-w width] [-n height] [file.pix] > file.pix\n";
+
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
+	bu_log("pixrot: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
 
 
 /* 4 times bigger than typ. screen */
@@ -93,20 +111,25 @@ get_args(int argc, char **argv)
 		invert++;
 		break;
 	    case '#':
-		pixbytes = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &pixbytes, "bytes-per-pixel"))
+		    return 0;
 		break;
 	    case 'S':
 	    case 's':
 		/* square size */
-		nxin = nyin = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &nxin, "input size"))
+		    return 0;
+		nyin = nxin;
 		break;
 	    case 'W':
 	    case 'w':
-		nxin = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &nxin, "input width"))
+		    return 0;
 		break;
 	    case 'N':
 	    case 'n':
-		nyin = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &nyin, "input height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' */
@@ -116,8 +139,10 @@ get_args(int argc, char **argv)
 
     /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
-	nxin = atoi(argv[bu_optind++]);
-	nyin = atoi(argv[bu_optind++]);
+	if (!parse_positive_int_arg(argv[bu_optind++], &nxin, "input width"))
+	    return 0;
+	if (!parse_positive_int_arg(argv[bu_optind++], &nyin, "input height"))
+	    return 0;
     }
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
@@ -126,14 +151,21 @@ get_args(int argc, char **argv)
 	ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("pixrot: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((ifp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
     }
 
-    if (argc > ++bu_optind)
-	bu_log("pixrot: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	bu_log("pixrot: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }
