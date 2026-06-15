@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
@@ -46,37 +48,78 @@ char usage[] = "\
 Usage:  bwrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height]\n\
 			[-x xorig] [-y yorig] [-o out_file.bw] [file.bw] > [out_file.bw]\n";
 
+static int
+parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < 0 || parsed > INT_MAX) {
+	bu_log("bwrect: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *value, const char *label)
+{
+    if (!parse_nonnegative_int_arg(arg, value, label))
+	return 0;
+    if (*value == 0) {
+	bu_log("bwrect: %s must be greater than zero, got '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
 
 static int
 get_args(int argc, char **argv)
 {
     int c;
+    int remaining = 0;
 
     while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
 	switch (c) {
 	    case 's':
-		inx = iny = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &inx, "input size"))
+		    return 0;
+		iny = inx;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &inx, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &iny, "input height"))
+		    return 0;
 		break;
 	    case 'S':
-		outy = outx = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &outx, "output size"))
+		    return 0;
+		outy = outx;
 		break;
 	    case 'W':
-		outx = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &outx, "output width"))
+		    return 0;
 		break;
 	    case 'N':
-		outy = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &outy, "output height"))
+		    return 0;
 		break;
 	    case 'x':
-		xorig = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &xorig, "x origin"))
+		    return 0;
 		break;
 	    case 'y':
-		yorig = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &yorig, "y origin"))
+		    return 0;
 		break;
 	    case 'o':
 		out_file = bu_optarg;
@@ -92,7 +135,6 @@ get_args(int argc, char **argv)
     } else {
 	in_file = argv[bu_optind];
 	bu_optind++;
-	return 1;
     }
 
 
@@ -100,8 +142,10 @@ get_args(int argc, char **argv)
 	return 0;
     }
 
-    if (argc > ++bu_optind) {
-	bu_log("bwrect: excess argument(s) ignored\n");
+    remaining = argc - bu_optind;
+    if (remaining != 0) {
+	bu_log("bwrect: excess argument(s) not supported\n");
+	return 0;
     }
 
     return 1;

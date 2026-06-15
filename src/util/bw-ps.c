@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <time.h> /* for ctime() */
@@ -58,6 +60,40 @@ static char usage[] = "\
 Usage: bw-ps [-e] [-c] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
+
+static int
+parse_positive_size_arg(const char *arg, size_t *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0 || parsed > INT_MAX) {
+	fprintf(stderr, "bw-ps: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = (size_t)parsed;
+    return 1;
+}
+
+static int
+parse_positive_double_arg(const char *arg, double *value, const char *label)
+{
+    char *end = NULL;
+    double parsed = 0.0;
+
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0.0) {
+	fprintf(stderr, "bw-ps: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = parsed;
+    return 1;
+}
 
 void
 prolog(FILE *fp, char *name, int w, int h)
@@ -132,23 +168,31 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		height = width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &width, "input size"))
+		    return 0;
+		height = width;
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &width, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		height = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &height, "input height"))
+		    return 0;
 		break;
 	    case 'S':
 		/* square file size */
-		outheight = outwidth = atof(bu_optarg);
+		if (!parse_positive_double_arg(bu_optarg, &outwidth, "output size"))
+		    return 0;
+		outheight = outwidth;
 		break;
 	    case 'W':
-		outwidth = atof(bu_optarg);
+		if (!parse_positive_double_arg(bu_optarg, &outwidth, "output width"))
+		    return 0;
 		break;
 	    case 'N':
-		outheight = atof(bu_optarg);
+		if (!parse_positive_double_arg(bu_optarg, &outheight, "output height"))
+		    return 0;
 		break;
 
 	    default:		/* 'h' '?' */
@@ -163,6 +207,11 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "bw-ps: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "bw-ps: cannot open \"%s\" for reading\n",
@@ -172,8 +221,10 @@ get_args(int argc, char **argv)
 	/*fileinput++;*/
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "bw-ps: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "bw-ps: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }
