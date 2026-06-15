@@ -10,14 +10,14 @@ pix-bw - combine pix color planes into a bw black and white image
 
 [source]
 ----
-pix-bw [-s squaresize] [-w width] [-n height] [ [-e ntsc|crt|hdtv|hdr|avg] [ [ -Rr_weight] [ -Gg_weight] [ -Bb_weight]]] [-o out.bw] [ [<]in.pix] > out.bw
+pix-bw [-s squaresize] [-w width] [-n height] [ [-e ntsc|crt|hdtv|hdr|avg] [ [ -Rr_weight] [ -Gg_weight] [ -Bb_weight]]] [-o out.bw] [ [<]in.pix] [> out.bw]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pix-bw* will combine or select the color planes of a *pix*(5) format file from its standard input and produce a black and white *bw*(5) file on its standard output.
+*pix-bw* will combine or select the color planes of a *pix*(5) format file from its standard input and produce a black and white *bw*(5) file on its standard output. If *-o* is specified and standard output is also redirected or piped, *pix-bw* writes the same output to both destinations.
 
 The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels. The *-n* _file_height_ flag specifies the height in scanlines of the input file. They are set to the same value using *-s* _squarefilesize_.
 

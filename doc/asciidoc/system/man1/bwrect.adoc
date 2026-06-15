@@ -10,51 +10,83 @@ bwrect - extract a rectangle from a black and white bw file
 
 [source]
 ----
-bwrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height] [-x xorig] [-y yorig] [-o out_file.bw] file.bw > [out_file.bw]
+bwrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height] [-x xorig] [-y yorig] [-o out_file.bw] [file.bw] [> out_file.bw]
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-*bwrect* extracts a rectangular region from a black and white *bw*(5) format file. The default input image size is 512x512. The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the lower left corner) are passed as arguments for *-x* and *-y*.
+*bwrect* extracts a rectangular region from a black and white *bw*(5) format file. The default input image size is 512x512. The output width and height must be explicitly specified (using *-W* and *-N*, or *-S*), as they default to zero.
 
-The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels. *-W* _scr_width_ does the same for the display device.
+If an input file is not specified, *bwrect* reads from standard input. If an output file is not specified via the *-o* option, *bwrect* writes to standard output. This allows the utility to be easily used within pipelines.
 
-The *-n* _file_height_ and *-N* _scr_height_ flags specify the height in scanlines of the input file and display device respectively.
+[[options]]
+== OPTIONS
 
-*-s* _squarefilesize_ and *-S* _squarescrsize_ set both the height and width to the size given (for input file and display device respectively).
+*-s* _squaresize_::
+	Set both the width and height of the input image to _squaresize_ in pixels.
 
-(_scr_width_ and _scr_height_ must be set to positive values, either separately via *-W* and *-N*, or jointly via *-S*. This is because they start with default values of zero.)
+*-w* _width_::
+	Specify the width of the input image in pixels (default is 512).
 
-*-o* _out_file.bw_ is a way of specifying output file name.
+*-n* _height_::
+	Specify the height of the input image in scanlines (default is 512).
 
-This utility supports pipes and can read/write from/to them.
+*-S* _out_squaresize_::
+	Set both the width and height of the extracted output rectangle to _out_squaresize_ in pixels.
 
+*-W* _out_width_::
+	Specify the width of the extracted output rectangle in pixels.
+
+*-N* _out_height_::
+	Specify the height of the extracted output rectangle in scanlines.
+
+*-x* _xorig_::
+	Specify the x-coordinate of the origin for the extraction (default is 0).
+
+*-y* _yorig_::
+	Specify the y-coordinate of the origin for the extraction (default is 0). The origin corresponds to the lower-left corner.
+
+*-o* _out_file.bw_::
+	Specify the name of the output file. If standard output is also redirected or piped, *bwrect* writes the same output to both destinations. If *-o* is not provided, output is written to standard output.
+
+[[examples]]
+== EXAMPLES
+
+.Extracting a 256x256 rectangle from a 1024x1024 image
+====
+[source,bash]
+----
+$ bwrect -s 1024 -S 256 -x 0 -y 0 in.bw > out.bw
+----
+
+This command extracts a 256x256 rectangle from the lower-left corner of the 1024x1024 image _in.bw_ and writes it to _out.bw_ using standard output redirection.
+====
+
+.Extracting a 100x100 region with a specific origin and output file
+====
+[source,bash]
+----
+$ bwrect -W 100 -N 100 -x 200 -y 200 -o out.bw in.bw
+----
+
+This command extracts a 100x100 rectangle starting at coordinate (200, 200) from an image of default size (512x512) and saves it directly to _out.bw_ using the *-o* option.
+====
 
 [[see_also]]
 == SEE ALSO
 
 *brlcad*(1), *bwcrop*(1), *bwscale*(1), *pixrect*(1), *bw*(5)
 
-
-[[bugs]]
-== BUGS
-
-We ought to allow the questions to be answered on the command line so that shell scripts, etc., could use this.
-
-
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

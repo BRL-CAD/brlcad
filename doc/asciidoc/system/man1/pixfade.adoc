@@ -10,7 +10,7 @@ pixfade - darken a pix file
 
 [source]
 ----
-pixfade [-f fraction] [-p percentage] [-m max] [-s squaresize] [-w width] [-n height] [-o out_file.pix] [infile.pix] > outfile.pix
+pixfade [-f fraction] [-p percentage] [-m max] [-s squaresize] [-w width] [-n height] [-o out_file.pix] [infile.pix] [> outfile.pix]
 ----
 
 
@@ -25,7 +25,7 @@ An alternative way to darken the image is to specify a ceiling pixel level (0 - 
 
 The *-w* and *-n* flags specify the input file width and number of scan lines in pixels; they can be set to the same value via *-s*. Default is 512x512.
 
-The *-o* option supplies output file name. If this option is omitted, standard output is used.
+The *-o* option supplies output file name. If standard output is also redirected or piped, *pixfade* writes the same output to both destinations. If this option is omitted, standard output is used.
 
 
 [[see_also]]
