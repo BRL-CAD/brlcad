@@ -1,85 +1,99 @@
 = LOOP(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD
+:manmanual: User Commands
 
 == NAME
-loop - generate numerical indices for shell loops, etc.
+
+loop - generate numerical or alphabetical sequences for shell loops
 
 == SYNOPSIS
 
-[source]
-----
-loop [-c] start finish [increment]
-----
+*loop* [-c] _start_ _finish_ [_increment_]
 
-
-[[description]]
 == DESCRIPTION
 
-*loop* generates a sequence of numbers between _start_ and _finish_ inclusive, one per line, on stdout. This is mostly useful for driving loops when writing Shell programs *sh*(1). The default increment is +1 when _start_<_finish_, and -1 when _start_>_finish_. An optional _increment_ may be specified. If _increment_ is zero, then the _start_ value will be generated continuously.
+*loop* generates a sequence of numbers or characters between _start_ and _finish_ (inclusive), outputting one value per line to standard output. This utility is primarily designed for driving loops in shell scripts.
 
-Both floating point and integer arguments can be used. On integer arguments, if leading zeros are specified, they will be preserved on output. This is useful for generating sequences of file names which are numbered with leading zeros.
+The default _increment_ is `1` (or `-1` if _start_ is greater than _finish_).
 
-*-c* is used for character (char) looping.
+=== Preserving Padding
 
+For integer sequences, if _start_ or _finish_ contains leading zeros, *loop* preserves the padding in the output. It uses the maximum field width from the arguments to pad the output values with leading zeros (e.g., `008` to `010`).
 
-[[examples]]
+== OPTIONS
+
+*-c*::
+	Enable character (char) looping. When this option is specified, _start_ and _finish_ must be single characters, and the sequence will progress alphabetically.
+
 == EXAMPLES
 
-
+.Generate numbers from 10 to 30 in steps of 5
+[source,bash]
+----
+loop 10 30 5
+----
+Output:
+....
+10
+15
+20
+25
+30
 ....
 
-for i in `loop 10 30 5`
-do
-  echo $i
-done
+.Generate a descending sequence of zero-padded numbers
+[source,bash]
+----
+loop 008 005
+----
+Output:
+....
+008
+007
+006
+005
 ....
 
-will display the values 10, 15, 20, 25, 30 .
-
-
+.Generate floating-point numbers
+[source,bash]
+----
+loop 0.1 1.6 0.5
+----
+Output:
+....
+0.1
+0.6
+1.1
+1.6
 ....
 
-for i in `loop 008 005`
-do
-  echo $i
-done
+.Generate an alphabetical sequence of characters from 'a' to 'e'
+[source,bash]
+----
+loop -c a e
+----
+Output:
+....
+a
+b
+c
+d
+e
 ....
 
-will display the values 008, 007, 006, 005 .
-
-
-....
-
-for i in `loop 0.1 2.9 0.5`
-do
-  echo $i
-done
-....
-
-will display the values 0.1, 0.6, 1.1, 1.6, 2.1, 2.6 .
-
-
-[[bugs]]
 == BUGS
 
-This program just scratches the surface. The shells could benefit from a greater ability to perform math. Limitless opportunities for extensions exist, but this simple version is adequate for most shell scripts dealing with sequences of images, etc.
+Character looping only supports single characters, and increments must be integers.
 
-
-[[author]]
 == AUTHOR
 
-BRL-CAD Team
+John Grosh, Phil Dykstra, Michael John Muuss
 
-
-[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
