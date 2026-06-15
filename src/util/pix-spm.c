@@ -25,13 +25,34 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "bu/app.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "bn/spm.h"
 #include "dm.h"
+
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
+	bu_log("pix-spm: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
 
 
 int
@@ -46,7 +67,9 @@ main(int argc, char **argv)
 	bu_exit(1, "Usage: pix-spm file.pix size > file.spm\n");
     }
 
-    size = atoi(argv[2]);
+    if (!parse_positive_int_arg(argv[2], &size, "size")) {
+	return 1;
+    }
     mp = bn_spm_init(size, sizeof(RGBpixel));
     bn_spm_pix_load(mp, argv[1], size, size);
     bn_spm_save(mp, "-");

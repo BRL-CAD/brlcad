@@ -31,6 +31,24 @@
 #include "bu/log.h"
 
 
+static int
+parse_byte_arg(const char *arg, unsigned char *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > 255) {
+	bu_log("pixsubst: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (unsigned char)value;
+    return 1;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -50,19 +68,25 @@ main(int argc, char **argv)
 
     if (argc == 7) {
 	argv++;
-	pixin[0] = '\0' + atoi(*argv);
+	if (!parse_byte_arg(*argv, &pixin[0], "input red value"))
+	    bu_exit(1, NULL);
 	argv++;
-	pixin[1] = '\0' + atoi(*argv);
+	if (!parse_byte_arg(*argv, &pixin[1], "input green value"))
+	    bu_exit(1, NULL);
 	argv++;
-	pixin[2] = '\0' + atoi(*argv);
+	if (!parse_byte_arg(*argv, &pixin[2], "input blue value"))
+	    bu_exit(1, NULL);
     }
 
     argv++;
-    pixout[0] = '\0' + atoi(*argv);
+    if (!parse_byte_arg(*argv, &pixout[0], "output red value"))
+	bu_exit(1, NULL);
     argv++;
-    pixout[1] = '\0' + atoi(*argv);
+    if (!parse_byte_arg(*argv, &pixout[1], "output green value"))
+	bu_exit(1, NULL);
     argv++;
-    pixout[2] = '\0' + atoi(*argv);
+    if (!parse_byte_arg(*argv, &pixout[2], "output blue value"))
+	bu_exit(1, NULL);
 
     if (argc == 4) {
 	if ((npixels=fread(pixin, sizeof(unsigned char), 3, stdin)) != 3) {

@@ -25,16 +25,35 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 
 
 static const char usage[] = "Usage: plot3color r g b\n";
+
+static int
+parse_color_component(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > 255) {
+	bu_log("plot3color: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
 
 int
 main(int argc, char **argv)
@@ -57,9 +76,11 @@ main(int argc, char **argv)
 	    putchar(c);
     }
 
-    r = atoi(argv[1]);
-    g = atoi(argv[2]);
-    b = atoi(argv[3]);
+    if (!parse_color_component(argv[1], &r, "red component") ||
+	!parse_color_component(argv[2], &g, "green component") ||
+	!parse_color_component(argv[3], &b, "blue component")) {
+	return 1;
+    }
 
     pl_color(stdout, r, g, b);
     return 0;

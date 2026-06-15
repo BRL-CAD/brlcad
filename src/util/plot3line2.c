@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <string.h>
@@ -32,11 +33,44 @@
 
 #include "bu/app.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 
 
 static const char usage[] = "Usage: plot3line2 x1 y1 x2 y2 [r g b]\n";
+
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	bu_log("plot3line2: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_color_component(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > 255) {
+	bu_log("plot3line2: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
 
 int
 main(int argc, char **argv)
@@ -52,7 +86,7 @@ main(int argc, char **argv)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc < 5 || isatty(fileno(stdout))) {
+    if (argc < 5 || argc > 8 || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
     }
 
@@ -62,17 +96,22 @@ main(int argc, char **argv)
 	    putchar(c);
     }
 
-    x_1 = atof(argv[1]);
-    y_1 = atof(argv[2]);
-    x_2 = atof(argv[3]);
-    y_2 = atof(argv[4]);
+    if (!parse_double_arg(argv[1], &x_1, "x1") ||
+	!parse_double_arg(argv[2], &y_1, "y1") ||
+	!parse_double_arg(argv[3], &x_2, "x2") ||
+	!parse_double_arg(argv[4], &y_2, "y2")) {
+	return 1;
+    }
 
     if (argc > 5)
-	r = atoi(argv[5]);
+	if (!parse_color_component(argv[5], &r, "red component"))
+	    return 1;
     if (argc > 6)
-	g = atoi(argv[6]);
+	if (!parse_color_component(argv[6], &g, "green component"))
+	    return 1;
     if (argc > 7)
-	b = atoi(argv[7]);
+	if (!parse_color_component(argv[7], &b, "blue component"))
+	    return 1;
 
     if (argc > 5)
 	pl_color(stdout, r, g, b);

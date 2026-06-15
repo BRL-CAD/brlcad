@@ -47,7 +47,9 @@
  */
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "bio.h"
 
@@ -70,6 +72,59 @@ Usage: pixfade [-p percentage] [-f fraction] [-m max] [-s squaresize] [-w width]
 double multiplier = 0.5;
 int max = -1;
 
+static int
+parse_nonnegative_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	bu_log("pixfade: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+    if (*out_value < 0.0) {
+	bu_log("pixfade: %s must be non-negative, got '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
+	bu_log("pixfade: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
+static int
+parse_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
+	bu_log("pixfade: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -78,33 +133,39 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "p:f:s:w:n:o:m:h?")) != -1) {
 	switch (c) {
             case 'p':
-		multiplier = atof(bu_optarg) / 100.0;
-		if (multiplier < 0.0) {
-		    bu_log("pixfade: percent is negative");
-		    bu_exit (1, NULL);
+		if (!parse_nonnegative_double_arg(bu_optarg, &multiplier, "percentage")) {
+		    bu_exit(1, NULL);
 		}
+		multiplier /= 100.0;
 		break;
 	    case 'f':
-		multiplier = atof(bu_optarg);
-		if (multiplier < 0.0) {
-		    bu_log("pixfade: fraction is negative");
-		    bu_exit (1, NULL);
+		if (!parse_nonnegative_double_arg(bu_optarg, &multiplier, "fraction")) {
+		    bu_exit(1, NULL);
 		}
 		break;
     	    case 's':
-		inx = iny = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &inx, "input size")) {
+		    bu_exit(1, NULL);
+		}
+		iny = inx;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &inx, "input width")) {
+		    bu_exit(1, NULL);
+		}
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &iny, "input height")) {
+		    bu_exit(1, NULL);
+		}
 		break;
 	    case 'o':
 		out_file = bu_optarg;
 		break;
 	    case 'm':
-		max = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &max, "max value")) {
+		    bu_exit(1, NULL);
+		}
 		if (max < 0 )
 		    max = 0;
 		else if (max > 255)
@@ -123,6 +184,10 @@ get_args(int argc, char **argv)
 
     in_file = argv[bu_optind];
     bu_optind++;
+    if (bu_optind < argc) {
+	bu_log("pixfade: excess argument(s) not supported\n");
+	return 0;
+    }
     return 1;		/* OK */
 
 }

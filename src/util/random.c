@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
@@ -39,6 +41,38 @@
 #include "bn.h"
 
 const char *usage = "Usage: random [-u] [-g [-c center]] [-s seed] [-v] low high";
+
+static int
+parse_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
+	bu_log("random: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	bu_log("random: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 void
 printusage(void)
@@ -66,10 +100,14 @@ main(int argc, char *argv[])
     while ((c = bu_getopt(argc, argv, "vugs:c:h?")) != -1) {
 	switch (c) {
 	    case 's':
-		seed = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &seed, "seed")) {
+		    bu_exit(1, NULL);
+		}
 		break;
 	    case 'c':
-		center = atoi(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &center, "center")) {
+		    bu_exit(1, NULL);
+		}
 		cdone = 1;
 		break;
 	    case 'g':
@@ -99,8 +137,10 @@ main(int argc, char *argv[])
     }
     if (gauss == 0 && uniform == 0)
 	uniform = 1;
-    low = atoi(argv[bu_optind]);
-    high = atoi(argv[bu_optind+1]);
+    if (!parse_int_arg(argv[bu_optind], &low, "low value") ||
+	!parse_int_arg(argv[bu_optind+1], &high, "high value")) {
+	bu_exit(1, NULL);
+    }
     if (!cdone) {
 	center = ((double)(high + low)) / 2.0;
     }

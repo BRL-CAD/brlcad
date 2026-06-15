@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 #include "bio.h"
@@ -112,6 +114,23 @@ struct uplot letters[] = {
 int verbose;
 char buf[8*32];
 
+static int
+parse_nonnegative_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > INT_MAX) {
+	bu_log("plot3getframe: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
 
 int
 main(int argc, char **argv)
@@ -136,10 +155,12 @@ main(int argc, char **argv)
 	argc--;
 	argv++;
     }
-    if (argc < 2 || isatty(fileno(stdin))) {
+    if (argc != 2 || isatty(fileno(stdin))) {
 	bu_exit(1, "Usage: plot3getframe [-v] desired_frame < unix_plot\n");
     }
-    desired_frame = atoi(argv[1]);
+    if (!parse_nonnegative_int_arg(argv[1], &desired_frame, "desired frame")) {
+	return 1;
+    }
     current_frame = 0;
 
     while ((c = getchar()) != EOF) {

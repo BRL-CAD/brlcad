@@ -36,6 +36,7 @@
 
 #include "bio.h" /* for setmode */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <limits.h> /* for INT_MAX */
 
@@ -59,6 +60,23 @@ unsigned char *oline;
 size_t discard;
 size_t wpad;
 
+static int
+parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long long value;
+
+    errno = 0;
+    value = strtoull(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
+	bu_log("decimate: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (size_t)value;
+    return 1;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -76,17 +94,21 @@ main(int argc, char **argv)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc < 4) {
+    if (argc != 4 && argc != 6) {
 	bu_exit (1, "%s", usage);
     }
 
-    nbytes = atoi(argv[1]);
-    iwidth = atoi(argv[2]);
-    iheight = atoi(argv[3]);
+    if (!parse_positive_size_arg(argv[1], &nbytes, "bytes per pixel") ||
+	!parse_positive_size_arg(argv[2], &iwidth, "input width") ||
+	!parse_positive_size_arg(argv[3], &iheight, "input height")) {
+	bu_exit(EXIT_FAILURE, "%s", usage);
+    }
 
     if (argc >= 6) {
-	owidth = atoi(argv[4]);
-	oheight = atoi(argv[5]);
+	if (!parse_positive_size_arg(argv[4], &owidth, "output width") ||
+	    !parse_positive_size_arg(argv[5], &oheight, "output height")) {
+	    bu_exit(EXIT_FAILURE, "%s", usage);
+	}
     }
 
     if (nbytes <= 0 || nbytes > INT_MAX) {
