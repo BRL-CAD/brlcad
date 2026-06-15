@@ -8,16 +8,26 @@ cad_parea - compute area of polygon
 
 == SYNOPSIS
 
-[source]
-----
-cad_parea [ -i input] [ -o output]
-----
-
+*cad_parea* [-h] [-?] [-i _input_] [-o _output_]
 
 [[description]]
 == DESCRIPTION
 
-*cad_parea* reads from _input_ (standard input if not given) a series of polygon vertex (_x_,_y_) coordinate values and writes to _output_ (standard output if not given) the polygon's area. Lines not beginning with a number are silently skipped. Vertices are assumed to be given in counter-clockwise cyclic order.
+*cad_parea* reads a series of 2D polygon vertex coordinate values (_x_, _y_) from an input stream and writes the computed polygon area to an output stream. Vertices are expected to be provided in counter-clockwise cyclic order.
+
+Lines not beginning with a number are silently skipped.
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*::
+	Print a usage message and exit.
+
+*-i* _input_::
+	Read coordinates from the specified _input_ file instead of standard input.
+
+*-o* _output_::
+	Write the computed area to the specified _output_ file instead of standard output.
 
 
 [[hints]]
@@ -28,17 +38,24 @@ A hole can be accommodated as a clockwise section connected to the periphery by 
 Disjoint pieces may be connected by a line segment traced in both directions.
 
 
-[[example]]
-== EXAMPLE
+[[examples]]
+== EXAMPLES
 
+.Calculate the area of a square
+====
+Compute the area of a 1x1 square by providing its vertices via standard input:
 
-[quote]
-____
-$ cad_parea# _comment_ 1 0 2 0 2 1 3 1 3 2 2 2 1 2 0 2 0 1 1 1 _^D_ 4
-
-____
-
-
+[source,bash]
+----
+$ cat square.txt
+0 0
+1 0
+1 1
+0 1
+$ cad_parea -i square.txt
+1
+----
+====
 [[see_also]]
 == SEE ALSO
 
