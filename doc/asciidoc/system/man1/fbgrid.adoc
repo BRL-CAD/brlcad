@@ -10,16 +10,82 @@ fbgrid - draw a grid on a frame buffer
 
 [source]
 ----
-fbgrid [-cbdo] [-F framebuffer] [-S squaresize] [-W width] [-N height]
+fbgrid [-c] [-b] [-d] [-o] [-F framebuffer] [-s squaresize] [-S squaresize] \
+     [-w width] [-W width] [-n height] [-N height]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbgrid* is used to generate a grid on a frame buffer. The environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used. The *-SWN* options can all be used in the normal way to specify the size of the grid (see *brlcad*(1)). The default grid size is 512x512. The framebuffer can be declared with the *-F* flag. *-c* will clear the screen before drawing.
+*fbgrid* draws a calibration grid pattern on a frame buffer. Three
+intensity levels of grid lines are drawn at different spacings, making
+it easy to count pixels and verify display geometry.
 
-The available patterns are:*-b* for binary spacing with lines at 8, 64, and 128 line intervals. *-d* for decimal spacing with lines at 10, 50, and 100 line intervals (the default). *-o* for the old cross grid pattern.
+The default grid pattern is decimal (*-d*), with dark lines every 10
+pixels, grey lines every 50 pixels, and white lines every 100 pixels.
+
+If the *FB_FILE* environment variable is set, it selects the display
+device (see *brlcad*(1)). If this variable is not set, the default
+device for the system is used.
+
+[[options]]
+== OPTIONS
+
+*-c*::
+Clear the framebuffer to black before drawing the grid.
+
+*-b*::
+Use binary spacing: dark lines every 8 pixels, grey lines every 64
+pixels, and white lines every 128 pixels.
+
+*-d*::
+Use decimal spacing (default): dark lines every 10 pixels, grey lines
+every 50 pixels, and white lines every 100 pixels.
+
+*-o*::
+Use the old cross grid pattern.
+
+*-F* _framebuffer_::
+Specify the framebuffer device. If not provided, the default frame
+buffer is used.
+
+*-s* _squaresize_::
+*-S* _squaresize_::
+Set both the width and height of the grid.
+
+*-w* _width_::
+*-W* _width_::
+Set the grid width in pixels.
+
+*-n* _height_::
+*-N* _height_::
+Set the grid height in scanlines.
+
+*-h* or *-?*::
+Print usage information and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+Draw a default decimal grid on the default framebuffer:
+
+....
+fbgrid
+....
+
+Clear the screen and draw a binary grid at 1024x1024:
+
+....
+fbgrid -c -b -S 1024
+....
+
+Draw a decimal grid on a specific framebuffer:
+
+....
+fbgrid -F /dev/fb0 -d
+....
 
 
 [[see_also]]

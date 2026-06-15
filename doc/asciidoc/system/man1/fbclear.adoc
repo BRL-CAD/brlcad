@@ -10,42 +10,90 @@ fbclear - clear a frame buffer image
 
 [source]
 ----
-fbclear [ -c] [-F framebuffer] [ red green blue] \
-     [ -c] [-F framebuffer] [gray_value]
+fbclear [-c] [-F framebuffer] [-s squaresize]
+        [-w width] [-n height] [-S squaresize]
+        [-W width] [-N height] [gray | r g b]
 ----
 
-
-[[description]]
 == DESCRIPTION
 
-*fbclear* is used to erase a frame buffer using whatever method is efficient for the device being accessed. By default, the selected color will be flooded into the color planes. If the *-c* option is used, a standard linear colormap will be loaded and the pan and zoom values will be reset.
+*fbclear* erases a frame buffer using whatever method is efficient for
+the device being accessed.  By default, the selected color is flooded
+into the color planes.
 
-If the optional color values are given, *fbclear* writes the specified color over the entire image. The color values must be in the range 0 to 255. In the second form shown above, the single gray_value is written into all three color channels.
+If optional color values are given, *fbclear* writes the specified
+color over the entire image.  Three values (_r g b_) set each channel
+independently; a single _gray_ value is written into all three
+channels.  Color values must be in the range 0 to 255.  If no color
+is specified, the frame buffer is cleared to black.
 
-The frame buffer to be cleared is determined from the *-F* option if given. Otherwise the environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used.
+The frame buffer to clear is determined by the *-F* option if given.
+Otherwise the environment variable `FB_FILE` is used to select the
+display device (see *brlcad*(1)).  If this variable is not set, the
+default device for your system will be used.
 
-In addition to those flags shown above, the *-W* (or *-w*) _width_, *-N* (or *-n*) _height_, and *-S* (or *-s*) _square_size_ options can be used to set the size of the output frame buffer.
+== OPTIONS
 
+*-c*
+Clear the frame buffer and reset the colormap to linear, and reset
+the pan and zoom to default values.  Without this flag, *fbclear*
+will warn if a non-linear colormap or zoom is in effect.
 
-[[see_also]]
+*-F* _framebuffer_
+Use the specified _framebuffer_ device.  Overrides the `FB_FILE`
+environment variable.
+
+*-s* _squaresize_
+Set both the width and height of the frame buffer to _squaresize_
+pixels.
+
+*-w* _width_
+Set the width of the frame buffer to _width_ pixels.
+
+*-n* _height_
+Set the height of the frame buffer to _height_ pixels.
+
+*-S* _squaresize_
+Same as *-s*.
+
+*-W* _width_
+Same as *-w*.
+
+*-N* _height_
+Same as *-n*.
+
+== EXAMPLES
+
+Clear the default frame buffer to black:
+
+....
+fbclear
+....
+
+Clear a specific frame buffer to white:
+
+....
+fbclear -F /dev/fb0 255 255 255
+....
+
+Clear to a mid-gray, resetting the colormap and zoom:
+
+....
+fbclear -c 128
+....
+
 == SEE ALSO
 
 *brlcad*(1), *fbcmap*(1), *fbhelp*(1)
 
-
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
-[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

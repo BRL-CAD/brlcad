@@ -10,91 +10,92 @@ fbfade - fade a frame buffer image in or out
 
 [source]
 ----
-fbfade [-H] [ -f input_image_name] [ -s input_square_size] [ -w input_width] \
-     [ -n input_height] [ -S output_square_size] [ -W output_width] [ -N output_height] \
-     [ [-F] output_frame_buffer_name]
+fbfade [-H] [-f input_image_name] [-s input_square_size] [-w input_width] \
+     [-n input_height] [-S output_square_size] [-W output_width] [-N output_height] \
+     [[-F] output_frame_buffer_name]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbfade* gradually displays an image on a frame buffer, one randomly chosen pixel at a time.
+*fbfade* gradually displays an image on a frame buffer, one randomly
+selected pixel at a time. It requires fast single-pixel write support
+for best effect.
+
+If no input image is specified with *-f*, the program fades the
+existing frame buffer contents to black (fade out). When an input
+image is given, that image is faded in over whatever is currently
+displayed.
 
 [[options]]
-=== Options
+== OPTIONS
 
+*-H*::
+Assumes 1024x1024 pixels for the default input image size instead of
+512x512. Explicitly specified sizes override this default. If actual
+input is smaller than requested, the actual size is used. If output
+size is not specified, the revised input size is used.
 
--H::
-(high resolution) Assumes 1024 by 1024 pixels for default input image size instead of 512 by 512. Explicitly-specified sizes override the default, and if actual input image size is smaller than requested, the actual size will be used. If output frame buffer size is not specified, the revised input size will be requested for output. If actual output frame buffer size is greater than requested, only the lower-left portion of the frame buffer will be used. Actual sizes depend on details of specific frame buffers.
+*-f* _input_image_name_::
+Reads the image to be displayed from the specified frame buffer file,
+instead of using a black background (fade out).
 
+*-s* _input_square_size_::
+Sets both width and height of the input image.
 
--f __input_image_name__::
-Inputs the image to be displayed from the specified frame buffer or *pix*(5) file, instead of using pure background (which fades out the image already on the output frame buffer).
+*-w* _input_width_::
+Sets the input image width.
 
+*-n* _input_height_::
+Sets the input image height.
 
--s __input_square_size__::
-Specifies input image width and height.
+*-S* _output_square_size_::
+Sets both width and height of the output frame buffer.
 
+*-W* _output_width_::
+Sets the output frame buffer width.
 
--w __input_width__::
-Specifies input image width.
+*-N* _output_height_::
+Sets the output frame buffer height.
 
+*-F* _output_frame_buffer_name_::
+Writes to the specified frame buffer instead of the one given by the
+*FB_FILE* environment variable (or the default frame buffer). If this
+is the last option specified, the *-F* flag is optional.
 
--n __input_height__::
-Specifies input image height.
-
-
--S __output_square_size__::
-Specifies output frame buffer width and height.
-
-
--W __output_width__::
-Specifies output frame buffer width.
-
-
--N __output_height__::
-Specifies output frame buffer height.
-
-
--F __output_frame_buffer_name__::
-Outputs to the specified frame buffer instead of the one specified by the __FB_FILE__ environment variable (or the default, if __FB_FILE__ is not set). If this is the last option specified, the _-F_ is optional.
-
-
-
+*-h* or *-?*::
+Print usage information and exit.
 
 
 [[caveat]]
 == CAVEAT
 
-*fbfade* works best in conjunction with a frame buffer having very fast access to pixels.
+*fbfade* works best in conjunction with a frame buffer having very
+fast single-pixel access.
 
 
-[[example]]
-== EXAMPLE
+[[examples]]
+== EXAMPLES
 
-The following shell script can be used to produce a slick slide show:
+The following shell script produces a slide show by fading each image
+in, pausing, then fading to black:
 
-
-[quote]
-____
+....
 fbclear
-
 for i in *.pix
-
-do fbfade -f $i
-
-sleep 15
-
-done fbfade
-
-____
+do
+    fbfade -f $i
+    sleep 15
+done
+fbfade
+....
 
 
 [[see_also]]
 == SEE ALSO
 
-*libfb*(3), *pix*(5).
+*libfb*(3), *pix*(5)
 
 
 [[diagnostics]]
@@ -106,7 +107,7 @@ Error messages are intended to be self-explanatory.
 [[authors]]
 == AUTHORS
 
-Douglas A. Gwyn, BRL/VLD-VMB;Gary S. Moss, BRL/VLD-VMB
+Douglas A. Gwyn, BRL/VLD-VMB; Gary S. Moss, BRL/VLD-VMB
 
 
 [[copyright]]

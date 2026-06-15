@@ -8,56 +8,97 @@ fbcolor - interactively pick colors
 
 == SYNOPSIS
 
-[source]
-----
-fbcolor [-F framebuffer] [ -s|S screen_squaresize] [ -w|W screen_width] [ -n|N screen_height] \
-    
-----
+....
+fbcolor [-F framebuffer] [-s|-S squaresize] [-w|-W width] [-n|-N height] [-h]
+....
 
-
-[[description]]
 == DESCRIPTION
 
-*fbcolor* is an interactive color picking facility. It allows you to pick and display colors, by varying parameters in either RGB (red, green, blue) or HSI (hue, saturation, intensity) space.
+*fbcolor* is an interactive color picking facility. It displays color
+bars and a solid background on a framebuffer, allowing you to pick and
+display colors by varying parameters in either RGB (red, green, blue)
+or HSV (hue, saturation, value) space.
 
+*fbcolor* draws a set of color bars in the lower left corner of the
+display, sets the remainder of the display to the current color, then
+starts reading standard input for color editing commands. As the
+various parameters are changed, the color bars grow and shrink to show
+the relative red, green, and blue intensities.
+
+At the same time, *fbcolor* displays the current RGB and HSV values on
+the terminal, allowing you to record values for later use.
+
+*fbcolor* recognizes two main sets of commands: those which select
+which parameter to edit, and those which vary the value of the
+selected parameter.
+
+``*r*'', ``*g*'', and ``*b*'' select the red, green, or blue channel
+for editing, while ``*h*'', ``*s*'', and ``*v*'' (or ``*i*'') select
+the hue, saturation, or value for editing. The ``*/*'' key steps
+through the list of parameters in the order given above.
+
+``*+*'' and ``*.*'' both increment the currently selected parameter by
+one; ``*-*'' and ``*,*'' both decrement by one; ``*>*'' and ``*<*''
+increment and decrement by 16. Parameter values range from 0 to 255
+and wrap in both directions.
+
+A ``*?*'' prints a short command summary, and typing ``*q*'',
+``*Q*'', ``*<CR>*'', or ``*<LF>*'' exits the program.
+
+== OPTIONS
 
 *-F* _framebuffer_::
-This option specifies which framebuffer the image is to be saved from. If not given, the environment variable *FB_FILE* is used to select the display device (see *brlcad*(1)). If *FB_FILE* has not been set, the default device for your system will be used.
+Specifies the framebuffer device to use. If not given, the
+environment variable *FB_FILE* is used to select the display device
+(see *brlcad*(1)). If *FB_FILE* has not been set, the default
+device for your system will be used.
 
+*-s* _squaresize_::
+Sets both the width and height of the framebuffer window to
+_squaresize_ pixels.
 
+*-S* _squaresize_::
+Same as *-s*.
 
-The *-SWN* (or *-swn*) options can all be used in the normal way to specify the size of the screen (see *brlcad*(1)).
+*-w* _width_::
+Sets the width of the framebuffer window to _width_ pixels.
 
-*fbcolor* draws a set of color bars in the lower left corner of the display, sets the remainder of the display to the current color, then starts reading standard input for color editing commands. As you change the various parameters which specify the color, the color bars grow and shrink to show the relative red, green and blue intensities.
+*-W* _width_::
+Same as *-w*.
 
-At the same time, *fbcolor* displays the current RGB and HSI values on your terminal. This allows you to record the RGB or HSI values of the colors you select for later use.
+*-n* _height_::
+Sets the height of the framebuffer window to _height_ pixels.
 
-*fbcolor* recognizes two main sets of commands; those which select which parameter to edit, and those which vary the value of the selected parameter. ``*r*'', ``*g*'', and ``*b*'' selects the red, green, or blue color for editing, while ``*h*'', ``*s*'', and ``*i*'', (or ``*v*'') selects the hue, saturation, or intensity for editing. There is one other parameter selection character, the ``*/*'', which steps through the list of color parameters in the order given above.
+*-N* _height_::
+Same as *-n*.
 
-``*+*'' and ```.`'' both increment the currently selected parameter by one; ``*-*'' and ``*,*'' both decrement by one, and ``*>*'' and ``*<*'' increments and decrements by 16. The value of each of the parameters can range from 0 to 255 and all parameters wrap in both directions.
+*-h*::
+Prints a usage summary and exits.
 
-A ``*?*'' prints a short command summary, and typing ``*q*'', ``*Q*'', ``*<CR>*'', or ``*<LF>*'' exits the program.
+== EXAMPLES
 
+.Interactively pick colors on the default framebuffer.
+....
+fbcolor
+....
 
-[[see_also]]
+.Use a specific framebuffer device with a 512x512 window.
+....
+fbcolor -F /dev/fb0 -s 512
+....
+
 == SEE ALSO
 
 *brlcad*(1), *fbclear*(1), *fbcmap*(1)
 
-
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
-[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

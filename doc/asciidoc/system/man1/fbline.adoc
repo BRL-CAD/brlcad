@@ -10,28 +10,77 @@ fbline - draw a colored line on a framebuffer
 
 [source]
 ----
-fbline [-c] [-F framebuffer] [-S|s squaresize] [-W|w screen_width] [-N|n screen_height] [-r red] [-g green] [-b blue] x1 y1 x2 y2
+fbline [-c] [-F framebuffer] [-s squaresize] [-S squaresize]
+       [-w width] [-W width] [-n height] [-N height]
+       [-r red] [-g green] [-b blue] x1 y1 x2 y2
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbline* draws a line on the currently selected framebuffer between the points (x1, y1) and (x2, y2). The points must be within the bounds of the framebuffer, or they are silently limited to an edge. Use *fbpoint*(1) to determine where to position the points. The environment variable FB_FILE specifies the current framebuffer; see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+*fbline* draws a line on the currently selected framebuffer between
+the points (_x1_, _y1_) and (_x2_, _y2_) using a Bresenham line
+algorithm. Points that exceed the framebuffer dimensions are silently
+clamped to the screen edges.
 
-By default, the requested framebuffer size is 512x512 pixels.
+Use *fbpoint*(1) to interactively determine endpoint coordinates.
 
-The *-S* (or *-s*) flag sets the width and height to the same value. The *-W* (or *-w*) and *-N* (or *-n*) flags are used for setting them individually.
+The environment variable FB_FILE specifies the current framebuffer;
+see *brlcad*(1). Alternatively, the framebuffer may be explicitly
+specified with the *-F* flag.
 
-The *-c* flag causes the screen to be cleared before the line is displayed. The default behavior is to draw the line on the current image without clearing the screen.
+By default, the requested framebuffer size is 512x512 pixels and the
+line color is white (255, 255, 255).
 
-The *-r red* , *-g green* , *-b blue* flags specify alternate red, green, and blue rgb values for the line color. The default color is white. Thus, a green line is created by turning off the red and green components, i.e., with *-r 0* *-b 0* options.
+
+[[options]]
+== OPTIONS
+
+*-c*
+Clear the screen before drawing the line. The default behavior is to
+draw the line on the current image without clearing the screen.
+
+*-F* _framebuffer_
+Explicitly specifies the framebuffer device.
+
+*-s* _squaresize_ or *-S* _squaresize_
+Sets both the width and height of the framebuffer to _squaresize_.
+
+*-w* _width_ or *-W* _width_
+Sets the framebuffer width.
+
+*-n* _height_ or *-N* _height_
+Sets the framebuffer height.
+
+*-r* _red_
+Specifies the red component [0..255] of the line color.
+
+*-g* _green_
+Specifies the green component [0..255] of the line color.
+
+*-b* _blue_
+Specifies the blue component [0..255] of the line color.
+
+*-h* or *-?*
+Prints a usage message.
 
 
-[[example]]
-== EXAMPLE
+[[examples]]
+== EXAMPLES
 
-fbline -s 1024 -c -r0 -b0 82 11 300 472
+Draw a white line from (10, 10) to (400, 400) on the default
+framebuffer:
+
+....
+fbline 10 10 400 400
+....
+
+Draw a green line on a cleared 1024x1024 framebuffer:
+
+....
+fbline -s 1024 -c -r 0 -b 0 82 11 300 472
+....
 
 
 [[see_also]]

@@ -10,30 +10,63 @@ fbcbars - display standard color bars on a framebuffer
 
 [source]
 ----
-fbcbars [-e] [-f] [-s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N scr_height]
+fbcbars [-e | -f | -s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N scr_height] [-h]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbcbars* displays a color bar scale on the currently selected framebuffer. The default pattern is the standard SMPTE color bars.
+*fbcbars* displays a standard color bar scale on the currently selected framebuffer. By default, or when the *-s* option is provided, SMPTE color bars are displayed. Other supported patterns include FCC/EBU and EIA color bars. If no framebuffer is explicitly specified, the environment variable *FB_FILE* is used (see *brlcad*(1)). Ordinarily, the requested framebuffer size is the device default.
 
-With the *-f* flag, FCC/EBU color bars are made. The entire screen will contain 8 colors: 100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue, and black.
 
-By specifying the *-e* flag, the standard EIA color bars are displayed, arranged horizontally on screen. The bottom quarter of the screen will be -I, 100% white, Q, black. The upper portion of the screen will be seven colors at 75% intensity: grey, yellow, cyan, green, magenta, red, blue.
+[[options]]
+== OPTIONS
 
-By specifying the *-s* flag, SMPTE color bars are displayed. This is the EIA pattern with the upper quarter of the bottom quarter of the screen containing a reversed and shifted version of the upper pattern, which is very useful for aligning color demodulators in monitors. Using a dichroic blue filter, observe the magenta and cyan bars on the NTSC monitor. Adjust the phase of the chroma demodulator until they have visually equal intensity. At this point, all the other color bars will display the correct chroma.
+*-e*::
+	Display standard EIA color bars, arranged horizontally. The bottom quarter of the screen will be -I, 100% white, Q, black. The upper three-quarters of the screen will be seven colors at 75% intensity: grey, yellow, cyan, green, magenta, red, blue.
 
-The environment variable FB_FILE specifies the current framebuffer; see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+*-f*::
+	Display FCC/EBU color bars. The entire screen will contain 8 colors: 100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue, and black.
 
-Ordinarily, the requested framebuffer size is the device default.
+*-s*::
+	Display SMPTE color bars (the default). This is the EIA pattern with the upper quarter of the bottom quarter of the screen containing a reversed and shifted version of the upper pattern, which is very useful for aligning color demodulators in monitors. Using a dichroic blue filter, observe the magenta and cyan bars on the NTSC monitor. Adjust the phase of the chroma demodulator until they have visually equal intensity. At this point, all the other color bars will display the correct chroma.
 
-The *-W* _scr_width_ option specifies the width of each output scanline, in pixels.
+*-F* _framebuffer_::
+	Explicitly specify the framebuffer to use. If this option is not provided, the environment variable *FB_FILE* is used.
 
-The *-N* _scr_height_ option specifies the desired height in scanlines of the display device.
+*-S* _squarescrsize_::
+	Set both the height and width of the display device to the given size.
 
-*-S* _squarescrsize_ sets both the height and width to the size given.
+*-W* _scr_width_::
+	Specify the width of each output scanline, in pixels.
+
+*-N* _scr_height_::
+	Specify the desired height in scanlines of the display device.
+
+*-h*, *-?*::
+	Print usage information and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+The following examples demonstrate how to use *fbcbars* to display various color bar patterns on different framebuffers.
+
+.Displaying SMPTE color bars on a specified framebuffer
+====
+[prompt]#fbcbars -s -F /dev/sgil0 -S 512#
+
+Displays the SMPTE color bar scale on the framebuffer `/dev/sgil0` with a screen size of 512x512 pixels.
+====
+
+.Displaying FCC/EBU color bars with a specific resolution
+====
+[prompt]#fbcbars -f -W 1920 -N 1080#
+
+Displays FCC/EBU color bars with a resolution of 1920x1080 on the default framebuffer.
+====
+
 
 
 [[inspirations]]

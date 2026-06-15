@@ -4,85 +4,136 @@
 :manmanual: BRL-CAD
 
 == NAME
-fbcmap - change the color map of a frame buffer
+fbcmap - load a color map onto a framebuffer
 
 == SYNOPSIS
 
 [source]
 ----
-fbcmap [-F framebuffer] [ -w|W scr_width] [ -n|N scr_height] [ -s|S squarescrsize] [map_number]
+fbcmap [-h] [-F framebuffer] [-s squarescrsize] [-w scr_width] [-n scr_height] [-S squarescrsize] [-W scr_width] [-N scr_height] [map_number]
 ----
 
-
-[[description]]
 == DESCRIPTION
 
-*fbcmap* is used to change the color map of a frame buffer.
+*fbcmap* writes a built-in color map to a framebuffer.
+When invoked with no _map_number_ argument, or with a _map_number_ of
+0, the standard linear (identity) color map is loaded.
+Other map numbers select alternative mappings described below.
 
+== OPTIONS
 
-*-F* _framebuffer_::
-This option specifies which framebuffer the image is to be saved from. If not given, the environment variable *FB_FILE* is used to select the display device (see *brlcad*(1)). If *FB_FILE* has not been set, the default device for your system will be used.
+*-h*
+Print help and exit.
 
+*-F* _framebuffer_
+Specifies the framebuffer device.
+If not given, the *FB_FILE* environment variable is used
+(see *brlcad*(1)).
+If *FB_FILE* is not set, the default device for the system is used.
 
+*-s* _squarescrsize_
+Sets both the width and height of the framebuffer to
+_squarescrsize_ pixels.
 
-The requested framebuffer size will be the default size for the selected device (often 512x512 pixels).
+*-S* _squarescrsize_
+Same as *-s*.
 
-The *-w* (or *-W*) _scr_width_ option specifies the width of each scanline for the display device, in pixels.
+*-w* _scr_width_
+Sets the framebuffer display width to _scr_width_ pixels.
 
-The *-n* (or *-N*) _scr_height_ option specifies the height of each scanline for the display device.
+*-W* _scr_width_
+Same as *-w*.
 
-The *-s* (or *-S*) _squarescrsize_ option sets both the height and width to the size given. This size distinction is important only for devices like the Adage framebuffers which have different operating modes based on the display size.
+*-n* _scr_height_
+Sets the framebuffer display height to _scr_height_ pixels.
 
-If an optional color __map_number__ is given, that map is used; the default is the standard linear map. There are currently six other maps supplied numbered 1 through 6 as follows:
+*-N* _scr_height_
+Same as *-n*.
 
+If no size options are given, the requested framebuffer size will be
+the default for the selected device (typically 512×512 pixels).
+
+An optional _map_number_ argument selects the color map to load.
+The following maps are available:
+
+0::
+Linear (identity) color map (default).
 
 1::
-reverse-linear (negative) map.
-
+Reverse-linear (negative) map.
 
 2::
-one corrected for Polaroid 809/891 film.
-
+Corrected for Polaroid 809/891 print film.
 
 3::
-a linear mapping in which the first 100 values are black.
-
+Linear map with the first 100 entries set to black.
 
 4::
-a linear map with values 1->191 incremented by 64 to boost dim pictures. The values at 191 and above are all full on. Zero remains at zero.
-
+Linear map with values 1–191 shifted up by 64 to boost dim
+pictures.  Values 192 and above are full intensity.
+Zero remains black.
 
 5::
-a gamma correcting color map used by the University of Utah Alpha_1 project. A better source of gamma correction is the *fbgamma*(1) utility.
-
+Gamma-correcting map from the University of Utah Alpha_1 project.
+For general gamma correction, *fbgamma*(1) is preferred.
 
 6::
-a map with a series of color deltas. This map is mostly black with the following colors, appearing at multiples of 32, having values full on: white (0), magenta (32), red (64), yellow (96), green (128), cyan (160), blue (192). This map is most useful in conjunction with *fbcmrot*(1) and will show which pixels have the same intensities in one, two, or all three color planes.
+Color deltas map.  Mostly black, with full-intensity colors at
+multiples of 32: white (0), magenta (32), red (64), yellow (96),
+green (128), cyan (160), blue (192).
+Useful with *fbcmrot*(1) to visualize intensity relationships
+across color planes.
 
+8::
+Ikcmap 8 false-color map.
 
+9::
+Ikcmap 9 false-color map.
 
-There are also three special maps used to quickly change the display to a solid color for adjusting a camera without losing image memory, numbered 10 through 12 for black, white, and 18% neutral grey, respectively.
+10::
+Solid black.
 
+11::
+Solid white.
 
-[[see_also]]
+12::
+18% neutral grey.
+
+Maps 10–12 are useful for adjusting a camera to a uniform field
+without losing image memory.
+
+== EXAMPLES
+
+Load the standard linear color map onto the default framebuffer:
+
+....
+fbcmap
+....
+
+Load the reverse-linear (negative) map onto a specific framebuffer:
+
+....
+fbcmap -F /dev/fb0 1
+....
+
+Set the framebuffer to solid 18% grey at 1024×1024 resolution:
+
+....
+fbcmap -s 1024 12
+....
+
 == SEE ALSO
 
 *brlcad*(1), *fbcmrot*(1), *fbgamma*(1), *cmap-fb*(1), *fb-cmap*(1), *cmap*(5)
 
-
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
-[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

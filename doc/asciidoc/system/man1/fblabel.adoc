@@ -10,40 +10,106 @@ fblabel - display a text string on a framebuffer
 
 [source]
 ----
-fblabel [-dca] [-F framebuffer] [-f fontname] [-{sS} squaresize] [-{wW} width] [-{nN} height] [-C r/g/b] x_position y_position text_string
+fblabel [-a] [-c] [-d] [-F framebuffer] [-f fontname] [-C r/g/b]
+        [-r red] [-g green] [-b blue]
+        [-s squaresize] [-S squaresize]
+        [-w width] [-W width] [-n height] [-N height]
+        x_position y_position text_string
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fblabel* writes a text string to the image on the currently selected framebuffer. The text string will be filtered to the image currently displayed. Use *fbpoint*(1) to determine where to position the text string. The lower left corner of the text string starts displaying at the x and y position given. The environment variable FB_FILE specifies the current framebuffer; see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+*fblabel* writes a text string to the image on the currently selected
+framebuffer. The text is anti-aliased (filtered) against the existing
+image by default. Use *fbpoint*(1) to determine where to position the
+text. The lower left corner of the text string begins at the given
+_x_position_ and _y_position_.
 
-By default, the requested framebuffer size is assumed to be 512x512 pixels.
+The environment variable FB_FILE specifies the current framebuffer;
+see *brlcad*(1). Alternatively, the framebuffer may be explicitly
+specified with the *-F* flag.
 
-The *-d* flag is for debugging.
+By default, the requested framebuffer size is assumed to be 512x512
+pixels. The default text color is white (255/255/255).
 
-The *-c* flag causes the screen to be cleared before the text string is displayed. The default behavior is to label the current image without clearing the screen.
 
-The *-a* flag causes the text not to be filtered against the frame buffer image.
+[[options]]
+== OPTIONS
 
-The *-C* _r/g/b_ option specifies red, green, and blue (r/g/b) values [0..255] for the text. The default color is white.
+*-a*
+Disable anti-aliasing. Text is rendered without filtering against
+the background image.
 
-The *-f* _fontname_ option will change the current default font from nonie.r.12 to "/usr/lib/vfont/fontname".
+*-c*
+Clear the screen before displaying the text string. The default
+behavior is to label the current image without clearing the screen.
 
-The *-S* (or *-s*) flag sets the width and the height to the same value; the *-W* (or *-w*) and *-N* (or *-n*) flags are used for setting them individually.
+*-d*
+Enable debugging output.
+
+*-F* _framebuffer_
+Explicitly specifies the framebuffer device.
+
+*-f* _fontname_
+Specifies the font to use. The default font is nonie.r.12.
+
+*-C* _r/g/b_
+Specifies red, green, and blue color values [0..255] for the text,
+separated by slashes. The default color is white (255/255/255).
+
+*-r* _red_
+Specifies the red component [0..255] of the text color.
+
+*-g* _green_
+Specifies the green component [0..255] of the text color.
+
+*-b* _blue_
+Specifies the blue component [0..255] of the text color.
+
+*-s* _squaresize_ or *-S* _squaresize_
+Sets both the width and height of the framebuffer to _squaresize_.
+
+*-w* _width_ or *-W* _width_
+Sets the framebuffer width.
+
+*-n* _height_ or *-N* _height_
+Sets the framebuffer height.
+
+*-h* or *-?*
+Prints a usage message.
 
 
 [[fonts]]
 == FONTS
 
-*fblabel* expects the Berkeley fonts in the directory /usr/lib/vfont. The fonts are expected to be in Vax byte order, even if that is not the natural byte order of the machine, to avoid having to create a font converter.
+*fblabel* expects the Berkeley fonts in the directory /usr/lib/vfont.
+The fonts are expected to be in Vax byte order, even if that is not
+the natural byte order of the machine, to avoid having to create a
+font converter.
 
 
-[[example]]
-== EXAMPLE
+[[examples]]
+== EXAMPLES
 
-fblabel -f "oldenglish.14" `fbpoint -H` "Hello"
+Display white text at position (100, 200) on the default framebuffer:
+
+....
+fblabel 100 200 "Hello World"
+....
+
+Display red text with a specific font on a cleared 1024x1024 screen:
+
+....
+fblabel -c -S 1024 -C 255/0/0 -f oldenglish.14 50 300 "Title"
+....
+
+Use *fbpoint* to interactively select a position for the label:
+
+....
+fblabel -f "oldenglish.14" `fbpoint` "Hello"
+....
 
 
 [[see_also]]
