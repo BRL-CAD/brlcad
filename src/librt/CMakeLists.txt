@@ -118,6 +118,7 @@ set(
   cut_hlbvh.c
   cut_null.c
   cut_nubsp.c
+  default.c
   db5_alloc.c
   db5_attr.c
   db5_attr_registry.cpp

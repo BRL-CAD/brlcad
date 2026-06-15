@@ -72,6 +72,8 @@ __BEGIN_DECLS
 
 #include "./rt/debug.h"
 
+#include "./rt/default.h"
+
 #include "./rt/tol.h"
 
 #include "./rt/db_internal.h"

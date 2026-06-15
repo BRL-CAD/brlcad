@@ -44,6 +44,9 @@ endif(USING_MATERIALX)
 # diff testing
 brlcad_addexec(rt_diff diff.c "${RT_TEST_LIBS}" TEST)
 
+brlcad_addexec(rt_default_object default_object.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_default_object COMMAND rt_default_object)
+
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
   brlcad_addexec(rt_binary_attribute binary_attribute.c "${RT_TEST_LIBS}" TEST)
   brlcad_add_test(NAME rt_binary_attribute COMMAND rt_binary_attribute)
@@ -127,6 +130,7 @@ set(
   arb_intersect.g
   binary_attribute.c
   crofton.c
+  default_object.c
   dsp_raytrace_check.c
   dsp_sa_vol_check.c
   brep_boolean_tests.g
