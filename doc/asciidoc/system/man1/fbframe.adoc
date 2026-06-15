@@ -10,20 +10,64 @@ fbframe - place a colored frame around a framebuffer
 
 [source]
 ----
-fbframe [-F framebuffer] [-w|W frame_width] [-n|N frame_height] [-s|S squareframesize]
+fbframe [-F framebuffer] [-s squaresize] [-S squaresize] [-w width] \
+     [-W width] [-n height] [-N height]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbframe* places a colored frame around the edge pixels of a framebuffer. It is mostly for purposes of framebuffer alignment. The *-F* option can be used to specify the framebuffer. If this option is omitted, the environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If the variable is not set, the default device for your system will be used.
+*fbframe* draws a single-pixel-wide colored frame around the border
+of a framebuffer. The frame is drawn counter-clockwise starting from
+the bottom: red along the bottom, green up the right side, blue
+across the top, and white down the left side.
 
-The frame starts in the lower left with a red line running to the right to the next to last pixel. Next, a green line from there up to the next to top scan line is drawn. Then blue across the top scan line to the next to first column. Finally a white line down the left edge stopping just above the red line.
+This is primarily useful for framebuffer alignment and verifying
+display dimensions.
 
-By default, the dimensions of the frame will be taken from the framebuffer used. Alternatively, one or more of the options *-s*, *-w*, *-n* (or *-S*, *-W*, *-N*) may be used to set the dimensions of the frame drawn.
+If no size options are given, the dimensions are taken from the
+framebuffer. The *-F* option selects a specific framebuffer; if
+omitted, the *FB_FILE* environment variable is used (see
+*brlcad*(1)).
 
-The options *-w* (or *-W*) _frame_width_ and *-n* (or *-N*) _frame_height_ are used to specify the width (in pixels) and height (in scanlines) of the frame on the framebuffer respectively. The *-s* (or *-S*) _squareframesize_ option specifies both the height and width of the frame to be drawn.
+[[options]]
+== OPTIONS
+
+*-F* _framebuffer_::
+Specify the framebuffer device. If not provided, the default frame
+buffer is used.
+
+*-s* _squaresize_::
+*-S* _squaresize_::
+Set both the width and height of the frame.
+
+*-w* _width_::
+*-W* _width_::
+Set the frame width in pixels.
+
+*-n* _height_::
+*-N* _height_::
+Set the frame height in scanlines.
+
+*-h* or *-?*::
+Print usage information and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+Draw a frame on the default framebuffer:
+
+....
+fbframe
+....
+
+Draw a 1024x1024 frame on a specific framebuffer:
+
+....
+fbframe -F /dev/fb0 -s 1024
+....
 
 
 [[see_also]]
