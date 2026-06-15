@@ -25,7 +25,7 @@ The *-n* _file_height_ and *-N* _scr_height_ flags specifies the height in scanl
 
 *-s* _squarefilesize_ and *-S* _squarescrsize_ set both the height and width to the size given (for input file and display device respectively).
 
-*-o* _out_file.pix_ is a way of specifying output file name.
+*-o* _out_file.pix_ is a way of specifying output file name. If standard output is also redirected or piped, *pixrect* writes the same output to both destinations.
 
 This utility supports redirected input/output images.
 
