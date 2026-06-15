@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD
 
 == NAME
-dbclean - a shell script for compacting mged databases.
+dbclean - compact an mged database by removing dead space
 
 == SYNOPSIS
 
@@ -13,58 +13,51 @@ dbclean - a shell script for compacting mged databases.
 dbclean in_model.g out_model.g
 ----
 
-
 [[description]]
 == DESCRIPTION
 
-*dbclean* operates on the indicated input database __in_model.g__ and produces a compacter version of the same as __out_model.g.__
+*dbclean* compacts the input database _in_model.g_ by converting it
+to ASCII via *g2asc*(1) and back to binary via *asc2g*(1), writing
+the result to _out_model.g_. This removes gaps left by the
+*kill*/*killall* commands in *mged*(1).
 
-The objective is to remove "holes" in the original database which resulted from use of the _kill_/_killall_ commands in *mged*(1). Note that when a database is compacted in this manner, the compacting is dependent on the successful completion of the converters *g2asc*(1) and *asc2g*(1). The compacting will only be aborted if one of the conversions fails. Thus, when either converter "skips" solids, *dbclean* will continue, and __out_model.g__ will be written, albeit without the skipped solids. This will also result in a smaller database.
+If either converter skips objects it cannot handle, the conversion
+still completes and _out_model.g_ is written without those objects.
 
+[[examples]]
+== EXAMPLES
 
-[[example]]
-== EXAMPLE
-
-This section will acquaint the user with the ordinary usage of *dbclean* .
-
-
-....
-
-dbclean in_model.g out_model.g
-....
-
-This will result in a compacted version of the input.
-
+.Compact a database to reclaim dead space
+====
+[source,bash]
+----
+$ dbclean original.g compacted.g
+----
+Reads `original.g`, removes internal gaps, and writes a smaller
+`compacted.g`.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*mged*(1)
-
+*mged*(1), *g2asc*(1), *asc2g*(1)
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-Numerous error conditions are possible, usually due to errors in the geometry database. Descriptive messages are printed on standard error (file descriptor 2).
-
-
-[[bugs]]
-== BUGS
-
-Most deficiencies observed while using the *dbclean* program are usually with the *g2asc*(1) and *asc2g*(1) packages instead.
-
+Numerous error conditions are possible, usually due to errors in
+the geometry database. Descriptive messages are printed on standard
+error (file descriptor 2).
 
 [[author]]
 == AUTHOR
 
 *BRL-CAD Team*
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1991-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

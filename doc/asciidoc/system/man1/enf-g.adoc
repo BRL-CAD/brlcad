@@ -17,17 +17,38 @@ enf-g [-t tolerance] [-i starting_ident_number] [-l name_length_limit] [-n part_
 [[description]]
 == DESCRIPTION
 
-*enf-g* converts the specified __input_enf_facet_file__ to a BRL-CAD _database.g_ file. This input file is expected to be the ASCII output from the Elysium enf2mxp tessellator. The _tolerance_ provided is the maximum distance (in mm) between two vertices at which they will be considered to be the same vertex. The __starting_ident_number__ is the ident number to use for the first region created, each succeeding region will have their ident numbers incremented by one. If a __name_length_limit__ is provided, then the resulting names in the BRL-CAD model will not be longer than that limit. If a __part_number_to_name_mapping__ file is provided, then that file will be read and used to convert part numbers in the __input_enf_facet_file__ to the corresponding names in the mapping, and is expected to consist of a series of lines of text with each line having a part number and a legal BRL-CAD object name separated by a tab. (_-v_ option is provided for verbose mode.)
+*enf-g* converts the specified _input_enf_facet_file_ to a BRL-CAD _database.g_ file. The input file is expected to be the ASCII output from the Elysium _enf2mxp_ tessellator.
 
+[[options]]
+== OPTIONS
 
-[[example]]
-== EXAMPLE
+*-i starting_ident_number*::
+Specifies the starting ident number for the first region created. Each succeeding region will have its ident number incremented by one. The default is 1000.
 
+*-t tolerance*::
+Specifies the maximum distance (in mm) between two vertices at which they will be considered the same vertex. The default is the BRL-CAD standard tolerance (0.0005 mm).
 
-----
+*-l name_length_limit*::
+Sets a maximum length limit for the resulting object names in the BRL-CAD model. Names exceeding this limit will be truncated.
 
-$ enf-g sample.enf sample.g
-----
+*-n part_number_to_name_mapping*::
+Specifies a file containing a mapping from part numbers to object names. The file is expected to contain one mapping per line, consisting of a part number and a legal BRL-CAD object name separated by whitespace (tab or space). This file is used to convert part numbers in the input ENF facet file to the corresponding names in the mapping.
+
+*-v*::
+Enables verbose output mode.
+
+*-h, -?*::
+Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+The following example demonstrates a basic conversion of an ENF file to a BRL-CAD database, starting region ident numbers at 2000 and limiting object names to 32 characters.
+
+.Converting an ENF File with Custom Ident Numbers and Name Lengths
+====
+[prompt]#$# [in]`enf-g -i 2000 -l 32 sample.enf sample.g`
+====
 
 
 [[diagnostics]]

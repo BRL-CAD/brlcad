@@ -25,55 +25,60 @@ fbstretch [ -f input_image_name] [ -s input_square_size] [ -w input_width] \
 The default input image size is 512 by 512. Explicitly specified sizes override the default, and if actual input image size is smaller than requested, the actual size will be used. If not specified, requested output frame buffer size will be the stretched revised input size. If there are margins within the requested output beyond the stretched image, they will be cleared to background; if the stretched image would extend beyond the requested output size, it will be clipped to fit, even if there is room for it in the actual frame buffer. Actual sizes depend on details of specific frame buffers.
 
 [[options]]
-=== Options
+== OPTIONS
 
 
--f __input_image_name__::
+*-f* _input_image_name_::
 Inputs the image to be displayed from the specified frame buffer or *pix*(5) file, instead of modifying the output frame buffer in place. This option may not work if input and output frame buffers are the same device.
 
 
--s __input_square_size__::
+*-s* _input_square_size_::
 Specifies input image width and height.
 
 
--w __input_ width__::
+*-w* _input_width_::
 Specifies input image width.
 
 
--n __input_height__::
+*-n* _input_height_::
 Specifies input image height.
 
 
--a::
+*-a*::
 (no averaging) Specifies that output pixels will be sampled from the input, instead of being computed by averaging RGB values.
 
 
--v::
+*-v*::
 (verbose) Causes actual sizes and scale factors used to be printed on the standard error output.
 
 
--x __horizontal_scale_factor__::
+*-x* _horizontal_scale_factor_::
 Scales the image by the specified factor in the horizontal direction; the default is the ratio of requested output to input widths, if specified, otherwise 1.
 
 
--y __vertical_scale_factor__::
+*-y* _vertical_scale_factor_::
 Scales the image by the specified factor in the vertical direction; the default is the ratio of requested output to input heights, if specified, otherwise 1.
 
 
--S __output_square_size__::
+*-S* _output_square_size_::
 Specifies output frame buffer width and height.
 
 
--W __output_width__::
+*-W* _output_width_::
 Specifies output frame buffer width.
 
 
--N __output_height__::
+*-N* _output_height_::
 Specifies output frame buffer height.
 
 
--F __output_frame_buffer_name__::
-Outputs to the specified frame buffer instead of the one specified by the _FB_FILE_ environment variable (or the default, if _FB_FILE_ is not set). If this is the last option specified, the _-F_ is optional.
+*-F* _output_frame_buffer_name_::
+Outputs to the specified framebuffer instead of the one specified
+by the `FB_FILE` environment variable. If this is the last option,
+the *-F* prefix is optional.
+
+*-h, -?*::
+Print a usage message and exit.
 
 
 
@@ -85,19 +90,17 @@ Outputs to the specified frame buffer instead of the one specified by the _FB_FI
 Pixel averaging may be meaningless for some images or color maps, in which case sampling should be specified. Images of the Mandelbrot set (see *mandel*(1)) are a good example of this.
 
 
-[[example]]
-== EXAMPLE
+[[examples]]
+== EXAMPLES
 
-The following procedure enlarges an image, obtained from a personal computer via the *gif-fb* utility, to fill a 1280-by-1024 frame buffer.
-
-
-[quote]
-____
-$ gif-fb _image.gif_ # displays the 320x200 PC image
-
+.Enlarge a 320x200 image to fill a 1280x1024 framebuffer
+====
+[source,bash]
+----
+$ gif-fb image.gif
 $ fbstretch -w 320 -n 200 -W 1280 -N 1024
-
-____
+----
+====
 
 
 [[see_also]]

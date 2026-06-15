@@ -1,54 +1,63 @@
 = G-DOT(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
-g-dot - BRL-CAD to DOT language converter
+g-dot - BRL-CAD to DOT graph language converter
 
 == SYNOPSIS
 
 [source]
 ----
-g-dot [-o output.dot] database.g object(s)
+g-dot [-o output.dot] [-h] [-?] database.g object(s)
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-*g-dot* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _DOT_ language format. The *-o* option specifies an output .dot file (writes to stdout by default).
+*g-dot* converts the specified _object(s)_ from a BRL-CAD
+_database.g_ file to the DOT graph description language. Programs
+such as Graphviz, Tulip, and OmniGraffle can render the output as
+images.
 
-The DOT language format is a plain text format for describing graphs. Programs like Graphviz, Tulip, OmniGraffle, and others can render .dot files (such as those produced by *g-dot*) as images.
+[[options]]
+== OPTIONS
 
+*-o* _output.dot_::
+Write output to _output.dot_ instead of stdout.
 
-[[example]]
-== EXAMPLE
+*-h, -?*::
+Print a usage message and exit.
 
+[[examples]]
+== EXAMPLES
 
+.Export a model hierarchy as a DOT graph and render it
+====
+[source,bash]
 ----
-
-$ g-dot -o sample.dot sample.g sample_object
+$ g-dot -o model.dot sample.g all
+$ dot -Tpng model.dot -o model.png
 ----
+Exports the hierarchy of `all` from `sample.g` as a DOT file, then
+renders it to PNG using Graphviz.
+====
 
+[[see_also]]
+== SEE ALSO
 
-[[diagnostics]]
-== DIAGNOSTICS
-
-Error messages are intended to be self-explanatory.
-
+*brlcad*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1997-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

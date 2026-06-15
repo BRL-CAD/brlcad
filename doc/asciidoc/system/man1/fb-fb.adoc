@@ -4,42 +4,59 @@
 :manmanual: BRL-CAD
 
 == NAME
-fb-fb - copy an image on one frame buffer to another
+fb-fb - copy a framebuffer image to another framebuffer
 
 == SYNOPSIS
 
 [source]
 ----
-fb-fb [-v] [-F output_framebuffer] \
-     [-v] input_framebuffer [output_framebuffer]
+fb-fb [-v] [-F output_framebuffer] [-h] [-?] input_framebuffer [output_framebuffer]
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-*fb-fb* copies an image from the input frame buffer onto the output frame buffer. The framebuffer may also be explicitly specified by using the *-F* flag.
+*fb-fb* copies the image from _input_framebuffer_ to the output
+framebuffer. The output device may be specified with *-F* or as the
+second positional argument.
 
-The *-v* flag sets verbose mode.
+[[options]]
+== OPTIONS
 
+*-v*::
+Enable verbose mode.
+
+*-F* _output_framebuffer_::
+Explicitly specify the output framebuffer device.
+
+*-h, -?*::
+Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Copy the default framebuffer to a file-based framebuffer
+====
+[source,bash]
+----
+$ fb-fb /dev/Xl /dev/debug
+----
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fb-bw*(1), *fb-pix*(1), *fb-rle*(1)
-
+*brlcad*(1), *fb-bw*(1), *fb-pix*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

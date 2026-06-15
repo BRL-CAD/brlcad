@@ -4,41 +4,49 @@
 :manmanual: BRL-CAD
 
 == NAME
-decimate - Reduce image or data file of MxN tuples to one of size IxJ
+decimate - reduce the resolution of an image or data file
 
 == SYNOPSIS
 
 [source]
 ----
-decimate nbytes/pixel width height [ outwidth outheight]
+decimate nbytes/pixel width height [outwidth outheight]
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-*decimate* reads a file of *width* by *height* data items (each of which may be of arbitrary size as given by *nbytes/pixel* ), and discards enough of them to result in an output file of *outwidth* by *outheight* items, both of which default to 512. If the input image size is not an integer multiple of the output image size, then the decimated result will be padded with zero elements (pixels) on the right and top to achieve an output image of exactly the specified size.
+*decimate* reads a file of _width_ by _height_ data items from standard input, and discards enough data to produce an output file of _outwidth_ by _outheight_ items on standard output. The size of each data item is specified by _nbytes/pixel_. If _outwidth_ and _outheight_ are not provided, both default to 512.
 
-To process a *bw*(5) format file, use a value of 1 for *nbytes/pixel*. To process a *pix*(5) format file, use a value of 3 for *nbytes/pixel*.
+If the input image size is not an integer multiple of the output image size, the result is padded with zero elements (pixels) on the right and top to achieve an output image of exactly the specified size.
 
+To process a *bw*(5) format file, use a value of 1 for _nbytes/pixel_. To process a *pix*(5) format file, use a value of 3.
+
+[[examples]]
+== EXAMPLES
+
+.Downsample a 1024x1024 pix image to 256x256
+====
+[source,bash]
+----
+$ decimate 3 1024 1024 256 256 < input.pix > output.pix
+----
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix*(5), *bw*(5)
-
+*brlcad*(1), *bw*(5), *pix*(5)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1992-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

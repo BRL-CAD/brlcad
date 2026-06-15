@@ -8,35 +8,41 @@ dpix-pix - convert a double precision dpix file to a pix file
 
 == SYNOPSIS
 
-[source]
-----
-dpix-pix file.dpix > file.pix
-----
-
+*dpix-pix* _file.dpix_ > _file.pix_
 
 [[description]]
 == DESCRIPTION
 
-Outputs a dpix file to pix (see *pix*(5)) format. Standard input is read if a file name is not supplied.
+*dpix-pix* converts a double-precision image format (dpix) file to a *pix*(5) format file. The program reads the binary input file to determine the minimum and maximum values. It then linearly interpolates all values from this minimum and maximum range into the 8-bit range of 0 to 255, and writes the resulting pixels to standard output. 
 
+Please note that standard input cannot be used, as the program must read the input file twice (once to find the extrema, and once to interpolate and write the output).
+
+[[examples]]
+== EXAMPLES
+
+.Convert a dpix file to a pix file
+====
+[source,bash]
+----
+$ dpix-pix image.dpix > image.pix
+----
+Converts the double-precision image `image.dpix` to a *pix*(5) format file named `image.pix`.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*plot3-plot3*(1), *plot3rot*(1), *plot3-fb*(1), *libplot3*(3), *plot3*(5)
-
+*cv*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS
