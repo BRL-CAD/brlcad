@@ -63,7 +63,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    printf("\
+    fprintf(stderr, "\
 A Frame Buffer display device is selected by\n\
 setting the environment variable FB_FILE:\n\
 (/bin/sh) FB_FILE=/dev/device; export FB_FILE\n\
@@ -71,10 +71,10 @@ setting the environment variable FB_FILE:\n\
 Many programs also accept a \"-F framebuffer\" flag.\n\
 Type \"man brlcad\" for more information.\n");
 
-    printf("=============== Available Devices ================\n");
+    fprintf(stderr, "=============== Available Devices ================\n");
     fb_genhelp();
 
-    printf("=============== Current Selection ================\n");
+    fprintf(stderr, "=============== Current Selection ================\n");
     if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
 	fprintf(stderr, "fbhelp: Can't open frame buffer\n");
 	return 1;
