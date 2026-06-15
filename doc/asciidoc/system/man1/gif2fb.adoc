@@ -4,47 +4,62 @@
 :manmanual: BRL-CAD
 
 == NAME
+
 gif2fb - display GIF file on frame buffer
 
 == SYNOPSIS
 
-[source]
-----
-gif2fb [-H] [-v] [ -F frame_buffer_name] GIF_file_name
-----
+*gif2fb* [-H] [-v] [-F _frame_buffer_name_] [_GIF_file_name_]
 
-
-[[description]]
 == DESCRIPTION
 
-*gif2fb* displays on a frame buffer the images described by a CompuServe GIF (Graphics Interchange Format) file. The *-F* option outputs to the specified frame buffer instead of the one specified by the __FB_FILE__ environment variable (or the default frame buffer, if __FB_FILE__ is not set). The frame buffer size requested will be the same as the input GIF screen size. The actual size obtained depends on details of the specific frame buffer. The *-H* option prints the GIF screen size on stderr. The *-v* option prints additional information about the GIF file on stderr. The __GIF_file_name__ specifies the GIF input file to be translated, rather than reading the file from the standard input.
+*gif2fb* displays CompuServe GIF (Graphics Interchange Format) images on a frame buffer. If no _GIF_file_name_ is specified, it reads from standard input.
 
+== OPTIONS
 
-[[see_also]]
+*-F* _frame_buffer_name_::
+	Outputs to the specified frame buffer instead of the one specified by the *FB_FILE* environment variable (or the default system frame buffer). The requested frame buffer size will match the GIF image size.
+
+*-H*::
+	Print the GIF screen dimensions (width and height) to standard error and exit.
+
+*-v*::
+	Verbose mode. Print additional information about the GIF file structure on standard error.
+
+*-h*::
+*-?*::
+	Print the usage message and exit.
+
+== EXAMPLES
+
+.Display a GIF image on the default frame buffer
+[source,bash]
+----
+gif2fb image.gif
+----
+
+.Print dimensions of a GIF file
+[source,bash]
+----
+gif2fb -H image.gif
+----
+
 == SEE ALSO
 
-A Standard Defining a Mechanism for the Storage and Transmission of Raster-Based Graphics Information, June 15, 1987 (CompuServe Incorporated).*libfb*(3) , *gif-fb*(1)
+*gif-fb*(1), *libfb*(3)
 
-
-[[diagnostics]]
 == DIAGNOSTICS
 
 Error messages are intended to be self-explanatory.
 
-
-[[author]]
 == AUTHOR
 
 Christopher T. Johnson
 
-
-[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1994-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
