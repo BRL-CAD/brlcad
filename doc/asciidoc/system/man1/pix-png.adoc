@@ -17,7 +17,7 @@ pix-png [-a] [-g gamma] [-n file_height] [-w file_width] [-s squaresize] [-o PNG
 [[description]]
 == DESCRIPTION
 
-*pix-png* converts a _BRL PIX(5)_ format file to a _PNG_ format file on the standard output. The PNG file created will be an RGB file with a bit-depth of 8 and a file gamma of 1.0.
+*pix-png* converts a _BRL PIX(5)_ format file to a _PNG_ format file. By default it writes to standard output. The PNG file created will be an RGB file with a bit-depth of 8 and a file gamma of 1.0.
 
 PIX image files do not contain information about their size. The size of the input PIX image file must be specified if the dimensions are not the default 512x512 size.
 
@@ -47,7 +47,7 @@ sets both the width and the height for the input to be _squaresize_
 
 
 *-o PNG_file*::
-tells *pix-png* to write image data to the specified __PNG_file__ output file. The *pix-png* command will not write out binary image data directly to a terminal device as a safeguard.
+tells *pix-png* to write image data to the specified __PNG_file__ output file. If standard output is also redirected or piped, *pix-png* writes the same output to both destinations. The *pix-png* command will not write out binary image data directly to a terminal device as a safeguard.
 
 
 
