@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -76,6 +78,57 @@ Usage: png-fb [-H -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.png]\n";
 
+static int
+parse_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < INT_MIN || parsed > INT_MAX) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
+static int
+parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
+{
+    if (!parse_int_arg(arg, value, label))
+	return 0;
+    if (*value < 0) {
+	fprintf(stderr, "%s: %s must be zero or greater, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_positive_double_arg(const char *arg, double *value, const char *label)
+{
+    char *end = NULL;
+    double parsed = 0.0;
+
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    if (parsed <= 0.0) {
+	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = parsed;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -87,10 +140,12 @@ get_args(int argc, char **argv)
 		one_line_only = 1;
 		break;
 	    case 'm':
-		multiple_lines = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &multiple_lines, "line count"))
+		    return 0;
 		break;
 	    case 'g':
-		def_screen_gamma = atof(bu_optarg);
+		if (!parse_positive_double_arg(bu_optarg, &def_screen_gamma, "screen gamma"))
+		    return 0;
 		break;
 	    case 'H':
 		header_only = 1;
@@ -111,25 +166,33 @@ get_args(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 'x':
-		file_xoff = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &file_xoff, "file x offset"))
+		    return 0;
 		break;
 	    case 'y':
-		file_yoff = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &file_yoff, "file y offset"))
+		    return 0;
 		break;
 	    case 'X':
-		scr_xoff = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &scr_xoff, "screen x offset"))
+		    return 0;
 		break;
 	    case 'Y':
-		scr_yoff = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &scr_yoff, "screen y offset"))
+		    return 0;
 		break;
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen width"))
+		    return 0;
 		break;
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_height, "screen height"))
+		    return 0;
 		break;
 
 	    default:		/* '?''h' */
@@ -155,8 +218,10 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "png-fb: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "png-fb: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

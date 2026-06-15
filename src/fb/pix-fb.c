@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -85,6 +87,52 @@ Usage: pix-fb [-a -i -c -z -1] [-m #lines] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [-p seconds]\n\
 	[file.pix]\n";
 
+static int
+parse_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < INT_MIN || parsed > INT_MAX) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
+static int
+parse_positive_size_arg(const char *arg, size_t *value, const char *label)
+{
+    int parsed = 0;
+
+    if (!parse_int_arg(arg, &parsed, label))
+	return 0;
+    if (parsed <= 0) {
+	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (size_t)parsed;
+    return 1;
+}
+
+static int
+parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
+{
+    if (!parse_int_arg(arg, value, label))
+	return 0;
+    if (*value < 0) {
+	fprintf(stderr, "%s: %s must be zero or greater, got '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -96,7 +144,8 @@ get_args(int argc, char **argv)
 		one_line_only = 1;
 		break;
 	    case 'm':
-		multiple_lines = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &multiple_lines, "line count"))
+		    return 0;
 		break;
 	    case 'a':
 		autosize = 1;
@@ -115,40 +164,53 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_width, "file size"))
+		    return 0;
+		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_width, "file width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_height, "file height"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'x':
-		file_xoff = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &file_xoff, "file x offset"))
+		    return 0;
 		break;
 	    case 'y':
-		file_yoff = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &file_yoff, "file y offset"))
+		    return 0;
 		break;
 	    case 'X':
-		scr_xoff = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &scr_xoff, "screen x offset"))
+		    return 0;
 		break;
 	    case 'Y':
-		scr_yoff = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &scr_yoff, "screen y offset"))
+		    return 0;
 		break;
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen width"))
+		    return 0;
 		break;
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_height, "screen height"))
+		    return 0;
 		break;
 	    case 'p':
-		pause_sec=atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &pause_sec, "pause duration"))
+		    return 0;
 		break;
 
 	    default:		/* '?' */
@@ -178,8 +240,10 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pix-fb: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "pix-fb: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

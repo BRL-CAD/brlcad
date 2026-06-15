@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -69,6 +71,23 @@ int doKeyPad(void);
 static char usage[] = "\
 Usage: fbcolor [-F framebuffer]\n\
 	[-s|S squarescrsize] [-w|W scr_width] [-n|N scr_height]\n";
+
+static int
+parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < 0 || parsed > INT_MAX) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
 
 void
 printusage(void)
@@ -304,6 +323,8 @@ int
 pars_Argv(int argc, char **argv)
 {
     int c;
+    int remaining = 0;
+
     while ((c = bu_getopt(argc, argv, "F:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
 	    case 'F':
@@ -311,19 +332,28 @@ pars_Argv(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &scr_height, "screen height"))
+		    return 0;
 		break;
 	    default :
 		return 0;
 	}
+    }
+    remaining = argc - bu_optind;
+    if (remaining != 0) {
+	fprintf(stderr, "fbcolor: excess argument(s) not supported\n");
+	return 0;
     }
     return 1;
 }
