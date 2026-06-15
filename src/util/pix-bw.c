@@ -80,6 +80,21 @@ parse_positive_size_arg(const char *arg, size_t *value, const char *label)
     return 1;
 }
 
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	bu_log("pix-bw: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -123,15 +138,18 @@ get_args(int argc, char **argv)
 		break;
 	    case 'R' :
 		red++;
-		rweight = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &rweight, "red weight"))
+		    return 0;
 		break;
 	    case 'G' :
 		green++;
-		gweight = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &gweight, "green weight"))
+		    return 0;
 		break;
 	    case 'B' :
 		blue++;
-		bweight = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &bweight, "blue weight"))
+		    return 0;
 		break;
 	    case 'o' :
 		out_file = bu_optarg;

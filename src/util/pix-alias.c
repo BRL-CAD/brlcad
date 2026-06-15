@@ -38,6 +38,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -62,6 +64,23 @@ struct aliashead {
     short xoff, yoff;	/* offsets of pixels */
     short bitplanes;	/* the number of bits per pixel */
 };
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
 
 
 /*
@@ -164,9 +183,19 @@ main(int ac, char **av)
      */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
-	    case 'w' : x = atoi(bu_optarg); break;
-	    case 'n' : y = atoi(bu_optarg); break;
-	    case 's' : x = y = atoi(bu_optarg); break;
+	    case 'w' :
+		if (!parse_positive_int_arg(bu_optarg, &x, "input width"))
+		    usage();
+		break;
+	    case 'n' :
+		if (!parse_positive_int_arg(bu_optarg, &y, "input height"))
+		    usage();
+		break;
+	    case 's' :
+		if (!parse_positive_int_arg(bu_optarg, &x, "input size"))
+		    usage();
+		y = x;
+		break;
 	    default	: usage(); break;
 	}
 

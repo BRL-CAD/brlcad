@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include "bio.h"
 
@@ -52,6 +53,23 @@ char usage[] =
 "Usage: pixinterp2x [-s squarefilesize] [-w file_width] [-n file_height] [file.pix] > outfile.pix\n";
 
 static int
+parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long long value;
+
+    errno = 0;
+    value = strtoull(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
+	fprintf(stderr, "pixinterp2x: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (size_t)value;
+    return 1;
+}
+
+static int
 get_args(int argc, char **argv)
 {
     int c;
@@ -60,13 +78,17 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square file size */
-		file_height = file_width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_width, "input size"))
+		    return 0;
+		file_height = file_width;
 		break;
 	    case 'w':
-		file_width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_width, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		file_height = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_height, "input height"))
+		    return 0;
 		break;
 	    default:
 		return 0;
@@ -79,8 +101,10 @@ get_args(int argc, char **argv)
 	}
 	bu_optind++;
     }
-    if (argc > ++bu_optind)
-	(void) fprintf(stderr, "Excess arguments ignored\n");
+    if (argc > ++bu_optind) {
+	(void) fprintf(stderr, "pixinterp2x: excess argument(s) not supported\n");
+	return 0;
+    }
 
     if (isatty(fileno(infp)) || isatty(fileno(stdout)))
 	return 0;

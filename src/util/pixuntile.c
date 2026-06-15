@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -50,6 +52,40 @@ Usage: pixuntile [-s squareinsize] [-w in_width] [-n in_height]\n\
 	[-S squareoutsize] [-W out_width] [-N out_height]\n\
 	[-o startframe] basename [file2 ... fileN] <file.pix\n";
 
+static int
+parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long long value;
+
+    errno = 0;
+    value = strtoull(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
+	fprintf(stderr, "pixuntile: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (size_t)value;
+    return 1;
+}
+
+static int
+parse_nonnegative_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > INT_MAX) {
+	fprintf(stderr, "pixuntile: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -59,25 +95,34 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square input file size */
-		in_height = in_width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &in_width, "input size"))
+		    return 0;
+		in_height = in_width;
 		break;
 	    case 'w':
-		in_width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &in_width, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		in_height = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &in_height, "input height"))
+		    return 0;
 		break;
 	    case 'S':
-		out_height = out_width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &out_width, "output size"))
+		    return 0;
+		out_height = out_width;
 		break;
 	    case 'W':
-		out_width = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &out_width, "output width"))
+		    return 0;
 		break;
 	    case 'N':
-		out_height = atoi(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &out_height, "output height"))
+		    return 0;
 		break;
 	    case 'o':
-		framenumber = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &framenumber, "start frame"))
+		    return 0;
 		break;
 	    default:		/* '?''h' */
 		return 0;	/* Bad, other than option '?' or 'h' */

@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -57,6 +59,40 @@ Usage: pixbgstrip [-a] [-t thresh] [-x x_off_for_bg_pixel]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.pix]\n";
 
+static int
+parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long long value;
+
+    errno = 0;
+    value = strtoull(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
+	fprintf(stderr, "pixbgstrip: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (size_t)value;
+    return 1;
+}
+
+static int
+parse_nonnegative_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > INT_MAX) {
+	fprintf(stderr, "pixbgstrip: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -69,21 +105,25 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_width = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_width, "input size"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_width, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
 		autosize = 0;
 		break;
 	    case 't':
-		thresh = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &thresh, "threshold"))
+		    return 0;
 		break;
 	    case 'x':
-		bg_x_offset = atoi(bu_optarg);
+		if (!parse_nonnegative_int_arg(bu_optarg, &bg_x_offset, "background x offset"))
+		    return 0;
 		break;
 
 	    default:		/* '?' , 'h' */
@@ -108,8 +148,10 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "pixbgstrip: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }
@@ -145,6 +187,11 @@ main(int argc, char **argv)
 	} else {
 	    fprintf(stderr, "pixbgstrip: unable to autosize\n");
 	}
+    }
+
+    if ((size_t)bg_x_offset >= file_width) {
+	fprintf(stderr, "pixbgstrip: background x offset %d is outside width %zu\n", bg_x_offset, file_width);
+	bu_exit(1, NULL);
     }
 
     scanbytes = file_width * sizeof(RGBpixel);

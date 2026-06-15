@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -67,6 +69,23 @@ struct rasterfile {
     1,		/* equal RGB color map */
     MAPSIZE*3	/* length (bytes) of RGB colormap */
 };
+
+static int
+parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long long value;
+
+    errno = 0;
+    value = strtoull(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+	return 0;
+    }
+
+    *out_value = (size_t)value;
+    return 1;
+}
 
 
 /* The Sun Rasterfile Colormap
@@ -341,9 +360,19 @@ main(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'd'    : dither = !dither; break;
-	    case 'w'    : ras.ras_width = atoi(bu_optarg); break;
-	    case 'n'    : ras.ras_height = atoi(bu_optarg); break;
-	    case 's'    : ras.ras_width = ras.ras_height = atoi(bu_optarg); break;
+	    case 'w'    :
+		if (!parse_positive_size_arg(bu_optarg, &ras.ras_width, "input width"))
+		    usage();
+		break;
+	    case 'n'    :
+		if (!parse_positive_size_arg(bu_optarg, &ras.ras_height, "input height"))
+		    usage();
+		break;
+	    case 's'    :
+		if (!parse_positive_size_arg(bu_optarg, &ras.ras_width, "input size"))
+		    usage();
+		ras.ras_height = ras.ras_width;
+		break;
 	    default     : usage(); break;
 	}
 

@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -46,6 +48,40 @@ unsigned char obuf[32767 * 3];
 #define RGBCMP(a, b) ((a) == (b)[0] && \
 		      (a)[1] == (b)[1] && \
 		      (a)[2] == (b)[2])
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
+static int
+parse_byte_arg(const char *arg, unsigned char *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > 255) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+	return 0;
+    }
+
+    *out_value = (unsigned char)value;
+    return 1;
+}
 
 
 void
@@ -73,10 +109,8 @@ parse_args(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
 	    case 'd':
-		if ((c=atoi(bu_optarg)) > 0)
-		    depth = c;
-		else
-		    fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
+		if (!parse_positive_int_arg(bu_optarg, &depth, "pixel depth"))
+		    usage("");
 
 		break;
 
@@ -109,18 +143,21 @@ int main(int ac, char **av)
 
     if (i+6 > ac)
 	usage("missing pixel value(s)\n");
+    if (i+6 < ac)
+	usage("excess pixel value(s)\n");
 
     if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
 	usage("Redirect standard input and output\n");
 
     /* get pixel values */
-    r = atoi(av[i++]);
-    g = atoi(av[i++]);
-    b = atoi(av[i++]);
-
-    R = atoi(av[i++]);
-    G = atoi(av[i++]);
-    B = atoi(av[i]);
+    if (!parse_byte_arg(av[i++], &r, "input red value") ||
+	!parse_byte_arg(av[i++], &g, "input green value") ||
+	!parse_byte_arg(av[i++], &b, "input blue value") ||
+	!parse_byte_arg(av[i++], &R, "output red value") ||
+	!parse_byte_arg(av[i++], &G, "output green value") ||
+	!parse_byte_arg(av[i], &B, "output blue value")) {
+	return 1;
+    }
 
     /* process stdin */
     while ((pixels = fread(ibuf, 3, sizeof(ibuf)/3, stdin)) > 0) {

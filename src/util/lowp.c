@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -52,6 +54,23 @@ char usage[] = "Usage: lowp file1.pix file2.pix file3.pix [width] > out.pix\n";
 
 int infd1, infd2, infd3;		/* input fd's */
 
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
+	fprintf(stderr, "lowp: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
 static void
 check_readval(unsigned char *in, int infd)
 {
@@ -72,7 +91,7 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    if (argc < 2) {
+    if (argc != 4 && argc != 5) {
 	fprintf(stderr, "%s", usage);
 	bu_exit (1, NULL);
     }
@@ -108,7 +127,8 @@ main(int argc, char **argv)
     bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     if (argc == 5) {
-	nlines = atoi(argv[4]);
+	if (!parse_positive_int_arg(argv[4], &nlines, "width"))
+	    bu_exit(1, "%s", usage);
     }
 
     pix_line = nlines;	/* Square pictures */

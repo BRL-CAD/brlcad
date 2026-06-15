@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,6 +62,35 @@ static long int file_height = 512L;	/* default input height */
 static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
 
+static int
+parse_positive_long_arg(const char *arg, long int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0) {
+	bu_log("double-asc: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = value;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    long int value = 0;
+
+    if (!parse_positive_long_arg(arg, &value, label) || value > INT_MAX)
+	return 0;
+
+    *out_value = (int)value;
+    return 1;
+}
+
 
 void
 print_usage(void)
@@ -84,15 +115,19 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &file_width, "input size"))
+		    print_usage();
+		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &file_height, "input height"))
+		    print_usage();
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &file_width, "input width"))
+		    print_usage();
 		autosize = 0;
 		break;
 		/*
@@ -107,7 +142,8 @@ get_args(int argc, char **argv)
 		bu_strlcpy(format, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case '#':
-		d_per_l = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &d_per_l, "doubles per line"))
+		    print_usage();
 		break;
 	    default:
 		print_usage();
