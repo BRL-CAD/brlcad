@@ -1,7 +1,7 @@
 = MGED(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: User Commands
 
 == NAME
 mged - multi-display interactive combinatorial solid geometry editor
