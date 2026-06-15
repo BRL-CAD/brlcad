@@ -10,20 +10,64 @@ fb-bw - save a framebuffer image in a black and white bw file
 
 [source]
 ----
-fb-bw [-i] [-F framebuffer] [-X scr_xoff] [-Y scr_yoff] [-s squaresize] [-w width] [-n height] [file.bw]
+fb-bw [-h] [-i] [-F framebuffer] [-X scr_xoff] [-Y scr_yoff] [-s squaresize] [-w width] [-n height] [file.bw]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fb-bw* will take a region of a framebuffer display and save it as a black and white *bw*(5) format file. The environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used. Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+*fb-bw* saves a region of a framebuffer display as a black and white *bw*(5) format file. The conversion is performed by computing an equal blending of the red, green, and blue channels. For more complex conversions, use *fb-pix*(1) and *pix-bw*(1).
 
-By default, the output file will be size 512x512 pixels. The *-s* flag will set both the file height and width to be the given size, while *-w* and *-n* are used for setting them individually.
+By default, a first quadrant coordinate system is used (origin in the lower left of the screen), and the saved area starts from this origin.
 
-A first quadrant coordinate system is used (origin in lower left of screen), and the area saved is normally from this origin. The *-X* and *-Y* flags can be used to move the origin to an offset position on the screen. The *-i* flag switches to a fourth quadrant system, both in the storage order as well as the origin offset coordinates (i.e. origin is now the upper left corner of the screen).
 
-An equal blending of red, green, and blue is done. For more complicated black and white conversion use *fb-pix*(1) and *pix-bw*(1).
+[[options]]
+== OPTIONS
+
+*-F* _framebuffer_::
+Explicitly specify the framebuffer device. If not set, the environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If `FB_FILE` is also not set, the default device for the system will be used.
+
+*-s* _squaresize_::
+Set both the output file width and height to the given _squaresize_. The default size is 512x512 pixels.
+
+*-w* _width_::
+Set the output file width.
+
+*-n* _height_::
+Set the output file height.
+
+*-X* _scr_xoff_::
+Set the starting X coordinate (offset) on the screen.
+
+*-Y* _scr_yoff_::
+Set the starting Y coordinate (offset) on the screen.
+
+*-i*::
+Use a fourth quadrant coordinate system (origin at the upper left corner of the screen) instead of the default first quadrant (origin at the lower left). This changes both the origin offset coordinates and the storage order.
+
+*-h* / *-?*::
+Print a help message and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+*Example 1. Save a full 1024x1024 framebuffer image to a file*
+[example]
+====
+[cmd]`fb-bw -F /dev/Xl -s 1024 image.bw`
+
+Saves the entire 1024x1024 image from the framebuffer `/dev/Xl` into `image.bw`.
+====
+
+*Example 2. Save a specific region of the framebuffer*
+[example]
+====
+[cmd]`fb-bw -X 256 -Y 256 -w 512 -n 512 region.bw`
+
+Saves a 512x512 region starting at offset (256, 256) from the default framebuffer into `region.bw`.
+====
 
 
 [[see_also]]
