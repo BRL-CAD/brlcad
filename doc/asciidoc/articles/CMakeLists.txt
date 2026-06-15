@@ -17,6 +17,7 @@ set(
   pipes.adoc
   procedural_geometry.adoc
   projection_shader.adoc
+  renderer_showcase.adoc
   tire.adoc
 )
 
@@ -204,6 +205,23 @@ set(
   images/gallery_window.png
   images/gallery_window_frame.png
   images/gallery_wire.png
+  images/renderer_gallery_rt_l0.png
+  images/renderer_gallery_rt_l1.png
+  images/renderer_gallery_rt_l2.png
+  images/renderer_gallery_rt_l3.png
+  images/renderer_gallery_rt_l4.png
+  images/renderer_gallery_rt_l5.png
+  images/renderer_gallery_rt_l6.png
+  images/renderer_gallery_rt_l7.png
+  images/renderer_gallery_rt_l8.png
+  images/renderer_gallery_rt_haze.png
+  images/renderer_gallery_rt_cutaway.png
+  images/renderer_gallery_rtedge_default.png
+  images/renderer_gallery_rtedge_colored.png
+  images/renderer_gallery_rtedge_regions.png
+  images/renderer_gallery_rthide.png
+  images/renderer_gallery_rtdepth.png
+  images/renderer_gallery_rtxray.png
 )
 if(TARGET mged OR TARGET qged OR TARGET archer)
   if(BRLCAD_EXTRADOCS)
@@ -260,6 +278,66 @@ if(BRLCAD_GENERATE_GALLERY AND TARGET rt AND TARGET mged)
   set_target_properties(procedural-gallery-snapshot PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 endif(BRLCAD_GENERATE_GALLERY AND TARGET rt AND TARGET mged)
 
+# Renderer showcase gallery -- opt-in regeneration of the committed snapshot.
+#
+# Like the procedural geometry gallery above, the .adoc article and
+# renderer_gallery_*.png images are normal committed documentation.  This target
+# refreshes those products from the built renderers and sample Cornell box so a
+# developer can review and commit the resulting diff.
+option(BRLCAD_GENERATE_RENDERER_GALLERY "Regenerate the renderer showcase gallery snapshot" OFF)
+if(
+  BRLCAD_GENERATE_RENDERER_GALLERY
+  AND TARGET rt
+  AND TARGET rtedge
+  AND TARGET rtdepth
+  AND TARGET rtxray
+  AND TARGET rthide
+  AND TARGET bw-png
+  AND TARGET fbclear
+  AND TARGET plot3-fb
+  AND TARGET fb-png
+  AND TARGET cornell.g
+)
+  add_custom_target(
+    renderer-gallery-snapshot
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DRT=$<TARGET_FILE:rt>
+      -DRTEDGE=$<TARGET_FILE:rtedge>
+      -DRTDEPTH=$<TARGET_FILE:rtdepth>
+      -DRTXRAY=$<TARGET_FILE:rtxray>
+      -DRTHIDE=$<TARGET_FILE:rthide>
+      -DBWPNG=$<TARGET_FILE:bw-png>
+      -DFBCLEAR=$<TARGET_FILE:fbclear>
+      -DPLOT3FB=$<TARGET_FILE:plot3-fb>
+      -DFBPNG=$<TARGET_FILE:fb-png>
+      -DMANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/renderer_gallery/renderer_gallery_manifest.cmake
+      -DIMGDIR=${CMAKE_CURRENT_SOURCE_DIR}/images
+      -DADOC=${CMAKE_CURRENT_SOURCE_DIR}/renderer_showcase.adoc
+      -DWORKDIR=${CMAKE_CURRENT_BINARY_DIR}/renderer_gallery_work
+      -DDB=${CMAKE_BINARY_DIR}/${DATA_DIR}/db/cornell.g
+      -DSIZE=512
+      "-DTITLE=BRL-CAD Renderer Showcase"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/renderer_gallery/generate_renderer_gallery.cmake
+    DEPENDS
+      rt
+      rtedge
+      rtdepth
+      rtxray
+      rthide
+      bw-png
+      fbclear
+      plot3-fb
+      fb-png
+      cornell.g
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Regenerating renderer showcase gallery snapshot (images + adoc)"
+    VERBATIM
+    USES_TERMINAL
+  )
+  set_target_properties(renderer-gallery-snapshot PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+endif()
+
 cmakefiles(
   CMakeLists.txt
   ${articles_EN}
@@ -268,6 +346,8 @@ cmakefiles(
   images/tire_fig13.svg
   gallery/gallery_manifest.cmake
   gallery/generate_gallery.cmake
+  renderer_gallery/renderer_gallery_manifest.cmake
+  renderer_gallery/generate_renderer_gallery.cmake
   gallery/inputs/pipe.stdin
   gallery/inputs/wire.stdin
   gallery/inputs/tube.stdin

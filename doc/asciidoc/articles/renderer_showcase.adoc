@@ -1,0 +1,84 @@
+= BRL-CAD Renderer Showcase
+:doctype: article
+:toc:
+:toclevels: 2
+
+This gallery shows BRL-CAD's image-producing ray-tracing front ends and
+selected `rt` output styles rendered against the sample Cornell box model.
+Each snapshot uses the same database, object, perspective, and saved view
+matrix from `db/cornell.rt`:
+
+----
+rt -B -M -p55 -s512 -P1 [style options] -o <name>.png cornell.g all.g < cornell.view
+----
+
+The scalar and plot outputs are converted with BRL-CAD image tools.  In
+particular, `rthide` is rendered as plot3 and rasterized with `plot3-fb` and
+`fb-png`.
+
+NOTE: This article and its images are a committed snapshot. Developers can
+regenerate them from the built tools by configuring with
+`-DBRLCAD_GENERATE_RENDERER_GALLERY=ON` and building the
+`renderer-gallery-snapshot` target.
+
+== RT lighting models
+
+[cols="1,3"]
+[%noheader]
+|===
+|image:images/renderer_gallery_rt_l0.png[rt_l0,512]
+|*rt -l0 full lighting*: Full lighting model with explicit Cornell-box light, material color, shadows, and reflection.
+|image:images/renderer_gallery_rt_l1.png[rt_l1,512]
+|*rt -l1 eye diffuse*: Simple diffuse lighting from the eye, useful for debugging object form without scene-light complexity.
+|image:images/renderer_gallery_rt_l2.png[rt_l2,512]
+|*rt -l2 normals*: Surface normals encoded as RGB colors, useful for checking orientation and curvature continuity.
+|image:images/renderer_gallery_rt_l3.png[rt_l3,512]
+|*rt -l3 three-light*: Three-light diffuse debug model. On the Cornell box this currently matches the full-lighting snapshot closely.
+|image:images/renderer_gallery_rt_l4.png[rt_l4,512]
+|*rt -l4 curvature*: Inverse-curvature debug display. The Cornell box is mostly planar, so the committed image is intentionally flat.
+|image:images/renderer_gallery_rt_l5.png[rt_l5,512]
+|*rt -l5 principal direction*: Principal curvature direction debug display.
+|image:images/renderer_gallery_rt_l6.png[rt_l6,512]
+|*rt -l6 UV*: UV coordinate test-map style; U appears in red and V in blue.
+|image:images/renderer_gallery_rt_l7.png[rt_l7,512]
+|*rt -l7 photon map*: Photon-mapping global illumination using a small deterministic photon count so regeneration remains quick enough for documentation snapshots.
+|image:images/renderer_gallery_rt_l8.png[rt_l8,512]
+|*rt -l8 heat graph*: Heat-graph mode. Current PNG file output matches the shaded image while heat timing is reported in the render log.
+|===
+
+== RT output options
+
+[cols="1,3"]
+[%noheader]
+|===
+|image:images/renderer_gallery_rt_haze.png[rt_haze,512]
+|*rt haze*: Full lighting with atmospheric haze enabled.
+|image:images/renderer_gallery_rt_cutaway.png[rt_cutaway,512]
+|*rt cut plane*: Full lighting with a view-wide cutting plane applied at render time.
+|===
+
+== Edges and line renderers
+
+[cols="1,3"]
+[%noheader]
+|===
+|image:images/renderer_gallery_rtedge_default.png[rtedge_default,512]
+|*rtedge default*: Default edge rendering on a dark background.
+|image:images/renderer_gallery_rtedge_colored.png[rtedge_colored,512]
+|*rtedge colored*: Custom foreground and background colors.
+|image:images/renderer_gallery_rtedge_regions.png[rtedge_regions,512]
+|*rtedge region colors*: Region-aware edge rendering using region colors.
+|image:images/renderer_gallery_rthide.png[rthide,512]
+|*rthide hidden line*: Hidden-line plot3 output rasterized with BRL-CAD's plot3-fb and fb-png tools.
+|===
+
+== Scalar image renderers
+
+[cols="1,3"]
+[%noheader]
+|===
+|image:images/renderer_gallery_rtdepth.png[rtdepth,512]
+|*rtdepth*: Depth map rendered as grayscale.
+|image:images/renderer_gallery_rtxray.png[rtxray,512]
+|*rtxray*: Pseudo X-ray thickness image rendered as grayscale.
+|===
