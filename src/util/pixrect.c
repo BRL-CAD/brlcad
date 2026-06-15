@@ -46,7 +46,7 @@ char *in_file = NULL;
 
 char usage[] = "\
 Usage:  pixrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height]\n\
-			[-x xorig] [-y yorig] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
+			[-x xorig] [-y yorig] [-o out_file.pix] [file.pix] [> out_file.pix]\n";
 
 static int
 parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
@@ -137,11 +137,6 @@ get_args(int argc, char **argv)
 	bu_optind++;
     }
 
-
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
-	return 0;
-    }
-
     remaining = argc - bu_optind;
     if (remaining != 0) {
 	bu_log("pixrect: excess argument(s) not supported\n");
@@ -169,6 +164,9 @@ main(int argc, char **argv)
 	return 1;
     icv_rect(img, xorig, yorig, outx, outy);
     icv_write(img, out_file, BU_MIME_IMAGE_PIX);
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, BU_MIME_IMAGE_PIX);
+    }
 
     icv_destroy(img);
     return 0;

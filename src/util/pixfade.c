@@ -65,7 +65,7 @@ char *in_file = NULL;
 
 char usage[] = "\
 Usage: pixfade [-p percentage] [-f fraction] [-m max] [-s squaresize] [-w width] [-n height] \n\
-                [-o out_file.pix] [file.pix] > [out_file.pix]\n";
+                [-o out_file.pix] [file.pix] [> out_file.pix]\n";
 
 double multiplier = 0.5;
 int max = -1;
@@ -170,6 +170,9 @@ main(int argc, char **argv)
     else
 	icv_ceiling(img, max);
     icv_write(img, out_file, BU_MIME_IMAGE_PIX);
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, BU_MIME_IMAGE_PIX);
+    }
 
     icv_destroy(img);
     return 0;

@@ -66,14 +66,43 @@ size_t pixbytes = 1;
 
 char hyphen[] = "-";
 
+static int
+copy_output_to_stdout(FILE *fp)
+{
+    unsigned char buf[BUFSIZ];
+    size_t nread;
+
+    if (fp == NULL)
+	return 0;
+
+    if (fflush(fp) != 0) {
+	perror("fflush");
+	return 0;
+    }
+    clearerr(fp);
+    if (bu_fseek(fp, 0, SEEK_SET) < 0) {
+	perror("fseek");
+	return 0;
+    }
+
+    while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) {
+	if (fwrite(buf, 1, nread, stdout) != nread) {
+	    perror("fwrite");
+	    return 0;
+	}
+    }
+
+    return !ferror(fp);
+}
+
 int
-get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
+get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle, char **out_file_name)
 {
     int c;
     char *in_file_name = NULL;
-    char *out_file_name = NULL;
+    char *of_name = NULL;
 
-    if (!ifp || !ofp || !angle)
+    if (!ifp || !ofp || !angle || !out_file_name)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
 
     if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
@@ -113,12 +142,13 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		*angle = atof(bu_optarg);
 		break;
 	    case 'o':
-		out_file_name = bu_optarg;
-		*ofp = fopen(out_file_name, "wb+");
+		of_name = bu_optarg;
+		*ofp = fopen(of_name, "wb+");
 		if (*ofp == NULL) {
-		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", bu_getprogname(), out_file_name);
+		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", bu_getprogname(), of_name);
 		    return 0;
 		}
+		*out_file_name = of_name;
 		break;
 
 	    default:		/* '?' */
@@ -224,7 +254,7 @@ reverse_buffer(unsigned char *buf)
  * dy' = cos(a)
  */
 static void
-arbrot(double a, FILE *ifp, unsigned char *buf)
+arbrot(double a, FILE *ifp, FILE *ofp, unsigned char *buf)
 {
 #define DtoR(x)	((x) * DEG2RAD)
     size_t x, y;				/* working coord */
@@ -275,9 +305,9 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 		&& ZERO(y2)
 		&& y2 < (double)nyin)
 	    {
-		putchar(buf[(int)y2*nyin + (int)x2]);
+		fputc(buf[(int)y2*nyin + (int)x2], ofp);
 	    } else {
-		putchar(0);	/* XXX - settable color? */
+		fputc(0, ofp);	/* XXX - settable color? */
 	    }
 	    /* "forward difference" our coordinates */
 	    x2 += cosa;
@@ -302,6 +332,7 @@ main(int argc, char **argv)
     unsigned char *obuf;
     unsigned char *buffer;
     double angle = 0.0;
+    char *out_file_name = NULL;
     ssize_t io;
 
     bu_setprogname(argv[0]);
@@ -311,7 +342,7 @@ main(int argc, char **argv)
     ifp = stdin;
     ofp = stdout;
 
-    if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
+    if (!get_args(argc, argv, &ifp, &ofp, &angle, &out_file_name)) {
 	bu_exit(1, "%s", usage);
     }
 
@@ -328,7 +359,7 @@ main(int argc, char **argv)
      * Break out to added arbitrary angle routine
      */
     if (angle > 0.0) {
-	arbrot(angle, ifp, buffer);
+	arbrot(angle, ifp, ofp, buffer);
 	goto done;
     }
 
@@ -431,6 +462,15 @@ main(int argc, char **argv)
     }
 
 done:
+    if (ret == 0 && out_file_name != NULL && !isatty(fileno(stdout))) {
+	if (!copy_output_to_stdout(ofp))
+	    ret = 1;
+    }
+
+    if (ifp != stdin)
+	fclose(ifp);
+    if (ofp != stdout)
+	fclose(ofp);
     bu_free(buffer, "buffer");
     bu_free(obuf, "obuf");
 
