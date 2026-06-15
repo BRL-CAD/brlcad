@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -58,6 +59,23 @@ int *rlines[5];
 int *glines[5];
 int *blines[5];
 
+static int
+parse_positive_size_arg(const char *arg, size_t *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
+	fprintf(stderr, "pixhalve: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *value = (size_t)parsed;
+    return 1;
+}
+
 
 static int
 get_args(int argc, char **argv)
@@ -71,11 +89,13 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_width = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_width, "input size"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, &file_width, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
@@ -94,6 +114,11 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "pixhalve: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
@@ -104,8 +129,10 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixhalve: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "pixhalve: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

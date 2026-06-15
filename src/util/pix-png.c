@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <math.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -64,6 +65,40 @@ static char *file_name = (char *)NULL;
  */
 double out_gamma = -1.0;
 
+static int
+parse_positive_size_arg(const char *arg, size_t *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
+	bu_log("%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = (size_t)parsed;
+    return 1;
+}
+
+static int
+parse_double_arg(const char *arg, double *value, const char *label)
+{
+    char *end = NULL;
+    double parsed = 0.0;
+
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
+	bu_log("%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = parsed;
+    return 1;
+}
+
 
 int
 get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE **outfp)
@@ -76,19 +111,24 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		autosize = 1;
 		break;
 	    case 'g':
-		out_gamma = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &out_gamma, "gamma"))
+		    return 0;
 		break;
 	    case 's':
 		/* square file size */
-		*height = *width = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, width, "input size"))
+		    return 0;
+		*height = *width;
 		autosize = 0;
 		break;
 	    case 'w':
-		*width = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, width, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		*height = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, height, "input height"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'o': {
@@ -109,6 +149,11 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
+	    return 0;
+	}
 	if ((*infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
@@ -126,8 +171,9 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 	bu_log("%s: will not write png data to a tty\n", bu_getprogname());
     if (ttyin || ttyout)
 	return 0; /* usage */
-    if (argc > ++bu_optind) {
-	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
+    if (argc > bu_optind) {
+	bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
+	return 0;
     }
 
     return 1; /* OK */

@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -49,6 +50,40 @@ static FILE *outfp = (FILE *)NULL;
 
 static int pixbytes = 3;
 
+static int
+parse_positive_long_arg(const char *arg, long *value, const char *label)
+{
+    char *end = NULL;
+    long parsed = 0;
+
+    errno = 0;
+    parsed = strtol(arg, &end, 10);
+    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
+	bu_log("%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = parsed;
+    return 1;
+}
+
+static int
+parse_pixbytes_arg(const char *arg, int *value)
+{
+    long parsed = 0;
+
+    if (!parse_positive_long_arg(arg, &parsed, "bytes-per-pixel"))
+	return 0;
+
+    if (parsed != 1 && parsed != 3) {
+	bu_log("%s: bytes-per-pixel must be 1 or 3, got '%s'\n", bu_getprogname(), arg);
+	return 0;
+    }
+
+    *value = (int)parsed;
+    return 1;
+}
+
 
 int
 get_args(int argc, char *argv[], long *width, long *height)
@@ -58,22 +93,27 @@ get_args(int argc, char *argv[], long *width, long *height)
     while ((c = bu_getopt(argc, argv, "a#:s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case '#':
-		pixbytes = atoi(bu_optarg);
+		if (!parse_pixbytes_arg(bu_optarg, &pixbytes))
+		    return 0;
 		break;
 	    case 'a':
 		autosize = 1;
 		break;
 	    case 's':
 		/* square file size */
-		*height = *width = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, width, "input size"))
+		    return 0;
+		*height = *width;
 		autosize = 0;
 		break;
 	    case 'w':
-		*width = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, width, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		*height = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, height, "input height"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'o': {
@@ -95,6 +135,11 @@ get_args(int argc, char *argv[], long *width, long *height)
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
@@ -116,8 +161,10 @@ get_args(int argc, char *argv[], long *width, long *height)
     if (isatty(fileno(outfp))) {
 	bu_exit(0, "ERROR: %s will not write ppm data to a tty\n", bu_getprogname());
     }
-    if (argc > ++bu_optind)
-	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
+    if (argc > bu_optind) {
+	bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
+	return 0;
+    }
 
     return 1;		/* OK */
 }
