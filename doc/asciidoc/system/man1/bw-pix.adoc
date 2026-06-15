@@ -10,8 +10,8 @@ bw-pix - convert a black and white image, or three individual color channels, to
 
 [source]
 ----
-bw-pix [-h] [-o out_file.pix] [file.bw [out_file.pix]]
-bw-pix [-h] [-o out_file.pix] file_red.bw file_green.bw file_blue.bw [out_file.pix]
+bw-pix [-h] [-o out_file.pix] [file.bw [out_file.pix]] [> out_file.pix]
+bw-pix [-h] [-o out_file.pix] file_red.bw file_green.bw file_blue.bw [out_file.pix] [> out_file.pix]
 ----
 
 
@@ -24,14 +24,14 @@ When a single input file is provided (or when reading from standard input), *bw-
 
 When three input files are provided, *bw-pix* reads them concurrently and merges them, treating them as separate red, green, and blue color channels (in that order). The resulting color output file interleaves the bytes from each of the three input files.
 
-If an output file is not specified with the *-o* option or as the final positional argument, output is written to standard output. If no input file is specified, *bw-pix* reads from standard input.
+If an output file is not specified with the *-o* option or as the final positional argument, output is written to standard output. If an output file is specified and standard output is also redirected or piped, *bw-pix* writes the same output to both destinations. If no input file is specified, *bw-pix* reads from standard input.
 
 
 [[options]]
 == OPTIONS
 
 *-o out_file.pix*::
-Specify the output file name. If this option is not used, output goes to standard output unless specified as the final positional argument.
+Specify the output file name. If this option is not used, output goes to standard output unless specified as the final positional argument. If standard output is also redirected or piped, *bw-pix* writes the same output to both destinations.
 
 *-h*::
 Print a help message and exit.
