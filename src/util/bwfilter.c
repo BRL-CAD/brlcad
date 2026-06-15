@@ -74,7 +74,7 @@ void select_filter(char *str), dousage(void);
 
 char usage[] = "\
 Usage: bwfilter [-f type] [-v] [-d div] [-O offset]\n\
-	[-s squaresize] [-w width] [-n height] [-o out_file.bw] [file.bw] > out_file.bw\n";
+	[-s squaresize] [-w width] [-n height] [-o out_file.bw] [file.bw] [> out_file.bw]\n";
 
 char *in_file = NULL;
 char *out_file = NULL;
@@ -121,7 +121,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vf:d:O:w:n:s:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vf:d:O:w:n:s:o:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -165,10 +165,6 @@ get_args(int argc, char **argv)
 	in_file = argv[bu_optind];
 	bu_optind++;
 	return 1;
-    }
-
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
-	return 0;
     }
 
     if (argc > ++bu_optind) {
@@ -231,6 +227,12 @@ main(int argc, char **argv)
     bu_free(max_d, "min values");
 
     icv_write(img, out_file, BU_MIME_IMAGE_BW);
+
+    /* If stdout is non-interactive as well as -o being specified, emit to both. */
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, BU_MIME_IMAGE_BW);
+    }
+
     return 0;
 }
 
