@@ -4,49 +4,44 @@
 :manmanual: BRL-CAD
 
 == NAME
+
 g-voxel - generates a list of voxels from a BRL-CAD database
 
 == SYNOPSIS
 
-[source]
-----
-g-voxel [ -s "dx dy dz"] [-d n] [-t f] model.g objects...
-----
+*g-voxel* [-s "_dx dy dz_"] [-d _detail_level_] [-t _threshold_] _model.g_ _object(s)_...
 
-
-[[description]]
 == DESCRIPTION
 
-The *g-voxel* command generates a list of voxels from a .g file (BRL-CAD database) and writes them to a voxels.txt file.
+*g-voxel* generates a list of voxels from a BRL-CAD database _model.g_ for the specified _object(s)_ and appends the voxel coordinates to the file `voxels1.txt`.
 
-The command takes two compulsory arguments: a BRL-CAD database and at least one geometry object (though there can be as many of the latter as you like).
-
-
-[[options]]
 == OPTIONS
 
+*-s* "_dx dy dz_"::
+	Specify the voxel dimensions (voxel size) in the X, Y, and Z directions (in millimeters). The default is `1.0 1.0 1.0`.
 
-*-s "dx dy dz"*::
-The voxel's size in the x, y and z axes.
+*-d* _detail_level_::
+	Specify the level of detail (number of rays fired per voxel dimension). The default is 4.
 
+*-t* _threshold_::
+	Specify the fill threshold (0.0 to 1.0) above which a voxel is considered occupied and output. The default is 0.5.
 
-*-d n*::
-The level of detail used (influences the number of rays used).
+== EXAMPLES
 
+.Voxelize an object with custom voxel size and threshold
+[source,bash]
+----
+g-voxel -s "2.0 2.0 2.0" -t 0.6 sample.g sample_object
+----
 
-*-t f*::
-The threshold upon which the voxel is considered.
-
-
-
-
-[[copyright]]
-== COPYRIGHT
-
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory. Al rights reserved.
-
-
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -4,51 +4,73 @@
 :manmanual: BRL-CAD
 
 == NAME
+
 g-nff - NFF Translator (BRL-CAD to NFF)
 
 == SYNOPSIS
 
-[source]
-----
-g-nff [-v] [-i] [-xX lvl] [-e error_file] [-D calculation_tolerance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output.nff] database.g object(s)
-----
+*g-nff* [-v] [-i] [-x _rt_debug_] [-X _nmg_debug_] [-e _error_file_] [-D _dist_tol_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] -o _output.nff_ _database.g_ _object(s)_
 
-
-[[description]]
 == DESCRIPTION
 
-*g-nff* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _NFF_ file format. The *-x* option specifies an RT debug flag and the *-X* option specifies an NMG debug flag. The *-a*, *-r*, and *-n* options specify tessellation tolerances. The *-D* option specifies a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex. The *-v* option requests verbose output. The *-i* option requests the output file units to be inches (the default is mm). The *-o* option specifies the name of the file to receive the output (stdout is the default). The *-e* option specifies a file for receiving the error messages.
+*g-nff* converts the specified geometry _object(s)_ from a BRL-CAD database _database.g_ to the Neutral File Format (NFF).
 
+== OPTIONS
 
-[[example]]
-== EXAMPLE
+*-o* _output.nff_::
+	Specify the output file name. This option is required.
 
+*-i*::
+	Request the output file units to be in inches. The default unit is millimeters.
 
+*-a* _abs_tol_::
+	Specify absolute tessellation tolerance (in mm).
+
+*-r* _rel_tol_::
+	Specify relative tessellation tolerance. The default is 0.01.
+
+*-n* _norm_tol_::
+	Specify surface normal tessellation tolerance.
+
+*-v*::
+	Verbose output.
+
+*-x* _rt_debug_::
+	Specify an RT debug flag (hexadecimal format).
+
+*-X* _nmg_debug_::
+	Specify an NMG debug flag (hexadecimal format).
+
+*-D* _dist_tol_::
+	Specify calculation distance tolerance (in mm) used when checking if vertices are coincident.
+
+*-e* _error_file_::
+	Specify a file for receiving error messages. By default, error messages are printed to standard error.
+
+*-h*::
+*-?*::
+	Print the usage message and exit.
+
+== EXAMPLES
+
+.Convert a BRL-CAD object to an NFF file
+[source,bash]
+----
+g-nff -o sample.nff sample.g sample_object
 ----
 
-$ g-nff -o sample.nff sample.g sample_object
-----
-
-
-[[diagnostics]]
 == DIAGNOSTICS
 
 Error messages are intended to be self-explanatory.
 
-
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
-[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2003-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -4,99 +4,76 @@
 :manmanual: User Commands
 
 == NAME
+
 g-raw - RAW Translator (BRL-CAD to RAW)
 
 == SYNOPSIS
 
-[source]
-----
-g-raw [-o output_file] [-m output_directory] [-i] [-8] [-D calculation_tolerance] [-a absolute_tol] [-r relative_tol] [-n normal_tol] [-xX level] [-v] database.g object(s)...
-----
+*g-raw* [-v] [-i] [-8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-o _output_file_ | -m _output_directory_] _database.g_ _object(s)_...
 
-
-[[description]]
 == DESCRIPTION
 
-*g-raw* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _stereolithography_ file format.
+*g-raw* converts the specified _object(s)_ from a BRL-CAD database _database.g_ to the RAW triangle format.
 
-The following options are recognized.
+== OPTIONS
 
+*-o* _output_file_::
+	Specify the output file name (default is standard output).
 
-*-o PATH*::
-Specify output file name (default is stdout).
-
-
-*-m DIR*::
-Specify a directory for output files. Each region converted is written to a separate file. File names are constructed from the full path names of each region (the path from the specified object to the region). Any "/" characters in the path name are replaced by "@" characters and "." and white space are replaced by "_" characters. If the -m option is not specified, all regions are written to the same file. The *-o* and *-m* options are mutually exclusive.
-
+*-m* _output_directory_::
+	Specify a directory for output files. Each region converted is written to a separate file within this directory. File names are constructed from the region's full path name (replacing "/" with "@", and spaces/periods with "_"). The *-o* and *-m* options are mutually exclusive.
 
 *-i*::
-Use inches as the output format (the default is mm).
-
+	Use inches as the output units (the default is millimeters).
 
 *-8*::
-Facetize using the marching cubes algorithm.
+	Facetize using the marching cubes algorithm.
 
+*-D* _dist_tol_::
+	Specify calculation distance tolerance (in mm) used when checking if vertices are coincident. The default is 0.0005.
 
-*-D#*::
-Specify a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex.
+*-a* _abs_tol_::
+	Specify absolute tessellation tolerance (in mm).
 
+*-r* _rel_tol_::
+	Specify relative tessellation tolerance. The default is 0.01.
 
-*-a#*::
-Specify the absolute tesselation tolerance.
+*-n* _norm_tol_::
+	Specify surface normal tessellation tolerance.
 
+*-x* _rt_debug_::
+	Specify an RT debug flag (hexadecimal format).
 
-*-r#*::
-Specify the relative tesselation tolerance.
-
-
-*-n#*::
-Specify the surface-normal tesselation tolerance.
-
-
-*-x#*::
-Specify an RT debug flag.
-
-
-*-X#*::
-Specify an NMG debug flag.
-
+*-X* _nmg_debug_::
+	Specify an NMG debug flag (hexadecimal format).
 
 *-v*::
-Enable verbose output.
+	Enable verbose output.
 
+*-h*::
+*-?*::
+	Print the usage message and exit.
 
+== EXAMPLES
 
-
-[[example]]
-== EXAMPLE
-
-
+.Convert a BRL-CAD object to a RAW file
+[source,bash]
+----
+g-raw -o sample.raw sample.g sample_object
 ----
 
-$ g-raw -o sample.raw sample.g sample_object
-----
-
-
-[[diagnostics]]
 == DIAGNOSTICS
 
 Error messages are intended to be self-explanatory.
 
-
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
-[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 2013-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
