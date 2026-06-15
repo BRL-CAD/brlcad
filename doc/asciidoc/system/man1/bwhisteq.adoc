@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD
 
 == NAME
-bwhisteq - equalize the histogram of a black and white bw file
+bwhisteq - equalize the histogram of a black and white image
 
 == SYNOPSIS
 
@@ -17,9 +17,26 @@ bwhisteq [-v] file.bw > file.equalized
 [[description]]
 == DESCRIPTION
 
-*bwhisteq* automatically equalizes the histogram of a black and white *bw*(5) format file. It reads the file _file.bw_ and writes a "remapped" version of it on standard output. The method used is to distribute the values of the histogram, as best as possible, in order to produce a constant average "density", while maintaining monotonicity.
+*bwhisteq* equalizes the histogram of a black and white *bw*(5) format file. It reads the specified input file and writes a remapped version of it to standard output. The values of the histogram are distributed to produce a constant average density while maintaining monotonicity.
 
-The *-v* flag will output the old and new histogram values on the terminal.
+[[options]]
+== OPTIONS
+
+*-v*::
+Prints the pixel value mapping to standard error. For each original pixel value (0-255), it displays the corresponding new equalized value.
+
+
+[[examples]]
+== EXAMPLES
+
+.Equalizing the histogram of a black and white image
+====
+[source,bash]
+----
+$ bwhisteq image.bw > equalized.bw
+----
+Remaps the pixel values of _image.bw_ to produce a more uniform histogram and saves the result to _equalized.bw_.
+====
 
 
 [[see_also]]
