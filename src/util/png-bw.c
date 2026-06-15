@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -42,6 +43,21 @@ static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
 
 static char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
+
+static int
+parse_double_suffix_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	bu_log("png-bw: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 int
 main(int argc, char **argv)
@@ -99,17 +115,20 @@ main(int argc, char **argv)
 		case 'R':
 		    red++;
 		    if (argv[1][2] != '\0')
-			rweight = atof(&argv[1][2]);
+			if (!parse_double_suffix_arg(&argv[1][2], &rweight, "red weight"))
+			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		case 'G':
 		    green++;
 		    if (argv[1][2] != '\0')
-			gweight = atof(&argv[1][2]);
+			if (!parse_double_suffix_arg(&argv[1][2], &gweight, "green weight"))
+			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		case 'B':
 		    blue++;
 		    if (argv[1][2] != '\0')
-			bweight = atof(&argv[1][2]);
+			if (!parse_double_suffix_arg(&argv[1][2], &bweight, "blue weight"))
+			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		default:
 		    bu_log("Illegal option (%s)\n", argv[1]);
@@ -128,6 +147,11 @@ main(int argc, char **argv)
 	}
 	fp_in = stdin;
     } else {
+	if (argc > 2) {
+	    bu_log("png-bw: excess argument(s) not supported\n");
+	    bu_log(usage, "png-bw");
+	    bu_exit(EXIT_FAILURE, "Excess arguments\n");
+	}
 	if ((fp_in = fopen(argv[1], "rb")) == NULL) {
 	    perror(argv[1]);
 	    bu_log ("png-bw: cannot open \"%s\" for reading\n", argv[1]);

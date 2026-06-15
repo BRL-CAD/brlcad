@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -169,6 +171,23 @@ int factor = 2;
 #define METH_UNDERSAMPLE 2
 int method = METH_BOXCAR;
 
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
 
 void
 usage(void)
@@ -192,20 +211,21 @@ parse_args(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'f':
-		if ((c = atoi(bu_optarg)) > 1)
-		    factor = c;
+		if (!parse_positive_int_arg(bu_optarg, &factor, "shrink factor") || factor <= 1)
+		    usage();
 		break;
 	    case 'n':
-		if ((c=atoi(bu_optarg)) > 0)
-		    height = c;
+		if (!parse_positive_int_arg(bu_optarg, &height, "height"))
+		    usage();
 		break;
 	    case 'w':
-		if ((c=atoi(bu_optarg)) > 0)
-		    width = c;
+		if (!parse_positive_int_arg(bu_optarg, &width, "width"))
+		    usage();
 		break;
 	    case 's':
-		if ((c=atoi(bu_optarg)) > 0)
-		    height = width = c;
+		if (!parse_positive_int_arg(bu_optarg, &width, "size"))
+		    usage();
+		height = width;
 		break;
 	    case 'u':
 		method = METH_UNDERSAMPLE;
@@ -229,8 +249,10 @@ parse_args(int ac, char **av)
 	    filename = av[bu_optind];
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
     }
-    if (bu_optind+1 < ac)
-	fprintf(stderr, "%s: Excess arguments ignored\n", progname);
+    if (bu_optind+1 < ac) {
+	fprintf(stderr, "%s: excess argument(s) not supported\n", progname);
+	usage();
+    }
 
 }
 

@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -80,6 +82,37 @@ Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
 
 char hyphen[] = "-";
 
+static int
+parse_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
+	fprintf(stderr, "pixfilter: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    if (!parse_int_arg(arg, out_value, label))
+	return 0;
+
+    if (*out_value <= 0) {
+	fprintf(stderr, "pixfilter: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -95,20 +128,26 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		dflag++;
-		kerndiv = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
+		    return 0;
 		break;
 	    case 'o':
 		oflag++;
-		kernoffset = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &kernoffset, "offset"))
+		    return 0;
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &width, "width"))
+		    return 0;
 		break;
 	    case 'n':
-		height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &height, "height"))
+		    return 0;
 		break;
 	    case 's':
-		width = height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &width, "size"))
+		    return 0;
+		height = width;
 		break;
 	    default:		/* 'h' '?' */
 		return 0;
@@ -133,8 +172,10 @@ get_args(int argc, char **argv)
     if (isatty(fileno(stdout)))
 	return 0;
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixfilter: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "pixfilter: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

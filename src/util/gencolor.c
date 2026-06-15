@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -52,6 +54,57 @@ int setrcount = 0; /* set to 1 if -r is detected */
 
 unsigned char buf[MAX_BYTES];
 
+static int
+parse_nonnegative_int32_arg(const char *arg, int32_t *out_value, const char *label)
+{
+    char *end = NULL;
+    long long value;
+
+    errno = 0;
+    value = strtoll(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > INT32_MAX) {
+	bu_log("gencolor: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int32_t)value;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
+	bu_log("gencolor: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
+static int
+parse_byte_arg(const char *arg, unsigned char *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > UCHAR_MAX) {
+	bu_log("gencolor: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (unsigned char)value;
+    return 1;
+}
+
 void
 printusage(int i)
 {
@@ -72,9 +125,8 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "r:pbs:S:n:N:w:W:h?")) != -1) {
 	switch (c) {
 	    case 'r':
-		count = atoi(bu_optarg);
-		if (count > INT32_MAX)
-		    count = INT32_MAX;
+		if (!parse_nonnegative_int32_arg(bu_optarg, &count, "repeat count"))
+		    printusage(0);
 		setrcount = 1;
 		break;
 	    case 'p':
@@ -87,17 +139,21 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		height = width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &width, "size"))
+		    printusage(0);
+		height = width;
 		typeselected = 1;
 		break;
 	    case 'n':
 	    case 'N':
-		height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &height, "height"))
+		    printusage(0);
 		typeselected = 1;
 		break;
 	    case 'w':
 	    case 'W':
-		width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &width, "width"))
+		    printusage(0);
 		typeselected = 1;
 		break;
 	    default:		/* 'h' '?' */
@@ -133,7 +189,8 @@ main(int argc, char **argv)
 	/* get values from the command line */
 	i = 0;
 	while (argc > 1 && i < MAX_BYTES - 1) {
-	    buf[i] = atoi(argv[i+1]);
+	    if (!parse_byte_arg(argv[i+1], &buf[i], "byte value"))
+		return 1;
 	    argc--;
 	    i++;
 	}

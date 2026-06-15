@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h> /* atof() */
 #include <string.h>
 #include <ctype.h>
@@ -73,6 +74,47 @@ void two_coord_out(FILE *fp, fastf_t *m);
 void three_coord_out(FILE *fp, fastf_t *m);
 void two_dcoord_out(FILE *fp, fastf_t *m);
 void three_dcoord_out(FILE *fp, fastf_t *m);
+
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	bu_log("plot3rot: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_six_doubles(const char *arg, double *out_values)
+{
+    int i = 0;
+    char *end = NULL;
+    const char *cp = arg;
+
+    for (i = 0; i < 6; i++) {
+	while (isspace((unsigned char)*cp))
+	    cp++;
+	if (*cp == '\0')
+	    return 0;
+
+	errno = 0;
+	out_values[i] = strtod(cp, &end);
+	if (errno != 0 || end == cp)
+	    return 0;
+	cp = end;
+    }
+
+    while (isspace((unsigned char)*cp))
+	cp++;
+
+    return (*cp == '\0');
+}
 
 
 /*
@@ -200,29 +242,39 @@ get_args(int argc, char **argv)
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'a':
-		bn_mat_angles(tmp, 0.0, 0.0, -atof(bu_optarg));
+		if (!parse_double_arg(bu_optarg, &mtmp[0], "azimuth"))
+		    return 0;
+		bn_mat_angles(tmp, 0.0, 0.0, -mtmp[0]);
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		rpp++;
 		break;
 	    case 'e':
-		bn_mat_angles(tmp, 0.0, -atof(bu_optarg), 0.0);
+		if (!parse_double_arg(bu_optarg, &mtmp[0], "elevation"))
+		    return 0;
+		bn_mat_angles(tmp, 0.0, -mtmp[0], 0.0);
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		rpp++;
 		break;
 	    case 'x':
-		bn_mat_angles(tmp, atof(bu_optarg), 0.0, 0.0);
+		if (!parse_double_arg(bu_optarg, &mtmp[0], "x rotation"))
+		    return 0;
+		bn_mat_angles(tmp, mtmp[0], 0.0, 0.0);
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'y':
-		bn_mat_angles(tmp, 0.0, atof(bu_optarg), 0.0);
+		if (!parse_double_arg(bu_optarg, &mtmp[0], "y rotation"))
+		    return 0;
+		bn_mat_angles(tmp, 0.0, mtmp[0], 0.0);
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'z':
-		bn_mat_angles(tmp, 0.0, 0.0, atof(bu_optarg));
+		if (!parse_double_arg(bu_optarg, &mtmp[0], "z rotation"))
+		    return 0;
+		bn_mat_angles(tmp, 0.0, 0.0, mtmp[0]);
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
@@ -245,24 +297,29 @@ get_args(int argc, char **argv)
 		break;
 	    case 'X':
 		MAT_IDN(tmp);
-		tmp[MDX] = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &tmp[MDX], "x translation"))
+		    return 0;
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'Y':
 		MAT_IDN(tmp);
-		tmp[MDY] = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &tmp[MDY], "y translation"))
+		    return 0;
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'Z':
 		MAT_IDN(tmp);
-		tmp[MDZ] = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &tmp[MDZ], "z translation"))
+		    return 0;
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 's':
-		scale *= atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &mtmp[0], "scale factor") || ZERO(mtmp[0]))
+		    return 0;
+		scale *= mtmp[0];
 		/*
 		 * If rpp flag has already been set, defer
 		 * application of scale until after the
@@ -282,9 +339,10 @@ get_args(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'S':
-		sscanf(bu_optarg, "%lf %lf %lf %lf %lf %lf",
-		       &mtmp[0], &mtmp[1], &mtmp[2],
-		       &mtmp[3], &mtmp[4], &mtmp[5]);
+		if (!parse_six_doubles(bu_optarg, mtmp)) {
+		    bu_log("plot3rot: invalid space specification '%s'\n", bu_optarg);
+		    return 0;
+		}
 		VSET(forced_space_min, mtmp[0], mtmp[1], mtmp[2]);
 		VSET(forced_space_max, mtmp[3], mtmp[4], mtmp[5]);
 

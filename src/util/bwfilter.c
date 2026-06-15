@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -78,6 +80,37 @@ Usage: bwfilter [-f type] [-v] [-d div] [-O offset]\n\
 
 char *in_file = NULL;
 char *out_file = NULL;
+
+static int
+parse_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
+	bu_log("bwfilter: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    if (!parse_int_arg(arg, out_value, label))
+	return 0;
+
+    if (*out_value <= 0) {
+	bu_log("bwfilter: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 /*
  * Looks at the command line string and selects a filter
@@ -131,27 +164,29 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		dflag++;
-		kerndiv = atoi(bu_optarg);
-		if (ZERO(kerndiv)) {
-		    bu_log("Bad argument for kerndiv\n");
-		    return 1;
-		}
+		if (!parse_int_arg(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
+		    return 0;
 		break;
 	    case 'O':
 		oflag++;
-		kernoffset = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &kernoffset, "offset"))
+		    return 0;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &inx, "width"))
+		    return 0;
 		break;
 	    case 'o':
 		out_file = bu_optarg;
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &iny, "height"))
+		    return 0;
 		break;
 	    case 's':
-		inx = iny = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &inx, "size"))
+		    return 0;
+		iny = inx;
 		break;
 	    default:		/* 'h' '?' */
 		return 0;
@@ -164,11 +199,11 @@ get_args(int argc, char **argv)
     } else {
 	in_file = argv[bu_optind];
 	bu_optind++;
-	return 1;
     }
 
-    if (argc > ++bu_optind) {
-	bu_log("bwrfilter: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	bu_log("bwfilter: excess argument(s) not supported\n");
+	return 0;
     }
 
     return 1;
