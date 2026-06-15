@@ -4,55 +4,72 @@
 :manmanual: BRL-CAD
 
 == NAME
-gencolor - output a pattern of byte values
+
+gencolor - output a repeated pattern of byte values
 
 == SYNOPSIS
 
-[source]
-----
-gencolor [-r#] [-p -b] [-{sS} squaresize] [-{wW} width] [-{nN} height] [ val1... valN]
-----
+*gencolor* [-p | -b] [-r _repeat_count_] [-s _squaresize_ | -S _squaresize_] [-w _width_ | -W _width_] [-n _height_ | -N _height_] [_val1_ ... _valN_] > _output_file_
 
-
-[[description]]
 == DESCRIPTION
 
-*gencolor* repeats a pattern of up to 8192 8-bit values on its standard output. The values, which range from 0 to 255, are taken either from the command line, or in binary (as stored in a .bw or .pix file) from standard input; if the values are not supplied, a single value of 0, for black, is used. The *-r* flag can be used to specify the number of times to repeat the given pattern, the default being infinity (unless any other "-" options are used -- see below). This program is useful for producing a given grey value or color. Note that *gencolor* will refuse to write its output to a window; you must redirect the output to a file.
+*gencolor* repeats a pattern of up to 8192 8-bit values to its standard output. The values (ranging from 0 to 255) are read either from the command line arguments or in binary format from standard input. If no values are supplied, a default single value of 0 (black) is used.
 
-*-p* and *-b* are used to specify _pix_ file and _bw_ file, respectively. *-w* (or *-W*) indicates the width; *-n* (or *-N*) indicates the height; width and height are set to the same value using *-s* (or *-S*). By default, a pix file of size 512x512 is assumed; however, use of *-r* overrules use of any other "-" options.
+Note that *gencolor* will refuse to write its output directly to a terminal; you must redirect the output to a file or pipe it to another command.
 
+== OPTIONS
 
-[[example]]
-== EXAMPLE
+*-p*::
+	Specify a `.pix` file output format (3 bytes per pixel). This is the default.
 
-gencolor -r512 0 255 0 > foo.pix
+*-b*::
+	Specify a `.bw` file output format (1 byte per pixel).
 
-will output 512 "green" pixels (0 255 0 being used as RGB values).
+*-r* _repeat_count_::
+	Specify the number of times to repeat the given pattern. The default is infinity (unless another option that specifies dimensions is used).
 
-gencolor -r1 0 255 0 | gencolor -r512 > foo.pix
+*-w* _width_::
+*-W* _width_::
+	Specify the width of the image. The default is 512.
 
-will do the same as above, using standard input instead of having the values on the command line.
+*-n* _height_::
+*-N* _height_::
+	Specify the height of the image. The default is 512.
 
+*-s* _squaresize_::
+*-S* _squaresize_::
+	Set both the width and height of the image to the specified value.
 
-[[see_also]]
+*-h*::
+*-?*::
+	Print the usage message and exit.
+
+== EXAMPLES
+
+.Output a 512-pixel green pattern (0 255 0) to a file
+[source,bash]
+----
+gencolor -r 512 0 255 0 > green.pix
+----
+
+.Generate a green pattern using standard input
+[source,bash]
+----
+gencolor -r 1 0 255 0 | gencolor -r 512 > green.pix
+----
+
 == SEE ALSO
 
 *brlcad*(1), *pix*(5), *bw*(5)
 
-
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
-[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
