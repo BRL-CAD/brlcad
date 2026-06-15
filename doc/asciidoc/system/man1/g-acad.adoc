@@ -4,49 +4,95 @@
 :manmanual: BRL-CAD
 
 == NAME
-g-acad - Convert from BRL-CAD format to Lockheed Martin's ACAD format
+g-acad - BRL-CAD to Lockheed Martin ACAD converter
 
 == SYNOPSIS
 
 [source]
 ----
-g-acad [-vi] [-xX lvl] [-e error_file] [-D calculation_tolerance] [-a abs_tol] [-r rel_tol] [-P number_of_CPUs] [-n norm_tol] [-o ACAD_file] database.g object(s)
+g-acad [-v] [-i] [-x lvl] [-X lvl] [-e error_file] [-D calc_tol] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P ncpus] [-o ACAD_file] [-h] [-?] database.g object(s)
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-*g-acad* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the in-house Lockheed Martin's Advanced Computer-Aided Design _(ACAD)_ file format (formerly the General Dynamics ACAD file format). This converter has NOT connected with Autodesk Inc.'s AutoCAD file format. The *-x* option specifies an RT debug flag and the *-X* option specifies an NMG debug flag. The *-a* , *-r* , and *-n* options specify tessellation tolerances. The *-D* option specifies a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex. The *-v* option requests verbose output. The *-i* option requests the output file units to be inches (the default is mm). The *-o* option specifies the name of the file to receive the output (stdout is the default). The *-e* option specifies a file for receiving the error messages. The *-P* option specifies the number of CPU's to be used, and also turns on a flag to enable the receiving of core dumps.
+*g-acad* converts the specified _object(s)_ from a BRL-CAD
+_database.g_ file to Lockheed Martin's ACAD file format (formerly
+General Dynamics ACAD). This is not related to Autodesk AutoCAD.
 
+[[options]]
+== OPTIONS
 
-[[example]]
-== EXAMPLE
+*-v*::
+Verbose output.
 
+*-i*::
+Output in inches (default is mm).
 
+*-x* _lvl_::
+Set librt debug flag.
+
+*-X* _lvl_::
+Set NMG debug flag.
+
+*-e* _error_file_::
+Write error messages to _error_file_ instead of standard error.
+
+*-D* _calc_tol_::
+Calculation distance tolerance (mm). Vertices closer than this are
+merged.
+
+*-a* _abs_tol_::
+Absolute tessellation tolerance (mm).
+
+*-r* _rel_tol_::
+Relative tessellation tolerance.
+
+*-n* _norm_tol_::
+Surface normal tolerance (degrees).
+
+*-P* _ncpus_::
+Number of CPUs to use; enables core dumps.
+
+*-o* _ACAD_file_::
+Output file (default is stdout).
+
+*-h, -?*::
+Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a BRL-CAD object to ACAD format
+====
+[source,bash]
 ----
-
 $ g-acad -o sample.ACAD sample.g sample_object
 ----
+====
 
+.Convert with tight tolerances in inches
+====
+[source,bash]
+----
+$ g-acad -i -a 0.1 -r 0.01 -o hull.ACAD vehicle.g hull
+----
+====
 
-[[diagnostics]]
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Error messages are intended to be self-explanatory.
-
+*brlcad*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1997-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS
