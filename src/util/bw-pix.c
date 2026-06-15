@@ -54,6 +54,30 @@ open_file(FILE **fp, const char *name)
     }
 }
 
+static int
+duplicate_stdout(const struct bu_vls *out_fname)
+{
+    int fno = fileno(stdout);
+
+    return (bu_vls_strlen(out_fname) > 0 && fno > 0 && !isatty(fno));
+}
+
+static int
+write_output(FILE *outfp, const unsigned char *buf, size_t len, int dup_stdout)
+{
+    if (fwrite(buf, sizeof(char), len, outfp) != len) {
+	perror("fwrite");
+	return 0;
+    }
+
+    if (dup_stdout && fwrite(buf, sizeof(char), len, stdout) != len) {
+	perror("fwrite");
+	return 0;
+    }
+
+    return 1;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -164,15 +188,13 @@ main(int argc, char **argv)
 	if (!in_std || !out_std)
 	    bu_exit(EXIT_FAILURE, "%s", usage);
 	while ((num = fread(ibuf, sizeof(char), 1024, in_std)) > 0) {
-	    size_t ret;
+	    int dup_stdout = duplicate_stdout(&out_fname);
 	    for (in = out = 0; in < num; in++, out += 3) {
 		obuf[out] = ibuf[in];
 		obuf[out+1] = ibuf[in];
 		obuf[out+2] = ibuf[in];
 	    }
-	    ret = fwrite(obuf, sizeof(char), 3*num, out_std);
-	    if (ret == 0) {
-		perror("fwrite");
+	    if (!write_output(out_std, obuf, 3*num, dup_stdout)) {
 		break;
 	    }
 	}
@@ -200,6 +222,7 @@ main(int argc, char **argv)
 	    unsigned char obuf[3*1024];
 	    unsigned char red[1024], green[1024], blue[1024];
 	    unsigned char *obufp;
+	    int dup_stdout = duplicate_stdout(&out_fname);
 	    int nr, ng, nb, num, i;
 	    nr = fread(red, sizeof(char), 1024, rfp);
 	    ng = fread(green, sizeof(char), 1024, gfp);
@@ -223,9 +246,7 @@ main(int argc, char **argv)
 		*obufp++ = green[i];
 		*obufp++ = blue[i];
 	    }
-	    num = fwrite(obuf, sizeof(char), num*3, out_std);
-	    if (num <= 0) {
-		perror("fwrite");
+	    if (!write_output(out_std, obuf, (size_t)num*3, dup_stdout)) {
 		break;
 	    }
 	}
@@ -240,6 +261,9 @@ main(int argc, char **argv)
 	return 1;
     icv_gray2rgb(img);
     icv_write(img, bu_vls_addr(&out_fname), BU_MIME_IMAGE_PIX);
+    if (duplicate_stdout(&out_fname)) {
+	icv_write(img, NULL, BU_MIME_IMAGE_PIX);
+    }
     icv_destroy(img);
     return 0;
 }
