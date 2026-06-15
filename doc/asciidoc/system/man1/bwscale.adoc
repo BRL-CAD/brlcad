@@ -10,18 +10,72 @@ bwscale - change the size of a black and white bw file
 
 [source]
 ----
-bwscale [-r] [-s squareinsize] [-w in_width] [-n in_height] [-S squareoutsize] [-W out_width] [-N out_height] [infile.bw] > outfile.bw
+bwscale [-r] [-s squareinsize] [-w in_width] [-n in_height] [-S squareoutsize] [-W out_width] [-N out_height] [-h] [-?] [infile.bw] > outfile.bw
+----
+
+[source]
+----
+bwscale infile.bw in_width in_height out_width out_height > outfile.bw
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bwscale* will take a black and white *bw*(5) format file of given dimensions and produce a larger or smaller scaled version. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels; they can be set to the same value via *-s.* Similarly, the *-W* and *-N* flags specify the desired output file width and number of scan lines in pixels; they can be set to the same value via *-S.* Defaults of 512 are assumed for any unspecified dimensions.
+*bwscale* takes a black and white *bw*(5) format file of given dimensions and produces a larger or smaller scaled version. If input and output dimensions are not specified, a default of 512x512 is assumed for both.
 
-By default, the algorithm used is bilinear interpolation if scaling up, and a box filter of arbitrary size if scaling down. For the box filter a "square pixel" assumption is made; that is, all whole and fractional input pixels falling into a rectangle the size of an output pixel contribute equally according to the fraction of the output pixel area they cover. When interpolating, the edge pixels are preserved, i.e., all of the interpolated pixels fall inside of the edges. This can be a bit surprising when doubling the size of a file, for example, as only the edge pixels will fall at exactly the location of an output pixel.
+By default, the algorithm used is bilinear interpolation when scaling up, and a box filter of arbitrary size when scaling down. For the box filter, a "square pixel" assumption is made: all whole and fractional input pixels falling into a rectangle the size of an output pixel contribute equally, based on the fraction of the output pixel area they cover. When interpolating, edge pixels are preserved (all interpolated pixels fall inside the edges). This can be surprising when doubling the size of an image, for example, as only the edge pixels will fall at exactly the location of an output pixel.
 
-Specifying the *-r* flag changes from bilinear interpolation to nearest neighbor interpolation, i.e., it enlarges the image by pixel replication.
+
+[[options]]
+== OPTIONS
+
+*-r*::
+Enlarges the image by pixel replication (nearest neighbor interpolation) instead of bilinear interpolation.
+
+*-s squareinsize*::
+Sets both the input width and height to the specified size in pixels.
+
+*-w in_width*::
+Specifies the input width in pixels.
+
+*-n in_height*::
+Specifies the input height in pixels.
+
+*-S squareoutsize*::
+Sets both the output width and height to the specified size in pixels.
+
+*-W out_width*::
+Specifies the output width in pixels.
+
+*-N out_height*::
+Specifies the output height in pixels.
+
+*-h*, *-?*::
+Print help message and exit.
+
+*infile.bw*::
+The input image file. If not specified, standard input is read.
+
+
+[[examples]]
+== EXAMPLES
+
+.Scale a 512x512 image down to 256x256
+====
+[source,bash]
+----
+$ bwscale -s 512 -S 256 input.bw > output.bw
+----
+====
+
+.Enlarge a 256x256 image to 1024x1024 using pixel replication
+====
+[source,bash]
+----
+$ bwscale -r -s 256 -S 1024 input.bw > output.bw
+----
+====
 
 
 [[see_also]]
