@@ -4,137 +4,115 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-gist - Generate a one page summary of the geometry present in a database.
+
+gist - Generate a one-page visual and textual summary of a geometry database
 
 == SYNOPSIS
 
-[source]
-----
-gist [options ...]... {(-F model/dir | model.g)}
-----
+*gist* [-v] [-g] [-f] [-Z] [-L] [-A] [-i _filename.g_] [-o _filename.png_] [-F _folder_] [-e _dir_name_] [-t _component_] [-m _logopath_] [-p _ppi_] [-n _preparer_] [-r _owner_] [-T _rt_path_] [-c _classification_] [-N _notes_] [-d _density_file_] [-l _len_units_] [-w _wt_units_] [-a _working_dir_] [-P _ncpu_]
 
-
-[[gist_description]]
 == DESCRIPTION
 
-The Geometric Information Summary Tool - *gist* - is used to create a high level summary conveying visually and textually what geometry is defined with one or a set of .g geometry databases. It can output a PNG image containing renders and information summarizing area, volume and other standard properties as well as the top level structure of the geometry present.
+The Geometric Information Summary Tool (*gist*) creates a high-level visual and textual summary of BRL-CAD database files (`.g`). It exports a PNG image report containing rendered views of the geometry alongside calculations for area, mass/volume, and other standard properties, as well as the database's top-level structure.
 
-
-[[gist_options]]
 == OPTIONS
 
+*-i* _filename.g_::
+	Specify the input BRL-CAD database file.
 
-*-i filename.g*::
-Specify a .g database file to use as *gist* input.
+*-o* _filename.png_::
+	Specify the output PNG file name. If not specified, and not running in folder mode, *gist* defaults to displaying the report in a popup window.
 
+*-F* _folder_::
+	Specify a folder containing multiple BRL-CAD database files to process as inputs.
 
-*-o output.png*::
-The output PNG filename to use when generating a report image.
-
-
-*-F directory*::
-A directory holding .g database files to use as inputs.
-
-
-*-e directory*::
-Specify directory to hold exported images.
-
+*-e* _dir_name_::
+	Specify the output folder name when processing multiple databases in folder mode.
 
 *-g*::
-Display report in pop-up window.
-
+	Display the generated report in a popup GUI window.
 
 *-f*::
-Overwrite a pre-existing report (if any is present).
-
+	Force overwrite of an existing report PNG or output directory.
 
 *-Z*::
-Reuse renders if [model].working directory is present. Can significantly shorten processing time if producing multiple versions of a report.
+	Reuse pre-existing renders if the `.working` directory is present. This significantly reduces processing time.
 
+*-t* _component_::
+	Specify a particular database object/component to summarize.
 
-*-t object_name*::
-Specify an object in the database to report on.
+*-m* _logopath_::
+	Specify the path to a custom logo image to be included in the report.
 
+*-p* _ppi_::
+	Specify the resolution density for the output image in pixels per inch (PPI). The default is 300.
 
-*-m path/to/image*::
-Specify a logo image to be used in the report.
+*-n* _preparer_::
+	Specify the name of the person preparing the report.
 
+*-r* _owner_::
+	Specify the name of the model's owner.
 
-*-p #*::
-Control density of report image (default 300ppi).
+*-T* _rt_path_::
+	Specify the directory path containing the BRL-CAD `rt` and `rtwizard` executables.
 
+*-c* _classification_::
+	Specify the classification level (e.g. UNCLASSIFIED) to display in the top and bottom report banners.
 
-*-n "Preparer Name"*::
-Name of person preparing the report (used in report output).
-
-
-*-r "Owner Name"*::
-Name of the owner of the .g database.
-
-
-*-T path/to/rt*::
-Specify directory containing the rt and rtwizard executables to use when generating images.
-
-
-*-c classification*::
-Classification displayed on top/bottom banner.
-
-
-*-N "extra notes"*::
-Add extra information to the report.
-
+*-N* _notes_::
+	Add additional textual notes to the report.
 
 *-L*::
-Use left handed coordinate system.
-
+	Use a left-handed coordinate system.
 
 *-A*::
-Use +Y-up geometry axis (default is +Z-up)
+	Use +Y-up geometry axis orientation (the default is +Z-up).
 
+*-d* _density_file_::
+	Specify a custom density file path for materials, or `0` to skip mass/density calculations.
 
-*-l len_units*::
-Specify length units.
+*-l* _len_units_::
+	Specify the length units to use in the report.
 
+*-w* _wt_units_::
+	Specify the mass/weight units to use in the report.
 
-*-w wt_units*::
-Specify weight units.
+*-a* _working_dir_::
+	Specify a custom working directory to store cached rendering work.
 
+*-P* _ncpu_::
+	Specify the number of CPUs to use. The default is to use all available cores.
 
 *-v*::
-Verbose printing.
-
+	Enable verbose output.
 
 *-h*::
-Print help and exit.
+*--help*::
+*-?*::
+	Print a usage summary and exit.
 
+== EXAMPLES
 
+.Generate a report for the component of the M35 database
+[source,bash]
+----
+gist -o m35.png -i m35.g -t component
+----
 
+.Generate a report and reuse existing renders
+[source,bash]
+----
+gist -Z -o ktank.png -i ktank.g
+----
 
-[[gist_examples]]
-== EXAMPLE
+== AUTHOR
 
-.M35 Truck
-[example]
-====
-**gist -o m35.png m35.g -t component**
+BRL-CAD Team
 
-====
-
-.KTANK reuse existing working directory
-[example]
-====
-**gist ktank.g -Z -o ktank.png**
-
-====
-
-
-[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 2008-2026 United States Government as represented by U.S. Army Research Laboratory.
 
-
-[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
