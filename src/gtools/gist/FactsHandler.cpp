@@ -20,6 +20,7 @@
 
 #include "FactsHandler.h"
 #include "RenderHandler.h"
+#include "bu/path.h"
 
 static std::string
 fitHierarchyLabel(IFPainter& img, int textHeight, int width, const std::string& text, int flags)
@@ -37,6 +38,20 @@ fitHierarchyLabel(IFPainter& img, int textHeight, int width, const std::string& 
     }
 
     return fitted;
+}
+
+static std::string
+hierarchyDisplayLabel(const std::string& component)
+{
+    struct bu_vls basename = BU_VLS_INIT_ZERO;
+    std::string label = component;
+
+    if (bu_path_component(&basename, component.c_str(), BU_PATH_BASENAME)) {
+	label = bu_vls_addr(&basename);
+    }
+    bu_vls_free(&basename);
+
+    return label;
 }
 
 void
@@ -195,7 +210,7 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 	render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
 	// std::cout << "INSIDE factshandler DBG: " << render << std::endl;
 	img.drawImageTransparentFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
-	std::string childLabel = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, info.largestComponents[i].name, TO_BOLD);
+	std::string childLabel = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, hierarchyDisplayLabel(info.largestComponents[i].name), TO_BOLD);
 	img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, hierarchyLabelWidth, childLabel, TO_BOLD);
 	img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
 	img.drawCirc(offX + (i-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));

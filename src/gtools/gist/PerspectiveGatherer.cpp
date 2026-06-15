@@ -83,6 +83,15 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
     std::string comp = component;
     if (comp.find(" ") != std::string::npos) {
         comp = "etc";
+    } else {
+	for (char &c : comp) {
+	    if (c == '/' || c == '\\') {
+		c = '_';
+	    }
+	}
+	if (!comp.empty() && comp[0] == '_') {
+	    comp.erase(0, 1);
+	}
     }
 
     // put it all together

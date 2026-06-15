@@ -425,32 +425,25 @@ InformationGatherer::getEntityData(char* buf)
 void
 InformationGatherer::getSubComp()
 {
-    std::string mged = getCmdPath(opt->getExeDir(), "mged");
-    std::string inFile = opt->getInFile();
-    std::string tclScript = "foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }";
-    const char* av[5] = {mged.c_str(), "-c", inFile.c_str(), tclScript.c_str(), NULL};
-
-    struct bu_process* p;
-    bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW);
-
-    int read_cnt = 0;
-    char buf[1024] = {0};
-    std::string result = "";
-    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buf)) > 0) {
-        buf[read_cnt] = '\0';
-        result += buf;
+    std::string rootPath = largestComponents[0].name;
+    if (!rootPath.empty() && rootPath[0] != '/') {
+	rootPath = "/" + rootPath;
     }
 
-    (void)bu_process_wait_n(&p, 0);
+    const char *cmd[6] = {"search", rootPath.c_str(), "-mindepth", "1", "-maxdepth", "1"};
+    ged_exec_search(g, 6, cmd);
 
-    std::stringstream ss(result);
+    std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string comp;
-    int numEntities = 0;
     std::vector<ComponentData> subComps;
 
-    while (ss >> comp >> numEntities) {
-        boundingBox bb = getBBData(comp);
-        subComps.push_back({numEntities, bb, comp});
+    while (std::getline(ss, comp)) {
+	if (comp.empty()) {
+	    continue;
+	}
+	int numEntities = getNumEntities(comp);
+	boundingBox bb = getBBData(comp);
+	subComps.push_back({numEntities, bb, comp});
     }
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
