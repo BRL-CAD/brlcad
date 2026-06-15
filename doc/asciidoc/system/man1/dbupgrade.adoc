@@ -4,24 +4,55 @@
 :manmanual: BRL-CAD
 
 == NAME
-dbupgrade - a program to upgrade BRL-CAD mged geometry databases files to the current version.
+dbupgrade - upgrade a BRL-CAD mged geometry database to the current version.
 
 == SYNOPSIS
 
 [source]
 ----
-dbupgrade input.g output.g
+dbupgrade [-f] [-r] [-h] [-?] input.g output.g
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*dbupgrade* operates on the indicated input geometry database _input.g_, recognizing the version of the BRL-CAD database provided as input and then converting it to the current database version. Output is then saved to the specified _output.g_ file.
+*dbupgrade* upgrades an older BRL-CAD geometry database (_input.g_) to the current database version (v5) and writes the result to _output.g_.
 
-Note that this tool will attempt to automatically 'fix' an existing (v4 format) binary database that was transferred from a binary-incompatible platform. However, this process may be imperfect - the best approach (if the original platform on which the file was created is available) is to run *dbupgrade* on the file before transferring from the originating platform. Once upgraded the output file will be platform-independent regardless of the platform on which the upgrade was done.
+The v5 database format is platform-independent, so upgrading eliminates the need to use *g2asc*(1) and *asc2g*(1) to transfer databases between different computer architectures. If an older v4 database was already transferred from a binary-incompatible platform, *dbupgrade* attempts to automatically fix any endianness issues, though this process may be imperfect. For best results, upgrade the database on its original platform before transferring it.
 
-Running *dbupgrade* removes the need to run *g2asc*(1) and *asc2g*(1) on a database to move it between computers (historically this was a way to work around the platform-specific nature of v4 files). The latest BRL-CAD geometry database format is platform-independent.
+Additionally, *dbupgrade* performs automatic conversions of obsolete geometry types and properties. For example, it converts heightfields (HF) to displacement maps (DSP), polysolids to bag-of-triangles (BOT), and BSPLINEs to boundary representations (BREP). It also updates old material shader properties (e.g., replacing "plastic" with "phong") and migrates material color tables to the `regionid_colortable` global attribute.
+
+
+[[options]]
+== OPTIONS
+
+*-f*::
+Force the conversion process. If the input database is already at the current version (v5), the tool normally halts with a warning. Using this option forces the conversion to proceed (e.g., from v5 to v5, or v4 to v4 if reverting).
+
+*-r*::
+Revert the database to an older format (currently version 4).
+
+*-h, -?*::
+Print a usage message and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+dbupgrade _old_model.g new_model.g_
+
+[quote]
+____
+Upgrades the older database `old_model.g` to the current format and saves it as `new_model.g`.
+____
+
+dbupgrade -f _current_model.g rewritten_model.g_
+
+[quote]
+____
+Forces the conversion of `current_model.g` even if it is already at the v5 format, which is useful for applying internal geometry updates (like converting polysolids to BOTs).
+____
 
 
 [[see_also]]
