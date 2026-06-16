@@ -41,10 +41,6 @@
 
 #include "./vls_vprintf.h"
 
-/* non-published globals */
-extern const char bu_vls_message[];
-extern const char bu_strdup_message[];
-
 /* private constants */
 
 /* minimum initial allocation size */
@@ -138,7 +134,7 @@ bu_vls_extend(struct bu_vls *vp, size_t extra)
      * implementation changes.
      */
     if (vp->vls_max <= 0 || vp->vls_str == (char *)0) {
-	vp->vls_str = (char *)bu_malloc(extra, bu_vls_message);
+	vp->vls_str = (char *)bu_malloc(extra, "bu_vls_str");
 	vp->vls_max = extra;
 	vp->vls_len = 0;
 	vp->vls_offset = 0;
@@ -154,7 +150,7 @@ bu_vls_extend(struct bu_vls *vp, size_t extra)
 
     /* need more space? */
     if (vp->vls_offset + vp->vls_len + extra >= vp->vls_max) {
-	vp->vls_str = (char *)bu_realloc(vp->vls_str, (vp->vls_max + extra), bu_vls_message);
+	vp->vls_str = (char *)bu_realloc(vp->vls_str, (vp->vls_max + extra), "bu_vls_str");
 	vp->vls_max += extra;
     }
 }
@@ -269,7 +265,7 @@ bu_vls_strdup(const struct bu_vls *vp)
     BU_CK_VLS(vp);
 
     len = bu_vls_strlen(vp);
-    str = (char *)bu_malloc(len+1, bu_strdup_message);
+    str = (char *)bu_malloc(len+1, "bu_strdup string");
     bu_strlcpy(str, bu_vls_addr(vp), len+1);
 
     return str;

@@ -58,20 +58,6 @@ size_t bu_n_realloc = 0;
 size_t bu_n_free = 0;
 
 /**
- * used by malloc and vls as the bu_malloc/bu_free debug string.
- *
- * NOT published in a public header.
- */
-extern const char bu_vls_message[] = "bu_vls_str";
-
-/**
- * used by malloc and vls as the bu_strdup debug string.
- *
- * NOT published in a public header.
- */
-extern const char bu_strdup_message[] = "bu_strdup string";
-
-/**
  * Marker for knowing if an exception handler is set.  bu_setjmp_valid
  * is global array because BU_SETJUMP() *must* be a macro (jump calls
  * must be embedded into the frame they return to).

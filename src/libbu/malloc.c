@@ -66,10 +66,6 @@ typedef enum {
 } alloc_t;
 
 
-/* non-published globals */
-extern const char bu_vls_message[];
-extern const char bu_strdup_message[];
-
 extern int bu_bomb_failsafe_init(void);
 
 
