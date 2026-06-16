@@ -546,24 +546,6 @@ typedef _TCHAR TCHAR;
 #endif
 
 /**
- * Provide a macro for different treatment of initialized extern const
- * variables between C and C++.  In C the following initialization
- * (definition) is acceptable for external linkage:
- *
- *   const int var = 10;
- *
- * but in C++ const is implicitly internal linkage so it must have
- * extern qualifier:
- *
- *   extern const int var = 10;
- */
-#if defined(__cplusplus)
-#  define EXTERNVARINIT extern
-#else
-#  define EXTERNVARINIT
-#endif
-
-/**
  * Provide canonical preprocessor stringification.
  *
  @code
