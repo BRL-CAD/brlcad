@@ -487,6 +487,13 @@ function(BRLCAD_COLLECT_DEP_INCLUDES out_var)
 endfunction(BRLCAD_COLLECT_DEP_INCLUDES)
 
 
+# Check if the CXX compiler supports static linking of its standard libraries.
+# This is necessary to work around linker errors with std::filesystem on
+# some Red Hat GCC Toolset versions.
+include(CheckLinkerFlag)
+check_linker_flag(CXX "-static-libstdc++" BRLCAD_HAVE_STATIC_LIBSTDCXX)
+check_linker_flag(CXX "-static-libgcc" BRLCAD_HAVE_STATIC_LIBGCC)
+
 # Add a link-only executable that forces all object files in a static archive
 # onto the link line.  This catches missing PRIVATE/PUBLIC dependency
 # declarations that ordinary archive linking can hide until a downstream
@@ -526,6 +533,16 @@ function(BRLCAD_ADD_STATIC_LINK_TEST libstatic)
     ${ARGN}
   )
   set_target_properties(${_link_test} PROPERTIES FOLDER "BRL-CAD Static Link Tests")
+
+  # Conditionally add flags to work around GCC toolset linker issues with std::filesystem.
+  # This forces the linker to use the complete static C++ runtime from the toolset,
+  # which contains the necessary symbols.
+  if(BRLCAD_HAVE_STATIC_LIBSTDCXX)
+    target_link_options(${_link_test} PRIVATE -static-libstdc++)
+  endif()
+  if(BRLCAD_HAVE_STATIC_LIBGCC)
+    target_link_options(${_link_test} PRIVATE -static-libgcc)
+  endif()
 
   # With newer GCC, our bitv structure triggers a compiler
   # warning about writing 1 byte into a region of size 0.
