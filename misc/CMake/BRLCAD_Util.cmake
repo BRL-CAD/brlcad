@@ -353,40 +353,6 @@ function(BRLCAD_GET_DIR_LIST_CONTENTS list_name dir_in outvar)
   set(${outvar} "${DATA_TARGETS_${currdir_str}}" PARENT_SCOPE)
 endfunction(BRLCAD_GET_DIR_LIST_CONTENTS)
 
-#-----------------------------------------------------------------------------
-# Determine whether a list of source files contains all C, all C++, or
-# mixed source types.
-function(SRCS_LANG sourceslist resultvar targetname)
-  # Check whether we have a mixed C/C++ library or just a single language.
-  # If the former, different compilation flag management is needed.
-  set(has_C 0)
-  set(has_CXX 0)
-  foreach(srcfile ${sourceslist})
-    get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
-    if(NOT file_language)
-      get_filename_component(srcfile_ext ${srcfile} EXT)
-      if(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
-        set(has_CXX 1)
-        set(file_language CXX)
-      elseif(${srcfile_ext} STREQUAL ".c")
-        set(has_C 1)
-        set(file_language C)
-      endif(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
-    endif(NOT file_language)
-    if(NOT file_language)
-      message(WARNING "File ${srcfile} listed in the ${targetname} sources list does not appear to be a C or C++ file.")
-    endif(NOT file_language)
-  endforeach(srcfile ${sourceslist})
-  set(${resultvar} "UNKNOWN" PARENT_SCOPE)
-  if(has_C AND has_CXX)
-    set(${resultvar} "MIXED" PARENT_SCOPE)
-  elseif(has_C AND NOT has_CXX)
-    set(${resultvar} "C" PARENT_SCOPE)
-  elseif(NOT has_C AND has_CXX)
-    set(${resultvar} "CXX" PARENT_SCOPE)
-  endif(has_C AND has_CXX)
-endfunction(SRCS_LANG)
-
 #---------------------------------------------------------------------------
 # Add dependencies to a target, but only if they are defined as targets in
 # CMake

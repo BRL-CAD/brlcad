@@ -72,22 +72,51 @@ define_property(
 include(CMakeParseArguments)
 
 
-# For BRL-CAD targets, use CXX as the language if the user requests it
-function(set_lang_cxx SRC_FILES cxx_enable)
-  if(${cxx_enable})
-    foreach(srcfile ${SRC_FILES})
-      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+#-----------------------------------------------------------------------------
+# C/C++ language management
+
+function(src_lang srcfile resultvar)
+  get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
+  if (file_language)
+    set(${resultvar} "${file_language}" PARENT_SCOPE)
+    return()
+  endif()
+  get_filename_component(srcfile_ext ${srcfile} EXT)
+  if(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
+    set(file_language CXX)
+    set_source_files_properties(${srcfile} PROPERTIES LANGUAGE CXX)
+  elseif(${srcfile_ext} STREQUAL ".c")
+    set(file_language C)
+    set_source_files_properties(${srcfile} PROPERTIES LANGUAGE C)
+  endif(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
+  set(${resultvar} "${file_language}" PARENT_SCOPE)
+endfunction()
+
+function(set_srcs_lang SRC_FILES cxx_enable)
+  foreach(srcfile ${SRC_FILES})
+    set(sfile ${srcfile})
+    if(NOT EXISTS "${srcfile}")
+      set(sfile "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+    endif()
+    if (EXISTS "${sfile}")
+      # Make sure each file is identified as C or C++, if it is supposed to be
+      # one of those types
+      src_lang("${srcfile}" f_lang)
+      # If the user is asking to use CXX as the language for C files, do so in
+      # all viable cases
+      if(${cxx_enable})
 	get_property(_no_cxx SOURCE ${srcfile} PROPERTY NO_CXX_COMPILE)
-	if(NOT _no_cxx)
+	if(NOT _no_cxx AND "${f_lang}" STREQUAL "C")
 	  set_source_files_properties(${srcfile} PROPERTIES LANGUAGE CXX)
 	  set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS NO_CXX_COMPILE register=)
 	endif()
-      endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-    endforeach(srcfile ${SRC_FILES})
-  endif()
-endfunction(set_lang_cxx SRC_FILES)
+      endif()
+    endif()
+  endforeach()
+endfunction()
 
 
+#-----------------------------------------------------------------------------
 # BRL-CAD style checking with AStyle
 function(VALIDATE_STYLE targetname srcslist)
 
@@ -276,7 +305,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   if (E_ALL_CXX)
     set(all_cxx ON)
   endif()
-  set_lang_cxx("${srcslist}" "${all_cxx}")
+  set_srcs_lang("${srcslist}" "${all_cxx}")
 
   # Add the executable.  If the caller indicates this is a GUI type
   # executable, add the correct flag for Visual Studio building (where
@@ -765,13 +794,13 @@ function(
 
   # Go all C++ if the settings request it
   set(all_cxx OFF)
-  if (ENABLL_ALL_CXX_COMPILE AND NOT L_NO_CXX)
+  if (ENABLE_ALL_CXX_COMPILE AND NOT L_NO_CXX)
     set(all_cxx ON)
   endif()
   if (L_ALL_CXX)
     set(all_cxx ON)
   endif()
-  set_lang_cxx("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" "${all_cxx}")
+  set_srcs_lang("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" "${all_cxx}")
 
   # Local copy of srcslist in case manipulation is needed
   set(lsrcslist ${srcslist})
