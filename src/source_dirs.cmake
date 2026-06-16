@@ -62,7 +62,7 @@ set_deps(libfft     "")
 set_deps(libpc      "")
 set_deps(libqtcad   "libged;libdm;libbv;libbn;libbu")
 set_deps(libtclcad  "libged;libdm;libbv;libbn;libbu")
-set_deps(libmcpcad  "libbu")
+set_deps(libmcpcad  "libged;libbu")
 
 
 # Applications

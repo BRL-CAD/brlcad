@@ -1,5 +1,8 @@
 set(LIBMCPCAD_SOURCES
+  exec.c
+  frame.c
   parse.c
+  session.c
 )
 
 # Note - libmcpcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
