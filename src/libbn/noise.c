@@ -45,8 +45,11 @@
 #include "bn/noise.h"
 #include "bn/rand.h"
 
+#ifdef __cplusplus
+extern "C" void bn_ensure_initialized(void);
+#else
 extern void bn_ensure_initialized(void);
-
+#endif
 
 /**
  * @brief interpolate smoothly from 0 .. 1

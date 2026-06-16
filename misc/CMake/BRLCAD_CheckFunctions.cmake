@@ -454,10 +454,19 @@ int main(void) {
 endfunction(BRLCAD_HEADER_SYS_WAIT)
 
 ###
-function(BRLCAD_ALLOCA)
+function(brlcad_alloca)
 
   include(CheckCSourceRuns)
   include(CheckCXXSourceRuns)
+
+  # Set up required flags
+  if(ENABLE_ALL_CXX_COMPILE)
+    # Use C++ flags for C++ checks
+    set(ALLOCA_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CXX_STANDARD_FLAGS}")
+  else()
+    # Use C flags for C checks
+    set(ALLOCA_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+  endif()
 
   set(ALLOCA_TEST_TEMPLATE "
 #include <stdlib.h>
@@ -484,7 +493,7 @@ int main(void)
 ")
     string(CONFIGURE "${ALLOCA_TEST_TEMPLATE}" TEST_SRC @ONLY)
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${ALLOCA_REQUIRED_FLAGS}")
     if(ENABLE_ALL_CXX_COMPILE)
       check_cxx_source_runs("${TEST_SRC}" HAVE_WORKING_ALLOCA)
     else()
@@ -508,7 +517,7 @@ int main(void)
 ")
     string(CONFIGURE "${ALLOCA_TEST_TEMPLATE}" TEST_SRC @ONLY)
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${ALLOCA_REQUIRED_FLAGS}")
     if(ENABLE_ALL_CXX_COMPILE)
       check_cxx_source_runs("${TEST_SRC}" HAVE_WORKING_BUILTIN_ALLOCA)
     else()
@@ -516,6 +525,26 @@ int main(void)
     endif()
     cmake_pop_check_state()
     if(HAVE_WORKING_BUILTIN_ALLOCA)
+      config_h_append(BRLCAD "
+#define HAVE_ALLOCA 1
+#define BRLCAD_ALLOCA(size) __builtin_alloca(size)
+")
+      return()
+    endif()
+    set(ALLOCA_IMPL "
+    #include <alloca.h>
+    #define BRLCAD_ALLOCA(size) __builtin_alloca(size)
+    ")
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${ALLOCA_REQUIRED_FLAGS}")
+    if(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${TEST_SRC}" HAVE_WORKING_BUILTIN_ALLOCA_W_HDR)
+    else()
+      check_c_source_runs("${TEST_SRC}" HAVE_WORKING_BUILTIN_ALLOCA_W_HDR)
+    endif()
+    cmake_pop_check_state()
+    message("HAVE_WORKING_BUILTIN_ALLOCA_W_HDR: ${HAVE_WORKING_BUILTIN_ALLOCA_W_HDR}")
+    if(HAVE_WORKING_BUILTIN_ALLOCA_W_HDR)
       config_h_append(BRLCAD "
 #define HAVE_ALLOCA 1
 #define BRLCAD_ALLOCA(size) __builtin_alloca(size)
@@ -531,7 +560,7 @@ int main(void)
 ")
   string(CONFIGURE "${ALLOCA_TEST_TEMPLATE}" TEST_SRC @ONLY)
   cmake_push_check_state()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+  set(CMAKE_REQUIRED_FLAGS "${ALLOCA_REQUIRED_FLAGS}")
   if(ENABLE_ALL_CXX_COMPILE)
     check_cxx_source_runs("${TEST_SRC}" HAVE_WORKING_ALLOCA_H)
   else()
@@ -547,7 +576,7 @@ int main(void)
 ")
     return()
   endif()
-endfunction(BRLCAD_ALLOCA)
+endfunction()
 
 ###
 # See if the compiler supports the C99 %z print specifier for size_t.
