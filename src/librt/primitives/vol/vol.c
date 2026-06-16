@@ -425,6 +425,93 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
+static size_t
+vol_from_file(const struct bu_mapped_file* mfile, size_t xdim, size_t ydim, size_t zdim, unsigned char **map)
+{
+    size_t y;
+    size_t z;
+    size_t ret = 0;
+    size_t nbytes;
+
+    /* Get bit map from .bw(5) file */
+    nbytes = (xdim+VOL_XWIDEN*2)*
+	(ydim+VOL_YWIDEN*2)*
+	(zdim+VOL_ZWIDEN*2);
+    *map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
+
+    /* Because of in-memory padding, read each scanline separately */
+    const unsigned char* cp = (const unsigned char*)mfile->buf;
+    for (z = 0; z < zdim; z++) {
+	for (y = 0; y < ydim; y++) {
+	    void *data = &VOLMAP(*map, xdim, ydim, 0, y, z);
+
+	    /* copy from file buf */
+	    memcpy(data, cp, xdim);
+	    cp += xdim;
+
+	    /* track read */
+	    ret += xdim;
+	}
+    }
+
+    return ret;
+}
+
+
+/**
+ * Read VOL data from external file
+ * Returns :
+ * 0 success
+ * !0 fail
+ */
+static int
+vol_file_data(struct rt_vol_internal *vip, const struct db_i *dbip)
+{
+    size_t nbytes;
+    struct bu_mapped_file* mfile = NULL;
+    const char* filename = vip->name;
+
+    /* try to open the file. If it can't be found, look in the parent file's dir */
+    if (!bu_file_readable(filename) && dbip && dbip->dbi_filepath) {
+	/* dbip is optional for V4 and below */
+	mfile = bu_open_mapped_file_with_path(dbip->dbi_filepath, filename, "vol");
+    } else {
+	mfile = bu_open_mapped_file(filename, "vol");
+    }
+
+    /* make sure we got something */
+    if (!mfile) {
+	bu_log("ERROR: unable to open data file: '%s'\n", filename);
+	return 1;
+    }
+
+    /* quick check: file buff should be atleast as big as dimensions */
+    size_t expected = (size_t)vip->xdim * vip->ydim * vip->zdim;
+    if (mfile->buflen < expected) {
+	bu_log("ERROR: data file '%s' too small (%zu bytes, need %zu)\n", filename, mfile->buflen, expected);
+
+	bu_close_mapped_file(mfile);
+	return 1;
+    }
+
+    /* extract vol from the file */
+    nbytes = vol_from_file(mfile, vip->xdim, vip->ydim, vip->zdim, &vip->map);
+    if (nbytes != expected) {
+	bu_log("ERROR: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, expected, vip->name);
+
+	bu_close_mapped_file(mfile);
+	return 1;
+    }
+
+    /* NOTE: bu_close_mapped_file does not free the memory associated. To not effect any other primitives
+     *  accidentally (ebm, dsp, hf, etc.) we don't call it either with the assumption that this is being run
+     *  through normal db operations (bu_close calls bu_free_mapped_files()).
+     */
+    bu_close_mapped_file(mfile);
+    return 0;
+}
+
+
 /**
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
@@ -436,12 +523,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     union record *rp;
     register struct rt_vol_internal *vip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    FILE *fp;
-    int nbytes;
-    size_t y;
-    size_t z;
     mat_t tmat;
-    size_t ret;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -493,40 +575,11 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bn_mat_mul(tmat, mat, vip->mat);
     MAT_COPY(vip->mat, tmat);
 
-    /* Get bit map from .bw(5) file */
-    nbytes = (vip->xdim+VOL_XWIDEN*2)*
-	(vip->ydim+VOL_YWIDEN*2)*
-	(vip->zdim+VOL_ZWIDEN*2);
-    vip->map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    if ((fp = fopen(vip->name, "rb")) == NULL) {
-	perror(vip->name);
-	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+    /* extract data from file */
+    if (vol_file_data(vip, dbip)) {
 	return -1;
     }
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
-    /* Because of in-memory padding, read each scanline separately */
-    for (z = 0; z < vip->zdim; z++) {
-	for (y = 0; y < vip->ydim; y++) {
-	    void *data = &VOLMAP(vip->map, vip->xdim, vip->ydim, 0, y, z);
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-	    ret = fread(data, vip->xdim, 1, fp); /* res_syscall */
-	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	    if (ret < 1) {
-		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
-		       vip->name, y, z);
-		bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-		fclose(fp);
-		bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-		return -1;
-	    }
-	}
-    }
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    fclose(fp);
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
     return 0;
 }
 
@@ -566,77 +619,6 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bu_vls_free(&str);
 
     return 0;
-}
-
-
-static size_t
-vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned char **map)
-{
-    size_t y;
-    size_t z;
-    size_t ret = 0;
-    size_t nbytes;
-    FILE *fp;
-
-    /* Get bit map from .bw(5) file */
-    nbytes = (xdim+VOL_XWIDEN*2)*
-	(ydim+VOL_YWIDEN*2)*
-	(zdim+VOL_ZWIDEN*2);
-    *map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    if ((fp = fopen(file, "rb")) == NULL) {
-	perror(file);
-	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	return 0;
-    }
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-
-    /* Because of in-memory padding, read each scanline separately */
-    for (z = 0; z < zdim; z++) {
-	for (y = 0; y < ydim; y++) {
-	    size_t fret;
-	    void *data = &VOLMAP(*map, xdim, ydim, 0, y, z);
-
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
-	    fret = fread(data, xdim, 1, fp);		/* res_syscall */
-	    bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
-	    if (fret < 1) {
-		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n", file, y, z);
-		bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
-		fclose(fp);
-		bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
-		return 0;
-	    }
-	    ret += xdim;
-	}
-    }
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    fclose(fp);
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-
-    return ret;
-}
-
-
-/**
- * Read VOL data from external file
- * Returns :
- * 0 success
- * !0 fail
- */
-static int
-vol_file_data(struct rt_vol_internal *vip)
-{
-   size_t nbytes;
-
-   size_t bytes = vip->xdim * vip->ydim * vip->zdim;
-	nbytes = vol_from_file(vip->name, vip->xdim, vip->ydim, vip->zdim, &vip->map);
-	if (nbytes != bytes) {
-	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->name);
-	}
-
-   return 0;
 }
 
 
@@ -738,7 +720,7 @@ get_vol_data(struct rt_vol_internal *vip, const struct db_i *dbip)
 	    if (RT_G_DEBUG & RT_DEBUG_HF)
 		bu_log("getting data from file \"%s\"\n", vip->name);
 
-	    if(vol_file_data(vip) != 0) {
+	    if (vol_file_data(vip, dbip) != 0) {
 		return 1;
 	    }
 	    else {
