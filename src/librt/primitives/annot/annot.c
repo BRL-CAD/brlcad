@@ -105,7 +105,7 @@ rt_txt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 
 
 static int
-ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
+ant_check_pos(const struct txt_seg *tsg, const char **rel_pos)
 {
     switch (tsg->rel_pos) {
 	case RT_TXT_POS_BL:
@@ -1372,7 +1372,7 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 			    V2INTCLAMPARGS(annot_ip->verts[tsg->ref_pt]));
 		}
 		bu_vls_strcat(str, buf);
-		ant_check_pos(tsg, &rel_pos);
+		ant_check_pos(tsg, (const char **)&rel_pos);
 		sprintf(buf, "\t\tRelative position: %s\n", rel_pos);
 		bu_vls_strcat(str, buf);
 		sprintf(buf, "\tLabel text: %s\n", bu_vls_addr(&tsg->label));
@@ -1715,7 +1715,7 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 	    case ANN_TSEG_MAGIC:
 		{
 		    struct txt_seg *tsg = (struct txt_seg *)ant->segments[j];
-		    ant_check_pos(tsg, &rel_pos);
+		    ant_check_pos(tsg, (const char **)&rel_pos);
 		    bu_vls_printf(vls, " { label %s ref_pt %d position %s txt_size %.25g txt_rot_angle %.25g }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos, tsg->txt_size, tsg->txt_rot_angle);
 		}
 		break;

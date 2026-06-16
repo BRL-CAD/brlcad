@@ -105,7 +105,11 @@ EMail:               luebke@cs.virginia.edu
 #ifndef _VDS_H
 #define _VDS_H
 
+#include "common.h"
+
 #include <stdio.h>
+
+__BEGIN_DECLS
 
 /** VDS_MAXDEGREE defines the maximum degree of vertex tree nodes	*/
 #define VDS_MAXDEGREE 8
@@ -330,6 +334,8 @@ extern vdsNode *vdsClusterOctree(vdsNode **nodes, int nnodes, int depth);
 #else
 #    error "Only values of 2, 4, and 8 supported for VDS_MAXDEGREE"
 #endif
+
+__END_DECLS
 
 #endif		/* _VDS_H */
 

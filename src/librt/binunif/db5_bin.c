@@ -371,7 +371,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     struct rt_binunif_internal	*bip;
     struct bu_external		ext;
     struct db5_raw_internal		raw;
-    char				*tmp;
+    const char				*tmp;
 
     /*
      *Find the guy we're told to write

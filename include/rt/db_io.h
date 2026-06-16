@@ -936,17 +936,17 @@ RT_EXPORT extern struct rt_i *rt_dirbuild_inmem(const void *data, b_off_t data_s
 
 
 /* db5_types.c */
-RT_EXPORT extern int db5_type_tag_from_major(char **tag,
+RT_EXPORT extern int db5_type_tag_from_major(const char **tag,
 					     const int major);
 
-RT_EXPORT extern int db5_type_descrip_from_major(char **descrip,
+RT_EXPORT extern int db5_type_descrip_from_major(const char **descrip,
 						 const int major);
 
-RT_EXPORT extern int db5_type_tag_from_codes(char **tag,
+RT_EXPORT extern int db5_type_tag_from_codes(const char **tag,
 					     const int major,
 					     const int minor);
 
-RT_EXPORT extern int db5_type_descrip_from_codes(char **descrip,
+RT_EXPORT extern int db5_type_descrip_from_codes(const char **descrip,
 						 const int major,
 						 const int minor);
 

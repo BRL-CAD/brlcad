@@ -510,7 +510,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	tp->tr_l.tl_op = OP_SOLID;
-	tp->tr_l.tl_name = "dummy";
+	tp->tr_l.tl_name = bu_strdup("dummy");
 	tp->tr_l.tl_mat = (matp_t)NULL;
 	tp->tr_a.tu_stp = rt_find_solid(rtip, dp->d_namep);
 	combp->tree = tp;

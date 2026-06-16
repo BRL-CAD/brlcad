@@ -1257,8 +1257,9 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 	return 0;			/* MISS */
     } else if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	int seg_count=0;
-
-	print_seg_list(rd->seghead, seg_count, "before");
+	char *bstr = bu_strdup("before");
+	print_seg_list(rd->seghead, seg_count, bstr);
+	bu_free(bstr, "bstr");
 
 	bu_log("\n\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
 
@@ -1292,7 +1293,9 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 
 	if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	    /* print debugging data before returning */
-	    print_seg_list(rd->seghead, seg_count, "after");
+	    char *astr = bu_strdup("after");
+	    print_seg_list(rd->seghead, seg_count, astr);
+	    bu_free(astr, "astr");
 	}
 	return seg_count;
     }
@@ -2247,7 +2250,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     struct rt_db_internal intern;
     struct bu_external ext;
     int flags;
-    char *name="error.s";
+    const char *name="error.s";
 
     bu_log("nmg_stash_model_to_file('%s', %p, %s)\n", filename, (void *)m, title);
 
@@ -2394,10 +2397,12 @@ rt_nmg_do_bool(
     nmg_r_radial_check(tl->tr_d.td_r, vlfree, tol);
 
     if (nmg_debug & NMG_DEBUG_BOOL) {
+	char *estr = bu_strdup("");
 	bu_log("Before model fuse\nShell A:\n");
-	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), "");
+	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), estr);
 	bu_log("Shell B:\n");
-	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tr->tr_d.td_r->s_hd), "");
+	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tr->tr_d.td_r->s_hd), estr);
+	bu_free(estr, "estr");
     }
 
     /* move operands into the same model */

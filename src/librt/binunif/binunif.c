@@ -47,6 +47,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rt/geom.h"
+#include "rt/binunif.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "librt_private.h"

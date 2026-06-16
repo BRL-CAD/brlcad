@@ -133,6 +133,8 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
+    int vs_flag;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     rt_edit_set_edflag(s, mode);
 
@@ -171,7 +173,7 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    if (*n->es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&n->es_eu->up.lu_p->down_hd, n->es_eu->up.magic_p);
 	    /* no change of state or edit_flag */
-	    int vs_flag = 1;
+	    vs_flag = 1;
 	    f = NULL; d = NULL;
 	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
 	    if (f)
@@ -186,8 +188,6 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    n->es_eu = BU_LIST_PNEXT_CIRC(edgeuse, n->es_eu);
 
 	    {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -208,8 +208,6 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    n->es_eu = BU_LIST_PPREV_CIRC(edgeuse, n->es_eu);
 
 	    {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -229,8 +227,6 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    n->es_eu = n->es_eu->eumate_p->radial_p;
 
 	    {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -333,8 +329,6 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 			if ((ret_val = bg_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
 							    v2->vg_p->coord, edge2, s->tol)) > (-1))
 			{
-			    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
 			    bu_vls_printf(&tmp_vls,
 					  "Loop crosses itself, cannot extrude\n");
 			    bu_vls_printf(&tmp_vls,

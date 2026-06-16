@@ -782,8 +782,10 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	NMG_CK_FACEUSE(fu);
 
 	if (nmg_calc_face_g(fu,vlfree)) {
+	    char *estr = bu_strdup("");
 	    bu_log("rt_tess_cline: failed to calculate plane equation\n");
-	    nmg_pr_fu_briefly(fu, "");
+	    nmg_pr_fu_briefly(fu, estr);
+	    bu_free(estr, "estr");
 	    return -1;
 	}
     }

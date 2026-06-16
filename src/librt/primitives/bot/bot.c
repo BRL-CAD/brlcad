@@ -832,8 +832,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 		fastf_t dist = VDOT(wxb, wn) / dn;
 
 		// Fill out hitdata
-		struct hit cur_hit = {0};
-		cur_hit.hit_magic = RT_HIT_MAGIC;
+		struct hit cur_hit = RT_HIT_INIT_ZERO;
 		cur_hit.hit_dist = dist;
 		cur_hit.hit_vpriv[X] = VDOT(tri->face_norm, rp->r_dir);
 		cur_hit.hit_vpriv[Y] = gamma / abs_dn;
@@ -859,7 +858,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 }
 
 
-THREADLOCAL hit_da hits_per_cpu = {0};
+THREADLOCAL hit_da hits_per_cpu = {0, 0, NULL};
 
 
 /**
@@ -2451,15 +2450,15 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-static char *unoriented="unoriented";
-static char *ccw="counter-clockwise";
-static char *cw="clockwise";
-static char *unknown_orientation="unknown orientation";
-static char *surface="\tThis is a surface with no volume\n";
-static char *solid="\tThis is a solid object (not just a surface)\n";
-static char *plate="\tThis is a FASTGEN plate mode solid\n";
-static char *nocos="\tThis is a plate mode solid with no obliquity angle effect\n";
-static char *unknown_mode="\tunknown mode\n";
+static const char *unoriented="unoriented";
+static const char *ccw="counter-clockwise";
+static const char *cw="clockwise";
+static const char *unknown_orientation="unknown orientation";
+static const char *surface="\tThis is a surface with no volume\n";
+static const char *solid="\tThis is a solid object (not just a surface)\n";
+static const char *plate="\tThis is a FASTGEN plate mode solid\n";
+static const char *nocos="\tThis is a plate mode solid with no obliquity angle effect\n";
+static const char *unknown_mode="\tunknown mode\n";
 
 /**
  * Make human-readable formatted presentation of this solid.  First
@@ -2472,7 +2471,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     struct rt_bot_internal *bot_ip =
 	(struct rt_bot_internal *)ip->idb_ptr;
     char buf[256];
-    char *orientation, *mode;
+    const char *orientation, *mode;
     size_t i;
 
     size_t badVertexCount = 0;
@@ -2570,7 +2569,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    bu_vls_strcat(str, "\n");
 	}
 	if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
-	    char *face_mode;
+	    const char *face_mode;
 
 	    if (BU_BITTEST(bot_ip->face_mode, i))
 		face_mode = "appended to hit point";
@@ -2912,7 +2911,7 @@ rt_bot_find_e_nearest_pt2(
 }
 
 
-static char *modes[]={
+static const char *modes[]={
     "ERROR: Unrecognized mode",
     "surf",
     "volume",
@@ -2921,7 +2920,7 @@ static char *modes[]={
 };
 
 
-static char *orientation[]={
+static const char *orientation[]={
     "ERROR: Unrecognized orientation",
     "no",
     "rh",
@@ -2929,7 +2928,7 @@ static char *orientation[]={
 };
 
 
-static char *los[]={
+static const char *los[]={
     "center",
     "append"
 };

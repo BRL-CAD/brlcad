@@ -511,7 +511,7 @@ test_bn_mat_ck(int argc, char *argv[])
 {
     mat_t m;
     int expected;
-    char *title = "test_bn_mat_ck";
+    const char *title = "test_bn_mat_ck";
 
     if (argc != 4) {
 	bu_exit(1, "<args> format: M <expected_result> [%s]\n", argv[0]);

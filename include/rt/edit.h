@@ -538,7 +538,7 @@ rt_edit_revert(struct rt_edit *s);
 /* Edit menu items encode information about specific edit operations, as well
  * as info documenting them.  Edit functab methods use this data type. */
 struct rt_edit_menu_item {
-    char *menu_string;
+    const char *menu_string;
     void (*menu_func)(struct rt_edit *, int, int, int, void *);
     int menu_arg;
 };

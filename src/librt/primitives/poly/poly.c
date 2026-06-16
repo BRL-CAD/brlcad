@@ -616,9 +616,11 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 	/* Associate face geometry */
 	if (nmg_calc_face_g(fu, vlfree)) {
-	    nmg_pr_fu_briefly(fu, "");
+	    char *estr = bu_strdup("");
+	    nmg_pr_fu_briefly(fu, estr);
 	    bu_free((char *)verts, "pg_tess verts[]");
 	    bu_free((char *)vertp, "pg_tess vertp[]");
+	    bu_free(estr, "estr");
 	    return -1;			/* FAIL */
 	}
     }

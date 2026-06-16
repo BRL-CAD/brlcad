@@ -30,7 +30,7 @@
 
 #include "vmath.h"
 #include "rt/db4.h"
-
+#include "./librt_private.h"
 
 typedef union {
     float f;

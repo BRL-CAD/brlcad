@@ -1420,7 +1420,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
     int hits_needed;
     int ret = 0;
     int indefinite_outpt = 0;
-    char *reason = (char *)NULL;
+    const char *reason = NULL;
     fastf_t diff;
 
 #define HITS_TODO (hits_needed - hits_avail)

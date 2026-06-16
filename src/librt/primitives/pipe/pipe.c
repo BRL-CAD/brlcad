@@ -48,11 +48,11 @@
 #include "wdb.h"
 #include "../../librt_private.h"
 
-#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan) && !defined(__cplusplus)
 extern int isnan(double x);
 #endif
 
-#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF) && !defined(isinf)
+#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF) && !defined(isinf) && !defined(__cplusplus)
 extern int isinf(double x);
 #endif
 

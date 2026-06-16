@@ -748,7 +748,7 @@ get_obj_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 static int
 ebm_get_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 {
-    char *p;
+    const char *p;
 
     p = eip->name;
 

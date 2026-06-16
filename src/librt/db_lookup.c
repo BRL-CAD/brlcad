@@ -425,7 +425,7 @@ void
 db_pr_dir(const struct db_i *dbip)
 {
     const struct directory *dp;
-    char *flags;
+    const char *flags;
 
     RT_CK_DBI(dbip);
 

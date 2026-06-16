@@ -120,7 +120,7 @@ struct prep_arb {
  * (Although the cross product wants counter-clockwise order)
  */
 struct arb_info {
-    char *ai_title;
+    const char *ai_title;
     int ai_sub[4];
 };
 

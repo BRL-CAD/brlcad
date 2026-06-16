@@ -43,8 +43,8 @@ struct db5_type {
     int major_code;
     int minor_code;
     int heed_minor;
-    char *tag;
-    char *description;
+    const char *tag;
+    const char *description;
 };
 
 /**
@@ -112,7 +112,7 @@ static const struct db5_type type_table[] = {
 
 
 int
-db5_type_tag_from_major(char **tag, const int major)
+db5_type_tag_from_major(const char **tag, const int major)
 {
     register struct db5_type *tp;
 
@@ -129,7 +129,7 @@ db5_type_tag_from_major(char **tag, const int major)
 
 
 int
-db5_type_descrip_from_major(char **descrip, const int major)
+db5_type_descrip_from_major(const char **descrip, const int major)
 {
     register struct db5_type *tp;
 
@@ -146,7 +146,7 @@ db5_type_descrip_from_major(char **descrip, const int major)
 
 
 int
-db5_type_tag_from_codes(char **tag, const int major, const int minor)
+db5_type_tag_from_codes(const char **tag, const int major, const int minor)
 {
     register struct db5_type *tp;
     register int found_minors = 0;
@@ -168,7 +168,7 @@ db5_type_tag_from_codes(char **tag, const int major, const int minor)
 
 
 int
-db5_type_descrip_from_codes(char **descrip, const int major, const int minor)
+db5_type_descrip_from_codes(const char **descrip, const int major, const int minor)
 {
     register struct db5_type *tp;
     register int found_minors = 0;

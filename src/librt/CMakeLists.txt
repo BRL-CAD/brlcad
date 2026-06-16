@@ -381,6 +381,12 @@ set(
 )
 cmakefiles(${librt_ignored_files})
 
+# tie violates the One Definition Rule when we compile as C++
+set_source_files_properties(primitives/bot/btg.c PROPERTIES NO_CXX_COMPILE TRUE)
+set_source_files_properties(primitives/bot/btgf.c PROPERTIES NO_CXX_COMPILE TRUE)
+set_source_files_properties(primitives/bot/tie.c PROPERTIES NO_CXX_COMPILE TRUE)
+set_source_files_properties(primitives/bot/tie_kdtree.c PROPERTIES NO_CXX_COMPILE TRUE)
+
 set(
   CL_FILES
   primitives/bool.cl

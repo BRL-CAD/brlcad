@@ -106,6 +106,9 @@ get_system_output(const char *input)
 }
 #endif
 
+
+#if defined(HAVE_BASENAME) || defined(HAVE__SPLITPATH)
+
 static char *
 get_bu_output(const char *input)
 {
@@ -119,9 +122,6 @@ get_bu_output(const char *input)
 
     return output;
 }
-
-
-#if defined(HAVE_BASENAME) || defined(HAVE__SPLITPATH)
 
 static void
 compare_bu_to_system_basename(const char *input)
