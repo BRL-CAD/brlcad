@@ -986,7 +986,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
-    ep->ext_nbytes = bu_vls_strlen(&str) + 1;
+    ep->ext_nbytes = bu_vls_strlen(&str) + 1;	/* null term for strcpy */
     if (ep->ext_nbytes <= 1)
 	return -1;
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
