@@ -2147,7 +2147,7 @@ static int
 vtk_can_read(const char *data)
 {
     FILE *fp;
-    char buf[64];
+    char buf[512]; /* Read a larger buffer to accommodate XML headers */
     int ret = 0;
 
     if (!data)
@@ -2157,16 +2157,61 @@ vtk_can_read(const char *data)
     if (!fp)
 	return 0;
 
-    if (bu_fgets(buf, sizeof(buf), fp) != NULL) {
-	if (bu_strncmp(buf, "# vtk DataFile Version", 22) == 0)
-	    ret = 1;
-	else if (bu_strncmp(buf, "<?xml", 5) == 0)
-	    ret = 1;
-	else if (bu_strncmp(buf, "<VTKFile", 8) == 0)
-	    ret = 1;
+    /* Read up to 511 bytes and null-terminate the buffer safely */
+    size_t bytes_read = fread(buf, 1, sizeof(buf) - 1, fp);
+    fclose(fp);
+
+    if (bytes_read == 0)
+	return 0;
+
+    buf[bytes_read] = '\0';
+
+    /* 1. Check for Legacy VTK File Format */
+    if (bu_strncmp(buf, "# vtk DataFile Version", 22) == 0) {
+	return 1;
     }
 
-    fclose(fp);
+    /* 2. Check for Modern VTK XML File Format */
+    const char *ptr = buf;
+
+    /* Skip leading whitespace if any */
+    while (*ptr && isspace((unsigned char)*ptr)) {
+	ptr++;
+    }
+
+    /* Skip the XML declaration if present: <?xml ... ?> */
+    if (bu_strncmp(ptr, "<?xml", 5) == 0) {
+	ptr = strstr(ptr, "?>");
+	if (!ptr) {
+	    return 0; /* Malformed XML declaration */
+	}
+	ptr += 2; /* Move past "?>" */
+
+	/* Skip whitespace between xml declaration and root tag */
+	while (*ptr && isspace((unsigned char)*ptr)) {
+	    ptr++;
+	}
+    }
+
+    /* Skip potential XML comments: <!-- ... --> */
+    while (bu_strncmp(ptr, "<!--", 4) == 0) {
+	ptr = strstr(ptr, "-->");
+	if (!ptr) {
+	    return 0; /* Malformed comment */
+	}
+	ptr += 3; /* Move past "-->" */
+
+	/* Skip trailing whitespace */
+	while (*ptr && isspace((unsigned char)*ptr)) {
+	    ptr++;
+	}
+    }
+
+    /* Verify if the first major element tag is <VTKFile */
+    if (bu_strncmp(ptr, "<VTKFile", 8) == 0) {
+	ret = 1;
+    }
+
     return ret;
 }
 
