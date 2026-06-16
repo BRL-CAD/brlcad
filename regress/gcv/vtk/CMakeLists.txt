@@ -52,13 +52,14 @@ gcv_regress_util(
 
 cmakefiles(
   CMakeLists.txt
-  points.vtk
-  verts_lines.vtk
-  mesh.vtk
-  ugrid_cells.vtk
-  image.vtk
-  rgrid.vtk
   binary.vtk
+  image.vtk
+  image2d.vtk
+  mesh.vtk
+  points.vtk
+  rgrid.vtk
+  ugrid_cells.vtk
+  verts_lines.vtk
 )
 
 # Local Variables:
