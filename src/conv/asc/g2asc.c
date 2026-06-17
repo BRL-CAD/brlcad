@@ -51,7 +51,9 @@ char *strchop(char *str, size_t len);
 #define CH(x)	strchop(x, sizeof(x))
 
 int	combdump(void);
-void	idendump(void), polyhead(void), polydata(void);
+void	idendump(void);
+void f_polyhead(void);
+void f_polydata(void);
 void	soldump(void), extrdump(void), sketchdump(void);
 void	membdump(union record *rp), arsadump(void), arsbdump(void);
 void	materdump(void), bspldump(void), bsurfdump(void);
@@ -69,7 +71,7 @@ Usage: g2asc file.g file.asc\n\
 
 FILE	*ifp;
 FILE	*ofp;
-char	*iname = "-";
+const char	*iname = "-";
 
 static char *tclified_name=NULL;
 static size_t tclified_name_buffer_len=0;
@@ -392,10 +394,10 @@ top:
 		arsadump();
 		continue;
 	    case ID_P_HEAD:
-		polyhead();
+		f_polyhead();
 		continue;
 	    case ID_P_DATA:
-		polydata();
+		f_polydata();
 		continue;
 	    case ID_IDENT:
 		idendump();
@@ -457,6 +459,7 @@ top:
  */
 char *encode_name(char *str)
 {
+    static char *nbuf = bu_strdup("-=NULL=-");
     static char buf[NAMESIZE+1];
     char *ip = str;
     char *op = buf;
@@ -482,7 +485,7 @@ char *encode_name(char *str)
 	/* Null input name */
 	fprintf(stderr,
 		      "g2asc:  NULL object name converted to -=NULL=-\n");
-	return "-=NULL=-";
+	return nbuf;
     }
     return buf;
 }
@@ -620,7 +623,7 @@ idendump(void)	/* Print out Ident record information */
 }
 
 void
-polyhead(void)	/* Print out Polyhead record information */
+f_polyhead(void)	/* Print out Polyhead record information */
 {
     fprintf(ofp, "%c ", record.p.p_id);		/* P */
     fprintf(ofp, "%.16s", encode_name(record.p.p_name));	/* unique name */
@@ -628,7 +631,7 @@ polyhead(void)	/* Print out Polyhead record information */
 }
 
 void
-polydata(void)	/* Print out Polydata record information */
+f_polydata(void)	/* Print out Polydata record information */
 {
     int i, j;
 
@@ -1186,6 +1189,7 @@ bsurfdump(void)	/* Print d-spline surface description record information */
  */
 char *strchop(char *str, size_t len)
 {
+    static char *sbuf = bu_strdup("-=STRING=-");
     static char buf[10000] = {0};
     char *ip = str;
     char *op = buf;
@@ -1215,7 +1219,7 @@ char *strchop(char *str, size_t len)
 	/* Null input name */
 	fprintf(stderr,
 		      "g2asc:  NULL string converted to -=STRING=-\n");
-	return "-=STRING=-";
+	return sbuf;
     }
     return buf;
 }

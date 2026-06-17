@@ -31,7 +31,6 @@
 #include <GL/gl.h>
 
 #include "tcl.h"
-#include "tk.h"
 
 #include "bu/app.h"
 #include "bu/parallel.h"
@@ -44,6 +43,10 @@
 #include "camera.h"
 #include "raytrace.h"
 #include "tclcad.h"
+
+// Tclcad pulls in OpenNURBS in C++ compilation mode, which defines None, which
+// will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tk.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -542,7 +545,7 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 static int
 open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *UNUSED(objv))
 {
-    char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
+    const char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
     dmp = dm_open(NULL, (void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 

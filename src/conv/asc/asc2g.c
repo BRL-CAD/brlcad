@@ -72,8 +72,8 @@ static size_t ars_curve = 0;
 static size_t ars_pt = 0;
 static char *ars_name = NULL;
 static fastf_t **ars_curves = NULL;
-static char *slave_name = "safe_interp";
-static char *db_name = "_db";
+const static char *slave_name = "safe_interp";
+const static char *db_name = "_db";
 
 static int linecnt = 0;
 static char usage[] = "\
@@ -81,7 +81,7 @@ Usage: asc2g file.asc file.g\n\
  Convert an ASCII BRL-CAD database to binary form\n\
 ";
 
-char *aliases[] = {
+const char *aliases[] = {
     "attr",
     "color",
     "put",

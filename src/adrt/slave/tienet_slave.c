@@ -97,15 +97,23 @@ void tienet_slave_free(void)
 
 
 void tienet_slave_worker(int port, char *host) {
-    tienet_buffer_t result = {0};
-    tienet_buffer_t buffer = {0};
+    tienet_buffer_t result;
+    TIENET_BUFFER_INIT(result);
+    tienet_buffer_t buffer;
+    TIENET_BUFFER_INIT(buffer);
+#ifdef __cplusplus
+    struct sockaddr_in master = {};
+    struct sockaddr_in slave = {};
+#else
     struct sockaddr_in master = {0};
     struct sockaddr_in slave = {0};
+#endif
     struct hostent h;
     short op = 0;
     uint32_t size = 0;
     int slave_socket = 0;
-    tienet_buffer_t buffer_comp = {0};
+    tienet_buffer_t buffer_comp;
+    TIENET_BUFFER_INIT(buffer_comp);
     unsigned long dest_len = 0;
 
 

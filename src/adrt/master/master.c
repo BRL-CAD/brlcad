@@ -324,8 +324,13 @@ int
 master_networking(void *ptr)
 {
     master_socket_t *sock = NULL, *tmp = NULL;
+#ifdef __cplusplus
+    struct sockaddr_in master_addr = {};
+    struct sockaddr_in observer_addr = {};
+#else
     struct sockaddr_in master_addr = {0};
     struct sockaddr_in observer_addr = {0};
+#endif
     fd_set readfds;
     int port=0, master_socket=0, highest_fd=0, new_socket=0, error=0;
     unsigned int addrlen = 0;

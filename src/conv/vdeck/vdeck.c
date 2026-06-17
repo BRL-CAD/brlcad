@@ -78,7 +78,7 @@
 
 int	debug = 0;
 
-char	*cmd[] = {
+const char	*cmd[] = {
     "",
     "C O M M A N D                  D E S C R I P T I O N",
     "",
@@ -99,7 +99,7 @@ char	*cmd[] = {
     0
 };
 
-char	*usage[] = {
+const char	*usage[] = {
     "",
     "v d e c k",
     "Make COMGEOM decks of objects from a \"mged\" file suitable as",
@@ -1581,9 +1581,9 @@ getcmd(char *args[], int ct)
  * Display menu stored at address 'addr'.
  */
 void
-menu(char **addr)
+menu(const char **addr)
 {
-    char	**sbuf = addr;
+    const char	**sbuf = addr;
     while (*sbuf)
 	(void) printf("%s\n", *sbuf++);
     (void) fflush(stdout);

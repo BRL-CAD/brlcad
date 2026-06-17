@@ -31,13 +31,15 @@
 #include "bio.h"
 
 #include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#endif
 
 #include "bu.h"
 #include "tclcad.h"
 
+// Tclcad pulls in OpenNURBS in C++ compilation mode, which defines None, which
+// will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #ifdef HAVE_WINDOWS_H
 int APIENTRY

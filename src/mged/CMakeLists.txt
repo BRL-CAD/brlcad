@@ -83,7 +83,7 @@ if(BRLCAD_ENABLE_TCL)
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
   )
-  brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}")
+  brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}" NO_CXX)
   if(TK_LIBRARY)
     target_compile_definitions(mged PRIVATE HAVE_TK=1)
   endif(TK_LIBRARY)

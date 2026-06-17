@@ -42,7 +42,7 @@
 #include "wdb.h"
 
 /* defined in read.c */
-extern int get_line(char *cp, int buflen, char *title);
+extern int get_line(char *cp, int buflen, const char *title);
 extern void namecvt(int n, char **cp, int c);
 extern int getint(char *cp, int start, size_t len);
 extern double getdouble(char *cp, int start, size_t len);

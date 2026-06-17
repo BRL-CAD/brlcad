@@ -42,7 +42,7 @@ extern char name_it[16];		/* argv[3] */
 void namecvt(int n, char **cp, int c);
 
 int
-get_line(char *cp, int buflen, char *title)
+get_line(char *cp, int buflen, const char *title)
 {
     int c = 0;
     struct bu_vls str = BU_VLS_INIT_ZERO;

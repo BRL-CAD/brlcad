@@ -31,7 +31,7 @@
 #include "wdb.h"
 
 /* defined in read.c */
-extern int get_line(char *cp, int buflen, char *title);
+extern int get_line(char *cp, int buflen, const char *title);
 extern int getint(char *cp, int start, size_t len);
 extern void namecvt(int n, char **cp, int c);
 
@@ -53,7 +53,7 @@ char rcard[128];
 
 void region_register(int reg_num, int id, int air, int mat, int los);
 void group_init(void);
-void group_register(char *name, int lo, int hi);
+void group_register(const char *name, int lo, int hi);
 void group_add(int val, char *name);
 void group_write(void);
 
@@ -311,7 +311,7 @@ group_init(void)
 
 
 void
-group_register(char *name, int lo, int hi)
+group_register(const char *name, int lo, int hi)
 {
     char nbuf[32];
     struct wmember *wp;

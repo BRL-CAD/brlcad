@@ -47,7 +47,7 @@ extern void region_register(int reg_num, int id, int air, int mat, int los);
 extern void group_write(void);
 
 /* defined in read.c */
-extern int get_line(char *cp, int buflen, char *title);
+extern int get_line(char *cp, int buflen, const char *title);
 
 /* defined in solid.c */
 extern void trim_trail_spaces(char *cp);

@@ -63,7 +63,7 @@ static const char *usage = "[-r region] [-g group] [jack_db] [brlcad_db]\n";
 
 int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile, struct bu_list *vlfree);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
-void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile, struct bu_list *vlfree);
+void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, const char *jfile, struct bu_list *vlfree);
 
 static void
 print_usage(const char *progname)
@@ -74,7 +74,8 @@ print_usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-    char		*base, *bfile, *grp_name, *jfile, *reg_name;
+    char		*base, *bfile, *grp_name, *reg_name;
+    const char *jfile;
     FILE		*fpin;
     struct rt_wdb	*fpout = NULL;
     size_t doti;
@@ -158,12 +159,14 @@ main(int argc, char **argv)
  *	Convert a UPenn Jack data base into a BRL-CAD data base.
  */
 void
-jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile, struct bu_list *vlfree)
+jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, const char *jfile, struct bu_list *vlfree)
 {
     struct model	*m;
 
     m = nmg_mm();			/* Make nmg model. */
-    psurf_to_nmg(m, fpin, jfile, vlfree);	/* Convert psurf model to nmg. */
+    char *ljfile = bu_strdup(jfile);
+    psurf_to_nmg(m, fpin, ljfile, vlfree);	/* Convert psurf model to nmg. */
+    bu_free(ljfile, "ljfile");
     create_brlcad_db(fpout, m, reg_name, grp_name);	/* Put in db. */
     nmg_km(m);			/* Destroy the nmg model. */
 }

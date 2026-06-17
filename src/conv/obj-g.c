@@ -914,7 +914,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
     size_t *num_vertices_arr_tmp = NULL;
     size_t *obj_file_face_idx_arr_tmp = NULL;
 
-    const size_t (*index_arr_v_faces) = NULL;      /* used by v_faces */
+    const size_t *index_arr_v_faces = NULL;      /* used by v_faces */
     const size_t (*index_arr_tv_faces)[2] = NULL;  /* used by tv_faces */
     const size_t (*index_arr_nv_faces)[2] = NULL;  /* used by nv_faces */
     const size_t (*index_arr_tnv_faces)[3] = NULL; /* used by tnv_faces */
@@ -2840,7 +2840,9 @@ output_to_nmg(struct ga_t *ga,
 			   gfi->obj_file_face_idx_arr[face_idx] + 1,
 			   bu_vls_addr(gfi->raw_grouping_name),
 			   gfi->grouping_index + 1);
-		    nmg_pr_fu_briefly(fu, "");
+		    char *estr = bu_strdup("");
+		    nmg_pr_fu_briefly(fu, estr);
+		    bu_free(estr, "estr");
 		}
 		(void)nmg_kfu(fu);
 		fu = (struct faceuse *)NULL;

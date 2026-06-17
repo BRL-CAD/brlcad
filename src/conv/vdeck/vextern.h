@@ -58,7 +58,8 @@
 #define NO	0
 
 extern int	debug;
-extern char	*usage[], *cmd[];
+extern const char *usage[];
+extern const char *cmd[];
 extern mat_t	identity;
 
 extern void		abort_sig(int sig), quit(int sig);

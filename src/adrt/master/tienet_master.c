@@ -299,8 +299,13 @@ void tienet_master_wait(void)
 void tienet_master_connect_slaves(fd_set *readfds)
 {
     FILE *fh;
+#ifdef __cplusplus
+    struct sockaddr_in tdaemon = {};
+    struct sockaddr_in slave = {};
+#else
     struct sockaddr_in tdaemon = {0};
     struct sockaddr_in slave = {0};
+#endif
     struct hostent slave_ent;
     tienet_master_socket_t *tmp = NULL;
     short op = 0;

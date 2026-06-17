@@ -124,7 +124,7 @@ static char *output_file=(char *)NULL;
 static char *plotfile;
 static short vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
 static int debug=0;
-static char *token_seps=" \t, ;\n";
+static const char *token_seps=" \t, ;\n";
 static size_t cur_dir=0;
 static size_t cell_count[3];
 static fastf_t decimation_tol=0.0;
@@ -240,7 +240,7 @@ a_overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp),
 
 
 static int
-miss(struct application *UNUSED(ap))
+r_miss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -768,7 +768,9 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab, struct bu_list *vlfree)
 
 	if (count != 4) {
 	    bu_log("Found a loop with %d edge! (should be 3 or 4)\n", count);
-	    nmg_pr_fu_briefly(fu, "");
+	    char *estr = bu_strdup("");
+	    nmg_pr_fu_briefly(fu, estr);
+	    bu_free(estr, "estr");
 	    continue;
 	}
 
@@ -813,7 +815,9 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab, struct bu_list *vlfree)
 
 	if (!eu1 || !eu2) {
 	    bu_log("Could not find edges to split in loop:\n");
-	    nmg_pr_fu_briefly(fu, "");
+	    char *estr = bu_strdup("");
+	    nmg_pr_fu_briefly(fu, estr);
+	    bu_free(estr, "estr");
 	    continue;
 	}
 
@@ -983,7 +987,7 @@ shrink_wrap(struct shell *s, struct bu_list *vlfree)
     memset(&ap, 0, sizeof(struct application));
     ap.a_uptr = (void *)&sd;
     ap.a_rt_i = rtip;
-    ap.a_miss = miss;
+    ap.a_miss = r_miss;
     ap.a_overlap = a_overlap;
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_onehit = 0;
@@ -1260,7 +1264,7 @@ refine_edges(struct shell *s, struct bu_list *vlfree)
 
     memset(&ap, 0, sizeof(struct application));
     ap.a_rt_i = rtip;
-    ap.a_miss = miss;
+    ap.a_miss = r_miss;
     ap.a_overlap = a_overlap;
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_onehit = 0;
@@ -1565,7 +1569,7 @@ Make_shell(struct bu_list *vlfree)
 
 
 static int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     struct partition *first_pp;
     struct partition *last_pp;
@@ -1789,8 +1793,8 @@ main(int argc, char **argv)
 
     memset(&ap, 0, sizeof(struct application));
     ap.a_rt_i = rtip;
-    ap.a_hit = hit;
-    ap.a_miss = miss;
+    ap.a_hit = r_hit;
+    ap.a_miss = r_miss;
     ap.a_overlap = a_overlap;
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_onehit = 0;

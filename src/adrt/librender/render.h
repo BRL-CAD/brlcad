@@ -26,6 +26,8 @@
 
 #include "render_internal.h"
 
+__BEGIN_DECLS
+
 RENDER_EXPORT extern int render_component_init(render_t *, const char *);
 RENDER_EXPORT extern int render_cut_init(render_t *, const char *);
 RENDER_EXPORT extern int render_depth_init(render_t *, const char *);
@@ -40,6 +42,7 @@ RENDER_EXPORT extern int render_surfel_init(render_t *, const char *);
 
 RENDER_EXPORT void* render_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
 
+__END_DECLS
 #endif
 
 /*

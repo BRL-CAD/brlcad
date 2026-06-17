@@ -103,13 +103,13 @@ static fastf_t conv[3]={
 
 
 static int units;			/* units flag */
-static char *output_file = "nastran.g";
+static const char *output_file = "nastran.g";
 static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
-static char *usage = "[-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
+static const char *usage = "[-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
 static b_off_t start_off;
-static char *delims=", \t";
+static const char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
 static struct pbar pbar_head;		/* head of linked list of PBAR's */
 static struct pshell pshell_head;	/* head of linked list of PSHELL's */
@@ -503,7 +503,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 
 
 static void
-log_line(char *str)
+log_line(const char *str)
 {
     int i;
 
@@ -1110,7 +1110,7 @@ main(int argc, char **argv)
     struct pbar *pbp;
     struct wmember head;
     struct wmember all_head;
-    char *nastran_file = "Converted from NASTRAN file (stdin)";
+    const char *nastran_file = "Converted from NASTRAN file (stdin)";
 
     struct bu_list *vlfree = &rt_vlfree;
 
