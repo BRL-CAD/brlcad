@@ -162,7 +162,7 @@ default_options(void)
 void
 usage(const char *argv0, int verbose)
 {
-    bu_log("\nUsage:  %s [options] model.g objects...\n", argv0);
+    bu_log("\nUsage:  %s [options] model.g [objects...]\n", argv0);
 
     /* use defaults if none were loaded */
     if (!map_initialized) {
