@@ -61,7 +61,6 @@ cmakefiles(
 brlcad_addlib(libnmg "${LIBNMG_SOURCES}" "" ""
   PUBLIC_LIBS ${libnmg_deps}
   PRIVATE_LIBS ${STDCXX_LIBRARIES} ${WINSOCK_LIB}
-  NO_CXX
 )
 
 add_subdirectory(tests)
