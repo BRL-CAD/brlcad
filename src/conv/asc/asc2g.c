@@ -72,8 +72,8 @@ static size_t ars_curve = 0;
 static size_t ars_pt = 0;
 static char *ars_name = NULL;
 static fastf_t **ars_curves = NULL;
-const static char *slave_name = "safe_interp";
-const static char *db_name = "_db";
+static const char *slave_name = "safe_interp";
+static const char *db_name = "_db";
 
 static int linecnt = 0;
 static char usage[] = "\
