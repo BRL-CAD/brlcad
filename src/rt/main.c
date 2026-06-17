@@ -65,9 +65,8 @@
 #include "./ext.h"
 #include "brlcad_ident.h"
 
-__BEGIN_DECLS
+
 extern void application_init(void);
-__END_DECLS
 
 extern const char title[];
 

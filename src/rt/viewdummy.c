@@ -141,7 +141,7 @@ raymiss(register struct application *ap)
     return 0;
 }
 
-C_DECL void
+void
 application_init (void)
 {
     /* You can customize usage for this application here. */

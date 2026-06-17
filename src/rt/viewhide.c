@@ -664,7 +664,7 @@ cleanline(struct cell *inbuffp, int file_width)
 }
 
 
-C_DECL void
+void
 application_init (void)
 {
     option("", "-A angle", "Angle between surface normals (default=5degrees)", 0);

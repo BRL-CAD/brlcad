@@ -68,7 +68,6 @@
 #define REMRT_TLS_IMPL
 #include "./tls_wrap.h"
 
-__BEGIN_DECLS
 
 struct bu_list WorkHead;
 
@@ -182,7 +181,6 @@ static int rtsrv_log_hook(void *clientdata, void *str);
 static int rtsrv_bomb_hook(void *clientdata, void *str);
 static void rtsrv_install_log_hook(void);
 
-__END_DECLS
 
 int
 main(int argc, char **argv)

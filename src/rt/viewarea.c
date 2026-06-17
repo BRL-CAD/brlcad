@@ -1182,7 +1182,7 @@ void view_setup(struct rt_i *UNUSED(rtip)) {}
 void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
-C_DECL void
+void
 application_init (void) {
     option("", "-u units", "Set the display units (default=mm)", 0);
     option("", "-U #", "Set use_air boolean to # (default=1)", 0);

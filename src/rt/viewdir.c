@@ -215,7 +215,7 @@ view_end(struct application *ap)
 }
 
 
-C_DECL void application_init (void) {}
+void application_init (void) {}
 
 /*
  * Local Variables:

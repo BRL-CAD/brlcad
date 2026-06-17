@@ -57,7 +57,7 @@ struct ihost {
 #define HT_USE		3		/* cd to ht_path, use asc database */
 					/* best of cd and convert */
 #define HT_LOCAL	4		/* spawn rtsrv directly on this machine via pkg IPC (no SSH) */
-    const char		*ht_path;	/* remote directory to run in */
+    char		*ht_path;	/* remote directory to run in */
 };
 #define IHOST_MAGIC	0x69486f73
 #define CK_IHOST(_p)	BU_CKMAG(_p, IHOST_MAGIC, "ihost")
