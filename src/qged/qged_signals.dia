@@ -2524,7 +2524,7 @@ Update#</dia:string>
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
-            <dia:string>#BSelectState
+            <dia:string>#SelectionSet
 (libged)#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">

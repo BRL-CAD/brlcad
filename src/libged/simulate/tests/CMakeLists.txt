@@ -37,12 +37,16 @@ if(BRLCAD_ENABLE_BULLET)
     add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
   endif()
 
-  # Not ready to turn this on by default yet.
-  #brlcad_addexec(simulate_test "simulate_test.cpp" "libged;${BULLET_LIBRARIES}" TEST)
-  #target_include_directories(simulate_test BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
-  #target_include_directories(simulate_test SYSTEM PRIVATE ${BULLET_INCLUDE_DIR})
-  #target_compile_options(simulate_test PRIVATE -Wno-nonnull-compare)
-  #brlcad_add_test(NAME simulate_test COMMAND simulate_test)
+  check_cxx_compiler_flag(-Wno-nonnull-compare SIMULATE_TEST_NO_NONNULL_COMPARE)
+
+  brlcad_addexec(simulate_test "simulate_test.cpp" "libged;libwdb;librt;libbu;${BULLET_LIBRARIES}" TEST)
+  target_include_directories(simulate_test BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
+  target_include_directories(simulate_test SYSTEM PRIVATE ${BULLET_INCLUDE_DIR})
+  target_compile_options(simulate_test PRIVATE $<$<BOOL:${SIMULATE_TEST_NO_NONNULL_COMPARE}>:-Wno-nonnull-compare>)
+  if(TARGET simulate_test)
+    add_dependencies(simulate_test ged-simulate)
+  endif()
+  brlcad_add_test(NAME simulate_test COMMAND simulate_test)
 
   # verify_simulation: standalone tool for pre/post-simulation checks on an
   # actual on-disk .g database (m35 truck + terra terrain scenario).

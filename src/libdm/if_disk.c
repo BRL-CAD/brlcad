@@ -411,7 +411,8 @@ struct fb_impl disk_interface_impl = {
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0},  /* u6 */
+    0     /* if_active_clients */
 };
 
 struct fb disk_interface = { &disk_interface_impl };

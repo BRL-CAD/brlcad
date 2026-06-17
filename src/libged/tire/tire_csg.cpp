@@ -32,14 +32,16 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/db_attr.h"
+#include "ged/event_txn.h"
 #include "wdb.h"
 
 #include "tire_private.h"
 
 namespace tire_private {
 
-CsgTransaction::CsgTransaction(rt_wdb *file, bool dry_run) :
+CsgTransaction::CsgTransaction(rt_wdb *file, bool dry_run, struct ged *gedp) :
     file_(file),
+    gedp_(gedp),
     dry_run_(dry_run)
 {
 }
@@ -71,6 +73,13 @@ CsgTransaction::set_error(const std::string &message)
 void
 CsgTransaction::commit()
 {
+    if (!dry_run_ && gedp_ && !attributed_.empty()) {
+	int event_depth = ged_event_batch_begin(gedp_);
+	for (const std::string &name : attributed_)
+	    (void)ged_event_notify_attribute_changed(gedp_, name.c_str(), 0, NULL);
+	if (event_depth > 0)
+	    (void)ged_event_batch_end(gedp_, NULL);
+    }
     committed_ = true;
 }
 
@@ -244,6 +253,9 @@ CsgTransaction::update_attributes(const std::string &name, struct bu_attribute_v
 	fail("failed to update generated object attributes: " + name);
 	return BRLCAD_ERROR;
     }
+
+    if (attributed_set_.insert(name).second)
+	attributed_.push_back(name);
 
     return BRLCAD_OK;
 }

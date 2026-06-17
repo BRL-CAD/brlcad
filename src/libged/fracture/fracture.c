@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 
@@ -51,25 +53,25 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 	return;
     }
 
+    RT_DB_INTERNAL_INIT(&new_intern);
+    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    new_intern.idb_type = ID_NMG;
+    new_intern.idb_meth = &OBJ[ID_NMG];
+    new_intern.idb_ptr = (void *)m;
+
     new_dp = db_diradd(gedp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
     if (new_dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      newname);
+	nmg_km(m);
+	frac_stat = 1;
 	return;
     }
 
     /* make sure the geometry/bounding boxes are up to date */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
 	nmg_region_a(r, &wdbp->wdb_tol);
-
-
-    /* Export NMG as a new solid */
-    RT_DB_INTERNAL_INIT(&new_intern);
-    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    new_intern.idb_type = ID_NMG;
-    new_intern.idb_meth = &OBJ[ID_NMG];
-    new_intern.idb_ptr = (void *)m;
 
     if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern) < 0) {
 	/* Free memory */
@@ -94,6 +96,7 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
     char newname[32];
     char prefix[31];
     int maxdigits;
+    int event_batch_opened = 0;
     struct nmgregion *r, *new_r;
     struct shell *s, *new_s;
     struct faceuse *fu;
@@ -159,6 +162,8 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Bust it up here */
 
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     i = 1;
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	NMG_CK_REGION(r);
@@ -174,6 +179,9 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 		new_s = BU_LIST_FIRST(shell, &r->s_hd);
 		if (!new_s || !new_s->vu_p) {
 		    bu_log("ERROR: nmg structural problem, fracture.c(%d)\n", __LINE__);
+		    if (event_batch_opened)
+			(void)ged_event_batch_end(gedp, NULL);
+		    rt_db_free_internal(&old_intern);
 		    return BRLCAD_ERROR;
 		}
 		v_new = new_s->vu_p->v_p;
@@ -184,7 +192,12 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 
 		fracture_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return BRLCAD_ERROR;
+		if (frac_stat) {
+		    if (event_batch_opened)
+			(void)ged_event_batch_end(gedp, NULL);
+		    rt_db_free_internal(&old_intern);
+		    return BRLCAD_ERROR;
+		}
 		continue;
 	    }
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -204,11 +217,19 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 		fracture_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return BRLCAD_ERROR;
+		if (frac_stat) {
+		    if (event_batch_opened)
+			(void)ged_event_batch_end(gedp, NULL);
+		    rt_db_free_internal(&old_intern);
+		    return BRLCAD_ERROR;
+		}
 	    }
 	}
     }
 
+    if (event_batch_opened)
+	(void)ged_event_batch_end(gedp, NULL);
+    rt_db_free_internal(&old_intern);
     return BRLCAD_OK;
 }
 

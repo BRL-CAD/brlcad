@@ -32,7 +32,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/nurb.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 
 
 extern double drand48(void);

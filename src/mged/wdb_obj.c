@@ -1745,6 +1745,7 @@ wdb_units_cmd(struct rt_wdb *wdbp,
 
     wdbp->dbip->dbi_local2base = loc2mm;
     wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+    (void)mged_event_notify_database_metadata_changed_dbip(wdbp->dbip);
 
     str = bu_units_string(wdbp->dbip->dbi_local2base);
     if (!str) str = "Unknown_unit";
@@ -1934,10 +1935,12 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     struct ged ged; // Use a local ged struct to avoid needing global MGED state
     struct bu_hook_list save_hook_list = BU_HOOK_LIST_INIT_ZERO;
     int ret;
+    int event_batch_started;
 
     /* look for the new libged commands before trying one of the old ones */
     ged_init(&ged);
     ged.dbip = wdbp->dbip;
+    event_batch_started = mged_event_batch_begin_dbip(wdbp->dbip);
 
     bu_log_hook_save_all(&save_hook_list);
 
@@ -1949,6 +1952,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     if (bu_cmd(wdb_newcmds, argc-1, argv+1, 0, (ClientData)&ged, &ret) == BRLCAD_OK) {
 	Tcl_SetResult(interp, bu_vls_addr(ged.ged_result_str), TCL_VOLATILE);
+	mged_event_batch_end_dbip(wdbp->dbip, event_batch_started);
 	ged_free(&ged);
 	/* unsuppress bu_log output */
 	bu_log_hook_restore_all(&save_hook_list);
@@ -1963,6 +1967,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* not a new command -- look for the command in the old command table */
     bu_cmd(wdb_cmds, argc, (const char **)argv, 1, clientData, &ret);
+    mged_event_batch_end_dbip(wdbp->dbip, event_batch_started);
 
     return ret;
 }

@@ -40,6 +40,9 @@
 #include "raytrace.h"
 #include "rt/func.h"
 
+#include "bsg/draw_intent.h"
+#include "bsg/geometry.h"
+#include "../bsg_ged_draw_private.h"
 #include "../ged_private.h"
 #include "./ged_draw.h"
 
@@ -103,6 +106,60 @@ union E_tree {
 
 #define E_TREE_MAGIC 0x45545245
 #define CK_ETREE(_p) BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
+
+
+struct bigE_line_set {
+    point_t *points;
+    int *commands;
+    size_t count;
+    size_t capacity;
+};
+
+
+static void
+bigE_line_set_init(struct bigE_line_set *lines)
+{
+    if (!lines)
+	return;
+    lines->points = NULL;
+    lines->commands = NULL;
+    lines->count = 0;
+    lines->capacity = 0;
+}
+
+
+static void
+bigE_line_set_free(struct bigE_line_set *lines)
+{
+    if (!lines)
+	return;
+    if (lines->points)
+	bu_free(lines->points, "bigE typed line points");
+    if (lines->commands)
+	bu_free(lines->commands, "bigE typed line commands");
+    bigE_line_set_init(lines);
+}
+
+
+static void
+bigE_line_set_append(struct bigE_line_set *lines, const point_t point, int command)
+{
+    if (!lines || !point)
+	return;
+
+    if (lines->count >= lines->capacity) {
+	size_t ncap = lines->capacity ? lines->capacity * 2 : 256;
+	lines->points = (point_t *)bu_realloc(lines->points,
+		ncap * sizeof(point_t), "bigE typed line points");
+	lines->commands = (int *)bu_realloc(lines->commands,
+		ncap * sizeof(int), "bigE typed line commands");
+	lines->capacity = ncap;
+    }
+
+    VMOVE(lines->points[lines->count], point);
+    lines->commands[lines->count] = command;
+    lines->count++;
+}
 
 
 static union E_tree *
@@ -1096,13 +1153,12 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 static void
 shoot_and_plot(point_t start_pt,
 	       vect_t dir,
-	       struct bu_list *vlfree,
-	       struct bu_list *vhead,
 	       fastf_t edge_len,
 	       int skip_leaf1,
 	       int skip_leaf2,
 	       union E_tree *eptr,
 	       struct soltab *type,
+	       struct bigE_line_set *lines,
 	       struct _ged_client_data *dgcdp)
 {
     struct xray rp;
@@ -1266,7 +1322,6 @@ shoot_and_plot(point_t start_pt,
     if (final_segs) {
 	struct seg *seg;
 
-	/* add the segments to the VLIST */
 	for (BU_LIST_FOR (seg, seg, final_segs)) {
 	    point_t pt;
 
@@ -1283,14 +1338,14 @@ shoot_and_plot(point_t start_pt,
 	    bu_log("\t\tDRAW (%g %g %g)", V3ARGS(pt));
 #endif
 
-	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
+	    bigE_line_set_append(lines, pt, BSG_GEOMETRY_LINE_MOVE);
 	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir);
 
 #ifdef debug
 	    bu_log("<->(%g %g %g)\n", V3ARGS(pt));
 #endif
 
-	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
+	    bigE_line_set_append(lines, pt, BSG_GEOMETRY_LINE_DRAW);
 	}
 
     }
@@ -1305,7 +1360,7 @@ shoot_and_plot(point_t start_pt,
 
 static void
 Eplot(union E_tree *eptr,
-      struct bu_list *vhead,
+      struct bigE_line_set *lines,
       struct _ged_client_data *dgcdp)
 {
     point_t start_pt;
@@ -1373,7 +1428,8 @@ Eplot(union E_tree *eptr,
 		continue;
 	    inv_len = 1.0/edge_len;
 	    VSCALE(dir, dir, inv_len);
-	    shoot_and_plot(vg->coord, dir, vlfree, vhead, edge_len, leaf_no, -1, eptr, ON_SURF, dgcdp);
+	    shoot_and_plot(vg->coord, dir, edge_len, leaf_no, -1, eptr,
+		    ON_SURF, lines, dgcdp);
 
 	}
     }
@@ -1644,9 +1700,10 @@ Eplot(union E_tree *eptr,
 			point_t ray_start;
 
 			VJOIN1(ray_start, start_pt, aseg->seg_in.hit_dist, dir);
-			shoot_and_plot(ray_start, dir, vlfree, vhead,
+			shoot_and_plot(ray_start, dir,
 				       aseg->seg_out.hit_dist - aseg->seg_in.hit_dist,
-				       leaf_no, leaf2, eptr, ON_INT, dgcdp);
+				       leaf_no, leaf2, eptr, ON_INT, lines,
+				       dgcdp);
 		    }
 		    MY_FREE_SEG_LIST(result, dgcdp->ap->a_resource);
 
@@ -2010,7 +2067,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
     dgcdp->do_polysolids = 0;
     dgcdp->vs.color_override = 0;
     dgcdp->vs.transparency = 0;
-    dgcdp->vs.s_dmode = _GED_BOOL_EVAL;
+    dgcdp->vs.draw_mode = BSG_DRAW_MODE_EVAL_WIRE;
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
@@ -2054,8 +2111,25 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
-	dl_erasePathFromDisplay(gedp, argv[i], 0);
-	dgcdp->gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+	{
+	    struct db_full_path dfp;
+	    db_full_path_init(&dfp);
+	    if (db_string_to_path(&dfp, gedp->dbip, argv[i]) == 0) {
+		ged_draw_apply_erase_path(gedp, &dfp);
+		dgcdp->draw_group_ref = ged_draw_group_ref_lookup_or_create(gedp, &dfp);
+	    } else {
+		dgcdp->draw_group_ref = GED_DRAW_GROUP_REF_NULL;
+	    }
+	    db_free_full_path(&dfp);
+	}
+
+	/* bigE is the evaluated-wireframe draw mode. */
+	if (!ged_draw_group_ref_is_null(dgcdp->draw_group_ref)) {
+	    struct bsg_appearance_settings settings = dgcdp->vs;
+	    settings.draw_mode = BSG_DRAW_MODE_EVAL_WIRE;
+	    ged_draw_group_ref_set_appearance(gedp, dgcdp->draw_group_ref,
+		    &settings);
+	}
 
 	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);
@@ -2087,26 +2161,28 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 	{
 	    struct region *rp;
 	    union E_tree *eptr;
-	    struct bu_list vhead;
 	    struct db_tree_state ts;
 	    struct db_full_path path;
 
-	    BU_LIST_INIT(&vhead);
-
 	    for (BU_LIST_FOR (rp, region, &(dgcdp->rtip->HeadRegion))) {
+		struct bigE_line_set lines;
+
+		bigE_line_set_init(&lines);
 		dgcdp->num_halfs = 0;
 		eptr = e_build_etree(rp->reg_treetop, dgcdp);
 
 		if (dgcdp->num_halfs)
 		    fix_halfs(dgcdp);
 
-		Eplot(eptr, &vhead, dgcdp);
+		Eplot(eptr, &lines, dgcdp);
 		free_etree(eptr, dgcdp);
 		bu_ptbl_reset(&dgcdp->leaf_list);
 		ts.ts_mater = rp->reg_mater;
 		db_string_to_path(&path, gedp->dbip, rp->reg_name);
-		_ged_drawH_part2(0, &vhead, &path, &ts, dgcdp);
+		_ged_drawH_part2_line_set(0, (const point_t *)lines.points,
+			lines.commands, lines.count, &path, &ts, dgcdp);
 		db_free_full_path(&path);
+		bigE_line_set_free(&lines);
 	    }
 	    rt_i_destroy(dgcdp->rtip);
 	}

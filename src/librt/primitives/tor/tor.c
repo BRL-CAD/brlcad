@@ -120,7 +120,9 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "bsg/view_state.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 #include "../../librt_private.h"
 
@@ -135,13 +137,14 @@
  *
  */
 
-EXTERNCPP const struct bu_structparse rt_tor_parse[] = {
+const struct bu_structparse rt_tor_parse[] = {
     {"%f", 3, "V",   bu_offsetofarray(struct rt_tor_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 3, "H",   bu_offsetofarray(struct rt_tor_internal, h, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {{'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
+
 
 struct tor_specific {
     fastf_t tor_alpha;	/* 0 < (R2/R1) <= 1 */
@@ -187,7 +190,7 @@ clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Compute the bounding RPP for a circular torus.
  */
-C_DECL int
+int
 rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
@@ -246,7 +249,7 @@ rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct tor_specific is created, and its address is stored in
  * stp->st_specific for use by rt_tor_shot().
  */
-C_DECL int
+int
 rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct tor_specific *tor;
@@ -332,7 +335,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_tor_print(register const struct soltab *stp)
 {
     register const struct tor_specific *tor =
@@ -398,7 +401,7 @@ inside_overlapping_region(struct tor_specific *tor, point_t hp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct tor_specific *tor =
@@ -602,7 +605,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version
  */
-C_DECL void
+void
 rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
     /* An array of solid pointers */
     /* An array of ray pointers */
@@ -874,7 +877,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by four here.
  */
-C_DECL void
+void
 rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct tor_specific *tor =
@@ -901,7 +904,7 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Return the curvature of the torus.
  */
-C_DECL void
+void
 rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     register struct tor_specific *tor =
@@ -944,7 +947,7 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 }
 
 
-C_DECL void
+void
 rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct tor_specific *tor = (struct tor_specific *) stp->st_specific;
@@ -975,7 +978,7 @@ rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-C_DECL void
+void
 rt_tor_free(struct soltab *stp)
 {
     register struct tor_specific *tor =
@@ -1058,8 +1061,8 @@ tor_ellipse_points(
     return circumference / point_spacing;
 }
 
-C_DECL int
-rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
+static int
+rt_tor_lod_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
@@ -1067,9 +1070,9 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     fastf_t radian, radian_step;
     int i, num_ellipses, points_per_ellipse;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!realization)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
@@ -1095,7 +1098,9 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	points_per_ellipse = 6;
     }
 
-    plot_ellipse(vlfree, vhead, tor->v, a, b, points_per_ellipse);
+    if (!primitive_lod_append_ellipse(realization, tor->v, a, b,
+		points_per_ellipse))
+	return -1;
 
     /* plot inner circular contour */
     VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
@@ -1106,7 +1111,9 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	points_per_ellipse = 6;
     }
 
-    plot_ellipse(vlfree, vhead, tor->v, a, b, points_per_ellipse);
+    if (!primitive_lod_append_ellipse(realization, tor->v, a, b,
+		points_per_ellipse))
+	return -1;
 
     /* Draw parallel circles to show the primitive's most extreme points along
      * +h/-h.
@@ -1117,15 +1124,19 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     VADD2(center, tor->v, tor_h);
-    plot_ellipse(vlfree, vhead, center, tor_a, tor_b, points_per_ellipse);
+    if (!primitive_lod_append_ellipse(realization, center, tor_a, tor_b,
+		points_per_ellipse))
+	return -1;
 
     VJOIN1(center, tor->v, -1.0, tor_h);
-    plot_ellipse(vlfree, vhead, center, tor_a, tor_b, points_per_ellipse);
+    if (!primitive_lod_append_ellipse(realization, center, tor_a, tor_b,
+		points_per_ellipse))
+	return -1;
 
     /* draw circular radial cross sections */
     VMOVE(b, tor_h);
 
-    num_ellipses = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
+    num_ellipses = primitive_curve_count(ip, tol, primitive_lod_curve_scale(v), s_size);
     if (num_ellipses < 3) {
 	num_ellipses = 3;
     }
@@ -1139,12 +1150,26 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	VUNITIZE(a);
 	VSCALE(a, a, mag_h);
 
-	plot_ellipse(vlfree, vhead, center, a, b, points_per_ellipse);
+	if (!primitive_lod_append_ellipse(realization, center, a, b,
+		    points_per_ellipse))
+	    return -1;
 
 	radian += radian_step;
     }
 
     return 0;
+}
+
+int
+rt_tor_lod_realize(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
+{
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    int ret = rt_tor_lod_line_set(realization, ip, tol, v, s_size);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
 }
 
 /**
@@ -1153,15 +1178,51 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
  * ti.h Radius Vector, Normal to plane of torus
  * ti.a, ti.b perpendicular, to CENTER of torus (for top, bottom)
  */
-C_DECL int
-rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+struct tor_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_tor_line_sink_append(struct tor_line_sink *sink, const point_t p, int command)
+{
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
+static int
+rt_tor_standard_line_set(struct tor_line_sink *sink,
+			 struct rt_tor_internal *tip,
+			 const struct bg_tess_tol *ttol)
 {
     fastf_t alpha;
     fastf_t beta;
     fastf_t cos_alpha, sin_alpha;
     fastf_t cos_beta, sin_beta;
     fastf_t dist_to_rim;
-    struct rt_tor_internal *tip;
     int w;
     int nw = 8;
     int len;
@@ -1172,10 +1233,8 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     vect_t edge;
     fastf_t rel;
 
-    BU_CK_LIST_HEAD(vhead);
-    RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
-    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    if (!sink || !tip || !ttol)
+	return -1;
     RT_TOR_CK_MAGIC(tip);
 
     /* Use abs(r_h) so negative r_h (same surface, opposite orientation)
@@ -1232,22 +1291,72 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* Draw lengthwise (around outside rim) */
     for (w = 0; w < nw; w++) {
 	len = nlen-1;
-	BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
+	rt_tor_line_sink_append(sink, TOR_PTA(w, len),
+		BSG_GEOMETRY_LINE_MOVE);
 	for (len = 0; len < nlen; len++) {
-	    BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
+	    rt_tor_line_sink_append(sink, TOR_PTA(w, len),
+		    BSG_GEOMETRY_LINE_DRAW);
 	}
     }
     /* Draw around the "width" (1 cross section) */
     for (len = 0; len < nlen; len++) {
 	w = nw-1;
-	BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
+	rt_tor_line_sink_append(sink, TOR_PTA(w, len),
+		BSG_GEOMETRY_LINE_MOVE);
 	for (w = 0; w < nw; w++) {
-	    BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
+	    rt_tor_line_sink_append(sink, TOR_PTA(w, len),
+		    BSG_GEOMETRY_LINE_DRAW);
 	}
     }
 
     bu_free((char *)pts, "rt_tor_plot pts[]");
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_tor_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			  struct rt_db_internal *ip,
+			  const struct bg_tess_tol *ttol)
+{
+    struct rt_tor_internal *tip;
+
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+    RT_CK_DB_INTERNAL(ip);
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+
+    struct tor_line_sink sink;
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    int ret = rt_tor_standard_line_set(&sink, tip, ttol);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
+{
+    struct rt_tor_internal *tip;
+
+    BU_CK_LIST_HEAD(vhead);
+    RT_CK_DB_INTERNAL(ip);
+    tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+
+    struct tor_line_sink sink;
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_tor_standard_line_set(&sink, tip, ttol);
 }
 
 
@@ -1419,7 +1528,7 @@ rt_tor_spindle_tess(struct nmgregion **r, struct model *m,
 }
 
 
-C_DECL int
+int
 rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t alpha;
@@ -1623,7 +1732,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Import a torus from the database format to the internal format.
  * Apply modeling transformations at the same time.
  */
-C_DECL int
+int
 rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1684,7 +1793,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-C_DECL int
+int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1719,7 +1828,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 /**
  * The name will be added by the caller.
  */
-C_DECL int
+int
 rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1801,7 +1910,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-C_DECL int
+int
 rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1852,7 +1961,7 @@ rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * ring unit vector 1
  * ring unit vector 2
  */
-C_DECL int
+int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1903,7 +2012,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_tor_internal *tip =
@@ -1957,7 +2066,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_tor_ifree(struct rt_db_internal *ip)
 {
     register struct rt_tor_internal *tip;
@@ -1972,7 +2081,7 @@ rt_tor_ifree(struct rt_db_internal *ip)
 }
 
 
-C_DECL int
+int
 rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1981,7 +2090,7 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -2006,7 +2115,7 @@ rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -2024,7 +2133,7 @@ rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -2032,7 +2141,7 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
     VMOVE(*cent,tip->v);
 }
 
-C_DECL int
+int
 rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -2075,7 +2184,7 @@ rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-C_DECL const char *
+const char *
 rt_tor_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2110,7 +2219,7 @@ tor_kpt_end:
  * breaking exact coplanarity with adjacent solids.  @a planar_only is ignored
  * because a torus has no planar faces.
  */
-C_DECL int
+int
 rt_tor_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip,
 	       int UNUSED(planar_only), fastf_t val)
 {

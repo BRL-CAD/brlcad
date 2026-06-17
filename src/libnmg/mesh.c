@@ -37,6 +37,7 @@
 #include "vmath.h"
 #include "bg/plane.h"
 #include "nmg.h"
+#include "nmg/plot.h"
 
 /* TODO - do we need this? */
 #if 0

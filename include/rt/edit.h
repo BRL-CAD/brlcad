@@ -63,7 +63,7 @@
  * defining the vlist.  Then the instance obj would just hold the matrix and
  * any override info for color, etc.  Need to check how MGED is handling comb
  * instances now, the new drawing layer I think is just creating a new
- * bv_scene_obj for each instance with its own vlist...
+ * bsg_node for each instance with its own vlist...
  */
 
 #ifndef RT_EDIT_H
@@ -75,7 +75,7 @@
 #include "bn/mat.h"
 #include "bu/parse.h"
 #include "bu/avs.h"
-#include "bv/defines.h"
+#include "bsg/defines.h"
 #include "rt/defines.h"
 #include "rt/db_internal.h"
 
@@ -227,9 +227,9 @@ struct rt_edit {
     // Main view associated with the edit.  This may not be the only view in
     // which the edit is *visible*, but this should hold the pointer to the
     // view which will be used to drive any view dependent edit ops.
-    struct bview *vp;
+    struct bsg_view *vp;
     // Knob based editing data
-    struct bview_knobs k;
+    struct bsg_view_knobs k;
 
     // Current editing operation.  This holds the exact operation being
     // performed (for example, ECMD_TGC_SCALE_A to scale a tgc primitive's
@@ -295,7 +295,7 @@ struct rt_edit {
      * the pattern looks like the following:
      *
      * mat_t model2objview;
-     * struct bview *vp = <current view pointer>;
+     * struct bsg_view *vp = <current view pointer>;
      * bn_mat_mul(model2objview, vp->gv_model2view, s->model_changes);
      * ## A second bn_mat_mul might be needed if a perspective matrix is in use
      * dm_loadmatrix(DMP, model2objview, which_eye);
@@ -337,7 +337,7 @@ struct rt_edit {
     double local2base;
 
     // Trigger for view updating
-    int update_views;
+    int view_update_requested;
 
     // vlfree list
     struct bu_list *vlfree;
@@ -367,7 +367,7 @@ struct rt_edit {
 
 /** Create and initialize an rt_edit struct */
 RT_EXPORT extern struct rt_edit *
-rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
+rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bsg_view *v);
 
 /** Free a rt_edit struct */
 RT_EXPORT extern void
@@ -401,7 +401,7 @@ rt_edit_reset(struct rt_edit *s);
  */
 RT_EXPORT extern int
 rt_edit_reinit(struct rt_edit *s, struct db_full_path *dfp, struct db_i *dbip,
-               struct bn_tol *tol, struct bview *v);
+               struct bn_tol *tol, struct bsg_view *v);
 
 /**
  * Set a dynamic option for this editing session.
@@ -469,7 +469,7 @@ RT_EXPORT extern int
 rt_edit_knob_cmd_process(
 	struct rt_edit *s,
 	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran, int *do_sca,
-        struct bview *v, const char *cmd, fastf_t f,
+        struct bsg_view *v, const char *cmd, fastf_t f,
         char origin, int incr_flag, void *u_data
 	);
 

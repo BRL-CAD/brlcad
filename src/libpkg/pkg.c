@@ -2260,6 +2260,21 @@ pkg_suckin(struct pkg_conn *pc)
 	avail = (size_t)pc->pkc_inlen - (size_t)pc->pkc_inend;
     }
 
+    /* Phase H1 (ert reliability): bound a single read so a misbehaving
+     * peer cannot induce arbitrarily large kernel reads.  Empirically
+     * 64 KiB is plenty for libpkg framing while keeping the GUI thread
+     * responsive in the embedded qged path. */
+    {
+	const size_t pkg_suckin_max_chunk = 64 * 1024;
+	if (avail > pkg_suckin_max_chunk)
+	    avail = pkg_suckin_max_chunk;
+    }
+
+    /* Reset the would-block flag before attempting a read; pkg_suckin's
+     * ret==0 contract is overloaded with two cases and pkc_would_block
+     * lets callers distinguish EOF (flag clear) from EAGAIN (flag set). */
+    pc->pkc_would_block = 0;
+
     /* Take as much as the system will give us, up to buffer size */
     got = (int)_pkg_io_read(pc, &pc->pkc_inbuf[pc->pkc_inend], avail);
     if (got <= 0) {
@@ -2275,6 +2290,20 @@ pkg_suckin(struct pkg_conn *pc)
 	    goto out;
 	}
 #ifndef HAVE_WINSOCK_H
+	/* Phase C2 (ert reliability): on a non-blocking fd, EAGAIN /
+	 * EWOULDBLOCK simply means "no data right now"; this is not an
+	 * error and must not be treated as EOF.  Mark the would-block
+	 * flag and return 0 so callers can re-arm their notifier and
+	 * try again later instead of dropping the client. */
+	if (errno == EAGAIN
+#ifdef EWOULDBLOCK
+	    || errno == EWOULDBLOCK
+#endif
+	    ) {
+	    pc->pkc_would_block = 1;
+	    ret = 0;
+	    goto out;
+	}
 	_pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_suckin: read(%d, %p, %ld) ret=%d inbuf=%p, inend=%d\n",
 		 pc->pkc_fd, (void *)(&pc->pkc_inbuf[pc->pkc_inend]), (long)avail,
@@ -2283,6 +2312,16 @@ pkg_suckin(struct pkg_conn *pc)
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	} else {
 	    fprintf(stderr, "%s", _pkg_errbuf);
+	}
+#else
+	/* WinSock equivalents of EAGAIN */
+	{
+	    int wsa_err = WSAGetLastError();
+	    if (wsa_err == WSAEWOULDBLOCK) {
+		pc->pkc_would_block = 1;
+		ret = 0;
+		goto out;
+	    }
 	}
 #endif
 	ret = -1;

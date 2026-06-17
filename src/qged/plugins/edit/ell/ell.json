@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.edit.ell",
+    "displayName": "Ell Edit",
+    "category": "qged.object",
+    "iconName": ":ell.svg",
+    "sortKey": 1000,
+    "requiresOpenDb": true,
+    "requiresView": true,
+    "description": "Preview and edit ellipsoid primitives in the active database.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

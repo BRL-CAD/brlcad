@@ -39,25 +39,26 @@
 #include "qtcad/defines.h"
 #include "qtcad/QgConsole.h"
 
-class QTCAD_EXPORT QgAppExecDialog : public QDialog
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgAppExecDialog : public QDialog {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgAppExecDialog)
 
-    public:
+
+public:
 	QgAppExecDialog(QWidget *pparent, QString executable, QStringList args, QString lfile = "");
 	~QgAppExecDialog() {}
 
-    public slots:
+public slots:
 	void read_stdout();
 	void read_stderr();
 	void process_abort();
 	void process_done(int, QProcess::ExitStatus);
 
-    public:
+public:
 	QFile *logfile;
-        QgConsole *console;
-        QProcess *proc;
-        QDialogButtonBox *buttonBox;
+	QgConsole *console;
+	QProcess *proc;
+	QDialogButtonBox *buttonBox;
 };
 
 #endif // QGAPPEXECDIALOG_H

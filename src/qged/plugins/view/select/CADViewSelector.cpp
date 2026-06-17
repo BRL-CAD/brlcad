@@ -24,22 +24,56 @@
  */
 
 #include "common.h"
+#include <QApplication>
 #include <QMouseEvent>
 #include <QVBoxLayout>
 #include <string>
 #include <set>
-#include "../../../QgEdApp.h"
+#include <vector>
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgSignalFlags.h"
 
 #include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 #include "bg/aabb_ray.h"
 #include "bg/plane.h"
-
-#include "../../../../libged/dbi.h"
+#include "bsg/interaction.h"
+#include "bsg/node.h"
+#include "ged/selection_state.h"
 
 #include "qtcad/QgSelectFilter.h"
 #include "./CADViewSelector.h"
+
+static std::vector<std::string>
+qged_selection_paths(struct ged *gedp)
+{
+    std::vector<std::string> ret;
+    if (!ged_selection_state_available(gedp))
+	return ret;
+
+    struct bu_vls paths = BU_VLS_INIT_ZERO;
+    if (!ged_selection_list_paths(gedp, nullptr, &paths)) {
+	bu_vls_free(&paths);
+	return ret;
+    }
+
+    const char *pstr = bu_vls_cstr(&paths);
+    const char *start = pstr;
+    for (const char *c = pstr; c && *c; c++) {
+	if (*c != '\n')
+	    continue;
+	if (c > start)
+	    ret.push_back(std::string(start, (size_t)(c - start)));
+	start = c + 1;
+    }
+    if (start && *start)
+	ret.push_back(std::string(start));
+    bu_vls_free(&paths);
+
+    return ret;
+}
 
 CADViewSelector::CADViewSelector(QWidget *)
 {
@@ -192,27 +226,21 @@ CADViewSelector::disable_useall_opt(bool)
 }
 
 void
-CADViewSelector::do_view_update(unsigned long long flags)
+CADViewSelector::do_view_update(QgViewUpdateFlags flags)
 {
-    if (!gedp || !gedp->dbi_state)
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
+    if (!ged_selection_state_available(gedp))
 	return;
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss)
-	return;
-
-    unsigned long long chash = ss->state_hash();
+    unsigned long long chash = ged_selection_state_hash(gedp, nullptr);
     if ((flags & QG_VIEW_SELECT) || chash != ohash) {
 	group_contents->clear();
 	ohash = chash;
 
 	std::set<std::string> ordered_paths;
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
-	for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	    std::string spath = std::string(dbis->pathstr(s_it->second));
-	    ordered_paths.insert(spath);
-	}
+	std::vector<std::string> paths = qged_selection_paths(gedp);
+	for (size_t i = 0; i < paths.size(); i++)
+	    ordered_paths.insert(paths[i]);
 	std::set<std::string>::iterator o_it;
 	for (o_it = ordered_paths.begin(); o_it != ordered_paths.end(); o_it++) {
 	    group_contents->addItem(QString(o_it->c_str()));
@@ -223,67 +251,75 @@ CADViewSelector::do_view_update(unsigned long long flags)
 void
 CADViewSelector::select_objs()
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss)
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
+    if (!ged_selection_state_available(gedp))
 	return;
 
-    struct bu_vls dpath = BU_VLS_INIT_ZERO;
-    for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
-	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
-	if (bu_vls_cstr(&dpath)[0] != '/')
-	    bu_vls_prepend(&dpath, "/");
-	if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
-	    bu_vls_free(&dpath);
+    const struct bsg_interaction_result *res = cf->interaction_result();
+    if (!res || !bsg_interaction_result_count(res))
+	return;
+    for (size_t i = 0; i < bsg_interaction_result_count(res); i++) {
+	const struct bsg_interaction_record *rec = bsg_interaction_result_get(res, i);
+	if (!rec)
+	    continue;
+	const char *path = bsg_interaction_record_path(rec);
+	if (!path || !path[0])
+	    continue;
+	if (!ged_selection_select_path(gedp, nullptr, path, 0))
 	    return;
-	}
     }
 
-    bu_vls_free(&dpath);
-    ss->characterize();
-    ss->draw_sync();
+    ged_selection_recompute(gedp, nullptr);
+    ged_selection_draw_sync(gedp, nullptr);
 }
 
 void
 CADViewSelector::deselect_objs()
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss)
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
+    if (!ged_selection_state_available(gedp))
 	return;
 
-    struct bu_vls dpath = BU_VLS_INIT_ZERO;
-    for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
-	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
-	if (bu_vls_cstr(&dpath)[0] != '/')
-	    bu_vls_prepend(&dpath, "/");
-	if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
-	    bu_vls_free(&dpath);
+    const struct bsg_interaction_result *res = cf->interaction_result();
+    if (!res || !bsg_interaction_result_count(res))
+	return;
+    for (size_t i = 0; i < bsg_interaction_result_count(res); i++) {
+	const struct bsg_interaction_record *rec = bsg_interaction_result_get(res, i);
+	if (!rec)
+	    continue;
+	const char *path = bsg_interaction_record_path(rec);
+	if (!path || !path[0])
+	    continue;
+	if (!ged_selection_deselect_path(gedp, nullptr, path, 0))
 	    return;
-	}
     }
 
-    bu_vls_free(&dpath);
-    ss->characterize();
-    ss->draw_sync();
+    ged_selection_recompute(gedp, nullptr);
+    ged_selection_draw_sync(gedp, nullptr);
 }
 
 
 void
 CADViewSelector::erase_objs()
 {
-    // erase_obj_bbox
-    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&cf->selected_set)+2, sizeof(char *), "av");
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
+    if (!gedp)
+	return;
+    const struct bsg_interaction_result *res = cf->interaction_result();
+    if (!res || !bsg_interaction_result_count(res))
+	return;
+    size_t pick_cnt = bsg_interaction_result_count(res);
+    const char **av = (const char **)bu_calloc(pick_cnt+2, sizeof(char *), "av");
     av[0] = "erase";
     int scnt = 1;
-    for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
-	if (!s)
+    for (size_t i = 0; i < pick_cnt; i++) {
+	const struct bsg_interaction_record *rec = bsg_interaction_result_get(res, i);
+	if (!rec)
 	    continue;
-	av[i+1] = bu_vls_cstr(&s->s_name);
-	scnt++;
+	const char *path = bsg_interaction_record_path(rec);
+	if (!path || !path[0])
+	    continue;
+	av[scnt++] = path;
     }
     ged_exec_erase(gedp, scnt, av);
     bu_free(av, "av");
@@ -292,26 +328,22 @@ CADViewSelector::erase_objs()
 void
 CADViewSelector::do_draw_selections()
 {
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
     if (!gedp || !gedp->ged_gvp)
 	return;
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss || !ss->selected.size())
+    std::vector<std::string> paths = qged_selection_paths(gedp);
+    if (!paths.size())
 	return;
 
-    const char **av = (const char **)bu_calloc(ss->selected.size()+2, sizeof(char *), "av");
+    const char **av = (const char **)bu_calloc(paths.size()+2, sizeof(char *), "av");
     av[0] = bu_strdup("draw");
 
-    int i = 0;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
-    for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	av[i+1] = bu_strdup(dbis->pathstr(s_it->second));
-	i++;
-    }
+    for (size_t i = 0; i < paths.size(); i++)
+	av[i+1] = bu_strdup(paths[i].c_str());
 
-    ged_exec_draw(gedp, (int)(ss->selected.size()+1), av);
-    for (size_t j = 0; j < ss->selected.size()+1; j++) {
+    ged_exec_draw(gedp, (int)(paths.size()+1), av);
+    for (size_t j = 0; j < paths.size()+1; j++) {
 	bu_free((void *)av[j], "path");
     }
     bu_free(av, "av");
@@ -322,26 +354,22 @@ CADViewSelector::do_draw_selections()
 void
 CADViewSelector::do_erase_selections()
 {
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
     if (!gedp || !gedp->ged_gvp)
 	return;
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss || !ss->selected.size())
+    std::vector<std::string> paths = qged_selection_paths(gedp);
+    if (!paths.size())
 	return;
 
-    const char **av = (const char **)bu_calloc(ss->selected.size()+2, sizeof(char *), "av");
+    const char **av = (const char **)bu_calloc(paths.size()+2, sizeof(char *), "av");
     av[0] = bu_strdup("erase");
 
-    int i = 0;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
-    for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	av[i+1] = bu_strdup(dbis->pathstr(s_it->second));
-	i++;
-    }
+    for (size_t i = 0; i < paths.size(); i++)
+	av[i+1] = bu_strdup(paths[i].c_str());
 
-    ged_exec_erase(gedp, (int)(ss->selected.size()+1), av);
-    for (size_t j = 0; j < ss->selected.size()+1; j++) {
+    ged_exec_erase(gedp, (int)(paths.size()+1), av);
+    for (size_t j = 0; j < paths.size()+1; j++) {
 	bu_free((void *)av[j], "path");
     }
     bu_free(av, "av");
@@ -355,13 +383,10 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
     if (QApplication::keyboardModifiers() != Qt::NoModifier)
 	return false;
 
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return false;
-    gedp = m->gedp;
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
     if (!gedp || !gedp->ged_gvp)
 	return false;
-    struct bview *v = gedp->ged_gvp;
+    struct bsg_view *v = gedp->ged_gvp;
 
     // Set the libqtcad filter based on current options
     cf = pf;
@@ -373,7 +398,7 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
     }
 
     // Inform the filter of the current settings and view
-    cf->v = v;
+    cf->set_view(v);
     cf->first_only = select_all_depth_ckbx->isChecked() ? false : true;
 
     // TODO - create and/or connect the signals and slots so cf can
@@ -385,21 +410,18 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
     if (erase_from_scene_button->isChecked()) {
 	erase_objs();
 	emit view_changed(QG_VIEW_DRAWN);
-	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }
 
     if (add_to_group_button->isChecked()) {
 	select_objs();
 	emit view_changed(QG_VIEW_DRAWN);
-	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }
 
     if (rm_from_group_button->isChecked()) {
 	deselect_objs();
 	emit view_changed(QG_VIEW_DRAWN);
-	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }
 

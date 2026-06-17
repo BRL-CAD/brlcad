@@ -3,6 +3,7 @@ set(
   check.h
   debug.h
   defines.h
+  display.h
   edge.h
   face.h
   globals.h

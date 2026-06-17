@@ -29,6 +29,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -94,6 +95,7 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
+    ged_event_batch_begin(gedp);
     for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(gedp->dbip,  argv[i], verbose)) != RT_DIR_NULL) {
 	    if (!force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
@@ -110,18 +112,20 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 	    if (is_phony)
 		continue;
 
-	    _dl_eraseAllNamesFromDisplay(gedp, argv[i], 0);
-
 	    if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */
 		bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[i]);
+		db_update_nref(gedp->dbip);
+		ged_event_batch_end(gedp, NULL);
 		return BRLCAD_ERROR;
 	    }
+	    ged_event_notify_object_removed(gedp, argv[i], NULL);
 	}
     }
 
     /* Update references. */
     db_update_nref(gedp->dbip);
+    ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

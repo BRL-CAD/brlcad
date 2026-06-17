@@ -33,7 +33,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 
 static int plot_files;
 

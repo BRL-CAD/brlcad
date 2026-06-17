@@ -27,6 +27,7 @@
 #include "bu/path.h"
 #include "bu/vls.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 #include "./include/plugin.h"
 
 extern "C" void libged_init(void);
@@ -90,6 +91,8 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    int event_batch_started = (ged_event_batch_begin(gedp) > 0);
+
     // Check for a pre-exec callback.
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -109,6 +112,9 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     // a specific command wants to anyway, it can do so in its own
     // implementation.)
     if (cret != BRLCAD_OK) {
+	if (event_batch_started)
+	    ged_event_batch_end(gedp, NULL);
+
 	if (tstr)
 	    bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
 
@@ -123,6 +129,9 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	if (cret != BRLCAD_OK)
 	    bu_log("error running %s post-execution callback\n", cmdname.c_str());
     }
+
+    if (event_batch_started)
+	ged_event_batch_end(gedp, NULL);
 
     if (tstr)
 	bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);

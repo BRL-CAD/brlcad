@@ -31,13 +31,14 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <thread>
 
 #include "linenoise.hpp"
 
 #include "brlcad_ident.h"
 #include "bu.h"
-#include "bv.h"
+#include "bsg.h"
 
 #define USE_DM 1
 #ifdef USE_DM
@@ -46,8 +47,7 @@
 #endif
 
 #include "ged.h"
-
-#include "../../libged/dbi.h"
+#include "ged/db_index.h"
 
 #define DEFAULT_GSH_PROMPT "g> "
 
@@ -160,10 +160,10 @@ class DisplayHash {
 };
 
 bool
-DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
+DisplayHash::hash(struct ged *gedp, bool db_index_check, bool qged_display_mode)
 {
     d = 0; v = 0; l = 0; g = 0;
-    struct bview *bv = gedp->ged_gvp;
+    struct bsg_view *bv = gedp->ged_gvp;
     if (!bv)
 	return false;
 
@@ -172,25 +172,24 @@ DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
 	return false;
 
     d = dm_hash(dmp);
-    v = bv_hash(bv);
+    v = bsg_hash(bv);
 
-    if (new_cmd_forms && gedp->dbi_state) {
-	if (dbi_state_check) {
-	    DbiState *dbis = (DbiState *)gedp->dbi_state;
-	    unsigned long long updated = dbis->update();
+    if (qged_display_mode) {
+	if (db_index_check) {
+	    unsigned long long updated = ged_db_index_refresh_flags(gedp);
 	    l = (updated) ? l + 1 : 0;
-	    if (bv->gv_s->gv_cleared) {
+	    if (bsg_view_cleared(bv)) {
 		l = 1;
-		bv->gv_s->gv_cleared = 0;
+		bsg_view_set_cleared(bv, 0);
 	    }
 	} else {
 	    l = 0;
 	}
     } else {
-	l = dl_name_hash(gedp);
+	l = ged_draw_scene_hash(gedp);
     }
 
-    g = ged_dl_hash(ged_dl(gedp));
+    g = ged_draw_scene_hash(gedp);
 
     return true;
 }
@@ -198,7 +197,7 @@ DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
 void
 DisplayHash::dirty(struct ged *gedp, const DisplayHash &o)
 {
-    struct bview *bv = gedp->ged_gvp;
+    struct bsg_view *bv = gedp->ged_gvp;
     if (!bv)
 	return;
 
@@ -207,16 +206,16 @@ DisplayHash::dirty(struct ged *gedp, const DisplayHash &o)
 	return;
 
     if (d != o.d) {
-	dm_set_dirty(dmp, 1);
+	dm_set_native_repaint_pending(dmp, 1);
     }
     if (v != o.v) {
-	dm_set_dirty(dmp, 1);
+	dm_set_native_repaint_pending(dmp, 1);
     }
     if (l != o.l) {
-	dm_set_dirty(dmp, 1);
+	dm_set_native_repaint_pending(dmp, 1);
     }
     if (g != o.g) {
-	dm_set_dirty(dmp, 1);
+	dm_set_native_repaint_pending(dmp, 1);
     }
 }
 
@@ -252,7 +251,7 @@ class GshState {
 
 	struct ged *gedp;
 	std::string gfile;  // Mostly used to test the post_opendb callback
-	bool new_cmd_forms = false;  // Set if we're testing QGED style commands
+	bool qged_display_mode = false;  // Set if we're testing QGED style commands
     private:
 	// Active listeners
 	std::map<std::pair<struct ged_subprocess *, bu_process_io_t>, ProcessIOHandler *> listeners;
@@ -406,9 +405,9 @@ GshState::GshState()
 GshState::~GshState()
 {
 #ifdef USE_DM
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    struct bu_ptbl *views = bsg_set_views(&gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	struct bsg_view *v = (struct bsg_view *)BU_PTBL_GET(views, i);
 	if (v->dmp) {
 	    dm_close((struct dm *)v->dmp);
 	    v->dmp = NULL;
@@ -505,7 +504,7 @@ void
 GshState::view_checkpoint()
 {
 #ifdef USE_DM
-    prev_hash.hash(gedp, false, new_cmd_forms);
+    prev_hash.hash(gedp, false, qged_display_mode);
 #endif
 }
 
@@ -573,40 +572,21 @@ GshState::view_update()
 {
 #ifdef USE_DM
     DisplayHash hashes;
-    if (!hashes.hash(gedp, true, new_cmd_forms))
+    if (!hashes.hash(gedp, true, qged_display_mode))
 	return;
 
     hashes.dirty(gedp, prev_hash);
 
-    struct bview *v = gedp->ged_gvp;
+    struct bsg_view *v = gedp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
-    if (dm_get_dirty(dmp)) {
-	if (new_cmd_forms) {
+    if (dm_get_native_repaint_pending(dmp)) {
+	if (qged_display_mode) {
 	    unsigned char *dm_bg1;
 	    unsigned char *dm_bg2;
 	    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
 	    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-	    dm_set_dirty(dmp, 0);
-	    dm_draw_objs(v, NULL, NULL);
-	    dm_draw_end(dmp);
-	} else {
-	    matp_t mat = gedp->ged_gvp->gv_model2view;
-	    dm_loadmatrix(dmp, mat, 0);
-	    unsigned char geometry_default_color[] = { 255, 0, 0 };
-	    dm_draw_begin(dmp);
-	    dm_draw_head_dl(dmp, (struct bu_list *)ged_dl(gedp),
-		    1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
-		    0, 0, geometry_default_color, 1, 0);
-
-	    // Faceplate drawing
-	    if (gedp->dbip) {
-		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-		v->gv_base2local = gedp->dbip->dbi_base2local;
-		v->gv_local2base = gedp->dbip->dbi_local2base;
-		dm_draw_viewobjs(wdbp, v, NULL);
-	    } else {
-		dm_draw_viewobjs(NULL, v, NULL);
-	    }
+	    dm_set_native_repaint_pending(dmp, 0);
+	    dm_draw_objs(v);
 	    dm_draw_end(dmp);
 	}
     }
@@ -757,12 +737,12 @@ main(int argc, const char **argv)
     /* Options */
     int print_help = 0;
     int report_versions = 0;
-    int new_cmd_forms = 0;
+    int new_cmds = 0;
     struct bu_opt_desc d[5];
     BU_OPT(d[0], "h", "help",      "",  NULL, &print_help,        "print help and exit");
     BU_OPT(d[1], "?", "",          "",  NULL, &print_help,        "");
     BU_OPT(d[2], "v", "version",   "",  NULL, &report_versions,   "Report BRL-CAD and library versions, then exit");
-    BU_OPT(d[3], "",  "new-cmds",  "",  NULL, &new_cmd_forms,     "use new (qged style) commands");
+    BU_OPT(d[3], "",  "new-cmds",  "",  NULL, &new_cmds,           "use new (qged style) commands");
     BU_OPT_NULL(d[4]);
 
     /* Parse options, fail if anything goes wrong */
@@ -812,13 +792,9 @@ main(int argc, const char **argv)
     // Use a C++ class to manage info we will need
     std::shared_ptr<GshState> gs = std::make_shared<GshState>();
 
-    // If we're using the new command forms, there's a little bit
-    // of setup to do at the moment (eventually, once this cmd
-    // behavior is the default, ged setup will do this automatically)
-    gs->new_cmd_forms = (new_cmd_forms) ? true : false;
-    if (gs->new_cmd_forms) {
-	gs->gedp->dbi_state = new DbiState(gs->gedp);
-	gs->gedp->new_cmd_forms = 1;
+    // If we're using the new command forms, use qged-style display refresh.
+    gs->qged_display_mode = (new_cmds) ? true : false;
+    if (gs->qged_display_mode) {
 	bu_setenv("DM_SWRAST", "1", 1);
     }
 
@@ -910,4 +886,3 @@ main(int argc, const char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

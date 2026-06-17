@@ -31,6 +31,8 @@
 
 #include "rt/geom.h"
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 
@@ -42,6 +44,7 @@ ged_cpi_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal;
     struct rt_tgc_internal *tgc_ip;
     int id;
+    int event_batch_opened = 0;
     static const char *usage = "from to";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -87,16 +90,26 @@ ged_cpi_core(struct ged *gedp, int argc, const char *argv[])
     /* translate to end of "original" cylinder */
     VADD2(tgc_ip->v, tgc_ip->v, tgc_ip->h);
 
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     dp = db_diradd(gedp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, &proto->d_minor_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: An error has occurred while adding a new object to the database.\n", argv[0]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
+    (void)ged_event_notify_object_added(gedp, argv[2], NULL);
+
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

@@ -46,6 +46,7 @@
 #include "bu/glob.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
+#include "ged/event_txn.h"
 #include "raytrace.h"
 #include "rt/search.h"
 
@@ -100,13 +101,16 @@ _rm_comb_has_children(struct db_i *dbip, struct directory *dp)
 static int
 _rm_delete_object(struct ged *gedp, struct directory *dp)
 {
-    _dl_eraseAllNamesFromDisplay(gedp, dp->d_namep, 0);
+    char *name = bu_strdup(dp->d_namep);
 
     if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 	bu_vls_printf(gedp->ged_result_str,
-		"rm: error deleting '%s'\n", dp->d_namep);
+		"rm: error deleting '%s'\n", name);
+	bu_free(name, "deleted object event name");
 	return BRLCAD_ERROR;
     }
+    ged_event_notify_object_removed(gedp, name, NULL);
+    bu_free(name, "deleted object event name");
     return BRLCAD_OK;
 }
 
@@ -139,15 +143,16 @@ _rm_remove_from_comb(struct ged *gedp, struct directory *parent_dp, const char *
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_printf(&path, "%s/%s", parent_dp->d_namep, child_name);
-    _dl_eraseAllPathsFromDisplay(gedp, bu_vls_cstr(&path), 0);
-    bu_vls_free(&path);
-
     if (rt_db_put_internal(parent_dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		"rm: database write error for '%s'\n", parent_dp->d_namep);
 	return BRLCAD_ERROR;
     }
+
+    bu_vls_printf(&path, "%s/%s", parent_dp->d_namep, child_name);
+    ged_event_notify_comb_instance_removed(gedp, parent_dp->d_namep,
+	    child_name, bu_vls_cstr(&path), NULL);
+    bu_vls_free(&path);
 
     return BRLCAD_OK;
 }
@@ -317,6 +322,9 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
 	_rm_expand_operand(argv[i], gedp->dbip, &operands);
     }
 
+    if (!nflag)
+	ged_event_batch_begin(gedp);
+
     /* Process each resolved operand */
     for (i = 0; i < BU_PTBL_LEN(&operands); i++) {
 	struct bu_vls *vop = (struct bu_vls *)BU_PTBL_GET(&operands, i);
@@ -475,6 +483,8 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
     bu_ptbl_free(&operands);
 
     db_update_nref(gedp->dbip);
+    if (!nflag)
+	ged_event_batch_end(gedp, NULL);
 
     return ret;
 }

@@ -51,6 +51,7 @@
 #include "rt/conv.h"
 #include "rt/search.h"
 #include "raytrace.h"
+#include "ged/event_txn.h"
 #include "analyze.h"
 #include "wdb.h"
 #include "../ged_private.h"
@@ -154,10 +155,13 @@ static int
 _ged_facetize_attempted(struct ged *gedp, const char *oname, int method)
 {
     int ret = 0;
-    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
     struct directory *dp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
     if (!dp) return 0;
-    if (db5_get_attributes(gedp->dbip, &avs, dp)) return 0;
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
+	bu_avs_free(&avs);
+	return 0;
+    }
     if (bu_avs_get(&avs, _ged_facetize_attr(method))) ret = 1;
     bu_avs_free(&avs);
     return ret;
@@ -2102,8 +2106,14 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _old_ged_facetize_o
     dp = db_lookup(dbip, o, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB)) return BRLCAD_ERROR;
     bu_avs_init_empty(&avs);
-    if (db5_get_attributes(dbip, &avs, dp)) return BRLCAD_ERROR;
-    if (rt_db_get_internal(&ointern, dp, dbip, NULL) < 0) return BRLCAD_ERROR;
+    if (db5_get_attributes(dbip, &avs, dp)) {
+	bu_avs_free(&avs);
+	return BRLCAD_ERROR;
+    }
+    if (rt_db_get_internal(&ointern, dp, dbip, NULL) < 0) {
+	bu_avs_free(&avs);
+	return BRLCAD_ERROR;
+    }
     ocomb = (struct rt_comb_internal *)ointern.idb_ptr;
     RT_CK_COMB(ocomb);
     flags = dp->d_flags;
@@ -2131,9 +2141,14 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _old_ged_facetize_o
     GED_DB_PUT_INTERN(gedp, dp, &intern, 0);
 
     /* apply attributes to new comb */
-    db5_update_attributes(dp, &avs, dbip);
+    if (db5_update_attributes(dp, &avs, dbip)) {
+	ret = BRLCAD_ERROR;
+    } else {
+	(void)ged_event_notify_attribute_changed(gedp, dp->d_namep, 1, NULL);
+    }
 
     rt_db_free_internal(&ointern);
+    bu_avs_free(&avs);
 
     return ret;
 }

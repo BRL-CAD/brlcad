@@ -394,13 +394,13 @@ public:
     {
     }
 
-    int build(struct bu_vls *msg)
+    int build(struct bu_vls *msg, struct ged *gedp = nullptr)
     {
 	CsgTransaction preflight_txn(wdbp_, true);
 	if (build_into(preflight_txn) != BRLCAD_OK)
 	    return fail(preflight_txn, msg, "generated object preflight failed");
 
-	CsgTransaction csg_txn(wdbp_);
+	CsgTransaction csg_txn(wdbp_, false, gedp);
 	if (build_into(csg_txn) != BRLCAD_OK)
 	    return fail(csg_txn, msg, "failed to generate tire geometry");
 
@@ -629,7 +629,7 @@ generate_demo(struct ged *gedp, const char *demo_file)
     if (write_demo_top(preflight_txn, samples, demo_file) != BRLCAD_OK)
 	return demo_fail(preflight_txn, gedp->ged_result_str, "generated tire demo preflight failed");
 
-    CsgTransaction csg_txn(wdbp);
+    CsgTransaction csg_txn(wdbp, false, gedp);
     for (size_t i = 0; i < requests.size(); i++) {
 	const ValidatedTireRequest &request = requests[i];
 	TireBuilder builder(wdbp, request.top_name, request.suffix, request.iso, request.dim,
@@ -744,7 +744,7 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 
     TireBuilder builder(wdbp, request->top_name, request->suffix, request->iso, request->dim,
 			std::move(request->tread_spec), request->usewheel);
-    if (builder.build(gedp->ged_result_str) != BRLCAD_OK)
+    if (builder.build(gedp->ged_result_str, gedp) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
     mk_id(wdbp, "Tire");

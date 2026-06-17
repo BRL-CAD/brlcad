@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "bu/units.h"
+#include "bsg/feature.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -33,10 +34,25 @@
 #include "../tclcad_private.h"
 #include "../view/view.h"
 
+/* Phase T1 (drawing_stack_modernization): keep BSG VIEW_SCOPE label objects in
+ * sync with the gv_tcl data-labels state so the modern BSG renderer draws
+ * labels without the legacy dm_draw_labels path.  Delegates to the public
+ * bsg_feature_labels_sync() API.
+ *
+ * Phase T3 (drawing_stack_modernization): the draw, color and labels getters in
+ * to_data_labels_func now recover values by reading BSG object/child data
+ * instead of gv_tcl directly.  The size getter still uses gv_tcl because font
+ * size is not stored in the BSG child objects yet.
+ *
+ * gv_tcl continues to be written by setters here because label parsing still
+ * builds a bsg_data_label_state input record.  This is now internal state used
+ * solely for feature sync; commands.c pick/move/scale read from BSG children
+ * directly. */
+
 int
 go_data_labels(Tcl_Interp *interp,
 	       struct ged *gedp,
-	       struct bview *gdvp,
+	       struct bsg_view *gdvp,
 	       int argc,
 	       const char *argv[],
 	       const char *usage)
@@ -56,14 +72,10 @@ go_data_labels(Tcl_Interp *interp,
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-
-    /* Don't allow go_refresh() to be called */
-    if (current_top != NULL) {
-	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_dmv.refresh_on = 0;
-    }
+    to_refresh_suppress_all_begin(current_top);
 
     ret = to_data_labels_func(interp, gedp, gdvp, argc, argv);
+    to_refresh_suppress_all_end(current_top);
     if (ret & BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
@@ -79,7 +91,7 @@ to_data_labels(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    struct bview *gdvp;
+    struct bsg_view *gdvp;
     int ret;
 
     /* initialize result */
@@ -96,7 +108,7 @@ to_data_labels(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
+    gdvp = bsg_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
@@ -115,20 +127,22 @@ to_data_labels(struct ged *gedp,
 int
 to_data_labels_func(Tcl_Interp *interp,
 		    struct ged *gedp,
-		    struct bview *gdvp,
+		    struct bsg_view *gdvp,
 		    int argc,
 		    const char *argv[])
 {
-    struct bv_data_label_state *gdlsp;
+    struct bsg_data_label_state *gdlsp;
 
     if (argv[0][0] == 's')
-	gdlsp = &gdvp->gv_tcl.gv_sdata_labels;
+	gdlsp = &gdvp->gv_tcl->gv_sdata_labels;
     else
-	gdlsp = &gdvp->gv_tcl.gv_data_labels;
+	gdlsp = &gdvp->gv_tcl->gv_data_labels;
+    const char *bsg_name = (argv[0][0] == 's') ? "_tcl_sdata_labels" : "_tcl_data_labels";
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
+	    bsg_feature_ref ref = bsg_feature_find(gdvp, bsg_name);
+	    bu_vls_printf(gedp->ged_result_str, "%d", bsg_feature_ref_is_null(ref) ? 0 : 1);
 	    return BRLCAD_OK;
 	}
 
@@ -143,6 +157,7 @@ to_data_labels_func(Tcl_Interp *interp,
 	    else
 		gdlsp->gdls_draw = 0;
 
+	    bsg_feature_labels_sync(gdvp, gdlsp, bsg_name);
 	    to_refresh_view(gdvp);
 	    return BRLCAD_OK;
 	}
@@ -152,8 +167,14 @@ to_data_labels_func(Tcl_Interp *interp,
 
     if (BU_STR_EQUAL(argv[1], "color")) {
 	if (argc == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gdlsp->gdls_color));
+	    bsg_feature_ref ref = bsg_feature_find(gdvp, bsg_name);
+	    unsigned char rgb[3] = {0, 0, 0};
+	    if (bsg_feature_label_copy(ref, 0, NULL, NULL, rgb)) {
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d",
+			      (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "0 0 0");
+	    }
 	    return BRLCAD_OK;
 	}
 
@@ -174,6 +195,7 @@ to_data_labels_func(Tcl_Interp *interp,
 
 	    VSET(gdlsp->gdls_color, r, g, b);
 
+	    bsg_feature_labels_sync(gdvp, gdlsp, bsg_name);
 	    to_refresh_view(gdvp);
 	    return BRLCAD_OK;
 	}
@@ -187,10 +209,20 @@ to_data_labels_func(Tcl_Interp *interp,
 	/* { {{label this} {0 0 0}} {{label that} {100 100 100}} }*/
 
 	if (argc == 2) {
-	    for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
-		bu_vls_printf(gedp->ged_result_str, "{{%s}", gdlsp->gdls_labels[i]);
-		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf}} ",
-			      V3ARGS(gdlsp->gdls_points[i]));
+	    bsg_feature_ref ref = bsg_feature_find(gdvp, bsg_name);
+	    size_t _child_cnt = bsg_feature_label_count(ref);
+	    if (_child_cnt > 0) {
+		for (size_t _k = 0; _k < _child_cnt; _k++) {
+		    struct bu_vls text = BU_VLS_INIT_ZERO;
+		    point_t pt;
+		    if (!bsg_feature_label_copy(ref, _k, &text, pt, NULL)) {
+			bu_vls_free(&text);
+			continue;
+		    }
+		    bu_vls_printf(gedp->ged_result_str, "{{%s}", bu_vls_cstr(&text));
+		    bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf}} ", V3ARGS(pt));
+		    bu_vls_free(&text);
+		}
 	    }
 	    return BRLCAD_OK;
 	}
@@ -215,6 +247,7 @@ to_data_labels_func(Tcl_Interp *interp,
 	    /* Clear out data points */
 	    if (ac < 1) {
 		Tcl_Free((char *)av);
+		bsg_feature_labels_sync(gdvp, gdlsp, bsg_name);
 		to_refresh_view(gdvp);
 		return BRLCAD_OK;
 	    }
@@ -279,6 +312,7 @@ to_data_labels_func(Tcl_Interp *interp,
 	    }
 
 	    Tcl_Free((char *)av);
+	    bsg_feature_labels_sync(gdvp, gdlsp, bsg_name);
 	    to_refresh_view(gdvp);
 	    return BRLCAD_OK;
 	}
@@ -298,6 +332,7 @@ to_data_labels_func(Tcl_Interp *interp,
 
 	    gdlsp->gdls_size = size;
 
+	    bsg_feature_labels_sync(gdvp, gdlsp, bsg_name);
 	    to_refresh_view(gdvp);
 	    return BRLCAD_OK;
 	}

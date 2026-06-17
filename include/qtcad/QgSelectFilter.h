@@ -31,34 +31,42 @@ extern "C" {
 #include "bu/color.h"
 #include "bu/ptbl.h"
 #include "bg/polygon.h"
-#include "bv.h"
+#include "bsg.h"
 #include "raytrace.h"
 }
 
 #include <QBoxLayout>
 #include <QEvent>
 #include <QMouseEvent>
-#include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
+#include "qtcad/QgViewFilter.h"
 
 // Filters designed for specific editing modes
-class QTCAD_EXPORT QgSelectFilter : public QObject
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSelectFilter : public QgViewFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSelectFilter)
+
 
     public:
+	QgSelectFilter() = default;
+	~QgSelectFilter() override;
 	// Primary mouse interaction.  This differs a bit for the
 	// various selection types, hence the virtual definition
 	// in the base class.
-	virtual bool eventFilter(QObject *, QEvent *) { return false; }
+	bool eventFilter(QObject *, QEvent *) override
+	{
+		return false;
+	}
 
-	// Recover info from view (common logic for all selection modes)
-	QMouseEvent *view_sync(QEvent *e);
-
-	struct bu_ptbl selected_set = BU_PTBL_INIT_ZERO;
-
-	struct bview *v = NULL;
+	const struct bsg_pick_result *pick_result() const
+	{
+		return selected_result;
+	}
+	const struct bsg_interaction_result *interaction_result() const
+	{
+		return selected_interactions;
+	}
 
 	// Whenever we're doing selections, we may want either all the objects
 	// that match the selection criteria, or just the "closest" object.
@@ -66,38 +74,49 @@ class QTCAD_EXPORT QgSelectFilter : public QObject
 	// caller to request the more limited result as well.
 	bool first_only = false;
 
-    signals:
-        void view_updated(int);
+    protected:
+	void clear_selected_result();
+	void set_selected_result(struct bsg_view *v, struct bsg_pick_result *res);
+
+	struct bsg_pick_result *selected_result = nullptr;
+	struct bsg_interaction_result *selected_interactions = nullptr;
+
 };
 
-class QTCAD_EXPORT QgSelectPntFilter: public QgSelectFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSelectPntFilter: public QgSelectFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSelectPntFilter)
 
-    public:
-	bool eventFilter(QObject *, QEvent *e);
+
+public:
+	QgSelectPntFilter() = default;
+	bool eventFilter(QObject *, QEvent *e) override;
 };
 
-class QTCAD_EXPORT QgSelectBoxFilter: public QgSelectFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSelectBoxFilter: public QgSelectFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSelectBoxFilter)
 
-    public:
-	bool eventFilter(QObject *, QEvent *e);
 
-    private:
+public:
+	QgSelectBoxFilter() = default;
+	bool eventFilter(QObject *, QEvent *e) override;
+
+private:
 	fastf_t px = -FLT_MAX;
 	fastf_t py = -FLT_MAX;
 };
 
-class QTCAD_EXPORT QgSelectRayFilter: public QgSelectFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSelectRayFilter: public QgSelectFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSelectRayFilter)
 
-    public:
-	bool eventFilter(QObject *, QEvent *e);
 
-	struct db_i *dbip = NULL;
+public:
+	QgSelectRayFilter() = default;
+	bool eventFilter(QObject *, QEvent *e) override;
+
+	struct db_i *dbip = nullptr;
 };
 
 #endif /* QGSELECTFILTER_H */
@@ -110,4 +129,3 @@ class QTCAD_EXPORT QgSelectRayFilter: public QgSelectFilter
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

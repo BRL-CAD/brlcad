@@ -85,7 +85,7 @@ rt_edit_map_destroy(struct rt_edit_map *o)
 }
 
 struct rt_edit *
-rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bview *v)
+rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bsg_view *v)
 {
     struct rt_edit *s;
     BU_GET(s, struct rt_edit);
@@ -111,7 +111,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     memset(s->e_para, 0, sizeof(s->e_para));
     memset(s->e_str,  0, sizeof(s->e_str));
 
-    bv_knobs_reset(&s->k, 0);
+    bsg_knobs_reset(&s->k, 0);
     s->k.origin_m = '\0';
     s->k.origin_o = '\0';
     s->k.origin_v = '\0';
@@ -142,7 +142,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     s->edit_mode = RT_EDIT_DEFAULT;
     s->tol = tol;
     s->u_ptr = NULL;
-    s->update_views = 0;
+    s->view_update_requested = 0;
     s->vlfree = NULL;
     s->vp = v;
     s->dbip = NULL;
@@ -262,8 +262,8 @@ rt_edit_reset(struct rt_edit *s)
     memset(s->e_para, 0, sizeof(s->e_para));
     memset(s->e_str, 0, sizeof(s->e_str));
 
-    bv_knobs_reset(&s->k, 0);
-    /* bv_knobs_reset() clears numeric knob fields (rates + absolutes) but
+    bsg_knobs_reset(&s->k, 0);
+    /* bsg_knobs_reset() clears numeric knob fields (rates + absolutes) but
      * does NOT touch origin_m/o/v or *_udata pointers; clear those here. */
     s->k.origin_m = '\0';
     s->k.origin_o = '\0';
@@ -292,7 +292,7 @@ rt_edit_reset(struct rt_edit *s)
     s->snap.enabled = 0;
     s->snap.spacing = 1.0;
     s->u_ptr = NULL;
-    s->update_views = 0;
+    s->view_update_requested = 0;
     s->vlfree = NULL;
 
     bu_vls_trunc(s->log_str, 0);
@@ -301,7 +301,7 @@ rt_edit_reset(struct rt_edit *s)
 
 int
 rt_edit_reinit(struct rt_edit *s, struct db_full_path *dfp, struct db_i *dbip,
-               struct bn_tol *tol, struct bview *v)
+               struct bn_tol *tol, struct bsg_view *v)
 {
     if (!s)
 	return BRLCAD_ERROR;
@@ -577,7 +577,7 @@ int
 rt_edit_knob_cmd_process(
 	struct rt_edit *s,
 	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran, int *do_sca,
-	struct bview *v, const char *cmd, fastf_t f,
+	struct bsg_view *v, const char *cmd, fastf_t f,
 	char origin, int incr_flag, void *u_data)
 {
     char c = (cmd[1] == '\0') ? cmd[0] : cmd[1];
@@ -817,7 +817,7 @@ rt_knob_edit_rot(struct rt_edit *s,
 {
     mat_t temp1, temp2;
 
-    s->update_views = 1;
+    s->view_update_requested = 1;
 
     switch (coords) {
 	case 'm':
@@ -1094,7 +1094,7 @@ rt_edit_process(struct rt_edit *s)
     bu_clbk_t f = NULL;
     void *d = NULL;
 
-    ++s->update_views;
+    ++s->view_update_requested;
 
     int had_method = 0;
     const struct rt_db_internal *ip = &s->es_int;
@@ -1122,7 +1122,7 @@ rt_edit_process(struct rt_edit *s)
 
 	case RT_EDIT_IDLE:
 	    /* do nothing more */
-	    --s->update_views;
+	    --s->view_update_requested;
 	    break;
 	default:
 	    {
@@ -1160,7 +1160,7 @@ rt_edit_process(struct rt_edit *s)
 	(*f)(0, NULL, d, NULL);
 
     // view update callback
-    if (s->update_views) {
+    if (s->view_update_requested) {
 	f = NULL; d = NULL;
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, BU_CLBK_DURING);
 	if (f)

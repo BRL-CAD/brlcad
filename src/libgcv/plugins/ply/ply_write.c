@@ -33,6 +33,7 @@
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "raytrace.h"
+#include "rt/vlist.h"
 #include "rply.h"
 
 struct ply_write_options

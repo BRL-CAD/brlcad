@@ -18,6 +18,16 @@
  * information.
  */
 
+/** @defgroup libqtcad libqtcad
+ *
+ * @brief BRL-CAD Qt widget/model helper library.
+ *
+ * Public headers in include/qtcad define the reusable Qt APIs consumed by
+ * qged and related tools.
+ */
+/** @addtogroup libqtcad
+ * @{
+ */
 /** @addtogroup qtcad_defines
  *
  * @brief
@@ -86,6 +96,8 @@
 #  define QTCAD_EVENT(event_name, level)
 #endif
 
+/** @} */ /* qtcad_defines */
+/** @} */ /* libqtcad */
 #endif  /* QTCAD_DEFINES_H */
 
 /*

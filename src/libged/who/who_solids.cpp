@@ -34,25 +34,23 @@
 extern "C" {
 #include "bu/opt.h"
 #include "ged.h"
+#include "ged/bsg_ged_draw.h"
 #include "rt/db_fullpath.h"
 #include "rt/directory.h"
 #include "rt/tree.h"
 }
 
-#include "bv/util.h"
-#include "bv/view_sets.h"
+#include "bsg/export.h"
+#include "bsg/render.h"
+#include "bsg/view_set.h"
 
 #include "../alphanum.h"
 #include "../ged_private.h"
 
-#define LAST_SOLID(_sp) DB_FULL_PATH_CUR_DIR(&(_sp)->s_fullpath)
-
 static void
 who_solids_usage(struct ged *gedp, const char *cmd_name, int subcmd_usage)
 {
-    const char *subcmd = (gedp->new_cmd_forms) ?
-	"  who solids [-V view] [-m #] [level]\n" :
-	"  who solids [level]\n";
+    const char *subcmd = "  who solids [-V view] [-m #] [level]\n";
 
     if (subcmd_usage) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -126,43 +124,42 @@ who_solids_path_state(struct db_i *dbip, const char *path, struct db_tree_state 
 
 
 static void
-who_solids_print_scene_obj(struct bv_scene_obj *sp, struct db_i *dbip, int lvl, struct bu_vls *vls)
+who_solids_print_export_record(const struct bsg_export_record *rec, struct db_i *dbip, int lvl, struct bu_vls *vls)
 {
     struct db_tree_state ts = RT_DBTS_INIT_ZERO;
     unsigned char basecolor[3];
     int region_id = -1;
     int dflag = 0;
     int cflag = 0;
-    size_t nvlist = 0;
-    size_t npts = 0;
+    const char *path = NULL;
     const char *leaf = NULL;
 
-    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+    if (!rec || !dbip || !vls)
+	return;
 
+    path = bu_vls_cstr(&rec->path);
     if (lvl <= -2) {
-	if (bdata && LAST_SOLID(bdata))
-	    leaf = LAST_SOLID(bdata)->d_namep;
-	if (!leaf && bu_vls_strlen(&sp->s_name)) {
-	    leaf = strrchr(bu_vls_cstr(&sp->s_name), '/');
-	    leaf = leaf ? leaf + 1 : bu_vls_cstr(&sp->s_name);
+	if (path && *path) {
+	    leaf = strrchr(path, '/');
+	    leaf = leaf ? leaf + 1 : path;
 	}
 	if (leaf)
 	    bu_vls_printf(vls, "%s ", leaf);
 	return;
     }
 
-    bu_vls_printf(vls, "%s", bu_vls_cstr(&sp->s_name));
-    if ((lvl != -1) && (sp->s_iflag == UP))
+    bu_vls_printf(vls, "%s", path ? path : "");
+    if ((lvl != -1) && rec->highlighted)
 	bu_vls_printf(vls, " ILLUM");
     bu_vls_printf(vls, "\n");
 
     if (lvl <= 0)
 	return;
 
-    basecolor[0] = sp->s_color[0];
-    basecolor[1] = sp->s_color[1];
-    basecolor[2] = sp->s_color[2];
-    if (who_solids_path_state(dbip, bu_vls_cstr(&sp->s_name), &ts)) {
+    basecolor[0] = rec->color[0];
+    basecolor[1] = rec->color[1];
+    basecolor[2] = rec->color[2];
+    if (who_solids_path_state(dbip, path, &ts)) {
 	region_id = ts.ts_regionid;
 	if (ts.ts_mater.ma_color_valid) {
 	    basecolor[0] = ts.ts_mater.ma_color[0] * 255.0;
@@ -174,175 +171,78 @@ who_solids_print_scene_obj(struct bv_scene_obj *sp, struct db_i *dbip, int lvl, 
 	db_free_db_tree_state(&ts);
     }
 
-    cflag = (basecolor[0] != sp->s_color[0] ||
-	     basecolor[1] != sp->s_color[1] ||
-	     basecolor[2] != sp->s_color[2]);
+    cflag = (basecolor[0] != rec->color[0] ||
+	     basecolor[1] != rec->color[1] ||
+	     basecolor[2] != rec->color[2]);
 
     bu_vls_printf(vls, "  cent=(%.3f, %.3f, %.3f) sz=%g ",
-		  sp->s_center[X] * dbip->dbi_base2local,
-		  sp->s_center[Y] * dbip->dbi_base2local,
-		  sp->s_center[Z] * dbip->dbi_base2local,
-		  sp->s_size * dbip->dbi_base2local);
+		  rec->bounds_center[X] * dbip->dbi_base2local,
+		  rec->bounds_center[Y] * dbip->dbi_base2local,
+		  rec->bounds_center[Z] * dbip->dbi_base2local,
+		  rec->bounds_radius * dbip->dbi_base2local);
     bu_vls_printf(vls, "reg=%d\n", region_id);
     bu_vls_printf(vls, "  basecolor=(%d, %d, %d) color=(%d, %d, %d)%s%s\n",
 		  basecolor[0],
 		  basecolor[1],
 		  basecolor[2],
-		  sp->s_color[0],
-		  sp->s_color[1],
-		  sp->s_color[2],
+		  rec->color[0],
+		  rec->color[1],
+		  rec->color[2],
 		  dflag ? " D" : "",
 		  cflag ? " C" : "");
 
     if (lvl <= 1)
 	return;
 
-    struct bv_vlist *vp;
-    for (BU_LIST_FOR(vp, bv_vlist, &sp->s_vlist)) {
-	size_t i;
-	size_t nused = vp->nused;
-	int *cmd = vp->cmd;
-	point_t *pt = vp->pt;
+    if (lvl > 2)
+	bsg_export_record_geometry_report(rec, vls);
 
-	BV_CK_VLIST(vp);
-	nvlist++;
-	npts += nused;
-
-	if (lvl <= 2)
-	    continue;
-
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-			  bv_vlist_get_cmd_description(*cmd),
-			  V3ARGS(*pt));
-	}
-    }
-
-    bu_vls_printf(vls, "  %zu vlist structures, %zu pts\n", nvlist, npts);
-    bu_vls_printf(vls, "  %zu pts (via bv_ck_vlist)\n", bv_ck_vlist(&sp->s_vlist));
+    bu_vls_printf(vls, "  %zu vlist structures, %zu pts\n",
+		  rec->vlist_structure_count,
+		  rec->vlist_point_count);
+    bu_vls_printf(vls, "  %zu pts (via semantic export)\n",
+		  rec->vlist_point_count);
 }
 
 
 static void
-who_solids_print_view(struct bview *v, struct db_i *dbip, int mode, int lvl, struct bu_vls *vls)
+who_solids_print_view(struct bsg_view *v, struct db_i *dbip, int mode, int lvl, struct bu_vls *vls)
 {
-    std::set<struct bv_scene_obj *> uniq;
-    std::vector<struct bv_scene_obj *> objs;
-    struct bu_ptbl *tbls[2];
+    std::vector<const struct bsg_export_record *> objs;
 
     if (!v)
 	return;
 
-    tbls[0] = bv_view_objs(v, BV_DB_OBJS);
-    tbls[1] = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+    struct bsg_export_request request;
+    bsg_export_request_init(&request, v);
+    request.query_flags = BSG_EXPORT_QUERY_VISIBLE_ONLY | BSG_EXPORT_QUERY_DB_OBJECTS;
+    request.render_flags = BSG_RENDER_FLAG_VISIBLE_ONLY | BSG_RENDER_FLAG_PAYLOAD_PREPARE;
+    if (mode >= 0)
+	request.draw_mode = mode;
+    struct bsg_export_result *result = bsg_export_query(&request);
+    if (!result)
+	return;
 
-    for (size_t t = 0; t < 2; t++) {
-	struct bu_ptbl *tbl = tbls[t];
-	if (!tbl)
+    for (size_t i = 0; i < bsg_export_result_count(result); i++) {
+	const struct bsg_export_record *rec = bsg_export_result_get(result, i);
+	if (!rec)
 	    continue;
-	for (size_t i = 0; i < BU_PTBL_LEN(tbl); i++) {
-	    struct bv_scene_obj *sp = (struct bv_scene_obj *)BU_PTBL_GET(tbl, i);
-	    if (!sp || uniq.find(sp) != uniq.end())
-		continue;
-	    if (mode >= 0 && sp->s_os->s_dmode != mode)
-		continue;
-	    uniq.insert(sp);
-	    objs.push_back(sp);
-	}
+	if (rec->non_database_source)
+	    continue;
+	objs.push_back(rec);
     }
 
     std::sort(objs.begin(), objs.end(),
-	      [](const struct bv_scene_obj *a, const struct bv_scene_obj *b) {
-		  return alphanum_impl(bu_vls_cstr(&a->s_name), bu_vls_cstr(&b->s_name), NULL) < 0;
+	      [](const struct bsg_export_record *a, const struct bsg_export_record *b) {
+		  const char *aname = a ? bu_vls_cstr(&a->path) : "";
+		  const char *bname = b ? bu_vls_cstr(&b->path) : "";
+		  return alphanum_impl(aname ? aname : "", bname ? bname : "", NULL) < 0;
 	      });
 
     for (size_t i = 0; i < objs.size(); i++)
-	who_solids_print_scene_obj(objs[i], dbip, lvl, vls);
-}
+	who_solids_print_export_record(objs[i], dbip, lvl, vls);
 
-
-static void
-who_solids_print_display(struct bu_list *hdlp, struct db_i *dbip, int lvl, struct bu_vls *vls)
-{
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-
-    if (dbip == DBI_NULL)
-	return;
-
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_u_data)
-		continue;
-	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-
-	    if (lvl <= -2) {
-		if (bdata && LAST_SOLID(bdata))
-		    bu_vls_printf(vls, "%s ", LAST_SOLID(bdata)->d_namep);
-		continue;
-	    }
-
-	    db_path_to_vls(vls, &bdata->s_fullpath);
-	    if ((lvl != -1) && (sp->s_iflag == UP))
-		bu_vls_printf(vls, " ILLUM");
-	    bu_vls_printf(vls, "\n");
-
-	    if (lvl <= 0)
-		continue;
-
-	    bu_vls_printf(vls, "  cent=(%.3f, %.3f, %.3f) sz=%g ",
-			  sp->s_center[X] * dbip->dbi_base2local,
-			  sp->s_center[Y] * dbip->dbi_base2local,
-			  sp->s_center[Z] * dbip->dbi_base2local,
-			  sp->s_size * dbip->dbi_base2local);
-	    bu_vls_printf(vls, "reg=%d\n", sp->s_old.s_regionid);
-	    bu_vls_printf(vls, "  basecolor=(%d, %d, %d) color=(%d, %d, %d)%s%s%s\n",
-			  sp->s_old.s_basecolor[0],
-			  sp->s_old.s_basecolor[1],
-			  sp->s_old.s_basecolor[2],
-			  sp->s_color[0],
-			  sp->s_color[1],
-			  sp->s_color[2],
-			  sp->s_old.s_uflag ? " U" : "",
-			  sp->s_old.s_dflag ? " D" : "",
-			  sp->s_old.s_cflag ? " C" : "");
-
-	    if (lvl <= 1)
-		continue;
-
-	    size_t nvlist = 0;
-	    size_t npts = 0;
-	    struct bv_vlist *vp;
-	    for (BU_LIST_FOR(vp, bv_vlist, &sp->s_vlist)) {
-		size_t i;
-		size_t nused = vp->nused;
-		int *cmd = vp->cmd;
-		point_t *pt = vp->pt;
-
-		BV_CK_VLIST(vp);
-		nvlist++;
-		npts += nused;
-
-		if (lvl <= 2)
-		    continue;
-
-		for (i = 0; i < nused; i++, cmd++, pt++) {
-		    bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-				  bv_vlist_get_cmd_description(*cmd),
-				  V3ARGS(*pt));
-		}
-	    }
-
-	    bu_vls_printf(vls, "  %zu vlist structures, %zu pts\n", nvlist, npts);
-	    bu_vls_printf(vls, "  %zu pts (via bv_ck_vlist)\n", bv_ck_vlist(&sp->s_vlist));
-	}
-
-	gdlp = next_gdlp;
-    }
+    bsg_export_result_free(result);
 }
 
 
@@ -404,20 +304,9 @@ who_solids_impl(struct ged *gedp, int argc, const char *argv[], int subcmd_usage
 	return BRLCAD_ERROR;
     }
 
-    if (!gedp->new_cmd_forms) {
-	if (bu_vls_strlen(&cvls) || mode != -1) {
-	    who_solids_usage(gedp, subcmd_usage ? "who" : cmd_name, subcmd_usage);
-	    bu_vls_free(&cvls);
-	    return BRLCAD_ERROR;
-	}
-	who_solids_print_display(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, lvl, gedp->ged_result_str);
-	bu_vls_free(&cvls);
-	return BRLCAD_OK;
-    }
-
-    struct bview *v = gedp->ged_gvp;
+    struct bsg_view *v = gedp->ged_gvp;
     if (bu_vls_strlen(&cvls)) {
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	v = bsg_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
 	if (!v) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);

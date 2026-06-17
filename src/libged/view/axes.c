@@ -35,17 +35,27 @@
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bv.h"
+#include "bsg.h"
+#include "bsg/feature.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
+
+static int
+_view_axes_state(struct ged *gedp, bsg_feature_ref ref, const char *name, struct bsg_axes *a)
+{
+    if (bsg_feature_axes_state_get(ref, a))
+	return 1;
+    bu_vls_printf(gedp->ged_result_str, "View object %s has no axes state\n", name);
+    return 0;
+}
 
 int
 _axes_cmd_create(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes create x y z";
+    const char *usage_string = "view obj create <objname> axes create x y z";
     const char *purpose_string = "define data axes at point x,y,z";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -55,10 +65,10 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bv_scene_obj *s = gd->s;
-    if (s) {
-        bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
-        return BRLCAD_ERROR;
+    bsg_feature_ref ref = bsg_feature_find(gd->cv, gd->vobj);
+    if (!bsg_feature_ref_is_null(ref)) {
+	bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
+	return BRLCAD_ERROR;
     }
 
     if (argc != 3) {
@@ -73,28 +83,22 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    int flags = BV_VIEW_OBJS;
-    if (gd->local_obj)
-	flags |= BV_LOCAL_OBJS;
-    s = bv_obj_get(gd->cv, flags);
+    ref = bsg_feature_create_axes(gd->cv, gd->vobj, gd->local_obj);
+    if (bsg_feature_ref_is_null(ref)) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
+	return BRLCAD_ERROR;
+    }
 
-    BU_LIST_INIT(&(s->s_vlist));
-    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
-    VSET(s->s_color, 255, 255, 0);
-
-    struct bv_axes *l;
-    BU_GET(l, struct bv_axes);
-    VMOVE(l->axes_pos, p);
-    l->line_width = 1;
-    l->axes_size = 10;
-    VSET(l->axes_color, 255, 255, 0);
-    s->s_i_data = (void *)l;
-
-    s->s_type_flags |= BV_VIEWONLY;
-    s->s_type_flags |= BV_AXES;
-
-    bu_vls_init(&s->s_name);
-    bu_vls_printf(&s->s_name, "%s", gd->vobj);
+    struct bsg_axes l;
+    memset(&l, 0, sizeof(l));
+    VMOVE(l.axes_pos, p);
+    l.line_width = 1;
+    l.axes_size = 10;
+    VSET(l.axes_color, 255, 255, 0);
+    if (!bsg_feature_axes_state_replace(ref, &l)) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to set axes state for %s\n", gd->vobj);
+	return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }
@@ -104,7 +108,7 @@ _axes_cmd_pos(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes pos [x y z]";
+    const char *usage_string = "view obj create <objname> axes pos [x y z]";
     const char *purpose_string = "adjust axes position";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -114,18 +118,16 @@ _axes_cmd_pos(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bv_scene_obj *s = gd->s;
-    if (!s) {
-        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
-        return BRLCAD_ERROR;
+    bsg_feature_ref ref = bsg_feature_find(gd->cv, gd->vobj);
+    if (bsg_feature_ref_is_null(ref)) {
+	bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_AXES)) {
-        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
-        return BRLCAD_ERROR;
-    }
-    struct bv_axes *a = (struct bv_axes *)s->s_i_data;
+    struct bsg_axes a;
+    if (!_view_axes_state(gedp, ref, gd->vobj, &a))
+	return BRLCAD_ERROR;
     if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "%f %f %f\n", V3ARGS(a->axes_pos));
+	bu_vls_printf(gedp->ged_result_str, "%f %f %f\n", V3ARGS(a.axes_pos));
 	return BRLCAD_OK;
     }
     if (argc != 3) {
@@ -140,8 +142,11 @@ _axes_cmd_pos(void *bs, int argc, const char **argv)
 	}
     }
 
-    VMOVE(a->axes_pos, p);
-    s->s_changed++;
+    VMOVE(a.axes_pos, p);
+    if (!bsg_feature_axes_state_replace(ref, &a)) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to set axes state for %s\n", gd->vobj);
+	return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }
@@ -151,7 +156,7 @@ _axes_cmd_size(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes size [#]";
+    const char *usage_string = "view obj create <objname> axes size [#]";
     const char *purpose_string = "adjust axes size";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -161,18 +166,16 @@ _axes_cmd_size(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bv_scene_obj *s = gd->s;
-    if (!s) {
-        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
-        return BRLCAD_ERROR;
+    bsg_feature_ref ref = bsg_feature_find(gd->cv, gd->vobj);
+    if (bsg_feature_ref_is_null(ref)) {
+	bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_AXES)) {
-        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
-        return BRLCAD_ERROR;
-    }
-    struct bv_axes *a = (struct bv_axes *)s->s_i_data;
+    struct bsg_axes a;
+    if (!_view_axes_state(gedp, ref, gd->vobj, &a))
+	return BRLCAD_ERROR;
      if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "%f\n", a->axes_size);
+	bu_vls_printf(gedp->ged_result_str, "%f\n", a.axes_size);
 	return BRLCAD_OK;
     }
 
@@ -186,8 +189,11 @@ _axes_cmd_size(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    a->axes_size = val;
-    s->s_changed++;
+    a.axes_size = val;
+    if (!bsg_feature_axes_state_replace(ref, &a)) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to set axes state for %s\n", gd->vobj);
+	return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }
@@ -197,7 +203,7 @@ _axes_cmd_linewidth(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes linewidth [#]";
+    const char *usage_string = "view obj create <objname> axes linewidth [#]";
     const char *purpose_string = "adjust axes line width";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -207,18 +213,16 @@ _axes_cmd_linewidth(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bv_scene_obj *s = gd->s;
-    if (!s) {
-        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
-        return BRLCAD_ERROR;
+    bsg_feature_ref ref = bsg_feature_find(gd->cv, gd->vobj);
+    if (bsg_feature_ref_is_null(ref)) {
+	bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_AXES)) {
-        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
-        return BRLCAD_ERROR;
-    }
-    struct bv_axes *a = (struct bv_axes *)s->s_i_data;
+    struct bsg_axes a;
+    if (!_view_axes_state(gedp, ref, gd->vobj, &a))
+	return BRLCAD_ERROR;
      if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "%d\n", a->line_width);
+	bu_vls_printf(gedp->ged_result_str, "%d\n", a.line_width);
 	return BRLCAD_OK;
     }
 
@@ -237,8 +241,11 @@ _axes_cmd_linewidth(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    a->line_width = val;
-    s->s_changed++;
+    a.line_width = val;
+    if (!bsg_feature_axes_state_replace(ref, &a)) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to set axes state for %s\n", gd->vobj);
+	return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }
@@ -248,7 +255,7 @@ _axes_cmd_axes_color(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> axes color [r/g/b]";
+    const char *usage_string = "view obj create <objname> axes color [r/g/b]";
     const char *purpose_string = "get/set color of axes";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -258,18 +265,16 @@ _axes_cmd_axes_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bv_scene_obj *s = gd->s;
-    if (!s) {
-        bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
-        return BRLCAD_ERROR;
+    bsg_feature_ref ref = bsg_feature_find(gd->cv, gd->vobj);
+    if (bsg_feature_ref_is_null(ref)) {
+	bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
+	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_AXES)) {
-        bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
-        return BRLCAD_ERROR;
-    }
-    struct bv_axes *a = (struct bv_axes *)s->s_i_data;
+    struct bsg_axes a;
+    if (!_view_axes_state(gedp, ref, gd->vobj, &a))
+	return BRLCAD_ERROR;
      if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->axes_color[0], a->axes_color[1], a->axes_color[2]);
+	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a.axes_color[0], a.axes_color[1], a.axes_color[2]);
 	return BRLCAD_OK;
     }
 
@@ -286,8 +291,11 @@ _axes_cmd_axes_color(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    bu_color_to_rgb_ints(&c, &a->axes_color[0], &a->axes_color[1], &a->axes_color[2]);
-    s->s_changed++;
+    bu_color_to_rgb_ints(&c, &a.axes_color[0], &a.axes_color[1], &a.axes_color[2]);
+    if (!bsg_feature_axes_state_replace(ref, &a)) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to set axes state for %s\n", gd->vobj);
+	return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }

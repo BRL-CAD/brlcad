@@ -135,7 +135,7 @@ rt_generic_xform(
  * 'attr' is specified to retrieve only one attribute, rather than
  * all.  Example: "db get ell.s B" to get only the B vector.
  */
-C_DECL int
+int
 rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register const struct bu_structparse *sp = NULL;
@@ -210,7 +210,7 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
  * For those solids entirely defined by their parsetab.  Invoked via
  * OBJ[].ft_adjust()
  */
-C_DECL int
+int
 rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     const struct rt_functab *ftp;
@@ -246,128 +246,6 @@ rt_generic_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 		  ftp->ft_label);
 
     return BRLCAD_ERROR;
-}
-
-static int
-rt_wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
-{
-    // If we meet the conditions for an adaptive wireframe, do that
-    if (v && s->adaptive_wireframe && ip->idb_meth->ft_adaptive_plot) {
-
-        ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, tol, v, s->s_size);
-        s->s_type_flags |= BV_CSG_LOD;
-
-	return BRLCAD_OK;
-    }
-
-    // Can only plot if we have an ft_plot method
-    if (ip->idb_meth->ft_plot)
-	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
-
-    // If we didn't have a plotting method, we have an empty bv_scene_obj,
-    // which is fine.  Otherwise, we're good to go - either way, return
-    // BRLCAD_OK.
-    return BRLCAD_OK;
-}
-
-static int
-rt_shaded_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
-{
-    if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
-        bu_log("ERROR: tessellation support not available\n");
-        return BRLCAD_ERROR;
-    }
-
-    struct model *m = nmg_mm();
-    struct nmgregion *r = (struct nmgregion *)NULL;
-    if (ip->idb_meth->ft_tessellate(&r, m, ip, ttol, tol) < 0) {
-        bu_log("ERROR: tessellation failure\n");
-        return BRLCAD_ERROR;
-    }
-
-    NMG_CK_REGION(r);
-    nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, s->vlfree);
-    nmg_km(m);
-
-    return BRLCAD_OK;
-}
-
-
-/**
- * Used for solid types that don't have any special modes beyond basic and adaptive
- * plotting
- */
-C_DECL int
-rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
-{
-    int ret = BRLCAD_ERROR;
-
-    if (!s || !dp || !dbip)
-	return BRLCAD_ERROR;
-
-    // In the generic case we don't have cached data, so we need to proceed straight
-    // to the rt_db_internal.  In some cases (like BoTs) we DON'T want to do this in
-    // all cases, since cracking the internal on large BoTs can be be relatively slow,
-    // but in most cases it's what we need to do.
-    struct rt_db_internal intern;
-    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
-	return BRLCAD_ERROR;
-    RT_CK_DB_INTERNAL(&intern);
-
-    // Clear out existing vlists - if we're calling this, we definitely don't want
-    // any old data to linger.
-    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
-
-#if 0
-    // NOTE - above call stages the vlist memory for reuse.  If we need
-    // to ACTUALLY free it (to back down memory usage if our drawing
-    // doesn't require it) this block can be used instead to actually free
-    // the memory.
-    struct bu_list *p;
-    while (BU_LIST_WHILE(p, bu_list, &s->s_vlist)) {
-	BU_LIST_DEQUEUE(p);
-	struct bv_vlist *pv = (struct bv_vlist *)p;
-	BU_FREE(pv, struct bv_vlist);
-    }
-#endif
-
-    switch (s->s_os->s_dmode) {
-        case 2:
-        case 4:
-	    // Shaded mode and hidden line mode need shaded eval (although they
-	    // do NOT attempt boolean evaluation.)  Fall back to wireframe mode
-	    // in case of tessellation failure.
-	    ret = rt_shaded_plot(s, &intern, ttol, tol);
-            if (ret != BRLCAD_OK) {
-                s->s_os->s_dmode = 0;
-		ret = rt_wireframe_plot(s, &intern, ttol, tol, v);
-	    }
-            break;
-        case 3:
-	    // Evaluated wireframes are only meaningful for combs, which have
-	    // boolean trees to evaluate.  For all other cases (which is what
-	    // rt_generic_scene_obj handles) just return the standard
-	    // wireframe.
-            ret = rt_wireframe_plot(s, &intern, ttol, tol, v);
-            break;
-        case 5:
-            // Draw triangles at points sampled by raytracing (this is an
-	    // evaluated drawing mode.)
-	    ret = rt_sample_pnts(s, &intern);
-            break;
-        default:
-            // Default to wireframe
-            s->s_os->s_dmode = 0;
-            ret = rt_wireframe_plot(s, &intern, ttol, tol, v);
-            break;
-    }
-
-    s->current = 1;
-
-    // Done with internal contents
-    rt_db_free_internal(&intern);
-
-    return ret;
 }
 
 /*

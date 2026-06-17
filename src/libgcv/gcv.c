@@ -484,10 +484,14 @@ const struct gcv_filter *
      const struct bu_ptbl * const filters = gcv_list_filters(context);
 
      for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
- 	bu_mime_model_t emt = (*entry)->mime_type;
- 	if ((*entry)->filter_type != filter_type) continue;
- 	if ( (emt != BU_MIME_MODEL_AUTO) && (emt == mime_type)) return *entry;
- 	if ( (emt == BU_MIME_MODEL_AUTO) && ((*entry)->data_supported && data && (*(*entry)->data_supported)(data)) ) return *entry;
+	bu_mime_model_t emt = (*entry)->mime_type;
+	if ((*entry)->filter_type != filter_type) continue;
+	if ( (emt != BU_MIME_MODEL_AUTO) && (emt == mime_type)) return *entry;
+     }
+     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
+	bu_mime_model_t emt = (*entry)->mime_type;
+	if ((*entry)->filter_type != filter_type) continue;
+	if ( (emt == BU_MIME_MODEL_AUTO) && ((*entry)->data_supported && data && (*(*entry)->data_supported)(data)) ) return *entry;
      }
      return NULL;
  }

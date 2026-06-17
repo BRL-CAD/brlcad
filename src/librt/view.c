@@ -19,7 +19,7 @@
  */
 /** @file rt/view.c
  *
- * Information routines to support adaptive plotting.
+ * Information routines to support LoD primitive realization.
  *
  */
 
@@ -28,11 +28,40 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bv.h"
+#include "bsg.h"
 #include "librt_private.h"
 
+static struct bsg_lod_source_policy_settings
+view_lod_policy(const struct bsg_view *gvp)
+{
+    struct bsg_lod_source_policy_settings policy;
+    memset(&policy, 0, sizeof(policy));
+    policy.scale = 1.0;
+    policy.curve_scale = 1.0;
+    policy.point_scale = 1.0;
+    if (gvp)
+	(void)bsg_view_lod_source_policy_get(gvp, &policy);
+    if (policy.curve_scale <= SMALL_FASTF)
+	policy.curve_scale = 1.0;
+    if (policy.point_scale <= SMALL_FASTF)
+	policy.point_scale = 1.0;
+    return policy;
+}
+
+fastf_t
+primitive_lod_curve_scale(const struct bsg_view *v)
+{
+    return view_lod_policy(v).curve_scale;
+}
+
+size_t
+primitive_lod_bot_threshold(const struct bsg_view *v)
+{
+    return view_lod_policy(v).bot_threshold;
+}
+
 static fastf_t
-view_avg_size(const struct bview *gvp)
+view_avg_size(const struct bsg_view *gvp)
 {
     fastf_t view_aspect, x_size, y_size;
 
@@ -44,7 +73,7 @@ view_avg_size(const struct bview *gvp)
 }
 
 fastf_t
-view_avg_sample_spacing(const struct bview *gvp)
+view_avg_sample_spacing(const struct bsg_view *gvp)
 {
     fastf_t avg_view_size, avg_view_samples;
 
@@ -55,7 +84,7 @@ view_avg_sample_spacing(const struct bview *gvp)
 }
 
 fastf_t
-solid_point_spacing(const struct bview *gvp, fastf_t solid_width)
+solid_point_spacing(const struct bsg_view *gvp, fastf_t solid_width)
 {
     fastf_t radius, avg_view_size, avg_sample_spacing;
     point2d_t p1, p2;
@@ -121,7 +150,7 @@ solid_point_spacing(const struct bview *gvp, fastf_t solid_width)
     }
     p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
 
-    return DIST_PNT2_PNT2(p1, p2);
+    return DIST_PNT2_PNT2(p1, p2) / view_lod_policy(gvp).point_scale;
 }
 
 

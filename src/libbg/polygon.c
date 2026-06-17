@@ -28,7 +28,7 @@
 #ifndef PLOT_PREFIX_STR
 #  define PLOT_PREFIX_STR bg_plot3_
 #endif
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "bn/tol.h"
 #include "bg/polygon.h"
 

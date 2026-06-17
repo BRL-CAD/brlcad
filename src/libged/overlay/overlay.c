@@ -28,7 +28,6 @@
 
 #include "bu/path.h"
 #include "bu/mime.h"
-#include "bv/vlist.h"
 #include "icv.h"
 #include "dm.h"
 
@@ -77,7 +76,6 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     struct dm *dmp = NULL;
     struct fb *fbp = NULL;
     struct bu_vls vname = BU_VLS_INIT_ZERO;
-    struct bu_list *vlfree = &rt_vlfree;
 
     static char usage[] = "Usage: overlay [options] file\n";
 
@@ -85,7 +83,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[0],  "h", "help",           "",     NULL,            &print_help,       "Print help and exit");
     BU_OPT(d[1],  "F", "fb",             "",     NULL,            &write_fb,         "Overlay image on framebuffer");
     BU_OPT(d[2],  "s", "size",           "#",    &bu_opt_fastf_t, &size,             "[Plot] Character size for plot drawing");
-    BU_OPT(d[3],  "N", "view-obj",       "name", &bu_opt_vls,     &vname,            "[Plot] Name of view object");
+    BU_OPT(d[3],  "N", "view-obj",       "name", &bu_opt_vls,     &vname,            "[Plot] Name of view feature");
     BU_OPT(d[4],  "i", "inverse",        "",     NULL,            &inverse,          "[Fb]   Draw upside-down");
     BU_OPT(d[5],  "c", "clear",          "",     NULL,            &clear,            "[Fb]   Clear framebuffer before drawing");
     BU_OPT(d[6],  "v", "verbose",        "",     NULL,            &verbose,          "[Fb]   Verbose reporting");
@@ -177,8 +175,6 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (!write_fb) {
-	struct bv_vlblock*vbp;
-
 	struct bu_vls nroot = BU_VLS_INIT_ZERO;
 	if (!BU_STR_EQUAL(bu_vls_cstr(&vname), "_PLOT_OVERLAY_")) {
 	    bu_vls_sprintf(&nroot, "overlay::%s", bu_vls_cstr(&vname));
@@ -197,51 +193,27 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    char **files = NULL;
 	    size_t count = bu_file_list(".", argv[0], &files);
 	    if (count <= 0) {
-		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[1]);
+		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[0]);
 		bu_vls_free(&nroot);
 		bu_vls_free(&vname);
 		return BRLCAD_ERROR;
 	    }
-	    vbp = bv_vlblock_init(vlfree, 32);
-	    for (size_t i = 0; i < count; i++) {
-		if ((fp = fopen(files[i], "rb")) == NULL) {
-		    bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", files[i]);
-		    bu_argv_free(count, files);
-		    bu_vls_free(&nroot);
-		    bu_vls_free(&vname);
-		    return BRLCAD_ERROR;
-		}
-		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
-		fclose(fp);
-		if (ret < 0) {
-		    bv_vlblock_free(vbp);
-		    bu_argv_free(count, files);
-		    bu_vls_free(&nroot);
-		    bu_vls_free(&vname);
-		    return BRLCAD_ERROR;
-		}
-	    }
+	    ret = _ged_draw_uplot_files_to_feature(gedp, (const char * const *)files, count,
+		    bu_vls_cstr(&nroot), size, gedp->i->ged_gdp->gd_uplotOutputMode);
 	    bu_argv_free(count, files);
 	} else {
-	    vbp = bv_vlblock_init(vlfree, 32);
-	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
+	    ret = _ged_draw_uplot_to_feature(gedp, fp, bu_vls_cstr(&nroot),
+		    size, gedp->i->ged_gdp->gd_uplotOutputMode);
 	    fclose(fp);
-	    if (ret < 0) {
-		bv_vlblock_free(vbp);
-		bu_vls_free(&nroot);
-		bu_vls_free(&vname);
-		return BRLCAD_ERROR;
-	    }
 	}
 
-	if (gedp->new_cmd_forms) {
-	    struct bview *v = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, v, bu_vls_cstr(&nroot));
-	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_cstr(&vname), 0);
+	if (ret != BRLCAD_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to load plot data - %s\n", argv[0]);
+	    bu_vls_free(&nroot);
+	    bu_vls_free(&vname);
+	    return BRLCAD_ERROR;
 	}
 
-	bv_vlblock_free(vbp);
 	bu_vls_free(&nroot);
 	bu_vls_free(&vname);
 

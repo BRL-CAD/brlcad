@@ -28,8 +28,51 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
+
+
+struct killrefs_removed_ref {
+    char *parent_name;
+    char *child_name;
+    char *path;
+};
+
+
+static void
+killrefs_removed_ref_free(struct killrefs_removed_ref *ref)
+{
+    if (!ref)
+	return;
+    if (ref->parent_name)
+	bu_free(ref->parent_name, "killrefs removed parent name");
+    if (ref->child_name)
+	bu_free(ref->child_name, "killrefs removed child name");
+    if (ref->path)
+	bu_free(ref->path, "killrefs removed path");
+    BU_PUT(ref, struct killrefs_removed_ref);
+}
+
+
+static void
+killrefs_removed_ref_record(struct bu_ptbl *removed_refs,
+			    const char *parent_name,
+			    const char *child_name)
+{
+    if (!removed_refs || !parent_name || !child_name)
+	return;
+
+    struct bu_vls path = BU_VLS_INIT_ZERO;
+    struct killrefs_removed_ref *ref;
+    BU_GET(ref, struct killrefs_removed_ref);
+    ref->parent_name = bu_strdup(parent_name);
+    ref->child_name = bu_strdup(child_name);
+    bu_vls_printf(&path, "%s/%s", parent_name, child_name);
+    ref->path = bu_strdup(bu_vls_cstr(&path));
+    bu_vls_free(&path);
+    bu_ptbl_ins(removed_refs, (long *)ref);
+}
 
 
 int
@@ -41,6 +84,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     int nflag;
     int ret;
+    struct bu_ptbl removed_refs = BU_PTBL_INIT_ZERO;
     static const char *usage = "[-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -67,25 +111,33 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     } else
 	nflag = 0;
 
-    if (!nflag && !gedp->ged_internal_call) {
-	for (k = 1; k < argc; k++)
-	    _dl_eraseAllNamesFromDisplay(gedp, argv[k], 1);
-    }
-
     ret = BRLCAD_OK;
+
+    if (!nflag && !gedp->ged_internal_call)
+	bu_ptbl_init(&removed_refs, 8, "killrefs removed references");
+
+    if (!nflag)
+	ged_event_batch_begin(gedp);
 
     FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
+	struct bu_ptbl parent_removed_children = BU_PTBL_INIT_ZERO;
+	if (!nflag && !gedp->ged_internal_call)
+	    bu_ptbl_init(&parent_removed_children, 4,
+		    "killrefs parent removed children");
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 	    ret = BRLCAD_ERROR;
+	    if (BU_PTBL_IS_INITIALIZED(&parent_removed_children))
+		bu_ptbl_free(&parent_removed_children);
 	    continue;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
+	int comb_changed = 0;
 	for (k = 1; k < argc; k++) {
 	    int code;
 
@@ -100,20 +152,69 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		if (nflag)
 		    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
-		else
+		else {
+		    comb_changed = 1;
 		    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
+		    if (!gedp->ged_internal_call)
+			bu_ptbl_ins(&parent_removed_children,
+				(long *)bu_strdup(argv[k]));
+		}
 	    }
 	}
 
-	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
-	    ret = BRLCAD_ERROR;
-	    continue;
+	if (!nflag && comb_changed) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
+		ret = BRLCAD_ERROR;
+		if (BU_PTBL_IS_INITIALIZED(&parent_removed_children)) {
+		    for (size_t ci = 0;
+			    ci < BU_PTBL_LEN(&parent_removed_children); ci++)
+			bu_free((char *)BU_PTBL_GET(&parent_removed_children,
+				ci), "killrefs parent removed child");
+		    bu_ptbl_free(&parent_removed_children);
+		}
+		continue;
+	    }
+	    if (BU_PTBL_IS_INITIALIZED(&parent_removed_children)) {
+		for (size_t ci = 0;
+			ci < BU_PTBL_LEN(&parent_removed_children); ci++) {
+		    char *child_name =
+			(char *)BU_PTBL_GET(&parent_removed_children, ci);
+		    killrefs_removed_ref_record(&removed_refs, dp->d_namep,
+			    child_name);
+		    bu_free(child_name, "killrefs parent removed child");
+		}
+	    }
+	} else {
+	    rt_db_free_internal(&intern);
 	}
+	if (BU_PTBL_IS_INITIALIZED(&parent_removed_children))
+	    bu_ptbl_free(&parent_removed_children);
     } FOR_ALL_DIRECTORY_END;
 
     /* Update references. */
     db_update_nref(gedp->dbip);
+
+    if (!nflag && !gedp->ged_internal_call) {
+	for (size_t ri = 0; ri < BU_PTBL_LEN(&removed_refs); ri++) {
+	    struct killrefs_removed_ref *ref =
+		(struct killrefs_removed_ref *)BU_PTBL_GET(&removed_refs, ri);
+	    ged_event_notify_object_reference_removed_from_parent(gedp,
+		    ref->child_name, ref->parent_name, ref->path, NULL);
+	}
+    }
+    if (!nflag)
+	ged_event_batch_end(gedp, NULL);
+
+    if (BU_PTBL_IS_INITIALIZED(&removed_refs)) {
+	for (size_t ri = 0; ri < BU_PTBL_LEN(&removed_refs); ri++) {
+	    struct killrefs_removed_ref *ref =
+		(struct killrefs_removed_ref *)BU_PTBL_GET(&removed_refs,
+			ri);
+	    killrefs_removed_ref_free(ref);
+	}
+	bu_ptbl_free(&removed_refs);
+    }
 
     return ret;
 }

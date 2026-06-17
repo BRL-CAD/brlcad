@@ -31,8 +31,10 @@
 
 #include <QToolBar>
 #include <QWidget>
-#include "ged.h"
 #include "qtcad/defines.h"
+#include "qtcad/QgTypes.h"
+
+struct ged;
 
 // TODO - add save scene image
 //
@@ -42,22 +44,37 @@
 // instances under the mouse click, adding and removing objects from
 // selection sets, and creating an initial set with a rectangle selection
 
-class QTCAD_EXPORT QgViewCtrl : public QToolBar
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgViewCtrl : public QToolBar {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgViewCtrl)
+	Q_PROPERTY(int iconSize READ iconSize WRITE setIconSize)
 
-    public:
-        QgViewCtrl(QWidget *p, struct ged *pgedp);
-        ~QgViewCtrl();
 
-	struct ged *gedp = NULL;
-	int icon_size = 25;
+public:
+	QgViewCtrl(QWidget *p, struct ged *pgedp);
+	~QgViewCtrl();
 
-    signals:
-	void view_changed(unsigned long long);
+	struct ged *ged() const {
+		return gedp;
+	}
+	void set_ged(struct ged *pgedp)
+	{
+		gedp = pgedp;
+	}
+	int iconSize() const
+	{
+		return icon_size;
+	}
+	void setIconSize(int size)
+	{
+		icon_size = size;
+	}
+
+signals:
+	void view_changed(QgViewUpdateFlags);
 	void lmouse_mode(int);
 
-    public slots:
+public slots:
 
 	void sca_mode();
 	void rot_mode();
@@ -68,7 +85,7 @@ class QTCAD_EXPORT QgViewCtrl : public QToolBar
 
 	void fb_mode_cmd();
 
-	void do_view_update(unsigned long long);
+	void do_view_update(QgViewUpdateFlags);
 
 	// Unlike the other commands, the raytrace button
 	// has to reflect a potentially long-running state -
@@ -79,19 +96,21 @@ class QTCAD_EXPORT QgViewCtrl : public QToolBar
 	void raytrace_start(int);
 	void raytrace_done();
 
-    public:
+private:
+	struct ged *gedp = nullptr;
+	int icon_size = 25;
+
 	// Left mouse behavior controls (when not using a tool or editing)
-	QAction *sca;
-	QAction *rot;
-	QAction *tra;
-	QAction *center;
+	QAction *sca = nullptr;
+	QAction *rot = nullptr;
+	QAction *tra = nullptr;
+	QAction *center = nullptr;
 
 	// Raytrace/framebuffer controls
-	QAction *raytrace;
-	QAction *fb_mode;
-	QAction *fb_clear;
+	QAction *raytrace = nullptr;
+	QAction *fb_mode = nullptr;
+	QAction *fb_clear = nullptr;
 
-    private:
 	bool raytrace_running = false;
 	int pid = -1;
 };
@@ -107,4 +126,3 @@ class QTCAD_EXPORT QgViewCtrl : public QToolBar
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

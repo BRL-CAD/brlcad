@@ -38,7 +38,7 @@
 #include "bu/sort.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "wdb.h"
 
 #include "fitness.h"

@@ -36,7 +36,7 @@
 #  define PLOT_PREFIX_STR bg_plot3_
 #endif
 #define PLOT3_IMPLEMENTATION
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "bg/trimesh.h"
 #include "bg/plane.h"
 

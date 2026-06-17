@@ -41,6 +41,7 @@
 #include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
+#include "bsg/vlist.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -1925,46 +1926,46 @@ drawString(char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPo
 	xScale = allowedLength / stringLength;
 	yScale = textHeight;
 	scale = xScale < yScale ? xScale : yScale;
-	bv_vlist_2string(&vhead, &free_hd, copyOfText,
+	bsg_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 scale, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BV_FREE_VLIST(&free_hd, &vhead);
+	BSG_FREE_VLIST(&free_hd, &vhead);
     } else if (horizAlignment == LEFT && vertAlignment == BASELINE) {
-	bv_vlist_2string(&vhead, &free_hd, copyOfText,
+	bsg_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 textHeight, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BV_FREE_VLIST(&free_hd, &vhead);
+	BSG_FREE_VLIST(&free_hd, &vhead);
     } else if ((horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == BASELINE) {
 	double len = stringLength * textHeight;
 	firstAlignmentPoint[X] = secondAlignmentPoint[X] - cos(textRotation) * len / 2.0;
 	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - sin(textRotation) * len / 2.0;
-	bv_vlist_2string(&vhead, &free_hd, copyOfText,
+	bsg_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 textHeight, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BV_FREE_VLIST(&free_hd, &vhead);
+	BSG_FREE_VLIST(&free_hd, &vhead);
     } else if ((horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == VMIDDLE) {
 	double len = stringLength * textHeight;
 	firstAlignmentPoint[X] = secondAlignmentPoint[X] - len / 2.0;
 	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - textHeight / 2.0;
 	firstAlignmentPoint[X] = firstAlignmentPoint[X] - (1.0 - cos(textRotation)) * len / 2.0;
 	firstAlignmentPoint[Y] = firstAlignmentPoint[Y] - sin(textRotation) * len / 2.0;
-	bv_vlist_2string(&vhead, &free_hd, copyOfText,
+	bsg_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 textHeight, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BV_FREE_VLIST(&free_hd, &vhead);
+	BSG_FREE_VLIST(&free_hd, &vhead);
     } else if (horizAlignment == RIGHT && vertAlignment == BASELINE) {
 	double len = stringLength * textHeight;
 	firstAlignmentPoint[X] = secondAlignmentPoint[X] - cos(textRotation) * len;
 	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - sin(textRotation) * len;
-	bv_vlist_2string(&vhead, &free_hd, copyOfText,
+	bsg_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 textHeight, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BV_FREE_VLIST(&free_hd, &vhead);
+	BSG_FREE_VLIST(&free_hd, &vhead);
     } else {
 	bu_log("cannot handle this alignment: horiz = %d, vert = %d\n", horizAlignment, vertAlignment);
     }
@@ -2061,11 +2062,11 @@ drawMtext(char *text, int attachPoint, int UNUSED(drawingDirection), double text
 		done = 1;
 	    }
 	    *cp = '\0';
-	    bv_vlist_2string(&vhead, &free_hd, c,
+	    bsg_vlist_2string(&vhead, &free_hd, c,
 			     startx, starty,
 			     scale, rotationAngle);
 	    nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	    BV_FREE_VLIST(&free_hd, &vhead);
+	    BSG_FREE_VLIST(&free_hd, &vhead);
 	    c = ++cp;
 	    startx -= lineSpace * ydir[X];
 	    starty -= lineSpace * ydir[Y];

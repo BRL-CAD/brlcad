@@ -1594,11 +1594,11 @@ ecmd_arb_setup_rotface(struct rt_edit *s)
     s->edit_mode = RT_PARAMS_EDIT_ROT;
 
     /* draw arrow, etc. */
-    int vs_flag = 1;
+    int view_update_request = 1;
     f = NULL; d = NULL;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
     if (f)
-	(*f)(0, NULL, d, &vs_flag);
+	(*f)(0, NULL, d, &view_update_request);
 
     /* eaxes */
     int e_flag = 1;

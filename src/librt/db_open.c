@@ -649,7 +649,7 @@ db_i_internal_destroy(struct db_i_internal *i)
 	return;
 
     if (i->mesh_c)
-	bv_mesh_lod_context_destroy(i->mesh_c);
+	bsg_mesh_lod_context_destroy(i->mesh_c);
 
     /* Free any directory blocks */
     for (size_t ii = 0; ii < BU_PTBL_LEN(&i->dbi_directory_blocks); ii++)

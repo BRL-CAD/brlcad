@@ -30,7 +30,7 @@
 #include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
-#include "bv/defines.h"
+#include "bsg/defines.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
@@ -40,7 +40,7 @@ __BEGIN_DECLS
 RT_EXPORT extern void db_mesh_lod_init(struct db_i *dbip, int verbose);
 RT_EXPORT extern void db_mesh_lod_clear(struct db_i *dbip);
 RT_EXPORT extern int db_mesh_lod_update(struct db_i *dbip, const char *name);
-RT_EXPORT extern struct bv_mesh_lod *db_mesh_lod_get(struct db_i *dbip, const char *name);
+RT_EXPORT extern struct bsg_mesh_lod *db_mesh_lod_get(struct db_i *dbip, const char *name);
 
 /**
  * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.

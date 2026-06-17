@@ -23,6 +23,7 @@
 
 #include "bu/cmd.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 static int
@@ -61,6 +62,7 @@ constraint_set(void *datap, int argc, const char *argv[])
     }
 
     bu_avs_free(&avs);
+    (void)ged_event_notify_attribute_changed(gedp, dp->d_namep, 1, NULL);
 
     return BRLCAD_OK;
 }

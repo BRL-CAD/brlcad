@@ -26,35 +26,36 @@
 #include "common.h"
 
 #include "bu/env.h"
+#include "bsg/view_state.h"
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgSignalFlags.h"
 
 
 QgViewCtrl::QgViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
 {
-    gedp = pgedp;
+	gedp = pgedp;
 
-    this->setStyleSheet("QToolButton{margin:0px;}");
+	this->setStyleSheet("QToolButton{margin:0px;}");
 
-    sca = addAction(QIcon(QPixmap(":images/view/view_scale.png")), "Scale");
-    rot = addAction(QIcon(QPixmap(":images/view/view_rotate.png")), "Rotate");
-    tra = addAction(QIcon(QPixmap(":images/view/view_translate.png")), "Translate");
-    center = addAction(QIcon(QPixmap(":images/view/view_center.png")), "Center");
+	sca = addAction(QIcon(QPixmap(":images/view/view_scale.png")), "Scale");
+	rot = addAction(QIcon(QPixmap(":images/view/view_rotate.png")), "Rotate");
+	tra = addAction(QIcon(QPixmap(":images/view/view_translate.png")), "Translate");
+	center = addAction(QIcon(QPixmap(":images/view/view_center.png")), "Center");
 
-    addSeparator();
+	addSeparator();
 
-    raytrace = addAction(QIcon(QPixmap(":images/view/raytrace.png")), "Raytrace");
-    fb_mode = addAction(QIcon(QPixmap(":images/view/framebuffer_off.png")), "Framebuffer Off/Overlay/Underlay");
-    fb_clear = addAction(QIcon(QPixmap(":images/view/framebuffer_clear.png")), "Clear Framebuffer");
+	raytrace = addAction(QIcon(QPixmap(":images/view/raytrace.png")), "Raytrace");
+	fb_mode = addAction(QIcon(QPixmap(":images/view/framebuffer_off.png")), "Framebuffer Off/Overlay/Underlay");
+	fb_clear = addAction(QIcon(QPixmap(":images/view/framebuffer_clear.png")), "Clear Framebuffer");
 
-    // Connect buttons to standard actions
-    connect(sca, &QAction::triggered, this, &QgViewCtrl::sca_mode);
-    connect(rot, &QAction::triggered, this, &QgViewCtrl::rot_mode);
-    connect(tra, &QAction::triggered, this, &QgViewCtrl::tra_mode);
-    connect(center, &QAction::triggered, this, &QgViewCtrl::center_mode);
-    connect(raytrace, &QAction::triggered, this, &QgViewCtrl::raytrace_cmd);
-    connect(fb_clear, &QAction::triggered, this, &QgViewCtrl::fbclear_cmd);
-    connect(fb_mode, &QAction::triggered, this, &QgViewCtrl::fb_mode_cmd);
+	// Connect buttons to standard actions
+	connect(sca, &QAction::triggered, this, &QgViewCtrl::sca_mode);
+	connect(rot, &QAction::triggered, this, &QgViewCtrl::rot_mode);
+	connect(tra, &QAction::triggered, this, &QgViewCtrl::tra_mode);
+	connect(center, &QAction::triggered, this, &QgViewCtrl::center_mode);
+	connect(raytrace, &QAction::triggered, this, &QgViewCtrl::raytrace_cmd);
+	connect(fb_clear, &QAction::triggered, this, &QgViewCtrl::fbclear_cmd);
+	connect(fb_mode, &QAction::triggered, this, &QgViewCtrl::fb_mode_cmd);
 }
 
 QgViewCtrl::~QgViewCtrl()
@@ -64,153 +65,153 @@ QgViewCtrl::~QgViewCtrl()
 void
 QgViewCtrl::sca_mode()
 {
-    QTCAD_SLOT("QgViewCtrl::sca_mode", 1);
-    emit lmouse_mode(BV_SCALE);
+	QTCAD_SLOT("QgViewCtrl::sca_mode", 1);
+	emit lmouse_mode(BSG_SCALE);
 }
 
 void
 QgViewCtrl::rot_mode()
 {
-    QTCAD_SLOT("QgViewCtrl::rot_mode", 1);
-    emit lmouse_mode(BV_ROT);
+	QTCAD_SLOT("QgViewCtrl::rot_mode", 1);
+	emit lmouse_mode(BSG_ROT);
 }
 
 void
 QgViewCtrl::tra_mode()
 {
-    QTCAD_SLOT("QgViewCtrl::tra_mode", 1);
-    emit lmouse_mode(BV_TRANS);
+	QTCAD_SLOT("QgViewCtrl::tra_mode", 1);
+	emit lmouse_mode(BSG_TRANS);
 }
 
 void
 QgViewCtrl::center_mode()
 {
-    QTCAD_SLOT("QgViewCtrl::center_mode", 1);
-    emit lmouse_mode(BV_CENTER);
+	QTCAD_SLOT("QgViewCtrl::center_mode", 1);
+	emit lmouse_mode(BSG_CENTER);
 }
 
 
 void
 QgViewCtrl::fbclear_cmd()
 {
-    QTCAD_SLOT("QgViewCtrl::fbclear_cmd", 1);
-    const char *av[2] = {NULL};
-    av[0] = "fbclear";
-    ged_exec_fbclear(gedp, 1, (const char **)av);
-    emit view_changed(QG_VIEW_REFRESH);
+	QTCAD_SLOT("QgViewCtrl::fbclear_cmd", 1);
+	const char *av[2] = {nullptr};
+	av[0] = "fbclear";
+	ged_exec_fbclear(gedp, 1, (const char **)av);
+	emit view_changed(QG_VIEW_REFRESH);
 }
 
 void
 QgViewCtrl::fb_mode_cmd()
 {
-    QTCAD_SLOT("QgViewCtrl::fb_mode_cmd", 1);
-    if (!gedp->ged_gvp)
-	return;
-    struct bview *v = gedp->ged_gvp;
-    switch (v->gv_s->gv_fb_mode) {
+	QTCAD_SLOT("QgViewCtrl::fb_mode_cmd", 1);
+	if (!gedp->ged_gvp)
+		return;
+	struct bsg_view *v = gedp->ged_gvp;
+	switch (bsg_view_framebuffer_mode(v)) {
 	case 0:
-	    v->gv_s->gv_fb_mode = 2;
-	    break;
+		bsg_view_set_framebuffer_mode(v, 2);
+		break;
 	case 2:
-	    v->gv_s->gv_fb_mode = 1;
-	    break;
+		bsg_view_set_framebuffer_mode(v, 1);
+		break;
 	case 1:
-	    v->gv_s->gv_fb_mode = 0;
-	    break;
+		bsg_view_set_framebuffer_mode(v, 0);
+		break;
 	default:
-	    bu_log("Error - invalid fb mode: %d\n", v->gv_s->gv_fb_mode);
-    }
-    emit view_changed(QG_VIEW_REFRESH);
+		bu_log("Error - invalid fb mode: %d\n", bsg_view_framebuffer_mode(v));
+	}
+	emit view_changed(QG_VIEW_REFRESH);
 }
 
 void
-QgViewCtrl::do_view_update(unsigned long long flags)
+QgViewCtrl::do_view_update(QgViewUpdateFlags flags)
 {
-    QTCAD_SLOT("QgViewCtrl::do_view_update", 1);
-    if (!gedp->ged_gvp || !flags)
-	return;
-    struct bview *v = gedp->ged_gvp;
-    switch (v->gv_s->gv_fb_mode) {
+	QTCAD_SLOT("QgViewCtrl::do_view_update", 1);
+	if (!gedp->ged_gvp || !flags)
+		return;
+	struct bsg_view *v = gedp->ged_gvp;
+	switch (bsg_view_framebuffer_mode(v)) {
 	case 0:
-	    fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer_off.png")));
-	    break;
+		fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer_off.png")));
+		break;
 	case 1:
-	    fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer.png")));
-	    break;
+		fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer.png")));
+		break;
 	case 2:
-	    fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer_underlay.png")));
-	    break;
+		fb_mode->setIcon(QIcon(QPixmap(":images/view/framebuffer_underlay.png")));
+		break;
 	default:
-	    bu_log("Error - invalid fb mode: %d\n", v->gv_s->gv_fb_mode);
-    }
+		bu_log("Error - invalid fb mode: %d\n", bsg_view_framebuffer_mode(v));
+	}
 }
 
 int
 rt_cmd_start(int UNUSED(ac), const char **UNUSED(av), void *pid_ptr, void *ctx)
 {
-    int *pidp = (int *)pid_ptr;
-    if (!pidp)
+	int *pidp = (int *)pid_ptr;
+	if (!pidp)
+		return BRLCAD_OK;
+	QgViewCtrl *vctrl = (QgViewCtrl *)ctx;
+	vctrl->raytrace_start(*pidp);
 	return BRLCAD_OK;
-    QgViewCtrl *vctrl = (QgViewCtrl *)ctx;
-    vctrl->raytrace_start(*pidp);
-    return BRLCAD_OK;
 }
 
 int
 rt_cmd_done(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(u1), void *ctx)
 {
-    QgViewCtrl *vctrl = (QgViewCtrl *)ctx;
-    vctrl->raytrace_done();
-    return BRLCAD_OK;
+	QgViewCtrl *vctrl = (QgViewCtrl *)ctx;
+	vctrl->raytrace_done();
+	return BRLCAD_OK;
 }
 
 void
 QgViewCtrl::raytrace_cmd()
 {
-    QTCAD_SLOT("QgViewCtrl::raytrace_cmd", 1);
-    const char *av[4] = {NULL};
-    struct bu_vls pid_str = BU_VLS_INIT_ZERO;
+	QTCAD_SLOT("QgViewCtrl::raytrace_cmd", 1);
+	const char *av[4] = {nullptr};
+	struct bu_vls pid_str = BU_VLS_INIT_ZERO;
 
-    ged_clbk_set(gedp, "ert", BU_CLBK_DURING, &rt_cmd_start, (void *)this);
-    ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, &rt_cmd_done, (void *)this);
+	ged_clbk_set(gedp, "ert", BU_CLBK_DURING, &rt_cmd_start, (void *)this);
+	ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, &rt_cmd_done, (void *)this);
 
-    if (raytrace_running) {
-	if (pid < 0)
-	    goto cmd_cleanup;
-	bu_vls_sprintf(&pid_str, "%d", pid);
-	av[0] = "process";
-	av[1] = "pabort";
-	av[2] = bu_vls_cstr(&pid_str);
-	ged_exec_process(gedp, 3, (const char **)av);
-	goto cmd_cleanup;
-    }
+	if (raytrace_running) {
+		if (pid < 0)
+			goto cmd_cleanup;
+		bu_vls_sprintf(&pid_str, "%d", pid);
+		av[0] = "process";
+		av[1] = "pabort";
+		av[2] = bu_vls_cstr(&pid_str);
+		ged_exec_process(gedp, 3, (const char **)av);
+		goto cmd_cleanup;
+	}
 
-    av[0] = "ert";
-    ged_exec_ert(gedp, 1, (const char **)av);
-    emit view_changed(QG_VIEW_REFRESH);
+	av[0] = "ert";
+	ged_exec_ert(gedp, 1, (const char **)av);
+	emit view_changed(QG_VIEW_REFRESH);
 
 cmd_cleanup:
-    ged_clbk_set(gedp, "ert", BU_CLBK_DURING, NULL, NULL);
-    ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, NULL, NULL);
-    bu_vls_free(&pid_str);
+	ged_clbk_set(gedp, "ert", BU_CLBK_DURING, nullptr, nullptr);
+	ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, nullptr, nullptr);
+	bu_vls_free(&pid_str);
 }
 
 void
 QgViewCtrl::raytrace_start(int rpid)
 {
-    QTCAD_SLOT("QgViewCtrl::raytrace_start", 1);
-    raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace_abort.png")));
-    raytrace_running = true;
-    pid = rpid;
+	QTCAD_SLOT("QgViewCtrl::raytrace_start", 1);
+	raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace_abort.png")));
+	raytrace_running = true;
+	pid = rpid;
 }
 
 void
 QgViewCtrl::raytrace_done()
 {
-    QTCAD_SLOT("QgViewCtrl::raytrace_done", 1);
-    raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace.png")));
-    raytrace_running = false;
-    pid = -1;
+	QTCAD_SLOT("QgViewCtrl::raytrace_done", 1);
+	raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace.png")));
+	raytrace_running = false;
+	pid = -1;
 }
 
 // Local Variables:
@@ -221,5 +222,4 @@ QgViewCtrl::raytrace_done()
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
 

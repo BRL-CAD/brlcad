@@ -1,7 +1,7 @@
 # Single comprehensive edit test: all phase content consolidated into test_edit.cpp.
 # Covers: infrastructure (section 0), parser/selection/buffer (section 1),
-# translate/rotate/scale/checkpoint/mat (section 2),
-# DbiState null-safety (section A), axis-mode rotate / scale -c (section C).
+# translate/rotate/scale/checkpoint/mat (section 2), axis-mode rotate /
+# scale -c (section C), and null-state command behavior.
 brlcad_addexec(ged_test_edit
   test_edit.cpp
   "libged;libwdb;libbrep"

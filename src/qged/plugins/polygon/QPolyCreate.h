@@ -36,6 +36,8 @@
 #include "qtcad/QgView.h"
 #include "QPolySettings.h"
 
+class QgPluginContext;
+
 class QPolyCreate : public QWidget
 {
     Q_OBJECT
@@ -43,6 +45,8 @@ class QPolyCreate : public QWidget
     public:
 	QPolyCreate();
 	~QPolyCreate();
+
+	void setContext(QgPluginContext *ctx) { m_ctx = ctx; }
 
 	// Boolean Operation Mode
 	QComboBox *csg_modes;
@@ -71,8 +75,8 @@ class QPolyCreate : public QWidget
 
     signals:
 	void poly_added();
-	void settings_changed(unsigned long long);
-	void view_updated(unsigned long long);
+	void settings_changed(QgViewUpdateFlags);
+	void view_updated(QgViewUpdateFlags);
 
     public slots:
 	void checkbox_refresh(unsigned long long);
@@ -82,7 +86,7 @@ class QPolyCreate : public QWidget
 	void finalize(bool);
 	void do_import_sketch();
 	void do_vpoly_copy();
-	void propagate_update(int);
+	void propagate_update(QgViewUpdateFlags);
 
 	void sketch_sync_bool(bool);
 	void sketch_sync_str(const QString &);
@@ -98,11 +102,15 @@ class QPolyCreate : public QWidget
     private:
 	bg_clip_t op = bg_Union;
 	int poly_cnt = 0;
-	struct bv_scene_obj *p = NULL;
+	bsg_polygon_ref p = BSG_POLYGON_REF_NULL_INIT;
 	bool do_bool = false;
 
 	QgPolyFilter *cf = NULL;
-	QPolyCreateFilter *pcf;
+	QgPolyCreateFilter *pcf;
+	QgPluginContext *m_ctx = nullptr;
+
+	struct ged *getGed() const;
+	struct bsg_view *getView() const;
 };
 
 #endif //QPOLYCREATE_H

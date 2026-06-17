@@ -1,5 +1,4 @@
-if(BRLCAD_ENABLE_QT AND TARGET libbu)
-  find_package_qt(REQUIRED)
+if(BRLCAD_ENABLE_QT AND TARGET libbu AND (Qt6Widgets_FOUND OR Qt5Widgets_FOUND))
 
   # Include directories needed by libpkg users
   set(PKG_EXAMPLE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${BU_INCLUDE_DIRS} ${PKG_INCLUDE_DIRS})

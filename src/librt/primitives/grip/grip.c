@@ -43,6 +43,7 @@
 #include "vmath.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 #include "nmg.h"
 #include "rt/db4.h"
 
@@ -57,7 +58,7 @@ struct grip_specific {
 };
 #define GRIP_NULL ((struct grip_specific *)0)
 
-EXTERNCPP const struct bu_structparse rt_grp_parse[] = {
+const struct bu_structparse rt_grp_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_grip_internal, center, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "N", bu_offsetofarray(struct rt_grip_internal, normal, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "L", bu_offsetof(struct rt_grip_internal, mag), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -65,7 +66,7 @@ EXTERNCPP const struct bu_structparse rt_grp_parse[] = {
 };
 
 
-C_DECL int
+int
 rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_grip_internal *gip;
@@ -93,7 +94,7 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_grp_print(const struct soltab *stp)
 {
     const struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
@@ -119,7 +120,7 @@ rt_grp_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *UNUSED(seghead))
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -136,7 +137,7 @@ rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
-C_DECL void
+void
 rt_grp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (hitp) RT_CK_HIT(hitp);
@@ -150,7 +151,7 @@ rt_grp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the "curvature" of the grip.
  */
-C_DECL void
+void
 rt_grp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp) return;
@@ -168,7 +169,7 @@ rt_grp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * "toroidal" map is established, varying each from 0 up to 1 and then
  * back down to 0 again.
  */
-C_DECL void
+void
 rt_grp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -180,7 +181,7 @@ rt_grp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-C_DECL void
+void
 rt_grp_free(struct soltab *stp)
 {
     struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
@@ -197,7 +198,7 @@ rt_grp_free(struct soltab *stp)
  *
  */
 C_DECL int
-rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
 {
     struct rt_grip_internal *gip;
     vect_t xbase, ybase;	/* perpendiculars to normal */
@@ -226,21 +227,21 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     VADD2(y_1, gip->center, ybase);
     VSUB2(y_2, gip->center, ybase);
 
-    BV_ADD_VLIST(vlfree, vhead, x_1, BV_VLIST_LINE_MOVE); /* the base */
-    BV_ADD_VLIST(vlfree, vhead, y_1, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, x_2, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, y_2, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, x_1, BV_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, x_1, BSG_VLIST_LINE_MOVE); /* the base */
+    BSG_ADD_VLIST(vlfree, vhead, y_1, BSG_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, x_2, BSG_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, y_2, BSG_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, x_1, BSG_VLIST_LINE_DRAW);
 
     VSCALE(tip, gip->normal, gip->mag);
     VADD2(tip, gip->center, tip);
 
-    BV_ADD_VLIST(vlfree, vhead, x_1,  BV_VLIST_LINE_MOVE); /* the sides */
-    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, x_2,  BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, y_1,  BV_VLIST_LINE_MOVE);
-    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, y_2,  BV_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, x_1,  BSG_VLIST_LINE_MOVE); /* the sides */
+    BSG_ADD_VLIST(vlfree, vhead, tip, BSG_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, x_2,  BSG_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, y_1,  BSG_VLIST_LINE_MOVE);
+    BSG_ADD_VLIST(vlfree, vhead, tip, BSG_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, y_2,  BSG_VLIST_LINE_DRAW);
     return 0;
 }
 
@@ -250,7 +251,7 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * -1 failure
  * 0 success
  */
-C_DECL int
+int
 rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
@@ -304,7 +305,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-C_DECL int
+int
 rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
@@ -331,7 +332,7 @@ rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double U
     return 0;
 }
 
-C_DECL int
+int
 rt_grp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -375,7 +376,7 @@ rt_grp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 }
 
 
-C_DECL int
+int
 rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
@@ -418,7 +419,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-C_DECL int
+int
 rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
@@ -453,7 +454,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_grip_internal *gip = (struct rt_grip_internal *)ip->idb_ptr;
@@ -485,7 +486,7 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_grp_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -495,7 +496,7 @@ rt_grp_ifree(struct rt_db_internal *ip)
 }
 
 
-C_DECL int
+int
 rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_grip_internal *gip;
@@ -512,7 +513,7 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-C_DECL int
+int
 rt_grp_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -520,7 +521,7 @@ rt_grp_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-C_DECL const char *
+const char *
 rt_grp_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

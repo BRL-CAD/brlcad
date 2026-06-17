@@ -29,8 +29,8 @@
 #include "bu/sort.h"
 #include "bu/avs.h"
 #include "bu/malloc.h"
+#include "qtcad/QgPluginContext.h"
 #include "qtcad/QgSignalFlags.h"
-#include "QgEdApp.h"
 #include "CADViewModel.h"
 
 CADViewModel::CADViewModel(QObject *parentobj)
@@ -49,21 +49,16 @@ CADViewModel::~CADViewModel()
 void
 CADViewModel::update()
 {
-    printf("view model update\n");
     refresh(QG_VIEW_REFRESH);
 }
 
 void
 CADViewModel::refresh(unsigned long long)
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->gedp;
-    if (!gedp)
+    struct bsg_view *v = m_ctx ? m_ctx->getView() : nullptr;
+    if (!v)
 	return;
 
-    struct bview *v = gedp->ged_gvp;
     struct bu_vls val = BU_VLS_INIT_ZERO;
     QMap<QString, QgKeyValNode*> standard_nodes;
     int i = 0;
@@ -108,5 +103,4 @@ CADViewModel::refresh(unsigned long long)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
 

@@ -54,7 +54,7 @@ ged_pmat_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 
 	MAT_COPY(gedp->ged_gvp->gv_pmat, pmat);
-	bv_update(gedp->ged_gvp);
+	bsg_update(gedp->ged_gvp);
 
 	return BRLCAD_OK;
     }

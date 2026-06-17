@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.polygon.modify",
+    "displayName": "Polygon Modify",
+    "category": "qged.view",
+    "iconName": ":poly_modify.svg",
+    "sortKey": 101,
+    "requiresOpenDb": false,
+    "requiresView": true,
+    "description": "Select, update, boolean-combine, align, and delete view polygons.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

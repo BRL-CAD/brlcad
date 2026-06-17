@@ -29,6 +29,14 @@
 
 __BEGIN_DECLS
 
+struct bn_tol;
+struct rt_db_internal;
+struct rt_primitive_lod_realization;
+
+RT_EXPORT extern int rt_nurb_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+						struct rt_db_internal *ip,
+						const struct bn_tol *tol);
+
 /**
  * Convert a BSPLINE (ID_BSPLINE) rt_db_internal to a BREP (ID_BREP)
  * rt_db_internal in-place.

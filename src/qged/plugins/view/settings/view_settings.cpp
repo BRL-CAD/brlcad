@@ -1,4 +1,4 @@
-/*                 V I E W _ I N F O . C P P
+/*                 V I E W _ S E T T I N G S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2026 United States Government as represented by
@@ -17,47 +17,92 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_info.cpp
+/** @file view_settings.cpp
  *
+ * IQgToolFactory implementation for the view-settings palette tool.
+ * Replaces the legacy qged_plugin_info ABI.
  */
 
 #include <QGroupBox>
 #include <QCheckBox>
+#include <QIcon>
+#include <QPixmap>
+
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgPluginDescriptor.h"
 #include "qtcad/QgToolPalette.h"
-#include "../../plugin.h"
-#include "CADViewSettings.h"
+#include "ViewSettingsFactory.h"
 
-void *
-view_settings_tool_create()
+/* ------------------------------------------------------------------ */
+/* ViewSettingsTool                                                     */
+/* ------------------------------------------------------------------ */
+
+ViewSettingsTool::ViewSettingsTool(QgPluginContext *ctx, QObject *parent)
+    : QgToolBase(ctx, parent)
 {
-    QIcon *obj_icon = new QIcon(QPixmap(":settings.svg"));
+}
 
-    CADViewSettings *vs = new CADViewSettings();
-
-    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, vs);
-
-    QObject::connect(el, &QgToolPaletteElement::element_view_update, vs, &CADViewSettings::checkbox_refresh);
-    QObject::connect(vs, &CADViewSettings::settings_changed, el, &QgToolPaletteElement::element_view_changed);
-
+/* Override to wire the settings->element_view_changed signal AFTER the
+ * element has been created by the base class.  Calling paletteElement()
+ * from inside createWidget() would be re-entrant and must be avoided. */
+QgToolPaletteElement *
+ViewSettingsTool::paletteElement()
+{
+    QgToolPaletteElement *el = QgToolBase::paletteElement();
+    if (m_settings && el && !m_extra_wired) {
+	QObject::connect(m_settings, &CADViewSettings::settings_changed,
+			 el, &QgToolPaletteElement::element_view_changed);
+	m_extra_wired = true;
+    }
     return el;
 }
 
-extern "C" {
-    struct qged_tool_impl view_settings_tool_impl = {
-	view_settings_tool_create
-    };
-
-    const struct qged_tool view_settings_tool = { &view_settings_tool_impl, 1 };
-    const struct qged_tool *view_settings_tools[] = { &view_settings_tool, NULL };
-
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_settings_tools, 1 };
-
-    COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
-    {
-	return &pinfo;
-    }
+QWidget *
+ViewSettingsTool::createWidget()
+{
+    m_settings = new CADViewSettings();
+    m_settings->setContext(m_ctx);
+    return m_settings;
 }
 
+QIcon *
+ViewSettingsTool::createIcon()
+{
+    return new QIcon(QPixmap(":settings.svg"));
+}
+
+void
+ViewSettingsTool::refresh()
+{
+    if (m_settings)
+	m_settings->checkbox_refresh(0);
+}
+
+/* ------------------------------------------------------------------ */
+/* ViewSettingsFactory                                                  */
+/* ------------------------------------------------------------------ */
+
+QgPluginDescriptor
+ViewSettingsFactory::descriptor() const
+{
+    QgPluginDescriptor d;
+    d.id           = "org.brlcad.qged.view.settings";
+    d.displayName  = "View Settings";
+    d.category     = "qged.view";
+    d.iconName     = ":settings.svg";
+    d.sortKey      = 1;
+    d.requiresView = true;
+    d.description  = "Controls faceplate elements: adaptive plotting, ADC, center dot, grid, axes, scale, framebuffer mode, and view parameter display.";
+    d.vendor       = "BRL-CAD";
+    d.version      = "1.0";
+    return d;
+}
+
+QgToolBase *
+ViewSettingsFactory::create(QgPluginContext *ctx, QObject *parent)
+{
+    return new ViewSettingsTool(ctx, parent);
+}
 
 
 // Local Variables:

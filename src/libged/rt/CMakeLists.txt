@@ -3,6 +3,7 @@ set(PLUGIN_LIBS libged libbu)
 ged_plugin_library(ged-rt
   rt.c
   LIBS ${PLUGIN_LIBS}
+  PLUGIN_ONLY
 )
 
 cmakefiles(

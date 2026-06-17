@@ -32,15 +32,59 @@
 #include "rt/db_fullpath.h"
 #include "rt/db_diff.h"
 #include "analyze.h"
+#include "bsg/feature.h"
 
 #include "../ged_private.h"
 
 static void check_walk(
 	int *diff,
-       	struct bu_vls *msgs,
-       	struct db_i *dbip,
+	struct bu_vls *msgs,
+	struct db_i *dbip,
 	struct db_full_path *p1,
 	struct db_full_path *p2);
+
+static point_t *
+gdiff_segment_points(const struct bu_ptbl *segments, size_t *point_count)
+{
+    size_t segment_count = segments ? (size_t)BU_PTBL_LEN(segments) : 0;
+    point_t *points = NULL;
+
+    if (point_count)
+	*point_count = segment_count * 2;
+    if (!segment_count)
+	return NULL;
+
+    points = (point_t *)bu_calloc(segment_count * 2, sizeof(point_t), "gdiff segment points");
+    for (size_t i = 0; i < segment_count; i++) {
+	struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(segments, i);
+	VMOVE(points[i * 2], dseg->in_pt);
+	VMOVE(points[i * 2 + 1], dseg->out_pt);
+    }
+
+    return points;
+}
+
+static void
+gdiff_replace_line_feature(struct bsg_view *view, const char *name,
+	const struct bu_ptbl *segments, int r, int g, int b)
+{
+    if (!view || !name)
+	return;
+
+    size_t point_count = 0;
+    point_t *points = gdiff_segment_points(segments, &point_count);
+    if (!point_count || !points) {
+	(void)bsg_feature_remove(view, name);
+	return;
+    }
+
+    struct bsg_feature_style style = BSG_FEATURE_STYLE_INIT;
+    style.color_valid = 1;
+    VSET(style.color, r, g, b);
+    (void)bsg_feature_replace_lines(view, name, 0, (const point_t *)points, point_count, &style);
+    bu_free(points, "gdiff segment points");
+}
+
 static void
 check_walk_subtree(int *diff, struct bu_vls *msgs, struct db_i *dbip, struct db_full_path *p1, struct db_full_path *p2, union tree *tp1, union tree *tp2)
 {
@@ -194,7 +238,6 @@ check_walk(int *diff,
 int
 ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 {
-    size_t i;
     struct analyze_raydiff_results *results;
     struct bn_tol tol = BN_TOL_INIT_TOL;
 
@@ -363,66 +406,19 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (view_left || view_overlap || view_right) {
-	/* Visualize the differences */
-	struct bu_list *vhead;
-	point_t a, b;
-	struct bv_vlblock *vbp;
-	struct bu_list local_vlist;
-	BU_LIST_INIT(&local_vlist);
-	vbp = bv_vlblock_init(&local_vlist, 32);
-
-	/* Clear any previous diff drawing */
-	if (db_lookup(gedp->dbip, "diff_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
-	    dl_erasePathFromDisplay(gedp, "diff_visualff", 1);
-	if (db_lookup(gedp->dbip, "diff_visualff0000", LOOKUP_QUIET) != RT_DIR_NULL)
-	    dl_erasePathFromDisplay(gedp, "diff_visualff0000", 1);
-	if (db_lookup(gedp->dbip, "diff_visualffffff", LOOKUP_QUIET) != RT_DIR_NULL)
-	    dl_erasePathFromDisplay(gedp, "diff_visualffffff", 1);
-
-	/* Draw left-only lines */
-	if (view_left) {
-	    for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
-		VMOVE(a, dseg->in_pt);
-		VMOVE(b, dseg->out_pt);
-		vhead = bv_vlblock_find(vbp, 255, 0, 0); /* should be red */
-		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BV_VLIST_LINE_DRAW);
-	    }
+	if (gedp->ged_gvp) {
+	    struct bsg_view *view = gedp->ged_gvp;
+	    (void)bsg_feature_remove(view, "gdiff");
+	    (void)bsg_feature_remove(view, "gdiff::left");
+	    (void)bsg_feature_remove(view, "gdiff::overlap");
+	    (void)bsg_feature_remove(view, "gdiff::right");
+	    if (view_left)
+		gdiff_replace_line_feature(view, "gdiff::left", results->left, 255, 0, 0);
+	    if (view_overlap)
+		gdiff_replace_line_feature(view, "gdiff::overlap", results->both, 255, 255, 255);
+	    if (view_right)
+		gdiff_replace_line_feature(view, "gdiff::right", results->right, 0, 0, 255);
 	}
-	/* Draw overlap lines */
-	if (view_overlap) {
-	    for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
-		VMOVE(a, dseg->in_pt);
-		VMOVE(b, dseg->out_pt);
-		vhead = bv_vlblock_find(vbp, 255, 255, 255); /* should be white */
-		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BV_VLIST_LINE_DRAW);
-
-	    }
-	}
-	/* Draw right lines */
-	if (view_right) {
-	    for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
-		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
-		VMOVE(a, dseg->in_pt);
-		VMOVE(b, dseg->out_pt);
-		vhead = bv_vlblock_find(vbp, 0, 0, 255); /* should be blue */
-		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BV_VLIST_LINE_DRAW);
-	    }
-	}
-
-	if (gedp->new_cmd_forms) {
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, view, "gdiff");
-	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
-	}
-
-	bv_vlist_cleanup(&local_vlist);
-	bv_vlblock_free(vbp);
     }
     analyze_raydiff_results_free(results);
 

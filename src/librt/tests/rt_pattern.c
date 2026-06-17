@@ -22,7 +22,7 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "raytrace.h"
 
 int validate_sph_qrand(struct rt_pattern_data* data) {

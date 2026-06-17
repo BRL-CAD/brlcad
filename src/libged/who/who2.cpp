@@ -25,13 +25,9 @@
 
 #include "common.h"
 
-#include <set>
-
-#include "bu/malloc.h"
-#include "bu/str.h"
 #include "ged.h"
+#include "ged/bsg_ged_draw.h"
 
-#include "../dbi.h"
 #include "../ged_private.h"
 
 extern "C" int ged_who_solids_core(struct ged *gedp, int argc, const char *argv[]);
@@ -58,12 +54,19 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    /* skip command name argv[0] */
+    if (argc > 0) {
+	argc--;
+	argv++;
+    }
+
     int expand = 0;
     int print_help = 0;
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
     static const char *usage =
 	"Usage:\n"
 	"  who [options]\n"
+	"  who [real|phony|both]\n"
 	"  who solids [-V view] [-m #] [level]\n";
     struct bu_opt_desc vd[6];
     int mode = -1;
@@ -86,9 +89,16 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    struct bview *v = gedp->ged_gvp;
+    argc = opt_ret;
+    if (argc) {
+	_ged_cmd_help(gedp, usage, vd);
+	bu_vls_free(&cvls);
+	return BRLCAD_ERROR;
+    }
+
+    struct bsg_view *v = gedp->ged_gvp;
     if (bu_vls_strlen(&cvls)) {
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	v = bsg_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
 	if (!v) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
@@ -103,12 +113,7 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BViewState *bvs = dbis->get_view_state(v);
-    std::vector<std::string> paths = bvs->list_drawn_paths(mode, (bool)!expand);
-    for (size_t i = 0; i < paths.size(); i++) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", paths[i].c_str());
-    }
+    ged_draw_list_paths(gedp, v, mode, expand, gedp->ged_result_str);
 
     return BRLCAD_OK;
 }

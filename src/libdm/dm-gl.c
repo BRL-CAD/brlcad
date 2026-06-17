@@ -28,12 +28,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <math.h>
 #include <string.h>
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-#include "bv/defines.h"
+#include "bsg/defines.h"
+#include "bsg/vlist.h"
 #include "dm.h"
 #include "./dm-gl.h"
 #include "./include/private.h"
@@ -79,7 +81,7 @@ gl_debug_log(struct dm *dmp, struct bu_vls *msg)
 	    return;
 	}
     }
-    bu_log("%s", bu_vls_cstr(msg));
+    fprintf(stderr, "%s", bu_vls_cstr(msg));
 }
 
 void
@@ -539,11 +541,11 @@ void gl_popPMatrix(struct dm *UNUSED(dmp))
     glPopMatrix();
 }
 
-int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
+int gl_drawVListHiddenLine(struct dm *dmp, register bsg_vlist *vp)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
-    register struct bv_vlist *tvp;
+    register bsg_vlist *tvp;
     register int first;
 
     gl_debug_print(dmp, "gl_drawVListHiddenLine", dmp->i->dm_debugLevel);
@@ -567,7 +569,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
-    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bsg_vlist, &vp->l)) {
 	register int i;
 	register int nused = tvp->nused;
 	register int *cmd = tvp->cmd;
@@ -577,10 +579,10 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 	    VMOVE(dpt, *pt); /* fastf_t-to-double */
 
 	    switch (*cmd) {
-		case BV_VLIST_LINE_MOVE:
-		case BV_VLIST_LINE_DRAW:
+		case BSG_VLIST_LINE_MOVE:
+		case BSG_VLIST_LINE_DRAW:
 		    break;
-		case BV_VLIST_POLY_START:
+		case BSG_VLIST_POLY_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
@@ -590,23 +592,23 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 		    /* Set surface normal (vl_pnt points outward) */
 		    glNormal3dv(dpt);
 		    break;
-		case BV_VLIST_POLY_MOVE:
-		case BV_VLIST_POLY_DRAW:
-		case BV_VLIST_TRI_MOVE:
-		case BV_VLIST_TRI_DRAW:
+		case BSG_VLIST_POLY_MOVE:
+		case BSG_VLIST_POLY_DRAW:
+		case BSG_VLIST_TRI_MOVE:
+		case BSG_VLIST_TRI_DRAW:
 		    glVertex3dv(dpt);
 		    break;
-		case BV_VLIST_POLY_END:
+		case BSG_VLIST_POLY_END:
 		    /* Draw, End Polygon */
 		    glEnd();
 		    first = 1;
 		    break;
-		case BV_VLIST_POLY_VERTNORM:
-		case BV_VLIST_TRI_VERTNORM:
+		case BSG_VLIST_POLY_VERTNORM:
+		case BSG_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    glNormal3dv(dpt);
 		    break;
-		case BV_VLIST_TRI_START:
+		case BSG_VLIST_TRI_START:
 		    if (first)
 			glBegin(GL_TRIANGLES);
 
@@ -616,7 +618,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 		    glNormal3dv(dpt);
 
 		    break;
-		case BV_VLIST_TRI_END:
+		case BSG_VLIST_TRI_END:
 		    break;
 	    }
 	}
@@ -632,7 +634,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
-    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bsg_vlist, &vp->l)) {
 	register int i;
 	register int nused = tvp->nused;
 	register int *cmd = tvp->cmd;
@@ -643,7 +645,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 	    VMOVE(dpt, *pt); /* fastf_t-to-double */
 
 	    switch (*cmd) {
-		case BV_VLIST_LINE_MOVE:
+		case BSG_VLIST_LINE_MOVE:
 		    /* Move, start line */
 		    if (first == 0)
 			glEnd();
@@ -652,8 +654,8 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 		    glBegin(GL_LINE_STRIP);
 		    glVertex3dv(dpt);
 		    break;
-		case BV_VLIST_POLY_START:
-		case BV_VLIST_TRI_START:
+		case BSG_VLIST_POLY_START:
+		case BSG_VLIST_TRI_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
@@ -661,22 +663,22 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 
 		    glBegin(GL_LINE_STRIP);
 		    break;
-		case BV_VLIST_LINE_DRAW:
-		case BV_VLIST_POLY_MOVE:
-		case BV_VLIST_POLY_DRAW:
-		case BV_VLIST_TRI_MOVE:
-		case BV_VLIST_TRI_DRAW:
+		case BSG_VLIST_LINE_DRAW:
+		case BSG_VLIST_POLY_MOVE:
+		case BSG_VLIST_POLY_DRAW:
+		case BSG_VLIST_TRI_MOVE:
+		case BSG_VLIST_TRI_DRAW:
 		    glVertex3dv(dpt);
 		    break;
-		case BV_VLIST_POLY_END:
-		case BV_VLIST_TRI_END:
+		case BSG_VLIST_POLY_END:
+		case BSG_VLIST_TRI_END:
 		    /* Draw, End Polygon */
 		    glVertex3dv(dpt);
 		    glEnd();
 		    first = 1;
 		    break;
-		case BV_VLIST_POLY_VERTNORM:
-		case BV_VLIST_TRI_VERTNORM:
+		case BSG_VLIST_POLY_VERTNORM:
+		case BSG_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    glNormal3dv(dpt);
 		    break;
@@ -706,10 +708,10 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 }
 
 
-int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
+int gl_drawVList(struct dm *dmp, bsg_vlist *vp)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    struct bv_vlist *tvp;
+    bsg_vlist *tvp;
     register int first;
     register int mflag = 1;
     GLfloat pointSize = 0.0;
@@ -728,7 +730,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
-    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bsg_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -745,7 +747,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 	    }
 
 	    switch (*cmd) {
-		case BV_VLIST_LINE_MOVE:
+		case BSG_VLIST_LINE_MOVE:
 		    /* Move, start line */
 		    if (first == 0)
 			glEnd();
@@ -765,7 +767,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    glBegin(GL_LINE_STRIP);
 		    glVertex3dv(dpt);
 		    break;
-		case BV_VLIST_MODEL_MAT:
+		case BSG_VLIST_MODEL_MAT:
 		    if (first == 0) {
 			glEnd();
 			first = 1;
@@ -774,7 +776,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    glMatrixMode(GL_MODELVIEW);
 		    glPopMatrix();
 		    break;
-		case BV_VLIST_DISPLAY_MAT:
+		case BSG_VLIST_DISPLAY_MAT:
 		    glMatrixMode(GL_MODELVIEW);
 		    glGetDoublev(GL_MODELVIEW_MATRIX, m);
 
@@ -789,8 +791,8 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		             2. * 3.78 / dmp->i->dm_height,
 		             1.);
 		    break;
-		case BV_VLIST_POLY_START:
-		case BV_VLIST_TRI_START:
+		case BSG_VLIST_POLY_START:
+		case BSG_VLIST_TRI_START:
 		    /* Start poly marker & normal */
 
 		    if (mvars->lighting_on && mflag) {
@@ -820,7 +822,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 			}
 		    }
 
-		    if (*cmd == BV_VLIST_POLY_START) {
+		    if (*cmd == BSG_VLIST_POLY_START) {
 			if (first == 0)
 			    glEnd();
 
@@ -834,26 +836,26 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    first = 0;
 
 		    break;
-		case BV_VLIST_LINE_DRAW:
-		case BV_VLIST_POLY_MOVE:
-		case BV_VLIST_POLY_DRAW:
-		case BV_VLIST_TRI_MOVE:
-		case BV_VLIST_TRI_DRAW:
+		case BSG_VLIST_LINE_DRAW:
+		case BSG_VLIST_POLY_MOVE:
+		case BSG_VLIST_POLY_DRAW:
+		case BSG_VLIST_TRI_MOVE:
+		case BSG_VLIST_TRI_DRAW:
 		    glVertex3dv(dpt);
 		    break;
-		case BV_VLIST_POLY_END:
+		case BSG_VLIST_POLY_END:
 		    /* Draw, End Polygon */
 		    glEnd();
 		    first = 1;
 		    break;
-		case BV_VLIST_TRI_END:
+		case BSG_VLIST_TRI_END:
 		    break;
-		case BV_VLIST_POLY_VERTNORM:
-		case BV_VLIST_TRI_VERTNORM:
+		case BSG_VLIST_POLY_VERTNORM:
+		case BSG_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    glNormal3dv(dpt);
 		    break;
-		case BV_VLIST_POINT_DRAW:
+		case BSG_VLIST_POINT_DRAW:
 		    if (first == 0)
 			glEnd();
 		    first = 0;
@@ -866,7 +868,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
-		case BV_VLIST_LINE_WIDTH:
+		case BSG_VLIST_LINE_WIDTH:
 		    {
 		    GLfloat lineWidth = (GLfloat)(*pt)[0];
 		    if (lineWidth > 0.0) {
@@ -874,7 +876,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    }
 		    break;
 		}
-		case BV_VLIST_POINT_SIZE:
+		case BSG_VLIST_POINT_SIZE:
 		    {
 		    pointSize = (GLfloat)(*pt)[0];
 		    if (pointSize > 0.0) {
@@ -901,90 +903,12 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
     return BRLCAD_OK;
 }
 
-int gl_draw_data_axes(struct dm *dmp,
-                  fastf_t sf,
-                  struct bv_data_axes_state *bndasp)
+int gl_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data)
 {
-    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    int npoints = bndasp->num_points * 6;
-    if (npoints < 1)
-        return 0;
-
-    gl_debug_print(dmp, "gl_draw_data_axes", dmp->i->dm_debugLevel);
-
-    /* set color */
-    dm_set_fg(dmp, bndasp->color[0], bndasp->color[1], bndasp->color[2], 1, 1.0);
-
-    if (bndasp->draw > 1) {
-        if (mvars->lighting_on)
-            glDisable(GL_LIGHTING);
-
-        glPointSize(bndasp->size);
-        dm_draw_points_3d(dmp, bndasp->num_points, bndasp->points);
-        glPointSize(1);
-
-        if (mvars->lighting_on)
-            glEnable(GL_LIGHTING);
-
-	return 0;
-    }
-
-    int i, j;
-    fastf_t halfAxesSize;               /* half the length of an axis */
-    point_t ptA, ptB;
-    point_t *points;
-    /* Save the line attributes */
-    int saveLineWidth = dmp->i->dm_lineWidth;
-    int saveLineStyle = dmp->i->dm_lineStyle;
-
-    points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
-    halfAxesSize = bndasp->size * 0.5 * sf;
-
-    /* set linewidth */
-    dm_set_line_attr(dmp, bndasp->line_width, 0);  /* solid lines */
-
-    for (i = 0, j = -1; i < bndasp->num_points; ++i) {
-	/* draw X axis with x/y offsets */
-	VSET(ptA, bndasp->points[i][X] - halfAxesSize, bndasp->points[i][Y], bndasp->points[i][Z]);
-	VSET(ptB, bndasp->points[i][X] + halfAxesSize, bndasp->points[i][Y], bndasp->points[i][Z]);
-	++j;
-	VMOVE(points[j], ptA);
-	++j;
-	VMOVE(points[j], ptB);
-
-	/* draw Y axis with x/y offsets */
-	VSET(ptA, bndasp->points[i][X], bndasp->points[i][Y] - halfAxesSize, bndasp->points[i][Z]);
-	VSET(ptB, bndasp->points[i][X], bndasp->points[i][Y] + halfAxesSize, bndasp->points[i][Z]);
-	++j;
-	VMOVE(points[j], ptA);
-	++j;
-	VMOVE(points[j], ptB);
-
-	/* draw Z axis with x/y offsets */
-	VSET(ptA, bndasp->points[i][X], bndasp->points[i][Y], bndasp->points[i][Z] - halfAxesSize);
-	VSET(ptB, bndasp->points[i][X], bndasp->points[i][Y], bndasp->points[i][Z] + halfAxesSize);
-	++j;
-	VMOVE(points[j], ptA);
-	++j;
-	VMOVE(points[j], ptB);
-    }
-
-    dm_draw_lines_3d(dmp, npoints, points, 0);
-    bu_free((void *)points, "data axes points");
-
-    /* Restore the line attributes */
-    dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
-
-
-    return 0;
-}
-
-int gl_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
-{
-    struct bv_vlist *vp;
+    bsg_vlist *vp;
     if (!callback_function) {
 	if (data) {
-	    vp = (struct bv_vlist *)data;
+	    vp = (bsg_vlist *)data;
 	    gl_drawVList(dmp, vp);
 	}
     } else {
@@ -1541,73 +1465,6 @@ int gl_getBoundFlag(struct dm *dmp)
     return mvars->boundFlag;
 }
 
-int gl_beginDList(struct dm *dmp, unsigned int list)
-{
-    gl_debug_print(dmp, "gl_beginDList", dmp->i->dm_debugLevel);
-
-    glNewList((GLuint)list, GL_COMPILE);
-    return BRLCAD_OK;
-}
-
-
-int gl_endDList(struct dm *dmp)
-{
-    gl_debug_print(dmp, "gl_endDList", dmp->i->dm_debugLevel);
-
-    glEndList();
-    return BRLCAD_OK;
-}
-
-
-int gl_drawDList(unsigned int list)
-{
-    glCallList((GLuint)list);
-    return BRLCAD_OK;
-}
-
-
-int gl_freeDLists(struct dm *dmp, unsigned int list, int range)
-{
-    gl_debug_print(dmp, "gl_freeDLists", dmp->i->dm_debugLevel);
-
-    glDeleteLists((GLuint)list, (GLsizei)range);
-    return BRLCAD_OK;
-}
-
-
-int gl_genDLists(struct dm *dmp, size_t range)
-{
-    gl_debug_print(dmp, "gl_genDLists", dmp->i->dm_debugLevel);
-
-    return glGenLists((GLsizei)range);
-}
-
-int gl_draw_display_list(struct dm *dmp, struct display_list *obj)
-{
-    gl_debug_print(dmp, "gl_draw_obj", dmp->i->dm_debugLevel);
-
-    struct bv_scene_obj *sp;
-    for (BU_LIST_FOR(sp, bv_scene_obj, &obj->dl_head_scene_obj)) {
-	if (sp->s_dlist == 0)
-	    sp->s_dlist = gl_genDLists(dmp, 1);
-
-	(void)dm_make_current(dmp);
-	(void)gl_beginDList(dmp, sp->s_dlist);
-	if (sp->s_iflag == UP)
-	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os->transparency);
-	else {
-	    // TODO - do we need to respect override color here??
-	    (void)dm_set_fg(dmp,
-		    (unsigned char)sp->s_color[0],
-		    (unsigned char)sp->s_color[1],
-		    (unsigned char)sp->s_color[2], 0, sp->s_os->transparency);
-	}
-	(void)dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist);
-	(void)gl_endDList(dmp);
-    }
-    return 0;
-}
-
 int gl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
     gl_debug_print(dmp, "gl_getDisplayImage", dmp->i->dm_debugLevel);
@@ -1647,6 +1504,7 @@ int gl_get_internal(struct dm *dmp)
 	mvars = (struct gl_vars *)dmp->i->m_vars;
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
+	BU_PTBL_INIT(&mvars->pending_command_list_deletes);
     }
     return 0;
 }
@@ -1657,9 +1515,39 @@ int gl_put_internal(struct dm *dmp)
     if (dmp->i->m_vars) {
 	mvars = (struct gl_vars *)dmp->i->m_vars;
 	bu_vls_free(&(mvars->log));
+	bu_ptbl_free(&mvars->pending_command_list_deletes);
 	BU_PUT(dmp->i->m_vars, struct gl_vars);
     }
     return 0;
+}
+
+void
+gl_command_list_delete_enqueue(struct dm *dmp, unsigned int list)
+{
+    struct gl_vars *mvars = NULL;
+    if (!dmp || !dmp->i || !dmp->i->m_vars || !list)
+	return;
+    mvars = (struct gl_vars *)dmp->i->m_vars;
+    if (!BU_PTBL_IS_INITIALIZED(&mvars->pending_command_list_deletes))
+	return;
+    bu_ptbl_ins(&mvars->pending_command_list_deletes, (long *)(uintptr_t)list);
+}
+
+void
+gl_command_list_delete_flush(struct dm *dmp)
+{
+    struct gl_vars *mvars = NULL;
+    if (!dmp || !dmp->i || !dmp->i->m_vars)
+	return;
+    mvars = (struct gl_vars *)dmp->i->m_vars;
+    if (!BU_PTBL_IS_INITIALIZED(&mvars->pending_command_list_deletes))
+	return;
+    for (size_t i = 0; i < BU_PTBL_LEN(&mvars->pending_command_list_deletes); i++) {
+	GLuint list = (GLuint)(uintptr_t)BU_PTBL_GET(&mvars->pending_command_list_deletes, i);
+	if (list)
+	    glDeleteLists(list, 1);
+    }
+    bu_ptbl_reset(&mvars->pending_command_list_deletes);
 }
 
 void gl_colorchange(const struct bu_structparse *sdp,
@@ -1686,7 +1574,7 @@ void gl_zclip_hook(const struct bu_structparse *sdp,
 {
     struct gl_vars *mvars = (struct gl_vars *)base;
     struct dm *dmp = mvars->this_dm;
-    fastf_t bounds[6] = { BV_MIN, BV_MAX, BV_MIN, BV_MAX, BV_MIN, BV_MAX };
+    fastf_t bounds[6] = { BSG_VIEW_MIN, BSG_VIEW_MAX, BSG_VIEW_MIN, BSG_VIEW_MAX, BSG_VIEW_MIN, BSG_VIEW_MAX };
 
     if (mvars->zclipping_on) {
 	bounds[4] = -1.0;
@@ -1800,6 +1688,21 @@ void gl_fog_hook(const struct bu_structparse *sdp,
     dm_generic_hook(sdp, name, base, value, data);
 }
 
+void
+gl_update_fast_wireframe_active(struct dm *dmp)
+{
+    if (!dmp || !dmp->i->m_vars)
+	return;
+
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    mvars->fast_wireframe_active = 0;
+    if (!dm_get_dm_name(dmp))
+	return;
+
+    if (mvars->fast_wireframe && BU_STR_EQUAL(dm_get_dm_name(dmp), "swrast"))
+	mvars->fast_wireframe_active = 1;
+}
+
 static void
 gl_fast_wireframe_hook(const struct bu_structparse *sdp,
 	const char *name,
@@ -1811,13 +1714,7 @@ gl_fast_wireframe_hook(const struct bu_structparse *sdp,
     struct dm *dmp = mvars->this_dm;
 
     dm_generic_hook(sdp, name, base, value, data);
-
-    mvars->fast_wireframe_active = 0;
-    if (!dmp || !dm_get_dm_name(dmp))
-	return;
-
-    if (mvars->fast_wireframe && BU_STR_EQUAL(dm_get_dm_name(dmp), "swrast"))
-	mvars->fast_wireframe_active = 1;
+    gl_update_fast_wireframe_active(dmp);
 }
 
 

@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.edit.revolve",
+    "displayName": "Revolve Edit",
+    "category": "qged.object",
+    "iconName": ":revolve.svg",
+    "sortKey": 1200,
+    "requiresOpenDb": true,
+    "requiresView": true,
+    "description": "Preview and edit revolve primitives in the active database.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

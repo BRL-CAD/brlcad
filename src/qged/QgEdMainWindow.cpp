@@ -24,9 +24,15 @@
  */
 
 #include <QTimer>
+#include <QDialog>
 #include <QMessageBox>
+#include "qtcad/QgPaletteController.h"
+#include "qtcad/QgPluginInterfaces.h"
+#include "qtcad/QgPluginManager.h"
+#include "qtcad/QgToolBase.h"
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
+#include "QgEdCategories.h"
 #include "QgEdMainWindow.h"
 #include "QgEdApp.h"
 
@@ -50,8 +56,11 @@ qged_dm_during_clbk(int ac, const char **av, void *u1, void *u2)
         return BRLCAD_OK;
 
     QgEdApp *ap = (QgEdApp *)qApp;
-    if (ap)
+    if (ap) {
+	if (ap->pluginNotifier())
+	    emit ap->pluginNotifier()->settingsChanged();
         emit ap->view_update(QG_VIEW_REFRESH);
+    }
 
     return BRLCAD_OK;
 }
@@ -60,13 +69,6 @@ QgEdMainWindow::QgEdMainWindow(int canvas_type, int quad_view)
 {
     QgEdApp *ap = (QgEdApp *)qApp;
     ap->w = this;
-
-#ifdef BRLCAD_OPENGL
-    // Define the surface format for OpenGL drawing
-    QSurfaceFormat format;
-    format.setDepthBufferSize(16);
-    QSurfaceFormat::setDefaultFormat(format);
-#endif
 
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when
@@ -104,7 +106,7 @@ QgEdMainWindow::CreateWidgets(int canvas_type)
 {
     QgEdApp *ap = (QgEdApp *)qApp;
     QgModel *m = ap->mdl;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
 
     // Define a widget to hold the main view and its associated
     // view control toolbar
@@ -132,17 +134,29 @@ QgEdMainWindow::CreateWidgets(int canvas_type)
     // attached and detached from the main window.
 
     // Palettes and their associated dock widgets
-    vc = new QgEdPalette(QGED_VC_TOOL_PLUGIN, this);
+    vc = new QgEdPalette(QgEdPalette::ViewMode, this);
     vcd = new QDockWidget("View Controls", this);
     vcd->setObjectName("View_Controls");
     vcd->setWidget(vc);
-    oc = new QgEdPalette(QGED_OC_TOOL_PLUGIN, this);
+    oc = new QgEdPalette(QgEdPalette::ObjectMode, this);
     ocd = new QDockWidget("Object Editing", this);
     ocd->setObjectName("Object_Editing");
     ocd->setWidget(oc);
+
     // We start out with the View Control panel as the current panel - by
     // default we are viewing, not editing
     vc->makeCurrent(vc);
+
+    // Create palette controllers for the two qged palette categories.
+    // Ownership is via Qt parentage (parent = this).  populate() is
+    // called once in ConnectWidgets() after the plugin manager has been
+    // fully wired.  Active view is set in ConnectWidgets() too.
+    vc_ctrl = new QgPaletteController(vc, ap->pluginManager(),
+				      QStringLiteral(QGED_CATEGORY_VIEW),
+				      ap->pluginContext(), this);
+    oc_ctrl = new QgPaletteController(oc, ap->pluginManager(),
+				      QStringLiteral(QGED_CATEGORY_OBJECT),
+				      ap->pluginContext(), this);
 
     // Command console
     console = new QgConsole(console_dock);
@@ -161,19 +175,19 @@ QgEdMainWindow::CreateWidgets(int canvas_type)
     tree_dock = new QgDockWidget("Hierarchy", this);
     tree_dock->setObjectName("Hierarchy");
     tree_dock->setWidget(treeview);
-    tree_dock->m = ap->mdl;
+    tree_dock->setModel(ap->mdl);
 
     /* Object Attribute widgets */
     sattrd = new QDockWidget("Standard Attributes", this);
     sattrd->setObjectName("Standard_Attributes");
-    stdpropmodel = new QgAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
+    stdpropmodel = new QgAttributesModel(0, m->session(), RT_DIR_NULL, 1, 0);
     QgKeyValView *stdpropview = new QgKeyValView(this, 1);
     stdpropview->setModel(stdpropmodel);
     sattrd->setWidget(stdpropview);
 
     uattrd = new QDockWidget("User Attributes", this);
     uattrd->setObjectName("User_Attributes");
-    userpropmodel = new QgAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
+    userpropmodel = new QgAttributesModel(0, m->session(), RT_DIR_NULL, 0, 1);
     QgKeyValView *userpropview = new QgKeyValView(this, 0);
     userpropview->setModel(userpropmodel);
     uattrd->setWidget(userpropview);
@@ -238,7 +252,7 @@ QgEdMainWindow::ConnectWidgets()
     QgModel *m = ap->mdl;
 
     // If the model does something that it things should trigger a view update, let the app know
-    QObject::connect(m, &QgModel::view_change, ap, &QgEdApp::do_view_changed);
+    QObject::connect(m, &QgModel::view_changed, ap, &QgEdApp::do_view_changed);
 
     // Make the fundamental connection that allows the view to update in
     // response to commands or widgets taking actions that will impact the
@@ -262,23 +276,38 @@ QgEdMainWindow::ConnectWidgets()
     // Make the connection so the view control can change the mouse mode of the Quad View
     QObject::connect(vcw, &QgViewCtrl::lmouse_mode, c4, &QgQuadView::set_lmouse_move_default);
 
-    // The makeCurrent connections enforce an either/or paradigm
-    // for the view and object editing panels.
-    connect(vc, &QgEdPalette::current, oc, &QgEdPalette::makeCurrent);
-    connect(vc, &QgEdPalette::current, vc, &QgEdPalette::makeCurrent);
-    connect(oc, &QgEdPalette::current, oc, &QgEdPalette::makeCurrent);
-    connect(oc, &QgEdPalette::current, vc, &QgEdPalette::makeCurrent);
+    // Cross-palette deselection: only one palette should appear "active"
+    // (highlighted tool button) at a time.
+    //
+    // When vc selects any element, tell oc to visually deselect.
+    QObject::connect(vc, &QgToolPalette::palette_element_selected,
+		     this, [this](QgToolPaletteElement *) { oc->makeCurrent(vc); });
+    // When oc selects any element, tell vc to visually deselect.
+    QObject::connect(oc, &QgToolPalette::palette_element_selected,
+		     this, [this](QgToolPaletteElement *) { vc->makeCurrent(oc); });
+    // When a new-style tool in vc_ctrl is activated, deselect oc.
+    QObject::connect(vc_ctrl, &QgPaletteController::currentToolChanged,
+		     this, [this](QgToolBase *) { oc->makeCurrent(vc); });
+    // When a new-style tool in oc_ctrl is activated, deselect vc.
+    QObject::connect(oc_ctrl, &QgPaletteController::currentToolChanged,
+		     this, [this](QgToolBase *) { vc->makeCurrent(oc); });
 
-    // Now that we've got everything set up, connect the palette selection
-    // signals so they can update the view event filter as needed.  We don't do
-    // this before populating the palettes with tools since the initial
-    // addition would trigger a selection which we're not going to use.  (We
-    // default to selecting the default view tool at the end of this
-    // procedure by making vc the current palette.)
-    // TODO - need to figure out how this should (or shouldn't) be rolled into
-    // do_view_changed
-    QObject::connect(vc, &QgToolPalette::palette_element_selected, ap, &QgEdApp::element_selected);
-    QObject::connect(oc, &QgToolPalette::palette_element_selected, ap, &QgEdApp::element_selected);
+    // Set initial active view on both controllers so that any immediately
+    // populated Qt plugin tools can attach their view event filters.
+    QgView *init_view = c4->get();
+    if (init_view) {
+	vc_ctrl->setActiveView(init_view);
+	oc_ctrl->setActiveView(init_view);
+    }
+
+    // Populate both controllers from the discovered Qt plugins.
+    vc_ctrl->populate();
+    oc_ctrl->populate();
+    rebuildPluginExtensions();
+    QObject::connect(ap->pluginManager(), &QgPluginManager::factoryRegistered,
+		     this, [this](const QString &) { rebuildPluginExtensions(); });
+    QObject::connect(ap->pluginManager(), &QgPluginManager::factoryUnregistered,
+		     this, [this](const QString &) { rebuildPluginExtensions(); });
 
     // The tools in the view and edit panels may have consequences for the view.
     // Connect to the palette signals and slots (the individual tool connections
@@ -301,7 +330,7 @@ QgEdMainWindow::ConnectWidgets()
     connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
     connect(vm_treeview_mode_toggle, &QAction::triggered, m, &QgModel::toggle_hierarchy);
     connect(m, &QgModel::opened_item, treeview, &QgTreeView::qgitem_select_sync);
-    connect(m, &QgModel::view_change, ap, &QgEdApp::do_view_changed);
+    connect(m, &QgModel::view_changed, ap, &QgEdApp::do_view_changed);
     QObject::connect(treeview, &QgTreeView::view_changed, ap, &QgEdApp::do_view_changed);
     QObject::connect(ap, &QgEdApp::view_update, treeview, &QgTreeView::do_view_update);
     // We need to record the expanded/contracted state of the tree items,
@@ -312,10 +341,11 @@ QgEdMainWindow::ConnectWidgets()
     connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
 
     // Update props if we change the dbip or select a new item in the tree.
-    QObject::connect(ap, &QgEdApp::dbi_update, stdpropmodel, &QgAttributesModel::do_dbi_update);
+    // The attribute models subscribed directly to the session's db_changed
+    // signal in their constructor (QgSession* path), so no explicit
+    // dbi_update wiring is needed here for those connections.
     QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &QgAttributesModel::refresh);
     QObject::connect(ap, &QgEdApp::view_update, stdpropmodel, &QgAttributesModel::db_change_refresh);
-    QObject::connect(ap, &QgEdApp::dbi_update, userpropmodel, &QgAttributesModel::do_dbi_update);
     QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &QgAttributesModel::refresh);
     QObject::connect(ap, &QgEdApp::view_update, userpropmodel, &QgAttributesModel::db_change_refresh);
 
@@ -356,9 +386,145 @@ QgEdMainWindow::SetupMenu()
     view_menu->addAction(vm_treeview_mode_toggle);
     vm_panels = view_menu->addMenu("Panels");
 
+    QMenu *tools_menu = menuBar()->addMenu("Tools");
+    tm_dialogs = tools_menu->addMenu("Dialogs");
+    tm_dialogs->setEnabled(false);
+
     menuBar()->addSeparator();
 
     menuBar()->addMenu("Help");
+}
+
+void
+QgEdMainWindow::clearPluginPanels()
+{
+    if (vm_panels_plugin_separator && vm_panels) {
+	vm_panels->removeAction(vm_panels_plugin_separator);
+	delete vm_panels_plugin_separator;
+	vm_panels_plugin_separator = NULL;
+    }
+
+    for (auto it = m_plugin_panels.begin(); it != m_plugin_panels.end(); ++it) {
+	QDockWidget *dock = it.value();
+	if (!dock)
+	    continue;
+	if (vm_panels)
+	    vm_panels->removeAction(dock->toggleViewAction());
+	removeDockWidget(dock);
+	dock->deleteLater();
+    }
+    m_plugin_panels.clear();
+}
+
+void
+QgEdMainWindow::populatePluginPanels()
+{
+    QgEdApp *ap = (QgEdApp *)qApp;
+    if (!ap || !ap->pluginManager() || !vm_panels)
+	return;
+
+    QList<QgPluginDescriptor> descs =
+	ap->pluginManager()->descriptors(QStringLiteral(QGED_CATEGORY_PANEL));
+    if (descs.isEmpty())
+	return;
+
+    vm_panels_plugin_separator = new QAction(this);
+    vm_panels_plugin_separator->setSeparator(true);
+    vm_panels->addAction(vm_panels_plugin_separator);
+
+    for (const QgPluginDescriptor &desc : descs) {
+	QObject *obj = ap->pluginManager()->instance(desc.id);
+	IQgPanelFactory *fac = obj ? qobject_cast<IQgPanelFactory *>(obj) : NULL;
+	if (!fac)
+	    continue;
+	QDockWidget *dock = fac->create(ap->pluginContext(), this);
+	if (!dock)
+	    continue;
+	if (dock->objectName().isEmpty())
+	    dock->setObjectName(desc.id);
+	if (dock->windowTitle().isEmpty())
+	    dock->setWindowTitle(desc.displayName);
+	addDockWidget(Qt::LeftDockWidgetArea, dock);
+	dock->hide();
+	vm_panels->addAction(dock->toggleViewAction());
+	m_plugin_panels.insert(desc.id, dock);
+    }
+}
+
+void
+QgEdMainWindow::clearPluginDialogs()
+{
+    for (auto it = m_plugin_dialog_actions.begin(); it != m_plugin_dialog_actions.end(); ++it) {
+	QAction *act = it.value();
+	if (!act)
+	    continue;
+	if (tm_dialogs)
+	    tm_dialogs->removeAction(act);
+	delete act;
+    }
+    m_plugin_dialog_actions.clear();
+    if (tm_dialogs)
+	tm_dialogs->setEnabled(false);
+}
+
+void
+QgEdMainWindow::populatePluginDialogs()
+{
+    QgEdApp *ap = (QgEdApp *)qApp;
+    if (!ap || !ap->pluginManager() || !tm_dialogs)
+	return;
+
+    QList<QgPluginDescriptor> descs =
+	ap->pluginManager()->descriptors(QStringLiteral(QGED_CATEGORY_DIALOG));
+    for (const QgPluginDescriptor &desc : descs) {
+	QObject *obj = ap->pluginManager()->instance(desc.id);
+	IQgDialogFactory *fac = obj ? qobject_cast<IQgDialogFactory *>(obj) : NULL;
+	if (!fac)
+	    continue;
+	QAction *act = new QAction(desc.displayName, tm_dialogs);
+	if (!desc.description.isEmpty())
+	    act->setToolTip(desc.description);
+	QObject::connect(act, &QAction::triggered,
+			 this, [this, id = desc.id]() { launchPluginDialog(id); });
+	tm_dialogs->addAction(act);
+	m_plugin_dialog_actions.insert(desc.id, act);
+    }
+
+    tm_dialogs->setEnabled(!m_plugin_dialog_actions.isEmpty());
+}
+
+void
+QgEdMainWindow::rebuildPluginExtensions()
+{
+    clearPluginPanels();
+    clearPluginDialogs();
+    populatePluginPanels();
+    populatePluginDialogs();
+}
+
+void
+QgEdMainWindow::launchPluginDialog(const QString &id)
+{
+    QgEdApp *ap = (QgEdApp *)qApp;
+    if (!ap || !ap->pluginManager())
+	return;
+
+    QObject *obj = ap->pluginManager()->instance(id);
+    IQgDialogFactory *fac = obj ? qobject_cast<IQgDialogFactory *>(obj) : NULL;
+    if (!fac)
+	return;
+
+    QDialog *dialog = fac->create(ap->pluginContext(), this);
+    if (!dialog)
+	return;
+
+    QgPluginDescriptor desc = ap->pluginManager()->descriptor(id);
+    if (dialog->windowTitle().isEmpty())
+	dialog->setWindowTitle(desc.displayName);
+    dialog->setAttribute(Qt::WA_DeleteOnClose, true);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
 }
 
 
@@ -372,7 +538,9 @@ QgEdMainWindow::do_dm_init()
     QTCAD_SLOT("QgEdMainWindow::do_dm_init", 1);
     QgEdApp *ap = (QgEdApp *)qApp;
     QgModel *m = ap->mdl;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
+
+    (void)ged_clbk_set(gedp, "dm", BU_CLBK_DURING, qged_dm_during_clbk, NULL);
 
     (void)ged_clbk_set(gedp, "dm", BU_CLBK_DURING, qged_dm_during_clbk, NULL);
 
@@ -421,7 +589,6 @@ QgEdMainWindow::closeEvent(QCloseEvent* e)
     // https://bugreports.qt.io/browse/QTBUG-16252?focusedCommentId=250562&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-250562
     settings.setValue("geometry", QVariant(geometry()));
     settings.setValue("windowState", saveState());
-    bu_log("mainwindow write settings\n");
     if (!e)
 	return;
     QMainWindow::closeEvent(e);
@@ -456,7 +623,7 @@ QgEdMainWindow::CurrentDisplay()
     return c4->get();
 }
 
-struct bview *
+struct bsg_view *
 QgEdMainWindow::CurrentView()
 {
     return c4->view();
@@ -498,27 +665,43 @@ QgEdMainWindow::IndicateRaytraceDone()
     vcw->raytrace_done();
 }
 
-int
-QgEdMainWindow::InteractionMode(QPoint &gpos)
+QString
+QgEdMainWindow::ActivePaletteCategory(QPoint &gpos)
 {
     if (vc) {
-	QWidget *vcp = vc;
-	QRect lrect = vcp->geometry();
-	QPoint mpos = vcp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos)) {
-	    return 0;
-	}
+	QRect lrect = vc->geometry();
+	QPoint mpos = vc->mapFromGlobal(gpos);
+	if (lrect.contains(mpos))
+	    return QStringLiteral(QGED_CATEGORY_VIEW);
     }
 
     if (oc) {
-	QWidget *ocp = oc;
-	QRect lrect = ocp->geometry();
-	QPoint mpos = ocp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos)) {
-	    return 2;
-	}
+	QRect lrect = oc->geometry();
+	QPoint mpos = oc->mapFromGlobal(gpos);
+	if (lrect.contains(mpos))
+	    return QStringLiteral(QGED_CATEGORY_OBJECT);
     }
 
+    return QString();
+}
+
+void
+QgEdMainWindow::setActiveView(QgView *view)
+{
+    if (vc_ctrl)
+	vc_ctrl->setActiveView(view);
+    if (oc_ctrl)
+	oc_ctrl->setActiveView(view);
+}
+
+int
+QgEdMainWindow::InteractionMode(QPoint &gpos)
+{
+    QString cat = ActivePaletteCategory(gpos);
+    if (cat == QStringLiteral(QGED_CATEGORY_VIEW))
+	return 0;
+    if (cat == QStringLiteral(QGED_CATEGORY_OBJECT))
+	return 2;
     return -1;
 }
 

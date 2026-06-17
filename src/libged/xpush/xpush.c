@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 #include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
@@ -434,6 +435,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_ptbl tops;
     mat_t xform;
     size_t i;
+    int event_batch_opened = 0;
     static const char *usage = "object";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -538,6 +540,8 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     /* Free list of tree-tops */
     bu_ptbl_free(&tops);
 
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     /* Make new names */
     db_treewalk_basic(gedp->dbip, old_dp, Make_new_name, Make_new_name, (void *)gedp);
 
@@ -548,12 +552,16 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep);
 	bu_vls_printf(gedp->ged_result_str, "\tNothing has been changed!!\n");
 	Free_uses(gedp->dbip);
+	if (event_batch_opened)
+	    (void)ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (!comb->tree) {
 	Free_uses(gedp->dbip);
+	if (event_batch_opened)
+	    (void)ged_event_batch_end(gedp, NULL);
 	return BRLCAD_OK;
     }
 
@@ -564,11 +572,15 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);
 	rt_db_free_internal(&intern);
 	Free_uses(gedp->dbip);
+	if (event_batch_opened)
+	    (void)ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
     /* Free use lists and delete unused directory entries */
     Free_uses(gedp->dbip);
+    if (event_batch_opened)
+	(void)ged_event_batch_end(gedp, NULL);
     return BRLCAD_OK;
 }
 

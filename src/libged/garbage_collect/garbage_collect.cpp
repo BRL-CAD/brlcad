@@ -37,8 +37,7 @@
 #include "bu/path.h"
 #include "raytrace.h"
 #include "ged.h"
-
-#include "../dbi.h"
+#include "ged/bsg_ged_draw.h"
 
 void print_help_msg(struct bu_vls *str)
 {
@@ -55,6 +54,26 @@ void print_help_msg(struct bu_vls *str)
     bu_vls_printf(str, "\n");
     bu_vls_printf(str, "DUE TO THE POTENTIAL FOR DATA CORRUPTION, PLEASE MANUALLY BACK UP\n");
     bu_vls_printf(str, "YOUR GEOMETRY FILE BEFORE RUNNING 'garbage_collect'.\n");
+}
+
+static void
+gc_collect_paths(struct ged *gedp, std::vector<std::string> &who_objs)
+{
+    struct bu_vls paths = BU_VLS_INIT_ZERO;
+    ged_draw_list_paths(gedp, gedp ? gedp->ged_gvp : NULL, -1, 1, &paths);
+
+    const char *s = bu_vls_cstr(&paths);
+    const char *start = s;
+    for (const char *p = s; p && *p; p++) {
+	if (*p != '\n')
+	    continue;
+	who_objs.push_back(std::string(start, p - start));
+	start = p + 1;
+    }
+    if (start && *start)
+	who_objs.push_back(std::string(start));
+
+    bu_vls_free(&paths);
 }
 
 extern "C" int
@@ -155,18 +174,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
      * views to their original state when we open the garbage collected
      * database.  Save the who list. (TODO - do we need to save views?  Or
      * will drawing without resize work?) */
-    if (gedp->new_cmd_forms) {
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
-	std::vector<std::string> wpaths = bvs->list_drawn_paths(-1, false);
-	for (size_t i = 0; i < wpaths.size(); i++) {
-	    who_objs.push_back(wpaths[i]);
-	}
-    } else {
-	struct display_list *gdlp;
-	for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp)))
-	    who_objs.push_back(std::string(bu_vls_cstr(&gdlp->dl_path)));
-    }
+    gc_collect_paths(gedp, who_objs);
 
     /* Create "working" database. */
     bu_vls_sprintf(&working_file, "%s/%d_gc_%s", bu_vls_cstr(&fdir),

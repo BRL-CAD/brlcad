@@ -58,10 +58,10 @@ struct mged_dm *mged_dm_init_state = NULL;
 
 
 extern struct _color_scheme default_color_scheme;
-extern void share_dlist(struct mged_dm *dlp2);	/* defined in share.c */
-int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
+extern void share_backend_cache(struct mged_dm *dlp2);	/* defined in share.c */
+int mged_default_backend_cache = 0;   /* This variable is available via Tcl for controlling use of backend caches */
 
-static fastf_t windowbounds[6] = { (int)BV_MIN, (int)BV_MAX, (int)BV_MIN, (int)BV_MAX, (int)BV_MIN, (int)BV_MAX };
+static fastf_t windowbounds[6] = { (int)BSG_VIEW_MIN, (int)BSG_VIEW_MAX, (int)BSG_VIEW_MIN, (int)BSG_VIEW_MAX, (int)BSG_VIEW_MIN, (int)BSG_VIEW_MAX };
 
 /* If we changed the active dm, need to update GEDP as well.. */
 void set_curr_dm(struct mged_state *s, struct mged_dm *nc)
@@ -83,10 +83,9 @@ void set_curr_dm(struct mged_state *s, struct mged_dm *nc)
 	return;
     }
 
-    s->mged_curr_dm = nc;
+	s->mged_curr_dm = nc;
     if (nc != MGED_DM_NULL && nc->dm_view_state) {
 	s->gedp->ged_gvp = nc->dm_view_state->vs_gvp;
-	s->gedp->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
     } else {
 	if (s->gedp) {
 	    s->gedp->ged_gvp = NULL;
@@ -111,7 +110,7 @@ mged_dm_init(
 
     /* In case the user wants swrast in headless mode, pass the view in the
      * context slot.  Other dms will either not use the ctx argument or will
-     * catch the BV_MAGIC value and not initialize (such as qtgl, which needs a
+     * catch the BSG_VIEW_MAGIC value and not initialize (such as qtgl, which needs a
      * context from a parent Qt widget and won't work in MGED.) */
     void *ctx = view_state->vs_gvp;
     if ((DMP = dm_open(ctx, (void *)s->interp, dm_type, argc-1, argv)) == DM_NULL)
@@ -240,7 +239,6 @@ release(struct mged_state *s, char *name, int need_close)
     if (need_close)
 	dm_close(DMP);
 
-    BV_FREE_VLIST(s->vlfree, &s->mged_curr_dm->dm_p_vlist);
     bu_ptbl_rm(&active_dm_set, (long *)s->mged_curr_dm);
     mged_slider_free_vls(s->mged_curr_dm);
     bu_free((void *)s->mged_curr_dm, "release: s->mged_curr_dm");
@@ -335,6 +333,9 @@ f_attach(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     if (!dm_valid_type(argv[argc-1], NULL)) {
 	Tcl_AppendResult(interpreter, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 	print_valid_dm(interpreter);
+	Tcl_AppendResult(interpreter,
+			 "Hint: run `dm initmsg` to see why other plugins (e.g. ogl) may have failed to register.\n",
+			 (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -435,10 +436,6 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
     o_dm = s->mged_curr_dm;
     BU_ALLOC(s->mged_curr_dm, struct mged_dm);
 
-    /* initialize predictor stuff */
-    BU_LIST_INIT(&s->mged_curr_dm->dm_p_vlist);
-    predictor_init(s);
-
     /* Only need to do this once */
     if (tkwin == NULL && BU_STR_EQUIV(dm_graphics_system(wp_name), "Tk")) {
 	struct dm *tmp_dmp;
@@ -502,11 +499,12 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
 	Tcl_AppendResult(s->interp, "ATTACHING ", dm_name, " (", dm_lname,	")\n", (char *)NULL);
     }
 
-    share_dlist(s->mged_curr_dm);
+    share_backend_cache(s->mged_curr_dm);
 
-    if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(s, (struct bu_list *)ged_dl(s->gedp));
-	dlist_state->dl_active = 1;
+    if (dm_get_backend_cache(DMP) && mged_variables->mv_backend_cache && !backend_cache_state->cache_active) {
+	/* Backend caches are populated lazily by the renderer.  MGED tracks
+	 * policy state and lets the next refresh populate backend resources. */
+	backend_cache_state->cache_active = 1;
     }
 
     (void)dm_make_current(DMP);
@@ -514,7 +512,6 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
     mged_fb_open(s);
 
     s->gedp->ged_gvp = s->mged_curr_dm->dm_view_state->vs_gvp;
-    s->gedp->ged_gvp->gv_s->gv_grid = *s->mged_curr_dm->dm_grid_state; /* struct copy */
 
     return TCL_OK;
 
@@ -658,10 +655,6 @@ f_dm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 void
 dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
 {
-    BU_ALLOC(adc_state, struct _adc_state);
-    *adc_state = *target_dm->dm_adc_state;		/* struct copy */
-    adc_state->adc_rc = 1;
-
     BU_ALLOC(menu_state, struct _menu_state);
     *menu_state = *target_dm->dm_menu_state;		/* struct copy */
     menu_state->ms_rc = 1;
@@ -673,7 +666,7 @@ dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
     BU_ALLOC(mged_variables, struct _mged_variables);
     *mged_variables = *target_dm->dm_mged_variables;	/* struct copy */
     mged_variables->mv_rc = 1;
-    mged_variables->mv_dlist = mged_default_dlist;
+    mged_variables->mv_backend_cache = mged_default_backend_cache;
     mged_variables->mv_listen = 0;
     mged_variables->mv_port = 0;
     mged_variables->mv_fb = 0;
@@ -687,46 +680,39 @@ dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
 
     color_scheme->cs_rc = 1;
 
-    BU_ALLOC(grid_state, struct bv_grid_state);
-    *grid_state = *target_dm->dm_grid_state;		/* struct copy */
-    grid_state->rc = 1;
-
     BU_ALLOC(axes_state, struct _axes_state);
     *axes_state = *target_dm->dm_axes_state;		/* struct copy */
     axes_state->ax_rc = 1;
 
-    BU_ALLOC(dlist_state, struct _dlist_state);
-    dlist_state->dl_rc = 1;
+    BU_ALLOC(backend_cache_state, struct _backend_cache_state);
+    backend_cache_state->cache_rc = 1;
 
     BU_ALLOC(view_state, struct _view_state);
     *view_state = *target_dm->dm_view_state;			/* struct copy */
-    BU_ALLOC(view_state->vs_gvp, struct bview);
+    BU_ALLOC(view_state->vs_gvp, struct bsg_view);
+    bsg_view_init_copy(view_state->vs_gvp,
+	    target_dm->dm_view_state->vs_gvp,
+	    &s->gedp->ged_views);
     BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bv callbacks");
 
-    *view_state->vs_gvp = *target_dm->dm_view_state->vs_gvp;	/* struct copy */
-
-    BU_GET(view_state->vs_gvp->gv_objs.db_objs, struct bu_ptbl);
-    bu_ptbl_init(view_state->vs_gvp->gv_objs.db_objs, 8, "view_objs init");
-
-    BU_GET(view_state->vs_gvp->gv_objs.view_objs, struct bu_ptbl);
-    bu_ptbl_init(view_state->vs_gvp->gv_objs.view_objs, 8, "view_objs init");
-
     view_state->vs_gvp->vset = &s->gedp->ged_views;
-    view_state->vs_gvp->independent = 0;
+    /* Independent view state is managed through BSG view-scope records. */
 
+    view_state->vs_gvp->gv_callback = mged_view_callback;
     view_state->vs_gvp->gv_clientData = (void *)view_state;
-    view_state->vs_gvp->gv_s->adaptive_plot_csg = 0;
-    view_state->vs_gvp->gv_s->redraw_on_zoom = 0;
-    view_state->vs_gvp->gv_s->point_scale = 1.0;
-    view_state->vs_gvp->gv_s->curve_scale = 1.0;
+    struct bsg_lod_source_policy_settings lod_policy;
+    if (bsg_view_lod_source_policy_get(view_state->vs_gvp, &lod_policy)) {
+	lod_policy.csg_enabled = 0;
+	lod_policy.zoom_refresh = 0;
+	lod_policy.point_scale = 1.0;
+	lod_policy.curve_scale = 1.0;
+	bsg_view_lod_source_policy_set(view_state->vs_gvp, &lod_policy);
+    }
     view_state->vs_rc = 1;
     view_ring_init(s->mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
 
-    DMP_dirty = 1;
-    if (target_dm->dm_dmp) {
-	dm_set_dirty(target_dm->dm_dmp, 1);
-    }
+    mged_dm_repaint_request(target_dm, MGED_REPAINT_NATIVE_EVENT);
     mapped = 1;
     s->mged_curr_dm->dm_netfd = -1;
     owner = 1;

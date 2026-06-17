@@ -168,15 +168,15 @@ main(int argc, char *argv[])
     db_full_path_init(&fp);
     db_add_node_to_full_path(&fp, dp);
 
-    struct bview *v;
-    BU_GET(v, struct bview);
-    bv_init(v, NULL);
+    struct bsg_view *v;
+    BU_GET(v, struct bsg_view);
+    bsg_init(v, NULL);
     VSET(v->gv_aet, 45, 35, 0);
-    bv_mat_aet(v);
+    bsg_mat_aet(v);
     v->gv_size = 73.3197;
     v->gv_isize = 1.0 / v->gv_size;
     v->gv_scale = 0.5 * v->gv_size;
-    bv_update(v);
+    bsg_update(v);
     bu_vls_sprintf(&v->gv_name, "default");
     v->gv_width = 512;
     v->gv_height = 512;

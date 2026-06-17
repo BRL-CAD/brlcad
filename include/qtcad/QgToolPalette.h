@@ -47,52 +47,72 @@
 #include <QScrollArea>
 #include <QSplitter>
 #include "qtcad/defines.h"
+#include "qtcad/QgTypes.h"
 #include "qtcad/QgFlowLayout.h"
 #include "qtcad/QgSignalFlags.h"
 
 class QTCAD_EXPORT QgToolPaletteElement;
 
-class QTCAD_EXPORT QgToolPaletteButton: public QPushButton
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgToolPaletteButton: public QPushButton {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgToolPaletteButton)
 
-    public:
+
+public:
 	QgToolPaletteButton(QWidget *bparent, QIcon *iicon = 0, QgToolPaletteElement *eparent = 0);
-	~QgToolPaletteButton(){};
+	~QgToolPaletteButton() {};
 
 	void setButtonElement(QIcon *iicon, QgToolPaletteElement *n_element);
 
-    public slots:
+public slots:
 	void select_element();
 
-    signals:
+signals:
 	void element_selected(QgToolPaletteElement *);
 
-    private:
+private:
 	QgToolPaletteElement *element;
 };
 
 
-class QTCAD_EXPORT QgToolPaletteElement: public QWidget
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgToolPaletteElement: public QWidget {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgToolPaletteElement)
 
-    public:
+
+public:
 	QgToolPaletteElement(QIcon *iicon = 0, QWidget *control = 0);
 	~QgToolPaletteElement();
 
 	void setButton(QgToolPaletteButton *n_button);
 	void setControls(QWidget *n_controls);
+	QgToolPaletteButton *buttonWidget() const
+	{
+		return button;
+	}
+	/* May be nullptr for placeholder elements constructed without a control widget. */
+	QWidget *controlsWidget() const
+	{
+		return controls;
+	}
+	int scrollPosition() const
+	{
+		return scroll_pos;
+	}
+	void setScrollPosition(int n_scroll_pos)
+	{
+		scroll_pos = n_scroll_pos;
+	}
 
-    signals:
+signals:
 	// PUBLIC, for palette:
 	// Signal the application can listen to to see if the Element has
 	// changed anything in the view.  Emitted by element_do_view_update slot,
 	// which is connected to internal widget signals in the controls. This
 	// provide a generic, public "signal interface" for widget internals.
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 
-    public slots:
+public slots:
 	// PUBLIC, for palette:
 	// These slots are intended to be connected to parent signals when the
 	// Element is added to a Palette.  They will in turn emit the local
@@ -100,12 +120,12 @@ class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 	// hide any internal signal/slot implementation details from the
 	// application while still allowing changes at the app level to drive
 	// updates in the Element contents.
-	void do_view_update(unsigned long long);
+	void do_view_update(QgViewUpdateFlags);
 
 
 	void do_element_unhide(void *);
 
-     signals:
+signals:
 	// INTERNAL:
 	// These signals are emitted by the below slots.  Subcomponents will
 	// connect to these in lieu of connecting directly to application
@@ -117,28 +137,32 @@ class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 	// Note that these signals should NEVER be emitted directly by any of
 	// the Element subcomponents.  Nor should they be connected to by
 	// application code.
-	void element_view_update(unsigned long long);
+	void element_view_update(QgViewUpdateFlags);
 
 	void element_unhide();
 
-    public slots:
+public slots:
 	// INTERNAL:
-	void element_view_changed(unsigned long long);
+	void element_view_changed(QgViewUpdateFlags);
 
-    public:
-	QgToolPaletteButton *button;
-	QWidget *controls;
-	int scroll_pos = 0;
-
+public:
 	bool use_event_filter = false;
 
+private:
+	QgToolPaletteButton *button = nullptr;
+	QWidget *controls = nullptr;
+	int scroll_pos = 0;
 };
 
-class QTCAD_EXPORT QgToolPalette: public QWidget
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgToolPalette: public QWidget {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgToolPalette)
+	Q_PROPERTY(int iconWidth READ iconWidth WRITE setIconWidth)
+	Q_PROPERTY(int iconHeight READ iconHeight WRITE setIconHeight)
+	Q_PROPERTY(int alwaysSelected READ alwaysSelected WRITE setAlwaysSelected)
 
-    public:
+
+public:
 	QgToolPalette(QWidget *pparent = 0);
 	~QgToolPalette();
 	void addElement(QgToolPaletteElement *element);
@@ -146,20 +170,31 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	void setIconWidth(int iwidth);
 	void setIconHeight(int iheight);
 	void setAlwaysSelected(int iheight);  // If 0 can disable all tools, if 1 some tool is always selected
+	int iconWidth() const
+	{
+		return icon_width;
+	}
+	int iconHeight() const
+	{
+		return icon_height;
+	}
+	int alwaysSelected() const
+	{
+		return always_selected;
+	}
+	QgToolPaletteElement *selectedElement() const
+	{
+		return selected;
+	}
 
-	void resizeEvent(QResizeEvent *pevent);
+	void resizeEvent(QResizeEvent *pevent) override;
 
-	QgToolPaletteElement *selected;
-	QString selected_style = QString("");
-
-	QVBoxLayout *mlayout;
-
-   signals:
+signals:
 
 	// PUBLIC, for parent application:
 	// Signal the application can listen to to see if any Element has
 	// changed anything in the view.
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 
 
 	// INTERNAL, for elements:
@@ -172,17 +207,17 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	// parent applications view changed signal (which they can't do without
 	// knowing about the parent applications top level class, or requiring
 	// the application to individually connect directly to each element.)
-	void palette_view_update(unsigned long long);
+	void palette_view_update(QgViewUpdateFlags);
 
-   public slots:
-       // PUBLIC, for parent application:
-       // Trigger any needed updates in any elements in response to an
-       // app level view change. 
-       void do_view_update(unsigned long long);
+public slots:
+	// PUBLIC, for parent application:
+	// Trigger any needed updates in any elements in response to an
+	// app level view change.
+	void do_view_update(QgViewUpdateFlags);
 
 
-        // INTERNAL
-        // TODO - I think we're going to need an activateElement and drawElement
+	// INTERNAL
+	// TODO - I think we're going to need an activateElement and drawElement
 	// distinction here for editing - we will want the current panel shown
 	// (and highlighted button, if we can figure out how to highlight without
 	// selecting) to reflect the most recent selection, and we'll probably
@@ -192,12 +227,15 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	// is actually selected.
 	void palette_displayElement(QgToolPaletteElement *);
 	void button_layout_resize();
-	void palette_do_view_changed(unsigned long long);
+	void palette_do_view_changed(QgViewUpdateFlags);
 
-    private:
+private:
 	int always_selected;
 	int icon_width;
 	int icon_height;
+	QgToolPaletteElement *selected = nullptr;
+	QString selected_style = QString("");
+	QVBoxLayout *mlayout = nullptr;
 	QSplitter *splitter;
 	QWidget *button_container;
 	QgFlowLayout *button_layout;
@@ -209,11 +247,10 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

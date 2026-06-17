@@ -21,19 +21,18 @@
  *
  * Qt mouse-event filters for interactive 2-D sketch editing.
  *
- * These filters are designed to be installed on a QgView (or its
- * underlying canvas widget) via QgView::add_event_filter().  Each
+ * These filters are designed to be installed on a QgView via
+ * QgView::installFilter().  Each
  * filter encapsulates one editing mode and drives the primitive edit
  * API (rt_edit / ECMD_SKETCH_* commands) defined in
  * include/rt/rt_ecmds.h and include/rt/edit.h.
  *
  * Typical usage sequence
  * ----------------------
- *  1. Create a QgView and obtain its struct bview * via view().
+ *  1. Create a QgView and obtain its struct bsg_view * via view().
  *  2. Call rt_edit_create() to open a sketch primitive for editing.
- *  3. Instantiate whichever filter(s) you need, setting the .v and
- *     .es public members.
- *  4. Install the active filter:  view->add_event_filter(filter);
+ *  3. Instantiate whichever filter(s) you need, setting the .es public member.
+ *  4. Install the active filter:  view->installFilter(filter);
  *  5. Connect filter->view_updated(int) to your view's need_update(ull)
  *     slot, and filter->sketch_changed() to whatever slot performs a
  *     wireframe refresh.
@@ -50,7 +49,7 @@
 
 extern "C" {
 #include "vmath.h"
-#include "bv.h"
+#include "bsg.h"
 #include "rt/edit.h"
 #include "rt/primitives/sketch.h"
 #include "rt/rt_ecmds.h"
@@ -58,8 +57,8 @@ extern "C" {
 
 #include <QEvent>
 #include <QMouseEvent>
-#include <QObject>
 #include "qtcad/defines.h"
+#include "qtcad/QgViewFilter.h"
 
 /**
  * QgSketchFilter — base class for sketch editing mouse-event filters.
@@ -68,91 +67,76 @@ extern "C" {
  * filter modes.  Follows the same design pattern as QgPolyFilter and
  * QgMeasureFilter.
  */
-class QTCAD_EXPORT QgSketchFilter : public QObject
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchFilter : public QgViewFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchFilter)
+
 
 public:
-    /**
-     * Synchronise Qt mouse event with the bview coordinate state.
-     *
-     * Updates v->gv_mouse_x/y, v->gv_prevMouseX/Y, and v->gv_point.
-     * Returns the cast QMouseEvent on success, NULL if the event is
-     * not a mouse event or if a non-None keyboard modifier is active
-     * (modifier keys are typically used for view navigation, not editing).
-     */
-    QMouseEvent *view_sync(QEvent *e);
+	explicit QgSketchFilter(QObject *parent = nullptr);
 
-    /**
-     * Convert screen pixel coordinates to normalised view coordinates.
-     *
-     * Output is in the range roughly [-1, +1] x [-1, +1] (the exact
-     * range depends on the view aspect ratio), matching the coordinate
-     * space expected by EDOBJ[].ft_edit_xy().
-     */
-    void screen_to_view(int sx, int sy, vect_t mvec) const;
+	/**
+	 * Convert screen pixel coordinates to normalised view coordinates.
+	 *
+	 * Output is in the range roughly [-1, +1] x [-1, +1] (the exact
+	 * range depends on the view aspect ratio), matching the coordinate
+	 * space expected by EDOBJ[].ft_edit_xy().
+	 */
+	void screen_to_view(int sx, int sy, vect_t mvec) const;
 
-    /**
-     * Convert screen pixel coordinates to sketch-plane UV coordinates.
-     *
-     * Unprojects the screen position to a 3-D model-space point (on the
-     * view-centre plane, z=0 in view space) and then projects it onto
-     * the sketch's coordinate system using the sketch's V origin, u_vec
-     * and v_vec unit vectors.
-     *
-     * @param[in]  sx    screen X in pixels (left = 0)
-     * @param[in]  sy    screen Y in pixels (top  = 0)
-     * @param[out] u_out U coordinate in model base units
-     * @param[out] v_out V coordinate in model base units
-     * @return true on success; false if v or es is NULL
-     */
-    bool screen_to_uv(int sx, int sy, fastf_t *u_out, fastf_t *v_out) const;
+	/**
+	 * Convert screen pixel coordinates to sketch-plane UV coordinates.
+	 *
+	 * Unprojects the screen position to a 3-D model-space point (on the
+	 * view-centre plane, z=0 in view space) and then projects it onto
+	 * the sketch's coordinate system using the sketch's V origin, u_vec
+	 * and v_vec unit vectors.
+	 *
+	 * @param[in]  sx    screen X in pixels (left = 0)
+	 * @param[in]  sy    screen Y in pixels (top  = 0)
+	 * @param[out] u_out U coordinate in model base units
+	 * @param[out] v_out V coordinate in model base units
+	 * @return true on success; false if v or es is nullptr
+	 */
+	bool screen_to_uv(int sx, int sy, fastf_t *u_out, fastf_t *v_out) const;
 
-    /**
-     * Convert screen pixel coordinates to sketch UV, optionally snapping
-     * to the nearest existing sketch vertex if its projected view-space
-     * distance is within snap_px pixels.
-     *
-     * When snapping, *snapped_idx is set to the vertex index that was
-     * snapped to (or -1 if no snap occurred).  Pass NULL for snapped_idx
-     * if you don't need that information.
-     *
-     * @param snap_px     Snap radius in screen pixels (0 disables snapping)
-     * @param snapped_idx Output: index of snapped vertex, or -1
-     */
-    bool snap_vertex_uv(int sx, int sy,
-			fastf_t *u_out, fastf_t *v_out,
-			fastf_t snap_px = 10.0,
-			int *snapped_idx = NULL) const;
+	/**
+	 * Convert screen pixel coordinates to sketch UV, optionally snapping
+	 * to the nearest existing sketch vertex if its projected view-space
+	 * distance is within snap_px pixels.
+	 *
+	 * When snapping, *snapped_idx is set to the vertex index that was
+	 * snapped to (or -1 if no snap occurred).  Pass nullptr for snapped_idx
+	 * if you don't need that information.
+	 *
+	 * @param snap_px     Snap radius in screen pixels (0 disables snapping)
+	 * @param snapped_idx Output: index of snapped vertex, or -1
+	 */
+	bool snap_vertex_uv(int sx, int sy,
+	                    fastf_t *u_out, fastf_t *v_out,
+	                    fastf_t snap_px = 10.0,
+	                    int *snapped_idx = nullptr) const;
 
-    /* Make eventFilter virtual so callers can store a base-class pointer
-     * and swap derived implementations without an explicit cast. */
-    virtual bool eventFilter(QObject *, QEvent *) { return false; }
+	/* Make eventFilter virtual so callers can store a base-class pointer
+	 * and swap derived implementations without an explicit cast. */
+	virtual bool eventFilter(QObject *, QEvent *)
+	{
+		return false;
+	}
 
 signals:
-    /**
-     * Emitted when the view image needs refreshing (e.g. after a
-     * vertex move that should be reflected immediately in the viewport).
-     * The integer argument carries QG_VIEW_* flag bits from
-     * QgSignalFlags.h; typically QG_VIEW_REFRESH.
-     */
-    void view_updated(int);
-
-    /**
-     * Emitted when the sketch data has been structurally changed (a
-     * vertex moved, segment added/deleted, etc.) and the caller should
-     * rebuild whatever higher-level representations depend on it (e.g.
-     * regenerate wireframe, update vertex/segment tables).
-     */
-    void sketch_changed();
+	/**
+	 * Emitted when the sketch data has been structurally changed (a
+	 * vertex moved, segment added/deleted, etc.) and the caller should
+	 * rebuild whatever higher-level representations depend on it (e.g.
+	 * regenerate wireframe, update vertex/segment tables).
+	 */
+	void sketch_changed();
 
 public:
-    /** The bview the filter is watching.  Must be set before install. */
-    struct bview    *v  = NULL;
-
-    /** The rt_edit context managing the sketch being edited.
-     *  Must be set before install.  The filter does NOT take ownership. */
-    struct rt_edit  *es = NULL;
+	/** The rt_edit context managing the sketch being edited.
+	 *  Must be set before install.  The filter does NOT take ownership. */
+	struct rt_edit  *es = nullptr;
 };
 
 
@@ -166,12 +150,14 @@ public:
  * After a successful pick sketch_changed() is emitted so callers can
  * update selection highlighting in their tables/views.
  */
-class QTCAD_EXPORT QgSketchPickVertexFilter : public QgSketchFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchPickVertexFilter : public QgSketchFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchPickVertexFilter)
+
 
 public:
-    bool eventFilter(QObject *, QEvent *e);
+	using QgSketchFilter::QgSketchFilter;
+	bool eventFilter(QObject *, QEvent *e);
 };
 
 
@@ -187,15 +173,17 @@ public:
  * ECMD_SKETCH_MOVE_VERTEX.  Both view_updated and sketch_changed are
  * emitted during the drag.
  */
-class QTCAD_EXPORT QgSketchMoveVertexFilter : public QgSketchFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchMoveVertexFilter : public QgSketchFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchMoveVertexFilter)
+
 
 public:
-    bool eventFilter(QObject *, QEvent *e);
+	using QgSketchFilter::QgSketchFilter;
+	bool eventFilter(QObject *, QEvent *e);
 
 private:
-    bool m_dragging = false;
+	bool m_dragging = false;
 };
 
 
@@ -210,12 +198,14 @@ private:
  * This mode is the building block for interactive segment creation:
  * the application places vertices and then calls an append command.
  */
-class QTCAD_EXPORT QgSketchAddVertexFilter : public QgSketchFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchAddVertexFilter : public QgSketchFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchAddVertexFilter)
+
 
 public:
-    bool eventFilter(QObject *, QEvent *e);
+	using QgSketchFilter::QgSketchFilter;
+	bool eventFilter(QObject *, QEvent *e);
 };
 
 
@@ -230,12 +220,14 @@ public:
  *
  * After a successful pick sketch_changed() is emitted.
  */
-class QTCAD_EXPORT QgSketchPickSegmentFilter : public QgSketchFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchPickSegmentFilter : public QgSketchFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchPickSegmentFilter)
+
 
 public:
-    bool eventFilter(QObject *, QEvent *e);
+	using QgSketchFilter::QgSketchFilter;
+	bool eventFilter(QObject *, QEvent *e);
 };
 
 
@@ -247,17 +239,19 @@ public:
  * between consecutive cursor positions is translated to UV coordinates
  * and applied via ECMD_SKETCH_MOVE_SEGMENT.
  */
-class QTCAD_EXPORT QgSketchMoveSegmentFilter : public QgSketchFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchMoveSegmentFilter : public QgSketchFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchMoveSegmentFilter)
+
 
 public:
-    bool eventFilter(QObject *, QEvent *e);
+	using QgSketchFilter::QgSketchFilter;
+	bool eventFilter(QObject *, QEvent *e);
 
 private:
-    bool    m_dragging = false;
-    fastf_t m_prev_u   = 0.0;
-    fastf_t m_prev_v   = 0.0;
+	bool    m_dragging = false;
+	fastf_t m_prev_u   = 0.0;
+	fastf_t m_prev_v   = 0.0;
 };
 
 
@@ -276,18 +270,20 @@ private:
  *
  * Both view_updated and sketch_changed are emitted during the drag.
  */
-class QTCAD_EXPORT QgSketchArcRadiusFilter : public QgSketchFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchArcRadiusFilter : public QgSketchFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchArcRadiusFilter)
+
 
 public:
-    bool eventFilter(QObject *, QEvent *e);
+	using QgSketchFilter::QgSketchFilter;
+	bool eventFilter(QObject *, QEvent *e);
 
 private:
-    bool    m_dragging  = false;
-    fastf_t m_center_u  = 0.0;
-    fastf_t m_center_v  = 0.0;
-    bool    m_full_circle = false; /* preserve sign for full-circle arcs */
+	bool    m_dragging  = false;
+	fastf_t m_center_u  = 0.0;
+	fastf_t m_center_v  = 0.0;
+	bool    m_full_circle = false; /* preserve sign for full-circle arcs */
 };
 
 
@@ -303,19 +299,21 @@ private:
  * Typical usage: connect uv_moved to a QLabel in the status bar to provide
  * a live cursor coordinate readout.
  */
-class QTCAD_EXPORT QgSketchCursorTracker : public QgSketchFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchCursorTracker : public QgSketchFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchCursorTracker)
+
 
 public:
-    bool eventFilter(QObject *, QEvent *e);
+	using QgSketchFilter::QgSketchFilter;
+	bool eventFilter(QObject *, QEvent *e);
 
 signals:
-    /**
-     * Emitted on every mouse-move event with the current cursor position
-     * in sketch-plane coordinates (model base units, e.g. mm).
-     */
-    void uv_moved(double u, double v);
+	/**
+	 * Emitted on every mouse-move event with the current cursor position
+	 * in sketch-plane coordinates (model base units, e.g. mm).
+	 */
+	void uv_moved(double u, double v);
 };
 
 
@@ -336,15 +334,17 @@ signals:
  * The user can change tangency_angle via the public field before
  * installing the filter.
  */
-class QTCAD_EXPORT QgSketchSetTangencyFilter : public QgSketchFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgSketchSetTangencyFilter : public QgSketchFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgSketchSetTangencyFilter)
+
 
 public:
-    /** Tangency angle in radians (0 = smooth / G1 join). */
-    fastf_t tangency_angle = 0.0;
+	using QgSketchFilter::QgSketchFilter;
+	/** Tangency angle in radians (0 = smooth / G1 join). */
+	fastf_t tangency_angle = 0.0;
 
-    bool eventFilter(QObject *, QEvent *e);
+	bool eventFilter(QObject *, QEvent *e);
 };
 
 

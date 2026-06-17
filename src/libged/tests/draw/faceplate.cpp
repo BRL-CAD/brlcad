@@ -33,7 +33,7 @@
 #include <dm.h>
 #include <ged.h>
 
-#include "../../dbi.h"
+#define ADIFF_THRES 20
 
 extern "C" int img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root);
 extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
@@ -88,13 +88,16 @@ main(int ac, char *av[]) {
 	return 2;
     }
 
+    /* Use a local working-directory cache so we do not pollute the user's
+     * real BRL-CAD cache and so the test is fully self-contained. */
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_fp_test_cache", NULL);
+    bu_mkdir(lcache);
+    bu_setenv("BU_DIR_CACHE", lcache, 1);
+
     /* Open the temp file, then dbconcat argv[1] into it */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
     gedp = ged_open("db", bu_vls_cstr(&fname), 1);
 
-    // Set up new cmd data (not yet done by default in ged_open
-    gedp->dbi_state = new DbiState(gedp);
-    gedp->new_cmd_forms = 1;
     bu_setenv("DM_SWRAST", "1", 1);
 
     /* To generate images that will allow us to check if the drawing
@@ -105,10 +108,13 @@ main(int ac, char *av[]) {
     s_av[2] = "swrast";
     s_av[3] = "SW";
     s_av[4] = NULL;
-    ged_exec_dm(gedp, 4, s_av);
+    if (ged_exec_dm(gedp, 4, s_av) != BRLCAD_OK || !gedp->ged_gvp || !gedp->ged_gvp->dmp) {
+	bu_exit(EXIT_FAILURE, "failed to attach swrast display manager: %s\n",
+		bu_vls_strlen(gedp->ged_result_str) ? bu_vls_cstr(gedp->ged_result_str) : "no display manager available");
+    }
 
-    struct bview *v = gedp->ged_gvp;
-    struct dm *dmp = (struct dm *)v->dmp;
+    struct bsg_view *v = gedp->ged_gvp;
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
     dm_set_width(dmp, 512);
     dm_set_height(dmp, 512);
 
@@ -166,7 +172,7 @@ main(int ac, char *av[]) {
     s_av[3] = "1";
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
-    ret += img_cmp(2, gedp, lcache, false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ret += img_cmp(2, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
@@ -214,14 +220,18 @@ main(int ac, char *av[]) {
     bu_log("Testing turning on frames per second reporting...\n");
 
     // So we don't get random values here, override the timing variable values
-    ((struct dm *)v->dmp)->start_time = 0;
-    v->gv_s->gv_frametime = 1000000000;
+    dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (!dmp) {
+	bu_exit(EXIT_FAILURE, "no active display manager available for fps faceplate test\n");
+    }
+    dmp->start_time = 0;
+    bsg_view_set_frametime(v, 1000000000);
 
     s_av[0] = "view";
     s_av[1] = "faceplate";
     s_av[2] = "params";
     s_av[3] = "fps";
-    s_av[4] = "0";
+    s_av[4] = "1";
     s_av[5] = NULL;
     ged_exec_view(gedp, 5, s_av);
     ret += img_cmp(5, gedp, lcache, false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
@@ -251,7 +261,7 @@ main(int ac, char *av[]) {
     s_av[3] = "1";
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
-    ret += img_cmp(6, gedp, lcache, false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ret += img_cmp(6, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
@@ -348,4 +358,3 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

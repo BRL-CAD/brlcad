@@ -29,6 +29,8 @@
 
 #include "bu/cmd.h"
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 
@@ -45,6 +47,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     char *tok;
     int endpos = 0;
     int i;
+    int event_batch_opened = 0;
     mat_t start_mat;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -137,11 +140,15 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     dp = db_diradd(gedp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)
 	    rt_db_free_internal(&new_int);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.");
 	return BRLCAD_ERROR;
     }
@@ -159,13 +166,19 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 	if (ip == &new_int)
 	    rt_db_free_internal(&internal);
 
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return BRLCAD_ERROR;
     }
+    (void)ged_event_notify_object_added(gedp, argv[2], NULL);
 
     /* see previous comment */
     if (ip == &new_int)
 	rt_db_free_internal(&internal);
+
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

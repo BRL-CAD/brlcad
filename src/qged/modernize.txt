@@ -1,0 +1,292 @@
+qged modernization plan
+=======================
+
+Goal
+----
+
+qged's command prompt, supported by libqtcad's console widget, offers tab
+completion with drop down menus.  Ideally, we would like to further enhance
+the command prompt's capabilities with three new features:
+
+1.  syntax validity awareness for commands - we would like to be able to color
+code the text on the command prompt based on whether the command is in a valid
+state.  We have a libbu bu_opt command definition layer that is used for many (but not yet all)
+GED commands - we would like to extend that layer to support a means of supplying
+JSON data that a client like the qged console could use to do validity checking and
+hinting as the user is typing a command.
+
+2.  collapsible command history for each command's output.  Many BRL-CAD command
+outputs are very large, and the console's history has a limit to maintain interactivity.
+We would like to capture each individual command's output in its own widget, and have that
+widget be expandable/closable to avoid needing to "lose" history.  We would want to be able
+to also save each individual command's output to a text file, as well as being able to do
+the same for the whole command history.  This system would need to be able to handle
+background running processes like rt producing output while the main command prompt is
+interactive (i.e. support async command output - see the listener system.)
+
+3.  drag-and-drop from the tree widget - qged uses a tree widget to show the geometry
+hierarchy.  We want to be able to drag a selection from the tree widget into the command
+prompt and have it populate with the text version of the path.
+
+Validation expectations
+-----------------------
+
+For every major implementation phase, configure and build with Qt enabled.  At
+minimum, build the touched qtcad/qged targets and relevant plugin targets:
+libqtcad, qged, qged_plugins, and any converted plugin library.  When touching
+display-manager or view-event-filter behavior, also build dm-qtgl, dm-swrast,
+qged, and the relevant libqtcad/qged tests.  Run available tests that exercise
+the touched area, especially any new QgPluginManager/QgPaletteController tests
+and existing qged/libqtcad headless tests.
+
+Do not build or validate the non-Qt path for this work unless specifically
+requested; this modernization is Qt-specific and should use
+BRLCAD_ENABLE_QT=ON.
+
+Implementation plan
+-------------------
+
+The three prompt goals are related, but they should be implemented as separate
+capability layers so each can be validated independently and reused outside of
+qged where appropriate.
+
+Phase 1: define command syntax metadata in libbu
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Extend libbu's bu_opt layer from "parse an argv array for one command" to
+"describe and incrementally validate a command language."  The first step is to
+add metadata APIs without changing existing bu_opt_parse behavior:
+
+* Add a JSON output format to bu_opt_describe, or add a sibling
+  bu_opt_describe_json API, that reports:
+
+  * option short and long spellings;
+  * whether an option is flag-only, requires an argument, accepts an optional
+    argument, or may repeat;
+  * option argument help text and a machine-readable option argument type;
+  * help text;
+  * alias relationships;
+  * command and subcommand names;
+  * minimum/maximum positional operand counts, if known;
+  * positional operand kinds such as db object, db path, file path, number,
+    vector, color, keyword, arbitrary string, and raw remainder.
+
+* Keep struct bu_opt_desc source compatibility.  Add optional side metadata
+  rather than forcing every existing command to update immediately.  Candidate
+  mechanisms are an additional "schema" descriptor structure referenced by new
+  APIs, or a second descriptor array keyed to existing bu_opt_desc entries.
+* Add subcommand description support consistent with
+  doc/notes/bu_opt_design_notes.txt.  The metadata API should be able to
+  represent nested subcommands even before bu_opt_parse fully owns nested
+  parsing.
+* Add an incremental validation API that accepts a command line string or
+  argc/argv plus cursor position and reports:
+
+  * state: valid, incomplete, invalid, or unknown;
+  * token range responsible for an error or incomplete requirement;
+  * expected next token classes;
+  * completion candidates when the schema can derive them;
+  * a short hint/error string suitable for a tooltip or status line.
+
+* Add libbu tests for JSON stability, option alias grouping, required/optional
+  operands, repeated options, invalid option detection, incomplete arguments,
+  and nested subcommand metadata.
+
+Current status (2026-05-21) — Phase 1 complete
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+All Phase 1 items have been implemented in libbu:
+
+* source-compatible side metadata (`bu_opt_desc_meta`, `bu_opt_operand_desc`,
+  `bu_opt_cmd_desc`) for options, operands, and nested subcommands;
+* `bu_opt_describe_json` and `BU_OPT_JSON` support in `bu_opt_describe`,
+  with a versioned JSON schema contract (`{"schema":"bu_opt","version":1,...}`)
+  covering option spellings, argument cardinality and type, repeat flag, help
+  text, keyword lists, alias groups, operand bounds, and a per-option/operand
+  `"completion"` field (`"static"`, `"db_object"`, `"db_path"`, `"file"`,
+  `"none"`) so libged consumers can identify the right completion source;
+* advisory `bu_opt_validate_argv` / `bu_opt_validate_string` APIs returning
+  valid/incomplete/invalid/unknown states, expected token classes, and hint
+  strings;
+* schema-derived completion candidates for option names, subcommand names, and
+  keyword-valued option/operand arguments;
+* `bu_opt_validate_result.completion_type` dynamic completion hint (`BU_OPT_VAL_*`)
+  that tells callers what external source to query when static candidate lists
+  are insufficient (e.g., `BU_OPT_VAL_DB_OBJECT` requests geometry database
+  completion, `BU_OPT_VAL_FILE_PATH` requests filesystem completion);
+* `bu_opt_validate_result.char_start` / `char_end` byte-offset fields
+  populated by `bu_opt_validate_string` for UI-facing token highlighting;
+* libbu tests covering JSON stability, aliases, repeated/non-repeated options,
+  operand bounds, incomplete arguments, nested subcommands, schema-derived
+  completions, completion_type values, and char offset spans.
+
+Phase 2: publish libged command schemas
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Teach libged how to expose command syntax metadata to clients without requiring
+qged to know command internals:
+
+* Extend the libged command registry with optional metadata callbacks or schema
+  pointers associated with each registered command.  The current struct
+  ged_cmd_impl records name, function pointer, and command flags; add metadata
+  access in a source-compatible way rather than requiring every command to
+  change at once.
+* Add public APIs such as:
+
+  * list commands with their schema availability;
+  * return one command's JSON schema;
+  * validate a command line against the registered schema database;
+  * complete a token using schema context plus existing database geometry
+    completion helpers.
+
+* Preserve current ged_cmd_completions and ged_geom_completions behavior as the
+  fallback for commands that have not yet supplied schemas.
+* Convert a representative set of commands first:
+
+  * simple option/operand commands already using bu_opt_parse and _ged_cmd_help;
+  * view and dm subcommand-style commands;
+  * common qged prompt commands such as draw, erase, who, ls, select, and open.
+
+* Add a build/test path that verifies schema generation for converted commands
+  and confirms each converted command's old help text and parse behavior remain
+  compatible.
+* Do not block the qged UI on full command coverage.  Commands without schema
+  support should display an "unknown syntax" state while keeping current
+  completion and execution behavior.
+
+Phase 3: add qtcad command prompt syntax services
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Refactor QgConsole so syntax awareness is a reusable widget feature, not a
+GED-only special case:
+
+* Add a command analysis interface in libqtcad that can accept the current text
+  and cursor position and return validation state, highlight ranges, hints, and
+  completions.
+* Implement a GED-backed analyzer that calls the new libged schema APIs and
+  falls back to the current GEDShellCompleter behavior.
+* Update QgConsole's internal editor to:
+
+  * run analysis after command-buffer changes;
+  * apply lightweight QTextEdit extra selections or syntax formatting for valid,
+    incomplete, invalid, and unknown states;
+  * show expected-token hints without forcing completion popups;
+  * keep tab completion behavior compatible with current command and geometry
+    completion.
+
+* Keep command execution unchanged in this phase.  The analyzer is advisory and
+  must not prevent a user from running a command, because schema coverage will
+  be incremental and some commands intentionally accept flexible inputs.
+* Add libqtcad tests for analyzer integration using a fake analyzer, and add a
+  qged/GED-backed test for at least one converted command.
+
+Phase 4: replace flat console output with command output records
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Separate input editing from command output history.  The current QgConsole is a
+single QPlainTextEdit with a prompt region and a maximum visible text block
+count used to preserve interactivity, and async process output is inserted
+before the prompt by printStringBeforePrompt.  The new design should keep the
+prompt responsive while preserving per-command output:
+
+* Introduce a QgConsoleHistory model containing command records:
+
+  * command text;
+  * start/end timestamps;
+  * exit/status state when available;
+  * stdout/stderr/log text chunks;
+  * async process association for listener-produced output;
+  * collapsed/expanded state;
+  * output truncation state for very large outputs.
+
+* Introduce a history view widget using per-command child widgets, with each
+  record collapsible, closeable, searchable, and saveable to a text file.
+* Keep output storage independent of what is currently visible.  The visible UI
+  may virtualize or summarize records that exceed configurable line-count or
+  byte-count thresholds, but the model should retain the full captured text
+  until an explicit memory/history policy removes it.
+* Route QgConsole::printString, printStringBeforePrompt, and QgConsoleListener
+  output into the active command record rather than directly editing a flat
+  document.  For commands that spawn long-running subprocesses, keep the record
+  alive after the prompt returns and append listener output asynchronously.
+* Add "save this command output" and "save full history" actions.  Use Qt file
+  dialogs in qged and plain model APIs in libqtcad so tests can save to
+  deterministic paths.
+* Preserve current command history navigation separately from output history.
+  Up/down recall should continue to operate on command lines, not output
+  records.
+* Add tests for synchronous output, output while the prompt remains editable,
+  record collapse/expand state, output export, and listener teardown behavior.
+
+Phase 5: tree-to-prompt drag and drop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add drag sources to the geometry tree and drop handling to the console:
+
+* Extend QgTreeView/QgModel MIME support to export selected geometry as text.
+  The primary text format should be the command-line path syntax users already
+  type at the GED prompt.  Multiple selections should be space-separated and
+  safely quoted when needed.
+* Include a BRL-CAD-specific MIME type carrying structured path data so future
+  widgets can distinguish geometry drops from arbitrary pasted text, while also
+  providing text/plain for interoperability.
+* Allow drops on the editable command area of QgConsole.  Drops on output
+  history should be ignored or treated as copy-only, not as history edits.
+* Insert dropped text at the cursor and update the command buffer, completer,
+  and syntax analyzer immediately after insertion.
+* Add tests for single object paths, nested paths, multiple selection ordering,
+  quoting of names containing whitespace or shell-sensitive characters, and
+  rejection of drops outside the editable prompt.
+
+Phase 6: qged integration and user-facing polish
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Wire the new capabilities into qged incrementally:
+
+* Construct the GED-backed analyzer after qged has a ged pointer and attach it
+  to the QgConsole next to, or replacing, GEDShellCompleter.
+* Connect QgTreeView drag output to QgConsole drop input through standard Qt
+  drag/drop mechanisms rather than qged-specific direct calls.
+* Add context menu actions for clearing output records and saving selected or
+  full history.
+* Add preference hooks for syntax coloring, maximum retained history memory,
+  default collapsed/expanded output behavior, and whether invalid syntax should
+  warn only or require confirmation before execution.
+* Document the new prompt behavior in qged user documentation once the feature
+  set is implemented.
+
+Recommended implementation order
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Add metadata-only libbu APIs and tests.
+2. Add libged schema registry APIs and convert a small command set.
+3. Add the qtcad analyzer interface and non-blocking syntax coloring using the
+   converted commands.
+4. Add tree drag source and console drop insertion, because it can reuse current
+   prompt storage and does not depend on output-history refactoring.
+5. Introduce the command-output history model and route synchronous command
+   output through it.
+6. Move async listener output into command records and add save/export actions.
+7. Convert more libged commands to schemas based on the commands most used from
+   qged and on commands with existing bu_opt descriptions.
+
+Risk management and compatibility
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Keep all new libbu/libged syntax metadata advisory until command coverage is
+  broad.  The existing parser remains the authority for execution.
+* Preserve existing public APIs where practical.  Add new APIs and compatibility
+  wrappers rather than changing bu_opt_parse, ged_cmd_completions, or qged
+  command execution semantics in the first phases.
+* Treat JSON schema output as a public contract once qged consumes it.  Version
+  the schema and add tests that make intentional changes explicit.
+* Avoid per-keystroke command execution or callbacks.  Validation should use
+  static metadata plus safe database-name completion helpers only.
+* Bound UI work per keystroke.  Large command databases and large geometry
+  hierarchies should not make typing lag; cache parsed schemas and debounce
+  expensive completion queries.
+* Keep async output append operations on the Qt GUI thread via queued
+  connections, as the existing listener system does.
+* Validate with Qt enabled at every phase, building at least libbu when bu_opt
+  changes, libged when command schemas change, libqtcad when widget behavior
+  changes, and qged plus relevant qged/libqtcad tests for integrated phases.

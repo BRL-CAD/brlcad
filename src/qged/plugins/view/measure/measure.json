@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.view.measure",
+    "displayName": "View Measure",
+    "category": "qged.view",
+    "iconName": ":measure.svg",
+    "sortKey": 3,
+    "requiresOpenDb": false,
+    "requiresView": true,
+    "description": "Measure distances and angles in the view using 2D or 3D hit points.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

@@ -29,15 +29,23 @@
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
+#include <QThread>
+#include "brlcad_version.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
+#include "dm.h"
+#include "ged/bsg_ged_draw.h"
+#include "ged/db_index.h"
+#include "ged/selection_state.h"
 #include "qtcad/QgGeomImport.h"
+#include "qtcad/QgPluginCommands.h"
+#include "qtcad/QgPluginInterfaces.h"
+#include "qtcad/QgPluginManager.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdApp.h"
 #include "fbserv.h"
+#include "QgEdCategories.h"
 #include "QgEdFilter.h"
-
-#include "../libged/dbi.h"
 
 int
 qged_pre_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
@@ -49,14 +57,17 @@ int
 qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
 {
     QgEdApp *a = (QgEdApp *)ctx;
-    emit a->dbi_update(a->mdl->gedp->dbip);
+    if (!a)
+	return BRLCAD_OK;
+    if (a->mdl && a->mdl->ged())
+	emit a->dbi_update(a->mdl->ged()->dbip);
     if (!a->w)
 	return BRLCAD_OK;
-    if (!a->mdl->gedp->dbip) {
+    if (!a->mdl || !a->mdl->ged() || !a->mdl->ged()->dbip) {
 	a->w->statusBar()->showMessage("open failed");
 	return BRLCAD_OK;
     }
-    QString fileName(a->mdl->gedp->dbip->dbi_filename);
+    QString fileName(a->mdl->ged()->dbip->dbi_filename);
     a->w->statusBar()->showMessage(fileName);
     return BRLCAD_OK;
 }
@@ -68,8 +79,11 @@ qged_pre_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp
 }
 
 int
-qged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
+qged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
 {
+    QgEdApp *a = (QgEdApp *)ctx;
+    if (a)
+	emit a->dbi_update(DBI_NULL);
     return BRLCAD_OK;
 }
 
@@ -103,51 +117,78 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t 
 extern "C" void
 qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 {
-    if (!p) return;
+    if (!p || !p->gedp || !p->gedp->ged_io_data) return;
 
     QgEdApp *ca = (QgEdApp *)p->gedp->ged_io_data;
     QgConsole *c = ca->w->console;
 
-    // Since these callbacks are invoked from the listener, we can't call
-    // the listener destructors directly.  We instead call a routine that
-    // emits a single that will notify the console widget it's time to
-    // detach the listener.
-    switch (t) {
-	case BU_PROCESS_STDIN:
-	    bu_log("stdin\n");
-	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-	    }
-	    p->stdin_active = 0;
-	    break;
-	case BU_PROCESS_STDOUT:
-	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-		bu_log("stdout: %d\n", p->stdout_active);
-	    }
-	    p->stdout_active = 0;
-	    break;
-	case BU_PROCESS_STDERR:
-	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-		bu_log("stderr: %d\n", p->stderr_active);
-	    }
-	    p->stderr_active = 0;
-	    break;
-    }
+    auto it = c->findListener(p, (int)t);
+    if (!it)
+	return;
+    QgConsoleListener *l = it;
 
-    // All communication has ceased between the app and the subprocess,
-    // time to call the end callback (if any)
-    if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
-	if (p->end_clbk)
-	    p->end_clbk(0, NULL, NULL, p->end_clbk_data);
-    }
+    // Stop the QSocketNotifier from firing again on the worker thread
+    // *immediately*.  This must happen on whatever thread we are called
+    // from so that no further activated() lambda invocations land in
+    // the libged callback after we return.
+    l->disconnectNotifier();
 
-    emit ca->view_update(QG_VIEW_REFRESH);
+    // Two callers reach this code:
+    //
+    //  1. The GUI thread (e.g. ged_close, or QgConsole::detach finishing
+    //     up a queued is_finished signal).  We can finish synchronously.
+    //
+    //  2. The QgConsoleListener::m_thread worker thread, via
+    //     _ged_rt_output_handler2 dispatched from the QSocketNotifier
+    //     activated() lambda.  Anything touching Qt widgets (including
+    //     the per-subprocess end_clbk, which in qged drives QAction
+    //     icon state) MUST happen on the GUI thread.  So we hop back
+    //     by emitting the queued is_finished signal and let
+    //     QgConsole::detach do the real teardown over there.
+    //
+    // We never fire p->end_clbk here.  end_clbk is fired by libged
+    // (_ged_rt_output_handler2 with type == -1) from the GUI thread
+    // when QgConsole::detach observes the last listener has gone away.
+    if (QThread::currentThread() == c->thread()) {
+	// GUI thread: tear the listener down directly.  Do *not* fire the
+	// libged callback with type == -1 here; that path is owned by
+	// QgConsole::detach (it is the one that knows whether all streams
+	// for the subprocess have been retired).  However, in the
+	// synchronous (GUI-thread) case we also do not want a stale
+	// queued is_finished to arrive later and re-enter detach for an
+	// already-removed listener, so erase it now.
+	c->removeListener(p, (int)t);
+	switch (t) {
+	    case BU_PROCESS_STDIN:  p->stdin_active  = 0; break;
+	    case BU_PROCESS_STDOUT: p->stdout_active = 0; break;
+	    case BU_PROCESS_STDERR: p->stderr_active = 0; break;
+	}
+    } else {
+	// Worker thread: hop back to GUI thread.  on_finished() emits
+	// the queued is_finished signal which is connected to
+	// QgConsole::detach.  detach() will erase the listener, clear
+	// the stream-active flag for this stream, and (once all streams
+	// for the subprocess are retired) re-enter the libged callback
+	// with type == -1 so it can finalize on the GUI thread.
+	l->on_finished();
+    }
 }
+
+struct qged_qcmd_cleanup {
+    const char *cmd = NULL;
+    char *input = NULL;
+    char **av = NULL;
+
+    ~qged_qcmd_cleanup()
+    {
+	if (cmd)
+	    bu_free((void *)cmd, "cmd");
+	if (input)
+	    bu_free(input, "input copy");
+	if (av)
+	    bu_free(av, "input argv");
+    }
+};
 
 
 QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplication(argc, argv)
@@ -165,6 +206,38 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
 
     mdl = new QgModel();
+    m_plugin_notifier = new QgPluginNotifier(this);
+    QObject::connect(this, &QgEdApp::dbi_update, m_plugin_notifier, &QgPluginNotifier::dbChanged);
+    QObject::connect(this, &QgEdApp::view_update, m_plugin_notifier, &QgPluginNotifier::viewUpdated);
+    /* QgEdApp owns mdl for the lifetime of the application; the accessor
+     * re-reads the member so future replacements are observed as well. */
+    m_plugin_context.gedAccessor = [this]() -> struct ged * {
+	return mdl ? mdl->ged() : GED_NULL;
+    };
+    m_plugin_context.viewAccessor = [this]() -> struct bsg_view * {
+	/* Prefer the main window's current display when it exists; before window
+	 * construction falls back to the model's current ged view pointer. */
+	if (w)
+	    return w->CurrentView();
+	return (mdl && mdl->ged()) ? mdl->ged()->ged_gvp : NULL;
+    };
+    m_plugin_context.model = mdl;
+    m_plugin_context.notifier = m_plugin_notifier;
+    m_plugin_context.hostName = QStringLiteral("qged");
+    m_plugin_context.log = [this](const QString &msg) {
+	if (w && w->console) {
+	    w->console->printStringBeforePrompt(msg);
+	    return;
+	}
+	bu_log("%s", msg.toLocal8Bit().constData());
+    };
+    char plugin_dir[MAXPATHLEN] = {0};
+    bu_dir(plugin_dir, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", NULL);
+    QString plugin_dir_path = QString::fromLocal8Bit(plugin_dir);
+    QStringList plugin_search_dirs;
+    if (!plugin_dir_path.isEmpty())
+	plugin_search_dirs.append(plugin_dir_path);
+    m_plugin_manager = new QgPluginManager(plugin_search_dirs, QStringLiteral("qged/plugins"), this);
 
     // Install a filter to handle the top level key bindings and other
     // interactive event management requiring global application knowledge.
@@ -178,12 +251,30 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     QTextStream stream(&file);
     setStyleSheet(stream.readAll());
 
+    // Backend policy:
+    //   - dm-qtgl  (hardware OpenGL via QgGL) is the default when BRL-CAD is
+    //     built with OpenGL support.  It delegates rendering to the system GPU
+    //     and is substantially faster than software rasterization for
+    //     interactive 3-D work.
+    //   - dm-swrast (Mesa OSMesa software rasterizer via QgSW) is the fallback
+    //     selected by the user with the -s / --swrast command-line flag, or
+    //     automatically used in environments where OpenGL is unavailable.
+    //
+    // The QgEdMainWindow constructor expects a QgView_* canvas type constant
+    // (QgView_GL or QgView_SW), not a raw swrast_mode boolean.  The
+    // translation is done here so that the policy is stated in one place.
+#ifdef BRLCAD_OPENGL
+    int canvas_type = swrast_mode ? QgView_SW : QgView_GL;
+#else
+    int canvas_type = QgView_SW; /* No OpenGL support — software rasterizer only */
+#endif
+
     // Create the windows
-    w = new QgEdMainWindow(swrast_mode, quad_mode);
+    w = new QgEdMainWindow(canvas_type, quad_mode);
 
     /* GED needs some information and methods from QGED - make
      * those assignment */
-    struct ged *gedp = mdl->gedp;
+    struct ged *gedp = mdl->ged();
 
     // Let GED know to use the QgQuadView view as its current view
     gedp->ged_gvp = w->CurrentView();
@@ -249,15 +340,15 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     }
 
     // Assign QGED specific open/close db handlers to the gedp
-    ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "opendb", BU_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
 
     // Assign QGED specific I/O handlers to the gedp
-    mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
-    mdl->gedp->ged_delete_io_handler = &qt_delete_io_handler;
-    mdl->gedp->ged_io_data = (void *)qApp;
+    mdl->ged()->ged_create_io_handler = &qt_create_io_handler;
+    mdl->ged()->ged_delete_io_handler = &qt_delete_io_handler;
+    mdl->ged()->ged_io_data = (void *)qApp;
 
     // If we have a default filename supplied, open it.  We've delayed doing so
     // until now in order to have the display related containers from graphical
@@ -277,7 +368,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 	    bu_exit(EXIT_FAILURE, "Error opening file %s\n", fname);
 	}
 	bu_free(fname, "path");
-	emit dbi_update(mdl->gedp->dbip);
+	emit dbi_update(mdl->ged()->dbip);
     }
 
     // Send a view_change signal so widgets depending on view information
@@ -319,35 +410,24 @@ void
 QgEdApp::do_quad_view_change(QgView *cv)
 {
     QTCAD_SLOT("QgEdApp::do_quad_view_change", 1);
-    mdl->gedp->ged_gvp = cv->view();
+    mdl->ged()->ged_gvp = cv->view();
+    if (w)
+	w->setActiveView(cv);
+    if (m_plugin_notifier)
+	emit m_plugin_notifier->viewChanged();
     emit view_update(QG_VIEW_REFRESH);
 }
 
 void
-QgEdApp::do_view_changed(unsigned long long flags)
+QgEdApp::do_view_changed(QgViewUpdateFlags flags)
 {
-    bv_log(1, "QgEdApp::do_view_changed");
+    bsg_log(1, "QgEdApp::do_view_changed");
     QTCAD_SLOT("QgEdApp::do_view_changed", 1);
 
     if (flags & QG_VIEW_DRAWN) {
-	// For all associated view states, execute any necessary changes to
-	// view objects and lists
-	std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
-	struct bu_ptbl *views = bv_set_views(&mdl->gedp->ged_views);
-	if (mdl->gedp->dbi_state) {
-	    DbiState *dbis = (DbiState *)mdl->gedp->dbi_state;
-	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-		BViewState *bvs = dbis->get_view_state(v);
-		if (!bvs)
-		    continue;
-		vmap[bvs].insert(v);
-	    }
-	    std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
-	    for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-		bv_it->first->redraw(NULL, bv_it->second, 1);
-	    }
-	}
+	struct ged_draw_transaction txn =
+	    ged_draw_transaction_make(GED_DRAW_TXN_REDRAW, NULL);
+	ged_draw_apply_transaction(mdl->ged(), &txn, NULL);
     }
 
     emit view_update(flags);
@@ -380,22 +460,18 @@ QgEdApp::load_g_file(const char *gfile, bool do_conversion)
     av[0] = "opendb";
     av[1] = bu_strdup(fileName.toLocal8Bit().data());
     av[2] = NULL;
-    int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
+    int ret = mdl->run_cmd(mdl->ged()->ged_result_str, ac, (const char **)av);
     bu_free((void *)av[1], "filename cpy");
     return ret;
 }
 
-int
+QgViewUpdateFlags
 qged_view_update(struct ged *gedp)
 {
-    int view_flags = 0;
+    QgViewUpdateFlags view_flags;
 
-    if (!gedp->dbi_state)
-	return view_flags;
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    unsigned long long updated = dbis->update();
-    if (updated & GED_DBISTATE_VIEW_CHANGE)
+    unsigned long long updated = ged_db_index_refresh_flags(gedp);
+    if (updated & GED_DB_INDEX_REFRESH_VIEW_CHANGE)
 	view_flags |= QG_VIEW_DRAWN;
 
     return view_flags;
@@ -424,19 +500,18 @@ int
 QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;
-    int view_flags = 0;
+    QgViewUpdateFlags view_flags;
 
     if (!mdl || !argc || !argv)
 	return BRLCAD_ERROR;
 
-    struct ged *gedp = mdl->gedp;
+    struct ged *gedp = mdl->ged();
 
-    BSelectState *ss = (gedp->dbi_state) ? ((DbiState *)gedp->dbi_state)->find_selected_state(NULL) : NULL;
-    select_hash = (ss) ? ss->state_hash() : 0;
+    select_hash = ged_selection_state_hash(gedp, nullptr);
 
     /* Set the local unit conversions */
     if (gedp->dbip) {
-	struct bview *v = w->CurrentView();
+	struct bsg_view *v = w->CurrentView();
 	v->gv_base2local = gedp->dbip->dbi_base2local;
 	v->gv_local2base = gedp->dbip->dbi_local2base;
     }
@@ -490,12 +565,12 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (w->DisplayDiff())
 	    view_flags |= QG_VIEW_DRAWN;
 
-	unsigned long long cs_hash = (ss) ? ss->state_hash() : 0;
+	unsigned long long cs_hash = ged_selection_state_hash(gedp, nullptr);
 	if (cs_hash != select_hash) {
 	    view_flags |= QG_VIEW_SELECT;
 	    // This is what notifies currently drawn solids to update
 	    // in response to a command line selection change
-	    if (ss && ss->draw_sync())
+	    if (ged_selection_draw_sync(gedp, nullptr))
 		view_flags |= QG_VIEW_DRAWN;
 	}
     }
@@ -574,6 +649,65 @@ QgEdApp::run_qcmd(const QString &command)
     char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
     int ac = bu_argv_from_string(av, strlen(input), input);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct qged_qcmd_cleanup cleanup = {cmd, input, av};
+
+    if (ac > 0 && BU_STR_EQUAL(av[0], "plugins")) {
+	QString out;
+	QString err;
+	QStringList plugin_argv;
+	if (ac > 1)
+	    plugin_argv.reserve(ac - 1);
+	for (int i = 1; i < ac; ++i)
+	    plugin_argv.append(QString::fromLocal8Bit(av[i]));
+	QgPluginCommands::run(m_plugin_manager, plugin_argv, &out, &err);
+	if (console) {
+	    if (!out.isEmpty())
+		console->printString(out);
+	    if (!err.isEmpty())
+		console->printString(err);
+	    console->prompt("$ ");
+	}
+	bu_vls_free(&msg);
+	return;
+    }
+
+    if (ac > 0 && m_plugin_manager) {
+	QString verb = QString::fromLocal8Bit(av[0]);
+	QString out;
+	QString err;
+	QStringList plugin_argv;
+	plugin_argv.reserve(ac);
+	for (int i = 0; i < ac; ++i)
+	    plugin_argv.append(QString::fromLocal8Bit(av[i]));
+
+	IQgCommand *plugin_cmd = NULL;
+	QList<IQgCommand *> cmds =
+	    m_plugin_manager->factories<IQgCommand>(QStringLiteral(QGED_CATEGORY_COMMAND));
+	for (IQgCommand *plugin_factory : cmds) {
+	    if (!plugin_factory)
+		continue;
+	    if (plugin_factory->verb() == verb || plugin_factory->aliases().contains(verb)) {
+		plugin_cmd = plugin_factory;
+		break;
+	    }
+	}
+
+	if (plugin_cmd) {
+	    int ret = plugin_cmd->run(&m_plugin_context, plugin_argv, &out, &err);
+	    if (console) {
+		if (!out.isEmpty())
+		    console->printString(out);
+		if (!err.isEmpty())
+		    console->printString(err);
+		console->prompt("$ ");
+	    }
+	    if (mdl && mdl->ged())
+		bu_vls_trunc(mdl->ged()->ged_result_str, 0);
+	    bu_vls_free(&msg);
+	    (void)ret;
+	    return;
+	}
+    }
 
     // Run as a GED command.
     int ret = BRLCAD_OK;
@@ -584,7 +718,7 @@ QgEdApp::run_qcmd(const QString &command)
 
     if (console) {
 	if (ret & GED_MORE) {
-	    console->prompt(bu_vls_cstr(mdl->gedp->ged_result_str));
+	    console->prompt(bu_vls_cstr(mdl->ged()->ged_result_str));
 	} else {
 	    console->prompt("$ ");
 	    if (history_mark_start >= 0 && history_mark_end >= 0) {
@@ -595,21 +729,20 @@ QgEdApp::run_qcmd(const QString &command)
 	}
     }
 
-    if (mdl && mdl->gedp) {
-	bu_vls_trunc(mdl->gedp->ged_result_str, 0);
+    if (mdl && mdl->ged()) {
+	bu_vls_trunc(mdl->ged()->ged_result_str, 0);
     }
-
-    bu_free((void *)cmd, "cmd");
     bu_vls_free(&msg);
-    bu_free(input, "input copy");
-    bu_free(av, "input argv");
 }
 
 void
 QgEdApp::element_selected(QgToolPaletteElement *el)
 {
     QTCAD_SLOT("QgEdApp::element_selected", 1);
-    if (!el->controls->isVisible()) {
+    QWidget *controls = el->controlsWidget();
+    // Palette elements may legitimately omit a controls widget and expose only
+    // button-driven behavior, so guard that case before manipulating visibility.
+    if (!controls || !controls->isVisible()) {
 	// Apparently this can happen when we have docked widgets
 	// closed and we click on the border between the view and
 	// the dock - need to avoid messing with the event filters
@@ -618,16 +751,13 @@ QgEdApp::element_selected(QgToolPaletteElement *el)
     }
 
     QgView *curr_view = w->CurrentDisplay();
+    QObject *active_filter = curr_view->active_event_filter();
 
-    if (curr_view->curr_event_filter) {
-	curr_view->clear_event_filter(curr_view->curr_event_filter);
-	curr_view->curr_event_filter = NULL;
-    }
+    if (active_filter)
+	curr_view->clear_event_filter(active_filter);
 
-    if (el->use_event_filter) {
-	curr_view->add_event_filter(el->controls);
-	curr_view->curr_event_filter = el->controls;
-    }
+    if (el->use_event_filter)
+	curr_view->add_event_filter(controls);
     if (curr_view->view()) {
 	curr_view->view()->gv_width = curr_view->width();
 	curr_view->view()->gv_height = curr_view->height();
@@ -642,6 +772,8 @@ QgEdApp::write_settings()
 
     // TODO - write user settings here.  Window state saving is handled by
     // QgEdMainWindow closeEvent
+    if (m_plugin_notifier)
+	emit m_plugin_notifier->settingsChanged();
 }
 
 // Local Variables:
@@ -652,4 +784,3 @@ QgEdApp::write_settings()
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -25,13 +25,87 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <utility>
 #include <string>
 #include <set>
 #include <cstdlib>
+#include <vector>
 
+#include "bu/getopt.h"
 #include "rt/cmd.h"
 #include "ged/database.h"
+#include "ged/event_txn.h"
+
+static int
+attr_subcommand_mutates(const char *subcmd)
+{
+    return BU_STR_EQUAL(subcmd, "set") ||
+	BU_STR_EQUAL(subcmd, "rm") ||
+	BU_STR_EQUAL(subcmd, "append") ||
+	BU_STR_EQUAL(subcmd, "copy") ||
+	BU_STR_EQUAL(subcmd, "standardize");
+}
+
+static int
+ged_attr_mutation_object_arg(int argc, const char *argv[])
+{
+    int opt;
+
+    bu_optind = 1;
+    while ((opt = bu_getopt(argc, (char * const *)argv, "c:")) != -1) {
+	if (opt != 'c')
+	    return -1;
+    }
+
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
+    if (argc < 3 || !attr_subcommand_mutates(argv[1]))
+	return -1;
+
+    return bu_optind + 1;
+}
+
+static void
+ged_attr_collect_mutation_targets(struct ged *gedp, const char *object_pattern,
+	std::vector<std::string> &object_names)
+{
+    if (!gedp || !gedp->dbip || !object_pattern || !object_pattern[0])
+	return;
+
+    struct directory **paths = NULL;
+    size_t path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, object_pattern, &paths);
+    if (!path_cnt || !paths) {
+	if (paths)
+	    bu_free(paths, "ged attr mutation paths");
+	return;
+    }
+
+    for (size_t i = 0; i < path_cnt; i++) {
+	if (!paths[i] || !paths[i]->d_namep)
+	    continue;
+	object_names.push_back(paths[i]->d_namep);
+    }
+
+    std::sort(object_names.begin(), object_names.end());
+    object_names.erase(std::unique(object_names.begin(), object_names.end()),
+	    object_names.end());
+
+    bu_free(paths, "ged attr mutation paths");
+}
+
+
+static void
+ged_attr_queue_mutation_events(struct ged *gedp,
+			       const std::vector<std::string> &object_names)
+{
+    if (!gedp || object_names.empty())
+	return;
+
+    for (const std::string &object_name : object_names)
+	ged_event_notify_attribute_changed(gedp, object_name.c_str(), 1,
+		NULL);
+}
 
 extern "C" int
 ged_attr_core(struct ged *gedp, int argc, const char *argv[])
@@ -54,10 +128,30 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
        (non-null dbip) */
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
+    int mutation_object_arg = ged_attr_mutation_object_arg(argc, argv);
+    std::vector<std::string> mutation_targets;
+    if (mutation_object_arg >= 0)
+	ged_attr_collect_mutation_targets(gedp, argv[mutation_object_arg],
+		mutation_targets);
+
+    int mutation_event_batch_started = 0;
+    if (mutation_object_arg >= 0)
+	mutation_event_batch_started = (ged_event_batch_begin(gedp) > 0);
+
     int ret = rt_cmd_attr(gedp->ged_result_str, gedp->dbip, argc, argv);
 
     if (ret & GED_HELP) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+    }
+
+    if (!(ret & BRLCAD_ERROR))
+	ged_attr_queue_mutation_events(gedp, mutation_targets);
+
+    if (mutation_event_batch_started) {
+	struct ged_event_txn_result result;
+	ged_event_txn_result_init(&result);
+	(void)ged_event_batch_end(gedp, &result);
+	ged_event_txn_result_free(&result);
     }
 
     if (ret & BRLCAD_ERROR) {

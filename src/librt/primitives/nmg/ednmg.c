@@ -84,7 +84,7 @@
  */
 #define ECMD_NMG_LEXTRU_DIR	11032
 
-C_DECL void *
+void *
 rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_nmg_edit *e;
@@ -99,7 +99,7 @@ rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)e;
 }
 
-C_DECL void
+void
 rt_edit_nmg_prim_edit_destroy(struct rt_nmg_edit *e)
 {
     if (!e)
@@ -116,7 +116,7 @@ rt_edit_nmg_prim_edit_destroy(struct rt_nmg_edit *e)
     BU_PUT(e, struct rt_nmg_edit);
 }
 
-C_DECL void
+void
 rt_edit_nmg_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
@@ -127,14 +127,12 @@ rt_edit_nmg_prim_edit_reset(struct rt_edit *s)
 }
 
 
-C_DECL void
+void
 rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
-    int vs_flag;
-    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     rt_edit_set_edflag(s, mode);
 
@@ -173,11 +171,11 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    if (*n->es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&n->es_eu->up.lu_p->down_hd, n->es_eu->up.magic_p);
 	    /* no change of state or edit_flag */
-	    vs_flag = 1;
+	    int view_update_request = 1;
 	    f = NULL; d = NULL;
 	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
 	    if (f)
-		(*f)(0, NULL, d, &vs_flag);
+		(*f)(0, NULL, d, &view_update_request);
 	    return;
 	case ECMD_NMG_FORW:
 	    if (!n->es_eu) {
@@ -188,6 +186,8 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    n->es_eu = BU_LIST_PNEXT_CIRC(edgeuse, n->es_eu);
 
 	    {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -208,6 +208,8 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    n->es_eu = BU_LIST_PPREV_CIRC(edgeuse, n->es_eu);
 
 	    {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -227,6 +229,8 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	    n->es_eu = n->es_eu->eumate_p->radial_p;
 
 	    {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
 		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 			      (void *)n->es_eu, V3ARGS(n->es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(n->es_eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -329,6 +333,8 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 			if ((ret_val = bg_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
 							    v2->vg_p->coord, edge2, s->tol)) > (-1))
 			{
+			    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
 			    bu_vls_printf(&tmp_vls,
 					  "Loop crosses itself, cannot extrude\n");
 			    bu_vls_printf(&tmp_vls,
@@ -472,20 +478,20 @@ static const struct rt_edit_prim_desc nmg_prim_desc = {
     NULL                  /* opts         */
 };
 
-C_DECL const struct rt_edit_prim_desc *
+const struct rt_edit_prim_desc *
 rt_edit_nmg_edit_desc(void)
 {
     return &nmg_prim_desc;
 }
 
-C_DECL struct rt_edit_menu_item *
+struct rt_edit_menu_item *
 rt_edit_nmg_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return nmg_menu;
 }
 
 
-C_DECL const char *
+const char *
 rt_edit_nmg_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
@@ -622,7 +628,7 @@ nmg_keypoint_finalize:
 }
 
 
-C_DECL void
+void
 rt_edit_nmg_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
@@ -1009,10 +1015,10 @@ void ecmd_nmg_lextru(struct rt_edit *s)
     if (f)
 	(*f)(0, NULL, d, NULL);
 
-    int vs_flag = 1;
+    int view_update_request = 1;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
     if (f)
-	(*f)(0, NULL, d, &vs_flag);
+	(*f)(0, NULL, d, &view_update_request);
 }
 
 /* Extrude current loop in an explicit direction + distance.
@@ -1297,7 +1303,7 @@ ecmd_nmg_fmove(struct rt_edit *s)
     return 0;
 }
 
-C_DECL int
+int
 rt_edit_nmg_edit(struct rt_edit *s)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
@@ -1351,7 +1357,7 @@ rt_edit_nmg_edit(struct rt_edit *s)
     return 0;
 }
 
-C_DECL int
+int
 rt_edit_nmg_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

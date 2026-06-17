@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "optical/light.h"
 #include "optical/photonmap.h"
 

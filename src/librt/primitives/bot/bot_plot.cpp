@@ -26,10 +26,15 @@
 
 #include "common.h"
 
+#include <limits.h>
+
+#include "../../librt_private.h"
+
 extern "C" {
 #include "vds.h"
 
-#include "bv/vlist.h"
+#include "bsg/vlist.h"
+#include "bsg/view_state.h"
 #include "bg/trimesh.h" // needed for the call in rt_bot_bbox
 #include "bg/tri_ray.h"
 #include "vmath.h"
@@ -140,8 +145,8 @@ should_fold(const vdsNode *node, void *udata)
 }
 
 struct node_data {
-    struct bu_list *vhead;
-    struct bu_list *vlfree;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
 };
 
 static void
@@ -153,21 +158,27 @@ plot_node(const vdsNode *node, void *udata)
     if (!t)
 	return;
     struct node_data *nd = (struct node_data *)udata;
-    struct bu_list *vhead = nd->vhead;
-    struct bu_list *vlfree = nd->vlfree;
 
     while (t != NULL) {
 	vdsUpdateTriProxies(t);
-	BV_ADD_VLIST(vlfree, vhead, t->proxies[2]->coord, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, t->proxies[0]->coord, BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, t->proxies[1]->coord, BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, t->proxies[2]->coord, BV_VLIST_LINE_DRAW);
+	if (nd->ok && !primitive_lod_line_set_append(nd->realization,
+		t->proxies[2]->coord, BSG_GEOMETRY_LINE_MOVE))
+	    nd->ok = 0;
+	if (nd->ok && !primitive_lod_line_set_append(nd->realization,
+		t->proxies[0]->coord, BSG_GEOMETRY_LINE_DRAW))
+	    nd->ok = 0;
+	if (nd->ok && !primitive_lod_line_set_append(nd->realization,
+		t->proxies[1]->coord, BSG_GEOMETRY_LINE_DRAW))
+	    nd->ok = 0;
+	if (nd->ok && !primitive_lod_line_set_append(nd->realization,
+		t->proxies[2]->coord, BSG_GEOMETRY_LINE_DRAW))
+	    nd->ok = 0;
 	t = t->next;
     }
 }
 
 static fastf_t
-avg_sample_spacing(const struct bview *gvp)
+avg_sample_spacing(const struct bsg_view *gvp)
 {
     fastf_t view_aspect = (fastf_t)gvp->gv_width / gvp->gv_height;
     fastf_t x_size = gvp->gv_size;
@@ -177,8 +188,8 @@ avg_sample_spacing(const struct bview *gvp)
     return avg_view_size / avg_view_samples;
 }
 
-extern "C" int
-rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t UNUSED(s_size))
+static int
+rt_bot_lod_line_set_vds(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bsg_view *v, fastf_t UNUSED(s_size))
 {
     double d1, d2, d3;
     point_t min;
@@ -188,9 +199,9 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     struct vdsState vdss = VDS_STATE_INIT_ZERO;
     struct bot_fold_data fold_data;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!realization)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -213,21 +224,33 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     vdsAdjustTreeTopDown(vertex_tree, should_fold, (void *)&fold_data);
     struct node_data nd;
-    nd.vhead = vhead;
-    nd.vlfree = vlfree;
+    nd.realization = realization;
+    nd.ok = 1;
     vdsRenderTree(vertex_tree, plot_node, NULL, (void *)&nd);
     vdsFreeTree(vertex_tree);
 
-    return 0;
+    return nd.ok ? 0 : -1;
+}
+
+extern "C" int
+rt_bot_lod_realize(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
+{
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    int ret = rt_bot_lod_line_set_vds(realization, ip, tol, v, s_size);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
 }
 
 /* TODO - duplicated from brep_debug.cpp - probably should refactor into proper
  * internal API (maybe even libbn, if that makes sense) ... */
 #define BOT_BBOX_ARB_FACE(valp, a, b, c, d)             \
-    BV_ADD_VLIST(vlfree, vhead, valp[a], BV_VLIST_LINE_MOVE);   \
-    BV_ADD_VLIST(vlfree, vhead, valp[b], BV_VLIST_LINE_DRAW);   \
-    BV_ADD_VLIST(vlfree, vhead, valp[c], BV_VLIST_LINE_DRAW);   \
-    BV_ADD_VLIST(vlfree, vhead, valp[d], BV_VLIST_LINE_DRAW);
+    BSG_ADD_VLIST(vlfree, vhead, valp[a], BSG_VLIST_LINE_MOVE);   \
+    BSG_ADD_VLIST(vlfree, vhead, valp[b], BSG_VLIST_LINE_DRAW);   \
+    BSG_ADD_VLIST(vlfree, vhead, valp[c], BSG_VLIST_LINE_DRAW);   \
+    BSG_ADD_VLIST(vlfree, vhead, valp[d], BSG_VLIST_LINE_DRAW);
 
 #define BOT_BB_PLOT_VLIST(_min, _max) {             \
     fastf_t pt[8][3];                       \
@@ -251,7 +274,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 // making the vlist copies... this duplication results in massive additional
 // memory usage for large BoTs.
 extern "C" int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *info)
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bsg_view *info)
 {
     struct rt_bot_internal *bot_ip;
     size_t i;
@@ -265,15 +288,15 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     if (bot_ip->num_vertices <= 0 || !bot_ip->vertices || bot_ip->num_faces <= 0 || !bot_ip->faces)
 	return 0;
 
-    if (!info || !info->gv_s->bot_threshold || (info->gv_s->bot_threshold > bot_ip->num_faces)) {
+    if (!info || !primitive_lod_bot_threshold(info) || ((size_t)primitive_lod_bot_threshold(info) > bot_ip->num_faces)) {
 	for (i = 0; i < bot_ip->num_faces; i++) {
 	    if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
 		continue; /* sanity */
 
-	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BV_VLIST_LINE_DRAW);
+	    BSG_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BSG_VLIST_LINE_MOVE);
+	    BSG_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BSG_VLIST_LINE_DRAW);
+	    BSG_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BSG_VLIST_LINE_DRAW);
+	    BSG_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BSG_VLIST_LINE_DRAW);
 	}
     } else {
 	/* too big - just draw the bbox */
@@ -286,75 +309,175 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 }
 
 
-extern "C" int
-rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+static int
+bot_indexed_face_order(const struct rt_bot_internal *bot,
+		       size_t face_idx,
+		       int vertex_order[3],
+		       int normal_order[3])
 {
-    struct rt_bot_internal *bot_ip;
-    size_t i;
+    const int *face;
 
-    BU_CK_LIST_HEAD(vhead);
-    RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
-    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
-    RT_BOT_CK_MAGIC(bot_ip);
-
-    if (bot_ip->num_vertices <= 0 || !bot_ip->vertices || bot_ip->num_faces <= 0 || !bot_ip->faces)
+    if (!bot || !bot->faces || !vertex_order || !normal_order)
 	return 0;
 
-    /* XXX Should consider orientation here, flip if necessary. */
-    for (i = 0; i < bot_ip->num_faces; i++) {
-	point_t aa, bb, cc;
-	vect_t ab, ac;
-	vect_t norm;
-
-	if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
-	    continue; /* sanity */
-
-	VMOVE(aa, &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
-	if (bot_ip->orientation == RT_BOT_CW) {
-	    VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
-	    VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-	} else {
-	    VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-	    VMOVE(cc, &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
-	}
-
-	VSUB2(ab, aa, bb);
-	VSUB2(ac, aa, cc);
-	VCROSS(norm, ab, ac);
-	VUNITIZE(norm);
-	BV_ADD_VLIST(vlfree, vhead, norm, BV_VLIST_TRI_START);
-
-	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
-		(bot_ip->bot_flags & RT_BOT_USE_NORMALS)) {
-	    vect_t na, nb, nc;
-
-	    VMOVE(na, &bot_ip->normals[bot_ip->face_normals[i*3+0]*3]);
-	    if (bot_ip->orientation == RT_BOT_CW) {
-		VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
-		VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
-	    } else {
-		VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
-		VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
-	    }
-	    BV_ADD_VLIST(vlfree, vhead, na, BV_VLIST_TRI_VERTNORM);
-	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, nb, BV_VLIST_TRI_VERTNORM);
-	    BV_ADD_VLIST(vlfree, vhead, bb, BV_VLIST_TRI_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, nc, BV_VLIST_TRI_VERTNORM);
-	    BV_ADD_VLIST(vlfree, vhead, cc, BV_VLIST_TRI_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_END);
-	} else {
-	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, bb, BV_VLIST_TRI_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, cc, BV_VLIST_TRI_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, aa, BV_VLIST_TRI_END);
-	}
+    face = &bot->faces[face_idx * 3];
+    for (int i = 0; i < 3; i++) {
+	if (face[i] < 0 || (size_t)face[i] >= bot->num_vertices)
+	    return 0;
     }
 
-    return 0;
+    vertex_order[0] = face[0];
+    normal_order[0] = 0;
+    if (bot->orientation == RT_BOT_CW) {
+	vertex_order[1] = face[2];
+	vertex_order[2] = face[1];
+	normal_order[1] = 2;
+	normal_order[2] = 1;
+    } else {
+	vertex_order[1] = face[1];
+	vertex_order[2] = face[2];
+	normal_order[1] = 1;
+	normal_order[2] = 2;
+    }
+
+    return 1;
 }
 
+
+static void
+bot_indexed_face_normal(const struct rt_bot_internal *bot,
+			const int vertex_order[3],
+			vect_t normal)
+{
+    vect_t ab, ac;
+    const fastf_t *aa;
+    const fastf_t *bb;
+    const fastf_t *cc;
+
+    VSETALL(normal, 0.0);
+    if (!bot || !vertex_order)
+	return;
+
+    aa = &bot->vertices[(size_t)vertex_order[0] * 3];
+    bb = &bot->vertices[(size_t)vertex_order[1] * 3];
+    cc = &bot->vertices[(size_t)vertex_order[2] * 3];
+    VSUB2(ab, aa, bb);
+    VSUB2(ac, aa, cc);
+    VCROSS(normal, ab, ac);
+    if (MAGSQ(normal) > SMALL_FASTF)
+	VUNITIZE(normal);
+    else
+	VSETALL(normal, 0.0);
+}
+
+
+static int
+bot_indexed_face_vertex_normal(const struct rt_bot_internal *bot,
+			       size_t face_idx,
+			       int normal_slot,
+			       vect_t normal)
+{
+    int normal_idx;
+
+    if (!bot || !normal ||
+	    !(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) ||
+	    !(bot->bot_flags & RT_BOT_USE_NORMALS) ||
+	    !bot->normals || !bot->face_normals ||
+	    face_idx >= bot->num_face_normals ||
+	    normal_slot < 0 || normal_slot > 2)
+	return 0;
+
+    normal_idx = bot->face_normals[face_idx * 3 + normal_slot];
+    if (normal_idx < 0 || (size_t)normal_idx >= bot->num_normals)
+	return 0;
+
+    VMOVE(normal, &bot->normals[(size_t)normal_idx * 3]);
+    return 1;
+}
+
+
+extern "C" int
+rt_bot_indexed_face_set(struct rt_primitive_indexed_face_set *face_set,
+			struct rt_db_internal *ip,
+			const struct bg_tess_tol *UNUSED(ttol),
+			const struct bn_tol *UNUSED(tol),
+			const struct bsg_view *UNUSED(info))
+{
+    struct rt_bot_internal *bot;
+    point_t *points = NULL;
+    vect_t *normals = NULL;
+    int *indices = NULL;
+    size_t valid_faces = 0;
+    size_t index_count;
+    size_t normal_count;
+    size_t index_idx = 0;
+    size_t normal_idx = 0;
+
+    if (!face_set || !ip)
+	return BRLCAD_ERROR;
+
+    RT_CK_DB_INTERNAL(ip);
+    bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    if (!bot->vertices || !bot->faces || !bot->num_vertices || !bot->num_faces)
+	return BRLCAD_OK;
+    if (bot->num_vertices > (size_t)INT_MAX)
+	return BRLCAD_ERROR;
+
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	int vertex_order[3];
+	int normal_order[3];
+	if (bot_indexed_face_order(bot, i, vertex_order, normal_order))
+	    valid_faces++;
+    }
+
+    if (!valid_faces)
+	return BRLCAD_OK;
+
+    index_count = valid_faces * 4;
+    normal_count = valid_faces * 3;
+    points = (point_t *)bu_calloc(bot->num_vertices, sizeof(point_t),
+	    "BoT indexed-face points");
+    normals = (vect_t *)bu_calloc(normal_count, sizeof(vect_t),
+	    "BoT indexed-face normals");
+    indices = (int *)bu_calloc(index_count, sizeof(int),
+	    "BoT indexed-face indices");
+
+    for (size_t i = 0; i < bot->num_vertices; i++)
+	VMOVE(points[i], &bot->vertices[i * 3]);
+
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	int vertex_order[3];
+	int normal_order[3];
+	vect_t face_normal;
+
+	if (!bot_indexed_face_order(bot, i, vertex_order, normal_order))
+	    continue;
+
+	bot_indexed_face_normal(bot, vertex_order, face_normal);
+	for (int j = 0; j < 3; j++) {
+	    indices[index_idx] = vertex_order[j];
+	    if (!bot_indexed_face_vertex_normal(bot, i, normal_order[j],
+		    normals[normal_idx]))
+		VMOVE(normals[normal_idx], face_normal);
+	    normal_idx++;
+	    index_idx++;
+	}
+	indices[index_idx] = -1;
+	index_idx++;
+    }
+
+    face_set->points = points;
+    face_set->point_count = bot->num_vertices;
+    face_set->normals = normals;
+    face_set->normal_count = normal_count;
+    face_set->indices = indices;
+    face_set->index_count = index_count;
+    face_set->source_identity = (uint64_t)(uintptr_t)bot;
+    face_set->geometry_revision++;
+    return BRLCAD_OK;
+}
 
 
 /** @} */

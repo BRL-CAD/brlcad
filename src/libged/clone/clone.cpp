@@ -62,6 +62,7 @@
 #include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/vls.h"
+#include "ged/event_txn.h"
 #include "bn/mat.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -168,6 +169,50 @@ struct CloneState {
     /* Output */
     struct bu_vls olist = BU_VLS_INIT_ZERO;
     NameMap        names;
+};
+
+
+class ged_event_batch_guard {
+public:
+    explicit ged_event_batch_guard(struct ged *g) : gedp(g)
+    {
+	started = (ged_event_batch_begin(gedp) > 0);
+    }
+
+    ~ged_event_batch_guard()
+    {
+	if (started)
+	    (void)ged_event_batch_end(gedp, nullptr);
+    }
+
+    ged_event_batch_guard(const ged_event_batch_guard &) = delete;
+    ged_event_batch_guard& operator=(const ged_event_batch_guard &) = delete;
+
+private:
+    struct ged *gedp = nullptr;
+    int started = 0;
+};
+
+
+class ged_librt_callback_guard {
+public:
+    explicit ged_librt_callback_guard(struct ged *g) : gedp(g)
+    {
+	disabled = ged_event_librt_callbacks_disable(gedp);
+    }
+
+    ~ged_librt_callback_guard()
+    {
+	if (disabled)
+	    (void)ged_event_librt_callbacks_enable(gedp);
+    }
+
+    ged_librt_callback_guard(const ged_librt_callback_guard &) = delete;
+    ged_librt_callback_guard& operator=(const ged_librt_callback_guard &) = delete;
+
+private:
+    struct ged *gedp = nullptr;
+    int disabled = 0;
 };
 
 
@@ -1235,6 +1280,7 @@ make_xpushed_src(struct ged *gedp, struct directory *src)
     bu_vls_vlscat(&saved, gedp->ged_result_str);
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    ged_librt_callback_guard callback_guard(gedp);
     int ret = ged_exec_clone(gedp, 2, clone_av);
     std::string tmp_name;
     if (ret == BRLCAD_OK) {
@@ -1255,6 +1301,63 @@ make_xpushed_src(struct ged *gedp, struct directory *src)
     const char *xp_av[3] = { "xpush", tmp_dp->d_namep, nullptr };
     ged_exec_xpush(gedp, 2, xp_av);
     return tmp_dp;
+}
+
+
+static void
+collect_xpushed_tmp_name(std::vector<std::string> *names, const char *name)
+{
+    if (!names || !name || !name[0])
+	return;
+    for (const std::string &existing : *names) {
+	if (existing == name)
+	    return;
+    }
+    names->push_back(name);
+}
+
+
+static void
+collect_xpushed_tmp_cb(struct db_i *, struct directory *dp, void *cd)
+{
+    if (!dp)
+	return;
+    std::vector<std::string> *names = (std::vector<std::string> *)cd;
+    collect_xpushed_tmp_name(names, dp->d_namep);
+}
+
+
+static void
+delete_xpushed_tmp_src(struct ged *gedp, struct directory *tmp)
+{
+    if (!gedp || !gedp->dbip || !tmp)
+	return;
+
+    std::vector<std::string> names;
+    db_treewalk_basic(gedp->dbip, tmp, collect_xpushed_tmp_cb,
+	    collect_xpushed_tmp_cb, (void *)&names);
+    collect_xpushed_tmp_name(&names, tmp->d_namep);
+
+    ged_librt_callback_guard callback_guard(gedp);
+    for (const std::string &name : names) {
+	struct directory *dp = db_lookup(gedp->dbip, name.c_str(),
+		LOOKUP_QUIET);
+	if (!dp)
+	    continue;
+	if (dp->d_addr != RT_DIR_PHONY_ADDR &&
+		db_delete(gedp->dbip, dp) != 0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "clone: failed to delete temporary \"%s\"\n",
+		    name.c_str());
+	    continue;
+	}
+	if (db_dirdelete(gedp->dbip, dp) < 0) {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "clone: failed to remove temporary \"%s\" from directory\n",
+		    name.c_str());
+	}
+    }
+    db_update_nref(gedp->dbip);
 }
 
 
@@ -2291,6 +2394,8 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    ged_event_batch_guard event_batch(gedp);
+
     /* --xpush: replace each source with a xpushed temporary */
     std::vector<struct directory *> xpush_tmps;
     if (state.do_xpush) {
@@ -2382,10 +2487,8 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     if (!state.group_name.empty())
 	create_group(&state, top_names);
 
-    for (auto *tmp : xpush_tmps) {
-	const char *kill_av[3] = { "killtree", tmp->d_namep, nullptr };
-	ged_exec_killtree(gedp, 2, kill_av);
-    }
+    for (auto *tmp : xpush_tmps)
+	delete_xpushed_tmp_src(gedp, tmp);
 
     bu_vls_free(&state.olist);
     return BRLCAD_OK;

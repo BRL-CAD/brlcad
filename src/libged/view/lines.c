@@ -33,7 +33,11 @@
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bv.h"
+#include "bsg.h"
+#include "bsg/feature.h"
+#include "bsg/geometry.h"
+#include "bsg/hud.h"
+#include "bsg/overlay.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -43,7 +47,7 @@ _line_cmd_create(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> line create x y z";
+    const char *usage_string = "view obj create <objname> line create x y z";
     const char *purpose_string = "start a polyline at point x,y,z";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -53,9 +57,9 @@ _line_cmd_create(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bv_scene_obj *s = gd->s;
-    if (s) {
-        bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
+    bsg_feature_ref ref = bsg_feature_find(gd->cv, gd->vobj);
+    if (!bsg_feature_ref_is_null(ref)) {
+        bu_vls_printf(gedp->ged_result_str, "View feature named %s already exists\n", gd->vobj);
         return BRLCAD_ERROR;
     }
 
@@ -77,17 +81,19 @@ _line_cmd_create(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    int flags = BV_VIEW_OBJS;
-    if (gd->local_obj)
-	flags |= BV_LOCAL_OBJS;
-
-    s = bv_obj_get(gd->cv, flags);
-    BU_LIST_INIT(&(s->s_vlist));
-
-    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
-
-    bu_vls_init(&s->s_name);
-    bu_vls_printf(&s->s_name, "%s", gd->vobj);
+    ref = bsg_feature_create_lines(gd->cv, gd->vobj, gd->local_obj);
+    if (bsg_feature_ref_is_null(ref)) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
+	return BRLCAD_ERROR;
+    }
+    bsg_feature_overlay_register_owner(ref, NULL,
+	    BSG_OVERLAY_ROLE_MODEL,
+	    BSG_OVERLAY_CLASS_USER_ANNOTATION,
+	    BSG_OVERLAY_LC_PERSISTENT,
+	    BSG_OVERLAY_ORDER_MODEL,
+	    NULL, 0);
+    int cmd = BSG_GEOMETRY_LINE_MOVE;
+    bsg_feature_points_replace(ref, BSG_FEATURE_LINES, &p, &cmd, 1);
 
     return BRLCAD_OK;
 }
@@ -97,7 +103,7 @@ _line_cmd_append(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view obj <objname> line append x y z";
+    const char *usage_string = "view obj create <objname> line append x y z";
     const char *purpose_string = "append point to a polyline";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -107,9 +113,9 @@ _line_cmd_append(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bv_scene_obj *s = gd->s;
-    if (!s) {
-        bu_vls_printf(gedp->ged_result_str, "no view object named %s\n", gd->vobj);
+    bsg_feature_ref ref = bsg_feature_find(gd->cv, gd->vobj);
+    if (bsg_feature_ref_is_null(ref)) {
+        bu_vls_printf(gedp->ged_result_str, "no view feature named %s\n", gd->vobj);
         return BRLCAD_ERROR;
     }
 
@@ -132,9 +138,29 @@ _line_cmd_append(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p, BV_VLIST_LINE_DRAW);
+    point_t *points = NULL;
+    int *cmds = NULL;
+    size_t point_count = 0;
+    if (!bsg_feature_points_copy(ref, &points, &cmds, &point_count))
+	return BRLCAD_ERROR;
+    point_t *npoints = (point_t *)bu_calloc(point_count + 1, sizeof(point_t), "line append points");
+    int *ncmds = (int *)bu_calloc(point_count + 1, sizeof(int), "line append cmds");
+    for (size_t i = 0; i < point_count; i++) {
+	VMOVE(npoints[i], points[i]);
+	ncmds[i] = cmds ? cmds[i] : ((i == 0) ? BSG_GEOMETRY_LINE_MOVE : BSG_GEOMETRY_LINE_DRAW);
+    }
+    VMOVE(npoints[point_count], p);
+    ncmds[point_count] = BSG_GEOMETRY_LINE_DRAW;
+    int ret = bsg_feature_points_replace(ref, BSG_FEATURE_LINES, npoints, ncmds, point_count + 1) ?
+	BRLCAD_OK : BRLCAD_ERROR;
+    if (points)
+	bu_free(points, "bsg feature points copy");
+    if (cmds)
+	bu_free(cmds, "bsg feature cmds copy");
+    bu_free(npoints, "line append points");
+    bu_free(ncmds, "line append cmds");
+    return ret;
 
-    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _line_cmds[] = {

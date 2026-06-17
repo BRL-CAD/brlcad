@@ -40,6 +40,7 @@
 #include "bu/app.h"
 #include "bu/env.h"
 #include "bu/process.h"
+#include "bsg/view_state.h"
 #include "raytrace.h"
 #include "dm.h"
 
@@ -82,11 +83,21 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // If the framebuffer is not displayed, enable it in underlay mode so the
-    // output is visible.  TODO - we can support a -Q option or some such to
-    // suppress this behavior, but since the fb isn't up in default usage the
-    // behavior of ert is a bit too cryptic without doing this...
-    if (!gedp->ged_gvp->gv_s->gv_fb_mode)
-	gedp->ged_gvp->gv_s->gv_fb_mode = 2;
+    // output is visible.
+    //
+    // Phase B1 (ert reliability) — gv_fb_mode lifecycle contract:
+    //   * `ert` deliberately leaves gv_fb_mode set after the rt subprocess
+    //     exits.  This is intentional so the user can keep the just-rendered
+    //     image visible underneath the 3D wireframe (the common interactive
+    //     "render → review → tweak view → re-render" workflow).
+    //   * To clear the lingering raytrace overlay and return to a plain 3D
+    //     view, the user runs `fbclear -m` (clears if_mem AND resets
+    //     gv_fb_mode = 0) — see src/libged/fbclear/fbclear.c.
+    //   * Programmatic callers that need to restore the prior fb_mode
+    //     should snapshot it before invoking ert and write it back after.
+    int prior_fb_mode = bsg_view_framebuffer_mode(gedp->ged_gvp);
+    if (!prior_fb_mode)
+	bsg_view_set_framebuffer_mode(gedp->ged_gvp, 2);
 
     // Have a framebuffer to target and objects to raytrace.  Next we need a
     // framebuffer server.
@@ -123,8 +134,12 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     }
     args.push_back(std::string("-M"));
 
-    int width = dm_get_width(dmp);
-    int height = dm_get_height(dmp);
+    int width = fb_getwidth(fbp);
+    int height = fb_getheight(fbp);
+    if (width <= 0 || height <= 0) {
+	width = dm_get_width(dmp);
+	height = dm_get_height(dmp);
+    }
 
     args.push_back(std::string("-w"));
     args.push_back(std::to_string(width));
@@ -190,12 +205,19 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 	if (addr_env) {
 	    /* addr_env is "PKG_ADDR=pipe:4,7" — strip the "KEY=" prefix */
 	    const char *eq = strchr(addr_env, '=');
-	    if (eq)
+	    if (eq) {
+		bu_log("ert: setting PKG_ADDR='%s' for rt subprocess\n", eq + 1);
 		bu_setenv(PKG_ADDR_ENVVAR, eq + 1, 1);
+	    }
+	} else {
+	    bu_log("ert: WARNING fbs_ipc_child_addr_env returned NULL - rt will not find IPC channel\n");
 	}
     }
 
+    bu_log("ert: calling _ged_run_rt (using_ipc=%d fb_size=%dx%d)\n",
+	   using_ipc, fb_getwidth(fbp), fb_getheight(fbp));
     ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]), 0, &rt_pid, clbk, u2);
+    bu_log("ert: _ged_run_rt returned %d rt_pid=%d\n", ret, rt_pid);
 
     if (using_ipc)
 	bu_setenv(PKG_ADDR_ENVVAR, "", 1); /* clear parent's env copy */
@@ -225,4 +247,3 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

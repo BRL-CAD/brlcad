@@ -33,8 +33,11 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "dm.h"  // For labelface - see if the dm_set_dirty is really needed
+#include "dm.h"  // For labelface - see if the dm_set_native_repaint_pending is really needed
 
+#include "bsg/export.h"
+#include "bsg/feature.h"
+#include "bsg/render.h"
 #include "ged.h"
 #include "../ged_private.h"
 
@@ -96,17 +99,95 @@ get_face_list( const struct model* m, struct bu_list* f_list )
 }
 
 /* Usage:  labelface solid(s) */
+/* Callback data for nmg labelface solid lookup */
+struct labelface_data {
+    struct directory *dp;
+    struct model *m;
+    struct db_i *dbip;
+    struct bu_list *f_list;
+    struct bsg_feature_label_data *labels;
+    size_t label_count;
+    size_t label_capacity;
+};
+
+#define LABELFACE_FEATURE_NAME "_LABELFACE_ffffff"
+
+static int
+labelface_record_matches(struct db_i *dbip, const struct bsg_export_record *rec, struct directory *dp)
+{
+    if (!dbip || !rec || !dp || rec->source.scope != BSG_RENDER_SOURCE_SCOPE_DATABASE)
+	return 0;
+
+    struct db_full_path fp;
+    db_full_path_init(&fp);
+    if (db_string_to_path(&fp, dbip, bu_vls_cstr(&rec->path)) < 0)
+	return 0;
+    int ret = db_full_path_search(&fp, dp);
+    db_free_full_path(&fp);
+    return ret;
+}
+
+static void
+labelface_export_record(const struct bsg_export_record *rec, struct labelface_data *lfd)
+{
+    if (!lfd || !labelface_record_matches(lfd->dbip, rec, lfd->dp))
+	return;
+
+    get_face_list(lfd->m, lfd->f_list);
+    struct face *curr_f;
+    for (BU_LIST_FOR(curr_f, face, lfd->f_list)) {
+	char label[256];
+	point_t avg_pt;
+
+	if (lfd->label_count + 1 > lfd->label_capacity) {
+	    size_t ncap = lfd->label_capacity ? lfd->label_capacity * 2 : 64;
+	    lfd->labels = (struct bsg_feature_label_data *)bu_realloc(lfd->labels,
+		    ncap * sizeof(struct bsg_feature_label_data), "labelface label data");
+	    for (size_t i = lfd->label_capacity; i < ncap; i++) {
+		struct bsg_feature_label_data init = BSG_FEATURE_LABEL_DATA_INIT;
+		lfd->labels[i] = init;
+	    }
+	    lfd->label_capacity = ncap;
+	}
+
+	avg_pt[0] = (curr_f->min_pt[0] + curr_f->max_pt[0]) / 2;
+	avg_pt[1] = (curr_f->min_pt[1] + curr_f->max_pt[1]) / 2;
+	avg_pt[2] = (curr_f->min_pt[2] + curr_f->max_pt[2]) / 2;
+	snprintf(label, sizeof(label), " %d", (int)curr_f->index);
+
+	struct bsg_feature_label_data init = BSG_FEATURE_LABEL_DATA_INIT;
+	lfd->labels[lfd->label_count] = init;
+	lfd->labels[lfd->label_count].text = bu_strdup(label);
+	VMOVE(lfd->labels[lfd->label_count].point, avg_pt);
+	lfd->labels[lfd->label_count].color_valid = 1;
+	VSET(lfd->labels[lfd->label_count].color, 255, 255, 255);
+	lfd->label_count++;
+    }
+}
+
+static void
+labelface_data_free(struct labelface_data *lfd)
+{
+    if (!lfd)
+	return;
+
+    for (size_t i = 0; i < lfd->label_count; i++) {
+	if (lfd->labels[i].text)
+	    bu_free((char *)lfd->labels[i].text, "labelface label text");
+    }
+    if (lfd->labels)
+	bu_free(lfd->labels, "labelface label data");
+    lfd->labels = NULL;
+    lfd->label_count = 0;
+    lfd->label_capacity = 0;
+}
+
 int
 ged_labelface_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal internal;
     struct directory *dp;
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
     int i;
-    struct bv_vlblock *vbp;
-    mat_t mat;
-    fastf_t scale;
     struct model* m;
     const char* name;
     struct bu_list f_list;
@@ -146,40 +227,46 @@ ged_labelface_core(struct ged *gedp, int argc, const char *argv[])
     m = (struct model *)internal.idb_ptr;
     NMG_CK_MODEL(m);
 
-    vbp = rt_vlblock_init();
-    MAT_IDN(mat);
-    bn_mat_inv(mat, gedp->ged_gvp->gv_rotation);
-    scale = gedp->ged_gvp->gv_size / 100;      /* divide by # chars/screen */
+    struct labelface_data lfd;
+    memset(&lfd, 0, sizeof(lfd));
+    lfd.m = m;
+    lfd.dbip = gedp->dbip;
+    lfd.f_list = &f_list;
+
     for (i=1; i<argc; i++) {
-	struct bv_scene_obj *s;
 	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
-	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(display_list, gedp->i->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->i->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-	    for (BU_LIST_FOR(s, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-		if (!s->s_u_data)
-		    continue;
-		struct ged_bv_data *bdata = (struct ged_bv_data *)s->s_u_data;
-		if (db_full_path_search(&bdata->s_fullpath, dp)) {
-		    get_face_list(m, &f_list);
-		    rt_label_vlist_faces(vbp, &f_list, mat, scale, gedp->dbip->dbi_base2local);
-		}
-	    }
+	/* Find displayed uses of this database object. */
+	lfd.dp = dp;
+	struct bsg_export_request request;
+	bsg_export_request_init(&request, gedp->ged_gvp);
+	request.query_flags = BSG_EXPORT_QUERY_VISIBLE_ONLY | BSG_EXPORT_QUERY_DB_OBJECTS;
+	request.render_flags = BSG_RENDER_FLAG_VISIBLE_ONLY | BSG_RENDER_FLAG_PAYLOAD_PREPARE;
+	struct bsg_export_result *result = bsg_export_query(&request);
+	if (!result)
+	    continue;
+	for (size_t ri = 0; ri < bsg_export_result_count(result); ri++)
+	    labelface_export_record(bsg_export_result_get(result, ri), &lfd);
+	bsg_export_result_free(result);
+    }
 
-	    gdlp = next_gdlp;
+    (void)bsg_feature_remove(gedp->ged_gvp, LABELFACE_FEATURE_NAME);
+    if (lfd.label_count) {
+	bsg_feature_ref ref = bsg_feature_create_label(gedp->ged_gvp,
+		LABELFACE_FEATURE_NAME, 0);
+	if (bsg_feature_ref_is_null(ref) ||
+		!bsg_feature_labels_replace(ref, lfd.labels, lfd.label_count)) {
+	    labelface_data_free(&lfd);
+	    bu_vls_printf(gedp->ged_result_str, "failed to create labelface feature\n");
+	    return BRLCAD_ERROR;
 	}
     }
 
-    _ged_cvt_vlblock_to_solids(gedp, vbp, "_LABELFACE_", 0);
-
-    bv_vlblock_free(vbp);
-
+    labelface_data_free(&lfd);
     struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
     if (dmp)
-	dm_set_dirty(dmp, 1);
+	dm_set_native_repaint_pending(dmp, 1);
     return BRLCAD_OK;
 }
 

@@ -45,7 +45,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 
 
 #define MAX_LINE_SIZE 256

@@ -73,6 +73,110 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
 }
 
 
+static int
+red_matrix_equal(const matp_t left, const matp_t right, const struct bn_tol *tol)
+{
+    int left_idn = (!left || bn_mat_is_identity(left));
+    int right_idn = (!right || bn_mat_is_identity(right));
+
+    if (left_idn && right_idn)
+	return 1;
+    if (!left || !right)
+	return 0;
+
+    return bn_mat_is_equal(left, right, tol);
+}
+
+
+static size_t
+red_flatten_tree(const union tree *tree, struct rt_tree_array **array)
+{
+    size_t count;
+
+    if (array)
+	*array = NULL;
+    if (!tree || !array)
+	return 0;
+
+    count = db_tree_nleaves(tree);
+    if (!count)
+	return 0;
+
+    *array = (struct rt_tree_array *)bu_calloc(count,
+	    sizeof(struct rt_tree_array), "red tree compare array");
+    return (size_t)(db_flatten_tree(*array, (union tree *)tree,
+		OP_UNION, 0) - *array);
+}
+
+
+static int
+red_tree_equal(const union tree *left, const union tree *right,
+	const struct bn_tol *tol)
+{
+    struct rt_tree_array *left_array = NULL;
+    struct rt_tree_array *right_array = NULL;
+    size_t left_count;
+    size_t right_count;
+    size_t i;
+    int equal = 1;
+
+    if (!left || !right)
+	return left == right;
+
+    left_count = red_flatten_tree(left, &left_array);
+    right_count = red_flatten_tree(right, &right_array);
+    if (left_count != right_count) {
+	equal = 0;
+	goto cleanup;
+    }
+
+    for (i = 0; i < left_count; i++) {
+	const char *left_name = left_array[i].tl_tree ?
+	    left_array[i].tl_tree->tr_l.tl_name : NULL;
+	const char *right_name = right_array[i].tl_tree ?
+	    right_array[i].tl_tree->tr_l.tl_name : NULL;
+
+	if (left_array[i].tl_op != right_array[i].tl_op ||
+		!left_name || !right_name ||
+		!BU_STR_EQUAL(left_name, right_name) ||
+		!red_matrix_equal(left_array[i].tl_tree->tr_l.tl_mat,
+		    right_array[i].tl_tree->tr_l.tl_mat, tol)) {
+	    equal = 0;
+	    goto cleanup;
+	}
+    }
+
+cleanup:
+    if (left_array)
+	bu_free(left_array, "red tree compare array");
+    if (right_array)
+	bu_free(right_array, "red tree compare array");
+    return equal;
+}
+
+
+static int
+red_avs_equal(const struct bu_attribute_value_set *left,
+	const struct bu_attribute_value_set *right)
+{
+    struct bu_attribute_value_pair *avp;
+
+    if (!left || !right)
+	return left == right;
+    if (left->count != right->count)
+	return 0;
+
+    for (BU_AVS_FOR(avp, left)) {
+	const char *right_value = bu_avs_get(right, avp->name);
+	if (!right_value || !avp->value ||
+		!BU_STR_EQUAL(avp->value, right_value))
+	    return 0;
+    }
+
+    return 1;
+}
+
+
 void
 _ged_print_matrix(FILE *fp, matp_t matrix)
 {
@@ -211,7 +315,8 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 
 
 static int
-build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
+build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name,
+	int *tree_changed, int *attrs_changed)
 {
     struct rt_comb_internal *comb = NULL;
     size_t node_count=0;
@@ -232,9 +337,18 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     int attrstart, attrend, attrcumulative, name_end;
     int ret, reti, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
+    struct bu_attribute_value_set old_avs;
     matp_t matrix = {0};
+    int old_avs_valid = 0;
+    int comb_tree_changed = 1;
+    int comb_attrs_changed = 1;
+    const struct bn_tol red_tol = BN_TOL_INIT_TOL;
 
     bu_vls_init(target_name);
+    if (tree_changed)
+	*tree_changed = 0;
+    if (attrs_changed)
+	*attrs_changed = 0;
 
     rt_tree_array = (struct rt_tree_array *)NULL;
 
@@ -545,7 +659,15 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     else
 	tp = (union tree *)NULL;
 
+    bu_avs_init_empty(&old_avs);
+    if (db5_get_attributes(gedp->dbip, &old_avs, dp) == 0) {
+	db5_standardize_avs(&old_avs);
+	old_avs_valid = 1;
+    }
+
     if (comb) {
+	comb_tree_changed = !red_tree_equal(comb->tree, tp, &red_tol);
+
 	if (comb->tree) {
 	    db_free_tree(comb->tree);
 	    comb->tree = NULL;
@@ -555,17 +677,25 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	db5_standardize_avs(&avs);
 	db5_sync_attr_to_comb(comb, &avs, dp);
 	db5_sync_comb_to_attr(&avs, comb);
+	if (old_avs_valid)
+	    comb_attrs_changed = !red_avs_equal(&old_avs, &avs);
     }
 
     if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
+	bu_avs_free(&old_avs);
 	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     }
+    if (tree_changed)
+	*tree_changed = comb_tree_changed;
 
     if (db5_replace_attributes(dp, &avs, gedp->dbip))
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Failed to update attributes\n", dp->d_namep);
+    else if (attrs_changed)
+	*attrs_changed = comb_attrs_changed;
 
+    bu_avs_free(&old_avs);
     bu_avs_free(&avs);
     return BRLCAD_OK;
 }
@@ -745,6 +875,8 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
     struct bu_vls final_name = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_ged_result_str = BU_VLS_INIT_ZERO;
     int force_flag = 0;
+    int tree_changed = 0;
+    int attrs_changed = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -844,7 +976,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 
 	/* specifically avoid CHECK_READ_ONLY; above so that we can
 	 * delay checking if the geometry is read-only until here so
-	 * that red may be used to view objects.
+	 * that red may be used to inspect objects.
 	 */
 
 	if (gedp->dbip->dbi_read_only) {
@@ -891,7 +1023,8 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	}
 
 	/* reconstitute the new combination */
-	if ((ret = build_comb(gedp, tmp_dp, &final_name)) != BRLCAD_OK) {
+	if ((ret = build_comb(gedp, tmp_dp, &final_name, &tree_changed,
+		    &attrs_changed)) != BRLCAD_OK) {
 
 	    /* Something went wrong - kill the temporary comb */
 
@@ -973,10 +1106,19 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	/* save ged_result_str */
 	bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
 
-	(void)ged_exec_mv(gedp, 3, (const char **)av);
+	int mv_ret = ged_exec_mv(gedp, 3, (const char **)av);
 
 	/* restore ged_result_str */
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
+
+	if (mv_ret == BRLCAD_OK) {
+	    if (tree_changed)
+		(void)ged_event_notify_comb_tree_changed(gedp,
+			bu_vls_addr(&final_name), 1, NULL);
+	    if (attrs_changed)
+		(void)ged_event_notify_attribute_changed(gedp,
+			bu_vls_addr(&final_name), 1, NULL);
+	}
     }
     /* if we have reached cleanup by now, everything was fine */
     ret = BRLCAD_OK;

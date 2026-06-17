@@ -67,15 +67,15 @@
  *
  * In the above listing:
  * "i" refers to an integer
- * "c" is an integer representing one of the following bv_vlist commands:
+ * "c" is an integer representing one of the following vdraw commands:
  *
- * BV_VLIST_LINE_MOVE     0 / begin new line /
- * BV_VLIST_LINE_DRAW     1 / draw line /
- * BV_VLIST_POLY_START    2 / pt[] has surface normal /
- * BV_VLIST_POLY_MOVE     3 / move to first poly vertex /
- * BV_VLIST_POLY_DRAW     4 / subsequent poly vertex /
- * BV_VLIST_POLY_END      5 / last vert (repeats 1st), draw poly /
- * BV_VLIST_POLY_VERTNORM 6 / per-vertex normal, for interpolation /
+ * VDRAW_CMD_LINE_MOVE     0 / begin new line /
+ * VDRAW_CMD_LINE_DRAW     1 / draw line /
+ * VDRAW_CMD_POLY_START    2 / pt[] has surface normal /
+ * VDRAW_CMD_POLY_MOVE     3 / move to first poly vertex /
+ * VDRAW_CMD_POLY_DRAW     4 / subsequent poly vertex /
+ * VDRAW_CMD_POLY_END      5 / last vert (repeats 1st), draw poly /
+ * VDRAW_CMD_POLY_VERTNORM 6 / per-vertex normal, for interpolation /
  *
  * "x y z" refer to floating point values which represent a point or
  * normal vector. For commands 0, 1, 3, 4, and 5, they represent a
@@ -102,17 +102,124 @@
 
 #include "bu/cmd.h"
 #include "bu/interrupt.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "vmath.h"
+#include "bsg/geometry.h"
 #include "raytrace.h"
 #include "nmg.h"
 
 #include "../ged_private.h"
 
-#define REV_BU_LIST_FOR(p, structure, hp)	\
-    (p)=BU_LIST_LAST(structure, hp);	\
-       BU_LIST_NOT_HEAD(p, hp);		\
-       (p)=BU_LIST_PLAST(structure, p)
+enum vdraw_command {
+    VDRAW_CMD_LINE_MOVE = 0,
+    VDRAW_CMD_LINE_DRAW = 1,
+    VDRAW_CMD_POLY_START = 2,
+    VDRAW_CMD_POLY_MOVE = 3,
+    VDRAW_CMD_POLY_DRAW = 4,
+    VDRAW_CMD_POLY_END = 5,
+    VDRAW_CMD_POLY_VERTNORM = 6,
+    VDRAW_CMD_TRI_START = 7,
+    VDRAW_CMD_TRI_MOVE = 8,
+    VDRAW_CMD_TRI_DRAW = 9,
+    VDRAW_CMD_TRI_END = 10,
+    VDRAW_CMD_TRI_VERTNORM = 11,
+    VDRAW_CMD_POINT_DRAW = 12
+};
+
+static void
+vdraw_curve_clear(struct vd_curve *curve)
+{
+    if (!curve)
+	return;
+    curve->vdc_count = 0;
+}
+
+static void
+vdraw_curve_free(struct vd_curve *curve)
+{
+    if (!curve)
+	return;
+    if (curve->vdc_points)
+	bu_free(curve->vdc_points, "vdraw points");
+    if (curve->vdc_commands)
+	bu_free(curve->vdc_commands, "vdraw commands");
+    curve->vdc_points = NULL;
+    curve->vdc_commands = NULL;
+    curve->vdc_count = 0;
+    curve->vdc_capacity = 0;
+}
+
+static int
+vdraw_curve_reserve(struct vd_curve *curve, size_t capacity)
+{
+    if (!curve)
+	return 0;
+    if (capacity <= curve->vdc_capacity)
+	return 1;
+
+    size_t new_capacity = curve->vdc_capacity ? curve->vdc_capacity : 64;
+    while (new_capacity < capacity) {
+	if (new_capacity > ((size_t)-1) / 2)
+	    return 0;
+	new_capacity *= 2;
+    }
+
+    curve->vdc_points = (point_t *)bu_realloc(curve->vdc_points,
+	    new_capacity * sizeof(point_t), "vdraw points");
+    curve->vdc_commands = (int *)bu_realloc(curve->vdc_commands,
+	    new_capacity * sizeof(int), "vdraw commands");
+    curve->vdc_capacity = new_capacity;
+    return 1;
+}
+
+static int
+vdraw_curve_set(struct vd_curve *curve, size_t idx, int command, const point_t point)
+{
+    if (!curve || idx > curve->vdc_count)
+	return 0;
+    if (!vdraw_curve_reserve(curve, idx + 1))
+	return 0;
+    curve->vdc_commands[idx] = command;
+    VMOVE(curve->vdc_points[idx], point);
+    if (idx == curve->vdc_count)
+	curve->vdc_count++;
+    return 1;
+}
+
+static int
+vdraw_curve_insert(struct vd_curve *curve, size_t idx, int command, const point_t point)
+{
+    if (!curve || idx > curve->vdc_count)
+	return 0;
+    if (!vdraw_curve_reserve(curve, curve->vdc_count + 1))
+	return 0;
+    if (idx < curve->vdc_count) {
+	memmove(&curve->vdc_commands[idx + 1], &curve->vdc_commands[idx],
+		(curve->vdc_count - idx) * sizeof(int));
+	memmove(&curve->vdc_points[idx + 1], &curve->vdc_points[idx],
+		(curve->vdc_count - idx) * sizeof(point_t));
+    }
+    curve->vdc_commands[idx] = command;
+    VMOVE(curve->vdc_points[idx], point);
+    curve->vdc_count++;
+    return 1;
+}
+
+static int
+vdraw_curve_delete(struct vd_curve *curve, size_t idx)
+{
+    if (!curve || idx >= curve->vdc_count)
+	return 0;
+    if (idx + 1 < curve->vdc_count) {
+	memmove(&curve->vdc_commands[idx], &curve->vdc_commands[idx + 1],
+		(curve->vdc_count - idx - 1) * sizeof(int));
+	memmove(&curve->vdc_points[idx], &curve->vdc_points[idx + 1],
+		(curve->vdc_count - idx - 1) * sizeof(point_t));
+    }
+    curve->vdc_count--;
+    return 1;
+}
 
 
 /*
@@ -125,9 +232,9 @@ vdraw_write(void *data, int argc, const char *argv[])
     struct ged *gedp = (struct ged *)data;
     size_t idx;
     unsigned long uind = 0;
-    struct bv_vlist *vp, *cp;
     static const char *usage = "i|next c x y z";
-    struct bu_list *vlfree = &rt_vlfree;
+    point_t point = VINIT_ZERO;
+    int command = 0;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -144,87 +251,38 @@ vdraw_write(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     if (argv[2][0] == 'n') {
-	/* next */
-	for (REV_BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    if (vp->nused > 0) {
-		break;
-	    }
-	}
-	if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    /* we went all the way through */
-	    vp = BU_LIST_PNEXT(bv_vlist, vp);
-	    if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-		BV_GET_VLIST(vlfree, vp);
-		BU_LIST_INSERT(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
-	    }
-	}
-	if (vp->nused >= BV_VLIST_CHUNK) {
-	    vp = BU_LIST_PNEXT(bv_vlist, vp);
-	    if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-		BV_GET_VLIST(vlfree, vp);
-		BU_LIST_INSERT(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
-	    }
-	}
-	cp = vp;
-	idx = vp->nused;
+	idx = gedp->i->ged_gdp->gd_currVHead->vdc_count;
     } else if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: write index not an integer\n");
 	return BRLCAD_ERROR;
     } else {
-	/* uind holds user-specified index */
-	/* only allow one past the end */
-
-	for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    if ((size_t)uind < BV_VLIST_CHUNK) {
-		/* this is the right vlist */
-		break;
-	    }
-	    if (vp->nused == 0) {
-		break;
-	    }
-	    uind -= vp->nused;
-	}
-
-	if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    if (uind > 0) {
-		bu_vls_printf(gedp->ged_result_str, "vdraw: write out of range\n");
-		return BRLCAD_ERROR;
-	    }
-	    BV_GET_VLIST(vlfree, vp);
-	    BU_LIST_INSERT(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
-	}
-	if ((size_t)uind > vp->nused) {
+	idx = (size_t)uind;
+	if (idx > gedp->i->ged_gdp->gd_currVHead->vdc_count) {
 	    bu_vls_printf(gedp->ged_result_str, "vdraw: write out of range\n");
 	    return BRLCAD_ERROR;
 	}
-	cp = vp;
-	idx = uind;
     }
 
-    /* This should never happen. Adding this to silence covarity. */
-    if (idx >= BV_VLIST_CHUNK) {
-	bu_vls_printf(gedp->ged_result_str, "vdraw: vlist chunk size exceeded!\n");
-	return BRLCAD_ERROR;
-    }
-
-    if (sscanf(argv[3], "%d", &(cp->cmd[idx])) < 1) {
+    if (sscanf(argv[3], "%d", &command) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: cmd not an integer\n");
 	return BRLCAD_ERROR;
     }
     if (argc == 7) {
-	cp->pt[idx][0] = atof(argv[4]);
-	cp->pt[idx][1] = atof(argv[5]);
-	cp->pt[idx][2] = atof(argv[6]);
+	point[0] = atof(argv[4]);
+	point[1] = atof(argv[5]);
+	point[2] = atof(argv[6]);
     } else {
 	if (argc != 5 ||
-	    bn_decode_vect(cp->pt[idx], argv[4]) != 3) {
+	    bn_decode_vect(point, argv[4]) != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "vdraw write: wrong # args, need either x y z or {x y z}\n");
 	    return BRLCAD_ERROR;
 	}
     }
-    /* increment counter only if writing onto end */
-    if (idx == cp->nused)
-	cp->nused++;
+
+    if (!vdraw_curve_set(gedp->i->ged_gdp->gd_currVHead, idx, command, point)) {
+	bu_vls_printf(gedp->ged_result_str, "vdraw: write failed\n");
+	return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }
@@ -238,12 +296,11 @@ int
 vdraw_insert(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
-    struct bv_vlist *vp, *cp, *wp;
-    size_t i;
     size_t idx;
     unsigned long uind = 0;
     static const char *usage = "i c x y z";
-    struct bu_list *vlfree = &rt_vlfree;
+    point_t point = VINIT_ZERO;
+    int command = 0;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -264,60 +321,24 @@ vdraw_insert(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* uinds hold user specified index */
-    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	if ((size_t)uind < BV_VLIST_CHUNK) {
-	    /* this is the right vlist */
-	    break;
-	}
-	if (vp->nused == 0) {
-	    break;
-	}
-	uind -= vp->nused;
-    }
-
-    if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	if (uind > 0) {
-	    bu_vls_printf(gedp->ged_result_str, "vdraw: insert out of range\n");
-	    return BRLCAD_ERROR;
-	}
-	BV_GET_VLIST(vlfree, vp);
-	BU_LIST_INSERT(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
-    }
-    if ((size_t)uind > vp->nused) {
+    idx = (size_t)uind;
+    if (idx > gedp->i->ged_gdp->gd_currVHead->vdc_count) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: insert out of range\n");
 	return BRLCAD_ERROR;
     }
 
-
-    cp = vp;
-    idx = uind;
-
-    vp = BU_LIST_LAST(bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd));
-    vp->nused++;
-
-    while (vp != cp) {
-	for (i = vp->nused-1; i > 0; i--) {
-	    vp->cmd[i] = vp->cmd[i-1];
-	    VMOVE(vp->pt[i], vp->pt[i-1]);
-	}
-	wp = BU_LIST_PLAST(bv_vlist, vp);
-	vp->cmd[0] = wp->cmd[BV_VLIST_CHUNK-1];
-	VMOVE(vp->pt[0], wp->pt[BV_VLIST_CHUNK-1]);
-	vp = wp;
-    }
-
-    for (i = vp->nused - 1; i > idx; i--) {
-	vp->cmd[i] = vp->cmd[i-1];
-	VMOVE(vp->pt[i], vp->pt[i-1]);
-    }
-    if (sscanf(argv[3], "%d", &(vp->cmd[idx])) < 1) {
+    if (sscanf(argv[3], "%d", &command) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: cmd not an integer\n");
 	return BRLCAD_ERROR;
     }
-    vp->pt[idx][0] = atof(argv[4]);
-    vp->pt[idx][1] = atof(argv[5]);
-    vp->pt[idx][2] = atof(argv[6]);
+    point[0] = atof(argv[4]);
+    point[1] = atof(argv[5]);
+    point[2] = atof(argv[6]);
+
+    if (!vdraw_curve_insert(gedp->i->ged_gdp->gd_currVHead, idx, command, point)) {
+	bu_vls_printf(gedp->ged_result_str, "vdraw: insert failed\n");
+	return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }
@@ -331,8 +352,6 @@ int
 vdraw_delete(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
-    struct bv_vlist *vp, *wp;
-    size_t i;
     unsigned long uind = 0;
     static const char *usage = "i|last|all";
 
@@ -351,20 +370,12 @@ vdraw_delete(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     if (argv[2][0] == 'a') {
-	/* delete all */
-	for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    vp->nused = 0;
-	}
+	vdraw_curve_clear(gedp->i->ged_gdp->gd_currVHead);
 	return BRLCAD_OK;
     }
     if (argv[2][0] == 'l') {
-	/* delete last */
-	for (REV_BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    if (vp->nused > 0) {
-		vp->nused--;
-		break;
-	    }
-	}
+	if (gedp->i->ged_gdp->gd_currVHead->vdc_count)
+	    gedp->i->ged_gdp->gd_currVHead->vdc_count--;
 	return BRLCAD_OK;
     }
     if (sscanf(argv[2], "%lu", &uind) < 1) {
@@ -372,56 +383,15 @@ vdraw_delete(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	if ((size_t)uind < BV_VLIST_CHUNK) {
-	    /* this is the right vlist */
-	    break;
-	}
-	if (vp->nused == 0) {
-	    /* no point going further */
-	    break;
-	}
-	uind -= vp->nused;
-    }
-
-    /* make sure we start in a valid delete range */
-    if ((size_t)uind >= vp->nused || uind >= BV_VLIST_CHUNK) {
+    if ((size_t)uind >= gedp->i->ged_gdp->gd_currVHead->vdc_count) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: delete out of range\n", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    for (i = (size_t)uind; i < vp->nused - 1; i++) {
-	if (i >= BV_VLIST_CHUNK-1)
-	    break;
-	vp->cmd[i] = vp->cmd[i+1];
-	VMOVE(vp->pt[i], vp->pt[i+1]);
-    }
-
-    wp = BU_LIST_PNEXT(bv_vlist, vp);
-    while (BU_LIST_NOT_HEAD(wp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	if (wp->nused == 0) {
-	    break;
-	}
-
-	vp->cmd[BV_VLIST_CHUNK-1] = wp->cmd[0];
-	VMOVE(vp->pt[BV_VLIST_CHUNK-1], wp->pt[0]);
-
-	for (i = 0; i < wp->nused - 1; i++) {
-	    if (i >= BV_VLIST_CHUNK-1)
-		break;
-	    wp->cmd[i] = wp->cmd[i+1];
-	    VMOVE(wp->pt[i], wp->pt[i+1]);
-	}
-	vp = wp;
-	wp = BU_LIST_PNEXT(bv_vlist, vp);
-    }
-
-    if (vp->nused <= 0) {
-	/* this shouldn't happen */
-	bu_vls_printf(gedp->ged_result_str, "%s %s: vlist corrupt", argv[0], argv[1]);
+    if (!vdraw_curve_delete(gedp->i->ged_gdp->gd_currVHead, (size_t)uind)) {
+	bu_vls_printf(gedp->ged_result_str, "%s %s: delete failed", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
-    vp->nused--;
 
     return BRLCAD_OK;
 }
@@ -435,9 +405,7 @@ static int
 vdraw_read(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
-    struct bv_vlist *vp;
     unsigned long uind = 0;
-    int length;
     static const char *usage = "read i|color|length|name";
 
     /* must be wanting help */
@@ -465,14 +433,8 @@ vdraw_read(void *data, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
     if (argv[2][0] == 'l') {
-	/* return length of list */
-	length = 0;
-	vp = BU_LIST_FIRST(bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd));
-	while (!BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    length += vp->nused;
-	    vp = BU_LIST_PNEXT(bv_vlist, vp);
-	}
-	bu_vls_printf(gedp->ged_result_str, "%d", length);
+	bu_vls_printf(gedp->ged_result_str, "%zu",
+		gedp->i->ged_gdp->gd_currVHead->vdc_count);
 	return BRLCAD_OK;
     }
     if (sscanf(argv[2], "%lu", &uind) < 1) {
@@ -480,29 +442,294 @@ vdraw_read(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	if ((size_t)uind < BV_VLIST_CHUNK) {
-	    /* this is the right vlist */
-	    break;
-	}
-	if (vp->nused == 0) {
-	    /* no point going further */
-	    break;
-	}
-	uind -= vp->nused;
-    }
-
-    /* The comparison to BV_VLIST_CHUNK is to silence covarity */
-    if ((size_t)uind >= vp->nused || uind >= BV_VLIST_CHUNK) {
+    if ((size_t)uind >= gedp->i->ged_gdp->gd_currVHead->vdc_count) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: read out of range\n", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%d %.12e %.12e %.12e",
-		  vp->cmd[uind], vp->pt[uind][0],
-		  vp->pt[uind][1], vp->pt[uind][2]);
+		  gedp->i->ged_gdp->gd_currVHead->vdc_commands[uind],
+		  gedp->i->ged_gdp->gd_currVHead->vdc_points[uind][0],
+		  gedp->i->ged_gdp->gd_currVHead->vdc_points[uind][1],
+		  gedp->i->ged_gdp->gd_currVHead->vdc_points[uind][2]);
 
     return BRLCAD_OK;
+}
+
+
+struct vdraw_overlay_publish_geometry {
+    struct ged_draw_overlay_geometry geometry;
+    point_t *points;
+    int *commands;
+    vect_t *normals;
+    int *indices;
+};
+
+
+static void
+vdraw_overlay_publish_geometry_free(struct vdraw_overlay_publish_geometry *pg)
+{
+    if (!pg)
+	return;
+    if (pg->points)
+	bu_free(pg->points, "vdraw overlay points");
+    if (pg->commands)
+	bu_free(pg->commands, "vdraw overlay commands");
+    if (pg->normals)
+	bu_free(pg->normals, "vdraw overlay normals");
+    if (pg->indices)
+	bu_free(pg->indices, "vdraw overlay indices");
+    memset(pg, 0, sizeof(*pg));
+}
+
+
+static int
+vdraw_cmd_to_line_geometry(int command, int *geometry_cmd)
+{
+    if (!geometry_cmd)
+	return 0;
+    switch (command) {
+	case VDRAW_CMD_LINE_MOVE:
+	    *geometry_cmd = BSG_GEOMETRY_LINE_MOVE;
+	    return 1;
+	case VDRAW_CMD_LINE_DRAW:
+	    *geometry_cmd = BSG_GEOMETRY_LINE_DRAW;
+	    return 1;
+	default:
+	    return 0;
+    }
+}
+
+
+static int
+vdraw_geometry_line_set_compatible(const struct vd_curve *curve)
+{
+    if (!curve)
+	return 1;
+
+    for (size_t i = 0; i < curve->vdc_count; i++) {
+	switch (curve->vdc_commands[i]) {
+	    case VDRAW_CMD_LINE_MOVE:
+	    case VDRAW_CMD_LINE_DRAW:
+		break;
+	    default:
+		return 0;
+	}
+    }
+
+    return 1;
+}
+
+
+static int
+vdraw_geometry_point_set_compatible(const struct vd_curve *curve)
+{
+    if (!curve)
+	return 1;
+
+    for (size_t i = 0; i < curve->vdc_count; i++) {
+	if (curve->vdc_commands[i] != VDRAW_CMD_POINT_DRAW)
+	    return 0;
+    }
+
+    return 1;
+}
+
+
+static int
+vdraw_geometry_face_set_stats(const struct vd_curve *curve,
+			      size_t *point_count,
+			      size_t *index_count)
+{
+    size_t points = 0;
+    size_t indices = 0;
+    size_t face_vertices = 0;
+    int in_face = 0;
+
+    if (point_count)
+	*point_count = 0;
+    if (index_count)
+	*index_count = 0;
+    if (!curve)
+	return 0;
+
+    for (size_t i = 0; i < curve->vdc_count; i++) {
+	switch (curve->vdc_commands[i]) {
+	    case VDRAW_CMD_POLY_START:
+	    case VDRAW_CMD_TRI_START:
+	    case VDRAW_CMD_POLY_VERTNORM:
+	    case VDRAW_CMD_TRI_VERTNORM:
+		break;
+	    case VDRAW_CMD_POLY_MOVE:
+	    case VDRAW_CMD_TRI_MOVE:
+		if (in_face && face_vertices)
+		    return 0;
+		in_face = 1;
+		face_vertices = 1;
+		points++;
+		indices++;
+		break;
+	    case VDRAW_CMD_POLY_DRAW:
+	    case VDRAW_CMD_TRI_DRAW:
+		if (!in_face)
+		    return 0;
+		face_vertices++;
+		points++;
+		indices++;
+		break;
+	    case VDRAW_CMD_POLY_END:
+	    case VDRAW_CMD_TRI_END:
+		if (!in_face || face_vertices < 3)
+		    return 0;
+		indices++;
+		in_face = 0;
+		face_vertices = 0;
+		break;
+	    default:
+		return 0;
+	}
+    }
+
+    if (in_face || !points || !indices)
+	return 0;
+
+    if (point_count)
+	*point_count = points;
+    if (index_count)
+	*index_count = indices;
+    return 1;
+}
+
+
+static int
+vdraw_overlay_line_geometry_from_curve(const struct vd_curve *curve,
+				       struct vdraw_overlay_publish_geometry *pg,
+				       size_t count)
+{
+    size_t idx = 0;
+
+    pg->points = (point_t *)bu_calloc(count ? count : 1, sizeof(point_t),
+	    "vdraw overlay line points");
+    pg->commands = (int *)bu_calloc(count ? count : 1, sizeof(int),
+	    "vdraw overlay line commands");
+
+    for (size_t i = 0; curve && i < curve->vdc_count && idx < count; i++) {
+	int geometry_cmd = BSG_GEOMETRY_LINE_MOVE;
+	if (!vdraw_cmd_to_line_geometry(curve->vdc_commands[i], &geometry_cmd))
+	    continue;
+	VMOVE(pg->points[idx], curve->vdc_points[i]);
+	pg->commands[idx] = geometry_cmd;
+	idx++;
+    }
+
+    pg->geometry.kind = BSG_GEOMETRY_NODE_LINE_SET;
+    pg->geometry.points = (const point_t *)pg->points;
+    pg->geometry.point_count = idx;
+    pg->geometry.commands = pg->commands;
+    pg->geometry.command_count = idx;
+    return 1;
+}
+
+
+static int
+vdraw_overlay_point_geometry_from_curve(const struct vd_curve *curve,
+					struct vdraw_overlay_publish_geometry *pg,
+					size_t count)
+{
+    size_t idx = 0;
+
+    pg->points = (point_t *)bu_calloc(count ? count : 1, sizeof(point_t),
+	    "vdraw overlay point points");
+
+    for (size_t i = 0; curve && i < curve->vdc_count && idx < count; i++, idx++)
+	VMOVE(pg->points[idx], curve->vdc_points[i]);
+
+    pg->geometry.kind = BSG_GEOMETRY_NODE_POINT_SET;
+    pg->geometry.points = (const point_t *)pg->points;
+    pg->geometry.point_count = idx;
+    return 1;
+}
+
+
+static int
+vdraw_overlay_face_geometry_from_curve(const struct vd_curve *curve,
+				       struct vdraw_overlay_publish_geometry *pg,
+				       size_t point_count,
+				       size_t index_count)
+{
+    size_t point_idx = 0;
+    size_t index_idx = 0;
+    vect_t face_normal = VINIT_ZERO;
+    vect_t current_normal = VINIT_ZERO;
+
+    pg->points = (point_t *)bu_calloc(point_count, sizeof(point_t),
+	    "vdraw overlay face points");
+    pg->normals = (vect_t *)bu_calloc(point_count, sizeof(vect_t),
+	    "vdraw overlay face normals");
+    pg->indices = (int *)bu_calloc(index_count, sizeof(int),
+	    "vdraw overlay face indices");
+
+    for (size_t i = 0; curve && i < curve->vdc_count; i++) {
+	switch (curve->vdc_commands[i]) {
+	    case VDRAW_CMD_POLY_START:
+	    case VDRAW_CMD_TRI_START:
+		VMOVE(face_normal, curve->vdc_points[i]);
+		VMOVE(current_normal, face_normal);
+		break;
+	    case VDRAW_CMD_POLY_VERTNORM:
+	    case VDRAW_CMD_TRI_VERTNORM:
+		VMOVE(current_normal, curve->vdc_points[i]);
+		break;
+	    case VDRAW_CMD_POLY_MOVE:
+	    case VDRAW_CMD_POLY_DRAW:
+	    case VDRAW_CMD_TRI_MOVE:
+	    case VDRAW_CMD_TRI_DRAW:
+		VMOVE(pg->points[point_idx], curve->vdc_points[i]);
+		VMOVE(pg->normals[point_idx], current_normal);
+		pg->indices[index_idx++] = (int)point_idx++;
+		VMOVE(current_normal, face_normal);
+		break;
+	    case VDRAW_CMD_POLY_END:
+	    case VDRAW_CMD_TRI_END:
+		pg->indices[index_idx++] = -1;
+		break;
+	    default:
+		break;
+	}
+    }
+
+    pg->geometry.kind = BSG_GEOMETRY_NODE_INDEXED_FACE_SET;
+    pg->geometry.points = (const point_t *)pg->points;
+    pg->geometry.point_count = point_idx;
+    pg->geometry.normals = (const vect_t *)pg->normals;
+    pg->geometry.normal_count = point_idx;
+    pg->geometry.indices = pg->indices;
+    pg->geometry.index_count = index_idx;
+    return 1;
+}
+
+
+static int
+vdraw_overlay_geometry_from_curve(const struct vd_curve *curve,
+				  struct vdraw_overlay_publish_geometry *pg)
+{
+    size_t count = curve ? curve->vdc_count : 0;
+    size_t face_points = 0;
+    size_t face_indices = 0;
+
+    if (!pg)
+	return 0;
+    memset(pg, 0, sizeof(*pg));
+
+    if (vdraw_geometry_line_set_compatible(curve))
+	return vdraw_overlay_line_geometry_from_curve(curve, pg, count);
+    if (vdraw_geometry_point_set_compatible(curve))
+	return vdraw_overlay_point_geometry_from_curve(curve, pg, count);
+    if (vdraw_geometry_face_set_stats(curve, &face_points, &face_indices))
+	return vdraw_overlay_face_geometry_from_curve(curve, pg,
+		face_points, face_indices);
+
+    return 0;
 }
 
 
@@ -516,8 +743,8 @@ vdraw_send(void *data, int argc, const char *argv[])
     struct ged *gedp = (struct ged *)data;
     struct directory *dp;
     char solid_name [RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1];
+    struct vdraw_overlay_publish_geometry pg;
     int idx;
-    int real_flag;
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: missing parameter after [%s]", argv[0]);
@@ -530,20 +757,24 @@ vdraw_send(void *data, int argc, const char *argv[])
     }
 
     snprintf(solid_name, RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1, "%s%s", RT_VDRW_PREFIX, gedp->i->ged_gdp->gd_currVHead->vdc_name);
-    if ((dp = db_lookup(gedp->dbip, solid_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	real_flag = 0;
-    } else {
-	real_flag = (dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
-    }
 
-    if (real_flag) {
-	/* solid exists - don't kill */
+    /* Overlays no longer create phony db entries; refuse only if the name
+     * collides with an actual database object. */
+    if ((dp = db_lookup(gedp->dbip, solid_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	/* solid name matches a real database entry - don't overwrite */
 	bu_vls_printf(gedp->ged_result_str, "-1");
 	return BRLCAD_OK;
     }
 
     /* 0 means OK, -1 means conflict with real solid name */
-    idx = invent_solid(gedp, solid_name, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), gedp->i->ged_gdp->gd_currVHead->vdc_rgb, 1, 1.0, 0, 0);
+    ged_draw_shape_ref ref = GED_DRAW_SHAPE_REF_NULL;
+    if (!vdraw_overlay_geometry_from_curve(gedp->i->ged_gdp->gd_currVHead, &pg)) {
+	bu_vls_printf(gedp->ged_result_str, "-1");
+	return BRLCAD_OK;
+    }
+    idx = ged_draw_overlay_geometry_insert(gedp, solid_name, &pg.geometry,
+	    gedp->i->ged_gdp->gd_currVHead->vdc_rgb, 1.0, 0, 0, &ref);
+    vdraw_overlay_publish_geometry_free(&pg);
 
     bu_vls_printf(gedp->ged_result_str, "%d", idx);
 
@@ -610,10 +841,8 @@ vdraw_open(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp;
-    struct bv_vlist *vp;
     char temp_name[RT_VDRW_MAXNAME+1];
     static const char *usage = "[name]";
-    struct bu_list *vlfree = &rt_vlfree;
 
     if (argc == 2) {
 	if (gedp->i->ged_gdp->gd_currVHead) {
@@ -643,24 +872,18 @@ vdraw_open(void *data, int argc, const char *argv[])
     if (!gedp->i->ged_gdp->gd_currVHead) {
 	/* create new entry */
 	BU_GET(rcp, struct vd_curve);
+	memset(rcp, 0, sizeof(*rcp));
 	BU_LIST_APPEND(gedp->i->ged_gdp->gd_headVDraw, &(rcp->l));
 
 	bu_strlcpy(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME);
 
 	rcp->vdc_rgb = RT_VDRW_DEF_COLOR;
-	BU_LIST_INIT(&(rcp->vdc_vhd));
-	BV_GET_VLIST(vlfree, vp);
-	BU_LIST_APPEND(&(rcp->vdc_vhd), &(vp->l));
 	gedp->i->ged_gdp->gd_currVHead = rcp;
 	/* 1 means new entry */
 	bu_vls_printf(gedp->ged_result_str, "1");
 	return BRLCAD_OK;
     } else {
 	/* entry already existed */
-	if (BU_LIST_IS_EMPTY(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    BV_GET_VLIST(vlfree, vp);
-	    BU_LIST_APPEND(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
-	}
 	gedp->i->ged_gdp->gd_currVHead->vdc_name[RT_VDRW_MAXNAME] = '\0'; /*safety*/
 	/* 0 means entry already existed*/
 	bu_vls_printf(gedp->ged_result_str, "0");
@@ -680,7 +903,6 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
-    struct bu_list *vlfree = &rt_vlfree;
 
     /* must be needing help */
     if (argc < 3 || argc > 4) {
@@ -716,7 +938,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 		    gedp->i->ged_gdp->gd_currVHead = BU_LIST_LAST(vd_curve, gedp->i->ged_gdp->gd_headVDraw);
 		}
 	    }
-	    BV_FREE_VLIST(vlfree, &(rcp2->vdc_vhd));
+	    vdraw_curve_free(rcp2);
 	    BU_PUT(rcp2, struct vd_curve);
 	    return BRLCAD_OK;
 	default:

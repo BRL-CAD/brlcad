@@ -140,7 +140,7 @@ namespace GEOBRL {
     std::map<signed_quadindex, index_t> pmm_to_id_;
 
     // Maps boundary vertex index to unique vertex id.
-    vector<signed_index_t> bv_to_id_;
+    vector<signed_index_t> bsg_to_id_;
     index_t nb_vertices_;
     };
 

@@ -33,6 +33,11 @@ class QgEdPalette : public QgToolPalette
     Q_OBJECT
 
     public:
+	enum Mode {
+	    ViewMode = 0,
+	    ObjectMode = 2
+	};
+
 	QgEdPalette(int mode = 0, QWidget *pparent = 0);
 	~QgEdPalette();
 
@@ -59,4 +64,3 @@ class QgEdPalette : public QgToolPalette
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

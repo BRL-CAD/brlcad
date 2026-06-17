@@ -33,7 +33,7 @@
 #include <time.h>
 
 #include "bu/opt.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "bu/color.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -49,14 +49,12 @@ struct _ged_bot_info {
     struct ged *gedp = NULL;
     struct rt_db_internal *intern = NULL;
     struct directory *dp = NULL;
-    struct bv_vlblock *vbp = NULL;
     struct bu_color *color = NULL;
     int verbosity;
     int visualize;
     std::string solid_name;
     const struct bu_cmdtab *cmds = NULL;
     struct bu_opt_desc *gopts = NULL;
-    struct bu_list *vlfree = NULL;
 };
 
 int _bot_obj_setup(struct _ged_bot_info *gb, const char *name);

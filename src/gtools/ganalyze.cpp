@@ -37,6 +37,7 @@
 #include "bu/log.h"
 #include "bu/process.h"
 #include "bu/vls.h"
+#include "bsg/vlist.h"
 #include "raytrace.h"
 #include "analyze.h"
 
@@ -55,7 +56,7 @@ struct analyze_command_table {
 };
 
 struct analyze_command_state {
-    struct bv_vlblock *vbp;
+    struct bsg_vlblock *vbp;
     int draw_pipe;
 };
 
@@ -232,4 +233,3 @@ analyze_cleanup:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

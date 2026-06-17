@@ -30,61 +30,62 @@
 #include "qtcad/QgDockWidget.h"
 
 QgDockWidget::QgDockWidget(const QString &title, QWidget *parent)
-    : QDockWidget(title, parent)
+	: QDockWidget(title, parent)
 {
 }
 
 void
 QgDockWidget::toWindow(bool floating)
 {
-    QTCAD_SLOT("QgDockWidget::toWindow", 1);
+	QTCAD_SLOT("QgDockWidget::toWindow", 1);
 
-    if (floating) {
-	setWindowFlags(
-		Qt::CustomizeWindowHint |
-                Qt::Window |
-                Qt::WindowMinimizeButtonHint |
-                Qt::WindowMaximizeButtonHint |
-		Qt::WindowCloseButtonHint
+	if (floating) {
+		setWindowFlags(
+		        Qt::CustomizeWindowHint |
+		        Qt::Window |
+		        Qt::WindowMinimizeButtonHint |
+		        Qt::WindowMaximizeButtonHint |
+		        Qt::WindowCloseButtonHint
 		);
-	show();
-    }
+		show();
+	}
 }
 
 bool
 QgDockWidget::event(QEvent *e)
 {
-    if (e->type() == QEvent::MouseMove) {
-	moving = true;
-	return QDockWidget::event(e);
-    }
-    if (e->type() != QEvent::MouseButtonRelease)
-	return QDockWidget::event(e);
-    QMouseEvent *m_e = (QMouseEvent *)e;
-    if (moving) {
-	moving = false;
-	return QDockWidget::event(e);
-    }
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    QPoint gpos = m_e->globalPos();
-#else
-    QPoint gpos = m_e->globalPosition().toPoint();
-#endif
-    QRect trect = this->geometry();
-    if (!trect.contains(gpos))
-	return QDockWidget::event(e);
-
-    emit banner_click();
-
-    if (m) {
-	if (m->flatten_hierarchy) {
-	    setWindowTitle("Objects");
-	} else {
-	    setWindowTitle("Hierarchy");
+	if (e->type() == QEvent::MouseMove) {
+		moving = true;
+		return QDockWidget::event(e);
 	}
-    }
+	if (e->type() != QEvent::MouseButtonRelease)
+		return QDockWidget::event(e);
+	QMouseEvent *m_e = (QMouseEvent *)e;
+	if (moving) {
+		moving = false;
+		return QDockWidget::event(e);
+	}
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+	QPoint gpos = m_e->globalPos();
+#else
+	QPoint gpos = m_e->globalPosition().toPoint();
+#endif
+	QRect trect = this->geometry();
+	if (!trect.contains(gpos))
+		return QDockWidget::event(e);
 
-    return QDockWidget::event(e);
+	emit banner_click();
+
+	if (m) {
+		if (m->flattenHierarchy()) {
+			setWindowTitle("Objects");
+		}
+		else {
+			setWindowTitle("Hierarchy");
+		}
+	}
+
+	return QDockWidget::event(e);
 }
 
 /*

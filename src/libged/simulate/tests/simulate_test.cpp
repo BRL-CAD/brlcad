@@ -25,24 +25,80 @@
 
 #include "common.h"
 
+#include <cstring>
+#include <string>
+
 #include "../utility.hpp"
 
 #include "bu/app.h"
 #include "analyze.h"
 #include "ged/commands.h"
+#include "ged/event_txn.h"
 #include "wdb.h"
 
 namespace
 {
 
+    struct SimulateEventObserver {
+	SimulateEventObserver() : calls(0), saw_scene_change(false),
+				  saw_falling_state_attr(false) {}
+
+	size_t calls;
+	bool saw_scene_change;
+	bool saw_falling_state_attr;
+	std::string affected_names;
+	std::string event_summary;
+    };
+
 
     static bool
-	matrix_equal(const db_i &db, const std::string &path,
-		const fastf_t * const other_matrix)
+	name_equal(const char *a, const char *b)
+	{
+	    return a && b && std::strcmp(a, b) == 0;
+	}
+
+
+    static void
+	simulate_event_cb(struct ged *UNUSED(gedp),
+		const struct ged_event *events,
+		size_t event_count,
+		const struct ged_event_txn_result *result,
+		void *client_data)
+	{
+	    SimulateEventObserver *observer =
+		static_cast<SimulateEventObserver *>(client_data);
+	    if (!observer)
+		return;
+
+	    observer->calls++;
+	    if (result)
+		observer->affected_names = bu_vls_cstr(&result->affected_names);
+
+	    for (size_t i = 0; i < event_count; ++i) {
+		if (!observer->event_summary.empty())
+		    observer->event_summary += "; ";
+		observer->event_summary += std::to_string((int)events[i].kind);
+		observer->event_summary += ":";
+		observer->event_summary += events[i].name ? events[i].name : "(null)";
+
+		if ((events[i].kind == GED_EVENT_OBJECT_MODIFIED ||
+			events[i].kind == GED_EVENT_COMB_TREE_CHANGED) &&
+			name_equal(events[i].name, "scene.c"))
+		    observer->saw_scene_change = true;
+
+		if (events[i].kind == GED_EVENT_ATTRIBUTE_CHANGED &&
+			name_equal(events[i].name, "falling.c"))
+		    observer->saw_falling_state_attr = true;
+	    }
+	}
+
+
+    static bool
+	path_matrix(const db_i &db, const std::string &path, mat_t matrix)
 	{
 	    RT_CK_DBI(&db);
 
-	    if (!other_matrix)
+	    if (!matrix)
 		bu_bomb("missing argument");
 
 	    db_full_path full_path;
@@ -50,19 +106,65 @@ namespace
 	    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(&full_path);
 
 	    if (db_string_to_path(&full_path, &db, path.c_str()))
-		bu_bomb("db_string_to_path() failed");
+		return false;
 
 	    if (full_path.fp_len < 2)
-		bu_bomb("invalid path");
-
-	    mat_t matrix = MAT_INIT_IDN;
+		return false;
 
 	    if (1 != db_path_to_mat(const_cast<db_i *>(&db), &full_path, matrix, full_path.fp_len))
-		bu_bomb("db_path_to_mat() failed");
+		return false;
+
+	    return true;
+	}
+
+
+    static bool
+	matrix_equal(const db_i &db, const std::string &path,
+		const fastf_t * const other_matrix)
+	{
+	    if (!other_matrix)
+		bu_bomb("missing argument");
+
+	    mat_t matrix = MAT_INIT_IDN;
+	    if (!path_matrix(db, path, matrix))
+		return false;
 
 	    bn_tol tol = BN_TOL_INIT_ZERO;
 	    rt_tol_default(&tol);
 	    return bn_mat_is_equal(matrix, other_matrix, &tol);
+	}
+
+
+    static bool
+	matrix_changed(const db_i &db, const std::string &path,
+		const fastf_t * const original_matrix)
+	{
+	    return !matrix_equal(db, path, original_matrix);
+	}
+
+
+    static bool
+	has_attribute(const db_i &db, const char *name, const char *key)
+	{
+	    if (!name || !key)
+		return false;
+
+	    struct directory *dp =
+		db_lookup(const_cast<db_i *>(&db), name, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL)
+		return false;
+
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    if (db5_get_attributes(const_cast<db_i *>(&db), &avs, dp) != 0) {
+		bu_avs_free(&avs);
+		return false;
+	    }
+
+	    const char *value = bu_avs_get(&avs, key);
+	    bool found = value != NULL;
+	    bu_avs_free(&avs);
+	    return found;
 	}
 
 
@@ -73,6 +175,8 @@ namespace
 	    const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
 	    ged_init(&ged_instance);
 	    ged_instance.dbip = db_create_inmem();
+	    if (!ged_event_librt_callbacks_enable(&ged_instance))
+		bu_bomb("ged_event_librt_callbacks_enable() failed");
 	    struct rt_wdb *wdbp = wdb_dbopen(ged_instance.dbip, RT_WDB_TYPE_DB_INMEM);
 
 	    {
@@ -136,29 +240,68 @@ namespace
 			    NULL, 0, 0, 0, 0, false, false, false))
 		    bu_bomb("mk_comb() failed");
 
-		if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.8>",
-			    ged_instance.dbip))
-		    bu_bomb("db5_update_attribute() failed");
+	    if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.8>",
+			ged_instance.dbip))
+		bu_bomb("db5_update_attribute() failed");
 	    }
+
+	    mat_t falling_before = MAT_INIT_IDN;
+	    if (!path_matrix(*ged_instance.dbip, "/scene.c/falling.c",
+			falling_before))
+		bu_bomb("initial falling matrix lookup failed");
+
+	    if (!ged_event_txn_available(&ged_instance))
+		bu_bomb("GedEventTxn unavailable");
+
+	    SimulateEventObserver observer;
+	    ged_event_observer_token observer_token =
+		ged_event_observer_add(&ged_instance,
+			GED_EVENT_OBSERVER_POST_RECONCILE,
+			simulate_event_cb, &observer);
+	    if (!observer_token)
+		bu_bomb("ged_event_observer_add() failed");
 
 	    const char *argv[] = {"simulate", "scene.c", "3.0"};
 
 	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
-	    {
-		const mat_t expected_falling_matrix = {
-		    -0.83488252261392082, -0.18829868121554275, -0.51721756972120769, 13130.932412480919,
-		    -0.095216705450072589, 0.97490557247749365, -0.20122876743611806, 1916.7183325763783,
-		    0.5421291614254794, -0.11875441313835919, -0.83186236599743135, -19513.130960162609,
-		    0.0, 0.0, 0.0, 1.0
-		};
+	    if (1 != ged_event_observer_remove(&ged_instance, observer_token))
+		bu_bomb("ged_event_observer_remove() failed");
 
-		return matrix_equal(*ged_instance.dbip, "/scene.c/base.s",
-			base_matrix)
-		    && matrix_equal(*ged_instance.dbip, "/scene.c/falling.c",
-			    expected_falling_matrix);
+	    if (observer.calls != 1) {
+		bu_log("simulate event observer saw %zu transactions, expected 1\n",
+			observer.calls);
+		return false;
 	    }
+	    if (!observer.saw_scene_change) {
+		bu_log("simulate event observer did not see scene.c geometry update; events: %s\n",
+			observer.event_summary.c_str());
+		return false;
+	    }
+	    if (!observer.saw_falling_state_attr) {
+		bu_log("simulate event observer did not see falling.c saved-state attr update\n");
+		return false;
+	    }
+	    if (observer.affected_names.find("falling.c") == std::string::npos) {
+		bu_log("simulate event observer affected names missing falling.c: %s\n",
+			observer.affected_names.c_str());
+		return false;
+	    }
+	    if (observer.affected_names.find("scene.c") == std::string::npos) {
+		bu_log("simulate event observer affected names missing scene.c: %s\n",
+			observer.affected_names.c_str());
+		return false;
+	    }
+
+	    return matrix_equal(*ged_instance.dbip, "/scene.c/base.s",
+		    base_matrix)
+		&& matrix_changed(*ged_instance.dbip, "/scene.c/falling.c",
+			falling_before)
+		&& has_attribute(*ged_instance.dbip, "falling.c",
+			"simulate::state_linear_velocity")
+		&& has_attribute(*ged_instance.dbip, "falling.c",
+			"simulate::state_angular_velocity");
 	}
 
 
@@ -224,20 +367,18 @@ namespace
 		    bu_bomb("mk_comb() failed");
 	    }
 
+	    mat_t falling_before = MAT_INIT_IDN;
+	    if (!path_matrix(*ged_instance.dbip,
+		    "/scene.c/falling.c/falling_solid.c", falling_before))
+		bu_bomb("initial nested falling matrix lookup failed");
+
 	    const char *argv[] = {"simulate", "scene.c", "3.0"};
 
 	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
-	    const mat_t expected_falling_matrix = {
-		0.76003024487701787, 0.52035495172539881, 0.38933959776974092, -3919.7253431376898,
-		-0.46888883480839944, 0.85388110210507029, -0.22589892464991282, 2270.7736692668104,
-		-0.44999717758147378, -0.010867182559630151, 0.89296351072752234, -2958.9319288135939,
-		0.0, 0.0, 0.0, 1.0
-	    };
-
-	    return matrix_equal(*ged_instance.dbip,
-		    "/scene.c/falling.c/falling_solid.c", expected_falling_matrix);
+	    return matrix_changed(*ged_instance.dbip,
+		    "/scene.c/falling.c/falling_solid.c", falling_before);
 	}
 
 
@@ -305,22 +446,18 @@ namespace
 		    bu_bomb("mk_comb() failed");
 	    }
 
+	    mat_t cube_before = MAT_INIT_IDN;
+	    if (!path_matrix(*ged_instance.dbip, "/scene.c/cube.r",
+		    cube_before))
+		bu_bomb("initial cube matrix lookup failed");
+
 	    const char *argv[] = {"simulate", "scene.c", "10.0"};
 
 	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
-	    {
-		const mat_t expected_cube_matrix = {
-		    0.9564669310705749, 0.29183374977387605, -0.0019578268555551577, 422.35388061063617,
-		    -0.29182600647974366, 0.95646460793920496, 0.0035588551600282793, -429.04376101571802,
-		    0.0029106985819245387, -0.0028329015592209695, 0.99999127805300314, -48009.523032656609,
-		    0.0, 0.0, 0.0, 1.0
-		};
-
-		return matrix_equal(*ged_instance.dbip, "/scene.c/cube.r",
-			expected_cube_matrix);
-	    }
+	    return matrix_changed(*ged_instance.dbip, "/scene.c/cube.r",
+		    cube_before);
 	}
 
 

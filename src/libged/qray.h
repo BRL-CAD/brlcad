@@ -52,18 +52,9 @@ struct qray_fmt_data {
 
 GED_EXPORT extern struct qray_fmt_data def_qray_fmt_data[];
 
-struct qray_dataList {
-    struct bu_list l;
-    fastf_t x_in;
-    fastf_t y_in;
-    fastf_t z_in;
-    fastf_t los;
-};
-
 /* defined in qray.c */
 GED_EXPORT extern void qray_init(struct ged_drawable *gdp);
 GED_EXPORT extern void qray_free(struct ged_drawable *gdp);
-GED_EXPORT extern void qray_data_to_vlist(struct ged *gdp, struct bv_vlblock *vbp, struct qray_dataList *headp, vect_t dir, int do_overlaps);
 
 
 __END_DECLS

@@ -32,9 +32,50 @@
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "rt/geom.h"
-#include "bv/plot3.h"
+#include "bsg/feature.h"
+#include "bsg/plot3.h"
 
 #include "../ged_private.h"
+
+struct bot_fuse_line_data {
+    point_t *points;
+    size_t count;
+    size_t capacity;
+};
+
+static int
+bot_fuse_line_append(struct bot_fuse_line_data *lines, const point_t a, const point_t b)
+{
+    if (!lines)
+	return 0;
+
+    if (lines->count + 2 > lines->capacity) {
+	size_t ncap = lines->capacity ? lines->capacity * 2 : 64;
+	while (ncap < lines->count + 2)
+	    ncap *= 2;
+	lines->points = (point_t *)bu_realloc(lines->points,
+		ncap * sizeof(point_t), "bot_fuse line points");
+	lines->capacity = ncap;
+    }
+
+    VMOVE(lines->points[lines->count], a);
+    VMOVE(lines->points[lines->count + 1], b);
+    lines->count += 2;
+    return 1;
+}
+
+static void
+bot_fuse_lines_free(struct bot_fuse_line_data *lines)
+{
+    if (!lines)
+	return;
+
+    if (lines->points)
+	bu_free(lines->points, "bot_fuse line points");
+    lines->points = NULL;
+    lines->count = 0;
+    lines->capacity = 0;
+}
 
 
 static size_t
@@ -46,8 +87,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
     int done;
     point_t pt1, pt2;
     size_t i, cnt;
-    struct bv_vlblock *vbp = NULL;
-    struct bu_list *vhead = NULL;
+    struct bot_fuse_line_data lines = {NULL, 0, 0};
     struct bu_ptbl faces;
     struct bu_vls plot_file_name = BU_VLS_INIT_ZERO;
     struct edgeuse *eu = NULL;
@@ -60,11 +100,6 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
     if (out_type < 0 || out_type > 2) {
 	bu_log("Internal error, open edge test failed.\n");
 	return 0;
-    }
-
-    if (out_type == 1) {
-	vbp = bv_vlblock_init(vlfree, 32);
-	vhead = bv_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
     }
 
     bu_ptbl_init(&faces, 64, "faces buffer");
@@ -99,16 +134,16 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 			    VMOVE(pt1, eu->vu_p->v_p->vg_p->coord);
 			    VMOVE(pt2, eu->eumate_p->vu_p->v_p->vg_p->coord);
 			    if (out_type == 1) {
-				BV_ADD_VLIST(vbp->free_vlist_hd, vhead, pt1, BV_VLIST_LINE_MOVE);
-				BV_ADD_VLIST(vbp->free_vlist_hd, vhead, pt2, BV_VLIST_LINE_DRAW);
+				(void)bot_fuse_line_append(&lines, pt1, pt2);
 			    } else if (out_type == 2) {
 				if (!plotfp) {
 				    bu_vls_sprintf(&plot_file_name, "%s.%p.pl", name, (void *)magic_p);
 				    plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
 				    if (plotfp == (FILE *)NULL) {
-					bu_vls_free(&plot_file_name);
 					bu_log("Error, unable to create plot file (%s), open edge test failed.\n",
 					       bu_vls_addr(&plot_file_name));
+					bu_vls_free(&plot_file_name);
+					bot_fuse_lines_free(&lines);
 					return 0;
 				    }
 				}
@@ -127,16 +162,21 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 
     if (out_type == 1) {
 	/* Add overlay */
-	if (gedp->new_cmd_forms) {
+	if (gedp->ged_gvp) {
 	    struct bu_vls nroot = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&nroot, "bot_fuse::%s", name);
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));
+	    struct bsg_view *view = gedp->ged_gvp;
+	    struct bsg_feature_style style = BSG_FEATURE_STYLE_INIT;
+	    style.color_valid = 1;
+	    VSET(style.color, 255, 255, 0);
+	    if (lines.count)
+		(void)bsg_feature_replace_lines(view, bu_vls_cstr(&nroot), 0,
+			(const point_t *)lines.points, lines.count, &style);
+	    else
+		(void)bsg_feature_remove(view, bu_vls_cstr(&nroot));
 	    bu_vls_free(&nroot);
-	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
 	}
-	bv_vlblock_free(vbp);
+	bot_fuse_lines_free(&lines);
 	bu_log("Showing open edges...\n");
     } else if (out_type == 2) {
 	if (plotfp) {
@@ -146,6 +186,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 	}
     }
     bu_ptbl_free(&faces);
+    bot_fuse_lines_free(&lines);
 
     return cnt;
 }

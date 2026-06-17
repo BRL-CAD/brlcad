@@ -29,7 +29,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     libbrep
     libbg
     libnmg
-    libbv
+    libbsg
     libbn
     libbu
   )

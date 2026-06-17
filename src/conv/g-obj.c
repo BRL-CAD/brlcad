@@ -43,6 +43,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "rt/vlist.h"
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4

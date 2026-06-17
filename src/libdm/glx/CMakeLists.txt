@@ -13,7 +13,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
     # Since ogl uses an X11 OpenGL and that may differ from the overall standard
     # system OpenGL in use, build in the libdmgl logic rather than risking
     # conflicting OpenGL linkages.
-    set(OGL_SRCS ${OGL_SRCS} ../dm-gl.c)
+    set(OGL_SRCS ${OGL_SRCS} ../dm-gl.c ../dm-gl_lod.cpp)
 
     include_directories(
       ${CMAKE_CURRENT_SOURCE_DIR}

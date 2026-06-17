@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "rt/geom.h"
 #include "raytrace.h"
@@ -39,18 +40,17 @@
 
 #include "./ged_private.h"
 
-C_DECL int
-draw_points(struct bv_scene_obj *s)
+int
+ged_draw_scene_ref_eval_points(bsg_scene_ref ref)
 {
-    if (!s)
+    if (bsg_scene_ref_is_null(ref))
 	return BRLCAD_OK; /* nothing to do is fine */
 
-    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    struct ged_draw_source_state *d = ged_draw_scene_ref_source_data(ref);
     if (!d)
 	return BRLCAD_OK; /* nothing to do is fine */
 
-    struct db_full_path *fp = (struct db_full_path *)s->s_path;
-    struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
+    struct directory *dp = ged_draw_scene_ref_leaf_dp(ref);
     if (!dp)
 	return BRLCAD_OK; /* nothing to do is fine */
 
@@ -58,7 +58,23 @@ draw_points(struct bv_scene_obj *s)
     if (rt_db_get_internal(&intern, dp, d->dbip, NULL) < 0)
 	return BRLCAD_ERROR;
 
-    int ret = rt_sample_pnts(s, &intern);
+    struct rt_primitive_indexed_face_set face_set;
+    memset(&face_set, 0, sizeof(face_set));
+
+    int ret = rt_obj_sampled_face_set(&face_set, &intern);
+    if (ret == BRLCAD_OK) {
+	if (!ged_draw_scene_ref_publish_indexed_face_set(ref,
+		(const point_t *)face_set.points, face_set.point_count,
+		(const vect_t *)face_set.normals, face_set.normal_count,
+		face_set.indices, face_set.index_count))
+	    ret = BRLCAD_ERROR;
+    }
+    if (face_set.points)
+	bu_free(face_set.points, "sample point face-set points");
+    if (face_set.normals)
+	bu_free(face_set.normals, "sample point face-set normals");
+    if (face_set.indices)
+	bu_free(face_set.indices, "sample point face-set indices");
 
     rt_db_free_internal(&intern);
 

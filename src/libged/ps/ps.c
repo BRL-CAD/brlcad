@@ -35,6 +35,10 @@
 #include "bn.h"
 #include "bg/clip.h"
 
+#include "bsg/export.h"
+#include "bsg/render.h"
+
+#include "ged/bsg_ged_draw.h"
 #include "../ged_private.h"
 
 static void
@@ -88,146 +92,113 @@ NEWPG\n\
 #define PS_COORD(_x) ((int)((_x)+2048))
 #define PS_COLOR(_c) ((_c)*(1.0/255.0))
 
-static void
-ps_draw_solid(fastf_t perspective, FILE *fp, struct bv_scene_obj *sp, matp_t psmat)
+struct ps_segment_data {
+    fastf_t perspective;
+    FILE *fp;
+    matp_t psmat;
+    fastf_t delta;
+};
+
+static int
+ps_project_segment(const point_t a, const point_t b, matp_t psmat, fastf_t perspective, fastf_t delta, vect_t start, vect_t fin)
 {
-    static vect_t last;
+    if (perspective > 0) {
+	fastf_t dist_a = VDOT(a, &psmat[12]) + psmat[15];
+	fastf_t dist_b = VDOT(b, &psmat[12]) + psmat[15];
+	vect_t diff;
+
+	if (dist_a <= 0.0 && dist_b <= 0.0)
+	    return 0;
+
+	VSUB2(diff, b, a);
+	if (dist_a <= 0.0) {
+	    fastf_t alpha = (-dist_a + delta) / (dist_b - dist_a);
+	    point_t tmp_pt;
+	    VJOIN1(tmp_pt, a, alpha, diff);
+	    MAT4X3PNT(start, psmat, tmp_pt);
+	} else {
+	    MAT4X3PNT(start, psmat, a);
+	}
+
+	if (dist_b <= 0.0) {
+	    fastf_t alpha = (dist_a - delta) / (dist_a - dist_b);
+	    point_t tmp_pt;
+	    VJOIN1(tmp_pt, a, alpha, diff);
+	    MAT4X3PNT(fin, psmat, tmp_pt);
+	} else {
+	    MAT4X3PNT(fin, psmat, b);
+	}
+	return 1;
+    }
+
+    MAT4X3PNT(start, psmat, a);
+    MAT4X3PNT(fin, psmat, b);
+    return 1;
+}
+
+static int
+ps_draw_segment_cb(const point_t a, const point_t b, void *data)
+{
+    struct ps_segment_data *psd = (struct ps_segment_data *)data;
     point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
     point_t clipmax = {1.0, 1.0, MAX_FASTF};
-    struct bv_vlist *tvp;
-    point_t *pt_prev=NULL;
-    fastf_t dist_prev=1.0;
-    fastf_t dist;
-    struct bv_vlist *vp = (struct bv_vlist *)&sp->s_vlist;
-    fastf_t delta;
+    vect_t start;
+    vect_t fin;
+
+    if (!psd || !psd->fp || !psd->psmat)
+	return 0;
+    if (!ps_project_segment(a, b, psd->psmat, psd->perspective, psd->delta, start, fin))
+	return 1;
+    if (bg_ray_vclip(start, fin, clipmin, clipmax) == 0)
+	return 1;
+
+    fprintf(psd->fp,
+	    "newpath %d %d moveto %d %d lineto stroke\n",
+	    PS_COORD(start[0] * 2047),
+	    PS_COORD(start[1] * 2047),
+	    PS_COORD(fin[0] * 2047),
+	    PS_COORD(fin[1] * 2047));
+
+    return 1;
+}
+
+static void
+ps_draw_record(fastf_t perspective, FILE *fp, const struct bsg_export_record *rec, matp_t psmat)
+{
+    struct ps_segment_data psd;
+
+    if (!rec)
+	return;
+    if (!bsg_export_record_has_segments(rec))
+	return;
 
     fprintf(fp, "%f %f %f setrgbcolor\n",
-            PS_COLOR(sp->s_color[0]),
-            PS_COLOR(sp->s_color[1]),
-            PS_COLOR(sp->s_color[2]));
+            PS_COLOR(rec->color[0]),
+            PS_COLOR(rec->color[1]),
+            PS_COLOR(rec->color[2]));
 
     /* delta is used in clipping to insure clipped endpoint is slightly
      * in front of eye plane (perspective mode only).
      * This value is a SWAG that seems to work OK.
      */
-    delta = psmat[15]*0.0001;
-    if (delta < 0.0)
-        delta = -delta;
-    if (delta < SQRT_SMALL_FASTF)
-        delta = SQRT_SMALL_FASTF;
+    psd.delta = psmat[15]*0.0001;
+    if (psd.delta < 0.0)
+	psd.delta = -psd.delta;
+    if (psd.delta < SQRT_SMALL_FASTF)
+	psd.delta = SQRT_SMALL_FASTF;
+    psd.perspective = perspective;
+    psd.fp = fp;
+    psd.psmat = psmat;
 
-    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
-        size_t i;
-        size_t nused = tvp->nused;
-        int *cmd = tvp->cmd;
-        point_t *pt = tvp->pt;
-        for (i = 0; i < nused; i++, cmd++, pt++) {
-            static vect_t start, fin;
-            switch (*cmd) {
-                case BV_VLIST_POLY_START:
-                case BV_VLIST_POLY_VERTNORM:
-                case BV_VLIST_TRI_START:
-                case BV_VLIST_TRI_VERTNORM:
-                    continue;
-                case BV_VLIST_POLY_MOVE:
-                case BV_VLIST_LINE_MOVE:
-                case BV_VLIST_TRI_MOVE:
-                    /* Move, not draw */
-                    if (perspective > 0) {
-                        /* cannot apply perspective transformation to
-                         * points behind eye plane!!!!
-                         */
-                        dist = VDOT(*pt, &psmat[12]) + psmat[15];
-                        if (dist <= 0.0) {
-                            pt_prev = pt;
-                            dist_prev = dist;
-                            continue;
-                        } else {
-                            MAT4X3PNT(last, psmat, *pt);
-                            dist_prev = dist;
-                            pt_prev = pt;
-                        }
-                    } else
-                        MAT4X3PNT(last, psmat, *pt);
-                    continue;
-                case BV_VLIST_POLY_DRAW:
-                case BV_VLIST_POLY_END:
-                case BV_VLIST_LINE_DRAW:
-                case BV_VLIST_TRI_DRAW:
-		case BV_VLIST_TRI_END:
-                    /* draw */
-                    if (perspective > 0) {
-                        /* cannot apply perspective transformation to
-                         * points behind eye plane!!!!
-                         */
-                        dist = VDOT(*pt, &psmat[12]) + psmat[15];
-                        if (dist <= 0.0) {
-                            if (dist_prev <= 0.0) {
-                                /* nothing to plot */
-                                dist_prev = dist;
-                                pt_prev = pt;
-                                continue;
-                            } else {
-                                if (pt_prev) {
-				    fastf_t alpha;
-				    vect_t diff;
-				    point_t tmp_pt;
-
-				    /* clip this end */
-				    VSUB2(diff, *pt, *pt_prev);
-				    alpha = (dist_prev - delta) / (dist_prev - dist);
-				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				    MAT4X3PNT(fin, psmat, tmp_pt);
-                                }
-                            }
-                        } else {
-                            if (dist_prev <= 0.0) {
-                                if (pt_prev) {
-				    fastf_t alpha;
-				    vect_t diff;
-				    point_t tmp_pt;
-
-				    /* clip other end */
-				    VSUB2(diff, *pt, *pt_prev);
-				    alpha = (-dist_prev + delta) / (dist - dist_prev);
-				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				    MAT4X3PNT(last, psmat, tmp_pt);
-				    MAT4X3PNT(fin, psmat, *pt);
-                                }
-                            } else {
-                                MAT4X3PNT(fin, psmat, *pt);
-                            }
-                        }
-                    } else
-                        MAT4X3PNT(fin, psmat, *pt);
-                    VMOVE(start, last);
-                    VMOVE(last, fin);
-                    break;
-            }
-
-            if (bg_ray_vclip(start, fin, clipmin, clipmax) == 0)
-                continue;
-
-            fprintf(fp,
-                    "newpath %d %d moveto %d %d lineto stroke\n",
-                    PS_COORD(start[0] * 2047),
-                    PS_COORD(start[1] * 2047),
-                    PS_COORD(fin[0] * 2047),
-                    PS_COORD(fin[1] * 2047));
-        }
-    }
+    (void)bsg_export_record_foreach_segment(rec, ps_draw_segment_cb, &psd);
 }
 
-
 static void
-ps_draw_body(struct bu_list *hdlp, FILE *fp, mat_t model2view, fastf_t perspective, vect_t eye_pos)
+ps_draw_body(struct ged *gedp, FILE *fp, mat_t model2view, fastf_t perspective, vect_t eye_pos)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
     mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
-    struct bv_scene_obj *sp;
 
     mat = model2view;
 
@@ -252,16 +223,17 @@ ps_draw_body(struct bu_list *hdlp, FILE *fp, mat_t model2view, fastf_t perspecti
         mat = newmat;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+    struct bsg_export_request request;
+    bsg_export_request_init(&request, gedp->ged_gvp);
+    request.query_flags = BSG_EXPORT_QUERY_VISIBLE_ONLY;
+    request.render_flags = BSG_RENDER_FLAG_VISIBLE_ONLY | BSG_RENDER_FLAG_PAYLOAD_PREPARE;
+    struct bsg_export_result *result = bsg_export_query(&request);
+    if (!result)
+	return;
 
-        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-            ps_draw_solid(perspective, fp, sp, mat);
-        }
-
-        gdlp = next_gdlp;
-    }
+    for (size_t i = 0; i < bsg_export_result_count(result); i++)
+	ps_draw_record(perspective, fp, bsg_export_result_get(result, i), mat);
+    bsg_export_result_free(result);
 }
 
 
@@ -285,12 +257,12 @@ ps_draw_footer(FILE *fp)
 
 
 static void
-dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue)
+dl_ps(struct ged *gedp, FILE *fp, int border, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue)
 {
     ps_draw_header(fp, font, title, creator, linewidth, scale, xoffset, yoffset);
     if (border)
 	ps_draw_border(fp, red, green, blue);
-    ps_draw_body(hdlp, fp, model2view, perspective, eye_pos);
+    ps_draw_body(gedp, fp, model2view, perspective, eye_pos);
     ps_draw_footer(fp);
 
 }
@@ -436,7 +408,7 @@ ged_ps_core(struct ged *gedp, int argc, const char *argv[])
 	goto bad;
     }
 
-    dl_ps(gedp->i->ged_gdp->gd_headDisplay, fp, border, bu_vls_addr(&font), bu_vls_addr(&title), bu_vls_addr(&creator), linewidth, scale, xoffset, yoffset, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_perspective, gedp->ged_gvp->gv_eye_pos, border_red, border_green, border_blue);
+    dl_ps(gedp, fp, border, bu_vls_addr(&font), bu_vls_addr(&title), bu_vls_addr(&creator), linewidth, scale, xoffset, yoffset, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_perspective, gedp->ged_gvp->gv_eye_pos, border_red, border_green, border_blue);
 
     fclose(fp);
 

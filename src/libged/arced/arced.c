@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 int
@@ -122,6 +123,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	goto fail;
     }
+    (void)ged_event_notify_comb_tree_changed(gedp, dp->d_namep, 1, NULL);
     db_free_1anim(anp);
     return BRLCAD_OK;
 

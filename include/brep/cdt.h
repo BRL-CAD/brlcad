@@ -31,7 +31,7 @@
 
 #include "common.h"
 
-#include "bv/vlist.h"
+#include "bu/vls.h"
 #include "bn/tol.h"
 #include "bg/defines.h"
 #include "brep/defines.h"
@@ -40,6 +40,7 @@ __BEGIN_DECLS
 
 /* Container that holds the state of a triangulation */
 struct ON_Brep_CDT_State;
+struct bsg_line_layer;
 
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -82,19 +83,17 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s, int face_cnt, int *faces);
 extern BREP_EXPORT int
 ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s);
 
-/* Construct a vlist plot from the tessellation.  Modes are:
+/* Append a typed line-layer plot from the tessellation.  Modes are:
  *
- * 0 - shaded 3D triangles
+ * 0 - 3D triangle preview
  * 1 - 3D triangle wireframe
  * 2 - 2D triangle wireframe (from parametric space)
  *
- * Returns 0 if vlist was successfully generated, else -1
+ * Returns 0 if the plot was successfully generated, else -1
  */
 extern BREP_EXPORT int
-ON_Brep_CDT_VList(
-    struct bv_vlblock *vbp,
-    struct bu_list *vlfree,
-    struct bu_color *c,
+ON_Brep_CDT_Plot(
+    struct bsg_line_layer *layer,
     int mode,
     struct ON_Brep_CDT_State *s);
 
@@ -139,9 +138,8 @@ ON_Brep_CDT_Mesh(
 extern BREP_EXPORT int
 brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-	const ON_Brep *brep, struct bu_list *p_vhead,
-	struct bv_vlblock *vbp, struct bu_list *vlfree,
-      	int index, int plottype, int num_points);
+	const ON_Brep *brep, struct bsg_line_layer *layer,
+	int index, int plottype, int num_points);
 
 /* Routine to capture the triangles from the fast CDT process
  * for caching */

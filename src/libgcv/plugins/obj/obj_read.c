@@ -54,7 +54,7 @@
 #include "wdb.h"
 #include "bu/sort.h"
 #include "bu/units.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "obj_parser.h"
 #include "tri_face.h"
 

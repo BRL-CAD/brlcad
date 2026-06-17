@@ -37,6 +37,7 @@
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
+#include "ged/bsg_ged_draw.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -49,9 +50,11 @@
 void
 mged_color_soltab(struct mged_state *s)
 {
-    dl_color_soltab((struct bu_list *)ged_dl(s->gedp), s->gedp->dbip);
-    s->update_views = 1;		/* re-write control list with new colors */
-    dm_set_dirty(DMP, 1);
+    struct ged_draw_transaction refresh =
+	ged_draw_transaction_make(GED_DRAW_TXN_REFRESH_MATERIAL_COLORS, NULL);
+    ged_draw_apply_transaction(s->gedp, &refresh, NULL);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);		/* re-write control list with new colors */
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 }
 
 

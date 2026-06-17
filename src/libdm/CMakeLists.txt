@@ -30,7 +30,6 @@ set(
   view.c
   vers.c
 )
-set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 set_property(
   SOURCE dm_init.cpp
   APPEND

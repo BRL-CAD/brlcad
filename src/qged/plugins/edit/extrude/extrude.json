@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.edit.extrude",
+    "displayName": "Extrude Edit",
+    "category": "qged.object",
+    "iconName": ":extrude.svg",
+    "sortKey": 1100,
+    "requiresOpenDb": true,
+    "requiresView": true,
+    "description": "Preview and edit extrude primitives in the active database.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

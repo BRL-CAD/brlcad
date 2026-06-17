@@ -47,6 +47,8 @@
 #include "bg/chull.h"
 #include "bg/pca.h"
 #include "bg/trimesh.h"
+#include "bsg/feature.h"
+#include "bsg/geometry.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -656,20 +658,6 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-static void
-_bot_vlblock_plot(struct ged *gedp, struct bv_vlblock *vbp, const char *sname)
-{
-    struct bview *view = gedp->ged_gvp;
-    if (gedp->new_cmd_forms) {
-	struct bu_vls nroot = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&nroot, "bot::%s", sname);
-	bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));
-	bu_vls_free(&nroot);
-    } else {
-	_ged_cvt_vlblock_to_solids(gedp, vbp, sname, 0);
-    }
-}
-
 extern "C" int
 _bot_cmd_plot(void *bs, int argc, const char **argv)
 {
@@ -683,8 +671,6 @@ _bot_cmd_plot(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
     struct bu_color *color = gb->color;
-    struct bv_vlblock *vbp = gb->vbp;
-    struct bu_list *vlfree = gb->vlfree;
 
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
@@ -702,21 +688,50 @@ _bot_cmd_plot(void *bs, int argc, const char **argv)
 	bu_color_to_rgb_chars(color, rgb);
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+    size_t point_count = elements.size() * 4;
+    point_t *points = NULL;
+    int *cmds = NULL;
+    if (point_count) {
+	points = (point_t *)bu_calloc(point_count, sizeof(point_t), "bot face plot points");
+	cmds = (int *)bu_calloc(point_count, sizeof(int), "bot face plot commands");
+    }
 
-    struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-
+    size_t pi = 0;
     std::set<int>::iterator f_it;
     for (f_it = elements.begin(); f_it != elements.end(); ++f_it) {
 	point_t v[3];
 	for (int i = 0; i < 3; i++)
-          VMOVE(v[i], &bot->vertices[bot->faces[*f_it*3+i]*3]);
-	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+	    VMOVE(v[i], &bot->vertices[bot->faces[*f_it*3+i]*3]);
+	VMOVE(points[pi], v[0]);
+	cmds[pi++] = BSG_GEOMETRY_LINE_MOVE;
+	VMOVE(points[pi], v[1]);
+	cmds[pi++] = BSG_GEOMETRY_LINE_DRAW;
+	VMOVE(points[pi], v[2]);
+	cmds[pi++] = BSG_GEOMETRY_LINE_DRAW;
+	VMOVE(points[pi], v[0]);
+	cmds[pi++] = BSG_GEOMETRY_LINE_DRAW;
     }
 
-    _bot_vlblock_plot(gb->gedp, vbp, "_bot_face_plot");
+    if (gb->gedp->ged_gvp) {
+	struct bu_vls nroot = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&nroot, "bot::%s", "_bot_face_plot");
+	struct bsg_view *view = gb->gedp->ged_gvp;
+	(void)bsg_feature_remove(view, bu_vls_cstr(&nroot));
+	if (point_count) {
+	    bsg_feature_ref ref = bsg_feature_create_lines(view, bu_vls_cstr(&nroot), 0);
+	    if (!bsg_feature_ref_is_null(ref)) {
+		(void)bsg_feature_points_replace(ref, BSG_FEATURE_LINES,
+			(const point_t *)points, cmds, point_count);
+		bsg_feature_set_color(ref, rgb[0], rgb[1], rgb[2]);
+	    }
+	}
+	bu_vls_free(&nroot);
+    }
+
+    if (points)
+	bu_free(points, "bot face plot points");
+    if (cmds)
+	bu_free(cmds, "bot face plot commands");
 
     return BRLCAD_OK;
 }
@@ -1318,7 +1333,6 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     gb.cmds = _bot_cmds;
     gb.verbosity = 0;
     gb.visualize = 0;
-    gb.vlfree = &rt_vlfree;
     struct bu_color *color = NULL;
 
     // Sanity
@@ -1394,9 +1408,8 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     argc = argc - cmd_pos;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    if (gb.visualize || BU_STR_EQUAL(argv[cmd_pos], "plot")) {
+    if (gb.visualize) {
 	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-	gb.vbp = bv_vlblock_init(gb.vlfree, 32);
     }
     gb.color = color;
 
@@ -1412,10 +1425,6 @@ bot_cleanup:
     if (gb.intern) {
 	rt_db_free_internal(gb.intern);
 	BU_PUT(gb.intern, struct rt_db_internal);
-    }
-    if (gb.visualize) {
-	bv_vlblock_free(gb.vbp);
-	gb.vbp = (struct bv_vlblock *)NULL;
     }
     if (color) {
 	BU_PUT(color, struct bu_color);

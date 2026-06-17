@@ -30,6 +30,8 @@
 #include <algorithm>
 #include "../../librt/librt_private.h"
 
+#include "bsg/vlist.h"
+
 #include "./nirt.h"
 
 #include "./debug_cmd.c"
@@ -1278,9 +1280,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		{
 		    int rgb[3] = {0, 0, 0};
 		    bu_color_to_rgb_ints(&nss->color_gap, &rgb[RED], &rgb[GRN], &rgb[BLU]);
-		    vhead = bv_vlblock_find(nss->i->segs, rgb[RED], rgb[GRN], rgb[BLU]);
-		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BV_VLIST_LINE_MOVE);
-		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_DRAW);
+		    vhead = bsg_vlblock_find(nss->i->segs, rgb[RED], rgb[GRN], rgb[BLU]);
+		    BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BSG_VLIST_LINE_MOVE);
+		    BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BSG_VLIST_LINE_DRAW);
 		}
 		nss->i->b_segs = true;
 		s->type = NIRT_PARTITION_SEG;
@@ -1368,9 +1370,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	_nirt_find_ovlps(seg_ovlps, nss, part);
 	if (!seg_ovlps.size()) {
 	    // Easy case - no ovlps, just draw the segment
-	    vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
-	    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+	    vhead = bsg_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+	    BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BSG_VLIST_LINE_MOVE);
+	    BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BSG_VLIST_LINE_DRAW);
 	} else {
 	    // Have ovlps - need to be nuanced about what we draw and when
 	    fastf_t curr_dist = part->pt_inhit->hit_dist;
@@ -1389,9 +1391,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 			VMOVE(curr_pnt, op->out_point);
 			curr_dist = op->out_dist;
 		    }
-		    vhead = bv_vlblock_find(nss->i->segs, ovlp_rgb[RED], ovlp_rgb[GRN], ovlp_rgb[BLU]);
-		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_MOVE);
-		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_DRAW);
+		    vhead = bsg_vlblock_find(nss->i->segs, ovlp_rgb[RED], ovlp_rgb[GRN], ovlp_rgb[BLU]);
+		    BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BSG_VLIST_LINE_MOVE);
+		    BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BSG_VLIST_LINE_DRAW);
 		    seg_ovlps.erase(op);
 		} else {
 		    // Current distance is not in an overlap.  If op ended up as non-NULL,
@@ -1399,21 +1401,21 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		    // If that is the case, we need to draw segment color from the current distance
 		    // to the start of the next overlap.  Otherwise, we need to complete the
 		    // segment.
-		    vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
-		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_MOVE);
+		    vhead = bsg_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+		    BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BSG_VLIST_LINE_MOVE);
 		    if (op) {
-			BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_DRAW);
+			BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BSG_VLIST_LINE_DRAW);
 			VMOVE(curr_pnt, op->in_point);
 			curr_dist = op->in_dist;
 		    } else {
-			BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+			BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BSG_VLIST_LINE_DRAW);
 		    }
 		}
 	    }
 	    if (curr_dist < part->pt_outhit->hit_dist) {
-		vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+		vhead = bsg_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+		BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BSG_VLIST_LINE_MOVE);
+		BSG_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BSG_VLIST_LINE_DRAW);
 	    }
 	}
 	nss->i->b_segs = true;
@@ -2334,7 +2336,7 @@ _nirt_cmd_quit(void *nsv, int UNUSED(argc), const char **UNUSED(argv))
     if (bu_vls_strlen(&ns->plotfile)) {
 	FILE *fp = fopen(bu_vls_cstr(&ns->plotfile), "wb");
 	if (fp) {
-	    bv_plot_vlblock(fp, ns->i->segs);
+	    bsg_plot_vlblock(fp, ns->i->segs);
 	    fclose(fp);
 	}
     }
@@ -2879,7 +2881,7 @@ nirt_init(struct nirt_state *ns)
     bu_vls_init(n->err);
     n->err_accumulate = 0;
     BU_LIST_INIT(&(n->s_vlist));
-    n->segs = bv_vlblock_init(&(n->s_vlist), 32);
+    n->segs = bsg_vlblock_init(&(n->s_vlist), 32);
     n->plot_overlaps = 1;
     n->ret = 0;
 
@@ -3049,8 +3051,8 @@ nirt_destroy(struct nirt_state *ns)
     bu_vls_free(ns->i->err);
     bu_vls_free(ns->i->msg);
     bu_vls_free(ns->i->out);
-    bv_vlist_cleanup(&(ns->i->s_vlist));
-    bv_vlblock_free(ns->i->segs);
+    bsg_vlist_cleanup(&(ns->i->s_vlist));
+    bsg_vlblock_free(ns->i->segs);
 
     if (ns->i->rtip != RTI_NULL) rt_i_destroy(ns->i->rtip);
     if (ns->i->rtip_air != RTI_NULL) rt_i_destroy(ns->i->rtip_air);

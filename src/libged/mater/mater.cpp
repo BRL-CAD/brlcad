@@ -30,6 +30,7 @@
 #include <regex>
 #include <string>
 #include <sstream>
+#include <vector>
 
 #include "bu/app.h"
 #include "bu/path.h"
@@ -251,6 +252,10 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     bu_avs_free(&avs);
+
+    /* Invalidate per-shape color stamps so the next color_from_soltab sweep
+     * picks up the changed shader/rgb (B4). */
+    ged_event_notify_object_material_changed(gedp, argv[1], NULL);
 
     return BRLCAD_OK;
 }
@@ -1348,6 +1353,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     long int wids[1];
     int id_found_cnt;
     int nid;
+    std::vector<std::string> changed_objects;
 
     struct bu_opt_desc d[5];
     BU_OPT(d[0], "",  "ids-from-names",  "", NULL,   &ids_from_names,   "Assign material_id based on material_name");
@@ -1502,6 +1508,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	    bu_avs_init_empty(avs);
 	    if (db5_get_attributes(gedp->dbip, avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		bu_avs_free(avs);
+		BU_PUT(avs, struct bu_attribute_value_set);
 		goto ged_mater_mat_id_fail;
 	    }
 	    mat_id = bu_avs_get(avs, "material_id");
@@ -1528,13 +1536,16 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
 		    bu_avs_free(avs);
 		    BU_PUT(avs, struct bu_attribute_value_set);
+		    bu_free(nname, "free name");
 		    goto ged_mater_mat_id_fail;
 		}
+		if (dp->d_namep)
+		    changed_objects.push_back(dp->d_namep);
 	    } else {
 		// Already has correct name, no need to update
-		bu_avs_free(avs);
-		BU_PUT(avs, struct bu_attribute_value_set);
 	    }
+	    bu_avs_free(avs);
+	    BU_PUT(avs, struct bu_attribute_value_set);
 	    bu_free(nname, "free name");
 	}
 
@@ -1542,6 +1553,9 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	bu_vls_free(&dfilename);
 	bu_vls_free(&mfilename);
 	analyze_densities_destroy(a);
+	for (std::vector<std::string>::const_iterator it = changed_objects.begin();
+		it != changed_objects.end(); ++it)
+	    (void)ged_event_notify_attribute_changed(gedp, it->c_str(), 0, NULL);
 	return BRLCAD_OK;
     } else {
 	for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
@@ -1564,7 +1578,6 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	bu_avs_init_empty(avs);
 	if (db5_get_attributes(gedp->dbip, avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	    analyze_densities_destroy(a);
 	    bu_avs_free(avs);
 	    BU_PUT(avs, struct bu_attribute_value_set);
 	    goto ged_mater_mat_id_fail;
@@ -1581,6 +1594,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	id_found_cnt = analyze_densities_id((long int *)wids, 1, a, listed_to_defined[std::string(oname)].c_str());
 	if (!id_found_cnt) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: failed to find ID for %s\n", oname);
+	    bu_avs_free(avs);
+	    BU_PUT(avs, struct bu_attribute_value_set);
 	    goto ged_mater_mat_id_fail;
 	}
 	nid = wids[0];
@@ -1592,17 +1607,22 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 		BU_PUT(avs, struct bu_attribute_value_set);
 		goto ged_mater_mat_id_fail;
 	    }
+	    if (dp->d_namep)
+		changed_objects.push_back(dp->d_namep);
 	} else {
 	    // Already has correct name, no need to update
-	    bu_avs_free(avs);
-	    BU_PUT(avs, struct bu_attribute_value_set);
 	}
+	bu_avs_free(avs);
+	BU_PUT(avs, struct bu_attribute_value_set);
     }
 
     bu_vls_free(&msgs);
     bu_vls_free(&dfilename);
     bu_vls_free(&mfilename);
     analyze_densities_destroy(a);
+    for (std::vector<std::string>::const_iterator it = changed_objects.begin();
+	    it != changed_objects.end(); ++it)
+	(void)ged_event_notify_attribute_changed(gedp, it->c_str(), 0, NULL);
     return BRLCAD_OK;
 
 ged_mater_mat_id_fail:

@@ -516,7 +516,7 @@ package provide Archer 1.0
 	updateZClipPlanesFromSettings
     }
 
-    gedCmd dlist_on $mDisplayListMode
+    gedCmd cache_on $mBackendCacheMode
     gedCmd configure -hideSubtractions $mHideSubtractions
 
     if {$mWireframeMode} {
@@ -2835,10 +2835,10 @@ proc title_node_handler {node} {
 	    -variable [::itcl::scope mDefaultDisplayModePref]
     } {}
 
-    itk_component add dlistModeCB {
-	::ttk::checkbutton $parent.dlistModeCB \
-	    -text "Use Display Lists" \
-	    -variable [::itcl::scope mDisplayListModePref]
+    itk_component add backendCacheModeCB {
+	::ttk::checkbutton $parent.backendCacheModeCB \
+	    -text "Use Backend Cache" \
+	    -variable [::itcl::scope mBackendCacheModePref]
     } {}
     itk_component add hideSubCB {
 	::ttk::checkbutton $parent.hideSubCB \
@@ -2892,7 +2892,7 @@ proc title_node_handler {node} {
     grid $itk_component(displayModeL) -column 0 -row $i -sticky ne
     grid $itk_component(displayModeF) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(dlistModeCB) -columnspan 2 -column 0 -row $i -sticky sw
+    grid $itk_component(backendCacheModeCB) -columnspan 2 -column 0 -row $i -sticky sw
     grid rowconfigure $parent $i -weight 1
     grid columnconfigure $parent 1 -weight 1
     incr i
@@ -8607,9 +8607,9 @@ proc title_node_handler {node} {
 	set mDefaultDisplayMode $mDefaultDisplayModePref
     }
 
-    if {$mDisplayListModePref != $mDisplayListMode} {
-	set mDisplayListMode $mDisplayListModePref
-	gedCmd dlist_on $mDisplayListMode
+    if {$mBackendCacheModePref != $mBackendCacheMode} {
+	set mBackendCacheMode $mBackendCacheModePref
+	gedCmd cache_on $mBackendCacheMode
 	set rflag 1
     }
 
@@ -9168,7 +9168,7 @@ proc title_node_handler {node} {
     set mZClipFrontPref $mZClipFront
     set mLightingModePref $mLightingMode
     set mDefaultDisplayModePref $mDefaultDisplayMode
-    set mDisplayListModePref $mDisplayListMode
+    set mBackendCacheModePref $mBackendCacheMode
     set mHideSubtractionsPref $mHideSubtractions
     set mWireframeModePref $mWireframeMode
 
@@ -9333,7 +9333,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mZClipFront $mZClipFront"
     puts $_pfile "set mLightingMode $mLightingMode"
     puts $_pfile "set mDefaultDisplayMode $mDefaultDisplayMode"
-    puts $_pfile "set mDisplayListMode $mDisplayListMode"
+    puts $_pfile "set mBackendCacheMode $mBackendCacheMode"
     puts $_pfile "set mHideSubtractions $mHideSubtractions"
     puts $_pfile "set mWireframeMode $mWireframeMode"
 

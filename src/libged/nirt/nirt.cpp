@@ -54,26 +54,32 @@
 #include "bu/process.h"
 #include "vmath.h"
 
+#include "bsg/appearance.h"
+#include "bsg/feature.h"
+#include "bsg/node.h"
+#include "ged/bsg_ged_draw.h"
 #include "../qray.h"
 #include "../ged_private.h"
 
-static void
-dl_set_wflag(struct bu_list *hdlp, int wflag)
+struct dl_wflag_ctx {
+    struct ged *gedp;
+    int wflag;
+};
+
+static int
+set_wflag_cb(const struct ged_draw_shape_record *rec, void *userdata)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-    /* calculate the bounding for of all solids being displayed */
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+    struct dl_wflag_ctx *ctx = (struct dl_wflag_ctx *)userdata;
+    if (rec)
+	ged_draw_shape_ref_set_work_flag(ctx->gedp, rec->ref, ctx->wflag);
+    return 1;
+}
 
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    sp->s_old.s_wflag = wflag;
-	}
-
-	gdlp = next_gdlp;
-    }
+static void
+dl_set_wflag(struct ged *gedp, int wflag)
+{
+    struct dl_wflag_ctx ctx = {gedp, wflag};
+    ged_draw_foreach_shape_record(gedp, set_wflag_cb, &ctx);
 }
 
 struct nirt_info {
@@ -220,7 +226,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	if (retcode != 0)
 	    _ged_wait_status(gedp->ged_result_str, retcode);
 
-	dl_set_wflag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
+	dl_set_wflag(gedp, DOWN);
 
 	return BRLCAD_OK;
     }
@@ -351,7 +357,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* Calculate point from xyz point from which to fire the ray, if it was not
      * explicitly supplied by one of the above. */
     if (VNEAR_ZERO(nv.center_model, VUNITIZE_TOL)) {
-	struct bview *bv = gedp->ged_gvp;
+	struct bsg_view *bv = gedp->ged_gvp;
 	VSET(nv.center_model, -bv->gv_center[MDX], -bv->gv_center[MDY], -bv->gv_center[MDZ]);
 	/* Because we are preparing an input for the nirt command line, we need
 	 * to convert to local units - lower level logic will be expecting
@@ -586,47 +592,24 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     if (retcode != 0)
 	_ged_wait_status(gedp->ged_result_str, retcode);
 
-    dl_set_wflag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_wflag(gedp, DOWN);
 
     /* Whether or not we're doing graphics, if we took a shot we should clear any
      * old objects from prior shots. */
-    if (gedp->new_cmd_forms) {
-	struct bview *view = gedp->ged_gvp;
-	struct bv_scene_obj *nobj = bv_find_obj(view, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
-	if (nobj)
-	    bv_obj_put(nobj);
-    } else {
-	struct directory **dpv;
-	struct bu_vls dp_pattern = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&dp_pattern, "%s*", bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
-	size_t lscnt = db_ls(gedp->dbip, DB_LS_PHONY, bu_vls_cstr(&dp_pattern), &dpv);
-	for (size_t i = 0; i < lscnt; i++)
-	    dl_erasePathFromDisplay(gedp, dpv[i]->d_namep, 0);
-	bu_vls_free(&dp_pattern);
-    }
+    struct bsg_view *view = gedp->ged_gvp;
+    bsg_feature_remove(view, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
 
     /* If we're supposed to do graphics, look for the plot file */
-    struct bu_list *vlfree = &rt_vlfree;
     if (DG_QRAY_GRAPHICS(gedp->i->ged_gdp) && bu_vls_strlen(&nv.plotfile)) {
 	FILE *fp = fopen(bu_vls_cstr(&nv.plotfile), "rb");
 	if (fp) {
-	    struct bv_vlblock*vbp = bv_vlblock_init(vlfree, 32);
-	    fastf_t csize = gedp->ged_gvp->gv_scale * 0.01;
-	    int pret = rt_uplot_to_vlist(vbp, fp, csize, gedp->i->ged_gdp->gd_uplotOutputMode);
+	    fastf_t csize = gedp->ged_gvp ? gedp->ged_gvp->gv_scale * 0.01 : 1.0;
+	    int pret = _ged_draw_uplot_to_feature(gedp, fp,
+		    bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename),
+		    csize, gedp->i->ged_gdp->gd_uplotOutputMode);
 	    fclose(fp);
-	    if (pret < 0) {
+	    if (pret != BRLCAD_OK)
 		bu_log("Error loading plot data from %s\n", bu_vls_cstr(&nv.plotfile));
-	    } else {
-		if (gedp->new_cmd_forms) {
-		    struct bview *view = gedp->ged_gvp;
-		    struct bv_scene_obj *nobj = bv_vlblock_obj(vbp, view, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
-		    bu_vls_sprintf(&nobj->s_name, "%s", bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
-		} else {
-		    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename), 0);
-		}
-
-		bv_vlblock_free(vbp);
-	    }
 	}
 	bu_file_delete(bu_vls_cstr(&nv.plotfile));
     }
@@ -688,7 +671,7 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 	sscanf(argv[argc-1], "%lf", &scan[Y]) != 1) {
 	return BRLCAD_ERROR;
     }
-    scan[Z] = BV_MAX;
+    scan[Z] = BSG_VIEW_MAX;
     argc -= 2;
 
     av = (char **)bu_calloc(1, sizeof(char *) * (argc + 5), "gd_vnirt_cmd: av");

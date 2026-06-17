@@ -43,12 +43,6 @@ NMG_EXPORT extern uint32_t nmg_debug;
 
 /**
  * @brief
- * global nmg animation vblock callback
- */
-NMG_EXPORT extern void (*nmg_vlblock_anim_upcall)(void);
-
-/**
- * @brief
  * global nmg mged display debug callback (ew)
  */
 NMG_EXPORT extern void (*nmg_mged_debug_display_hack)(void);

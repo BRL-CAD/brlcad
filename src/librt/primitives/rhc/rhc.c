@@ -171,7 +171,9 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "bsg/view_state.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 #include "../../librt_private.h"
 
@@ -225,7 +227,7 @@ clt_rhc_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
-EXTERNCPP const struct bu_structparse rt_rhc_parse[] = {
+const struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rhc_internal, rhc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_rhc_internal, rhc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_rhc_internal, rhc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -238,7 +240,7 @@ EXTERNCPP const struct bu_structparse rt_rhc_parse[] = {
 /**
  * Calculate the bounding RPP for an RHC
  */
-C_DECL int
+int
 rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
 
@@ -302,7 +304,7 @@ rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rhc_specific is created, and its address is stored in
  * stp->st_specific for use by rhc_shot().
  */
-C_DECL int
+int
 rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rhc_internal *xip;
@@ -383,7 +385,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_rhc_print(const struct soltab *stp)
 {
     const struct rhc_specific *rhc =
@@ -413,7 +415,7 @@ rt_rhc_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct rhc_specific *rhc =
@@ -594,7 +596,7 @@ check_plates:
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     fastf_t c;
@@ -637,7 +639,7 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the rhc.
  */
-C_DECL void
+void
 rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t b, c, rsq, y;
@@ -678,7 +680,7 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-C_DECL void
+void
 rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rhc_specific *rhc = (struct rhc_specific *)stp->st_specific;
@@ -725,7 +727,7 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-C_DECL void
+void
 rt_rhc_free(struct soltab *stp)
 {
     struct rhc_specific *rhc =
@@ -819,8 +821,7 @@ rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
  */
 static void
 rhc_plot_hyperbolic_curve(
-    struct bu_list *vlfree,
-    struct bu_list *vhead,
+    struct rt_primitive_lod_realization *realization,
     struct rhc_specific *rhc,
     struct rt_pnt_node *pts,
     vect_t rhc_H,
@@ -835,12 +836,14 @@ rhc_plot_hyperbolic_curve(
     VMOVE(Bu, rhc->rhc_Bunit);
 
     VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+    (void)primitive_lod_line_set_append(realization, p,
+	    BSG_GEOMETRY_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+	(void)primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW);
 
 	node = node->next;
     }
@@ -849,8 +852,7 @@ rhc_plot_hyperbolic_curve(
 
 static void
 rhc_plot_hyperbolas(
-    struct bu_list *vlfree,
-    struct bu_list *vhead,
+    struct rt_primitive_lod_realization *realization,
     struct rt_rhc_internal *rhc,
     struct rt_pnt_node *pts)
 {
@@ -866,20 +868,19 @@ rhc_plot_hyperbolas(
     VUNITIZE(rhc_s.rhc_Runit);
 
     /* plot hyperbolic contour curve of face containing V */
-    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, 1.0);
-    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, -1.0);
+    rhc_plot_hyperbolic_curve(realization, &rhc_s, pts, rhc_H, 1.0);
+    rhc_plot_hyperbolic_curve(realization, &rhc_s, pts, rhc_H, -1.0);
 
     /* plot hyperbolic contour curve of opposing face */
     VMOVE(rhc_H, rhc->rhc_H);
-    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, 1.0);
-    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, -1.0);
+    rhc_plot_hyperbolic_curve(realization, &rhc_s, pts, rhc_H, 1.0);
+    rhc_plot_hyperbolic_curve(realization, &rhc_s, pts, rhc_H, -1.0);
 }
 
 
 static void
 rhc_plot_curve_connections(
-    struct bu_list *vlfree,
-    struct bu_list *vhead,
+    struct rt_primitive_lod_realization *realization,
     const struct rt_rhc_internal *rhc,
     int num_connections)
 {
@@ -911,17 +912,21 @@ rhc_plot_curve_connections(
 
 	/* connect faces on one side of the curve */
 	VJOIN2(p, rhc->rhc_V, z, Zu, -y, Yu);
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+	(void)primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_MOVE);
 
 	VADD2(p, p, rhc->rhc_H);
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+	(void)primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW);
 
 	/* connect the faces on the other side */
 	VJOIN2(p, rhc->rhc_V, z, Zu, y, Yu);
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+	(void)primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_MOVE);
 
 	VADD2(p, p, rhc->rhc_H);
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+	(void)primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW);
     }
 }
 
@@ -946,8 +951,8 @@ rhc_curve_points(
 }
 
 
-C_DECL int
-rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
+static int
+rt_rhc_lod_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
 {
     point_t p;
     vect_t rhc_R;
@@ -955,10 +960,10 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     struct rt_rhc_internal *rhc;
     struct rt_pnt_node *pts, *node, *tmp;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!realization)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
 
-    struct bu_list *vlfree = &rt_vlfree;
     rhc = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(rhc)) {
 	return -2;
@@ -977,7 +982,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     VSCALE(rhc_R, rhc_R, rhc->rhc_r);
 
     pts = rhc_hyperbolic_curve(MAGNITUDE(rhc->rhc_B), rhc->rhc_c, rhc->rhc_r, num_curve_points);
-    rhc_plot_hyperbolas(vlfree, vhead, rhc, pts);
+    rhc_plot_hyperbolas(realization, rhc, pts);
 
     node = pts;
     while (node != NULL) {
@@ -988,35 +993,94 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     /* connect both halves of the hyperbolic contours of the opposing faces */
-    num_connections = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
+    num_connections = primitive_curve_count(ip, tol, primitive_lod_curve_scale(v), s_size);
     if (num_connections < 2) {
 	num_connections = 2;
     }
 
-    rhc_plot_curve_connections(vlfree, vhead, rhc, num_connections);
+    rhc_plot_curve_connections(realization, rhc, num_connections);
 
     /* plot rectangular face */
     VADD2(p, rhc->rhc_V, rhc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_MOVE))
+	return -1;
 
     VADD2(p, p, rhc->rhc_H);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW))
+	return -1;
 
     VJOIN1(p, p, -2.0, rhc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW))
+	return -1;
 
     VJOIN1(p, p, -1.0, rhc->rhc_H);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW))
+	return -1;
 
     VJOIN1(p, p, 2.0, rhc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW))
+	return -1;
 
     return 0;
 }
 
 
-C_DECL int
-rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+int
+rt_rhc_lod_realize(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
+{
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    int ret = rt_rhc_lod_line_set(realization, ip, tol, v, s_size);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+struct rhc_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_rhc_line_sink_append(struct rhc_line_sink *sink, const point_t p, int command)
+{
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
+static int
+rt_rhc_standard_line_set(struct rhc_line_sink *sink,
+			 struct rt_db_internal *ip,
+			 const struct bg_tess_tol *ttol)
 {
     int i, n;
     fastf_t b, c, *back, *front, rh;
@@ -1027,10 +1091,10 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     struct rt_rhc_internal *xip;
     struct rt_pnt_node *old, *pos, *pts;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!sink || !ttol)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
 
-    struct bu_list *vlfree = &rt_vlfree;
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(xip)) {
 	return -2;
@@ -1109,31 +1173,72 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* Draw the front */
-    BV_ADD_VLIST(vlfree, vhead, &front[(n - 1)*ELEMENTS_PER_VECT],
-		 BV_VLIST_LINE_MOVE);
+    rt_rhc_line_sink_append(sink, &front[(n - 1)*ELEMENTS_PER_VECT],
+	    BSG_GEOMETRY_LINE_MOVE);
 
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &front[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	rt_rhc_line_sink_append(sink, &front[i * ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* Draw the back */
-    BV_ADD_VLIST(vlfree, vhead, &back[(n - 1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    rt_rhc_line_sink_append(sink, &back[(n - 1)*ELEMENTS_PER_VECT],
+	    BSG_GEOMETRY_LINE_MOVE);
 
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &back[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	rt_rhc_line_sink_append(sink, &back[i * ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &front[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, &back[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	rt_rhc_line_sink_append(sink, &front[i * ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_rhc_line_sink_append(sink, &back[i * ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* free mem */
     bu_free((char *)front, "fastf_t");
     bu_free((char *)back, "fastf_t");
 
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_rhc_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			  struct rt_db_internal *ip,
+			  const struct bg_tess_tol *ttol)
+{
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    struct rhc_line_sink sink;
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    int ret = rt_rhc_standard_line_set(&sink, ip, ttol);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
+{
+    BU_CK_LIST_HEAD(vhead);
+
+    struct rhc_line_sink sink;
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_rhc_standard_line_set(&sink, ip, ttol);
 }
 
 
@@ -1308,7 +1413,7 @@ rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-C_DECL int
+int
 rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
@@ -1594,7 +1699,7 @@ fail:
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1666,7 +1771,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1705,7 +1810,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-C_DECL int
+int
 rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1741,7 +1846,7 @@ rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1796,7 +1901,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1842,7 +1947,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-C_DECL int
+int
 rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_rhc_internal *xip =
@@ -1889,7 +1994,7 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-C_DECL void
+void
 rt_rhc_ifree(struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *xip;
@@ -1904,7 +2009,7 @@ rt_rhc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-C_DECL void
+void
 rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_rhc_internal* rhc_ip;
@@ -1927,7 +2032,7 @@ rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-C_DECL int
+int
 rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) {
@@ -1967,7 +2072,7 @@ rhc_is_valid(struct rt_rhc_internal *rhc)
 }
 
 
-C_DECL void
+void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
@@ -2029,7 +2134,7 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 /**
  * Computer volume of a right hyperbolic cylinder
  */
-C_DECL void
+void
 rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
@@ -2057,7 +2162,7 @@ rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 /**
  * Computes centroid of a right hyperbolic cylinder
  */
-C_DECL void
+void
 rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     if (cent != NULL && ip != NULL) {
@@ -2105,7 +2210,7 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 }
 
-C_DECL int
+int
 rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 5;
@@ -2154,7 +2259,7 @@ rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-C_DECL const char *
+const char *
 rt_rhc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2183,7 +2288,7 @@ rhc_kpt_end:
 }
 
 
-C_DECL int
+int
 rt_rhc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

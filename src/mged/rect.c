@@ -75,8 +75,7 @@ rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_rubber_band == rubber_band) {
-	    m_dmp->dm_dirty = 1;
-	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	    mged_dm_repaint_request(m_dmp, MGED_REPAINT_INTERACTION);
 	}
     }
 }
@@ -288,7 +287,7 @@ mged_center(struct mged_state *s, point_t center)
     av[4] = (char *)0;
     ged_exec_center(s->gedp, 4, (const char **)av);
     (void)mged_svbase(s);
-    view_state->vs_flag = 1;
+    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
 }
 
 void

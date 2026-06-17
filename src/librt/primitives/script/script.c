@@ -57,7 +57,7 @@
  * !0 Error in description
  *
  */
-C_DECL int
+int
 rt_script_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     if (!stp)
@@ -71,7 +71,7 @@ rt_script_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_script_print(const struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -86,7 +86,7 @@ rt_script_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_script_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     if (!stp || !rp || !ap || !seghead)
@@ -106,7 +106,7 @@ rt_script_shot(struct soltab *stp, struct xray *rp, struct application *ap, stru
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_script_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !rp)
@@ -123,7 +123,7 @@ rt_script_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the script.
  */
-C_DECL void
+void
 rt_script_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -138,7 +138,7 @@ rt_script_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-C_DECL void
+void
 rt_script_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -149,7 +149,7 @@ rt_script_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struc
 }
 
 
-C_DECL void
+void
 rt_script_free(struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -157,7 +157,7 @@ rt_script_free(struct soltab *stp)
 
 
 C_DECL int
-rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
 {
     struct rt_script_internal *script_ip;
 
@@ -177,7 +177,7 @@ rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg
 /**
  * Import a script from the database format to the internal format.
  */
-C_DECL int
+int
 rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *UNUSED(mat), const struct db_i *dbip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -191,7 +191,7 @@ rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, regis
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (ep) BU_CK_EXTERNAL(ep);
@@ -205,7 +205,7 @@ rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 /**
  * Import a script from the database format to the internal format.
  */
-C_DECL int
+int
 rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
 {
     struct rt_script_internal *script_ip;
@@ -236,7 +236,7 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_script_internal *script_ip;
@@ -275,7 +275,7 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
  * line describes type of primitive. Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
     char buf[256];
@@ -299,7 +299,7 @@ rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUS
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_script_ifree(struct rt_db_internal *ip)
 {
     struct rt_script_internal *script_ip;
@@ -318,7 +318,7 @@ rt_script_ifree(struct rt_db_internal *ip)
 }
 
 
-C_DECL int
+int
 rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     BU_CK_VLS(logstr);
@@ -330,7 +330,7 @@ rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-C_DECL int
+int
 rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_script_internal *script_ip=(struct rt_script_internal *)intern->idb_ptr;
@@ -349,7 +349,7 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
     return BRLCAD_OK;
 }
 
-C_DECL void
+void
 rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_script_internal* ip;
@@ -368,7 +368,7 @@ rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-C_DECL int
+int
 rt_script_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct rt_script_internal *script_ip;
@@ -383,7 +383,7 @@ rt_script_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, i
 }
 
 
-C_DECL int
+int
 rt_script_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);

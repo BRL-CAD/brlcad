@@ -1004,11 +1004,9 @@ ged_bot_exterior(struct ged *gedp, int argc, const char *argv[])
     gb.gedp      = gedp;
     gb.intern    = NULL;
     gb.dp        = NULL;
-    gb.vbp       = NULL;
     gb.color     = NULL;
     gb.verbosity = 0;
     gb.visualize = 0;
-    gb.vlfree    = &rt_vlfree;
     gb.cmds      = NULL;
     gb.gopts     = NULL;
 

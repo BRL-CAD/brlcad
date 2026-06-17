@@ -35,20 +35,78 @@ extern "C" {
 #include "bu/opt.h"
 #include "wdb.h"
 }
+#include "bsg/feature.h"
+#include "bsg/geometry.h"
 #include "./ged_lint.h"
 
 lint_data::lint_data()
 {
     color = NULL;
-    vlfree = &rt_vlfree;
-    vbp = bv_vlblock_init(vlfree, 32);
 }
 
 lint_data::~lint_data()
 {
-    bv_vlblock_free(vbp);
-    vbp = NULL;
-    vlfree = NULL;
+    if (plot_points)
+	bu_free(plot_points, "lint plot points");
+    if (plot_cmds)
+	bu_free(plot_cmds, "lint plot commands");
+    plot_points = NULL;
+    plot_cmds = NULL;
+    plot_point_count = 0;
+    plot_point_capacity = 0;
+}
+
+void
+lint_data::plot_append_triangle(struct rt_bot_internal *bot, int tri_ind)
+{
+    if (!do_plot || !bot || tri_ind < 0)
+	return;
+
+    point_t v[3];
+    for (int i = 0; i < 3; i++)
+	VMOVE(v[i], &bot->vertices[bot->faces[tri_ind*3+i]*3]);
+
+    if (plot_point_count + 4 > plot_point_capacity) {
+	size_t ncap = plot_point_capacity ? plot_point_capacity * 2 : 64;
+	while (ncap < plot_point_count + 4)
+	    ncap *= 2;
+	plot_points = (point_t *)bu_realloc(plot_points,
+		ncap * sizeof(point_t), "lint plot points");
+	plot_cmds = (int *)bu_realloc(plot_cmds,
+		ncap * sizeof(int), "lint plot commands");
+	plot_point_capacity = ncap;
+    }
+    VMOVE(plot_points[plot_point_count], v[0]);
+    plot_cmds[plot_point_count++] = BSG_GEOMETRY_LINE_MOVE;
+    VMOVE(plot_points[plot_point_count], v[1]);
+    plot_cmds[plot_point_count++] = BSG_GEOMETRY_LINE_DRAW;
+    VMOVE(plot_points[plot_point_count], v[2]);
+    plot_cmds[plot_point_count++] = BSG_GEOMETRY_LINE_DRAW;
+    VMOVE(plot_points[plot_point_count], v[0]);
+    plot_cmds[plot_point_count++] = BSG_GEOMETRY_LINE_DRAW;
+}
+
+void
+lint_data::plot_publish(const char *name)
+{
+    if (!do_plot || !gedp || !name)
+	return;
+
+    if (!gedp->ged_gvp)
+	return;
+
+    struct bsg_view *view = gedp->ged_gvp;
+    struct bsg_feature_style style = BSG_FEATURE_STYLE_INIT;
+    unsigned char rgb[3] = {255, 255, 0};
+    if (color)
+	bu_color_to_rgb_chars(color, rgb);
+    style.color_valid = 1;
+    VSET(style.color, rgb[0], rgb[1], rgb[2]);
+    if (plot_point_count)
+	(void)bsg_feature_replace_lines(view, name, 0,
+		(const point_t *)plot_points, plot_point_count, &style);
+    else
+	(void)bsg_feature_remove(view, name);
 }
 
 std::string
@@ -483,12 +541,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (visualize) {
-	struct bview *view = gedp->ged_gvp;
-	if (gedp->new_cmd_forms) {
-	    bv_vlblock_obj(ldata.vbp, view, "lint_visual");
-	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, ldata.vbp, "lint_visual", 0);
-	}
+	ldata.plot_publish("lint_visual");
     }
 
     if (dpa)

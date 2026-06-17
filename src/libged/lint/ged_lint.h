@@ -65,8 +65,13 @@ class lint_data {
 
 	bool do_plot = false;
 	struct bu_color *color;
-	struct bv_vlblock *vbp;
-	struct bu_list *vlfree;
+	point_t *plot_points = NULL;
+	int *plot_cmds = NULL;
+	size_t plot_point_count = 0;
+	size_t plot_point_capacity = 0;
+
+	void plot_append_triangle(struct rt_bot_internal *bot, int tri_ind);
+	void plot_publish(const char *name);
 
 	std::map<std::string, std::set<std::string>> im_techniques;
 

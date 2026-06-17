@@ -32,6 +32,7 @@
 #include <QAction>
 #include <QDockWidget>
 #include <QFileDialog>
+#include <QHash>
 #include <QHeaderView>
 #include <QMainWindow>
 #include <QMenu>
@@ -52,9 +53,10 @@
 #include "qtcad/QgView.h"
 #include "qtcad/QgViewCtrl.h"
 
-#include "plugins/plugin.h"
+#include "QgEdCategories.h"
 #include "QgEdPalette.h"
 
+class QgPaletteController;
 class QgEdMainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -71,7 +73,7 @@ class QgEdMainWindow : public QMainWindow
 
 	// Get the currently active view of the quad/central display widget
 	QgView * CurrentDisplay();
-	struct bview * CurrentView();
+	struct bsg_view * CurrentView();
 
 	// Checkpoint display state (used for subsequent diff)
 	void DisplayCheckpoint();
@@ -85,8 +87,18 @@ class QgEdMainWindow : public QMainWindow
 	// Clear visual window changes indicating a raytrace has begun
 	void IndicateRaytraceDone();
 
+	// Determine the logical palette category ("qged.view" or "qged.object")
+	// for the palette widget that contains the supplied global screen
+	// position.  Returns an empty QString when the point is over neither.
+	QString ActivePaletteCategory(QPoint &gpos);
+
 	// Determine interaction mode based on selected palettes and the supplied point
 	int InteractionMode(QPoint &gpos);
+
+	// Forward the currently-active QgView to both palette controllers.
+	// Called from QgEdApp::do_quad_view_change when the user activates a
+	// different view in the quad-view layout.
+	void setActiveView(QgView *view);
 
 	// Utility wrapper for the closeEvent to save windowing dimensions
 	void closeEvent(QCloseEvent* e);
@@ -106,6 +118,12 @@ class QgEdMainWindow : public QMainWindow
 	void LocateWidgets();
 	void ConnectWidgets();
 	void SetupMenu();
+	void clearPluginPanels();
+	void populatePluginPanels();
+	void clearPluginDialogs();
+	void populatePluginDialogs();
+	void rebuildPluginExtensions();
+	void launchPluginDialog(const QString &id);
 
 	// Menu actions
 	QAction *cad_open;
@@ -127,6 +145,13 @@ class QgEdMainWindow : public QMainWindow
 	QgAttributesModel *userpropmodel = NULL;
 	QgEdPalette *oc = NULL;
 	QgEdPalette *vc = NULL;
+
+	/* Palette controllers wiring the new Qt-plugin path to vc/oc.
+	 * Created in CreateWidgets(), populated in ConnectWidgets().
+	 * Keep NULL until then to avoid dangling use during construction. */
+	QgPaletteController *vc_ctrl = NULL;
+	QgPaletteController *oc_ctrl = NULL;
+
 	QgTreeView *treeview = NULL;
 
 	// Action for toggling treeview's ls or tree view
@@ -138,8 +163,12 @@ class QgEdMainWindow : public QMainWindow
 	QDockWidget *uattrd = NULL;
 	QDockWidget *vcd = NULL;
 	QMenu *vm_panels = NULL;
+	QAction *vm_panels_plugin_separator = NULL;
+	QMenu *tm_dialogs = NULL;
 	QgDockWidget *console_dock = NULL;
 	QgDockWidget *tree_dock = NULL;
+	QHash<QString, QDockWidget *> m_plugin_panels;
+	QHash<QString, QAction *> m_plugin_dialog_actions;
 };
 
 #endif /* QGEDMAINWINDOW_H */
@@ -152,4 +181,3 @@ class QgEdMainWindow : public QMainWindow
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

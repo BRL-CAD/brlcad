@@ -30,11 +30,16 @@
 
 __BEGIN_DECLS
 
+struct bg_tess_tol;
+struct rt_db_internal;
+struct rt_primitive_lod_realization;
+
 RT_EXPORT extern void rt_ell(fastf_t *ov,
 			     const fastf_t *V,
 			     const fastf_t *A,
 			     const fastf_t *B,
 			     int sides);
+RT_EXPORT extern int rt_epa_wireframe_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bg_tess_tol *ttol);
 
 /** @} */
 

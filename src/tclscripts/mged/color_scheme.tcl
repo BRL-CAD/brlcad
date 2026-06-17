@@ -113,9 +113,6 @@ the rubber band rectangle."} {see_also rset}}}
 	{ grid "Grid"
 	  {{summary "Specify the color to use for drawing
 the grid array."} {see_also rset}}}
-	{ predictor "Predictor"
-	  {{summary "Specify the color to use for drawing
-the predictor."} {see_also rset}}}
     }
 
     set mged_color_scheme(secondary_map) {
@@ -490,8 +487,6 @@ proc color_scheme_load_canned { id top\
     set mged_color_scheme($id,rubber_band_ia) $line_hl_ia
     set mged_color_scheme($id,grid_a) $line_hl_a
     set mged_color_scheme($id,grid_ia) $line_hl_ia
-    set mged_color_scheme($id,predictor_a) $line_hl_a
-    set mged_color_scheme($id,predictor_ia) $line_hl_ia
     set mged_color_scheme($id,menu_line_a) $line_a
     set mged_color_scheme($id,menu_line_ia) $line_ia
     set mged_color_scheme($id,slider_line_a) $line_a

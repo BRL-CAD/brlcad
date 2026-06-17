@@ -1,0 +1,53 @@
+/* Top level library group */
+/** @defgroup libbsg libbsg (Graphical View Concepts) */
+
+/* Second tier groups */
+/** @ingroup libbsg */
+/**   @defgroup bv_defines Definitions */
+/**  @addtogroup bv_defines
+     @brief Types and definitions related to display lists, angle distance cursor, and other generic view constructs.
+ */
+/** @ingroup libbsg */
+/**  @defgroup bv_adc Angle-Distance Cursor */
+/**  @addtogroup bv_adc
+     @brief Data types and manipulation routines for the Angle-Distance cursor.
+ */
+/** @ingroup libbsg */
+/**  @defgroup bv_faceplate Faceplate */
+/**  @addtogroup bv_faceplate
+     @brief Data types for faceplate objects.
+ */
+/** @ingroup libbsg */
+/**  @defgroup bv_lod Level of Detail*/
+/**  @addtogroup bv_lod
+     @brief Routines for generating and loading Level-of-Detail triangle mesh data.
+ */
+/** @ingroup libbsg */
+/**  @defgroup bv_polygon Polygons*/
+/**  @addtogroup bv_lod
+     @brief Routines for generating and working with polygons in a view context.
+ */
+/** @ingroup libbsg */
+/**  @defgroup bv_plot Plotting */
+/**  @addtogroup bv_plot
+     @brief The basic UNIX-plot routines.
+ */
+/** @ingroup libbsg */
+/**  @defgroup bv_snap Snapping */
+/**  @addtogroup bv_snap
+     @brief Snap sample points to view grinds and/or elements.
+ */
+/** @ingroup libbsg */
+/**  @defgroup bv_vfont Vector Fonts*/
+/** @ingroup libbsg */
+/**  @defgroup bv_vlist Vector Lists*/
+/** @ingroup libbsg */
+/**  @defgroup bv_util Utilities */
+/**  @addtogroup bv_util
+     @brief Utility routines for manipulating libbsg data structures
+ */
+/** @ingroup libbsg */
+/**  @defgroup bv_tcl Tcl */
+/**  @addtogroup bv_tcl
+     @brief Definitions specific to the non-view-obj drawing logic in libtclcad
+ */

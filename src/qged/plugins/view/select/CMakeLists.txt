@@ -13,7 +13,7 @@ endif(BRLCAD_ENABLE_QT)
 
 set(select_srcs select.cpp CADViewSelector.cpp)
 
-set(select_moc_hdrs CADViewSelector.h)
+set(select_moc_hdrs CADViewSelector.h ViewSelectFactory.h)
 
 if(BRLCAD_ENABLE_QT)
   if(Qt6Widgets_FOUND)
@@ -50,6 +50,7 @@ if(BRLCAD_ENABLE_QT)
   distclean(
     icon.qrc.depends
     moc_CADViewSelector.cpp_parameters
+    moc_ViewSelectFactory.cpp_parameters
   )
 endif(BRLCAD_ENABLE_QT)
 
@@ -60,6 +61,7 @@ set(
   ${select_moc_hdrs}
   icon.qrc
   selective-tool.svg
+  select.json
   README
 )
 

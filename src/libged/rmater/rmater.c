@@ -24,6 +24,7 @@
  */
 
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 static int
@@ -93,6 +94,8 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
     int r, g, b;
     int override;
     int inherit;
+    int event_depth = 0;
+    int queued_events = 0;
     static const char *usage = "filename";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -118,6 +121,8 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "ged_rmater: Failed to read file - %s", argv[1]);
 	return BRLCAD_ERROR;
     }
+
+    event_depth = ged_event_batch_begin(gedp);
 
     while (bu_fgets(line, LINELEN, fp) != NULL) {
 	if ((extract_mater_from_line(line, name, shader,
@@ -153,7 +158,18 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting\n");
 	    status = BRLCAD_ERROR;
+	} else if (event_depth > 0) {
+	    ged_event_notify_object_material_changed(gedp, name, NULL);
+	    queued_events = 1;
 	}
+    }
+
+    if (event_depth > 0) {
+	struct ged_event_txn_result result;
+	ged_event_txn_result_init(&result);
+	if (ged_event_batch_end(gedp, &result) < 0 && queued_events)
+	    status = BRLCAD_ERROR;
+	ged_event_txn_result_free(&result);
     }
 
     (void)fclose(fp);

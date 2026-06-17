@@ -242,7 +242,8 @@ _edcolor(struct ged *gedp, int argc, const char *argv[])
     bu_file_delete(tmpfil);
 
     /* if there are drawables, update their colors */
-    dl_color_soltab((struct bu_list *)ged_dl(gedp), gedp->dbip);
+    ged_event_notify_object_material_changed(gedp, DB5_GLOBAL_OBJECT_NAME,
+	    NULL);
 
     return BRLCAD_OK;
 }
@@ -355,6 +356,10 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->dbip);
 	bu_vls_free(&colors);
     }
+
+    /* Update drawn objects to reflect the new color entry. */
+    ged_event_notify_object_material_changed(gedp, DB5_GLOBAL_OBJECT_NAME,
+	    NULL);
 
     return BRLCAD_OK;
 }

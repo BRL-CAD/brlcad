@@ -49,7 +49,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bg/plane.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 
 #define HLBVH_IMPLEMENTATION
 #include "cut_hlbvh.h"

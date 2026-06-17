@@ -34,12 +34,21 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 
+#include "bsg/feature.h"
+#include "bsg/geometry.h"
+
 #include "../ged_private.h"
 extern "C" {
 #include "./ged_draw.h"
 }
 
-static struct bv_vlblock *preview_vbp;
+struct preview_line_data {
+    point_t *points;
+    int *cmds;
+    size_t count;
+    size_t capacity;
+};
+static struct preview_line_data preview_eye_path;
 static double preview_delay;
 static int preview_mode;
 static int preview_desiredframe;
@@ -48,6 +57,43 @@ static int preview_currentframe;
 static int preview_tree_walk_needed;
 static int draw_eye_path;
 static char *image_name = NULL;
+
+static int
+preview_line_append(struct preview_line_data *lines, const point_t pt, int cmd)
+{
+    if (!lines)
+	return 0;
+
+    if (lines->count + 1 > lines->capacity) {
+	size_t ncap = lines->capacity ? lines->capacity * 2 : 64;
+	lines->points = (point_t *)bu_realloc(lines->points,
+		ncap * sizeof(point_t), "preview eye path points");
+	lines->cmds = (int *)bu_realloc(lines->cmds,
+		ncap * sizeof(int), "preview eye path commands");
+	lines->capacity = ncap;
+    }
+
+    VMOVE(lines->points[lines->count], pt);
+    lines->cmds[lines->count] = cmd;
+    lines->count++;
+    return 1;
+}
+
+static void
+preview_lines_free(struct preview_line_data *lines)
+{
+    if (!lines)
+	return;
+
+    if (lines->points)
+	bu_free(lines->points, "preview eye path points");
+    if (lines->cmds)
+	bu_free(lines->cmds, "preview eye path commands");
+    lines->points = NULL;
+    lines->cmds = NULL;
+    lines->count = 0;
+    lines->capacity = 0;
+}
 
 /* FIXME: this shouldn't exist as a static array and doesn't even seem
  * to be necessary.  gd_rt_cmd points into it as an argv, but the
@@ -98,24 +144,21 @@ ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int UNUSED(argc), const 
     vect_t new_cent;
     vect_t xv, yv;			/* view x, y */
     vect_t xm, ym;			/* model x, y */
-    struct bu_list *vhead = &preview_vbp->head[0];
-    struct bu_list *vlfree = &rt_vlfree;
 
     /* Only display the frames the user is interested in */
     if (preview_currentframe < preview_desiredframe) return 0;
     if (preview_finalframe && preview_currentframe > preview_finalframe) return 0;
 
     /* Record eye path as a polyline.  Move, then draws */
-    if (BU_LIST_IS_EMPTY(vhead)) {
-	BV_ADD_VLIST(vlfree, vhead, (*v), BV_VLIST_LINE_MOVE);
-    } else {
-	BV_ADD_VLIST(vlfree, vhead, (*v), BV_VLIST_LINE_DRAW);
+    if (draw_eye_path) {
+	int cmd = preview_eye_path.count ? BSG_GEOMETRY_LINE_DRAW : BSG_GEOMETRY_LINE_MOVE;
+	(void)preview_line_append(&preview_eye_path, (*v), cmd);
     }
 
     /* First step:  put eye at view center (view 0, 0, 0) */
     MAT_COPY(gedp->ged_gvp->gv_rotation, (*m));
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, (*v));
-    bv_update(gedp->ged_gvp);
+    bsg_update(gedp->ged_gvp);
 
     /*
      * Compute camera orientation notch to right (+X) and up (+Y)
@@ -125,10 +168,12 @@ ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int UNUSED(argc), const 
     VSET(yv, 0.0, 0.05, 0.0);
     MAT4X3PNT(xm, gedp->ged_gvp->gv_view2model, xv);
     MAT4X3PNT(ym, gedp->ged_gvp->gv_view2model, yv);
-    BV_ADD_VLIST(vlfree, vhead, xm, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, (*v), BV_VLIST_LINE_MOVE);
-    BV_ADD_VLIST(vlfree, vhead, ym, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, (*v), BV_VLIST_LINE_MOVE);
+    if (draw_eye_path) {
+	(void)preview_line_append(&preview_eye_path, xm, BSG_GEOMETRY_LINE_DRAW);
+	(void)preview_line_append(&preview_eye_path, (*v), BSG_GEOMETRY_LINE_MOVE);
+	(void)preview_line_append(&preview_eye_path, ym, BSG_GEOMETRY_LINE_DRAW);
+	(void)preview_line_append(&preview_eye_path, (*v), BSG_GEOMETRY_LINE_MOVE);
+    }
 
     /* Second step:  put eye at view 0, 0, 1.
      * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
@@ -136,7 +181,7 @@ ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int UNUSED(argc), const 
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, gedp->ged_gvp->gv_view2model, xlate);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_cent);
-    bv_update(gedp->ged_gvp);
+    bsg_update(gedp->ged_gvp);
 
     /* If new treewalk is needed, get new objects into view. */
     if (preview_tree_walk_needed) {
@@ -297,7 +342,6 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls extension = BU_VLS_INIT_ZERO;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     char *dot;
-    struct bu_list *vlfree = &rt_vlfree;
     vect_t *ged_eye_model = &gedp->i->i->ged_eye_model;
     mat_t *ged_viewrot = &gedp->i->i->ged_viewrot;
     char **gd_rt_cmd = NULL;
@@ -387,7 +431,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    preview_vbp = bv_vlblock_init(vlfree, 32);
+    preview_lines_free(&preview_eye_path);
 
     bu_vls_printf(gedp->ged_result_str, "eyepoint at (0, 0, 1) viewspace\n");
 
@@ -439,18 +483,21 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     fp = NULL;
 
     if (draw_eye_path) {
-	if (gedp->new_cmd_forms) {
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(preview_vbp, view, "preview::eye_path");
-	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
+	struct bsg_view *view = gedp->ged_gvp;
+	(void)bsg_feature_remove(view, "preview::eye_path");
+	if (preview_eye_path.count) {
+	    bsg_feature_ref ref = bsg_feature_create_lines(view, "preview::eye_path", 0);
+	    if (!bsg_feature_ref_is_null(ref)) {
+		(void)bsg_feature_points_replace(ref, BSG_FEATURE_LINES,
+			(const point_t *)preview_eye_path.points,
+			preview_eye_path.cmds,
+			preview_eye_path.count);
+		bsg_feature_set_color(ref, 255, 255, 0);
+	    }
 	}
     }
 
-    if (preview_vbp) {
-	bv_vlblock_free(preview_vbp);
-	preview_vbp = (struct bv_vlblock *)NULL;
-    }
+    preview_lines_free(&preview_eye_path);
     db_free_anim(gedp->dbip);	/* Forget any anim commands */
 
     // Restore app ged_uptrs

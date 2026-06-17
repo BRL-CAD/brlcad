@@ -53,6 +53,7 @@ class QFBSocket : public QObject
 
     public slots:
 	void client_handler();
+	void on_disconnected();
 
     private:
         QByteArray buff;

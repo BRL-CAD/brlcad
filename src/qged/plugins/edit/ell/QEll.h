@@ -30,8 +30,12 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QRadioButton>
+#include "bsg/feature.h"
 #include "raytrace.h"
 #include "qtcad/QgColorRGB.h"
+#include "qtcad/QgTypes.h"
+
+class QgPluginContext;
 
 class QEll : public QWidget
 {
@@ -40,6 +44,8 @@ class QEll : public QWidget
     public:
 	QEll();
 	~QEll();
+
+	void setContext(QgPluginContext *ctx) { m_ctx = ctx; }
 
 	// Ell origin
 	QCheckBox *O_pnt;
@@ -56,7 +62,7 @@ class QEll : public QWidget
 	QPushButton *reset_values;
 
     signals:
-	void view_updated(unsigned long long);
+	void view_updated(QgViewUpdateFlags);
 
     private slots:
 	void read_from_db();
@@ -70,8 +76,12 @@ class QEll : public QWidget
     private:
 	struct directory *dp = NULL;
 	struct rt_ell_internal ell;
-	struct bv_scene_obj *p = NULL;
+	bsg_feature_ref p = BSG_FEATURE_REF_NULL_INIT;
 	struct bu_vls oname = BU_VLS_INIT_ZERO;
+	QgPluginContext *m_ctx = nullptr;
+
+	struct ged *getGed() const;
+	struct bsg_view *getView() const;
 };
 
 #endif //QELL_H

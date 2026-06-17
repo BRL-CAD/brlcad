@@ -35,15 +35,48 @@
 #include "rt/defines.h"
 #include "rt/geom.h"
 #include "rt/db_internal.h"
+#include "rt/func.h"
 #include "rt/wdb.h"
 
 #include "../librt_private.h"
 
-int
-rt_sample_pnts(struct bv_scene_obj *s, struct rt_db_internal *ip)
+
+static void
+rt_sample_pnts_internal_free(struct rt_pnts_internal *pnts)
 {
-    if (!s || !ip)
-	return BRLCAD_OK; /* nothing to do is fine */
+    if (!pnts)
+	return;
+
+    if (pnts->point) {
+	struct pnt_normal *head = (struct pnt_normal *)pnts->point;
+	struct pnt_normal *entry;
+	while (BU_LIST_WHILE(entry, pnt_normal, &(head->l))) {
+	    BU_LIST_DEQUEUE(&(entry->l));
+	    BU_PUT(entry, struct pnt_normal);
+	}
+	BU_PUT(head, struct pnt_normal);
+	pnts->point = NULL;
+    }
+
+    BU_PUT(pnts, struct rt_pnts_internal);
+}
+
+
+int
+rt_obj_sampled_face_set(struct rt_primitive_indexed_face_set *face_set,
+			struct rt_db_internal *ip)
+{
+    point_t *points = NULL;
+    vect_t *normals = NULL;
+    int *indices = NULL;
+    size_t sample_count = 0;
+    int ret = BRLCAD_OK;
+
+    if (face_set)
+	memset(face_set, 0, sizeof(*face_set));
+
+    if (!face_set || !ip)
+	return BRLCAD_ERROR;
 
     /* If we were given a comb, use its internal info to set up for shooting.
      * Otherwise, we will need to provide an inmem database. */
@@ -67,7 +100,10 @@ rt_sample_pnts(struct bv_scene_obj *s, struct rt_db_internal *ip)
 	if (!dbip)
 	    return BRLCAD_ERROR;
 	struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-	wdb_export(wdbp, oname, ip->idb_ptr, ip->idb_type, 1.0);
+	if (wdb_export(wdbp, oname, ip->idb_ptr, ip->idb_type, 1.0) < 0) {
+	    db_close(dbip);
+	    return BRLCAD_ERROR;
+	}
     }
 
     const char *oav[2] = {oname, NULL};
@@ -106,6 +142,7 @@ rt_sample_pnts(struct bv_scene_obj *s, struct rt_db_internal *ip)
     if (rt_gen_obj_pnts(pnts, &avg_thickness, dbip, oname, &btol, flags, max_pnts, max_time, 2)) {
 	if (ip->idb_type != ID_COMBINATION)
 	    db_close(dbip);
+	rt_sample_pnts_internal_free(pnts);
 	return BRLCAD_ERROR;
     }
 
@@ -125,10 +162,30 @@ rt_sample_pnts(struct bv_scene_obj *s, struct rt_db_internal *ip)
     VSET(v2, -1*tx1, ty2, 0);
     VSET(v3, tx1, ty2, 0);
 
-    struct pnt_normal *pn = NULL;
     struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
-    struct bu_list *vlfree = s->vlfree;
-    struct bu_list *vhead = &s->s_vlist;
+    if (!pl)
+	goto done;
+
+    struct pnt_normal *pn = NULL;
+    for (BU_LIST_FOR(pn, pnt_normal, &(pl->l)))
+	sample_count++;
+
+    if (!sample_count)
+	goto done;
+
+    face_set->point_count = sample_count * 3;
+    face_set->normal_count = sample_count * 3;
+    face_set->index_count = sample_count * 4;
+    points = (point_t *)bu_calloc(face_set->point_count, sizeof(point_t),
+	    "sample point face-set points");
+    normals = (vect_t *)bu_calloc(face_set->normal_count, sizeof(vect_t),
+	    "sample point face-set normals");
+    indices = (int *)bu_calloc(face_set->index_count, sizeof(int),
+	    "sample point face-set indices");
+
+    size_t point_idx = 0;
+    size_t index_idx = 0;
+    size_t normal_idx = 0;
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
 	vect_t v1pp, v2pp, v3pp = {0.0, 0.0, 0.0};
 	vect_t v1fp, v2fp, v3fp = {0.0, 0.0, 0.0};
@@ -142,32 +199,48 @@ rt_sample_pnts(struct bv_scene_obj *s, struct rt_db_internal *ip)
 	VADD2(v1pp, v1fp, pn->v);
 	VADD2(v2pp, v2fp, pn->v);
 	VADD2(v3pp, v3fp, pn->v);
-#if 0
-	/* Wireframe  */
-	BV_ADD_VLIST(vlfree, vhead, v1pp, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, v2pp, BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v3pp, BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v1pp, BV_VLIST_LINE_DRAW);
-#else
-	/* Shaded */
-	BV_ADD_VLIST(vlfree, vhead, pn->n, BV_VLIST_TRI_START);
-	BV_ADD_VLIST(vlfree, vhead, v1pp, BV_VLIST_TRI_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, v2pp, BV_VLIST_TRI_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v3pp, BV_VLIST_TRI_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v1pp, BV_VLIST_TRI_END);
-#endif
+
+	VMOVE(points[point_idx], v1pp);
+	VMOVE(normals[normal_idx], pn->n);
+	normal_idx++;
+	indices[index_idx++] = (int)point_idx++;
+
+	VMOVE(points[point_idx], v2pp);
+	VMOVE(normals[normal_idx], pn->n);
+	normal_idx++;
+	indices[index_idx++] = (int)point_idx++;
+
+	VMOVE(points[point_idx], v3pp);
+	VMOVE(normals[normal_idx], pn->n);
+	normal_idx++;
+	indices[index_idx++] = (int)point_idx++;
+
+	indices[index_idx++] = -1;
     }
 
-    BU_PUT(internal.idb_ptr, struct rt_pnts_internal);
+    face_set->points = points;
+    face_set->normals = normals;
+    face_set->indices = indices;
+    face_set->source_identity = (uint64_t)(uintptr_t)ip->idb_ptr;
+    face_set->geometry_revision++;
+    points = NULL;
+    normals = NULL;
+    indices = NULL;
 
+done:
+    if (points)
+	bu_free(points, "sample point face-set points");
+    if (normals)
+	bu_free(normals, "sample point face-set normals");
+    if (indices)
+	bu_free(indices, "sample point face-set indices");
+    rt_sample_pnts_internal_free(pnts);
     if (ip->idb_type != ID_COMBINATION)
 	db_close(dbip);
 
-    // Update the bounding box
-    bv_scene_obj_bound(s, NULL);
-
-    return BRLCAD_OK;
+    return ret;
 }
+
 
 /*
  * Local Variables:

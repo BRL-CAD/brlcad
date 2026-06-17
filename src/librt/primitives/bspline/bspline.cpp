@@ -48,7 +48,10 @@
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
+#include "rt/primitives/brep.h"
+#include "rt/primitives/bspline.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 #ifdef CONVERT_TO_BREP
 #  include "brep/defines.h"
@@ -91,7 +94,7 @@ struct nurb_hit {
     extern void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     extern void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     extern void rt_brep_free(struct soltab *stp);
-    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info));
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bsg_view *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
 
@@ -556,7 +559,46 @@ rt_nurb_free(struct soltab *stp)
 
 
 int
-rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info))
+rt_nurb_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			   struct rt_db_internal *ip,
+			   const struct bn_tol *tol)
+{
+#ifdef NEW_WIREFRAME
+    ON_Brep *brep = ON_Brep::New();
+    struct rt_brep_internal bi;
+    struct rt_db_internal brep_ip;
+    int ret = -1;
+
+    if (!brep)
+	return -1;
+
+    rt_nurb_brep(&brep, ip, tol);
+    if (!brep)
+	return -1;
+
+    bi.magic = RT_BREP_INTERNAL_MAGIC;
+    bi.brep = brep;
+
+    RT_DB_INTERNAL_INIT(&brep_ip);
+    brep_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_ip.idb_type = ID_BREP;
+    brep_ip.idb_meth = &OBJ[ID_BREP];
+    brep_ip.idb_ptr = (void *)&bi;
+
+    ret = rt_brep_wireframe_line_set(realization, &brep_ip, tol);
+    delete brep;
+    return ret;
+#else
+    if (!realization)
+	return -1;
+    return primitive_lod_line_set_begin(realization) &&
+	primitive_lod_line_set_finish(realization) ? 0 : -1;
+#endif
+}
+
+
+int
+rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bsg_view *UNUSED(info))
 {
     struct rt_nurb_internal *sip;
 
@@ -636,10 +678,10 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
 	vp = c->ctl_points;
 	for (i = 0; i < c->s_size[0]; i++) {
-	    BV_ADD_VLIST(vlfree, vhead, vp, BV_VLIST_LINE_MOVE);
+	    BSG_ADD_VLIST(vlfree, vhead, vp, BSG_VLIST_LINE_MOVE);
 	    vp += coords;
 	    for (j = 1; j < c->s_size[1]; j++) {
-		BV_ADD_VLIST(vlfree, vhead, vp, BV_VLIST_LINE_DRAW);
+		BSG_ADD_VLIST(vlfree, vhead, vp, BSG_VLIST_LINE_DRAW);
 		vp += coords;
 	    }
 	}
@@ -649,9 +691,9 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
 	    stride = c->s_size[1] * coords;
 	    vp = &c->ctl_points[j * coords];
-	    BV_ADD_VLIST(vlfree, vhead, vp, BV_VLIST_LINE_MOVE);
+	    BSG_ADD_VLIST(vlfree, vhead, vp, BSG_VLIST_LINE_MOVE);
 	    for (i = 0; i < c->s_size[0]; i++) {
-		BV_ADD_VLIST(vlfree, vhead, vp, BV_VLIST_LINE_DRAW);
+		BSG_ADD_VLIST(vlfree, vhead, vp, BSG_VLIST_LINE_DRAW);
 		vp += stride;
 	    }
 	}

@@ -27,11 +27,13 @@
 #include <QMouseEvent>
 #include <QVBoxLayout>
 #include <QtGlobal>
-#include "../../../QgEdApp.h"
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgSignalFlags.h"
 
 #include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/units.h"
 #include "bg/aabb_ray.h"
 #include "bg/plane.h"
 
@@ -87,8 +89,6 @@ CADViewMeasure::CADViewMeasure(QWidget *)
 
 CADViewMeasure::~CADViewMeasure()
 {
-    if (s)
-	bv_obj_put(s);
 }
 
 void
@@ -114,10 +114,7 @@ CADViewMeasure::adjust_text_db(void *)
 void
 CADViewMeasure::adjust_text()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
     if (!gedp || !gedp->ged_gvp)
 	return;
 
@@ -155,20 +152,16 @@ CADViewMeasure::do_filter_view_update()
 bool
 CADViewMeasure::eventFilter(QObject *, QEvent *e)
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return false;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m_ctx ? m_ctx->getGed() : nullptr;
     if (!gedp || !gedp->ged_gvp)
 	return false;
-    struct bview *v = gedp->ged_gvp;
+    struct bsg_view *v = gedp->ged_gvp;
 
     f3d->dbip = gedp->dbip;
 
     mf = (measure_3d->isChecked()) ? (QgMeasureFilter *)f3d : (QgMeasureFilter *)f2d;
 
-    mf->s = s;
-    mf->v = v;
+    mf->set_view(v);
     update_color();
 
     // Connect whatever the current filter is to pass on updating signals from
@@ -176,9 +169,6 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
     QObject::connect(mf, &QgMeasureFilter::view_updated, this, &CADViewMeasure::do_filter_view_update);
 
     bool ret = mf->eventFilter(NULL, e);
-
-    // Retrieve the scene object from the libqtcad data container
-    s = mf->s;
 
     QObject::disconnect(mf, &QgMeasureFilter::view_updated, this, &CADViewMeasure::do_filter_view_update);
 
@@ -193,4 +183,3 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

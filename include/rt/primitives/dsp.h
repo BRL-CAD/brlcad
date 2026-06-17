@@ -31,9 +31,15 @@
 
 __BEGIN_DECLS
 
+struct bg_tess_tol;
+struct rt_db_internal;
+struct rt_primitive_lod_realization;
+
 RT_EXPORT extern int dsp_pos(point_t out,
 			     struct soltab *stp,
 			     point_t p);
+
+RT_EXPORT extern int rt_dsp_wireframe_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bg_tess_tol *ttol);
 
 RT_EXPORT extern void rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip);
 

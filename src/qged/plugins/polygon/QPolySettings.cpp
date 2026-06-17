@@ -145,7 +145,7 @@ QPolySettings::~QPolySettings()
 }
 
 bool
-QPolySettings::uniq_obj_name(struct bu_vls *oname, struct bview *v)
+QPolySettings::uniq_obj_name(struct bu_vls *oname, struct bsg_view *v)
 {
     if (!v || !oname)
 	return false;
@@ -163,7 +163,7 @@ QPolySettings::uniq_obj_name(struct bu_vls *oname, struct bview *v)
     // See if the supplied name will collide.  If it will, then reject.  If we want
     // an output name, fail with a message box
     struct bu_vls ovname = BU_VLS_INIT_ZERO;
-    bv_uniq_obj_name(&ovname, vname, v);
+    bsg_uniq_obj_name(&ovname, vname, v);
     if (!BU_STR_EQUAL(bu_vls_cstr(&ovname), vname)) {
 	if (!oname)
 	    return false;
@@ -218,38 +218,36 @@ QPolySettings::do_grid_snapping_changed()
 
 
 void
-QPolySettings::settings_sync(struct bv_scene_obj *p)
+QPolySettings::settings_sync(const struct bsg_polygon_record *p)
 {
     if (!p)
 	return;
 
 
-    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-
     edge_color->blockSignals(true);
-    edge_color->rgbtext->setText(QString("%1/%2/%3").arg(p->s_color[0]).arg(p->s_color[1]).arg(p->s_color[2]));
+    edge_color->rgbtext->setText(QString("%1/%2/%3").arg(p->edge_color[0]).arg(p->edge_color[1]).arg(p->edge_color[2]));
     edge_color->blockSignals(false);
 
     unsigned char frgb[3];
-    bu_color_to_rgb_chars(&ip->fill_color, frgb);
+    bu_color_to_rgb_chars(&p->fill_color, frgb);
     fill_color->blockSignals(true);
     fill_color->rgbtext->setText(QString("%1/%2/%3").arg(frgb[0]).arg(frgb[1]).arg(frgb[2]));
     fill_color->blockSignals(false);
 
     fill_slope_x->blockSignals(true);
-    fill_slope_x->setText(QString("%1").arg(ip->fill_dir[0]));
+    fill_slope_x->setText(QString("%1").arg(p->fill_dir[0]));
     fill_slope_x->blockSignals(false);
 
     fill_slope_y->blockSignals(true);
-    fill_slope_y->setText(QString("%1").arg(ip->fill_dir[1]));
+    fill_slope_y->setText(QString("%1").arg(p->fill_dir[1]));
     fill_slope_y->blockSignals(false);
 
     fill_density->blockSignals(true);
-    fill_density->setText(QString("%1").arg(ip->fill_delta));
+    fill_density->setText(QString("%1").arg(p->fill_delta));
     fill_density->blockSignals(false);
 
     fill_poly->blockSignals(true);
-    if (ip->fill_flag) {
+    if (p->fill_flag) {
 	fill_poly->setChecked(true);
     } else {
 	fill_poly->setChecked(false);
@@ -257,7 +255,7 @@ QPolySettings::settings_sync(struct bv_scene_obj *p)
     fill_poly->blockSignals(false);
 
     vZ->blockSignals(true);
-    vZ->setText(QVariant(ip->vZ).toString());
+    vZ->setText(QVariant(p->vZ).toString());
     vZ->blockSignals(false);
 
     // Values set, now update the button colors

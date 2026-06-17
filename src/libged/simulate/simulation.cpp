@@ -30,7 +30,7 @@
 #ifdef HAVE_BULLET
 
 
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 
 #include "simulation.hpp"
 #include "rt_collision_algorithm.hpp"
@@ -327,6 +327,10 @@ public:
 
     // Get the db_full_path for this region
     const db_full_path &getPath() const { return m_motion_state.get_path(); }
+    std::string takeChangedParentName()
+    {
+	return m_motion_state.takeChangedParentName();
+    }
 
     // Get the physical AABB for this region (global AABB for ROI proxy, shape AABB otherwise)
     void getAabb(btVector3 &aabb_min, btVector3 &aabb_max) const
@@ -798,10 +802,27 @@ Simulation::step(const fastf_t seconds, const DebugMode debug_mode)
 }
 
 
-void
+std::vector<std::string>
+Simulation::takeChangedParentNames()
+{
+    std::vector<std::string> changed_parent_names;
+
+    for (Region * const region : m_regions) {
+	std::string name = region->takeChangedParentName();
+	if (!name.empty())
+	    changed_parent_names.push_back(name);
+    }
+
+    return changed_parent_names;
+}
+
+
+std::vector<std::string>
 Simulation::saveState()
 {
     RT_CK_DBI(&m_db);
+
+    std::vector<std::string> changed_names;
 
     for (const Region * const region : m_regions) {
 	const btRigidBody * const body = region->getRigidBody();
@@ -824,7 +845,12 @@ Simulation::saveState()
 	if (db5_update_attribute(name, "simulate::state_angular_velocity",
 				 angular_vel_str.c_str(), &m_db))
 	    bu_bomb("db5_update_attribute() failed");
+
+	if (name && name[0])
+	    changed_names.push_back(name);
     }
+
+    return changed_names;
 }
 
 

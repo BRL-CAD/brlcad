@@ -27,15 +27,15 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 
-#include "bv/defines.h"
+#include "bsg/defines.h"
 
-int CADkeyPressEvent(struct bview *v, int x_prev, int y_prev, QKeyEvent *k);
+int CADkeyPressEvent(struct bsg_view *v, int x_prev, int y_prev, QKeyEvent *k);
 
-int CADmousePressEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
+int CADmousePressEvent(struct bsg_view *v, int x_prev, int y_prev, QMouseEvent *e);
 
-int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int x_prev, int y_prev, QMouseEvent *e, int mode);
+int CADmouseReleaseEvent(struct bsg_view *v, double x_press, double y_press, int x_prev, int y_prev, QMouseEvent *e, int mode);
 
-int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, int mode);
+int CADmouseMoveEvent(struct bsg_view *v, int x_prev, int y_prev, QMouseEvent *e, int mode);
 
-int CADwheelEvent(struct bview *v, QWheelEvent *e);
+int CADwheelEvent(struct bsg_view *v, QWheelEvent *e);
 

@@ -37,6 +37,7 @@
 #include "bu/sort.h"
 #include "bg/chull.h"
 #include "bg/trimesh.h"
+#include "bsg/feature.h"
 #include "rt/geom.h"
 #include "wdb.h"
 #include "../ged_private.h"
@@ -267,37 +268,36 @@ edges_from_bot(struct rt_bot_internal *bot)
 static void
 draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_edges, int edges[], struct bu_color *color, const char *draw_name)
 {
-    struct bu_list *vhead;
-    point_t a,b;
     unsigned char draw_color[3];
     bu_color_to_rgb_chars(color, draw_color);
-    struct bv_vlblock *vbp;
-    struct bu_list local_vlist;
+    point_t *points = NULL;
 
-    BU_LIST_INIT(&local_vlist);
-    vbp = bv_vlblock_init(&local_vlist, 32);
-
+    if (num_edges > 0)
+	points = (point_t *)bu_calloc((size_t)num_edges * 2, sizeof(point_t), "bot check edge points");
     for (int curr_edge = 0; curr_edge < num_edges; curr_edge++) {
 	int p1 = edges[curr_edge*2];
 	int p2 = edges[curr_edge*2+1];
-	VSET(a, bot->vertices[p1*3], bot->vertices[p1*3+1], bot->vertices[p1*3+2]);
-	VSET(b, bot->vertices[p2*3], bot->vertices[p2*3+1], bot->vertices[p2*3+2]);
-	vhead = bv_vlblock_find(vbp, draw_color[0], draw_color[1], draw_color[2]);
-	BV_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BV_VLIST_LINE_DRAW);
+	VSET(points[curr_edge * 2], bot->vertices[p1*3], bot->vertices[p1*3+1], bot->vertices[p1*3+2]);
+	VSET(points[curr_edge * 2 + 1], bot->vertices[p2*3], bot->vertices[p2*3+1], bot->vertices[p2*3+2]);
     }
 
-    if (gedp->new_cmd_forms) {
+    if (gedp->ged_gvp) {
 	struct bu_vls nroot = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&nroot, "bot_check::%s", draw_name);
-	struct bview *view = gedp->ged_gvp;
-	bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));
+	struct bsg_view *view = gedp->ged_gvp;
+	if (points && num_edges > 0) {
+	    struct bsg_feature_style style = BSG_FEATURE_STYLE_INIT;
+	    style.color_valid = 1;
+	    VSET(style.color, draw_color[0], draw_color[1], draw_color[2]);
+	    (void)bsg_feature_replace_lines(view, bu_vls_cstr(&nroot), 0,
+		    (const point_t *)points, (size_t)num_edges * 2, &style);
+	} else {
+	    (void)bsg_feature_remove(view, bu_vls_cstr(&nroot));
+	}
 	bu_vls_free(&nroot);
-    } else {
-	_ged_cvt_vlblock_to_solids(gedp, vbp, draw_name, 0);
     }
-    bv_vlist_cleanup(&local_vlist);
-    bv_vlblock_free(vbp);
+    if (points)
+	bu_free(points, "bot check edge points");
 }
 
 static int

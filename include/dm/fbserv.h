@@ -137,6 +137,20 @@ DM_EXPORT extern int fbs_new_client(struct fbserv_obj *fbsp, struct pkg_conn *pc
 DM_EXPORT extern void fbs_existing_client_handler(void *clientData, int mask);
 
 /**
+ * @brief Tear down an fbserv client slot.
+ *
+ * Closes the libpkg connection, calls the registered TCP or IPC close
+ * handler, and resets the slot fields.  Safe to call from a
+ * Qt/Tcl/etc. handler that has detected EOF or an error on its
+ * fd-monitor channel and does not (or cannot) rely on the
+ * select-based fbs_existing_client_handler() path to do the drop.
+ *
+ * @p sub is the client index returned by fbs_new_client() / stored in
+ * fbsp->fbs_clients[*].  Out-of-range or unused indices are no-ops.
+ */
+DM_EXPORT extern void fbs_drop_client(struct fbserv_obj *fbsp, int sub);
+
+/**
  * @brief Open an IPC-based framebuffer server (no TCP listen socket).
  *
  * Creates a pkg_pair(), wraps the parent end as a pre-connected pkg_conn

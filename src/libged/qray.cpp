@@ -102,59 +102,6 @@ qray_free(struct ged_drawable *gdp)
 }
 
 
-void
-qray_data_to_vlist(struct ged *gedp,
-	struct bv_vlblock *vbp,
-	struct qray_dataList *headp,
-	vect_t dir,
-	int do_overlaps)
-{
-    int i = 1;			/* start out odd */
-    struct bu_list *vhead;
-    struct qray_dataList *ndlp;
-    vect_t in_pt, out_pt;
-    vect_t last_out_pt = { 0, 0, 0 };
-    struct bu_list *vlfree = &rt_vlfree;
-
-    for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
-	if (do_overlaps)
-	    vhead = bv_vlblock_find(vbp,
-		    gedp->i->ged_gdp->gd_qray_overlap_color.r,
-		    gedp->i->ged_gdp->gd_qray_overlap_color.g,
-		    gedp->i->ged_gdp->gd_qray_overlap_color.b);
-	else if (i % 2)
-	    vhead = bv_vlblock_find(vbp,
-		    gedp->i->ged_gdp->gd_qray_odd_color.r,
-		    gedp->i->ged_gdp->gd_qray_odd_color.g,
-		    gedp->i->ged_gdp->gd_qray_odd_color.b);
-	else
-	    vhead = bv_vlblock_find(vbp,
-		    gedp->i->ged_gdp->gd_qray_even_color.r,
-		    gedp->i->ged_gdp->gd_qray_even_color.g,
-		    gedp->i->ged_gdp->gd_qray_even_color.b);
-
-	VSET(in_pt, ndlp->x_in, ndlp->y_in, ndlp->z_in);
-	VJOIN1(out_pt, in_pt, ndlp->los, dir);
-	VSCALE(in_pt, in_pt, gedp->dbip->dbi_local2base);
-	VSCALE(out_pt, out_pt, gedp->dbip->dbi_local2base);
-	BV_ADD_VLIST(vlfree, vhead, in_pt, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, out_pt, BV_VLIST_LINE_DRAW);
-
-	if (!do_overlaps && i > 1 && !VNEAR_EQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
-	    vhead = bv_vlblock_find(vbp,
-		    gedp->i->ged_gdp->gd_qray_void_color.r,
-		    gedp->i->ged_gdp->gd_qray_void_color.g,
-		    gedp->i->ged_gdp->gd_qray_void_color.b);
-	    BV_ADD_VLIST(vlfree, vhead, last_out_pt, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, in_pt, BV_VLIST_LINE_DRAW);
-	}
-
-	VMOVE(last_out_pt, out_pt);
-	++i;
-    }
-}
-
-
 /** @} */
 
 

@@ -46,6 +46,7 @@ extern "C" {
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "rt/vlist.h"
 #include "gcv.h"
 }
 

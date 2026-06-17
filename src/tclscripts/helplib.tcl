@@ -27,7 +27,6 @@
 set helplib_data(dm_bg)			{{[r g b]} {Get/set background color}}
 set helplib_data(dm_bounds)		{{[xmin xmax ymin ymax zmin zmax]} {Set/get window bounds}}
 set helplib_data(dm_close)		{{} {close/destroy this display manager object}}
-set helplib_data(dm_open)		{{[name type [args]]} {Open/create a display manager object}}
 set helplib_data(dm_configure)		{{} {configure window parameters}}
 set helplib_data(dm_debug)		{{[level]} {Set/get debug level}}
 set helplib_data(dm_loadmat)		{{mat} {load viewing matrix}}

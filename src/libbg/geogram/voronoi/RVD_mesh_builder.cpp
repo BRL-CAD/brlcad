@@ -108,13 +108,13 @@ namespace GEOBRL {
         case 0:
         {
             index_t bv = sym.get_boundary_vertex();
-            if(bv >= bv_to_id_.size()) {
-                bv_to_id_.resize(bv + 1, -1);
+            if(bv >= bsg_to_id_.size()) {
+                bsg_to_id_.resize(bv + 1, -1);
             }
-            if(bv_to_id_[bv] == -1) {
-                bv_to_id_[bv] = signed_index_t(new_vertex());
+            if(bsg_to_id_[bv] == -1) {
+                bsg_to_id_[bv] = signed_index_t(new_vertex());
             }
-            return index_t(bv_to_id_[bv]);
+            return index_t(bsg_to_id_[bv]);
         }
         default:
             geo_assert_not_reached;

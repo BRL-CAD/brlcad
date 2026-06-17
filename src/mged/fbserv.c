@@ -163,8 +163,7 @@ found:
 	}
 
 	if (npp > 0) {
-	    DMP_dirty = 1;
-	    dm_set_dirty(DMP, 1);
+	    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_FRAMEBUFFER);
 	}
 
 	if (clients[i].c_fd != fd)
@@ -187,8 +186,7 @@ found:
 	}
 
 	if (npp > 0) {
-	    DMP_dirty = 1;
-	    dm_set_dirty(DMP, 1);
+	    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_FRAMEBUFFER);
 	}
     }
 

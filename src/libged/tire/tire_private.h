@@ -39,6 +39,8 @@
 #include "vmath.h"
 #include "wdb.h"
 
+struct ged;
+
 namespace tire_private {
 
 using TreadPoint = std::array<fastf_t, 2>;
@@ -140,7 +142,7 @@ struct WheelSpec {
 
 class CsgTransaction {
 public:
-    explicit CsgTransaction(rt_wdb *file, bool dry_run = false);
+    explicit CsgTransaction(rt_wdb *file, bool dry_run = false, struct ged *gedp = nullptr);
     ~CsgTransaction();
 
     CsgTransaction(const CsgTransaction &) = delete;
@@ -170,6 +172,9 @@ private:
     rt_wdb *file_ = nullptr;
     std::vector<std::string> created_;
     std::unordered_set<std::string> created_set_;
+    std::vector<std::string> attributed_;
+    std::unordered_set<std::string> attributed_set_;
+    struct ged *gedp_ = nullptr;
     bool dry_run_ = false;
     bool committed_ = false;
     bool failed_ = false;

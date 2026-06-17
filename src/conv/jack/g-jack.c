@@ -46,9 +46,12 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
+#include "nmg/plot.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "bv/plot3.h"
+#include "rt/vlist.h"
+#include "bsg/plot3.h"
+#include "bsg/vlist.h"
 
 
 static const char *usage =
@@ -392,9 +395,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[2] * 255));
 		BU_LIST_INIT(&vhead);
 		nmg_r_to_vlist(&vhead, r, 0, vlfree);
-		bv_vlist_to_uplot(fp, &vhead);
+		bsg_vlist_to_uplot(fp, &vhead);
 		fclose(fp);
-		BV_FREE_VLIST(vlfree, &vhead);
+		BSG_FREE_VLIST(vlfree, &vhead);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 	    }
 	    bu_vls_free(&file);

@@ -602,7 +602,7 @@ proc qray_reset_fmt { id } {
 
 ## - qray_nirt
 #
-# Delete phony solids from the display list before calling nirt.
+# Delete phony solids from the drawn scene before calling nirt.
 #
 proc qray_nirt { args } {
     # delete phony solids

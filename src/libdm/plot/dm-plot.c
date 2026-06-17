@@ -40,13 +40,14 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 #include "dm.h"
 
 #include "./dm-plot.h"
 #include "../null/dm-Null.h"
 
-#include "bv/defines.h"
-#include "bv/plot3.h"
+#include "bsg/defines.h"
+#include "bsg/plot3.h"
 
 #include "../include/private.h"
 
@@ -322,10 +323,10 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  * Returns 0 if object could be drawn, !0 if object was omitted.
  */
 static int
-plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
+plot_drawVList(struct dm *dmp, bsg_vlist *vp)
 {
     static vect_t last;
-    struct bv_vlist *tvp;
+    bsg_vlist *tvp;
     point_t *pt_prev=NULL;
     fastf_t dist_prev=1.0;
     fastf_t dist;
@@ -336,7 +337,7 @@ plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
     struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     if (privars->floating) {
-	bv_vlist_to_uplot(privars->up_fp, &vp->l);
+	bsg_vlist_to_uplot(privars->up_fp, &vp->l);
 
 	return BRLCAD_OK;
     }
@@ -351,7 +352,7 @@ plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
     if (delta < SQRT_SMALL_FASTF)
 	delta = SQRT_SMALL_FASTF;
 
-    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bsg_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -359,24 +360,24 @@ plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    static vect_t start, fin;
 	    switch (*cmd) {
-		case BV_VLIST_POLY_START:
-		case BV_VLIST_POLY_VERTNORM:
-		case BV_VLIST_TRI_START:
-		case BV_VLIST_TRI_VERTNORM:
+		case BSG_VLIST_POLY_START:
+		case BSG_VLIST_POLY_VERTNORM:
+		case BSG_VLIST_TRI_START:
+		case BSG_VLIST_TRI_VERTNORM:
 		    continue;
-		case BV_VLIST_MODEL_MAT:
+		case BSG_VLIST_MODEL_MAT:
 		    MAT_COPY(privars->plotmat, privars->mod_mat);
 		    continue;
-		case BV_VLIST_DISPLAY_MAT:
+		case BSG_VLIST_DISPLAY_MAT:
 		    MAT4X3PNT(tlate, (privars->mod_mat), *pt);
 		    privars->disp_mat[3] = tlate[0];
 		    privars->disp_mat[7] = tlate[1];
 		    privars->disp_mat[11] = tlate[2];
 		    MAT_COPY(privars->plotmat, privars->disp_mat);
 		    continue;
-		case BV_VLIST_POLY_MOVE:
-		case BV_VLIST_LINE_MOVE:
-		case BV_VLIST_TRI_MOVE:
+		case BSG_VLIST_POLY_MOVE:
+		case BSG_VLIST_LINE_MOVE:
+		case BSG_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -395,11 +396,11 @@ plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    } else
 			MAT4X3PNT(last, privars->plotmat, *pt);
 		    continue;
-		case BV_VLIST_POLY_DRAW:
-		case BV_VLIST_POLY_END:
-		case BV_VLIST_LINE_DRAW:
-		case BV_VLIST_TRI_DRAW:
-		case BV_VLIST_TRI_END:
+		case BSG_VLIST_POLY_DRAW:
+		case BSG_VLIST_POLY_END:
+		case BSG_VLIST_LINE_DRAW:
+		case BSG_VLIST_TRI_DRAW:
+		case BSG_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -479,12 +480,12 @@ plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
 
 
 static int
-plot_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
+plot_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data)
 {
-    struct bv_vlist *vp;
+    bsg_vlist *vp;
     if (!callback_function) {
 	if (data) {
-	    vp = (struct bv_vlist *)data;
+	    vp = (bsg_vlist *)data;
 	    plot_drawVList(dmp, vp);
 	}
     } else {
@@ -518,7 +519,7 @@ plot_hud_end(struct dm *dmp)
 
 
 /**
- * Output a string into the displaylist.
+ * Output a string into the plot stream.
  * The starting position of the beam is as specified.
  */
 static int
@@ -536,6 +537,29 @@ plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int siz
     sy = y + 2047;
     pl_move(privars->up_fp, sx, sy);
     pl_label(privars->up_fp, str);
+
+    return BRLCAD_OK;
+}
+
+/**
+ * Output a rotated vector string into the plot stream.
+ * The starting position of the beam is as specified.
+ */
+static int
+plot_drawString2DRot(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect), fastf_t angle)
+{
+    int sx, sy;
+
+    if (!dmp || !str || size < 0) {
+	return BRLCAD_ERROR;
+    }
+
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
+
+    sx = x * 2047;
+    sy = y + 2047;
+    pd_symbol(privars->up_fp, (char *)str, (double)sx, (double)sy,
+	    (double)((size > 0) ? size : 10), (double)angle);
 
     return BRLCAD_OK;
 }
@@ -781,6 +805,7 @@ struct dm_impl dm_plot_impl = {
     null_loadPMatrix,
     null_popPMatrix,
     plot_drawString2D,
+    plot_drawString2DRot,
     null_String2DBBox,
     plot_drawLine2D,
     plot_drawLine3D,
@@ -790,8 +815,6 @@ struct dm_impl dm_plot_impl = {
     null_drawPoints3D,
     plot_drawVList,
     plot_drawVList,
-    null_draw_obj,
-    NULL,
     plot_draw,
     plot_setFGColor,
     plot_setBGColor,
@@ -813,12 +836,6 @@ struct dm_impl dm_plot_impl = {
     plot_getBoundFlag,
     plot_debug,
     plot_logfile,
-    null_beginDList,
-    null_endDList,
-    null_drawDList,
-    null_freeDLists,
-    null_genDLists,
-    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
@@ -834,11 +851,10 @@ struct dm_impl dm_plot_impl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     0,
     0,				/* not graphical */
     NULL,                       /* not graphical */
-    0,				/* no displaylist */
+    0,				/* no backend cache */
     0,				/* no stereo */
     "plot",
     "Screen to UNIX-Plot",
@@ -862,6 +878,7 @@ struct dm_impl dm_plot_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
+    {255, 0, 0},/* geometry default color */
     VINIT_ZERO,			/* clipmin */
     VINIT_ZERO,			/* clipmax */
     0,				/* no debugging */
@@ -874,7 +891,9 @@ struct dm_impl dm_plot_impl = {
     NULL,			/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    NULL,                       /* backend ops */
+    NULL,                       /* backend resource cache */
+    0                           /* backend frame generation */
 };
 
 struct dm dm_plot = { DM_MAGIC, &dm_plot_impl, 0 };

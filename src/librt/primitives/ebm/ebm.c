@@ -41,9 +41,12 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/ebm.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 #include "../fixpt.h"
 #include "../../librt_private.h"
+
 
 struct rt_ebm_specific {
     struct rt_ebm_internal ebm_i;
@@ -61,7 +64,7 @@ struct rt_ebm_specific {
 
 #define RT_EBM_O(m) bu_offsetof(struct rt_ebm_internal, m)
 
-EXTERNCPP const struct bu_structparse rt_ebm_parse[] = {
+const struct bu_structparse rt_ebm_parse[] = {
     {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetof(struct rt_ebm_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s",	RT_EBM_NAME_LEN, "name", bu_offsetof(struct rt_ebm_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "src",	RT_EBM_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -193,7 +196,7 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Computes centroid of an extruded bitmap
  */
-C_DECL void
+void
 rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ebm_internal *eip;
@@ -645,10 +648,10 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
     return 0;
 }
 
-__BEGIN_DECLS
+
 extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
 extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-__END_DECLS
+
 
 /**
  * Retrieve data for EBM from a database object.
@@ -747,7 +750,7 @@ get_obj_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 static int
 ebm_get_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 {
-    const char *p;
+    char *p;
 
     p = eip->name;
 
@@ -798,7 +801,7 @@ ebm_get_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
  * service to the application, read in the bitmap and set up some of
  * the associated internal variables.
  */
-C_DECL int
+int
 rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     union record *rp;
@@ -904,7 +907,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name will be added by the caller.
  */
-C_DECL int
+int
 rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ebm_internal *eip;
@@ -939,7 +942,7 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-C_DECL int
+int
 rt_ebm_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -963,7 +966,7 @@ rt_ebm_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * service to the application, read in the bitmap and set up some of
  * the associated internal variables.
  */
-C_DECL int
+int
 rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     register struct rt_ebm_internal *eip;
@@ -1023,7 +1026,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name will be added by the caller.
  */
-C_DECL int
+int
 rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ebm_internal *eip;
@@ -1060,7 +1063,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_ebm_internal *eip =
@@ -1097,7 +1100,7 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_ebm_ifree(struct rt_db_internal *ip)
 {
     register struct rt_ebm_internal *eip;
@@ -1120,7 +1123,7 @@ rt_ebm_ifree(struct rt_db_internal *ip)
 /**
  * Calculate bounding RPP for ebm
  */
-C_DECL int
+int
 rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register struct rt_ebm_internal *eip;
@@ -1147,7 +1150,7 @@ rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rt_ebm_specific is created, and its address is stored
  * in stp->st_specific for use by rt_ebm_shot().
  */
-C_DECL int
+int
 rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_ebm_internal *eip;
@@ -1200,7 +1203,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_ebm_print(register const struct soltab *stp)
 {
     register const struct rt_ebm_specific *ebmp =
@@ -1223,7 +1226,7 @@ rt_ebm_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct rt_ebm_specific *ebmp =
@@ -1254,7 +1257,7 @@ rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  * This is mostly a matter of translating the stored code into the
  * proper normal.
  */
-C_DECL void
+void
 rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct rt_ebm_specific *ebmp =
@@ -1296,7 +1299,7 @@ rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Everything has sharp edges.  This makes things easy.
  */
-C_DECL void
+void
 rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     struct rt_ebm_specific *ebmp = (struct rt_ebm_specific *)stp->st_specific;
@@ -1311,7 +1314,7 @@ rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * Map the hit point in 2-D into the range 0..1 untransformed X
  * becomes U, and Y becomes V.
  */
-C_DECL void
+void
 rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -1326,7 +1329,7 @@ rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-C_DECL void
+void
 rt_ebm_free(struct soltab *stp)
 {
     register struct rt_ebm_specific *ebmp =
@@ -1338,46 +1341,98 @@ rt_ebm_free(struct soltab *stp)
 }
 
 
+struct ebm_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_ebm_line_sink_append(struct ebm_line_sink *sink, const point_t p,
+			int command)
+{
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
 /* either x1==x2, or y1==y2 */
-void
-rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, struct bu_list *vlfree, register struct bu_list *vhead)
+static void
+rt_ebm_plate_line_sink(int x_1, int y_1, int x_2, int y_2, double t,
+		       register fastf_t *mat, struct ebm_line_sink *sink)
 {
     point_t s, p;
     point_t srot, prot;
 
-    BU_CK_LIST_HEAD(vhead);
     VSET(s, x_1, y_1, 0.0);
     MAT4X3PNT(srot, mat, s);
-    BV_ADD_VLIST(vlfree, vhead, srot, BV_VLIST_LINE_MOVE);
+    rt_ebm_line_sink_append(sink, srot, BSG_GEOMETRY_LINE_MOVE);
 
     VSET(p, x_1, y_1, t);
     MAT4X3PNT(prot, mat, p);
-    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
+    rt_ebm_line_sink_append(sink, prot, BSG_GEOMETRY_LINE_DRAW);
 
     VSET(p, x_2, y_2, t);
     MAT4X3PNT(prot, mat, p);
-    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
+    rt_ebm_line_sink_append(sink, prot, BSG_GEOMETRY_LINE_DRAW);
 
     p[Z] = 0;
     MAT4X3PNT(prot, mat, p);
-    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
+    rt_ebm_line_sink_append(sink, prot, BSG_GEOMETRY_LINE_DRAW);
 
-    BV_ADD_VLIST(vlfree, vhead, srot, BV_VLIST_LINE_DRAW);
+    rt_ebm_line_sink_append(sink, srot, BSG_GEOMETRY_LINE_DRAW);
 }
 
 
-C_DECL int
-rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+void
+rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t,
+	     register fastf_t *mat, struct bu_list *vlfree,
+	     register struct bu_list *vhead)
 {
-    register struct rt_ebm_internal *eip;
+    struct ebm_line_sink sink;
+
+    BU_CK_LIST_HEAD(vhead);
+
+    sink.vlfree = vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    rt_ebm_plate_line_sink(x_1, y_1, x_2, y_2, t, mat, &sink);
+}
+
+
+static int
+rt_ebm_standard_line_set(struct ebm_line_sink *sink,
+			 struct rt_ebm_internal *eip)
+{
     size_t x, y;
     register int following;
     register int base;
 
-    BU_CK_LIST_HEAD(vhead);
-    RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
-    eip = (struct rt_ebm_internal *)ip->idb_ptr;
+    if (!sink || !eip)
+	return -1;
     RT_EBM_CK_MAGIC(eip);
 
     /* Find vertical lines */
@@ -1388,8 +1443,8 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    if (following) {
 		if ((*bit(eip, x-1, y) == 0) != (*bit(eip, x, y) == 0))
 		    continue;
-		rt_ebm_plate(x, base, x, y, eip->tallness,
-			     eip->mat, vlfree, vhead);
+		rt_ebm_plate_line_sink(x, base, x, y, eip->tallness,
+			eip->mat, sink);
 		following = 0;
 	    } else {
 		if ((*bit(eip, x-1, y) == 0) == (*bit(eip, x, y) == 0))
@@ -1407,8 +1462,8 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    if (following) {
 		if ((*bit(eip, x, y-1) == 0) != (*bit(eip, x, y) == 0))
 		    continue;
-		rt_ebm_plate(base, y, x, y, eip->tallness,
-			     eip->mat, vlfree, vhead);
+		rt_ebm_plate_line_sink(base, y, x, y, eip->tallness,
+			eip->mat, sink);
 		following = 0;
 	    } else {
 		if ((*bit(eip, x, y-1) == 0) == (*bit(eip, x, y) == 0))
@@ -1418,7 +1473,56 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    }
 	}
     }
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_ebm_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			  struct rt_db_internal *ip)
+{
+    struct rt_ebm_internal *eip;
+    struct ebm_line_sink sink;
+    int ret;
+
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(eip);
+
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    ret = rt_ebm_standard_line_set(&sink, eip);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip,
+	    const struct bg_tess_tol *UNUSED(ttol),
+	    const struct bn_tol *UNUSED(tol),
+	    const struct bsg_view *UNUSED(info))
+{
+    struct rt_ebm_internal *eip;
+    struct ebm_line_sink sink;
+
+    BU_CK_LIST_HEAD(vhead);
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(eip);
+
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_ebm_standard_line_set(&sink, eip);
 }
 
 
@@ -1598,7 +1702,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 }
 
 
-C_DECL int
+int
 rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_ebm_internal *eip;
@@ -1807,7 +1911,7 @@ fail:
  *
  * no parameters requested returns all
  */
-C_DECL int
+int
 rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_ebm_internal *ebm=(struct rt_ebm_internal *)intern->idb_ptr;
@@ -1853,7 +1957,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * "H" - height of each cell (mm)
  * "M" - matrix to transform EBM solid into model coordinates
  */
-C_DECL int
+int
 rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_ebm_internal *ebm;
@@ -1905,7 +2009,7 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-C_DECL int
+int
 rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
@@ -1921,7 +2025,7 @@ rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  * Routine to make a new EBM solid. The only purpose of this routine
  * is to initialize the matrix and height to legal values.
  */
-C_DECL void
+void
 rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_ebm_internal *ebm;
@@ -1942,7 +2046,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-C_DECL int
+int
 rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
@@ -1960,7 +2064,7 @@ rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
  * then calculates the area of the top and bottom faces, then any other
  * necessary faces.
  */
-C_DECL void
+void
 rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ebm_internal *eip;
@@ -2047,7 +2151,7 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-C_DECL const char *
+const char *
 rt_ebm_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

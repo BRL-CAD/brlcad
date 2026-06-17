@@ -29,6 +29,7 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
+#include "bsg/vlist.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "../include/private.h"
@@ -179,27 +180,21 @@ null_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(p
 
 
 int
-null_drawVList(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
+null_drawVList(struct dm *UNUSED(dmp), bsg_vlist *UNUSED(vp))
 {
     return 0;
 }
 
 
 int
-null_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
+null_drawVListHiddenLine(struct dm *UNUSED(dmp), bsg_vlist *UNUSED(vp))
 {
     return 0;
 }
 
 
 int
-null_draw_obj(struct dm *UNUSED(dmp), struct bv_scene_obj *UNUSED(s)) {
-    return 0;
-}
-
-
-int
-null_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
+null_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data)
 {
     return dmp == NULL && callback_function == NULL && data == NULL;
 }
@@ -345,40 +340,6 @@ null_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
     return 0;
 }
 
-int
-null_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
-{
-    return 0;
-}
-
-
-int
-null_endDList(struct dm *UNUSED(dmp))
-{
-    return 0;
-}
-
-
-int
-null_drawDList(unsigned int UNUSED(list))
-{
-    return 0;
-}
-
-
-int
-null_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
-{
-    return 0;
-}
-
-
-int
-null_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
-{
-    return 0;
-}
-
 
 int
 null_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image), int UNUSED(flip), int UNUSED(alpha))
@@ -431,6 +392,7 @@ struct dm_impl dm_null_impl = {
     null_loadPMatrix,
     null_popPMatrix,
     null_drawString2D,
+    NULL,
     null_String2DBBox,
     null_drawLine2D,
     null_drawLine3D,
@@ -440,8 +402,6 @@ struct dm_impl dm_null_impl = {
     null_drawPoints3D,
     null_drawVList,
     null_drawVListHiddenLine,
-    null_draw_obj,
-    NULL,
     null_draw,
     null_setFGColor,
     null_setBGColor,
@@ -463,12 +423,6 @@ struct dm_impl dm_null_impl = {
     null_getBoundFlag,
     null_debug,
     null_logfile,
-    null_beginDList,
-    null_endDList,
-    null_drawDList,
-    null_freeDLists,
-    null_genDLists,
-    NULL,
     null_getDisplayImage,
     null_reshape,
     null_makeCurrent,
@@ -484,11 +438,10 @@ struct dm_impl dm_null_impl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     0,
     0,				/* not graphical */
     NULL,                       /* not graphical */
-    0,				/* no displaylist */
+    0,				/* no backend cache */
     0,				/* no stereo */
     "nu",
     "Null Display",
@@ -512,6 +465,7 @@ struct dm_impl dm_null_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
+    {255, 0, 0},		/* geometry default color */
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
@@ -524,7 +478,9 @@ struct dm_impl dm_null_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    NULL,                       /* backend ops */
+    NULL,                       /* backend resource cache */
+    0                           /* backend frame generation */
 };
 
 struct dm dm_null = { DM_MAGIC, &dm_null_impl, 0 };

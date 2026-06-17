@@ -41,7 +41,9 @@
 #include "nmg.h"
 #include "rt/db5.h"
 #include "rt/geom.h"
+#include "rt/primitives/datum.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 /* local interface header */
 #include "./datum.h"
@@ -63,7 +65,7 @@
  * A struct datum_specific is created, and its address is stored in
  * stp->st_specific for use by datum_shot().
  */
-C_DECL int
+int
 rt_datum_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_datum_internal *datum_ip;
@@ -91,7 +93,7 @@ rt_datum_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_datum_print(const struct soltab *stp)
 {
     /* unnecessary callback */
@@ -100,7 +102,7 @@ rt_datum_print(const struct soltab *stp)
 }
 
 
-C_DECL int
+int
 rt_datum_shot(struct soltab *UNUSED(stp), struct xray *UNUSED(rp), struct application *UNUSED(ap), struct seg *UNUSED(seghead))
 {
     /* these are not solid geometry, so always a miss */
@@ -108,28 +110,28 @@ rt_datum_shot(struct soltab *UNUSED(stp), struct xray *UNUSED(rp), struct applic
 }
 
 
-C_DECL void
+void
 rt_datum_norm(struct hit *UNUSED(hitp), struct soltab *UNUSED(stp), struct xray *UNUSED(rp))
 {
     return;
 }
 
 
-C_DECL void
+void
 rt_datum_curve(struct curvature *UNUSED(cvp), struct hit *UNUSED(hitp), struct soltab *UNUSED(stp))
 {
     return;
 }
 
 
-C_DECL void
+void
 rt_datum_uv(struct application *UNUSED(ap), struct soltab *UNUSED(stp), struct hit *UNUSED(hitp), struct uvcoord *UNUSED(uvp))
 {
     return;
 }
 
 
-C_DECL void
+void
 rt_datum_free(struct soltab *stp)
 {
     struct datum_specific *datum;
@@ -143,23 +145,84 @@ rt_datum_free(struct soltab *stp)
 }
 
 
-C_DECL int
-rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+struct datum_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_datum_line_sink_append(struct datum_line_sink *sink, const point_t p,
+			  int command)
+{
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    switch (command) {
+	case BSG_GEOMETRY_LINE_MOVE:
+	    BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+	    break;
+	case BSG_GEOMETRY_LINE_DRAW:
+	    BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+	    break;
+	case BSG_GEOMETRY_POINT_DRAW:
+	    BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_POINT_DRAW);
+	    break;
+	default:
+	    sink->ok = 0;
+	    break;
+    }
+}
+
+
+static void
+rt_datum_line_sink_set_point_size(struct datum_line_sink *sink,
+				  fastf_t point_size)
+{
+    point_t point_size_record = VINIT_ZERO;
+
+    if (!sink || !sink->ok || sink->realization)
+	return;
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    point_size_record[X] = point_size;
+    BSG_ADD_VLIST(sink->vlfree, sink->vhead, point_size_record,
+	    BSG_VLIST_POINT_SIZE);
+}
+
+
+static int
+rt_datum_standard_line_set(struct datum_line_sink *sink,
+			   struct rt_db_internal *ip)
 {
     struct rt_datum_internal *datum_ip;
-    point_t point_size = VINIT_ZERO;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!sink)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
     datum_ip = (struct rt_datum_internal *)ip->idb_ptr;
     RT_DATUM_CK_MAGIC(datum_ip);
 
-    BU_CK_LIST_HEAD(vhead);
-
-    /* make sure plotted points are an odd selectable number of pixels with a center pixel, 5x5 */
-    point_size[X] = 5.0;
-    BV_ADD_VLIST(vlfree, vhead, point_size, BV_VLIST_POINT_SIZE);
+    /* Legacy vlist output used a 5x5 point marker.  The typed line-set keeps
+     * the point geometry; marker styling belongs in a style record.
+     */
+    rt_datum_line_sink_set_point_size(sink, 5.0);
 
     while (datum_ip) {
 	if (!ZERO(datum_ip->w)) {
@@ -170,8 +233,10 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VMOVE(up, datum_ip->dir);
 	    VUNITIZE(up);
 	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
-	    BV_ADD_VLIST(vlfree, vhead, datum_ip->pnt, BV_VLIST_POINT_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_POINT_DRAW);
+	    rt_datum_line_sink_append(sink, datum_ip->pnt,
+		    BSG_GEOMETRY_POINT_DRAW);
+	    rt_datum_line_sink_append(sink, tip,
+		    BSG_GEOMETRY_POINT_DRAW);
 
 	    VSUB2(up, tip, datum_ip->pnt);
 	    VUNITIZE(up);
@@ -185,8 +250,9 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VSCALE(nright, nright, MAGNITUDE(datum_ip->dir));
 
 	    /* line to normal point */
-	    BV_ADD_VLIST(vlfree, vhead, datum_ip->pnt, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, datum_ip->pnt,
+		    BSG_GEOMETRY_LINE_MOVE);
+	    rt_datum_line_sink_append(sink, tip, BSG_GEOMETRY_LINE_DRAW);
 
 	    /* draw the box */
 	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, left, datum_ip->w, right);
@@ -194,11 +260,11 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VJOIN2(ur, datum_ip->pnt, datum_ip->w, left, datum_ip->w, nright);
 	    VJOIN2(lr, datum_ip->pnt, datum_ip->w, nleft, datum_ip->w, nright);
 
-	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, ll, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, lr, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, ur, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ul, BSG_GEOMETRY_LINE_MOVE);
+	    rt_datum_line_sink_append(sink, ll, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, lr, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ur, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ul, BSG_GEOMETRY_LINE_DRAW);
 
 	} else if (MAGNITUDE(datum_ip->dir) > 0.0 && ZERO(datum_ip->w)) {
 	    vect_t left, right, nleft, nright, dir;
@@ -212,8 +278,9 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    /* draw main segment minus a smidgen for an arrowhead */
 	    VSCALE(line_seg, datum_ip->dir, 1.0 - arrowhead_percentage);
 	    VADD2(endpt, datum_ip->pnt, line_seg);
-	    BV_ADD_VLIST(vlfree, vhead, datum_ip->pnt, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, endpt, BV_VLIST_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, datum_ip->pnt,
+		    BSG_GEOMETRY_LINE_MOVE);
+	    rt_datum_line_sink_append(sink, endpt, BSG_GEOMETRY_LINE_DRAW);
 
 	    /* calculate arrowhead points */
 	    VMOVE(dir, datum_ip->dir);
@@ -233,27 +300,67 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VJOIN2(lr, endpt, 1, nleft, 1, nright);
 
 	    /* draw arrowhead */
-	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, lr, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, ll, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, ur, BV_VLIST_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ul, BSG_GEOMETRY_LINE_MOVE);
+	    rt_datum_line_sink_append(sink, tip, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, lr, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ll, BSG_GEOMETRY_LINE_MOVE);
+	    rt_datum_line_sink_append(sink, tip, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ur, BSG_GEOMETRY_LINE_DRAW);
 
-
-	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, ll, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, lr, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, ur, BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, ul, BV_VLIST_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ul, BSG_GEOMETRY_LINE_MOVE);
+	    rt_datum_line_sink_append(sink, ll, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, lr, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ur, BSG_GEOMETRY_LINE_DRAW);
+	    rt_datum_line_sink_append(sink, ul, BSG_GEOMETRY_LINE_DRAW);
 
 	} else {
-	    BV_ADD_VLIST(vlfree, vhead, datum_ip->pnt, BV_VLIST_POINT_DRAW);
+	    rt_datum_line_sink_append(sink, datum_ip->pnt,
+		    BSG_GEOMETRY_POINT_DRAW);
 	}
 	datum_ip = datum_ip->next;
     }
 
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_datum_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			    struct rt_db_internal *ip)
+{
+    struct datum_line_sink sink;
+
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    int ret = rt_datum_standard_line_set(&sink, ip);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip,
+	      const struct bg_tess_tol *UNUSED(ttol),
+	      const struct bn_tol *UNUSED(tol),
+	      const struct bsg_view *UNUSED(info))
+{
+    struct datum_line_sink sink;
+
+    BU_CK_LIST_HEAD(vhead);
+
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_datum_standard_line_set(&sink, ip);
 }
 
 
@@ -262,7 +369,7 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-C_DECL int
+int
 rt_datum_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_datum_internal *datum_ip;
@@ -302,7 +409,7 @@ datum_unpack_double(unsigned char *buf, unsigned char *data, size_t count)
  *
  * Apply the transformation to mm units as well.
  */
-C_DECL int
+int
 rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_datum_internal *datum_ip;
@@ -370,7 +477,7 @@ rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 }
 
 
-C_DECL int
+int
 rt_datum_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !mat)
@@ -408,7 +515,7 @@ rt_datum_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
  *
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_datum_internal *first = NULL;
@@ -472,7 +579,7 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_datum_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_datum_internal *datum_ip = (struct rt_datum_internal *)ip->idb_ptr;
@@ -525,7 +632,7 @@ rt_datum_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_datum_ifree(struct rt_db_internal *ip)
 {
     struct rt_datum_internal *datum_ip;
@@ -547,7 +654,7 @@ rt_datum_ifree(struct rt_db_internal *ip)
 }
 
 
-C_DECL const char *
+const char *
 rt_datum_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -576,7 +683,7 @@ datum_kpt_end:
 }
 
 
-C_DECL int
+int
 rt_datum_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_datum_internal *datum;
@@ -609,7 +716,7 @@ rt_datum_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 }
 
 
-C_DECL int
+int
 rt_datum_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
@@ -618,7 +725,7 @@ rt_datum_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-C_DECL int
+int
 rt_datum_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_datum_internal *datum;

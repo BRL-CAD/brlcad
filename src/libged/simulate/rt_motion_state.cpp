@@ -151,7 +151,8 @@ RtMotionState::RtMotionState(db_i &db, const db_full_path &path,
     m_db(db),
     m_path(),
     m_autofree_m_path(&m_path),
-    m_transform(btMatrix3x3::getIdentity(), center_of_mass)
+    m_transform(btMatrix3x3::getIdentity(), center_of_mass),
+    m_tree_matrix_changed(false)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -167,6 +168,21 @@ const db_full_path &
 RtMotionState::get_path() const
 {
     return m_path;
+}
+
+
+std::string
+RtMotionState::takeChangedParentName()
+{
+    if (!m_tree_matrix_changed)
+	return std::string();
+
+    m_tree_matrix_changed = false;
+    if (m_path.fp_len < 2 || !m_path.fp_names[m_path.fp_len - 2] ||
+	    !m_path.fp_names[m_path.fp_len - 2]->d_namep)
+	return std::string();
+
+    return std::string(m_path.fp_names[m_path.fp_len - 2]->d_namep);
 }
 
 
@@ -203,6 +219,7 @@ RtMotionState::setWorldTransform(const btTransform &transform)
     bn_mat_mul2(transform_matrix, matrix);
     bn_mat_mul2(parent_path_matrix_inverse, matrix);
     apply_tree_matrix(m_db, get_path(), matrix);
+    m_tree_matrix_changed = true;
 }
 
 

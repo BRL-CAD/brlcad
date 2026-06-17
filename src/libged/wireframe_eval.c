@@ -37,17 +37,18 @@
 
 #include "bu/debug.h"
 #include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/func.h"
 
+#include "bsg/geometry.h"
+#include "bsg/scene_builder.h"
 #include "./ged_private.h"
 
 struct bigE_data {
-    struct bv_scene_obj *s;
-
     struct db_i *dbip;
     struct db_full_path *fp;
     const struct bn_tol *tol;
@@ -57,6 +58,10 @@ struct bigE_data {
     struct bu_ptbl leaf_list;
     struct rt_i *rtip;
     struct bu_list *vlfree;
+    point_t *line_points;
+    int *line_commands;
+    size_t line_count;
+    size_t line_capacity;
     time_t start_time;
     time_t etime;
     long nvectors;
@@ -123,6 +128,43 @@ union E_tree {
 
 #define E_TREE_MAGIC 0x45545245
 #define CK_ETREE(_p) BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
+
+
+static void
+bigE_line_append(struct bigE_data *dgcdp, const point_t point, int command)
+{
+    if (!dgcdp || !point)
+	return;
+
+    if (dgcdp->line_count >= dgcdp->line_capacity) {
+	size_t ncap = dgcdp->line_capacity ? dgcdp->line_capacity * 2 : 256;
+	dgcdp->line_points = (point_t *)bu_realloc(dgcdp->line_points,
+		ncap * sizeof(point_t), "bigE typed line points");
+	dgcdp->line_commands = (int *)bu_realloc(dgcdp->line_commands,
+		ncap * sizeof(int), "bigE typed line commands");
+	dgcdp->line_capacity = ncap;
+    }
+
+    VMOVE(dgcdp->line_points[dgcdp->line_count], point);
+    dgcdp->line_commands[dgcdp->line_count] = command;
+    dgcdp->line_count++;
+}
+
+
+static void
+bigE_line_free(struct bigE_data *dgcdp)
+{
+    if (!dgcdp)
+	return;
+    if (dgcdp->line_points)
+	bu_free(dgcdp->line_points, "bigE typed line points");
+    if (dgcdp->line_commands)
+	bu_free(dgcdp->line_commands, "bigE typed line commands");
+    dgcdp->line_points = NULL;
+    dgcdp->line_commands = NULL;
+    dgcdp->line_count = 0;
+    dgcdp->line_capacity = 0;
+}
 
 
 static union E_tree *
@@ -939,8 +981,6 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct big
 static void
 shoot_and_plot(point_t start_pt,
 	       vect_t dir,
-	       struct bu_list *vlfree,
-	       struct bu_list *vhead,
 	       fastf_t edge_len,
 	       int skip_leaf1,
 	       int skip_leaf2,
@@ -1099,7 +1139,7 @@ shoot_and_plot(point_t start_pt,
     if (final_segs) {
 	struct seg *seg;
 
-	/* add the segments to the VLIST */
+	/* add the segments to the typed line accumulator */
 	for (BU_LIST_FOR (seg, seg, final_segs)) {
 	    point_t pt;
 
@@ -1111,9 +1151,9 @@ shoot_and_plot(point_t start_pt,
 
 	    dgcdp->nvectors++;
 	    VJOIN1(pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir);
-	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
+	    bigE_line_append(dgcdp, pt, BSG_GEOMETRY_LINE_MOVE);
 	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir);
-	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
+	    bigE_line_append(dgcdp, pt, BSG_GEOMETRY_LINE_DRAW);
 	}
 
     }
@@ -1128,7 +1168,6 @@ shoot_and_plot(point_t start_pt,
 
 static void
 Eplot(union E_tree *eptr,
-      struct bu_list *vhead,
       struct bigE_data *dgcdp)
 {
     point_t start_pt;
@@ -1193,7 +1232,7 @@ Eplot(union E_tree *eptr,
 		continue;
 	    inv_len = 1.0/edge_len;
 	    VSCALE(dir, dir, inv_len);
-	    shoot_and_plot(vg->coord, dir, vlfree, vhead, edge_len, (int)leaf_no, -1, eptr, ON_SURF, dgcdp);
+	    shoot_and_plot(vg->coord, dir, edge_len, (int)leaf_no, -1, eptr, ON_SURF, dgcdp);
 
 	}
     }
@@ -1464,7 +1503,7 @@ Eplot(union E_tree *eptr,
 			point_t ray_start;
 
 			VJOIN1(ray_start, start_pt, aseg->seg_in.hit_dist, dir);
-			shoot_and_plot(ray_start, dir, vlfree, vhead,
+			shoot_and_plot(ray_start, dir,
 				       aseg->seg_out.hit_dist - aseg->seg_in.hit_dist,
 				       (int)leaf_no, (int)leaf2, eptr, ON_INT, dgcdp);
 		    }
@@ -1791,20 +1830,27 @@ fix_halfs(struct bigE_data *dgcdp)
 }
 
 
-C_DECL int
-draw_m3(struct bv_scene_obj *s)
+int
+ged_draw_scene_ref_eval_wireframe(bsg_scene_ref ref)
 {
 
     struct bigE_data dgcdp;
+    int ret = BRLCAD_OK;
 
-    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    struct ged_draw_source_state *d = ged_draw_scene_ref_source_data(ref);
+    if (!d)
+	return BRLCAD_OK;
 
     dgcdp.dbip = d->dbip;
     dgcdp.do_polysolids = 0;
-    dgcdp.fp = (struct db_full_path *)s->s_path;
+    dgcdp.fp = (struct db_full_path *)ged_draw_scene_ref_fullpath(ref);
     dgcdp.tol = d->tol;
     dgcdp.ttol = d->ttol;
-    dgcdp.vlfree = s->vlfree;
+    dgcdp.vlfree = ged_draw_scene_ref_geometry_pool(ref);
+    dgcdp.line_points = NULL;
+    dgcdp.line_commands = NULL;
+    dgcdp.line_count = 0;
+    dgcdp.line_capacity = 0;
 
     BU_ALLOC(dgcdp.ap, struct application);
     RT_APPLICATION_INIT(dgcdp.ap);
@@ -1827,15 +1873,18 @@ draw_m3(struct bv_scene_obj *s)
 	db_path_to_vls(&ppath, dgcdp.fp);
 	path = bu_vls_cstr(&ppath);
     } else {
-	path = bu_vls_cstr(&s->s_name);
+	path = ged_draw_scene_ref_name(ref);
     }
 
     if (!path || rt_gettrees(dgcdp.rtip, 1, (const char **)&path, 1)) {
 	bu_ptbl_free(&dgcdp.leaf_list);
 
 	rt_i_destroy(dgcdp.rtip);
+	bu_free(dgcdp.ap, "struct application");
+	bu_vls_free(&ppath);
 	return BRLCAD_ERROR;
     }
+    bu_vls_free(&ppath);
 
     struct region *rp;
     union E_tree *eptr;
@@ -1847,17 +1896,23 @@ draw_m3(struct bv_scene_obj *s)
 	if (dgcdp.num_halfs)
 	    fix_halfs(&dgcdp);
 
-	Eplot(eptr, &s->s_vlist, &dgcdp);
+	Eplot(eptr, &dgcdp);
 	free_etree(eptr, &dgcdp);
 	bu_ptbl_reset(&dgcdp.leaf_list);
     }
+    if (!ged_draw_scene_ref_publish_line_set(ref,
+	    (const point_t *)dgcdp.line_points, dgcdp.line_commands,
+	    dgcdp.line_count))
+	ret = BRLCAD_ERROR;
+    bigE_line_free(&dgcdp);
 
     rt_i_destroy(dgcdp.rtip);
+    bu_free(dgcdp.ap, "struct application");
 
     /* free leaf_list */
     bu_ptbl_free(&dgcdp.leaf_list);
 
-    return BRLCAD_OK;
+    return ret;
 }
 
 /*

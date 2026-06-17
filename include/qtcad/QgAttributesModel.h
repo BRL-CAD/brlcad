@@ -26,40 +26,42 @@
 #ifndef QGATTRIBUTESMODEL_H
 #define QGATTRIBUTESMODEL_H
 
-#ifndef Q_MOC_RUN
-#include "bu/avs.h"
-#include "bv.h"
-#include "raytrace.h"
-#include "ged.h"
-#endif
-
 #include "qtcad/defines.h"
 #include "qtcad/QgKeyVal.h"
 
-class QTCAD_EXPORT QgAttributesModel : public QgKeyValModel
-{
-    Q_OBJECT
+struct db_i;
+struct directory;
+struct bu_attribute_value_set;
+class QgSession;
 
-    public:  // "standard" custom tree model functions
-	explicit QgAttributesModel(QObject *parent = 0, struct db_i *dbip = DBI_NULL, struct directory *dp = RT_DIR_NULL, int show_std = 0, int show_user = 0);
+class QTCAD_EXPORT QgAttributesModel : public QgKeyValModel {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgAttributesModel)
+
+
+public:  // "standard" custom tree model functions
+	explicit QgAttributesModel(QObject *parent = nullptr, struct db_i *dbip = nullptr, struct directory *dp = nullptr, int show_std = 0, int show_user = 0);
+	/* Preferred constructor: subscribe directly to the session's db_changed
+	 * signal instead of relying on an application-level relay. */
+	explicit QgAttributesModel(QObject *parent, QgSession *session, struct directory *dp = nullptr, int show_std = 0, int show_user = 0);
 	~QgAttributesModel();
 
-	bool hasChildren(const QModelIndex &parent) const;
+	bool hasChildren(const QModelIndex &parent) const override;
 	int update(struct db_i *new_dbip, struct directory *dp);
 
-    public slots:
+public slots:
 	// Used when a selection in the model has changed
 	void refresh(const QModelIndex &idx);
-        // Used when the values may have changed in the underlying .g
+	// Used when the values may have changed in the underlying .g
 	void db_change_refresh();
 	// Used when the currently opened database changes
 	void do_dbi_update(struct db_i *dbip);
 
-    protected:
-	bool canFetchMore(const QModelIndex &parent) const;
-	void fetchMore(const QModelIndex &parent);
+protected:
+	bool canFetchMore(const QModelIndex &parent) const override;
+	void fetchMore(const QModelIndex &parent) override;
 
-    private:
+private:
 	void add_Children(const char *name, QgKeyValNode *curr_node);
 	struct db_i *current_dbip;
 	struct directory *current_dp;
@@ -78,4 +80,3 @@ class QTCAD_EXPORT QgAttributesModel : public QgKeyValModel
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

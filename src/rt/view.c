@@ -55,7 +55,7 @@
 #include "raytrace.h"
 #include "bu/cv.h"
 #include "dm.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "optical/photonmap.h"
 #include "scanline.h"
 

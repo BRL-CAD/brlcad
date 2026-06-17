@@ -40,11 +40,13 @@
 #endif
 
 #include "bio.h"
+#include "bnetwork.h"
 #include "bresource.h"
 
 
 #include "bu/app.h"
 #include "bu/cmd.h"
+#include "bu/cv.h"
 #include "bu/env.h"
 #include "bu/file.h"
 #include "bu/opt.h"
@@ -53,11 +55,37 @@
 #include "bu/str.h"
 #include "bu/units.h"
 #include "bu/vls.h"
-#include "bv.h"
-
+#include "bsg.h"
+#include "bsg/export.h"
+#include "bsg/feature.h"
+#include "bsg/geometry.h"
+#include "bsg/plot3.h"
+#include "bsg/render.h"
+#include "bsg/view_state.h"
 #include "ged.h"
+#include "ged/bsg_ged_draw.h"
 #include "./ged_private.h"
-#include "./dbi.h"
+
+extern "C" bsg_scene_ref
+ged_scene_root_ref(struct ged *gedp)
+{
+    if (gedp && gedp->i && gedp->i->ged_gdp)
+	return gedp->i->ged_gdp->gd_scene_root;
+    return bsg_scene_ref_null();
+}
+
+extern "C" void
+ged_scene_root_ref_set(struct ged *gedp, bsg_scene_ref root)
+{
+    if (gedp && gedp->i && gedp->i->ged_gdp)
+	gedp->i->ged_gdp->gd_scene_root = root;
+}
+
+extern "C" void
+ged_scene_root_ref_clear(struct ged *gedp)
+{
+    ged_scene_root_ref_set(gedp, bsg_scene_ref_null());
+}
 
 int
 _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv)
@@ -246,54 +274,6 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
 
     return BRLCAD_OK;
 }
-
-/* NOTE - caller must initialize vmin and vmax to INFINITY and -INFINITY
- * respectively (we don't do it here so callers may run this routine
- * repeatedly over different tables to accumulate bounds. */
-static int
-scene_bounding_sph(struct bu_ptbl *so, vect_t *vmin, vect_t *vmax, int pflag)
-{
-    struct bv_scene_obj *sp;
-    vect_t minus, plus;
-    int is_empty = 1;
-
-    /* calculate the bounding for of all solids being displayed */
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
-	if (BU_PTBL_LEN(&g->children)) {
-	    for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
-		sp = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);
-		minus[X] = sp->s_center[X] - sp->s_size;
-		minus[Y] = sp->s_center[Y] - sp->s_size;
-		minus[Z] = sp->s_center[Z] - sp->s_size;
-		VMIN((*vmin), minus);
-		plus[X] = sp->s_center[X] + sp->s_size;
-		plus[Y] = sp->s_center[Y] + sp->s_size;
-		plus[Z] = sp->s_center[Z] + sp->s_size;
-		VMAX((*vmax), plus);
-
-		is_empty = 0;
-	    }
-	} else {
-	    // If we're an evaluated object, the group itself has the
-	    // necessary info.
-	    minus[X] = g->s_center[X] - g->s_size;
-	    minus[Y] = g->s_center[Y] - g->s_size;
-	    minus[Z] = g->s_center[Z] - g->s_size;
-	    VMIN((*vmin), minus);
-	    plus[X] = g->s_center[X] + g->s_size;
-	    plus[Y] = g->s_center[Y] + g->s_size;
-	    plus[Z] = g->s_center[Z] + g->s_size;
-	    VMAX((*vmax), plus);
-	}
-    }
-    if (!pflag) {
-	bu_log("todo - handle pflag\n");
-    }
-
-    return is_empty;
-}
-
 
 int
 _ged_results_init(struct ged_results *results)
@@ -1051,30 +1031,57 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     return ret;
 }
 
+static size_t
+_ged_draw_intent_path_count(struct ged *gedp)
+{
+    struct bu_vls paths = BU_VLS_INIT_ZERO;
+    size_t count = ged_draw_list_paths(gedp, gedp ? gedp->ged_gvp : NULL,
+	    -1, 0, &paths);
+    bu_vls_free(&paths);
+    return count;
+}
+
+
+static int
+_ged_draw_path_list_fill_argv(struct ged *gedp,
+			      const struct bu_vls *paths,
+			      char **start,
+			      const char **end)
+{
+    char **vp = start;
+    const char *path = bu_vls_cstr(paths);
+
+    while (path && *path) {
+	const char *nl = strchr(path, '\n');
+	size_t len = nl ? (size_t)(nl - path) : strlen(path);
+	if (len > 0) {
+	    if ((vp != NULL) && ((const char **)vp < end)) {
+		char *arg = (char *)bu_malloc(len + 1, "ged who argv path");
+		memcpy(arg, path, len);
+		arg[len] = '\0';
+		*vp++ = arg;
+	    } else {
+		bu_vls_printf(gedp->ged_result_str,
+			"INTERNAL ERROR: ged_who_argv() ran out of space at %.*s\n",
+			(int)len, path);
+		break;
+	    }
+	}
+	if (!nl)
+	    break;
+	path = nl + 1;
+    }
+
+    if ((vp != NULL) && ((const char **)vp < end))
+	*vp = (char *)0;
+
+    return vp - start;
+}
+
 size_t
 ged_who_argc(struct ged *gedp)
 {
-    if (gedp->new_cmd_forms) {
-	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
-	    return 0;
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
-	if (bvs)
-	    return bvs->count_drawn_paths(-1, true);
-	return 0;
-    }
-
-    struct display_list *gdlp = NULL;
-    size_t visibleCount = 0;
-
-    if (!gedp || !gedp->i->ged_gdp || !gedp->i->ged_gdp->gd_headDisplay)
-	return 0;
-
-    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
-	visibleCount++;
-    }
-
-    return visibleCount;
+    return _ged_draw_intent_path_count(gedp);
 }
 
 
@@ -1089,32 +1096,7 @@ ged_who_argc(struct ged *gedp)
 int
 ged_who_argv(struct ged *gedp, char **start, const char **end)
 {
-    char **vp = start;
     if (!gedp)
-	return 0;
-    if (gedp->new_cmd_forms) {
-	if (!gedp->ged_gvp || !gedp->dbi_state)
-	    return 0;
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
-	if (bvs) {
-	    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
-	    for (size_t i = 0; i < drawn_paths.size(); i++) {
-		if ((vp != NULL) && ((const char **)vp < end)) {
-		    *vp++ = bu_strdup(drawn_paths[i].c_str());
-		} else {
-		    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", drawn_paths[i].c_str());
-		    break;
-		}
-	    }
-	} else {
-	    return 0;
-	}
-    }
-
-    struct display_list *gdlp;
-
-    if (!gedp || !gedp->i->ged_gdp || !gedp->i->ged_gdp->gd_headDisplay)
 	return 0;
 
     if (UNLIKELY(!start || !end)) {
@@ -1122,23 +1104,11 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 	return 0;
     }
 
-    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
-	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;
-
-	if ((vp != NULL) && ((const char **)vp < end)) {
-	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
-	    break;
-	}
-    }
-
-    if ((vp != NULL) && ((const char **)vp < end)) {
-	*vp = (char *) 0;
-    }
-
-    return vp-start;
+    struct bu_vls paths = BU_VLS_INIT_ZERO;
+    ged_draw_list_paths(gedp, gedp->ged_gvp, -1, 0, &paths);
+    int count = _ged_draw_path_list_fill_argv(gedp, &paths, start, end);
+    bu_vls_free(&paths);
+    return count;
 }
 
 void
@@ -1206,21 +1176,612 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
     }
 }
 
-void
-_ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char *name, int copy)
+enum ged_uplot_arg_type {
+    GED_UPLOT_BAD = 0,
+    GED_UPLOT_NONE = 1,
+    GED_UPLOT_SHORT = 2,
+    GED_UPLOT_IEEE = 3,
+    GED_UPLOT_CHAR = 4,
+    GED_UPLOT_STRING = 5
+};
+
+struct ged_uplot_op {
+    int targ;
+    int narg;
+    const char *desc;
+};
+
+static const struct ged_uplot_op ged_uplot_error = {GED_UPLOT_BAD, 0, "error"};
+static const struct ged_uplot_op ged_uplot_letters[] = {
+    /*A*/ {GED_UPLOT_BAD, 0, ""},
+    /*B*/ {GED_UPLOT_BAD, 0, ""},
+    /*C*/ {GED_UPLOT_CHAR, 3, "color"},
+    /*D*/ {GED_UPLOT_BAD, 0, ""},
+    /*E*/ {GED_UPLOT_BAD, 0, ""},
+    /*F*/ {GED_UPLOT_NONE, 0, "flush"},
+    /*G*/ {GED_UPLOT_BAD, 0, ""},
+    /*H*/ {GED_UPLOT_BAD, 0, ""},
+    /*I*/ {GED_UPLOT_BAD, 0, ""},
+    /*J*/ {GED_UPLOT_BAD, 0, ""},
+    /*K*/ {GED_UPLOT_BAD, 0, ""},
+    /*L*/ {GED_UPLOT_SHORT, 6, "3line"},
+    /*M*/ {GED_UPLOT_SHORT, 3, "3move"},
+    /*N*/ {GED_UPLOT_SHORT, 3, "3cont"},
+    /*O*/ {GED_UPLOT_IEEE, 3, "d_3move"},
+    /*P*/ {GED_UPLOT_SHORT, 3, "3point"},
+    /*Q*/ {GED_UPLOT_IEEE, 3, "d_3cont"},
+    /*R*/ {GED_UPLOT_BAD, 0, ""},
+    /*S*/ {GED_UPLOT_SHORT, 6, "3space"},
+    /*T*/ {GED_UPLOT_BAD, 0, ""},
+    /*U*/ {GED_UPLOT_BAD, 0, ""},
+    /*V*/ {GED_UPLOT_IEEE, 6, "d_3line"},
+    /*W*/ {GED_UPLOT_IEEE, 6, "d_3space"},
+    /*X*/ {GED_UPLOT_IEEE, 3, "d_3point"},
+    /*Y*/ {GED_UPLOT_BAD, 0, ""},
+    /*Z*/ {GED_UPLOT_BAD, 0, ""},
+    /*[*/ {GED_UPLOT_BAD, 0, ""},
+    /*\*/ {GED_UPLOT_BAD, 0, ""},
+    /*]*/ {GED_UPLOT_BAD, 0, ""},
+    /*^*/ {GED_UPLOT_BAD, 0, ""},
+    /*_*/ {GED_UPLOT_BAD, 0, ""},
+    /*`*/ {GED_UPLOT_BAD, 0, ""},
+    /*a*/ {GED_UPLOT_SHORT, 6, "arc"},
+    /*b*/ {GED_UPLOT_BAD, 0, ""},
+    /*c*/ {GED_UPLOT_SHORT, 3, "circle"},
+    /*d*/ {GED_UPLOT_BAD, 0, ""},
+    /*e*/ {GED_UPLOT_NONE, 0, "erase"},
+    /*f*/ {GED_UPLOT_STRING, 1, "linmod"},
+    /*g*/ {GED_UPLOT_BAD, 0, ""},
+    /*h*/ {GED_UPLOT_BAD, 0, ""},
+    /*i*/ {GED_UPLOT_IEEE, 3, "d_circle"},
+    /*j*/ {GED_UPLOT_BAD, 0, ""},
+    /*k*/ {GED_UPLOT_BAD, 0, ""},
+    /*l*/ {GED_UPLOT_SHORT, 4, "line"},
+    /*m*/ {GED_UPLOT_SHORT, 2, "move"},
+    /*n*/ {GED_UPLOT_SHORT, 2, "cont"},
+    /*o*/ {GED_UPLOT_IEEE, 2, "d_move"},
+    /*p*/ {GED_UPLOT_SHORT, 2, "point"},
+    /*q*/ {GED_UPLOT_IEEE, 2, "d_cont"},
+    /*r*/ {GED_UPLOT_IEEE, 6, "d_arc"},
+    /*s*/ {GED_UPLOT_SHORT, 4, "space"},
+    /*t*/ {GED_UPLOT_STRING, 1, "label"},
+    /*u*/ {GED_UPLOT_BAD, 0, ""},
+    /*v*/ {GED_UPLOT_IEEE, 4, "d_line"},
+    /*w*/ {GED_UPLOT_IEEE, 4, "d_space"},
+    /*x*/ {GED_UPLOT_IEEE, 2, "d_point"},
+    /*y*/ {GED_UPLOT_BAD, 0, ""},
+    /*z*/ {GED_UPLOT_BAD, 0, ""}
+};
+
+struct ged_uplot_layer {
+    long rgb;
+    point_t *points;
+    int *commands;
+    size_t count;
+    size_t capacity;
+};
+
+struct ged_uplot_stream {
+    struct ged_uplot_layer *layers;
+    size_t layer_count;
+    size_t layer_capacity;
+    size_t current_layer;
+    point_t lpnt;
+    int moved;
+    double char_size;
+    int mode;
+};
+
+static int
+ged_uplot_getshort(FILE *fp)
 {
-    size_t i;
-    char shortname[32] = {0};
-    char namebuf[64] = {0};
+    int lo = getc(fp);
+    int hi = getc(fp);
+    if (lo == EOF || hi == EOF)
+	return 0;
 
-    bu_strlcpy(shortname, name, sizeof(shortname));
+    long v = lo;
+    v |= (hi << 8);
+    if (v <= 0x7FFF)
+	return (int)v;
+    long w = -1;
+    w &= ~0x7FFF;
+    return (int)(w | v);
+}
 
-    for (i = 0; i < vbp->nused; i++) {
-	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
-	    continue;
-	snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
-	invent_solid(gedp, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, 0);
+static void
+ged_uplot_read_binary_args(FILE *fp, const struct ged_uplot_op *up, char *carg, fastf_t *arg)
+{
+    char inbuf[SIZEOF_NETWORK_DOUBLE] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+
+    for (int i = 0; i < up->narg; i++) {
+	switch (up->targ) {
+	    case GED_UPLOT_SHORT:
+		arg[i] = ged_uplot_getshort(fp);
+		break;
+	    case GED_UPLOT_IEEE:
+	    {
+		double scan = 0.0;
+		size_t ret = fread(inbuf, SIZEOF_NETWORK_DOUBLE, 1, fp);
+		if (ret != 1)
+		    bu_log("WARNING: uplot read failure\n");
+		bu_cv_ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
+		arg[i] = scan;
+		break;
+	    }
+	    case GED_UPLOT_STRING:
+	    {
+		int j = 0;
+		int cc = 0;
+		while (!feof(fp) && (cc = getc(fp)) != '\n' && cc != EOF) {
+		    if (j < 255)
+			carg[j++] = (char)cc;
+		}
+		carg[j] = '\0';
+		break;
+	    }
+	    case GED_UPLOT_CHAR:
+	    {
+		int cc = getc(fp);
+		if (cc == EOF)
+		    return;
+		carg[i] = (char)cc;
+		arg[i] = 0;
+		break;
+	    }
+	    case GED_UPLOT_NONE:
+	    default:
+		arg[i] = 0;
+		break;
+	}
     }
+}
+
+static void
+ged_uplot_read_text_args(FILE *fp, const struct ged_uplot_op *up, char *carg, fastf_t *arg)
+{
+    for (int i = 0; i < up->narg; i++) {
+	switch (up->targ) {
+	    case GED_UPLOT_SHORT:
+	    case GED_UPLOT_IEEE:
+	    {
+		double val = 0.0;
+		int ret = fscanf(fp, "%lf", &val);
+		if (ret != 1)
+		    bu_log("WARNING: uplot numeric input failure\n");
+		else
+		    arg[i] = val;
+		break;
+	    }
+	    case GED_UPLOT_STRING:
+	    {
+		int ret = fscanf(fp, "%255s\n", &carg[0]);
+		if (ret != 1)
+		    bu_log("WARNING: uplot string input failure\n");
+		break;
+	    }
+	    case GED_UPLOT_CHAR:
+	    {
+		unsigned int tchar = 0;
+		int ret = fscanf(fp, "%u", &tchar);
+		if (ret != 1)
+		    bu_log("WARNING: uplot character input failure\n");
+		if (tchar > 255)
+		    tchar = 255;
+		carg[i] = (char)tchar;
+		arg[i] = 0;
+		break;
+	    }
+	    case GED_UPLOT_NONE:
+	    default:
+		arg[i] = 0;
+		break;
+	}
+    }
+}
+
+static void
+ged_uplot_layer_free(struct ged_uplot_layer *layer)
+{
+    if (!layer)
+	return;
+    if (layer->points)
+	bu_free(layer->points, "ged uplot layer points");
+    if (layer->commands)
+	bu_free(layer->commands, "ged uplot layer commands");
+    memset(layer, 0, sizeof(*layer));
+}
+
+static void
+ged_uplot_builder_free(struct ged_uplot_stream *ctx)
+{
+    if (!ctx)
+	return;
+    for (size_t i = 0; i < ctx->layer_count; i++)
+	ged_uplot_layer_free(&ctx->layers[i]);
+    if (ctx->layers)
+	bu_free(ctx->layers, "ged uplot layers");
+    memset(ctx, 0, sizeof(*ctx));
+}
+
+static struct ged_uplot_layer *
+ged_uplot_layer_find(struct ged_uplot_stream *ctx, long rgb)
+{
+    if (!ctx)
+	return NULL;
+
+    for (size_t i = 0; i < ctx->layer_count; i++) {
+	if (ctx->layers[i].rgb == rgb) {
+	    ctx->current_layer = i;
+	    return &ctx->layers[i];
+	}
+    }
+
+    if (ctx->layer_count >= ctx->layer_capacity) {
+	size_t old_capacity = ctx->layer_capacity;
+	size_t new_capacity = old_capacity ? old_capacity * 2 : 4;
+	ctx->layers = (struct ged_uplot_layer *)bu_realloc(ctx->layers,
+		new_capacity * sizeof(struct ged_uplot_layer), "ged uplot layers");
+	memset(ctx->layers + old_capacity, 0,
+		(new_capacity - old_capacity) * sizeof(struct ged_uplot_layer));
+	ctx->layer_capacity = new_capacity;
+    }
+
+    struct ged_uplot_layer *layer = &ctx->layers[ctx->layer_count];
+    memset(layer, 0, sizeof(*layer));
+    layer->rgb = rgb;
+    ctx->current_layer = ctx->layer_count;
+    ctx->layer_count++;
+    return layer;
+}
+
+static struct ged_uplot_layer *
+ged_uplot_current_layer(struct ged_uplot_stream *ctx)
+{
+    if (!ctx || ctx->current_layer >= ctx->layer_count)
+	return NULL;
+    return &ctx->layers[ctx->current_layer];
+}
+
+static int
+ged_uplot_layer_append(struct ged_uplot_layer *layer, const point_t point, int command)
+{
+    if (!layer)
+	return 0;
+    if (layer->count >= layer->capacity) {
+	size_t new_capacity = layer->capacity ? layer->capacity * 2 : 64;
+	layer->points = (point_t *)bu_realloc(layer->points,
+		new_capacity * sizeof(point_t), "ged uplot layer points");
+	layer->commands = (int *)bu_realloc(layer->commands,
+		new_capacity * sizeof(int), "ged uplot layer commands");
+	layer->capacity = new_capacity;
+    }
+    VMOVE(layer->points[layer->count], point);
+    layer->commands[layer->count] = command;
+    layer->count++;
+    return 1;
+}
+
+static void
+ged_uplot_append_text(struct ged_uplot_stream *ctx, const char *text)
+{
+    struct ged_uplot_layer *layer = ged_uplot_current_layer(ctx);
+    if (!ctx || !layer || !text)
+	return;
+
+    point_t last_pos = VINIT_ZERO;
+    if (layer->count)
+	VMOVE(last_pos, layer->points[layer->count - 1]);
+
+    double offset = 0.0;
+    for (const unsigned char *cp = (const unsigned char *)text; *cp;
+	    cp++, offset += ctx->char_size) {
+	vect_t local;
+	point_t point;
+
+	VSET(local, offset, 0.0, 0.0);
+	VADD2(point, last_pos, local);
+	(void)ged_uplot_layer_append(layer, point, BSG_GEOMETRY_LINE_MOVE);
+
+	for (int *stroke_ptr = plot3_font_getchar(cp); *stroke_ptr != PLOT3_FONT_LAST;
+		stroke_ptr++) {
+	    int stroke = *stroke_ptr;
+	    int ysign = 1;
+	    int draw = 1;
+
+	    if (stroke == PLOT3_FONT_NEGY) {
+		ysign = -1;
+		stroke = *++stroke_ptr;
+	    }
+	    if (stroke < 0) {
+		stroke = -stroke;
+		draw = 0;
+	    }
+
+	    VSET(local, (stroke / 11) * 0.1 * ctx->char_size + offset,
+		    (ysign * (stroke % 11)) * 0.1 * ctx->char_size, 0.0);
+	    VADD2(point, last_pos, local);
+	    (void)ged_uplot_layer_append(layer, point,
+		    draw ? BSG_GEOMETRY_LINE_DRAW : BSG_GEOMETRY_LINE_MOVE);
+	}
+    }
+}
+
+static int
+ged_uplot_process_value(struct ged_uplot_stream *ctx, FILE *fp, int c)
+{
+    if (!ctx || !fp)
+	return -1;
+
+    const struct ged_uplot_op *up = NULL;
+    if (c < 'A' || c > 'z')
+	up = &ged_uplot_error;
+    else
+	up = &ged_uplot_letters[c - 'A'];
+
+    if (up->targ == GED_UPLOT_BAD) {
+	bu_log("Bad uplot command '%c' (0x%02x)\n", c, c);
+	return -1;
+    }
+
+    char carg[256] = {0};
+    fastf_t arg[6] = {0.0};
+    if (up->narg > 0) {
+	if (ctx->mode == PL_OUTPUT_MODE_BINARY)
+	    ged_uplot_read_binary_args(fp, up, carg, arg);
+	else
+	    ged_uplot_read_text_args(fp, up, carg, arg);
+    }
+
+    struct ged_uplot_layer *layer = ged_uplot_current_layer(ctx);
+    vect_t a, b;
+    switch (c) {
+	case 's':
+	case 'w':
+	case 'S':
+	case 'W':
+	    break;
+	case 'm':
+	case 'o':
+	    arg[Z] = 0;
+	    (void)ged_uplot_layer_append(layer, arg, BSG_GEOMETRY_LINE_MOVE);
+	    VMOVE(ctx->lpnt, arg);
+	    ctx->moved = 1;
+	    break;
+	case 'M':
+	case 'O':
+	    (void)ged_uplot_layer_append(layer, arg, BSG_GEOMETRY_LINE_MOVE);
+	    VMOVE(ctx->lpnt, arg);
+	    ctx->moved = 1;
+	    break;
+	case 'n':
+	case 'q':
+	    if (!ctx->moved) {
+		(void)ged_uplot_layer_append(layer, ctx->lpnt, BSG_GEOMETRY_LINE_MOVE);
+		ctx->moved = 1;
+	    }
+	    arg[Z] = 0;
+	    (void)ged_uplot_layer_append(layer, arg, BSG_GEOMETRY_LINE_DRAW);
+	    VMOVE(ctx->lpnt, arg);
+	    break;
+	case 'N':
+	case 'Q':
+	    if (!ctx->moved) {
+		(void)ged_uplot_layer_append(layer, ctx->lpnt, BSG_GEOMETRY_LINE_MOVE);
+		ctx->moved = 1;
+	    }
+	    (void)ged_uplot_layer_append(layer, arg, BSG_GEOMETRY_LINE_DRAW);
+	    VMOVE(ctx->lpnt, arg);
+	    break;
+	case 'l':
+	case 'v':
+	    VSET(a, arg[0], arg[1], 0.0);
+	    VSET(b, arg[2], arg[3], 0.0);
+	    (void)ged_uplot_layer_append(layer, a, BSG_GEOMETRY_LINE_MOVE);
+	    (void)ged_uplot_layer_append(layer, b, BSG_GEOMETRY_LINE_DRAW);
+	    break;
+	case 'L':
+	case 'V':
+	    VSET(a, arg[0], arg[1], arg[2]);
+	    VSET(b, arg[3], arg[4], arg[5]);
+	    (void)ged_uplot_layer_append(layer, a, BSG_GEOMETRY_LINE_MOVE);
+	    (void)ged_uplot_layer_append(layer, b, BSG_GEOMETRY_LINE_DRAW);
+	    break;
+	case 'p':
+	case 'x':
+	    arg[Z] = 0;
+	    (void)ged_uplot_layer_append(layer, arg, BSG_GEOMETRY_LINE_MOVE);
+	    (void)ged_uplot_layer_append(layer, arg, BSG_GEOMETRY_LINE_DRAW);
+	    break;
+	case 'P':
+	case 'X':
+	    (void)ged_uplot_layer_append(layer, arg, BSG_GEOMETRY_LINE_MOVE);
+	    (void)ged_uplot_layer_append(layer, arg, BSG_GEOMETRY_LINE_DRAW);
+	    break;
+	case 'C':
+	{
+	    long rgb = ((long)(unsigned char)carg[0] << 16) |
+		((long)(unsigned char)carg[1] << 8) |
+		(long)(unsigned char)carg[2];
+	    layer = ged_uplot_layer_find(ctx, rgb);
+	    ctx->moved = 0;
+	    break;
+	}
+	case 't':
+	    ged_uplot_append_text(ctx, carg);
+	    break;
+	default:
+	    break;
+    }
+
+    return layer ? 0 : -1;
+}
+
+static void
+ged_uplot_builder_init(struct ged_uplot_stream *ctx, double char_size, int mode)
+{
+    if (!ctx)
+	return;
+    memset(ctx, 0, sizeof(*ctx));
+    ctx->char_size = char_size;
+    ctx->mode = mode;
+    VSETALL(ctx->lpnt, 0.0);
+    (void)ged_uplot_layer_find(ctx, 0xFFFF00);
+}
+
+static int
+ged_uplot_parse_stream(struct ged_uplot_stream *ctx, FILE *fp)
+{
+    if (!ctx || !fp)
+	return BRLCAD_ERROR;
+    int c = 0;
+    while (!feof(fp) && (c = getc(fp)) != EOF) {
+	if (ged_uplot_process_value(ctx, fp, c) < 0)
+	    return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+ged_uplot_publish_feature(struct ged *gedp, const char *name, struct ged_uplot_stream *ctx)
+{
+    if (!gedp || !name || !ctx || !gedp->ged_gvp)
+	return BRLCAD_ERROR;
+
+    size_t live_layers = 0;
+    for (size_t i = 0; i < ctx->layer_count; i++) {
+	if (ctx->layers[i].count)
+	    live_layers++;
+    }
+
+    struct bsg_feature_line_layer *layers = NULL;
+    char **names = NULL;
+    if (live_layers) {
+	layers = (struct bsg_feature_line_layer *)bu_calloc(live_layers,
+		sizeof(struct bsg_feature_line_layer), "ged uplot feature layers");
+	names = (char **)bu_calloc(live_layers, sizeof(char *), "ged uplot feature layer names");
+    }
+
+    size_t idx = 0;
+    for (size_t i = 0; i < ctx->layer_count; i++) {
+	if (!ctx->layers[i].count)
+	    continue;
+	struct bsg_feature_line_layer init = BSG_FEATURE_LINE_LAYER_INIT;
+	layers[idx] = init;
+	layers[idx].points = (const point_t *)ctx->layers[i].points;
+	layers[idx].commands = ctx->layers[i].commands;
+	layers[idx].point_count = ctx->layers[i].count;
+	layers[idx].style.color_valid = 1;
+	layers[idx].style.color[0] = (ctx->layers[i].rgb >> 16) & 0xFF;
+	layers[idx].style.color[1] = (ctx->layers[i].rgb >> 8) & 0xFF;
+	layers[idx].style.color[2] = ctx->layers[i].rgb & 0xFF;
+
+	struct bu_vls lname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&lname, "%s_%ld_%ld_%ld", name,
+		(ctx->layers[i].rgb >> 16) & 0xFF,
+		(ctx->layers[i].rgb >> 8) & 0xFF,
+		ctx->layers[i].rgb & 0xFF);
+	names[idx] = bu_strdup(bu_vls_cstr(&lname));
+	layers[idx].name = names[idx];
+	bu_vls_free(&lname);
+	idx++;
+    }
+
+    bsg_feature_ref ref = bsg_feature_replace_line_layers(gedp->ged_gvp,
+	    name, 0, layers, live_layers, NULL);
+    int ret = (live_layers && bsg_feature_ref_is_null(ref)) ? BRLCAD_ERROR : BRLCAD_OK;
+
+    for (size_t i = 0; i < live_layers; i++) {
+	if (names[i])
+	    bu_free(names[i], "ged uplot feature layer name");
+    }
+    if (names)
+	bu_free(names, "ged uplot feature layer names");
+    if (layers)
+	bu_free(layers, "ged uplot feature layers");
+
+    return ret;
+}
+
+extern "C" int
+_ged_draw_uplot_to_feature(struct ged *gedp, FILE *fp, const char *name, double char_size, int mode)
+{
+    if (!gedp || !fp || !name || !gedp->ged_gvp)
+	return BRLCAD_ERROR;
+
+    struct ged_uplot_stream ctx;
+    ged_uplot_builder_init(&ctx, char_size, mode);
+
+    int ret = ged_uplot_parse_stream(&ctx, fp);
+    if (ret == BRLCAD_OK)
+	ret = ged_uplot_publish_feature(gedp, name, &ctx);
+
+    ged_uplot_builder_free(&ctx);
+    return ret;
+}
+
+extern "C" int
+_ged_draw_uplot_files_to_feature(struct ged *gedp, const char * const *files, size_t file_count,
+	const char *name, double char_size, int mode)
+{
+    if (!gedp || !files || !file_count || !name || !gedp->ged_gvp)
+	return BRLCAD_ERROR;
+
+    struct ged_uplot_stream ctx;
+    ged_uplot_builder_init(&ctx, char_size, mode);
+
+    int ret = BRLCAD_OK;
+    for (size_t i = 0; i < file_count; i++) {
+	FILE *fp = fopen(files[i], "rb");
+	if (!fp) {
+	    if (gedp->ged_result_str)
+		bu_vls_printf(gedp->ged_result_str, "failed to open plot file - %s\n", files[i]);
+	    ret = BRLCAD_ERROR;
+	    break;
+	}
+	ret = ged_uplot_parse_stream(&ctx, fp);
+	fclose(fp);
+	if (ret != BRLCAD_OK)
+	    break;
+    }
+
+    if (ret == BRLCAD_OK)
+	ret = ged_uplot_publish_feature(gedp, name, &ctx);
+
+    ged_uplot_builder_free(&ctx);
+    return ret;
+}
+
+extern "C" struct ged_uplot_stream *
+_ged_uplot_stream_create(double char_size, int mode)
+{
+    struct ged_uplot_stream *stream = NULL;
+    BU_GET(stream, struct ged_uplot_stream);
+    ged_uplot_builder_init(stream, char_size, mode);
+    return stream;
+}
+
+extern "C" int
+_ged_uplot_stream_process(struct ged_uplot_stream *stream, FILE *fp, int command)
+{
+    if (!stream || !fp)
+	return BRLCAD_ERROR;
+    return (ged_uplot_process_value(stream, fp, command) == 0) ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+extern "C" int
+_ged_uplot_stream_publish_feature(struct ged *gedp, struct ged_uplot_stream *stream, const char *name)
+{
+    return ged_uplot_publish_feature(gedp, name, stream);
+}
+
+extern "C" void
+_ged_uplot_stream_free(struct ged_uplot_stream *stream)
+{
+    if (!stream)
+	return;
+    ged_uplot_builder_free(stream);
+    BU_PUT(stream, struct ged_uplot_stream);
 }
 
 /* print a message to let the user know they need to quit their
@@ -1669,7 +2230,7 @@ void
 _ged_rt_set_eye_model(struct ged *gedp,
 		      vect_t eye_model)
 {
-    if (gedp->ged_gvp->gv_s->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {
+    if (bsg_view_zclip(gedp->ged_gvp) || gedp->ged_gvp->gv_perspective > 0) {
 	vect_t temp;
 
 	VSET(temp, 0.0, 0.0, 1.0);
@@ -1692,18 +2253,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    extremum[1][i] = -INFINITY;
 	}
 
-	if (gedp->new_cmd_forms) {
-	    VSETALL(extremum[0],  INFINITY);
-	    VSETALL(extremum[1], -INFINITY);
-	    struct bu_ptbl *db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
-	    if (db_objs)
-		(void)scene_bounding_sph(db_objs, &(extremum[0]), &(extremum[1]), 1);
-	    struct bu_ptbl *local_db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS | BV_LOCAL_OBJS);
-	    if (local_db_objs)
-		(void)scene_bounding_sph(local_db_objs, &(extremum[0]), &(extremum[1]), 1);
-	} else {
-	    (void)dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
-	}
+	(void)ged_draw_bounds(gedp, &(extremum[0]), &(extremum[1]), 0);
 
 	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
 	for (i = 0; i < 3; ++i)
@@ -1719,12 +2269,72 @@ _ged_rt_set_eye_model(struct ged *gedp,
     }
 }
 
+/* Finalize an rt subprocess: wait for it, fire notify/end_clbk, and
+ * release the ged_subprocess struct.  This MUST be called on the GUI
+ * (main) thread for hosts that use a worker-thread IO listener (qged),
+ * because rrtp->end_clbk typically mutates Qt widgets (e.g. toolbar
+ * actions in QgViewCtrl).  For synchronous hosts (tclcad/gsh) the
+ * caller is already on the main thread, so this is a no-op distinction
+ * there.
+ */
+static void
+_ged_rt_finalize(struct ged_subprocess *rrtp)
+{
+    struct ged *gedp = rrtp->gedp;
+
+    /* Either EOF has been sent or there was a read error;
+     * there is no need to block indefinitely. */
+    bu_log("_ged_rt_finalize: waiting for rt pid=%d (timeout=120s)\n",
+	   rrtp->p ? bu_process_pid(rrtp->p) : -1);
+    int retcode = bu_process_wait_n(&rrtp->p, 120);
+    int aborted = (retcode == ERROR_PROCESS_ABORTED);
+
+    if (aborted)
+	bu_log("Raytrace aborted.\n");
+    else if (retcode)
+	bu_log("Raytrace failed.\n");
+    else
+	bu_log("Raytrace complete.\n");
+
+    /* Phase A2 (ert reliability): drop any IPC fbserv client(s) attached
+     * to this ged's fbserv now that rt has exited.  Without this, the
+     * close of the rt-side IPC pipe is only observed asynchronously
+     * (next QSocketNotifier::activated edge), which can leave
+     * if_active_clients > 0 across this ert boundary — defeating the
+     * deferred-resize finalization in libdm's drop_client and
+     * potentially racing with the next ert's fbs_open_ipc.  In qged,
+     * IPC fbserv clients are created exclusively by libged/dm/ert.cpp
+     * via fbs_open_ipc(), so it is safe to drop every IPC slot here.
+     * fbs_drop_client invokes the registered close handler, which uses
+     * deleteLater() in qged for safe async tear-down on the GUI
+     * thread (see comment above _ged_rt_finalize). */
+    if (gedp->ged_fbs) {
+	for (int ci = 0; ci < MAX_CLIENTS; ++ci) {
+	    if (gedp->ged_fbs->fbs_clients[ci].fbsc_fd != 0 &&
+		gedp->ged_fbs->fbs_clients[ci].fbsc_is_ipc) {
+		bu_log("_ged_rt_finalize: dropping IPC client slot %d fd=%d\n",
+		       ci, gedp->ged_fbs->fbs_clients[ci].fbsc_fd);
+		fbs_drop_client(gedp->ged_fbs, ci);
+	    }
+	}
+    }
+
+    if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	gedp->i->ged_gdp->gd_rtCmdNotify(aborted);
+
+    if (rrtp->end_clbk)
+	rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
+
+    /* free rrtp */
+    bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
+    BU_PUT(rrtp, struct ged_subprocess);
+}
+
 void
 _ged_rt_output_handler2(void *clientData, int type)
 {
     struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
     int count = 0;
-    int retcode = 0;
     int read_failed_stderr = 0;
     int read_failed_stdout = 0;
     char line[RT_MAXLINE+1] = {0};
@@ -1736,6 +2346,16 @@ _ged_rt_output_handler2(void *clientData, int type)
 
     struct ged *gedp = rrtp->gedp;
 
+    /* type == -1 is the canonical "finalize on the GUI thread" entry,
+     * dispatched by hosts (qged's QgConsole::detach) once all per-stream
+     * listeners for this subprocess have been retired.  Just finalize and
+     * return; do not attempt any more reads.
+     */
+    if (type == -1) {
+	_ged_rt_finalize(rrtp);
+	return;
+    }
+
     /* Get data from rt */
     if (rrtp->stderr_active && (count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	read_failed_stderr = 1;
@@ -1745,49 +2365,36 @@ _ged_rt_output_handler2(void *clientData, int type)
     }
 
     if (read_failed_stderr || read_failed_stdout) {
-	/* Done watching for output, undo subprocess I/O hooks. */
-	if (type != -1 && gedp->ged_delete_io_handler) {
-
-	    if (rrtp->stdin_active || rrtp->stdout_active || rrtp->stderr_active) {
-		// If anyone else is still listening, we're not done yet.
-		if (rrtp->stdin_active) {
-		    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDIN);
-		    return;
-		}
-		if (rrtp->stdout_active) {
-		    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
-		    return;
-		}
-		if (rrtp->stderr_active) {
-		    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
-		    return;
-		}
-	    }
-
-	    return;
+	/* Done watching for output on whichever stream just hit EOF /
+	 * a read error.  Detach that single stream listener; do *not*
+	 * touch any other stream's listener here (each stream's worker
+	 * thread will handle its own EOF in turn).
+	 *
+	 * For synchronous hosts (tclcad/gsh) ged_delete_io_handler
+	 * clears the stream-active flag inline before returning, so by
+	 * the time control returns here all streams may already be
+	 * inactive and we can finalize on the spot (we are on the main
+	 * thread).  For asynchronous hosts (qged) ged_delete_io_handler
+	 * only disconnects the QSocketNotifier; the stream-active flag
+	 * is cleared later, on the GUI thread, by QgConsole::detach,
+	 * which then re-enters this function with type == -1 to
+	 * finalize.  In that case we must NOT finalize here, because we
+	 * are running on a worker thread.
+	 */
+	if (gedp->ged_delete_io_handler) {
+	    bu_process_io_t failed = read_failed_stderr ? BU_PROCESS_STDERR : BU_PROCESS_STDOUT;
+	    (*gedp->ged_delete_io_handler)(rrtp, failed);
+	} else {
+	    if (read_failed_stderr) rrtp->stderr_active = 0;
+	    if (read_failed_stdout) rrtp->stdout_active = 0;
 	}
 
-	/* Either EOF has been sent or there was a read error.
-	 * there is no need to block indefinitely */
-	retcode = bu_process_wait_n(&rrtp->p, 120);
-	int aborted = (retcode == ERROR_PROCESS_ABORTED);
-
-	if (aborted)
-	    bu_log("Raytrace aborted.\n");
-	else if (retcode)
-	    bu_log("Raytrace failed.\n");
-	else
-	    bu_log("Raytrace complete.\n");
-
-	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->i->ged_gdp->gd_rtCmdNotify(aborted);
-
-	if (rrtp->end_clbk)
-	    rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
-
-	/* free rrtp */
-	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
-	BU_PUT(rrtp, struct ged_subprocess);
+	/* If all streams are now inactive synchronously (no async
+	 * delete_io_handler in effect), finalize here.  Otherwise the
+	 * type == -1 re-entry will finalize on the GUI thread.
+	 */
+	if (!rrtp->stdin_active && !rrtp->stdout_active && !rrtp->stderr_active)
+	    _ged_rt_finalize(rrtp);
 
 	return;
     }
@@ -1803,150 +2410,80 @@ _ged_rt_output_handler2(void *clientData, int type)
 
 }
 
-static int
-ged_rt_output_handler_helper(struct ged_subprocess* rrtp, bu_process_io_t type)
-{
-    int active = 0;
-    int count = 0;
-    char line[RT_MAXLINE+1] = {0};
-
-    if (type == BU_PROCESS_STDERR) active = rrtp->stderr_active;
-    if (type == BU_PROCESS_STDOUT) active = rrtp->stdout_active;
-
-    if (active && (count = bu_process_read_n(rrtp->p, type, RT_MAXLINE, (char *)line)) <= 0) {
-	/* Done watching for output or a bad read, undo subprocess I/O hooks. */
-	struct ged *gedp = rrtp->gedp;
-	if (gedp->ged_delete_io_handler) {
-	    (*gedp->ged_delete_io_handler)(rrtp, type);
-	} else {
-	    if (type == BU_PROCESS_STDERR) rrtp->stderr_active = 0;
-	    if (type == BU_PROCESS_STDOUT) rrtp->stdout_active = 0;
-	}
-
-	return 1;
-    }
-
-
-    /* for feelgoodedness */
-    line[count] = '\0';
-
-    /* handle (i.e., probably log to stderr) the resulting line */
-    if (rrtp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
-	ged_output_handler_cb(rrtp->gedp, line);
-    else
-	bu_vls_printf(rrtp->gedp->ged_result_str, "%s", line);
-
-    return 0;
-}
-
 void
 _ged_rt_output_handler(void *clientData, int mask)
 {
-    struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
-    if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
-	return;
-
-    BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
-
-    struct ged *gedp = rrtp->gedp;
-    if (gedp->new_cmd_forms) {
-	_ged_rt_output_handler2(clientData, mask);
-	return;
-    }
-
-    /* Get data from rt */
-    if (ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDERR) || ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDOUT)) {
-	/* don't fully clean up until we mark each stream inactive */
-	if (rrtp->stderr_active || rrtp->stdout_active)
-	    return;
-
-	int retcode = 0;
-
-	/* Either EOF has been sent or there was a read error.
-	 * there is no need to block indefinitely */
-	retcode = bu_process_wait_n(&rrtp->p, 120);
-	int aborted = (retcode == ERROR_PROCESS_ABORTED);
-
-	if (aborted)
-	    bu_log("Raytrace aborted.\n");
-	else if (retcode)
-	    bu_log("Raytrace failed.\n");
-	else
-	    bu_log("Raytrace complete.\n");
-
-	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->i->ged_gdp->gd_rtCmdNotify(aborted);
-
-	if (rrtp->end_clbk)
-	    rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
-
-	/* free rrtp */
-	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
-	BU_PUT(rrtp, struct ged_subprocess);
-
-	return;
-    }
+    _ged_rt_output_handler2(clientData, mask);
 }
 
 
 static void
-dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag_val)
+bitwise_and_export_record(struct ged *gedp, const struct bsg_export_record *rec, int flag_val)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    size_t i;
-    struct bv_scene_obj *sp;
+    if (!gedp || !gedp->dbip || !rec || rec->source.scope != BSG_RENDER_SOURCE_SCOPE_DATABASE)
+	return;
 
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+    struct db_full_path fp;
+    db_full_path_init(&fp);
+    if (db_string_to_path(&fp, gedp->dbip, bu_vls_cstr(&rec->path)) < 0)
+	return;
+    for (size_t i = 0; i < fp.fp_len; i++)
+	DB_FULL_PATH_GET(&fp, i)->d_flags &= flag_val;
+    db_free_full_path(&fp);
+}
 
-        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_u_data)
-		continue;
-	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-
-	    for (i = 0; i < bdata->s_fullpath.fp_len; i++) {
-                DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags &= flag_val;
-	    }
-        }
-
-        gdlp = next_gdlp;
-    }
+static void
+dl_bitwise_and_fullpath(struct ged *gedp, int flag_val)
+{
+    struct bsg_export_request request;
+    bsg_export_request_init(&request, gedp->ged_gvp);
+    request.query_flags = BSG_EXPORT_QUERY_VISIBLE_ONLY | BSG_EXPORT_QUERY_DB_OBJECTS;
+    request.render_flags = BSG_RENDER_FLAG_VISIBLE_ONLY | BSG_RENDER_FLAG_PAYLOAD_PREPARE;
+    struct bsg_export_result *result = bsg_export_query(&request);
+    if (!result)
+	return;
+    for (size_t i = 0; i < bsg_export_result_count(result); i++)
+	bitwise_and_export_record(gedp, bsg_export_result_get(result, i), flag_val);
+    bsg_export_result_free(result);
 }
 
 
+static void
+write_animate_export_record(struct ged *gedp, FILE *fp, const struct bsg_export_record *rec)
+{
+    if (!gedp || !gedp->dbip || !fp || !rec || rec->source.scope != BSG_RENDER_SOURCE_SCOPE_DATABASE)
+	return;
+
+    struct db_full_path path;
+    db_full_path_init(&path);
+    if (db_string_to_path(&path, gedp->dbip, bu_vls_cstr(&rec->path)) < 0)
+	return;
+
+    for (size_t i = 0; i < path.fp_len; i++) {
+	if (!(DB_FULL_PATH_GET(&path, i)->d_flags & RT_DIR_USED)) {
+	    struct animate *anp;
+	    for (anp = DB_FULL_PATH_GET(&path, i)->d_animate; anp; anp=anp->an_forw) {
+		db_write_anim(fp, anp);
+	    }
+	    DB_FULL_PATH_GET(&path, i)->d_flags |= RT_DIR_USED;
+	}
+    }
+    db_free_full_path(&path);
+}
 
 static void
-dl_write_animate(struct bu_list *hdlp, FILE *fp)
+dl_write_animate(struct ged *gedp, FILE *fp)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    size_t i;
-    struct bv_scene_obj *sp;
-
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_u_data)
-		continue;
-	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-
-	    for (i = 0; i < bdata->s_fullpath.fp_len; i++) {
-                if (!(DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags & RT_DIR_USED)) {
-		    struct animate *anp;
-                    for (anp = DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_animate; anp; anp=anp->an_forw) {
-			db_write_anim(fp, anp);
-		    }
-                    DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags |= RT_DIR_USED;
-		}
-	    }
-        }
-
-        gdlp = next_gdlp;
-    }
+    struct bsg_export_request request;
+    bsg_export_request_init(&request, gedp->ged_gvp);
+    request.query_flags = BSG_EXPORT_QUERY_VISIBLE_ONLY | BSG_EXPORT_QUERY_DB_OBJECTS;
+    request.render_flags = BSG_RENDER_FLAG_VISIBLE_ONLY | BSG_RENDER_FLAG_PAYLOAD_PREPARE;
+    struct bsg_export_result *result = bsg_export_query(&request);
+    if (!result)
+	return;
+    for (size_t i = 0; i < bsg_export_result_count(result); i++)
+	write_animate_export_record(gedp, fp, bsg_export_result_get(result, i));
+    bsg_export_result_free(result);
 }
 
 void
@@ -1984,23 +2521,19 @@ _ged_rt_write(struct ged *gedp,
      * remove the -1 case.) */
     if (argc >= 0) {
 	if (!argc) {
-	    if (gedp->new_cmd_forms) {
-		DbiState *dbis = (DbiState *)gedp->dbi_state;
-		BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
-		if (bvs) {
-		    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
-		    for (size_t i = 0; i < drawn_paths.size(); i++) {
-			fprintf(fp, "draw %s;\n", drawn_paths[i].c_str());
-		    }
-		}
-	    } else {
-		struct display_list *gdlp;
-		for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
-		    if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
-			continue;
-		    fprintf(fp, "draw %s;\n", bu_vls_addr(&gdlp->dl_path));
-		}
+	    struct bu_vls paths = BU_VLS_INIT_ZERO;
+	    ged_draw_list_paths(gedp, gedp->ged_gvp, -1, 0, &paths);
+	    const char *path = bu_vls_cstr(&paths);
+	    while (path && *path) {
+		const char *nl = strchr(path, '\n');
+		size_t len = nl ? (size_t)(nl - path) : strlen(path);
+		if (len > 0)
+		    fprintf(fp, "draw %.*s;\n", (int)len, path);
+		if (!nl)
+		    break;
+		path = nl + 1;
 	    }
+	    bu_vls_free(&paths);
 	} else {
 	    int i = 0;
 	    while (i < argc) {
@@ -2011,11 +2544,11 @@ _ged_rt_write(struct ged *gedp,
 	fprintf(fp, "prep;\n");
     }
 
-    dl_bitwise_and_fullpath(gedp->i->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
+    dl_bitwise_and_fullpath(gedp, ~RT_DIR_USED);
 
-    dl_write_animate(gedp->i->ged_gdp->gd_headDisplay, fp);
+    dl_write_animate(gedp, fp);
 
-    dl_bitwise_and_fullpath(gedp->i->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
+    dl_bitwise_and_fullpath(gedp, ~RT_DIR_USED);
 
     fprintf(fp, "end;\n");
 }
@@ -2303,6 +2836,8 @@ addmembers:
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->dbip);
 
+    ged_event_notify_comb_tree_changed(gedp, combname, 1, NULL);
+
     return BRLCAD_OK;
 }
 
@@ -2523,12 +3058,10 @@ _ged_characterize_pathspec(struct bu_vls *normalized, struct ged *gedp, const ch
 
 #endif
 
-struct display_list *
-ged_dl(struct ged *gedp)
+int
+ged_draw_scene_available(struct ged *gedp)
 {
-    if (!gedp || !gedp->i || !gedp->i->ged_gdp)
-	return NULL;
-    return (struct display_list *)gedp->i->ged_gdp->gd_headDisplay;
+    return bsg_scene_ref_is_null(ged_scene_root_ref(gedp)) ? 0 : 1;
 }
 
 void

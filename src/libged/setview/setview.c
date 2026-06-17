@@ -85,7 +85,7 @@ ged_setview_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bn_mat_angles(gedp->ged_gvp->gv_rotation, rvec[X], rvec[Y], rvec[Z]);
-    bv_update(gedp->ged_gvp);
+    bsg_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }

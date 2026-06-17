@@ -40,7 +40,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-#include "bv/defines.h"
+#include "bsg/defines.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
@@ -66,6 +66,8 @@ extern "C" {
 static struct dm *qtgl_open(void *ctx, void *interp, int argc, const char **argv);
 static int qtgl_close(struct dm *dmp);
 static int qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+static int qtgl_drawString2DRot(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect, fastf_t angle);
+static int qtgl_drawString2D_internal(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect, fastf_t angle);
 static int qtgl_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 static int qtgl_configureWin(struct dm *dmp, int force);
 static int qtgl_makeCurrent(struct dm *dmp);
@@ -90,7 +92,7 @@ qtgl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
     if (eventPtr->type() == QEvent::Expose) {
 	(void)dm_make_current(dmp);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	dm_set_dirty(dmp, 1);
+	dm_set_native_repaint_pending(dmp, 1);
 	return BRLCAD_OK;
     }
     /* allow further processing of this event */
@@ -105,17 +107,17 @@ qtgl_configureWin(struct dm *dmp, int UNUSED(force))
     gl_debug_print(dmp, "qtgl_configureWin", dmp->i->dm_debugLevel);
 
     if (!privars || !privars->qw) {
-	bu_log("qtgl_configureWin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
 
-    gl_reshape(dmp, privars->qw->width(), privars->qw->height());
+    int width = qMax(1, static_cast<int>(std::ceil(privars->qw->width() * privars->qw->devicePixelRatioF())));
+    int height = qMax(1, static_cast<int>(std::ceil(privars->qw->height() * privars->qw->devicePixelRatioF())));
+    gl_reshape(dmp, width, height);
 
     /* this is where font information is set up, if not already done */
     if (!privars->fs) {
 	privars->fs = glfonsCreate(512, 512, FONS_ZERO_TOPLEFT);
 	if (privars->fs == NULL) {
-	    bu_log("dm-qtgl: Failed to create font stash");
 	    return BRLCAD_ERROR;
 	}
 	privars->fontNormal = FONS_INVALID;
@@ -199,11 +201,11 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     struct dm_qtvars *pubvars = NULL;
     struct qtgl_vars *privars = NULL;
 
-    /* Make sure we have a ctx - if not, we can't proceed.  struct bview
+    /* Make sure we have a ctx - if not, we can't proceed.  struct bsg_view
      * gets passed in as a "default" context when the application hasn't
      * supplied anything else, so we check the magic value to catch it. */
-    struct bview *vctx = (struct bview *)ctx;
-    if (!ctx || vctx->magic == BV_MAGIC)
+    struct bsg_view *vctx = (struct bsg_view *)ctx;
+    if (!ctx || vctx->magic == BSG_VIEW_MAGIC)
 	return NULL;
 
     BU_GET(dmp, struct dm);
@@ -334,9 +336,20 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
  * The starting position of the beam is as specified.
  */
 static int
-qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int UNUSED(size), int use_aspect)
+qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int size, int use_aspect)
 {
-    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    return qtgl_drawString2D_internal(dmp, str, ix, iy, size, use_aspect, 0.0);
+}
+
+static int
+qtgl_drawString2DRot(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int size, int use_aspect, fastf_t angle)
+{
+    return qtgl_drawString2D_internal(dmp, str, ix, iy, size, use_aspect, angle);
+}
+
+static int
+qtgl_drawString2D_internal(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int UNUSED(size), int use_aspect, fastf_t angle)
+{
     struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
 
     gl_debug_print(dmp, "qtgl_drawString2D", dmp->i->dm_debugLevel);
@@ -394,6 +407,11 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int U
 	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
 	coord_x = (nxc) ? -1*(dm_get_width(dmp) - coord_x) : coord_x;
 	coord_y = (nyc) ? coord_y + (fastf_t)dm_get_height(dmp) : coord_y;
+	if (!NEAR_ZERO(angle, SMALL_FASTF)) {
+	    glTranslatef((GLfloat)coord_x, (GLfloat)coord_y, 0.0f);
+	    glRotatef((GLfloat)angle, 0.0f, 0.0f, 1.0f);
+	    glTranslatef((GLfloat)-coord_x, (GLfloat)-coord_y, 0.0f);
+	}
 
 	// Have info and OpenGL state, do the text drawing
 	fonsSetFont(privars->fs, privars->fontNormal);
@@ -409,19 +427,12 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int U
 	if (dmp->i->dm_debugLevel > 4)
 	    gl_debug_print(dmp, "qtgl_drawString2D 5:", dmp->i->dm_debugLevel);
 
-	// Restore view matrix (changed by glOrtho call)
-	glPopMatrix();
-	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 6:", dmp->i->dm_debugLevel);
-
 	// Put us back in whatever mode we were in before starting the text draw
 	glMatrixMode(mm);
 	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 7:", dmp->i->dm_debugLevel);
+	    gl_debug_print(dmp, "qtgl_drawString2D 6:", dmp->i->dm_debugLevel);
 
 	if (!blend_state) glDisable(GL_BLEND);
-
-	glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
     }
 
     if (dmp->i->dm_debugLevel > 1)
@@ -490,9 +501,7 @@ qtgl_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *st
 	//bu_log("%s bounds: min(%f,%f) max(%f,%f)\n", str, bounds[0], bounds[1], bounds[2], bounds[3]);
 	//bu_log("%s width %d\n", str, width);
 
-	// Done with text, put matrices back
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
+	// Done with text, restore projection matrix
 	glPopMatrix();
 
 	if (bmin)
@@ -592,6 +601,7 @@ struct dm_impl dm_qtgl_impl = {
     gl_loadPMatrix,
     gl_popPMatrix,
     qtgl_drawString2D,
+    qtgl_drawString2DRot,
     qtgl_String2DBBox,
     gl_drawLine2D,
     gl_drawLine3D,
@@ -601,8 +611,6 @@ struct dm_impl dm_qtgl_impl = {
     gl_drawPoints3D,
     gl_drawVList,
     gl_drawVListHiddenLine,
-    gl_draw_obj,
-    gl_draw_data_axes,
     gl_draw,
     gl_setFGColor,
     gl_setBGColor,
@@ -624,12 +632,6 @@ struct dm_impl dm_qtgl_impl = {
     gl_getBoundFlag,
     gl_debug,
     gl_logfile,
-    gl_beginDList,
-    gl_endDList,
-    gl_drawDList,
-    gl_freeDLists,
-    gl_genDLists,
-    gl_draw_display_list,
     qtgl_getDisplayImage, /* display to image function */
     gl_reshape,
     qtgl_makeCurrent,
@@ -645,11 +647,10 @@ struct dm_impl dm_qtgl_impl = {
     NULL,
     qtgl_event_cmp,
     gl_fogHint,
-    NULL, //qtgl_share_dlist,
     0,
     1,				/* is graphical */
     "Qt",                       /* uses Qt graphics system */
-    1,				/* has displaylist */
+    1,				/* has backend cache */
     0,                          /* no stereo by default */
     "qtgl",
     "Qt Windows with OpenGL graphics",
@@ -673,8 +674,9 @@ struct dm_impl dm_qtgl_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
-    {BV_MIN, BV_MIN, BV_MIN},	/* clipmin */
-    {BV_MAX, BV_MAX, BV_MAX},	/* clipmax */
+    {255, 0, 0},/* geometry default color */
+    {BSG_VIEW_MIN, BSG_VIEW_MIN, BSG_VIEW_MIN},	/* clipmin */
+    {BSG_VIEW_MAX, BSG_VIEW_MAX, BSG_VIEW_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* depth buffer is writable */
@@ -685,7 +687,9 @@ struct dm_impl dm_qtgl_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    &gl_backend_ops,            /* GL backend contract (dm-gl_lod.cpp) */
+    NULL,                       /* backend resource cache */
+    0                           /* backend frame generation */
 };
 
 struct dm dm_qtgl = { DM_MAGIC, &dm_qtgl_impl, 0 };
@@ -708,4 +712,3 @@ COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

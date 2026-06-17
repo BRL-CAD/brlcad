@@ -33,14 +33,14 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
-#include "../../libged/dbi.h"
+#include "ged.h"
 #include "qtcad/QgModel.h"
 
 
 void
 open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 {
-    if (!itm || !itm->ihash)
+    if (!itm || !itm->instanceHash())
 	return;
 
     if (max_depth > 0 && depth >= max_depth)
@@ -48,7 +48,7 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 
     itm->open();
 
-    for (size_t j = 0; j < itm->children.size(); j++) {
+    for (size_t j = 0; j < itm->childItems().size(); j++) {
 	QgItem *c = itm->child(j);
 	open_children(c, s, depth+1, max_depth);
     }
@@ -57,9 +57,9 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 void
 open_tops(QgModel *s, int depth)
 {
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
-	if (!itm->ihash)
+    for (size_t i = 0; i < s->topItems().size(); i++) {
+	QgItem *itm = s->topItems()[i];
+	if (!itm->instanceHash())
 	    continue;
 	open_children(itm, s, 0, depth);
     }
@@ -69,7 +69,7 @@ void
 close_children(QgItem *itm)
 {
     itm->close();
-    for (size_t j = 0; j < itm->children.size(); j++) {
+    for (size_t j = 0; j < itm->childItems().size(); j++) {
 	QgItem *c = itm->child(j);
 	close_children(c);
     }
@@ -78,7 +78,7 @@ close_children(QgItem *itm)
 void
 print_children(QgItem *itm, QgModel *s, int depth)
 {
-    if (!itm || !itm->ihash)
+    if (!itm || !itm->instanceHash())
 	return;
 
 
@@ -88,17 +88,12 @@ print_children(QgItem *itm, QgModel *s, int depth)
     if (depth)
 	std::cout << "* ";
 
-    struct bu_vls path_str = BU_VLS_INIT_ZERO;
-    std::vector<unsigned long long> path_hashes = itm->path_items();
-    DbiState *dbis = (DbiState *)itm->mdl->gedp->dbi_state;
-    dbis->print_hash(&path_str, path_hashes[path_hashes.size()-1]);
-    std::cout << bu_vls_cstr(&path_str) << "\n";
-    bu_vls_free(&path_str);
+    std::cout << itm->model()->item_path(itm) << "\n";
 
-    for (size_t j = 0; j < itm->children.size(); j++) {
+    for (size_t j = 0; j < itm->childItems().size(); j++) {
 	QgItem *c = itm->child(j);
 
-	if (!itm->open_itm) {
+	if (!itm->isOpen()) {
 	    continue;
 	}
 
@@ -109,9 +104,9 @@ print_children(QgItem *itm, QgModel *s, int depth)
 void
 print_tops(QgModel *s)
 {
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
-	if (!itm->ihash)
+    for (size_t i = 0; i < s->topItems().size(); i++) {
+	QgItem *itm = s->topItems()[i];
+	if (!itm->instanceHash())
 	    continue;
 	print_children(itm, s, 0);
     }
@@ -145,8 +140,8 @@ int main(int argc, char *argv[])
 
     // Close top level
     std::cout << "\nTop level closed:\n";
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
+    for (size_t i = 0; i < s->topItems().size(); i++) {
+	QgItem *itm = s->topItems()[i];
 	itm->close();
     }
     print_tops(s);
@@ -160,8 +155,8 @@ int main(int argc, char *argv[])
 
     // Close everything
     std::cout << "\nEverything closed:\n";
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
+    for (size_t i = 0; i < s->topItems().size(); i++) {
+	QgItem *itm = s->topItems()[i];
 	close_children(itm);
     }
     print_tops(s);
@@ -180,7 +175,7 @@ int main(int argc, char *argv[])
     open_tops(s, 2);
     print_tops(s);
 
-    struct ged *g = s->gedp;
+    struct ged *g = s->ged();
 
     // Perform edit operations to trigger callbacks->  assuming
     // moss->g example

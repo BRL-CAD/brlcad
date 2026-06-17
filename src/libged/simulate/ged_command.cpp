@@ -56,9 +56,12 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 
 #include "bu/opt.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 #include <iomanip>
 #include <sstream>
+#include <unordered_set>
+#include <vector>
 
 
 namespace
@@ -289,10 +292,25 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	simulate::Simulation simulation(*gedp->dbip, path, resume_flag != 0);
 
 	const fastf_t step_seconds = seconds / num_steps;
+	std::vector<std::string> tree_change_names;
+	std::unordered_set<std::string> tree_change_seen;
+	std::vector<std::string> state_attr_names;
+	std::unordered_set<std::string> state_attr_seen;
 
 	for (int i = 0; i < num_steps; ++i) {
 	    simulation.step(step_seconds, debug_mode);
-	    simulation.saveState();
+	    std::vector<std::string> changed_parent_names =
+		simulation.takeChangedParentNames();
+	    for (const std::string &name : changed_parent_names) {
+		if (tree_change_seen.insert(name).second)
+		    tree_change_names.push_back(name);
+	    }
+
+	    std::vector<std::string> changed_names = simulation.saveState();
+	    for (const std::string &name : changed_names) {
+		if (state_attr_seen.insert(name).second)
+		    state_attr_names.push_back(name);
+	    }
 
 	    if (*plot_prefix_string) {
 		std::ostringstream fname;
@@ -312,6 +330,18 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	    anim_state->encodeVideo();
 	    delete anim_state;
 	    anim_state = NULL;
+	}
+
+	if (!tree_change_names.empty() || !state_attr_names.empty()) {
+	    int event_depth = ged_event_batch_begin(gedp);
+	    for (const std::string &name : tree_change_names)
+		(void)ged_event_notify_comb_tree_changed(gedp, name.c_str(),
+			1, NULL);
+	    for (const std::string &name : state_attr_names)
+		(void)ged_event_notify_attribute_changed(gedp, name.c_str(),
+			0, NULL);
+	    if (event_depth > 0)
+		(void)ged_event_batch_end(gedp, NULL);
 	}
 
     } catch (const simulate::InvalidSimulationError &exception) {
@@ -340,4 +370,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_simulate", 1, GED_SIMULATE_COMMANDS)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

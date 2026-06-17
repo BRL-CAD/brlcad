@@ -30,11 +30,11 @@
 
 #include "bu/sort.h"
 #include "bg/polygon.h"
-#include "bv/util.h"
+#include "bsg/util.h"
 #include "ged.h"
 
 int
-ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
+ged_export_polygon(struct ged *gedp, bsg_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
 {
     size_t j, k, n;
     size_t num_verts = 0;
@@ -295,7 +295,7 @@ ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polyg
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     plane_t pl;
-    bv_view_plane(&pl, gedp->ged_gvp);
+    bsg_view_plane(&pl, gedp->ged_gvp);
 
     return bg_polygons_overlap(polyA, polyB, &pl, &wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
 }

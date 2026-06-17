@@ -30,24 +30,27 @@
 #include "qtcad/QgModel.h"
 
 // https://stackoverflow.com/q/44707344/2037687
-class QTCAD_EXPORT QgDockWidget : public QDockWidget
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgDockWidget : public QDockWidget {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgDockWidget)
 
-    public:
+
+public:
 	QgDockWidget(const QString &title, QWidget *parent);
 	bool event(QEvent *e);
 
-	QgModel *m = NULL;
+	QgModel *model() const { return m; }
+	void setModel(QgModel *mdl) { m = mdl; }
 
-    signals:
+signals:
 	void banner_click();
 
-    public slots:
-       void toWindow(bool floating);
+public slots:
+	void toWindow(bool floating);
 
-    private:
-        bool moving = false;
+private:
+	bool moving = false;
+	QgModel *m = nullptr;
 };
 
 #endif /* QGDOCKWIDGET_H */

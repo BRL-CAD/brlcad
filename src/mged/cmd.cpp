@@ -52,7 +52,8 @@ extern "C" {
 #include "bu/time.h"
 #include "bu/snooze.h"
 #include "bn.h"
-#include "bv/util.h"
+#include "bsg/appearance.h"
+#include "bsg/util.h"
 #include "rt/edit.h"
 #include "rt/geom.h"
 #include "ged.h"
@@ -80,7 +81,7 @@ int ReplayInterpSnapshot(Tcl_Interp *interp, Tcl_Obj *snapshot);
 
 
 // FIXME: Globals
-extern int mged_default_dlist;			/* in attach.c */
+extern int mged_default_backend_cache;			/* in attach.c */
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 static int glob_compat_mode = 1;
@@ -692,7 +693,7 @@ cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int arg
     }
 
     if (has_output && !has_view && s->gedp && s->gedp->ged_gvp) {
-	struct bview *bv = s->gedp->ged_gvp;
+	struct bsg_view *bv = s->gedp->ged_gvp;
 	quat_t quat;
 	quat_mat2quat(quat, bv->gv_rotation);
 
@@ -756,7 +757,8 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
-    struct ged_bv_data *bdata = NULL;
+    struct ged_draw_shape_record hrec;
+    int have_highlight = mged_highlight_shape_record(s, &hrec);
 
     if (s->gedp == GED_NULL)
 	return TCL_OK;
@@ -769,10 +771,10 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
-	    if (illump && illump->s_u_data) {
-		bdata = (struct ged_bv_data *)illump->s_u_data;
-		if (bdata->s_fullpath.fp_len > 0) {
-		    av[1] = (const char *)LAST_SOLID(bdata)->d_namep;
+	    if (have_highlight && hrec.fullpath && hrec.fullpath->fp_len > 0) {
+		struct directory *ldp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
+		if (ldp && ldp->d_namep) {
+		    av[1] = (const char *)ldp->d_namep;
 		    av[argc] = (const char *)NULL;
 		    (void)run_ged_async(s, [&]() -> int { return (*ctp->ged_func)(s->gedp, argc, (const char **)av); });
 		    GED_OUTPUT;
@@ -807,8 +809,8 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	return TCL_ERROR;
 
     solid_list_callback(s);
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     return TCL_OK;
 }
@@ -881,8 +883,8 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     if (ret)
 	return TCL_ERROR;
 
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     return TCL_OK;
 }
@@ -991,7 +993,8 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     struct mged_state *s = ctp->s;
     const char *new_cmd[3];
     struct rt_db_internal intern;
-    struct ged_bv_data *bdata = NULL;
+    struct ged_draw_shape_record hrec;
+    int have_highlight = mged_highlight_shape_record(s, &hrec);
 
     if (s->gedp == GED_NULL)
 	return TCL_OK;
@@ -1008,14 +1011,13 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	/* apply MEDIT(s)->e_mat editing to parameters */
 	struct directory *outdp = RT_DIR_NULL;
 	transform_editing_solid(s, &intern, MEDIT(s)->e_mat, &MEDIT(s)->es_int, 0);
-	if (illump && illump->s_u_data) {
-	    bdata = (struct ged_bv_data *)illump->s_u_data;
-	    outdp = LAST_SOLID(bdata);
+	if (have_highlight && hrec.fullpath && hrec.fullpath->fp_len > 0) {
+	    outdp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
 	}
 
 	if (argc < 2) {
 	    Tcl_AppendResult(interpreter, "You are in Primitive Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
-	    add_solid_path_to_result(interpreter, illump);
+	    add_solid_record_path_to_result(interpreter, have_highlight ? &hrec : NULL);
 	    Tcl_AppendResult(interpreter, "\n", (char *)NULL);
 	}
 
@@ -1030,7 +1032,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	struct directory *outdp = RT_DIR_NULL;
 
 	/* object edit mode */
-	if (illump->s_old.s_Eflag) {
+	if (have_highlight && hrec.evaluated_region) {
 	    Tcl_AppendResult(interpreter, "Cannot find inside of a processed (E'd) region\n",
 			     (char *)NULL);
 	    (void)signal(SIGINT, SIG_IGN);
@@ -1040,14 +1042,13 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	/* apply MEDIT(s)->e_mat and MEDIT(s)->model_changes editing to parameters */
 	bn_mat_mul(newmat, MEDIT(s)->model_changes, MEDIT(s)->e_mat);
 	transform_editing_solid(s, &intern, newmat, &MEDIT(s)->es_int, 0);
-	if (illump && illump->s_u_data) {
-	    bdata = (struct ged_bv_data *)illump->s_u_data;
-	    outdp = LAST_SOLID(bdata);
+	if (have_highlight && hrec.fullpath && hrec.fullpath->fp_len > 0) {
+	    outdp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
 	}
 
-	if (illump && argc < 2) {
+	if (have_highlight && argc < 2) {
 	    Tcl_AppendResult(interpreter, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
-	    add_solid_path_to_result(interpreter, illump);
+	    add_solid_record_path_to_result(interpreter, &hrec);
 	    Tcl_AppendResult(interpreter, "\n", (char *)NULL);
 	}
 
@@ -1257,7 +1258,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	return TCL_ERROR;
 
     (void)mged_svbase(s);
-    view_state->vs_flag = 1;
+    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
 
     return TCL_OK;
 }
@@ -1319,8 +1320,7 @@ cmd_screengrab(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	return TCL_OK;
 
     /* Force the scene to be rendered before reading pixels. */
-    DMP_dirty = 1;
-    dm_set_dirty(DMP, 1);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_DEVICE_SETTING);
     refresh(s);
 
     if (!s->gedp->ged_gvp)
@@ -2053,8 +2053,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     scroll_y = dml->dm_scroll_y;
     memmove((void *)scroll_array, (void *)dml->dm_scroll_array, sizeof(struct scroll_item *) * 6);
 
-    DMP_dirty = 1;
-    dm_set_dirty(DMP, 1);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_DEVICE_SETTING);
     refresh(s);
 
     view_state = vsp;  /* restore state info pointer */
@@ -2119,7 +2118,7 @@ f_winset(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 void
 mged_global_variable_setup(struct mged_state *s)
 {
-    Tcl_LinkVar(s->interp, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "mged_default(cache)", (char *)&mged_default_backend_cache, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_warn)", (char *)&mged_global_db_ctx.db_warn, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_global_db_ctx.db_upgrade, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_global_db_ctx.db_version, TCL_LINK_INT);
@@ -2137,7 +2136,7 @@ mged_global_variable_setup(struct mged_state *s)
 void
 mged_global_variable_teardown(struct mged_state *s)
 {
-    Tcl_UnlinkVar(s->interp, "mged_default(dlist)");
+    Tcl_UnlinkVar(s->interp, "mged_default(cache)");
     Tcl_UnlinkVar(s->interp, "mged_default(db_warn)");
     Tcl_UnlinkVar(s->interp, "mged_default(db_upgrade)");
     Tcl_UnlinkVar(s->interp, "mged_default(db_version)");
@@ -2353,8 +2352,8 @@ cmd_units(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     set_localunit_TclVar(s);
     sf = s->dbip->dbi_base2local / sf;
     update_grids(s,sf);
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     return TCL_OK;
 }
@@ -2450,8 +2449,6 @@ cmd_blast(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
     /* update and resize the views */
     struct mged_dm *save_m_dmp = s->mged_curr_dm;
     struct cmd_list *save_cmd_list = curr_cmd_list;
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	int non_empty = 0; /* start out empty */
@@ -2466,18 +2463,7 @@ cmd_blast(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 
 	s->gedp->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-
-	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	    if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
-		non_empty = 1;
-		break;
-	    }
-
-	    gdlp = next_gdlp;
-	}
+	non_empty = ged_draw_has_shapes(s->gedp);
 
 	if (mged_variables->mv_autosize && non_empty) {
 	    struct view_ring *vrp;
@@ -2510,7 +2496,7 @@ cmd_draw(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, const
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    struct bview *gvp = NULL;
+    struct bsg_view *gvp = NULL;
 
     if (s->gedp)
 	gvp = s->gedp->ged_gvp;
@@ -2745,11 +2731,11 @@ struct _view_cache {
 
     /* Knob state (optional) */
     int have_knobs;
-    struct bview_knobs k;
+    struct bsg_view_knobs k;
 };
 
 static void
-_view_cache_save(struct _view_cache *c, struct bview *v, int include_knobs)
+_view_cache_save(struct _view_cache *c, struct bsg_view *v, int include_knobs)
 {
     if (!c || !v) return;
     c->valid = 1;
@@ -2783,7 +2769,7 @@ _view_cache_save(struct _view_cache *c, struct bview *v, int include_knobs)
 }
 
 static void
-_view_cache_restore(const struct _view_cache *c, struct bview *v)
+_view_cache_restore(const struct _view_cache *c, struct bsg_view *v)
 {
     if (!c || !v || !c->valid) return;
 
@@ -2815,7 +2801,7 @@ _view_cache_restore(const struct _view_cache *c, struct bview *v)
 }
 
 static void
-_view_copy_to_staging(struct bview *dst, struct bview *src, struct mged_state *s, int include_knobs)
+_view_copy_to_staging(struct bsg_view *dst, struct bsg_view *src, struct mged_state *s, int include_knobs)
 {
     if (!dst || !src) return;
 
@@ -2849,7 +2835,7 @@ _view_copy_to_staging(struct bview *dst, struct bview *src, struct mged_state *s
 }
 
 static void
-_view_copy_from_staging(struct bview *dst, struct bview *src, int include_knobs)
+_view_copy_from_staging(struct bsg_view *dst, struct bsg_view *src, int include_knobs)
 {
     if (!dst || !src) return;
 
@@ -2898,7 +2884,7 @@ _view_update_rate_flags_viewonly(struct mged_state *s)
 				!ZERO(view_state->k.tra_m[Y]) ||
 				!ZERO(view_state->k.tra_m[Z])) ? 1 : 0;
     view_state->k.sca_flag = (!ZERO(view_state->k.sca)) ? 1 : 0;
-    view_state->vs_flag = 1;
+    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
 }
 
 static void
@@ -2914,10 +2900,10 @@ _view_maybe_baseline_reset(struct mged_state *s, int do_reset)
 }
 
 /* Calculate focused hash of a subset of the view to detect mutation of view
- * transform & knob state.  This deliberately ignores display list contents,
+ * transform & knob state.  This deliberately ignores draw-scene contents,
  * settings pointers, and unrelated UI fields to minimize false positives. */
 static unsigned long long
-_view_mutation_hash(struct mged_state *ms, struct bview *v)
+_view_mutation_hash(struct mged_state *ms, struct bsg_view *v)
 {
     if (!v) return 0ULL;
 
@@ -2950,7 +2936,7 @@ _view_mutation_hash(struct mged_state *ms, struct bview *v)
     bu_data_hash_update(state, &v->gv_rotate_about, sizeof(char));
 
     /* Knob state (rates + absolute values + flags + origins) */
-    bv_knobs_hash(&v->k, state);
+    bsg_knobs_hash(&v->k, state);
 
     /*
      * If we are in an edit mode (solid or object) include the active edit
@@ -2973,7 +2959,7 @@ _view_mutation_hash(struct mged_state *ms, struct bview *v)
 	bu_data_hash_update(state, &e->acc_sc_obj, sizeof(e->acc_sc_obj));
 	bu_data_hash_update(state, &e->acc_sc, sizeof(e->acc_sc));
 	/* Edit knob state */
-	bv_knobs_hash(&e->k, state);
+	bsg_knobs_hash(&e->k, state);
     }
 
     unsigned long long hv = bu_data_hash_val(state);
@@ -3003,12 +2989,12 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     const int is_knob = _view_is_knob(argc, argv);
     const int baseline_reset = _view_is_baseline_reset(argc, argv);
 
-    struct bview *mged_view = view_state->vs_gvp;
+    struct bsg_view *mged_view = view_state->vs_gvp;
 
     /* Determine staging context */
     int shared_view = 0;
     int created_temp = 0;
-    struct bview *staging = NULL;
+    struct bsg_view *staging = NULL;
 
     if (s->gedp->ged_gvp) {
 	if (s->gedp->ged_gvp == mged_view) {
@@ -3019,8 +3005,8 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	}
     } else {
 	/* No existing ged_gvp: create ephemeral staging view */
-	staging = (struct bview *)bu_calloc(1, sizeof(struct bview), "temporary staging bview");
-	bv_init(staging, NULL);
+	staging = (struct bsg_view *)bu_calloc(1, sizeof(struct bsg_view), "temporary staging bsg_view");
+	bsg_init(staging, NULL);
 	created_temp = 1;
 	/* Carry over dimensions for screen-dependent ops */
 	if (mged_view) {
@@ -3036,7 +3022,7 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     }
 
     /* Snapshot knob state for rollback on error (shared or distinct) */
-    struct bview_knobs pre_knob;
+    struct bsg_view_knobs pre_knob;
     int have_pre_knob = 0;
     if (is_knob && mged_view) {
 	pre_knob = (shared_view ? mged_view->k : staging->k);
@@ -3051,7 +3037,7 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	staging->gv_base2local = (s->dbip) ? s->dbip->dbi_base2local : 1.0;
     }
 
-    /* For knob operations, ensure the staging (or shared) bview's knob struct
+    /* For knob operations, ensure the staging (or shared) bsg_view's knob struct
      * reflects the current MGED knob state (view_state->k).  This preserves
      * prior "knob ..." (MGED) adjustments when switching to "view knob ...".
      * (We already sync view knob results back into view_state->k after each
@@ -3077,8 +3063,8 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    if (!created_temp)
 		_view_cache_restore(&prev, staging);
 	    else {
-		bv_free(staging);
-		bu_free(staging, "free staging bview");
+		bsg_free(staging);
+		bu_free(staging, "free staging bsg_view");
 		s->gedp->ged_gvp = NULL;
 	    }
 	}
@@ -3100,8 +3086,8 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    if (!created_temp) {
 		_view_cache_restore(&prev, staging);
 	    } else {
-		bv_free(staging);
-		bu_free(staging, "free staging bview");
+		bsg_free(staging);
+		bu_free(staging, "free staging bsg_view");
 		s->gedp->ged_gvp = NULL;
 	    }
 	}
@@ -3111,7 +3097,7 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* Success: propagate staging->MGED if distinct */
     if (!shared_view) {
 	_view_copy_from_staging(mged_view, staging, is_knob);
-	view_state->vs_flag = 1;
+	mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
     }
 
     /* Copy updated vs_gvp->k into view_state->k immediately after a confirmed
@@ -3139,8 +3125,8 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    }
 	} else {
 	    /* Ephemeral staging freed; detach from ged */
-	    bv_free(staging);
-	    bu_free(staging, "free staging bview");
+	    bsg_free(staging);
+	    bu_free(staging, "free staging bsg_view");
 	    s->gedp->ged_gvp = NULL;
 	}
     }

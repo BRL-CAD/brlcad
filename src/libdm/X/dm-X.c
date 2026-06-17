@@ -69,12 +69,16 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bn.h"
+#include "bsg/vlist.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "./fb_X.h"
 #include "./dm-X.h"
 
-#include "bv/defines.h"
+#include "bsg/appearance.h"
+#include "bsg/defines.h"
+#include "bsg/draw_source.h"
+#include "bsg/scene_object.h"
 
 #include "../include/private.h"
 
@@ -180,7 +184,7 @@ X_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 {
     XEvent *eventPtr= (XEvent *)veventPtr;
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-        dm_set_dirty(dmp, 1);
+        dm_set_native_repaint_pending(dmp, 1);
         /* no further processing for this event */
         return TCL_RETURN;
     }
@@ -880,10 +884,10 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 static int
-X_drawVList(struct dm *dmp, struct bv_vlist *vp)
+X_drawVList(struct dm *dmp, bsg_vlist *vp)
 {
     static vect_t spnt, lpnt, pnt;
-    struct bv_vlist *tvp;
+    bsg_vlist *tvp;
     XSegment segbuf[1024];	/* XDrawSegments list */
     XSegment *segp;		/* current segment */
     int nseg;		        /* number of segments */
@@ -909,7 +913,7 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 
     nseg = 0;
     segp = segbuf;
-    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bsg_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -923,24 +927,24 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 	/* Integerize and let the X server do the clipping */
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
-		case BV_VLIST_POLY_START:
-		case BV_VLIST_POLY_VERTNORM:
-		case BV_VLIST_TRI_START:
-		case BV_VLIST_TRI_VERTNORM:
+		case BSG_VLIST_POLY_START:
+		case BSG_VLIST_POLY_VERTNORM:
+		case BSG_VLIST_TRI_START:
+		case BSG_VLIST_TRI_VERTNORM:
 		    continue;
-		case BV_VLIST_MODEL_MAT:
+		case BSG_VLIST_MODEL_MAT:
 		    privars->xmat = &(privars->mod_mat[0]);
 		    continue;
-		case BV_VLIST_DISPLAY_MAT:
+		case BSG_VLIST_DISPLAY_MAT:
 		    MAT4X3PNT(tlate, privars->mod_mat, *pt);
 		    privars->disp_mat[3] = tlate[0];
 		    privars->disp_mat[7] = tlate[1];
 		    privars->disp_mat[11] = tlate[2];
 		    privars->xmat = &(privars->disp_mat[0]);
 		    continue;
-		case BV_VLIST_POLY_MOVE:
-		case BV_VLIST_LINE_MOVE:
-		case BV_VLIST_TRI_MOVE:
+		case BSG_VLIST_POLY_MOVE:
+		case BSG_VLIST_LINE_MOVE:
+		case BSG_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -969,11 +973,11 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    lpnt[1] *= 2047 * dmp->i->dm_aspect;
 		    lpnt[2] *= 2047;
 		    continue;
-		case BV_VLIST_POLY_DRAW:
-		case BV_VLIST_POLY_END:
-		case BV_VLIST_LINE_DRAW:
-		case BV_VLIST_TRI_DRAW:
-		case BV_VLIST_TRI_END:
+		case BSG_VLIST_POLY_DRAW:
+		case BSG_VLIST_POLY_END:
+		case BSG_VLIST_LINE_DRAW:
+		case BSG_VLIST_TRI_DRAW:
+		case BSG_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -1110,7 +1114,7 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 			segp = segbuf;
 		    }
 		    break;
-		case BV_VLIST_POINT_DRAW:
+		case BSG_VLIST_POINT_DRAW:
 		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
 			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
@@ -1160,7 +1164,7 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 			XFillArc(pubvars->dpy, privars->pix, privars->gc, upperLeft[X], upperLeft[Y], pointSize, pointSize, 0, 360*64);
 		    }
 		    break;
-		case BV_VLIST_POINT_SIZE:
+		case BSG_VLIST_POINT_SIZE:
 		    pointSize = (*pt)[0];
 		    if (pointSize < DM_X_DEFAULT_POINT_SIZE) {
 			pointSize = DM_X_DEFAULT_POINT_SIZE;
@@ -1192,12 +1196,12 @@ X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 
 
 static int
-X_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
+X_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data)
 {
-    struct bv_vlist *vp;
+    bsg_vlist *vp;
     if (!callback_function) {
 	if (data) {
-	    vp = (struct bv_vlist *)data;
+	    vp = (bsg_vlist *)data;
 	    X_drawVList(dmp, vp);
 	}
     } else {
@@ -1232,7 +1236,7 @@ X_hud_end(struct dm *dmp)
 
 
 /**
- * Output a string into the displaylist.  The starting position of the
+ * Output a string into the X drawing stream.  The starting position of the
  * beam is as specified.
  */
 static int
@@ -2155,6 +2159,7 @@ X_event_cmp(struct dm *dmp, dm_event_t type, int event)
     };
 }
 
+
 /* Display Manager package interface */
 struct dm_impl dm_X_impl = {
     X_open,
@@ -2168,6 +2173,7 @@ struct dm_impl dm_X_impl = {
     null_loadPMatrix,
     null_popPMatrix,
     X_drawString2D,
+    NULL,
     null_String2DBBox,
     X_drawLine2D,
     X_drawLine3D,
@@ -2177,8 +2183,6 @@ struct dm_impl dm_X_impl = {
     null_drawPoints3D,
     X_drawVList,
     X_drawVList,
-    null_draw_obj,
-    NULL,
     X_draw,
     X_setFGColor,
     X_setBGColor,
@@ -2200,12 +2204,6 @@ struct dm_impl dm_X_impl = {
     X_getBoundFlag,
     X_debug,
     X_logfile,
-    null_beginDList,
-    null_endDList,
-    null_drawDList,
-    null_freeDLists,
-    null_genDLists,
-    NULL,
     X_getDisplayImage, /* display to image function */
     X_reshape,
     null_makeCurrent,
@@ -2221,11 +2219,10 @@ struct dm_impl dm_X_impl = {
     X_sync,
     X_event_cmp,
     NULL,
-    NULL,
     0,
     1,				/* is graphical */
     "Tk",                       /* uses Tk graphics system */
-    0,				/* no displaylist */
+    0,				/* no backend cache */
     0,                          /* no stereo */
     "X",
     "X Window System (X11)",
@@ -2249,8 +2246,9 @@ struct dm_impl dm_X_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
-    {BV_MIN, BV_MIN, BV_MIN},	/* clipmin */
-    {BV_MAX, BV_MAX, BV_MAX},	/* clipmax */
+    {255, 0, 0},/* geometry default color */
+    {BSG_VIEW_MIN, BSG_VIEW_MIN, BSG_VIEW_MIN},	/* clipmin */
+    {BSG_VIEW_MAX, BSG_VIEW_MAX, BSG_VIEW_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* depth buffer is not writable */
@@ -2261,7 +2259,9 @@ struct dm_impl dm_X_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    NULL,                       /* backend ops */
+    NULL,                       /* backend resource cache */
+    0                           /* backend frame generation */
 };
 
 struct dm dm_X = { DM_MAGIC, &dm_X_impl, 0 };

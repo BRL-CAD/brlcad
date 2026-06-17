@@ -34,7 +34,8 @@
 #include "bu/str.h"
 #include "bu/time.h"
 #include "bu/vls.h"
-#include "bv/lod.h"
+#include "bsg/lod.h"
+#include "bsg/view_state.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -50,7 +51,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
-    struct bview *gvp;
+    struct bsg_view *gvp;
     int print_help = 0;
     static const char *usage = "view lod [csg|mesh] [0|1]\n"
 	"view lod cache [clear [all_files] | exists] \n"
@@ -90,57 +91,66 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    struct bsg_lod_source_policy_settings lod_policy = {};
+    if (!bsg_view_lod_source_policy_get(gvp, &lod_policy)) {
+	bu_vls_printf(gedp->ged_result_str, "unable to read LoD policy\n");
+	return BRLCAD_ERROR;
+    }
+    auto commit_lod_policy = [&]() {
+	bsg_view_lod_source_policy_set(gvp, &lod_policy);
+	int rac = 1;
+	const char *rav[1] = {"redraw"};
+	ged_exec_redraw(gedp, rac, (const char **)rav);
+    };
+
     /* Print current state if no args are supplied */
     if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "enabled(mesh/csg): %d/%d\n", gvp->gv_s->adaptive_plot_mesh, gvp->gv_s->adaptive_plot_csg);
-	bu_vls_printf(gedp->ged_result_str, "scale: %g\n", gvp->gv_s->lod_scale);
-	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->gv_s->point_scale);
-	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->gv_s->curve_scale);
-	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->gv_s->bot_threshold);
+	bu_vls_printf(gedp->ged_result_str, "enabled(mesh/csg): %d/%d\n", lod_policy.mesh_enabled, lod_policy.csg_enabled);
+	bu_vls_printf(gedp->ged_result_str, "scale: %g\n", lod_policy.scale);
+	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", lod_policy.point_scale);
+	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", lod_policy.curve_scale);
+	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zu\n", lod_policy.bot_threshold);
 	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUIV(argv[0], "1")) {
-	if (!gvp->gv_s->adaptive_plot_mesh || !gvp->gv_s->adaptive_plot_csg) {
-	    gvp->gv_s->adaptive_plot_csg = 1;
-	    gvp->gv_s->adaptive_plot_mesh = 1;
-	    int rac = 1;
-	    const char *rav[1] = {"redraw"};
-	    ged_exec_redraw(gedp, rac, (const char **)rav);
+	if (!lod_policy.mesh_enabled || !lod_policy.csg_enabled) {
+	    lod_policy.mesh_enabled = 1;
+	    lod_policy.csg_enabled = 1;
+	    lod_policy.zoom_refresh = 1;
+	    commit_lod_policy();
 	}
 	return BRLCAD_OK;
     }
     if (BU_STR_EQUIV(argv[0], "0")) {
-	if (gvp->gv_s->adaptive_plot_mesh || gvp->gv_s->adaptive_plot_csg) {
-	    gvp->gv_s->adaptive_plot_csg = 0;
-	    gvp->gv_s->adaptive_plot_mesh = 0;
-	    int rac = 1;
-	    const char *rav[1] = {"redraw"};
-	    ged_exec_redraw(gedp, rac, (const char **)rav);
+	if (lod_policy.mesh_enabled || lod_policy.csg_enabled) {
+	    lod_policy.mesh_enabled = 0;
+	    lod_policy.csg_enabled = 0;
+	    lod_policy.zoom_refresh = 0;
+	    commit_lod_policy();
 	}
 	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "csg")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot_csg);
+	    bu_vls_printf(gedp->ged_result_str, "%d\n", lod_policy.csg_enabled);
 	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL(argv[1], "1")) {
-	    if (!gvp->gv_s->adaptive_plot_csg) {
-		gvp->gv_s->adaptive_plot_csg = 1;
-		int rac = 1;
-		const char *rav[1] = {"redraw"};
-		ged_exec_redraw(gedp, rac, (const char **)rav);
+	    if (!lod_policy.csg_enabled) {
+		lod_policy.csg_enabled = 1;
+		lod_policy.zoom_refresh = 1;
+		commit_lod_policy();
 	    }
 	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL(argv[1], "0")) {
-	    if (gvp->gv_s->adaptive_plot_csg) {
-		gvp->gv_s->adaptive_plot_csg = 0;
-		int rac = 1;
-		const char *rav[1] = {"redraw"};
-		ged_exec_redraw(gedp, rac, (const char **)rav);
+	    if (lod_policy.csg_enabled) {
+		lod_policy.csg_enabled = 0;
+		if (!lod_policy.mesh_enabled)
+		    lod_policy.zoom_refresh = 0;
+		commit_lod_policy();
 	    }
 	    return BRLCAD_OK;
 	}
@@ -150,24 +160,23 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "mesh")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot_mesh);
+	    bu_vls_printf(gedp->ged_result_str, "%d\n", lod_policy.mesh_enabled);
 	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL(argv[1], "1")) {
-	    if (!gvp->gv_s->adaptive_plot_mesh) {
-		gvp->gv_s->adaptive_plot_mesh = 1;
-		int rac = 1;
-		const char *rav[1] = {"redraw"};
-		ged_exec_redraw(gedp, rac, (const char **)rav);
+	    if (!lod_policy.mesh_enabled) {
+		lod_policy.mesh_enabled = 1;
+		lod_policy.zoom_refresh = 1;
+		commit_lod_policy();
 	    }
 	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL(argv[1], "0")) {
-	    if (gvp->gv_s->adaptive_plot_mesh) {
-		gvp->gv_s->adaptive_plot_mesh = 0;
-		int rac = 1;
-		const char *rav[1] = {"redraw"};
-		ged_exec_redraw(gedp, rac, (const char **)rav);
+	    if (lod_policy.mesh_enabled) {
+		lod_policy.mesh_enabled = 0;
+		if (!lod_policy.csg_enabled)
+		    lod_policy.zoom_refresh = 0;
+		commit_lod_policy();
 	    }
 	    return BRLCAD_OK;
 	}
@@ -185,7 +194,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
 	    // Clear any old cache in memory
-	    bv_mesh_lod_clear_cache(gedp->ged_lod, 0);
+	    bsg_mesh_lod_clear_cache(gedp->ged_lod, 0);
 
 	    int done = 0;
 	    int total = 0;
@@ -224,9 +233,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			bu_vls_free(&pname);
 			struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 			RT_BOT_CK_MAGIC(bot);
-			key = bv_mesh_lod_cache(gedp->ged_lod, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+			key = bsg_mesh_lod_cache(gedp->ged_lod, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
 			if (key)
-			    bv_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
+			    bsg_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
 			rt_db_free_internal(&dbintern);
 		    }
 
@@ -278,10 +287,10 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
 			// Because we won't have the internal data to use for a full detail scenario, we set the ratio
 			// to 1 rather than .66 for breps...
-			key = bv_mesh_lod_cache(gedp->ged_lod, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
+			key = bsg_mesh_lod_cache(gedp->ged_lod, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
 
 			if (key)
-			    bv_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
+			    bsg_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
 
 			rt_db_free_internal(&dbintern);
 			bu_free(faces, "faces");
@@ -304,7 +313,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	}
 	if (argc == 2) {
 	    if (BU_STR_EQUAL(argv[1], "clear")) {
-		bv_mesh_lod_clear_cache(gedp->ged_lod, 0);
+		bsg_mesh_lod_clear_cache(gedp->ged_lod, 0);
 		return BRLCAD_OK;
 	    } else if (BU_STR_EQUAL(argv[1], "exists")) {
 		struct directory *dp;
@@ -314,7 +323,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		    // checking both BoTs and BREPs
 		    if ((dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) ||
 			(dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
-			unsigned long long key = bv_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+			unsigned long long key = bsg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
 			if (!key) {
 			    return BRLCAD_ERROR;
 			}
@@ -325,7 +334,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	}
 	if (argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "clear") && BU_STR_EQUAL(argv[2], "all_files")) {
-		bv_mesh_lod_clear_cache(NULL, 0);
+		bsg_mesh_lod_clear_cache(NULL, 0);
 		return BRLCAD_OK;
 	    }
 	}
@@ -335,7 +344,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "scale")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->lod_scale);
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", lod_policy.scale);
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
@@ -343,13 +352,14 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
-	gvp->gv_s->lod_scale = scale;
+	lod_policy.scale = scale;
+	commit_lod_policy();
 	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "point_scale")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->point_scale);
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", lod_policy.point_scale);
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
@@ -357,13 +367,14 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
-	gvp->gv_s->point_scale = scale;
+	lod_policy.point_scale = scale;
+	commit_lod_policy();
 	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "curve_scale")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->curve_scale);
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", lod_policy.curve_scale);
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
@@ -371,13 +382,14 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to curve_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
-	gvp->gv_s->curve_scale = scale;
+	lod_policy.curve_scale = scale;
+	commit_lod_policy();
 	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "bot_threshold")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%zd\n", gvp->gv_s->bot_threshold);
+	    bu_vls_printf(gedp->ged_result_str, "%zu\n", lod_policy.bot_threshold);
 	    return BRLCAD_OK;
 	}
 	int bcnt = 0;
@@ -385,7 +397,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to bot_threshold: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
-	gvp->gv_s->bot_threshold = bcnt;
+	lod_policy.bot_threshold = (size_t)bcnt;
+	commit_lod_policy();
 	return BRLCAD_OK;
 
     }

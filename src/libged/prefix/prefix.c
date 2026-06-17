@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 
@@ -96,6 +98,8 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_log("!!! ged_prefix_core: step 1\n");
 
+    ged_event_batch_begin(gedp);
+
     /* First, check validity, and change node names */
     for (i = 2; i < argc; i++) {
 	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
@@ -130,18 +134,23 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* Change object name in the directory. */
 	if (db_rename(gedp->dbip, dp, tempstring) < 0) {
-	    bu_vls_free(&tempstring_v5);
 	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting\n", tempstring);
+	    bu_vls_free(&tempstring_v5);
+	    ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
+	    bu_vls_free(&tempstring_v5);
+	    ged_event_batch_end(gedp, NULL);
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
 
 	/* Change object name on disk. */
 	if (rt_db_put_internal(dp, gedp->dbip, &intern)) {
+	    bu_vls_free(&tempstring_v5);
+	    ged_event_batch_end(gedp, NULL);
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -156,6 +165,7 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
+	    ged_event_batch_end(gedp, NULL);
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -165,13 +175,29 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, prefix_do,
 			     (void *)argv[1], (void *)argv[k], (void *)NULL, (void *)NULL);
 	if (rt_db_put_internal(dp, gedp->dbip, &intern)) {
+	    ged_event_batch_end(gedp, NULL);
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
-	}
-    } FOR_ALL_DIRECTORY_END;
+	    }
+	} FOR_ALL_DIRECTORY_END;
 
-    return BRLCAD_OK;
-}
+	{
+	    struct bu_vls new_name = BU_VLS_INIT_ZERO;
+	    for (k = 2; k < argc; k++) {
+		if (!argv[k] || !argv[k][0])
+		    continue;
+		bu_vls_trunc(&new_name, 0);
+		bu_vls_strcpy(&new_name, argv[1]);
+		bu_vls_strcat(&new_name, argv[k]);
+		ged_event_notify_object_renamed(gedp, argv[k],
+			bu_vls_cstr(&new_name), NULL);
+	    }
+	    ged_event_batch_end(gedp, NULL);
+	    bu_vls_free(&new_name);
+	}
+
+	return BRLCAD_OK;
+    }
 
 
 #include "../include/plugin.h"
