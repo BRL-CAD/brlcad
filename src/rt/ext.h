@@ -104,6 +104,7 @@ extern struct application APP;
 extern struct icv_image *bif;
 extern int rtg_parallel;		/* flag for parallel raytracing */
 extern int embed_icv_metadata;		/* !0 = embed render metadata in output PNG */
+extern const char title[];
 
 /***** variables shared with worker() ******/
 extern unsigned char *scanbuf;		/* pixels for REMRT */

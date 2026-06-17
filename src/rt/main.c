@@ -68,8 +68,6 @@
 
 extern void application_init(void);
 
-extern const char title[];
-
 
 /***** Variables shared with viewing model *** */
 struct fb	*fbp = FB_NULL;	/* Framebuffer handle */
