@@ -2091,6 +2091,6 @@ s/bu_process_create_opts/bu_process_opts/g
         process option enum renamed for bu_process_func() reuse [7.44]
 s/autoview([[:space:]]+)([[:digit:].]+)/autoview\1-s\2/g
 	autoview command scale parameter now requires a -s option [7.44]
-s/EXTERNVARINIT/extern/g
-	extern is valid in C and C++ - don't need to conditionalize it [7.44]
+s/EXTERNVARINIT/EXTERNCPP/g
+	more general/purpose-specific naming  [7.44]
 

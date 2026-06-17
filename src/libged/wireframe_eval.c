@@ -1791,7 +1791,7 @@ fix_halfs(struct bigE_data *dgcdp)
 }
 
 
-int
+C_DECL int
 draw_m3(struct bv_scene_obj *s)
 {
 

@@ -225,7 +225,7 @@ clt_rhc_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
-const struct bu_structparse rt_rhc_parse[] = {
+EXTERNCPP const struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rhc_internal, rhc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_rhc_internal, rhc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_rhc_internal, rhc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -238,7 +238,7 @@ const struct bu_structparse rt_rhc_parse[] = {
 /**
  * Calculate the bounding RPP for an RHC
  */
-int
+C_DECL int
 rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
 
@@ -302,7 +302,7 @@ rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rhc_specific is created, and its address is stored in
  * stp->st_specific for use by rhc_shot().
  */
-int
+C_DECL int
 rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rhc_internal *xip;
@@ -383,7 +383,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_rhc_print(const struct soltab *stp)
 {
     const struct rhc_specific *rhc =
@@ -413,7 +413,7 @@ rt_rhc_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct rhc_specific *rhc =
@@ -594,7 +594,7 @@ check_plates:
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     fastf_t c;
@@ -637,7 +637,7 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the rhc.
  */
-void
+C_DECL void
 rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t b, c, rsq, y;
@@ -678,7 +678,7 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rhc_specific *rhc = (struct rhc_specific *)stp->st_specific;
@@ -725,7 +725,7 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_rhc_free(struct soltab *stp)
 {
     struct rhc_specific *rhc =
@@ -946,7 +946,7 @@ rhc_curve_points(
 }
 
 
-int
+C_DECL int
 rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     point_t p;
@@ -1015,7 +1015,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 }
 
 
-int
+C_DECL int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     int i, n;
@@ -1308,7 +1308,7 @@ rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
@@ -1594,7 +1594,7 @@ fail:
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1666,7 +1666,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1705,7 +1705,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1741,7 +1741,7 @@ rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1796,7 +1796,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1842,7 +1842,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_rhc_internal *xip =
@@ -1889,7 +1889,7 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_rhc_ifree(struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *xip;
@@ -1904,7 +1904,7 @@ rt_rhc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-void
+C_DECL void
 rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_rhc_internal* rhc_ip;
@@ -1927,7 +1927,7 @@ rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-int
+C_DECL int
 rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) {
@@ -1967,7 +1967,7 @@ rhc_is_valid(struct rt_rhc_internal *rhc)
 }
 
 
-void
+C_DECL void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
@@ -2029,7 +2029,7 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 /**
  * Computer volume of a right hyperbolic cylinder
  */
-void
+C_DECL void
 rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
@@ -2057,7 +2057,7 @@ rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 /**
  * Computes centroid of a right hyperbolic cylinder
  */
-void
+C_DECL void
 rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     if (cent != NULL && ip != NULL) {
@@ -2105,7 +2105,7 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 }
 
-int
+C_DECL int
 rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 5;
@@ -2154,7 +2154,7 @@ rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_rhc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2183,7 +2183,7 @@ rhc_kpt_end:
 }
 
 
-int
+C_DECL int
 rt_rhc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

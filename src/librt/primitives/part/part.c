@@ -212,7 +212,7 @@ struct part_specific {
 #define RT_PARTICLE_SURF_BODY 2
 #define RT_PARTICLE_SURF_HSPHERE 3
 
-const struct bu_structparse rt_part_parse[] = {
+EXTERNCPP const struct bu_structparse rt_part_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_part_internal, part_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_part_internal, part_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r_v", bu_offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -270,7 +270,7 @@ clt_part_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Compute the bounding RPP for a particle
  */
-int
+C_DECL int
 rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_part_internal *pip;
     vect_t tip_pt, tmp_min, tmp_max;
@@ -317,7 +317,7 @@ rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
  * A struct part_specific is created, and its address is stored in
  * stp->st_specific for use by part_shot().
  */
-int
+C_DECL int
 rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct part_specific *part;
@@ -451,7 +451,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_part_print(register const struct soltab *stp)
 {
     register const struct part_specific *part =
@@ -492,7 +492,7 @@ rt_part_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct part_specific *part =
@@ -783,7 +783,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct part_specific *part =
@@ -832,7 +832,7 @@ rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray
  * Return the curvature of the particle.
  * There are two cases:  hitting a hemisphere, and hitting the cylinder.
  */
-void
+C_DECL void
 rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     register struct part_specific *part =
@@ -878,7 +878,7 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
  *
  * hit_point has already been computed.
  */
-void
+C_DECL void
 rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     register const struct part_specific *part =
@@ -917,7 +917,7 @@ rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 }
 
 
-void
+C_DECL void
 rt_part_free(register struct soltab *stp)
 {
     register struct part_specific *part =
@@ -964,7 +964,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
 }
 
 
-int
+C_DECL int
 rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_part_internal *pip;
@@ -1099,7 +1099,7 @@ struct part_vert_strip {
  * middle cylinder	nsegs..nsegs+1
  * lower hemisphere	nsegs+1..nstrips-1	V	South
  */
-int
+C_DECL int
 rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_part_internal *pip;
@@ -1477,7 +1477,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 }
 
 
-int
+C_DECL int
 rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     fastf_t maxrad, minrad;
@@ -1566,7 +1566,7 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-int
+C_DECL int
 rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_part_internal *pip;
@@ -1606,7 +1606,7 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     return 0;
 }
 
-int
+C_DECL int
 rt_part_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1667,7 +1667,7 @@ rt_part_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
 
 }
 
-int
+C_DECL int
 rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     fastf_t maxrad;
@@ -1732,7 +1732,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 }
 
 
-int
+C_DECL int
 rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_part_internal *pip;
@@ -1771,7 +1771,7 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_part_internal *pip =
@@ -1845,7 +1845,7 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_part_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -1855,7 +1855,7 @@ rt_part_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1864,7 +1864,7 @@ rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t vrad, hrad, mag_h;
@@ -1887,7 +1887,7 @@ rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t vrad, hrad, mag_h;
@@ -1908,7 +1908,7 @@ rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     fastf_t vrad, hrad, mag_h, nm, dm, c_frst, cv_hem, ch_hem;
@@ -1945,7 +1945,7 @@ rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
     VADD3(*cent, fcent, hhcent, cvcent);
 }
 
-int
+C_DECL int
 rt_part_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -1988,7 +1988,7 @@ rt_part_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const 
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_part_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2022,7 +2022,7 @@ part_kpt_end:
 }
 
 
-int
+C_DECL int
 rt_part_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

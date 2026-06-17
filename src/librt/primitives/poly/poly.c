@@ -50,7 +50,7 @@ static int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
 /**
  * Calculate the bounding RPP for a poly
  */
-int
+C_DECL int
 rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_pg_internal *pgp;
@@ -93,7 +93,7 @@ rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct b
  * from the first point to the remaining points.
  *
  */
-int
+C_DECL int
 rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_pg_internal *pgp;
@@ -197,7 +197,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 }
 
 
-void
+C_DECL void
 rt_pg_print(const struct soltab *stp)
 {
     const struct tri_specific *trip =
@@ -228,7 +228,7 @@ rt_pg_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct tri_specific *trip =
@@ -442,7 +442,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 }
 
 
-void
+C_DECL void
 rt_pg_free(struct soltab *stp)
 {
     struct tri_specific *trip =
@@ -457,7 +457,7 @@ rt_pg_free(struct soltab *stp)
 }
 
 
-void
+C_DECL void
 rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !stp || !rp)
@@ -470,7 +470,7 @@ rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 }
 
 
-void
+C_DECL void
 rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -552,7 +552,7 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 }
 
 
-void
+C_DECL void
 rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -565,7 +565,7 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     size_t i;
@@ -644,7 +644,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  * The caller is responsible for freeing the dynamic memory.
  * (vid rt_pg_ifree).
  */
-int
+C_DECL int
 rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_pg_internal *pgp;
@@ -726,7 +726,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  * The name will be added by the caller.
  * Generally, only libwdb will set conv2mm != 1.0
  */
-int
+C_DECL int
 rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_pg_internal *pgp;
@@ -812,7 +812,7 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     size_t i, j;
@@ -867,7 +867,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_pg_ifree(struct rt_db_internal *ip)
 {
     struct rt_pg_internal *pgp;
@@ -898,7 +898,7 @@ rt_pg_ifree(struct rt_db_internal *ip)
  * anchored at its first vertex, and the signed tetrahedral contribution
  * a · (b × c) / 6 is accumulated.
  */
-void
+C_DECL void
 rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_pg_internal *pgp;
@@ -937,7 +937,7 @@ rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip)
  * triangulation, and each triangle's area is half the magnitude of the
  * cross product of its two edge vectors.
  */
-void
+C_DECL void
 rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_pg_internal *pgp;
@@ -965,7 +965,7 @@ rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1095,7 +1095,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol)
     return 0;
 }
 
-const char *
+C_DECL const char *
 rt_pg_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

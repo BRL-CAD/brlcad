@@ -73,7 +73,7 @@ struct rt_ars_edit {
 };
 
 
-void *
+C_DECL void *
 rt_edit_ars_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_ars_edit *e;
@@ -86,7 +86,7 @@ rt_edit_ars_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)e;
 }
 
-void
+C_DECL void
 rt_edit_ars_prim_edit_destroy(struct rt_ars_edit *e)
 {
     if (!e)
@@ -134,7 +134,7 @@ find_ars_nearest_pnt(
     *col = closest_j;
 }
 
-void
+C_DECL void
 rt_edit_ars_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -236,13 +236,13 @@ static const struct rt_edit_prim_desc ars_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_ars_edit_desc(void)
 {
     return &ars_prim_desc;
 }
 
-void
+C_DECL void
 rt_edit_ars_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
@@ -286,7 +286,7 @@ rt_edit_ars_labels(
     }
 }
 
-const char *
+C_DECL const char *
 rt_edit_ars_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
@@ -324,13 +324,13 @@ rt_edit_ars_keypoint(
     return strp;
 }
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_ars_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ars_menu;
 }
 
-int
+C_DECL int
 rt_edit_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!mstr || !ip)
@@ -1072,7 +1072,7 @@ ecmd_ars_move_pt(struct rt_edit *s)
     VMOVE(&ars->curves[a->es_ars_crv][a->es_ars_col*3], new_pt);
 }
 
-int
+C_DECL int
 rt_edit_ars_edit(struct rt_edit *s)
 {
     bu_clbk_t f = NULL;
@@ -1159,7 +1159,7 @@ rt_edit_ars_edit(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_ars_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

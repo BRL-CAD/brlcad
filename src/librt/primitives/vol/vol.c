@@ -64,7 +64,7 @@ struct rt_vol_specific {
 
 #define VOL_O(m) bu_offsetof(struct rt_vol_internal, m)
 
-const struct bu_structparse rt_vol_parse[] = {
+EXTERNCPP const struct bu_structparse rt_vol_parse[] = {
     {"%s", RT_VOL_NAME_LEN, "file", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s", RT_VOL_NAME_LEN, "name", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c", 1, "src",	VOL_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -78,11 +78,13 @@ const struct bu_structparse rt_vol_parse[] = {
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-
+__BEGIN_DECLS
 extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
 			 mat_t mat, struct bu_list *vlfree, struct bu_list *vhead, struct rt_vol_internal *vip);
 extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
 extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
+__END_DECLS
+
 /*
  * Codes to represent surface normals.
  * In a bitmap, there are only 4 possible normals.
@@ -124,7 +126,7 @@ static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  * Return intersection segments.
  *
  */
-int
+C_DECL int
 rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct rt_vol_specific *volp =
@@ -428,7 +430,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
  */
-int
+C_DECL int
 rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     union record *rp;
@@ -532,7 +534,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name will be added by the caller.
  */
-int
+C_DECL int
 rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_vol_internal *vip;
@@ -767,7 +769,7 @@ get_vol_data(struct rt_vol_internal *vip, const struct db_i *dbip)
     return 0; //temporary
 }
 
-int
+C_DECL int
 rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -791,7 +793,7 @@ rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
  */
-int
+C_DECL int
 rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     register struct rt_vol_internal *vip;
@@ -852,7 +854,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name will be added by the caller.
  */
-int
+C_DECL int
 rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_vol_internal *vip;
@@ -888,7 +890,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double mm2local)
 {
     struct rt_vol_internal *vip = (struct rt_vol_internal *)ip->idb_ptr;
@@ -935,7 +937,7 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_vol_ifree(struct rt_db_internal *ip)
 {
     register struct rt_vol_internal *vip;
@@ -959,7 +961,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
 /**
  * Calculate bounding RPP for vol
  */
-int
+C_DECL int
 rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register struct rt_vol_internal *vip;
@@ -986,7 +988,7 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rt_vol_specific is created, and its address is stored
  * in stp->st_specific for use by rt_vol_shot().
  */
-int
+C_DECL int
 rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_vol_internal *vip;
@@ -1037,7 +1039,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_vol_print(register const struct soltab *stp)
 {
     register const struct rt_vol_specific *volp =
@@ -1058,7 +1060,7 @@ rt_vol_print(register const struct soltab *stp)
  * This is mostly a matter of translating the stored
  * code into the proper normal.
  */
-void
+C_DECL void
 rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct rt_vol_specific *volp =
@@ -1100,7 +1102,7 @@ rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Everything has sharp edges.  This makes things easy.
  */
-void
+C_DECL void
 rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -1117,7 +1119,7 @@ rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * Map the hit point in 2-D into the range 0..1
  * untransformed X becomes U, and Y becomes V.
  */
-void
+C_DECL void
 rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -1130,7 +1132,7 @@ rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_vol_free(struct soltab *stp)
 {
     register struct rt_vol_specific *volp =
@@ -1145,7 +1147,7 @@ rt_vol_free(struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register struct rt_vol_internal *vip;
@@ -1323,7 +1325,7 @@ struct vol_patch_rect {
 };
 
 
-int
+C_DECL int
 rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_vol_internal *vip;
@@ -1598,7 +1600,7 @@ fail:
 }
 
 
-int
+C_DECL int
 rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1607,7 +1609,7 @@ rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     register struct rt_vol_internal *vip;
@@ -1649,7 +1651,7 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
  * the matrix and then summing the area of the faces of each cell necessary.
  * The vertices are numbered from left to right, front to back, bottom to top.
  */
-void
+C_DECL void
 rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_vol_internal *vip;
@@ -1749,7 +1751,7 @@ rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
  * The eight vertices are calculated, then transformed by the matrix and the
  * volume calculated from that.
  */
-void
+C_DECL void
 rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_vol_internal *vip;
@@ -1817,7 +1819,7 @@ rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
     *volume = fabs(_vol);
 }
 
-const char *
+C_DECL const char *
 rt_vol_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

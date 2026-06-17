@@ -192,23 +192,23 @@ ecmd_datum_set_w(struct rt_edit *s)
  * ================================================================== */
 
 /* No per-edit state needed for datum (no selection). */
-void *
+C_DECL void *
 rt_edit_datum_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     return NULL;
 }
 
-void
+C_DECL void
 rt_edit_datum_prim_edit_destroy(void *UNUSED(ptr))
 {
 }
 
-void
+C_DECL void
 rt_edit_datum_prim_edit_reset(struct rt_edit *UNUSED(s))
 {
 }
 
-void
+C_DECL void
 rt_edit_datum_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -221,7 +221,7 @@ rt_edit_datum_set_edit_mode(struct rt_edit *s, int mode)
     if (f) (*f)(0, NULL, d, &flag);
 }
 
-int
+C_DECL int
 rt_edit_datum_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -251,8 +251,8 @@ rt_edit_datum_edit(struct rt_edit *s)
     return 0;
 }
 
-int
-rt_edit_datum_edit_xy(struct rt_edit *s, vect_t mousevec)
+C_DECL int
+rt_edit_datum_edit_xy(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;
 
@@ -318,14 +318,14 @@ static const struct rt_edit_prim_desc datum_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_datum_edit_desc(void)
 {
     return &datum_prim_desc;
 }
 
 
-int
+C_DECL int
 rt_edit_datum_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     if (!s || !vals) return 0;

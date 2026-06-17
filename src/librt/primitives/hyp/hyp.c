@@ -105,7 +105,7 @@ hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
 }
 
 
-const struct bu_structparse rt_hyp_parse[] = {
+EXTERNCPP const struct bu_structparse rt_hyp_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_hyp_internal, hyp_Vi, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H",   bu_offsetofarray(struct rt_hyp_internal, hyp_Hi, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A",   bu_offsetofarray(struct rt_hyp_internal, hyp_A, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -160,7 +160,7 @@ clt_hyp_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Create a bounding RPP for an hyp
  */
-int
+C_DECL int
 rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_hyp_internal *xip;
     vect_t hyp_Au, hyp_B, hyp_An, hyp_Bn, hyp_H;
@@ -222,7 +222,7 @@ rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct hyp_specific is created, and its address is stored in
  * stp->st_specific for use by hyp_shot().
  */
-int
+C_DECL int
 rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_hyp_internal *hyp_ip;
@@ -254,7 +254,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_hyp_print(const struct soltab *stp)
 {
     const struct hyp_specific *hyp =
@@ -282,7 +282,7 @@ rt_hyp_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
@@ -451,7 +451,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct hyp_specific *hyp =
@@ -498,7 +498,7 @@ rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the hyp.
  */
-void
+C_DECL void
 rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct hyp_specific *hyp =
@@ -574,7 +574,7 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
@@ -620,7 +620,7 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_hyp_free(struct soltab *stp)
 {
     struct hyp_specific *hyp =
@@ -630,7 +630,7 @@ rt_hyp_free(struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     int i, j;		/* loop indices */
@@ -738,7 +738,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
@@ -1306,7 +1306,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     return -1;
 }
 
-int
+C_DECL int
 rt_hyp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1339,7 +1339,7 @@ rt_hyp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  *
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_hyp_internal *hyp_ip;
@@ -1388,7 +1388,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
  *
  * Apply the transformation to mm units as well.
  */
-int
+C_DECL int
 rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hyp_internal *hyp_ip;
@@ -1430,7 +1430,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_hyp_internal *hyp_ip;
@@ -1476,7 +1476,7 @@ rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_hyp_ifree(struct rt_db_internal *ip)
 {
     struct rt_hyp_internal *hyp_ip;
@@ -1492,7 +1492,7 @@ rt_hyp_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1501,7 +1501,7 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     if (cent != NULL && ip != NULL) {
@@ -1522,7 +1522,7 @@ rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
  * There is no known closed-form solution for the general case.
  * Use the Cauchy-Crofton ray-sampling estimator as a fallback.
  */
-void
+C_DECL void
 rt_hyp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     if (!area || !ip)
@@ -1531,7 +1531,7 @@ rt_hyp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     if (volume != NULL && ip != NULL) {
@@ -1549,7 +1549,7 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
     }
 }
 
-int
+C_DECL int
 rt_hyp_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -1590,7 +1590,7 @@ rt_hyp_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_hyp_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -1619,7 +1619,7 @@ hyp_kpt_end:
 }
 
 
-int
+C_DECL int
 rt_hyp_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

@@ -81,7 +81,7 @@
  */
 #define ECMD_BOT_FACE_FUSE	30077
 
-void *
+C_DECL void *
 rt_edit_bot_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_bot_edit *b;
@@ -94,7 +94,7 @@ rt_edit_bot_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)b;
 }
 
-void
+C_DECL void
 rt_edit_bot_prim_edit_destroy(struct rt_bot_edit *b)
 {
     if (!b)
@@ -107,7 +107,7 @@ rt_edit_bot_prim_edit_destroy(struct rt_bot_edit *b)
     BU_PUT(b, struct rt_bot_edit);
 }
 
-void
+C_DECL void
 rt_edit_bot_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
@@ -116,7 +116,7 @@ rt_edit_bot_prim_edit_reset(struct rt_edit *s)
     b->bot_verts[2] = -1;
 }
 
-void
+C_DECL void
 rt_edit_bot_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -185,13 +185,13 @@ struct rt_edit_menu_item bot_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_bot_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return bot_menu;
 }
 
-void
+C_DECL void
 rt_edit_bot_labels(
 	int *num_lines,
 	point_t *lines,
@@ -267,7 +267,7 @@ rt_edit_bot_labels(
 
 }
 
-const char *
+C_DECL const char *
 rt_edit_bot_keypoint(
 	point_t *pt,
 	const char *keystr,
@@ -1079,7 +1079,7 @@ ecmd_bot_pickt(struct rt_edit *s, const vect_t mousevec)
     }
 }
 
-int
+C_DECL int
 rt_edit_bot_edit(struct rt_edit *s)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
@@ -1175,7 +1175,7 @@ rt_edit_bot_edit(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_bot_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec
@@ -1334,14 +1334,14 @@ static const struct rt_edit_prim_desc bot_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_bot_edit_desc(void)
 {
     return &bot_prim_desc;
 }
 
 
-int
+C_DECL int
 rt_edit_bot_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     if (!s || !vals) return 0;

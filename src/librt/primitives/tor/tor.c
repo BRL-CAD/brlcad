@@ -135,14 +135,13 @@
  *
  */
 
-const struct bu_structparse rt_tor_parse[] = {
+EXTERNCPP const struct bu_structparse rt_tor_parse[] = {
     {"%f", 3, "V",   bu_offsetofarray(struct rt_tor_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 3, "H",   bu_offsetofarray(struct rt_tor_internal, h, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {{'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
-
 
 struct tor_specific {
     fastf_t tor_alpha;	/* 0 < (R2/R1) <= 1 */
@@ -188,7 +187,7 @@ clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Compute the bounding RPP for a circular torus.
  */
-int
+C_DECL int
 rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
@@ -247,7 +246,7 @@ rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct tor_specific is created, and its address is stored in
  * stp->st_specific for use by rt_tor_shot().
  */
-int
+C_DECL int
 rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct tor_specific *tor;
@@ -333,7 +332,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_tor_print(register const struct soltab *stp)
 {
     register const struct tor_specific *tor =
@@ -399,7 +398,7 @@ inside_overlapping_region(struct tor_specific *tor, point_t hp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct tor_specific *tor =
@@ -603,7 +602,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version
  */
-void
+C_DECL void
 rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
     /* An array of solid pointers */
     /* An array of ray pointers */
@@ -875,7 +874,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by four here.
  */
-void
+C_DECL void
 rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct tor_specific *tor =
@@ -902,7 +901,7 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Return the curvature of the torus.
  */
-void
+C_DECL void
 rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     register struct tor_specific *tor =
@@ -945,7 +944,7 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 }
 
 
-void
+C_DECL void
 rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct tor_specific *tor = (struct tor_specific *) stp->st_specific;
@@ -976,7 +975,7 @@ rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_tor_free(struct soltab *stp)
 {
     register struct tor_specific *tor =
@@ -1059,7 +1058,7 @@ tor_ellipse_points(
     return circumference / point_spacing;
 }
 
-int
+C_DECL int
 rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
@@ -1154,7 +1153,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
  * ti.h Radius Vector, Normal to plane of torus
  * ti.a, ti.b perpendicular, to CENTER of torus (for top, bottom)
  */
-int
+C_DECL int
 rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     fastf_t alpha;
@@ -1420,7 +1419,7 @@ rt_tor_spindle_tess(struct nmgregion **r, struct model *m,
 }
 
 
-int
+C_DECL int
 rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t alpha;
@@ -1624,7 +1623,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Import a torus from the database format to the internal format.
  * Apply modeling transformations at the same time.
  */
-int
+C_DECL int
 rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1685,7 +1684,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1720,7 +1719,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 /**
  * The name will be added by the caller.
  */
-int
+C_DECL int
 rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1802,7 +1801,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1853,7 +1852,7 @@ rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * ring unit vector 1
  * ring unit vector 2
  */
-int
+C_DECL int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1904,7 +1903,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_tor_internal *tip =
@@ -1958,7 +1957,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_tor_ifree(struct rt_db_internal *ip)
 {
     register struct rt_tor_internal *tip;
@@ -1973,7 +1972,7 @@ rt_tor_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1982,7 +1981,7 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -2007,7 +2006,7 @@ rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -2025,7 +2024,7 @@ rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -2033,7 +2032,7 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
     VMOVE(*cent,tip->v);
 }
 
-int
+C_DECL int
 rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -2076,7 +2075,7 @@ rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_tor_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2111,7 +2110,7 @@ tor_kpt_end:
  * breaking exact coplanarity with adjacent solids.  @a planar_only is ignored
  * because a torus has no planar faces.
  */
-int
+C_DECL int
 rt_tor_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip,
 	       int UNUSED(planar_only), fastf_t val)
 {

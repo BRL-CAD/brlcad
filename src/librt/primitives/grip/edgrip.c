@@ -34,7 +34,7 @@
 
 #include "../edit_private.h"
 
-const char *
+C_DECL const char *
 rt_edit_grp_keypoint(
 	point_t *pt,
 	const char *keystr,
@@ -53,7 +53,7 @@ rt_edit_grp_keypoint(
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
-void
+C_DECL void
 rt_edit_grp_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
@@ -78,7 +78,7 @@ rt_edit_grp_write_params(
     if (ln) *ln = '\0'; \
     while (lc && strchr(lc, ':')) lc++
 
-int
+C_DECL int
 rt_edit_grp_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,

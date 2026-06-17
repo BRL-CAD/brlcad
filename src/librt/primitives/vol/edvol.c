@@ -41,7 +41,7 @@
 #define ECMD_VOL_THRESH_HI	13051	/* set VOL threshold (hi) */
 #define ECMD_VOL_FNAME		13052	/* set VOL file name */
 
-void
+C_DECL void
 rt_edit_vol_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -108,7 +108,7 @@ struct rt_edit_menu_item vol_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_vol_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return vol_menu;
@@ -296,7 +296,7 @@ static const struct rt_edit_prim_desc vol_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_vol_edit_desc(void)
 {
     return &vol_prim_desc;
@@ -541,7 +541,7 @@ rt_edit_vol_pscale(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_vol_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -560,7 +560,7 @@ rt_edit_vol_edit(struct rt_edit *s)
     }
 }
 
-int
+C_DECL int
 rt_edit_vol_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

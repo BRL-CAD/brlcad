@@ -82,7 +82,7 @@ struct rt_bspline_edit {
     int knot_idx;   /* index within the selected direction's vector */
 };
 
-void *
+C_DECL void *
 rt_edit_bspline_prim_edit_create(struct rt_edit *s)
 {
     struct rt_bspline_edit *e;
@@ -104,7 +104,7 @@ rt_edit_bspline_prim_edit_create(struct rt_edit *s)
     return (void *)e;
 }
 
-void
+C_DECL void
 rt_edit_bspline_prim_edit_destroy(struct rt_bspline_edit *e)
 {
     if (!e)
@@ -112,7 +112,7 @@ rt_edit_bspline_prim_edit_destroy(struct rt_bspline_edit *e)
     BU_PUT(e, struct rt_bspline_edit);
 }
 
-void
+C_DECL void
 rt_edit_bspline_set_edit_mode(struct rt_edit *s, int mode)
 {
     /* In vanilla MGED, entering vertex-pick mode called chg_state() to
@@ -189,7 +189,7 @@ struct rt_edit_menu_item spline_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_bspline_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return spline_menu;
@@ -224,7 +224,7 @@ static const struct rt_edit_prim_desc bspline_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_bspline_edit_desc(void)
 {
     return &bspline_prim_desc;
@@ -364,7 +364,7 @@ sedit_vpick(struct rt_edit *s)
 	(*f)(0, NULL, d, &vs_flag);
 }
 
-void
+C_DECL void
 rt_edit_bspline_labels(
   	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
@@ -415,7 +415,7 @@ rt_edit_bspline_labels(
     pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
-const char *
+C_DECL const char *
 rt_edit_bspline_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
@@ -640,7 +640,7 @@ ecmd_vtrans(struct rt_edit *s)
 }
 
 
-int
+C_DECL int
 rt_edit_bspline_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -675,7 +675,7 @@ rt_edit_bspline_edit(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_bspline_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

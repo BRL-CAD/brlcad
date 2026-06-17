@@ -306,7 +306,7 @@ ecmd_arbn_plane_del(struct rt_edit *s)
  * Public interface                                                    *
  * ================================================================== */
 
-void *
+C_DECL void *
 rt_edit_arbn_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_arbn_edit *e;
@@ -315,7 +315,7 @@ rt_edit_arbn_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)e;
 }
 
-void
+C_DECL void
 rt_edit_arbn_prim_edit_destroy(void *ptr)
 {
     struct rt_arbn_edit *e = (struct rt_arbn_edit *)ptr;
@@ -323,14 +323,14 @@ rt_edit_arbn_prim_edit_destroy(void *ptr)
     BU_PUT(e, struct rt_arbn_edit);
 }
 
-void
+C_DECL void
 rt_edit_arbn_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_arbn_edit *e = (struct rt_arbn_edit *)s->ipe_ptr;
     e->plane_index = -1;
 }
 
-void
+C_DECL void
 rt_edit_arbn_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -351,7 +351,7 @@ rt_edit_arbn_set_edit_mode(struct rt_edit *s, int mode)
     if (f) (*f)(0, NULL, d, &flag);
 }
 
-int
+C_DECL int
 rt_edit_arbn_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -387,8 +387,8 @@ rt_edit_arbn_edit(struct rt_edit *s)
     return 0;
 }
 
-int
-rt_edit_arbn_edit_xy(struct rt_edit *s, vect_t mousevec)
+C_DECL int
+rt_edit_arbn_edit_xy(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;
 
@@ -459,14 +459,14 @@ static const struct rt_edit_prim_desc arbn_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_arbn_edit_desc(void)
 {
     return &arbn_prim_desc;
 }
 
 
-int
+C_DECL int
 rt_edit_arbn_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     if (!s || !vals) return 0;

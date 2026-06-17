@@ -175,7 +175,7 @@ struct epa_specific {
 };
 
 
-const struct bu_structparse rt_epa_parse[] = {
+EXTERNCPP const struct bu_structparse rt_epa_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_epa_internal, epa_V, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H",   bu_offsetofarray(struct rt_epa_internal, epa_H, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A",   bu_offsetofarray(struct rt_epa_internal, epa_Au, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -217,7 +217,7 @@ clt_epa_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Create a bounding RPP for an epa
  */
-int
+C_DECL int
 rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_epa_internal *xip;
     vect_t epa_A, epa_B, epa_An, epa_Bn, epa_H;
@@ -279,7 +279,7 @@ rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct epa_specific is created, and its address is stored in
  * stp->st_specific for use by epa_shot().
  */
-int
+C_DECL int
 rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_epa_internal *xip;
@@ -359,7 +359,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_epa_print(const struct soltab *stp)
 {
     const struct epa_specific *epa =
@@ -387,7 +387,7 @@ rt_epa_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct epa_specific *epa =
@@ -504,7 +504,7 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     fastf_t scale;
@@ -539,7 +539,7 @@ rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the epa.
  */
-void
+C_DECL void
 rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t a, b, c, scale;
@@ -594,7 +594,7 @@ rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct epa_specific *epa =
@@ -640,7 +640,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_epa_free(struct soltab *stp)
 {
     struct epa_specific *epa =
@@ -825,7 +825,7 @@ epa_ellipse_points(
     return avg_circumference / point_spacing;
 }
 
-int
+C_DECL int
 rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
     vect_t epa_H, Hu, Au, Bu;
@@ -911,7 +911,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     return 0;
 }
 
-int
+C_DECL int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
@@ -1247,7 +1247,7 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t dtol, mag_h, ntol, r1, r2;
@@ -1760,7 +1760,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Import an EPA from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
@@ -1829,7 +1829,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
@@ -1885,7 +1885,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_epa_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1924,7 +1924,7 @@ rt_epa_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an EPA from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
@@ -1988,7 +1988,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
@@ -2051,7 +2051,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -2090,7 +2090,7 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_epa_ifree(struct rt_db_internal *ip)
 {
     struct rt_epa_internal *xip;
@@ -2105,7 +2105,7 @@ rt_epa_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-void
+C_DECL void
 rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_epa_internal* epa_ip;
@@ -2128,7 +2128,7 @@ rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-int
+C_DECL int
 rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
@@ -2138,7 +2138,7 @@ rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_h;
@@ -2150,7 +2150,7 @@ rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -2159,7 +2159,7 @@ rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t magsq_h, m;
@@ -2210,7 +2210,7 @@ epa_is_valid(struct rt_epa_internal *epa)
     return 1;
 }
 
-int
+C_DECL int
 rt_epa_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -2252,7 +2252,7 @@ rt_epa_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_epa_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2281,7 +2281,7 @@ epa_kpt_end:
 }
 
 
-int
+C_DECL int
 rt_epa_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

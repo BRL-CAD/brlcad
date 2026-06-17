@@ -41,11 +41,12 @@
 
 #include "../../librt_private.h"
 
-
+__BEGIN_DECLS
 extern int rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip,
 		       struct rt_i *rtip);
+__END_DECLS
 
-const struct bu_structparse rt_ell_parse[] = {
+EXTERNCPP const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_ell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A", bu_offsetofarray(struct rt_ell_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_ell_internal, b, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -217,7 +218,7 @@ rt_ell_is_sph(const struct rt_db_internal* ip) {
 /**
  * Compute the bounding RPP for an ellipsoid
  */
-int
+C_DECL int
 rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t w1, w2, P;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
@@ -302,7 +303,7 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct ell_specific is created, and its address is stored in
  * stp->st_specific for use by rt_ell_shot().
  */
-int
+C_DECL int
 rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct ell_specific *ell;
@@ -413,7 +414,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_ell_print(register const struct soltab *stp)
 {
     register struct ell_specific *ell =
@@ -434,7 +435,7 @@ rt_ell_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct ell_specific *ell =
@@ -482,7 +483,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version.
  */
-void
+C_DECL void
 rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 /* An array of solid pointers */
 /* An array of ray pointers */
@@ -541,7 +542,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct ell_specific *ell =
@@ -563,7 +564,7 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Return the curvature of the ellipsoid.
  */
-void
+C_DECL void
 rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     register struct ell_specific *ell =
@@ -603,7 +604,7 @@ rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     register struct ell_specific *ell =
@@ -637,7 +638,7 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_ell_free(register struct soltab *stp)
 {
     register struct ell_specific *ell =
@@ -796,7 +797,7 @@ ell_ellipse_points(
     return avg_circumference / point_spacing;
 }
 
-int
+C_DECL int
 rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     struct ell_draw_configuration config;
@@ -843,7 +844,7 @@ rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     return 0;
 }
 
-int
+C_DECL int
 rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register int i;
@@ -947,7 +948,7 @@ struct ell_vert_strip {
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     mat_t R;
@@ -1327,7 +1328,7 @@ fail:
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
@@ -1367,7 +1368,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ell_internal *tip;
@@ -1397,7 +1398,7 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_ell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1426,7 +1427,7 @@ rt_ell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
@@ -1469,7 +1470,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * B vector
  * C vector
  */
-int
+C_DECL int
 rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
@@ -1506,7 +1507,7 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_ell_internal *tip =
@@ -1572,7 +1573,7 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_ell_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -1594,7 +1595,7 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 };
 
 
-int
+C_DECL int
 rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     mat_t R;
@@ -1883,7 +1884,7 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
  * @return 0 on success
  * @return -1 on failure
  */
-int
+C_DECL int
 rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED(ip))
 {
     return -1;			/* FAIL */
@@ -1947,7 +1948,7 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 /**
  * Computes volume of a ellipsoid.
  */
-void
+C_DECL void
 rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
@@ -1964,7 +1965,7 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 /**
  * Computes centroid of an ellipsoid
  */
-void
+C_DECL void
 rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -1979,7 +1980,7 @@ rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
  */
 #define PROLATE 1
 #define OBLATE 2
-void
+C_DECL void
 rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
@@ -2064,7 +2065,7 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 }
 
-int
+C_DECL int
 rt_ell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -2100,7 +2101,7 @@ rt_ell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_ell_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2147,7 +2148,7 @@ ell_kpt_end:
  * structure; the output preserves the input idb_type.  @a planar_only is
  * ignored because an ellipsoid has no planar faces.
  */
-int
+C_DECL int
 rt_ell_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip,
 	       int UNUSED(planar_only), fastf_t val)
 {

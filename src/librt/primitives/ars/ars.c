@@ -61,9 +61,10 @@
 /* Describe algorithm here */
 
 /* from g_bot.c */
+__BEGIN_DECLS
 extern int rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
 extern void rt_bot_ifree(struct rt_db_internal *ip);
-
+__END_DECLS
 
 /**
  * reads a set of ARS B records and returns a pointer to memory
@@ -113,7 +114,7 @@ ars_rd_curve(union record *rp, ssize_t npts, int flip)
  * Note that in each curve array, the first point is replicated as the
  * last point, to make processing the data easier.
  */
-int
+C_DECL int
 rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ars_internal *ari;
@@ -196,7 +197,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
  * The name will be added by the caller.  Generally, only libwdb will
  * set conv2mm != 1.0
  */
-int
+C_DECL int
 rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ars_internal *arip;
@@ -265,7 +266,7 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_ars_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -305,7 +306,7 @@ rt_ars_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Note that in each curve array, the first point is replicated as the
  * last point, to make processing the data easier.
  */
-int
+C_DECL int
 rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ars_internal *ari;
@@ -362,7 +363,7 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
  * The name will be added by the caller.  Generally, only libwdb will
  * set conv2mm != 1.0
  */
-int
+C_DECL int
 rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ars_internal *arip;
@@ -410,7 +411,7 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register size_t  i, j;
@@ -458,7 +459,7 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_ars_ifree(struct rt_db_internal *ip)
 {
     register struct rt_ars_internal *arip;
@@ -482,7 +483,7 @@ rt_ars_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     register size_t i;
@@ -709,7 +710,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 /**
  * TODO:  produces bboxes that are waaay too big.
  */
-int
+C_DECL int
 rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register size_t i;
@@ -751,7 +752,7 @@ rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * This routine is unusual in that it has to read additional database
  * records to obtain all the necessary information.
  */
-int
+C_DECL int
 rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_db_internal intern;
@@ -802,7 +803,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-int
+C_DECL int
 rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register size_t i;
@@ -840,7 +841,7 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 }
 
 
-int
+C_DECL int
 rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_ars_internal *ars = (struct rt_ars_internal *)intern->idb_ptr;
@@ -911,7 +912,7 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 }
 
 
-int
+C_DECL int
 rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_ars_internal *ars;
@@ -1044,7 +1045,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-int
+C_DECL int
 rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -1052,7 +1053,7 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-int
+C_DECL int
 rt_ars_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 1;

@@ -39,7 +39,7 @@
 #define ECMD_EBM_FSIZE		12054	/* set EBM file size */
 #define ECMD_EBM_HEIGHT		12055	/* set EBM extrusion depth */
 
-void
+C_DECL void
 rt_edit_ebm_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -71,7 +71,7 @@ struct rt_edit_menu_item ebm_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ebm_menu;
@@ -177,7 +177,7 @@ static const struct rt_edit_prim_desc ebm_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_ebm_edit_desc(void)
 {
     return &ebm_prim_desc;
@@ -326,7 +326,7 @@ ecmd_ebm_height(struct rt_edit *s)
     return BRLCAD_OK;
 }
 
-int
+C_DECL int
 rt_edit_ebm_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -361,7 +361,7 @@ rt_edit_ebm_edit(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_ebm_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

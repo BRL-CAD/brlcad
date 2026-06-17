@@ -73,7 +73,7 @@ get_all_avs_keys(const struct bu_attribute_value_set *avsp, const char *title)
  * Free the storage associated with the rt_db_internal version of
  * material object.
  */
-void rt_material_ifree(struct rt_db_internal *ip)
+C_DECL void rt_material_ifree(struct rt_db_internal *ip)
 {
     register struct rt_material_internal *material;
 
@@ -99,7 +99,7 @@ void rt_material_ifree(struct rt_db_internal *ip)
 /**
  * Import a material from the database format to the internal format.
  */
-int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
+C_DECL int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
 {
     struct rt_material_internal *material_ip;
 
@@ -203,7 +203,7 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 /**
  * Export a material from the internal format to the database format.
  */
-int rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *UNUSED(dbip))
+C_DECL int rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *UNUSED(dbip))
 {
     struct rt_material_internal *material_ip;
     RT_CK_DB_INTERNAL(ip);
@@ -281,7 +281,7 @@ int rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip,
     return 0; /* OK */
 }
 
-void
+C_DECL void
 rt_material_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_material_internal* ip;
@@ -305,7 +305,7 @@ rt_material_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_AVS_INIT(&ip->thermalProperties);
 }
 
-int
+C_DECL int
 rt_material_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_material_internal *material = (struct rt_material_internal *)intern->idb_ptr;
@@ -381,7 +381,7 @@ rt_material_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
  * line describes type of object.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
+C_DECL int rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     register struct rt_material_internal *material_ip = (struct rt_material_internal *)ip->idb_ptr;
 

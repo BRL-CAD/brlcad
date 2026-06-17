@@ -36,7 +36,7 @@
 
 #define V4BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local, (_pt)[W]*base2local
 
-void
+C_DECL void
 rt_edit_hlf_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
@@ -49,7 +49,7 @@ rt_edit_hlf_write_params(
     bu_vls_printf(p, "Plane: %.9f %.9f %.9f %.9f\n", V4BASE2LOCAL(half->eqn));
 }
 
-int
+C_DECL int
 rt_edit_hlf_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
@@ -120,19 +120,19 @@ static const struct rt_edit_prim_desc half_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_hlf_edit_desc(void)
 {
     return &half_prim_desc;
 }
 
-void
+C_DECL void
 rt_edit_hlf_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
 }
 
-int
+C_DECL int
 rt_edit_hlf_edit(struct rt_edit *s)
 {
     struct rt_half_internal *haf;
@@ -149,13 +149,13 @@ rt_edit_hlf_edit(struct rt_edit *s)
     return edit_generic(s);
 }
 
-int
+C_DECL int
 rt_edit_hlf_edit_xy(struct rt_edit *s, const vect_t mousevec)
 {
     return edit_generic_xy(s, mousevec);
 }
 
-int
+C_DECL int
 rt_edit_hlf_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_half_internal *haf;

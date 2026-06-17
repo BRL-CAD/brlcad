@@ -239,7 +239,7 @@
 /* ipe_ptr lifecycle                                                   */
 /* ------------------------------------------------------------------ */
 
-void *
+C_DECL void *
 rt_edit_sketch_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_sketch_edit *se;
@@ -251,7 +251,7 @@ rt_edit_sketch_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)se;
 }
 
-void
+C_DECL void
 rt_edit_sketch_prim_edit_destroy(struct rt_sketch_edit *se)
 {
     if (!se)
@@ -259,7 +259,7 @@ rt_edit_sketch_prim_edit_destroy(struct rt_sketch_edit *se)
     BU_PUT(se, struct rt_sketch_edit);
 }
 
-void
+C_DECL void
 rt_edit_sketch_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_sketch_edit *se = (struct rt_sketch_edit *)s->ipe_ptr;
@@ -275,7 +275,7 @@ rt_edit_sketch_prim_edit_reset(struct rt_edit *s)
 /* set_edit_mode                                                       */
 /* ------------------------------------------------------------------ */
 
-void
+C_DECL void
 rt_edit_sketch_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -333,7 +333,7 @@ struct rt_edit_menu_item sketch_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_sketch_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return sketch_menu;
@@ -378,7 +378,7 @@ static const struct rt_edit_prim_desc sketch_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_sketch_edit_desc(void)
 {
     return &sketch_prim_desc;
@@ -1996,7 +1996,7 @@ ecmd_sketch_toggle_segment_reverse(struct rt_edit *s)
     return BRLCAD_OK;
 }
 
-int
+C_DECL int
 rt_edit_sketch_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -2055,7 +2055,7 @@ rt_edit_sketch_edit(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_sketch_edit_xy(struct rt_edit *s, const vect_t mousevec)
 {
     struct rt_sketch_edit *se = (struct rt_sketch_edit *)s->ipe_ptr;

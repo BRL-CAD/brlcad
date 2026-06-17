@@ -236,13 +236,13 @@ static const struct rt_edit_prim_desc arb_prim_desc = {
     arb_opts              /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_arb_edit_desc(void)
 {
     return &arb_prim_desc;
 }
 
-void *
+C_DECL void *
 rt_edit_arb_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_arb8_edit *a;
@@ -251,7 +251,7 @@ rt_edit_arb_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)a;
 }
 
-void
+C_DECL void
 rt_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
 {
     if (!a)
@@ -259,7 +259,7 @@ rt_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
     BU_PUT(a, struct rt_arb8_edit);
 }
 
-void
+C_DECL void
 rt_edit_arb_set_edit_mode(struct rt_edit *UNUSED(s), int UNUSED(mode))
 {
     /* ARB8 uses its own per-type sub-menus (arb8_edge, arb8_mv_face, etc.)
@@ -753,13 +753,13 @@ struct rt_edit_menu_item *which_menu[] = {
     rot8_menu
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_arb_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return cntrl_menu;
 }
 
-int
+C_DECL int
 rt_edit_arb_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     if (!mstr || !ip)
@@ -805,7 +805,7 @@ rt_edit_arb_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const
     return BRLCAD_OK;
 }
 
-const char *
+C_DECL const char *
 rt_edit_arb_keypoint(
 	point_t *pt,
 	const char *keystr,
@@ -821,7 +821,7 @@ rt_edit_arb_keypoint(
     return OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
 }
 
-void
+C_DECL void
 rt_edit_arb_e_axes_pos(
 	struct rt_edit *s,
 	const struct rt_db_internal *ip,
@@ -935,7 +935,7 @@ useThisVertex(int idx, int *uvec, int *svec)
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
-void
+C_DECL void
 rt_edit_arb_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
@@ -972,7 +972,7 @@ rt_edit_arb_write_params(
     if (ln) *ln = '\0'; \
     while (lc && strchr(lc, ':')) lc++
 
-int
+C_DECL int
 rt_edit_arb_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
@@ -1873,7 +1873,7 @@ edarb_move_face_mousevec(struct rt_edit *s, const vect_t mousevec)
     }
 }
 
-int
+C_DECL int
 rt_edit_arb_edit(struct rt_edit *s)
 {
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
@@ -1950,7 +1950,7 @@ arb_planecalc:
     return ret;
 }
 
-int
+C_DECL int
 rt_edit_arb_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

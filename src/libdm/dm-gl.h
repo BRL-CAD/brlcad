@@ -137,6 +137,7 @@ struct gl_vars {
 /* For debugging - print specified string, and additional state
  * information depending on dm_debugLevel settings (such as
  * GL_MODELVIEW and GL_PROJECTION matrices) */
+__BEGIN_DECLS
 DMGL_EXPORT extern void gl_debug_print(struct dm *dmp, const char *title, int lvl);
 
 DMGL_EXPORT extern struct bu_structparse gl_vparse[];
@@ -208,6 +209,7 @@ DMGL_EXPORT extern void gl_printmat(struct bu_vls *tmp_vls, fastf_t *mat);
 DMGL_EXPORT extern void gl_transparency_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 DMGL_EXPORT extern void gl_zbuffer_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 DMGL_EXPORT extern void gl_zclip_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
+__END_DECLS
 
 #endif /* DM_OGL_H */
 

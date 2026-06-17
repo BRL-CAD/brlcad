@@ -303,7 +303,7 @@ ant_check(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, in
  * !0 Error in description
  *
  */
-int
+C_DECL int
 rt_annot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     if (!stp)
@@ -317,7 +317,7 @@ rt_annot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_annot_print(const struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -332,7 +332,7 @@ rt_annot_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_annot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     if (!stp || !rp || !ap || !seghead)
@@ -352,7 +352,7 @@ rt_annot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struc
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_annot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !rp)
@@ -369,7 +369,7 @@ rt_annot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the annotation.
  */
-void
+C_DECL void
 rt_annot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -384,7 +384,7 @@ rt_annot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-void
+C_DECL void
 rt_annot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -395,7 +395,7 @@ rt_annot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct
 }
 
 
-void
+C_DECL void
 rt_annot_free(struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -833,7 +833,7 @@ ant_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 }
 
 
-int
+C_DECL int
 rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_annot_internal *annot_ip;
@@ -856,7 +856,7 @@ rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     return myret;
 }
 
-int
+C_DECL int
 rt_annot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -878,7 +878,7 @@ rt_annot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
  * Import an annotation from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_annot_internal *annot_ip;
@@ -1073,7 +1073,7 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_annot_internal *annot_ip;
@@ -1295,7 +1295,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_annot_internal *annot_ip =
@@ -1564,7 +1564,7 @@ rt_ant_free(struct rt_ant *ant)
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_annot_ifree(struct rt_db_internal *ip)
 {
     struct rt_annot_internal *annot_ip;
@@ -1763,7 +1763,7 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 }
 
 
-int
+C_DECL int
 rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     BU_CK_VLS(logstr);
@@ -1775,7 +1775,7 @@ rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-int
+C_DECL int
 rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_annot_internal *ann=(struct rt_annot_internal *)intern->idb_ptr;
@@ -1991,7 +1991,7 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 }
 
 
-int
+C_DECL int
 rt_annot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_annot_internal *annot_ip;
@@ -2080,7 +2080,7 @@ rt_annot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 }
 
 
-int
+C_DECL int
 rt_annot_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2088,7 +2088,7 @@ rt_annot_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-const char *
+C_DECL const char *
 rt_annot_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

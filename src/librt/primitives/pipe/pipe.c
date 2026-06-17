@@ -531,7 +531,7 @@ rt_linear_pipe_prep(
 
 
 static void
-pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip, point_t *min, point_t *max)
+pipe_elements_calculate(struct bu_list *elements_head, const struct rt_db_internal *ip, point_t *min, point_t *max)
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipe_pnt *pp1, *pp2, *pp3;
@@ -660,7 +660,7 @@ pipe_elements_free(struct bu_list *head)
 /**
  * Calculate a bounding RPP for a pipe
  */
-int
+C_DECL int
 rt_pipe_bbox(
     struct rt_db_internal *ip,
     point_t *min,
@@ -685,7 +685,7 @@ rt_pipe_bbox(
  * A struct bu_list is created, and its address is stored in
  * stp->st_specific for use by pipe_shot().
  */
-int
+C_DECL int
 rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct bu_list *head;
@@ -724,7 +724,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_pipe_print(const struct soltab *stp)
 {
     struct bu_list *head = (struct bu_list *)stp->st_specific;
@@ -1585,7 +1585,7 @@ rt_pipe_elim_dups(
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_pipe_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct bu_list *head = (struct bu_list *)stp->st_specific;
@@ -1675,7 +1675,7 @@ rt_pipe_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
  *  0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_pipe_shot(
     struct soltab *stp,
     struct xray *rp,
@@ -1768,7 +1768,7 @@ rt_pipe_shot(
 /**
  * Return the curvature of the pipe.
  */
-void
+C_DECL void
 rt_pipe_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp) {
@@ -1791,7 +1791,7 @@ rt_pipe_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_pipe_uv(
     struct application *ap,
     struct soltab *stp,
@@ -1804,7 +1804,7 @@ rt_pipe_uv(
 }
 
 
-void
+C_DECL void
 rt_pipe_free(struct soltab *stp)
 {
     if (stp != NULL) {
@@ -2307,7 +2307,7 @@ draw_pipe_end_adaptive(
 }
 
 
-int
+C_DECL int
 rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
     struct rt_pipe_internal *pipeobj;
@@ -2350,7 +2350,7 @@ rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 }
 
 
-int
+C_DECL int
 rt_pipe_plot(
     struct bu_list *vhead,
     struct rt_db_internal *ip,
@@ -3751,7 +3751,7 @@ tesselate_pipe_end(
 /**
  * XXXX Still needs vertexuse normals!
  */
-int
+C_DECL int
 rt_pipe_tess(
     struct nmgregion **r,
     struct model *m,
@@ -3940,7 +3940,7 @@ rt_pipe_tess(
 }
 
 
-int
+C_DECL int
 rt_pipe_import4(
     struct rt_db_internal *ip,
     const struct bu_external *ep,
@@ -4014,7 +4014,7 @@ rt_pipe_import4(
 }
 
 
-int
+C_DECL int
 rt_pipe_export4(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
@@ -4096,7 +4096,7 @@ rt_pipe_export4(
     return 0;
 }
 
-int
+C_DECL int
 rt_pipe_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -4127,7 +4127,7 @@ rt_pipe_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     return BRLCAD_OK;
 }
 
-int
+C_DECL int
 rt_pipe_import5(
     struct rt_db_internal *ip,
     const struct bu_external *ep,
@@ -4196,7 +4196,7 @@ rt_pipe_import5(
 }
 
 
-int
+C_DECL int
 rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_pipe_internal *pip;
@@ -4267,7 +4267,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_pipe_describe(
     struct bu_vls *str,
     const struct rt_db_internal *ip,
@@ -4318,7 +4318,7 @@ rt_pipe_describe(
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_pipe_ifree(struct rt_db_internal *ip)
 {
     struct rt_pipe_internal *pip;
@@ -4787,7 +4787,7 @@ rt_pipe_project_apply(
  * db get name P# => get all data for vertex #
  * db get name N ==> get number of vertices
  */
-int
+C_DECL int
 rt_pipe_get(
     struct bu_vls *logstr,
     const struct rt_db_internal *intern,
@@ -4866,7 +4866,7 @@ rt_pipe_get(
 }
 
 
-int
+C_DECL int
 rt_pipe_adjust(
     struct bu_vls *logstr,
     struct rt_db_internal *intern,
@@ -4968,7 +4968,7 @@ rt_pipe_adjust(
     return (rt_pipe_ck(&pip->pipe_segs_head) == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
-void
+C_DECL void
 rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_pipe_internal* pipe_ip;
@@ -4999,7 +4999,7 @@ rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-int
+C_DECL int
 rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) {
@@ -5010,8 +5010,8 @@ rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
-rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
+C_DECL void
+rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct bu_list head;
     point_t min, max;
@@ -5213,8 +5213,8 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 }
 
 
-void
-rt_pipe_volume(fastf_t *vol, struct rt_db_internal *ip)
+C_DECL void
+rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct bu_list head;
     point_t min, max;
@@ -5233,8 +5233,8 @@ rt_pipe_volume(fastf_t *vol, struct rt_db_internal *ip)
 }
 
 
-void
-rt_pipe_centroid(point_t *cent, struct rt_db_internal *ip)
+C_DECL void
+rt_pipe_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct bu_list head;
     point_t min, max;

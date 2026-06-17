@@ -63,7 +63,7 @@
 #define HF_O(m) bu_offsetof(struct rt_hf_internal, m)
 
 /* All fields valid in string solid */
-const struct bu_structparse rt_hf_parse[] = {
+EXTERNCPP const struct bu_structparse rt_hf_parse[] = {
     {"%s",	128,	"cfile",	HF_O(cfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%s",	128,	"dfile",	HF_O(dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%s",	8,	"fmt",		HF_O(fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -80,7 +80,7 @@ const struct bu_structparse rt_hf_parse[] = {
     {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 /* Subset of fields found in cfile */
-const struct bu_structparse rt_hf_cparse[] = {
+EXTERNCPP const struct bu_structparse rt_hf_cparse[] = {
     {"%s",	128,	"dfile",	HF_O(dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%s",	8,	"fmt",		HF_O(fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -192,7 +192,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 /**
  * Calculate the bounding RPP for an hf
  */
-int
+C_DECL int
 rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const struct bn_tol *UNUSED(tol)) {
     struct rt_hf_internal *hip;
     vect_t height, work;
@@ -279,7 +279,7 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const st
  * A struct hf_specific is created, and its address is stored in
  * stp->st_specific for use by hf_shot().
  */
-int
+C_DECL int
 rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_hf_internal *hip;
@@ -418,7 +418,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_hf_print(const struct soltab *stp)
 {
     const struct hf_specific *hf =
@@ -781,7 +781,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct hf_specific *hf =
@@ -1533,7 +1533,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_hf_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct hf_specific *hf =
@@ -1576,7 +1576,7 @@ rt_hf_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the hf.
  */
-void
+C_DECL void
 rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct hf_specific *hf = (struct hf_specific *)stp->st_specific;
@@ -1598,7 +1598,7 @@ rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct hf_specific *hf;
@@ -1627,7 +1627,7 @@ rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 }
 
 
-void
+C_DECL void
 rt_hf_free(struct soltab *stp)
 {
     struct hf_specific *hf =
@@ -1640,7 +1640,7 @@ rt_hf_free(struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_hf_internal *xip;
@@ -1894,7 +1894,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_hf_internal *xip;
@@ -1914,7 +1914,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  * Import an HF from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_hf_internal *xip;
@@ -2086,7 +2086,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  * override those stored in the string solid (including the dfile
  * name).
  */
-int
+C_DECL int
 rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hf_internal *xip;
@@ -2127,7 +2127,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 }
 
 
-int
+C_DECL int
 rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2141,7 +2141,7 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 }
 
 
-int
+C_DECL int
 rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (!ep) return -1;
@@ -2160,7 +2160,7 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_hf_internal *xip;
@@ -2185,7 +2185,7 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_hf_ifree(struct rt_db_internal *ip)
 {
     struct rt_hf_internal *xip;
@@ -2200,7 +2200,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
     bu_free((char *)xip, "hf ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
-int
+C_DECL int
 rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2208,7 +2208,7 @@ rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-const char *
+C_DECL const char *
 rt_hf_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

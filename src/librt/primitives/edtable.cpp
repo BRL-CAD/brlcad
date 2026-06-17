@@ -36,9 +36,9 @@ extern "C" {
     extern const char *rt_edit_##name##_keypoint(point_t *pt, const char *keystr, const mat_t mat, struct rt_edit *s, const struct bn_tol *tol); \
     extern void rt_edit_##name##_e_axes_pos(struct rt_edit *s, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void rt_edit_##name##_write_params(struct bu_vls *p, const struct rt_db_internal *ip, const struct bn_tol *tol, fastf_t base2local); \
-    extern void rt_edit_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
+    extern int rt_edit_##name##_read_params(struct rt_db_internal *ip, const char *fc, const struct bn_tol *tol, fastf_t local2base); \
     extern int rt_edit_##name##_edit(struct rt_edit *s); \
-    extern int rt_edit_##name##_edit_xy(struct rt_edit *s, vect_t mousevec); \
+    extern int rt_edit_##name##_edit_xy(struct rt_edit *s, const vect_t mousevec); \
     extern void *rt_edit_##name##_prim_edit_create(struct rt_edit *s); \
     extern void rt_edit_##name##_prim_edit_destroy(void *); \
     extern void rt_edit_##name##_prim_edit_reset(struct rt_edit *s); \
@@ -48,6 +48,7 @@ extern "C" {
 
 
 /* Forward declaration for ft_edit_desc implementations */
+__BEGIN_DECLS
 extern const struct rt_edit_prim_desc *rt_edit_tor_edit_desc(void);
 extern const struct rt_edit_prim_desc *rt_edit_tgc_edit_desc(void);
 extern const struct rt_edit_prim_desc *rt_edit_ell_edit_desc(void);
@@ -141,6 +142,8 @@ EDIT_DECLARE_INTERFACE(datum);
 EDIT_DECLARE_INTERFACE(brep);
 EDIT_DECLARE_INTERFACE(joint);
 EDIT_DECLARE_INTERFACE(script);
+
+__END_DECLS
 
 const struct rt_edit_functab EDOBJ[] = {
     {

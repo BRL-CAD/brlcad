@@ -109,7 +109,7 @@ clt_sph_pack(struct bu_pool *pool, struct soltab *stp)
  * stp->st_specific for use by rt_sph_shot().
  * If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
-int
+C_DECL int
 rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct sph_specific *sph;
@@ -199,7 +199,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_sph_print(register const struct soltab *stp)
 {
     register const struct sph_specific *sph =
@@ -232,7 +232,7 @@ rt_sph_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct sph_specific *sph =
@@ -281,7 +281,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vectorized version
  */
-void
+C_DECL void
 rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
     /* An array of solid pointers */
     /* An array of ray pointers */
@@ -340,7 +340,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct sph_specific *sph =
@@ -355,7 +355,7 @@ rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Return the curvature of the sphere.
  */
-void
+C_DECL void
 rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     register struct sph_specific *sph =
@@ -375,7 +375,7 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     register struct sph_specific *sph =
@@ -410,7 +410,7 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_sph_free(register struct soltab *stp)
 {
     register struct sph_specific *sph =
@@ -420,7 +420,7 @@ rt_sph_free(register struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_sph_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);

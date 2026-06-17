@@ -129,11 +129,11 @@ struct dsp_bb_layer {
 # define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
 
 
-/* FIXME: rename? */
+__BEGIN_DECLS
 extern int rt_retrieve_binunif(struct rt_db_internal *intern,
 			       const struct db_i *dbip,
 			       const char *name);
-
+__END_DECLS
 
 #define dlog if (RT_G_DEBUG & RT_DEBUG_HF) bu_log
 
@@ -283,7 +283,7 @@ hook_file(
 
 
 /** only used when editing a v4 database */
-const struct bu_structparse dsp_v4_parse[] = {
+EXTERNCPP const struct bu_structparse dsp_v4_parse[] = {
     {"%V",	1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -294,7 +294,7 @@ const struct bu_structparse dsp_v4_parse[] = {
 
 
 /* only used on v5 database */
-const struct bu_structparse rt_dsp_parse[] = {
+EXTERNCPP const struct bu_structparse rt_dsp_parse[] = {
     {"%V",  1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
     {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },
@@ -511,7 +511,7 @@ dsp_print(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 }
 
 
-void
+C_DECL void
 rt_dsp_print(register const struct soltab *stp)
 {
     register const struct dsp_specific *dsp =
@@ -886,7 +886,7 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * in to avoid duplication rather than calling rt_dsp_bbox.
  */
 
-int
+C_DECL int
 rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_dsp_internal *dsp_ip;
@@ -2509,7 +2509,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct dsp_specific *dsp =
@@ -2769,7 +2769,7 @@ compute_normal_at_gridpoint(vect_t N,
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     vect_t N, t, tmp, A;
@@ -2955,7 +2955,7 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Return the curvature of the dsp.
  */
-void
+C_DECL void
 rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -2976,7 +2976,7 @@ rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     register struct dsp_specific *dsp =
@@ -3066,7 +3066,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_dsp_free(register struct soltab *stp)
 {
     register struct dsp_specific *dsp =
@@ -3145,7 +3145,7 @@ dsp_query_terrain(struct soltab *stp,
     if (smooth) *smooth = dsp->dsp_i.dsp_smooth;
 }
 
-int
+C_DECL int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
@@ -3470,8 +3470,9 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
 
 /* FIXME, not publicly exposed anywhere as it's a non-geom object */
+__BEGIN_DECLS
 extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-
+__END_DECLS
 
 /**
  * Retrieve data for DSP from a database object.
@@ -3599,7 +3600,7 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     return 1;
 }
 
-int
+C_DECL int
 rt_dsp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -3623,7 +3624,7 @@ rt_dsp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an DSP from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_dsp_internal *dsp_ip;
@@ -3704,7 +3705,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_dsp_internal *dsp_ip;
@@ -3751,7 +3752,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Import an DSP from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_dsp_internal *dsp_ip;
@@ -3863,7 +3864,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *UNUSED(dbip))
 {
     struct rt_dsp_internal *dsp_ip;
@@ -3965,7 +3966,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_dsp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
     register struct rt_dsp_internal *dsp_ip =
@@ -3986,7 +3987,7 @@ rt_dsp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_dsp_ifree(struct rt_db_internal *ip)
 {
     register struct rt_dsp_internal *dsp_ip;
@@ -4026,7 +4027,7 @@ rt_dsp_ifree(struct rt_db_internal *ip)
  *
  * Example:  "db get ell.s B" to get only the B vector.
  */
-int
+C_DECL int
 rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register const struct bu_structparse *sp = NULL;
@@ -4090,7 +4091,7 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * For those solids entirely defined by their parsetab.  Invoked via
  * OBJ[].ft_adjust()
  */
-int
+C_DECL int
 rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     register const struct bu_structparse *sp = NULL;
@@ -4117,7 +4118,7 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-void
+C_DECL void
 rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_dsp_internal *dsp;
@@ -4142,7 +4143,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-int
+C_DECL int
 rt_dsp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
@@ -4372,7 +4373,7 @@ dsp_pos(point_t out, /* return value */
     return 0;
 }
 
-const char *
+C_DECL const char *
 rt_dsp_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

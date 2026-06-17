@@ -62,7 +62,7 @@ extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
  * Routine to make a new REVOLVE solid. The only purpose of this routine
  * is to initialize the internal to legal values (e.g., vls)
  */
-void
+C_DECL void
 rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_revolve_internal *rev;
@@ -85,7 +85,7 @@ rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 /**
  * Calculate a bounding RPP around a sketch
  */
-int
+C_DECL int
 rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_revolve_internal *rip;
     vect_t zUnit;
@@ -205,7 +205,7 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
  * A struct revolve_specific is created, and its address is stored
  * in stp->st_specific for use by revolve_shot().
  */
-int
+C_DECL int
 rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_revolve_internal *rip;
@@ -340,7 +340,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 }
 
 
-void
+C_DECL void
 rt_revolve_print(const struct soltab *stp)
 {
     const struct revolve_specific *rev =
@@ -363,7 +363,7 @@ rt_revolve_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct revolve_specific *rev =
@@ -1008,7 +1008,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_revolve_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct revolve_specific *rev =
@@ -1079,7 +1079,7 @@ rt_revolve_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the revolve.
  */
-void
+C_DECL void
 rt_revolve_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -1100,7 +1100,7 @@ rt_revolve_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
  * u = azimuth,  v = elevation
  */
-void
+C_DECL void
 rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct revolve_specific *rev = (struct revolve_specific *)stp->st_specific;
@@ -1192,7 +1192,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 }
 
 
-void
+C_DECL void
 rt_revolve_free(struct soltab *stp)
 {
     struct revolve_specific *revolve =
@@ -1203,7 +1203,7 @@ rt_revolve_free(struct soltab *stp)
 
 #define VVECT_INIT16 {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
-int
+C_DECL int
 rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_revolve_internal *rip;
@@ -1433,7 +1433,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_revolve_internal *rip = NULL;
@@ -1464,7 +1464,7 @@ rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt
     return -1;
 }
 
-const char *
+C_DECL const char *
 rt_revolve_keypoint(point_t *pt, const char *keystr, const mat_t mat,
 		    const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
@@ -1489,7 +1489,7 @@ rt_revolve_keypoint(point_t *pt, const char *keystr, const mat_t mat,
 }
 
 
-int
+C_DECL int
 rt_revolve_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1518,7 +1518,7 @@ rt_revolve_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_i
  *
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_revolve_internal *rip;
@@ -1591,7 +1591,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
  * object, storing the results in the specified 'op' out pointer or
  * creating a copy if NULL.
  */
-int
+C_DECL int
 rt_revolve_xform(
     struct rt_db_internal *op,
     const mat_t mat,
@@ -1652,7 +1652,7 @@ rt_revolve_xform(
  *
  * Apply the transformation to mm units as well.
  */
-int
+C_DECL int
 rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_revolve_internal *rip;
@@ -1698,7 +1698,7 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_revolve_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_revolve_internal *rip =
@@ -1744,7 +1744,7 @@ rt_revolve_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_revolve_ifree(struct rt_db_internal *ip)
 {
     struct rt_revolve_internal *revolve_ip;

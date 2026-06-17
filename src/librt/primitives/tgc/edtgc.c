@@ -54,7 +54,7 @@
 #define ECMD_TGC_SCALE_H_V	2028
 #define ECMD_TGC_SCALE_H_V_AB	2112
 
-void
+C_DECL void
 rt_edit_tgc_set_edit_mode(struct rt_edit *s, int mode)
 {
     // Most of the commands are scale, so set those flags by default.  That
@@ -114,7 +114,7 @@ struct rt_edit_menu_item tgc_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_tgc_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return tgc_menu;
@@ -435,13 +435,13 @@ static const struct rt_edit_prim_desc tgc_prim_desc = {
     tgc_opts              /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_tgc_edit_desc(void)
 {
     return &tgc_prim_desc;
 }
 
-void
+C_DECL void
 rt_edit_tgc_e_axes_pos(
 	struct rt_edit *s,
 	const struct rt_db_internal *ip,
@@ -463,7 +463,7 @@ rt_edit_tgc_e_axes_pos(
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
-void
+C_DECL void
 rt_edit_tgc_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
@@ -491,7 +491,7 @@ rt_edit_tgc_write_params(
     if (ln) *ln = '\0'; \
     while (lc && strchr(lc, ':')) lc++
 
-int
+C_DECL int
 rt_edit_tgc_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
@@ -1157,7 +1157,7 @@ rt_edit_tgc_pscale(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_tgc_edit(struct rt_edit *s)
 {
     int ret = 0;
@@ -1202,7 +1202,7 @@ rt_edit_tgc_edit(struct rt_edit *s)
     return ret;
 }
 
-int
+C_DECL int
 rt_edit_tgc_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

@@ -84,7 +84,7 @@
  */
 #define ECMD_NMG_LEXTRU_DIR	11032
 
-void *
+C_DECL void *
 rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_nmg_edit *e;
@@ -99,7 +99,7 @@ rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)e;
 }
 
-void
+C_DECL void
 rt_edit_nmg_prim_edit_destroy(struct rt_nmg_edit *e)
 {
     if (!e)
@@ -116,7 +116,7 @@ rt_edit_nmg_prim_edit_destroy(struct rt_nmg_edit *e)
     BU_PUT(e, struct rt_nmg_edit);
 }
 
-void
+C_DECL void
 rt_edit_nmg_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
@@ -127,7 +127,7 @@ rt_edit_nmg_prim_edit_reset(struct rt_edit *s)
 }
 
 
-void
+C_DECL void
 rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
@@ -472,20 +472,20 @@ static const struct rt_edit_prim_desc nmg_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_nmg_edit_desc(void)
 {
     return &nmg_prim_desc;
 }
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_nmg_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return nmg_menu;
 }
 
 
-const char *
+C_DECL const char *
 rt_edit_nmg_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
@@ -622,7 +622,7 @@ nmg_keypoint_finalize:
 }
 
 
-void
+C_DECL void
 rt_edit_nmg_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
@@ -1297,7 +1297,7 @@ ecmd_nmg_fmove(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_nmg_edit(struct rt_edit *s)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
@@ -1351,7 +1351,7 @@ rt_edit_nmg_edit(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_nmg_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

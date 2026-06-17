@@ -60,7 +60,7 @@
 /**
  * Tessellate a metaball.
  */
-int
+C_DECL int
 rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_metaball_internal *mb;

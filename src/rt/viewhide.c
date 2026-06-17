@@ -82,7 +82,7 @@ struct bu_structparse view_parse[] = {
 };
 
 
-const char title[] = "RT Hidden-Line Plot";
+EXTERNCPP const char title[] = "RT Hidden-Line Plot";
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *);
 int	raymiss(register struct application *ap);

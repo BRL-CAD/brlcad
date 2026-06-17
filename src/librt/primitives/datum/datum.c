@@ -63,7 +63,7 @@
  * A struct datum_specific is created, and its address is stored in
  * stp->st_specific for use by datum_shot().
  */
-int
+C_DECL int
 rt_datum_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_datum_internal *datum_ip;
@@ -91,7 +91,7 @@ rt_datum_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_datum_print(const struct soltab *stp)
 {
     /* unnecessary callback */
@@ -100,7 +100,7 @@ rt_datum_print(const struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_datum_shot(struct soltab *UNUSED(stp), struct xray *UNUSED(rp), struct application *UNUSED(ap), struct seg *UNUSED(seghead))
 {
     /* these are not solid geometry, so always a miss */
@@ -108,28 +108,28 @@ rt_datum_shot(struct soltab *UNUSED(stp), struct xray *UNUSED(rp), struct applic
 }
 
 
-void
+C_DECL void
 rt_datum_norm(struct hit *UNUSED(hitp), struct soltab *UNUSED(stp), struct xray *UNUSED(rp))
 {
     return;
 }
 
 
-void
+C_DECL void
 rt_datum_curve(struct curvature *UNUSED(cvp), struct hit *UNUSED(hitp), struct soltab *UNUSED(stp))
 {
     return;
 }
 
 
-void
+C_DECL void
 rt_datum_uv(struct application *UNUSED(ap), struct soltab *UNUSED(stp), struct hit *UNUSED(hitp), struct uvcoord *UNUSED(uvp))
 {
     return;
 }
 
 
-void
+C_DECL void
 rt_datum_free(struct soltab *stp)
 {
     struct datum_specific *datum;
@@ -143,7 +143,7 @@ rt_datum_free(struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_datum_internal *datum_ip;
@@ -262,7 +262,7 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_datum_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_datum_internal *datum_ip;
@@ -302,7 +302,7 @@ datum_unpack_double(unsigned char *buf, unsigned char *data, size_t count)
  *
  * Apply the transformation to mm units as well.
  */
-int
+C_DECL int
 rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_datum_internal *datum_ip;
@@ -370,7 +370,7 @@ rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 }
 
 
-int
+C_DECL int
 rt_datum_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !mat)
@@ -408,7 +408,7 @@ rt_datum_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
  *
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_datum_internal *first = NULL;
@@ -472,7 +472,7 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_datum_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_datum_internal *datum_ip = (struct rt_datum_internal *)ip->idb_ptr;
@@ -525,7 +525,7 @@ rt_datum_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_datum_ifree(struct rt_db_internal *ip)
 {
     struct rt_datum_internal *datum_ip;
@@ -547,7 +547,7 @@ rt_datum_ifree(struct rt_db_internal *ip)
 }
 
 
-const char *
+C_DECL const char *
 rt_datum_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -576,7 +576,7 @@ datum_kpt_end:
 }
 
 
-int
+C_DECL int
 rt_datum_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_datum_internal *datum;
@@ -609,7 +609,7 @@ rt_datum_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 }
 
 
-int
+C_DECL int
 rt_datum_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
@@ -618,7 +618,7 @@ rt_datum_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-int
+C_DECL int
 rt_datum_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_datum_internal *datum;

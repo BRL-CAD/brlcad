@@ -39,7 +39,7 @@
 
 #include "./ged_private.h"
 
-int
+C_DECL int
 draw_points(struct bv_scene_obj *s)
 {
     if (!s)

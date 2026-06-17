@@ -82,7 +82,7 @@ extern int srv_startpix;	/* offset for view_pixel */
 extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 #endif
 
-const char title[] = "The BRL-CAD Raytracer RT";
+EXTERNCPP const char title[] = "The BRL-CAD Raytracer RT";
 
 static struct scanline* scanline = NULL;
 static fastf_t* psum_buffer;            /* Buffer that keeps partial sums for multi-samples modes */

@@ -54,7 +54,7 @@
  */
 #define ECMD_DSP_SET_DATASRC    25062
 
-void
+C_DECL void
 rt_edit_dsp_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -96,7 +96,7 @@ struct rt_edit_menu_item dsp_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_dsp_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return dsp_menu;
@@ -303,7 +303,7 @@ static const struct rt_edit_prim_desc dsp_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_dsp_edit_desc(void)
 {
     return &dsp_prim_desc;
@@ -543,7 +543,7 @@ ecmd_dsp_set_datasrc(struct rt_edit *s)
     return BRLCAD_OK;
 }
 
-int
+C_DECL int
 rt_edit_dsp_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -581,7 +581,7 @@ rt_edit_dsp_edit(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_dsp_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

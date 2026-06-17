@@ -81,7 +81,7 @@ struct bu_structparse view_parse[] = {
 static mat_t model2hv;			/* model coords to GIFT h, v in inches */
 static FILE *plotfp;			/* optional plotting file */
 
-const char title[] = "RTG3";
+EXTERNCPP const char title[] = "RTG3";
 
 int rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int raymiss(register struct application *ap);

@@ -50,7 +50,7 @@ extern "C" {
     extern void rt_##name##_norm(struct hit *hitp, struct soltab *stp, struct xray *rp); \
     extern void rt_##name##_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp); \
     extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
-    extern int rt_##name##_class(const struct soltab *, const vect_t *, const vect_t *, const struct bn_tol *); \
+    extern int rt_##name##_class(const struct soltab *, const vect_t, const vect_t, const struct bn_tol *); \
     extern void rt_##name##_free(struct soltab *stp); \
     extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *info); \
     extern int rt_##name##_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size); \
@@ -130,6 +130,7 @@ RT_DECLARE_INTERFACE(brep);
 RT_DECLARE_INTERFACE(joint);
 RT_DECLARE_INTERFACE(script);
 
+extern "C" {
 
 /* generics for object manipulation, in generic.c */
 extern int rt_generic_get(struct bu_vls *, const struct rt_db_internal *, const char *);
@@ -141,12 +142,10 @@ extern int rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, st
 
 /* from primitives/crofton.cpp - Cauchy-Crofton SA/volume functab callbacks
  * (internal to librt; not exported via the public header)              */
-extern "C" {
 extern void rt_crofton_surf_area(fastf_t *area, const struct rt_db_internal *ip);
 extern void rt_crofton_volume(fastf_t *vol, const struct rt_db_internal *ip);
 extern void rt_crofton_surf_area_implicit(fastf_t *area, const struct rt_db_internal *ip);
 extern void rt_crofton_volume_implicit(fastf_t *vol, const struct rt_db_internal *ip);
-}
 
 /* from primitives/poly/poly.c - analytic polysolid measure functions */
 extern void rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip);
@@ -183,6 +182,8 @@ extern int rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_metaball_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+
+} // extern "C"
 
 
 const struct rt_functab OBJ[] = {

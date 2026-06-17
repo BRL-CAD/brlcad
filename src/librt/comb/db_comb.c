@@ -1263,7 +1263,7 @@ db_comb_describe(
 /**
  * Free the storage associated with the rt_db_internal version of this combination.
  */
-void
+C_DECL void
 rt_comb_ifree(struct rt_db_internal *ip)
 {
     register struct rt_comb_internal *comb;

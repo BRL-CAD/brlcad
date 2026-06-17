@@ -189,13 +189,13 @@ static const struct rt_edit_prim_desc rec_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_rec_edit_desc(void)
 {
     return &rec_prim_desc;
 }
 
-void
+C_DECL void
 rt_edit_rec_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -216,10 +216,12 @@ rt_edit_rec_set_edit_mode(struct rt_edit *s, int mode)
 }
 
 /* Forward declare TGC functions used by REC as fallback */
+__BEGIN_DECLS
 extern int rt_edit_tgc_edit(struct rt_edit *s);
 extern int rt_edit_tgc_edit_xy(struct rt_edit *s, const vect_t mousevec);
+__END_DECLS
 
-int
+C_DECL int
 rt_edit_rec_edit(struct rt_edit *s)
 {
     struct rt_tgc_internal *tgc;
@@ -335,13 +337,13 @@ rt_edit_rec_edit(struct rt_edit *s)
     return rt_edit_tgc_edit(s);
 }
 
-int
+C_DECL int
 rt_edit_rec_edit_xy(struct rt_edit *s, const vect_t mousevec)
 {
     return rt_edit_tgc_edit_xy(s, mousevec);
 }
 
-int
+C_DECL int
 rt_edit_rec_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_tgc_internal *tgc;

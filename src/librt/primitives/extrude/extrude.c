@@ -43,12 +43,13 @@
 
 #include "../../librt_private.h"
 
-
+__BEGIN_DECLS
 extern int seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
 extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
 extern void rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip);
+__END_DECLS
 
 struct extrude_specific {
     mat_t rot, irot;	/* rotation and translation to get extrusion vector in +z direction with V at origin */
@@ -97,7 +98,7 @@ static struct bn_tol extr_tol = {
 /**
  * Calculate a bounding RPP for an extruded sketch
  */
-int
+C_DECL int
 rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
 {
     struct rt_extrude_internal *eip;
@@ -329,7 +330,7 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 /**
  * Calculate the volume of an extruded object
  */
-void
+C_DECL void
 rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct rt_extrude_internal *eip;
@@ -370,7 +371,7 @@ rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
  * A struct extrude_specific is created, and its address is stored in
  * stp->st_specific for use by extrude_shot().
  */
-int
+C_DECL int
 rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_extrude_internal *eip;
@@ -603,7 +604,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 }
 
 
-void
+C_DECL void
 rt_extrude_print(const struct soltab *stp)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
@@ -835,7 +836,7 @@ isect_line_earc(vect2d_t dist, const vect_t ray_start, const vect_t ray_dir, con
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
@@ -1250,7 +1251,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_extrude_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
@@ -1308,7 +1309,7 @@ rt_extrude_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the extrude.
  */
-void
+C_DECL void
 rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
@@ -1361,7 +1362,7 @@ rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
     }
 }
 
-void
+C_DECL void
 rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -1373,7 +1374,7 @@ rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *h
     uvp->uv_dv = 0;
 }
 
-void
+C_DECL void
 rt_extrude_free(struct soltab *stp)
 {
     struct extrude_specific *extrude =
@@ -1386,7 +1387,7 @@ rt_extrude_free(struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_extrude_internal *extrude_ip;
@@ -1473,7 +1474,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     return 0;
 }
 
-void
+C_DECL void
 rt_extrude_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_extrude_internal *eip;
@@ -2131,7 +2132,7 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct bu_list vhead;
@@ -2461,7 +2462,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
  * Import an EXTRUDE from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
@@ -2532,7 +2533,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
@@ -2580,7 +2581,7 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
@@ -2624,7 +2625,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     return 0;
 }
 
-int
+C_DECL int
 rt_extrude_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -2654,7 +2655,7 @@ rt_extrude_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_i
  * Import an EXTRUDE from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
@@ -2717,7 +2718,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_extrude_internal *extrude_ip;
@@ -2754,7 +2755,7 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_extrude_ifree(struct rt_db_internal *ip)
 {
     struct rt_extrude_internal *extrude_ip;
@@ -2780,7 +2781,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_extrude_xform(
     struct rt_db_internal *op,
     const mat_t mat,
@@ -2837,7 +2838,7 @@ rt_extrude_xform(
 }
 
 
-int
+C_DECL int
 rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
@@ -2848,7 +2849,7 @@ rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-int
+C_DECL int
 rt_extrude_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
@@ -2881,7 +2882,7 @@ rt_extrude_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 }
 
 
-int
+C_DECL int
 rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_extrude_internal *extr;
@@ -2948,7 +2949,7 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
     return BRLCAD_OK;
 }
 
-void
+C_DECL void
 rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_extrude_internal* ip;
@@ -2967,7 +2968,7 @@ rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-int
+C_DECL int
 rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
@@ -2976,7 +2977,7 @@ rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-const char *
+C_DECL const char *
 rt_extrude_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

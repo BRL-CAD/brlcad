@@ -50,8 +50,9 @@ struct pnts_specific {
 };
 
 
+__BEGIN_DECLS
 extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *);
-
+__END_DECLS
 
 static unsigned char *
 pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
@@ -96,7 +97,7 @@ _pnts_calc_bbox(point_t *min, point_t *max, point_t *v, fastf_t scale)
 /**
  * Calculate a bounding box for a set of points
  */
-int
+C_DECL int
 rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_pnts_internal *pnts;
     struct bu_list *head;
@@ -184,7 +185,7 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
     return 0;
 }
 
-int
+C_DECL int
 rt_pnts_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_pnts_internal *pnts_ip;
@@ -342,7 +343,7 @@ rt_pnts_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * 0 MISS
  * >0 HIT (number of segments)
  */
-int
+C_DECL int
 rt_pnts_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct pnts_specific *spec = (struct pnts_specific *)stp->st_specific;
@@ -386,7 +387,7 @@ rt_pnts_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
  * Given ONE ray distance, return the normal and entry/exit point for
  * the sphere that was hit.
  */
-void
+C_DECL void
 rt_pnts_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct pnts_specific *spec = (struct pnts_specific *)stp->st_specific;
@@ -401,7 +402,7 @@ rt_pnts_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Trivial UV mapping for the point cloud.
  */
-void
+C_DECL void
 rt_pnts_uv(struct application *UNUSED(ap), struct soltab *UNUSED(stp), struct hit *UNUSED(hitp), struct uvcoord *uvp)
 {
     uvp->uv_u = 0.0;
@@ -414,7 +415,7 @@ rt_pnts_uv(struct application *UNUSED(ap), struct soltab *UNUSED(stp), struct hi
 /**
  * Free the prep-time sphere list.
  */
-void
+C_DECL void
 rt_pnts_free(struct soltab *stp)
 {
     struct pnts_specific *spec = (struct pnts_specific *)stp->st_specific;
@@ -430,7 +431,7 @@ rt_pnts_free(struct soltab *stp)
  * Export a pnts collection from the internal structure to the
  * database format
  */
-int
+C_DECL int
 rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *internal, double local2mm, const struct db_i *dbip)
 {
     struct rt_pnts_internal *pnts = NULL;
@@ -668,7 +669,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     return 0;
 }
 
-int
+C_DECL int
 rt_pnts_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !mat)
@@ -772,7 +773,7 @@ rt_pnts_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
  * Import a pnts collection from the database format to the internal
  * structure and apply modeling transformations.
  */
-int
+C_DECL int
 rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *external, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_pnts_internal *pnts = NULL;
@@ -1080,7 +1081,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
  * points as a bu_list instead of calling up a switching table for
  * each point type.
  */
-void
+C_DECL void
 rt_pnts_ifree(struct rt_db_internal *internal)
 {
     struct rt_pnts_internal *pnts;
@@ -1114,7 +1115,7 @@ rt_pnts_ifree(struct rt_db_internal *internal)
 }
 
 
-void
+C_DECL void
 rt_pnts_print(register const struct soltab *stp)
 {
     register const struct pnts_specific *spec =
@@ -1129,7 +1130,7 @@ rt_pnts_print(register const struct soltab *stp)
 /**
  * Plot pnts collection as axes or spheres.
  */
-int
+C_DECL int
 rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info))
 {
     struct rt_pnts_internal *pnts;
@@ -1207,7 +1208,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int verbose, double mm2local)
 {
     const struct rt_pnts_internal *pnts;

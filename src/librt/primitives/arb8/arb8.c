@@ -167,7 +167,7 @@ static const int rt_arb_planes[5][24] = {
 
 #define ARB_AO(_t, _a, _i) offsetof(_t, _a) + sizeof(point_t) * _i + sizeof(point_t) / ELEMENTS_PER_POINT * X
 
-const struct bu_structparse rt_arb_parse[] = {
+EXTERNCPP const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", ARB_AO(struct rt_arb_internal, pt, 0), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V2", ARB_AO(struct rt_arb_internal, pt, 1), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V3", ARB_AO(struct rt_arb_internal, pt, 2), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -728,7 +728,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 }
 
 
-void
+C_DECL void
 rt_arb_print(register const struct soltab *stp)
 {
     register struct arb_specific *arbp =
@@ -761,7 +761,7 @@ rt_arb_print(register const struct soltab *stp)
 /**
  * Find the bounding RPP of an arb
  */
-int
+C_DECL int
 rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     int i;
     struct rt_arb_internal *aip;
@@ -1439,7 +1439,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
  * 0 OK
  * !0 failure
  */
-int
+C_DECL int
 rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_arb_internal *aip;
@@ -1465,7 +1465,7 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
@@ -1557,7 +1557,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version
  */
-void
+C_DECL void
 rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 /* An array of solid pointers */
 /* An array of ray pointers */
@@ -1644,7 +1644,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct arb_specific *arbp =
@@ -1661,7 +1661,7 @@ rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the "curvature" of the ARB face.  Pick a principle direction
  * orthogonal to normal, and indicate no curvature.
  */
-void
+C_DECL void
 rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -1678,7 +1678,7 @@ rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * u extends along the arb_U direction defined by B-A,
  * v extends along the arb_V direction defined by Nx(B-A).
  */
-void
+C_DECL void
 rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     register struct arb_specific *arbp =
@@ -1762,7 +1762,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_arb_free(register struct soltab *stp)
 {
     register struct arb_specific *arbp =
@@ -1786,7 +1786,7 @@ rt_arb_free(register struct soltab *stp)
  *
  * TODO: does not currently optimize for arb7/6/5/4, but should.
  */
-int
+C_DECL int
 rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     point_t *pts;
@@ -1808,8 +1808,8 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     return 0;
 }
 
-int
-rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
+C_DECL int
+rt_arb_class(const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol)
 {
     register struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
     register int i;
@@ -1839,7 +1839,7 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
  * Convert from vector to point notation by rotating each vector and
  * adding in the base vector.
  */
-int
+C_DECL int
 rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
@@ -1885,7 +1885,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
@@ -1916,7 +1916,7 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_arb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1942,7 +1942,7 @@ rt_arb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * structure.  Code duplicated from rt_arb_import4() with db5 help from
  * g_ell.c
  */
-int
+C_DECL int
 rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
@@ -1976,7 +1976,7 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
@@ -2008,7 +2008,7 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_arb_internal *aip = NULL;
@@ -2121,7 +2121,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_arb_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -2863,7 +2863,7 @@ rt_arb_repair(struct rt_arb_internal *out_arb, const struct rt_arb_internal *arb
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
@@ -3030,7 +3030,7 @@ static const int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
@@ -3342,7 +3342,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 }
 
 
-int
+C_DECL int
 rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -3355,7 +3355,7 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
  * compute surface area of an arb8 by dividing it into
  * it's component faces and summing the face areas.
  */
-void
+C_DECL void
 rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
@@ -3505,7 +3505,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
  * compute volume of an arb8 by dividing it into
  * 6 arb4 and summing the volumes.
  */
-void
+C_DECL void
 rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     int i, a, b, c, d;
@@ -3758,7 +3758,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
     return 0;
 }
 
-int
+C_DECL int
 rt_arb_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *utol)
 {
     if (!pl || pl_max < 8 || !ip)
@@ -3819,7 +3819,7 @@ rt_arb_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     }
 }
 
-int
+C_DECL int
 rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))
@@ -3916,7 +3916,7 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     return BRLCAD_OK;
 }
 
-const char *
+C_DECL const char *
 rt_arb_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

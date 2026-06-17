@@ -175,7 +175,7 @@ struct ehy_specific {
 };
 
 
-const struct bu_structparse rt_ehy_parse[] = {
+EXTERNCPP const struct bu_structparse rt_ehy_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_ehy_internal, ehy_V, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H",   bu_offsetofarray(struct rt_ehy_internal, ehy_H, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A",   bu_offsetofarray(struct rt_ehy_internal, ehy_Au, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -222,7 +222,7 @@ clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Create a bounding RPP for an ehy
  */
-int
+C_DECL int
 rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_ehy_internal *xip;
     vect_t ehy_A, ehy_B, ehy_An, ehy_Bn, ehy_H;
@@ -284,7 +284,7 @@ rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct ehy_specific is created, and its address is stored in
  * stp->st_specific for use by ehy_shot().
  */
-int
+C_DECL int
 rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_ehy_internal *xip;
@@ -360,7 +360,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_ehy_print(const struct soltab *stp)
 {
     const struct ehy_specific *ehy =
@@ -389,7 +389,7 @@ rt_ehy_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct ehy_specific *ehy =
@@ -515,7 +515,7 @@ check_plates:
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t can_normal;	/* normal to canonical ehy */
@@ -551,7 +551,7 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the ehy.
  */
-void
+C_DECL void
 rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t a, b, c, scale;
@@ -610,7 +610,7 @@ rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct ehy_specific *ehy =
@@ -657,7 +657,7 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_ehy_free(struct soltab *stp)
 {
     struct ehy_specific *ehy =
@@ -865,7 +865,7 @@ ehy_ellipse_points(
 }
 
 
-int
+C_DECL int
 rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
     vect_t ehy_H, Hu, Au, Bu;
@@ -948,7 +948,7 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 }
 
 
-int
+C_DECL int
 rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
@@ -1226,7 +1226,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, mag_h, ntol, r1, r2, cprime;
@@ -1818,7 +1818,7 @@ fail:
  * Import an EHY from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
@@ -1890,7 +1890,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
@@ -1946,7 +1946,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1987,7 +1987,7 @@ rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an EHY from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
@@ -2039,7 +2039,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
@@ -2102,7 +2102,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_ehy_internal *xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -2144,7 +2144,7 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_ehy_ifree(struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *xip;
@@ -2159,7 +2159,7 @@ rt_ehy_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-void
+C_DECL void
 rt_ehy_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_ehy_internal* ehy_ip;
@@ -2183,7 +2183,7 @@ rt_ehy_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-int
+C_DECL int
 rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
@@ -2231,7 +2231,7 @@ ehy_is_valid(struct rt_ehy_internal *ehy)
 }
 
 
-void
+C_DECL void
 rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
@@ -2301,7 +2301,7 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
@@ -2339,7 +2339,7 @@ rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
  *
  * This is independent of r1 and r2, so it applies to all valid EHY shapes.
  */
-void
+C_DECL void
 rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
@@ -2363,7 +2363,7 @@ rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
     VJOIN1(*cent, eip->ehy_V, z_c, Hu);
 }
 
-int
+C_DECL int
 rt_ehy_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 5;
@@ -2413,7 +2413,7 @@ rt_ehy_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_ehy_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2441,7 +2441,7 @@ ehy_kpt_end:
     return k;
 }
 
-int
+C_DECL int
 rt_ehy_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

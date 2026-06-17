@@ -81,7 +81,7 @@ pipe_apply_cedit(struct rt_edit *s, const struct rt_constraint_edit_op *op)
     return ret;
 }
 
-void *
+C_DECL void *
 rt_edit_pipe_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_pipe_edit *p;
@@ -92,7 +92,7 @@ rt_edit_pipe_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)p;
 }
 
-void
+C_DECL void
 rt_edit_pipe_prim_edit_destroy(struct rt_pipe_edit *p)
 {
     if (!p)
@@ -104,7 +104,7 @@ rt_edit_pipe_prim_edit_destroy(struct rt_pipe_edit *p)
     BU_PUT(p, struct rt_pipe_edit);
 }
 
-void
+C_DECL void
 rt_edit_pipe_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
@@ -112,7 +112,7 @@ rt_edit_pipe_prim_edit_reset(struct rt_edit *s)
 }
 
 
-void
+C_DECL void
 rt_edit_pipe_set_edit_mode(struct rt_edit *s, int mode)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
@@ -223,7 +223,7 @@ struct rt_edit_menu_item pipe_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_pipe_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return pipe_menu;
@@ -447,7 +447,7 @@ static const struct rt_edit_prim_desc pipe_prim_desc = {
     NULL                  /* opts         */
 };
 
-const struct rt_edit_prim_desc *
+C_DECL const struct rt_edit_prim_desc *
 rt_edit_pipe_edit_desc(void)
 {
     return &pipe_prim_desc;
@@ -912,7 +912,7 @@ pipe_move_pnt(struct rt_edit *s, struct rt_pipe_internal *pipeip, struct wdb_pip
     }
 }
 
-const char *
+C_DECL const char *
 rt_edit_pipe_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
@@ -938,7 +938,7 @@ rt_edit_pipe_keypoint(
     return strp;
 }
 
-void
+C_DECL void
 rt_edit_pipe_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
@@ -1467,7 +1467,7 @@ rt_edit_pipe_pscale(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_pipe_edit(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
@@ -1562,7 +1562,7 @@ rt_edit_pipe_edit(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_pipe_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec

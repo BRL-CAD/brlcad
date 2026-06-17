@@ -130,7 +130,7 @@ rt_check_curve(const struct rt_curve *crv, const struct rt_sketch_internal *skt,
  * A struct sketch_specific is created, and its address is
  * stored in stp->st_specific for use by sketch_shot().
  */
-int
+C_DECL int
 rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     if (!stp)
@@ -144,7 +144,7 @@ rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_sketch_print(const struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -159,7 +159,7 @@ rt_sketch_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_sketch_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     if (!stp || !rp || !ap || !seghead)
@@ -180,7 +180,7 @@ rt_sketch_shot(struct soltab *stp, struct xray *rp, struct application *ap, stru
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_sketch_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !rp)
@@ -197,7 +197,7 @@ rt_sketch_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the sketch.
  */
-void
+C_DECL void
 rt_sketch_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -219,7 +219,7 @@ rt_sketch_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  *
  * u = azimuth,  v = elevation
  */
-void
+C_DECL void
 rt_sketch_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -230,7 +230,7 @@ rt_sketch_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struc
 }
 
 
-void
+C_DECL void
 rt_sketch_free(struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -463,7 +463,7 @@ rt_sketch_degree(struct rt_sketch_internal *sk)
 }
 
 
-int
+C_DECL int
 seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, void *seg)
 {
     int ret=0;
@@ -871,7 +871,7 @@ curve_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_te
 }
 
 
-int
+C_DECL int
 rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_sketch_internal *sketch_ip;
@@ -1021,7 +1021,7 @@ sketch_centroid_with_precision(point_t *cent,
     return n;
 }
 
-void
+C_DECL void
 rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     /* With BN_TOL_DIST instead, even relatively simple sketches can
@@ -1088,7 +1088,7 @@ rt_sketch_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_
  * Import an SKETCH from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
@@ -1270,7 +1270,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
@@ -1458,7 +1458,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     return 0;
 }
 
-int
+C_DECL int
 rt_sketch_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1485,7 +1485,7 @@ rt_sketch_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_in
  * Import an SKETCH from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
@@ -1667,7 +1667,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
@@ -1870,7 +1870,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_sketch_internal *sketch_ip =
@@ -2116,7 +2116,7 @@ rt_curve_free(struct rt_curve *crv)
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_sketch_ifree(struct rt_db_internal *ip)
 {
     struct rt_sketch_internal *sketch_ip;
@@ -2295,7 +2295,7 @@ curve_to_tcl_list(struct bu_vls *vls, struct rt_curve *crv)
 }
 
 
-int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp)
+C_DECL int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     BU_CK_VLS(logstr);
     RT_CK_FUNCTAB(ftp);
@@ -2306,7 +2306,7 @@ int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-int
+C_DECL int
 rt_sketch_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
@@ -2507,7 +2507,7 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 }
 
 
-int
+C_DECL int
 rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_sketch_internal *skt;
@@ -2612,7 +2612,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 }
 
 
-int
+C_DECL int
 rt_sketch_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2734,7 +2734,7 @@ rt_curve_order_segments(struct rt_curve *crv)
     }
 }
 
-const char *
+C_DECL const char *
 rt_sketch_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

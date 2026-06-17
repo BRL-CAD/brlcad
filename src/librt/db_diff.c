@@ -38,6 +38,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/db_diff.h"
+#include "./librt_private.h"
 
 /* Exposed as private function to librt, but not (currently) beyond librt -
  * see librt_private.h */

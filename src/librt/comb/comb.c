@@ -278,7 +278,7 @@ rt_comb_v5_serialize(
 }
 
 
-int
+C_DECL int
 rt_comb_export5(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
@@ -516,7 +516,7 @@ _comb_mat_leaf(const mat_t mat, union tree *tp)
     }
 }
 
-int
+C_DECL int
 rt_comb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !mat)
@@ -871,7 +871,7 @@ finish:
  * Sets the result string to a description of the given combination.
  * Entered via OBJ[].ft_get().
  */
-int
+C_DECL int
 rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item)
 {
     const struct rt_comb_internal *comb;
@@ -985,8 +985,8 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
  *
  * Invoked via OBJ[ID_COMBINATION].ft_adjust()
  */
-int
-rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+C_DECL int
+rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_comb_internal *comb;
     char buf[1024] = {'\0'};
@@ -1146,7 +1146,7 @@ not_region:
 }
 
 
-int
+C_DECL int
 rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
@@ -1161,7 +1161,7 @@ rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  * Create a blank combination with appropriate values.  Called via
  * OBJ[ID_COMBINATION].ft_make().
  */
-void
+C_DECL void
 rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern)
 {
     struct rt_comb_internal *comb;
@@ -1226,7 +1226,7 @@ facetize_region_end(struct db_tree_state *tsp,
  * current.  ONLY use comb methods on rt_db_internals when they are associated
  * with a current, valid dbip.
  */
-int
+C_DECL int
 rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     if (!r || !m  || !ip || !ttol || !tol)
@@ -1363,7 +1363,7 @@ comb_crofton_sample(const struct rt_db_internal *ip, double *out_sa, double *out
 }
 
 
-void
+C_DECL void
 rt_comb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     if (!area || !ip)
@@ -1374,7 +1374,7 @@ rt_comb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_comb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     if (!vol || !ip)
