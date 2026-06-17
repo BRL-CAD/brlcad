@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -88,6 +90,38 @@ struct plot_list HeadPlot;
 static const char *Xtype = "X";
 static const char *Otype = "ogl";
 const char *dm_type = "X";
+
+static int
+parse_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
+	bu_log("plot3-dm: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	bu_log("plot3-dm: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 
 /*
@@ -431,15 +465,22 @@ X_dm(int argc, char *argv[])
 
     if (BU_STR_EQUAL(argv[0], "m")) {
 	vect_t view_pos;
+	int xpos, ypos;
 
-	if (argc < 4) {
+	if (argc < 5) {
 	    Tcl_AppendResult(INTERP, "dm m: need more parameters\n",
 			     "dm m button 1|0 xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
 
-	view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
-	view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
+	if (!parse_int_arg(argv[3], &xpos, "x position") ||
+	    !parse_int_arg(argv[4], &ypos, "y position")) {
+	    Tcl_AppendResult(INTERP, "dm m: invalid numeric parameter\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	view_pos[X] = dm_Xx2Normal(dmp, xpos);
+	view_pos[Y] = dm_Xy2Normal(dmp, ypos, 0);
 	view_pos[Z] = 0.0;
 	status = slewview(view_pos);
 	new_mats();
@@ -457,9 +498,12 @@ X_dm(int argc, char *argv[])
 	    return TCL_ERROR;
 	}
 
-	buttonpress = atoi(argv[2]);
-	omx = atoi(argv[3]);
-	omy = atoi(argv[4]);
+	if (!parse_int_arg(argv[2], &buttonpress, "button state") ||
+	    !parse_int_arg(argv[3], &omx, "x position") ||
+	    !parse_int_arg(argv[4], &omy, "y position")) {
+	    Tcl_AppendResult(INTERP, "dm am: invalid numeric parameter\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
 
 	if (buttonpress) {
 	    switch (*argv[1]) {
@@ -659,7 +703,16 @@ cmd_vrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
 	return TCL_ERROR;
     }
 
-    vrot(atof(argv[1]), atof(argv[2]), atof(argv[3]));
+    {
+	double xrot, yrot, zrot;
+
+	if (!parse_double_arg(argv[1], &xrot, "x rotation") ||
+	    !parse_double_arg(argv[2], &yrot, "y rotation") ||
+	    !parse_double_arg(argv[3], &zrot, "z rotation"))
+	    return TCL_ERROR;
+
+	vrot(xrot, yrot, zrot);
+    }
     new_mats();
     refresh();
 
@@ -871,7 +924,8 @@ cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
 	return TCL_ERROR;
     }
 
-    val = atof(argv[1]);
+    if (!parse_double_arg(argv[1], &val, "zoom factor"))
+	return TCL_ERROR;
     status = zoom(interp, val);
     new_mats();
     refresh();
@@ -910,8 +964,15 @@ cmd_slewview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	return TCL_ERROR;
     }
 
-    view_pos[X] = atof(argv[1]) / 2047.0;
-    view_pos[Y] = atof(argv[2]) / 2047.0;
+    {
+	double xpos, ypos;
+
+	if (!parse_double_arg(argv[1], &xpos, "x position") ||
+	    !parse_double_arg(argv[2], &ypos, "y position"))
+	    return TCL_ERROR;
+	view_pos[X] = xpos / 2047.0;
+	view_pos[Y] = ypos / 2047.0;
+    }
     view_pos[Z] = 0.0;
 
     status = slewview(view_pos);
@@ -952,12 +1013,16 @@ cmd_aetview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
     o_twist = twist;
 
     /* set view using azimuth and elevation angles */
+    if (!parse_double_arg(argv[1], &azimuth, "azimuth") ||
+	!parse_double_arg(argv[2], &elevation, "elevation"))
+	return TCL_ERROR;
+
     if (iflag)
-	setview(270.0 + atof(argv[2]) + elevation,
+	setview(270.0 + elevation,
 		0.0,
-		270.0 - atof(argv[1]) - azimuth);
+		270.0 - azimuth);
     else
-	setview(270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]));
+	setview(270.0 + elevation, 0.0, 270.0 - azimuth);
 
     new_mats();
 
@@ -966,7 +1031,8 @@ cmd_aetview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 	double x, y, z;
 
 	x = y = 0.0;
-	twist = atof(argv[3]);
+	if (!parse_double_arg(argv[3], &twist, "twist"))
+	    return TCL_ERROR;
 
 	if (iflag)
 	    z = -o_twist - twist;

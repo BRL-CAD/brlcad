@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -95,9 +96,28 @@ Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
 static int read_hsv (fastf_t *hsvp, char *buf)
 {
     double tmp[3];
+    int i = 0;
+    const char *cp = buf;
+    char *end = NULL;
 
-    if (sscanf(buf, "%lf %lf %lf", tmp, tmp + 1, tmp + 2) != 3)
+    for (i = 0; i < 3; i++) {
+	while (isspace((unsigned char)*cp))
+	    cp++;
+	if (*cp == '\0')
+	    return 0;
+
+	errno = 0;
+	tmp[i] = strtod(cp, &end);
+	if (errno != 0 || end == cp)
+	    return 0;
+	cp = end;
+    }
+
+    while (isspace((unsigned char)*cp))
+	cp++;
+    if (*cp != '\0')
 	return 0;
+
     if ((tmp[HUE] < 0.0) || (tmp[HUE] > 360.0)
 	|| (tmp[SAT] < 0.0) || (tmp[SAT] > 1.0)
 	|| (tmp[VAL] < 0.0) || (tmp[VAL] > 1.0))

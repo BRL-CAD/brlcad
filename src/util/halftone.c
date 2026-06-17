@@ -64,6 +64,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
@@ -95,6 +97,47 @@ int Surpent=0;		/* use serpentine scan lines */
 int Levels=1;		/* Number of levels */
 int Debug=0;
 struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
+
+static int
+parse_long_arg(const char *arg, long int *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0') {
+	fprintf(stderr, "halftone: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_positive_long_arg(const char *arg, long int *out_value, const char *label)
+{
+    if (!parse_long_arg(arg, out_value, label) || *out_value <= 0) {
+	fprintf(stderr, "halftone: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	fprintf(stderr, "halftone: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 /**
  * return a sharpened tone mapped buffer.
@@ -799,22 +842,32 @@ setup(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "D:s:an:w:B:M:RSI:T:h?")) != -1) {
 	switch (c) {
 	    case 's':
-		width = height = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &width, "size"))
+		    bu_exit(1, usage);
+		height = width;
 		break;
 	    case 'n':
-		height = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &height, "height"))
+		    bu_exit(1, usage);
 		break;
 	    case 'w':
-		width = atol(bu_optarg);
+		if (!parse_positive_long_arg(bu_optarg, &width, "width"))
+		    bu_exit(1, usage);
 		break;
 	    case 'a':
 		autosize = 1;
 		break;
 	    case 'B':
-		Beta = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &Beta, "beta"))
+		    bu_exit(1, usage);
 		break;
 	    case 'M':
-		Method = atoi(bu_optarg);
+		{
+		    long int method = 0;
+		    if (!parse_long_arg(bu_optarg, &method, "method"))
+			bu_exit(1, usage);
+		    Method = (int)method;
+		}
 		if (Method <0 || Method >3) {
 			fprintf(stderr,"halftone: Method must be 0,1,2,3; set to default (0)\n");
 			Method = 0;
@@ -827,7 +880,12 @@ setup(int argc, char **argv)
 		Surpent = 1;
 		break;
 	    case 'I':
-		Levels = atoi(bu_optarg)-1;
+		{
+		    long int levels = 0;
+		    if (!parse_positive_long_arg(bu_optarg, &levels, "level count"))
+			bu_exit(1, usage);
+		    Levels = (int)levels - 1;
+		}
 		V_MAX(Levels, 1);
 		break;
 /*
@@ -851,8 +909,16 @@ setup(int argc, char **argv)
 		Ylist = (int *) bu_malloc((c+2)*sizeof(int), "Ylist");
 
 		for (j=0;bu_optind < i; ) {
-		    Xlist[j] = atoi(argv[bu_optind++]);
-		    Ylist[j] = atoi(argv[bu_optind++]);
+		    long int xval = 0;
+		    long int yval = 0;
+		    if (!parse_long_arg(argv[bu_optind++], &xval, "tone-map X coordinate") ||
+			!parse_long_arg(argv[bu_optind++], &yval, "tone-map Y coordinate")) {
+			bu_free(Xlist, "Xlist");
+			bu_free(Ylist, "Ylist");
+			bu_exit(1, NULL);
+		    }
+		    Xlist[j] = (int)xval;
+		    Ylist[j] = (int)yval;
 		    j++;
 		}
 		Xlist[j] = 1024;
@@ -867,7 +933,12 @@ setup(int argc, char **argv)
  * debug statements.  Debug is a level indicator NOT a bit flag.
  */
 	    case 'D':
-		Debug = atoi(bu_optarg);
+		{
+		    long int debug = 0;
+		    if (!parse_long_arg(bu_optarg, &debug, "debug level"))
+			bu_exit(1, usage);
+		    Debug = (int)debug;
+		}
 		break;
 	    default:
 		bu_exit(1, usage);
@@ -901,7 +972,8 @@ setup(int argc, char **argv)
     }
 
     if ( argc > ++bu_optind) {
-	(void) fprintf(stderr, "halftone: excess argument(s) ignored.\n");
+	(void) fprintf(stderr, "halftone: excess argument(s) not supported.\n");
+	bu_exit(1, usage);
     }
 }
 

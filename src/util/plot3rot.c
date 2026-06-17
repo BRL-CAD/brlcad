@@ -116,6 +116,32 @@ parse_six_doubles(const char *arg, double *out_values)
     return (*cp == '\0');
 }
 
+static int
+parse_sixteen_doubles(const char *arg, double *out_values)
+{
+    int i = 0;
+    char *end = NULL;
+    const char *cp = arg;
+
+    for (i = 0; i < 16; i++) {
+	while (isspace((unsigned char)*cp))
+	    cp++;
+	if (*cp == '\0')
+	    return 0;
+
+	errno = 0;
+	out_values[i] = strtod(cp, &end);
+	if (errno != 0 || end == cp)
+	    return 0;
+	cp = end;
+    }
+
+    while (isspace((unsigned char)*cp))
+	cp++;
+
+    return (*cp == '\0');
+}
+
 
 /*
  * Process a space command.
@@ -223,7 +249,7 @@ get_args(int argc, char **argv)
 {
     int c;
     mat_t tmp, m;
-    int i, num;
+    int i;
     double mtmp[16];
 
     MAT_IDN(rmat);
@@ -279,14 +305,8 @@ get_args(int argc, char **argv)
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'm':
-		num = sscanf(&bu_optarg[0], "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-			     &mtmp[0], &mtmp[1], &mtmp[2], &mtmp[3],
-			     &mtmp[4], &mtmp[5], &mtmp[6], &mtmp[7],
-			     &mtmp[8], &mtmp[9], &mtmp[10], &mtmp[11],
-			     &mtmp[12], &mtmp[13], &mtmp[14], &mtmp[15]);
-
-		if (num != 16) {
-		    bu_log("Num of arguments to -m only %d, should be 16\n", num);
+		if (!parse_sixteen_doubles(bu_optarg, mtmp)) {
+		    bu_log("plot3rot: invalid matrix specification '%s'\n", bu_optarg);
 		    bu_exit (1, NULL);
 		}
 
