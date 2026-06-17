@@ -93,15 +93,11 @@ main(int argc, char **argv)
 		    argv[bu_optind]);
 	    return 1;
 	}
+	bu_optind++;
     }
 
-    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(fp_in), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "png-pix: excess argument(s) not supported\n");
-	return 1;
-    }
 
     if (fread(header, 8, 1, fp_in) != 1)
 	bu_exit(EXIT_FAILURE, "png-pix: ERROR: Failed while reading file header!!!\n");
