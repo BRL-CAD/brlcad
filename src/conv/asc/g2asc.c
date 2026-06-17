@@ -47,7 +47,7 @@
 
 const mat_t id_mat = MAT_INIT_IDN; /* identity matrix for pipes */
 
-char *strchop(char *str, size_t len);
+const char *strchop(char *str, size_t len);
 #define CH(x)	strchop(x, sizeof(x))
 
 int	combdump(void);
@@ -457,9 +457,9 @@ top:
  *  converting unprintable characters to something printable.
  *  Here we deal with names not being null-terminated.
  */
-char *encode_name(char *str)
+const char *encode_name(char *str)
 {
-    static char *nbuf = bu_strdup("-=NULL=-");
+    static const char *nbuf = "-=NULL=-";
     static char buf[NAMESIZE+1];
     char *ip = str;
     char *op = buf;
@@ -487,7 +487,7 @@ char *encode_name(char *str)
 		      "g2asc:  NULL object name converted to -=NULL=-\n");
 	return nbuf;
     }
-    return buf;
+    return (const char *)buf;
 }
 
 
@@ -1187,9 +1187,9 @@ bsurfdump(void)	/* Print d-spline surface description record information */
  *  Take a string and a length, and null terminate,
  *  converting unprintable characters to something printable.
  */
-char *strchop(char *str, size_t len)
+const char *strchop(char *str, size_t len)
 {
-    static char *sbuf = bu_strdup("-=STRING=-");
+    static const char *sbuf = "-=STRING=-";
     static char buf[10000] = {0};
     char *ip = str;
     char *op = buf;
@@ -1221,7 +1221,7 @@ char *strchop(char *str, size_t len)
 		      "g2asc:  NULL string converted to -=STRING=-\n");
 	return sbuf;
     }
-    return buf;
+    return (const char *)buf;
 }
 
 void
