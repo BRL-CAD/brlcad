@@ -38,6 +38,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -72,6 +73,73 @@ double fbm_delta[3] = {1000.0, 1000.0, 1000.0};
 
 int quiet = 0;
 int debug;
+
+static int
+parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long long int value;
+
+    errno = 0;
+    value = strtoull(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value == 0) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+	return 0;
+    }
+
+    *out_value = (size_t)value;
+    return 1;
+}
+
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label, int require_positive)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0' || (require_positive && *out_value <= 0.0)) {
+	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_vec3_arg(const char *arg, double *out_values, const char *label)
+{
+    int i = 0;
+    const char *component = arg;
+    char *end = NULL;
+
+    for (i = 0; i < 3; i++) {
+	errno = 0;
+	out_values[i] = strtod(component, &end);
+	if (errno != 0 || end == component) {
+	    fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+	    return 0;
+	}
+	if (i == 2) {
+	    if (*end != '\0') {
+		fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+		return 0;
+	    }
+	} else {
+	    while (*end == ' ' || *end == '\t')
+		end++;
+	    if (*end != ',') {
+		fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
+		return 0;
+	    }
+	    component = end + 1;
+	    while (*component == ' ' || *component == '\t')
+		component++;
+	}
+    }
+
+    return 1;
+}
 
 /* transform a point in integer X, Y, Z space to appropriate noise space */
 static void
@@ -556,7 +624,6 @@ int
 parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
 {
     int c;
-    double v;
 
     if (! (progname = strrchr(*av, '/')))
 	progname = *av;
@@ -577,48 +644,51 @@ parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
 		do_convert = !do_convert;
 		break;
 	    case 'w':
-		if ((c = atoi(bu_optarg)) > 0)
-		    xdim = c;
+		if (!parse_positive_size_arg(bu_optarg, &xdim, "X postings"))
+		    usage("");
 		break;
 	    case 'n':
-		if ((c = atoi(bu_optarg)) > 0)
-		    ydim = c;
+		if (!parse_positive_size_arg(bu_optarg, &ydim, "Y postings"))
+		    usage("");
 		break;
 	    case 'q' :
 		quiet = !quiet;
 		break;
 	    case 's':
-		if ((c = atoi(bu_optarg)) > 0)
-		    xdim = ydim = c;
+		if (!parse_positive_size_arg(bu_optarg, &xdim, "posting count"))
+		    usage("");
+		ydim = xdim;
 		break;
 	    case 'L':
-		if ((v = atof(bu_optarg)) > 0.0)
-		    fbm_lacunarity = v;
+		if (!parse_double_arg(bu_optarg, &fbm_lacunarity, "noise lacunarity", 1))
+		    usage("");
 		break;
 	    case 'H':
-		if ((v = atof(bu_optarg)) > 0.0)
-		    fbm_h = v;
+		if (!parse_double_arg(bu_optarg, &fbm_h, "noise H value", 1))
+		    usage("");
 		break;
 	    case 'O':
-		if ((v = atof(bu_optarg)) > 0.0)
-		    fbm_octaves = v;
+		if (!parse_double_arg(bu_optarg, &fbm_octaves, "noise octaves", 1))
+		    usage("");
 		break;
 
 	    case 'S':
-		if ((v = atof(bu_optarg)) > 0.0)
-		    VSETALL(fbm_vscale, v);
+		if (!parse_double_arg(bu_optarg, &fbm_size, "noise scale", 1))
+		    usage("");
+		VSETALL(fbm_vscale, fbm_size);
 		break;
 
 	    case 'V':
-		sscanf(bu_optarg, "%lg, %lg, %lg",
-		       &fbm_vscale[0], &fbm_vscale[1], &fbm_vscale[2]);
+		if (!parse_vec3_arg(bu_optarg, fbm_vscale, "noise vector scale"))
+		    usage("");
 		break;
 	    case 'D':
-		sscanf(bu_optarg, "%lg, %lg, %lg",
-		       &fbm_delta[0], &fbm_delta[1], &fbm_delta[2]);
+		if (!parse_vec3_arg(bu_optarg, fbm_delta, "noise delta"))
+		    usage("");
 		break;
 	    case 'o':
-		fbm_offset = atof(bu_optarg);
+		if (!parse_double_arg(bu_optarg, &fbm_offset, "offset", 0))
+		    usage("");
 		break;
 	    case 'f':
 		switch (*bu_optarg) {
@@ -688,14 +758,11 @@ main(int ac, char *av[])
     if (!terrain_func)
 	terrain_func = &func_fbm;
 
-    if (arg_count + 1 < ac)
+    if (arg_count < ac)
 	usage("Excess arguments on command line\n");
 
     if (isatty(fileno(stdout)))
 	usage("Redirect standard output\n");
-
-    if (arg_count < ac)
-	bu_log("Excess command line arguments ignored\n");
 
     count = xdim * ydim;
     buf = (unsigned short *)bu_malloc(sizeof(*buf) * count, "buf");

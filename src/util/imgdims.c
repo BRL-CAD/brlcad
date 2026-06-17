@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -59,6 +61,23 @@ static void print_usage (void)
     bu_exit(1, "%s", usage);
 }
 
+static int
+parse_positive_int_arg(const char *buf, int *np, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(buf, &end, 10);
+    if (errno != 0 || end == buf || *end != '\0' || value <= 0 || value > INT_MAX) {
+	bu_log("imgdims: invalid %s '%s'\n", label, buf);
+	return 0;
+    }
+
+    *np = (int)value;
+    return 1;
+}
+
 
 static int grab_number (char *buf, int *np)
 {
@@ -67,9 +86,8 @@ static int grab_number (char *buf, int *np)
     for (bp = buf; *bp != '\0'; ++bp)
 	if (!isdigit((int)*bp))
 	    return 0;
-    if (sscanf(buf, "%d", np) != 1)
-	bu_exit (1, "imgdims: grab_number(%s) failed.  This shouldn't happen\n", buf);
-    return 1;
+
+    return parse_positive_int_arg(buf, np, "byte count");
 }
 
 
@@ -126,8 +144,7 @@ main (int argc, char **argv)
 		how = BELIEVE_STAT;
 		break;
 	    case '#':
-		if (sscanf(bu_optarg, "%d", &bytes_per_pixel) != 1) {
-		    bu_log("Invalid pixel-size value: '%s'\n", bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &bytes_per_pixel, "pixel size")) {
 		    print_usage();
 		}
 		break;
