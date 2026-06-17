@@ -379,7 +379,7 @@ view_end(struct application *UNUSED(ap)) {
 }
 
 
-void
+C_DECL void
 application_init (void)
 {
     option("", "-o file.plot3", "Specify a UNIX-plot output file", 0);

@@ -244,7 +244,7 @@ depthmiss(register struct application *ap)
 	return 0; /* report miss to main routine */
 }
 
-void
+C_DECL void
 application_init (void)
 {
     option("", "-o file.bw", "Output black & white image filename", 0);

@@ -467,7 +467,7 @@ static SSL_CTX *remrt_ssl_ctx = NULL;
 #define OPT_LOAD 1	/* 10% per server per frame */
 #define OPT_MOVIE 2	/* one server per frame */
 int work_allocate_method = OPT_MOVIE;
-char *allocate_method[] = {
+const char *allocate_method[] = {
     "Frame",
     "Load Averaging",
     "One per Frame"};
@@ -501,7 +501,7 @@ static void reap_helpers(void);
  * Return a pointer to a string, generally less than 8 bytes,
  * that describes this state.
  */
-char *
+const char *
 state_to_string(int state)
 {
     static char buf[128];
@@ -557,7 +557,7 @@ remrt_log(const char *msg)
  * to prevent recursion problems.
  */
 static void
-drop_server(struct servers *sp, char *why)
+drop_server(struct servers *sp, const char *why)
 {
     struct list *lp;
     struct pkg_conn *pc;
@@ -2918,7 +2918,7 @@ cd_stat(const int UNUSED(argc), const char **UNUSED(argv))
     int frame;
     char *s;
     char buf[48];
-    char *state;
+    const char *state;
 
     s = stamp();
 
@@ -3209,6 +3209,7 @@ cd_host(const int argc, const char **argv)
     }
 
     /* Where */
+    char *ht_path = NULL;
     if (BU_STR_EQUAL(argv[argpoint], "cd")) {
 	ihp->ht_where = HT_CD;
 	ihp->ht_path = bu_strdup(argv[argpoint+1]);
@@ -3228,11 +3229,12 @@ cd_host(const int argc, const char **argv)
 	bu_log("unknown 'where' string '%s'\n", argv[argpoint]);
     }
     /* Strip any trailing whitespace (e.g. from newlines in .remrtrc) */
-    if (ihp->ht_path) {
-	char *p = ihp->ht_path + strlen(ihp->ht_path);
-	while (p > ihp->ht_path && isspace((unsigned char)p[-1]))
+    if (ht_path) {
+	char *p = ht_path + strlen(ht_path);
+	while (p > ht_path && isspace((unsigned char)p[-1]))
 	    *--p = '\0';
     }
+    ihp->ht_path = ht_path;
 
     if ((ihp->ht_when == HT_PASSIVE || ihp->ht_when == HT_PASSRS) &&
 	!remrt_ensure_listener()) {

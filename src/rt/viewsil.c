@@ -166,7 +166,7 @@ raymiss(register struct application *ap)
     return 0;
 }
 
-void
+C_DECL void
 application_init (void)
 {
     option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);

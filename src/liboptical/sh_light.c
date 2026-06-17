@@ -784,8 +784,11 @@ light_init(struct application *ap)
  * lights which will not be cleaned up by mlib_free(): implicitly
  * created lights, because they have no associated region, and
  * invisible lights, because their region was destroyed.
+ *
+ * TODO - used directly by rtsrv - should this be a public feature,
+ * or is some other solution in order?
  */
-void
+C_DECL void
 light_cleanup(void)
 {
     register struct light_specific *lsp, *zaplsp;

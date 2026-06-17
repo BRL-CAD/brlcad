@@ -776,7 +776,7 @@ part_compact(register struct application *ap, register struct partition *PartHea
 }
 
 
-void
+C_DECL void
 application_init (void)
 {
     option("", "-o model.g3", "Specify output file, GIFT-3 format (default=stdout)", 0);
