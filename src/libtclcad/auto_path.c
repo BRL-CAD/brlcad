@@ -31,15 +31,17 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#endif
-
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/ptbl.h"
 #include "tclcad.h"
+
+// tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
+// which will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #define MAX_BUF 2048
 

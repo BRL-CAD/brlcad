@@ -3112,6 +3112,7 @@ rt_dsp_free(register struct soltab *stp)
  * @param stom16   If non-NULL, receives a copy of the 16-element solid-to-model
  *                 matrix (fastf_t[16]) stored in the DSP.
  */
+__BEGIN_DECLS
 RT_EXPORT void dsp_query_terrain(struct soltab *stp,
 				 const unsigned short **pbuf,
 				 unsigned int *pxcnt,
@@ -3119,7 +3120,9 @@ RT_EXPORT void dsp_query_terrain(struct soltab *stp,
 				 fastf_t *stom16,
 				 int *cuttype,
 				 int *smooth);
-void
+__END_DECLS
+
+C_DECL void
 dsp_query_terrain(struct soltab *stp,
 		  const unsigned short **pbuf,
 		  unsigned int *pxcnt,

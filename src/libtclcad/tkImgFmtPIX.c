@@ -64,9 +64,15 @@
 #include "bu/malloc.h"
 #include "bn.h"
 #include "dm.h"
-#include "tk.h"
 
 #include "tclcad.h"
+
+// tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
+// which will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 /* we need tk version numbers for compatibility compilation */
 #if !defined(TK_MAJOR_VERSION) || (TK_MAJOR_VERSION != 8)

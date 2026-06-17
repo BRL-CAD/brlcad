@@ -60,7 +60,7 @@ static int tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, co
  ************************************************************************/
 
 struct dbcmdstruct {
-    char *cmdname;
+    const char *cmdname;
     int (*cmdfunc)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 };
 

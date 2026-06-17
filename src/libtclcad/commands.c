@@ -41,9 +41,6 @@
 #include "png.h"
 
 #include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#endif
 
 #include "bio.h"
 
@@ -59,6 +56,13 @@
 #include "raytrace.h"
 #include "ged.h"
 #include "tclcad.h"
+
+// tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
+// which will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #include "bv/defines.h"
 #include "dm.h"

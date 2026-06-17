@@ -105,7 +105,7 @@ new_client_handler(ClientData clientData, int UNUSED(port))
 }
 
 /* Check if we're already listening. */
-int
+C_DECL int
 tclcad_is_listening(struct fbserv_obj *fbsp)
 {
 #ifdef USE_TCL_CHAN
@@ -118,7 +118,7 @@ tclcad_is_listening(struct fbserv_obj *fbsp)
     return 0;
 }
 
-int
+C_DECL int
 tclcad_listen_on_port(struct fbserv_obj *fbsp, int available_port)
 {
     char hostname[32] = {0};
@@ -150,7 +150,7 @@ tclcad_listen_on_port(struct fbserv_obj *fbsp, int available_port)
     return 0;
 }
 
-void
+C_DECL void
 tclcad_open_server_handler(struct fbserv_obj *fbsp)
 {
 #ifdef USE_TCL_CHAN
@@ -160,7 +160,7 @@ tclcad_open_server_handler(struct fbserv_obj *fbsp)
 #endif
 }
 
-void
+C_DECL void
 tclcad_close_server_handler(struct fbserv_obj *fbsp)
 {
 #ifdef USE_TCL_CHAN
@@ -175,7 +175,7 @@ tclcad_close_server_handler(struct fbserv_obj *fbsp)
 #endif
 }
 
-void
+C_DECL void
 #ifdef USE_TCL_CHAN
 tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 #else
@@ -193,7 +193,7 @@ tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
 #endif
 }
 
-void
+C_DECL void
 tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub)
 {
 #ifdef USE_TCL_CHAN

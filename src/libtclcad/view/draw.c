@@ -255,7 +255,7 @@ to_edit_redraw(struct ged *gedp,
 			struct bv_scene_obj *sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
 			struct bu_vls mflag = BU_VLS_INIT_ZERO;
 			struct bu_vls xflag = BU_VLS_INIT_ZERO;
-			char *av[5] = {0};
+			const char *av[5] = {0};
 			int arg = 0;
 
 			av[arg++] = (char *)argv[0];
@@ -271,7 +271,7 @@ to_edit_redraw(struct ged *gedp,
 
 			ret = ged_exec(gedp, arg + 1, (const char **)av);
 
-			bu_free(av[arg], "to_edit_redraw");
+			bu_free((void *)av[arg], "to_edit_redraw");
 			bu_vls_free(&mflag);
 			bu_vls_free(&xflag);
 

@@ -2869,7 +2869,9 @@ fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
     }
 
     /* Signal error */
-    Tcl_SetResult(interp, "0 0", TCL_STATIC);
+    char *zerr = bu_strdup("0 0");
+    Tcl_SetResult(interp, zerr, TCL_STATIC);
+    bu_free(zerr, "zerr");
     return TCL_OK;
 }
 

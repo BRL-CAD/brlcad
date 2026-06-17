@@ -28,10 +28,6 @@
 #include "common.h"
 
 #define RESOURCE_INCLUDED 1
-#include <tcl.h>
-#ifdef HAVE_TK
-#  include <tk.h>
-#endif
 
 #include "vmath.h"
 #include "bu/app.h"
@@ -43,6 +39,13 @@
 #include "dm.h"
 #include "raytrace.h"
 #include "tclcad.h"
+
+// tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
+// which will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 /* Private headers */
 #include "brlcad_version.h"

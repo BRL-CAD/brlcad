@@ -38,7 +38,7 @@ to_autoview_func(struct ged *gedp,
 {
     size_t i;
     int ret;
-    char *av[2];
+    const char *av[2];
     int aflag = 0;
     int rflag = 0;
     struct bview *gdvp;
@@ -289,7 +289,7 @@ to_view_func_common(struct ged *gedp,
     if (gdvp->gv_s->adaptive_plot_csg &&
 	gdvp->gv_s->redraw_on_zoom)
     {
-	char *gr_av[] = {"redraw", NULL};
+	const char *gr_av[] = {"redraw", NULL};
 
 	ged_exec_redraw(gedp, 1, (const char **)gr_av);
 
