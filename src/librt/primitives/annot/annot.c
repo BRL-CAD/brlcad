@@ -1025,7 +1025,7 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		    bu_cv_ntohd((unsigned char *)scanp, ptr, nsg->c_size);
 
 		    /* convert double to fastf_t */
-		    for (i=0; i<(size_t)nsg->k.k_size; i++) {
+		    for (i=0; i<(size_t)nsg->c_size; i++) {
 			nsg->weights[i] = scanp[i];
 		    }
 		    bu_free(scanp, "scanp");
@@ -1701,7 +1701,6 @@ static int
 ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 {
     size_t i, j;
-    char *rel_pos = NULL;
 
     bu_vls_printf(vls, " SL {");
     for (j=0; j<ant->count; j++) {
@@ -1715,8 +1714,7 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 	    case ANN_TSEG_MAGIC:
 		{
 		    struct txt_seg *tsg = (struct txt_seg *)ant->segments[j];
-		    ant_check_pos(tsg, (const char **)&rel_pos);
-		    bu_vls_printf(vls, " { label %s ref_pt %d position %s txt_size %.25g txt_rot_angle %.25g }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos, tsg->txt_size, tsg->txt_rot_angle);
+		    bu_vls_printf(vls, " { txt R %d P %d L {%s} S %.25g A %.25g }", tsg->ref_pt, tsg->rel_pos, bu_vls_addr(&tsg->label), tsg->txt_size, tsg->txt_rot_angle);
 		}
 		break;
 	    case CURVE_CARC_MAGIC:
@@ -1786,7 +1784,7 @@ rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
     RT_ANNOT_CK_MAGIC(ann);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(logstr, "annotation");
+	bu_vls_strcpy(logstr, "annot");
 	bu_vls_printf(logstr, " V {%.25g %.25g %.25g}", V3ARGS(ann->V));
 	bu_vls_strcat(logstr, " VL {");
 	for (i=0; i<ann->vert_count; i++)
@@ -1851,10 +1849,15 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 
 	/* get the next segment */
 	if (bu_argv_from_tcl_list(seg_list[j], &seg_argc, (const char ***)&seg_argv) != 0) {
+	    bu_free((char *)seg_list, "free seg list");
 	    return -1;
 	}
 
-	if (seg_argc < 1) return 0;
+	if (seg_argc < 1) {
+	    bu_free((char *)seg_argv, "free seg argv");
+	    bu_free((char *)seg_list, "free seg list");
+	    return 0;
+	}
 
 	/* get the next segment */
 	if (BU_STR_EQUAL(seg_argv[0], "line")) {
@@ -1879,6 +1882,7 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 	    struct txt_seg *tsg;
 
 	    BU_ALLOC(tsg, struct txt_seg);
+	    bu_vls_init(&tsg->label);
 	    for (k=1; k<seg_argc; k+= 2) {
 		elem = seg_argv[k];
 		sval = seg_argv[k+1];
@@ -1891,6 +1895,12 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 			break;
 		    case 'L': /* label text */
 			(void)bu_opt_vls(NULL, 1, &sval, (void *)&tsg->label);
+			break;
+		    case 'S': /* text size */
+			(void)bu_opt_fastf_t(NULL, 1, &sval, (void *)&tsg->txt_size);
+			break;
+		    case 'A': /* text rotation angle */
+			(void)bu_opt_fastf_t(NULL, 1, &sval, (void *)&tsg->txt_rot_angle);
 			break;
 		}
 	    }
@@ -1913,8 +1923,11 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 			(void)_rt_tcl_list_to_int_array(sval, &bsg->ctl_points, &num_points);
 			if (num_points != bsg->degree + 1) {
 			    bu_vls_printf(logstr, "ERROR: degree and number of control points disagree for a Bezier segment\n");
+			    if (bsg->ctl_points)
+				bu_free((char *)bsg->ctl_points, "bsg->ctl_points");
+			    bu_free((char *)bsg, "bsg");
 			    bu_free((char *)seg_argv, "free seg argv");
-			    bu_free((char *)seg_list, "free seg argv");
+			    bu_free((char *)seg_list, "free seg list");
 			    return 1;
 			}
 		}
@@ -1969,7 +1982,14 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 			(void)_rt_tcl_list_to_int_array(sval, &nsg->ctl_points, &nsg->c_size);
 			break;
 		    case 'W':
-			(void)_rt_tcl_list_to_fastf_array(sval, &nsg->weights, &nsg->c_size);
+			{
+			    /* Use a local length: c_size may already be set by
+			     * the 'P' case and the func only allocates when 
+			     * the last value is '0'. We intentionally 
+			     * throw away the value as it is == nsg->c_size */
+			    int wlen = 0;
+			    (void)_rt_tcl_list_to_fastf_array(sval, &nsg->weights, &wlen);
+			}
 			break;
 		}
 	    }
@@ -2048,9 +2068,9 @@ rt_annot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 	    struct rt_ant *ant;
 
 	    ant = &annot_ip->ant;
-	    ant->count = 0;
-	    ant->reverse = (int *)NULL;
-	    ant->segments = (void **)NULL;
+	    /* free any previously-populated segment list before rebuilding
+	     * (rt_ant_free is a safe no-op when count == 0) */
+	    rt_ant_free(ant);
 
 	    if ((ret=ant_get_tcl(logstr, ant, argv[1])) != 0)
 		return ret;
