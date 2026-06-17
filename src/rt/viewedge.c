@@ -1542,7 +1542,8 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 }
 
 
-void application_init(void) {
+C_DECL void
+application_init(void) {
     bu_vls_trunc(&occlusion_objects, 0);
 
     /* Set the byte offsets at run time */

@@ -1854,7 +1854,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
  * Called once, very early on in RT setup, even before command line is
  * processed.
  */
-void
+C_DECL void
 application_init(void)
 {
     /* Set the byte offsets at run time */

@@ -313,7 +313,7 @@ xraymiss(register struct application *ap)
 }
 
 
-void
+C_DECL void
 application_init (void)
 {
     option("", "-o file.bw", "Output black & white image filename", 0);

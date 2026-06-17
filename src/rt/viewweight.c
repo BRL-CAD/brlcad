@@ -787,7 +787,7 @@ view_cleanup(struct rt_i *UNUSED(rtip))
 }
 
 
-void
+C_DECL void
 application_init(void)
 {
     option("", "-o file.out", "Weights and Moments output file", 0);
