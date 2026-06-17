@@ -131,13 +131,12 @@ db_default_object_msg_tops(struct bu_vls *msg, struct directory **tops, size_t t
     if (!msg)
 	return;
 
-    bu_vls_printf(msg, "Available top-level objects:");
     if (!tops || !tops_cnt) {
-	bu_vls_printf(msg, " (none)\n");
+	bu_vls_printf(msg, "No top-level objects found in this database.\n");
 	return;
     }
 
-    bu_vls_printf(msg, "\n");
+    bu_vls_printf(msg, "Available top-level objects:\n");
     for (i = 0; i < tops_cnt; i++)
 	bu_vls_printf(msg, "  %s\n", tops[i]->d_namep);
 }
@@ -297,7 +296,7 @@ db_default_object(struct db_i *dbip, struct directory **dp, struct bu_vls *msg)
 
     if (!dbip) {
 	if (msg)
-	    bu_vls_printf(msg, "db_default_object: NULL database instance\n");
+	    bu_vls_printf(msg, "Cannot choose a default object. No database is open.\n");
 	return -1;
     }
 
@@ -316,7 +315,7 @@ db_default_object(struct db_i *dbip, struct directory **dp, struct bu_vls *msg)
 	BU_AVS_INIT(&avs);
 	if (db5_get_attributes(dbip, &avs, global_dp) < 0) {
 	    db_default_object_msg(msg, tops, tops_cnt,
-				  "Unable to read _GLOBAL attributes while selecting a default object.\n");
+				  "Cannot choose a default object. Unable to read database attributes.\n");
 	    bu_avs_free(&avs);
 	    ret = -1;
 	    goto cleanup;
@@ -328,8 +327,7 @@ db_default_object(struct db_i *dbip, struct directory **dp, struct bu_vls *msg)
 
 	    if (db_default_object_disabled(attr_name)) {
 		db_default_object_msg(msg, tops, tops_cnt,
-				      "Default object selection is disabled by _GLOBAL %s.\n",
-				      DB_DEFAULT_OBJECT_ATTR);
+				      "No object specified. Database 'default_object' attribute on _GLOBAL disabled automatic selection.\n");
 		bu_free(attr_name, "trimmed default object attribute");
 		bu_avs_free(&avs);
 		ret = 0;
@@ -339,8 +337,8 @@ db_default_object(struct db_i *dbip, struct directory **dp, struct bu_vls *msg)
 	    selected = db_lookup(dbip, attr_name, LOOKUP_QUIET);
 	    if (!db_default_object_geom(selected)) {
 		db_default_object_msg(msg, tops, tops_cnt,
-				      "_GLOBAL %s=\"%s\" does not name a geometry object.\n",
-				      DB_DEFAULT_OBJECT_ATTR, attr_name);
+				      "Database default_object=\"%s\" is not usable geometry.\n",
+				      attr_name);
 		bu_free(attr_name, "trimmed default object attribute");
 		bu_avs_free(&avs);
 		ret = 0;
@@ -387,7 +385,7 @@ db_default_object(struct db_i *dbip, struct directory **dp, struct bu_vls *msg)
 
     if (matches > 1) {
 	db_default_object_msg(msg, tops, tops_cnt,
-			      "Default object selection is ambiguous: multiple combinations match the database filename.\n");
+			      "No object(s) specified, and more than one matches database filename.\n");
 	ret = 0;
 	goto cleanup;
     }
@@ -402,13 +400,13 @@ db_default_object(struct db_i *dbip, struct directory **dp, struct bu_vls *msg)
 
     if (matches > 1) {
 	db_default_object_msg(msg, tops, tops_cnt,
-			      "Default object selection is ambiguous: multiple top-level combinations match all* or scene*.\n");
+			      "No object(s) specified, and more than one top-level is prefixed all* or scene*.\n");
 	ret = 0;
 	goto cleanup;
     }
 
     db_default_object_msg(msg, tops, tops_cnt,
-			  "No default object selected: no deterministic match found.\n");
+			  "No object(s) specified, and BRL-CAD could not infer one automatically.\n");
 
 cleanup:
     if (tops)
