@@ -247,8 +247,28 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
 }
 
 int
+IFPainter::getFontSizeFromHeight(int height)
+{
+    if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end()) {
+	return heightToFontSizeMap[height];
+    }
+
+    int fontSize = 1;
+    while (getTextSize("I", cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).height < height) {
+	fontSize++;
+    }
+    fontSize--;
+
+    heightToFontSizeMap[height] = fontSize;
+    return fontSize;
+}
+
+int
 IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text, bool centerImage)
 {
+    const int titleHeight = 50;
+    const double maxTitleFontShrinkFrac = 0.10;
+    const double titleFontShrinkStepFrac = 0.025;
     const int titleWidth = width;
     const int titleCenterX = x + titleWidth / 2;
     y += 65;
@@ -307,26 +327,54 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     }
     resized_image.copyTo(destRoi);
 
-    // truncate title until it fits on line
-    int countCharDisplayedText = text.length();
-    getTextWidth(50, titleWidth, text, TO_BOLD); // needed for while loop to run correctly
-    while (getTextWidth(50, titleWidth, text, TO_BOLD) > titleWidth) {
-	if ((size_t)countCharDisplayedText == text.length()) {
-	    text = text + " ...";
+    double titleFontSize = static_cast<double>(getFontSizeFromHeight(titleHeight));
+    auto titlePixelWidth = [&](double fontSize, const std::string& titleText) {
+	return getTextSize(titleText, cv::FONT_HERSHEY_DUPLEX, fontSize, boldTextWeight, 0).width;
+    };
+
+    bool fitsWithNudge = false;
+    double nudgedFontSize = titleFontSize;
+    for (double shrinkFrac = 0.0; shrinkFrac <= maxTitleFontShrinkFrac + 0.001; shrinkFrac += titleFontShrinkStepFrac) {
+	double candidateFontSize = titleFontSize * (1.0 - shrinkFrac);
+	if (candidateFontSize <= 0.0) {
+	    break;
 	}
-	if (text.length() >= 5) {
-	    text.erase(text.length() - 5, 1);
-	    countCharDisplayedText--;
-	}
-	while (text.length() >= 5 && text[text.length() - 5] == ' ') {
-	    // Remove the fifth-to-last character (if it is a space)
-	    text.erase(text.length() - 5, 1);
-	    countCharDisplayedText--;
+	if (titlePixelWidth(candidateFontSize, text) <= titleWidth) {
+	    fitsWithNudge = true;
+	    nudgedFontSize = candidateFontSize;
+	    break;
 	}
     }
+
+    std::string titleText = text;
+    int countCharDisplayedText = text.length();
+    if (!fitsWithNudge) {
+	while (titlePixelWidth(titleFontSize, titleText) > titleWidth) {
+	    if ((size_t)countCharDisplayedText == text.length()) {
+		titleText = text + " ...";
+	    }
+	    if (titleText.length() >= 5) {
+		titleText.erase(titleText.length() - 5, 1);
+		countCharDisplayedText--;
+	    }
+	    while (titleText.length() >= 5 && titleText[titleText.length() - 5] == ' ') {
+		titleText.erase(titleText.length() - 5, 1);
+		countCharDisplayedText--;
+	    }
+	}
+	nudgedFontSize = titleFontSize;
+    }
+
     // now, draw text and line
     this->drawLine(x, y + heightOffset - 5, x + titleWidth, y + heightOffset - 5, 5, cv::Scalar(0, 0, 0));
-    this->drawTextCentered(titleCenterX, y + heightOffset - 65, 50, titleWidth, text, TO_BOLD);
+    int centeredTextWidth = titlePixelWidth(nudgedFontSize, titleText);
+    cv::putText(img,
+		titleText,
+		cv::Point(titleCenterX - centeredTextWidth / 2, y + heightOffset - 65 + titleHeight),
+		cv::FONT_HERSHEY_DUPLEX,
+		nudgedFontSize,
+		cv::Scalar(0, 0, 0),
+		boldTextWeight);
 
     return countCharDisplayedText;
 }
@@ -344,17 +392,7 @@ IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 int
 IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text)
 {
-    if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end()) {
-	return heightToFontSizeMap[height];
-    }
-
-    int fontSize = 1;
-    while (getTextSize("I", cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).height < height) {
-	fontSize++;
-    }
-    fontSize--;
-
-    heightToFontSizeMap[height] = fontSize;
+    int fontSize = getFontSizeFromHeight(height);
     while (getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).width > width) {
 	fontSize--;
     }

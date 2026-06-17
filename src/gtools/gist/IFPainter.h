@@ -48,6 +48,7 @@ private:
 
     std::map<int, int> heightToFontSizeMap;
 
+    int getFontSizeFromHeight(int height);
     int getFontSizeFromHeightAndWidth(int height, int width, std::string text);
 
 public:
