@@ -37,7 +37,6 @@ set(
   mover.c
   overlay.c
   plot.c
-  predictor.c
   rect.c
   rtif.c
   scroll.c

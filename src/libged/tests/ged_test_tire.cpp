@@ -34,6 +34,7 @@
 
 #include "bu.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 #include "raytrace.h"
 #include "rt/db_attr.h"
 #include "wdb.h"
@@ -226,6 +227,37 @@ check_attr(struct ged *gedp, const char *name, const char *attr_name, const char
 #define CHECK_ATTR_PRESENT(gedp, name, attr) check_attr((gedp), (name), (attr), nullptr, __FILE__, __LINE__)
 #define CHECK_ATTR_EQ(gedp, name, attr, value) check_attr((gedp), (name), (attr), (value), __FILE__, __LINE__)
 
+struct TireEventObserver {
+    size_t calls = 0;
+    size_t attr_events = 0;
+    std::string affected_names;
+};
+
+static void
+tire_event_observer_cb(struct ged *UNUSED(gedp),
+		       const struct ged_event *events,
+		       size_t event_count,
+		       const struct ged_event_txn_result *result,
+		       void *client_data)
+{
+    auto *obs = static_cast<TireEventObserver *>(client_data);
+    if (!obs)
+	return;
+
+    obs->calls++;
+    for (size_t i = 0; i < event_count; i++) {
+	if (events[i].kind == GED_EVENT_ATTRIBUTE_CHANGED)
+	    obs->attr_events++;
+    }
+
+    if (result && BU_VLS_IS_INITIALIZED(&result->affected_names) &&
+	    bu_vls_strlen(&result->affected_names)) {
+	if (!obs->affected_names.empty())
+	    obs->affected_names.append(" ");
+	obs->affected_names.append(bu_vls_cstr(&result->affected_names));
+    }
+}
+
 static struct ged *
 open_test_db()
 {
@@ -241,6 +273,38 @@ open_test_db()
 
     db_close(wdbp->dbip);
     return ged_open("db", tmppath, 1);
+}
+
+static void
+run_event_publication_case()
+{
+    struct ged *gedp = open_test_db();
+    if (!gedp) {
+	std::fprintf(stderr, "SKIP tire event publication: open failed\n");
+	g_failures++;
+	return;
+    }
+
+    TireEventObserver obs;
+    ged_event_observer_token token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		tire_event_observer_cb, &obs);
+    CHECK(token != 0, "tire event observer registration");
+
+    const char *event_av[] = {"tire", "-n", "event_tire", nullptr};
+    int ret = ged_exec_tire(gedp, 3, event_av);
+    if (ret != BRLCAD_OK)
+	std::fprintf(stderr, "%s\n", bu_vls_cstr(gedp->ged_result_str));
+    CHECK(ret == BRLCAD_OK, "tire generation publishes events");
+    CHECK(obs.calls > 0, "tire generation publishes post-reconcile events");
+    CHECK(obs.attr_events > 0,
+	    "tire generated metadata publishes attribute-changed event");
+    CHECK(obs.affected_names.find("event_tire") != std::string::npos,
+	    "tire generated metadata event names top object");
+    CHECK(ged_event_observer_remove(gedp, token) == 1,
+	    "tire event observer removal");
+
+    ged_close(gedp);
 }
 
 static void
@@ -553,6 +617,7 @@ main(int ac, char *av[])
 
     const char *default_av[] = {"tire", "-n", "default_tire", nullptr};
     run_success_case("default tire generation", 3, default_av, "default_tire", true);
+    run_event_publication_case();
 
     const char *no_wheel_av[] = {"tire", "-w", "0", "-n", "no_wheel_tire", nullptr};
     run_success_case("wheel disabled tire generation", 5, no_wheel_av, "no_wheel_tire", false);

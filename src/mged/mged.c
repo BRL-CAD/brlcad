@@ -69,7 +69,7 @@
 #include "raytrace.h"
 #define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
-#include "bv/util.h"
+#include "bsg/util.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -113,7 +113,7 @@ extern struct _mged_variables default_mged_variables;
 extern struct _color_scheme default_color_scheme;
 
 /* defined in grid.c */
-extern struct bv_grid_state default_grid_state;
+extern struct bsg_grid_state default_grid_state;
 
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
@@ -150,6 +150,37 @@ double frametime;	/* time needed to draw last frame */
 struct rt_wdb rtg_headwdb;  /* head of database object list */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
+
+
+int
+mged_event_batch_begin_dbip(struct db_i *dbip)
+{
+    if (!dbip || !MGED_STATE || !MGED_STATE->gedp ||
+	    !MGED_STATE->dbip || MGED_STATE->dbip != dbip ||
+	    MGED_STATE->gedp->dbip != dbip)
+	return 0;
+    return ged_event_batch_begin(MGED_STATE->gedp) > 0;
+}
+
+
+void
+mged_event_batch_end_dbip(struct db_i *dbip, int started)
+{
+    if (started && dbip && MGED_STATE && MGED_STATE->gedp &&
+	    MGED_STATE->dbip == dbip && MGED_STATE->gedp->dbip == dbip)
+	(void)ged_event_batch_end(MGED_STATE->gedp, NULL);
+}
+
+
+int
+mged_event_notify_database_metadata_changed_dbip(struct db_i *dbip)
+{
+    if (!dbip || !MGED_STATE || !MGED_STATE->gedp ||
+	    !MGED_STATE->dbip || MGED_STATE->dbip != dbip ||
+	    MGED_STATE->gedp->dbip != dbip)
+	return 0;
+    return ged_event_notify_database_metadata_changed(MGED_STATE->gedp, NULL);
+}
 
 
 int
@@ -387,7 +418,7 @@ new_edit_mats(struct mged_state *s)
 	/* Keep rt_edit’s own cached matrix in sync for external users */
 	MAT_COPY(MEDIT(s)->model2objview, view_state->vs_model2objview);
 
-	view_state->vs_flag = 1;
+	mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
     }
 
     set_curr_dm(s, save_dm_list);
@@ -395,7 +426,7 @@ new_edit_mats(struct mged_state *s)
 
 
 void
-mged_view_callback(struct bview *gvp,
+mged_view_callback(struct bsg_view *gvp,
 		   void *clientData)
 {
     struct mged_state *s = MGED_STATE;
@@ -408,8 +439,8 @@ mged_view_callback(struct bview *gvp,
 	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, MEDIT(s)->model_changes);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
-    vsp->vs_flag = 1;
-    dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
+    mged_refresh_request_view(s, vsp, BSG_VIEW_REFRESH_VIEW);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_VIEW_RECORD);
 }
 
 
@@ -420,7 +451,7 @@ mged_view_callback(struct bview *gvp,
 void
 new_mats(struct mged_state *s)
 {
-    bv_update(view_state->vs_gvp);
+    bsg_update(view_state->vs_gvp);
 }
 
 static int
@@ -439,23 +470,19 @@ mged_dm_during_clbk(int ac, const char **av, void *UNUSED(u1), void *u2)
     }
 
     if (BU_STR_EQUAL(av[1], "set")) {
-        if (ac > 2 && BU_STR_EQUAL(av[2], "zclip") && DMP && view_state && view_state->vs_gvp && view_state->vs_gvp->gv_s) {
-            view_state->vs_gvp->gv_s->gv_zclip = dm_get_zclip(DMP);
+        if (ac > 2 && BU_STR_EQUAL(av[2], "zclip") && DMP && view_state && view_state->vs_gvp) {
+            bsg_view_set_zclip(view_state->vs_gvp, dm_get_zclip(DMP));
         }
         if (view_state)
-            view_state->vs_flag = 1;
-        DMP_dirty = 1;
-        if (DMP)
-            dm_set_dirty(DMP, 1);
+            mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
+        mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_DEVICE_SETTING);
         return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(av[1], "bg") || BU_STR_EQUAL(av[1], "attach")) {
         if (view_state)
-            view_state->vs_flag = 1;
-        DMP_dirty = 1;
-        if (DMP)
-            dm_set_dirty(DMP, 1);
+            mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
+        mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_DEVICE_SETTING);
     }
 
     return BRLCAD_OK;
@@ -531,7 +558,7 @@ struct mged_cli_overrides {
 
     /* mged_variables (rset var / set <name>) */
     int use_air;            /* --use-air / --no-use-air */
-    int dlist;              /* --dlist   / --no-dlist   */
+    int cache;              /* --cache   / --no-cache   */
     int faceplate;          /* --faceplate / --no-faceplate */
     int orig_gui;           /* MGED_CLI_UNSET_INT / 0 / 1 */
     int linewidth;          /* --linewidth #  (pixels, >=1) */
@@ -540,7 +567,6 @@ struct mged_cli_overrides {
     int fb;                 /* MGED_CLI_UNSET_INT / 0 / 1 */
     int fb_all;             /* MGED_CLI_UNSET_INT / 0 / 1 */
     int fb_overlay;         /* --fb-overlay 0|1|2 */
-    int predictor;          /* --predictor / --no-predictor */
     int hot_key;            /* MGED_CLI_UNSET_INT / keycode */
     int context;            /* MGED_CLI_UNSET_INT / 0 / 1 */
     int sliders;            /* MGED_CLI_UNSET_INT / 0 / 1 */
@@ -551,8 +577,6 @@ struct mged_cli_overrides {
     char rotate_about;      /* --rotate-about m|v|e */
     char transform;         /* --transform v|a|e */
     double perspective;     /* --perspective #  (degrees, MGED_CLI_UNSET_DBL = not set) */
-    double predictor_advance;   /* --predictor-advance # */
-    double predictor_length;    /* --predictor-length # */
     double nmg_eu_dist;         /* --nmg-eu-dist # */
     double eye_sep_dist;        /* --eye-sep-dist # (mm, 0 = mono) */
 
@@ -1847,15 +1871,70 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 }
 
 
+void
+mged_refresh_request_view(struct mged_state *UNUSED(s), struct _view_state *vsp, unsigned int flags)
+{
+    if (!vsp || !vsp->vs_gvp)
+	return;
+
+    bsg_view_refresh_request(vsp->vs_gvp, flags ? flags : BSG_VIEW_REFRESH_ALL);
+}
+
+void
+mged_refresh_request_current(struct mged_state *s, unsigned int flags)
+{
+    if (!s)
+	return;
+
+    mged_refresh_request_view(s, view_state, flags);
+}
+
+void
+mged_refresh_request_all(struct mged_state *s, unsigned int flags)
+{
+    int requested = 0;
+
+    if (!s)
+	return;
+
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p || !p->dm_view_state)
+	    continue;
+	mged_refresh_request_view(s, p->dm_view_state, flags);
+	requested = 1;
+    }
+
+    if (!requested)
+	mged_refresh_request_current(s, flags);
+}
+
+int
+mged_refresh_pending(struct mged_state *s)
+{
+    if (!s)
+	return 0;
+
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	if (!p || !p->dm_view_state || !p->dm_view_state->vs_gvp)
+	    continue;
+	if (bsg_view_refresh_dirty(p->dm_view_state->vs_gvp))
+	    return 1;
+    }
+
+    return (view_state && view_state->vs_gvp) ? bsg_view_refresh_dirty(view_state->vs_gvp) : 0;
+}
+
 
 /**
- * NOTE that this routine is not to be casually used to refresh the
- * screen.  The normal procedure for screen refresh is to manipulate
- * the necessary global variables, and wait for refresh to be called
- * at the bottom of the while loop in main().  However, when it is
- * absolutely necessary to flush a change in the solids table out to
- * the display in the middle of a routine somewhere (such as the "B"
- * command processor), then this routine may be called.
+ * NOTE that this routine is not to be casually used to refresh the screen.
+ * The normal procedure is to commit view/scene changes and request refresh
+ * with mged_refresh_request_*(), then wait for refresh to be called at the
+ * bottom of the main loop.  However, when it is absolutely necessary to flush a
+ * change in the solids table out to the display in the middle of a routine
+ * somewhere (such as the "B" command processor), then this routine may be
+ * called.
  *
  * If you don't understand the ramifications of using this routine,
  * then you don't want to call it.
@@ -1881,24 +1960,11 @@ refresh(struct mged_state *s)
     /* Display Manager / Views */
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (!p->dm_view_state)
+	if (!p->dm_view_state || !p->dm_view_state->vs_gvp)
 	    continue;
-	if (s->update_views || p->dm_view_state->vs_flag)
-	    p->dm_dirty = 1;
+	if (bsg_view_refresh_dirty(p->dm_view_state->vs_gvp))
+	    mged_dm_repaint_request(p, MGED_REPAINT_VIEW_RECORD);
     }
-
-    /*
-     * This needs to be done separately because dm_view_state may be
-     * shared.
-     */
-    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
-	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (!p->dm_view_state)
-	    continue;
-	p->dm_view_state->vs_flag = 0;
-    }
-
-    s->update_views = 0;
 
     save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -1909,8 +1975,10 @@ refresh(struct mged_state *s)
 	 */
 	set_curr_dm(s, p);
 	(void)dm_configure_win(DMP, 0);
-	if (mapped && DMP_dirty) {
+	if (mapped && mged_dm_repaint_pending(p)) {
 	    int restore_zbuffer = 0;
+	    if (p->dm_view_state && p->dm_view_state->vs_gvp)
+		(void)bsg_view_refresh_consume(p->dm_view_state->vs_gvp);
 
 	    if (mged_variables->mv_fb &&
 		dm_get_zbuffer(DMP)) {
@@ -1919,9 +1987,16 @@ refresh(struct mged_state *s)
 		(void)dm_set_zbuffer(DMP, 0);
 	    }
 
-	    DMP_dirty = 0;
+	    mged_dm_repaint_consume(p);
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
+	    /* Push the current geometry default colour into the dm so render-item
+	     * appearance resolution can honour default-colour draw sources without
+	     * reaching back into MGED globals. */
+	    dm_set_geometry_default_color(DMP,
+					  geometry_default_color[0],
+					  geometry_default_color[1],
+					  geometry_default_color[2]);
 
 	    if (s->dbip != DBI_NULL) {
 		if (do_overlay) {
@@ -1934,12 +2009,9 @@ refresh(struct mged_state *s)
 		if (viewpoint_hook)  (*viewpoint_hook)();
 	    }
 
-	    if (mged_variables->mv_predictor)
-		predictor_frame(s);
+	    if (dm_get_native_repaint_pending(DMP)) {
 
-	    if (dm_get_dirty(DMP)) {
-
-		dm_draw_begin(DMP);	/* update displaylist prolog */
+		dm_draw_begin(DMP);	/* update drawn scene prolog */
 
 		if (s->dbip != DBI_NULL) {
 		    /* do framebuffer underlay */
@@ -1963,9 +2035,7 @@ refresh(struct mged_state *s)
 			    dm_set_zbuffer(DMP, 1);
 
 			/* Draw each solid in its proper place on the
-			 * screen by applying zoom, rotation, &
-			 * translation.  Calls dm_loadmatrix() and
-			 * dm_draw_vlist().
+			 * screen by applying zoom, rotation, and translation.
 			 */
 
 			if (dm_get_stereo(DMP) == 0 ||
@@ -1995,11 +2065,15 @@ refresh(struct mged_state *s)
 			if (rubber_band->rb_active || rubber_band->rb_draw)
 			    draw_rect(s);
 
-			if (grid_state->draw)
+			struct bsg_grid_state grid = {0};
+			(void)mged_dm_grid_state_get(s->mged_curr_dm, &grid);
+			if (grid.draw)
 			    draw_grid(s);
 
 			/* Compute and display angle/distance cursor */
-			if (adc_state->adc_draw)
+			struct bsg_adc_state adc = {0};
+			(void)mged_dm_adc_state_get(s->mged_curr_dm, &adc);
+			if (adc.draw)
 			    adcursor(s);
 
 			if (axes_state->ax_view_draw)
@@ -2031,7 +2105,9 @@ refresh(struct mged_state *s)
 		}
 
 		dm_draw_end(DMP);
-		dm_set_dirty(DMP, 0);
+		dm_set_native_repaint_pending(DMP, 0);
+		if (p->dm_view_state && p->dm_view_state->vs_gvp)
+		    bsg_view_refresh_complete(p->dm_view_state->vs_gvp);
 
 	    }
 	}
@@ -2109,7 +2185,6 @@ mged_finish(struct mged_state *s, int exitcode)
 
 	if (p && p->dm_dmp) {
 	    dm_close(p->dm_dmp);
-	    BV_FREE_VLIST(s->vlfree, &p->dm_p_vlist);
 	    mged_slider_free_vls(p);
 	    bu_free(p, "release: mged_curr_dm");
 	}
@@ -2256,7 +2331,7 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
 
     /* --- mged_variables -------------------------------------------------- */
     if (cl->use_air        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("use_air",        cl->use_air);
-    if (cl->dlist          != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("dlist",          cl->dlist);
+    if (cl->cache          != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("cache",          cl->cache);
     if (cl->faceplate      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("faceplate",      cl->faceplate);
     if (cl->orig_gui       != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("orig_gui",       cl->orig_gui);
     if (cl->linewidth      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("linewidth",      cl->linewidth);
@@ -2265,7 +2340,6 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
     if (cl->fb             != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb",             cl->fb);
     if (cl->fb_all         != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb_all",         cl->fb_all);
     if (cl->fb_overlay     != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb_overlay",     cl->fb_overlay);
-    if (cl->predictor      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("predictor",      cl->predictor);
     if (cl->hot_key        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("hot_key",        cl->hot_key);
     if (cl->context        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("context",        cl->context);
     if (cl->sliders        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("sliders",        cl->sliders);
@@ -2276,8 +2350,6 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
     if (cl->rotate_about   != '\0')               CLI_SETVAR_CHAR("rotate_about",  cl->rotate_about);
     if (cl->transform      != '\0')               CLI_SETVAR_CHAR("transform",     cl->transform);
     if (cli_dbl_is_set(cl->perspective))         CLI_SETVAR_DBL("perspective",    cl->perspective);
-    if (cli_dbl_is_set(cl->predictor_advance))   CLI_SETVAR_DBL("predictor_advance", cl->predictor_advance);
-    if (cli_dbl_is_set(cl->predictor_length))    CLI_SETVAR_DBL("predictor_length",  cl->predictor_length);
     if (cli_dbl_is_set(cl->nmg_eu_dist))         CLI_SETVAR_DBL("nmg_eu_dist",    cl->nmg_eu_dist);
     if (cli_dbl_is_set(cl->eye_sep_dist))        CLI_SETVAR_DBL("eye_sep_dist",   cl->eye_sep_dist);
 
@@ -2452,6 +2524,22 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
+    /* If any libdm display manager plugins failed to load, surface the
+     * diagnostic now so users don't see a silent fallback (e.g. "ogl"
+     * missing from `attach` / `dm_list_types`) without any clue why.
+     * This mirrors the diagnostic qged already prints (see
+     * src/qged/QgEdApp.cpp). */
+    {
+	const char *dm_msgs = dm_init_msgs();
+	if (dm_msgs && dm_msgs[0] != '\0') {
+	    size_t dm_msgs_len = strlen(dm_msgs);
+	    bu_log("WARNING: libdm plugin initialization issues:\n%s",
+		   dm_msgs);
+	    if (dm_msgs[dm_msgs_len - 1] != '\n')
+		bu_log("\n");
+	}
+    }
+
 #if defined(HAVE_TK)
     if (dm_have_graphics()) {
 	s->classic_mged = 0;
@@ -2471,7 +2559,7 @@ main(int argc, char *argv[])
 
     /* Initialise all int fields to MGED_CLI_UNSET_INT ("not given") */
     cl.use_air          = MGED_CLI_UNSET_INT;
-    cl.dlist            = MGED_CLI_UNSET_INT;
+    cl.cache            = MGED_CLI_UNSET_INT;
     cl.faceplate        = MGED_CLI_UNSET_INT;
     cl.orig_gui         = MGED_CLI_UNSET_INT;
     cl.linewidth        = MGED_CLI_UNSET_INT;
@@ -2480,7 +2568,6 @@ main(int argc, char *argv[])
     cl.fb               = MGED_CLI_UNSET_INT;
     cl.fb_all           = MGED_CLI_UNSET_INT;
     cl.fb_overlay       = MGED_CLI_UNSET_INT;
-    cl.predictor        = MGED_CLI_UNSET_INT;
     cl.hot_key          = MGED_CLI_UNSET_INT;
     cl.context          = MGED_CLI_UNSET_INT;
     cl.sliders          = MGED_CLI_UNSET_INT;
@@ -2494,8 +2581,6 @@ main(int argc, char *argv[])
 
     /* Initialise double fields to MGED_CLI_UNSET_DBL ("not given") */
     cl.perspective        = MGED_CLI_UNSET_DBL;
-    cl.predictor_advance  = MGED_CLI_UNSET_DBL;
-    cl.predictor_length   = MGED_CLI_UNSET_DBL;
     cl.nmg_eu_dist        = MGED_CLI_UNSET_DBL;
     cl.eye_sep_dist       = MGED_CLI_UNSET_DBL;
     cl.grid_rh            = MGED_CLI_UNSET_DBL;
@@ -2515,7 +2600,7 @@ main(int argc, char *argv[])
     /* Option table: the BU_OPT macro takes (slot, shortopt, longopt, arghelp,
      * argprocess, set_var, help) — 7 arguments.  Long-only options use NULL for
      * shortopt.  No-argument options use "" for arghelp and NULL for argprocess. */
-    struct bu_opt_desc opt_defs[54];
+    struct bu_opt_desc opt_defs[50];
     /* ---- Existing short options, now with long aliases ---- */
     BU_OPT(opt_defs[0],  "a", "attach",           "type",    bu_opt_str,      &cl.attach,           "display manager attach target");
     BU_OPT(opt_defs[1],  "d", "display",           "string",  bu_opt_str,      &cl.dpy_string,       "X display string");
@@ -2542,45 +2627,41 @@ main(int argc, char *argv[])
     /* ---- mged_variables: boolean on/off pairs ---- */
     BU_OPT(opt_defs[17], NULL, "use-air",          "",        NULL,            &cl.use_air,          "enable use_air");
     BU_OPT(opt_defs[18], NULL, "no-use-air",       "",        flag_set_zero,   &cl.use_air,          "disable use_air");
-    BU_OPT(opt_defs[19], NULL, "dlist",            "",        NULL,            &cl.dlist,            "enable display lists");
-    BU_OPT(opt_defs[20], NULL, "no-dlist",         "",        flag_set_zero,   &cl.dlist,            "disable display lists");
+    BU_OPT(opt_defs[19], NULL, "cache",            "",        NULL,            &cl.cache,            "enable backend caching");
+    BU_OPT(opt_defs[20], NULL, "no-cache",         "",        flag_set_zero,   &cl.cache,            "disable backend caching");
     BU_OPT(opt_defs[21], NULL, "faceplate",        "",        NULL,            &cl.faceplate,        "show faceplate overlay");
     BU_OPT(opt_defs[22], NULL, "no-faceplate",     "",        flag_set_zero,   &cl.faceplate,        "hide faceplate overlay");
-    BU_OPT(opt_defs[23], NULL, "predictor",        "",        NULL,            &cl.predictor,        "enable view predictor");
-    BU_OPT(opt_defs[24], NULL, "no-predictor",     "",        flag_set_zero,   &cl.predictor,        "disable view predictor");
     /* ---- mged_variables: valued options ---- */
-    BU_OPT(opt_defs[25], NULL, "linewidth",        "#",       bu_opt_int,      &cl.linewidth,        "wireframe line width (pixels, >=1)");
-    BU_OPT(opt_defs[26], NULL, "linestyle",        "s|d",     bu_opt_char,     &cl.linestyle,        "line style: s=solid, d=dashed");
-    BU_OPT(opt_defs[27], NULL, "perspective",      "#",       bu_opt_fastf_t,  &cl.perspective,      "perspective angle in degrees (-1=off)");
-    BU_OPT(opt_defs[28], NULL, "eye-sep-dist",     "#",       bu_opt_fastf_t,  &cl.eye_sep_dist,     "stereo eye separation (mm, 0=mono)");
-    BU_OPT(opt_defs[29], NULL, "port",             "#",       bu_opt_int,      &cl.port,             "framebuffer server listen port (0-65535)");
-    BU_OPT(opt_defs[30], NULL, "coords",           "m|v",     bu_opt_char,     &cl.coords,           "constraint coords: m=model v=view");
-    BU_OPT(opt_defs[31], NULL, "rotate-about",     "m|v|e",   bu_opt_char,     &cl.rotate_about,     "rotate center: m=model v=view e=eye");
-    BU_OPT(opt_defs[32], NULL, "transform",        "v|a|e",   bu_opt_char,     &cl.transform,        "mouse transform: v=view a=adc e=edit");
-    BU_OPT(opt_defs[33], NULL, "nmg-eu-dist",      "#",       bu_opt_fastf_t,  &cl.nmg_eu_dist,      "NMG edge-use distance tolerance");
-    BU_OPT(opt_defs[34], NULL, "mouse-behavior",   "v|a|e",   bu_opt_char,     &cl.mouse_behavior,   "mouse behavior mode");
-    BU_OPT(opt_defs[35], NULL, "predictor-advance","#",       bu_opt_fastf_t,  &cl.predictor_advance,"predictor advance time (s)");
-    BU_OPT(opt_defs[36], NULL, "predictor-length", "#",       bu_opt_fastf_t,  &cl.predictor_length, "predictor trail length (s)");
-    BU_OPT(opt_defs[37], NULL, "perspective-mode", "0|1",     bu_opt_int,      &cl.perspective_mode, "enable/disable perspective mode");
-    BU_OPT(opt_defs[38], NULL, "context",          "0|1",     bu_opt_int,      &cl.context,          "context mode (0=off)");
-    BU_OPT(opt_defs[39], NULL, "sliders",          "0|1",     bu_opt_int,      &cl.sliders,          "show sliders");
-    BU_OPT(opt_defs[40], NULL, "hot-key",          "#",       bu_opt_int,      &cl.hot_key,          "hot key character code");
-    BU_OPT(opt_defs[41], NULL, "fb-overlay",       "0|1|2",   bu_opt_int,      &cl.fb_overlay,       "framebuffer overlay: 0=under 1=inter 2=over");
+    BU_OPT(opt_defs[23], NULL, "linewidth",        "#",       bu_opt_int,      &cl.linewidth,        "wireframe line width (pixels, >=1)");
+    BU_OPT(opt_defs[24], NULL, "linestyle",        "s|d",     bu_opt_char,     &cl.linestyle,        "line style: s=solid, d=dashed");
+    BU_OPT(opt_defs[25], NULL, "perspective",      "#",       bu_opt_fastf_t,  &cl.perspective,      "perspective angle in degrees (-1=off)");
+    BU_OPT(opt_defs[26], NULL, "eye-sep-dist",     "#",       bu_opt_fastf_t,  &cl.eye_sep_dist,     "stereo eye separation (mm, 0=mono)");
+    BU_OPT(opt_defs[27], NULL, "port",             "#",       bu_opt_int,      &cl.port,             "framebuffer server listen port (0-65535)");
+    BU_OPT(opt_defs[28], NULL, "coords",           "m|v",     bu_opt_char,     &cl.coords,           "constraint coords: m=model v=view");
+    BU_OPT(opt_defs[29], NULL, "rotate-about",     "m|v|e",   bu_opt_char,     &cl.rotate_about,     "rotate center: m=model v=view e=eye");
+    BU_OPT(opt_defs[30], NULL, "transform",        "v|a|e",   bu_opt_char,     &cl.transform,        "mouse transform: v=view a=adc e=edit");
+    BU_OPT(opt_defs[31], NULL, "nmg-eu-dist",      "#",       bu_opt_fastf_t,  &cl.nmg_eu_dist,      "NMG edge-use distance tolerance");
+    BU_OPT(opt_defs[32], NULL, "mouse-behavior",   "v|a|e",   bu_opt_char,     &cl.mouse_behavior,   "mouse behavior mode");
+    BU_OPT(opt_defs[33], NULL, "perspective-mode", "0|1",     bu_opt_int,      &cl.perspective_mode, "enable/disable perspective mode");
+    BU_OPT(opt_defs[34], NULL, "context",          "0|1",     bu_opt_int,      &cl.context,          "context mode (0=off)");
+    BU_OPT(opt_defs[35], NULL, "sliders",          "0|1",     bu_opt_int,      &cl.sliders,          "show sliders");
+    BU_OPT(opt_defs[36], NULL, "hot-key",          "#",       bu_opt_int,      &cl.hot_key,          "hot key character code");
+    BU_OPT(opt_defs[37], NULL, "fb-overlay",       "0|1|2",   bu_opt_int,      &cl.fb_overlay,       "framebuffer overlay: 0=under 1=inter 2=over");
     /* ---- window/display (Tcl mged_default array) ---- */
-    BU_OPT(opt_defs[42], NULL, "dm-type",          "type",    bu_opt_str,      &cl.dm_type,          "display manager type (e.g. ogl, swrast)");
-    BU_OPT(opt_defs[43], NULL, "geom",             "WxH+X+Y", bu_opt_str,      &cl.geom,             "command window geometry");
-    BU_OPT(opt_defs[44], NULL, "ggeom",            "WxH+X+Y", bu_opt_str,      &cl.ggeom,            "graphics window geometry");
+    BU_OPT(opt_defs[38], NULL, "dm-type",          "type",    bu_opt_str,      &cl.dm_type,          "display manager type (e.g. ogl, swrast)");
+    BU_OPT(opt_defs[39], NULL, "geom",             "WxH+X+Y", bu_opt_str,      &cl.geom,             "command window geometry");
+    BU_OPT(opt_defs[40], NULL, "ggeom",            "WxH+X+Y", bu_opt_str,      &cl.ggeom,            "graphics window geometry");
     /* ---- grid (rset g …) ---- */
-    BU_OPT(opt_defs[45], NULL, "grid-draw",        "0|1",     bu_opt_int,      &cl.grid_draw,        "show/hide grid");
-    BU_OPT(opt_defs[46], NULL, "grid-snap",        "0|1",     bu_opt_int,      &cl.grid_snap,        "enable/disable grid snap");
-    BU_OPT(opt_defs[47], NULL, "grid-rh",          "#",       bu_opt_fastf_t,  &cl.grid_rh,          "horizontal grid resolution");
-    BU_OPT(opt_defs[48], NULL, "grid-rv",          "#",       bu_opt_fastf_t,  &cl.grid_rv,          "vertical grid resolution");
-    BU_OPT(opt_defs[49], NULL, "grid-mrh",         "#",       bu_opt_int,      &cl.grid_mrh,         "horizontal major grid interval");
-    BU_OPT(opt_defs[50], NULL, "grid-mrv",         "#",       bu_opt_int,      &cl.grid_mrv,         "vertical major grid interval");
+    BU_OPT(opt_defs[41], NULL, "grid-draw",        "0|1",     bu_opt_int,      &cl.grid_draw,        "show/hide grid");
+    BU_OPT(opt_defs[42], NULL, "grid-snap",        "0|1",     bu_opt_int,      &cl.grid_snap,        "enable/disable grid snap");
+    BU_OPT(opt_defs[43], NULL, "grid-rh",          "#",       bu_opt_fastf_t,  &cl.grid_rh,          "horizontal grid resolution");
+    BU_OPT(opt_defs[44], NULL, "grid-rv",          "#",       bu_opt_fastf_t,  &cl.grid_rv,          "vertical grid resolution");
+    BU_OPT(opt_defs[45], NULL, "grid-mrh",         "#",       bu_opt_int,      &cl.grid_mrh,         "horizontal major grid interval");
+    BU_OPT(opt_defs[46], NULL, "grid-mrv",         "#",       bu_opt_int,      &cl.grid_mrv,         "vertical major grid interval");
     /* ---- colour scheme subset (rset cs …) ---- */
-    BU_OPT(opt_defs[51], NULL, "bg",               "R G B",   parse_opt_color, &cl.bg_color,         "background colour (0-255 per component, or #RRGGBB)");
-    BU_OPT(opt_defs[52], NULL, "geo-color",        "R G B",   parse_opt_color, &cl.geo_def_color,    "default geometry wireframe colour");
-    BU_OPT_NULL(opt_defs[53]);
+    BU_OPT(opt_defs[47], NULL, "bg",               "R G B",   parse_opt_color, &cl.bg_color,         "background colour (0-255 per component, or #RRGGBB)");
+    BU_OPT(opt_defs[48], NULL, "geo-color",        "R G B",   parse_opt_color, &cl.geo_def_color,    "default geometry wireframe colour");
+    BU_OPT_NULL(opt_defs[49]);
 
     /* bu_opt_parse does not consume argv[0] (the program name).
      * Skip it manually so that the remaining args match what the
@@ -2774,10 +2855,6 @@ main(int argc, char *argv[])
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    /* initialize predictor stuff */
-    BU_LIST_INIT(&s->mged_curr_dm->dm_p_vlist);
-    predictor_init(s);
-
     /* register application provided routines */
 
     DMP = dm_open(NULL, s->interp, "nu", 0, NULL);
@@ -2805,26 +2882,28 @@ main(int argc, char *argv[])
     BU_ALLOC(color_scheme, struct _color_scheme);
     *color_scheme = default_color_scheme;	/* struct copy */
 
-    BU_ALLOC(grid_state, struct bv_grid_state);
-    *grid_state = default_grid_state;		/* struct copy */
-
     BU_ALLOC(axes_state, struct _axes_state);
     *axes_state = default_axes_state;		/* struct copy */
-
-    BU_ALLOC(adc_state, struct _adc_state);
-    adc_state->adc_rc = 1;
-    adc_state->adc_a1 = adc_state->adc_a2 = 45.0;
 
     BU_ALLOC(menu_state, struct _menu_state);
     menu_state->ms_rc = 1;
 
-    BU_ALLOC(dlist_state, struct _dlist_state);
-    dlist_state->dl_rc = 1;
+    BU_ALLOC(backend_cache_state, struct _backend_cache_state);
+    backend_cache_state->cache_rc = 1;
 
     BU_ALLOC(view_state, struct _view_state);
     view_state->vs_rc = 1;
     view_ring_init(s->mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
     MAT_IDN(view_state->vs_ModelDelta);
+    if (view_state->vs_gvp) {
+	struct bsg_adc_state adc;
+	bsg_view_grid_set(view_state->vs_gvp, &default_grid_state);
+	if (bsg_view_adc_get(view_state->vs_gvp, &adc)) {
+	    adc.a1 = 45.0;
+	    adc.a2 = 45.0;
+	    bsg_view_adc_set(view_state->vs_gvp, &adc);
+	}
+    }
 
     am_mode = AMM_IDLE;
     owner = 1;
@@ -3339,7 +3418,7 @@ main(int argc, char *argv[])
 	    break;
 
 	/*
-	 * Cause the control portion of the displaylist to be updated
+	 * Cause the control portion of the drawn scene to be updated
 	 * to reflect the changes made above.
 	 */
 	refresh(s);

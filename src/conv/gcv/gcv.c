@@ -380,14 +380,25 @@ do_conversion(
 	if ((*entry)->filter_type == GCV_FILTER_READ) {
 	    if (!in_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == in_type))
 		in_filter = *entry;
-	    if (!in_filter && (emt == BU_MIME_MODEL_AUTO) &&
-		((*entry)->data_supported && in_path && (*(*entry)->data_supported)(in_path))) {
-	       	in_filter = *entry;
-	    }
 	}
 	if ((*entry)->filter_type == GCV_FILTER_WRITE) {
 	    if (!out_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == out_type))
 		out_filter = *entry;
+	}
+    }
+
+    for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
+	if (!entry || !*entry)
+	    break;
+
+	bu_mime_model_t emt = (*entry)->mime_type;
+	if ((*entry)->filter_type == GCV_FILTER_READ) {
+	    if (!in_filter && (emt == BU_MIME_MODEL_AUTO) &&
+		((*entry)->data_supported && in_path && (*(*entry)->data_supported)(in_path))) {
+		in_filter = *entry;
+	    }
+	}
+	if ((*entry)->filter_type == GCV_FILTER_WRITE) {
 	    if (!out_filter && (emt == BU_MIME_MODEL_AUTO) &&
 		((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_MODEL)))) {
 		out_filter = *entry;

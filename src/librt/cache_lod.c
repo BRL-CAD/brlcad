@@ -63,7 +63,7 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 
 	// If we already have a match, assume it is valid.  Resetting
 	// invalid data in the cache is outside the scope of cache init.
-	unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, dp->d_namep);
+	unsigned long long key = bsg_mesh_lod_key_get(dbip->i->mesh_c, dp->d_namep);
 	if (key)
 	    continue;
 
@@ -107,7 +107,7 @@ db_mesh_lod_clear(struct db_i *dbip)
     if (!dbip || !dbip->i || dbip->i->mesh_c)
 	return;
 
-    bv_mesh_lod_clear_cache(dbip->i->mesh_c, 0);
+    bsg_mesh_lod_clear_cache(dbip->i->mesh_c, 0);
 }
 
 int
@@ -121,10 +121,10 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
 	return BRLCAD_OK;
 
     // If we have existing data, clear it.
-    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, name);
+    unsigned long long key = bsg_mesh_lod_key_get(dbip->i->mesh_c, name);
     if (key) {
-	bv_mesh_lod_clear_cache(dbip->i->mesh_c, key);
-	bv_mesh_lod_key_put(dbip->i->mesh_c, name, 0);
+	bsg_mesh_lod_clear_cache(dbip->i->mesh_c, key);
+	bsg_mesh_lod_key_put(dbip->i->mesh_c, name, 0);
     }
 
     // If this isn't an active BoT, we're done.
@@ -148,13 +148,13 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
     RT_BOT_CK_MAGIC(bot);
 
     // Generate and write new data
-    key = bv_mesh_lod_cache(dbip->i->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+    key = bsg_mesh_lod_cache(dbip->i->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
     if (!key) {
 	bu_log("Error processing %s - unable to generate LoD data\n", dp->d_namep);
 	rt_db_free_internal(&dbintern);
 	return BRLCAD_ERROR;
     }
-    bv_mesh_lod_key_put(dbip->i->mesh_c, dp->d_namep, key);
+    bsg_mesh_lod_key_put(dbip->i->mesh_c, dp->d_namep, key);
 
     // Done with BoT
     rt_db_free_internal(&dbintern);
@@ -162,29 +162,29 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
     // Make sure we can retrieve the cached data
     // TODO - may not really be necessary to verify this here once we're
     // working - including during early stages for testing.
-    struct bv_mesh_lod *lod = bv_mesh_lod_create(dbip->i->mesh_c, key);
+    struct bsg_mesh_lod *lod = bsg_mesh_lod_create(dbip->i->mesh_c, key);
     if (!lod) {
 	bu_log("Error processing %s - unable to retrieve LoD data\n", dp->d_namep);
 	rt_db_free_internal(&dbintern);
 	return BRLCAD_ERROR;
     }
 
-    bv_mesh_lod_destroy(lod);
+    bsg_mesh_lod_destroy(lod);
 
     return BRLCAD_OK;
 }
 
-struct bv_mesh_lod *
+struct bsg_mesh_lod *
 db_mesh_lod_get(struct db_i *dbip, const char *name)
 {
     if (!dbip || !name)
 	return NULL;
 
-    struct bv_mesh_lod *lod = NULL;
+    struct bsg_mesh_lod *lod = NULL;
 
-    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, name);
+    unsigned long long key = bsg_mesh_lod_key_get(dbip->i->mesh_c, name);
     if (key)
-	lod = bv_mesh_lod_create(dbip->i->mesh_c, key);
+	lod = bsg_mesh_lod_create(dbip->i->mesh_c, key);
 
     return lod;
 }

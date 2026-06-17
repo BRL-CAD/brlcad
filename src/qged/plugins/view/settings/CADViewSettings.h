@@ -20,8 +20,8 @@
 /** @file CADViewSettings.h
  *
  * Widget for controlling and reflecting the current state of view
- * settings (faceplate elements).  Covers all fields in bview_settings
- * and bv_params_state that have widget-level controls.
+ * settings (faceplate elements).  Covers all fields in bsg_view_settings
+ * and bsg_params_state that have widget-level controls.
  *
  */
 
@@ -29,7 +29,10 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include <QComboBox>
-#include "bv/defines.h"
+#include "bsg/defines.h"
+#include "qtcad/QgTypes.h"
+
+class QgPluginContext;
 
 class CADViewSettings : public QWidget
 {
@@ -38,6 +41,8 @@ class CADViewSettings : public QWidget
     public:
 	CADViewSettings(QWidget *p = 0);
 	~CADViewSettings();
+
+	void setContext(QgPluginContext *ctx) { m_ctx = ctx; }
 
 	/* Top-level faceplate toggles */
 	QCheckBox *acsg_ckbx;
@@ -63,7 +68,7 @@ class CADViewSettings : public QWidget
 	QCheckBox *params_fps_ckbx;
 
     signals:
-	void settings_changed(unsigned long long);
+	void settings_changed(QgViewUpdateFlags);
 
     public slots:
 	void checkbox_refresh(unsigned long long);
@@ -71,6 +76,9 @@ class CADViewSettings : public QWidget
 	void view_refresh(unsigned long long);
 	void view_update_int(int);
 	void view_update();
+
+    private:
+	QgPluginContext *m_ctx = nullptr;
 };
 
 // Local Variables:

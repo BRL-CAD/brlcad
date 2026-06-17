@@ -30,6 +30,8 @@
 
 #include "common.h"
 
+#include <string>
+
 #include "utility.hpp"
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -77,6 +79,7 @@ public:
 			   const btVector3 &center_of_mass);
 
     const db_full_path &get_path() const;
+    std::string takeChangedParentName();
 
     virtual void getWorldTransform(btTransform &dest) const;
     virtual void setWorldTransform(const btTransform &transform);
@@ -87,6 +90,7 @@ private:
     db_full_path m_path;
     const AutoPtr<db_full_path, db_free_full_path> m_autofree_m_path;
     btTransform m_transform;
+    bool m_tree_matrix_changed;
 };
 
 

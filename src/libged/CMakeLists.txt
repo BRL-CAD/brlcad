@@ -1,7 +1,6 @@
 # LIBGED is set up based on a plugin architecture, with common functionality
 # defined in a core library.
 
-brlcad_find_package(LMDB REQUIRED)
 brlcad_find_package(PNG REQUIRED)
 brlcad_find_package(REGEX REQUIRED)
 
@@ -313,12 +312,13 @@ set(
   LIBGED_SOURCES
   ${GED_CMD_SRC}
   ${GED_STATIC_REGISTRATION_CPP}
+  cmd_schemas.cpp
   edit_buf.cpp
+  event_txn.cpp
   exec.cpp
   ged_init.cpp
   columns.c
-  dbi_state.cpp
-  display_list.c
+  db_index.cpp
   draw.cpp
   ged.cpp
   ged_inside.c
@@ -331,10 +331,28 @@ set(
   points_eval.c
   polyclip.cpp
   qray.cpp
+  selection_state.cpp
   tab_complete.cpp
   trace.c
   vers.c
   vutil.c
+  bsg_ged_draw_binding.c
+  bsg_ged_draw_brep.cpp
+  bsg_ged_draw_draft.c
+  bsg_ged_draw_highlight.c
+  bsg_ged_draw_material.c
+  bsg_ged_draw_navigation.c
+  bsg_ged_draw_refs.c
+  bsg_ged_draw_scene_root.c
+  bsg_ged_draw_state.c
+  bsg_ged_draw_transactions.c
+  bsg_ged_draw_tree.c
+  bsg_ged_draw_util.c
+  bsg_ged_draw_node.c
+  bsg_ged_draw_overlay.c
+  bsg_ged_draw_registry.c
+  bsg_ged_draw_records.c
+  bsg_ged_draw_source.c
   view/data_lines.c
   wdb_importFg4Section.c
   wireframe_eval.c
@@ -353,6 +371,7 @@ set(
   PNG::PNG
   LMDB::LMDB
   REGEX::REGEX
+  Threads::Threads
   ${WINSOCK_LIB}
   ${M_LIBRARY}
   ${DL_LIBRARY}
@@ -727,12 +746,11 @@ set(
   bot/ged_bot.h
   brep/ged_brep.h
   check/check_private.h
-  dbi.h
+  bsg_ged_draw_private.h
   ged_cmd_scanner.cpp
   ged_private.h
   include/plugin.h
   joint/joint.h
-  osg.cpp
   pnts_util.h
   qray.h
 )

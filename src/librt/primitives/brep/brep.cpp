@@ -28,6 +28,8 @@
 
 #include "common.h"
 
+#include <limits.h>
+
 #include <vector>
 #include <list>
 #include <map>
@@ -46,6 +48,7 @@
 #include "bu/time.h"
 #include "brep.h"
 #include "bn/dvec.h"
+#include "bsg/vlist.h"
 
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -70,8 +73,9 @@ extern "C" {
     void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     void rt_brep_free(struct soltab *stp);
-    int rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size);
-    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info));
+    int rt_brep_lod_realize(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size);
+    int rt_brep_indexed_face_set(struct rt_primitive_indexed_face_set *face_set, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bsg_view *info);
+    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bsg_view *UNUSED(info));
     int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
     int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
     int rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
@@ -1565,8 +1569,54 @@ near_equal(double first, double second)
 }
 
 
+struct brep_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
 static void
-plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v)
+brep_line_sink_append(struct brep_line_sink *sink, const point_t p, int command)
+{
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
+static void
+brep_line_sink_append_segment(
+    struct brep_line_sink *sink,
+    const point_t pt1,
+    const point_t pt2)
+{
+    brep_line_sink_append(sink, pt1, BSG_GEOMETRY_LINE_MOVE);
+    brep_line_sink_append(sink, pt2, BSG_GEOMETRY_LINE_DRAW);
+}
+
+
+static void
+plotisoUCheckForTrim(struct brep_line_sink *sink, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -1649,8 +1699,7 @@ plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 		    //						"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
 		    //						cnt++, x, v, x + deltax, v);
 
-		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
-		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
+		    brep_line_sink_append_segment(sink, pt1, pt2);
 		}
 	    }
 	}
@@ -1661,7 +1710,7 @@ plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 
 
 static void
-plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u)
+plotisoVCheckForTrim(struct brep_line_sink *sink, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -1739,8 +1788,7 @@ plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 		    //bu_log("\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
 		    //		cnt++, u, y, u, y + deltay);
 
-		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
-		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
+		    brep_line_sink_append_segment(sink, pt1, pt2);
 		}
 	    }
 	}
@@ -1750,7 +1798,7 @@ plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 
 
 static void
-plotisoU(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v, int curveres)
+plotisoU(struct brep_line_sink *sink, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v, int curveres)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -1768,14 +1816,13 @@ plotisoU(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, fastf_t
 	}
 	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
 	VMOVE(pt2, p);
-	BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
+	brep_line_sink_append_segment(sink, pt1, pt2);
     }
 }
 
 
 static void
-plotisoV(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u, int curveres)
+plotisoV(struct brep_line_sink *sink, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u, int curveres)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -1793,14 +1840,13 @@ plotisoV(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, fastf_t
 	}
 	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
 	VMOVE(pt2, p);
-	BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
+	brep_line_sink_append_segment(sink, pt1, pt2);
     }
 }
 
 
 static void
-plot_BBNode(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, const BBNode * node, int isocurveres, int gridres)
+plot_BBNode(struct brep_line_sink *sink, SurfaceTree* st, const BBNode * node, int isocurveres, int gridres)
 {
     if (node->isLeaf()) {
 	//draw leaf
@@ -1813,40 +1859,40 @@ plot_BBNode(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, cons
 	    fastf_t to = node->m_u[1];
 	    //bu_log("drawBBNode: node %x uvmin center %f %f 0.0, uvmax center %f %f 0.0\n", node, node->m_u[0], node->m_v[0], node->m_u[1], node->m_v[1]);
 
-	    plotisoUCheckForTrim(vlfree, vhead, st, from, to, v); //bottom
+	    plotisoUCheckForTrim(sink, st, from, to, v); //bottom
 	    v = node->m_v[1];
-	    plotisoUCheckForTrim(vlfree, vhead, st, from, to, v); //top
+	    plotisoUCheckForTrim(sink, st, from, to, v); //top
 	    from = node->m_v[0];
 	    to = node->m_v[1];
-	    plotisoVCheckForTrim(vlfree, vhead, st, from, to, u); //left
+	    plotisoVCheckForTrim(sink, st, from, to, u); //left
 	    u = node->m_u[1];
-	    plotisoVCheckForTrim(vlfree, vhead, st, from, to, u); //right
+	    plotisoVCheckForTrim(sink, st, from, to, u); //right
 	    return;
 	} else { // fully untrimmed just draw bottom and right edges
 	    fastf_t u = node->m_u[0];
 	    fastf_t v = node->m_v[0];
 	    fastf_t from = u;
 	    fastf_t to = node->m_u[1];
-	    plotisoU(vlfree, vhead, st, from, to, v, isocurveres); //bottom
+	    plotisoU(sink, st, from, to, v, isocurveres); //bottom
 
 	    from = v;
 	    to = node->m_v[1];
-	    plotisoV(vlfree, vhead, st, from, to, u, isocurveres); //right
+	    plotisoV(sink, st, from, to, u, isocurveres); //right
 	    return;
 	}
     } else {
 	for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode != node->get_children().end(); ++childnode) {
-	    plot_BBNode(vlfree, vhead, st, *childnode, isocurveres, gridres);
+	    plot_BBNode(sink, st, *childnode, isocurveres, gridres);
 	}
     }
 }
 
 
 static void
-plot_face_from_surface_tree(struct bu_list *vlfree, struct bu_list *vhead, SurfaceTree* st, int isocurveres, int gridres)
+plot_face_from_surface_tree(struct brep_line_sink *sink, SurfaceTree* st, int isocurveres, int gridres)
 {
     const BBNode *root = st->getRootNode();
-    plot_BBNode(vlfree, vhead, st, root, isocurveres, gridres);
+    plot_BBNode(sink, st, root, isocurveres, gridres);
 }
 
 static fastf_t
@@ -1883,19 +1929,25 @@ brep_est_avg_curve_len(struct rt_brep_internal *bi)
     return brep_avg_curve_bbox_diagonal_len(bi->brep) * 2.0;
 }
 
-int
-rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t UNUSED(s_size))
+static int
+rt_brep_lod_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bsg_view *v, fastf_t UNUSED(s_size))
 {
-    TRACE1("rt_brep_adaptive_plot");
+    TRACE1("rt_brep_lod_line_set");
     struct rt_brep_internal* bi;
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!realization)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
+
+    struct brep_line_sink sink;
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
 
     fastf_t point_spacing = solid_point_spacing(v, brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
 
@@ -1911,13 +1963,13 @@ rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 	    ON_SumSurface *sumsurf = const_cast<ON_SumSurface *>(ON_SumSurface::Cast(surf));
 	    if (sumsurf != NULL) {
 		SurfaceTree st(&face, true, 2);
-		plot_face_from_surface_tree(vlfree, vhead, &st, isocurveres, gridres);
+		plot_face_from_surface_tree(&sink, &st, isocurveres, gridres);
 	    } else {
 		ON_RevSurface *revsurf = const_cast<ON_RevSurface *>(ON_RevSurface::Cast(surf));
 
 		if (revsurf != NULL) {
 		    SurfaceTree st(&face, true, 0);
-		    plot_face_from_surface_tree(vlfree, vhead, &st, isocurveres, gridres);
+		    plot_face_from_surface_tree(&sink, &st, isocurveres, gridres);
 		}
 	    }
 	}
@@ -1932,8 +1984,7 @@ rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 	    const ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
 	    VMOVE(pt1, v1.Point());
 	    VMOVE(pt2, v2.Point());
-	    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
+	    brep_line_sink_append_segment(&sink, pt1, pt2);
 	} else {
 	    point_t endpt;
 	    ON_Interval dom = crv->Domain();
@@ -1949,7 +2000,7 @@ rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 	    double t1 = 0.0;
 	    p = crv->PointAt(dom.ParameterAt(t1));
 	    VMOVE(pt1, p);
-	    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+	    brep_line_sink_append(&sink, pt1, BSG_GEOMETRY_LINE_MOVE);
 
 	    // add segments until the minimum segment count is
 	    // achieved and the distance between the end of the last
@@ -1968,7 +2019,7 @@ rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 		    p = crv->PointAt(dom.ParameterAt(t2));
 		    VMOVE(pt2, p);
 		}
-		BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
+		brep_line_sink_append(&sink, pt2, BSG_GEOMETRY_LINE_DRAW);
 
 		// advance to next segment
 		t1 = t2;
@@ -1979,11 +2030,23 @@ rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 		    t2 = 1.0;
 		}
 	    }
-	    BV_ADD_VLIST(vlfree, vhead, endpt, BV_VLIST_LINE_DRAW);
+	    brep_line_sink_append(&sink, endpt, BSG_GEOMETRY_LINE_DRAW);
 	}
     }
 
-    return 0;
+    return sink.ok ? 0 : -1;
+}
+
+int
+rt_brep_lod_realize(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
+{
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    int ret = rt_brep_lod_line_set(realization, ip, tol, v, s_size);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
 }
 
 
@@ -2002,16 +2065,19 @@ rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
  * edge-only wireframes are the default.
  *
  */
-int
-rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct bview *UNUSED(info))
+static int
+rt_brep_standard_wireframe(struct brep_line_sink *sink,
+			   struct rt_db_internal *ip,
+			   const struct bn_tol *tol)
 {
-    TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;
     int i;
+    const fastf_t dist_tol = (tol && tol->dist > 0.0) ? tol->dist :
+	BN_TOL_DIST;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!sink)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
@@ -2026,18 +2092,18 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 	if (surf != NULL) {
 	    if (surf->IsClosed(0) || surf->IsClosed(1)) {
 		ON_SumSurface *sumsurf = const_cast<ON_SumSurface *>(ON_SumSurface::Cast(surf));
-		if (sumsurf != NULL) {
-		    SurfaceTree st(&face, true, 2);
-		    plot_face_from_surface_tree(vlfree, vhead, &st, isocurveres, gridres);
-		} else {
-		    ON_RevSurface *revsurf = const_cast<ON_RevSurface *>(ON_RevSurface::Cast(surf));
+		    if (sumsurf != NULL) {
+			SurfaceTree st(&face, true, 2);
+			plot_face_from_surface_tree(sink, &st, isocurveres, gridres);
+		    } else {
+			ON_RevSurface *revsurf = const_cast<ON_RevSurface *>(ON_RevSurface::Cast(surf));
 
-		    if (revsurf != NULL) {
-			SurfaceTree st(&face, true, 0);
-			plot_face_from_surface_tree(vlfree, vhead, &st, isocurveres, gridres);
+			if (revsurf != NULL) {
+			    SurfaceTree st(&face, true, 0);
+			    plot_face_from_surface_tree(sink, &st, isocurveres, gridres);
+			}
 		    }
 		}
-	    }
 	} else {
 	    bu_log("Surface index %d not defined.\n", index);
 	}
@@ -2052,21 +2118,62 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 	    ON_Polyline poly;
 	    const ON_BrepEdge& e = brep->m_E[i];
 	    const ON_Curve* crv = e.EdgeCurveOf();
-	    pnt_cnt = ON_Curve_PolyLine_Approx(&poly, crv, tol->dist);
+	    pnt_cnt = ON_Curve_PolyLine_Approx(&poly, crv, dist_tol);
 	    if (pnt_cnt > 1) {
 		p = poly[0];
 		VMOVE(pt1, p);
-		BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+		brep_line_sink_append(sink, pt1, BSG_GEOMETRY_LINE_MOVE);
 		for (j = 1; j < pnt_cnt; j++) {
 		    p = poly[j];
 		    VMOVE(pt1, p);
-		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_DRAW);
+		    brep_line_sink_append(sink, pt1, BSG_GEOMETRY_LINE_DRAW);
 		}
 	    }
 	}
     }
 
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_brep_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			   struct rt_db_internal *ip,
+			   const struct bn_tol *tol)
+{
+    TRACE1("rt_brep_wireframe_line_set");
+
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    struct brep_line_sink sink;
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    int ret = rt_brep_standard_wireframe(&sink, ip, tol);
+    if (ret < 0)
+	return ret;
+
+    return primitive_lod_line_set_finish(realization) ? 0 : -1;
+}
+
+
+int
+rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct bsg_view *UNUSED(info))
+{
+    TRACE1("rt_brep_plot");
+
+    BU_CK_LIST_HEAD(vhead);
+
+    struct brep_line_sink sink;
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_brep_standard_wireframe(&sink, ip, tol);
 }
 
 
@@ -3036,32 +3143,159 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
     }
 }
 
-int rt_brep_plot_poly(struct bu_list *vhead, const struct directory *dp, struct rt_db_internal *ip,
-		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-		      const struct bview *UNUSED(info))
+static int
+brep_indexed_face_valid(const int *faces,
+			int face_idx,
+			int point_count)
 {
-    TRACE1("rt_brep_plot");
+    if (!faces || face_idx < 0 || point_count <= 0)
+	return 0;
 
-    if (!vhead || dp == RT_DIR_NULL || !ip || !ttol || !tol)
-	return -1;
-
-    struct bu_list *vlfree = &rt_vlfree;
-    struct rt_brep_internal* bi;
-    const char *solid_name =  dp->d_namep;
-    ON_wString wstr;
-    ON_TextLog tl(wstr);
-
-    BU_CK_LIST_HEAD(vhead);
-    RT_CK_DB_INTERNAL(ip);
-    bi = (struct rt_brep_internal*) ip->idb_ptr;
-    RT_BREP_CK_MAGIC(bi);
-
-    ON_Brep* brep = bi->brep;
-
-    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, vlfree, -1, 0, -1)) {
-	return -1;
+    for (int i = 0; i < 3; i++) {
+	int point_idx = faces[face_idx * 3 + i];
+	if (point_idx < 0 || point_idx >= point_count)
+	    return 0;
     }
-    return 0;
+
+    return 1;
+}
+
+
+static void
+brep_indexed_face_normal(const int *faces,
+			 int face_idx,
+			 const point_t *points,
+			 vect_t normal)
+{
+    vect_t ab, ac;
+
+    VSETALL(normal, 0.0);
+    if (!faces || !points || face_idx < 0)
+	return;
+
+    const fastf_t *aa = points[faces[face_idx * 3 + 0]];
+    const fastf_t *bb = points[faces[face_idx * 3 + 1]];
+    const fastf_t *cc = points[faces[face_idx * 3 + 2]];
+    VSUB2(ab, aa, bb);
+    VSUB2(ac, aa, cc);
+    VCROSS(normal, ab, ac);
+    if (MAGSQ(normal) > SMALL_FASTF)
+	VUNITIZE(normal);
+    else
+	VSETALL(normal, 0.0);
+}
+
+
+extern "C" int
+rt_brep_indexed_face_set(struct rt_primitive_indexed_face_set *face_set,
+			 struct rt_db_internal *ip,
+			 const struct bg_tess_tol *ttol,
+			 const struct bn_tol *tol,
+			 const struct bsg_view *UNUSED(info))
+{
+    int *faces = NULL;
+    int face_count = 0;
+    vect_t *corner_normals = NULL;
+    point_t *points = NULL;
+    int point_count = 0;
+    int ret;
+
+    if (!face_set || !ip || !ttol || !tol)
+	return BRLCAD_ERROR;
+
+    RT_CK_DB_INTERNAL(ip);
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    if (!bi->brep)
+	return BRLCAD_OK;
+
+    ret = brep_cdt_fast(&faces, &face_count, &corner_normals, &points,
+	    &point_count, bi->brep, -1, ttol, tol);
+    if (ret != BRLCAD_OK) {
+	if (faces)
+	    bu_free(faces, "brep cdt faces");
+	if (corner_normals)
+	    bu_free(corner_normals, "brep cdt normals");
+	if (points)
+	    bu_free(points, "brep cdt points");
+	return BRLCAD_ERROR;
+    }
+
+    if (!faces || !points || face_count <= 0 || point_count <= 0) {
+	if (faces)
+	    bu_free(faces, "brep cdt faces");
+	if (corner_normals)
+	    bu_free(corner_normals, "brep cdt normals");
+	if (points)
+	    bu_free(points, "brep cdt points");
+	return BRLCAD_OK;
+    }
+
+    if (point_count > INT_MAX) {
+	bu_free(faces, "brep cdt faces");
+	if (corner_normals)
+	    bu_free(corner_normals, "brep cdt normals");
+	bu_free(points, "brep cdt points");
+	return BRLCAD_ERROR;
+    }
+
+    size_t valid_faces = 0;
+    for (int i = 0; i < face_count; i++) {
+	if (brep_indexed_face_valid(faces, i, point_count))
+	    valid_faces++;
+    }
+
+    if (!valid_faces) {
+	bu_free(faces, "brep cdt faces");
+	if (corner_normals)
+	    bu_free(corner_normals, "brep cdt normals");
+	bu_free(points, "brep cdt points");
+	return BRLCAD_OK;
+    }
+
+    size_t index_count = valid_faces * 4;
+    size_t normal_count = valid_faces * 3;
+    int *indices = (int *)bu_calloc(index_count, sizeof(int),
+	    "brep cdt indexed-face indices");
+    vect_t *indexed_normals = (vect_t *)bu_calloc(normal_count, sizeof(vect_t),
+	    "brep cdt indexed-face normals");
+    size_t out = 0;
+    size_t normal_out = 0;
+
+    for (int i = 0; i < face_count; i++) {
+	vect_t face_normal;
+
+	if (!brep_indexed_face_valid(faces, i, point_count))
+	    continue;
+
+	brep_indexed_face_normal(faces, i, (const point_t *)points,
+		face_normal);
+	for (int j = 0; j < 3; j++) {
+	    indices[out] = faces[i * 3 + j];
+	    if (corner_normals && MAGSQ(corner_normals[i * 3 + j]) > SMALL_FASTF)
+		VMOVE(indexed_normals[normal_out], corner_normals[i * 3 + j]);
+	    else
+		VMOVE(indexed_normals[normal_out], face_normal);
+	    out++;
+	    normal_out++;
+	}
+	indices[out] = -1;
+	out++;
+    }
+
+    face_set->points = points;
+    face_set->point_count = (size_t)point_count;
+    face_set->normals = indexed_normals;
+    face_set->normal_count = normal_count;
+    face_set->indices = indices;
+    face_set->index_count = index_count;
+    face_set->source_identity = (uint64_t)(uintptr_t)bi;
+    face_set->geometry_revision++;
+
+    bu_free(faces, "brep cdt faces");
+    if (corner_normals)
+	bu_free(corner_normals, "brep cdt normals");
+    return BRLCAD_OK;
 }
 
 

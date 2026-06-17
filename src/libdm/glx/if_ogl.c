@@ -2399,7 +2399,8 @@ struct fb_impl ogl_interface_impl =  {
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0},  /* u6 */
+    0     /* if_active_clients */
 };
 
 

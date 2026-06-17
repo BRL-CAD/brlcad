@@ -1,0 +1,12 @@
+{
+    "id": "org.brlcad.qged.panel.host_status",
+    "displayName": "Host Status",
+    "category": "qged.panel",
+    "sortKey": 0,
+    "requiresOpenDb": false,
+    "requiresView": false,
+    "description": "Dockable status panel showing the active qged host, database, and view.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

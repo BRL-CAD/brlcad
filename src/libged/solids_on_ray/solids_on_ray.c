@@ -218,7 +218,7 @@ ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if ((int)BV_MIN > h || h > (int)BV_MAX || (int)BV_MIN > v || v > (int)BV_MAX) {
+    if ((int)BSG_VIEW_MIN > h || h > (int)BSG_VIEW_MAX || (int)BSG_VIEW_MIN > v || v > (int)BSG_VIEW_MAX) {
 	bu_vls_printf(gedp->ged_result_str, "Screen coordinates out of range\nMust be between +/-2048");
 	return BRLCAD_ERROR;
     }

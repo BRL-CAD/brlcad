@@ -19,50 +19,109 @@
  */
 /** @file select.cpp
  *
+ * IQgToolFactory implementation for the view-select palette tool.
+ * Replaces the legacy qged_plugin_info ABI.
  */
 
 #include <QGroupBox>
 #include <QCheckBox>
+#include <QIcon>
+#include <QPixmap>
 #include <QtGlobal>
+
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgPluginDescriptor.h"
 #include "qtcad/QgToolPalette.h"
-#include "../../plugin.h"
-#include "./CADViewSelector.h"
+#include "qtcad/QgView.h"
+#include "ViewSelectFactory.h"
 
-void *
-view_select_tool_create()
+/* ------------------------------------------------------------------ */
+/* ViewSelectTool                                                       */
+/* ------------------------------------------------------------------ */
+
+ViewSelectTool::ViewSelectTool(QgPluginContext *ctx, QObject *parent)
+    : QgToolBase(ctx, parent)
 {
-    QIcon *obj_icon = new QIcon(QPixmap(":selective-tool.svg"));
+}
 
-    CADViewSelector *er = new CADViewSelector();
-
-    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, er);
-
-    QObject::connect(er, &CADViewSelector::view_changed, el, &QgToolPaletteElement::element_view_changed);
-    QObject::connect(el, &QgToolPaletteElement::element_view_update, er, &CADViewSelector::do_view_update);
-
-    // Let the element (and hence the application) know that this tool has a
-    // locally customized event filter to use with the view widget.
-    el->use_event_filter = true;
-
+/* Override to wire the view_changed -> element_view_changed signal AFTER
+ * the element has been created by the base class. */
+QgToolPaletteElement *
+ViewSelectTool::paletteElement()
+{
+    QgToolPaletteElement *el = QgToolBase::paletteElement();
+    if (m_selector && el && !m_extra_wired) {
+	QObject::connect(m_selector, &CADViewSelector::view_changed,
+			 el, &QgToolPaletteElement::element_view_changed);
+	m_extra_wired = true;
+    }
     return el;
 }
 
-extern "C" {
-    struct qged_tool_impl view_select_tool_impl = {
-	view_select_tool_create
-    };
-
-    const struct qged_tool view_select_tool = { &view_select_tool_impl, 2 };
-    const struct qged_tool *view_select_tools[] = { &view_select_tool, NULL };
-
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_select_tools, 1 };
-
-    COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
-    {
-	return &pinfo;
-    }
+QWidget *
+ViewSelectTool::createWidget()
+{
+    m_selector = new CADViewSelector();
+    m_selector->setContext(m_ctx);
+    return m_selector;
 }
 
+QIcon *
+ViewSelectTool::createIcon()
+{
+    return new QIcon(QPixmap(":selective-tool.svg"));
+}
+
+void
+ViewSelectTool::refresh()
+{
+    if (m_selector)
+	m_selector->do_view_update(QgViewUpdateFlags{});
+}
+
+/* IQgViewEventFilter: install/remove the selector widget as an event
+ * filter on the active view.  The widget's own eventFilter() handles
+ * all mouse-based selection logic. */
+void
+ViewSelectTool::attachToView(QgView *view)
+{
+    if (m_selector && view)
+	view->installEventFilter(m_selector);
+}
+
+void
+ViewSelectTool::detachFromView(QgView *view)
+{
+    if (m_selector && view)
+	view->removeEventFilter(m_selector);
+}
+
+/* ------------------------------------------------------------------ */
+/* ViewSelectFactory                                                    */
+/* ------------------------------------------------------------------ */
+
+QgPluginDescriptor
+ViewSelectFactory::descriptor() const
+{
+    QgPluginDescriptor d;
+    d.id             = "org.brlcad.qged.view.select";
+    d.displayName    = "View Select";
+    d.category       = "qged.view";
+    d.iconName       = ":selective-tool.svg";
+    d.sortKey        = 2;
+    d.requiresOpenDb = true;
+    d.requiresView   = true;
+    d.description    = "Select objects in the scene by point, rectangle, or ray test; add to or remove from selection sets; draw or erase selected geometry.";
+    d.vendor         = "BRL-CAD";
+    d.version        = "1.0";
+    return d;
+}
+
+QgToolBase *
+ViewSelectFactory::create(QgPluginContext *ctx, QObject *parent)
+{
+    return new ViewSelectTool(ctx, parent);
+}
 
 
 // Local Variables:

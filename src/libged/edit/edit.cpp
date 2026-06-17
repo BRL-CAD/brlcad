@@ -35,6 +35,7 @@
 
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "./uri.hh"
@@ -47,8 +48,9 @@
 #include "rt/primitives/arb8.h"
 #include "rt/primitives/tgc.h"
 
+#include "ged/db_index.h"
+#include "ged/selection_state.h"
 #include "../ged_private.h"
-#include "../dbi.h"
 #include "./ged_edit.h"
 
 
@@ -57,7 +59,7 @@
  * ------------------------------------------------------------------ */
 
 /**
- * Attempt to resolve argv[i] as a geometry specifier via DbiState.
+ * Attempt to resolve argv[i] as a geometry specifier via the database index.
  * Fills *spec and returns true on success, false if the token does not
  * resolve to any known database object.
  *
@@ -69,7 +71,7 @@
  */
 static bool
 _resolve_geom_spec(ged_edit_geom_spec &spec, const char *token,
-		   struct ged *gedp, DbiState *dbis)
+		   struct ged *gedp)
 {
     spec.raw = token;
     spec.is_batch = false;
@@ -102,26 +104,32 @@ _resolve_geom_spec(ged_edit_geom_spec &spec, const char *token,
 
     spec.path = path_str;
 
-    /* When DbiState is available, use its richer path resolution.
-     * When it is absent (older code paths that have not initialised
-     * DbiState), fall back to a plain db_lookup so the command still
-     * functions in non-GUI contexts.  URI fragments/queries are
-     * silently ignored in the no-DbiState path. */
-    if (dbis) {
-	spec.hashes = dbis->digest_path(path_str.c_str());
+    /* When indexed path resolution is available, use it so comb instance
+     * paths resolve precisely.  When it is absent, fall back to a plain
+     * db_lookup so the command still functions in non-GUI contexts. */
+    if (ged_db_index_available(gedp)) {
+	size_t path_len = ged_db_index_path_resolve(gedp, path_str.c_str(),
+	    NULL, 0);
 
-	if (spec.hashes.empty())
+	if (!path_len)
 	    return false;
 
-	/* Single-element path — get the head dp */
-	if (spec.hashes.size() == 1)
-	    spec.dp = dbis->get_hdp(spec.hashes[0]);
+	spec.hashes.resize(path_len);
+	(void)ged_db_index_path_resolve(gedp, path_str.c_str(),
+	    spec.hashes.data(), spec.hashes.size());
 
-	/* Multi-element path (comb instance) — dp stays RT_DIR_NULL */
+	/* Single-element path - get the head dp. */
+	if (spec.hashes.size() == 1) {
+	    struct ged_db_index_record rec;
+	    if (ged_db_index_record_get(gedp, spec.hashes[0], &rec))
+		spec.dp = rec.dp;
+	}
+
+	/* Multi-element path (comb instance) - dp stays RT_DIR_NULL. */
 	return (spec.hashes.size() > 1) || (spec.dp != RT_DIR_NULL);
     }
 
-    /* No DbiState: plain directory lookup against gedp->dbip.
+    /* No index backend: plain directory lookup against gedp->dbip.
      * Only bare names are reliably resolvable; for slash-paths we use
      * the last component as a best-effort lookup. */
     {
@@ -142,20 +150,44 @@ _resolve_geom_spec(ged_edit_geom_spec &spec, const char *token,
 }
 
 
+static std::vector<std::string>
+_edit_selected_paths(struct ged *gedp)
+{
+    std::vector<std::string> paths;
+    struct bu_vls selected = BU_VLS_INIT_ZERO;
+
+    (void)ged_selection_list_paths(gedp, NULL, &selected);
+    const char *s = bu_vls_cstr(&selected);
+    const char *start = s;
+    for (const char *p = s; ; p++) {
+	if (*p == '\n' || *p == '\r' || *p == '\0') {
+	    if (p > start)
+		paths.push_back(std::string(start, (size_t)(p - start)));
+	    if (*p == '\0')
+		break;
+	    start = p + 1;
+	}
+    }
+
+    bu_vls_free(&selected);
+    return paths;
+}
+
+
 /* ================================================================== *
  * Phase 2 helpers
  * ================================================================== */
 
 /**
- * Initialise a minimal stack-allocated bview for scripted (CLI) rt_edit
+ * Initialise a minimal stack-allocated bsg_view for scripted (CLI) rt_edit
  * operations.  Only the fields accessed by edit_srot/edit_stra/edit_sscale
  * are set; nothing is heap-allocated so no cleanup is required.
  */
 static void
-_edit_cli_view_init(struct bview *v)
+_edit_cli_view_init(struct bsg_view *v)
 {
     memset(v, 0, sizeof(*v));
-    v->magic            = BV_MAGIC;
+    v->magic            = BSG_VIEW_MAGIC;
     v->gv_scale         = 1.0;
     v->gv_rotate_about  = 'k';   /* rotate about keypoint — no view matrices needed */
     v->gv_coord         = 'm';   /* model-space coordinates */
@@ -217,7 +249,7 @@ _edit_get_obj_keypoint(point_t *kp, const char *name, struct ged *gedp)
  *
  *   1. If dp already has a live buffer entry (from a previous -i operation),
  *      reuse it; otherwise create a fresh rt_edit from the on-disk geometry.
- *   2. Install a minimal CLI bview so edit_srot() resolves its rotate-about
+ *   2. Install a minimal CLI bsg_view so edit_srot() resolves its rotate-about
  *      axis without dereferencing a null vp.
  *   3. Run do_edit(s); return early on error.
  *   4. flag_i == 0 (normal): promote es_int to disk and clear buffer entry.
@@ -269,10 +301,10 @@ _edit_xform_apply(struct ged_edit_ctx *ctx,
 	rt_edit_set_opt(s, opt.first.c_str(), opt.second.c_str());
     }
 
-    /* Temporarily install a minimal CLI bview (stack-allocated) */
-    struct bview cli_v;
+    /* Temporarily install a minimal CLI bsg_view (stack-allocated) */
+    struct bsg_view cli_v;
     _edit_cli_view_init(&cli_v);
-    struct bview *saved_vp = s->vp;
+    struct bsg_view *saved_vp = s->vp;
     s->vp = &cli_v;
 
     int ret = do_edit(s);
@@ -1596,9 +1628,7 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     }
     bu_ptbl_free(&objs);
 
-    DbiState *dbis = (DbiState *)ctx->gedp->dbi_state;
-    if (dbis)
-	dbis->update();
+    ged_db_index_refresh(ctx->gedp);
 
     return ret;
 }
@@ -2197,11 +2227,8 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     /* ---- Pass 1: find positions of first geometry spec and subcommand
      *              so we know how many leading tokens to feed to
      *              bu_opt_parse as global options.                      */
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-
     int geom_pos = INT_MAX;
     int cmd_pos  = INT_MAX;
-    std::vector<unsigned long long> gs;
 
     for (int i = 0; i < argc; i++) {
 	/* Check if this token matches a known subcommand name */
@@ -2213,11 +2240,9 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* Try to resolve as a geometry specifier */
 	ged_edit_geom_spec spec;
-	if (_resolve_geom_spec(spec, argv[i], gedp, dbis)) {
-	    if (geom_pos == INT_MAX) {
+	if (_resolve_geom_spec(spec, argv[i], gedp)) {
+	    if (geom_pos == INT_MAX)
 		geom_pos = i;
-		gs = spec.hashes;
-	    }
 	    break;
 	}
     }
@@ -2364,65 +2389,56 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     if (geom_pos != INT_MAX) {
 	geom_str = argv[geom_pos];
 	ged_edit_geom_spec spec;
-	if (_resolve_geom_spec(spec, geom_str, gedp, dbis)) {
+	if (_resolve_geom_spec(spec, geom_str, gedp)) {
 	    ctx.geom_specs.push_back(spec);
 	}
     }
 
     /* Selection fallback: if no explicit specifier was given, use the
      * active "default" selection state. */
-    if (ctx.geom_specs.empty() && !ctx.flag_F && dbis) {
-	std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-	if (!ss.empty()) {
-	    std::vector<std::string> sel_paths = ss[0]->list_selected_paths();
-	    for (const std::string &spath : sel_paths) {
-		ged_edit_geom_spec spec;
-		if (_resolve_geom_spec(spec, spath.c_str(), gedp, dbis))
-		    ctx.geom_specs.push_back(spec);
-	    }
-	    if (!ctx.geom_specs.empty())
-		ctx.from_selection = true;
+    if (ctx.geom_specs.empty() && !ctx.flag_F) {
+	std::vector<std::string> sel_paths = _edit_selected_paths(gedp);
+	for (const std::string &spath : sel_paths) {
+	    ged_edit_geom_spec spec;
+	    if (_resolve_geom_spec(spec, spath.c_str(), gedp))
+		ctx.geom_specs.push_back(spec);
 	}
+	if (!ctx.geom_specs.empty())
+	    ctx.from_selection = true;
     }
 
     /* Selection conflict arbiter: explicit specifier present AND the same
      * object is also in the active selection → require an arbiter flag. */
-    if (dbis && !ctx.geom_specs.empty() && !ctx.from_selection && !ctx.flag_S &&
+    if (!ctx.geom_specs.empty() && !ctx.from_selection && !ctx.flag_S &&
 	    !ctx.flag_f && !ctx.flag_F && !ctx.flag_i) {
-	std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-	if (!ss.empty()) {
-	    std::vector<std::string> sel_paths = ss[0]->list_selected_paths();
-	    for (const auto &gspec : ctx.geom_specs) {
-		for (const std::string &spath : sel_paths) {
-		    if (gspec.path == spath) {
-			ctx.has_conflict = true;
-			bu_vls_printf(gedp->ged_result_str,
-			    "Conflict: \"%s\" has both an explicit command-line "
-			    "specifier and an active selection.\n"
-			    "Use -S to operate on the selection, -f to force "
-			    "a disk write, -F to abandon the intermediate "
-			    "state, or -i to edit the temp buffer.\n",
-			    gspec.path.c_str());
-			return BRLCAD_ERROR;
-		    }
+	std::vector<std::string> sel_paths = _edit_selected_paths(gedp);
+	for (const auto &gspec : ctx.geom_specs) {
+	    for (const std::string &spath : sel_paths) {
+		if (gspec.path == spath) {
+		    ctx.has_conflict = true;
+		    bu_vls_printf(gedp->ged_result_str,
+			"Conflict: \"%s\" has both an explicit command-line "
+			"specifier and an active selection.\n"
+			"Use -S to operate on the selection, -f to force "
+			"a disk write, -F to abandon the intermediate "
+			"state, or -i to edit the temp buffer.\n",
+			gspec.path.c_str());
+		    return BRLCAD_ERROR;
 		}
 	    }
 	}
     }
 
     /* If -S flag is set, discard explicit specifiers and use selection */
-    if (ctx.flag_S && dbis) {
+    if (ctx.flag_S) {
 	ctx.geom_specs.clear();
-	std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-	if (!ss.empty()) {
-	    std::vector<std::string> sel_paths = ss[0]->list_selected_paths();
-	    for (const std::string &spath : sel_paths) {
-		ged_edit_geom_spec spec;
-		if (_resolve_geom_spec(spec, spath.c_str(), gedp, dbis))
-		    ctx.geom_specs.push_back(spec);
-	    }
-	    ctx.from_selection = true;
+	std::vector<std::string> sel_paths = _edit_selected_paths(gedp);
+	for (const std::string &spath : sel_paths) {
+	    ged_edit_geom_spec spec;
+	    if (_resolve_geom_spec(spec, spath.c_str(), gedp))
+		ctx.geom_specs.push_back(spec);
 	}
+	ctx.from_selection = true;
     }
 
     /* Set convenience dp from first resolved specifier */

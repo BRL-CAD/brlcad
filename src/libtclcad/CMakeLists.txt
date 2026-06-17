@@ -105,6 +105,7 @@ add_subdirectory(tests)
 
 cmakefiles(
   ${LIBTCLCAD_SRCS}
+  bsg_move_helpers.h
   tclcad_private.h
   view/view.h
   CMakeLists.txt

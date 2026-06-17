@@ -35,6 +35,7 @@
 
 #include "gcv.h"
 #include "raytrace.h"
+#include "rt/vlist.h"
 
 /* assimp headers */
 #include <assimp/scene.h>

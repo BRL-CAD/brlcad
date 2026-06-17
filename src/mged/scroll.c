@@ -98,13 +98,17 @@ struct scroll_item sl_adc_menu[] = {
 void
 set_scroll(struct mged_state *s)
 {
+    struct bsg_adc_state adc = {0};
+
+    (void)mged_dm_adc_state_get(s->mged_curr_dm, &adc);
+
     if (mged_variables->mv_sliders) {
 	if (mged_variables->mv_rateknobs)
 	    scroll_array[0] = sl_menu;
 	else
 	    scroll_array[0] = sl_abs_menu;
 
-	if (adc_state->adc_draw)
+	if (adc.draw)
 	    scroll_array[1] = sl_adc_menu;
 	else
 	    scroll_array[1] = NULL;
@@ -273,7 +277,7 @@ sl_itol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*BV_MAX);
+    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*BSG_VIEW_MAX);
     Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -289,21 +293,25 @@ sl_itol(struct scroll_item *mptr, double val)
 static void
 second_menu_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 {
+    struct bsg_adc_state adc = {0};
+
+    (void)mged_dm_adc_state_get(s->mged_curr_dm, &adc);
+
     switch (mptr->scroll_val) {
 	case 0:
-	    *f = (double)adc_state->adc_dv_x * INV_BV;
+	    *f = (double)adc.dv_x * INV_BV;
 	    break;
 	case 1:
-	    *f = (double)adc_state->adc_dv_y * INV_BV;
+	    *f = (double)adc.dv_y * INV_BV;
 	    break;
 	case 2:
-	    *f = (double)adc_state->adc_dv_a1 * INV_BV;
+	    *f = (double)adc.dv_a1 * INV_BV;
 	    break;
 	case 3:
-	    *f = (double)adc_state->adc_dv_a2 * INV_BV;
+	    *f = (double)adc.dv_a2 * INV_BV;
 	    break;
 	case 4:
-	    *f = (double)adc_state->adc_dv_dist * INV_BV;
+	    *f = (double)adc.dv_dist * INV_BV;
 	    break;
 	default:
 	    Tcl_AppendResult(s->interp,
@@ -508,7 +516,7 @@ scroll_display(struct mged_state *s, int y_top)
 	    }
 
 	    if (f > 0)
-		xpos = (f + SL_TOL) * BV_MAX;
+		xpos = (f + SL_TOL) * BSG_VIEW_MAX;
 	    else if (f < 0)
 		xpos = (f - SL_TOL) * -MENUXLIM;
 	    else
@@ -521,7 +529,7 @@ scroll_display(struct mged_state *s, int y_top)
 		    color_scheme->cs_slider_line[1],
 		    color_scheme->cs_slider_line[2], 1, 1.0);
 	    dm_draw_line_2d(DMP,
-		    GED2PM1((int)BV_MAX), GED2PM1(y),
+		    GED2PM1((int)BSG_VIEW_MAX), GED2PM1(y),
 		    GED2PM1(MENUXLIM), GED2PM1(y));
 	}
     }

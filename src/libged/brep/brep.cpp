@@ -45,6 +45,8 @@
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
+#include "bsg/feature.h"
+#include "ged/event_txn.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -773,7 +775,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
 
 
     if (argc == 4 || BU_STR_EQUAL(argv[4], "SS")) {
-	brep_intersect_surface_surface(&gb->intern, &intern2, i, j, gb->vbp);
+	brep_intersect_surface_surface(&gb->intern, &intern2, i, j, gb->plot);
     } else if (BU_STR_EQUAL(argv[4], "PP")) {
 	brep_intersect_point_point(&gb->intern, &intern2, i, j);
     } else if (BU_STR_EQUAL(argv[4], "PC")) {
@@ -788,13 +790,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Invalid intersection type %s.\n", argv[6]);
     }
 
-    if (gedp->new_cmd_forms) {
-	struct bview *view = gedp->ged_gvp;
-	bv_vlblock_obj(gb->vbp, view, "brep_intersect");
-    } else {
-	char namebuf[65];
-	_ged_cvt_vlblock_to_solids(gedp, gb->vbp, namebuf, 0);
-    }
+    _brep_plot_publish(gedp, gb->plot, "brep_intersect");
 
     rt_db_free_internal(&intern2);
 
@@ -869,8 +865,10 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
     double local2base = gb->gedp->dbip->dbi_local2base;
 
     // Make sure we can get attributes
+    bu_avs_init_empty(&avs);
     if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
+	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     };
 
@@ -878,10 +876,13 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "0");
 	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
+	    bu_avs_free(&avs);
 	    return BRLCAD_ERROR;
 	} else {
 	    bu_vls_printf(gb->gedp->ged_result_str, "%s", val);
 	}
+	bu_avs_free(&avs);
+	(void)ged_event_notify_attribute_changed(gb->gedp, gb->dp->d_namep, 1, NULL);
 	return BRLCAD_OK;
     }
 
@@ -889,10 +890,13 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "1");
 	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
+	    bu_avs_free(&avs);
 	    return BRLCAD_ERROR;
 	} else {
 	    bu_vls_printf(gb->gedp->ged_result_str, "%s", val);
 	}
+	bu_avs_free(&avs);
+	(void)ged_event_notify_attribute_changed(gb->gedp, gb->dp->d_namep, 1, NULL);
 	return BRLCAD_OK;
     }
 
@@ -915,10 +919,13 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
     (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
     if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
+	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     } else {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", val);
     }
+    bu_avs_free(&avs);
+    (void)ged_event_notify_attribute_changed(gb->gedp, gb->dp->d_namep, 1, NULL);
     return BRLCAD_OK;
 }
 
@@ -1242,10 +1249,16 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	    struct bu_vls fbrep_name = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fbrep_name, "%s.%d", gb->solid_name.c_str(), f_id);
 	    (void)mk_addmember(bu_vls_cstr(&fbrep_name), &(wcomb.l), NULL, DB_OP_UNION);
-	    mk_brep(wdbp, bu_vls_cstr(&fbrep_name), fbrep);
+	    if (mk_brep(wdbp, bu_vls_cstr(&fbrep_name), fbrep)) {
+		delete fbrep;
+		bu_vls_printf(gedp->ged_result_str, ": failed to create brep for face %d", f_id);
+		bu_vls_free(&fbrep_name);
+		bu_vls_free(&ocomb);
+		return BRLCAD_ERROR;
+	    }
 	    delete fbrep;
 	    if (thickness > 0) {
-		struct bu_attribute_value_set avs;
+		struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 		struct directory *ndp = db_lookup(gedp->dbip, bu_vls_cstr(&fbrep_name), LOOKUP_QUIET);
 		if (ndp == RT_DIR_NULL) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to create brep for face %d", f_id);
@@ -1255,6 +1268,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 		}
 		if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from face brep  %s", bu_vls_cstr(&fbrep_name));
+		    bu_avs_free(&avs);
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
 		    return BRLCAD_ERROR;
@@ -1267,10 +1281,12 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 		(void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
 		if (db5_replace_attributes(ndp, &avs, gb->gedp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness for face %d", f_id);
+		    bu_avs_free(&avs);
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
 		    return BRLCAD_ERROR;
 		}
+		bu_avs_free(&avs);
 	    }
 	    bu_vls_free(&fbrep_name);
 	} else {
@@ -1291,8 +1307,13 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 
     if (!object_per_face) {
 	ret = mk_brep(wdbp, bu_vls_cstr(&ocomb), brep);
+	delete brep;
+	if (ret) {
+	    bu_vls_free(&ocomb);
+	    return ret;
+	}
 	if (thickness > 0) {
-	    struct bu_attribute_value_set avs;
+	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 	    struct directory *ndp = db_lookup(gedp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET);
 	    if (ndp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to create brep");
@@ -1301,6 +1322,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	    }
 	    if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from brep");
+		bu_avs_free(&avs);
 		bu_vls_free(&ocomb);
 		return BRLCAD_ERROR;
 	    };
@@ -1312,14 +1334,17 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	    (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
 	    if (db5_replace_attributes(ndp, &avs, gb->gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness");
+		bu_avs_free(&avs);
 		bu_vls_free(&ocomb);
 		return BRLCAD_ERROR;
 	    }
+	    bu_avs_free(&avs);
 	}
     } else {
 	ret = mk_lcomb(wdbp, bu_vls_cstr(&ocomb), &wcomb, 0, NULL, NULL, NULL, 0);
     }
 
+    bu_vls_free(&ocomb);
     return ret;
 }
 
@@ -1468,7 +1493,6 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     int help = 0;
     struct bu_color *color = NULL;
     int plotres = 100;
-    struct bu_list *vlfree = &rt_vlfree;
     struct _ged_brep_info gb;
     gb.verbosity = 0;
     gb.gedp = gedp;
@@ -1571,7 +1595,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERN(gedp, &gb.intern, gb.dp, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
 
-    gb.vbp = bv_vlblock_init(vlfree, 32);
+    gb.plot = bsg_line_layer_builder_create();
     gb.color = color;
     gb.plotres = plotres;
 
@@ -1581,14 +1605,15 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 
     int ret;
     if (bu_cmd(_brep_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
+	bsg_line_layer_builder_free(gb.plot);
 	rt_db_free_internal(&gb.intern);
 	return ret;
     } else {
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
-    bv_vlblock_free(gb.vbp);
-    gb.vbp = (struct bv_vlblock *)NULL;
+    bsg_line_layer_builder_free(gb.plot);
+    gb.plot = (struct bsg_line_layer_builder *)NULL;
     rt_db_free_internal(&gb.intern);
     return BRLCAD_ERROR;
 }
@@ -1610,4 +1635,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_brep", 1, GED_BREP_COMMANDS)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

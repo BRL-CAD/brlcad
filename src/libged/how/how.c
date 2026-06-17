@@ -31,59 +31,43 @@
 #include "bu/cmd.h"
 #include "bu/str.h"
 #include "dm.h"
+#include "ged/bsg_ged_draw.h"
 #include "../ged_private.h"
 
+struct how_find_ctx {
+    const char *path;
+    struct bsg_view *view;
+    const struct ged_draw_group_record *match;
+    struct ged_draw_group_record rec;
+};
+
 static int
-dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both)
+how_group_match_cb(const struct ged_draw_group_record *rec, void *ud)
 {
-    size_t i;
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-    struct directory **tmp_dpp;
+    struct how_find_ctx *ctx = (struct how_find_ctx *)ud;
+    if (!ctx || !rec || !rec->path || !ctx->path)
+	return 1;
+    if (rec->is_overlay || !rec->visible || rec->shape_count <= 0)
+	return 1;
+    if (!ged_draw_group_record_in_view(rec, ctx->view))
+	return 1;
 
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_u_data)
-		continue;
-	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-
-	    for (i = 0, tmp_dpp = dpp;
-		 i < bdata->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
-		 ++i, ++tmp_dpp) {
-		if (bdata->s_fullpath.fp_names[i] != *tmp_dpp)
-		    break;
-	    }
-
-	    if (*tmp_dpp != RT_DIR_NULL)
-		continue;
-
-
-	    /* found a match */
-	    if (sp->s_os->s_dmode == 4) {
-		if (both)
-		    bu_vls_printf(vls, "%d 1", _GED_HIDDEN_LINE);
-		else
-		    bu_vls_printf(vls, "%d", _GED_HIDDEN_LINE);
-	    } else {
-		if (both)
-		    bu_vls_printf(vls, "%d %g", sp->s_os->s_dmode, sp->s_os->transparency);
-		else
-		    bu_vls_printf(vls, "%d", sp->s_os->s_dmode);
-	    }
-
-	    return 1;
-	}
-
-	gdlp = next_gdlp;
+    if (BU_STR_EQUAL(rec->path, ctx->path)) {
+	ctx->rec = *rec;
+	ctx->match = &ctx->rec;
+	return 0;
     }
 
-    return 0;
-}
+    size_t n = strlen(ctx->path);
+    if (strlen(rec->path) > n && !bu_strncmp(rec->path, ctx->path, n) &&
+	    rec->path[n] == '/') {
+	ctx->rec = *rec;
+	ctx->match = &ctx->rec;
+	return 0;
+    }
 
+    return 1;
+}
 
 /*
  * Returns "how" an object is being displayed.
@@ -95,10 +79,9 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
 int
 ged_how_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int good;
-    struct directory **dpp;
     int both = 0;
     static const char *usage = "[-b] object";
+    const char *obj_arg = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -122,22 +105,39 @@ ged_how_core(struct ged *gedp, int argc, const char *argv[])
 	argv[1][0] == '-' &&
 	argv[1][1] == 'b') {
 	both = 1;
-
-	if ((dpp = _ged_build_dpp(gedp, argv[2])) == NULL)
-	    goto good_label;
     } else {
-	if ((dpp = _ged_build_dpp(gedp, argv[1])) == NULL)
-	    goto good_label;
+	if (argc != 2) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
     }
 
-    good = dl_how(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_result_str, dpp, both);
+    obj_arg = both ? argv[2] : argv[1];
+    struct how_find_ctx ctx;
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.path = obj_arg;
+    ctx.view = gedp->ged_gvp;
+    ged_draw_foreach_group_record(gedp, how_group_match_cb, &ctx);
+    if (!ctx.match)
+	goto not_found;
 
-    /* match NOT found */
-    if (!good) bu_vls_printf(gedp->ged_result_str, "-1");
+    int dmode = (int)ctx.match->draw_mode;
+    fastf_t transparency = ctx.match->transparency;
+    if (dmode == _GED_HIDDEN_LINE) {
+	if (both)
+	    bu_vls_printf(gedp->ged_result_str, "%d 1", _GED_HIDDEN_LINE);
+	else
+	    bu_vls_printf(gedp->ged_result_str, "%d", _GED_HIDDEN_LINE);
+    } else {
+	if (both)
+	    bu_vls_printf(gedp->ged_result_str, "%d %g", dmode, transparency);
+	else
+	    bu_vls_printf(gedp->ged_result_str, "%d", dmode);
+    }
+    return BRLCAD_OK;
 
-good_label:
-    if (dpp != (struct directory **)NULL)
-	bu_free((void *)dpp, "ged_how_core: directory pointers");
+not_found:
+    bu_vls_printf(gedp->ged_result_str, "-1");
 
     return BRLCAD_OK;
 }

@@ -208,7 +208,7 @@ package provide cadwidgets::Ged 1.0
 	method decompose {args}
 	method delay {args}
 	method dir2ae {args}
-	method dlist_on {args}
+	method cache_on {args}
 	method dplot {args}
 	method draw {args}
 	method draw_ray {_start _partitions}
@@ -1620,8 +1620,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed dir2ae $args
 }
 
-::itcl::body cadwidgets::Ged::dlist_on {args} {
-    eval $mGed dlist_on $args
+::itcl::body cadwidgets::Ged::cache_on {args} {
+    eval $mGed cache_on $args
 }
 
 ::itcl::body cadwidgets::Ged::dplot {args} {

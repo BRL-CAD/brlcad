@@ -45,7 +45,9 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bv/plot3.h"
+#include "bsg/feature.h"
+#include "bsg/geometry.h"
+#include "bsg/plot3.h"
 #include "analyze.h"
 
 #include "../ged_private.h"
@@ -169,9 +171,27 @@ struct cstate {
 
 
 struct ged_gqa_plot {
-    struct bv_vlblock *vbp;
-    struct bu_list *vhead;
+    struct bsg_line_layer_builder *builder;
 } ged_gqa_plot;
+
+static int
+ged_gqa_plot_append(const point_t a, const point_t b)
+{
+    if (!ged_gqa_plot.builder)
+	return 0;
+
+    if (!bsg_line_layer_builder_add(ged_gqa_plot.builder, 255, 255, 0, a, BSG_GEOMETRY_LINE_MOVE))
+	return 0;
+    return bsg_line_layer_builder_add(ged_gqa_plot.builder, 255, 255, 0, b, BSG_GEOMETRY_LINE_DRAW);
+}
+
+static void
+ged_gqa_plot_free(void)
+{
+    if (ged_gqa_plot.builder)
+	bsg_line_layer_builder_free(ged_gqa_plot.builder);
+    memset(&ged_gqa_plot, 0, sizeof(ged_gqa_plot));
+}
 
 /* summary data structure for objects specified on command line */
 static struct per_obj_data {
@@ -805,8 +825,7 @@ _gqa_overlap(struct application *ap,
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	bu_semaphore_acquire(state->sem_worker);
-	BV_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ihit, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ohit, BV_VLIST_LINE_DRAW);
+	(void)ged_gqa_plot_append(ihit, ohit);
 	bu_semaphore_release(state->sem_worker);
     }
 
@@ -2496,7 +2515,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     struct region *regp;
     static const char *usage = "object [object ...]";
     struct resource resp[MAX_PSW];	/* memory resources for multi-cpu processing */
-    struct bu_list *vlfree = &rt_vlfree;
+    int overlay_enabled = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -2561,9 +2580,13 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    overlay_enabled = (analysis_flags & ANALYSIS_PLOT_OVERLAPS) && gedp->ged_gvp;
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
-	ged_gqa_plot.vbp = bv_vlblock_init(vlfree, 32);
-	ged_gqa_plot.vhead = bv_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
+	memset(&ged_gqa_plot, 0, sizeof(ged_gqa_plot));
+	if (overlay_enabled)
+	    ged_gqa_plot.builder = bsg_line_layer_builder_create();
+	else
+	    bu_vls_printf(gedp->ged_result_str, "overlap overlay requested, but no view is available\n");
     }
 
     rtip = rt_i_create(gedp->dbip);
@@ -2721,19 +2744,15 @@ aborted:
     if (!aborted) {
 	summary_reports(gedp, &state);
 
-	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
-	    if (gedp->new_cmd_forms) {
-		struct bview *view = gedp->ged_gvp;
-		bv_vlblock_obj(ged_gqa_plot.vbp, view, "gqa::overlaps");
-	    } else {
-		_ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
-	    }
+	if (overlay_enabled) {
+	    (void)bsg_feature_replace_line_layer_builder(gedp->ged_gvp,
+		    "gqa::overlaps", 0, ged_gqa_plot.builder, NULL);
 	}
     } else
 	aborted = 0; /* reset flag */
 
-    if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
-	bv_vlblock_free(ged_gqa_plot.vbp);
+    if (overlay_enabled)
+	ged_gqa_plot_free();
 
     /* Clear out the lists */
     while (BU_LIST_WHILE (rp, region_pair, &overlapList.l)) {

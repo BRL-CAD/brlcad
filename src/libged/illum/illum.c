@@ -26,21 +26,114 @@
 #include "common.h"
 #include <string.h>
 
-#include "dm.h" // For labelvert - see if we really need the dm_set_dirty call there...
+#include "dm.h" // For labelvert - see if we really need the dm_set_native_repaint_pending call there...
+
+#include "bsg/export.h"
+#include "bsg/feature.h"
+#include "bsg/render.h"
 
 #include "ged.h"
+#include "ged/bsg_ged_draw.h"
+#include "ged/view.h"
 #include "../ged_private.h"
+
+/* Callback data for labelvert */
+struct labelvert_data {
+    struct directory *dp;
+    double base2local;
+    struct bsg_feature_label_data *labels;
+    size_t label_count;
+    size_t label_capacity;
+};
+
+#define LABELVERT_FEATURE_NAME "_LABELVERT_ffffff"
+
+static int
+labelvert_record_matches(struct db_i *dbip, const struct bsg_export_record *rec, struct directory *dp)
+{
+    if (!dbip || !rec || !dp || rec->source.scope != BSG_RENDER_SOURCE_SCOPE_DATABASE)
+	return 0;
+
+    struct db_full_path fp;
+    db_full_path_init(&fp);
+    if (db_string_to_path(&fp, dbip, bu_vls_cstr(&rec->path)) < 0)
+	return 0;
+    int ret = db_full_path_search(&fp, dp);
+    db_free_full_path(&fp);
+    return ret;
+}
+
+static void
+labelvert_data_free(struct labelvert_data *lvd)
+{
+    if (!lvd)
+	return;
+
+    for (size_t i = 0; i < lvd->label_count; i++) {
+	if (lvd->labels[i].text)
+	    bu_free((char *)lvd->labels[i].text, "labelvert label text");
+    }
+    if (lvd->labels)
+	bu_free(lvd->labels, "labelvert label data");
+    lvd->labels = NULL;
+    lvd->label_count = 0;
+    lvd->label_capacity = 0;
+}
+
+static int
+labelvert_append_label(struct labelvert_data *lvd, const point_t pt)
+{
+    char label[256];
+
+    if (!lvd)
+	return 0;
+
+    if (lvd->label_count + 1 > lvd->label_capacity) {
+	size_t ncap = lvd->label_capacity ? lvd->label_capacity * 2 : 64;
+	lvd->labels = (struct bsg_feature_label_data *)bu_realloc(lvd->labels,
+		ncap * sizeof(struct bsg_feature_label_data), "labelvert label data");
+	for (size_t i = lvd->label_capacity; i < ncap; i++) {
+	    struct bsg_feature_label_data init = BSG_FEATURE_LABEL_DATA_INIT;
+	    lvd->labels[i] = init;
+	}
+	lvd->label_capacity = ncap;
+    }
+
+    snprintf(label, sizeof(label), " %g, %g, %g",
+	    pt[0] * lvd->base2local,
+	    pt[1] * lvd->base2local,
+	    pt[2] * lvd->base2local);
+    struct bsg_feature_label_data init = BSG_FEATURE_LABEL_DATA_INIT;
+    lvd->labels[lvd->label_count] = init;
+    lvd->labels[lvd->label_count].text = bu_strdup(label);
+    VMOVE(lvd->labels[lvd->label_count].point, pt);
+    lvd->labels[lvd->label_count].color_valid = 1;
+    VSET(lvd->labels[lvd->label_count].color, 255, 255, 255);
+    lvd->label_count++;
+    return 1;
+}
+
+static int
+labelvert_point_cb(const point_t pt, void *data)
+{
+    return labelvert_append_label((struct labelvert_data *)data, pt);
+}
+
+static void
+labelvert_export_record(struct db_i *dbip, const struct bsg_export_record *rec, struct labelvert_data *lvd)
+{
+    if (!lvd || !labelvert_record_matches(dbip, rec, lvd->dp))
+	return;
+
+    (void)bsg_export_record_foreach_point(rec, labelvert_point_cb, lvd);
+}
 
 /* Usage:  labelvert solid(s) */
 int
 ged_labelvert_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
     int i;
-    struct bv_vlblock*vbp;
-    mat_t mat;
-    fastf_t scale;
+    struct labelvert_data lvd;
     static const char *usage = "object(s) - label vertices of wireframes of objects";
 
     if (!gedp || !gedp->dbip)
@@ -51,69 +144,46 @@ ged_labelvert_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    vbp = rt_vlblock_init();
-    MAT_IDN(mat);
-    bn_mat_inv(mat, gedp->ged_gvp->gv_rotation);
-    scale = gedp->ged_gvp->gv_size / 100;          /* divide by # chars/screen */
+    memset(&lvd, 0, sizeof(lvd));
+    lvd.base2local = gedp->dbip->dbi_base2local;
 
     for (i=1; i<argc; i++) {
-	struct bv_scene_obj *s;
 	struct directory *dp;
 	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
-	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(display_list, gedp->i->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->i->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+	/* Find displayed uses of this database object. */
+	lvd.dp = dp;
+	struct bsg_export_request request;
+	bsg_export_request_init(&request, gedp->ged_gvp);
+	request.query_flags = BSG_EXPORT_QUERY_VISIBLE_ONLY | BSG_EXPORT_QUERY_DB_OBJECTS;
+	request.render_flags = BSG_RENDER_FLAG_VISIBLE_ONLY | BSG_RENDER_FLAG_PAYLOAD_PREPARE;
+	struct bsg_export_result *result = bsg_export_query(&request);
+	if (!result)
+	    continue;
+	for (size_t ri = 0; ri < bsg_export_result_count(result); ri++)
+	    labelvert_export_record(gedp->dbip, bsg_export_result_get(result, ri), &lvd);
+	bsg_export_result_free(result);
+    }
 
-	    for (BU_LIST_FOR(s, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-		if (!s->s_u_data)
-		    continue;
-		struct ged_bv_data *bdata = (struct ged_bv_data *)s->s_u_data;
-		if (db_full_path_search(&bdata->s_fullpath, dp)) {
-		    rt_label_vlist_verts(vbp, &s->s_vlist, mat, scale, gedp->dbip->dbi_base2local);
-		}
-	    }
-
-	    gdlp = next_gdlp;
+    (void)bsg_feature_remove(gedp->ged_gvp, LABELVERT_FEATURE_NAME);
+    if (lvd.label_count) {
+	bsg_feature_ref ref = bsg_feature_create_label(gedp->ged_gvp,
+		LABELVERT_FEATURE_NAME, 0);
+	if (bsg_feature_ref_is_null(ref) ||
+		!bsg_feature_labels_replace(ref, lvd.labels, lvd.label_count)) {
+	    labelvert_data_free(&lvd);
+	    bu_vls_printf(gedp->ged_result_str, "failed to create labelvert feature\n");
+	    return BRLCAD_ERROR;
 	}
     }
 
-    _ged_cvt_vlblock_to_solids(gedp, vbp, "_LABELVERT_", 0);
-
-    bv_vlblock_free(vbp);
+    labelvert_data_free(&lvd);
     struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
     if (dmp)
-	dm_set_dirty(dmp, 1);
+	dm_set_native_repaint_pending(dmp, 1);
     return BRLCAD_OK;
 }
 
-
-static int
-dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
-{
-    int found = 0;
-    struct bv_scene_obj *sp;
-
-    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	size_t i;
-	if (!sp->s_u_data)
-	    continue;
-	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-
-	for (i = 0; i < bdata->s_fullpath.fp_len; ++i) {
-	    if (*obj == *DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep &&
-		BU_STR_EQUAL(obj, DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep)) {
-		found = 1;
-		if (illum)
-		    sp->s_iflag = UP;
-		else
-		    sp->s_iflag = DOWN;
-	    }
-	}
-    }
-    return found;
-}
 
 /*
  * Illuminate/highlight database object
@@ -125,9 +195,6 @@ dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
 int
 ged_illum_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    int found = 0;
     int illum = 1;
     static const char *usage = "[-n] obj";
 
@@ -157,17 +224,14 @@ ged_illum_core(struct ged *gedp, int argc, const char *argv[])
     if (argc != 2)
 	goto bad;
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->i->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->i->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	found += dl_set_illum(gdlp, argv[1], illum);
-
-	gdlp = next_gdlp;
-    }
-
-
-    if (!found) {
+    struct ged_draw_transaction txn =
+	ged_draw_transaction_make_value(GED_DRAW_TXN_HIGHLIGHT,
+					argv[1], (double)illum);
+    struct ged_draw_transaction_result result;
+    ged_draw_transaction_result_init(&result);
+    int changed = ged_draw_apply_transaction(gedp, &txn, &result);
+    ged_draw_transaction_result_free(&result);
+    if (!changed) {
 	bu_vls_printf(gedp->ged_result_str, "illum: %s not found", argv[1]);
 	return BRLCAD_ERROR;
     }

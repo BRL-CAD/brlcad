@@ -34,7 +34,7 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "bv.h"
+#include "bsg.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 
@@ -69,7 +69,7 @@ struct db_i_internal {
     uint32_t dbi_magic;
 
     /* BoT level of detail cached data for drawing */
-    struct bv_mesh_lod_context *mesh_c;
+    struct bsg_mesh_lod_context *mesh_c;
     int mesh_c_completed;
     int mesh_c_target;
 
@@ -167,6 +167,13 @@ void rt_i_internal_destroy(struct rt_i_internal *i);
 /* Used by sketch extrude revolve */
 extern int curve_to_vlist(struct bu_list              *vlfree,
                          struct bu_list              *vhead,
+                         const struct bg_tess_tol    *ttol,
+                         point_t                     V,
+                         vect_t                      u_vec,
+                         vect_t                      v_vec,
+                         struct rt_sketch_internal *sketch_ip,
+                         struct rt_curve             *crv);
+extern int curve_to_line_set(struct rt_primitive_lod_realization *realization,
                          const struct bg_tess_tol    *ttol,
                          point_t                     V,
                          vect_t                      u_vec,
@@ -335,7 +342,7 @@ extern void primitive_clamp_tess_tol(
 
 extern fastf_t primitive_diagonal_samples(
 	struct rt_db_internal *ip,
-	const struct bview *v,
+	const struct bsg_view *v,
 	const struct bn_tol *tol,
 	fastf_t s_size);
 
@@ -349,6 +356,20 @@ extern fastf_t primitive_curve_count(
 	const struct bn_tol *tol,
 	fastf_t curve_scale,
 	fastf_t s_size);
+
+extern fastf_t primitive_lod_curve_scale(const struct bsg_view *v);
+extern size_t primitive_lod_bot_threshold(const struct bsg_view *v);
+
+extern int primitive_lod_line_set_begin(
+	struct rt_primitive_lod_realization *realization);
+extern int primitive_lod_line_set_append(
+	struct rt_primitive_lod_realization *realization,
+	const point_t point,
+	int command);
+extern int primitive_lod_line_set_finish(
+	struct rt_primitive_lod_realization *realization);
+extern void primitive_lod_line_set_free(
+	struct rt_primitive_lod_realization *realization);
 
 extern int approximate_hyperbolic_curve(
 	struct rt_pnt_node *pts,
@@ -371,13 +392,19 @@ extern void plot_ellipse(
 	const vect_t a,
 	const vect_t b,
 	int num_points);
+extern int primitive_lod_append_ellipse(
+	struct rt_primitive_lod_realization *realization,
+	const vect_t t,
+	const vect_t a,
+	const vect_t b,
+	int num_points);
 
 extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
 extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);
 
 /* view.c */
-extern fastf_t solid_point_spacing(const struct bview *gvp, fastf_t solid_width);
-extern fastf_t view_avg_sample_spacing(const struct bview *gvp);
+extern fastf_t solid_point_spacing(const struct bsg_view *gvp, fastf_t solid_width);
+extern fastf_t view_avg_sample_spacing(const struct bsg_view *gvp);
 
 
 #ifdef USE_OPENCL

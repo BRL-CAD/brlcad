@@ -27,7 +27,6 @@
 #include "common.h"
 #include "bu/units.h"
 #include "ged.h"
-#define DM_WITH_RT
 #include "tclcad.h"
 
 /* Private headers */
@@ -35,24 +34,23 @@
 #include "../view/view.h"
 
 void
-go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
+go_refresh_draw(struct ged *gedp, struct bsg_view *gdvp, int restore_zbuffer)
 {
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bsg_interactive_rect_state rect = {0};
+    (void)bsg_view_interactive_rect_get(gdvp, &rect);
     if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
-	if (gdvp->gv_s->gv_rect.draw) {
+	if (rect.draw) {
 	    go_draw(gdvp);
 
-	    // TODO - I wouldn't expect these values to differ from the dbi
-	    // versions, but to preserve the old behavior where the factors
-	    // were passed explicitly we stash and restore.  Need to figure
-	    // out whether this is ever needed (shouldn't be?)
+	    /* Phase T2-final: replaced dm_draw_viewobjs with dm_draw_objs.
+	     * Stash/restore gv_local2base|base2local to keep faceplate unit
+	     * display consistent with the database unit factors. */
 	    double l2b = gdvp->gv_local2base;
 	    double b2l = gdvp->gv_base2local;
 	    gdvp->gv_local2base = gedp->dbip->dbi_local2base;
 	    gdvp->gv_base2local = gedp->dbip->dbi_base2local;
-	    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv);
+	    dm_draw_objs(gdvp);
 	    gdvp->gv_local2base = l2b;
 	    gdvp->gv_base2local = b2l;
 
@@ -60,14 +58,14 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp,
-		       gdvp->gv_s->gv_rect.pos[X], gdvp->gv_s->gv_rect.pos[Y],
-		       gdvp->gv_s->gv_rect.dim[X], gdvp->gv_s->gv_rect.dim[Y]);
+		       rect.pos[X], rect.pos[Y],
+		       rect.dim[X], rect.dim[Y]);
 
 	    /* enable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 1);
 
-	    if (gdvp->gv_s->gv_rect.line_width)
-		dm_draw_rect((struct dm *)gdvp->dmp, &gdvp->gv_s->gv_rect);
+	    if (rect.line_width)
+		dm_draw_rect((struct dm *)gdvp->dmp, &rect);
 	} else {
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
@@ -90,10 +88,10 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	/* disable write to depth buffer */
 	(void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
-	if (gdvp->gv_s->gv_rect.draw) {
+	if (rect.draw) {
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp,
-		       gdvp->gv_s->gv_rect.pos[X], gdvp->gv_s->gv_rect.pos[Y],
-		       gdvp->gv_s->gv_rect.dim[X], gdvp->gv_s->gv_rect.dim[Y]);
+		       rect.pos[X], rect.pos[Y],
+		       rect.dim[X], rect.dim[Y]);
 	} else
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
 		       dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));
@@ -109,10 +107,10 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
-	    if (gdvp->gv_s->gv_rect.draw) {
+	    if (rect.draw) {
 		fb_refresh(tvd->gdv_fbs.fbs_fbp,
-			   gdvp->gv_s->gv_rect.pos[X], gdvp->gv_s->gv_rect.pos[Y],
-			   gdvp->gv_s->gv_rect.dim[X], gdvp->gv_s->gv_rect.dim[Y]);
+			   rect.pos[X], rect.pos[Y],
+			   rect.dim[X], rect.dim[Y]);
 	    } else
 		fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
 			   dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));
@@ -128,22 +126,21 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	go_draw(gdvp);
     }
 
-    // TODO - I wouldn't expect these values to differ from the dbi versions,
-    // but to preserve the old behavior where the factors were passed
-    // explicitly we stash and restore.  Need to figure out whether this is
-    // ever needed (shouldn't be?)
+    /* Phase T2-final: replaced dm_draw_viewobjs with dm_draw_objs so the
+     * full BSG view-scope object set (including T1-migrated overlays) and
+     * faceplate are rendered through the modern path.  Stash/restore the
+     * unit-conversion factors as before. */
     double l2b = gdvp->gv_local2base;
     double b2l = gdvp->gv_base2local;
     gdvp->gv_local2base = gedp->dbip->dbi_local2base;
     gdvp->gv_base2local = gedp->dbip->dbi_base2local;
-    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv);
-    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv);
+    dm_draw_objs(gdvp);
     gdvp->gv_local2base = l2b;
     gdvp->gv_base2local = b2l;
 }
 
 void
-go_refresh(struct ged *gedp, struct bview *gdvp)
+go_refresh(struct ged *gedp, struct bsg_view *gdvp)
 {
     int restore_zbuffer = 0;
 
@@ -160,29 +157,95 @@ go_refresh(struct ged *gedp, struct bview *gdvp)
 }
 
 void
-to_refresh_view(struct bview *gdvp)
+to_refresh_view(struct bsg_view *gdvp)
 {
 
-    if (current_top == NULL)
+    if (current_top == NULL || gdvp == NULL)
 	return;
 
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-    if (!tgd->go_dmv.refresh_on)
+    if (!bsg_view_refresh_enabled(gdvp) || bsg_view_refresh_suppressed(gdvp))
 	return;
 
-    if (to_is_viewable(gdvp))
+    bsg_view_refresh_request(gdvp, BSG_VIEW_REFRESH_ALL);
+    if (to_is_viewable(gdvp)) {
+	(void)bsg_view_refresh_consume(gdvp);
 	go_refresh(current_top->to_gedp, gdvp);
+	bsg_view_refresh_complete(gdvp);
+    }
 }
 
 void
 to_refresh_all_views(struct tclcad_obj *top)
 {
-    struct bview *gdvp;
+    struct bsg_view *gdvp;
 
-    struct bu_ptbl *views = bv_set_views(&top->to_gedp->ged_views);
+    struct bu_ptbl *views = bsg_set_views(&top->to_gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(views, i);
+	gdvp = (struct bsg_view *)BU_PTBL_GET(views, i);
 	to_refresh_view(gdvp);
+    }
+}
+
+int
+to_refresh_all_enabled(struct tclcad_obj *top)
+{
+    struct bsg_view *gdvp;
+
+    if (!top)
+	return 1;
+
+    struct bu_ptbl *views = bsg_set_views(&top->to_gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	gdvp = (struct bsg_view *)BU_PTBL_GET(views, i);
+	if (!bsg_view_refresh_enabled(gdvp))
+	    return 0;
+    }
+
+    return 1;
+}
+
+void
+to_refresh_all_set_enabled(struct tclcad_obj *top, int enabled)
+{
+    struct bsg_view *gdvp;
+
+    if (!top)
+	return;
+
+    struct bu_ptbl *views = bsg_set_views(&top->to_gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	gdvp = (struct bsg_view *)BU_PTBL_GET(views, i);
+	bsg_view_refresh_set_enabled(gdvp, enabled);
+    }
+}
+
+void
+to_refresh_suppress_all_begin(struct tclcad_obj *top)
+{
+    struct bsg_view *gdvp;
+
+    if (!top)
+	return;
+
+    struct bu_ptbl *views = bsg_set_views(&top->to_gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	gdvp = (struct bsg_view *)BU_PTBL_GET(views, i);
+	bsg_view_refresh_suppress_begin(gdvp);
+    }
+}
+
+void
+to_refresh_suppress_all_end(struct tclcad_obj *top)
+{
+    struct bsg_view *gdvp;
+
+    if (!top)
+	return;
+
+    struct bu_ptbl *views = bsg_set_views(&top->to_gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	gdvp = (struct bsg_view *)BU_PTBL_GET(views, i);
+	bsg_view_refresh_suppress_end(gdvp);
     }
 }
 
@@ -240,8 +303,6 @@ to_refresh_on(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     int on;
-    struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -252,7 +313,7 @@ to_refresh_on(struct ged *gedp,
 
     /* Get refresh_on state */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dmv.refresh_on);
+	bu_vls_printf(gedp->ged_result_str, "%d", to_refresh_all_enabled(current_top));
 	return BRLCAD_OK;
     }
 
@@ -262,7 +323,7 @@ to_refresh_on(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    tgd->go_dmv.refresh_on = on;
+    to_refresh_all_set_enabled(current_top, on);
 
     return BRLCAD_OK;
 }
@@ -271,9 +332,9 @@ int
 to_handle_refresh(struct ged *gedp,
 		  const char *name)
 {
-    struct bview *gdvp;
+    struct bsg_view *gdvp;
 
-    gdvp = bv_set_find_view(&gedp->ged_views, name);
+    gdvp = bsg_set_find_view(&gedp->ged_views, name);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", name);
 	return BRLCAD_ERROR;
@@ -288,7 +349,7 @@ to_handle_refresh(struct ged *gedp,
 void
 to_refresh_handler(void *clientdata)
 {
-    struct bview *gdvp = (struct bview *)clientdata;
+    struct bsg_view *gdvp = (struct bsg_view *)clientdata;
 
     /* Possibly do more here */
 

@@ -39,7 +39,7 @@
 #include "../view/view.h"
 
 int
-to_is_viewable(struct bview *gdvp)
+to_is_viewable(struct bsg_view *gdvp)
 {
     int result_int;
 

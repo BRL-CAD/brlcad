@@ -41,6 +41,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "rt/primitives/nmg.h"
@@ -171,7 +172,7 @@ make_nmg_tet(struct rt_wdb *wdbp)
     BU_LIST_INIT(&vlfree);
     nmg_fix_normals(s, &vlfree, &tol);
     /* free any vlists that nmg_fix_normals may have allocated */
-    BV_FREE_VLIST(&vlfree, &vlfree);
+    BSG_FREE_VLIST(&vlfree, &vlfree);
 
     const char *objname = "nmg_tet";
     mk_nmg(wdbp, objname, m);  /* mk_nmg takes ownership of m */
@@ -203,11 +204,11 @@ main(int argc, char *argv[])
     db_full_path_init(&fp);
     db_add_node_to_full_path(&fp, dp);
 
-    struct bview *v;
-    BU_GET(v, struct bview);
-    bv_init(v, NULL);
+    struct bsg_view *v;
+    BU_GET(v, struct bsg_view);
+    bsg_init(v, NULL);
     VSET(v->gv_aet, 45, 35, 0);
-    bv_mat_aet(v);
+    bsg_mat_aet(v);
     v->gv_size  = 73.3197;
     v->gv_isize = 1.0 / v->gv_size;
 
@@ -368,13 +369,13 @@ main(int argc, char *argv[])
 	db_full_path_init(&wfp);
 	db_add_node_to_full_path(&wfp, wdp);
 
-	struct bview *wv;
-	BU_GET(wv, struct bview);
-	bv_init(wv, NULL);
+	struct bsg_view *wv;
+	BU_GET(wv, struct bsg_view);
+	bsg_init(wv, NULL);
 	wv->gv_size  = 10.0;
 	wv->gv_isize = 0.1;
 	wv->gv_scale = 5.0;
-	bv_update(wv);
+	bsg_update(wv);
 	bu_vls_sprintf(&wv->gv_name, "default");
 	wv->gv_width = wv->gv_height = 512;
 

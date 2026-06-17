@@ -36,26 +36,26 @@
 
 #include "qtcad/defines.h"
 
-class QTCAD_EXPORT QgKeyValNode
-  {
-  public:
-      QgKeyValNode(QgKeyValNode *aParent=0);
-      ~QgKeyValNode();
+class QTCAD_EXPORT QgKeyValNode {
+public:
+	QgKeyValNode(QgKeyValNode *aParent=0);
+	~QgKeyValNode();
 
-      QString name;
-      QString value;
-      int attr_type;
+	QString name;
+	QString value;
+	int attr_type;
 
-      QgKeyValNode *parent;
-      QList<QgKeyValNode*> children;
+	QgKeyValNode *parent;
+	QList<QgKeyValNode*> children;
 };
 
-class QTCAD_EXPORT QgKeyValModel : public QAbstractItemModel
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgKeyValModel : public QAbstractItemModel {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgKeyValModel)
 
-    public:
-	QgKeyValModel(QObject *p = NULL);
+
+public:
+	QgKeyValModel(QObject *p = nullptr);
 	~QgKeyValModel();
 
 	QModelIndex index(int row, int column, const QModelIndex &parent) const;
@@ -80,22 +80,24 @@ class QTCAD_EXPORT QgKeyValModel : public QAbstractItemModel
 	int NodeRow(QgKeyValNode *node) const;
 };
 
-class QTCAD_EXPORT QgKeyValDelegate : public QStyledItemDelegate
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgKeyValDelegate : public QStyledItemDelegate {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgKeyValDelegate)
 
-    public:
+
+public:
 	QgKeyValDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
 
 	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
 };
 
-class QTCAD_EXPORT QgKeyValView : public QTreeView
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgKeyValView : public QTreeView {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgKeyValView)
 
-    public:
+
+public:
 	QgKeyValView(QWidget *pparent, int decorate_tree = 0);
 	~QgKeyValView() {};
 };
@@ -103,4 +105,12 @@ class QTCAD_EXPORT QgKeyValView : public QTreeView
 
 #endif /* QGKEYVAL_H */
 
-
+/*
+ * Local Variables:
+ * mode: C++
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

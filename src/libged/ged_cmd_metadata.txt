@@ -1,0 +1,462 @@
+GED command metadata design proposal
+====================================
+
+Problem
+-------
+
+The initial qged Phase 2 schema prototype demonstrates that libged can expose
+command syntax information, validate prompt text, and produce completions using
+bu_opt metadata.  However, a central libged command schema file is not the right
+long-term architecture:
+
+* command syntax knowledge is separated from the command implementation and will
+  drift from the real parser;
+* plugin commands cannot publish metadata unless libged has a central list that
+  knows about them in advance;
+* complex commands such as brep, bot, and view have large and evolving
+  subcommand trees that should be owned by their command modules;
+* static-core and dynamic-plugin builds need to expose the same metadata.
+
+The long-term design should make command metadata part of each command's normal
+registration data.  Metadata must be optional, versioned, immutable, safe to
+query without executing commands, and available for both built-ins and plugins.
+
+Goals
+-----
+
+1. Keep command metadata next to the command parser and help text.
+2. Preserve existing command execution behavior and plugin compatibility.
+3. Allow commands to opt in incrementally without forcing every command to
+   update at once.
+4. Support aliases explicitly and avoid assuming one function has one syntax.
+5. Support deep and irregular subcommand trees without requiring enormous eager
+   static schema objects.
+6. Allow clients to ask libged for:
+
+   * command list with schema availability;
+   * one command's JSON schema;
+   * advisory validation of a command line;
+   * completion candidates using static schema plus database/view/file context.
+
+7. Keep metadata thread-safe and side-effect-free.
+8. Avoid per-keystroke command execution or callbacks that modify a ged state.
+
+Non-goals
+---------
+
+* The metadata layer is not a replacement for command parsers.  Execution
+  parsers remain authoritative.
+* The first production migration does not need complete schema coverage.
+* The metadata layer should not require qged to include private command headers.
+* The metadata layer should not force bu_opt_parse to own all command parsing
+  immediately.
+
+High-level architecture
+-----------------------
+
+Use a three-layer model:
+
+1. Command-owned metadata providers
+
+   Each command translation unit declares metadata for the commands it registers.
+   Simple commands may publish a static bu_opt_cmd_desc.  Complex commands may
+   publish a provider callback that can lazily describe a root command or one
+   subcommand path.
+
+2. libged registry storage
+
+   The libged command registry stores each command's execution pointer, flags,
+   and optional metadata provider.  The metadata provider is keyed by command
+   name, not only by function pointer, so aliases can report alias-specific names
+   and syntax when needed.
+
+3. Public query APIs
+
+   Public APIs operate only through the registry.  They never inspect command
+   internals directly and never need a central command schema file.
+
+Core data model
+---------------
+
+Extend libged's private command registration data with optional metadata:
+
+* command name;
+* command function pointer;
+* command flags;
+* optional metadata provider;
+* optional alias group identifier;
+* optional metadata flags, such as incomplete, experimental, hidden, or
+  dynamic-completion-required.
+
+The provider should be a function pointer rather than only a raw schema pointer.
+That allows simple commands to return a static descriptor while complex commands
+can answer path-specific questions lazily.
+
+Conceptual provider responsibilities:
+
+* return whether metadata exists for a command;
+* return a root command descriptor;
+* list immediate subcommands for a command path;
+* find one subcommand by path;
+* produce JSON for a command or subcommand path;
+* optionally provide dynamic completion classes, such as database object, view
+  name, selection set, material, attribute, file path, or arbitrary command-
+  private completions;
+* optionally report that the static schema is partial.
+
+The provider result should be versioned and size-checked.  This matters for
+plugins: a newer libged must be able to reject or degrade metadata from an older
+or newer plugin without failing command execution.
+
+Recommended C-level shape
+-------------------------
+
+The final names can change, but the concepts should be present:
+
+* ged_cmd_metadata
+
+  Versioned metadata for one command name or alias.  It contains a schema
+  provider callback and flags describing completeness and safety.
+
+* ged_cmd_schema_provider
+
+  A callback table for root schema, subcommand lookup, validation hints, and
+  dynamic completion hints.  All callbacks are advisory and read-only.
+
+* ged_cmd_desc or extended ged_cmd_impl
+
+  The private command implementation record should gain metadata fields.  Since
+  ged_cmd_impl is private to libged/plugin.h, built-in commands can be migrated
+  by macro evolution while source-compatible wrappers keep old command list
+  definitions working.
+
+* ged_register_command_with_metadata or equivalent
+
+  A registration path that stores metadata in the same registry entry as the
+  command implementation.  Existing ged_register_command continues to register a
+  command with no metadata.
+
+Do not store parser output variables in global metadata.  bu_opt_desc currently
+contains set_var pointers for execution parsing.  Metadata-only descriptors
+should either use NULL/non-mutating placeholders or, preferably, be represented
+by immutable schema descriptors that do not require writable parse destinations.
+If bu_opt_desc must be used initially, metadata descriptors must be const,
+side-effect-free, and never passed to bu_opt_parse for execution.
+
+Macro migration
+---------------
+
+The current command macros accept entries of the form:
+
+* token, function, flags
+* explicit-symbol, command-string, function, flags
+
+Keep those forms working and treat them as metadata-free.  Add metadata-capable
+forms in the same command-list system so each command module can opt in without
+moving syntax data elsewhere.
+
+Recommended entry forms:
+
+* command token, function, flags, metadata provider
+* explicit symbol, command string, function, flags, metadata provider
+
+The command-list macro can support both by adding new X_META and XID_META
+callbacks, or by introducing a second metadata list macro beside the execution
+list.  Prefer a single source of truth per command module, but do not require a
+flag day conversion.
+
+For example, a module should be able to express:
+
+* open -> ged_opendb_core + open metadata provider;
+* opendb -> same function + opendb alias metadata provider;
+* reopen -> same function + narrower reopen metadata provider.
+
+The generated static-core record and plugin record must both carry metadata.
+
+Plugin support
+--------------
+
+The generic bu_plugin_cmd table currently stores command names and function
+pointers.  That is sufficient for execution but insufficient for GED-specific
+metadata.  There are two workable approaches:
+
+1. Add an optional GED metadata manifest exported by GED plugins.
+
+   Each GED plugin continues to export the generic bu_plugin_manifest for command
+   execution.  It also exports a GED-specific metadata manifest containing
+   command-name-to-provider records.  During plugin loading, libged checks for
+   the optional metadata symbol after loading the plugin and attaches metadata to
+   already registered command entries.
+
+2. Extend bu_plugin_cmd with optional opaque metadata.
+
+   This is cleaner for one-table registration, but it changes a more general
+   libbu plugin ABI for a GED-specific need.  It should only be chosen if other
+   plugin users also need command metadata.
+
+The preferred design is option 1: a GED-specific optional manifest.  It preserves
+existing generic plugin behavior and lets libged evolve metadata independently.
+
+The GED metadata manifest should include:
+
+* ABI version;
+* struct size;
+* count;
+* array of command metadata records;
+* optional plugin-wide metadata flags.
+
+If the manifest is absent or incompatible, command execution remains available
+and schema availability is false.
+
+Registry behavior
+-----------------
+
+The command registry should become the single source of truth for execution and
+metadata.  Registration should follow these rules:
+
+* First command implementation wins, as today, unless an explicit replacement
+  policy is later added.
+* Metadata is attached to the winning command entry.
+* If command execution registration succeeds but metadata registration fails,
+  command execution remains available and a diagnostic can be retained in
+  ged_init_msgs.
+* Synthetic _mged_ aliases inherit metadata from their canonical command unless
+  explicitly overridden.
+* Real aliases are independent names.  They may share a provider or publish
+  alias-specific root descriptors.
+* Schema queries skip synthetic _mged_ names in public command lists by default.
+
+Public APIs
+-----------
+
+Keep the prototype API direction, but make all answers registry-backed:
+
+* ged_cmd_list_with_metadata
+
+  Return command names plus flags indicating schema availability, schema
+  completeness, and whether dynamic completions may be needed.
+
+* ged_cmd_schema_json
+
+  Return one command's JSON schema.  If the provider can answer subcommand paths,
+  support either full-tree JSON or path-limited JSON.  Full-tree JSON may be
+  expensive for commands such as brep and bot, so path-limited access should be
+  part of the design.
+
+* ged_cmd_validate
+
+  Parse only enough of the command line to identify command and schema path, then
+  ask the provider/bu_opt layer for advisory state.  Unknown or metadata-free
+  commands report unknown syntax and retain current fallback completions.
+
+* ged_cmd_complete
+
+  Use validation context plus completion_type hints to decide whether to return
+  static candidates, command names, database objects/paths, file paths, view
+  names, selection sets, or command-private candidates.
+
+* ged_cmd_metadata_reload or cache invalidation, if needed
+
+  Useful for tests and plugin unload/reload scenarios.  Not needed for qged's
+  first integration if metadata is static after initialization.
+
+Complex subcommand design
+-------------------------
+
+Simple commands can be described as one bu_opt_cmd_desc.  Complex commands need
+more structure.
+
+The following cases must be supported:
+
+1. Command subcommand immediately after root options
+
+   Example: view [options] subcommand [args].  The root schema has global
+   options and a subcommand table.  Completion after "view " lists subcommands.
+
+2. Command with leading object operand before subcommand
+
+   Examples: brep [options] object subcommand [args], bot [options] object
+   subcommand [args].  The root schema must express that the first positional
+   operand is a database object and that the next token is selected from a
+   subcommand table.  Completion after the object should list subcommands;
+   completion before the object should use database-object completion.
+
+3. Nested subcommands
+
+   Example families: view faceplate grid ..., bot subcommands with operation
+   modes, brep subcommands with secondary operation words.  Providers should be
+   able to resolve a path such as ["faceplate", "grid"] without constructing
+   all possible descendants eagerly.
+
+4. Repeated command words and aliases
+
+   A subcommand table may have aliases or multiple command words mapped to the
+   same function.  Metadata should preserve alias spellings but identify the
+   canonical label for help grouping and JSON stability.
+
+5. Dynamic or command-private operands
+
+   Some operands are neither plain strings nor database objects.  Examples may
+   include view names, display manager names, selection set names, shader names,
+   attributes, or material IDs.  The schema should expose a value class, and the
+   completion engine should dispatch value classes to registered completion
+   providers.
+
+For brep, bot, and view, avoid a single monolithic root object when practical.
+Use one metadata table per subcommand family and a root provider that can find
+subcommand providers by name.  This keeps maintenance local and allows partial
+coverage: converted subcommands report schemas, unconverted subcommands report
+unknown syntax after the subcommand token while preserving execution.
+
+Relationship to bu_cmdtab and help
+----------------------------------
+
+libged already has subcommand tables using bu_cmdtab and helper functions such
+as _ged_subcmd_help.  Metadata should align with those tables rather than create
+parallel lists that drift.
+
+Recommended migration:
+
+1. Introduce a metadata-aware subcommand table wrapper for libged command modules.
+   Each entry contains the bu_cmdtab name/function pair plus optional metadata.
+
+2. Teach _ged_subcmd_help to use metadata when present for purpose strings,
+   usage strings, and JSON generation, while retaining the existing --print-help
+   and --print-purpose behavior for unconverted subcommands.
+
+3. For commands that already have C++ ged_subcmd classes, add virtual metadata
+   methods or an adapter that exposes the same provider interface.
+
+4. Once all users are migrated, reduce duplicated usage/purpose strings.
+
+The execution path should not depend on metadata being complete.  Metadata is
+advisory; help and execution must still work for metadata-free commands.
+
+Completion provider design
+--------------------------
+
+bu_opt metadata can identify broad completion classes, but libged should own GED
+specific completions.  Use a registry of value-type completion handlers:
+
+* command name;
+* static keyword;
+* database object;
+* database path;
+* file path;
+* view name;
+* display manager name;
+* selection set;
+* attribute name;
+* attribute value;
+* command-private callback.
+
+The command-private callback should be optional and explicitly marked safe for
+interactive use.  It must not execute the command, mutate the database, or do
+unbounded work per keystroke.  qged can debounce and cache expensive results,
+but libged should also bound obvious work.
+
+JSON stability
+--------------
+
+The JSON schema should remain versioned.  Schema output should include:
+
+* schema name and version;
+* command name and alias information;
+* schema completeness flag;
+* global options;
+* operands and value classes;
+* subcommands, either embedded or represented by path/query references;
+* dynamic completion classes;
+* hints for unknown or partially converted subcommands.
+
+For large commands, support both:
+
+* full JSON for documentation/tests;
+* path-scoped JSON for UI lookup of the active subcommand.
+
+Tests should compare stable representative JSON, not every command's full output
+unless the command explicitly opts into a locked contract.
+
+Threading and lifetime
+----------------------
+
+Metadata providers must return immutable data or allocate request-owned results.
+Do not use global parser destination variables as mutable set_var storage for
+metadata.  If any metadata must be generated lazily, use one-time initialization
+with proper synchronization and immutable results afterward.
+
+Returned JSON and completion arrays are caller-owned.  Registry-owned command
+and metadata records live until libged shutdown or plugin unload.
+
+Plugin unload must either be unsupported while ged instances are active, or it
+must remove metadata and command entries together.  The current practical path is
+to treat metadata as stable after initialization and avoid plugin unload during a
+session.
+
+Migration plan
+--------------
+
+1. Define the metadata provider structs and registry attachment path.
+2. Extend command declaration macros with optional metadata forms while keeping
+   old command list forms valid.
+3. Add a GED-specific optional metadata manifest for dynamic plugins.
+4. Move the prototype schemas from cmd_schemas.cpp into their owning command
+   modules one at a time:
+
+   * open in open/open.cpp;
+   * draw in draw/draw.c or draw/draw2.cpp, matching the parser owner;
+   * erase in erase/erase.c and erase/erase2.cpp;
+   * ls in ls/ls.c;
+   * who in who/who.c and who/who2.cpp;
+   * select in select/select.c and select/select2.cpp;
+   * view in view/view.c;
+   * dm in dm/dm.c.
+
+5. Convert one complex command in depth, preferably view, because it is central
+   to qged and already has a clear bu_cmdtab subcommand table.
+6. Convert bot or brep next to validate object-before-subcommand grammar.
+7. Keep the central prototype file only as a temporary compatibility shim during
+   migration.  Delete it when converted commands publish their own metadata.
+8. Add tests for:
+
+   * metadata in static-core builds;
+   * metadata in dynamic plugin builds;
+   * aliases with distinct command names;
+   * commands without metadata;
+   * view-style immediate subcommands;
+   * brep/bot-style object-before-subcommand parsing;
+   * nested subcommands;
+   * JSON version stability;
+   * fallback geometry and command completions.
+
+Open questions
+--------------
+
+* Should metadata live in public ged headers or a private plugin-only header?
+  Public clients need query APIs, but command provider structs may remain
+  private until plugin authors need a supported ABI.
+
+* Should bu_opt grow a metadata-only option descriptor that omits set_var?
+  That would avoid using execution-oriented bu_opt_desc arrays for read-only
+  metadata.
+
+* How much dynamic completion should be allowed in command-private callbacks?
+  The safest initial policy is static keywords plus centrally managed GED value
+  classes, adding command-private callbacks only after clear safety rules.
+
+* Should full-tree JSON be mandatory for plugin metadata?  For very large
+  commands, path-scoped JSON may be more practical.
+
+Recommendation
+--------------
+
+Use command-owned, optional, versioned metadata providers attached during normal
+command registration.  Extend libged's command declaration macros and plugin
+loading with metadata-aware paths, but preserve metadata-free registration as the
+default.  Model complex commands as lazy subcommand provider trees rather than
+central static schemas.  Keep validation advisory and completion fallback-based
+until coverage is broad.
+
+This design keeps syntax knowledge with command implementations, works for both
+built-ins and plugins, and gives qged a stable libged-facing interface without
+requiring qged to learn individual command internals.

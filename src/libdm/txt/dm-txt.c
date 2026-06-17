@@ -30,6 +30,7 @@
 #include "tcl.h"
 #include "vmath.h"
 #include "bu/malloc.h"
+#include "bsg/vlist.h"
 #include "dm.h"
 #include "../include/private.h"
 
@@ -191,7 +192,7 @@ txt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(po
 
 
 static int
-txt_drawVList(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
+txt_drawVList(struct dm *UNUSED(dmp), bsg_vlist *UNUSED(vp))
 {
     bu_log("drawVList called\n");
     return 0;
@@ -199,7 +200,7 @@ txt_drawVList(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
 
 
 static int
-txt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
+txt_drawVListHiddenLine(struct dm *UNUSED(dmp), bsg_vlist *UNUSED(vp))
 {
     bu_log("drawVListHiddenLine called\n");
     return 0;
@@ -207,15 +208,7 @@ txt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
 
 
 static int
-txt_draw_obj(struct dm *UNUSED(dmp), struct bv_scene_obj *UNUSED(s))
-{
-    bu_log("draw_obj called\n");
-    return 0;
-}
-
-
-static int
-txt_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
+txt_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data)
 {
     bu_log("draw called\n");
     return dmp == NULL && callback_function == NULL && data == NULL;
@@ -384,45 +377,6 @@ txt_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
 }
 
 
-static int
-txt_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
-{
-    bu_log("beginDList called\n");
-    return 0;
-}
-
-
-static int
-txt_endDList(struct dm *UNUSED(dmp))
-{
-    bu_log("endDList called\n");
-    return 0;
-}
-
-
-static int
-txt_drawDList(unsigned int UNUSED(list))
-{
-    bu_log("drawDList called\n");
-    return 0;
-}
-
-
-static int
-txt_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
-{
-    bu_log("freeDList called\n");
-    return 0;
-}
-
-
-static int
-txt_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
-{
-    bu_log("genDLists called\n");
-    return 0;
-}
-
 
 static int
 txt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image), int flip, int alpha)
@@ -481,6 +435,7 @@ struct dm_impl dm_txt_impl = {
     txt_loadPMatrix,
     txt_popPMatrix,
     txt_drawString2D,
+    NULL,
     txt_String2DBBox,
     txt_drawLine2D,
     txt_drawLine3D,
@@ -490,8 +445,6 @@ struct dm_impl dm_txt_impl = {
     txt_drawPoints3D,
     txt_drawVList,
     txt_drawVListHiddenLine,
-    txt_draw_obj,
-    NULL,
     txt_draw,
     txt_setFGColor,
     txt_setBGColor,
@@ -513,12 +466,6 @@ struct dm_impl dm_txt_impl = {
     txt_getBoundFlag,
     txt_debug,
     txt_logfile,
-    txt_beginDList,
-    txt_endDList,
-    txt_drawDList,
-    txt_freeDLists,
-    txt_genDLists,
-    NULL,
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,
@@ -534,11 +481,10 @@ struct dm_impl dm_txt_impl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     0,
     0,				/* not graphical */
     NULL,                       /* not graphical */
-    0,				/* no displaylist */
+    0,				/* no backend cache */
     0,				/* no stereo */
     "txt",
     "Text Display",
@@ -562,6 +508,7 @@ struct dm_impl dm_txt_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
+    {255, 0, 0},/* geometry default color */
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
@@ -574,7 +521,9 @@ struct dm_impl dm_txt_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    NULL,                       /* backend ops */
+    NULL,                       /* backend resource cache */
+    0                           /* backend frame generation */
 };
 
 struct dm dm_txt = { DM_MAGIC, &dm_txt_impl, 0 };

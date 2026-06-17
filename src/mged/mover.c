@@ -55,7 +55,9 @@ moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate)
 	return;
     }
 
+    int event_batch_started = mged_event_batch_begin(s);
     if (rt_db_put_internal(dp, s->dbip, &intern) < 0) {
+	mged_event_batch_end(s, event_batch_started);
 	Tcl_AppendResult(s->interp, "moveHobj(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	rt_db_free_internal(&intern);
@@ -63,6 +65,7 @@ moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate)
 	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
 	return;
     }
+    mged_event_batch_end(s, event_batch_started);
 }
 
 
@@ -98,7 +101,10 @@ moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp,
 		tp->tr_l.tl_mat = (matp_t)bu_malloc(16 * sizeof(fastf_t), "tl_mat");
 		MAT_COPY(tp->tr_l.tl_mat, xlate);
 	    }
-	    if (rt_db_put_internal(cdp, s->dbip, &intern) < 0) {
+	    int event_batch_started = mged_event_batch_begin(s);
+	    int put_status = rt_db_put_internal(cdp, s->dbip, &intern);
+	    mged_event_batch_end(s, event_batch_started);
+	    if (put_status < 0) {
 		Tcl_AppendResult(s->interp, "rt_db_put_internal failed for ",
 				 cdp->d_namep, "\n", (char *)NULL);
 		rt_db_free_internal(&intern);

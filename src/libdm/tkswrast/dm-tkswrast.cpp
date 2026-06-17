@@ -90,6 +90,19 @@ tkswrast_log(const char *fmt, ...)
     fflush(lfp);
 }
 
+static void
+tkswrast_request_repaint(struct dm *dmp, unsigned int flags)
+{
+    if (!dmp)
+	return;
+
+    dm_set_native_repaint_pending(dmp, 1);
+
+    struct swrast_vars *sv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    if (sv && sv->v)
+	bsg_view_refresh_request(sv->v, flags ? flags : BSG_VIEW_REFRESH_ALL);
+}
+
 static unsigned long
 tkswrast_black_pixel(Tk_Window tkwin)
 {
@@ -214,6 +227,8 @@ tkswrast_configureWin(struct dm *dmp, int force)
     if (width < 2 || height < 2)
 	return BRLCAD_OK;
 
+    tkswrast_request_repaint(dmp, BSG_VIEW_REFRESH_VIEW | BSG_VIEW_REFRESH_FORCE);
+
     if (!force && dmp->i->dm_width == width && dmp->i->dm_height == height)
 	return BRLCAD_OK;
 
@@ -230,7 +245,7 @@ tkswrast_configureWin(struct dm *dmp, int force)
 
     if (!tv->mapped_once && width > 1 && height > 1) {
 	tv->mapped_once = 1;
-	dm_set_dirty(dmp, 1);
+	tkswrast_request_repaint(dmp, BSG_VIEW_REFRESH_VIEW | BSG_VIEW_REFRESH_FORCE);
     }
 
     if (tkswrast_debug()) {
@@ -409,7 +424,7 @@ static int
 tkswrast_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 {
     if (veventPtr) {
-	dm_set_dirty(dmp, 1);
+	tkswrast_request_repaint(dmp, BSG_VIEW_REFRESH_VIEW | BSG_VIEW_REFRESH_FORCE);
     }
     return TCL_OK;
 }
@@ -539,13 +554,13 @@ tkswrast_open(void *ctx, void *vinterp, int argc, const char **argv)
 	    tkswrast_log("tkswrast_open: bindtags failed: %s\n", Tcl_GetStringResult(interp));
 	}
 	bu_vls_trunc(&tcmd, 0);
-	bu_vls_printf(&tcmd, "bind %s <Expose> {catch {%s dirty 1}; catch {%s configure}}", bu_vls_addr(&dmp->i->dm_pathName), bu_vls_addr(&dmp->i->dm_pathName), bu_vls_addr(&dmp->i->dm_pathName));
+	bu_vls_printf(&tcmd, "bind %s <Expose> {catch {%s configure}}", bu_vls_addr(&dmp->i->dm_pathName), bu_vls_addr(&dmp->i->dm_pathName));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcmd));
 	bu_vls_trunc(&tcmd, 0);
-	bu_vls_printf(&tcmd, "bind %s <Configure> {catch {%s dirty 1}; catch {%s configure}}", bu_vls_addr(&tv->label_path), bu_vls_addr(&dmp->i->dm_pathName), bu_vls_addr(&dmp->i->dm_pathName));
+	bu_vls_printf(&tcmd, "bind %s <Configure> {catch {%s configure}}", bu_vls_addr(&tv->label_path), bu_vls_addr(&dmp->i->dm_pathName));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcmd));
 	bu_vls_trunc(&tcmd, 0);
-	bu_vls_printf(&tcmd, "bind %s <Expose> {catch {%s dirty 1}; catch {%s configure}}", bu_vls_addr(&tv->label_path), bu_vls_addr(&dmp->i->dm_pathName), bu_vls_addr(&dmp->i->dm_pathName));
+	bu_vls_printf(&tcmd, "bind %s <Expose> {catch {%s configure}}", bu_vls_addr(&tv->label_path), bu_vls_addr(&dmp->i->dm_pathName));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcmd));
 	bu_vls_trunc(&tcmd, 0);
 	bu_vls_printf(&tcmd,
@@ -642,7 +657,7 @@ tkswrast_open(void *ctx, void *vinterp, int argc, const char **argv)
 	}
     }
 
-    dm_set_dirty(dmp, 1);
+    tkswrast_request_repaint(dmp, BSG_VIEW_REFRESH_VIEW | BSG_VIEW_REFRESH_FORCE);
 
     return dmp;
 }

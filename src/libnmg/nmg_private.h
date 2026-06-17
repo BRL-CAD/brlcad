@@ -30,7 +30,24 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bsg/vlist.h"
 #include "nmg/defines.h"
+
+struct bn_tol;
+struct bsg_vlblock;
+struct bu_list;
+struct edge;
+struct edgeuse;
+struct faceuse;
+struct loopuse;
+struct model;
+struct nmgregion;
+struct shell;
+struct vertex;
+
+typedef void (*nmg_plot_anim_upcall_t)(struct bsg_vlblock *, int, int);
+
+NMG_EXPORT extern nmg_plot_anim_upcall_t nmg_plot_anim_upcall;
 
 /**
  * @brief Internal routine to kill an edge geometry structure (of either
@@ -57,6 +74,71 @@ NMG_EXPORT extern double nmg_vu_angle_measure(struct vertexuse   *vu,
                                               int assessment,
                                               int in);
 
+NMG_EXPORT extern void nmg_vlblock_v(struct bsg_vlblock *vbp,
+				     const struct vertex *v,
+				     long *tab,
+				     struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_vlblock_e(struct bsg_vlblock *vbp,
+				     const struct edge *e,
+				     long *tab,
+				     int red,
+				     int green,
+				     int blue,
+				     struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_vlblock_eu(struct bsg_vlblock *vbp,
+				      const struct edgeuse *eu,
+				      long *tab,
+				      int red,
+				      int green,
+				      int blue,
+				      int fancy,
+				      struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_vlblock_euleft(struct bu_list *vh,
+					  const struct edgeuse *eu,
+					  const point_t center,
+					  const mat_t mat,
+					  const vect_t xvec,
+					  const vect_t yvec,
+					  double len,
+					  struct bu_list *vlfree,
+					  const struct bn_tol *tol);
+NMG_EXPORT extern void nmg_vlblock_around_eu(struct bsg_vlblock *vbp,
+					     const struct edgeuse *arg_eu,
+					     long *tab,
+					     int fancy,
+					     struct bu_list *vlfree,
+					     const struct bn_tol *tol);
+NMG_EXPORT extern void nmg_vlblock_lu(struct bsg_vlblock *vbp,
+				      const struct loopuse *lu,
+				      long *tab,
+				      int red,
+				      int green,
+				      int blue,
+				      int fancy,
+				      struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_vlblock_fu(struct bsg_vlblock *vbp,
+				      const struct faceuse *fu,
+				      long *tab,
+				      int fancy,
+				      struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_vlblock_s(struct bsg_vlblock *vbp,
+				     const struct shell *s,
+				     int fancy,
+				     struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_vlblock_r(struct bsg_vlblock *vbp,
+				     const struct nmgregion *r,
+				     int fancy,
+				     struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_vlblock_m(struct bsg_vlblock *vbp,
+				     const struct model *m,
+				     int fancy,
+				     struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_pl_edges_in_2_shells(struct bsg_vlblock *vbp,
+						long *b,
+						const struct edgeuse *eu,
+						int fancy,
+						struct bu_list *vlfree,
+						const struct bn_tol *tol);
 
 /*
  * Local Variables:

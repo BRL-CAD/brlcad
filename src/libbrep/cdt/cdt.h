@@ -51,9 +51,8 @@
 #include "bu/time.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "bn/tol.h"
-#include "bv/vlist.h"
 #include "bg/polygon.h"
 #include "bg/trimesh.h"
 #include "brep/defines.h"
@@ -185,4 +184,3 @@ bool TRICHECK(triangle_t &tri);
 // ex: shiftwidth=4 tabstop=8
 
 #endif /* LIBBREP_CDT_H */
-

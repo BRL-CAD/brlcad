@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.view.select",
+    "displayName": "View Select",
+    "category": "qged.view",
+    "iconName": ":selective-tool.svg",
+    "sortKey": 2,
+    "requiresOpenDb": true,
+    "requiresView": true,
+    "description": "Select objects in the scene by point, rectangle, or ray test; add to or remove from selection sets; draw or erase selected geometry.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

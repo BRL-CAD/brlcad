@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include <string>
+#include <vector>
 
 #include "rt_debug_draw.hpp"
 #include "rt_instance.hpp"
@@ -59,9 +60,13 @@ public:
 
     void step(fastf_t seconds, DebugMode debug_mode);
 
+    // Report parent combinations whose instance matrices were written since
+    // the previous call.
+    std::vector<std::string> takeChangedParentNames();
+
     // Save current body velocities to the database as simulate::state_* attributes
     // so the simulation can be resumed later with --resume.
-    void saveState();
+    std::vector<std::string> saveState();
 
     // Write a .pl wireframe plot file showing the current AABB of each body.
     // Dynamic bodies are drawn in green; static bodies are drawn in red.

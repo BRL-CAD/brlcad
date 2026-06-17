@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 
@@ -155,18 +157,54 @@ save_comb(struct ged *gedp, struct directory *dpold)
 	return NULL;
     }
 
+    int callbacks_disabled = ged_event_librt_callbacks_disable(gedp);
     dp = db_diradd(gedp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(gedp);
+	rt_db_free_internal(&intern);
 	return NULL;
     }
 
     if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
+	(void)db_dirdelete(gedp->dbip, dp);
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(gedp);
 	return NULL;
     }
 
+    if (callbacks_disabled)
+	(void)ged_event_librt_callbacks_enable(gedp);
+
     return name;
+}
+
+
+static int
+remove_saved_comb(struct ged *gedp, const char *saved_name)
+{
+    struct directory *dp;
+
+    if (!gedp || !saved_name)
+	return BRLCAD_OK;
+
+    dp = db_lookup(gedp->dbip, saved_name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	return BRLCAD_OK;
+
+    int callbacks_disabled = ged_event_librt_callbacks_disable(gedp);
+    if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(gedp);
+	bu_vls_printf(gedp->ged_result_str, "remove_saved_comb: Unable to delete temporary combination %s\n", saved_name);
+	return BRLCAD_ERROR;
+    }
+    if (callbacks_disabled)
+	(void)ged_event_librt_callbacks_enable(gedp);
+
+    return BRLCAD_OK;
 }
 
 
@@ -485,6 +523,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     const char *expression = NULL;
 
     int save_comb_flag = 0;
+    int existing_comb = 0;
     struct directory *dp = NULL;
     struct rt_comb_internal *comb = NULL;
     struct rt_db_internal intern;
@@ -516,6 +555,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *)NULL;
     dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
+	existing_comb = 1;
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", cmd_name, comb_name);
 	    return BRLCAD_ERROR;
@@ -528,6 +568,10 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	saved_name = save_comb(gedp, dp); /* Save combination to a temp name */
+	if (!saved_name) {
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+	}
 	save_comb_flag = 1;
     }
 
@@ -584,9 +628,14 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     } else if (save_comb_flag) {
 	/* eliminate the temporary combination */
-	const char *av[2] = {"kill", NULL};
-	av[1] = saved_name;
-	(void)ged_exec_kill(gedp, 2, (const char **)av);
+	if (remove_saved_comb(gedp, saved_name) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+    }
+
+    if (existing_comb) {
+	(void)ged_event_notify_comb_tree_changed(gedp, comb_name, 1, NULL);
+	(void)ged_event_notify_attribute_changed(gedp, comb_name, 1, NULL);
+	(void)ged_event_notify_object_material_changed(gedp, comb_name, NULL);
     }
 
     return BRLCAD_OK;

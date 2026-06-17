@@ -19,7 +19,7 @@
  */
 /** @file libged/view/gobjs.c
  *
- * Create and manage transient view objects that are used to
+ * Create and manage transient view features that are used to
  * interactively edit geometry parameters for database solids
  * and combs.  These edits change only the locally stored info,
  * without out disturbing the original object in the .g, until
@@ -33,28 +33,21 @@
 #include <ctype.h>
 #include <cstdlib>
 #include <cstring>
-#include <map>
+#include <string>
 
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bv.h"
+#include "bsg.h"
+#include "bsg/defines.h"
+#include "bsg/draw_source.h"
+#include "bsg/feature.h"
+#include "bsg/scene_object.h"
 
+#include "ged/view.h"
 #include "../ged_private.h"
 #include "./ged_view.h"
-
-static void
-gobjs_scene_free(struct bv_scene_obj *s)
-{
-    if (!s)
-	return;
-    if (s->s_path) {
-	struct db_full_path *sfp = (struct db_full_path *)s->s_path;
-	db_free_full_path(sfp);
-	BU_PUT(sfp, struct db_full_path);
-    }
-}
 
 int
 _gobjs_cmd_create(void *bs, int argc, const char **argv)
@@ -63,7 +56,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct db_i *dbip = gedp->dbip;
-    struct bview *v = gd->cv;
+    struct bsg_view *v = gd->cv;
     const char *usage_string = "view gobjs name create";
     const char *purpose_string = "create an editing view obj from a database solid/comb";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
@@ -80,9 +73,9 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     }
     gd->vobj = argv[0];
 
-    struct bv_scene_obj *s = bv_find_obj(gedp->ged_gvp, argv[1]);
-    if (s) {
-	bu_vls_printf(gedp->ged_result_str, "View object %s already exists\n", argv[1]);
+    bsg_feature_ref ref = bsg_feature_find(gedp->ged_gvp, argv[1]);
+    if (!bsg_feature_ref_is_null(ref)) {
+	bu_vls_printf(gedp->ged_result_str, "View feature %s already exists\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -121,25 +114,27 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     }
 
     /* Set up the toplevel object */
-    struct bv_scene_group *g = bv_obj_get(v, BV_DB_OBJS);
-    if (!g)
+    ref = bsg_feature_create_overlay(v, argv[1], 0);
+    if (bsg_feature_ref_is_null(ref))
 	return BRLCAD_ERROR;
-    BU_GET(g->s_path, struct db_full_path);
-    db_full_path_init((struct db_full_path *)g->s_path);
-    db_dup_full_path((struct db_full_path *)g->s_path, fp);
-    db_path_to_vls(&g->s_name, fp);
-    g->s_i_data = (void *)ip;
-    g->s_free_callback = &gobjs_scene_free;
+    bsg_scene_ref g_ref = bsg_feature_ref_as_scene(ref);
+    if (bsg_scene_ref_is_null(g_ref))
+	return BRLCAD_ERROR;
+    ged_draw_shape_state *state = ged_draw_shape_ref_set_fullpath(g_ref, gedp, fp);
+    if (state) {
+	state->u_data = (void *)ip;
+	state->u_data_kind = GED_DRAW_SHAPE_USER_DATA_RT_DB_INTERNAL;
+    }
 
     // Set up drawing settings
     unsigned char wcolor[3] = {255,255,255};
-    struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(g->s_os, &vs);
+    struct bsg_appearance_settings vs = BSG_APPEARANCE_SETTINGS_INIT;
 
     // We have a tree walk ahead to populate the wireframe - set up the client
     // data structure.
     std::map<struct directory *, fastf_t> s_size;
     struct draw_data_t dd;
+    dd.gedp = gedp;
     dd.dbip = gedp->dbip;
     dd.v = v;
     dd.tol = &wdbp->wdb_tol;
@@ -150,7 +145,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.s_size = &s_size;
     bu_color_from_rgb_chars(&dd.c, wcolor);
     dd.vs = &vs;
-    dd.g = g;
+    dd.g_ref = g_ref;
 
     // Create a wireframe from the current state of the specified object
     draw_gather_paths(fp, &mat, (void *)&dd);
@@ -169,7 +164,7 @@ _gobjs_cmd_delete(void *bs, int argc, const char **argv)
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
     const char *usage_string = "view gobjs name delete";
-    const char *purpose_string = "delete view object";
+    const char *purpose_string = "delete view feature";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
 
@@ -178,90 +173,54 @@ _gobjs_cmd_delete(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bv_scene_obj *s = gd->s;
-    if (!s) {
-	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
+    if (!gd->vobj || bsg_feature_ref_is_null(bsg_feature_find(gd->cv, gd->vobj)) ||
+	    !bsg_feature_remove(gd->cv, gd->vobj)) {
+	bu_vls_printf(gedp->ged_result_str, "No view feature named %s\n", gd->vobj ? gd->vobj : "");
 	return BRLCAD_ERROR;
     }
-    bv_obj_put(s);
 
     return BRLCAD_OK;
 }
 
-const struct bu_cmdtab _gobjs_cmds[] = {
-    { "create",     _gobjs_cmd_create},
-    { "del",        _gobjs_cmd_delete},
-    { (char *)NULL,      NULL}
-};
-
 extern "C" int
 _view_cmd_gobjs(void *bs, int argc, const char **argv)
 {
-    int help = 0;
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct ged *gedp = gd->gedp;
-
-    const char *usage_string = "view [options] gobjs [options] [args]";
-    const char *purpose_string = "view-only scene objects based on geometry solids/combs";
+    const char *usage_string = "view [options] gobjs [create|del] ...";
+    const char *purpose_string = "deprecated alias for 'view obj -g <dbpath> ...'";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
 
-    if (!gd->cv) {
-	bu_vls_printf(gedp->ged_result_str, ": no view specified or current in GED");
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    if (!gd || !gd->gedp)
 	return BRLCAD_ERROR;
+    struct ged *gedp = gd->gedp;
+
+    argc--; argv++; /* skip gobjs */
+    if (argc <= 0) {
+	const char *nargv[3] = {"view", "obj", "list"};
+	return _view_cmd_objs(bs, 3, nargv);
     }
 
-    // See if we have any high level options set
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",        "",  NULL,  &help,      "Print help");
-    BU_OPT_NULL(d[1]);
-
-    gd->gopts = d;
-
-    // We know we're the gobjs command - start processing args
-    argc--; argv++;
-
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_gobjs_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
+    if (BU_STR_EQUAL(argv[0], "create")) {
+	if (argc != 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: view gobjs create <dbpath> <name>\n");
+	    return BRLCAD_ERROR;
 	}
+	const char *nargv[7] = {"view", "obj", "-g", argv[1], "create", argv[2], NULL};
+	return _view_cmd_objs(bs, 6, nargv);
     }
 
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int ac = bu_opt_parse(NULL, acnt, argv, d);
-
-    // If we're not wanting help and we have no subcommand, list current gobjs objects
-    struct bview *v = gd->cv;
-    if (!ac && cmd_pos < 0 && !help) {
-	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-	if (view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
-	    }
+    if (BU_STR_EQUAL(argv[0], "del") || BU_STR_EQUAL(argv[0], "delete") || BU_STR_EQUAL(argv[0], "remove")) {
+	if (argc != 2) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: view gobjs del <name>\n");
+	    return BRLCAD_ERROR;
 	}
-	struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-	if (local_view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
-	    }
-	}
-	return BRLCAD_OK;
+	const char *nargv[5] = {"view", "obj", "remove", argv[1], NULL};
+	return _view_cmd_objs(bs, 4, nargv);
     }
 
-    gd->s = NULL;
-
-    if (!gd->s) {
-	// View object doesn't already exist.  subcommands will either need to create it
-	// or handle the error case
-    }
-
-    return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_gobjs_cmds,
-			    "view gobjs", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
+    bu_vls_printf(gedp->ged_result_str, "view gobjs is deprecated - use 'view obj -g <dbpath> create <name>' or 'view obj remove <name>'\n");
+    return BRLCAD_ERROR;
 }
 
 // Local Variables:
@@ -272,4 +231,3 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

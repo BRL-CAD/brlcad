@@ -2,9 +2,11 @@
 
 brlcad_addexec(dm_test dm_test.c "libdm;libbu" TEST)
 
-# dm_dlist_sensor register/fire/clear
-brlcad_addexec(test_dm_dlist_sensor test_dlist_sensor.c "libdm;libbv;libbu" TEST)
-brlcad_add_test(NAME dm_dlist_sensor COMMAND test_dm_dlist_sensor)
+brlcad_addexec(test_dm_backend_draw_item test_backend_draw_item.c "libdm;libbsg;libbu" TEST)
+brlcad_add_test(NAME dm_backend_draw_item COMMAND test_dm_backend_draw_item "${CMAKE_SOURCE_DIR}")
+if(TEST dm_backend_draw_item)
+  set_property(TEST dm_backend_draw_item APPEND PROPERTY LABELS drawing_baseline)
+endif()
 
 #TODO - these should be portable without X11, but we need to set up the Tk Xlib
 # and provide an appropriate include first...
@@ -25,7 +27,7 @@ endif()
 cmakefiles(CMakeLists.txt)
 cmakefiles(
   dm_test.c
-  test_dlist_sensor.c
+  test_backend_draw_item.c
   tcl_img.cpp
   tcl_tevent.cpp
 )

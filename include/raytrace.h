@@ -172,8 +172,6 @@ __BEGIN_DECLS
 
 #include "./rt/prep.h"
 
-#include "./rt/vlist.h"
-
 #include "./rt/htbl.h"
 
 #include "./rt/dspline.h"

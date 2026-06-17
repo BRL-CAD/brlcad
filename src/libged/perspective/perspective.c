@@ -67,7 +67,7 @@ ged_perspective_core(struct ged *gedp, int argc, const char *argv[])
 	    MAT_COPY(gedp->ged_gvp->gv_pmat, bn_mat_identity);
 	}
 
-	bv_update(gedp->ged_gvp);
+	bsg_update(gedp->ged_gvp);
 
 	return BRLCAD_OK;
     }

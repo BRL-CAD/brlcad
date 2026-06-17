@@ -42,6 +42,7 @@
 #include "bu/app.h"
 #include "bu/dylib.h"
 #include "bu/file.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "ged.h"
@@ -235,6 +236,30 @@ ged_cmd_exists(const char *cmd)
 {
     ged_ensure_initialized();
     return bu_plugin_cmd_exists(cmd);
+}
+
+extern "C" int
+ged_cmd_schema_exists(const char *cmd)
+{
+    if (!cmd)
+	return 0;
+
+    ged_ensure_initialized();
+    return (_ged_cmd_schema(cmd) != NULL) ? 1 : 0;
+}
+
+extern "C" char *
+ged_cmd_schema_json(const char *cmd)
+{
+    if (!cmd)
+	return NULL;
+
+    ged_ensure_initialized();
+    const struct bu_opt_cmd_desc *schema = _ged_cmd_schema(cmd);
+    if (!schema)
+	return NULL;
+
+    return bu_opt_describe_json(schema);
 }
 
 extern "C" int

@@ -30,6 +30,7 @@
 
 #include "bu/cmd.h"
 #include "bu/str.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -37,7 +38,6 @@
 int
 ged_move_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
     static const char *usage = "from to";
@@ -82,9 +82,12 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    ged_event_batch_begin(gedp);
+
     /* Change object name in the in-memory directory. */
     if (db_rename(gedp->dbip, dp, argv[2]) < 0) {
 	rt_db_free_internal(&intern);
+	ged_event_batch_end(gedp, NULL);
 	bu_vls_printf(gedp->ged_result_str, "error in db_rename to %s, aborting", argv[2]);
 	return BRLCAD_ERROR;
     }
@@ -92,40 +95,12 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
     /* Re-write to the database.  New name is applied on the way out. */
     if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
+	ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
-    /* Change object name if it matches the first element in the display list path. */
-    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
-	int first = 1;
-	int found = 0;
-	struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	char *dupstr = bu_strdup(bu_vls_addr(&gdlp->dl_path));
-	char *tok = strtok(dupstr, "/");
-
-	while (tok) {
-	    if (first) {
-		first = 0;
-
-		if (BU_STR_EQUAL(tok, argv[1])) {
-		    found = 1;
-		    bu_vls_printf(&new_path, "%s", argv[2]);
-		} else
-		    break; /* no need to go further */
-	    } else
-		bu_vls_printf(&new_path, "/%s", tok);
-
-	    tok = strtok((char *)NULL, "/");
-	}
-
-	if (found) {
-	    bu_vls_free(&gdlp->dl_path);
-	    bu_vls_printf(&gdlp->dl_path, "%s", bu_vls_addr(&new_path));
-	}
-
-	free((void *)dupstr);
-	bu_vls_free(&new_path);
-    }
+    ged_event_notify_object_renamed(gedp, argv[1], argv[2], NULL);
+    ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

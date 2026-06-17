@@ -205,7 +205,7 @@ struct ged_edit_geom_spec {
     std::string fragment;  /**< @brief URI fragment, e.g. "V1" from "obj.s#V1" */
     std::string query;     /**< @brief URI query, e.g. "V*" from "obj.s?V*"   */
     bool is_batch;         /**< @brief true when token was "." (each-object)   */
-    std::vector<unsigned long long> hashes; /**< @brief from DbiState::digest_path */
+    std::vector<unsigned long long> hashes; /**< @brief database-index path ids */
     struct directory *dp;  /**< @brief head dp; RT_DIR_NULL for comb instances */
 };
 

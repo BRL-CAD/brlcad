@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 
@@ -145,6 +147,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	status = BRLCAD_ERROR;
 	goto wrapup;
     }
+    (void)ged_event_notify_comb_tree_changed(gedp, dp->d_namep, 1, NULL);
 
     status = BRLCAD_OK;
 

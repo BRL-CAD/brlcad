@@ -39,6 +39,24 @@
 #include "../ged_private.h"
 
 
+static const char *
+ged_rt_framebuffer_device(struct ged *gedp)
+{
+    if (!gedp)
+	return NULL;
+
+    ged_rt_fb_refresh(gedp);
+    const char *fbdev = ged_rt_fb_get(gedp);
+    if (fbdev && fbdev[0])
+	return fbdev;
+
+    if (gedp->ged_gvp && gedp->ged_gvp->dmp)
+	return "/dev/ogl";
+
+    return NULL;
+}
+
+
 int
 ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -67,7 +85,8 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (gedp->new_cmd_forms) {
+    const char *fbdev = ged_rt_framebuffer_device(gedp);
+    if (fbdev) {
 	args = argc + 9 + 2 + (int)ged_who_argc(gedp);
     } else {
 	args = argc + 7 + 2 + (int)ged_who_argc(gedp);
@@ -89,10 +108,9 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     vp = &gd_rt_cmd[0];
     *vp++ = rt;
 
-    if (gedp->new_cmd_forms) {
+    if (fbdev) {
 	*vp++ = "-F";
-	// TODO - look up dm type for this...
-	*vp++ = "/dev/qtgl";
+	*vp++ = (char *)fbdev;
     }
 
     *vp++ = "-M";

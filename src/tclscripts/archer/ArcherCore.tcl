@@ -499,8 +499,8 @@ namespace eval ArcherCore {
 
 	variable mLightingMode 1
 	variable mLightingModePref ""
-	variable mDisplayListMode 1
-	variable mDisplayListModePref ""
+	variable mBackendCacheMode 1
+	variable mBackendCacheModePref ""
 	variable mWireframeMode 0
 	variable mWireframeModePref ""
 	variable mHideSubtractions 0
@@ -2815,11 +2815,11 @@ namespace eval ArcherCore {
 	if {$mEnableListView} {
 	    set ditem [regsub {^/} $ditem {}]
 	    set dlist [split $ditem /]
-	    set dlen [llength $dlist]
+	    set dlen [llength $cache]
 	    if {$dlen == 1} {
 		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
 	    } else {
-		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
+		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $cache 0]) 0] 0]
 	    }
 	} else {
 	    set nodesList [getTreeNodes $ditem $_cflag]
@@ -4124,7 +4124,7 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::doMultiPane {} {
     gedCmd configure -multi_pane $mMultiPane
 
-    if {$mMultiPane && $mDisplayListMode} {
+    if {$mMultiPane && $mBackendCacheMode} {
 	::update
 	redrawWho
     }
@@ -5947,7 +5947,7 @@ namespace eval ArcherCore {
     updateZClipPlanesFromSettings
     updatePerspective 0
     doLighting
-    gedCmd dlist_on $mDisplayListMode
+    gedCmd cache_on $mBackendCacheMode
     gedCmd configure -hideSubtractions $mHideSubtractions
 
     if {$mWireframeMode} {

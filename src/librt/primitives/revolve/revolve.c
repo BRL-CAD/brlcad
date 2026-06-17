@@ -38,7 +38,9 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/revolve.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 #include "../../librt_private.h"
 
 /* local interface header */
@@ -62,7 +64,7 @@ extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
  * Routine to make a new REVOLVE solid. The only purpose of this routine
  * is to initialize the internal to legal values (e.g., vls)
  */
-C_DECL void
+void
 rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_revolve_internal *rev;
@@ -85,7 +87,7 @@ rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 /**
  * Calculate a bounding RPP around a sketch
  */
-C_DECL int
+int
 rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_revolve_internal *rip;
     vect_t zUnit;
@@ -205,7 +207,7 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
  * A struct revolve_specific is created, and its address is stored
  * in stp->st_specific for use by revolve_shot().
  */
-C_DECL int
+int
 rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_revolve_internal *rip;
@@ -340,7 +342,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 }
 
 
-C_DECL void
+void
 rt_revolve_print(const struct soltab *stp)
 {
     const struct revolve_specific *rev =
@@ -363,7 +365,7 @@ rt_revolve_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct revolve_specific *rev =
@@ -1008,7 +1010,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_revolve_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct revolve_specific *rev =
@@ -1079,7 +1081,7 @@ rt_revolve_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the revolve.
  */
-C_DECL void
+void
 rt_revolve_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -1100,7 +1102,7 @@ rt_revolve_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
  * u = azimuth,  v = elevation
  */
-C_DECL void
+void
 rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct revolve_specific *rev = (struct revolve_specific *)stp->st_specific;
@@ -1192,7 +1194,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 }
 
 
-C_DECL void
+void
 rt_revolve_free(struct soltab *stp)
 {
     struct revolve_specific *revolve =
@@ -1203,8 +1205,10 @@ rt_revolve_free(struct soltab *stp)
 
 #define VVECT_INIT16 {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
-C_DECL int
-rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+int
+rt_revolve_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			      struct rt_db_internal *ip,
+			      const struct bg_tess_tol *ttol)
 {
     struct rt_revolve_internal *rip;
 
@@ -1218,12 +1222,18 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     fastf_t cos67_5 = 0.3826834323650898373;
     int *endcount = NULL, ang_sign;
     point_t add, add2, add3;
+    int ret = -1;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
+
+    if (!rip->skt) {
+	bu_log("ERROR: no sketch to revolve!\n");
+	return -1;
+    }
 
     nseg = rip->skt->curve.count;
     nvert = rip->skt->vert_count;
@@ -1338,16 +1348,24 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 	    VSCALE(cir[j], ucir[j], verts[i][X]);
 	    VADD3(ell[j], rip->v3d, cir[j], height);
 	}
-	BV_ADD_VLIST(vlfree, vhead, ell[0], BV_VLIST_LINE_MOVE);
+	if (!primitive_lod_line_set_append(realization, ell[0],
+		    BSG_GEOMETRY_LINE_MOVE))
+	    goto cleanup;
 	for (j=1; j<narc; j++) {
-	    BV_ADD_VLIST(vlfree, vhead, ell[j], BV_VLIST_LINE_DRAW);
+	    if (!primitive_lod_line_set_append(realization, ell[j],
+			BSG_GEOMETRY_LINE_DRAW))
+		goto cleanup;
 	}
 	if (narc < 16) {
 	    VSCALE(cir[narc], rEnd, verts[i][X]);
 	    VADD3(ell[narc], rip->v3d, cir[narc], height);
-	    BV_ADD_VLIST(vlfree, vhead, ell[narc], BV_VLIST_LINE_DRAW);
+	    if (!primitive_lod_line_set_append(realization, ell[narc],
+			BSG_GEOMETRY_LINE_DRAW))
+		goto cleanup;
 	} else {
-	    BV_ADD_VLIST(vlfree, vhead, ell[0], BV_VLIST_LINE_DRAW);
+	    if (!primitive_lod_line_set_append(realization, ell[0],
+			BSG_GEOMETRY_LINE_DRAW))
+		goto cleanup;
 	}
     }
 
@@ -1376,55 +1394,119 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     /* draw sketch outlines */
     for (i=0; i<narc; i++) {
-	curve_to_vlist(vlfree, vhead, ttol, rip->v3d, ucir[i], uz, rip->skt, crv);
+	if (curve_to_line_set(realization, ttol, rip->v3d, ucir[i], uz,
+		rip->skt, crv))
+	    goto cleanup;
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
 		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], ucir[i]);
 		VJOIN1(add3, add, verts[endcount[j+1]][X], ucir[i]);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add3, BV_VLIST_LINE_DRAW);
+		if (!primitive_lod_line_set_append(realization, add2,
+			    BSG_GEOMETRY_LINE_MOVE) ||
+			!primitive_lod_line_set_append(realization, add3,
+			    BSG_GEOMETRY_LINE_DRAW))
+		    goto cleanup;
 		j++;
 	    } else {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], ucir[i]);
-		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
+		if (!primitive_lod_line_set_append(realization, add,
+			    BSG_GEOMETRY_LINE_MOVE) ||
+			!primitive_lod_line_set_append(realization, add2,
+			    BSG_GEOMETRY_LINE_DRAW))
+		    goto cleanup;
 	    }
 	}
     }
     if (narc < 16) {
-	curve_to_vlist(vlfree, vhead, ttol, rip->v3d, rEnd, uz, rip->skt, crv);
+	if (curve_to_line_set(realization, ttol, rip->v3d, rEnd, uz,
+		rip->skt, crv))
+	    goto cleanup;
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
 		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], rEnd);
 		VJOIN1(add3, add, verts[endcount[j+1]][X], rEnd);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add3, BV_VLIST_LINE_DRAW);
+		if (!primitive_lod_line_set_append(realization, add2,
+			    BSG_GEOMETRY_LINE_MOVE) ||
+			!primitive_lod_line_set_append(realization, add3,
+			    BSG_GEOMETRY_LINE_DRAW))
+		    goto cleanup;
 		j++;
 	    } else {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], rEnd);
-		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
+		if (!primitive_lod_line_set_append(realization, add,
+			    BSG_GEOMETRY_LINE_MOVE) ||
+			!primitive_lod_line_set_append(realization, add2,
+			    BSG_GEOMETRY_LINE_DRAW))
+		    goto cleanup;
 	    }
 	}
 	for (j=0; j<nadd; j+=2) {
 	    if (!ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, rip->v3d, verts[endcount[j+1]][Y], rip->axis3d);
-		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
+		if (!primitive_lod_line_set_append(realization, add,
+			    BSG_GEOMETRY_LINE_MOVE) ||
+			!primitive_lod_line_set_append(realization, add2,
+			    BSG_GEOMETRY_LINE_DRAW))
+		    goto cleanup;
 	    }
 	}
     }
 
+    ret = primitive_lod_line_set_finish(realization) ? 0 : -1;
+
+cleanup:
     if (nvert)
 	bu_free(endcount, "endcount");
-    return 0;
+    return ret;
+}
+
+
+C_DECL int
+rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip,
+		const struct bg_tess_tol *ttol,
+		const struct bn_tol *UNUSED(tol),
+		const struct bsg_view *UNUSED(info))
+{
+    struct rt_primitive_lod_realization realization = { 0 };
+    int ret;
+
+    BU_CK_LIST_HEAD(vhead);
+
+    ret = rt_revolve_wireframe_line_set(&realization, ip, ttol);
+    if (ret >= 0) {
+	struct bu_list *vlfree = &rt_vlfree;
+
+	for (size_t i = 0; i < realization.line_count; i++) {
+	    int vlist_cmd;
+
+	    switch (realization.line_commands[i]) {
+		case BSG_GEOMETRY_LINE_MOVE:
+		    vlist_cmd = BSG_VLIST_LINE_MOVE;
+		    break;
+		case BSG_GEOMETRY_LINE_DRAW:
+		    vlist_cmd = BSG_VLIST_LINE_DRAW;
+		    break;
+		case BSG_GEOMETRY_POINT_DRAW:
+		    vlist_cmd = BSG_VLIST_POINT_DRAW;
+		    break;
+		default:
+		    primitive_lod_line_set_free(&realization);
+		    return -1;
+	    }
+	    BSG_ADD_VLIST(vlfree, vhead, realization.line_points[i],
+		    vlist_cmd);
+	}
+    }
+
+    primitive_lod_line_set_free(&realization);
+    return ret;
 }
 
 
@@ -1433,7 +1515,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-C_DECL int
+int
 rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_revolve_internal *rip = NULL;
@@ -1464,7 +1546,7 @@ rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt
     return -1;
 }
 
-C_DECL const char *
+const char *
 rt_revolve_keypoint(point_t *pt, const char *keystr, const mat_t mat,
 		    const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
@@ -1489,7 +1571,7 @@ rt_revolve_keypoint(point_t *pt, const char *keystr, const mat_t mat,
 }
 
 
-C_DECL int
+int
 rt_revolve_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1518,7 +1600,7 @@ rt_revolve_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_i
  *
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_revolve_internal *rip;
@@ -1591,7 +1673,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
  * object, storing the results in the specified 'op' out pointer or
  * creating a copy if NULL.
  */
-C_DECL int
+int
 rt_revolve_xform(
     struct rt_db_internal *op,
     const mat_t mat,
@@ -1652,7 +1734,7 @@ rt_revolve_xform(
  *
  * Apply the transformation to mm units as well.
  */
-C_DECL int
+int
 rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_revolve_internal *rip;
@@ -1698,7 +1780,7 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_revolve_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_revolve_internal *rip =
@@ -1744,7 +1826,7 @@ rt_revolve_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_revolve_ifree(struct rt_db_internal *ip)
 {
     struct rt_revolve_internal *revolve_ip;

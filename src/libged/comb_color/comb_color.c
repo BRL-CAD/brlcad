@@ -24,6 +24,7 @@
  */
 
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 int
@@ -61,17 +62,29 @@ ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
+    int rgb[3] = {0, 0, 0};
     for (i = 0; i < 3; ++i) {
 	if (sscanf(argv[i+2], "%d", &val) != 1 || val < 0 || 255 < val) {
 	    bu_vls_printf(gedp->ged_result_str, "RGB value out of range: %s", argv[i + 2]);
 	    rt_db_free_internal(&intern);
 	    return BRLCAD_ERROR;
-	} else
-	    comb->rgb[i] = val;
+	}
+	rgb[i] = val;
     }
 
+    if (comb->rgb_valid &&
+	    comb->rgb[0] == rgb[0] &&
+	    comb->rgb[1] == rgb[1] &&
+	    comb->rgb[2] == rgb[2]) {
+	rt_db_free_internal(&intern);
+	return BRLCAD_OK;
+    }
+
+    for (i = 0; i < 3; ++i)
+	comb->rgb[i] = rgb[i];
     comb->rgb_valid = 1;
     GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    (void)ged_event_notify_object_material_changed(gedp, dp->d_namep, NULL);
 
     return BRLCAD_OK;
 }

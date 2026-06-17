@@ -17,7 +17,7 @@ endif(BRLCAD_ENABLE_QT)
 
 set(view_info_srcs view_info.cpp CADViewModel.cpp)
 
-set(view_info_moc_headers CADViewModel.h)
+set(view_info_moc_headers CADViewModel.h ViewInfoFactory.h)
 
 if(BRLCAD_ENABLE_QT)
   if(Qt6Widgets_FOUND)
@@ -55,6 +55,7 @@ if(BRLCAD_ENABLE_QT)
   distclean(
     icon.qrc.depends
     moc_CADViewModel.cpp_parameters
+    moc_ViewInfoFactory.cpp_parameters
   )
 endif(BRLCAD_ENABLE_QT)
 
@@ -65,6 +66,7 @@ set(
   ${view_info_moc_headers}
   icon.qrc
   info.svg
+  view_info.json
   README
 )
 

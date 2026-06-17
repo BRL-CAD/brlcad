@@ -36,8 +36,28 @@
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
+
+
+class ged_librt_callback_guard {
+public:
+    explicit ged_librt_callback_guard(struct ged *g) : gedp(g)
+    {
+	disabled = ged_event_librt_callbacks_disable(gedp);
+    }
+
+    ~ged_librt_callback_guard()
+    {
+	if (disabled)
+	    (void)ged_event_librt_callbacks_enable(gedp);
+    }
+
+private:
+    struct ged *gedp = nullptr;
+    int disabled = 0;
+};
 
 /* Canonical matrix container to create stable keys for comparisons */
 struct mat_canon {
@@ -1562,98 +1582,126 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    // Walk a final time to characterize the state of the comb trees in light
-    // of the changes made to handle pushed information.
-    for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
-	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
-	if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
-	    // All walks start with an identity matrix.
-	    MAT_IDN(m);
-	    // We are now working with instances, not the raw directory
-	    // pointers.  Because by definition the top level object is an
-	    // identity matrix object, we initialize a dp_i with the identity
-	    // form of the object to "seed" the tree walk.
-	    dp_i ldpi;
-	    ldpi.dp = dp;
-	    ldpi.tol = s.tol;
-	    bool found = canon_matrix_find(m, s.tol, s.canon_mats, &ldpi.mat_key, ldpi.mat, &ldpi.mat_is_idn);
-	    if (!found) {
-		bu_vls_printf(gedp->ged_result_str, "Error - unable to locate canonical identity matrix for tree walk.\n");
-		return BRLCAD_ERROR;
+    std::vector<struct ged_event> npush_events;
+    {
+	ged_librt_callback_guard librt_guard(gedp);
+
+	// Walk a final time to characterize the state of the comb trees in light
+	// of the changes made to handle pushed information.
+	for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
+	    struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
+	    if (dp != RT_DIR_NULL && (dp->d_flags & RT_DIR_COMB)) {
+		// All walks start with an identity matrix.
+		MAT_IDN(m);
+		// We are now working with instances, not the raw directory
+		// pointers.  Because by definition the top level object is an
+		// identity matrix object, we initialize a dp_i with the identity
+		// form of the object to "seed" the tree walk.
+		dp_i ldpi;
+		ldpi.dp = dp;
+		ldpi.tol = s.tol;
+		bool found = canon_matrix_find(m, s.tol, s.canon_mats, &ldpi.mat_key, ldpi.mat, &ldpi.mat_is_idn);
+		if (!found) {
+		    bu_vls_printf(gedp->ged_result_str, "Error - unable to locate canonical identity matrix for tree walk.\n");
+		    return BRLCAD_ERROR;
+		}
+		ldpi.finalize_apply_key();
+
+		struct db_full_path *dfp;
+		BU_GET(dfp, struct db_full_path);
+		db_full_path_init(dfp);
+		db_add_node_to_full_path(dfp, dp);
+
+		// Start the walk.
+		tree_update_walk(ldpi, dfp, 0, &m, &s);
+
+		db_free_full_path(dfp);
+		BU_PUT(dfp, struct db_full_path);
+
 	    }
-	    ldpi.finalize_apply_key();
-
-	    struct db_full_path *dfp;
-	    BU_GET(dfp, struct db_full_path);
-	    db_full_path_init(dfp);
-	    db_add_node_to_full_path(dfp, dp);
-
-	    // Start the walk.
-	    tree_update_walk(ldpi, dfp, 0, &m, &s);
-
-	    db_free_full_path(dfp);
-	    BU_PUT(dfp, struct db_full_path);
-
 	}
-    }
 
-    // If anything went wrong, there's no point in going any further.
-    if (s.walk_error) {
-	bu_vls_printf(gedp->ged_result_str, "Fatal error preparing new trees\n");
-	std::map<struct directory *, struct rt_db_internal *>::iterator uf_it;
-	for (uf_it = s.updated.begin(); uf_it != s.updated.end(); uf_it++) {
-	    struct rt_db_internal *in = uf_it->second;
+	// If anything went wrong, there's no point in going any further.
+	if (s.walk_error) {
+	    bu_vls_printf(gedp->ged_result_str, "Fatal error preparing new trees\n");
+	    std::map<struct directory *, struct rt_db_internal *>::iterator uf_it;
+	    for (uf_it = s.updated.begin(); uf_it != s.updated.end(); uf_it++) {
+		struct rt_db_internal *in = uf_it->second;
+		rt_db_free_internal(in);
+		BU_PUT(in, struct rt_db_internal);
+	    }
+	    for (uf_it = s.added.begin(); uf_it != s.added.end(); uf_it++) {
+		struct rt_db_internal *in = uf_it->second;
+		rt_db_free_internal(in);
+		BU_PUT(in, struct rt_db_internal);
+		db_dirdelete(gedp->dbip, uf_it->first);
+	    }
+	    return BRLCAD_ERROR;
+	}
+
+	/* We now know everything we need.  For combs and primitives that have updates
+	 * or are being newly created apply those changes to the .g file.  Because this
+	 * step is destructive, it is carried out only after all characterization steps
+	 * are complete in order to avoid any risk of changing what is being analyzed
+	 * mid-stream.  (Problems of that nature are not always simple to observe, and
+	 * can be *very* difficult to debug.) */
+	std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
+	npush_events.reserve(s.updated.size() + s.added.size());
+	for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
+	    struct directory *dp = u_it->first;
+	    if (s.verbosity > 4) {
+		bu_log("Writing %s to database\n", dp->d_namep);
+	    }
+	    struct rt_db_internal *in = u_it->second;
+	    int put_ok = 1;
+	    if (!s.dry_run) {
+		if (rt_db_put_internal(dp, s.dbip, in) < 0) {
+		    bu_log("Unable to store %s to the database", dp->d_namep);
+		    put_ok = 0;
+		}
+	    }
+	    if (!s.dry_run && put_ok) {
+		struct ged_event ev = {};
+		ev.name = dp->d_namep;
+		ev.kind = (dp->d_flags & RT_DIR_COMB) ?
+		    GED_EVENT_COMB_TREE_CHANGED : GED_EVENT_OBJECT_MODIFIED;
+		ev.redraw = 0;
+		npush_events.push_back(ev);
+	    }
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
 	}
-	for (uf_it = s.added.begin(); uf_it != s.added.end(); uf_it++) {
-	    struct rt_db_internal *in = uf_it->second;
+	for (u_it = s.added.begin(); u_it != s.added.end(); u_it++) {
+	    struct directory *dp = u_it->first;
+	    if (s.verbosity > 4) {
+		bu_log("Adding %s to database\n", dp->d_namep);
+	    }
+	    struct rt_db_internal *in = u_it->second;
+	    int put_ok = 1;
+	    if (!s.dry_run) {
+		if (rt_db_put_internal(dp, s.dbip, in) < 0) {
+		    bu_log("Unable to store %s to the database", dp->d_namep);
+		    put_ok = 0;
+		}
+	    } else {
+		// Delete the directory pointers we set up - dry run, so we're not
+		// actually creating the objects.
+		db_dirdelete(gedp->dbip, dp);
+	    }
+	    if (!s.dry_run && put_ok) {
+		struct ged_event ev = {};
+		ev.name = dp->d_namep;
+		ev.kind = GED_EVENT_OBJECT_ADDED;
+		npush_events.push_back(ev);
+	    }
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
-	    db_dirdelete(gedp->dbip, uf_it->first);
 	}
-	return BRLCAD_ERROR;
     }
 
-    /* We now know everything we need.  For combs and primitives that have updates
-     * or are being newly created apply those changes to the .g file.  Because this
-     * step is destructive, it is carried out only after all characterization steps
-     * are complete in order to avoid any risk of changing what is being analyzed
-     * mid-stream.  (Problems of that nature are not always simple to observe, and
-     * can be *very* difficult to debug.) */
-    std::map<struct directory *, struct rt_db_internal *>::iterator u_it;
-    for (u_it = s.updated.begin(); u_it != s.updated.end(); u_it++) {
-	struct directory *dp = u_it->first;
-	if (s.verbosity > 4) {
-	    bu_log("Writing %s to database\n", dp->d_namep);
-	}
-	struct rt_db_internal *in = u_it->second;
-	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.dbip, in) < 0) {
-		bu_log("Unable to store %s to the database", dp->d_namep);
-	    }
-	}
-	rt_db_free_internal(in);
-	BU_PUT(in, struct rt_db_internal);
-    }
-    for (u_it = s.added.begin(); u_it != s.added.end(); u_it++) {
-	struct directory *dp = u_it->first;
-	if (s.verbosity > 4) {
-	    bu_log("Adding %s to database\n", dp->d_namep);
-	}
-	struct rt_db_internal *in = u_it->second;
-	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.dbip, in) < 0) {
-		bu_log("Unable to store %s to the database", dp->d_namep);
-	    }
-	} else {
-	    // Delete the directory pointers we set up - dry run, so we're not
-	    // actually creating the objects.
-	    db_dirdelete(gedp->dbip, dp);
-	}
-	rt_db_free_internal(in);
-	BU_PUT(in, struct rt_db_internal);
-    }
+    if (!s.dry_run && !npush_events.empty())
+	(void)ged_event_publish(gedp, npush_events.data(),
+	    npush_events.size(), NULL);
 
     // We've written to the database - everything should be finalized now.  Do a final
     // validation check.

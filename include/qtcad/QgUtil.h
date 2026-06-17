@@ -29,18 +29,12 @@
 
 #include <QImage>
 #include "qtcad/defines.h"
+#include "qtcad/QgTypes.h"
 
 #ifndef Q_MOC_RUN
 #include "raytrace.h"
 #include "ged.h"
 #endif
-
-
-#define G_STANDARD_OBJ 0 /** @brief no region or air flags set, or not a comb */
-#define G_REGION 1       /** @brief region flag set, no air flag set */
-#define G_AIR 2          /** @brief non-zero aircode set, no non-zero region_id set */
-#define G_AIR_REGION 3   /** @brief both non-zero aircode and non-zero region_id set (error case) */
-#define G_ASSEMBLY 4     /** @brief a comb object above one or more regions */
 
 /**
  * Given a dp and its parent dbip, report its comb type (non-combs will
@@ -66,4 +60,3 @@ QgIcon(struct directory *dp, struct db_i *dbip);
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

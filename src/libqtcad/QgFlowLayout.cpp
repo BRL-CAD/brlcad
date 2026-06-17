@@ -47,161 +47,165 @@
 #include "qtcad/QgFlowLayout.h"
 
 QgFlowLayout::QgFlowLayout(QWidget *pparent, int mmargin, int hSpacing, int vSpacing)
-    : QLayout(pparent), m_hSpace(hSpacing), m_vSpace(vSpacing)
+	: QLayout(pparent), m_hSpace(hSpacing), m_vSpace(vSpacing)
 {
-    setContentsMargins(mmargin, mmargin, mmargin, mmargin);
+	setContentsMargins(mmargin, mmargin, mmargin, mmargin);
 }
 
 QgFlowLayout::QgFlowLayout(int mmargin, int hSpacing, int vSpacing)
-    : m_hSpace(hSpacing), m_vSpace(vSpacing)
+	: m_hSpace(hSpacing), m_vSpace(vSpacing)
 {
-    setContentsMargins(mmargin, mmargin, mmargin, mmargin);
+	setContentsMargins(mmargin, mmargin, mmargin, mmargin);
 }
 
 QgFlowLayout::~QgFlowLayout()
 {
-    QLayoutItem *item;
-    while ((item = takeAt(0)))
-        delete item;
+	QLayoutItem *item;
+	while ((item = takeAt(0)))
+		delete item;
 }
 
 void QgFlowLayout::addItem(QLayoutItem *item)
 {
-    itemList.append(item);
+	itemList.append(item);
 }
 
 int QgFlowLayout::horizontalSpacing() const
 {
-    if (m_hSpace >= 0) {
-        return m_hSpace;
-    } else {
-        return smartSpacing(QStyle::PM_LayoutHorizontalSpacing);
-    }
+	if (m_hSpace >= 0) {
+		return m_hSpace;
+	}
+	else {
+		return smartSpacing(QStyle::PM_LayoutHorizontalSpacing);
+	}
 }
 
 int QgFlowLayout::verticalSpacing() const
 {
-    if (m_vSpace >= 0) {
-        return m_vSpace;
-    } else {
-        return smartSpacing(QStyle::PM_LayoutVerticalSpacing);
-    }
+	if (m_vSpace >= 0) {
+		return m_vSpace;
+	}
+	else {
+		return smartSpacing(QStyle::PM_LayoutVerticalSpacing);
+	}
 }
 
 void QgFlowLayout::setHorizontalSpacing(int hspacing)
 {
-    m_hSpace = hspacing;
+	m_hSpace = hspacing;
 }
 
 void QgFlowLayout::setVerticalSpacing(int vspacing)
 {
-    m_vSpace = vspacing;
+	m_vSpace = vspacing;
 }
 
 int QgFlowLayout::count() const
 {
-    return itemList.size();
+	return itemList.size();
 }
 
 QLayoutItem *QgFlowLayout::itemAt(int index) const
 {
-    return itemList.value(index);
+	return itemList.value(index);
 }
 
 QLayoutItem *QgFlowLayout::takeAt(int index)
 {
-    if (index >= 0 && index < itemList.size())
-        return itemList.takeAt(index);
-    else
-        return 0;
+	if (index >= 0 && index < itemList.size())
+		return itemList.takeAt(index);
+	else
+		return 0;
 }
 
 Qt::Orientations QgFlowLayout::expandingDirections() const
 {
-    return Qt::Orientations{};
+	return Qt::Orientations{};
 }
 
 bool QgFlowLayout::hasHeightForWidth() const
 {
-    return true;
+	return true;
 }
 
 int QgFlowLayout::heightForWidth(int width) const
 {
-    int height = doLayout(QRect(0, 0, width, 0), true);
-    return height;
+	int height = doLayout(QRect(0, 0, width, 0), true);
+	return height;
 }
 
 void QgFlowLayout::setGeometry(const QRect &rect)
 {
-    QLayout::setGeometry(rect);
-    doLayout(rect, false);
+	QLayout::setGeometry(rect);
+	doLayout(rect, false);
 }
 
 QSize QgFlowLayout::sizeHint() const
 {
-    return minimumSize();
+	return minimumSize();
 }
 
 QSize QgFlowLayout::minimumSize() const
 {
-    QSize size;
-    QLayoutItem *item;
-    foreach (item, itemList)
-        size = size.expandedTo(item->minimumSize());
+	QSize size;
+	QLayoutItem *item;
+	foreach (item, itemList)
+		size = size.expandedTo(item->minimumSize());
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    // TODO - figure out the right Qt6 logic here...
-    size += QSize(2*margin(), 2*margin());
+	// TODO - figure out the right Qt6 logic here...
+	size += QSize(2*margin(), 2*margin());
 #endif
-    return size;
+	return size;
 }
 
 int QgFlowLayout::doLayout(const QRect &rect, bool testOnly) const
 {
-    int left, top, right, bottom;
-    getContentsMargins(&left, &top, &right, &bottom);
-    QRect effectiveRect = rect.adjusted(+left, +top, -right, -bottom);
-    int x = effectiveRect.x();
-    int y = effectiveRect.y();
-    int lineHeight = 0;
+	int left, top, right, bottom;
+	getContentsMargins(&left, &top, &right, &bottom);
+	QRect effectiveRect = rect.adjusted(+left, +top, -right, -bottom);
+	int x = effectiveRect.x();
+	int y = effectiveRect.y();
+	int lineHeight = 0;
 
-    QLayoutItem *item;
-    foreach (item, itemList) {
-        QWidget *wid = item->widget();
-        int spaceX = horizontalSpacing();
-        if (spaceX == -1)
-            spaceX = wid->style()->layoutSpacing(
-                QSizePolicy::PushButton, QSizePolicy::PushButton, Qt::Horizontal);
-        int spaceY = verticalSpacing();
-        if (spaceY == -1)
-            spaceY = wid->style()->layoutSpacing(
-                QSizePolicy::PushButton, QSizePolicy::PushButton, Qt::Vertical);
-        int nextX = x + item->sizeHint().width() + spaceX;
-        if (nextX - spaceX > effectiveRect.right() && lineHeight > 0) {
-            x = effectiveRect.x();
-            y = y + lineHeight + spaceY;
-            nextX = x + item->sizeHint().width() + spaceX;
-            lineHeight = 0;
-        }
+	QLayoutItem *item;
+	foreach (item, itemList) {
+		QWidget *wid = item->widget();
+		int spaceX = horizontalSpacing();
+		if (spaceX == -1)
+			spaceX = wid->style()->layoutSpacing(
+			                 QSizePolicy::PushButton, QSizePolicy::PushButton, Qt::Horizontal);
+		int spaceY = verticalSpacing();
+		if (spaceY == -1)
+			spaceY = wid->style()->layoutSpacing(
+			                 QSizePolicy::PushButton, QSizePolicy::PushButton, Qt::Vertical);
+		int nextX = x + item->sizeHint().width() + spaceX;
+		if (nextX - spaceX > effectiveRect.right() && lineHeight > 0) {
+			x = effectiveRect.x();
+			y = y + lineHeight + spaceY;
+			nextX = x + item->sizeHint().width() + spaceX;
+			lineHeight = 0;
+		}
 
-        if (!testOnly)
-            item->setGeometry(QRect(QPoint(x, y), item->sizeHint()));
+		if (!testOnly)
+			item->setGeometry(QRect(QPoint(x, y), item->sizeHint()));
 
-        x = nextX;
-        lineHeight = qMax(lineHeight, item->sizeHint().height());
-    }
-    return y + lineHeight - rect.y() + bottom;
+		x = nextX;
+		lineHeight = qMax(lineHeight, item->sizeHint().height());
+	}
+	return y + lineHeight - rect.y() + bottom;
 }
 int QgFlowLayout::smartSpacing(QStyle::PixelMetric pm) const
 {
-    QObject *pparent = this->parent();
-    if (!pparent) {
-        return -1;
-    } else if (pparent->isWidgetType()) {
-        QWidget *pw = static_cast<QWidget *>(pparent);
-        return pw->style()->pixelMetric(pm, 0, pw);
-    } else {
-        return static_cast<QLayout *>(pparent)->spacing();
-    }
+	QObject *pparent = this->parent();
+	if (!pparent) {
+		return -1;
+	}
+	else if (pparent->isWidgetType()) {
+		QWidget *pw = static_cast<QWidget *>(pparent);
+		return pw->style()->pixelMetric(pm, 0, pw);
+	}
+	else {
+		return static_cast<QLayout *>(pparent)->spacing();
+	}
 }

@@ -29,6 +29,7 @@
 
 #include "bu/cmd.h"
 #include "bu/units.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -98,6 +99,7 @@ ged_units_core(struct ged *gedp, int argc, const char *argv[])
 
     gedp->dbip->dbi_local2base = loc2mm;
     gedp->dbip->dbi_base2local = 1.0 / loc2mm;
+    (void)ged_event_notify_database_metadata_changed(gedp, NULL);
 
     str = bu_units_string(gedp->dbip->dbi_local2base);
     if (!str) str = "Unknown_unit";

@@ -30,6 +30,10 @@
 
 __BEGIN_DECLS
 
+struct bg_tess_tol;
+struct rt_db_internal;
+struct rt_primitive_lod_realization;
+
 /**
  * Approximate a hyperbola with line segments.
  *
@@ -78,6 +82,7 @@ DEPRECATED RT_EXPORT extern int rt_mk_hyperbola_old(struct rt_pnt_node *pts,
 						    fastf_t c,
 						    fastf_t dtol,
 						    fastf_t ntol);
+RT_EXPORT extern int rt_rhc_wireframe_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bg_tess_tol *ttol);
 
 /** @} */
 

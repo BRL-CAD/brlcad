@@ -53,7 +53,6 @@ TCLCAD_EXPORT extern int Rt_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Bu_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Dm_Init(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Dmo_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Fbo_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Ged_Init(Tcl_Interp *interp);
 

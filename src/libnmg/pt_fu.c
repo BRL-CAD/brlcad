@@ -35,8 +35,9 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bg/plane.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "nmg.h"
+#include "nmg/plot.h"
 
 /* vertex/edge distance
  * Each loop geometry element (edge/vertex) has one of these computed.

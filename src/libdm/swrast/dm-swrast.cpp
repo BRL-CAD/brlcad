@@ -39,7 +39,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-#include "bv/defines.h"
+#include "bsg/defines.h"
 #include "dm.h"
 #include "dm/util.h"
 #include "../null/dm-Null.h"
@@ -67,6 +67,8 @@ extern "C" {
 static struct dm *swrast_open(void *ctx, void *interp, int argc, const char **argv);
 static int swrast_close(struct dm *dmp);
 static int swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+static int swrast_drawString2DRot(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect, fastf_t angle);
+static int swrast_drawString2D_internal(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect, fastf_t angle);
 static int swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 static int swrast_configureWin(struct dm *dmp, int force);
 static int swrast_makeCurrent(struct dm *dmp);
@@ -76,17 +78,25 @@ static int
 swrast_makeCurrent(struct dm *dmp)
 {
     struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    int width, height;
 
     if (!pv || !pv->ctx || !pv->v) {
-	bu_log("swrast_configureWin: Couldn't make context current\n");
+	fprintf(stderr, "swrast_configureWin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
 
     if (dmp->i->dm_debugLevel)
-	bu_log("swrast_makeCurrent()\n");
+	fprintf(stderr, "swrast_makeCurrent()\n");
 
-    if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE, pv->v->gv_width, pv->v->gv_height)) {
-	bu_log("OSMesaMakeCurrent failed!\n");
+    width = (dmp->i->dm_width > 0) ? dmp->i->dm_width : ((pv->v->gv_width > 0) ? pv->v->gv_width : 512);
+    height = (dmp->i->dm_height > 0) ? dmp->i->dm_height : ((pv->v->gv_height > 0) ? pv->v->gv_height : 512);
+    dmp->i->dm_width = width;
+    dmp->i->dm_height = height;
+    pv->v->gv_width = width;
+    pv->v->gv_height = height;
+
+    if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE, width, height)) {
+	fprintf(stderr, "OSMesaMakeCurrent failed!\n");
 	return BRLCAD_ERROR;
     }
 
@@ -106,15 +116,19 @@ swrast_configureWin(struct dm *dmp, int UNUSED(force))
     struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
 
     if (!pv || !pv->ctx || !pv->v) {
-	bu_log("swrast_configureWin: Couldn't make context current\n");
+	fprintf(stderr, "swrast_configureWin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
 
-    int width = pv->v->gv_width;
-    int height = pv->v->gv_height;
+    int width = (dmp->i->dm_width > 0) ? dmp->i->dm_width : ((pv->v->gv_width > 0) ? pv->v->gv_width : 512);
+    int height = (dmp->i->dm_height > 0) ? dmp->i->dm_height : ((pv->v->gv_height > 0) ? pv->v->gv_height : 512);
+    dmp->i->dm_width = width;
+    dmp->i->dm_height = height;
+    pv->v->gv_width = width;
+    pv->v->gv_height = height;
 
     if (!width || !height) {
-	bu_log("swrast_configureWin: Zero sized window\n");
+	fprintf(stderr, "swrast_configureWin: Zero sized window\n");
 	return BRLCAD_ERROR;
     }
 
@@ -123,12 +137,12 @@ swrast_configureWin(struct dm *dmp, int UNUSED(force))
     // (textures, etc.), not just the current dm image.
     pv->os_b = bu_realloc(pv->os_b, 4096 * 4096 * sizeof(GLubyte)*4, "OSMesa rendering buffer");
     if (!pv->os_b) {
-	bu_log("swrast_configureWin: render buffer allocation failed\n");
+	fprintf(stderr, "swrast_configureWin: render buffer allocation failed\n");
 	return BRLCAD_ERROR;
     }
 
     if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE, width, height)) {
-	bu_log("OSMesaMakeCurrent failed!\n");
+	fprintf(stderr, "OSMesaMakeCurrent failed!\n");
 	return BRLCAD_ERROR;
     }
 
@@ -138,7 +152,7 @@ swrast_configureWin(struct dm *dmp, int UNUSED(force))
     if (!pv->fs) {
 	pv->fs = glfonsCreate(512, 512, FONS_ZERO_TOPLEFT);
 	if (pv->fs == NULL) {
-	    bu_log("dm-swrast: Failed to create font stash");
+	    fprintf(stderr, "dm-swrast: Failed to create font stash");
 	    return BRLCAD_ERROR;
 	}
 	pv->fontNormal = FONS_INVALID;
@@ -210,17 +224,19 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct swrast_vars);
     privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
-    privars->v = (struct bview *)ctx;
+    privars->v = (struct bsg_view *)ctx;
     // Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend
     // was switched to RGBA to make it easier to display the output
-    privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 32, 0, 0, NULL);
+    privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);
     int width = (!privars->v->gv_width) ? 512 : privars->v->gv_width;
     int height = (!privars->v->gv_height) ? 512 : privars->v->gv_height;
+    dmp->i->dm_width = width;
+    dmp->i->dm_height = height;
     privars->v->gv_width = width;
     privars->v->gv_height = height;
     privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
     if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, width, height)) {
-	bu_log("OSMesaMakeCurrent failed!\n");
+	fprintf(stderr, "OSMesaMakeCurrent failed!\n");
 	bu_free(dmp->i->dm_vars.pub_vars, "swrast_open: dmp->i->dm_vars.pub_vars");
 	bu_free(dmp, "swrast_open: dmp");
 	return DM_NULL;
@@ -267,7 +283,7 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->fogdensity = 1.0;
     mvars->lighting_on = 1;
     mvars->fast_wireframe = 1;
-    mvars->fast_wireframe_active = 1;
+    gl_update_fast_wireframe_active(dmp);
     mvars->zbuffer_on = 1;
     mvars->zclipping_on = 0;
     mvars->bound = 1.0;
@@ -330,12 +346,23 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
  * The starting position of the beam is as specified.
  */
 static int
-swrast_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int UNUSED(size), int use_aspect)
+swrast_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int size, int use_aspect)
 {
-    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    return swrast_drawString2D_internal(dmp, str, ix, iy, size, use_aspect, 0.0);
+}
+
+static int
+swrast_drawString2DRot(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int size, int use_aspect, fastf_t angle)
+{
+    return swrast_drawString2D_internal(dmp, str, ix, iy, size, use_aspect, angle);
+}
+
+static int
+swrast_drawString2D_internal(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int UNUSED(size), int use_aspect, fastf_t angle)
+{
     struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
-	bu_log("swrast_drawString2D()\n");
+	fprintf(stderr, "swrast_drawString2D()\n");
 
     // If the positions are out of range on the positive side, just don't draw -
     // text will go to the right and not be visible
@@ -383,6 +410,11 @@ swrast_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int
 	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
 	coord_x = (nxc) ? -1*(dm_get_width(dmp) - coord_x) : coord_x;
 	coord_y = (nyc) ? coord_y + (fastf_t)dm_get_height(dmp) : coord_y;
+	if (!NEAR_ZERO(angle, SMALL_FASTF)) {
+	    glTranslatef((GLfloat)coord_x, (GLfloat)coord_y, 0.0f);
+	    glRotatef((GLfloat)angle, 0.0f, 0.0f, 1.0f);
+	    glTranslatef((GLfloat)-coord_x, (GLfloat)-coord_y, 0.0f);
+	}
 
 	// Have info and OpenGL state, do the text drawing
 	fonsSetFont(privars->fs, privars->fontNormal);
@@ -394,15 +426,10 @@ swrast_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int
 	// Restore previous projection matrix
 	glPopMatrix();
 
-	// Restore view matrix (changed by glOrtho call)
-	glPopMatrix();
-
 	// Put us back in whatever mode we were in before starting the text draw
 	glMatrixMode(mm);
 
 	if (!blend_state) glDisable(GL_BLEND);
-
-	glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
     }
     return BRLCAD_OK;
 }
@@ -412,7 +439,7 @@ swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *
 {
     struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
-	bu_log("qtgl_drawString2D()\n");
+	fprintf(stderr, "qtgl_drawString2D()\n");
 
     // If the positions are out of range on the positive side, just don't draw -
     // text will go to the right and not be visible
@@ -465,9 +492,7 @@ swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *
 	//bu_log("%s bounds: min(%f,%f) max(%f,%f)\n", str, bounds[0], bounds[1], bounds[2], bounds[3]);
 	//bu_log("%s width %d\n", str, width);
 
-	// Done with text, put matrices back
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
+	// Done with text, restore projection matrix
 	glPopMatrix();
 
 	if (bmin)
@@ -541,7 +566,7 @@ swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alph
 {
     struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     if (!pv || !pv->ctx) {
-	bu_log("swrast_getDisplayImage: no context\n");
+	fprintf(stderr, "swrast_getDisplayImage: no context\n");
 	*image = NULL;
 	return BRLCAD_ERROR;
     }
@@ -558,18 +583,19 @@ swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alph
 	if (OSMesaGetColorBuffer(saved_ctx, &saved_width, &saved_height, &saved_format, &saved_buf) && saved_buf)
 	    need_restore = true;
 	else
-	    bu_log("swrast_getDisplayImage: could not save current context buffer; context will not be restored\n");
+	    fprintf(stderr, "swrast_getDisplayImage: could not save current context buffer; context will not be restored\n");
     }
 
     /* Ensure this OSMesa context is current before reading its buffer */
     if (dm_make_current(dmp) != BRLCAD_OK) {
-	bu_log("swrast_getDisplayImage: dm_make_current failed\n");
+	fprintf(stderr, "swrast_getDisplayImage: dm_make_current failed\n");
 	*image = NULL;
 	return BRLCAD_ERROR;
     }
 
     int width = dmp->i->dm_width;
     int height = dmp->i->dm_height;
+    int bytes_per_pixel = alpha ? 4 : 3;
 
     /* Get the raw RGBA render buffer directly from OSMesa.  This is the os_b
      * buffer that OSMesaMakeCurrent was called with, which receives all drawing
@@ -577,42 +603,50 @@ swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alph
     GLint cbwidth, cbheight, bitsperchannel;
     void *cbuf = NULL;
     if (!OSMesaGetColorBuffer(pv->ctx, &cbwidth, &cbheight, &bitsperchannel, &cbuf) || !cbuf) {
-	bu_log("swrast_getDisplayImage: OSMesaGetColorBuffer failed\n");
+	fprintf(stderr, "swrast_getDisplayImage: OSMesaGetColorBuffer failed\n");
 	*image = NULL;
 	if (need_restore)
 	    if (!OSMesaMakeCurrent(saved_ctx, saved_buf, GL_UNSIGNED_BYTE, saved_width, saved_height))
-		bu_log("swrast_getDisplayImage: context restore failed after read error\n");
+		fprintf(stderr, "swrast_getDisplayImage: context restore failed after read error\n");
 	return BRLCAD_ERROR;
     }
 
-    /* cbuf is RGBA unsigned byte, row-major. */
-    unsigned char *src = (unsigned char *)cbuf;
-    if (alpha && !flip) {
-	*image = src;
+    /* DIM-DBG: log whenever the OSMesa buffer dimensions differ from what dm expects */
+    if (cbwidth != width || cbheight != height) {
+	fprintf(stderr, "swrast_getDisplayImage: DIM MISMATCH: dm=(%d,%d) OSMesa_buf=(%d,%d) gv=(%d,%d)\n",
+	       width, height, (int)cbwidth, (int)cbheight,
+	       pv->v ? pv->v->gv_width : -1,
+	       pv->v ? pv->v->gv_height : -1);
     } else {
-	int bytes_per_pixel = alpha ? 4 : 3;
-	unsigned char *idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel,
-						       sizeof(unsigned char), "swrast image");
-	if (alpha) {
-	    memcpy(idata, src, (size_t)width * height * 4);
-	} else {
-	    for (int i = 0; i < width * height; i++) {
-		idata[i * 3 + 0] = src[i * 4 + 0];
-		idata[i * 3 + 1] = src[i * 4 + 1];
-		idata[i * 3 + 2] = src[i * 4 + 2];
-	    }
-	}
-
-	*image = idata;
-
-	if (flip)
-	    flip_display_image_vertically(*image, width, height, alpha);
+	fprintf(stderr, "swrast_getDisplayImage: dm=(%d,%d) OSMesa_buf=(%d,%d) [OK]\n",
+	       width, height, (int)cbwidth, (int)cbheight);
     }
+
+    /* cbuf is RGBA unsigned byte, row-major from bottom-left */
+    unsigned char *src = (unsigned char *)cbuf;
+    unsigned char *idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel,
+						       sizeof(unsigned char), "swrast image");
+    if (alpha) {
+	/* copy RGBA directly */
+	memcpy(idata, src, (size_t)width * height * 4);
+    } else {
+	/* convert RGBA → RGB */
+	for (int i = 0; i < width * height; i++) {
+	    idata[i * 3 + 0] = src[i * 4 + 0];
+	    idata[i * 3 + 1] = src[i * 4 + 1];
+	    idata[i * 3 + 2] = src[i * 4 + 2];
+	}
+    }
+
+    *image = idata;
+
+    if (flip)
+	flip_display_image_vertically(*image, width, height, alpha);
 
     /* Restore the previously active OSMesa context */
     if (need_restore)
 	if (!OSMesaMakeCurrent(saved_ctx, saved_buf, GL_UNSIGNED_BYTE, saved_width, saved_height))
-	    bu_log("swrast_getDisplayImage: context restore failed\n");
+	    fprintf(stderr, "swrast_getDisplayImage: context restore failed\n");
 
     return BRLCAD_OK;
 }
@@ -649,6 +683,7 @@ struct dm_impl dm_swrast_impl = {
     gl_loadPMatrix,
     gl_popPMatrix,
     swrast_drawString2D,
+    swrast_drawString2DRot,
     swrast_String2DBBox,
     gl_drawLine2D,
     gl_drawLine3D,
@@ -658,8 +693,6 @@ struct dm_impl dm_swrast_impl = {
     gl_drawPoints3D,
     gl_drawVList,
     gl_drawVListHiddenLine,
-    gl_draw_obj,
-    gl_draw_data_axes,
     gl_draw,
     gl_setFGColor,
     gl_setBGColor,
@@ -681,12 +714,6 @@ struct dm_impl dm_swrast_impl = {
     gl_getBoundFlag,
     gl_debug,
     gl_logfile,
-    gl_beginDList,
-    gl_endDList,
-    gl_drawDList,
-    gl_freeDLists,
-    gl_genDLists,
-    gl_draw_display_list,
     swrast_getDisplayImage, /* display to image function */
     gl_reshape,
     swrast_makeCurrent,
@@ -702,11 +729,10 @@ struct dm_impl dm_swrast_impl = {
     NULL,
     swrast_event_cmp,
     gl_fogHint,
-    NULL, //swrast_share_dlist,
     0,
     1,				/* is graphical (sort of...) */
     "osmesa",                   /* uses OSMesa software rasterizer */
-    1,				/* has displaylist */
+    1,				/* has backend cache */
     0,                          /* no stereo by default */
     "swrast",
     "OSMesa swrast graphics",
@@ -730,8 +756,9 @@ struct dm_impl dm_swrast_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
-    {BV_MIN, BV_MIN, BV_MIN},	/* clipmin */
-    {BV_MAX, BV_MAX, BV_MAX},	/* clipmax */
+    {255, 0, 0},/* geometry default color */
+    {BSG_VIEW_MIN, BSG_VIEW_MIN, BSG_VIEW_MIN},	/* clipmin */
+    {BSG_VIEW_MAX, BSG_VIEW_MAX, BSG_VIEW_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* depth buffer is writable */
@@ -742,7 +769,9 @@ struct dm_impl dm_swrast_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    &gl_backend_ops,            /* GL backend contract (dm-gl_lod.cpp) */
+    NULL,                       /* backend resource cache */
+    0                           /* backend frame generation */
 };
 
 struct dm dm_swrast = { DM_MAGIC, &dm_swrast_impl, 0 };

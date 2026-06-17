@@ -30,13 +30,13 @@
 #include <fstream>
 
 #include <bu.h>
-#include <bv/lod.h>
+#include <bsg/lod.h>
 #include <icv.h>
 #define DM_WITH_RT
 #include <dm.h>
 #include <ged.h>
-
-#include "../../dbi.h"
+#include <ged/bsg_ged_draw.h>
+#include <ged/event_txn.h>
 
 // In order to handle changes to .g geometry contents, we need to defined
 // callbacks for the librt hooks that will update the working data structures.
@@ -45,36 +45,27 @@
 extern "C" void
 ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    unsigned long long hash;
     struct ged *gedp = (struct ged *)u_data;
-    DbiState *ctx = (DbiState *)gedp->dbi_state;
-
-    // Clear cached GED drawing data and update
-    ctx->clear_cache(dp);
+    const char *name = (dp) ? dp->d_namep : NULL;
 
     // Need to invalidate any LoD caches associated with this dp
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
-	unsigned long long key = bv_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
+    if (dp && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
+	unsigned long long key = bsg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
 	if (key) {
-	    bv_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
-	    bv_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
+	    bsg_mesh_lod_clear_cache(gedp->ged_lod, key);
+	    bsg_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, 0);
 	}
     }
 
     switch(mode) {
 	case 0:
-	    ctx->changed.insert(dp);
+	    ged_event_notify_object_modified(gedp, name, 1, NULL);
 	    break;
 	case 1:
-	    ctx->added.insert(dp);
+	    ged_event_notify_object_added(gedp, name, NULL);
 	    break;
 	case 2:
-	    // When this callback is made, dp is still valid, but in subsequent
-	    // processing it will not be.  We need to capture everything we
-	    // will need from this dp now, for later use when updating state
-	    hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    ctx->removed.insert(hash);
-	    ctx->old_names[hash] = std::string(dp->d_namep);
+	    ged_event_notify_object_removed(gedp, name, NULL);
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -84,21 +75,29 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 extern "C" void
 dm_refresh(struct ged *gedp)
 {
-    struct bview *v= gedp->ged_gvp;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BViewState *bvs = dbis->get_view_state(v);
-    dbis->update();
-    std::unordered_set<struct bview *> uset;
-    uset.insert(v);
-    bvs->redraw(NULL, uset, 1);
+    struct bu_ptbl *views = bsg_set_views(&gedp->ged_views);
+    struct bsg_view *v = NULL;
+    if (views && BU_PTBL_LEN(views) > 0)
+	v = (struct bsg_view *)BU_PTBL_GET(views, 0);
+    if (!v)
+	v = gedp->ged_gvp;
+    if (!v)
+	return;
+    struct ged_draw_transaction txn =
+	ged_draw_transaction_make(GED_DRAW_TXN_REDRAW, NULL);
+    txn.view = v;
+    ged_draw_apply_transaction(gedp, &txn, NULL);
 
     struct dm *dmp = (struct dm *)v->dmp;
+    if (!dmp)
+	return;
+    dm_make_current(dmp);
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
     dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-    dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, NULL, NULL);
+    dm_set_native_repaint_pending(dmp, 0);
+    dm_draw_objs(v);
     dm_draw_end(dmp);
 }
 
@@ -247,6 +246,67 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
     return BRLCAD_OK;
 }
 
+extern "C" int
+img_not_empty(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, const char *UNUSED(clear_root), const char *img_root)
+{
+    icv_image_t *ctrl, *timg;
+    struct bu_vls tname = BU_VLS_INIT_ZERO;
+    struct bu_vls cname = BU_VLS_INIT_ZERO;
+
+    bu_vls_sprintf(&tname, "%s%03d_semantic.png", img_root, id);
+    bu_vls_sprintf(&cname, "%s/empty.png", cdir);
+
+    dm_refresh(gedp);
+    const char *s_av[2] = {"screengrab", NULL};
+    s_av[1] = bu_vls_cstr(&tname);
+    ged_exec_screengrab(gedp, 2, s_av);
+
+    timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_PNG, 0, 0);
+    ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_PNG, 0, 0);
+    bu_vls_free(&cname);
+
+    if (!timg || !ctrl) {
+	if (timg) icv_destroy(timg);
+	if (ctrl) icv_destroy(ctrl);
+	if (clear_image)
+	    bu_file_delete(bu_vls_cstr(&tname));
+	bu_vls_free(&tname);
+	if (clear_scene)
+	    scene_clear(gedp);
+	if (soft_fail)
+	    return BRLCAD_ERROR;
+	bu_exit(EXIT_FAILURE, "failed to read semantic image comparison inputs\n");
+    }
+
+    int matching_cnt = 0;
+    int off_by_1_cnt = 0;
+    int off_by_many_cnt = 0;
+    int diff = icv_diff(&matching_cnt, &off_by_1_cnt, &off_by_many_cnt, ctrl, timg);
+    icv_destroy(ctrl);
+    icv_destroy(timg);
+
+    if (clear_image)
+	bu_file_delete(bu_vls_cstr(&tname));
+    bu_vls_free(&tname);
+
+    if (!diff) {
+	bu_log("%d %s semantic non-empty check failed: image matches empty scene\n", id, img_root);
+	if (clear_scene)
+	    scene_clear(gedp);
+	if (soft_fail)
+	    return BRLCAD_ERROR;
+	bu_exit(EXIT_FAILURE, "Semantic empty-image failure found, test aborted.\n");
+    }
+
+    bu_log("%d %s semantic non-empty check passed against empty scene.  %d empty pixels matching, %d nearly-empty pixels, %d visibly drawn pixels\n",
+	    id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+
+    if (clear_scene)
+	scene_clear(gedp);
+
+    return BRLCAD_OK;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
@@ -255,4 +315,3 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

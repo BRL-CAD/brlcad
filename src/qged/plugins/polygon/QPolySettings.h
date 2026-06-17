@@ -27,7 +27,7 @@
 #include <QLineEdit>
 #include <QCheckBox>
 #include <QComboBox>
-#include "bv.h"
+#include "bsg.h"
 #include "qtcad/QgColorRGB.h"
 
 class QPolySettings : public QWidget
@@ -54,7 +54,7 @@ class QPolySettings : public QWidget
 	QCheckBox *line_snapping;
 	QCheckBox *grid_snapping;
 
-	bool uniq_obj_name(struct bu_vls *oname, struct bview *v);
+	bool uniq_obj_name(struct bu_vls *oname, struct bsg_view *v);
 
     signals:
 	void settings_changed();
@@ -65,7 +65,7 @@ class QPolySettings : public QWidget
 	void do_settings_changed();
 	void do_line_snapping_changed();
 	void do_grid_snapping_changed();
-	void settings_sync(struct bv_scene_obj *p);
+	void settings_sync(const struct bsg_polygon_record *p);
 
     private slots:
 	void sketch_sync_toggled(bool);

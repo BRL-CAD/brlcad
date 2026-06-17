@@ -109,6 +109,26 @@ dm_graphics_system(const char *dmtype)
 }
 
 
+/* Backend default policy:
+ *
+ * The priority_list drives dm_bestXType / dm_default_type for legacy
+ * applications such as mged that open a DM via dm_open() outside of a Qt
+ * widget context.  The ordering reflects historical platform priorities:
+ *   wgl - Windows OpenGL (MSVC / MinGW builds)
+ *   ogl - X11 OpenGL (Linux / macOS native GL)
+ *   tkswrast - Tk-hosted OSMesa fallback for MGED/Tcl clients
+ *   X - X11 non-GL fallback
+ *
+ * The Qt-based backends (dm-qtgl, qged's swrast canvas path) are intentionally
+ * absent from this list because their widget lifetime is managed by qged.
+ * tkswrast is different: it is a Tk display manager wrapper around the
+ * headless OSMesa swrast backend, so it can be selected by MGED/Tcl clients
+ * using their normal Tk window context.
+ *
+ * For headless / scripted use with mged, pass --dm-type swrast on the command
+ * line; dm_open() accepts swrast without a widget context by using the bsg_view
+ * pointer (view_state->vs_gvp) as the ctx argument.
+ */
 static const char *priority_list[] = {"wgl", "ogl", "tkswrast", "X", NULL};
 
 

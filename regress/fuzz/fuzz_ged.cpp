@@ -26,7 +26,7 @@
 #include <cassert>
 
 #include "bu.h"
-#include "bv.h"
+#include "bsg.h"
 #include "ged.h"
 
 const size_t MAX_ARGS = 5;
@@ -231,9 +231,9 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
     BU_LIST_INIT(&rt_vlfree);
 
     /* Need a view for commands that expect a view */
-    struct bview *gvp;
-    BU_GET(gvp, struct bview);
-    bv_init(gvp, &g->ged_views);
+    struct bsg_view *gvp;
+    BU_GET(gvp, struct bsg_view);
+    bsg_init(gvp, &g->ged_views);
     g->ged_gvp = gvp;
 
     void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);

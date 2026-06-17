@@ -34,6 +34,9 @@
 
 __BEGIN_DECLS
 
+struct rt_db_internal;
+struct rt_primitive_lod_realization;
+
 /* PIPE specific editing info */
 struct rt_pipe_edit {
     struct wdb_pipe_pnt *es_pipe_pnt; /* Currently selected PIPE segment */
@@ -57,6 +60,7 @@ RT_EXPORT extern void rt_pipe_pnt_print(const struct wdb_pipe_pnt *pipe_pnt, dou
 RT_EXPORT extern int rt_pipe_ck(const struct bu_list *headp);
 RT_EXPORT extern int rt_pipe_validate(struct bu_ptbl *violations, const struct rt_pipe_internal *pip, int flags);
 RT_EXPORT extern int rt_pipe_project_apply(struct rt_constraint_edit_result *out, struct rt_db_internal *ip, const struct rt_constraint_edit_op *op, const struct rt_constraint_edit_ctx *ctx);
+RT_EXPORT extern int rt_pipe_wireframe_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip);
 
 RT_EXPORT extern int rt_pipe_get_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps);
 RT_EXPORT extern struct wdb_pipe_pnt *rt_pipe_get_seg_i(struct rt_pipe_internal *pipeip, int seg_i);

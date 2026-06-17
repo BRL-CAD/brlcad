@@ -112,6 +112,13 @@ RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
+ * obtain a sampled indexed-face representation of an object for point-mode
+ * visualization.  The caller owns any arrays assigned in face_set and releases
+ * them with bu_free().
+ */
+RT_EXPORT extern int rt_obj_sampled_face_set(struct rt_primitive_indexed_face_set *face_set, struct rt_db_internal *ip);
+
+/**
  * shoot an array of rays at a set of homogeneous objects.
  */
 RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);

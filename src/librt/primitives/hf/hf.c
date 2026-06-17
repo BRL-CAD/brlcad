@@ -57,13 +57,16 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/hf.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
+#include "../../librt_private.h"
 
 
 #define HF_O(m) bu_offsetof(struct rt_hf_internal, m)
 
 /* All fields valid in string solid */
-EXTERNCPP const struct bu_structparse rt_hf_parse[] = {
+const struct bu_structparse rt_hf_parse[] = {
     {"%s",	128,	"cfile",	HF_O(cfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%s",	128,	"dfile",	HF_O(dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%s",	8,	"fmt",		HF_O(fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -80,7 +83,7 @@ EXTERNCPP const struct bu_structparse rt_hf_parse[] = {
     {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 /* Subset of fields found in cfile */
-EXTERNCPP const struct bu_structparse rt_hf_cparse[] = {
+const struct bu_structparse rt_hf_cparse[] = {
     {"%s",	128,	"dfile",	HF_O(dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%s",	8,	"fmt",		HF_O(fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -192,7 +195,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 /**
  * Calculate the bounding RPP for an hf
  */
-C_DECL int
+int
 rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const struct bn_tol *UNUSED(tol)) {
     struct rt_hf_internal *hip;
     vect_t height, work;
@@ -279,7 +282,7 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const st
  * A struct hf_specific is created, and its address is stored in
  * stp->st_specific for use by hf_shot().
  */
-C_DECL int
+int
 rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_hf_internal *hip;
@@ -418,7 +421,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_hf_print(const struct soltab *stp)
 {
     const struct hf_specific *hf =
@@ -781,7 +784,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct hf_specific *hf =
@@ -1533,7 +1536,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_hf_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct hf_specific *hf =
@@ -1576,7 +1579,7 @@ rt_hf_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the hf.
  */
-C_DECL void
+void
 rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct hf_specific *hf = (struct hf_specific *)stp->st_specific;
@@ -1598,7 +1601,7 @@ rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-C_DECL void
+void
 rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct hf_specific *hf;
@@ -1627,7 +1630,7 @@ rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 }
 
 
-C_DECL void
+void
 rt_hf_free(struct soltab *stp)
 {
     struct hf_specific *hf =
@@ -1640,8 +1643,46 @@ rt_hf_free(struct soltab *stp)
 }
 
 
-C_DECL int
-rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+struct hf_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_hf_line_sink_append(struct hf_line_sink *sink, const point_t p,
+		       int command)
+{
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
+static int
+rt_hf_standard_line_set(struct hf_line_sink *sink,
+			struct rt_db_internal *ip,
+			const struct bg_tess_tol *ttol)
 {
     struct rt_hf_internal *xip;
     unsigned short *sp = (unsigned short *)NULL;
@@ -1658,9 +1699,9 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
     int half_step;
     int goal;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!sink)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
 
@@ -1673,18 +1714,18 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
     goal = 20000;
 
     /* Draw the 4 corners of the base plate */
-    BV_ADD_VLIST(vlfree, vhead, xip->v, BV_VLIST_LINE_MOVE);
+    rt_hf_line_sink_append(sink, xip->v, BSG_GEOMETRY_LINE_MOVE);
 
     VJOIN1(start, xip->v, xip->xlen, xip->x);
-    BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_DRAW);
+    rt_hf_line_sink_append(sink, start, BSG_GEOMETRY_LINE_DRAW);
 
     VJOIN2(start, xip->v, xip->xlen, xip->x, xip->ylen, xip->y);
-    BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_DRAW);
+    rt_hf_line_sink_append(sink, start, BSG_GEOMETRY_LINE_DRAW);
 
     VJOIN1(start, xip->v, xip->ylen, xip->y);
-    BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_DRAW);
+    rt_hf_line_sink_append(sink, start, BSG_GEOMETRY_LINE_DRAW);
 
-    BV_ADD_VLIST(vlfree, vhead, xip->v, BV_VLIST_LINE_DRAW);
+    rt_hf_line_sink_append(sink, xip->v, BSG_GEOMETRY_LINE_DRAW);
     goal -= 5;
 
 #define HF_GET(_p, _x, _y)	((_p)[(_y)*xip->w+(_x)])
@@ -1693,92 +1734,92 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
      */
     if (xip->shorts) {
 	/* X direction, Y=0, with edges down to base */
-	BV_ADD_VLIST(vlfree, vhead, xip->v, BV_VLIST_LINE_MOVE);
+	rt_hf_line_sink_append(sink, xip->v, BSG_GEOMETRY_LINE_MOVE);
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0);
 	for (x = 0; x < xip->w; x++) {
 	    VJOIN2(cur, xip->v, x, xbasis, *sp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+	    rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    sp++;
 	}
 	VJOIN1(cur, xip->v, xip->xlen, xip->x);
-	BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+	rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 
 	/* X direction, Y=n-1, with edges down to base */
 	VJOIN1(start, xip->v, xip->ylen, xip->y);
-	BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_MOVE);
+	rt_hf_line_sink_append(sink, start, BSG_GEOMETRY_LINE_MOVE);
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, xip->n - 1);
 	VJOIN1(start, xip->v, xip->ylen, xip->y);
 	for (x = 0; x < xip->w; x++) {
 	    VJOIN2(cur, start, x, xbasis, *sp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+	    rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    sp++;
 	}
 	VJOIN2(cur, xip->v, xip->xlen, xip->x, xip->ylen, xip->y);
-	BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+	rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 
 	/* Y direction, X=0 */
-	cmd = BV_VLIST_LINE_MOVE;
+	cmd = BSG_GEOMETRY_LINE_MOVE;
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0);
 	for (y = 0; y < xip->n; y++) {
 	    VJOIN2(cur, xip->v, y, ybasis, *sp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, cmd);
-	    cmd = BV_VLIST_LINE_DRAW;
+	    rt_hf_line_sink_append(sink, cur, cmd);
+	    cmd = BSG_GEOMETRY_LINE_DRAW;
 	    sp += xip->w;
 	}
 
 	/* Y direction, X=w-1 */
-	cmd = BV_VLIST_LINE_MOVE;
+	cmd = BSG_GEOMETRY_LINE_MOVE;
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, xip->w - 1, 0);
 	VJOIN1(start, xip->v, xip->xlen, xip->x);
 	for (y = 0; y < xip->n; y++) {
 	    VJOIN2(cur, start, y, ybasis, *sp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, cmd);
-	    cmd = BV_VLIST_LINE_DRAW;
+	    rt_hf_line_sink_append(sink, cur, cmd);
+	    cmd = BSG_GEOMETRY_LINE_DRAW;
 	    sp += xip->w;
 	}
     } else {
 	/* X direction, Y=0, with edges down to base */
-	BV_ADD_VLIST(vlfree, vhead, xip->v, BV_VLIST_LINE_MOVE);
+	rt_hf_line_sink_append(sink, xip->v, BSG_GEOMETRY_LINE_MOVE);
 	dp = &HF_GET((double *)xip->mp->apbuf, 0, 0);
 	for (x = 0; x < xip->w; x++) {
 	    VJOIN2(cur, xip->v, x, xbasis, *dp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+	    rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    dp++;
 	}
 	VJOIN1(cur, xip->v, xip->xlen, xip->x);
-	BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+	rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 
 	/* X direction, Y=n-1, with edges down to base */
 	VJOIN1(start, xip->v, xip->ylen, xip->y);
-	BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_MOVE);
+	rt_hf_line_sink_append(sink, start, BSG_GEOMETRY_LINE_MOVE);
 	dp = &HF_GET((double *)xip->mp->apbuf, 0, xip->n - 1);
 	VJOIN1(start, xip->v, xip->ylen, xip->y);
 	for (x = 0; x < xip->w; x++) {
 	    VJOIN2(cur, start, x, xbasis, *dp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+	    rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    dp++;
 	}
 	VJOIN2(cur, xip->v, xip->xlen, xip->x, xip->ylen, xip->y);
-	BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+	rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 
 	/* Y direction, X=0 */
-	cmd = BV_VLIST_LINE_MOVE;
+	cmd = BSG_GEOMETRY_LINE_MOVE;
 	dp = &HF_GET((double *)xip->mp->apbuf, 0, 0);
 	for (y = 0; y < xip->n; y++) {
 	    VJOIN2(cur, xip->v, y, ybasis, *dp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, cmd);
-	    cmd = BV_VLIST_LINE_DRAW;
+	    rt_hf_line_sink_append(sink, cur, cmd);
+	    cmd = BSG_GEOMETRY_LINE_DRAW;
 	    sp += xip->w;
 	}
 
 	/* Y direction, X=w-1 */
-	cmd = BV_VLIST_LINE_MOVE;
+	cmd = BSG_GEOMETRY_LINE_MOVE;
 	dp = &HF_GET((double *)xip->mp->apbuf, xip->w - 1, 0);
 	VJOIN1(start, xip->v, xip->xlen, xip->x);
 	for (y = 0; y < xip->n; y++) {
 	    VJOIN2(cur, start, y, ybasis, *dp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, cmd);
-	    cmd = BV_VLIST_LINE_DRAW;
+	    rt_hf_line_sink_append(sink, cur, cmd);
+	    cmd = BSG_GEOMETRY_LINE_DRAW;
 	    dp += xip->w;
 	}
     }
@@ -1792,7 +1833,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	step = ttol->rel * rstep;
     } else {
 	/* No relative tol specified, limit drawing to 'goal' # of vectors */
-	if (goal <= 0) return 0;		/* no vectors for interior */
+	if (goal <= 0) return sink->ok ? 0 : -1;		/* no vectors for interior */
 
 	/* Compute data stride based upon producing no more than 'goal' vectors */
 	step = ceil(sqrt(2*(xip->w-1)*(xip->n-1) / (double)goal));
@@ -1807,37 +1848,37 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	if (xip->shorts) {
 	    sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 	    VJOIN2(cur, start, x, xbasis, *sp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_MOVE);
+	    rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_MOVE);
 	    x += half_step;
 	    sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 	    for (; x < xip->w; x += step) {
 		VJOIN2(cur, start, x, xbasis, *sp, zbasis);
-		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+		rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 		sp += step;
 	    }
 	    if (x != step+xip->w-1+step) {
 		x = xip->w - 1;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, x, xbasis, *sp, zbasis);
-		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+		rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    }
 	} else {
 	    /* doubles */
 	    dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 	    VJOIN2(cur, start, x, xbasis, *dp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_MOVE);
+	    rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_MOVE);
 	    x += half_step;
 	    dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 	    for (; x < xip->w; x+=step) {
 		VJOIN2(cur, start, x, xbasis, *dp, zbasis);
-		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+		rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 		dp += step;
 	    }
 	    if (x != step+xip->w-1+step) {
 		x = xip->w - 1;
 		dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, x, xbasis, *dp, zbasis);
-		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+		rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    }
 	}
     }
@@ -1849,18 +1890,18 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	    y = 0;
 	    sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 	    VJOIN2(cur, start, y, ybasis, *sp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_MOVE);
+	    rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_MOVE);
 	    y += half_step;
 	    for (; y < xip->n; y += step) {
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, y, ybasis, *sp, zbasis);
-		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+		rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    }
 	    if (y != step+xip->n-1+step) {
 		y = xip->n - 1;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, y, ybasis, *sp, zbasis);
-		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+		rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    }
 	}
     } else {
@@ -1870,22 +1911,64 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	    y = 0;
 	    dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 	    VJOIN2(cur, start, y, ybasis, *dp, zbasis);
-	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_MOVE);
+	    rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_MOVE);
 	    y += half_step;
 	    for (; y < xip->n; y += step) {
 		dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, y, ybasis, *dp, zbasis);
-		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+		rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    }
 	    if (y != step+xip->n-1+step) {
 		y = xip->n - 1;
 		dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, y, ybasis, *dp, zbasis);
-		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
+		rt_hf_line_sink_append(sink, cur, BSG_GEOMETRY_LINE_DRAW);
 	    }
 	}
     }
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_hf_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			 struct rt_db_internal *ip,
+			 const struct bg_tess_tol *ttol)
+{
+    struct hf_line_sink sink;
+    int ret;
+
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    ret = rt_hf_standard_line_set(&sink, ip, ttol);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip,
+	   const struct bg_tess_tol *ttol,
+	   const struct bn_tol *UNUSED(tol),
+	   const struct bsg_view *UNUSED(info))
+{
+    struct hf_line_sink sink;
+
+    BU_CK_LIST_HEAD(vhead);
+
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_hf_standard_line_set(&sink, ip, ttol);
 }
 
 
@@ -1894,7 +1977,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-C_DECL int
+int
 rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_hf_internal *xip;
@@ -1914,7 +1997,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  * Import an HF from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_hf_internal *xip;
@@ -2086,7 +2169,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  * override those stored in the string solid (including the dfile
  * name).
  */
-C_DECL int
+int
 rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hf_internal *xip;
@@ -2127,7 +2210,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 }
 
 
-C_DECL int
+int
 rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2141,7 +2224,7 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 }
 
 
-C_DECL int
+int
 rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (!ep) return -1;
@@ -2160,7 +2243,7 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_hf_internal *xip;
@@ -2185,7 +2268,7 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_hf_ifree(struct rt_db_internal *ip)
 {
     struct rt_hf_internal *xip;
@@ -2200,7 +2283,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
     bu_free((char *)xip, "hf ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
-C_DECL int
+int
 rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2208,7 +2291,7 @@ rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-C_DECL const char *
+const char *
 rt_hf_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

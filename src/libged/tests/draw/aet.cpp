@@ -33,22 +33,19 @@
 #define DM_WITH_RT
 #include <dm.h>
 #include <ged.h>
-
-#include "../../dbi.h"
+#include <ged/bsg_ged_draw.h>
 
 void
 dm_refresh(struct ged *gedp, int vnum)
 {
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    struct bview *v = (struct bview *)BU_PTBL_GET(views, vnum);
+    struct bu_ptbl *views = bsg_set_views(&gedp->ged_views);
+    struct bsg_view *v = (struct bsg_view *)BU_PTBL_GET(views, vnum);
     if (!v)
 	return;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BViewState *bvs = dbis->get_view_state(v);
-    dbis->update();
-    std::unordered_set<struct bview *> uset;
-    uset.insert(v);
-    bvs->redraw(NULL, uset, 1);
+    struct ged_draw_transaction txn =
+	ged_draw_transaction_make(GED_DRAW_TXN_REDRAW, NULL);
+    txn.view = v;
+    ged_draw_apply_transaction(gedp, &txn, NULL);
 
     struct dm *dmp = (struct dm *)v->dmp;
     /* Ensure rendering goes to this view's DM context, not the last-active one.
@@ -60,8 +57,8 @@ dm_refresh(struct ged *gedp, int vnum)
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
     dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-    dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, NULL, NULL);
+    dm_set_native_repaint_pending(dmp, 0);
+    dm_draw_objs(v);
     dm_draw_end(dmp);
 }
 
@@ -81,8 +78,8 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 
     dm_refresh(gedp, vnum);
 
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    struct bview *v = (struct bview *)BU_PTBL_GET(views, vnum);
+    struct bu_ptbl *views = bsg_set_views(&gedp->ged_views);
+    struct bsg_view *v = (struct bsg_view *)BU_PTBL_GET(views, vnum);
     if (!v)
 	bu_exit(EXIT_FAILURE, "Invalid view specifier: %d\n", vnum);
     struct dm *dmp = (struct dm *)v->dmp;
@@ -182,6 +179,12 @@ main(int ac, char *av[]) {
 	return 2;
     }
 
+    /* Use a local working-directory cache so we do not pollute the user's
+     * real BRL-CAD cache and so the test is fully self-contained. */
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_aet_test_cache", NULL);
+    bu_mkdir(lcache);
+    bu_setenv("BU_DIR_CACHE", lcache, 1);
+
     /* make a temporary copy of moss */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
     std::ifstream orig(bu_vls_cstr(&fname), std::ios::binary);
@@ -194,28 +197,25 @@ main(int ac, char *av[]) {
     const char *s_av[15] = {NULL};
     gedp = ged_open("db", "moss_aet_tmp.g", 1);
 
-    // Set up new cmd data (not yet done by default in ged_open
-    gedp->dbi_state = new DbiState(gedp);
-    gedp->new_cmd_forms = 1;
     bu_setenv("DM_SWRAST", "1", 1);
 
     // We don't want the default GED views for this test
-    bv_set_rm_view(&gedp->ged_views, NULL);
+    bsg_set_rm_view(&gedp->ged_views, NULL);
 
     // Set up the views.  Unlike the other drawing tests, we are explicitly
     // out to test the behavior of multiple views and dms, so we need to
     // set up multiples.  We'll start out with four non-independent views,
     // to mimic the most common multi-dm/view display - a Quad view widget.
     // Each view will get its own attached swrast DM.
-    struct bview *views[4];
+    struct bsg_view *views[4];
     for (size_t i = 0; i < 4; i++) {
-	BU_GET(views[i], struct bview);
+	BU_GET(views[i], struct bsg_view);
 	if (!i)
 	    gedp->ged_gvp = views[i];
-	struct bview *v = views[i];
-	bv_init(v, &gedp->ged_views);
+	struct bsg_view *v = views[i];
+	bsg_init(v, &gedp->ged_views);
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
-	bv_set_add_view(&gedp->ged_views, v);
+	bsg_set_add_view(&gedp->ged_views, v);
 	bu_ptbl_ins(&gedp->ged_free_views, (long *)v);
 
 	/* To generate images that will allow us to check if the drawing
@@ -256,20 +256,20 @@ main(int ac, char *av[]) {
      * the potential to be challenging in "gimbal lock" positions in
      * multiples of 90 degrees and using non-zero twist components. */
     VSET(views[0]->gv_aet, 0, 0, 90);
-    bv_mat_aet(views[0]);
-    bv_update(views[0]);
+    bsg_mat_aet(views[0]);
+    bsg_update(views[0]);
 
     VSET(views[1]->gv_aet, 90, 90, 180);
-    bv_mat_aet(views[1]);
-    bv_update(views[1]);
+    bsg_mat_aet(views[1]);
+    bsg_update(views[1]);
 
     VSET(views[2]->gv_aet, -90, 270, -90);
-    bv_mat_aet(views[2]);
-    bv_update(views[2]);
+    bsg_mat_aet(views[2]);
+    bsg_update(views[2]);
 
     VSET(views[3]->gv_aet, 270, -180, 90);
-    bv_mat_aet(views[3]);
-    bv_update(views[3]);
+    bsg_mat_aet(views[3]);
+    bsg_update(views[3]);
 
 
     /************************************************************************/
@@ -301,7 +301,7 @@ main(int ac, char *av[]) {
 	dm_configure_win(dmp, 0);
 	// NOTE:  deliberately not resetting aet here - we want to see if it is
 	// stable without adjustment.
-	bv_update(views[i]);
+	bsg_update(views[i]);
     }
     ret += img_cmp(0, 2, gedp, av[1], soft_fail);
     ret += img_cmp(1, 2, gedp, av[1], soft_fail);
@@ -320,7 +320,7 @@ main(int ac, char *av[]) {
 	dm_configure_win(dmp, 0);
 	// NOTE:  deliberately not resetting aet here - we want to see if it is
 	// stable without adjustment.
-	bv_update(views[i]);
+	bsg_update(views[i]);
     }
     ret += img_cmp(0, 1, gedp, av[1], soft_fail);
     ret += img_cmp(1, 1, gedp, av[1], soft_fail);
@@ -339,7 +339,7 @@ main(int ac, char *av[]) {
 	    dm_configure_win(dmp, 0);
 	    // NOTE:  deliberately not resetting aet here - we want to see if it is
 	    // stable without adjustment.
-	    bv_update(views[j]);
+	    bsg_update(views[j]);
 	}
     }
     len = 512;
@@ -352,7 +352,7 @@ main(int ac, char *av[]) {
 	dm_configure_win(dmp, 0);
 	// NOTE:  deliberately not resetting aet here - we want to see if it is
 	// stable without adjustment.
-	bv_update(views[i]);
+	bsg_update(views[i]);
     }
     ret += img_cmp(0, 1, gedp, av[1], soft_fail);
     ret += img_cmp(1, 1, gedp, av[1], soft_fail);
@@ -373,4 +373,3 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

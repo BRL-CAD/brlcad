@@ -50,8 +50,11 @@
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/plane.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
+#include "bsg/vlist.h"
 #include "nmg.h"
+#include "nmg/plot.h"
+#include "./nmg_private.h"
 
 #define PLOT_BOTH_FACES 1
 
@@ -1507,7 +1510,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	FILE *fp;
 	struct model *m;
 	long *b;
-	struct bv_vlblock *vbp;
+	struct bsg_vlblock *vbp;
 	static int num = 0;
 
 	bu_log("nmg_special_wedge_processing(start=%d, end=%d, lo=%g, hi=%g, wclass=%s)\n",
@@ -1518,7 +1521,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	/* Plot all the loops that touch here. */
 	m = nmg_find_model((uint32_t *)vs[start].vu);
 	b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
-	vbp = bv_vlblock_init(vlfree, 32);
+	vbp = bsg_vlblock_init(vlfree, 32);
 	for (i=start; i < end; i++) {
 	    struct loopuse *lu;
 	    lu = nmg_find_lu_of_vu(vs[i].vu);
@@ -1532,11 +1535,11 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	}
 	sprintf(buf, "wedge%d.plot3", num++);
 	fp = fopen(buf, "wb");
-	bv_plot_vlblock(fp, vbp);
+	bsg_plot_vlblock(fp, vbp);
 	fclose(fp);
 	bu_log("wrote %s\n", buf);
 	bu_free((char *)b, "nmg_special_wedge_processing flag[]");
-	bv_vlblock_free(vbp);
+	bsg_vlblock_free(vbp);
     }
 
     if (end-start >= 128) bu_bomb("nmg_special_wedge_processing: array overflow\n");

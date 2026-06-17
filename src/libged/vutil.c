@@ -27,8 +27,11 @@
 
 #include <string.h>
 
+#include "bsg/feature.h"
+#include "nmg/display.h"
 #include "./ged_private.h"
 #include "ged/view.h"
+#include "ged/bsg_ged_draw.h"
 
 int
 _ged_do_rot(struct ged *gedp,
@@ -89,7 +92,7 @@ _ged_do_rot(struct ged *gedp,
 
     /* pure rotation */
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
-    bv_update(gedp->ged_gvp);
+    bsg_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }
@@ -102,7 +105,7 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 
     MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
-    bv_update(gedp->ged_gvp);
+    bsg_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }
@@ -137,54 +140,13 @@ _ged_do_tra(struct ged *gedp,
 
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
-    bv_update(gedp->ged_gvp);
+    bsg_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }
 
-unsigned long long
-ged_dl_hash(struct display_list *dl)
-{
-    if (!dl)
-	return 0;
-
-    struct bu_data_hash_state *state = bu_data_hash_create();
-    if (!state)
-	return 0;
-
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)dl);
-    while (BU_LIST_NOT_HEAD(gdlp, dl)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_u_data)
-		continue;
-	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-	    bu_data_hash_update(state, &bdata->s_fullpath.fp_len, sizeof(size_t));
-	    bu_data_hash_update(state, &bdata->s_fullpath.fp_maxlen, sizeof(size_t));
-	    for (size_t i = 0; i < DB_FULL_PATH_LEN(&bdata->s_fullpath); i++) {
-		// In principle we should check all of struct directory
-		// contents, but names are unique in the database and should
-		// suffice for this purpose - we care if the path has changed.
-		struct directory *dp = DB_FULL_PATH_GET(&bdata->s_fullpath, i);
-		bu_data_hash_update(state, &dp->d_namep, strlen(dp->d_namep));
-	    }
-	}
-	gdlp = next_gdlp;
-    }
-
-    unsigned long long hash_val = bu_data_hash_val(state);
-    bu_data_hash_destroy(state);
-
-    return hash_val;
-}
-
 void
-nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, const struct bn_tol *tol, struct bu_list *vlfree)
+nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, const struct bn_tol *tol)
 {
     if (!gedp || !es_eu || !tol)
 	return;
@@ -197,12 +159,15 @@ nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, const struct bn_tol *tol, s
 
     /* get space for list of items processed */
     long *tab = (long *)bu_calloc(m->maxindex+1, sizeof(long), "nmg_ed tab[]");
-    struct bv_vlblock *vbp = rt_vlblock_init();
+    struct bsg_line_layer_builder *plot = bsg_line_layer_builder_create();
 
-    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, vlfree, tol);
-    _ged_cvt_vlblock_to_solids(gedp, vbp, "_EU_", 0);      /* swipe vlist */
+    nmg_line_layer_around_eu(plot, es_eu, tab, 1, tol);
+    if (gedp->ged_gvp) {
+	(void)bsg_feature_replace_line_layer_builder(gedp->ged_gvp,
+		"nmg::_EU_", 0, plot, NULL);
+    }
 
-    bv_vlblock_free(vbp);
+    bsg_line_layer_builder_free(plot);
     bu_free((void *)tab, "nmg_ed tab[]");
 }
 

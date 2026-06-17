@@ -41,11 +41,12 @@
 #include "bn.h"
 #include "raytrace.h"
 
+#include "bsg/vlist.h"
 #include "dm.h"
 #include "./dm-ps.h"
 #include "../null/dm-Null.h"
 
-#include "bv/defines.h"
+#include "bsg/defines.h"
 
 #include "../include/private.h"
 
@@ -410,10 +411,10 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 /* ARGSUSED */
 static int
-ps_drawVList(struct dm *dmp, struct bv_vlist *vp)
+ps_drawVList(struct dm *dmp, bsg_vlist *vp)
 {
     static vect_t last;
-    struct bv_vlist *tvp;
+    bsg_vlist *tvp;
     point_t *pt_prev=NULL;
     fastf_t dist_prev=1.0;
     fastf_t dist;
@@ -434,7 +435,7 @@ ps_drawVList(struct dm *dmp, struct bv_vlist *vp)
     if (delta < SQRT_SMALL_FASTF)
 	delta = SQRT_SMALL_FASTF;
 
-    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bsg_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -442,24 +443,24 @@ ps_drawVList(struct dm *dmp, struct bv_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    static vect_t start, fin;
 	    switch (*cmd) {
-		case BV_VLIST_POLY_START:
-		case BV_VLIST_POLY_VERTNORM:
-		case BV_VLIST_TRI_START:
-		case BV_VLIST_TRI_VERTNORM:
+		case BSG_VLIST_POLY_START:
+		case BSG_VLIST_POLY_VERTNORM:
+		case BSG_VLIST_TRI_START:
+		case BSG_VLIST_TRI_VERTNORM:
 		    continue;
-		case BV_VLIST_MODEL_MAT:
+		case BSG_VLIST_MODEL_MAT:
 		    MAT_COPY(psmat, mod_mat);
 		    continue;
-		case BV_VLIST_DISPLAY_MAT:
+		case BSG_VLIST_DISPLAY_MAT:
 		    MAT4X3PNT(tlate, (mod_mat), *pt);
 		    disp_mat[3] = tlate[0];
 		    disp_mat[7] = tlate[1];
 		    disp_mat[11] = tlate[2];
 		    MAT_COPY(psmat, disp_mat);
 		    continue;
-		case BV_VLIST_POLY_MOVE:
-		case BV_VLIST_LINE_MOVE:
-		case BV_VLIST_TRI_MOVE:
+		case BSG_VLIST_POLY_MOVE:
+		case BSG_VLIST_LINE_MOVE:
+		case BSG_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -478,11 +479,11 @@ ps_drawVList(struct dm *dmp, struct bv_vlist *vp)
 		    } else
 			MAT4X3PNT(last, psmat, *pt);
 		    continue;
-		case BV_VLIST_POLY_DRAW:
-		case BV_VLIST_POLY_END:
-		case BV_VLIST_LINE_DRAW:
-		case BV_VLIST_TRI_DRAW:
-		case BV_VLIST_TRI_END:
+		case BSG_VLIST_POLY_DRAW:
+		case BSG_VLIST_POLY_END:
+		case BSG_VLIST_LINE_DRAW:
+		case BSG_VLIST_TRI_DRAW:
+		case BSG_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -556,12 +557,12 @@ ps_drawVList(struct dm *dmp, struct bv_vlist *vp)
 
 /* ARGSUSED */
 static int
-ps_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
+ps_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data)
 {
-    struct bv_vlist *vp;
+    bsg_vlist *vp;
     if (!callback_function) {
 	if (data) {
-	    vp = (struct bv_vlist *)data;
+	    vp = (bsg_vlist *)data;
 	    ps_drawVList(dmp, vp);
 	}
     } else {
@@ -595,40 +596,76 @@ ps_hud_end(struct dm *dmp)
 
 
 
+static FILE *
+ps_fp(struct dm *dmp)
+{
+    if (!dmp || !dmp->i || !dmp->i->dm_vars.priv_vars)
+	return NULL;
+    return ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp;
+}
+
+
+static void
+ps_set_font(FILE *fp, int size)
+{
+    switch (size) {
+	default:
+	    /* Smallest */
+	    fprintf(fp, "DFntS ");
+	    break;
+	case 1:
+	    fprintf(fp, "DFntM ");
+	    break;
+	case 2:
+	    fprintf(fp, "DFntL ");
+	    break;
+	case 3:
+	    /* Largest */
+	    fprintf(fp, "FntH ");
+	    break;
+    }
+}
+
+
 /*
- * Output a string into the displaylist.
+ * Output a string into the PostScript stream.
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
 static int
 ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
+    FILE *fp = ps_fp(dmp);
     int sx, sy;
 
-    if (!((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp)
+    if (!fp)
 	return BRLCAD_ERROR;
 
-    switch (size) {
-	default:
-	    /* Smallest */
-	    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "DFntS ");
-	    break;
-	case 1:
-	    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "DFntM ");
-	    break;
-	case 2:
-	    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "DFntL ");
-	    break;
-	case 3:
-	    /* Largest */
-	    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "FntH ");
-	    break;
-    }
+    ps_set_font(fp, size);
 
     sx = x * 2047.0 + 2048;
     sy = y * 2047.0 + 2048;
-    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp,
-	    "(%s) %d %d moveto show\n", str, sx, sy);
+    fprintf(fp, "(%s) %d %d moveto show\n", str, sx, sy);
+
+    return BRLCAD_OK;
+}
+
+
+static int
+ps_drawString2DRot(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect), fastf_t angle)
+{
+    FILE *fp = ps_fp(dmp);
+    int sx, sy;
+
+    if (!fp)
+	return BRLCAD_ERROR;
+
+    ps_set_font(fp, size);
+
+    sx = x * 2047.0 + 2048;
+    sy = y * 2047.0 + 2048;
+    fprintf(fp, "gsave %d %d translate %g rotate 0 0 moveto (%s) show grestore\n",
+	    sx, sy, angle, str);
 
     return BRLCAD_OK;
 }
@@ -852,6 +889,7 @@ struct dm_impl dm_ps_impl = {
     null_loadPMatrix,
     null_popPMatrix,
     ps_drawString2D,
+    ps_drawString2DRot,
     null_String2DBBox,
     ps_drawLine2D,
     ps_drawLine3D,
@@ -861,8 +899,6 @@ struct dm_impl dm_ps_impl = {
     null_drawPoints3D,
     ps_drawVList,
     ps_drawVList,
-    null_draw_obj,
-    NULL,
     ps_draw,
     ps_setFGColor,
     ps_setBGColor,
@@ -884,12 +920,6 @@ struct dm_impl dm_ps_impl = {
     ps_getBoundFlag,
     ps_debug,
     ps_logfile,
-    null_beginDList,
-    null_endDList,
-    null_drawDList,
-    null_freeDLists,
-    null_genDLists,
-    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
@@ -905,11 +935,10 @@ struct dm_impl dm_ps_impl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     0,
     0,				/* not graphical */
     NULL,                       /* not graphical */
-    0,				/* no displaylist */
+    0,				/* no backend cache */
     0,                          /* no stereo */
     "ps",
     "Screen to PostScript",
@@ -933,6 +962,7 @@ struct dm_impl dm_ps_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
+    {255, 0, 0},/* geometry default color */
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
@@ -945,7 +975,9 @@ struct dm_impl dm_ps_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    NULL,                       /* backend ops */
+    NULL,                       /* backend resource cache */
+    0                           /* backend frame generation */
 };
 
 

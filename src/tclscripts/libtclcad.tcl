@@ -19,17 +19,13 @@
 #
 ###
 
-## - init_dm_obj
+## - init_dm_obj (REMOVED, drawing_stack_modernization Phase T-final)
 #
-# Called to initialize display manager objects.
-#
-proc init_dm_obj { w } {
-    if ![winfo exists $w] {
-	return
-    }
+# The init_dm_obj proc was a helper for the old dm_obj standalone display
+# manager path, which was removed in Phase T3.  No replacement is provided —
+# the Qt path handles its own widget configuration.  This file is kept as
+# an empty stub because it is referenced by the libtclcad CMake script.
 
-    bind $w <Configure> {catch {%W configure}}
-}
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

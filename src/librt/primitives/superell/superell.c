@@ -41,7 +41,9 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/superell.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 #include "../../librt_private.h"
 
@@ -49,7 +51,7 @@
 extern double tgamma(double x);
 #endif
 
-EXTERNCPP const struct bu_structparse rt_superell_parse[] = {
+const struct bu_structparse rt_superell_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_superell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A", bu_offsetofarray(struct rt_superell_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_superell_internal, b, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -208,7 +210,7 @@ clt_superell_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Calculate a bounding RPP for a superell
  */
-C_DECL int
+int
 rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
 
     struct rt_superell_internal *eip;
@@ -285,7 +287,7 @@ rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const st
  * Implicit return - A struct superell_specific is created, and its
  * address is stored in stp->st_specific for use by rt_superell_shot()
  */
-C_DECL int
+int
 rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 
@@ -403,7 +405,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 }
 
 
-C_DECL void
+void
 rt_superell_print(const struct soltab *stp)
 {
     struct superell_specific *superell =
@@ -427,7 +429,7 @@ rt_superell_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     static int counter=10;
@@ -597,7 +599,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_superell_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct superell_specific *superell =
@@ -619,7 +621,7 @@ rt_superell_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the superellipsoid.
  */
-C_DECL void
+void
 rt_superell_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp || !stp)
@@ -638,7 +640,7 @@ rt_superell_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-C_DECL void
+void
 rt_superell_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -652,7 +654,7 @@ rt_superell_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
 }
 
 
-C_DECL void
+void
 rt_superell_free(struct soltab *stp)
 {
     struct superell_specific *superell =
@@ -705,18 +707,70 @@ rt_superell_16pts(fastf_t *ov,
 }
 
 
-C_DECL int
-rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+struct superell_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_superell_line_sink_append(struct superell_line_sink *sink, const point_t p,
+			     int command)
 {
-    int i;
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
+static void
+rt_superell_line_sink_append_16_point_ring(struct superell_line_sink *sink,
+					   const fastf_t *ring)
+{
+    if (!sink || !ring)
+	return;
+
+    rt_superell_line_sink_append(sink, &ring[15 * ELEMENTS_PER_VECT],
+	    BSG_GEOMETRY_LINE_MOVE);
+    for (int i = 0; i < 16; i++) {
+	rt_superell_line_sink_append(sink, &ring[i * ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+    }
+}
+
+
+static int
+rt_superell_standard_line_set(struct superell_line_sink *sink,
+			      struct rt_db_internal *ip)
+{
     struct rt_superell_internal *eip;
     fastf_t top[16*3];
     fastf_t middle[16*3];
     fastf_t bottom[16*3];
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!sink)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(eip);
 
@@ -724,21 +778,51 @@ rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     rt_superell_16pts(bottom, eip->v, eip->b, eip->c);
     rt_superell_16pts(middle, eip->v, eip->a, eip->c);
 
-    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
+    rt_superell_line_sink_append_16_point_ring(sink, top);
+    rt_superell_line_sink_append_16_point_ring(sink, bottom);
+    rt_superell_line_sink_append_16_point_ring(sink, middle);
 
-    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
+    return sink->ok ? 0 : -1;
+}
 
-    BV_ADD_VLIST(vlfree, vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-    return 0;
+
+int
+rt_superell_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			       struct rt_db_internal *ip)
+{
+    struct superell_line_sink sink;
+
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    int ret = rt_superell_standard_line_set(&sink, ip);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip,
+		 const struct bg_tess_tol *UNUSED(ttol),
+		 const struct bn_tol *UNUSED(tol),
+		 const struct bsg_view *UNUSED(info))
+{
+    struct superell_line_sink sink;
+
+    BU_CK_LIST_HEAD(vhead);
+
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_superell_standard_line_set(&sink, ip);
 }
 
 
@@ -790,7 +874,7 @@ struct superell_vert_strip {
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tesssuperellation.
  */
-C_DECL int
+int
 rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     if (r) NMG_CK_REGION(*r);
@@ -806,7 +890,7 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
  * Import an superellipsoid/sphere from the database format to the
  * internal structure.  Apply modeling transformations as wsuperell.
  */
-C_DECL int
+int
 rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
@@ -854,7 +938,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 }
 
 
-C_DECL int
+int
 rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_superell_internal *tip;
@@ -889,7 +973,7 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     return 0;
 }
 
-C_DECL int
+int
 rt_superell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -920,7 +1004,7 @@ rt_superell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_
  * Import an superellipsoid/sphere from the database format to the
  * internal structure.  Apply modeling transformations as wsuperell.
  */
-C_DECL int
+int
 rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
@@ -967,7 +1051,7 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
  * B vector
  * C vector
  */
-C_DECL int
+int
 rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
@@ -1007,7 +1091,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_superell_internal *tip =
@@ -1076,7 +1160,7 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_superell_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -1099,7 +1183,7 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 };
 */
 
-C_DECL int
+int
 rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1114,7 +1198,7 @@ rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
  * Volume equation from http://lrv.fri.uni-lj.si/~franc/SRSbook/geometry.pdf
  * which also includes a derivation on page 32.
  */
-C_DECL void
+void
 rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     if (volume == NULL || ip == NULL) {
@@ -1266,7 +1350,7 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
 }
 
 
-C_DECL void
+void
 rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_superell_internal *sip;
@@ -1318,7 +1402,7 @@ rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 }
 
-C_DECL int
+int
 rt_superell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -1354,7 +1438,7 @@ rt_superell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, co
     return lcnt;
 }
 
-C_DECL const char *
+const char *
 rt_superell_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -1395,7 +1479,7 @@ superell_kpt_end:
 }
 
 
-C_DECL int
+int
 rt_superell_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

@@ -31,6 +31,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "../../librt_private.h"
 
 // Make an edge using consistent vertex ordering
 static std::pair<unsigned int, unsigned int>
@@ -119,13 +120,13 @@ face_area(struct rt_bot_internal *bot, size_t face_num)
  *   Code for identifying semi-flat patches in bots
  *   and creating wireframe edges
  **********************************************************/
-extern "C" int
-rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(v), fastf_t UNUSED(s_size))
+static int
+rt_bot_lod_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(v), fastf_t UNUSED(s_size))
 {
     struct rt_bot_internal *bot;
-    struct bu_list *vlfree = &rt_vlfree;
+    if (!realization)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
-    BU_CK_LIST_HEAD(vhead);
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
     vect_t gvects[6];
@@ -299,22 +300,34 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     for (unsigned int j = 0; j < bot->num_faces; j++) {
 	if (vert_edge_status[bot->faces[j*3+0]] &&  vert_edge_status[bot->faces[j*3+1]]) {
-	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_DRAW);
+	    (void)primitive_lod_line_set_append(realization, &(bot->vertices[bot->faces[j*3+0]*3]), BSG_GEOMETRY_LINE_MOVE);
+	    (void)primitive_lod_line_set_append(realization, &(bot->vertices[bot->faces[j*3+1]*3]), BSG_GEOMETRY_LINE_DRAW);
 	}
 	if (vert_edge_status[bot->faces[j*3+1]] &&  vert_edge_status[bot->faces[j*3+2]]) {
-	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_DRAW);
+	    (void)primitive_lod_line_set_append(realization, &(bot->vertices[bot->faces[j*3+1]*3]), BSG_GEOMETRY_LINE_MOVE);
+	    (void)primitive_lod_line_set_append(realization, &(bot->vertices[bot->faces[j*3+2]*3]), BSG_GEOMETRY_LINE_DRAW);
 	}
 	if (vert_edge_status[bot->faces[j*3+2]] &&  vert_edge_status[bot->faces[j*3+0]]) {
-	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_DRAW);
+	    (void)primitive_lod_line_set_append(realization, &(bot->vertices[bot->faces[j*3+2]*3]), BSG_GEOMETRY_LINE_MOVE);
+	    (void)primitive_lod_line_set_append(realization, &(bot->vertices[bot->faces[j*3+0]*3]), BSG_GEOMETRY_LINE_DRAW);
 	}
     }
 
     bu_free(vert_edge_status, "vert status");
 
     return 0;
+}
+
+extern "C" int
+rt_bot_lod_realize(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
+{
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    int ret = rt_bot_lod_line_set(realization, ip, tol, v, s_size);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
 }
 
 // Local Variables:

@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -61,6 +62,7 @@ ged_title_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&title);
+    (void)ged_event_notify_database_metadata_changed(gedp, NULL);
     return BRLCAD_OK;
 }
 

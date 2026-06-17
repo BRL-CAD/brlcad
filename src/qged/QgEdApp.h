@@ -34,14 +34,17 @@
 #include <QSet>
 #include <QModelIndex>
 
-#include "bv.h"
+#include "bsg.h"
 #include "raytrace.h"
 #include "ged.h"
 #include "qtcad/QgModel.h"
+#include "qtcad/QgPluginContext.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgSignalFlags.h"
 
 #include "QgEdMainWindow.h"
+
+class QgPluginManager;
 
 /* Command type for application level commands */
 
@@ -61,11 +64,14 @@ class QgEdApp : public QApplication
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	int load_g_file(const char *gfile = NULL, bool do_conversion = true);
+	QgPluginContext *pluginContext() { return &m_plugin_context; }
+	QgPluginManager *pluginManager() const { return m_plugin_manager; }
+	QgPluginNotifier *pluginNotifier() const { return m_plugin_notifier; }
 
 	QgModel *mdl = NULL;
 
     signals:
-	void view_update(unsigned long long);
+	void view_update(QgViewUpdateFlags);
 	void dbi_update(struct db_i *dbip);
 
         /* Menu slots */
@@ -82,7 +88,7 @@ class QgEdApp : public QApplication
 	// signal should trigger ANY logic (directly OR indirectly) that leads
 	// back to this slot being called again, or an infinite loop may
 	// result.
-	void do_view_changed(unsigned long long);
+	void do_view_changed(QgViewUpdateFlags);
 
 	// This slot is used for quad view configurations - it is called if the
 	// user uses the mouse to select one of multiple views.  This slot has
@@ -104,6 +110,9 @@ class QgEdApp : public QApplication
 	unsigned long long select_hash = 0;
 	long history_mark_start = -1;
 	long history_mark_end = -1;
+	QgPluginContext m_plugin_context;
+	QgPluginNotifier *m_plugin_notifier = NULL;
+	QgPluginManager *m_plugin_manager = NULL;
 };
 
 #endif // QGEDAPP_H
@@ -116,4 +125,3 @@ class QgEdApp : public QApplication
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

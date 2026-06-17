@@ -54,7 +54,6 @@
 #include "icv.h"
 #include "dm.h"
 
-
 struct fb *fb_get(void)
 {
     struct fb *new_fb = FB_NULL;
@@ -133,11 +132,13 @@ fb_refresh(struct fb *ifp, int x, int y, int w, int h)
 int
 fb_configure_window(struct fb *ifp, int width, int height)
 {
+    int ret;
     /* unknown/unset framebuffer */
     if (!ifp || !ifp->i->if_configure_window || width < 0 || height < 0) {
 	return 0;
     }
-    return ifp->i->if_configure_window(ifp, width, height);
+    ret = ifp->i->if_configure_window(ifp, width, height);
+    return ret;
 }
 
 const char *fb_get_name(const struct fb *ifp)

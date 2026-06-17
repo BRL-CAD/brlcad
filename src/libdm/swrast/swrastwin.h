@@ -33,9 +33,16 @@
 class QgSWWin : public QMainWindow
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QgSWWin)
     public:
 	QgSWWin(struct fb *fbp);
-	QgSW *canvas = NULL;
+	QgSW *canvasWidget() const
+	{
+	    return canvas;
+	}
+
+    private:
+	QgSW *canvas = nullptr;
 };
 
 #endif /* QTSWRASTWIN_H */
@@ -50,4 +57,3 @@ class QgSWWin : public QMainWindow
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.edit.bot",
+    "displayName": "BOT Edit",
+    "category": "qged.object",
+    "iconName": ":bot.svg",
+    "sortKey": 1300,
+    "requiresOpenDb": true,
+    "requiresView": true,
+    "description": "Preview and edit bag-of-triangles (BOT) primitives in the active database.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

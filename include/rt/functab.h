@@ -34,10 +34,11 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/list.h"
 #include "bu/parse.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
-#include "bv.h"
+#include "bsg.h"
 #include "rt/geom.h"
 #include "rt/defines.h"
 #include "rt/application.h"
@@ -61,6 +62,27 @@
 __BEGIN_DECLS
 
 struct rt_piecestate; /* forward declaration for ft_piece_shot / ft_piece_hitsegs */
+
+struct rt_primitive_lod_realization {
+    point_t *line_points;
+    int *line_commands;
+    size_t line_count;
+    size_t line_capacity;
+    int has_line_set;
+    uint64_t source_identity;
+    uint64_t geometry_revision;
+};
+
+struct rt_primitive_indexed_face_set {
+    point_t *points;
+    size_t point_count;
+    vect_t *normals;
+    size_t normal_count;
+    int *indices;
+    size_t index_count;
+    uint64_t source_identity;
+    uint64_t geometry_revision;
+};
 
 /**
  * This needs to be at the end of the raytrace.h header file, so that
@@ -131,15 +153,15 @@ struct rt_functab {
 		   struct rt_db_internal * /*ip*/,
 		   const struct bg_tess_tol * /*ttol*/,
 		   const struct bn_tol * /*tol*/,
-		   const struct bview * /*view info*/);
-#define RTFUNCTAB_FUNC_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
+		   const struct bsg_view * /*view info*/);
+#define RTFUNCTAB_FUNC_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bsg_view *))((void (*)(void))_func))
 
-    int (*ft_adaptive_plot)(struct bu_list * /*vhead*/,
-	                    struct rt_db_internal * /*ip*/,
-			    const struct bn_tol * /*tol*/,
-			    const struct bview * /* view info */,
-			    fastf_t /* s_size */);
-#define RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bn_tol *, const struct bview *, fastf_t))((void (*)(void))_func))
+    int (*ft_lod_realize)(struct rt_primitive_lod_realization * /*realization*/,
+			  struct rt_db_internal * /*ip*/,
+			  const struct bn_tol * /*tol*/,
+			  const struct bsg_view * /* view info */,
+			  fastf_t /* s_size */);
+#define RTFUNCTAB_FUNC_LOD_REALIZE_CAST(_func) ((int (*)(struct rt_primitive_lod_realization *, struct rt_db_internal *, const struct bn_tol *, const struct bsg_view *, fastf_t))((void (*)(void))_func))
 
     void (*ft_vshot)(struct soltab * /*stp*/[],
 		     struct xray *[] /*rp*/,
@@ -297,31 +319,12 @@ struct rt_functab {
     int (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor);
 #define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
 
-    /* Populate a scene object with the appropriate visualization data.  Unlike
-     * ft_plot, this routine handles multiple drawing modes (e.g. shaded) and
-     * adaptive plotting based on a view. If NULL parameters are passed for
-     * tolerance, defaults will be used.  If no view info is available, adaptive
-     * settings are ignored and the standard visuals will be generated.
-     *
-     * Unlike most functab methods, we deliberately use a directory pointer and
-     * the database instance pointer as inputs rather than the rt_db_internal.
-     * This is for performance reasons - some primitives cache drawing data
-     * in a way that lets them draw more quickly than they could trying to process
-     * the full rt_db_internal primitive data, and in those cases we want to avoid
-     * the memory overhead of populating an rt_db_internal unless it is actually
-     * needed.
-     *
-     * TODO - for combs, we either need the evaluated tree output or an agglomeration
-     * of all the leaf wireframes.  Normally the latter won't be what apps want,
-     * since it wouldn't reuse solid leaf wireframes, but from an API perspective
-     * it's what this function would return... */
-    int (*ft_scene_obj)(struct bv_scene_obj * /*s*/,
-		   struct directory * /*dp*/,
-		   struct db_i * /*dbip*/,
-		   const struct bg_tess_tol * /*ttol*/,
-		   const struct bn_tol * /*tol*/,
-		   const struct bview * /*v*/);
-#define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct directory *, struct db_i *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
+    int (*ft_indexed_face_set)(struct rt_primitive_indexed_face_set * /*face_set*/,
+			       struct rt_db_internal * /*ip*/,
+			       const struct bg_tess_tol * /*ttol*/,
+			       const struct bn_tol * /*tol*/,
+			       const struct bsg_view * /*view info*/);
+#define RTFUNCTAB_FUNC_INDEXED_FACE_SET_CAST(_func) ((int (*)(struct rt_primitive_indexed_face_set *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bsg_view *))((void (*)(void))_func))
 
 };
 

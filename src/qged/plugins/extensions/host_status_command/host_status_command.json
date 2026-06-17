@@ -1,0 +1,12 @@
+{
+    "id": "org.brlcad.qged.command.host_status",
+    "displayName": "host_status",
+    "category": "qged.command",
+    "sortKey": 0,
+    "requiresOpenDb": false,
+    "requiresView": false,
+    "description": "Reports qged host status and optionally requests a view refresh.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

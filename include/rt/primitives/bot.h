@@ -105,11 +105,7 @@ RT_EXPORT extern int rt_bot_plot(struct bu_list         *vhead,
 				 struct rt_db_internal  *ip,
 				 const struct bg_tess_tol *ttol,
 				 const struct bn_tol    *tol,
-				 const struct bview *info);
-RT_EXPORT extern int rt_bot_plot_poly(struct bu_list            *vhead,
-				      struct rt_db_internal     *ip,
-				      const struct bg_tess_tol *ttol,
-				      const struct bn_tol       *tol);
+				 const struct bsg_view *info);
 RT_EXPORT extern int rt_bot_find_v_nearest_pt2(const struct rt_bot_internal *bot,
 					       const point_t    pt2,
 					       const mat_t      mat);

@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 
@@ -72,6 +74,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     while (bu_fgets(line, RT_MAXLINE, fp) != NULL) {
 	int changed;
+	int material_changed;
 
 	/* character and/or whitespace delimited numbers */
 	if (sscanf(line, "%d%*c%d%*c%d%*c%d%s", &item, &air, &mat, &los, name) != 5)
@@ -108,9 +111,11 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* make the changes */
 	changed = 0;
+	material_changed = 0;
 	if (comb->region_id != item) {
 	    comb->region_id = item;
 	    changed = 1;
+	    material_changed = 1;
 	}
 	if (comb->aircode != air) {
 	    comb->aircode = air;
@@ -119,6 +124,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 	if (comb->GIFTmater != mat) {
 	    comb->GIFTmater = mat;
 	    changed = 1;
+	    material_changed = 1;
 	}
 	if (comb->los != los) {
 	    comb->los = los;
@@ -136,6 +142,13 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 		fclose(fp);
 		return BRLCAD_ERROR;
 	    }
+	    (void)ged_event_notify_attribute_changed(gedp, dp->d_namep, 1,
+		    NULL);
+	    if (material_changed)
+		(void)ged_event_notify_object_material_changed(gedp,
+			dp->d_namep, NULL);
+	} else {
+	    rt_db_free_internal(&intern);
 	}
 	g_changed += (size_t)changed;
 

@@ -24,8 +24,9 @@
  */
 
 #include "bu/getopt.h"
-#include "bv/util.h"
+#include "bsg/util.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 int
@@ -45,6 +46,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     double mirror_offset = 0.0;
 
     int ret;
+    int event_batch_opened = 0;
     struct rt_db_internal *ip;
     struct rt_db_internal internal;
     struct directory *dp;
@@ -187,17 +189,24 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     /* add the mirrored object to the directory */
     dp = db_diradd(gedp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to add [%s] to the database directory", argv[bu_optind+1]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
     /* save the mirrored object to disk */
     if (rt_db_put_internal(dp, gedp->dbip, ip) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to store [%s] to the database", argv[bu_optind+1]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
+    (void)ged_event_notify_object_added(gedp, argv[bu_optind+1], NULL);
 
     {
 	/* draw the new object */
@@ -205,8 +214,11 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 	const char *e_argv[2] = {"draw", NULL};
 	e_argv[1] = object;
 	(void)ged_exec_draw(gedp, 2, e_argv);
-	bv_update(gedp->ged_gvp);
+	bsg_update(gedp->ged_gvp);
     }
+
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

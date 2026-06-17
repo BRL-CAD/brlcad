@@ -30,32 +30,32 @@
 
 extern "C" {
 #include "bu/color.h"
-#include "bu/ptbl.h"
 #include "bg/polygon.h"
-#include "bv.h"
+#include "bsg.h"
 #include "raytrace.h"
 }
 
+#include <string>
+#include <vector>
 #include <QBoxLayout>
 #include <QEvent>
 #include <QMouseEvent>
-#include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
+#include "qtcad/QgViewFilter.h"
 
 // Filters designed for specific editing modes
-class QTCAD_EXPORT QgMeasureFilter : public QObject
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgMeasureFilter : public QgViewFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgMeasureFilter)
+
 
     public:
+	QgMeasureFilter() = default;
 	// Primary mouse interaction.  As it happens the 2D and 3D mouse event
 	// filtering is the same, so this is not a virtual function.  See
 	// get_point for the 2D/3D specific logic.
-	bool eventFilter(QObject *, QEvent *);
-
-	// Initialization common to the various polygon filter types
-	QMouseEvent *view_sync(QEvent *e);
+	bool eventFilter(QObject *, QEvent *) override;
 
 	double length1();
 	double length2();
@@ -72,7 +72,10 @@ class QTCAD_EXPORT QgMeasureFilter : public QObject
 
 	// 2D and 3D point interrogation is different - hence this
 	// is a virtual method to be customized for 2D and 3D
-	virtual bool get_point() { return false; };
+	virtual bool get_point()
+	{
+		return false;
+	};
 	point_t mpnt;
 
 	// If the client code only wants a simple length measurement,
@@ -81,52 +84,56 @@ class QTCAD_EXPORT QgMeasureFilter : public QObject
 	// binding behavior accordingly.
 	bool length_only = false;
 
-    signals:
-        void view_updated(int);
-
-    public:
-	struct bview *v = NULL;
-	struct bv_scene_obj *s = NULL;
+public:
+	bsg_feature_ref feature = BSG_FEATURE_REF_NULL_INIT;
 	std::string oname = std::string("tool:measurement");
 
-    public slots:
+	/* Measure results populated via bsg_measure_candidates when each
+	 * segment is finalized.  mr12 covers p1→p2, mr23 covers p2→p3. */
+	struct bsg_measure_result mr12 = {0.0, 0.0, 0.0, 0};
+	struct bsg_measure_result mr23 = {0.0, 0.0, 0.0, 0};
+
+public slots:
 	void update_color(struct bu_color *);
 
-    private:
+private:
 	point_t p1 = VINIT_ZERO;
 	point_t p2 = VINIT_ZERO;
 	point_t p3 = VINIT_ZERO;
 };
 
-class QTCAD_EXPORT QMeasure2DFilter : public QgMeasureFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QMeasure2DFilter : public QgMeasureFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QMeasure2DFilter)
 
-    public:
-	bool eventFilter(QObject *, QEvent *e);
 
-    private:
-	bool get_point();
+public:
+	QMeasure2DFilter() = default;
+	bool eventFilter(QObject *, QEvent *e) override;
+
+private:
+	bool get_point() override;
 };
 
 
-class QTCAD_EXPORT QMeasure3DFilter : public QgMeasureFilter
-{
-    Q_OBJECT
+class QTCAD_EXPORT QMeasure3DFilter : public QgMeasureFilter {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QMeasure3DFilter)
 
-    public:
+
+public:
 	QMeasure3DFilter();
 	~QMeasure3DFilter();
-	bool eventFilter(QObject *, QEvent *e);
-	struct db_i *dbip = NULL;
+	bool eventFilter(QObject *, QEvent *e) override;
+	struct db_i *dbip = nullptr;
 
-    private:
-	bool get_point();
+private:
+	bool get_point() override;
 
 	int prev_cnt = 0;
-	struct bu_ptbl scene_obj_set = BU_PTBL_INIT_ZERO;
-	struct application *ap = NULL;
-	struct rt_i *rtip = NULL;
+	std::vector<std::string> scene_obj_paths;
+	struct application *ap = nullptr;
+	struct rt_i *rtip = nullptr;
 };
 
 #endif /* QGMEASUREFILTER_H */
@@ -139,4 +146,3 @@ class QTCAD_EXPORT QMeasure3DFilter : public QgMeasureFilter
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -28,7 +28,7 @@
 #include "vmath.h"
 #include "bg.h"
 #define PLOT3_IMPLEMENTATION
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 
 static
 void plot_obr(int test_num, const point_t *pnt_array, int pnt_cnt)

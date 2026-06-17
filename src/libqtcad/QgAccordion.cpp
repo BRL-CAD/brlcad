@@ -28,24 +28,24 @@
 #include "qtcad/QgAccordion.h"
 
 QgAccordionObject::QgAccordionObject(QWidget *pparent, QWidget *object, QString header_title)
-    : QWidget(pparent)
+	: QWidget(pparent)
 {
-    title = header_title;
-    toggle = new QPushButton(title, this);
-    toggle->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
-    objscrollarea= new QScrollArea();
-    objscrollarea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    objlayout = new QVBoxLayout(this);
-    objlayout->setSpacing(0);
-    objlayout->setContentsMargins(0,0,0,0);
-    objlayout->setAlignment(Qt::AlignTop);
-    objlayout->addWidget(toggle);
-    objscrollarea->setWidget(object);
-    objscrollarea->setWidgetResizable(true);
-    objlayout->addWidget(objscrollarea);
-    this->setLayout(objlayout);
+	title = header_title;
+	toggle = new QPushButton(title, this);
+	toggle->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+	objscrollarea= new QScrollArea();
+	objscrollarea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+	objlayout = new QVBoxLayout(this);
+	objlayout->setSpacing(0);
+	objlayout->setContentsMargins(0,0,0,0);
+	objlayout->setAlignment(Qt::AlignTop);
+	objlayout->addWidget(toggle);
+	objscrollarea->setWidget(object);
+	objscrollarea->setWidgetResizable(true);
+	objlayout->addWidget(objscrollarea);
+	this->setLayout(objlayout);
 
-    QObject::connect(toggle, &QPushButton::clicked, this, &QgAccordionObject::toggleVisibility);
+	QObject::connect(toggle, &QPushButton::clicked, this, &QgAccordionObject::toggleVisibility);
 }
 
 QgAccordionObject::~QgAccordionObject()
@@ -55,17 +55,17 @@ QgAccordionObject::~QgAccordionObject()
 void
 QgAccordionObject::toggleVisibility()
 {
-    QTCAD_SLOT("QgAccordionObject::toggleVisibility", 1);
-    emit select(this);
+	QTCAD_SLOT("QgAccordionObject::toggleVisibility", 1);
+	emit select(this);
 }
 
 
 QgAccordion::QgAccordion(QWidget *pparent) : QWidget(pparent)
 {
-    mlayout = new QVBoxLayout();
-    mlayout->setSpacing(0);
-    mlayout->setContentsMargins(1,1,1,1);
-    this->setLayout(mlayout);
+	mlayout = new QVBoxLayout();
+	mlayout->setSpacing(0);
+	mlayout->setContentsMargins(1,1,1,1);
+	this->setLayout(mlayout);
 }
 
 QgAccordion::~QgAccordion()
@@ -75,36 +75,38 @@ QgAccordion::~QgAccordion()
 void
 QgAccordion::addObject(QgAccordionObject *o)
 {
-    if (!selected) {
-	selected = o;
-    }
-    objs.insert(o);
-    foreach(QgAccordionObject *obj, objs) {
-	if (obj == selected) {
-	    obj->objscrollarea->show();
-	} else {
-	    obj->objscrollarea->hide();
+	if (!selected) {
+		selected = o;
 	}
-    }
-    mlayout->addWidget(o);
-    QObject::connect(o, &QgAccordionObject::select, this, &QgAccordion::open);
+	objs.insert(o);
+	foreach(QgAccordionObject *obj, objs) {
+		if (obj == selected) {
+			obj->objscrollarea->show();
+		}
+		else {
+			obj->objscrollarea->hide();
+		}
+	}
+	mlayout->addWidget(o);
+	QObject::connect(o, &QgAccordionObject::select, this, &QgAccordion::open);
 }
 
 void
 QgAccordion::open(QgAccordionObject *o)
 {
-    if (selected == o)
-	return;
+	if (selected == o)
+		return;
 
-    selected = o;
+	selected = o;
 
-    foreach(QgAccordionObject *obj, objs) {
-	if (obj == selected) {
-	    obj->objscrollarea->show();
-	} else {
-	    obj->objscrollarea->hide();
+	foreach(QgAccordionObject *obj, objs) {
+		if (obj == selected) {
+			obj->objscrollarea->show();
+		}
+		else {
+			obj->objscrollarea->hide();
+		}
 	}
-    }
 }
 
 

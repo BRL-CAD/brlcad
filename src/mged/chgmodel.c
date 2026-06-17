@@ -122,8 +122,8 @@ mged_rot_obj(struct mged_state *s, int iflag, fastf_t *argvect)
     mat_t temp;
     vect_t v_work;
 
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     if (movedir != ROTARROW) {
 	/* NOT in object rotate mode - put it in obj rot */
@@ -257,8 +257,8 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_ERROR;
     }
 
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     MAT_IDN(incr);
 
@@ -340,8 +340,8 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
     /* Remainder of code concerns object edit case */
 
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     MAT_IDN(incr);
     MAT_IDN(old);

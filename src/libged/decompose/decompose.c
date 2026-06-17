@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 int
@@ -48,6 +50,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal nmg_intern;
     static const char *usage = "nmg [prefix]";
     struct bu_list *vlfree = &rt_vlfree;
+    int event_batch_opened = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -92,6 +95,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 
     if (nmg_intern.idb_type != ID_NMG) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not an NMG solid!", argv[0], nmg_solid_name);
+	rt_db_free_internal(&nmg_intern);
 	return BRLCAD_ERROR;
     }
 
@@ -102,6 +106,8 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
     tmp_r = nmg_mrsv(m);	/* temp nmgregion to hold dup shells */
     kill_s = BU_LIST_FIRST(shell, &tmp_r->s_hd);
     (void)nmg_ks(kill_s);
+
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	struct shell *s;
@@ -165,6 +171,10 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 		if (db_lookup(gedp->dbip, bu_vls_addr(&solid_name), LOOKUP_QUIET) != RT_DIR_NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "%s: cannot create unique solid name (%s)",
 				  argv[0], bu_vls_addr(&solid_name));
+		    if (event_batch_opened)
+			(void)ged_event_batch_end(gedp, NULL);
+		    rt_db_free_internal(&nmg_intern);
+		    bu_vls_free(&solid_name);
 		    return BRLCAD_ERROR;
 		}
 
@@ -179,6 +189,9 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 		if (new_dp == RT_DIR_NULL) {
 		    bu_vls_free(&solid_name);
 		    bu_vls_printf(gedp->ged_result_str, "%s: Database alloc error, aborting", argv[0]);
+		    if (event_batch_opened)
+			(void)ged_event_batch_end(gedp, NULL);
+		    rt_db_free_internal(&nmg_intern);
 		    return BRLCAD_ERROR;
 		}
 
@@ -187,6 +200,9 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "%s: rt_db_put_internal(%s) failure\n",
 				  argv[0], bu_vls_addr(&solid_name));
 		    bu_vls_free(&solid_name);
+		    if (event_batch_opened)
+			(void)ged_event_batch_end(gedp, NULL);
+		    rt_db_free_internal(&nmg_intern);
 		    return BRLCAD_ERROR;
 		}
 
@@ -196,6 +212,8 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    if (event_batch_opened)
+	(void)ged_event_batch_end(gedp, NULL);
     rt_db_free_internal(&nmg_intern);
     bu_vls_free(&solid_name);
 

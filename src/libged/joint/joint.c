@@ -33,6 +33,7 @@
 
 #include "bu/getopt.h"
 
+#include "bsg/feature.h"
 #include "raytrace.h"
 
 #include "./joint.h"
@@ -85,6 +86,46 @@ struct bu_list hold_head = {
     BU_LIST_HEAD_MAGIC,
     &hold_head, &hold_head
 };
+
+struct joint_line_data {
+    point_t *points;
+    size_t count;
+    size_t capacity;
+};
+
+static int
+joint_line_append(struct joint_line_data *lines, const point_t a, const point_t b)
+{
+    if (!lines)
+	return 0;
+
+    if (lines->count + 2 > lines->capacity) {
+	size_t ncap = lines->capacity ? lines->capacity * 2 : 64;
+	while (ncap < lines->count + 2)
+	    ncap *= 2;
+	lines->points = (point_t *)bu_realloc(lines->points,
+		ncap * sizeof(point_t), "joint mesh line points");
+	lines->capacity = ncap;
+    }
+
+    VMOVE(lines->points[lines->count], a);
+    VMOVE(lines->points[lines->count + 1], b);
+    lines->count += 2;
+    return 1;
+}
+
+static void
+joint_lines_free(struct joint_line_data *lines)
+{
+    if (!lines)
+	return;
+
+    if (lines->points)
+	bu_free(lines->points, "joint mesh line points");
+    lines->points = NULL;
+    lines->count = 0;
+    lines->capacity = 0;
+}
 
 
 struct joint *
@@ -239,28 +280,21 @@ static struct db_tree_state mesh_initial_tree_state = {
 static int
 joint_mesh(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *name;
-    struct bv_vlblock*vbp;
-    struct bu_list *vhead;
     struct artic_joints *jp;
     struct artic_grips *gp, *gpp;
     int i;
     char *topv[2000];
     int topc;
+    struct joint_line_data lines = {NULL, 0, 0};
 
     if (gedp->dbip == DBI_NULL)
 	return BRLCAD_OK;
 
-    struct bu_list *vlfree = &rt_vlfree;
-
-    if (argc <= 2) {
-	name = "_ANIM_";
-    } else {
-	name = argv[2];
-    }
+    (void)argc;
+    (void)argv;
 
     topc = ged_who_argv(gedp, topv, (const char **)(topv+2000));
-    dl_set_iflag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
+    ged_draw_set_highlight_state(gedp, 0);
 
     (void)db_walk_tree(gedp->dbip, topc, (const char **)topv,
 		     1,			/* Number of cpus */
@@ -274,9 +308,6 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
      * Now we draw the overlays.  We do this by building a mesh from
      * each grip to every other grip in that list.
      */
-    vbp = bv_vlblock_init(vlfree, 32);
-    vhead = bv_vlblock_find(vbp, 0x00, 0xff, 0xff);
-
     for (BU_LIST_FOR(jp, artic_joints, &artic_head)) {
 	i=0;
 	for (BU_LIST_FOR(gp, artic_grips, &jp->head)) {
@@ -284,8 +315,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 	    for (gpp=BU_LIST_NEXT(artic_grips, &(gp->l));
 		 BU_LIST_NOT_HEAD(gpp, &(jp->head));
 		 gpp=BU_LIST_NEXT(artic_grips, &(gpp->l))) {
-		BV_ADD_VLIST(vlfree, vhead, gp->vert, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, gpp->vert, BV_VLIST_LINE_DRAW);
+		(void)joint_line_append(&lines, gp->vert, gpp->vert);
 	    }
 	}
 	if (J_DEBUG & DEBUG_J_MESH) {
@@ -294,14 +324,19 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (gedp->new_cmd_forms) {
-	struct bview *view = gedp->ged_gvp;
-	bv_vlblock_obj(vbp, view, "joint");
-    } else {
-	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
+    if (gedp->ged_gvp) {
+	struct bsg_view *view = gedp->ged_gvp;
+	struct bsg_feature_style style = BSG_FEATURE_STYLE_INIT;
+	style.color_valid = 1;
+	VSET(style.color, 0, 255, 255);
+	if (lines.count)
+	    (void)bsg_feature_replace_lines(view, "joint", 0,
+		    (const point_t *)lines.points, lines.count, &style);
+	else
+	    (void)bsg_feature_remove(view, "joint");
     }
 
-    bv_vlblock_free(vbp);
+    joint_lines_free(&lines);
     while (BU_LIST_WHILE(jp, artic_joints, &artic_head)) {
 	while (BU_LIST_WHILE(gp, artic_grips, &jp->head)) {
 	    BU_LIST_DEQUEUE(&gp->l);

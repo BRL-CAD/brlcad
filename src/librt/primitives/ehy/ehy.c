@@ -159,7 +159,10 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/ehy.h"
+#include "bsg/view_state.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 #include "../../librt_private.h"
 
@@ -175,7 +178,7 @@ struct ehy_specific {
 };
 
 
-EXTERNCPP const struct bu_structparse rt_ehy_parse[] = {
+const struct bu_structparse rt_ehy_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_ehy_internal, ehy_V, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H",   bu_offsetofarray(struct rt_ehy_internal, ehy_H, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A",   bu_offsetofarray(struct rt_ehy_internal, ehy_Au, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -222,7 +225,7 @@ clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Create a bounding RPP for an ehy
  */
-C_DECL int
+int
 rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_ehy_internal *xip;
     vect_t ehy_A, ehy_B, ehy_An, ehy_Bn, ehy_H;
@@ -284,7 +287,7 @@ rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct ehy_specific is created, and its address is stored in
  * stp->st_specific for use by ehy_shot().
  */
-C_DECL int
+int
 rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_ehy_internal *xip;
@@ -360,7 +363,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_ehy_print(const struct soltab *stp)
 {
     const struct ehy_specific *ehy =
@@ -389,7 +392,7 @@ rt_ehy_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct ehy_specific *ehy =
@@ -515,7 +518,7 @@ check_plates:
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t can_normal;	/* normal to canonical ehy */
@@ -551,7 +554,7 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the ehy.
  */
-C_DECL void
+void
 rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t a, b, c, scale;
@@ -610,7 +613,7 @@ rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-C_DECL void
+void
 rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct ehy_specific *ehy =
@@ -657,7 +660,7 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-C_DECL void
+void
 rt_ehy_free(struct soltab *stp)
 {
     struct ehy_specific *ehy =
@@ -769,8 +772,7 @@ ehy_hyperbola_y(fastf_t mag_H, fastf_t c, fastf_t r, fastf_t z)
  */
 static void
 ehy_plot_ellipse(
-    struct bu_list *vlfree,
-    struct bu_list *vhead,
+    struct rt_primitive_lod_realization *realization,
     struct rt_ehy_internal *ehy,
     fastf_t h,
     fastf_t num_points)
@@ -793,14 +795,14 @@ ehy_plot_ellipse(
     VSCALE(B, Bu, ehy_hyperbola_y(mag_H, ehy->ehy_c, ehy->ehy_r2, h));
     VJOIN1(cross_section_plane, V, h, Hu);
 
-    plot_ellipse(vlfree, vhead, cross_section_plane, A, B, num_points);
+    (void)primitive_lod_append_ellipse(realization, cross_section_plane, A, B,
+	    num_points);
 }
 
 
 static void
 ehy_plot_hyperbola(
-    struct bu_list *vlfree,
-    struct bu_list *vhead,
+    struct rt_primitive_lod_realization *realization,
     struct rt_ehy_internal *ehy,
     struct rt_pnt_node *pts,
     vect_t Ru,
@@ -818,14 +820,16 @@ ehy_plot_hyperbola(
 
     z = pts->p[Z];
     VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+    (void)primitive_lod_line_set_append(realization, p,
+	    BSG_GEOMETRY_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	z = node->p[Z];
 	VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
 
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+	(void)primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW);
 
 	node = node->next;
     }
@@ -865,19 +869,19 @@ ehy_ellipse_points(
 }
 
 
-C_DECL int
-rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
+static int
+rt_ehy_lod_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bsg_view *v, fastf_t s_size)
 {
     vect_t ehy_H, Hu, Au, Bu;
     fastf_t mag_H, z, z_step, c, r1, r2;
     int i, num_curve_points, num_ellipse_points, num_curves;
     struct rt_ehy_internal *ehy;
     struct rt_pnt_node *pts_r1, *pts_r2, *node, *node1, *node2;
-    struct bu_list *vlfree = &rt_vlfree;
 
     fastf_t point_spacing = solid_point_spacing(v, s_size);
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!realization)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
     ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(ehy);
@@ -914,7 +918,7 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     fastf_t curve_spacing = s_size / 2.0;
-    curve_spacing /= v->gv_s->curve_scale;
+    curve_spacing /= primitive_lod_curve_scale(v);
     num_curves = mag_H / curve_spacing;
     if (num_curves < 2) {
 	num_curves = 2;
@@ -923,14 +927,14 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     z_step = mag_H / num_curves;
     z = 0.0;
     for (i = 0; i < num_curves; ++i) {
-	ehy_plot_ellipse(vlfree, vhead, ehy, z, num_ellipse_points);
+	ehy_plot_ellipse(realization, ehy, z, num_ellipse_points);
 	z += z_step;
     }
 
-    ehy_plot_hyperbola(vlfree, vhead, ehy, pts_r1, Au, r1);
-    ehy_plot_hyperbola(vlfree, vhead, ehy, pts_r1, Au, -r1);
-    ehy_plot_hyperbola(vlfree, vhead, ehy, pts_r1, Bu, r2);
-    ehy_plot_hyperbola(vlfree, vhead, ehy, pts_r1, Bu, -r2);
+    ehy_plot_hyperbola(realization, ehy, pts_r1, Au, r1);
+    ehy_plot_hyperbola(realization, ehy, pts_r1, Au, -r1);
+    ehy_plot_hyperbola(realization, ehy, pts_r1, Bu, r2);
+    ehy_plot_hyperbola(realization, ehy, pts_r1, Bu, -r2);
 
     node1 = pts_r1;
     node2 = pts_r2;
@@ -948,10 +952,57 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 }
 
 
-C_DECL int
-rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+int
+rt_ehy_lod_realize(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
 {
-    struct bu_list *vlfree = &rt_vlfree;
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    int ret = rt_ehy_lod_line_set(realization, ip, tol, v, s_size);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+struct ehy_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_ehy_line_sink_append(struct ehy_line_sink *sink, const point_t p, int command)
+{
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
+static int
+rt_ehy_standard_line_set(struct ehy_line_sink *sink, struct rt_db_internal *ip,
+			 const struct bg_tess_tol *ttol)
+{
     fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t min_abs;
     fastf_t **ellipses;
@@ -963,7 +1014,8 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     struct rt_ehy_internal *xip;
     vect_t A, Au, B, Bu, Hu, V, Work;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!sink || !ttol)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
 
@@ -1156,13 +1208,13 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* Draw the top ellipse */
-    BV_ADD_VLIST(vlfree, vhead,
-		 &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
-		 BV_VLIST_LINE_MOVE);
+    rt_ehy_line_sink_append(sink,
+	    &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
+	    BSG_GEOMETRY_LINE_MOVE);
     for (i = 0; i < nseg; i++) {
-	BV_ADD_VLIST(vlfree, vhead,
-		     &ellipses[nell-1][i*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
+	rt_ehy_line_sink_append(sink,
+		&ellipses[nell-1][i*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* connect ellipses */
@@ -1176,13 +1228,13 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    nseg /= 2;	/* # segs in 'bottom' ellipse */
 
 	/* Draw the current ellipse */
-	BV_ADD_VLIST(vlfree, vhead,
-		     &ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
+	rt_ehy_line_sink_append(sink,
+		&ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
 	for (j = 0; j < nseg; j++) {
-	    BV_ADD_VLIST(vlfree, vhead,
-			 &ellipses[bottom][j*ELEMENTS_PER_VECT],
-			 BV_VLIST_LINE_DRAW);
+	    rt_ehy_line_sink_append(sink,
+		    &ellipses[bottom][j*ELEMENTS_PER_VECT],
+		    BSG_GEOMETRY_LINE_DRAW);
 	}
 
 	/* make connections between ellipses */
@@ -1191,22 +1243,22 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		jj = j + j;	/* top ellipse index */
 	    else
 		jj = j;
-	    BV_ADD_VLIST(vlfree, vhead,
-			 &ellipses[bottom][j*ELEMENTS_PER_VECT],
-			 BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead,
-			 &ellipses[top][jj*ELEMENTS_PER_VECT],
-			 BV_VLIST_LINE_DRAW);
+	    rt_ehy_line_sink_append(sink,
+		    &ellipses[bottom][j*ELEMENTS_PER_VECT],
+		    BSG_GEOMETRY_LINE_MOVE);
+	    rt_ehy_line_sink_append(sink,
+		    &ellipses[top][jj*ELEMENTS_PER_VECT],
+		    BSG_GEOMETRY_LINE_DRAW);
 	}
     }
 
     VADD2(Work, xip->ehy_V, xip->ehy_H);
     for (i = 0; i < nseg; i++) {
 	/* Draw connector */
-	BV_ADD_VLIST(vlfree, vhead, Work, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &ellipses[0][i*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
+	rt_ehy_line_sink_append(sink, Work, BSG_GEOMETRY_LINE_MOVE);
+	rt_ehy_line_sink_append(sink,
+		&ellipses[0][i*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* free mem */
@@ -1217,7 +1269,47 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)segs_per_ell, "segs_per_ell");
 
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_ehy_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			  struct rt_db_internal *ip,
+			  const struct bg_tess_tol *ttol)
+{
+    struct ehy_line_sink sink;
+
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    int ret = rt_ehy_standard_line_set(&sink, ip, ttol);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip,
+	    const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol),
+	    const struct bsg_view *UNUSED(info))
+{
+    struct ehy_line_sink sink;
+
+    BU_CK_LIST_HEAD(vhead);
+
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_ehy_standard_line_set(&sink, ip, ttol);
 }
 
 
@@ -1226,7 +1318,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-C_DECL int
+int
 rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, mag_h, ntol, r1, r2, cprime;
@@ -1818,7 +1910,7 @@ fail:
  * Import an EHY from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
@@ -1890,7 +1982,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
@@ -1946,7 +2038,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-C_DECL int
+int
 rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1987,7 +2079,7 @@ rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an EHY from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
@@ -2039,7 +2131,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
@@ -2102,7 +2194,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_ehy_internal *xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -2144,7 +2236,7 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_ehy_ifree(struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *xip;
@@ -2159,7 +2251,7 @@ rt_ehy_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-C_DECL void
+void
 rt_ehy_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_ehy_internal* ehy_ip;
@@ -2183,7 +2275,7 @@ rt_ehy_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-C_DECL int
+int
 rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
@@ -2231,7 +2323,7 @@ ehy_is_valid(struct rt_ehy_internal *ehy)
 }
 
 
-C_DECL void
+void
 rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
@@ -2301,7 +2393,7 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
@@ -2339,7 +2431,7 @@ rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
  *
  * This is independent of r1 and r2, so it applies to all valid EHY shapes.
  */
-C_DECL void
+void
 rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
@@ -2363,7 +2455,7 @@ rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
     VJOIN1(*cent, eip->ehy_V, z_c, Hu);
 }
 
-C_DECL int
+int
 rt_ehy_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 5;
@@ -2413,7 +2505,7 @@ rt_ehy_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-C_DECL const char *
+const char *
 rt_ehy_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2441,7 +2533,7 @@ ehy_kpt_end:
     return k;
 }
 
-C_DECL int
+int
 rt_ehy_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

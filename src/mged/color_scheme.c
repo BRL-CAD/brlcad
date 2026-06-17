@@ -83,9 +83,6 @@ struct _color_scheme default_color_scheme = {
     /* cs_grid */		{ 255, 255, 255 },
     /* cs_grid_a */		{ 255, 255, 255 },
     /* cs_grid_ia */		{ 255, 255, 255 },
-    /* cs_predictor */		{ 255, 255, 255 },
-    /* cs_predictor_a */	{ 255, 255, 255 },
-    /* cs_predictor_ia */	{ 255, 255, 255 },
     /* cs_menu_line */		{ 255, 255, 0 },
     /* cs_menu_line_a */	{ 255, 255, 0 },
     /* cs_menu_line_ia */	{ 255, 255, 0 },
@@ -163,9 +160,6 @@ struct bu_structparse color_scheme_vparse[] = {
     {"%d", 3, "grid",		CS_O(cs_grid),			cs_set_dirty_flag, NULL, NULL },
     {"%d", 3, "grid_a",		CS_O(cs_grid_a),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 3, "grid_ia",	CS_O(cs_grid_ia),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 3, "predictor",	CS_O(cs_predictor),		cs_set_dirty_flag, NULL, NULL },
-    {"%d", 3, "predictor_a",	CS_O(cs_predictor_a),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 3, "predictor_ia",	CS_O(cs_predictor_ia),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 3, "menu_line",	CS_O(cs_menu_line),		cs_set_dirty_flag, NULL, NULL },
     {"%d", 3, "menu_line_a",	CS_O(cs_menu_line_a),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 3, "menu_line_ia",	CS_O(cs_menu_line_ia),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -251,8 +245,7 @@ cs_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_color_scheme == color_scheme) {
-	    m_dmp->dm_dirty = 1;
-	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	    mged_dm_repaint_request(m_dmp, MGED_REPAINT_DEVICE_SETTING);
 	}
     }
 }
@@ -311,12 +304,11 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
     // the notion of the "current" dm in situations
     // where we act on all dm instances.  set_curr_dm
     // should probably be replaced with get_next_dm
-    struct bview *cbv = s->gedp->ged_gvp;
+    struct bsg_view *cbv = s->gedp->ged_gvp;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_color_scheme == color_scheme) {
-	    m_dmp->dm_dirty = 1;
-	    dm_set_dirty(m_dmp->dm_dmp, 1);
+	    mged_dm_repaint_request(m_dmp, MGED_REPAINT_DEVICE_SETTING);
 	    set_curr_dm(s, m_dmp);
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	}

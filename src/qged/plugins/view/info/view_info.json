@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.view.info",
+    "displayName": "View Info",
+    "category": "qged.view",
+    "iconName": ":info.svg",
+    "sortKey": 0,
+    "requiresOpenDb": false,
+    "requiresView": true,
+    "description": "Displays the current view name, size, azimuth, elevation, twist, and center.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

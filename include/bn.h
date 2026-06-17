@@ -50,7 +50,7 @@
 #include "bn/msr.h"
 #include "bn/noise.h"
 #include "bn/poly.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "bn/multipoly.h"
 #include "bn/qmath.h"
 #include "bn/rand.h"

@@ -33,6 +33,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "nmg.h"
+#include "nmg/plot.h"
 #include "raytrace.h"
 #include "wdb.h"
 

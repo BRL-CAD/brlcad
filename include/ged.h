@@ -46,14 +46,17 @@
 
 #include "common.h"
 
-#include "bv/defines.h"
+#include "bsg/defines.h"
 #include "raytrace.h"
 #include "analyze.h"
 #include "ged/defines.h"
 #include "ged/version.h"
 #include "ged/database.h"
+#include "ged/db_index.h"
+#include "ged/event_txn.h"
 #include "ged/commands.h"
 #include "ged/objects.h"
+#include "ged/selection_state.h"
 #include "ged/view.h"
 #include "ged/debug.h"
 
@@ -111,7 +114,7 @@ GED_EXPORT extern int ged_help(struct ged *gedp, int argc, const char *argv[]);
  * }                   |
  *                     |
  * struct geometry { <-'
- *   display lists
+ *   drawn scene records
  *   directory *
  *   update()
  * }

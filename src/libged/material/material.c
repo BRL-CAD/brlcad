@@ -29,6 +29,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -116,6 +117,7 @@ assign_material(struct ged *gedp, int argc, const char *argv[])
 
         if (db5_get_attributes(gedp->dbip, &avs, dp)) {
             bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+            bu_avs_free(&avs);
             return BRLCAD_ERROR;
         } else {
             bu_avs_add(&avs, "material_name", argv[3]);
@@ -124,8 +126,11 @@ assign_material(struct ged *gedp, int argc, const char *argv[])
 
         if (db5_update_attributes(dp, &avs, gedp->dbip)) {
             bu_vls_printf(gedp->ged_result_str, "Error: failed to update attributes\n");
+            bu_avs_free(&avs);
             return BRLCAD_ERROR;
         }
+        bu_avs_free(&avs);
+        (void)ged_event_notify_object_material_changed(gedp, dp->d_namep, NULL);
     } else {
         bu_vls_printf(gedp->ged_result_str, "Cannot get object %s\n", argv[2]);
         return BRLCAD_ERROR;
@@ -375,6 +380,7 @@ static int
 destroy_material(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
+    int deleted = 0;
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -388,8 +394,6 @@ destroy_material(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    _dl_eraseAllNamesFromDisplay(gedp, argv[2], 0);
-
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
 	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
             bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[2]);
@@ -401,10 +405,13 @@ destroy_material(struct ged *gedp, int argc, const char *argv[])
             bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[2]);
             return BRLCAD_ERROR;
 	}
+	deleted = 1;
     }
 
     /* Update references. */
     db_update_nref(gedp->dbip);
+    if (deleted)
+	ged_event_notify_object_removed(gedp, argv[2], NULL);
 
     return BRLCAD_OK;
 }
@@ -584,6 +591,7 @@ static int
 ged_material_core(struct ged *gedp, int argc, const char *argv[])
 {
     material_cmd_t scmd;
+    int ret = BRLCAD_OK;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -601,36 +609,37 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
 
     if (scmd == MATERIAL_ASSIGN) {
         // assign routine
-        assign_material(gedp, argc, argv);
+        ret = assign_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_CREATE) {
         // create routine
-        create_material(gedp, argc, argv);
+        ret = create_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_DESTROY) {
         // destroy routine
-        destroy_material(gedp, argc, argv);
+        ret = destroy_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_IMPORT) {
         // import routine
-        import_materials(gedp, argc, argv);
+        ret = import_materials(gedp, argc, argv);
     } else if (scmd == MATERIAL_GET) {
         // get routine
-        get_material(gedp, argc, argv);
+        ret = get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_HELP) {
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], material_usage);
         bu_vls_printf(gedp->ged_result_str, "%s", possibleProperties);
     }
     else if (scmd == MATERIAL_REMOVE) {
         // set routine
-        remove_material(gedp, argc, argv);
+        ret = remove_material(gedp, argc, argv);
     }
     else if (scmd == MATERIAL_SET) {
         // set routine
-        set_material(gedp, argc, argv);
+        ret = set_material(gedp, argc, argv);
     } else {
         bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid subcommand.\n", argv[1]);
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], material_usage);
+        ret = BRLCAD_ERROR;
     }
 
-    return 0;
+    return ret;
 }
 
 #include "../include/plugin.h"

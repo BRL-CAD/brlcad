@@ -35,7 +35,7 @@
 #include "Mathematics/IntrOrientedBox3OrientedBox3.h"
 
 #include "vmath.h"
-#include "bv/defines.h"
+#include "bsg/defines.h"
 #include "bg/sat.h"
 
 using GTF = fastf_t;

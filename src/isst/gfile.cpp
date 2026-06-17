@@ -33,6 +33,7 @@
 #include "gcv.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/vlist.h"
 
 /* Replace the load_g globals from adrt with a struct that is
  * passed through the callers. */

@@ -32,81 +32,13 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "bv/defines.h"
 #include "./include/private.h"
 
 void
-dm_draw_data_axes(struct dm *dmp,
-		  fastf_t sf,
-		  struct bv_data_axes_state *bndasp)
+dm_draw_scene_axes_payload(struct dm *dmp, const struct bsg_axes *bndasp)
 {
-
-    if (dmp->i->dm_draw_data_axes) {
-	dmp->i->dm_draw_data_axes(dmp, sf, bndasp);
+    if (!dmp || !bndasp)
 	return;
-    }
-
-    int i, j;
-    fastf_t halfAxesSize;		/* half the length of an axis */
-    point_t ptA, ptB;
-    int npoints = bndasp->num_points * 6;
-    point_t *points;
-    /* Save the line attributes */
-    int saveLineWidth = dmp->i->dm_lineWidth;
-    int saveLineStyle = dmp->i->dm_lineStyle;
-
-    if (npoints < 1)
-	return;
-
-    /* set color */
-    dm_set_fg(dmp, bndasp->color[0], bndasp->color[1], bndasp->color[2], 1, 1.0);
-
-    points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
-    halfAxesSize = bndasp->size * 0.5 * sf;
-
-    /* set linewidth */
-    dm_set_line_attr(dmp, bndasp->line_width, 0);  /* solid lines */
-
-    for (i = 0, j = -1; i < bndasp->num_points; ++i) {
-	/* draw X axis with x/y offsets */
-	VSET(ptA, bndasp->points[i][X] - halfAxesSize, bndasp->points[i][Y], bndasp->points[i][Z]);
-	VSET(ptB, bndasp->points[i][X] + halfAxesSize, bndasp->points[i][Y], bndasp->points[i][Z]);
-	++j;
-	VMOVE(points[j], ptA);
-	++j;
-	VMOVE(points[j], ptB);
-
-	/* draw Y axis with x/y offsets */
-	VSET(ptA, bndasp->points[i][X], bndasp->points[i][Y] - halfAxesSize, bndasp->points[i][Z]);
-	VSET(ptB, bndasp->points[i][X], bndasp->points[i][Y] + halfAxesSize, bndasp->points[i][Z]);
-	++j;
-	VMOVE(points[j], ptA);
-	++j;
-	VMOVE(points[j], ptB);
-
-	/* draw Z axis with x/y offsets */
-	VSET(ptA, bndasp->points[i][X], bndasp->points[i][Y], bndasp->points[i][Z] - halfAxesSize);
-	VSET(ptB, bndasp->points[i][X], bndasp->points[i][Y], bndasp->points[i][Z] + halfAxesSize);
-	++j;
-	VMOVE(points[j], ptA);
-	++j;
-	VMOVE(points[j], ptB);
-    }
-
-    dm_draw_lines_3d(dmp, npoints, points, 0);
-    bu_free((void *)points, "data axes points");
-
-    /* Restore the line attributes */
-    dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
-}
-
-void
-dm_draw_scene_axes(struct dm *dmp,  struct bv_scene_obj *s)
-{
-    if (!(s->s_type_flags & BV_AXES))
-	return;
-
-    struct bv_axes *bndasp = (struct bv_axes *)s->s_i_data;
     fastf_t halfAxesSize;		/* half the length of an axis */
     point_t ptA, ptB;
     /* Save the line attributes */
@@ -145,7 +77,7 @@ void
 dm_draw_hud_axes(struct dm		        *dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
-	     struct bv_axes	 	*bnasp)
+	     struct bsg_axes	 	*bnasp)
 {
     fastf_t halfAxesSize;		/* half the length of an axis */
     fastf_t xlx, xly;			/* X axis label position */

@@ -36,6 +36,8 @@
 #include "ged.h"
 #include "qtcad/QgSelectFilter.h"
 
+class QgPluginContext;
+
 class CADViewSelector : public QWidget
 {
     Q_OBJECT
@@ -43,6 +45,8 @@ class CADViewSelector : public QWidget
     public:
 	CADViewSelector(QWidget *p = 0);
 	~CADViewSelector();
+
+	void setContext(QgPluginContext *ctx) { m_ctx = ctx; }
 
 	QRadioButton *use_pnt_select_button;
 	QRadioButton *use_rect_select_button;
@@ -63,7 +67,7 @@ class CADViewSelector : public QWidget
 
 
 signals:
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 
     public slots:
 	void enable_groups(bool);
@@ -72,7 +76,7 @@ signals:
     	void disable_raytrace_opt(bool);
 	void enable_useall_opt(bool);
     	void disable_useall_opt(bool);
-	void do_view_update(unsigned long long);
+	void do_view_update(QgViewUpdateFlags);
 	void do_draw_selections();
 	void do_erase_selections();
 
@@ -89,7 +93,7 @@ signals:
 	QgSelectBoxFilter *bf;
 	QgSelectRayFilter *rf;
 
-	struct ged *gedp = NULL;
+	QgPluginContext *m_ctx = nullptr;
 	unsigned long long ohash = 0;
 	unsigned long long omhash = 0;
 };

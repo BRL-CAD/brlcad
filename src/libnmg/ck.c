@@ -36,6 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "nmg.h"
+#include "nmg/plot.h"
 
 
 /************************************************************************

@@ -1,0 +1,141 @@
+libqtcad - BRL-CAD Qt widget library
+=====================================
+
+`libqtcad` is the shared library of reusable Qt widgets, models, and helper
+classes used to build BRL-CAD's Qt-based applications (currently `qged`, and
+indirectly `archer`).  Public headers live in `include/qtcad/`, implementations
+in `src/libqtcad/`.
+
+This README is a navigational overview.  Per-class API documentation belongs in
+the public headers themselves.
+
+Library taxonomy
+----------------
+
+The contents of libqtcad fall into a small number of categories.  When adding a
+new file, place it in the category that best matches its responsibility.
+
+* Canvas / display-manager widgets
+    `QgGL`        - QOpenGLWidget-backed canvas driving dm-qtgl
+    `QgSW`        - QWidget-backed canvas driving dm-swrast (software raster)
+    `QgView`      - thin wrapper that picks one of the canvas types at runtime
+    `QgQuadView`  - 4-up arrangement of `QgView`s
+
+* Tree / data models for .g database content
+    `QgModel`               - QAbstractItemModel over a .g hierarchy
+    `QgItem`                - per-tree-node payload used by `QgModel`
+    `QgTreeView`            - QTreeView subclass that knows how to paint
+                              `QgModel` rows
+    `QgTreeSelectionModel`  - selection model paired with `QgTreeView`
+    `QgAttributesModel`     - model exposing one object's attribute AVS
+    `QgKeyVal*`             - generic key/value tree model + delegate + view
+    `QgUtil`                - free functions returning per-object icons and
+                              the comb-type classification used for those icons
+
+* Mouse-event filters installed on a view to implement editing modes
+    `QgPolyFilter`     (+ five derived classes for create/update/select/point/move)
+    `QgSelectFilter`   (+ point / box / ray)
+    `QgMeasureFilter`  (+ 2D / 3D)
+    `QgSketchFilter`   (+ several sketch-edit derivations)
+
+* General-purpose Qt widgets
+    `QgAccordion`       - vertical stack of collapsing panels
+    `QgToolPalette`     - palette of icon-buttons that toggle docked control
+                          widgets (`QgToolPaletteElement` / `QgToolPaletteButton`)
+    `QgFlowLayout`      - flow layout (from Qt examples; BSD-licensed)
+    `QgColorRGB`        - color picker combining a swatch button with text entry
+    `QgDockWidget`      - QDockWidget with extra "promote to top-level window"
+                          behavior
+    `QgConsole`         - QPlainTextEdit-based interactive console
+                          (ParaView-derived); used as the GED command prompt
+    `QgConsoleListener` - QThread-backed FD reader feeding `QgConsole`
+                          (juangburgos/QConsoleListener-derived; MIT-licensed)
+    `QgAppExecDialog`   - dialog that runs a child process and displays its
+                          stdout / stderr stream in a `QgConsole`
+    `QgViewCtrl`        - QToolBar with rotate / translate / scale / center /
+                          raytrace / framebuffer toggle actions
+
+* Dialogs / format converters
+    `QgGeomImport`         - chooses a .g file to open, running any required
+                              converter
+    `ASCImportDialog`, `RhinoImportDialog`, `STEPImportDialog`
+                           - format-specific configuration dialogs invoked by
+                              `QgGeomImport`
+
+* Cross-cutting helpers
+    `defines.h`         - `QTCAD_EXPORT` macro and env-driven slot/event
+                          tracing macros (`QTCAD_SLOT`, `QTCAD_EVENT`)
+    `QgSignalFlags.h`   - bitmask flags passed through view-update signals
+    `bindings.{h,cpp}`  - shared key / mouse / wheel event handlers used by
+                          the canvas widgets (private to libqtcad)
+    `qtcad_resources.qrc` - icon resources
+
+Signal / slot conventions
+-------------------------
+
+The conventions documented in `QgSignalFlags.h` apply throughout the library.
+Briefly:
+
+1. The application provides a single `view_update(flags)` signal that fans out
+   to every widget which may need to refresh.
+2. Widgets emit a `view_changed(flags)` signal when something they do may
+   affect the view.  Applications connect that to a `do_view_changed` slot
+   that turns around and re-emits `view_update`.
+3. Widgets provide a `do_view_update(flags)` slot, connected by the
+   application to `view_update`, which performs the widget-local refresh.
+   `do_view_update` MUST NOT itself emit (directly or transitively)
+   `view_changed`, to avoid loops.
+
+The `flags` parameter is currently a bitmask of the `QG_VIEW_*` `#define`s in
+`QgSignalFlags.h`.  A future cleanup will replace it with a `Q_FLAG`-decorated
+`enum class`.
+
+Threading model
+---------------
+
+The library is single-threaded in the Qt-main-thread sense, with one
+exception: `QgConsoleListener` runs an `m_thread` that watches a file
+descriptor and emits text lines via a queued connection back to the main
+thread.  All other widgets, models, and filters expect to be created, used,
+and destroyed on the Qt GUI thread.
+
+Lifetime / ownership
+--------------------
+
+QWidgets follow the normal Qt parent/child ownership rules.  `QgView` owns its
+canvas widget (`QgSW` or `QgGL`); the canvas in turn allocates and owns its
+local `struct bview` (`local_v`).  Filters installed via
+`QgView::add_event_filter` are owned by the caller, not the view.
+
+Consumers
+---------
+
+Inside the BRL-CAD tree libqtcad is consumed by:
+
+* `src/qged` and its plugins (the primary client)
+* `src/libqtcad/tests` (`qgmodel`, `qgview`, `qsketch`, plus GED-level tests
+  that exercise the dm backends end-to-end)
+
+`archer` and `libtclcad` do not currently depend on libqtcad.
+
+Modernization plan
+------------------
+
+The library is the subject of a longer-running modernization effort tracked
+in the project plan that originally introduced this README.  Subsequent PRs
+will progressively:
+
+* tighten encapsulation (move public data behind accessors; adopt the pimpl
+  idiom for the heaviest classes)
+* unify the `QgGL` / `QgSW` duplication behind a common `QgCanvasBase`
+* unify the polygon / select / measure / sketch filter hierarchies behind a
+  common `QgViewFilter` base
+* replace the `unsigned long long` view-flag signals with a `Q_FLAG`
+  `enum class`
+* introduce a `QgSession` abstraction so the models no longer talk directly
+  to `struct ged` / `struct db_i`
+* wrap the public API in a `qtcad::` namespace
+* expand the test suite to use `QSignalSpy` / `QAbstractItemModelTester`
+
+Each phase is intended to land independently while keeping `libqtcad`,
+`qged`, `archer`, `dm-qtgl`, and `dm-swrast` building.

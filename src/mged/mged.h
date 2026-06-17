@@ -75,10 +75,10 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 #include "wdb.h"
 
-/* Needed to define struct bv_scene_obj */
-#include "bv/defines.h"
+#include "../libged/bsg_ged_draw_private.h"
 
 // We have to use different I/O mechanisms based on which
 // platform we're on.  Make a define to key off of.
@@ -243,10 +243,6 @@ struct mged_state {
     struct mged_edit_state *s_edit;
     int global_editing_state; // main global editing state (ugh)
 
-    /* called by numerous functions to indicate truthfully whether the
-     * views need to be redrawn. */
-    int update_views;
-
     /* Asynchronous ged_exec state (cmd.cpp).
      * cmd_running is set to 1 while ged_exec runs in a worker thread so
      * that re-entrant command dispatch (e.g. from stdin_input) is blocked.
@@ -282,6 +278,22 @@ struct mged_state {
 };
 extern struct mged_state *MGED_STATE;
 
+static inline int
+mged_event_batch_begin(struct mged_state *s)
+{
+    if (!s || !s->gedp || !s->dbip || s->gedp->dbip != s->dbip)
+	return 0;
+    return ged_event_batch_begin(s->gedp) > 0;
+}
+
+
+static inline void
+mged_event_batch_end(struct mged_state *s, int started)
+{
+    if (started && s && s->gedp)
+	(void)ged_event_batch_end(s->gedp, NULL);
+}
+
 __BEGIN_DECLS
 
 
@@ -301,6 +313,10 @@ extern void dozoom(struct mged_state *s, int which_eye);
 extern void mged_finish(struct mged_state *s, int exitcode);
 extern void mged_request_shutdown(struct mged_state *s, int exitcode);
 extern int mged_shutting_down(struct mged_state *s);
+extern void mged_refresh_request_view(struct mged_state *s, struct _view_state *vsp, unsigned int flags);
+extern void mged_refresh_request_current(struct mged_state *s, unsigned int flags);
+extern void mged_refresh_request_all(struct mged_state *s, unsigned int flags);
+extern int mged_refresh_pending(struct mged_state *s);
 extern void slewview(struct mged_state *s, vect_t view_pos);
 extern void moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp, matp_t xlate);
 extern void moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate);
@@ -315,7 +331,7 @@ extern void sig2(int);
 extern void sig3(int);
 
 /* mged.c */
-extern void mged_view_callback(struct bview *gvp, void *clientData);
+extern void mged_view_callback(struct bsg_view *gvp, void *clientData);
 
 /* buttons.c */
 extern void button(struct mged_state *s, int bnum);
@@ -338,9 +354,16 @@ void history_setup(void);
 #define ROTARROW 010 /* Object rotation enabled */
 extern int movedir;  /* RARROW | UARROW | SARROW | ROTARROW */
 
-extern struct display_list *illum_gdlp; /* Pointer to solid in solid table to be illuminated */
-extern struct bv_scene_obj *illump; /* == 0 if none, else points to ill. solid */
-extern int ipathpos; /* path index of illuminated element */
+struct mged_highlight_state {
+    ged_draw_shape_ref shape; /* NULL ref if none, else highlighted shape */
+    int path_pos;            /* path index of highlighted element */
+};
+extern struct mged_highlight_state mged_highlight;
+#define highlight_path_pos (mged_highlight.path_pos)
+extern ged_draw_shape_ref mged_highlight_shape_ref(struct mged_state *s);
+extern int mged_highlight_shape_record(struct mged_state *s, struct ged_draw_shape_record *out);
+extern void mged_highlight_set_shape_ref(struct mged_state *s, ged_draw_shape_ref ref);
+extern void mged_highlight_clear(struct mged_state *s);
 extern int sedraw; /* apply solid editing changes */
 extern int edobj; /* object editing options */
 
@@ -459,16 +482,12 @@ void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);
 
 /* dodraw.c */
-int replot_modified_solid(struct mged_state *s, struct bv_scene_obj *sp, struct rt_db_internal *ip, const mat_t mat);
-int replot_original_solid(struct mged_state *s, struct bv_scene_obj *sp);
-void add_solid_path_to_result(Tcl_Interp *interpreter, struct bv_scene_obj *sp);
+int replot_modified_solid(struct mged_state *s, ged_draw_shape_ref ref, struct rt_db_internal *ip, const mat_t mat);
+int replot_original_solid(struct mged_state *s, ged_draw_shape_ref ref);
+void add_solid_record_path_to_result(Tcl_Interp *interpreter, const struct ged_draw_shape_record *rec);
 int redraw_visible_objects(struct mged_state *s);
 
 /* dozoom.c */
-void createDLists(void *, struct bu_list *hdlp);
-void createDListSolid(void *, struct bv_scene_obj *);
-void createDListAll(void *, struct display_list *);
-void freeDListsAll(void *, unsigned int dlist, int range);
 
 /* edarb.c */
 int editarb(struct mged_state *s, vect_t pos_model);
@@ -529,10 +548,6 @@ extern void snap_view_center_to_grid(struct mged_state *s);
 extern void snap_to_grid(struct mged_state *s, fastf_t *mx, fastf_t *my);
 extern void snap_view_to_grid(struct mged_state *s, fastf_t view_dx, fastf_t view_dy);
 extern void draw_grid(struct mged_state *s);
-
-/* predictor.c */
-extern void predictor_frame(struct mged_state *s);
-extern void predictor_init(struct mged_state *s);
 
 /* usepen.c */
 void wrt_view(struct mged_state *s, mat_t out, const mat_t change, const mat_t in);

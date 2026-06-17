@@ -42,7 +42,7 @@
 #ifndef PLOT_PREFIX_STR
 #  define PLOT_PREFIX_STR bg_plot3_
 #endif
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"

@@ -31,6 +31,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -189,6 +190,7 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     int c;
     int old_debug;
     int push_error;
+    int event_batch_opened = 0;
     static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -268,9 +270,10 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 /*
- * We've built the push solid list, now all we need to do is apply
+ * We've built the push solid work list, now all we need to do is apply
  * the matrix we've stored for each solid.
  */
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     FOR_ALL_PUSH_SOLIDS(gpip, gpdp->pi_head) {
 	if (rt_db_get_internal(&es_int, gpip->pi_dir, gedp->dbip, gpip->pi_mat) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_push_core: Read error fetching '%s'\n", gpip->pi_dir->d_namep);
@@ -302,6 +305,8 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 	    identitize(db, gedp->dbip, gedp->ged_result_str);
 	--argc;
     }
+    if (event_batch_opened)
+	(void)ged_event_batch_end(gedp, NULL);
 
     /*
      * Free up the solid table we built.

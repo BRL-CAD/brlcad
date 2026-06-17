@@ -38,6 +38,7 @@ extern void *fb_backends;
 #include <stdlib.h>
 
 #include "vmath.h"
+#include "bsg/vlist.h"
 #include "dm.h"
 
 #include "./calltable.h"
@@ -55,8 +56,8 @@ extern void *fb_backends;
 #define DIVBY4096(x) (((double)(x))*INV_4096)
 #define GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->i->dm_width))
 #define GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->i->dm_height))
-#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->i->dm_width - 0.5) * BV_RANGE))
-#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->i->dm_height) * BV_RANGE))
+#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->i->dm_width - 0.5) * BSG_VIEW_RANGE))
+#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->i->dm_height) * BSG_VIEW_RANGE))
 
 /* +-2048 to +-1 */
 #define GED_TO_PM1(x) (((fastf_t)(x))*INV_BV)
@@ -106,6 +107,11 @@ DM_EXPORT extern struct fb remote_interface; /* not in list[] */
 /* Always included */
 extern struct fb debug_interface, disk_interface, stk_interface;
 extern struct fb memory_interface, fb_null_interface;
+
+/* Private direct-device drawing for in-tree utilities and backend adapters.
+ * Normal application drawing must use retained render records instead. */
+DM_EXPORT extern int dm_draw_device_vlist(struct dm *dmp, bsg_vlist *vp);
+DM_EXPORT extern int dm_draw_device_vlist_hidden_line(struct dm *dmp, bsg_vlist *vp);
 
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */
 #define SHMEM_KEY 42
@@ -191,8 +197,8 @@ __END_DECLS
     static int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
     static int _dmtype##_drawPoint3D(struct dm *dmp, point_t point); \
     static int _dmtype##_drawPoints3D(struct dm *dmp, int npoints, point_t *points); \
-    static int _dmtype##_drawVList(struct dm *dmp, struct bv_vlist *vp); \
-    static int _dmtype##_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data); \
+    static int _dmtype##_drawVList(struct dm *dmp, bsg_vlist *vp); \
+    static int _dmtype##_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data); \
     static int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
     static int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
     static int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \
@@ -204,10 +210,6 @@ __END_DECLS
     static int _dmtype##_setZBuffer(struct dm *dmp, int zbuffer_on); \
     static int _dmtype##_setWinBounds(struct dm *dmp, fastf_t *w); \
     static int _dmtype##_debug(struct dm *dmp, int lvl); \
-    static int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
-    static int _dmtype##_endDList(struct dm *dmp); \
-    static int _dmtype##_drawDList(struct dm *dmp, unsigned int list); \
-    static int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); \
     static int _dmtype##_getDisplayImage(struct dm *dmp, unsigned char **image);
 
 #endif /* DM_PRIVATE_H */

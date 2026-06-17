@@ -34,7 +34,7 @@
 #include <set>
 #include "vmath.h"
 #include "bu/color.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "bg/aabb_ray.h"
 
 #define RTreeAssert assert // RTree uses RTreeAssert( condition )

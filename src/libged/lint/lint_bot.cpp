@@ -158,7 +158,7 @@ namespace {
 	    lint_worker_data(struct rt_i *rtip, struct resource *res);
 	    ~lint_worker_data();
 	    void shoot(int ind, bool reverse);
-	    void plot_bad_tris(struct bv_vlblock *vbp, struct bu_list *vhead, struct bu_list *vlfree);
+	    void plot_bad_tris(lint_data *bdata);
 
 	    nlohmann::json tresults;
 	    bool condition_flag = false;
@@ -257,22 +257,16 @@ lint_worker_data::shoot(int ind, bool reverse)
 }
 
 void
-lint_worker_data::plot_bad_tris(struct bv_vlblock *vbp, struct bu_list *vhead, struct bu_list *vlfree)
+lint_worker_data::plot_bad_tris(lint_data *bdata)
 {
-    if (!vbp || !vhead || !vlfree)
+    if (!bdata)
 	return;
 
     std::unordered_set<int>::iterator tr_it;
 
     for (tr_it = flagged_tris.begin(); tr_it != flagged_tris.end(); tr_it++) {
 	int tri_ind = *tr_it;
-	point_t v[3];
-	for (int i = 0; i < 3; i++)
-	    VMOVE(v[i], &bot->vertices[bot->faces[tri_ind*3+i]*3]);
-	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, v[1], BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v[2], BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead, v[0], BV_VLIST_LINE_DRAW);
+	bdata->plot_append_triangle(bot, tri_ind);
     }
 }
 
@@ -649,18 +643,11 @@ bot_checks(lint_data *bdata, struct directory *dp, struct rt_bot_internal *bot)
     bot_check(state, "unexpected_hit", _uh_hit, _miss_noop, 0, false, ncpus);
 
     if (bdata->do_plot) {
-	struct bu_color *color = bdata->color;
-	struct bv_vlblock *vbp = bdata->vbp;
-	struct bu_list *vlfree = bdata->vlfree;
-	unsigned char rgb[3] = {255, 255, 0};
-	if (color)
-	    bu_color_to_rgb_chars(color, rgb);
-	struct bu_list *vhead = bv_vlblock_find(vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	// Triangle plotting order doesn't matter particularly, just
 	// iterate over all the workers
 	for (size_t i = 0; i < ncpus; i++) {
 	    lint_worker_data *d = (lint_worker_data *)state[i].ptr;
-	    d->plot_bad_tris(vbp, vhead, vlfree);
+	    d->plot_bad_tris(bdata);
 	}
     }
 

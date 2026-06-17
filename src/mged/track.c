@@ -635,18 +635,22 @@ wrobj(struct mged_state *s, char name[], int flags)
 	    return -1;
     }
 
+    int event_batch_started = mged_event_batch_begin(s);
     if ((tdp = db_diradd(s->dbip, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
+	mged_event_batch_end(s, event_batch_started);
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(s->interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
     }
 
     if (rt_db_put_internal(tdp, s->dbip, &intern) < 0) {
+	mged_event_batch_end(s, event_batch_started);
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(s->interp, "wrobj(", name, "):  write error\n", (char *)NULL);
 	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
 	return -1;
     }
+    mged_event_batch_end(s, event_batch_started);
     return 0;
 }
 

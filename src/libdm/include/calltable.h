@@ -38,6 +38,7 @@
 
 #include "bu/parse.h"
 #include "bu/vls.h"
+#include "bsg/vlist.h"
 #include "dm.h"
 #include "brlcad_version.h"
 
@@ -58,18 +59,6 @@ struct dm_vars {
  * Tk information...
  */
 
-/**
- * Singly-linked list node for the display-list sensor mechanism.
- * Sensors are fired by dm_fire_dlist_sensors() when a display list is
- * regenerated, providing a push-based alternative to polling s_dlist_stale.
- */
-struct dm_dlist_sensor {
-    struct bv_scene_obj *s;                         /**< @brief associated scene object */
-    void (*callback)(struct bv_scene_obj *, void *); /**< @brief notification callback */
-    void *data;                                     /**< @brief caller-provided context */
-    struct dm_dlist_sensor *next;                   /**< @brief intrusive list linkage */
-};
-
 struct dm_impl {
     struct dm *(*dm_open)(void *ctx, void *interp, int argc, const char *argv[]);
     int (*dm_close)(struct dm *dmp);
@@ -82,6 +71,7 @@ struct dm_impl {
     int (*dm_loadPMatrix)(struct dm *dmp, const fastf_t *mat);
     void (*dm_popPMatrix)(struct dm *dmp);
     int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
+    int (*dm_drawString2DRot)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect, fastf_t angle);	/**< @brief optional rotated 2D string in degrees */
     int (*dm_String2DBBox)(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int size, int use_aspect); /**< @brief Returns screen X,Y coordinates */
     int (*dm_drawLine2D)(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);	/**< @brief formerly dmr_2d_line */
     int (*dm_drawLine3D)(struct dm *dmp, point_t pt1, point_t pt2);
@@ -89,11 +79,9 @@ struct dm_impl {
     int (*dm_drawPoint2D)(struct dm *dmp, fastf_t x, fastf_t y);
     int (*dm_drawPoint3D)(struct dm *dmp, point_t point);
     int (*dm_drawPoints3D)(struct dm *dmp, int npoints, point_t *points);
-    int (*dm_drawVList)(struct dm *dmp, struct bv_vlist *vp);
-    int (*dm_drawVListHiddenLine)(struct dm *dmp, struct bv_vlist *vp);
-    int (*dm_draw_obj)(struct dm *dmp, struct bv_scene_obj *s);
-    int (*dm_draw_data_axes)(struct dm *dmp, fastf_t sf, struct bv_data_axes_state *bndasp);
-    int (*dm_draw)(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
+    int (*dm_drawVList)(struct dm *dmp, bsg_vlist *vp);
+    int (*dm_drawVListHiddenLine)(struct dm *dmp, bsg_vlist *vp);
+    int (*dm_draw)(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
     int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
     int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
     int (*dm_setLineAttr)(struct dm *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
@@ -114,12 +102,6 @@ struct dm_impl {
     int (*dm_getBoundFlag)(struct dm *dmp);  /**< @brief get zoom-in limit enable/disable state */
     int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
     int (*dm_logfile)(struct dm *dmp, const char *filename); /**< @brief Set DM log file */
-    int (*dm_beginDList)(struct dm *dmp, unsigned int list);
-    int (*dm_endDList)(struct dm *dmp);
-    int (*dm_drawDList)(unsigned int list);
-    int (*dm_freeDLists)(struct dm *dmp, unsigned int list, int range);
-    int (*dm_genDLists)(struct dm *dmp, size_t range);
-    int (*dm_draw_display_list)(struct dm *dmp, struct display_list *obj);
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image, int flip, int alpha);  /**< @brief (0,0) is upper left pixel */
     int (*dm_reshape)(struct dm *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm *dmp);
@@ -135,18 +117,17 @@ struct dm_impl {
     void (*dm_sync)(struct dm *dmp);
     int (*dm_event_cmp)(struct dm *dmp, dm_event_t type, int event);
     void (*dm_fogHint)(struct dm *dmp, int fastfog);
-    int (*dm_share_dlist)(struct dm *dmp1, struct dm *dmp2);
     unsigned long dm_id;          /**< @brief window id */
     int dm_graphical;		/**< @brief !0 means device supports interactive graphics */
     const char *graphics_system; /**< @brief String identifying the drawing layer assumed */
-    int dm_displaylist;		/**< @brief !0 means device has displaylist */
+    int dm_backend_cache;	/**< @brief !0 means backend supports retained geometry caching */
     int dm_stereo;                /**< @brief stereo flag */
     const char *dm_name;		/**< @brief short name of device */
     const char *dm_lname;		/**< @brief long name of device */
     int dm_top;                   /**< @brief !0 means toplevel window */
     int dm_width;
     int dm_height;
-    int dm_dirty;
+    int dm_native_repaint_pending;
     int dm_bytes_per_pixel;
     int dm_bits_per_channel;  /* bits per color channel */
     int dm_lineWidth;
@@ -163,6 +144,7 @@ struct dm_impl {
     unsigned char dm_bg1[3];	/**< @brief background color 1*/
     unsigned char dm_bg2[3];	/**< @brief background color 2 (if different than bg1, draw gradient)*/
     unsigned char dm_fg[3];	/**< @brief foreground color */
+    unsigned char dm_geometry_default_color[3]; /**< @brief default wireframe color used when a scene object's s_old.s_cflag is set */
     vect_t dm_clipmin;		/**< @brief minimum clipping vector */
     vect_t dm_clipmax;		/**< @brief maximum clipping vector */
     int dm_debugLevel;		/**< @brief !0 means debugging */
@@ -175,8 +157,12 @@ struct dm_impl {
     void *dm_interp;		/**< @brief interpreter */
     void *dm_ctx;		/**< @brief drawing context */
     void *dm_udata;		/**< @brief associate general application data here */
-    /** @brief singly-linked list of dlist sensors; NULL when empty */
-    struct dm_dlist_sensor *dm_dlist_sensors;
+    /** @brief Modern renderer-backend contract ops.  Set by dm initialization
+     * for backends that support render-item drawing; NULL otherwise.  See
+     * include/dm.h for the dispatch wrappers. */
+    const struct dm_backend_ops *dm_backend_ops;
+    struct dm_backend_resource *dm_backend_resources;
+    uint64_t dm_backend_generation;
 };
 
 struct fb_impl {
@@ -244,6 +230,22 @@ struct fb_impl {
         char *p;
         size_t l;
     } u1, u2, u3, u4, u5, u6;
+    /**
+     * @brief Reference count of fbserv clients currently streaming to this fb.
+     *
+     * Maintained by libdm/fbserv.c (fbs_new_client / drop_client).  When
+     * non-zero, the fb dimensions (if_width/if_height) are "locked" — any
+     * attempt to mutate them via fb_configure_window (e.g. on a Qt widget
+     * resize) is deferred until the streaming client(s) disconnect.  This
+     * prevents an in-flight rt subprocess from having its scanline width
+     * silently change underneath it, which produces tiled / distorted
+     * "ghost copies" of the raytrace output in the framebuffer image.
+     *
+     * Placed at the end of the struct so the per-backend aggregate
+     * initialisers for `struct fb_impl` (if_remote.c, if_stack.c, …)
+     * default-initialise this counter to 0 without needing edits.
+     */
+    int if_active_clients;
 };
 
 

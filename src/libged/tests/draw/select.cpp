@@ -32,8 +32,8 @@
 #define DM_WITH_RT
 #include <dm.h>
 #include <ged.h>
-
-#include "../../dbi.h"
+#include <ged/db_index.h>
+#include <ged/event_txn.h>
 
 #define ADIFF_THRES 20
 
@@ -100,14 +100,9 @@ main(int ac, char *av[]) {
     const char *s_av[15] = {NULL};
     gedp = ged_open("db", "moss_select_tmp.g", 1);
 
-    // Set up new cmd data (not yet done by default in ged_open
-    gedp->dbi_state = new DbiState(gedp);
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    gedp->new_cmd_forms = 1;
-    gedp->ged_lod = bv_mesh_lod_context_create(gedp->dbip->dbi_filename);
     bu_setenv("DM_SWRAST", "1", 1);
 
-    // Set callback so database changes will update dbi_state
+    // Set callback so database changes notify public GED services.
     db_add_changed_clbk(gedp->dbip, &ged_changed_callback, (void *)gedp);
 
     /* To generate images that will allow us to check if the drawing
@@ -119,7 +114,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_dm(gedp, 4, s_av);
 
-    struct bview *v = gedp->ged_gvp;
+    struct bsg_view *v = gedp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
     dm_set_width(dmp, 512);
     dm_set_height(dmp, 512);
@@ -311,7 +306,8 @@ main(int ac, char *av[]) {
     s_av[3] = "all.bot";
     s_av[4] = NULL;
     ged_exec_facetize(gedp, 4, s_av);
-    dbis->update();
+    ged_db_index_refresh(gedp);
+    ged_event_notify_batch_rebuild(gedp, NULL);
 
 
     s_av[0] = "view";
@@ -773,4 +769,3 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

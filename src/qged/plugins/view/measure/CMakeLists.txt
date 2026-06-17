@@ -13,7 +13,7 @@ endif(BRLCAD_ENABLE_QT)
 
 set(measure_srcs measure.cpp CADViewMeasure.cpp)
 
-set(measure_moc_hdrs CADViewMeasure.h)
+set(measure_moc_hdrs CADViewMeasure.h ViewMeasureFactory.h)
 
 if(BRLCAD_ENABLE_QT)
   if(Qt6Widgets_FOUND)
@@ -50,6 +50,7 @@ if(BRLCAD_ENABLE_QT)
   distclean(
     icon.qrc.depends
     moc_CADViewMeasure.cpp_parameters
+    moc_ViewMeasureFactory.cpp_parameters
   )
 endif(BRLCAD_ENABLE_QT)
 
@@ -60,6 +61,7 @@ set(
   ${measure_moc_hdrs}
   icon.qrc
   measure.svg
+  measure.json
   README
 )
 

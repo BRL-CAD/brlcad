@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -39,7 +40,9 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
     int i;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
+    struct bu_ptbl removed_paths = BU_PTBL_INIT_ZERO;
     int ret;
+    size_t j;
     static const char *usage = "comb object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -78,28 +81,51 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
     RT_CK_COMB(comb);
 
     /* Process each argument */
+    bu_ptbl_init(&removed_paths, 8, "removed comb instance paths");
     ret = BRLCAD_OK;
     for (i = 2; i < argc; i++) {
 	if (db_tree_rm_dbleaf(&(comb->tree), argv[i], 0) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
 	    ret = BRLCAD_ERROR;
 	} else {
-	    struct bu_vls path = BU_VLS_INIT_ZERO;
+	    struct bu_vls *path;
 
-	    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
-	    _dl_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
-	    bu_vls_free(&path);
+	    BU_GET(path, struct bu_vls);
+	    bu_vls_init(path);
+	    bu_vls_printf(path, "%s/%s", dp->d_namep, argv[i]);
+	    bu_ptbl_ins(&removed_paths, (long *)path);
 	    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
 	}
     }
 
+    ged_event_batch_begin(gedp);
     if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
+	ged_event_batch_end(gedp, NULL);
+	for (j = 0; j < BU_PTBL_LEN(&removed_paths); j++) {
+	    struct bu_vls *path = (struct bu_vls *)BU_PTBL_GET(&removed_paths, j);
+	    bu_vls_free(path);
+	    BU_PUT(path, struct bu_vls);
+	}
+	bu_ptbl_free(&removed_paths);
 	return BRLCAD_ERROR;
     }
 
     // Comb changed, need to update nref count
     db_update_nref(gedp->dbip);
+    for (j = 0; j < BU_PTBL_LEN(&removed_paths); j++) {
+	struct bu_vls *path = (struct bu_vls *)BU_PTBL_GET(&removed_paths, j);
+	ged_event_notify_comb_instance_removed(gedp, dp->d_namep, NULL,
+		bu_vls_cstr(path), NULL);
+    }
+    ged_event_batch_end(gedp, NULL);
+
+    for (j = 0; j < BU_PTBL_LEN(&removed_paths); j++) {
+	struct bu_vls *path = (struct bu_vls *)BU_PTBL_GET(&removed_paths, j);
+	bu_vls_free(path);
+	BU_PUT(path, struct bu_vls);
+    }
+    bu_ptbl_free(&removed_paths);
 
     return ret;
 }

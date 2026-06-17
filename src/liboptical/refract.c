@@ -32,7 +32,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 
 
 extern int viewshade(struct application *ap,

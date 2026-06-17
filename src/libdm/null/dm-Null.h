@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include "bsg/vlist.h"
 #include "dm.h"
 
 #ifndef DM_NULL_EXPORT
@@ -107,19 +108,15 @@ null_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
 
 
 DM_NULL_EXPORT extern int
-null_drawVList(struct dm *dmp, struct bv_vlist *vp);
+null_drawVList(struct dm *dmp, bsg_vlist *vp);
 
 
 DM_NULL_EXPORT extern int
-null_drawVListHiddenLine(struct dm *dmp, struct bv_vlist *vp);
+null_drawVListHiddenLine(struct dm *dmp, bsg_vlist *vp);
 
 
 DM_NULL_EXPORT extern int
-null_draw_obj(struct dm *dmp, struct bv_scene_obj *s);
-
-
-DM_NULL_EXPORT extern int
-null_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data);
+null_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data);
 
 
 DM_NULL_EXPORT extern int
@@ -199,31 +196,11 @@ null_debug(struct dm *dmp, int lvl);
 
 
 DM_NULL_EXPORT extern int
-null_beginDList(struct dm *dmp, unsigned int list);
-
-
-DM_NULL_EXPORT extern int
-null_endDList(struct dm *dmp);
-
-
-DM_NULL_EXPORT extern int
-null_drawDList(unsigned int list);
-
-
-DM_NULL_EXPORT extern int
-null_freeDLists(struct dm *dmp, unsigned int list, int range);
-
-
-DM_NULL_EXPORT extern int
-null_genDLists(struct dm *dmp, size_t range);
-
-
-DM_NULL_EXPORT extern int
 null_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha);
 
 
 DM_NULL_EXPORT extern int
-null_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data);
+null_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data);
 
 
 DM_NULL_EXPORT extern int

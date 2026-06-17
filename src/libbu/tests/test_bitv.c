@@ -44,6 +44,7 @@
 
 
 
+
 typedef enum {
     HEX         = 0x0001,
     HEX_RAW     = 0x0011,
@@ -99,8 +100,8 @@ test_bu_bitv_master()
     struct bu_vls rand_bin_str = BU_VLS_INIT_ZERO;
     struct bu_vls bv2hex_str   = BU_VLS_INIT_ZERO;
     struct bu_vls bv2bin_str   = BU_VLS_INIT_ZERO;
-    struct bu_bitv *bv_rhs;
-    struct bu_bitv *bv_rbs;
+    struct bu_bitv *bsg_rhs;
+    struct bu_bitv *bsg_rbs;
     int test_results = BRLCAD_ERROR;
     int thex, tbin;
 
@@ -109,16 +110,16 @@ test_bu_bitv_master()
     random_hex_or_binary_string(&rand_bin_str, BINARY, 9);
 
     /* convert to bitvs */
-    bv_rhs = bu_hex_to_bitv(bu_vls_cstr(&rand_hex_str));
-    bv_rbs = bu_binary_to_bitv(bu_vls_cstr(&rand_bin_str));
+    bsg_rhs = bu_hex_to_bitv(bu_vls_cstr(&rand_hex_str));
+    bsg_rbs = bu_binary_to_bitv(bu_vls_cstr(&rand_bin_str));
 
     /* check for failures */
-    if (bv_rhs == NULL) {
+    if (bsg_rhs == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
 	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
-    if (bv_rbs == NULL) {
+    if (bsg_rbs == NULL) {
 	bu_log("\nERROR: NULL from bu_binary_to_bitv.");
 	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
@@ -126,8 +127,8 @@ test_bu_bitv_master()
 
 
     /* bitvs back to strings */
-    bu_bitv_to_hex(&bv2hex_str, bv_rhs);
-    bu_bitv_to_binary(&bv2bin_str, bv_rbs);
+    bu_bitv_to_hex(&bv2hex_str, bsg_rhs);
+    bu_bitv_to_binary(&bv2bin_str, bsg_rbs);
 
     /* finally, the comparisons (not case sensitive) */
     thex = BU_STR_EQUIV(bu_vls_cstr(&rand_hex_str), bu_vls_cstr(&bv2hex_str));
@@ -157,10 +158,10 @@ test_bu_bitv_master()
 
 ERROR_RETURN:
 
-    if (bv_rhs)
-	bu_bitv_free(bv_rhs);
-    if (bv_rbs)
-	bu_bitv_free(bv_rbs);
+    if (bsg_rhs)
+	bu_bitv_free(bsg_rhs);
+    if (bsg_rbs)
+	bu_bitv_free(bsg_rbs);
     bu_vls_free(&rand_hex_str);
     bu_vls_free(&rand_bin_str);
     bu_vls_free(&bv2hex_str);

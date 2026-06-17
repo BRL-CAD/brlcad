@@ -41,6 +41,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "rt/vlist.h"
 
 static const char *usage =
     "[-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"

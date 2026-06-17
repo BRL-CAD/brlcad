@@ -23,40 +23,42 @@
 #ifndef QGTREESELECTIONMODEL_H
 #define QGTREESELECTIONMODEL_H
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <QAbstractItemModel>
 #include <QItemSelectionModel>
 #include <QModelIndex>
 #include <QObject>
-#include "ged.h"
 #include "qtcad/defines.h"
+#include "qtcad/QgTypes.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeView.h"
 
-#define QgViewMode 0
-#define QgInstanceEditMode 1
-#define QgPrimitiveEditMode 2
+class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgTreeSelectionModel)
 
-class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
-{
-    Q_OBJECT
 
-    public:
+public:
 
-	QgTreeSelectionModel(QAbstractItemModel *model, QObject* parent, QgTreeView *tv): QItemSelectionModel(model, parent) {treeview = tv;}
-	QgTreeSelectionModel(QAbstractItemModel *model = nullptr, QgTreeView *tv = nullptr): QItemSelectionModel(model) {treeview = tv;}
+	QgTreeSelectionModel(QAbstractItemModel *model, QObject* parent, QgTreeView *tv): QItemSelectionModel(model, parent)
+	{
+		treeview = tv;
+	}
+	QgTreeSelectionModel(QAbstractItemModel *model = nullptr, QgTreeView *tv = nullptr): QItemSelectionModel(model)
+	{
+		treeview = tv;
+	}
 
 	void clear_all();
 
-    public slots:
-	void select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags) override;
-        void select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags) override;
+	/* Return the QgTreeView this selection model is associated with. */
+	QgTreeView *treeView() const { return treeview; }
 
-    public:
-	QgTreeView *treeview;
+public slots:
+	void select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags) override;
+	void select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags) override;
+
+private:
+	QgTreeView *treeview = nullptr;
 };
 
 #endif //QGTREESELECTIONMODEL_H
@@ -69,4 +71,3 @@ class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

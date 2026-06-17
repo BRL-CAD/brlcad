@@ -37,7 +37,10 @@
 #include "bu/exit.h"
 #include "bu/list.h"
 #include "bu/log.h"
+#include "bsg/vlist.h"
 #include "nmg.h"
+#include "nmg/plot.h"
+#include "./nmg_private.h"
 
 
 struct nmg_bool_state {
@@ -624,24 +627,21 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
     }
 
     if (do_anim) {
-	struct bv_vlblock *vbp = bv_vlblock_init(bs->vlfree, 32);
+	struct bsg_vlblock *vbp = bsg_vlblock_init(bs->vlfree, 32);
 
 	nmg_vlblock_s(vbp, bs->bs_dest, 0, bs->vlfree);
 	nmg_vlblock_s(vbp, bs->bs_src, 0, bs->vlfree);
 
 	/* Cause animation of boolean operation as it proceeds! */
-	if (nmg_vlblock_anim_upcall) {
+	if (nmg_plot_anim_upcall) {
 	    /* if requested, delay 1/4 second */
-	    /* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
-	    void (*cfp)(struct bv_vlblock *, int, int);
-	    cfp = (void (*)(struct bv_vlblock *, int, int))nmg_vlblock_anim_upcall;
-	    cfp(vbp,
+	    nmg_plot_anim_upcall(vbp,
 		(nmg_debug&NMG_DEBUG_PL_SLOW) ? 250000 : 0,
 		0);
 	} else {
-	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
+	    bu_log("null nmg_plot_anim_upcall, no animation\n");
 	}
-	bv_vlblock_free(vbp);
+	bsg_vlblock_free(vbp);
     }
 }
 

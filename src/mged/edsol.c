@@ -39,6 +39,8 @@
 #include "wdb.h"
 #include "rt/db4.h"
 #include "ged/view.h"
+#include "bsg/appearance.h"
+#include "bsg/draw_source.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -51,6 +53,67 @@ extern struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_p
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
 int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
+
+
+/* ------------------------------------------------------------------ */
+/* Draw-record callbacks for solid-list iteration                       */
+/* ------------------------------------------------------------------ */
+
+/* Callback: replot shapes whose LAST_SOLID matches illdp (replot_modified). */
+struct _replot_modified_data {
+    struct mged_state *s;
+    struct directory *illdp;
+    struct rt_db_internal *es_int;
+};
+
+static int
+_replot_modified_shape_cb(const struct ged_draw_shape_record *rec, void *ud)
+{
+    struct _replot_modified_data *d = (struct _replot_modified_data *)ud;
+    if (!rec || !rec->fullpath || rec->fullpath->fp_len <= 0) return 1;
+    if (DB_FULL_PATH_CUR_DIR(rec->fullpath) == d->illdp) {
+	mat_t mat;
+	(void)db_path_to_mat(d->s->dbip, (struct db_full_path *)rec->fullpath, mat,
+			     rec->fullpath->fp_len - 1);
+	(void)replot_modified_solid(d->s, rec->ref, d->es_int, mat);
+    }
+    return 1;
+}
+
+/* Callback: replot active highlighted shapes; optionally clear highlight. */
+struct _replot_active_data {
+    struct mged_state *s;
+    int continue_editing; /* if DOWN, clear highlight after replot */
+};
+
+static int
+_replot_active_shape_cb(const struct ged_draw_shape_record *rec, void *ud)
+{
+    struct _replot_active_data *d = (struct _replot_active_data *)ud;
+    if (!rec || !rec->highlighted) return 1;
+    (void)replot_original_solid(d->s, rec->ref);
+    if (d->continue_editing == DOWN)
+	ged_draw_shape_set_highlighted(d->s->gedp, rec->ref, 0);
+    return 1;
+}
+
+/* Callback: replot solids sharing the same LAST_SOLID as target_dp. */
+struct _replot_lastsol_data {
+    struct mged_state *s;
+    struct directory *target_dp;
+};
+
+static int
+_replot_lastsol_cb(const struct ged_draw_shape_record *rec, void *ud)
+{
+    struct _replot_lastsol_data *d = (struct _replot_lastsol_data *)ud;
+    if (!rec || !rec->fullpath || rec->fullpath->fp_len <= 0) return 1;
+    if (DB_FULL_PATH_CUR_DIR(rec->fullpath) == d->target_dp)
+	(void)replot_original_solid(d->s, rec->ref);
+    return 1;
+}
+
+/* ------------------------------------------------------------------ */
 
 // FIXME:  Globals
 
@@ -112,8 +175,8 @@ set_e_axes_pos(struct mged_state *s, int both)
     const short earb5[9][18] = earb5_edit_array;
     const int local_arb_faces[5][24] = rt_arb_faces;
 
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
     switch (MEDIT(s)->es_int.idb_type) {
 	case ID_ARB8:
 	    if (s->global_editing_state == ST_O_EDIT) {
@@ -949,28 +1012,28 @@ init_sedit(struct mged_state *s)
 {
     int type;
     int id;
+    struct ged_draw_shape_record hrec;
+    int have_highlight = mged_highlight_shape_record(s, &hrec);
 
-    if (s->dbip == DBI_NULL || !illump)
+    if (s->dbip == DBI_NULL || !have_highlight || !hrec.fullpath || hrec.fullpath->fp_len <= 0)
 	return;
 
     /*
      * Check for a processed region or other illegal solid.
      */
-    if (illump->s_old.s_Eflag) {
+    if (hrec.evaluated_region) {
 	Tcl_AppendResult(s->interp,
 			 "Unable to Solid_Edit a processed region;  select a primitive instead\n", (char *)NULL);
 	return;
     }
 
     /* Read solid description into MEDIT(s)->es_int */
-    if (!illump->s_u_data)
-	return;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
+    struct directory *ldp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
+    if (rt_db_get_internal(&MEDIT(s)->es_int, ldp,
 			   s->dbip, NULL) < 0) {
-	if (bdata->s_fullpath.fp_len > 0) {
+	if (hrec.fullpath->fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_sedit(",
-		    LAST_SOLID(bdata)->d_namep,
+		    ldp->d_namep,
 		    "):  solid import failure\n", (char *)NULL);
 	} else {
 	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
@@ -1014,7 +1077,7 @@ init_sedit(struct mged_state *s)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1);
+    (void)db_path_to_mat(s->dbip, (struct db_full_path *)hrec.fullpath, MEDIT(s)->e_mat, hrec.fullpath->fp_len-1);
 
     /* get the inverse matrix */
     bn_mat_inv(MEDIT(s)->e_invmat, MEDIT(s)->e_mat);
@@ -1046,7 +1109,7 @@ init_sedit(struct mged_state *s)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "begin_edit_callback ");
-	db_path_to_vls(&vls, &bdata->s_fullpath);
+	db_path_to_vls(&vls, hrec.fullpath);
 	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
@@ -1089,36 +1152,17 @@ init_sedit_vars(struct mged_state *s)
 void
 replot_editing_solid(struct mged_state *s)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    mat_t mat;
-    struct bv_scene_obj *sp;
-    struct directory *illdp;
-
-    if (!illump) {
+    struct ged_draw_shape_record hrec;
+    if (!mged_highlight_shape_record(s, &hrec) || !hrec.fullpath || hrec.fullpath->fp_len <= 0) {
 	return;
     }
-    if (!illump->s_u_data)
-	return;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    illdp = LAST_SOLID(bdata);
+    struct directory *illdp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
 
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (sp->s_u_data) {
-		bdata = (struct ged_bv_data *)sp->s_u_data;
-		if (LAST_SOLID(bdata) == illdp) {
-		    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1);
-		    (void)replot_modified_solid(s, sp, &MEDIT(s)->es_int, mat);
-		}
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
+    struct _replot_modified_data d;
+    d.s = s;
+    d.illdp = illdp;
+    d.es_int = &MEDIT(s)->es_int;
+    ged_draw_foreach_shape_record(s->gedp, _replot_modified_shape_cb, &d);
 }
 
 
@@ -2396,13 +2440,13 @@ sedit(struct mged_state *s)
 	return;
 
     sedraw = 0;
-    ++s->update_views;
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
 
     switch (MEDIT(s)->edit_flag) {
 
 	case IDLE:
 	    /* do nothing more */
-	    --s->update_views;
+	    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
 	    break;
 
 	case ECMD_DSP_SCALE_X:
@@ -3167,7 +3211,7 @@ sedit(struct mged_state *s)
 	    pr_prompt(s);
 	    fixv--;
 	    MEDIT(s)->edit_flag = ECMD_ARB_ROTATE_FACE;
-	    view_state->vs_flag = 1;	/* draw arrow, etc. */
+	    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);	/* draw arrow, etc. */
 	    set_e_axes_pos(s, 1);
 	    break;
 
@@ -4207,7 +4251,7 @@ sedit(struct mged_state *s)
 		es_eu = (struct edgeuse *)NULL;
 
 		replot_editing_solid(s);
-		view_state->vs_flag = 1;
+		mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
 	    }
 	    break;
 	case ECMD_PIPE_PICK:
@@ -5134,8 +5178,8 @@ sedit(struct mged_state *s)
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
 
-    if (s->update_views) {
-	dm_set_dirty(DMP, 1);
+    if (mged_refresh_pending(s)) {
+	mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "active_edit_callback");
@@ -5817,37 +5861,37 @@ init_oedit_guts(struct mged_state *s)
 {
     int id;
     const char *strp="";
+    struct ged_draw_shape_record hrec;
+    int have_highlight = mged_highlight_shape_record(s, &hrec);
 
     /* for safety sake */
     es_menu = 0;
     MEDIT(s)->edit_flag = -1;
     MAT_IDN(MEDIT(s)->e_mat);
 
-    if (s->dbip == DBI_NULL || !illump) {
+    if (s->dbip == DBI_NULL || !have_highlight || !hrec.fullpath || hrec.fullpath->fp_len <= 0) {
 	return;
     }
 
     /*
      * Check for a processed region
      */
-    if (illump->s_old.s_Eflag) {
+    if (hrec.evaluated_region) {
 	/* Have a processed (E'd) region - NO key solid.
 	 * Use the 'center' as the key
 	 */
-	VMOVE(MEDIT(s)->e_keypoint, illump->s_center);
+	VMOVE(MEDIT(s)->e_keypoint, hrec.center);
 
-	/* The s_center takes the MEDIT(s)->e_mat into account already */
+	/* The node center takes the MEDIT(s)->e_mat into account already */
     }
 
     /* Not an evaluated region - just a regular path ending in a solid */
-    if (!illump->s_u_data)
-	return;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
+    struct directory *ldp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
+    if (rt_db_get_internal(&MEDIT(s)->es_int, ldp,
 			   s->dbip, NULL) < 0) {
-	if (bdata->s_fullpath.fp_len > 0) {
+	if (hrec.fullpath->fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_oedit(",
-		    LAST_SOLID(bdata)->d_namep,
+		    ldp->d_namep,
 		    "):  solid import failure\n", (char *)NULL);
 	} else {
 	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
@@ -5869,7 +5913,7 @@ init_oedit_guts(struct mged_state *s)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1);
+    (void)db_path_to_mat(s->dbip, (struct db_full_path *)hrec.fullpath, MEDIT(s)->e_mat, hrec.fullpath->fp_len-1);
 
     /* get the inverse matrix */
     bn_mat_inv(MEDIT(s)->e_invmat, MEDIT(s)->e_mat);
@@ -5932,9 +5976,6 @@ void oedit_reject(struct mged_state *s);
 static void
 oedit_apply(struct mged_state *s, int continue_editing)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
      */
@@ -5942,19 +5983,18 @@ oedit_apply(struct mged_state *s, int continue_editing)
     mat_t inv_topm;	/* inverse */
     mat_t deltam;	/* final "changes":  deltam = (inv_topm)(MEDIT(s)->model_changes)(topm) */
     mat_t tempm;
-
-    if (!illump || !illump->s_u_data)
+    struct ged_draw_shape_record hrec;
+    if (!mged_highlight_shape_record(s, &hrec) || !hrec.fullpath)
 	return;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
-    switch (ipathpos) {
+    switch (highlight_path_pos) {
 	case 0:
-	    moveHobj(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
+	    moveHobj(s, DB_FULL_PATH_GET(hrec.fullpath, highlight_path_pos),
 		     MEDIT(s)->model_changes);
 	    break;
 	case 1:
-	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
-			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
+	    moveHinstance(s, DB_FULL_PATH_GET(hrec.fullpath, highlight_path_pos-1),
+			  DB_FULL_PATH_GET(hrec.fullpath, highlight_path_pos),
 			  MEDIT(s)->model_changes);
 	    break;
 	default:
@@ -5963,15 +6003,15 @@ oedit_apply(struct mged_state *s, int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, topm, ipathpos-1);
+	    (void)db_path_to_mat(s->dbip, (struct db_full_path *)hrec.fullpath, topm, highlight_path_pos-1);
 
 	    bn_mat_inv(inv_topm, topm);
 
 	    bn_mat_mul(tempm, MEDIT(s)->model_changes, topm);
 	    bn_mat_mul(deltam, inv_topm, tempm);
 
-	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
-			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
+	    moveHinstance(s, DB_FULL_PATH_GET(hrec.fullpath, highlight_path_pos-1),
+			  DB_FULL_PATH_GET(hrec.fullpath, highlight_path_pos),
 			  deltam);
 	    break;
     }
@@ -5980,26 +6020,16 @@ oedit_apply(struct mged_state *s, int continue_editing)
      * Redraw all solids affected by this edit.
      * Regenerate a new control list which does not
      * include the solids about to be replaced,
-     * so we can safely fiddle the displaylist.
+     * so we can safely fiddle the drawn scene.
      */
     MEDIT(s)->model_changes[15] = 1000000000;	/* => small ratio */
 
-    /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (sp->s_iflag == DOWN)
-		continue;
-	    (void)replot_original_solid(s, sp);
-
-	    if (continue_editing == DOWN) {
-		sp->s_iflag = DOWN;
-	    }
-	}
-
-	gdlp = next_gdlp;
+    /* Now, recompute new chunks of drawn scene */
+    {
+	struct _replot_active_data d;
+	d.s = s;
+	d.continue_editing = continue_editing;
+	ged_draw_foreach_shape_record(s->gedp, _replot_active_shape_cb, &d);
     }
 }
 
@@ -6007,28 +6037,17 @@ oedit_apply(struct mged_state *s, int continue_editing)
 void
 oedit_accept(struct mged_state *s)
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-
     if (s->dbip == DBI_NULL)
 	return;
 
     if (s->dbip->dbi_read_only) {
 	oedit_reject(s);
 
-	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-		if (sp->s_iflag == DOWN)
-		    continue;
-		(void)replot_original_solid(s, sp);
-		sp->s_iflag = DOWN;
-	    }
-
-	    gdlp = next_gdlp;
+	{
+	    struct _replot_active_data d;
+	    d.s = s;
+	    d.continue_editing = DOWN;
+	    ged_draw_foreach_shape_record(s->gedp, _replot_active_shape_cb, &d);
 	}
 
 	bu_log("Sorry, this database is READ-ONLY\n");
@@ -6111,7 +6130,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     replot_editing_solid(s);
 
     /* update display information */
-    view_state->vs_flag = 1;
+    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
 
     return TCL_OK;
 }
@@ -6127,6 +6146,8 @@ static int
 sedit_apply(struct mged_state *s, int accept_flag)
 {
     struct directory *dp;
+    struct ged_draw_shape_record hrec;
+    int have_highlight = mged_highlight_shape_record(s, &hrec);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -6136,7 +6157,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     bot_verts[2] = -1;
 
     /* make sure we are in solid edit mode */
-    if (!illump) {
+    if (!have_highlight || !hrec.fullpath || hrec.fullpath->fp_len <= 0) {
 	return TCL_OK;
     }
 
@@ -6149,10 +6170,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* write editing changes out to disc */
-    if (!illump->s_u_data)
-	return TCL_ERROR;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    dp = LAST_SOLID(bdata);
+    dp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
     if (!dp) {
 	/* sanity check, unexpected error */
 	return TCL_ERROR;
@@ -6184,7 +6202,9 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* Scale change on export is 1.0 -- no change */
+    int event_batch_started = mged_event_batch_begin(s);
     if (rt_db_put_internal(dp, s->dbip, &MEDIT(s)->es_int) < 0) {
+	mged_event_batch_end(s, event_batch_started);
 	Tcl_AppendResult(s->interp, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
@@ -6192,6 +6212,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	}
 	return TCL_ERROR;				/* FAIL */
     }
+    mged_event_batch_end(s, event_batch_started);
 
     if (accept_flag) {
 	menu_state->ms_flag = 0;
@@ -6203,10 +6224,10 @@ sedit_apply(struct mged_state *s, int accept_flag)
     } else {
 	/* XXX hack to restore MEDIT(s)->es_int after rt_db_put_internal blows it away */
 	/* Read solid description into MEDIT(s)->es_int again! Gaak! */
-	if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
+	if (rt_db_get_internal(&MEDIT(s)->es_int, dp,
 			       s->dbip, NULL) < 0) {
 	    Tcl_AppendResult(s->interp, "sedit_apply(",
-			     LAST_SOLID(bdata)->d_namep,
+			     dp->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
 	    rt_db_free_internal(&MEDIT(s)->es_int);
 	    return TCL_ERROR;
@@ -6244,7 +6265,10 @@ sedit_accept(struct mged_state *s)
 void
 sedit_reject(struct mged_state *s)
 {
-    if (not_state(s, ST_S_EDIT, "Solid edit reject") || !illump) {
+    struct ged_draw_shape_record hrec;
+    int have_highlight = mged_highlight_shape_record(s, &hrec);
+
+    if (not_state(s, ST_S_EDIT, "Solid edit reject") || !have_highlight || !hrec.fullpath || hrec.fullpath->fp_len <= 0) {
 	return;
     }
 
@@ -6269,27 +6293,10 @@ sedit_reject(struct mged_state *s)
 
     /* Restore the original solid everywhere */
     {
-	struct display_list *gdlp;
-	struct display_list *next_gdlp;
-	struct bv_scene_obj *sp;
-	if (!illump->s_u_data)
-	    return;
-	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-
-	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-		if (!sp->s_u_data)
-		    continue;
-		struct ged_bv_data *bdatas = (struct ged_bv_data *)sp->s_u_data;
-		if (LAST_SOLID(bdatas) == LAST_SOLID(bdata))
-		    (void)replot_original_solid(s, sp);
-	    }
-
-	    gdlp = next_gdlp;
-	}
+	struct _replot_lastsol_data d;
+	d.s = s;
+	d.target_dp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
+	ged_draw_foreach_shape_record(s->gedp, _replot_lastsol_cb, &d);
     }
 
     menu_state->ms_flag = 0;
@@ -7061,7 +7068,7 @@ sedit_vpick(struct mged_state *s, point_t v_pos)
 	get_solid_keypoint(s, MEDIT(s)->e_keypoint, &MEDIT(s)->e_keytag, &MEDIT(s)->es_int, MEDIT(s)->e_mat);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
-    view_state->vs_flag = 1;
+    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
 }
 
 
@@ -7197,7 +7204,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	    return TCL_ERROR;
     }
 
-    view_state->vs_flag = 1;
+    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
     return TCL_OK;
 }
 
@@ -7374,6 +7381,8 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
+    struct ged_draw_shape_record hrec;
+    int have_highlight = mged_highlight_shape_record(s, &hrec);
 
     int status;
     struct rt_db_internal ces_int;
@@ -7389,14 +7398,10 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (s->global_editing_state != ST_S_EDIT || !illump) {
+    if (s->global_editing_state != ST_S_EDIT || !have_highlight || !hrec.fullpath || hrec.fullpath->fp_len <= 0) {
 	Tcl_AppendResult(interp, "get_sed: must be in solid edit state", (char *)0);
 	return TCL_ERROR;
     }
-
-    if (illump || !illump->s_u_data)
-	return TCL_ERROR;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
     if (argc == 1) {
 	struct bu_vls logstr = BU_VLS_INIT_ZERO;
@@ -7412,7 +7417,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
 	pnto = Tcl_NewObj();
 	/* insert solid name, type and parameters */
-	Tcl_AppendStringsToObj(pnto, LAST_SOLID(bdata)->d_namep, " ",
+	Tcl_AppendStringsToObj(pnto, DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1)->d_namep, " ",
 			       Tcl_GetStringFromObj(pto, (int *)0), (char *)0);
 
 	Tcl_SetObjResult(interp, pnto);
@@ -7445,7 +7450,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	db_path_to_vls(&str, &bdata->s_fullpath);
+	db_path_to_vls(&str, hrec.fullpath);
 	Tcl_AppendStringsToObj(pnto, bu_vls_addr(&str), NULL);
 	bu_vls_free(&str);
     }
@@ -7558,8 +7563,10 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct ged_draw_shape_record hrec;
+    int have_highlight = mged_highlight_shape_record(s, &hrec);
 
-    if (s->global_editing_state != ST_S_EDIT || !illump)
+    if (s->global_editing_state != ST_S_EDIT || !have_highlight || !hrec.fullpath || hrec.fullpath->fp_len <= 0)
 	return TCL_ERROR;
 
     if (argc != 1) {
@@ -7579,14 +7586,12 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     es_eu = (struct edgeuse *)NULL;
 
     /* read in a fresh copy */
-    if (!illump || !illump->s_u_data)
-	return TCL_ERROR;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
+    struct directory *ldp = DB_FULL_PATH_GET(hrec.fullpath, hrec.fullpath->fp_len - 1);
+    if (rt_db_get_internal(&MEDIT(s)->es_int, ldp,
 			   s->dbip, NULL) < 0) {
-	if (bdata->s_fullpath.fp_len > 0) {
+	if (hrec.fullpath->fp_len > 0) {
 	    Tcl_AppendResult(interp, "sedit_reset(",
-		    LAST_SOLID(bdata)->d_namep,
+		    ldp->d_namep,
 		    "):  solid import failure\n", (char *)NULL);
 	} else {
 	    Tcl_AppendResult(interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
@@ -7622,8 +7627,8 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     VSETALL(MEDIT(s)->k.tra_v, 0.0);
 
     set_e_axes_pos(s, 1);
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");
@@ -7687,8 +7692,8 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     init_oedit_guts(s);
 
     new_edit_mats(s);
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");
@@ -7708,17 +7713,17 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
 
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     const char *strp="";
+    struct ged_draw_shape_record hrec;
 
     CHECK_DBI_NULL;
     oedit_apply(s, UP); /* apply changes, but continue editing */
 
-    if (!illump->s_u_data)
+    if (!mged_highlight_shape_record(s, &hrec) || !hrec.fullpath)
 	return TCL_ERROR;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
     /* Save aggregate path matrix */
     MAT_IDN(MEDIT(s)->e_mat);
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1);
+    (void)db_path_to_mat(s->dbip, (struct db_full_path *)hrec.fullpath, MEDIT(s)->e_mat, hrec.fullpath->fp_len-1);
 
     /* get the inverse matrix */
     bn_mat_inv(MEDIT(s)->e_invmat, MEDIT(s)->e_mat);
@@ -7726,8 +7731,8 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     get_solid_keypoint(s, MEDIT(s)->e_keypoint, &strp, &MEDIT(s)->es_int, MEDIT(s)->e_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+    mged_refresh_request_all(s, BSG_VIEW_REFRESH_ALL);
+    mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");

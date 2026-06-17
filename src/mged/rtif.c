@@ -41,12 +41,81 @@
 
 #include "vmath.h"
 #include "raytrace.h"
+#include "ged/view.h"
 
 #include "./sedit.h"
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
 
+
+/* Callback: find the displayed shape for database solid "EYE" for rmats. */
+struct _rtif_eye_data {
+    struct mged_state *s;
+    struct directory *dp;
+    Tcl_Interp *interp;
+    vect_t sav_start;
+    vect_t sav_center;
+    ged_draw_shape_ref ref; /* set on match */
+    int found;
+};
+
+static int
+_rtif_shape_last_point(struct mged_state *s, ged_draw_shape_ref ref, point_t out)
+{
+    if (!s || !s->gedp || ged_draw_shape_ref_is_null(ref))
+	return 0;
+    return ged_draw_shape_ref_last_point(s->gedp, ref, out);
+}
+
+static int
+_rtif_shape_translate_geometry(struct mged_state *s, ged_draw_shape_ref ref, const vect_t xlate)
+{
+    if (!s || !s->gedp || ged_draw_shape_ref_is_null(ref))
+	return 0;
+    return ged_draw_shape_ref_translate_geometry(s->gedp, ref, xlate);
+}
+
+static int
+_rtif_shape_set_center(struct mged_state *s, ged_draw_shape_ref ref, const point_t center)
+{
+    if (!s || !s->gedp || ged_draw_shape_ref_is_null(ref))
+	return 0;
+    return ged_draw_shape_ref_set_center(s->gedp, ref, center);
+}
+
+static int
+_rtif_eye_shape_cb(const struct ged_draw_shape_record *rec, void *ud)
+{
+    struct _rtif_eye_data *d = (struct _rtif_eye_data *)ud;
+    if (!rec || !rec->fullpath || rec->fullpath->fp_len <= 0) return 1;
+    if (DB_FULL_PATH_CUR_DIR(rec->fullpath) != d->dp) return 1;
+    if (!_rtif_shape_last_point(d->s, rec->ref, d->sav_start)) return 1;
+    VMOVE(d->sav_center, rec->center);
+    d->ref = rec->ref;
+    Tcl_AppendResult(d->interp, "animating EYE solid\n", (char *)NULL);
+    d->found = 1;
+    return 0; /* stop visiting */
+}
+
+static void
+_rtif_use_current_view(struct mged_state *s)
+{
+    if (!s || !s->gedp || !view_state || !view_state->vs_gvp)
+	return;
+
+    s->gedp->ged_gvp = view_state->vs_gvp;
+    if (s->mged_curr_dm)
+	s->gedp->ged_gvp->dmp = (void *)s->mged_curr_dm->dm_dmp;
+}
+
+static void
+_rtif_request_current_view_refresh(struct mged_state *s)
+{
+    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
+    if (s)
+	mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_INTERACTION);
+}
 
 /**
  * rt, rtarea, rtweight, rtcheck, and rtedge all use this.
@@ -169,10 +238,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     FILE *fp = NULL;
     fastf_t scale = 0.0;
     mat_t rot;
-    struct bv_vlist *vp = NULL;
     struct directory *dp = NULL;
-    struct display_list *gdlp = NULL;
-    struct display_list *next_gdlp = NULL;
     vect_t eye_model = VINIT_ZERO;
     vect_t sav_center = VINIT_ZERO;
     vect_t sav_start = VINIT_ZERO;
@@ -180,7 +246,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* static due to setjmp */
     static int mode = 0;
-    static struct bv_scene_obj *sp;
+    static ged_draw_shape_ref sp_ref;
 
     CHECK_DBI_NULL;
 
@@ -201,7 +267,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    sp = NULL;
+    sp_ref = GED_DRAW_SHAPE_REF_NULL;
 
     mode = -1;
     if (argc > 2)
@@ -213,24 +279,22 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 	    }
 
-	    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-	    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-		for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-		    if (!sp->s_u_data)
-			continue;
-		    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-		    if (LAST_SOLID(bdata) != dp) continue;
-		    if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) continue;
-		    vp = BU_LIST_LAST(bv_vlist, &(sp->s_vlist));
-		    VMOVE(sav_start, vp->pt[vp->nused-1]);
-		    VMOVE(sav_center, sp->s_center);
-		    Tcl_AppendResult(interp, "animating EYE solid\n", (char *)NULL);
+	    {
+		struct _rtif_eye_data d;
+		d.s = s;
+		d.dp = dp;
+		d.interp = interp;
+		VSETALL(d.sav_start, 0.0);
+		VSETALL(d.sav_center, 0.0);
+		d.ref = GED_DRAW_SHAPE_REF_NULL;
+		d.found = 0;
+		ged_draw_foreach_shape_record(s->gedp, _rtif_eye_shape_cb, &d);
+		if (d.found) {
+		    VMOVE(sav_start, d.sav_start);
+		    VMOVE(sav_center, d.sav_center);
+		    sp_ref = d.ref;
 		    goto work;
 		}
-
-		gdlp = next_gdlp;
 	    }
 	    /* Fall through */
 	default:
@@ -271,74 +335,24 @@ work:
 		new_mats(s);
 		break;
 	    case 1:
-		/* Adjust center for displaylist devices */
-		VMOVE(sp->s_center, eye_model);
+		/* Adjust center for drawn scene devices */
+		_rtif_shape_set_center(s, sp_ref, eye_model);
 
 		/* Adjust vector list for non-dl devices */
-		if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) break;
-		vp = BU_LIST_LAST(bv_vlist, &(sp->s_vlist));
-		VSUB2(xlate, eye_model, vp->pt[vp->nused-1]);
-		for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-		    int i;
-		    int nused = vp->nused;
-		    int *cmd = vp->cmd;
-		    point_t *pt = vp->pt;
-		    for (i = 0; i < nused; i++, cmd++, pt++) {
-			switch (*cmd) {
-			    case BV_VLIST_POLY_START:
-			    case BV_VLIST_POLY_VERTNORM:
-			    case BV_VLIST_TRI_START:
-			    case BV_VLIST_TRI_VERTNORM:
-				break;
-			    case BV_VLIST_LINE_MOVE:
-			    case BV_VLIST_LINE_DRAW:
-			    case BV_VLIST_POLY_MOVE:
-			    case BV_VLIST_POLY_DRAW:
-			    case BV_VLIST_POLY_END:
-			    case BV_VLIST_TRI_MOVE:
-			    case BV_VLIST_TRI_DRAW:
-			    case BV_VLIST_TRI_END:
-				VADD2(*pt, *pt, xlate);
-				break;
-			}
-		    }
-		}
+		if (!_rtif_shape_last_point(s, sp_ref, xlate)) break;
+		VSUB2(xlate, eye_model, xlate);
+		_rtif_shape_translate_geometry(s, sp_ref, xlate);
 		break;
 	}
-	view_state->vs_flag = 1;
+	mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
 	refresh(s);	/* Draw new display */
     }
 
     if (mode == 1) {
-	VMOVE(sp->s_center, sav_center);
-	if (BU_LIST_NON_EMPTY(&(sp->s_vlist))) {
-	    vp = BU_LIST_LAST(bv_vlist, &(sp->s_vlist));
-	    VSUB2(xlate, sav_start, vp->pt[vp->nused-1]);
-	    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-		int i;
-		int nused = vp->nused;
-		int *cmd = vp->cmd;
-		point_t *pt = vp->pt;
-		for (i = 0; i < nused; i++, cmd++, pt++) {
-		    switch (*cmd) {
-			case BV_VLIST_POLY_START:
-			case BV_VLIST_POLY_VERTNORM:
-			case BV_VLIST_TRI_START:
-			case BV_VLIST_TRI_VERTNORM:
-			    break;
-			case BV_VLIST_LINE_MOVE:
-			case BV_VLIST_LINE_DRAW:
-			case BV_VLIST_POLY_MOVE:
-			case BV_VLIST_POLY_DRAW:
-			case BV_VLIST_POLY_END:
-			case BV_VLIST_TRI_MOVE:
-			case BV_VLIST_TRI_DRAW:
-			case BV_VLIST_TRI_END:
-			    VADD2(*pt, *pt, xlate);
-			    break;
-		    }
-		}
-	    }
+	_rtif_shape_set_center(s, sp_ref, sav_center);
+	if (_rtif_shape_last_point(s, sp_ref, xlate)) {
+	    VSUB2(xlate, sav_start, xlate);
+	    _rtif_shape_translate_geometry(s, sp_ref, xlate);
 	}
     }
 
@@ -370,6 +384,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	argv[0] += 6;
 
     Tcl_DStringInit(&ds);
+    _rtif_use_current_view(s);
 
     if (mged_variables->mv_use_air) {
 	int insertArgc = 2;
@@ -391,8 +406,10 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == BRLCAD_OK) {
+	_rtif_request_current_view_refresh(s);
 	return TCL_OK;
+    }
 
     return TCL_ERROR;
 }
@@ -415,14 +432,17 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	argv[0] += 6;
 
     Tcl_DStringInit(&ds);
+    _rtif_use_current_view(s);
 
     ret = ged_exec(s->gedp, argc, (const char **)argv);
 
     Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == BRLCAD_OK) {
+	_rtif_request_current_view_refresh(s);
 	return TCL_OK;
+    }
 
     return TCL_ERROR;
 }

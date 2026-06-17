@@ -28,10 +28,10 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bv/lod.h"
+#include "bsg/lod.h"
 
+#include "ged/event_txn.h"
 #include "../ged_private.h"
-#include "../dbi.h"
 
 
 extern "C" int
@@ -50,18 +50,15 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     const char *av[1] = {"zap"};
     ged_exec_zap(gedp, 1, (const char **)av);
 
+    ged_event_librt_callbacks_disable(gedp);
+    if (gedp->ged_lod)
+	bsg_mesh_lod_context_destroy(gedp->ged_lod);
+    gedp->ged_lod = NULL;
+
     /* close current database */
     if (gedp->dbip)
 	db_close(gedp->dbip);
     gedp->dbip = NULL;
-
-    /* Clean up any old acceleration states, if present */
-    if (gedp->dbi_state)
-	delete (DbiState *)gedp->dbi_state;
-    gedp->dbi_state = NULL;
-    if (gedp->ged_lod)
-	bv_mesh_lod_context_destroy(gedp->ged_lod);
-    gedp->ged_lod = NULL;
 
     /* Terminate any ged subprocesses */
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {

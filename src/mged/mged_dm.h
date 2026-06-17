@@ -32,6 +32,7 @@
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
+#include "bsg/view_state.h"
 
 #include "mged.h"
 
@@ -85,15 +86,6 @@ struct view_ring {
 };
 
 
-#define NUM_TRAILS 8
-#define MAX_TRAIL 32
-struct trail {
-    int		t_cur_index;      /* index of first free entry */
-    int		t_nused;          /* max index in use */
-    point_t	t_pt[MAX_TRAIL];
-};
-
-
 #ifdef MAX_CLIENTS
 #	undef MAX_CLIENTS
 #	define MAX_CLIENTS 32
@@ -123,7 +115,7 @@ struct _mged_variables {
     char	mv_linestyle;
     int		mv_hot_key;
     int		mv_context;
-    int		mv_dlist;
+    int		mv_backend_cache;
     int		mv_use_air;
     int		mv_listen;			/* nonzero to listen on port */
     int		mv_port;			/* port to listen on */
@@ -135,9 +127,6 @@ struct _mged_variables {
     char	mv_coords;
     char	mv_rotate_about;
     char	mv_transform;
-    int		mv_predictor;
-    double	mv_predictor_advance;
-    double	mv_predictor_length;
     double	mv_perspective;			/* used to directly set the perspective angle */
     int		mv_perspective_mode;		/* used to toggle perspective viewing on/off */
     int		mv_toggle_perspective;		/* used to toggle through values in perspective_table[] */
@@ -167,35 +156,11 @@ struct _axes_state {
 };
 
 
-struct _dlist_state {
-    int		dl_rc;
-    int		dl_active;	/* 1 - actively using display lists */
-    int		dl_flag;
+struct _backend_cache_state {
+    int		cache_rc;
+    int		cache_active;	/* 1 - actively using backend caches */
+    int		cache_flag;
 };
-
-struct _adc_state {
-    int		adc_rc;
-    int		adc_draw;
-    int		adc_dv_x;
-    int		adc_dv_y;
-    int		adc_dv_a1;
-    int		adc_dv_a2;
-    int		adc_dv_dist;
-    fastf_t	adc_pos_model[3];
-    fastf_t	adc_pos_view[3];
-    fastf_t	adc_pos_grid[3];
-    fastf_t	adc_a1;
-    fastf_t	adc_a2;
-    fastf_t	adc_dst;
-    int		adc_anchor_pos;
-    int		adc_anchor_a1;
-    int		adc_anchor_a2;
-    int		adc_anchor_dst;
-    fastf_t	adc_anchor_pt_a1[3];
-    fastf_t	adc_anchor_pt_a2[3];
-    fastf_t	adc_anchor_pt_dst[3];
-};
-
 
 struct _rubber_band {
     int		rb_rc;
@@ -214,9 +179,8 @@ struct _rubber_band {
 
 struct _view_state {
     int		vs_rc;
-    int		vs_flag;
 
-    struct bview *vs_gvp;
+    struct bsg_view *vs_gvp;
     mat_t	vs_model2objview;
     mat_t	vs_objview2model;
     mat_t	vs_ModelDelta;		/* changes to Viewrot this frame */
@@ -226,7 +190,7 @@ struct _view_state {
     struct view_ring	*vs_last_view;
 
     /* Rate stuff */
-    struct bview_knobs k;
+    struct bsg_view_knobs k;
 
     /* Virtual trackball stuff */
     point_t	vs_orig_pos;
@@ -284,9 +248,6 @@ struct _color_scheme {
     int	cs_grid[3];
     int	cs_grid_a[3];
     int	cs_grid_ia[3];
-    int	cs_predictor[3];
-    int	cs_predictor_a[3];
-    int	cs_predictor_ia[3];
     int	cs_menu_line[3];
     int	cs_menu_line_a[3];
     int	cs_menu_line_ia[3];
@@ -353,15 +314,13 @@ struct mged_dm {
     struct client	dm_clients[MAX_CLIENTS];
     char		dm_session_token[65];		/* fbserv auth token (64 hex + NUL); empty = no auth */
     int			dm_require_auth;		/* !0 = reject unauthenticated fb clients */
-    int			dm_dirty;			/* true if received an expose or configuration event */
+    int			repaint_pending;		/* true if this display needs another paint */
+    unsigned int	repaint_reasons;		/* audit-only mged_repaint_reason flags */
     int			dm_mapped;
     int			dm_owner;			/* true if owner of the view info */
     int			dm_am_mode;			/* alternate mouse mode */
-    int			dm_ndrawn;
     int			dm_perspective_angle;
     int			*dm_zclip_ptr;
-    struct bu_list	dm_p_vlist;			/* predictor vlist */
-    struct trail	dm_trails[NUM_TRAILS];
     struct cmd_list	*dm_tie;
 
     int			dm_adc_auto;
@@ -389,14 +348,12 @@ struct mged_dm {
 
     /* Shareable Resources */
     struct _view_state	*dm_view_state;
-    struct _adc_state	*dm_adc_state;
     struct _menu_state	*dm_menu_state;
     struct _rubber_band	*dm_rubber_band;
     struct _mged_variables *dm_mged_variables;
     struct _color_scheme	*dm_color_scheme;
-    struct bv_grid_state *dm_grid_state;
     struct _axes_state	*dm_axes_state;
-    struct _dlist_state	*dm_dlist_state;
+    struct _backend_cache_state	*dm_backend_cache_state;
 
     /* Hooks */
     int			(*dm_cmd_hook)(int, const char **, void *);
@@ -404,15 +361,89 @@ struct mged_dm {
     int			(*dm_eventHandler)(void);
 };
 
+enum mged_repaint_reason {
+    MGED_REPAINT_NATIVE_EVENT = 1u << 0,
+    MGED_REPAINT_VIEW_RECORD = 1u << 1,
+    MGED_REPAINT_FRAMEBUFFER = 1u << 2,
+    MGED_REPAINT_DEVICE_SETTING = 1u << 3,
+    MGED_REPAINT_INTERACTION = 1u << 4
+};
+
+static inline void
+mged_dm_repaint_request(struct mged_dm *mdmp, unsigned int reason)
+{
+    if (!mdmp)
+	return;
+    mdmp->repaint_pending = 1;
+    mdmp->repaint_reasons |= reason;
+    if (mdmp->dm_dmp)
+	dm_set_native_repaint_pending(mdmp->dm_dmp, 1);
+}
+
+static inline int
+mged_dm_repaint_pending(const struct mged_dm *mdmp)
+{
+    return mdmp ? mdmp->repaint_pending : 0;
+}
+
+static inline void
+mged_dm_repaint_consume(struct mged_dm *mdmp)
+{
+    if (!mdmp)
+	return;
+    mdmp->repaint_pending = 0;
+    mdmp->repaint_reasons = 0;
+}
+
 /* If we're changing the active DM, use this function so
  * libged also gets the word. */
 __BEGIN_DECLS
 extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
 __END_DECLS
 
+static inline int
+mged_dm_adc_state_get(struct mged_dm *dm, struct bsg_adc_state *adc)
+{
+    if (!dm || !dm->dm_view_state || !dm->dm_view_state->vs_gvp)
+	return 0;
+    return bsg_view_adc_get(dm->dm_view_state->vs_gvp, adc);
+}
+
+static inline void
+mged_dm_adc_state_set(struct mged_dm *dm, const struct bsg_adc_state *adc)
+{
+    if (!dm || !dm->dm_view_state || !dm->dm_view_state->vs_gvp)
+	return;
+    bsg_view_adc_set(dm->dm_view_state->vs_gvp, adc);
+}
+
+static inline int
+mged_dm_grid_state_get(struct mged_dm *dm, struct bsg_grid_state *grid)
+{
+    if (!dm || !dm->dm_view_state || !dm->dm_view_state->vs_gvp)
+	return 0;
+    return bsg_view_grid_get(dm->dm_view_state->vs_gvp, grid);
+}
+
+static inline void
+mged_dm_grid_state_set(struct mged_dm *dm, const struct bsg_grid_state *grid)
+{
+    if (!dm || !dm->dm_view_state || !dm->dm_view_state->vs_gvp)
+	return;
+    bsg_view_grid_set(dm->dm_view_state->vs_gvp, grid);
+}
+
+static inline int
+mged_dm_view_settings_shared(struct mged_dm *a, struct mged_dm *b)
+{
+    if (!a || !a->dm_view_state || !a->dm_view_state->vs_gvp ||
+	    !b || !b->dm_view_state || !b->dm_view_state->vs_gvp)
+	return 0;
+    return bsg_view_settings_shared(a->dm_view_state->vs_gvp, b->dm_view_state->vs_gvp);
+}
+
 #define MGED_DM_NULL ((struct mged_dm *)NULL)
 #define DMP s->mged_curr_dm->dm_dmp
-#define DMP_dirty s->mged_curr_dm->dm_dirty
 #define fbp s->mged_curr_dm->dm_fbp
 #define clients s->mged_curr_dm->dm_clients
 #define mapped s->mged_curr_dm->dm_mapped
@@ -422,14 +453,12 @@ __END_DECLS
 #define zclip_ptr s->mged_curr_dm->dm_zclip_ptr
 
 #define view_state s->mged_curr_dm->dm_view_state
-#define adc_state s->mged_curr_dm->dm_adc_state
 #define menu_state s->mged_curr_dm->dm_menu_state
 #define rubber_band s->mged_curr_dm->dm_rubber_band
 #define mged_variables s->mged_curr_dm->dm_mged_variables
 #define color_scheme s->mged_curr_dm->dm_color_scheme
-#define grid_state s->mged_curr_dm->dm_grid_state
 #define axes_state s->mged_curr_dm->dm_axes_state
-#define dlist_state s->mged_curr_dm->dm_dlist_state
+#define backend_cache_state s->mged_curr_dm->dm_backend_cache_state
 
 #define cmd_hook s->mged_curr_dm->dm_cmd_hook
 #define viewpoint_hook s->mged_curr_dm->dm_viewpoint_hook
@@ -522,7 +551,6 @@ __END_DECLS
 
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
-extern int update_views;		/* defined in mged.c */
 extern struct bu_ptbl active_dm_set;	/* defined in attach.c */
 extern struct mged_dm *mged_dm_init_state;
 
@@ -556,7 +584,7 @@ extern void mged_rtCmdNotify(int);
 struct mged_view_hook_state {
     struct dm *hs_dmp;
     struct _view_state *vs;
-    int *dirty_global;
+    struct mged_dm *mdmp;
 };
 extern void *set_hook_data(struct mged_state *s, struct mged_view_hook_state *hs);
 

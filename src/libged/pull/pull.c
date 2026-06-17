@@ -33,6 +33,7 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 #include "bn.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -213,6 +214,7 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     mat_t mat;
     int c;
+    int event_batch_opened = 0;
     static const char *usage = "object";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -263,7 +265,11 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
      * right to the the head of the tree pulling objects.
      * All new changes are immediately written to database
      */
+    MAT_IDN(mat);
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     db_treewalk_basic(gedp->dbip, dp, pull_comb, pull_leaf, &mat);
+    if (event_batch_opened)
+	(void)ged_event_batch_end(gedp, NULL);
 
    return  BRLCAD_OK;
 }

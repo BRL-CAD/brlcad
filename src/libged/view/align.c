@@ -124,7 +124,7 @@ ged_align_core(struct ged *gedp, int argc, const char *argv[])
 
     // update view ae using direction
     VSET(gedp->ged_gvp->gv_aet, new_az, new_el, gedp->ged_gvp->gv_aet[Z]);
-    bv_mat_aet(gedp->ged_gvp);
+    bsg_mat_aet(gedp->ged_gvp);
 
     // update eye
     point_t new_eye;
@@ -132,7 +132,7 @@ ged_align_core(struct ged *gedp, int argc, const char *argv[])
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_view2model, new_eye);
 
     // done. update the view
-    bv_update(gedp->ged_gvp);
+    bsg_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }

@@ -1,0 +1,269 @@
+Modern drawing status
+=====================
+
+Checkpoint: June 17, 2026.
+
+Purpose
+-------
+
+This file is the handoff guide for the modern drawing/model work.  Keep it
+short, current, and action oriented.  Do not use it as a detailed history log;
+use git history, test output, and commit messages for that.
+
+The product target is a high-quality drawing/model architecture for large
+`.g` databases: typed view records, indexed update paths, stable semantic event
+transactions, and bounded GUI/model refreshes.
+
+Design goals
+------------
+
+* The `.g` database is authoritative.  Draw records, selections, edit previews,
+  Qt models, indexes, and application state are derived and rebuildable.
+* Native GED services are the active ownership model:
+  * `GedDbIndex` owns object/path/reverse-use/affected-path indexing.
+  * `GedEventTxn` owns mutation batching, event coalescing, reconcile phases,
+    and post-reconcile observer notification.
+  * `GedDrawState` owns retained draw intents, typed realized geometry, stale
+    state, draw/erase/clear/redraw/who behavior, and shared/independent view
+    transactions.
+  * `GedSelectionState` owns semantic selection state and highlight sync.
+* `DbiState`/`BViewState` and their compatibility APIs are removed.  Do not
+  recreate them or build new code around their old ownership model.
+* Modern drawing publication is typed: line sets, point sets, indexed line
+  sets, indexed face sets, text, annotations, images, overlays, proxies, and
+  edit previews.  Modern draw paths should not expose raw vlists/vlblocks or
+  raw BSG internals.
+* Observers should see stable post-reconcile state only.  Do not notify UI or
+  application consumers while database, draw, selection, or edit state is
+  partially mutated.
+* Scale matters.  Local edits should be bounded by affected objects, active
+  draw intents, expanded Qt branches, selected/edit targets, and active views.
+  Full rebuilds are acceptable for open-file, explicit rebuild, corruption,
+  batch import, or events whose scope cannot yet be localized.
+* Avoid full path-string scans in hot update paths.  Prefer path hashes,
+  reverse-use answers, affected-path hints, and loaded-row indexes.  If full
+  path matching is unavoidable, benchmark it at scale and add a regression
+  gate.
+
+Current status
+--------------
+
+Native service migration:
+* Production and test callers should use the native GED services.
+* Keep scanning for accidental reintroduction of `DbiState`, `BViewState`,
+  `gedp->dbi_state`, `ged_dbi_state_*`, `include/ged/dbi_state.h`,
+  `src/libged/dbi.h`, and `src/libged/dbi_state.cpp`.
+
+Event transactions:
+* Low-level librt add/modify/remove callbacks are batched and coalesced so a
+  command-level mutation reaches observers as one final post-reconcile
+  transaction.
+* Command-level semantic coverage is in place for the main structural,
+  metadata, and material commands audited so far: rename/remove/killrefs,
+  hide/unhide, title/units, attr/constraint/BREP plate-mode updates,
+  combination helpers, red, arced/copymat, simulate, facetize copied-comb
+  metadata, adjust, and existing-combination `put_comb` edits.
+* Multi-object or raw-writer commands recently covered:
+  `push`, `pull`, `xpush`, `npush`, `clone`, `clone --xpush`,
+  `shells`, `decompose`, `fracture`, `mirror`, `cpi`, and `copyeval`.
+* `put_comb` hides internal `ged_tmp.a*` rollback combinations from observers
+  and publishes final comb tree/attribute/material events for the edited comb.
+* `clone --xpush` hides temporary source setup/cleanup events.  `npush`
+  suppresses dry-run/error notifications and publishes one explicit committed
+  transaction.  NMG multi-output writers publish one grouped object-add
+  transaction.  `mirror` preserves its legacy auto-draw behavior while adding
+  an explicit object-add semantic event.
+* Remaining event work is mostly lower-frequency/offline raw writers and old
+  Tcl `db`/`wdb` helper paths that do not yet have a clean GED command context.
+  Add semantic details as those paths are migrated; do not rely on broad raw
+  fallback as the final product behavior.
+
+QgModel and indexed consumers:
+* Row-level structural deltas are active and worthwhile.  They cover top-level
+  add/remove, comb child insert/remove/move, rename, kill/unreference,
+  duplicate siblings, invalid references, deep paths, mixed batched updates,
+  first child in an opened empty branch, and targeted multi-expanded-parent
+  updates.
+* QgModel structural planning uses event affected-path hints plus loaded-row
+  path-hash indexes to plan affected root/open parents.  Keep the broad
+  loaded-parent plan and reset fallback until larger real-model and adversarial
+  duplicate-path coverage proves the hints are complete.
+* Non-structural notifications distinguish direct object updates, loaded
+  subtree updates, view-only draw transactions, and database/session metadata
+  changes.  Metadata-only updates should not walk loaded rows.
+* The QgModel batch draw endpoint is backed by true multi-path draw
+  transactions and coalesced observer notification.  Keep expanding around this
+  endpoint instead of returning to per-path UI refresh loops.
+* Current scale gates report zero full path fallback scans in the default and
+  slow QgModel runs.  Preserve that as a hard regression signal.
+* The 1024-child `QAbstractItemModelTester` issue is understood: tester
+  invariant probing can call `fetchMore()` on lazy branches.  Large fanout
+  performance checks now detach the tester for benchmark sections and assert
+  setup leaves the branch lazy.  If this regresses, investigate tester-triggered
+  auto-fetch first.
+
+Interactive editing:
+* Interactive GUI edits are not database events until they commit.  Mouse/key
+  intermediate states for qged tools, MGED faceplate editing, polygons, solids,
+  and other transient view objects should update in-memory view/edit records,
+  bump preview revision or dirty state, and schedule repaint through the
+  UI/view path.
+* qged direct commit writes for ell, extrude, revolve, and polygon sketch sync
+  are batched through libqtcad event facilities.
+* MGED faceplate solid/object edit commit paths are event-batched at durable
+  write boundaries, while preview refresh stays on the existing repaint path.
+* Future edit-preview work should preserve this separation: transient preview
+  updates are view-state changes; accept/apply/cancel/write boundaries publish
+  one durable semantic transaction when database state changes.
+
+Typed drawing and view objects:
+* Standard primitive wireframes, shaded BoT/POLY/BREP through
+  `ft_indexed_face_set`, evaluated wire modes, evaluated sampled point-mode,
+  qged edit previews, SUBMODEL, ANNOT, and NIRT/qray line-result view objects
+  have typed publication paths.
+* NIRT/qray line segments are handled as typed overlay line-layer view objects,
+  not phony database solids or vlist display objects.  qged and MGED refresh
+  through their normal command/update paths.
+* Remaining typed-record work is edge-case auditing: payload ownership,
+  lifetime, source identity, bounds, stale-state repair, strict/fallback
+  semantics, and callback safety for new producers.
+
+Legacy/API isolation:
+* Modern installed drawing/service APIs should not expose raw vlist/vlblock
+  types, raw BSG nodes, raw payload mutation, taxonomy bits, lifecycle
+  callbacks, scene-store internals, display lists, `nmg/plot.h`,
+  `nmg_vlblock`, or primitive `ft_plot` geometry.
+* Explicit compatibility/file/debug I/O paths may still use legacy vlists.
+  Keep those paths isolated and covered by API hygiene tests.
+* NIRT internal plotfile vlblock use is legacy file/debug I/O until that output
+  path is redesigned.
+
+Performance and scale
+---------------------
+
+Use BENCH phase timings and counters instead of relying only on total CTest
+time.
+
+Current FreeBSD reference points from June 17, 2026:
+* Default 4096-child QgModel scale gate: fixture construction dominates at
+  about 12.6 s; large-branch fetch is about 43 ms; named material is about
+  0.17 ms; attr set is about 2.6 ms; grouped add/remove are about 230/164 ms;
+  8-path draw/erase are about 6.1/3.2 ms; fallback scans are zero.
+* Slow 16384-child/64-draw gate: fixture construction dominates at about
+  186.6 s; fetch is about 170 ms; grouped add/remove are about 960/682 ms;
+  64-path draw/erase are about 79/81 ms; model deletion is about 31 ms;
+  fallback scans are zero.
+* For faster local loops, save a generated fixture with
+  `BRLCAD_QGMODEL_SAVE_FIXTURE=/tmp/qgmodel_scale_<children>_<draw>.g`, then
+  reuse it with `BRLCAD_QGMODEL_SCALE_FIXTURE=...` and the same child/draw
+  environment values.  A cached 16384-child/64-draw rerun completed in about
+  2.3 s while preserving the same zero-fallback behavior.
+
+Profiling notes:
+* `/usr/bin/time`, `lldb`, `procstat`, and `ktrace` are usable on the current
+  FreeBSD host.  `dtrace` and `pmcstat` are installed but may need unavailable
+  kernel support or permissions.  Valgrind callgrind is present.
+* Phase BENCH counters and `lldb` were sufficient to identify the previous
+  draw-list formatting and draw-registry teardown hotspots.
+
+Known risks
+-----------
+
+* Keep benchmarking any path-matching routine that looks at full path strings.
+  The original path-hash work exists to avoid exactly that hot-path cost.
+* `regress-shaders` was expected to finish quickly but, during the adjust
+  sanity check on June 17, 2026, repeatedly spun in `mged -c` after
+  `set radius 256` and before reaching its `db adjust` lines.  A bounded rerun
+  later the same day was still active after more than 60 s and had to be
+  terminated manually.  Treat this as a separate MGED/regression-script
+  investigation item.
+* Long `regress-rtwiz_m35_C`, `D`, or especially `F` runs are regression
+  signals, not expected slow tests.
+* After public `struct ged` or `struct rt_functab` layout changes, do a broad
+  or clean rebuild before diagnosing crashes from stale build products.
+
+Priority next work
+------------------
+
+1. Continue QgModel scale hardening.
+   Run the default and slow scale gates, keep fallback scans at zero, inspect
+   BENCH phase growth, and keep model-tester invariant checks separated from
+   large fanout timing checks.
+
+2. Finish raw writer/event semantic audits.
+   Search for direct `db_i`/librt writes in libged, mged, libtclcad, libqtcad,
+   and qged.  Add command-level semantic events or explicit batching where the
+   path commits durable database state.  Prioritize multi-object rewrites and
+   existing-object mutations.
+
+3. Add focused MGED/qged interactive edit coverage.
+   Verify preview-time updates repaint without database events, and apply/accept
+   paths publish one stable post-commit transaction.
+
+4. Continue typed-record edge audits.
+   Focus on new producers or consumers where ownership, stale repair, bounds,
+   fallback, source identity, or callback safety is not directly tested.
+
+5. Maintain legacy/API hygiene.
+   Keep modern headers and draw paths free of raw vlist/vlblock and raw BSG
+   internals.  Legacy file/debug I/O can remain isolated.
+
+Useful scans
+------------
+
+Compatibility symbols:
+
+    rg -n 'ged_dbi_state|dbi_state|DbiState|BViewState|dbi\.h|gedp->dbi_state' include src -g '!build/**' -g '!*.eps' -g '!*.dia'
+
+Raw database writers:
+
+    rg -n "wdb_put_internal\(|rt_db_put_internal\(|db_put_external\(|db_put\(|db_diradd\(|db_delete\(|db_rename\(" src/libged src/mged src/libtclcad src/libqtcad src/qged -g '*.c' -g '*.cpp' -g '*.h'
+
+Modern-path vlist/BSG hygiene:
+
+    rg -n "bsg_payload_create|bsg_scene_set_payload|bsg_node_ref_set_payload|bsg_payload_vlist|struct bsg_payload" include src -g '!build/**'
+    rg -n "nmg/plot\.h|NMG_VLIST_STYLE_|nmg_r_to_vlist|nmg_vlblock_" include src -g '!build/**'
+    rg -n "primitive_lod_vlist|has_vlist|realization\.vlist|lod_plot_vlist" include/rt src/librt src/libged -g '!build/**'
+    rg -n "bsg_vlist|bsg_vlblock|rt_uplot_to_vlist|ft_plot|drawVList|vlblock|rt_.*_plot_poly|rt_sample_pnts_face_set|rt_sample_pnts\(" include src -g '!build/**'
+
+Validation gates
+----------------
+
+Current focused event slice:
+
+    cmake --build build --target ged_plugins ged_test_state_services -j 2
+    ctest --test-dir build -R '^ged_test_state_services$' --output-on-failure
+    ctest --test-dir build -R '^regress-mged_comb$' --output-on-failure
+    ctest --test-dir build -R '^regress-mged_push$' --output-on-failure
+    ctest --test-dir build -R '^regress-mged_xpush$' --output-on-failure
+    ctest --test-dir build -R '^regress-mged_clone$' --output-on-failure
+    ctest --test-dir build -R '^regress-mged_mirror$' --output-on-failure
+
+QgModel scale/performance:
+
+    ctest --test-dir build -R '^test_qgmodel_scale$' -V
+    ctest --test-dir build -R '^slow-test_qgmodel_scale_16384$' -V
+    ctest --test-dir build -R '^test_qgmodel_model_tester$' -V
+
+Minimum draw/service gate:
+
+    cmake --build build --target libged ged_test_draw ged_test_cmd_schemas ged_test_state_services ged_test_ged_draw_scene -j 2
+    ctest --test-dir build -R '^(ged_test_state_services|ged_test_cmd_schemas|ged_test_drawing_basic|ged_test_drawing_faceplate|ged_test_drawing_lod|ged_test_drawing_select|ged_test_drawing_quad|ged_test_bsg_render_stability|ged_test_bsg_quad_stability|ged_test_lod_crossrun|ged_test_mged_bsg|ged_test_rtwizard_bsg|ged_test_ged_draw_scene|ged_test_view_command|ged_test_view_independent|ged_test_mged_shaded_mode_bsg|ged_test_edit|ged_test_selection_semantics|ged_test_qged_swrast|test_qgmodel_model_tester|test_qgmodel_scale)$' --output-on-failure --timeout 180
+    git diff --check
+
+Typed/API cleanup gate:
+
+    cmake --build build --target libbsg libdm libged mged qged_bot qged_ell qged_extrude qged_revolve test_bsg_backend_adapter test_bsg_final_architecture test_bsg_public_headers test_bsg_api_hygiene test_bsg_pick test_dm_backend_draw_item ged_test_view_command ged_test_ged_draw_scene ged_test_state_services test_qgmodel_model_tester test_qgmodel_scale ged_test_qged_swrast -j 2
+    ctest --test-dir build -R '^(libbsg_backend_adapter|libbsg_final_architecture|libbsg_public_headers|libbsg_api_hygiene|libbsg_pick|dm_backend_draw_item|ged_test_ged_draw_scene|ged_test_view_command)$' --output-on-failure
+    ctest --test-dir build -R '^(ged_test_qged_swrast|test_qgmodel_model_tester|test_qgmodel_scale|ged_test_ged_draw_scene|ged_test_state_services|ged_test_drawing_select|ged_test_selection_semantics|ged_test_view_command|ged_test_view_independent)$' --output-on-failure
+
+Full gate before declaring broad cleanup complete:
+
+    cmake --build build --target check -j 2
+
+Deferred
+--------
+
+Scene serialization and round-trip loading are out of scope.  Future
+serialization should cover typed scene state only, not GED database contents,
+process-local pointers, raw taxonomy bits, or private payload layout.

@@ -40,8 +40,9 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "nmg.h"
+#include "nmg/plot.h"
 
 
 extern int nmg_class_nothing_broken;

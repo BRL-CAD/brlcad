@@ -36,8 +36,9 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bn/mat.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "nmg.h"
+#include "nmg/plot.h"
 
 
 /* Plot a faceuse and a line between pt and plane_pt */

@@ -32,8 +32,12 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/time.h"
-#include "bv/defines.h"
+#include "bsg/defines.h"
+#include "bsg/plot3.h"
+#include "bsg/render_item.h"
+#include "bsg/backend_adapter.h"
 #include "dm.h"
+#include "dm/vlist.h"
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
@@ -66,51 +70,186 @@ dm_set_udata(struct dm *dmp, void *udata)
 }
 
 
-/* --- Dlist sensor API --- */
+/* --- Backend-ops accessors / dispatch wrappers --- */
+
+const struct dm_backend_ops *
+dm_get_backend_ops(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp || !dmp->i)) return NULL;
+    return dmp->i->dm_backend_ops;
+}
+
+void
+dm_set_backend_ops(struct dm *dmp, const struct dm_backend_ops *ops)
+{
+    if (UNLIKELY(!dmp || !dmp->i)) return;
+    dmp->i->dm_backend_ops = ops;
+}
 
 int
-dm_register_dlist_sensor(struct dm *dmp,
-			 struct bv_scene_obj *s,
-			 void (*callback)(struct bv_scene_obj *, void *),
-			 void *data)
+dm_backend_begin_frame(struct dm *dmp)
 {
-    if (UNLIKELY(!dmp) || !callback) return -1;
-
-    struct dm_dlist_sensor *sensor;
-    BU_GET(sensor, struct dm_dlist_sensor);
-    sensor->s        = s;
-    sensor->callback = callback;
-    sensor->data     = data;
-    sensor->next     = dmp->i->dm_dlist_sensors;
-    dmp->i->dm_dlist_sensors = sensor;
+    if (UNLIKELY(!dmp)) return -1;
+    dmp->i->dm_backend_generation++;
+    const struct dm_backend_ops *ops = dm_get_backend_ops(dmp);
+    if (ops && ops->begin_frame)
+	return ops->begin_frame(dmp);
     return 0;
 }
 
 void
-dm_fire_dlist_sensors(struct dm *dmp)
+dm_backend_end_frame(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return;
-    struct dm_dlist_sensor *cur = dmp->i->dm_dlist_sensors;
-    while (cur) {
-	cur->callback(cur->s, cur->data);
-	cur = cur->next;
+    const struct dm_backend_ops *ops = dm_get_backend_ops(dmp);
+    if (ops && ops->end_frame)
+	ops->end_frame(dmp);
+}
+
+int
+dm_backend_draw_item(struct dm *dmp, const struct bsg_render_item *item)
+{
+    if (UNLIKELY(!dmp || !item || item->geometry.kind == BSG_RENDER_GEOMETRY_NONE)) return -1;
+    const struct dm_backend_ops *ops = dm_get_backend_ops(dmp);
+    if (ops && ops->draw_item)
+	return ops->draw_item(dmp, item);
+    return -1;
+}
+
+void
+dm_backend_invalidate_item(struct dm *dmp, const struct bsg_render_item *item, unsigned int reason_mask)
+{
+    if (UNLIKELY(!dmp || !item)) return;
+    const struct dm_backend_ops *ops = dm_get_backend_ops(dmp);
+    if (ops && ops->invalidate_item)
+	ops->invalidate_item(dmp, item, reason_mask);
+    else
+	dm_backend_resource_invalidate(dmp,
+		item->source.source_id ? item->source.source_id : item->geometry.source_identity);
+}
+
+void
+dm_backend_release_source(struct dm *dmp, uint64_t source_identity)
+{
+    if (UNLIKELY(!dmp || !source_identity)) return;
+    const struct dm_backend_ops *ops = dm_get_backend_ops(dmp);
+    if (ops && ops->release_source)
+	ops->release_source(dmp, source_identity);
+    else
+	dm_backend_resource_release_source(dmp, source_identity);
+}
+
+/* --- end backend-ops API --- */
+
+static void
+_dm_backend_resource_free(struct dm *dmp, struct dm_backend_resource *r)
+{
+    if (!r)
+	return;
+    if (r->free_resource)
+	r->free_resource(dmp, r);
+    BU_PUT(r, struct dm_backend_resource);
+}
+
+struct dm_backend_resource *
+dm_backend_resource_get(struct dm *dmp,
+			uint64_t cache_identity,
+			uint64_t source_identity,
+			uint64_t backend_identity,
+			int create,
+			dm_backend_resource_free_fn free_resource)
+{
+    if (UNLIKELY(!dmp) || !cache_identity)
+	return NULL;
+    struct dm_backend_resource **prev = &dmp->i->dm_backend_resources;
+    struct dm_backend_resource *r = dmp->i->dm_backend_resources;
+    while (r) {
+	if (r->cache_identity == cache_identity &&
+		r->source_identity == source_identity &&
+		r->backend_identity == backend_identity) {
+	    if (!r->stale)
+		return r;
+	    if (!create)
+		return NULL;
+	    *prev = r->next;
+	    _dm_backend_resource_free(dmp, r);
+	    break;
+	}
+	prev = &r->next;
+	r = r->next;
+    }
+    if (!create)
+	return NULL;
+
+    BU_GET(r, struct dm_backend_resource);
+    memset(r, 0, sizeof(*r));
+    r->cache_identity = cache_identity;
+    r->source_identity = source_identity;
+    r->backend_identity = backend_identity;
+    r->free_resource = free_resource;
+    r->last_seen_generation = dmp->i->dm_backend_generation;
+    r->next = dmp->i->dm_backend_resources;
+    dmp->i->dm_backend_resources = r;
+    return r;
+}
+
+void
+dm_backend_resource_touch(struct dm *dmp, struct dm_backend_resource *resource)
+{
+    if (UNLIKELY(!dmp) || !resource)
+	return;
+    resource->last_seen_generation = dmp->i->dm_backend_generation;
+}
+
+void
+dm_backend_resource_invalidate(struct dm *dmp, uint64_t source_identity)
+{
+    if (UNLIKELY(!dmp) || !source_identity)
+	return;
+    for (struct dm_backend_resource *r = dmp->i->dm_backend_resources; r; r = r->next) {
+	if (r->source_identity == source_identity)
+	    r->stale = 1;
     }
 }
 
 void
-dm_dlist_sensors_clear(struct dm *dmp)
+dm_backend_resource_release_source(struct dm *dmp, uint64_t source_identity)
 {
-    if (UNLIKELY(!dmp)) return;
-    struct dm_dlist_sensor *cur = dmp->i->dm_dlist_sensors;
-    while (cur) {
-	struct dm_dlist_sensor *next = cur->next;
-	BU_PUT(cur, struct dm_dlist_sensor);
-	cur = next;
+    if (UNLIKELY(!dmp) || !source_identity)
+	return;
+    struct dm_backend_resource **prev = &dmp->i->dm_backend_resources;
+    struct dm_backend_resource *r = dmp->i->dm_backend_resources;
+    while (r) {
+	struct dm_backend_resource *next = r->next;
+	if (r->source_identity == source_identity) {
+	    *prev = next;
+	    _dm_backend_resource_free(dmp, r);
+	} else {
+	    prev = &r->next;
+	}
+	r = next;
     }
-    dmp->i->dm_dlist_sensors = NULL;
 }
 
-/* --- end dlist sensor API --- */
+void
+dm_backend_resource_reclaim_unseen(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp))
+	return;
+    uint64_t gen = dmp->i->dm_backend_generation;
+    struct dm_backend_resource **prev = &dmp->i->dm_backend_resources;
+    struct dm_backend_resource *r = dmp->i->dm_backend_resources;
+    while (r) {
+	struct dm_backend_resource *next = r->next;
+	if (r->last_seen_generation != gen) {
+	    *prev = next;
+	    _dm_backend_resource_free(dmp, r);
+	} else {
+	    prev = &r->next;
+	}
+	r = next;
+    }
+}
 
 
 void
@@ -125,23 +264,6 @@ dm_fogHint(struct dm *dmp, int fastfog)
 	dmp->i->dm_fogHint(dmp, fastfog);
     }
 }
-
-/*
- * Provides a way to (un)share display lists. If dmp2 is
- * NULL, then dmp1 will no longer share its display lists.
- */
-int
-dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
-{
-    if (UNLIKELY(!dmp1) || UNLIKELY(!dmp2)) return BRLCAD_ERROR;
-
-    if (dmp1->i->dm_share_dlist) {
-	return dmp1->i->dm_share_dlist(dmp1, dmp2);
-    }
-
-    return BRLCAD_ERROR;
-}
-
 
 int
 dm_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
@@ -273,10 +395,10 @@ dm_get_type(struct dm *dmp)
 }
 
 int
-dm_get_displaylist(struct dm *dmp)
+dm_get_backend_cache(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_displaylist;
+    return dmp->i->dm_backend_cache;
 }
 
 fastf_t
@@ -304,8 +426,11 @@ int
 dm_close(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    /* Free any registered dlist sensors before the backend tears down. */
-    dm_dlist_sensors_clear(dmp);
+    while (dmp->i->dm_backend_resources) {
+	struct dm_backend_resource *r = dmp->i->dm_backend_resources;
+	dmp->i->dm_backend_resources = r->next;
+	_dm_backend_resource_free(dmp, r);
+    }
     return dmp->i->dm_close(dmp);
 }
 
@@ -359,6 +484,23 @@ dm_set_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int
     return dmp->i->dm_setFGColor(dmp, r, g, b, strict, transparency);
 }
 
+unsigned char *
+dm_get_geometry_default_color(struct dm *dmp)
+{
+    static unsigned char dgc[3] = {255, 0, 0};
+    if (UNLIKELY(!dmp)) return dgc;
+    return dmp->i->dm_geometry_default_color;
+}
+
+void
+dm_set_geometry_default_color(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_geometry_default_color[0] = r;
+    dmp->i->dm_geometry_default_color[1] = g;
+    dmp->i->dm_geometry_default_color[2] = b;
+}
+
 int
 dm_reshape(struct dm *dmp, int width, int height)
 {
@@ -381,17 +523,17 @@ dm_doevent(struct dm *dmp, void *clientData, void *eventPtr)
 }
 
 int
-dm_get_dirty(struct dm *dmp)
+dm_get_native_repaint_pending(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_dirty;
+    return dmp->i->dm_native_repaint_pending;
 }
 
 void
-dm_set_dirty(struct dm *dmp, int i)
+dm_set_native_repaint_pending(struct dm *dmp, int i)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->i->dm_dirty = i;
+    dmp->i->dm_native_repaint_pending = i;
 }
 
 vect_t *
@@ -631,55 +773,17 @@ dm_get_display_image(struct dm *dmp, unsigned char **image, int flip, int alpha)
 }
 
 int
-dm_gen_dlists(struct dm *dmp, size_t range)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_genDLists(dmp, range);
-}
-
-int
-dm_begin_dlist(struct dm *dmp, unsigned int list)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_beginDList(dmp, list);
-}
-int
-dm_draw_dlist(struct dm *dmp, unsigned int list)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_drawDList(list);
-}
-int
-dm_end_dlist(struct dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_endDList(dmp);
-}
-int
-dm_free_dlists(struct dm *dmp, unsigned int list, int range)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_freeDLists(dmp, list, range);
-}
-
-int
-dm_draw_vlist(struct dm *dmp, struct bv_vlist *vp)
+dm_draw_device_vlist(struct dm *dmp, bsg_vlist *vp)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->i->dm_drawVList(dmp, vp);
 }
 
 int
-dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp)
+dm_draw_device_vlist_hidden_line(struct dm *dmp, bsg_vlist *vp)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->i->dm_drawVListHiddenLine(dmp, vp);
-}
-
-int
-dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s){
-    if (UNLIKELY(!dmp)) return -1;
-    return dmp->i->dm_draw_obj(dmp, s);
 }
 
 int
@@ -731,6 +835,97 @@ dm_draw_string_2d(struct dm *dmp, const char *str, fastf_t x,  fastf_t y, int si
     if (!dmp || !str) return 0;
     return dmp->i->dm_drawString2D(dmp, str, x, y, size, use_aspect);
 }
+
+static void
+dm_stroke_text_point(fastf_t base_x, fastf_t base_y,
+		     fastf_t px, fastf_t py,
+		     fastf_t cang, fastf_t sang,
+		     int width, int height,
+		     fastf_t *out_x, fastf_t *out_y)
+{
+    fastf_t rx = cang * px - sang * py;
+    fastf_t ry = sang * px + cang * py;
+
+    *out_x = base_x + 2.0 * rx / (fastf_t)width;
+    *out_y = base_y + 2.0 * ry / (fastf_t)height;
+}
+
+static int
+dm_draw_string_2d_rot_stroke(struct dm *dmp, const char *str,
+			     fastf_t x, fastf_t y,
+			     int size, int use_aspect, fastf_t angle)
+{
+    if (!dmp || !dmp->i || !dmp->i->dm_drawLine2D || !str)
+	return BRLCAD_ERROR;
+
+    int width = dmp->i->dm_width;
+    int height = dmp->i->dm_height;
+    if (width <= 0 || height <= 0)
+	return BRLCAD_ERROR;
+
+    if (size <= 0)
+	size = dmp->i->dm_fontsize;
+    if (size <= 0)
+	size = 10;
+
+    fastf_t aspect = (dmp->i->dm_aspect > SMALL_FASTF) ?
+	dmp->i->dm_aspect : 1.0;
+    fastf_t base_y = use_aspect ? y * aspect : y;
+    fastf_t rad = angle * M_PI / 180.0;
+    fastf_t cang = cos(rad);
+    fastf_t sang = sin(rad);
+    fastf_t scale = (fastf_t)size;
+    fastf_t offset = 0.0;
+    int ret = BRLCAD_OK;
+
+    for (const unsigned char *cp = (const unsigned char *)str; *cp; cp++, offset += scale) {
+	int *p = plot3_font_getchar(cp);
+	fastf_t pen_x = offset;
+	fastf_t pen_y = 0.0;
+
+	for (int stroke = *p; stroke != PLOT3_FONT_LAST; stroke = *++p) {
+	    int ysign = 1;
+	    int draw = 1;
+
+	    if (stroke == PLOT3_FONT_NEGY) {
+		ysign = -1;
+		stroke = *++p;
+	    }
+	    if (stroke < 0) {
+		stroke = -stroke;
+		draw = 0;
+	    }
+
+	    fastf_t px = ((fastf_t)(stroke / 11) * 0.1 * scale) + offset;
+	    fastf_t py = (fastf_t)ysign * (fastf_t)(stroke % 11) * 0.1 * scale;
+	    if (draw) {
+		fastf_t x1, y1, x2, y2;
+		dm_stroke_text_point(x, base_y, pen_x, pen_y, cang, sang,
+			width, height, &x1, &y1);
+		dm_stroke_text_point(x, base_y, px, py, cang, sang,
+			width, height, &x2, &y2);
+		if (dmp->i->dm_drawLine2D(dmp, x1, y1, x2, y2) != BRLCAD_OK)
+		    ret = BRLCAD_ERROR;
+	    }
+	    pen_x = px;
+	    pen_y = py;
+	}
+    }
+
+    return ret;
+}
+
+int
+dm_draw_string_2d_rot(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect, fastf_t angle)
+{
+    if (!dmp || !str) return 0;
+    if (dmp->i->dm_drawString2DRot)
+	return dmp->i->dm_drawString2DRot(dmp, str, x, y, size, use_aspect, angle);
+    if (!NEAR_ZERO(angle, SMALL_FASTF) &&
+	    dm_draw_string_2d_rot_stroke(dmp, str, x, y, size, use_aspect, angle) == BRLCAD_OK)
+	return BRLCAD_OK;
+    return dmp->i->dm_drawString2D(dmp, str, x, y, size, use_aspect);
+}
 int
 dm_string_bbox_2d(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)
 {
@@ -774,16 +969,10 @@ dm_draw_points_3d(struct dm *dmp, int npoints, point_t *points)
     return dmp->i->dm_drawPoints3D(dmp, npoints, points);
 }
 int
-dm_draw(struct dm *dmp, struct bv_vlist *(*callback)(void *), void **data)
+dm_draw(struct dm *dmp, bsg_vlist *(*callback)(void *), void **data)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->i->dm_draw(dmp, callback, data);
-}
-int
-dm_draw_display_list(struct dm *dmp, struct display_list *obj)
-{
-    if (!dmp || !obj) return 0;
-    return dmp->i->dm_draw_display_list(dmp, obj);
 }
 int
 dm_set_depth_mask(struct dm *dmp, int d_on)
@@ -998,143 +1187,6 @@ dm_hash(struct dm *dmp)
     bu_data_hash_destroy(state);
 
     return hash_val;
-}
-
-/* Routines for drawing based on a list of display_list
- * structures.  This will probably need to be a struct dm
- * entry to allow it to be customized for various dm
- * backends, but as a first step get it out of MGED
- * and into libdm. */
-static int
-dm_drawSolid(struct dm *dmp,
-	     struct bv_scene_obj *sp,
-	     short r,
-	     short g,
-	     short b,
-	     int draw_style,
-	     unsigned char *gdc)
-{
-    int ndrawn = 0;
-
-    if (UNLIKELY(!dmp))
-	return ndrawn;
-
-    if (sp->s_old.s_cflag) {
-	if (!DM_SAME_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2])) {
-	    dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_os->transparency);
-	    DM_COPY_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2]);
-	}
-    } else {
-	if (!DM_SAME_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2])) {
-	    dm_set_fg(dmp, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2], 0, sp->s_os->transparency);
-	    DM_COPY_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2]);
-	}
-    }
-
-    if (dm_get_displaylist(dmp) && draw_style) {
-	dm_draw_dlist(dmp, sp->s_dlist);
-	sp->s_flag = UP;
-	ndrawn++;
-    } else {
-	if (sp->s_os->s_dmode == 4) {
-	    if (dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
-	    	sp->s_flag = UP;
-		ndrawn++;
-	    }
-	} else {
-	    if (dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
-		sp->s_flag = UP;
-		ndrawn++;
-	    }
-	}
-    }
-
-    return ndrawn;
-}
-
-
-int
-dm_draw_head_dl(struct dm *dmp,
-		     struct bu_list *dl,
-		     fastf_t transparency_threshold,
-		     fastf_t inv_viewsize,
-		     short r, short g, short b,
-		     int line_width,
-		     int draw_style,
-		     int draw_edit,
-		     unsigned char *gdc,
-		     int solids_down,
-		     int mv_dlist
-		    )
-{
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-    fastf_t ratio;
-    int ndrawn = 0;
-    int opaque = 0;
-    int opaque_only = EQUAL(transparency_threshold, 1.0);
-
-    if (UNLIKELY(!dmp))
-	return 0;
-
-    gdlp = BU_LIST_NEXT(display_list, dl);
-    while (BU_LIST_NOT_HEAD(gdlp, dl)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (solids_down) sp->s_flag = DOWN;              /* Not drawn yet */
-
-	    /* If part of object edit, will be drawn below */
-	    if ((sp->s_iflag == UP && !draw_edit) || (sp->s_iflag != UP && draw_edit))
-		continue;
-
-	    opaque = EQUAL(sp->s_os->transparency, 1.0);
-	    if (opaque_only) {
-		if (!opaque) {
-		    continue;
-		}
-	    } else {
-		/* transparent only */
-		if (opaque || !(sp->s_os->transparency > transparency_threshold || EQUAL(sp->s_os->transparency, transparency_threshold))) {
-		    continue;
-		}
-	    }
-
-	    if (dm_get_bound_flag(dmp) && !sp->s_displayobj) {
-		ratio = sp->s_size * inv_viewsize;
-
-		/*
-		 * Check for this object being bigger than
-		 * dmp->i->dm_bound * the window size, or smaller than a speck.
-		 */
-		if (ratio < 0.001)
-		    continue;
-	    }
-
-	    dm_set_line_attr(dmp, line_width, sp->s_soldash);
-
-	    if (!draw_edit) {
-		ndrawn += dm_drawSolid(dmp, sp, r, g, b, draw_style, gdc);
-	    } else {
-		if (dm_get_displaylist(dmp) && mv_dlist) {
-		    dm_draw_dlist(dmp, sp->s_dlist);
-		    sp->s_flag = UP;
-		    ndrawn++;
-		} else {
-		    /* draw in immediate mode */
-		    if (dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
-			sp->s_flag = UP;
-			ndrawn++;
-		    }
-		}
-	    }
-	}
-
-	gdlp = next_gdlp;
-    }
-
-    return ndrawn;
 }
 
 /*

@@ -34,6 +34,7 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/getopt.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 #include "../../librt/librt_private.h"
 
@@ -325,13 +326,13 @@ copy_object(struct ged *gedp,
     /* if overwriting -
      * we've added the new object, its safe to delete the original */
     if (oride_dp) {
-	_dl_eraseAllNamesFromDisplay(gedp, owrite_backup.c_str(), 0);
 	if (db_delete(gedp->dbip, oride_dp) != 0 || db_dirdelete(gedp->dbip, oride_dp) != 0) {
 	    /* Abort processing on first error */
 	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s\n", owrite_backup.c_str());
 	    return BRLCAD_ERROR;
 	}
 	db_update_nref(gedp->dbip);
+	ged_event_notify_object_removed(gedp, owrite_backup.c_str(), NULL);
 	cc_data->overwritten++;
     }
 
@@ -453,6 +454,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: db_update_ident failed (%s)", commandName, i_fname);
 		return BRLCAD_ERROR;
 	    }
+	    ged_event_notify_database_metadata_changed(gedp, NULL);
 	}
 	if (cc_data.use_ctbl) {
 	    struct bu_attribute_value_set g_avs = BU_AVS_INIT_ZERO;
@@ -468,7 +470,14 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    db5_get_attributes(t_dbip, &t_avs, tglobal_dp);
 	    bu_avs_add(&t_avs, "regionid_colortable", colorTab);
 	    db5_import_color_table(gedp->dbip, colorTab);
-	    db5_update_attributes(tglobal_dp, &t_avs, gedp->dbip);
+	    if (db5_update_attributes(tglobal_dp, &t_avs, gedp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str, "%s: Can't update regionid_colortable in %s", commandName, t_fname);
+		bu_free(colorTab, "colorTab");
+		bu_avs_free(&g_avs);
+		bu_avs_free(&t_avs);
+		return BRLCAD_ERROR;
+	    }
+	    ged_event_notify_object_material_changed(gedp, DB5_GLOBAL_OBJECT_NAME, NULL);
 	    bu_free(colorTab, "colorTab");
 	    bu_avs_free(&g_avs);
 	    bu_avs_free(&t_avs);

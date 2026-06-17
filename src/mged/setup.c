@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bn.h"
-#include "bv/util.h"
+#include "bsg/util.h"
 #include "tclcad.h"
 #include "ged.h"
 
@@ -481,7 +481,7 @@ mged_refresh_handler(void *clientdata)
     struct mged_state *s = (struct mged_state *)clientdata;
     MGED_CK_STATE(s);
 
-    view_state->vs_flag = 1;
+    mged_refresh_request_view(s, view_state, BSG_VIEW_REFRESH_VIEW);
     refresh(s);
 }
 
@@ -532,10 +532,6 @@ mged_setup(struct mged_state *s)
     s->gedp->ged_output_handler = mged_output_handler;
     s->gedp->ged_refresh_clientdata = (void *)s;
     s->gedp->ged_refresh_handler = mged_refresh_handler;
-    s->gedp->vlist_ctx = (void *)s;
-    s->gedp->ged_create_vlist_scene_obj_callback = createDListSolid;
-    s->gedp->ged_create_vlist_display_list_callback = createDListAll;
-    s->gedp->ged_destroy_vlist_callback = freeDListsAll;
     s->gedp->ged_create_io_handler = &tclcad_create_io_handler;
     s->gedp->ged_delete_io_handler = &tclcad_delete_io_handler;
 
@@ -567,8 +563,8 @@ mged_setup(struct mged_state *s)
     mged_global_db_ctx.old_dbip = NULL;
     mged_global_db_ctx.post_open_cnt = 0;
 
-    BU_ALLOC(view_state->vs_gvp, struct bview);
-    bv_init(view_state->vs_gvp, NULL);
+    BU_ALLOC(view_state->vs_gvp, struct bsg_view);
+    bsg_init(view_state->vs_gvp, NULL);
     BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bv callbacks");
 
@@ -578,7 +574,7 @@ mged_setup(struct mged_state *s)
 
     view_state->vs_gvp->vset = &s->gedp->ged_views;
 
-    bv_set_add_view(&s->gedp->ged_views, view_state->vs_gvp);
+    bsg_set_add_view(&s->gedp->ged_views, view_state->vs_gvp);
     bu_ptbl_ins(&s->gedp->ged_free_views, (long *)view_state->vs_gvp);
     s->gedp->ged_gvp = view_state->vs_gvp;
 

@@ -26,10 +26,36 @@
 #include "common.h"
 
 #include <stdlib.h>
-
-
+#include "ged/bsg_ged_draw.h"
 #include "../ged_private.h"
-#include "../dbi.h"
+
+
+static int
+zap_draw_db_scope(struct ged *gedp, struct bsg_view *v)
+{
+    struct ged_draw_transaction txn =
+	ged_draw_transaction_make(GED_DRAW_TXN_CLEAR_SCOPE, NULL);
+    txn.view = v;
+    return ged_draw_apply_transaction(gedp, &txn, NULL);
+}
+
+
+static int
+zap_has_independent_views(struct ged *gedp)
+{
+    if (!gedp)
+	return 0;
+
+    struct bu_ptbl *views = bsg_set_views(&gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bsg_view *v = (struct bsg_view *)BU_PTBL_GET(views, i);
+	if (v && bsg_view_is_independent(v))
+	    return 1;
+    }
+
+    return 0;
+}
+
 
 /*
  * Erase all currently displayed geometry
@@ -50,7 +76,7 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     const char *usage = "zap [options]\n";
-    struct bview *v = NULL;
+    struct bsg_view *v = NULL;
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
 
@@ -62,8 +88,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[1],  "?", "",             "",        NULL,       &print_help, "");
     BU_OPT(d[2],  "V", "view",     "name", &bu_opt_vls,             &cvls, "clear data specific to this view");
     BU_OPT(d[3],  "S", "shared",       "",        NULL,      &shared_only, "clear only data shared across views");
-    BU_OPT(d[4],  "v", "view-objs",    "",        NULL,  &clear_view_objs, "clear non-solid based view objects");
-    BU_OPT(d[5],  "g", "solid-objs",   "",        NULL, &clear_solid_objs, "clear solid based view objects");
+    BU_OPT(d[4],  "v", "view-objs",    "",        NULL,  &clear_view_objs, "clear non-solid based view features");
+    BU_OPT(d[5],  "g", "solid-objs",   "",        NULL, &clear_solid_objs, "clear solid based view features");
     BU_OPT(d[6],  "",  "all",          "",        NULL,  &clear_all_views, "clear shared and independent views");
     BU_OPT_NULL(d[7]);
 
@@ -93,28 +119,24 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	v = bsg_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
 	if (!v) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
 
-	int flags = BV_LOCAL_OBJS;
-	if (clear_solid_objs) {
-	    flags |= BV_DB_OBJS;
-	    if (gedp->dbi_state) {
-		DbiState *dbis = (DbiState *)gedp->dbi_state;
-		BViewState *bvs = dbis->get_view_state(v);
-		bvs->clear();
-	    }
+	int flags = BSG_SOURCE_LOCAL;
+	if (clear_solid_objs && bsg_view_is_independent(v)) {
+	    flags |= BSG_SOURCE_DB;
+	    zap_draw_db_scope(gedp, v);
 	}
 
 	if (clear_view_objs)
-	    flags |= BV_VIEW_OBJS;
+	    flags |= BSG_SOURCE_VIEW;
 
-	if (!bv_clear(v, flags))
-	    v->gv_s->gv_cleared = 1;
+	if (!bsg_clear(v, flags))
+	    bsg_view_set_cleared(v, 1);
 
 	bu_vls_free(&cvls);
 	return BRLCAD_OK;
@@ -122,32 +144,43 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Clear everything
     int ret = BRLCAD_OK;
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    int cleared_shared_db = 0;
+    int full_canonical_clear = clear_solid_objs && clear_view_objs &&
+	!shared_only &&
+	(clear_all_views || !zap_has_independent_views(gedp));
+    if (clear_solid_objs && !full_canonical_clear)
+	cleared_shared_db = zap_draw_db_scope(gedp, NULL);
+
+    struct bu_ptbl *views = bsg_set_views(&gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	v = (struct bview *)BU_PTBL_GET(views, i);
-	if (v->independent && !clear_all_views)
+	v = (struct bsg_view *)BU_PTBL_GET(views, i);
+	if (bsg_view_is_independent(v) && !clear_all_views)
 	    continue;
 	int flags = 0;
 	if (clear_solid_objs) {
-	    flags |= BV_DB_OBJS;
-	    if (gedp->dbi_state) {
-		DbiState *dbis = (DbiState *)gedp->dbi_state;
-		BViewState *bvs = dbis->get_view_state(v);
-		bvs->clear();
-	    }
+	    flags |= BSG_SOURCE_DB;
+	    if (!full_canonical_clear &&
+		    (bsg_view_is_independent(v) || !cleared_shared_db))
+		zap_draw_db_scope(gedp, bsg_view_is_independent(v) ? v : NULL);
 	}
 	if (clear_view_objs)
-	    flags |= BV_VIEW_OBJS;
-	int nret = bv_clear(v, flags);
+	    flags |= BSG_SOURCE_VIEW;
+	int nret = bsg_clear(v, flags);
 	int lret = 1;
 	if (!shared_only) {
-	    flags |= BV_LOCAL_OBJS;
-	    lret = bv_clear(v, flags);
+	    flags |= BSG_SOURCE_LOCAL;
+	    lret = bsg_clear(v, flags);
 	}
 	if (!nret || !lret)
-	    v->gv_s->gv_cleared = 1;
+	    bsg_view_set_cleared(v, 1);
 
 	ret = BRLCAD_OK;
+    }
+
+    if (full_canonical_clear) {
+	struct ged_draw_transaction txn =
+	    ged_draw_transaction_make(GED_DRAW_TXN_CLEAR, NULL);
+	(void)ged_draw_apply_transaction(gedp, &txn, NULL);
     }
 
     bu_vls_free(&cvls);

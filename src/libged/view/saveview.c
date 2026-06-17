@@ -33,8 +33,8 @@
 #include "bu/file.h"
 #include "bu/getopt.h"
 
-
 #include "../ged_private.h"
+#include "ged/bsg_ged_draw.h"
 
 
 /**
@@ -69,11 +69,30 @@ basename_without_suffix(const char *p1, const char *suff)
 }
 
 
+static void
+saveview_write_draw_paths(struct ged *gedp, FILE *fp)
+{
+    struct bu_vls paths = BU_VLS_INIT_ZERO;
+    ged_draw_list_paths(gedp, gedp ? gedp->ged_gvp : NULL, -1, 0, &paths);
+
+    const char *path = bu_vls_cstr(&paths);
+    while (path && *path) {
+	const char *nl = strchr(path, '\n');
+	size_t len = nl ? (size_t)(nl - path) : strlen(path);
+	if (len > 0)
+	    fprintf(fp, "'%.*s' ", (int)len, path);
+	if (!nl)
+	    break;
+	path = nl + 1;
+    }
+
+    bu_vls_free(&paths);
+}
+
+
 int
 ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
     int i;
     FILE *fp;
     char *base;
@@ -170,12 +189,8 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
     }
     fprintf(fp, " '%s'\\\n ", inputg);
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->i->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->i->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-	fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->dl_path));
-	gdlp = next_gdlp;
-    }
+    /* Write out exportable draw source paths. */
+    saveview_write_draw_paths(gedp, fp);
 
     fprintf(fp, "\\\n 2>> %s\\\n", outlog);
     fprintf(fp, " <<EOF\n");

@@ -624,12 +624,12 @@ if {$::tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Dm::createDm {type} {
-    itk_component add dm {
-	dm_open $itk_interior.dm $type -t 0 -W $width -N $height
-    } {}
-
-    pack $itk_component(dm) -fill both -expand yes
-    set tkwin $itk_component(dm)
+    # Phase T3 (drawing_stack_modernization): the dm_obj standalone path has
+    # been removed from libtclcad/dm.c.  The Dm Tcl class is retained as a
+    # compatibility shim but can no longer create a dm_obj-backed widget.
+    # Applications that previously relied on this path should use the Qt-based
+    # display manager (qged / QgView) instead.
+    error "dm_open Tcl command removed (drawing_stack_modernization Phase T3): use the Qt display manager path"
 }
 
 ::itcl::body Dm::initDm {} {

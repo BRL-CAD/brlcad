@@ -39,6 +39,8 @@
 
 #include "dm.h"
 #include "ged.h"
+#include "bu/str.h"
+#include "bsg/view_state.h"
 
 
 #define FB_CONSTRAIN(_v, _a, _b) \
@@ -47,9 +49,10 @@
 int
 ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char usage[] = "\nUsage: fbclear [rgb]";
+    static const char usage[] = "\nUsage: fbclear [-m] [rgb]\n  -m   also reset gv_fb_mode to 0 (turn the framebuffer underlay off)";
 
     int ret;
+    int reset_mode = 0;
     unsigned char clearColor[3] = {0.0, 0.0 ,0.0};
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -70,11 +73,24 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc == 2) {
+    /* Phase B2 (ert reliability): optional "-m" flag that also resets
+     * gv_fb_mode to 0 so the user can wipe the framebuffer image *and*
+     * restore the plain 3D view in a single command.  Without this the
+     * faceplate-driven underlay pasted on top of the 3D scene by ert's
+     * implicit `gv_fb_mode = 2` would persist (showing a black canvas
+     * after `fbclear`) until the user separately runs the `view fb`
+     * faceplate command. */
+    int arg_start = 1;
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], "-m")) {
+	reset_mode = 1;
+	arg_start = 2;
+    }
+
+    if (argc - arg_start == 1) {
 	int r, g, b;
 
-	if (sscanf(argv[1], "%d %d %d", &r, &g, &b) != 3) {
-	    bu_log("fb_clear: bad color spec - %s", argv[1]);
+	if (sscanf(argv[arg_start], "%d %d %d", &r, &g, &b) != 3) {
+	    bu_log("fb_clear: bad color spec - %s", argv[arg_start]);
 	    return BRLCAD_ERROR;
 	}
 
@@ -82,7 +98,7 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
 	clearColor[GRN] = FB_CONSTRAIN(g, 0, 255);
 	clearColor[BLU] = FB_CONSTRAIN(b, 0, 255);
 
-    } else if (argc > 2) {
+    } else if (argc - arg_start > 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
@@ -92,11 +108,14 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
     if (ret)
 	return BRLCAD_ERROR;
 
+    if (reset_mode)
+	bsg_view_set_framebuffer_mode(gedp->ged_gvp, 0);
+
     (void)dm_draw_begin(dmp);
     fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
     (void)dm_draw_end(dmp);
 
-    dm_set_dirty(dmp, 1);
+    dm_set_native_repaint_pending(dmp, 1);
 
     return BRLCAD_OK;
 }

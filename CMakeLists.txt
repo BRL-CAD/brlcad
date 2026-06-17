@@ -1728,12 +1728,14 @@ brlcad_check_dirname()
 # OpenGL headers
 if(BRLCAD_ENABLE_OPENGL)
   find_package(OpenGL)
-  if(OPENGL_INCLUDE_DIR_GL)
+  # Modern CMake FindOpenGL sets OPENGL_INCLUDE_DIR; older versions used
+  # OPENGL_INCLUDE_DIR_GL.  Accept either form so the build works with both.
+  if(OPENGL_INCLUDE_DIR_GL OR OPENGL_INCLUDE_DIR)
     config_h_append(BRLCAD "#define HAVE_GL_GL_H 1\n")
-  endif(OPENGL_INCLUDE_DIR_GL)
-  if(OPENGL_INCLUDE_DIR_GLX)
+  endif()
+  if(OPENGL_INCLUDE_DIR_GLX OR OPENGL_GLX_INCLUDE_DIR)
     config_h_append(BRLCAD "#define HAVE_GL_GLX_H 1\n")
-  endif(OPENGL_INCLUDE_DIR_GLX)
+  endif()
   if(OPENGL_USING_FRAMEWORK)
     config_h_append(BRLCAD "#define HAVE_OPENGL_GL_H 1\n")
   endif(OPENGL_USING_FRAMEWORK)

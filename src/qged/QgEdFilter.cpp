@@ -80,8 +80,8 @@ bool QgEdFilter::eventFilter(QObject *, QEvent *e)
     int smode = c->w->InteractionMode(gpos);
     if (smode == -1)
 	return false;
-    if (c->mdl->interaction_mode != smode) {
-	c->mdl->interaction_mode = smode;
+    if (c->mdl->interactionMode() != smode) {
+	c->mdl->setInteractionMode(smode);
 	emit c->view_update(QG_VIEW_MODE);
 	return false;
     }

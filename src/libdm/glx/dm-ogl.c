@@ -90,7 +90,7 @@
 #include "bn.h"
 #include "bu/file.h"
 #include "bu/process.h"
-#include "bv/defines.h"
+#include "bsg/defines.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
@@ -334,7 +334,7 @@ ogl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	(void)dm_make_current(dmp);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	dm_set_dirty(dmp, 1);
+	dm_set_native_repaint_pending(dmp, 1);
 	return TCL_OK;
     }
     /* allow further processing of this event */
@@ -856,15 +856,14 @@ Done:
 	return DM_NULL;
     }
 
-    /* display list (fontOffset + char) will display a given ASCII char */
+    /* Font glyph cache: fontOffset + char displays a given ASCII char. */
     if ((privvars->fontOffset = glGenLists(128))==0) {
-	bu_log("dm-ogl: Can't make display lists for font.\n");
+	bu_log("dm-ogl: Can't initialize font glyph cache.\n");
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
-    /* This is the applications display list offset */
-    dmp->i->dm_displaylist = privvars->fontOffset + 128;
+    dmp->i->dm_backend_cache = 1;
 
 
     // FOR INITIALIZATION DEBUGGING - enable debugging/logging from the beginning
@@ -916,174 +915,6 @@ Done:
 }
 
 
-int
-ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
-{
-    struct gl_vars *mvars = (struct gl_vars *)dmp1->i->m_vars;
-    struct pogl_vars *privars = (struct pogl_vars *)dmp1->i->dm_vars.priv_vars;
-    GLfloat backgnd[4];
-    GLfloat vf;
-    GLXContext old_glxContext;
-
-    if (dmp1 == (struct dm *)NULL)
-	return BRLCAD_ERROR;
-
-    if (dmp2 == (struct dm *)NULL) {
-	/* create a new graphics context for dmp1 with private display lists */
-
-	old_glxContext = privars->glxc;
-
-	if ((privars->glxc =
-	     glXCreateContext(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->vip,
-			      (GLXContext)NULL, GL_TRUE))==NULL) {
-	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
-	    privars->glxc = old_glxContext;
-
-	    return BRLCAD_ERROR;
-	}
-
-	if (dm_make_current(dmp1) != BRLCAD_OK) {
-	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
-	    privars->glxc = old_glxContext;
-
-	    return BRLCAD_ERROR;
-	}
-
-	/* display list (fontOffset + char) will display a given ASCII char */
-	if ((privars->fontOffset = glGenLists(128))==0) {
-	    bu_log("dm-ogl: Can't make display lists for font.\nUsing old context\n.");
-	    privars->glxc = old_glxContext;
-
-	    return BRLCAD_ERROR;
-	}
-
-	/* This is the applications display list offset */
-	dmp1->i->dm_displaylist = privars->fontOffset + 128;
-
-	gl_setBGColor(dmp1, 0, 0, 0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	if (mvars->doublebuffer)
-	    glDrawBuffer(GL_BACK);
-	else
-	    glDrawBuffer(GL_FRONT);
-
-	/* this is important so that ogl_configureWin knows to set the font */
-	((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->fontstruct = NULL;
-
-	/* do viewport, ortho commands and initialize font */
-	(void)ogl_configureWin_guts(dmp1, 1);
-
-	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple(1, 0xCF33);
-	glDisable(GL_LINE_STIPPLE);
-
-	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
-	glFogi(GL_FOG_MODE, GL_LINEAR);
-	glFogf(GL_FOG_START, 0.0);
-	glFogf(GL_FOG_END, 2.0);
-	glFogfv(GL_FOG_COLOR, backgnd);
-
-	/*XXX Need to do something about VIEWFACTOR */
-	vf = 1.0/(*dmp1->i->dm_vp);
-	glFogf(GL_FOG_DENSITY, vf);
-
-	/* Initialize matrices */
-	/* Leave it in model_view mode normally */
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, 0.0, 2.0);
-	glGetDoublev(GL_PROJECTION_MATRIX, mvars->i.faceplate_mat);
-	glPushMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glPushMatrix();
-	glLoadIdentity();
-	mvars->i.faceFlag = 1;	/* faceplate matrix is on top of stack */
-
-	/* destroy old context */
-	dm_make_current(dmp1);
-	glXDestroyContext(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy, old_glxContext);
-    } else {
-	/* dmp1 will share its display lists with dmp2 */
-
-	if (!BU_STR_EQUAL(dmp1->i->dm_name, dmp2->i->dm_name)) {
-	    return BRLCAD_ERROR;
-	}
-	if (bu_vls_strcmp(&dmp1->i->dm_dName, &dmp2->i->dm_dName)) {
-	    return BRLCAD_ERROR;
-	}
-
-	old_glxContext = ((struct pogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc;
-
-	if ((((struct pogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc =
-	     glXCreateContext(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->vip,
-			      privars->glxc,
-			      GL_TRUE))==NULL) {
-	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
-	    ((struct pogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
-
-	    return BRLCAD_ERROR;
-	}
-
-	if (dm_make_current(dmp2) != BRLCAD_OK) {
-	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
-	    ((struct pogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
-
-	    return BRLCAD_ERROR;
-	}
-
-	((struct pogl_vars *)dmp2->i->dm_vars.priv_vars)->fontOffset = privars->fontOffset;
-	dmp2->i->dm_displaylist = dmp1->i->dm_displaylist;
-
-	gl_setBGColor(dmp2, 0, 0, 0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	if (mvars->doublebuffer)
-	    glDrawBuffer(GL_BACK);
-	else
-	    glDrawBuffer(GL_FRONT);
-
-	/* do viewport, ortho commands and initialize font */
-	(void)ogl_configureWin_guts(dmp2, 1);
-
-	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple(1, 0xCF33);
-	glDisable(GL_LINE_STIPPLE);
-
-	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
-	glFogi(GL_FOG_MODE, GL_LINEAR);
-	glFogf(GL_FOG_START, 0.0);
-	glFogf(GL_FOG_END, 2.0);
-	glFogfv(GL_FOG_COLOR, backgnd);
-
-	/*XXX Need to do something about VIEWFACTOR */
-	vf = 1.0/(*dmp2->i->dm_vp);
-	glFogf(GL_FOG_DENSITY, vf);
-
-	/* Initialize matrices */
-	/* Leave it in model_view mode normally */
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, 0.0, 2.0);
-	glGetDoublev(GL_PROJECTION_MATRIX, ((struct gl_vars *)dmp2->i->m_vars)->i.faceplate_mat);
-	glPushMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glPushMatrix();
-	glLoadIdentity();
-	((struct gl_vars *)dmp2->i->m_vars)->i.faceFlag = 1; /* faceplate matrix is on top of stack */
-
-	/* destroy old context */
-	dm_make_current(dmp2);
-	glXDestroyContext(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy, old_glxContext);
-    }
-
-    return BRLCAD_OK;
-}
-
 /*
  * Output a string.
  * The starting position of the beam is as specified.
@@ -1100,10 +931,11 @@ ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUS
 	glRasterPos2f(x, y);
 
     glListBase(privars->fontOffset);
-    glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
+    glCallLists(strlen(str), GL_UNSIGNED_BYTE, str);
 
     return BRLCAD_OK;
 }
+
 
 int
 ogl_openFb(struct dm *dmp)
@@ -1468,6 +1300,7 @@ struct dm_impl dm_ogl_impl = {
     gl_loadPMatrix,
     gl_popPMatrix,
     ogl_drawString2D,
+    NULL,
     null_String2DBBox,
     gl_drawLine2D,
     gl_drawLine3D,
@@ -1477,8 +1310,6 @@ struct dm_impl dm_ogl_impl = {
     gl_drawPoints3D,
     gl_drawVList,
     gl_drawVListHiddenLine,
-    null_draw_obj,
-    gl_draw_data_axes,
     gl_draw,
     gl_setFGColor,
     gl_setBGColor,
@@ -1500,12 +1331,6 @@ struct dm_impl dm_ogl_impl = {
     gl_getBoundFlag,
     gl_debug,
     gl_logfile,
-    gl_beginDList,
-    gl_endDList,
-    gl_drawDList,
-    gl_freeDLists,
-    gl_genDLists,
-    gl_draw_display_list,
     gl_getDisplayImage, /* display to image function */
     gl_reshape,
     ogl_makeCurrent,
@@ -1521,11 +1346,10 @@ struct dm_impl dm_ogl_impl = {
     NULL,
     ogl_event_cmp,
     gl_fogHint,
-    ogl_share_dlist,
     0,
     1,				/* is graphical */
     "Tk",                       /* uses Tk graphics system */
-    1,				/* has displaylist */
+    1,				/* has backend cache */
     0,                          /* no stereo by default */
     "ogl",
     "X Windows with OpenGL graphics",
@@ -1549,8 +1373,9 @@ struct dm_impl dm_ogl_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
-    {BV_MIN, BV_MIN, BV_MIN},	/* clipmin */
-    {BV_MAX, BV_MAX, BV_MAX},	/* clipmax */
+    {255, 0, 0},/* geometry default color */
+    {BSG_VIEW_MIN, BSG_VIEW_MIN, BSG_VIEW_MIN},	/* clipmin */
+    {BSG_VIEW_MAX, BSG_VIEW_MAX, BSG_VIEW_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* depth buffer is writable */
@@ -1561,7 +1386,9 @@ struct dm_impl dm_ogl_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    &gl_backend_ops,            /* GL backend contract (dm-gl_lod.cpp) */
+    NULL,                       /* backend resource cache */
+    0                           /* backend frame generation */
 };
 
 struct dm dm_ogl = { DM_MAGIC, &dm_ogl_impl, 0 };

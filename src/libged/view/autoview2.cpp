@@ -28,6 +28,7 @@
 #include <cstdlib>
 
 #include "bu/opt.h"
+#include "bsg/util.h"
 #include "dm.h"
 #include "../ged_private.h"
 
@@ -70,7 +71,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
 
     /* default, 0.5 model scale == 2.0 view factor */
-    fastf_t factor = BV_AUTOVIEW_SCALE_DEFAULT;
+    fastf_t factor = BSG_AUTOVIEW_SCALE_DEFAULT;
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -83,11 +84,11 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     int all_view_objs = 0;
     int print_help = 0;
     fastf_t scale = -1.0;
-    struct bview *v = gedp->ged_gvp;
+    struct bsg_view *v = gedp->ged_gvp;
 
     struct bu_opt_desc d[5];
     BU_OPT(d[0], "h", "help",      "",        NULL,     &print_help, "Print help and exit");
-    BU_OPT(d[1], "",   "all-objs", "",        NULL,  &all_view_objs, "Bound all non-faceplate view objects");
+    BU_OPT(d[1], "",   "all-objs", "",        NULL,  &all_view_objs, "Bound all non-faceplate view features");
     BU_OPT(d[2], "s", "scale",  "#", &bu_opt_fastf_t,         &scale, "Set view scale (model scale relative to view size)");
     BU_OPT(d[3], "V", "view",  "name", &bu_opt_vls,           &cvls, "Specify view to adjust");
     BU_OPT_NULL(d[4]);
@@ -104,7 +105,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     argc = opt_ret;
 
     if (bu_vls_strlen(&cvls)) {
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	v = bsg_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
 	if (!v) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
@@ -137,10 +138,10 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	point_t min, max;
 	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc, argv, 0, min, max) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
-	bv_autoview_bounds(v, factor, min, max);
+	bsg_autoview_bounds(v, factor, min, max);
     } else {
-	// libbv has the nuts and bolts
-	bv_autoview(v, factor, all_view_objs);
+	// libbsg has the nuts and bolts
+	bsg_autoview(v, factor, all_view_objs);
     }
 
     return BRLCAD_OK;
@@ -154,4 +155,3 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -43,6 +43,15 @@ if(TARGET ged_test_plugins)
   add_dependencies(ged_test_plugins ged_plugins)
 endif(TARGET ged_test_plugins)
 
+brlcad_addexec(ged_test_cmd_schemas test_cmd_schemas.cpp libged TEST)
+if(TARGET ged_test_cmd_schemas)
+  add_dependencies(ged_test_cmd_schemas ged_plugins)
+endif(TARGET ged_test_cmd_schemas)
+brlcad_add_test(NAME ged_test_cmd_schemas COMMAND ged_test_cmd_schemas "${CMAKE_CURRENT_SOURCE_DIR}/ged_tests.g")
+if(TARGET ged_test_cmd_schemas)
+  set_property(TEST ged_test_cmd_schemas APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_cmd_schemas)
+
 brlcad_addexec(ged_test_material test_material.c libged TEST)
 if(TARGET ged_test_material)
   add_dependencies(ged_test_material ged_plugins)
@@ -57,6 +66,26 @@ brlcad_addexec(ged_test_select test_select.cpp libged TEST)
 if(TARGET ged_test_select)
   add_dependencies(ged_test_select ged_plugins)
 endif(TARGET ged_test_select)
+
+# Public GED state-service coverage.  This deliberately avoids removed
+# migration-internal APIs.
+brlcad_addexec(ged_test_state_services test_state_services.cpp libged TEST)
+if(TARGET ged_test_state_services)
+  add_dependencies(ged_test_state_services ged_plugins)
+endif(TARGET ged_test_state_services)
+brlcad_add_test(NAME ged_test_state_services COMMAND ged_test_state_services "${CMAKE_CURRENT_SOURCE_DIR}/draw")
+if(TARGET ged_test_state_services)
+  set_property(TEST ged_test_state_services APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_state_services)
+brlcad_add_test(NAME slow-ged_test_state_services_100k COMMAND ged_test_state_services "${CMAKE_CURRENT_SOURCE_DIR}/draw" 100000)
+if(TEST slow-ged_test_state_services_100k)
+  set_property(TEST slow-ged_test_state_services_100k PROPERTY SKIP_RETURN_CODE 123)
+  set_property(TEST slow-ged_test_state_services_100k APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TEST slow-ged_test_state_services_100k)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_state_services_tmp.g)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_state_services_100000_tmp.g)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_state_services_test_cache)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_state_services_test_cache_100000)
 
 brlcad_addexec(ged_test_search test_search.c libged TEST)
 if(TARGET ged_test_search)
@@ -83,6 +112,10 @@ add_subdirectory(bot)
 add_subdirectory(draw)
 add_subdirectory(edit)
 
+if(TEST ged_test_state_services)
+  set_property(TEST ged_test_state_services APPEND PROPERTY LABELS drawing_baseline)
+endif()
+
 # Note: it is particularly important that the lint tests in particular are kept
 # in a separate file, since its bad input examples stand an excellent chance of
 # breaking commands.
@@ -92,6 +125,7 @@ cmakefiles(
   search_tests.g
   obb_tests.g
   ged_tests.g
+  test_cmd_schemas.cpp
   pnts_in_out.g
 )
 

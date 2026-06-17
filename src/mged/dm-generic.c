@@ -52,17 +52,26 @@ int
 common_dm(struct mged_state *s, int argc, const char *argv[])
 {
     int status;
+    struct bsg_adc_state adc_record = {0};
+    struct bsg_adc_state *adc = &adc_record;
+    struct bsg_grid_state grid_record = {0};
+    struct bsg_grid_state *grid = &grid_record;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (s->dbip == DBI_NULL)
 	return TCL_OK;
 
+    (void)mged_dm_adc_state_get(s->mged_curr_dm, adc);
+    (void)mged_dm_grid_state_get(s->mged_curr_dm, grid);
+
     if (BU_STR_EQUAL(argv[0], "idle")) {
 
 	/* redraw after scaling */
+	struct bsg_lod_source_policy_settings lod_policy;
 	if (s->gedp && s->gedp->ged_gvp &&
-	    s->gedp->ged_gvp->gv_s->adaptive_plot_csg &&
-	    s->gedp->ged_gvp->gv_s->redraw_on_zoom &&
+	    bsg_view_lod_source_policy_get(s->gedp->ged_gvp, &lod_policy) &&
+	    lod_policy.csg_enabled &&
+	    lod_policy.zoom_refresh &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||
 	     am_mode == AMM_CON_SCALE_Y ||
@@ -112,8 +121,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 	fx = dm_Xx2Normal(DMP, atoi(argv[1]));
 	fy = dm_Xy2Normal(DMP, atoi(argv[2]), 0);
-	x = fx * BV_MAX;
-	y = fy * BV_MAX;
+	x = fx * BSG_VIEW_MAX;
+	y = fy * BSG_VIEW_MAX;
 
 	if (mged_variables->mv_faceplate &&
 	    mged_variables->mv_orig_gui) {
@@ -132,14 +141,14 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 	mged_variables->mv_orig_gui = 0;
 	fy = dm_Xy2Normal(DMP, atoi(argv[2]), 1);
-	y = fy * BV_MAX;
+	y = fy * BSG_VIEW_MAX;
 
     end:
 	if (mged_variables->mv_mouse_behavior == 'q' && !stolen) {
 	    point_t view_pt;
 	    point_t model_pt;
 
-	    if (grid_state->snap)
+	    if (grid->snap)
 		snap_to_grid(s, &fx, &fy);
 
 	    if (mged_variables->mv_perspective_mode)
@@ -159,7 +168,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    mged_variables->mv_mouse_behavior == 'r' ||
 		    mged_variables->mv_mouse_behavior == 'z') && !stolen) {
 
-	    if (grid_state->snap)
+	    if (grid->snap)
 		snap_to_grid(s, &fx, &fy);
 
 	    rubber_band->rb_active = 1;
@@ -184,18 +193,18 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
 	} else if (mged_variables->mv_mouse_behavior == 'o' && !stolen) {
 	    bu_vls_printf(&vls, "mouse_rt_obj_select %d %d", x, y);
-	} else if (adc_state->adc_draw && mged_variables->mv_transform == 'a' && !stolen) {
+	} else if (adc->draw && mged_variables->mv_transform == 'a' && !stolen) {
 	    point_t model_pt;
 	    point_t view_pt;
 
-	    if (grid_state->snap)
+	    if (grid->snap)
 		snap_to_grid(s, &fx, &fy);
 
 	    VSET(view_pt, fx, fy, 1.0);
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->snap && !stolen &&
+	} else if (grid->snap && !stolen &&
 		   SEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
 	    point_t model_pt;
@@ -207,7 +216,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->snap && !stolen &&
+	} else if (grid->snap && !stolen &&
 		   OEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
 	    point_t model_pt;
@@ -219,7 +228,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	} else if (grid_state->snap && !stolen &&
+	} else if (grid->snap && !stolen &&
 		   s->global_editing_state != ST_S_PICK && s->global_editing_state != ST_O_PICK &&
 		   s->global_editing_state != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
 	    point_t view_pt;
@@ -271,7 +280,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    case 't':
 		am_mode = AMM_TRAN;
 
-		if (grid_state->snap) {
+		if (grid->snap) {
 		    int save_edflag;
 
 		    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
@@ -332,8 +341,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 	switch (*argv[1]) {
 	    case '1':
-		fx = dm_Xx2Normal(DMP, dm_omx) * BV_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * BSG_VIEW_MAX - adc->dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BSG_VIEW_MAX - adc->dv_y;
 
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(s->interp, bu_vls_addr(&vls));
@@ -342,8 +351,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		am_mode = AMM_ADC_ANG1;
 		break;
 	    case '2':
-		fx = dm_Xx2Normal(DMP, dm_omx) * BV_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * BSG_VIEW_MAX - adc->dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BSG_VIEW_MAX - adc->dv_y;
 
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(s->interp, bu_vls_addr(&vls));
@@ -358,7 +367,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 		    VSET(view_pt, dm_Xx2Normal(DMP, dm_omx), dm_Xy2Normal(DMP, dm_omy, 1), 0.0);
 
-		    if (grid_state->snap)
+		    if (grid->snap)
 			snap_to_grid(s, &view_pt[X], &view_pt[Y]);
 
 		    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -373,10 +382,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 		break;
 	    case 'd':
-		fx = (dm_Xx2Normal(DMP, dm_omx) * BV_MAX -
-		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
-		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX -
-		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
+		fx = (dm_Xx2Normal(DMP, dm_omx) * BSG_VIEW_MAX -
+		      adc->dv_x) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
+		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * BSG_VIEW_MAX -
+		      adc->dv_y) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
 
 		td = sqrt(fx * fx + fy * fy);
 
@@ -587,8 +596,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	DMP_dirty = 1;
-	dm_set_dirty(DMP, 1);
+	mged_dm_repaint_request(s->mged_curr_dm, MGED_REPAINT_DEVICE_SETTING);
 	(void)dm_make_current(DMP);
 	return dm_set_bg(DMP, r, g, b, r, g, b);
     }
@@ -608,7 +616,7 @@ view_state_flag_hook(const struct bu_structparse *UNUSED(sdp),
 {
     struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
     if (hs->vs)
-	hs->vs->vs_flag = 1;
+	bsg_view_refresh_request(hs->vs->vs_gvp, BSG_VIEW_REFRESH_VIEW);
 }
 
 void
@@ -619,7 +627,7 @@ dirty_hook(const struct bu_structparse *UNUSED(sdp),
 	void *data)
 {
     struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    *(hs->dirty_global) = 1;
+    mged_dm_repaint_request(hs->mdmp, MGED_REPAINT_DEVICE_SETTING);
 }
 
 void
@@ -630,7 +638,7 @@ zclip_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    hs->vs->vs_gvp->gv_s->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    bsg_view_set_zclip(hs->vs->vs_gvp, dm_get_zclip(hs->hs_dmp));
     dirty_hook(sdp, name, base, value, data);
 }
 
@@ -638,7 +646,7 @@ void *
 set_hook_data(struct mged_state *s, struct mged_view_hook_state *hs) {
     hs->hs_dmp = DMP;
     hs->vs = view_state;
-    hs->dirty_global = &(DMP_dirty);
+    hs->mdmp = s->mged_curr_dm;
     return (void *)hs;
 }
 

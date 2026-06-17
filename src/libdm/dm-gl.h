@@ -32,8 +32,10 @@
 
 #include "vmath.h"
 #include "bu.h"
-#include "bv/vlist.h"
-#include "bv/defines.h"
+#include "bsg/vlist.h"
+
+struct bsg_render_item;
+#include "bsg/defines.h"
 #include "dm.h"
 
 #define GL_SILENCE_DEPRECATION 1
@@ -131,6 +133,7 @@ struct gl_vars {
     double adaptive_zclip_min;
     double adaptive_zclip_max;
     struct gl_internal_vars i;
+    struct bu_ptbl pending_command_list_deletes;
 };
 
 
@@ -142,17 +145,16 @@ DMGL_EXPORT extern void gl_debug_print(struct dm *dmp, const char *title, int lv
 
 DMGL_EXPORT extern struct bu_structparse gl_vparse[];
 
+DMGL_EXPORT extern void gl_update_fast_wireframe_active(struct dm *dmp);
 DMGL_EXPORT extern void glvars_init(struct dm *dmp);
 
 DMGL_EXPORT extern int drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
 DMGL_EXPORT extern int drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
 DMGL_EXPORT extern int drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor);
 
-DMGL_EXPORT extern int gl_beginDList(struct dm *dmp, unsigned int list);
 DMGL_EXPORT extern int gl_debug(struct dm *dmp, int vl);
-DMGL_EXPORT extern int gl_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data);
+DMGL_EXPORT extern int gl_draw(struct dm *dmp, bsg_vlist *(*callback_function)(void *), void **data);
 DMGL_EXPORT extern int gl_drawBegin(struct dm *dmp);
-DMGL_EXPORT extern int gl_drawDList(unsigned int list);
 DMGL_EXPORT extern int gl_drawEnd(struct dm *dmp);
 DMGL_EXPORT extern int gl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
 DMGL_EXPORT extern int gl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
@@ -160,14 +162,19 @@ DMGL_EXPORT extern int gl_drawLines3D(struct dm *dmp, int npoints, point_t *poin
 DMGL_EXPORT extern int gl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 DMGL_EXPORT extern int gl_drawPoint3D(struct dm *dmp, point_t point);
 DMGL_EXPORT extern int gl_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
-DMGL_EXPORT extern int gl_drawVList(struct dm *dmp, struct bv_vlist *vp);
-DMGL_EXPORT extern int gl_drawVListHiddenLine(struct dm *dmp, struct bv_vlist *vp);
-DMGL_EXPORT extern int gl_draw_obj(struct dm *dmp, struct bv_scene_obj *s);
-DMGL_EXPORT extern int gl_draw_data_axes(struct dm *dmp, fastf_t sf,  struct bv_data_axes_state *bndasp);
-DMGL_EXPORT extern int gl_draw_display_list(struct dm *dmp, struct display_list *obj);
-DMGL_EXPORT extern int gl_endDList(struct dm *dmp);
-DMGL_EXPORT extern int gl_freeDLists(struct dm *dmp, unsigned int list, int range);
-DMGL_EXPORT extern int gl_genDLists(struct dm *dmp, size_t range);
+DMGL_EXPORT extern int gl_drawVList(struct dm *dmp, bsg_vlist *vp);
+DMGL_EXPORT extern int gl_drawVListHiddenLine(struct dm *dmp, bsg_vlist *vp);
+DMGL_EXPORT extern int gl_draw_item(struct dm *dmp, const struct bsg_render_item *item);
+DMGL_EXPORT extern void gl_command_list_delete_enqueue(struct dm *dmp, unsigned int list);
+DMGL_EXPORT extern void gl_command_list_delete_flush(struct dm *dmp);
+
+/* Modern renderer-backend contract for the
+ * GL family of display managers (dm-gl, dm-qtgl, dm-glx, dm-wgl, dm-swrast).
+ * Each GL plugin slots this into dm_impl::dm_backend_ops at static-init time
+ * so dm_backend_draw_item() and the dm-owned resource cache route through the
+ * GL-aware implementation defined in dm-gl_lod.cpp. */
+DMGL_EXPORT extern const struct dm_backend_ops gl_backend_ops;
+
 DMGL_EXPORT extern int gl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha);
 DMGL_EXPORT extern int gl_get_internal(struct dm *dmp);
 DMGL_EXPORT extern int gl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);

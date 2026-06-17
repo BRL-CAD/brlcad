@@ -55,24 +55,22 @@
 #include "qtcad/defines.h"
 #include "qtcad/QgConsoleListener.h"
 
-class QTCAD_EXPORT QgConsoleWidgetCompleter : public QCompleter
-{
+class QTCAD_EXPORT QgConsoleWidgetCompleter : public QCompleter {
 public:
-  /**
-   * Update the completion model given a string.  The given string
-   * is the current console text between the cursor and the start of
-   * the line.
-   */
-  virtual void updateCompletionModel(const QString& str) = 0;
+	/**
+	 * Update the completion model given a string.  The given string
+	 * is the current console text between the cursor and the start of
+	 * the line.
+	 */
+	virtual void updateCompletionModel(const QString& str) = 0;
 };
 
 /* Completion class specific to GED command line */
-class QTCAD_EXPORT GEDShellCompleter : public QgConsoleWidgetCompleter
-{
+class QTCAD_EXPORT GEDShellCompleter : public QgConsoleWidgetCompleter {
 public:
-  GEDShellCompleter(QWidget *p, struct ged *ged_ptr);
-  void updateCompletionModel(const QString& console_txt) override;
-  struct ged *gedp = NULL;
+	GEDShellCompleter(QWidget *p, struct ged *ged_ptr);
+	void updateCompletionModel(const QString& console_txt) override;
+	struct ged *gedp = nullptr;
 };
 
 /**
@@ -85,97 +83,119 @@ public:
   signals and written by slots.  Users should not attempt to manipulate the
   underlying QPlainTextEdit widget directly.
 */
-class QTCAD_EXPORT QgConsole : public QWidget
-{
-  Q_OBJECT
+class QTCAD_EXPORT QgConsole : public QWidget {
+	Q_OBJECT
+
 
 public:
-  QgConsole(QWidget* Parent);
-  virtual ~QgConsole();
+	QgConsole(QWidget* Parent);
+	virtual ~QgConsole();
 
-  /// Returns the current font
-  QFont getFont();
-  /// Sets current font
-  void setFont(const QFont &font);
+	/// Returns the current font
+	QFont getFont();
+	/// Sets current font
+	void setFont(const QFont &font);
 
-  /// Set a completer for this console widget
-  void setCompleter(QgConsoleWidgetCompleter* completer);
+	/// Set a completer for this console widget
+	void setCompleter(QgConsoleWidgetCompleter* completer);
 
-  QPoint getCursorPosition();
+	QPoint getCursorPosition();
 
-  // combine multiple history lines and replace them with the combination
-  bool consolidateHistory(size_t start, size_t end);
-  size_t historyCount();
-  std::string historyAt(size_t ind);
+	// combine multiple history lines and replace them with the combination
+	bool consolidateHistory(size_t start, size_t end);
+	size_t historyCount();
+	std::string historyAt(size_t ind);
 
-  void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
-  std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *> listeners;
+	void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
 
-  // When inserting a completion, need a setting to control
-  // how we handle slashes
-  int split_slash = 0;
+	/**
+	 * Look up the active listener for subprocess @p p / stream @p t.
+	 * Returns nullptr if no matching listener is registered.
+	 */
+	QgConsoleListener *findListener(struct ged_subprocess *p, int t) const;
+
+	/**
+	 * Remove and delete the listener for subprocess @p p / stream @p t.
+	 * If the listener does not exist this is a no-op.
+	 * Must be called on the GUI thread.
+	 */
+	void removeListener(struct ged_subprocess *p, int t);
+
+	// When inserting a completion, need a setting to control
+	// how we handle slashes
+	int split_slash = 0;
 
 signals:
-  /// Signal emitted whenever the user enters a command
-  void executeCommand(const QString& cmd);
+	/// Signal emitted whenever the user enters a command
+	void executeCommand(const QString& cmd);
 
-  /// Signal that there is queued, unprinted buffer output
-  void queued_log(const QString& Text);
+	/// Signal that there is queued, unprinted buffer output
+	void queued_log(const QString& Text);
 
 public slots:
-  /// Writes the supplied text to the console
-  void printString(const QString& Text);
+	/// Writes the supplied text to the console
+	void printString(const QString& Text);
 
-  /// Writes the supplied text to the console
-  void printStringBeforePrompt(const QString& Text);
+	/// Writes the supplied text to the console
+	void printStringBeforePrompt(const QString& Text);
 
-  /// Clears a listener (called by the listener's finished() signal)
-  void detach(struct ged_subprocess *p, int t);
+	/// Clears a listener (called by the listener's finished() signal)
+	void detach(struct ged_subprocess *p, int t);
 
-  /// Updates the current command. Unlike printString, this will affect the
-  /// current command being typed.
-  void printCommand(const QString& cmd);
+	/// Updates the current command. Unlike printString, this will affect the
+	/// current command being typed.
+	void printCommand(const QString& cmd);
 
-  /// Clears the contents of the console
-  void clear();
+	/// Clears the contents of the console
+	void clear();
 
-  /// Puts out an input accepting prompt.
-  /// It is recommended that one uses prompt instead of printString() to print
-  /// an input prompt since this call ensures that the prompt is shown on a new
-  /// line.
-  void prompt(const QString& text);
+	/// Puts out an input accepting prompt.
+	/// It is recommended that one uses prompt instead of printString() to print
+	/// an input prompt since this call ensures that the prompt is shown on a new
+	/// line.
+	void prompt(const QString& text);
 
-  /// Inserts the given completion string at the cursor.  This will replace
-  /// the current word that the cursor is touching with the given text.
-  /// Determines the word using QTextCursor::StartOfWord, EndOfWord.
-  void insertCompletion(const QString& text);
+	/// Inserts the given completion string at the cursor.  This will replace
+	/// the current word that the cursor is touching with the given text.
+	/// Determines the word using QTextCursor::StartOfWord, EndOfWord.
+	void insertCompletion(const QString& text);
 
 private:
-  QgConsole(const QgConsole&);
-  QgConsole& operator=(const QgConsole&);
+	QgConsole(const QgConsole&);
+	QgConsole& operator=(const QgConsole&);
 
-  // Used by printStringBeforePrompt to queue up a timed repetition of printing
-  // to catch anything recently added but not subsequently printed successfully
-  // by an event based trigger.  Avoids output getting "stuck" in the buffer
-  // waiting for an event.  Noticed when rt instances are lingering but not
-  // closed and typing heavily on the command prompt - the last line or two of
-  // rt output sometimes weren't printed under those conditions until the
-  // window was closed.
-  void emit_queued() {
-     QString estring("");
-     Q_EMIT queued_log(estring);
-  }
+	// Used by printStringBeforePrompt to queue up a timed repetition of printing
+	// to catch anything recently added but not subsequently printed successfully
+	// by an event based trigger.  Avoids output getting "stuck" in the buffer
+	// waiting for an event.  Noticed when rt instances are lingering but not
+	// closed and typing heavily on the command prompt - the last line or two of
+	// rt output sometimes weren't printed under those conditions until the
+	// window was closed.
+	void emit_queued()
+	{
+		QString estring("");
+		Q_EMIT queued_log(estring);
+	}
 
-  QString prompt_str;
-  int prompt_start = 0;
-  int64_t log_timestamp = 0;
-  QString logbuf;
+	QString prompt_str;
+	int prompt_start = 0;
+	int64_t log_timestamp = 0;
+	QString logbuf;
 
-  void internalExecuteCommand(const QString& Command);
+	void internalExecuteCommand(const QString& Command);
 
-  class pqImplementation;
-  pqImplementation* const Implementation;
-  friend class pqImplementation;
+	/*
+	 * Active subprocess listeners, keyed by (subprocess*, stream-type).
+	 *
+	 * Ownership: each QgConsoleListener is created with 'this' as QObject
+	 * parent, so QgConsole destructor automatically deletes any listeners
+	 * that were not already removed by detach() / removeListener().
+	 */
+	std::map<std::pair<struct ged_subprocess *, int>, QgConsoleListener *> m_listeners;
+
+	class pqImplementation;
+	pqImplementation* const Implementation;
+	friend class pqImplementation;
 };
 
 
@@ -189,4 +209,3 @@ private:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -152,13 +152,7 @@ libdm_init(void)
 	    void *info_val = bu_dlsym(dl_handle, psymbol);
 	    const struct fb_plugin *(*plugin_info)() = (const struct fb_plugin *(*)())(intptr_t)info_val;
 	    if (!plugin_info) {
-		const char * const error_msg = bu_dlerror();
-
-		if (error_msg)
-		    bu_vls_printf(&init_msgs, "%s\n", error_msg);
-
-		bu_vls_printf(&init_msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
-		bu_vls_printf(&init_msgs, "Could not find '%s' symbol in plugin\n", psymbol);
+		(void)bu_dlerror();
 		continue;
 	    }
 

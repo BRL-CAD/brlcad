@@ -358,10 +358,10 @@ sedit_vpick(struct rt_edit *s)
     /* draw arrow, etc. */
     bu_clbk_t f = NULL;
     void *d = NULL;
-    int vs_flag = 1;
+    int view_update_request = 1;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
     if (f)
-	(*f)(0, NULL, d, &vs_flag);
+	(*f)(0, NULL, d, &view_update_request);
 }
 
 C_DECL void

@@ -29,6 +29,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <math.h>
 #include "bio.h"
 
@@ -37,6 +38,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 #include "../../librt_private.h"
 
@@ -486,7 +488,7 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 
 
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
 {
     size_t i;
     size_t p;	/* current polygon number */
@@ -502,53 +504,133 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	struct rt_pg_face_internal *pp;
 
 	pp = &pgp->poly[p];
-	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)],
-		     BV_VLIST_LINE_MOVE);
+	BSG_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)],
+		     BSG_VLIST_LINE_MOVE);
 	for (i=0; i < pp->npts; i++) {
-	    BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*i],
-			 BV_VLIST_LINE_DRAW);
+	    BSG_ADD_VLIST(vlfree, vhead, &pp->verts[3*i],
+			 BSG_VLIST_LINE_DRAW);
 	}
     }
     return 0;		/* OK */
 }
 
 
-/**
- * Convert to vlist, draw as polygons.
- */
-int
-rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+static int
+pg_indexed_face_valid(const struct rt_pg_face_internal *face)
 {
-    size_t i;
-    size_t p;	/* current polygon number */
-    struct rt_pg_internal *pgp;
+    return face && face->verts && face->npts >= 3;
+}
 
-    BU_CK_LIST_HEAD(vhead);
+
+static void
+pg_indexed_face_normal(const struct rt_pg_face_internal *face,
+		       vect_t normal)
+{
+    vect_t aa, bb;
+
+    VSETALL(normal, 0.0);
+    if (!pg_indexed_face_valid(face))
+	return;
+
+    VSUB2(aa, &face->verts[0], &face->verts[3]);
+    VSUB2(bb, &face->verts[0], &face->verts[6]);
+    VCROSS(normal, aa, bb);
+    if (MAGSQ(normal) > SMALL_FASTF)
+	VUNITIZE(normal);
+    else
+	VSETALL(normal, 0.0);
+}
+
+
+int
+rt_pg_indexed_face_set(struct rt_primitive_indexed_face_set *face_set,
+		       struct rt_db_internal *ip,
+		       const struct bg_tess_tol *UNUSED(ttol),
+		       const struct bn_tol *UNUSED(tol),
+		       const struct bsg_view *UNUSED(info))
+{
+    struct rt_pg_internal *pg;
+    point_t *points = NULL;
+    vect_t *normals = NULL;
+    int *indices = NULL;
+    size_t valid_faces = 0;
+    size_t point_count = 0;
+    size_t index_count = 0;
+    size_t normal_count = 0;
+    size_t point_idx = 0;
+    size_t index_idx = 0;
+    size_t normal_idx = 0;
+
+    if (!face_set || !ip)
+	return BRLCAD_ERROR;
+
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &rt_vlfree;
-    pgp = (struct rt_pg_internal *)ip->idb_ptr;
-    RT_PG_CK_MAGIC(pgp);
+    pg = (struct rt_pg_internal *)ip->idb_ptr;
+    RT_PG_CK_MAGIC(pg);
 
-    for (p = 0; p < pgp->npoly; p++) {
-	struct rt_pg_face_internal *pp;
-	vect_t aa, bb, norm;
+    if (!pg->poly || !pg->npoly)
+	return BRLCAD_OK;
 
-	pp = &pgp->poly[p];
-	if (pp->npts < 3)
+    for (size_t i = 0; i < pg->npoly; i++) {
+	const struct rt_pg_face_internal *face = &pg->poly[i];
+	if (!pg_indexed_face_valid(face))
 	    continue;
-	VSUB2(aa, &pp->verts[3*(0)], &pp->verts[3*(1)]);
-	VSUB2(bb, &pp->verts[3*(0)], &pp->verts[3*(2)]);
-	VCROSS(norm, aa, bb);
-	VUNITIZE(norm);
-	BV_ADD_VLIST(vlfree, vhead, norm, BV_VLIST_POLY_START);
-
-	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_MOVE);
-	for (i=0; i < pp->npts-1; i++) {
-	    BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*i], BV_VLIST_POLY_DRAW);
-	}
-	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_END);
+	if (point_count > (size_t)INT_MAX - face->npts)
+	    return BRLCAD_ERROR;
+	valid_faces++;
+	point_count += face->npts;
+	index_count += face->npts + 1;
+	normal_count += face->npts;
     }
-    return 0;		/* OK */
+
+    if (!valid_faces)
+	return BRLCAD_OK;
+
+    points = (point_t *)bu_calloc(point_count, sizeof(point_t),
+	    "POLY indexed-face points");
+    normals = (vect_t *)bu_calloc(normal_count, sizeof(vect_t),
+	    "POLY indexed-face normals");
+    indices = (int *)bu_calloc(index_count, sizeof(int),
+	    "POLY indexed-face indices");
+
+    for (size_t i = 0; i < pg->npoly; i++) {
+	const struct rt_pg_face_internal *face = &pg->poly[i];
+	vect_t face_normal;
+
+	if (!pg_indexed_face_valid(face))
+	    continue;
+
+	pg_indexed_face_normal(face, face_normal);
+
+	VMOVE(points[point_idx], &face->verts[3 * (face->npts - 1)]);
+	indices[index_idx] = (int)point_idx;
+	VMOVE(normals[normal_idx], face_normal);
+	normal_idx++;
+	point_idx++;
+	index_idx++;
+
+	for (size_t j = 0; j < face->npts - 1; j++) {
+	    VMOVE(points[point_idx], &face->verts[3 * j]);
+	    indices[index_idx] = (int)point_idx;
+	    VMOVE(normals[normal_idx], face_normal);
+	    normal_idx++;
+	    point_idx++;
+	    index_idx++;
+	}
+
+	indices[index_idx] = -1;
+	index_idx++;
+    }
+
+    face_set->points = points;
+    face_set->point_count = point_count;
+    face_set->normals = normals;
+    face_set->normal_count = normal_count;
+    face_set->indices = indices;
+    face_set->index_count = index_count;
+    face_set->source_identity = (uint64_t)(uintptr_t)pg;
+    face_set->geometry_revision++;
+    return BRLCAD_OK;
 }
 
 

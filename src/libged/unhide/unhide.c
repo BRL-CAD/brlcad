@@ -28,6 +28,8 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/bsg_ged_draw.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -83,25 +85,38 @@ ged_unhide_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	raw.h_name_hidden = (unsigned char)(0x0);
+	int visibility_changed = raw.h_name_hidden ||
+	    (dp->d_flags & RT_DIR_HIDDEN);
+	if (visibility_changed) {
+	    raw.h_name_hidden = (unsigned char)(0x0);
 
-	BU_EXTERNAL_INIT(&tmp);
-	db5_export_object3(&tmp, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-			   dp->d_namep,
-			   raw.h_name_hidden,
-			   &raw.attributes,
-			   &raw.body,
-			   raw.major_type, raw.minor_type,
-			   raw.a_zzz, raw.b_zzz);
-	bu_free_external(&ext);
+	    BU_EXTERNAL_INIT(&tmp);
+	    db5_export_object3(&tmp, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+			       dp->d_namep,
+			       raw.h_name_hidden,
+			       &raw.attributes,
+			       &raw.body,
+			       raw.major_type, raw.minor_type,
+			       raw.a_zzz, raw.b_zzz);
+	    bu_free_external(&ext);
 
-	if (db_put_external(&tmp, dp, dbip)) {
-	    bu_vls_printf(gedp->ged_result_str, "db_put_external() failed for %s\n", dp->d_namep);
+	    if (db_put_external(&tmp, dp, dbip)) {
+		bu_vls_printf(gedp->ged_result_str, "db_put_external() failed for %s\n", dp->d_namep);
+		bu_free_external(&tmp);
+		continue;
+	    }
 	    bu_free_external(&tmp);
-	    continue;
+	    dp->d_flags &= (~RT_DIR_HIDDEN);
+	    (void)ged_event_notify_object_visibility_changed(gedp,
+		    dp->d_namep, NULL);
+	} else {
+	    bu_free_external(&ext);
 	}
-	bu_free_external(&tmp);
-	dp->d_flags &= (~RT_DIR_HIDDEN);
+
+	struct ged_draw_transaction txn =
+	    ged_draw_transaction_make_value(GED_DRAW_TXN_VISIBILITY,
+					    dp->d_namep, 1.0);
+	ged_draw_apply_transaction(gedp, &txn, NULL);
     }
 
     return BRLCAD_OK;

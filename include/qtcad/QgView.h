@@ -26,98 +26,92 @@
 
 #include "common.h"
 
-extern "C" {
-#include "bu/ptbl.h"
-#include "bg/polygon.h"
-#include "bv.h"
-#include "dm.h"
-}
-
 #include <vector>
 #include <QBoxLayout>
-#include <QImage>
-#include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
-#include "qtcad/QgSW.h"
-#ifdef BRLCAD_OPENGL
-#  include "qtcad/QgGL.h"
-#endif
+#include "qtcad/QgTypes.h"
 
-#define QgView_AUTO 0
-#define QgView_SW 1
-#ifdef BRLCAD_OPENGL
-#  define QgView_GL 2
-#endif
+class QgCanvasBase;
+class QImage;
+class QObject;
+class QgViewFilter;
 
-class QTCAD_EXPORT QgView : public QWidget
+struct bsg_view;
+struct dm;
+struct fb;
+
+class QTCAD_EXPORT QgView : public QWidget {
+Q_OBJECT
+Q_DISABLE_COPY_MOVE(QgView)
+
+
+public:
+explicit QgView(QWidget *parent = nullptr, int type = QgView_AUTO, struct fb *fbp = nullptr);
+~QgView();
+
+int view_type();
+void set_current(int);
+int current();
+
+void stash_hashes(); // Store current dmp and v hash values
+bool diff_hashes();  // Set dmp dirty flag if current hashes != stashed hashes.  (Does not update   stored hash values - use stash_hashes for that operation.)
+
+void save_image(int quad = 0);
+void render_to_file(const QString &filename);
+/* Render the current view and return the raw DM pixel data.
+ * Returns a null QImage (check with isNull()) on failure. */
+void get_viewport_image(QImage &img);
+
+bool isValid();
+
+struct bsg_view * view();
+struct dm * dmp();
+struct fb * ifp();
+
+void set_view(struct bsg_view *);
+
+void aet(double a, double e, double t);
+
+QObject *active_event_filter() const
 {
-    Q_OBJECT
+return curr_event_filter;
+}
 
-    public:
-	explicit QgView(QWidget *parent = nullptr, int type = 0, struct fb *fbp = NULL);
-	~QgView();
+// Wrappers around Qt's facility for adding eventFilter objects to
+// widgets.  This is how custom key binding modes are enabled and
+// disabled in QgView windows.
+void add_event_filter(QObject *);
+void installFilter(QgViewFilter *);
 
-	int view_type();
-	void set_current(int);
-	int current();
+// If a filter object is supplied, remove just that filter.  If nullptr is
+// passed in, remove all filters added using add_event_filter.  Does
+// not clear all event filters of any sort (i.e. internal filters used
+// by Qt), just those managed using these methods.
+void clear_event_filter(QObject *);
+void clearFilter(QgViewFilter *);
 
-	void stash_hashes(); // Store current dmp and v hash values
-	bool diff_hashes();  // Set dmp dirty flag if current hashes != stashed hashes.  (Does not update   stored hash values - use stash_hashes for that operation.)
+void enableDefaultKeyBindings();
+void disableDefaultKeyBindings();
 
-	void save_image(int quad = 0);
-	void render_to_file(const QString &filename);
-	/* Render the current view and return the raw DM pixel data.
-	 * Returns a null QImage (check with isNull()) on failure. */
-	void get_viewport_image(QImage &img);
+void enableDefaultMouseBindings();
+void disableDefaultMouseBindings();
 
-	bool isValid();
+signals:
+void changed(QgView *);
+void init_done();
 
-	struct bview * view();
-	struct dm * dmp();
-	struct fb * ifp();
+public slots:
+void need_update(QgViewUpdateFlags);
+void do_view_changed();
+void do_init_done();
+void set_lmouse_move_default(int);
 
-	void set_view(struct bview *);
-
-	void aet(double a, double e, double t);
-
-	QObject *curr_event_filter = NULL;
-	void set_draw_custom(void (*draw_custom)(struct bview *, void *), void *draw_udata);
-
-	// Wrappers around Qt's facility for adding eventFilter objects to
-	// widgets.  This is how custom key binding modes are enabled and
-	// disabled in QgView windows.
-	void add_event_filter(QObject *);
-
-	// If a filter object is supplied, remove just that filter.  If NULL is
-	// passed in, remove all filters added using add_event_filter.  Does
-	// not clear all event filters of any sort (i.e. internal filters used
-	// by Qt), just those managed using these methods.
-	void clear_event_filter(QObject *);
-
-	void enableDefaultKeyBindings();
-	void disableDefaultKeyBindings();
-
-	void enableDefaultMouseBindings();
-	void disableDefaultMouseBindings();
-
-    signals:
-	void changed(QgView *);
-	void init_done();
-
-    public slots:
-	void need_update(unsigned long long);
-	void do_view_changed();
-	void do_init_done();
-	void set_lmouse_move_default(int);
-
-    private:
-        QBoxLayout *l = NULL;
-	QgSW *canvas_sw = NULL;
-#ifdef BRLCAD_OPENGL
-        QgGL *canvas_gl = NULL;
-#endif
-	std::vector<QObject *> filters;
+private:
+QBoxLayout  *l = nullptr;
+QgCanvasBase *canvas = nullptr;
+QObject     *curr_event_filter = nullptr;
+std::vector<QObject *> filters;
 };
 
 #endif /* QGVIEW_H */
@@ -130,4 +124,3 @@ class QTCAD_EXPORT QgView : public QWidget
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

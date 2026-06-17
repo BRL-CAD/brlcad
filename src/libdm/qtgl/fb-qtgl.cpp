@@ -55,6 +55,8 @@
 #include "common.h"
 
 #include "bu/app.h"
+#include "bu/str.h"
+#include "bsg/view_state.h"
 
 extern "C" {
 #include "../include/private.h"
@@ -66,6 +68,7 @@ extern struct fb qtgl_interface;
 }
 
 #include <QApplication>
+#include <QtGlobal>
 #include "qtglwin.h"
 
 struct qtglinfo {
@@ -83,6 +86,10 @@ struct qtglinfo {
     short mi_cmap_flag;		/* enabled when there is a non-linear map in memory */
 
     int mi_memwidth;            /* width of scanline in if_mem */
+    unsigned int fb_tex;        /* texture id for texture-backed blit path */
+    int fb_tex_width;           /* texture storage width */
+    int fb_tex_height;          /* texture storage height */
+    int fb_use_texture;         /* runtime toggle for texture blit path */
 
     int alive;
 };
@@ -93,6 +100,86 @@ struct qtglinfo {
 #define CMR(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmr
 #define CMG(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmg
 #define CMB(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmb
+
+static int
+_qtgl_texture_enabled(void)
+{
+    const char *ev = getenv("BRLCAD_QTGL_FB_TEXTURE");
+    /* Runtime perf toggle for normal user sessions; do not rely on this
+     * variable in privileged execution contexts. */
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    if (!ev || !ev[0])
+	return 0; /* Qt5 embedded QOpenGLWidget path has shown color-channel issues with the texture blit path. */
+#else
+    if (!ev || !ev[0])
+	return 1; /* Default to texture-backed blit path for better incremental update performance. */
+#endif
+    if (!bu_str_true(ev))
+	return 0;
+    return 1;
+}
+
+static void
+qtgl_xmit_texture(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
+{
+    struct qtglinfo *qi = QTGL(ifp);
+    GLfloat s0, s1, t0, t1;
+
+    if (!qi->fb_use_texture)
+	return;
+    if (ifp->i->if_xzoom != 1 || ifp->i->if_yzoom != 1)
+	return; /* texture path assumes 1:1 pixel mapping; caller falls through to glDrawPixels path */
+    if (ifp->i->if_mem == NULL || ifp->i->if_width <= 0 || ifp->i->if_height <= 0)
+	return;
+
+    if (qi->fb_tex == 0) {
+	glGenTextures(1, &qi->fb_tex);
+	glBindTexture(GL_TEXTURE_2D, qi->fb_tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	qi->fb_tex_width = 0;
+	qi->fb_tex_height = 0;
+    } else {
+	glBindTexture(GL_TEXTURE_2D, qi->fb_tex);
+    }
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    if (qi->fb_tex_width != ifp->i->if_width || qi->fb_tex_height != ifp->i->if_height) {
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, qi->mi_memwidth);
+	glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+	glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ifp->i->if_width, ifp->i->if_height, 0,
+		     GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *)ifp->i->if_mem);
+	qi->fb_tex_width = ifp->i->if_width;
+	qi->fb_tex_height = ifp->i->if_height;
+    } else {
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, qi->mi_memwidth);
+	glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+	glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, xbase, ybase, npix, nlines,
+			GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *)ifp->i->if_mem);
+    }
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+
+    s0 = ((GLfloat)xbase) / ((GLfloat)ifp->i->if_width);
+    s1 = ((GLfloat)(xbase + npix)) / ((GLfloat)ifp->i->if_width);
+    t0 = ((GLfloat)ybase) / ((GLfloat)ifp->i->if_height);
+    t1 = ((GLfloat)(ybase + nlines)) / ((GLfloat)ifp->i->if_height);
+
+    glEnable(GL_TEXTURE_2D);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_QUADS);
+    glTexCoord2f(s0, t0); glVertex2i(xbase, ybase);
+    glTexCoord2f(s1, t0); glVertex2i(xbase + npix, ybase);
+    glTexCoord2f(s1, t1); glVertex2i(xbase + npix, ybase + nlines);
+    glTexCoord2f(s0, t1); glVertex2i(xbase, ybase + nlines);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+}
 
 
 static void
@@ -120,6 +207,13 @@ qtgl_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 	npix = clp->xpixmax - xbase + 1;
     if ((ybase + nlines - 1) > clp->ypixmax)
 	nlines = clp->ypixmax - ybase + 1;
+    if (npix <= 0 || nlines <= 0)
+	return;
+
+    if (!sw_cmap && QTGL(ifp)->fb_use_texture) {
+	qtgl_xmit_texture(ifp, ybase, nlines, xbase, npix);
+	return;
+    }
 
     if (sw_cmap) {
 	/* Software colormap each line as it's transmitted */
@@ -192,6 +286,8 @@ qtgl_getmem(struct fb *ifp)
 	 * only malloc as much memory as is needed.
 	 */
 	QTGL(ifp)->mi_memwidth = ifp->i->if_width;
+	QTGL(ifp)->fb_tex_width = 0;
+	QTGL(ifp)->fb_tex_height = 0;
 	pixsize = ifp->i->if_height * ifp->i->if_width * sizeof(struct fb_pixel);
 	size = pixsize + sizeof(struct fb_cmap);
 
@@ -286,6 +382,17 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
     if (!QTGL(ifp)->mi_memwidth)
 	getmem = 1;
 
+    /* Phase A1 (ert reliability): see comment in swrast_configureWindow.
+     * Defer canvas resize / if_mem realloc while any fbserv client is
+     * streaming; just track the new viewport and return.  The wireframe
+     * compositor stretches the existing fb image to the new vp size. */
+    if (ifp->i->if_active_clients > 0) {
+	QTGL(ifp)->vp_width = width;
+	QTGL(ifp)->vp_height = height;
+	dm_make_current(ifp->i->dmp);
+	return 0;
+    }
+
     QTGL(ifp)->vp_width = width;
     QTGL(ifp)->vp_height = height;
 
@@ -316,7 +423,10 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
 static void
 qtgl_do_event(struct fb *ifp)
 {
-    QTGL(ifp)->mw->update();
+    /* Phase F (ert reliability): only standalone-window has mw set; embedded
+     * Qt path drives updates via the libpkg client handler chain. */
+    if (QTGL(ifp)->mw)
+	QTGL(ifp)->mw->update();
 }
 
 static int
@@ -334,6 +444,8 @@ qtgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
     }
 
     ifp->i->dmp = (struct dm *)fb_p->data;
+    QTGL(ifp)->fb_use_texture = _qtgl_texture_enabled();
+    QTGL(ifp)->alive = 1;
 
     if (ifp->i->dmp) {
 	ifp->i->dmp->i->fbp = ifp;
@@ -387,7 +499,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     FB_CK_FB(ifp->i);
 
     qi->win_width = qi->vp_width = width;
-    qi->win_height = qi->vp_width = height;
+    qi->win_height = qi->vp_height = height;
 
     qi->qapp = new QApplication(qi->ac, qi->av);
 
@@ -396,17 +508,42 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     QSurfaceFormat::setDefaultFormat(fmt);
 
     qi->mw = new QgGLWin(ifp);
-    qi->mw->canvas->setFixedSize(width, height);
+    QgGL *canvas = qi->mw->canvasWidget();
+    if (!canvas) {
+	qt_destroy(qi);
+	free(ifp->i->pp);
+	ifp->i->pp = NULL;
+	return -1;
+    }
+    {
+	qreal dpr = canvas->devicePixelRatioF();
+	int lw = qMax(1, static_cast<int>(std::ceil(((qreal)width) / dpr)));
+	int lh = qMax(1, static_cast<int>(std::ceil(((qreal)height) / dpr)));
+	canvas->setFixedSize(lw, lh);
+    }
     qi->mw->adjustSize();
     qi->mw->setFixedSize(qi->mw->size());
     qi->mw->show();
+    qi->qapp->processEvents();
 
     // Do the standard libdm attach to get our rendering backend.
     const char *acmd = "attach";
-    struct dm *dmp = dm_open((void *)qi->mw->canvas, NULL, "qtgl", 1, &acmd);
-    if (!dmp)
+    struct dm *dmp = dm_open((void *)canvas, NULL, "qtgl", 1, &acmd);
+    if (!dmp) {
+	qt_destroy(qi);
+	free(ifp->i->pp);
+	ifp->i->pp = NULL;
 	return -1;
-    qi->mw->canvas->v->gv_s->gv_fb_mode = 1;
+    }
+    struct bsg_view *canvas_view = canvas->view();
+    if (!canvas_view) {
+	dm_close(dmp);
+	qt_destroy(qi);
+	free(ifp->i->pp);
+	ifp->i->pp = NULL;
+	return -1;
+    }
+    bsg_view_set_framebuffer_mode(canvas_view, 1);
 
     struct fb_platform_specific fbps;
     fbps.magic = FB_QTGL_MAGIC;
@@ -458,8 +595,9 @@ fb_qtgl_close(struct fb *ifp)
 }
 
 int
-qtgl_close_existing(struct fb *UNUSED(ifp))
+qtgl_close_existing(struct fb *ifp)
 {
+    QTGL(ifp)->alive = 0;
     return 0;
 }
 
@@ -469,6 +607,8 @@ qtgl_close_existing(struct fb *UNUSED(ifp))
 static int
 qtgl_poll(struct fb *ifp)
 {
+    if (QTGL(ifp)->qapp)
+	QTGL(ifp)->qapp->processEvents();
     qtgl_do_event(ifp);
 
     if (QTGL(ifp)->alive)
@@ -494,6 +634,16 @@ qtgl_free(struct fb *ifp)
 	/* free up memory associated with image */
 	(void)free(ifp->i->if_mem);
     }
+
+    int have_gl_ctx = 0;
+    if (ifp->i->dmp && dm_make_current(ifp->i->dmp) == BRLCAD_OK)
+	have_gl_ctx = 1;
+    if (QTGL(ifp)->fb_tex && have_gl_ctx) {
+	glDeleteTextures(1, &QTGL(ifp)->fb_tex);
+    }
+    QTGL(ifp)->fb_tex = 0;
+    QTGL(ifp)->fb_tex_width = 0;
+    QTGL(ifp)->fb_tex_height = 0;
 
     if (QTGLL(ifp) != NULL) {
 	(void)free((char *)QTGLL(ifp));
@@ -587,7 +737,7 @@ qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	gl_debug_print(ifp->i->dmp, "FB: qtgl_view after:", ifp->i->dmp->i->dm_debugLevel);
 
     // TODO - somehow, we need to trigger an update event here for incremental display...
-    dm_set_dirty(ifp->i->dmp, 1);
+    dm_set_native_repaint_pending(ifp->i->dmp, 1);
     return 0;
 }
 
@@ -785,7 +935,9 @@ qtgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
 	}
     }
 
-    QTGL(ifp)->mw->update();
+    /* Phase F: standalone-only update (see comment in qtgl_do_event). */
+    if (QTGL(ifp)->mw)
+	QTGL(ifp)->mw->update();
 
     return width*height;
 }
@@ -826,7 +978,9 @@ qtgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 	}
     }
 
-    QTGL(ifp)->mw->update();
+    /* Phase F: standalone-only update (see comment in qtgl_do_event). */
+    if (QTGL(ifp)->mw)
+	QTGL(ifp)->mw->update();
 
     return width*height;
 }
@@ -945,7 +1099,7 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     if (ifp->i->dmp && ifp->i->dmp->i->dm_debugLevel > 3)
 	gl_debug_print(ifp->i->dmp, "FB: qtgl_refresh after:", ifp->i->dmp->i->dm_debugLevel);
 
-    dm_set_dirty(ifp->i->dmp, 1);
+    dm_set_native_repaint_pending(ifp->i->dmp, 1);
     return 0;
 }
 
@@ -1010,7 +1164,8 @@ struct fb_impl qtgl_interface_impl =
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0},  /* u6 */
+    0     /* if_active_clients */
 };
 
 extern "C" {
@@ -1042,4 +1197,3 @@ COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -200,12 +200,6 @@ rt_gen_obj_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, struct d
        const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity);
 
 
-// NOTE:  For now this is exposed for testing in libged, but eventually
-// it should be hidden behind the functab methods - NOT to be considered
-// as public API.
-RT_EXPORT extern int
-rt_sample_pnts(struct bv_scene_obj *s, struct rt_db_internal *ip);
-
 #ifdef USE_OPENCL
 struct cl_hit {
     cl_double3 hit_point;

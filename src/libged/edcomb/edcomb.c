@@ -24,6 +24,7 @@
  */
 
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 int
@@ -77,16 +78,30 @@ ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    if (argv[2][0] == 'R' || atoi(argv[2]))
-	comb->region_flag = 1;
-    else
-	comb->region_flag = 0;
+    int region_flag = (argv[2][0] == 'R' || atoi(argv[2])) ? 1 : 0;
+    int attr_changed = (comb->region_flag != region_flag ||
+	    comb->region_id != regionid ||
+	    comb->aircode != air ||
+	    comb->los != los ||
+	    comb->GIFTmater != mat);
+    int material_changed = (comb->region_flag != region_flag ||
+	    comb->region_id != regionid ||
+	    comb->GIFTmater != mat);
 
+    if (!attr_changed) {
+	rt_db_free_internal(&intern);
+	return BRLCAD_OK;
+    }
+
+    comb->region_flag = region_flag;
     comb->region_id = regionid;
     comb->aircode = air;
     comb->los = los;
     comb->GIFTmater = mat;
     GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    (void)ged_event_notify_attribute_changed(gedp, dp->d_namep, 1, NULL);
+    if (material_changed)
+	(void)ged_event_notify_object_material_changed(gedp, dp->d_namep, NULL);
 
     return BRLCAD_OK;
 }

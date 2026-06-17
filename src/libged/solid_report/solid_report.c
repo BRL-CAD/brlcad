@@ -19,7 +19,7 @@
  */
 /** @file libged/solid_report.c
  *
- * Compatibility front-end for the detailed solid listing command.
+ * Compatibility front-end for the detailed solid report command.
  *
  */
 

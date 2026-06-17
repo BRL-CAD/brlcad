@@ -48,7 +48,7 @@ set(
 
 set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate)
 set(SIM_SYSTEM_INCLUDE_DIRS ${BULLET_INCLUDE_DIRS})
-set(SIM_LIBS libged libicv libbv libbu ${BULLET_LIBRARIES})
+set(SIM_LIBS libged libicv libbsg libbu ${BULLET_LIBRARIES})
 
 check_cxx_compiler_flag(-Wno-nonnull-compare NO_NONNULL_COMPARE)
 

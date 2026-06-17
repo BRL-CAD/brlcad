@@ -108,9 +108,8 @@
 #include <string.h>
 
 #include "bu/opt.h"
+#include "ged/selection_state.h"
 #include "../ged_private.h"
-
-#include "../dbi.h"
 
 struct _ged_select_info {
     struct ged *gedp;
@@ -145,33 +144,20 @@ _select_cmd_list(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
-    if (!gedp->dbi_state || argc > 1)
+    if (!ged_selection_state_available(gedp) || argc > 1)
 	return BRLCAD_ERROR;
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-
     if (!argc) {
-	std::vector<std::string> ssets = dbis->list_selection_sets();
-	for (size_t i = 0; i < ssets.size(); i++) {
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", ssets[i].c_str());
-	}
+	ged_selection_list_set_names(gedp, gedp->ged_result_str);
 	return BRLCAD_OK;
     }
 
     const char *sname = argv[0];
-    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
-    if (!ss.size()) {
+    if (!ged_selection_list_paths(gedp, sname, gedp->ged_result_str)) {
 	bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < ss.size(); i++) {
-	std::vector<std::string> paths = ss[i]->list_selected_paths();
-
-	for (size_t j = 0; j < paths.size(); j++) {
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", paths[j].c_str());
-	}
-    }
     return BRLCAD_OK;
 }
 
@@ -189,10 +175,8 @@ _select_cmd_clear(void *bs, int argc, const char **argv)
 
     struct ged *gedp = gd->gedp;
 
-    if (!gedp->dbi_state)
+    if (!ged_selection_state_available(gedp))
 	return BRLCAD_ERROR;
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
 
     const char *sname = NULL;
     if (argc) {
@@ -201,16 +185,13 @@ _select_cmd_clear(void *bs, int argc, const char **argv)
 	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
-    if (!ss.size()) {
+    if (!ged_selection_clear_matching(gedp, sname)) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < ss.size(); i++) {
-	ss[i]->clear();
-    }
+    ged_selection_draw_sync_matching(gedp, sname);
 
     return BRLCAD_OK;
 }
@@ -235,37 +216,28 @@ _select_cmd_add(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (!gedp->dbi_state)
+    if (!ged_selection_state_available(gedp))
 	return BRLCAD_ERROR;
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
 
     const char *sname = NULL;
     if (bu_vls_strlen(&gd->curr_set))
 	sname = bu_vls_cstr(&gd->curr_set);
 
-    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
-    if (ss.size() != 1) {
+    if (ged_selection_set_match_count(gedp, sname) != 1) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match one selection set\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    struct bu_vls dpath = BU_VLS_INIT_ZERO;
     for (int i = 0; i < argc; i++) {
-	bu_vls_sprintf(&dpath, "%s", argv[i]);
-	if (bu_vls_cstr(&dpath)[0] != '/')
-	    bu_vls_prepend(&dpath, "/");
-	if (!ss[0]->select_path(bu_vls_cstr(&dpath), false)) {
+	if (!ged_selection_select_path_matching(gedp, sname, argv[i], 0)) {
 	    bu_vls_printf(gedp->ged_result_str, "Selection set %s: unable to add path: %s", (sname) ? sname : "default", argv[i]);
-	    bu_vls_free(&dpath);
 	    return BRLCAD_ERROR;
 	}
     }
 
-    ss[0]->characterize();
-
-    bu_vls_free(&dpath);
+    ged_selection_recompute_matching(gedp, sname);
+    ged_selection_draw_sync_matching(gedp, sname);
 
     return BRLCAD_OK;
 }
@@ -289,36 +261,28 @@ _select_cmd_rm(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (!gedp->dbi_state)
+    if (!ged_selection_state_available(gedp))
 	return BRLCAD_ERROR;
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
 
     const char *sname = NULL;
     if (bu_vls_strlen(&gd->curr_set))
 	sname = bu_vls_cstr(&gd->curr_set);
 
-    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
-    if (ss.size() != 1) {
+    if (ged_selection_set_match_count(gedp, sname) != 1) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match one selection set\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    struct bu_vls dpath = BU_VLS_INIT_ZERO;
     for (int i = 0; i < argc; i++) {
-	bu_vls_sprintf(&dpath, "%s", argv[i]);
-	if (bu_vls_cstr(&dpath)[0] != '/')
-	    bu_vls_prepend(&dpath, "/");
-	if (!ss[0]->deselect_path(bu_vls_cstr(&dpath), false)) {
+	if (!ged_selection_deselect_path_matching(gedp, sname, argv[i], 0)) {
 	    bu_vls_printf(gedp->ged_result_str, "Selection set %s: unable to remove path: %s", (sname) ? sname : "default", argv[i]);
-	    bu_vls_free(&dpath);
 	    return BRLCAD_ERROR;
 	}
     }
-    bu_vls_free(&dpath);
 
-    ss[0]->characterize();
+    ged_selection_recompute_matching(gedp, sname);
+    ged_selection_draw_sync_matching(gedp, sname);
 
     return BRLCAD_OK;
 }
@@ -336,10 +300,8 @@ _select_cmd_collapse(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
-    if (!gedp->dbi_state)
+    if (!ged_selection_state_available(gedp))
 	return BRLCAD_ERROR;
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
 
     const char *sname = NULL;
     if (argc) {
@@ -348,25 +310,16 @@ _select_cmd_collapse(void *bs, int argc, const char **argv)
 	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
-    if (!ss.size()) {
+    if (!ged_selection_collapse_matching(gedp, sname)) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < ss.size(); i++) {
-	ss[i]->collapse();
-    }
+    ged_selection_draw_sync_matching(gedp, sname);
 
     // TODO - for now, printing results - maybe tie this to a verbose option at some point... 
-    for (size_t i = 0; i < ss.size(); i++) {
-	std::vector<std::string> paths = ss[i]->list_selected_paths();
-
-	for (size_t j = 0; j < paths.size(); j++) {
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", paths[j].c_str());
-	}
-    }
+    ged_selection_list_paths(gedp, sname, gedp->ged_result_str);
 
     return BRLCAD_OK;
 }
@@ -385,10 +338,8 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
 
     struct ged *gedp = gd->gedp;
 
-    if (!gedp->dbi_state)
+    if (!ged_selection_state_available(gedp))
 	return BRLCAD_ERROR;
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
 
     const char *sname = NULL;
     if (argc) {
@@ -397,25 +348,16 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
 	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
-    if (!ss.size()) {
+    if (!ged_selection_expand_matching(gedp, sname)) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < ss.size(); i++) {
-	ss[i]->expand();
-    }
+    ged_selection_draw_sync_matching(gedp, sname);
 
     // TODO - for now, printing results - maybe tie this to a verbose option at some point...
-    for (size_t i = 0; i < ss.size(); i++) {
-	std::vector<std::string> paths = ss[i]->list_selected_paths();
-
-	for (size_t j = 0; j < paths.size(); j++) {
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", paths[j].c_str());
-	}
-    }
+    ged_selection_list_paths(gedp, sname, gedp->ged_result_str);
 
     return BRLCAD_OK;
 }

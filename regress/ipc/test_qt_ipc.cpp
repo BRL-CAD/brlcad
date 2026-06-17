@@ -56,7 +56,6 @@
 
 #include <QCoreApplication>
 #include <QSocketNotifier>
-#include <QTimer>
 
 /* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/str.h"

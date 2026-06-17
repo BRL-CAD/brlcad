@@ -31,6 +31,7 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QApplication>
+#include <QSurfaceFormat>
 #include <QTextStream>
 
 #include "bu/app.h"
@@ -140,6 +141,19 @@ main(int argc, char **argv)
 	bu_log("Unimplemented\n");
 	return BRLCAD_ERROR;
     }
+
+    // Qt6 requires QSurfaceFormat::setDefaultFormat() to be called BEFORE
+    // QApplication is constructed.  Without specifying QSurfaceFormat::OpenGL
+    // here, Qt's RHI layer may fall back to OpenGL ES (QRhiGles2) even on a
+    // desktop system, causing context-creation failures at runtime.
+#ifdef BRLCAD_OPENGL
+    if (!swrast_mode) {
+	QSurfaceFormat fmt;
+	fmt.setRenderableType(QSurfaceFormat::OpenGL);
+	fmt.setDepthBufferSize(16);
+	QSurfaceFormat::setDefaultFormat(fmt);
+    }
+#endif
 
     // We derive our own app type from QApplication
     QgEdApp app(argc, argv, swrast_mode, quad_mode);

@@ -28,6 +28,8 @@
 #include "common.h"
 #include "bu/str.h"
 #include "bg/tri_ray.h"
+#include "bsg/feature.h"
+#include "bsg/geometry.h"
 #include "./cdt.h"
 
 /***************************************************
@@ -726,19 +728,13 @@ ON_Brep_CDT_Tol_Get(struct bg_tess_tol *t, const struct ON_Brep_CDT_State *s)
 }
 
 static int
-ON_Brep_CDT_VList_Face(
-	struct bu_list *vhead,
-	struct bu_list *vlfree,
+ON_Brep_CDT_Plot_Face(
+	struct bsg_line_layer *layer,
 	int face_index,
 	int mode,
 	struct ON_Brep_CDT_State *s)
 {
     point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
-    vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
-#if 0
-    point_t pt1 = VINIT_ZERO;
-    point_t pt2 = VINIT_ZERO;
-#endif
 
     cdt_mesh_t *fmesh = &(s->fmeshes[face_index]);
     RTree<size_t, double, 3>::Iterator tree_it;
@@ -754,26 +750,12 @@ ON_Brep_CDT_VList_Face(
 		tri = fmesh->tris_vect[t_ind];
 		for (size_t j = 0; j < 3; j++) {
 		    ON_3dPoint *p3d = fmesh->pnts[tri.v[j]];
-		    ON_3dPoint onorm;
-		    if (s->singular_vert_to_norms->find(p3d) != s->singular_vert_to_norms->end()) {
-			// Use calculated normal for singularity points
-			onorm = *(*s->singular_vert_to_norms)[p3d];
-		    } else {
-			onorm = *fmesh->normals[fmesh->nmap[tri.v[j]]];
-		    }
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
-		    VSET(nv[j], onorm.x, onorm.y, onorm.z);
 		}
-		//tri one
-		BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_START);
-		BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_VERTNORM);
-		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, nv[1], BV_VLIST_TRI_VERTNORM);
-		BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_TRI_DRAW);
-		BV_ADD_VLIST(vlfree, vhead, nv[2], BV_VLIST_TRI_VERTNORM);
-		BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_TRI_DRAW);
-		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_END);
-		//bu_log("Face %d, Tri %zd: %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f\n", face_index, i, V3ARGS(pt[0]), V3ARGS(nv[0]), V3ARGS(pt[1]), V3ARGS(nv[1]), V3ARGS(pt[2]), V3ARGS(nv[2]));
+		(void)bsg_line_layer_add(layer, pt[0], BSG_GEOMETRY_LINE_MOVE);
+		(void)bsg_line_layer_add(layer, pt[1], BSG_GEOMETRY_LINE_DRAW);
+		(void)bsg_line_layer_add(layer, pt[2], BSG_GEOMETRY_LINE_DRAW);
+		(void)bsg_line_layer_add(layer, pt[0], BSG_GEOMETRY_LINE_DRAW);
 		++tree_it;
 	    }
 	    break;
@@ -786,27 +768,14 @@ ON_Brep_CDT_VList_Face(
 		    ON_3dPoint *p3d = fmesh->pnts[tri.v[j]];
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
 		}
-		//tri one
-		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_LINE_DRAW);
-		BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_LINE_DRAW);
-		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_LINE_DRAW);
+		(void)bsg_line_layer_add(layer, pt[0], BSG_GEOMETRY_LINE_MOVE);
+		(void)bsg_line_layer_add(layer, pt[1], BSG_GEOMETRY_LINE_DRAW);
+		(void)bsg_line_layer_add(layer, pt[2], BSG_GEOMETRY_LINE_DRAW);
+		(void)bsg_line_layer_add(layer, pt[0], BSG_GEOMETRY_LINE_DRAW);
 		++tree_it;
 	    }
 	    break;
 	case 2:
-#if 0
-	    // 2D wireframe
-	    pt1[0] = p->x;
-	    pt1[1] = p->y;
-	    pt1[2] = 0.0;
-	    p = t->GetPoint(j);
-	    pt2[0] = p->x;
-	    pt2[1] = p->y;
-	    pt2[2] = 0.0;
-	    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
-#endif
 	    break;
 	default:
 	    return -1;
@@ -815,36 +784,19 @@ ON_Brep_CDT_VList_Face(
     return 0;
 }
 
-int ON_Brep_CDT_VList(
-	struct bv_vlblock *vbp,
-	struct bu_list *vlfree,
-	struct bu_color *c,
+int
+ON_Brep_CDT_Plot(
+	struct bsg_line_layer *layer,
 	int mode,
 	struct ON_Brep_CDT_State *s)
 {
-    int r, g, b;
-    struct bu_list *vhead = NULL;
-    int have_color = 0;
-
-   if (UNLIKELY(!c) || mode < 0) {
-       return -1;
-   }
-
-   have_color = bu_color_to_rgb_ints(c, &r, &g, &b);
-
-   if (UNLIKELY(!have_color)) {
-       return -1;
-   }
-
-   vhead = bv_vlblock_find(vbp, r, g, b);
-
-   if (UNLIKELY(!vhead)) {
+   if (UNLIKELY(!layer) || UNLIKELY(!s) || mode < 0) {
        return -1;
    }
 
    for (int i = 0; i < s->brep->m_F.Count(); i++) {
        if (s->fmeshes[i].tris_vect.size()) {
-	   (void)ON_Brep_CDT_VList_Face(vhead, vlfree, i, mode, s);
+	   (void)ON_Brep_CDT_Plot_Face(layer, i, mode, s);
        }
    }
 
@@ -861,4 +813,3 @@ int ON_Brep_CDT_VList(
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

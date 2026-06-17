@@ -1,6 +1,13 @@
 # Primitives have their own individual editing requirements
 add_subdirectory(ell)
 
+# stub editors demonstrating BSG_PL_EDIT_PREVIEW
+# contract.  Each carries an edit-preview overlay feature with a bsg_edit_preview_source
+# payload so downstream renderers detect geometry changes via pl_revision.
+add_subdirectory(extrude)
+add_subdirectory(revolve)
+add_subdirectory(bot)
+
 # Things to check include:
 #
 # preparing selectable "schematic" 2D graphics with
@@ -16,7 +23,10 @@ add_subdirectory(ell)
 # https://github.com/peizhan/psketcher
 # https://github.com/cmerrill/sketchsolve
 
-cmakefiles(CMakeLists.txt)
+cmakefiles(
+  CMakeLists.txt
+  qged_edit_preview_util.h
+)
 
 # Local Variables:
 # tab-width: 8

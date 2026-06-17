@@ -24,13 +24,40 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bsg/feature.h"
+#include "bsg/geometry.h"
+
 #include "../ged_private.h"
 #include "./check_private.h"
 
 struct ged_check_plot {
-    struct bv_vlblock *vbp;
-    struct bu_list *vhead;
+    struct bsg_line_layer_builder *builder;
 };
+
+static int
+ged_check_plot_append(struct ged_check_plot *plot, const point_t a, const point_t b)
+{
+    if (!plot)
+	return 0;
+
+    if (!plot->builder)
+	return 0;
+
+    if (!bsg_line_layer_builder_add(plot->builder, 255, 255, 0, a, BSG_GEOMETRY_LINE_MOVE))
+	return 0;
+    return bsg_line_layer_builder_add(plot->builder, 255, 255, 0, b, BSG_GEOMETRY_LINE_DRAW);
+}
+
+static void
+ged_check_plot_free(struct ged_check_plot *plot)
+{
+    if (!plot)
+	return;
+
+    if (plot->builder)
+	bsg_line_layer_builder_free(plot->builder);
+    memset(plot, 0, sizeof(*plot));
+}
 
 
 struct overlap_list {
@@ -257,8 +284,7 @@ overlap(const struct xray *ray,
 
     if (context->overlaps_overlay_flag) {
 	bu_semaphore_acquire(context->sem_stats);
-	BV_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ihit, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ohit, BV_VLIST_LINE_DRAW);
+	(void)ged_check_plot_append(context->overlaps_overlay_plot, ihit, ohit);
 	bu_semaphore_release(context->sem_stats);
     }
 
@@ -284,11 +310,11 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
     callbackdata.gedp = gedp;
     struct overlap_list overlapList;
     struct overlap_list *op;
-    struct bu_list *vlfree = &rt_vlfree;
 
     FILE *plot_overlaps = NULL;
     char *name = "overlaps.plot3";
     int overlap_color[3] = { 255, 255, 0 };	/* yellow */
+    int overlay_enabled = options->overlaps_overlay_flag && gedp->ged_gvp;
 
     /* init overlaps list */
     BU_LIST_INIT(&(overlapList.l));
@@ -306,8 +332,11 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
     }
 
     if (options->overlaps_overlay_flag) {
-	check_plot.vbp = bv_vlblock_init(vlfree, 32);
-	check_plot.vhead = bv_vlblock_find(check_plot.vbp, 0xFF, 0xFF, 0x00);
+	memset(&check_plot, 0, sizeof(check_plot));
+	if (overlay_enabled)
+	    check_plot.builder = bsg_line_layer_builder_create();
+	else
+	    bu_vls_printf(gedp->ged_result_str, "overlap overlay requested, but no view is available\n");
     }
 
     callbackdata.noverlaps = 0;
@@ -317,7 +346,7 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
     VMOVE(callbackdata.overlap_color,overlap_color);
     callbackdata.plot_overlaps = plot_overlaps;
     callbackdata.overlapList = &overlapList;
-    callbackdata.overlaps_overlay_flag = options->overlaps_overlay_flag;
+    callbackdata.overlaps_overlay_flag = overlay_enabled;
     callbackdata.overlaps_overlay_plot = &check_plot;
     callbackdata.sem_stats = bu_semaphore_register("check_stats");
     callbackdata.sem_lists = bu_semaphore_register("check_lists");
@@ -333,6 +362,8 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
 	    BU_LIST_DEQUEUE(&(op->l));
 	    BU_PUT(op, struct overlap_list);
 	}
+	if (overlay_enabled)
+	    ged_check_plot_free(&check_plot);
 	return BRLCAD_ERROR;
     }
 
@@ -340,14 +371,10 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
 
     printOverlaps(gedp, &callbackdata, options);
 
-    if (options->overlaps_overlay_flag) {
-	if (gedp->new_cmd_forms) {
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(check_plot.vbp, view, "check::overlaps");
-	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, check_plot.vbp, "OVERLAPS", 0);
-	}
-	bv_vlblock_free(check_plot.vbp);
+    if (overlay_enabled) {
+	(void)bsg_feature_replace_line_layer_builder(gedp->ged_gvp,
+		"check::overlaps", 0, check_plot.builder, NULL);
+	ged_check_plot_free(&check_plot);
     }
 
     if (plot_overlaps) {

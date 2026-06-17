@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.view.settings",
+    "displayName": "View Settings",
+    "category": "qged.view",
+    "iconName": ":settings.svg",
+    "sortKey": 1,
+    "requiresOpenDb": false,
+    "requiresView": true,
+    "description": "Controls faceplate elements: adaptive plotting, ADC, center dot, grid, axes, scale, framebuffer mode, and view parameter display.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

@@ -1,0 +1,12 @@
+{
+    "id": "org.brlcad.qged.dialog.host_status",
+    "displayName": "Host Status",
+    "category": "qged.dialog",
+    "sortKey": 0,
+    "requiresOpenDb": false,
+    "requiresView": false,
+    "description": "Modeless dialog showing the active qged host, database, and view.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

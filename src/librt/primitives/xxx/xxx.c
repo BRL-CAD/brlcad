@@ -52,7 +52,7 @@
  *     bbox == bounding box, 'bb' command
  *     volume/surf_area/centroid == 'analyze' command
  *     brep == conversion to NURBS
- *     adaptive_plot == LoD wireframe
+ *     lod_realize == LoD wireframe
  *     uv/curve == texture mapping, visualization
  * edit src/librt/primitives/xxx/xxx.h,
  *   define xxx_specific: raytracing form with precomputed terms
@@ -258,7 +258,7 @@ rt_xxx_free(struct soltab *stp)
 
 
 int
-rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
 {
     struct rt_xxx_internal *xxx_ip;
 

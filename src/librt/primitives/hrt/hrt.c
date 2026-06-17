@@ -120,12 +120,14 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/hrt.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 #include "../../librt_private.h"
 
 
-EXTERNCPP const struct bu_structparse rt_hrt_parse[] = {
+const struct bu_structparse rt_hrt_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_hrt_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "X", bu_offsetofarray(struct rt_hrt_internal, xdir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "Y", bu_offsetofarray(struct rt_hrt_internal, ydir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -175,7 +177,7 @@ clt_hrt_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Compute the bounding RPP for a heart.
  */
-C_DECL int
+int
 rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_hrt_internal *hip;
@@ -247,7 +249,7 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct hrt_specific is created, and its address is stored in
  * stp->st_specific for use by rt_hrt_shot().
  */
-C_DECL int
+int
 rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct hrt_specific *hrt;
@@ -364,7 +366,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_hrt_print(register const struct soltab *stp)
 {
     register struct hrt_specific *hrt =
@@ -414,7 +416,7 @@ rt_hrt_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct hrt_specific *hrt =
@@ -660,7 +662,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version
  */
-C_DECL void
+void
 rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 {
     register struct hrt_specific *hrt;
@@ -964,7 +966,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by six here.
  */
-C_DECL void
+void
 rt_hrt_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *rp)
 {
 
@@ -983,7 +985,7 @@ rt_hrt_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *rp)
 }
 
 
-C_DECL void
+void
 rt_hrt_free(struct soltab *stp)
 {
     struct hrt_specific *hrt =
@@ -1045,10 +1047,62 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
 }
 
 
-C_DECL int
-rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+struct hrt_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_hrt_line_sink_append(struct hrt_line_sink *sink, const point_t p,
+			int command)
 {
-    struct bu_list *vlfree = &rt_vlfree;
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
+static void
+rt_hrt_line_sink_append_24_point_ring(struct hrt_line_sink *sink,
+				      const fastf_t *ring)
+{
+    if (!sink || !ring)
+	return;
+
+    rt_hrt_line_sink_append(sink, &ring[23 * ELEMENTS_PER_VECT],
+	    BSG_GEOMETRY_LINE_MOVE);
+    for (int i = 0; i < 24; i++) {
+	rt_hrt_line_sink_append(sink, &ring[i * ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+    }
+}
+
+
+static int
+rt_hrt_standard_line_set(struct hrt_line_sink *sink, struct rt_db_internal *ip,
+			 const struct bg_tess_tol *ttol)
+{
     fastf_t c, dtol, mag_h, ntol = M_PI, r1, r2, **ellipses;
     fastf_t min_abs;
     int *pts_dbl;
@@ -1094,7 +1148,8 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     fastf_t angle_g = 0.33990;  /* sin(19.8) */
     fastf_t angle_h = 0.48357;  /* sin(29.0) */
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!sink)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
@@ -1167,70 +1222,19 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     rt_hrt_24pts(top4_right_lobe, highest_point_right, xdir4_right, ydir4_right);
     rt_hrt_24pts(top5_upper_cusp, upper_cusp, upper_cusp_xdir, upper_cusp_xdir);
 
-    BV_ADD_VLIST(vlfree, vhead, &top[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top01[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top01[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top02[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top02[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top1[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top1[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top1_left_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top1_left_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top1_right_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top1_right_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top2_left_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top2_left_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top2_right_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top2_right_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top3_left_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top3_left_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top3_right_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top3_right_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top4_left_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top4_left_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top4_right_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top4_right_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
-
-    BV_ADD_VLIST(vlfree, vhead, &top5_upper_cusp[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 24; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top5_upper_cusp[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    }
+    rt_hrt_line_sink_append_24_point_ring(sink, top);
+    rt_hrt_line_sink_append_24_point_ring(sink, top01);
+    rt_hrt_line_sink_append_24_point_ring(sink, top02);
+    rt_hrt_line_sink_append_24_point_ring(sink, top1);
+    rt_hrt_line_sink_append_24_point_ring(sink, top1_left_lobe);
+    rt_hrt_line_sink_append_24_point_ring(sink, top1_right_lobe);
+    rt_hrt_line_sink_append_24_point_ring(sink, top2_left_lobe);
+    rt_hrt_line_sink_append_24_point_ring(sink, top2_right_lobe);
+    rt_hrt_line_sink_append_24_point_ring(sink, top3_left_lobe);
+    rt_hrt_line_sink_append_24_point_ring(sink, top3_right_lobe);
+    rt_hrt_line_sink_append_24_point_ring(sink, top4_left_lobe);
+    rt_hrt_line_sink_append_24_point_ring(sink, top4_right_lobe);
+    rt_hrt_line_sink_append_24_point_ring(sink, top5_upper_cusp);
 
     /*
       Make connections between ellipses
@@ -1239,54 +1243,38 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
      */
 
     for (k = 1; k < 24; k++) {
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top01[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top02[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top02[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top1[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top1_left_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top2_left_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top1_right_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top2_right_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top2_left_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top3_left_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top2_right_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top3_right_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top3_left_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top4_left_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top3_right_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &top4_right_lobe[k*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, &top01[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink, &top02[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, &top02[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink, &top1[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, &top1_left_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink, &top2_left_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, &top1_right_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink, &top2_right_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, &top2_left_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink, &top3_left_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, &top2_right_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink, &top3_right_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, &top3_left_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink, &top4_left_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, &top3_right_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink, &top4_right_lobe[k*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     mag_h = MAGNITUDE(hip->zdir);
@@ -1438,13 +1426,13 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     }
 
     /* Draw the top (largest) ellipse in the XY plane */
-    BV_ADD_VLIST(vlfree, vhead,
-		 &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
-		 BV_VLIST_LINE_MOVE);
+    rt_hrt_line_sink_append(sink,
+	    &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
+	    BSG_GEOMETRY_LINE_MOVE);
     for (i = 0; i < nseg; i++) {
-	BV_ADD_VLIST(vlfree, vhead,
-		     &ellipses[nell-1][i*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
+	rt_hrt_line_sink_append(sink,
+		&ellipses[nell-1][i*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* Connect ellipses skipping the top (largest) ellipse which is at index nell - 1 */
@@ -1455,13 +1443,13 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 	    nseg /= 2;	/* Number of line segments in 'ellipse_below' ellipse is halved if points double */
 
 	/* Draw the current ellipse */
-	BV_ADD_VLIST(vlfree, vhead,
-		     &ellipses[ellipse_below][(nseg-1)*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
+	rt_hrt_line_sink_append(sink,
+		&ellipses[ellipse_below][(nseg-1)*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
 	for (j = 0; j < nseg; j++) {
-	    BV_ADD_VLIST(vlfree, vhead,
-			 &ellipses[ellipse_below][j*ELEMENTS_PER_VECT],
-			 BV_VLIST_LINE_DRAW);
+	    rt_hrt_line_sink_append(sink,
+		    &ellipses[ellipse_below][j*ELEMENTS_PER_VECT],
+		    BSG_GEOMETRY_LINE_DRAW);
 	}
 
     /*
@@ -1475,12 +1463,12 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 	    jj = j + j;
 	else
 	    jj = j;
-	BV_ADD_VLIST(vlfree, vhead,
-		     &ellipses[ellipse_below][j*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &ellipses[ellipse_above][jj*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
+	rt_hrt_line_sink_append(sink,
+		&ellipses[ellipse_below][j*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink,
+		&ellipses[ellipse_above][jj*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
 	}
     }
 
@@ -1488,10 +1476,10 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     VADD2(Work, hip->v, lower_cusp);
     for (i = 0; i < nseg; i++) {
 	/* Draw connector */
-	BV_ADD_VLIST(vlfree, vhead, Work, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
-		     &ellipses[0][i*ELEMENTS_PER_VECT],
-		     BV_VLIST_LINE_DRAW);
+	rt_hrt_line_sink_append(sink, Work, BSG_GEOMETRY_LINE_MOVE);
+	rt_hrt_line_sink_append(sink,
+		&ellipses[0][i*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* free memory */
@@ -1501,7 +1489,48 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     bu_free((char *)ellipses, "fastf_t ell[]");
     bu_free((char *)pts_dbl, "dbl ints");
 
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_hrt_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			  struct rt_db_internal *ip,
+			  const struct bg_tess_tol *ttol)
+{
+    struct hrt_line_sink sink;
+
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    int ret = rt_hrt_standard_line_set(&sink, ip, ttol);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,
+	    const struct bg_tess_tol *ttol,
+	    const struct bn_tol *UNUSED(tol),
+	    const struct bsg_view *UNUSED(info))
+{
+    struct hrt_line_sink sink;
+
+    BU_CK_LIST_HEAD(vhead);
+
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_hrt_standard_line_set(&sink, ip, ttol);
 }
 
 
@@ -1512,7 +1541,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
  * Ydir vector
  * Zdir vector
  */
-C_DECL int
+int
 rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hrt_internal *hip;
@@ -1544,7 +1573,7 @@ rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-C_DECL int
+int
 rt_hrt_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1573,7 +1602,7 @@ rt_hrt_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import a heart from the database format to the internal format.
  *
  */
-C_DECL int
+int
 rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_hrt_internal *hip;
@@ -1617,7 +1646,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_hrt_internal *hip =
@@ -1686,7 +1715,7 @@ rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_hrt_ifree(struct rt_db_internal *ip)
 {
     register struct rt_hrt_internal *hip;
@@ -1701,7 +1730,7 @@ rt_hrt_ifree(struct rt_db_internal *ip)
 }
 
 
-C_DECL int
+int
 rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1710,7 +1739,7 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t area_hrt_YZ_plane;
@@ -1730,7 +1759,7 @@ rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 /**
  * Computes centroid of a heart
  */
-C_DECL void
+void
 rt_hrt_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
@@ -1739,7 +1768,7 @@ rt_hrt_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-C_DECL int
+int
 rt_hrt_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

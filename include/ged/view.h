@@ -34,13 +34,14 @@
 #include "rt/db_fullpath.h"
 #include "rt/db_instance.h"
 #include "ged/defines.h"
+#include "ged/bsg_ged_draw.h"
 
 __BEGIN_DECLS
 
 
 /** Check if a drawable exists */
 #define GED_CHECK_DRAWABLE(_gedp, _flags) \
-    if (!ged_dl(_gedp)) { \
+    if (!ged_draw_scene_available(_gedp)) { \
 	int ged_check_drawable_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_drawable_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
@@ -60,22 +61,7 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
-struct ged_bv_data {
-    struct db_full_path s_fullpath;
-    void *u_data;
-};
-
-/* defined in display_list.c */
-GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
-GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp, struct db_i *dbip);
-GED_EXPORT extern void dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split);
-GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
-
-/* Check ged_bv data associated with a display list */
-GED_EXPORT extern unsigned long long ged_dl_hash(struct display_list *dl);
-
-
-GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
+GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bsg_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
 GED_EXPORT extern struct bg_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB);
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
@@ -205,19 +191,6 @@ GED_EXPORT extern int ged_tra_args(struct ged *gedp, int argc, const char *argv[
  * case, that may simplify some things.
  */
  
-// TODO - once this settles down, give it a magic number so we can type
-// check it after a void cast
-struct draw_update_data_t {
-    struct db_i *dbip;
-    struct db_full_path *fp;
-    const struct bn_tol *tol;
-    const struct bg_tess_tol *ttol;
-    struct bv_mesh_lod_context *mesh_c;
-};
-
-GED_EXPORT extern unsigned long long dl_name_hash(struct ged *gedp);
-
-
 /**
  * Return ged selections for specified object. Created if it doesn't
  * exist.
@@ -235,14 +208,8 @@ GED_EXPORT struct rt_selection_set *ged_get_selection_set(struct ged *gedp,
 
 
 
-/* Accessors for display list based drawing info.  Eventually we want to migrate
- * off of direct usage of these containers completely, but for now the older
- * drawing path (which MGED and Archer use) needs them.
- */
 typedef void (*ged_drawable_notify_func_t)(int);
 
-GED_EXPORT struct display_list *
-ged_dl(struct ged *gedp);
 GED_EXPORT void
 ged_dl_notify_func_set(struct ged *gedp, ged_drawable_notify_func_t f);
 GED_EXPORT ged_drawable_notify_func_t
@@ -256,7 +223,7 @@ ged_dl_notify_func_get(struct ged *gedp);
  * This will almost certainly move elsewhere - its presence here should be
  * considered temporary and not relied on from an API design perspective.
  */
-GED_EXPORT extern void nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, const struct bn_tol *tol, struct bu_list *vlfree);
+GED_EXPORT extern void nmg_plot_eu(struct ged *gedp, struct edgeuse *es_eu, const struct bn_tol *tol);
 
 
 __END_DECLS

@@ -36,7 +36,7 @@
 void
 open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 {
-    if (!itm || !itm->ihash)
+    if (!itm || !itm->instanceHash())
 	return;
 
     if (max_depth > 0 && depth >= max_depth)
@@ -52,9 +52,9 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 void
 open_tops(QgModel *s, int depth)
 {
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
-	if (!itm->ihash)
+    for (size_t i = 0; i < s->topItems().size(); i++) {
+	QgItem *itm = s->topItems()[i];
+	if (!itm->instanceHash())
 	    continue;
 	open_children(itm, s, 0, depth);
     }

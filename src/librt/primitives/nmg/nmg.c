@@ -38,6 +38,7 @@
 #include "bu/cv.h"
 #include "bg/polygon.h"
 #include "nmg.h"
+#include "nmg/plot.h"
 #include "rt/db4.h"
 #include "rt/conv.h"
 #include "rt/primitives/nmg.h"
@@ -93,7 +94,7 @@ struct tmp_v {
 /**
  * Calculate the bounding box for an N-Manifold Geometry
  */
-C_DECL int
+int
 rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct bn_tol *UNUSED(tol)) {
     struct model *m;
 
@@ -116,7 +117,7 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct
  * implicit return - a struct nmg_specific is created, and its
  * address is stored in stp->st_specific for use by nmg_shot().
  */
-C_DECL int
+int
 rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct model *m;
@@ -149,7 +150,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_nmg_print(const struct soltab *stp)
 {
     struct model *m =
@@ -1257,9 +1258,8 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 	return 0;			/* MISS */
     } else if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	int seg_count=0;
-	char *bstr = bu_strdup("before");
-	print_seg_list(rd->seghead, seg_count, bstr);
-	bu_free(bstr, "bstr");
+
+	print_seg_list(rd->seghead, seg_count, "before");
 
 	bu_log("\n\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
 
@@ -1293,9 +1293,7 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 
 	if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	    /* print debugging data before returning */
-	    char *astr = bu_strdup("after");
-	    print_seg_list(rd->seghead, seg_count, astr);
-	    bu_free(astr, "astr");
+	    print_seg_list(rd->seghead, seg_count, "after");
 	}
 	return seg_count;
     }
@@ -1310,7 +1308,7 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 
 /* info about the ray */
@@ -1395,7 +1393,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !rp)
@@ -1412,7 +1410,7 @@ rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the nmg.
  */
-C_DECL void
+void
 rt_nmg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -1435,7 +1433,7 @@ rt_nmg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-C_DECL void
+void
 rt_nmg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -1445,7 +1443,7 @@ rt_nmg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-C_DECL void
+void
 rt_nmg_free(struct soltab *stp)
 {
     struct nmg_specific *nmg =
@@ -1458,7 +1456,7 @@ rt_nmg_free(struct soltab *stp)
 
 
 C_DECL int
-rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
     struct model *m;
@@ -1484,7 +1482,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-C_DECL int
+int
 rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct model *lm;
@@ -1581,7 +1579,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
  * Import an NMG from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct model *m;
@@ -1609,7 +1607,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     return 0;			/* OK */
 }
 
-C_DECL int
+int
 rt_nmg_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !mat)
@@ -1646,9 +1644,9 @@ rt_nmg_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 }
 
 
-C_DECL int
+int
 rt_nmg_import5(struct rt_db_internal *ip,
-	       const struct bu_external *ep,
+	       struct bu_external *ep,
 	       const mat_t mat,
 	       const struct db_i *dbip)
 {
@@ -1675,7 +1673,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct model *m;
@@ -1695,7 +1693,7 @@ rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-C_DECL int
+int
 rt_nmg_export5(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
@@ -1720,7 +1718,7 @@ rt_nmg_export5(
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     struct model *m =
@@ -1740,7 +1738,7 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_nmg_ifree(struct rt_db_internal *ip)
 {
     struct model *m;
@@ -1756,7 +1754,7 @@ rt_nmg_ifree(struct rt_db_internal *ip)
 }
 
 
-C_DECL int
+int
 rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct model *m=(struct model *)intern->idb_ptr;
@@ -1865,7 +1863,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 }
 
 
-C_DECL int
+int
 rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct model *m;
@@ -2016,7 +2014,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-C_DECL void
+void
 rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct model *m;
@@ -2029,7 +2027,7 @@ rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-C_DECL int
+int
 rt_nmg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2086,7 +2084,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s, struct bu_list *vlfr
 }
 
 
-C_DECL void
+void
 rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct model *m;
@@ -2125,7 +2123,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct model *m = NULL;
@@ -2195,7 +2193,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct model *m;
@@ -2250,7 +2248,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     struct rt_db_internal intern;
     struct bu_external ext;
     int flags;
-    const char *name="error.s";
+    char *name="error.s";
 
     bu_log("nmg_stash_model_to_file('%s', %p, %s)\n", filename, (void *)m, title);
 
@@ -2397,12 +2395,10 @@ rt_nmg_do_bool(
     nmg_r_radial_check(tl->tr_d.td_r, vlfree, tol);
 
     if (nmg_debug & NMG_DEBUG_BOOL) {
-	char *estr = bu_strdup("");
 	bu_log("Before model fuse\nShell A:\n");
-	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), estr);
+	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), "");
 	bu_log("Shell B:\n");
-	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tr->tr_d.td_r->s_hd), estr);
-	bu_free(estr, "estr");
+	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tr->tr_d.td_r->s_hd), "");
     }
 
     /* move operands into the same model */

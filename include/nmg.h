@@ -92,7 +92,6 @@
 #include "bu/ptbl.h"
 #include "bg/plane.h"
 #include "bn/tol.h"
-#include "bv/vlist.h"
 #include "vmath.h"
 
 __BEGIN_DECLS
@@ -105,6 +104,7 @@ __BEGIN_DECLS
 #include "nmg/topology.h"
 
 #include "nmg/debug.h"
+#include "nmg/display.h"
 #include "nmg/globals.h"
 #include "nmg/vertex.h"
 #include "nmg/edge.h"
@@ -115,7 +115,6 @@ __BEGIN_DECLS
 #include "nmg/model.h"
 #include "nmg/nurb.h"
 #include "nmg/ray.h"
-#include "nmg/plot.h"
 #include "nmg/print.h"
 #include "nmg/index.h"
 #include "nmg/radial.h"

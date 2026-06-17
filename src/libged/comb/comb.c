@@ -33,6 +33,7 @@
 #include "bg/trimesh.h"
 #include "wdb.h"
 #include "analyze.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -52,6 +53,8 @@ region_flag_set(struct ged *gedp, struct directory *dp) {
 	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     }
+    bu_avs_free(&avs);
+    (void)ged_event_notify_attribute_changed(gedp, dp->d_namep, 1, NULL);
     return BRLCAD_OK;
 }
 
@@ -71,6 +74,8 @@ region_flag_clear(struct ged *gedp, struct directory *dp) {
 	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     }
+    bu_avs_free(&avs);
+    (void)ged_event_notify_attribute_changed(gedp, dp->d_namep, 1, NULL);
     return BRLCAD_OK;
 }
 
@@ -92,6 +97,8 @@ color_shader_clear(struct ged *gedp, struct directory *dp) {
 	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
     }
+    bu_avs_free(&avs);
+    (void)ged_event_notify_object_material_changed(gedp, dp->d_namep, NULL);
     return BRLCAD_OK;
 }
 
@@ -115,6 +122,7 @@ comb_tree_clear(struct ged *gedp, struct directory *dp)
 	return BRLCAD_ERROR;
     }
     rt_db_free_internal(&intern);
+    (void)ged_event_notify_comb_tree_changed(gedp, dp->d_namep, 1, NULL);
     return BRLCAD_OK;
 }
 

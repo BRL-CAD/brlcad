@@ -13,7 +13,7 @@ endif(BRLCAD_ENABLE_QT)
 
 set(view_settings_srcs view_settings.cpp CADViewSettings.cpp)
 
-set(view_settings_moc_hdrs CADViewSettings.h)
+set(view_settings_moc_hdrs CADViewSettings.h ViewSettingsFactory.h)
 
 if(BRLCAD_ENABLE_QT)
   if(Qt6Widgets_FOUND)
@@ -50,6 +50,7 @@ if(BRLCAD_ENABLE_QT)
   distclean(
     icon.qrc.depends
     moc_CADViewSettings.cpp_parameters
+    moc_ViewSettingsFactory.cpp_parameters
   )
 endif(BRLCAD_ENABLE_QT)
 
@@ -60,6 +61,7 @@ set(
   ${view_settings_moc_hdrs}
   icon.qrc
   settings.svg
+  view_settings.json
   README
 )
 

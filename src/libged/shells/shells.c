@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -45,6 +46,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
     long **trans_tbl;
     static const char *usage = "nmg_model";
     struct bu_list *vlfree = &rt_vlfree;
+    int event_batch_opened = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -75,11 +77,14 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 
     if (old_intern.idb_type != ID_NMG) {
 	bu_vls_printf(gedp->ged_result_str, "Object is not an NMG!!!\n");
+	rt_db_free_internal(&old_intern);
 	return BRLCAD_ERROR;
     }
 
     m = (struct model *)old_intern.idb_ptr;
     NMG_CK_MODEL(m);
+
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
@@ -112,6 +117,10 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    new_dp = db_diradd(gedp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 	    if (new_dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.\n");
+		if (event_batch_opened)
+		    (void)ged_event_batch_end(gedp, NULL);
+		rt_db_free_internal(&old_intern);
+		bu_vls_free(&shell_name);
 		return BRLCAD_ERROR;
 	    }
 
@@ -122,12 +131,19 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 		/* Free memory */
 		nmg_km(m_tmp);
 		bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
+		if (event_batch_opened)
+		    (void)ged_event_batch_end(gedp, NULL);
+		rt_db_free_internal(&old_intern);
+		bu_vls_free(&shell_name);
 		return BRLCAD_ERROR;
 	    }
 	    /* Internal representation has been freed by rt_db_put_internal */
 	    new_intern.idb_ptr = (void *)NULL;
 	}
     }
+    if (event_batch_opened)
+	(void)ged_event_batch_end(gedp, NULL);
+    rt_db_free_internal(&old_intern);
     bu_vls_free(&shell_name);
 
     return BRLCAD_OK;

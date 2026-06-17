@@ -27,8 +27,6 @@
 #include <bu.h>
 #include <ged.h>
 
-#include "../dbi.h"
-
 int
 main(int ac, char *av[]) {
     struct ged *gedp;
@@ -53,9 +51,6 @@ main(int ac, char *av[]) {
 
     gedp = ged_open("db", av[1], 1);
 
-    // Set up new cmd data (not yet done by default in ged_open
-    gedp->dbi_state = new DbiState(gedp);
-    gedp->new_cmd_forms = 1;
     bu_setenv("DM_SWRAST", "1", 1);
 
     const char *s_av[5] = {NULL, NULL, NULL, NULL, NULL};

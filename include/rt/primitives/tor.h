@@ -29,8 +29,13 @@
 
 __BEGIN_DECLS
 
+struct bg_tess_tol;
+struct rt_db_internal;
+struct rt_primitive_lod_realization;
+
 RT_EXPORT extern int rt_num_circular_segments(double maxerr,
 					      double radius);
+RT_EXPORT extern int rt_tor_wireframe_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bg_tess_tol *ttol);
 
 __END_DECLS
 

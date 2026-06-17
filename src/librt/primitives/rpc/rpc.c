@@ -169,7 +169,9 @@
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "bsg/view_state.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 
 #include "../../librt_private.h"
 
@@ -223,7 +225,7 @@ clt_rpc_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
-EXTERNCPP const struct bu_structparse rt_rpc_parse[] = {
+const struct bu_structparse rt_rpc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rpc_internal, rpc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_rpc_internal, rpc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_rpc_internal, rpc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -234,7 +236,7 @@ EXTERNCPP const struct bu_structparse rt_rpc_parse[] = {
 /**
  * Calculate the RPP for an RPC
  */
-C_DECL int
+int
 rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_rpc_internal *xip;
     vect_t rinv, rvect, rv2, working;
@@ -295,7 +297,7 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rpc_specific is created, and its address is stored in
  * stp->st_specific for use by rpc_shot().
  */
-C_DECL int
+int
 rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rpc_internal *xip;
@@ -371,7 +373,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_rpc_print(const struct soltab *stp)
 {
     const struct rpc_specific *rpc =
@@ -401,7 +403,7 @@ rt_rpc_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct rpc_specific *rpc =
@@ -546,7 +548,7 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_rpc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t can_normal;	/* normal to canonical rpc */
@@ -579,7 +581,7 @@ rt_rpc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the rpc.
  */
-C_DECL void
+void
 rt_rpc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t zp1, zp2;	/* 1st & 2nd derivatives */
@@ -613,7 +615,7 @@ rt_rpc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-C_DECL void
+void
 rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rpc_specific *rpc = (struct rpc_specific *)stp->st_specific;
@@ -658,7 +660,7 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-C_DECL void
+void
 rt_rpc_free(struct soltab *stp)
 {
     struct rpc_specific *rpc =
@@ -741,8 +743,7 @@ rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
  */
 static void
 rpc_plot_parabolic_curve(
-	struct bu_list *vlfree,
-	struct bu_list *vhead,
+	struct rt_primitive_lod_realization *realization,
 	struct rpc_specific *rpc,
 	struct rt_pnt_node *pts,
 	vect_t rpc_H,
@@ -757,12 +758,14 @@ rpc_plot_parabolic_curve(
     VMOVE(Bu, rpc->rpc_Bunit);
 
     VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+    (void)primitive_lod_line_set_append(realization, p,
+	    BSG_GEOMETRY_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+	(void)primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW);
 
 	node = node->next;
     }
@@ -770,8 +773,7 @@ rpc_plot_parabolic_curve(
 
 static void
 rpc_plot_parabolas(
-	struct bu_list *vlfree,
-	struct bu_list *vhead,
+	struct rt_primitive_lod_realization *realization,
 	struct rt_rpc_internal *rpc,
 	struct rt_pnt_node *pts)
 {
@@ -788,19 +790,18 @@ rpc_plot_parabolas(
 
     /* plot parabolic contour curve of face containing V */
     VSETALL(rpc_H, 0.0);
-    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, 1.0);
-    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, -1.0);
+    rpc_plot_parabolic_curve(realization, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(realization, &rpc_s, pts, rpc_H, -1.0);
 
     /* plot parabolic contour curve of opposing face */
     VMOVE(rpc_H, rpc->rpc_H);
-    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, 1.0);
-    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, -1.0);
+    rpc_plot_parabolic_curve(realization, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(realization, &rpc_s, pts, rpc_H, -1.0);
 }
 
 static void
 rpc_plot_curve_connections(
-	struct bu_list *vlfree,
-	struct bu_list *vhead,
+	struct rt_primitive_lod_realization *realization,
 	struct rt_rpc_internal *rpc,
 	int num_connections)
 {
@@ -831,17 +832,21 @@ rpc_plot_curve_connections(
 
 	/* connect faces on one side of the curve */
 	VJOIN2(pt, rpc->rpc_V, z, Zu, -y, Yu);
-	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
+	(void)primitive_lod_line_set_append(realization, pt,
+		BSG_GEOMETRY_LINE_MOVE);
 
 	VADD2(pt, pt, rpc->rpc_H);
-	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
+	(void)primitive_lod_line_set_append(realization, pt,
+		BSG_GEOMETRY_LINE_DRAW);
 
 	/* connect the faces on the other side */
 	VJOIN2(pt, rpc->rpc_V, z, Zu, y, Yu);
-	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
+	(void)primitive_lod_line_set_append(realization, pt,
+		BSG_GEOMETRY_LINE_MOVE);
 
 	VADD2(pt, pt, rpc->rpc_H);
-	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
+	(void)primitive_lod_line_set_append(realization, pt,
+		BSG_GEOMETRY_LINE_DRAW);
     }
 }
 
@@ -864,17 +869,17 @@ rpc_curve_points(
     return est_curve_length / point_spacing;
 }
 
-C_DECL int
-rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
+static int
+rt_rpc_lod_line_set(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
 {
     point_t p;
     vect_t rpc_R;
     int num_curve_points, num_connections;
     struct rt_rpc_internal *rpc;
     struct rt_pnt_node *pts, *node, *tmp;
-    struct bu_list *vlfree = &rt_vlfree;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!realization)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
 
     rpc = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -894,7 +899,7 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     VSCALE(rpc_R, rpc_R, rpc->rpc_r);
 
     pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
-    rpc_plot_parabolas(vlfree, vhead, rpc, pts);
+    rpc_plot_parabolas(realization, rpc, pts);
 
     node = pts;
     while (node != NULL) {
@@ -905,34 +910,93 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     /* connect both halves of the parabolic contours of the opposing faces */
-    num_connections = primitive_curve_count(ip, tol, v->gv_ls.curve_scale, s_size);
+    num_connections = primitive_curve_count(ip, tol, primitive_lod_curve_scale(v), s_size);
     if (num_connections < 2) {
 	num_connections = 2;
     }
 
-    rpc_plot_curve_connections(vlfree, vhead, rpc, num_connections);
+    rpc_plot_curve_connections(realization, rpc, num_connections);
 
     /* plot rectangular face */
     VADD2(p, rpc->rpc_V, rpc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_MOVE))
+	return -1;
 
     VADD2(p, p, rpc->rpc_H);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW))
+	return -1;
 
     VJOIN1(p, p, -2.0, rpc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW))
+	return -1;
 
     VJOIN1(p, p, -1.0, rpc->rpc_H);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW))
+	return -1;
 
     VJOIN1(p, p, 2.0, rpc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    if (!primitive_lod_line_set_append(realization, p,
+		BSG_GEOMETRY_LINE_DRAW))
+	return -1;
 
     return 0;
 }
 
-C_DECL int
-rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+int
+rt_rpc_lod_realize(struct rt_primitive_lod_realization *realization, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bsg_view *v, fastf_t s_size)
+{
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    int ret = rt_rpc_lod_line_set(realization, ip, tol, v, s_size);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+struct rpc_line_sink {
+    struct bu_list *vlfree;
+    struct bu_list *vhead;
+    struct rt_primitive_lod_realization *realization;
+    int ok;
+};
+
+
+static void
+rt_rpc_line_sink_append(struct rpc_line_sink *sink, const point_t p, int command)
+{
+    if (!sink || !sink->ok)
+	return;
+
+    if (sink->realization) {
+	if (!primitive_lod_line_set_append(sink->realization, p, command))
+	    sink->ok = 0;
+	return;
+    }
+
+    if (!sink->vlfree || !sink->vhead) {
+	sink->ok = 0;
+	return;
+    }
+
+    if (command == BSG_GEOMETRY_LINE_MOVE) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_MOVE);
+    } else if (command == BSG_GEOMETRY_LINE_DRAW) {
+	BSG_ADD_VLIST(sink->vlfree, sink->vhead, p, BSG_VLIST_LINE_DRAW);
+    } else {
+	sink->ok = 0;
+    }
+}
+
+
+static int
+rt_rpc_standard_line_set(struct rpc_line_sink *sink,
+			 struct rt_db_internal *ip,
+			 const struct bg_tess_tol *ttol)
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;
@@ -942,9 +1006,9 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     int i, n;
     struct rt_pnt_node *old, *pos, *pts;
     vect_t Bu, Hu, Ru, B, R;
-    struct bu_list *vlfree = &rt_vlfree;
 
-    BU_CK_LIST_HEAD(vhead);
+    if (!sink || !ttol)
+	return -1;
     RT_CK_DB_INTERNAL(ip);
 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -1023,27 +1087,69 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* Draw the front */
-    BV_ADD_VLIST(vlfree, vhead, &front[(n-1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    rt_rpc_line_sink_append(sink, &front[(n-1)*ELEMENTS_PER_VECT],
+	    BSG_GEOMETRY_LINE_MOVE);
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	rt_rpc_line_sink_append(sink, &front[i*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* Draw the back */
-    BV_ADD_VLIST(vlfree, vhead, &back[(n-1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    rt_rpc_line_sink_append(sink, &back[(n-1)*ELEMENTS_PER_VECT],
+	    BSG_GEOMETRY_LINE_MOVE);
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	rt_rpc_line_sink_append(sink, &back[i*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	rt_rpc_line_sink_append(sink, &front[i*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_MOVE);
+	rt_rpc_line_sink_append(sink, &back[i*ELEMENTS_PER_VECT],
+		BSG_GEOMETRY_LINE_DRAW);
     }
 
     bu_free((char *)front, "fastf_t");
     bu_free((char *)back,  "fastf_t");
 
-    return 0;
+    return sink->ok ? 0 : -1;
+}
+
+
+int
+rt_rpc_wireframe_line_set(struct rt_primitive_lod_realization *realization,
+			  struct rt_db_internal *ip,
+			  const struct bg_tess_tol *ttol)
+{
+    if (!primitive_lod_line_set_begin(realization))
+	return -1;
+
+    struct rpc_line_sink sink;
+    sink.vlfree = NULL;
+    sink.vhead = NULL;
+    sink.realization = realization;
+    sink.ok = 1;
+
+    int ret = rt_rpc_standard_line_set(&sink, ip, ttol);
+    if (ret < 0)
+	return ret;
+    return primitive_lod_line_set_finish(realization) ? ret : -1;
+}
+
+
+C_DECL int
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
+{
+    BU_CK_LIST_HEAD(vhead);
+
+    struct rpc_line_sink sink;
+    sink.vlfree = &rt_vlfree;
+    sink.vhead = vhead;
+    sink.realization = NULL;
+    sink.ok = 1;
+
+    return rt_rpc_standard_line_set(&sink, ip, ttol);
 }
 
 
@@ -1178,7 +1284,7 @@ rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fast
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-C_DECL int
+int
 rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
@@ -1420,7 +1526,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Import an RPC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
@@ -1484,7 +1590,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
@@ -1529,7 +1635,7 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-C_DECL int
+int
 rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1564,7 +1670,7 @@ rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an RPC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
@@ -1612,7 +1718,7 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
@@ -1664,7 +1770,7 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-C_DECL int
+int
 rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_rpc_internal *xip =
@@ -1707,7 +1813,7 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-C_DECL void
+void
 rt_rpc_ifree(struct rt_db_internal *ip)
 {
     struct rt_rpc_internal *xip;
@@ -1722,7 +1828,7 @@ rt_rpc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-C_DECL void
+void
 rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_rpc_internal* rpc_ip;
@@ -1745,7 +1851,7 @@ rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-C_DECL int
+int
 rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1754,7 +1860,7 @@ rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_h, mag_b, mag_r;
@@ -1769,7 +1875,7 @@ rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -1787,7 +1893,7 @@ rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+void
 rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t area_base, area_shell, area_rect;
@@ -1844,7 +1950,7 @@ rpc_is_valid(struct rt_rpc_internal *rpc)
     return 1;
 }
 
-C_DECL int
+int
 rt_rpc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -1884,7 +1990,7 @@ rt_rpc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-C_DECL const char *
+const char *
 rt_rpc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -1913,7 +2019,7 @@ rpc_kpt_end:
 }
 
 
-C_DECL int
+int
 rt_rpc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))

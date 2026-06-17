@@ -610,7 +610,7 @@ ON_Brep_CDT_Mesh(
     std::set<ON_3dPoint *> vfnormals;
     std::set<ON_3dPoint *> flip_normals;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh_t *fmesh = &s_cdt->fmeshes[(int)fi];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
 	RTree<size_t, double, 3>::Iterator tree_it;
 	fmesh->tris_tree.GetFirst(tree_it);
 	size_t t_ind;
@@ -700,7 +700,7 @@ ON_Brep_CDT_Mesh(
     // 3D points should be geometrically unique in this final container.
     int face_cnt = 0;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh_t *fmesh = &s_cdt->fmeshes[(int)fi];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[active_faces[fi]];
 	RTree<size_t, double, 3>::Iterator tree_it;
 	fmesh->tris_tree.GetFirst(tree_it);
 	size_t t_ind;
@@ -815,4 +815,3 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -32,7 +32,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "nmg.h"
 
 void

@@ -528,7 +528,8 @@ struct fb_impl memory_interface_impl =  {
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0},  /* u6 */
+    0     /* if_active_clients */
 };
 
 struct fb memory_interface =  { &memory_interface_impl };

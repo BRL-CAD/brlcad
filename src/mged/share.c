@@ -78,6 +78,26 @@ extern struct bu_structparse mged_vparse[];
 
 void free_all_resources(struct mged_dm *dlp);
 
+static void
+copy_faceplate_record(int uflag, struct mged_dm *src, struct mged_dm *dst, int is_adc)
+{
+    if (uflag || !src || !dst)
+	return;
+
+    if (is_adc) {
+	struct bsg_adc_state adc;
+	if (mged_dm_adc_state_get(src, &adc))
+	    mged_dm_adc_state_set(dst, &adc);
+    } else {
+	struct bsg_grid_state grid;
+	if (mged_dm_grid_state_get(src, &grid))
+	    mged_dm_grid_state_set(dst, &grid);
+    }
+
+    mged_dm_repaint_request(src, MGED_REPAINT_DEVICE_SETTING);
+    mged_dm_repaint_request(dst, MGED_REPAINT_DEVICE_SETTING);
+}
+
 /*
  * SYNOPSIS
  *	share [-u] res p1 [p2]
@@ -97,7 +117,6 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 {
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
-    struct mged_state *s = ctp->s;
 
     int uflag = 0;		/* unshare flag */
     struct mged_dm *dlp1 = MGED_DM_NULL;
@@ -160,7 +179,7 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 	case 'a':
 	case 'A':
 	    if (argv[1][1] == 'd' || argv[1][1] == 'D')
-		SHARE_RESOURCE(uflag, _adc_state, dm_adc_state, adc_rc, dlp1, dlp2, vls, "share: adc_state");
+		copy_faceplate_record(uflag, dlp1, dlp2, 1);
 	    else if (argv[1][1] == 'x' || argv[1][1] == 'X')
 		SHARE_RESOURCE(uflag, _axes_state, dm_axes_state, ax_rc, dlp1, dlp2, vls, "share: axes_state");
 	    else {
@@ -178,43 +197,19 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 	case 'd':
 	case 'D':
 	    {
-		struct dm *dmp1;
-		struct dm *dmp2 = (struct dm *)NULL;
-
-		dmp1 = dlp1->dm_dmp;
-		if (dlp2 != (struct mged_dm *)NULL)
-		    dmp2 = dlp2->dm_dmp;
-
-		if (dm_share_dlist(dmp1, dmp2) == TCL_OK) {
-		    SHARE_RESOURCE(uflag, _dlist_state, dm_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
-		    if (uflag) {
-			dlp1->dm_dlist_state->dl_active = dlp1->dm_mged_variables->mv_dlist;
-
-			if (dlp1->dm_mged_variables->mv_dlist) {
-			    struct mged_dm *save_dlp;
-
-			    save_dlp = s->mged_curr_dm;
-
-			    set_curr_dm(s, dlp1);
-			    createDLists(s, (struct bu_list *)ged_dl(s->gedp));
-
-			    /* restore */
-			    set_curr_dm(s, save_dlp);
-			}
-
-			dlp1->dm_dirty = 1;
-			dm_set_dirty(dlp1->dm_dmp, 1);
-		    } else {
-			dlp1->dm_dirty = dlp2->dm_dirty = 1;
-			dm_set_dirty(dlp1->dm_dmp, 1);
-			dm_set_dirty(dlp2->dm_dmp, 1);
-		    }
+		SHARE_RESOURCE(uflag, _backend_cache_state, dm_backend_cache_state, cache_rc, dlp1, dlp2, vls, "share: backend_cache_state");
+		if (uflag) {
+		    dlp1->dm_backend_cache_state->cache_active = dlp1->dm_mged_variables->mv_backend_cache;
+		    mged_dm_repaint_request(dlp1, MGED_REPAINT_DEVICE_SETTING);
+		} else {
+		    mged_dm_repaint_request(dlp1, MGED_REPAINT_DEVICE_SETTING);
+		    mged_dm_repaint_request(dlp2, MGED_REPAINT_DEVICE_SETTING);
 		}
 	    }
 	    break;
 	case 'g':
 	case 'G':
-	    SHARE_RESOURCE(uflag, bv_grid_state, dm_grid_state, rc, dlp1, dlp2, vls, "share: grid_state");
+	    copy_faceplate_record(uflag, dlp1, dlp2, 0);
 	    break;
 	case 'm':
 	case 'M':
@@ -264,8 +259,7 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
     }
 
     if (!uflag) {
-	dlp2->dm_dirty = 1;	/* need to redraw this guy */
-	dm_set_dirty(dlp2->dm_dmp, 1);
+	mged_dm_repaint_request(dlp2, MGED_REPAINT_DEVICE_SETTING);
     }
 
     bu_vls_free(&vls);
@@ -290,7 +284,9 @@ f_rset (ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
+    struct bsg_grid_state grid = {0};
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    (void)mged_dm_grid_state_get(s->mged_curr_dm, &grid);
 
     /* print values for all resources */
     if (argc == 1) {
@@ -301,7 +297,7 @@ f_rset (ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 			      (const char *)color_scheme, argc, argv);
 	bu_vls_printf(&vls, "\n");
 	mged_vls_struct_parse(s, &vls, "Grid, res_type - g", grid_vparse,
-			      (const char *)grid_state, argc, argv);
+			      (const char *)&grid, argc, argv);
 	bu_vls_printf(&vls, "\n");
 	mged_vls_struct_parse(s, &vls, "Rubber Band, res_type - r", rubber_band_vparse,
 			      (const char *)rubber_band, argc, argv);
@@ -339,7 +335,8 @@ f_rset (ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 	case 'g':
 	case 'G':
 	    mged_vls_struct_parse(s, &vls, "Grid", grid_vparse,
-				  (const char *)grid_state, argc-1, argv+1);
+				  (const char *)&grid, argc-1, argv+1);
+	    mged_dm_grid_state_set(s->mged_curr_dm, &grid);
 	    break;
 	case 'r':
 	case 'R':
@@ -387,27 +384,23 @@ usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2)
 {
     free_all_resources(dlp1);
     dlp1->dm_view_state = dlp2->dm_view_state;
-    dlp1->dm_adc_state = dlp2->dm_adc_state;
     dlp1->dm_menu_state = dlp2->dm_menu_state;
     dlp1->dm_rubber_band = dlp2->dm_rubber_band;
     dlp1->dm_mged_variables = dlp2->dm_mged_variables;
     dlp1->dm_color_scheme = dlp2->dm_color_scheme;
-    dlp1->dm_grid_state = dlp2->dm_grid_state;
     dlp1->dm_axes_state = dlp2->dm_axes_state;
 
     /* sanity */
     dlp2->dm_view_state = (struct _view_state *)NULL;
-    dlp2->dm_adc_state = (struct _adc_state *)NULL;
     dlp2->dm_menu_state = (struct _menu_state *)NULL;
     dlp2->dm_rubber_band = (struct _rubber_band *)NULL;
     dlp2->dm_mged_variables = (struct _mged_variables *)NULL;
     dlp2->dm_color_scheme = (struct _color_scheme *)NULL;
-    dlp2->dm_grid_state = (struct bv_grid_state *)NULL;
     dlp2->dm_axes_state = (struct _axes_state *)NULL;
 
-    /* it doesn't make sense to save display list info */
-    if (!--dlp2->dm_dlist_state->dl_rc)
-	bu_free((void *)MGED_STATE->mged_curr_dm->dm_dlist_state, "usurp_all_resources: _dlist_state");
+    /* it doesn't make sense to save draw-scene info */
+    if (!--dlp2->dm_backend_cache_state->cache_rc)
+	bu_free((void *)MGED_STATE->mged_curr_dm->dm_backend_cache_state, "usurp_all_resources: _backend_cache_state");
 }
 
 
@@ -423,9 +416,6 @@ free_all_resources(struct mged_dm *dlp)
 	bu_free((void *)dlp->dm_view_state, "free_all_resources: view_state");
     }
 
-    if (!--dlp->dm_adc_state->adc_rc)
-	bu_free((void *)dlp->dm_adc_state, "free_all_resources: adc_state");
-
     if (!--dlp->dm_menu_state->ms_rc)
 	bu_free((void *)dlp->dm_menu_state, "free_all_resources: menu_state");
 
@@ -438,18 +428,15 @@ free_all_resources(struct mged_dm *dlp)
     if (!--dlp->dm_color_scheme->cs_rc)
 	bu_free((void *)dlp->dm_color_scheme, "free_all_resources: color_scheme");
 
-    if (!--dlp->dm_grid_state->rc)
-	bu_free((void *)dlp->dm_grid_state, "free_all_resources: grid_state");
-
     if (!--dlp->dm_axes_state->ax_rc)
 	bu_free((void *)dlp->dm_axes_state, "free_all_resources: axes_state");
 }
 
 
 void
-share_dlist(struct mged_dm *dlp2)
+share_backend_cache(struct mged_dm *dlp2)
 {
-    if (!dm_get_displaylist(dlp2->dm_dmp))
+    if (!dm_get_backend_cache(dlp2->dm_dmp))
 	return;
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -457,15 +444,12 @@ share_dlist(struct mged_dm *dlp2)
 	if (dlp1 != dlp2 &&
 	    dm_get_type(dlp1->dm_dmp) == dm_get_type(dlp2->dm_dmp) && dm_get_dname(dlp1->dm_dmp) && dm_get_dname(dlp2->dm_dmp) &&
 	    !bu_vls_strcmp(dm_get_dname(dlp1->dm_dmp), dm_get_dname(dlp2->dm_dmp))) {
-	    if (dm_share_dlist(dlp1->dm_dmp, dlp2->dm_dmp) == TCL_OK) {
-		struct bu_vls vls = BU_VLS_INIT_ZERO;
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		SHARE_RESOURCE(0, _dlist_state, dm_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
-		dlp1->dm_dirty = dlp2->dm_dirty = 1;
-		dm_set_dirty(dlp1->dm_dmp, 1);
-		dm_set_dirty(dlp2->dm_dmp, 1);
-		bu_vls_free(&vls);
-	    }
+	    SHARE_RESOURCE(0, _backend_cache_state, dm_backend_cache_state, cache_rc, dlp1, dlp2, vls, "share: backend_cache_state");
+	    mged_dm_repaint_request(dlp1, MGED_REPAINT_DEVICE_SETTING);
+	    mged_dm_repaint_request(dlp2, MGED_REPAINT_DEVICE_SETTING);
+	    bu_vls_free(&vls);
 
 	    break;
 	}

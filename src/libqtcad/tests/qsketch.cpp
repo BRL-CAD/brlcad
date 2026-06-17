@@ -85,8 +85,10 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bn/tol.h"
-#include "bv.h"
-#include "bv/util.h"
+#include "bsg.h"
+#include "bsg/util.h"
+#include "bsg/scene_object.h"
+#include "dm.h"
 #include "raytrace.h"
 #include "rt/functab.h"
 #include "rt/geom.h"
@@ -172,54 +174,35 @@ sketch_create_empty(struct db_i *dbip, const char *name)
 /* ------------------------------------------------------------------ */
 
 /*
- * Draw the sketch wireframe directly via ft_plot into the swrast dm.
- * This is the custom draw callback registered with QgView_SW: it bypasses
- * the scene-object machinery and renders the sketch vlist directly,
- * which is both simpler and faster for a single-primitive editor.
+ * Build sketch wireframe geometry for the sketch's BSG line-set node.
+ * Rendering now flows through the normal BSG render path (no custom frame
+ * callback bypass).  The librt sketch helper publishes typed line-set arrays
+ * directly, so qsketch does not depend on primitive plot/vlist conversion.
  */
-struct qsketch_draw_ctx {
-    struct rt_edit *es;
-    struct bv_grid_state *grid;
-};
+static int
+sketch_realization_to_line_set(bsg_line_set_ref lines,
+			       const struct rt_primitive_lod_realization *realization)
+{
+    if (!realization || !realization->has_line_set)
+	return bsg_line_set_ref_set_points(lines, NULL, NULL, 0);
+
+    return bsg_line_set_ref_set_points(lines,
+	    (const point_t *)realization->line_points,
+	    realization->line_commands,
+	    realization->line_count);
+}
+
 
 static void
-sketch_draw_custom(struct bview *v, void *udata)
+sketch_realization_free(struct rt_primitive_lod_realization *realization)
 {
-    struct qsketch_draw_ctx *ctx = (struct qsketch_draw_ctx *)udata;
-    if (!ctx || !ctx->es) return;
-
-    struct dm *dmp = (struct dm *)v->dmp;
-    if (!dmp) return;
-
-    /* The caller (QgSW::paintEvent) already called dm_draw_begin before
-     * invoking us via dm_draw_objs; we just issue draw commands here. */
-
-    /* ---- grid (optional) ---- */
-    if (ctx->grid && ctx->grid->draw) {
-	dm_draw_grid(dmp, ctx->grid, v->gv_scale, v->gv_model2view, 1.0);
-    }
-
-    /* ---- sketch wireframe ---- */
-    const struct rt_sketch_internal *skt =
-	(const struct rt_sketch_internal *)ctx->es->es_int.idb_ptr;
-    if (skt && skt->vert_count > 0 && skt->curve.count > 0) {
-	struct bu_list vlist;
-	BU_LIST_INIT(&vlist);
-
-	struct bg_tess_tol ttol;
-	ttol.magic = BG_TESS_TOL_MAGIC;
-	ttol.abs   = 0.0;
-	ttol.rel   = 0.01;
-	ttol.norm  = 0.0;
-
-	struct bn_tol tol = BN_TOL_INIT_TOL;
-	OBJ[ctx->es->es_int.idb_type].ft_plot(
-	    &vlist, &ctx->es->es_int, &ttol, &tol, v);
-
-	dm_set_fg(dmp, 255, 255, 0, 1, 1.0);  /* yellow wireframe */
-	dm_draw_vlist(dmp, (struct bv_vlist *)&vlist);
-	bv_vlist_cleanup(&vlist);
-    }
+    if (!realization)
+	return;
+    if (realization->line_points)
+	bu_free(realization->line_points, "qsketch sketch line-set points");
+    if (realization->line_commands)
+	bu_free(realization->line_commands, "qsketch sketch line-set commands");
+    memset(realization, 0, sizeof(*realization));
 }
 
 /*
@@ -227,9 +210,8 @@ sketch_draw_custom(struct bview *v, void *udata)
  *
  * This is called after every edit operation so the view shows the
  * latest geometry.  In a production qged integration the wireframe
- * would instead be refreshed from the in-memory es_int directly via
- * EDOBJ.ft_plot without touching the database; for this demo the
- * write-then-read round-trip keeps things simple.
+ * would be refreshed from the in-memory es_int directly; for this demo
+ * the write-then-read round-trip keeps things simple.
  */
 static int
 sketch_write_to_db(struct rt_edit *es, struct db_i *dbip, struct directory *dp)
@@ -400,6 +382,7 @@ private:
     void clear_filter();
     void refresh_tables();
     void refresh_view();
+    void update_sketch_geometry();
     void set_status(const QString &msg);
 
     /* Edit-state helpers */
@@ -418,10 +401,12 @@ private:
     /* ---- data ---- */
     struct db_i          *m_dbip = NULL;
     struct directory     *m_dp   = NULL;
-    struct bview         *m_bv   = NULL;
+    struct bsg_view         *m_bv   = NULL;
     struct rt_edit       *m_es   = NULL;
     struct bn_tol         m_tol;
-    qsketch_draw_ctx      m_draw_ctx;
+    bsg_separator_ref  m_scene_root = BSG_SEPARATOR_REF_NULL_INIT;
+    bsg_line_set_ref   m_sketch_lines = BSG_LINE_SET_REF_NULL_INIT;
+    bsg_node_ref       m_sketch_node = BSG_NODE_REF_NULL_INIT;
 
     /* ---- Qt UI ---- */
     QgView          *m_view   = NULL;
@@ -456,19 +441,19 @@ QSketchEditWindow::QSketchEditWindow(struct db_i *dbip,
     /* ---- tolerance ---- */
     BN_TOL_INIT(&m_tol);
 
-    /* ---- bview ---- */
-    BU_GET(m_bv, struct bview);
-    bv_init(m_bv, NULL);
+    /* ---- bsg_view ---- */
+    BU_GET(m_bv, struct bsg_view);
+    bsg_init(m_bv, NULL);
 
     /* Look along -Z toward +Z (top view, sketch in XY plane face-on).
      * az=0, el=90 gives view +X→right, +Y→up which matches the sketch
      * u_vec (1,0,0) and v_vec (0,1,0) defaults. */
     VSET(m_bv->gv_aet, 0.0, 90.0, 0.0);
-    bv_mat_aet(m_bv);
+    bsg_mat_aet(m_bv);
     m_bv->gv_scale  = 250.0;
     m_bv->gv_size   = 2.0 * m_bv->gv_scale;
     m_bv->gv_isize  = 1.0 / m_bv->gv_size;
-    bv_update(m_bv);
+    bsg_update(m_bv);
     bu_vls_sprintf(&m_bv->gv_name, "qsketch");
     m_bv->gv_width  = 700;
     m_bv->gv_height = 700;
@@ -495,10 +480,16 @@ QSketchEditWindow::QSketchEditWindow(struct db_i *dbip,
     m_view = new QgView(this, QgView_SW);
     m_view->set_view(m_bv);
 
-    /* Register our custom draw callback so ft_plot renders the sketch */
-    m_draw_ctx.es   = m_es;
-    m_draw_ctx.grid = &m_bv->gv_s->gv_grid;
-    m_view->set_draw_custom(sketch_draw_custom, &m_draw_ctx);
+    /* Create a field-backed BSG line-set node for the sketch wireframe under
+     * the view's initialized scene anchor.  qsketch refreshes the line-set
+     * fields explicitly after each edit command. */
+    m_scene_root = bsg_view_scene_separator_ref(m_bv, 1);
+    m_sketch_lines = bsg_line_set_ref_create(m_bv, "sketch_wireframe");
+    m_sketch_node = bsg_line_set_ref_as_node(m_sketch_lines);
+    if (!bsg_node_ref_is_null(m_sketch_node)) {
+	bsg_node_ref_set_color(m_sketch_node, 255, 255, 0); /* yellow wireframe */
+	bsg_separator_ref_append_child(m_scene_root, m_sketch_node);
+    }
 
     /* ---- vertex table — allow multi-row selection ---- */
     m_vtable = new QTableWidget(this);
@@ -641,9 +632,8 @@ QSketchEditWindow::QSketchEditWindow(struct db_i *dbip,
 
     /* Cursor tracker — always installed, never consumes events */
     m_tracker = new QgSketchCursorTracker();
-    m_tracker->v  = m_bv;
     m_tracker->es = m_es;
-    m_view->add_event_filter(m_tracker);
+    m_view->installFilter(m_tracker);
     connect(m_tracker, &QgSketchCursorTracker::uv_moved,
 	    this, [this](double u, double vv) {
 		m_cursor_label->setText(
@@ -654,6 +644,7 @@ QSketchEditWindow::QSketchEditWindow(struct db_i *dbip,
 
     /* ---- initial display ---- */
     refresh_tables();
+    update_sketch_geometry();
     /* Fit view and draw the sketch on first show */
     QTimer::singleShot(0, this, [this]() {
 	on_fit_view();
@@ -664,15 +655,22 @@ QSketchEditWindow::QSketchEditWindow(struct db_i *dbip,
 QSketchEditWindow::~QSketchEditWindow()
 {
     if (m_tracker) {
-	m_view->clear_event_filter(m_tracker);
+	m_view->clearFilter(m_tracker);
 	delete m_tracker;
     }
     clear_filter();
     if (m_es)
 	rt_edit_destroy(m_es);
     if (m_bv) {
-	bv_free(m_bv);
-	BU_PUT(m_bv, struct bview);
+	/* Destroy the sketch line-set node before releasing the view.  The
+	 * scene anchor is a borrowed view attachment freed by bsg_free(). */
+	if (!bsg_node_ref_is_null(m_sketch_node)) {
+	    bsg_node_ref_destroy(m_sketch_node);
+	    m_sketch_lines = BSG_LINE_SET_REF_NULL_INIT;
+	    m_sketch_node = bsg_node_ref_null();
+	}
+	bsg_free(m_bv);
+	BU_PUT(m_bv, struct bsg_view);
     }
 }
 
@@ -684,7 +682,6 @@ QSketchEditWindow::install_filter(QgSketchFilter *f)
     clear_filter();
     if (!f) return;
 
-    f->v  = m_bv;
     f->es = m_es;
 
     connect(f, &QgSketchFilter::view_updated,
@@ -692,7 +689,7 @@ QSketchEditWindow::install_filter(QgSketchFilter *f)
     connect(f, &QgSketchFilter::sketch_changed,
 	    this,  &QSketchEditWindow::on_sketch_changed);
 
-    m_view->add_event_filter(f);
+    m_view->installFilter(f);
     m_active_filter = f;
 }
 
@@ -701,7 +698,7 @@ QSketchEditWindow::clear_filter()
 {
     if (!m_active_filter) return;
 
-    m_view->clear_event_filter(m_active_filter);
+    m_view->clearFilter(m_active_filter);
     disconnect(m_active_filter, nullptr, this, nullptr);
     disconnect(m_active_filter, nullptr, m_view, nullptr);
     delete m_active_filter;
@@ -730,9 +727,40 @@ QSketchEditWindow::refresh_tables()
 void
 QSketchEditWindow::refresh_view()
 {
-    /* Write edited sketch back to the DB so the view can re-read it */
+    /* Persist edit state, refresh the field-backed sketch line geometry, then
+     * request a view refresh. */
     sketch_write_to_db(m_es, m_dbip, m_dp);
+    update_sketch_geometry();
     m_view->need_update(QG_VIEW_REFRESH);
+}
+
+void
+QSketchEditWindow::update_sketch_geometry()
+{
+    /* Regenerate the sketch wireframe from the current rt_edit state and push
+     * it into the BSG line-set fields. */
+    if (!m_es || bsg_node_ref_is_null(m_sketch_node)) return;
+
+    struct rt_primitive_lod_realization realization;
+    memset(&realization, 0, sizeof(realization));
+    int ok = 0;
+
+    const struct rt_sketch_internal *skt =
+	(const struct rt_sketch_internal *)m_es->es_int.idb_ptr;
+    if (skt && skt->vert_count > 0 && skt->curve.count > 0) {
+	struct bg_tess_tol ttol;
+	ttol.magic = BG_TESS_TOL_MAGIC;
+	ttol.abs   = 0.0;
+	ttol.rel   = 0.01;
+	ttol.norm  = 0.0;
+	ok = (rt_sketch_wireframe_line_set(&realization, &m_es->es_int,
+		    &ttol) == 0);
+    }
+    if (ok)
+	sketch_realization_to_line_set(m_sketch_lines, &realization);
+    else
+	bsg_line_set_ref_set_points(m_sketch_lines, NULL, NULL, 0);
+    sketch_realization_free(&realization);
 }
 
 void
@@ -1146,7 +1174,7 @@ void QSketchEditWindow::on_fit_view()
     m_bv->gv_scale = span * 0.5;
     m_bv->gv_size  = span;
     m_bv->gv_isize = 1.0 / span;
-    bv_update(m_bv);
+    bsg_update(m_bv);
 
     m_view->need_update(QG_VIEW_REFRESH);
     set_status("View fitted to sketch bounds.");
@@ -1297,7 +1325,10 @@ void QSketchEditWindow::on_mode_set_tangency()
 void QSketchEditWindow::on_toggle_grid(bool checked)
 {
     if (!m_bv) return;
-    m_bv->gv_s->gv_grid.draw = checked ? 1 : 0;
+    struct bsg_grid_state grid;
+    if (!bsg_view_grid_get(m_bv, &grid)) return;
+    grid.draw = checked ? 1 : 0;
+    bsg_view_grid_set(m_bv, &grid);
     m_view->need_update(QG_VIEW_REFRESH);
     set_status(checked ? "Grid enabled." : "Grid disabled.");
 }
@@ -1308,7 +1339,8 @@ void QSketchEditWindow::on_grid_settings()
 {
     if (!m_bv) return;
 
-    struct bv_grid_state *gs = &m_bv->gv_s->gv_grid;
+    struct bsg_grid_state grid;
+    if (!bsg_view_grid_get(m_bv, &grid)) return;
 
     QDialog dlg(this);
     dlg.setWindowTitle("Grid Settings");
@@ -1317,36 +1349,36 @@ void QSketchEditWindow::on_grid_settings()
     QDoubleSpinBox *sb_res_h = new QDoubleSpinBox(&dlg);
     sb_res_h->setRange(0.001, 99999.0);
     sb_res_h->setDecimals(3);
-    sb_res_h->setValue(gs->res_h);
+    sb_res_h->setValue(grid.res_h);
     sb_res_h->setSuffix(" mm");
 
     QDoubleSpinBox *sb_res_v = new QDoubleSpinBox(&dlg);
     sb_res_v->setRange(0.001, 99999.0);
     sb_res_v->setDecimals(3);
-    sb_res_v->setValue(gs->res_v);
+    sb_res_v->setValue(grid.res_v);
     sb_res_v->setSuffix(" mm");
 
     QDoubleSpinBox *sb_major_h = new QDoubleSpinBox(&dlg);
     sb_major_h->setRange(1.0, 1000.0);
     sb_major_h->setDecimals(0);
-    sb_major_h->setValue(gs->res_major_h);
+    sb_major_h->setValue(grid.res_major_h);
 
     QDoubleSpinBox *sb_major_v = new QDoubleSpinBox(&dlg);
     sb_major_v->setRange(1.0, 1000.0);
     sb_major_v->setDecimals(0);
-    sb_major_v->setValue(gs->res_major_v);
+    sb_major_v->setValue(grid.res_major_v);
 
     /* Anchor point — exposed in this dialog (was previously omitted) */
     QDoubleSpinBox *sb_anchor_u = new QDoubleSpinBox(&dlg);
     sb_anchor_u->setRange(-99999.0, 99999.0);
     sb_anchor_u->setDecimals(3);
-    sb_anchor_u->setValue(gs->anchor[0]);
+    sb_anchor_u->setValue(grid.anchor[0]);
     sb_anchor_u->setSuffix(" mm");
 
     QDoubleSpinBox *sb_anchor_v = new QDoubleSpinBox(&dlg);
     sb_anchor_v->setRange(-99999.0, 99999.0);
     sb_anchor_v->setDecimals(3);
-    sb_anchor_v->setValue(gs->anchor[1]);
+    sb_anchor_v->setValue(grid.anchor[1]);
     sb_anchor_v->setSuffix(" mm");
 
     /* Row widget for anchor U+V side by side */
@@ -1360,10 +1392,10 @@ void QSketchEditWindow::on_grid_settings()
     }
 
     QCheckBox *cb_snap = new QCheckBox("Snap to grid", &dlg);
-    cb_snap->setChecked(gs->snap);
+    cb_snap->setChecked(grid.snap);
 
     QCheckBox *cb_adaptive = new QCheckBox("Adaptive spacing", &dlg);
-    cb_adaptive->setChecked(gs->adaptive);
+    cb_adaptive->setChecked(grid.adaptive);
 
     fl->addRow("H spacing:", sb_res_h);
     fl->addRow("V spacing:", sb_res_v);
@@ -1382,22 +1414,23 @@ void QSketchEditWindow::on_grid_settings()
     if (dlg.exec() != QDialog::Accepted)
 	return;
 
-    gs->res_h       = (fastf_t)sb_res_h->value();
-    gs->res_v       = (fastf_t)sb_res_v->value();
-    gs->res_major_h = (int)sb_major_h->value();
-    gs->res_major_v = (int)sb_major_v->value();
-    gs->anchor[0]   = (fastf_t)sb_anchor_u->value();
-    gs->anchor[1]   = (fastf_t)sb_anchor_v->value();
-    gs->snap        = cb_snap->isChecked() ? 1 : 0;
-    gs->adaptive    = cb_adaptive->isChecked() ? 1 : 0;
+    grid.res_h       = (fastf_t)sb_res_h->value();
+    grid.res_v       = (fastf_t)sb_res_v->value();
+    grid.res_major_h = (int)sb_major_h->value();
+    grid.res_major_v = (int)sb_major_v->value();
+    grid.anchor[0]   = (fastf_t)sb_anchor_u->value();
+    grid.anchor[1]   = (fastf_t)sb_anchor_v->value();
+    grid.snap        = cb_snap->isChecked() ? 1 : 0;
+    grid.adaptive    = cb_adaptive->isChecked() ? 1 : 0;
+    bsg_view_grid_set(m_bv, &grid);
 
     m_view->need_update(QG_VIEW_REFRESH);
     set_status(QString("Grid: H=%1 V=%2 mm  anchor=(%3,%4)  snap=%5.")
-		       .arg(gs->res_h, 0, 'f', 3)
-		       .arg(gs->res_v, 0, 'f', 3)
-		       .arg(gs->anchor[0], 0, 'f', 3)
-		       .arg(gs->anchor[1], 0, 'f', 3)
-		       .arg(gs->snap ? "on" : "off"));
+		       .arg(grid.res_h, 0, 'f', 3)
+		       .arg(grid.res_v, 0, 'f', 3)
+		       .arg(grid.anchor[0], 0, 'f', 3)
+		       .arg(grid.anchor[1], 0, 'f', 3)
+		       .arg(grid.snap ? "on" : "off"));
 }
 
 /* ---- Sketch plane dialog ---- */

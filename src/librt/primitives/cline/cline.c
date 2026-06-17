@@ -38,6 +38,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "bsg/vlist.h"
 #include "wdb.h"
 #include "../../librt_private.h"
 
@@ -54,7 +55,7 @@ struct cline_specific {
 
 #define RT_CLINE_O(m) bu_offsetof(struct rt_cline_internal, m)
 
-EXTERNCPP const struct bu_structparse rt_cline_parse[] = {
+const struct bu_structparse rt_cline_parse[] = {
     { "%f", 3, "V", RT_CLINE_O(v),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", RT_CLINE_O(h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "r", RT_CLINE_O(radius), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -65,7 +66,7 @@ EXTERNCPP const struct bu_structparse rt_cline_parse[] = {
 /**
  * Calculate bounding RPP for cline
  */
-C_DECL int
+int
 rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_cline_internal *cline_ip;
     vect_t rad, work;
@@ -104,7 +105,7 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
  * A struct cline_specific is created, and its address is stored
  * in stp->st_specific for use by rt_cline_shot().
  */
-C_DECL int
+int
 rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_cline_internal *cline_ip;
@@ -148,7 +149,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-C_DECL void
+void
 rt_cline_print(register const struct soltab *stp)
 {
     register const struct cline_specific *cline =
@@ -173,7 +174,7 @@ rt_cline_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-C_DECL int
+int
 rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct cline_specific *cline =
@@ -349,7 +350,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
+void
 rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t tmp;
@@ -389,7 +390,7 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the cline.
  */
-C_DECL void
+void
 rt_cline_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -407,7 +408,7 @@ rt_cline_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * For a hit on the surface of an cline, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  */
-C_DECL void
+void
 rt_cline_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -421,7 +422,7 @@ rt_cline_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct
 }
 
 
-C_DECL void
+void
 rt_cline_free(register struct soltab *stp)
 {
     register struct cline_specific *cline =
@@ -434,7 +435,7 @@ rt_cline_free(register struct soltab *stp)
 
 
 C_DECL int
-rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bsg_view *UNUSED(info))
 {
     struct rt_cline_internal *cline_ip;
     fastf_t top[16*3];
@@ -462,21 +463,21 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     rt_ell_16pnts(top, top_pt, a, b);
 
     /* Draw the top */
-    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    BSG_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BSG_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BSG_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BSG_VLIST_LINE_DRAW);
     }
 
     /* Draw the bottom */
-    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    BSG_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BSG_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BSG_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BSG_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < 16; i += 4) {
-	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BSG_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BSG_VLIST_LINE_MOVE);
+	BSG_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BSG_VLIST_LINE_DRAW);
     }
 
     if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
@@ -491,21 +492,21 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	rt_ell_16pnts(top, top_pt, a, b);
 
 	/* Draw the top */
-	BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	BSG_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BSG_VLIST_LINE_MOVE);
 	for (i = 0; i < 16; i++) {
-	    BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	    BSG_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BSG_VLIST_LINE_DRAW);
 	}
 
 	/* Draw the bottom */
-	BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	BSG_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BSG_VLIST_LINE_MOVE);
 	for (i = 0; i < 16; i++) {
-	    BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	    BSG_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BSG_VLIST_LINE_DRAW);
 	}
 
 	/* Draw connections */
 	for (i = 0; i < 16; i += 4) {
-	    BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	    BSG_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BSG_VLIST_LINE_MOVE);
+	    BSG_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BSG_VLIST_LINE_DRAW);
 	}
 
     }
@@ -525,7 +526,7 @@ struct cline_vert {
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-C_DECL int
+int
 rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t ang_tol, abs_tol, norm_tol, rel_tol;
@@ -782,10 +783,8 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	NMG_CK_FACEUSE(fu);
 
 	if (nmg_calc_face_g(fu,vlfree)) {
-	    char *estr = bu_strdup("");
 	    bu_log("rt_tess_cline: failed to calculate plane equation\n");
-	    nmg_pr_fu_briefly(fu, estr);
-	    bu_free(estr, "estr");
+	    nmg_pr_fu_briefly(fu, "");
 	    return -1;
 	}
     }
@@ -801,7 +800,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
  * Import an cline from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_cline_internal *cline_ip;
@@ -848,7 +847,7 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_cline_internal *cline_ip;
@@ -885,7 +884,7 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     return 0;
 }
 
-C_DECL int
+int
 rt_cline_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -913,7 +912,7 @@ rt_cline_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
  * Import an cline from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-C_DECL int
+int
 rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_cline_internal *cline_ip;
@@ -953,7 +952,7 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
 /**
  * The name is added by the caller, in the usual place.
  */
-C_DECL int
+int
 rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_cline_internal *cline_ip;
@@ -989,7 +988,7 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-C_DECL int
+int
 rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_cline_internal *cline_ip =
@@ -1024,7 +1023,7 @@ rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-C_DECL void
+void
 rt_cline_ifree(struct rt_db_internal *ip)
 {
     register struct rt_cline_internal *cline_ip;
@@ -1040,7 +1039,7 @@ rt_cline_ifree(struct rt_db_internal *ip)
 }
 
 
-C_DECL int
+int
 rt_cline_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_cline_internal *cli =
@@ -1070,7 +1069,7 @@ rt_cline_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 }
 
 
-C_DECL int
+int
 rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_cline_internal *cli =
@@ -1110,7 +1109,7 @@ rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 }
 
 
-C_DECL int
+int
 rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
@@ -1123,7 +1122,7 @@ rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-C_DECL int
+int
 rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1131,7 +1130,7 @@ rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-C_DECL int
+int
 rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip)
 {
     struct rt_cline_internal *cip;
@@ -1170,7 +1169,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     return 0;
 }
 
-C_DECL int
+int
 rt_cline_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 2;
@@ -1198,7 +1197,7 @@ rt_cline_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const
     return lcnt;
 }
 
-C_DECL const char *
+const char *
 rt_cline_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

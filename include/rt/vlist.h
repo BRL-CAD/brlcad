@@ -31,6 +31,7 @@
 
 /* interface headers */
 #include "vmath.h"
+#include "bsg/vlist.h"
 #include "bu/vls.h"
 #include "rt/defines.h"
 
@@ -46,7 +47,7 @@ RT_EXPORT extern void rt_vlist_cleanup(void);
 RT_EXPORT extern void rt_vlist_import(struct bu_list *hp,
 				      struct bu_vls *namevls,
 				      const unsigned char *buf);
-RT_EXPORT extern struct bv_vlblock *    rt_vlblock_init(void);
+RT_EXPORT extern struct bsg_vlblock *    rt_vlblock_init(void);
 
 
 
@@ -57,7 +58,7 @@ RT_EXPORT extern struct bv_vlblock *    rt_vlblock_init(void);
  ************************************************************************/
 
 RT_EXPORT extern int rt_process_uplot_value(struct bu_list **vhead,
-					    struct bv_vlblock *vbp,
+					    struct bsg_vlblock *vbp,
 					    FILE *fp,
 					    int c,
 					    double char_size,
@@ -69,7 +70,7 @@ RT_EXPORT extern int rt_process_uplot_value(struct bu_list **vhead,
  * discard color information, only extract vectors.  This might be
  * more naturally located in mged/plot.c
  */
-RT_EXPORT extern int rt_uplot_to_vlist(struct bv_vlblock *vbp,
+RT_EXPORT extern int rt_uplot_to_vlist(struct bsg_vlblock *vbp,
 				       FILE *fp,
 				       double char_size,
 				       int mode);
@@ -78,7 +79,7 @@ RT_EXPORT extern int rt_uplot_to_vlist(struct bv_vlblock *vbp,
 /**
  * Used by MGED's "labelvert" command.
  */
-RT_EXPORT extern void rt_label_vlist_verts(struct bv_vlblock *vbp,
+RT_EXPORT extern void rt_label_vlist_verts(struct bsg_vlblock *vbp,
 					   struct bu_list *src,
 					   mat_t mat,
 					   double sz,
@@ -87,7 +88,7 @@ RT_EXPORT extern void rt_label_vlist_verts(struct bv_vlblock *vbp,
 /**
  * Used by MGED's "labelface" command.
  */
-RT_EXPORT extern void rt_label_vlist_faces(struct bv_vlblock *vbp,
+RT_EXPORT extern void rt_label_vlist_faces(struct bsg_vlblock *vbp,
 					   struct bu_list* f_list,
 					   mat_t mat,
 					   double sz,

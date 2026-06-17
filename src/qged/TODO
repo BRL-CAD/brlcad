@@ -27,8 +27,8 @@ x 4.  Implement Qt quad view widget  (start basic - do a QGridLayout with 4 QtGL
 
 x 5.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
 
-    look at all libged commands using _ged_cvt_vlblock_to_solids to get a list of those that will
-    need adjustment to work with the new setup.
+    Modern drawing paths now publish typed temporary features directly.  Keep any remaining
+    legacy plot/vlist work scoped to explicit file/export compatibility paths.
 
 
 x 7.  color controls (background in particular) settable in MGED...
@@ -118,16 +118,16 @@ X 21.  Figure out how to do a button bar in Qt
     with a librt functab entry.
 
     Want to do this without baking editing state into libged.  Current thought is to define a
-    view routine to create a transient interactive view object from the database solid that has
+    view routine to create a transient interactive view feature from the database solid that has
     a local copy of the db internal.  The edit operations and wireframe updates will be done
-    using that local copy, and then a separate operation will be used to write the view object
+    using that local copy, and then a separate operation will be used to write the view feature
     back to the database.  Equivalent to the sed|oed/edit/apply cycle, with the sed operation
-    creating a view object (it will be a separate step to suppress the original wireframe, if
-    that's what the app wants to do) edit operations being applied to the view object, and
-    then apply writing the altered db internal from the view object back to the .g file.  (If
+    creating a view feature (it will be a separate step to suppress the original wireframe, if
+    that's what the app wants to do) edit operations being applied to the view feature, and
+    then apply writing the altered db internal from the view feature back to the .g file.  (If
     the app suppressed the old wireframe, it will also need to restore the new version since
     applying the view obj changes and removing the view obj won't automatically draw the final
-    database object.  The "reject" operation would just be removing the view object on which
+    database object.  The "reject" operation would just be removing the view feature on which
     editing is being performed.
 
     The above approach will also involve refactoring the edit command logic so we can call the
@@ -206,5 +206,3 @@ Eventually, we may want to explore the possibilities of Paraview's QtTesting
 framework, which has potential for automated GUI regression testing:
 https://www.paraview.org/ParaView/index.php/Testing_Guide
 https://github.com/Kitware/QtTesting
-
-

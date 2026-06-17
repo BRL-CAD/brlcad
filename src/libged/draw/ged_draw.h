@@ -28,29 +28,34 @@
 
 #include "common.h"
 
+#include "ged/bsg_ged_draw.h"
 #include "ged.h"
 #include "../ged_private.h"
 
 __BEGIN_DECLS
 
-struct ged_solid_data {
-    struct display_list *gdlp;
+struct bsg_line_layer_builder;
+
+struct ged_shape_data {
+    struct ged *gedp;
+    ged_draw_group_ref draw_group_ref;
     int draw_solid_lines_only;
     int wireframe_color_override;
     int wireframe_color[3];
     fastf_t transparency;
-    int dmode;
-    struct bview *v;
+    int draw_mode;
+    struct bsg_appearance_settings vs;
+    struct bsg_view *v;
 };
 
 struct _ged_client_data {
     uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
     struct ged *gedp;
     struct rt_wdb *wdbp;
-    struct display_list *gdlp;
+    ged_draw_group_ref draw_group_ref;
     int fastpath_count;			/* statistics */
-    struct bv_vlblock *draw_edge_uses_vbp;
-    struct bview *v;
+    struct bsg_line_layer_builder *draw_edge_uses_plot;
+    struct bsg_view *v;
 
     /* bigE related members */
     struct application *ap;
@@ -75,7 +80,7 @@ struct _ged_client_data {
     int draw_edge_uses;
     int do_not_draw_nmg_solids_during_debugging;
 
-    struct bv_obj_settings vs;
+    struct bsg_appearance_settings vs;
 };
 
 struct ged_command_tab {
@@ -99,7 +104,7 @@ extern int _ged_cm_set(struct ged *gedp, vect_t *v, mat_t *m, const int argc, co
 extern int _ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
 extern int _ged_cm_null(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **argv);
 
-extern void _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp);
+extern int _ged_drawH_part2_line_set(int dashflag, const point_t *points, const int *commands, size_t point_count, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp);
 
 extern int _ged_drawtrees(struct ged *gedp,
 			  int argc,

@@ -38,8 +38,9 @@
 #include "rt/db_fullpath.h"
 #include "rt/edit.h"
 
+#include "ged/db_index.h"
+#include "ged/event_txn.h"
 #include "./ged_private.h"
-#include "./dbi.h"
 
 
 /* ------------------------------------------------------------------ *
@@ -142,10 +143,9 @@ ged_edit_buf_promote(struct ged *gedp, const struct db_full_path *dfp)
     db_free_full_path(&it->second.dfp);
     gi->edit_buf.erase(it);
 
-    /* Notify DbiState of the change */
-    if (ret == BRLCAD_OK && gedp->dbi_state) {
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	dbis->update();
+    if (ret == BRLCAD_OK) {
+	ged_db_index_refresh(gedp);
+	ged_event_notify_object_modified(gedp, dp->d_namep, 1, NULL);
     }
 
     return ret;
@@ -205,10 +205,8 @@ ged_edit_buf_flush(struct ged *gedp)
 	gi->edit_buf.erase(it);
     }
 
-    if (any_written && gedp->dbi_state) {
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	dbis->update();
-    }
+    if (any_written)
+	ged_db_index_refresh(gedp);
 }
 
 

@@ -38,38 +38,39 @@
 #include "bu/opt.h"
 #include "qtcad/defines.h"
 
-class QTCAD_EXPORT QgColorRGB: public QWidget
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgColorRGB: public QWidget {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgColorRGB)
 
-    public:
-	QgColorRGB(QWidget *p = NULL, QString lstr = QString("Color:"), QColor dcolor = QColor(Qt::red));
+
+public:
+	QgColorRGB(QWidget *p = nullptr, QString lstr = QString("Color:"), QColor dcolor = QColor(Qt::red));
 	~QgColorRGB();
 
 	QLineEdit *rgbtext;
 	QPushButton *rgbcolor;
 	struct bu_color bc;
 
-    signals:
+signals:
 	void color_changed(struct bu_color *);
 
-    public slots:
+public slots:
 	void set_color_from_text();
 
-    private slots:
+private slots:
 	void set_color_from_button();
 
-    private:
+private:
 	QColorDialog *d;
-        QHBoxLayout *mlayout;
+	QHBoxLayout *mlayout;
 	QColor qc;
 };
 
-#endif /* QACCORDIANWIDGET_H */
+#endif /* QGCOLORRGB_H */
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"

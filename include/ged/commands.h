@@ -35,6 +35,8 @@
 
 __BEGIN_DECLS
 
+struct bu_opt_validate_result;
+
 /** @addtogroup ged_plugins */
 /** @{ */
 /** Execute plugin based command */
@@ -113,6 +115,22 @@ ged_cmd_completions(const char ***completions, const char *seed);
 GED_EXPORT extern int
 ged_geom_completions(const char ***completions, struct bu_vls *cprefix, struct db_i *dbip, const char *seed);
 
+/* Report whether a GED command has schema metadata available. */
+GED_EXPORT extern int
+ged_cmd_schema_exists(const char *cmd);
+
+/* Return JSON schema metadata for a GED command.  Caller must free with bu_free. */
+GED_EXPORT extern char *
+ged_cmd_schema_json(const char *cmd);
+
+/* Validate a GED command line against available schema metadata. */
+GED_EXPORT extern int
+ged_cmd_validate(struct ged *gedp, const char *input, size_t cursor_pos, struct bu_opt_validate_result *result);
+
+/* Complete the token at cursor_pos using schema metadata and existing fallbacks. */
+GED_EXPORT extern int
+ged_cmd_complete(const char ***completions, struct bu_vls *prefix, struct ged *gedp, const char *input, size_t cursor_pos);
+
 
 /**
  * Use bu_editor to set up an editor for use with GED
@@ -150,9 +168,6 @@ GED_EXPORT extern int ged_inside_internal(struct ged *gedp,
 					  const char *argv[],
 					  int arg,
 					  char *o_name);
-
-
-GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
 
 
 /** @} */

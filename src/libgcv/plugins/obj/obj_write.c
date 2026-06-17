@@ -34,6 +34,7 @@
 
 #include "bu/path.h"
 #include "raytrace.h"
+#include "rt/vlist.h"
 #include "gcv/api.h"
 
 #define V3ARGS_SCALE(v, factor)       (v)[X] * (factor), (v)[Y] * (factor), (v)[Z] * (factor)

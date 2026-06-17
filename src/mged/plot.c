@@ -36,7 +36,9 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bv/plot3.h"
+#include "bsg/export.h"
+#include "bsg/plot3.h"
+#include "bsg/render.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -45,6 +47,69 @@
 extern FILE *fdopen(int fd, const char *mode);
 #endif
 
+static int
+_area_has_unsupported_subtraction(struct mged_state *s)
+{
+    if (!s || !s->gedp)
+	return 0;
+
+    int area_err = 0;
+    struct bsg_export_request request;
+    bsg_export_request_init(&request, s->gedp->ged_gvp);
+    request.query_flags = BSG_EXPORT_QUERY_VISIBLE_ONLY | BSG_EXPORT_QUERY_DB_OBJECTS;
+    request.render_flags = BSG_RENDER_FLAG_VISIBLE_ONLY | BSG_RENDER_FLAG_PAYLOAD_PREPARE;
+
+    struct bsg_export_result *export_result = bsg_export_query(&request);
+    if (!export_result)
+	return 0;
+
+    for (size_t i = 0; i < bsg_export_result_count(export_result); i++) {
+	const struct bsg_export_record *rec =
+	    bsg_export_result_get(export_result, i);
+	if (rec && !rec->evaluated_region && rec->line_style != 0) {
+	    area_err = 1;
+	    break;
+	}
+    }
+    bsg_export_result_free(export_result);
+    return area_err;
+}
+
+/* Callback: write shape vlists to cad_boundp pipe. */
+struct _area_write_data {
+    FILE *fp_w;
+    const mat_t *rotation;
+    struct db_i *dbip;
+};
+
+static int
+_area_write_segment(const point_t a, const point_t b, void *data)
+{
+    struct _area_write_data *d = (struct _area_write_data *)data;
+    vect_t last;
+    vect_t fin;
+
+    if (!d || !d->fp_w || !d->rotation || !d->dbip)
+	return 0;
+
+    MAT4X3VEC(last, *d->rotation, a);
+    MAT4X3VEC(fin, *d->rotation, b);
+    fprintf(d->fp_w, "%.9e %.9e %.9e %.9e\n",
+	    last[X] * d->dbip->dbi_base2local,
+	    last[Y] * d->dbip->dbi_base2local,
+	    fin[X]  * d->dbip->dbi_base2local,
+	    fin[Y]  * d->dbip->dbi_base2local);
+    return 1;
+}
+
+static void
+_area_write_record(const struct bsg_export_record *rec, struct _area_write_data *d)
+{
+    (void)bsg_export_record_foreach_segment(rec, _area_write_segment, d);
+}
+
+/* ------------------------------------------------------------------ */
+
 int
 f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
@@ -52,17 +117,10 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    static vect_t last;
-    static vect_t fin;
     char result[RT_MAXLINE] = {0};
     char tol_str[32] = {0};
-    int is_empty = 1;
 
 #ifndef _WIN32
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct bv_scene_obj *sp;
-    struct bv_vlist *vp;
     FILE *fp_r;
     FILE *fp_w;
     int rpid;
@@ -90,39 +148,19 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (not_state(s, ST_VIEW, "Presented Area Calculation") == TCL_ERROR)
 	return TCL_ERROR;
 
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
-	    is_empty = 0;
-	    break;
-	}
-
-	gdlp = next_gdlp;
-    }
-
-    if (is_empty) {
+    if (!ged_draw_has_shapes(s->gedp)) {
 	Tcl_AppendResult(interp, "No objects displayed!!!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_old.s_Eflag && sp->s_soldash != 0) {
-		struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-		bu_vls_printf(&vls, "help area");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	    }
+    {
+	if (_area_has_unsupported_subtraction(s)) {
+	    struct bu_vls vls = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&vls, "help area");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
 	}
-
-	gdlp = next_gdlp;
     }
 
     if (argc == 2) {
@@ -198,51 +236,21 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
      * Write out rotated but unclipped, untranslated,
      * and unscaled vectors
      */
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-		int i;
-		int nused = vp->nused;
-		int *cmd = vp->cmd;
-		point_t *pt = vp->pt;
-		for (i = 0; i < nused; i++, cmd++, pt++) {
-		    switch (*cmd) {
-			case BV_VLIST_POLY_START:
-			case BV_VLIST_POLY_VERTNORM:
-			case BV_VLIST_TRI_START:
-			case BV_VLIST_TRI_VERTNORM:
-			    continue;
-			case BV_VLIST_POLY_MOVE:
-			case BV_VLIST_LINE_MOVE:
-			case BV_VLIST_TRI_MOVE:
-			    /* Move, not draw */
-			    MAT4X3VEC(last, view_state->vs_gvp->gv_rotation, *pt);
-			    continue;
-			case BV_VLIST_POLY_DRAW:
-			case BV_VLIST_POLY_END:
-			case BV_VLIST_LINE_DRAW:
-			case BV_VLIST_TRI_DRAW:
-			case BV_VLIST_TRI_END:
-			    /* draw.  */
-			    MAT4X3VEC(fin, view_state->vs_gvp->gv_rotation, *pt);
-			    break;
-		    }
-
-		    fprintf(fp_w, "%.9e %.9e %.9e %.9e\n",
-			    last[X] * s->dbip->dbi_base2local,
-			    last[Y] * s->dbip->dbi_base2local,
-			    fin[X] * s->dbip->dbi_base2local,
-			    fin[Y] * s->dbip->dbi_base2local);
-
-		    VMOVE(last, fin);
-		}
-	    }
+    {
+	struct _area_write_data wd;
+	wd.fp_w = fp_w;
+	wd.rotation = (const mat_t *)&view_state->vs_gvp->gv_rotation;
+	wd.dbip = s->dbip;
+	struct bsg_export_request request;
+	bsg_export_request_init(&request, s->gedp->ged_gvp);
+	request.query_flags = BSG_EXPORT_QUERY_VISIBLE_ONLY | BSG_EXPORT_QUERY_DB_OBJECTS;
+	request.render_flags = BSG_RENDER_FLAG_VISIBLE_ONLY | BSG_RENDER_FLAG_PAYLOAD_PREPARE;
+	struct bsg_export_result *export_result = bsg_export_query(&request);
+	if (export_result) {
+	    for (size_t i = 0; i < bsg_export_result_count(export_result); i++)
+		_area_write_record(bsg_export_result_get(export_result, i), &wd);
+	    bsg_export_result_free(export_result);
 	}
-
-	gdlp = next_gdlp;
     }
 
     fclose(fp_w);

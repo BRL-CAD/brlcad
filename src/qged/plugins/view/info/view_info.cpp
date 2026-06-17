@@ -19,43 +19,80 @@
  */
 /** @file view_info.cpp
  *
+ * IQgToolFactory implementation for the view-info palette tool.
+ * Replaces the legacy qged_plugin_info ABI.
  */
 
-#include "qtcad/QgToolPalette.h"
-#include "../../plugin.h"
-#include "CADViewModel.h"
+#include <QIcon>
+#include <QPixmap>
+#include <QSizePolicy>
 
-void *
-view_info_tool_create()
+#include "qtcad/QgKeyVal.h"
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgPluginDescriptor.h"
+#include "ViewInfoFactory.h"
+
+/* ------------------------------------------------------------------ */
+/* ViewInfoTool                                                         */
+/* ------------------------------------------------------------------ */
+
+ViewInfoTool::ViewInfoTool(QgPluginContext *ctx, QObject *parent)
+    : QgToolBase(ctx, parent)
 {
-    CADViewModel *vmodel = new CADViewModel();
-    QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
-    QgKeyValView *vview = new QgKeyValView(NULL, 0);
-    vview->setModel(vmodel);
+}
+
+QWidget *
+ViewInfoTool::createWidget()
+{
+    m_model = new CADViewModel(this);
+    m_model->setContext(m_ctx);
+    m_model->refresh(0);
+
+    QgKeyValView *vview = new QgKeyValView(nullptr, 0);
+    vview->setModel(m_model);
     vview->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     vview->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, vview);
-    QObject::connect(el, &QgToolPaletteElement::element_view_update, vmodel, &CADViewModel::refresh);
-
-    return el;
+    return vview;
 }
 
-extern "C" {
-    struct qged_tool_impl view_info_tool_impl = {
-	view_info_tool_create
-    };
-
-    const struct qged_tool view_info_tool = { &view_info_tool_impl, 0 };
-    const struct qged_tool *view_info_tools[] = { &view_info_tool, NULL };
-
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_info_tools, 1 };
-
-    COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
-    {
-	return &pinfo;
-    }
+QIcon *
+ViewInfoTool::createIcon()
+{
+    return new QIcon(QPixmap(":info.svg"));
 }
 
+void
+ViewInfoTool::refresh()
+{
+    if (m_model)
+	m_model->refresh(0);
+}
+
+/* ------------------------------------------------------------------ */
+/* ViewInfoFactory                                                      */
+/* ------------------------------------------------------------------ */
+
+QgPluginDescriptor
+ViewInfoFactory::descriptor() const
+{
+    QgPluginDescriptor d;
+    d.id           = "org.brlcad.qged.view.info";
+    d.displayName  = "View Info";
+    d.category     = "qged.view";
+    d.iconName     = ":info.svg";
+    d.sortKey      = 0;
+    d.requiresView = true;
+    d.description  = "Displays the current view name, size, azimuth, elevation, twist, and center.";
+    d.vendor       = "BRL-CAD";
+    d.version      = "1.0";
+    return d;
+}
+
+QgToolBase *
+ViewInfoFactory::create(QgPluginContext *ctx, QObject *parent)
+{
+    return new ViewInfoTool(ctx, parent);
+}
 
 
 // Local Variables:

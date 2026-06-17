@@ -27,8 +27,10 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "./alphanum.h"
+#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/time.h"
@@ -188,6 +190,169 @@ obj_match(const char ***completions, struct db_i *dbip, const char *seed)
     return (int)matches.size();
 }
 
+struct ged_input_parse {
+    char *copy = NULL;
+    char **argv = NULL;
+    size_t argc = 0;
+    size_t cursor_arg = 0;
+    size_t input_len = 0;
+    std::vector<size_t> char_starts;
+    std::vector<size_t> char_ends;
+};
+
+static void
+ged_input_parse_free(struct ged_input_parse *parsed)
+{
+    if (!parsed)
+	return;
+
+    if (parsed->argv)
+	bu_free(parsed->argv, "argv array");
+    if (parsed->copy)
+	bu_free(parsed->copy, "input copy");
+
+    parsed->copy = NULL;
+    parsed->argv = NULL;
+    parsed->argc = 0;
+    parsed->cursor_arg = 0;
+    parsed->input_len = 0;
+    parsed->char_starts.clear();
+    parsed->char_ends.clear();
+}
+
+static int
+ged_input_parse_line(struct ged_input_parse *parsed, const char *input, size_t cursor_pos)
+{
+    size_t p = 0;
+    int in_token = 0;
+
+    if (!parsed || !input)
+	return -1;
+
+    parsed->input_len = strlen(input);
+    parsed->copy = bu_strdup(input);
+
+    {
+	size_t len = parsed->input_len;
+	while (len > 0 && isspace((unsigned char)parsed->copy[len - 1]))
+	    parsed->copy[--len] = '\0';
+    }
+
+    parsed->argv = (char **)bu_calloc(parsed->input_len + 1, sizeof(char *), "argv array");
+    parsed->argc = bu_argv_from_string(parsed->argv, parsed->input_len, parsed->copy);
+    parsed->char_starts.resize(parsed->argc);
+    parsed->char_ends.resize(parsed->argc);
+
+    for (size_t i = 0; i < parsed->argc; i++) {
+	parsed->char_starts[i] = (size_t)(parsed->argv[i] - parsed->copy);
+	parsed->char_ends[i] = parsed->char_starts[i] + strlen(parsed->argv[i]);
+    }
+
+    for (p = 0; p < cursor_pos && input[p]; p++) {
+	if (isspace((unsigned char)input[p])) {
+	    if (in_token) {
+		parsed->cursor_arg++;
+		in_token = 0;
+	    }
+	} else {
+	    in_token = 1;
+	}
+    }
+    if (parsed->cursor_arg > parsed->argc)
+	parsed->cursor_arg = parsed->argc;
+
+    return 0;
+}
+
+static std::string
+ged_cursor_seed(const struct ged_input_parse &parsed)
+{
+    if (parsed.cursor_arg < parsed.argc && parsed.argv && parsed.argv[parsed.cursor_arg])
+	return std::string(parsed.argv[parsed.cursor_arg]);
+
+    return std::string();
+}
+
+static void
+ged_set_validate_result(struct bu_opt_validate_result *result,
+			bu_opt_validate_state_t state,
+			size_t token_start,
+			size_t token_end,
+			unsigned int expected,
+			const char *hint)
+{
+    bu_opt_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token_start;
+    result->token_end = token_end;
+    result->expected = expected;
+    result->hint = hint;
+    result->completion_type = BU_OPT_VAL_UNKNOWN;
+}
+
+static void
+ged_set_result_chars(struct bu_opt_validate_result *result,
+		     const struct ged_input_parse &parsed,
+		     size_t token_start,
+		     size_t token_end)
+{
+    if (!result)
+	return;
+
+    if (token_start < parsed.argc) {
+	size_t end_index = (token_end < parsed.argc) ? token_end : parsed.argc - 1;
+	result->char_start = parsed.char_starts[token_start];
+	result->char_end = parsed.char_ends[end_index];
+    } else {
+	result->char_start = parsed.input_len;
+	result->char_end = parsed.input_len;
+    }
+}
+
+static void
+ged_replace_candidates(struct bu_opt_validate_result *result,
+		       const char ***completions,
+		       int cnt,
+		       bu_opt_value_type_t ctype)
+{
+    if (!result)
+	return;
+
+    if (result->completion_candidates)
+	bu_argv_free(result->completion_count, (char **)result->completion_candidates);
+
+    result->completion_candidates = *completions;
+    result->completion_count = (cnt > 0) ? (size_t)cnt : 0;
+    result->completion_type = ctype;
+}
+
+static void
+ged_fill_command_candidates(struct bu_opt_validate_result *result, const std::string &seed)
+{
+    const char **completions = NULL;
+    int cnt = ged_cmd_completions(&completions, seed.c_str());
+    if (cnt > 0)
+	ged_replace_candidates(result, &completions, cnt, BU_OPT_VAL_UNKNOWN);
+}
+
+static void
+ged_fill_geometry_candidates(struct ged *gedp,
+			     const std::string &seed,
+			     struct bu_opt_validate_result *result)
+{
+    if (!gedp || !gedp->dbip || !result)
+	return;
+
+    struct bu_vls prefix = BU_VLS_INIT_ZERO;
+    const char **completions = NULL;
+    int cnt = ged_geom_completions(&completions, &prefix, gedp->dbip, seed.c_str());
+    if (cnt > 0) {
+	ged_replace_candidates(result, &completions, cnt,
+		(seed.find('/') != std::string::npos) ? BU_OPT_VAL_DB_PATH : BU_OPT_VAL_DB_OBJECT);
+    }
+    bu_vls_free(&prefix);
+}
+
 int
 ged_cmd_completions(const char ***completions, const char *seed)
 {
@@ -212,6 +377,106 @@ ged_cmd_completions(const char ***completions, const char *seed)
     for (size_t i = 0; i < matches.size(); i++)
 	(*completions)[i] = bu_strdup(matches[i]);
     ret = (int)matches.size();
+
+    return ret;
+}
+
+extern "C" int
+ged_cmd_validate(struct ged *gedp, const char *input, size_t cursor_pos, struct bu_opt_validate_result *result)
+{
+    struct ged_input_parse parsed;
+    std::string seed;
+    const char *cmd = NULL;
+    int cmd_exists = 0;
+
+    if (!input || !result)
+	return -1;
+
+    (void)ged_input_parse_line(&parsed, input, cursor_pos);
+    seed = ged_cursor_seed(parsed);
+    cmd = (parsed.argc > 0) ? parsed.argv[0] : NULL;
+    cmd_exists = (cmd) ? ged_cmd_exists(cmd) : 0;
+
+    if (!parsed.argc || parsed.cursor_arg == 0 || !cmd_exists) {
+	bu_opt_validate_state_t state = (!parsed.argc) ? BU_OPT_VALIDATE_INCOMPLETE :
+	    (cmd_exists ? BU_OPT_VALIDATE_VALID : BU_OPT_VALIDATE_UNKNOWN);
+	const char *hint = (!parsed.argc) ? "command expected" :
+	    (cmd_exists ? "valid command" : "unknown command");
+	ged_set_validate_result(result, state, 0, 0, BU_OPT_EXPECT_SUBCOMMAND, hint);
+	ged_set_result_chars(result, parsed, 0, 0);
+	ged_fill_command_candidates(result, seed);
+	ged_input_parse_free(&parsed);
+	return 0;
+    }
+
+    const struct bu_opt_cmd_desc *schema = _ged_cmd_schema(cmd);
+    if (!schema) {
+	size_t token_index = (parsed.cursor_arg < parsed.argc) ? parsed.cursor_arg : parsed.argc;
+	ged_set_validate_result(result, BU_OPT_VALIDATE_UNKNOWN, token_index, token_index,
+		BU_OPT_EXPECT_NONE, "syntax metadata unavailable");
+	ged_set_result_chars(result, parsed, token_index, token_index);
+	if (parsed.cursor_arg > 0 && gedp && gedp->dbip) {
+	    result->completion_type = (seed.find('/') != std::string::npos) ? BU_OPT_VAL_DB_PATH : BU_OPT_VAL_DB_OBJECT;
+	    ged_fill_geometry_candidates(gedp, seed, result);
+	}
+	ged_input_parse_free(&parsed);
+	return 0;
+    }
+
+    size_t local_cursor = parsed.cursor_arg - 1;
+    int ret = bu_opt_validate_argv(schema, parsed.argc - 1, (const char **)parsed.argv + 1, local_cursor, result);
+    result->token_start += 1;
+    result->token_end += 1;
+    ged_set_result_chars(result, parsed, result->token_start, result->token_end);
+    if (!result->completion_count &&
+	(result->completion_type == BU_OPT_VAL_DB_OBJECT || result->completion_type == BU_OPT_VAL_DB_PATH)) {
+	ged_fill_geometry_candidates(gedp, seed, result);
+    }
+
+    ged_input_parse_free(&parsed);
+    return ret;
+}
+
+extern "C" int
+ged_cmd_complete(const char ***completions, struct bu_vls *prefix, struct ged *gedp, const char *input, size_t cursor_pos)
+{
+    struct ged_input_parse parsed;
+    struct bu_opt_validate_result result = BU_OPT_VALIDATE_RESULT_NULL;
+    std::string seed;
+    int ret = 0;
+
+    if (!completions || !input)
+	return 0;
+
+    *completions = NULL;
+    if (prefix)
+	bu_vls_trunc(prefix, 0);
+
+    (void)ged_input_parse_line(&parsed, input, cursor_pos);
+    seed = ged_cursor_seed(parsed);
+    (void)ged_cmd_validate(gedp, input, cursor_pos, &result);
+
+    if ((result.completion_type == BU_OPT_VAL_DB_OBJECT || result.completion_type == BU_OPT_VAL_DB_PATH) &&
+	gedp && gedp->dbip) {
+	struct bu_vls lprefix = BU_VLS_INIT_ZERO;
+	struct bu_vls *pfx = prefix ? prefix : &lprefix;
+	ret = ged_geom_completions(completions, pfx, gedp->dbip, seed.c_str());
+	if (!prefix)
+	    bu_vls_free(&lprefix);
+	bu_opt_validate_result_clear(&result);
+	ged_input_parse_free(&parsed);
+	return ret;
+    }
+
+    if (prefix)
+	bu_vls_sprintf(prefix, "%s", seed.c_str());
+
+    *completions = result.completion_candidates;
+    ret = (int)result.completion_count;
+    result.completion_candidates = NULL;
+    result.completion_count = 0;
+    bu_opt_validate_result_clear(&result);
+    ged_input_parse_free(&parsed);
 
     return ret;
 }

@@ -46,14 +46,14 @@ code(fastf_t x, fastf_t y)
     int cval;
 
     cval = 0;
-    if (x < BV_MIN)
+    if (x < BSG_VIEW_MIN)
 	cval |= 01;
-    else if (x > BV_MAX)
+    else if (x > BSG_VIEW_MAX)
 	cval |= 02;
 
-    if (y < BV_MIN)
+    if (y < BSG_VIEW_MIN)
 	cval |= 04;
-    else if (y > BV_MAX)
+    else if (y > BSG_VIEW_MAX)
 	cval |= 010;
 
     return cval;
@@ -95,20 +95,20 @@ clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 
 	if (code1 & 01) {
 	    /* Push toward left edge */
-	    *yp1 = *yp1 + (*yp2-*yp1)*(BV_MIN-*xp1)/(*xp2-*xp1);
-	    *xp1 = BV_MIN;
+	    *yp1 = *yp1 + (*yp2-*yp1)*(BSG_VIEW_MIN-*xp1)/(*xp2-*xp1);
+	    *xp1 = BSG_VIEW_MIN;
 	} else if (code1 & 02) {
 	    /* Push toward right edge */
-	    *yp1 = *yp1 + (*yp2-*yp1)*(BV_MAX-*xp1)/(*xp2-*xp1);
-	    *xp1 = BV_MAX;
+	    *yp1 = *yp1 + (*yp2-*yp1)*(BSG_VIEW_MAX-*xp1)/(*xp2-*xp1);
+	    *xp1 = BSG_VIEW_MAX;
 	} else if (code1 & 04) {
 	    /* Push toward bottom edge */
-	    *xp1 = *xp1 + (*xp2-*xp1)*(BV_MIN-*yp1)/(*yp2-*yp1);
-	    *yp1 = BV_MIN;
+	    *xp1 = *xp1 + (*xp2-*xp1)*(BSG_VIEW_MIN-*yp1)/(*yp2-*yp1);
+	    *yp1 = BSG_VIEW_MIN;
 	} else if (code1 & 010) {
 	    /* Push toward top edge */
-	    *xp1 = *xp1 + (*xp2-*xp1)*(BV_MAX-*yp1)/(*yp2-*yp1);
-	    *yp1 = BV_MAX;
+	    *xp1 = *xp1 + (*xp2-*xp1)*(BSG_VIEW_MAX-*yp1)/(*yp2-*yp1);
+	    *yp1 = BSG_VIEW_MAX;
 	}
 
 	code1 = code(*xp1, *yp1);

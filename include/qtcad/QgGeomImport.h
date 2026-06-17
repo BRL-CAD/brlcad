@@ -46,59 +46,62 @@
 
 #include "qtcad/defines.h"
 
-class QTCAD_EXPORT QgGeomImport : public QObject
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgGeomImport : public QObject {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgGeomImport)
 
-    public:
-	QgGeomImport(QWidget *pparent = NULL);
+
+public:
+	QgGeomImport(QWidget *pparent = nullptr);
 	~QgGeomImport();
 
-	QString gfile(const char *tfile = NULL);
+	QString gfile(const char *tfile = nullptr);
 
 	bool enable_conversion = true;
 
 	struct bu_vls conv_msg = BU_VLS_INIT_ZERO;
 
-    private:
+private:
 	int exec_console_app_in_window(QString command, QStringList options, QString lfile);
 	QString fileName;
 };
 
 // GUI dialogues for specific format conversion options
 
-class ASCImportDialog : public QDialog
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgAscImportDialog : public QDialog {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgAscImportDialog)
 
-    public:
-	ASCImportDialog(QString filename, QString g_path, QString l_path);
+
+public:
+	QgAscImportDialog(QString filename, QString g_path, QString l_path);
 
 	QString command();
 	QStringList options();
 	QLineEdit *db_path;
 	QLineEdit *log_path;
 
-    private:
+private:
 
 	QString input_file;
 	QGroupBox *formGroupBox;
 	QDialogButtonBox *buttonBox;
 };
 
-class RhinoImportDialog : public QDialog
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgRhinoImportDialog : public QDialog {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgRhinoImportDialog)
 
-    public:
-	RhinoImportDialog(QString filename, QString g_path, QString l_path);
+
+public:
+	QgRhinoImportDialog(QString filename, QString g_path, QString l_path);
 
 	QString command();
 	QStringList options();
 	QLineEdit *db_path;
 	QLineEdit *log_path;
 
-    private:
+private:
 
 	QString input_file;
 
@@ -114,19 +117,20 @@ class RhinoImportDialog : public QDialog
 	QDialogButtonBox *buttonBox;
 };
 
-class STEPImportDialog : public QDialog
-{
-    Q_OBJECT
+class QTCAD_EXPORT QgStepImportDialog : public QDialog {
+	Q_OBJECT
+	Q_DISABLE_COPY_MOVE(QgStepImportDialog)
 
-    public:
-	STEPImportDialog(QString filename, QString g_path, QString l_path);
+
+public:
+	QgStepImportDialog(QString filename, QString g_path, QString l_path);
 
 	QString command();
 	QStringList options();
 	QLineEdit *db_path;
 	QLineEdit *log_path;
 
-    private:
+private:
 
 	QString input_file;
 
@@ -135,6 +139,10 @@ class STEPImportDialog : public QDialog
 	QGroupBox *formGroupBox;
 	QDialogButtonBox *buttonBox;
 };
+
+using ASCImportDialog = QgAscImportDialog;
+using RhinoImportDialog = QgRhinoImportDialog;
+using STEPImportDialog = QgStepImportDialog;
 
 #endif // QGGEOMIMPORT_H
 
@@ -148,4 +156,3 @@ class STEPImportDialog : public QDialog
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

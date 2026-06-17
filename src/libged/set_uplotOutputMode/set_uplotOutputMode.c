@@ -25,7 +25,7 @@
 
 #include "common.h"
 #include <string.h>
-#include "bv/plot3.h"
+#include "bsg/plot3.h"
 #include "ged.h"
 #include "../ged_private.h"
 

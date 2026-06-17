@@ -11,12 +11,9 @@ if(BRLCAD_ENABLE_QT)
   )
 endif(BRLCAD_ENABLE_QT)
 
-set(ell_srcs QEll.cpp ell_tool.cpp)
+set(ell_srcs QEll.cpp ell.cpp)
 
-set(qth_names QEll)
-foreach(qh ${qth_names})
-  set(ell_moc_hdrs ${ell_moc_hdrs} ${qh}.h)
-endforeach(qh ${qth_names})
+set(ell_moc_hdrs QEll.h EditEllFactory.h)
 
 if(BRLCAD_ENABLE_QT)
   if(Qt6Widgets_FOUND)
@@ -48,13 +45,14 @@ if(BRLCAD_ENABLE_QT)
     )
   endif(Qt6Widgets_FOUND)
   set_property(TARGET qged_ell APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  validate_style(qged_ell ell_tool.cpp)
+  validate_style(qged_ell ell.cpp)
   plugin_setup(qged_ell qged)
 
-  foreach(qh ${qth_names})
-    distclean(moc_${qh}.cpp_parameters)
-  endforeach(qh ${qth_names})
-  distclean(icon.qrc.depends)
+  distclean(
+    icon.qrc.depends
+    moc_QEll.cpp_parameters
+    moc_EditEllFactory.cpp_parameters
+  )
 endif(BRLCAD_ENABLE_QT)
 
 set(
@@ -65,6 +63,7 @@ set(
   ${ell_moc_hdrs}
   icon.qrc
   ell.svg
+  ell.json
 )
 
 cmakefiles(${ignore_srcs})
