@@ -2374,6 +2374,20 @@ nmg_isect_ray_model(struct nmg_ray_data *rd, struct bu_list *vlfree)
     NMG_CK_MODEL(rd->rd_m);
     NMG_CK_HITMISS_LISTS(rd);
 
+    /* re_nmgfree is a process-global freelist used by NMG_GET_HITMISS()
+     * (to draw hitmiss structs) and by NMG_FREE_HITLIST() (to return them).
+     * It must be a valid, initialized bu_list head before either is reached.
+     * The normal librt shot path initializes it in rt_init_resource(), but
+     * direct callers of this routine (and other public libnmg entry points)
+     * can reach it first, so guard it here. Take BU_SEM_GENERAL so the
+     * check-and-init is atomic with respect to the same lock
+     * NMG_GET_HITMISS()/NMG_FREE_HITLIST() use.
+     */
+    bu_semaphore_acquire(BU_SEM_GENERAL);
+    if (!BU_LIST_IS_INITIALIZED(&re_nmgfree))
+	BU_LIST_INIT(&re_nmgfree);
+    bu_semaphore_release(BU_SEM_GENERAL);
+
     /* Caller has assured us that the ray intersects the nmg model,
      * check ray for intersection with rpp's of nmgregion's
      */
@@ -2665,8 +2679,12 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
 	       V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
     }
 
+    /* Guard the process-global freelist init under the same lock the
+     * NMG_GET_HITMISS()/NMG_FREE_HITLIST() macros use (see nmg_isect_ray_model). */
+    bu_semaphore_acquire(BU_SEM_GENERAL);
     if (!BU_LIST_IS_INITIALIZED(&re_nmgfree))
 	BU_LIST_INIT(&re_nmgfree);
+    bu_semaphore_release(BU_SEM_GENERAL);
 
     rd.rd_m = nmg_find_model(&s->l.magic);
 
