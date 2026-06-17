@@ -95,21 +95,43 @@ usage(const char *s, int n)
     bu_exit(n, "%s", usage_msg);
 }
 
+static int
+parse_constant_bytes(const char *arg, unsigned char *out_values, int component_count)
+{
+    int i;
+    const char *component = arg;
+    char *end = NULL;
+    long int value;
+
+    for (i = 0; i < component_count; i++) {
+	errno = 0;
+	value = strtol(component, &end, 10);
+	if (errno != 0 || end == component || value < 0 || value > 255)
+	    return 0;
+	out_values[i] = (unsigned char)value;
+
+	if (i == component_count - 1) {
+	    if (*end != '\0')
+		return 0;
+	} else {
+	    if (*end != '/')
+		return 0;
+	    component = end + 1;
+	}
+    }
+
+    return 1;
+}
+
 
 int
 open_file(int i, char *name)
 {
     if (name[0] == '=') {
 	/* Parse constant */
-	char *cp = name+1;
-	unsigned char *conp = &f_const[i][0];
-	int j;
-
-	/* premature null => atoi gives zeros */
-	for (j=0; j < width; j++) {
-	    *conp++ = atoi(cp);
-	    while (*cp && *cp++ != '/')
-		;
+	if (!parse_constant_bytes(name + 1, &f_const[i][0], width)) {
+	    bu_log("pixmatte: invalid constant '%s'\n", name);
+	    return -1;
 	}
 
 	file_name[i] = name+1;	/* skip '=' */

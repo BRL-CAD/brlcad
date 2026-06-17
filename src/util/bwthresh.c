@@ -30,6 +30,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +43,22 @@
 
 
 #define USAGE "Usage: bwthresh values ...\n"
+
+static int
+parse_threshold_arg(const char *arg, int *out_value)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > 255) {
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
 
 
 int
@@ -54,7 +72,7 @@ main (int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2)
+    if (argc == 2 && (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")))
 	bu_exit(1, "%s", USAGE);
     if ((nm_threshs = argc - 1) < 1)
 	bu_exit(1, "%s", USAGE);
@@ -66,7 +84,7 @@ main (int argc, char **argv)
     bin_color = (unsigned char *)bu_malloc((unsigned) ((nm_threshs + 1) * sizeof(int)), "bin_color");
 
     for (i = 0; i < nm_threshs; ++i) {
-	if (sscanf(*++argv, "%d", thresh_val + i) != 1) {
+	if (!parse_threshold_arg(*++argv, thresh_val + i)) {
 	    bu_log("bwthresh: Illegal threshold value: '%s'\n", *argv);
 	    bu_exit(1, "%s", USAGE);
 	}

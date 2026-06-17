@@ -37,6 +37,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -347,6 +349,44 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
     }
 }
 
+static int
+parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long long int value;
+
+    errno = 0;
+    value = strtoull(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value == 0) {
+	fprintf(stderr, "pixmorph: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (size_t)value;
+    return 1;
+}
+
+static int
+parse_unit_interval_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+    double value;
+
+    errno = 0;
+    value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	fprintf(stderr, "pixmorph: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+    if (value < 0.0 || value > 1.0) {
+	fprintf(stderr, "pixmorph: %s must be between 0 and 1\n", label);
+	return 0;
+    }
+
+    *out_value = value;
+    return 1;
+}
+
 
 int
 get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep,
@@ -354,6 +394,7 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 	 size_t *widthp, size_t *heightp)
 {
     long int c;
+    double dissolvefrac = 0.0;
 
     *autosizep = 1;
     *widthp = *heightp = 0;
@@ -361,11 +402,13 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     while ((c = bu_getopt(argc, argv, "w:n:h?")) != -1) {
 	switch (c) {
 	    case 'w':
-		*widthp = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, widthp, "width"))
+		    return 0;
 		*autosizep = 0;
 		break;
 	    case 'n':
-		*heightp = atol(bu_optarg);
+		if (!parse_positive_size_arg(bu_optarg, heightp, "height"))
+		    return 0;
 		*autosizep = 0;
 		break;
 	    default:
@@ -379,8 +422,11 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     *picAnamep = argv[bu_optind];
     *picBnamep = argv[bu_optind+1];
     *linesfilenamep = argv[bu_optind+2];
-    *warpfracp = atof(argv[bu_optind+3]);
-    *dissolvefracp = (int)(255.0*atof(argv[bu_optind+4])+0.5);
+    if (!parse_unit_interval_arg(argv[bu_optind+3], warpfracp, "warpfrac"))
+	return 0;
+    if (!parse_unit_interval_arg(argv[bu_optind+4], &dissolvefrac, "dissolvefrac"))
+	return 0;
+    *dissolvefracp = (int)(255.0*dissolvefrac + 0.5);
 
     return 1;
 }
@@ -443,18 +489,8 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    if (warpfrac < 0.0 || warpfrac > 1.0) {
-	fprintf(stderr, "pixmorph: warpfrac must be between 0 and 1\n");
-	return 1;
-    }
-
-    if (dissolvefrac < 0 || dissolvefrac > 255) {
-	fprintf(stderr, "pixmorph: dissolvefrac must be between 0 and 1\n");
-	return 1;
-    }
-
     if (autosize) {
-	if (fb_common_file_size(&pa_width, &pa_height, argv[1], 3) == 0) {
+	if (fb_common_file_size(&pa_width, &pa_height, picAname, 3) == 0) {
 	    fprintf(stderr, "pixmorph: unable to autosize\n");
 	    return 1;
 	}

@@ -140,6 +140,23 @@ int b_flag = 0;			/* use mread() */
 
 double cput, realt;		/* user, real time (seconds) */
 
+static int
+parse_option_int_arg(const char *arg, int min_value, int max_value, const char *label, int *out_value)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < min_value || value > max_value) {
+        fprintf(stderr, "ttcp: invalid %s '%s'\n", label, arg);
+        return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
 /*
  * This function performs the function of a read(II) but will
  * call read(II) multiple times in order to get the requested
@@ -408,38 +425,19 @@ main(int argc, char **argv)
 #endif
             break;
         case 'n':
-            nbuf = atoi(&argv[0][2]);
-            if (nbuf < 0) {
-                printf("Negative buffer count.\n");
+            if (!parse_option_int_arg(&argv[0][2], 0, INT_MAX - 1, "buffer count", &nbuf))
                 return -1;
-            }
-            if (nbuf >= INT_MAX) {
-                printf("Too many buffers specified.\n");
-                return -1;
-            }
             break;
         case 'l':
-            buflen = atoi(&argv[0][2]);
-            if (buflen <= 0) {
-                printf("Invalid buffer length.\n");
+            if (!parse_option_int_arg(&argv[0][2], 1, INT_MAX - 1, "buffer length", &buflen))
                 return -1;
-            }
-            if (buflen >= INT_MAX) {
-                printf("Buffer length too large.\n");
-                return -1;
-            }
             break;
         case 's':
             sinkmode = 1;	/* source or sink, really */
             break;
         case 'p':
-            port = atoi(&argv[0][2]);
-            if (port < 0) {
-                port = 0;
-            }
-            if (port > 65535) {
-                port = 65535;
-            }
+            if (!parse_option_int_arg(&argv[0][2], 0, 65535, "port", &port))
+                return -1;
             break;
         case 'u':
             udp = 1;

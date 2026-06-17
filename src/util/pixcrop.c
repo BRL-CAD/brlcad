@@ -33,6 +33,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <limits.h> /* for INT_MAX */
 #include "vmath.h"
@@ -62,6 +63,59 @@ static const char usage[] = "\
 Usage: bwcrop in.bw out.bw (I prompt!)\n\
    or  bwcrop in.bw out.bw inwidth outwidth outheight\n\
 	ulx uly urx ury lrx lry llx lly\n";
+
+static int
+parse_positive_ssize_arg(const char *arg, ssize_t *out_value, const char *label)
+{
+    char *end = NULL;
+    long long int value;
+
+    errno = 0;
+    value = strtoll(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0) {
+	fprintf(stderr, "pixcrop: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (ssize_t)value;
+    return 1;
+}
+
+static int
+parse_output_dim_arg(const char *arg, unsigned long *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long value;
+
+    errno = 0;
+    value = strtoul(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value == 0) {
+	fprintf(stderr, "pixcrop: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+    if (value > (unsigned long)(INT_MAX - 1))
+	value = (unsigned long)(INT_MAX - 1);
+
+    *out_value = value;
+    return 1;
+}
+
+static int
+parse_float_arg(const char *arg, float *out_value, const char *label)
+{
+    char *end = NULL;
+    double value;
+
+    errno = 0;
+    value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	fprintf(stderr, "pixcrop: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (float)value;
+    return 1;
+}
 
 /*
  * Determine max number of lines to buffer.
@@ -121,11 +175,9 @@ main(int argc, char **argv)
     size_t ret;
     long int subsc;
 
-    int atoival;
-
     bu_setprogname(argv[0]);
 
-    if (argc < 3) {
+    if (argc != 3 && argc != 14) {
 	bu_exit(1, "%s", usage);
     }
     if ((ifp = fopen(argv[1], "rb")) == NULL) {
@@ -136,59 +188,18 @@ main(int argc, char **argv)
     }
 
     if (argc == 14) {
-	if (! argv[3])
-	    return 1;
-        scanlen = atoi(argv[3]);
-
-	if (! argv[4])
-	    return 1;
-	atoival = atoi(argv[4]);
-	if (atoival < 0)
-	    atoival = 0;
-	else if (atoival > INT_MAX-1)
-	    atoival = INT_MAX-1;
-        xnum = atoival;
-
-	if (! argv[5])
-	    return 1;
-	atoival = atoi(argv[5]);
-	if (atoival < 0)
-	    atoival = 0;
-	else if (atoival > INT_MAX-1)
-	    atoival = INT_MAX-1;
-	ynum = atoival;
-
-	if (! argv[6])
-	    return 1;
-	ulx = atoi(argv[6]);
-
-	if (! argv[7])
-	    return 1;
-	uly = atoi(argv[7]);
-
-	if (! argv[8])
-	    return 1;
-	urx = atoi(argv[8]);
-
-	if (! argv[9])
-	    return 1;
-	ury = atoi(argv[9]);
-
-	if (! argv[10])
-	    return 1;
-	lrx = atoi(argv[10]);
-
-	if (! argv[11])
-	    return 1;
-	lry = atoi(argv[11]);
-
-	if (! argv[12])
-	    return 1;
-	llx = atoi(argv[12]);
-
-	if (! argv[13])
-	    return 1;
-	lly = atoi(argv[13]);
+	if (!parse_positive_ssize_arg(argv[3], &scanlen, "input width") ||
+	    !parse_output_dim_arg(argv[4], &xnum, "output width") ||
+	    !parse_output_dim_arg(argv[5], &ynum, "output height") ||
+	    !parse_float_arg(argv[6], &ulx, "upper-left x") ||
+	    !parse_float_arg(argv[7], &uly, "upper-left y") ||
+	    !parse_float_arg(argv[8], &urx, "upper-right x") ||
+	    !parse_float_arg(argv[9], &ury, "upper-right y") ||
+	    !parse_float_arg(argv[10], &lrx, "lower-right x") ||
+	    !parse_float_arg(argv[11], &lry, "lower-right y") ||
+	    !parse_float_arg(argv[12], &llx, "lower-left x") ||
+	    !parse_float_arg(argv[13], &lly, "lower-left y"))
+	    bu_exit(1, "%s", usage);
     } else {
 	double xval, yval;
 	unsigned long len;

@@ -40,6 +40,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
@@ -86,6 +88,65 @@ Usage: mac-pix [-c -l -b]\n\
 	[-C r/g/b] [file.mac]\n\
        (standard output must be redirected)\n";
 
+static int
+parse_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    long int value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
+	fprintf(stderr, "mac-pix: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    if (!parse_int_arg(arg, out_value, label))
+	return 0;
+
+    if (*out_value <= 0) {
+	fprintf(stderr, "mac-pix: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_color_arg(const char *arg, unsigned char *out_color)
+{
+    int i;
+    char *end = NULL;
+    long int value;
+    const char *component = arg;
+
+    for (i = 0; i < 3; i++) {
+	errno = 0;
+	value = strtol(component, &end, 10);
+	if (errno != 0 || end == component || value < 0 || value > 255)
+	    return 0;
+	out_color[i] = (unsigned char)value;
+
+	if (i == 2) {
+	    if (*end != '\0')
+		return 0;
+	} else {
+	    if (*end != '/')
+		return 0;
+	    component = end + 1;
+	}
+    }
+
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -107,47 +168,59 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &file_width, "Mac size"))
+		    return 0;
+		file_height = file_width;
 		break;
 	    case 'w':
-		file_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &file_width, "Mac width"))
+		    return 0;
 		break;
 	    case 'n':
-		file_height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &file_height, "Mac height"))
+		    return 0;
 		break;
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_height, "output height"))
+		    return 0;
 		break;
 	    case 'x':
-		file_xoff = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &file_xoff, "Mac x offset"))
+		    return 0;
 		break;
 	    case 'X':
-		scr_xoff += atoi(bu_optarg);
+		{
+		    int xoff = 0;
+		    if (!parse_int_arg(bu_optarg, &xoff, "output x offset"))
+			return 0;
+		    scr_xoff += xoff;
+		}
 		break;
 	    case 'y':
-		file_yoff = atoi(bu_optarg);
+		if (!parse_int_arg(bu_optarg, &file_yoff, "Mac y offset"))
+		    return 0;
 		break;
 	    case 'Y':
-		scr_yoff += atoi(bu_optarg);
+		{
+		    int yoff = 0;
+		    if (!parse_int_arg(bu_optarg, &yoff, "output y offset"))
+			return 0;
+		    scr_yoff += yoff;
+		}
 		break;
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_width, "output size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &scr_width, "output width"))
+		    return 0;
 		break;
 	    case 'C':
-		{
-		    char *cp = bu_optarg;
-		    unsigned char *conp
-			= (unsigned char *)color;
-
-		    /* premature null => atoi gives zeros */
-		    for (c=0; c < 3; c++) {
-			*conp++ = atoi(cp);
-			while (*cp && *cp++ != '/')
-			    ;
-		    }
+		if (!parse_color_arg(bu_optarg, color)) {
+		    fprintf(stderr, "mac-pix: invalid color '%s'\n", bu_optarg);
+		    return 0;
 		}
 		break;
 
@@ -181,8 +254,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "mac-pix: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "mac-pix: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

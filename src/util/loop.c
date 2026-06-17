@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -50,6 +51,38 @@
 #define INTEGER 0
 #define REAL 1
 #define CHAR 2
+
+static int
+parse_long_arg(const char *arg, long int *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtol(arg, &end, 0);
+    if (errno != 0 || end == arg || *end != '\0') {
+	if (label)
+	    bu_log("loop: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
+parse_double_arg(const char *arg, double *out_value, const char *label)
+{
+    char *end = NULL;
+
+    errno = 0;
+    *out_value = strtod(arg, &end);
+    if (errno != 0 || end == arg || *end != '\0') {
+	if (label)
+	    bu_log("loop: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 void
 usage(void)
@@ -99,33 +132,44 @@ main(int argc, char *argv[])
 	}
     }
 
+    if ((status == CHAR && (argc < 4 || argc > 5)) ||
+	(status != CHAR && (argc < 3 || argc > 4))) {
+	usage();
+	return 9;
+    }
+
     /* determine if any arguments are real */
     for (i = 1; i < argc; i++) {
-	double dval = atof(argv[i]);
-	long int ival = strtol(argv[i], NULL, 0);
+	long int ival = 0;
+	double dval = 0.0;
+
+	if (status == CHAR)
+	    break;
+	if (parse_long_arg(argv[i], &ival, NULL))
+	    continue;
+	if (!parse_double_arg(argv[i], &dval, NULL)) {
+	    usage();
+	    return 9;
+	}
 	if (!ZERO(dval - (double)ival)) {
 	    status = REAL;
 	    break;
 	}
+	status = REAL;
+	break;
     }
 
     if (status == REAL) {
-	dstart  = atof(argv[1]);
-	if ((dstart < -DBL_MAX) || (dstart > DBL_MAX)) {
-	    bu_log("'start' out of range of double.\n");
+	if (!parse_double_arg(argv[1], &dstart, "start")) {
 	    return 1;
 	}
 
-	dfinish = atof(argv[2]);
-	if ((dfinish < -DBL_MAX) || (dfinish > DBL_MAX)) {
-	    bu_log("'finish' out of range of double.\n");
+	if (!parse_double_arg(argv[2], &dfinish, "finish")) {
 	    return 1;
 	}
 
 	if (argc == 4) {
-	    dincr = atof(argv[3]);
-	    if ((dincr < -DBL_MAX) || (dincr > DBL_MAX)) {
-		bu_log("'incr' out of range of double.\n");
+	    if (!parse_double_arg(argv[3], &dincr, "incr")) {
 		return 1;
 	    }
 	} else {
@@ -197,20 +241,23 @@ main(int argc, char *argv[])
 	    bu_strlcpy(fmt_string, "%d\n", sizeof(fmt_string));
 	fmt_string[50-1] = '\0'; /* sanity */
 
-	start  = strtol(argv[1], NULL, 0);
+	if (!parse_long_arg(argv[1], &start, "start"))
+	    return 1;
 	if ((start < INT_MIN) || (start > INT_MAX)) {
 	    bu_log("'start' out of range of signed integer.\n");
 	    return 1;
 	}
 
-	finish = strtol(argv[2], NULL, 0);
+	if (!parse_long_arg(argv[2], &finish, "finish"))
+	    return 1;
 	if ((finish < INT_MIN) || (finish > INT_MAX)) {
 	    bu_log("'finish' out of range of signed integer.\n");
 	    return 1;
 	}
 
 	if (argc == 4) {
-	    incr = strtol(argv[3], NULL, 0);
+	    if (!parse_long_arg(argv[3], &incr, "incr"))
+		return 1;
 	    if ((incr < INT_MIN) || (incr > INT_MAX)) {
 		bu_log("'incr' out of range of signed integer.\n");
 		return 1;
@@ -248,7 +295,8 @@ main(int argc, char *argv[])
 	    cfinish = ULONG_MAX-1;
 
 	if (argc == 5) {
-	    cincr = strtol(argv[4], NULL, 0);
+	    if (!parse_long_arg(argv[4], &cincr, "incr"))
+		return 1;
 	    if ((cincr < -UCHAR_MAX) || (cincr > UCHAR_MAX)) {
 		bu_log("'incr' out of range of char.\n");
 		return 1;
