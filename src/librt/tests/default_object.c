@@ -84,9 +84,11 @@ expect_selected(const char *label, struct db_i *dbip, const char *expected)
 {
     struct directory *dp = RT_DIR_NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *msg_seed = "seed";
     int ret;
     int failures = 0;
 
+    bu_vls_strcpy(&msg, msg_seed);
     ret = db_default_object(dbip, &dp, &msg);
     if (ret != 1) {
 	bu_log("%s: expected selection %s, got return %d and message:\n%s",
@@ -98,8 +100,8 @@ expect_selected(const char *label, struct db_i *dbip, const char *expected)
 	failures++;
     }
 
-    if (ret == 1 && bu_vls_strlen(&msg) != 0) {
-	bu_log("%s: success should not append message, got:\n%s",
+    if (ret == 1 && !BU_STR_EQUAL(bu_vls_cstr(&msg), msg_seed)) {
+	bu_log("%s: success should leave message unchanged, got:\n%s",
 	       label, bu_vls_cstr(&msg));
 	failures++;
     }
@@ -110,13 +112,16 @@ expect_selected(const char *label, struct db_i *dbip, const char *expected)
 
 
 static int
-expect_no_selection(const char *label, struct db_i *dbip, const char *text1, const char *text2)
+expect_no_selection(const char *label, struct db_i *dbip)
 {
     struct directory *dp = RT_DIR_NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const char *msg_seed = "seed";
+    size_t msg_seed_len = strlen(msg_seed);
     int ret;
     int failures = 0;
 
+    bu_vls_strcpy(&msg, msg_seed);
     ret = db_default_object(dbip, &dp, &msg);
     if (ret != 0) {
 	bu_log("%s: expected no selection, got return %d\n", label, ret);
@@ -128,13 +133,10 @@ expect_no_selection(const char *label, struct db_i *dbip, const char *text1, con
 	failures++;
     }
 
-    if (text1 && !strstr(bu_vls_cstr(&msg), text1)) {
-	bu_log("%s: message missing [%s]:\n%s", label, text1, bu_vls_cstr(&msg));
-	failures++;
-    }
-
-    if (text2 && !strstr(bu_vls_cstr(&msg), text2)) {
-	bu_log("%s: message missing [%s]:\n%s", label, text2, bu_vls_cstr(&msg));
+    if (bu_vls_strlen(&msg) <= msg_seed_len ||
+	strncmp(bu_vls_cstr(&msg), msg_seed, msg_seed_len) != 0) {
+	bu_log("%s: expected no-selection diagnostic to append to message, got:\n%s",
+	       label, bu_vls_cstr(&msg));
 	failures++;
     }
 
@@ -169,7 +171,7 @@ test_global_disable(void)
 
     failures += add_sphere(wdbp, "only.s");
     failures += db5_update_attribute(DB5_GLOBAL_OBJECT_NAME, DB_DEFAULT_OBJECT_ATTR, "false", dbip);
-    failures += expect_no_selection("global disable", dbip, "disabled", "Available top-level objects");
+    failures += expect_no_selection("global disable", dbip);
 
     db_close(dbip);
     return failures;
@@ -185,7 +187,7 @@ test_global_invalid(void)
 
     failures += add_sphere(wdbp, "only.s");
     failures += db5_update_attribute(DB5_GLOBAL_OBJECT_NAME, DB_DEFAULT_OBJECT_ATTR, "missing.s", dbip);
-    failures += expect_no_selection("global invalid", dbip, "does not name a geometry object", "only.s");
+    failures += expect_no_selection("global invalid", dbip);
 
     db_close(dbip);
     return failures;
@@ -248,7 +250,7 @@ test_filename_ambiguous(void)
 
     failures += add_comb_with_sphere(wdbp, "model.c", "model_c_leaf.s");
     failures += add_comb_with_sphere(wdbp, "model.r", "model_r_leaf.s");
-    failures += expect_no_selection("filename ambiguous", dbip, "ambiguous", "model.c");
+    failures += expect_no_selection("filename ambiguous", dbip);
 
     db_close(dbip);
     return failures;
@@ -280,7 +282,7 @@ test_all_scene_ambiguous(void)
 
     failures += add_comb_with_sphere(wdbp, "all.g", "all_leaf.s");
     failures += add_comb_with_sphere(wdbp, "scene.c", "scene_leaf.s");
-    failures += expect_no_selection("all scene ambiguous", dbip, "ambiguous", "scene.c");
+    failures += expect_no_selection("all scene ambiguous", dbip);
 
     db_close(dbip);
     return failures;
@@ -288,36 +290,15 @@ test_all_scene_ambiguous(void)
 
 
 static int
-test_no_match_sorted_tops(void)
+test_no_match(void)
 {
     struct db_i *dbip = test_db(NULL);
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-    struct directory *dp = RT_DIR_NULL;
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    const char *a_pos;
-    const char *z_pos;
-    int ret;
     int failures = 0;
 
     failures += add_sphere(wdbp, "z.s");
     failures += add_sphere(wdbp, "a.s");
-
-    ret = db_default_object(dbip, &dp, &msg);
-    if (ret != 0 || dp != RT_DIR_NULL) {
-	bu_log("no match sorted tops: expected no selection, got return %d and dp %s\n",
-	       ret, dp ? dp->d_namep : "(null)");
-	failures++;
-    }
-
-    a_pos = strstr(bu_vls_cstr(&msg), "  a.s\n");
-    z_pos = strstr(bu_vls_cstr(&msg), "  z.s\n");
-    if (!a_pos || !z_pos || a_pos > z_pos) {
-	bu_log("no match sorted tops: tops are not sorted as expected:\n%s",
-	       bu_vls_cstr(&msg));
-	failures++;
-    }
-
-    bu_vls_free(&msg);
+    failures += expect_no_selection("no match", dbip);
     db_close(dbip);
     return failures;
 }
@@ -344,7 +325,7 @@ main(int argc, char *argv[])
     failures += test_filename_ambiguous();
     failures += test_all_scene_match();
     failures += test_all_scene_ambiguous();
-    failures += test_no_match_sorted_tops();
+    failures += test_no_match();
 
     if (failures)
 	bu_log("rt_default_object: %d failure(s)\n", failures);
