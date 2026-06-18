@@ -165,7 +165,7 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 	    bu_vls_struct_item(&str, sp,
 			       (char *)intern->idb_ptr, ' ');
 
-	    if (sp->sp_count < 2)
+	    if (sp->sp_count < 2 && bu_vls_strlen(&str))
 		bu_vls_printf(logstr, " %s", bu_vls_addr(&str));
 	    else {
 		bu_vls_printf(logstr, " {");
