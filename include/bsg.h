@@ -22,8 +22,14 @@
  * @brief
  * Umbrella header for the BSG scene-graph library.
  *
- * NOTE!!!!!! THIS API IS HIGHLY EXPERIMENTAL, and UNTIL THIS NOTICE IS REMOVED
- * IT SHOULD *NOT* BE CONSIDERED STABLE.
+ * Installed BSG headers define the public scene-graph, typed payload, render,
+ * and backend adapter surface used by the modern drawing stack.  Private
+ * storage, raw-node mutation helpers, and lifecycle internals remain confined
+ * to libbsg implementation headers under src/libbsg.
+ *
+ * Headers that explicitly describe themselves as backward-compatibility
+ * bridges are transitional: prefer their documented canonical replacements
+ * for new code.
  */
 /** @{ */
 /* @file bsg.h */

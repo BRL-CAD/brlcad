@@ -1685,9 +1685,14 @@ test_events(struct ged *gedp)
 	    "comb command event fixture must create writer");
     const char *comb_event_child = "_ged_event_comb_child.s";
     const char *comb_event_region = "_ged_event_comb_region.c";
+    const char *comb_event_region_b = "_ged_event_comb_region_b.c";
     const char *adjust_event_comb = "_ged_event_adjust_comb.c";
     const char *adjust_event_prim = "_ged_event_adjust_prim.s";
     const char *put_comb_event_comb = "_ged_event_put_comb.c";
+    const char *put_event_dst = "_ged_event_put.s";
+    const char *in_direct_event_dst = "_ged_event_in_direct.s";
+    const char *in_common_event_dst = "_ged_event_in_common.s";
+    const char *heal_event_bot = "_ged_event_heal.bot";
     const char *matrix_event_child = "_ged_event_matrix_child.s";
     const char *matrix_event_source = "_ged_event_matrix_source.c";
     const char *matrix_event_dest = "_ged_event_matrix_dest.c";
@@ -1715,9 +1720,17 @@ test_events(struct ged *gedp)
     const char *cpi_event_dst = "_ged_event_cpi_dst.s";
     const char *copyeval_event_src = "_ged_event_copyeval_src.s";
     const char *copyeval_event_dst = "_ged_event_copyeval_dst.s";
+    const char *bb_event_dst = "_ged_event_bb_bbox.s";
+    const char *rfarb_event_dst = "_ged_event_rfarb.s";
+    const char *bot_split_event_src = "_ged_event_bot_split.bot";
+    const char *bot_split_event_dst_a = "_ged_event_bot_split.bot.0";
+    const char *bot_split_event_dst_b = "_ged_event_bot_split.bot.1";
     const char *shells_event_nmg = "_ged_event_shells.nmg";
     const char *decompose_event_nmg = "_ged_event_decompose.nmg";
     const char *fracture_event_nmg = "_ged_event_fracture.nmg";
+    const char *prefix_event_src = "_ged_event_prefix_src.s";
+    const char *prefix_event_dst = "pre__ged_event_prefix_src.s";
+    const char *prefix_event_parent = "_ged_event_prefix_parent.c";
     if (wdbp) {
 	point_t child_center = {340.0, 0.0, 0.0};
 	struct wmember empty_wm;
@@ -1727,6 +1740,9 @@ test_events(struct ged *gedp)
 	CHECK(mk_comb(wdbp, comb_event_region, &empty_wm.l, 0, NULL, NULL,
 		    NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
 		"comb command event fixture comb must be created");
+	CHECK(mk_comb(wdbp, comb_event_region_b, &empty_wm.l, 1, NULL, NULL,
+		    NULL, 8200, 0, 50, 100, 0, 0, 0) == 0,
+		"rcodes command event fixture region must be created");
 	CHECK(mk_comb(wdbp, adjust_event_comb, &empty_wm.l, 0, NULL, NULL,
 		    NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
 		"adjust command event fixture comb must be created");
@@ -1912,6 +1928,51 @@ test_events(struct ged *gedp)
 	point_t copyeval_src_center = {415.0, 0.0, 0.0};
 	CHECK(mk_sph(wdbp, copyeval_event_src, copyeval_src_center, 1.0) == 0,
 		"copyeval command event fixture source must be created");
+
+	point_t prefix_src_center = {420.0, 0.0, 0.0};
+	CHECK(mk_sph(wdbp, prefix_event_src, prefix_src_center, 1.0) == 0,
+		"prefix command event fixture source must be created");
+	struct wmember prefix_wm;
+	BU_LIST_INIT(&prefix_wm.l);
+	CHECK(mk_addmember(prefix_event_src, &prefix_wm.l, NULL,
+		    WMOP_UNION) != NULL,
+		"prefix command event fixture must add source child");
+	CHECK(mk_comb(wdbp, prefix_event_parent, &prefix_wm.l, 0,
+		    NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
+		"prefix command event fixture parent comb must be created");
+
+	fastf_t heal_vertices[12] = {
+	    0.0, 0.0, 0.0,
+	    1.0, 0.0, 0.0,
+	    0.0, 1.0, 0.0,
+	    0.0, 0.0, 1.0
+	};
+	int heal_faces[12] = {
+	    0, 2, 1,
+	    0, 3, 2,
+	    0, 1, 3,
+	    1, 2, 3
+	};
+	CHECK(mk_bot(wdbp, heal_event_bot, RT_BOT_SOLID, RT_BOT_CCW, 0,
+		    4, 4, heal_vertices, heal_faces, NULL, NULL) == 0,
+		"heal command event fixture BoT must be created");
+
+	fastf_t bot_split_vertices[18] = {
+	    0.0, 0.0, 0.0,
+	    1.0, 0.0, 0.0,
+	    0.0, 1.0, 0.0,
+	    10.0, 0.0, 0.0,
+	    11.0, 0.0, 0.0,
+	    10.0, 1.0, 0.0
+	};
+	int bot_split_faces[6] = {
+	    0, 1, 2,
+	    3, 4, 5
+	};
+	CHECK(mk_bot(wdbp, bot_split_event_src, RT_BOT_SURFACE,
+		    RT_BOT_UNORIENTED, 0, 6, 2, bot_split_vertices,
+		    bot_split_faces, NULL, NULL) == 0,
+		"bot split command event fixture BoT must be created");
 
 	CHECK(make_event_nmg_tet(wdbp, fracture_event_nmg) == 0,
 		"fracture command event fixture NMG must be created");
@@ -2116,6 +2177,97 @@ test_events(struct ged *gedp)
 	    "put_comb existing comb edit must hide saved temporary comb events");
     CHECK(ged_event_observer_remove(gedp, put_comb_post_token) == 1,
 	    "put_comb observer removal must succeed");
+
+    event_order_observer put_post;
+    ged_event_observer_token put_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &put_post);
+    CHECK(put_post_token != 0,
+	    "put observer must register");
+    const char *put_av[12] = {"put", put_event_dst, "ell", "V",
+	"0 0 0", "A", "1 0 0", "B", "0 1 0", "C", "0 0 1", NULL};
+    CHECK(ged_exec(gedp, 11, put_av) == BRLCAD_OK,
+	    "put command must publish object creation event");
+    CHECK(put_post.calls == 1,
+	    "put command must publish one event transaction");
+    CHECK(observed_named_event(put_post, GED_EVENT_OBJECT_ADDED,
+		put_event_dst),
+	    "put command must emit object-added event for created object");
+    CHECK(std::find(put_post.all_kinds.begin(),
+	    put_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    put_post.all_kinds.end(),
+	    "put command creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, put_post_token) == 1,
+	    "put observer removal must succeed");
+
+    event_order_observer in_direct_post;
+    ged_event_observer_token in_direct_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &in_direct_post);
+    CHECK(in_direct_post_token != 0,
+	    "in direct-write observer must register");
+    const char *in_direct_av[8] = {"in", in_direct_event_dst, "sph",
+	"0", "0", "0", "1", NULL};
+    CHECK(ged_exec(gedp, 7, in_direct_av) == BRLCAD_OK,
+	    "in sph direct-write helper must publish object creation event");
+    CHECK(in_direct_post.calls == 1,
+	    "in sph direct-write helper must publish one event transaction");
+    CHECK(observed_named_event(in_direct_post, GED_EVENT_OBJECT_ADDED,
+		in_direct_event_dst),
+	    "in sph direct-write helper must emit object-added event");
+    CHECK(std::find(in_direct_post.all_kinds.begin(),
+	    in_direct_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    in_direct_post.all_kinds.end(),
+	    "in sph creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, in_direct_post_token) == 1,
+	    "in direct-write observer removal must succeed");
+
+    event_order_observer in_common_post;
+    ged_event_observer_token in_common_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &in_common_post);
+    CHECK(in_common_post_token != 0,
+	    "in common-write observer must register");
+    const char *in_common_av[16] = {"in", in_common_event_dst, "ell",
+	"0", "0", "0", "1", "0", "0", "0", "1", "0", "0", "0", "1",
+	NULL};
+    CHECK(ged_exec(gedp, 15, in_common_av) == BRLCAD_OK,
+	    "in ell common writer must publish object creation event");
+    CHECK(in_common_post.calls == 1,
+	    "in ell common writer must publish one event transaction");
+    CHECK(observed_named_event(in_common_post, GED_EVENT_OBJECT_ADDED,
+		in_common_event_dst),
+	    "in ell common writer must emit object-added event");
+    CHECK(std::find(in_common_post.all_kinds.begin(),
+	    in_common_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    in_common_post.all_kinds.end(),
+	    "in ell creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, in_common_post_token) == 1,
+	    "in common-write observer removal must succeed");
+
+    event_order_observer heal_post;
+    ged_event_observer_token heal_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &heal_post);
+    CHECK(heal_post_token != 0,
+	    "heal observer must register");
+    const char *heal_av[3] = {"heal", heal_event_bot, NULL};
+    CHECK(ged_exec(gedp, 2, heal_av) == BRLCAD_OK,
+	    "heal command must publish object-modified event");
+    CHECK(heal_post.calls == 1,
+	    "heal command must publish one event transaction");
+    CHECK(observed_named_event(heal_post, GED_EVENT_OBJECT_MODIFIED,
+		heal_event_bot),
+	    "heal command must emit object-modified event for healed BoT");
+    CHECK(std::find(heal_post.all_kinds.begin(),
+	    heal_post.all_kinds.end(), GED_EVENT_OBJECT_ADDED) ==
+	    heal_post.all_kinds.end() &&
+	    std::find(heal_post.all_kinds.begin(),
+	    heal_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    heal_post.all_kinds.end(),
+	    "heal command mutation fixture must not publish add/remove events");
+    CHECK(ged_event_observer_remove(gedp, heal_post_token) == 1,
+	    "heal observer removal must succeed");
 
     event_order_observer push_post;
     ged_event_observer_token push_post_token =
@@ -2374,6 +2526,75 @@ test_events(struct ged *gedp)
     CHECK(ged_event_observer_remove(gedp, copyeval_post_token) == 1,
 	    "copyeval observer removal must succeed");
 
+    event_order_observer bb_post;
+    ged_event_observer_token bb_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bb_post);
+    CHECK(bb_post_token != 0,
+	    "bb observer must register");
+    const char *bb_av[5] = {"bb", "-c", bb_event_dst, mirror_event_src, NULL};
+    CHECK(ged_exec(gedp, 4, bb_av) == BRLCAD_OK,
+	    "bb -c command must publish object creation event");
+    CHECK(bb_post.calls == 1,
+	    "bb -c command must publish one event transaction");
+    CHECK(observed_named_event(bb_post, GED_EVENT_OBJECT_ADDED,
+		bb_event_dst),
+	    "bb -c command must emit object-added event for bounding box");
+    CHECK(std::find(bb_post.all_kinds.begin(),
+	    bb_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bb_post.all_kinds.end(),
+	    "bb -c command creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bb_post_token) == 1,
+	    "bb observer removal must succeed");
+
+    event_order_observer rfarb_post;
+    ged_event_observer_token rfarb_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &rfarb_post);
+    CHECK(rfarb_post_token != 0,
+	    "rfarb observer must register");
+    const char *rfarb_av[18] = {"rfarb", rfarb_event_dst, "0", "0", "0",
+	"0", "90", "z", "1", "0", "z", "0", "1", "z", "1", "1", "1",
+	NULL};
+    CHECK(ged_exec(gedp, 17, rfarb_av) == BRLCAD_OK,
+	    "rfarb command must publish object creation event");
+    CHECK(rfarb_post.calls == 1,
+	    "rfarb command must publish one event transaction");
+    CHECK(observed_named_event(rfarb_post, GED_EVENT_OBJECT_ADDED,
+		rfarb_event_dst),
+	    "rfarb command must emit object-added event for created arb");
+    CHECK(std::find(rfarb_post.all_kinds.begin(),
+	    rfarb_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    rfarb_post.all_kinds.end(),
+	    "rfarb command creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, rfarb_post_token) == 1,
+	    "rfarb observer removal must succeed");
+
+    event_order_observer bot_split_post;
+    ged_event_observer_token bot_split_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_split_post);
+    CHECK(bot_split_post_token != 0,
+	    "bot split observer must register");
+    const char *bot_split_av[4] = {"bot", "split", bot_split_event_src,
+	NULL};
+    CHECK(ged_exec(gedp, 3, bot_split_av) == BRLCAD_OK,
+	    "bot split command must publish grouped object creation events");
+    CHECK(bot_split_post.calls == 1,
+	    "bot split command must publish one event transaction");
+    CHECK(observed_named_event(bot_split_post, GED_EVENT_OBJECT_ADDED,
+		bot_split_event_dst_a),
+	    "bot split command must emit object-added event for first output BoT");
+    CHECK(observed_named_event(bot_split_post, GED_EVENT_OBJECT_ADDED,
+		bot_split_event_dst_b),
+	    "bot split command must emit object-added event for second output BoT");
+    CHECK(std::find(bot_split_post.all_kinds.begin(),
+	    bot_split_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_split_post.all_kinds.end(),
+	    "bot split creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_split_post_token) == 1,
+	    "bot split observer removal must succeed");
+
     event_order_observer shells_post;
     ged_event_observer_token shells_post_token =
 	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
@@ -2521,6 +2742,84 @@ test_events(struct ged *gedp)
 	    "move command semantic rename event must cover librt fallback");
     CHECK(ged_event_observer_remove(gedp, move_post_token) == 1,
 	    "move command observer removal must succeed");
+
+    const char *move_all_file_old_a = "_ged_event_mvall_file_old_a.s";
+    const char *move_all_file_old_b = "_ged_event_mvall_file_old_b.s";
+    const char *move_all_file_new_a = "_ged_event_mvall_file_new_a.s";
+    const char *move_all_file_new_b = "_ged_event_mvall_file_new_b.s";
+    if (wdbp) {
+	point_t move_all_file_center_a = {362.0, 0.0, 0.0};
+	point_t move_all_file_center_b = {364.0, 0.0, 0.0};
+	CHECK(mk_sph(wdbp, move_all_file_old_a,
+		    move_all_file_center_a, 1.0) == 0,
+		"move_all -f event fixture first source must be created");
+	CHECK(mk_sph(wdbp, move_all_file_old_b,
+		    move_all_file_center_b, 1.0) == 0,
+		"move_all -f event fixture second source must be created");
+    }
+    event_order_observer move_all_file_post;
+    ged_event_observer_token move_all_file_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &move_all_file_post);
+    CHECK(move_all_file_post_token != 0,
+	    "move_all -f observer must register");
+    char move_all_file[MAXPATHLEN] = {0};
+    FILE *move_all_fp = bu_temp_file(move_all_file, MAXPATHLEN);
+    CHECK(move_all_fp != NULL,
+	    "move_all -f command test must create input file");
+    if (move_all_fp) {
+	std::fprintf(move_all_fp, "%s %s\n", move_all_file_old_a,
+		move_all_file_new_a);
+	std::fprintf(move_all_fp, "%s %s\n", move_all_file_old_b,
+		move_all_file_new_b);
+	std::fclose(move_all_fp);
+	const char *move_all_file_av[4] = {"move_all", "-f",
+	    move_all_file, NULL};
+	CHECK(ged_exec(gedp, 3, move_all_file_av) == BRLCAD_OK,
+		"move_all -f command must publish grouped rename events");
+	CHECK(move_all_file_post.calls == 1,
+		"move_all -f command must publish one event transaction");
+	CHECK(observed_named_event(move_all_file_post,
+		    GED_EVENT_OBJECT_RENAMED, move_all_file_old_a),
+		"move_all -f command must emit first old-name rename event");
+	CHECK(observed_named_event(move_all_file_post,
+		    GED_EVENT_OBJECT_RENAMED, move_all_file_old_b),
+		"move_all -f command must emit second old-name rename event");
+	CHECK(!observed_named_structural_fallback(move_all_file_post,
+		    move_all_file_new_a) &&
+		!observed_named_structural_fallback(move_all_file_post,
+		    move_all_file_new_b),
+		"move_all -f rename events must cover raw fallbacks");
+	bu_file_delete(move_all_file);
+    }
+    CHECK(ged_event_observer_remove(gedp, move_all_file_post_token) == 1,
+	    "move_all -f observer removal must succeed");
+
+    event_order_observer prefix_post;
+    ged_event_observer_token prefix_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &prefix_post);
+    CHECK(prefix_post_token != 0,
+	    "prefix command observer must register");
+    const char *prefix_av[4] = {"prefix", "pre_", prefix_event_src, NULL};
+    CHECK(ged_exec(gedp, 3, prefix_av) == BRLCAD_OK,
+	    "prefix command must publish grouped rename/tree event");
+    CHECK(prefix_post.calls == 1,
+	    "prefix command must publish one event transaction");
+    CHECK(observed_named_event(prefix_post, GED_EVENT_OBJECT_RENAMED,
+		prefix_event_src),
+	    "prefix command must emit old-name rename event");
+    CHECK(observed_named_event(prefix_post, GED_EVENT_COMB_TREE_CHANGED,
+		prefix_event_parent),
+	    "prefix command must emit comb-tree event for updated parent");
+    CHECK(!observed_named_structural_fallback(prefix_post,
+		prefix_event_dst),
+	    "prefix command rename event must cover raw fallback for renamed object");
+    CHECK(prefix_post.all_affected_names.find(prefix_event_parent) !=
+	    std::string::npos,
+	    "prefix command must identify affected parent comb");
+    CHECK(ged_event_observer_remove(gedp, prefix_post_token) == 1,
+	    "prefix command observer removal must succeed");
 
     const char *killrefs_child = "_ged_event_killrefs_child.s";
     const char *killrefs_parent_a = "_ged_event_killrefs_parent_a.c";
@@ -2739,6 +3038,7 @@ test_events(struct ged *gedp)
 	    "rcodes command test must create input file");
     if (rcodes_fp) {
 	std::fprintf(rcodes_fp, "8103 0 43 100 %s\n", comb_event_region);
+	std::fprintf(rcodes_fp, "8201 0 51 100 %s\n", comb_event_region_b);
 	std::fclose(rcodes_fp);
 	uint64_t rcodes_revision_before = ged_draw_material_revision(gedp);
 	const char *rcodes_av[3] = {"rcodes", rcodes_file, NULL};
@@ -2752,8 +3052,16 @@ test_events(struct ged *gedp)
 	CHECK(observed_named_event(rcodes_post, GED_EVENT_MATERIAL_CHANGED,
 		    comb_event_region),
 		"rcodes command must emit material-changed event for region/material ids");
+	CHECK(observed_named_event(rcodes_post, GED_EVENT_ATTRIBUTE_CHANGED,
+		    comb_event_region_b),
+		"rcodes command must emit attribute-changed event for every changed region");
+	CHECK(observed_named_event(rcodes_post, GED_EVENT_MATERIAL_CHANGED,
+		    comb_event_region_b),
+		"rcodes command must emit material-changed event for every changed region/material id");
 	CHECK(!observed_named_structural_fallback(rcodes_post,
-		    comb_event_region),
+		    comb_event_region) &&
+		!observed_named_structural_fallback(rcodes_post,
+		    comb_event_region_b),
 		"rcodes semantic events must cover raw comb fallback");
 	CHECK(ged_draw_material_revision(gedp) > rcodes_revision_before,
 		"rcodes command must bump draw material revision");

@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "bu/path.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"	/* for rt_bot_split (in raytrace.h) */
 #include "../ged_private.h"
 
@@ -46,6 +47,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_bot_internal *bot;
     struct rt_db_internal intern;
+    int event_depth = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -101,6 +103,8 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    ac = 2;
 	    av[2] = NULL;
 
+	    event_depth = ged_event_batch_begin(gedp);
+
 	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 		/* Get a unique name based on the original name */
 		av[1] = obj;
@@ -126,12 +130,19 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
+		  } else {
+		    (void)ged_event_notify_object_added(gedp,
+			    bu_vls_addr(gedp->ged_result_str), NULL);
 		  }
 		}
 	    }
 
 	    /* Save the name of the original bot and the new bots as a sublist */
 	    bu_vls_printf(&bot_result_list, "{%s {%s}} ", obj, bu_vls_addr(&new_bots));
+	    if (event_depth > 0) {
+		ged_event_batch_end(gedp, NULL);
+		event_depth = 0;
+	    }
 
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_trunc(&new_bots, 0);

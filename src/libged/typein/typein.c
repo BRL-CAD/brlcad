@@ -32,6 +32,7 @@
 
 #include "bu/opt.h"
 #include "rt/geom.h"
+#include "ged/event_txn.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
@@ -3363,6 +3364,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
     int (*fn_in)(struct ged *, const char **, struct rt_db_internal *) = NULL;
     int (*fn_in_2)(struct ged *, const char **, struct rt_db_internal *, const char *) = NULL;
     int (*fn_in_3)(struct ged *, int, const char **, struct rt_db_internal *) = NULL;
+    int event_batch_opened = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -3413,6 +3415,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	    case GED_MORE:
 		return GED_MORE;
 	}
+	event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "bot")) {
 	switch (bot_in(gedp, argc, argv, &internal, &p_bot[0])) {
@@ -3423,6 +3426,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	    case GED_MORE:
 		return GED_MORE;
 	}
+	event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "submodel")) {
 	nvals = 3;
@@ -3466,6 +3470,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	    case GED_MORE:
 		return GED_MORE;
 	}
+	event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "metaball")) {
 	switch (metaball_in(gedp, argc, argv, &internal, &p_metaball[0])) {
@@ -3476,6 +3481,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	    case GED_MORE:
 		return GED_MORE;
 	}
+	event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "ars")) {
 	switch (ars_in(gedp, argc, argv, &internal, &p_ars[0])) {
@@ -3486,6 +3492,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	    case GED_MORE:
 		return GED_MORE;
 	}
+	event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "half")) {
 	nvals = 3*1 + 1;
@@ -3642,6 +3649,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	}
 
+	event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "datum")) {
 	switch (datum_in(gedp, argc, argv, &internal, &p_datum[0])) {
@@ -3652,6 +3660,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	    case GED_MORE:
 		return GED_MORE;
 	}
+	event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "cline") ||
 	       BU_STR_EQUAL(argv[2], "grip") ||
@@ -3672,6 +3681,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_MORE;
     }
 
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     if (fn_in) {
 	if (fn_in(gedp, argv, &internal) != 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
@@ -3681,6 +3692,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		 */
 		rt_db_free_internal(&internal);
 	    }
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
     } else if (fn_in_2) {
@@ -3692,6 +3705,8 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		 */
 		rt_db_free_internal(&internal);
 	    }
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
     } else if (fn_in_3) {
@@ -3703,10 +3718,14 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 		 */
 		rt_db_free_internal(&internal);
 	    }
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
     } else {
 	bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -3717,14 +3736,21 @@ do_new_update:
 	if (dp == RT_DIR_NULL) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
 	if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
     }
+    (void)ged_event_notify_object_added(gedp, name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     bu_vls_printf(gedp->ged_result_str, "%s", argv[1]);
     return BRLCAD_OK;

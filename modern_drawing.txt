@@ -1,7 +1,7 @@
 Modern drawing status
 =====================
 
-Checkpoint: June 17, 2026.
+Checkpoint: June 18, 2026.
 
 Purpose
 -------
@@ -65,7 +65,9 @@ Event transactions:
   metadata, adjust, and existing-combination `put_comb` edits.
 * Multi-object or raw-writer commands recently covered:
   `push`, `pull`, `xpush`, `npush`, `clone`, `clone --xpush`,
-  `shells`, `decompose`, `fracture`, `mirror`, `cpi`, and `copyeval`.
+  `shells`, `decompose`, `fracture`, `mirror`, `cpi`, `copyeval`, `put`,
+  `in`, `bb -c`, `rfarb`, `heal`, `prefix`, file-batched `rcodes`, and
+  file-batched `move_all -f`, and `bot split`/legacy `bot_split` outputs.
 * `put_comb` hides internal `ged_tmp.a*` rollback combinations from observers
   and publishes final comb tree/attribute/material events for the edited comb.
 * `clone --xpush` hides temporary source setup/cleanup events.  `npush`
@@ -73,6 +75,11 @@ Event transactions:
   transaction.  NMG multi-output writers publish one grouped object-add
   transaction.  `mirror` preserves its legacy auto-draw behavior while adding
   an explicit object-add semantic event.
+* `prefix` no longer rewrites unrelated combinations while updating object
+  references, so observers see renamed objects plus actual parent comb-tree
+  updates instead of broad unchanged-comb churn.
+* `move_all -f` now keeps all successful mapping-file renames in one outer
+  event transaction and reports command failure if any mapping line fails.
 * Remaining event work is mostly lower-frequency/offline raw writers and old
   Tcl `db`/`wdb` helper paths that do not yet have a clean GED command context.
   Add semantic details as those paths are migrated; do not rely on broad raw
@@ -137,6 +144,19 @@ Legacy/API isolation:
   Keep those paths isolated and covered by API hygiene tests.
 * NIRT internal plotfile vlblock use is legacy file/debug I/O until that output
   path is redesigned.
+* libbg/libbsg layering still needs a focused compatibility audit.  Track and
+  remove or quarantine moved legacy vlist-style machinery, transitional bridge
+  code, and any modern consumer that reaches through private libged BSG headers.
+  Where compatibility shims must remain, document the boundary and add hygiene
+  tests so they do not become new public architecture.
+* The old blanket "highly experimental" warning in `include/bsg.h` has been
+  replaced with precise public/private/compatibility-boundary language.
+  Maintain that wording with API hygiene tests rather than reintroducing broad
+  instability warnings.
+* libdm GL backends need a backend modernization audit.  OpenGL 2.0 plus the
+  OSMesa-supported extension set is the required hard baseline: any newer
+  system-OpenGL path must probe capabilities at runtime and either work
+  correctly or downgrade gracefully to the baseline used by swrast.
 
 Performance and scale
 ---------------------
@@ -144,13 +164,13 @@ Performance and scale
 Use BENCH phase timings and counters instead of relying only on total CTest
 time.
 
-Current FreeBSD reference points from June 17, 2026:
+Current FreeBSD reference points from June 18, 2026:
 * Default 4096-child QgModel scale gate: fixture construction dominates at
-  about 12.6 s; large-branch fetch is about 43 ms; named material is about
-  0.17 ms; attr set is about 2.6 ms; grouped add/remove are about 230/164 ms;
-  8-path draw/erase are about 6.1/3.2 ms; fallback scans are zero.
+  about 12.7 s; large-branch fetch is about 42 ms; named material is about
+  0.2 ms; attr set is about 2.6 ms; grouped add/remove are about 230/164 ms;
+  8-path draw/erase are about 6.0/3.2 ms; fallback scans are zero.
 * Slow 16384-child/64-draw gate: fixture construction dominates at about
-  186.6 s; fetch is about 170 ms; grouped add/remove are about 960/682 ms;
+  186.6 s; fetch is about 171 ms; grouped add/remove are about 1016/711 ms;
   64-path draw/erase are about 79/81 ms; model deletion is about 31 ms;
   fallback scans are zero.
 * For faster local loops, save a generated fixture with
@@ -181,6 +201,10 @@ Known risks
   signals, not expected slow tests.
 * After public `struct ged` or `struct rt_functab` layout changes, do a broad
   or clean rebuild before diagnosing crashes from stale build products.
+* `heal` event coverage exposed pre-existing mesh-healing DCEL robustness
+  problems on small BoTs.  The immediate face-indexing and null free-edge
+  crashes are fixed, but larger libanalyze mesh-healing regression coverage is
+  still warranted before treating `heal` behavior as fully characterized.
 
 Priority next work
 ------------------
@@ -208,6 +232,17 @@ Priority next work
    Keep modern headers and draw paths free of raw vlist/vlblock and raw BSG
    internals.  Legacy file/debug I/O can remain isolated.
 
+6. Resolve remaining compatibility/layering issues from review.
+   Audit libbg/libbsg compatibility shims, moved vlist-style helpers, and
+   private libged BSG header inclusion.  Decide whether each is deleted,
+   moved behind a private boundary, or documented as an explicit legacy/debug
+   path with tests.
+
+7. Audit GL backend modernization against the OSMesa baseline.
+   Identify pre-modern GL backend code that can be simplified or improved, but
+   require runtime capability checks and graceful fallback for anything beyond
+   OpenGL 2.0 plus OSMesa-supported extensions.
+
 Useful scans
 ------------
 
@@ -233,11 +268,14 @@ Current focused event slice:
 
     cmake --build build --target ged_plugins ged_test_state_services -j 2
     ctest --test-dir build -R '^ged_test_state_services$' --output-on-failure
+    ctest --test-dir build -R '^regress-mged_in$' --output-on-failure
     ctest --test-dir build -R '^regress-mged_comb$' --output-on-failure
     ctest --test-dir build -R '^regress-mged_push$' --output-on-failure
     ctest --test-dir build -R '^regress-mged_xpush$' --output-on-failure
     ctest --test-dir build -R '^regress-mged_clone$' --output-on-failure
     ctest --test-dir build -R '^regress-mged_mirror$' --output-on-failure
+    ctest --test-dir build -R '^regress-mged_mvall$' --output-on-failure
+    ctest --test-dir build -R '^regress-mged_prefix$' --output-on-failure
 
 QgModel scale/performance:
 

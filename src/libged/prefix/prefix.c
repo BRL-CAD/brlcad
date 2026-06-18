@@ -35,11 +35,12 @@
 
 
 static void
-prefix_do(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *prefix_ptr, void *obj_ptr, void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
+prefix_do(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *prefix_ptr, void *obj_ptr, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     char *prefix, *obj;
     char tempstring_v4[NAMESIZE+1];
     size_t len = NAMESIZE+1;
+    int *changed = (int *)user_ptr3;
 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
@@ -62,6 +63,8 @@ prefix_do(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *
 	bu_strlcpy(comb_leaf->tr_l.tl_name , prefix, len);
 	bu_strlcat(comb_leaf->tr_l.tl_name , obj, len);
     }
+    if (changed)
+	*changed = 1;
 }
 
 
@@ -69,6 +72,7 @@ int
 ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i, k;
+    int comb_changed;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -95,8 +99,6 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-
-    bu_log("!!! ged_prefix_core: step 1\n");
 
     ged_event_batch_begin(gedp);
 
@@ -154,7 +156,6 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}
-	bu_log("XXXged_prefix_core: changed name from %s to %s\n", argv[i], tempstring);
     }
 
     bu_vls_free(&tempstring_v5);
@@ -171,14 +172,20 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
+	comb_changed = 0;
 	for (k = 2; k < argc; k++)
 	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, prefix_do,
-			     (void *)argv[1], (void *)argv[k], (void *)NULL, (void *)NULL);
+			     (void *)argv[1], (void *)argv[k], (void *)&comb_changed, (void *)NULL);
+	if (!comb_changed) {
+	    rt_db_free_internal(&intern);
+	    continue;
+	}
 	if (rt_db_put_internal(dp, gedp->dbip, &intern)) {
 	    ged_event_batch_end(gedp, NULL);
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
-	    }
+	}
+	(void)ged_event_notify_comb_tree_changed(gedp, dp->d_namep, 1, NULL);
 	} FOR_ALL_DIRECTORY_END;
 
 	{

@@ -75,10 +75,9 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "ged.h"
+#include "ged/bsg_ged_draw.h"
 #include "ged/event_txn.h"
 #include "wdb.h"
-
-#include "../libged/bsg_ged_draw_private.h"
 
 // We have to use different I/O mechanisms based on which
 // platform we're on.  Make a define to key off of.

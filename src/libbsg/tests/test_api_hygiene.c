@@ -2020,6 +2020,14 @@ main(int argc, char **argv)
 	},
 	{
 	    "src",
+	    "bsg_ged_draw_private.h",
+	    "private GED draw bridge includes are confined to libged",
+	    "src/libbsg/tests/test_api_hygiene.c",
+	    NULL,
+	    "src/libged/"
+	},
+	{
+	    "src",
 	    "scene_object_private.h",
 	    "private BSG scene-object storage includes are confined to libbsg",
 	    NULL,
@@ -3518,6 +3526,10 @@ main(int argc, char **argv)
 	"bsg/plot3.h",
 	"bsg/draw_ctx.h"
     };
+    const char *bsg_umbrella_stability_warning_patterns[] = {
+	"THIS API IS HIGHLY EXPERIMENTAL",
+	"SHOULD *NOT* BE CONSIDERED STABLE"
+    };
     const char *modern_installed_vlist_patterns[] = {
 	"bsg/vlist.h",
 	"rt/vlist.h",
@@ -4161,6 +4173,11 @@ main(int argc, char **argv)
 	    stage17_umbrella_legacy_patterns,
 	    sizeof(stage17_umbrella_legacy_patterns) / sizeof(stage17_umbrella_legacy_patterns[0]),
 	    "Stage 17 umbrella header must not pull in legacy vlist/plot/TIG/draw-context utility headers");
+
+    _scan_exact_file_for_patterns(srcroot, "include/bsg.h",
+	    bsg_umbrella_stability_warning_patterns,
+	    sizeof(bsg_umbrella_stability_warning_patterns) / sizeof(bsg_umbrella_stability_warning_patterns[0]),
+	    "BSG umbrella header must describe stable public/private boundaries instead of a blanket experimental warning");
 
     for (size_t i = 0; i < sizeof(modern_installed_vlist_roots) / sizeof(modern_installed_vlist_roots[0]); i++) {
 	_scan_tree_for_patterns_outside_allowed(srcroot,
