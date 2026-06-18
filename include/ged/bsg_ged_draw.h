@@ -447,6 +447,39 @@ ged_draw_shape_ref_get_color(struct ged *gedp, ged_draw_shape_ref ref, unsigned 
 GED_EXPORT extern int
 ged_draw_shape_ref_set_color(struct ged *gedp, ged_draw_shape_ref ref, const unsigned char rgb[3]);
 
+GED_EXPORT extern int
+ged_draw_shape_ref_last_point(struct ged *gedp,
+			      ged_draw_shape_ref ref,
+			      point_t out);
+
+GED_EXPORT extern int
+ged_draw_shape_ref_translate_geometry(struct ged *gedp,
+				      ged_draw_shape_ref ref,
+				      const vect_t xlate);
+
+GED_EXPORT extern int
+ged_draw_shape_ref_set_center(struct ged *gedp,
+			      ged_draw_shape_ref ref,
+			      const point_t center);
+
+GED_EXPORT extern int
+ged_draw_shape_ref_geometry_clear(struct ged *gedp,
+				  ged_draw_shape_ref ref);
+
+GED_EXPORT extern int
+ged_draw_shape_ref_update_bounds_from_geometry(struct ged *gedp,
+					       ged_draw_shape_ref ref,
+					       int *bad_cmd);
+
+GED_EXPORT extern int
+ged_draw_shape_ref_publish_primitive_wireframe(struct ged *gedp,
+					       ged_draw_shape_ref ref,
+					       struct rt_db_internal *ip,
+					       const struct bg_tess_tol *ttol,
+					       const struct bn_tol *tol,
+					       struct bsg_view *v,
+					       int adaptive);
+
 GED_EXPORT extern ged_draw_shape_ref
 ged_draw_highlighted_shape_ref(const struct ged *gedp);
 

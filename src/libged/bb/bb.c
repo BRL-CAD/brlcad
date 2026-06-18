@@ -34,6 +34,8 @@
 #include "bu/units.h"
 #include "rt/geom.h"
 
+#include "ged/event_txn.h"
+
 #include "../ged_private.h"
 
 
@@ -60,6 +62,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     double vol;
     double oriented_bbox_tol = BN_TOL_DIST;
     char bbname[64];
+    int event_batch_opened = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -200,16 +203,27 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    new_intern.idb_meth = &OBJ[ID_ARB8];
 	    new_intern.idb_ptr = (void *)arb;
 
+	    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
 	    dp = db_diradd(gedp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 	    if (dp == RT_DIR_NULL) {
+		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
+		if (event_batch_opened)
+		    ged_event_batch_end(gedp, NULL);
 		return BRLCAD_ERROR;
 	    }
 
 	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
+		if (event_batch_opened)
+		    ged_event_batch_end(gedp, NULL);
+		return BRLCAD_ERROR;
 	    }
+	    (void)ged_event_notify_object_added(gedp, bbname, NULL);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	}
     } else {
 	/* basic test - BoT only at the moment */
@@ -303,18 +317,28 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&new_intern);
 	} else {
 
+	    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
 	    dp = db_diradd(gedp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 	    if (dp == RT_DIR_NULL) {
+		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
+		if (event_batch_opened)
+		    ged_event_batch_end(gedp, NULL);
 		return BRLCAD_ERROR;
 	    }
 
 	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
+		if (event_batch_opened)
+		    ged_event_batch_end(gedp, NULL);
 		return BRLCAD_ERROR;
 	    }
+	    (void)ged_event_notify_object_added(gedp, bbname, NULL);
 	    rt_db_free_internal(&new_intern);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 
 	}
     }

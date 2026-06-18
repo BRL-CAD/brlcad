@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 int
@@ -38,6 +39,7 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     const struct rt_functab *ftp;
     int i;
+    int event_batch_opened = 0;
     char *name;
     char type[16];
     static const char *usage = "object type attrs";
@@ -95,11 +97,17 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     if (wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
+    (void)ged_event_notify_object_added(gedp, name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     rt_db_free_internal(&intern);
 

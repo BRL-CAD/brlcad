@@ -32,6 +32,7 @@
 
 #include "bg/chull.h"
 #include "rt/geom.h"
+#include "ged/event_txn.h"
 #include "wdb.h"
 #include "../ged_private.h"
 
@@ -44,6 +45,7 @@ ged_heal_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_bot_internal *bot;
     const char *cmd = argv[0];
     const char *primitive = NULL;
+    int event_batch_opened = 0;
 
     double zipper_tol = 0;
 
@@ -77,7 +79,17 @@ ged_heal_core(struct ged *gedp, int argc, const char *argv[])
     RT_BOT_CK_MAGIC(bot);
 
     analyze_heal_bot(bot, zipper_tol);
-    rt_db_put_internal(bot_dp, gedp->dbip, &intern);
+
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    if (rt_db_put_internal(bot_dp, gedp->dbip, &intern) < 0) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting.\n", cmd);
+	return BRLCAD_ERROR;
+    }
+    (void)ged_event_notify_object_modified(gedp, primitive, 1, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     bu_vls_printf(gedp->ged_result_str, "Healed Mesh!");
 

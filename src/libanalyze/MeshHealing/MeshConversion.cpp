@@ -543,6 +543,9 @@ PolygonalMesh::isVertexInFace(int vertex_id, int face_id)
 bool
 PolygonalMesh::isFreeEdge(DCEL_Edge* edge)
 {
+    if (edge == NULL || edge->incident_face == NULL)
+	return false;
+
     if (edge->incident_face->face_id == UNBOUNDED_FACE)
 	return true;
 
@@ -885,4 +888,3 @@ PolygonalMesh::getEdgeWithIndex(int index)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

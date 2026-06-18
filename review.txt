@@ -1,0 +1,550 @@
+newdraw branch review
+=====================
+
+Scope and method
+----------------
+
+This review compares the newdraw branch against main.  The review deliberately
+does not use modern_drawing.txt as an input; the findings are based on the
+source tree, CMake/test inventory, and git diff between main and newdraw.
+
+The branch is a very large single-line-of-development change:
+
+  1050 files changed, 155298 insertions, 42636 deletions
+
+Most of the change is concentrated in the drawing stack and consumers of the
+drawing stack:
+
+  libbsg/include/bsg      new replacement/successor for libbv
+  libged/include/ged      semantic draw records, transactions, db indexing
+  libdm/include/dm        backend render-item contract and resource cache
+  librt/include/rt        BSG-aware primitive drawing and LoD hooks
+  libqtcad/qged           Qt session/plugin/model/canvas restructuring
+  libtclcad/mged          migration of legacy frontends to the BSG path
+
+Executive assessment
+--------------------
+
+This is not a cosmetic rename of libbv.  The main branch libbv role has been
+replaced by libbsg, but libbsg is substantially broader: it is a scene graph,
+view-state, render-item, payload, selection, snapping, overlay, HUD, LoD, and
+backend-adapter layer.  The new branch appears to be an architectural migration
+from immediate display-list-oriented drawing toward a retained semantic drawing
+model.
+
+My overall assessment is that the main direction is sound and likely valuable.
+The strongest improvements are the new semantic draw model in libged, the
+backend boundary in libdm, and the effort to make MGED, TclCAD, and qged share
+one draw-state model instead of maintaining parallel state.  These are real
+maintainability and correctness improvements, not churn for no benefit.
+
+The main concern is scope and stability.  The branch exposes a large amount of
+new public API, and include/bsg.h explicitly marks the API as highly
+experimental.  Several systems were migrated at once, so regression risk is
+high even when the design is good.  Some compatibility and layering issues
+remain, including moved legacy vlist-style machinery, transitional bridge code,
+and at least one consumer including private libged BSG headers.
+
+Component findings
+------------------
+
+libbsg, replacing libbv
+~~~~~~~~~~~~~~~~~~~~~~~
+
+What changed:
+
+libbv is effectively removed as the central drawing/view library, and a new
+libbsg library is introduced.  libbsg contains both moved legacy functionality
+and new systems: scene graph, scene builder, draw sources, view state, view
+scope, render requests, render batches, render items, backend adapters, typed
+payloads, LoD nodes, selection, pick, snap, measurement, overlay, HUD,
+appearance/material resolution, and compatibility support for vlist-style
+drawing.
+
+Likely intent:
+
+The main intent appears to be to separate scene semantics from rendering
+mechanics.  Instead of each frontend and display manager holding loosely related
+view, display-list, selection, and object state, libbsg provides a common
+language for "what exists in the view" and "what a backend is being asked to
+draw."  This should make multiple frontends, multiple display managers,
+per-view/per-scene state, and backend caching much more manageable.
+
+Evaluation:
+
+This is a substantial architectural improvement over libbv's conflation of
+view/camera/display-list/scene-object responsibilities.  The direction is
+worthwhile.  However, libbsg is also large and public very early.  Some of the
+old machinery has moved rather than disappeared, and there is enough API
+surface that stabilization will be a serious task.  The branch should not be
+sold as "low risk" because the design is small; it should be sold as "low risk
+after validation" because the design centralizes previously scattered state and
+has a focused test strategy.
+
+libged
+~~~~~~
+
+What changed:
+
+libged has a major new semantic drawing API.  include/ged/bsg_ged_draw.h
+defines draw transactions, draw refs, draw records, observers, scene revisions,
+material/visibility/highlight state, stale tracking, and APIs to enumerate and
+query draw state.  include/ged/db_index.h adds an explicit in-memory database
+hierarchy/index query API.  include/ged/selection_state.h adds GED-owned
+selection state.  include/ged/event_txn.h adds database mutation and
+reconciliation event handling.  The old display list implementation is removed
+or bypassed, and the new implementation is split across many focused
+bsg_ged_draw_* source files.
+
+Likely intent:
+
+The intent is to make GED the authoritative semantic owner of drawn objects,
+their database paths, their display state, and their interaction state.  That
+lets qged, MGED, TclCAD, and tests observe the same draw model rather than
+having each frontend infer or duplicate draw state.
+
+Evaluation:
+
+This is one of the strongest changes in the branch.  If correct, it should
+reduce redraw bugs, stale object bugs, path/name ambiguity, erase/redraw
+inconsistency, selection drift, and frontend divergence.  The new in-memory
+database index is also easier to reason about than a hidden persistent cache for
+active UI state.  The concern is migration risk: this touches core GED behavior
+and replaces old assumptions broadly.  The branch needs strong behavioral tests
+for draw/erase/redraw/edit/database mutation sequences before skeptics should
+accept it.
+
+libdm
+~~~~~
+
+What changed:
+
+libdm now has a backend operations contract for BSG render items: begin frame,
+draw item, invalidate item, release source, end frame, and backend resource
+cache management.  Legacy vlist drawing is isolated under dm/vlist.h.  The GL
+path gains render-item handling and resource identity/caching logic.
+
+Likely intent:
+
+The intent is to make display managers consume resolved render items rather
+than GED/libbv internals, and to let backends cache resources by stable source,
+geometry, material, mode, and transform identities.
+
+Evaluation:
+
+This is a meaningful layering improvement.  It creates a real backend boundary
+and gives the renderer a place to cache and invalidate resources explicitly.
+However, this is not a complete renderer modernization by itself.  Some GL code
+still appears to rely on older immediate/display-list style mechanisms, and the
+benefits will depend on whether backend implementations mature.  This should be
+presented as a solid enabling step, not as proof that rendering performance is
+already improved.
+
+librt
+~~~~~
+
+What changed:
+
+librt primitive drawing hooks now accept BSG view context, add LoD realization
+hooks, and add typed/indexed geometry extraction paths for selected primitives
+such as BOT, BREP, and polygonal geometry.  The primitive function table has
+changed accordingly, and many primitive implementations were touched.
+
+Likely intent:
+
+The intent is to let the primitive layer produce richer drawing payloads than
+old vlist plotting: wireframe, LoD line data, indexed face sets, and shaded
+geometry inputs for the BSG/render-item path.
+
+Evaluation:
+
+The capability is important if BRL-CAD wants a modern draw stack.  Typed
+geometry and LoD cannot be bolted on cleanly if primitives only publish old
+plot/vlist data.  That said, this area contains a lot of signature churn.  Some
+changes are necessary plumbing rather than immediate functional improvement,
+and the public dependency from librt APIs to BSG should be reviewed carefully.
+The high-value validation here is primitive coverage: BOT, BREP, NMG/polygons,
+CSG-only models, mixed shaded/wireframe modes, and pathological large models.
+
+libqtcad
+~~~~~~~~
+
+What changed:
+
+libqtcad now has session, plugin context, plugin manager, plugin interface,
+tool base, palette controller, command/plugin wrappers, canvas abstraction, and
+GED-index-backed model changes.  qged-facing Qt model/view code is less
+monolithic, and headless/offscreen Qt tests were added.
+
+Likely intent:
+
+The intent is to make qged a host for reusable Qt CAD components instead of a
+single tightly coupled application.  Plugins can provide tools, panels,
+dialogs, commands, and view event filters.  QgSession and QgPluginContext
+reduce direct dependency on QgEdApp internals.
+
+Evaluation:
+
+The refactor is a reasonable maintainability improvement, especially if qged is
+expected to grow.  It also creates a cleaner testing seam for model and plugin
+behavior.  The risk is added indirection before the plugin ecosystem is proven.
+Some plugin code looks like scaffolding or example infrastructure rather than
+finished user-facing capability.  This should be validated as host
+architecture, not oversold as immediate UI improvement.
+
+qged
+~~~~
+
+What changed:
+
+qged now wires plugin discovery, plugin commands, plugin panels/dialogs,
+session state, GED draw transactions, selection synchronization, and GL/SW
+canvas selection through libqtcad abstractions.  It also picks up several qged
+plugins under src/qged/plugins.
+
+Likely intent:
+
+The intent is to make qged consume the common GED/BSG draw model and become a
+modular frontend rather than a separate drawing implementation.
+
+Evaluation:
+
+This is significant and directionally good.  Shared draw state should reduce
+frontend-specific bugs, and plugins are a plausible path for qged tool growth.
+The critical test is not whether plugins load in a sample case; it is whether
+qged preserves existing draw, select, edit, refresh, and model behavior while
+using the new stack.  I also noticed code hygiene concerns worth checking, such
+as duplicate callback registration patterns in qged initialization.
+
+libtclcad
+~~~~~~~~~
+
+What changed:
+
+TclCAD view drawing and refresh paths now use BSG view refresh state and
+dm_draw_objs.  Edit redraw, mouse/snap/move helpers, overlay state, and related
+view operations were migrated toward BSG records.
+
+Likely intent:
+
+The intent is to stop TclCAD from maintaining an independent drawing world and
+make Tcl-driven views use the same BSG/GED state as other frontends.
+
+Evaluation:
+
+This is important because TclCAD/MGED-style flows are still core BRL-CAD usage.
+However, the migration is visibly transitional.  Some old Tcl state remains,
+and there are helper headers bridging old behavior to new BSG records.  This is
+not needless churn, but it needs targeted regression coverage because small
+Tcl/MGED interaction differences can be user-visible.
+
+mged
+~~~~
+
+What changed:
+
+MGED rendering, zoom/redraw, highlight, edit redraw, and picking-related state
+now use GED draw refs and BSG view selection/refresh state.  The old predictor
+source is removed.  MGED also includes a private libged BSG draw header.
+
+Likely intent:
+
+The intent is to move MGED onto the same drawing stack as qged and TclCAD while
+preserving legacy command behavior.
+
+Evaluation:
+
+This is strategically necessary and potentially very valuable.  MGED is where
+many old drawing assumptions live, so migration to the shared model is a major
+win if behavior is preserved.  It is also one of the highest risk areas.  The
+private-header dependency is a layering smell, and removal of predictor.c
+should be explicitly justified or covered by an intentional feature-removal
+decision.  MGED needs direct command-sequence and visual-regression validation.
+
+Other libraries and utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Changes in libnmg, libbrep, converters, and utilities mostly look like API
+fallout from replacing bv plotting/vlist usage with bsg equivalents.  These
+are mostly necessary churn rather than independent architectural changes.  They
+still matter for regression risk because include churn and plotting API changes
+can break less-traveled tools.
+
+Cross-cutting risks
+-------------------
+
+1. API stability: include/bsg.h marks the BSG API as highly experimental.  If
+   the branch is merged broadly, we should decide which headers are public,
+   which are private, and which are temporary compatibility surfaces.
+
+2. Layering: Some consumers appear to reach into private implementation details
+   to complete the migration.  That is acceptable for a branch but should be
+   cleaned up or documented before merge.
+
+3. Behavioral drift: The new model may be more correct internally while still
+   changing visible behavior.  Skeptical reviewers will need evidence that
+   ordinary draw/select/edit/view workflows are unchanged unless a change is
+   intentional and reviewed.
+
+4. Performance uncertainty: The architecture enables better caching and LoD,
+   but the implementation still includes legacy GL mechanisms and very large
+   data paths.  Performance should be measured, not assumed.
+
+5. Test provenance: Newdraw adds many good tests, but tests written only for
+   the new architecture do not by themselves prove parity with main.  We need a
+   main-compatible control suite first.
+
+Proposed focused validation plan
+--------------------------------
+
+Do not execute this plan yet.  This is a proposal for building evidence that
+the new drawing stack is worthwhile and low risk.
+
+Validation goals
+~~~~~~~~~~~~~~~~
+
+The validation effort should answer four questions:
+
+1. Does newdraw preserve existing user-visible behavior from main?
+
+2. Does newdraw correctly support the new semantic guarantees it claims:
+   stable draw refs, draw transactions, per-view state, selection state,
+   backend invalidation, and typed payload rendering?
+
+3. Does newdraw avoid unacceptable performance, memory, or build-time
+   regressions?
+
+4. Are remaining differences intentional, documented, and valuable enough to
+   justify the migration?
+
+Phase 0: establish controlled builds
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Build main and newdraw with the same compiler, build type, CMake options,
+external dependency set, and test data.  Record OS, compiler, Qt version, OpenGL
+availability, swrast availability, and CMake cache summaries.
+
+Use at least two build profiles:
+
+  Release or RelWithDebInfo for performance-sensitive validation.
+  Debug or assertions-enabled build for correctness and leak/stress checks.
+
+Keep main and newdraw build directories separate and immutable during a
+validation run.  If a test must be adjusted to compile on both branches, make
+that test adjustment first on main, then apply the same test to newdraw.
+
+Phase 1: backfill main-compatible baseline tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before relying on newdraw-specific tests, expand main's own coverage where
+possible.  The strongest persuasion strategy is to add tests that main can pass
+today, then show newdraw passes the same tests unchanged.
+
+Recommended main-compatible baseline areas:
+
+  Drawing image baselines:
+    Use swrast-based PNG comparison for basic draw, faceplate, LoD, selection,
+    quad/multi-view, view resize/AET stability, shaded/wireframe modes, and
+    common view commands.  Existing draw-test infrastructure under
+    src/libged/tests/draw is the right model.
+
+  GED command behavior:
+    Script draw, erase, redraw, who, zap, view, select, mater/color,
+    transparency, and database mutation sequences.  Verify command output,
+    drawn object counts, and image output where applicable.
+
+  Database mutation and stale state:
+    Establish baseline behavior for creating, renaming, deleting, modifying,
+    and redrawing objects after they have already been drawn.  Include nested
+    combinations, shared leaves, and ambiguous display names.
+
+  Selection and highlight:
+    Test object selection, path selection, parent/child selection effects,
+    highlight changes, erase after select, redraw after select, and selection
+    persistence across view changes.
+
+  MGED scripted workflows:
+    Add or expand non-interactive MGED regressions for common draw/edit/view
+    sequences.  Include wireframe draw, shaded mode if available, edit redraw,
+    erase/redraw, save/restore view, and database edits while objects are
+    visible.
+
+  TclCAD/overlay behavior:
+    Exercise Tcl-created overlays, faceplate elements, framebuffer underlay or
+    overlay behavior, mouse/snap helper paths where scriptable, and refresh
+    semantics.
+
+  qged/libqtcad behavior:
+    For main, cover existing qged model/view behavior that is not dependent on
+    the new plugin system.  Validate model population, refresh after database
+    changes, view update calls, and headless/offscreen Qt rendering where
+    supported.
+
+  Primitive rendering coverage:
+    Use small .g files covering arb/ell/tgc/tor/bot/brep/nmg/sketch/extrude and
+    mixed combinations.  Compare main and newdraw images in wireframe and,
+    where supported, shaded display modes.
+
+  Compatibility/build coverage:
+    Build representative tools and converters that include plotting/vlist APIs,
+    not just the main GUI paths.  Include gqa plot output, gdiff/gchecker-style
+    consumers, and common converters if they touch changed headers.
+
+Phase 2: run unchanged baseline tests on newdraw
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After main-compatible tests are passing on main, run the same tests unchanged
+on newdraw.  Treat results in three categories:
+
+  Exact pass:
+    Behavior matches main within the established image or textual tolerances.
+
+  Intentional difference:
+    Behavior differs, but the difference is reviewed, documented, and accepted
+    as an improvement.  Update the expected baseline only after explicit review.
+
+  Regression:
+    Behavior differs without a documented reason.  Fix before merge or record a
+    conscious deferral with risk owner and follow-up issue.
+
+For image tests, use strict comparison where deterministic.  If antialiasing or
+backend variation creates noise, use documented tolerances and include example
+diff images in the review package.
+
+Phase 3: run newdraw-only semantic tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once parity is established, run tests that only make sense for the new
+architecture.  These should demonstrate why the migration is worth doing, not
+just that it does not break old behavior.
+
+Recommended newdraw-only areas:
+
+  BSG scene graph, render item, payload, backend adapter, selection, snap,
+  measure, overlay, HUD, LoD, and public-header tests.
+
+  GED draw-scene transaction tests for draw, erase, redraw, visibility,
+  material, transparency, stale source, rename, reference removal, clear, and
+  teardown.
+
+  Multi-view independence tests proving shared scene state and view-local state
+  do not bleed into each other.
+
+  Backend invalidation/resource-cache tests proving stale resources are
+  invalidated and reused correctly.
+
+  qged plugin-host tests proving plugins are host-agnostic where claimed and do
+  not require direct QgEdApp coupling.
+
+  MGED/rtwizard/Tcl overlay BSG tests proving legacy command flows are using
+  the new common draw state correctly.
+
+Phase 4: stress, scale, and interactive-risk validation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run focused stress tests after correctness tests pass:
+
+  Large hierarchy model:
+    Thousands to tens of thousands of objects, shared leaves, deep paths,
+    repeated draw/erase/redraw, and view model expansion.
+
+  Large geometry model:
+    BOT-heavy and BREP-heavy models, including shaded mode and LoD transitions.
+
+  Multi-view workload:
+    Four views with independent draw state, selection, highlight, and refresh.
+
+  Edit workload:
+    Draw object, enter edit, modify primitive, redraw, undo/redo if available,
+    erase, redraw, and verify displayed state.
+
+  Long session:
+    Repeated database edits and view refreshes for leak detection and resource
+    cache invalidation checks.
+
+  Frontend smoke:
+    Manual MGED and qged smoke tests for workflows that are hard to automate:
+    mouse selection, snapping, measurement, edit handles, shaded/wireframe
+    switching, and plugin tool activation.
+
+Phase 5: performance and resource gates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Collect main and newdraw numbers with the same datasets and hardware:
+
+  Build time for affected targets.
+  Startup time for MGED and qged on representative databases.
+  First draw time and repeated redraw time.
+  Selection/highlight latency on large hierarchies.
+  Memory after open, after draw, after repeated redraw, and after erase/clear.
+  Backend cache hit/miss behavior where measurable.
+  Qt model population and expansion time.
+
+Proposed acceptance guidance:
+
+  No unexplained correctness regressions.
+  No ordinary workflow performance regression over main without documented
+  reason and mitigation.
+  Memory growth across repeated redraw/edit cycles must plateau.
+  New semantic tests must pass consistently under repeated runs.
+  Any intentional visual drift must have before/after images and reviewer sign
+  off.
+
+Phase 6: merge-readiness cleanup checklist
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before asking skeptical project members to accept the branch, resolve or
+explicitly document the following:
+
+  Decide which BSG headers are public API and which are internal.
+
+  Remove or justify private-header dependencies from applications.
+
+  Document intentional behavior changes from main.
+
+  Confirm predictor.c removal from MGED is intentional or restore equivalent
+  behavior.
+
+  Audit qged initialization for duplicate callback registration or similar
+  migration artifacts.
+
+  Identify compatibility shims that are temporary and file follow-up cleanup
+  tasks.
+
+  Make the validation matrix reproducible: exact commit IDs, build options,
+  test commands, datasets, expected outputs, and tolerances.
+
+Recommended evidence package
+----------------------------
+
+To convince skeptical reviewers, prepare a short evidence bundle:
+
+  A one-page architecture summary explaining the old state ownership problem
+  and the new GED/BSG/DM responsibility split.
+
+  A test matrix showing which tests run on main, which run unchanged on newdraw,
+  and which are newdraw-only semantic tests.
+
+  Image-diff results for main-compatible drawing baselines.
+
+  Command-output diffs for GED/MGED scripted workflows.
+
+  Performance tables for first draw, redraw, selection/highlight, and memory.
+
+  A list of accepted intentional differences with reviewer sign-off.
+
+  A short remaining-risk list with owners and follow-up tasks.
+
+Bottom line
+-----------
+
+The branch is technically ambitious and invasive, but the core direction is
+sound.  The new stack addresses real architectural problems in BRL-CAD's
+drawing system: scattered state ownership, frontend-specific draw behavior,
+display-list coupling, weak invalidation semantics, and limited ability to
+support richer geometry/rendering contracts.
+
+The right way to make this acceptable is not to argue that the diff is small or
+low risk.  It is not.  The right argument is that the new architecture reduces
+long-term risk, and that a disciplined main-first validation suite can make the
+merge risk bounded and visible.

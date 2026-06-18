@@ -49,6 +49,7 @@
 #include "bg/trimesh.h"
 #include "bsg/feature.h"
 #include "bsg/geometry.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -842,6 +843,7 @@ extern "C" int
 _bot_cmd_split(void *bs, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;
+    int event_depth = 0;
     const char *usage_string = "bot split <objname>";
     const char *purpose_string = "Split BoT into objects containing topologically connected triangle subsets";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -877,6 +879,8 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 	bu_vls_printf(gb->gedp->ged_result_str, "BoT is fully connected topologically, not splitting");
 	goto bot_split_done;
     }
+
+    event_depth = ged_event_batch_begin(gb->gedp);
 
     // Two or more triangle sets - time for new bots
     for (int i = 0; i < split_cnt; i++) {
@@ -931,6 +935,8 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 	    goto bot_split_done;
 	}
 
+	(void)ged_event_notify_object_added(gb->gedp, bu_vls_cstr(&bname),
+		NULL);
 	bu_vls_free(&bname);
     }
 
@@ -946,6 +952,8 @@ bot_split_done:
 	bu_free(fset_cnts, "free cnts array");
     if (split_cnt > 1)
 	bu_vls_printf(gb->gedp->ged_result_str, "Split into %d objects", split_cnt);
+    if (event_depth > 0)
+	ged_event_batch_end(gb->gedp, NULL);
     return ret;
 }
 

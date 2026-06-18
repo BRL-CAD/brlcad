@@ -208,12 +208,12 @@ BrlcadMesh::initIncidentFace()
 	    v3 = bot->faces[VERTICES_PER_FACE * j + 2];
 
 	    if (bot->orientation == RT_BOT_CCW) {
-		v2 = bot->faces[VERTICES_PER_FACE * i + 1];
-		v3 = bot->faces[VERTICES_PER_FACE * i + 2];
+		v2 = bot->faces[VERTICES_PER_FACE * j + 1];
+		v3 = bot->faces[VERTICES_PER_FACE * j + 2];
 	    }
 	    else if (bot->orientation == RT_BOT_CW) {
-		v2 = bot->faces[VERTICES_PER_FACE * i + 2];
-		v3 = bot->faces[VERTICES_PER_FACE * i + 1];
+		v2 = bot->faces[VERTICES_PER_FACE * j + 2];
+		v3 = bot->faces[VERTICES_PER_FACE * j + 1];
 	    }
 	    else {
 
@@ -470,4 +470,3 @@ BrlcadMesh::addVertex(int ID)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

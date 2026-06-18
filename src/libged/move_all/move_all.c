@@ -222,12 +222,17 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
 {
     FILE *fp = NULL;
     char line[512];
+    int event_depth = 0;
+    int status = BRLCAD_OK;
 
     fp = fopen(file, "r");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "cannot open %s\n", file);
 	return BRLCAD_ERROR;
     }
+
+    if (!nflag)
+	event_depth = ged_event_batch_begin(gedp);
 
     while (bu_fgets(line, sizeof(line), fp) != NULL) {
 	char *cp = NULL;
@@ -240,12 +245,17 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
 	if (bu_argv_from_string(new_av, 2, line) != 2)
 	    continue;
 
-	move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
+	if (move_all_func(gedp, nflag, (const char *)new_av[0],
+		(const char *)new_av[1]) != BRLCAD_OK)
+	    status = BRLCAD_ERROR;
     }
 
     fclose(fp);
 
-    return BRLCAD_OK;
+    if (event_depth > 0)
+	ged_event_batch_end(gedp, NULL);
+
+    return status;
 }
 
 
