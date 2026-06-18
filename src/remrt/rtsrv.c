@@ -56,6 +56,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "optical/debug.h"
+#include "optical/light.h"
 #include "pkg.h"
 #include "dm.h"
 #include "icv.h"
@@ -91,7 +92,7 @@ unsigned char *scanbuf = NULL;
 extern int grid_setup(struct bu_vls *err);
 extern void worker(int, void *);
 extern void application_init(void);
-extern void light_cleanup(void); /* from liboptical/sh_light.c */
+/* light_cleanup() is declared in optical/light.h */
 
 /***** variables shared with worker() ******/
 struct application APP;

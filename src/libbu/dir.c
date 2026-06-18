@@ -701,7 +701,7 @@ bu_mkdir(const char *path)
     for (int i = (int)BU_PTBL_LEN(&ndirs) - 1; i >= 0; i--) {
 	char *npath = (char *)BU_PTBL_GET(&ndirs, i);
 #ifdef HAVE_WINDOWS_H
-	CreateDirectory(npath, (const char *)NULL);
+	CreateDirectory(npath, NULL);
 #else
 	/* mode: 775 */
 	mkdir(npath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);

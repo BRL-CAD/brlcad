@@ -40,20 +40,6 @@
 
 #include <stdio.h>
 
-/* strict mode may not declare fileno().  Ensure a consistent C linkage
- * declaration for both C and C++ consumers, but do not attempt to add
- * any project-specific dll-export/import attributes here so this header
- * remains a standalone portability shim. */
-# if !defined(fileno)
-#  ifdef __cplusplus
-extern "C" {
-#  endif
-int fileno(FILE *stream);
-#  ifdef __cplusplus
-}
-#  endif
-# endif
-
 #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
 
 #  ifdef WIN32_LEAN_AND_MEAN
@@ -77,6 +63,22 @@ int fileno(FILE *stream);
 #  undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
 
 #else
+
+/* strict mode may not declare fileno().  Ensure a consistent C linkage
+ * declaration for both C and C++ consumers, but do not attempt to add
+ * any project-specific dll-export/import attributes here so this header
+ * remains a standalone portability shim.  On Windows fileno() is always
+ * declared by <stdio.h> (with CRT dll-import linkage), so redeclaring it
+ * here would conflict - skip the declaration on that platform. */
+# if !defined(fileno)
+#  ifdef __cplusplus
+extern "C" {
+#  endif
+int fileno(FILE *stream);
+#  ifdef __cplusplus
+}
+#  endif
+# endif
 
 #  include <unistd.h>
 

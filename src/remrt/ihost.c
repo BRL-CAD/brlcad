@@ -56,7 +56,10 @@
 #  define NI_MAXHOST 1025
 #endif
 
-#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
+/* On Windows gethostname() is declared by <winsock2.h> (via bnetwork.h)
+ * with a differing prototype (int length, __stdcall, dll-import linkage),
+ * so only supply our own declaration on platforms that lack one. */
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME) && !defined(HAVE_WINDOWS_H)
 extern int gethostname(char *name, size_t len);
 #endif
 
