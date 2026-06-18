@@ -77,25 +77,20 @@
  */
 struct id_note { int id; const char *note; };
 static const struct id_note skip_list[] = {
-    //{ ID_SUBMODEL, "needs external submodel.g at prep" },
-    { ID_SCRIPT,   "(FIXME?)asc round-trip yields no object; non-volumetric pseudo-solid" },
-    { ID_ANNOT,    "(FIXME!)asc2g annot import round-trips to a crash; non-volumetric 2D" },
-    { ID_NMG,      "(FIXME!)librt ray/NMG intersection asserts (libnmg/isect.c) - see TODO" },
     { ID_REC,      "(deprecated?) shares rt_tgc import/export; no distinct on-disk minor type" },
     { ID_SPH,      "(deprecated?) shares rt_ell import/export; no distinct on-disk minor type" },
     { ID_POLY,     "(deprecated) v4 polysolid (superseded by bot)" },
     { ID_HF,       "(deprecated) needs external data file (superseded by dsp)" },
-    { ID_BSPLINE,  "(deprecated) asc2g no longer imports bspline (use brep)" },
+    { ID_BSPLINE,  "(deprecated) asc2g no longer imports bspline (superseded by brep)" },
 };
 static const size_t skip_list_n = sizeof(skip_list) / sizeof(skip_list[0]);
 
 /*
- * Pseudo-solids: prep+shot are present but the shot is a stub that never
- * produces volumetric hits.  They must still be represented, but zero 
- * hits is the expected outcome.
+ * Pseudo-solids: prep+shot are present but the shot is either a WIP stub or
+ * something that does not produce volumetric hits.
  */
 static const int pseudo_solid_ids[] = {
-    ID_GRIP, ID_JOINT, ID_SKETCH, ID_ANNOT, ID_DATUM,
+    ID_GRIP, ID_JOINT, ID_SKETCH, ID_ANNOT, ID_DATUM, ID_SCRIPT,
 };
 static const size_t pseudo_solid_ids_n = sizeof(pseudo_solid_ids) / sizeof(pseudo_solid_ids[0]);
 
