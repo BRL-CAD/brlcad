@@ -63,6 +63,7 @@ struct ged_event_txn_state {
     struct ged *gedp = nullptr;
     struct db_i *callback_dbip = nullptr;
     ged_event_observer_token next_token = 1;
+    int suspended = 0;
     int batch_depth = 0;
     int dispatch_depth = 0;
     std::vector<ged_event_owned> queued_events;
@@ -878,7 +879,39 @@ ged_event_txn_state_destroy(struct ged_event_txn_state *state)
 int
 ged_event_txn_available(struct ged *gedp)
 {
-    return ged_event_state(gedp) ? 1 : 0;
+    struct ged_event_txn_state *state = ged_event_state(gedp);
+    return (state && !state->suspended) ? 1 : 0;
+}
+
+
+int
+ged_event_txn_disable(struct ged *gedp)
+{
+    struct ged_event_txn_state *state = ged_event_state(gedp);
+    if (!state)
+	return 0;
+
+    state->suspended++;
+    state->batch_depth = 0;
+    state->queued_events.clear();
+    state->followup_events.clear();
+    if (state->callback_dbip)
+	ged_event_librt_callbacks_disable(gedp);
+    return state->suspended;
+}
+
+
+int
+ged_event_txn_enable(struct ged *gedp)
+{
+    struct ged_event_txn_state *state = ged_event_state(gedp);
+    if (!state || state->suspended <= 0)
+	return 0;
+
+    state->suspended--;
+    if (!state->suspended && gedp->dbip)
+	ged_event_librt_callbacks_enable(gedp);
+    return state->suspended;
 }
 
 
@@ -886,7 +919,7 @@ int
 ged_event_librt_callbacks_enable(struct ged *gedp)
 {
     struct ged_event_txn_state *state = ged_event_state(gedp);
-    if (!state || !gedp || !gedp->dbip)
+    if (!state || !gedp || !gedp->dbip || state->suspended)
 	return 0;
 
     if (state->callback_dbip == gedp->dbip)
@@ -953,7 +986,7 @@ int
 ged_event_batch_begin(struct ged *gedp)
 {
     struct ged_event_txn_state *state = ged_event_state(gedp);
-    if (!state)
+    if (!state || state->suspended)
 	return 0;
     state->batch_depth++;
     return state->batch_depth;
@@ -987,7 +1020,7 @@ ged_event_publish_impl(struct ged *gedp,
 		       int librt)
 {
     struct ged_event_txn_state *state = ged_event_state(gedp);
-    if (!state || !events || !event_count)
+    if (!state || state->suspended || !events || !event_count)
 	return 0;
 
     if (state->dispatch_depth > 0) {
