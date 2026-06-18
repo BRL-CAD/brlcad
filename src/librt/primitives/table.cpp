@@ -180,6 +180,7 @@ extern int rt_datum_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_metaball_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_pnts_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 
@@ -2312,9 +2313,9 @@ const struct rt_functab OBJ[] = {
 	NULL, /* parse */
 	sizeof(struct rt_pnts_internal),
 	RT_PNTS_INTERNAL_MAGIC,
-	NULL, /* get */
-	NULL, /* adjust */
-	NULL, /* form */
+	RTFUNCTAB_FUNC_GET_CAST(rt_pnts_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_pnts_adjust),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_pnts_form),
 	NULL, /* make */
 	NULL, /* params */
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_pnts_bbox),
