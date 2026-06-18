@@ -503,15 +503,16 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    /* copy each directory pointer in the input database */
-    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    /* Copying an external database can touch many objects.  Suppress detailed
+     * per-object reconciliation and let live consumers do one final rebuild. */
+    int bulk_started = (ged_event_bulk_begin(gedp) > 0);
     FOR_ALL_DIRECTORY_START(dp, cc_data.incoming_dbip) {
 	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
 	    continue;
 	copy_object(gedp, dp, &cc_data);
     } FOR_ALL_DIRECTORY_END;
-    if (event_batch_opened)
-	ged_event_batch_end(gedp, NULL);
+    if (bulk_started)
+	ged_event_bulk_end(gedp, NULL);
 
     rt_mempurge(&(cc_data.incoming_dbip->i->dbi_freep));
 

@@ -483,6 +483,9 @@ ged_event_state_has_live_consumers(struct ged_event_txn_state *state)
 	return 1;
 
     struct ged *gedp = state->gedp;
+    if (ged_db_index_available(gedp))
+	return 1;
+
     if (gedp->ged_refresh_handler != GED_REFRESH_FUNC_NULL)
 	return 1;
 
@@ -764,6 +767,9 @@ ged_event_reconcile_db_index(struct ged *gedp, const ged_event_owned &event)
 	    }
 	    break;
 	case GED_EVENT_BATCH_REBUILD:
+	    if (ged_db_index_available(gedp) && ged_db_index_refresh(gedp))
+		ret += 1;
+	    break;
 	case GED_EVENT_DATABASE_METADATA_CHANGED:
 	case GED_EVENT_NONE:
 	default:

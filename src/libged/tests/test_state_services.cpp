@@ -2300,9 +2300,13 @@ test_events(struct ged *gedp)
 	    concat_post.all_kinds.end(),
 	    GED_EVENT_OBJECT_MODIFIED) == concat_post.all_kinds.end(),
 	    "concat -c material event must cover _GLOBAL librt fallback event");
-    CHECK(observed_named_event(concat_post, GED_EVENT_OBJECT_ADDED,
-		concat_import_dst),
-	    "concat command must emit object-added event for imported objects");
+    CHECK(std::find(concat_post.all_kinds.begin(),
+	    concat_post.all_kinds.end(),
+	    GED_EVENT_BATCH_REBUILD) != concat_post.all_kinds.end(),
+	    "concat command must collapse imported objects to a final rebuild");
+    CHECK(db_lookup(gedp->dbip, concat_import_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "concat command must import objects under the resolved name");
     CHECK(concat_post.all_affected_names.find(DB5_GLOBAL_OBJECT_NAME) !=
 	    std::string::npos,
 	    "concat -c material event must identify _GLOBAL metadata");
@@ -2345,9 +2349,13 @@ test_events(struct ged *gedp)
 	    "concat -O command must publish final modified event");
     CHECK(concat_overwrite_post.calls == 1,
 	    "concat -O command must publish one event transaction");
-    CHECK(observed_named_event(concat_overwrite_post,
-		GED_EVENT_OBJECT_MODIFIED, concat_overwrite_name),
-	    "concat -O command must emit object-modified event for overwritten object");
+    CHECK(std::find(concat_overwrite_post.all_kinds.begin(),
+	    concat_overwrite_post.all_kinds.end(),
+	    GED_EVENT_BATCH_REBUILD) != concat_overwrite_post.all_kinds.end(),
+	    "concat -O command must collapse overwritten objects to a final rebuild");
+    CHECK(db_lookup(gedp->dbip, concat_overwrite_name, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "concat -O command must leave the overwritten object present");
     CHECK(!observed_named_event(concat_overwrite_post,
 		GED_EVENT_OBJECT_ADDED, concat_overwrite_name),
 	    "concat -O overwrite must not expose final object as an add");
@@ -5322,6 +5330,40 @@ test_events(struct ged *gedp)
 	    "killrefs command semantic parent events must update DB index paths");
     CHECK(ged_event_observer_remove(gedp, killrefs_post_token) == 1,
 	    "killrefs observer removal must succeed");
+
+    const char *killall_child = "_ged_event_killall_child.s";
+    const char *killall_parent = "_ged_event_killall_parent.c";
+    if (wdbp) {
+	point_t killall_center = {390.0, 0.0, 0.0};
+	struct wmember killall_wm;
+	CHECK(mk_sph(wdbp, killall_child, killall_center, 1.0) == 0,
+		"killall event fixture child must be created");
+	BU_LIST_INIT(&killall_wm.l);
+	CHECK(mk_addmember(killall_child, &killall_wm.l, NULL,
+		    WMOP_UNION) != NULL,
+		"killall event fixture must add parent child");
+	CHECK(mk_comb(wdbp, killall_parent, &killall_wm.l, 0, NULL,
+		    NULL, NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
+		"killall event fixture parent must be created");
+    }
+    event_order_observer killall_post;
+    ged_event_observer_token killall_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &killall_post);
+    CHECK(killall_post_token != 0,
+	    "killall observer must register");
+    const char *killall_av[3] = {"killall", killall_child, NULL};
+    CHECK(ged_exec(gedp, 2, killall_av) == BRLCAD_OK,
+	    "killall command must remove references and object");
+    CHECK(killall_post.calls == 1,
+	    "killall nested commands must publish one outer event transaction");
+    CHECK(observed_named_event(killall_post, GED_EVENT_OBJECT_REMOVED,
+		killall_child),
+	    "killall command must emit object-removed event for killed object");
+    CHECK(db_lookup(gedp->dbip, killall_child, LOOKUP_QUIET) == RT_DIR_NULL,
+	    "killall command must remove the target object from the database");
+    CHECK(ged_event_observer_remove(gedp, killall_post_token) == 1,
+	    "killall observer removal must succeed");
 
     event_order_observer comb_region_post;
     ged_event_observer_token comb_region_post_token =
