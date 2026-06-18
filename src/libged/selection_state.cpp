@@ -39,7 +39,6 @@
 #include "ged/bsg_ged_draw.h"
 #include "ged/selection_state.h"
 
-#include "./bsg_ged_draw_private.h"
 #include "./ged_private.h"
 
 

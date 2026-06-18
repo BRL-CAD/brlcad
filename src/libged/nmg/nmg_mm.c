@@ -29,6 +29,7 @@
 
 #include "bu/cmd.h"
 #include "bu/interrupt.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -68,8 +69,26 @@ ged_nmg_mm_core(struct ged *gedp, int argc, const char *argv[])
     (void)signal(SIGINT, SIG_IGN);
 
     /* add model to database */
-    GED_DB_DIRADD(gedp, dp, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    dp = db_diradd(gedp->dbip, name, RT_DIR_PHONY_ADDR, 0,
+	    RT_DIR_SOLID, (void *)&internal.idb_type);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.",
+		name);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	rt_db_free_internal(&internal);
+	return BRLCAD_ERROR;
+    }
+    if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+    (void)ged_event_notify_object_added(gedp, name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

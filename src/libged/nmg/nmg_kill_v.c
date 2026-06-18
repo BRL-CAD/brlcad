@@ -28,9 +28,36 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
+
+static void
+nmg_kill_v_remove_empty_regions(struct model *m)
+{
+    struct nmgregion *r = NULL;
+
+    if (!m)
+	return;
+
+    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    while (BU_LIST_NOT_HEAD(&r->l, &m->r_hd)) {
+	struct nmgregion *next_r = BU_LIST_NEXT(nmgregion, &r->l);
+	struct shell *s = BU_LIST_FIRST(shell, &r->s_hd);
+	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
+	    struct shell *next_s = BU_LIST_NEXT(shell, &s->l);
+	    if (BU_LIST_IS_EMPTY(&s->fu_hd) &&
+		    BU_LIST_IS_EMPTY(&s->lu_hd) &&
+		    BU_LIST_IS_EMPTY(&s->eu_hd) && !s->vu_p)
+		(void)nmg_ks(s);
+	    s = next_s;
+	}
+	if (BU_LIST_IS_EMPTY(&r->s_hd))
+	    (void)nmg_kr(r);
+	r = next_r;
+    }
+}
 
 void remove_vertex(const struct model* m, point_t rv)
 {
@@ -305,13 +332,20 @@ ged_nmg_kill_v_core(struct ged* gedp, int argc, const char* argv[])
     NMG_CK_MODEL(m);
 
     remove_vertex(m, vt);
+    nmg_kill_v_remove_empty_regions(m);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     if (wdb_put_internal(wdbp, name, &internal, 1.0) < 0 ) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
 	rt_db_free_internal(&internal);
 	return BRLCAD_ERROR;
     }
+    (void)ged_event_notify_object_modified(gedp, name, 1, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     rt_db_free_internal(&internal);
 

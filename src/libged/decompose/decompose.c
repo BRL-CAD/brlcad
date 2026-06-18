@@ -205,6 +205,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 		    rt_db_free_internal(&nmg_intern);
 		    return BRLCAD_ERROR;
 		}
+		(void)ged_event_notify_object_added(gedp, bu_vls_addr(&solid_name), NULL);
 
 		(void)nmg_ks(decomp_s);
 		decomp_s = next_s;

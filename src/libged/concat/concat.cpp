@@ -233,6 +233,7 @@ copy_object(struct ged *gedp,
     std::string new_name;
     struct directory* oride_dp = NULL;
     std::string owrite_backup;
+    int callbacks_disabled = 0;
 
     if (rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -300,12 +301,22 @@ copy_object(struct ged *gedp,
 		owrite_backup = std::string(bu_vls_cstr(&bname));
 	    }
 	    bu_vls_free(&bname);
-	    db_rename(cc_data->target_dbip, oride_dp, owrite_backup.c_str());
+	    callbacks_disabled = ged_event_librt_callbacks_disable(gedp);
+	    if (db_rename(cc_data->target_dbip, oride_dp, owrite_backup.c_str()) < 0) {
+		if (callbacks_disabled)
+		    (void)ged_event_librt_callbacks_enable(gedp);
+		bu_vls_printf(gedp->ged_result_str,
+			"Failed to rename existing object (%s) to backup - aborting!!\n",
+			input_dp->d_namep);
+		return BRLCAD_ERROR;
+	    }
 	}
     }
 
     if ((new_dp = db_diradd(cc_data->target_dbip, new_name.c_str(), RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
 		    (void *)&input_dp->d_minor_type)) == RT_DIR_NULL) {
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(gedp);
 	bu_vls_printf(gedp->ged_result_str,
 		"Failed to add new object name (%s) to directory - aborting!!\n",
 		new_name.c_str());
@@ -317,6 +328,8 @@ copy_object(struct ged *gedp,
     new_dp->d_major_type = input_dp->d_major_type;
 
     if (rt_db_put_internal(new_dp, cc_data->target_dbip, &ip) < 0) {
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(gedp);
 	bu_vls_printf(gedp->ged_result_str,
 		"Failed to write new object (%s) to database - aborting!!\n",
 		new_name.c_str());
@@ -328,12 +341,18 @@ copy_object(struct ged *gedp,
     if (oride_dp) {
 	if (db_delete(gedp->dbip, oride_dp) != 0 || db_dirdelete(gedp->dbip, oride_dp) != 0) {
 	    /* Abort processing on first error */
+	    if (callbacks_disabled)
+		(void)ged_event_librt_callbacks_enable(gedp);
 	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s\n", owrite_backup.c_str());
 	    return BRLCAD_ERROR;
 	}
 	db_update_nref(gedp->dbip);
-	ged_event_notify_object_removed(gedp, owrite_backup.c_str(), NULL);
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(gedp);
+	ged_event_notify_object_modified(gedp, new_name.c_str(), 1, NULL);
 	cc_data->overwritten++;
+    } else {
+	ged_event_notify_object_added(gedp, new_name.c_str(), NULL);
     }
 
     return BRLCAD_OK;
@@ -413,7 +432,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     // For compatibility (and because '/' isn't a sane character to use for obj
     // names in any case) clear if such a character was supplied.
-    if (BU_STR_EQUAL(argv[1], "/"))
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "/"))
 	cc_data.affix = std::string("");
 
     // For all incoming objects, compare their names against the current
@@ -485,11 +504,14 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* copy each directory pointer in the input database */
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     FOR_ALL_DIRECTORY_START(dp, cc_data.incoming_dbip) {
 	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
 	    continue;
 	copy_object(gedp, dp, &cc_data);
     } FOR_ALL_DIRECTORY_END;
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     rt_mempurge(&(cc_data.incoming_dbip->i->dbi_freep));
 

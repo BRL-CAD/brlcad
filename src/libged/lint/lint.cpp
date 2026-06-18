@@ -37,6 +37,7 @@ extern "C" {
 }
 #include "bsg/feature.h"
 #include "bsg/geometry.h"
+#include "ged/event_txn.h"
 #include "./ged_lint.h"
 
 lint_data::lint_data()
@@ -584,11 +585,21 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	if (onames.size()) {
 	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	    struct wmember wcomb;
+	    int event_batch_opened = 0;
 	    BU_LIST_INIT(&wcomb.l);
 	    std::set<std::string>::iterator o_it;
 	    for (o_it = onames.begin(); o_it != onames.end(); o_it++)
 		(void)mk_addmember(o_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
-	    mk_lcomb(wdbp, bu_vls_cstr(&gname), &wcomb, 1, NULL, NULL, NULL, 0);
+	    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+	    if (mk_lcomb(wdbp, bu_vls_cstr(&gname), &wcomb, 1, NULL, NULL, NULL, 0) == 0) {
+		(void)ged_event_notify_object_added(gedp, bu_vls_cstr(&gname), NULL);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "Failed to write lint output comb %s\n",
+			bu_vls_cstr(&gname));
+		ret = BRLCAD_ERROR;
+	    }
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	}
     }
 

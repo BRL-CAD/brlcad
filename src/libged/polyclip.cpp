@@ -32,6 +32,7 @@
 #include "bg/polygon.h"
 #include "bsg/util.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 int
 ged_export_polygon(struct ged *gedp, bsg_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
@@ -45,6 +46,7 @@ ged_export_polygon(struct ged *gedp, bsg_data_polygon_state *gdpsp, size_t polyg
     vect_t view;
     point_t vorigin;
     mat_t invRot;
+    int event_batch_opened = 0;
 
     GED_CHECK_EXISTS(gedp, sname, LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
@@ -124,8 +126,28 @@ ged_export_polygon(struct ged *gedp, bsg_data_polygon_state *gdpsp, size_t polyg
     }
 
 
-    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
+    dp = db_diradd(gedp->dbip, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID,
+	    (void *)&internal.idb_type);
+    if (dp == RT_DIR_NULL) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	rt_db_free_internal(&internal);
+	bu_vls_printf(gedp->ged_result_str,
+		"An error has occurred while adding a new object to the database.");
+	return BRLCAD_ERROR;
+    }
+
+    if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	return BRLCAD_ERROR;
+    }
+    (void)ged_event_notify_object_added(gedp, sname, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }
@@ -560,4 +582,3 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

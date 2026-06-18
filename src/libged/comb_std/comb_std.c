@@ -32,6 +32,7 @@
 #include "vmath.h"
 #include "rt/geom.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 struct tokens {
@@ -504,6 +505,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
+	int material_changed = (comb->region_flag != region_flag);
 	if (region_flag) {
 	    if (!comb->region_flag) {
 		/* assign values from the defaults */
@@ -517,7 +519,18 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	} else
 	    comb->region_flag = 0;
 
-	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+	int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
+	    return BRLCAD_ERROR;
+	}
+	(void)ged_event_notify_attribute_changed(gedp, dp->d_namep, 1, NULL);
+	if (material_changed)
+	    (void)ged_event_notify_object_material_changed(gedp, dp->d_namep, NULL);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 
 	return BRLCAD_OK;
     }
@@ -648,8 +661,26 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 	intern.idb_ptr = (void *)comb;
 
-	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type, BRLCAD_ERROR);
-	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+	int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+	dp = db_diradd(gedp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0,
+		flags, (void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.",
+		    comb_name);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+	}
+	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
+	    return BRLCAD_ERROR;
+	}
+	(void)ged_event_notify_object_added(gedp, comb_name, NULL);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
     }
 
     return BRLCAD_OK;

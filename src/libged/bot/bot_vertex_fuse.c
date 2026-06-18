@@ -31,6 +31,7 @@
 
 #include "rt/geom.h"
 
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 
 
@@ -78,6 +79,7 @@ ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERN(gedp, new_dp, &intern, BRLCAD_ERROR);
+    (void)ged_event_notify_object_added(gedp, argv[1], NULL);
 
     return BRLCAD_OK;
 }

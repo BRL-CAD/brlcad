@@ -38,8 +38,27 @@
 #include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
+
+static int
+pipe_put_modified(struct ged *gedp, struct directory *dp, struct rt_db_internal *intern)
+{
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
+    if (rt_db_put_internal(dp, gedp->dbip, intern) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+
+    (void)ged_event_notify_object_modified(gedp, dp->d_namep, 1, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
+    return BRLCAD_OK;
+}
 
 int
 _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t))
@@ -139,7 +158,8 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 	    VMOVE(curr_ps->pp_coord, curr_pt);
 	}
 
-	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+	if (pipe_put_modified(gedp, dp, &intern) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
     }
 
     rt_db_free_internal(&intern);
@@ -228,7 +248,8 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    if (pipe_put_modified(gedp, dp, &intern) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
@@ -427,7 +448,8 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	    VMOVE(curr_ps->pp_coord, curr_pt);
 	}
 
-	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+	if (pipe_put_modified(gedp, dp, &intern) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
     }
 
     rt_db_free_internal(&intern);

@@ -35,6 +35,7 @@ extern "C" {
 extern "C" {
 #include "rt/geom.h"
 #include "analyze.h"
+#include "ged/event_txn.h"
 }
 #include "../ged_private.h"
 #include "../pnts_util.h"
@@ -401,8 +402,29 @@ op_pnts_vol(
 
     if (output_pnts_obj) {
 	opnts->count = pntcnt;
-	GED_DB_DIRADD(gedp, dp, output_pnts_obj, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-	GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
+	int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+	dp = db_diradd(gedp->dbip, output_pnts_obj, RT_DIR_PHONY_ADDR, 0,
+		RT_DIR_SOLID, (void *)&internal.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "Unable to add %s to the database.", output_pnts_obj);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
+	    rt_db_free_internal(&internal);
+	    pntcnt = BRLCAD_ERROR;
+	    goto pnts_internal_memfree;
+	}
+	if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
+	    rt_db_free_internal(&internal);
+	    pntcnt = BRLCAD_ERROR;
+	    goto pnts_internal_memfree;
+	}
+	(void)ged_event_notify_object_added(gedp, output_pnts_obj, NULL);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 
 	bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s\n", output_pnts_obj);
     }

@@ -544,8 +544,15 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 		bu_log("Unable to create a valid version of %s via decimation\n", bot_dp->d_namep);
 	    } else {
 		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+		int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 		if (wdb_put_internal(wdbp, bot_dp->d_namep, &intern, 1.0) < 0) {
+		    if (event_batch_opened)
+			ged_event_batch_end(gedp, NULL);
 		    bu_log("Failed to write decimated version of %s back to database\n", bot_dp->d_namep);
+		} else {
+		    (void)ged_event_notify_object_modified(gedp, bot_dp->d_namep, 1, NULL);
+		    if (event_batch_opened)
+			ged_event_batch_end(gedp, NULL);
 		}
 	    }
 	}

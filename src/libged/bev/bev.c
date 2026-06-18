@@ -31,6 +31,7 @@
 
 #include "bu/parallel.h"
 #include "bu/getopt.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -292,8 +293,26 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     intern.idb_ptr = (void *)bev_nmg_model;
     bev_nmg_model = (struct model *)NULL;
 
-    GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    dp = db_diradd(gedp->dbip, newname, RT_DIR_PHONY_ADDR, 0,
+	    RT_DIR_SOLID, (void *)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.",
+		newname);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+    (void)ged_event_notify_object_added(gedp, newname, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
 

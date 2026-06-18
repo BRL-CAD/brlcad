@@ -30,6 +30,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -72,8 +73,26 @@ ged_cc_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&(con_ip->expression));
     bu_vls_strcat(&(con_ip->expression), argv[2]);
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    dp = db_diradd(gedp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0,
+	    RT_DIR_NON_GEOM, (void *)&internal.idb_type);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.",
+		argv[1]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	rt_db_free_internal(&internal);
+	return BRLCAD_ERROR;
+    }
+    if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+    (void)ged_event_notify_object_added(gedp, argv[1], NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     bu_vls_printf(gedp->ged_result_str, "Constraint saved");
     return BRLCAD_OK;

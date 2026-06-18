@@ -2027,6 +2027,22 @@ main(int argc, char **argv)
 	    "src/libged/"
 	},
 	{
+	    "include",
+	    "bsg_ged_draw_private.h",
+	    "installed headers must use ged/bsg_ged_draw.h, not the private GED draw bridge",
+	    NULL,
+	    NULL,
+	    NULL
+	},
+	{
+	    "src/libged",
+	    "bsg_ged_draw_private.h",
+	    "direct private GED draw bridge includes are limited to libged draw internals",
+	    "src/libged/CMakeLists.txt;src/libged/ged_private.h;src/libged/draw/bigE.c;src/libged/draw/draw.c;src/libged/dm/dm.c",
+	    "src/libged/tests/draw/ged_draw_scene.cpp",
+	    "src/libged/bsg_ged_draw"
+	},
+	{
 	    "src",
 	    "scene_object_private.h",
 	    "private BSG scene-object storage includes are confined to libbsg",

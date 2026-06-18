@@ -100,6 +100,8 @@ extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
 extern int brep_geo(struct _ged_brep_info *gb, int argc, const char **argv);
 extern int brep_topo(struct _ged_brep_info *gb, int argc, const char **argv);
+extern int brep_write_object(struct ged *gedp, const char *name, ON_Brep *brep, int added);
+extern int brep_write_modified(struct _ged_brep_info *gb, ON_Brep *brep);
 
 extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
 extern int brep_repair(struct ged *gedp, const ON_Brep *brep, const char *oname, int argc, const char **argv);

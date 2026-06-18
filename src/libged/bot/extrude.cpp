@@ -56,6 +56,7 @@ extern "C" {
 #include "wdb.h"
 }
 #include "ged.h"
+#include "ged/event_txn.h"
 #include "./ged_bot.h"
 
 // Default to a maximum of 1% surface area change allowed - if we get more
@@ -260,6 +261,11 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 		bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
 	    return BRLCAD_ERROR;
 	}
+	if (extrude_in_place) {
+	    (void)ged_event_notify_object_modified(gb->gedp, rname, 1, NULL);
+	} else {
+	    (void)ged_event_notify_object_added(gb->gedp, rname, NULL);
+	}
 	return BRLCAD_OK;
     }
 
@@ -282,6 +288,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
 
     BU_LIST_INIT(&wcomb.l);
+    int event_depth = ged_event_batch_begin(gb->gedp);
 
     // For each face, define an arb6 using shifted vertices.  For each face
     // vertex two new points will be constructed - an inner and outer - based
@@ -352,8 +359,10 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	// Make a sph at the vertex point with a radius based on the thickness
 	VMOVE(v, &bot->vertices[3**v_it]);
 	bu_vls_sprintf(&prim_name, "%s.sph.%d", gb->dp->d_namep, *v_it);
-	mk_sph(wdbp, bu_vls_cstr(&prim_name), v, r);
+	int mk_ret = mk_sph(wdbp, bu_vls_cstr(&prim_name), v, r);
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
+	if (mk_ret == 0)
+	    (void)ged_event_notify_object_added(gb->gedp, bu_vls_cstr(&prim_name), NULL);
     }
 
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
@@ -370,8 +379,10 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	VMOVE(v, &bot->vertices[3*(*e_it).second]);
 	VSUB2(h, v, b);
 	bu_vls_sprintf(&prim_name, "%s.rcc.%d_%d", gb->dp->d_namep, (*e_it).first, (*e_it).second);
-	mk_rcc(wdbp, bu_vls_cstr(&prim_name), b, h, r);
+	int mk_ret = mk_rcc(wdbp, bu_vls_cstr(&prim_name), b, h, r);
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
+	if (mk_ret == 0)
+	    (void)ged_event_notify_object_added(gb->gedp, bu_vls_cstr(&prim_name), NULL);
     }
 
     // Now, handle the primary arb faces
@@ -407,15 +418,20 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	/* 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
 
 	bu_vls_sprintf(&prim_name, "%s.arb6.%zd", gb->dp->d_namep, i);
-	mk_arb6(wdbp, bu_vls_cstr(&prim_name), pnts_array);
+	int mk_ret = mk_arb6(wdbp, bu_vls_cstr(&prim_name), pnts_array);
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
+	if (mk_ret == 0)
+	    (void)ged_event_notify_object_added(gb->gedp, bu_vls_cstr(&prim_name), NULL);
     }
 
     // Write the comb
-    mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 1, NULL, NULL, NULL, 0);
+    if (mk_lcomb(wdbp, bu_vls_addr(&comb_name), &wcomb, 1, NULL, NULL, NULL, 0) == 0)
+	(void)ged_event_notify_object_added(gb->gedp, bu_vls_cstr(&comb_name), NULL);
 
     bu_vls_free(&comb_name);
     bu_vls_free(&prim_name);
+    if (event_depth > 0)
+	ged_event_batch_end(gb->gedp, NULL);
 
     return BRLCAD_OK;
 }

@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -252,10 +253,13 @@ out1:
 	bu_vls_printf(gedp->ged_result_str,
 		"Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     dp = db_diradd(gedp->dbip, new_name,
 	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 
     if (dp == RT_DIR_NULL) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	success = 0;
 	ret = BRLCAD_ERROR;
@@ -263,12 +267,17 @@ out1:
     }
 
     if (rt_db_put_internal(dp, gedp->dbip, &new_intern) < 0) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	rt_db_free_internal(&new_intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	success = 0;
 	ret = BRLCAD_ERROR;
 	goto out2;
     }
+    (void)ged_event_notify_object_added(gedp, new_name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     ret = BRLCAD_OK;
 

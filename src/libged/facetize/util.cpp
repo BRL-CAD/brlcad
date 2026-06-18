@@ -39,6 +39,7 @@
 #include "rt/db_instance.h"
 #include "rt/primitives/bot.h"
 #include "wdb.h"
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
@@ -641,6 +642,7 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
     // Make combs with the various categories of object that weren't a
     // standard successful NMG ft_tessellate run
     struct bu_vls cname = BU_VLS_INIT_ZERO;
+    int event_batch_opened = (ged_event_batch_begin(s->gedp) > 0);
     for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
 	if (m_it->first == std::string("NMG"))
 	    continue;
@@ -653,8 +655,11 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
 	for (s_it = m_it->second.begin(); s_it != m_it->second.end(); ++s_it) {
 	    (void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
 	}
-	mk_lcomb(cwdbp, bu_vls_cstr(&cname), &wcomb, 0, NULL, NULL, NULL, 0);
+	if (mk_lcomb(cwdbp, bu_vls_cstr(&cname), &wcomb, 0, NULL, NULL, NULL, 0) == 0)
+	    (void)ged_event_notify_object_added(s->gedp, bu_vls_cstr(&cname), NULL);
     }
+    if (event_batch_opened)
+	ged_event_batch_end(s->gedp, NULL);
     bu_vls_free(&cname);
 }
 

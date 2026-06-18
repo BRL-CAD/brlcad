@@ -18,6 +18,7 @@
 #include "rt/db_internal.h"
 #include "wdb.h"
 
+#include "ged/event_txn.h"
 #include "ged_arb.h"
 #include "../ged_private.h"
 
@@ -72,6 +73,7 @@ _arb_cmd_repair(void *bs, int argc, const char **argv)
         }
     }
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     int ret = BRLCAD_OK;
     for (int i = 0; i < argc; i++) {
         struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY);
@@ -159,11 +161,17 @@ _arb_cmd_repair(void *bs, int argc, const char **argv)
         }
 
         bu_vls_printf(gedp->ged_result_str, "Repair completed successfully and written to %s\n", rname);
+        if (in_place_repair)
+            (void)ged_event_notify_object_modified(gedp, rname, 1, NULL);
+        else
+            (void)ged_event_notify_object_added(gedp, rname, NULL);
         
         rt_db_free_internal(intern);
         BU_PUT(intern, struct rt_db_internal);
     }
 
+    if (event_batch_opened)
+        ged_event_batch_end(gedp, NULL);
     bu_vls_free(&out_name);
     return ret;
 }

@@ -158,6 +158,40 @@ _brep_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char
     return 0;
 }
 
+int
+brep_write_object(struct ged *gedp, const char *name, ON_Brep *brep, int added)
+{
+    if (!gedp || !name || !brep)
+	return BRLCAD_ERROR;
+
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_brep(wdbp, name, (void *)brep)) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+
+    if (added)
+	(void)ged_event_notify_object_added(gedp, name, NULL);
+    else
+	(void)ged_event_notify_object_modified(gedp, name, 1, NULL);
+
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
+
+    return BRLCAD_OK;
+}
+
+int
+brep_write_modified(struct _ged_brep_info *gb, ON_Brep *brep)
+{
+    if (!gb)
+	return BRLCAD_ERROR;
+
+    return brep_write_object(gb->gedp, gb->solid_name.c_str(), brep, 0);
+}
+
 
 extern "C" int
 _brep_cmd_boolean(void *bs, int argc, const char **argv)
@@ -208,10 +242,11 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
     struct rt_db_internal intern_res;
     rt_brep_boolean(&intern_res, &gb->intern, &intern2, op);
     struct rt_brep_internal *bip = (struct rt_brep_internal *)intern_res.idb_ptr;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    mk_brep(wdbp, argv[3], (void *)(bip->brep));
+    int write_ret = brep_write_object(gedp, argv[3], bip->brep, 1);
     rt_db_free_internal(&intern2);
     rt_db_free_internal(&intern_res);
+    if (write_ret != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
 }
@@ -507,8 +542,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 		      "to brep correctly.", gb->solid_name.c_str());
     } else {
 	brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
-	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	ret = mk_brep(wdbp, bu_vls_cstr(&bname), brep);
+	ret = brep_write_object(gedp, bu_vls_cstr(&bname), brep, 1);
 	if (ret == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_cstr(&bname));
 	}
@@ -639,8 +673,7 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
     b_ip->brep->Flip();
 
     // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1002,15 +1035,16 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
     struct rt_selection_query query;
     const char *cmd, *solid_name, *selection_name;
 
-    /*     0
-     * subcommand
+    /*     0            1
+     * selection <append/translate>
      */
-    if (argc < 1) {
+    if (argc < 2) {
 	return BRLCAD_ERROR;
     }
 
     solid_name = gb->solid_name.c_str();
     struct rt_db_internal *ip = &gb->intern;
+    argc--; argv++;
     cmd = argv[0];
 
     if (BU_STR_EQUAL(cmd, "append")) {
@@ -1103,7 +1137,16 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 		return BRLCAD_ERROR;
 	    }
 	}
-	GED_DB_PUT_INTERN(gedp, gb->dp, &gb->intern, BRLCAD_ERROR);
+	int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+	if (rt_db_put_internal(gb->dp, gedp->dbip, &gb->intern) < 0) {
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
+	    bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	    return BRLCAD_ERROR;
+	}
+	(void)ged_event_notify_object_modified(gedp, gb->dp->d_namep, 1, NULL);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
     }
     return BRLCAD_OK;
 }
@@ -1154,8 +1197,7 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
     b_ip->brep->ShrinkSurfaces();
 
     // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1249,7 +1291,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	    struct bu_vls fbrep_name = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fbrep_name, "%s.%d", gb->solid_name.c_str(), f_id);
 	    (void)mk_addmember(bu_vls_cstr(&fbrep_name), &(wcomb.l), NULL, DB_OP_UNION);
-	    if (mk_brep(wdbp, bu_vls_cstr(&fbrep_name), fbrep)) {
+	    if (brep_write_object(gedp, bu_vls_cstr(&fbrep_name), fbrep, 1) != BRLCAD_OK) {
 		delete fbrep;
 		bu_vls_printf(gedp->ged_result_str, ": failed to create brep for face %d", f_id);
 		bu_vls_free(&fbrep_name);
@@ -1286,6 +1328,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 		    bu_vls_free(&ocomb);
 		    return BRLCAD_ERROR;
 		}
+		(void)ged_event_notify_attribute_changed(gedp, bu_vls_cstr(&fbrep_name), 1, NULL);
 		bu_avs_free(&avs);
 	    }
 	    bu_vls_free(&fbrep_name);
@@ -1306,7 +1349,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
     int ret;
 
     if (!object_per_face) {
-	ret = mk_brep(wdbp, bu_vls_cstr(&ocomb), brep);
+	ret = brep_write_object(gedp, bu_vls_cstr(&ocomb), brep, 1);
 	delete brep;
 	if (ret) {
 	    bu_vls_free(&ocomb);
@@ -1338,10 +1381,13 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 		bu_vls_free(&ocomb);
 		return BRLCAD_ERROR;
 	    }
+	    (void)ged_event_notify_attribute_changed(gedp, bu_vls_cstr(&ocomb), 1, NULL);
 	    bu_avs_free(&avs);
 	}
     } else {
 	ret = mk_lcomb(wdbp, bu_vls_cstr(&ocomb), &wcomb, 0, NULL, NULL, NULL, 0);
+	if (ret == 0)
+	    (void)ged_event_notify_object_added(gedp, bu_vls_cstr(&ocomb), NULL);
     }
 
     bu_vls_free(&ocomb);

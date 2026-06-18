@@ -43,6 +43,7 @@
 #include "bu/path.h"
 #include "bu/snooze.h"
 #include "bu/time.h"
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 #include "./tess_opts.h"
@@ -1345,6 +1346,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     union tree *ftree;
     if (!dbip || !wdbp || !argv || !oname)
 	return BRLCAD_ERROR;
+    int output_written = 0;
 
     if (total_cnt < 0) {
 	facetize_log(s, 0, "Processing %s [%d perturb]...", oname, curr_cnt);
@@ -1452,6 +1454,9 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    facetize_log_current_failure(s, "unable to write empty BoT to the database");
 	    return BRLCAD_ERROR;
 	}
+	output_written = 1;
+	if (!output_to_working)
+	    (void)ged_event_notify_object_added(s->gedp, oname, NULL);
 	facetize_log(s, 0, " Success.\n");
 	return BRLCAD_OK;
     }
@@ -1546,6 +1551,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    facetize_log_current_failure(s, "unable to write evaluated BoT to the database");
 	    return BRLCAD_ERROR;
 	}
+	output_written = 1;
     } else {
 	// Evaluation didn't produce a tree - unless we've been told not to,
 	// prepare an empty BoT
@@ -1567,6 +1573,9 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 		facetize_log_current_failure(s, "unable to write empty BoT to the database");
 		return BRLCAD_ERROR;
 	    }
+	    output_written = 1;
+	    if (!output_to_working)
+		(void)ged_event_notify_object_added(s->gedp, oname, NULL);
 	    facetize_log(s, 0, "Success.\n");
 	    return BRLCAD_OK;
 	}
@@ -1587,9 +1596,13 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 		    facetize_log_current_failure(s, "BoT fixup succeeded but writing the repaired BoT failed");
 		    return BRLCAD_ERROR;
 		}
+		output_written = 1;
 	    }
 	}
     }
+
+    if (output_written && !output_to_working)
+	(void)ged_event_notify_object_added(s->gedp, oname, NULL);
 
     facetize_log(s, 0, " Success.\n");
     return BRLCAD_OK;

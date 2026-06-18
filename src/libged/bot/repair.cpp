@@ -60,6 +60,7 @@
 #include "bu/opt.h"
 #include "bg/chull.h"
 #include "bg/trimesh.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -238,6 +239,12 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
 	    continue;
 	}
 
+	if (in_place_repair) {
+	    (void)ged_event_notify_object_modified(gb->gedp, rname, 1, NULL);
+	} else {
+	    (void)ged_event_notify_object_added(gb->gedp, rname, NULL);
+	}
+
 	bu_vls_printf(gb->gedp->ged_result_str, "Repair completed successfully and written to %s\n", rname);
 
 	rt_db_free_internal(gb->intern);
@@ -258,4 +265,3 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

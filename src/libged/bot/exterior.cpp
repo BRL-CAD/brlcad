@@ -74,6 +74,7 @@
 #include "rt/seg.h"
 #include "raytrace.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 #include "./ged_bot.h"
 #include "concurrentqueue.h"
@@ -965,6 +966,8 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gb->gedp->ged_result_str,
 			  "Failed to write %s\n", input_name);
 	    ret = BRLCAD_ERROR;
+	} else {
+	    (void)ged_event_notify_object_modified(gb->gedp, input_name, 1, NULL);
 	}
     } else {
 	struct directory *outdp =
@@ -979,6 +982,8 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gb->gedp->ged_result_str,
 			  "Failed to write %s\n", bu_vls_cstr(&output_name));
 	    ret = BRLCAD_ERROR;
+	} else {
+	    (void)ged_event_notify_object_added(gb->gedp, bu_vls_cstr(&output_name), NULL);
 	}
     }
 

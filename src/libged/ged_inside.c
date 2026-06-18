@@ -38,6 +38,7 @@
 #include "raytrace.h"
 #include "rt/db4.h"
 
+#include "ged/event_txn.h"
 #include "./ged_private.h"
 
 
@@ -1143,16 +1144,26 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    return BRLCAD_ERROR;
     }
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     /* Add to in-core directory */
     dp = db_diradd(gedp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database alloc error, aborting\n", argv[0]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
     if (rt_db_put_internal(dp, gedp->dbip, ip) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
+
+    (void)ged_event_notify_object_added(gedp, newname, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     bu_vls_printf(gedp->ged_result_str, "%s", argv[2]);
     return BRLCAD_OK;

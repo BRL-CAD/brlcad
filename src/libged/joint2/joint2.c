@@ -30,6 +30,7 @@
 
 
 #include "raytrace.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -229,7 +230,16 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[2], "selection")) {
 	int ret = joint_selection(gedp, &intern, argc, argv);
 	if (BU_STR_EQUAL(argv[3], "translate") && ret == 0) {
-	    GED_DB_PUT_INTERN(gedp, ndp, &intern, BRLCAD_ERROR);
+	    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+	    if (rt_db_put_internal(ndp, gedp->dbip, &intern) < 0) {
+		if (event_batch_opened)
+		    ged_event_batch_end(gedp, NULL);
+		bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+		return BRLCAD_ERROR;
+	    }
+	    (void)ged_event_notify_object_modified(gedp, ndp->d_namep, 1, NULL);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	}
 	rt_db_free_internal(&intern);
 	return ret;

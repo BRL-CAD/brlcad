@@ -63,26 +63,165 @@ Event transactions:
   hide/unhide, title/units, attr/constraint/BREP plate-mode updates,
   combination helpers, red, arced/copymat, simulate, facetize copied-comb
   metadata, adjust, and existing-combination `put_comb` edits.
+* `arced` now batches its combination-tree write with the final semantic
+  comb-tree event; existing state-services coverage verifies it publishes one
+  post-reconcile transaction.
 * Multi-object or raw-writer commands recently covered:
   `push`, `pull`, `xpush`, `npush`, `clone`, `clone --xpush`,
-  `shells`, `decompose`, `fracture`, `mirror`, `cpi`, `copyeval`, `put`,
-  `in`, `bb -c`, `rfarb`, `heal`, `prefix`, file-batched `rcodes`, and
-  file-batched `move_all -f`, and `bot split`/legacy `bot_split` outputs.
+  `concat`/`dbconcat`, `shells`, `decompose`, `fracture`, `mirror`, `cpi`,
+  `copyeval`, `put`, `in`, `make`, `bo -i`, `3ptarb`, `cc`, `g`/`group`, `c`/`comb_std`, `inside`, `bev`, `track`, `edit perturb`, `ptranslate`/`pscale`/`protate`, `ocenter`/`orotate`/`oscale`/`otranslate`, `pset`, `metaball_*_pnt`, `pnts` output generators, `polyclip`, `edarb`/`facedef`, `move_arb_face`/`move_arb_edge`, `bb -c`, `rfarb`, `arb create`, `rotate_arb_face`, `arb repair -o`,
+  `heal`, `coil`, `human`, `voxelize`, `pipe_*_pnt`, `tire`, `combmem`, `comb -d`,
+  `facetize -r` final imports/output combs, `analyze` PNTS/volume output, `comb_color`, `item`, `edcomb`, `material set/remove`, `mater -d set/import/clear`, `nmg_mm`, `nmg_collapse`, `nmg_simplify`, top-level NMG in-place edits,
+  `prefix`, file-batched `rcodes`, file-batched `move_all -f`,
+  `bot flip`, `bot pca`, legacy `bot_flip`/`bot_condense`/
+  `bot_vertex_fuse`/`bot_face_fuse`/`bot_face_sort`/`bot_sync`/
+  `bot_smooth`/`bot_decimate`/`bot_merge`, and
+  `bot split`/legacy `bot_split` outputs.
 * `put_comb` hides internal `ged_tmp.a*` rollback combinations from observers
   and publishes final comb tree/attribute/material events for the edited comb.
 * `clone --xpush` hides temporary source setup/cleanup events.  `npush`
   suppresses dry-run/error notifications and publishes one explicit committed
-  transaction.  NMG multi-output writers publish one grouped object-add
-  transaction.  `mirror` preserves its legacy auto-draw behavior while adding
-  an explicit object-add semantic event.
+  transaction.  NMG multi-output writers publish one grouped semantic
+  object-add transaction.  `mirror` preserves its legacy auto-draw behavior
+  while adding an explicit object-add semantic event.
 * `prefix` no longer rewrites unrelated combinations while updating object
   references, so observers see renamed objects plus actual parent comb-tree
   updates instead of broad unchanged-comb churn.
 * `move_all -f` now keeps all successful mapping-file renames in one outer
   event transaction and reports command failure if any mapping line fails.
-* Remaining event work is mostly lower-frequency/offline raw writers and old
-  Tcl `db`/`wdb` helper paths that do not yet have a clean GED command context.
-  Add semantic details as those paths are migrated; do not rely on broad raw
+* `concat`/`dbconcat` object-copy events are batched.  New imported objects
+  publish `OBJECT_ADDED`; `-O` overwrites publish `OBJECT_MODIFIED` for the
+  final object name while hiding temporary backup rename/delete churn.
+* Modern `facetize` final outputs publish semantic object-add events.  Direct
+  NMG/BoT outputs notify on the final output object, and `facetize -r` keeps
+  the final `dbconcat`, optional rename, generated region BoTs, and
+  output-combination write in one outer event transaction.  Scratch/working
+  database writes remain intentionally silent; final summary combinations and
+  output combinations publish explicit object-add events.  Focused coverage
+  exercises direct `facetize -n` output and `facetize -r --methods NMG`.
+* `coil` generator writes are batched and publish object-add/object-modified
+  events for the core, optional caps/subtraction comb, and final comb.  The
+  command also resets `bu_optind` before parsing so repeated in-process command
+  calls honor the positional output name.
+* `voxelize` now batches generated voxel solids and final comb creation events.
+  Focused state-services coverage exercises a one-voxel region output and
+  verifies the generated voxel solid plus final comb publish in one
+  transaction.  The libanalyze voxel hit accumulator now initializes appended
+  region-list nodes and clips boundary hit distances/indices to the allocated
+  voxel range before updating per-voxel arrays.
+* `make` publishes object-added events for the common primitive creation path
+  and the `hyp` special writer path.  Focused state-services coverage exercises
+  a standard primitive creation.
+* `bo -i` binary-object imports are batched and publish object-added events for
+  the imported binary object.
+* `3ptarb`, `arb create`, and `cc` now batch their final direct database
+  writes and publish object-added events for the created solid/non-geometry
+  object.
+* `rotate_arb_face` batches successful in-place ARB edits and publishes
+  object-modified events.
+* `ptranslate`, `pscale`, and `protate` batch successful primitive parameter
+  edits and publish object-modified events.
+* `ocenter`, `orotate`, `oscale`, and `otranslate` batch successful object
+  transform writes and publish object-modified events.
+* `pset` and metaball point add/move/delete commands batch successful
+  metaball writes and publish object-modified events.
+* `pnts` output generators batch final BoT/PNTS object writes and publish
+  object-added events.  Focused coverage exercises basic `xyz` and fully
+  attributed `xyzijksrgb` point-cloud read variants.
+* `polyclip` polygon sketch export batches the final sketch write and publishes
+  an object-added event.  Focused state-services helper coverage exercises
+  sketch export from a polygon state.
+* `lint -g` diagnostic output comb creation batches the final write and
+  publishes an object-added event.  Focused state-services coverage exercises
+  `lint -I bot:not_solid -g` diagnostic comb output.
+* BREP command writes now publish semantic events: boolean/conversion/split
+  outputs publish object-added events, split plate-mode attribute updates
+  publish attribute-changed events, `brep csg` generated combination/object
+  writes publish object-added/object-modified events, and in-place geometry/
+  topology/flip/shrink/selection writes use a shared helper and publish
+  object-modified events.  Focused state-services coverage exercises
+  conversion, boolean output, `brep split -t`, in-place geometry/topology
+  edits, flip/shrink, selection append plus translate, a combination-target
+  `brep csg` output, and a direct RCC-derived CSG primitive-simplification
+  output.
+* `edarb` ARB subcommands and `facedef` batch successful in-place ARB writes
+  and publish object-modified events.  Focused state-services coverage
+  exercises `edarb extrude`.
+* `move_arb_face` and `move_arb_edge` batch successful in-place ARB writes and
+  publish object-modified events.
+* `comb_color`, `item`, and `edcomb` batch region/material metadata writes with their
+  semantic material/attribute events, covering raw object-modified fallback.
+* Legacy `c`/`comb_std` combination creation publishes object-added events;
+  region-flag toggles publish attribute/material semantic events instead of
+  leaking raw object-modified fallback as the only signal.
+* Shared `_ged_combadd2` callers now publish object-added events when creating
+  new combinations and comb-tree events when editing existing combinations.
+  Focused coverage exercises `g`/`group` creation and existing `comb` child
+  insertion.
+* `bev` batches its final evaluated NMG database write and publishes an
+  object-added event for the output object.
+* `analyze` PNTS/volume output object writes are batched and publish
+  object-added events.  Two-object `-o` output writes directly to the requested
+  final name instead of exposing temporary rename/remove churn; focused
+  state-services coverage exercises PNTS/volume intersection output.
+* `pipe_append_pnt`, `pipe_prepend_pnt`, `pipe_move_pnt`, and
+  `pipe_delete_pnt` share a batched pipe write helper and publish
+  object-modified events for successful in-place pipe edits.  Focused
+  state-services coverage exercises `pipe_delete_pnt`.
+* `tire` generation publishes an explicit object-add event for the final
+  top-level tire/demo object in the same commit batch as generated tire
+  metadata attribute events.  The event-only tire test path covers this
+  semantic contract; the full tire regression matrix remains too long for
+  routine event-audit loops.
+* GED `track` batches generated solid, region, and final group creation events.
+  The older raw WDB/Tcl helper entry point still lacks a direct GED context and
+  remains part of the old Tcl `db`/`wdb` helper audit surface.
+* GED `human` batches generated body/army object creation, publishes explicit
+  object-added events for public top-level body/box/crowd combinations, and
+  publishes database metadata changes for its `mk_id_units` write.  Focused
+  state-services coverage exercises single-human output plus one generated
+  solid.
+* `joint2 selection translate` now batches its final selection-driven object
+  write and publishes an object-modified event.  Focused state-services
+  coverage exercises BREP control-vertex selection replacement followed by
+  selection translation.
+* `edit perturb` suppresses its internal delete/re-add fallback churn and
+  publishes a final `OBJECT_MODIFIED` event for each successfully perturbed
+  object.
+* `ged_edit_buf_flush` now batches pending edit-buffer disk writes and
+  publishes object-modified events for each successfully flushed object.
+  `ged_test_edit` covers the multi-entry flush event contract.
+* NMG output and in-place helper hooks now batch raw writes.  `shells`,
+  `decompose`, and `fracture` publish explicit object-added events for each
+  generated NMG part.  Focused event coverage currently exercises those
+  multi-output commands, `nmg_mm`, `nmg_collapse`, `nmg_simplify`, and
+  top-level `nmg cmface`/`nmg make V`/`nmg move V`/`nmg kill V,F`
+  writes.  The top-level `nmg` dispatcher now honors the documented
+  `nmg <object> <subcommand>` syntax, and `nmg kill V,F` cleanup removes
+  emptied shells/regions before writing the modified NMG.
+* `comb -d` BoT decimation writes publish object-modified events for
+  successfully updated BoTs.  `shader`, `mater` assignment, and `material
+  set/remove` property writes batch durable updates with material-change events
+  instead of leaking raw object-modified fallbacks.  `mater -d set/import/clear`
+  batches hidden density-object add/remove/visibility changes with global
+  material-change events; focused coverage exercises set, replacement import,
+  and clear.  `mater -d map` batches multi-object attribute updates with the
+  final attribute-changed events.
+* BOT command-module write hooks publish explicit semantic events for
+  successful `bot set`, `bot chull`, `bot flip`, `bot sync`, `bot pca`,
+  `bot repair`, `bot remesh`, `bot extrude`, `bot exterior`, `bot decimate`,
+  `bot subd`, and `bot smooth` writes.  The CSG `bot extrude` path batches
+  events for generated support objects and the final comb.  Focused event
+  tests currently cover C++ `bot set`, `bot sync`, `bot flip`, `bot chull`,
+  `bot pca`, `bot repair -o`, `bot remesh`, `bot extrude -C`,
+  `bot exterior`, `bot decimate`, `bot subd`, and `bot smooth` paths plus the
+  legacy BOT wrappers listed above.
+* Raw-writer event audit status: the high-traffic GED command paths found in
+  the current direct-writer scan are either covered above or intentionally
+  scratch/offline writes hidden inside larger command transactions.  Remaining
+  event work is old MGED/Tcl `db`/`wdb` helper entry points and lower-frequency
+  compatibility paths that do not yet have a clean GED command context.  Add
+  semantic details as those paths are migrated; do not rely on broad raw
   fallback as the final product behavior.
 
 QgModel and indexed consumers:
@@ -144,11 +283,16 @@ Legacy/API isolation:
   Keep those paths isolated and covered by API hygiene tests.
 * NIRT internal plotfile vlblock use is legacy file/debug I/O until that output
   path is redesigned.
-* libbg/libbsg layering still needs a focused compatibility audit.  Track and
-  remove or quarantine moved legacy vlist-style machinery, transitional bridge
-  code, and any modern consumer that reaches through private libged BSG headers.
-  Where compatibility shims must remain, document the boundary and add hygiene
-  tests so they do not become new public architecture.
+* libbg/libbsg compatibility layering is guarded by focused API hygiene tests.
+  The audit found no libbg vlist-style bridge hits; remaining legacy vlist
+  machinery is confined to explicit libbsg compatibility/file/debug helpers,
+  libdm device-vlist backends, NMG/RT debug/file APIs, and private libbsg
+  internals/tests.  Keep those boundaries covered so compatibility shims do
+  not become new public drawing architecture.
+* Private `bsg_ged_draw_private.h` leakage is now guarded: installed headers
+  and non-libged code may not include it, and direct libged includes are
+  confined by API hygiene tests to draw internals, `ged_private.h`, and the
+  remaining command/test files that still need private root/draft access.
 * The old blanket "highly experimental" warning in `include/bsg.h` has been
   replaced with precise public/private/compatibility-boundary language.
   Maintain that wording with API hygiene tests rather than reintroducing broad
@@ -232,11 +376,12 @@ Priority next work
    Keep modern headers and draw paths free of raw vlist/vlblock and raw BSG
    internals.  Legacy file/debug I/O can remain isolated.
 
-6. Resolve remaining compatibility/layering issues from review.
-   Audit libbg/libbsg compatibility shims, moved vlist-style helpers, and
-   private libged BSG header inclusion.  Decide whether each is deleted,
-   moved behind a private boundary, or documented as an explicit legacy/debug
-   path with tests.
+6. Maintain compatibility/layering guardrails.
+   API hygiene tests now seal libbg/libbsg compatibility boundaries, deleted
+   vlist-style bridge names, and private libged BSG header inclusion.  Continue
+   reducing direct libged-internal includes where public draw-record helpers are
+   sufficient, and keep each remaining shim either private or documented as an
+   explicit legacy/debug path with tests.
 
 7. Audit GL backend modernization against the OSMesa baseline.
    Identify pre-modern GL backend code that can be simplified or improved, but

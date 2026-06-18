@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -135,18 +136,26 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 
     count = (size_t)nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, vlfree);
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     dp = db_diradd(gedp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	return BRLCAD_ERROR;
     }
+    (void)ged_event_notify_object_added(gedp, new_name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     rt_db_free_internal(&intern);
 

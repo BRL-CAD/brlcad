@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <optional>
@@ -229,6 +230,7 @@ check_attr(struct ged *gedp, const char *name, const char *attr_name, const char
 
 struct TireEventObserver {
     size_t calls = 0;
+    size_t add_events = 0;
     size_t attr_events = 0;
     std::string affected_names;
 };
@@ -246,6 +248,8 @@ tire_event_observer_cb(struct ged *UNUSED(gedp),
 
     obs->calls++;
     for (size_t i = 0; i < event_count; i++) {
+	if (events[i].kind == GED_EVENT_OBJECT_ADDED)
+	    obs->add_events++;
 	if (events[i].kind == GED_EVENT_ATTRIBUTE_CHANGED)
 	    obs->attr_events++;
     }
@@ -297,6 +301,8 @@ run_event_publication_case()
 	std::fprintf(stderr, "%s\n", bu_vls_cstr(gedp->ged_result_str));
     CHECK(ret == BRLCAD_OK, "tire generation publishes events");
     CHECK(obs.calls > 0, "tire generation publishes post-reconcile events");
+    CHECK(obs.add_events > 0,
+	    "tire generated objects publish object-added events");
     CHECK(obs.attr_events > 0,
 	    "tire generated metadata publishes attribute-changed event");
     CHECK(obs.affected_names.find("event_tire") != std::string::npos,
@@ -613,6 +619,11 @@ main(int ac, char *av[])
     if (ac != 1) {
 	std::fprintf(stderr, "Usage: %s\n", av[0]);
 	return 1;
+    }
+
+    if (std::getenv("BRLCAD_TIRE_TEST_EVENT_ONLY")) {
+	run_event_publication_case();
+	return g_failures ? 1 : 0;
     }
 
     const char *default_av[] = {"tire", "-n", "default_tire", nullptr};

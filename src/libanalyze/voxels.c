@@ -61,6 +61,8 @@ getRegionByName(struct voxelRegion *head, const char *regionName) {
 		BU_ALLOC(ret, struct voxelRegion);
 		head->nextRegion = ret;
 		ret->regionName  = bu_strdup(regionName);
+		ret->regionDistance = 0.0;
+		ret->nextRegion = NULL;
 	    }
 	}
     }
@@ -87,7 +89,11 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg *UN
     struct partition *pp            = PartHeadp->pt_forw;
     struct rayInfo   *voxelHits     = (struct rayInfo*) ap->a_uptr;
     fastf_t           sizeVoxel     = voxelHits->sizeVoxel;
+    int               numVoxels     = voxelHits->numVoxels;
     fastf_t          *fillDistances = voxelHits->fillDistances;
+
+    if (numVoxels <= 0)
+	return 0;
 
     while (pp != PartHeadp) {
 	/**
@@ -102,11 +108,37 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg *UN
 	struct hit *hitOutp     = pp->pt_outhit;
 	fastf_t     hitDistIn   = hitInp->hit_dist - 1.;
 	fastf_t     hitDistOut  = hitOutp->hit_dist - 1.;
-	int         voxelNumIn  = (int)(hitDistIn / sizeVoxel);
-	int         voxelNumOut = (int)(hitDistOut / sizeVoxel);
+	fastf_t     gridMax     = numVoxels * sizeVoxel;
+	int         voxelNumIn;
+	int         voxelNumOut;
+
+	if (hitDistOut <= 0.0 || hitDistIn >= gridMax) {
+	    pp = pp->pt_forw;
+	    continue;
+	}
+	if (hitDistIn < 0.0)
+	    hitDistIn = 0.0;
+	if (hitDistOut > gridMax)
+	    hitDistOut = gridMax;
+
+	voxelNumIn  = (int)(hitDistIn / sizeVoxel);
+	voxelNumOut = (int)(hitDistOut / sizeVoxel);
 
 	if (EQUAL((hitDistOut / sizeVoxel), floor(hitDistOut / sizeVoxel)))
 	    voxelNumOut = FMAX(voxelNumIn, voxelNumOut - 1);
+
+	if (voxelNumOut < 0 || voxelNumIn >= numVoxels) {
+	    pp = pp->pt_forw;
+	    continue;
+	}
+	if (voxelNumIn < 0)
+	    voxelNumIn = 0;
+	if (voxelNumOut >= numVoxels)
+	    voxelNumOut = numVoxels - 1;
+	if (voxelNumOut < voxelNumIn) {
+	    pp = pp->pt_forw;
+	    continue;
+	}
 
 	/**
 	 * If voxel entered and voxel exited are same then nothing can
@@ -146,7 +178,7 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg *UN
 void
 voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData)
 {
-    struct rayInfo voxelHits;
+    struct rayInfo voxelHits = {0};
     int            numVoxel[3];
     int            yMin;
     int            zMin;
@@ -173,6 +205,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 	numVoxel[2] -=1;
 
     voxelHits.sizeVoxel = sizeVoxel[0];
+    voxelHits.numVoxels = numVoxel[0];
 
     /* voxelArray stores the distance in path of ray inside a voxel which is filled
      * initialize with 0s */

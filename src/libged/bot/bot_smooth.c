@@ -31,6 +31,7 @@
 #include "bu/cmd.h"
 #include "rt/geom.h"
 
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 
 
@@ -116,11 +117,32 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     if (dp_new == RT_DIR_NULL) {
-	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
+	dp_new = db_diradd(gedp->dbip, new_bot_name, RT_DIR_PHONY_ADDR, 0,
+		RT_DIR_SOLID, (void *)&intern.idb_type);
+	if (dp_new == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.", new_bot_name);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+	}
     }
 
-    GED_DB_PUT_INTERN(gedp, dp_new, &intern, BRLCAD_ERROR);
+    if (rt_db_put_internal(dp_new, gedp->dbip, &intern) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+    if (BU_STR_EQUAL(old_bot_name, new_bot_name))
+	(void)ged_event_notify_object_modified(gedp, new_bot_name, 1, NULL);
+    else
+	(void)ged_event_notify_object_added(gedp, new_bot_name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;

@@ -82,6 +82,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     }
     /* Internal representation has been freed by rt_db_put_internal */
     new_intern.idb_ptr = (void *)NULL;
+    (void)ged_event_notify_object_added(gedp, newname, NULL);
     frac_stat = 0;
 }
 

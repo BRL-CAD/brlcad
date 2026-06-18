@@ -180,6 +180,8 @@ ged_edit_buf_flush(struct ged *gedp)
     if (gi->edit_buf.empty())
 	return;
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     /* Collect keys up front to avoid iterator invalidation during erase */
     std::vector<std::string> keys;
     keys.reserve(gi->edit_buf.size());
@@ -196,8 +198,10 @@ ged_edit_buf_flush(struct ged *gedp)
 	struct directory *dp = DB_FULL_PATH_CUR_DIR(&it->second.dfp);
 
 	if (dp && gedp->dbip) {
-	    rt_db_put_internal(dp, gedp->dbip, &s->es_int);
-	    any_written = true;
+	    if (rt_db_put_internal(dp, gedp->dbip, &s->es_int) >= 0) {
+		any_written = true;
+		(void)ged_event_notify_object_modified(gedp, dp->d_namep, 1, NULL);
+	    }
 	}
 
 	rt_edit_destroy(s);
@@ -207,6 +211,9 @@ ged_edit_buf_flush(struct ged *gedp)
 
     if (any_written)
 	ged_db_index_refresh(gedp);
+
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 }
 
 

@@ -49,6 +49,7 @@
 #include "rt/primitives/tgc.h"
 
 #include "ged/db_index.h"
+#include "ged/event_txn.h"
 #include "ged/selection_state.h"
 #include "../ged_private.h"
 #include "./ged_edit.h"
@@ -1567,20 +1568,33 @@ cmd_perturb::dp_perturb(struct directory *dp)
     }
 
     std::string oname(dp->d_namep);
-    db_delete(dbip, dp);
-    db_dirdelete(dbip, dp);
+    int callbacks_disabled = ged_event_librt_callbacks_disable(ctx->gedp);
+    if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(ctx->gedp);
+	rt_db_free_internal(pintern);
+	return BRLCAD_ERROR;
+    }
     struct directory *ndp = db_diradd(dbip, oname.c_str(), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&pintern->idb_type);
     if (ndp == RT_DIR_NULL) {
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(ctx->gedp);
 	bu_log("Cannot add %s to directory\n", oname.c_str());
 	rt_db_free_internal(pintern);
 	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(ndp, dbip, pintern) < 0) {
+	if (callbacks_disabled)
+	    (void)ged_event_librt_callbacks_enable(ctx->gedp);
 	bu_log("Failed to write %s to database\n", oname.c_str());
 	rt_db_free_internal(pintern);
 	return BRLCAD_ERROR;
     }
+
+    if (callbacks_disabled)
+	(void)ged_event_librt_callbacks_enable(ctx->gedp);
+    (void)ged_event_notify_object_modified(ctx->gedp, oname.c_str(), 1, NULL);
 
     return BRLCAD_OK;
 }

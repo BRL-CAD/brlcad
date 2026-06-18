@@ -526,7 +526,16 @@ set_material(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     int ret = wdb_put_internal(wdbp, argv[2], &intern, mk_conv2mm);
+    if (ret < 0) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return ret;
+    }
+    (void)ged_event_notify_object_material_changed(gedp, argv[2], NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
     return ret;
 }
 
@@ -582,7 +591,16 @@ remove_material(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     int ret = wdb_put_internal(wdbp, argv[2], &intern, mk_conv2mm);
+    if (ret < 0) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return ret;
+    }
+    (void)ged_event_notify_object_material_changed(gedp, argv[2], NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
     return ret;
 }
 
