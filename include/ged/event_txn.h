@@ -100,6 +100,12 @@ __BEGIN_DECLS
 GED_EXPORT extern int
 ged_event_txn_available(struct ged *gedp);
 
+GED_EXPORT extern int
+ged_event_txn_disable(struct ged *gedp);
+
+GED_EXPORT extern int
+ged_event_txn_enable(struct ged *gedp);
+
 /**
  * Install/remove the GED-owned bridge from low-level librt database changed
  * callbacks into GedEventTxn.  The bridge is a fallback source for database

@@ -1588,6 +1588,7 @@ main(int argc, char *argv[])
 	bu_vls_trunc(&line, 0);
 
 	interp = Tcl_CreateInterp();
+	Tcl_SetVar(interp, "tclcad_disable_events", "1", TCL_GLOBAL_ONLY);
 	tret = Ged_Init(interp);
 	if (tret == TCL_ERROR) {
 	    bu_log("Ged_Init error: %s\n", Tcl_GetStringResult(interp));
