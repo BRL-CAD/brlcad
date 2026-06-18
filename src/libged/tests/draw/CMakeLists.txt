@@ -53,6 +53,30 @@ endif(TARGET ged_test_draw)
 brlcad_add_test(NAME ged_test_drawing_basic COMMAND ged_test_draw -c "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(
+  classic_test_ctrls
+  classic001_ctrl.png
+  classic002_ctrl.png
+  classic003_ctrl.png
+  classic004_ctrl.png
+  classic005_ctrl.png
+  classic006_ctrl.png
+  classic007_ctrl.png
+  classic008_ctrl.png
+  classic009_ctrl.png
+  classic010_ctrl.png
+)
+brlcad_addexec(ged_test_classic_draw classic.cpp "libged;libdm" TEST)
+if(TARGET ged_test_classic_draw)
+  foreach(tdp ${test_deps})
+    if (TARGET tdp)
+      add_dependencies(ged_test_classic_draw ${tdp})
+    endif ()
+  endforeach()
+endif(TARGET ged_test_classic_draw)
+brlcad_add_test(NAME ged_test_drawing_classic COMMAND ged_test_classic_draw -c "${CMAKE_CURRENT_SOURCE_DIR}")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_classic_tmp.g)
+
+set(
   faceplate_test_ctrls
   fp001_ctrl.png
   fp002_ctrl.png
@@ -226,6 +250,7 @@ cmakefiles(
   rook.g
   util.cpp
   ${basic_view_test_ctrls}
+  ${classic_test_ctrls}
   ${faceplate_test_ctrls}
   ${lod_test_ctrls}
   ${select_test_ctrls}

@@ -122,7 +122,7 @@ mged_dm_init(
     dm_set_perspective(DMP, mged_variables->mv_perspective_mode);
 
 #ifdef HAVE_TK
-    if (dm_graphical(DMP) && !BU_STR_EQUAL(dm_get_dm_name(DMP), "swrast")) {
+    if (dm_graphical(DMP) && !BU_STR_EQUAL(dm_get_graphics_system(DMP), "osmesa")) {
 	Tk_DeleteGenericHandler(doEvent, (ClientData)s);
 	Tk_CreateGenericHandler(doEvent, (ClientData)s);
     }
