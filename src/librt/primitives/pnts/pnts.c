@@ -31,12 +31,15 @@
 
 /* common headers */
 #include "bu/cv.h"
+#include "bu/opt.h"
 #include "bn.h"
 
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "vmath.h"
 
+#define PNT_FMT "%.17g"    /* format precision for printf */
+#define PNT_FMT_3ARGS PNT_FMT " " PNT_FMT " " PNT_FMT
 
 /**
  * Per-soltab data computed at prep time, used to ray-trace the point
@@ -93,6 +96,156 @@ _pnts_calc_bbox(point_t *min, point_t *max, point_t *v, fastf_t scale)
     }
 }
 
+/**
+ * True if 'type' is one of the recognized point types.  Used to keep
+ * the unknown-type error paths intact now that the per-type switches
+ * have been collapsed into generic, flag-driven loops.
+ */
+static int
+pnts_type_is_valid(rt_pnt_type type)
+{
+    return (type >= RT_PNT_TYPE_PNT && type <= RT_PNT_TYPE_COL_SCA_NRM);
+}
+
+/**
+ * Return the expected data size depending on point type
+ */
+static int
+pnts_data_size(rt_pnt_type type) {
+    int dataSize = 3;	    /* v [x y z] */
+
+    if (type & RT_PNT_TYPE_COL) dataSize += 3; /* c [r g b]  */
+    if (type & RT_PNT_TYPE_SCA) dataSize += 1; /* s [double] */
+    if (type & RT_PNT_TYPE_NRM) dataSize += 3; /* n [i j k]  */
+
+    return dataSize;
+}
+
+/**
+ * Allocate a zeroed point node of the storage type appropriate for the
+ * given pnts type.
+ * Returns void* assuming caller is dispatching indiscriminatory to the type
+ */
+static void*
+pnts_node_alloc(rt_pnt_type type)
+{
+    void *node = NULL;
+
+    switch (type) {
+	case RT_PNT_TYPE_PNT: {
+	    struct pnt *p; BU_ALLOC(p, struct pnt); node = p; break;
+	}
+	case RT_PNT_TYPE_COL: {
+	    struct pnt_color *p; BU_ALLOC(p, struct pnt_color); node = p; break;
+	}
+	case RT_PNT_TYPE_SCA: {
+	    struct pnt_scale *p; BU_ALLOC(p, struct pnt_scale); node = p; break;
+	}
+	case RT_PNT_TYPE_NRM: {
+	    struct pnt_normal *p; BU_ALLOC(p, struct pnt_normal); node = p; break;
+	}
+	case RT_PNT_TYPE_COL_SCA: {
+	    struct pnt_color_scale *p; BU_ALLOC(p, struct pnt_color_scale); node = p; break;
+	}
+	case RT_PNT_TYPE_COL_NRM: {
+	    struct pnt_color_normal *p; BU_ALLOC(p, struct pnt_color_normal); node = p; break;
+	}
+	case RT_PNT_TYPE_SCA_NRM: {
+	    struct pnt_scale_normal *p; BU_ALLOC(p, struct pnt_scale_normal); node = p; break;
+	}
+	case RT_PNT_TYPE_COL_SCA_NRM: {
+	    struct pnt_color_scale_normal *p; BU_ALLOC(p, struct pnt_color_scale_normal); node = p; break;
+	}
+	default:
+	    break;
+    }
+
+    return node;
+}
+
+/**
+ * Collapse (color / scale / normal) access for the pnt types
+ * Returns the pointer to the type-specific field (or NULL)
+ */
+static struct bu_color *
+pnts_node_color(void *node, rt_pnt_type type)
+{
+    switch (type) {
+	case RT_PNT_TYPE_COL:		return &((struct pnt_color *)node)->c;
+	case RT_PNT_TYPE_COL_SCA:	return &((struct pnt_color_scale *)node)->c;
+	case RT_PNT_TYPE_COL_NRM:	return &((struct pnt_color_normal *)node)->c;
+	case RT_PNT_TYPE_COL_SCA_NRM:	return &((struct pnt_color_scale_normal *)node)->c;
+	default:			return NULL;
+    }
+}
+
+static fastf_t *
+pnts_node_scale(void *node, rt_pnt_type type)
+{
+    switch (type) {
+	case RT_PNT_TYPE_SCA:		return &((struct pnt_scale *)node)->s;
+	case RT_PNT_TYPE_COL_SCA:	return &((struct pnt_color_scale *)node)->s;
+	case RT_PNT_TYPE_SCA_NRM:	return &((struct pnt_scale_normal *)node)->s;
+	case RT_PNT_TYPE_COL_SCA_NRM:	return &((struct pnt_color_scale_normal *)node)->s;
+	default:			return NULL;
+    }
+}
+
+static fastf_t *
+pnts_node_normal(void *node, rt_pnt_type type)
+{
+    switch (type) {
+	case RT_PNT_TYPE_NRM:		return ((struct pnt_normal *)node)->n;
+	case RT_PNT_TYPE_COL_NRM:	return ((struct pnt_color_normal *)node)->n;
+	case RT_PNT_TYPE_SCA_NRM:	return ((struct pnt_scale_normal *)node)->n;
+	case RT_PNT_TYPE_COL_SCA_NRM:	return ((struct pnt_color_scale_normal *)node)->n;
+	default:			return NULL;
+    }
+}
+
+/**
+ * Populate a point node's fields from the decomposed values.  Only the
+ * fields the node's type actually carries are written.
+ */
+static void
+pnts_node_set(void *node, rt_pnt_type type, const point_t v, fastf_t *cf, fastf_t s, const vect_t n)
+{
+    struct bu_color *c = pnts_node_color(node, type);
+    fastf_t *sp = pnts_node_scale(node, type);
+    fastf_t *np = pnts_node_normal(node, type);
+
+    VMOVE(((struct pnt *)node)->v, v);
+    if (c)  bu_color_from_rgb_floats(c, cf);
+    if (sp) *sp = s;
+    if (np) VMOVE(np, n);
+}
+
+/**
+ * Free any existing point list (head sentinel and all nodes) held by a
+ * pnts collection, leaving pnts->point NULL.
+ */
+static void
+pnts_data_free(struct rt_pnts_internal *pnts)
+{
+    struct bu_list *bp;
+
+    if (!pnts->point)
+	return;
+
+    /* since each point type has a bu_list as the first struct
+     * element, we can treat them all as 'pnt' structs in order to
+     * iterate over the bu_list and free them.
+     */
+    while (BU_LIST_WHILE(bp, bu_list, &(((struct pnt *)pnts->point)->l))) {
+	BU_LIST_DEQUEUE(bp);
+	bu_free(bp, "pnts point");
+    }
+
+    /* free the head point */
+    bu_free(pnts->point, "pnts head point");
+    pnts->point = NULL; /* sanity */
+}
+
 
 /**
  * Calculate a bounding box for a set of points
@@ -100,15 +253,8 @@ _pnts_calc_bbox(point_t *min, point_t *max, point_t *v, fastf_t scale)
 C_DECL int
 rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_pnts_internal *pnts;
-    struct bu_list *head;
     struct pnt *point;
-    struct pnt_color *point_color;
-    struct pnt_scale *point_scale;
-    struct pnt_normal *point_normal;
-    struct pnt_color_scale *point_color_scale;
-    struct pnt_color_normal *point_color_normal;
-    struct pnt_scale_normal *point_scale_normal;
-    struct pnt_color_scale_normal *point_color_scale_normal;
+    struct bu_list *head;
 
     RT_CK_DB_INTERNAL(ip);
     pnts = (struct rt_pnts_internal *)ip->idb_ptr;
@@ -117,69 +263,21 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
     if (pnts->count <= 0) {
 	return 0;
     }
+    if (!pnts_type_is_valid(pnts->type)) {
+	return 0;
+    }
 
     VSETALL((*min), INFINITY);
     VSETALL((*max), -INFINITY);
 
-    switch (pnts->type) {
-	case RT_PNT_TYPE_PNT:
-	    point = (struct pnt *)pnts->point;
-	    head = &point->l;
-	    for (BU_LIST_FOR(point, pnt, head)) {
-		_pnts_calc_bbox(min, max, &(point->v), pnts->scale);
-	    }
-	    break;
-	case RT_PNT_TYPE_COL:
-	    point_color = (struct pnt_color *)pnts->point;
-	    head = &point_color->l;
-	    for (BU_LIST_FOR(point_color, pnt_color, head)) {
-		_pnts_calc_bbox(min, max, &(point_color->v), pnts->scale);
-	    }
-	    break;
-	case RT_PNT_TYPE_SCA:
-	    point_scale = (struct pnt_scale *)pnts->point;
-	    head = &point_scale->l;
-	    for (BU_LIST_FOR(point_scale, pnt_scale, head)) {
-		_pnts_calc_bbox(min, max, &(point_scale->v), pnts->scale);
-	    }
-	    break;
-	case RT_PNT_TYPE_NRM:
-	    point_normal = (struct pnt_normal *)pnts->point;
-	    head = &point_normal->l;
-	    for (BU_LIST_FOR(point_normal, pnt_normal, head)) {
-		_pnts_calc_bbox(min, max, &(point_normal->v), pnts->scale);
-	    }
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    point_color_scale = (struct pnt_color_scale *)pnts->point;
-	    head = &point_color_scale->l;
-	    for (BU_LIST_FOR(point_color_scale, pnt_color_scale, head)) {
-		_pnts_calc_bbox(min, max, &(point_color_scale->v), pnts->scale);
-	    }
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    point_color_normal = (struct pnt_color_normal *)pnts->point;
-	    head = &point_color_normal->l;
-	    for (BU_LIST_FOR(point_color_normal, pnt_color_normal, head)) {
-		_pnts_calc_bbox(min, max, &(point_color_normal->v), pnts->scale);
-	    }
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    point_scale_normal = (struct pnt_scale_normal *)pnts->point;
-	    head = &point_scale_normal->l;
-	    for (BU_LIST_FOR(point_scale_normal, pnt_scale_normal, head)) {
-		_pnts_calc_bbox(min, max, &(point_scale_normal->v), pnts->scale);
-	    }
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    point_color_scale_normal = (struct pnt_color_scale_normal *)pnts->point;
-	    head = &point_color_scale_normal->l;
-	    for (BU_LIST_FOR(point_color_scale_normal, pnt_color_scale_normal, head)) {
-		_pnts_calc_bbox(min, max, &(point_color_scale_normal->v), pnts->scale);
-	    }
-	    break;
-	default:
-	    break;
+    /* every node type shares the leading 'l' and 'v' members, so walk
+     * the list generically as 'struct pnt' regardless of type.  'head'
+     * must be a stable pointer to the sentinel: BU_LIST_FOR reassigns
+     * 'point', so it can't double as the head expression. */
+    point = (struct pnt *)pnts->point;
+    head = &point->l;
+    for (BU_LIST_FOR(point, pnt, head)) {
+	_pnts_calc_bbox(min, max, &(point->v), pnts->scale);
     }
 
     return 0;
@@ -190,7 +288,6 @@ rt_pnts_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_pnts_internal *pnts_ip;
     struct pnts_specific *spec;
-    struct bu_list *head;
 
     RT_CK_DB_INTERNAL(ip);
     pnts_ip = (struct rt_pnts_internal *)ip->idb_ptr;
@@ -223,109 +320,26 @@ rt_pnts_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     spec->centers = NULL;
     spec->radii = NULL;
 
-    if (pnts_ip->count > 0) {
+    if (pnts_ip->count > 0 && pnts_type_is_valid(pnts_ip->type)) {
+	struct pnt *point;
+	struct bu_list *head;
+
 	spec->centers = (point_t *)bu_malloc(pnts_ip->count * sizeof(point_t), "pnts centers");
 	spec->radii = (fastf_t *)bu_malloc(pnts_ip->count * sizeof(fastf_t), "pnts radii");
 
-	switch (pnts_ip->type) {
-	    case RT_PNT_TYPE_PNT: {
-		struct pnt *point = (struct pnt *)pnts_ip->point;
-		head = &point->l;
-		for (BU_LIST_FOR(point, pnt, head)) {
-		    if (pnts_ip->scale > 0) {
-			VMOVE(spec->centers[spec->count], point->v);
-			spec->radii[spec->count] = pnts_ip->scale;
-			spec->count++;
-		    }
-		}
-		break;
+	/* each point becomes a sphere using its per-point scale where the
+	 * type carries one, otherwise the global scale; zero/negative
+	 * radii are not renderable and are skipped. */
+	point = (struct pnt *)pnts_ip->point;
+	head = &point->l;
+	for (BU_LIST_FOR(point, pnt, head)) {
+	    fastf_t *sp = pnts_node_scale(point, pnts_ip->type);
+	    fastf_t r = sp ? *sp : pnts_ip->scale;
+	    if (r > 0) {
+		VMOVE(spec->centers[spec->count], point->v);
+		spec->radii[spec->count] = r;
+		spec->count++;
 	    }
-	    case RT_PNT_TYPE_COL: {
-		struct pnt_color *point = (struct pnt_color *)pnts_ip->point;
-		head = &point->l;
-		for (BU_LIST_FOR(point, pnt_color, head)) {
-		    if (pnts_ip->scale > 0) {
-			VMOVE(spec->centers[spec->count], point->v);
-			spec->radii[spec->count] = pnts_ip->scale;
-			spec->count++;
-		    }
-		}
-		break;
-	    }
-	    case RT_PNT_TYPE_SCA: {
-		struct pnt_scale *point = (struct pnt_scale *)pnts_ip->point;
-		head = &point->l;
-		for (BU_LIST_FOR(point, pnt_scale, head)) {
-		    if (point->s > 0) {
-			VMOVE(spec->centers[spec->count], point->v);
-			spec->radii[spec->count] = point->s;
-			spec->count++;
-		    }
-		}
-		break;
-	    }
-	    case RT_PNT_TYPE_NRM: {
-		struct pnt_normal *point = (struct pnt_normal *)pnts_ip->point;
-		head = &point->l;
-		for (BU_LIST_FOR(point, pnt_normal, head)) {
-		    if (pnts_ip->scale > 0) {
-			VMOVE(spec->centers[spec->count], point->v);
-			spec->radii[spec->count] = pnts_ip->scale;
-			spec->count++;
-		    }
-		}
-		break;
-	    }
-	    case RT_PNT_TYPE_COL_SCA: {
-		struct pnt_color_scale *point = (struct pnt_color_scale *)pnts_ip->point;
-		head = &point->l;
-		for (BU_LIST_FOR(point, pnt_color_scale, head)) {
-		    if (point->s > 0) {
-			VMOVE(spec->centers[spec->count], point->v);
-			spec->radii[spec->count] = point->s;
-			spec->count++;
-		    }
-		}
-		break;
-	    }
-	    case RT_PNT_TYPE_COL_NRM: {
-		struct pnt_color_normal *point = (struct pnt_color_normal *)pnts_ip->point;
-		head = &point->l;
-		for (BU_LIST_FOR(point, pnt_color_normal, head)) {
-		    if (pnts_ip->scale > 0) {
-			VMOVE(spec->centers[spec->count], point->v);
-			spec->radii[spec->count] = pnts_ip->scale;
-			spec->count++;
-		    }
-		}
-		break;
-	    }
-	    case RT_PNT_TYPE_SCA_NRM: {
-		struct pnt_scale_normal *point = (struct pnt_scale_normal *)pnts_ip->point;
-		head = &point->l;
-		for (BU_LIST_FOR(point, pnt_scale_normal, head)) {
-		    if (point->s > 0) {
-			VMOVE(spec->centers[spec->count], point->v);
-			spec->radii[spec->count] = point->s;
-			spec->count++;
-		    }
-		}
-		break;
-	    }
-	    case RT_PNT_TYPE_COL_SCA_NRM: {
-		struct pnt_color_scale_normal *point = (struct pnt_color_scale_normal *)pnts_ip->point;
-		head = &point->l;
-		for (BU_LIST_FOR(point, pnt_color_scale_normal, head)) {
-		    if (point->s > 0) {
-			VMOVE(spec->centers[spec->count], point->v);
-			spec->radii[spec->count] = point->s;
-			spec->count++;
-		    }
-		}
-		break;
-	    }
-	    default:
-		break;
 	}
     }
 
@@ -451,6 +465,11 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     pnts = (struct rt_pnts_internal *) internal->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 
+    if (!pnts_type_is_valid(pnts->type)) {
+	bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
+	return 0;
+    }
+
     /* allocate enough for the header (scale + type + count) */
     external->ext_nbytes = SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_SHORT + SIZEOF_NETWORK_LONG;
     external->ext_buf = (uint8_t *) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
@@ -469,16 +488,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     }
 
     /* figure out how much data there is for each point */
-    pointDataSize = 3; /* v */
-    if (pnts->type & RT_PNT_TYPE_COL) {
-	pointDataSize += 3; /* c */
-    }
-    if (pnts->type & RT_PNT_TYPE_SCA) {
-	pointDataSize += 1; /* s */
-    }
-    if (pnts->type & RT_PNT_TYPE_NRM) {
-	pointDataSize += 3; /* n */
-    }
+    pointDataSize = pnts_data_size(pnts->type);
 
     /* convert number of doubles to number of network bytes required to store doubles */
     pointDataSize = pointDataSize * SIZEOF_NETWORK_DOUBLE;
@@ -488,182 +498,43 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     external->ext_nbytes = external->ext_nbytes + (pnts->count * pointDataSize);
 
     /* get busy, serialize the point data depending on what type of point it is */
-    switch (pnts->type) {
-	case RT_PNT_TYPE_PNT: {
-	    register struct pnt *point;
+    {
+	struct pnt *point = (struct pnt *)pnts->point;
+	struct bu_list *head = &point->l;
 
-	    for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
-		double v[3];
+	for (BU_LIST_FOR(point, pnt, head)) {
+	    struct bu_color *col = pnts_node_color(point, pnts->type);
+	    fastf_t *sp = pnts_node_scale(point, pnts->type);
+	    fastf_t *np = pnts_node_normal(point, pnts->type);
+	    double v[3];
 
-		/* pack v */
-		VSCALE(v, point->v, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-	    }
+	    /* pack v */
+	    VSCALE(v, point->v, local2mm);
+	    buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 
-	    break;
-	}
-	case RT_PNT_TYPE_COL: {
-	    register struct pnt_color *point;
-
-	    for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
-		double v[3];
+	    /* pack c */
+	    if (col) {
 		double c[3];
 		fastf_t cf[3];
-
-		/* pack v */
-		VSCALE(v, point->v, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-
-		/* pack c */
-		bu_color_to_rgb_floats(&point->c, cf);
+		bu_color_to_rgb_floats(col, cf);
 		VMOVE(c, cf);
 		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 	    }
 
-	    break;
-	}
-	case RT_PNT_TYPE_SCA: {
-	    register struct pnt_scale *point;
-
-	    for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
-		double v[3];
+	    /* pack s */
+	    if (sp) {
 		double s[1];
-
-		/* pack v */
-		VSCALE(v, point->v, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-
-		/* pack s */
-		s[0] = point->s * local2mm;
+		s[0] = *sp * local2mm;
 		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
 	    }
 
-	    break;
-	}
-	case RT_PNT_TYPE_NRM: {
-	    register struct pnt_normal *point;
-
-	    for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
-		double v[3];
+	    /* pack n */
+	    if (np) {
 		double n[3];
-
-		/* pack v */
-		VSCALE(v, point->v, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-
-		/* pack n */
-		VSCALE(n, point->n, local2mm);
+		VSCALE(n, np, local2mm);
 		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 	    }
-
-	    break;
 	}
-	case RT_PNT_TYPE_COL_SCA: {
-	    register struct pnt_color_scale *point;
-
-	    for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
-		double v[3];
-		double c[3];
-		fastf_t cf[3];
-		double s[1];
-
-		/* pack v */
-		VSCALE(v, point->v, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-
-		/* pack c */
-		bu_color_to_rgb_floats(&point->c, cf);
-		VMOVE(c, cf);
-		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
-
-		/* pack s */
-		s[0] = point->s * local2mm;
-		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
-	    }
-
-	    break;
-	}
-	case RT_PNT_TYPE_COL_NRM: {
-	    register struct pnt_color_normal *point;
-
-	    for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
-		double v[3];
-		double c[3];
-		fastf_t cf[3];
-		double n[3];
-
-		/* pack v */
-		VSCALE(v, point->v, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-
-		/* pack c */
-		bu_color_to_rgb_floats(&point->c, cf);
-		VMOVE(c, cf);
-		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
-
-		/* pack n */
-		VSCALE(n, point->n, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-	    }
-
-	    break;
-	}
-	case RT_PNT_TYPE_SCA_NRM: {
-	    register struct pnt_scale_normal *point;
-
-	    for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
-		double v[3];
-		double s[1];
-		double n[3];
-
-		/* pack v */
-		VSCALE(v, point->v, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-
-		/* pack s */
-		s[0] = point->s * local2mm;
-		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
-
-		/* pack n */
-		VSCALE(n, point->n, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-	    }
-
-	    break;
-	}
-	case RT_PNT_TYPE_COL_SCA_NRM: {
-	    register struct pnt_color_scale_normal *point;
-
-	    for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
-		double v[3];
-		double s[1];
-		double c[3];
-		fastf_t cf[3];
-		double n[3];
-
-		/* pack v */
-		VSCALE(v, point->v, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-
-		/* pack c */
-		bu_color_to_rgb_floats(&point->c, cf);
-		VMOVE(c, cf);
-		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
-
-		/* pack s */
-		s[0] = point->s * local2mm;
-		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
-
-		/* pack n */
-		VSCALE(n, point->n, local2mm);
-		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-	    }
-
-	    break;
-	}
-	default:
-	    bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
-	    return 0;
     }
 
     return 0;
@@ -685,88 +556,30 @@ rt_pnts_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)rop->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 
-    point_t v;
-    vect_t n;
-    switch (pnts->type) {
-	case RT_PNT_TYPE_PNT: {
-	    struct pnt *point;
-	    for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
-		VMOVE(v, point->v);
-		MAT4X3PNT(point->v, mat, v);
-	    }
-	    return BRLCAD_OK;
-	}
-	case RT_PNT_TYPE_COL: {
-	    struct pnt_color *point;
-	    for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
-		VMOVE(v, point->v);
-		MAT4X3PNT(point->v, mat, v);
-	    }
-	    return BRLCAD_OK;
-	}
-	case RT_PNT_TYPE_SCA: {
-	    struct pnt_scale *point;
-	    for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
-		VMOVE(v, point->v);
-		MAT4X3PNT(point->v, mat, v);
-	    }
-	    return BRLCAD_OK;
-	}
-	case RT_PNT_TYPE_NRM: {
-	    struct pnt_normal *point;
-	    for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
-		VMOVE(v, point->v);
-		MAT4X3PNT(point->v, mat, v);
-		VMOVE(n, point->n);
-		MAT4X3PNT(point->n, mat, n);
-	    }
-	    return BRLCAD_OK;
-	}
-	case RT_PNT_TYPE_COL_SCA: {
-	    struct pnt_color_scale *point;
-	    for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
-		VMOVE(v, point->v);
-		MAT4X3PNT(point->v, mat, v);
-	    }
-	    return BRLCAD_OK;
-	}
-	case RT_PNT_TYPE_COL_NRM: {
-	    struct pnt_color_normal *point;
-	    for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
-		VMOVE(v, point->v);
-		MAT4X3PNT(point->v, mat, v);
-		VMOVE(n, point->n);
-		MAT4X3PNT(point->n, mat, n);
-	    }
-	    return BRLCAD_OK;
-	}
-	case RT_PNT_TYPE_SCA_NRM: {
-	    struct pnt_scale_normal *point;
-	    for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
-		VMOVE(v, point->v);
-		MAT4X3PNT(point->v, mat, v);
-		VMOVE(n, point->n);
-		MAT4X3PNT(point->n, mat, n);
-	    }
-	    return BRLCAD_OK;
-	}
-	case RT_PNT_TYPE_COL_SCA_NRM: {
-	    struct pnt_color_scale_normal *point;
-	    for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
-		VMOVE(v, point->v);
-		MAT4X3PNT(point->v, mat, v);
-		VMOVE(n, point->n);
-		MAT4X3PNT(point->n, mat, n);
-	    }
-	    return BRLCAD_OK;
-	}
-	default:
-	    bu_log("rt_pnts_mat: unknown points primitive type (type=%d)\n", pnts->type);
-	    return BRLCAD_ERROR;
+    if (!pnts_type_is_valid(pnts->type)) {
+	bu_log("rt_pnts_mat: unknown points primitive type (type=%d)\n", pnts->type);
+	return BRLCAD_ERROR;
     }
 
-    // Shouldn't be reached
-    return BRLCAD_ERROR;
+    /* every node type shares the leading 'l' and 'v' members; transform
+     * v for all, and n only for the types that carry a normal. */
+    struct pnt *point = (struct pnt *)pnts->point;
+    struct bu_list *head = &point->l;
+    for (BU_LIST_FOR(point, pnt, head)) {
+	point_t v;
+	fastf_t *np = pnts_node_normal(point, pnts->type);
+
+	VMOVE(v, point->v);
+	MAT4X3PNT(point->v, mat, v);
+
+	if (np) {
+	    vect_t n;
+	    VMOVE(n, np);
+	    MAT4X3PNT(np, mat, n);
+	}
+    }
+
+    return BRLCAD_OK;
 }
 
 /**
@@ -818,255 +631,59 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     }
 
 
-    /* get busy, deserialize the point data depending on what type of point it is */
-    switch (pnts->type) {
-	case RT_PNT_TYPE_PNT: {
-	    register struct pnt *point;
+    if (!pnts_type_is_valid(pnts->type)) {
+	bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
+	return 0;
+    }
 
-	    BU_ALLOC(point, struct pnt);
-	    head = &point->l;
-	    BU_LIST_INIT(head);
-	    pnts->point = point;
+    /* get busy, deserialize the point data.  Every node type shares the
+     * leading 'l' and 'v' members, so allocate the head/sentinel then
+     * pull out v and whatever optional c/s/n the type carries (matching
+     * the order written by rt_pnts_export5). */
+    {
+	void *point = pnts_node_alloc(pnts->type);
 
-	    for (i = 0; i < pnts->count; i++) {
-		double v[3];
+	head = &((struct pnt *)point)->l;
+	BU_LIST_INIT(head);
+	pnts->point = point;
 
-		BU_ALLOC(point, struct pnt);
+	for (i = 0; i < pnts->count; i++) {
+	    double v[3];
+	    point_t pv = VINIT_ZERO;
+	    fastf_t cf[3] = {0.0, 0.0, 0.0};
+	    fastf_t s = 0.0;
+	    vect_t nrm = VINIT_ZERO;
 
-		/* unpack v */
-		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		VMOVE(point->v, v);
+	    point = pnts_node_alloc(pnts->type);
 
-		BU_LIST_INSERT(head, &point->l);
-	    }
+	    /* unpack v */
+	    buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+	    VMOVE(pv, v);
 
-	    break;
-	}
-	case RT_PNT_TYPE_COL: {
-	    register struct pnt_color *point;
-
-	    BU_ALLOC(point, struct pnt_color);
-	    head = &point->l;
-	    BU_LIST_INIT(head);
-	    pnts->point = point;
-
-	    for (i = 0; i < pnts->count; i++) {
-		double v[3];
+	    /* unpack c */
+	    if (pnts->type & RT_PNT_TYPE_COL) {
 		double c[3];
-		fastf_t cf[3];
-
-		BU_ALLOC(point, struct pnt_color);
-
-		/* unpack v */
-		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		VMOVE(point->v, v);
-
-		/* unpack c */
 		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
 		VMOVE(cf, c);
-		bu_color_from_rgb_floats(&point->c, cf);
-
-		BU_LIST_INSERT(head, &point->l);
 	    }
 
-	    break;
-	}
-	case RT_PNT_TYPE_SCA: {
-	    register struct pnt_scale *point;
-
-	    BU_ALLOC(point, struct pnt_scale);
-	    head = &point->l;
-	    BU_LIST_INIT(head);
-	    pnts->point = point;
-
-	    for (i = 0; i < pnts->count; i++) {
-		double v[3];
-		double s[1];
-
-		BU_ALLOC(point, struct pnt_scale);
-
-		/* unpack v */
-		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		VMOVE(point->v, v);
-
-		/* unpack s */
-		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
-		point->s = s[0];
-
-		BU_LIST_INSERT(head, &point->l);
+	    /* unpack s */
+	    if (pnts->type & RT_PNT_TYPE_SCA) {
+		double sd[1];
+		buf = pnts_unpack_double(buf, (unsigned char *)sd, 1);
+		s = sd[0];
 	    }
 
-	    break;
-	}
-	case RT_PNT_TYPE_NRM: {
-	    register struct pnt_normal *point;
-
-	    BU_ALLOC(point, struct pnt_normal);
-	    head = &point->l;
-	    BU_LIST_INIT(head);
-	    pnts->point = point;
-
-	    for (i = 0; i < pnts->count; i++) {
-		double v[3];
+	    /* unpack n */
+	    if (pnts->type & RT_PNT_TYPE_NRM) {
 		double n[3];
-
-		BU_ALLOC(point, struct pnt_normal);
-
-		/* unpack v */
-		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		VMOVE(point->v, v);
-
-		/* unpack n */
 		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		VMOVE(point->n, n);
-
-		BU_LIST_INSERT(head, &point->l);
+		VMOVE(nrm, n);
 	    }
 
-	    break;
+	    pnts_node_set(point, pnts->type, pv, cf, s, nrm);
+	    BU_LIST_INSERT(head, &((struct pnt *)point)->l);
 	}
-	case RT_PNT_TYPE_COL_SCA: {
-	    register struct pnt_color_scale *point;
-
-	    BU_ALLOC(point, struct pnt_color_scale);
-	    head = &point->l;
-	    BU_LIST_INIT(head);
-	    pnts->point = point;
-
-	    for (i = 0; i < pnts->count; i++) {
-		double v[3];
-		double c[3];
-		fastf_t cf[3];
-		double s[1];
-
-		BU_ALLOC(point, struct pnt_color_scale);
-
-		/* unpack v */
-		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		VMOVE(point->v, v);
-
-		/* unpack c */
-		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
-		VMOVE(cf, c);
-		bu_color_from_rgb_floats(&point->c, cf);
-
-		/* unpack s */
-		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
-		point->s = s[0];
-
-		BU_LIST_INSERT(head, &point->l);
-	    }
-
-	    break;
-	}
-	case RT_PNT_TYPE_COL_NRM: {
-	    register struct pnt_color_normal *point;
-
-	    BU_ALLOC(point, struct pnt_color_normal);
-	    head = &point->l;
-	    BU_LIST_INIT(head);
-	    pnts->point = point;
-
-	    for (i = 0; i < pnts->count; i++) {
-		double v[3];
-		double c[3];
-		fastf_t cf[3];
-		double n[3];
-
-		BU_ALLOC(point, struct pnt_color_normal);
-
-		/* unpack v */
-		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		VMOVE(point->v, v);
-
-		/* unpack c */
-		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
-		VMOVE(cf, c);
-		bu_color_from_rgb_floats(&point->c, cf);
-
-		/* unpack n */
-		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		VMOVE(point->n, n);
-
-		BU_LIST_INSERT(head, &point->l);
-	    }
-
-	    break;
-	}
-	case RT_PNT_TYPE_SCA_NRM: {
-	    register struct pnt_scale_normal *point;
-
-	    BU_ALLOC(point, struct pnt_scale_normal);
-	    head = &point->l;
-	    BU_LIST_INIT(head);
-	    pnts->point = point;
-
-	    for (i = 0; i < pnts->count; i++) {
-		double v[3];
-		double s[1];
-		double n[3];
-
-		BU_ALLOC(point, struct pnt_scale_normal);
-
-		/* unpack v */
-		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		VMOVE(point->v, v);
-
-		/* unpack s */
-		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
-		point->s = s[0];
-
-		/* unpack n */
-		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		VMOVE(point->n, n);
-
-		BU_LIST_INSERT(head, &point->l);
-	    }
-
-	    break;
-	}
-	case RT_PNT_TYPE_COL_SCA_NRM: {
-	    register struct pnt_color_scale_normal *point;
-
-	    BU_ALLOC(point, struct pnt_color_scale_normal);
-	    head = &point->l;
-	    BU_LIST_INIT(head);
-	    pnts->point = point;
-
-	    for (i = 0; i < pnts->count; i++) {
-		double v[3];
-		double s[1];
-		double c[3];
-		fastf_t cf[3];
-		double n[3];
-
-		BU_ALLOC(point, struct pnt_color_scale_normal);
-
-		/* unpack v */
-		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		VMOVE(point->v, v);
-
-		/* unpack c */
-		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
-		VMOVE(cf, c);
-		bu_color_from_rgb_floats(&point->c, cf);
-
-		/* unpack s */
-		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
-		point->s = s[0];
-
-		/* unpack n */
-		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		VMOVE(point->n, n);
-
-		BU_LIST_INSERT(head, &point->l);
-	    }
-
-	    break;
-	}
-	default:
-	    bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
-	    return 0;
     }
 
     /* Apply transform */
@@ -1096,18 +713,7 @@ rt_pnts_ifree(struct rt_db_internal *internal)
 	return;
     }
 
-    /* since each point type has a bu_list as the first struct
-     * element, we can treat them all as 'pnt' structs in order to
-     * iterate over the bu_list and free them.
-     */
-    while (BU_LIST_WHILE(point, bu_list, &(((struct pnt *)pnts->point)->l))) {
-	BU_LIST_DEQUEUE(point);
-	bu_free(point, "free point");
-    }
-
-    /* free the head point */
-    bu_free(pnts->point, "free head point");
-    pnts->point = NULL; /* sanity */
+    pnts_data_free(pnts);
 
     /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
@@ -1212,12 +818,11 @@ C_DECL int
 rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int verbose, double mm2local)
 {
     const struct rt_pnts_internal *pnts;
+    struct pnt *point;
+    struct bu_list *head;
     double defaultSize = 0.0;
     unsigned long numPoints = 0;
     unsigned long loop_counter = 0;
-
-    char buf[256]= {0};
-    static const int BUF_SZ = 256;
 
     /* retrieve head record values */
     pnts = (struct rt_pnts_internal *) intern->idb_ptr;
@@ -1234,161 +839,295 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	return 1;
     }
 
-    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", numPoints, defaultSize);
-    bu_vls_strcat(str, buf);
+    bu_vls_printf(str, "Total number of points: %lu\nDefault scale: %f\n", numPoints, defaultSize);
 
     if (pnts->count == 0) {
 	return 0;
     }
+    if (!pnts_type_is_valid(pnts->type)) {
+	bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
+	return 1;
+    }
 
+    /* column header describing the per-point fields for this type */
+    bu_vls_strcat(str, "point#, (point)");
+    if (pnts->type & RT_PNT_TYPE_COL) bu_vls_strcat(str, ", (color)");
+    if (pnts->type & RT_PNT_TYPE_SCA) bu_vls_strcat(str, ", (scale)");
+    if (pnts->type & RT_PNT_TYPE_NRM) bu_vls_strcat(str, ", (normal)");
+    bu_vls_strcat(str, "\n");
+
+    /* print c/s/n values if we have them */
     loop_counter = 1;
-    switch (pnts->type) {
-	case RT_PNT_TYPE_PNT: {
-	    register struct pnt *point;
-	    bu_vls_strcat(str, "point#, (point)\n");
-	    for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f)\n",
-			 (long unsigned)loop_counter,
-			 point->v[X] * mm2local,
-			 point->v[Y] * mm2local,
-			 point->v[Z] * mm2local);
-		bu_vls_strcat(str, buf);
-		loop_counter++;
-	    }
-	    break;
-	}
-	case RT_PNT_TYPE_COL: {
-	    register struct pnt_color *point;
-	    bu_vls_strcat(str, "point#, (point), (color)\n");
-	    for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f)\n",
-			 (long unsigned)loop_counter,
-			 point->v[X] * mm2local,
-			 point->v[Y] * mm2local,
-			 point->v[Z] * mm2local,
-			 point->c.buc_rgb[0],
-			 point->c.buc_rgb[1],
-			 point->c.buc_rgb[2]);
-		bu_vls_strcat(str, buf);
-		loop_counter++;
-	    }
-	    break;
-	}
-	case RT_PNT_TYPE_SCA: {
-	    register struct pnt_scale *point;
-	    bu_vls_strcat(str, "point#, (point), (scale)\n");
-	    for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f)\n",
-			 (long unsigned)loop_counter,
-			 point->v[X] * mm2local,
-			 point->v[Y] * mm2local,
-			 point->v[Z] * mm2local,
-			 point->s);
-		bu_vls_strcat(str, buf);
-		loop_counter++;
-	    }
-	    break;
-	}
-	case RT_PNT_TYPE_NRM: {
-	    register struct pnt_normal *point;
-	    bu_vls_strcat(str, "point#, (point), (normal)\n");
-	    for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f)\n",
-			 (long unsigned)loop_counter,
-			 point->v[X] * mm2local,
-			 point->v[Y] * mm2local,
-			 point->v[Z] * mm2local,
-			 point->n[X],
-			 point->n[Y],
-			 point->n[Z]);
-		bu_vls_strcat(str, buf);
-		loop_counter++;
-	    }
-	    break;
-	}
-	case RT_PNT_TYPE_COL_SCA: {
-	    register struct pnt_color_scale *point;
-	    bu_vls_strcat(str, "point#, (point), (color), (scale)\n");
-	    for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f)\n",
-			 (long unsigned)loop_counter,
-			 point->v[X] * mm2local,
-			 point->v[Y] * mm2local,
-			 point->v[Z] * mm2local,
-			 point->c.buc_rgb[0],
-			 point->c.buc_rgb[1],
-			 point->c.buc_rgb[2],
-			 point->s);
-		bu_vls_strcat(str, buf);
-		loop_counter++;
-	    }
-	    break;
-	}
-	case RT_PNT_TYPE_COL_NRM: {
-	    register struct pnt_color_normal *point;
-	    bu_vls_strcat(str, "point#, (point), (color), (normal)\n");
-	    for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f %f %f)\n",
-			 (long unsigned)loop_counter,
-			 point->v[X] * mm2local,
-			 point->v[Y] * mm2local,
-			 point->v[Z] * mm2local,
-			 point->c.buc_rgb[0],
-			 point->c.buc_rgb[1],
-			 point->c.buc_rgb[2],
-			 point->n[X],
-			 point->n[Y],
-			 point->n[Z]);
-		bu_vls_strcat(str, buf);
-		loop_counter++;
-	    }
-	    break;
-	}
-	case RT_PNT_TYPE_SCA_NRM: {
-	    register struct pnt_scale_normal *point;
-	    bu_vls_strcat(str, "point#, (point), (scale), (normal)\n");
-	    for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f), (%f %f %f)\n",
-			 (long unsigned)loop_counter,
-			 point->v[X] * mm2local,
-			 point->v[Y] * mm2local,
-			 point->v[Z] * mm2local,
-			 point->s,
-			 point->n[X],
-			 point->n[Y],
-			 point->n[Z]);
-		bu_vls_strcat(str, buf);
-		loop_counter++;
-	    }
-	    break;
-	}
-	case RT_PNT_TYPE_COL_SCA_NRM: {
-	    register struct pnt_color_scale_normal *point;
-	    bu_vls_strcat(str, "point#, (point), (color), (scale), (normal)\n");
-	    for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f), (%f %f %f)\n",
-			 (long unsigned)loop_counter,
-			 point->v[X] * mm2local,
-			 point->v[Y] * mm2local,
-			 point->v[Z] * mm2local,
-			 point->c.buc_rgb[0],
-			 point->c.buc_rgb[1],
-			 point->c.buc_rgb[2],
-			 point->s,
-			 point->n[X],
-			 point->n[Y],
-			 point->n[Z]);
-		bu_vls_strcat(str, buf);
-		loop_counter++;
-	    }
-	    break;
-	}
-	default:
-	    bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
-	    return 1;
+    point = (struct pnt *)pnts->point;
+    head = &point->l;
+    for (BU_LIST_FOR(point, pnt, head)) {
+	struct bu_color *col = pnts_node_color(point, pnts->type);
+	fastf_t *sp = pnts_node_scale(point, pnts->type);
+	fastf_t *np = pnts_node_normal(point, pnts->type);
+
+	bu_vls_printf(str, "%lu, \t (%f %f %f)", (long unsigned)loop_counter,
+		      point->v[X] * mm2local, point->v[Y] * mm2local, point->v[Z] * mm2local);
+	if (col)
+	    bu_vls_printf(str, ", (%f %f %f)", col->buc_rgb[0], col->buc_rgb[1], col->buc_rgb[2]);
+	if (sp)
+	    bu_vls_printf(str, ", (%f)", *sp);
+	if (np)
+	    bu_vls_printf(str, ", (%f %f %f)", np[X], np[Y], np[Z]);
+	bu_vls_strcat(str, "\n");
+	loop_counter++;
     }
 
     return 0;
+}
+
+
+/**
+ * Create a brace-deliminted vls list from point data.
+ * Field order is "v [c] [s] [n]" - c,s,n optionally added depending on type
+ */
+static void
+pnts_data_to_vls(struct bu_vls *logstr, const struct rt_pnts_internal *pnts)
+{
+    struct pnt *p;
+    struct bu_list *head;
+
+    if (pnts->count == 0 || !pnts->point)
+	return;
+    if (!pnts_type_is_valid(pnts->type))
+	return;
+
+    /* build up the format string
+     * minimum is "{x y z}"
+     * maximum is "{x y z r g b s i j k}"
+     * with any combination of c/s/n depending on pnt type */
+    p = (struct pnt *)pnts->point;
+    head = &p->l;
+    for (BU_LIST_FOR(p, pnt, head)) {
+	struct bu_color *col = pnts_node_color(p, pnts->type);
+	fastf_t *sp = pnts_node_scale(p, pnts->type);
+	fastf_t *np = pnts_node_normal(p, pnts->type);
+
+	bu_vls_printf(logstr, " {" PNT_FMT_3ARGS, V3ARGS(p->v));
+	if (col) {
+	    fastf_t cf[3];
+	    bu_color_to_rgb_floats(col, cf);
+	    bu_vls_printf(logstr, " " PNT_FMT_3ARGS, V3ARGS(cf));
+	}
+	if (sp)
+	    bu_vls_printf(logstr, " " PNT_FMT, *sp);
+	if (np)
+	    bu_vls_printf(logstr, " " PNT_FMT_3ARGS, V3ARGS(np));
+	bu_vls_strcat(logstr, "}");
+    }
+}
+
+
+/**
+ * Available attrs:
+ * count -  number of points in set
+ * type  -  point type (see geom.h:rt_pnt_type)
+ * scale -  scale of point
+ * data  -  data in "v [c] [s] [n]"
+ * ---
+ * NULL  -  All of the above
+ */
+int
+rt_pnts_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
+{
+    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)intern->idb_ptr;
+
+    BU_CK_VLS(logstr);
+    RT_PNTS_CK_MAGIC(pnts);
+
+    if (attr == (char *)NULL) {
+	/* full dump */
+	bu_vls_strcpy(logstr, "pnts");
+	bu_vls_printf(logstr, " count %lu", pnts->count);
+	bu_vls_printf(logstr, " type %d", (int)pnts->type);
+	bu_vls_printf(logstr, " scale " PNT_FMT, pnts->scale);
+	bu_vls_strcat(logstr, " data {");
+	pnts_data_to_vls(logstr, pnts);
+	bu_vls_strcat(logstr, " }");
+    } else if (BU_STR_EQUAL(attr, "count")) {
+	bu_vls_printf(logstr, "%lu", pnts->count);
+    } else if (BU_STR_EQUAL(attr, "type")) {
+	bu_vls_printf(logstr, "%d", (int)pnts->type);
+    } else if (BU_STR_EQUAL(attr, "scale")) {
+	bu_vls_printf(logstr, PNT_FMT, pnts->scale);
+    } else if (BU_STR_EQUAL(attr, "data")) {
+	pnts_data_to_vls(logstr, pnts);
+    } else {
+	bu_vls_printf(logstr, "ERROR: Unknown attribute '%s', choices are count, type, scale, or data\n", attr);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+/**
+ * Rebuild the point list from a Tcl list of per-point sublists, using
+ * the already-established pnts->type to interpret each sublist.
+ */
+static int
+pnts_data_from_str(struct bu_vls *logstr, struct rt_pnts_internal *pnts, const char *datastr)
+{
+    int npts = 0;
+    const char **pts = NULL;
+    int i;
+    int expected;
+    void *head = NULL;
+    struct bu_list *headl = NULL;
+
+    if (pnts->type == RT_PNT_UNKNOWN) {
+	bu_vls_printf(logstr, "ERROR: pnts type must be set before point data\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* num of expected fields per point */
+    expected = pnts_data_size(pnts->type);
+
+    /* discard any pre-existing points before rebuilding; keep count
+     * consistent with the (now empty) list so that any early error
+     * return below leaves the internal in a coherent state. */
+    pnts_data_free(pnts);
+    pnts->count = 0;
+
+    if (bu_argv_from_tcl_list(datastr, &npts, (const char ***)&pts) != 0) {
+	bu_vls_printf(logstr, "ERROR: unable to parse pnts data list\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* allocate the head/sentinel node */
+    head = pnts_node_alloc(pnts->type);
+    if (!head) {
+	bu_vls_printf(logstr, "ERROR: unknown pnts type %d\n", (int)pnts->type);
+	if (pts)
+	    bu_free((char *)pts, "pnts data argv");
+	return BRLCAD_ERROR;
+    }
+    headl = &((struct pnt *)head)->l;
+    BU_LIST_INIT(headl);
+    pnts->point = head;
+
+    for (i = 0; i < npts; i++) {
+	fastf_t *vals = NULL;
+	int nvals = 0;
+	int idx = 3;
+	point_t v = VINIT_ZERO;
+	fastf_t cf[3] = {0.0, 0.0, 0.0};
+	fastf_t s = 0.0;
+	vect_t nrm = VINIT_ZERO;
+	void *node;
+
+	(void)_rt_tcl_list_to_fastf_array(pts[i], &vals, &nvals);
+	if (nvals != expected) {
+	    bu_vls_printf(logstr, "ERROR: point %d has %d values, expected %d for this pnts type\n",
+			  i, nvals, expected);
+	    if (vals)
+		bu_free(vals, "pnts point vals");
+	    bu_free((char *)pts, "pnts data argv");
+	    /* free the partial list and leave an empty, coherent object */
+	    pnts_data_free(pnts);
+	    return BRLCAD_ERROR;
+	}
+
+	VSET(v, vals[0], vals[1], vals[2]);
+	if (pnts->type & RT_PNT_TYPE_COL) {
+	    VSET(cf, vals[idx], vals[idx+1], vals[idx+2]);
+	    idx += 3;
+	}
+	if (pnts->type & RT_PNT_TYPE_SCA) {
+	    s = vals[idx];
+	    idx += 1;
+	}
+	if (pnts->type & RT_PNT_TYPE_NRM) {
+	    VSET(nrm, vals[idx], vals[idx+1], vals[idx+2]);
+	    idx += 3;
+	}
+
+	/* next node */
+	node = pnts_node_alloc(pnts->type);
+	pnts_node_set(node, pnts->type, v, cf, s, nrm);
+	BU_LIST_INSERT(headl, &((struct pnt *)node)->l);
+
+	bu_free(vals, "pnts point vals");
+    }
+
+    pnts->count = (unsigned long)npts;
+
+    if (pts)
+	bu_free((char *)pts, "pnts data argv");
+
+    return BRLCAD_OK;
+}
+
+
+/**
+ * Set pnts attributes from attribute/value pairs (the inverse of rt_pnts_get)
+ * Recognized attributes are count, type, scale, and data 
+ */
+int
+rt_pnts_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
+{
+    struct rt_pnts_internal *pnts;
+    const char *datastr = NULL;
+
+    RT_CK_DB_INTERNAL(intern);
+    pnts = (struct rt_pnts_internal *)intern->idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    /* First pass: scalar attributes.  'data' is deferred until after the
+     * loop so that 'type' is known regardless of argument order. */
+    while (argc >= 2) {
+	if (BU_STR_EQUAL(argv[0], "count")) {
+	    /* 'count' is advisory only - the actual count is always derived
+	     * from the 'data' list (see pnts_data_from_str).  We deliberately
+	     * do not store it here, so a 'count' supplied without 'data'
+	     * cannot leave count > 0 with an empty point list. */
+	    int cnt = 0;
+	    (void)bu_opt_int(NULL, 1, &argv[1], (void *)&cnt);
+	} else if (BU_STR_EQUAL(argv[0], "type")) {
+	    int t = 0;
+	    (void)bu_opt_int(NULL, 1, &argv[1], (void *)&t);
+	    if (t < RT_PNT_TYPE_PNT || t > RT_PNT_TYPE_COL_SCA_NRM) {
+		bu_vls_printf(logstr, "ERROR: invalid pnts type %d (valid range is %d-%d)\n",
+			      t, RT_PNT_TYPE_PNT, RT_PNT_TYPE_COL_SCA_NRM);
+		return BRLCAD_ERROR;
+	    }
+	    pnts->type = (rt_pnt_type)t;
+	} else if (BU_STR_EQUAL(argv[0], "scale")) {
+	    (void)bu_opt_fastf_t(NULL, 1, &argv[1], (void *)&pnts->scale);
+	} else if (BU_STR_EQUAL(argv[0], "data")) {
+	    datastr = argv[1];
+	} else {
+	    bu_vls_printf(logstr, "ERROR: Unknown attribute '%s', choices are count, type, scale, or data\n", argv[0]);
+	    return BRLCAD_ERROR;
+	}
+
+	argc -= 2;
+	argv += 2;
+    }
+
+    if (datastr) {
+	/* count is authoritative from the data list itself */
+	if (pnts_data_from_str(logstr, pnts, datastr) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+int
+rt_pnts_form(struct bu_vls *logstr, const struct rt_functab *ftp)
+{
+    BU_CK_VLS(logstr);
+    RT_CK_FUNCTAB(ftp);
+
+    bu_vls_printf(logstr, "count %%lu type %%d scale %" PNT_FMT " data {{x y z [r g b] [s] [i j k]} ...}");
+
+    return BRLCAD_OK;
 }
 
 
