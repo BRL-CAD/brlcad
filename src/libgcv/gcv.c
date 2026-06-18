@@ -50,6 +50,9 @@
 
 struct gcv_context_internal {
     struct bu_ptbl *handles;
+    gcv_context_bulk_begin_func_t bulk_begin;
+    gcv_context_bulk_end_func_t bulk_end;
+    void *bulk_data;
 };
 
 
@@ -437,6 +440,9 @@ gcv_context_init(struct gcv_context *context)
     context->dbip = db_create_inmem();
     BU_AVS_INIT(&context->messages);
     BU_GET(context->i, struct gcv_context_internal);
+    context->i->bulk_begin = NULL;
+    context->i->bulk_end = NULL;
+    context->i->bulk_data = NULL;
     BU_GET(context->i->handles, struct bu_ptbl);
     bu_ptbl_init(context->i->handles, 64, "handles init");
 }
@@ -457,6 +463,20 @@ gcv_context_destroy(struct gcv_context *context)
     // TODO - clean up the inmem db so db_close will
     // do the job correctly here...
     bu_avs_free(&context->messages);
+}
+
+
+void
+gcv_context_bulk_callbacks_set(struct gcv_context *context,
+			       gcv_context_bulk_begin_func_t begin_func,
+			       gcv_context_bulk_end_func_t end_func,
+			       void *client_data)
+{
+    _gcv_context_check(context);
+
+    context->i->bulk_begin = begin_func;
+    context->i->bulk_end = end_func;
+    context->i->bulk_data = client_data;
 }
 
 
@@ -496,6 +516,38 @@ const struct gcv_filter *
      return NULL;
  }
 
+
+static int
+_gcv_filter_mutates_context(const struct gcv_filter *filter)
+{
+    return filter && (filter->filter_type == GCV_FILTER_READ ||
+	    filter->filter_type == GCV_FILTER_FILTER);
+}
+
+
+static int
+_gcv_context_bulk_begin(struct gcv_context *context,
+			const struct gcv_filter *filter)
+{
+    if (!_gcv_filter_mutates_context(filter) || !context->i->bulk_begin ||
+	    !context->i->bulk_end)
+	return 0;
+
+    return (context->i->bulk_begin(context, context->i->bulk_data) > 0) ?
+	1 : 0;
+}
+
+
+static void
+_gcv_context_bulk_end(struct gcv_context *context, int bulk_started)
+{
+    if (!bulk_started || !context->i->bulk_end)
+	return;
+
+    (void)context->i->bulk_end(context, context->i->bulk_data);
+}
+
+
 void
 gcv_opts_default(struct gcv_opts *gcv_options)
 {
@@ -524,6 +576,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
     int dbi_read_only_orig;
 
     int result;
+    int bulk_started = 0;
     struct gcv_opts default_opts;
     void *options_data;
 
@@ -569,6 +622,8 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
     if (filter->filter_type == GCV_FILTER_WRITE)
 	context->dbip->dbi_read_only = 1;
 
+    bulk_started = _gcv_context_bulk_begin(context, filter);
+
     if (!gcv_options->num_objects && filter->filter_type != GCV_FILTER_READ) {
 	size_t num_objects;
 	struct directory **toplevel_dirs;
@@ -589,6 +644,8 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	    result = filter->filter_fn(context, gcv_options, options_data, target);
     } else
 	result = filter->filter_fn(context, gcv_options, options_data, target);
+
+    _gcv_context_bulk_end(context, bulk_started);
 
     bu_debug = bu_debug_orig;
     rt_debug = rt_debug_orig;

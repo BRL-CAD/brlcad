@@ -107,6 +107,25 @@ GED_EXPORT extern int
 ged_event_txn_enable(struct ged *gedp);
 
 /**
+ * Begin/end a bulk mutation/import transaction.  While a bulk transaction is
+ * active, per-command batches and published events are treated as evidence of
+ * database mutation, but interactive reconciliation is deferred.  The outermost
+ * end publishes one batch-rebuild event only when a live GED consumer is
+ * present.
+ */
+GED_EXPORT extern int
+ged_event_bulk_begin(struct ged *gedp);
+
+GED_EXPORT extern int
+ged_event_bulk_end(struct ged *gedp, struct ged_event_txn_result *result);
+
+GED_EXPORT extern int
+ged_event_bulk_active(struct ged *gedp);
+
+GED_EXPORT extern int
+ged_event_txn_has_live_consumers(struct ged *gedp);
+
+/**
  * Install/remove the GED-owned bridge from low-level librt database changed
  * callbacks into GedEventTxn.  The bridge is a fallback source for database
  * mutations that do not publish richer command semantic events directly.

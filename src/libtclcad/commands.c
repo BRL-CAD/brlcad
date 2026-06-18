@@ -55,6 +55,7 @@
 #include "wdb.h"
 #include "raytrace.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 #include "tclcad.h"
 
 // tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
@@ -1255,6 +1256,12 @@ to_open_tcl(ClientData UNUSED(clientData),
 	return TCL_ERROR;
     }
     gedp->ged_interp = (void *)interp;
+
+    const char *disable_events = Tcl_GetVar(interp, "tclcad_disable_events",
+	    TCL_GLOBAL_ONLY);
+    if (disable_events && disable_events[0] &&
+	    !BU_STR_EQUAL(disable_events, "0"))
+	(void)ged_event_bulk_begin(gedp);
 
     /* Set the Tcl specific I/O handlers for asynchronous subprocess I/O */
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
