@@ -47,7 +47,7 @@ typedef enum {
     PRIM_PREP_FAIL,      /* rt_prep produced no solids              [GATES] */
     PRIM_SAMPLE_FAIL,    /* ray sampler failed                      [GATES] */
     PRIM_MISSING,        /* candidate type has no object in the .g  [GATES] */
-    PRIM_ZERO_HITS,      /* real-shot solid that hit nothing (suspect, not gated) */
+    PRIM_ZERO_HITS,      /* real-shot solid that hit nothing	    [GATES] */
     PRIM_EXCLUDED,       /* candidate deliberately not required (skip-list) */
     PRIM_EXPECTED_ZERO,  /* stub-shot pseudo-solid: zero hits is correct */
     PRIM_UNEXPECTED_HITS /* stub-shot pseudo-solid that DID hit (sentinel) */
@@ -91,6 +91,7 @@ prim_status_is_failure(prim_status_t s)
     return (s == PRIM_GETTREE_FAIL
 	    || s == PRIM_PREP_FAIL
 	    || s == PRIM_SAMPLE_FAIL
+	    || s == PRIM_ZERO_HITS
 	    || s == PRIM_MISSING);
 }
 
@@ -156,7 +157,7 @@ prim_report_console(const struct prim_row *rows, size_t n)
 static inline void
 prim_report_coverage(const struct prim_row *rows, size_t n)
 {
-    size_t i, excluded = 0, expzero = 0, unexp = 0, missing = 0;
+    size_t i, excluded = 0, expzero = 0, unexp = 0, zerohits = 0, missing = 0;
 
     for (i = 0; i < n; i++) {
 	switch (rows[i].status) {
@@ -164,6 +165,7 @@ prim_report_coverage(const struct prim_row *rows, size_t n)
 	    case PRIM_EXPECTED_ZERO:   expzero++;  break;
 	    case PRIM_UNEXPECTED_HITS: unexp++;    break;
 	    case PRIM_MISSING:         missing++;  break;
+	    case PRIM_ZERO_HITS:       zerohits++; break;
 	    default: break;
 	}
     }
@@ -179,6 +181,12 @@ prim_report_coverage(const struct prim_row *rows, size_t n)
 	printf("\nSENTINEL: stub-shot primitives that unexpectedly produced hits:\n");
 	for (i = 0; i < n; i++)
 	    if (rows[i].status == PRIM_UNEXPECTED_HITS)
+		printf("    %-9s (id %d)\n", rows[i].type, rows[i].id);
+    }
+    if (zerohits) {
+	printf("\nZERO HIT primitives (expected to raytrace, got zero hits):\n");
+	for (i = 0; i < n; i++)
+	    if (rows[i].status == PRIM_ZERO_HITS)
 		printf("    %-9s (id %d)\n", rows[i].type, rows[i].id);
     }
 
