@@ -72,9 +72,7 @@ _brep_cmd_geo_vertex_create(void *bs, int argc, const char **argv)
     ON_3dPoint position(atof(argv[0]), atof(argv[1]), atof(argv[2]));
     int vertex = brep_vertex_create(b_ip->brep, position);
     // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create vertex! id = %d", vertex);
@@ -105,9 +103,7 @@ _brep_cmd_geo_vertex_remove(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "remove vertex %d", v_id);
@@ -142,8 +138,7 @@ _brep_cmd_geo_curve2d_create_line(void *bs, int argc, const char **argv)
     int curve_id = brep_curve2d_make_line(b_ip->brep, from, to);
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create C2 curve! id = %d", curve_id);
@@ -181,8 +176,7 @@ _brep_cmd_geo_curve2d_remove(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "remove C2 curve %d", curve_id);
@@ -216,8 +210,7 @@ _brep_cmd_geo_curve3d_create(void *bs, int argc, const char **argv)
     int curve_id = brep_curve_make(b_ip->brep, position);
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create C3 curve! id = %d", curve_id);
@@ -279,9 +272,7 @@ _brep_cmd_geo_curve3d_in(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create C3 curve! id = %d", curve_id);
@@ -336,9 +327,7 @@ _brep_cmd_geo_curve3d_interp(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create C3 curve! id = %d", curve_id);
@@ -377,9 +366,7 @@ _brep_cmd_geo_curve3d_copy(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "successful copy C3 curve! new curve id = %d", res);
@@ -418,9 +405,7 @@ _brep_cmd_geo_curve3d_remove(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "successful remove C3 curve! id = %d", curve_id);
@@ -453,9 +438,7 @@ _brep_cmd_geo_curve3d_move(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -488,9 +471,7 @@ _brep_cmd_geo_curve3d_set_cv(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -530,9 +511,7 @@ _brep_cmd_geo_curve3d_flip(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -589,9 +568,7 @@ _brep_cmd_geo_curve3d_insert_knot(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -648,9 +625,7 @@ _brep_cmd_geo_curve3d_trim(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -698,9 +673,7 @@ _brep_cmd_geo_curve3d_split(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "split curve %s at parameter %s. Old curve removed.\n", argv[0], argv[1]);
@@ -742,9 +715,7 @@ _brep_cmd_geo_curve3d_join(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "joined curve id %d, old curves deleted.\n", flag);
@@ -770,9 +741,7 @@ _brep_cmd_geo_surface_create(void *bs, int argc, const char **argv)
     int surf_id = brep_surface_make(b_ip->brep, position);
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
@@ -827,9 +796,7 @@ _brep_cmd_geo_surface_interp(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surface_id);
@@ -867,9 +834,7 @@ _brep_cmd_geo_surface_copy(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "successful copy surface! new surface id = %d", res);
@@ -902,9 +867,7 @@ _brep_cmd_geo_surface_birail(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
@@ -936,9 +899,7 @@ _brep_cmd_geo_surface_remove(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -970,9 +931,7 @@ _brep_cmd_geo_surface_move(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1004,9 +963,7 @@ _brep_cmd_geo_surface_set_cv(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1040,9 +997,7 @@ _brep_cmd_geo_surface_trim(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1075,9 +1030,7 @@ _brep_cmd_geo_surface_split(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1109,9 +1062,7 @@ _brep_cmd_geo_surface_tensor_product(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
@@ -1149,9 +1100,7 @@ _brep_cmd_geo_surface_revolution(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
@@ -1188,9 +1137,7 @@ _brep_cmd_geo_surface_extract_vertex(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create vertex! id = %d", vertex_id);
@@ -1227,9 +1174,7 @@ _brep_cmd_geo_surface_extract_curve(void *bs, int argc, const char **argv)
     }
 
     // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create curve! id = %d", curve_id);

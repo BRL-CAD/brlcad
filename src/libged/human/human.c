@@ -89,6 +89,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 /*
  * Default height is 5 feet, 8 inches, arbitrarily
@@ -2211,6 +2212,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, BRLCAD_ERROR);
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 
     bu_log("Center Location: ");
     bu_log("%.2f %.2f %.2f\n", location[X], location[Y], location[Z]);
@@ -2230,6 +2232,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
     if (troops <= 1) {
 	makeBody(wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(wdbp, "A single Human", "in");
+	(void)ged_event_notify_database_metadata_changed(gedp, NULL);
 
 	/*This function dumps out a text file of all dimensions of bounding boxes/anthro-data/whatever on human model.*/
 	if (human_data.textwrite == 1)
@@ -2240,6 +2243,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
     if (troops > 1) {
 	makeArmy(wdbp, &human_data, troops, showBoxes);
 	mk_id_units(wdbp, "An army of people", "in");
+	(void)ged_event_notify_database_metadata_changed(gedp, NULL);
     }
 /****End Magic****/
 
@@ -2287,6 +2291,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 		 "di=.99 sp=.01",
 		 rgb,
 		 0);
+	(void)ged_event_notify_object_added(gedp, humanName, NULL);
 
 /* make the .r for the bounding boxes */
 	if (showBoxes) {
@@ -2321,6 +2326,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 		     "di=0.5 sp=0.5",
 		     rgb2,
 		     0);
+	    (void)ged_event_notify_object_added(gedp, "Boxes.r", NULL);
 	    /*
 	     * Creating a hollow box that would allow for a person to see inside the
 	     * bounding boxes to the actual body representation inside.
@@ -2392,6 +2398,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 		     "di=0.5 sp=0.5 tr=0.75 ri=1",
 		     rgb3,
 		     0);
+	    (void)ged_event_notify_object_added(gedp, "Hollow.r", NULL);
 	}
     }
     if (troops) {
@@ -2453,6 +2460,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 		     "di=.99 sp=.01",
 		     rgb,
 		     0);
+	    (void)ged_event_notify_object_added(gedp, body[0], NULL);
 
 	    if (showBoxes) {
 		VSET(rgb2, 255, 128, 128); /* redish color */
@@ -2464,6 +2472,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 			 "di=0.5 sp=0.5",
 			 rgb2,
 			 0);
+		(void)ged_event_notify_object_added(gedp, box[0], NULL);
 	    }
 	    bu_log("%s\n", body[0]);
 	    num++;
@@ -2479,11 +2488,15 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	    (void)mk_addmember(comber, &crowd.l, NULL, WMOP_UNION);
 	}
     }
-    if (troops)
+    if (troops) {
 	mk_lcomb(wdbp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);
+	(void)ged_event_notify_object_added(gedp, "Crowd.c", NULL);
+    }
 
     /* Close database */
     bu_log("Regions Built\n");
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
     bu_vls_free(&name);
     bu_vls_free(&str);
 

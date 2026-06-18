@@ -1038,6 +1038,101 @@ make_event_nmg_tet(struct rt_wdb *wdbp, const char *name)
 }
 
 static int
+make_event_nmg_box(struct rt_wdb *wdbp, const char *name)
+{
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct model *m = nmg_mm();
+    struct nmgregion *r = nmg_mrsv(m);
+    struct shell *s = BU_LIST_FIRST(shell, &r->s_hd);
+    struct vertex *verts[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL};
+    point_t pts[8] = {
+	{0.0, 0.0, 0.0},
+	{1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0},
+	{0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0},
+	{1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0},
+	{0.0, 1.0, 1.0}
+    };
+    int face_ids[6][4] = {
+	{0, 3, 2, 1},
+	{4, 5, 6, 7},
+	{0, 1, 5, 4},
+	{3, 7, 6, 2},
+	{0, 4, 7, 3},
+	{1, 2, 6, 5}
+    };
+
+    if (!wdbp || !name || !m || !r || !s) {
+	if (m)
+	    nmg_km(m);
+	return -1;
+    }
+
+    for (size_t i = 0; i < 6; i++) {
+	struct vertex **fv[4] = {
+	    &verts[face_ids[i][0]],
+	    &verts[face_ids[i][1]],
+	    &verts[face_ids[i][2]],
+	    &verts[face_ids[i][3]]
+	};
+	struct faceuse *fu = nmg_cmface(s, fv, 4);
+	for (size_t j = 0; j < 4; j++) {
+	    int vindex = face_ids[i][j];
+	    if (verts[vindex])
+		nmg_vertex_gv(verts[vindex], pts[vindex]);
+	}
+	if (!fu || nmg_fu_planeeqn(fu, &tol) != 0) {
+	    nmg_km(m);
+	    return -1;
+	}
+    }
+
+    if (mk_nmg(wdbp, name, m) != 0) {
+	nmg_km(m);
+	return -1;
+    }
+    return 0;
+}
+
+static long
+first_nmg_face_index(struct ged *gedp, const char *name)
+{
+    struct directory *dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	return -1;
+
+    struct rt_db_internal intern;
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, bn_mat_identity) < 0)
+	return -1;
+
+    long face_index = -1;
+    if (intern.idb_type == ID_NMG) {
+	struct model *m = (struct model *)intern.idb_ptr;
+	struct nmgregion *r = NULL;
+	struct shell *s = NULL;
+	struct faceuse *fu = NULL;
+
+	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+		for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		    if (fu->orientation != OT_SAME)
+			continue;
+		    face_index = fu->f_p->index;
+		    goto done;
+		}
+	    }
+	}
+    }
+
+done:
+    rt_db_free_internal(&intern);
+    return face_index;
+}
+
+static int
 test_events(struct ged *gedp)
 {
     bu_log("=== GedEventTxn service batching/observers ===\n");
@@ -1429,6 +1524,82 @@ test_events(struct ged *gedp)
     CHECK(ged_event_observer_remove(gedp, constraint_post_token) == 1,
 	    "constraint command observer removal must succeed");
 
+    const char *brep_convert_solid = "_ged_event_brep_convert_source.s";
+    const char *brep_convert_out = "_ged_event_brep_convert_out.brep";
+    const char *brep_convert_make_av[4] = {"make", brep_convert_solid,
+	"ell", NULL};
+    CHECK(ged_exec(gedp, 3, brep_convert_make_av) == BRLCAD_OK,
+	    "brep conversion fixture must create source ellipsoid");
+    event_order_observer brep_convert_post;
+    ged_event_observer_token brep_convert_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_convert_post);
+    CHECK(brep_convert_post_token != 0,
+	    "brep conversion observer must register");
+    const char *brep_conversion_av[5] = {"brep", brep_convert_solid, "brep",
+	brep_convert_out, NULL};
+    CHECK(ged_exec(gedp, 4, brep_conversion_av) == BRLCAD_OK,
+	    "brep conversion command must create named brep output");
+    CHECK(brep_convert_post.calls == 1,
+	    "brep conversion command must publish one event transaction");
+    CHECK(observed_named_event(brep_convert_post, GED_EVENT_OBJECT_ADDED,
+		brep_convert_out),
+	    "brep conversion output must emit object-added event");
+    CHECK(!observed_named_event(brep_convert_post,
+		GED_EVENT_OBJECT_MODIFIED, brep_convert_out),
+	    "brep conversion output must not report final object as modified");
+    CHECK(db_lookup(gedp->dbip, brep_convert_out, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "brep conversion output must be present");
+    CHECK(ged_event_observer_remove(gedp, brep_convert_post_token) == 1,
+	    "brep conversion observer removal must succeed");
+
+    const char *brep_bool_l_solid = "_ged_event_brep_bool_left.s";
+    const char *brep_bool_r_solid = "_ged_event_brep_bool_right.s";
+    const char *brep_bool_l = "_ged_event_brep_bool_left.brep";
+    const char *brep_bool_r = "_ged_event_brep_bool_right.brep";
+    const char *brep_bool_out = "_ged_event_brep_bool_out.brep";
+    const char *brep_bool_l_make_av[4] = {"make", brep_bool_l_solid,
+	"sph", NULL};
+    CHECK(ged_exec(gedp, 3, brep_bool_l_make_av) == BRLCAD_OK,
+	    "brep boolean fixture must create left source sphere");
+    const char *brep_bool_r_make_av[4] = {"make", brep_bool_r_solid,
+	"ell", NULL};
+    CHECK(ged_exec(gedp, 3, brep_bool_r_make_av) == BRLCAD_OK,
+	    "brep boolean fixture must create right source ellipsoid");
+    const char *brep_bool_l_convert_av[5] = {"brep", brep_bool_l_solid,
+	"brep", brep_bool_l, NULL};
+    CHECK(ged_exec(gedp, 4, brep_bool_l_convert_av) == BRLCAD_OK,
+	    "brep boolean fixture must convert left source to brep");
+    const char *brep_bool_r_convert_av[5] = {"brep", brep_bool_r_solid,
+	"brep", brep_bool_r, NULL};
+    CHECK(ged_exec(gedp, 4, brep_bool_r_convert_av) == BRLCAD_OK,
+	    "brep boolean fixture must convert right source to brep");
+    event_order_observer brep_bool_post;
+    ged_event_observer_token brep_bool_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_bool_post);
+    CHECK(brep_bool_post_token != 0,
+	    "brep boolean observer must register");
+    const char *brep_bool_av[7] = {"brep", brep_bool_l, "bool", "u",
+	brep_bool_r, brep_bool_out, NULL};
+    CHECK(ged_exec(gedp, 6, brep_bool_av) == BRLCAD_OK,
+	    "brep boolean command must create named output");
+    CHECK(brep_bool_post.calls == 1,
+	    "brep boolean command must publish one event transaction");
+    CHECK(observed_named_event(brep_bool_post, GED_EVENT_OBJECT_ADDED,
+		brep_bool_out),
+	    "brep boolean output must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, brep_bool_out, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "brep boolean output must be present");
+    CHECK(std::find(brep_bool_post.all_kinds.begin(),
+	    brep_bool_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    brep_bool_post.all_kinds.end(),
+	    "brep boolean output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, brep_bool_post_token) == 1,
+	    "brep boolean observer removal must succeed");
+
     const char *brep_source_solid = "_ged_event_brep_source.s";
     const char *brep_source = "_ged_event_brep_source.s.brep";
     const char *brep_split = "_ged_event_brep_split";
@@ -1478,6 +1649,235 @@ test_events(struct ged *gedp)
     }
     CHECK(ged_event_observer_remove(gedp, brep_split_post_token) == 1,
 	    "brep split observer removal must succeed");
+
+    const char *brep_edit_solid = "_ged_event_brep_edit_source.s";
+    const char *brep_edit = "_ged_event_brep_edit_source.brep";
+    const char *brep_edit_make_av[4] = {"make", brep_edit_solid, "sph",
+	NULL};
+    CHECK(ged_exec(gedp, 3, brep_edit_make_av) == BRLCAD_OK,
+	    "brep edit fixture must create source sphere");
+    const char *brep_edit_convert_av[5] = {"brep", brep_edit_solid,
+	"brep", brep_edit, NULL};
+    CHECK(ged_exec(gedp, 4, brep_edit_convert_av) == BRLCAD_OK,
+	    "brep edit fixture must convert sphere to brep");
+
+    event_order_observer brep_geo_post;
+    ged_event_observer_token brep_geo_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_geo_post);
+    CHECK(brep_geo_post_token != 0,
+	    "brep geo observer must register");
+    const char *brep_geo_av[8] = {"brep", brep_edit, "geo",
+	"v_create", "3", "0", "0", NULL};
+    CHECK(ged_exec(gedp, 7, brep_geo_av) == BRLCAD_OK,
+	    "brep geo v_create command must publish object-modified event");
+    CHECK(brep_geo_post.calls == 1,
+	    "brep geo v_create command must publish one event transaction");
+    CHECK(observed_named_event(brep_geo_post, GED_EVENT_OBJECT_MODIFIED,
+		brep_edit),
+	    "brep geo v_create command must emit object-modified event");
+    CHECK(!observed_named_event(brep_geo_post, GED_EVENT_OBJECT_ADDED,
+		brep_edit),
+	    "brep geo v_create command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, brep_geo_post_token) == 1,
+	    "brep geo observer removal must succeed");
+
+    event_order_observer brep_topo_post;
+    ged_event_observer_token brep_topo_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_topo_post);
+    CHECK(brep_topo_post_token != 0,
+	    "brep topo observer must register");
+    const char *brep_topo_av[6] = {"brep", brep_edit, "topo", "f_rev",
+	"0", NULL};
+    CHECK(ged_exec(gedp, 5, brep_topo_av) == BRLCAD_OK,
+	    "brep topo f_rev command must publish object-modified event");
+    CHECK(brep_topo_post.calls == 1,
+	    "brep topo f_rev command must publish one event transaction");
+    CHECK(observed_named_event(brep_topo_post, GED_EVENT_OBJECT_MODIFIED,
+		brep_edit),
+	    "brep topo f_rev command must emit object-modified event");
+    CHECK(!observed_named_event(brep_topo_post, GED_EVENT_OBJECT_ADDED,
+		brep_edit),
+	    "brep topo f_rev command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, brep_topo_post_token) == 1,
+	    "brep topo observer removal must succeed");
+
+    event_order_observer brep_flip_post;
+    ged_event_observer_token brep_flip_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_flip_post);
+    CHECK(brep_flip_post_token != 0,
+	    "brep flip observer must register");
+    const char *brep_flip_av[4] = {"brep", brep_edit, "flip", NULL};
+    CHECK(ged_exec(gedp, 3, brep_flip_av) == BRLCAD_OK,
+	    "brep flip command must publish object-modified event");
+    CHECK(brep_flip_post.calls == 1,
+	    "brep flip command must publish one event transaction");
+    CHECK(observed_named_event(brep_flip_post, GED_EVENT_OBJECT_MODIFIED,
+		brep_edit),
+	    "brep flip command must emit object-modified event");
+    CHECK(!observed_named_event(brep_flip_post, GED_EVENT_OBJECT_ADDED,
+		brep_edit),
+	    "brep flip command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, brep_flip_post_token) == 1,
+	    "brep flip observer removal must succeed");
+
+    event_order_observer brep_shrink_post;
+    ged_event_observer_token brep_shrink_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_shrink_post);
+    CHECK(brep_shrink_post_token != 0,
+	    "brep shrink observer must register");
+    const char *brep_shrink_av[4] = {"brep", brep_edit,
+	"shrink_surfaces", NULL};
+    CHECK(ged_exec(gedp, 3, brep_shrink_av) == BRLCAD_OK,
+	    "brep shrink_surfaces command must publish object-modified event");
+    CHECK(brep_shrink_post.calls == 1,
+	    "brep shrink_surfaces command must publish one event transaction");
+    CHECK(observed_named_event(brep_shrink_post, GED_EVENT_OBJECT_MODIFIED,
+		brep_edit),
+	    "brep shrink_surfaces command must emit object-modified event");
+    CHECK(!observed_named_event(brep_shrink_post, GED_EVENT_OBJECT_ADDED,
+		brep_edit),
+	    "brep shrink_surfaces command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, brep_shrink_post_token) == 1,
+	    "brep shrink observer removal must succeed");
+
+    const char *brep_selection_name = "_ged_event_brep_sel";
+    const char *brep_selection_append_av[12] = {"brep", brep_edit,
+	"selection", "append", brep_selection_name, "0", "0", "0",
+	"1", "0", "0", NULL};
+    CHECK(ged_exec(gedp, 11, brep_selection_append_av) == BRLCAD_OK,
+	    "brep selection fixture must append a selectable control vertex");
+    struct rt_selection_set *brep_selection_set =
+	ged_get_selection_set(gedp, brep_edit, brep_selection_name);
+    CHECK(brep_selection_set != NULL &&
+	    BU_PTBL_LEN(&brep_selection_set->selections) > 0,
+	    "brep selection fixture must store a selection");
+    event_order_observer brep_selection_post;
+    ged_event_observer_token brep_selection_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_selection_post);
+    CHECK(brep_selection_post_token != 0,
+	    "brep selection observer must register");
+    const char *brep_selection_translate_av[9] = {"brep", brep_edit,
+	"selection", "translate", brep_selection_name, "0.1", "0", "0",
+	NULL};
+    CHECK(ged_exec(gedp, 8, brep_selection_translate_av) == BRLCAD_OK,
+	    "brep selection translate must publish object-modified event");
+    CHECK(brep_selection_post.calls == 1,
+	    "brep selection translate must publish one event transaction");
+    CHECK(observed_named_event(brep_selection_post,
+		GED_EVENT_OBJECT_MODIFIED, brep_edit),
+	    "brep selection translate must emit object-modified event");
+    CHECK(!observed_named_event(brep_selection_post,
+		GED_EVENT_OBJECT_ADDED, brep_edit),
+	    "brep selection translate must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, brep_selection_post_token) == 1,
+	    "brep selection observer removal must succeed");
+
+    const char *brep_csg_solid = "_ged_event_brep_csg_source.s";
+    const char *brep_csg_source = "_ged_event_brep_csg_source.brep";
+    const char *brep_csg_group = "_ged_event_brep_csg_group.c";
+    const char *brep_csg_top = "csg__ged_event_brep_csg_group.c";
+    const char *brep_csg_make_av[4] = {"make", brep_csg_solid, "sph",
+	NULL};
+    CHECK(ged_exec(gedp, 3, brep_csg_make_av) == BRLCAD_OK,
+	    "brep csg fixture must create source sphere");
+    const char *brep_csg_convert_av[5] = {"brep", brep_csg_solid,
+	"brep", brep_csg_source, NULL};
+    CHECK(ged_exec(gedp, 4, brep_csg_convert_av) == BRLCAD_OK,
+	    "brep csg fixture must convert sphere to named brep");
+    const char *brep_csg_group_av[4] = {"g", brep_csg_group,
+	brep_csg_source, NULL};
+    CHECK(ged_exec(gedp, 3, brep_csg_group_av) == BRLCAD_OK,
+	    "brep csg fixture must create source comb");
+    event_order_observer brep_csg_post;
+    ged_event_observer_token brep_csg_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_csg_post);
+    CHECK(brep_csg_post_token != 0,
+	    "brep csg observer must register");
+    const char *brep_csg_av[4] = {"brep", brep_csg_group, "csg", NULL};
+    CHECK(ged_exec(gedp, 3, brep_csg_av) == BRLCAD_OK,
+	    "brep csg command must create CSG output");
+    CHECK(observed_named_event(brep_csg_post, GED_EVENT_OBJECT_ADDED,
+		brep_csg_top),
+	    "brep csg top-level output must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, brep_csg_top, LOOKUP_QUIET) != RT_DIR_NULL,
+	    "brep csg top-level output must be present");
+    CHECK(ged_event_observer_remove(gedp, brep_csg_post_token) == 1,
+	    "brep csg observer removal must succeed");
+
+    const char *brep_csg_direct_solid = "_ged_event_brep_csg_direct.s";
+    const char *brep_csg_direct = "_ged_event_brep_csg_direct.brep";
+    const char *brep_csg_direct_top = "csg__ged_event_brep_csg_direct.c";
+    const char *brep_csg_direct_make_av[4] = {"make",
+	brep_csg_direct_solid, "rcc", NULL};
+    CHECK(ged_exec(gedp, 3, brep_csg_direct_make_av) == BRLCAD_OK,
+	    "brep direct csg fixture must create source cylinder");
+    const char *brep_csg_direct_convert_av[5] = {"brep",
+	brep_csg_direct_solid, "brep", brep_csg_direct, NULL};
+    CHECK(ged_exec(gedp, 4, brep_csg_direct_convert_av) == BRLCAD_OK,
+	    "brep direct csg fixture must convert cylinder to named brep");
+    event_order_observer brep_csg_direct_post;
+    ged_event_observer_token brep_csg_direct_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &brep_csg_direct_post);
+    CHECK(brep_csg_direct_post_token != 0,
+	    "brep direct csg observer must register");
+    const char *brep_csg_direct_av[4] = {"brep", brep_csg_direct, "csg",
+	NULL};
+    CHECK(ged_exec(gedp, 3, brep_csg_direct_av) == BRLCAD_OK,
+	    "brep direct csg command must create CSG output");
+    CHECK(brep_csg_direct_post.calls == 1,
+	    "brep direct csg command must publish one event transaction");
+    CHECK(observed_named_event(brep_csg_direct_post,
+		GED_EVENT_OBJECT_ADDED, brep_csg_direct_top),
+	    "brep direct csg top-level output must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, brep_csg_direct_top, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "brep direct csg top-level output must be present");
+    CHECK(std::find(brep_csg_direct_post.all_kinds.begin(),
+	    brep_csg_direct_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    brep_csg_direct_post.all_kinds.end(),
+	    "brep direct csg fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, brep_csg_direct_post_token) == 1,
+	    "brep direct csg observer removal must succeed");
+
+    const char *joint2_selection_name = "_ged_event_joint2_sel";
+    const char *joint2_replace_av[12] = {"joint2", brep_csg_source,
+	"selection", "replace", joint2_selection_name, "0", "0", "0",
+	"1", "0", "0", NULL};
+    CHECK(ged_exec(gedp, 11, joint2_replace_av) == BRLCAD_OK,
+	    "joint2 selection fixture must create a selectable BREP control vertex");
+    struct rt_selection_set *joint2_selection_set =
+	ged_get_selection_set(gedp, brep_csg_source, joint2_selection_name);
+    CHECK(joint2_selection_set != NULL &&
+	    BU_PTBL_LEN(&joint2_selection_set->selections) > 0,
+	    "joint2 selection fixture must store a selection");
+    event_order_observer joint2_translate_post;
+    ged_event_observer_token joint2_translate_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &joint2_translate_post);
+    CHECK(joint2_translate_post_token != 0,
+	    "joint2 selection translate observer must register");
+    const char *joint2_translate_av[9] = {"joint2", brep_csg_source,
+	"selection", "translate", joint2_selection_name, "0.1", "0", "0",
+	NULL};
+    CHECK(ged_exec(gedp, 8, joint2_translate_av) == BRLCAD_OK,
+	    "joint2 selection translate must publish object-modified event");
+    CHECK(joint2_translate_post.calls == 1,
+	    "joint2 selection translate must publish one event transaction");
+    CHECK(observed_named_event(joint2_translate_post,
+		GED_EVENT_OBJECT_MODIFIED, brep_csg_source),
+	    "joint2 selection translate must emit object-modified event");
+    CHECK(!observed_named_event(joint2_translate_post,
+		GED_EVENT_OBJECT_ADDED, brep_csg_source),
+	    "joint2 selection translate must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, joint2_translate_post_token) == 1,
+	    "joint2 selection translate observer removal must succeed");
 
     uint64_t material_revision_before = ged_draw_material_revision(gedp);
     ged_event_txn_result_init(&result);
@@ -1556,10 +1956,71 @@ test_events(struct ged *gedp)
     CHECK(ged_event_observer_remove(gedp, material_assign_post_token) == 1,
 	    "material assign observer removal must succeed");
 
+    const char *material_prop_obj = "_ged_event_material_prop";
+    const char *material_create_av[5] = {"material", "create",
+	material_prop_obj, "MaterialProp", NULL};
+    CHECK(ged_exec(gedp, 4, material_create_av) == BRLCAD_OK,
+	    "material property fixture must create material object");
+    event_order_observer material_set_post;
+    ged_event_observer_token material_set_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &material_set_post);
+    CHECK(material_set_post_token != 0,
+	    "material set observer must register");
+    const char *material_set_av[7] = {"material", "set", material_prop_obj,
+	"physical", "density", "1.25", NULL};
+    CHECK(ged_exec(gedp, 6, material_set_av) == BRLCAD_OK,
+	    "material set command must publish material event");
+    CHECK(material_set_post.calls == 1,
+	    "material set command must publish one event transaction");
+    CHECK(observed_named_event(material_set_post,
+		GED_EVENT_MATERIAL_CHANGED, material_prop_obj),
+	    "material set command must emit material-changed event");
+    CHECK(std::find(material_set_post.all_kinds.begin(),
+	    material_set_post.all_kinds.end(),
+	    GED_EVENT_OBJECT_MODIFIED) == material_set_post.all_kinds.end(),
+	    "material set semantic event must cover raw object fallback");
+    CHECK(ged_event_observer_remove(gedp, material_set_post_token) == 1,
+	    "material set observer removal must succeed");
+
+    const char *mater_density_obj = "_DENSITIES";
+    event_order_observer mater_density_set_post;
+    ged_event_observer_token mater_density_set_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &mater_density_set_post);
+    CHECK(mater_density_set_post_token != 0,
+	    "mater density set observer must register");
+    uint64_t mater_density_set_revision_before =
+	ged_draw_material_revision(gedp);
     const char *mater_density_set_av[5] = {"mater", "-d", "set",
 	"42,1.0,ModernMapMaterial", NULL};
     CHECK(ged_exec(gedp, 4, mater_density_set_av) == BRLCAD_OK,
 	    "mater density setup must create in-database density data");
+    CHECK(mater_density_set_post.calls == 1,
+	    "mater density set command must publish one event transaction");
+    CHECK(observed_named_event(mater_density_set_post,
+		GED_EVENT_OBJECT_ADDED, mater_density_obj),
+	    "mater density set command must emit density object-added event");
+    CHECK(observed_named_event(mater_density_set_post,
+		GED_EVENT_OBJECT_VISIBILITY_CHANGED, mater_density_obj),
+	    "mater density set command must emit density visibility event");
+    CHECK(std::find(mater_density_set_post.all_kinds.begin(),
+	    mater_density_set_post.all_kinds.end(),
+	    GED_EVENT_MATERIAL_CHANGED) !=
+	    mater_density_set_post.all_kinds.end(),
+	    "mater density set command must emit global material-changed event");
+    CHECK(ged_draw_material_revision(gedp) >
+	    mater_density_set_revision_before,
+	    "mater density set command must bump draw material revision");
+    struct directory *mater_density_set_dp = db_lookup(gedp->dbip,
+	    mater_density_obj, LOOKUP_QUIET);
+    CHECK(mater_density_set_dp != RT_DIR_NULL &&
+	    (mater_density_set_dp->d_flags & RT_DIR_HIDDEN),
+	    "mater density set command must leave density object hidden");
+    CHECK(ged_event_observer_remove(gedp,
+		mater_density_set_post_token) == 1,
+	    "mater density set observer removal must succeed");
+
     const char *mater_map_id_av[6] = {"attr", "set", "box.r",
 	"material_id", "42", NULL};
     CHECK(ged_exec(gedp, 5, mater_map_id_av) == BRLCAD_OK,
@@ -1609,6 +2070,67 @@ test_events(struct ged *gedp)
     CHECK(ged_event_observer_remove(gedp, mater_map_post_token) == 1,
 	    "mater map observer removal must succeed");
 
+    char mater_import_file[MAXPATHLEN] = {0};
+    FILE *mater_import_fp = bu_temp_file(mater_import_file, MAXPATHLEN);
+    CHECK(mater_import_fp != NULL,
+	    "mater density import test must create temp input file");
+    if (mater_import_fp) {
+	std::fprintf(mater_import_fp, "77\t2500\tImportedDensity\n");
+	std::fclose(mater_import_fp);
+	event_order_observer mater_import_post;
+	ged_event_observer_token mater_import_post_token =
+	    ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		    event_order_cb, &mater_import_post);
+	CHECK(mater_import_post_token != 0,
+		"mater density import observer must register");
+	const char *mater_import_av[5] = {"mater", "-d", "import",
+	    mater_import_file, NULL};
+	CHECK(ged_exec(gedp, 4, mater_import_av) == BRLCAD_OK,
+		"mater density import command must publish density events");
+	CHECK(mater_import_post.calls == 1,
+		"mater density import command must publish one event transaction");
+	CHECK(observed_named_event(mater_import_post,
+		    GED_EVENT_OBJECT_REMOVED, mater_density_obj),
+		"mater density import command must emit replaced density removal");
+	CHECK(observed_named_event(mater_import_post,
+		    GED_EVENT_OBJECT_ADDED, mater_density_obj),
+		"mater density import command must emit density object-added event");
+	CHECK(std::find(mater_import_post.all_kinds.begin(),
+		mater_import_post.all_kinds.end(),
+		GED_EVENT_MATERIAL_CHANGED) != mater_import_post.all_kinds.end(),
+		"mater density import command must emit material-changed event");
+	CHECK(ged_event_observer_remove(gedp, mater_import_post_token) == 1,
+		"mater density import observer removal must succeed");
+	bu_file_delete(mater_import_file);
+    }
+
+    event_order_observer mater_clear_post;
+    ged_event_observer_token mater_clear_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &mater_clear_post);
+    CHECK(mater_clear_post_token != 0,
+	    "mater density clear observer must register");
+    const char *mater_clear_av[4] = {"mater", "-d", "clear", NULL};
+    CHECK(ged_exec(gedp, 3, mater_clear_av) == BRLCAD_OK,
+	    "mater density clear command must publish density removal event");
+    CHECK(mater_clear_post.calls == 1,
+	    "mater density clear command must publish one event transaction");
+    CHECK(observed_named_event(mater_clear_post, GED_EVENT_OBJECT_REMOVED,
+		mater_density_obj),
+	    "mater density clear command must emit density object-removed event");
+    CHECK(std::find(mater_clear_post.all_kinds.begin(),
+	    mater_clear_post.all_kinds.end(),
+	    GED_EVENT_MATERIAL_CHANGED) != mater_clear_post.all_kinds.end(),
+	    "mater density clear command must emit material-changed event");
+    CHECK(!observed_named_event(mater_clear_post, GED_EVENT_OBJECT_ADDED,
+		mater_density_obj),
+	    "mater density clear command must not emit density object add");
+    CHECK(db_lookup(gedp->dbip, mater_density_obj, LOOKUP_QUIET) ==
+	    RT_DIR_NULL,
+	    "mater density clear command must remove density object");
+    CHECK(ged_event_observer_remove(gedp, mater_clear_post_token) == 1,
+	    "mater density clear observer removal must succeed");
+
     event_order_observer color_post;
     ged_event_observer_token color_post_token =
 	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
@@ -1640,6 +2162,8 @@ test_events(struct ged *gedp)
     bu_dir(concat_src_g, MAXPATHLEN, BU_DIR_CURR,
 	    "ged_state_services_concat_source.g", NULL);
     bu_file_delete(concat_src_g);
+    const char *concat_import_src = "_ged_concat_import_source.s";
+    const char *concat_import_dst = "_ged_concat__ged_concat_import_source.s";
     struct ged *concat_src = ged_open("db", concat_src_g, 0);
     CHECK(concat_src != NULL,
 	    "concat color-table source database must be created");
@@ -1648,6 +2172,10 @@ test_events(struct ged *gedp)
 	    "11", "22", "33", NULL};
 	CHECK(ged_exec(concat_src, 6, source_color_av) == BRLCAD_OK,
 		"concat color-table source must define region color table");
+	const char *source_in_av[8] = {"in", concat_import_src, "sph",
+	    "0", "0", "0", "1", NULL};
+	CHECK(ged_exec(concat_src, 7, source_in_av) == BRLCAD_OK,
+		"concat source must define importable primitive");
 	db_sync(concat_src->dbip);
 	ged_close(concat_src);
     }
@@ -1673,6 +2201,9 @@ test_events(struct ged *gedp)
 	    concat_post.all_kinds.end(),
 	    GED_EVENT_OBJECT_MODIFIED) == concat_post.all_kinds.end(),
 	    "concat -c material event must cover _GLOBAL librt fallback event");
+    CHECK(observed_named_event(concat_post, GED_EVENT_OBJECT_ADDED,
+		concat_import_dst),
+	    "concat command must emit object-added event for imported objects");
     CHECK(concat_post.all_affected_names.find(DB5_GLOBAL_OBJECT_NAME) !=
 	    std::string::npos,
 	    "concat -c material event must identify _GLOBAL metadata");
@@ -1680,22 +2211,88 @@ test_events(struct ged *gedp)
 	    "concat color-table observer removal must succeed");
     bu_file_delete(concat_src_g);
 
+    const char *concat_overwrite_name = "_ged_concat_overwrite.s";
+    const char *concat_overwrite_target_av[8] = {"in", concat_overwrite_name,
+	"sph", "0", "0", "0", "1", NULL};
+    CHECK(ged_exec(gedp, 7, concat_overwrite_target_av) == BRLCAD_OK,
+	    "concat overwrite target must be created");
+    char concat_overwrite_src_g[MAXPATHLEN] = {0};
+    bu_dir(concat_overwrite_src_g, MAXPATHLEN, BU_DIR_CURR,
+	    "ged_state_services_concat_overwrite_source.g", NULL);
+    bu_file_delete(concat_overwrite_src_g);
+    struct ged *concat_overwrite_src = ged_open("db", concat_overwrite_src_g,
+	    0);
+    CHECK(concat_overwrite_src != NULL,
+	    "concat overwrite source database must be created");
+    if (concat_overwrite_src) {
+	const char *overwrite_source_in_av[8] = {"in", concat_overwrite_name,
+	    "sph", "1", "0", "0", "2", NULL};
+	CHECK(ged_exec(concat_overwrite_src, 7, overwrite_source_in_av) ==
+		BRLCAD_OK,
+		"concat overwrite source must define replacement primitive");
+	db_sync(concat_overwrite_src->dbip);
+	ged_close(concat_overwrite_src);
+    }
+    event_order_observer concat_overwrite_post;
+    ged_event_observer_token concat_overwrite_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &concat_overwrite_post);
+    CHECK(concat_overwrite_post_token != 0,
+	    "concat overwrite observer must register");
+    const char *concat_overwrite_av[4] = {"concat", "-O",
+	concat_overwrite_src_g, NULL};
+    CHECK(concat_overwrite_src &&
+	    ged_exec(gedp, 3, concat_overwrite_av) == BRLCAD_OK,
+	    "concat -O command must publish final modified event");
+    CHECK(concat_overwrite_post.calls == 1,
+	    "concat -O command must publish one event transaction");
+    CHECK(observed_named_event(concat_overwrite_post,
+		GED_EVENT_OBJECT_MODIFIED, concat_overwrite_name),
+	    "concat -O command must emit object-modified event for overwritten object");
+    CHECK(!observed_named_event(concat_overwrite_post,
+		GED_EVENT_OBJECT_ADDED, concat_overwrite_name),
+	    "concat -O overwrite must not expose final object as an add");
+    CHECK(std::find(concat_overwrite_post.all_kinds.begin(),
+	    concat_overwrite_post.all_kinds.end(),
+	    GED_EVENT_OBJECT_REMOVED) == concat_overwrite_post.all_kinds.end(),
+	    "concat -O overwrite must hide temporary backup removal");
+    CHECK(concat_overwrite_post.all_affected_names.find(".bak") ==
+	    std::string::npos,
+	    "concat -O overwrite must not expose temporary backup names");
+    CHECK(ged_event_observer_remove(gedp, concat_overwrite_post_token) == 1,
+	    "concat overwrite observer removal must succeed");
+    bu_file_delete(concat_overwrite_src_g);
+
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     CHECK(wdbp != RT_WDB_NULL,
 	    "comb command event fixture must create writer");
     const char *comb_event_child = "_ged_event_comb_child.s";
+    const char *group_event_dst = "_ged_event_group.c";
     const char *comb_event_region = "_ged_event_comb_region.c";
     const char *comb_event_region_b = "_ged_event_comb_region_b.c";
+    const char *comb_std_event_dst = "_ged_event_comb_std.c";
     const char *adjust_event_comb = "_ged_event_adjust_comb.c";
     const char *adjust_event_prim = "_ged_event_adjust_prim.s";
     const char *put_comb_event_comb = "_ged_event_put_comb.c";
     const char *put_event_dst = "_ged_event_put.s";
     const char *in_direct_event_dst = "_ged_event_in_direct.s";
     const char *in_common_event_dst = "_ged_event_in_common.s";
+    const char *make_event_dst = "_ged_event_make.s";
+    const char *metaball_event_dst = "_ged_event_metaball.s";
+    const char *bo_event_dst = "_ged_event_bo.bin";
+    const char *threeptarb_event_dst = "_ged_event_3ptarb.s";
+    const char *cc_event_dst = "_ged_event_constraint";
+    const char *inside_event_src = "_ged_event_inside_outer.s";
+    const char *inside_event_dst = "_ged_event_inside_inner.s";
     const char *heal_event_bot = "_ged_event_heal.bot";
     const char *matrix_event_child = "_ged_event_matrix_child.s";
     const char *matrix_event_source = "_ged_event_matrix_source.c";
     const char *matrix_event_dest = "_ged_event_matrix_dest.c";
+    const char *combmem_event_child_a = "_ged_event_combmem_child_a.s";
+    const char *combmem_event_child_b = "_ged_event_combmem_child_b.s";
+    const char *combmem_event_comb = "_ged_event_combmem.c";
+    const char *edit_perturb_event_sph = "_ged_event_edit_perturb.s";
+    const char *pipe_event_obj = "_ged_event_pipe.s";
     const char *push_event_leaf_a = "_ged_event_push_leaf_a.s";
     const char *push_event_leaf_b = "_ged_event_push_leaf_b.s";
     const char *push_event_mid = "_ged_event_push_mid.c";
@@ -1720,14 +2317,70 @@ test_events(struct ged *gedp)
     const char *cpi_event_dst = "_ged_event_cpi_dst.s";
     const char *copyeval_event_src = "_ged_event_copyeval_src.s";
     const char *copyeval_event_dst = "_ged_event_copyeval_dst.s";
+    const char *bev_event_child = "_ged_event_bev_child.s";
+    const char *bev_event_region = "_ged_event_bev_region.r";
+    const char *bev_event_dst = "_ged_event_bev.nmg";
+    const char *polyclip_event_sketch = "_ged_event_polyclip.sketch";
+    const char *analyze_pnts_src = "_ged_event_analyze_src.pnts";
+    const char *analyze_vol_src = "_ged_event_analyze_vol.s";
+    const char *analyze_pnts_out = "_ged_event_analyze_out.pnts";
+    const char *pnts_read_basic_obj = "_ged_event_pnts_read_basic.pnts";
+    const char *pnts_read_full_obj = "_ged_event_pnts_read_full.pnts";
     const char *bb_event_dst = "_ged_event_bb_bbox.s";
     const char *rfarb_event_dst = "_ged_event_rfarb.s";
+    const char *arb_create_event_dst = "_ged_event_arb_create.s";
+    const char *track_event_group = "_ged_event_track";
+    const char *coil_event_group = "_ged_event_coil";
+    const char *human_event_top = "_ged_event_human.r";
+    const char *voxelize_event_child = "_ged_event_voxelize_child.s";
+    const char *voxelize_event_region = "_ged_event_voxelize_region.r";
+    const char *voxelize_event_dst = "_ged_event_voxelize.c";
+    const char *voxelize_event_box = "_ged_event_voxelize.c.x0y0z0.s";
+    const char *arb_repair_event_dst = "_ged_event_arb_repair.s";
     const char *bot_split_event_src = "_ged_event_bot_split.bot";
+    const char *bot_pca_event_dst = "_ged_event_bot_pca.bot";
+    const char *bot_condense_event_dst = "_ged_event_bot_condense.bot";
+    const char *bot_vertex_fuse_event_dst =
+	"_ged_event_bot_vertex_fuse.bot";
+    const char *bot_face_fuse_event_dst = "_ged_event_bot_face_fuse.bot";
+    const char *bot_smooth_event_src = "_ged_event_bot_smooth_src.bot";
+    const char *bot_smooth_event_dst = "_ged_event_bot_smooth.bot";
+    const char *bot_cpp_event_src = "_ged_event_bot_cpp_src.bot";
+    const char *bot_chull_event_dst = "_ged_event_bot_chull.bot";
+    const char *bot_decimate_cpp_event_dst =
+	"_ged_event_bot_decimate_cpp.bot";
+    const char *bot_subd_event_dst = "_ged_event_bot_subd.bot";
+    const char *bot_smooth_cpp_event_dst =
+	"_ged_event_bot_smooth_cpp.bot";
+    const char *bot_repair_cpp_event_src =
+	"_ged_event_bot_repair_cpp_src.bot";
+    const char *bot_repair_cpp_event_dst =
+	"_ged_event_bot_repair_cpp.bot";
+    const char *bot_remesh_event_src = "_ged_event_bot_remesh_src.bot";
+    const char *bot_remesh_event_dst = "_ged_event_bot_remesh.bot";
+    const char *bot_extrude_event_src =
+	"_ged_event_bot_extrude_src.bot";
+    const char *bot_extrude_event_dst = "_ged_event_bot_extrude.c";
+    const char *bot_exterior_event_src =
+	"_ged_event_bot_exterior_src.bot";
+    const char *bot_exterior_event_dst =
+	"_ged_event_bot_exterior.bot";
+    const char *bot_decimate_event_dst = "_ged_event_bot_decimate.bot";
+    const char *bot_merge_event_dst = "_ged_event_bot_merge.bot";
     const char *bot_split_event_dst_a = "_ged_event_bot_split.bot.0";
     const char *bot_split_event_dst_b = "_ged_event_bot_split.bot.1";
+    const char *lint_bad_bot = "_ged_event_lint_bad.bot";
+    const char *lint_group = "_ged_event_lint_group.c";
     const char *shells_event_nmg = "_ged_event_shells.nmg";
     const char *decompose_event_nmg = "_ged_event_decompose.nmg";
     const char *fracture_event_nmg = "_ged_event_fracture.nmg";
+    const char *nmg_collapse_event_src = "_ged_event_nmg_collapse.nmg";
+    const char *nmg_collapse_event_dst = "_ged_event_nmg_collapse_out.nmg";
+    const char *nmg_mm_event_dst = "_ged_event_nmg_mm.nmg";
+    const char *nmg_inplace_event_obj = "_ged_event_nmg_inplace.nmg";
+    const char *nmg_simplify_event_src = "_ged_event_nmg_simplify.nmg";
+    const char *nmg_simplify_event_dst =
+	"_ged_event_nmg_simplify_out.s";
     const char *prefix_event_src = "_ged_event_prefix_src.s";
     const char *prefix_event_dst = "pre__ged_event_prefix_src.s";
     const char *prefix_event_parent = "_ged_event_prefix_parent.c";
@@ -1754,6 +2407,32 @@ test_events(struct ged *gedp)
 	CHECK(mk_cline(wdbp, adjust_event_prim, adjust_prim_v,
 		    adjust_prim_h, 1.0, 0.0) == 0,
 		"adjust command event fixture primitive must be created");
+	point_t inside_center = {347.0, 0.0, 0.0};
+	CHECK(mk_sph(wdbp, inside_event_src, inside_center, 2.0) == 0,
+		"inside command event fixture primitive must be created");
+
+	point_t voxelize_center = {347.0, 8.0, 0.0};
+	CHECK(mk_sph(wdbp, voxelize_event_child, voxelize_center, 1.0) == 0,
+		"voxelize command event fixture child must be created");
+	struct wmember voxelize_wm;
+	BU_LIST_INIT(&voxelize_wm.l);
+	CHECK(mk_addmember(voxelize_event_child, &voxelize_wm.l, NULL,
+		    WMOP_UNION) != NULL,
+		"voxelize command event fixture must add child");
+	CHECK(mk_comb(wdbp, voxelize_event_region, &voxelize_wm.l, 1,
+		    NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
+		"voxelize command event fixture region must be created");
+
+	point_t analyze_vol_center = {348.0, 0.0, 0.0};
+	CHECK(mk_sph(wdbp, analyze_vol_src, analyze_vol_center, 2.0) == 0,
+		"analyze PNTS fixture volume must be created");
+	fastf_t analyze_pnts_vertices[6] = {
+	    348.0, 0.0, 0.0,
+	    360.0, 0.0, 0.0
+	};
+	CHECK(mk_pnts(wdbp, analyze_pnts_src, RT_PNT_TYPE_PNT, 1.0, 2,
+		    analyze_pnts_vertices, NULL, NULL, NULL) == 0,
+		"analyze PNTS fixture point cloud must be created");
 
 	point_t matrix_center = {350.0, 0.0, 0.0};
 	CHECK(mk_sph(wdbp, matrix_event_child, matrix_center, 1.0) == 0,
@@ -1774,6 +2453,40 @@ test_events(struct ged *gedp)
 	CHECK(mk_comb(wdbp, matrix_event_dest, &matrix_dest_wm.l, 0,
 		    NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
 		"matrix command event fixture destination comb must be created");
+
+	point_t combmem_a_center = {352.0, 0.0, 0.0};
+	point_t combmem_b_center = {353.0, 0.0, 0.0};
+	CHECK(mk_sph(wdbp, combmem_event_child_a, combmem_a_center, 1.0)
+		== 0,
+		"combmem command event fixture first child must be created");
+	CHECK(mk_sph(wdbp, combmem_event_child_b, combmem_b_center, 1.0)
+		== 0,
+		"combmem command event fixture second child must be created");
+	struct wmember combmem_wm;
+	BU_LIST_INIT(&combmem_wm.l);
+	CHECK(mk_addmember(combmem_event_child_a, &combmem_wm.l, NULL,
+		    WMOP_UNION) != NULL,
+		"combmem command event fixture must add first child");
+	CHECK(mk_comb(wdbp, combmem_event_comb, &combmem_wm.l, 0,
+		    NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
+		"combmem command event fixture comb must be created");
+
+	point_t edit_perturb_center = {354.0, 0.0, 0.0};
+	CHECK(mk_sph(wdbp, edit_perturb_event_sph, edit_perturb_center, 1.0)
+		== 0,
+		"edit perturb command event fixture primitive must be created");
+
+	struct bu_list pipe_head;
+	point_t pipe_p0 = {354.0, 2.0, 0.0};
+	point_t pipe_p1 = {355.0, 2.0, 0.0};
+	point_t pipe_p2 = {356.0, 2.0, 0.0};
+	mk_pipe_init(&pipe_head);
+	mk_add_pipe_pnt(&pipe_head, pipe_p0, 0.5, 0.0, 0.5);
+	mk_add_pipe_pnt(&pipe_head, pipe_p1, 0.5, 0.0, 0.5);
+	mk_add_pipe_pnt(&pipe_head, pipe_p2, 0.5, 0.0, 0.5);
+	CHECK(mk_pipe(wdbp, pipe_event_obj, &pipe_head) == 0,
+		"pipe command event fixture primitive must be created");
+	mk_pipe_free(&pipe_head);
 
 	point_t push_a_center = {355.0, 0.0, 0.0};
 	point_t push_b_center = {358.0, 0.0, 0.0};
@@ -1929,6 +2642,18 @@ test_events(struct ged *gedp)
 	CHECK(mk_sph(wdbp, copyeval_event_src, copyeval_src_center, 1.0) == 0,
 		"copyeval command event fixture source must be created");
 
+	point_t bev_child_center = {418.0, 0.0, 0.0};
+	CHECK(mk_sph(wdbp, bev_event_child, bev_child_center, 1.0) == 0,
+		"bev command event fixture child must be created");
+	struct wmember bev_wm;
+	BU_LIST_INIT(&bev_wm.l);
+	CHECK(mk_addmember(bev_event_child, &bev_wm.l, NULL,
+		    WMOP_UNION) != NULL,
+		"bev command event fixture must add child");
+	CHECK(mk_comb(wdbp, bev_event_region, &bev_wm.l, 1, NULL, NULL,
+		    NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
+		"bev command event fixture region must be created");
+
 	point_t prefix_src_center = {420.0, 0.0, 0.0};
 	CHECK(mk_sph(wdbp, prefix_event_src, prefix_src_center, 1.0) == 0,
 		"prefix command event fixture source must be created");
@@ -1957,6 +2682,45 @@ test_events(struct ged *gedp)
 		    4, 4, heal_vertices, heal_faces, NULL, NULL) == 0,
 		"heal command event fixture BoT must be created");
 
+	CHECK(mk_bot(wdbp, bot_smooth_event_src, RT_BOT_SOLID,
+		    RT_BOT_CCW, 0, 4, 4, heal_vertices, heal_faces, NULL,
+		    NULL) == 0,
+		"bot_smooth command event fixture BoT must be created");
+	CHECK(mk_bot(wdbp, bot_cpp_event_src, RT_BOT_SOLID,
+		    RT_BOT_CCW, 0, 4, 4, heal_vertices, heal_faces, NULL,
+		    NULL) == 0,
+		"C++ bot subcommand event fixture BoT must be created");
+	CHECK(mk_bot(wdbp, bot_remesh_event_src, RT_BOT_SOLID,
+		    RT_BOT_CCW, 0, 4, 4, heal_vertices, heal_faces, NULL,
+		    NULL) == 0,
+		"bot remesh command event fixture BoT must be created");
+	CHECK(mk_bot(wdbp, bot_exterior_event_src, RT_BOT_SOLID,
+		    RT_BOT_CCW, 0, 4, 4, heal_vertices, heal_faces, NULL,
+		    NULL) == 0,
+		"bot exterior command event fixture BoT must be created");
+
+	int bot_repair_faces[9] = {
+	    0, 2, 1,
+	    0, 3, 2,
+	    0, 1, 3
+	};
+	CHECK(mk_bot(wdbp, bot_repair_cpp_event_src, RT_BOT_SOLID,
+		    RT_BOT_CCW, 0, 4, 3, heal_vertices, bot_repair_faces,
+		    NULL, NULL) == 0,
+		"bot repair command event fixture BoT must be created");
+
+	fastf_t bot_extrude_vertices[9] = {
+	    0.0, 0.0, 0.0,
+	    1.0, 0.0, 0.0,
+	    0.0, 1.0, 0.0
+	};
+	int bot_extrude_faces[3] = {0, 1, 2};
+	fastf_t bot_extrude_thickness[1] = {0.2};
+	CHECK(mk_bot(wdbp, bot_extrude_event_src, RT_BOT_PLATE,
+		    RT_BOT_CCW, 0, 3, 1, bot_extrude_vertices,
+		    bot_extrude_faces, bot_extrude_thickness, NULL) == 0,
+		"bot extrude command event fixture BoT must be created");
+
 	fastf_t bot_split_vertices[18] = {
 	    0.0, 0.0, 0.0,
 	    1.0, 0.0, 0.0,
@@ -1974,12 +2738,26 @@ test_events(struct ged *gedp)
 		    bot_split_faces, NULL, NULL) == 0,
 		"bot split command event fixture BoT must be created");
 
+	fastf_t lint_bad_vertices[9] = {
+	    0.0, 0.0, 0.0,
+	    1.0, 0.0, 0.0,
+	    0.0, 1.0, 0.0
+	};
+	int lint_bad_faces[3] = {0, 1, 2};
+	CHECK(mk_bot(wdbp, lint_bad_bot, RT_BOT_SOLID, RT_BOT_CCW, 0,
+		    3, 1, lint_bad_vertices, lint_bad_faces, NULL, NULL) == 0,
+		"lint diagnostic comb fixture BoT must be created");
+
 	CHECK(make_event_nmg_tet(wdbp, fracture_event_nmg) == 0,
 		"fracture command event fixture NMG must be created");
 	CHECK(make_event_nmg_tet(wdbp, shells_event_nmg) == 0,
 		"shells command event fixture NMG must be created");
 	CHECK(make_event_nmg_tet(wdbp, decompose_event_nmg) == 0,
 		"decompose command event fixture NMG must be created");
+	CHECK(make_event_nmg_tet(wdbp, nmg_collapse_event_src) == 0,
+		"nmg_collapse command event fixture NMG must be created");
+	CHECK(make_event_nmg_box(wdbp, nmg_simplify_event_src) == 0,
+		"nmg_simplify command event fixture NMG must be created");
     }
 
     event_order_observer arced_post;
@@ -2035,6 +2813,128 @@ test_events(struct ged *gedp)
 	    "copymat command must identify affected destination comb");
     CHECK(ged_event_observer_remove(gedp, copymat_post_token) == 1,
 	    "copymat observer removal must succeed");
+
+    event_order_observer comb_std_post;
+    ged_event_observer_token comb_std_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &comb_std_post);
+    CHECK(comb_std_post_token != 0,
+	    "c command observer must register");
+    const char *comb_std_av[4] = {"c", comb_std_event_dst,
+	comb_event_child, NULL};
+    CHECK(ged_exec(gedp, 3, comb_std_av) == BRLCAD_OK,
+	    "c command must publish object creation event");
+    CHECK(comb_std_post.calls == 1,
+	    "c command must publish one event transaction");
+    CHECK(observed_named_event(comb_std_post, GED_EVENT_OBJECT_ADDED,
+		comb_std_event_dst),
+	    "c command must emit object-added event for created comb");
+    CHECK(std::find(comb_std_post.all_kinds.begin(),
+	    comb_std_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    comb_std_post.all_kinds.end(),
+	    "c command creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, comb_std_post_token) == 1,
+	    "c command observer removal must succeed");
+
+    event_order_observer comb_std_region_post;
+    ged_event_observer_token comb_std_region_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &comb_std_region_post);
+    CHECK(comb_std_region_post_token != 0,
+	    "c -r command observer must register");
+    const char *comb_std_region_av[4] = {"c", "-r", comb_std_event_dst,
+	NULL};
+    CHECK(ged_exec(gedp, 3, comb_std_region_av) == BRLCAD_OK,
+	    "c -r command must publish region flag event");
+    CHECK(comb_std_region_post.calls == 1,
+	    "c -r command must publish one event transaction");
+    CHECK(observed_named_event(comb_std_region_post,
+		GED_EVENT_ATTRIBUTE_CHANGED, comb_std_event_dst),
+	    "c -r command must emit attribute-changed event");
+    CHECK(!observed_named_event(comb_std_region_post,
+		GED_EVENT_OBJECT_MODIFIED, comb_std_event_dst),
+	    "c -r semantic event must cover raw object fallback");
+    CHECK(ged_event_observer_remove(gedp, comb_std_region_post_token) == 1,
+	    "c -r command observer removal must succeed");
+
+    event_order_observer combmem_post;
+    ged_event_observer_token combmem_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &combmem_post);
+    CHECK(combmem_post_token != 0,
+	    "combmem observer must register");
+    const char *combmem_av[10] = {"combmem", "-r", "5",
+	combmem_event_comb, "u", combmem_event_child_b, "1", "2", "3",
+	NULL};
+    CHECK(ged_exec(gedp, 9, combmem_av) == BRLCAD_OK,
+	    "combmem command must publish comb-tree event");
+    CHECK(combmem_post.calls == 1,
+	    "combmem command must publish one event transaction");
+    CHECK(combmem_post.coalesced_count == 1,
+	    "combmem command must coalesce raw fallback with semantic event");
+    CHECK(observed_named_event(combmem_post,
+		GED_EVENT_COMB_TREE_CHANGED, combmem_event_comb),
+	    "combmem command must emit comb-tree event for edited comb");
+    CHECK(!observed_named_event(combmem_post,
+		GED_EVENT_OBJECT_MODIFIED, combmem_event_comb),
+	    "combmem semantic event must cover raw object fallback");
+    CHECK(!combmem_post.redraws.empty() && combmem_post.redraws[0] == 1,
+	    "combmem semantic event must request redraw");
+    CHECK(combmem_post.all_affected_names.find(combmem_event_comb) !=
+	    std::string::npos,
+	    "combmem command must identify affected comb");
+    CHECK(ged_event_observer_remove(gedp, combmem_post_token) == 1,
+	    "combmem observer removal must succeed");
+
+    event_order_observer edit_perturb_post;
+    ged_event_observer_token edit_perturb_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &edit_perturb_post);
+    CHECK(edit_perturb_post_token != 0,
+	    "edit perturb observer must register");
+    const char *edit_perturb_av[5] = {"edit", edit_perturb_event_sph,
+	"perturb", "0.1", NULL};
+    CHECK(ged_exec(gedp, 4, edit_perturb_av) == BRLCAD_OK,
+	    "edit perturb command must publish object-modified event");
+    CHECK(edit_perturb_post.calls == 1,
+	    "edit perturb command must publish one event transaction");
+    CHECK(observed_named_event(edit_perturb_post,
+		GED_EVENT_OBJECT_MODIFIED, edit_perturb_event_sph),
+	    "edit perturb command must emit object-modified event");
+    CHECK(!observed_named_event(edit_perturb_post,
+		GED_EVENT_OBJECT_ADDED, edit_perturb_event_sph),
+	    "edit perturb command must not expose delete/re-add as object add");
+    CHECK(std::find(edit_perturb_post.all_kinds.begin(),
+	    edit_perturb_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    edit_perturb_post.all_kinds.end(),
+	    "edit perturb command must hide temporary delete/re-add removal");
+    CHECK(ged_event_observer_remove(gedp, edit_perturb_post_token) == 1,
+	    "edit perturb observer removal must succeed");
+
+    event_order_observer pipe_delete_post;
+    ged_event_observer_token pipe_delete_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &pipe_delete_post);
+    CHECK(pipe_delete_post_token != 0,
+	    "pipe_delete_pnt observer must register");
+    const char *pipe_delete_av[4] = {"pipe_delete_pnt", pipe_event_obj,
+	"1", NULL};
+    CHECK(ged_exec(gedp, 3, pipe_delete_av) == BRLCAD_OK,
+	    "pipe_delete_pnt command must publish object-modified event");
+    CHECK(pipe_delete_post.calls == 1,
+	    "pipe_delete_pnt command must publish one event transaction");
+    CHECK(observed_named_event(pipe_delete_post,
+		GED_EVENT_OBJECT_MODIFIED, pipe_event_obj),
+	    "pipe_delete_pnt command must emit object-modified event");
+    CHECK(!observed_named_event(pipe_delete_post,
+		GED_EVENT_OBJECT_ADDED, pipe_event_obj),
+	    "pipe_delete_pnt command must not report an in-place edit as an add");
+    CHECK(std::find(pipe_delete_post.all_kinds.begin(),
+	    pipe_delete_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    pipe_delete_post.all_kinds.end(),
+	    "pipe_delete_pnt command must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, pipe_delete_post_token) == 1,
+	    "pipe_delete_pnt observer removal must succeed");
 
     event_order_observer adjust_prim_post;
     ged_event_observer_token adjust_prim_post_token =
@@ -2244,6 +3144,321 @@ test_events(struct ged *gedp)
 	    "in ell creation fixture must not publish removals");
     CHECK(ged_event_observer_remove(gedp, in_common_post_token) == 1,
 	    "in common-write observer removal must succeed");
+
+    event_order_observer make_post;
+    ged_event_observer_token make_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &make_post);
+    CHECK(make_post_token != 0,
+	    "make observer must register");
+    const char *make_av[4] = {"make", make_event_dst, "sph", NULL};
+    CHECK(ged_exec(gedp, 3, make_av) == BRLCAD_OK,
+	    "make command must publish object creation event");
+    CHECK(make_post.calls == 1,
+	    "make command must publish one event transaction");
+    CHECK(observed_named_event(make_post, GED_EVENT_OBJECT_ADDED,
+		make_event_dst),
+	    "make command must emit object-added event for created primitive");
+    CHECK(std::find(make_post.all_kinds.begin(),
+	    make_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    make_post.all_kinds.end(),
+	    "make creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, make_post_token) == 1,
+	    "make observer removal must succeed");
+
+    event_order_observer pscale_post;
+    ged_event_observer_token pscale_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &pscale_post);
+    CHECK(pscale_post_token != 0,
+	    "pscale observer must register");
+    const char *pscale_av[5] = {"pscale", make_event_dst, "A", "2",
+	NULL};
+    CHECK(ged_exec(gedp, 4, pscale_av) == BRLCAD_OK,
+	    "pscale command must publish object-modified event");
+    CHECK(pscale_post.calls == 1,
+	    "pscale command must publish one event transaction");
+    CHECK(observed_named_event(pscale_post, GED_EVENT_OBJECT_MODIFIED,
+		make_event_dst),
+	    "pscale command must emit object-modified event");
+    CHECK(!observed_named_event(pscale_post, GED_EVENT_OBJECT_ADDED,
+		make_event_dst),
+	    "pscale command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, pscale_post_token) == 1,
+	    "pscale observer removal must succeed");
+
+    event_order_observer otranslate_post;
+    ged_event_observer_token otranslate_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &otranslate_post);
+    CHECK(otranslate_post_token != 0,
+	    "otranslate observer must register");
+    const char *otranslate_av[6] = {"otranslate", make_event_dst, "1",
+	"0", "0", NULL};
+    CHECK(ged_exec(gedp, 5, otranslate_av) == BRLCAD_OK,
+	    "otranslate command must publish object-modified event");
+    CHECK(otranslate_post.calls == 1,
+	    "otranslate command must publish one event transaction");
+    CHECK(observed_named_event(otranslate_post, GED_EVENT_OBJECT_MODIFIED,
+		make_event_dst),
+	    "otranslate command must emit object-modified event");
+    CHECK(!observed_named_event(otranslate_post, GED_EVENT_OBJECT_ADDED,
+		make_event_dst),
+	    "otranslate command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, otranslate_post_token) == 1,
+	    "otranslate observer removal must succeed");
+
+    event_order_observer oscale_post;
+    ged_event_observer_token oscale_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &oscale_post);
+    CHECK(oscale_post_token != 0,
+	    "oscale observer must register");
+    const char *oscale_av[4] = {"oscale", make_event_dst, "1.1", NULL};
+    CHECK(ged_exec(gedp, 3, oscale_av) == BRLCAD_OK,
+	    "oscale command must publish object-modified event");
+    CHECK(oscale_post.calls == 1,
+	    "oscale command must publish one event transaction");
+    CHECK(observed_named_event(oscale_post, GED_EVENT_OBJECT_MODIFIED,
+		make_event_dst),
+	    "oscale command must emit object-modified event");
+    CHECK(!observed_named_event(oscale_post, GED_EVENT_OBJECT_ADDED,
+		make_event_dst),
+	    "oscale command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, oscale_post_token) == 1,
+	    "oscale observer removal must succeed");
+
+    event_order_observer orotate_post;
+    ged_event_observer_token orotate_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &orotate_post);
+    CHECK(orotate_post_token != 0,
+	    "orotate observer must register");
+    const char *orotate_av[6] = {"orotate", make_event_dst, "0", "0",
+	"1", NULL};
+    CHECK(ged_exec(gedp, 5, orotate_av) == BRLCAD_OK,
+	    "orotate command must publish object-modified event");
+    CHECK(orotate_post.calls == 1,
+	    "orotate command must publish one event transaction");
+    CHECK(observed_named_event(orotate_post, GED_EVENT_OBJECT_MODIFIED,
+		make_event_dst),
+	    "orotate command must emit object-modified event");
+    CHECK(!observed_named_event(orotate_post, GED_EVENT_OBJECT_ADDED,
+		make_event_dst),
+	    "orotate command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, orotate_post_token) == 1,
+	    "orotate observer removal must succeed");
+
+    event_order_observer ocenter_post;
+    ged_event_observer_token ocenter_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &ocenter_post);
+    CHECK(ocenter_post_token != 0,
+	    "ocenter observer must register");
+    const char *ocenter_av[6] = {"ocenter", make_event_dst, "0", "0",
+	"0", NULL};
+    CHECK(ged_exec(gedp, 5, ocenter_av) == BRLCAD_OK,
+	    "ocenter command must publish object-modified event");
+    CHECK(ocenter_post.calls == 1,
+	    "ocenter command must publish one event transaction");
+    CHECK(observed_named_event(ocenter_post, GED_EVENT_OBJECT_MODIFIED,
+		make_event_dst),
+	    "ocenter command must emit object-modified event");
+    CHECK(!observed_named_event(ocenter_post, GED_EVENT_OBJECT_ADDED,
+		make_event_dst),
+	    "ocenter command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, ocenter_post_token) == 1,
+	    "ocenter observer removal must succeed");
+
+    const char *metaball_make_av[4] = {"make", metaball_event_dst,
+	"metaball", NULL};
+    CHECK(ged_exec(gedp, 3, metaball_make_av) == BRLCAD_OK,
+	    "metaball command event fixture must be created");
+
+    event_order_observer pset_post;
+    ged_event_observer_token pset_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &pset_post);
+    CHECK(pset_post_token != 0,
+	    "pset observer must register");
+    const char *pset_av[5] = {"pset", metaball_event_dst, "t", "2",
+	NULL};
+    CHECK(ged_exec(gedp, 4, pset_av) == BRLCAD_OK,
+	    "pset command must publish object-modified event");
+    CHECK(pset_post.calls == 1,
+	    "pset command must publish one event transaction");
+    CHECK(observed_named_event(pset_post, GED_EVENT_OBJECT_MODIFIED,
+		metaball_event_dst),
+	    "pset command must emit object-modified event");
+    CHECK(!observed_named_event(pset_post, GED_EVENT_OBJECT_ADDED,
+		metaball_event_dst),
+	    "pset command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, pset_post_token) == 1,
+	    "pset observer removal must succeed");
+
+    event_order_observer metaball_add_post;
+    ged_event_observer_token metaball_add_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &metaball_add_post);
+    CHECK(metaball_add_post_token != 0,
+	    "mouse_add_metaball_pnt observer must register");
+    const char *metaball_add_av[4] = {"mouse_add_metaball_pnt",
+	metaball_event_dst, "0 0 0", NULL};
+    CHECK(ged_exec(gedp, 3, metaball_add_av) == BRLCAD_OK,
+	    "mouse_add_metaball_pnt command must publish object-modified event");
+    CHECK(metaball_add_post.calls == 1,
+	    "mouse_add_metaball_pnt command must publish one event transaction");
+    CHECK(observed_named_event(metaball_add_post,
+		GED_EVENT_OBJECT_MODIFIED, metaball_event_dst),
+	    "mouse_add_metaball_pnt command must emit object-modified event");
+    CHECK(!observed_named_event(metaball_add_post,
+		GED_EVENT_OBJECT_ADDED, metaball_event_dst),
+	    "mouse_add_metaball_pnt command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, metaball_add_post_token) == 1,
+	    "mouse_add_metaball_pnt observer removal must succeed");
+
+    event_order_observer metaball_move_post;
+    ged_event_observer_token metaball_move_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &metaball_move_post);
+    CHECK(metaball_move_post_token != 0,
+	    "metaball_move_pnt observer must register");
+    const char *metaball_move_av[5] = {"metaball_move_pnt",
+	metaball_event_dst, "0", "0 0 1", NULL};
+    CHECK(ged_exec(gedp, 4, metaball_move_av) == BRLCAD_OK,
+	    "metaball_move_pnt command must publish object-modified event");
+    CHECK(metaball_move_post.calls == 1,
+	    "metaball_move_pnt command must publish one event transaction");
+    CHECK(observed_named_event(metaball_move_post,
+		GED_EVENT_OBJECT_MODIFIED, metaball_event_dst),
+	    "metaball_move_pnt command must emit object-modified event");
+    CHECK(!observed_named_event(metaball_move_post,
+		GED_EVENT_OBJECT_ADDED, metaball_event_dst),
+	    "metaball_move_pnt command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, metaball_move_post_token) == 1,
+	    "metaball_move_pnt observer removal must succeed");
+
+    event_order_observer metaball_delete_post;
+    ged_event_observer_token metaball_delete_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &metaball_delete_post);
+    CHECK(metaball_delete_post_token != 0,
+	    "metaball_delete_pnt observer must register");
+    const char *metaball_delete_av[4] = {"metaball_delete_pnt",
+	metaball_event_dst, "2", NULL};
+    CHECK(ged_exec(gedp, 3, metaball_delete_av) == BRLCAD_OK,
+	    "metaball_delete_pnt command must publish object-modified event");
+    CHECK(metaball_delete_post.calls == 1,
+	    "metaball_delete_pnt command must publish one event transaction");
+    CHECK(observed_named_event(metaball_delete_post,
+		GED_EVENT_OBJECT_MODIFIED, metaball_event_dst),
+	    "metaball_delete_pnt command must emit object-modified event");
+    CHECK(!observed_named_event(metaball_delete_post,
+		GED_EVENT_OBJECT_ADDED, metaball_event_dst),
+	    "metaball_delete_pnt command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, metaball_delete_post_token) == 1,
+	    "metaball_delete_pnt observer removal must succeed");
+
+    char bo_event_file[MAXPATHLEN] = {0};
+    FILE *bo_fp = bu_temp_file(bo_event_file, MAXPATHLEN);
+    CHECK(bo_fp != NULL,
+	    "bo command event fixture temp file must be created");
+    if (bo_fp) {
+	const unsigned char bo_data[4] = {1, 2, 3, 4};
+	CHECK(fwrite(bo_data, sizeof(bo_data), 1, bo_fp) == 1,
+		"bo command event fixture temp file must be writable");
+	fclose(bo_fp);
+    }
+    event_order_observer bo_post;
+    ged_event_observer_token bo_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bo_post);
+    CHECK(bo_post_token != 0,
+	    "bo observer must register");
+    const char *bo_av[7] = {"bo", "-i", "u", "c", bo_event_dst,
+	bo_event_file, NULL};
+    CHECK(bo_fp && ged_exec(gedp, 6, bo_av) == BRLCAD_OK,
+	    "bo import command must publish object creation event");
+    CHECK(bo_post.calls == 1,
+	    "bo import command must publish one event transaction");
+    CHECK(observed_named_event(bo_post, GED_EVENT_OBJECT_ADDED,
+		bo_event_dst),
+	    "bo import command must emit object-added event");
+    CHECK(std::find(bo_post.all_kinds.begin(),
+	    bo_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bo_post.all_kinds.end(),
+	    "bo import fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bo_post_token) == 1,
+	    "bo observer removal must succeed");
+    if (bo_event_file[0] != '\0')
+	bu_file_delete(bo_event_file);
+
+    event_order_observer threeptarb_post;
+    ged_event_observer_token threeptarb_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &threeptarb_post);
+    CHECK(threeptarb_post_token != 0,
+	    "3ptarb observer must register");
+    const char *threeptarb_av[16] = {"3ptarb", threeptarb_event_dst,
+	"0", "0", "0", "1", "0", "0", "0", "1", "0", "z", "1", "1",
+	"1", NULL};
+    CHECK(ged_exec(gedp, 15, threeptarb_av) == BRLCAD_OK,
+	    "3ptarb command must publish object creation event");
+    CHECK(threeptarb_post.calls == 1,
+	    "3ptarb command must publish one event transaction");
+    CHECK(observed_named_event(threeptarb_post, GED_EVENT_OBJECT_ADDED,
+		threeptarb_event_dst),
+	    "3ptarb command must emit object-added event");
+    CHECK(std::find(threeptarb_post.all_kinds.begin(),
+	    threeptarb_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    threeptarb_post.all_kinds.end(),
+	    "3ptarb fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, threeptarb_post_token) == 1,
+	    "3ptarb observer removal must succeed");
+
+    event_order_observer cc_post;
+    ged_event_observer_token cc_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &cc_post);
+    CHECK(cc_post_token != 0,
+	    "cc observer must register");
+    const char *cc_av[4] = {"cc", cc_event_dst,
+	"_ged_event_constraint_expr", NULL};
+    CHECK(ged_exec(gedp, 3, cc_av) == BRLCAD_OK,
+	    "cc command must publish object creation event");
+    CHECK(cc_post.calls == 1,
+	    "cc command must publish one event transaction");
+    CHECK(observed_named_event(cc_post, GED_EVENT_OBJECT_ADDED,
+		cc_event_dst),
+	    "cc command must emit object-added event");
+    CHECK(std::find(cc_post.all_kinds.begin(),
+	    cc_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    cc_post.all_kinds.end(),
+	    "cc fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, cc_post_token) == 1,
+	    "cc observer removal must succeed");
+
+    event_order_observer inside_post;
+    ged_event_observer_token inside_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &inside_post);
+    CHECK(inside_post_token != 0,
+	    "inside observer must register");
+    const char *inside_av[5] = {"inside", inside_event_src,
+	inside_event_dst, "0.25", NULL};
+    CHECK(ged_exec(gedp, 4, inside_av) == BRLCAD_OK,
+	    "inside command must publish object creation event");
+    CHECK(inside_post.calls == 1,
+	    "inside command must publish one event transaction");
+    CHECK(observed_named_event(inside_post, GED_EVENT_OBJECT_ADDED,
+		inside_event_dst),
+	    "inside command must emit object-added event for created object");
+    CHECK(std::find(inside_post.all_kinds.begin(),
+	    inside_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    inside_post.all_kinds.end(),
+	    "inside creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, inside_post_token) == 1,
+	    "inside observer removal must succeed");
 
     event_order_observer heal_post;
     ged_event_observer_token heal_post_token =
@@ -2504,6 +3719,212 @@ test_events(struct ged *gedp)
     CHECK(ged_event_observer_remove(gedp, cpi_post_token) == 1,
 	    "cpi observer removal must succeed");
 
+    event_order_observer ptranslate_post;
+    ged_event_observer_token ptranslate_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &ptranslate_post);
+    CHECK(ptranslate_post_token != 0,
+	    "ptranslate observer must register");
+    const char *ptranslate_av[6] = {"ptranslate", "-r", cpi_event_src,
+	"H", "0 0 1", NULL};
+    CHECK(ged_exec(gedp, 5, ptranslate_av) == BRLCAD_OK,
+	    "ptranslate command must publish object-modified event");
+    CHECK(ptranslate_post.calls == 1,
+	    "ptranslate command must publish one event transaction");
+    CHECK(observed_named_event(ptranslate_post, GED_EVENT_OBJECT_MODIFIED,
+		cpi_event_src),
+	    "ptranslate command must emit object-modified event");
+    CHECK(!observed_named_event(ptranslate_post, GED_EVENT_OBJECT_ADDED,
+		cpi_event_src),
+	    "ptranslate command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, ptranslate_post_token) == 1,
+	    "ptranslate observer removal must succeed");
+
+    event_order_observer protate_post;
+    ged_event_observer_token protate_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &protate_post);
+    CHECK(protate_post_token != 0,
+	    "protate observer must register");
+    const char *protate_av[5] = {"protate", cpi_event_src, "H", "1 0 0",
+	NULL};
+    CHECK(ged_exec(gedp, 4, protate_av) == BRLCAD_OK,
+	    "protate command must publish object-modified event");
+    CHECK(protate_post.calls == 1,
+	    "protate command must publish one event transaction");
+    CHECK(observed_named_event(protate_post, GED_EVENT_OBJECT_MODIFIED,
+		cpi_event_src),
+	    "protate command must emit object-modified event");
+    CHECK(!observed_named_event(protate_post, GED_EVENT_OBJECT_ADDED,
+		cpi_event_src),
+	    "protate command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, protate_post_token) == 1,
+	    "protate observer removal must succeed");
+
+    event_order_observer bev_post;
+    ged_event_observer_token bev_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bev_post);
+    CHECK(bev_post_token != 0,
+	    "bev observer must register");
+    const char *bev_av[4] = {"bev", bev_event_dst, bev_event_region, NULL};
+    CHECK(ged_exec(gedp, 3, bev_av) == BRLCAD_OK,
+	    "bev command must publish object creation event");
+    CHECK(bev_post.calls == 1,
+	    "bev command must publish one event transaction");
+    CHECK(observed_named_event(bev_post, GED_EVENT_OBJECT_ADDED,
+		bev_event_dst),
+	    "bev command must emit object-added event");
+    CHECK(std::find(bev_post.all_kinds.begin(),
+	    bev_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bev_post.all_kinds.end(),
+	    "bev fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bev_post_token) == 1,
+	    "bev observer removal must succeed");
+
+    bsg_data_polygon_state polyclip_state;
+    std::memset(&polyclip_state, 0, sizeof(polyclip_state));
+    MAT_IDN(polyclip_state.gdps_rotation);
+    MAT_IDN(polyclip_state.gdps_model2view);
+    MAT_IDN(polyclip_state.gdps_view2model);
+    polyclip_state.gdps_scale = 1.0;
+    VSET(polyclip_state.gdps_origin, 0.0, 0.0, 0.0);
+    polyclip_state.gdps_data_vZ = 0.0;
+    int polyclip_hole = 0;
+    point_t polyclip_points[4];
+    VSET(polyclip_points[0], 0.0, 0.0, 0.0);
+    VSET(polyclip_points[1], 1.0, 0.0, 0.0);
+    VSET(polyclip_points[2], 1.0, 1.0, 0.0);
+    VSET(polyclip_points[3], 0.0, 1.0, 0.0);
+    struct bg_poly_contour polyclip_contour;
+    std::memset(&polyclip_contour, 0, sizeof(polyclip_contour));
+    polyclip_contour.num_points = 4;
+    polyclip_contour.point = polyclip_points;
+    struct bg_polygon polyclip_polygon;
+    std::memset(&polyclip_polygon, 0, sizeof(polyclip_polygon));
+    polyclip_polygon.num_contours = 1;
+    polyclip_polygon.hole = &polyclip_hole;
+    polyclip_polygon.contour = &polyclip_contour;
+    polyclip_state.gdps_polygons.num_polygons = 1;
+    polyclip_state.gdps_polygons.polygon = &polyclip_polygon;
+
+    event_order_observer polyclip_post;
+    ged_event_observer_token polyclip_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &polyclip_post);
+    CHECK(polyclip_post_token != 0,
+	    "polyclip export observer must register");
+    CHECK(ged_export_polygon(gedp, &polyclip_state, 0,
+		polyclip_event_sketch) == BRLCAD_OK,
+	    "polyclip export helper must publish object creation event");
+    CHECK(polyclip_post.calls == 1,
+	    "polyclip export helper must publish one event transaction");
+    CHECK(observed_named_event(polyclip_post, GED_EVENT_OBJECT_ADDED,
+		polyclip_event_sketch),
+	    "polyclip export helper must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, polyclip_event_sketch, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "polyclip export helper must create sketch object");
+    CHECK(std::find(polyclip_post.all_kinds.begin(),
+	    polyclip_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    polyclip_post.all_kinds.end(),
+	    "polyclip export helper fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, polyclip_post_token) == 1,
+	    "polyclip export observer removal must succeed");
+
+    event_order_observer analyze_pnts_post;
+    ged_event_observer_token analyze_pnts_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &analyze_pnts_post);
+    CHECK(analyze_pnts_post_token != 0,
+	    "analyze PNTS output observer must register");
+    const char *analyze_pnts_av[7] = {"analyze", "intersect", "-o",
+	analyze_pnts_out, analyze_pnts_src, analyze_vol_src, NULL};
+    int analyze_pnts_ret = ged_exec(gedp, 6, analyze_pnts_av);
+    if (analyze_pnts_ret != BRLCAD_OK)
+	bu_log("analyze PNTS result: %s\n", bu_vls_cstr(gedp->ged_result_str));
+    CHECK(analyze_pnts_ret == BRLCAD_OK,
+	    "analyze PNTS/volume output command must succeed");
+    CHECK(analyze_pnts_post.calls == 1,
+	    "analyze PNTS/volume output must publish one event transaction");
+    CHECK(observed_named_event(analyze_pnts_post, GED_EVENT_OBJECT_ADDED,
+		analyze_pnts_out),
+	    "analyze PNTS/volume output must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, analyze_pnts_out, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "analyze PNTS/volume output object must be present");
+    CHECK(std::find(analyze_pnts_post.all_kinds.begin(),
+	    analyze_pnts_post.all_kinds.end(), GED_EVENT_OBJECT_RENAMED) ==
+	    analyze_pnts_post.all_kinds.end(),
+	    "analyze PNTS direct output must not publish temporary rename");
+    CHECK(std::find(analyze_pnts_post.all_kinds.begin(),
+	    analyze_pnts_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    analyze_pnts_post.all_kinds.end(),
+	    "analyze PNTS direct output must not publish temporary removal");
+    CHECK(ged_event_observer_remove(gedp, analyze_pnts_post_token) == 1,
+	    "analyze PNTS output observer removal must succeed");
+
+    char pnts_read_basic_file[MAXPATHLEN] = {0};
+    FILE *pnts_read_basic_fp = bu_temp_file(pnts_read_basic_file, MAXPATHLEN);
+    if (pnts_read_basic_fp) {
+	CHECK(fprintf(pnts_read_basic_fp, "1 2 3\n") > 0,
+		"pnts read basic fixture must write point data");
+	fclose(pnts_read_basic_fp);
+    }
+    event_order_observer pnts_read_basic_post;
+    ged_event_observer_token pnts_read_basic_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &pnts_read_basic_post);
+    CHECK(pnts_read_basic_post_token != 0,
+	    "pnts read basic observer must register");
+    const char *pnts_read_basic_av[7] = {"pnts", "read", "-f", "xyz",
+	pnts_read_basic_file, pnts_read_basic_obj, NULL};
+    CHECK(pnts_read_basic_fp &&
+	    ged_exec(gedp, 6, pnts_read_basic_av) == BRLCAD_OK,
+	    "pnts read basic command must publish object creation event");
+    CHECK(pnts_read_basic_post.calls == 1,
+	    "pnts read basic command must publish one event transaction");
+    CHECK(observed_named_event(pnts_read_basic_post, GED_EVENT_OBJECT_ADDED,
+		pnts_read_basic_obj),
+	    "pnts read basic command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, pnts_read_basic_obj, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "pnts read basic command must create PNTS object");
+    CHECK(ged_event_observer_remove(gedp, pnts_read_basic_post_token) == 1,
+	    "pnts read basic observer removal must succeed");
+    bu_file_delete(pnts_read_basic_file);
+
+    char pnts_read_full_file[MAXPATHLEN] = {0};
+    FILE *pnts_read_full_fp = bu_temp_file(pnts_read_full_file, MAXPATHLEN);
+    if (pnts_read_full_fp) {
+	CHECK(fprintf(pnts_read_full_fp,
+		    "4 5 6 0 0 1 0.5 255 128 0\n") > 0,
+		"pnts read full fixture must write point data");
+	fclose(pnts_read_full_fp);
+    }
+    event_order_observer pnts_read_full_post;
+    ged_event_observer_token pnts_read_full_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &pnts_read_full_post);
+    CHECK(pnts_read_full_post_token != 0,
+	    "pnts read full observer must register");
+    const char *pnts_read_full_av[7] = {"pnts", "read", "-f",
+	"xyzijksrgb", pnts_read_full_file, pnts_read_full_obj, NULL};
+    CHECK(pnts_read_full_fp &&
+	    ged_exec(gedp, 6, pnts_read_full_av) == BRLCAD_OK,
+	    "pnts read full command must publish object creation event");
+    CHECK(pnts_read_full_post.calls == 1,
+	    "pnts read full command must publish one event transaction");
+    CHECK(observed_named_event(pnts_read_full_post, GED_EVENT_OBJECT_ADDED,
+		pnts_read_full_obj),
+	    "pnts read full command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, pnts_read_full_obj, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "pnts read full command must create PNTS object");
+    CHECK(ged_event_observer_remove(gedp, pnts_read_full_post_token) == 1,
+	    "pnts read full observer removal must succeed");
+    bu_file_delete(pnts_read_full_file);
+
     event_order_observer copyeval_post;
     ged_event_observer_token copyeval_post_token =
 	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
@@ -2570,6 +3991,696 @@ test_events(struct ged *gedp)
     CHECK(ged_event_observer_remove(gedp, rfarb_post_token) == 1,
 	    "rfarb observer removal must succeed");
 
+    event_order_observer arb_create_post;
+    ged_event_observer_token arb_create_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &arb_create_post);
+    CHECK(arb_create_post_token != 0,
+	    "arb create observer must register");
+    const char *arb_create_av[6] = {"arb", "create", arb_create_event_dst,
+	"0", "0", NULL};
+    CHECK(ged_exec(gedp, 5, arb_create_av) == BRLCAD_OK,
+	    "arb create command must publish object creation event");
+    CHECK(arb_create_post.calls == 1,
+	    "arb create command must publish one event transaction");
+    CHECK(observed_named_event(arb_create_post, GED_EVENT_OBJECT_ADDED,
+		arb_create_event_dst),
+	    "arb create command must emit object-added event");
+    CHECK(std::find(arb_create_post.all_kinds.begin(),
+	    arb_create_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    arb_create_post.all_kinds.end(),
+	    "arb create fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, arb_create_post_token) == 1,
+	    "arb create observer removal must succeed");
+
+    event_order_observer rotate_arb_face_post;
+    ged_event_observer_token rotate_arb_face_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &rotate_arb_face_post);
+    CHECK(rotate_arb_face_post_token != 0,
+	    "rotate_arb_face observer must register");
+    const char *rotate_arb_face_av[6] = {"rotate_arb_face",
+	arb_create_event_dst, "1", "1", "0 0 1", NULL};
+    CHECK(ged_exec(gedp, 5, rotate_arb_face_av) == BRLCAD_OK,
+	    "rotate_arb_face command must publish object-modified event");
+    CHECK(rotate_arb_face_post.calls == 1,
+	    "rotate_arb_face command must publish one event transaction");
+    CHECK(observed_named_event(rotate_arb_face_post,
+		GED_EVENT_OBJECT_MODIFIED, arb_create_event_dst),
+	    "rotate_arb_face command must emit object-modified event");
+    CHECK(!observed_named_event(rotate_arb_face_post,
+		GED_EVENT_OBJECT_ADDED, arb_create_event_dst),
+	    "rotate_arb_face command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, rotate_arb_face_post_token) == 1,
+	    "rotate_arb_face observer removal must succeed");
+
+    event_order_observer edarb_extrude_post;
+    ged_event_observer_token edarb_extrude_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &edarb_extrude_post);
+    CHECK(edarb_extrude_post_token != 0,
+	    "edarb extrude observer must register");
+    const char *edarb_extrude_av[6] = {"edarb", "extrude",
+	arb_create_event_dst, "1234", "1", NULL};
+    CHECK(ged_exec(gedp, 5, edarb_extrude_av) == BRLCAD_OK,
+	    "edarb extrude command must publish object-modified event");
+    CHECK(edarb_extrude_post.calls == 1,
+	    "edarb extrude command must publish one event transaction");
+    CHECK(observed_named_event(edarb_extrude_post,
+		GED_EVENT_OBJECT_MODIFIED, arb_create_event_dst),
+	    "edarb extrude command must emit object-modified event");
+    CHECK(!observed_named_event(edarb_extrude_post,
+		GED_EVENT_OBJECT_ADDED, arb_create_event_dst),
+	    "edarb extrude command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, edarb_extrude_post_token) == 1,
+	    "edarb extrude observer removal must succeed");
+
+    event_order_observer move_arb_face_post;
+    ged_event_observer_token move_arb_face_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &move_arb_face_post);
+    CHECK(move_arb_face_post_token != 0,
+	    "move_arb_face observer must register");
+    const char *move_arb_face_av[6] = {"move_arb_face", "-r",
+	arb_create_event_dst, "1", "0 0 1", NULL};
+    CHECK(ged_exec(gedp, 5, move_arb_face_av) == BRLCAD_OK,
+	    "move_arb_face command must publish object-modified event");
+    CHECK(move_arb_face_post.calls == 1,
+	    "move_arb_face command must publish one event transaction");
+    CHECK(observed_named_event(move_arb_face_post,
+		GED_EVENT_OBJECT_MODIFIED, arb_create_event_dst),
+	    "move_arb_face command must emit object-modified event");
+    CHECK(!observed_named_event(move_arb_face_post,
+		GED_EVENT_OBJECT_ADDED, arb_create_event_dst),
+	    "move_arb_face command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, move_arb_face_post_token) == 1,
+	    "move_arb_face observer removal must succeed");
+
+    event_order_observer move_arb_edge_post;
+    ged_event_observer_token move_arb_edge_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &move_arb_edge_post);
+    CHECK(move_arb_edge_post_token != 0,
+	    "move_arb_edge observer must register");
+    const char *move_arb_edge_av[6] = {"move_arb_edge", "-r",
+	arb_create_event_dst, "1", "0 0 1", NULL};
+    CHECK(ged_exec(gedp, 5, move_arb_edge_av) == BRLCAD_OK,
+	    "move_arb_edge command must publish object-modified event");
+    CHECK(move_arb_edge_post.calls == 1,
+	    "move_arb_edge command must publish one event transaction");
+    CHECK(observed_named_event(move_arb_edge_post,
+		GED_EVENT_OBJECT_MODIFIED, arb_create_event_dst),
+	    "move_arb_edge command must emit object-modified event");
+    CHECK(!observed_named_event(move_arb_edge_post,
+		GED_EVENT_OBJECT_ADDED, arb_create_event_dst),
+	    "move_arb_edge command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, move_arb_edge_post_token) == 1,
+	    "move_arb_edge observer removal must succeed");
+
+    event_order_observer track_post;
+    ged_event_observer_token track_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &track_post);
+    CHECK(track_post_token != 0,
+	    "track observer must register");
+    const char *track_av[16] = {"track", track_event_group, "10", "0",
+	"0", "1", "-3", "0", "1", "13", "0", "1", "-1", "1", "0.2",
+	NULL};
+    CHECK(ged_exec(gedp, 15, track_av) == BRLCAD_OK,
+	    "track command must publish object creation events");
+    CHECK(track_post.calls == 1,
+	    "track command must publish one event transaction");
+    CHECK(observed_named_event(track_post, GED_EVENT_OBJECT_ADDED,
+		track_event_group),
+	    "track command must emit object-added event for final group");
+    CHECK(observed_named_event(track_post, GED_EVENT_OBJECT_ADDED,
+		"_ged_event_track.s.0"),
+	    "track command must emit object-added event for generated solids");
+    CHECK(std::find(track_post.all_kinds.begin(),
+	    track_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    track_post.all_kinds.end(),
+	    "track command fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, track_post_token) == 1,
+	    "track observer removal must succeed");
+
+    event_order_observer coil_post;
+    ged_event_observer_token coil_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &coil_post);
+    CHECK(coil_post_token != 0,
+	    "coil observer must register");
+    const char *coil_av[3] = {"coil", coil_event_group, NULL};
+    CHECK(ged_exec(gedp, 2, coil_av) == BRLCAD_OK,
+	    "coil command must publish object creation events");
+    CHECK(coil_post.calls == 1,
+	    "coil command must publish one event transaction");
+    CHECK(observed_named_event(coil_post, GED_EVENT_OBJECT_ADDED,
+		coil_event_group),
+	    "coil command must emit object-added event for final comb");
+    CHECK(observed_named_event(coil_post, GED_EVENT_OBJECT_ADDED,
+		"_ged_event_coil_core.s"),
+	    "coil command must emit object-added event for generated core");
+    CHECK(std::find(coil_post.all_kinds.begin(),
+	    coil_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    coil_post.all_kinds.end(),
+	    "coil command fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, coil_post_token) == 1,
+	    "coil observer removal must succeed");
+
+    event_order_observer human_post;
+    ged_event_observer_token human_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &human_post);
+    CHECK(human_post_token != 0,
+	    "human observer must register");
+    const char *human_av[4] = {"human", "-n", human_event_top, NULL};
+    CHECK(ged_exec(gedp, 3, human_av) == BRLCAD_OK,
+	    "human command must publish object creation events");
+    CHECK(human_post.calls == 1,
+	    "human command must publish one event transaction");
+    CHECK(observed_named_event(human_post, GED_EVENT_OBJECT_ADDED,
+		human_event_top),
+	    "human command must emit object-added event for final body comb");
+    CHECK(observed_named_event(human_post, GED_EVENT_OBJECT_ADDED,
+		"Head.s"),
+	    "human command must emit object-added event for generated solids");
+    CHECK(std::find(human_post.all_kinds.begin(), human_post.all_kinds.end(),
+	    GED_EVENT_DATABASE_METADATA_CHANGED) != human_post.all_kinds.end(),
+	    "human command must emit database metadata change event");
+    CHECK(std::find(human_post.all_kinds.begin(), human_post.all_kinds.end(),
+	    GED_EVENT_OBJECT_REMOVED) == human_post.all_kinds.end(),
+	    "human command fixture must not publish removals");
+    CHECK(db_lookup(gedp->dbip, human_event_top, LOOKUP_QUIET) != RT_DIR_NULL,
+	    "human command must create final body comb");
+    CHECK(ged_event_observer_remove(gedp, human_post_token) == 1,
+	    "human observer removal must succeed");
+
+    event_order_observer voxelize_post;
+    ged_event_observer_token voxelize_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &voxelize_post);
+    CHECK(voxelize_post_token != 0,
+	    "voxelize observer must register");
+    const char *voxelize_av[10] = {"voxelize", "-s", "2 2 2", "-d", "1",
+	"-t", "0.5", voxelize_event_dst, voxelize_event_region, NULL};
+    CHECK(ged_exec(gedp, 9, voxelize_av) == BRLCAD_OK,
+	    "voxelize command must publish object creation events");
+    CHECK(voxelize_post.calls == 1,
+	    "voxelize command must publish one event transaction");
+    CHECK(observed_named_event(voxelize_post, GED_EVENT_OBJECT_ADDED,
+		voxelize_event_dst),
+	    "voxelize command must emit object-added event for final comb");
+    CHECK(observed_named_event(voxelize_post, GED_EVENT_OBJECT_ADDED,
+		voxelize_event_box),
+	    "voxelize command must emit object-added event for generated voxel");
+    CHECK(db_lookup(gedp->dbip, voxelize_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "voxelize command must create final comb");
+    CHECK(db_lookup(gedp->dbip, voxelize_event_box, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "voxelize command must create generated voxel solid");
+    CHECK(std::find(voxelize_post.all_kinds.begin(),
+	    voxelize_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    voxelize_post.all_kinds.end(),
+	    "voxelize command fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, voxelize_post_token) == 1,
+	    "voxelize observer removal must succeed");
+
+    event_order_observer arb_repair_post;
+    ged_event_observer_token arb_repair_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &arb_repair_post);
+    CHECK(arb_repair_post_token != 0,
+	    "arb repair observer must register");
+    const char *arb_repair_av[6] = {"arb", "repair", "-o",
+	arb_repair_event_dst, rfarb_event_dst, NULL};
+    CHECK(ged_exec(gedp, 5, arb_repair_av) == BRLCAD_OK,
+	    "arb repair output command must publish object creation event");
+    CHECK(arb_repair_post.calls == 1,
+	    "arb repair output command must publish one event transaction");
+    CHECK(observed_named_event(arb_repair_post, GED_EVENT_OBJECT_ADDED,
+		arb_repair_event_dst),
+	    "arb repair output command must emit object-added event");
+    CHECK(std::find(arb_repair_post.all_kinds.begin(),
+	    arb_repair_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    arb_repair_post.all_kinds.end(),
+	    "arb repair output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, arb_repair_post_token) == 1,
+	    "arb repair observer removal must succeed");
+
+    event_order_observer bot_flip_post;
+    ged_event_observer_token bot_flip_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_flip_post);
+    CHECK(bot_flip_post_token != 0,
+	    "bot flip observer must register");
+    const char *bot_flip_av[4] = {"bot", "flip", bot_split_event_src, NULL};
+    CHECK(ged_exec(gedp, 3, bot_flip_av) == BRLCAD_OK,
+	    "bot flip command must publish object-modified event");
+    CHECK(bot_flip_post.calls == 1,
+	    "bot flip command must publish one event transaction");
+    CHECK(observed_named_event(bot_flip_post, GED_EVENT_OBJECT_MODIFIED,
+		bot_split_event_src),
+	    "bot flip command must emit object-modified event");
+    CHECK(!observed_named_event(bot_flip_post, GED_EVENT_OBJECT_ADDED,
+		bot_split_event_src),
+	    "bot flip command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, bot_flip_post_token) == 1,
+	    "bot flip observer removal must succeed");
+
+    event_order_observer bot_pca_post;
+    ged_event_observer_token bot_pca_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_pca_post);
+    CHECK(bot_pca_post_token != 0,
+	    "bot pca observer must register");
+    const char *bot_pca_av[5] = {"bot", "pca", bot_split_event_src,
+	bot_pca_event_dst, NULL};
+    CHECK(ged_exec(gedp, 4, bot_pca_av) == BRLCAD_OK,
+	    "bot pca output command must publish object creation event");
+    CHECK(bot_pca_post.calls == 1,
+	    "bot pca output command must publish one event transaction");
+    CHECK(observed_named_event(bot_pca_post, GED_EVENT_OBJECT_ADDED,
+		bot_pca_event_dst),
+	    "bot pca output command must emit object-added event");
+    CHECK(std::find(bot_pca_post.all_kinds.begin(),
+	    bot_pca_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_pca_post.all_kinds.end(),
+	    "bot pca output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_pca_post_token) == 1,
+	    "bot pca observer removal must succeed");
+
+    event_order_observer bot_set_post;
+    ged_event_observer_token bot_set_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_set_post);
+    CHECK(bot_set_post_token != 0,
+	    "bot set observer must register");
+    const char *bot_set_av[6] = {"bot", "set", "orientation",
+	bot_cpp_event_src, "cw", NULL};
+    CHECK(ged_exec(gedp, 5, bot_set_av) == BRLCAD_OK,
+	    "bot set command must publish object-modified event");
+    CHECK(bot_set_post.calls == 1,
+	    "bot set command must publish one event transaction");
+    CHECK(observed_named_event(bot_set_post, GED_EVENT_OBJECT_MODIFIED,
+		bot_cpp_event_src),
+	    "bot set command must emit object-modified event");
+    CHECK(!observed_named_event(bot_set_post, GED_EVENT_OBJECT_ADDED,
+		bot_cpp_event_src),
+	    "bot set command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, bot_set_post_token) == 1,
+	    "bot set observer removal must succeed");
+
+    event_order_observer bot_sync_post;
+    ged_event_observer_token bot_sync_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_sync_post);
+    CHECK(bot_sync_post_token != 0,
+	    "bot sync observer must register");
+    const char *bot_sync_av[4] = {"bot", "sync", bot_cpp_event_src, NULL};
+    CHECK(ged_exec(gedp, 3, bot_sync_av) == BRLCAD_OK,
+	    "bot sync command must publish object-modified event");
+    CHECK(bot_sync_post.calls == 1,
+	    "bot sync command must publish one event transaction");
+    CHECK(observed_named_event(bot_sync_post, GED_EVENT_OBJECT_MODIFIED,
+		bot_cpp_event_src),
+	    "bot sync command must emit object-modified event");
+    CHECK(!observed_named_event(bot_sync_post, GED_EVENT_OBJECT_ADDED,
+		bot_cpp_event_src),
+	    "bot sync command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, bot_sync_post_token) == 1,
+	    "bot sync observer removal must succeed");
+
+    event_order_observer bot_chull_post;
+    ged_event_observer_token bot_chull_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_chull_post);
+    CHECK(bot_chull_post_token != 0,
+	    "bot chull observer must register");
+    const char *bot_chull_av[5] = {"bot", "chull", bot_cpp_event_src,
+	bot_chull_event_dst, NULL};
+    CHECK(ged_exec(gedp, 4, bot_chull_av) == BRLCAD_OK,
+	    "bot chull output command must publish object creation event");
+    CHECK(bot_chull_post.calls == 1,
+	    "bot chull output command must publish one event transaction");
+    CHECK(observed_named_event(bot_chull_post, GED_EVENT_OBJECT_ADDED,
+		bot_chull_event_dst),
+	    "bot chull output command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, bot_chull_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "bot chull output object must exist after command");
+    CHECK(std::find(bot_chull_post.all_kinds.begin(),
+	    bot_chull_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_chull_post.all_kinds.end(),
+	    "bot chull output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_chull_post_token) == 1,
+	    "bot chull observer removal must succeed");
+
+    event_order_observer bot_decimate_cpp_post;
+    ged_event_observer_token bot_decimate_cpp_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_decimate_cpp_post);
+    CHECK(bot_decimate_cpp_post_token != 0,
+	    "bot decimate observer must register");
+    const char *bot_decimate_cpp_av[7] = {"bot", "decimate", "-t",
+	"0.001", bot_cpp_event_src, bot_decimate_cpp_event_dst, NULL};
+    CHECK(ged_exec(gedp, 6, bot_decimate_cpp_av) == BRLCAD_OK,
+	    "bot decimate output command must publish object creation event");
+    CHECK(bot_decimate_cpp_post.calls == 1,
+	    "bot decimate output command must publish one event transaction");
+    CHECK(observed_named_event(bot_decimate_cpp_post,
+		GED_EVENT_OBJECT_ADDED, bot_decimate_cpp_event_dst),
+	    "bot decimate output command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, bot_decimate_cpp_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "bot decimate output object must exist after command");
+    CHECK(std::find(bot_decimate_cpp_post.all_kinds.begin(),
+	    bot_decimate_cpp_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_decimate_cpp_post.all_kinds.end(),
+	    "bot decimate output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_decimate_cpp_post_token) == 1,
+	    "bot decimate observer removal must succeed");
+
+    event_order_observer bot_subd_post;
+    ged_event_observer_token bot_subd_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_subd_post);
+    CHECK(bot_subd_post_token != 0,
+	    "bot subd observer must register");
+    const char *bot_subd_av[7] = {"bot", "subd", "-l", "1",
+	bot_cpp_event_src, bot_subd_event_dst, NULL};
+    CHECK(ged_exec(gedp, 6, bot_subd_av) == BRLCAD_OK,
+	    "bot subd output command must publish object creation event");
+    CHECK(bot_subd_post.calls == 1,
+	    "bot subd output command must publish one event transaction");
+    CHECK(observed_named_event(bot_subd_post, GED_EVENT_OBJECT_ADDED,
+		bot_subd_event_dst),
+	    "bot subd output command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, bot_subd_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "bot subd output object must exist after command");
+    CHECK(std::find(bot_subd_post.all_kinds.begin(),
+	    bot_subd_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_subd_post.all_kinds.end(),
+	    "bot subd output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_subd_post_token) == 1,
+	    "bot subd observer removal must succeed");
+
+    event_order_observer bot_smooth_cpp_post;
+    ged_event_observer_token bot_smooth_cpp_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_smooth_cpp_post);
+    CHECK(bot_smooth_cpp_post_token != 0,
+	    "bot smooth observer must register");
+    const char *bot_smooth_cpp_av[7] = {"bot", "smooth", "-I", "1",
+	bot_cpp_event_src, bot_smooth_cpp_event_dst, NULL};
+    CHECK(ged_exec(gedp, 6, bot_smooth_cpp_av) == BRLCAD_OK,
+	    "bot smooth output command must publish object creation event");
+    CHECK(bot_smooth_cpp_post.calls == 1,
+	    "bot smooth output command must publish one event transaction");
+    CHECK(observed_named_event(bot_smooth_cpp_post, GED_EVENT_OBJECT_ADDED,
+		bot_smooth_cpp_event_dst),
+	    "bot smooth output command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, bot_smooth_cpp_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "bot smooth output object must exist after command");
+    CHECK(std::find(bot_smooth_cpp_post.all_kinds.begin(),
+	    bot_smooth_cpp_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_smooth_cpp_post.all_kinds.end(),
+	    "bot smooth output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_smooth_cpp_post_token) == 1,
+	    "bot smooth observer removal must succeed");
+
+    event_order_observer bot_repair_cpp_post;
+    ged_event_observer_token bot_repair_cpp_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_repair_cpp_post);
+    CHECK(bot_repair_cpp_post_token != 0,
+	    "bot repair observer must register");
+    const char *bot_repair_cpp_av[8] = {"bot", "repair", "-p", "100",
+	"-o", bot_repair_cpp_event_dst, bot_repair_cpp_event_src, NULL};
+    CHECK(ged_exec(gedp, 7, bot_repair_cpp_av) == BRLCAD_OK,
+	    "bot repair output command must publish object creation event");
+    CHECK(bot_repair_cpp_post.calls == 1,
+	    "bot repair output command must publish one event transaction");
+    CHECK(observed_named_event(bot_repair_cpp_post, GED_EVENT_OBJECT_ADDED,
+		bot_repair_cpp_event_dst),
+	    "bot repair output command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, bot_repair_cpp_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "bot repair output object must exist after command");
+    CHECK(std::find(bot_repair_cpp_post.all_kinds.begin(),
+	    bot_repair_cpp_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_repair_cpp_post.all_kinds.end(),
+	    "bot repair output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_repair_cpp_post_token) == 1,
+	    "bot repair observer removal must succeed");
+
+    event_order_observer bot_remesh_post;
+    ged_event_observer_token bot_remesh_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_remesh_post);
+    CHECK(bot_remesh_post_token != 0,
+	    "bot remesh observer must register");
+    const char *bot_remesh_av[5] = {"bot", "remesh", bot_remesh_event_src,
+	bot_remesh_event_dst, NULL};
+    CHECK(ged_exec(gedp, 4, bot_remesh_av) == BRLCAD_OK,
+	    "bot remesh output command must publish object creation event");
+    CHECK(bot_remesh_post.calls == 1,
+	    "bot remesh output command must publish one event transaction");
+    CHECK(observed_named_event(bot_remesh_post, GED_EVENT_OBJECT_ADDED,
+		bot_remesh_event_dst),
+	    "bot remesh output command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, bot_remesh_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "bot remesh output object must exist after command");
+    CHECK(std::find(bot_remesh_post.all_kinds.begin(),
+	    bot_remesh_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_remesh_post.all_kinds.end(),
+	    "bot remesh output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_remesh_post_token) == 1,
+	    "bot remesh observer removal must succeed");
+
+    event_order_observer bot_extrude_post;
+    ged_event_observer_token bot_extrude_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_extrude_post);
+    CHECK(bot_extrude_post_token != 0,
+	    "bot extrude observer must register");
+    const char *bot_extrude_av[7] = {"bot", "extrude", "-q", "-C",
+	bot_extrude_event_src, bot_extrude_event_dst, NULL};
+    CHECK(ged_exec(gedp, 6, bot_extrude_av) == BRLCAD_OK,
+	    "bot extrude CSG command must publish object creation events");
+    CHECK(bot_extrude_post.calls == 1,
+	    "bot extrude CSG command must publish one event transaction");
+    CHECK(observed_named_event(bot_extrude_post, GED_EVENT_OBJECT_ADDED,
+		bot_extrude_event_dst),
+	    "bot extrude CSG command must emit output object-added event");
+    CHECK(db_lookup(gedp->dbip, bot_extrude_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "bot extrude CSG output object must exist after command");
+    CHECK(std::find(bot_extrude_post.all_kinds.begin(),
+	    bot_extrude_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_extrude_post.all_kinds.end(),
+	    "bot extrude CSG fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_extrude_post_token) == 1,
+	    "bot extrude observer removal must succeed");
+
+    event_order_observer bot_exterior_post;
+    ged_event_observer_token bot_exterior_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_exterior_post);
+    CHECK(bot_exterior_post_token != 0,
+	    "bot exterior observer must register");
+    const char *bot_exterior_av[7] = {"bot", "exterior", "-c", "100",
+	bot_exterior_event_src, bot_exterior_event_dst, NULL};
+    CHECK(ged_exec(gedp, 6, bot_exterior_av) == BRLCAD_OK,
+	    "bot exterior output command must publish object creation event");
+    CHECK(bot_exterior_post.calls == 1,
+	    "bot exterior output command must publish one event transaction");
+    CHECK(observed_named_event(bot_exterior_post, GED_EVENT_OBJECT_ADDED,
+		bot_exterior_event_dst),
+	    "bot exterior output command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, bot_exterior_event_dst, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "bot exterior output object must exist after command");
+    CHECK(std::find(bot_exterior_post.all_kinds.begin(),
+	    bot_exterior_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    bot_exterior_post.all_kinds.end(),
+	    "bot exterior output fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, bot_exterior_post_token) == 1,
+	    "bot exterior observer removal must succeed");
+
+    event_order_observer bot_flip_legacy_post;
+    ged_event_observer_token bot_flip_legacy_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_flip_legacy_post);
+    CHECK(bot_flip_legacy_post_token != 0,
+	    "legacy bot_flip observer must register");
+    const char *bot_flip_legacy_av[3] = {"bot_flip", bot_pca_event_dst, NULL};
+    CHECK(ged_exec(gedp, 2, bot_flip_legacy_av) == BRLCAD_OK,
+	    "legacy bot_flip command must publish object-modified event");
+    CHECK(bot_flip_legacy_post.calls == 1,
+	    "legacy bot_flip command must publish one event transaction");
+    CHECK(observed_named_event(bot_flip_legacy_post,
+		GED_EVENT_OBJECT_MODIFIED, bot_pca_event_dst),
+	    "legacy bot_flip command must emit object-modified event");
+    CHECK(!observed_named_event(bot_flip_legacy_post,
+		GED_EVENT_OBJECT_ADDED, bot_pca_event_dst),
+	    "legacy bot_flip command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, bot_flip_legacy_post_token) == 1,
+	    "legacy bot_flip observer removal must succeed");
+
+    event_order_observer bot_condense_post;
+    ged_event_observer_token bot_condense_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_condense_post);
+    CHECK(bot_condense_post_token != 0,
+	    "bot_condense observer must register");
+    const char *bot_condense_av[4] = {"bot_condense",
+	bot_condense_event_dst, bot_pca_event_dst, NULL};
+    CHECK(ged_exec(gedp, 3, bot_condense_av) == BRLCAD_OK,
+	    "bot_condense command must publish object creation event");
+    CHECK(bot_condense_post.calls == 1,
+	    "bot_condense command must publish one event transaction");
+    CHECK(observed_named_event(bot_condense_post, GED_EVENT_OBJECT_ADDED,
+		bot_condense_event_dst),
+	    "bot_condense command must emit object-added event");
+    CHECK(ged_event_observer_remove(gedp, bot_condense_post_token) == 1,
+	    "bot_condense observer removal must succeed");
+
+    event_order_observer bot_vertex_fuse_post;
+    ged_event_observer_token bot_vertex_fuse_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_vertex_fuse_post);
+    CHECK(bot_vertex_fuse_post_token != 0,
+	    "bot_vertex_fuse observer must register");
+    const char *bot_vertex_fuse_av[4] = {"bot_vertex_fuse",
+	bot_vertex_fuse_event_dst, bot_condense_event_dst, NULL};
+    CHECK(ged_exec(gedp, 3, bot_vertex_fuse_av) == BRLCAD_OK,
+	    "bot_vertex_fuse command must publish object creation event");
+    CHECK(bot_vertex_fuse_post.calls == 1,
+	    "bot_vertex_fuse command must publish one event transaction");
+    CHECK(observed_named_event(bot_vertex_fuse_post,
+		GED_EVENT_OBJECT_ADDED, bot_vertex_fuse_event_dst),
+	    "bot_vertex_fuse command must emit object-added event");
+    CHECK(ged_event_observer_remove(gedp, bot_vertex_fuse_post_token) == 1,
+	    "bot_vertex_fuse observer removal must succeed");
+
+    event_order_observer bot_face_fuse_post;
+    ged_event_observer_token bot_face_fuse_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_face_fuse_post);
+    CHECK(bot_face_fuse_post_token != 0,
+	    "bot_face_fuse observer must register");
+    const char *bot_face_fuse_av[4] = {"bot_face_fuse",
+	bot_face_fuse_event_dst, bot_vertex_fuse_event_dst, NULL};
+    CHECK(ged_exec(gedp, 3, bot_face_fuse_av) == BRLCAD_OK,
+	    "bot_face_fuse command must publish object creation event");
+    CHECK(bot_face_fuse_post.calls == 1,
+	    "bot_face_fuse command must publish one event transaction");
+    CHECK(observed_named_event(bot_face_fuse_post,
+		GED_EVENT_OBJECT_ADDED, bot_face_fuse_event_dst),
+	    "bot_face_fuse command must emit object-added event");
+    CHECK(ged_event_observer_remove(gedp, bot_face_fuse_post_token) == 1,
+	    "bot_face_fuse observer removal must succeed");
+
+    event_order_observer bot_face_sort_post;
+    ged_event_observer_token bot_face_sort_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_face_sort_post);
+    CHECK(bot_face_sort_post_token != 0,
+	    "bot_face_sort observer must register");
+    const char *bot_face_sort_av[4] = {"bot_face_sort", "1",
+	bot_face_fuse_event_dst, NULL};
+    CHECK(ged_exec(gedp, 3, bot_face_sort_av) == BRLCAD_OK,
+	    "bot_face_sort command must publish object-modified event");
+    CHECK(bot_face_sort_post.calls == 1,
+	    "bot_face_sort command must publish one event transaction");
+    CHECK(observed_named_event(bot_face_sort_post,
+		GED_EVENT_OBJECT_MODIFIED, bot_face_fuse_event_dst),
+	    "bot_face_sort command must emit object-modified event");
+    CHECK(!observed_named_event(bot_face_sort_post,
+		GED_EVENT_OBJECT_ADDED, bot_face_fuse_event_dst),
+	    "bot_face_sort command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, bot_face_sort_post_token) == 1,
+	    "bot_face_sort observer removal must succeed");
+
+    event_order_observer bot_sync_legacy_post;
+    ged_event_observer_token bot_sync_legacy_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_sync_legacy_post);
+    CHECK(bot_sync_legacy_post_token != 0,
+	    "legacy bot_sync observer must register");
+    const char *bot_sync_legacy_av[3] = {"bot_sync", bot_face_fuse_event_dst,
+	NULL};
+    CHECK(ged_exec(gedp, 2, bot_sync_legacy_av) == BRLCAD_OK,
+	    "legacy bot_sync command must publish object-modified event");
+    CHECK(bot_sync_legacy_post.calls == 1,
+	    "legacy bot_sync command must publish one event transaction");
+    CHECK(observed_named_event(bot_sync_legacy_post,
+		GED_EVENT_OBJECT_MODIFIED, bot_face_fuse_event_dst),
+	    "legacy bot_sync command must emit object-modified event");
+    CHECK(!observed_named_event(bot_sync_legacy_post,
+		GED_EVENT_OBJECT_ADDED, bot_face_fuse_event_dst),
+	    "legacy bot_sync command must not report an in-place edit as an add");
+    CHECK(ged_event_observer_remove(gedp, bot_sync_legacy_post_token) == 1,
+	    "legacy bot_sync observer removal must succeed");
+
+    event_order_observer bot_smooth_post;
+    ged_event_observer_token bot_smooth_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_smooth_post);
+    CHECK(bot_smooth_post_token != 0,
+	    "legacy bot_smooth observer must register");
+    const char *bot_smooth_av[4] = {"bot_smooth", bot_smooth_event_dst,
+	bot_smooth_event_src, NULL};
+    CHECK(ged_exec(gedp, 3, bot_smooth_av) == BRLCAD_OK,
+	    "legacy bot_smooth command must publish object creation event");
+    CHECK(bot_smooth_post.calls == 1,
+	    "legacy bot_smooth command must publish one event transaction");
+    CHECK(observed_named_event(bot_smooth_post, GED_EVENT_OBJECT_ADDED,
+		bot_smooth_event_dst),
+	    "legacy bot_smooth command must emit object-added event");
+    CHECK(ged_event_observer_remove(gedp, bot_smooth_post_token) == 1,
+	    "legacy bot_smooth observer removal must succeed");
+
+    event_order_observer bot_decimate_post;
+    ged_event_observer_token bot_decimate_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_decimate_post);
+    CHECK(bot_decimate_post_token != 0,
+	    "bot_decimate observer must register");
+    const char *bot_decimate_av[6] = {"bot_decimate", "-f", "0",
+	bot_decimate_event_dst, bot_face_fuse_event_dst, NULL};
+    CHECK(ged_exec(gedp, 5, bot_decimate_av) == BRLCAD_OK,
+	    "bot_decimate command must publish object creation event");
+    CHECK(bot_decimate_post.calls == 1,
+	    "bot_decimate command must publish one event transaction");
+    CHECK(observed_named_event(bot_decimate_post, GED_EVENT_OBJECT_ADDED,
+		bot_decimate_event_dst),
+	    "bot_decimate command must emit object-added event");
+    CHECK(ged_event_observer_remove(gedp, bot_decimate_post_token) == 1,
+	    "bot_decimate observer removal must succeed");
+
+    event_order_observer bot_merge_post;
+    ged_event_observer_token bot_merge_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bot_merge_post);
+    CHECK(bot_merge_post_token != 0,
+	    "bot_merge observer must register");
+    const char *bot_merge_av[5] = {"bot_merge", bot_merge_event_dst,
+	bot_pca_event_dst, bot_decimate_event_dst, NULL};
+    CHECK(ged_exec(gedp, 4, bot_merge_av) == BRLCAD_OK,
+	    "bot_merge command must publish object creation event");
+    CHECK(bot_merge_post.calls == 1,
+	    "bot_merge command must publish one event transaction");
+    CHECK(observed_named_event(bot_merge_post, GED_EVENT_OBJECT_ADDED,
+		bot_merge_event_dst),
+	    "bot_merge command must emit object-added event");
+    CHECK(ged_event_observer_remove(gedp, bot_merge_post_token) == 1,
+	    "bot_merge observer removal must succeed");
+
     event_order_observer bot_split_post;
     ged_event_observer_token bot_split_post_token =
 	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
@@ -2594,6 +4705,30 @@ test_events(struct ged *gedp)
 	    "bot split creation fixture must not publish removals");
     CHECK(ged_event_observer_remove(gedp, bot_split_post_token) == 1,
 	    "bot split observer removal must succeed");
+
+    event_order_observer lint_group_post;
+    ged_event_observer_token lint_group_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &lint_group_post);
+    CHECK(lint_group_post_token != 0,
+	    "lint diagnostic group observer must register");
+    const char *lint_group_av[7] = {"lint", "-I", "bot:not_solid", "-g",
+	lint_group, lint_bad_bot, NULL};
+    CHECK(ged_exec(gedp, 6, lint_group_av) == BRLCAD_OK,
+	    "lint diagnostic group command must publish object creation event");
+    CHECK(lint_group_post.calls == 1,
+	    "lint diagnostic group command must publish one event transaction");
+    CHECK(observed_named_event(lint_group_post, GED_EVENT_OBJECT_ADDED,
+		lint_group),
+	    "lint diagnostic group command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, lint_group, LOOKUP_QUIET) != RT_DIR_NULL,
+	    "lint diagnostic group command must create output comb");
+    CHECK(std::find(lint_group_post.all_kinds.begin(),
+	    lint_group_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    lint_group_post.all_kinds.end(),
+	    "lint diagnostic group fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, lint_group_post_token) == 1,
+	    "lint diagnostic group observer removal must succeed");
 
     event_order_observer shells_post;
     ged_event_observer_token shells_post_token =
@@ -2661,6 +4796,211 @@ test_events(struct ged *gedp)
 	    "fracture command creation fixture must not publish removals");
     CHECK(ged_event_observer_remove(gedp, fracture_post_token) == 1,
 	    "fracture observer removal must succeed");
+
+    event_order_observer nmg_collapse_post;
+    ged_event_observer_token nmg_collapse_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &nmg_collapse_post);
+    CHECK(nmg_collapse_post_token != 0,
+	    "nmg_collapse observer must register");
+    const char *nmg_collapse_av[5] = {"nmg_collapse",
+	nmg_collapse_event_src, nmg_collapse_event_dst, "0.01", NULL};
+    CHECK(ged_exec(gedp, 4, nmg_collapse_av) == BRLCAD_OK,
+	    "nmg_collapse command must publish object-added event");
+    CHECK(nmg_collapse_post.calls == 1,
+	    "nmg_collapse command must publish one event transaction");
+    CHECK(observed_named_event(nmg_collapse_post, GED_EVENT_OBJECT_ADDED,
+		nmg_collapse_event_dst),
+	    "nmg_collapse command must emit object-added event");
+    CHECK(std::find(nmg_collapse_post.all_kinds.begin(),
+	    nmg_collapse_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    nmg_collapse_post.all_kinds.end(),
+	    "nmg_collapse creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, nmg_collapse_post_token) == 1,
+	    "nmg_collapse observer removal must succeed");
+
+    event_order_observer nmg_simplify_post;
+    ged_event_observer_token nmg_simplify_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &nmg_simplify_post);
+    CHECK(nmg_simplify_post_token != 0,
+	    "nmg_simplify observer must register");
+    const char *nmg_simplify_av[5] = {"nmg_simplify", "arb",
+	nmg_simplify_event_dst, nmg_simplify_event_src, NULL};
+    CHECK(ged_exec(gedp, 4, nmg_simplify_av) == BRLCAD_OK,
+	    "nmg_simplify command must publish object-added event");
+    CHECK(nmg_simplify_post.calls == 1,
+	    "nmg_simplify command must publish one event transaction");
+    CHECK(observed_named_event(nmg_simplify_post, GED_EVENT_OBJECT_ADDED,
+		nmg_simplify_event_dst),
+	    "nmg_simplify command must emit object-added event");
+    CHECK(std::find(nmg_simplify_post.all_kinds.begin(),
+	    nmg_simplify_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    nmg_simplify_post.all_kinds.end(),
+	    "nmg_simplify creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, nmg_simplify_post_token) == 1,
+	    "nmg_simplify observer removal must succeed");
+
+    event_order_observer nmg_mm_post;
+    ged_event_observer_token nmg_mm_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &nmg_mm_post);
+    CHECK(nmg_mm_post_token != 0,
+	    "nmg_mm observer must register");
+    const char *nmg_mm_av[3] = {"nmg_mm", nmg_mm_event_dst, NULL};
+    CHECK(ged_exec(gedp, 2, nmg_mm_av) == BRLCAD_OK,
+	    "nmg_mm command must publish object-added event");
+    CHECK(nmg_mm_post.calls == 1,
+	    "nmg_mm command must publish one event transaction");
+    CHECK(observed_named_event(nmg_mm_post, GED_EVENT_OBJECT_ADDED,
+		nmg_mm_event_dst),
+	    "nmg_mm command must emit object-added event");
+    CHECK(std::find(nmg_mm_post.all_kinds.begin(),
+	    nmg_mm_post.all_kinds.end(), GED_EVENT_OBJECT_REMOVED) ==
+	    nmg_mm_post.all_kinds.end(),
+	    "nmg_mm creation fixture must not publish removals");
+    CHECK(ged_event_observer_remove(gedp, nmg_mm_post_token) == 1,
+	    "nmg_mm observer removal must succeed");
+
+    const char *nmg_inplace_mm_av[3] = {"nmg_mm", nmg_inplace_event_obj,
+	NULL};
+    CHECK(ged_exec(gedp, 2, nmg_inplace_mm_av) == BRLCAD_OK,
+	    "nmg in-place fixture must create an empty NMG");
+
+    event_order_observer nmg_cmface_post;
+    ged_event_observer_token nmg_cmface_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &nmg_cmface_post);
+    CHECK(nmg_cmface_post_token != 0,
+	    "nmg cmface observer must register");
+    const char *nmg_cmface_av[13] = {"nmg", nmg_inplace_event_obj,
+	"cmface", "0", "0", "0", "1", "0", "0", "0", "1", "0",
+	NULL};
+    CHECK(ged_exec(gedp, 12, nmg_cmface_av) == BRLCAD_OK,
+	    "nmg cmface command must publish object-modified event");
+    CHECK(nmg_cmface_post.calls == 1,
+	    "nmg cmface command must publish one event transaction");
+    CHECK(observed_named_event(nmg_cmface_post,
+		GED_EVENT_OBJECT_MODIFIED, nmg_inplace_event_obj),
+	    "nmg cmface command must emit object-modified event");
+    CHECK(!observed_named_event(nmg_cmface_post,
+		GED_EVENT_OBJECT_ADDED, nmg_inplace_event_obj),
+	    "nmg cmface command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, nmg_cmface_post_token) == 1,
+	    "nmg cmface observer removal must succeed");
+
+    event_order_observer nmg_make_v_post;
+    ged_event_observer_token nmg_make_v_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &nmg_make_v_post);
+    CHECK(nmg_make_v_post_token != 0,
+	    "nmg make V observer must register");
+    const char *nmg_make_v_av[8] = {"nmg", nmg_inplace_event_obj,
+	"make", "V", "2", "0", "0", NULL};
+    CHECK(ged_exec(gedp, 7, nmg_make_v_av) == BRLCAD_OK,
+	    "nmg make V command must publish object-modified event");
+    CHECK(nmg_make_v_post.calls == 1,
+	    "nmg make V command must publish one event transaction");
+    CHECK(observed_named_event(nmg_make_v_post,
+		GED_EVENT_OBJECT_MODIFIED, nmg_inplace_event_obj),
+	    "nmg make V command must emit object-modified event");
+    CHECK(!observed_named_event(nmg_make_v_post,
+		GED_EVENT_OBJECT_ADDED, nmg_inplace_event_obj),
+	    "nmg make V command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, nmg_make_v_post_token) == 1,
+	    "nmg make V observer removal must succeed");
+
+    event_order_observer nmg_move_v_post;
+    ged_event_observer_token nmg_move_v_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &nmg_move_v_post);
+    CHECK(nmg_move_v_post_token != 0,
+	    "nmg move V observer must register");
+    const char *nmg_move_v_av[11] = {"nmg", nmg_inplace_event_obj,
+	"move", "V", "2", "0", "0", "2", "1", "0", NULL};
+    CHECK(ged_exec(gedp, 10, nmg_move_v_av) == BRLCAD_OK,
+	    "nmg move V command must publish object-modified event");
+    CHECK(nmg_move_v_post.calls == 1,
+	    "nmg move V command must publish one event transaction");
+    CHECK(observed_named_event(nmg_move_v_post,
+		GED_EVENT_OBJECT_MODIFIED, nmg_inplace_event_obj),
+	    "nmg move V command must emit object-modified event");
+    CHECK(!observed_named_event(nmg_move_v_post,
+		GED_EVENT_OBJECT_ADDED, nmg_inplace_event_obj),
+	    "nmg move V command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, nmg_move_v_post_token) == 1,
+	    "nmg move V observer removal must succeed");
+
+    event_order_observer nmg_kill_v_post;
+    ged_event_observer_token nmg_kill_v_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &nmg_kill_v_post);
+    CHECK(nmg_kill_v_post_token != 0,
+	    "nmg kill V observer must register");
+    const char *nmg_kill_v_av[8] = {"nmg", nmg_inplace_event_obj,
+	"kill", "V", "2", "1", "0", NULL};
+    CHECK(ged_exec(gedp, 7, nmg_kill_v_av) == BRLCAD_OK,
+	    "nmg kill V command must publish object-modified event");
+    CHECK(nmg_kill_v_post.calls == 1,
+	    "nmg kill V command must publish one event transaction");
+    CHECK(observed_named_event(nmg_kill_v_post,
+		GED_EVENT_OBJECT_MODIFIED, nmg_inplace_event_obj),
+	    "nmg kill V command must emit object-modified event");
+    CHECK(!observed_named_event(nmg_kill_v_post,
+		GED_EVENT_OBJECT_ADDED, nmg_inplace_event_obj),
+	    "nmg kill V command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, nmg_kill_v_post_token) == 1,
+	    "nmg kill V observer removal must succeed");
+
+    long nmg_kill_face_index =
+	first_nmg_face_index(gedp, nmg_inplace_event_obj);
+    CHECK(nmg_kill_face_index >= 0,
+	    "nmg kill F fixture must find an existing face");
+    char nmg_kill_face_arg[64] = {0};
+    std::snprintf(nmg_kill_face_arg, sizeof(nmg_kill_face_arg), "%ld",
+	    nmg_kill_face_index);
+    event_order_observer nmg_kill_f_post;
+    ged_event_observer_token nmg_kill_f_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &nmg_kill_f_post);
+    CHECK(nmg_kill_f_post_token != 0,
+	    "nmg kill F observer must register");
+    const char *nmg_kill_f_av[6] = {"nmg", nmg_inplace_event_obj,
+	"kill", "F", nmg_kill_face_arg, NULL};
+    CHECK(nmg_kill_face_index >= 0 &&
+	    ged_exec(gedp, 5, nmg_kill_f_av) == BRLCAD_OK,
+	    "nmg kill F command must publish object-modified event");
+    CHECK(nmg_kill_f_post.calls == 1,
+	    "nmg kill F command must publish one event transaction");
+    CHECK(observed_named_event(nmg_kill_f_post,
+		GED_EVENT_OBJECT_MODIFIED, nmg_inplace_event_obj),
+	    "nmg kill F command must emit object-modified event");
+    CHECK(!observed_named_event(nmg_kill_f_post,
+		GED_EVENT_OBJECT_ADDED, nmg_inplace_event_obj),
+	    "nmg kill F command must not report in-place edit as add");
+    CHECK(ged_event_observer_remove(gedp, nmg_kill_f_post_token) == 1,
+	    "nmg kill F observer removal must succeed");
+
+    event_order_observer group_post;
+    ged_event_observer_token group_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &group_post);
+    CHECK(group_post_token != 0,
+	    "group command observer must register");
+    const char *group_av[4] = {"g", group_event_dst, comb_event_child,
+	NULL};
+    CHECK(ged_exec(gedp, 3, group_av) == BRLCAD_OK,
+	    "group command creation must publish object-added event");
+    CHECK(group_post.calls == 1,
+	    "group command creation must publish one event transaction");
+    CHECK(observed_named_event(group_post, GED_EVENT_OBJECT_ADDED,
+		group_event_dst),
+	    "group command creation must emit object-added event");
+    CHECK(!observed_named_event(group_post, GED_EVENT_COMB_TREE_CHANGED,
+		group_event_dst),
+	    "group command creation must not report new comb as tree edit");
+    CHECK(ged_event_observer_remove(gedp, group_post_token) == 1,
+	    "group command observer removal must succeed");
 
     event_order_observer comb_add_post;
     ged_event_observer_token comb_add_post_token =
@@ -3306,6 +5646,77 @@ test_events(struct ged *gedp)
 	    "facetize_old copied comb must update DB index path");
     CHECK(ged_event_observer_remove(gedp, facet_old_post_token) == 1,
 	    "facetize old observer removal must succeed");
+
+    const char *facet_modern_child = "_ged_event_facetize_modern_child.s";
+    const char *facet_modern_region = "_ged_event_facetize_modern_region.r";
+    const char *facet_modern_output = "_ged_event_facetize_modern_output.c";
+    if (wdbp) {
+	point_t facet_modern_center = {625.0, 0.0, 0.0};
+	struct wmember facet_modern_wm;
+	BU_LIST_INIT(&facet_modern_wm.l);
+	CHECK(mk_sph(wdbp, facet_modern_child, facet_modern_center, 1.0) == 0,
+		"facetize modern event fixture child must be created");
+	CHECK(mk_addmember(facet_modern_child, &facet_modern_wm.l, NULL,
+		    WMOP_UNION) != NULL,
+		"facetize modern event fixture must add child");
+	CHECK(mk_comb(wdbp, facet_modern_region, &facet_modern_wm.l, 1,
+		    NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0) == 0,
+		"facetize modern event fixture region must be created");
+    }
+
+    event_order_observer facet_modern_post;
+    ged_event_observer_token facet_modern_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &facet_modern_post);
+    CHECK(facet_modern_post_token != 0,
+	    "facetize modern observer must register");
+    const char *facet_modern_av[8] = {"facetize", "-q", "-r",
+	"--methods", "NMG", facet_modern_region, facet_modern_output, NULL};
+    int facet_modern_ret = ged_exec(gedp, 7, facet_modern_av);
+    if (facet_modern_ret != BRLCAD_OK)
+	bu_log("facetize modern result: %s\n",
+		bu_vls_cstr(gedp->ged_result_str));
+    CHECK(facet_modern_ret == BRLCAD_OK,
+	    "facetize modern region copy must succeed");
+    CHECK(observed_named_event(facet_modern_post, GED_EVENT_OBJECT_ADDED,
+		facet_modern_output),
+	    "facetize modern output comb must emit object-added event");
+    CHECK(facet_modern_post.calls == 1,
+	    "facetize modern import and output comb must be one transaction");
+    CHECK(facet_modern_post.all_affected_names.find(facet_modern_output) !=
+	    std::string::npos,
+	    "facetize modern event must identify output comb");
+    CHECK(db_lookup(gedp->dbip, facet_modern_output, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "facetize modern output comb must be present");
+    CHECK(ged_event_observer_remove(gedp, facet_modern_post_token) == 1,
+	    "facetize modern observer removal must succeed");
+
+    const char *facet_nmg_output = "_ged_event_facetize_nmg_output.nmg";
+    event_order_observer facet_nmg_post;
+    ged_event_observer_token facet_nmg_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &facet_nmg_post);
+    CHECK(facet_nmg_post_token != 0,
+	    "facetize NMG output observer must register");
+    const char *facet_nmg_av[6] = {"facetize", "-q", "-n",
+	facet_modern_child, facet_nmg_output, NULL};
+    int facet_nmg_ret = ged_exec(gedp, 5, facet_nmg_av);
+    if (facet_nmg_ret != BRLCAD_OK)
+	bu_log("facetize NMG result: %s\n",
+		bu_vls_cstr(gedp->ged_result_str));
+    CHECK(facet_nmg_ret == BRLCAD_OK,
+	    "facetize NMG output command must succeed");
+    CHECK(facet_nmg_post.calls == 1,
+	    "facetize NMG output command must publish one event transaction");
+    CHECK(observed_named_event(facet_nmg_post, GED_EVENT_OBJECT_ADDED,
+		facet_nmg_output),
+	    "facetize NMG output command must emit object-added event");
+    CHECK(db_lookup(gedp->dbip, facet_nmg_output, LOOKUP_QUIET) !=
+	    RT_DIR_NULL,
+	    "facetize NMG output object must be present");
+    CHECK(ged_event_observer_remove(gedp, facet_nmg_post_token) == 1,
+	    "facetize NMG output observer removal must succeed");
 
     const char *erase_av[2] = {"erase", "all.g"};
     CHECK(ged_exec_erase(gedp, 2, erase_av) == BRLCAD_OK,

@@ -28,9 +28,26 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 #include "rt/primitives/arb8.h"
 #include "../ged_private.h"
 #include "./ged_edit.h"
+
+static int
+edarb_put_modified(struct ged *gedp, struct directory *dp, struct rt_db_internal *intern)
+{
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    if (rt_db_put_internal(dp, gedp->dbip, intern) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+    (void)ged_event_notify_object_modified(gedp, dp->d_namep, 1, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
+    return BRLCAD_OK;
+}
 
 /*
  * An ARB edge is moved by finding the direction of the line
@@ -126,7 +143,10 @@ edarb_extrude(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    if (edarb_put_modified(gedp, dp, &intern) != BRLCAD_OK) {
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;
@@ -178,7 +198,10 @@ edarb_mirface(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    if (edarb_put_modified(gedp, dp, &intern) != BRLCAD_OK) {
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;
@@ -259,7 +282,8 @@ edarb_edgedir(void *data, int argc, const char *argv[])
 
     ret = editarb(gedp, arb, type, edge, slope, 1);
     if (ret == BRLCAD_OK) {
-	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+	if (edarb_put_modified(gedp, dp, &intern) != BRLCAD_OK)
+	    ret = BRLCAD_ERROR;
     }
 
     rt_db_free_internal(&intern);
@@ -323,7 +347,10 @@ edarb_permute(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    if (edarb_put_modified(gedp, dp, &intern) != BRLCAD_OK) {
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;

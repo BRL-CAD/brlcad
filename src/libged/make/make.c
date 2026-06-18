@@ -33,6 +33,7 @@
 #include "bu/interrupt.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "ged/event_txn.h"
 
 #include "../ged_private.h"
 
@@ -551,7 +552,12 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	VSET(height, 0.0, 0.0, scale);
 	VSET(vectA, 0.0, scale*0.5, 0.0);
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	int ret = mk_hyp(wdbp, argv[save_bu_optind], vertex, height, vectA, scale*0.25, 0.4);
+	if (ret == 0)
+	    (void)ged_event_notify_object_added(gedp, argv[save_bu_optind], NULL);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return ret;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "part")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -932,8 +938,25 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    dp = db_diradd(gedp->dbip, argv[save_bu_optind], RT_DIR_PHONY_ADDR, 0,
+	    RT_DIR_SOLID, (void *)&internal.idb_type);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.",
+		argv[save_bu_optind]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+    if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+    (void)ged_event_notify_object_added(gedp, argv[save_bu_optind], NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

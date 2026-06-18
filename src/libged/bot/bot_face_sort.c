@@ -31,6 +31,7 @@
 
 #include "rt/geom.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 int
@@ -101,6 +102,7 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+	(void)ged_event_notify_object_modified(gedp, dp->d_namep, 1, NULL);
     }
 
     return BRLCAD_OK;

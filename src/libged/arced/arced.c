@@ -40,6 +40,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     union tree *tp;
+    int event_batch_opened = 0;
     static const char *usage = "a/b anim_cmd ...";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -119,11 +120,17 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	tp->tr_l.tl_mat = (matp_t)NULL;
     }
 
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	goto fail;
     }
     (void)ged_event_notify_comb_tree_changed(gedp, dp->d_namep, 1, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
     db_free_1anim(anp);
     return BRLCAD_OK;
 

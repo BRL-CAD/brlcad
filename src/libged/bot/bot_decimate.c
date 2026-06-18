@@ -32,6 +32,7 @@
 #include "bu/getopt.h"
 #include "rt/geom.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 int
@@ -186,6 +187,7 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 		      "Failed to write decimated BOT back to database\n");
 	return BRLCAD_ERROR;
     }
+    (void)ged_event_notify_object_added(gedp, argv[0], NULL);
 
     return BRLCAD_OK;
 }

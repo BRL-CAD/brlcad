@@ -38,6 +38,7 @@
 #include "rt/edit.h"
 #include "wdb.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 #include "brep/util.h"
 #include "ged/selection_state.h"
 
@@ -64,6 +65,36 @@ static int failed_tests = 0;
             bu_log("PASS: %s\n", msg);                               \
         }                                                            \
     } while (0)
+
+
+struct edit_event_observer {
+    int calls = 0;
+    int tor_modified = 0;
+    int sph_modified = 0;
+};
+
+
+static void
+edit_event_cb(struct ged *UNUSED(gedp),
+	      const struct ged_event *events,
+	      size_t event_count,
+	      const struct ged_event_txn_result *UNUSED(result),
+	      void *client_data)
+{
+    struct edit_event_observer *obs = (struct edit_event_observer *)client_data;
+    if (!obs)
+	return;
+
+    obs->calls++;
+    for (size_t i = 0; i < event_count; i++) {
+	if (events[i].kind != GED_EVENT_OBJECT_MODIFIED || !events[i].name)
+	    continue;
+	if (BU_STR_EQUAL(events[i].name, "tor.s"))
+	    obs->tor_modified++;
+	if (BU_STR_EQUAL(events[i].name, "sph.s"))
+	    obs->sph_modified++;
+    }
+}
 
 
 /* ------------------------------------------------------------------ *
@@ -841,11 +872,21 @@ test_p1_buf_flush(struct ged *gedp)
 
     ged_edit_buf_set(gedp, &dfp1, s1);
     ged_edit_buf_set(gedp, &dfp2, s2);
+    struct edit_event_observer obs;
+    ged_event_observer_token token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		edit_event_cb, &obs);
+    CHECK(token != 0, "ged_edit_buf_flush event observer registers");
     ged_edit_buf_flush(gedp);
 
     struct rt_edit *g1 = ged_edit_buf_get(gedp, &dfp1);
     struct rt_edit *g2 = ged_edit_buf_get(gedp, &dfp2);
     CHECK(g1 == NULL && g2 == NULL, "ged_edit_buf_flush removes all entries");
+    CHECK(obs.calls == 1, "ged_edit_buf_flush publishes one event transaction");
+    CHECK(obs.tor_modified == 1 && obs.sph_modified == 1,
+	"ged_edit_buf_flush emits object-modified events for flushed entries");
+    CHECK(ged_event_observer_remove(gedp, token) == 1,
+	"ged_edit_buf_flush event observer removal succeeds");
 
     db_free_full_path(&dfp1);
     db_free_full_path(&dfp2);

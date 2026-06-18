@@ -139,6 +139,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    /* Internal representation has been freed by rt_db_put_internal */
 	    new_intern.idb_ptr = (void *)NULL;
+	    (void)ged_event_notify_object_added(gedp, bu_vls_addr(&shell_name), NULL);
 	}
     }
     if (event_batch_opened)

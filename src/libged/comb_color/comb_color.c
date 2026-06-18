@@ -83,8 +83,16 @@ ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < 3; ++i)
 	comb->rgb[i] = rgb[i];
     comb->rgb_valid = 1;
-    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
     (void)ged_event_notify_object_material_changed(gedp, dp->d_namep, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

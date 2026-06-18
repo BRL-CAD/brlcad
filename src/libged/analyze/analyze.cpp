@@ -488,8 +488,13 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	bu_vls_free(&oname);
 	return BRLCAD_ERROR;
     }
+    int direct_output = (argc == 2 && bu_vls_strlen(&oname));
+    int count_only = (argc == 2 && !bu_vls_strlen(&oname));
+    const char *first_output = count_only ? NULL :
+	(direct_output ? bu_vls_cstr(&oname) : tmpname);
+
     clear_obj(gc->gedp, tmpname);
-    ret = (*of)(tmpname, gc->gedp,  DB_OP_INTERSECT, argv[0], argv[1]);
+    ret = (*of)(first_output, gc->gedp,  DB_OP_INTERSECT, argv[0], argv[1]);
     if (ret == -1) {
 	clear_obj(gc->gedp, tmpname);
 	bu_vls_free(&oname);
@@ -522,11 +527,12 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	}
     }
 
-    if (bu_vls_strlen(&oname)) {
+    if (!direct_output && bu_vls_strlen(&oname)) {
 	mv_obj(gc->gedp, tmpname, bu_vls_cstr(&oname));
     }
 
-    clear_obj(gc->gedp, tmpname);
+    if (!direct_output)
+	clear_obj(gc->gedp, tmpname);
 
     bu_vls_sprintf(gedp->ged_result_str, "%ld\n", ret);
     bu_vls_free(&oname);
@@ -606,8 +612,13 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 	bu_vls_free(&oname);
 	return BRLCAD_ERROR;
     }
+    int direct_output = (argc == 2 && bu_vls_strlen(&oname));
+    int count_only = (argc == 2 && !bu_vls_strlen(&oname));
+    const char *first_output = count_only ? NULL :
+	(direct_output ? bu_vls_cstr(&oname) : tmpname);
+
     clear_obj(gc->gedp, tmpname);
-    ret = (*of)(tmpname, gc->gedp,  DB_OP_SUBTRACT, argv[0], argv[1]);
+    ret = (*of)(first_output, gc->gedp,  DB_OP_SUBTRACT, argv[0], argv[1]);
     if (ret == -1) {
 	clear_obj(gc->gedp, tmpname);
 	bu_vls_free(&oname);
@@ -640,11 +651,12 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 	}
     }
 
-    if (bu_vls_strlen(&oname)) {
+    if (!direct_output && bu_vls_strlen(&oname)) {
 	mv_obj(gc->gedp, tmpname, bu_vls_cstr(&oname));
     }
 
-    clear_obj(gc->gedp, tmpname);
+    if (!direct_output)
+	clear_obj(gc->gedp, tmpname);
 
     bu_vls_sprintf(gedp->ged_result_str, "%ld\n", ret);
     bu_vls_free(&oname);

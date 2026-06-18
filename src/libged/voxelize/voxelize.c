@@ -35,6 +35,7 @@
 #include "../ged_private.h"
 #include "analyze.h"
 #include "wdb.h"
+#include "ged/event_txn.h"
 
 
 struct voxelizeData
@@ -43,6 +44,7 @@ struct voxelizeData
     fastf_t *bbMin;
     fastf_t sizeVoxel[3];
     struct rt_wdb *wdbp;
+    struct ged *gedp;
     char *newname;
     struct wmember content;
 };
@@ -83,6 +85,11 @@ create_boxes(void *callBackData, int x, int y, int z, const char *a, fastf_t fil
 
 	    nameDestination = bu_vls_strgrab(vp);
 	    mk_rpp(dataValues->wdbp,nameDestination, min, max);
+	    if (dataValues->gedp && dataValues->gedp->dbip &&
+		    db_lookup(dataValues->gedp->dbip, nameDestination,
+			LOOKUP_QUIET) != RT_DIR_NULL)
+		(void)ged_event_notify_object_added(dataValues->gedp,
+			nameDestination, NULL);
 	    mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
 	}
     }
@@ -203,15 +210,23 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     voxDat.sizeVoxel[2] = sizeVoxel[2];
     voxDat.threshold = threshold;
     voxDat.wdbp = wdbp;
+    voxDat.gedp = gedp;
     voxDat.bbMin = rtip->mdl_min;
     BU_LIST_INIT(&voxDat.content.l);
 
     callBackData = (void*)(&voxDat);
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
    /* voxelize function is called here with rtip(ray trace instance), userParameter and create_boxes function */
     voxelize(rtip, sizeVoxel, levelOfDetail, create_boxes, callBackData);
 
-    mk_comb(wdbp, voxDat.newname, &voxDat.content.l, 1, "plastic", "sh=4 sp=0.5 di=0.5 re=0.1", 0, 1000, 0, 0, 100, 0, 0, 0);
+    if (mk_comb(wdbp, voxDat.newname, &voxDat.content.l, 1, "plastic",
+		"sh=4 sp=0.5 di=0.5 re=0.1", 0, 1000, 0, 0, 100, 0,
+		0, 0) == 0)
+	(void)ged_event_notify_object_added(gedp, voxDat.newname, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     mk_freemembers(&voxDat.content.l);
     rt_i_destroy(rtip);

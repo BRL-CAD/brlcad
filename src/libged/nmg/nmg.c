@@ -329,43 +329,63 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* advance CLI arguments for subcommands */
+    /* advance past the command name */
     --argc;
     ++argv;
 
-    const char *subcmd = argv[0];
-    if( BU_STR_EQUAL( "mm", subcmd ) ) {
-	ged_nmg_mm_core(gedp, argc, argv);
-    }
-    else if( BU_STR_EQUAL( "cmface", subcmd ) ) {
-	ged_nmg_cmface_core(gedp, argc, argv);
-    }
-    else if( BU_STR_EQUAL( "kill", subcmd ) ) {
-	const char* opt = argv[2];
-	if ( BU_STR_EQUAL( "V", opt ) ) {
-	    ged_nmg_kill_v_core(gedp, argc, argv);
-	} else if ( BU_STR_EQUAL( "F", opt ) ) {
-	    ged_nmg_kill_f_core(gedp, argc, argv);
-	}
-    }
-    else if( BU_STR_EQUAL( "move", subcmd ) ) {
-	const char* opt = argv[2];
-	if ( BU_STR_EQUAL( "V", opt ) ) {
-	    ged_nmg_move_v_core(gedp, argc, argv);
-	}
-    }
-    else if( BU_STR_EQUAL( "make", subcmd ) ) {
-	const char* opt = argv[2];
-	if ( BU_STR_EQUAL( "V", opt ) ) {
-	    ged_nmg_make_v_core(gedp, argc, argv);
-	}
-    }
-    else {
-	bu_vls_printf(gedp->ged_result_str, "%s is not a subcommand.", subcmd );
+    if (argc < 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: nmg %s", usage);
 	return BRLCAD_ERROR;
     }
 
-    return BRLCAD_OK;
+    if (BU_STR_EQUAL("mm", argv[0])) {
+	return ged_nmg_mm_core(gedp, argc, argv);
+    }
+
+    if (argc < 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: nmg %s", usage);
+	return BRLCAD_ERROR;
+    }
+
+    const char *subcmd = argv[1];
+    if( BU_STR_EQUAL( "cmface", subcmd ) ) {
+	return ged_nmg_cmface_core(gedp, argc, argv);
+    }
+    if( BU_STR_EQUAL( "kill", subcmd ) ) {
+	if (argc < 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: nmg %s", usage);
+	    return BRLCAD_ERROR;
+	}
+	const char* opt = argv[2];
+	if ( BU_STR_EQUAL( "V", opt ) ) {
+	    return ged_nmg_kill_v_core(gedp, argc, argv);
+	} else if ( BU_STR_EQUAL( "F", opt ) ) {
+	    return ged_nmg_kill_f_core(gedp, argc, argv);
+	}
+    }
+    else if( BU_STR_EQUAL( "move", subcmd ) ) {
+	if (argc < 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: nmg %s", usage);
+	    return BRLCAD_ERROR;
+	}
+	const char* opt = argv[2];
+	if ( BU_STR_EQUAL( "V", opt ) ) {
+	    return ged_nmg_move_v_core(gedp, argc, argv);
+	}
+    }
+    else if( BU_STR_EQUAL( "make", subcmd ) ) {
+	if (argc < 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: nmg %s", usage);
+	    return BRLCAD_ERROR;
+	}
+	const char* opt = argv[2];
+	if ( BU_STR_EQUAL( "V", opt ) ) {
+	    return ged_nmg_make_v_core(gedp, argc, argv);
+	}
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "%s is not a subcommand.", subcmd);
+    return BRLCAD_ERROR;
 }
 
 

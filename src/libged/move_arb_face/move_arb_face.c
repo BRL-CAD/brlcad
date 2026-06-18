@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -237,7 +238,17 @@ if (face_idx > max_idx) { \
 	    VMOVE(arb->pt[i], arb_pt);
 	}
 
-	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+	int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+	}
+	(void)ged_event_notify_object_modified(gedp, dp->d_namep, 1, NULL);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
     }
 
     return BRLCAD_OK;

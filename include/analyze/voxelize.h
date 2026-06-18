@@ -52,6 +52,7 @@ struct voxelRegion {
 
 struct rayInfo {
     fastf_t sizeVoxel;
+    int numVoxels;
     fastf_t *fillDistances;
     struct voxelRegion *regionList;
 };

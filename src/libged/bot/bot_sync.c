@@ -32,6 +32,7 @@
 #include "bu/path.h"
 #include "raytrace.h"
 
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 
 
@@ -82,6 +83,7 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 		rt_bot_sync(bot);
 
 		GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+		(void)ged_event_notify_object_modified(gedp, dp->d_namep, 1, NULL);
 	    }
 	}
 	bu_free(obj, "free obj");

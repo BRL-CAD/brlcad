@@ -47,6 +47,7 @@
 #include "rt/search.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
@@ -1175,6 +1176,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     }
     affix = (use_prefix) ? bu_vls_cstr(&prefix_str) : bu_vls_cstr(&suffix_str);
 
+    int final_event_batch_opened = (ged_event_batch_begin(s->gedp) > 0);
+
     // dbconcat output .g into original .g - either using -O to overwrite
     // or allowing dbconcat to suffix the names depending on whether we're
     // in-place or not.
@@ -1220,6 +1223,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		if (s->verbosity >= 0) {
 		    bu_log("regions.cpp:%d unable to generate name - FAIL\n", __LINE__);
 		}
+		if (final_event_batch_opened)
+		    ged_event_batch_end(s->gedp, NULL);
 		bu_vls_free(&nname);
 		return BRLCAD_ERROR;
 	    }
@@ -1243,10 +1248,13 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     for (s_it = new_tobjs.begin(); s_it != new_tobjs.end(); ++s_it) {
 	(void)mk_addmember(s_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
     }
-    mk_lcomb(cwdbp, oname, &wcomb, 0, NULL, NULL, NULL, 0);
+    if (mk_lcomb(cwdbp, oname, &wcomb, 0, NULL, NULL, NULL, 0) == 0)
+	(void)ged_event_notify_object_added(s->gedp, oname, NULL);
 
     /* Done importing stuff - update nref. */
     db_update_nref(dbip);
+    if (final_event_batch_opened)
+	ged_event_batch_end(s->gedp, NULL);
 
     /* Print aggregate variant-plan summary and clean up (Manifold path only). */
     if (vcnt_adjusted_instances > 0) {

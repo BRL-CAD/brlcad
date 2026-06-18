@@ -444,6 +444,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    (void)ged_event_notify_object_modified(gedp, gb->dp->d_namep, 1, NULL);
     return BRLCAD_OK;
 }
 
@@ -500,6 +501,9 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 
     struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     retval = mk_bot(wdbp, bu_vls_cstr(&out_name), RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+    if (!retval)
+	(void)ged_event_notify_object_added(gb->gedp, bu_vls_cstr(&out_name),
+		NULL);
 
     bu_vls_free(&out_name);
     bu_free(faces, "free faces");
@@ -565,6 +569,7 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    (void)ged_event_notify_object_modified(gb->gedp, gb->dp->d_namep, 1, NULL);
     bu_vls_printf(gb->gedp->ged_result_str, "BoT faces flipped");
     return BRLCAD_OK;
 }
@@ -655,6 +660,7 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    (void)ged_event_notify_object_modified(gb->gedp, gb->dp->d_namep, 1, NULL);
     bu_vls_printf(gb->gedp->ged_result_str, "Performed %d face flipping operations", flip_cnt);
     return BRLCAD_OK;
 }
@@ -836,6 +842,7 @@ _bot_cmd_pca(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    (void)ged_event_notify_object_added(gb->gedp, argv[0], NULL);
     return BRLCAD_OK;
 }
 

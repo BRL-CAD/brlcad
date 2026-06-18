@@ -40,6 +40,7 @@
 
 
 #include "bu/sort.h"
+#include "bu/hash.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rt/geom.h"
@@ -60,6 +61,59 @@ extern "C" void libged_init(void);
 
 extern "C" {
 #include "./qray.h"
+}
+
+static void
+ged_old_selection_set_free(struct rt_selection_set *set)
+{
+    if (!set)
+	return;
+
+    if (set->free_selection) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&set->selections); i++) {
+	    struct rt_selection *selection = (struct rt_selection *)BU_PTBL_GET(&set->selections, i);
+	    if (selection)
+		set->free_selection(selection);
+	}
+    }
+
+    bu_ptbl_free(&set->selections);
+    BU_FREE(set, struct rt_selection_set);
+}
+
+static void
+ged_old_object_selections_free(struct rt_object_selections *obj_selections)
+{
+    if (!obj_selections)
+	return;
+
+    if (obj_selections->sets) {
+	struct bu_hash_entry *entry = NULL;
+	while ((entry = bu_hash_next(obj_selections->sets, entry)) != NULL) {
+	    struct rt_selection_set *set = (struct rt_selection_set *)bu_hash_value(entry, NULL);
+	    ged_old_selection_set_free(set);
+	}
+	bu_hash_destroy(obj_selections->sets);
+	obj_selections->sets = NULL;
+    }
+
+    BU_FREE(obj_selections, struct rt_object_selections);
+}
+
+static void
+ged_old_selections_free(struct ged *gedp)
+{
+    if (!gedp || !gedp->ged_selections)
+	return;
+
+    struct bu_hash_entry *entry = NULL;
+    while ((entry = bu_hash_next(gedp->ged_selections, entry)) != NULL) {
+	struct rt_object_selections *obj_selections = (struct rt_object_selections *)bu_hash_value(entry, NULL);
+	ged_old_object_selections_free(obj_selections);
+    }
+
+    bu_hash_destroy(gedp->ged_selections);
+    gedp->ged_selections = NULL;
 }
 
 
@@ -207,6 +261,8 @@ ged_init(struct ged *gedp)
     /* User data */
     BU_PTBL_INIT(&gedp->ged_uptrs);
 
+    gedp->ged_selections = NULL;
+
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
@@ -278,6 +334,8 @@ ged_free(struct ged *gedp)
 	bu_vls_free(gedp->ged_result_str);
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
+
+    ged_old_selections_free(gedp);
 
     if (gedp->i && gedp->i->ged_db_indexp) {
 	ged_db_index_destroy(gedp->i->ged_db_indexp);

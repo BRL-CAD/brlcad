@@ -45,6 +45,17 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "ged.h"
+#include "ged/event_txn.h"
+
+static void
+track_notify_added_if_present(struct ged *gedp, const char *name)
+{
+    if (!gedp || !name)
+	return;
+
+    if (db_lookup(gedp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL)
+	(void)ged_event_notify_object_added(gedp, name, NULL);
+}
 
 /*
  *
@@ -75,7 +86,24 @@ ged_track_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     int ret = ged_track2(gedp->ged_result_str, wdbp, argv);
+    if (ret == BRLCAD_OK) {
+	struct bu_vls name = BU_VLS_INIT_ZERO;
+	for (int i = 0; i < 10; i++) {
+	    bu_vls_sprintf(&name, "%s.s.%d", argv[1], i);
+	    track_notify_added_if_present(gedp, bu_vls_cstr(&name));
+	}
+	const int region_ids[] = {0, 1, 4, 5, 8, 9};
+	for (size_t i = 0; i < sizeof(region_ids)/sizeof(region_ids[0]); i++) {
+	    bu_vls_sprintf(&name, "%s.r.%d", argv[1], region_ids[i]);
+	    track_notify_added_if_present(gedp, bu_vls_cstr(&name));
+	}
+	track_notify_added_if_present(gedp, argv[1]);
+	bu_vls_free(&name);
+    }
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
     return ret;
 }
 

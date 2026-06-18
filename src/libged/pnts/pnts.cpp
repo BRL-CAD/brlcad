@@ -45,6 +45,7 @@ extern "C" {
 #include "bu/units.h"
 #include "bg/ballpivot.h"
 #include "bg/spsr.h"
+#include "ged/event_txn.h"
 #include "rt/geom.h"
 #include "wdb.h"
 #include "analyze.h"
@@ -63,6 +64,31 @@ void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
     bu_vls_sprintf(o, "%s", sd.c_str());
 }
 
+
+static int
+pnts_put_added(struct ged *gedp, struct directory **dp, const char *name, struct rt_db_internal *intern)
+{
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    *dp = db_diradd(gedp->dbip, name, RT_DIR_PHONY_ADDR, 0,
+	    RT_DIR_SOLID, (void *)&intern->idb_type);
+    if (*dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.",
+		name);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+    if (rt_db_put_internal(*dp, gedp->dbip, intern) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	return BRLCAD_ERROR;
+    }
+    (void)ged_event_notify_object_added(gedp, name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
+    return BRLCAD_OK;
+}
 
 static int
 _ged_pnts_cmd_msgs(struct ged *gedp, int argc, const char **argv, const char *us, const char *ps)
@@ -180,9 +206,7 @@ _pnts_write_bot_mesh(struct ged *gedp, const char *bot_name, int *faces, int nfa
     bot_ip->uvs = NULL;
     bot_ip->face_uvs = NULL;
 
-    GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
-    return BRLCAD_OK;
+    return pnts_put_added(gedp, &dp, bot_name, &internal);
 }
 
 static int
@@ -333,8 +357,15 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
     }
 
     struct directory *dp = NULL;
-    GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
+    int write_ret = pnts_put_added(gedp, &dp, bot_name, &internal);
+    if (write_ret != BRLCAD_OK) {
+	rt_db_free_internal(&intern);
+	if (ipts)
+	    bu_free(ipts, "ipts");
+	if (inrms)
+	    bu_free(inrms, "inrms");
+	return write_ret;
+    }
 
     bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %d triangles", bot_name, ncnt);
 
@@ -812,8 +843,10 @@ _ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points, avg. partition thickness %g", pnt_prim, pnts->count, avg_thickness);
 
-    GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
+    if (pnts_put_added(gedp, &dp, pnt_prim, &internal) != BRLCAD_OK) {
+	rt_db_free_internal(&internal);
+	return BRLCAD_ERROR;
+    }
 
     return BRLCAD_OK;
 }
@@ -1032,8 +1065,12 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points", pnt_prim, pnts->count);
 
-    GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
+    if (pnts_put_added(gedp, &dp, pnt_prim, &internal) != BRLCAD_OK) {
+	rt_db_free_internal(&internal);
+	bu_vls_free(&fmt);
+	if (nums) bu_free(nums, "free old nums array");
+	return BRLCAD_ERROR;
+    }
 
     bu_vls_free(&fmt);
     if (nums) bu_free(nums, "free old nums array");

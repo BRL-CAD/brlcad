@@ -64,6 +64,7 @@
 #include "bsg/view_state.h"
 #include "ged.h"
 #include "ged/bsg_ged_draw.h"
+#include "ged/event_txn.h"
 #include "./ged_private.h"
 
 extern "C" bsg_scene_ref
@@ -2610,6 +2611,15 @@ ged_get_object_selections(struct ged *gedp, const char *object_name)
 {
     struct rt_object_selections *obj_selections;
 
+    if (!gedp || !object_name || !object_name[0])
+	return NULL;
+
+    if (!gedp->ged_selections)
+	gedp->ged_selections = bu_hash_create(0);
+
+    if (!gedp->ged_selections)
+	return NULL;
+
     obj_selections = (struct rt_object_selections *)bu_hash_get(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name));
 
     if (!obj_selections) {
@@ -2628,7 +2638,13 @@ ged_get_selection_set(struct ged *gedp, const char *object_name, const char *sel
     struct rt_object_selections *obj_selections;
     struct rt_selection_set *set;
 
+    if (!selection_name || !selection_name[0])
+	return NULL;
+
     obj_selections = ged_get_object_selections(gedp, object_name);
+    if (!obj_selections || !obj_selections->sets)
+	return NULL;
+
     set = (struct rt_selection_set *)bu_hash_get(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name));
     if (!set) {
 	BU_ALLOC(set, struct rt_selection_set);
@@ -2701,6 +2717,7 @@ _ged_combadd2(struct ged *gedp,
     size_t actual_count;
     size_t curr_count;
     int i;
+    int created_comb = 0;
 
     if (argc < 1)
 	return BRLCAD_ERROR;
@@ -2721,7 +2738,13 @@ _ged_combadd2(struct ged *gedp,
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 
-	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (void *)&intern.idb_type, 0);
+	dp = db_diradd(gedp->dbip, combname, -1, 0, flags,
+		(void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to add %s to the database.", combname);
+	    return BRLCAD_ERROR;
+	}
+	created_comb = 1;
 
 	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
@@ -2829,14 +2852,27 @@ addmembers:
     comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count);
 
     /* and finally, write it out */
-    GED_DB_PUT_INTERN(gedp, dp, &intern, 0);
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	bu_free((char *)tree_list, "combadd: tree_list");
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
 
     bu_free((char *)tree_list, "combadd: tree_list");
 
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->dbip);
 
-    ged_event_notify_comb_tree_changed(gedp, combname, 1, NULL);
+    if (created_comb)
+	(void)ged_event_notify_object_added(gedp, combname, NULL);
+    else
+	(void)ged_event_notify_comb_tree_changed(gedp, combname, 1, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

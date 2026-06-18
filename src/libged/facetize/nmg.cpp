@@ -34,6 +34,7 @@
 #include "bu/vls.h"
 #include "bu/log.h"
 
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
@@ -321,11 +322,15 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
     intern.idb_meth = &OBJ[ID_NMG];
     intern.idb_ptr = (void *)nmg_model;
 
+    int event_batch_opened = (ged_event_batch_begin(s->gedp) > 0);
+
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	if (s->verbosity > 0) {
 	    bu_log("Cannot add %s to directory\n", name);
 	}
+	if (event_batch_opened)
+	    ged_event_batch_end(s->gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -333,9 +338,15 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
 	if (s->verbosity > 0) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
+	if (event_batch_opened)
+	    ged_event_batch_end(s->gedp, NULL);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
+
+    (void)ged_event_notify_object_added(s->gedp, name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(s->gedp, NULL);
 
     return BRLCAD_OK;
 }
@@ -354,11 +365,15 @@ _write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const cha
     intern.idb_meth = &OBJ[ID_BOT];
     intern.idb_ptr = (void *)bot;
 
+    int event_batch_opened = (ged_event_batch_begin(s->gedp) > 0);
+
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	if (s->verbosity > 0) {
 	    bu_log("Cannot add %s to directory\n", name);
 	}
+	if (event_batch_opened)
+	    ged_event_batch_end(s->gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -366,9 +381,15 @@ _write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const cha
 	if (s->verbosity > 0) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
+	if (event_batch_opened)
+	    ged_event_batch_end(s->gedp, NULL);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
+
+    (void)ged_event_notify_object_added(s->gedp, name, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(s->gedp, NULL);
 
     return BRLCAD_OK;
 }

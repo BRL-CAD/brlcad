@@ -32,6 +32,7 @@
 #include "bu/path.h"
 #include "rt/geom.h"
 
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 
 
@@ -80,6 +81,7 @@ ged_bot_flip_core(struct ged *gedp, int argc, const char *argv[])
 		rt_bot_flip(bot);
 
 		GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+		(void)ged_event_notify_object_modified(gedp, dp->d_namep, 1, NULL);
 	    }
 	}
 	bu_free(obj, "free obj");

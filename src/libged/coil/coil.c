@@ -36,6 +36,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 
 
 #define D2R(x) (x * DEG2RAD)
@@ -53,6 +54,22 @@ struct coil_data_t {
     fastf_t p;  /*Pitch*/
     int lhf; /*Winding Direction - 1 is Right Handed, -1 is Left Handed*/
 };
+
+
+static void
+coil_notify_object_written(struct ged *gedp, const char *name, int existed)
+{
+    if (!gedp || !gedp->dbip || !name)
+	return;
+
+    if (db_lookup(gedp->dbip, name, LOOKUP_QUIET) == RT_DIR_NULL)
+	return;
+
+    if (existed)
+	(void)ged_event_notify_object_modified(gedp, name, 1, NULL);
+    else
+	(void)ged_event_notify_object_added(gedp, name, NULL);
+}
 
 
 fastf_t
@@ -337,6 +354,7 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
     struct coil_data_t *coil_data;
 
     usedefaults = (argc == 1) ;
+    bu_optind = 1;
 
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
 	switch (c) {
@@ -548,8 +566,43 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 
     /* do it. */
     struct rt_wdb *db_fp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
+    struct bu_vls core_name = BU_VLS_INIT_ZERO;
+    struct bu_vls startcap_name = BU_VLS_INIT_ZERO;
+    struct bu_vls endcap_name = BU_VLS_INIT_ZERO;
+    struct bu_vls subtractions_name = BU_VLS_INIT_ZERO;
+    int core_existed = 0;
+    int startcap_existed = 0;
+    int endcap_existed = 0;
+    int subtractions_existed = 0;
+    int final_existed = (db_lookup(gedp->dbip, bu_vls_addr(&name), LOOKUP_QUIET) != RT_DIR_NULL);
+    int event_batch_opened = 0;
 
+    bu_vls_sprintf(&core_name, "%s_core.s", bu_vls_addr(&name));
+    bu_vls_sprintf(&startcap_name, "%s-startcap.s", bu_vls_addr(&name));
+    bu_vls_sprintf(&endcap_name, "%s-endcap.s", bu_vls_addr(&name));
+    bu_vls_sprintf(&subtractions_name, "%s_subtractions.c", bu_vls_addr(&name));
+    core_existed = (db_lookup(gedp->dbip, bu_vls_addr(&core_name), LOOKUP_QUIET) != RT_DIR_NULL);
+    startcap_existed = (db_lookup(gedp->dbip, bu_vls_addr(&startcap_name), LOOKUP_QUIET) != RT_DIR_NULL);
+    endcap_existed = (db_lookup(gedp->dbip, bu_vls_addr(&endcap_name), LOOKUP_QUIET) != RT_DIR_NULL);
+    subtractions_existed = (db_lookup(gedp->dbip, bu_vls_addr(&subtractions_name), LOOKUP_QUIET) != RT_DIR_NULL);
+
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
+    coil_notify_object_written(gedp, bu_vls_addr(&core_name), core_existed);
+    if (start_cap_type == 2 || start_cap_type == 3)
+	coil_notify_object_written(gedp, bu_vls_addr(&startcap_name), startcap_existed);
+    if (end_cap_type == 2 || end_cap_type == 3)
+	coil_notify_object_written(gedp, bu_vls_addr(&endcap_name), endcap_existed);
+    if (start_cap_type == 2 || start_cap_type == 3 || end_cap_type == 2 || end_cap_type == 3)
+	coil_notify_object_written(gedp, bu_vls_addr(&subtractions_name), subtractions_existed);
+    coil_notify_object_written(gedp, bu_vls_addr(&name), final_existed);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
+
+    bu_vls_free(&core_name);
+    bu_vls_free(&startcap_name);
+    bu_vls_free(&endcap_name);
+    bu_vls_free(&subtractions_name);
     bu_vls_free(&name);
 
     return BRLCAD_OK;

@@ -36,6 +36,7 @@
 #include "bu/path.h"
 #include "analyze.h"
 #include "ged.h"
+#include "ged/event_txn.h"
 #include "../ged_private.h"
 
 #include <string.h>
@@ -74,6 +75,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     struct rt_db_internal intern;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int offset = 0;
+    int event_batch_opened = 0;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -243,11 +245,20 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     }
     db5_sync_comb_to_attr(&avs, comb);
 
-    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	bu_avs_free(&avs);
+	bu_vls_printf(gedp->ged_result_str, "Database write failure.");
+	return BRLCAD_ERROR;
+    }
 
     if (db5_update_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: failed to update attributes\n");
 	bu_avs_free(&avs);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -256,6 +267,8 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     /* Invalidate per-shape color stamps so the next color_from_soltab sweep
      * picks up the changed shader/rgb (B4). */
     ged_event_notify_object_material_changed(gedp, argv[1], NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }
@@ -305,13 +318,28 @@ mater_clear(struct ged *gedp)
 {
     struct directory *dp;
     if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
 	if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Error removing density information from database.");
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
 	db_update_nref(gedp->dbip);
+	(void)ged_event_notify_object_removed(gedp, GED_DB_DENSITY_OBJECT, NULL);
+	(void)ged_event_notify_material_changed(gedp, NULL);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
     }
     return BRLCAD_OK;
+}
+
+
+static void
+mater_hide_density_object(struct ged *gedp)
+{
+    const char *av[2] = {"hide", GED_DB_DENSITY_OBJECT};
+    (void)ged_exec_hide(gedp, 2, (const char **)av);
 }
 
 
@@ -678,12 +706,17 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
     if (mater_clear(gedp) != BRLCAD_OK) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
     if (validate_input) {
 	if (mater_validate(gedp, 2, argv) != BRLCAD_OK) {
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -691,14 +724,16 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (rt_mk_binunif (wdbp, GED_DB_DENSITY_OBJECT, argv[1], DB5_MINORTYPE_BINU_8BITINT, 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Error reading density file %s", argv[1]);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
-    /* Mark it hidden */
-    {
-	const char *av[2] = {"hide", GED_DB_DENSITY_OBJECT};
-	(void)ged_exec_hide(gedp, 2, (const char **)av);
-    }
+    (void)ged_event_notify_object_added(gedp, GED_DB_DENSITY_OBJECT, NULL);
+    mater_hide_density_object(gedp);
+    (void)ged_event_notify_material_changed(gedp, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }
@@ -1138,8 +1173,13 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    int event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+
     // Got through parsing, make a buffer and replace the existing density object
     if (mater_clear(gedp) != BRLCAD_OK) {
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
+	bu_free(new_buf, "density buffer");
 	return BRLCAD_ERROR;
     }
 
@@ -1150,6 +1190,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     bip->count = buf_len;
     bip->u.int8 = (char *)bu_malloc(buf_len, "binary uniform object");
     memcpy(bip->u.int8, new_buf, buf_len);
+    bu_free(new_buf, "density buffer");
 
     /* create the rt_internal form */
     struct rt_db_internal intern;
@@ -1169,6 +1210,8 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);
 	rt_db_free_internal(&intern);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -1184,6 +1227,9 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     /* make sure the database directory is initialized */
     if (gedp->dbip->i->dbi_eof == RT_DIR_PHONY_ADDR) {
 	if (db_dirbuild(gedp->dbip)) {
+	    bu_free_external(&bin_ext);
+	    if (event_batch_opened)
+		ged_event_batch_end(gedp, NULL);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -1193,6 +1239,8 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to add new name (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -1200,15 +1248,17 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     if (db_put_external5(&bin_ext, dp, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "Error while adding new binary object (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_ERROR;
     }
     bu_free_external(&bin_ext);
 
-    /* Mark it hidden */
-    {
-	const char *av[2] = {"hide", GED_DB_DENSITY_OBJECT};
-	(void)ged_exec_hide(gedp, 2, (const char **)av);
-    }
+    (void)ged_event_notify_object_added(gedp, GED_DB_DENSITY_OBJECT, NULL);
+    mater_hide_density_object(gedp);
+    (void)ged_event_notify_material_changed(gedp, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }
@@ -1354,6 +1404,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     int id_found_cnt;
     int nid;
     std::vector<std::string> changed_objects;
+    int event_batch_started = 0;
+    int event_batch_opened = 0;
 
     struct bu_opt_desc d[5];
     BU_OPT(d[0], "",  "ids-from-names",  "", NULL,   &ids_from_names,   "Assign material_id based on material_name");
@@ -1532,6 +1584,10 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	    char *nname = analyze_densities_name(a, std::stol(mat_id));
 	    if (!oname || !BU_STR_EQUAL(nname, oname)) {
 		(void)bu_avs_add(avs, "material_name", nname);
+		if (!event_batch_started) {
+		    event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+		    event_batch_started = 1;
+		}
 		if (db5_update_attributes(dp, avs, gedp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
 		    bu_avs_free(avs);
@@ -1556,6 +1612,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	for (std::vector<std::string>::const_iterator it = changed_objects.begin();
 		it != changed_objects.end(); ++it)
 	    (void)ged_event_notify_attribute_changed(gedp, it->c_str(), 0, NULL);
+	if (event_batch_opened)
+	    ged_event_batch_end(gedp, NULL);
 	return BRLCAD_OK;
     } else {
 	for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
@@ -1601,6 +1659,10 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	nid = wids[0];
 	if (!mat_id || std::stoi(mat_id) != nid) {
 	    (void)bu_avs_add(avs, "material_id", std::to_string(nid).c_str());
+	    if (!event_batch_started) {
+		event_batch_opened = (ged_event_batch_begin(gedp) > 0);
+		event_batch_started = 1;
+	    }
 	    if (db5_update_attributes(dp, avs, gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: failed to update object %s attributes\n", dp->d_namep);
 		bu_avs_free(avs);
@@ -1623,9 +1685,13 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     for (std::vector<std::string>::const_iterator it = changed_objects.begin();
 	    it != changed_objects.end(); ++it)
 	(void)ged_event_notify_attribute_changed(gedp, it->c_str(), 0, NULL);
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
     return BRLCAD_OK;
 
 ged_mater_mat_id_fail:
+    if (event_batch_opened)
+	ged_event_batch_end(gedp, NULL);
     if (a) {
 	analyze_densities_destroy(a);
     }

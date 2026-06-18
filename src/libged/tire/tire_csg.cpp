@@ -73,8 +73,10 @@ CsgTransaction::set_error(const std::string &message)
 void
 CsgTransaction::commit()
 {
-    if (!dry_run_ && gedp_ && !attributed_.empty()) {
+    if (!dry_run_ && gedp_ && (!created_.empty() || !attributed_.empty())) {
 	int event_depth = ged_event_batch_begin(gedp_);
+	if (!created_.empty())
+	    (void)ged_event_notify_object_added(gedp_, created_.back().c_str(), NULL);
 	for (const std::string &name : attributed_)
 	    (void)ged_event_notify_attribute_changed(gedp_, name.c_str(), 0, NULL);
 	if (event_depth > 0)

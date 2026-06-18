@@ -74,9 +74,7 @@ _brep_cmd_topo_create_edge(void *bs, int argc, const char **argv)
     int c = atoi(argv[2]);
     int edge = brep_edge_create(b_ip->brep, v1, v2, c);
 
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create edge! id = %d", edge);
@@ -108,9 +106,7 @@ _brep_cmd_topo_create_face(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create face! id = %d", face_id);
@@ -142,9 +138,7 @@ _brep_cmd_topo_reverse_face(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "reverse face!");
@@ -176,9 +170,7 @@ _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create loop! id = %d", loop_id);
@@ -213,9 +205,7 @@ _brep_cmd_topo_create_trim(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    if (brep_write_modified(gib->gb, b_ip->brep) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create trim! id = %d", trim_id);
