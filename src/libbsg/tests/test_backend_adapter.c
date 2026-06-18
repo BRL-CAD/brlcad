@@ -390,7 +390,7 @@ test_backend_scene_retained_cache(void)
     if (_render_to_backend_scene(v, scene) != 1)
 	FAIL("first render should draw one item");
     struct bsg_backend_scene_stats stats;
-    bsg_backend_scene_stats(scene, &stats);
+    bsg_backend_scene_get_stats(scene, &stats);
     if (stats.node_count != 1 || stats.created != 1 || stats.drawn != 1)
 	FAIL("first render should create and draw one retained node");
 
@@ -429,14 +429,14 @@ test_backend_scene_retained_cache(void)
 
     if (_render_to_backend_scene(v, scene) != 1)
 	FAIL("second render should draw one item");
-    bsg_backend_scene_stats(scene, &stats);
+    bsg_backend_scene_get_stats(scene, &stats);
     if (stats.reused != 1 || stats.created != 0 || stats.updated != 0)
 	FAIL("second render should reuse retained node");
 
     bsg_appearance_set_transparency(s, 0.5);
     if (_render_to_backend_scene(v, scene) != 1)
 	FAIL("transparency render should draw one item");
-    bsg_backend_scene_stats(scene, &stats);
+    bsg_backend_scene_get_stats(scene, &stats);
     if (stats.updated != 1)
 	FAIL("appearance change should update retained node");
     if (bsg_backend_scene_count(scene) != 1)
@@ -532,7 +532,7 @@ test_backend_scene_geometry_snapshots(void)
 		BSG_RENDER_FLAG_VISIBLE_ONLY) != 1)
 	FAIL("updated line-set should render into retained scene");
     struct bsg_backend_scene_stats stats;
-    bsg_backend_scene_stats(scene, &stats);
+    bsg_backend_scene_get_stats(scene, &stats);
     if (stats.node_count != 1 || (stats.updated + stats.created) != 1)
 	FAIL("retained scene should refresh when field snapshot changes");
     if (_collect_render_items(v, &items) != 1)
@@ -1221,7 +1221,7 @@ test_backend_scene_proxy_revision_replaces_cache(void)
 	FAIL("updated retained proxy cache snapshot wrong");
     struct bsg_backend_scene_stats stats;
     memset(&stats, 0, sizeof(stats));
-    bsg_backend_scene_stats(scene, &stats);
+    bsg_backend_scene_get_stats(scene, &stats);
     if (stats.created != 1 || stats.removed != 1 || stats.node_count != 1)
 	FAIL("proxy revision update should create new cache entry and prune old one");
 
@@ -1577,11 +1577,11 @@ test_backend_scene_frame_and_iteration(void)
 	FAIL("frame render should draw one item");
 
     const struct bsg_backend_scene_camera *camera =
-	bsg_backend_scene_camera(scene);
+	bsg_backend_scene_get_camera(scene);
     const struct bsg_backend_scene_clip *clip =
-	bsg_backend_scene_clip(scene);
+	bsg_backend_scene_get_clip(scene);
     const struct bsg_backend_scene_lights *lights =
-	bsg_backend_scene_lights(scene);
+	bsg_backend_scene_get_lights(scene);
     if (!camera || camera->viewport_width != 640 ||
 	    camera->viewport_height != 480)
 	FAIL("retained camera should record viewport");
@@ -1627,7 +1627,7 @@ test_backend_scene_capability_gap(void)
 	FAIL("capability-gap render should draw one item");
 
     struct bsg_backend_scene_stats stats;
-    bsg_backend_scene_stats(scene, &stats);
+    bsg_backend_scene_get_stats(scene, &stats);
     if (stats.capability_gaps != 1)
 	FAIL("transparent item should produce a retained capability gap");
 

@@ -94,7 +94,7 @@ _rebuild_bsg_dlines(struct bsg_view *v, const char *bsg_name,
 	cmds[i] = BSG_GEOMETRY_LINE_MOVE;
 	cmds[i+1] = BSG_GEOMETRY_LINE_DRAW;
     }
-    bsg_feature_points_replace(ref, BSG_FEATURE_LINES, pts, cmds, (size_t)npts);
+    bsg_feature_points_replace(ref, BSG_FEATURE_LINES, (const point_t *)pts, cmds, (size_t)npts);
     bu_free(cmds, "data line cmds");
 
     if (color)

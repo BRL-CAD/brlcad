@@ -399,6 +399,7 @@ mged_dm_repaint_consume(struct mged_dm *mdmp)
  * libged also gets the word. */
 __BEGIN_DECLS
 extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
+extern void mged_dm_adc_state_set(struct mged_dm *dm, const struct bsg_adc_state *adc);
 __END_DECLS
 
 static inline int
@@ -407,14 +408,6 @@ mged_dm_adc_state_get(struct mged_dm *dm, struct bsg_adc_state *adc)
     if (!dm || !dm->dm_view_state || !dm->dm_view_state->vs_gvp)
 	return 0;
     return bsg_view_adc_get(dm->dm_view_state->vs_gvp, adc);
-}
-
-static inline void
-mged_dm_adc_state_set(struct mged_dm *dm, const struct bsg_adc_state *adc)
-{
-    if (!dm || !dm->dm_view_state || !dm->dm_view_state->vs_gvp)
-	return;
-    bsg_view_adc_set(dm->dm_view_state->vs_gvp, adc);
 }
 
 static inline int

@@ -340,9 +340,7 @@ _snap_candidates_impl(struct bsg_view *v, point_t sample, double tol,
     bsg_snap_result_init(out);
 
     point_t sample_model = VINIT_ZERO;
-    point_t snapped_model = VINIT_ZERO;
     VMOVE(sample_model, sample);
-    VMOVE(snapped_model, sample_model);
 
     if ((kinds & BSG_SNAP_KIND_ENDPOINT) ||
 	(kinds & BSG_SNAP_KIND_MIDPOINT) ||

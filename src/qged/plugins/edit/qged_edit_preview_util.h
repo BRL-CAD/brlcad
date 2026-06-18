@@ -356,8 +356,12 @@ qged_edit_sketch_append_carc_seg(struct qged_edit_preview_lines *lines,
 				 const struct carc_seg *csg)
 {
     point2d_t mid_pt, start2d, end2d, center2d, s2m, dir;
-    point_t center, start_pt, pt;
-    vect_t semi_a, semi_b, norm;
+    point_t center = VINIT_ZERO;
+    point_t start_pt = VINIT_ZERO;
+    point_t pt = VINIT_ZERO;
+    vect_t semi_a = VINIT_ZERO;
+    vect_t semi_b = VINIT_ZERO;
+    vect_t norm = VINIT_ZERO;
     fastf_t radius = csg->radius;
     fastf_t delta;
     fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;

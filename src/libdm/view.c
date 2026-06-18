@@ -957,7 +957,7 @@ _dm_scene_begin_request(void *dmp_ptr, struct bsg_render_request *req)
     bsg_render_request_set_geometry_default_color(req, gdc);
     vect_t *clipmin = dm_get_clipmin(dmp);
     vect_t *clipmax = dm_get_clipmax(dmp);
-    bsg_render_request_set_clip(req, clipmin, clipmax, dm_get_zclip(dmp));
+    bsg_render_request_set_clip(req, (const vect_t *)clipmin, (const vect_t *)clipmax, dm_get_zclip(dmp));
     bsg_render_request_set_lighting(req, dm_get_light(dmp));
     return 1;
 }

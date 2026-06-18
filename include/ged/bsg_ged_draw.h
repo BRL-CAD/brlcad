@@ -142,6 +142,9 @@ typedef struct ged_draw_group_ref {
     uint64_t scene_revision;
 } ged_draw_group_ref;
 
+#define GED_DRAW_SHAPE_REF_NULL_INIT {0, 0}
+#define GED_DRAW_GROUP_REF_NULL_INIT {0, 0}
+
 #ifdef __cplusplus
 #  define GED_DRAW_SHAPE_REF_NULL ged_draw_shape_ref{0, 0}
 #  define GED_DRAW_GROUP_REF_NULL ged_draw_group_ref{0, 0}

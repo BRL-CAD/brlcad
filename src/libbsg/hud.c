@@ -209,7 +209,7 @@ bsg_geometry_node_clear_private_realization(node);
 bsg_node_set_payload_type(node, BSG_PAYLOAD_OVERLAY);
 return;
     }
-    (void)bsg_geometry_node_set_line_set(node, pts, cmds, cnt);
+    (void)bsg_geometry_node_set_line_set(node, (const point_t *)pts, cmds, cnt);
     bsg_node_set_payload_type(node, BSG_PAYLOAD_OVERLAY);
 }
 

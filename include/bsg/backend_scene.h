@@ -308,20 +308,20 @@ bsg_backend_scene_foreach_node(const struct bsg_backend_scene *scene,
 			       void *userdata);
 
 BSG_EXPORT extern const struct bsg_backend_scene_camera *
-bsg_backend_scene_camera(const struct bsg_backend_scene *scene);
+bsg_backend_scene_get_camera(const struct bsg_backend_scene *scene);
 
 BSG_EXPORT extern const struct bsg_backend_scene_clip *
-bsg_backend_scene_clip(const struct bsg_backend_scene *scene);
+bsg_backend_scene_get_clip(const struct bsg_backend_scene *scene);
 
 BSG_EXPORT extern const struct bsg_backend_scene_lights *
-bsg_backend_scene_lights(const struct bsg_backend_scene *scene);
+bsg_backend_scene_get_lights(const struct bsg_backend_scene *scene);
 
 BSG_EXPORT extern size_t
 bsg_backend_scene_count(const struct bsg_backend_scene *scene);
 
 BSG_EXPORT extern void
-bsg_backend_scene_stats(const struct bsg_backend_scene *scene,
-			struct bsg_backend_scene_stats *stats);
+bsg_backend_scene_get_stats(const struct bsg_backend_scene *scene,
+			    struct bsg_backend_scene_stats *stats);
 
 BSG_EXPORT extern void
 bsg_backend_scene_invalidate_item(struct bsg_backend_scene *scene,
