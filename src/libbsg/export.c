@@ -400,10 +400,10 @@ bsg_export_record_geometry_report(const struct bsg_export_record *record,
 	for (size_t i = 0; i < record->geometry.arrays.point_count; i++) {
 	    int cmd = (record->geometry.kind == BSG_RENDER_GEOMETRY_POINT_SET) ?
 		BSG_GEOMETRY_POINT_DRAW : _geometry_line_command(&record->geometry, i);
-	    const point_t *pt = &record->geometry.arrays.points[i];
+	    const fastf_t *pt = record->geometry.arrays.points[i];
 	    bu_vls_printf(out, "  %s (%g, %g, %g)\n",
 		    _geometry_command_description(cmd),
-		    V3ARGS(*pt));
+		    V3ARGS(pt));
 	}
 	return;
     }
@@ -423,10 +423,10 @@ bsg_export_record_geometry_report(const struct bsg_export_record *record,
 	    if ((size_t)idx >= record->geometry.arrays.point_count)
 		continue;
 	    int cmd = have_current ? BSG_GEOMETRY_LINE_DRAW : BSG_GEOMETRY_LINE_MOVE;
-	    const point_t *pt = &record->geometry.arrays.points[idx];
+	    const fastf_t *pt = record->geometry.arrays.points[idx];
 	    bu_vls_printf(out, "  %s (%g, %g, %g)\n",
 		    _geometry_command_description(cmd),
-		    V3ARGS(*pt));
+		    V3ARGS(pt));
 	    have_current = 1;
 	}
 	return;
@@ -446,9 +446,9 @@ bsg_export_record_geometry_report(const struct bsg_export_record *record,
 	    }
 	    if ((size_t)idx >= record->geometry.surface.point_count)
 		continue;
-	    const point_t *pt = &record->geometry.surface.points[idx];
+	    const fastf_t *pt = record->geometry.surface.points[idx];
 	    bu_vls_printf(out, "  indexed face %zu (%g, %g, %g)\n",
-		    face_vertex, V3ARGS(*pt));
+		    face_vertex, V3ARGS(pt));
 	    face_vertex++;
 	}
 	return;

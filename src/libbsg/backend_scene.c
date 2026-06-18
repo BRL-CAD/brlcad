@@ -1095,19 +1095,19 @@ bsg_backend_scene_foreach_node(const struct bsg_backend_scene *scene,
 }
 
 const struct bsg_backend_scene_camera *
-bsg_backend_scene_camera(const struct bsg_backend_scene *scene)
+bsg_backend_scene_get_camera(const struct bsg_backend_scene *scene)
 {
     return scene ? &scene->camera : NULL;
 }
 
 const struct bsg_backend_scene_clip *
-bsg_backend_scene_clip(const struct bsg_backend_scene *scene)
+bsg_backend_scene_get_clip(const struct bsg_backend_scene *scene)
 {
     return scene ? &scene->clip : NULL;
 }
 
 const struct bsg_backend_scene_lights *
-bsg_backend_scene_lights(const struct bsg_backend_scene *scene)
+bsg_backend_scene_get_lights(const struct bsg_backend_scene *scene)
 {
     return scene ? &scene->lights : NULL;
 }
@@ -1119,8 +1119,8 @@ bsg_backend_scene_count(const struct bsg_backend_scene *scene)
 }
 
 void
-bsg_backend_scene_stats(const struct bsg_backend_scene *scene,
-			struct bsg_backend_scene_stats *stats)
+bsg_backend_scene_get_stats(const struct bsg_backend_scene *scene,
+			    struct bsg_backend_scene_stats *stats)
 {
     if (!stats)
 	return;
@@ -1239,7 +1239,7 @@ _backend_scene_action_apply(bsg_action_ref UNUSED(action),
     if (result) {
 	result->rendered = ret;
 	result->scene = scene;
-	bsg_backend_scene_stats(scene, &result->stats);
+	bsg_backend_scene_get_stats(scene, &result->stats);
 	result->capabilities = bsg_backend_scene_capabilities(scene);
 	result->capability_gaps = result->stats.capability_gaps;
     }

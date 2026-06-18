@@ -1218,9 +1218,9 @@ ged_draw_scene_ref_publish_part_wireframe_line_set(bsg_scene_ref ref,
     ged_draw_part_hemisphere(hhemi, tail, as, bs, hs);
 
     ged_draw_line_set_append_part_hemisphere_outline(points, commands, &idx,
-	    vhemi);
+	    (const point_t *)vhemi);
     ged_draw_line_set_append_part_hemisphere_outline(points, commands, &idx,
-	    hhemi);
+	    (const point_t *)hhemi);
 
     for (int i = 0; i <= 6; i += 2) {
 	ged_draw_line_set_append_point(points, commands, &idx, vhemi[i],

@@ -93,7 +93,7 @@ _line_cmd_create(void *bs, int argc, const char **argv)
 	    BSG_OVERLAY_ORDER_MODEL,
 	    NULL, 0);
     int cmd = BSG_GEOMETRY_LINE_MOVE;
-    bsg_feature_points_replace(ref, BSG_FEATURE_LINES, &p, &cmd, 1);
+    bsg_feature_points_replace(ref, BSG_FEATURE_LINES, (const point_t *)&p, &cmd, 1);
 
     return BRLCAD_OK;
 }
@@ -151,7 +151,7 @@ _line_cmd_append(void *bs, int argc, const char **argv)
     }
     VMOVE(npoints[point_count], p);
     ncmds[point_count] = BSG_GEOMETRY_LINE_DRAW;
-    int ret = bsg_feature_points_replace(ref, BSG_FEATURE_LINES, npoints, ncmds, point_count + 1) ?
+    int ret = bsg_feature_points_replace(ref, BSG_FEATURE_LINES, (const point_t *)npoints, ncmds, point_count + 1) ?
 	BRLCAD_OK : BRLCAD_ERROR;
     if (points)
 	bu_free(points, "bsg feature points copy");

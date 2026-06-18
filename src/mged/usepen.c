@@ -40,7 +40,7 @@
 #include "./menu.h"
 
 
-struct mged_highlight_state mged_highlight = {GED_DRAW_SHAPE_REF_NULL, 0};
+struct mged_highlight_state mged_highlight = {GED_DRAW_SHAPE_REF_NULL_INIT, 0};
 
 ged_draw_shape_ref
 mged_highlight_shape_ref(struct mged_state *s)

@@ -1215,7 +1215,7 @@ test_export_measurement_feature_geometry_record(void)
     point_t pts[2] = {VINIT_ZERO, VINIT_ZERO};
     int cmds[2] = {BSG_GEOMETRY_LINE_MOVE, BSG_GEOMETRY_LINE_DRAW};
     VSET(pts[1], 3.0, 0.0, 0.0);
-    if (!bsg_feature_points_replace(ref, BSG_FEATURE_MEASUREMENT, pts, cmds, 2)) {
+    if (!bsg_feature_points_replace(ref, BSG_FEATURE_MEASUREMENT, (const point_t *)pts, cmds, 2)) {
 	printf("FAIL: measurement export feature points\n");
 	return 1;
     }

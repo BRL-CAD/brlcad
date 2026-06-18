@@ -142,7 +142,7 @@ test_feature_create_record_payload(void)
     point_t p1 = VINIT_ZERO;
     VSET(p1, 1.0, 0.0, 0.0);
     VMOVE(points[1], p1);
-    if (!bsg_feature_points_replace(ref, BSG_FEATURE_LINES, points, cmds, 2))
+    if (!bsg_feature_points_replace(ref, BSG_FEATURE_LINES, (const point_t *)points, cmds, 2))
 	FAIL("feature point replacement failed");
 
     struct bsg_feature_record record;
