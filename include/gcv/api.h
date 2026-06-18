@@ -52,6 +52,15 @@ struct gcv_context
 };
 
 
+typedef int (*gcv_context_bulk_begin_func_t)(
+	struct gcv_context *context,
+	void *client_data);
+
+typedef int (*gcv_context_bulk_end_func_t)(
+	struct gcv_context *context,
+	void *client_data);
+
+
 /**
  * Initialize a conversion context.
  */
@@ -66,6 +75,19 @@ gcv_context_init(struct gcv_context *cxt);
  */
 GCV_EXPORT void
 gcv_context_destroy(struct gcv_context *cxt);
+
+
+/**
+ * Register callbacks used by mutating conversions to bracket bulk database
+ * changes.  This lets embedding applications suppress per-object live
+ * reconciliation while a reader or in-place filter is importing/updating many
+ * objects, then perform one final refresh.
+ */
+GCV_EXPORT void
+gcv_context_bulk_callbacks_set(struct gcv_context *cxt,
+			       gcv_context_bulk_begin_func_t begin_func,
+			       gcv_context_bulk_end_func_t end_func,
+			       void *client_data);
 
 
 enum gcv_tessellation_algorithm {

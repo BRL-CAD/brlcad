@@ -853,6 +853,19 @@ struct event_counts {
     size_t coalesced_count = 0;
 };
 
+struct event_refresh_counts {
+    size_t calls = 0;
+};
+
+static void
+event_refresh_cb(void *client_data)
+{
+    struct event_refresh_counts *counts =
+	(struct event_refresh_counts *)client_data;
+    if (counts)
+	counts->calls++;
+}
+
 static void
 event_count_cb(struct ged *UNUSED(gedp),
 	       const struct ged_event *UNUSED(events),
@@ -1171,6 +1184,92 @@ test_events(struct ged *gedp)
 	    std::string::npos,
 	    "event result must identify affected names");
     ged_event_txn_result_free(&result);
+
+    void (*old_refresh_handler)(void *) = gedp->ged_refresh_handler;
+    void *old_refresh_clientdata = gedp->ged_refresh_clientdata;
+    event_refresh_counts refresh_counts;
+    gedp->ged_refresh_handler = event_refresh_cb;
+    gedp->ged_refresh_clientdata = &refresh_counts;
+
+    event_order_observer bulk_post;
+    ged_event_observer_token bulk_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &bulk_post);
+    CHECK(bulk_post_token != 0,
+	    "bulk transaction observer must register");
+    ged_event_txn_result_init(&result);
+    CHECK(ged_event_bulk_begin(gedp) == 1,
+	    "bulk transaction begin must succeed");
+    CHECK(ged_event_bulk_active(gedp) == 1,
+	    "bulk transaction must report active");
+    CHECK(ged_event_batch_begin(gedp) == 1,
+	    "bulk transaction must allow nested command batches to pair");
+    CHECK(ged_event_notify_object_modified(gedp, "all.g", 1, NULL) == 0,
+	    "bulk transaction must defer published mutation events");
+    CHECK(ged_event_batch_end(gedp, NULL) == 0,
+	    "bulk transaction nested command batch end must not reconcile");
+    CHECK(bulk_post.calls == 0,
+	    "bulk transaction must not dispatch before final refresh");
+    CHECK(ged_event_bulk_end(gedp, &result) >= 0,
+	    "bulk transaction end must perform final refresh");
+    CHECK(ged_event_bulk_active(gedp) == 0,
+	    "bulk transaction must report inactive after end");
+    CHECK(bulk_post.calls == 1 && bulk_post.event_count == 1,
+	    "bulk transaction observer must see one final event");
+    CHECK(bulk_post.kinds.size() == 1 &&
+	    bulk_post.kinds[0] == GED_EVENT_BATCH_REBUILD,
+	    "bulk transaction final event must be a batch rebuild");
+    CHECK(result.event_count == 1 && result.coalesced_event_count == 1,
+	    "bulk transaction result must report one final rebuild event");
+    CHECK(refresh_counts.calls == 1,
+	    "bulk transaction must run one final refresh callback");
+    ged_event_txn_result_free(&result);
+    CHECK(ged_event_observer_remove(gedp, bulk_post_token) == 1,
+	    "bulk transaction observer removal must succeed");
+
+    refresh_counts = event_refresh_counts();
+    event_order_observer outer_bulk_post;
+    ged_event_observer_token outer_bulk_post_token =
+	ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+		event_order_cb, &outer_bulk_post);
+    CHECK(outer_bulk_post_token != 0,
+	    "outer bulk transaction observer must register");
+    ged_event_txn_result_init(&result);
+    CHECK(ged_event_batch_begin(gedp) == 1,
+	    "outer bulk command batch begin must succeed");
+    CHECK(ged_event_bulk_begin(gedp) == 1,
+	    "outer bulk transaction begin must succeed");
+    CHECK(ged_event_batch_begin(gedp) == 2,
+	    "outer bulk nested command batch must increment depth");
+    CHECK(ged_event_notify_object_modified(gedp, "all.g", 1, NULL) == 0,
+	    "outer bulk nested event must be deferred");
+    CHECK(ged_event_batch_end(gedp, NULL) == 1,
+	    "outer bulk nested command batch must leave outer batch open");
+    CHECK(outer_bulk_post.calls == 0,
+	    "outer bulk nested command batch must not dispatch");
+    CHECK(ged_event_bulk_end(gedp, NULL) == 0,
+	    "outer bulk transaction end must queue final refresh in outer batch");
+    CHECK(outer_bulk_post.calls == 0,
+	    "outer bulk final refresh must wait for outer batch end");
+    CHECK(refresh_counts.calls == 0,
+	    "outer bulk final refresh callback must wait for outer batch end");
+    CHECK(ged_event_batch_end(gedp, &result) >= 0,
+	    "outer bulk command batch end must dispatch final refresh");
+    CHECK(outer_bulk_post.calls == 1 && outer_bulk_post.event_count == 1,
+	    "outer bulk observer must see one final event");
+    CHECK(outer_bulk_post.kinds.size() == 1 &&
+	    outer_bulk_post.kinds[0] == GED_EVENT_BATCH_REBUILD,
+	    "outer bulk final event must be a batch rebuild");
+    CHECK(result.event_count == 1 && result.coalesced_event_count == 1,
+	    "outer bulk result must report one final rebuild event");
+    CHECK(refresh_counts.calls == 1,
+	    "outer bulk must run one final refresh callback");
+    ged_event_txn_result_free(&result);
+    CHECK(ged_event_observer_remove(gedp, outer_bulk_post_token) == 1,
+	    "outer bulk transaction observer removal must succeed");
+
+    gedp->ged_refresh_handler = old_refresh_handler;
+    gedp->ged_refresh_clientdata = old_refresh_clientdata;
 
     CHECK(ged_event_observer_remove(gedp, post_token) == 1,
 	    "post observer removal must succeed");

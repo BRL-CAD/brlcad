@@ -64,6 +64,10 @@ struct ged_event_txn_state {
     struct db_i *callback_dbip = nullptr;
     ged_event_observer_token next_token = 1;
     int suspended = 0;
+    int bulk_depth = 0;
+    int bulk_dirty = 0;
+    int bulk_callbacks_were_enabled = 0;
+    int bulk_refresh_pending = 0;
     int batch_depth = 0;
     int dispatch_depth = 0;
     std::vector<ged_event_owned> queued_events;
@@ -150,6 +154,17 @@ ged_event_same(const ged_event_owned &a, const ged_event_owned &b)
 	a.child_name == b.child_name &&
 	a.path == b.path &&
 	a.redraw == b.redraw;
+}
+
+
+static int
+ged_event_contains_batch_rebuild(const std::vector<ged_event_owned> &events)
+{
+    for (const ged_event_owned &event : events) {
+	if (event.kind == GED_EVENT_BATCH_REBUILD)
+	    return 1;
+    }
+    return 0;
 }
 
 
@@ -440,6 +455,44 @@ ged_event_prune_observers(struct ged_event_txn_state *state)
 		    return entry.removed || !entry.func;
 		}),
 	    state->observers.end());
+}
+
+
+static int
+ged_event_observer_count(struct ged_event_txn_state *state)
+{
+    if (!state)
+	return 0;
+
+    int count = 0;
+    for (const ged_event_observer_entry &entry : state->observers) {
+	if (!entry.removed && entry.func)
+	    count++;
+    }
+    return count;
+}
+
+
+static int
+ged_event_state_has_live_consumers(struct ged_event_txn_state *state)
+{
+    if (!state || !state->gedp)
+	return 0;
+
+    if (ged_event_observer_count(state) > 0)
+	return 1;
+
+    struct ged *gedp = state->gedp;
+    if (gedp->ged_refresh_handler != GED_REFRESH_FUNC_NULL)
+	return 1;
+
+    if (ged_draw_has_shapes(gedp) || ged_draw_has_groups(gedp))
+	return 1;
+
+    if (ged_selection_count(gedp, nullptr) > 0)
+	return 1;
+
+    return 0;
 }
 
 
@@ -812,6 +865,14 @@ ged_event_process_owned(struct ged_event_txn_state *state,
     state->dispatch_depth--;
     ged_event_prune_observers(state);
 
+    if (state->bulk_refresh_pending &&
+	    ged_event_contains_batch_rebuild(coalesced)) {
+	state->bulk_refresh_pending = 0;
+	if (state->gedp &&
+		state->gedp->ged_refresh_handler != GED_REFRESH_FUNC_NULL)
+	    ged_refresh_cb(state->gedp);
+    }
+
     if (use_local_result)
 	ged_event_txn_result_free(&local_result);
 
@@ -892,12 +953,82 @@ ged_event_txn_disable(struct ged *gedp)
 	return 0;
 
     state->suspended++;
+    state->bulk_depth = 0;
+    state->bulk_dirty = 0;
+    state->bulk_callbacks_were_enabled = 0;
+    state->bulk_refresh_pending = 0;
     state->batch_depth = 0;
     state->queued_events.clear();
     state->followup_events.clear();
     if (state->callback_dbip)
 	ged_event_librt_callbacks_disable(gedp);
     return state->suspended;
+}
+
+
+int
+ged_event_bulk_begin(struct ged *gedp)
+{
+    struct ged_event_txn_state *state = ged_event_state(gedp);
+    if (!state || state->suspended)
+	return 0;
+
+    if (state->bulk_depth == 0) {
+	state->bulk_callbacks_were_enabled = (state->callback_dbip != nullptr);
+	if (state->callback_dbip)
+	    ged_event_librt_callbacks_disable(gedp);
+	state->bulk_dirty = 1;
+	state->bulk_refresh_pending = 0;
+    }
+
+    state->bulk_depth++;
+    return state->bulk_depth;
+}
+
+
+int
+ged_event_bulk_end(struct ged *gedp, struct ged_event_txn_result *result)
+{
+    struct ged_event_txn_state *state = ged_event_state(gedp);
+    if (!state || state->bulk_depth <= 0)
+	return 0;
+
+    state->bulk_depth--;
+    if (state->bulk_depth > 0)
+	return state->bulk_depth;
+
+    int dirty = state->bulk_dirty;
+    int live = ged_event_state_has_live_consumers(state);
+    int restore_callbacks = state->bulk_callbacks_were_enabled;
+
+    state->bulk_dirty = 0;
+    state->bulk_callbacks_were_enabled = 0;
+
+    if (restore_callbacks && !state->suspended && gedp && gedp->dbip)
+	ged_event_librt_callbacks_enable(gedp);
+
+    if (!dirty || !live)
+	return 0;
+
+    if (gedp && gedp->ged_refresh_handler != GED_REFRESH_FUNC_NULL)
+	state->bulk_refresh_pending = 1;
+
+    return ged_event_notify_batch_rebuild(gedp, result);
+}
+
+
+int
+ged_event_bulk_active(struct ged *gedp)
+{
+    struct ged_event_txn_state *state = ged_event_state(gedp);
+    return (state && !state->suspended && state->bulk_depth > 0) ? 1 : 0;
+}
+
+
+int
+ged_event_txn_has_live_consumers(struct ged *gedp)
+{
+    return ged_event_state_has_live_consumers(ged_event_state(gedp));
 }
 
 
@@ -919,7 +1050,8 @@ int
 ged_event_librt_callbacks_enable(struct ged *gedp)
 {
     struct ged_event_txn_state *state = ged_event_state(gedp);
-    if (!state || !gedp || !gedp->dbip || state->suspended)
+    if (!state || !gedp || !gedp->dbip || state->suspended ||
+	    state->bulk_depth > 0)
 	return 0;
 
     if (state->callback_dbip == gedp->dbip)
@@ -1004,6 +1136,15 @@ ged_event_batch_end(struct ged *gedp, struct ged_event_txn_result *result)
     if (state->batch_depth > 0)
 	return state->batch_depth;
 
+    if (state->bulk_depth > 0) {
+	if (!state->queued_events.empty()) {
+	    state->bulk_dirty = 1;
+	    state->queued_events.clear();
+	}
+	state->followup_events.clear();
+	return 0;
+    }
+
     std::vector<ged_event_owned> events;
     events.swap(state->queued_events);
     int ret = ged_event_process_owned(state, events, result);
@@ -1022,6 +1163,11 @@ ged_event_publish_impl(struct ged *gedp,
     struct ged_event_txn_state *state = ged_event_state(gedp);
     if (!state || state->suspended || !events || !event_count)
 	return 0;
+
+    if (state->bulk_depth > 0) {
+	state->bulk_dirty = 1;
+	return 0;
+    }
 
     if (state->dispatch_depth > 0) {
 	ged_event_queue(state->followup_events, events, event_count, librt);

@@ -40,6 +40,8 @@
 #include "bu/sort.h"
 #include "bu/defines.h"
 
+#include "ged/event_txn.h"
+
 #include "../alphanum.h"
 #include "../ged_private.h"
 
@@ -352,6 +354,8 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int all_local = 1;
     int print_verbose_info = DB_FP_PRINT_COMB_INDEX;
     int search_cnt = 0; /* used to keep a running total of all items printed from search */
+    int has_exec = 0;
+    int bulk_started = 0;
     struct bu_vls prefix = BU_VLS_INIT_ZERO;
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
@@ -360,6 +364,12 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* COPY argv_orig to argv; */
     char **argv = NULL;
 
+    for (i = 1; i < (size_t)argc; i++) {
+	if (BU_STR_EQUAL(argv_orig[i], "-exec")) {
+	    has_exec = 1;
+	    break;
+	}
+    }
 
     bu_clbk_t clbk = NULL;
     void *u1 = (void *)gedp;
@@ -564,6 +574,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	}
     }
 
+    if (has_exec && clbk)
+	bulk_started = (ged_event_bulk_begin(gedp) > 0) ? 1 : 0;
+
     /* If all searches are local, use all supplied paths in the search to
      * return one unique list of objects.  If one or more paths are non-local,
      * each path is treated as its own search */
@@ -706,6 +719,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
     if (flags & DB_SEARCH_PRINT_TOTAL)
 	bu_vls_printf(gedp->ged_result_str, "[%d] items found in search\n", search_cnt);
+
+    if (bulk_started)
+	(void)ged_event_bulk_end(gedp, NULL);
 
     /* Done - free memory */
     bu_vls_free(&bname);
