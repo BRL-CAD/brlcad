@@ -1,6 +1,6 @@
 # Values set at CMake configure time
-set(BIN_DIR "@BIN_DIR@")
 set(DATA_DIR "@DATA_DIR@")
+set(BUILD_ROOT "@CMAKE_BINARY_DIR@")
 set(LOGFILE "@LOG_FILE@")
 
 file(WRITE "${LOGFILE}" "rt_primitives regression run\n")
@@ -13,10 +13,8 @@ if(NOT EXISTS "${RTP_EXEC}")
   message(FATAL_ERROR "Unable to find rt_primitives, aborting.\nSee ${LOGFILE}.\n${LOG}")
 endif(NOT EXISTS "${RTP_EXEC}")
 
-# Reconstruct the build root from the EXEC path, and locate primitives.g.
 get_filename_component(BDIR "${RTP_EXEC}" DIRECTORY)
-string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
-set(GFILE "${RDIR}/${DATA_DIR}/db/primitives.g")
+set(GFILE "${BUILD_ROOT}/${DATA_DIR}/db/primitives.g")
 
 file(APPEND "${LOGFILE}" "Running ${RTP_EXEC} ${GFILE}\n")
 execute_process(

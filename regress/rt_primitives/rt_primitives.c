@@ -60,6 +60,7 @@
 #include "bu/str.h"
 #include "bu/time.h"
 #include "bu/vls.h"
+#include "bu/sort.h"
 #include "bn/sobol.h"
 #include "raytrace.h"
 
@@ -125,7 +126,7 @@ static void shoot_all(struct application *ap, const fastf_t *rays, size_t n) {
 }
 
 /* compare function for qsort */
-static int cmp_double(const void *a, const void *b) {
+static int cmp_double(const void *a, const void *b, void* UNUSED(context)) {
     double x = *(const double *)a, y = *(const double *)b;
     return (x < y) ? -1 : (x > y) ? 1 : 0;
 }
@@ -228,11 +229,11 @@ static void run_solid(struct db_i *dbip, const char *name, int id, int is_stub,
     bu_strlcpy(row->type, id_label(id), sizeof(row->type));
     row->id = id;
 
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
     if (!rtip || rt_gettree(rtip, name) != 0) {
 	row->status = PRIM_GETTREE_FAIL;
 	if (rtip)
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	return;
     }
 
@@ -243,7 +244,7 @@ static void run_solid(struct db_i *dbip, const char *name, int id, int is_stub,
 
     if (rtip->stats.nsolids == 0) {
 	row->status = PRIM_PREP_FAIL;
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return;
     }
 
@@ -259,7 +260,7 @@ static void run_solid(struct db_i *dbip, const char *name, int id, int is_stub,
     rays = sample_chords(center, R, o->nrays, SEED_BASE + (unsigned long)id, &got);
     if (!rays || got == 0) {
 	row->status = PRIM_SAMPLE_FAIL;
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return;
     }
     row->nrays = got;
@@ -294,7 +295,7 @@ static void run_solid(struct db_i *dbip, const char *name, int id, int is_stub,
     if (ns > 0) {
 	double mean = 0.0, var = 0.0;
 	size_t i;
-	qsort(vals, ns, sizeof(double), cmp_double);
+	bu_sort(vals, ns, sizeof(double), cmp_double, NULL);
 	row->rays_per_sec = (ns % 2) ? vals[ns / 2]
 	    : 0.5 * (vals[ns / 2 - 1] + vals[ns / 2]);
 	for (i = 0; i < ns; i++)
@@ -316,7 +317,7 @@ static void run_solid(struct db_i *dbip, const char *name, int id, int is_stub,
 	row->status = (row->hits == 0) ? PRIM_ZERO_HITS : PRIM_OK;
 
     bu_free(rays, "chord rays");
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 }
 
 /* An empty filter table matches everything; otherwise match name or type. */
