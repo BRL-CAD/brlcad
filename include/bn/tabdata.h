@@ -82,7 +82,9 @@
 #include "vmath.h"
 
 #include "bn/defines.h"
+#include "bu/exit.h"
 #include "bu/magic.h"
+#include "bu/malloc.h"
 #include "bu/vls.h"
 
 __BEGIN_DECLS
