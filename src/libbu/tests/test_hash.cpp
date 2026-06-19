@@ -129,10 +129,18 @@ hash_add_del_one() {
     int *val = NULL;
     bu_hash_tbl *t = bu_hash_create(0);
     if (bu_hash_set(t, (const uint8_t *)array2[0], strlen(array2[0]), (void *)&indices[0]) == -1) return 1;
+
+    /* " C" hashes to the same default bucket as "r1"; removing a
+     * missing key from a populated bucket should be a no-op.
+     */
+    bu_hash_rm(t, (const uint8_t *)" C", strlen(" C"));
+
     val = (int *)bu_hash_get(t, (const uint8_t *)"r1", strlen("r1"));
     if (*val != 7) return 1;
     bu_hash_rm(t, (const uint8_t *)"r1", strlen("r1"));
     if (bu_hash_get(t, (const uint8_t *)"r1", strlen("r1"))) return 1;
+    bu_hash_rm(t, (const uint8_t *)"r1", strlen("r1"));
+    bu_hash_rm(t, (const uint8_t *)" C", strlen(" C"));
     bu_hash_destroy(t);
     return 0;
 }

@@ -317,7 +317,7 @@ bu_hash_rm(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 
     hsh_entry = hsh_tbl->lists[idx];
     prev_entry = NULL;
-    while (!found) {
+    while (hsh_entry) {
 	/* compare key lengths first for performance */
 	if ((size_t)hsh_entry->key_len != key_len) {
 	    prev_entry = hsh_entry;
@@ -335,7 +335,13 @@ bu_hash_rm(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 	    }
 	    free(hsh_entry->key);
 	    free(hsh_entry);
+	    if (hsh_tbl->num_entries > 0)
+		hsh_tbl->num_entries--;
+	    break;
 	}
+
+	prev_entry = hsh_entry;
+	hsh_entry = hsh_entry->next;
     }
 
     bu_semaphore_release(hsh_tbl->semaphore);
