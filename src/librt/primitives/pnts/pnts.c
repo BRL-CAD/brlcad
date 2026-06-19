@@ -702,7 +702,6 @@ C_DECL void
 rt_pnts_ifree(struct rt_db_internal *internal)
 {
     struct rt_pnts_internal *pnts;
-    register struct bu_list *point;
 
     RT_CK_DB_INTERNAL(internal);
 

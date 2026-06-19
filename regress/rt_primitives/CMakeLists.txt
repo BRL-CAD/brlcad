@@ -1,5 +1,5 @@
 if(TARGET librt AND BUILD_TESTING)
-  brlcad_addexec(rt_primitives rt_primitives.c "librt;libbu;libbn" NO_INSTALL)
+  brlcad_addexec(rt_primitives rt_primitives.c "librt;libbu;libbn;${M_LIBRARY}" NO_INSTALL)
 
   # The real brep sample is carried as serialized NURBS in primitives.asc and
   # round-trips through asc2g (Tcl), but the gcv fallback importer used when

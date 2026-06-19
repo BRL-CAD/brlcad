@@ -40,6 +40,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bu/sort.h"
+#include "bu/str.h"
+
 typedef enum {
     PRIM_OK = 0,         /* prepped, shot, hit */
     PRIM_SKIP_NONRT,     /* object whose type lacks ft_prep/ft_shot */
@@ -66,7 +69,7 @@ struct prim_row {
     double prep_us;
 };
 
-static inline const char *
+static const char *
 prim_status_str(prim_status_t s)
 {
     switch (s) {
@@ -107,19 +110,19 @@ prim_row_has_perf(const struct prim_row *r)
 
 /* Stable ordering for reproducible console + CSV output: by id, then name. */
 static inline int
-prim_row_cmp(const void *a, const void *b)
+prim_row_cmp(const void *a, const void *b, void *UNUSED(context))
 {
     const struct prim_row *ra = (const struct prim_row *)a;
     const struct prim_row *rb = (const struct prim_row *)b;
     if (ra->id != rb->id)
 	return (ra->id < rb->id) ? -1 : 1;
-    return strcmp(ra->name, rb->name);
+    return bu_strcmp(ra->name, rb->name);
 }
 
 static inline void
 prim_report_sort(struct prim_row *rows, size_t n)
 {
-    qsort(rows, n, sizeof(struct prim_row), prim_row_cmp);
+    bu_sort(rows, n, sizeof(struct prim_row), prim_row_cmp, NULL);
 }
 
 static inline void
