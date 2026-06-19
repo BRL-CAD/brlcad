@@ -2093,4 +2093,23 @@ s/autoview([[:space:]]+)([[:digit:].]+)/autoview\1-s\2/g
 	autoview command scale parameter now requires a -s option [7.44]
 s/EXTERNVARINIT/EXTERNCPP/g
 	more general/purpose-specific naming  [7.44]
-
+s/(#[[:space:]]*include[[:space:]]+["<])bv\/tig\.h([">])/\1bv\/plot3.h\2/g
+s/(#[[:space:]]*include[[:space:]]+["<])bv\/vectfont\.h([">])/\1bv\/plot3.h\2/g
+s/\btp_i2list\b/pl_list/g
+s/\btp_2list\b/pd_list/g
+s/\btp_3list\b/pd_3list/g
+s/\btp_2mlist\b/pd_marked_list/g
+s/\btp_2marker\b/pd_marker/g
+s/\btp_3marker\b/pd_3marker/g
+s/\btp_2symbol\b/pd_symbol/g
+s/\btp_3symbol\b/pdv_3symbol/g
+s/\btp_3axis\b/pdv_3axis/g
+s/\btp_3vector\b/pdv_3vector/g
+s/\btp_getchar\b/plot3_font_getchar/g
+s/\btp_scale\b/plot3_data_scale/g
+s/\btp_fixsc\b/plot3_scale_fit/g
+s/\btp_sep\b/plot3_float_split/g
+s/\btp_ipow\b/plot3_ipow/g
+s/\btp_ftoa\b/plot3_float_to_ascii/g
+s/\btp_plot\b/plot3_xy_plot/g
+	remove tig.h/vectfont.h, consolidate functionality into plot3.h [7.44]

@@ -28,7 +28,6 @@
 #include "bu.h"
 #include "bn.h"
 #include "bv/plot3.h"
-#include "bv/tig.h"
 
 #define BUFFER_SIZE 2000
 #define MAX_POINTS 30
@@ -105,7 +104,7 @@ convert_points(double *d_values, int *i_values, int count)
  * Tests
  */
 
-/* Produces the expected output of tp_i2list based on the input */
+/* Produces the expected output of pl_list based on the input */
 void
 make_tp_i2list_expected(char *buf, int buflen, int *x, int *y, int npoints)
 {
@@ -125,7 +124,7 @@ make_tp_i2list_expected(char *buf, int buflen, int *x, int *y, int npoints)
     }
 }
 
-/* This test ensures the tp_i2list function produces the output it's supposed to */
+/* This test ensures the pl_list function produces the output it's supposed to */
 int
 test_tp_i2list(int *x, int *y, int npoints)
 {
@@ -143,13 +142,13 @@ test_tp_i2list(int *x, int *y, int npoints)
     pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
 
     /* Plot the points */
-    tp_i2list(buf_out, x, y, npoints);
+    pl_list(buf_out, x, y, npoints);
 
     return compare_result(expected_buf, buf_out);
 }
 
 
-/* Produces the expected output of tp_2list based on the input */
+/* Produces the expected output of pd_list based on the input */
 void
 make_tp_2list_expected(char *buf, int buflen, double *x, double *y, int npoints)
 {
@@ -169,7 +168,7 @@ make_tp_2list_expected(char *buf, int buflen, double *x, double *y, int npoints)
     }
 }
 
-/* This test ensures the tp_2list function produces the output it's supposed to */
+/* This test ensures the pd_list function produces the output it's supposed to */
 int
 test_tp_2list(double *x, double *y, int npoints)
 {
@@ -184,14 +183,14 @@ test_tp_2list(double *x, double *y, int npoints)
     make_tp_2list_expected(expected_buf, BUFFER_SIZE, x, y, npoints);
 
     pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
-    tp_2list(buf_out, x, y, npoints);
+    pd_list(buf_out, x, y, npoints);
 
     return compare_result(expected_buf, buf_out);
 }
 
 
 /*
- * This test tests the tp_2mlist marker function to ensure it
+ * This test tests the pd_marked_list marker function to ensure it
  *  doesn't have any SEGFAULTs when invalid values are put in, and
  *  produces output when required and not when none is required
  */
@@ -217,7 +216,7 @@ test_tp_2mlist(double *x, double *y, int npoints)
 	for (; mark < 5; mark++)
 	    for (; interval < 5; interval++)
 		for (; size < 5; size++)
-		    tp_2mlist(buf_out, x, y, npoints, flag, mark, interval, size);
+		    pd_marked_list(buf_out, x, y, npoints, flag, mark, interval, size);
     fclose(buf_out);
 
     /* Check it doesn't produce output when there are no points */
@@ -227,7 +226,7 @@ test_tp_2mlist(double *x, double *y, int npoints)
     size = 1;
 
     buf_out = initialise_buffers(NULL);
-    tp_2mlist(buf_out, x, y, 0, flag, mark, interval, size);
+    pd_marked_list(buf_out, x, y, 0, flag, mark, interval, size);
 
     if (check_result_len(buf_out) > 0) {
 	printf("Produced output when no points were given.\n");
@@ -246,7 +245,7 @@ test_tp_2mlist(double *x, double *y, int npoints)
     size = 1;
 
     buf_out = initialise_buffers(NULL);
-    tp_2mlist(buf_out, x, y, 0, flag, mark, interval, size);
+    pd_marked_list(buf_out, x, y, 0, flag, mark, interval, size);
 
     if (check_result_len(buf_out) > 0) {
 	printf("Produced output when output was turned off.\n");
@@ -261,7 +260,7 @@ test_tp_2mlist(double *x, double *y, int npoints)
     size = 1;
 
     buf_out = initialise_buffers(NULL);
-    tp_2mlist(buf_out, x, y, 0, flag, mark, interval, size);
+    pd_marked_list(buf_out, x, y, 0, flag, mark, interval, size);
 
     if (check_result_len(buf_out) > 0) {
 	printf("Produced output when mark was null.\n");
@@ -276,7 +275,7 @@ test_tp_2mlist(double *x, double *y, int npoints)
     size = 1;
 
     buf_out = initialise_buffers(NULL);
-    tp_2mlist(buf_out, x, y, npoints, flag, mark, interval, size);
+    pd_marked_list(buf_out, x, y, npoints, flag, mark, interval, size);
 
     if (check_result_len(buf_out) <= 0) {
 	printf("Didn't produce output when expected.\n");
@@ -287,7 +286,45 @@ test_tp_2mlist(double *x, double *y, int npoints)
 }
 
 
-/* Produces the expected output of tp_3list based on the input */
+int
+test_plot3_font_getchar(void)
+{
+    unsigned char space = ' ';
+    unsigned char marker = 1;
+    unsigned char fallback = 9;
+    unsigned char question = '?';
+
+    if (!plot3_font_getchar(&space) || !plot3_font_getchar(&marker))
+	return 0;
+
+    if (*plot3_font_getchar(&space) != PLOT3_FONT_LAST)
+	return 0;
+
+    if (*plot3_font_getchar(&marker) == PLOT3_FONT_LAST)
+	return 0;
+
+    return plot3_font_getchar(&fallback) == plot3_font_getchar(&question);
+}
+
+
+int
+test_pd_symbol(void)
+{
+    FILE *buf_out = initialise_buffers(NULL);
+
+    if (!buf_out) {
+	printf("File Invalid\n");
+	return 0;
+    }
+
+    pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
+    pd_symbol(buf_out, "A", 0.0, 0.0, 10.0, 0.0);
+
+    return check_result_len(buf_out) > 0;
+}
+
+
+/* Produces the expected output of pd_3list based on the input */
 void
 make_tp_3list_expected(char *buf, int buflen, double *x, double *y, double *z, int npoints)
 {
@@ -307,7 +344,7 @@ make_tp_3list_expected(char *buf, int buflen, double *x, double *y, double *z, i
     }
 }
 
-/* This test ensures the tp_3list function produces the output it's supposed to */
+/* This test ensures the pd_3list function produces the output it's supposed to */
 int
 test_tp_3list(double *x, double *y, double *z, int npoints)
 {
@@ -322,7 +359,50 @@ test_tp_3list(double *x, double *y, double *z, int npoints)
     make_tp_3list_expected(expected_buf, BUFFER_SIZE, x, y, z, npoints);
 
     pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
-    tp_3list(buf_out, x, y, z, npoints);
+    pd_3list(buf_out, x, y, z, npoints);
+
+    return compare_result(expected_buf, buf_out);
+}
+
+
+int
+test_pdv_3symbol(void)
+{
+    FILE *buf_out = initialise_buffers(NULL);
+    point_t p = VINIT_ZERO;
+    mat_t mat;
+
+    if (!buf_out) {
+	printf("File Invalid\n");
+	return 0;
+    }
+
+    MAT_IDN(mat);
+    pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
+    pdv_3symbol(buf_out, "A", p, mat, 10.0);
+
+    return check_result_len(buf_out) > 0;
+}
+
+
+int
+test_pdv_3vector(void)
+{
+    char expected_buf[BUFFER_SIZE];
+    FILE *buf_out = initialise_buffers(expected_buf);
+    point_t from = VINIT_ZERO;
+    point_t to = VINIT_ZERO;
+
+    if (!buf_out) {
+	printf("File Invalid\n");
+	return 0;
+    }
+
+    VSET(to, 1.0, 0.0, 0.0);
+    snprintf(expected_buf, BUFFER_SIZE, "V 0 0 0 1 0 0\n");
+
+    pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
+    pdv_3vector(buf_out, from, to, 0.0, 0.0);
 
     return compare_result(expected_buf, buf_out);
 }
@@ -344,15 +424,23 @@ automatic_2d_test(double *double_x, double *double_y, int npoints)
     convert_points(double_y, int_y, npoints);
 
     if (!test_tp_i2list(int_x, int_y, npoints)) {
-	printf("tp_i2list test failed\n");
+	printf("pl_list test failed\n");
 	return 0;
     }
     if (!test_tp_2list(double_x, double_y, npoints)) {
-	printf("tp_2list test failed\n");
+	printf("pd_list test failed\n");
 	return 0;
     }
     if (!test_tp_2mlist(double_x, double_y, npoints)) {
-	printf("tp_2mlist test failed\n");
+	printf("pd_marked_list test failed\n");
+	return 0;
+    }
+    if (!test_plot3_font_getchar()) {
+	printf("plot3_font_getchar test failed\n");
+	return 0;
+    }
+    if (!test_pd_symbol()) {
+	printf("pd_symbol test failed\n");
 	return 0;
     }
 
@@ -364,7 +452,15 @@ int
 automatic_3d_test(double *double_x, double *double_y, double *double_z, int npoints)
 {
     if (!test_tp_3list(double_x, double_y, double_z, npoints)) {
-	printf("tp_3list test failed\n");
+	printf("pd_3list test failed\n");
+	return 0;
+    }
+    if (!test_pdv_3symbol()) {
+	printf("pdv_3symbol test failed\n");
+	return 0;
+    }
+    if (!test_pdv_3vector()) {
+	printf("pdv_3vector test failed\n");
 	return 0;
     }
 

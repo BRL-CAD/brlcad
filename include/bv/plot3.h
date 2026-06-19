@@ -33,6 +33,18 @@
  * -# The names have been changed.
  *
  * The 3-D extensions are those of Doug Gwyn, from his System V extensions.
+ * Plot3 also incorporates routines from the BRL TIG-PACK (Terminal
+ * Independent Plotting Package), originally written in 1978 and 1979 for
+ * generating polylines, markers, axes, simple XY plots, vectors, and plotted
+ * symbols using the plot3 primitives.
+ *
+ * The built-in vector font support descends from the Terminal Independent
+ * Graphics Display Package by Mike Muuss, July 31, 1978.  The vector font
+ * table was provided courtesy of Dr. Bruce Henrikson and Dr. Stephen Wolff,
+ * U.S. Army Ballistic Research Laboratory, Summer 1978, based on work for a
+ * remote Houston Instruments pen plotter package on the GE Tymeshare system.
+ * The basic font resides in a 10x10 unit square; callers scale and transform
+ * those stroke lists into plot coordinates.
  *
  * These are the ascii command letters allocated to various actions.  Care has
  * been taken to consistently match lowercase and uppercase letters.
@@ -157,8 +169,27 @@ __BEGIN_DECLS
 #define pl_point         PL_ADD_PREFIX(pl_point)
 #define pl_setOutputMode PL_ADD_PREFIX(pl_setOutputMode)
 #define pl_space         PL_ADD_PREFIX(pl_space)
+#define pl_list          PL_ADD_PREFIX(pl_list)
 #define plot3_invalid    PL_ADD_PREFIX(plot3_invalid)
+#define plot3_data_scale PL_ADD_PREFIX(plot3_data_scale)
+#define plot3_float_split PL_ADD_PREFIX(plot3_float_split)
+#define plot3_float_to_ascii PL_ADD_PREFIX(plot3_float_to_ascii)
+#define plot3_font_getchar PL_ADD_PREFIX(plot3_font_getchar)
+#define plot3_ipow       PL_ADD_PREFIX(plot3_ipow)
+#define plot3_scale_fit  PL_ADD_PREFIX(plot3_scale_fit)
+#define plot3_xy_plot    PL_ADD_PREFIX(plot3_xy_plot)
+#define pd_3list         PL_ADD_PREFIX(pd_3list)
+#define pd_3marker       PL_ADD_PREFIX(pd_3marker)
+#define pd_list          PL_ADD_PREFIX(pd_list)
+#define pd_marked_list   PL_ADD_PREFIX(pd_marked_list)
+#define pd_marker        PL_ADD_PREFIX(pd_marker)
+#define pd_symbol        PL_ADD_PREFIX(pd_symbol)
+#define pdv_3axis        PL_ADD_PREFIX(pdv_3axis)
+#define pdv_3symbol      PL_ADD_PREFIX(pdv_3symbol)
+#define pdv_3vector      PL_ADD_PREFIX(pdv_3vector)
 
+#define PLOT3_FONT_LAST -128
+#define PLOT3_FONT_NEGY -127
 
 PLOT3_EXPORT extern int pl_getOutputMode(void);
 PLOT3_EXPORT extern void pl_setOutputMode(int mode);
@@ -340,6 +371,97 @@ PLOT3_EXPORT extern void pdv_3ray(FILE *fp,
 			       const vect_t dir,
 			       double t);
 
+PLOT3_EXPORT extern void pl_list(FILE *fp,
+			      int *x,
+			      int *y,
+			      int npoints);
+PLOT3_EXPORT extern void pd_list(FILE *fp,
+			      double *x,
+			      double *y,
+			      int npoints);
+PLOT3_EXPORT extern void pd_3list(FILE *fp,
+			       double *x,
+			       double *y,
+			       double *z,
+			       int npoints);
+PLOT3_EXPORT extern void pd_marked_list(FILE *fp,
+				     double *x,
+				     double *y,
+				     int npoints,
+				     int flag,
+				     int mark,
+				     int interval,
+				     double size);
+PLOT3_EXPORT extern void pd_marker(FILE *fp,
+				int c,
+				double x,
+				double y,
+				double scale);
+PLOT3_EXPORT extern void pd_3marker(FILE *fp,
+				 int c,
+				 double x,
+				 double y,
+				 double z,
+				 double scale);
+PLOT3_EXPORT extern void plot3_data_scale(int idata[],
+				       int elements,
+				       int mode,
+				       int length,
+				       int odata[],
+				       double *min,
+				       double *dx);
+PLOT3_EXPORT extern void pd_symbol(FILE *fp,
+				char *string,
+				double x,
+				double y,
+				double scale,
+				double theta);
+PLOT3_EXPORT extern void plot3_xy_plot(FILE *fp,
+				    int xp,
+				    int yp,
+				    int xl,
+				    int yl,
+				    char xtitle[],
+				    char ytitle[],
+				    float x[],
+				    float y[],
+				    int n,
+				    double cscale);
+PLOT3_EXPORT extern void plot3_float_to_ascii(float x, char *s);
+PLOT3_EXPORT extern void plot3_scale_fit(float *x,
+				     int npts,
+				     float size,
+				     float *xs,
+				     float *xmin,
+				     float *xmax,
+				     float *dx);
+PLOT3_EXPORT extern void plot3_float_split(float x,
+				       float *coef,
+				       int *ex);
+PLOT3_EXPORT extern double plot3_ipow(double x,
+				  int n);
+PLOT3_EXPORT extern void pdv_3axis(FILE *fp,
+			       char *string,
+			       point_t origin,
+			       mat_t rot,
+			       double length,
+			       int ccw,
+			       int ndigits,
+			       double label_start,
+			       double label_incr,
+			       double tick_separation,
+			       double char_width);
+PLOT3_EXPORT extern void pdv_3symbol(FILE *fp,
+				  char *string,
+				  point_t origin,
+				  mat_t rot,
+				  double scale);
+PLOT3_EXPORT extern void pdv_3vector(FILE *plotfp,
+				  point_t from,
+				  point_t to,
+				  double fromheadfract,
+				  double toheadfract);
+PLOT3_EXPORT extern int *plot3_font_getchar(const unsigned char *c);
 
 PLOT3_EXPORT extern int plot3_invalid(FILE *fp, int mode);
 
@@ -347,6 +469,8 @@ __END_DECLS
 
 #if defined(PLOT3_IMPLEMENTATION)
 #include <stdio.h>
+#include <math.h>
+#include <string.h>
 #include "bu/cv.h"
 
 static int pl_outputMode = PL_OUTPUT_MODE_BINARY;
@@ -1114,6 +1238,1742 @@ read_tstring(FILE *fp, int mode)
     }
     return 1;
 }
+
+#define PLOT3_MARK 1
+#define PLOT3_LINE 2
+#define PLOT3_NUM_SYMBOLS 8
+#define PLOT3_BRT(_x, _y) (11*(_x)+(_y))
+#define PLOT3_DRK(_x, _y) -(11*(_x)+(_y))
+#define PLOT3_BNEG(_x, _y) PLOT3_FONT_NEGY, PLOT3_BRT((_x), (_y))
+#define PLOT3_DNEG(_x, _y) PLOT3_FONT_NEGY, PLOT3_DRK((_x), (_y))
+#define PLOT3_TICK_YLEN (char_width)
+#define PLOT3_NUM_YOFF (3*char_width)
+#define PLOT3_TITLE_YOFF (5*char_width)
+#define PLOT3_TIC 100
+#define PLOT3_REF_WIDTH 0.857143
+#define PLOT3_NUM_DISTANCE 250
+#define PLOT3_LAB_LNGTH 860
+
+static int *plot3_font_index[256];
+
+static int plot3_font_table[] = {
+
+/*	+	*/
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(8, 5),
+    PLOT3_DRK(4, 8),
+    PLOT3_BRT(4, 2),
+    PLOT3_FONT_LAST,
+
+/*	x	*/
+    PLOT3_DRK(0, 2),
+    PLOT3_BRT(8, 8),
+    PLOT3_DRK(0, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_FONT_LAST,
+
+/*	triangle	*/
+    PLOT3_DRK(0, 2),
+    PLOT3_BRT(4, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(0, 2),
+    PLOT3_FONT_LAST,
+
+/*	square	*/
+    PLOT3_DRK(0, 2),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(0, 2),
+    PLOT3_FONT_LAST,
+
+/*	hourglass	*/
+    PLOT3_DRK(0, 2),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(0, 2),
+    PLOT3_FONT_LAST,
+
+/*	plus-minus	*/
+    PLOT3_DRK(5, 7),
+    PLOT3_BRT(5, 2),
+    PLOT3_DRK(2, 2),
+    PLOT3_BRT(8, 2),
+    PLOT3_DRK(2, 5),
+    PLOT3_BRT(8, 5),
+    PLOT3_FONT_LAST,
+
+/*	centerline symbol	*/
+    PLOT3_DRK(8, 4),
+    PLOT3_BRT(7, 6),
+    PLOT3_BRT(4, 7),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(0, 4),
+    PLOT3_BRT(1, 2),
+    PLOT3_BRT(4, 1),
+    PLOT3_BRT(7, 2),
+    PLOT3_BRT(8, 4),
+    PLOT3_DRK(1, 1),
+    PLOT3_BRT(7, 7),
+    PLOT3_FONT_LAST,
+
+/*	degree symbol	*/
+    PLOT3_DRK(1, 9),
+    PLOT3_BRT(2, 9),
+    PLOT3_BRT(3, 8),
+    PLOT3_BRT(3, 7),
+    PLOT3_BRT(2, 6),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(0, 7),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(1, 9),
+    PLOT3_FONT_LAST,
+
+/*	table for ascii 040, ' '	*/
+    PLOT3_FONT_LAST,
+
+/*	table for !	*/
+    PLOT3_DRK(3, 0),
+    PLOT3_BRT(5, 2),
+    PLOT3_BRT(5, 0),
+    PLOT3_BRT(3, 2),
+    PLOT3_BRT(3, 0),
+    PLOT3_DRK(4, 4),
+    PLOT3_BRT(3, 10),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(4, 4),
+    PLOT3_BRT(4, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for "	*/
+    PLOT3_DRK(1, 10),
+    PLOT3_BRT(3, 10),
+    PLOT3_BRT(2, 7),
+    PLOT3_BRT(1, 10),
+    PLOT3_DRK(5, 10),
+    PLOT3_BRT(7, 10),
+    PLOT3_BRT(6, 7),
+    PLOT3_BRT(5, 10),
+    PLOT3_FONT_LAST,
+
+
+/*	table for #	*/
+    PLOT3_DRK(1, 0),
+    PLOT3_BRT(3, 9),
+    PLOT3_DRK(6, 9),
+    PLOT3_BRT(4, 0),
+    PLOT3_DRK(6, 3),
+    PLOT3_BRT(0, 3),
+    PLOT3_DRK(1, 6),
+    PLOT3_BRT(7, 6),
+    PLOT3_FONT_LAST,
+
+/*	table for $	*/
+    PLOT3_DRK(1, 2),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(7, 5),
+    PLOT3_BRT(1, 5),
+    PLOT3_BRT(1, 9),
+    PLOT3_BRT(7, 9),
+    PLOT3_BRT(7, 8),
+    PLOT3_DRK(4, 10),
+    PLOT3_BRT(4, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for %	*/
+    PLOT3_DRK(3, 10),
+    PLOT3_BRT(3, 7),
+    PLOT3_BRT(0, 7),
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(0, 0),
+    PLOT3_DRK(8, 0),
+    PLOT3_BRT(5, 0),
+    PLOT3_BRT(5, 3),
+    PLOT3_BRT(8, 3),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for &	*/
+    PLOT3_DRK(7, 3),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(1, 0),
+    PLOT3_BRT(0, 3),
+    PLOT3_BRT(5, 8),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(3, 10),
+    PLOT3_BRT(1, 8),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for '	*/
+    PLOT3_DRK(4, 6),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(4, 6),
+    PLOT3_FONT_LAST,
+
+/*	table for (	*/
+    PLOT3_DRK(5, 0),
+    PLOT3_BRT(3, 1),
+    PLOT3_BRT(2, 4),
+    PLOT3_BRT(2, 6),
+    PLOT3_BRT(3, 9),
+    PLOT3_BRT(5, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for)	*/
+    PLOT3_DRK(3, 0),
+    PLOT3_BRT(5, 1),
+    PLOT3_BRT(6, 4),
+    PLOT3_BRT(6, 6),
+    PLOT3_BRT(5, 9),
+    PLOT3_BRT(3, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for *	*/
+    PLOT3_DRK(4, 2),
+    PLOT3_BRT(4, 8),
+    PLOT3_DRK(6, 7),
+    PLOT3_BRT(2, 3),
+    PLOT3_DRK(6, 3),
+    PLOT3_BRT(2, 7),
+    PLOT3_DRK(1, 5),
+    PLOT3_BRT(7, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for +	*/
+    PLOT3_DRK(1, 5),
+    PLOT3_BRT(7, 5),
+    PLOT3_DRK(4, 8),
+    PLOT3_BRT(4, 2),
+    PLOT3_FONT_LAST,
+
+/*	table for, 	*/
+    PLOT3_DRK(5, 0),
+    PLOT3_BRT(3, 2),
+    PLOT3_BRT(3, 0),
+    PLOT3_BRT(5, 2),
+    PLOT3_BRT(5, 0),
+    PLOT3_BNEG(2, 2),
+    PLOT3_BRT(4, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for -	*/
+    PLOT3_DRK(1, 5),
+    PLOT3_BRT(7, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for .	*/
+    PLOT3_DRK(5, 0),
+    PLOT3_BRT(3, 2),
+    PLOT3_BRT(3, 0),
+    PLOT3_BRT(5, 2),
+    PLOT3_BRT(5, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for /	*/
+    PLOT3_BRT(8, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for 0	*/
+    PLOT3_DRK(8, 10),
+    PLOT3_BRT(0, 0),
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(8, 0),
+    PLOT3_BRT(0, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for 1	*/
+    PLOT3_DRK(4, 0),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(2, 8),
+    PLOT3_FONT_LAST,
+
+/*	table for 2	*/
+    PLOT3_DRK(0, 6),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(3, 10),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 7),
+    PLOT3_BRT(0, 2),
+    PLOT3_BRT(0, 0),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for 3	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(8, 0),
+    PLOT3_BRT(0, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for 4	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(8, 5),
+    PLOT3_DRK(8, 10),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for 5	*/
+    PLOT3_DRK(8, 10),
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(8, 0),
+    PLOT3_BRT(0, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for 6	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(0, 0),
+    PLOT3_BRT(8, 0),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(0, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for 7	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(6, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for 8	*/
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(0, 0),
+    PLOT3_BRT(8, 0),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(8, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for 9	*/
+    PLOT3_DRK(8, 5),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for :	*/
+    PLOT3_DRK(5, 6),
+    PLOT3_BRT(3, 8),
+    PLOT3_BRT(3, 6),
+    PLOT3_BRT(5, 8),
+    PLOT3_BRT(5, 6),
+    PLOT3_DRK(5, 0),
+    PLOT3_BRT(3, 2),
+    PLOT3_BRT(3, 0),
+    PLOT3_BRT(5, 2),
+    PLOT3_BRT(5, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for ;	*/
+    PLOT3_DRK(5, 6),
+    PLOT3_BRT(3, 8),
+    PLOT3_BRT(3, 6),
+    PLOT3_BRT(5, 8),
+    PLOT3_BRT(5, 6),
+    PLOT3_DRK(5, 0),
+    PLOT3_BRT(3, 2),
+    PLOT3_BRT(3, 0),
+    PLOT3_BRT(5, 2),
+    PLOT3_BRT(5, 0),
+    PLOT3_BNEG(2, 2),
+    PLOT3_BRT(4, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for <	*/
+    PLOT3_DRK(8, 8),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(8, 2),
+    PLOT3_FONT_LAST,
+
+/*	table for =	*/
+    PLOT3_DRK(0, 7),
+    PLOT3_BRT(8, 7),
+    PLOT3_DRK(0, 3),
+    PLOT3_BRT(8, 3),
+    PLOT3_FONT_LAST,
+
+/*	table for >	*/
+    PLOT3_DRK(0, 8),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(0, 2),
+    PLOT3_FONT_LAST,
+
+/*	table for ?	*/
+    PLOT3_DRK(3, 0),
+    PLOT3_BRT(5, 2),
+    PLOT3_BRT(5, 0),
+    PLOT3_BRT(3, 2),
+    PLOT3_BRT(3, 0),
+    PLOT3_DRK(1, 7),
+    PLOT3_BRT(1, 9),
+    PLOT3_BRT(3, 10),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(7, 9),
+    PLOT3_BRT(7, 7),
+    PLOT3_BRT(4, 5),
+    PLOT3_BRT(4, 3),
+    PLOT3_FONT_LAST,
+
+/*	table for @	*/
+    PLOT3_DRK(0, 8),
+    PLOT3_BRT(2, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(1, 4),
+    PLOT3_BRT(2, 5),
+    PLOT3_BRT(4, 5),
+    PLOT3_BRT(5, 4),
+    PLOT3_BRT(5, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for A	*/
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(2, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 0),
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(8, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for B	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(8, 9),
+    PLOT3_BRT(8, 6),
+    PLOT3_BRT(5, 5),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(5, 5),
+    PLOT3_BRT(8, 4),
+    PLOT3_BRT(8, 1),
+    PLOT3_BRT(5, 0),
+    PLOT3_BRT(0, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for C	*/
+    PLOT3_DRK(8, 2),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(0, 2),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(2, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_FONT_LAST,
+
+/*	table for D	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(5, 0),
+    PLOT3_BRT(0, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for E	*/
+    PLOT3_DRK(8, 0),
+    PLOT3_BRT(0, 0),
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(5, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for F	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(5, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for G	*/
+    PLOT3_DRK(5, 5),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(0, 2),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(2, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_FONT_LAST,
+
+/*	table for H	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_DRK(8, 10),
+    PLOT3_BRT(8, 0),
+    PLOT3_DRK(0, 6),
+    PLOT3_BRT(8, 6),
+    PLOT3_FONT_LAST,
+
+/*	table for I	*/
+    PLOT3_DRK(4, 0),
+    PLOT3_BRT(6, 0),
+    PLOT3_DRK(5, 0),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for J	*/
+    PLOT3_DRK(0, 2),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(5, 0),
+    PLOT3_BRT(7, 2),
+    PLOT3_BRT(7, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for K	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(8, 10),
+    PLOT3_DRK(3, 7),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for L	*/
+    PLOT3_DRK(8, 0),
+    PLOT3_BRT(0, 0),
+    PLOT3_BRT(0, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for M	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(4, 5),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for N	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(8, 0),
+    PLOT3_BRT(8, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for O	*/
+    PLOT3_DRK(0, 2),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(2, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(0, 2),
+    PLOT3_FONT_LAST,
+
+/*	table for P	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 9),
+    PLOT3_BRT(8, 6),
+    PLOT3_BRT(6, 5),
+    PLOT3_BRT(0, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for Q	*/
+    PLOT3_DRK(0, 2),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(2, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(0, 2),
+    PLOT3_DRK(5, 3),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for R	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 6),
+    PLOT3_BRT(6, 5),
+    PLOT3_BRT(0, 5),
+    PLOT3_DRK(5, 5),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for S	*/
+    PLOT3_DRK(0, 1),
+    PLOT3_BRT(1, 0),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(8, 4),
+    PLOT3_BRT(6, 6),
+    PLOT3_BRT(2, 6),
+    PLOT3_BRT(0, 7),
+    PLOT3_BRT(0, 9),
+    PLOT3_BRT(1, 10),
+    PLOT3_BRT(7, 10),
+    PLOT3_BRT(8, 9),
+    PLOT3_FONT_LAST,
+
+/*	table for T	*/
+    PLOT3_DRK(4, 0),
+    PLOT3_BRT(4, 10),
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for U	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(0, 2),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(8, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for V	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(8, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for W	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(1, 0),
+    PLOT3_BRT(4, 4),
+    PLOT3_BRT(7, 0),
+    PLOT3_BRT(8, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for X	*/
+    PLOT3_BRT(8, 10),
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for Y	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(4, 4),
+    PLOT3_BRT(8, 10),
+    PLOT3_DRK(4, 4),
+    PLOT3_BRT(4, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for Z	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(8, 10),
+    PLOT3_BRT(0, 0),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for [	*/
+    PLOT3_DRK(6, 0),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(6, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for \	*/
+    PLOT3_DRK(0, 10),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for ]	*/
+    PLOT3_DRK(2, 0),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(2, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for ^	*/
+    PLOT3_DRK(4, 0),
+    PLOT3_BRT(4, 10),
+    PLOT3_DRK(2, 8),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(6, 8),
+    PLOT3_FONT_LAST,
+
+/*	table for _	*/
+    PLOT3_DNEG(0, 1),
+    PLOT3_BNEG(11, 1),
+    PLOT3_FONT_LAST,
+
+/*	table for ascii 96: accent	*/
+    PLOT3_DRK(3, 10),
+    PLOT3_BRT(5, 6),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(3, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for a	*/
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(6, 6),
+    PLOT3_BRT(7, 5),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(8, 0),
+    PLOT3_DRK(7, 1),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(1, 0),
+    PLOT3_BRT(0, 1),
+    PLOT3_BRT(0, 2),
+    PLOT3_BRT(1, 3),
+    PLOT3_BRT(6, 3),
+    PLOT3_BRT(7, 2),
+    PLOT3_FONT_LAST,
+
+/*	table for b	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_DRK(8, 3),
+    PLOT3_BRT(7, 5),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(1, 5),
+    PLOT3_BRT(0, 3),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(8, 3),
+    PLOT3_FONT_LAST,
+
+/*	table for c	*/
+    PLOT3_DRK(8, 5),
+    PLOT3_BRT(7, 6),
+    PLOT3_BRT(2, 6),
+    PLOT3_BRT(0, 4),
+    PLOT3_BRT(0, 4),
+    PLOT3_BRT(0, 2),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(7, 0),
+    PLOT3_BRT(8, 1),
+    PLOT3_FONT_LAST,
+
+/*	table for d	*/
+    PLOT3_DRK(8, 0),
+    PLOT3_BRT(8, 10),
+    PLOT3_DRK(8, 3),
+    PLOT3_BRT(7, 5),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(1, 5),
+    PLOT3_BRT(0, 3),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(8, 3),
+    PLOT3_FONT_LAST,
+
+/*	table for e	*/
+    PLOT3_DRK(0, 4),
+    PLOT3_BRT(1, 3),
+    PLOT3_BRT(7, 3),
+    PLOT3_BRT(8, 4),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(7, 6),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(0, 1),
+    PLOT3_BRT(1, 0),
+    PLOT3_BRT(7, 0),
+    PLOT3_BRT(8, 1),
+    PLOT3_FONT_LAST,
+
+/*	table for f	*/
+    PLOT3_DRK(2, 0),
+    PLOT3_BRT(2, 9),
+    PLOT3_BRT(3, 10),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(6, 9),
+    PLOT3_DRK(1, 5),
+    PLOT3_BRT(4, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for g	*/
+    PLOT3_DRK(8, 6),
+    PLOT3_DRK(8, 3),
+    PLOT3_BRT(7, 5),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(1, 5),
+    PLOT3_BRT(0, 3),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(8, 3),
+    PLOT3_BNEG(8, 2),
+    PLOT3_BNEG(7, 3),
+    PLOT3_BNEG(1, 3),
+    PLOT3_BNEG(0, 2),
+    PLOT3_FONT_LAST,
+
+/*	table for h	*/
+    PLOT3_BRT(0, 10),
+    PLOT3_DRK(0, 4),
+    PLOT3_BRT(2, 6),
+    PLOT3_BRT(6, 6),
+    PLOT3_BRT(8, 4),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for i	*/
+    PLOT3_DRK(4, 0),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(3, 6),
+    PLOT3_DRK(4, 9),
+    PLOT3_BRT(4, 8),
+    PLOT3_DRK(3, 0),
+    PLOT3_BRT(5, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for j	*/
+    PLOT3_DRK(5, 6),
+    PLOT3_BRT(6, 6),
+    PLOT3_BNEG(6, 2),
+    PLOT3_BNEG(5, 3),
+    PLOT3_BNEG(3, 3),
+    PLOT3_BNEG(2, 2),
+    PLOT3_FONT_LAST,
+
+/*	table for k	*/
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(2, 10),
+    PLOT3_BRT(0, 10),
+    PLOT3_DRK(2, 4),
+    PLOT3_BRT(4, 4),
+    PLOT3_BRT(8, 6),
+    PLOT3_DRK(4, 4),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for l	*/
+    PLOT3_DRK(3, 10),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(4, 2),
+    PLOT3_BRT(5, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for m	*/
+    PLOT3_BRT(0, 6),
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(3, 6),
+    PLOT3_BRT(4, 5),
+    PLOT3_BRT(4, 0),
+    PLOT3_DRK(4, 5),
+    PLOT3_BRT(5, 6),
+    PLOT3_BRT(7, 6),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for n	*/
+    PLOT3_BRT(0, 6),
+    PLOT3_DRK(0, 4),
+    PLOT3_BRT(2, 6),
+    PLOT3_BRT(6, 6),
+    PLOT3_BRT(8, 4),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for o	*/
+    PLOT3_DRK(8, 3),
+    PLOT3_BRT(7, 5),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(1, 5),
+    PLOT3_BRT(0, 3),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(8, 3),
+    PLOT3_FONT_LAST,
+
+/*	table for p	*/
+    PLOT3_DRK(0, 6),
+    PLOT3_BNEG(0, 3),
+    PLOT3_DRK(8, 3),
+    PLOT3_BRT(7, 5),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(1, 5),
+    PLOT3_BRT(0, 3),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(8, 3),
+    PLOT3_FONT_LAST,
+
+/*	table for q	*/
+    PLOT3_DRK(8, 6),
+    PLOT3_DRK(8, 3),
+    PLOT3_BRT(7, 5),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(1, 5),
+    PLOT3_BRT(0, 3),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(8, 3),
+    PLOT3_BNEG(8, 3),
+    PLOT3_BNEG(9, 3),
+    PLOT3_FONT_LAST,
+
+/*	table for r	*/
+    PLOT3_BRT(1, 0),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(0, 6),
+    PLOT3_DRK(1, 4),
+    PLOT3_BRT(3, 6),
+    PLOT3_BRT(6, 6),
+    PLOT3_BRT(8, 4),
+    PLOT3_FONT_LAST,
+
+/*	table for s	*/
+    PLOT3_DRK(0, 1),
+    PLOT3_BRT(1, 0),
+    PLOT3_BRT(7, 0),
+    PLOT3_BRT(8, 1),
+    PLOT3_BRT(7, 2),
+    PLOT3_BRT(1, 4),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(7, 6),
+    PLOT3_BRT(8, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for t	*/
+    PLOT3_DRK(7, 1),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(3, 1),
+    PLOT3_BRT(3, 10),
+    PLOT3_BRT(2, 10),
+    PLOT3_DRK(1, 5),
+    PLOT3_BRT(5, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for u	*/
+    PLOT3_DRK(0, 6),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(1, 1),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(7, 1),
+    PLOT3_BRT(7, 6),
+    PLOT3_DRK(7, 1),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for v	*/
+    PLOT3_DRK(0, 6),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(8, 6),
+    PLOT3_FONT_LAST,
+
+/*	table for w	*/
+    PLOT3_DRK(0, 6),
+    PLOT3_BRT(0, 5),
+    PLOT3_BRT(2, 0),
+    PLOT3_BRT(4, 5),
+    PLOT3_BRT(6, 0),
+    PLOT3_BRT(8, 5),
+    PLOT3_BRT(8, 6),
+    PLOT3_FONT_LAST,
+
+/*	table for x	*/
+    PLOT3_BRT(8, 6),
+    PLOT3_DRK(0, 6),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for y	*/
+    PLOT3_DRK(0, 6),
+    PLOT3_BRT(0, 1),
+    PLOT3_BRT(1, 0),
+    PLOT3_BRT(7, 0),
+    PLOT3_BRT(8, 1),
+    PLOT3_DRK(8, 6),
+    PLOT3_BNEG(8, 2),
+    PLOT3_BNEG(7, 3),
+    PLOT3_BNEG(1, 3),
+    PLOT3_BNEG(0, 2),
+    PLOT3_FONT_LAST,
+
+/*	table for z	*/
+    PLOT3_DRK(0, 6),
+    PLOT3_BRT(8, 6),
+    PLOT3_BRT(0, 0),
+    PLOT3_BRT(8, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for ascii 123, left brace	*/
+    PLOT3_DRK(6, 10),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(4, 9),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(3, 5),
+    PLOT3_BRT(4, 4),
+    PLOT3_BRT(4, 1),
+    PLOT3_BRT(5, 0),
+    PLOT3_BRT(6, 0),
+    PLOT3_FONT_LAST,
+
+/*	table for ascii 124, vertical bar	*/
+    PLOT3_DRK(4, 4),
+    PLOT3_BRT(4, 0),
+    PLOT3_BRT(5, 0),
+    PLOT3_BRT(5, 4),
+    PLOT3_BRT(4, 4),
+    PLOT3_DRK(4, 6),
+    PLOT3_BRT(4, 10),
+    PLOT3_BRT(5, 10),
+    PLOT3_BRT(5, 6),
+    PLOT3_BRT(4, 6),
+    PLOT3_FONT_LAST,
+
+/*	table for ascii 125, right brace	*/
+    PLOT3_DRK(2, 0),
+    PLOT3_BRT(3, 0),
+    PLOT3_BRT(4, 1),
+    PLOT3_BRT(4, 4),
+    PLOT3_BRT(5, 5),
+    PLOT3_BRT(4, 6),
+    PLOT3_BRT(4, 9),
+    PLOT3_BRT(3, 10),
+    PLOT3_BRT(2, 10),
+    PLOT3_FONT_LAST,
+
+/*	table for ascii 126, tilde	*/
+    PLOT3_DRK(0, 5),
+    PLOT3_BRT(1, 6),
+    PLOT3_BRT(3, 6),
+    PLOT3_BRT(5, 4),
+    PLOT3_BRT(7, 4),
+    PLOT3_BRT(8, 5),
+    PLOT3_FONT_LAST,
+
+/*	table for ascii 127, rubout	*/
+    PLOT3_DRK(0, 2),
+    PLOT3_BRT(0, 8),
+    PLOT3_BRT(8, 8),
+    PLOT3_BRT(8, 2),
+    PLOT3_BRT(0, 2),
+    PLOT3_FONT_LAST
+};
+
+static void
+plot3_mat_mul(mat_t o, const mat_t a, const mat_t b)
+{
+    mat_t t;
+    int row;
+    int col;
+
+    for (row = 0; row < 4; row++) {
+	for (col = 0; col < 4; col++) {
+	    t[row*4 + col] = a[row*4 + 0] * b[col + 0]
+		+ a[row*4 + 1] * b[col + 4]
+		+ a[row*4 + 2] * b[col + 8]
+		+ a[row*4 + 3] * b[col + 12];
+	}
+    }
+
+    MAT_COPY(o, t);
+}
+
+static void
+plot3_mat_zrot(mat_t mat, double theta)
+{
+    double rad = theta * DEG2RAD;
+    double s = sin(rad);
+    double c = cos(rad);
+
+    MAT_IDN(mat);
+    mat[0] = c;
+    mat[1] = -s;
+    mat[4] = s;
+    mat[5] = c;
+}
+
+static void
+plot3_vec_ortho(vect_t out, const vect_t in)
+{
+    vect_t a;
+
+    if (fabs(in[X]) <= fabs(in[Y]) && fabs(in[X]) <= fabs(in[Z])) {
+	VSET(a, 1, 0, 0);
+    } else if (fabs(in[Y]) <= fabs(in[Z])) {
+	VSET(a, 0, 1, 0);
+    } else {
+	VSET(a, 0, 0, 1);
+    }
+
+    VCROSS(out, in, a);
+    VUNITIZE(out);
+}
+
+static void
+plot3_font_setup(void)
+{
+    int *p = plot3_font_table;
+    int i;
+
+    for (i = 040 - PLOT3_NUM_SYMBOLS; i < 128; i++) {
+	plot3_font_index[i+128] = plot3_font_index[i] = p;
+	while ((*p++) != PLOT3_FONT_LAST)
+	    ;
+    }
+    for (i = 1; i <= PLOT3_NUM_SYMBOLS; i++) {
+	plot3_font_index[i+128] = plot3_font_index[i] = plot3_font_index[040-PLOT3_NUM_SYMBOLS-1+i];
+    }
+    for (i = PLOT3_NUM_SYMBOLS + 1; i < 040; i++) {
+	plot3_font_index[i+128] = plot3_font_index[i] = plot3_font_index['?'];
+    }
+}
+
+int *
+plot3_font_getchar(const unsigned char *c)
+{
+    if (plot3_font_index[040] == 0)
+	plot3_font_setup();
+    return plot3_font_index[*c];
+}
+
+void
+pl_list(FILE *fp, int *x, int *y, int npoints)
+{
+    if (npoints <= 0)
+	return;
+
+    pl_move(fp, *x++, *y++);
+    while (--npoints > 0)
+	pl_cont(fp, *x++, *y++);
+}
+
+void
+pd_list(FILE *fp, double *x, double *y, int npoints)
+{
+    if (npoints <= 0)
+	return;
+
+    pd_move(fp, *x++, *y++);
+    while (--npoints > 0)
+	pd_cont(fp, *x++, *y++);
+}
+
+void
+pd_3list(FILE *fp, double *x, double *y, double *z, int npoints)
+{
+    if (npoints <= 0)
+	return;
+
+    pd_3move(fp, *x++, *y++, *z++);
+    while (--npoints > 0)
+	pd_3cont(fp, *x++, *y++, *z++);
+}
+
+void
+pd_marked_list(FILE *fp, double *x, double *y, int npoints, int flag, int mark, int interval, double size)
+{
+    int i;
+    int counter;
+
+    if (npoints <= 0)
+	return;
+
+    if (flag & PLOT3_LINE)
+	pd_list(fp, x, y, npoints);
+    if (flag & PLOT3_MARK) {
+	pd_marker(fp, mark, *x++, *y++, size);
+	counter = 1;
+	for (i = 1; i < npoints; i++) {
+	    if (counter >= interval) {
+		pd_marker(fp, mark, *x, *y, size);
+		counter = 0;
+	    }
+	    x++;
+	    y++;
+	    counter++;
+	}
+    }
+}
+
+void
+pd_marker(FILE *fp, int c, double x, double y, double scale)
+{
+    char mark_str[4];
+
+    mark_str[0] = (char)c;
+    mark_str[1] = '\0';
+    pd_symbol(fp, mark_str, x - scale*0.5, y - scale*0.5, scale, 0.0);
+}
+
+void
+pd_3marker(FILE *fp, int c, double x, double y, double z, double scale)
+{
+    char mark_str[4];
+    mat_t mat;
+    vect_t p;
+
+    mark_str[0] = (char)c;
+    mark_str[1] = '\0';
+    MAT_IDN(mat);
+    VSET(p, x - scale*0.5, y - scale*0.5, z);
+    pdv_3symbol(fp, mark_str, p, mat, scale);
+}
+
+void
+pdv_3symbol(FILE *fp, char *string, point_t origin, mat_t rot, double scale)
+{
+    unsigned char *cp;
+    double offset;
+    int ysign;
+    vect_t temp;
+    vect_t loc;
+    mat_t xlate_to_origin;
+    mat_t mat;
+
+    if (string == NULL || *string == '\0')
+	return;
+
+    MAT_IDN(xlate_to_origin);
+    MAT_DELTAS_VEC(xlate_to_origin, origin);
+    plot3_mat_mul(mat, xlate_to_origin, rot);
+
+    offset = 0;
+    for (cp = (unsigned char *)string; *cp; cp++, offset += scale) {
+	int *p;
+	int stroke;
+
+	VSET(temp, offset, 0, 0);
+	MAT4X3PNT(loc, mat, temp);
+	pdv_3move(fp, loc);
+
+	for (p = plot3_font_getchar(cp); (stroke = *p) != PLOT3_FONT_LAST; p++) {
+	    int draw;
+
+	    if (stroke == PLOT3_FONT_NEGY) {
+		ysign = -1;
+		stroke = *++p;
+	    } else {
+		ysign = 1;
+	    }
+
+	    if (stroke < 0) {
+		stroke = -stroke;
+		draw = 0;
+	    } else {
+		draw = 1;
+	    }
+
+	    VSET(temp, (stroke/11) * 0.1 * scale + offset,
+		 ysign * (stroke%11) * 0.1 * scale, 0);
+	    MAT4X3PNT(loc, mat, temp);
+	    if (draw)
+		pdv_3cont(fp, loc);
+	    else
+		pdv_3move(fp, loc);
+	}
+    }
+}
+
+void
+pd_symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
+{
+    mat_t mat;
+    vect_t p;
+
+    plot3_mat_zrot(mat, theta);
+    VSET(p, x, y, 0);
+    pdv_3symbol(fp, string, p, mat, scale);
+}
+
+void
+pdv_3vector(FILE *plotfp, point_t from, point_t to, double fromheadfract, double toheadfract)
+{
+    fastf_t len;
+    fastf_t hooklen;
+    vect_t diff;
+    vect_t c1, c2;
+    vect_t h1, h2;
+    vect_t backup;
+    point_t tip;
+
+    pdv_3line(plotfp, from, to);
+
+    VSUB2(diff, to, from);
+    if ((len = MAGNITUDE(diff)) < SQRT_SMALL_FASTF)
+	return;
+    VSCALE(diff, diff, 1/len);
+    plot3_vec_ortho(c1, diff);
+    VCROSS(c2, c1, diff);
+
+    if (!ZERO(fromheadfract)) {
+	hooklen = fromheadfract*len;
+	VSCALE(backup, diff, -hooklen);
+
+	VSCALE(h1, c1, hooklen);
+	VADD3(tip, from, h1, backup);
+	pdv_3move(plotfp, from);
+	pdv_3cont(plotfp, tip);
+
+	VSCALE(h2, c2, hooklen);
+	VADD3(tip, from, h2, backup);
+	pdv_3move(plotfp, tip);
+    }
+    if (!ZERO(toheadfract)) {
+	hooklen = toheadfract*len;
+	VSCALE(backup, diff, -hooklen);
+
+	VSCALE(h1, c1, hooklen);
+	VADD3(tip, to, h1, backup);
+	pdv_3move(plotfp, to);
+	pdv_3cont(plotfp, tip);
+
+	VSCALE(h2, c2, hooklen);
+	VADD3(tip, to, h2, backup);
+	pdv_3move(plotfp, tip);
+    }
+    if (!ZERO(fromheadfract) || !ZERO(toheadfract))
+	pdv_3cont(plotfp, to);
+}
+
+void
+pdv_3axis(FILE *fp, char *string, point_t origin, mat_t rot, double length, int ccw, int ndigits, double label_start, double label_incr, double tick_separation, double char_width)
+{
+    int i;
+    int nticks;
+    point_t tick_bottom;
+    vect_t axis_incr;
+    vect_t axis_dir;
+    point_t title_left;
+    point_t cur_point;
+    point_t num_start;
+    point_t num_center;
+    point_t num_last_end;
+    vect_t temp;
+    vect_t diff;
+    mat_t xlate_to_0;
+    mat_t mat;
+    char fmt[32];
+    char str[64];
+
+    if (ccw)
+	ccw = -1;
+    else
+	ccw = 1;
+
+    if (ZERO(tick_separation))
+	tick_separation = 1;
+
+    MAT_IDN(xlate_to_0);
+    MAT_DELTAS_VEC(xlate_to_0, origin);
+    plot3_mat_mul(mat, rot, xlate_to_0);
+    VMOVE(cur_point, origin);
+
+    VSET(temp, 0, -PLOT3_TICK_YLEN * ccw, 0);
+    MAT4X3PNT(tick_bottom, mat, temp);
+
+    VSET(temp, 0, -PLOT3_NUM_YOFF * ccw, 0);
+    MAT4X3PNT(num_center, mat, temp);
+    temp[X] = -char_width*ndigits;
+    MAT4X3PNT(num_last_end, mat, temp);
+
+    VSET(temp, 1, 0, 0);
+    MAT4X3VEC(axis_dir, mat, temp);
+    VSCALE(axis_incr, axis_dir, tick_separation);
+
+    VSET(temp, 0.5*(length - strlen(string)*char_width), -PLOT3_TITLE_YOFF*ccw, 0);
+    MAT4X3PNT(title_left, mat, temp);
+    pdv_3symbol(fp, string, title_left, rot, char_width);
+
+    nticks = length/tick_separation+0.5;
+    pdv_3move(fp, cur_point);
+    for (i = 0; i <= nticks; i++) {
+	pdv_3cont(fp, tick_bottom);
+
+	if (ndigits > 0) {
+	    double f;
+	    if (ndigits > 63)
+		ndigits = 63;
+	    snprintf(fmt, 32, "%%%dg", ndigits);
+	    snprintf(str, 64, fmt, label_start);
+	    f = strlen(str) * char_width * 0.5;
+	    VJOIN1(num_start, num_center, -f, axis_dir);
+
+	    VSUB2(diff, num_start, num_last_end);
+	    if (VDOT(diff, axis_dir) >= 0) {
+		pdv_3symbol(fp, str, num_start, rot, char_width);
+		VJOIN1(num_last_end, num_center, f, axis_dir);
+	    }
+	}
+
+	if (i == nticks)
+	    break;
+
+	pdv_3move(fp, cur_point);
+	VADD2(cur_point, cur_point, axis_incr);
+	VADD2(tick_bottom, tick_bottom, axis_incr);
+	VADD2(num_center, num_center, axis_incr);
+
+	label_start += label_incr;
+	pdv_3cont(fp, cur_point);
+    }
+}
+
+void
+plot3_float_split(float x, float *coef, int *ex)
+{
+    int i, isv;
+    float xx;
+
+    isv = 1;
+    if (x < 0.0) {
+	isv = -1;
+	x = -x;
+    }
+
+    if (x > 1.0) {
+	xx = x;
+	*ex = 0;
+	*coef = 0.0;
+
+	if (xx < 10.0) {
+	    *coef = xx*isv;
+	    return;
+	}
+
+	for (i = 1; i < 39; ++i) {
+	    *ex += 1;
+	    xx = xx/10.0;
+	    if (xx < 10.0)
+		break;
+	}
+	*coef = xx*isv;
+	return;
+    }
+
+    xx = x;
+    *ex = 0;
+    *coef = 0.0;
+    for (i = 1; i < 39; ++i) {
+	*ex -= 1;
+	xx *= 10.0;
+	if (xx >= 1.0)
+	    break;
+    }
+    *coef = xx*isv;
+}
+
+double
+plot3_ipow(double x, int n)
+{
+    return n > 0 ? x*plot3_ipow(x, n-1) : 1;
+}
+
+void
+plot3_scale_fit(float *x, int npts, float size, float *xs, float *xmin, float *xmax, float *dx)
+{
+    float txmi, txma, coef, delta, diff;
+    int i, ex;
+
+    txmi = txma = x[0];
+    i = 0;
+    while (i <= npts) {
+	V_MIN(txmi, x[i]);
+	V_MAX(txma, x[i]);
+	i++;
+    }
+
+    diff = txma - txmi;
+    V_MAX(diff, 0.000001f);
+
+    plot3_float_split(diff, &coef, &ex);
+    if (coef < 2.0f)
+	delta = .1f;
+    else if (coef < 4.0f)
+	delta = .2f;
+    else
+	delta = .5f;
+
+    i = 0;
+    if (ex < 0) {
+	ex = -ex;
+	i = 12;
+    }
+
+    delta *= plot3_ipow(10.0, ex);
+    if (i == 12)
+	delta = 1.0/delta;
+    *dx = delta;
+
+    i = (fabs(txmi)/delta);
+    *xmin = i*delta;
+    if (txmi < 0.0f)
+	*xmin = -(*xmin+delta);
+
+    i = (fabs(txma)/delta);
+    *xmax = i*delta;
+    if (txma < 0.0f)
+	*xmax = -*xmax;
+    else
+	*xmax = *xmax+delta;
+    *xs = 1000.0f*size/(*xmax - *xmin);
+}
+
+void
+plot3_xy_plot(FILE *fp, int xp, int yp, int xl, int yl, char *xtitle, char *ytitle, float *x, float *y, int n, double cscale)
+{
+    int ddx = 0, ddy = 0, xend = 0, yend = 0, xpen = 0, ypen = 0;
+    float fxl = 0.0, fyl = 0.0, xs = 0.0, ys = 0.0, xmin = 0.0, xmax = 0.0, ymin = 0.0, ymax = 0.0, dx = 0.0, dy = 0.0;
+    float lab = 0.0;
+    int xtics = 0, ytics = 0, i = 0, xtl = 0, ytl = 0, j = 0;
+    int ix[101] = {0}, iy[101] = {0}, isave = 0;
+    char str[32] = {0};
+
+    if (xl == 0) {
+	j = 0;
+	goto loop;
+    }
+    fxl = xl/1000.0;
+    fyl = yl/1000.0;
+    n -= 1;
+    plot3_scale_fit(x, n, fxl, &xs, &xmin, &xmax, &dx);
+    plot3_scale_fit(y, n, fyl, &ys, &ymin, &ymax, &dy);
+    ddx = dx*xs;
+    ddy = dy*ys;
+    xtics = PLOT3_LAB_LNGTH / ddx + 1.0;
+    ytics = 500/ddy + 1.0;
+    xend = xl+xp;
+    xpen = xp;
+
+    pl_move(fp, xpen, yp-PLOT3_TIC);
+    pl_cont(fp, xpen, yp);
+
+    lab = xmin;
+    snprintf(str, 32, "%3.3g", xmin);
+    pd_symbol(fp, str, (double)(xpen-171), (double)(yp-PLOT3_TIC-PLOT3_NUM_DISTANCE), cscale, 0.0);
+
+    i = 0;
+    while ((xpen+ddx) <= xend) {
+	i++;
+	xpen += ddx;
+	pl_line(fp, xpen, yp, xpen, yp-PLOT3_TIC);
+	lab += dx;
+	if ((i%xtics) == 0) {
+	    snprintf(str, 32, "%3.3g", lab);
+	    pd_symbol(fp, str, (double)(xpen-171), (double)(yp-PLOT3_TIC-PLOT3_NUM_DISTANCE), cscale, 0.0);
+	}
+    }
+
+    xtl = xp+(xl - strlen(xtitle)*cscale)/2;
+    ytl = yp - 8 * cscale;
+    pd_symbol(fp, xtitle, (double)xtl, (double)ytl, 100.0, 0.0);
+    yend = yl+yp;
+    ypen = yp;
+    pl_line(fp, xp-PLOT3_TIC, ypen, xp, ypen);
+
+    lab = ymin;
+    snprintf(str, 32, "%3.3g", lab);
+    pd_symbol(fp, str, (double)(xp-PLOT3_TIC-PLOT3_LAB_LNGTH-PLOT3_NUM_DISTANCE), (double)ypen, cscale, 0.0);
+
+    i = 0;
+    while ((ypen+ddy) <= yend) {
+	i++;
+	ypen += ddy;
+	pl_line(fp, xp, ypen, xp-PLOT3_TIC, ypen);
+	lab += dy;
+	if ((i%ytics) == 0) {
+	    snprintf(str, 32, "%3.3g", lab);
+	    pd_symbol(fp, str, (double)(xp-PLOT3_TIC-PLOT3_LAB_LNGTH-PLOT3_NUM_DISTANCE), (double)ypen, cscale, 0.0);
+	}
+    }
+
+    xtl = xp-1500;
+    ytl = yp + (yl - strlen(ytitle)*cscale)/2;
+    pd_symbol(fp, ytitle, (double)xtl, (double)ytl, 100.0, 90.0);
+
+    j = 0;
+
+loop:
+    if (n <= 100) {
+	isave = n-1;
+    } else {
+	isave = 100;
+	n -= 101;
+    }
+
+    if (j == 0) {
+	ix[0] = (x[j] - xmin)*xs + xp;
+	iy[0] = (y[j] - ymin)*ys + yp;
+	j++;
+    } else {
+	ix[0] = (x[j-1] - xmin)*xs + xp;
+	iy[0] = (y[j-1] - ymin)*ys + yp;
+    }
+
+    i = 1;
+    while (i <= isave) {
+	ix[i] = (x[j] - xmin)*xs + xp;
+	iy[i] = (y[j] - ymin)*ys + yp;
+	i++;
+	j++;
+    }
+    pl_list(fp, ix, iy, isave+1);
+    if (isave == 100)
+	goto loop;
+}
+
+void
+plot3_float_to_ascii(float x, char *s)
+{
+    int ex, tmp;
+    float coef;
+    char esgn, nsgn;
+    char i;
+
+    plot3_float_split(x, &coef, &ex);
+    if (ex < -15) {
+	ex = 0;
+	*s++ = '0';
+	*s++ = '.';
+	*s++ = '0';
+	*s++ = '0';
+	*s++ = '0';
+	*s++ = 'e';
+	*s++ = '+';
+	*s++ = '0';
+	*s++ = '0';
+	*s = 0;
+	return;
+    }
+
+    if (ex < 0) {
+	esgn = '-';
+	ex = -ex;
+    } else {
+	esgn = '+';
+    }
+
+    if (coef < 0.0) {
+	nsgn = '-';
+	coef = -coef;
+    } else {
+	nsgn = ' ';
+    }
+    *s++ = nsgn;
+
+    tmp = coef;
+    *s++ = tmp + '0';
+    coef = (coef - tmp)*10.0;
+    *s++ = '.';
+
+    for (i = 1; i <= 3; ++i) {
+	tmp = coef;
+	coef = (coef - tmp)*10.0;
+	*s++ = tmp + '0';
+    }
+
+    *s++ = 'e';
+    *s++ = esgn;
+
+    if (ex < 0)
+	ex = -ex;
+
+    if (ex < 10) {
+	*s++ = '0';
+	*s++ = ex + '0';
+    } else {
+	tmp = ex/10;
+	*s++ = tmp + '0';
+	ex = ex - tmp*10;
+	*s++ = ex +'0';
+    }
+    *s = 0;
+}
+
+void
+plot3_data_scale(int *idata, int elements, int mode, int length, int *odata, double *min, double *dx)
+{
+    double xmax, xmin, x, workdx;
+    int i;
+    static double log_10;
+    float *ifloatp;
+    double *idoublep;
+    double fractional;
+    int integral;
+
+    ifloatp = (float *)idata;
+    idoublep = (double *)idata;
+    xmax = xmin = 0.0;
+    for (i = 0; i < elements; i++) {
+	x = (mode == 'f') ? ifloatp[i] : ((mode == 'd') ? idoublep[i] : idata[i]);
+	V_MAX(xmax, x);
+	V_MIN(xmin, x);
+    }
+
+    if (log_10 <= 0.0)
+	log_10 = log(10.0);
+
+    fractional = log((xmax-xmin)/length) / log_10;
+    integral = fractional;
+    fractional -= integral;
+
+    if (fractional < 0.0) {
+	fractional += 1.0;
+	integral -= 1;
+    }
+
+    fractional = pow(10.0, fractional);
+    i = fractional - 0.01;
+    switch (i) {
+	case 1:
+	    fractional = 2.0;
+	    break;
+	case 2:
+	case 3:
+	    fractional = 4.0;
+	    break;
+	case 4:
+	    fractional = 5.0;
+	    break;
+	case 5:
+	case 6:
+	case 7:
+	    fractional = 8.0;
+	    break;
+	case 8:
+	case 9:
+	    fractional = 10.0;
+    }
+
+    workdx = pow(10.0, (double)integral) * fractional;
+
+    for (i = 0; i < elements; i++) {
+	if (mode == 'f')
+	    odata[i] = (ifloatp[i] - xmin) / workdx;
+	else if (mode == 'd')
+	    odata[i] = (idoublep[i] - xmin) / workdx;
+	else
+	    odata[i] = (idata[i] - xmin) / workdx;
+    }
+
+    *min = xmin;
+    *dx = workdx;
+}
+
 
 int
 plot3_invalid(FILE *fp, int mode)

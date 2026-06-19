@@ -29,7 +29,7 @@
 #include "bu/log.h"
 #include "vmath.h"
 #include "bn/mat.h"
-#include "bv/vectfont.h"
+#include "bv/plot3.h"
 #include "bv/vlist.h"
 
 void
@@ -75,10 +75,10 @@ bv_vlist_3string(struct bu_list *vhead,
 	MAT4X3PNT( loc, mat, temp );
 	BV_ADD_VLIST(free_hd, vhead, loc, BV_VLIST_LINE_MOVE );
 
-	for ( p = tp_getchar(cp); ((stroke= *p)) != VFONT_LAST; p++ )  {
+	for ( p = plot3_font_getchar(cp); ((stroke= *p)) != PLOT3_FONT_LAST; p++ )  {
 	    int	draw;
 
-	    if ( (stroke)==NEGY )  {
+	    if ( (stroke)==PLOT3_FONT_NEGY )  {
 		ysign = (-1);
 		stroke = *++p;
 	    } else

@@ -10,14 +10,6 @@ set(
   polygon_op.cpp
   polygon_fill.cpp
   snap.c
-  tig/axis.c
-  tig/list.c
-  tig/marker.c
-  tig/scale.c
-  tig/symbol.c
-  tig/tplot.c
-  tig/vectfont.c
-  tig/vector.c
   util.cpp
   vlist.c
   view_sets.cpp

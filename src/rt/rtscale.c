@@ -61,7 +61,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bv/plot3.h"
-#include "bv/tig.h"
 
 #define BUFF_LEN 256
 #define FALSE 0
@@ -368,7 +367,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     }
 
     if (verbose)  {
-	fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_label_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
+	fprintf(stderr, "Now calling pdv_3symbol( outfp, %s, m_label_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
 		label, V3ARGS(m_label_st), m_char_width);
 	bn_mat_print("v2symbol", v2symbol);
     }
@@ -377,8 +376,8 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
      * numbers under the scale; the second is for an optional string.
      */
 
-    tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
-    tp_3symbol(outfp, descript, m_descript_st, v2symbol, m_char_width);
+    pdv_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
+    pdv_3symbol(outfp, descript, m_descript_st, v2symbol, m_char_width);
     return 0;		/* OK */
 }
 
