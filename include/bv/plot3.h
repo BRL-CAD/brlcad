@@ -2339,7 +2339,7 @@ plot3_font_setup(void)
 	plot3_font_index[i+128] = plot3_font_index[i] = plot3_font_index[040-PLOT3_NUM_SYMBOLS-1+i];
     }
     for (i = PLOT3_NUM_SYMBOLS + 1; i < 040; i++) {
-	plot3_font_index[i+128] = plot3_font_index[i] = plot3_font_index['?'];
+	plot3_font_index[i+128] = plot3_font_index[i] = plot3_font_index[(unsigned char)'?'];
     }
 }
 
