@@ -382,6 +382,10 @@ lookup check to ensure none are missing.
   manifold made some robustness improvements and we rely on them anyway,
   so we should probably just leverage them.
 
+* latest Manifold has a Contains(vec3) method - that's likely quite
+  robust and may be worth using in our code for "point in mesh" tests
+  if it is performant enough.
+
 * RTAREA
 
   * add an option to rtarea for onehit.  this is probably best as an
