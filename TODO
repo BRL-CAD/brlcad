@@ -136,6 +136,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * Look into https://www.kitware.com/really-fast-isocontouring/ to see
   if those algorithms could be useful for BRL-CAD
 
+* Investigate https://github.com/zeux/meshoptimizer to see if its
+  algorithms would be useful for our BoTs - unless there's a reason
+  not to, writing out optimized meshes might help performance in
+  a few graphical display cases.
+
 * There are probably a number of algorithms in our code where
   we should check to see if the GTE implementation would be better
   than ours (line/point distance functionality, for example).
