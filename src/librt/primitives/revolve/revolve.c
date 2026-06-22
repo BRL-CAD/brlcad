@@ -1505,8 +1505,8 @@ rt_revolve_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_i
     VMOVE(axis3d, tip->axis3d);
     VMOVE(r, tip->r);
     MAT4X3PNT(top->v3d, mat, v3d);
-    MAT4X3PNT(top->axis3d, mat, axis3d);
-    MAT4X3PNT(top->r, mat, r);
+    MAT4X3VEC(top->axis3d, mat, axis3d);
+    MAT4X3VEC(top->r, mat, r);
 
    return BRLCAD_OK;
 }
