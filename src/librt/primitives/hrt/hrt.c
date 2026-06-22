@@ -1153,6 +1153,25 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     VSET(ydir4_right, 0, v1_right[Z] * 0.01, 0 );
     VSET(upper_cusp_xdir, 0 , v3_left[Z] * 0.01 , 0 );
 
+    /* The above top-lobe/cusp centers are computed relative to the
+     * origin; offset them by the vertex so the top of the heart
+     * translates with V (The lower body below already adds hip->v
+     * explicitly). This must happen after the relative sizes derived
+     * from their [Z]/[X] components have been computed above
+     */
+    VADD2(top01_center, top01_center, hip->v);
+    VADD2(top02_center, top02_center, hip->v);
+    VADD2(top1_center, top1_center, hip->v);
+    VADD2(v1_left, v1_left, hip->v);
+    VADD2(v1_right, v1_right, hip->v);
+    VADD2(v2_left, v2_left, hip->v);
+    VADD2(v2_right, v2_right, hip->v);
+    VADD2(v3_left, v3_left, hip->v);
+    VADD2(v3_right, v3_right, hip->v);
+    VADD2(highest_point_left, highest_point_left, hip->v);
+    VADD2(highest_point_right, highest_point_right, hip->v);
+    VADD2(upper_cusp, upper_cusp, hip->v);
+
     rt_hrt_24pts(top, hip->v, top_xdir, top_ydir);
     rt_hrt_24pts(top01, top01_center, top01_xdir, top01_ydir );
     rt_hrt_24pts(top02, top02_center, top02_xdir, top02_ydir );
@@ -1562,9 +1581,9 @@ rt_hrt_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     VMOVE(zdir, tip->zdir);
 
     MAT4X3PNT(top->v, mat, v);
-    MAT4X3PNT(top->xdir, mat, xdir);
-    MAT4X3PNT(top->ydir, mat, ydir);
-    MAT4X3PNT(top->zdir, mat, zdir);
+    MAT4X3VEC(top->xdir, mat, xdir);
+    MAT4X3VEC(top->ydir, mat, ydir);
+    MAT4X3VEC(top->zdir, mat, zdir);
 
     return BRLCAD_OK;
 }
