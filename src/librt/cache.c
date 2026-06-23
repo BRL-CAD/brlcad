@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h> /* for accessing mtime of a cache file */
 
 #include "bio.h"
 #include "bnetwork.h"
@@ -57,6 +58,9 @@ extern int brl_LZ4_decompress_fast (const char* source, char* dest, int original
 
 #define CACHE_FORMAT 3
 
+/* 1 GB default cache limit */
+#define CACHE_MAX_SIZE_DEFAULT (1024 * 1024 * 1024)
+
 static const char * const cache_mime_type = "brlcad/cache";
 
 
@@ -76,8 +80,9 @@ struct rt_cache {
     int (*log)(const char *format, ...);
     int (*debug)(const char *format, ...);
     struct bu_hash_tbl *entry_hash;
+    size_t max_size;
 };
-#define CACHE_INIT {{0}, 0, 0, bu_log, NULL, NULL}
+#define CACHE_INIT {{0}, 0, 0, bu_log, NULL, NULL, CACHE_MAX_SIZE_DEFAULT}
 
 
 static void
@@ -404,6 +409,143 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 }
 
 
+/* used by cache_evict to track file info for sorting */
+struct cache_file_info {
+    char path[MAXPATHLEN];
+    size_t size;
+    time_t mtime;
+};
+
+
+/* sort oldest first by mtime */
+static int
+cache_file_cmp(const void *a, const void *b)
+{
+    const struct cache_file_info *fa = (const struct cache_file_info *)a;
+    const struct cache_file_info *fb = (const struct cache_file_info *)b;
+
+    if (fa->mtime < fb->mtime) return -1;
+    if (fa->mtime > fb->mtime) return 1;
+    return 0;
+}
+
+
+/* parse a size string like "500M" or "2G" into bytes */
+static size_t
+cache_parse_size(const char *str)
+{
+    char *endptr;
+    double val;
+
+    if (!str || strlen(str) == 0)
+	return CACHE_MAX_SIZE_DEFAULT;
+
+    if (bu_str_false(str) || strcmp(str, "0") == 0)
+	return 0; /* cache disabled */
+
+    errno = 0;
+    val = strtod(str, &endptr);
+    if (errno || endptr == str || val < 0)
+	return CACHE_MAX_SIZE_DEFAULT;
+
+    if (*endptr == '\0')
+	return (size_t)val;
+
+    switch (*endptr) {
+	case 'K': case 'k': return (size_t)(val * 1024);
+	case 'M': case 'm': return (size_t)(val * 1024 * 1024);
+	case 'G': case 'g': return (size_t)(val * 1024 * 1024 * 1024);
+	default: return (size_t)val;
+    }
+}
+
+
+/*
+ * Delete oldest cache files until total size is under the limit.
+ * Uses mtime to approximate LRU — oldest modified files go first.
+ */
+static void
+cache_evict(struct rt_cache *cache)
+{
+    char objdir[MAXPATHLEN] = {0};
+    char **subdirs = NULL;
+    size_t nsub;
+    struct cache_file_info *flist;
+    size_t fcount = 0;
+    size_t fcap = 256;
+    size_t total = 0;
+    size_t i;
+
+    if (!cache || cache->max_size == 0 || cache->read_only)
+	return;
+
+    bu_dir(objdir, MAXPATHLEN, cache->dir, "objects", NULL);
+    if (!bu_file_directory(objdir))
+	return;
+
+    flist = (struct cache_file_info *)bu_calloc(fcap, sizeof(struct cache_file_info), "evict list");
+
+    nsub = bu_file_list(objdir, "[A-Z0-9][A-Z0-9]", &subdirs);
+
+    for (i = 0; i < nsub; i++) {
+	char subpath[MAXPATHLEN] = {0};
+	char **files = NULL;
+	size_t nfiles;
+	size_t j;
+
+	bu_dir(subpath, MAXPATHLEN, objdir, subdirs[i], NULL);
+	if (!bu_file_directory(subpath))
+	    continue;
+
+	nfiles = bu_file_list(subpath, "*", &files);
+	for (j = 0; j < nfiles; j++) {
+	    char fpath[MAXPATHLEN] = {0};
+	    struct stat sb;
+
+	    if (files[j][0] == '.')
+		continue;
+
+	    bu_dir(fpath, MAXPATHLEN, subpath, files[j], NULL);
+
+	    if (stat(fpath, &sb) != 0)
+		continue;
+
+	    /* grow the list if full */
+	    if (fcount >= fcap) {
+		fcap *= 2;
+		flist = (struct cache_file_info *)bu_realloc(flist,
+		    fcap * sizeof(struct cache_file_info), "evict list");
+	    }
+
+	    bu_strlcpy(flist[fcount].path, fpath, MAXPATHLEN);
+	    flist[fcount].size = (size_t)sb.st_size;
+	    flist[fcount].mtime = sb.st_mtime;
+	    total += (size_t)sb.st_size;
+	    fcount++;
+	}
+	bu_argv_free(nfiles, files);
+    }
+    bu_argv_free(nsub, subdirs);
+
+    if (total <= cache->max_size) {
+	bu_free(flist, "evict list");
+	return;
+    }
+
+    CACHE_LOG("  CACHE  size (%zu bytes) exceeds limit (%zu bytes), evicting...\n",
+	      total, cache->max_size);
+
+    qsort(flist, fcount, sizeof(struct cache_file_info), cache_file_cmp);
+
+    for (i = 0; i < fcount && total > cache->max_size; i++) {
+	if (bu_file_delete(flist[i].path))
+	    total -= flist[i].size;
+    }
+
+    bu_free(flist, "evict list");
+}
+
+
 static struct rt_cache_entry *
 cache_read_entry(const struct rt_cache *cache, const char *name)
 {
@@ -725,8 +867,10 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp, struct rt_db_internal 
     /* not in cache yet */
 
     ret = rt_obj_prep(stp, internal, stp->st_rtip);
-    if (ret == 0 && !cache->read_only)
+    if (ret == 0 && !cache->read_only) {
 	cache_try_store(cache, name, internal, stp);
+	cache_evict(cache); /* checks for cache size limits */
+    }
 
     return ret;
 }
@@ -766,6 +910,7 @@ struct rt_cache *
 rt_cache_open(void)
 {
     const char *dir = NULL;
+    const char *size_str = NULL;
     int format;
     struct rt_cache *result;
     struct rt_cache CACHE = CACHE_INIT;
@@ -784,6 +929,11 @@ rt_cache_open(void)
 	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
 	dir = bu_dir(cache->dir, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
     }
+
+    /* check if user wants a custom cache size limit */
+    size_str = getenv("LIBRT_CACHE_SIZE");
+    if (!BU_STR_EMPTY(size_str))
+	cache->max_size = cache_parse_size(size_str);
 
     if (!cache_init(cache)) {
 	return NULL;
