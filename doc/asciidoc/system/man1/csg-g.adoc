@@ -1,0 +1,61 @@
+= CSG-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+csg-g - OpenSCAD CSG Translator (CSG to BRL-CAD)
+
+== SYNOPSIS
+
+[source]
+----
+csg-g [-d] file.csg file.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*csg-g* converts an OpenSCAD evaluated CSG file (_file.csg_) to a BRL-CAD _file.g_ file. The CSG format is produced by running `openscad -o file.csg input.scad` and contains the fully evaluated CSG tree with all variables, modules, and loops resolved.
+
+The converter preserves CSG structure, mapping OpenSCAD primitives and boolean operations directly to BRL-CAD equivalents rather than tessellating to mesh. Supported primitives include cube (RPP), sphere (SPH), cylinder (TGC), polyhedron (ARB or BOT), torus via rotate_extrude of circle (TOR), and extrusions of square, circle, and polygon profiles (RPP, TGC, or sketch+extrusion). Boolean operations (difference, union, intersection, group) and transformation matrices (multmatrix) are preserved. Colors are stored as object attributes. The `import()` node reads and inlines referenced STL files as BOT primitives.
+
+Polyhedra are matched against ARB4, ARB5, and ARB8 when the vertex and face counts match and the shape is convex. Non-convex polyhedra and unmatched shapes fall back to BOT (bag of triangles).
+
+The *-d* option prints debugging information during conversion.
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ openscad -o model.csg model.scad
+$ csg-g model.csg model.g
+----
+
+
+[[see_also]]
+== SEE ALSO
+
+*g-scad*(1), *stl-g*(1), *openscad*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

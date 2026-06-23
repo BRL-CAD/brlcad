@@ -1,0 +1,59 @@
+= G-SCAD(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+g-scad - BRL-CAD to OpenSCAD Translator (BRL-CAD to SCAD)
+
+== SYNOPSIS
+
+[source]
+----
+g-scad [-d] [-o output.scad] file.g object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-scad* converts the specified BRL-CAD objects from _file.g_ to OpenSCAD format. The output preserves CSG structure, mapping BRL-CAD boolean operations and primitives directly to OpenSCAD equivalents rather than tessellating everything to polyhedron.
+
+Direct primitive mappings: SPH and ELL to sphere(), TGC and REC to cylinder(), ARB to polyhedron(), BOT to polyhedron(), TOR to rotate_extrude(circle()), PARTICLE to hull() of two spheres, PIPE to union of cylinders and spheres, EXTRUDE to linear_extrude(polygon()), REVOLVE to rotate_extrude(polygon()), and HALF to a large translated cube. Combination colors are emitted as color() wrappers. Primitives without direct mappings are tessellated via their ft_tessellate method and emitted as polyhedron().
+
+The *-d* option prints debugging information. The *-o* option specifies the output file (default is stdout).
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ g-scad -o model.scad model.g all.g
+$ openscad model.scad
+----
+
+
+[[see_also]]
+== SEE ALSO
+
+*csg-g*(1), *g-stl*(1), *openscad*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
