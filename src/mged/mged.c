@@ -2188,7 +2188,10 @@ mged_finish(struct mged_state *s, int exitcode)
     }
 #endif
 
-    Tcl_Exit(exitcode);
+    /* Avoid calling Tcl_Exit here as it may touch channels and OS handles
+     * that were already torn down, leading to crash-on-exit.
+     */
+    exit(exitcode);
 }
 
 /*
