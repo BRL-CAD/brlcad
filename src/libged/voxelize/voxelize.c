@@ -82,8 +82,17 @@ create_boxes(void *callBackData, int x, int y, int z, const char *a, fastf_t fil
 	    max[2] = (dataValues->bbMin)[2] + ( (z + 1.0) * (dataValues->sizeVoxel)[2]);
 
 	    nameDestination = bu_vls_strgrab(vp);
-	    mk_rpp(dataValues->wdbp,nameDestination, min, max);
-	    mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
+
+	    /* guard against duplicate rpp's
+	     *	voxelize() calls this once per region - NOT once per voxel. So overlapping
+	     *	regions can/will create duplicate solids in the tree
+	     */
+	    if (db_lookup(dataValues->wdbp->dbip, nameDestination, LOOKUP_QUIET) == RT_DIR_NULL) {
+		mk_rpp(dataValues->wdbp, nameDestination, min, max);
+		mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
+	    }
+
+	    bu_free(nameDestination, "free nameDestination strgrab");
 	}
     }
     /* else this voxel is air */
