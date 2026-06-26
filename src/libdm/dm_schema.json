@@ -1,0 +1,25 @@
+{
+    "actions": {
+        "view_toggle_adc": "Toggle Angle Distance Cursor",
+        "view_toggle_model_axes": "Toggle Model Axes",
+        "view_toggle_view_axes": "Toggle View Axes",
+        "view_2": "Set View 2",
+        "view_3": "Set View 3",
+        "view_4": "Set View 4",
+        "view_5": "Set View 5",
+        "view_6": "Set View 6",
+        "view_7": "Set View 7",
+        "view_front": "Set Front View",
+        "view_top": "Set Top View",
+        "view_bottom": "Set Bottom View",
+        "view_left": "Set Left View",
+        "view_right": "Set Right View",
+        "view_rear": "Set Rear View",
+        "view_mouse_drag_rotate": "Rotate view via mouse drag",
+        "view_mouse_drag_translate": "Translate view via mouse drag",
+        "view_mouse_drag_scale": "Scale view via mouse drag",
+        "view_mouse_wheel_scale": "Scale view via mouse wheel",
+        "view_mouse_press_left": "Left mouse press action",
+        "view_mouse_press_right": "Right mouse press action"
+    }
+}

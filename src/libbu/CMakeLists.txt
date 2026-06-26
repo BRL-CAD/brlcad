@@ -41,6 +41,7 @@ set(
   badmagic.c
   bitv.c
   bomb.c
+  binding.cpp
   booleanize.c
   bu_init.cpp
   cache.cpp
