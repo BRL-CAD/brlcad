@@ -29,6 +29,7 @@
 #include <cctype>
 #include <cstring>
 #include <map>
+#include "bu/binding.h"
 #include <set>
 #include <string>
 #include <cstdio>
@@ -62,6 +63,13 @@ dm_open(void *ctx, void *interp, const char *type, int argc, const char *argv[])
 
     const struct dm *d = d_it->second;
     struct dm *dmp = d->i->dm_open(ctx, interp, argc, argv);
+
+    char *bindings_path = (char *)bu_dir(NULL, 0, BU_DIR_DATA, "bindings", "dm_bindings.json", NULL);
+    if (bindings_path) {
+        bu_binding_load(bindings_path);
+        bu_free(bindings_path, "bindings_path");
+    }
+
     return dmp;
 }
 
@@ -500,6 +508,12 @@ found_interface:
 
         return FB_NULL;
     }
+    char *bindings_path = (char *)bu_dir(NULL, 0, BU_DIR_DATA, "bindings", "dm_bindings.json", NULL);
+    if (bindings_path) {
+        bu_binding_load(bindings_path);
+        bu_free(bindings_path, "bindings_path");
+    }
+
     return ifp;
 }
 
