@@ -10,6 +10,7 @@ set(
   test_bomb.c
   test_badmagic.c
   test_basename.c
+  test_binding.cpp
   test_bitv.c
   test_booleanize.c
   test_cache.cpp
@@ -104,6 +105,7 @@ brlcad_addexec(bu_gethostname test_gethostname.c libbu TEST)
 brlcad_add_test(NAME bu_argv COMMAND bu_test test_argv)
 brlcad_add_test(NAME bu_backtrace COMMAND bu_test test_backtrace)
 brlcad_add_test(NAME bu_bomb COMMAND bu_test test_bomb "$<TARGET_FILE:bu_test>")
+brlcad_add_test(NAME bu_binding COMMAND bu_test test_binding "${CMAKE_CURRENT_SOURCE_DIR}/test_bindings.json")
 brlcad_add_test(NAME bu_dir COMMAND bu_test test_dir)
 brlcad_add_test(NAME bu_list_empty COMMAND bu_test test_list 0)
 brlcad_add_test(NAME bu_list_single COMMAND bu_test test_list 1)

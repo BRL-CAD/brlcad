@@ -1,0 +1,22 @@
+{
+  "contexts": {
+    "fb": {
+      "bindings": [
+        {
+          "match": {
+            "type": "mouse-press",
+            "button": 2
+          },
+          "action": "fb_close_window"
+        },
+        {
+          "match": {
+            "type": "key-press",
+            "key": "Escape"
+          },
+          "action": "fb_invalid_action"
+        }
+      ]
+    }
+  }
+}
