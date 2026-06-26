@@ -58,6 +58,14 @@
 #endif
 #include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H
+#  include <X11/Xosdefs.h>
+#endif
+#include <X11/Xutil.h>
+#include <X11/keysym.h>
+
+#include "bu/binding.h"
+#include "bu/file.h"
+
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif
@@ -2834,6 +2842,8 @@ _X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Color
     xi->xi_xheight = 0;
     X24_configureWindow(ifp, width, height);
 
+    X24_init_bindings();
+
     return 0;
 }
 
@@ -2873,6 +2883,76 @@ X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 static int alive = 1;
 
 static void
+X24_action_fb_print_pixel_rgb(const struct bu_vls *event_json, void *UNUSED(registered_data), void *event_data)
+{
+    struct fb *ifp = (struct fb *)event_data;
+    struct xinfo *xi;
+    int x = -1, y = -1;
+    char *p;
+    
+    if (!ifp) return;
+    xi = XI(ifp);
+    
+    if ((p = strstr(bu_vls_cstr(event_json), "\"x\":"))) {
+        sscanf(p + 4, "%d", &x);
+    }
+    if ((p = strstr(bu_vls_cstr(event_json), "\"y\":"))) {
+        sscanf(p + 4, "%d", &y);
+    }
+    
+    if (x < 0 || y < 0) {
+        fb_log("No RGB (outside image viewport)\n");
+        return;
+    }
+
+    int ix, isy;
+    unsigned char *cp;
+
+    x -= xi->xi_xlf;
+    y -= xi->xi_xheight - xi->xi_xbt - 1;
+    if (x < 0 || y < 0) {
+	fb_log("No RGB (outside image) 1\n");
+	return;
+    }
+
+    if (x < xi->xi_ilf_w)
+	ix = xi->xi_ilf;
+    else
+	ix = xi->xi_ilf + (x - xi->xi_ilf_w + ifp->i->if_xzoom - 1) / ifp->i->if_xzoom;
+
+    if (y < xi->xi_ibt_h)
+	isy = xi->xi_ibt;
+    else
+	isy = xi->xi_ibt + (y - xi->xi_ibt_h + ifp->i->if_yzoom - 1) / ifp->i->if_yzoom;
+
+    if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight) {
+	fb_log("No RGB (outside image) 2\n");
+	return;
+    }
+
+    cp = &(xi->xi_mem[(isy*xi->xi_iwidth + ix)*3]);
+    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+	   ix, isy, cp[RED], cp[GRN], cp[BLU]);
+}
+
+static void
+X24_action_fb_close_window(const struct bu_vls *UNUSED(event_json), void *UNUSED(registered_data), void *UNUSED(event_data))
+{
+    alive = 0;
+}
+
+static int bindings_loaded = 0;
+static void
+X24_init_bindings(void)
+{
+    if (bindings_loaded) return;
+    bindings_loaded = 1;
+
+    bu_binding_register_action("fb_print_pixel_rgb", X24_action_fb_print_pixel_rgb, NULL);
+    bu_binding_register_action("fb_close_window", X24_action_fb_close_window, NULL);
+}
+
+static void
 X24_handle_event(struct fb *ifp, XEvent *event)
 {
     struct xinfo *xi = XI(ifp);
@@ -2908,7 +2988,7 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 	case ButtonPress:
 	    {
 		int button = (int) event->xbutton.button;
-
+		int w3c_button = 0;
 
 		if (button == Button1) {
 		    /* Check for single button mouse remap.
@@ -2926,49 +3006,38 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 
 		}
 
-		switch (button) {
-		    case Button1:
-			break;
-		    case Button2:
-			{
-			    int x, sy;
-			    int ix, isy;
-			    unsigned char *cp;
+		/* Map X11 button to W3C button:
+		   X11: Button1(1)=Left, Button2(2)=Middle, Button3(3)=Right
+		   W3C: Left=0, Middle=1, Right=2 */
+		if (button == Button1) w3c_button = 0;
+		else if (button == Button2) w3c_button = 1;
+		else if (button == Button3) w3c_button = 2;
+		else w3c_button = button;
 
-			    x = event->xbutton.x;
-			    sy = xi->xi_xheight - event->xbutton.y - 1;
+		struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+		int x = event->xbutton.x;
+		int y = xi->xi_xheight - event->xbutton.y - 1;
 
-			    x -= xi->xi_xlf;
-			    sy -= xi->xi_xheight - xi->xi_xbt - 1;
-			    if (x < 0 || sy < 0) {
-				fb_log("No RGB (outside image) 1\n");
-				break;
-			    }
-
-			    if (x < xi->xi_ilf_w)
-				ix = xi->xi_ilf;
-			    else
-				ix = xi->xi_ilf + (x - xi->xi_ilf_w + ifp->i->if_xzoom - 1) / ifp->i->if_xzoom;
-
-			    if (sy < xi->xi_ibt_h)
-				isy = xi->xi_ibt;
-			    else
-				isy = xi->xi_ibt + (sy - xi->xi_ibt_h + ifp->i->if_yzoom - 1) / ifp->i->if_yzoom;
-
-			    if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight) {
-				fb_log("No RGB (outside image) 2\n");
-				break;
-			    }
-
-			    cp = &(xi->xi_mem[(isy*xi->xi_iwidth + ix)*3]);
-			    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-				   ix, isy, cp[RED], cp[GRN], cp[BLU]);
-
-			    break;
-			}
-		    case Button3:
-			alive = 0;
-			break;
+		bu_vls_sprintf(&ev_json, "{\"type\": \"mouse-press\", \"button\": %d, \"x\": %d, \"y\": %d}", w3c_button, x, y);
+		
+		if (!bu_binding_process_event("fb", bu_vls_cstr(&ev_json), ifp)) {
+		    fb_log("unhandled mouse event\n");
+		}
+		bu_vls_free(&ev_json);
+		break;
+	    }
+	case KeyPress:
+	    {
+		KeySym keysym = XLookupKeysym(&event->xkey, 0);
+		char *key_str = XKeysymToString(keysym);
+		
+		if (key_str) {
+		    struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&ev_json, "{\"type\": \"key-press\", \"key\": \"%s\"}", key_str);
+		    if (!bu_binding_process_event("fb", bu_vls_cstr(&ev_json), ifp)) {
+			/* optionally log unhandled key event */
+		    }
+		    bu_vls_free(&ev_json);
 		}
 		break;
 	    }
