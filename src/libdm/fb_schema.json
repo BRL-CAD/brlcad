@@ -1,0 +1,6 @@
+{
+    "actions": {
+        "fb_print_pixel_rgb": "Print RGB values of pixel under cursor",
+        "fb_close_window": "Close framebuffer window"
+    }
+}
