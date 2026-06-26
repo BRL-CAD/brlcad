@@ -55,6 +55,8 @@
 #include "bu/str.h"
 #include "bu/snooze.h"
 #include "bu/parallel.h"
+#include "bu/binding.h"
+#include "bu/file.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -402,6 +404,56 @@ wgl_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 }
 
 
+static void
+wgl_action_fb_print_pixel_rgb(const struct bu_vls *event_json, void *UNUSED(registered_data), void *event_data)
+{
+    struct fb *ifp = (struct fb *)event_data;
+    int x = -1, y = -1;
+    char *p;
+    struct fb_pixel *wglp;
+
+    if (!ifp) return;
+
+    if ((p = strstr(bu_vls_cstr(event_json), "\"x\":"))) {
+        sscanf(p + 4, "%d", &x);
+    }
+    if ((p = strstr(bu_vls_cstr(event_json), "\"y\":"))) {
+        sscanf(p + 4, "%d", &y);
+    }
+
+    if (x < 0 || y < 0) {
+        fb_log("No RGB (outside image viewport)\n");
+        return;
+    }
+
+    wglp = (struct fb_pixel *)&ifp->i->if_mem[
+        (y*WIN(ifp)->mi_memwidth)*
+        sizeof(struct fb_pixel)];
+
+    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+           x, y, (int)wglp[x].red, (int)wglp[x].green, (int)wglp[x].blue);
+}
+
+static void
+wgl_action_fb_close_window(const struct bu_vls *UNUSED(event_json), void *UNUSED(registered_data), void *event_data)
+{
+    struct fb *ifp = (struct fb *)event_data;
+    if (ifp) {
+        WGL(ifp)->alive = 0;
+    }
+}
+
+static int bindings_loaded = 0;
+static void
+wgl_init_bindings(void)
+{
+    if (bindings_loaded) return;
+    bindings_loaded = 1;
+
+    bu_binding_register_action("fb_print_pixel_rgb", wgl_action_fb_print_pixel_rgb, NULL);
+    bu_binding_register_action("fb_close_window", wgl_action_fb_close_window, NULL);
+}
+
 LONG WINAPI
 MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -411,45 +463,52 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		expose_callback(saveifp, 0);
 	    break;
 	case WM_LBUTTONDOWN:
-	    break;
 	case WM_RBUTTONDOWN:
-	    break;
 	case WM_MBUTTONDOWN:
-	    break;
-	case WM_CLOSE:
-	    WGL(saveifp)->alive = 0;
-	    break;
-	case WM_LBUTTONUP:
-	    WGL(saveifp)->alive = 0;
-	    break;
-	case WM_RBUTTONUP:
-	    WGL(saveifp)->alive = 0;
-	    break;
-	case WM_MBUTTONUP:
 	    {
-		int x, y;
-		struct fb_pixel *wglp;
+		int w3c_button = 0;
+		if (uMsg == WM_LBUTTONDOWN) w3c_button = 0;
+		else if (uMsg == WM_MBUTTONDOWN) w3c_button = 1;
+		else if (uMsg == WM_RBUTTONDOWN) w3c_button = 2;
 
-		x = GET_X_LPARAM(lParam);
-		y = saveifp->i->if_height - GET_Y_LPARAM(lParam) - 1;
+		int x = GET_X_LPARAM(lParam);
+		int y = saveifp->i->if_height - GET_Y_LPARAM(lParam) - 1;
 
-		if (x < 0 || y < 0) {
-		    fb_log("No RGB (outside image viewport)\n");
-		    break;
+		struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&ev_json, "{\"type\": \"mouse-press\", \"button\": %d, \"x\": %d, \"y\": %d}", w3c_button, x, y);
+		if (!bu_binding_process_event("fb", bu_vls_cstr(&ev_json), saveifp)) {
+		    /* unhandled */
 		}
-
-		wglp = (struct fb_pixel *)&saveifp->i->if_mem[
-		    (y*WIN(saveifp)->mi_memwidth)*
-		    sizeof(struct fb_pixel)];
-
-		fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-		       x, y, (int)wglp[x].red, (int)wglp[x].green, (int)wglp[x].blue);
+		bu_vls_free(&ev_json);
 	    }
 	    break;
+	case WM_CLOSE:
+	    {
+		struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&ev_json, "{\"type\": \"key-press\", \"key\": \"Escape\"}");
+		bu_binding_process_event("fb", bu_vls_cstr(&ev_json), saveifp);
+		bu_vls_free(&ev_json);
+	    }
+	    break;
+	case WM_LBUTTONUP:
+	case WM_RBUTTONUP:
+	case WM_MBUTTONUP:
+	    break;
 	case WM_KEYDOWN:
+	    {
+		char key_str[32];
+		if (wParam == VK_ESCAPE) {
+		    strcpy(key_str, "Escape");
+		} else {
+		    sprintf(key_str, "%c", (char)wParam);
+		}
+		struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&ev_json, "{\"type\": \"key-press\", \"key\": \"%s\"}", key_str);
+		bu_binding_process_event("fb", bu_vls_cstr(&ev_json), saveifp);
+		bu_vls_free(&ev_json);
+	    }
 	    break;
 	case WM_KEYUP:
-	    WGL(saveifp)->alive = 0;
 	    break;
 	case WM_SIZE:
 	    /* WIP: unimplemented, intentional fall through */
@@ -694,6 +753,8 @@ wgl_open(struct fb *ifp, const char *file, int width, int height)
     WGL(ifp)->glxc = wglCreateContext(WGL(ifp)->hdc);
     glxc = WGL(ifp)->glxc;
 
+    wgl_init_bindings();
+
     /* count windows */
     wgl_nwindows++;
 
@@ -800,6 +861,8 @@ open_existing(struct fb *ifp,
 
     WGL(ifp)->alive = 1;
     WGL(ifp)->firstTime = 1;
+
+    wgl_init_bindings();
 
     fb_clipper(ifp);
 

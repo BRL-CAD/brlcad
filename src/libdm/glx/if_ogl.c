@@ -86,6 +86,10 @@
 #include "dm.h"
 #include "./fb_ogl.h"
 
+#include "bu/binding.h"
+#include "bu/file.h"
+#include <X11/keysym.h>
+
 extern struct fb ogl_interface;
 
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
@@ -799,6 +803,52 @@ ogl_configureWindow(struct fb *ifp, int width, int height)
     return 0;
 }
 
+static void
+ogl_action_fb_print_pixel_rgb(const struct bu_vls *event_json, void *registered_data, void *event_data)
+{
+    struct fb *ifp = (struct fb *)event_data;
+    int x = -1, y = -1;
+    char *p;
+    
+    if (!ifp) return;
+    
+    if ((p = strstr(bu_vls_cstr(event_json), "\"x\":"))) {
+        sscanf(p + 4, "%d", &x);
+    }
+    if ((p = strstr(bu_vls_cstr(event_json), "\"y\":"))) {
+        sscanf(p + 4, "%d", &y);
+    }
+    
+    if (x < 0 || y < 0) {
+        fb_log("No RGB (outside image viewport)\n");
+        return;
+    }
+
+    size_t memidx = (y * WIN(ifp)->mi_pixwidth) * sizeof(struct fb_pixel);
+    struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[memidx];
+
+    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+           x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
+}
+
+static void
+ogl_action_fb_close_window(const struct bu_vls *event_json, void *registered_data, void *event_data)
+{
+    struct fb *ifp = (struct fb *)event_data;
+    if (ifp) OGL(ifp)->alive = 0;
+}
+
+static int bindings_loaded = 0;
+static void
+ogl_init_bindings(void)
+{
+    if (bindings_loaded) return;
+    bindings_loaded = 1;
+
+    
+    bu_binding_register_action("fb_print_pixel_rgb", ogl_action_fb_print_pixel_rgb, NULL);
+    bu_binding_register_action("fb_close_window", ogl_action_fb_close_window, NULL);
+}
 
 static void
 ogl_do_event(struct fb *ifp)
@@ -815,6 +865,7 @@ ogl_do_event(struct fb *ifp)
 	    case ButtonPress:
 		{
 		    int button = (int) event.xbutton.button;
+		    int w3c_button = 0;
 		    if (button == Button1) {
 			/* Check for single button mouse remap.
 			 * ctrl-1 => 2
@@ -830,36 +881,38 @@ ogl_do_event(struct fb *ifp)
 			}
 		    }
 
-		    switch (button) {
-			case Button1:
-			    break;
-			case Button2:
-			    {
-				int x, y;
-				register struct fb_pixel *oglp;
+		    /* Map X11 button to W3C button:
+		       X11: Button1(1)=Left, Button2(2)=Middle, Button3(3)=Right
+		       W3C: Left=0, Middle=1, Right=2 */
+		    if (button == Button1) w3c_button = 0;
+		    else if (button == Button2) w3c_button = 1;
+		    else if (button == Button3) w3c_button = 2;
+		    else w3c_button = button;
 
-				x = event.xbutton.x;
-				y = ifp->i->if_height - event.xbutton.y - 1;
+		    struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+		    int x = event.xbutton.x;
+		    int y = ifp->i->if_height - event.xbutton.y - 1;
 
-				if (x < 0 || y < 0) {
-				    fb_log("No RGB (outside image viewport)\n");
-				    break;
-				}
-
-				size_t memidx = (y * WIN(ifp)->mi_pixwidth) * sizeof(struct fb_pixel);
-				oglp = (struct fb_pixel *)&ifp->i->if_mem[memidx];
-
-				fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-				       x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
-
-				break;
-			    }
-			case Button3:
-			    OGL(ifp)->alive = 0;
-			    break;
-			default:
-			    fb_log("unhandled mouse event\n");
-			    break;
+		    bu_vls_sprintf(&ev_json, "{\"type\": \"mouse-press\", \"button\": %d, \"x\": %d, \"y\": %d}", w3c_button, x, y);
+		    
+		    if (!bu_binding_process_event("fb", bu_vls_cstr(&ev_json), ifp)) {
+			fb_log("unhandled mouse event\n");
+		    }
+		    bu_vls_free(&ev_json);
+		    break;
+		}
+	    case KeyPress:
+		{
+		    KeySym keysym = XLookupKeysym(&event.xkey, 0);
+		    char *key_str = XKeysymToString(keysym);
+		    
+		    if (key_str) {
+			struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+			bu_vls_sprintf(&ev_json, "{\"type\": \"key-press\", \"key\": \"%s\"}", key_str);
+			if (!bu_binding_process_event("fb", bu_vls_cstr(&ev_json), ifp)) {
+			    /* optionally log unhandled key event */
+			}
+			bu_vls_free(&ev_json);
 		    }
 		    break;
 		}
@@ -1046,8 +1099,9 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
     int mode, i;
     long valuemask;
     XSetWindowAttributes swa;
-
     FB_CK_FB(ifp->i);
+
+    ogl_init_bindings();
 
     /*
      * First, attempt to determine operating mode for this open,
@@ -1406,6 +1460,8 @@ ogl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 {
     struct ogl_fb_info *ogl_internal = (struct ogl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
+    
+    ogl_init_bindings();
     return open_existing(ifp, ogl_internal->dpy, ogl_internal->win,
 			 ogl_internal->cmap, ogl_internal->vip, width, height, ogl_internal->glxc,
 			 ogl_internal->double_buffer, ogl_internal->soft_cmap);

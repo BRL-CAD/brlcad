@@ -37,6 +37,11 @@ set_property(
   PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
 )
 
+# Files related to key/mouse binding management
+brlcad_manage_files(dm_bindings.json ${DATA_DIR}/bindings)
+brlcad_manage_files(dm_schema.json ${DATA_DIR}/bindings)
+brlcad_manage_files(fb_schema.json ${DATA_DIR}/bindings)
+
 brlcad_find_package(PNG REQUIRED)
 
 if(BRLCAD_ENABLE_OPENGL)
@@ -152,3 +157,4 @@ cmakefiles(${libdm_ignore_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+
