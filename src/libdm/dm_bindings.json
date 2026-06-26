@@ -1,0 +1,59 @@
+{
+  "contexts": {
+    "fb": {
+      "description": "Standard interactions for raw framebuffers (rt, fbserv)",
+      "bindings": [
+        {
+          "match": {
+            "type": "mouse-press",
+            "button": 1
+          },
+          "action": "fb_print_pixel_rgb"
+        },
+        {
+          "match": {
+            "type": "mouse-press",
+            "button": 2
+          },
+          "action": "fb_close_window"
+        },
+        {
+          "match": {
+            "type": "key-press",
+            "key": "Escape"
+          },
+          "action": "fb_close_window"
+        }
+      ]
+    },
+    "dm": {
+      "description": "Standard bindings for the Geometry Editor (qged & mged)",
+      "bindings": [
+        { "match": { "type": "key-press", "key": "A" }, "action": "view_toggle_adc" },
+        { "match": { "type": "key-press", "key": "M" }, "action": "view_toggle_model_axes" },
+        { "match": { "type": "key-press", "key": "V" }, "action": "view_toggle_view_axes" },
+        { "match": { "type": "key-press", "key": "2" }, "action": "view_2" },
+        { "match": { "type": "key-press", "key": "3" }, "action": "view_3" },
+        { "match": { "type": "key-press", "key": "4" }, "action": "view_4" },
+        { "match": { "type": "key-press", "key": "5" }, "action": "view_5" },
+        { "match": { "type": "key-press", "key": "6" }, "action": "view_6" },
+        { "match": { "type": "key-press", "key": "7" }, "action": "view_7" },
+        { "match": { "type": "key-press", "key": "F" }, "action": "view_front" },
+        { "match": { "type": "key-press", "key": "T" }, "action": "view_top" },
+        { "match": { "type": "key-press", "key": "B" }, "action": "view_bottom" },
+        { "match": { "type": "key-press", "key": "L" }, "action": "view_left" },
+        { "match": { "type": "key-press", "key": "R", "modifiers": ["Shift"] }, "action": "view_rear" },
+        { "match": { "type": "key-press", "key": "R" }, "action": "view_right" },
+        { "match": { "type": "mouse-press", "button": 0 }, "action": "view_mouse_press_left" },
+        { "match": { "type": "mouse-release", "button": 0 }, "action": "view_mouse_release_left" },
+        { "match": { "type": "mouse-release", "button": 2 }, "action": "view_mouse_release_right" },
+        { "match": { "type": "mouse-release", "button": 1 }, "action": "view_mouse_release_middle" },
+        { "match": { "type": "mouse-move", "button": 0, "modifiers": ["Control"] }, "action": "view_mouse_drag_rotate" },
+        { "match": { "type": "mouse-move", "button": 0, "modifiers": ["Shift"] }, "action": "view_mouse_drag_translate" },
+        { "match": { "type": "mouse-move", "button": 0, "modifiers": ["Control", "Shift"] }, "action": "view_mouse_drag_scale" },
+        { "match": { "type": "mouse-move", "button": 0 }, "action": "view_mouse_drag_adjust" },
+        { "match": { "type": "mouse-wheel" }, "action": "view_mouse_wheel_scale" }
+      ]
+    }
+  }
+}

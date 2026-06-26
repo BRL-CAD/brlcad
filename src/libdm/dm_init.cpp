@@ -66,10 +66,22 @@ dm_init_msgs()
 }
 
 
+#include "bu/binding.h"
+
 static void
 libdm_init(void)
 {
     bu_vls_init(&init_msgs);
+    
+    const char *dm_schema = bu_dir(NULL, 0, BU_DIR_DATA, "bindings", "dm_schema.json", NULL);
+    if (dm_schema) {
+        bu_binding_register_schema("dm", dm_schema);
+    }
+    
+    const char *fb_schema = bu_dir(NULL, 0, BU_DIR_DATA, "bindings", "fb_schema.json", NULL);
+    if (fb_schema) {
+        bu_binding_register_schema("fb", fb_schema);
+    }
 
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dm", NULL);
     char **dm_filenames;

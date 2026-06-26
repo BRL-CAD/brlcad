@@ -2925,6 +2925,7 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 	case ButtonPress:
 	    {
 		int button = (int) event->xbutton.button;
+		int w3c_button = 0;
 
 		/* In interactive mode, report the event to the application
 		 * rather than consuming it here. */
