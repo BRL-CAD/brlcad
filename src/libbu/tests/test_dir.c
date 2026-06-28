@@ -311,7 +311,11 @@ main(int argc, char *argv[])
 
 	bu_strlcpy(libdir, cpath, MAXPATHLEN);
 	for (i = 0; i < sizeof(extensions) / sizeof(extensions[0]); i++) {
-	    snprintf(path, MAXPATHLEN, "%s/libbu%s", libdir, extensions[i]);
+	    if (!extensions[i])
+		continue;
+	    bu_strlcpy(path, libdir, MAXPATHLEN);
+	    bu_strlcat(path, "/libbu", MAXPATHLEN);
+	    bu_strlcat(path, extensions[i], MAXPATHLEN);
 	    if (bu_file_exists(path, NULL)) {
 		bu_dir(lpath, MAXPATHLEN, BU_DIR_LIB, "libbu", BU_DIR_LIBEXT, (const char *)NULL);
 		PRINT(BU_DIR_LIBEXT, path, ==, lpath);
