@@ -134,7 +134,7 @@ expect_no_selection(const char *label, struct db_i *dbip)
     }
 
     if (bu_vls_strlen(&msg) <= msg_seed_len ||
-	strncmp(bu_vls_cstr(&msg), msg_seed, msg_seed_len) != 0) {
+	bu_strncmp(bu_vls_cstr(&msg), msg_seed, msg_seed_len) != 0) {
 	bu_log("%s: expected no-selection diagnostic to append to message, got:\n%s",
 	       label, bu_vls_cstr(&msg));
 	failures++;
