@@ -574,10 +574,8 @@ int main(int argc, char *argv[])
 	}
     }
 
-    if (objv && !matflag) {
+    if (!matflag && def_tree(APP.a_rt_i, &title_obj)) {
 	int frame_retval;
-
-	def_tree(APP.a_rt_i);		/* Load the default trees */
 
 	/*
 	 * Initialize application.
