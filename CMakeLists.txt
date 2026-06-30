@@ -456,6 +456,12 @@ define_property(
   BRIEF_DOCS "config.h.in contents"
   FULL_DOCS "config.h.in contents for BRL-CAD project"
 )
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_CONFIG_H_DEFERRED_DEFINES
+  BRIEF_DOCS "Deferred config.h simple #define entries"
+  FULL_DOCS "Simple config.h '#define NAME VALUE' entries to emit in sorted order"
+)
 if(NOT COMMAND CONFIG_H_APPEND)
   function(CONFIG_H_APPEND PROJECT_NAME NEW_CONTENTS)
     if(PROJECT_NAME)
@@ -465,6 +471,12 @@ if(NOT COMMAND CONFIG_H_APPEND)
     endif(PROJECT_NAME)
   endfunction(CONFIG_H_APPEND NEW_CONTENTS)
 endif(NOT COMMAND CONFIG_H_APPEND)
+
+function(brlcad_deferred_define LINE)
+  get_property(_brlcad_deferred_defines GLOBAL PROPERTY BRLCAD_CONFIG_H_DEFERRED_DEFINES)
+  list(APPEND _brlcad_deferred_defines "${LINE}")
+  set_property(GLOBAL PROPERTY BRLCAD_CONFIG_H_DEFERRED_DEFINES "${_brlcad_deferred_defines}")
+endfunction(brlcad_deferred_define)
 
 config_h_append(BRLCAD "/**** Define statements for CMake ****/\n")
 config_h_append(BRLCAD "#if !defined(BRLCADBUILD)\n")
@@ -784,7 +796,7 @@ check_c_source_compiles(
   HAVE_PRINTF12_ATTRIBUTE
 )
 if(HAVE_PRINTF12_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_PRINTF12_ATTRIBUTE 1")
 endif(HAVE_PRINTF12_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
@@ -793,7 +805,7 @@ check_c_source_compiles(
   HAVE_PRINTF23_ATTRIBUTE
 )
 if(HAVE_PRINTF23_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_PRINTF23_ATTRIBUTE 1")
 endif(HAVE_PRINTF23_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
@@ -802,7 +814,7 @@ check_c_source_compiles(
   HAVE_SCANF23_ATTRIBUTE
 )
 if(HAVE_SCANF23_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_SCANF23_ATTRIBUTE 1")
 endif(HAVE_SCANF23_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((deprecated))
@@ -811,7 +823,7 @@ check_c_source_compiles(
   HAVE_DEPRECATED_ATTRIBUTE
 )
 if(HAVE_DEPRECATED_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_DEPRECATED_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_DEPRECATED_ATTRIBUTE 1")
 endif(HAVE_DEPRECATED_ATTRIBUTE)
 
 # Check whether the compiler supports __declspec(deprecated())
@@ -820,7 +832,7 @@ check_c_source_compiles(
   HAVE_DEPRECATED_DECLSPEC
 )
 if(HAVE_DEPRECATED_DECLSPEC)
-  config_h_append(BRLCAD "#define HAVE_DEPRECATED_DECLSPEC 1\n")
+  brlcad_deferred_define("HAVE_DEPRECATED_DECLSPEC 1")
 endif(HAVE_DEPRECATED_DECLSPEC)
 
 # Check whether the compiler supports __attribute__((__noreturn__))
@@ -830,7 +842,7 @@ __attribute__((__noreturn__)) void noret(void); void noret(void){exit(1);} int m
   HAVE_NORETURN_ATTRIBUTE
 )
 if(HAVE_NORETURN_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_NORETURN_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_NORETURN_ATTRIBUTE 1")
 endif(HAVE_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __declspec(noreturn)
@@ -840,7 +852,7 @@ __declspec(noreturn) void noret(void) {exit(1);} int main(int argc, char *argv[]
   HAVE_NORETURN_DECLSPEC
 )
 if(HAVE_NORETURN_DECLSPEC)
-  config_h_append(BRLCAD "#define HAVE_NORETURN_DECLSPEC 1\n")
+  brlcad_deferred_define("HAVE_NORETURN_DECLSPEC 1")
 endif(HAVE_NORETURN_DECLSPEC)
 
 # Check whether the compiler supports __attribute__((analyzer_noreturn))
@@ -849,7 +861,7 @@ check_c_source_compiles(
   HAVE_ANALYZER_NORETURN_ATTRIBUTE
 )
 if(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_ANALYZER_NORETURN_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_ANALYZER_NORETURN_ATTRIBUTE 1")
 endif(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((always_inline))
@@ -858,7 +870,7 @@ check_c_source_compiles(
   HAVE_ALWAYS_INLINE_ATTRIBUTE
 )
 if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_ALWAYS_INLINE_ATTRIBUTE 1")
 endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
 
 # Check whether the compiler supports __forceinline
@@ -867,7 +879,7 @@ check_c_source_compiles(
   HAVE_FORCEINLINE
 )
 if(HAVE_FORCEINLINE)
-  config_h_append(BRLCAD "#define HAVE_FORCEINLINE 1\n")
+  brlcad_deferred_define("HAVE_FORCEINLINE 1")
 endif(HAVE_FORCEINLINE)
 
 # Check whether the compiler supports __attribute__((const))
@@ -876,7 +888,7 @@ check_c_source_compiles(
   HAVE_CONST_ATTRIBUTE
 )
 if(HAVE_CONST_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_CONST_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_CONST_ATTRIBUTE 1")
 endif(HAVE_CONST_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((pure))
@@ -885,7 +897,7 @@ check_c_source_compiles(
   HAVE_PURE_ATTRIBUTE
 )
 if(HAVE_PURE_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_PURE_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_PURE_ATTRIBUTE 1")
 endif(HAVE_PURE_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((cold))
@@ -894,7 +906,7 @@ check_c_source_compiles(
   HAVE_COLD_ATTRIBUTE
 )
 if(HAVE_COLD_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_COLD_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_COLD_ATTRIBUTE 1")
 endif(HAVE_COLD_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((hot))
@@ -903,7 +915,7 @@ check_c_source_compiles(
   HAVE_HOT_ATTRIBUTE
 )
 if(HAVE_HOT_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_HOT_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_HOT_ATTRIBUTE 1")
 endif(HAVE_HOT_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((nonnull))
@@ -912,7 +924,7 @@ check_c_source_compiles(
   HAVE_NONNULL_ATTRIBUTE
 )
 if(HAVE_NONNULL_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_NONNULL_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_NONNULL_ATTRIBUTE 1")
 endif(HAVE_NONNULL_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((warn_unused_result))
@@ -921,7 +933,7 @@ check_c_source_compiles(
   HAVE_WARN_UNUSED_RESULT_ATTRIBUTE
 )
 if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1")
 endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((flatten))
@@ -930,7 +942,7 @@ check_c_source_compiles(
   HAVE_FLATTEN_ATTRIBUTE
 )
 if(HAVE_FLATTEN_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_FLATTEN_ATTRIBUTE 1\n")
+  brlcad_deferred_define("HAVE_FLATTEN_ATTRIBUTE 1")
 endif(HAVE_FLATTEN_ATTRIBUTE)
 
 # Silence check for unused arguments (used to silence clang warnings about
@@ -951,7 +963,7 @@ check_c_source_compiles(
   HAVE_RESTRICT__
 )
 if(HAVE_RESTRICT__)
-  config_h_append(BRLCAD "#define HAVE_RESTRICT__ 1\n")
+  brlcad_deferred_define("HAVE_RESTRICT__ 1")
 endif(HAVE_RESTRICT__)
 
 # Check whether the compiler supports __restrict (MSVC / other single-underscore form).
@@ -963,7 +975,7 @@ if(NOT HAVE_RESTRICT__)
     HAVE_RESTRICT
   )
   if(HAVE_RESTRICT)
-    config_h_append(BRLCAD "#define HAVE_RESTRICT 1\n")
+    brlcad_deferred_define("HAVE_RESTRICT 1")
   endif(HAVE_RESTRICT)
 endif()
 
@@ -973,7 +985,7 @@ check_c_source_compiles(
   HAVE_BUILTIN_ASSUME_ALIGNED
 )
 if(HAVE_BUILTIN_ASSUME_ALIGNED)
-  config_h_append(BRLCAD "#define HAVE_BUILTIN_ASSUME_ALIGNED 1\n")
+  brlcad_deferred_define("HAVE_BUILTIN_ASSUME_ALIGNED 1")
 endif(HAVE_BUILTIN_ASSUME_ALIGNED)
 
 # Check whether the compiler supports __debugbreak() (MSVC/Windows)
@@ -982,7 +994,7 @@ check_c_source_compiles(
   HAVE_DEBUGBREAK
 )
 if(HAVE_DEBUGBREAK)
-  config_h_append(BRLCAD "#define HAVE_DEBUGBREAK 1\n")
+  brlcad_deferred_define("HAVE_DEBUGBREAK 1")
 endif(HAVE_DEBUGBREAK)
 
 # Check whether #pragma fp_contract(off) is accepted without warnings (MSVC only).
@@ -998,7 +1010,7 @@ check_c_source_compiles(
 )
 cmake_pop_check_state()
 if(HAVE_PRAGMA_FP_CONTRACT)
-  config_h_append(BRLCAD "#define HAVE_PRAGMA_FP_CONTRACT 1\n")
+  brlcad_deferred_define("HAVE_PRAGMA_FP_CONTRACT 1")
 endif(HAVE_PRAGMA_FP_CONTRACT)
 
 # Check for _mm_pause (x86/x86_64 spinlock hint via Intel intrinsics)
@@ -1008,7 +1020,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|x86|i[36789]86")
     HAVE_MM_PAUSE
   )
   if(HAVE_MM_PAUSE)
-    config_h_append(BRLCAD "#define HAVE_MM_PAUSE 1\n")
+    brlcad_deferred_define("HAVE_MM_PAUSE 1")
   endif(HAVE_MM_PAUSE)
 endif()
 
@@ -1018,14 +1030,14 @@ check_c_source_compiles(
   HAVE_ALIGNED_MALLOC
 )
 if(HAVE_ALIGNED_MALLOC)
-  config_h_append(BRLCAD "#define HAVE_ALIGNED_MALLOC 1\n")
+  brlcad_deferred_define("HAVE_ALIGNED_MALLOC 1")
 endif(HAVE_ALIGNED_MALLOC)
 
 # On Linux the default thread stack is 8-10 MB (vs 1 MB on Windows, 512 KB on
 # macOS).  geogram's exact-arithmetic predicates use this to allocate
 # multi-precision temporaries on the stack for performance.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  config_h_append(BRLCAD "#define BRLCAD_HAS_BIG_STACK 1\n")
+  brlcad_deferred_define("BRLCAD_HAS_BIG_STACK 1")
 endif()
 
 # The following tests are almost entirely for gcc/llvm style flags, so
@@ -1516,12 +1528,12 @@ if(BRLCAD_ENABLE_X11)
   message("X11 detected and enabled")
   if(X11_Xlib_INCLUDE_PATH)
     set(HAVE_X11_XLIB_H 1)
-    config_h_append(BRLCAD "#cmakedefine HAVE_X11_XLIB_H 1\n")
+    brlcad_deferred_define("HAVE_X11_XLIB_H 1")
     # message("Defining HAVE_X11_XLIB_H")
   endif(X11_Xlib_INCLUDE_PATH)
   if(X11_Xi_INCLUDE_PATH)
     set(HAVE_X11_EXTENSIONS_XINPUT_H 1)
-    config_h_append(BRLCAD "#cmakedefine HAVE_X11_EXTENSIONS_XINPUT_H 1\n")
+    brlcad_deferred_define("HAVE_X11_EXTENSIONS_XINPUT_H 1")
     # message("Defining HAVE_X11_EXTENSIONS_XINPUT_H")
   endif(X11_Xi_INCLUDE_PATH)
 endif(BRLCAD_ENABLE_X11)
@@ -1607,7 +1619,7 @@ endif(BRLCAD_PRINT_MSGS)
 # Because libtclcad, bwish and mged include Tcl headers, we need to define
 # STDC_HEADERS here - the Tcl headers do need the definition.  Just
 # define it - we require C89, so the test itself is not needed.
-config_h_append(BRLCAD "#define STDC_HEADERS 1\n")
+brlcad_deferred_define("STDC_HEADERS 1")
 
 # AC_HEADER_SYS_WAIT
 brlcad_header_sys_wait()
@@ -1692,7 +1704,7 @@ brlcad_include_file(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac &
 # TODO - this test is failing on the github runner???
 #BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
 if(MSVC)
-  config_h_append(BRLCAD "#define HAVE_WINDOWS_H 1\n")
+  brlcad_deferred_define("HAVE_WINDOWS_H 1")
   set(HAVE_WINDOWS_H 1)
 endif(MSVC)
 
@@ -1702,7 +1714,7 @@ check_c_source_compiles(
   HAVE_SYS_SYSCTL_H
 )
 if(HAVE_SYS_SYSCTL_H)
-  config_h_append(BRLCAD "#define HAVE_SYS_SYSCTL_H 1\n")
+  brlcad_deferred_define("HAVE_SYS_SYSCTL_H 1")
 endif(HAVE_SYS_SYSCTL_H)
 
 # custom libproc.h test due to BSDisms when compiling
@@ -1711,7 +1723,7 @@ check_c_source_compiles(
   HAVE_LIBPROC_H
 )
 if(HAVE_LIBPROC_H)
-  config_h_append(BRLCAD "#define HAVE_LIBPROC_H 1\n")
+  brlcad_deferred_define("HAVE_LIBPROC_H 1")
 endif(HAVE_LIBPROC_H)
 
 brlcad_include_file(termios.h HAVE_TERMIOS_H)
@@ -1729,13 +1741,13 @@ brlcad_check_dirname()
 if(BRLCAD_ENABLE_OPENGL)
   find_package(OpenGL)
   if(OPENGL_INCLUDE_DIR_GL)
-    config_h_append(BRLCAD "#define HAVE_GL_GL_H 1\n")
+    brlcad_deferred_define("HAVE_GL_GL_H 1")
   endif(OPENGL_INCLUDE_DIR_GL)
   if(OPENGL_INCLUDE_DIR_GLX)
-    config_h_append(BRLCAD "#define HAVE_GL_GLX_H 1\n")
+    brlcad_deferred_define("HAVE_GL_GLX_H 1")
   endif(OPENGL_INCLUDE_DIR_GLX)
   if(OPENGL_USING_FRAMEWORK)
-    config_h_append(BRLCAD "#define HAVE_OPENGL_GL_H 1\n")
+    brlcad_deferred_define("HAVE_OPENGL_GL_H 1")
   endif(OPENGL_USING_FRAMEWORK)
 endif(BRLCAD_ENABLE_OPENGL)
 
@@ -1743,7 +1755,7 @@ endif(BRLCAD_ENABLE_OPENGL)
 if(HAVE_EMMINTRIN_H)
   check_c_source_compiles("#include <emmintrin.h>\nint main(void) { return 0; }" HAVE_EMMINTRIN)
   if(HAVE_EMMINTRIN)
-    config_h_append(BRLCAD "#define HAVE_EMMINTRIN 1\n")
+    brlcad_deferred_define("HAVE_EMMINTRIN 1")
   endif(HAVE_EMMINTRIN)
 endif(HAVE_EMMINTRIN_H)
 
@@ -1792,7 +1804,7 @@ brlcad_type_size("u_int" "sys/types.h")
 brlcad_type_size("u_long" "sys/types.h")
 brlcad_type_size("u_short" "sys/types.h")
 if(HAVE_U_CHAR AND HAVE_U_INT AND HAVE_U_LONG AND HAVE_U_SHORT)
-  config_h_append(BRLCAD "#define HAVE_U_TYPES 1\n")
+  brlcad_deferred_define("HAVE_U_TYPES 1")
 endif(HAVE_U_CHAR AND HAVE_U_INT AND HAVE_U_LONG AND HAVE_U_SHORT)
 
 # If we have an off_t that's too small, we'll need to deal with that in order to
@@ -1802,24 +1814,24 @@ if(CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
     if(NOT DEFINED OFF_T_SIZE_MISMATCH)
       message("Note: platform void pointer size (${CMAKE_SIZEOF_VOID_P}) is greater than off_t size (${HAVE_OFF_T})")
     endif(NOT DEFINED OFF_T_SIZE_MISMATCH)
-    config_h_append(BRLCAD "#define OFF_T_SIZE_MISMATCH 1\n")
+    brlcad_deferred_define("OFF_T_SIZE_MISMATCH 1")
     set(OFF_T_SIZE_MISMATCH 1 CACHE INTERNAL "Have off_t that is too small for platform.")
   endif(${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
   if(CMAKE_WORD_SIZE STREQUAL "64BIT")
-    config_h_append(BRLCAD "#define HAVE_OFF_T_64BIT 1\n")
+    brlcad_deferred_define("HAVE_OFF_T_64BIT 1")
   endif(CMAKE_WORD_SIZE STREQUAL "64BIT")
 endif(CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
 
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main(void) { return i; }" HAVE_THREAD_LOCAL)
 if(HAVE_THREAD_LOCAL)
-  config_h_append(BRLCAD "#define HAVE_THREAD_LOCAL 1\n")
+  brlcad_deferred_define("HAVE_THREAD_LOCAL 1")
 else(HAVE_THREAD_LOCAL)
   # try GCC except Mac OS X
   include(CheckCXXSourceRuns)
   check_cxx_source_runs("static __thread int i = 0; int main(void) { return i; }" HAVE___THREAD)
   if(HAVE___THREAD)
-    config_h_append(BRLCAD "#define HAVE___THREAD 1\n")
+    brlcad_deferred_define("HAVE___THREAD 1")
   else(HAVE___THREAD)
     # try Windows
     check_cxx_source_compiles(
@@ -1827,7 +1839,7 @@ else(HAVE_THREAD_LOCAL)
       HAVE___DECLSPEC_THREAD
     )
     if(HAVE___DECLSPEC_THREAD)
-      config_h_append(BRLCAD "#define HAVE___DECLSPEC_THREAD 1\n")
+      brlcad_deferred_define("HAVE___DECLSPEC_THREAD 1")
     endif(HAVE___DECLSPEC_THREAD)
   endif(HAVE___THREAD)
 endif(HAVE_THREAD_LOCAL)
@@ -1900,7 +1912,7 @@ brlcad_function_exists(_pipe)
 if(NOT HAVE_PIPE AND HAVE__PIPE)
   set(HAVE_PIPE 1 CACHE INTERNAL "pipe available via config_win.h macro wrapper")
   if(CONFIG_H_FILE)
-    config_h_append(BRLCAD "#define HAVE_PIPE 1\n")
+    brlcad_deferred_define("HAVE_PIPE 1")
   endif()
 endif()
 brlcad_function_exists(popen) # implies pclose
@@ -1957,7 +1969,7 @@ if(HAVE_DAEMON)
     HAVE_WORKING_DAEMON_FUNCTION
   )
   if(HAVE_WORKING_DAEMON_FUNCTION)
-    config_h_append(BRLCAD "#define HAVE_WORKING_DAEMON_FUNCTION 1\n")
+    brlcad_deferred_define("HAVE_WORKING_DAEMON_FUNCTION 1")
   endif(HAVE_WORKING_DAEMON_FUNCTION)
 endif(HAVE_DAEMON)
 
@@ -1970,7 +1982,7 @@ if(HAVE_SYSCONF)
     HAVE_SYSCONF_AVPHYS
   )
   if(HAVE_SYSCONF_AVPHYS)
-    config_h_append(BRLCAD "#define HAVE_SYSCONF_AVPHYS 1\n")
+    brlcad_deferred_define("HAVE_SYSCONF_AVPHYS 1")
   endif(HAVE_SYSCONF_AVPHYS)
 endif(HAVE_SYSCONF)
 
@@ -1979,14 +1991,14 @@ if("${HAVE_NTOHLL}" STREQUAL "")
   check_symbol_exists(ntohll "sys/_endian.h" HAVE_NTOHLL_SYS__ENDIAN)
   if(HAVE_NTOHLL_SYS__ENDIAN)
     set(HAVE_NTOHLL 1 CACHE INTERNAL "Have function NTOHLL")
-    config_h_append(BRLCAD "#cmakedefine HAVE_NTOHLL 1\n")
+    brlcad_deferred_define("HAVE_NTOHLL 1")
   endif(HAVE_NTOHLL_SYS__ENDIAN)
 endif("${HAVE_NTOHLL}" STREQUAL "")
 if("${HAVE_HTONLL}" STREQUAL "")
   check_symbol_exists(htonll "sys/_endian.h" HAVE_HTONLL_SYS__ENDIAN)
   if(HAVE_HTONLL_SYS__ENDIAN)
     set(HAVE_HTONLL 1 CACHE INTERNAL "Have function HTONLL")
-    config_h_append(BRLCAD "#cmakedefine HAVE_HTONLL 1\n")
+    brlcad_deferred_define("HAVE_HTONLL 1")
   endif(HAVE_HTONLL_SYS__ENDIAN)
 endif("${HAVE_HTONLL}" STREQUAL "")
 
@@ -2004,7 +2016,7 @@ if(HAVE_REALPATH AND NOT HAVE_WORKING_REALPATH)
     HAVE_WORKING_REALPATH
   )
   if(HAVE_WORKING_REALPATH)
-    config_h_append(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+    brlcad_deferred_define("HAVE_WORKING_REALPATH 1")
   endif(HAVE_WORKING_REALPATH)
 endif(HAVE_REALPATH AND NOT HAVE_WORKING_REALPATH)
 
@@ -2022,7 +2034,7 @@ return 0;
   HAVE_GETFULLPATHNAME
 )
 if(HAVE_GETFULLPATHNAME)
-  config_h_append(BRLCAD "#define HAVE_GETFULLPATHNAME 1\n")
+  brlcad_deferred_define("HAVE_GETFULLPATHNAME 1")
 endif(HAVE_GETFULLPATHNAME)
 
 # If we have GetProcessTimes, we need it instead of clock() for CPU time.
@@ -2039,7 +2051,7 @@ return 0;
   HAVE_GETPROCESSTIMES
 )
 if(HAVE_GETPROCESSTIMES)
-  config_h_append(BRLCAD "#define HAVE_GETPROCESSTIMES 1\n")
+  brlcad_deferred_define("HAVE_GETPROCESSTIMES 1")
 endif(HAVE_GETPROCESSTIMES)
 
 # GetCurrentProcessId
@@ -2054,7 +2066,7 @@ return 0;
   HAVE_GETCURRENTPROCESSID
 )
 if(HAVE_GETCURRENTPROCESSID)
-  config_h_append(BRLCAD "#define HAVE_GETCURRENTPROCESSID 1\n")
+  brlcad_deferred_define("HAVE_GETCURRENTPROCESSID 1")
 endif(HAVE_GETCURRENTPROCESSID)
 
 
@@ -2074,7 +2086,7 @@ return getaddrinfo(\"localhost\", NULL, &hints, &res);
 }
   " HAVE_GETADDRINFO)
   if(HAVE_GETADDRINFO)
-    config_h_append(BRLCAD "#define HAVE_GETADDRINFO 1\n")
+    brlcad_deferred_define("HAVE_GETADDRINFO 1")
   endif(HAVE_GETADDRINFO)
 endif()
 
@@ -2088,7 +2100,7 @@ brlcad_function_exists(lrint DECL_TEST_SRCS lrint_decl_test
   REQUIRED_LIBS ${M_LIBRARY}
 )
 if(HAVE_DECL_LRINT)
-  config_h_append(BRLCAD "#cmakedefine HAVE_DECL_LRINT 1\n")
+  brlcad_deferred_define("HAVE_DECL_LRINT 1")
 endif(HAVE_DECL_LRINT)
 if(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
   cmake_push_check_state(RESET)
@@ -2100,7 +2112,7 @@ if(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
   )
 endif(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
 if(HAVE_WORKING_LRINT_MACRO)
-  config_h_append(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
+  brlcad_deferred_define("HAVE_WORKING_LRINT_MACRO 1")
 endif(HAVE_WORKING_LRINT_MACRO)
 
 # test for tgamma
@@ -2119,7 +2131,9 @@ brlcad_function_exists(gethostbyname DECL_TEST_SRCS gethostbyname_test REQUIRED_
 
 # Check for logb in C++
 check_cxx_source_compiles("#include <cmath>\nint main(void) {return logb(3.14);}" HAVE_CXX_LOGB)
-config_h_append(BRLCAD "#cmakedefine HAVE_CXX_LOGB 1\n")
+if(HAVE_CXX_LOGB)
+  brlcad_deferred_define("HAVE_CXX_LOGB 1")
+endif(HAVE_CXX_LOGB)
 
 #-----------------------------------------------------------------------
 
@@ -2143,11 +2157,11 @@ if(WIN32)
 
   check_symbol_exists(isnan "math.h" HAVE_ISNAN)
   if(HAVE_ISNAN)
-    config_h_append(BRLCAD "#define HAVE_ISNAN 1\n")
+    brlcad_deferred_define("HAVE_ISNAN 1")
   else(HAVE_ISNAN)
     check_symbol_exists(_isnan "float.h" HAVE__ISNAN)
     if(HAVE__ISNAN)
-      config_h_append(BRLCAD "#define HAVE__ISNAN 1\n")
+      brlcad_deferred_define("HAVE__ISNAN 1")
     endif(HAVE__ISNAN)
   endif(HAVE_ISNAN)
 
@@ -2497,6 +2511,20 @@ install(
 
 # Make sure we have the target dir
 file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
+
+# Emit simple feature-test defines in sorted order.  Keeping these entries out
+# of the immediate append stream makes brlcad_config.h deterministic when
+# independent platform probes are evaluated in a different order.
+get_property(_brlcad_deferred_defines GLOBAL PROPERTY BRLCAD_CONFIG_H_DEFERRED_DEFINES)
+if(_brlcad_deferred_defines)
+  list(SORT _brlcad_deferred_defines)
+  list(REMOVE_DUPLICATES _brlcad_deferred_defines)
+  foreach(_brlcad_def ${_brlcad_deferred_defines})
+    config_h_append(BRLCAD "#define ${_brlcad_def}\n")
+  endforeach()
+endif()
+unset(_brlcad_def)
+unset(_brlcad_deferred_defines)
 
 # If we're building on Windows with MSVC, use config_win.h file
 if(MSVC)
