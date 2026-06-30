@@ -125,12 +125,7 @@ macro(brlcad_find_package pkg_name)
   # compile/not-compile decisions made by the plugin logic, the build will
   # break.  Since changing the system under a configure run is likely to make a
   # mess anyway when trying to build, this should be a workable limitation.
-  get_property(_calls DIRECTORY PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS)
-  if(NOT _calls)
-    set(_calls "")
-  endif()
-  list(APPEND _calls "${this_call}")
-  set_property(DIRECTORY PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS "${_calls}")
+  set_property(DIRECTORY APPEND PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS "${this_call}")
 
   # If we have NOINSTALL or SYSPATTERN, those are BRL-CAD specific add-ons -
   # otherwise, everything goes on to find package.

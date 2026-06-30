@@ -6,6 +6,7 @@ set(
   BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
+  BRLCAD_Copy_Files.cmake.in
   BRLCAD_Environment_Setup.cmake
   BRLCAD_EXT_Setup.cmake
   BRLCAD_ExternalDeps.cmake

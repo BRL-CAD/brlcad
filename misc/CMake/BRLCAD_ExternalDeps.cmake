@@ -200,6 +200,29 @@ function(tfile_type_msg ALL_CNT ALL_PROCESSED TEXT_LIST)
   endif(TCNT)
 endfunction(tfile_type_msg)
 
+function(brlcad_ext_record_file_type out_prop count_prop label interval all_cnt fname)
+  set_property(GLOBAL APPEND PROPERTY ${out_prop} "${fname}")
+
+  get_property(_brlcad_ext_count GLOBAL PROPERTY ${count_prop})
+  if(NOT _brlcad_ext_count)
+    set(_brlcad_ext_count 0)
+  endif(NOT _brlcad_ext_count)
+  math(EXPR _brlcad_ext_count "${_brlcad_ext_count} + 1")
+  set_property(GLOBAL PROPERTY ${count_prop} "${_brlcad_ext_count}")
+
+  get_property(_brlcad_ext_processed GLOBAL PROPERTY BRLCAD_EXT_PROCESSED_FILE_COUNT)
+  if(NOT _brlcad_ext_processed)
+    set(_brlcad_ext_processed 0)
+  endif(NOT _brlcad_ext_processed)
+  math(EXPR _brlcad_ext_processed "${_brlcad_ext_processed} + 1")
+  set_property(GLOBAL PROPERTY BRLCAD_EXT_PROCESSED_FILE_COUNT "${_brlcad_ext_processed}")
+
+  math(EXPR _brlcad_ext_skip_msg "${_brlcad_ext_count} % ${interval}")
+  if(_brlcad_ext_count AND ${_brlcad_ext_skip_msg} EQUAL 0)
+    message("Found ${_brlcad_ext_count} ${label} files (characterized ${_brlcad_ext_processed} of ${all_cnt} files.")
+  endif(_brlcad_ext_count AND ${_brlcad_ext_skip_msg} EQUAL 0)
+endfunction(brlcad_ext_record_file_type)
+
 # For processing purposes, there are three categories of
 # ${BRLCAD_EXT_DIR}/install file:
 #
@@ -215,79 +238,63 @@ function(
   file_type
   fname
   ALL_CNT
-  BINARY_LIST
-  TEXT_LIST
-  NOEXEC_LIST
 )
   if(IS_SYMLINK ${CMAKE_BINARY_DIR}/${fname})
     return()
   endif(IS_SYMLINK ${CMAKE_BINARY_DIR}/${fname})
 
-  list(LENGTH ${BINARY_LIST} BCNT)
-  list(LENGTH ${TEXT_LIST} TCNT)
-  list(LENGTH ${NOEXEC_LIST} NCNT)
-  math(EXPR PCNT "${BCNT} + ${TCNT} + ${NCNT} + 1")
-
   foreach(skp ${NOPROCESS_PATTERNS})
     if("${fname}" MATCHES "${skp}")
-      set(${TEXT_LIST} ${${TEXT_LIST}} ${fname} PARENT_SCOPE)
-      tfile_type_msg(${ALL_CNT} ${PCNT} ${TEXT_LIST})
+      brlcad_ext_record_file_type(BRLCAD_EXT_NTEXT_FILES BRLCAD_EXT_NTEXT_COUNT "text" 500 ${ALL_CNT} "${fname}")
       return()
     endif("${fname}" MATCHES "${skp}")
   endforeach(skp ${NOPROCESS_PATTERNS})
   execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -B ${CMAKE_BINARY_DIR}/${fname} RESULT_VARIABLE TXT_FILE)
   if("${TXT_FILE}" GREATER 0)
-    set(${TEXT_LIST} ${${TEXT_LIST}} ${fname} PARENT_SCOPE)
-    tfile_type_msg(${ALL_CNT} ${PCNT} ${TEXT_LIST})
+    brlcad_ext_record_file_type(BRLCAD_EXT_NTEXT_FILES BRLCAD_EXT_NTEXT_COUNT "text" 500 ${ALL_CNT} "${fname}")
     return()
   endif("${TXT_FILE}" GREATER 0)
 
   # Some kind of binary file, can we set an RPATH?
   if(P_RPATH_EXECUTABLE)
     execute_process(
-      COMMAND ${P_RPATH_EXECUTABLE} ${CMAKE_BINARY_DIR}/${lf}
+      COMMAND ${P_RPATH_EXECUTABLE} ${CMAKE_BINARY_DIR}/${fname}
       RESULT_VARIABLE NOT_BIN_OBJ
       OUTPUT_VARIABLE NB_OUT
       ERROR_VARIABLE NB_ERR
     )
     if(NOT_BIN_OBJ)
-      set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
-      nfile_type_msg(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
+      brlcad_ext_record_file_type(BRLCAD_EXT_NNOEXEC_FILES BRLCAD_EXT_NNOEXEC_COUNT "binary" 100 ${ALL_CNT} "${fname}")
       return()
     else(NOT_BIN_OBJ)
       #message("File needing RPATH setting: ${fname}")
-      set(${BINARY_LIST} ${${BINARY_LIST}} ${fname} PARENT_SCOPE)
-      bfile_type_msg(${ALL_CNT} ${PCNT} ${BINARY_LIST})
+      brlcad_ext_record_file_type(BRLCAD_EXT_NBINARY_FILES BRLCAD_EXT_NBINARY_COUNT "shared object or executable" 100 ${ALL_CNT} "${fname}")
       return()
     endif(NOT_BIN_OBJ)
   endif(P_RPATH_EXECUTABLE)
   if(APPLE)
     execute_process(
-      COMMAND otool -l ${CMAKE_BINARY_DIR}/${lf}
+      COMMAND otool -l ${CMAKE_BINARY_DIR}/${fname}
       RESULT_VARIABLE ORESULT
       OUTPUT_VARIABLE OTOOL_OUT
       ERROR_VARIABLE NB_ERR
     )
     if("${OTOOL_OUT}" MATCHES "Archive")
-      set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
-      nfile_type_msg(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
+      brlcad_ext_record_file_type(BRLCAD_EXT_NNOEXEC_FILES BRLCAD_EXT_NNOEXEC_COUNT "binary" 100 ${ALL_CNT} "${fname}")
       return()
     endif("${OTOOL_OUT}" MATCHES "Archive")
     if("${OTOOL_OUT}" MATCHES "not an object")
-      set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
-      nfile_type_msg(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
+      brlcad_ext_record_file_type(BRLCAD_EXT_NNOEXEC_FILES BRLCAD_EXT_NNOEXEC_COUNT "binary" 100 ${ALL_CNT} "${fname}")
       return()
     endif("${OTOOL_OUT}" MATCHES "not an object")
     # Not one of the exceptions - binary
     #message("File needing RPATH setting: ${fname}")
-    set(${BINARY_LIST} ${${BINARY_LIST}} ${fname} PARENT_SCOPE)
-    bfile_type_msg(${ALL_CNT} ${PCNT} ${BINARY_LIST})
+    brlcad_ext_record_file_type(BRLCAD_EXT_NBINARY_FILES BRLCAD_EXT_NBINARY_COUNT "shared object or executable" 100 ${ALL_CNT} "${fname}")
     return()
   endif(APPLE)
 
   # If we haven't figured it out, treat as noexec binary
-  set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
-  nfile_type_msg(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
+  brlcad_ext_record_file_type(BRLCAD_EXT_NNOEXEC_FILES BRLCAD_EXT_NNOEXEC_COUNT "binary" 100 ${ALL_CNT} "${fname}")
 endfunction(file_type)
 
 # Copy everything in ${BRLCAD_EXT_DIR}/install into the build
@@ -890,13 +897,20 @@ endfunction()
   # initialization this is everything, but for subsequent passes there
   # is likely to be much less work to do.)
   message("Characterizing new or changed bundled third party files...")
-  set(NBINARY_FILES)
-  set(NTEXT_FILES)
-  set(NNOEXEC_FILES)
+  set_property(GLOBAL PROPERTY BRLCAD_EXT_NBINARY_FILES "")
+  set_property(GLOBAL PROPERTY BRLCAD_EXT_NTEXT_FILES "")
+  set_property(GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_FILES "")
+  set_property(GLOBAL PROPERTY BRLCAD_EXT_NBINARY_COUNT 0)
+  set_property(GLOBAL PROPERTY BRLCAD_EXT_NTEXT_COUNT 0)
+  set_property(GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_COUNT 0)
+  set_property(GLOBAL PROPERTY BRLCAD_EXT_PROCESSED_FILE_COUNT 0)
   list(LENGTH TP_PROCESS ALL_PCNT)
   foreach(lf ${TP_PROCESS})
-    file_type("${lf}" ${ALL_PCNT} NBINARY_FILES NTEXT_FILES NNOEXEC_FILES)
+    file_type("${lf}" ${ALL_PCNT})
   endforeach(lf ${TP_PROCESS})
+  get_property(NBINARY_FILES GLOBAL PROPERTY BRLCAD_EXT_NBINARY_FILES)
+  get_property(NTEXT_FILES GLOBAL PROPERTY BRLCAD_EXT_NTEXT_FILES)
+  get_property(NNOEXEC_FILES GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_FILES)
   message("Characterizing new or changed bundled third party files... done.")
 
   # Combine the previous lists and the new determinations, writing the
