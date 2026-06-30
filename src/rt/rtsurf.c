@@ -41,23 +41,23 @@
  * = Examples =
  *
  * # Calculate area within 0.1% convergence (after 3+ iterations):
- * rtsurf file.g object
+ * rtsurf file.g [object]
  *
  * # Calculate area using precisely 1M samples (1 iteration only):
- * rtsurf -n 1000000 file.g object
+ * rtsurf -n 1000000 file.g [object]
  *
  * # Sets of 1M samples to within 0.001% convergence (3+ iters):
  * rtsurf -t 0.001 -n 1000000
  *
  * # Sets of 1k, 0.1% convergence, saving geometry script to file:
- * rtsurf -n 1000 -o file.g object > file.mged
+ * rtsurf -n 1000 -o file.g [object] > file.mged
  * mged -c file.g source file.mged
  *
  * # Areas per exterior material encountered, output saved to file:
- * rtsurf -m density.txt file.g object
+ * rtsurf -m density.txt file.g [object]
  *
  * # Print summary of areas per region and per group to file:
- * rtsurf -r -g file.g object 2> rtsurf.log
+ * rtsurf -r -g file.g [object] 2> rtsurf.log
  *
  * = Citations =
  *
@@ -252,6 +252,7 @@ initialize(struct application *ap, const char *db, const char *obj[])
 {
     struct rt_i *rtip = NULL;
     struct resource *resources = NULL;
+    const char *default_objv[2] = {NULL, NULL};
 
     char title[4096] = {'\0'};
 
@@ -267,8 +268,22 @@ initialize(struct application *ap, const char *db, const char *obj[])
 	bu_log("Title:\n%s\n", title);
     }
 
+    if (!obj || !obj[0] || obj[0][0] == '\0') {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	struct directory *dp = RT_DIR_NULL;
+	int ret = db_default_object(rtip->rti_dbip, &dp, &msg);
+
+	if (ret == 1) {
+	    default_objv[0] = dp->d_namep;
+	    obj = default_objv;
+	} else if (bu_vls_strlen(&msg)) {
+	    bu_log("%s", bu_vls_cstr(&msg));
+	}
+	bu_vls_free(&msg);
+    }
+
     size_t loaded = 0;
-    while (*obj && *obj[0] != '\0') {
+    while (obj && *obj && *obj[0] != '\0') {
 	if (rt_gettree(rtip, obj[0]) < 0) {
 	    bu_log("Loading the geometry for [%s] FAILED\n", obj[0]);
 	} else {
@@ -743,18 +758,10 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 static void
 get_options(int argc, char *argv[], struct options *opts)
 {
-    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] [-o] model.g objects...\n";
+    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] [-o] model.g [objects...]\n";
 
     const char *argv0 = argv[0];
     const char *db = NULL;
-    const char **obj = NULL;
-
-    /* Make sure we have at least a geometry file and one geometry
-     * object on the command line, number of samples optional.
-     */
-    if (argc < 3) {
-	bu_exit(1, usage, argv0);
-    }
 
     bu_optind = 1;
 
@@ -811,14 +818,10 @@ get_options(int argc, char *argv[], struct options *opts)
     argv += bu_optind;
 
     db = argv[0];
-    obj = (const char **)(argv+1);
 
     /* final sanity checks */
     if (!db || !bu_file_exists(db, NULL)) {
 	bu_exit(EXIT_FAILURE, "ERROR: database %s not found\n", (db)?db:"[]");
-    }
-    if (!obj) {
-	bu_exit(EXIT_FAILURE, "ERROR: object(s) not specified\n");
     }
 }
 
@@ -845,7 +848,7 @@ main(int argc, char *argv[])
     obj = argv + bu_optind + 1;
 
     bu_log(" db is %s\n", db);
-    bu_log(" obj[0] is %s\n", obj[0]);
+    bu_log(" obj[0] is %s\n", (obj && obj[0]) ? obj[0] : "(automatic default)");
 
     double estimate = estimate_surface_area(db, (const char **)obj, &opts);
 

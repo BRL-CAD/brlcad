@@ -62,7 +62,7 @@
  * where the line beginning with "region" may be repeated any number of times, representing each
  * region encountered along the ray.
  * now run this program as follows: @verbatim
- reshoot geom.g obj [obj...] < inputfile
+ reshoot geom.g [obj...] < inputfile
  @endverbatim
  * and this  will re-shoot all of the rays that the original program
  * shot, and compare the results.
@@ -141,7 +141,7 @@ void
 usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
-    bu_exit(1, "Usage: %s geom.g obj [obj...] < rayfile \n", progname);
+    bu_exit(1, "Usage: %s geom.g [obj...] < rayfile \n", progname);
 }
 
 
@@ -317,11 +317,15 @@ main(int argc, char **argv)
     int status = 0;
     struct bu_vls buf = BU_VLS_INIT_ZERO;
     struct shot sh;
+    const char *default_objv[2] = {NULL, NULL};
+    const char **tree_argv = (const char **)argv + 2;
+    int tree_argc = argc - 2;
+    int i;
 
     bu_setprogname(argv[0]);
     progname = argv[0];
 
-    if (argc < 3) {
+    if (argc < 2) {
 	usage("insufficient args\n");
     }
 
@@ -341,15 +345,32 @@ main(int argc, char **argv)
 
     ap.a_rt_i = rtip;	/* your application uses this instance */
 
+    if (tree_argc <= 0) {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	struct directory *dp = RT_DIR_NULL;
+	int ret = db_default_object(rtip->rti_dbip, &dp, &msg);
+
+	if (ret == 1) {
+	    default_objv[0] = dp->d_namep;
+	    tree_argv = default_objv;
+	    tree_argc = 1;
+	} else {
+	    if (bu_vls_strlen(&msg))
+		bu_log("%s", bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    rt_i_destroy(rtip);
+	    bu_exit(1, "reshoot: no objects specified\n");
+	}
+	bu_vls_free(&msg);
+    }
+
     /* Walk trees.
      * Here you identify any object trees in the database that you
      * want included in the ray trace.
      */
-    while (argc > 2) {
-	if ( rt_gettree(rtip, argv[2]) < 0 )
-	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
-	argc--;
-	argv++;
+    for (i = 0; i < tree_argc; i++) {
+	if (rt_gettree(rtip, tree_argv[i]) < 0)
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", tree_argv[i]);
     }
     /*
      * This next call gets the database ready for ray tracing.
