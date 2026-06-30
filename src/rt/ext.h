@@ -164,7 +164,7 @@ extern int pix_start;			/* pixel to start at */
 /***** end variables shared with do.c *****/
 
 /*** do.c ***/
-extern void def_tree(struct rt_i *rtip);
+extern int def_tree(struct rt_i *rtip, const char **first_obj);
 extern void do_prep(struct rt_i *rtip);
 extern void do_run(int a, int b);
 extern void do_ae(double azim, double elev);
