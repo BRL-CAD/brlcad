@@ -172,6 +172,7 @@ set(
   ktank.asc
   lgt-test.asc
   operators.asc
+  photo_holder.asc
   pic.asc
   pinewood.asc
   primitives.asc
