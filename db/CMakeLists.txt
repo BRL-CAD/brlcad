@@ -156,6 +156,7 @@ set(
   annual_gift_man.asc
   axis.asc
   bearing.asc
+  bicycle_wheel.asc
   boolean-ops.asc
   castle.asc
   cornell.asc
