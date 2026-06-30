@@ -461,7 +461,13 @@ function(rpath_build_dir_process ROOT_DIR lf)
     execute_process(
       COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${ROOT_DIR}/${LIB_DIR}" ${lf}
       WORKING_DIRECTORY ${ROOT_DIR}
+      RESULT_VARIABLE _brlcad_ext_rpath_result
+      ERROR_VARIABLE _brlcad_ext_rpath_error
     )
+    if(NOT "${_brlcad_ext_rpath_result}" STREQUAL "0")
+      message(WARNING "RPATH update failed for ${ROOT_DIR}/${lf} (${_brlcad_ext_rpath_result}): ${_brlcad_ext_rpath_error}")
+      #return()
+    endif(NOT "${_brlcad_ext_rpath_result}" STREQUAL "0")
   elseif(APPLE)
     execute_process(
       COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/${BRLCAD_EXT_DIR}/install/${LIB_DIR}" ${lf}
