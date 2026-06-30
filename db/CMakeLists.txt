@@ -166,6 +166,8 @@ set(
   cube.asc
   demo.asc
   die.asc
+  earth.asc
+  earth.png
   galileo.asc
   goliath.asc
   havoc.asc
@@ -194,6 +196,13 @@ add_subdirectory(chess)
 add_subdirectory(comgeom)
 add_subdirectory(nist)
 add_subdirectory(faa)
+
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/earth.pix
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURREBT_BINARY_DIR}/earth.pix
+  COMMAND ${CMAKE_COMMAND} -DEXEC=$<TARGET_FILE:png-pix> -P "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake"
+  DEPENDS asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}"
+)
 
 foreach(g_input ${G_BENCHMARK_MODELS})
   g_target(${g_input} "BRL-CAD Geometry Models/Benchmark")
