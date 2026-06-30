@@ -233,13 +233,13 @@ macro(BRLCAD_FUNCTION_EXISTS function)
   # The config file is regenerated every time CMake is run, so we
   # always need this bit even if the testing is already complete.
   if(CONFIG_H_FILE AND HAVE_${var})
-    config_h_append(BRLCAD "#define HAVE_${var} 1\n")
+    brlcad_deferred_define("HAVE_${var} 1")
   endif(CONFIG_H_FILE AND HAVE_${var})
   if(CONFIG_H_FILE AND HAVE_DECL_${var})
-    config_h_append(BRLCAD "#define HAVE_DECL_${var} 1\n")
+    brlcad_deferred_define("HAVE_DECL_${var} 1")
   endif(CONFIG_H_FILE AND HAVE_DECL_${var})
   if(CONFIG_H_FILE AND HAVE_WORKING_${var})
-    config_h_append(BRLCAD "#define HAVE_WORKING_${var} 1\n")
+    brlcad_deferred_define("HAVE_WORKING_${var} 1")
   endif(CONFIG_H_FILE AND HAVE_WORKING_${var})
 endmacro(BRLCAD_FUNCTION_EXISTS)
 
@@ -262,7 +262,7 @@ endmacro(BRLCAD_CHECK_INCLUDE filelist var)
 macro(BRLCAD_INCLUDE_FILE filelist var)
   brlcad_check_include(${filelist} ${var})
   if(CONFIG_H_FILE AND ${var})
-    config_h_append(BRLCAD "#cmakedefine ${var} 1\n")
+    brlcad_deferred_define("${var} 1")
   endif(CONFIG_H_FILE AND ${var})
 endmacro(BRLCAD_INCLUDE_FILE)
 
@@ -276,7 +276,7 @@ macro(BRLCAD_INCLUDE_FILE_CXX filename var)
   cmake_pop_check_state()
 
   if(CONFIG_H_FILE AND ${var})
-    config_h_append(BRLCAD "#cmakedefine ${var} 1\n")
+    brlcad_deferred_define("${var} 1")
   endif(CONFIG_H_FILE AND ${var})
 endmacro(BRLCAD_INCLUDE_FILE_CXX)
 
@@ -306,8 +306,8 @@ macro(BRLCAD_TYPE_SIZE typename headers)
 
   # Produce config.h lines as appropriate
   if(CONFIG_H_FILE AND ${testvar})
-    config_h_append(BRLCAD "#define HAVE_${var} 1\n")
-    config_h_append(BRLCAD "#define SIZEOF_${var} ${${testvar}}\n")
+    brlcad_deferred_define("HAVE_${var} 1")
+    brlcad_deferred_define("SIZEOF_${var} ${${testvar}}")
   endif(CONFIG_H_FILE AND ${testvar})
 endmacro(BRLCAD_TYPE_SIZE)
 
@@ -325,7 +325,7 @@ macro(BRLCAD_STRUCT_MEMBER structname member headers var)
   cmake_pop_check_state()
 
   if(CONFIG_H_FILE AND HAVE_${var})
-    config_h_append(BRLCAD "#define HAVE_${var} 1\n")
+    brlcad_deferred_define("HAVE_${var} 1")
   endif(CONFIG_H_FILE AND HAVE_${var})
 endmacro(BRLCAD_STRUCT_MEMBER)
 
@@ -382,7 +382,7 @@ return 0;
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_BASENAME)
   if(HAVE_BASENAME)
-    config_h_append(BRLCAD "#define HAVE_BASENAME 1\n")
+    brlcad_deferred_define("HAVE_BASENAME 1")
   endif(HAVE_BASENAME)
 endfunction(BRLCAD_CHECK_BASENAME var)
 
@@ -411,7 +411,7 @@ return 0;
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_DIRNAME)
   if(HAVE_DIRNAME)
-    config_h_append(BRLCAD "#define HAVE_DIRNAME 1\n")
+    brlcad_deferred_define("HAVE_DIRNAME 1")
   endif(HAVE_DIRNAME)
 endfunction(BRLCAD_CHECK_DIRNAME var)
 
@@ -449,7 +449,7 @@ int main(void) {
     cmake_pop_check_state()
   endif(NOT DEFINED WORKING_SYS_WAIT)
   if(WORKING_SYS_WAIT)
-    config_h_append(BRLCAD "#define HAVE_SYS_WAIT_H 1\n")
+    brlcad_deferred_define("HAVE_SYS_WAIT_H 1")
   endif(WORKING_SYS_WAIT)
 endfunction(BRLCAD_HEADER_SYS_WAIT)
 
@@ -617,7 +617,7 @@ int main(int ac, char *av[])
   endif(NOT DEFINED HAVE_PERCENT_Z)
 
   if(HAVE_PERCENT_Z)
-    config_h_append(BRLCAD "#define HAVE_PERCENT_Z 1\n")
+    brlcad_deferred_define("HAVE_PERCENT_Z 1")
   endif(HAVE_PERCENT_Z)
 endfunction(BRLCAD_CHECK_PERCENT_Z)
 
@@ -654,7 +654,7 @@ int main(int ac, char *av[])
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_STATIC_ARRAYS)
   if(HAVE_STATIC_ARRAYS)
-    config_h_append(BRLCAD "#define HAVE_STATIC_ARRAYS 1\n")
+    brlcad_deferred_define("HAVE_STATIC_ARRAYS 1")
   endif(HAVE_STATIC_ARRAYS)
 endfunction(BRLCAD_CHECK_STATIC_ARRAYS)
 
