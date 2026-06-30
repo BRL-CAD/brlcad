@@ -122,6 +122,234 @@ if("${C_STANDARD_FLAGS}" STREQUAL "")
   message(FATAL_ERROR "C_STANDARD_FLAGS is not set - should at least be defining the C standard")
 endif("${C_STANDARD_FLAGS}" STREQUAL "")
 
+set(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES ON CACHE BOOL "Batch compatible configure probes into parallel mini-project builds")
+mark_as_advanced(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+
+###
+# Register a compile/link probe into a named batch.  The source file must be
+# written to ${CMAKE_BINARY_DIR}/CMakeTmp/<BATCH>_sources/<VAR>.c before the
+# batch is executed.
+###
+macro(_brlcad_register_probe)
+  cmake_parse_arguments(_BRP "" "BATCH;VAR" "LIBS" ${ARGN})
+
+  get_property(_brp_list GLOBAL PROPERTY "BRLCAD_PROBE_BATCH_${_BRP_BATCH}")
+  list(FIND _brp_list "${_BRP_VAR}" _brp_idx)
+  if(_brp_idx EQUAL -1)
+    list(APPEND _brp_list "${_BRP_VAR}")
+    set_property(GLOBAL PROPERTY "BRLCAD_PROBE_BATCH_${_BRP_BATCH}" "${_brp_list}")
+    if(_BRP_LIBS)
+      set_property(GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_LIBS" "${_BRP_LIBS}")
+    endif()
+  endif()
+
+  unset(_brp_list)
+  unset(_brp_idx)
+  unset(_BRP_BATCH)
+  unset(_BRP_VAR)
+  unset(_BRP_LIBS)
+endmacro()
+
+###
+# Execute all probes registered in a named batch as one generated C project,
+# building its targets in parallel.  Successful probes are cached as "1";
+# failed probes are cached as "".
+###
+function(_brlcad_run_probe_batch BATCH_NAME)
+  if(NOT BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+    return()
+  endif()
+
+  cmake_parse_arguments(_BRPB "" "C_FLAGS" "" ${ARGN})
+
+  get_property(_batch_vars GLOBAL PROPERTY "BRLCAD_PROBE_BATCH_${BATCH_NAME}")
+  if(NOT _batch_vars)
+    return()
+  endif()
+
+  set(_pending_vars)
+  foreach(_var IN LISTS _batch_vars)
+    if(NOT DEFINED ${_var})
+      list(APPEND _pending_vars "${_var}")
+    endif()
+  endforeach()
+
+  set(_cfg_result 1)
+  set(_build_dir "${CMAKE_BINARY_DIR}/CMakeTmp/${BATCH_NAME}_build")
+
+  if(_pending_vars)
+    set(_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/${BATCH_NAME}_sources")
+    file(MAKE_DIRECTORY "${_src_dir}")
+
+    set(_cml "${_src_dir}/CMakeLists.txt")
+    file(WRITE "${_cml}"
+      "cmake_minimum_required(VERSION 3.22)\n"
+      "project(BRLCAD${BATCH_NAME}Batch C)\n"
+      "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY \"\${CMAKE_BINARY_DIR}\")\n"
+      "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG \"\${CMAKE_BINARY_DIR}\")\n"
+      "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE \"\${CMAKE_BINARY_DIR}\")\n"
+    )
+    foreach(_var IN LISTS _pending_vars)
+      file(APPEND "${_cml}" "add_executable(${_var} \"${_src_dir}/${_var}.c\")\n")
+      get_property(_libs GLOBAL PROPERTY "BRLCAD_PROBE_${BATCH_NAME}_${_var}_LIBS")
+      if(_libs)
+        string(REPLACE ";" " " _libs_str "${_libs}")
+        file(APPEND "${_cml}" "target_link_libraries(${_var} PRIVATE ${_libs_str})\n")
+      endif()
+    endforeach()
+
+    set(_cfg_cmd
+      "${CMAKE_COMMAND}"
+      "-S" "${_src_dir}"
+      "-B" "${_build_dir}"
+      "-G" "${CMAKE_GENERATOR}"
+      "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
+    )
+    if(CMAKE_GENERATOR_PLATFORM)
+      list(APPEND _cfg_cmd "-A" "${CMAKE_GENERATOR_PLATFORM}")
+    endif()
+    if(CMAKE_GENERATOR_TOOLSET)
+      list(APPEND _cfg_cmd "-T" "${CMAKE_GENERATOR_TOOLSET}")
+    endif()
+    if(CMAKE_MAKE_PROGRAM)
+      list(APPEND _cfg_cmd "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}")
+    endif()
+    if(CMAKE_BUILD_TYPE)
+      list(APPEND _cfg_cmd "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+    endif()
+    if(_BRPB_C_FLAGS)
+      list(APPEND _cfg_cmd "-DCMAKE_C_FLAGS=${_BRPB_C_FLAGS}")
+    endif()
+
+    execute_process(
+      COMMAND ${_cfg_cmd}
+      RESULT_VARIABLE _cfg_result
+      OUTPUT_VARIABLE _cfg_out
+      ERROR_VARIABLE _cfg_err
+    )
+    file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH PROBE CONFIGURE LOG: ${BATCH_NAME} ===\n${_cfg_out}\n${_cfg_err}\n")
+
+    if(_cfg_result EQUAL 0)
+      cmake_host_system_information(RESULT _ncpus QUERY NUMBER_OF_PHYSICAL_CORES)
+      if(NOT _ncpus OR _ncpus LESS 1)
+        set(_ncpus 1)
+      endif()
+
+      if(CMAKE_GENERATOR MATCHES "Ninja")
+        set(_keepgoing "--" "-k" "0")
+      elseif(CMAKE_GENERATOR MATCHES "Makefiles")
+        set(_keepgoing "--" "-k")
+      elseif(CMAKE_GENERATOR MATCHES "Xcode")
+        set(_keepgoing "--" "-PBXBuildsContinueAfterErrors=YES")
+      else()
+        set(_keepgoing "")
+      endif()
+
+      set(_build_all "${CMAKE_COMMAND}" "--build" "${_build_dir}" "-j" "${_ncpus}" ${_keepgoing})
+      if(CMAKE_BUILD_TYPE AND NOT _keepgoing)
+        list(APPEND _build_all "--config" "${CMAKE_BUILD_TYPE}")
+      endif()
+      execute_process(
+        COMMAND ${_build_all}
+        RESULT_VARIABLE _ignored_result
+        OUTPUT_VARIABLE _build_out
+        ERROR_VARIABLE _build_err
+      )
+      file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH PROBE BUILD LOG: ${BATCH_NAME} ===\n${_build_out}\n${_build_err}\n")
+    endif()
+  endif()
+
+  foreach(_var IN LISTS _batch_vars)
+    if(NOT DEFINED ${_var})
+      message(CHECK_START "Performing Test ${_var}")
+      set(_success FALSE)
+      if(_cfg_result EQUAL 0)
+        if(EXISTS "${_build_dir}/${_var}" OR EXISTS "${_build_dir}/${_var}.exe")
+          set(_success TRUE)
+        endif()
+      endif()
+      if(_success)
+        set(${_var} 1 CACHE INTERNAL "Test ${_var}" FORCE)
+        message(CHECK_PASS "Success")
+      else()
+        set(${_var} "" CACHE INTERNAL "Test ${_var}" FORCE)
+        message(CHECK_FAIL "Failed")
+      endif()
+    endif()
+
+    if(${_var} AND CONFIG_H_FILE)
+      brlcad_deferred_define("${_var} 1")
+    endif()
+  endforeach()
+endfunction()
+
+macro(_brlcad_include_probe HEADER VAR)
+  if(NOT BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+    brlcad_include_file(${HEADER} ${VAR})
+  else()
+    set(_bip_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/INCLUDE_PROBE_sources")
+    file(MAKE_DIRECTORY "${_bip_src_dir}")
+    if(NOT DEFINED ${VAR})
+      file(WRITE "${_bip_src_dir}/${VAR}.c" "#include <${HEADER}>\nint main(void) { return 0; }\n")
+    endif()
+    _brlcad_register_probe(BATCH INCLUDE_PROBE VAR ${VAR})
+    unset(_bip_src_dir)
+  endif()
+endmacro()
+
+macro(_brlcad_func_probe)
+  cmake_parse_arguments(_BFP "" "FUNC;VAR" "LIBS" ${ARGN})
+
+  if(NOT BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+    if(_BFP_LIBS)
+      brlcad_function_exists(${_BFP_FUNC} REQUIRED_LIBS ${_BFP_LIBS})
+    else()
+      brlcad_function_exists(${_BFP_FUNC})
+    endif()
+  else()
+    set(_bfp_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/FUNC_EXISTS_sources")
+    file(MAKE_DIRECTORY "${_bfp_src_dir}")
+    if(NOT DEFINED ${_BFP_VAR})
+      file(WRITE "${_bfp_src_dir}/${_BFP_VAR}.c"
+        "#ifdef __cplusplus\nextern \"C\"\n#endif\nchar ${_BFP_FUNC}();\nint main(void) { return ${_BFP_FUNC}(); }\n"
+      )
+    endif()
+    if(_BFP_LIBS)
+      _brlcad_register_probe(BATCH FUNC_EXISTS VAR ${_BFP_VAR} LIBS ${_BFP_LIBS})
+    else()
+      _brlcad_register_probe(BATCH FUNC_EXISTS VAR ${_BFP_VAR})
+    endif()
+    unset(_bfp_src_dir)
+  endif()
+
+  unset(_BFP_FUNC)
+  unset(_BFP_VAR)
+  unset(_BFP_LIBS)
+endmacro()
+
+macro(_brlcad_struct_probe)
+  cmake_parse_arguments(_BSP "" "STRUCT;MEMBER;HEADER;VAR" "" ${ARGN})
+
+  if(NOT BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+    brlcad_struct_member("${_BSP_STRUCT}" ${_BSP_MEMBER} ${_BSP_HEADER} ${_BSP_VAR})
+  else()
+    set(_bsp_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/STRUCT_PROBE_sources")
+    file(MAKE_DIRECTORY "${_bsp_src_dir}")
+    if(NOT DEFINED HAVE_${_BSP_VAR})
+      file(WRITE "${_bsp_src_dir}/HAVE_${_BSP_VAR}.c"
+        "#include <${_BSP_HEADER}>\nint main(void) { ${_BSP_STRUCT} _s; (void)_s.${_BSP_MEMBER}; return 0; }\n"
+      )
+    endif()
+    _brlcad_register_probe(BATCH STRUCT_PROBE VAR HAVE_${_BSP_VAR})
+    unset(_bsp_src_dir)
+  endif()
+
+  unset(_BSP_STRUCT)
+  unset(_BSP_MEMBER)
+  unset(_BSP_HEADER)
+  unset(_BSP_VAR)
+endmacro()
+
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
 # HAVE_* define to config header, and HAVE_DECL_* and HAVE_WORKING_* if
