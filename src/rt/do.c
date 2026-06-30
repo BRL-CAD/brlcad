@@ -73,7 +73,7 @@ extern char *string_pix_end;	/* string spec of ending pixel */
 extern int finalframe;		/* frame to halt at */
 /***** end variables shared with rt.c *****/
 
-void def_tree(register struct rt_i *rtip);
+int def_tree(register struct rt_i *rtip, const char **first_obj);
 void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
@@ -151,12 +151,10 @@ old_way(FILE *fp)
     }
     bu_log("Interpreting command stream in old format\n");
 
-    /* Committing to old way - better have objv ready */
-    if (!objv) {
+    /* Committing to old way - better have trees ready */
+    if (!def_tree(APP.a_rt_i, NULL)) {
 	return -1;
     }
-
-    def_tree(APP.a_rt_i);	/* Load the default trees */
 
     curframe = 0;
     do {
@@ -305,8 +303,8 @@ int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct rt_i *rtip = APP.a_rt_i;
 
-    if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
-	def_tree(rtip);		/* Load the default trees */
+    if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion) && !def_tree(rtip, NULL)) {
+	return -1;
     }
 
     /* If no matrix or az/el specified yet, use params from cmd line */
@@ -460,8 +458,8 @@ int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 	60, 60, 60, 60, 60, 60, 60
     };
 
-    if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
-	def_tree(rtip);		/* Load the default trees */
+    if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion) && !def_tree(rtip, NULL)) {
+	return -1;
     }
     for (i = 0; i < (sizeof(a)/sizeof(a[0])); i++) {
 	do_ae((double)a[i], (double)e[i]);
@@ -599,22 +597,78 @@ int cm_opt(const int argc, const char **argv)
 }
 
 
+static int
+rtuif_tree_list(register struct rt_i *rtip, int *treec, const char ***treev, const char **first_obj)
+{
+    static const char *default_objv[2] = {NULL, NULL};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct directory *dp = RT_DIR_NULL;
+    int ret = 0;
+
+    if (treec)
+	*treec = 0;
+    if (treev)
+	*treev = NULL;
+    if (first_obj)
+	*first_obj = NULL;
+
+    if (objv && objc > 0) {
+	if (treec)
+	    *treec = objc;
+	if (treev)
+	    *treev = (const char **)objv;
+	if (first_obj)
+	    *first_obj = objv[0];
+	return 1;
+    }
+
+    if (!rtip)
+	return 0;
+
+    ret = db_default_object(rtip->rti_dbip, &dp, &msg);
+    if (ret == 1) {
+	default_objv[0] = dp->d_namep;
+	default_objv[1] = NULL;
+	if (treec)
+	    *treec = 1;
+	if (treev)
+	    *treev = default_objv;
+	if (first_obj)
+	    *first_obj = default_objv[0];
+    } else if (bu_vls_strlen(&msg)) {
+	bu_log("%s", bu_vls_cstr(&msg));
+    }
+
+    bu_vls_free(&msg);
+    return (ret == 1) ? 1 : 0;
+}
+
+
 /**
- * Load default tree list, from command line.
+ * Load the active tree list from explicit objects or an automatic default.
+ *
+ * Returns non-zero when one or more objects were available and tree loading
+ * was attempted.  Returns 0 when no explicit objects were provided and no
+ * deterministic default object could be resolved.
  */
-void
-def_tree(register struct rt_i *rtip)
+int
+def_tree(register struct rt_i *rtip, const char **first_obj)
 {
     struct bu_vls times = BU_VLS_INIT_ZERO;
+    const char **treev = NULL;
+    int treec = 0;
 
     RT_CK_RTI(rtip);
+
+    if (!rtuif_tree_list(rtip, &treec, &treev, first_obj))
+	return 0;
 
     /* propagate any app-level CLINE beam radius override to this rtip */
     rtip->rti_max_beam_radius = rt_app_cline_radius;
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, objc, (const char **)objv, (size_t)npsw) < 0) {
-	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
+    if (rt_gettrees(rtip, treec, treev, (size_t)npsw) < 0) {
+	bu_log("rt_gettrees(%s) FAILED\n", (treev && treev[0]) ? treev[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);
 
@@ -622,6 +676,8 @@ def_tree(register struct rt_i *rtip)
 	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
     memory_summary();
+
+    return 1;
 }
 
 
@@ -1217,7 +1273,7 @@ do_frame(int framenumber)
 	    if (rtip->rti_dbip && rtip->rti_dbip->dbi_filename)
 		ri->db_filename = bu_strdup(rtip->rti_dbip->dbi_filename);
 
-	    /* Object list: prefer cmd_objs (dynamic draw list), fall back to objv */
+	    /* Object list: prefer cmd_objs (dynamic draw list), fall back to the active tree list */
 	    {
 		struct bu_vls objs_str = BU_VLS_INIT_ZERO;
 		if (cmd_objs && BU_PTBL_LEN(cmd_objs) > 0) {
@@ -1227,11 +1283,17 @@ do_frame(int framenumber)
 			if (j) bu_vls_putc(&objs_str, ' ');
 			bu_vls_strcat(&objs_str, o);
 		    }
-		} else if (objv && objc > 0) {
+		} else {
+		    const char **treev = NULL;
+		    int treec = 0;
 		    int j;
-		    for (j = 0; j < objc; j++) {
+
+		    if (!rtuif_tree_list(rtip, &treec, &treev, NULL))
+			treec = 0;
+
+		    for (j = 0; j < treec; j++) {
 			if (j) bu_vls_putc(&objs_str, ' ');
-			bu_vls_strcat(&objs_str, objv[j]);
+			bu_vls_strcat(&objs_str, treev[j]);
 		    }
 		}
 		if (bu_vls_strlen(&objs_str))
