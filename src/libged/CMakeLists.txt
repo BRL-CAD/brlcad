@@ -21,16 +21,22 @@ set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ge
 
 # Utility program for finding and setting up GED commands
 set(GED_CMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/ged_cmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
-file(REMOVE "${GED_CMD_SCANNER}")
-try_compile(
-  ged_cmd_scanner
-  "${CMAKE_BINARY_DIR}/CMakeTmp"
-  SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/ged_cmd_scanner.cpp"
-  OUTPUT_VARIABLE GED_SCANNER_BLD_OUT
-  COPY_FILE "${GED_CMD_SCANNER}"
-  )
-if (NOT EXISTS ${GED_CMD_SCANNER})
-  message(FATAL_ERROR "Unable to build ged command scanner: ${GED_SCANNER_BLD_OUT}")
+set(GED_CMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/ged_cmd_scanner.cpp")
+file(SHA256 "${GED_CMD_SCANNER_SRC}" GED_CMD_SCANNER_SRC_HASH)
+set(GED_CMD_SCANNER_SIGNATURE "${GED_CMD_SCANNER_SRC_HASH};${CMAKE_CXX_COMPILER};${CMAKE_CXX_COMPILER_VERSION};${CMAKE_GENERATOR}")
+if(NOT EXISTS "${GED_CMD_SCANNER}" OR NOT DEFINED GED_CMD_SCANNER_BUILD_SIGNATURE OR NOT "${GED_CMD_SCANNER_BUILD_SIGNATURE}" STREQUAL "${GED_CMD_SCANNER_SIGNATURE}")
+  file(REMOVE "${GED_CMD_SCANNER}")
+  try_compile(
+    ged_cmd_scanner
+    "${CMAKE_BINARY_DIR}/CMakeTmp"
+    SOURCES "${GED_CMD_SCANNER_SRC}"
+    OUTPUT_VARIABLE GED_SCANNER_BLD_OUT
+    COPY_FILE "${GED_CMD_SCANNER}"
+    )
+  if(NOT EXISTS "${GED_CMD_SCANNER}")
+    message(FATAL_ERROR "Unable to build ged command scanner: ${GED_SCANNER_BLD_OUT}")
+  endif()
+  set(GED_CMD_SCANNER_BUILD_SIGNATURE "${GED_CMD_SCANNER_SIGNATURE}" CACHE INTERNAL "ged command scanner build signature")
 endif()
 set(GED_CMD_LIST ${CMAKE_CURRENT_BINARY_DIR}/../ged_cmds.txt)
 file(REMOVE ${GED_CMD_LIST})

@@ -160,35 +160,46 @@ if(NOT COMMAND check_source_dir_fullpath)
 endif(NOT COMMAND check_source_dir_fullpath)
 
 if(NOT COMMAND cmfile)
+  function(_cmakefiles_collect outvar)
+    set(_cmakefiles_items)
+    foreach(ITEM ${ARGN})
+      get_filename_component(ITEM_PATH "${ITEM}" PATH)
+      if(NOT "${ITEM_PATH}" STREQUAL "")
+        # The hard case - path specified, need some validation.
+        check_source_dir_fullpath("${ITEM_PATH}")
+
+        # Ignore files specified using full paths, since they
+        # should be generated files and are not part of the
+        # source code repository.
+        get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
+        if("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
+          continue()
+        endif("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
+      endif(NOT "${ITEM_PATH}" STREQUAL "")
+
+      # Handle fatal cases
+      if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+        message(FATAL_ERROR "Trying to ignore directory: ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+      endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+      if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+        message(
+          FATAL_ERROR
+          "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\""
+        )
+      endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+
+      # We're good - log it
+      get_filename_component(item_absolute "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" ABSOLUTE)
+      list(APPEND _cmakefiles_items "${item_absolute}")
+    endforeach(ITEM ${ARGN})
+    set(${outvar} "${_cmakefiles_items}" PARENT_SCOPE)
+  endfunction(_cmakefiles_collect outvar)
+
   function(cmfile ITEM)
-    get_filename_component(ITEM_PATH "${ITEM}" PATH)
-    if(NOT "${ITEM_PATH}" STREQUAL "")
-      # The hard case - path specified, need some validation.
-      check_source_dir_fullpath("${ITEM_PATH}")
-
-      # Ignore files specified using full paths, since they
-      # should be generated files and are not part of the
-      # source code repository.
-      get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
-      if("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
-        return()
-      endif("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
-    endif(NOT "${ITEM_PATH}" STREQUAL "")
-
-    # Handle fatal cases
-    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-      message(FATAL_ERROR "Trying to ignore directory: ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-    endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-      message(
-        FATAL_ERROR
-        "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\""
-      )
-    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-
-    # We're good - log it
-    get_filename_component(item_absolute "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" ABSOLUTE)
-    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
+    _cmakefiles_collect(_cmakefiles_items "${ITEM}")
+    if(_cmakefiles_items)
+      set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES ${_cmakefiles_items})
+    endif(_cmakefiles_items)
   endfunction(cmfile ITEM)
 endif(NOT COMMAND cmfile)
 
@@ -217,9 +228,10 @@ if(NOT COMMAND cmakefiles)
     )
     list(FILTER ITEMS EXCLUDE REGEX "TARGET_OBJECTS")
 
-    foreach(ITEM ${ITEMS})
-      cmfile("${ITEM}")
-    endforeach(ITEM ${ITEMS})
+    _cmakefiles_collect(_cmakefiles_items ${ITEMS})
+    if(_cmakefiles_items)
+      set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES ${_cmakefiles_items})
+    endif(_cmakefiles_items)
   endfunction(CMAKEFILES FILESLIST)
 endif(NOT COMMAND cmakefiles)
 
