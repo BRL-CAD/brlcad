@@ -1538,18 +1538,54 @@ function(_brlcad_ensure_soname lib_path)
   # Read the existing SONAME (empty output = no SONAME).
   execute_process(
     COMMAND "${_soname_tool}" --print-soname "${lib_path}"
+    RESULT_VARIABLE _soname_print_result
     OUTPUT_VARIABLE _existing_soname
-    ERROR_QUIET
+    ERROR_VARIABLE _soname_print_error
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
+  if(_soname_print_result)
+    string(STRIP "${_soname_print_error}" _soname_print_error)
+    message(WARNING "${_soname_tool} --print-soname failed for ${lib_path}: ${_soname_print_error}")
+    return()
+  endif()
   if(_existing_soname STREQUAL "")
     message(STATUS "Setting SONAME ${_soname} on ${lib_path}")
+    # Staged third party libraries may preserve read-only install
+    # permissions.  Make the build-tree copy writable before asking
+    # LIEF/patchelf to rewrite it.
+    file(
+      CHMOD "${lib_path}"
+      FILE_PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
+        WORLD_READ WORLD_EXECUTE
+    )
     execute_process(
       COMMAND "${_soname_tool}" --set-soname "${_soname}" "${lib_path}"
       RESULT_VARIABLE _soname_result
+      OUTPUT_VARIABLE _soname_output
+      ERROR_VARIABLE _soname_error
     )
     if(_soname_result)
-      message(WARNING "${_soname_tool} --set-soname failed for ${lib_path}")
+      string(STRIP "${_soname_output}" _soname_output)
+      string(STRIP "${_soname_error}" _soname_error)
+      message(WARNING "${_soname_tool} --set-soname failed for ${lib_path}: ${_soname_error}${_soname_output}")
+      return()
+    endif()
+    execute_process(
+      COMMAND "${_soname_tool}" --print-soname "${lib_path}"
+      RESULT_VARIABLE _soname_verify_result
+      OUTPUT_VARIABLE _updated_soname
+      ERROR_VARIABLE _soname_verify_error
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(_soname_verify_result)
+      string(STRIP "${_soname_verify_error}" _soname_verify_error)
+      message(WARNING "${_soname_tool} --print-soname verification failed for ${lib_path}: ${_soname_verify_error}")
+      return()
+    endif()
+    if(NOT "${_updated_soname}" STREQUAL "${_soname}")
+      message(WARNING "${_soname_tool} did not set SONAME on ${lib_path}: expected \"${_soname}\", got \"${_updated_soname}\"")
     endif()
   endif()
 endfunction()
