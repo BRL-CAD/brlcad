@@ -196,15 +196,10 @@ function(ged_plugin_library name)
 
     # Find package calls will need to be repeated at the parent scope,
     # so pass the info up
-    get_property(pkg_calls DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.." PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS)
-    if(NOT pkg_calls)
-      set(pkg_calls "")
-    endif()
     get_property(local_calls DIRECTORY PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS)
-    foreach(c ${local_calls})
-      list(APPEND pkg_calls "${c}")
-    endforeach()
-    set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.." PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS "${pkg_calls}")
+    if(local_calls)
+      set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.." APPEND PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS ${local_calls})
+    endif()
   else()
     add_library(${name} SHARED ${plugin_sources})
     target_compile_definitions(${name} PRIVATE GED_PLUGIN BRLCADBUILD HAVE_CONFIG_H)

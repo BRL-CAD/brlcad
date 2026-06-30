@@ -1339,24 +1339,23 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   if(NOT DEFINED HAVE_SYMLINK)
     message("--- Checking operating system support for file symlinking")
     file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "testing for symlink ability")
-    execute_process(
-      COMMAND
-      ${CMAKE_COMMAND} -E create_symlink "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src"
+    file(
+      CREATE_LINK "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src"
       "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest"
-      OUTPUT_QUIET # Errors are expected on some platforms (Windows) so
-      ERROR_QUIET # by default quiet the output to avoid confusion
+      RESULT _brlcad_symlink_test_result
+      SYMBOLIC
     )
-    if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
+    if("${_brlcad_symlink_test_result}" STREQUAL "0" AND EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
       message("--- Checking operating system support for file symlinking - Supported")
       set(HAVE_SYMLINK 1 CACHE BOOL "Platform supports creation of symlinks" FORCE)
       mark_as_advanced(HAVE_SYMLINK)
       file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
-    else(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
+    else("${_brlcad_symlink_test_result}" STREQUAL "0" AND EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
       message("--- Checking operating system support for file symlinking - Unsupported")
       set(HAVE_SYMLINK 0 CACHE BOOL "Platform does not support creation of symlinks" FORCE)
       mark_as_advanced(HAVE_SYMLINK)
       file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src")
-    endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
+    endif("${_brlcad_symlink_test_result}" STREQUAL "0" AND EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
   endif(NOT DEFINED HAVE_SYMLINK)
 
   # Now that the input data and target names are in order, define the
@@ -1366,7 +1365,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   if(HAVE_SYMLINK)
     # Make sure the target directory exists (symlinks need the target
     # directory already in place)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${targetdir}")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${targetdir}")
 
     # Using symlinks - in this case, the custom command doesn't
     # actually have to do the work every time the source file changes
@@ -1375,9 +1374,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     # the configure stage.
     foreach(filename ${fullpath_datalist})
       get_filename_component(ITEM_NAME ${filename} NAME)
-      execute_process(
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}"
-      )
+      file(CREATE_LINK "${filename}" "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}" SYMBOLIC)
     endforeach(filename ${fullpath_datalist})
 
     # check for and remove any dead symbolic links from a previous run
@@ -1385,7 +1382,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     foreach(filename ${listing})
       if(NOT EXISTS ${filename})
         message("Removing stale symbolic link ${filename}")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${filename})
+        file(REMOVE "${filename}")
       endif(NOT EXISTS ${filename})
     endforeach(filename ${listing})
 
@@ -1400,15 +1397,13 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     )
   else(HAVE_SYMLINK)
     # Write out script for copying from source dir to build dir
-    set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${fullpath_datalist}\")\n")
-    set(${targetname}_cmake_contents "${${targetname}_cmake_contents}foreach(filename \${FILES_TO_COPY})\n")
-    set(
-      ${targetname}_cmake_contents
-      "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${targetdir}\")\n"
+    set(BRLCAD_COPY_FILES "${fullpath_datalist}")
+    set(BRLCAD_COPY_DESTINATION "${CMAKE_BINARY_DIR}/${targetdir}")
+    configure_file(
+      "${BRLCAD_CMAKE_DIR}/BRLCAD_Copy_Files.cmake.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake"
+      @ONLY
     )
-    set(${targetname}_cmake_contents "${${targetname}_cmake_contents}endforeach(filename \${CURRENT_FILE_LIST})\n")
-    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake" "${${targetname}_cmake_contents}")
-    distclean("${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake")
 
     # Define custom command for copying from src to bin.
     add_custom_command(
