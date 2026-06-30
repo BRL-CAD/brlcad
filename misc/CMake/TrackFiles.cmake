@@ -77,29 +77,43 @@
 # in a regex string.
 if(NOT COMMAND is_subpath)
   function(is_subpath candidate_subpath full_path result_var)
-    # Just assume it isn't until we prove it is
-    set(${result_var} 0 PARENT_SCOPE)
+    string(SHA1 _subpath_cache_key "${candidate_subpath}|${full_path}")
+    get_property(_subpath_cache_set GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" SET)
+    if(_subpath_cache_set)
+      get_property(_subpath_cache_result GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}")
+      set(${result_var} ${_subpath_cache_result} PARENT_SCOPE)
+      return()
+    endif()
 
     # get the CMake form of the path so we have something consistent to work on
     file(TO_CMAKE_PATH "${full_path}" c_full_path)
     file(TO_CMAKE_PATH "${candidate_subpath}" c_candidate_subpath)
+
+    # Just assume it isn't until we prove it is
+    set(_subpath_result 0)
 
     # check the string lengths - if the "subpath" is longer than the full path,
     # there's not point in going further
     string(LENGTH "${c_full_path}" FULL_LENGTH)
     string(LENGTH "${c_candidate_subpath}" SUB_LENGTH)
     if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+      set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+      set(${result_var} ${_subpath_result} PARENT_SCOPE)
       return()
     endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
 
     # OK, maybe it's a subpath - time to actually check
     string(SUBSTRING "${c_full_path}" 0 ${SUB_LENGTH} c_full_subpath)
     if(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+      set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+      set(${result_var} ${_subpath_result} PARENT_SCOPE)
       return()
     endif(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
 
     # If we get here, it's a subpath
-    set(${result_var} 1 PARENT_SCOPE)
+    set(_subpath_result 1)
+    set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+    set(${result_var} ${_subpath_result} PARENT_SCOPE)
   endfunction(is_subpath)
 endif(NOT COMMAND is_subpath)
 
