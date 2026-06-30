@@ -23,25 +23,52 @@ function(check_libfuzzer_flags out_supported out_no_link_flag out_full_flag)
 
   set(_fuzzer_flag_prefixes "-fsanitize" "/fsanitize")
 
+  # Some compilers (notably MSVC's cl.exe and link.exe) only *warn* about an
+  # unrecognized flag and still exit successfully, so a plain exit-code check
+  # would report a false positive and then leak the unusable flag onto the real
+  # targets.  Treat any "flag not understood" diagnostic as a failure so the
+  # probe reflects genuine support on every toolchain.  This mirrors the
+  # patterns CMake's own CheckCXXCompilerFlag module uses internally.
+  set(_fuzzer_fail_regex
+    "[Uu]nknown argument"               # clang
+    "[Uu]nrecogni[sz]ed .*option"       # gcc / binutils ld
+    "ignoring unknown option"           # MSVC cl D9002
+    "command line warning D9002"        # MSVC cl (explicit)
+    "LNK4044"                           # MSVC link (unrecognized option)
+  )
+
   foreach(_prefix IN LISTS _fuzzer_flag_prefixes)
     set(_no_link_flag "${_prefix}=fuzzer-no-link")
     set(_full_flag "${_prefix}=fuzzer")
 
-    string(MAKE_C_IDENTIFIER "HAVE_CXX_${_no_link_flag}" _have_no_link_var)
-    string(MAKE_C_IDENTIFIER "HAVE_CXX_${_full_flag}" _have_full_var)
+    # MAKE_C_IDENTIFIER maps both leading '-' and '/' to '_', so the two flag
+    # spellings would otherwise collide on a single cache entry and the second
+    # prefix would silently reuse the first's result.  Tag the variable name
+    # with the prefix style to keep the probes independent.
+    string(SUBSTRING "${_prefix}" 0 1 _prefix_char)
+    if(_prefix_char STREQUAL "/")
+      set(_prefix_tag "slash")
+    else()
+      set(_prefix_tag "dash")
+    endif()
+
+    string(MAKE_C_IDENTIFIER "HAVE_CXX_${_prefix_tag}_${_no_link_flag}" _have_no_link_var)
+    string(MAKE_C_IDENTIFIER "HAVE_CXX_${_prefix_tag}_${_full_flag}" _have_full_var)
 
     cmake_push_check_state(RESET)
       set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
       set(CMAKE_REQUIRED_FLAGS "${_no_link_flag}")
-      check_cxx_source_compiles("int fuzzer_flag_probe(void) { return 0; }" ${_have_no_link_var})
+      check_cxx_source_compiles("int fuzzer_flag_probe(void) { return 0; }" ${_have_no_link_var}
+	FAIL_REGEX ${_fuzzer_fail_regex})
     cmake_pop_check_state()
 
     cmake_push_check_state(RESET)
       set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)
       set(CMAKE_REQUIRED_FLAGS "${_no_link_flag}")
       set(CMAKE_REQUIRED_LINK_OPTIONS "${_full_flag}")
-      check_cxx_source_compiles("${CHECK_FUZZER_CODE}" ${_have_full_var})
-    cmake_pop_check_state()
+      check_cxx_source_compiles("${CHECK_FUZZER_CODE}" ${_have_full_var}
+	FAIL_REGEX ${_fuzzer_fail_regex})
+      cmake_pop_check_state()
 
     if(${_have_no_link_var} AND ${_have_full_var})
       set(${out_supported} ON PARENT_SCOPE)
