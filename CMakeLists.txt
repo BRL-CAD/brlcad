@@ -607,6 +607,40 @@ clear_build_flags()
 set(CMAKE_C_FLAGS "${C_STANDARD_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CXX_STANDARD_FLAGS}")
 
+if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES AND NOT MSVC)
+  foreach(_brlcad_early_flag IN ITEMS
+      pipe
+      fvisibility=hidden
+      fno-strict-aliasing
+      fno-common
+      fexceptions
+    )
+    _brlcad_register_flag_probe(C "${_brlcad_early_flag}")
+    _brlcad_register_flag_probe(CXX "${_brlcad_early_flag}")
+  endforeach()
+  _brlcad_register_flag_probe(CXX ftemplate-depth-128)
+
+  if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64)
+    foreach(_brlcad_word_flag IN ITEMS m64 "arch x86_64" 64 "mabi=64" q64)
+      _brlcad_register_flag_probe(C "${_brlcad_word_flag}")
+    endforeach()
+  endif()
+  if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO")
+    foreach(_brlcad_word_flag IN ITEMS m32 "arch i686" 32 "mabi=32" q32)
+      _brlcad_register_flag_probe(C "${_brlcad_word_flag}")
+    endforeach()
+  endif()
+  if(BRLCAD_DEBUGGING)
+    foreach(_brlcad_debug_flag IN ITEMS g ggdb3)
+      _brlcad_register_flag_probe(C "${_brlcad_debug_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_debug_flag}")
+    endforeach()
+  endif()
+
+  _brlcad_run_flag_batch(C)
+  _brlcad_run_flag_batch(CXX)
+endif()
+
 # try to use -pipe to speed up the compiles
 check_c_flag(pipe)
 check_cxx_flag(pipe)
@@ -944,6 +978,110 @@ check_c_source_compiles(
 if(HAVE_FLATTEN_ATTRIBUTE)
   brlcad_deferred_define("HAVE_FLATTEN_ATTRIBUTE 1")
 endif(HAVE_FLATTEN_ATTRIBUTE)
+
+if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES AND NOT MSVC)
+  _brlcad_register_flag_probe(C Qunused-arguments)
+  _brlcad_register_flag_probe(CXX Qunused-arguments)
+
+  if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+    foreach(_brlcad_opt_flag IN ITEMS
+        O3
+        fipa-pta
+        fstrength-reduce
+        fexpensive-optimizations
+        finline-functions
+      )
+      _brlcad_register_flag_probe(C "${_brlcad_opt_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_opt_flag}")
+    endforeach()
+
+    if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
+      # GCC versions before 4.9 have known LTO problems in this build.
+    else()
+      foreach(_brlcad_lto_flag IN ITEMS "flto=auto" flto)
+        _brlcad_register_flag_probe(C "${_brlcad_lto_flag}")
+        _brlcad_register_flag_probe(CXX "${_brlcad_lto_flag}")
+      endforeach()
+    endif()
+
+    if(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
+      _brlcad_register_flag_probe(C fomit-frame-pointer)
+      _brlcad_register_flag_probe(CXX fomit-frame-pointer)
+    else()
+      _brlcad_register_flag_probe(C fno-omit-frame-pointer)
+      _brlcad_register_flag_probe(CXX fno-omit-frame-pointer)
+    endif()
+  endif()
+
+  if(${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
+    foreach(_brlcad_stack_flag IN ITEMS fstack-protector-all qstackprotect)
+      _brlcad_register_flag_probe(C "${_brlcad_stack_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_stack_flag}")
+    endforeach()
+  endif()
+
+  if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
+    foreach(_brlcad_asan_flag IN ITEMS
+        "fsanitize=address"
+        "fsanitize-address-use-after-return=always"
+        fsanitize-address-use-after-scope
+        fno-omit-frame-pointer
+      )
+      _brlcad_register_flag_probe(C "${_brlcad_asan_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_asan_flag}")
+    endforeach()
+  endif()
+
+  if(BRLCAD_SANITIZE_THREAD)
+    _brlcad_register_flag_probe(C "fsanitize=thread")
+    _brlcad_register_flag_probe(CXX "fsanitize=thread")
+  endif()
+
+  if(BRLCAD_WARNINGS OR BRLCAD_ENABLE_STRICT)
+    foreach(_brlcad_warning_flag IN ITEMS
+        pedantic
+        Wall
+        Wextra
+        Wundef
+        Wfloat-equal
+        Wshadow
+        Wbad-function-cast
+        Wdocumentation
+      )
+      _brlcad_register_flag_probe(C "${_brlcad_warning_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_warning_flag}")
+    endforeach()
+    _brlcad_register_flag_probe(C "Wc++-compat")
+    _brlcad_register_flag_probe(C Winline)
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+      _brlcad_register_flag_probe(CXX Wno-inline)
+    else()
+      _brlcad_register_flag_probe(CXX Winline)
+    endif()
+    foreach(_brlcad_wno_flag IN ITEMS
+        Wno-error=long-long
+        Wno-long-long
+        Wno-error=variadic-macros
+        Wno-variadic-macros
+      )
+      _brlcad_register_flag_probe(C "${_brlcad_wno_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_wno_flag}")
+    endforeach()
+  endif()
+
+  if(BRLCAD_ENABLE_COVERAGE)
+    _brlcad_register_flag_probe(C ftest-coverage)
+    _brlcad_register_flag_probe(CXX ftest-coverage)
+  endif()
+
+  if(BRLCAD_ENABLE_STRICT)
+    _brlcad_register_flag_probe(C Werror)
+    _brlcad_register_flag_probe(CXX Werror)
+  endif()
+
+  _brlcad_run_flag_batch(C WERROR "${ERROR_FLAG}")
+  _brlcad_run_flag_batch(CXX WERROR "${ERROR_FLAG}")
+endif()
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
