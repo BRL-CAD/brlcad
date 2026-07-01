@@ -5,70 +5,93 @@
 
 == NAME
 
-gif-fb - display GIF file on frame buffer
+gif-fb - display a GIF image on a frame buffer
 
 == SYNOPSIS
 
-*gif-fb* [-c] [-o] [-v] [-z] [-F _frame_buffer_name_] [-i _image_number_] [_GIF_file_name_]
+[source]
+----
+gif-fb [-c] [-o] [-v] [-z] [-F _frame_buffer_] [-i _image#_] [_gif_file_]
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*gif-fb* displays CompuServe GIF (Graphics Interchange Format) images on a frame buffer. If no _GIF_file_name_ is specified, the input is read from standard input.
+*gif-fb* decodes a CompuServe GIF (Graphics Interchange Format) image and
+writes it to a frame buffer.  If no _gif_file_ is given, the GIF data is read
+from standard input.  Multi-image GIF files are displayed sequentially unless a
+single image is selected with *-i*.  The requested frame buffer is sized to the
+GIF screen dimensions, and the image is written right-side-up at the bottom of
+the available frame buffer.
 
+[[options]]
 == OPTIONS
 
-*-F* _frame_buffer_name_::
-	Output to the specified frame buffer. If not specified, the frame buffer specified by the *FB_FILE* environment variable (or the default system frame buffer) is used. The frame buffer size requested will match the screen size specified in the GIF file.
-
 *-c*::
-	Use 8 bits per channel for color maps in the GIF file, overriding the color resolution specified in the file. (Some non-standard GIF implementations require this flag).
-
-*-i* _image_number_::
-	Display only the specified image (1-indexed), rather than displaying all images sequentially as standard multi-image GIF animation would do.
+  Force 8 bits of color resolution per R, G, and B channel, overriding the
+  color resolution declared in the GIF file.  Some non-standard GIF writers
+  require this.
 
 *-o*::
-	Overlay mode. Skip the initial clearing of the frame buffer to the background color specified in the GIF file.
+  Overlay mode.  Skip the initial clearing of the frame buffer to the GIF
+  background color, leaving existing frame buffer contents in place.
 
 *-v*::
-	Verbose mode. Print information about the GIF images on the standard error output.
+  Verbose mode.  Print information about the GIF screen, color maps, and each
+  image to standard error.
 
 *-z*::
-	Zoom mode. Use the zoom capability of the frame buffer to enlarge the image as much as possible while maintaining a square pixel aspect ratio.
+  Zoom the frame buffer to enlarge the image as much as possible while keeping
+  a square pixel aspect ratio.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-F* _frame_buffer_::
+  Write to the named frame buffer instead of the one given by the *FB_FILE*
+  environment variable (or the default frame buffer if *FB_FILE* is unset).
 
+*-i* _image#_::
+  Display only the given image (1-indexed) from a multi-image GIF, rather than
+  all images.
+
+[[examples]]
 == EXAMPLES
 
-.Display a GIF file on the default frame buffer
+.Convert a GIF to a BRL-CAD pix file
+====
 [source,bash]
 ----
-gif-fb image.gif
+gif-fb -F /dev/mem image.gif && fb-pix -F /dev/mem image.pix
 ----
+Decode a GIF into an in-memory frame buffer and capture it with *fb-pix*(1),
+producing a *pix*(5) file for use with the rest of the BRL-CAD image tools.
+====
 
-.Display the second image of a multi-image GIF file in overlay mode
+.View a single frame of an animated GIF, zoomed
+====
 [source,bash]
 ----
-gif-fb -i 2 -o image.gif
+gif-fb -z -i 3 animation.gif
 ----
+Display only the third image of a multi-image GIF on the default frame buffer,
+zoomed to fill the display while preserving square pixels.
+====
 
+[[see_also]]
 == SEE ALSO
 
-*libfb*(3)
+*brlcad*(1), *gif2fb*(1), *fb-pix*(1), *fb-png*(1), *pix-fb*(1), *fbclear*(1), *pix*(5)
 
-== DIAGNOSTICS
-
-Error messages are intended to be self-explanatory.
-
+[[author]]
 == AUTHOR
 
-Douglas A. Gwyn
+BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

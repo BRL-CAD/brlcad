@@ -5,61 +5,96 @@
 
 == NAME
 
-gif2fb - display GIF file on frame buffer
+gif2fb - display a GIF image on a frame buffer
 
 == SYNOPSIS
 
-*gif2fb* [-H] [-v] [-F _frame_buffer_name_] [_GIF_file_name_]
+[source]
+----
+gif2fb [-H] [-v] [-F _frame_buffer_] [_gif_file_]
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*gif2fb* displays CompuServe GIF (Graphics Interchange Format) images on a frame buffer. If no _GIF_file_name_ is specified, it reads from standard input.
+*gif2fb* reads a CompuServe GIF (Graphics Interchange Format) image and
+displays its first picture on a frame buffer.  The GIF data may contain
+1, 2, 4, or 8 bit deep pictures with one or more color maps; *gif2fb*
+selects the appropriate color map and decodes the LZW-compressed image,
+honoring GIF interlacing.  The frame buffer is opened at the size of the
+embedded image.
 
+If no _gif_file_ is given, the image is read from standard input (use the
+shell '<' redirection construct).
+
+[[options]]
 == OPTIONS
 
-*-F* _frame_buffer_name_::
-	Outputs to the specified frame buffer instead of the one specified by the *FB_FILE* environment variable (or the default system frame buffer). The requested frame buffer size will match the GIF image size.
+*-F* _frame_buffer_::
+  Display on the specified frame buffer rather than the one named by the
+  *FB_FILE* environment variable (or the default system frame buffer).
 
 *-H*::
-	Print the GIF screen dimensions (width and height) to standard error and exit.
+  Print the GIF screen dimensions to standard error in the form
+  "-w_width_ -n_height_" and exit without displaying the image.  The
+  output is suitable for passing as arguments to other BRL-CAD frame
+  buffer tools.
 
 *-v*::
-	Verbose mode. Print additional information about the GIF file structure on standard error.
+  Verbose.  Print details of the GIF header, image header, and code
+  sizes to standard error.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-h* | *-?*::
+  Print a usage message and exit.
 
+[[examples]]
 == EXAMPLES
 
-.Display a GIF image on the default frame buffer
-[source,bash]
-----
-gif2fb image.gif
-----
-
-.Print dimensions of a GIF file
+.Report the dimensions of a GIF image
+====
 [source,bash]
 ----
 gif2fb -H image.gif
 ----
+With *-H*, *gif2fb* prints the image dimensions to standard error as
+"-w_width_ -n_height_" and exits without displaying the image.  The
+reported dimensions can be used to size a matching frame buffer with
+tools such as *fbserv*(1) or *pixautosize*(1).
+====
 
+.Decode a GIF piped from standard input
+====
+[source,bash]
+----
+gif2fb -v -F /dev/X < image.gif
+----
+Reads the GIF from standard input and displays it on frame buffer
+/dev/X while printing header diagnostics, useful for inspecting an
+image produced earlier in a pipeline.
+====
+
+[[see_also]]
 == SEE ALSO
 
-*gif-fb*(1), *libfb*(3)
+*brlcad*(1), *gif-fb*(1), *pix-fb*(1), *png-fb*(1)
 
+[[diagnostics]]
 == DIAGNOSTICS
 
 Error messages are intended to be self-explanatory.
 
+[[author]]
 == AUTHOR
 
-Christopher T. Johnson
+BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1994-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
