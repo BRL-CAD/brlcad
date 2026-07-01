@@ -328,6 +328,7 @@ function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
   set(_brfb_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/CFLAG_${FLAG_LANG}_sources")
   set(_brfb_build_dir "${CMAKE_BINARY_DIR}/CMakeTmp/CFLAG_${FLAG_LANG}_build")
   file(MAKE_DIRECTORY "${_brfb_src_dir}")
+  file(REMOVE_RECURSE "${_brfb_build_dir}")
   file(WRITE "${_brfb_src_dir}/${_brfb_src_file}" "${_brfb_src_text}")
 
   set(_brfb_cml "${_brfb_src_dir}/CMakeLists.txt")
