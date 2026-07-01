@@ -2109,13 +2109,35 @@ if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
         string(REGEX REPLACE "^HAVE_" "" _func_uc "${_fvar}")
         string(TOLOWER "${_func_uc}" _func_lc)
         get_property(_func_libs GLOBAL PROPERTY "BRLCAD_PROBE_FUNC_EXISTS_${_fvar}_LIBS")
+        get_property(_func_includes GLOBAL PROPERTY "BRLCAD_PROBE_FUNC_EXISTS_${_fvar}_INCLUDES")
+        get_property(_func_defs GLOBAL PROPERTY "BRLCAD_PROBE_FUNC_EXISTS_${_fvar}_DEFINITIONS")
+        get_property(_func_flags GLOBAL PROPERTY "BRLCAD_PROBE_FUNC_EXISTS_${_fvar}_FLAGS")
+        set(_decl_defs ${_func_defs})
+        if(_decl_hdr_flags)
+          separate_arguments(_decl_hdr_def_list NATIVE_COMMAND "${_decl_hdr_flags}")
+          list(APPEND _decl_defs ${_decl_hdr_def_list})
+        endif()
+        list(REMOVE_DUPLICATES _decl_defs)
         file(WRITE "${_decl_src_dir}/HAVE_DECL_${_func_uc}.c"
           "${standard_header_template}\nint main(void) { (void)${_func_lc}; return 0; }\n"
         )
         if(_func_libs)
-          _brlcad_register_probe(BATCH FUNC_DECL VAR "HAVE_DECL_${_func_uc}" LIBS ${_func_libs})
+          _brlcad_register_probe(
+            BATCH FUNC_DECL
+            VAR "HAVE_DECL_${_func_uc}"
+            LIBS ${_func_libs}
+            INCLUDES ${_func_includes}
+            DEFINITIONS ${_decl_defs}
+            FLAGS ${_func_flags}
+          )
         else()
-          _brlcad_register_probe(BATCH FUNC_DECL VAR "HAVE_DECL_${_func_uc}")
+          _brlcad_register_probe(
+            BATCH FUNC_DECL
+            VAR "HAVE_DECL_${_func_uc}"
+            INCLUDES ${_func_includes}
+            DEFINITIONS ${_decl_defs}
+            FLAGS ${_func_flags}
+          )
         endif()
       endif()
     endforeach()
@@ -2123,8 +2145,13 @@ if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
     unset(_func_uc)
     unset(_func_lc)
     unset(_func_libs)
+    unset(_func_includes)
+    unset(_func_defs)
+    unset(_func_flags)
+    unset(_decl_defs)
+    unset(_decl_hdr_def_list)
     unset(_decl_src_dir)
-    _brlcad_run_probe_batch(FUNC_DECL C_FLAGS "${C_STANDARD_FLAGS} ${_decl_hdr_flags}")
+    _brlcad_run_probe_batch(FUNC_DECL C_FLAGS "${C_STANDARD_FLAGS}")
     get_property(_decl_batch_vars GLOBAL PROPERTY "BRLCAD_PROBE_BATCH_FUNC_DECL")
     foreach(_dvar IN LISTS _decl_batch_vars)
       set(${_dvar} "${${_dvar}}" CACHE BOOL "Cache decl test result" FORCE)
