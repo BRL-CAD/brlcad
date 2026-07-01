@@ -4,111 +4,118 @@
 :manmanual: BRL-CAD
 
 == NAME
-vdeck - generate COM-GEOM decks from a GED file
+vdeck - generate COMGEOM card decks from a BRL-CAD geometry database
 
 == SYNOPSIS
 
 [source]
 ----
-vdeck file.vg \
-    
+vdeck [-d] file.g [object ...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *vdeck* tool converts a model into an ASCII text representation separating regions (combinations with the region flag set) and primitives (also known as solids) into separate files. A list of objects to be converted are selected interactively from the table of contents. String matching operators (wild cards) like those used to specify file or directory names in *sh*(1) are provided for this purpose, as well as to search for names in the table of contents.
+The *vdeck* tool reads a BRL-CAD geometry database (*.g*) and produces a
+COMGEOM card deck, the strictly column-oriented ASCII representation
+historically used as input to GIFT5 (also *gift*(1V)).  A deck is made of
+three tables: a Solid table, a Region table, and a region Ident table.
+When concatenated in that order with *cat*(1) they form a complete COMGEOM
+deck.
 
-One or more COM-GEOM decks can be output. Each deck consists of three files: the solid, region, and region-id tables. These can be combined with *cat*(1).
+*vdeck* runs an interactive command interpreter.  Objects are selected from
+the database table of contents into a working list, and a deck is then
+written for that list.  Object names may be given with the shell-style
+string-matching operators *, ?, [], - and \\ (see *sh*(1)).  Any object
+names supplied on the command line after _file.g_ are inserted into the
+working list before the interpreter starts.
 
-A menu of the commands and their usage is available by typing *?* to the program.
+The interactive commands (the first letter is sufficient, and all
+arguments are optional) are:
+
+*deck* [_prefix_]::
+  Produce a COMGEOM card deck for the current list.
+*erase*::
+  Erase the current list of objects.
+*insert* [_object ..._]::
+  Add matching objects to the current list.
+*list* [_object ..._]::
+  Display the current list of selected objects.
+*number* [_solid_] [_region_]::
+  Set the starting numbers for solids and regions.
+*quit*::
+  Terminate the run.
+*remove* [_object ..._]::
+  Remove matching objects from the current list.
+*sort*::
+  Sort the table of contents alphabetically.
+*toc* [_object ..._]::
+  Show the database table of contents.
+
+Typing *?* at the prompt prints a menu of these commands.
+
+Only primitives with a COMGEOM equivalent are converted: *tor*, *arb8*
+(and its degenerate arb forms), *ell*, *tgc* (and its rcc/trc/tec/rec
+forms), *ars*, *half*, and *arbn*.  Primitives without a COMGEOM
+equivalent are written as a placeholder record and skipped with a warning.
 
 
-[[warning]]
-== WARNING
+[[options]]
+== OPTIONS
 
-The *vdeck* tool is intended for v5 BRL-CAD geometry databases only. Files produced by older (v4 and earlier) versions of BRL-CAD may be incompatible with *vdeck* .
-
-
-[[example]]
-== EXAMPLE
-
-In the following example, _<model>_ is the name of the BRL-CAD model and _<groupname>_ is a group or region. _Vdeck_ converts all of the primitives and regions within the specified group into text and writes them out to files:
+*-d*::
+  Enable debug output.  Region and solid processing is reported on
+  standard output as the deck is built.
 
 
-....
+[[examples]]
+== EXAMPLES
 
-> vdeck <model>.g
-command ( ? for menu ) >> i <groupname>
-command ( ? for menu ) >> d
-===================================================
-O U T P U T F I L E S
-solid table = "solids"
-region table = "regions"
-region identification table = "region_ids"
-command ( ? for menu ) >> q
-quitting...
-....
+.Build and concatenate a COMGEOM deck for a group
+====
+[source,bash]
+----
+vdeck havoc.g
+command ( ? for menu ) >> insert havoc
+command ( ? for menu ) >> deck havoc
+command ( ? for menu ) >> quit
+cat havoc.st havoc.rt havoc.id > havoc.cg
+----
+Selects the *havoc* group from the database, writes the three deck files
+*havoc.st*, *havoc.rt*, and *havoc.id*, then concatenates them in
+Solid/Region/Ident order into a single COMGEOM deck *havoc.cg* suitable for
+input to GIFT5.  Without a prefix argument to *deck*, the files are named
+*solids*, *regions*, and *region_ids* instead.
+====
 
 
 [[files]]
 == FILES
 
+_solids_, _regions_, _region_ids_::
+  Default Solid, Region, and region Ident tables (when *deck* is given no
+  prefix).
 
-_solids_::
-default solid table output
-
-
-_regions_::
-default region table output
-
-
-__region_ids__::
-default region ID table output
-
-
-_*.st_::
-unique solid table output
-
-
-_*.rt_::
-unique region table output
-
-
-_*.id_::
-unique region ID table output
-
-
-_/tmp/dis???_::
-temporary file used during processing
-
-
-_/tmp/reg???_::
-temporary file used during processing
-
-
+_prefix.st_, _prefix.rt_, _prefix.id_::
+  Solid, Region, and region Ident tables (when *deck* is given a prefix).
 
 
 [[see_also]]
 == SEE ALSO
 
-*cat*(1), *gedplot*(1V), *mged*(1B)
+*brlcad*(1), *mged*(1), *cat*(1), *sh*(1)
 
 
-[[authors]]
-== AUTHORS
+[[author]]
+== AUTHOR
 
-Gary S. Moss, BRL/VLD-VMB
-
-Keith Applin, BRL/VLD-TAB
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
