@@ -4,91 +4,121 @@
 :manmanual: BRL-CAD
 
 == NAME
-reshoot - re-shoot rays and compare results
+reshoot - re-shoot a list of rays and compare results to a previous run
 
 == SYNOPSIS
 
 [source]
 ----
-reshoot model.g objects... < raylist
+reshoot geom.g [obj...] < rayfile
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-This program is designed to shoot a set of rays and compare the results with previous results. The program exits with a non-zero status if any rays are different from the previous run, and a 0 status if no differences were found.
+*reshoot* re-shoots a set of previously recorded rays against the geometry
+database _geom.g_ and compares the results to the values recorded for each
+ray.  It is geared towards regression testing of the BRL-CAD ray tracing
+libraries.  If one or more _obj_ arguments are given they select the object
+trees to prepare; otherwise the database default object is used.  Differences
+are reported to standard error as they are found, and *reshoot* exits with a
+non-zero status if any ray result differs from its recorded value, or 0 if all
+results match.
 
-Typically, an application (probably other than *reshoot*) is run with the RT_G_DEBUG flag DEBUG_ALLHITS set. This will cause librt to log all calls to the application _hit_ routine to the standard error. The logged output can be processed by an _awk_ program to produce input to *reshoot*. Consider the file p.awk with the following contents:
+The list of rays is read from standard input.  Each ray begins with a *Pnt*
+line giving its origin and a *Dir* line giving its direction, followed by one
+*region* line for each region the ray was expected to cross.  The three
+coordinate values of *Pnt* and *Dir* must be comma-separated with no embedded
+whitespace, and the *Pnt* and *Dir* keywords must start their lines.  A new
+*Pnt* keyword begins the next ray, so any number of rays may appear in the
+file.
 
+The recorded ray file is normally produced from a candidate application (for
+example *rt*(1)) that is run with the *RT_G_DEBUG* flag *DEBUG_ALLHITS* set.
+That flag causes *librt* to log every call to the application _hit_ routine,
+together with the contents of each *struct partition*, on standard error.  The
+verbose log is then reduced to *reshoot* input with an *awk*(1) program.  A
+suitable p.awk is:
 
 ....
-
 /Pnt/ { START=index($0,"(") + 1
-       STR=substr($0, START, index($0,")") - START)
-       gsub(  ", "  , "," , STR)
-       printf "Pnt=%s\n",STR
-       }
+        STR=substr($0, START, index($0,")") - START)
+        gsub(  ", "  , "," , STR)
+        printf "Pnt=%s\n",STR
+        }
 /Dir/ { START=index($0,"(") + 1
-       STR=substr($0, START, index($0,")") - START)
-       gsub(  ", "  , "," , STR)
-       printf "Dir=%s\n",STR
-       }
+        STR=substr($0, START, index($0,")") - START)
+        gsub(  ", "  , "," , STR)
+        printf "Dir=%s\n",STR
+        }
 /PT/  { PIN=$3; POUT=$5 }
 /InHIT/ { INHIT=$2 }
 /OutHIT/ { OUTHIT=$2 }
-/Region/ { printf "	region=%s in=%s in%s out=%s out%s\n",
-	$2,PIN,INHIT,POUT,OUTHIT
-	}
+/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",
+        $2,PIN,INHIT,POUT,OUTHIT
+        }
 ....
 
-Given this _awk_ program The log file from the application can be processed as follows:
-
-awk -f p.awk < logfile > shotlist
-
-to produce input for *reshoot*. An example of the input file format for *reshoot* is:
-
+The resulting input file looks like:
 
 ....
-
 Pnt=0,0,1
 Dir=0,0,-1
 	region=r1.r in=p1.s indist=10016.8 out=p2.s outdist=10017.8
 	region=r2.r in=p3.s indist=10018.8 out=p4.s outdist=10019.8
-	... (arbitrary many region lines)
 Pnt=0,0,10
 Dir=0,0,-1
 	region=r1.r in=p1.s indist=10016.8 out=p2.s outdist=10017.8
-	region=r2.r in=p3.s indist=10018.8 out=p4.s outdist=10019.8
-	... (arbitrary many region lines)
 ....
 
-There can be an arbitrary number of rays specified in the file. There must not be whitespace between the values of Pnt and between the values of Dir; it is best to comma-separate the three coordinate values. The keywords "Pnt" and "Dir" must occur at the beginning of a line. There can be an arbitrary number of regions along the ray path. Each region must be described on a single line. A new ray is started by a "Pnt" value. Then *reshoot* can be run as follows:
+For each ray that disagrees, *reshoot* prints the ray's point and direction
+followed by one or more mismatch lines describing the inhit distance, outhit
+distance, region name, or in/out primitive name that did not match.
 
-reshoot geom.g obj ... < shotlist
+[[examples]]
+== EXAMPLES
 
-Differences are reported for each ray as they are found:
-
-Ray Pt 0,0,1 Dir 0,0,-1 inhit mismatch 17.8177 16.8 outhit mismatch 24.7685 23.8 region name mismatch /oops.r sb r1.r in primitive name mismatch p8.s sb p1.s
-
+.Capture rays from rt and verify them with reshoot
+====
+[source,bash]
+----
+rt -x 2 -o /dev/null geom.g all.g 2> log
+awk -f p.awk < log > shotlist
+reshoot geom.g all.g < shotlist
+echo "exit status: $?"
+----
+Running *rt*(1) with the *DEBUG_ALLHITS* debug bit (*-x 2*) records every
+hit to the file _log_, which p.awk distills into the ray list _shotlist_.
+Feeding that list back into *reshoot* re-traces the same rays and reports any
+result that changed.  A non-zero exit status signals that the geometry or the
+ray tracer now produces different intersections, making this a convenient
+regression check after editing a model or modifying *librt*.
+====
 
 [[bugs]]
 == BUGS
 
-The floating point values logged when the DEBUG_ALLHITS flag is set in RT_G_DEBUG are printed with a %g format. This causes some truncation of precision. This is accounted for by *reshoot* by re-formatting the numbers computed into ascii and re-parsing them back in. This causes the same amount of precision loss as the original values have undergone. However, small actual differences are also overlooked as a result.
+The floating point values logged when the DEBUG_ALLHITS flag is set in
+RT_G_DEBUG are printed with a %g format, which truncates precision.  *reshoot*
+compensates by re-formatting its own computed numbers to ascii and re-parsing
+them, so they suffer the same precision loss as the recorded values.  As a
+side effect, small genuine differences can be overlooked.
 
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *nirt*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2006-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
