@@ -4,100 +4,137 @@
 :manmanual: BRL-CAD
 
 == NAME
-terrain - Generate terrain field from mathematical noise
+terrain - generate a pseudo-terrain height field from procedural noise
 
 == SYNOPSIS
 
 [source]
 ----
-terrain [-w x_postings] [-n y_postings] [-s xy_postings] [-L noise_Lacunarity] [-H noise_H_value] [-O noise_octaves] [-o noise_offset] [-S noise_scale] [-V noise_Vector_scale] [-D noise_Delta] [-f noise_function] [ -c host/net format conversion off] > file.dsp
+terrain [-w x_postings] [-n y_postings] [-s xy_postings]
+        [-L lacunarity] [-H h_value] [-O octaves] [-S scale]
+        [-V x_scale,y_scale,z_scale] [-D x_delta,y_delta,z_delta]
+        [-o offset] [-f function] [-c] [-v] > file.dsp
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *terrain* program produces pseudo-terrain from procedural noise suitable for use with a BRL-CAD dsp primitive. Noise values are computed for the grid points of the lattice and the resultant values are output on the standard output as unsigned shorts in network byte order. The size of the grid is specified with the *-w* and *-n* options.
+The *terrain* program produces a pseudo-terrain height field from
+procedural noise, suitable for use with a BRL-CAD *dsp* (displacement
+map) primitive. A noise value is computed for each point of an
+_x_postings_ by _y_postings_ lattice and written to the standard output
+as unsigned 16-bit integers in network (big-endian) byte order. The
+default grid is 512 by 512 postings.
+
+The character of the terrain is controlled by selecting a noise function
+with *-f* and by tuning the fractal noise parameters. The standard
+output must be redirected to a file; *terrain* refuses to write binary
+data to a terminal. The resulting file is in the same binary format
+produced by *asc2dsp*(1) and can be referenced directly by a *dsp* solid
+in MGED.
 
 
 [[options]]
 == OPTIONS
 
+*-w* _x_postings_::
+  Number of grid points (postings) in the X dimension. Default is 512.
 
-*-w* _grid_x_postings_::
-Specifies the number of grid points in the X dimension. Default is 256.
+*-n* _y_postings_::
+  Number of grid points (postings) in the Y dimension. Default is 512.
 
+*-s* _xy_postings_::
+  Set the number of postings in both X and Y to the same value, producing
+  a square grid.
 
-*-n* _grid_y_postings_::
-Specifies the number of grid points in the Y dimension. Default is 256.
+*-L* _lacunarity_::
+  Scaling factor between successive octaves of noise. Practical values
+  are non-integer numbers between roughly 1.7 and 4.0. Default is
+  2.1753974.
 
+*-H* _h_value_::
+  The fractal increment (H) in the noise equation, controlling how
+  detail diminishes across octaves. Usually near 1.0, which is the
+  default.
+
+*-O* _octaves_::
+  Number of octaves of noise to layer. Typical values are 2 through 8.
+  Default is 7.
+
+*-S* _scale_::
+  Scale the noise uniformly in X, Y and Z by _scale_. Values below 1.0
+  make the noise pattern finer; values above 1.0 make it coarser. This
+  sets all three components of the vector scale (see *-V*). Default is
+  1.0.
+
+*-V* _x_scale,y_scale,z_scale_::
+  Non-uniform scaling of the X, Y and Z dimensions in noise space.
+  Default is 0.0125,0.0125,0.0125.
+
+*-D* _x_delta,y_delta,z_delta_::
+  Translation (offset) applied in noise space, useful for sampling a
+  different region of the noise field. Default is 1000,1000,1000.
+
+*-o* _offset_::
+  Offset value used by the multi-fractal (*m*) and ridged (*r*) noise
+  functions. Default is 1.0.
+
+*-f* _function_::
+  Select the noise function used to generate the field. One of:
++
+  *f*;; Fractional Brownian motion (fBm). This is the default.
+  *t*;; Turbulence.
+  *T*;; Inverted turbulence: 1.0 - turb(pt).
+  *m*;; Multi-fractal.
+  *r*;; Ridged multi-fractal.
+  *L*;; A lunar-like surface.
+  *l*;; Terrain with detail concentrated on peaks and in valleys.
 
 *-c*::
-Turns of the conversion of the data from host to network format. This only has an effect on little-endian machines.
-
+  Toggle the conversion of output from host to network byte order. By
+  default conversion is on; this only has an effect on little-endian
+  hosts.
 
 *-v*::
-Turns on verbose mode. Information about which filter is running is printed.
+  Toggle verbose/debug output, printing which noise function is running
+  and clamping diagnostics to standard error.
 
 
-*-f* _noise_type_::
-Selects the type of noise field to be used. Options include
+[[examples]]
+== EXAMPLES
+
+.Generate a terrain and build a dsp solid
+====
+[source,bash]
+----
+terrain -w 256 -n 256 -f r -O 8 -S 1.5 > hills.dsp
+mged terrain.g <<'EOF'
+in mountains.dsp dsp f hills.dsp 256 256 0 ad 1 100
+EOF
+----
+A 256x256 ridged multi-fractal height field is written to hills.dsp,
+then imported as a dsp primitive 256 cells wide and tall, smoothed,
+with a cell width of 1 and a height multiplier of 100, yielding a
+ridgeline of mountains in the database terrain.g.
+====
+
+.Create a tileable, square fBm patch
+====
+[source,bash]
+----
+terrain -s 512 -f f -O 5 -L 2.0 -D 0,0,0 > patch.dsp
+----
+A 512x512 fractional Brownian motion field generated with five octaves
+and a lacunarity of 2.0, sampled at the origin of noise space for a
+repeatable result.
+====
 
 
-*L*::
-A lunar-like surface.
+[[see_also]]
+== SEE ALSO
 
-
-*f*::
-Fractional Brownian motion (fBm).
-
-
-*t*::
-Turbulence.
-
-
-*T*::
-Turbulence inverted: 1.0 - turb(pt).
-
-
-*m*::
-A Multi-fractal.
-
-
-*r*::
-A Ridged multi-fractal.
-
-
-
-[[noise_options]]
-=== Noise Options
-
-
-*-O* _noise_octaves_::
-Specifies the number of octaves of noise to layer. Typical values are 2 through 8.
-
-
-*-L* _noise_Lacunarity_::
-Specifies the scaling factor between successive octaves of noise. Practical values are non-integer numbers between 1.7 and 4.0.
-
-
-*-H* _noise_H_val_::
-Specifies the value of H in the noise equation. Usually 1.0
-
-
-*-S* _noise_scale_::
-Scales the noise uniformly in X, Y and Z dimensions by the value __noise_scale.__ Values below 1.0 cause the noise pattern to become smaller. Values above 1.0 cause it to get bigger
-
-
-*-V* _scale_x,scale_y,scale_z_::
-Allows non-uniform scaling of the X, Y and Z dimensions. See *-S* above.
-
-
-*-D* _delta_x,delta_y,delta_z_::
-Specifies a translation in noise space.
-
-
-
+*brlcad*(1), *asc2dsp*(1), *asc2g*(1), *mged*(1)
 
 
 [[author]]
@@ -109,7 +146,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2000-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
