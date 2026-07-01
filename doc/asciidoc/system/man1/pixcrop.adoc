@@ -1,4 +1,4 @@
-= BWCROP(1)
+= PIXCROP(1)
 :doctype: manpage
 :mansource: BRL-CAD
 :manmanual: BRL-CAD
@@ -25,8 +25,20 @@ pixcrop in.pix out.pix inwidth outwidth outheight ulx uly urx ury lrx lry llx ll
 
 *pixcrop* crops any quadrilateral out of an arbitrarily large *pix*(5) input file (_in.pix_), squares that region to a given height and width output size, and writes the result to _out.pix_. The first form of *pixcrop* prompts for all parameters it needs to do the cropping. All responses should be pixel counts or first quadrant coordinates. The second form allows all of the needed parameters to be given on the command line and is intended for use from shell scripts. The coordinate names (the eight arguments listed above after _outheight_) refer to the input file, and more specifically to upper-left-x (ulx), lower-right-y (lry), etc., in clockwise-from-upper-left order.
 
-The nearest input pixel is selected for each output pixel. No interpolation is done by this program.
+The nearest input pixel is selected for each output pixel. No interpolation is done by this program. *pixcrop* takes no command-line options; all parameters are supplied either interactively or as the positional arguments shown in the second synopsis form.
 
+
+[[examples]]
+== EXAMPLES
+
+.Crop an upright 200x100 region out of a 512-wide image
+====
+[source,bash]
+----
+pixcrop in.pix out.pix 512 200 100 100 400 300 400 300 200 100 200
+----
+Reads the 512-pixel-wide _in.pix_ and writes a 200x100 _out.pix_ extracted from the axis-aligned rectangle whose input corners are upper-left (100,400), upper-right (300,400), lower-right (300,200), and lower-left (100,200). Because the four corners need not form a rectangle, skewed or sheared quadrilaterals can be rectified into an upright output image.
+====
 
 [[see_also]]
 == SEE ALSO

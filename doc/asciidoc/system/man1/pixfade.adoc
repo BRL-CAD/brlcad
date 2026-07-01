@@ -17,21 +17,80 @@ pixfade [-f fraction] [-p percentage] [-m max] [-s squaresize] [-w width] [-n he
 [[description]]
 == DESCRIPTION
 
-*pixfade* darkens a color pix file by fading the entire image a fractional amount or by using a pixel value as a maximum level.
+*pixfade* darkens a color *pix*(5) image, either by scaling every pixel by a
+fractional amount or by clamping each color channel to a maximum level.
 
-The *-f* option specifies a nonnegative fractional multiplier which is used to scale the red, green, and blue values of each pixel. In a similar way, the *-p* option is used to specify the multiplier as a nonnegative percentage. The default is *-f* 0.5 (*-p* 50.0).
+By default *pixfade* operates in scaling mode: the *-f* option gives a
+non-negative fractional multiplier applied to the red, green, and blue values
+of each pixel, and the *-p* option specifies the same multiplier as a
+non-negative percentage. The default is *-f* 0.5 (*-p* 50.0).
 
-An alternative way to darken the image is to specify a ceiling pixel level (0 - 255) with the *-m* option. The pixel plotted is the minimum of the ceiling value and each of the red, green, and blue levels of the pixel. If this option is used, the *-f* and *-p* options are ignored.
+The *-m* option selects truncation mode instead, supplying a ceiling pixel
+level (0 - 255). Each channel is replaced by the minimum of the ceiling and
+its original value. When *-m* is given, the *-f* and *-p* options are ignored.
 
-The *-w* and *-n* flags specify the input file width and number of scan lines in pixels; they can be set to the same value via *-s*. Default is 512x512.
+Input is read from _infile.pix_ if given, otherwise from standard input. The
+faded image is written to standard output, and additionally to the *-o* file
+when one is named; if both an output file and a redirected standard output are
+present, the same image is written to each.
 
-The *-o* option supplies output file name. If standard output is also redirected or piped, *pixfade* writes the same output to both destinations. If this option is omitted, standard output is used.
+
+[[options]]
+== OPTIONS
+
+*-f* _fraction_::
+  Scale every channel of each pixel by _fraction_, a non-negative multiplier
+  (clamped to 0 - 255). Default is 0.5.
+
+*-p* _percentage_::
+  Same as *-f* but expressed as a non-negative percentage; _percentage_ is
+  divided by 100 to form the multiplier. Default is 50.0.
+
+*-m* _max_::
+  Truncation mode: clamp each channel to the ceiling _max_ (0 - 255). Values
+  outside this range are clamped to the nearest bound. Overrides *-f* and *-p*.
+
+*-s* _squaresize_::
+  Set both input width and height to _squaresize_ pixels.
+
+*-w* _width_::
+  Set the input scanline width in pixels. Default is 512.
+
+*-n* _height_::
+  Set the number of input scanlines in pixels. Default is 512.
+
+*-o* _out_file.pix_::
+  Write the faded image to _out_file.pix_ in addition to standard output.
+
+
+[[examples]]
+== EXAMPLES
+
+.Dim an image to a quarter brightness
+====
+[source,bash]
+----
+pixfade -f 0.25 -w 1024 -n 768 scene.pix > dim.pix
+----
+Reads the 1024x768 image _scene.pix_ and scales every channel to 25% of its
+original value, producing a darkened _dim.pix_.
+====
+
+.Clamp highlights and view the result
+====
+[source,bash]
+----
+pixfade -m 200 scene.pix | pix-fb -w 512 -n 512
+----
+Caps each color channel at 200 to tame bright highlights, then pipes the
+result straight to a framebuffer with *pix-fb*(1) for inspection.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix*(5)
+*brlcad*(1), *pix-fb*(1), *pixscale*(1), *pix*(5)
 
 
 [[author]]

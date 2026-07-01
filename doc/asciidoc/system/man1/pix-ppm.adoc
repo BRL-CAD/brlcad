@@ -4,58 +4,88 @@
 :manmanual: BRL-CAD
 
 == NAME
-pix-ppm - convert a BRL-CAD PIX or BW format image to a PPM format image
+
+pix-ppm - convert a BRL-CAD PIX or BW image to a PPM/PGM image
 
 == SYNOPSIS
 
 [source]
 ----
-pix-ppm [-a] [-s squaresize] [-w file_width] [-n file_height] [-# bytes_per_pixel] [-o PPM_file] [PIX_file] [> PPM_file]
+pix-ppm [-a] [-# _bytes_per_pixel_] [-s _squaresize_] [-w _file_width_] [-n _file_height_] [-o _file.ppm_] [_file.pix_] [> _file.ppm_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pix-ppm* converts a _BRL PIX(5)_ format file to a _PPM_ (Portable PixMap) format file. By default it writes to standard output. The PPM file created will be either an RGB file with 3 bytes per pixel (default) or a B&W file with 1 byte per pixel.
+*pix-ppm* converts a *pix*(5) (or *bw*(5)) format image into a Netpbm
+PPM/PGM format image. Three-byte-per-pixel RGB input is written as a
+binary PPM (P6); single-byte-per-pixel input is written as a binary PGM
+(P2). Input is read from the named _file.pix_ or, if no file is given,
+from standard input; output is written to standard output by default.
 
-PIX image files do not contain information about their size. The size of the input PIX image file must be specified if the dimensions are not the default 512x512 size.
+PIX and BW files carry no embedded dimensions, so the size of the input
+must be supplied (default 512x512) via *-s*, *-w*/*-n*, or determined
+automatically with *-a*.
 
 
 [[options]]
 == OPTIONS
 
-
 *-a*::
-autosize the input file to determine file image height and width
+  Autosize the input file, inferring the image width and height from the
+  file length. Only effective when reading from a named file rather than
+  standard input.
+
+*-#* _bytes_per_pixel_::
+  Set the number of bytes per pixel in the input. Must be 3 (RGB, the
+  default) or 1 (grayscale).
+
+*-s* _squaresize_::
+  Set both the input width and height to _squaresize_ pixels.
+
+*-w* _file_width_::
+  Set the input width to _file_width_ pixels.
+
+*-n* _file_height_::
+  Set the input height to _file_height_ scanlines.
+
+*-o* _file.ppm_::
+  Write the image to the named output file. If standard output is also
+  redirected or piped, *pix-ppm* writes the same image to both
+  destinations. *pix-ppm* refuses to write binary image data to a
+  terminal.
 
 
-*-s squaresize*::
-sets both the width and the height for the input to be _squaresize_
+[[examples]]
+== EXAMPLES
 
+.Convert an autosized PIX rendering to PPM
+====
+[source,bash]
+----
+pix-ppm -a render.pix -o render.ppm
+----
+Reads _render.pix_, infers its dimensions from the file size, and writes
+a binary PPM file _render.ppm_ suitable for viewing or importing into
+common image tools.
+====
 
-*-w file_width*::
-tells *pix-ppm* that the input is __file_width__ pixels wide
-
-
-*-n file_height*::
-tells *pix-ppm* that the input is __file_height__ scanlines tall
-
-
-*-# bytes_per_pixel*::
-tells *pix-ppm* how many bytes there are per pixel in the input PIX or BW file
-
-
-*-o PPM_file*::
-tells *pix-ppm* to write image data to the specified __PPM_file__ output file. If standard output is also redirected or piped, *pix-ppm* writes the same output to both destinations. The *pix-ppm* command will not write out binary image data directly to a terminal device as a safeguard.
-
-
+.Render and convert in a single pipeline
+====
+[source,bash]
+----
+rt -s 1024 -o /dev/stdout model.g component | pix-ppm -s 1024 > component.ppm
+----
+Pipes a 1024x1024 *rt*(1) raytrace directly into *pix-ppm*, producing a
+PPM image without writing an intermediate PIX file to disk.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix-png*(1), *pix-bw*(1), *bw-pix*(1), *pix-fb*(1), *pix*(5), *bw*(5)
+*brlcad*(1), *rt*(1), *pix-png*(1), *pix-bw*(1), *bw-pix*(1), *pix-fb*(1), *pix*(5), *bw*(5)
 
 
 [[author]]
@@ -67,7 +97,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2009-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

@@ -1,52 +1,75 @@
 = PIXCOUNT(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-pixcount - Count and sort unique pixel color values in an image stream
+pixcount - count occurrences of each unique pixel color in an image stream
 
 == SYNOPSIS
 
 [source]
 ----
-pixcount [-# bytes_per_pixel] [input.pix [output.txt]]
+pixcount [-#_bytes_per_pixel_] [_infile.pix_ [_outfile_]]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixcount* reads a stream of pixels (by default, 3-byte RGB pixels), identifies every unique color value present, and counts the number of occurrences of each. The results are printed as a formatted text list, with the colors sorted automatically (based on their internal byte representations).
+*pixcount* reads a stream of pixels (3-byte RGB by default), tallies how many
+times each unique color value appears, and writes the result sorted by color
+value. Each output line lists the individual byte values of a pixel followed by
+the number of times that pixel occurred in the input.
 
-For each unique pixel, the output will list the individual byte values that make up the pixel, followed by the total count of how many times that pixel appeared in the input stream.
+If _infile.pix_ is given, *pixcount* reads from that file; otherwise it reads
+from standard input. If _outfile_ is also given, the tally is written there;
+otherwise it is written to standard output. Reading is refused when standard
+input is an interactive terminal.
 
-If an _input.pix_ file is specified, *pixcount* reads from that file; otherwise, it reads from standard input. If an _output.txt_ file is specified as a second argument, the results are written to that file; otherwise, they are printed to standard output.
+The tool is format-agnostic about pixel layout: setting the bytes-per-pixel lets
+it process *bw*(5) grayscale (1 byte), *pix*(5) RGB (3 bytes), RGBA (4 bytes),
+or any other fixed-width pixel data.
 
 [[options]]
 == OPTIONS
 
 *-#* _bytes_per_pixel_::
-Specify the number of bytes per pixel. The default is 3 (for standard RGB PIX files). For example, you can use `1` for grayscale (BW) images, or `4` for RGBA images.
+  Number of bytes that make up one pixel. Must be a positive integer. The
+  default is 3, matching standard *pix*(5) RGB data. Use 1 for *bw*(5) grayscale
+  or 4 for RGBA.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Counting Unique Colors in an Image
-[example]
+.Find the most common colors in a rendered image
 ====
-**pixcount image.pix color_counts.txt**
+[source,bash]
+----
+pixcount moss.pix | sort -k4 -n -r | head
+----
+Tallies every unique RGB color in _moss.pix_, then pipes the result through
+*sort*(1) to list the ten most frequently occurring colors first. This is a
+quick way to inspect an image's palette or spot a dominant background color.
+====
 
-Reads _image.pix_ (assuming standard 3-byte RGB pixels), tallies the occurrences of each unique color, and writes the sorted list to _color_counts.txt_.
+.Count grayscale levels in a BW image
+====
+[source,bash]
+----
+pixcount -#1 image.bw levels.txt
+----
+Treats the input as 1-byte-per-pixel *bw*(5) data and writes the count of each
+grayscale value to _levels.txt_, revealing the image's tonal distribution.
 ====
 
-.Processing a Grayscale Image
-[example]
-====
-**pixcount -# 1 < image.bw > counts.txt**
+[[see_also]]
+== SEE ALSO
 
-Reads a 1-byte-per-pixel BW image from standard input, counts the occurrences of each grayscale value, and writes the results to _counts.txt_.
-====
+*brlcad*(1), *pixhist*(1), *pixstat*(1), *bw*(5), *pix*(5)
 
 [[author]]
 == AUTHOR
@@ -56,7 +79,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1998-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

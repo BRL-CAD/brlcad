@@ -17,21 +17,57 @@ pixstat [-v] [file.pix]
 [[description]]
 == DESCRIPTION
 
-*pixstat* will take the given *pix*(5) format file, or read from standard in. A collection of statistics related to the pixel intensities is produced for each color plane (red, green, and blue). These include: the number of pixels (and the square root of this which is the file dimensions if square); the max and min values; the mean; the median (dividing line where half the pixels are above this value, half below); the mode (most frequently occurring value) and the number of pixels at this value; the variance, standard deviation, and skew.
+*pixstat* reads the given *pix*(5) format file, or standard input if no file
+is given, and reports a collection of statistics on the pixel intensities for
+each color plane (red, green, and blue). The values reported are: the number of
+pixels (and the square root of that count, which equals the image dimension if
+the image is square); the minimum and maximum values; the mean; the median
+(the value below which half the pixels fall); the mode (most frequently
+occurring value) and the number of pixels at that value; and the variance,
+standard deviation, and skew.
 
-The *-v* flag will also dump a histogram of the pixel values.
+The statistics are derived from a 256-bin histogram of the input, so a single
+pass over the file suffices and computation is performed on the per-bin lump
+sums rather than on individual samples.
 
+[[options]]
+== OPTIONS
 
-[[method]]
-== METHOD
+*-v*::
+  Verbose. In addition to the summary statistics, dump the full histogram, one
+  line per intensity value (0-255) giving the red, green, and blue bin counts.
+  This flag must precede the optional input file name.
 
-Since the pixel values are quantized (each color having discrete values from 0 to 255), the statistics can be computed from "lump sums" after building a histogram of the input. This results in a fantastic savings in computation while also making a single pass over the input file sufficient.
+[[examples]]
+== EXAMPLES
 
+.Summarize a rendered frame
+====
+[source,bash]
+----
+pixstat moss.pix
+----
+Prints the per-channel min, max, mode, median, mean, standard deviation,
+variance, and skew for the image, a quick way to confirm an image is not
+over- or under-exposed before further processing.
+====
+
+.Inspect the full value distribution from a render
+====
+[source,bash]
+----
+rt -o - -s512 moss.g all.g | pixstat -v
+----
+Renders a 512x512 image of the *moss.g* model, pipes the raw *pix*(5) stream
+directly into *pixstat*, and emits both the summary statistics and the
+complete 256-line red/green/blue histogram for examining the value
+distribution.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pixhist*(1), *bwstat*(1), *pix*(5)
+*brlcad*(1), *pixhist*(1), *pixhist3d*(1), *bwstat*(1), *rt*(1), *pix*(5)
 
 
 [[author]]

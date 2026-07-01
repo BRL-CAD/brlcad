@@ -10,51 +10,101 @@ pixrot - rotate, invert, or reverse a color pix file
 
 [source]
 ----
-pixrot [-#bytes] [-rifb] [-s squaresize] [-w in_width] [-n in_height] [file.pix] > newfile.pix
+pixrot [-f] [-b] [-r] [-i] [-#bytes] [-s squaresize] [-w width] [-n height] [file.pix] > newfile.pix
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixrot* will rotate, invert, or reverse a color *pix*(5) format file or read from standard input if a file name is not given. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels; they can be set to the same value via *-s*.
+*pixrot* rotates, inverts, and/or reverses a *pix*(5) format color image,
+reading from the named file or from standard input and writing the result to
+standard output. The input dimensions are given with *-w* (width) and *-n*
+(height), or with *-s* when the image is square; both default to 512.
 
-The *-r* flag reverses the scan lines left to right. The *-i* flag inverts the image top to bottom. The *-f* and *-b* flag will rotate the image ninety degrees forward or backward respectively. The sense of the rotation is relative to a first quadrant coordinate system, i.e. origin lower left, where "forward" means clockwise.
+The *-r* flag reverses each scan line left to right, and *-i* inverts the image
+top to bottom. The *-f* and *-b* flags rotate the image ninety degrees forward
+or backward respectively, where the sense is relative to a first-quadrant
+coordinate system (origin lower left) with "forward" meaning clockwise. A 180
+degree rotation is obtained by both reversing and inverting.
 
-Note that a 180 degree rotation can be obtained by both reversing and inverting.
+By default three-byte (RGB) pixels are assumed. The *-#* _bytes_ flag selects a
+different element size, so the same program can rotate rectangular arrays of any
+fixed-width datum, such as floating point values or fixed-width text.
 
-By default three byte pixels are assumed as in the *pix*(5) format. However, the *-#* _bytes_ flag can be used to specify some other pixel size, where _bytes_ is the number of bytes per pixel. Thus this program can be used to manipulate rectangles of other data types, such as an array of floating point numbers, files of text, etc.
+The output is written largely in scan-line order; if the image is too large to
+hold in memory at once, *pixrot* seeks on output, so standard output must be a
+seekable file rather than a pipe for the rotation modes.
 
+[[options]]
+== OPTIONS
 
-[[method]]
-== METHOD
+*-f*::
+  Rotate the image ninety degrees forward (clockwise).
 
-A fairly large buffer is kept in memory so that, file size permitting, the entire rotation can occur without seeking on input or output. In any event, the algorithm is designed to process the input sequentially, so that if any seeking is required, it will happen on output only. If these seeks fail, e.g. the output is a pipe, the user will be told that it needs a file on output. A more general solution to this problem would be to see if seeks can be done on input instead, and switch the algorithm to seek on input only.
+*-b*::
+  Rotate the image ninety degrees backward (counter-clockwise).
 
+*-r*::
+  Reverse each scan line left to right.
+
+*-i*::
+  Invert the image top to bottom.
+
+*-#* _bytes_::
+  Set the number of bytes per pixel (default 3, as in *pix*(5)).
+
+*-s* _squaresize_::
+  Set both the input width and height to _squaresize_ pixels (also *-S*).
+
+*-w* _width_::
+  Set the input width in pixels (default 512, also *-W*).
+
+*-n* _height_::
+  Set the input number of scan lines in pixels (default 512, also *-N*).
+
+*-h*::
+  Print a usage message.
+
+[[examples]]
+== EXAMPLES
+
+.Rotate a rendered frame and view it
+====
+[source,bash]
+----
+rt -o frame.pix -w 1024 -n 768 model.g component.r
+pixrot -w 1024 -n 768 -f frame.pix > frame-rot.pix
+pix-png -w 768 -n 1024 frame-rot.pix > frame-rot.png
+----
+Render a 1024x768 image with *rt*(1), rotate it ninety degrees clockwise (note
+the rotated image is 768x1024), then convert it to PNG with *pix-png*(1).
+====
+
+.Flip an image 180 degrees
+====
+[source,bash]
+----
+pixrot -s 512 -r -i image.pix > image-180.pix
+----
+Combine a left-to-right reversal with a top-to-bottom inversion to turn a
+512x512 image upside down.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pixscale*(1), *pixrect*(1), *pix*(5)
-
-
-[[bugs]]
-== BUGS
-
-If the file size is very large, excessive seeking may occur on output and the rotation will take a very long time. More complicated algorithms could remedy this.Rotations of arbitrary angle are not supported.
-
+*brlcad*(1), *bwrot*(1), *pixscale*(1), *pixrect*(1), *pix-png*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

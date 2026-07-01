@@ -4,46 +4,94 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixclump - quantize the colors in a pix(5) stream
+pixclump - quantize the colors in a pix(5) stream to a specified set
 
 == SYNOPSIS
 
 [source]
 ----
-pixclump [-c R/G/B] [-f color_file] [-x debug_flags] [ infile.pix [outfile.pix]] \
-    
+pixclump [-c _R/G/B_] [-f _color_file_] [-x _debug_flags_] [infile.pix [outfile.pix]]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixclump* reads an input stream of _pix_ data, converts each pixel to one of a set of specified colors, and writes out these quantized pixels.
+*pixclump* reads an input stream of *pix*(5) data, replaces each pixel with
+the most similar color from a specified set, and writes out the quantized
+pixels.
 
-The colors may be specified either on the command line, with one *-c* option per color, or in a file specified with the *-f* option.
+The set of colors may be specified either on the command line, with one *-c*
+option per color, or in a file named with the *-f* option. Each pixel in the
+input is compared against every color in the set and replaced on output by the
+nearest one, where distance is the sum of the squares of the differences in the
+red, green, and blue channels.
 
-Each pixel in the input stream is compared to all of the specified colors and replaced on the output by the specified color most resembling it. *pixclump* computes the difference between an input pixel and a specified color as the sum of the squares of the differences in their respective red, green, and blue channels.
+If no input file is named, *pixclump* reads from standard input; if no output
+file is named, it writes to standard output. A typical use is renormalizing an
+image: when a tool such as *pixscale*(1) interpolates new colors into an image
+that originally held only a few, *pixclump* maps the interpolated pixels back
+onto the original palette.
 
-The *-x* option may be used to selectively enable various diagnostic print statements.
+[[options]]
+== OPTIONS
 
+*-c* _R/G/B_::
+  Add a single color to the set, specified as a slash-separated red/green/blue
+  triple. May be given multiple times to build up the set. Using *-c* discards
+  any color file previously named with *-f*.
 
-[[hint]]
-== HINT
+*-f* _color_file_::
+  Read the color set from _color_file_, one _R/G/B_ color per line. Blank lines
+  and lines beginning with '#' are ignored. Using *-f* discards any colors
+  previously given with *-c*.
 
-A typical use for *pixclump* is in renormalizing an image. For example, if a tool such as *pixscale* has been used to transform an image containing a relatively small number of colors, *pixclump* will change pixels whose colors have been interpolated back to one of the original colors.
+*-x* _debug_flags_::
+  Enable diagnostic output. _debug_flags_ is a hexadecimal bit mask: 0x01 prints
+  the color table, 0x02 traces best-match selection, and 0x04 traces pixel
+  output.
 
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Map an image onto a four-color palette
+====
+[source,bash]
+----
+pixclump -c 0/0/0 -c 255/255/255 -c 255/0/0 -c 0/0/255 in.pix > out.pix
+----
+Quantizes every pixel of _in.pix_ to the nearest of black, white, red, or blue
+and writes the result to _out.pix_.
+====
+
+.Renormalize a scaled image to its original palette
+====
+[source,bash]
+----
+pixscale -s 512 -w 256 -n 256 orig.pix | pixclump -f palette.txt > fixed.pix
+----
+After *pixscale*(1) interpolates new intermediate colors while resizing, this
+maps each pixel back onto the original palette listed in _palette.txt_,
+restoring the limited color set.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixscale*(1), *pix-bw*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
 
-Paul Tanenbaum
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1997-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

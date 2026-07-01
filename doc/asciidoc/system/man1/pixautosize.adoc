@@ -4,73 +4,85 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixautosize - determine if a file size or byte count is a standard image size
+pixautosize - guess the width and height of a standard-size image file
 
 == SYNOPSIS
 
 [source]
 ----
-pixautosize [-b bytes_per_sample] [-f file_name] [-l file_length]
+pixautosize [-b bytes_per_sample] [-f file_name | -l file_length]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixautosize* determines if a given file is one of the standard sizes used in the BRL-CAD package, _i.e._ one of the sizes recognized by the *-a* option on *pix-fb*(1). If the dimensions are recognized, it prints a string suitable for use in a Bourne shell *sh*(1) script to set the variables WIDTH and HEIGHT, _e.g._
+*pixautosize* determines whether a file is one of the "standard" image
+sizes recognized by the BRL-CAD framebuffer library, the same sizes
+accepted by the *-a* (autosize) option of *pix-fb*(1). When a standard
+size is matched it prints an assignment string suitable for evaluation
+in a Bourne shell *sh*(1) script, e.g.
 
-WIDTH=512; HEIGHT=512
+  WIDTH=512; HEIGHT=512
 
-The file name can be specified by using the *-f* _file_name_ commandline option, or the file length (in bytes) can be specified by using the *-l* _file_length_ commandline option. One of these two options must be present. In either case, the *-b* _bytes_per_sample_ option can be used to specify the number of bytes which are used for each sample (pixel) in the file. The default value is three (3), which is appropriate for use with *pix*(5) files. This should be changed to one with *-b* `1` when processing a *bw*(5) file. Similarly, the proper value for a *dbw*(5) file is 8 (1 channel of 8 byte samples), and the value for *dpix*(5) files is 24 (3 channels of 8 byte samples).
+The image is selected either by name with *-f* or by byte count with
+*-l*; exactly one of the two must be given (specifying both is an
+error). The number of bytes per sample (pixel) defaults to 3, which is
+correct for *pix*(5) files; use *-b* `1` for *bw*(5) files and
+*-b* `24` for dpix files (three channels of 8-byte double samples).
 
+If no standard size matches, a diagnostic is printed to standard error,
+`WIDTH=0; HEIGHT=0` is printed to standard output, and a non-zero exit
+status is returned.
+
+[[options]]
+== OPTIONS
+
+*-b* _bytes_per_sample_::
+  Number of bytes used per sample (pixel). Must be a positive integer.
+  Defaults to 3.
+
+*-f* _file_name_::
+  Determine the size from the length of the named file. Mutually
+  exclusive with *-l*.
+
+*-l* _file_length_::
+  Determine the size from an explicit file length in bytes. Must be a
+  positive integer. Mutually exclusive with *-f*.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-These two examples both give the result of
+.Size a pix file by name and capture the result in a shell script
+====
+[source,bash]
+----
+eval `pixautosize -f scene.pix`   # sets WIDTH and HEIGHT
+pix-fb -w $WIDTH -n $HEIGHT scene.pix
+----
+The first line evaluates the `WIDTH=...; HEIGHT=...` string emitted by
+*pixautosize*, populating the shell variables; the second uses them to
+display the image with *pix-fb*(1).
+====
 
-WIDTH=50; HEIGHT=50;
-
-the first could be for a *bw*(5) file and the second for a *pix*(5) file:
-
+.Size a bw file from a known byte count
+====
+[source,bash]
+----
 pixautosize -b 1 -l 2500
-
-pixautosize -b 3 -l 7500
-
-This example shows how to determine the size of a *pix*(5) file by giving the file name:
-
-pixautosize -b 3 -f ../pix/moss.pix
-
-with the result being
-
-WIDTH=512; HEIGHT=512
-
-This command can be used easily in shell scripts with a line like this:
-
-eval `pixautosize -b 3 -f $FILE` # sets WIDTH, HEIGHT
-
-For a major shell script which uses this program, examine *pixinfo.sh*(1) .
-
+----
+Reports `WIDTH=50; HEIGHT=50` for a single-channel *bw*(5) image of
+2500 bytes. The equivalent three-channel *pix*(5) image would be sized
+with `pixautosize -b 3 -l 7500`.
+====
 
 [[see_also]]
 == SEE ALSO
 
-pixinfo.*sh*(1), *pix-fb*(1), *libfb*(3), *bw*(5), *pix*(5)
-
-
-[[diagnostics]]
-== DIAGNOSTICS
-
-If the file or file_length specified does not match any of the standard sizes, one of these messages is printed on standard error:
-
-pixautosize: unable to autosize nsamples=999
-
-pixautosize: unable to autosize file '/dev/null'
-
-In this case, the string printed on standard output is:
-
-WIDTH=0; HEIGHT=0
-
+*brlcad*(1), *pix-fb*(1), *bw*(5), *pix*(5), *sh*(1)
 
 [[author]]
 == AUTHOR

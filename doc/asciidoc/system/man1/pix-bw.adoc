@@ -4,68 +4,98 @@
 :manmanual: BRL-CAD
 
 == NAME
-pix-bw - combine pix color planes into a bw black and white image
+pix-bw - convert a color pix image into a black and white bw image
 
 == SYNOPSIS
 
 [source]
 ----
-pix-bw [-s squaresize] [-w width] [-n height] [ [-e ntsc|crt|hdtv|hdr|avg] [ [ -Rr_weight] [ -Gg_weight] [ -Bb_weight]]] [-o out.bw] [ [<]in.pix] [> out.bw]
+pix-bw [-s squaresize] [-w width] [-n height] [-e ntsc|crt|hdtv|hdr|avg] [-R red_weight] [-G green_weight] [-B blue_weight] [-o out_file.bw] [[<] file.pix] [> out_file.bw]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pix-bw* will combine or select the color planes of a *pix*(5) format file from its standard input and produce a black and white *bw*(5) file on its standard output. If *-o* is specified and standard output is also redirected or piped, *pix-bw* writes the same output to both destinations.
+*pix-bw* combines or selects the color planes of a *pix*(5) format image, read
+from standard input or from a named file, and produces an 8-bit greyscale
+*bw*(5) image on standard output.
 
-The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels. The *-n* _file_height_ flag specifies the height in scanlines of the input file. They are set to the same value using *-s* _squarefilesize_.
+By default the red, green, and blue planes are weighted equally. A standard
+weighting scheme may be chosen with *-e*, or arbitrary per-plane weights may be
+specified with *-R*, *-G*, and *-B*. Selecting only a subset of the *-R*, *-G*,
+and *-B* options computes the result from just those planes.
 
-By default all three colors are weighted equally. The *-e* _type_ flag can be used to specify a standard weighting scheme; the _type_ choices include:
+If the output is written to a named file with *-o* while standard output is
+also redirected or piped, the same *bw*(5) image is written to both
+destinations.
 
+[[options]]
+== OPTIONS
 
-*ntsc*::
-Weighting used is based on the NTSC primaries and white alignment. Conforming with Rec.ITU-R BT.601-7, this uses 0.299/0.587/0.114 RGB weights. This gives a simplified linear conversion of perceived luminance that reflects human physiological sensitivity to green and least to blue.
+*-s* _squaresize_::
+  Set both the width and height of the input image to _squaresize_ pixels.
 
+*-w* _width_::
+  Set the width of each scanline of the input image, in pixels.
 
-*crt*::
-Weighting scheme matches "historic" CRT phosphor chromaticities and a D6500 white alignment. Uses 0.26/0.66/0.08 RGB weights.
+*-n* _height_::
+  Set the height of the input image, in scanlines.
 
+*-e* _type_::
+  Use a standard luminance weighting scheme. _type_ may be one of:
+  *ntsc* (Rec. ITU-R BT.601-7 NTSC primaries, weights 0.299/0.587/0.114);
+  *crt* (historic CRT phosphors with D6500 white, weights 0.26/0.66/0.08);
+  *hdtv* (Rec. ITU-R BT.709, weights 0.2126/0.7152/0.0722);
+  *hdr* (Rec. ITU-R BT.2020, weights 0.2627/0.6780/0.0593);
+  *avg* (simple average of the three planes).
 
-*hdtv*::
-Weighting scheme matches "modern" HDTV display chromacities. Uses 0.2126/0.7152/0.0722 RGB weights per Rec.ITU-R BT.709
+*-R* _red_weight_::
+  Select the red plane and apply _red_weight_ to it.
 
+*-G* _green_weight_::
+  Select the green plane and apply _green_weight_ to it.
 
-*hdr*::
-Weighting scheme matches high dynamic range (HDR) chromacities. Uses 0.2627/0.6780/0.0593 RGB weights per Rec.ITU-R BT.2020
+*-B* _blue_weight_::
+  Select the blue plane and apply _blue_weight_ to it. If a weight of 0 is
+  supplied to any of *-R*, *-G*, or *-B*, the selected planes are instead
+  weighted equally as 1.0 divided by the number of planes selected.
 
+*-o* _out_file.bw_::
+  Write the output to the named *bw*(5) file instead of (or in addition to)
+  standard output.
 
-*avg*::
-Weighting scheme simply takes the average of all three values (i.e., R + G + B / 3.0).
-
-
-
-Individual color plane(s) can be selected via the *-R#*, *-G#*, and *-B#* options. The value used with each flag will be treated as a weight to be applied to that color.
-
-If 0 is supplied by the user for weights, then the weights assigned are 1.0 divided by the number of colors selected.
-
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-pix-bw -R0.0 -B0.0 < _file.pix_ > _file.bw_
+.Convert a color image to greyscale using NTSC luminance weighting
+====
+[source,bash]
+----
+pix-bw -e ntsc < image.pix > image.bw
+----
+Produces a perceptually weighted greyscale *bw*(5) image, giving green the most
+influence and blue the least, matching standard NTSC luminance.
+====
 
-will equally blend the red and blue color planes; because -G is omitted, the green color plane is not considered. (Had "-G0.0" been included in this example, the three colors would have been weighted equally, as in the default condition.)
-
-pix-bw -R0.3 -G0.6 -B0.1 < _file.pix_ > _file.bw_
-
-applies weights close to the *-ntsc* flag.
-
+.Extract a single color plane
+====
+[source,bash]
+----
+pix-bw -G1.0 -w 512 -n 512 scene.pix | bw-pix > green.pix
+----
+Selects only the green plane of a 512x512 image and pipes the resulting
+*bw*(5) image through *bw-pix*(1) to view the isolated green channel as a
+greyscale *pix*(5) image.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix-bw3*(1), *bw-pix*(1), *pix*(5), *bw*(5)
+*brlcad*(1), *bw-pix*(1), *pix*(5), *bw*(5)
 
 
 [[author]]

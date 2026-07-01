@@ -4,44 +4,106 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixbgstrip - strip smooth shaded background from a pix(5) file
+pixbgstrip - strip a uniform background color from a pix(5) file
 
 == SYNOPSIS
 
 [source]
 ----
-pixbgstrip [-a] [-t thresh] [-x x_offset_for_bg_pixel] [-s squarefilesize] [-w file_width] [-n file_height] [file.pix]
+pixbgstrip [-a] [-t _thresh_] [-x _x_offset_] [-s _squaresize_] [-w _width_] [-n _height_] [file.pix]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixbgstrip* reads a *pix*(5) format file from the named file, or from standard input if no file is specified. For each scanline read, all pixels that match the color of the background pixel are converted to black (0/0/0), and then the new scanline is written on stdout.
+*pixbgstrip* reads a *pix*(5) image from the named file, or from standard
+input if no file is given, and writes a new *pix*(5) image to standard output
+in which the background color has been replaced with black (0/0/0).
 
-The default X offset for the background pixel is zero (i.e. *-x* `0` ), but if the pixel at X offset zero is not the desired background (for example, if a border exists around the actual image), then another offset can be specified.
+For each scanline, the pixel at the background X offset (see *-x*) is taken as
+the reference background color. Every pixel on that scanline whose color falls
+within the matching threshold (see *-t*) of the reference is set to black; all
+other pixels are passed through unchanged. This is useful for keying out a
+solid or smoothly shaded backdrop, such as one produced by *pixbackgnd*(1),
+before compositing an image over a new background.
 
-By default, a pixel will be replaced with black only if it exactly matches the value of the background pixel (i.e., the matching threshold is zero; *-t* `0` ). However, if the background is slightly noisy, it may be necessary to perform a slightly looser matching. The threshold variable specifies how large a difference between an input pixel and the background pixel will still result in black being output.
+The image dimensions must be known so each scanline can be read. By default
+the input is assumed to be 512x512 pixels. The dimensions may be set
+explicitly with *-w*, *-n*, and *-s*, or guessed from the file length with
+*-a*.
 
-By default, the _pix_ file is assumed to be 512x512 pixels. Specifying the *-a* flag causes the program to attempt to autosize. A table of common image sizes is consulted, and if any match the size of the input file, then the width and height values associated with that size will be used.
+[[options]]
+== OPTIONS
 
-The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels.
+*-a*::
+  Autosize the input. The length of the input file is compared against a
+  table of common image sizes and, if a match is found, the corresponding
+  width is used. Only works when reading from a file, not a pipe.
 
-The *-n* _file_height_ flag specifies the height in scanlines of the input file.
+*-t* _thresh_::
+  Set the matching threshold (default 0). A pixel is treated as background
+  only if each of its red, green, and blue channels differs from the
+  reference background pixel by less than _thresh_. A larger value tolerates
+  a slightly noisy background.
 
-*-s* _squarefilesize_ sets both the height and width to the size given.
+*-x* _x_offset_::
+  Set the X offset, in pixels, of the pixel sampled as the background color
+  for each scanline (default 0, the leftmost pixel). Use this when the image
+  has a border so the true background can be sampled instead. The offset must
+  be smaller than the image width.
 
+*-s* _squaresize_::
+  Set both the width and height of the input to _squaresize_ pixels.
+  Disables autosizing.
+
+*-w* _width_::
+  Set the width, in pixels, of each input scanline. Disables autosizing.
+
+*-n* _height_::
+  Set the height, in scanlines, of the input. Disables autosizing. (The
+  program reads until end of file, so this value chiefly serves to turn off
+  autosizing.)
+
+[[examples]]
+== EXAMPLES
+
+.Key out a rendered background and composite over a new one
+====
+[source,bash]
+----
+rt -o image.pix model.g component.r
+pixbgstrip -w 1024 -n 1024 image.pix > stripped.pix
+pixmerge -g stripped.pix newbg.pix > composite.pix
+----
+A 1024x1024 image is rendered with *rt*(1), its solid background color is
+replaced with black by *pixbgstrip*, and the result is then layered over a
+replacement backdrop with *pixmerge*(1) (whose *-g* option treats black as
+transparent), yielding a composite image.
+====
+
+.Strip a slightly noisy bordered background
+====
+[source,bash]
+----
+pixbgstrip -a -x 5 -t 4 frame.pix > clean.pix
+----
+The input size is guessed automatically (*-a*), the background color is
+sampled five pixels in from the left edge to skip a thin border (*-x 5*), and
+a threshold of 4 (*-t 4*) tolerates minor noise in the background.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*pixbackgnd*(1), *pix-fb*(1), *fb-pix*(1), *libfb*(3), *pix*(5)
+*brlcad*(1), *pixbackgnd*(1), *pixmerge*(1), *pix-fb*(1), *fb-pix*(1), *pix*(5)
 
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-If the _pix_ file is shorter than expected, the program exits silently.
+If the input file is shorter than a whole number of scanlines, the trailing
+partial scanline is discarded and the program exits.
 
 
 [[author]]

@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixhist - display a histogram of a color pix file on a framebuffer
+pixhist - display a color histogram of a pix file on a framebuffer
 
 == SYNOPSIS
 
@@ -17,23 +17,60 @@ pixhist [-v] [file.pix]
 [[description]]
 == DESCRIPTION
 
-*pixhist* displays a histogram of the pixel values of the given *pix*(5) format file, or, if no file is specified, will read from standard input. The environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used.
+*pixhist* reads a *pix*(5) format color image and displays a per-channel
+histogram of its pixel values on the current framebuffer. If no _file.pix_
+is given, the image is read from standard input. The framebuffer is selected
+via the *FB_FILE* environment variable, falling back to the system default
+device (see *brlcad*(1)).
 
-The relative frequency is displayed on the x axis scaled so that the maximum is full screen. The value 0 is at the bottom of the screen, 255 is at the top. All three colors will be drawn on each scan line, and all are scaled by the same factor.The output is overlaid on whatever is currently on the display.
+The histogram is drawn into a 512x512 framebuffer. Each of the 256 possible
+intensity levels occupies two scan lines; level 0 is at the top of the
+display and level 255 at the bottom. For each level the relative frequency
+is drawn as a horizontal bar extending along the x axis, with the red, green,
+and blue channels overlaid on the same line. All three channels are scaled by
+the same factor so that the most populous bin spans the full width. The result
+is drawn over whatever is already on the display.
 
-The *-v* flag will output the histogram values on the terminal (standard error).
+The peak bin count and the resulting scale factor are always reported on
+standard error.
+
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose. In addition to the framebuffer display, print the red, green,
+  and blue counts (and the bar length) for each of the 256 levels on standard
+  error. If present, this flag must appear before the optional file name.
+
+
+[[examples]]
+== EXAMPLES
+
+.Inspect the tonal distribution of a rendered image
+====
+[source,bash]
+----
+rt -o frame.pix model.g component &&
+pixhist -v frame.pix
+----
+Renders a region to a *pix*(5) image with *rt*(1), then displays its color
+histogram on the framebuffer while also printing the per-level red, green, and
+blue counts to the terminal. Heavy clustering of bins near level 0 or 255
+indicates an underexposed or clipped image.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pixhist3d*(1), *pixstat*(1), *pix*(5)
+*brlcad*(1), *pixhist3d*(1), *pixstat*(1), *rt*(1), *pix*(5)
 
 
 [[bugs]]
 == BUGS
 
-This program assumes it has at least 512 lines in y to work with.
+This program assumes the framebuffer has at least 512 lines in y to work with.
 
 
 [[author]]

@@ -4,67 +4,118 @@
 :manmanual: BRL-CAD
 
 == NAME
-pix-fb - display a pix format RGB image file on a framebuffer
+pix-fb - display a pix format RGB image on a framebuffer
 
 == SYNOPSIS
 
 [source]
 ----
-pix-fb [-aicz1] [-F framebuffer] [-m #lines] [-s squarefilesize] [-w file_width] [-n file_height] [-S squarescrsize] [-W scr_width] [-N scr_height] [-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff] [-p seconds] [file.pix]
+pix-fb [-a] [-i] [-c] [-z] [-1] [-m _#lines_] [-F _framebuffer_] [-s _squarefilesize_] [-w _file_width_] [-n _file_height_] [-S _squarescrsize_] [-W _scr_width_] [-N _scr_height_] [-x _file_xoff_] [-y _file_yoff_] [-X _scr_xoff_] [-Y _scr_yoff_] [-p _seconds_] [_file.pix_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pix-fb* reads a *pix*(5) format file from the named file, or from standard input if no file is specified, and displays the image on the currently selected framebuffer. The environment variable FB_FILE specifies the current framebuffer, see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+*pix-fb* reads a *pix*(5) format RGB image from the named file, or from standard input if no file is given, and displays it on a framebuffer. The framebuffer defaults to the device named by the *FB_FILE* environment variable (see *brlcad*(1)) and can be overridden with *-F*.
 
-By default, the _pix_ file (and, automatically, the requested framebuffer size) is assumed to be 512x512 pixels. Specifying the *-a* flag causes the program to attempt to autosize. A table of common image sizes is consulted, and if any match the size of the input file, then the width and height values associated with that size will be used.
+A *pix*(5) file stores each pixel as three *unsigned char* bytes (red, green, blue) with the first pixel at the lower-left corner; scanlines run left-to-right, bottom-to-top. By default the image is assumed to be 512x512 pixels, and the framebuffer is opened at the file's dimensions unless an explicit screen size is requested.
 
-If the *-i* flag is specified, the image is output from top to bottom. Customarily, _pix_ files are stored bottom to top, so this flag inverts the image.
+To go the other direction (save a framebuffer image to a *pix*(5) file), use *fb-pix*(1).
 
-The *-c* flag causes the screen to be cleared before the image is displayed. The default behavior is to overwrite the current image with the new image without clearing the screen.
+[[options]]
+== OPTIONS
 
-The *-z* flag will zoom and center on the image being displayed to make it fill the display area, using the libfb fb_zoom() routine. fb_zoom only offers integer zoom factors, so displays with non-square screens (such as the SGI 3D machines) may find this option of limited usefulness.
+*-a*::
+  Autosize the input. The file's byte count is compared against a table of common image dimensions and the matching width and height are used. Requires file input (not a pipe).
 
-The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels. The *-n* _file_height_ flag specifies the height in scanlines of the input file. Both are set to to the same value via *-s* _squarefilesize_. (*-W* _scr_width_, *-N* _scr_height_, and *-S* _squarescrsize_ perform these roles for the display device; if none of these three options are used, the display device uses the dimensions of the input file.)
+*-i*::
+  Invert the image, displaying it top-to-bottom. Since *pix*(5) files are stored bottom-to-top, this turns the image upside down.
 
-*-x* _file_xoff_ *-y* _file_yoff_ and *-X* _scr_xoff_ *-Y* _scr_yoff_ will offset into the file or onto the screen by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+*-c*::
+  Clear the framebuffer before displaying. By default the new image overwrites whatever is already on screen without clearing.
 
-The *-1* flag causes the image to be written to the framebuffer one line at a time, using the *fb_write*(3) routine. This is the default behavior. The *-m* _#lines_ flag can be used to specify the number of lines to be written to the framebuffer in rectangular blocks of scanlines, using the *fb_writerect*(3) routine. In some circumstances, this can result in significantly faster image display, at the expense of the image being written less smoothly. If both *-m* and *-1* are specified, *-1* wins.
+*-z*::
+  Zoom and center the image to fill the display, using integer zoom factors via the libfb fb_view() routine.
 
-The *-p* flag specifies the (integer) number of _seconds_ to pause before the frame-buffer is closed.
+*-1*::
+  Force one scanline per write using *fb_write*(3). This is the default and overrides *-m*.
 
+*-m* _#lines_::
+  Write the image in rectangular blocks of _#lines_ scanlines using *fb_writerect*(3). This can be significantly faster on some framebuffers. Only used in the simplest non-inverted, non-zoomed, full-width case.
 
-[[format]]
-== FORMAT
+*-F* _framebuffer_::
+  Use the named _framebuffer_ device instead of the one given by *FB_FILE*.
 
-A *pix*(5) file contains sequences of pixels. Each pixel is stored as three *unsigned char* s, first red, then green, then blue. The first pixel in a _pix_ file is the lower left corner of the image. The pixels proceed from left-to-right across each scanline, with scanlines being written from the bottom to the top of the image. By convention, _pix_ images are usually square.
+*-s* _squarefilesize_::
+  Set both the input width and height to _squarefilesize_ pixels (disables autosizing).
 
+*-w* _file_width_::
+  Set the input scanline width, in pixels (disables autosizing).
+
+*-n* _file_height_::
+  Set the input height, in scanlines (disables autosizing).
+
+*-S* _squarescrsize_::
+  Set both the screen width and height to _squarescrsize_ pixels.
+
+*-W* _scr_width_::
+  Set the screen width, in pixels.
+
+*-N* _scr_height_::
+  Set the screen height, in pixels.
+
+*-x* _file_xoff_::
+  Skip _file_xoff_ pixels in from the left edge of the input. Origin is the lower-left corner.
+
+*-y* _file_yoff_::
+  Skip _file_yoff_ scanlines up from the bottom of the input.
+
+*-X* _scr_xoff_::
+  Offset the image _scr_xoff_ pixels horizontally on the screen (may be negative).
+
+*-Y* _scr_yoff_::
+  Offset the image _scr_yoff_ pixels vertically on the screen (may be negative).
+
+*-p* _seconds_::
+  Pause _seconds_ seconds before closing the framebuffer and exiting.
+
+[[examples]]
+== EXAMPLES
+
+.Render and display a model
+====
+[source,bash]
+----
+rt -o moss.pix -w 1024 -n 1024 moss.g all.g
+pix-fb -F /dev/X -a moss.pix
+----
+Ray traces the _all.g_ object from the _moss.g_ database into a 1024x1024 *pix*(5) image, then displays it on an X11 framebuffer. The *-a* flag autosizes from the file so the explicit dimensions need not be repeated.
+====
+
+.Pause so the result stays visible
+====
+[source,bash]
+----
+pix-fb -w 512 -n 512 -p 5 render.pix
+----
+Displays a 512x512 image and keeps the framebuffer open for 5 seconds before closing, useful in scripts or pop-up framebuffers that would otherwise vanish immediately.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*rt*(1), *fb-pix*(1), *libfb*(3), *pix*(5)
-
-
-[[diagnostics]]
-== DIAGNOSTICS
-
-If the _pix_ file is shorter than expected, the program exits silently.
-
+*brlcad*(1), *fb-pix*(1), *png-fb*(1), *rt*(1), *libfb*(3), *pix*(5)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

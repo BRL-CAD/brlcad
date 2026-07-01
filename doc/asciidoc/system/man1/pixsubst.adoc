@@ -4,33 +4,71 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixsubst - Change color values used in a PIX(5) format image
+pixsubst - substitute one color for another in a pix image
 
 == SYNOPSIS
 
 [source]
 ----
-pixsubst [ R_in G_in B_in] R_out G_out B_out < pixfile_in > pixfile_out
+pixsubst [_R_in_ _G_in_ _B_in_] _R_out_ _G_out_ _B_out_ < pixfile_in > pixfile_out
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixsubst* reads _pix(5)_ format pixels on the standard input and converts all pixels matching {R_in G_in B_in} to {R_out G_out B_out}. The pixels' values are specified as integers from 0 to 255. If {R_in G_in B_in} is not specified, the first pixel in the input stream is used as the value to be changed.
+*pixsubst* reads a *pix*(5) format image on standard input and writes it to
+standard output, replacing every pixel whose color matches the input color
+{_R_in_ _G_in_ _B_in_} with the output color {_R_out_ _G_out_ _B_out_}. All
+six values are integers in the range 0 to 255.
 
+If the input color {_R_in_ _G_in_ _B_in_} is omitted (only three values are
+given), the color of the very first pixel in the input stream is taken as the
+color to be replaced. That first pixel is itself substituted as well, so a
+fully uniform background can be recolored without knowing its exact value.
+
+Pixels that do not match the input color are passed through unchanged.
+
+[[examples]]
+== EXAMPLES
+
+.Replace a known background color
+====
+[source,bash]
+----
+pixsubst 0 0 0 255 255 255 < scene.pix > scene-white-bg.pix
+----
+Every pure-black pixel ({0 0 0}) in _scene.pix_ is changed to white
+({255 255 255}); all other pixels are left alone. This is handy for swapping a
+black background for a white one before compositing.
+====
+
+.Recolor the background using the first pixel as a key
+====
+[source,bash]
+----
+pixsubst 18 52 86 < input.pix | pix-fb -F /dev/X
+----
+Omitting the input color makes *pixsubst* sample the first pixel of
+_input.pix_ as the color to replace, substituting it with {18 52 86}. The
+result is piped to *pix-fb*(1) for display, which is useful when the exact
+background value is unknown but is known to be the top-left pixel.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-fb*(1), *pixfilter*(1), *pixmatte*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1999-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

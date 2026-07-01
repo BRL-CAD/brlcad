@@ -10,40 +10,87 @@ pix-ps - convert a color pix file to PostScript
 
 [source]
 ----
-pix-ps [-e] [-c|-l] [-L] [-s input_squaresize] [-w input_width] [-n input_height] [-S inches_square] [-W inches_width] [-N inches_height] [infile.pix] > outfile.ps
+pix-ps [-e] [-c|-l] [-L] [-s _input_squaresize_] [-w _input_width_] [-n _input_height_] [-S _inches_square_] [-W _inches_width_] [-N _inches_height_] [_input.pix_] > _output.ps_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pix-ps* will take a color *pix*(5) format file of given dimensions and produce a Postscript file on the standard output. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels. They can both be set to the same value via *-s.* If no input size is given, defaults of 512 are assumed.
+*pix-ps* reads a color *pix*(5) format image and writes a 24-bit color PostScript image to standard output. The input may be named on the command line or supplied on standard input.
 
-By default the output PostScript image size is 6.75 inches. The *-c* option (on by default) will center it on a 8.5 x 11 inch page; otherwise, the *-l* option uses the lower left corner. If a different output size is desired, *-S*, *-W*, and *-N* can be used to set the size in inches analogous to the input parameters. Finally, *-L* selects landscape mode, i.e. rotates the output image by ninety degrees.
+The *-w* and *-n* options set the input width and number of scan lines in pixels; *-s* sets both at once. If no input size is given, defaults of 512 are assumed.
 
-Encapsulated PostScript files can be generated via *-e.*
+By default the output is a 6.75 inch square centered on an 8.5 x 11 inch page. The *-S*, *-W*, and *-N* options change the output size in inches, analogous to the input options. The *-l* option places the image in the lower-left corner instead of centering it, and *-L* selects landscape orientation. An Encapsulated PostScript file, sized in pixels rather than inches, can be produced with *-e*.
 
+[[options]]
+== OPTIONS
+
+*-e*::
+  Produce an Encapsulated PostScript (EPS) file. The bounding box is sized in pixels and the page placement options (*-c*, *-l*, *-L*) are ignored.
+
+*-c*::
+  Center the image on an 8.5 x 11 inch page. This is the default.
+
+*-l*::
+  Place the image in the lower-left corner of the page rather than centering it.
+
+*-L*::
+  Landscape orientation; rotate the output image ninety degrees.
+
+*-s* _input_squaresize_::
+  Set both the input width and height to _input_squaresize_ pixels.
+
+*-w* _input_width_::
+  Set the input width to _input_width_ pixels (default 512).
+
+*-n* _input_height_::
+  Set the number of input scan lines to _input_height_ pixels (default 512).
+
+*-S* _inches_square_::
+  Set both the output width and height to _inches_square_ inches.
+
+*-W* _inches_width_::
+  Set the output width to _inches_width_ inches (default 6.75).
+
+*-N* _inches_height_::
+  Set the output height to _inches_height_ inches (default 6.75).
 
 [[examples]]
 == EXAMPLES
 
-pix-ps -c image.pix > image.ps
+.Center a default image on a page
+====
+[source,bash]
+----
+pix-ps image.pix > image.ps
+----
+Produces a 6.75 inch PostScript image from a 512x512 input and centers it on an 8.5 x 11 inch page, ready to send to a PostScript printer.
+====
 
-Produces a 6.75 inch PostScript file from a 512x512 input image and centers it on an 8.5 x 11 inch page.
+.Render a region of geometry directly to PostScript
+====
+[source,bash]
+----
+rt -s 1024 -o /dev/stdout share/db/moss.g all.g | pix-ps -w 1024 -n 1024 -L -S 7 > moss.ps
+----
+Ray traces the *moss.g* model at 1024x1024, pipes the resulting *pix*(5) data into *pix-ps*, and writes a 7 inch square landscape PostScript image.
+====
 
-pix-ps -e -w 1024 -n 768 image.pix > image.ps
-
-Takes the file image.pix which has the dimensions of 1024 pixels wide by 768 pixels high, and produces an Encapsulated Postscript version of it.
-
-pix-ps -L -c -S 5.2 < image.pix > image.ps
-
-Makes a PostScript file of the (assumed 512x512) image, with the output image 5.2 inches square, in landscape mode, centered on an 8.5 x 11 inch page.
+.Generate an Encapsulated PostScript figure
+====
+[source,bash]
+----
+pix-ps -e -w 800 -n 600 plot.pix > plot.eps
+----
+Creates an Encapsulated PostScript version of an 800x600 image, suitable for inclusion as a figure in a larger document.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bw-ps*(1), *pix*(5)
+*brlcad*(1), *bw-ps*(1), *rt*(1), *pix*(5)
 
 
 [[author]]
@@ -55,7 +102,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

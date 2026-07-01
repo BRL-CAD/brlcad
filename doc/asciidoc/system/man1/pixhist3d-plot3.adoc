@@ -10,22 +10,47 @@ pixhist3d-plot3 - output RGB color space utilization in 3D unix-plot form
 
 [source]
 ----
-pixhist3d-plot3 [[file.pix] | plot]
+pixhist3d-plot3 [file.pix] > file.plot3
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixhist3d-plot3* takes a color *pix*(5) format file and outputs points for each RGB color occurring in the image. The format of these points is the BRL extended three dimensional UNIX plot (see *libplot3*(3)). A red, green, and blue line is drawn along the edges of the color space indicating the coordinate axis. The resolution of the color space is 128x128x128, i.e. the least significant bit of each color plane is ignored.
+*pixhist3d-plot3* reads a color *pix*(5) format image, either from the named _file.pix_ or from standard input, and writes to standard output a point for each unique RGB color that occurs in the image. The points are emitted as a BRL extended three-dimensional UNIX plot (see *libbv*(3) and *plot3*(5)). Red, green, and blue lines are drawn along the edges of the color cube to mark the coordinate axes. The color space is sampled at a resolution of 128x128x128, i.e. the least significant bit of each color plane is ignored.
 
-These plots are best viewed on an interactive 3D UNIX plot display program, so that the color cube can be viewed from all angles. Anomalies in the colors of an image can often be seen, e.g. oversaturation resulting in intensity clipping.
+These plots are best viewed in an interactive 3D plot display program so the color cube can be rotated and examined from all angles. Anomalies in an image's colors are often readily apparent, e.g. oversaturation resulting in intensity clipping.
+
+The command takes no options.
+
+
+[[examples]]
+== EXAMPLES
+
+.Visualize the color space of an image
+====
+[source,bash]
+----
+pix-fb -i image.pix &
+pixhist3d-plot3 image.pix | plot3-fb
+----
+Plot the set of colors used by _image.pix_ as a 3D point cloud inside the RGB cube and display it on a framebuffer with *plot3-fb*(1). Running an interactive viewer that rotates the plot reveals clustering, gaps, and clipping in the image's color usage.
+====
+
+.Save the color cube plot for later viewing
+====
+[source,bash]
+----
+pixhist3d-plot3 < render.pix > render.plot3
+----
+Read _render.pix_ from standard input and store the resulting 3D plot in _render.plot3_, which can subsequently be displayed or converted with other *plot3*(5) tools.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pixhist3d*(1), *pixhist*(1), *libplot3*(3), *plot3-fb*(1), *pix*(5)
+*brlcad*(1), *pixhist3d*(1), *pixhist*(1), *plot3-fb*(1), *pix-fb*(1), *pix*(5), *plot3*(5)
 
 
 [[author]]

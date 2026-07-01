@@ -4,28 +4,63 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixdiff - highlight pixel colors which differ between two files
+pixdiff - highlight pixel colors which differ between two pix files
 
 == SYNOPSIS
 
 [source]
 ----
-pixdiff file1.pix file2.pix > out.pix
+pixdiff _file1.pix_ _file2.pix_ > _out.pix_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixdiff* highlights the pixels which differ between two color *pix*(5) format files. The input files are read pixel by pixel and if any of the color planes red, green, or blue differ, those colors are specially marked. Bytes that differ by +/-1 are drawn with intensity 192; bytes that differ more are displayed at full intensity of 255. If none of the color values differ, an NTSC converted black and white equivalent at one half the original intensity is displayed. This is to aid in seeing where in the image the different pixels lie. Upon completion, *pixdiff* reports the number of bytes matching, the number off by 1, and the number off by many.
+*pixdiff* compares two color *pix*(5) format images pixel by pixel and
+writes a new *pix*(5) image to standard output that highlights where they
+differ. For each pixel, if any of the red, green, or blue channels differ,
+the differing channels are specially marked: bytes that differ by +/-1 are
+written at intensity 192, while bytes that differ by more are written at
+full intensity 255. Where a pixel matches exactly, its NTSC black-and-white
+equivalent at half intensity is written instead, providing visual context
+for locating the differences within the image.
 
-Also see *bwdiff*(1), which can still be used on _pix_ files, yet can produce different kinds of output.
+Because comparison is per pixel, *pixdiff* is independent of image
+resolution. The two inputs must be the same size in bytes; otherwise the
+program reports the mismatch and exits. Either input file may be given as
+*-* to read from standard input. Output must be redirected; *pixdiff*
+refuses to write a *pix*(5) stream to a terminal.
+
+Upon completion, the count of bytes that matched, that were off by 1, and
+that were off by many is reported on standard error.
+
+Also see *bwdiff*(1), which can also operate on *pix*(5) files and can
+produce other kinds of difference output.
+
+
+[[examples]]
+== EXAMPLES
+
+.Diff two renderings and view the result
+====
+[source,bash]
+----
+pixdiff frame_a.pix frame_b.pix > diff.pix
+pix-png -w 512 -n 512 diff.pix > diff.png
+----
+Compares two 512x512 renderings, writing a highlight image to _diff.pix_,
+then converts it to PNG with *pix-png*(1) for easy viewing. Differing
+channels glow brightly against a dim grayscale backdrop, making changed
+regions easy to spot. The matching/off-by-1/off-by-many byte counts printed
+on standard error give a quick quantitative sense of how much changed.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bwdiff*(1), *pix-fb*(1), *pixstat*(1), *pix*(5)
+*brlcad*(1), *bwdiff*(1), *pix-fb*(1), *pix-png*(1), *pixstat*(1), *pix*(5)
 
 
 [[author]]

@@ -4,42 +4,78 @@
 :manmanual: BRL-CAD
 
 == NAME
-pix-sun - convert a BRL PIX(5) format image to a Sun Rasterfile format
+pix-sun - convert a BRL-CAD PIX image to a Sun rasterfile
 
 == SYNOPSIS
 
 [source]
 ----
-pix-sun [-d] [-s squaresize] [-w file_width] [-n file_height] < BRLpixfile > rasterfile
+pix-sun [-d] [-s _squaresize_] [-w _width_] [-n _height_] < _file.pix_ > _file.ras_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pix-sun* converts the _BRL PIX(5)_ format file on the standard input to a _Sun Rasterfile_ format file on the standard output. The rasterfile produced is a "standard" (as opposed to "byte encoded") image, with 8 bits per pixel, with a palette of 256 colors.
+*pix-sun* reads a *pix*(5) format image from standard input and writes an
+equivalent Sun Microsystems "rasterfile" to standard output.  The output is a
+standard (uncompressed) 8 bit deep rasterfile carrying an equal-RGB colormap of
+256 entries: a 6x6x6 color cube plus extra ramps for the primary colors and the
+grey levels.  Each 24 bit input pixel is quantized to the nearest colormap
+index, and the scanline order is reversed to account for the differing origin
+conventions of PIX and rasterfile images.
+
+The input width must be even.  When no dimensions are supplied, the image is
+assumed to be 512x512 pixels.
 
 
 [[options]]
 == OPTIONS
 
-
 *-d*::
-use a dither map
+  Dither the input while quantizing to 8 bits.  This spreads the quantization
+  error to better approximate the original colors at the cost of added noise.
+
+*-s* _squaresize_::
+  Set both the input width and height to _squaresize_ pixels.
+
+*-w* _width_::
+  Set the input width to _width_ pixels (must be even).
+
+*-n* _height_::
+  Set the input height to _height_ scanlines.
 
 
-*-n file_height*::
-tells *pix-sun* that the input is __file_height__ scanlines tall
+[[examples]]
+== EXAMPLES
+
+.Convert a non-square rendering to a rasterfile
+====
+[source,bash]
+----
+pix-sun -w 1024 -n 768 < render.pix > render.ras
+----
+Convert a 1024x768 PIX image produced by *rt*(1) into an 8 bit Sun
+rasterfile, preserving the image dimensions.
+====
+
+.Dither a high-color image to reduce banding
+====
+[source,bash]
+----
+rt -o scene.pix -s 512 scene.g all.g
+pix-sun -d -s 512 < scene.pix > scene.ras
+----
+Render a 512x512 image with *rt*(1) and then convert it with dithering enabled,
+which softens the visible banding introduced by reducing 24 bit color to the
+fixed 256-entry colormap.
+====
 
 
-*-s squaresize*::
-sets both the width and the height for the input to be _squaresize_
+[[see_also]]
+== SEE ALSO
 
-
-*-w file_width*::
-tells *pix-sun* that the input is __file_width__ pixels wide
-
-
+*brlcad*(1), *rt*(1), *pix*(5)
 
 
 [[author]]

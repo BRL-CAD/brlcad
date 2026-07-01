@@ -4,28 +4,82 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixhalve - halve a color pix file
+pixhalve - reduce the resolution of a color pix file by one half
 
 == SYNOPSIS
 
 [source]
 ----
-pixhalve [-a] [-s squareinsize] [-w in_width] [-n in_height] [<] [infile.pix] > outfile.pix
+pixhalve [-a] [-s squaresize] [-w file_width] [-n file_height] [file.pix] > outfile.pix
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixhalve* will take a color *pix*(5) format file of given dimensions and reduce the resolution of the file by one half in each direction using a 5x5 pyramid filter. If a file name is not given, standard input will be used. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels; they can be set to the same value via *-s*. Defaults of 512 are assumed for unspecified dimensions.
+*pixhalve* reads a color *pix*(5) image and writes a new *pix*(5) image
+at one half the resolution in each direction, so the output has one
+quarter as many pixels. Because the tool is used mainly to prepare
+imagery for NTSC television, it converts RGB to YUV and applies a 3x3
+pyramid filter to the luminance (Y) channel and a 5x5 pyramid filter to
+the chrominance (U and V) channels before downsampling.
 
-The *-a* flag indicates autosizing (off by default).
+The input is read from _file.pix_ if given, otherwise from standard
+input; the result is always written to standard output. The input width
+must be known so scanlines can be split correctly: it defaults to 512
+pixels and may be set with *-w*, with *-s* (square images), or detected
+automatically from a named file with *-a*. The image height does not
+need to be specified, as input is processed until end of file.
 
+[[options]]
+== OPTIONS
+
+*-a*::
+  Autosize the input by reading the dimensions from the named file.
+  This requires a file argument and has no effect on piped input.
+
+*-s* _squaresize_::
+  Set both the input width and (nominally) height to _squaresize_
+  pixels, for square images. Disables autosizing.
+
+*-w* _file_width_::
+  Set the input scanline width to _file_width_ pixels (default 512).
+  Disables autosizing.
+
+*-n* _file_height_::
+  Accepted for compatibility and to disable autosizing. The height value
+  itself is ignored, since input is consumed until end of file.
+
+[[examples]]
+== EXAMPLES
+
+.Downsample a rendered frame for NTSC preview
+====
+[source,bash]
+----
+rt -o frame.pix -w 1024 -n 1024 model.g component &&
+pixhalve -s 1024 frame.pix | pix-fb -w 512 -n 512
+----
+Renders a 1024x1024 image with *rt*(1), halves it to 512x512 with the
+NTSC-tuned YUV filtering, and displays the result on a framebuffer with
+*pix-fb*(1).
+====
+
+.Halve a file twice for a quarter-size thumbnail
+====
+[source,bash]
+----
+pixhalve -a big.pix | pixhalve -w 256 > quarter.pix
+----
+Autosizes the first pass from the file header, producing a half-size
+intermediate, then halves again so the final image is one quarter of the
+original width (e.g. 1024 to 256).
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pixcrop*(1), *pixrect*(1), *pixinterp2x*(1), *pixscale*(1), *pix*(5)
+*brlcad*(1), *pixcrop*(1), *pixrect*(1), *pixinterp2x*(1), *pixscale*(1), *pix-fb*(1), *pix*(5)
 
 
 [[author]]

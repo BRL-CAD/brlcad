@@ -4,64 +4,91 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixfilter - apply a 3x3 filter to a color pix file
+pixfilter - apply a 3x3 kernel filter to a color pix file
 
 == SYNOPSIS
 
 [source]
 ----
-pixfilter [-f type] [-v] [-d div] [-o offset] [-w width] [-n height] [-s squaresize] [file.pix] > newfile.pix
+pixfilter [-v] [-f type] [-d div] [-o offset] [-w width] [-n height] [-s squaresize] [file.pix] > newfile.pix
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixfilter* applies one of several 3x3 kernel filters to a color *pix*(5) format file. It will take a file name or else read from standard input. The input file size will be assumed to be 512 by 512 pixels unless the *-w*, and/or *-n*, or the *-s* flags are used to tell it otherwise. By default a low pass filter is used. The *-f* _type_ flag can be used to specify a different type of filter.
+*pixfilter* convolves a 3x3 kernel filter over a color *pix*(5) format
+image, reading from the named _file.pix_ or from standard input and
+writing the result to standard output.  The outermost rows and columns
+are copied through untouched.  The input is assumed to be 512x512
+pixels unless *-w*, *-n*, or *-s* are given.  A low-pass filter is used
+by default; other kernels are selected with *-f*.
 
-The _type_ choices include:
-
-
-*lo*::
-low pass (the default)
-
-
-*hi*::
-high pass
-
-
-*vg*::
-vertical gradient
+Each kernel divides the convolved result by a divisor to keep values in
+the 0-255 range (the boxcar average, for instance, divides by nine), and
+some kernels add an offset.  The Laplacian is centered about zero, so it
+adds 128 to express a difference from neutral grey.  The *-d* and *-o*
+options override a kernel's built-in divisor and offset.
 
 
-*hg*::
-horizontal gradient
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose; print the kernel values and the resulting minimum and maximum
+  pixel values on standard error.
+
+*-f* _type_::
+  Select the filter kernel.  Recognized _type_ values are *lo* (low pass,
+  the default), *hi* (high pass), *la* (Laplacian), *hg* (horizontal
+  gradient), *vg* (vertical gradient), and *b* (boxcar average).
+
+*-d* _div_::
+  Divide the convolved result by _div_ instead of the kernel's default
+  divisor.  Must be non-zero.
+
+*-o* _offset_::
+  Add _offset_ to the result instead of the kernel's default offset.
+
+*-w* _width_::
+  Set the input scanline width in pixels (default 512).
+
+*-n* _height_::
+  Set the number of scanlines in the input (default 512).
+
+*-s* _squaresize_::
+  Set both width and height to _squaresize_ pixels.
+
+*-h*, *-?*::
+  Print a usage message, including the list of filter types, and exit.
 
 
-*la*::
-laplacian
+[[examples]]
+== EXAMPLES
 
-
-*b*::
-boxcar low pass
-
-
-
-Most filters divide the result of the kernel multiplication by some value in order to scale it back to a 0->255 range. For example, the boxcar divides by nine. The *-d* flag can be used to change this divisor. Some filters also add an offset to their results. The output of a laplacian for example is "centered" about zero, thus it adds 128 to the answer to yield a difference from neutral grey. The *-o* flag can be used to change this offset.
-
-The *-v* flag displays the kernel values on standard error.
+.Edge detection on a rendered image
+====
+[source,bash]
+----
+rt -s 1024 -o scene.pix scene.g all.g
+pixfilter -s 1024 -f la scene.pix > edges.pix
+----
+Renders a 1024x1024 image with *rt*(1), then applies the Laplacian
+kernel to produce an edge-emphasized image whose values are centered on
+neutral grey, useful for highlighting object boundaries.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pixscale*(1), *pix*(5)
+*brlcad*(1), *pix3filter*(1), *pixscale*(1), *rt*(1), *pix*(5)
 
 
 [[bugs]]
 == BUGS
 
-This should allow any 3x3 kernel to be specified.
+This should allow any 3x3 kernel to be specified directly.
 
 
 [[author]]

@@ -1,48 +1,65 @@
 = PIXELSWAP(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-pixelswap - Interchange two specific pixel colors in a PIX image stream
+pixelswap - interchange two pixel colors in a pix image
 
 == SYNOPSIS
 
 [source]
 ----
-pixelswap [-d pixeldepth] r g b R G B < input.pix > output.pix
+pixelswap [-d _pixeldepth_] _r_ _g_ _b_ _R_ _G_ _B_ < input.pix > output.pix
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixelswap* reads a stream of RGB PIX data from standard input, searches for two specific colors defined by the user on the command line, and swaps them. Any pixel matching the first color (_r g b_) is changed to the second color (_R G B_), and any pixel matching the second color (_R G B_) is changed to the first color (_r g b_). All other colors are passed through to standard output unmodified.
+*pixelswap* reads a stream of RGB *pix*(5) data from standard input and
+exchanges two specific colors named on the command line.  Any pixel matching
+the first color (_r_ _g_ _b_) is rewritten as the second color (_R_ _G_ _B_),
+and any pixel matching the second color is rewritten as the first.  All other
+pixels are passed through to standard output unchanged.
 
-Currently, *pixelswap* assumes that the image format consists of 3-byte RGB pixels, regardless of the _pixeldepth_ option provided.
+Each of the six color components is an integer in the range 0-255.  Both
+standard input and standard output must be redirected; *pixelswap* refuses to
+run if either is a terminal.
+
+Although a pixel depth may be specified with *-d*, the current implementation
+always processes 3-byte RGB pixels and ignores the requested depth.
 
 [[options]]
 == OPTIONS
 
 *-d* _pixeldepth_::
-Specify the number of bytes per pixel. (Note: Currently, this option is parsed but ignored; the tool always processes 3 bytes per pixel).
+  Number of bytes per pixel (must be a positive integer).  Accepted for
+  forward compatibility but currently ignored; pixels are always treated as
+  3-byte RGB.
 
-*r g b*::
-The red, green, and blue integer values (0-255) of the first color to be swapped.
-
-*R G B*::
-The red, green, and blue integer values (0-255) of the second color to be swapped.
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Swapping Red and Blue
-[example]
+.Recolor a rendered frame
 ====
-**pixelswap 255 0 0 0 0 255 < in.pix > out.pix**
+[source,bash]
+----
+rt -o frame.pix scene.g region > /dev/null
+pixelswap 255 0 0 0 0 255 < frame.pix > swapped.pix
+----
+Ray traces a model with *rt*(1), then swaps every pure-red pixel for pure-blue
+and every pure-blue pixel for pure-red, producing _swapped.pix_.  This is a
+quick way to re-key flat region colors without re-rendering the scene.
+====
 
-Reads the PIX image _in.pix_, changes all purely red pixels to purely blue, and all purely blue pixels to purely red, then writes the result to _out.pix_.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-png*(1), *pixmatte*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
@@ -52,7 +69,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

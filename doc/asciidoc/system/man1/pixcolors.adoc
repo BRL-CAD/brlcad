@@ -4,30 +4,53 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixcolors - Count/list color values used in a PIX(5) format image
+pixcolors - count or list the distinct colors used in a pix image
 
 == SYNOPSIS
 
 [source]
 ----
-pixcolors [-v] < pixfile
+pixcolors [-v] [file.pix]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixcolors* reports on the standard output the number of distinct colors used in the _pix(5)_ format file on the standard input.
+*pixcolors* reads a *pix*(5) format image and writes to standard output the
+number of distinct color values it contains. The image is read from the named
+_file.pix_, or from standard input if no file is given. Each pixel is treated
+as a 24-bit RGB value, so the count ranges from 1 to 16,777,216.
 
 
 [[options]]
 == OPTIONS
 
-
 *-v*::
-Causes a sorted list of the unique colors used to be printed on standard output in addition to the count report.
+  Verbose. In addition to the color count, print a sorted list of every unique
+  color used, one per line, as three decimal *R G B* component values.
 
 
+[[examples]]
+== EXAMPLES
+
+.List the unique colors in a region of an image
+====
+[source,bash]
+----
+pixrect -s 512 -w 64 -n 64 -x 100 -y 100 frame.pix | pixcolors -v
+----
+Extracts a 64x64 tile from a 512-line image with *pixrect*(1) and pipes it to
+*pixcolors* to print the count followed by every distinct *R G B* triple in
+that tile, which is useful for checking whether an area is a flat color or a
+gradient.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixrect*(1), *pixhist*(1), *pixstat*(1), *pix*(5)
 
 
 [[author]]

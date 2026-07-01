@@ -4,36 +4,95 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixrect - extract a rectangle from a color pix file
+pixrect - extract a rectangular region from a color pix file
 
 == SYNOPSIS
 
 [source]
 ----
-pixrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height] [-x xorig] [-y yorig] [-o out_file.pix] file.pix > [out_file.pix]
+pixrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height] [-x xorig] [-y yorig] [-o out_file.pix] [file.pix] [> out_file.pix]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixrect* extracts a rectangular region from a colored *pix*(5) format file. The default input image size is 512x512. The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the lower left corner) are passed as command line arguments.
+*pixrect* extracts a rectangular sub-region from a *pix*(5) format color
+image, writing the cropped result as a new *pix*(5) image. It is intended
+for pulling a portion out of a potentially very large image without loading
+unrelated scanlines.
 
-The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels. *-W* _scr_width_ does the same for the display device.
+The input dimensions default to 512x512 pixels. The origin of the region to
+extract is given by _xorig_ and _yorig_, which default to 0,0 (the lower
+left corner of the image). The size of the extracted region is given by the
+output dimension options and must be specified; the output width and height
+default to 0, and *pixrect* will report an error and exit if either is left
+unset.
 
-The *-n* _file_height_ and *-N* _scr_height_ flags specifies the height in scanlines of the input file or display device respectively.
+Input is read from _file.pix_ if given, otherwise from standard input.
+Output is written to standard output and/or to the file named with *-o*.
 
-*-s* _squarefilesize_ and *-S* _squarescrsize_ set both the height and width to the size given (for input file and display device respectively).
 
-*-o* _out_file.pix_ is a way of specifying output file name. If standard output is also redirected or piped, *pixrect* writes the same output to both destinations.
+[[options]]
+== OPTIONS
 
-This utility supports redirected input/output images.
+*-s* _squaresize_::
+  Set both the input width and height to _squaresize_ pixels.
+
+*-w* _width_::
+  Set the input scanline width, in pixels (default 512).
+
+*-n* _height_::
+  Set the input height, in scanlines (default 512).
+
+*-S* _out_squaresize_::
+  Set both the output width and height to _out_squaresize_ pixels.
+
+*-W* _out_width_::
+  Set the output width, in pixels.
+
+*-N* _out_height_::
+  Set the output height, in scanlines.
+
+*-x* _xorig_::
+  Set the x coordinate of the lower left corner of the region to extract (default 0).
+
+*-y* _yorig_::
+  Set the y coordinate of the lower left corner of the region to extract (default 0).
+
+*-o* _out_file.pix_::
+  Write the extracted image to _out_file.pix_. If standard output is also
+  redirected or piped, the same image is written to both destinations.
+
+
+[[examples]]
+== EXAMPLES
+
+.Crop a 256x256 tile from a large image
+====
+[source,bash]
+----
+pixrect -w 1024 -n 1024 -x 384 -y 384 -S 256 image.pix > center.pix
+----
+Treats image.pix as a 1024x1024 image and extracts a 256x256 square starting
+at pixel (384,384), producing a centered tile in center.pix.
+====
+
+.Extract a region and view it directly
+====
+[source,bash]
+----
+pixrect -s 512 -x 0 -y 256 -W 512 -N 256 render.pix | pix-fb -w 512 -n 256
+----
+Pulls the top half of a 512x512 image and pipes the 512x256 result straight
+to a framebuffer with *pix-fb*(1) for immediate inspection.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bwrect*(1), *pix*(5), *bw*(5)
+*brlcad*(1), *bwrect*(1), *pix-fb*(1), *pix*(5), *bw*(5)
 
 
 [[author]]

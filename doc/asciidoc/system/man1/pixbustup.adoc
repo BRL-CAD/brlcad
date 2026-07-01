@@ -22,10 +22,32 @@ pixbustup basename width [image_offset] [first_number] < input.pix
 This program is mostly a holdover from the days when *rt*(1) wrote animations into one huge file, but it is still sometimes useful.
 
 
+[[examples]]
+== EXAMPLES
+
+.Split an animation into per-frame files
+====
+[source,bash]
+----
+pixbustup frame 512 < anim.pix
+----
+Break a concatenated stream of 512x512 *pix*(5) images in _anim.pix_ into individual files _frame.0_, _frame.1_, _frame.2_, and so on, one per frame.
+====
+
+.Extract a numbered subset of frames
+====
+[source,bash]
+----
+pixbustup frame 512 100 100 < anim.pix
+----
+Skip the first 100 images in _anim.pix_, then write the remaining 512x512 frames starting at _frame.100_ so the output file names match the original frame numbering. The resulting files can be converted for viewing with *pix-png*(1).
+====
+
+
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *rt*(1), *pix*(5)
+*brlcad*(1), *rt*(1), *pix-png*(1), *pix*(5)
 
 
 [[author]]

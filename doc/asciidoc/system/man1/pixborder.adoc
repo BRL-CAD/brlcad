@@ -10,42 +10,132 @@ pixborder - add a 1-pixel-wide border to regions of a specified color
 
 [source]
 ----
-pixborder [ -b 'R G B'] [ -e 'R G B'] [ -i 'R G B'] [ -t 'R G B'] [ -B 'H S V'] [ -E 'H S V'] [ -I 'H S V'] [ -T 'H S V'] [-x left_edge] [-y bottom_edge] [-X right_edge] [-Y top_edge] [-a] [-n file_height] [-s squaresize] [-w file_width] [file.pix]
+pixborder [-a] [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']
+          [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']
+          [-x _left_edge_] [-y _bottom_edge_] [-X _right_edge_] [-Y _top_edge_]
+          [-s _squaresize_] [-w _file_width_] [-n _file_height_] [_file.pix_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixborder* reads an input stream of _pix_ data, looking for maximal contiguous regions of a specified interior color, and writes out the _pix_ data with all pixels on the boundaries of these regions changed to a specified border color.
+*pixborder* reads a stream of *pix*(5) data, finds maximal contiguous regions of
+a specified interior color, and writes out *pix*(5) data with every pixel on the
+boundary of such a region replaced by a border color. (This outlines colored
+regions; it does not draw a frame around the whole image.) With no input file
+given, data is read from standard input; output always goes to standard output.
 
-The way *pixborder* decides if a given pixel is on the boundary depends on how the user specified the interior and exterior. The *-i* option causes *pixborder* to replace the default interior color of 255 255 255 by _R G B_, while the *-I* option replaces it by _H S V_, which are reals, with _H_ in [0, 360) and _S_, _V_ in [0, 1]. Similarly, the *-e* and *-E* options replace the default exterior color of 1 1 1. If the user specified colors for both or neither of the interior and exterior, then a pixel is on the boundary provided that it has the interior color and at least one of its four neighbors (left, right, above, and below) has the exterior color. If, on the other hand, the user specified only the interior (exterior) color, then a pixel is on the boundary provided that it has the interior color (does not have the exterior color) and at least one of its neighbors does not have the interior color (has the exterior color).
+Whether a pixel is on a boundary depends on the interior and exterior colors.
+The default interior color is 255 255 255 (white) and the default exterior color
+is 1 1 1. If both or neither color is specified, a pixel is on the boundary when
+it has the interior color and at least one of its four neighbors (left, right,
+above, below) has the exterior color. If only one color is specified, a pixel is
+on the boundary when it matches (or, for an exterior-only specification, does not
+match) that color and at least one neighbor differs accordingly.
 
-The *-b* and *-B* options are for the specification of what will be used for the border.
-
-Variability in the interior and exterior colors may be accommodated by the *-t* and *-T* options, with which one specifies a symmetric tolerance for each of the red, green, and blue channels or hue, saturation, and value. Any color within the specified tolerance of the nominal interior (exterior) color is treated as though it were the nominal color.
-
-The *-a* option is for autosizing. The *-w* option is for file width, the *-n* option is for file height, and the *-s* option sets file width and height to the same value. (Values are in pixels.)
-
-Changes are restricted to a specified rectangular portion of the image (by default this is the entire image). The *-x* option sets the left edge of that rectangle: no pixels to the left of this edge are changed. The *-X*, *-y*, and *-Y* options respectively set the right, bottom, and top edges in the same manner.
+Colors may be given in RGB (channels in {0..255}) or HSV (with _H_ in [0, 360)
+and _S_, _V_ in [0, 1]). A symmetric per-channel tolerance (*-t* or *-T*) lets
+nearby colors be treated as the nominal interior or exterior color.
 
 
-[[hint]]
-== HINT
+[[options]]
+== OPTIONS
 
-To obtain borders more than one pixel wide, one can run several copies of *pixborder* in a pipeline. In doing this to get, for instance, a border made up of constant-thickness segments of different colors, one should produce all the segments of a given layer before beginning any segments of the next inner layer.
+*-a*::
+  Autosize: guess the input dimensions from the file (only works for a named
+  *pix*(5) file, not standard input).
+
+*-b* _'R G B'_::
+  Set the border color in RGB. Default is 1 1 1.
+
+*-B* _'H S V'_::
+  Set the border color in HSV.
+
+*-e* _'R G B'_::
+  Set the exterior (background) color in RGB. Default is 1 1 1.
+
+*-E* _'H S V'_::
+  Set the exterior (background) color in HSV.
+
+*-i* _'R G B'_::
+  Set the interior (region) color in RGB. Default is 255 255 255.
+
+*-I* _'H S V'_::
+  Set the interior (region) color in HSV.
+
+*-t* _'R G B'_::
+  Set a symmetric per-channel RGB tolerance for color matching. Default is 0 0 0.
+
+*-T* _'H S V'_::
+  Set a symmetric per-channel HSV tolerance for color matching.
+
+*-s* _squaresize_::
+  Set both the input width and height to _squaresize_ pixels.
+
+*-w* _file_width_::
+  Set the input width in pixels. Default is 512.
+
+*-n* _file_height_::
+  Set the input height in pixels. Default is 512.
+
+*-x* _left_edge_::
+  Restrict changes to pixels at or to the right of this column. Default is 0.
+
+*-X* _right_edge_::
+  Restrict changes to pixels at or to the left of this column. Default is the
+  rightmost column.
+
+*-y* _bottom_edge_::
+  Restrict changes to pixels at or above this row. Default is 0.
+
+*-Y* _top_edge_::
+  Restrict changes to pixels at or below this row. Default is the topmost row.
+
+
+[[examples]]
+== EXAMPLES
+
+.Outline red regions in yellow
+====
+[source,bash]
+----
+pixborder -i '255 0 0' -b '255 255 0' -t '40 40 40' scene.pix > outlined.pix
+----
+Outlines every red region (red 255 0 0, with a tolerance of 40 per channel to
+catch anti-aliased edges) by recoloring its boundary pixels yellow.
+====
+
+.Draw a multi-pixel-wide border with a pipeline
+====
+[source,bash]
+----
+pixborder -i '255 0 0' -b '0 0 0' scene.pix | \
+    pixborder -i '255 0 0' -b '0 0 0' > thick.pix
+----
+*pixborder* only thickens by one pixel per pass, so chaining several invocations
+in a pipeline widens the border. To build a border of constant-thickness bands of
+different colors, produce all segments of an outer layer before any of the next
+inner layer.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-fb*(1), *pixfilter*(1), *pix*(5)
 
 
 [[author]]
 == AUTHOR
 
-Paul Tanenbaum
+BRL-CAD Team
 
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1996-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

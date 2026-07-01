@@ -11,49 +11,93 @@ pixbackgnd - generate a pix(5) shaded background
 [source]
 ----
 pixbackgnd [-H] [-i] [-s squaresize] [-w width] [-n height] [-t title_height] [-a top_inten] [-b bottom_inten] hue saturation > file.pix
-----
-
-
-[source]
-----
-pixbackgnd [-H] [-i] [-s squaresize] [-w width] [-n height] [-t title_height] red green blue > file.pix
+pixbackgnd [-H] [-i] [-s squaresize] [-w width] [-n height] [-t title_height] [-a top_inten] [-b bottom_inten] red green blue > file.pix
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixbackgnd* generates a *pix*(5) format shaded background on stdout suitable for making slides for a presentation on. The upper portion of the screen is reserved for a title area, and is drawn at constant intensity 240, followed by a 4 scanline white bar, after which the intensity smoothly decreases from 240 to 50. The values of _hue_ and _saturation_ range from 0 to 255 inclusive and can be selected via *fbcolor*(1). A hue of 160 is a pleasing blue.
+*pixbackgnd* generates a *pix*(5) format shaded background on standard
+output, suitable for use as a backdrop for presentation slides. The
+color is specified either as a _hue_ and _saturation_ pair or as an
+explicit _red_ _green_ _blue_ triple; in both cases the component values
+range from 0 to 255 inclusive and may be chosen interactively with
+*fbcolor*(1). A hue of 160 is a pleasing blue.
 
-The *-a* and *-b* options can be used to set the top and bottom intensity, in the range of 0 to 255. By default, the top intensity is 240, and the bottom is 50 (these values are used above).
+The upper _title_height_ scanlines are drawn at the constant top
+intensity, followed by a 4 scanline white bar, after which the intensity
+of the chosen color smoothly ramps down to the bottom intensity over the
+remainder of the image. By default the top intensity is 240 and the
+bottom intensity is 50; these may be overridden with the *-a* and *-b*
+options.
 
-*-w* and *-n* options set the width and height, respectively; *-s* sets them to the same value. By default, the display is assumed to be 512x512 pixels; specifying the *-H* flag, in addition to changing the title height to 90 scanlines (see below), changes the output size to 1024x1024.
+The output defaults to 512x512 pixels. The *-w* and *-n* options set the
+width and height independently, while *-s* sets both at once. The *-H*
+flag selects a 1024x1024 image and also raises the title area to 90
+scanlines.
 
-By default, the title height is 80 scanlines, or 90 scanlines if the *-H* flag is set, but the *-t* _title_height_ option may be used to specify another value. If __title_height__ is set to zero, then the white bar is omitted as well, and the entire display is smoothly shaded.
+Output is written to standard output and must be redirected to a file or
+pipe; *pixbackgnd* refuses to write *pix*(5) data to a terminal.
 
-If the *-i* flag is specified, the scanlines will be written out in inverted order (i.e., top to bottom).
+[[options]]
+== OPTIONS
 
+*-H*::
+  High resolution. Produce a 1024x1024 image instead of 512x512, and
+  set the title height to 90 scanlines.
+
+*-i*::
+  Invert the output, writing scanlines top to bottom rather than the
+  bottom-to-top order normally used for *pix*(5) data.
+
+*-s* _squaresize_::
+  Set both the width and the height to _squaresize_ pixels.
+
+*-w* _width_::
+  Set the output width to _width_ pixels.
+
+*-n* _height_::
+  Set the output height to _height_ pixels.
+
+*-t* _title_height_::
+  Set the height in scanlines of the constant-intensity title area at
+  the top of the image (default 80, or 90 with *-H*).
+
+*-a* _top_inten_::
+  Set the top (starting) intensity in the range 0 to 255 (default 240).
+
+*-b* _bottom_inten_::
+  Set the bottom (ending) intensity in the range 0 to 255 (default 50).
 
 [[examples]]
 == EXAMPLES
 
+.Composite a foreground image onto a shaded backdrop
+====
+[source,bash]
+----
 pixbackgnd 160 200 | pixmerge fg.pix - | pix-fb
+----
+Generate a blue shaded background (hue 160, saturation 200), merge an
+existing foreground image fg.pix over it with *pixmerge*(1), and display
+the result on a framebuffer with *pix-fb*(1).
+====
 
-pixbackgnd -t120 160 250
-
-pixbackgnd -i -t0 160 200 | pix-fb
-
+.Produce a high-resolution untitled backdrop
+====
+[source,bash]
+----
+pixbackgnd -H -a 200 -b 30 160 200 > backdrop.pix
+----
+Write a 1024x1024 backdrop with a stronger top-to-bottom intensity ramp
+(from 200 down to 30) to the file backdrop.pix for later compositing.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fbcolor*(1), *pix-fb*(1), *pixmerge*(1)
-
-
-[[bugs]]
-== BUGS
-
-The starting and ending intensities should probably be an option.
+*brlcad*(1), *fbcolor*(1), *pix-fb*(1), *pixmerge*(1), *pix*(5)
 
 
 [[author]]

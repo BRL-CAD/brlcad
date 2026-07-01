@@ -10,45 +10,78 @@ pixscale - change the size of a color pix file
 
 [source]
 ----
-pixscale [-r] [-s squareinsize] [-w in_width] [-n in_height] [-S squareoutsize] [-W out_width] [-N out_height] [infile.pix] > outfile.pix
+pixscale [-r] [-s _squareinsize_] [-w _inwidth_] [-n _inheight_] [-S _squareoutsize_] [-W _outwidth_] [-N _outheight_] [_in.pix_] > _out.pix_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixscale* will take a color *pix*(5) format file of given dimensions and produce a larger or smaller scaled version. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels. They can both be set to the same value via *-s.* Similarly, the *-W* and *-N* flags specify the desired output file width and number of scan lines in pixels. They can both be set to the same value via *-S.* Defaults of 512 are assumed for any unspecified dimensions.
+*pixscale* reads a color *pix*(5) format file of given dimensions and writes a larger or smaller scaled version to standard output. If no input file is given, the input is read from standard input. Input and output dimensions default to 512x512 pixels for any dimension not explicitly specified.
 
-The algorithm used is bilinear interpolation if scaling up, and a box filter of arbitrary size if scaling down. For the box filter a "square pixel" assumption is made; that is, all whole and fractional input pixels falling into a rectangle the size of an output pixel contribute equally according to the fraction of the output pixel area they cover. When interpolating, the edge pixels are preserved, i.e. all of the interpolated pixels fall inside of the edges. This can be a bit surprising when say doubling the size of a file as only the edge pixels will fall at exactly the location of an output pixel.
-
-Specifying the *-r* flag changes from bilinear interpolation to nearest neighbor interpolation, i.e. it enlarges the image by pixel replication.
+The algorithm is bilinear interpolation when scaling up and a box filter of arbitrary size when scaling down. The box filter makes a "square pixel" assumption, so all whole and fractional input pixels falling into a rectangle the size of an output pixel contribute according to the fraction of the output pixel area they cover. When interpolating, the edge pixels are preserved, i.e. all interpolated pixels fall inside the edges. This program cannot scale up in one dimension while scaling down in the other.
 
 For 2X interpolation, a much faster alternative is *pixinterp2x*(1).
 
+[[options]]
+== OPTIONS
+
+*-r*::
+  Use nearest neighbor interpolation (pixel replication) instead of bilinear interpolation when scaling up.
+
+*-s* _squareinsize_::
+  Set both the input width and input height to _squareinsize_ pixels.
+
+*-w* _inwidth_::
+  Set the input file width in pixels (default 512).
+
+*-n* _inheight_::
+  Set the input file height (number of scan lines) in pixels (default 512).
+
+*-S* _squareoutsize_::
+  Set both the output width and output height to _squareoutsize_ pixels.
+
+*-W* _outwidth_::
+  Set the output file width in pixels (default 512).
+
+*-N* _outheight_::
+  Set the output file height (number of scan lines) in pixels (default 512).
+
+[[examples]]
+== EXAMPLES
+
+.Generate a thumbnail
+====
+[source,bash]
+----
+pixscale -w 1024 -n 768 -W 128 -N 96 image.pix > thumb.pix
+----
+Reads a 1024x768 color *pix*(5) image and produces a 128x96 thumbnail using the box filter, preserving the 4:3 aspect ratio.
+====
+
+.Double an image with crisp pixels
+====
+[source,bash]
+----
+pixscale -r -s 256 -S 512 image.pix | pix-png > big.png
+----
+Reads a 256x256 image and doubles it to 512x512 using nearest neighbor replication (sharp edges, no blurring), then pipes the result through *pix-png*(1) to create a PNG.
+====
 
 [[see_also]]
 == SEE ALSO
 
 *brlcad*(1), *pixcrop*(1), *pixrect*(1), *pixinterp2x*(1), *pix*(5)
 
-
-[[bugs]]
-== BUGS
-
-This program cannot scale up in one dimension and down in the other at the same time.The box filter used for scaling down results in the usual high-frequency ripple.Optional cubic interpolation would be nice.
-
-
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

@@ -4,26 +4,70 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixsaturate - saturate a pix file
+pixsaturate - adjust the color saturation of a pix file
 
 == SYNOPSIS
 
 [source]
 ----
-pixsaturate saturation < infile.pix > outfile.pix
+pixsaturate [-h | -?] _saturation_ < infile.pix > outfile.pix
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixsaturate* saturates a color pix file using the *saturation* value. A value of 0 gives monochrome, 1.0 gives the original image, and values larger than 1.0 give a more saturated image.
+*pixsaturate* reads a color *pix*(5) image from standard input, adjusts its
+color saturation by the given _saturation_ factor, and writes the result to
+standard output. Each pixel's luminance is computed with fixed perceptual
+weights (R=79, G=156, B=21 out of 256) and the chroma is scaled toward or away
+from that gray value.
+
+The _saturation_ argument must be a non-negative number. A value of 0.0 yields a
+monochrome (grayscale) image, 1.0 leaves the image unchanged, and values greater
+than 1.0 increase color intensity. Output samples are clamped to the 0..255
+range.
+
+Both standard input and standard output must be pipes or redirected files;
+*pixsaturate* refuses to run when either is connected to a terminal.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*::
+  Print a usage message and exit. These are the only flags accepted; any other
+  argument beginning with `-` is rejected.
+
+
+[[examples]]
+== EXAMPLES
+
+.Desaturate a rendered image to grayscale
+====
+[source,bash]
+----
+pixsaturate 0.0 < scene.pix > scene-gray.pix
+----
+Produces a monochrome version of an image rendered by *rt*(1), preserving
+perceptual luminance, suitable for use as a matte or for printing.
+====
+
+.Boost color and convert to a viewable PNG
+====
+[source,bash]
+----
+pixsaturate 1.5 < render.pix | pix-png -w 1024 -n 768 > render.png
+----
+Increases the color intensity of a 1024x768 *pix*(5) image by 50% and pipes the
+result through *pix-png*(1) to create a more vivid PNG for previewing.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix*(5), *pixfade*(1)
+*brlcad*(1), *pix-png*(1), *pixfade*(1), *rt*(1), *pix*(5)
 
 
 [[author]]

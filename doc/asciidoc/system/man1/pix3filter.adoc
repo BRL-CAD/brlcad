@@ -1,76 +1,82 @@
 = PIX3FILTER(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-pix3filter - Apply a 3x3x3 3D convolution filter across a sequence of three PIX files
+pix3filter - apply a 3x3x3 convolution filter across three sequential pix files
 
 == SYNOPSIS
 
 [source]
 ----
-pix3filter [-f type] [-v] [-d divisor] [-o offset] [-s squaresize] [-w width] [-n height] { file1.pix file2.pix file3.pix | file.pix.N } > output.pix
+pix3filter [-f type] [-v] [-d divisor] [-o offset] [-w width] [-n height] [-s squaresize] {file.pix.N | file1.pix file2.pix file3.pix} > output.pix
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pix3filter* performs a 3D convolution filter across a temporal sequence of three RGB PIX files. The three input files represent consecutive frames in an animation or sequence, and the filter applies an arbitrary 3x3x3 kernel (operating spatially on the X and Y axes, and temporally across the three frames). The filtered result for the middle frame is written to standard output. 
+*pix3filter* applies a 3x3x3 convolution kernel across a temporal sequence of three RGB *pix*(5) files. The three input frames represent consecutive frames in an animation; the kernel operates spatially over the X and Y axes of each frame and temporally across the three frames. The filtered result for the middle frame is written to standard output.
 
-The tool expects the images to be 512x512 pixels by default, but this can be adjusted using command-line arguments. The outer border of the image (first and last scanlines, first and last pixels) is left untouched and passed through from the middle image directly to the output.
+Images are assumed to be 512x512 pixels unless overridden. The outer border of the frame (the first and last scanlines and the first and last pixel of each scanline) is copied unchanged from the middle frame to the output.
 
-You can specify the input files in two ways:
-1. Provide three separate filenames (e.g., `frame1.pix frame2.pix frame3.pix`).
-2. Provide a single filename ending in a dot and a number (e.g., `anim.pix.5`). The tool will automatically deduce and attempt to read the preceding and succeeding frames (e.g., `anim.pix.4` and `anim.pix.6`).
+The three input frames may be supplied in two ways. Three explicit filenames may be given in order. Alternatively, a single filename ending in a dot and a frame number (e.g. `anim.pix.5`) may be given, in which case *pix3filter* derives and reads the preceding and following frames (`anim.pix.4` and `anim.pix.6`). For the special case of frame number 1, if the preceding frame (`anim.pix.0`) cannot be opened, the named frame is reused as the preceding frame.
+
+The output must be redirected; *pix3filter* refuses to write image data to a terminal.
 
 [[options]]
 == OPTIONS
 
 *-f* _type_::
-Select the convolution kernel type to apply. The available types are:
-* *lo* : Low Pass filter (default)
-* *hi* : High Pass filter
-* *b* : Boxcar Average filter
-* *s* : Animation Smear filter
+  Select the convolution kernel. Recognized types are *lo* (low pass, the default), *hi* (high pass), *b* (boxcar average), and *s* (animation smear). Each kernel has its own built-in divisor (84, 1, 53, and 69 respectively).
 
 *-v*::
-Enable verbose mode. The program will print the applied kernel values to standard error and may provide additional advice on scaling factors or out-of-bounds pixel warnings.
+  Verbose mode. Print the kernel coefficients to standard error before filtering, warn about result values that fall outside the 0-255 range, and report the maximum and minimum computed values when finished (useful for choosing a divisor or offset).
 
 *-d* _divisor_::
-Specify an alternate divisor for the convolution kernel. By default, each kernel has its own predefined divisor (e.g., 84 for the Low Pass filter). This option overrides the default.
+  Override the kernel's built-in divisor. The convolution sum is divided by this value. May not be zero.
 
 *-o* _offset_::
-Specify an alternate offset to be added to the result of the convolution before writing it to the output. The default offset is 0.
+  Override the kernel's built-in offset, added to each result after division. The default offset is 0.
 
 *-w* _width_::
-Set the width of the input images in pixels. The default width is 512.
+  Set the width of the input images in pixels. The default is 512.
 
 *-n* _height_::
-Set the height (number of scanlines) of the input images. The default height is 512.
+  Set the height (number of scanlines) of the input images. The default is 512.
 
 *-s* _squaresize_::
-Set both the width and height of the input images to _squaresize_.
+  Set both width and height to _squaresize_.
+
+*-h*, *-?*::
+  Print a usage message, including the list of available filter types, and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Basic Temporal Low-Pass Filter
-[example]
+.Smooth the middle frame of an animation
 ====
-**pix3filter frame.pix.015 > smoothed.pix.015**
+[source,bash]
+----
+pix3filter frame.pix.15 > smoothed.pix.15
+----
+Reads `frame.pix.14`, `frame.pix.15`, and `frame.pix.16` as 512x512 frames, applies the default low-pass kernel, and writes the temporally and spatially smoothed middle frame to `smoothed.pix.15`. Doing this for each frame in a render reduces aliasing flicker between frames.
+====
 
-Automatically reads `frame.pix.014`, `frame.pix.015`, and `frame.pix.016` (assuming 512x512 dimensions), applies a 3D low-pass filter, and writes the resulting frame to `smoothed.pix.015`.
+.Boxcar average of three explicit high-resolution frames
+====
+[source,bash]
+----
+pix3filter -f b -s 1024 a.pix b.pix c.pix | pix-png -s 1024 > avg.png
+----
+Reads three explicit 1024x1024 frames, applies the boxcar average kernel, and pipes the result through *pix-png*(1) to produce a viewable PNG of the averaged center frame.
 ====
 
-.Applying a Boxcar Filter to Custom Size Images
-[example]
-====
-**pix3filter -f b -s 1024 a.pix b.pix c.pix > out.pix**
+[[see_also]]
+== SEE ALSO
 
-Reads three explicit 1024x1024 PIX files, applies the Boxcar Average kernel, and writes the output to `out.pix`.
-====
+*brlcad*(1), *pixfilter*(1), *pixdiff*(1), *pix-png*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
@@ -80,7 +86,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1986-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

@@ -4,44 +4,80 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixinterp2x - interpolate a color pix file twice as large as the original
+pixinterp2x - interpolate a color pix file to twice the original resolution
 
 == SYNOPSIS
 
 [source]
 ----
-pixinterp2x [-s squarefilesize] [-w file_width] [-n file_height] [infile.pix] > outfile.pix
+pixinterp2x [-s _squarefilesize_] [-w _file_width_] [-n _file_height_] [-h | -?] [_infile.pix_] > _outfile.pix_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixinterp2x* does a bilinear interpolation between the pixels of the input *pix*(5) file to create the output file. This program is most useful when creating images for photographing. Even though no additional image information is created, there may be significant photographic advantages to operating the display at its highest resolution.
+*pixinterp2x* reads a *pix*(5) file and produces an image with twice as many
+pixels in each direction by performing a bilinear interpolation between the
+pixels of the input. The input may be given as a file argument or piped on
+standard input; the doubled image is written to standard output.
 
-This is a very fast implementation of one special case of interpolation; the general tool for interpolation is *pixscale*(1).
+The interpolated scanlines fall exactly half way between the input lines, and
+the original input lines are preserved exactly. Rather than extrapolate beyond
+the edges of the image, the first row and column are duplicated (the left and
+bottom edges). This differs from the behavior of *pixscale*(1).
+
+This is a very fast implementation of one special case of interpolation. The
+general tool for arbitrary rescaling is *pixscale*(1). Doubling the resolution
+adds no new image information, but can be useful when driving a display at its
+highest resolution, such as when photographing an image.
+
+The default input dimensions are 512 by 512 pixels.
 
 
-*-w* _file_width_::
-Specify the width (in pixels) of the scanlines in the input file. The default is 512.
-
-
-*-n* _file_height_::
-Specify the number of scanlines of input to be processed. The default is 512.
-
+[[options]]
+== OPTIONS
 
 *-s* _squarefilesize_::
-Specify both the number of pixels per scanline and the number of scanlines in the file to process.
+  Set both the width and height of the input image to _squarefilesize_ pixels.
+
+*-w* _file_width_::
+  Set the width (in pixels) of the scanlines in the input file. The default is 512.
+
+*-n* _file_height_::
+  Set the number of scanlines of input to be processed. The default is 512.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 
+[[examples]]
+== EXAMPLES
 
-The interpolated scanlines fall exactly half way between the input lines, and the input lines are exactly preserved. Rather than extrapolate beyond the edges of the file, the first X and Y line is duplicated (left and bottom edge). This differs from the behavior of *pixscale*(1).
+.Double a 1024x768 image and view the result
+====
+[source,bash]
+----
+pixinterp2x -w 1024 -n 768 render.pix | pix-fb -w 2048 -n 1536
+----
+Interpolates a 1024x768 rendering up to 2048x1536 and pipes it directly to the
+framebuffer with *pix-fb*(1) for inspection, without writing an intermediate file.
+====
+
+.Upscale a square image and save it
+====
+[source,bash]
+----
+pixinterp2x -s 256 small.pix > large.pix
+----
+Reads a 256x256 *pix*(5) image and writes a smoothly interpolated 512x512 image.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pixscale*(1), *pix*(5)
+*brlcad*(1), *pixscale*(1), *pix-fb*(1), *pix*(5)
 
 
 [[bugs]]

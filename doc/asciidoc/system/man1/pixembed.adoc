@@ -1,70 +1,91 @@
 = PIXEMBED(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-pixembed - Embed a PIX image in a larger space, replicating border pixels
+pixembed - embed a pix image in a larger frame, replicating border pixels
 
 == SYNOPSIS
 
 [source]
 ----
-pixembed [-b border_inset] [-s squareinsize] [-w inwidth] [-n inheight] [-S squareoutsize] [-W outwidth] [-N outheight] [input.pix] > output.pix
+pixembed [-b border_inset] [-s squareinsize] [-w inwidth] [-n inheight]
+         [-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixembed* reads a standard 3-byte RGB PIX image and embeds it into a new, larger PIX image. The smaller input image is placed in the center of the larger output image. Instead of leaving the surrounding border empty (black), *pixembed* replicates the boundary pixels of the input image outwards to fill the entire remaining area. 
+*pixembed* reads a 3-byte/pixel RGB *pix*(5) image and centers it within a
+larger output *pix*(5) image. Rather than padding the surrounding border with
+black, *pixembed* replicates the boundary pixels of the input outward to fill
+the entire margin.
 
-Because the extreme border pixels of an image are sometimes noisy or degraded, an optional _border_inset_ parameter can be specified to sample the "boundary" color from slightly inside the actual edge of the input image.
+Because the extreme edge pixels of an image are sometimes noisy or degraded,
+the _border_inset_ may be increased so the replicated color is sampled from a
+row or column slightly inside the actual edge of the input.
 
-If no _input.pix_ is provided, the tool reads from standard input. The resulting embedded image is always written to standard output. Both the input dimensions (which default to 512x512) and output dimensions (which also default to 512x512) can be customized via command-line arguments. The output size must be strictly strictly greater than or equal to the input size.
+If no _in.pix_ is given, the image is read from standard input; the embedded
+result is always written to standard output. Both input and output dimensions
+default to 512x512. The output size must be greater than or equal to the input
+size, and the border inset must be smaller than the input width.
 
 [[options]]
 == OPTIONS
 
 *-b* _border_inset_::
-Specify the number of pixels to inset from the actual image edge when sampling the color to replicate outwards. The default is 0 (the exact edge pixels are replicated).
+  Inset, in pixels, from the actual image edge at which the replicated border
+  color is sampled. The default is 0 (the exact edge pixels are replicated).
 
 *-s* _squareinsize_::
-Set both the width and height of the input image to _squareinsize_ pixels.
+  Set both the width and height of the input image to _squareinsize_ pixels.
 
 *-w* _inwidth_::
-Set the width of the input image to _inwidth_ pixels.
+  Set the width of the input image to _inwidth_ pixels (default 512).
 
 *-n* _inheight_::
-Set the height of the input image to _inheight_ pixels.
+  Set the height of the input image to _inheight_ pixels (default 512).
 
 *-S* _squareoutsize_::
-Set both the width and height of the output image to _squareoutsize_ pixels.
+  Set both the width and height of the output image to _squareoutsize_ pixels.
 
 *-W* _outwidth_::
-Set the width of the output image to _outwidth_ pixels.
+  Set the width of the output image to _outwidth_ pixels (default 512).
 
 *-N* _outheight_::
-Set the height of the output image to _outheight_ pixels.
+  Set the height of the output image to _outheight_ pixels (default 512).
 
 [[examples]]
 == EXAMPLES
 
-.Embedding a 512x512 Image into a 1024x1024 Canvas
-[example]
+.Embed a 512x512 image into a 1024x1024 frame
 ====
-**pixembed -s 512 -S 1024 < input.pix > output.pix**
+[source,bash]
+----
+pixembed -s 512 -S 1024 < input.pix > output.pix
+----
+Centers the 512x512 input within a 1024x1024 image, replicating the input's
+edge pixels to fill the surrounding border, then writes the larger image to
+output.pix.
+====
 
-Reads a 512x512 image from _input.pix_ and centers it within a 1024x1024 image, replicating the 512x512 edge pixels to fill the 1024x1024 border. The result is written to _output.pix_.
+.Generate a clean matte for compositing
+====
+[source,bash]
+----
+pixembed -w 640 -n 480 -W 800 -N 600 -b 4 render.pix | pix-png -w 800 -n 600 > matte.png
+----
+Embeds a 640x480 render into an 800x600 frame, sampling the border color from
+4 pixels inside the edge to avoid noisy outer rows, and pipes the result
+straight into *pix-png*(1) to produce a PNG ready for compositing.
 ====
 
-.Embedding with a Border Inset
-[example]
-====
-**pixembed -W 800 -N 600 -b 5 < in.pix > out.pix**
+[[see_also]]
+== SEE ALSO
 
-Reads a 512x512 (default input size) image from _in.pix_ and embeds it in an 800x600 canvas. The pixels used to fill the border are sampled from 5 pixels inward from the actual edge of the input image.
-====
+*brlcad*(1), *pixscale*(1), *pixmatte*(1), *pixbustup*(1), *pix-png*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
@@ -74,7 +95,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1992-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

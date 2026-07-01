@@ -4,82 +4,113 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixcmp - compare two PIX(5) format files pixel by pixel
+pixcmp - compare two pix(5) format images pixel by pixel
 
 == SYNOPSIS
 
 [source]
 ----
-pixcmp [-b] [-s] [-d] [-q] [-i SKIP] [-i SKIP1:SKIP2] [-n COUNT] FILE1 [FILE2]
+pixcmp [-b] [-s] [-d] [-q] [-i _SKIP_|_SKIP1:SKIP2_] [-n _COUNT_] _FILE1_ [_FILE2_ [_SKIP1_ [_SKIP2_]]]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixcmp* computes and reports differences between two *PIX*(5) format files on a pixel-by-pixel basis. The utility can operate either on individual pixels (default) or on bytes (with *-b*).
+*pixcmp* compares two *pix*(5) format images on a pixel-by-pixel basis and
+summarizes the differences.  Because the comparison is per-pixel it is
+independent of image resolution.  Each pixel is classified as matching, off by
+one in a single channel, off by many (a larger or multi-channel difference), or
+missing when the files differ in size.  A one-line summary of these counts is
+printed to standard output.
 
-The tool allows users to specify a number of pixels (or bytes) to skip in each input file, a limit on the number of pixels (or bytes) to compare, and options for detailed or suppressed output. It detects matching pixels, pixels off by one channel, pixels off by multiple channels, and missing pixels when the files differ in size.
+With *-b* the files are instead compared byte by byte.  Initial pixels (or
+bytes) may be discarded from either input, and the number of pixels (or bytes)
+compared may be limited; by default comparison runs to the end of the larger
+input.
 
-If either _FILE_ is specified as `-`, input is read from standard input. If both inputs are standard input, interleaved data is expected.
+If either _FILE_ is `-` or is omitted, that input is read from standard input.
+If both inputs are standard input, the two images' data must be interleaved.
+Pixels and bytes are indexed linearly from one.  Skip amounts may be given
+either via *-i* or as the trailing positional _SKIP1_ and _SKIP2_ arguments.
 
 
 [[options]]
 == OPTIONS
 
-
 *-b*::
-Operate on bytes instead of pixels.
-
+  Iterate and report by bytes instead of by pixels.  _SKIP_ and _COUNT_ values
+  are then interpreted as bytes.
 
 *-s*::
-Print all pixels (or bytes) with matching values.
-
+  Print every pixel (or byte) whose values match.
 
 *-d*::
-Print all pixels (or bytes) with differing values.
-
+  Print every pixel (or byte) whose values differ.
 
 *-q*::
-Quiet mode; suppresses header and summary output.
+  Quiet.  Suppress the header, the size-mismatch warning, and the summary line.
 
+*-i* _SKIP_::
+  Discard the initial _SKIP_ pixels (or bytes with *-b*) from both inputs.
 
-*-i _SKIP_*::
-Skip the first _SKIP_ pixels (or bytes with *-b*) in both files.
+*-i* _SKIP1:SKIP2_::
+  Discard the initial _SKIP1_ pixels (or bytes) from _FILE1_ and _SKIP2_ from
+  _FILE2_.
 
+*-n* _COUNT_::
+  Compare at most _COUNT_ pixels (or bytes with *-b*).  The default stops at
+  end of file.
 
-*-i _SKIP1:SKIP2_*::
-Skip the first _SKIP1_ pixels (or bytes with *-b*) in _FILE1_ and _SKIP2_ in _FILE2_.
-
-
-*-n _COUNT_*::
-Compare up to _COUNT_ pixels (or bytes with *-b*).
-
-
+*-?*, *-h*::
+  Print a usage message and exit.
 
 
 [[exit_status]]
 == EXIT STATUS
 
+*0*::
+  No differences were found.
 
-`0`::
-No differences were found.
+*1*::
+  Only single-channel off-by-one differences were found.
 
-
-`1`::
-Differences of one channel were found.
-
-
-`2`::
-Differences of multiple channels or missing pixels were found.
+*2*::
+  Off-by-many or missing-pixel differences were found.
 
 
+[[examples]]
+== EXAMPLES
+
+.Compare a rendered frame against a reference image
+====
+[source,bash]
+----
+rt -s512 moss.g all.g
+pixcmp ref/moss.pix moss.pix
+----
+After ray tracing a scene with *rt*(1), compare the resulting *pix*(5) image
+against a known-good reference.  This is the check the BRL-CAD benchmark uses to
+confirm that a build produces correct imagery; the exit status reflects whether
+any pixels differ.
+====
+
+.List differing pixels, ignoring a header
+====
+[source,bash]
+----
+pixcmp -d -i 1024 a.pix b.pix
+----
+Skip the first 1024 pixels of each input (for example a leading scanline or
+header region) and print each remaining pixel that differs, along with its RGB
+values from both files.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*pix*(5)
+*brlcad*(1), *rt*(1), *pixdiff*(1), *pix*(5)
 
 
 [[author]]
@@ -91,7 +122,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 by the United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
