@@ -169,13 +169,18 @@ if(TARGET btclsh)
   get_property(index_depends_files GLOBAL PROPERTY index_depends_files)
   get_property(index_install_files GLOBAL PROPERTY index_install_files)
 
+  # Save Tcl processing messages to log file
+  set(TCLINDEXBLD_LOG "${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.log")
+  distclean(${TCLINDEXBLD_LOG})
+
   # We've collected all the commands - now add add a single command
   # to run all of them at once.
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-    COMMAND ${CMAKE_COMMAND} -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
+    COMMAND ${CMAKE_COMMAND} -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file} > "${TCLINDEXBLD_LOG}" 2>&1
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
     DEPENDS ${index_depends_files} ${index_cpy_targets}
+    VERBATIM
   )
   add_custom_target(TclIndexBld ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
   distclean(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
