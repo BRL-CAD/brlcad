@@ -1,10 +1,10 @@
 = 3DM-G(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
-3dm-g - Rhinoceros 3D Translator (3dm to BRL-CAD)
+3dm-g - convert a Rhino3D (.3dm) model to a BRL-CAD database
 
 == SYNOPSIS
 
@@ -17,51 +17,72 @@
 [[description]]
 == DESCRIPTION
 
-*3dm-g* converts the Rhino3D file _input_file.3dm_ to a BRL-CAD database _output_file.g_. 
+*3dm-g* converts the Rhino3D file _input_file.3dm_ into a BRL-CAD geometry
+database _output_file.g_. The output file may be named either with the *-o*
+option or as the final positional argument.
 
-Because BRL-CAD uses the OpenNURBS library to read and process .3dm files, and also uses it for its internal NURBS support, the conversion is typically direct and reliable.
+Because BRL-CAD uses the OpenNURBS library both to read .3dm files and as the
+foundation of its own NURBS support, the conversion is typically direct and
+reliable. The translation is performed through the *libgcv* geometry conversion
+library, so the same import behavior is available from other BRL-CAD tools such
+as *mged*(1) and *gcv*.
 
 
 [[options]]
 == OPTIONS
 
-*-o, --output* _output_file.g_::
-Specify the output BRL-CAD database name. This option is required if the output file is not specified as the last positional argument.
-
 *-r*::
-Randomize colors assigned to imported objects.
+  Randomize the colors assigned to imported objects, which can make distinct
+  components easier to tell apart visually.
 
-*-v, --verbosity*::
-Increase verbosity of conversion progress reporting. Can be specified multiple times.
+*-v*, *--verbosity*::
+  Increase the verbosity of conversion progress reporting. May be repeated to
+  raise the verbosity level further.
 
-*-h, --help, -?*::
-Print help and exit.
+*-o*, *--output* _output_file.g_::
+  Set the output BRL-CAD database filename. Required if the output file is not
+  given as the final positional argument.
+
+*-h*, *--help*, *-?*::
+  Print a usage message and exit.
 
 
 [[examples]]
 == EXAMPLES
 
-.Standard Conversion
-[example]
+.Basic conversion
 ====
-$ *3dm-g model.3dm model.g*
-
+[source,bash]
+----
+3dm-g model.3dm model.g
+----
 Converts the Rhino3D file _model.3dm_ into a BRL-CAD database named _model.g_.
 ====
 
-.Conversion with Randomized Colors and Verbose Output
-[example]
+.Verbose conversion with randomized colors and a follow-on render
 ====
-$ *3dm-g -r -v -o nist.g NIST_MBE_PMI_7-10.3dm*
-
-Imports the NIST MBE PMI 7-10 model into a BRL-CAD database named _nist.g_. Randomizes the colors assigned to imported objects and increases the verbosity level for detailed conversion progress reporting.
+[source,bash]
+----
+3dm-g -r -v -o nist.g NIST_MBE_PMI_7-10.3dm
+rt -o nist.png nist.g NIST_MBE_PMI_7-10
+----
+Imports the NIST MBE PMI sample model into _nist.g_ with randomized object
+colors and detailed progress output, then uses *rt*(1) to ray trace the
+resulting top-level assembly to a PNG image for a quick visual check of the
+conversion.
 ====
 
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-Users will see OpenNURBS diagnostic reporting as the 3dm file is read.
+OpenNURBS diagnostic messages may be emitted while the .3dm file is read.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *g-stl*(1), *stl-g*(1)
 
 
 [[author]]
@@ -73,7 +94,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1999-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
