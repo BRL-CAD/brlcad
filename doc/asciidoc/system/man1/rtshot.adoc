@@ -4,103 +4,152 @@
 :manmanual: BRL-CAD
 
 == NAME
-rtshot - fire one ray at an mged model, for debugging
+rtshot - fire a single ray at a BRL-CAD model and report what it hits
 
 == SYNOPSIS
 
 [source]
 ----
-rtshot [options]... model.g objects...
+rtshot {-p|-d|-a} _x_ _y_ _z_ {-p|-d|-a} _x_ _y_ _z_ [options] model.g [objects...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*rtshot* fires a single ray at the indicated _objects_ in the input _model.g_ and produces a printed summary of the geometry that the ray passes through. The orientation of the ray to be fired is specified by giving any two of the three options *-a* *-d* and *-p.*
+*rtshot* fires a single ray at the listed _objects_ in the BRL-CAD database
+_model.g_ and prints a textual summary of every region the ray passes through:
+the in and out hit points, surface normals, surface curvature, claiming regions
+for any overlaps, and optionally selected region attributes. If no _objects_ are
+named, the database's default (top-level) object is used.
 
+The ray is defined by supplying *exactly two* of the following three options:
+a start point (*-p*), a direction vector (*-d*), and a point to shoot "at"
+(*-a*). When *-a* is combined with *-d*, the start point is backed off from the
+"at" point by half the model diagonal so the ray begins outside the geometry.
+The direction vector is always normalized.
 
-The::
-*-d* option is followed by three numbers specifying the direction vector.
+*rtshot* is a thin front-end to *librt*(3) intended for inspecting and debugging
+geometry; it is the command-line analog of the ray a single pixel of *rt*(1)
+would cast.
 
+[[options]]
+== OPTIONS
 
-The::
-*-p* option is followed by three numbers specifying the start point.
+*-p* _x_ _y_ _z_::
+  Set the ray starting point.
 
+*-d* _x_ _y_ _z_::
+  Set the ray direction vector (normalized before use).
 
-The::
-*-a* option is followed by three numbers specifying a point to be fired "at".
+*-a* _x_ _y_ _z_::
+  Set the point the ray is fired "at".
 
+*-U* _#_::
+  Set reporting of air regions. The default is 1 (air is reported).
 
-*-t #*::
-specifies the number of triangles per piece for facetted primitives (currently only the BOT). The default value is 4.
+*-o* _#_::
+  Set the onehit flag, stopping the ray after the given number of hits
+  (0, the default, means no limit).
 
+*-r* _#_::
+  Set the maximum ray length, in millimeters. The default of 0 means unlimited.
 
-*-b #*::
-specifies the threshold for breaking facetted primitives into pieces. The default is 32.
+*-O* _keyword_::
+  Set overlap-claimant handling. Accepts a keyword or its numeric equivalent:
+  _resolve_ (or 0, the default) resolves all overlaps so none appear in the
+  output; _rebuild_fastgen_ (or 1) mimics FASTGEN4 plate-mode behavior;
+  _rebuild_all_ (or 2) rebuilds and reports every overlap along the ray;
+  _retain_ (or 3) does not resolve overlaps.
 
+*-v* _"attr1 attr2 ..."_::
+  Report the listed region attribute names (and their values) for each region
+  hit. The names are given as a single space-separated string.
 
-*-x #*::
-Set debug flags to (hexadecimal) number.
+*-A* _name_::
+  Report, for each region carrying the named attribute, the hit points and ray
+  direction transformed into that region's local (untransformed) coordinate
+  system via the inverse of its placement matrix.
 
+*-n* _#_::
+  Set the number of rings to use for a ray bundle (the central ray is not
+  counted).
 
-*-U #*::
-Set use_air flag.
+*-c* _#_::
+  Set the number of rays per ring for a ray bundle. The rings spiral outward and
+  are not aligned ring-to-ring; a central ray is always included.
 
+*-R* _#_::
+  Set the ray bundle radius, in millimeters. The outermost ring lies at this
+  radius.
 
-*-v attribute_name1 [attribute_name2 ...]*::
-This option specifies a list of attribute names to be listed (along with the appropriate values) for each region hit.
+*-g* _#_::
+  Set the grid spacing, in millimeters, for a circular-grid ray bundle
+  (the default is 1mm).
 
+*-u* _#_::
+  Set the *libbu*(3) debug flags (hexadecimal).
 
-*-O # or keyword*::
-This option indicates how overlaps should be handled. The _resolve_ or `0` argument is the default (normal BRL-CAD mode, all overlaps are resolved and no overlaps appear in the output). The __rebuild_fastgen__ or `1` argument mimics FASTGEN4 raytracing (plate-mode overlaps appear in the output). The __rebuild_all__ or `2` argument rebuilds all overlaps that occurred along the ray (all overlaps appear in the output). The _retain_ or `3` argument does not resolve any overlaps (each unique combination of intersection extent and list of claiming regions produces a single partition).
+*-x* _#_::
+  Set the *librt*(3) debug flags (hexadecimal).
 
+*-X* _#_::
+  Set the optical/rt program debug flags (hexadecimal). Setting the ray-plot
+  bit writes a plot of the ray and its hits to _rtshot.plot3_.
 
-*-n #*::
-This option specifies the number of rings to use in a ray bundle (does not include the central ray).
+*-N* _#_::
+  Set the NMG debug flags (hexadecimal).
 
+A ray bundle can be cast in two ways. Supplying both *-n* and *-c* (with an
+optional *-R* radius) fires a spiral ring bundle whose results are merged as a
+single ray. Supplying only *-R* (with an optional *-g* grid spacing) fires a
+circular grid of parallel rays. The default is to fire a single ray.
 
-*-c #*::
-This option specifies the number of rays in each ring. The rays in each ring are not aligned with the rays in the previous ring, they make an outward spiral pattern. A central ray is included.
+[[examples]]
+== EXAMPLES
 
+.Fire a ray down the X axis at a component
+====
+[source,bash]
+----
+rtshot -p 0 0 0 -d 1 0 0 havoc.g hull
+----
+Shoots a single ray from the origin in the +X direction at the _hull_ region of
+_havoc.g_, printing the in/out points and normals of each region encountered.
+====
 
-*-R #*::
-This option specifies the radius of the ray bundle. Each ring is evenly spaced with the outermost ring at this radius.
-
-
-
-The *rtshot* program is a simple front-end to *librt*(3) which can be invoked directly by the user. If a ray bundle is desired, all of the *-n* , *-c* , and *-R* options must be specified. The output from a ray bundle is handled as a single ray. Any overlaps between rays in the bundle are resolved by favoring rays closer to the central ray. The default is to fire a single ray.
-
+.Aim at a known point and list a material attribute
+====
+[source,bash]
+----
+rtshot -a -1000 0 500 -d -1 0 0 -v "material_id" model.g engine
+----
+Fires a ray toward the point (-1000, 0, 500) heading in the -X direction, with
+the start point automatically placed outside the geometry, and prints the
+_material_id_ attribute of every region the ray strikes. This is a quick way to
+verify which components and materials lie along a line of sight.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*mged*(1), *rt*(1), *pix-fb*(1), *rtray*(1), *rtpp*(1), *librt*(3), *ray*(5V), *pix*(5)
-
+*brlcad*(1), *mged*(1), *rt*(1), *rtarea*(1), *nirt*(1), *librt*(3), *plot3*(5)
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-Numerous error conditions are possible. Descriptive messages are printed on standard error.
-
-
-[[bugs]]
-== BUGS
-
-Most deficiencies observed while using the *rtshot* program are usually with the *librt*(3) package instead.
-
+Numerous error conditions are possible. Descriptive messages are printed on
+standard error.
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1987-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1987-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
