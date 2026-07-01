@@ -1,50 +1,70 @@
 = USTATS(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-ustats - Compute basic statistics of a stream of unsigned short integers
+ustats - compute basic statistics of a stream of unsigned short integers
 
 == SYNOPSIS
 
 [source]
 ----
-ustats [input.ushorts]
+ustats [-h] [file]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*ustats* reads a stream of 16-bit unsigned short integers (0 to 65535) and calculates several basic statistical properties of the data. The results are printed to standard output in a formatted, human-readable text block.
+*ustats* reads a stream of 16-bit unsigned short integers (0 to 65535)
+and computes basic statistics on the data, printing them to standard
+output as a small text block.  Input is read from the named _file_ if
+given, otherwise from standard input.
 
-The computed statistics include:
-* *Num*: The total number of unsigned short integer elements read.
-* *Min*: The minimum value in the dataset.
-* *Max*: The maximum value in the dataset.
-* *Sum*: The sum total of all the values.
-* *Mean*: The arithmetic mean (average) of the values.
-* *SStdev*: The sample standard deviation.
+The reported statistics are the number of samples (Num), the minimum
+(Min) and maximum (Max) values, the Sum of all values, the arithmetic
+Mean, and the sample standard deviation (SStdev).
 
-If the optional _input.ushorts_ file is specified, *ustats* reads from it; otherwise, it reads from standard input.
+It is a companion to the other signal-processing statistics tools such
+as *istats*(1) (signed shorts) and *dstats*(1) (doubles).
 
 [[options]]
 == OPTIONS
 
-*input.ushorts*::
-An optional file containing 16-bit unsigned short integers to be processed. If not provided, standard input is used.
+*-h*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Computing Statistics from a File
-[example]
+.Summarize 16-bit unsigned image data
 ====
-**ustats data.ushorts**
+[source,bash]
+----
+pix-bw scene.pix | bw-d | d-u > scene.ushorts
+ustats scene.ushorts
+----
+Converts a color image to single-channel data, then to unsigned shorts,
+and reports the value distribution (min, max, mean, standard deviation)
+useful for checking the dynamic range of the data before further
+processing.
+====
 
-Reads the unsigned short integer values from _data.ushorts_ and prints the statistical summary to standard output.
+.Compute statistics from a pipeline
 ====
+[source,bash]
+----
+ustats < samples.ushorts
+----
+Reads unsigned short values directly from standard input and prints the
+statistical summary, suitable for inclusion in a shell pipeline.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *istats*(1), *dstats*(1), *ihist*(1), *umod*(1)
 
 [[author]]
 == AUTHOR
@@ -54,7 +74,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

@@ -1,50 +1,61 @@
 = DSTATS(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-dstats - Compute basic statistics of a stream of doubles
+dstats - compute basic statistics of a stream of doubles
 
 == SYNOPSIS
 
 [source]
 ----
-dstats [input.doubles]
+dstats [-h] [file.doubles]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*dstats* reads a stream of double-precision floating-point numbers and calculates several basic statistical properties of the data. The results are printed to standard output in a human-readable text format.
+*dstats* reads a stream of raw, host-format double-precision floating-point
+numbers and computes basic statistics over the values. If a _file.doubles_
+argument is given, *dstats* reads from that file; otherwise it reads from
+standard input. The values are interpreted as packed binary doubles (as
+produced by tools such as *a-d*(1) or *dmod*(1)), not as ASCII text.
 
-The computed statistics include:
-* *Values*: The total number of double-precision elements read.
-* *Min*: The minimum value in the dataset.
-* *Max*: The maximum value in the dataset.
-* *Mean*: The arithmetic mean (average) of the values.
-* *s.d.*: The standard deviation.
-* *Var*: The variance.
+The following statistics are written to standard output in a human-readable
+text format: the number of values read (with its square root shown twice, a
+convenience for data representing a square image or matrix), the minimum,
+maximum, arithmetic mean, standard deviation, and variance.
 
-If the optional _input.doubles_ file is specified, *dstats* reads from it; otherwise, it reads from standard input.
+The unsigned-char and short-integer analogues are *ustats*(1) and *istats*(1).
 
 [[options]]
 == OPTIONS
 
-*input.doubles*::
-An optional file containing double-precision floating-point numbers to be processed. If not provided, standard input is used.
+*-h*::
+  Print a usage message and exit. The synonym *-?* is also accepted.
 
 [[examples]]
 == EXAMPLES
 
-.Computing Statistics from a File
-[example]
+.Inspect the range of converted sample data
 ====
-**dstats data.raw**
+[source,bash]
+----
+a-d < data.txt | dstats
+----
+Convert ASCII sample data to raw doubles with *a-d*(1) and pipe the
+result into *dstats* to quickly check the value range, mean, and variance of a
+signal before further processing. Reviewing the reported minimum and maximum is
+a fast way to confirm a stream is scaled as expected before feeding it to
+*dmod*(1) or *dfft*(1).
+====
 
-Reads the double-precision values from _data.raw_ and prints the statistical summary to standard output.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *a-d*(1), *dmod*(1), *dfft*(1), *istats*(1), *ustats*(1)
 
 [[author]]
 == AUTHOR
@@ -54,7 +65,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1986-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

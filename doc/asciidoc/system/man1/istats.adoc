@@ -1,50 +1,64 @@
 = ISTATS(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-istats - Compute basic statistics of a stream of short integers
+istats - compute basic statistics of a stream of short integers
 
 == SYNOPSIS
 
 [source]
 ----
-istats [input.shorts]
+istats [-h] [file]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*istats* reads a stream of 16-bit signed short integers and calculates several basic statistical properties of the data. The results are printed to standard output in a formatted, human-readable text block.
+*istats* reads a stream of 16-bit signed short integers and computes
+basic statistics over the data, writing a human-readable summary to
+standard output. Input is read from the named _file_ if one is given,
+otherwise from standard input.
 
-The computed statistics include:
-* *Num*: The total number of short integer elements read.
-* *Min*: The minimum value in the dataset.
-* *Max*: The maximum value in the dataset.
-* *Sum*: The sum total of all the values.
-* *Mean*: The arithmetic mean (average) of the values.
-* *SStdev*: The sample standard deviation.
+The reported statistics are the number of values (Num), the minimum
+(Min) and maximum (Max) values, the sum (Sum), the arithmetic mean
+(Mean), and the sample standard deviation (SStdev).
 
-If the optional _input.shorts_ file is specified, *istats* reads from it; otherwise, it reads from standard input.
+It is the short-integer analogue of *dstats*(1) and *ustats*(1), which
+operate on streams of doubles and unsigned chars respectively.
 
 [[options]]
 == OPTIONS
 
-*input.shorts*::
-An optional file containing 16-bit signed short integers to be processed. If not provided, standard input is used.
+*-h*::
+  Print a usage message and exit. The *-?* form is also accepted.
 
 [[examples]]
 == EXAMPLES
 
-.Computing Statistics from a File
-[example]
+.Summarize a file of signed-short sample data
 ====
-**istats data.shorts**
+[source,bash]
+----
+istats samples.shorts
+----
+Report the count, range, sum, mean, and sample standard deviation of
+the 16-bit signed integers stored in _samples.shorts_. This is a quick
+way to sanity check the dynamic range of intermediate signal-processing
+data. The same data may instead be supplied on standard input, for
+example as the output of another short-integer filter:
+[source,bash]
+----
+imod -s 2 < samples.shorts | istats
+----
+====
 
-Reads the short integer values from _data.shorts_ and prints the statistical summary to standard output.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dstats*(1), *ustats*(1), *ihist*(1), *imod*(1)
 
 [[author]]
 == AUTHOR
@@ -54,7 +68,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
