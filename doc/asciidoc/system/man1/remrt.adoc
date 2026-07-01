@@ -4,334 +4,209 @@
 :manmanual: BRL-CAD
 
 == NAME
-remrt - network distributed (remote) ray-trace dispatcher
+remrt - network-distributed (remote) ray-trace dispatcher
 
 == SYNOPSIS
 
 [source]
 ----
-remrt [options]... model.g objects...
+remrt [options] model.g objects...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*remrt* is intended to be an entirely plug-compatible replacement for the *rt*(1) program. While _rt_ can operate on more than one processor of a shared memory MIMD style multi-processor, it can not spread the work out across the network. *remrt* and its companion program *rtsrv*(1) implement a *libpkg*(3)-based protocol for distributing the task of ray-traced rendering out to an arbitrary number of processors on the network. Those processors can be from an arbitrary mix of vendors, with differing instruction sets and data representations, operating at widely different speeds.
+*remrt* is a plug-compatible front end for *rt*(1) that spreads a
+ray-traced rendering across many machines on a network. Where *rt*(1)
+can use only the processors of a single shared-memory host, *remrt*
+acts as a dispatcher: it parcels out scanline work to any number of
+*rtsrv*(1) worker processes -- possibly on hosts of differing
+architectures and speeds -- using a *libpkg*(3)-based protocol, and
+collects the returned pixels into an output file and/or framebuffer.
 
-*remrt* provides two levels of fault-tolerance in its distributed computation. First, any _rtsrv_ processor which fails (or whose network link fails) will have its work reassigned automatically by *remrt* to other processors, so that the failure of that processor does not hold up the progress of the computation. On a regular interval *remrt* attempts to restart computation on failed processors marked "active", so that when failed systems become available again they are put back to work. Second, *remrt* offers a form of "checkpoint-restart" by carefully writing all received pixel data immediately to disk. If the machine running *remrt* should fail, when *remrt* is restarted, it will determine what work remains to be done and restart all the _rtsrv_ processes on the remote machines.
+*remrt* accepts the same command-line arguments as *rt*(1); see the
+*rt*(1) manual page for the full list of options. The first positional
+argument is a BRL-CAD _model.g_ database and the rest are the treetop
+_objects_ to render. From within *mged*(1) a current-view render can be
+launched with `rrt remrt -M -s###`, where _###_ is the desired image
+resolution.
 
-*remrt* takes exactly the same set of command line arguments as *rt*(1). For a full discussion of those options, consult the *rt*(1) manual page. From within *mged*(1) the *remrt* program can be run from the current _mged_ view by giving the _mged_ command
+*remrt* provides two levels of fault tolerance. Any *rtsrv*(1) worker
+(or network link) that fails has its outstanding work reassigned to
+other workers automatically, and failed hosts marked "active" are
+periodically retried. *remrt* also writes received pixels to disk
+immediately, so a dispatcher that is killed and restarted resumes from
+where it left off rather than recomputing finished pixels.
 
+To launch workers automatically, *remrt* runs *ssh*(1) on each
+configured host (the client binary name defaults to *ssh* and may be
+overridden at compile time via the *SSH* macro). Password-less
+authentication must be configured so workers start without a prompt.
+Local workers are launched over a *libpkg*(3) IPC channel (an anonymous
+pipe or socketpair on POSIX, inherited handles on Windows) and need no
+TCP listener; the TCP listener is brought up lazily only when a remote
+or passive worker must connect back.
 
-....
+Without command-line arguments *remrt* enters an interactive mode in
+which the framebuffer can be attached or released, frames can be queued,
+and status and control commands can be issued. Normally *remrt* runs in
+batch mode, taking its work from the command line, the script read on
+standard input, and the _.remrtrc_ control file.
 
-    rrt remrt -M -s###
-  
-....
+=== Control file
 
-where "###" is the image resolution desired.
+*remrt* reads a _.remrtrc_ file (from the current directory, else the
+user's home directory) containing ordinary *remrt* commands run before
+processing begins. Its main use is one *host* command per worker host:
 
-*remrt* uses *ssh*(1) to automatically initiate remote computation. The SSH client binary name defaults to *ssh* and can be overridden at compile time via the *SSH* preprocessor macro. Public-key (or other password-less) authentication must be configured between the controlling machine and each worker host so that *remrt* can launch *rtsrv* workers without interactive prompting.
+[source]
+----
+host wolf   passive cd /tmp/cad/.remrt.4d
+host voyage always  cd /tmp/cad/.remrt.4d
+host whiz   hacknight convert /tmp
+----
 
-For local worker launches, *remrt* uses *libpkg*(3) inherited endpoint IPC transport instead of TCP. On POSIX this is normally an anonymous pipe or socketpair, and on Windows libpkg uses inherited Win32 pipe handles. In that mode no TCP listener is needed until a remote or passive host must connect back to the dispatcher.
+The first argument is the host name. The second says _when_ to use the
+host: *always* (retry roughly every 10 minutes whenever idle), *night* (1800-0800
+plus weekends), *hacknight* (0400-1300), *passive* (never auto-start;
+accept the host only if *rtsrv*(1) is started there manually), *rs*
+[_rays/sec_] (like *always* with an optional performance hint), or
+*passrs* [_rays/sec_] (like *passive* with a performance hint). The
+third argument says _where_ the database lives: *cd* changes to the
+named directory and reads the files already present there (most
+efficient, but the files must be staged manually), while *convert* ships
+a machine-independent copy of the _.g_ file to the host before starting
+*rtsrv*(1) (convenient, but auxiliary data such as height fields,
+textures, and bump maps are not transferred).
 
-At startup *remrt* generates a 256-bit random session authentication token and prints it to standard error. When *remrt* auto-launches an *rtsrv* worker via SSH it appends *-S _token_* to the worker command line. The worker includes the token in its version handshake; *remrt* verifies the token before accepting the worker into the session. Workers that were started manually and do not carry the token are still accepted by default (backward compatibility). Operators who need to ensure that _all_ connecting workers are authenticated can pass the session token manually to each *rtsrv* invocation via its *-S* flag.
+=== Work allocation
 
-*remrt* requires a control file called ".remrtrc" which specifies a few essential parameters of the server machines (network hosts) that are to participate in the distributed computation. The ".remrtrc" file contains a list of normal *remrt* commands which are to be executed before distributed processing is to begin. This can be useful for establishing a variety of user-specific defaults. However, the most important command to provide is a "host" command to describe each of the remote hosts that will (or may) participate in the distributed computation. Here is a sample ".remrt" file:
-
-
-....
-
-    host wolf	passive cd /tmp/cad/.remrt.4d
-    host voyage	always cd /tmp/cad/.remrt.4d
-    host whiz	hacknight convert /tmp
-  
-....
-
-The first argument to the "host" command is the name of the server machine. It will be resolved to a fully qualified name using *getaddrinfo*(3) and *getnameinfo*(3).
-
-The second argument to the "host" command describes "when" this machine should be used.
-
-
-*always*::
-says that whenever this host is not participating in the computation, repeated attempts should be made (every 5 minutes) to start an _rtsrv_ process on that machine. This option is most useful for machines where the system administrator and/or owner of the machine won't mind your using the machine at any time. (Note that _rtsrv_ runs at the lowest priority by default, so this isn't too terribly uncivilized. But be polite and ask first.)
-
-
-*night*::
-indicates that the machine should only be used during the night and on weekends. Night extends from 1800 through 0000 to 0800. Saturday and Sunday are considered to be in night time for the entire day.
-
-
-*hacknight*::
-indicates that the machine is owned by a late-night "hacker", and can be used while that hacker is likely to be asleep. Hacking tends to run from 1300 through 0000 to 0400, so *hacknight* is the time period from 0400 to 1300.
-
-
-*passive*::
-indicates that *remrt* should never attempt to initiate an _rtsrv_ process on this machine, but if the user should happen to start _rtsrv_ manually on the machine and direct it to join the computational fray, then the necessary information will be available.
-
-
-*rs* [_rays/sec_]::
-behaves like *always* but also records an optional performance hint (rays per second) for this host, which *remrt* uses to weight work allocation. If the value is omitted, performance is measured dynamically.
-
-
-*passrs* [_rays/sec_]::
-behaves like *passive* but records an optional performance hint (rays per second) for this host.
-
-
-If an unlisted machine should join the fray, it will be added::
-with a "when" value of *passive* and a "where" value of *convert*. When an _rtsrv_ passes from night into day, it is automatically terminated by *remrt* at the appointed time.
-
-
-
-The third argument to the "host" command is the "where" parameter, which indicates where the BRL-CAD ".g" file (and any related texture maps) can be found.
-
-
-*cd*::
-indicates that the _rtsrv_ program should change directory *cd*(2) to the indicated directory path, and should just read the data files in that directory as _rt_ normally would. This can be used to specify NFS or RFS mounted remote directories, or static copies of the binary database file(s) needed to perform the ray-tracing. This is the most efficient way of operating _rtsrv_, but it also requires some manual preparation on the part of the user to install all the required files in the designated location.
-
-
-*convert*::
-indicates that *remrt* should send across an ASCII machine-independent version of the ".g" database file using the command:
-+
-
-....
-
-	  asc2g < file.g | ssh host 'cd directory; g2asc > file.g'
-	
-....
-
-before starting up the _rtsrv_ program in that same directory. This relieves the user of the burden of setting up the ".g" database file, but suffers from several drawbacks. First, the transmission of a large database can take a noticeable amount of time. Second, should the server host go down and then re-join the fray, the database will be sent again, because *remrt* has no easy way to tell if the previous ".g" file is still intact after the crash/restart. Third, *remrt* has no way to tell what auxiliary files might be needed for this ".g" file, and thus can not send them automatically. If the ".g" file references height field, extruded bit-map, or volumetric solids, the associated data files will not be present on a *convert* mode server. The same applies for texture map and bump map files.
+The *allocteby* command selects the dispatch strategy. *allocteby frame*
+is a free-for-all over one frame at a time, giving the shortest time to
+the first finished frame (best for interactive demos). *allocteby load*
+withholds a worker from a frame unless at least 10% of its measured
+capacity is still needed. *allocteby movie* hands each worker a whole
+frame, minimizing prep overhead and maximizing throughput for long
+animations.
 
 
+[[options]]
+== OPTIONS
 
-*remrt* uses several different strategies for optimizing the dispatching of work. These can be controlled by the "allocate" command. If "allocate frame" has been specified, then the work allocation method is a "free for all", allocating work from one frame at a time to all servers as they become ready for more. This maximizes the CPU overhead for prepping (because all CPUs will prep all frames), but it also provides the shortest wall-clock time to getting the first frame finished. This mode is recommended for demonstrations, and other situations where people are sitting around waiting for results to appear on the screen.
+*remrt* parses the complete *rt*(1) option set; consult *rt*(1) for the
+full description. The options most relevant to distributed rendering
+are:
 
-If the "allocate load" command has been given, then new servers will not be assigned to a given frame unless there is at least enough work remaining on that frame to require 10 percent of that server's measured performance capacity. Otherwise the server is started on a subsequent frame.
+*-s* _#_::
+  Square image size in pixels (width and height).
 
-If the "allocate movie" command is given, then each server is allocated a whole frame to do. This minimizes the CPU time spent in the overhead of prepping the frame, and tends to maximize overall throughput, at the price of making you wait a long time for the first frame to finish. This mode is best used when crunching out large numbers of frames for an animation. (See also the *scriptsort*(1) command for a clever power-of-two script rearrangement technique first proposed by Jim Blinn).
+*-w* _#_ / *-n* _#_::
+  Image width and height (scanlines) in pixels.
 
-The output can be stored either in a file, or sent to the current framebuffer, the same as with *rt*(1).
+*-o* _file_::
+  Base name for the output _.pix_ file(s); frames are stored as
+  _file.N_. With no *-o* and no *-F*, frames go to temporary files.
 
-When *remrt* is run without command line arguments, it enters an interactive mode. In this mode, the current framebuffer can be assigned and released, frames can be added to the list of pending work, and many other control and status commands can be used.
+*-F* _framebuffer_::
+  Send pixels to the named framebuffer (see *libfb*(3)).
 
-Normally *remrt* runs in a batch mode, taking all its information from the command line, the script file on stdin, and the ".remrtrc" file. If you wish to issue an interactive-style command to *remrt* while it is running in batch mode, this can be accomplished by giving an extra argument to _rtsrv_, which will simply pass on the command and exit.
+*-M*::
+  Read a model2view matrix and animation script from standard input,
+  rather than rendering a single azimuth/elevation view.
 
-For example:
+*-a* _deg_ / *-e* _deg_::
+  Auto-size view azimuth and elevation in degrees (ignored with *-M*).
 
-
-....
-
-    rtsrv server_host 4446 status
-  
-....
-
-would send the command "status" to the *remrt* process running on the machine called "server_host" and listening at port 4446. 4446 is the port used by the first copy of *remrt* running on a machine. If a second copy of *remrt* is started while the first one continues to run, it will be assigned port 4447. One is added to the port number repeatedly until an available port is found. Normally you do not need to worry about which port is being used, unless you wish to send commands there directly. The *netstat*(1) command can sometimes be useful to track down which ports are being used.
+*-P* _#_::
+  Number of processor cores requested (parsed for *rt*(1) compatibility;
+  each *rtsrv*(1) worker selects its own core count independently).
 
 
-== 
+[[examples]]
+== EXAMPLES
 
-.Performing a Basic remrt/rtsrv Raytrace
-[example]
+.Driving a local remrt/rtsrv render by hand
 ====
-The following steps will set up a local (single machine) example remrt session. This does not utilize the full power of the remrt system, but will illustrate how the individual pieces relate to each other. Rather than use ssh, each process will be launched manually.
+[source,bash]
+----
+# 1. start a framebuffer server (X11 here; use /dev/wgl on Windows)
+fbserv -s2048 -p0 -F/dev/X
 
-Launch an *fbserv* instance on the desired port and with the desired type (we will use port 0 and /dev/X for a Linux-based X11 rendering - windows users can try /dev/wgl.) For a somewhat larger render we specify a size of 2048 pixels square.
+# 2. in MGED, frame the scene and save a view script
+#       saveview remrt.rt
+#    then edit remrt.rt: replace "rt" with "remrt",
+#    replace "-o file" with "-F0", and add "-s2048"
 
-**fbserv -s2048 -p0 -F/dev/X**
+# 3. run the edited script to start the dispatcher
+./remrt.rt
 
-If an graphical framebuffer was specified, a window should appear. Otherwise, fbserv will silently wait for input.
+# 4. from a directory holding the same model.g, start a worker
+rtsrv -d localhost 4446
 
-In MGED, set up the scene you wish to render and then save a script with *saveview*
-
-**saveview remrt.rt**
-
-Edit the script and replace the *rt* command with *remrt*. Replace the output file specification (*-o filename*) with a -F0 option to point the render to the fbserv started in the previous step. Also add a -s2048 option to specify a rendering size to match that provided to the fbserv.
-
-Run the script to launch remrt. You should see output indicating the program has launched. (Note: the port number printed by the default output is not useful - you want to use 4446 by default to connect to remrt.)
-
-**./remrt.rt**
-
-
-....
-
-08/22 21:51:41 machinename BRL-CAD Release 7.30.0  Network-Distributed RT (REMRT)
-    Sat, 22 Aug 2020 11:24:22 -0400, Compilation 1
-    user@machinename
-
-pkg_permserver(rtsrv, 8): unknown service
-08/22 21:51:41 Automatic REMRT on machine
-08/23 21:51:41 Assigned LIBPKG permport 24081
-08/23 21:51:41 Listening at TCP port 4446
-08/23 21:51:41 Reading script on stdin
-08/22 21:51:41 Starting to scan animation script
-08/22 21:51:41 Animation script loaded
-08/22 21:51:41 Worker assignment interval=5 seconds:
-   Server   Last  Last   Average  Cur   Machine
-    State   Lump Elapsed pix/sec Frame   Name
-  -------- ----- ------- ------- ----- -------------
-08/22 21:51:41 Seeking servers to start
-    
-....
-
-
-
-Note that it is seeking servers - we have not given *remrt* any instructions on how to start its own. To start a server and see the system work, we set up a local directory containing the same .g file we used to set up the scene, and from that directory run *rtsrv*. (For these purposes we also add the *-d* so we can see more of what is happening. Without this option, if anything isn't set up correctly rtsrv can fail with cryptic errors.)
-
-**rtsrv -d machinename 4446**
-
-If successful, both *remrt* and *rtsrv* will being producing output. The *rtsrv* will be more verbose, and should look like the following:
-
-
-....
-
-PIXELS fr=0 pix=3588096..3592191, rays=3712, cpu=0.153336
-ph_enqueue: 3592192 3596287 0
-PIXELS fr=0 pix=3592192..3596287, rays=3856, cpu=0.143813
-ph_enqueue: 3596288 3600383 0
-PIXELS fr=0 pix=3596288..3600383, rays=3456, cpu=0.145104
-ph_enqueue: 3600384 3604479 0
-PIXELS fr=0 pix=3600384..3604479, rays=4032, cpu=0.145221
-ph_enqueue: 3604480 3608575 0
-PIXELS fr=0 pix=3604480..3608575, rays=3776, cpu=0.141353
-ph_enqueue: 3608576 3612671 0
-PIXELS fr=0 pix=3608576..3612671, rays=3696, cpu=0.13579
-ph_enqueue: 3612672 3616767 0
-    
-....
-
-
-
-Upon completion, remrt will notify the user and exit. For this examle, the full remrt output is:
-
-
-....
-
-08/22 21:51:41 machinename BRL-CAD Release 7.31.0  Network-Distributed RT (REMRT)
-    Sat, 22 Aug 2020 11:24:22 -0400, Compilation 1
-    user@machinename
-
-pkg_permserver(rtsrv, 8): unknown service
-08/22 21:51:41 Automatic REMRT on machinename
-08/22 21:51:41 Listening at port 24081, reading script on stdin
-08/22 21:51:41 Starting to scan animation script
-08/22 21:51:41 Animation script loaded
-08/22 21:51:41 Worker assignment interval=5 seconds:
-   Server   Last  Last   Average  Cur   Machine
-    State   Lump Elapsed pix/sec Frame   Name 
-  -------- ----- ------- ------- ----- -------------
-08/22 21:51:41 Seeking servers to start
-host_lookup_by_hostent(localhost) got localhost?
-08/22 21:54:32 127.0.0.1: using 12 of 12 cpus
-08/22 21:54:32 127.0.0.1 dirbuild OK (Output from STEP converter step-g.)
-08/22 21:54:32 127.0.0.1: process_cmd 'opt -w2048 -n2048 -H0 -p0 -U0 -J0 -A0.4 -l0 -E1.41421 -x0 -X0 -T5.000000e-04/0.000000e+00'
-08/22 21:54:32 127.0.0.1: Using tolerance 0
-08/22 21:54:32 127.0.0.1: process_cmd 'viewsize 9.86571722597487e+02'
-08/22 21:54:32 127.0.0.1: process_cmd 'orientation 2.48097349045873e-01 4.76590573266048e-01 7.48097349045873e-01 3.89434830518390e-01'
-08/22 21:54:32 127.0.0.1: process_cmd 'eye_pt 1.01790192500394e+04 6.80791388110900e+03 5.76220366705708e+03'
-08/22 21:54:32 127.0.0.1: process_cmd 'clean'
-08/22 21:54:33 127.0.0.1: BRL-CAD Release 7.31.0  The BRL-CAD Optical Shader Library
-    Sat, 22 Aug 2020 11:24:22 -0400, Compilation 1
-    user@machinename
-08/22 21:54:33 127.0.0.1: PREP: cpu = 9.7e-05 sec, elapsed = 0.000109 sec
-    parent: 0.0user 0.0sys 0:00real 0% i+d maxrss +pf csw
-  children: 0.0user 0.0sys 0:00real 0% i+d maxrss +pf csw
-08/22 21:54:33 127.0.0.1: NUBSP: 0 cut, 1 box (1 empty)
-08/22 21:54:33 127.0.0.1 gettrees OK (Document)
-08/22 21:54:34 127.0.0.1: shade_inputs(Brep_1.s) flip N xy=1292, 238 ID_BREP surf=125 dot=0.422618
-08/22 21:54:34 127.0.0.1: center: 10236.048570366667 7005.4508761769466 5419.0434225048521
-08/22 21:54:34 127.0.0.1: dir: -0.74240387650610384 -0.51983679072568423 -0.42261826174069994
-08/22 21:54:35 127.0.0.1: shade_inputs(Brep_1.s) flip N xy=1090, 331 ID_BREP surf=37 dot=0.422618
-08/22 21:54:35 127.0.0.1: center: 10276.352963334217 6914.8807626523731 5459.6463522037802
-08/22 21:54:35 127.0.0.1: dir: -0.74240387650610384 -0.51983679072568423 -0.42261826174069994
-08/22 21:55:58 127.0.0.1: shade_inputs(Brep_1.s) flip N xy=1069, 1335 ID_BREP surf=171 dot=0.422618
-08/22 21:55:58 127.0.0.1: center: 10114.720787667989 6789.3550779060624 5897.983356695433
-08/22 21:55:58 127.0.0.1: dir: -0.74240387650610384 -0.51983679072568423 -0.42261826174069994
-08/22 21:56:16 Frame 0 DONE: 103.085 elapsed sec, 3890128 rays/1189.42 cpu sec
-08/22 21:56:16 RTFM=37737.1 rays/sec (3270.61 rays/cpu sec)
-08/22 21:56:16 All work done!
-08/22 21:56:16 Task accomplished
-    
-....
-
-The framebuffer started in the beginning will now hold the image results. To save those results to a file, the *fb-png* is used:
-
-**fb-png -F0 -s2048 image.png**
-
+# 5. when all frames report done, save the framebuffer to disk
+fb-png -F0 -s2048 image.png
+----
+This drives the whole pipeline on one machine without *ssh*(1): the
+dispatcher listens on its default TCP port (4446), a manually started
+*rtsrv*(1) worker connects back to it, and the finished image is read
+out of the framebuffer with *fb-png*(1). The same script scales to many
+hosts by adding *host* lines to _.remrtrc_ instead of starting workers
+by hand.
 ====
 
 
 [[security]]
 == SECURITY
 
-[[session_token]]
-=== Session Authentication Token
+At startup *remrt* generates a 256-bit random session token, prints it
+to standard error, and appends `-S _token_` to each *rtsrv*(1) worker it
+auto-launches. Workers echo the token in their version handshake and
+*remrt* rejects any mismatch. Manually started (passive) workers that
+present no token are still accepted by default for backward
+compatibility; to authenticate them, pass the printed token:
 
-Each time *remrt* starts it generates a 256-bit random session token and prints it to standard error, for example:
+[source]
+----
+rtsrv -S <token> server_host 4446
+----
 
-
-....
-
-    08/22 21:51:41 Session token: 3f8a1c...
-  
-....
-
-When *remrt* auto-launches an *rtsrv* worker via SSH it appends "-S _token_" to the worker command line. The worker sends the token as part of its protocol version handshake; *remrt* verifies the token and rejects any worker that presents a mismatched token.
-
-Workers started manually (passive connections) that do not supply a token are still accepted by default, preserving backward compatibility with older *rtsrv* binaries. To manually start a worker with authentication, pass the printed token via:
-
-
-....
-
-    rtsrv -S <token> server_host 4446
-  
-....
-
-
-[[tls]]
-=== Transport Layer Security (TLS)
-
-When *remrt* and *rtsrv* are built with OpenSSL support, all protocol traffic between the dispatcher and its workers is automatically encrypted using TLS 1.2 or later.
-
-*remrt* acts as the TLS server. By default it generates an RSA-2048 self-signed certificate in memory at startup — no external PKI infrastructure is required. Certificate verification is disabled on the *rtsrv* client side because there is no shared certificate authority; the session token (see above) provides application-level authentication instead.
-
-Sites that need to use pre-provisioned certificates can supply them via the following environment variables before starting *remrt*:
-
-
-`REMRT_TLS_CERT`::
-Path to a PEM-format certificate chain file (or a single certificate). Must be set together with `REMRT_TLS_KEY`.
-
-
-`REMRT_TLS_KEY`::
-Path to the PEM-format private key file corresponding to `REMRT_TLS_CERT`.
-
-
-
-If OpenSSL was not available at build time, all connections fall back to unencrypted plain TCP, which is the same behavior as earlier releases.
-
-
-
-[[see_also]]
-== SEE ALSO
-
-*rtsrv*(1), *rt*(1), *ssh*(1), *scriptsort*(1), *brlcad*(1), *mged*(1), *pix-fb*(1), *rtray*(1), *rtpp*(1), *librt*(3), *ray*(5V), *pix*(5)
+When built with OpenSSL, all dispatcher-to-worker traffic is encrypted
+with TLS 1.2 or later. *remrt* acts as the TLS server, generating an
+in-memory RSA-2048 self-signed certificate by default; the session token
+provides application-level authentication in place of certificate
+verification. Sites with pre-provisioned certificates may set
+`REMRT_TLS_CERT` (PEM certificate chain) and `REMRT_TLS_KEY` (matching
+PEM private key) before starting *remrt*. Without OpenSSL, connections
+fall back to plain TCP.
 
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-Numerous error conditions are possible. Descriptive messages are printed on standard error.
-
-
-[[see_also2]]
-== SEE ALSO
-
-M. Muuss, "_Workstations_, _Networking_, _Distributed Graphics_, _and Parallel Processing_", in "_Computer Graphics Techniques_: _Theory and Practice_", ed: Rogers & Earnshaw, Springer Verlag, New York, pages 409-472
+Numerous error conditions are possible; descriptive messages are printed
+on standard error.
 
 
 [[bugs]]
 == BUGS
 
-Most deficiencies observed while using the *remrt* program are usually with the *rt*(1) program, with which it shares a substantial amount of common code, or with the *librt*(3) library. If a frame fails to render properly, try processing it on a single machine using *rt*(1) to determine if the problem is in the ray-tracing side of things, or the distributed computation side of things.
+Most problems seen while using *remrt* actually originate in the *rt*(1)
+program or the *librt*(3) library, with which it shares a great deal of
+code. If a frame fails to render correctly, try it on a single machine
+with *rt*(1) to determine whether the fault is in the ray tracing or in
+the distributed-computation machinery.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *rtsrv*(1), *mged*(1), *fbserv*(1),
+*fb-png*(1), *ssh*(1), *libfb*(3), *libpkg*(3), *librt*(3), *pix*(5)
+
+M. Muuss, "Workstations, Networking, Distributed Graphics, and Parallel
+Processing", in "Computer Graphics Techniques: Theory and Practice", ed:
+Rogers & Earnshaw, Springer Verlag, New York, pages 409-472.
 
 
 [[author]]
@@ -343,7 +218,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1994-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
