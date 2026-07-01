@@ -511,7 +511,14 @@ function(brlcad_ext_batch_file_type ALL_CNT)
 
   set(_brlcad_ext_rpath_files)
   set(_brlcad_ext_noexec_files)
-  if(_brlcad_ext_binary_files)
+  if(_brlcad_ext_binary_files AND NOT P_RPATH_SUPPORTS_CLASSIFY)
+    # No RPATH-capable tool (e.g. plief) is available to sub-classify the
+    # binaries.  This is the normal case on Windows, where PE files have no
+    # RPATH concept - there is nothing to set, so every binary is treated as
+    # a non-exec binary (matching the per-file file_type() fallback, which
+    # drops through to the noexec bucket when P_RPATH_EXECUTABLE is unset).
+    set(_brlcad_ext_noexec_files ${_brlcad_ext_binary_files})
+  elseif(_brlcad_ext_binary_files)
     set(_brlcad_ext_plief_classify_list "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_classify_plief.txt")
     brlcad_ext_write_file_list("${_brlcad_ext_plief_classify_list}" ${_brlcad_ext_binary_files})
     execute_process(
@@ -1286,13 +1293,27 @@ endfunction()
   set_property(GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_COUNT 0)
   set_property(GLOBAL PROPERTY BRLCAD_EXT_PROCESSED_FILE_COUNT 0)
   list(LENGTH TP_PROCESS ALL_PCNT)
-  if(STRCLEAR_SUPPORTS_CLASSIFY AND P_RPATH_SUPPORTS_CLASSIFY AND NOT APPLE)
+  # Batch classification only requires strclear's --classify support to split
+  # text vs. binary.  The RPATH sub-classification (plief) is optional:
+  #
+  #   * If an RPATH tool can batch-classify (P_RPATH_SUPPORTS_CLASSIFY), the
+  #     binaries are further split inside brlcad_ext_batch_file_type.
+  #   * If no RPATH tool exists at all (NOT P_RPATH_EXECUTABLE, the normal
+  #     Windows case - PE files have no RPATH), there is nothing to
+  #     sub-classify and every binary is a non-exec binary.
+  #
+  # Only when an RPATH tool is present but cannot batch-classify (e.g. a
+  # patchelf without --classify) do we still need the per-file path, so that
+  # the tool is invoked per binary to set RPATH correctly.  This lets Windows
+  # avoid the per-file execute_process() storm, which is the dominant
+  # configure cost, without regressing that edge case.
+  if(STRCLEAR_SUPPORTS_CLASSIFY AND NOT APPLE AND (P_RPATH_SUPPORTS_CLASSIFY OR NOT P_RPATH_EXECUTABLE))
     brlcad_ext_batch_file_type(${ALL_PCNT} ${TP_PROCESS})
-  else(STRCLEAR_SUPPORTS_CLASSIFY AND P_RPATH_SUPPORTS_CLASSIFY AND NOT APPLE)
+  else()
     foreach(lf ${TP_PROCESS})
       file_type("${lf}" ${ALL_PCNT})
     endforeach(lf ${TP_PROCESS})
-  endif(STRCLEAR_SUPPORTS_CLASSIFY AND P_RPATH_SUPPORTS_CLASSIFY AND NOT APPLE)
+  endif()
   get_property(NBINARY_FILES GLOBAL PROPERTY BRLCAD_EXT_NBINARY_FILES)
   get_property(NTEXT_FILES GLOBAL PROPERTY BRLCAD_EXT_NTEXT_FILES)
   get_property(NNOEXEC_FILES GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_FILES)
