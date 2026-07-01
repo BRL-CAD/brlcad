@@ -1,41 +1,101 @@
 = NASTRAN-G(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
-nastran-g - NASTRAN Translator (NASTRAN to BRL-CAD)
+
+nastran-g - convert a NASTRAN finite element model to a BRL-CAD database
 
 == SYNOPSIS
 
 [source]
 ----
-nastran-g [-xX lvl] [-t tolerance_distance] [-n] [-m] -i nastran_input_file -o database.g
+nastran-g [-n] [-m] [-t _tolerance_] [-x _lvl_] [-X _lvl_] [-i _nastran_file_] -o _database.g_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*nastran-g* converts the specified __nastran_input_file__ to a BRL-CAD _database.g_ file. The __tolerance_distance__ provided is the maximum distance (in mm) between two vertices at which they will be considered to be the same vertex. The *-n* option requests that the output solids created from _NASTRAN CQUAD4_ or _CTRIA3_ elements be stored in the BRL-CAD file as NMG solids rather than as the default BOT solids. The *-m* option indicates that the units of the NASTRAN file are millimeters, rather than the default inches. The converter currently only handles the _CROD, CBAR, CTRIA3,_ and _CQUAD4_ elements.
+*nastran-g* reads a NASTRAN bulk data deck and converts the geometry it
+describes into a BRL-CAD _database.g_ file. Input is read from the file
+named with *-i*, or from standard input if *-i* is not given. Conversion
+begins at the *BEGIN BULK* card; everything before it is ignored.
 
-The *-x* and *-X* options are for debug levels.
+Only a subset of NASTRAN element types is handled: *CROD* and *CBAR*
+elements become right circular cylinders (RCC) whose radius is derived
+from the referenced *PBAR* cross-sectional area, while *CTRIA3* and
+*CQUAD4* shell elements are tessellated into surfaces. Grid points
+(*GRID*), coordinate systems (*CORD1*/*CORD2*), and properties (*PBAR*,
+*PSHELL*, *BAROR*) are interpreted as needed. All geometry is transformed
+into the default Cartesian coordinate system. The resulting primitives
+are grouped into combinations (_pbars_, _shells_, and a top-level _all_).
+
+By default the shell elements are written as *bot*(5) (BOT) solids and the
+model is assumed to be in inches.
 
 
-[[example]]
-== EXAMPLE
+[[options]]
+== OPTIONS
+
+*-n*::
+  Write surfaces created from *CQUAD4* and *CTRIA3* elements as NMG solids
+  rather than as the default BOT solids.
+
+*-m*::
+  Treat the NASTRAN input as millimeters rather than the default inches.
+
+*-t* _tolerance_::
+  Set the distance tolerance, in millimeters: two vertices closer than
+  this are treated as the same vertex. Defaults to the BRL-CAD distance
+  tolerance.
+
+*-x* _lvl_::
+  Set the librt debug flags to the given hexadecimal value.
+
+*-X* _lvl_::
+  Set the NMG debug flags to the given hexadecimal value.
+
+*-i* _nastran_file_::
+  Read the NASTRAN bulk data deck from _nastran_file_ instead of standard
+  input.
+
+*-o* _database.g_::
+  Write the converted geometry to _database.g_. Defaults to _nastran.g_.
 
 
+[[examples]]
+== EXAMPLES
+
+.Convert a metric model and inspect the result
+====
+[source,bash]
 ----
-
-$ nastran-g -i nastran.file -o sample.g
+nastran-g -m -i wing.nas -o wing.g
+mged wing.g 'tops'
 ----
+Converts the millimeter NASTRAN deck _wing.nas_ to _wing.g_, then lists
+the top-level objects with *mged*(1) so the _all_ combination can be
+drawn and examined.
+====
+
+.Convert from a pipeline using NMG shells and a tightened tolerance
+====
+[source,bash]
+----
+cat model.bdf | nastran-g -n -t 0.005 -o model.g
+----
+Reads the bulk data deck from standard input, writes shell elements as
+NMG solids, and treats vertices within 0.005 mm of each other as
+coincident.
+====
 
 
-[[diagnostics]]
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Error messages are intended to be self-explanatory.
+*brlcad*(1), *mged*(1), *bot*(5)
 
 
 [[author]]

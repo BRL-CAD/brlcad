@@ -1,52 +1,84 @@
 = PLY-G(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
-ply-g - Stanford PLY format Translator (PLY to BRL-CAD)
+ply-g - convert a Stanford PLY file to a BRL-CAD database
 
 == SYNOPSIS
 
 [source]
 ----
-ply-g [-s scale_factor] [-v] [-d] file.ply file.g
+ply-g [-s scale_factor] [-d] [-v] input_file.ply output_file.g
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*ply-g* converts the specified _file.ply_ to a BRL-CAD _file.g_ file. The *-v* option (verbose) prints much information about what the process is doing. The *-d* option sets a debug flag which will cause a core dump on error. The *-s* option specifies a scale factor to be applied to the PLY data. By convention, PLY data is typically in meters, so the default scale factor is 1000. The scale factor supplied on the command line will replace the default scale factor. So, for example, specifying a scale factor of 500 will halve the size of the resulting BRL-CAD model as compared to converting it without specifying a scale factor. The _file.ply_ file is expected to be in the Stanford PLY format (ASCII or binary).
+*ply-g* converts the geometry in a Stanford PLY file (ASCII or
+binary) into a BRL-CAD _.g_ database via the GCV conversion library. The
+resulting BRL-CAD model contains the triangulated mesh described by
+_input_file.ply_.
 
+PLY data is conventionally expressed in meters, so by default the input
+coordinates are scaled by 1000.0 to produce a model in BRL-CAD's base unit of
+millimeters. Use *-s* to override this factor.
 
-[[example]]
-== EXAMPLE
+[[options]]
+== OPTIONS
 
+*-s* _scale_factor_::
+  Multiply all input coordinates by _scale_factor_ instead of the default of
+  1000.0. For example, a value of 1.0 keeps the data in its original units and
+  a value of 500 produces a model half the default size.
 
+*-d*::
+  Enable the GCV debug flag, producing additional low-level diagnostic output
+  during conversion.
+
+*-v*::
+  Run verbosely, reporting progress and details about the conversion.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a binary PLY scan and inspect it
+====
+[source,bash]
 ----
-
-$ ply-g sample.ply sample.g
+ply-g bunny.ply bunny.g
+mged bunny.g 'tops'
 ----
+Convert the PLY mesh _bunny.ply_ into the database _bunny.g_, then list the
+top-level objects with *mged*(1) to verify the imported geometry.
+====
 
+.Preserve native units
+====
+[source,bash]
+----
+ply-g -s 1.0 model.ply model.g
+----
+Import _model.ply_ without the default meters-to-millimeters scaling, leaving
+the coordinates exactly as stored in the file.
+====
 
-[[diagnostics]]
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Error messages are intended to be self-explanatory.
-
+*brlcad*(1), *g-ply*(1), *mged*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2003-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

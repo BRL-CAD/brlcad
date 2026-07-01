@@ -4,125 +4,125 @@
 :manmanual: BRL-CAD
 
 == NAME
-patch-g - convert FASTGEN ASCII databases into binary MGED databases.
+patch-g - convert a preprocessed FASTGEN target description into a BRL-CAD database
 
 == SYNOPSIS
 
 [source]
 ----
-patch-g [options] output.g
+patch-g [options] model.g
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-This program converts FASTGEN geometry into BRL-CAD *mged*(1) formats. FASTGEN is a modeling system used by the Air Force and Navy to create military target descriptions. FASTGEN databases consist of the following primitives which can be converted by *patch-g* : polygons, plates, boxes, wedges, cylinders, spheres, and rods. It is recommended that *patch-g* be run with the *-p* option for most uses.
+*patch-g* converts FASTGEN target geometry into a BRL-CAD *.g* database.
+FASTGEN is a modeling system used to create military target descriptions,
+whose primitives (triangles in volume and plate mode, wedges, spheres,
+boxes, cylinders, and rods) are reproduced by *patch-g* as NMG solids,
+BoTs (polysolids), or ARB6 solids.
 
-*patch-g* requires that the FASTGEN file be run through the pre-processor *rpatch* . This is achieved by executing rpatch<__fastgen_file__>_file.rpatch_. Once this step is executed, *patch-g* can be used to convert the intermediate file into a binary *brlcad*(1) ".g" file.
+The FASTGEN file must first be passed through the *rpatch*(1) preprocessor,
+which produces the intermediate ".rp" file that *patch-g* consumes. The
+preprocessed input is read from standard input unless the *-f* option names
+a file, and the resulting geometry is written to the *model.g* database named
+as the sole positional argument.
 
-*patch-g* will provide messages when encountering problems in the conversion of FASTGEN geometry. For further debugging information, the -d flag with levels 1-3 of debugging can be provided.
+By default solids are written as NMG primitives; *-p* selects BoT (polysolid)
+output, and *-6* converts plate-mode triangles to ARB6 solids. Components are
+grouped into regions with a fixed number of unions each (see *-T* and *-A* for
+the tolerances controlling vertex fusing and face merging). Diagnostic
+messages are emitted when geometry cannot be converted; the *-d* option raises
+the verbosity, with higher levels producing more output.
 
-The available options are:
+[[options]]
+== OPTIONS
 
-
-*-T tolerance_distance*::
-The __tolerance_distance__ is specified in inches. Any two vertices within this distance from each other will be considered the same vertex.
-
-
-*-A perp_tolerance*::
-The __perp_tolerance__ is specified as the cosine of an angle (0.0 through 1.0). If the cosine of the angle between two vectors is less than the specified tolerance, then the vectors are considered perpendicular.
-
-
-*-u number_of_unions*::
-The __number_of_unions__ is the number of union operations per region, and has a pre-specified default value.
-
-
-*-x librt_debug_flag*::
-Specifies a flag for debugging the _librt_ package.
-
-
-*-X NMG_debug_flag*::
-Specifies a flag for NMG routine debugging.
-
-
-*-p*::
-Produce polysolid output rather than the default NMG solids.
-
-
-*-6*::
-Convert plate-mode triangles using ARB6 solids.
-
-
-*-f preprocessed_input_file*::
-Use the specified file as the input for conversion.
-
-
-*-i labels_file*::
-Specifies desired group names to override defaults.
-
-
-*-m materials_file*::
-Specifies material properties to be assigned to components.
-
+*-f* _fastgen.rp_::
+  Read the pre-processed (through *rpatch*(1)) FASTGEN file instead of standard input.
 
 *-n*::
-Process volume mode as plate mode.
+  Process volume mode components as plate mode.
 
+*-u* _number_::
+  Number of union operations per region (default 5).
 
-*-t title*::
-Specifies a title for the output model (default is "patch-g conversion").
+*-c* _"x y z"_::
+  Center of the object, in inches, used for some plate-mode surface normal
+  calculations. The quotation marks are required to group the three values.
 
+*-t* _title_::
+  Title for the output database (default "patch-g conversion").
 
-*-o top_level_name*::
-Specifies a name for the top level object (default is "all").
+*-o* _object_name_::
+  Name of the top-level object, containing no spaces (default "all").
 
+*-p*::
+  Write volume- and plate-mode components as BoT (polysolid) primitives rather than NMG solids.
+
+*-6*::
+  Process plate-mode triangles as ARB6 solids (overrides *-p* for triangles).
+
+*-i* _group.file_::
+  Read group label (region naming) information from the named file.
+
+*-m* _mat.file_::
+  Read material property information from the named file.
 
 *-r*::
-Reverse normals for plate mode triangles.
+  Reverse the surface normals for plate-mode triangles.
 
+*-d* _level_::
+  Set the debug (diagnostic verbosity) level. Higher numbers produce more
+  diagnostic output (levels above 3 also write intermediate NMG solids to the
+  database).
 
-*-c "X Y Z"*::
-Specifies centroid, in inches, for some plate mode surface normal calculations. Quotation marks are needed to provide for the embedded blanks.
+*-x* _flag_::
+  Set the _librt_ debugging flags (hexadecimal).
 
+*-X* _flag_::
+  Set the NMG (_librt_) debugging flags (hexadecimal).
 
-*-d debug_level*::
-Specifies a debug level (1-3).
+*-T* _distance_::
+  Vertex tolerance distance, in inches. Two vertices closer together than this
+  are treated as the same vertex.
 
+*-A* _tolerance_::
+  Perpendicularity tolerance, given as the cosine of an angle (0.0 through 1.0).
+  Two unit vectors whose dot product is less than this value are considered
+  perpendicular.
 
+[[examples]]
+== EXAMPLES
 
-
-[[example]]
-== EXAMPLE
-
-rpatch < __fastgen_file__ > _file.rpatch_
-
-patch-g -p -f _file.rpatch file.g_
-
-
-[[diagnostics]]
-== DIAGNOSTICS
-
-The diagnostics are intended to be self-explanatory.
-
+.Convert a FASTGEN target to a polysolid BRL-CAD database
+====
+[source,bash]
+----
+rpatch < tank.fastgen > tank.rp
+patch-g -p -f tank.rp -t "M1 Tank" -o tank tank.g
+----
+First *rpatch*(1) preprocesses the raw FASTGEN file into the intermediate
+*tank.rp*. *patch-g* then converts it, writing BoT (polysolid) geometry under
+a top-level group named *tank*, with a database title of "M1 Tank", into the
+new *tank.g* database that can be opened in *mged*(1).
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *mged*(1)
-
+*brlcad*(1), *rpatch*(1), *fast4-g*(1), *mged*(1)
 
 [[author]]
 == AUTHOR
 
-Bill Mermagen, Jr.
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

@@ -1,81 +1,123 @@
 = IGES-G(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-iges-g - IGES Translator (IGES CSG to BRL-CAD)
+iges-g - convert an IGES file to a BRL-CAD database
 
 == SYNOPSIS
 
-*iges-g* [-3] [-d] [-n] [-t] [-p] [-o _database.g_] [-N _solid_name_] [-x _rt_debug_flag_] [-X _NMG_debug_flag_] _file.iges_
+[source]
+----
+iges-g [-3] [-d] [-n] [-t] [-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_debug_flag_] -o _database.g_ _file.iges_
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*iges-g* converts the specified _file.iges_ to a BRL-CAD _database.g_ file. The input IGES file is expected to conform to IGES 5.1.
+*iges-g* reads an IGES (Initial Graphics Exchange Specification) file and
+writes the converted geometry to a BRL-CAD _database.g_ file. The input is
+expected to conform to IGES version 5.1.
 
-Without any of the flags *-3*, *-d*, *-n*, or *-t*, the default behavior is to convert all IGES CSG and planar face BREP objects to their BRL-CAD equivalents. Most conversions are exact, with some approximations for solids of revolution and solids of linear extrusion, which are approximated as BRL-CAD cone series and polysolids respectively. Planar faced IGES BREP objects are converted to NMG structures or BOT solids.
+With none of the *-3*, *-d*, *-n*, or *-t* options, the default action is to
+convert only IGES solid model entities (CSG primitives and planar-face BREP
+objects) to their BRL-CAD equivalents. Most CSG conversions are exact; solids
+of revolution are approximated by a series of BRL-CAD cones and solids of
+linear extrusion are approximated by polysolids. Planar-faced BREP objects are
+written as BOT solids by default (or as NMG solids with *-p*).
 
+The *-3*/*-d*, *-n*, and *-t* options are mutually exclusive and select
+alternate conversion modes (drawings, B-spline surfaces, or trimmed surfaces,
+respectively). The *-o* output option is required. When the chosen mode cannot
+represent something present in the file, *iges-g* prints suggestions for the
+options that would convert the remaining entities. To export geometry in the
+other direction, see *g-iges*(1).
+
+[[options]]
 == OPTIONS
 
 *-3*::
-	Convert IGES drawings to BRL-CAD NMG drawings without performing the final projection into 2D space. This can produce 3D drawings if the source drawings were created from a 3D model.
+  Convert IGES drawings to BRL-CAD NMG objects without the final projection
+  into 2D, preserving 3D drawings produced from a 3D model. Solid model
+  entities are ignored.
 
 *-d*::
-	Convert IGES drawings to BRL-CAD NMG objects. The resulting objects will be 2D drawings rather than 3D solids.
+  Convert IGES drawings to BRL-CAD NMG objects (projected to 2D). Solid model
+  entities are ignored.
 
 *-n*::
-	Combine all rational B-spline surfaces in the IGES file into a single BRL-CAD spline solid.
+  Combine all rational B-spline surfaces in the IGES file into a single
+  BRL-CAD spline solid.
 
 *-t*::
-	Convert all trimmed surfaces in the IGES file into a single BRL-CAD NMG solid.
+  Convert all trimmed surfaces in the IGES file into a single BRL-CAD NMG
+  trimmed-NURBS solid.
 
 *-p*::
-	Convert BREP objects to NMG solids rather than the default behavior of converting them to BOT solids.
+  Write BREP objects as NMG solids instead of the default BOT solids.
 
 *-o* _database.g_::
-	Specify the output BRL-CAD database file name.
+  Specify the output BRL-CAD database file. This option is required.
 
 *-N* _solid_name_::
-	Specify a name for the single solid created under the *-n* or *-t* options. If not specified, the default name "all" (or a unique variation of it) is used. This option is ignored if neither *-n* nor *-t* is used.
+  Name the single solid created by the *-n* or *-t* option. If not given, the
+  default name "all" (or a unique variant) is used. Ignored for all other
+  modes.
 
 *-x* _rt_debug_flag_::
-	Specify a debug flag (in hexadecimal format) for the raytrace (`rt`) library routines. See _raytrace.h_ for details.
+  Set the librt debug flag, given as a hexadecimal value. See _raytrace.h_ for
+  the bit definitions.
 
-*-X* _NMG_debug_flag_::
-	Specify a debug flag (in hexadecimal format) for NMG routines. See _nmg.h_ for details.
+*-X* _nmg_debug_flag_::
+  Set the NMG routine debug flag, given as a hexadecimal value. See _nmg.h_
+  for the bit definitions.
 
+[[examples]]
 == EXAMPLES
 
-.Convert an IGES file to BRL-CAD database with default settings
+.Convert IGES solid geometry and inspect the result
+====
 [source,bash]
 ----
-iges-g -o sample.g sample.iges
+iges-g -o widget.g widget.iges
+mged widget.g 'tops'
 ----
+Convert the CSG and planar-face BREP entities of _widget.iges_ into
+_widget.g_, then list the resulting top-level objects with *mged*(1) to verify
+the conversion.
+====
 
-.Convert trimmed surfaces from an IGES file into a single BRL-CAD solid named 'part1'
+.Convert trimmed surfaces into a single named solid
+====
 [source,bash]
 ----
-iges-g -t -N part1 -o parts.g sample.iges
+iges-g -t -N hull -o boat.g boat.iges
 ----
+Collapse all trimmed surfaces in _boat.iges_ into one BRL-CAD NMG solid named
+"hull" inside _boat.g_, useful for surface models that have no CSG geometry.
+====
 
+[[see_also]]
 == SEE ALSO
+
+*brlcad*(1), *g-iges*(1), *mged*(1)
 
 _The Initial Graphics Exchange Specification (IGES) Version 5.1_, IGES/PDES Organization, September 1991.
 
-== DIAGNOSTICS
-
-Error messages are intended to be self-explanatory.
-
-== AUTHORS
+[[author]]
+== AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

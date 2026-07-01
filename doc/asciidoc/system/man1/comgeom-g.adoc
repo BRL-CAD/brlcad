@@ -28,39 +28,38 @@ In the resulting database, a high-level group all.g is created. The units used i
 == OPTIONS
 
 *-d* _debug_lvl_::
-Set the debug level. By default, the program operates silently. Specifying `-d 1` provides verbose status reports indicating the progress of the conversion, which can be useful for large databases.
+  Set the debug/verbosity level. By default (level 0) the program reports only the title, units, and major errors. Any nonzero level enables verbose status reports describing the expected file layout and the progress of the conversion, which is useful for large or problematic models.
 
 *-h*, *-?*::
-Print a usage summary and exit.
+  Print a usage summary and exit.
 
 *-s* _name_suffix_::
-Append the specified suffix to the names of all generated items in the output database (except for the top-level group). The user must supply any leading period if desired.
+  Append the specified suffix to the names of all generated solids, regions, and groups (but not the top-level all.g group). Any leading period must be included in the suffix. The suffix is limited to 15 characters.
 
 *-v* _input_vers#_::
-Specify the COMGEOM input format version. The default is version 5. Version 4 is also supported. Additionally, the DoE MORSE/RAFFLE format (believed to be the original MAGIC format) can be converted by specifying version 1.
+  Specify the COMGEOM input format version. The default is version 5 (cg5); version 4 is also supported. Version 1 selects the DoE MORSE/RAFFLE format (believed to be the original MAGIC format). Any other value is rejected.
 
 
 [[examples]]
 == EXAMPLES
 
-.Convert a Version 4 COMGEOM file with verbose output
-[example]
+.Convert a version 4 COMGEOM file with verbose output
 ====
-....
-$ comgeom-g -d 1 -v 4 file.cg file.g
-....
-
-Converts the COMGEOM version 4 file _file.cg_ into a BRL-CAD database _file.g_, displaying status reports during the conversion.
+[source,bash]
+----
+comgeom-g -d 1 -v 4 model.cg model.g
+----
+Converts the COMGEOM version 4 input _model.cg_ into the BRL-CAD database _model.g_, printing the expected file layout and per-item progress reports during the conversion. Raising the debug level is the quickest way to find which solid or region card a malformed input file is choking on.
 ====
 
-.Convert a COMGEOM file and append a suffix to item names
-[example]
+.Convert and merge two COMGEOM models with namespaced names
 ====
-....
-$ comgeom-g -s .v1 file.cg file.g
-....
-
-Converts the COMGEOM version 5 file _file.cg_ into _file.g_, appending ".v1" to all generated solid and region names.
+[source,bash]
+----
+comgeom-g -s _a model_a.cg combined.g
+comgeom-g -s _b model_b.cg combined.g
+----
+Because *comgeom-g* appends to an existing output database rather than overwriting it, two COMGEOM models can be merged into one BRL-CAD database. The *-s* suffixes ("_a" and "_b") keep the auto-generated s###, r###, and g### names from each model distinct so they do not collide in _combined.g_. The result can then be inspected with *mged*(1).
 ====
 
 

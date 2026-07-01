@@ -4,86 +4,89 @@
 :manmanual: BRL-CAD
 
 == NAME
-dxf-g - DXF Translator (DXF to BRL-CAD)
+dxf-g - convert an AutoCAD DXF file to a BRL-CAD database
 
 == SYNOPSIS
 
 [source]
 ----
-dxf-g [-c] [-d] [-v] [-s scale_factor] [-t tolerance] [-h] [-?] file.dxf database.g
+dxf-g [-c] [-d] [-v] [-t _tolerance_] [-s _scale_factor_] [-h] [-?] _file.dxf_ _database.g_
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-*dxf-g* converts an AutoCAD DXF file (_file.dxf_) to a BRL-CAD
+*dxf-g* converts an AutoCAD DXF file (_file.dxf_) into a BRL-CAD
 database (_database.g_). The input is expected to be in ASCII DXF
 format as defined in the AutoCAD 2006 manuals.
 
-Supported DXF entity types include: POLYLINE, LWPOLYLINE, LEADER,
+Supported DXF entity types include POLYLINE, LWPOLYLINE, LEADER,
 DIMENSION, VERTEX, LINE, CIRCLE, ARC, ELLIPSE, 3DFACE, TEXT, MTEXT,
 ATTRIB, SOLID, and SPLINE. Supported POLYLINE subtypes include 3D
-polylines, 3D polygon meshes, and polyface meshes.
+polylines, 3D polygon meshes, and polyface meshes. SOLID entities are
+2D filled shapes, but this converter does not perform any filling.
 
-SOLID entities are 2D filled shapes, but this converter does not
-perform any filling. Each DXF layer is converted to a separate
-BRL-CAD object. Colors are also preserved.
+Each DXF layer is converted to a separate BRL-CAD object, and layer
+colors are preserved. The inverse conversion is performed by
+*g-dxf*(1).
 
 [[options]]
 == OPTIONS
 
 *-c*::
-Use only the first color encountered for each layer. Without this
-option, layers may be split into separate BOT primitives by color.
+  Ignore colors. By default each layer may be split into separate BOT
+  primitives by color; with this option a single object is produced per
+  layer regardless of the colors it contains.
 
 *-d*::
-Enable a debug flag that causes a core dump on failure. Useful only
-for developers.
+  Enable a debug flag that requests a core dump on failure. Useful only
+  for developers.
 
 *-v*::
-Produce verbose output on standard error.
-
-*-s* _scale_factor_::
-Apply _scale_factor_ to the DXF input. Useful for files that do not
-specify units.
+  Produce verbose progress output on standard error.
 
 *-t* _tolerance_::
-Maximum distance (in mm) between two vertices at which they are
-considered the same vertex.
+  Maximum distance, in millimeters, at which two vertices are
+  considered to be the same point.
 
-*-h, -?*::
-Print a usage message and exit.
+*-s* _scale_factor_::
+  Multiply all input coordinates by _scale_factor_. Useful for DXF
+  files that do not specify their units.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Convert a DXF file to a BRL-CAD database
+.Convert a DXF file drawn in inches
 ====
 [source,bash]
 ----
-$ dxf-g sample.dxf sample.g
+dxf-g -s 25.4 -t 0.01 drawing_inches.dxf drawing.g
 ----
+Converts a DXF file authored in inches into a millimeter-unit BRL-CAD
+database by scaling every coordinate by 25.4, while merging vertices
+that lie within 0.01 mm of one another into a single point.
 ====
 
-.Convert with a scale factor and tight tolerance
+.Round-trip a model through DXF
 ====
 [source,bash]
 ----
-$ dxf-g -s 25.4 -t 0.01 drawing_inches.dxf drawing.g
+g-dxf -o part.dxf part.g component
+dxf-g part.dxf part_reimport.g
 ----
-Converts a DXF file drawn in inches to millimeters (25.4 mm/in)
-with a vertex merge tolerance of 0.01 mm.
+Exports the object _component_ from _part.g_ to DXF with *g-dxf*(1),
+then re-imports the result into a new BRL-CAD database for comparison
+or further editing.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*g-dxf*(1)
-
-[[diagnostics]]
-== DIAGNOSTICS
-
-Error messages are intended to be self-explanatory.
+*brlcad*(1), *g-dxf*(1), *mged*(1)
 
 [[author]]
 == AUTHOR
@@ -93,7 +96,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1993-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

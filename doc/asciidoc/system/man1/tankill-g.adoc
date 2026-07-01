@@ -1,52 +1,106 @@
 = TANKILL-G(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
-tankill-g - TANKILL Translator (TANKILL to BRL-CAD)
+tankill-g - convert UK TANKILL triangular mesh geometry to a BRL-CAD database
 
 == SYNOPSIS
 
 [source]
 ----
-tankill-g [-n] [-t tolerance] [-i input_tankill_file] [-o database.g]
+tankill-g [-v] [-n] [-k] [-t _tolerance_] [-x _lvl_] [-X _lvl_] [-i _input.tankill_] [-o _output.g_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*tankill-g* converts the specified __input_tankill_file__ to a BRL-CAD _database.g_ file. The _tolerance_ provided is the maximum distance (in mm) between two vertices at which they will be considered to be the same vertex. The *-n* option provides output in the form of NMG primitives rather than the default which is BOT objects. The __input_tankill_file__ is expected to be in the _TANKILL_ format used by the British Defense Research Agency. This is a simple triangular patch format where each object is described by a series of vertices. Triangular facets are built from the first, second, and third vertices; from the second, third, and fourth vertices; from the third, fourth and fifth; and so on. Each object is converted to a single BOT object which is then placed into its own region and assigned the component code provided in the TANKILL file.
+*tankill-g* converts a model in the UK TANKILL format (a simple triangular
+patch format used by the British Defence Research Agency) into a BRL-CAD
+_.g_ database. TANKILL describes each object as a series of vertices from
+which triangular facets are built in a strip: vertices one, two and three;
+then two, three and four; then three, four and five; and so on.
 
+Each object is converted to a single *bot*(5) solid by default (or to an
+*nmg*(5) solid with *-n*), placed into its own region, and assigned the
+component code given in the TANKILL file. The resulting regions are
+collected into a hierarchy of groups based on their component codes (for
+example _00XX_codes_, _0XXX_codes_, and a top level _all_ group). Component
+code 1000 is treated as an air region; component code 1001 is skipped by
+default unless *-k* is given.
 
-[[example]]
-== EXAMPLE
+Input is read from standard input unless *-i* is used, and output is
+written to _tankill.g_ unless *-o* is used.
 
+[[options]]
+== OPTIONS
 
+*-v*::
+  Verbose output; report each component, solid, region, and group as it is created.
+
+*-n*::
+  Write each object as an *nmg*(5) solid instead of the default *bot*(5) solid.
+
+*-k*::
+  Keep components with id 1001 (these are normally skipped as non-physical).
+
+*-t* _tolerance_::
+  Minimum distance, in millimeters, below which two vertices are treated as
+  the same vertex. The default is 0.0005.
+
+*-x* _lvl_::
+  Set the librt debug flag to the given hexadecimal value.
+
+*-X* _lvl_::
+  Set the NMG debug flag to the given hexadecimal value.
+
+*-i* _input.tankill_::
+  Read the TANKILL model from the named file instead of standard input.
+
+*-o* _output.g_::
+  Write the BRL-CAD database to the named file instead of _tankill.g_.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a TANKILL model and inspect the result
+====
+[source,bash]
 ----
-
-$ tankill-g sample.tankill sample.g
+tankill-g -t 0.01 -i tank.tankill -o tank.g
+mged tank.g 'tops'
 ----
+Convert _tank.tankill_ into _tank.g_, merging vertices within 0.01 mm of
+each other, then list the top-level objects of the new database (such as
+the _all_ group) with *mged*(1).
+====
 
+.Pipe TANKILL data through a filter and keep 1001 components as NMGs
+====
+[source,bash]
+----
+gunzip -c tank.tankill.gz | tankill-g -n -k -o tank.g
+----
+Read gzip-compressed TANKILL data from standard input, retain the normally
+skipped component code 1001, and write *nmg*(5) solids to _tank.g_.
+====
 
-[[diagnostics]]
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Error messages are intended to be self-explanatory.
-
+*brlcad*(1), *mged*(1), *fast4-g*(1), *bot*(5), *nmg*(5)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1993-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

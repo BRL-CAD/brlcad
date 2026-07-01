@@ -4,70 +4,85 @@
 :manmanual: BRL-CAD
 
 == NAME
-enf-g - Elysium Neutral Format Translator (ENF to BRL-CAD)
+enf-g - convert an Elysium Neutral File (ENF) to a BRL-CAD database
 
 == SYNOPSIS
 
 [source]
 ----
-enf-g [-t tolerance] [-i starting_ident_number] [-l name_length_limit] [-n part_number_to_name_mapping] [-v] input_enf_facet_file database.g
+enf-g [-v] [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_name_file] input_facets_file output.g
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*enf-g* converts the specified _input_enf_facet_file_ to a BRL-CAD _database.g_ file. The input file is expected to be the ASCII output from the Elysium _enf2mxp_ tessellator.
+*enf-g* converts a tessellated _input_facets_file_ in the Elysium
+Neutral File (ENF) format into a BRL-CAD _output.g_ database. The input
+is expected to be the ASCII facet output produced by the Elysium
+_enf2mxp_ tessellator. Each ENF part is written as a BOT primitive
+wrapped in a region, and the ENF assembly hierarchy is reproduced using
+combinations. When a part name mapping file is supplied, the original
+ENF part number is also recorded as a *Part_No* attribute on the
+resulting region or combination.
 
 [[options]]
 == OPTIONS
 
-*-i starting_ident_number*::
-Specifies the starting ident number for the first region created. Each succeeding region will have its ident number incremented by one. The default is 1000.
-
-*-t tolerance*::
-Specifies the maximum distance (in mm) between two vertices at which they will be considered the same vertex. The default is the BRL-CAD standard tolerance (0.0005 mm).
-
-*-l name_length_limit*::
-Sets a maximum length limit for the resulting object names in the BRL-CAD model. Names exceeding this limit will be truncated.
-
-*-n part_number_to_name_mapping*::
-Specifies a file containing a mapping from part numbers to object names. The file is expected to contain one mapping per line, consisting of a part number and a legal BRL-CAD object name separated by whitespace (tab or space). This file is used to convert part numbers in the input ENF facet file to the corresponding names in the mapping.
-
 *-v*::
-Enables verbose output mode.
+  Enable verbose output, reporting each solid, region, and assembly as
+  it is written.
 
-*-h, -?*::
-Print a usage message and exit.
+*-i* _starting_ident_::
+  Set the ident number assigned to the first region created. Each
+  subsequent region's ident is incremented by one. The default is 1000.
+
+*-t* _tolerance_::
+  Set the maximum distance (in mm) at which two vertices are treated as
+  the same vertex. Must be greater than 0.0. The default is the BRL-CAD
+  standard distance tolerance.
+
+*-l* _name_length_limit_::
+  Truncate generated BRL-CAD object names to at most this many
+  characters. The value must be at least 5.
+
+*-n* _part_name_file_::
+  Read a part-number-to-name mapping from the named file. Each line
+  holds a part number and a legal BRL-CAD object name separated by
+  whitespace. Matching objects are renamed accordingly, while unmatched
+  objects keep their ENF part number and trigger a warning. When this
+  option is given, every resulting region and combination is tagged with
+  its original ENF part number in a *Part_No* attribute.
 
 [[examples]]
 == EXAMPLES
 
-The following example demonstrates a basic conversion of an ENF file to a BRL-CAD database, starting region ident numbers at 2000 and limiting object names to 32 characters.
-
-.Converting an ENF File with Custom Ident Numbers and Name Lengths
+.Convert an ENF facet file with a custom ident range and name mapping
 ====
-[prompt]#$# [in]`enf-g -i 2000 -l 32 sample.enf sample.g`
+[source,bash]
+----
+enf-g -v -i 2000 -l 32 -n parts.map widget.enf widget.g
+----
+Converts _widget.enf_ into _widget.g_, starting region idents at 2000,
+limiting object names to 32 characters, and renaming parts via the
+_parts.map_ lookup table. The resulting database can then be inspected
+with *mged*(1) or rendered with *rt*(1).
 ====
 
+[[see_also]]
+== SEE ALSO
 
-[[diagnostics]]
-== DIAGNOSTICS
-
-Error messages are intended to be self-explanatory.
-
+*brlcad*(1), *mged*(1), *rt*(1), *stl-g*(1), *obj-g*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2001-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

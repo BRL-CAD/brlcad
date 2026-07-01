@@ -4,102 +4,100 @@
 :manmanual: BRL-CAD
 
 == NAME
-fast4-g - FASTGEN4 Translator (FASTGEN4 to BRL-CAD)
+fast4-g - convert a FASTGEN4 file to a BRL-CAD geometry database
 
 == SYNOPSIS
 
 [source]
 ----
-fast4-g [-d] [-w] [-q] [-o plot_file] [-m muves_warnings] [-c id_list] [-C color_file] [-x RT_DEBUG_FLAG] [-b BU_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-h] [-?] file.fastgen4 file.g
+fast4-g [-dwq] [-o _plot_file_] [-m _muves_file_] [-c _id_list_] [-C _color_file_] [-x _RT_DEBUG_FLAG_] [-b _BU_DEBUG_FLAG_] [-h] [-?] _file.fastgen4_ _file.g_
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-*fast4-g* converts a FASTGEN 4.1 format file (_file.fastgen4_) to
-a BRL-CAD geometry database (_file.g_).
+*fast4-g* converts a FASTGEN 4.1 format file (_file.fastgen4_) into a
+BRL-CAD geometry database (_file.g_).
 
-The supported FASTGEN element types and their BRL-CAD equivalents
-are: CCONE1/CCONE2/CCONE3 to TRC, CHEX2 to ARB8, CLINE to cline,
-CQUAD/CTRI/CHEX1 to BOT faces, and CSPHERE to SPH. Region ident
-numbers are computed as `group * 1000 + component`, and object
-names derive from $NAME elements using an algorithm that ensures
-uniqueness.
+The supported FASTGEN element types and their BRL-CAD equivalents are:
+CCONE1/CCONE2/CCONE3 to TRC, CHEX2 to ARB8, CLINE to cline,
+CQUAD/CTRI/CHEX1 to BOT faces, and CSPHERE to SPH. Each component is
+built in either plate mode or volume mode. Region ident numbers are
+computed as `group * 1000 + component`, and object names derive from
+$NAME elements (falling back to generated `comp_NNNN.r` names) using an
+algorithm that ensures uniqueness. Coordinates are read in inches and
+converted to millimeters.
 
-For FASTGEN2 or FASTGEN3 files, convert them using *rpatch*(1) and
-then *patch-g*(1).
+For FASTGEN2 or FASTGEN3 files, convert them using *rpatch*(1) and then
+*patch-g*(1).
 
 [[options]]
 == OPTIONS
 
 *-d*::
-Print debugging information.
+  Print debugging information.
 
 *-w*::
-Print warnings when an object is assigned a default name.
+  Print warnings when a component is assigned a default (generated) name.
 
 *-q*::
-Quiet mode; suppress all output except errors.
+  Quiet mode; suppress progress output, emitting only error messages.
 
 *-o* _plot_file_::
-Write all CTRI and CQUAD elements to _plot_file_ in libplot3
-format. The file can be viewed in MGED using the _overlay_ command.
+  Write all processed CTRI and CQUAD elements to _plot_file_ in libplot3
+  format. The result can be viewed in *mged*(1) with the _overlay_ command.
 
-*-m* _muves_warnings_::
-Write CHGCOMP and CBACKING element information to
-_muves_warnings_.
+*-m* _muves_file_::
+  Write CHGCOMP and CBACKING element information to _muves_file_ as a
+  MUVES input file.
 
 *-c* _id_list_::
-Convert only the specified components. _id_list_ is a
-comma-separated list of ident numbers and ranges (e.g.,
-`3002,5678,1002-1100`).
+  Convert only the listed components. _id_list_ is a comma-separated list
+  of region idents and ranges, e.g. `3002,5678,1002-1100`.
 
 *-C* _color_file_::
-Read region colors from _color_file_. Each line contains five
-integers: low high r g b.
+  Read region colors from _color_file_. Each line holds five integers:
+  low high r g b.
 
 *-x* _RT_DEBUG_FLAG_::
-Set the librt debug flag (hex value).
+  Set the librt debug flag to the given hexadecimal value.
 
 *-b* _BU_DEBUG_FLAG_::
-Set the libbu debug flag (hex value).
+  Set the libbu debug flag to the given hexadecimal value.
 
-*-X* _NMG_DEBUG_FLAG_::
-Set the NMG debug flag (hex value).
-
-*-h, -?*::
-Print a usage message and exit.
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Basic conversion
+.Convert a model and inspect it
 ====
 [source,bash]
 ----
-$ fast4-g sample.fastgen4 sample.g
+fast4-g vehicle.fastgen4 vehicle.g
+mged vehicle.g
 ----
+Converts the FASTGEN4 bulk data file into _vehicle.g_, then opens the
+result in *mged*(1) where the generated `all` group can be drawn.
 ====
 
-.Convert specific components with verbose output
+.Convert selected components with a plot overlay
 ====
 [source,bash]
 ----
-$ fast4-g -d -w -c 3002,5678,1002-1100 vehicle.fg4 vehicle.g
+fast4-g -w -c 3002,5678,1002-1100 -o turret.plot3 vehicle.fastgen4 turret.g
 ----
-Converts only the specified component ident ranges, with debugging
-and default-name warnings enabled.
+Processes only the listed component ident ranges, warns when default
+names are generated, and writes the converted CTRI and CQUAD facets to
+_turret.plot3_ for overlay display in *mged*(1).
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*rpatch*(1), *patch-g*(1)
-
-[[diagnostics]]
-== DIAGNOSTICS
-
-Error messages are intended to be self-explanatory.
+*brlcad*(1), *rpatch*(1), *patch-g*(1), *mged*(1)
 
 [[author]]
 == AUTHOR

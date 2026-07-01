@@ -1,52 +1,116 @@
 = STL-G(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
-stl-g - Stereolithography Translator (STL to BRL-CAD)
+stl-g - Stereolithography (STL) to BRL-CAD converter
 
 == SYNOPSIS
 
 [source]
 ----
-stl-g [-db] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-c units] [-t tolerance] [-x RT_DEBUG_FLAG] file.stl file.g
+stl-g [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units] [-x rt_debug_flag] input.stl output.g
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*stl-g* converts the specified _file.stl_ to a BRL-CAD _file.g_ file. Use the *-b* option if you have a binary STL file (the default is ASCII). The *-d* option prints debugging information. The *-c* option specifies the units that are used in the STL file. The _units_ string may be "mm", "in", "ft", ... (default is "mm"). The *-t* option specifies a tolerance distance (in mm) such that any two vertices within tolerance distance of each other are treated as the same vertex. The *-i* option sets the starting ident number for the regions created. As each new region is created, this number will be incremented before assigning the next ident number (conflicts with *-I* ). The *-I* option sets a constant ident number that will be assigned to all the regions created (conflicts with *-i* ). The *-m* option sets a material code that will be assigned to all the regions created (default is 1). The *-N* option sets a name for the resulting BRL-CAD object. STL files typically do not contain any object names. The *-x* option sets an RT debug flag (see raytrace.h). The _file.stl_ file is expected to be a stereolithography file.
+*stl-g* converts a Stereolithography file _input.stl_ into a BRL-CAD
+database _output.g_. Each STL solid becomes a *bot*(5) (bag-of-triangles)
+primitive wrapped in its own region, and all regions are unioned together
+into a top-level group named *all*. Coincident vertices (within the
+tolerance distance) are merged so the resulting BOT shares vertices between
+adjacent faces.
 
+Both ASCII and binary STL are supported. Input is assumed to be ASCII
+unless the *-b* option is given. Because the STL format carries no useful
+object names, region and solid names are derived from the embedded solid
+name (ASCII), the input file name, or the *-N* option, and made unique
+within the database.
 
-[[example]]
-== EXAMPLE
+The inverse conversion (BRL-CAD to STL) is performed by *g-stl*(1).
 
+[[options]]
+== OPTIONS
 
+*-b*::
+  Treat the input as a binary STL file. The default is ASCII.
+
+*-d*::
+  Print additional debugging information, including each face and its
+  normal as it is read.
+
+*-t* _tolerance_::
+  Minimum distance, in millimeters, between two distinct vertices. Any two
+  vertices closer than this are treated as the same vertex. The default is
+  0.0005 mm (the same default used by *mged*(1) and the raytracer).
+
+*-N* _forced_name_::
+  Use _forced_name_ as the base name for the converted object instead of
+  deriving one from the STL solid name or input file name.
+
+*-i* _initial_ident_::
+  Set the ident (region) number assigned to the first region; it is
+  incremented for each subsequent region. The default is 1000. Conflicts
+  with *-I*.
+
+*-I* _constant_ident_::
+  Assign _constant_ident_ to every region created. Must be zero or greater.
+  Conflicts with *-i*.
+
+*-m* _material_code_::
+  Set the integer material code (GIFT material code) assigned to all
+  regions. The default is 1.
+
+*-c* _units_::
+  Specify the units used in the STL file so coordinates can be converted to
+  millimeters. _units_ may be any string accepted by BRL-CAD, such as "mm",
+  "cm", "m", "in", or "ft". The default is "mm".
+
+*-x* _rt_debug_flag_::
+  Set the librt debug flag (a hexadecimal value; see raytrace.h).
+
+[[examples]]
+== EXAMPLES
+
+.Convert a binary STL exported from a 3D printing tool
+====
+[source,bash]
 ----
-
-$ stl-g sample.stl sample.g
+stl-g -b -c in -N bracket part.stl part.g
 ----
+Reads the binary STL file _part.stl_ whose coordinates are expressed in
+inches, converts them to millimeters, names the resulting object _bracket_,
+and writes the BRL-CAD database _part.g_.
+====
 
+.Convert and immediately raytrace an ASCII STL model
+====
+[source,bash]
+----
+stl-g model.stl model.g
+rt -o model.png model.g all
+----
+Converts the ASCII STL file _model.stl_, then renders the top-level group
+_all_ with *rt*(1) to verify the geometry imported correctly.
+====
 
-[[diagnostics]]
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Error messages are intended to be self-explanatory.
-
+*brlcad*(1), *g-stl*(1), *mged*(1), *rt*(1), *bot*(5)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1999-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS
