@@ -4,72 +4,102 @@
 :manmanual: BRL-CAD
 
 == NAME
-bot_dump - export polygonal BoT primitives without performing evaluation
+bot_dump - export Bag of Triangles (BoT) primitives to mesh file formats
 
 == SYNOPSIS
 
 [source]
 ----
-bot_dump [-b] [-n] [-F] [-m directory] [-o file] [-t dxf | glb | gltf | obj | sat | stl] [-u units] [--displayed] [--viewdata] [--materials | --no-materials] geom.g [bot1 bot2 ...]
+bot_dump [-b] [-n] [-m _directory_] [-o _file_] [-t dxf|glb|gltf|obj|sat|stl] [-u _units_] geom.g [bot1 bot2 ...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bot_dump* exports the raw definition of polygonal Bag of Triangles (BoT) primitives from a BRL-CAD database to various standard formats. This operation does not evaluate Boolean combinations, ensuring that the exported geometry matches the primitive's exact original representation. 
+*bot_dump* exports the raw definition of polygonal Bag of Triangles (BoT)
+primitives from a BRL-CAD database to a variety of standard mesh formats. No
+Boolean evaluation is performed, so the exported geometry matches each
+primitive's exact stored representation.
 
-The *-b* option specifies that the output file should use a binary format, which is applicable to formats supporting both ASCII and binary variants, such as STL and glTF (as GLB).
+The database is given as the first positional argument. If one or more BoT
+object names follow, only those objects are exported; otherwise every BoT in
+the database is exported.
 
-The *-n* or *--normals* option includes surface normals in the output. This is only supported for certain formats like OBJ. Normals are natively required in STL and are not supported in DXF or SAT.
+If neither *-o* nor *-m* is given, ASCII output is written to standard output;
+binary formats require an output file or directory.
 
-The *-F* or *--full-precision* option writes floating-point values at maximum precision. Note that this is non-standard for some formats like glTF.
 
-The *-m* _directory_ or *--output-directory* _directory_ option outputs each dumped BoT into a separate file within the specified directory. This cannot be used simultaneously with *-o*.
+[[options]]
+== OPTIONS
 
-The *-o* _file_ or *--output-file* _file_ option specifies a single output file for all exported data. If neither *-o* nor *-m* is specified, the output is printed to standard output (except for binary formats).
+*-b*::
+  Write a binary version of the output format, for formats that support both
+  ASCII and binary variants (such as STL). glTF output is always binary (GLB).
 
-The *-t* _type_ option specifies the output file format. Supported formats are *dxf*, *glb*, *gltf*, *obj*, *sat*, and *stl*. If no format is specified but an output file is given with an extension, the format is inferred. Otherwise, the default format is *stl*.
+*-n*::
+  Include surface normals in the output where the format supports them (e.g.
+  OBJ). Normals are intrinsic to STL and unsupported by DXF and SAT.
 
-The *-u* _units_ option converts coordinates from internal millimeters to the specified unit (e.g., "in", "cm", "m") during export.
+*-m* _directory_::
+  Write each dumped BoT into its own file within _directory_. Mutually
+  exclusive with *-o*.
 
-The *--displayed* option exports currently displayed geometry (useful when invoked from within MGED).
+*-o* _file_::
+  Write all exported geometry to a single _file_. Mutually exclusive with *-m*.
 
-The *--viewdata* option exports non-geometry view-specific data (e.g., object colors).
+*-t* _type_::
+  Select the output format: *dxf*, *glb*, *gltf*, *obj*, *sat*, or *stl*. If
+  omitted, the format is inferred from the output file extension, defaulting to
+  *stl* when it cannot be determined.
 
-The *--materials* option exports resolved color and material information when the format supports it. This is enabled by default for supported formats.
+*-u* _units_::
+  Convert coordinates from the internal millimeters to _units_ on output (e.g.
+  "in", "cm", "m").
 
-The *--no-materials* option disables color and material export, preserving geometry-only output.
+*-h*, *-?*::
+  Print a usage summary and exit.
 
 
 [[examples]]
 == EXAMPLES
 
-Export a single BoT to a DXF file:
-
-[source]
+.Export selected BoTs to a binary STL
+====
+[source,bash]
 ----
-$ bot_dump -o some_bot_dump.dxf -t dxf sample.g some_bot
+bot_dump -b -t stl -o hull.stl ship.g hull_bot deck_bot
 ----
+Writes the *hull_bot* and *deck_bot* BoT primitives from ship.g into a single
+binary STL file suitable for slicing or 3D printing.
+====
 
-Export multiple BoTs as binary glTF (GLB) to a directory:
-
-[source]
+.Export every BoT to per-object glTF files in millimeters-to-meters
+====
+[source,bash]
 ----
-$ bot_dump -m output_dir -t glb sample.g bot1 bot2 bot3
+bot_dump -u m -t glb -m gltf_out world.g
 ----
+Converts all BoT primitives in world.g, scaling coordinates from millimeters to
+meters, and writes one GLB file per object into the gltf_out directory.
+====
 
-Export BoTs to OBJ with normals and default color/material export:
-
-[source]
+.Export an OBJ with normals and material colors
+====
+[source,bash]
 ----
-$ bot_dump -n --materials -o output.obj -t obj sample.g my_bot
+bot_dump -n -t obj -o part.obj assembly.g part_bot
 ----
+Produces an OBJ (plus companion MTL) containing surface normals and the
+resolved region/object color for *part_bot*, ready for import into a renderer.
+Color and material information is written automatically for OBJ output.
+====
 
-[[diagnostics]]
-== DIAGNOSTICS
 
-Error messages are intended to be self-explanatory.
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *g-stl*(1), *g-dxf*(1), *g-obj*(1)
 
 
 [[author]]
@@ -81,7 +111,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2008-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

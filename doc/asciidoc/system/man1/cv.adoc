@@ -10,77 +10,95 @@ cv - convert binary data files between representation formats
 
 [source]
 ----
-cv in_pat out_pat [ [infile] outfile]
+cv in_pat out_pat [[infile] outfile]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*cv* converts a binary data file from one representation (format) to another. The data formats are expressed as a set of choices from the pattern: `[h|n][s|u][c|s|i|l|d|8|16|32|64]`.
+*cv* converts a stream of binary numbers from one representation
+(format) to another, reading from _infile_ and writing the converted
+result to _outfile_. Each format is described by a short pattern (no
+embedded blanks) drawn from the choices `[h|n][s|u][c|s|i|l|d|8|16|32|64]`:
 
-* *h* or *n*: Host-specific (*h*) or network-independent (*n*) format. Host format uses the native internal number representation and byte ordering of the machine running *cv*. The network-independent format is big-endian (most significant bit first), two's complement. The network-independent double-precision floating point format is 64-bit IEEE 754, transmitted in big-endian order. The default is network format.
-* *s* or *u*: Signed (*s*) or unsigned (*u*) integer. This flag has no effect on double-precision formats.
-* *c*, *s*, *i*, *l*, *d*: C language types `char`, `short`, `int`, `long`, and `double`. These sizes map to their equivalents on the host processor.
-* *8*, *16*, *32*, *64*: Explicit bit sizes, commonly used with the *n* mode for precise specification of data sizes.
+* *h* or *n*: Host-specific (*h*) or network-independent (*n*) byte
+  order. Host format uses the native number representation and byte
+  ordering of the machine running *cv*. Network format is big-endian,
+  two's complement; network doubles are 64-bit IEEE 754 in big-endian
+  order. When omitted, network format is assumed.
+* *s* or *u*: Signed (*s*) or unsigned (*u*) integer. This flag has no
+  effect on the double-precision format.
+* *c*, *s*, *i*, *l*, *d*: C language types `char`, `short`, `int`,
+  `long`, and `double`, sized as on the host processor.
+* *8*, *16*, *32*, *64*: Explicit bit sizes, typically paired with *n*
+  to specify exact data sizes regardless of host word length.
 
-For example, `hui` specifies host unsigned integer, and `nl` specifies network (signed) long.
+For example, `hui` is a host unsigned int and `nl` is a network
+(signed) long. *cv* refuses to send binary output to a terminal.
 
+[[options]]
 == OPTIONS
 
 *in_pat*::
-The format pattern of the input data. If specified as an empty string (`""`), it defaults to `huc` (host unsigned char).
+  Format pattern of the input data. An empty string (`""`) defaults to
+  `huc` (host unsigned char).
 
 *out_pat*::
-The format pattern of the output data. If specified as an empty string (`""`), it defaults to `nuc` (network unsigned char).
+  Format pattern of the output data. An empty string (`""`) defaults to
+  `nuc` (network unsigned char).
 
 *infile*::
-The file to read input data from. If omitted, standard input is used.
+  File to read input from. When both _infile_ and _outfile_ are given,
+  this is the first filename; with a single filename it is the input and
+  output goes to standard output. If omitted entirely, standard input is
+  used.
 
 *outfile*::
-The file to write converted data to. If omitted, standard output is used. *cv* will refuse to write binary output directly to a terminal.
+  File to write the converted data to. Present only when two filenames
+  are supplied; otherwise output goes to standard output.
 
+[[examples]]
 == EXAMPLES
 
-.Convert host-specific signed shorts to network 32-bit integers
-[example]
+.Convert host signed shorts to network 32-bit integers
 ====
 [source,bash]
 ----
-$ cv hss n32 data.short data.net
+cv hss n32 data.short data.net
 ----
-Converts the binary file `data.short` containing machine-specific signed shorts into network-independent 32-bit integers, saving the result to `data.net`.
+Reads the binary file `data.short` of machine-specific signed shorts and
+writes network-independent 32-bit integers to `data.net`, producing a
+portable file that can be read identically on any platform.
 ====
 
-.Convert network doubles to host doubles via standard streams
-[example]
+.Repack network doubles as host doubles in a pipeline
 ====
 [source,bash]
 ----
-$ cat data.nd | cv nd hd > data.hd
+cat data.nd | cv nd hd > data.hd
 ----
-Reads network-independent double-precision floats from standard input and converts them to host-specific doubles on standard output.
+Reads network-independent double-precision floats from standard input and
+emits host-native doubles on standard output, the typical first step
+before feeding the values to a program that expects local byte order.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*pix-bw*(1), *dpix-pix*(1), *bw-pix*(1)
+*brlcad*(1), *dpix-pix*(1), *pix-bw*(1), *bw-pix*(1)
 
 M. J. Muuss, _Workstations, Networking, Distributed Graphics, and Parallel Processing_ in Computer Graphics Techniques: Theory and Practice, edited by D. F. Rogers, R. A. Earnshaw, Springer-Verlag, 1990
-
 
 [[author]]
 == AUTHOR
 
-*BRL-CAD Team*
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

@@ -4,70 +4,78 @@
 :manmanual: BRL-CAD
 
 == NAME
-cad_boundp - find bounding polygon of two-dimensional view
+cad_boundp - find bounding polygon of a two-dimensional view
 
 == SYNOPSIS
 
 [source]
 ----
-cad_boundp [-i input] [-o output] [-t tolerance] [-v] [-h] [-?]
+cad_boundp [-i _input_] [-o _output_] [-t _tolerance_] [-v]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*cad_boundp* reads a series of 2D line segment endpoints from an input file (or standard input) and computes the bounding polygon. It writes the vertices of the resulting bounding polygon to an output file (or standard output) in counter-clockwise order, starting with the vertex having the smallest _y_ coordinate. The input data describes a two-dimensional view of the edges of a 3D object.
+*cad_boundp* reads a set of 2D line segments, one per input line as four
+whitespace-separated numbers (_x1 y1 x2 y2_), and computes the bounding polygon
+of the region they outline. The segments typically describe a two-dimensional
+view of the edges of a 3D object. Intersecting segments are split so that every
+polygon vertex falls on a segment endpoint, and the perimeter is then traced
+counter-clockwise starting from the vertex with the smallest _y_ coordinate.
 
-Input lines that do not begin with a number are silently ignored, which allows for comments or additional control information to be interspersed with the data.
+By default each polygon vertex is written as an _x y_ pair. Input lines that do
+not begin with a number (such as comments or color records) are silently
+skipped, so segment data may be interleaved with other annotations.
 
 
 [[options]]
 == OPTIONS
 
-*-i input*::
-Read line segment coordinate data from _input_. If not specified, standard input is used.
+*-i* _input_::
+  Read segment data from _input_ instead of standard input. A value of *-* also
+  selects standard input.
 
-*-o output*::
-Write the bounding polygon vertices to _output_. If not specified, standard output is used.
+*-o* _output_::
+  Write results to _output_ instead of standard output. A value of *-* also
+  selects standard output.
 
-*-t tolerance*::
-Specify a floating-point _tolerance_ for comparing point coordinates. A point is considered identical to a previously-input point if the Euclidean distance between them is less than or equal to _tolerance_. The algorithm groups points by matching against the first point encountered that satisfies the tolerance test. If not specified, point coordinates must match precisely. If the _tolerance_ is too tight, or if the input is incomplete, a degenerate or smaller-than-expected polygon may result.
+*-t* _tolerance_::
+  Treat two points as identical when the distance between them does not exceed
+  _tolerance_ (default 0, requiring an exact match). A tolerance that is too
+  tight, or incomplete input, may yield a degenerate or smaller-than-expected
+  polygon; specifying double the expected tolerance is often prudent.
 
 *-v*::
-Output the bounding polygon as line segment data (pairs of endpoints) rather than individual vertex points. This format is suitable for input into another invocation of *cad_boundp*.
+  Emit the result as line segments (_x1 y1 x2 y2_ pairs of consecutive
+  vertices, including the closing edge) rather than as vertex points. This form
+  can be fed back into another invocation of *cad_boundp*.
 
 *-h*, *-?*::
-Print usage information and exit.
+  Print a usage message and exit.
 
 
 [[restrictions]]
 == RESTRICTIONS
 
-*cad_boundp* may output a polygon smaller than desired or produce a "degenerate input" message if the _tolerance_ is too tight or if input is incomplete. It may be wise to specify double the expected _tolerance_.
-
-Holes within the view cannot be recognized.
-
-Silhouette thickness must everywhere exceed _tolerance_ (no narrow necking-down) or a portion of the silhouette will be "lost"; in particular, the view should not consist of disjoint parts.
+Holes within the view cannot be recognized. The silhouette thickness must
+everywhere exceed _tolerance_ (no narrow necking-down) or part of the
+silhouette will be lost; in particular the view should not consist of disjoint
+parts.
 
 
 [[examples]]
 == EXAMPLES
 
-The following example demonstrates computing the bounding polygon for a set of four line segments forming a square.
-
-.Using `cad_boundp` to find a bounding polygon
+.Tracing the outline of a unit square
 ====
-[source,sh]
+[source,bash]
 ----
 $ cat square.txt
-# Bottom edge
+# bottom, right, top, and left edges
 0.0 0.0 1.0 0.0
-# Right edge
 1.0 0.0 1.0 1.0
-# Top edge
 1.0 1.0 0.0 1.0
-# Left edge
 0.0 1.0 0.0 0.0
 
 $ cad_boundp -t 0.01 -i square.txt
@@ -76,37 +84,38 @@ $ cad_boundp -t 0.01 -i square.txt
 1 1
 0 1
 ----
+The four edges are reduced to the bounding polygon's vertices, listed
+counter-clockwise from the lowest point. Re-running with *-v* would instead
+print the closed loop of edge segments, suitable for piping into another
+*cad_boundp* or plotting tool.
 ====
-
-
-[[see_also]]
-== SEE ALSO
-
-*cad_parea*(1)
 
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-Any error condition causes *cad_boundp* to terminate with non-zero exit status after it prints an error message on the standard error output.
+Any error condition causes *cad_boundp* to terminate with non-zero exit status
+after printing a message on standard error. Improperly formatted input produces
+a "bad input" message. A perimeter vertex with only one segment attached yields
+"degenerate input". Exhausting available memory yields "out of memory".
 
-An illegal argument or improperly formatted input produces an appropriate message.
 
-If a vertex having only one line segment connected to it is found on the perimeter, *cad_boundp* produces the message "degenerate input".
+[[see_also]]
+== SEE ALSO
 
-If there is too much data for *cad_boundp* to handle, the message "out of memory" is produced.
+*brlcad*(1), *cad_parea*(1)
 
 
 [[author]]
 == AUTHOR
 
-Douglas A. Gwyn, BRL/VLD-VMB
+BRL-CAD Team
 
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

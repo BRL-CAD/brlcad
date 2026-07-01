@@ -1,95 +1,142 @@
 = HALFTONE(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-halftone - translate a black and white (BW) image to a halftoned BW image
+halftone - convert a black and white image to a halftoned black and white image
 
 == SYNOPSIS
 
-*halftone* [-R] [-S] [-a] [-s _squarefilesize_] [-w _file_width_] [-n _file_height_] [-B _contrast_] [-I _Number_Intensity_Levels_] [-M _Method_] [-T _x1 y1 x2 y2 ..._] [-D _debug_level_] [_file.bw_]
+[source]
+----
+halftone [-R] [-S] [-a] [-s _squaresize_] [-w _width_] [-n _height_] [-B _contrast_] [-I _levels_] [-M _method_] [-T _x1 y1 x2 y2 ..._] [-D _debug_level_] [_file.bw_]
+----
 
+[[description]]
 == DESCRIPTION
 
-*halftone* reads a black and white image in *bw*(5) format from the specified file (or from standard input if no file is given) and reduces the number of intensity levels from 256 to a smaller number (default is 2). It applies dithering to preserve visual detail and shading info as much as possible.
+*halftone* reads a black and white image in *bw*(5) format from the
+named file (or from standard input if no file is given) and writes a
+halftoned *bw*(5) image to standard output.  Halftoning reduces the
+number of distinct intensity levels (256 by default down to 2, that is
+black and white) while using dithering to preserve as much apparent
+shading and detail as possible.  Several dithering algorithms are
+available via the *-M* option, ranging from Floyd-Steinberg error
+diffusion to ordered halftone screens.
 
+The output is itself a *bw*(5) file whose pixels take a limited set of
+values; each output level is scaled to the range 0 to 255 (as 255 /
+(_levels_ - 1) * _value_) so the result displays correctly with tools
+such as *bw-pix*(1).  The dithering algorithms are drawn largely from
+_Digital Halftoning_ by Robert Ulichney.
+
+[[options]]
 == OPTIONS
 
+*-s* _squaresize_::
+  Set both the width and height of the input image to _squaresize_
+  pixels.
+
+*-w* _width_::
+  Set the width of the input image in pixels.  The default is 512.
+
+*-n* _height_::
+  Set the height of the input image in scanlines.  The default is 512.
+
 *-a*::
-	Enable automatic input file sizing based on the file name or size. Note that automatic sizing cannot be used with pipes or standard input.
-
-*-s* _squarefilesize_::
-	Set both the width and height of the input image to the specified number of pixels.
-
-*-w* _file_width_::
-	Specify the width of the input image in pixels. The default is 512.
-
-*-n* _file_height_::
-	Specify the height of the input image in scanlines. The default is 512.
+  Automatically determine the input image dimensions from the file
+  name or file size.  Automatic sizing cannot be used with pipes or
+  standard input.
 
 *-B* _contrast_::
-	Specify a floating-point value to be used as the beta coefficient for an edge sharpening algorithm. The default is 0.0, which disables edge sharpening.
+  Floating-point beta coefficient applied by a Laplacian edge
+  sharpening filter before dithering.  The default is 0.0, which
+  disables sharpening.
 
-*-I* _Number_Intensity_Levels_::
-	Specify the number of output intensity levels to use. The default is 2 (black/white, 1-bit), and the maximum is 256.
+*-I* _levels_::
+  Number of output intensity levels.  The default is 2 (1-bit
+  black/white) and the maximum is 256.
 
-*-M* _Method_::
-	Specify the halftoning method to use. The methods are:
-	* *0*:: Floyd-Steinberg error diffusion (default)
-	* *1*:: 45-degree classical clustered halftone screen
-	* *2*:: Simple thresholding dither
-	* *3*:: 0-degree dispersed halftone screen
+*-M* _method_::
+  Select the halftoning method:
++
+--
+  *0*;; Floyd-Steinberg error diffusion (default)
+  *1*;; 45-degree classical clustered-dot halftone screen
+  *2*;; simple thresholding dither
+  *3*;; 0-degree dispersed-dot halftone screen
+--
++
+A value outside the range 0-3 is reported and reset to the default (0).
 
 *-R*::
-	Add random noise to the dither threshold. This can sometimes improve the appearance of the output image by breaking up repeating patterns.
+  Add random noise to the dither threshold.  This can break up
+  repeating screen patterns and improve the appearance of the output.
 
 *-S*::
-	Use a serpentine scan line path (reversing direction every other row) instead of a standard left-to-right scan. This option is only valid when using Floyd-Steinberg error diffusion (*-M 0*).
+  Use a serpentine scan path, reversing direction on every other row
+  instead of always scanning left to right.  This option only has an
+  effect with Floyd-Steinberg error diffusion (*-M 0*); it is ignored
+  for the other methods.
 
 *-T* _x1 y1 x2 y2 ..._::
-	Define a tone scale mapping curve using coordinate pairs (in the range 0 to 255). The curve interpolates intermediate points using cubic splines to map input pixels to output intensities. The default curve is equivalent to `-T 0 0 128 128 255 255`.
+  Define a tone-scale mapping from a list of integer coordinate pairs
+  (each in the range 0 to 255).  A cubic spline is fit through the
+  points to map input intensities to output intensities.  The default
+  mapping is the straight line equivalent to *-T* _0 0 255 255_.
 
 *-D* _debug_level_::
-	Set the debug level. Setting this to 9 outputs all debugging messages.
+  Set the debug level.  A value of 9 emits all debugging messages.
 
-*-h*::
-*-?*::
-	Print usage information and exit.
+*-h*, *-?*::
+  Print a usage message and exit.
 
-== FORMAT
-
-A *bw*(5) file contains sequences of pixels. Each pixel is stored as one *unsigned char*. The first pixel in a _bw_ file is the lower left corner of the image. The pixels proceed from left-to-right across each scanline, with scanlines being written from the bottom to the top of the image.
-
-The output from *halftone* is scaled so that each intensity level is output as 255 / (Levels - 1) * value.
-
+[[examples]]
 == EXAMPLES
 
-.Convert a 512x512 BW image to a binary halftoned image using Floyd-Steinberg diffusion
+.Render a model and halftone the result for a 1-bit display
+====
 [source,bash]
 ----
-halftone -M 0 < input.bw > output.bw
+rt -s 512 -o image.pix model.g component.r
+pix-bw image.pix > image.bw
+halftone -M 0 -S image.bw > image.ht.bw
 ----
+Ray traces a region to a 512x512 color image, converts it to *bw*(5)
+grayscale, then applies Floyd-Steinberg error diffusion with a
+serpentine scan to produce a dithered black-and-white image suitable
+for a 1-bit device.
+====
 
-.Convert a 1024x768 BW image using classical halftone screen with 4 intensity levels
+.Coarse newsprint-style halftone with four gray levels
+====
 [source,bash]
 ----
-halftone -w 1024 -n 768 -M 1 -I 4 input.bw > output.bw
+halftone -w 1024 -n 768 -M 1 -I 4 photo.bw > photo.ht.bw
 ----
+Treats the input as a 1024x768 image and applies the 45-degree
+classical clustered-dot screen quantized to four intensity levels,
+mimicking a coarse printed halftone.
+====
 
+[[see_also]]
 == SEE ALSO
 
-*rt*(1), *pix-bw*(1), *bw*(5), *bw-fb*(1)
+*brlcad*(1), *rt*(1), *pix-bw*(1), *bw-pix*(1), *bwmod*(1), *bw*(5)
 
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1990-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

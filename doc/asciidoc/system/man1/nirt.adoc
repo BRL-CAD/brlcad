@@ -1,7 +1,7 @@
 = NIRT(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
 nirt - interactively ray trace a BRL-CAD geometric model
@@ -17,78 +17,90 @@ nirt [options] model.g [objects]...
 [[description]]
 == DESCRIPTION
 
-*nirt* operates on the specified _objects_ in the database _model.g_, using *librt*(3) to trace rays according to commands read from the standard input and producing an ASCII report of the results. By default, the user can interact with *nirt*, repeatedly specifying origination points and directions for rays and the format and destination for the reports. Locations may be input and output in either model coordinates (_x_, _y_, _z_) or view (a.k.a. grid-plane) coordinates (_h_, _v_, _d_). Similarly, direction may be input and output either as vectors expressed in model coordinates or as angles of azimuth and elevation.
+*nirt* (Natalie's Interactive Ray-Tracer) traces rays through the specified _objects_ in the database _model.g_, using *librt*(3), and produces an ASCII report of what each ray encounters. Commands are read from standard input. By default the user interacts with *nirt*, repeatedly specifying ray origination points and directions and controlling the format and destination of the reports. Locations may be input and output in either model coordinates (_x_, _y_, _z_) or view (a.k.a. grid-plane) coordinates (_h_, _v_, _d_), and direction may be expressed either as a vector in model coordinates or as azimuth and elevation angles.
+
+When standard input is not a terminal (for example, when it is redirected from a file or a pipe), *nirt* defaults to silent mode, making it convenient for scripted ray queries.
 
 [[options]]
-=== Options
+== OPTIONS
 
+*-h*, *--help*, *-?*::
+  Print a usage message and exit.
 
-*-A _attribute_name..._*::
-Adds the names to the list of attributes that will be reported when the "attributes" partition information value is specified. See also the *attr* command below.
-
+*-A* _name_::
+  Add _name_ to the list of object attributes reported by the *attributes* output item. May be repeated to request multiple attributes. See also the *attr* command below.
 
 *-M*::
-Causes *nirt* to read the eye point and either the orientation quaternion (new format) or the view-rotation matrix (old format) from the standard input, and fire a single ray from the point in the specified direction. This option allows *nirt* to be called directly from within *mged* using the *nirt* and *rrt* commands.
-
+  Read an eye point and either an orientation quaternion or a view-rotation matrix from standard input, then fire a single ray. This allows *nirt* to be driven directly from *mged*(1) via its *nirt* and *rrt* commands.
 
 *-b*::
-Causes *nirt* to perform a *backout* command before the first *shoot* command (see the description of these two commands below). This is probably only useful with the *-M* option.
+  Back the ray out of the geometry before the first shot. Deprecated; this is now the default behavior and the flag is a no-op.
 
+*-c*::
+  Shoot the ray from the current center point rather than backing out of the geometry first.
 
 *-e* _script_::
-Causes *nirt* to run the _script_ string before reading the standard input. Multiple commands in _script_ may be separated with a semicolon ';'. Scripts specified with either the *-e* or *-f* options are executed in the order in which they are specified on the command line.
-
+  Run the _script_ string before reading standard input. Multiple commands may be separated with a semicolon. *-e* and *-f* scripts run in command-line order.
 
 *-f* _format_::
-Causes *nirt* to load the predefined format (see *-L*) _format_ or script file before reading standard input. Scripts specified with either the *-e* or *-f* options are executed in the order in which they are specified on the command line.
-
+  Load the predefined format (see *-L*) or script file named _format_ before reading standard input. *-e* and *-f* scripts run in command-line order.
 
 *-E*::
-Causes *nirt* to ignore any *-e* or *-f* options specified previously on the command line.
-
+  Ignore any *-e* or *-f* options given earlier on the command line.
 
 *-L*::
-List output formatting options.
-
+  List the available output formats and exit.
 
 *-s*::
-Causes *nirt* to run in silent (that is, non-verbose) mode. In this mode, which is useful in a pipeline, *nirt* does not print its initial lines of output or the prompt.
-
+  Run in silent (non-verbose) mode, suppressing the banner and prompt. Useful in pipelines.
 
 *-v*::
-Causes *nirt* to run in verbose mode. The default is verbose mode, except if standard input has been redirected, in which case the default is silent mode.
-
+  Run in verbose mode. Verbose is the default on a terminal; silent is the default when standard input is redirected.
 
 *-H* _n_::
-Set flag (_n_) for enable/disable informational header (_n_=1 [on] by default, always off in silent mode).
-
+  Enable (_n_=1, the default) or disable (_n_=0) the informational header. The header is always off in silent mode.
 
 *-u* _n_::
-Sets the _useair_ member of the __rt_i__ structure to _n_. See the discussion of the _useair_ command below.
+  Set the _use_air_ value to _n_, controlling whether air regions are reported. Default is 0 (air ignored).
 
-
-*-O* _n_::
-Causes *nirt* to handle multiple regions' claims to segments of a ray according to action _n_. The argument _n_ may be any of the values 0, 1, 2, or 3, or their corresponding key words "resolve", "rebuild_fastgen", "rebuild_all", or "retain". See the discussion of the __overlap_claims__ command below.
-
+*-O* _action_::
+  Control how overlapping regions' claims to a ray segment are handled. _action_ may be 0 or "resolve", 1 or "rebuild_fastgen", 2 or "rebuild_all", or 3 or "retain". See the *overlap_claims* command below. Default is "resolve".
 
 *-x* _v_::
-Sets the *librt*(3) debug flags to the hexadecimal bit vector _v_. See the discussion of the _libdebug_ command below.
-
+  Set the *librt*(3) diagnostic (debug) flags to the hexadecimal bit vector _v_.
 
 *-X* _v_::
-Sets *nirt*'s own debug flags to the hexadecimal bit vector _v_. See the discussion of the _debug_ command below.
+  Set *nirt*'s own diagnostic (debug) flags to the hexadecimal bit vector _v_.
 
+*--center* _x,y,z_::
+  Set the ray origination (center) point to the given model-space coordinates.
 
-*--xyz* _x y z_::
-Initializes the ray origination point to the specified value. See the discussion of the _xyz_ command below.
+*--xyz* _x,y,z_::
+  Synonym for *--center*.
 
+*--plotfile* _filename_::
+  Write graphical plot output of the ray segments to _filename_.
 
+*--color_odd* _r/g/b_::
+  Color used when plotting odd-numbered segments (default 0/255/255).
 
-*nirt* will check in two places for a `.nirtrc` file - first in the current directory, and if it is not found there, in the user's home directory. If found, *nirt* begins by reading from it. This start-up file may contain any *nirt* commands and is useful for loading predefined states or initializing actions for output statements.
+*--color_even* _r/g/b_::
+  Color used when plotting even-numbered segments (default 255/255/0).
+
+*--color_gap* _r/g/b_::
+  Color used when plotting gaps between segments (default 255/0/255).
+
+*--color_ovlp* _r/g/b_::
+  Color used when plotting overlap segments (default 255/255/255).
+
+*-B*::
+  Deprecated and no longer used; accepted but ignored.
+
+*nirt* also checks for a `.nirtrc` start-up file, first in the current directory and then in the user's home directory. If found, it is read before interaction begins and may contain any *nirt* commands, which is useful for loading predefined states or output formats.
 
 
 [[commands]]
-=== Commands
+== COMMANDS
 
 
 *center [* _x y z_*]*
@@ -156,6 +168,10 @@ Writes state information to the state file. The ray origination point and direct
 Reads state information from the state file. The state file loaded may contain any *nirt* commands.
 
 
+*clear*::
+Clears text from the terminal screen (interactive mode only).
+
+
 *print* _item_::
 Prints the current value of the output item _item_. See the discussion of output statements below.
 
@@ -179,7 +195,7 @@ Quits *nirt*.
 
 
 [[output_statements]]
-=== Output Statements
+== OUTPUT STATEMENTS
 
 *nirt* allows the user a high degree of control, via the _fmt_ command, over what information gets printed out for each ray and in what format. There are six types of output statements, each of which is executed under appropriate circumstances. The types and their use are:
 
@@ -484,6 +500,27 @@ _d_ coordinate of exit from overlap.
 
 
 
+[[examples]]
+== EXAMPLES
+
+.Scripted line-of-sight query through a model
+====
+[source,bash]
+----
+printf 'xyz 0 0 0\ndir 1 0 0\ns\n' | nirt -s model.g component
+----
+Because standard input is a pipe, *nirt* runs silently. The script positions the ray origin, aims it down the +X axis, and fires a single shot, printing only the ray report for the _component_ object. This is a convenient way to measure line-of-sight distances or material thickness from a shell script.
+====
+
+.Reporting custom attributes for each region hit
+====
+[source,bash]
+----
+nirt -A material_id -A los_density model.g all
+----
+Each region the ray passes through is reported together with its _material_id_ and _los_density_ attribute values via the *attributes* output item, which is useful for vulnerability and mass-properties analyses.
+====
+
 
 [[hints]]
 == HINTS
@@ -519,8 +556,8 @@ Azimuth is the angle measured around *k* (right-hand rule) from the _xz_ plane t
 == FILES
 
 
-_ ~/.nirtrc _::
-run-time configuration file
+_./.nirtrc_, _~/.nirtrc_::
+run-time configuration file, searched first in the current directory and then in the home directory
 
 
 
@@ -528,7 +565,7 @@ run-time configuration file
 [[see_also]]
 == SEE ALSO
 
-*mged*(1), *librt*(3), *printf*(3)
+*brlcad*(1), *mged*(1), *rt*(1), *librt*(3), *printf*(3)
 
 
 [[author]]
@@ -540,7 +577,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1984-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

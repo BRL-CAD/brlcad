@@ -1,10 +1,10 @@
 = IHIST(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-ihist - Compute a histogram and statistics for a stream of short integers
+ihist - compute a histogram and bit statistics for a stream of short integers
 
 == SYNOPSIS
 
@@ -17,34 +17,55 @@ ihist [-v] < input.shorts > output.txt
 [[description]]
 == DESCRIPTION
 
-*ihist* reads a stream of 16-bit signed short integers from standard input and computes statistical information about the dataset, printing the results as formatted text to standard output.
+*ihist* reads a stream of 16-bit signed short integers from standard input and
+writes statistics about the data to standard output. It reports the total
+number of values read, the minimum and maximum values encountered, and a
+per-bit tally showing how often each of the 16 bits was set across the entire
+stream (with each count expressed as a fraction of the total). It also reports
+the number of distinct levels (unique values) seen out of the 65,536 possible,
+as a percentage.
 
-The tool calculates and displays the total number of values read, the minimum and maximum values encountered, and a bitwise distribution showing how often each of the 16 bits was set across the entire dataset. It also reports the total number of distinct levels (unique values) used out of the possible 65,536 combinations, providing a percentage of utilized levels.
+The companion tool *istats*(1) reports running statistical moments (mean,
+variance, and so on) for the same short integer stream, while *imod*(1)
+applies arithmetic operations to it.
 
 [[options]]
 == OPTIONS
 
 *-v*::
-Enable verbose output. In addition to the summary statistics, the program will print a complete histogram detailing every unique value encountered and its corresponding frequency count.
+  Verbose. In addition to the summary statistics, print the full histogram as
+  one "value count" pair per line for every distinct value that occurred.
 
 [[examples]]
 == EXAMPLES
 
-.Basic *ihist* Usage
-[example]
+.Inspect the dynamic range of sampled audio
 ====
-**ihist < data.shorts > stats.txt**
+[source,bash]
+----
+ihist < samples.shorts
+----
+Reports the min/max range, the per-bit usage, and the percentage of the 65,536
+possible levels actually present in _samples.shorts_, which is a quick way to
+tell whether a 16-bit sample stream is using its full dynamic range or only a
+narrow band of values.
+====
 
-Reads the short integer values from _data.shorts_ and writes the statistical summary to _stats.txt_.
+.Produce a full histogram for plotting
+====
+[source,bash]
+----
+ihist -v < samples.shorts | tail -n +22 > histogram.dat
+----
+Generates a complete "value count" listing and skips the leading summary lines
+so that _histogram.dat_ contains only the per-value frequency pairs, ready to
+be fed to a plotting program.
 ====
 
-.Verbose Histogram Output
-[example]
-====
-**ihist -v < data.shorts > histogram.txt**
+[[see_also]]
+== SEE ALSO
 
-Reads the short integer values from _data.shorts_ and writes both the statistical summary and the complete frequency count for every unique value to _histogram.txt_.
-====
+*brlcad*(1), *istats*(1), *imod*(1), *ustats*(1), *bw-d*(1)
 
 [[author]]
 == AUTHOR
@@ -54,7 +75,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

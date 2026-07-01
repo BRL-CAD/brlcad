@@ -1,10 +1,10 @@
-= btclsh(1)
+= BTCLSH(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-btclsh - Tcl-based interactive shell for BRL-CAD
+btclsh - Tcl shell with BRL-CAD libraries loaded
 
 == SYNOPSIS
 
@@ -14,61 +14,100 @@ btclsh [script [arg ...]]
 ----
 
 
+[[description]]
 == DESCRIPTION
 
-*btclsh* is a Tcl-based interactive shell for BRL-CAD. It provides command-line editing, command history, and scripting capabilities. It is particularly suited for text-based interactive scripting and automation.
+*btclsh* is a Tcl interpreter with the BRL-CAD Tcl/Tk libraries
+preloaded, giving Tcl scripts direct access to BRL-CAD's geometry and
+database commands. It is the non-graphical counterpart to *bwish*(1):
+it requires no display server and is suited to text-based interactive
+work, scripting, and automation.
 
-Unlike *bwish*, *btclsh* does not require a graphical interface and can be used in environments without a display server.
+If a _script_ file is given and its name does not begin with a hyphen
+(`-`), *btclsh* evaluates that file and exits. Any remaining _arg_
+values are made available to the script through the Tcl variables
+*argv* (the argument list), *argc* (the argument count), and *argv0*
+(the script name).
 
-When invoked without arguments, or if the first argument starts with a hyphen (`-`), *btclsh* runs interactively, reading commands from standard input. It will execute the startup file `~/.btclshrc` (or `~/.btclshrc.tcl` on Windows) if it exists. During interactive use, *btclsh* provides a few built-in commands for session management, such as `history` to view past commands, `hist` for maintaining command history, and `exit` or `q` to terminate the shell.
+With no _script_, or when the first argument begins with a hyphen,
+*btclsh* runs interactively, reading commands from standard input. The
+interactive session offers command-line editing (Emacs-style key
+bindings, arrow-key history recall) and sources a startup file,
+*~/.btclshrc* (*~/.btclshrc.tcl* on Windows), if present.
 
-If a _script_ is provided (and does not begin with a hyphen), *btclsh* executes the file and exits. Any remaining arguments are passed to the script.
+Besides the full Tcl command set, *btclsh* registers a few built-in
+commands:
+
+*history* [*-delays*] [*-outfile* _file_]::
+  List the command history. With *-delays*, also report the elapsed
+  time between commands; with *-outfile*, append the listing to _file_
+  instead of printing it.
+
+*hist* *add* _command_ | *next* | *prev*::
+  Maintain the command history: add a command, or step to the next or
+  previous entry (used internally by history recall).
+
+*exit* [_status_] / *q* [_status_]::
+  Leave the shell, returning the optional integer _status_ (default 0).
+
+Because *btclsh* takes no command-line options, it has no OPTIONS
+section.
 
 
-== OPTIONS
-
-_script_::
-Executes the provided Tcl script file and exits. If the filename begins with a hyphen, it must be prefixed with a path (e.g., `./-script.tcl`) to prevent it from being treated as an interactive invocation.
-
-_arg ..._::
-Optional arguments passed to the script. They will be available within the script in the Tcl `argv` variable, with the number of arguments in `argc` and the script name in `argv0`.
-
-
+[[examples]]
 == EXAMPLES
 
-.Running a script with arguments
+.Scripting a geometry query with arguments
 ====
 [source,bash]
 ----
-$ btclsh myscript.tcl arg1 arg2
+cat > volume.tcl <<'EOF'
+opendb [lindex $argv 0] y
+puts [bb -v [lindex $argv 1]]
+EOF
+
+btclsh volume.tcl moss.g all.g
 ----
-Executes `myscript.tcl` with `arg1` and `arg2` passed to the script.
+Runs a Tcl script that opens the geometry database *moss.g* (passed as
+the first argument) and prints the bounding-box and volume report for
+the *all.g* object using the libged *bb* command. This shows how
+*btclsh* drives BRL-CAD database commands non-interactively, with
+arguments forwarded through the Tcl *argv* variable.
 ====
 
-.Interactive mode
+.Interactive session
 ====
 [source,bash]
 ----
-$ btclsh
-btclsh> puts "Hello BRL-CAD"
-Hello BRL-CAD
+btclsh
+btclsh> opendb moss.g y
+btclsh> ls
 btclsh> q
-$
 ----
-Starts the interactive shell, runs a simple Tcl command, and quits.
+Starts the interactive shell, opens a database, lists its objects with
+the libged *ls* command, then quits.
 ====
 
 
+[[see_also]]
 == SEE ALSO
 
-*bwish*(1), *mged*(1)
+*brlcad*(1), *bwish*(1), *mged*(1)
 
 
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1998-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,10 +1,10 @@
 = LOWP(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-lowp - Perform a 3D low-pass filter across three sequential PIX files
+lowp - 3D low-pass filter across three sequential pix files
 
 == SYNOPSIS
 
@@ -17,33 +17,58 @@ lowp file1.pix file2.pix file3.pix [width] > out.pix
 [[description]]
 == DESCRIPTION
 
-*lowp* reads three sequential PIX image files of identical dimensions and performs a 3D low-pass convolution filter across them, outputting a single smoothed PIX image to standard output.
+*lowp* reads three sequential *pix*(5) image files of identical dimensions and
+applies a 3D low-pass convolution filter, writing a single smoothed *pix*(5)
+image to standard output.
 
-The three input images are treated as a sequence in time (or depth). The filter applies a 3x3x3 spatial-temporal convolution kernel, taking the weighted average of the surrounding pixels in the current image (`file2.pix`) as well as the corresponding pixels in the preceding (`file1.pix`) and succeeding (`file3.pix`) images.
+The three inputs are treated as consecutive frames in a sequence. A 3x3x3
+spatial-temporal kernel is applied: each output pixel is the weighted average of
+the corresponding pixel and its eight neighbors in the middle frame
+(_file2.pix_), together with the same neighborhoods in the preceding
+(_file1.pix_) and succeeding (_file3.pix_) frames. The middle frame is weighted
+most heavily and the kernel weights sum to 84.
 
-The images are assumed to be square with a dimension of 512x512 pixels by default. If the images have a different dimension, the optional _width_ parameter must be provided to specify the number of pixels per scanline (and the number of scanlines).
+Images are assumed to be square. The dimension defaults to 512x512 pixels; if
+the images are a different size, supply the optional _width_ argument to set the
+number of pixels per scanline (and the number of scanlines). The border pixels
+(first and last scanline, and the first and last pixels of every scanline) are
+not filtered and are written as black.
 
-The edges of the output image (the first and last scanlines, and the first and last pixels of each scanline) are not filtered and are set to black (0, 0, 0).
+*lowp* refuses to write to a terminal, so its output must be redirected to a
+file or piped to another program.
 
 [[options]]
 == OPTIONS
 
-*file1.pix*, *file2.pix*, *file3.pix*::
-The three input PIX files representing a sequence of images.
+*file1.pix* *file2.pix* *file3.pix*::
+  The three input *pix*(5) files, given as a sequence of frames. The middle
+  file is the frame that is smoothed.
 
 *width*::
-The width (and height, as images are assumed square) of the input images in pixels. Defaults to 512 if not specified.
+  Width and height, in pixels, of the (square) input images. Defaults to 512.
 
 [[examples]]
 == EXAMPLES
 
-.Filtering a Sequence of Images
-[example]
+.Temporally smoothing a rendered animation frame
 ====
-**lowp frame1.pix frame2.pix frame3.pix 1024 > smoothed_frame2.pix**
+[source,bash]
+----
+rt -s 1024 -o frame1.pix model.g region &&
+rt -s 1024 -o frame2.pix model.g region &&
+rt -s 1024 -o frame3.pix model.g region
+lowp frame1.pix frame2.pix frame3.pix 1024 > smoothed.pix
+pix-png -s 1024 smoothed.pix > smoothed.png
+----
+Renders three 1024x1024 frames with *rt*(1), blends them into a smoothed
+middle frame to reduce per-frame noise and aliasing, and converts the result to
+PNG with *pix-png*(1).
+====
 
-Reads three 1024x1024 PIX images and produces a smoothed version of the middle frame, writing the result to _smoothed_frame2.pix_.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *pixfilter*(1), *pix3filter*(1), *pix-png*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
@@ -53,7 +78,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

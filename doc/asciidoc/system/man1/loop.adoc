@@ -1,99 +1,113 @@
 = LOOP(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-loop - generate numerical or alphabetical sequences for shell loops
+loop - generate numeric or character sequences for shell loops
 
 == SYNOPSIS
 
-*loop* [-c] _start_ _finish_ [_increment_]
+[source]
+----
+loop [-c] start finish [incr]
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*loop* generates a sequence of numbers or characters between _start_ and _finish_ (inclusive), outputting one value per line to standard output. This utility is primarily designed for driving loops in shell scripts.
+*loop* outputs a sequence of values between _start_ and _finish_
+(inclusive), one value per line on standard output.  It is intended for
+driving counted loops in shell scripts.
 
-The default _increment_ is `1` (or `-1` if _start_ is greater than _finish_).
+The values are integers, real numbers, or characters.  By default
+*loop* prints integers; if any of _start_, _finish_, or _incr_ contains
+a decimal point or otherwise parses only as a floating-point number, the
+sequence is generated and printed as real numbers (using *%g*
+formatting).  The *-c* option selects character sequences instead.
 
-=== Preserving Padding
+The default _incr_ is `1` when _start_ is less than _finish_ and `-1`
+when _start_ is greater than _finish_, so the sequence always runs
+toward _finish_.  An _incr_ of zero is an error.  No attempt is made to
+detect or prevent infinite loops.
 
-For integer sequences, if _start_ or _finish_ contains leading zeros, *loop* preserves the padding in the output. It uses the maximum field width from the arguments to pad the output values with leading zeros (e.g., `008` to `010`).
+For integer sequences, *loop* preserves zero padding: if _start_,
+_finish_, or _incr_ is written with leading zeros, the output is
+left-padded with zeros to the width of the widest such argument (for
+example, `008` through `010`).
 
+[[options]]
 == OPTIONS
 
 *-c*::
-	Enable character (char) looping. When this option is specified, _start_ and _finish_ must be single characters, and the sequence will progress alphabetically.
+  Generate a character sequence.  _start_ and _finish_ are taken as
+  single characters and the output steps through the character codes
+  between them.  An optional _incr_ may be supplied but must be an
+  integer.
 
+[[examples]]
 == EXAMPLES
 
-.Generate numbers from 10 to 30 in steps of 5
+.Count from 10 to 30 in steps of 5
+====
 [source,bash]
 ----
 loop 10 30 5
 ----
-Output:
-....
-10
-15
-20
-25
-30
-....
+Prints `10`, `15`, `20`, `25`, `30` on successive lines.
+====
 
-.Generate a descending sequence of zero-padded numbers
+.Drive a render loop over zero-padded frame numbers
+====
 [source,bash]
 ----
-loop 008 005
+for frame in $(loop 001 100) ; do
+    rt -o frame${frame}.pix -F /dev/null model.g component
+done
 ----
-Output:
-....
-008
-007
-006
-005
-....
+Renders 100 frames, naming the outputs `frame001.pix` through
+`frame100.pix`.  Because the bounds are written with leading zeros,
+*loop* zero-pads every value to three digits so the file names sort
+correctly.
+====
 
-.Generate floating-point numbers
+.Generate a descending real-number ramp
+====
 [source,bash]
 ----
-loop 0.1 1.6 0.5
+loop 1.6 0.1 -0.5
 ----
-Output:
-....
-0.1
-0.6
-1.1
-1.6
-....
+Prints `1.6`, `1.1`, `0.6`, `0.1`; the decimal point selects
+floating-point mode and the negative _incr_ steps downward.
+====
 
-.Generate an alphabetical sequence of characters from 'a' to 'e'
+.Step through an alphabetical range
+====
 [source,bash]
 ----
 loop -c a e
 ----
-Output:
-....
-a
-b
-c
-d
-e
-....
+Prints the characters `a` through `e`, one per line.
+====
 
-== BUGS
+[[see_also]]
+== SEE ALSO
 
-Character looping only supports single characters, and increments must be integers.
+*brlcad*(1), *rt*(1), *gencolor*(1)
 
+[[author]]
 == AUTHOR
 
-John Grosh, Phil Dykstra, Michael John Muuss
+BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

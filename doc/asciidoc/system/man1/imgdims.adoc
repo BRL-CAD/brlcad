@@ -1,7 +1,7 @@
 = IMGDIMS(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
@@ -9,61 +9,105 @@ imgdims - guess the width and height of an image file
 
 == SYNOPSIS
 
-*imgdims* [-n | -s] [-# _bytes_per_pixel_] _file_name_
+[source]
+----
+imgdims [-n | -s] [-# _bytes_per_pixel_] _file_name_
+imgdims [-# _bytes_per_pixel_] _num_bytes_
+----
 
-*imgdims* [-# _bytes_per_pixel_] _num_bytes_
 
+[[description]]
 == DESCRIPTION
 
-*imgdims* guesses the dimensions (width and height in pixels) of an image. The image size may be specified either implicitly by providing a file name, or explicitly by specifying the total number of bytes. It uses the autosizing capabilities of `libbn` to make the guess.
+*imgdims* guesses the dimensions (width and height in pixels) of an image.
+The total pixel count is computed and handed to the framebuffer common-image-size
+autosizing routines, which return the most plausible width and height for that count.
 
+The image size may be specified either implicitly, by giving a _file_name_ whose
+byte size is read with stat(2), or explicitly, by giving _num_bytes_ as a positive
+integer instead of a file. The byte count is divided by the bytes-per-pixel value to
+obtain the pixel count; it must divide evenly or *imgdims* exits with an error. By
+default *imgdims* uses the file size to guess; with *-n* it first tries to read the
+dimensions encoded in the file name (as written by tools such as *pix-fb*(1) and
+*fb-pix*(1)), falling back to the file size if the name carries no usable resolution.
+
+The result is printed to standard output as two space-separated numbers, "width height".
+
+[[options]]
 == OPTIONS
 
 *-n*::
-	Extract the dimensions directly from the file name if it contains standard BRL-CAD resolution indicators (e.g. `1024x768` or `512`). If this fails, the command will exit with an error.
+  Believe the file name. Try to extract the dimensions directly from the _file_name_
+  if it encodes a standard BRL-CAD resolution (e.g. an embedded "1024x768"). If the
+  name carries no usable resolution, fall back to guessing from the file size.
 
 *-s*::
-	Ignore any dimensions encoded in the file name and use the file size in bytes to determine the pixel count and guess the width and height.
+  Believe the stat. Ignore any dimensions encoded in the file name and use the file
+  size in bytes to determine the pixel count and guess the width and height. This is
+  the default behavior.
 
 *-#* _bytes_per_pixel_::
-	Specify the size of each pixel in bytes. Common values are `1` (for black and white images) and `3` (for RGB images, which is the default). If this option is omitted, *imgdims* attempts to determine the pixel size based on the file extension (e.g. `.bw` defaults to 1, `.pix` defaults to 3). If no recognized extension is found, it defaults to 3.
+  Specify the size of each pixel in bytes, as a positive integer. Common values are
+  1 (black-and-white images) and 3 (RGB images). If omitted, the pixel size is taken
+  from the file extension (.bw = 1, .pix = 3); any unrecognized extension, or an
+  explicit _num_bytes_ argument, defaults to 3.
 
-*-h*::
-*-?*::
-	Print usage information and exit.
+*-h*, *-?*::
+  Print usage information and exit.
 
+[[examples]]
 == EXAMPLES
 
-.Guess the dimensions of a file named 'image.pix' from its file size
+.Guess the dimensions of a .pix image and feed them to a viewer
+====
 [source,bash]
 ----
-imgdims image.pix
+imgdims teapot.pix
+# prints e.g. "512 512"
+pix-fb -w 512 -n 512 teapot.pix
 ----
+*imgdims* reads the byte size of teapot.pix, divides by 3 (the default for .pix),
+and reports the width and height autosizing chose for that pixel count, which can
+then be passed to *pix-fb*(1) to display the image.
+====
 
-.Extract dimensions from a filename containing resolution indicators
+.Recover the resolution from a tool-generated file name
+====
 [source,bash]
 ----
-imgdims -n image_1024x768.bw
+imgdims -n moss_1024x1024.bw
 ----
+With *-n*, *imgdims* pulls the "1024x1024" resolution straight out of the file name
+rather than inferring it from the file size, which is reliable even when the byte
+count is ambiguous between several common resolutions.
+====
 
-.Guess the dimensions of a black-and-white image given its file size in bytes
+.Size a raw black-and-white buffer given only its byte count
+====
 [source,bash]
 ----
 imgdims -# 1 262144
 ----
+No file is involved here: 262144 bytes at 1 byte per pixel is 262144 pixels, for
+which autosizing reports "512 512".
+====
 
+[[see_also]]
 == SEE ALSO
 
-*libbn*(3)
+*brlcad*(1), *pix-fb*(1), *fb-pix*(1), *pixdiff*(1)
 
+[[author]]
 == AUTHOR
 
-Paul Tanenbaum
+BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1997-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

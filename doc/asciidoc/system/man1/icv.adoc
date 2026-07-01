@@ -1,23 +1,25 @@
 = ICV(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-icv - convert, compare, and display information for various image formats
+icv - convert, compare, and report information for image formats
 
 == SYNOPSIS
 
-*icv* [-w _width_] [-n _height_] [--input-format _fmt_] [--output-format _fmt_] [-i _input_file_] [-o _output_file_] [_input_file_] [_output_file_]
+[source]
+----
+icv [-w width] [-n height] [--input-format fmt] [--output-format fmt] [-i input] [-o output] [input] [output]
+icv info file [file ...]
+icv diff [options] img1 img2
+----
 
-*icv* info _file_ [_file_ ...]
-
-*icv* diff [options] _img1_ _img2_
-
+[[description]]
 == DESCRIPTION
 
-Without a subcommand, *icv* acts as an image format converter, reading the input image and writing it to the output file. Image formats are auto-detected based on file extensions unless overridden.
+Without a subcommand, *icv* acts as an image format converter, reading the input image and writing it to the output file. Image formats are auto-detected from file extensions unless overridden with *--input-format* / *--output-format*. To stream through standard input or output (a path of which carries no extension) the corresponding format must be given explicitly. This tool is intended to eventually replace the family of single-purpose *pix-png*(1), *png-pix*(1), *bw-pix*(1) and similar converters.
 
 === Supported Formats
 
@@ -47,8 +49,9 @@ Without a subcommand, *icv* acts as an image format converter, reading the input
 	Report the width, height, format, number of channels, color space, and any embedded render information (like the database and objects used to render it) for the specified image file(s).
 
 *diff*::
-	Compare two images and report pixel differences. By default, with no output file specified, a raw PIX difference image is written to standard output.
+	Compare two images and report per-channel match statistics on standard error. When the images differ and no output file is given, a raw PIX difference image is written to standard output (only if stdout is not a terminal), matching the behaviour of *pixdiff*(1). Use *-o* to write the diff image to a named file instead.
 
+[[options]]
 == OPTIONS
 
 === Conversion Options
@@ -105,44 +108,52 @@ Without a subcommand, *icv* acts as an image format converter, reading the input
 *-?*::
 	Print diff subcommand help and exit.
 
+[[examples]]
 == EXAMPLES
 
-.Convert a PIX file to a PNG file (specifying dimensions)
+.Convert a raw PIX render to PNG
+====
 [source,bash]
 ----
-icv -w 1024 -n 512 input.pix output.png
+icv -w 1024 -n 512 render.pix render.png
 ----
+Reads a headerless 1024x512 PIX file and writes a PNG. The dimensions are required because PIX (and BW) carry no size information in the file; when omitted, *icv* attempts to deduce them from the file size.
+====
 
-.Get information about a PNG image
+.Inspect images before further processing
+====
 [source,bash]
 ----
-icv info model.png
+icv info *.png
 ----
+Reports the width, height, format, channel count, color space, and any embedded render information (originating database and objects) for every PNG in the directory, useful for confirming a batch of renders is consistent before compositing.
+====
 
-.Compare two PNG images and write the diff image to output.png
+.Regression-test a render against a known-good reference
+====
 [source,bash]
 ----
-icv diff -o output.png image1.png image2.png
+icv diff -o delta.png reference.png current.png
 ----
+Compares two renders, prints per-channel match statistics to standard error, and writes a highlighted difference image to delta.png. Omitting *-o* streams a raw PIX diff to standard output for piping, exactly as *pixdiff*(1) does.
+====
 
-.Compare two raw PIX images specifying different dimensions for each
-[source,bash]
-----
-icv diff --width-img1 512 --height-img1 512 --width-img2 1024 --height-img2 1024 img1.pix img2.pix
-----
-
+[[see_also]]
 == SEE ALSO
 
-*pix*(5), *bw*(5), *pixdiff*(1)
+*brlcad*(1), *pixdiff*(1), *pix-png*(1), *png-pix*(1), *bw-pix*(1), *pix*(5), *bw*(5)
 
+[[author]]
 == AUTHOR
 
-Clifford Yapp
+BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

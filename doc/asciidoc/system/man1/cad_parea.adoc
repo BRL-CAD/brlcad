@@ -4,47 +4,52 @@
 :manmanual: BRL-CAD
 
 == NAME
-cad_parea - compute area of polygon
+cad_parea - compute the area of a polygon
 
 == SYNOPSIS
 
-*cad_parea* [-h] [-?] [-i _input_] [-o _output_]
+[source]
+----
+cad_parea [-i input] [-o output]
+----
+
 
 [[description]]
 == DESCRIPTION
 
-*cad_parea* reads a series of 2D polygon vertex coordinate values (_x_, _y_) from an input stream and writes the computed polygon area to an output stream. Vertices are expected to be provided in counter-clockwise cyclic order.
+*cad_parea* reads a series of 2D polygon vertex coordinates (_x_ _y_, one
+pair per line, whitespace separated) and writes the signed area of the
+polygon they describe, computed with the shoelace formula. Vertices given
+in counter-clockwise order yield a positive area; clockwise order yields a
+negative area. The polygon is implicitly closed, so the final vertex need
+not repeat the first.
 
-Lines not beginning with a number are silently skipped.
+Lines that contain no leading number (blank lines, comments, color records,
+etc.) are silently skipped. A line containing exactly one number is treated
+as malformed input and aborts the program.
+
+By default coordinates are read from standard input and the area is written
+to standard output, making *cad_parea* convenient in a pipeline.
 
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
-	Print a usage message and exit.
-
 *-i* _input_::
-	Read coordinates from the specified _input_ file instead of standard input.
+  Read coordinates from _input_ instead of standard input. A value of
+  *-* means standard input. May be given only once.
 
 *-o* _output_::
-	Write the computed area to the specified _output_ file instead of standard output.
+  Write the computed area to _output_ instead of standard output. A value
+  of *-* means standard output. May be given only once.
 
-
-[[hints]]
-== HINTS
-
-A hole can be accommodated as a clockwise section connected to the periphery by a line segment traced in both directions.
-
-Disjoint pieces may be connected by a line segment traced in both directions.
-
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Calculate the area of a square
+.Area of a unit square from a file
 ====
-Compute the area of a 1x1 square by providing its vertices via standard input:
-
 [source,bash]
 ----
 $ cat square.txt
@@ -55,32 +60,50 @@ $ cat square.txt
 $ cad_parea -i square.txt
 1
 ----
+The four vertices are listed in counter-clockwise order, so *cad_parea*
+reports the positive area 1. Listing them clockwise would instead report -1.
 ====
-[[see_also]]
-== SEE ALSO
 
-*cad_boundp*(1)
+.Area of a region traced interactively in a pipeline
+====
+[source,bash]
+----
+$ printf '0 0\n4 0\n4 3\n0 3\n' | cad_parea -o area.txt
+$ cat area.txt
+12
+----
+Coordinates are streamed in on standard input and the resulting area of the
+4x3 rectangle (12) is written to the file _area.txt_, demonstrating how
+*cad_parea* slots into a pipeline that generates vertex lists on the fly.
+====
 
+[[hints]]
+== HINTS
+
+A hole can be accommodated as a clockwise section connected to the periphery
+by a line segment traced in both directions. Disjoint pieces may likewise be
+connected by a line segment traced in both directions.
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-Improperly formatted input produces an error message and terminates *cad_parea* with non-zero exit status.
+A line with a single numeric field is reported as bad input and *cad_parea*
+exits with status 2. A degenerate polygon yields an area of 0.
 
-*cad_parea* outputs "0" for the area of a degenerate polygon.
+[[see_also]]
+== SEE ALSO
 
+*brlcad*(1), *cad_boundp*(1)
 
 [[author]]
 == AUTHOR
 
-Douglas A. Gwyn, BRL/VLD-VMB
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

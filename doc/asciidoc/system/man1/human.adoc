@@ -1,115 +1,152 @@
 = HUMAN(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-human - Creates a BRL-CAD .g file containing human models.
+human - generate BRL-CAD human body models
 
 == SYNOPSIS
 
 [source]
 ----
-human [options]... [top_level_object_name]
+human [options] [top_level_object_name]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*human* is a program to create a BRL-CAD database of human models. By default, it creates a single human model standing at the origin with a default height of 68 inches (5 feet, 8 inches), and saves it to a database named _human.g_. The model is composed of various shapes representing the head, neck, torso, arms, and legs. The top level object name is _Body.c_ by default.
+*human* creates a BRL-CAD database, _human.g_, containing one or more
+articulated human body models built from primitive shapes representing
+the head, neck, torso, arms, and legs. By default it writes a single
+model standing at the origin with a height of 68 inches (5 feet 8 inches)
+under the top-level combination _Body.c_. The model height, stance, body
+dimensions, and the number of models (arranged in a square grid) can all
+be controlled from the options below or supplied interactively.
 
-The program can create multiple models in a grid formation, output bounding box dimensions, change the model's stance, and modify the physical dimensions of the models through command-line options or interactively.
+The last argument on the command line, if present, is used as the
+top-level object name in place of the default _Body.c_. When more than
+one model is generated (see *-N*), this name is instead used as a prefix
+for the individual models, which are grouped under a top-level
+combination named _Crowd.c_. The resulting geometry can be viewed and
+edited with *mged*(1) or rendered with *rt*(1).
 
 [[options]]
 == OPTIONS
 
-
 *-A*::
-AutoMake defaults. Generates a standard 50th percentile human model.
-
+  AutoMake defaults; generate a standard 50th-percentile human model.
 
 *-m*::
-Manual sizing mode. Prompts interactively for the exact dimensions of every body part in inches.
+  Manual sizing mode; prompt interactively for the dimensions of every
+  body part, in inches.
 
-
-*-H #*::
-Sets the overall height of the human model in inches.
-
+*-H* _#_::
+  Set the overall height of the model, in inches. Values below 1 are
+  rejected and the default height of 68 inches is used instead.
 
 *-L*, *-l*::
-Prompts interactively for the X, Y, and Z center point coordinates (in inches) of the model's location, relative to the feet.
-
+  Prompt interactively for the X, Y, and Z coordinates (in inches) of the
+  model's center point, measured at the feet. The default location is the
+  origin.
 
 *-b*::
-Generates bounding boxes for each body part of the model.
+  Generate bounding boxes for each body part of the model.
 
+*-n* _name_::
+  Set the bounding region (top-level object) name. The default is
+  _Body.c_. A name given as the final positional argument overrides this.
 
-*-n name*::
-Sets the bounding region name. The default is _Body.c_.
+*-N* _#_::
+  Set the number of models to generate. The value is squared, producing an
+  _N_ by _N_ grid of human models. Values of 1 or less default to a 4x4
+  (16-model) formation. In this multi-model mode the individual models are
+  named using the top-level name as a prefix (e.g. _Body.c0_, _Body.c1_,
+  ...) and are all gathered under a top-level combination named _Crowd.c_.
 
+*-s* _#_::
+  Set the model's stance. Supported values are: +
+  0 - Stand +
+  1 - Sit +
+  2 - Drive +
+  3 - Arms out +
+  4 - Letterman +
+  5 - Captain +
+  999 - Custom (prompts interactively for limb angles)
 
-*-N #*::
-Sets the number of models to generate. The input value will be squared by the program to generate an _N_ by _N_ grid of human models.
-
-
-*-s #*::
-Sets the stance of the model. Supported values are: +
-0 - Stand +
-1 - Sit +
-2 - Drive +
-3 - Arms out +
-4 - Letterman +
-5 - Captain +
-999 - Custom (prompts interactively for limb angles)
-
-
-*-p #*::
-Sets the percentile of the human model (1-99). Note: This option is currently parsed but has no effect on model generation dimensions.
-
+*-p* _#_::
+  Set the percentile of the model, clamped to the range 1-99. This option
+  is parsed but not yet implemented and currently has no effect on the
+  generated dimensions.
 
 *-t*::
-Saves bounding box dimensions (height, width, depth) for the generated model to a file named _stats.txt_.
-
+  Write bounding-box dimensions (height, width, depth) of the model to a
+  file named _stats.txt_.
 
 *-T*::
-Reads bounding box dimensions from a file named _stats.txt_ to override defaults.
-
+  Read bounding-box dimensions from a file named _stats.txt_ to override
+  the computed values.
 
 *-v*::
-Saves verbose output of all measurements and settings used to build the human model to a file named _verbose.txt_.
-
+  Write a verbose record of every measurement and setting used to build
+  the model to a file named _verbose.txt_.
 
 *-V*::
-Reads verbose input of all dimensions to build the human model from a file named _verbose.txt_.
+  Read all model dimensions from a file named _verbose.txt_.
 
+*-h*, *-?*::
+  Print a usage message and exit.
+
+In addition, *human* accepts a set of single-character "wizard" options
+(the digits _0_-_9_ and the symbols _= + _ * ^ % $ # @ ! ~ Q Z Y W_), each
+taking a numeric argument that sets one individual body measurement in
+inches. These are intended for use by automated front ends and are not
+meant to be supplied directly.
 
 [[examples]]
 == EXAMPLES
 
-.Default *human* Command
-[example]
+.Generate a default human model
 ====
-**human**
-
-Creates a BRL-CAD database named _human.g_ containing a standard 68-inch standing human model named _Body.c_.
-====
-
-.Create an Army of Humans
-[example]
-====
-**human -N 4 Army.c**
-
-Creates a 4x4 grid (16 models) of humans of varying heights, setting the top-level object name to _Army.c_.
+[source,bash]
+----
+human
+----
+Creates _human.g_ containing a single 68-inch standing human model under
+the top-level combination _Body.c_.
 ====
 
-.Create a Seated Human
-[example]
+.Build a squad and render it
 ====
-**human -H 72 -s 1 Seated.c**
+[source,bash]
+----
+human -N 4 squad.c
+rt -o squad.png human.g Crowd.c
+----
+Generates a 4x4 grid (16 models) of humans, each model named with the
+prefix _squad.c_ (so _squad.c0_ through _squad.c15_) and all gathered
+under a top-level combination named _Crowd.c_, then renders the scene to
+a PNG image with *rt*(1). In multi-model mode the top-level grouping
+object is always named _Crowd.c_ regardless of any name given on the
+command line.
+====
 
-Creates a human model named _Seated.c_ with a height of 72 inches in a seated pose.
+.Create a seated model of a specific height
 ====
+[source,bash]
+----
+human -H 72 -s 1 seated.c
+mged human.g 'draw seated.c; e seated.c'
+----
+Builds a 72-inch model in a seated pose named _seated.c_ and opens it in
+*mged*(1) for inspection.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1)
 
 [[author]]
 == AUTHOR
@@ -119,7 +156,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

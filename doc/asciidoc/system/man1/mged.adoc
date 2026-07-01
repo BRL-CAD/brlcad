@@ -1,7 +1,7 @@
 = MGED(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 mged - multi-display interactive combinatorial solid geometry editor
@@ -10,7 +10,7 @@ mged - multi-display interactive combinatorial solid geometry editor
 
 [source]
 ----
-mged [options] [database.g] [mged_command]
+mged [options] [_database.g_ [_command_]]
 ----
 
 
@@ -80,7 +80,7 @@ Skips loading any `.mgedrc` file entirely, providing a clean-slate session unaff
 === Variable Override Escape Hatches
 
 *--set* _VAR=VALUE_::
-Sets an MGED variable by name after `.mgedrc` is processed (e.g., `--set use_air=1`). This provides access to all 31 `mged_vparse[]` variables not exposed as individual long options. May be repeated.
+Sets an MGED variable by name after `.mgedrc` is processed (e.g., `--set use_air=1`). This provides access to any `mged_vparse[]` variable, including those not exposed as individual long options. May be repeated.
 
 *--rset* _ARGS_::
 Passes arguments directly to the MGED `rset` command after `.mgedrc` is processed (e.g., `--rset "ax draw 1"`). Provides access to axes, full colour scheme, rubber-band, and any other `rset` resource. May be repeated.
@@ -127,6 +127,9 @@ Shows (`1`) or hides (`0`) the slider bars.
 
 *--context* _0|1_::
 Enables (`1`) or disables (`0`) context-sensitive editing mode.
+
+*--hot-key* _#_::
+Sets the character code of the hot key used to switch the active display manager.
 
 === Air and Geometry Settings
 
@@ -365,7 +368,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1984-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

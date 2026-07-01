@@ -25,20 +25,26 @@ The conversion from version 3 to version 4 is fairly straightforward. Conversion
 [[examples]]
 == EXAMPLES
 
-The following example demonstrates how to convert an older binary database format to the version 4 format.
-
-.Convert an old database to version 4 format
+.Convert an old database and inspect the result
 ====
-[prompt]# conv-vg2g old_model.vg new_model.g#
-
-Converts the old binary database _old_model.vg_ to the version 4 format, saving the output to _new_model.g_. The user will be prompted for units and a title if the input is older than version 3.
+[source,bash]
+----
+conv-vg2g old_model.vg new_model.g
+mged new_model.g
+----
+Converts the old binary database _old_model.vg_ to the version 4 format,
+saving the output to _new_model.g_, then opens the converted database in
+*mged*(1). If the input predates version 3, *conv-vg2g* interactively
+prompts for the original units (1=mm, 2=cm, 3=meters, 4=inches, 5=feet)
+and a title so geometry can be scaled to the millimeter base units used
+internally.
 ====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *mged*(1), *libged*(3)
+*brlcad*(1), *dbupgrade*(1), *mged*(1)
 
 
 [[diagnostics]]
