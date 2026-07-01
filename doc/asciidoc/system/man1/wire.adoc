@@ -1,10 +1,10 @@
 = WIRE(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-wire - Creates a BRL-CAD .g file containing wiring or fuel lines.
+wire - create a BRL-CAD database of wires or fuel lines
 
 == SYNOPSIS
 
@@ -17,76 +17,63 @@ wire
 [[description]]
 == DESCRIPTION
 
-*wire* creates a BRL-CAD database of solid wires or fuel lines. This program is designed to be run strictly interactively. The user is prompted to enter the target database name, the number of wire segments, the coordinates of the starting and ending points for each segment, and the radius at each point. The program is limited to a maximum of 100 segments. The resulting wires are constructed as combinations of truncated cones (tgc) for the straight segments and spheres to produce rounded joints.
+*wire* creates a BRL-CAD geometry database (*.g*) describing a run of
+solid wires or fuel lines.  It runs strictly interactively, taking no
+command-line options or arguments; if any argument is supplied it prints
+a usage message and exits.
 
+The program prompts for the output database name (default *wire.g* if
+left blank), the number of wire segments (1 to 100), and the coordinates
+of the start and end points together with the radius at each point of
+every segment.  Each segment is built as a truncated general cone (the
+*tgc* primitive) so that the radius may taper from one end to the other,
+and adjacent segments are joined with spheres to round the joints.  The
+resulting solids are collected into regions and unioned into a group
+named *wires*.  All values are interpreted in millimeters.
 
 [[examples]]
 == EXAMPLES
 
-.Interactive *wire* Session
-[example]
+.Build a three-segment wire and raytrace it
 ====
+[source,bash]
+----
+wire <<EOF
+hose.g
+3
+0 0 0
+.25
+0 5 -3
+.25
+0 10 -3
+.25
+0 12 -2
+.25
+EOF
 
-
-
-....
-
-Enter mged file name (25 char max).
-	wire.g
-Enter the number of segments (maximum of 100).
-	3
-Enter starting point of segment # 1.
-	0 0 0
-Enter radius at the starting point of segment # 1.
-	.25
-Enter ending point of segment # 1.
-	0 5 -3
-Enter radius at the ending point of segment # 1.
-	.25
-Enter ending point of segment # 2.
-	0 10 -3
-Enter radius at the ending point of segment # 2.
-	.25
-Enter ending point of segment # 3.
-	0 12 -2
-Enter radius at the ending point of segment # 3.
-	.25
-
-
-mged file created:  wire.g
-Segment # 1:  (0.000000, 0.000000, 0.000000) 0.250000
-	      (0.000000, 5.000000, -3.000000)0.250000
-Segment # 2:  (0.000000, 5.000000, -3.000000) 0.250000
-	      (0.000000, 10.000000, -3.000000)0.250000
-Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
-	      (0.000000, 12.000000, -2.000000)0.250000
-    
-....
-
-
-
+rt -o hose.png hose.g wires
+----
+Feeding the interactive prompts from a here-document creates
+*hose.g* containing a three-segment wire of constant 0.25 mm radius whose
+segments are joined by spheres, then renders the resulting *wires* group
+to an image with *rt*(1).  Only the first segment requires a starting
+point; each later segment continues from the previous endpoint.
 ====
-
-In this example, a wire of three segments is made. These segments are joined together with spheres. All dimensions are in millimeters.
-
-
-[[author]]
-== AUTHOR
-
-Susan A. Coates
-
-
-[[copyright]]
-== COPYRIGHT
-
-This software is Copyright (c) 2005-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
 
 [[see_also]]
 == SEE ALSO
 
-bolt(1), handle(1), window(1), window_frame(1), gastank(1)
+*brlcad*(1), *mged*(1), *rt*(1), *bolt*(1), *gastank*(1), *handle*(1), *window*(1), *window_frame*(1)
 
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
