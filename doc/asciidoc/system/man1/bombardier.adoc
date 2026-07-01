@@ -1,42 +1,76 @@
 = BOMBARDIER(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-bombardier - BRL-CAD Crash Reporter
+bombardier - BRL-CAD graphical crash reporter
 
 == SYNOPSIS
 
 [source]
 ----
-bombardier logfile...
+bombardier [-h | -?] _logfile_...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bombardier* is the BRL-CAD crash reporter utility. It is designed to take one or more log files generated during an unexpected application crash and present a graphical interface to the user. This interface displays the crash details and system information, allowing the user to review the data, provide additional context about what they were doing when the crash occurred, and optionally submit the crash report to the BRL-CAD development team for analysis.
+*bombardier* is the BRL-CAD crash reporter. It reads one or more crash
+_logfile_ arguments, concatenates their contents, and presents a Tk
+graphical dialog showing the captured crash details and system
+information. The user can add a description of what they were doing and
+choose to submit the report to the BRL-CAD developers at brlcad.org so
+the stack trace can be reviewed.
 
-If multiple log files are specified, their contents are concatenated and presented together in the report.
+If a _logfile_ contains a line beginning with `Command:`, the token that
+follows is used as the name of the application that crashed and is shown
+in the dialog. A _logfile_ argument that does not exist is reported as a
+warning and skipped. At least one _logfile_ must be supplied.
+
+*bombardier* is normally launched automatically by other BRL-CAD
+applications such as *mged*(1) when they terminate unexpectedly, rather
+than invoked by hand.
 
 [[options]]
 == OPTIONS
 
-*logfile...*::
-One or more text log files containing crash diagnostic information or stack traces.
+*-h*::
+  Print a brief usage message and exit.
+
+*-?*::
+  Print a brief usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
 .Reviewing and submitting a crash log
-[example]
 ====
-**bombardier mged-crash.log**
+[source,bash]
+----
+bombardier ~/.brlcad/crash/mged-crash.log
+----
+Opens the crash reporter dialog populated with the contents of
+_mged-crash.log_, allowing the stack trace and system information to be
+reviewed, annotated, and submitted to the developers.
+====
 
-Opens the crash reporter GUI and loads the contents of _mged-crash.log_ for review and submission.
+.Combining multiple log files into one report
 ====
+[source,bash]
+----
+bombardier mged-crash.log rt-crash.log session-env.log
+----
+Loads and concatenates several log files so that a stack trace and its
+related environment or session diagnostics are reviewed and submitted
+together as a single crash report.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1)
 
 [[author]]
 == AUTHOR
@@ -46,7 +80,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2007-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
