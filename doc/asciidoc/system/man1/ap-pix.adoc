@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD
 
 == NAME
-ap-pix - convert Applicon files to pix files
+ap-pix - convert an Applicon color ink jet printer file to a pix file
 
 == SYNOPSIS
 
@@ -17,36 +17,41 @@ ap-pix [-v] file.ap > file.pix
 [[description]]
 == DESCRIPTION
 
-*ap-pix* converts an Applicon drum plotter image file into a *pix*(5) file.
+*ap-pix* converts an Applicon color ink jet printer image file into a *pix*(5) file written to standard output.
 
-The Applicon file is assumed to consist of a number of lines each 3456 bits long. The resulting _pix_ file thus has scanlines of 3456 pixels.
+The Applicon file holds three interleaved color separations (magenta, yellow, and cyan), each offset 50 records apart within the same file. *ap-pix* reads the three separations in parallel and combines them into RGB pixels: a set cyan dot clears red, a set magenta dot clears green, and a set yellow dot clears blue. Each scanline is 432 bytes (3456 bits), so the resulting _pix_ file has scanlines of 3456 pixels.
 
 
 [[options]]
 == OPTIONS
 
 *-v*::
-Enable verbose output. Prints the line number to standard error as each line is written.
+  Verbose. Print "wrote line _N_" to standard error as each scanline is written.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 
 [[examples]]
 == EXAMPLES
 
-.Convert an Applicon image file to a pix file
+.Convert an Applicon file and display it
 ====
 [source,bash]
 ----
 $ ap-pix image.ap > image.pix
+$ pix-fb -w 3456 image.pix
 ----
-
-Converts the Applicon drum plotter image file _image.ap_ into a _pix_ file named _image.pix_.
+Converts the Applicon file _image.ap_ to a _pix_ file, then displays the
+3456-pixel-wide result on a framebuffer with *pix-fb*(1). The image width
+must be given explicitly because the _pix_ format does not store dimensions.
 ====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix*(5)
+*brlcad*(1), *pix-fb*(1), *pix*(5)
 
 
 [[author]]
