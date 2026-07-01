@@ -1,10 +1,10 @@
 = DAUTO(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-dauto - Compute the unbiased autocorrelation function of doubles
+dauto - compute the unbiased autocorrelation function of a stream of doubles
 
 == SYNOPSIS
 
@@ -17,26 +17,49 @@ dauto [window_size] < input.doubles > output.doubles
 [[description]]
 == DESCRIPTION
 
-*dauto* reads a stream of double-precision floating-point numbers from standard input, computes an unbiased estimate of the autocorrelation function in overlapping windows, and writes the resulting double-precision values to standard output. 
+*dauto* reads a stream of double-precision floating-point numbers from
+standard input, computes an unbiased estimate of the autocorrelation
+function over successive fixed-size windows, and writes the resulting
+double-precision values to standard output.
 
-The input data is processed in chunks of size _window_size_ (default 512). Given _L_ elements at a time, it estimates the autocorrelation at lag 0 through lag _L_-1. The estimation is unbiased by applying a weighting factor inversely proportional to the number of overlapping samples at each lag. Zeros are assumed outside of the range of an input record.
+Input is processed in non-overlapping records of _window_size_ samples
+(default 512). For each record of _L_ samples, *dauto* estimates the
+autocorrelation at lags 0 through _L_-1, writing _L_ values per record.
+The estimate at lag 0 is based on all _L_ samples and the estimate at
+lag _L_-1 on only one; zeros are assumed outside the record. The
+estimate is unbiased by scaling each lag by a factor inversely
+proportional to the number of contributing samples. A final partial
+record shorter than _window_size_ is zero-padded.
+
+Both standard input and standard output must be redirected; *dauto*
+exits with a usage message if either is a terminal. See *dauto2*(1) for
+a biased variant.
 
 [[options]]
 == OPTIONS
 
-*window_size*::
-The number of samples per processing window. Defaults to 512 if not specified.
+_window_size_::
+  Number of samples per record, controlling the maximum lag computed.
+  Must be a positive integer. Defaults to 512 if omitted.
 
 [[examples]]
 == EXAMPLES
 
-.Basic *dauto* Usage
-[example]
+.Autocorrelate a sampled signal
 ====
-**dauto 1024 < signal.raw > autocor.raw**
+[source,bash]
+----
+dauto 1024 < signal.doubles > autocor.doubles
+----
+Computes the unbiased autocorrelation of a stream of double-precision
+values in 1024-sample windows. The resulting stream of doubles can be
+fed to *dpeak*(1) to locate dominant periodicities in the signal.
+====
 
-Computes the unbiased autocorrelation of the double-precision values in _signal.raw_ using a window size of 1024 samples, and writes the output to _autocor.raw_.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dauto2*(1), *damdf*(1), *dconv*(1), *dpeak*(1)
 
 [[author]]
 == AUTHOR
@@ -46,12 +69,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
-[[see_also]]
-== SEE ALSO
-
-dauto2(1), damdf(1)
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

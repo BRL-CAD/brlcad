@@ -1,10 +1,10 @@
 = DAUTO2(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-dauto2 - Compute the center-clipped autocorrelation function of doubles
+dauto2 - compute the center-clipped autocorrelation function of doubles
 
 == SYNOPSIS
 
@@ -17,26 +17,47 @@ dauto2 [window_size] < input.doubles > output.doubles
 [[description]]
 == DESCRIPTION
 
-*dauto2* reads a stream of double-precision floating-point numbers from standard input, computes an estimate of the autocorrelation function using center-clipping, and writes the resulting double-precision values to standard output. 
+*dauto2* reads a stream of double-precision floating-point numbers from
+standard input, computes an estimate of the autocorrelation function using
+center-clipping, and writes the resulting double-precision values to
+standard output.
 
-The input data is processed in chunks of size _window_size_ (default 512). To reduce the effect of formants in pitch extraction, *dauto2* applies center-clipping to the signal before computing the autocorrelation. The clipping threshold is dynamically determined based on 60% of the maximum absolute peaks found in the first third and the last third of the processing window. The data is then quantized to -1, 0, or 1 before the autocorrelation lags are calculated.
+The data is processed one window at a time, _window_size_ samples per
+window (default 512); a short final window is zero-padded. Before the
+autocorrelation lags are computed, *dauto2* applies center-clipping to
+suppress formants for pitch extraction: the clipping threshold is set to
+60% of the smaller of the peak magnitudes found in the first half and the
+last third of the window, and each sample is quantized to -1, 0, or +1.
+
+Like *dauto*(1), this filter operates on raw 64-bit host-order doubles such
+as those produced by other tools in the BRL-CAD signal-processing suite.
 
 [[options]]
 == OPTIONS
 
 *window_size*::
-The number of samples per processing window. Defaults to 512 if not specified.
+  Number of samples per processing window (default 512). Given as a single
+  optional positional argument; *dauto2* takes no flag options.
 
 [[examples]]
 == EXAMPLES
 
-.Basic *dauto2* Usage
-[example]
+.Estimate pitch periodicity of a speech signal
 ====
-**dauto2 1024 < signal.raw > autocor_clipped.raw**
+[source,bash]
+----
+dauto2 1024 < voice.doubles > voice.autocor.doubles
+----
+Computes the center-clipped autocorrelation of _voice.doubles_ using a
+1024-sample window. The center-clipping suppresses the strong formant
+structure of voiced speech, so peaks in the output correspond to the pitch
+period, which can then be plotted or tracked downstream.
+====
 
-Computes the center-clipped autocorrelation of the double-precision values in _signal.raw_ using a window size of 1024 samples, and writes the output to _autocor_clipped.raw_.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dauto*(1), *damdf*(1)
 
 [[author]]
 == AUTHOR
@@ -46,12 +67,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
-[[see_also]]
-== SEE ALSO
-
-dauto(1), damdf(1)
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
