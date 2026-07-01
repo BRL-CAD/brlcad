@@ -4,26 +4,56 @@
 :manmanual: BRL-CAD
 
 == NAME
-rpatch - convert FASTGEN ASCII databases into a format suitable for
+rpatch - reformat FASTGEN files for input to patch-g
 
 == SYNOPSIS
 
 [source]
 ----
-rpatch [-D] [-3] < FASTGEN_FILE > OUTPUT_FILE
+rpatch [-D] [-3] < fastgen_input_file > file.rp
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-This program reformats FASTGEN files to a form usable by *patch-g* . The *-D* option handles type 3 components as donuts rather than triangles. The *-3* option reads FASTGEN3 format files (coordinates are each 10 columns wide).
+*rpatch* is a pre-processor that reformats FASTGEN target description
+files into the column-aligned record format expected by *patch-g*(1),
+which performs the actual conversion into a BRL-CAD geometry database.
+It reads a FASTGEN file from standard input and writes the reformatted
+records to standard output. Each input record is parsed by fixed-width
+FORTRAN-style column fields, the packed solid type code is decomposed
+into separate type, thickness, and space-code values, and the result is
+re-emitted in the space-delimited layout that *patch-g*(1) reads.
 
 
-[[example]]
-== EXAMPLE
+[[options]]
+== OPTIONS
 
-rpatch < __fastgen_file__ > _file.rpatch_
+*-D*::
+  Treat type 3 components as donuts rather than triangles.
+
+*-3*::
+  Interpret the input as FASTGEN3 format, in which the coordinate
+  fields are each 10 columns wide (the default layout uses narrower
+  8- and 9-column coordinate fields).
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert a FASTGEN model into a BRL-CAD database
+====
+[source,bash]
+----
+rpatch < model.fastgen > model.rp
+patch-g -f model.rp model.g
+----
+The first command reformats the raw FASTGEN file into the intermediate
+*.rp* record format; the second feeds that file to *patch-g*(1) to
+produce the BRL-CAD geometry database *model.g*. Add *-3* to the
+*rpatch* invocation when the source file is in FASTGEN3 format.
+====
 
 
 [[diagnostics]]
