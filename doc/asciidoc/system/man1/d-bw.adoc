@@ -1,0 +1,100 @@
+= D-BW(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+d-bw - convert double-precision binary numbers to unsigned bytes
+
+== SYNOPSIS
+
+[source]
+----
+d-bw [-n | scale] < doubles > unsigned_chars
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*d-bw* reads a stream of machine-native double-precision (8-byte)
+binary floating point values from standard input, multiplies each by a
+scale factor, and writes the result as a stream of unsigned bytes (one
+8-bit value each) to standard output.  This is typically used to turn a
+floating point signal or single-channel image into raw 8-bit pixel data
+suitable for *bw*(5) imagery.
+
+Each scaled value is clamped to the range 0 through 255: values above
+255.0 are written as 255 and values below 0.0 are written as 0.  When
+any clamping occurs, the count of high and low clips is reported on
+standard error.
+
+The scale factor defaults to 1.0.  Supplying a numeric _scale_ argument
+multiplies every input value by that factor before conversion.  The
+*-n* flag is shorthand for a scale of 255.0, which maps normalized data
+in the range 0.0 to 1.0 onto the full 0 to 255 byte range.
+
+Because the input is raw binary, *d-bw* refuses to run when standard
+input is a terminal.  The inverse conversion, from unsigned bytes back
+to binary doubles, is performed by *u-d*(1).
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup.
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize the data by using a scale factor of 255.0, mapping input
+  values in the range 0.0 to 1.0 onto the output range 0 to 255.
+
+*scale*::
+  A numeric scale factor by which each input value is multiplied before
+  being clamped and written as a byte.  Defaults to 1.0.  Mutually
+  exclusive with *-n*.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a normalized double stream to a bw image
+====
+[source,bash]
+----
+d-bw -n < ramp.d > ramp.bw
+----
+Reads doubles in the range 0.0 to 1.0 from ramp.d and writes a
+single-channel 8-bit *bw*(5) image, scaling each value across the full
+0 to 255 range so it can be viewed with *bw-pix*(1) or *pix-fb*(1).
+====
+
+.Apply a custom gain
+====
+[source,bash]
+----
+dmod -m 100 < signal.d | d-bw 2.5 > signal.bw
+----
+Processes a double-precision signal with *dmod*(1), then scales each
+sample by 2.5 while converting to bytes, brightening the result and
+reporting on standard error how many samples were clipped.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *u-d*(1), *bw-d*(1), *dmod*(1), *dconv*(1), *bw*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,87 @@
+= G-AP214(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+g-ap214 - convert a BRL-CAD database to a STEP AP214 file
+
+== SYNOPSIS
+
+[source]
+----
+g-ap214 -o output.stp database.g [object(s)]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-ap214* converts geometry from a BRL-CAD _database.g_ to a STEP
+AP214 (ISO 10303-214, "Core Data for Automotive Mechanical Design
+Process") exchange file. BRL-CAD CSG and B-rep solids are written out
+as NURBS boundary representations.
+
+If one or more _object_ names are supplied, only those objects are
+converted; otherwise all top-level (tops) objects in the database are
+converted. The input database may be read from standard input by
+giving *-* in place of _database.g_.
+
+To avoid clobbering data, *g-ap214* refuses to run if the named output
+file already exists; remove or rename it first.
+
+This program is part of BRL-CAD's experimental STEP support and is
+built only when STEP experimental features are enabled. For AP203
+output see *g-step*(1).
+
+[[options]]
+== OPTIONS
+
+*-o* _output.stp_::
+  Write the STEP AP214 result to _output.stp_. This option is
+  required, and the file must not already exist.
+
+[[examples]]
+== EXAMPLES
+
+.Export the entire model
+====
+[source,bash]
+----
+g-ap214 -o widget.stp widget.g
+----
+With no object names given, every top-level object in widget.g is
+converted to AP214 geometry in widget.stp.
+====
+
+.Export selected components for CAD interchange
+====
+[source,bash]
+----
+g-ap214 -o cab.stp m35.g cab hood
+----
+Converts only the cab and hood assemblies from the m35.g database,
+producing an AP214 file that can be opened by automotive mechanical
+CAD packages.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g-step*(1), *step-g*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

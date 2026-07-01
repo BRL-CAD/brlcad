@@ -1,0 +1,98 @@
+= ADRT_SLAVE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+adrt_slave - ADRT distributed ray-tracing rendering worker
+
+== SYNOPSIS
+
+[source]
+----
+adrt_slave [-v] [-h] [-p port] [-t threads] [host]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*adrt_slave* is a rendering worker for the Advanced Distributed Ray
+Tracer (ADRT).  It receives geometry and per-tile work units over a
+network socket, ray-traces them with the *librender* TIE engine, and
+returns the rendered pixels (or shotline, component, and bounding-box
+results) to the dispatcher.  Multiple slaves cooperating with a single
+dispatcher allow a single image to be rendered in parallel across many
+machines.
+
+If a _host_ argument is given, *adrt_slave* connects to the ADRT
+dispatcher running on that host (default port 1980).  If no _host_ is
+given, the slave runs as a daemon and listens for an incoming
+connection (default port 1981).  The geometry to render is supplied by
+the dispatcher, *adrt_master*(1); the network rendering session is
+driven by *isst*(1).
+
+[[options]]
+== OPTIONS
+
+*-p* _port_::
+  Use the given TCP _port_ instead of the protocol default (1980 when
+  connecting to a _host_, 1981 when running as a daemon).
+
+*-t* _threads_::
+  Launch _threads_ rendering threads per slave.  The value is clamped
+  to the range 0-32; 0 lets the engine choose based on the available
+  cores.
+
+*-v*::
+  Print the ADRT version and exit.
+
+*-h*::
+  Print a usage summary and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Run a slave as a daemon awaiting work
+====
+[source,bash]
+----
+adrt_slave -t 8 -p 1981
+----
+Start a worker that listens on port 1981 using eight rendering
+threads.  A dispatcher (for example, one launched from *isst*(1)) can
+then connect to this host and hand it tiles to render.
+====
+
+.Connect a slave to a running dispatcher
+====
+[source,bash]
+----
+adrt_slave -t 16 dispatcher.example.com
+----
+Connect to the ADRT dispatcher on the host
+_dispatcher.example.com_ (port 1980) and contribute sixteen rendering
+threads to the rendering pool.  Launching this command on several
+machines pointed at the same dispatcher spreads the work of a single
+frame across the cluster.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *adrt_master*(1), *isst*(1), *rt*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,136 @@
+= RTSURF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtsurf - estimate exterior surface area of geometry via Monte Carlo ray sampling
+
+== SYNOPSIS
+
+[source]
+----
+rtsurf [-g] [-r] [-n _samples_] [-t _threshold_] [-m _density.txt_] [-o] _model.g_ [_objects..._]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtsurf* estimates the exterior surface area of BRL-CAD geometry using a
+Monte Carlo ray sampling method.  Random points are generated on the
+geometry's bounding sphere and rays are fired between pairs of those
+points.  The ratio of rays that hit the geometry to rays fired is fed
+through the Cauchy-Crofton formula to estimate exterior surface area,
+reported in square millimeters.
+
+By default *rtsurf* performs a single sampling iteration.  Supplying a
+convergence threshold with *-t* makes it sample iteratively instead,
+refining the estimate over successive batches of rays until the change
+between iterations falls below that threshold.  An explicit fixed sample
+count may also be requested with *-n*.  When no objects are named, the
+default top-level object of the database is used.
+
+The geometry is loaded from a _model.g_ database created with *mged*(1)
+or other BRL-CAD tools.  Per-region, per-combination, and per-material
+breakdowns of the area estimate can be requested, and the sample points,
+ray directions, and hit points can be emitted as an *mged*(1) command
+script for visualization.
+
+[[options]]
+== OPTIONS
+
+*-n* _samples_::
+  Use _samples_ rays per iteration.  Without *-t* a single iteration is
+  run; when combined with *-t*, batches of this size are run until the
+  threshold is met.  The default is 1000 rays in the first iteration.
+
+*-t* _threshold_::
+  Iterate until the percentage change of the estimate falls below
+  _threshold_ (a percentage) over the trailing iterations.  The default
+  threshold is 0, which performs a single iteration.
+
+*-r*::
+  Print the area estimate broken down per region.
+
+*-g*::
+  Print the area estimate broken down per combination (group).
+
+*-m* _density.txt_::
+  Print the area estimate broken down per material, using the named
+  density/material file (same format consumed by *gqa*(1)) to label
+  materials by name.
+
+*-o*::
+  Emit an *mged*(1) command script to standard output describing the
+  sample points, ray directions, and hit points as geometry so the
+  sampling can be visualized.
+
+*-h*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Estimate exterior surface area with a single sampling pass
+====
+[source,bash]
+----
+rtsurf havoc.g havoc
+----
+Runs a single sampling iteration on the *havoc* object in havoc.g and
+prints the estimated exterior surface area in square millimeters.
+====
+
+.Iterate to convergence
+====
+[source,bash]
+----
+rtsurf -t 0.1 havoc.g havoc
+----
+Samples the *havoc* object iteratively, refining the estimate over
+successive batches of rays until it converges to within 0.1%.
+====
+
+.Per-region and per-material breakdown with a fixed sample count
+====
+[source,bash]
+----
+rtsurf -r -m density.txt -n 1000000 havoc.g havoc 2> rtsurf.log
+----
+Fires one million rays and reports the total exterior surface area along
+with per-region and per-material subtotals (labeled using density.txt).
+The estimate output is on stderr, so it is redirected to a log file.
+====
+
+.Visualize the sampling in MGED
+====
+[source,bash]
+----
+rtsurf -o -n 1000 havoc.g havoc > rays.mged
+mged -c havoc.g source rays.mged
+----
+Runs a small thousand-ray pass and writes an *mged*(1) command script of
+the bounding sphere, sample points, ray directions, and hit points to
+rays.mged, which is then sourced into *mged*(1) to display the sampling.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *gqa*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

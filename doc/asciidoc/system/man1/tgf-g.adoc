@@ -1,0 +1,76 @@
+= TGF-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+tgf-g - convert an INTAVAL Target Geometry File to a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+tgf-g _material_file_ _geometry_file_ _output.g_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*tgf-g* converts geometry described by an INTAVAL Target Geometry File (TGF)
+into a BRL-CAD database (*.g*) file.  INTAVAL is a vulnerability/lethality
+analysis code, and its target descriptions are split across two input files: a
+material file and a geometry file.  Both are read by *tgf-g* and combined into a
+single output database, which is force-created (any existing file at that path is
+overwritten).
+
+The various INTAVAL box and form primitives are mapped onto BRL-CAD primitives
+as follows: a Long Form becomes a solid-mode bag of triangles (*bot*); a
+Two-Point Box becomes a rectangular parallelepiped (*arb8*); a Three-Point Box
+becomes a truncated right circular cone (*trc*); a Five-Point Box becomes a
+right circular cylinder (*rcc*); an Eight-Point Box
+becomes an arbitrary eight-vertex polyhedron (*arb8*); a Zero-Point Box
+translates the previous solid; a One-Point Box and a Minus One-Point Box
+become a *pipe*; and
+Minus N-Point, Ring Mode, and CAD Type boxes become plate- or solid-mode bags
+of triangles (*bot*).  Material assignments from the material file are written
+out as BRL-CAD regions.
+
+All three arguments are mandatory and positional.  The first argument is the
+INTAVAL material file, the second is the INTAVAL geometry file, and the third is
+the BRL-CAD database to create.
+
+[[examples]]
+== EXAMPLES
+
+.Convert an INTAVAL target and inspect the result
+====
+[source,bash]
+----
+tgf-g tank.mat tank.geo tank.g
+mged tank.g 'ls'
+----
+Convert the INTAVAL material file *tank.mat* and geometry file *tank.geo* into a
+new BRL-CAD database *tank.g*, then list the resulting regions and primitives
+with *mged*(1) to confirm the converted geometry.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *bot*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

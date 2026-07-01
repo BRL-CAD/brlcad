@@ -1,0 +1,84 @@
+= SHP-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+shp-g - convert an Esri Shapefile to a BRL-CAD .g database
+
+== SYNOPSIS
+
+[source]
+----
+shp-g [-v] [-d] [-x rt_debug_flag] shapefile [output.g]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*shp-g* converts the geometry stored in an Esri Shapefile into a BRL-CAD
+*.g* binary database.  The _shapefile_ argument may be given as a file name
+prefix or as an explicit *.shp* file; the companion *.shx* and *.dbf* files
+are located automatically.  If _output.g_ is omitted, the output database is
+named after the input with a *.g* suffix appended (for example, input
+*roads.shp* produces *roads.shp.g*).
+
+Each shape (and each part of a multi-part shape) is read as a closed loop of
+2D vertices.  For every loop, *shp-g* writes a planar *sketch* primitive in
+the XY plane and an *extrude* primitive built from that sketch with a fixed
+height of 10 units.  The resulting objects are named *shape-N.sketch* and
+*shape-N.extrude*.  Only the X and Y coordinates of each vertex are used; any
+Z and measure values present in the shapefile are ignored.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose output.  Prints the shapefile type, shape count, bounding extents,
+  per-shape detail, and a summary of any shapes with bad loop orientations.
+
+*-d*::
+  Enable diagnostic debugging output, including warnings about missing shapes
+  and loops whose winding order had to be corrected.
+
+*-x* _rt_debug_flag_::
+  Set the librt debugging flags to the given hexadecimal value (see the
+  RT_DEBUG definitions in raytrace.h).
+
+[[examples]]
+== EXAMPLES
+
+.Convert a shapefile and inspect the result
+====
+[source,bash]
+----
+shp-g -v roads.shp roads.g
+mged roads.g
+----
+Converts the *roads.shp* shapefile to *roads.g* with verbose progress
+reporting, then opens the resulting database in *mged*(1).  Each road feature
+becomes an extruded sketch named *shape-N.extrude* that can be listed with the
+*ls* command and raytraced or edited interactively.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *g-dxf*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

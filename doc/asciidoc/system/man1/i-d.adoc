@@ -1,0 +1,92 @@
+= I-D(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+i-d - convert 16-bit short integers to doubles
+
+== SYNOPSIS
+
+[source]
+----
+i-d [-n | scale] < shorts > doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*i-d* reads a stream of native, machine-format 16-bit signed short
+integers from standard input, multiplies each value by a scale factor,
+and writes the results to standard output as native, machine-format
+double-precision floating point numbers.
+
+The optional single argument selects the scaling:
+
+If a numeric _scale_ is given, each input value is multiplied by it.
+If *-n* is given, the scale is set to 1.0/32768.0, so that input data
+spanning the full short integer range maps onto the range -1.0 to
++1.0.  With no argument the scale defaults to 1.0.
+
+This command is deprecated and scheduled for removal; it prints a
+deprecation warning on startup.  It is the inverse of *d-i*(1), and is
+typically used in pipelines with other BRL-CAD signal-processing tools
+such as *dmod*(1) and *dconv*(1).
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize: use a scale of 1.0/32768.0 so that the full 16-bit signed
+  input range maps onto -1.0 to +1.0.  Mutually exclusive with a
+  numeric _scale_ argument.
+
+*scale*::
+  A floating point multiplier applied to every input sample during
+  conversion.  A scale of 0.0 is rejected as an error.
+
+[[examples]]
+== EXAMPLES
+
+.Normalize full-scale short samples to unit-range doubles
+====
+[source,bash]
+----
+i-d -n < signal.pcm > signal.d
+----
+Treats the values in `signal.pcm` as 16-bit signed samples and rescales
+them to the range -1.0 to +1.0, producing double-precision data in
+`signal.d` suitable for further floating point processing.
+====
+
+.Convert and filter in a processing pipeline
+====
+[source,bash]
+----
+i-d -n < input.shorts | dmod -m 2.0 > louder.d
+----
+Converts the 16-bit short stream to normalized doubles, then doubles
+the amplitude with *dmod*(1), leaving the result as a double-precision
+stream in `louder.d`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *d-i*(1), *i-a*(1), *i-f*(1), *dconv*(1), *dmod*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

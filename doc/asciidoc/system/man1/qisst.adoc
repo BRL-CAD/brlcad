@@ -1,0 +1,96 @@
+= QISST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+qisst - Qt interactive raytracing viewer for BRL-CAD geometry
+
+== SYNOPSIS
+
+[source]
+----
+qisst [file.g object ...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*qisst* is a Qt and OpenGL based viewer that uses the Advanced Distributed
+Raytracer (ADRT) *tie* engine to provide real-time, interactive raytraced
+visualization of BRL-CAD geometry. It is the Qt-based successor to the older
+Tcl/Tk *isst*(1) tool.
+
+On startup *qisst* opens a graphical window with a *File* menu offering *Open*,
+*Save Image*, *Save Settings*, and *Exit* actions. Window geometry and other
+preferences are persisted between sessions through the platform's Qt settings
+store (organization "BRL-CAD", application "ISST").
+
+When invoked with a BRL-CAD geometry database (_file.g_) followed by one or more
+target _object_ names, *qisst* loads those objects, tessellates their BoT and NMG
+primitives into the *tie* acceleration structure, and begins rendering
+immediately. The objects are required: a database loaded from the command line
+must be accompanied by at least one object name. Geometry may also be loaded
+after startup through *File -> Open*, which presents a file chooser for *.g* and
+*.asc* databases.
+
+[[options]]
+== OPTIONS
+
+*qisst* takes no dash-prefixed options. Its only command-line arguments are an
+optional geometry database and the objects to display:
+
+_file.g_::
+  A BRL-CAD geometry database to open. When supplied, it must be followed by one
+  or more _object_ arguments.
+
+_object_::
+  The name of a region or combination within _file.g_ to load and raytrace. One
+  or more may be given.
+
+[[examples]]
+== EXAMPLES
+
+.Interactively raytrace a model
+====
+[source,bash]
+----
+qisst moss.g all.g
+----
+Opens the sample _moss.g_ database, tessellates and loads the _all.g_
+combination into the *tie* engine, and presents the model in an interactive
+raytraced window where it can be navigated and inspected.
+====
+
+.Inspect a single component built with mged
+====
+[source,bash]
+----
+mged -c part.g "make box rpp; r assembly.r u box; q"
+qisst part.g assembly.r
+----
+Uses *mged*(1) to create a small assembly, then launches *qisst* on just the
+_assembly.r_ region so that one component can be examined in isolation rather
+than rendering the entire database.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *isst*(1), *rt*(1), *mged*(1), *adrt_master*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

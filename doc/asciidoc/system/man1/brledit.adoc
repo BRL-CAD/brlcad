@@ -1,0 +1,113 @@
+= BRLEDIT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+brledit - minimalist full-screen text editor
+
+== SYNOPSIS
+
+[source]
+----
+brledit [_file_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*brledit* is a small, self-contained full-screen text editor bundled with
+BRL-CAD. It provides a simple, friendly editing experience modeled on the
+*pico*(1) / *nano*(1) family of editors and is intended for quick edits of
+plain ASCII files (for example, BRL-CAD scripts, command files, or
+configuration text) without depending on an external editor being installed.
+
+If _file_ is given it is loaded into the buffer; otherwise *brledit* starts
+with an empty, unnamed buffer that is given a name the first time it is
+written out. Files are read and written as plain text, one line per line,
+with a trailing newline omitted on the final line.
+
+*brledit* runs on an alternate terminal screen and restores the original
+screen and terminal state on exit. The bottom status line shows the file
+name, a modified indicator (`[+]`), an overwrite indicator (`[OVR]`),
+transient status messages, and the current line and column. A help line of
+common key bindings is shown beneath the status line when space permits.
+
+The editor is controlled entirely through interactive key bindings; it
+accepts no command-line options. The principal bindings are:
+
+*^X*::
+  Exit (prompts to save if there are unsaved changes).
+*^O*::
+  Write out (save) the buffer, prompting for a file name if none is set.
+*^W*::
+  Search forward for a string (empty input repeats the last search).
+*^K*::
+  Cut the current line into the cut buffer.
+*^U*::
+  Uncut (paste) the cut buffer below the current line.
+*^Y* / PgUp::
+  Scroll up one page.
+*^V* / PgDn::
+  Scroll down one page.
+*^_*::
+  Go to a given line number.
+*INS*::
+  Toggle insert / overwrite mode.
+*^D* / Delete::
+  Delete the character under the cursor (joining lines at end of line).
+
+Arrow keys, Home, End, Enter, and Backspace behave as expected.
+
+If the environment variable *BRLEDIT_REPLACE_FILE* is set to a non-empty
+path, *brledit* does not start interactively. Instead it copies the contents
+of that file over the target _file_ argument (which becomes mandatory in this
+mode) and exits. This allows scripts and other BRL-CAD tools to invoke
+*brledit* as a non-interactive "replace this file with that file" helper.
+
+[[examples]]
+== EXAMPLES
+
+.Edit a BRL-CAD command script
+====
+[source,bash]
+----
+brledit build.tcl
+----
+Open the existing file `build.tcl` for editing. Make changes, press *^O* to
+write the file out, then *^X* to exit. This is a convenient way to tweak an
+*mged*(1) command script when no other editor is available.
+====
+
+.Non-interactive file replacement from a script
+====
+[source,bash]
+----
+BRLEDIT_REPLACE_FILE=new_model.g brledit model.g
+----
+Overwrite `model.g` with the contents of `new_model.g` and exit immediately,
+without entering the interactive editor. This form is useful inside shell
+scripts or automated pipelines that drive *brledit* programmatically.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

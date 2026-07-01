@@ -1,0 +1,94 @@
+= D-F(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+d-f - convert double-precision floats to single-precision floats
+
+== SYNOPSIS
+
+[source]
+----
+d-f [-n | scale] < doubles > floats
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*d-f* reads a stream of machine-native double-precision (8-byte)
+binary floating point values from standard input, converts each one to
+a single-precision (4-byte) binary float, and writes the result to
+standard output.
+
+An optional argument controls scaling.  If a numeric _scale_ is given,
+every value is multiplied by it during the conversion.  The *-n* flag
+selects normalized output, leaving the unit scale of 1.0 in effect.
+With no argument the values are converted unchanged.
+
+Because the input and output are raw binary, *d-f* refuses to run when
+standard input or standard output is a terminal, and it rejects a
+scale of zero.  The inverse conversion, from single-precision floats
+back to doubles, is performed by *f-d*(1).
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup.
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize the data.  The unit scale factor of 1.0 is retained so that
+  data already in the range -1.0 to +1.0 is preserved.
+
+*scale*::
+  A numeric multiplier applied to every value as it is converted.  May
+  not be zero.
+
+[[examples]]
+== EXAMPLES
+
+.Halve the amplitude of a double stream
+====
+[source,bash]
+----
+d-f 0.5 < signal.d > signal.f
+----
+Reads double-precision samples from signal.d, scales each by one half,
+and writes single-precision floats to signal.f, producing a more
+compact file at reduced amplitude.
+====
+
+.Round-trip through single precision
+====
+[source,bash]
+----
+d-f < values.d | f-d > rounded.d
+----
+Converts doubles to floats and back again with *f-d*(1), which is a
+convenient way to see the precision lost when signal-processing data is
+stored as single-precision floats by tools such as *dconv*(1) or
+*dmod*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *f-d*(1), *dconv*(1), *dmod*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,104 @@
+= C-D(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+c-d - extract components from complex double-precision data
+
+== SYNOPSIS
+
+[source]
+----
+c-d [-r] [-i] [-m] [-p] [-z] < complex_data > doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*c-d* reads a stream of complex numbers from standard input and writes
+selected real-valued components of each number to standard output.  Both
+the input and the output are machine-native double-precision (8-byte)
+binary floating point values.
+
+The input is interpreted as interleaved pairs of doubles, where each pair
+is the real part followed by the imaginary part of one complex number.
+For every input pair, the requested components are emitted, in the order
+the corresponding options appear below, so that selecting more than one
+component multiplies the output length accordingly.
+
+If no option is given, *c-d* consumes its input but produces no output.
+The interleaved complex data that *c-d* expects is the same format
+produced by *d2-c*(1), which packs a stream of real doubles and a stream
+of imaginary doubles into complex pairs.
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup and refuses to run when standard input is
+a terminal.
+
+[[options]]
+== OPTIONS
+
+*-r*::
+  Output the real part of each complex number.
+
+*-i*::
+  Output the imaginary part of each complex number.
+
+*-m*::
+  Output the magnitude (modulus), computed as the hypotenuse of the real
+  and imaginary parts.
+
+*-p*::
+  Output the phase angle, computed with atan2(); a complex value of zero
+  yields a phase of zero.
+
+*-z*::
+  Output a constant zero for each complex number.
+
+[[examples]]
+== EXAMPLES
+
+.Extract the magnitude of a complex stream
+====
+[source,bash]
+----
+d2-c real.d imag.d | c-d -m > magnitude.d
+----
+Packs separate real and imaginary double streams into interleaved
+complex pairs with *d2-c*(1), then uses *c-d* to reduce each complex
+number to its magnitude, producing one double per complex value.
+====
+
+.Split a complex stream into real and imaginary channels
+====
+[source,bash]
+----
+c-d -r -i < complex.d > interleaved.d
+----
+Emits the real part immediately followed by the imaginary part of every
+complex number, yielding two interleaved real-valued doubles per input
+pair.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *d2-c*(1), *dfft*(1), *dmod*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

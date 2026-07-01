@@ -1,0 +1,80 @@
+= A-D(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+a-d - convert ASCII numbers to double-precision binary
+
+== SYNOPSIS
+
+[source]
+----
+a-d [values ...] < ascii > doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*a-d* converts decimal numbers in ASCII text into a stream of
+machine-native double-precision (8-byte) binary floating point values
+written to standard output.
+
+If one or more numeric _values_ are supplied on the command line, each
+is converted in order and written to standard output.  Otherwise, the
+numbers are read from standard input, separated by whitespace.  When
+reading from standard input, any line beginning with a '#' character is
+treated as a comment and ignored through the end of that line.
+
+Because the output is raw binary, *a-d* refuses to run when standard
+output is a terminal.  The inverse conversion, from binary doubles back
+to ASCII, is performed by *d-a*(1).
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup.
+
+[[examples]]
+== EXAMPLES
+
+.Convert command-line values to a binary double stream
+====
+[source,bash]
+----
+a-d 1.0 2.5 -3.75 > values.d
+----
+Writes three 8-byte doubles (24 bytes total) to the file values.d.
+====
+
+.Pipe ASCII data through to a binary consumer
+====
+[source,bash]
+----
+echo "# sample data
+1.0 2.0 3.0" | a-d | d-a
+----
+Reads whitespace-separated numbers from standard input, skipping the
+leading comment line, converts them to binary doubles, and feeds the
+result to *d-a*(1) to convert it back to ASCII.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *d-a*(1), *dconv*(1), *dmod*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

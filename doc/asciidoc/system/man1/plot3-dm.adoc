@@ -1,0 +1,96 @@
+= PLOT3-DM(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3-dm - interactively view 3-D UNIX plot files in a display manager window
+
+== SYNOPSIS
+
+[source]
+----
+plot3-dm [-t o|X] [plot_file ...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3-dm* opens an interactive display-manager window and renders one or
+more BRL extended three-dimensional UNIX plot files (see *plot3-fb*(1)) into
+it. The view can be rotated, translated, and zoomed with the mouse, and a
+small set of Tcl commands is available for scripting the view and managing the
+loaded plots. The program is a sample application distributed with BRL-CAD to
+demonstrate how to drive the *libdm* display-manager library, and its source
+is installed alongside the other sample applications.
+
+One or more _plot_file_ arguments may be given on the command line; each is
+loaded as a named object (the basename of the file). If no _plot_file_ is
+given and standard input is not a terminal, plot commands are read from
+standard input instead.
+
+Once the window is open, commands are entered on the standard input. Useful
+commands include *openpl* _file ..._ (load more plot files), *ls* (list loaded
+plots), *draw* / *erase* / *closepl* _name_ (control individual plots),
+*zoom* _factor_, *vrot* _x y z_, *ae* _azim elev [twist]_ (set the
+azimuth/elevation view), *reset* (fit all plots to the window), and *exit*
+(or *q*) to quit. The view may also be manipulated directly with the mouse:
+the left, middle, and right drag modes rotate, translate, and zoom the scene.
+
+[[options]]
+== OPTIONS
+
+*-t* _o|X_::
+  Select the display-manager backend. _X_ (the default) uses the X11 display
+  manager; _o_ (or _O_) requests the OpenGL (*ogl*) display manager. Any other
+  value falls back to the X backend.
+
+*-h*, *-?*::
+  Print a short usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.View a plot generated from a BRL-CAD geometry database
+====
+[source,bash]
+----
+rt -o model.plot3 model.g component
+plot3-dm model.plot3
+----
+Render a region of the geometry in _model.g_ to a 3-D UNIX plot file with
+*rt*(1), then open it in an interactive window where it can be rotated and
+zoomed to inspect the wireframe.
+====
+
+.Load several plots at once using the OpenGL backend
+====
+[source,bash]
+----
+plot3-dm -t o first.plot3 second.plot3
+----
+Open both plot files together in the OpenGL display manager; each file becomes
+a separately named, individually drawable object that can be toggled with the
+*draw* and *erase* commands.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*plot3-fb*(1), *plot3-ps*(1), *plot3rot*(1), *rt*(1), *libdm*(3), *brlcad*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

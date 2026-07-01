@@ -1,0 +1,86 @@
+= SPM-FB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+spm-fb - display a sphere map on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+spm-fb [-s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N scr_height] vsize [filename]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*spm-fb* reads a sphere map (an equal-area spherical sampling, as produced
+and consumed by the libbn *bn_spm* routines) and displays it on a
+framebuffer.  The required _vsize_ argument is the number of latitude bins
+("v" size) used when the map was created; it determines how the bytes in the
+input are partitioned into scanlines.  If _filename_ is omitted the map is
+read from standard input.
+
+By default each latitude bin is written directly to the framebuffer as one
+scanline, so the displayed image has the natural ragged width of an
+equal-area sphere map.  With *-s* the map is instead resampled into a
+rectangular image that fills the framebuffer, mapping framebuffer pixel
+coordinates back onto the sphere.
+
+[[options]]
+== OPTIONS
+
+*-s*::
+  Display the map as a square (rectangular) image that fills the framebuffer,
+  resampling the sphere map with *bn_spm_read* instead of writing each bin as
+  a raw scanline.
+
+*-F* _framebuffer_::
+  Use the specified framebuffer device instead of the default.
+
+*-S* _squarescrsize_::
+  Set both the framebuffer width and height to _squarescrsize_ pixels.
+
+*-W* _scr_width_::
+  Set the framebuffer width to _scr_width_ pixels.
+
+*-N* _scr_height_::
+  Set the framebuffer height to _scr_height_ pixels.
+
+[[examples]]
+== EXAMPLES
+
+.Display a sphere map produced from an environment image
+====
+[source,bash]
+----
+pix-spm world.pix 512 > world.spm
+spm-fb -s -S 512 512 world.spm
+----
+Convert a *pix*(5) image into a 512-bin sphere map with *pix-spm*(1), then
+resample that map onto a 512x512 framebuffer.  The *-s* option fills the
+whole framebuffer rather than drawing the ragged equal-area bins directly.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-spm*(1), *fbserv*(1), *pix*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

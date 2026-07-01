@@ -1,0 +1,96 @@
+= IFC-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+ifc-g - convert an IFC (Industry Foundation Classes) STEP file to a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+ifc-g [-D] [-v] [-S _summary.log_] -o _output.g_ _input.ifc_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ifc-g* converts a building model stored in the IFC (Industry Foundation
+Classes) exchange format into a BRL-CAD geometry database (_*.g_).  IFC is a
+STEP-based (ISO 10303-21) schema used by Building Information Modeling (BIM)
+tools to describe building and construction data, and *ifc-g* reads such a
+file using the IFC4 schema and emits the corresponding BRL-CAD objects.
+
+The input IFC file is given as the final positional argument.  A single dash
+(_-_) may be supplied in place of a filename to read the model from standard
+input.  The destination database is named with the mandatory *-o* option;
+*ifc-g* refuses to overwrite an existing output file.
+
+This converter is an experimental STEP tool and is only built when BRL-CAD is
+configured with experimental STEP support enabled.
+
+[[options]]
+== OPTIONS
+
+*-o* _output.g_::
+  Name of the BRL-CAD database to create.  This option is required, and the
+  named file must not already exist.
+
+*-v*::
+  Verbose mode; print additional progress and diagnostic information while the
+  model is loaded.
+
+*-D*::
+  Dry run.  Parse and load the input IFC file but do not write geometry to the
+  output database, useful for validating an input file.
+
+*-S* _summary.log_::
+  Write a summary log of the conversion to the named file.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a building model and inspect it
+====
+[source,bash]
+----
+ifc-g -v -o building.g building.ifc
+mged building.g 'tops'
+----
+Converts the IFC model _building.ifc_ into _building.g_ with verbose progress
+output, then lists the top-level objects of the resulting database with
+*mged*(1) so the imported geometry can be examined.
+====
+
+.Validate an IFC file without producing output
+====
+[source,bash]
+----
+ifc-g -D -S import.log -o /tmp/check.g model.ifc
+----
+Performs a dry run that loads _model.ifc_ and records a summary of the parse in
+_import.log_ without committing geometry, allowing a file to be checked before
+a full conversion.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *step-g*(1), *g-step*(1), *gcv*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

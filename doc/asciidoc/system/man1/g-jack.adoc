@@ -1,0 +1,109 @@
+= G-JACK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+g-jack - convert a BRL-CAD model to Jack Psurf (.pss) and figure (.fig) files
+
+== SYNOPSIS
+
+[source]
+----
+g-jack [-v] [-d] [-f] [-x _rt_debug_] [-X _nmg_debug_] [-u _eu_dist_] [-a _abs_tess_tol_] [-r _rel_tess_tol_] [-n _norm_tess_tol_] [-D _dist_calc_tol_] [-p _prefix_] [-P _ncpu_] _database.g_ _object(s)_...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-jack* converts the specified _object(s)_ from a BRL-CAD database _database.g_
+into the Jack Psurf format used by the Jack human figure animation and
+ergonomic analysis package (originally from the University of Pennsylvania, later
+the commercial Tecnomatix Jack from Siemens).
+
+Each region is tessellated through the NMG boolean evaluator and written to its
+own polygonal surface file with a *.pss* suffix; the file name is derived from
+the region's leaf object name with periods replaced by underscores (Jack's
+Peabody language disallows periods). A single Jack figure file with a *.fig*
+suffix is also produced, named after _database.g_, that references every
+*.pss* segment, records material colors, and connects the segments with joints.
+Coordinates are converted from millimeters to centimeters on output.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Enable verbose progress reporting.
+
+*-d*::
+  Also write a UNIX-plot debugging file (*.plot3*) for each converted region.
+
+*-f*::
+  Suppress writing of the per-region *.pss* output files; the *.fig* file is
+  still produced. Useful for checking that the geometry converts without
+  generating output.
+
+*-u* _eu_dist_::
+  Set the edgeuse distance tolerance used for visualization (default 2.0).
+
+*-a* _abs_tess_tol_::
+  Set the absolute tessellation tolerance in millimeters.
+
+*-r* _rel_tess_tol_::
+  Set the relative tessellation tolerance (default 0.01).
+
+*-n* _norm_tess_tol_::
+  Set the surface normal tessellation tolerance.
+
+*-D* _dist_calc_tol_::
+  Set the calculation distance tolerance in millimeters used when deciding
+  whether vertices are coincident (default 0.0005).
+
+*-p* _prefix_::
+  Prepend _prefix_ to every generated output file name.
+
+*-P* _ncpu_::
+  Set the number of processors to use (default 1).
+
+*-x* _rt_debug_::
+  Set the librt debug flag (hexadecimal).
+
+*-X* _nmg_debug_::
+  Set the NMG debug flag (hexadecimal).
+
+[[examples]]
+== EXAMPLES
+
+.Convert selected regions and inspect them
+====
+[source,bash]
+----
+g-jack -p model_ -v -r 0.005 mannequin.g torso left_arm right_arm
+----
+Tessellates the three named regions from _mannequin.g_ using a tighter relative
+tolerance, writing verbose progress to the terminal. The output files are named
+with the *model_* prefix (for example *model_torso.pss*) and a *model_mannequin.fig*
+figure file is produced that ties the segments together for loading into Jack.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *jack-g*(1), *g-stl*(1), *g-obj*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

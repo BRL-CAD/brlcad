@@ -1,0 +1,97 @@
+= BW-D(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+bw-d - convert black-and-white unsigned bytes to double-precision binary
+
+== SYNOPSIS
+
+[source]
+----
+bw-d [-n | scale] < unsigned_chars > doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bw-d* reads a stream of unsigned 8-bit bytes (such as the pixel values
+of a *bw*(5) black-and-white image) from standard input and writes a
+stream of machine-native double-precision (8-byte) binary floating point
+values to standard output.
+
+By default each byte is copied to its corresponding double value
+unchanged (0 to 255).  If a numeric _scale_ argument is supplied, every
+value is multiplied by that factor before output.  The *-n* option is a
+shorthand that normalizes the data by scaling the 0-255 input range to
+the 0.0-1.0 floating point range.
+
+Because the output is raw binary, *bw-d* refuses to run when standard
+input is a terminal.  The inverse conversion, from binary doubles back
+to unsigned bytes, is performed by *d-bw*(1).
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup.
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize the data by scaling the 0-255 input byte range to the
+  0.0-1.0 output range (equivalent to a _scale_ of 1/255).
+
+*scale*::
+  Multiply every input byte by this floating point factor before
+  writing it.  Defaults to 1.0 (a straight 0-255 copy).  Cannot be
+  combined with *-n*.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Normalize a black-and-white image to the 0.0-1.0 range
+====
+[source,bash]
+----
+bw-d -n < image.bw > image.d
+----
+Converts every pixel byte in image.bw to a double in the range 0.0 to
+1.0, producing a normalized binary double stream suitable for signal
+processing tools such as *dmod*(1) or *dstats*(1).
+====
+
+.Scale and round-trip through the double pipeline
+====
+[source,bash]
+----
+bw-d 0.5 < image.bw | dmod -a 0.1 | d-bw > brighter.bw
+----
+Converts the image to doubles at half intensity, adds a constant offset
+with *dmod*(1), and converts the result back to a black-and-white byte
+stream with *d-bw*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *d-bw*(1), *u-d*(1), *dmod*(1), *dstats*(1), *bw*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

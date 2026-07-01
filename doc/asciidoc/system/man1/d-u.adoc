@@ -1,0 +1,98 @@
+= D-U(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+d-u - convert double-precision binary numbers to 16-bit unsigned shorts
+
+== SYNOPSIS
+
+[source]
+----
+d-u [-n | scale] < doubles > unsigned_shorts
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*d-u* reads a stream of machine-native double-precision (8-byte) binary
+floating point values from standard input, multiplies each value by a
+scale factor, and writes the result as 16-bit unsigned short integers
+to standard output.
+
+Each scaled value is clipped to the representable range: values above
+65535 are written as 65535 and values below 0 are written as 0.  When
+any clipping occurs, a summary of how many high and low samples were
+clipped is reported on standard error.
+
+The scale factor defaults to 1.0.  A single optional argument controls
+scaling: either the *-n* flag or an explicit numeric scale value (the
+two are mutually exclusive).
+
+Because the input is raw binary, *d-u* refuses to run when standard
+input is a terminal, and it also exits if the resulting scale is zero.
+The inverse conversion, from unsigned shorts back to binary doubles, is
+performed by *u-d*(1).
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup.
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize the data by using a scale factor of 65536.0, mapping input
+  doubles in the range 0.0 to 1.0 across the full 0 to 65535 output
+  range.
+
+*scale*::
+  Multiply every input value by this floating point factor before
+  conversion.  A scale of zero is rejected.
+
+[[examples]]
+== EXAMPLES
+
+.Quantize a normalized signal
+====
+[source,bash]
+----
+d-u -n < signal.d > signal.u
+----
+Reads doubles in the range 0.0 to 1.0 from signal.d and writes 16-bit
+unsigned shorts spanning the full 0 to 65535 range, suitable as input
+to *u-d*(1) or other unsigned-short tools.
+====
+
+.Apply an explicit gain and round-trip the data
+====
+[source,bash]
+----
+d-u 1000 < values.d | u-d > scaled.d
+----
+Scales each double in values.d by 1000 before quantizing to unsigned
+shorts, then converts the result back to doubles with *u-d*(1),
+demonstrating the lossy quantization introduced by the conversion.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *u-d*(1), *d-a*(1), *dconv*(1), *dmod*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

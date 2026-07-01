@@ -1,0 +1,76 @@
+= OFF-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+off-g - convert a DEC Object File Format model to a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+off-g _file.off_ _database.g_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*off-g* converts a model in Digital Equipment Corporation's OFF (Object
+File Format) into a BRL-CAD database. It reads the OFF descriptor file
+_file.off_ and writes a new BRL-CAD database _database.g_ containing an
+NMG (n-Manifold Geometry) solid, a region that references it, and a top
+level identification record.
+
+The descriptor file _file.off_ is a small text header rather than the
+geometry itself. *off-g* parses two fields from it: a *name* field,
+whose value is used as the object title and to derive the generated
+*s.* (solid) and *r.* (region) object names, and a *geometry* field of
+the form `geometry indexed_poly _format_ _geomfile_`. Only the
+`indexed_poly` data type is supported; the named _geomfile_ is then
+opened relative to the current directory and read for the actual mesh.
+
+The geometry file begins with a line giving the vertex, face, and edge
+counts, followed by one `x y z` coordinate triple per vertex and then
+one face per line listing an edge count followed by the 1-based vertex
+indices of that face. Per-face planes are fit and the faces are glued
+into a single NMG shell. See *g-off*(1) for the inverse conversion and
+*mged*(1) for working with the resulting database.
+
+[[examples]]
+== EXAMPLES
+
+.Convert an OFF model and view it
+====
+[source,bash]
+----
+off-g widget.off widget.g
+mged widget.g
+----
+Reads the OFF descriptor *widget.off* (and the geometry file it names),
+producing *widget.g* with an NMG solid *s.widget* wrapped in the region
+*r.widget*. The database is then opened in *mged*(1) for inspection and
+further editing.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g-off*(1), *mged*(1), *jack-g*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

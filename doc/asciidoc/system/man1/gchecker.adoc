@@ -1,0 +1,99 @@
+= GCHECKER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+gchecker - generate geometry overlap data for the MGED Overlap Tool
+
+== SYNOPSIS
+
+[source]
+----
+gchecker [-d] [-v] [-f] [-h] file.g [objects ...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gchecker* analyzes a BRL-CAD geometry database for overlaps and writes a
+summary file that can be loaded by the MGED Overlap Tool.  It is a C++
+reimplementation of the historical *check.tcl* logic.
+
+For the named geometry file _file.g_, *gchecker* creates a working directory
+named after the database file with a *.ck* suffix (for example, a working
+directory *model.g.ck* for *model.g*), copies the database into it, and runs the
+*check overlaps* command (see *check*(n)) against the requested objects.  If no
+objects are specified, all top-level (tops) objects in the database are used.
+
+Overlaps are sampled from sixteen azimuth/elevation view angles per object,
+combining a ray-density pass (equivalent to *rtcheck*) and a grid-spacing pass
+(equivalent to *gqa*).  For each unique overlapping pair of regions, the average
+overlap size (the product of overlap count and depth, in millimeters) is
+computed.  The results are written to *ck._file.g_.overlaps* inside the
+working directory, one pair per line as `left right size`.  The copy of the
+database is removed when processing completes.
+
+[[options]]
+== OPTIONS
+
+*-d*, *--dry-run*::
+  Step through the checker stages but do not raytrace.  No overlap data is
+  produced; useful for confirming the working directory and object selection.
+
+*-v*, *--verbose*::
+  Print verbose information about result processing, including each matched
+  overlap line and the per-pair size accumulation.
+
+*-f*, *--force*::
+  Overwrite an existing *.ck* working directory.  Without this flag, *gchecker*
+  refuses to run if the working directory already exists.
+
+*-h*, *--help*::
+  Print a help message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Check every top-level object in a database
+====
+[source,bash]
+----
+gchecker -f model.g
+----
+Removes any stale *model.g.ck* directory, copies *model.g* into a fresh one, and
+checks all tops objects for overlaps.  The resulting *ck.model.g.overlaps* file
+(written inside *model.g.ck*) can then be opened with the MGED Overlap Tool.
+====
+
+.Check specific assemblies with verbose output
+====
+[source,bash]
+----
+gchecker -v moss.g all.g component.r
+----
+Limits the overlap analysis to the named objects *all.g* and *component.r*
+rather than scanning the entire database, while printing detailed progress and
+the individual overlap measurements as they are accumulated.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rtcheck*(1), *gqa*(1), *check*(n)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

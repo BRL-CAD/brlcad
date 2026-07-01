@@ -1,0 +1,69 @@
+= RAW-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+raw-g - convert a RAW triangle geometry file to a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+raw-g _RAW_file_ _database.g_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*raw-g* reads an IABG RAW geometry file (an ASCII listing of named objects,
+each followed by triangles given as nine whitespace-separated coordinates per
+line) and writes the result to a new BRL-CAD _database.g_ file.
+
+Each named object in the input becomes a single BOT (Bag of Triangles) primitive
+and region in the output database. By default the triangles are written as a
+solid (volumetric) BOT. If an object's name line carries a *thickf=*_value_
+attribute, that object is instead written as a plate-mode BOT whose faces are
+given the specified thickness, which is convenient for representing thin shell
+geometry.
+
+The first argument names the input RAW file and the second names the output
+database, which is created with a title of the form "Converted from <RAW_file>".
+A summary of the conversion is printed when it completes. The resulting
+geometry can be inspected with *mged*(1) or further processed with other
+BRL-CAD converters such as *g-raw*(1).
+
+[[examples]]
+== EXAMPLES
+
+.Convert a RAW file and inspect the result
+====
+[source,bash]
+----
+raw-g hull.raw hull.g
+mged hull.g
+----
+Converts the triangle data in _hull.raw_ into solid BOT regions inside the new
+database _hull.g_, then opens the result in *mged*(1) for viewing and editing.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g-raw*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

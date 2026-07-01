@@ -1,0 +1,98 @@
+= GLTF-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+gltf-g - convert a glTF model to a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+gltf-g [-h] [-v] [-E] [-o _output_file.g_] _input_file_ [_output_file.g_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gltf-g* converts a glTF (GL Transmission Format) model into a BRL-CAD
+geometry database. Each glTF mesh is read and written as a Bag of
+Triangles (*BoT*) primitive in the output _.g_ file. A *BoT* whose
+trimesh is found to be a closed, manifold solid is stored as a solid
+*BoT*; otherwise it is stored as a surface *BoT*.
+
+The input format is selected from the _input_file_ extension: a file
+ending in _.glb_ is read as binary glTF, while any other extension
+(such as _.gltf_) is read as ASCII glTF. Triangle index data may be
+stored as signed or unsigned 16- or 32-bit integers, and vertex
+positions may be single- or double-precision floating point; other
+component types are skipped with a warning.
+
+The output database may be named either positionally as the second
+argument or with the *-o* option, but not both.
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print a usage message and exit. The *-?* flag is accepted as a synonym.
+
+*-v*, *--verbosity*::
+  Increase the verbosity level. May be given more than once; a single
+  *-v* reports per-mesh vertex and face counts and any parse warnings,
+  while repeating it additionally dumps the individual vertex and face
+  data.
+
+*-o* _output_file.g_, *--output* _output_file.g_::
+  Set the name of the output BRL-CAD database. Mutually exclusive with
+  giving the output file as a positional argument.
+
+*-E*, *--extensions*::
+  Preserve the original JSON for glTF extras and extensions while parsing.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a binary glTF model and inspect the result
+====
+[source,bash]
+----
+gltf-g -v model.glb model.g
+mged model.g tops
+----
+Imports the binary glTF file _model.glb_ into _model.g_, printing the
+mesh, vertex, and face counts as it works, then lists the top-level
+*BoT* objects of the new database with *mged*(1).
+====
+
+.Convert an ASCII glTF model using the output flag
+====
+[source,bash]
+----
+gltf-g -E -o scene.g scene.gltf
+----
+Reads the ASCII glTF file _scene.gltf_, retaining the original JSON for
+any extras and extensions, and writes the geometry to _scene.g_.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *obj-g*(1), *stl-g*(1), *g-obj*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

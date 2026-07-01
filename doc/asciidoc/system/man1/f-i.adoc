@@ -1,0 +1,99 @@
+= F-I(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+f-i - convert floats to 16-bit short integers
+
+== SYNOPSIS
+
+[source]
+----
+f-i [-n | scale] < floats > shorts
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*f-i* reads a stream of native, machine-format, single-precision
+floating point numbers from standard input, multiplies each value by a
+scale factor, and writes the results to standard output as native
+16-bit signed short integers.
+
+The optional single argument selects the scaling:
+
+If a numeric _scale_ is given, each input value is multiplied by it.
+If *-n* is given, the scale is set to 32767.0, so that input data in
+the range -1.0 to +1.0 maps onto the full short integer range.  With no
+argument the scale defaults to 1.0.
+
+Values that exceed the representable short range are clipped to 32767
+or -32768, and a count of clipped high and low samples is reported on
+standard error.
+
+This command is deprecated and scheduled for removal; it prints a
+deprecation warning on startup.  It is the inverse of *i-f*(1), and is
+typically used in pipelines with other BRL-CAD signal-processing tools
+that operate on single-precision float streams, such as *f-d*(1),
+*dmod*(1), and *d-f*(1).
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize: use a scale of 32767.0 so that input in the range -1.0 to
+  +1.0 fills the full 16-bit signed range.  Mutually exclusive with a
+  numeric _scale_ argument.
+
+*scale*::
+  A floating point multiplier applied to every input sample before
+  conversion.  A scale of 0.0 is rejected as an error.
+
+[[examples]]
+== EXAMPLES
+
+.Normalize unit-range floats to full-scale audio samples
+====
+[source,bash]
+----
+f-i -n < signal.f > signal.pcm
+----
+Treats the values in `signal.f` as samples in the range -1.0 to +1.0
+and rescales them to fill the 16-bit signed integer range, producing
+raw PCM-style short data in `signal.pcm`.
+====
+
+.Apply an explicit gain in a processing pipeline
+====
+[source,bash]
+----
+f-d < input.f | dmod -m 0.5 | d-f | f-i 100 > scaled.shorts
+----
+Converts the single-precision stream to doubles with *f-d*(1),
+multiplies by 0.5 using *dmod*(1), converts back to floats with
+*d-f*(1), then scales by 100 and converts to 16-bit shorts.  Any
+samples that exceed the short range are clipped and a clip count is
+printed to standard error.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *i-f*(1), *d-i*(1), *f-d*(1), *d-f*(1), *dmod*(1), *dconv*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,120 @@
+= ADRT_MASTER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+adrt_master - dispatch and coordinate distributed ADRT ray tracing slaves
+
+== SYNOPSIS
+
+[source]
+----
+adrt_master [-bdv] [-c _comp_host_] [-e _script_] [-l _slave_list_] [-o _obs_port_] [-p _port_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*adrt_master* is the coordinating node for the Advanced Distributed Ray
+Tracer (ADRT). It distributes rendering work units to one or more
+*adrt_slave*(1) compute nodes, collects the resulting image tiles and
+shotline data, and serves the assembled frames to connected observer
+clients such as *isst*(1).
+
+The master listens on two TCP ports: a master port for slave connections
+(default 1980) and an observer port for client connections (default 1982).
+It optionally connects to a component-name server (default port 1983) so
+that the names of geometry components hit by shotlines can be reported.
+Slaves may be enumerated from a host list file and launched automatically
+through a user-supplied execution script.
+
+The master runs until an observer issues a shutdown, after which it drains
+any outstanding work, collects all pending results from the slaves, and
+exits.
+
+[[options]]
+== OPTIONS
+
+*-b*::
+  Print the build date and time of this *adrt_master* binary and exit.
+
+*-c* _comp_host_::
+  Connect to the component-name server running on _comp_host_ (port 1983).
+  This server supplies geometry component names used when reporting
+  shotline intersections.
+
+*-d*::
+  Run in daemon mode. Once both the master and observer listening sockets
+  are bound, *adrt_master* detaches from the controlling terminal and runs
+  in the background.
+
+*-e* _script_::
+  Path to a script that *adrt_master* executes to start the slave compute
+  nodes.
+
+*-l* _slave_list_::
+  Path to a file containing the list of slave hosts to use as compute
+  nodes.
+
+*-o* _obs_port_::
+  Set the observer port that client applications (such as *isst*(1))
+  connect to. The default is 1982.
+
+*-p* _port_::
+  Set the master port that *adrt_slave*(1) compute nodes connect to. The
+  default is 1980.
+
+*-v*::
+  Enable verbose output.
+
+*-h*, *-?*::
+  Print a usage summary and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Launch a master that auto-starts slaves from a host list
+====
+[source,bash]
+----
+adrt_master -v -p 1980 -o 1982 -l hosts.txt -e start_slaves.sh
+----
+Starts the master in verbose mode, listening for slaves on port 1980 and
+for observers on port 1982. The slave hosts named in _hosts.txt_ are
+launched by running _start_slaves.sh_. An observer such as *isst*(1) can
+then connect to port 1982 to view the rendered geometry interactively.
+====
+
+.Run the master as a background daemon with a component server
+====
+[source,bash]
+----
+adrt_master -d -c compsrv.example.org -l hosts.txt -e start_slaves.sh
+----
+Connects to the component-name server on _compsrv.example.org_ so shotline
+hits can be reported by component name, launches the listed slaves, and
+detaches to run as a daemon once both sockets are bound.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *adrt_slave*(1), *isst*(1), *rt*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

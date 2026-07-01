@@ -1,0 +1,180 @@
+= ART(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+art - appleseed ray tracer for BRL-CAD geometry
+
+== SYNOPSIS
+
+[source]
+----
+art [options] model.g objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *art* program renders BRL-CAD geometry with the Appleseed physically
+based rendering engine, producing a photorealistic image of the indicated
+_objects_ in the input _model.g_ database.
+
+*art* shoots rays into the database with *librt*(3) to derive each region's
+geometry and material, then builds an equivalent Appleseed scene. Each
+region becomes an Appleseed object with a corresponding OSL shader: a
+region's RGB color is honored, and if a region references a *material*
+object carrying an "OSL" optical property that named shader is used,
+otherwise a default plastic-like shader is applied. A single point light
+plus a constant-color sky environment illuminate the scene.
+
+The view is autosized about the model centroid; the orientation is set with
+the *-a* and *-e* options. A perspective camera is used by default
+(*-p* _85_); setting the perspective angle to 0 selects an orthographic
+camera. Unless image dimensions are given, a 512x512 image is rendered.
+
+The result is written to the file named by *-o* (default _art.png_) inside
+an _output/_ subdirectory of the current directory, and the generated
+Appleseed scene is also saved as _output/objects.appleseed_. The output
+format is inferred from the file extension (e.g. _.png_ or *pix*(5)).
+
+*art* is built only when BRL-CAD is configured with Appleseed and a
+compatible Boost; otherwise it is not installed. It shares its command-line
+parser and rt-script command set with *rt*(1), but only the options below
+are honored by the Appleseed back end.
+
+
+[[options]]
+== OPTIONS
+
+*-o* _filename_::
+  Render to the named image file (e.g. _image.png_ or _image.pix_).
+  Default is _art.png_. The file is written under _output/_.
+
+*-F* _framebuffer_::
+  Also display the render in the named framebuffer (see FB_FILE in
+  *brlcad*(1)); defaults to opening a window.
+
+*-s* _#_::
+  Square image size in pixels (implies a _#_ x _#_ image). Default 512.
+
+*-w* _#_::
+  Image width in pixels.
+
+*-n* _#_::
+  Image height in pixels (scanlines).
+
+*-C* _#/#/#_::
+  Background (sky) color as R/G/B, either 0-255 or 0.0-1.0.
+  Default 191/204/255 (light blue).
+
+*-R*::
+  Disable reporting of overlapping region names.
+
+*-a* _#_::
+  View azimuth in degrees (default 0). Used with *-e*.
+
+*-e* _#_::
+  View elevation in degrees (default 0). Used with *-a*.
+
+*-p* _#_::
+  Perspective angle in degrees, side to side (0 <= _#_ < 180). The default
+  is 85; a value of 0 selects an orthographic camera.
+
+*-P* _#_::
+  Number of processors (render threads) to use. Default is all available.
+
+*-c* _"command"_::
+  Run a semicolon-separated list of rt script commands before rendering.
+  In addition to the standard *rt*(1) commands, *art* honors these
+  *set* variables: *samples* (or *s*) controls the number of samples per
+  pixel (the main quality/time tradeoff, default 25); *background* (or
+  *bg*) sets the sky color as an R/G/B string; and *light_intensity*
+  (or *li*) scales the point-light brightness (default 200).
+
+*-M*::
+  Read a model-to-view matrix and animation commands from standard input,
+  as produced by an *mged*(1) _saveview_ script.
+
+*-D* _#_::
+  Starting frame number (ending frame is set with *-K*).
+
+*-K* _#_::
+  Ending frame number (starting frame is set with *-D*).
+
+*-T* _#_ | _#/#_::
+  Modeling tolerance as distance, or distance/angular.
+
+*-v* [_#_]::
+  Increase or set the *rt* verbosity level.
+
+*-x* _#_::
+  Set *librt* debugging flags (hexadecimal).
+
+*-X* _#_::
+  Set *rt* optical/program debugging flags (hexadecimal).
+
+*-N* _#_::
+  Set *libnmg* debugging flags (hexadecimal).
+
+
+[[examples]]
+== EXAMPLES
+
+.Render a region to a PNG file
+====
+[source,bash]
+----
+art -o havoc.png -s 1024 -a 35 -e 25 havoc.g havoc
+----
+Renders the _havoc_ object from _havoc.g_ at azimuth 35 and elevation 25
+into a 1024x1024 image named _havoc.png_ (placed in _output/havoc.png_).
+====
+
+.Increase sample count and use an orthographic camera
+====
+[source,bash]
+----
+art -p 0 -c "set samples=100" -o ortho.png moss.g all.g
+----
+Sets the perspective angle to 0 (orthographic projection) and raises the
+per-pixel sample count to 100 for a smoother, less noisy image at the cost
+of longer render time.
+====
+
+.Render an mged saveview script
+====
+[source,bash]
+----
+mged moss.g 'saveview view.rt; q'
+art -M -o moss.png moss.g all.g < view.rt
+----
+Captures the current *mged*(1) view as an rt script, then feeds that script
+to *art* via *-M* so the rendered image matches the saved camera position.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *rtedge*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,87 @@
+= G-AP203E2(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+g-ap203e2 - convert a BRL-CAD geometry database to a STEP AP203 edition 2 file
+
+== SYNOPSIS
+
+[source]
+----
+g-ap203e2 -o _outfile.stp_ _infile.g_ [_object_ ...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-ap203e2* reads a BRL-CAD geometry database _infile.g_ and exports the named
+objects to an ISO 10303-203 edition 2 (AP203e2) STEP (Standard for the Exchange
+of Product model data) file _outfile.stp_.
+
+Geometry is written as STEP NURBS Boundary Representation (B-rep), so BRL-CAD CSG
+solids are first evaluated into their boundary representation. The STEP file is
+emitted against the
+`AP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF`
+schema. Boolean operations are not representable in AP203, so combinations are
+exported as assembly/part structure rather than as live CSG.
+
+If no _object_ names are given, *g-ap203e2* converts the top-level (tops) objects
+of the database. *g-ap203e2* shares its exporter implementation with *g-step*(1)
+but targets the AP203 edition 2 schema. As a safety measure it refuses to run if
+_outfile.stp_ already exists.
+
+[[options]]
+== OPTIONS
+
+*-o* _outfile.stp_::
+  Name the STEP output file to create. This option is required. *g-ap203e2*
+  refuses to overwrite an existing file and exits with an error if _outfile.stp_
+  is already present.
+
+[[examples]]
+== EXAMPLES
+
+.Export an entire database to AP203 edition 2 STEP
+====
+[source,bash]
+----
+g-ap203e2 -o m35.stp m35.g
+----
+Converts every top-level object of _m35.g_ into the STEP file _m35.stp_, suitable
+for import into a mechanical CAD package that reads AP203 edition 2.
+====
+
+.Export selected parts and round-trip back into BRL-CAD
+====
+[source,bash]
+----
+g-ap203e2 -o parts.stp truck.g cab suspension
+step-g -o parts.g parts.stp
+----
+Exports only the _cab_ and _suspension_ assemblies from _truck.g_, then reads the
+resulting STEP file back into a new BRL-CAD database with *step-g*(1) to verify
+that the geometry survives the round trip.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g-step*(1), *step-g*(1), *ap203e2-g*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

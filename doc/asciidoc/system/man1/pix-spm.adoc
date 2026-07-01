@@ -1,0 +1,66 @@
+= PIX-SPM(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pix-spm - convert a pix image into sphere map data
+
+== SYNOPSIS
+
+[source]
+----
+pix-spm file.pix size > file.spm
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix-spm* reads a *pix*(5) image and resamples it into a sphere map, an
+equal-area spherical sampling as produced and consumed by the libbn
+*bn_spm* routines.  The required _file.pix_ argument names the input image
+and the required _size_ argument is the number of sample points around the
+equator used to build the map; it must be a positive integer.  The map
+holds _size_/2 latitude bins.  The image is loaded as a _size_ by _size_
+pixel source and the resulting sphere map is written to standard output, so
+the output is normally redirected to a *.spm* file.
+
+The companion tool *spm-fb*(1) displays the resulting sphere map on a
+framebuffer.
+
+[[examples]]
+== EXAMPLES
+
+.Build a sphere map from an environment image and display it
+====
+[source,bash]
+----
+pix-spm world.pix 512 > world.spm
+spm-fb -s -S 512 512 world.spm
+----
+Convert a 512x512 *pix*(5) image into a 512-bin sphere map with
+*pix-spm*, then resample and display that map on a 512x512 framebuffer
+with *spm-fb*(1).  This is the typical workflow for turning a flat
+environment image into spherical environment-map data.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *spm-fb*(1), *pix-fb*(1), *pix*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

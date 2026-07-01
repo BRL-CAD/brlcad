@@ -1,0 +1,83 @@
+= G-AP242(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+g-ap242 - convert a BRL-CAD database to a STEP AP242 file
+
+== SYNOPSIS
+
+[source]
+----
+g-ap242 -o output.stp database.g object
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-ap242* converts geometry from a BRL-CAD _database.g_ to a STEP
+AP242 (ISO 10303-242, "Managed Model Based 3D Engineering") exchange
+file. A single _object_ from the database must be named; it is written
+to the output file with an AP242 "Managed Model Based 3D Engineering"
+schema header. The input database may be read from standard input by
+giving *-* in place of _database.g_.
+
+To avoid clobbering data, *g-ap242* refuses to run if the named output
+file already exists; remove or rename it first.
+
+This program is part of BRL-CAD's experimental STEP support and is
+built only when STEP experimental features are enabled. For AP203 and
+AP214 output see *g-step*(1) and *g-ap214*(1).
+
+[[options]]
+== OPTIONS
+
+*-o* _output.stp_::
+  Write the STEP AP242 result to _output.stp_. This option is
+  required, and the file must not already exist.
+
+[[examples]]
+== EXAMPLES
+
+.Export a single component
+====
+[source,bash]
+----
+g-ap242 -o cab.stp m35.g cab
+----
+Converts the cab assembly from the m35.g database, producing an AP242
+file suitable for model-based engineering interchange.
+====
+
+.Pipe a database from another tool
+====
+[source,bash]
+----
+asc2g < model.asc | g-ap242 -o part.stp - part
+----
+Reads the database from standard input (the *-* argument) instead of a
+file on disk, converting the named part to AP242 in a single pipeline.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g-ap214*(1), *g-step*(1), *step-g*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

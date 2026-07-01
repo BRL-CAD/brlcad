@@ -1,0 +1,86 @@
+= AP214-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+ap214-g - convert a STEP AP214 file to a BRL-CAD geometry database
+
+== SYNOPSIS
+
+[source]
+----
+ap214-g [-v] [-D] [-S _summary_file_] {-o _outfile.g_ | -O _outfile.g_} _infile.stp_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ap214-g* reads an ISO 10303 STEP (Standard for the Exchange of Product model data) file in the AP214 (Core data for automotive mechanical design processes, third edition) application protocol and translates its boundary representation (B-rep) geometry and assembly structure into a BRL-CAD *.g* geometry database.
+
+STEP manifold solids and bounded surfaces are converted to BRL-CAD Boundary Representation (BREP) objects, and the assembly/part hierarchy is preserved using BRL-CAD combinations. The input file may be named *-* to read the STEP data from standard input.
+
+Elapsed load and convert times along with translation progress are written to standard error.
+
+For the closely related AP203/AP214 translator see *step-g*(1); for the reverse BRL-CAD to STEP direction see *g-step*(1).
+
+[[options]]
+== OPTIONS
+
+*-o* _outfile.g_::
+  Write the BRL-CAD geometry database to _outfile.g_. If the file already exists, *ap214-g* refuses to overwrite it and exits with an error.
+
+*-O* _outfile.g_::
+  Write the BRL-CAD geometry database to _outfile.g_, forcibly overwriting it if it already exists.
+
+*-S* _summary_file_::
+  Write a detailed summary log of the translation (parsed entities, skipped unsupported types, and conversion statistics) to _summary_file_.
+
+*-v*::
+  Enable verbose output, printing detailed diagnostics to standard error during parsing and conversion.
+
+*-D*::
+  Perform a dry run: load and parse the STEP file and simulate the conversion, but do not write any output database. Useful for validating a STEP file or timing the parse phase.
+
+[[examples]]
+== EXAMPLES
+
+.Convert an AP214 part and inspect it
+====
+[source,bash]
+----
+ap214-g -o bracket.g bracket.stp
+mged bracket.g 'tops'
+----
+Converts the AP214 STEP file _bracket.stp_ into _bracket.g_ (refusing to clobber an existing _bracket.g_), then lists the top-level objects of the resulting database with *mged*(1) so the imported B-rep solids and assembly combinations can be examined or raytraced.
+====
+
+.Validate a STEP file without writing output
+====
+[source,bash]
+----
+ap214-g -v -D -O /dev/null model.stp
+----
+Loads and parses _model.stp_ with verbose diagnostics enabled to check for unsupported or malformed entities, reporting load and convert timing while producing no geometry database.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *step-g*(1), *g-step*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,113 @@
+= G-OFF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+g-off - convert BRL-CAD geometry to polygonal surface files
+
+== SYNOPSIS
+
+[source]
+----
+g-off [-v] [-d] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-p _prefix_] [-P _ncpu_] _database.g_ _object_...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-off* reads one or more _object_ regions from a BRL-CAD database
+_database.g_, tessellates them into NMG (n-Manifold Geometry) form by
+evaluating the Boolean tree of each region, and writes the resulting
+polygonal surfaces out.
+
+Each successfully converted region is written as a separate psurf
+(polygonal surface) file with a *.pss* extension, listing the unique
+vertices (converted from millimeters to centimeters) followed by the
+per-face vertex indices. A companion figure file with a *.fig*
+extension is written alongside, naming the segments, recording any
+region color, and joining the segments together. The base name of
+these output files is derived from the database name and the region
+names, optionally with a user-supplied _prefix_.
+
+Conversion is performed via the NMG Boolean evaluator, so regions that
+contain geometry the tessellator cannot resolve are reported as failed
+and skipped; a summary count of attempted versus converted regions is
+printed when finished. See *gqa*(1) and *facetize* for related
+tessellation-based tools.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Enable verbose output, reporting each region as it is processed and
+  each output file as it is written.
+
+*-d*::
+  Also write each converted region as a UNIX-plot debugging file with a
+  *.plot3* extension, colored to match the region's material color.
+
+*-a* _abs_tol_::
+  Absolute tessellation tolerance, in millimeters. Default is 0.0
+  (disabled).
+
+*-r* _rel_tol_::
+  Relative tessellation tolerance, expressed as a fraction of the
+  bounding box. Default is 0.01.
+
+*-n* _norm_tol_::
+  Surface normal tessellation tolerance, in degrees. Default is 0.0
+  (disabled).
+
+*-p* _prefix_::
+  String prepended to every generated output file name.
+
+*-P* _ncpu_::
+  Number of CPUs to use. Default is 1.
+
+*-x* _rt_debug_::
+  Set the librt debug flag (hexadecimal).
+
+*-X* _nmg_debug_::
+  Set the NMG debug flag (hexadecimal).
+
+*-h*, *-?*::
+  Print the usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Convert two regions with a tightened tolerance and a name prefix
+====
+[source,bash]
+----
+g-off -r 0.005 -p out_ have.g component1 component2
+----
+Tessellates the regions *component1* and *component2* from *have.g*
+using a relative tolerance of 0.005, writing the figure file
+*out_have.fig* together with one *.pss* psurf file per region (for
+example *out_component1.pss*). Tightening the relative tolerance yields
+a finer-grained polygonal approximation of curved surfaces.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *g-vrml*(1), *g-stl*(1), *gqa*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,102 @@
+= DM_OGL_PROBE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+dm_ogl_probe - test whether a usable GLX/OpenGL display environment is available
+
+== SYNOPSIS
+
+[source]
+----
+dm_ogl_probe [_display_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dm_ogl_probe* is a small helper utility used by BRL-CAD to determine, at run
+time, whether an X11 display supports a working GLX/OpenGL rendering context.
+It is the probe that backs the *ogl* display manager (the *dm-ogl* plugin):
+before BRL-CAD tools such as *mged*(1) or *archer*(1) attempt to open an *ogl*
+display, this probe can be run to confirm that the necessary GLX visual and
+context can actually be created.
+
+The probe takes no flag options. It optionally accepts a single argument naming
+the X display to test; if omitted, the display named by the *DISPLAY*
+environment variable is used. *dm_ogl_probe* opens the display, verifies the
+GLX extension is present, searches for the deepest RGBA visual that supports
+OpenGL, creates an OpenGL context and a temporary window, and makes the context
+current. It then tears everything down and exits. No window is left on screen
+and nothing is printed on success; the result is communicated entirely through
+the exit status, making the tool suitable for use in scripts and build/setup
+logic.
+
+The exit status indicates the outcome:
+
+* *0* - a usable GLX/OpenGL context was created and made current.
+* *2* - the display could not be opened.
+* *3* - the X server does not provide the GLX extension.
+* *4* - no suitable RGBA OpenGL visual was found.
+* *5* - an OpenGL context could not be created.
+* *6* - the temporary test window could not be created.
+* *7* - the context could not be made current.
+
+[[options]]
+== OPTIONS
+
+_display_::
+  The X display to probe, in standard X11 form (for example
+  *:0*, *:0.0*, or *hostname:0*). When omitted, the *DISPLAY*
+  environment variable selects the display.
+
+[[examples]]
+== EXAMPLES
+
+.Probe the default display
+====
+[source,bash]
+----
+dm_ogl_probe; echo $?
+----
+Tests the display named by *DISPLAY* and prints the exit status. A printed
+*0* means an *ogl* display manager can be opened on this display.
+====
+
+.Gate launching an OpenGL session on probe success
+====
+[source,bash]
+----
+if dm_ogl_probe ":0"; then
+    mged -c model.g
+else
+    echo "GLX/OpenGL not available on :0, falling back" >&2
+fi
+----
+Runs the probe against display *:0* and only launches *mged*(1) when a working
+GLX/OpenGL context is available, otherwise reporting the failure so a different
+display manager (such as *X* or *swrast*) can be selected.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *archer*(1), *fbserv*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

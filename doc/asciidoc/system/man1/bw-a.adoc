@@ -1,0 +1,97 @@
+= BW-A(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bw-a - convert a BRL-CAD BW image to an ASCII bitmap
+
+== SYNOPSIS
+
+[source]
+----
+bw-a [-a] [-s squaresize] [-w file_width] [-n file_height] [file.bw] > file.abm
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bw-a* reads a BRL-CAD _BW(5)_ grayscale image and writes an ASCII bitmap to
+the standard output, emitting one character per pixel. Pixels with a value
+below 127 produce a `#` and brighter pixels produce a `-`, with a newline
+inserted after every _file_width_ characters so that each scanline of the
+image becomes a line of text.
+
+If _file.bw_ is not specified, the image is read from the standard input. By
+default the input width is assumed to be 512 pixels; this can be overridden with
+the *-w* option (or determined automatically with *-a*). The image is treated as
+being in inverse (bottom-to-top) order, so it is typically flipped before
+conversion.
+
+The output is suitable for feeding to the X11 *atobm*(1) utility to create an
+X bitmap.
+
+
+[[options]]
+== OPTIONS
+
+*-a*::
+  Autosize the input. When a named file is given, the width is determined from
+  the file size rather than the default or supplied dimensions.
+
+*-s* _squaresize_::
+  Accepted for compatibility, but has no effect on the output; only the input
+  width (see *-w*) is used when emitting scanlines.
+
+*-w* _file_width_::
+  Set the width of the input to _file_width_ pixels (default 512). A newline is
+  emitted after every _file_width_ characters.
+
+*-n* _file_height_::
+  Accepted for compatibility, but has no effect on the output; the number of
+  scanlines is determined solely by the amount of input read.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert a halftoned image into an X11 bitmap
+====
+[source,bash]
+----
+$ pix-fb -w1280 -n960 -i -Fimage.pixi image.pix
+$ pix-bw image.pixi | halftone -R -S -w1280 -n960 | \
+      bw-a -w1280 -n960 | atobm -name image >image.bm
+----
+Flips a 1280x960 color image, converts it to grayscale, halftones it to a
+one-bit-per-pixel representation, turns that into an ASCII bitmap with *bw-a*,
+and finally pipes the result through *atobm*(1) to produce a usable X bitmap.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bw-pix*(1), *bw-png*(1), *halftone*(1), *pix-bw*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
