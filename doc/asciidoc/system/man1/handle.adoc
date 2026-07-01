@@ -1,123 +1,94 @@
 = HANDLE(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-handle - Creates a BRL-CAD .g file containing handles.
+handle - create a BRL-CAD .g database containing handle shapes
 
 == SYNOPSIS
 
 [source]
 ----
-handle [options]...
+handle [-h | -?]
+handle [-f _name.g_] [-n _count_] [-l _length_] [-H _height_] [-r1 _torus_radius_] [-r2 _cylinder_radius_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*handle* creates a BRL-CAD database containing handles. Up to 256 handles of the same dimensions may be generated per run. *handle* uses libwdb to create the database file, with each handle composed of three cylinders, two tori, and two arb8s.
+*handle* creates a BRL-CAD database (*mged*(1) .g file) containing one or
+more handle shapes built with *libwdb*. Each handle is composed of three
+cylinders, two tori, and two arb8s. The base of each handle is centered at
+(0, 0, 0) and the height extends in the positive z-direction. All dimensions
+are in millimeters.
 
-If run without arguments, the program enters interactive mode and prompts for all required parameters. Alternatively, options may be specified directly on the command line.
+If invoked with no arguments, *handle* enters interactive mode and prompts
+for each parameter. Otherwise the values are taken from the command-line
+options. Between 1 and 256 handles of identical dimensions may be created per
+run; values outside that range are clamped.
 
 
 [[options]]
 == OPTIONS
 
+*-h*, *-?*::
+  Print a usage message and exit.
 
 *-f* _name.g_::
-BRL-CAD file name.
+  Name of the .g database file to create. Defaults to handle.g in
+  interactive mode.
 
+*-n* _count_::
+  Number of handles to create (1 to 256, default 1).
 
-*-n #*::
-The number of handles to be created (must be less than or equal to 256).
+*-l* _length_::
+  Length of the handle in millimeters.
 
+*-H* _height_::
+  Height of the handle in millimeters.
 
-*-l #*::
-Length of handle in millimeters.
+*-r1* _torus_radius_::
+  Radius r1 of the two tori in millimeters (the rounding of the corners).
 
-
-*-H #*::
-Height of handle in millimeters.
-
-
-*-r1 #*::
-Radius, r1, of the tori in millimeters.
-
-
-*-r2 #*::
-Radius, r2, of the tori in millimeters.
-
-
+*-r2* _cylinder_radius_::
+  Radius r2 of the three cylinders in millimeters.
 
 
 [[examples]]
 == EXAMPLES
 
-.Interactive *handle* Session
-[example]
+.Generate handles and raytrace them
 ====
-
-
-
-....
-
-This program constructs a handle with the base centered
-at (0, 0, 0) and the height extending in the positive z-
-direction.  The handle will be composed of 3 cylinders,
-2 tori, and 2 arb8s.
-
-Enter the name of the mged file to be created (25 char max).
-	handle.g
-Enter number of handles to create (26 max).
-	3
-Enter the length and height of handle in mm.
-	200 100
-Enter the radius of the tori in mm.
-	20
-Enter the radius of the cylinders in mm.
-	10
-
-mged file name:  handle.g
-length:  200.000000 mm
-height:  100.000000 mm
-radius of tori:  20.000000 mm
-radius of cylinders:  10.000000 mm
-number of handles:  3
-   
-....
-
-
-
+[source,bash]
+----
+handle -fhandle.g -n3 -l200 -H100 -r120 -r210
+rt -s 1024 -o handle.png handle.g hana
+----
+Creates handle.g containing three handles, each 200 mm long and 100 mm tall,
+with a torus rounding radius of 20 mm and a cylinder radius of 10 mm. Note
+that the option value is appended directly to the flag (for example *-l200*
+and *-r120*). The grouped handles can then be rendered with *rt*(1).
 ====
-
-.Single-Line *handle* Command
-[example]
-====
-**handle -fhandle.g -n3 -l200 -H100 -r120 -r210**
-
-====
-
-Both of these examples produce the same result - a database called handle.g containing three handles of length 200mm, height 100mm, radius 20mm for the rounding, and radius 10mm for the cylinders.
-
-
-[[author]]
-== AUTHOR
-
-Susan A. Coates
-
-
-[[copyright]]
-== COPYRIGHT
-
-This software is Copyright (c) 2005-2026 United States Government as represented by the U.S. Army Research Laboratory.
 
 
 [[see_also]]
 == SEE ALSO
 
-bolt(1), window(1), window_frame(1), gastank(1)
+*brlcad*(1), *mged*(1), *rt*(1), *bolt*(1), *gastank*(1), *window*(1), *window_frame*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
