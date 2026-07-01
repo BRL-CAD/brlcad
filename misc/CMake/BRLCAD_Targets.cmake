@@ -43,6 +43,13 @@ define_property(
   FULL_DOCS "List of installed BRL-CAD binary programs"
 )
 
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_EXEC_MISSING_MANPAGES
+  BRIEF_DOCS "BRL-CAD binaries missing man pages"
+  FULL_DOCS "List of installed BRL-CAD binary programs without corresponding man pages"
+)
+
 # Installed BRL-CAD library targets and their object-library variants.  This
 # lets aggregate targets derive their contents from BRLCAD_ADDLIB declarations
 # instead of maintaining a separate, stale-prone library list.
@@ -392,7 +399,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
       if(EXISTS ${CMAKE_SOURCE_DIR}/doc/asciidoc/system/man1/${execname}.adoc)
 	add_asciidoc("MAN1" ${CMAKE_SOURCE_DIR}/doc/asciidoc/system/man1/${execname}.adoc man1 "")
       else()
-        message("No man page defined for ${execname}")
+        set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_MISSING_MANPAGES "${execname}")
       endif()
     endif()
   endif(BRLCAD_EXTRADOCS)

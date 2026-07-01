@@ -159,7 +159,12 @@ function(message)
     OR MessageType STREQUAL SEND_ERROR
     OR MessageType STREQUAL WARNING
     OR MessageType STREQUAL AUTHOR_WARNING
+    OR MessageType STREQUAL DEPRECATION
+    OR MessageType STREQUAL NOTICE
     OR MessageType STREQUAL STATUS
+    OR MessageType STREQUAL VERBOSE
+    OR MessageType STREQUAL DEBUG
+    OR MessageType STREQUAL TRACE
     OR MessageType STREQUAL CHECK_START
     OR MessageType STREQUAL CHECK_PASS
     OR MessageType STREQUAL CHECK_FAIL

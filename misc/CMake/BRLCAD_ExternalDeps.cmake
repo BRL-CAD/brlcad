@@ -151,6 +151,134 @@ function(brlcad_ext_write_file_list outfile)
   endforeach(_brlcad_ext_file ${ARGN})
 endfunction(brlcad_ext_write_file_list)
 
+function(brlcad_ext_path_forms outvar)
+  set(_brlcad_ext_path_forms)
+  foreach(_brlcad_ext_path ${ARGN})
+    if("${_brlcad_ext_path}" STREQUAL "")
+      continue()
+    endif("${_brlcad_ext_path}" STREQUAL "")
+    list(APPEND _brlcad_ext_path_forms "${_brlcad_ext_path}")
+    get_filename_component(_brlcad_ext_abs_path "${_brlcad_ext_path}" ABSOLUTE)
+    list(APPEND _brlcad_ext_path_forms "${_brlcad_ext_abs_path}")
+    file(REAL_PATH "${_brlcad_ext_path}" _brlcad_ext_real_path)
+    list(APPEND _brlcad_ext_path_forms "${_brlcad_ext_real_path}")
+  endforeach(_brlcad_ext_path ${ARGN})
+  if(_brlcad_ext_path_forms)
+    list(REMOVE_DUPLICATES _brlcad_ext_path_forms)
+  endif(_brlcad_ext_path_forms)
+  set(${outvar} ${_brlcad_ext_path_forms} PARENT_SCOPE)
+endfunction(brlcad_ext_path_forms)
+
+function(brlcad_ext_path_clear_targets outvar)
+  brlcad_ext_path_forms(_brlcad_ext_path_forms ${ARGN})
+  set(_brlcad_ext_path_targets ${_brlcad_ext_path_forms})
+  foreach(_brlcad_ext_path ${_brlcad_ext_path_forms})
+    list(APPEND _brlcad_ext_path_targets "${_brlcad_ext_path}/")
+  endforeach(_brlcad_ext_path ${_brlcad_ext_path_forms})
+  if(_brlcad_ext_path_targets)
+    list(REMOVE_DUPLICATES _brlcad_ext_path_targets)
+  endif(_brlcad_ext_path_targets)
+  set(${outvar} ${_brlcad_ext_path_targets} PARENT_SCOPE)
+endfunction(brlcad_ext_path_clear_targets)
+
+function(brlcad_ext_count_strclear_updates outvar output)
+  string(REGEX MATCHALL "[^\n\r]+: +(cleared|replaced) [0-9]+ instances" _brlcad_ext_strclear_matches "${output}")
+  list(LENGTH _brlcad_ext_strclear_matches _brlcad_ext_strclear_count)
+  set(${outvar} "${_brlcad_ext_strclear_count}" PARENT_SCOPE)
+endfunction(brlcad_ext_count_strclear_updates)
+
+function(brlcad_ext_append_strclear_log logfile label output)
+  brlcad_ext_count_strclear_updates(_brlcad_ext_strclear_count "${output}")
+  if(_brlcad_ext_strclear_count GREATER 0)
+    file(APPEND "${logfile}" "\n==== ${label} ====\n${output}")
+    if(NOT "${output}" MATCHES "\n$")
+      file(APPEND "${logfile}" "\n")
+    endif(NOT "${output}" MATCHES "\n$")
+  endif(_brlcad_ext_strclear_count GREATER 0)
+endfunction(brlcad_ext_append_strclear_log)
+
+function(brlcad_ext_append_file_list_log logfile label)
+  if(ARGN)
+    list(LENGTH ARGN _brlcad_ext_file_count)
+    file(APPEND "${logfile}" "\n==== ${label} (${_brlcad_ext_file_count} files) ====\n")
+    foreach(_brlcad_ext_file ${ARGN})
+      file(APPEND "${logfile}" "${_brlcad_ext_file}\n")
+    endforeach(_brlcad_ext_file ${ARGN})
+  endif(ARGN)
+endfunction(brlcad_ext_append_file_list_log)
+
+function(brlcad_ext_rpath_output_to_properties prefix output)
+  string(REPLACE ";" "@BRLCAD_EXT_SEMICOLON@" _brlcad_ext_rpath_output "${output}")
+  string(REPLACE "\r\n" "\n" _brlcad_ext_rpath_output "${_brlcad_ext_rpath_output}")
+  string(REPLACE "\n" ";" _brlcad_ext_rpath_lines "${_brlcad_ext_rpath_output}")
+  foreach(_brlcad_ext_rpath_line ${_brlcad_ext_rpath_lines})
+    if("${_brlcad_ext_rpath_line}" MATCHES "^([^:]+):(.*)$")
+      set(_brlcad_ext_rpath_file "${CMAKE_MATCH_1}")
+      set(_brlcad_ext_rpath_value "${CMAKE_MATCH_2}")
+      string(REPLACE "@BRLCAD_EXT_SEMICOLON@" ";" _brlcad_ext_rpath_value "${_brlcad_ext_rpath_value}")
+      string(SHA256 _brlcad_ext_rpath_key "${_brlcad_ext_rpath_file}")
+      set_property(GLOBAL PROPERTY "BRLCAD_EXT_RPATH_${prefix}_${_brlcad_ext_rpath_key}" "${_brlcad_ext_rpath_value}")
+    endif("${_brlcad_ext_rpath_line}" MATCHES "^([^:]+):(.*)$")
+  endforeach(_brlcad_ext_rpath_line ${_brlcad_ext_rpath_lines})
+endfunction(brlcad_ext_rpath_output_to_properties)
+
+function(brlcad_ext_log_plief_rpath_changes outvar logfile label before_prefix after_prefix)
+  set(_brlcad_ext_rpath_change_count 0)
+  set(_brlcad_ext_rpath_change_log)
+  foreach(_brlcad_ext_rpath_file ${ARGN})
+    string(SHA256 _brlcad_ext_rpath_key "${_brlcad_ext_rpath_file}")
+    get_property(_brlcad_ext_before GLOBAL PROPERTY "BRLCAD_EXT_RPATH_${before_prefix}_${_brlcad_ext_rpath_key}")
+    get_property(_brlcad_ext_after GLOBAL PROPERTY "BRLCAD_EXT_RPATH_${after_prefix}_${_brlcad_ext_rpath_key}")
+    if("${_brlcad_ext_before}" STREQUAL "")
+      set(_brlcad_ext_before "<none>")
+    endif("${_brlcad_ext_before}" STREQUAL "")
+    if("${_brlcad_ext_after}" STREQUAL "")
+      set(_brlcad_ext_after "<none>")
+    endif("${_brlcad_ext_after}" STREQUAL "")
+    if(NOT "${_brlcad_ext_before}" STREQUAL "${_brlcad_ext_after}")
+      math(EXPR _brlcad_ext_rpath_change_count "${_brlcad_ext_rpath_change_count} + 1")
+      string(APPEND _brlcad_ext_rpath_change_log "${_brlcad_ext_rpath_file}\n  before: ${_brlcad_ext_before}\n  after:  ${_brlcad_ext_after}\n")
+    endif(NOT "${_brlcad_ext_before}" STREQUAL "${_brlcad_ext_after}")
+  endforeach(_brlcad_ext_rpath_file ${ARGN})
+
+  if(_brlcad_ext_rpath_change_count GREATER 0)
+    file(APPEND "${logfile}" "\n==== ${label} (${_brlcad_ext_rpath_change_count} files) ====\n")
+    file(APPEND "${logfile}" "${_brlcad_ext_rpath_change_log}")
+  endif(_brlcad_ext_rpath_change_count GREATER 0)
+  set(${outvar} "${_brlcad_ext_rpath_change_count}" PARENT_SCOPE)
+endfunction(brlcad_ext_log_plief_rpath_changes)
+
+function(brlcad_ext_append_plief_report_log outvar logfile label output)
+  set(_brlcad_ext_rpath_change_count 0)
+  set(_brlcad_ext_rpath_change_log)
+  string(REPLACE ";" "@BRLCAD_EXT_SEMICOLON@" _brlcad_ext_plief_output "${output}")
+  string(REPLACE "\r\n" "\n" _brlcad_ext_plief_output "${_brlcad_ext_plief_output}")
+  string(REPLACE "\n" ";" _brlcad_ext_plief_lines "${_brlcad_ext_plief_output}")
+  foreach(_brlcad_ext_plief_line ${_brlcad_ext_plief_lines})
+    if("${_brlcad_ext_plief_line}" MATCHES "^([^\t]*)\t([^\t]*)\t(.*)$")
+      set(_brlcad_ext_rpath_file "${CMAKE_MATCH_1}")
+      set(_brlcad_ext_before "${CMAKE_MATCH_2}")
+      set(_brlcad_ext_after "${CMAKE_MATCH_3}")
+      string(REPLACE "@BRLCAD_EXT_SEMICOLON@" ";" _brlcad_ext_before "${_brlcad_ext_before}")
+      string(REPLACE "@BRLCAD_EXT_SEMICOLON@" ";" _brlcad_ext_after "${_brlcad_ext_after}")
+      if("${_brlcad_ext_before}" STREQUAL "")
+        set(_brlcad_ext_before "<none>")
+      endif("${_brlcad_ext_before}" STREQUAL "")
+      if("${_brlcad_ext_after}" STREQUAL "")
+        set(_brlcad_ext_after "<none>")
+      endif("${_brlcad_ext_after}" STREQUAL "")
+      math(EXPR _brlcad_ext_rpath_change_count "${_brlcad_ext_rpath_change_count} + 1")
+      string(APPEND _brlcad_ext_rpath_change_log "${_brlcad_ext_rpath_file}\n  before: ${_brlcad_ext_before}\n  after:  ${_brlcad_ext_after}\n")
+    endif("${_brlcad_ext_plief_line}" MATCHES "^([^\t]*)\t([^\t]*)\t(.*)$")
+  endforeach(_brlcad_ext_plief_line ${_brlcad_ext_plief_lines})
+
+  if(_brlcad_ext_rpath_change_count GREATER 0)
+    file(APPEND "${logfile}" "\n==== ${label} (${_brlcad_ext_rpath_change_count} files) ====\n")
+    file(APPEND "${logfile}" "${_brlcad_ext_rpath_change_log}")
+  endif(_brlcad_ext_rpath_change_count GREATER 0)
+  set(${outvar} "${_brlcad_ext_rpath_change_count}" PARENT_SCOPE)
+endfunction(brlcad_ext_append_plief_report_log)
+
 
 # Look for CMake files used in find_package. pkgconfig (*.pc) files can be used
 # by CMake, so they are treated as CMake inputs for the purposes of this test.
@@ -599,7 +727,7 @@ endfunction(find_relative_rpath)
 # a bit different from what is done for the final install - the goal
 # here is not to produce relocatable files, but just have things work
 # in place in the build locations.
-function(rpath_build_dir_process ROOT_DIR lf)
+function(rpath_build_dir_process ROOT_DIR lf logfile history_log updated_var)
 
   if(P_RPATH_EXECUTABLE)
     execute_process(
@@ -633,10 +761,18 @@ function(rpath_build_dir_process ROOT_DIR lf)
 
   execute_process(
     COMMAND
-      ${STRCLEAR_EXECUTABLE} -v -b -c ${ROOT_DIR}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}"
-      "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/"
-      "${BRLCAD_EXT_DIR_REAL}"
+      ${STRCLEAR_EXECUTABLE} -v -p -b -c ${ROOT_DIR}/${lf} ${_brlcad_ext_binary_clear_targets}
+    OUTPUT_VARIABLE _brlcad_ext_strclear_output
+    ECHO_OUTPUT_VARIABLE
   )
+  brlcad_ext_count_strclear_updates(_brlcad_ext_updated "${_brlcad_ext_strclear_output}")
+  if(logfile)
+    brlcad_ext_append_strclear_log("${logfile}" "Residual stale path cleanup by strclear: ${ROOT_DIR}/${lf}" "${_brlcad_ext_strclear_output}")
+  endif(logfile)
+  if(history_log)
+    brlcad_ext_append_strclear_log("${history_log}" "Residual stale path cleanup by strclear: ${ROOT_DIR}/${lf}" "${_brlcad_ext_strclear_output}")
+  endif(history_log)
+  set(${updated_var} "${_brlcad_ext_updated}" PARENT_SCOPE)
 
   # Modern Apple security features (particularly on ARM64) complicate
   # our post-processing of these files with strclear.  For more info,
@@ -713,6 +849,9 @@ function(brlcad_bext_process)
   endif(NOT P_RPATH_EXECUTABLE)
   set(P_RPATH_SUPPORTS_FILE_LIST FALSE)
   set(P_RPATH_SUPPORTS_CLASSIFY FALSE)
+  set(P_RPATH_SUPPORTS_CHANGE_REPORT FALSE)
+  set(P_RPATH_SUPPORTS_SET_IF_NEEDED FALSE)
+  set(P_RPATH_SUPPORTS_SET_IF_NEEDED_PREPEND FALSE)
   if(P_RPATH_EXECUTABLE)
     execute_process(
       COMMAND ${P_RPATH_EXECUTABLE} --help
@@ -726,6 +865,15 @@ function(brlcad_bext_process)
     if(P_RPATH_HELP_RESULT EQUAL 0 AND "${P_RPATH_HELP_OUTPUT}" MATCHES "--classify")
       set(P_RPATH_SUPPORTS_CLASSIFY TRUE)
     endif(P_RPATH_HELP_RESULT EQUAL 0 AND "${P_RPATH_HELP_OUTPUT}" MATCHES "--classify")
+    if(P_RPATH_HELP_RESULT EQUAL 0 AND "${P_RPATH_HELP_OUTPUT}" MATCHES "--report-rpath-changes")
+      set(P_RPATH_SUPPORTS_CHANGE_REPORT TRUE)
+    endif(P_RPATH_HELP_RESULT EQUAL 0 AND "${P_RPATH_HELP_OUTPUT}" MATCHES "--report-rpath-changes")
+    if(P_RPATH_HELP_RESULT EQUAL 0 AND "${P_RPATH_HELP_OUTPUT}" MATCHES "--set-rpath-if-needed")
+      set(P_RPATH_SUPPORTS_SET_IF_NEEDED TRUE)
+    endif(P_RPATH_HELP_RESULT EQUAL 0 AND "${P_RPATH_HELP_OUTPUT}" MATCHES "--set-rpath-if-needed")
+    if(P_RPATH_HELP_RESULT EQUAL 0 AND "${P_RPATH_HELP_OUTPUT}" MATCHES "--set-rpath-if-needed-prepend")
+      set(P_RPATH_SUPPORTS_SET_IF_NEEDED_PREPEND TRUE)
+    endif(P_RPATH_HELP_RESULT EQUAL 0 AND "${P_RPATH_HELP_OUTPUT}" MATCHES "--set-rpath-if-needed-prepend")
   endif(P_RPATH_EXECUTABLE)
 
   # Find the tool we use to scrub EXT paths from files
@@ -744,6 +892,12 @@ function(brlcad_bext_process)
   if(STRCLEAR_HELP_RESULT EQUAL 0 AND "${STRCLEAR_HELP_OUTPUT}" MATCHES "--classify")
     set(STRCLEAR_SUPPORTS_CLASSIFY TRUE)
   endif(STRCLEAR_HELP_RESULT EQUAL 0 AND "${STRCLEAR_HELP_OUTPUT}" MATCHES "--classify")
+  set(_brlcad_ext_strclear_verbose_arg)
+  set(_brlcad_ext_strclear_echo_arg)
+  if(BRLCAD_VERBOSE)
+    set(_brlcad_ext_strclear_verbose_arg "-v")
+    set(_brlcad_ext_strclear_echo_arg ECHO_OUTPUT_VARIABLE)
+  endif(BRLCAD_VERBOSE)
 
   set(BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT "${CMAKE_BINARY_DIR}/CMakeFiles/BRLCADInstallPostprocess.cmake")
   set(BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/install-postprocess")
@@ -797,7 +951,25 @@ function(_brlcad_install_copy source file install_type)
   file(INSTALL DESTINATION "${_brlcad_dest_dir}" TYPE ${install_type} FILES "${source}")
 endfunction()
 
-function(brlcad_install_strclear_replace stamp_dir strclear source file install_type from_path to_path)
+function(_brlcad_path_forms outvar)
+  set(_brlcad_forms)
+  foreach(_brlcad_path ${ARGN})
+    if("${_brlcad_path}" STREQUAL "")
+      continue()
+    endif()
+    list(APPEND _brlcad_forms "${_brlcad_path}")
+    get_filename_component(_brlcad_abs_path "${_brlcad_path}" ABSOLUTE)
+    list(APPEND _brlcad_forms "${_brlcad_abs_path}")
+    file(REAL_PATH "${_brlcad_path}" _brlcad_real_path)
+    list(APPEND _brlcad_forms "${_brlcad_real_path}")
+  endforeach()
+  if(_brlcad_forms)
+    list(REMOVE_DUPLICATES _brlcad_forms)
+  endif()
+  set(${outvar} ${_brlcad_forms} PARENT_SCOPE)
+endfunction()
+
+function(brlcad_install_strclear_replace stamp_dir strclear source file install_type from_path to_path verbose)
   set(_brlcad_signature "strclear-replace|${strclear}|${install_type}|${from_path}|${to_path}")
   _brlcad_postprocess_needed(_brlcad_needed "${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
   if(NOT _brlcad_needed)
@@ -805,8 +977,12 @@ function(brlcad_install_strclear_replace stamp_dir strclear source file install_
   endif()
 
   _brlcad_install_copy("${source}" "${file}" "${install_type}")
+  set(_brlcad_strclear_verbose_arg)
+  if(verbose)
+    set(_brlcad_strclear_verbose_arg "-v")
+  endif()
   execute_process(
-    COMMAND "${strclear}" -v -r "${file}" "${from_path}" "${to_path}"
+    COMMAND "${strclear}" ${_brlcad_strclear_verbose_arg} -p -r "${file}" "${from_path}" "${to_path}"
     RESULT_VARIABLE _brlcad_result
   )
   if(_brlcad_result EQUAL 0)
@@ -816,8 +992,8 @@ function(brlcad_install_strclear_replace stamp_dir strclear source file install_
   endif()
 endfunction()
 
-function(brlcad_install_binary_postprocess stamp_dir strclear source file install_type mode rpath_tool install_rpath build_lib_path rel_rpath)
-  set(_brlcad_signature "binary-postprocess|${install_type}|${mode}|${rpath_tool}|${install_rpath}|${build_lib_path}|${rel_rpath}|${strclear}")
+function(brlcad_install_binary_postprocess stamp_dir strclear source file install_type mode rpath_tool install_rpath build_lib_path rel_rpath use_selective_rpath verbose)
+  set(_brlcad_signature "binary-postprocess|${install_type}|${mode}|${rpath_tool}|${install_rpath}|${build_lib_path}|${rel_rpath}|${use_selective_rpath}|${strclear}")
   _brlcad_postprocess_needed(_brlcad_needed "${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
   if(NOT _brlcad_needed)
     return()
@@ -826,8 +1002,12 @@ function(brlcad_install_binary_postprocess stamp_dir strclear source file instal
   _brlcad_install_copy("${source}" "${file}" "${install_type}")
   set(_brlcad_result 0)
   if("${mode}" STREQUAL "RPATH_TOOL")
+    set(_brlcad_selective_rpath_args)
+    if(use_selective_rpath)
+      set(_brlcad_selective_rpath_args --set-rpath-if-needed --set-rpath-if-needed-prepend --stale-rpath-prefix "${build_lib_path}")
+    endif()
     execute_process(
-      COMMAND "${rpath_tool}" --set-rpath "${install_rpath}" "${file}"
+      COMMAND "${rpath_tool}" --set-rpath "${install_rpath}" ${_brlcad_selective_rpath_args} "${file}"
       RESULT_VARIABLE _brlcad_result
     )
   elseif("${mode}" STREQUAL "APPLE")
@@ -850,8 +1030,20 @@ function(brlcad_install_binary_postprocess stamp_dir strclear source file instal
     return()
   endif()
 
+  set(_brlcad_strclear_verbose_arg)
+  if(verbose)
+    set(_brlcad_strclear_verbose_arg "-v")
+  endif()
+  _brlcad_path_forms(_brlcad_build_lib_paths "${build_lib_path}")
+  set(_brlcad_binary_clear_paths ${_brlcad_build_lib_paths})
+  foreach(_brlcad_build_lib_path ${_brlcad_build_lib_paths})
+    list(APPEND _brlcad_binary_clear_paths "${_brlcad_build_lib_path}/")
+  endforeach()
+  if(_brlcad_binary_clear_paths)
+    list(REMOVE_DUPLICATES _brlcad_binary_clear_paths)
+  endif()
   execute_process(
-    COMMAND "${strclear}" -v -b -c "${file}" "${build_lib_path}"
+    COMMAND "${strclear}" ${_brlcad_strclear_verbose_arg} -p -b -c "${file}" ${_brlcad_binary_clear_paths}
     RESULT_VARIABLE _brlcad_result
   )
   if(NOT _brlcad_result EQUAL 0)
@@ -880,6 +1072,27 @@ endfunction()
   # TODO - once we can require CMake 3.21 minimum, add EXPAND_TILDE to
   # the arguments list
   file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL)
+  set(_brlcad_ext_install_scrub_path "${BRLCAD_EXT_INSTALL_DIR}")
+  if(DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+    set(_brlcad_ext_install_scrub_path "${BRLCAD_EXT_DIR}/install")
+  endif(DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+  brlcad_ext_path_forms(_brlcad_ext_install_path_forms "${_brlcad_ext_install_scrub_path}" "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_DIR_REAL}")
+  brlcad_ext_path_clear_targets(_brlcad_ext_install_clear_targets "${_brlcad_ext_install_scrub_path}" "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_DIR_REAL}")
+  brlcad_ext_path_clear_targets(
+    _brlcad_ext_binary_clear_targets
+    "${_brlcad_ext_install_scrub_path}/${LIB_DIR}"
+    "${BRLCAD_EXT_INSTALL_DIR}/${LIB_DIR}"
+    "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}"
+    "${_brlcad_ext_install_scrub_path}/${BIN_DIR}"
+    "${BRLCAD_EXT_INSTALL_DIR}/${BIN_DIR}"
+    "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}"
+    "${_brlcad_ext_install_scrub_path}/${INCLUDE_DIR}"
+    "${BRLCAD_EXT_INSTALL_DIR}/${INCLUDE_DIR}"
+    "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}"
+    "${_brlcad_ext_install_scrub_path}"
+    "${BRLCAD_EXT_INSTALL_DIR}"
+    "${BRLCAD_EXT_DIR_REAL}"
+  )
 
   # These patterns are used to identify sets of files where we are
   # assuming we don't need to do post-processing to correct file paths
@@ -984,12 +1197,12 @@ endfunction()
   else(BRLCAD_TP_FULL_RESET)
     # Clear copies of anything found to be stale
     if(TP_STALE)
+      list(LENGTH TP_STALE _brlcad_ext_stale_count)
       message("Removing stale 3rd party files in build directory...")
       foreach(ef ${TP_STALE})
         file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-        message("  ${CMAKE_BINARY_DIR}/${ef}")
       endforeach(ef ${TP_STALE})
-      message("Removing stale 3rd party files in build directory... done.")
+      message("Removing stale 3rd party files in build directory... done (${_brlcad_ext_stale_count} files).")
     endif(TP_STALE)
 
     # Stage new files - we don't have the bulk tar mechanism going
@@ -1002,19 +1215,20 @@ endfunction()
     # file(COPY):
     # https://gitlab.kitware.com/cmake/cmake/-/issues/14609
     if(TP_NEW)
+      list(LENGTH TP_NEW _brlcad_ext_new_count)
       message("Staging new 3rd party files from ${BRLCAD_EXT_DIR}/install...")
       foreach(ef ${TP_NEW})
         file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
         get_filename_component(EF_DIR ${ef} DIRECTORY)
         get_filename_component(EF_NAME ${ef} NAME)
         file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
-        message("  ${CMAKE_BINARY_DIR}/${ef}")
-      endforeach(ef ${TP_CHANGED})
-      message("Staging new 3rd party files from ${BRLCAD_EXT_DIR}/install... done.")
+      endforeach(ef ${TP_NEW})
+      message("Staging new 3rd party files from ${BRLCAD_EXT_DIR}/install... done (${_brlcad_ext_new_count} files).")
     endif(TP_NEW)
 
     # Stage changed files
     if(TP_CHANGED)
+      list(LENGTH TP_CHANGED _brlcad_ext_changed_count)
       message("Staging changed 3rd party files from ${BRLCAD_EXT_DIR}/install...")
       foreach(ef ${TP_CHANGED})
         file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
@@ -1022,9 +1236,8 @@ endfunction()
         get_filename_component(EF_NAME ${ef} NAME)
         file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
         execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate "${CMAKE_BINARY_DIR}/${ef}")
-        message("  ${CMAKE_BINARY_DIR}/${ef}")
       endforeach(ef ${TP_CHANGED})
-      message("Staging changed 3rd party files from ${BRLCAD_EXT_DIR}/install... done.")
+      message("Staging changed 3rd party files from ${BRLCAD_EXT_DIR}/install... done (${_brlcad_ext_changed_count} files).")
     endif(TP_CHANGED)
 
     # If the directory file lists differ, we have to reset find package
@@ -1091,7 +1304,26 @@ endfunction()
   string(REPLACE ";" "\n" TP_B "${ALL_BINARY_FILES}")
   file(WRITE "${TP_INVENTORY_BINARIES}" "${TP_B}")
 
+  set(_brlcad_ext_strclear_log "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_strclear_updates.log")
+  set(_brlcad_ext_strclear_history_log "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_strclear_updates_history.log")
+  if(NBINARY_FILES OR NNOEXEC_FILES OR NTEXT_FILES)
+    string(TIMESTAMP _brlcad_ext_strclear_log_time "%Y-%m-%d %H:%M:%S %z")
+    file(WRITE "${_brlcad_ext_strclear_log}" "BRL-CAD bundled third party path update log for latest configure pass\n")
+    file(APPEND "${_brlcad_ext_strclear_log}" "Timestamp: ${_brlcad_ext_strclear_log_time}\n")
+    file(APPEND "${_brlcad_ext_strclear_log}" "Build directory: ${CMAKE_BINARY_DIR}\n")
+    file(APPEND "${_brlcad_ext_strclear_log}" "External install directory: ${BRLCAD_EXT_DIR_REAL}\n")
+
+    file(APPEND "${_brlcad_ext_strclear_history_log}" "\n########################################################################\n")
+    file(APPEND "${_brlcad_ext_strclear_history_log}" "BRL-CAD bundled third party path update log entry\n")
+    file(APPEND "${_brlcad_ext_strclear_history_log}" "Timestamp: ${_brlcad_ext_strclear_log_time}\n")
+    file(APPEND "${_brlcad_ext_strclear_history_log}" "Build directory: ${CMAKE_BINARY_DIR}\n")
+    file(APPEND "${_brlcad_ext_strclear_history_log}" "External install directory: ${BRLCAD_EXT_DIR_REAL}\n")
+  endif(NBINARY_FILES OR NNOEXEC_FILES OR NTEXT_FILES)
+
   if(NBINARY_FILES)
+    set(_brlcad_ext_plief_updated 0)
+    set(_brlcad_ext_binary_updated 0)
+    list(LENGTH NBINARY_FILES _brlcad_ext_binary_processed)
     message("Setting rpath on new 3rd party lib and exe files...")
     if(P_RPATH_SUPPORTS_FILE_LIST AND STRCLEAR_SUPPORTS_FILE_LIST AND NOT APPLE)
       set(_brlcad_ext_binary_files)
@@ -1101,26 +1333,117 @@ endfunction()
       if(_brlcad_ext_binary_files)
         set(_brlcad_ext_binary_list "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_binary_postprocess.txt")
         brlcad_ext_write_file_list("${_brlcad_ext_binary_list}" ${_brlcad_ext_binary_files})
-        execute_process(
-          COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" --files "${_brlcad_ext_binary_list}"
-        )
+        brlcad_ext_append_file_list_log("${_brlcad_ext_strclear_log}" "RPATH tool input files" ${_brlcad_ext_binary_files})
+        brlcad_ext_append_file_list_log("${_brlcad_ext_strclear_history_log}" "RPATH tool input files" ${_brlcad_ext_binary_files})
+        if(P_RPATH_SUPPORTS_CHANGE_REPORT)
+          set(_brlcad_ext_rpath_set_if_needed_args)
+          if(P_RPATH_SUPPORTS_SET_IF_NEEDED AND P_RPATH_SUPPORTS_SET_IF_NEEDED_PREPEND)
+            set(_brlcad_ext_rpath_set_if_needed_args --set-rpath-if-needed --set-rpath-if-needed-prepend --stale-rpath-prefix "${_brlcad_ext_install_scrub_path}")
+          endif(P_RPATH_SUPPORTS_SET_IF_NEEDED AND P_RPATH_SUPPORTS_SET_IF_NEEDED_PREPEND)
+          execute_process(
+            COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${_brlcad_ext_rpath_set_if_needed_args} --report-rpath-changes --files "${_brlcad_ext_binary_list}"
+            RESULT_VARIABLE _brlcad_ext_set_rpath_result
+            OUTPUT_VARIABLE _brlcad_ext_plief_report
+            ERROR_VARIABLE _brlcad_ext_set_rpath_error
+          )
+          if(_brlcad_ext_set_rpath_result EQUAL 0)
+            brlcad_ext_append_plief_report_log(
+              _brlcad_ext_plief_updated
+              "${_brlcad_ext_strclear_log}"
+              "RPATH changes made by plief"
+              "${_brlcad_ext_plief_report}"
+            )
+            brlcad_ext_append_plief_report_log(
+              _brlcad_ext_plief_updated
+              "${_brlcad_ext_strclear_history_log}"
+              "RPATH changes made by plief"
+              "${_brlcad_ext_plief_report}"
+            )
+          else(_brlcad_ext_set_rpath_result EQUAL 0)
+            message(WARNING "Batch RPATH update failed: ${_brlcad_ext_set_rpath_error}")
+          endif(_brlcad_ext_set_rpath_result EQUAL 0)
+        else(P_RPATH_SUPPORTS_CHANGE_REPORT)
+          string(SHA256 _brlcad_ext_rpath_log_key "${CMAKE_BINARY_DIR}|${_brlcad_ext_strclear_log_time}|${_brlcad_ext_binary_list}")
+          set(_brlcad_ext_rpath_before_prefix "PLIEF_BEFORE_${_brlcad_ext_rpath_log_key}")
+          set(_brlcad_ext_rpath_after_prefix "PLIEF_AFTER_${_brlcad_ext_rpath_log_key}")
+          execute_process(
+            COMMAND ${P_RPATH_EXECUTABLE} --print-rpath --files "${_brlcad_ext_binary_list}"
+            RESULT_VARIABLE _brlcad_ext_rpath_before_result
+            OUTPUT_VARIABLE _brlcad_ext_rpath_before_output
+            ERROR_VARIABLE _brlcad_ext_rpath_before_error
+          )
+          if(_brlcad_ext_rpath_before_result EQUAL 0)
+            brlcad_ext_rpath_output_to_properties("${_brlcad_ext_rpath_before_prefix}" "${_brlcad_ext_rpath_before_output}")
+          else(_brlcad_ext_rpath_before_result EQUAL 0)
+            message(WARNING "Unable to inspect pre-update RPATH values: ${_brlcad_ext_rpath_before_error}")
+          endif(_brlcad_ext_rpath_before_result EQUAL 0)
+
+          execute_process(
+            COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" --files "${_brlcad_ext_binary_list}"
+            RESULT_VARIABLE _brlcad_ext_set_rpath_result
+            ERROR_VARIABLE _brlcad_ext_set_rpath_error
+          )
+          if(NOT _brlcad_ext_set_rpath_result EQUAL 0)
+            message(WARNING "Batch RPATH update failed: ${_brlcad_ext_set_rpath_error}")
+          endif(NOT _brlcad_ext_set_rpath_result EQUAL 0)
+          execute_process(
+            COMMAND ${P_RPATH_EXECUTABLE} --print-rpath --files "${_brlcad_ext_binary_list}"
+            RESULT_VARIABLE _brlcad_ext_rpath_after_result
+            OUTPUT_VARIABLE _brlcad_ext_rpath_after_output
+            ERROR_VARIABLE _brlcad_ext_rpath_after_error
+          )
+          if(_brlcad_ext_rpath_after_result EQUAL 0)
+            brlcad_ext_rpath_output_to_properties("${_brlcad_ext_rpath_after_prefix}" "${_brlcad_ext_rpath_after_output}")
+            if(_brlcad_ext_rpath_before_result EQUAL 0)
+              brlcad_ext_log_plief_rpath_changes(
+                _brlcad_ext_plief_updated
+                "${_brlcad_ext_strclear_log}"
+                "RPATH changes made by plief"
+                "${_brlcad_ext_rpath_before_prefix}"
+                "${_brlcad_ext_rpath_after_prefix}"
+                ${_brlcad_ext_binary_files}
+              )
+              brlcad_ext_log_plief_rpath_changes(
+                _brlcad_ext_plief_updated
+                "${_brlcad_ext_strclear_history_log}"
+                "RPATH changes made by plief"
+                "${_brlcad_ext_rpath_before_prefix}"
+                "${_brlcad_ext_rpath_after_prefix}"
+                ${_brlcad_ext_binary_files}
+              )
+            endif(_brlcad_ext_rpath_before_result EQUAL 0)
+          else(_brlcad_ext_rpath_after_result EQUAL 0)
+            message(WARNING "Unable to inspect post-update RPATH values: ${_brlcad_ext_rpath_after_error}")
+          endif(_brlcad_ext_rpath_after_result EQUAL 0)
+        endif(P_RPATH_SUPPORTS_CHANGE_REPORT)
+        message("Clearing residual stale path strings from 3rd party binaries with strclear...")
         execute_process(
           COMMAND
-            ${STRCLEAR_EXECUTABLE} -v -b --files "${_brlcad_ext_binary_list}" "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}"
-            "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/"
-            "${BRLCAD_EXT_DIR_REAL}"
+            ${STRCLEAR_EXECUTABLE} -v -p -b --files "${_brlcad_ext_binary_list}" ${_brlcad_ext_binary_clear_targets}
+          OUTPUT_VARIABLE _brlcad_ext_binary_strclear_output
+          ECHO_OUTPUT_VARIABLE
         )
+        brlcad_ext_count_strclear_updates(_brlcad_ext_binary_count "${_brlcad_ext_binary_strclear_output}")
+        math(EXPR _brlcad_ext_binary_updated "${_brlcad_ext_binary_updated} + ${_brlcad_ext_binary_count}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_log}" "Residual stale path cleanup by strclear for shared objects and executables" "${_brlcad_ext_binary_strclear_output}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_history_log}" "Residual stale path cleanup by strclear for shared objects and executables" "${_brlcad_ext_binary_strclear_output}")
       endif(_brlcad_ext_binary_files)
+      list(LENGTH _brlcad_ext_binary_files _brlcad_ext_binary_processed)
     else(P_RPATH_SUPPORTS_FILE_LIST AND STRCLEAR_SUPPORTS_FILE_LIST AND NOT APPLE)
       # Set local RPATH so the files will work during build
+      message("Clearing residual stale path strings from 3rd party binaries with strclear...")
       foreach(lf ${NBINARY_FILES})
-        rpath_build_dir_process("${CMAKE_BINARY_DIR}" "${lf}")
+        brlcad_ext_append_file_list_log("${_brlcad_ext_strclear_log}" "RPATH tool input files" "${CMAKE_BINARY_DIR}/${lf}")
+        brlcad_ext_append_file_list_log("${_brlcad_ext_strclear_history_log}" "RPATH tool input files" "${CMAKE_BINARY_DIR}/${lf}")
+        rpath_build_dir_process("${CMAKE_BINARY_DIR}" "${lf}" "${_brlcad_ext_strclear_log}" "${_brlcad_ext_strclear_history_log}" _brlcad_ext_binary_count)
+        math(EXPR _brlcad_ext_binary_updated "${_brlcad_ext_binary_updated} + ${_brlcad_ext_binary_count}")
       endforeach(lf ${NBINARY_FILES})
     endif(P_RPATH_SUPPORTS_FILE_LIST AND STRCLEAR_SUPPORTS_FILE_LIST AND NOT APPLE)
-    message("Setting rpath on new 3rd party lib and exe files... done.")
+    message("Setting rpath on new 3rd party lib and exe files... done (${_brlcad_ext_binary_processed} files checked, ${_brlcad_ext_plief_updated} files updated by plief, ${_brlcad_ext_binary_updated} files updated by strclear).")
   endif(NBINARY_FILES)
 
   if(NNOEXEC_FILES)
+    set(_brlcad_ext_noexec_updated 0)
     message("Scrubbing paths from new 3rd party data files...")
     if(STRCLEAR_SUPPORTS_FILE_LIST)
       set(_brlcad_ext_noexec_files)
@@ -1135,8 +1458,14 @@ endfunction()
         set(_brlcad_ext_noexec_list "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_noexec_strclear.txt")
         brlcad_ext_write_file_list("${_brlcad_ext_noexec_list}" ${_brlcad_ext_noexec_files})
         execute_process(
-          COMMAND ${STRCLEAR_EXECUTABLE} -v --binary-only --files "${_brlcad_ext_noexec_list}" "${BRLCAD_EXT_DIR_REAL}"
+          COMMAND ${STRCLEAR_EXECUTABLE} -v -p --binary-only --files "${_brlcad_ext_noexec_list}" ${_brlcad_ext_install_clear_targets}
+          OUTPUT_VARIABLE _brlcad_ext_noexec_strclear_output
+          ${_brlcad_ext_strclear_echo_arg}
         )
+        brlcad_ext_count_strclear_updates(_brlcad_ext_noexec_count "${_brlcad_ext_noexec_strclear_output}")
+        math(EXPR _brlcad_ext_noexec_updated "${_brlcad_ext_noexec_updated} + ${_brlcad_ext_noexec_count}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_log}" "Data file path scrubbing" "${_brlcad_ext_noexec_strclear_output}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_history_log}" "Data file path scrubbing" "${_brlcad_ext_noexec_strclear_output}")
       endif(_brlcad_ext_noexec_files)
     else(STRCLEAR_SUPPORTS_FILE_LIST)
       foreach(tf ${NNOEXEC_FILES})
@@ -1148,14 +1477,21 @@ endfunction()
         # Replace any stale paths in the files
         #message("${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${tf} ${BRLCAD_EXT_DIR_REAL}")
         execute_process(
-          COMMAND ${STRCLEAR_EXECUTABLE} -v -b -c "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}"
+          COMMAND ${STRCLEAR_EXECUTABLE} -v -p -b -c "${CMAKE_BINARY_DIR}/${tf}" ${_brlcad_ext_install_clear_targets}
+          OUTPUT_VARIABLE _brlcad_ext_noexec_strclear_output
+          ${_brlcad_ext_strclear_echo_arg}
         )
+        brlcad_ext_count_strclear_updates(_brlcad_ext_noexec_count "${_brlcad_ext_noexec_strclear_output}")
+        math(EXPR _brlcad_ext_noexec_updated "${_brlcad_ext_noexec_updated} + ${_brlcad_ext_noexec_count}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_log}" "Data file path scrubbing: ${CMAKE_BINARY_DIR}/${tf}" "${_brlcad_ext_noexec_strclear_output}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_history_log}" "Data file path scrubbing: ${CMAKE_BINARY_DIR}/${tf}" "${_brlcad_ext_noexec_strclear_output}")
       endforeach(tf ${NNOEXEC_FILES})
     endif(STRCLEAR_SUPPORTS_FILE_LIST)
-    message("Scrubbing paths from new 3rd party data files... done.")
+    message("Scrubbing paths from new 3rd party data files... done (${_brlcad_ext_noexec_updated} files updated).")
   endif(NNOEXEC_FILES)
 
   if(NTEXT_FILES)
+    set(_brlcad_ext_text_updated 0)
     message("Replacing paths in new 3rd party text files...")
     if(STRCLEAR_SUPPORTS_FILE_LIST)
       set(_brlcad_ext_cmake_text_files)
@@ -1190,16 +1526,28 @@ endfunction()
         set(_brlcad_ext_cmake_text_list "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_cmake_text_strclear.txt")
         brlcad_ext_write_file_list("${_brlcad_ext_cmake_text_list}" ${_brlcad_ext_cmake_text_files})
         execute_process(
-          COMMAND ${STRCLEAR_EXECUTABLE} -v --files "${_brlcad_ext_cmake_text_list}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_BINARY_DIR}"
+          COMMAND ${STRCLEAR_EXECUTABLE} -v -p --files "${_brlcad_ext_cmake_text_list}" "${_brlcad_ext_install_scrub_path}" "${CMAKE_BINARY_DIR}"
+          OUTPUT_VARIABLE _brlcad_ext_text_strclear_output
+          ${_brlcad_ext_strclear_echo_arg}
         )
+        brlcad_ext_count_strclear_updates(_brlcad_ext_text_count "${_brlcad_ext_text_strclear_output}")
+        math(EXPR _brlcad_ext_text_updated "${_brlcad_ext_text_updated} + ${_brlcad_ext_text_count}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_log}" "CMake/package text path replacement for build-tree paths" "${_brlcad_ext_text_strclear_output}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_history_log}" "CMake/package text path replacement for build-tree paths" "${_brlcad_ext_text_strclear_output}")
       endif(_brlcad_ext_cmake_text_files)
 
       if(_brlcad_ext_install_text_files)
         set(_brlcad_ext_install_text_list "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_install_text_strclear.txt")
         brlcad_ext_write_file_list("${_brlcad_ext_install_text_list}" ${_brlcad_ext_install_text_files})
         execute_process(
-          COMMAND ${STRCLEAR_EXECUTABLE} -v --files "${_brlcad_ext_install_text_list}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}"
+          COMMAND ${STRCLEAR_EXECUTABLE} -v -p --files "${_brlcad_ext_install_text_list}" "${_brlcad_ext_install_scrub_path}" "${CMAKE_INSTALL_PREFIX}"
+          OUTPUT_VARIABLE _brlcad_ext_text_strclear_output
+          ${_brlcad_ext_strclear_echo_arg}
         )
+        brlcad_ext_count_strclear_updates(_brlcad_ext_text_count "${_brlcad_ext_text_strclear_output}")
+        math(EXPR _brlcad_ext_text_updated "${_brlcad_ext_text_updated} + ${_brlcad_ext_text_count}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_log}" "Text path replacement for install-prefix paths" "${_brlcad_ext_text_strclear_output}")
+        brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_history_log}" "Text path replacement for install-prefix paths" "${_brlcad_ext_text_strclear_output}")
       endif(_brlcad_ext_install_text_files)
     else(STRCLEAR_SUPPORTS_FILE_LIST)
       foreach(tf ${NTEXT_FILES})
@@ -1225,19 +1573,36 @@ endfunction()
 	  #message("${STRCLEAR_EXECUTABLE} -v -r \"${CMAKE_BINARY_DIR}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_BINARY_DIR}\"")
 	  execute_process(
 	    COMMAND
-	    ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_BINARY_DIR}"
+	    ${STRCLEAR_EXECUTABLE} -v -p -r "${CMAKE_BINARY_DIR}/${tf}" "${_brlcad_ext_install_scrub_path}" "${CMAKE_BINARY_DIR}"
+            OUTPUT_VARIABLE _brlcad_ext_text_strclear_output
+            ${_brlcad_ext_strclear_echo_arg}
 	    )
+          brlcad_ext_count_strclear_updates(_brlcad_ext_text_count "${_brlcad_ext_text_strclear_output}")
+          math(EXPR _brlcad_ext_text_updated "${_brlcad_ext_text_updated} + ${_brlcad_ext_text_count}")
+          brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_log}" "Text path replacement for build-tree paths: ${CMAKE_BINARY_DIR}/${tf}" "${_brlcad_ext_text_strclear_output}")
+          brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_history_log}" "Text path replacement for build-tree paths: ${CMAKE_BINARY_DIR}/${tf}" "${_brlcad_ext_text_strclear_output}")
         else(CMAKE_FILE)
 	  #message("${STRCLEAR_EXECUTABLE} -v -r \"${CMAKE_BINARY_DIR}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_INSTALL_PREFIX}\"")
 	  execute_process(
 	    COMMAND
-	    ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}"
+	    ${STRCLEAR_EXECUTABLE} -v -p -r "${CMAKE_BINARY_DIR}/${tf}" "${_brlcad_ext_install_scrub_path}" "${CMAKE_INSTALL_PREFIX}"
+            OUTPUT_VARIABLE _brlcad_ext_text_strclear_output
+            ${_brlcad_ext_strclear_echo_arg}
 	    )
+          brlcad_ext_count_strclear_updates(_brlcad_ext_text_count "${_brlcad_ext_text_strclear_output}")
+          math(EXPR _brlcad_ext_text_updated "${_brlcad_ext_text_updated} + ${_brlcad_ext_text_count}")
+          brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_log}" "Text path replacement for install-prefix paths: ${CMAKE_BINARY_DIR}/${tf}" "${_brlcad_ext_text_strclear_output}")
+          brlcad_ext_append_strclear_log("${_brlcad_ext_strclear_history_log}" "Text path replacement for install-prefix paths: ${CMAKE_BINARY_DIR}/${tf}" "${_brlcad_ext_text_strclear_output}")
         endif(CMAKE_FILE)
       endforeach(tf ${NTEXT_FILES})
     endif(STRCLEAR_SUPPORTS_FILE_LIST)
-    message("Replacing paths in new 3rd party text files... done.")
+    message("Replacing paths in new 3rd party text files... done (${_brlcad_ext_text_updated} files updated).")
   endif(NTEXT_FILES)
+
+  if(NBINARY_FILES OR NNOEXEC_FILES OR NTEXT_FILES)
+    message("Detailed 3rd party path update log for this configure pass: ${_brlcad_ext_strclear_log}")
+    message("Cumulative 3rd party path update history log: ${_brlcad_ext_strclear_history_log}")
+  endif(NBINARY_FILES OR NNOEXEC_FILES OR NTEXT_FILES)
 
   # Tell the build cleanup about all the copied-in files - otherwise
   # it won't the distcheck cleaning logic won't know to scrub them.
@@ -1247,6 +1612,7 @@ endfunction()
   # directory. Now we set up the install rules.  It is for these
   # stages that we need complete knowledge of the third party files,
   # since configure re-defines all of these rules on every pass.
+  set(_brlcad_ext_cmake_install_rules 0)
   foreach(tf ${TP_FILES})
     # Rather than doing the PROGRAMS install for all binary files, we
     # target just those in the bin directory - those are the ones we
@@ -1275,9 +1641,13 @@ endfunction()
       elseif(APPLE)
         set(_brlcad_install_postprocess_mode "APPLE")
       endif(P_RPATH_EXECUTABLE)
+      set(_brlcad_install_use_selective_rpath FALSE)
+      if(P_RPATH_SUPPORTS_SET_IF_NEEDED_PREPEND)
+        set(_brlcad_install_use_selective_rpath TRUE)
+      endif(P_RPATH_SUPPORTS_SET_IF_NEEDED_PREPEND)
       install(
         CODE
-          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_binary_postprocess(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"PROGRAM\" \"${_brlcad_install_postprocess_mode}\" \"${_brlcad_install_postprocess_tool}\" \"${_brlcad_install_postprocess_rpath}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"${REL_RPATH}\")"
+          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_binary_postprocess(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"PROGRAM\" \"${_brlcad_install_postprocess_mode}\" \"${_brlcad_install_postprocess_tool}\" \"${_brlcad_install_postprocess_rpath}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"${REL_RPATH}\" \"${_brlcad_install_use_selective_rpath}\" \"${BRLCAD_VERBOSE}\")"
       )
       continue()
     endif("${tf}" IN_LIST ALL_BINARY_FILES)
@@ -1289,16 +1659,19 @@ endfunction()
     else(${dir} MATCHES "${BIN_DIR}$")
       is_cmake_file(${tf} CMAKE_FILE)
       if(CMAKE_FILE)
-        message("Adding install rule for CMake find_package file ${CMAKE_INSTALL_PREFIX}/${tf}")
+        math(EXPR _brlcad_ext_cmake_install_rules "${_brlcad_ext_cmake_install_rules} + 1")
         install(
           CODE
-          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_strclear_replace(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"FILE\" \"${CMAKE_BINARY_DIR}\" \"\${CMAKE_INSTALL_PREFIX}\")"
+          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_strclear_replace(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"FILE\" \"${CMAKE_BINARY_DIR}\" \"\${CMAKE_INSTALL_PREFIX}\" \"${BRLCAD_VERBOSE}\")"
           )
       else(CMAKE_FILE)
         install(FILES "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
       endif(CMAKE_FILE)
     endif(${dir} MATCHES "${BIN_DIR}$")
   endforeach(tf ${TP_FILES})
+  if(_brlcad_ext_cmake_install_rules)
+    message("Adding install rules for ${_brlcad_ext_cmake_install_rules} CMake find_package files.")
+  endif(_brlcad_ext_cmake_install_rules)
 
   # Because ${BRLCAD_EXT_DIR}/install is handled at configure time
   # (and indeed MUST be handled at configure time so find_package
