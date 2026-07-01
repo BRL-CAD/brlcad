@@ -92,7 +92,7 @@ jobs:
           cmake -E rm -rf bext_build
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -198,7 +198,7 @@ jobs:
           rm -rf bext_build
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -277,7 +277,7 @@ jobs:
           cmake -E rm -rf bext_build
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -383,7 +383,7 @@ jobs:
           cmake -E rm -rf bext_build
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -475,7 +475,7 @@ jobs:
           cmake -E rm -rf bext_build
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 

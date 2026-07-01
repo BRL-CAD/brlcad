@@ -56,7 +56,7 @@ jobs:
           sudo apt-get install libinput-dev
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -99,7 +99,7 @@ jobs:
         run: Add-Content -Path $env:GITHUB_PATH -Value $env:GITHUB_WORKSPACE
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -145,7 +145,7 @@ jobs:
         run: echo %GITHUB_WORKSPACE%>>"%GITHUB_PATH%"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -193,7 +193,7 @@ jobs:
           brew install xquartz --cask
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -296,7 +296,7 @@ jobs:
           cmake -E rm -rf bext_build
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 
@@ -394,7 +394,7 @@ jobs:
           cmake -E rm -rf bext_build
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: brlcad
 

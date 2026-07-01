@@ -61,7 +61,7 @@ jobs:
           sudo apt-get clean
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Directory setup
         run: |
