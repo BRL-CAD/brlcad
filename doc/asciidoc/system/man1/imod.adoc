@@ -1,62 +1,98 @@
 = IMOD(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-imod - Modify a stream of short integers with mathematical operations
+imod - modify a stream of short integers with arithmetic operations
 
 == SYNOPSIS
 
 [source]
 ----
-imod [options]... [input.shorts] > output.shorts
+imod [-a add] [-s sub] [-m mult] [-d div] [-A] [-e exp] [-r root] [file.s] > output.s
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*imod* reads a stream of 16-bit signed short integers and applies a sequence of mathematical operations to them, writing the modified 16-bit signed short integers to standard output. 
+*imod* reads a stream of 16-bit signed short integers and applies a
+sequence of arithmetic operations to each value, writing the modified
+short integers to standard output. If the optional _file.s_ argument is
+given, *imod* reads from that file; otherwise it reads from standard
+input.
 
-Any number of addition, subtraction, multiplication, division, absolute value, or exponentiation operations may be specified on the command line. The operations are applied to each number sequentially in the order they are provided using an internal lookup table. Because the output format is constrained to 16-bit signed integers, values that fall outside the representable range (-32768 to 32767) are clipped to the nearest valid value, and a summary of the clipping instances is printed to standard error upon completion.
+Any number of operations may be given on the command line, and they are
+applied to each value in the order they appear. For efficiency the
+operations are precomputed once into a 65536-entry lookup table that maps
+every possible input short to its result. Because the output is
+constrained to the signed 16-bit range (-32768 to 32767), results outside
+that range are clipped to the nearest limit and a count of high and low
+clipping events is printed to standard error when the program finishes.
 
-If the optional _input.shorts_ file is specified, *imod* reads from it; otherwise, it reads from standard input.
+*imod* refuses to run if either standard input or standard output is a
+terminal. It is the short-integer counterpart of *bwmod*(1) and *dmod*(1),
+operating on the same kind of data used by tools such as *dsp*(5).
 
 [[options]]
 == OPTIONS
 
 *-a* _val_::
-Add _val_ to each number.
+  Add _val_ to each value.
 
 *-s* _val_::
-Subtract _val_ from each number.
+  Subtract _val_ from each value.
 
 *-m* _val_::
-Multiply each number by _val_.
+  Multiply each value by _val_.
 
 *-d* _val_::
-Divide each number by _val_. Division by zero will cause the program to abort.
+  Divide each value by _val_. A _val_ of zero aborts the program.
 
 *-A*::
-Compute the absolute value of each number.
+  Replace each value with its absolute value.
 
 *-e* _val_::
-Raise each number to the power of _val_ (exponentiation).
+  Raise each value to the power _val_ (exponentiation).
 
 *-r* _val_::
-Compute the _val_-th root of each number (equivalent to raising to the power of 1/_val_). A zero root will cause the program to abort.
+  Take the _val_-th root of each value (equivalent to raising to the
+  power 1/_val_). A _val_ of zero aborts the program.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Sequential Mathematical Operations on Shorts
-[example]
+.Scale and offset a short-integer data stream
 ====
-**imod -a 5.0 -m 2.0 -A < data.shorts > out.shorts**
+[source,bash]
+----
+imod -m 2.0 -a 100 < terrain.s > brighter.s
+----
+Reads short integers from _terrain.s_, multiplies each by 2.0 and then
+adds 100, writing the result to _brighter.s_. The operations are applied
+in command-line order, so each value becomes 2*value + 100; any results
+that exceed the 16-bit range are clipped and reported on standard error.
+====
 
-Reads short integers from _data.shorts_. For each number, it adds 5.0, then multiplies the result by 2.0, and finally takes the absolute value, writing the output to _out.shorts_.
+.Rectify and attenuate a signal before further processing
 ====
+[source,bash]
+----
+imod -A -d 4 < signal.s | dpeak > peaks.s
+----
+Takes the absolute value of every sample in _signal.s_, divides each by
+4 to bring the magnitudes down, and pipes the rectified stream directly
+into *dpeak*(1) for peak detection.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwmod*(1), *dmod*(1), *smod*(1), *umod*(1), *istats*(1), *dsp*(5)
 
 [[author]]
 == AUTHOR
@@ -66,7 +102,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1986-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

@@ -1,64 +1,94 @@
 = UMOD(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-umod - Perform mathematical operations on a stream of 16-bit unsigned short integers
+umod - apply arithmetic operations to a stream of 16-bit unsigned short integers
 
 == SYNOPSIS
 
 [source]
 ----
-umod [-a add_val] [-s sub_val] [-m mult_val] [-d div_val] [-A] [-e exp_val] [-r root_val] [input.ushorts] > output.ushorts
+umod [-a add] [-s sub] [-m mult] [-d div] [-A] [-e exp] [-r root] [file.s] > output.s
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*umod* reads a data stream consisting of 16-bit unsigned short integers, applies a sequence of specified mathematical operations to each value, and writes the modified stream to standard output. 
+*umod* reads a stream of 16-bit unsigned short integers, applies a chain of
+arithmetic operations to each value, and writes the modified stream to standard
+output. Any number of add, subtract, multiply, divide, exponentiation, and
+absolute-value operations may be given; they are applied in the exact order they
+appear on the command line.
 
-Multiple mathematical operations can be chained together. They are evaluated in the exact order they appear on the command line. *umod* maintains an internal lookup table to optimize execution, calculating the resulting value for all possible 16-bit unsigned short integers (0 to 65535) before processing the file.
+To avoid recomputing the operations for every sample, *umod* precomputes a
+lookup table covering all 65536 possible input values. Results that exceed the
+representable range are clipped to 65535 (high) or 0 (low), and the total number
+of clipped values is reported to standard error when processing finishes.
 
-If a mathematical operation yields a result that exceeds the maximum representable bounds of a 16-bit unsigned short integer, the value is clamped (clipped) to the maximum or minimum bound (65535 or 0). The total number of values clipped during the operation will be reported to standard error at the end of the execution.
-
-If an _input.ushorts_ file is not provided, *umod* will read from standard input.
+If _file.s_ is given it is read as input; otherwise *umod* reads from standard
+input. The companion tools *smod*(1) and *imod*(1) perform the same operations
+on signed short integer streams, and *dmod*(1) operates on double-precision
+floating point streams.
 
 [[options]]
 == OPTIONS
 
-*-a* _add_val_::
-Add _add_val_ to each value.
+*-a* _add_::
+  Add _add_ to each value.
 
-*-s* _sub_val_::
-Subtract _sub_val_ from each value.
+*-s* _sub_::
+  Subtract _sub_ from each value.
 
-*-m* _mult_val_::
-Multiply each value by _mult_val_.
+*-m* _mult_::
+  Multiply each value by _mult_.
 
-*-d* _div_val_::
-Divide each value by _div_val_.
+*-d* _div_::
+  Divide each value by _div_. A divisor of zero is an error.
 
 *-A*::
-Compute the absolute value of each integer. (Note: Since the input consists of unsigned integers, this operation will only affect values if previous operations, such as subtraction, resulted in a negative intermediate value).
+  Replace each value with its absolute value. Since the input is unsigned this
+  only has an effect when a prior operation (such as subtraction) produced a
+  negative intermediate result.
 
-*-e* _exp_val_::
-Raise each value to the power of _exp_val_.
+*-e* _exp_::
+  Raise each value to the power _exp_.
 
-*-r* _root_val_::
-Take the _root_val_ root of each value (equivalent to raising to the power of 1/_root_val_).
+*-r* _root_::
+  Take the _root_ root of each value (equivalent to raising to the power
+  1/_root_). A root of zero is an error.
 
 [[examples]]
 == EXAMPLES
 
-.Basic Math Scaling
-[example]
+.Bias and scale a sample stream
 ====
-**umod -a 100 -m 3 data.ushorts > scaled.ushorts**
+[source,bash]
+----
+umod -a 100 -m 3 data.s > scaled.s
+----
+For each value, 100 is added first and the result is then multiplied by 3,
+writing the modified unsigned shorts to _scaled.s_. Because operations apply in
+command-line order, swapping *-a* and *-m* would yield a different result.
+====
 
-Reads unsigned short integers from _data.ushorts_. For each value, it first adds 100, then multiplies the intermediate result by 3, and writes the final 16-bit unsigned shorts to _scaled.ushorts_.
+.Convert a pixel image to a stream and stretch its contrast
 ====
+[source,bash]
+----
+pix-bw scene.pix | bw-d | d-u | umod -s 8000 -m 2 > stretched.s
+----
+The intensity of a *pix*(5) image is reduced to a single channel, converted to
+an unsigned short stream, then darkened by subtracting an offset and brightened
+by doubling, demonstrating *umod* used as a stage in a pipeline.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *smod*(1), *imod*(1), *dmod*(1), *ustats*(1)
 
 [[author]]
 == AUTHOR
@@ -68,7 +98,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1986-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

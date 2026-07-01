@@ -1,62 +1,83 @@
 = DMOD(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-dmod - Modify a stream of doubles with mathematical operations
+dmod - apply arithmetic operations to a stream of doubles
 
 == SYNOPSIS
 
 [source]
 ----
-dmod [options]... [input.doubles] > output.doubles
+dmod [-a add] [-s sub] [-m mult] [-d div] [-A] [-e exp] [-r root] [doubles]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*dmod* reads a stream of double-precision floating-point numbers and applies a sequence of mathematical operations to them, writing the modified double-precision values to standard output. 
+*dmod* reads a stream of 64-bit double-precision floating-point numbers,
+applies one or more arithmetic operations to every value, and writes the
+modified doubles to standard output.
 
-Any number of addition, subtraction, multiplication, division, absolute value, or exponentiation operations may be specified on the command line. The operations are applied to each number sequentially in the order they are provided.
+Any number of add, subtract, multiply, divide, absolute value, or
+exponentiation operations may be given on the command line. They are
+applied to each value in the order they appear, so the operations form a
+left-to-right pipeline.
 
-If the optional _input.doubles_ file is specified, *dmod* reads from it; otherwise, it reads from standard input.
+If a file argument is supplied, *dmod* reads from it; otherwise it reads
+from standard input. Both the input and output are raw binary doubles,
+so the standard input and output must not be a terminal. See *dconv*(1)
+and *d-i*(1) for converting between doubles and other numeric formats.
 
 [[options]]
 == OPTIONS
 
 *-a* _val_::
-Add _val_ to each number.
+  Add _val_ to each number.
 
 *-s* _val_::
-Subtract _val_ from each number.
+  Subtract _val_ from each number.
 
 *-m* _val_::
-Multiply each number by _val_.
+  Multiply each number by _val_.
 
 *-d* _val_::
-Divide each number by _val_. Division by zero will cause the program to abort.
+  Divide each number by _val_. A _val_ of zero is rejected.
 
 *-A*::
-Compute the absolute value of each number.
+  Replace each number with its absolute value.
 
 *-e* _val_::
-Raise each number to the power of _val_ (exponentiation).
+  Raise each number to the power _val_.
 
 *-r* _val_::
-Compute the _val_-th root of each number (equivalent to raising to the power of 1/_val_). A zero root will cause the program to abort.
+  Take the _val_-th root of each number (raise to the power 1/_val_). A
+  _val_ of zero is rejected.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Sequential Mathematical Operations
-[example]
+.Rescale a height field to inches and clamp negatives
 ====
-**dmod -a 5.0 -m 2.0 -A < data.raw > out.raw**
+[source,bash]
+----
+dmod -m 0.0393701 -A terrain_mm.d > terrain_in_pos.d
+----
+Reads doubles from _terrain_mm.d_ (values in millimeters), multiplies each
+by 0.0393701 to convert to inches, then takes the absolute value to remove any
+negative elevations, writing the result to _terrain_in_pos.d_. Operations
+are applied left to right, so the scaling happens before the absolute value.
+====
 
-Reads double-precision numbers from _data.raw_. For each number, it adds 5.0, then multiplies the result by 2.0, and finally takes the absolute value, writing the output to _out.raw_.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dconv*(1), *d-i*(1), *d-f*(1)
 
 [[author]]
 == AUTHOR
@@ -66,7 +87,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
