@@ -1,120 +1,143 @@
 = COIL(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-coil - generate various types of coils using pipe control points calculated from coil dimensions
+coil - generate a coil as a BRL-CAD pipe primitive
 
 == SYNOPSIS
 
 [source]
 ----
-coil [options]... [name]
+coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]
+     [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]
+     [-S number_of_turns,mean_outer_diameter,wire_diameter,helix_angle,pitch,winding_direction]
+     [-l overall_length] [-L] [name]
 ----
 
 
-[[coil_description]]
+[[description]]
 == DESCRIPTION
 
-*coil* generates a BRL-CAD pipe primitive representing a coil according to user-provided dimensions. If no dimensions are supplied, default values are used.
+*coil* generates a coil modeled as a BRL-CAD pipe primitive from a set
+of dimensional parameters.  If no parameters are supplied, a default coil
+is created.  All lengths are in millimeters and the helix angle is in degrees.
 
-When executed as a standalone program, the coil is created in a new database named _coil.g_. When executed as a command within a BRL-CAD modeling environment (such as MGED or Archer), the coil is created in the currently open database.
+When run as a standalone program, the coil is written to a new database named
+_coil.g_; *coil* refuses to overwrite an existing file of that name.  When run
+as a command inside a modeling environment such as *mged*(1) or *archer*(1),
+the coil is created in the currently open database.
 
-By default, the resulting geometry object is named `coil`. An alternate object name can be specified by providing an optional _name_ argument at the end of the command.
+The created object is named _coil_ by default; an alternate _name_ may be given
+as a trailing argument.  The result is a combination unioning the coil core
+pipe (and, for ground caps, subtracting the capping solids).
 
 
-[[coil_options]]
+[[options]]
 == OPTIONS
 
-*-d mean_outer_diameter*::
-Sets the mean outer diameter (millimeters) of the coil.
+*-d* _mean_outer_diameter_::
+  Mean outer diameter of the coil in millimeters.
 
-*-w wire_diameter*::
-Specify the diameter (millimeters) of the wire to be wound into a coil.
+*-w* _wire_diameter_::
+  Diameter of the wire wound into the coil in millimeters.
 
-*-H helix_angle*::
-Specify the helix angle (degrees) of the coil.
+*-H* _helix_angle_::
+  Helix angle of the coil in degrees.
 
-*-p pitch*::
-Specify the pitch - distance between center of wire at beginning and end of a single turn in millimeters. Minimum value is equal to the wire diameter.
+*-p* _pitch_::
+  Distance, in millimeters, between the center of the wire at the beginning and
+  end of a single turn.  The minimum (and default) value is the wire diameter;
+  a smaller pitch is clamped up to the wire diameter.
 
-*-n number_of_turns*::
-Sets the number of turns desired in the coil. Must be an integer value greater than zero - fractional turns are not supported.
+*-n* _number_of_turns_::
+  Number of turns in the coil.  Must be a positive integer; fractional turns
+  are not supported.
 
-*-s start_cap_type*::
-Specify the capping style for the start of the coil. The default is 0, with no special styling. 1 is a squared off cap, 2 is a cap ground in the plane normal to the vector of the coiling direction (the x-y plane), and 3 squares off the coil as well as grounding it. Any non-default cap will result in extra turns being added to the coil above those specified with *-n*.
+*-s* _start_cap_type_::
+  Capping style for the start of the coil.  0 (default) applies no special
+  styling, 1 is a squared-off cap, 2 grinds the cap flat in the plane normal to
+  the coiling direction, and 3 both squares off and grinds the cap.  Any
+  non-default cap adds extra turns beyond those requested with *-n*.
 
-*-e end_cap_type*::
-Specify the capping style for the end of the coil. Default and options are the same as for the starting cap.
+*-e* _end_cap_type_::
+  Capping style for the end of the coil.  Values are the same as for *-s*.
 
-*-S number_of_turns,mean_outer_diameter,wire_diameter,helix_angle,pitch,winding_direction*::
-An advanced option that allows specification of multiple sections, with settings specified in a delimited list (e.g., using commas) as above. All settings are required for each section - multiple sections are defined in left to right order with the left-most section being the starting section at the origin. Capping styles are supported for multiple section coils, but the presence of one or more sections specified with *-S* will cause any supplied parameters other than capping styles to be ignored. Note that many invalid inputs will generate only an empty database file.
+*-S* _number_of_turns,mean_outer_diameter,wire_diameter,helix_angle,pitch,winding_direction_::
+  Define one coil section as a comma-delimited list of all six values
+  (_winding_direction_ is 1 for right-handed, anything else for left-handed).
+  Repeat *-S* to build a multi-section coil; sections are stacked from the
+  origin in the order given.  Specifying any *-S* section causes all other
+  dimensional options to be ignored (capping with *-s*/*-e* still applies).
 
-*-l overall_length*::
-Clamp the overall length of a coil to the specified value. This option is currently limited - it will work only for uncapped coils and the helix angle must be zero. To fit length, pitch will be adjusted first. If pitch adjustments aren't enough, turns will be removed. If both of those variables can't be adjusted to satisfy the length, wire diameter will be adjusted.
+*-l* _overall_length_::
+  Clamp the overall length of the coil to the given value in millimeters.
+  Only effective for uncapped coils with a zero helix angle.  To fit the
+  length, pitch is adjusted first, then turns are removed, and finally wire
+  diameter is reduced.  Length clamping does not apply to *-S* sections.
 
 *-L*::
-Instructs the coil tool to create a "left-handed" coil (default is "right-handed"). From the starting point of the coil, the coil winding will proceed in the -x direction for a left-handed coil, and in the +x direction for a right-handed coil.
+  Create a left-handed coil.  The default is right-handed (winding proceeds in
+  +x from the start); *-L* winds in -x.
 
-*-h, -?*::
-Print usage information and exit.
+*-h*, *-?*::
+  Print usage information and exit.
 
 
-[[coil_examples]]
+[[examples]]
 == EXAMPLES
 
-The following will create coils exercising the various options.
-
-.Creating a named coil with specified dimensions
-[example]
+.Create a named spring with specific dimensions
 ====
-*coil -d 20 -w 2 -p 5 -n 10 my_spring*
-
-Creates a 10-turn coil named `my_spring` with a mean outer diameter of 20mm, a wire diameter of 2mm, and a pitch of 5mm.
-====
-
-.Creating a tight coil with default dimensions and ground ends
-[example]
-====
-*coil -s 3 -e 3*
+[source,bash]
+----
+coil -d 20 -w 2 -p 5 -n 10 my_spring
+----
+Writes _coil.g_ containing a 10-turn coil named _my_spring_ with a 20 mm mean
+outer diameter, 2 mm wire, and 5 mm pitch.
 ====
 
-.Creating a coil with large helix angle and pitch
-[example]
+.Create a coil with ground ends and inspect its volume
 ====
-*coil -H 40 -p 350*
+[source,bash]
+----
+coil -d 50 -w 5 -n 12 -s 3 -e 3 valve_spring
+mged -c coil.g 'analyze valve_spring'
+----
+Builds a compression-spring-style coil whose ends are squared off and ground
+flat, then opens the database in *mged*(1) to report the part's bounding box
+and volume.
 ====
 
-.Creating a multi-section coil with right-handed winding
-[example]
+.Build a two-section coil
 ====
-*coil -S 10,1000,50,60,800,1 -S 10,1000,50,0,100,1*
+[source,bash]
+----
+coil -S 10,1000,50,60,800,1 -S 10,1000,50,0,100,1 stacked_coil
+----
+Stacks a 10-turn section with a 60-degree helix angle and 800 mm pitch on top
+of a tighter 10-turn section, both right-handed, in a single _stacked_coil_
+object.
 ====
 
 
-[[diagnostics]]
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Not much error checking yet - need to add.
+*brlcad*(1), *mged*(1), *archer*(1)
 
 
 [[author]]
 == AUTHOR
 
-Clifford Yapp
+BRL-CAD Team
 
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2009-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
-
-[[bugs]]
-== BUGS
-
-There are many inputs that will be accepted but will attempt to generate invalid pipes.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

@@ -1,135 +1,173 @@
 = FENCE(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-fence - generates a BRL-CAD .g file containing a chain-link fence.
+fence - generate a chain-link fence in a BRL-CAD geometry database
 
 == SYNOPSIS
 
 [source]
 ----
-fence [options]...
+fence [options] -o output.g
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fence* generates a chain-link fence model in a BRL-CAD database. Every parameter of the fence can be adjusted, including the overall dimensions, pole properties, wire properties, and material settings. The tool can be run interactively or configured entirely via command-line options.
+*fence* generates a chain-link fence model and writes it to a BRL-CAD
+*.g* geometry database.  The fence is built from RCC poles spaced along
+its length, joined by a zig-zagging wire mesh.  Every parameter of the
+fence may be adjusted on the command line, including its overall
+dimensions, pole radius and spacing, wire radius and twist angle, object
+names, and per-component material and color.
 
+There are no positional arguments; the output destination is set with
+*-o* (defaulting to *fence.g*).  With no dimensional options the program
+uses its built-in defaults: a 3000mm long, 2000mm tall fence with 3000mm
+pole spacing, 30mm poles, and 2mm wire at a 45 degree twist, in
+millimeters.  All dimensional values are interpreted in the units set
+with *-u*.
+
+Most options come in a lowercase/uppercase pair.  The lowercase letter
+sets a value directly; the uppercase letter either toggles a mode
+relative to its default, or applies the value to all fence components at
+once (poles, mesh, and wire) rather than to the fence combination alone.
+
+The resulting database can be visualized or further edited with *mged*(1)
+and rendered with *rt*(1).
 
 [[options]]
 == OPTIONS
 
 *-i*, *-I*::
-Specifies (-i) or toggles (-I) interactive mode, prompting for parameters from standard input.
+  Enable (*-i*) or toggle (*-I*) interactive mode, prompting for
+  parameters on standard input.
 
 *-v*, *-V*::
-Specifies (-v) or toggles (-V) verbose mode.
+  Enable (*-v*) or toggle (*-V*) verbose mode.
 
 *-d*, *-D*::
-Specifies (-d) or toggles (-D) debug mode.
+  Enable (*-d*) or toggle (*-D*) debug mode.
 
 *-o*, *-O* _filename_::
-Specifies the output database file name.
+  Output geometry database file name (default *fence.g*).
 
-*-k*, *-K* '_string_'::
-The string name/title of the CSG database.
+*-k*, *-K* _string_::
+  Title/identification string stored in the database header.
 
-*-u*, *-U* '_units_'::
-The units of the data in the CSG database (e.g., mm, in).
+*-u*, *-U* _units_::
+  Units for the database and all dimensional values (e.g. *mm*, *in*);
+  default *mm*.
 
-*-n*, *-N* ['_x y z_' | _val_]::
-Specifies the height as either a vector or a single scalar value.
+*-n* _'x y z'_, *-N* _val_::
+  Fence height.  *-n* takes a vector; *-N* takes a single scalar applied
+  along +Z.  May not be zero.
 
-*-l*, *-L* ['_x y z_' | _val_]::
-Specifies the length (width) of the fence as either a vector or a single scalar value.
+*-l* _'x y z'_, *-L* _val_::
+  Fence length (width).  *-l* takes a vector; *-L* takes a single scalar
+  applied along +X.  May not be zero.
 
 *-r* _radius_::
-The radius of the fence's mesh wires.
+  Radius of the mesh wires.  May not be zero.
 
 *-R* _radius_::
-The radius of the fence poles.
+  Radius of the fence poles.  May not be zero.
 
 *-a*, *-A* _angle_::
-The primary angle of the wire 'zig-zagging'.
+  Primary angle, in degrees, of the wire zig-zag.  May not be zero.
 
 *-j*, *-J* _distance_::
-The maximum spacing between the poles.
+  Maximum spacing between poles.  May not be zero.
 
-*-t*, *-T* '_material_'::
-The material of the fence (-t) or the material of all generated regions (-T).
+*-t* _material_, *-T* _material_::
+  Shader/material name for the fence region (*-t*) or for every generated
+  region (*-T*).
 
-*-b*, *-B* '_parameters_'::
-The parameter string for the fence material (-b) or all region materials (-B).
+*-b* _parameters_, *-B* _parameters_::
+  Shader parameter string for the fence region (*-b*) or for every
+  generated region (*-B*).
 
-*-c*, *-C* '_r g b_'::
-The RGB color of the fence (-c) or all region materials (-C). Values must be 0-255.
+*-c* _'r g b'_, *-C* _'r g b'_::
+  RGB color (each value 0-255) for the fence region (*-c*) or for every
+  generated region (*-C*).
 
 *-f*, *-F* _fencename_::
-The base name of the fence objects in the database.
+  Base name of the fence object(s) in the database.
 
 *-p*, *-P* _polename_::
-The base name of the pole objects in the database.
+  Base name of the pole object(s).
 
 *-m*, *-M* _meshname_::
-The base name of the mesh objects in the database.
+  Base name of the mesh object(s).
 
 *-w*, *-W* _wirename_::
-The base name of the wire objects in the database.
+  Base name of the wire object(s).
 
 *-s*, *-S* _segmentname_::
-The base name of the segment objects in the database.
+  Base name of the wire segment object(s).
 
-*-e*, *-E* [_fpmw_]::
-Specify components (fence, pole, mesh, wire) to edit interactively. 'e' specifies edits, 'E' specifies the inverse of the defaults.
+*-e*, *-E* _fpmw_::
+  Select which components (*f*ence, *p*ole, *m*esh, *w*ire) are prompted
+  for in interactive mode.  *-e* sets the listed components; *-E* toggles
+  them relative to their defaults.
 
-*-g*, *-G* [_fpm_]::
-Specify which parts of the fence object(s) to generate (fence, pole, mesh). 'g' specifies to generate, 'G' specifies the inverse of defaults.
+*-g*, *-G* _fpm_::
+  Select which components (*f*ence, *p*ole, *m*esh) to generate.  *-g*
+  generates exactly the listed components; *-G* toggles them relative to
+  their defaults.
 
 *-x*, *-X*::
-Display command-line parameter examples and exit.
+  Print command-line usage examples and exit.
 
 *-z*, *-Z*::
-Display default settings and exit.
+  Print the default settings and exit.
 
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Generate a simple fence using default settings
-[example]
+.Generate a custom fence and render it
 ====
-*fence -o fence.g*
+[source,bash]
+----
+fence -o yard.g -N 1800 -L 6000 -j 2000 -R 25 -r 2 -a 60 -C '90 90 90'
+rt -o yard.png yard.g fence.r
+----
+Writes a 1.8m tall, 6m long fence to *yard.g* with poles spaced every 2m
+(25mm radius), 2mm mesh wire twisted at 60 degrees, and a gray color
+applied to all components.  The second command renders the resulting
+*fence.r* region to an image with *rt*(1).
 ====
 
-.Generate a 2000mm long fence with customized components
-[example]
+.Generate only the poles into a database
 ====
-*fence -o fence.g -L 2000 -H 1500 -r 2.5 -R 25 -c '128 128 128'*
+[source,bash]
+----
+fence -o posts.g -g p -L 9000 -j 3000 -R 40
+----
+Generates just the line of poles (no mesh) for a 9m run with 3m spacing
+and 40mm radius, useful when the mesh is modeled separately or omitted.
 ====
 
-Creates a 2-meter long fence with 1.5-meter height, 2.5mm wire radius, 25mm pole radius, and gray color.
+[[see_also]]
+== SEE ALSO
 
+*brlcad*(1), *mged*(1), *rt*(1), *picket_fence*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
-
-[[see_also]]
-== SEE ALSO
-
-brlcad(1), mged(1)
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
