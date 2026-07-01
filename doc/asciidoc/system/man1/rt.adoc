@@ -23,14 +23,6 @@ The *rt* program is a simple front-end to *librt*(3) which can be invoked direct
 
 The following options are recognized:
 
-*-. #*::
-selects the factor used in NUgrid algorithm. Default is 1.5 .
-
-
-*-, #*::
-selects which space partitioning algorithm to use
-
-
 *-a #*, *--azimuth #*::
 selects auto-sizing, and gives the view azimuth in degrees. Used with *-e* and conflicts with *-M* .
 
@@ -131,8 +123,20 @@ defines the width of each scanline in pixels.
 sets the *librt*(3) debug flags to the given hexadecimal bit vector. See raytrace.h for the bit definitions. (Notice that *-! #* sets the *libbu*(3) debug flags to the given hexadecimal bit vector. See bu.h for the bit definitions.)
 
 
-*-z*, *--opencl*::
-Enables OpenCL accelerated raytracing (OpenCL must be enabled at compilation time for this option to be present.)
+*-z #*, *--opencl #*::
+enables (*-z1*) or disables (*-z0*) OpenCL accelerated raytracing. OpenCL must be enabled at compilation time for this option to have any effect.
+
+
+*-d file*, *--density-file file*::
+specifies a material density definitions file, used by analysis-oriented views (such as *rtweight*(1)) to map region material codes to densities.
+
+
+*-q #*, *--rand-table-size #*::
+sets the number of entries used from the random-number half-table. The value must be greater than 0 and no larger than the compiled-in maximum. This is primarily of interest when tuning reproducibility of dithering and sampling.
+
+
+*-I file*, *--objects-file file*::
+reads the list of objects (treetops) to raytrace from the named text file, one object name per line, instead of (or in addition to) naming them on the command line.
 
 
 *-A #*, *--ambient #*::
@@ -186,7 +190,7 @@ sets the NMG_debug flags to the given hexadecimalbit vector. See h/nmg.h for the
 
 
 *-O output.dpix*, *--output-double output.dpix*::
-specifies the name of a file to store the double-precision floating-point version of the image. *dpix-pix*(1) can be used to later convert the file to *pix*(5) format output. (Deferred implementation)
+specifies the name of a file in which to store a double-precision floating-point version of the image. *dpix-pix*(1) can be used to later convert the file to *pix*(5) format output.
 
 
 *-P #*, *--cpus #*::
@@ -206,7 +210,7 @@ turns on stereo viewing. The left-eye image is drawn in red, and the right-eye i
 
 
 *-T #[/#]*, *--tolerance #[/#]* or *-T #[,#]*, *--tolerance #[,#]*::
-sets the calculation tolerances used by *librt*(3). If only one number is given, it specifies the distance tolerance. Any two entities closer than this distance are considered to be the same. The default distance tolerance is 0.005mm. If the second number is given, it specifies the value of the dot product below which two lines are to be considered perpendicular. This number should be near zero, but in any case should be less than 1. The default perpendicular tolerance is 1e-6. If both calculation tolerances are provided, they shall be separated by either a slash ("/") or a comma (","), with no white space between them. For example, the default tolerances would be specified as *-T0.005/1e-6* on the command line.
+sets the calculation tolerances used by *librt*(3). If only one number is given, it specifies the distance tolerance. Any two entities closer than this distance are considered to be the same. The default distance tolerance is 0.0005mm. If the second number is given, it specifies the value of the dot product below which two lines are to be considered perpendicular. This number should be near zero, but in any case should be less than 1. The default perpendicular tolerance is 1e-6. If both calculation tolerances are provided, they shall be separated by either a slash ("/") or a comma (","), with no white space between them. For example, the default tolerances would be specified as *-T0.0005/1e-6* on the command line.
 
 
 *-U #*, **--use-air #*::
@@ -218,19 +222,27 @@ sets the view aspect. This is the ratio of width over height and can be specifie
 
 
 *-W*, *--white-background*::
-specifies rendering on a white background. this option sets the image background color to a nearly pure white RGB of 255/255/254. This is equivalent to setting -c "set background=255/255/254".
+specifies rendering on a white background. this option sets the image background color to pure white. This is equivalent to setting -c "set background=1.0/1.0/1.0".
 
 
 *-X #*, *--optical-debug #*::
-turns on the *rt*(1) program debugging flags. See raytrace.h for the meaning of these bits.
+sets the *liboptical* program debugging flags to the given hexadecimal bit vector. See raytrace.h for the meaning of these bits.
 
 
 *-! #*, *--bu-debug #*::
 turns on the *libbu*(3) library debugging flags. See bu.h for the meaning of these bits. In particular, specifying *-!1* will cause `bu_bomb()` to dump core, rather than logging the error and exiting. This is useful with *dbx*(1) or *gdb*(1) for debugging. (Notice that *-x #* sets the *librt*(3) debug flags to the given hexadecimal bit vector. See raytrace.h for the bit definitions.)
 
 
-*-+ #*, *--text-output #*::
-specifies (setting argument to "t") that output is NOT binary (default is that it is). *-+* is otherwise not implemented.
+*-+ t*, *--text-output t*::
+specifies (with the argument "t") that output is text rather than binary (the default is binary). No other argument value is accepted.
+
+
+*-,*, *--space-partition*::
+selects the space-partitioning algorithm. This option is temporarily disabled and currently causes *rt* to exit with an error if used.
+
+
+*-h*, *-?*, *--help*::
+prints a usage summary listing all options and exits.
 
 
 
@@ -249,64 +261,61 @@ When using *rt* to create an animation sequence destined for NTSC video, it is u
 [[examples]]
 == EXAMPLES
 
-.Render a quick 256x256 preview to a file, with a little shading
-[example]
+.Render a quick 256x256 preview to a PNG file
 ====
-**rt -A0.9 -c "set ambSamples=4" -s256 -o file.png file.g object
-
-Renders to a PNG image with very minimal ambient occlusion (4 samples per ray).  We increase how bright the image will be with the *-A* ambient light option because of the occlusion option. 
-====
-
-.Render a scene but focusing on a specific part
-[example]
-====
-**rt -c "autoview headlight.r" car.g car**
-
-Renders a whole car object to a temporary window with a camera centered on a headlight.r object.
+[source,bash]
+----
+rt -A0.9 -c "set ambSamples=4" -s256 -o preview.png model.g object
+----
+Renders to a PNG image with minimal ambient occlusion (4 samples per ray) using the lighting-model default. The *-A* ambient-light value is raised to compensate for the darkening caused by the occlusion samples. View *preview.png* with *png-fb*(1) or any image viewer.
 ====
 
-.Render directly to an *fbserv* IPC endpoint
-[example]
+.Render a saved MGED view to a pix file
 ====
-**fbserv -F /dev/wgl -I C:\\Users\\you\\AppData\\Local\\Temp\\brl-fb.sock**
-
-**rt -F ipc:C:\\Users\\you\\AppData\\Local\\Temp\\brl-fb.sock model.g object**
-
-The first command starts *fbserv* in IPC mode. The second command renders directly to that framebuffer server using an IPC address via *-F*.
-====
-
-.Render to authenticated/TLS-enabled *fbserv* over TCP
-[example]
-====
-**set FBSERV_TOKEN=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef**
-
-**set FBSERV_TLS=1**
-
-**fbserv -T -A -p 0 -F /dev/wgl**
-
-**rt -F 0 model.g object**
-
-With matching *FBSERV_TOKEN* in both environments, *rt* sends authentication before opening the framebuffer. If both programs were built with OpenSSL and *FBSERV_TLS* is set, the connection attempts TLS.
+[source,bash]
+----
+rt -M -o view.pix model.g component < saveview.rt
+----
+Feeds an animation/view script (such as one produced by the MGED *saveview* command) into *rt* on standard input via *-M*, which supplies the model-to-view matrix and camera settings. The resulting image is written in *pix*(5) format and can be displayed with *pix-fb*(1).
 ====
 
-.Render a very high-quality, high-resolution image, very slowly
-[example]
+.Render directly to a framebuffer server
 ====
-**rt -H8 -R -A1.3 -c "set ambSamples=512 gamma=2.2" -C234/245/255 -s4096 -o render_4k.png file.g object**
+[source,bash]
+----
+fbserv -S 512 0 /dev/mem &
+rt -F 0 -s512 model.g object
+----
+The first command starts an *fbserv*(1) framebuffer server on port 0. The second command renders straight into that framebuffer via *-F*, displaying pixels as they are computed instead of writing a file.
+====
 
-This command renders with 8x512=4096 additional rays-per-pixel to average color results and determine whether a given hit point is partially shadowed. Ambient occlusion rendering is a simple brute force global illumination method. Hypersampling smooths out edges.
+.Render to a framebuffer server authenticated and secure
+====
+[source,bash]
+----
+set FBSERV_TOKEN=0123456789abcdef
+set FBSERV_TLS=1
+fbserv -T -A -p 0 -F /dev/wgl &
+rt -F 0 model.g object
+----
+With *FBSERV_TOKEN* in both the *fbserv* and *rt* environments, *fbserv* will require authentication from connecting *rt* processes.  If BRL-CAD was compiled with OpenSSL support, the connection attempts TLS.
+====
 
-Lower ambient samples for a more "grainy" surface appearance. Depending on geometry, the -A ambient light value may be increased (e.g., if there are very heavy shadows) or decreased if too bright. The gamma setting also affects overall image brightness (and color).
-
-Note: for optimal results, rendering may be performed at 2X or higher resolution (e.g., -s4096 for 2048x2048 resolution), then reduced and potentially color-corrected in post-processing.
-
+.Render a high-quality, high-resolution image
+====
+[source,bash]
+----
+rt -H8 -R -A1.3 -c "set ambSamples=512 gamma=2.2" \
+   -C234/245/255 -s4096 -o render_4k.png model.g object
+----
+Renders with 8 hypersamples each averaging 512 ambient-occlusion samples (a brute-force global-illumination approximation) to smooth edges and soften shadows, with overlap reporting suppressed (*-R*) and a near-white background (*-C*). Rendering at 2x the desired resolution (here 4096 for a 2048-pixel result) and decimating in post-processing with *pixhalve*(1) yields the cleanest output; the *-A* and *gamma* values can be tuned for overall brightness.
 ====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *mged*(1), *pix-fb*(1), *png-fb*(1), *rtray*(1), *rtpp*(1), *librt*(3), *ray*(5V), *pix*(5)
+*brlcad*(1), *mged*(1), *pix-fb*(1), *png-fb*(1), *librt*(3), *pix*(5)
 
 
 [[diagnostics]]
