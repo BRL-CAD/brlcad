@@ -1,87 +1,111 @@
 = BWSCALE(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-bwscale - change the size of a black and white bw file
+bwscale - change the size of a black and white bw image
 
 == SYNOPSIS
 
 [source]
 ----
-bwscale [-r] [-s squareinsize] [-w in_width] [-n in_height] [-S squareoutsize] [-W out_width] [-N out_height] [-h] [-?] [infile.bw] > outfile.bw
+bwscale [-r] [-s _squareinsize_] [-w _inwidth_] [-n _inheight_] [-S _squareoutsize_] [-W _outwidth_] [-N _outheight_] [_in.bw_] > _out.bw_
 ----
 
 [source]
 ----
-bwscale infile.bw in_width in_height out_width out_height > outfile.bw
+bwscale _in.bw_ _inwidth_ _inheight_ _outwidth_ _outheight_ > _out.bw_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bwscale* takes a black and white *bw*(5) format file of given dimensions and produces a larger or smaller scaled version. If input and output dimensions are not specified, a default of 512x512 is assumed for both.
+*bwscale* reads a black and white *bw*(5) image of given dimensions and writes a
+larger or smaller scaled version to standard output. Input is taken from the
+named file or, if none is given, from standard input. If the input and output
+dimensions are not specified, both default to 512x512.
 
-By default, the algorithm used is bilinear interpolation when scaling up, and a box filter of arbitrary size when scaling down. For the box filter, a "square pixel" assumption is made: all whole and fractional input pixels falling into a rectangle the size of an output pixel contribute equally, based on the fraction of the output pixel area they cover. When interpolating, edge pixels are preserved (all interpolated pixels fall inside the edges). This can be surprising when doubling the size of an image, for example, as only the edge pixels will fall at exactly the location of an output pixel.
+When scaling up, *bwscale* uses bilinear interpolation (or nearest-neighbor pixel
+replication with *-r*); outer edge pixels are preserved and only interior pixels
+are interpolated. When scaling down, a "square pixel" box filter is used that
+preserves the light energy per unit area, with each input pixel contributing in
+proportion to the fraction of the output pixel it covers. A single invocation
+cannot stretch one axis while compressing the other.
 
 
 [[options]]
 == OPTIONS
 
 *-r*::
-Enlarges the image by pixel replication (nearest neighbor interpolation) instead of bilinear interpolation.
+  Scale up by pixel replication (nearest-neighbor) instead of bilinear interpolation.
 
-*-s squareinsize*::
-Sets both the input width and height to the specified size in pixels.
+*-s* _squareinsize_::
+  Set both the input width and height to _squareinsize_ pixels.
 
-*-w in_width*::
-Specifies the input width in pixels.
+*-w* _inwidth_::
+  Set the input width in pixels (default 512).
 
-*-n in_height*::
-Specifies the input height in pixels.
+*-n* _inheight_::
+  Set the input height in pixels (default 512).
 
-*-S squareoutsize*::
-Sets both the output width and height to the specified size in pixels.
+*-S* _squareoutsize_::
+  Set both the output width and height to _squareoutsize_ pixels.
 
-*-W out_width*::
-Specifies the output width in pixels.
+*-W* _outwidth_::
+  Set the output width in pixels (default 512).
 
-*-N out_height*::
-Specifies the output height in pixels.
+*-N* _outheight_::
+  Set the output height in pixels (default 512).
 
 *-h*, *-?*::
-Print help message and exit.
+  Print a usage message and exit.
 
-*infile.bw*::
-The input image file. If not specified, standard input is read.
+As a backward-compatibility convenience, the input file and all four dimensions
+may instead be given as five positional arguments: _in.bw_ _inwidth_ _inheight_
+_outwidth_ _outheight_.
 
 
 [[examples]]
 == EXAMPLES
 
-.Scale a 512x512 image down to 256x256
+.Halve the resolution of a 1024x1024 image
 ====
 [source,bash]
 ----
-$ bwscale -s 512 -S 256 input.bw > output.bw
+bwscale -s 1024 -S 512 hires.bw > thumb.bw
 ----
+Down-samples a 1024x1024 image to 512x512 using the box filter, which
+averages the contributing input pixels to avoid aliasing.
 ====
 
-.Enlarge a 256x256 image to 1024x1024 using pixel replication
+.Build a small preview from a streamed image
 ====
 [source,bash]
 ----
-$ bwscale -r -s 256 -S 1024 input.bw > output.bw
+gencolor -r 1048576 200 | bwscale -s 1024 -S 128 > tiny.bw
 ----
+Feeds a 1024x1024 grayscale stream into *bwscale*, producing a 128x128 preview.
+*bwscale* reads the *bw*(5) data from standard input because no file name is
+supplied.
+====
+
+.Enlarge with crisp pixels
+====
+[source,bash]
+----
+bwscale -r -s 64 -S 256 icon.bw | bw-png -s 256 - > icon.png
+----
+Quadruples a 64x64 icon to 256x256 using pixel replication (*-r*) so the result
+stays blocky rather than blurred, then converts it to PNG with *bw-png*(1).
 ====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bwcrop*(1), *bwrect*(1), *bw*(5), *pixscale*(1)
+*brlcad*(1), *bwcrop*(1), *bwrect*(1), *pixscale*(1), *bw-png*(1), *bw*(5)
 
 
 [[bugs]]
@@ -103,7 +127,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1984-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

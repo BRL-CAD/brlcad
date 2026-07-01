@@ -4,57 +4,73 @@
 :manmanual: BRL-CAD
 
 == NAME
-bwthresh - threshold a black-and-white bw file
+bwthresh - threshold a black-and-white bw file into intensity bins
 
 == SYNOPSIS
 
 [source]
 ----
-bwthresh [-h] [-?] val... < file.bw > output.bw
+bwthresh [-h | -?] _val_... < file.bw > output.bw
 ----
 
 [[description]]
 == DESCRIPTION
 
-*bwthresh* reads a stream of black-and-white data in *bw*(5) format from standard input, quantizes the pixel values based on the provided threshold values, and writes the resulting *bw*(5) data to standard output.
+*bwthresh* reads a stream of black-and-white data in *bw*(5) format from
+standard input, quantizes each pixel value against the supplied threshold
+values, and writes the resulting *bw*(5) data to standard output.
 
-The number of provided threshold values, _n_, determines the number of output bins (_n_+1). The output grayscale range (0-255) is divided evenly among these bins. Each input pixel is compared against the threshold values to determine its corresponding output bin. The maximum number of thresholds allowed is 255.
+Given _n_ threshold values, the grayscale range 0-255 is divided evenly into
+_n_+1 output bins.  Each input pixel is compared against the thresholds in
+order: the first threshold the pixel is less than selects its bin, and the
+pixel is replaced by that bin's representative intensity.  Bin _i_ (for _i_
+from 0 to _n_-1) is assigned the value `256 * i / n`, and the final bin is
+assigned 255.
+
+The threshold values are positional arguments.  They must be integers in the
+range 0-255, given in strictly increasing order, and no more than 255 may be
+supplied.
 
 [[options]]
 == OPTIONS
 
 *-h*, *-?*::
-Print a usage message and exit.
+  Print a usage message and exit.  Recognized only when given as the sole
+  argument.
 
 _val_...::
-Threshold values. These must be provided on the command line in strictly increasing order, and each must be an integer between 0 and 255 (inclusive).
+  One or more threshold values.  Each must be an integer between 0 and 255
+  inclusive, and the values must be listed in strictly increasing order.
 
 [[examples]]
 == EXAMPLES
 
-The following example shows how to use *bwthresh* to map input pixels into three output levels based on two threshold values.
-
-.Thresholding a black-and-white image into three intensity levels
+.Posterize an image into three intensity levels
 ====
-[prompt]#bwthresh 37 143 < input.bw > output.bw#
-
-This command performs the following mapping:
-
-[source, c]
+[source,bash]
 ----
-if (pixel_in < 37)
-    pixel_out = 0;
-else if (pixel_in < 143)
-    pixel_out = 128;
-else
-    pixel_out = 255;
+pix-bw photo.pix | bwthresh 85 170 > poster.bw
 ----
+Convert a color *pix*(5) image to grayscale with *pix-bw*(1), then collapse it
+to three flat intensity levels: pixels below 85 become 0 (black), pixels below
+170 become 128 (mid-gray), and the rest become 255 (white).  This is a quick
+way to produce a hard-edged, posterized mask from a continuous-tone image.
+====
+
+.Binarize an image at a single threshold
+====
+[source,bash]
+----
+bwthresh 128 < input.bw > mask.bw
+----
+With a single threshold, every pixel below 128 becomes 0 and every pixel at or
+above 128 becomes 255, yielding a pure black-and-white mask.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*bwmod*(1), *bwstat*(1), *bw*(5)
+*brlcad*(1), *bwmod*(1), *bwstat*(1), *bwhisteq*(1), *pix-bw*(1), *bw*(5)
 
 [[author]]
 == AUTHOR

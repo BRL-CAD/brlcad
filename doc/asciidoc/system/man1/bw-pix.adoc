@@ -4,55 +4,81 @@
 :manmanual: BRL-CAD
 
 == NAME
-bw-pix - convert a black and white image, or three individual color channels, to a color pix image
+bw-pix - convert a black and white image, or three color channels, to a color pix image
 
 == SYNOPSIS
 
 [source]
 ----
-bw-pix [-h] [-o out_file.pix] [file.bw [out_file.pix]] [> out_file.pix]
-bw-pix [-h] [-o out_file.pix] file_red.bw file_green.bw file_blue.bw [out_file.pix] [> out_file.pix]
+bw-pix [-h] [-o _out.pix_] [_file.bw_ [_out.pix_]]
+bw-pix [-h] [-o _out.pix_] _red.bw_ _green.bw_ _blue.bw_ [_out.pix_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bw-pix* converts black and white *bw*(5) format files into a color *pix*(5) format file. It can operate in two different modes depending on the number of input files provided.
+*bw-pix* converts one or more black and white *bw*(5) files into a color
+*pix*(5) file. It operates in two modes depending on how many input files
+are given.
 
-When a single input file is provided (or when reading from standard input), *bw-pix* replicates each input value three times. The resulting output file will have identical values in all three color planes, effectively creating a grayscale image in RGB *pix* format.
+With a single input file (or when reading from standard input), each input
+value is replicated three times so that all three RGB planes hold the same
+value, producing a grayscale image stored in *pix* format.
 
-When three input files are provided, *bw-pix* reads them concurrently and merges them, treating them as separate red, green, and blue color channels (in that order). The resulting color output file interleaves the bytes from each of the three input files.
+With three input files, they are read concurrently and treated as the red,
+green, and blue channels (in that order) and their bytes are interleaved
+into a single color *pix* image. Channels of unequal length are zero-padded
+to the length of the longest.
 
-If an output file is not specified with the *-o* option or as the final positional argument, output is written to standard output. If an output file is specified and standard output is also redirected or piped, *bw-pix* writes the same output to both destinations. If no input file is specified, *bw-pix* reads from standard input.
+Output is written to the file named by *-o*, or to a final positional
+filename, or to standard output if neither is given. When an output file is
+named and standard output is also redirected, the result is written to both.
+With no input file, input is read from standard input.
 
 
 [[options]]
 == OPTIONS
 
-*-o out_file.pix*::
-Specify the output file name. If this option is not used, output goes to standard output unless specified as the final positional argument. If standard output is also redirected or piped, *bw-pix* writes the same output to both destinations.
+*-o* _out.pix_::
+  Write the color *pix* output to _out.pix_. May also be supplied as the
+  final positional argument instead. If standard output is simultaneously
+  redirected or piped, the same data is written to both destinations.
 
-*-h*::
-Print a help message and exit.
+*-h*, *--help*::
+  Print a usage message and exit.
 
 
 [[examples]]
 == EXAMPLES
 
-bw-pix -o _image.pix_ _image.bw_
+.Convert a grayscale image to pix
+====
+[source,bash]
+----
+bw-pix moon.bw moon.pix
+----
+Converts the grayscale image _moon.bw_ into _moon.pix_, with the grayscale
+value copied into each of the red, green, and blue planes.
+====
 
-Converts the grayscale image _image.bw_ into a color _image.pix_ file where all three RGB planes contain the grayscale values.
-
-bw-pix _red.bw_ _green.bw_ _blue.bw_ _merged.pix_
-
-Combines the individual red, green, and blue channel files into a single color _merged.pix_ file.
+.Recombine separated color channels into a viewable image
+====
+[source,bash]
+----
+bw-pix red.bw green.bw blue.bw | pix-fb
+----
+Merges the three single-channel *bw*(5) files _red.bw_, _green.bw_, and
+_blue.bw_ into a color *pix*(5) image and displays it on a framebuffer with
+*pix-fb*(1). This is useful when filtering individual color channels (for
+example with *bwmod*(1)) before recombining them.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix-bw*(1), *pix*(5), *bw*(5)
+*brlcad*(1), *pix-bw*(1), *bwmod*(1), *pix-fb*(1), *pix*(5), *bw*(5)
 
 
 [[author]]

@@ -23,26 +23,35 @@ bwhisteq [-v] file.bw > file.equalized
 == OPTIONS
 
 *-v*::
-Prints the pixel value mapping to standard error. For each original pixel value (0-255), it displays the corresponding new equalized value.
+  Print the pixel value mapping to standard error. For each original pixel value (0-255), it displays the corresponding new equalized value as _result[N] = value_.
 
 
 [[examples]]
 == EXAMPLES
 
-.Equalizing the histogram of a black and white image
+.Improving contrast of a low-contrast image
 ====
 [source,bash]
 ----
 $ bwhisteq image.bw > equalized.bw
 ----
-Remaps the pixel values of _image.bw_ to produce a more uniform histogram and saves the result to _equalized.bw_.
+Remaps the pixel values of _image.bw_ to produce a more uniform histogram, spreading out clustered intensities to improve apparent contrast, and saves the result to _equalized.bw_.
+====
+
+.Inspecting the remapping and viewing the result
+====
+[source,bash]
+----
+$ bwhisteq -v image.bw 2> mapping.txt | bw-fb
+----
+Equalizes _image.bw_ while writing the value-to-value mapping table to _mapping.txt_, and pipes the equalized image directly to *bw-fb*(1) for display on a framebuffer.
 ====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bwhist*(1), *bwstat*(1), *bw*(5)
+*brlcad*(1), *bwhist*(1), *bwstat*(1), *bw-fb*(1), *bw*(5)
 
 
 [[author]]

@@ -10,38 +10,44 @@ bwhist - display a histogram of a black and white bw file on a framebuffer
 
 [source]
 ----
-bwhist [-h] [-?] [-v] [file.bw]
+bwhist [-v] [file.bw]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bwhist* calculates and displays a histogram of the pixel values in a *bw*(5) format file. If a file is not specified, standard input is read. The histogram is displayed on the framebuffer selected via the `FB_FILE` environment variable (see *libfb*(3)).
+*bwhist* calculates and displays a histogram of the pixel values in a *bw*(5) format file. If a file is not specified, standard input is read. The histogram is displayed on the framebuffer selected via the `FB_FILE` environment variable (see *libfb*(3)) opened at 512x512.
 
-The relative frequency of each pixel value is displayed on the x-axis, scaled so that the maximum frequency spans the full width of the screen. The pixel values (0-255) correspond to the y-axis, with 0 (black) at the bottom of the screen and 255 (white) at the top. The histogram is drawn as a white overlay on whatever is currently displayed on the framebuffer.
+The relative frequency of each pixel value is drawn as a horizontal bar of white pixels along the x-axis, scaled so that the most frequent value spans the full width of the screen. The 256 pixel values map to the y-axis, with 0 (black) at the bottom and 255 (white) at the top. The pixel count corresponding to a full-width bar is always reported to standard output as a "Full screen = N pixels" line.
 
 
 [[options]]
 == OPTIONS
 
 *-v*::
-Print the calculated histogram values and their relative frequencies to standard output.
+  Verbose: in addition to displaying the histogram, print each pixel value, its
+  count, and its relative frequency to standard output. Must appear before the
+  optional file argument.
 
 *-h*, *-?*::
-Print a usage summary and exit.
+  Print a usage summary and exit.
 
 
 [[examples]]
 == EXAMPLES
 
-.Display a histogram of a bw file
+.Inspect the tonal distribution of a rendered image
 ====
 [source,bash]
 ----
-$ bwhist -v image.bw
+pix-bw scene.pix > scene.bw
+bwhist -v scene.bw
 ----
-Displays the histogram of `image.bw` on the active framebuffer and prints the corresponding numerical values to the terminal.
+Converts a color *pix*(5) image to black and white with *pix-bw*(1), then displays
+its intensity histogram on the framebuffer while dumping the per-value counts and
+frequencies to the terminal. The printed table makes it easy to spot clipping at
+0 or 255 and to judge overall exposure before adjusting a render.
 ====
 
 

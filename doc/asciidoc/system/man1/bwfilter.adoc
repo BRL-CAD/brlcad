@@ -4,25 +4,34 @@
 :manmanual: BRL-CAD
 
 == NAME
-bwfilter - apply a 3x3 filter to a black and white bw file
+bwfilter - apply a 3x3 kernel filter to a black and white bw image
 
 == SYNOPSIS
 
 [source]
 ----
-bwfilter [-v] [-f type] [-d div] [-O offset] [-s squaresize] [-w width] [-n height] [-o out_file.bw] [file.bw]
+bwfilter [-v] [-f _type_] [-d _div_] [-O _offset_] [-s _squaresize_] [-w _width_] [-n _height_] [-o _out_file.bw_] [_file.bw_]
 ----
 
 [[description]]
 == DESCRIPTION
 
-*bwfilter* applies one of several 3x3 kernel filters to a black and white *bw*(5) format file. It reads from the specified _file.bw_ or from standard input if no file is provided. By default, the input image dimensions are assumed to be 512x512 pixels, and a low pass filter is applied. 
+*bwfilter* convolves a 3x3 kernel filter over a black and white *bw*(5)
+format image.  It reads from _file.bw_ or from standard input when no
+file is given, and writes the filtered result to standard output (or to
+the file named with *-o*).  The outer rows and columns of the image are
+left untouched.
+
+By default the input is assumed to be 512x512 pixels and a low pass
+filter is applied.  Each built-in filter has an associated divisor that
+scales the convolved result back into the 0-255 range and, for some
+filters, an offset that recenters the result; both may be overridden.
 
 [[options]]
 == OPTIONS
 
-*-f type*::
-Specify the filter type to apply. The default is *lo*. Choices include:
+*-f* _type_::
+  Select the filter to apply (default *lo*).  Recognized types are:
 +
 --
 *lo*;; low pass
@@ -30,58 +39,72 @@ Specify the filter type to apply. The default is *lo*. Choices include:
 *vg*;; vertical gradient
 *hg*;; horizontal gradient
 *la*;; laplacian
-*b*;; boxcar low pass
+*b*;; boxcar average (low pass)
 --
 
-*-d div*::
-Change the divisor. Most filters divide the result of the kernel multiplication by a specific value to scale it back to a 0-255 range. For example, the boxcar filter divides by nine.
+*-d* _div_::
+  Override the kernel divisor.  Most filters divide the result of the
+  kernel multiplication by a fixed value to scale it into a 0-255 range
+  (for example, the boxcar filter divides by nine).  A divisor of zero
+  is rejected.
 
-*-O offset*::
-Change the offset. Some filters add an offset to their results. For example, the output of a laplacian is centered about zero, so it adds 128 to the answer to yield a difference from neutral grey.
+*-O* _offset_::
+  Override the kernel offset.  Some filters add an offset to their
+  results; the laplacian, for instance, is centered about zero and adds
+  128 to yield a difference from neutral grey.
 
-*-s squaresize*::
-Set both the width and height of the input image to _squaresize_.
+*-s* _squaresize_::
+  Set both the width and height of the input image to _squaresize_.
 
-*-w width*::
-Set the width of the input image to _width_.
+*-w* _width_::
+  Set the width of the input image to _width_ (default 512).
 
-*-n height*::
-Set the height of the input image to _height_.
+*-n* _height_::
+  Set the height of the input image to _height_ (default 512).
 
-*-o out_file.bw*::
-Write the filtered output to _out_file.bw_. If standard output is also redirected or piped, *bwfilter* writes the same output to both destinations.
+*-o* _out_file.bw_::
+  Write the filtered output to _out_file.bw_.  If standard output is
+  also non-interactive (redirected or piped), the same output is
+  written to both destinations.
 
 *-v*::
-Display the max and minimum values and the kernel information on standard error.
+  Verbose: print the kernel values and the maximum and minimum output
+  values to standard error.
 
 [[examples]]
 == EXAMPLES
 
-Here is an example demonstrating the use of the *bwfilter* command to apply a laplacian filter to a 1024x1024 image.
-
-.Apply a laplacian filter and save to a file
+.Sharpen an image with a high pass filter
 ====
-**bwfilter -f la -s 1024 -o filtered.bw image.bw**
-
-Applies a laplacian filter to the 1024x1024 image _image.bw_ and saves the result to _filtered.bw_.
+[source,bash]
+----
+bwfilter -f hi -s 1024 image.bw > sharp.bw
+----
+Applies a high pass filter to the 1024x1024 image _image.bw_ and
+redirects the result to _sharp.bw_, accentuating edges and fine detail.
 ====
 
-.Apply a laplacian filter using shell redirection
+.Detect edges and view the result
 ====
-**bwfilter -f la -s 1024 image.bw > filtered.bw**
-
-Applies a laplacian filter to the 1024x1024 image _image.bw_ and writes the result to standard output, which the shell redirects to _filtered.bw_.
+[source,bash]
+----
+bwfilter -f la moon.bw | bw-pix | pix-fb
+----
+Runs a laplacian edge detector over _moon.bw_, converts the resulting
+black and white image to *pix*(5) with *bw-pix*(1), and displays it on a
+framebuffer with *pix-fb*(1) without writing any intermediate file.
 ====
 
 [[bugs]]
 == BUGS
 
-This should allow any 3x3 kernel to be specified.
+This should allow any arbitrary 3x3 kernel to be specified on the
+command line.
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bwscale*(1), *bw*(5)
+*brlcad*(1), *bwmod*(1), *bwscale*(1), *pixfilter*(1), *bw*(5)
 
 [[author]]
 == AUTHOR

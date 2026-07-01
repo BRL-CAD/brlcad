@@ -1,63 +1,89 @@
-= bwish(1)
+= BWISH(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-bwish - Tcl/Tk-based interactive windowing shell for BRL-CAD
+bwish - BRL-CAD's Tcl/Tk windowing shell
 
 == SYNOPSIS
 
-*bwish* [_script_] [_arg_...]
+[source]
+----
+bwish [_script_ [_arg_ ...]]
+----
 
+[[description]]
 == DESCRIPTION
 
-*bwish* is a Tcl/Tk-based interactive windowing shell for BRL-CAD. It operates similarly to the standard Tk *wish*(1) command, but is pre-configured to initialize BRL-CAD's specific Tcl extensions and libraries. This makes *bwish* well-suited for developing custom graphical interfaces, interactive scripting, and driving BRL-CAD tasks that require visual windows or dialogs.
+*bwish* is a Tcl/Tk windowing shell, analogous to the standard Tk
+*wish*(1) interpreter, but preloaded with BRL-CAD's Tcl/Tk extensions
+(libtclcad, Itcl/Itk, and the associated BRL-CAD libraries). It is the
+graphical counterpart to *btclsh*(1) and provides the scripting and GUI
+foundation used by BRL-CAD tools such as *mged*(1) and *archer*(1).
 
-When started without arguments (or if the first argument begins with a `-`), *bwish* runs interactively. It reads commands from standard input, providing command-line editing and history, and automatically evaluates the `~/.bwishrc` (or `~/.bwishrc.tcl` on Windows) file if it exists.
+If the first argument does not begin with a `-`, it is taken as the name
+of a Tcl/Tk _script_ to evaluate; *bwish* runs the script and then enters
+the event loop. Any remaining _arg_ values are made available to the
+script through the Tcl global variables `argv` and `argc`, with `argv0`
+set to the script name.
 
-If a _script_ file is provided as the first argument, *bwish* evaluates the contents of that file instead of opening an interactive prompt. Any subsequent arguments are made available to the Tcl script via the global `argv` and `argc` variables.
+If no _script_ is given (or the first argument begins with a `-`),
+*bwish* runs interactively. It reads commands from standard input with
+emacs-style command-line editing and history (for example, *Ctrl-A*,
+*Ctrl-E*, *Ctrl-K*, *Ctrl-W*, and the arrow keys for history and cursor
+movement), and on startup evaluates the resource file `~/.bwishrc`
+(`~/.bwishrc.tcl` on Windows) if it exists.
 
-== OPTIONS
+*bwish* does not interpret any command-line options of its own; flags
+are left for the executed script to handle via `argv`.
 
-_script_::
-A Tcl/Tk script to execute. If specified as the first argument, *bwish* evaluates the script and exits when the script terminates.
-
-_arg_...::
-Optional arguments passed to the _script_. These are accessible within Tcl via the standard global `argv` list and `argc` count.
-
+[[examples]]
 == EXAMPLES
 
-.Running a Tk script with BRL-CAD extensions
+.Run a Tk script with arguments
 ====
-Execute a Tcl/Tk script using *bwish* and pass arguments to it:
-
 [source,bash]
 ----
-$ bwish draw_ui.tcl 800x600
+bwish make_dialog.tcl 800x600 model.g
 ----
+Evaluates the Tcl/Tk script `make_dialog.tcl`, with the BRL-CAD
+extensions already loaded, passing `800x600` and `model.g` to the script
+as `argv`. Because libtclcad is initialized, the script can open and
+query BRL-CAD geometry databases directly.
 ====
 
-.Interactive usage
+.Interactive geometry scripting
 ====
-Launch the interactive graphical shell, which will automatically source `~/.bwishrc` if it exists:
-
 [source,bash]
 ----
-$ bwish
-% pack [button .b -text "Exit" -command exit]
+bwish
+bwish> package require Tk
+bwish> set db [go_open db file model.g]
+bwish> button .quit -text Quit -command exit; pack .quit
 ----
+Starts an interactive session, builds a small Tk control, and works with
+a BRL-CAD database through the bundled commands, all without writing a
+separate script file.
 ====
 
+[[see_also]]
 == SEE ALSO
 
-*btclsh*(1), *mged*(1), *wish*(1)
+*brlcad*(1), *btclsh*(1), *mged*(1), *archer*(1)
 
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1998-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

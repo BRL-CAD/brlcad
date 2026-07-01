@@ -10,66 +10,82 @@ bw-ps - convert a black and white bw file to PostScript
 
 [source]
 ----
-bw-ps [-e] [-c] [-L] [-s input_squaresize] [-w input_width] [-n input_height] [-S inches_square] [-W inches_width] [-N inches_height] [infile.bw] > outfile.ps
+bw-ps [-e] [-c] [-L] [-s _input_squaresize_] [-w _input_width_] [-n _input_height_] [-S _inches_square_] [-W _inches_width_] [-N _inches_height_] [_file.bw_] > _file.ps_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*bw-ps* reads a black and white *bw*(5) format file of given dimensions and produces a PostScript file on the standard output. If no input file is specified, standard input is read. If no input dimensions are given, the input is assumed to be 512x512 pixels. By default, the output PostScript image size is 6.75x6.75 inches.
+*bw-ps* reads a black and white *bw*(5) format image and writes an 8-bit
+grayscale PostScript rendition to standard output. If no input file is
+given, standard input is read. The input is assumed to be 512x512 pixels
+unless overridden, and the output image is 6.75x6.75 inches by default,
+positioned at the lower-left of an 8.5x11 inch page.
 
 [[options]]
 == OPTIONS
 
-*-c*::
-Center the output image on an 8.5 x 11 inch page.
-
 *-e*::
-Generate an Encapsulated PostScript (EPS) file instead of standard PostScript.
+  Emit Encapsulated PostScript (EPSF) sized in pixels to the input
+  dimensions, suitable for embedding in another document. The *-c* and
+  *-L* page-layout options have no effect in this mode.
+
+*-c*::
+  Center the output image on the 8.5x11 inch page.
 
 *-L*::
-Select landscape mode (rotates the output image by ninety degrees).
+  Select landscape mode, rotating the output ninety degrees.
 
-*-n input_height*::
-Specify the input image height (number of scan lines) in pixels.
+*-s* _input_squaresize_::
+  Set both the input width and height, in pixels (default 512).
 
-*-N inches_height*::
-Specify the output image height in inches.
+*-w* _input_width_::
+  Set the input width, in pixels (default 512).
 
-*-s input_squaresize*::
-Specify both the input image width and height in pixels.
+*-n* _input_height_::
+  Set the input height (number of scan lines), in pixels (default 512).
 
-*-S inches_square*::
-Specify both the output image width and height in inches.
+*-S* _inches_square_::
+  Set both the output width and height, in inches (default 6.75).
 
-*-w input_width*::
-Specify the input image width in pixels.
+*-W* _inches_width_::
+  Set the output width, in inches (default 6.75).
 
-*-W inches_width*::
-Specify the output image width in inches.
-
+*-N* _inches_height_::
+  Set the output height, in inches (default 6.75).
 
 [[examples]]
 == EXAMPLES
 
-bw-ps -c _image.bw_ > _image.ps_
+.Convert a rendering for printing
+====
+[source,bash]
+----
+rt -o image.pix -s 1024 model.g component.r
+pix-bw image.pix > image.bw
+bw-ps -s 1024 -c -L image.bw > image.ps
+----
+Renders a region with *rt*(1), reduces the color frame to grayscale with
+*pix-bw*(1), then produces a 1024x1024 PostScript page centered in
+landscape orientation, ready to send to a printer.
+====
 
-Produces a 6.75 inch PostScript file from an 512 x 512 input image and centers it on an 8.5 x 11 inch page.
-
-bw-ps -e -w 1024 -n 768 _image.bw_ > _image.ps_
-
-Takes the file image.bw which has the dimensions of 1024 pixels wide by 768 pixels high, and produces an Encapsulated Postscript version of it.
-
-bw-ps -L -c -S 5.2 < _image.bw_ > _image.ps_
-
-Makes a PostScript file of the (assumed 512 square) image, with the output image 5.2 inches square, in landscape mode, centered on an 8.5 x 11 inch page.
-
+.Generate an embeddable EPS figure
+====
+[source,bash]
+----
+bw-ps -e -w 800 -n 600 plot.bw > plot.eps
+----
+Wraps an 800x600 grayscale image as Encapsulated PostScript whose bounding
+box matches the pixel dimensions, so it can be included as a figure in a
+LaTeX or word-processing document.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bw*(5)
+*brlcad*(1), *pix-bw*(1), *pix-ps*(1), *bw*(5)
 
 
 [[author]]

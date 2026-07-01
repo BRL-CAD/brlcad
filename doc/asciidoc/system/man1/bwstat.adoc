@@ -14,6 +14,7 @@ bwstat [-v] [file.bw]
 ----
 
 
+
 [[description]]
 == DESCRIPTION
 
@@ -24,27 +25,40 @@ bwstat [-v] [file.bw]
 == OPTIONS
 
 *-v*::
-Print a histogram of the pixel values.
+  Verbose mode. After the statistics, print the full histogram of pixel
+  values: each intensity from 0 to 255, its pixel count, and its percentage
+  of the total.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 _file.bw_::
-Optional input file. If not provided, *bwstat* reads from standard input.
+  Optional input file. If not provided, *bwstat* reads from standard input.
 
 
 [[examples]]
 == EXAMPLES
 
-.Compute statistics for a single black and white image
+.Summarize the intensity distribution of an image
 ====
-[prompt]#bwstat image.bw#
-
-Displays statistics for the pixel intensities in `image.bw`.
+[source,bash]
+----
+bwstat moss.bw
+----
+Reports the pixel count, inferred square dimensions, minimum, maximum,
+mode, median, mean, standard deviation, variance, and skew for the
+intensities in `moss.bw`.
 ====
 
-.Compute statistics and print a histogram
+.Inspect a histogram piped from another tool
 ====
-[prompt]#bwstat -v image.bw#
-
-Displays statistics and prints a histogram of the pixel values in `image.bw`.
+[source,bash]
+----
+pix-bw scene.pix | bwstat -v
+----
+Converts a color *pix*(5) image to black and white with *pix-bw*(1) and
+pipes it straight into *bwstat*, which prints the statistics followed by
+the complete 0-255 histogram without writing an intermediate file.
 ====
 
 
@@ -57,7 +71,7 @@ Since the pixel values are quantized (have discrete values from 0 to 255), the s
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bwhist*(1), *pixstat*(1), *bw*(5)
+*brlcad*(1), *bwhist*(1), *pix-bw*(1), *pixstat*(1), *bw*(5)
 
 
 [[author]]

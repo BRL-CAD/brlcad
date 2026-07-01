@@ -111,7 +111,7 @@ Displays _image.bw_ in the red color plane of the framebuffer, leaving the green
 [[see_also]]
 == SEE ALSO
 
-*fb-bw*(1), *bw*(5)
+*brlcad*(1), *fb-bw*(1), *pix-fb*(1), *bw*(5)
 
 
 [[author]]

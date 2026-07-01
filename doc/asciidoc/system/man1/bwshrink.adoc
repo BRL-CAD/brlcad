@@ -10,7 +10,7 @@ bwshrink - shrink a black and white bw file
 
 [source]
 ----
-bwshrink [-s squareinsize] [-w in_width] [-n in_height] [-f shrink_factor] [-u] [infile.bw] > outfile.bw
+bwshrink [-u] [-w _in_width_] [-n _in_height_] [-s _squaresize_] [-f _shrink_factor_] [_infile.bw_] > _outfile.bw_
 ----
 
 
@@ -23,19 +23,25 @@ bwshrink [-s squareinsize] [-w in_width] [-n in_height] [-f shrink_factor] [-u] 
 == OPTIONS
 
 *-u*::
-Use image undersampling instead of boxcar averaging.
+  Use pixel undersampling (nearest-neighbor decimation) instead of the
+  default boxcar averaging.
 
-*-w in_width*::
-Specify the input file width in pixels. The default is 512.
+*-w* _in_width_::
+  Specify the input file width in pixels. The default is 512.
 
-*-n in_height*::
-Specify the input file height (number of scanlines) in pixels. The default is 512.
+*-n* _in_height_::
+  Specify the input file height (number of scanlines) in pixels. The
+  default is 512.
 
-*-s squareinsize*::
-Set both the input file width and height to the given size in pixels.
+*-s* _squaresize_::
+  Set both the input file width and height to the given size in pixels.
 
-*-f shrink_factor*::
-Set the integer scaling factor. The default factor is 2.
+*-f* _shrink_factor_::
+  Set the integer scaling factor. Must be greater than 1. The default
+  factor is 2.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
@@ -44,9 +50,21 @@ Set the integer scaling factor. The default factor is 2.
 ====
 [source,bash]
 ----
-$ bwshrink -s 1024 -f 4 image.bw > image_small.bw
+bwshrink -s 1024 -f 4 image.bw > image_small.bw
 ----
-Shrinks the 1024x1024 input file `image.bw` by a factor of 4, producing a 256x256 output file named `image_small.bw`.
+Shrinks the 1024x1024 input file `image.bw` by a factor of 4, producing a
+256x256 output file named `image_small.bw` using boxcar averaging.
+====
+
+.Generating a thumbnail from a color render
+====
+[source,bash]
+----
+pix-bw -e ntsc -w 2048 -n 1536 render.pix | bwshrink -w 2048 -n 1536 -f 8 -u > thumb.bw
+----
+Converts a 2048x1536 color *pix*(5) render to grayscale with *pix-bw*(1),
+then pipes it to *bwshrink* to produce a 256x192 thumbnail. The *-u* flag
+selects fast nearest-neighbor undersampling instead of averaging.
 ====
 
 [[see_also]]

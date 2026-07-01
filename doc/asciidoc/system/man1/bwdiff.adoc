@@ -19,7 +19,7 @@ bwdiff [-b] [-m | -g | -l | -e | -n] file1 file2
 
 *bwdiff* compares two black and white *bw*(5) format files and writes the results to standard output. By default, *bwdiff* records the differences as offsets from a neutral, half-intensity grey (128). The written value is brighter than this neutral grey by an amount proportional to the signed difference between the pixels in _file1_ and _file2_. Pixels that are brighter in _file1_ than in _file2_ will be brighter than the neutral grey, while pixels that are dimmer in _file1_ than in _file2_ will be dimmer. This difference is divided by two to fit the 0 to 255 output range.
 
-*bwdiff* accepts ``*-*'' as a synonym for standard input, and ``*.*'' as a synonym for /dev/null. 
+*bwdiff* accepts ``*-*'' as a synonym for standard input, and ``*.*'' as a synonym for the platform's null device.
 
 Note that this program also produces useful results on color *pix*(5) files.
 
