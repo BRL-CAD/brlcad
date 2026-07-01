@@ -32,10 +32,10 @@
 #include <iostream>
 
 #ifdef Q_OS_WIN
-#include <QWinEventNotifier>
-#include <windows.h>
+#  include <QWinEventNotifier>
+#  include <windows.h>
 #else
-#include <QSocketNotifier>
+#  include <QSocketNotifier>
 #endif
 
 #include "bu.h"
@@ -43,13 +43,16 @@
 
 #include "qtcad/defines.h"
 
-
 class QTCAD_EXPORT QConsoleListener : public QObject
 {
     Q_OBJECT
 
     public:
-	QConsoleListener(int fd = -1, struct ged_subprocess *p = NULL, bu_process_io_t t = BU_PROCESS_STDIN, ged_io_func_t c = NULL, void *d = NULL);
+	QConsoleListener(int fd = -1,
+		struct ged_subprocess *p = NULL,
+		bu_process_io_t t = BU_PROCESS_STDIN,
+		ged_io_func_t c = NULL,
+		void *d = NULL);
 	~QConsoleListener();
 
 	// Called by client code when it is done with the process
@@ -60,7 +63,13 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 	bu_process_io_t type;
 	void *data;
 
-    Q_SIGNALS:
+#ifdef Q_OS_WIN
+	QWinEventNotifier *m_notifier;
+#else
+	QSocketNotifier *m_notifier;
+#endif
+
+Q_SIGNALS:
 	// connect to "newLine" to receive console input
 	void newLine(const QString &strNewLine);
 
@@ -73,12 +82,8 @@ class QTCAD_EXPORT QConsoleListener : public QObject
     private Q_SLOTS:
 	void on_finishedGetLine(const QString &strNewLine);
 
-    public:
-#ifdef Q_OS_WIN
-	QWinEventNotifier *m_notifier;
-#else
-	QSocketNotifier *m_notifier;
-#endif
+    private:
+	QThread m_thread;
 };
 
 // Local Variables:
