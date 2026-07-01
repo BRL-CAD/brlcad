@@ -1,42 +1,72 @@
 = ARCHER(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-archer - Graphical User Interface for BRL-CAD
+archer - graphical user interface for BRL-CAD solid modeling
 
 == SYNOPSIS
 
 [source]
 ----
-archer [file.g]
+archer [_geometry_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*archer* is a developmental graphical user interface for BRL-CAD. It provides a modern, integrated environment for solid modeling, ray tracing, and geometry manipulation, serving as an alternative to *mged*(1).
+*archer* is a graphical user interface for BRL-CAD, providing an
+integrated environment for solid modeling, geometry editing, and ray
+tracing. It serves as a modern alternative to the *mged*(1) command-line
+modeler and requires Tk to run.
 
-If a BRL-CAD geometry database file (_file.g_) is specified on the command line, *archer* will automatically open it upon startup. Otherwise, *archer* will launch with an empty workspace, allowing the user to create a new database or open an existing one via the File menu.
+If a geometry argument is given, *archer* opens it on startup. The
+argument is normally a BRL-CAD geometry database (a _.g_ file), but it
+may also be a file in an importable format such as STL, STEP, or
+Wavefront OBJ, in which case the data is converted and loaded into a new
+database. When invoked with no argument, *archer* changes to the user's
+home directory and starts with an empty workspace; a database can then be
+created or opened from the File menu.
 
 [[options]]
 == OPTIONS
 
-*file.g*::
-An optional BRL-CAD geometry database file to open upon startup.
+_geometry_::
+  Optional geometry file to open on startup. A BRL-CAD _.g_ database is
+  opened directly; a supported foreign format (e.g. _.stl_, _.step_,
+  _.obj_) is imported into a new database.
 
 [[examples]]
 == EXAMPLES
 
-.Launching *archer* with a Specific Database
-[example]
+.Open an existing database
 ====
-**archer my_model.g**
+[source,bash]
+----
+archer havoc.g
+----
+Launches the *archer* interface and opens the existing _havoc.g_
+geometry database for editing and visualization.
+====
 
-Starts the *archer* graphical user interface and automatically opens the _my_model.g_ geometry database.
+.Import foreign geometry for editing
 ====
+[source,bash]
+----
+archer part.stl
+----
+Starts *archer*, converts the _part.stl_ triangle mesh into a BRL-CAD
+database, and loads it so the imported geometry can be inspected,
+edited, and saved as a native _.g_ file. Compare with the batch
+converter *stl-g*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *stl-g*(1), *step-g*(1), *obj-g*(1)
 
 [[author]]
 == AUTHOR
@@ -46,12 +76,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2005-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
-[[see_also]]
-== SEE ALSO
-
-mged(1)
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
