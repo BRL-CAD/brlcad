@@ -27,51 +27,57 @@ gdiff -G [grouping_options]... [pattern]...
 
 In addition to direct comparison, *gdiff* supports a similarity grouping mode (*-G*) that analyzes one or more BRL-CAD database files and clusters them into groups of related models based on _per-file content similarity_ (and optionally on filename similarity for an extra top-level binning pass.) Grouping mode produces a human-readable report showing groups, a representative "newest" file, distances to a computed group center (medoid), and modification dates.
 
-The following options are recognized in basic diffing mode:
+The following options are recognized in basic diffing mode (each
+short flag also has a long-form equivalent):
 
 
-*-a*::
+*-h*, *--help*, *-?*::
+Print a usage message describing all options and exit.
+
+
+*-a*, *--added*::
 (two-way diff) Report objects added in right_model.g
 +
 (three-way diff) Report objects added in left_model.g and/or right_model.g
 
 
-*-d*::
+*-d*, *--deleted*::
 (two-way diff) Report objects deleted in right_model.g
 +
 (three-way diff) Report objects deleted in left_model.g and/or right_model.g
 
 
-*-m*::
+*-m*, *--modified*::
 (two-way diff) Report objects modified in right_model.g
 +
 (three-way diff) Report objects that are different in left_model.g and/or right_model.g relative to ancestor.g
 
 
-*-q*::
+*-q*, *--quiet*::
 Decrease the verbosity of the output. Additional specifications will further decrease the output provided. (Opposite effect of *v* option.) All settings for this option will respect other constraints applied to the reporting output.
 
 
-*-u*::
+*-u*, *--unchanged*::
 (two-way diff) Report objects that are identical in left_model.g and right_model.g
 +
 (three-way diff) Report objects that are identical in ancestor_model.g, left_model.g and right_model.g
 
 
-*-v*::
+*-v*, *--verbosity*::
 Increase the verbosity of the output. Additional specifications will further increase the output provided. (Opposite effect of *q* option.) All settings for this option will respect other constraints applied to the reporting output.
 
 
-*-t #*::
+*-t* _#_, *--tolerance* _#_::
 Set a numerical comparison tolerance used to compare numerical properties. Default value is RT_LEN_TOL, but be aware that this comparison is not aware of units.
 
 
-*-F "filter_string"*::
+*-F* _"filter_string"_, *--filter* _"filter_string"_::
 Apply filters to the diff output, using the same set of filters available in the *search* command's search. See the *search* manual page for more details.
 
 
-*-M merged_file.g*::
-Merge the files being diffed into one output file.
+*-M* _merged_file.g_, *--merge-file* _merged_file.g_::
+Merge the files being diffed into one output file. *gdiff* refuses to
+overwrite an existing _merged_file.g_.
 
 
 
@@ -832,7 +838,7 @@ Columns:
 [[see_also]]
 == SEE ALSO
 
-*search*(n)
+*brlcad*(1), *mged*(1), *search*(n)
 
 
 [[author]]

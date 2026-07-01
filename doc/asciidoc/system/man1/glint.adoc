@@ -5,103 +5,153 @@
 
 == NAME
 
-glint - a BRL-CAD geometry checker
+glint - sample BRL-CAD geometry for overlaps and air problems
 
 == SYNOPSIS
 
-*glint* [-copsu] [-a _az_] [-e _el_] [-g _gridsize_] [-r _bits_] [-t _tol_] [-x _bits_] _model.g_ _object(s)_...
+[source]
+----
+glint [-copsu] [-a _az_] [-e _el_] [-g _gridsize_] [-r _bits_] [-t _tol_] [-x _bits_] _model.g_ _object_...
+----
 
+[[description]]
 == DESCRIPTION
 
-*glint* uses *librt*(3) to fire an array of parallel rays at the specified _object(s)_ in the database _model.g_ and reports overlaps, vacuums, and potential problems with air regions.
+*glint* uses *librt*(3) to fire a regular grid of parallel rays at the
+specified _object_(s) in the database _model.g_ and reports overlaps,
+vacuums (voids), and potential problems with modeled air regions.
 
-By default, the output consists of single-line ASCII reports. Each report begins with a tag identifying the report type, followed by relevant data. The standard formats are:
+By default the output is one single-line ASCII report per problem.  Each
+report begins with a tag identifying its type, followed by the relevant
+data.  The report formats are:
 
 *overlap* _r1_ _r2_ _length_ _x_in_ _y_in_ _z_in_ _x_out_ _y_out_ _z_out_::
-	Consecutive partitions overlap by more than _tol_. Reports the names of the two regions, the overlap length along the ray, and the model coordinates of the ray's entry and exit points.
+  Consecutive partitions overlap by more than _tol_.  Reports the names of
+  the two regions, the overlap length along the ray, and the model
+  coordinates of the ray's entry and exit points.
 
 *air_contiguous* _r1_ _a1_ _r2_ _a2_ _x_ _y_ _z_::
-	Consecutive partitions have different (non-zero) air codes, and the gap between them is less than _tol_. Reports the names and air codes of the two regions, and the point coordinates.
+  Consecutive partitions have different (non-zero) air codes, and the gap
+  between them is less than _tol_.  Reports the names and air codes of the
+  two regions and the point coordinates.
 
 *air_unconfined* _r1_ (_s1_) _r2_ (_s2_) _length_ _x1_ _y1_ _z1_ _x2_ _y2_ _z2_::
-	A partition with a non-zero air code follows or precedes another partition with a gap larger than _tol_. Reports the names of the regions (and solids) involved, the gap length, and coordinates.
+  A partition with a non-zero air code abuts another partition across a gap
+  larger than _tol_.  Reports the names of the regions (and solids)
+  involved, the gap length, and coordinates.
 
 *air_first* _r_ _a_ _x_ _y_ _z_::
-	The first partition along a ray has a non-zero air code. Reports the region name, its air code, and the ray entry coordinates.
+  The first partition along a ray has a non-zero air code.  Reports the
+  region name, its air code, and the ray entry coordinates.
 
 *air_last* _r_ _a_ _x_ _y_ _z_::
-	The last partition along a ray has a non-zero air code. Reports the region name, its air code, and the ray exit coordinates.
+  The last partition along a ray has a non-zero air code.  Reports the
+  region name, its air code, and the ray exit coordinates.
 
 *vacuum* _r1_ (_s1_) _r2_ (_s2_) _length_ _x1_ _y1_ _z1_ _x2_ _y2_ _z2_::
-	The space between consecutive partitions is larger than _tol_. Reports the regions (and solids) involved, the gap length, and the coordinates.
+  The space between consecutive partitions is larger than _tol_.  Reports
+  the regions (and solids) involved, the gap length, and the coordinates.
 
+When the ray origin is requested (*-o*) the model coordinates of the ray's
+origination point are inserted between the report tag and the remaining
+data.  When *plot3* output is requested (*-p*) the problems are emitted as
+colored *plot3*(5) geometry instead of text.
+
+[[options]]
 == OPTIONS
 
 *-a* _az_::
-	Set the azimuth angle (in degrees) from which to fire rays. The default is 0.
+  Set the azimuth angle from which to fire rays.  The default is 0.
 
 *-c*::
-	Fire one ray from the exact center of each grid cell. By default, rays are fired from a random point within each cell.
+  Fire one ray from the exact center of each grid cell.  By default rays are
+  fired from a random point within each cell.
 
 *-e* _el_::
-	Set the elevation angle (in degrees) from which to fire rays. The default is 0.
+  Set the elevation angle from which to fire rays, in the range -90 to 90.
+  The default is 0.
 
 *-g* _gridsize_::
-	Set the width and height of each grid cell (in millimeters). The default is 100.
+  Set the width and height of each grid cell, in millimeters.  The default
+  is 100.
 
 *-o*::
-	Include the model coordinates of the ray's origination point in each report (inserted between the report tag and other data fields).
+  Include the model coordinates of the ray's origination point in each
+  report.
 
 *-p*::
-	Produce output in *plot3*(5) format rather than ASCII text. This is useful for overlaying results in MGED.
+  Produce output in *plot3*(5) format rather than ASCII text, useful for
+  overlaying results in *mged*(1).
 
 *-r* _bits_::
-	Specify which report types to produce using a bitmask (decimal, octal with `0`, or hex with `0x`). Prefixing with a minus sign `-` negates the selection (specifies what NOT to report). The bit definitions are:
-	* `1`::: Overlaps
-	* `2`::: Contiguous unlike airs
-	* `4`::: Unconfined airs
-	* `8`::: Air first on rays
-	* `16`::: Air last on rays
-	* `32`::: Vacuums
-	+
-	The default is `1` (overlaps only).
+  Select which report types to produce using a bitmask (decimal, octal with
+  a leading `0`, or hex with a leading `0x`).  Prefixing the value with a
+  minus sign negates the selection (specifies what NOT to report).  The bit
+  values are `1` (overlaps), `2` (contiguous unlike airs), `4` (unconfined
+  airs), `8` (air first on rays), `16` (air last on rays), and `32`
+  (vacuums).  The default is `1` (overlaps only).
 
 *-s*::
-	Collect and sort overlap reports before printing. Groups reports by overlapping region pairs, sorted in order of decreasing cumulative overlap length. By default, overlaps are reported immediately as they are discovered.
+  Collect and sort overlap reports before printing, grouping them by region
+  pair in order of decreasing cumulative overlap length.  By default
+  overlaps are reported immediately as they are found.  This overrides *-p*.
 
 *-t* _tol_::
-	Set the length tolerance (in millimeters) below which overlaps, vacuums, or air gaps are ignored. The default is 0.
+  Set the length tolerance, in millimeters, below which overlaps, vacuums,
+  and air gaps are ignored.  The default is 0.
 
 *-u*::
-	Enable reporting of partitions containing air (sets `useair` in `rt_i` to 1). This is also set implicitly if air-related report bits are specified.
+  Enable reporting on partitions containing air.  This is set implicitly
+  whenever an air-related report bit is requested via *-r*.
 
 *-x* _bits_::
-	Set *glint* debug flags.
+  Set *glint* diagnostic flags.  The value is interpreted as hexadecimal.
 
 *-h*::
 *-?*::
-	Print the usage message and exit.
+  Print the usage message and exit.
 
+[[examples]]
 == EXAMPLES
 
-.Run geometry check with custom grid spacing and report filters
+.Find overlaps with a fine grid and a tolerance
+====
 [source,bash]
 ----
-glint -a 35 -e 25 -c -g 1.0 -r 31 -t 0.01 kitchen.g appliances
+glint -c -g 1.0 -t 0.01 vehicle.g hull
 ----
+Fires one ray per 1mm grid cell from the center of each cell at the _hull_
+combination in _vehicle.g_, reporting only overlaps longer than 0.01mm.  A
+fine grid catches small interferences that a coarse grid would step over.
+====
 
+.Audit air regions and visualize the results in MGED
+====
+[source,bash]
+----
+glint -r 62 -p cabin.g interior > air.plot3
+----
+Selects every report type except plain overlaps (62 = 2+4+8+16+32) and emits
+*plot3*(5) geometry, which can be overlaid on the model with the *overlay*
+command in *mged*(1) to see exactly where the air problems occur.
+====
+
+[[see_also]]
 == SEE ALSO
 
-*mged*(1), *librt*(3), *plot3*(5)
+*brlcad*(1), *mged*(1), *gqa*(1), *rt*(1), *librt*(3), *plot3*(5)
 
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1995-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

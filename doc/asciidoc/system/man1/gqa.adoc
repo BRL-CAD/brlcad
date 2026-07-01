@@ -1,16 +1,16 @@
 = GQA(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-gqa - a BRL-CAD quantitative geometry analysis tool
+gqa - quantitative geometry analysis tool
 
 == SYNOPSIS
 
 [source]
 ----
-gqa [options] model.g objects
+gqa [options] model.g object [object ...]
 ----
 
 
@@ -141,6 +141,8 @@ Specifies which computations are to be performed and reported. The __analysis_fl
 |Adjacent different air
 |b
 |Bounding box dimensions
+|c
+|Weight + Centroids
 |e
 |Exposed air
 |g
@@ -149,6 +151,8 @@ Specifies which computations are to be performed and reported. The __analysis_fl
 |Weight + Centroids + Moments of Inertia
 |o
 |Overlaps
+|p
+|Overlaps + write an overlaps plot file
 |v
 |Volume
 |w
@@ -410,6 +414,12 @@ Average total weight: 3.67541e+06 kg
 ====
 
 
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rtweight*(1), *mater*(n), *rt*(1)
+
+
 [[author]]
 == AUTHOR
 
@@ -419,7 +429,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1984-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

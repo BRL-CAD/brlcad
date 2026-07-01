@@ -9,67 +9,87 @@ gencolor - output a repeated pattern of byte values
 
 == SYNOPSIS
 
-*gencolor* [-p | -b] [-r _repeat_count_] [-s _squaresize_ | -S _squaresize_] [-w _width_ | -W _width_] [-n _height_ | -N _height_] [_val1_ ... _valN_] > _output_file_
+[source]
+----
+gencolor [-p | -b] [-r _count_] [-s _squaresize_ | -S _squaresize_] [-w _width_ | -W _width_] [-n _height_ | -N _height_] [_val1_ ... _valN_] > _output_file_
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*gencolor* repeats a pattern of up to 8192 8-bit values to its standard output. The values (ranging from 0 to 255) are read either from the command line arguments or in binary format from standard input. If no values are supplied, a default single value of 0 (black) is used.
+*gencolor* writes a repeated pattern of 8-bit byte values to standard output. The pattern values (each ranging from 0 to 255) are taken from the command-line arguments, or, if none are given, are read in binary form from standard input. With no arguments and no piped input, a single default value of 0 (black) is used. The assembled pattern may be up to 131072 bytes long.
 
-Note that *gencolor* will refuse to write its output directly to a terminal; you must redirect the output to a file or pipe it to another command.
+By default the pattern repeats forever. The *-r* option limits the output to a fixed number of pattern repetitions. Alternatively, specifying an image geometry (*-s*/*-S*, *-w*/*-W*, *-n*/*-N*) or an output format (*-p*, *-b*) causes *gencolor* to emit exactly enough bytes to fill one image of the given dimensions, making it convenient for generating solid-color *pix*(5) or *bw*(5) backgrounds.
 
+*gencolor* refuses to write to a terminal; redirect its output to a file or pipe it to another command.
+
+[[options]]
 == OPTIONS
 
 *-p*::
-	Specify a `.pix` file output format (3 bytes per pixel). This is the default.
+  Assume *pix*(5) output (3 bytes per pixel). This is the default and affects only the byte count computed when an image geometry is requested without *-r*.
 
 *-b*::
-	Specify a `.bw` file output format (1 byte per pixel).
+  Assume *bw*(5) output (1 byte per pixel).
 
-*-r* _repeat_count_::
-	Specify the number of times to repeat the given pattern. The default is infinity (unless another option that specifies dimensions is used).
+*-r* _count_::
+  Repeat the pattern _count_ times. The default is to repeat forever (unless an image geometry option supplies a count instead).
 
 *-w* _width_::
 *-W* _width_::
-	Specify the width of the image. The default is 512.
+  Set the image width in pixels. The default is 512.
 
 *-n* _height_::
 *-N* _height_::
-	Specify the height of the image. The default is 512.
+  Set the image height in pixels. The default is 512.
 
 *-s* _squaresize_::
 *-S* _squaresize_::
-	Set both the width and height of the image to the specified value.
+  Set both the image width and height to _squaresize_ pixels.
 
 *-h*::
 *-?*::
-	Print the usage message and exit.
+  Print the usage message and exit.
 
+[[examples]]
 == EXAMPLES
 
-.Output a 512-pixel green pattern (0 255 0) to a file
+.Generate a solid green 512x512 pix image
+====
 [source,bash]
 ----
-gencolor -r 512 0 255 0 > green.pix
+gencolor -p -s 512 0 255 0 > green.pix
 ----
+The three-byte RGB pattern (0 255 0) is repeated to fill a 512x512 *pix*(5) image, yielding 512 * 512 * 3 bytes. The resulting file can be viewed with *pix-fb*(1) or *pixmatte*(1).
+====
 
-.Generate a green pattern using standard input
+.Tile a gradient background under a rendering
+====
 [source,bash]
 ----
-gencolor -r 1 0 255 0 | gencolor -r 512 > green.pix
+gencolor -b -w 1024 -n 768 128 > gray.bw
+pix-fb scene.pix
 ----
+The first command produces a 1024x768 single-channel *bw*(5) image filled with mid-gray (value 128), suitable as a neutral backdrop or matte before compositing a rendered *pix*(5) image onto the framebuffer.
+====
 
+[[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix*(5), *bw*(5)
+*brlcad*(1), *pix*(5), *bw*(5), *pix-fb*(1), *pixmatte*(1)
 
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,76 +1,122 @@
 = GCV(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-gcv - Geometry Converter
+gcv - geometry format converter
 
 == SYNOPSIS
 
 [source]
 ----
-gcv [options]... [-i input_file] [-o output_file]
+gcv [options] [--input-format _fmt_] [--output-format _fmt_] _input_file_ _output_file_
 ----
 
 [source]
 ----
-gcv [options]... [input_file] [output_file]
+gcv [options] -i _input_file_ -o _output_file_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*gcv* is the primary BRL-CAD Geometry Converter utility. It acts as a unified frontend for reading and writing various geometry formats, automatically selecting the appropriate filter plugins based on file extensions or explicit format specifiers.
+*gcv* is the unified BRL-CAD geometry converter. It reads a model in one
+file format and writes it out in another, selecting the appropriate read
+and write filter plugins from *libgcv* based on the file format. Supported
+formats include the BRL-CAD database (*.g*), STEP, IGES, STL, and Wavefront
+OBJ, among others.
 
-If the input and output files are not specified explicitly using the `-i` and `-o` flags, they must be the last two arguments provided on the command line. *gcv* will attempt to infer the file format automatically from the file extensions. If the formats cannot be inferred, or if you need to override the automatic detection, use the `--input-format` and `--output-format` options.
+The input and output files may be given as the last two positional
+arguments, or named explicitly with *-i* and *-o*. When only one of *-i* or
+*-o* is used, the remaining positional argument supplies the other file.
+
+The file format is normally inferred from the file extension. It may instead
+be stated with *--input-format* and *--output-format*, or with a multi-letter
+format prefix on the path itself in the form _fmt_:_path_ (e.g.
+*step:model.stp*). A single-letter prefix is not recognized as a format, so
+that Windows drive letters are not misinterpreted.
+
+Per-filter options may be passed through to the read filter, the write
+filter, or both, allowing format-specific behavior to be tuned without
+*gcv* needing to know about each option.
 
 [[options]]
 == OPTIONS
 
-*-h, -?, --help* [_format_]::
-Print help and exit. If a _format_ is specified (e.g., `step`, `iges`, `obj`), prints help specific to that geometry format.
+*-h*, *--help* [_format_]::
+  Print help and exit. If a _format_ is named, format-specific help is
+  intended to be printed for it.
 
-*-i, --input* _file_::
-Specify the input geometry file.
+*-?* [_format_]::
+  Same as *-h*.
 
-*-o, --output* _file_::
-Specify the output geometry file. If the file already exists, the conversion output will be appended where applicable.
+*-i* _file_, *--input* _file_::
+  Read geometry from _file_. The file must exist.
+
+*-o* _file_, *--output* _file_::
+  Write geometry to _file_. If _file_ already exists, conversion output is
+  appended where the write filter supports it.
 
 *--input-format* _format_::
-Explicitly specify the MIME model format of the input file (e.g., `model/vrml`, `model/iges`). This overrides file extension detection.
+  Set the input file format explicitly (e.g. *step*, *iges*, *stl*, *obj*),
+  overriding extension- and prefix-based detection.
 
 *--output-format* _format_::
-Explicitly specify the MIME model format of the output file.
+  Set the output file format explicitly.
 
-*-I, --input-only-opts* _opts_::
-Options to apply only while processing the input file. Accepts options until another top-level option is encountered.
+*-I* _opts_, *--input-only-opts* _opts_::
+  Pass _opts_ only to the input (read) filter. Consumes arguments until the
+  next top-level *gcv* option is encountered.
 
-*-O, --output-only-opts* _opts_::
-Options to apply only while preparing the output file. Accepts options until another top-level option is encountered.
+*-O* _opts_, *--output-only-opts* _opts_::
+  Pass _opts_ only to the output (write) filter. Consumes arguments until the
+  next top-level *gcv* option is encountered.
 
-*-B, --input-and-output-opts* _opts_::
-Options to apply both during input and output handling. Accepts options until another top-level option is encountered.
+*-B* _opts_, *--input-and-output-opts* _opts_::
+  Pass _opts_ to both the input and output filters. Consumes arguments until
+  the next top-level *gcv* option is encountered.
 
 [[examples]]
 == EXAMPLES
 
-.Basic Conversion
-[example]
+.Convert a STEP file into a BRL-CAD database
 ====
-**gcv input.obj output.g**
+[source,bash]
+----
+gcv assembly.stp assembly.g
+----
+Reads the STEP file _assembly.stp_ and writes a BRL-CAD database
+_assembly.g_. Both formats are detected from the file extensions, after
+which the result can be inspected with *mged*(1) or rendered with *rt*(1).
+====
 
-Converts a Wavefront OBJ file (_input.obj_) into a BRL-CAD geometry database (_output.g_). The formats are inferred automatically from the `.obj` and `.g` extensions.
+.Tune a filter while converting OBJ to a .g database
+====
+[source,bash]
+----
+gcv -I --units mm model.obj model.g
+----
+Converts a Wavefront OBJ mesh to a BRL-CAD database, passing the
+*--units mm* option only to the OBJ read filter so that the source
+coordinates are interpreted as millimeters.
 ====
 
-.Explicit Formats
-[example]
+.Override detection with explicit formats
 ====
-**gcv --input-format model/step -i in.step --output-format model/iges -o out.iges**
+[source,bash]
+----
+gcv --input-format step --output-format stl in.dat out.dat
+----
+Forces the input to be read as STEP and the output written as STL even
+though the *.dat* extensions give no hint of the formats involved.
+====
 
-Converts a STEP file to an IGES file using explicit format identifiers and file flags.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *g-stl*(1), *stl-g*(1), *g-iges*(1), *step-g*(1)
 
 [[author]]
 == AUTHOR
@@ -80,7 +126,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2015-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
