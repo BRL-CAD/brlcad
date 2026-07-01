@@ -1,18 +1,20 @@
-= naca456(1)
+= NACA456(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-naca456 - generates BRL-CAD wing geometry from NACA 4-, 5-, and 6-series airfoils
+naca456 - generate BRL-CAD wing geometry from NACA 4-, 5-, and 6-series airfoils
 
 == SYNOPSIS
 
 [source]
 ----
-naca456 [options]
-naca456 --demo-file sampler.g
-naca456 --airfoil 2412 --section-file section.tsv
+naca456 [-m _bot|brep_] [-a _code_] [-A _code_] [-s _length_] [-r _length_]
+        [-t _length_] [-w _degrees_] [-d _degrees_] [-T _degrees_]
+        [-S _count_] [-c _count_] [-f] [-o _file.g_] [-n _name_] [options]
+naca456 --demo-file _file.g_
+naca456 --airfoil _code_ --section-file _file.tsv_
 ----
 
 [[description]]
@@ -518,84 +520,67 @@ https://www.pdas.com/naca456refs.html
 [[examples]]
 == EXAMPLES
 
-Create a BoT NACA 2412 semi-span wing:
-
-[source]
+.Swept, dihedral, tapered BoT wing
+====
+[source,bash]
 ----
 naca456 --mode bot --force --output wing.g --name wing_2412 \
   --airfoil 2412 --semi-span 1000 --root-chord 250 --tip-chord 125 \
   --sweep-angle 4.6 --dihedral 5 --tip-twist -2 --stations 9 --samples 65
 ----
+Generates a closed Bag-of-Triangles half-wing from a NACA 2412 section with
+4.6 degrees of leading-edge sweep, 5 degrees of dihedral, and -2 degrees of
+tip washout into `wing.g` as the solid `wing_2412.bot` and region `wing_2412.r`,
+ready to be raytraced with *rt*(1) or edited in *mged*(1).
+====
 
-Create a BREP wing interpolating from a 5-digit root section to a 6-series tip
-section:
-
-[source]
+.BREP wing blending a 5-digit root into a 6-series tip
+====
+[source,bash]
 ----
 naca456 --mode brep --force --output wing-brep.g --name wing_brep \
   --airfoil 23012 --tip-airfoil 65-210 --full-span 2000 \
   --root-chord 280 --tip-chord 110 --sweep-offset 120 \
   --dihedral 4 --tip-twist -3 --stations 8 --samples 29
 ----
+Produces a NURBS boundary-representation wing whose sections are linearly
+interpolated from a NACA 23012 root to a NACA 65-210 tip. The full span is
+2000 model units (1000-unit semi-span), and the tip leading edge is placed
+120 units aft by direct offset rather than by sweep angle.
+====
 
-Create a BREP wing using smoother bicubic side patches:
-
-[source]
+.Wing with a JSON-specified raked tip, then inspected in mged
+====
+[source,bash]
 ----
-naca456 --mode brep --brep-surface smooth --force \
-  --output wing-smooth-brep.g --name wing_smooth \
-  --airfoil 2412 --semi-span 900 --root-chord 240 --tip-chord 120 \
-  --sweep-angle 5 --dihedral 4 --tip-twist -2 --stations 8 --samples 29
-----
+cat > tip-raked.json <<'EOF'
+{ "version": 1, "style": "raked", "extension": 120.0, "rake_offset": 80.0,
+  "terminal_chord": 70.0, "terminal_airfoil": "0008", "cap_style": "flat" }
+EOF
 
-Create a BREP wing with the flat tip fallback:
-
-[source]
-----
-naca456 --mode brep --tip-style flat --force --output wing-flat-brep.g \
-  --name wing_flat --airfoil 0012 --semi-span 700 \
-  --root-chord 220 --tip-chord 120 --stations 6 --samples 25
-----
-
-Create a BREP wing using a JSON raked-tip specification:
-
-[source]
-----
 naca456 --mode brep --force --output wing-raked-brep.g \
   --name wing_raked --airfoil 2412 --semi-span 780 \
   --root-chord 230 --tip-chord 110 --sweep-offset 70 \
   --tip-specification tip-raked.json --stations 7 --samples 25
+
+mged wing-raked-brep.g "attr get wing_raked.r naca456::tip_style"
 ----
+Builds a raked wing-tip extension described by an external versioned JSON tip
+specification, then reads back the `naca456::tip_style` attribute that
+*naca456* records on every generated region for auditability.
+====
 
-Create a 6A-series BREP:
-
-[source]
-----
-naca456 --mode brep --force --output naca64a.g --name wing_64a \
-  --airfoil 64A210 --semi-span 900 --root-chord 240 --tip-chord 120 \
-  --dihedral 4 --stations 7 --samples 25
-----
-
-Create the built-in sampler:
-
-[source]
+.Built-in sampler database
+====
+[source,bash]
 ----
 naca456 --demo-file naca456-demo.g
-----
-
-Create the same sampler with smooth BREP rows:
-
-[source]
-----
-naca456 --brep-surface smooth --demo-file naca456-demo-smooth.g
-----
-
-The sampler writes individual wing regions and a top-level `all` combination:
-
-[source]
-----
 mged naca456-demo.g "l all"
 ----
+Writes a 36-wing sampler (24 BoT and 12 BREP wings) covering the 4-digit,
+5-digit, 5-digit reflex, 6-series, and 6A-series families together with a
+top-level `all` combination that unions every generated wing region.
+====
 
 [[diagnostics]]
 == DIAGNOSTICS
@@ -608,21 +593,19 @@ BREP validation or solid classification fails.
 [[see_also]]
 == SEE ALSO
 
-*mged*(1), *rt*(1), *libwdb*(3)
+*brlcad*(1), *mged*(1), *rt*(1), *libwdb*(3)
 
 [[author]]
-== AUTHORS
+== AUTHOR
 
 BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2026 United States Government as represented by
-the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
 
-Reports of bugs or problems should be submitted via electronic mail to
-devs@brlcad.org
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
