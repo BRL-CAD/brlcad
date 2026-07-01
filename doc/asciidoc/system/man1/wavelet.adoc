@@ -4,58 +4,123 @@
 :manmanual: BRL-CAD
 
 == NAME
-wavelet - perform a haar wavelet decomposition/reconstruction
+wavelet - perform a Haar wavelet decomposition or reconstruction
 
 == SYNOPSIS
 
 [source]
 ----
-wavelet [-1] [-2] [-d] [-r] [-# channels] [ -t [c | d | f | i | l | s]] [-w width] [-n scanlines] [-s squaresize] [-S square_out_size] [-W width_out] < file > wavelet
+wavelet {-d | -r} [-1 | -2] [-t _datatype_] [-# _channels_] [-w _width_] [-n _scanlines_] [-s _squaresize_] [-W _out_size_] [-S _out_size_] [-R _avg_size_] [-D _level_] < datastream > wavelets
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *wavelet* command will perform Haar wavelet decomposition or reconstruction transforms on the input dataset. The command line options are:
+The *wavelet* command performs a Haar wavelet transform on a raw binary
+dataset read from standard input, writing the transformed result to
+standard output.  It can either *decompose* a signal into successively
+coarser "average" terms plus "detail" coefficients, or *reconstruct* the
+original signal from such a decomposition.  Decomposition and
+reconstruction are inverse operations.
 
-*-d* perform decomposition.
+The transform operates on interleaved, fixed-width samples, so it works
+directly on image formats such as *pix*(5) and *bw*(5) by treating each
+pixel as one sample with the appropriate number of channels.  A
+two-dimensional transform requires a square dataset.
 
-*-r* perform reconstruction.
+Because the Haar transform sums and differences sample values, results
+can overflow narrow integer types.  For lossless decomposition and
+reconstruction, convert the data to the next larger data type (via the
+*-t* option) before processing.
 
-*-1* perform a 1-dimensional (horizontal) transform.
+[[options]]
+== OPTIONS
 
-*-2* perform a 1-dimensional (interleaved horizontal and vertical) transform.
+*-d*::
+  Perform a decomposition.
 
-*-# channels* Indicates the number of values in each sample point. For example, to perform a transform on a *pix*(5) file properly, specify "-# 3". This causes the red, green and blue channels to be transformed individually.
+*-r*::
+  Perform a reconstruction.
 
-*-t {cdfils}* specifies the data type of the input, and hence the data type in which the wavelet calculations will be performed. The letters each stand for the first character of the C programming language data type: *c* haracter, *d* ouble, *f* loat, *i* nt, *l* ong, *s* hort. Note that if lossless decomposition and reconstruction are desired, then data sets should be converted to the next larger data type before being processed.
+*-1*::
+  Perform a one-dimensional (per-scanline horizontal) transform.  This is
+  the default.
 
-*-w width* Specify the number of samples per scanline.
+*-2*::
+  Perform a two-dimensional transform (interleaved horizontal and
+  vertical).  The dataset must be square.
 
-*-n scanline* Specify the number of scanlines in the dataset
+*-t* _datatype_::
+  Specify the data type of the samples, which is also the type used for
+  the wavelet arithmetic.  The letter is the first character of the C
+  type: *c* (char), *s* (short), *i* (int), *l* (long), *f* (float), *d*
+  (double).  The default is char.
 
-*-s squaresize* Specify both width and scanlines simultaneously (square image).
+*-#* _channels_::
+  Number of values per sample point.  For example, use *-# 3* to transform
+  a *pix*(5) file so the red, green, and blue channels are transformed
+  individually.  The default is 3.
 
-*-W width_out* Specifies the width of the output image. Normally this is 1 for a full decomposition/reconstruction. You may specify a width at which decomposition or reconstruction should stop. This number should be a power of 2. The result will be an "average" image of the specified size, with the remainder of the original data width converted to "detail" coefficients. See also: -R
+*-w* _width_::
+  Number of samples per scanline.  The default is 512.
 
-*-R avg_size* Resumes a transform that left off with an average image of avg_size.
+*-n* _scanlines_::
+  Number of scanlines in the dataset.  The default is 512.
 
-*-S square_out_size* This is the same as the *-W* option. It implies the square size for a 2D decomposition limit.
+*-s* _squaresize_::
+  Set the width and number of scanlines simultaneously to the same value
+  (a square dataset).
 
+*-W* _out_size_::
+  Width of the average image in the output.  Normally a full decomposition
+  reduces this to 1; specify a power-of-two value at which decomposition
+  or reconstruction should stop.  The output then holds an averaged image
+  of the given size with the remaining data stored as detail
+  coefficients.
+
+*-S* _out_size_::
+  Same as *-W*, expressed as the square size of a two-dimensional
+  transform limit.
+
+*-R* _avg_size_::
+  Resume a transform from a decomposition that left off with an average
+  image of _avg_size_.
+
+*-D* _level_::
+  Set the debug output level.  Diagnostic information about data type,
+  channels, width, height, and limit is written to standard error.
 
 [[examples]]
 == EXAMPLES
 
-The command**decompose -# 3 < img.pix | pix-fb** will display the horizontal decomposition of the file img.pix.
+.Display a horizontal decomposition
+====
+[source,bash]
+----
+wavelet -d -# 3 -s 512 < img.pix | pix-fb
+----
+Decomposes each scanline of a 512x512 color *pix*(5) image and displays
+the result on a framebuffer with *pix-fb*(1).  Each scanline shows a
+shrinking "average" toward the left with detail coefficients to the right.
+====
 
-The command**decompose -# 3 -s 1024 -l 64 < img.pix >** will decompose a 1024x1024 image. The decomposition will stop when the image has been decomposed to 64x64. The output image will thus have a 64x64 version of the original in the lower left corner of the image, with detail terms in the remainder.
-
+.Two-dimensional decomposition with a stopping size
+====
+[source,bash]
+----
+wavelet -d -2 -# 3 -s 1024 -S 64 < img.pix > img.wlt
+----
+Performs a 2D decomposition of a 1024x1024 color image, stopping once the
+average has been reduced to 64x64.  The output image holds a 64x64 version
+of the original in the lower-left corner with detail terms filling the
+remainder, ready to be inverted with *wavelet -r -2 -s 1024 -R 64*.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix*(5), *bw*(5)
+*brlcad*(1), *pix-fb*(1), *pix*(5), *bw*(5)
 
 
 [[author]]
