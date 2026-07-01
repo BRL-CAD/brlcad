@@ -131,7 +131,7 @@ mark_as_advanced(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
 # batch is executed.
 ###
 macro(_brlcad_register_probe)
-  cmake_parse_arguments(_BRP "" "BATCH;VAR" "LIBS" ${ARGN})
+  cmake_parse_arguments(_BRP "" "BATCH;VAR" "LIBS;INCLUDES;DEFINITIONS;FLAGS" ${ARGN})
 
   get_property(_brp_list GLOBAL PROPERTY "BRLCAD_PROBE_BATCH_${_BRP_BATCH}")
   list(FIND _brp_list "${_BRP_VAR}" _brp_idx)
@@ -141,6 +141,39 @@ macro(_brlcad_register_probe)
     if(_BRP_LIBS)
       set_property(GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_LIBS" "${_BRP_LIBS}")
     endif()
+    if(_BRP_INCLUDES)
+      set_property(GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_INCLUDES" "${_BRP_INCLUDES}")
+    endif()
+    if(_BRP_DEFINITIONS)
+      set_property(GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_DEFINITIONS" "${_BRP_DEFINITIONS}")
+    endif()
+    if(_BRP_FLAGS)
+      set_property(GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_FLAGS" "${_BRP_FLAGS}")
+    endif()
+  else()
+    get_property(_brp_existing_libs GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_LIBS")
+    get_property(_brp_existing_includes GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_INCLUDES")
+    get_property(_brp_existing_definitions GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_DEFINITIONS")
+    get_property(_brp_existing_flags GLOBAL PROPERTY "BRLCAD_PROBE_${_BRP_BATCH}_${_BRP_VAR}_FLAGS")
+
+    if(NOT "${_brp_existing_libs}" STREQUAL "${_BRP_LIBS}"
+        OR NOT "${_brp_existing_includes}" STREQUAL "${_BRP_INCLUDES}"
+        OR NOT "${_brp_existing_definitions}" STREQUAL "${_BRP_DEFINITIONS}"
+        OR NOT "${_brp_existing_flags}" STREQUAL "${_BRP_FLAGS}")
+      message(FATAL_ERROR
+        "Probe ${_BRP_BATCH}/${_BRP_VAR} registered multiple times with different requirements.\n"
+        "Existing:\n"
+        "  LIBS=${_brp_existing_libs}\n"
+        "  INCLUDES=${_brp_existing_includes}\n"
+        "  DEFINITIONS=${_brp_existing_definitions}\n"
+        "  FLAGS=${_brp_existing_flags}\n"
+        "New:\n"
+        "  LIBS=${_BRP_LIBS}\n"
+        "  INCLUDES=${_BRP_INCLUDES}\n"
+        "  DEFINITIONS=${_BRP_DEFINITIONS}\n"
+        "  FLAGS=${_BRP_FLAGS}\n"
+      )
+    endif()
   endif()
 
   unset(_brp_list)
@@ -148,6 +181,13 @@ macro(_brlcad_register_probe)
   unset(_BRP_BATCH)
   unset(_BRP_VAR)
   unset(_BRP_LIBS)
+  unset(_BRP_INCLUDES)
+  unset(_BRP_DEFINITIONS)
+  unset(_BRP_FLAGS)
+  unset(_brp_existing_libs)
+  unset(_brp_existing_includes)
+  unset(_brp_existing_definitions)
+  unset(_brp_existing_flags)
 endmacro()
 
 ###
@@ -179,6 +219,7 @@ function(_brlcad_run_probe_batch BATCH_NAME)
 
   if(_pending_vars)
     set(_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/${BATCH_NAME}_sources")
+    file(REMOVE_RECURSE "${_build_dir}")
     file(MAKE_DIRECTORY "${_src_dir}")
 
     set(_cml "${_src_dir}/CMakeLists.txt")
@@ -192,9 +233,31 @@ function(_brlcad_run_probe_batch BATCH_NAME)
     foreach(_var IN LISTS _pending_vars)
       file(APPEND "${_cml}" "add_executable(${_var} \"${_src_dir}/${_var}.c\")\n")
       get_property(_libs GLOBAL PROPERTY "BRLCAD_PROBE_${BATCH_NAME}_${_var}_LIBS")
+      get_property(_incs GLOBAL PROPERTY "BRLCAD_PROBE_${BATCH_NAME}_${_var}_INCLUDES")
+      get_property(_defs GLOBAL PROPERTY "BRLCAD_PROBE_${BATCH_NAME}_${_var}_DEFINITIONS")
+      get_property(_flags GLOBAL PROPERTY "BRLCAD_PROBE_${BATCH_NAME}_${_var}_FLAGS")
+      if(_incs)
+        set(_incs_cmd "")
+        foreach(_inc IN LISTS _incs)
+          string(APPEND _incs_cmd " \"${_inc}\"")
+        endforeach()
+        file(APPEND "${_cml}" "target_include_directories(${_var} PRIVATE${_incs_cmd})\n")
+      endif()
+      if(_defs OR _flags)
+        set(_compile_opts "${_defs}")
+        list(APPEND _compile_opts ${_flags})
+        set(_compile_opts_cmd "")
+        foreach(_opt IN LISTS _compile_opts)
+          string(APPEND _compile_opts_cmd " \"${_opt}\"")
+        endforeach()
+        file(APPEND "${_cml}" "target_compile_options(${_var} PRIVATE${_compile_opts_cmd})\n")
+      endif()
       if(_libs)
-        string(REPLACE ";" " " _libs_str "${_libs}")
-        file(APPEND "${_cml}" "target_link_libraries(${_var} PRIVATE ${_libs_str})\n")
+        set(_libs_cmd "")
+        foreach(_lib IN LISTS _libs)
+          string(APPEND _libs_cmd " \"${_lib}\"")
+        endforeach()
+        file(APPEND "${_cml}" "target_link_libraries(${_var} PRIVATE${_libs_cmd})\n")
       endif()
     endforeach()
 
@@ -300,7 +363,13 @@ macro(_brlcad_include_probe HEADER VAR)
     if(NOT DEFINED ${VAR})
       file(WRITE "${_bip_src_dir}/${VAR}.c" "#include <${HEADER}>\nint main(void) { return 0; }\n")
     endif()
-    _brlcad_register_probe(BATCH INCLUDE_PROBE VAR ${VAR})
+    _brlcad_register_probe(
+      BATCH INCLUDE_PROBE
+      VAR ${VAR}
+      INCLUDES ${CMAKE_REQUIRED_INCLUDES}
+      DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS}
+      FLAGS ${CMAKE_REQUIRED_FLAGS}
+    )
     unset(_bip_src_dir)
   endif()
 endmacro()
@@ -317,17 +386,41 @@ macro(_brlcad_func_probe)
   else()
     set(_bfp_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/FUNC_EXISTS_sources")
     file(MAKE_DIRECTORY "${_bfp_src_dir}")
+    if("${have_header_cppflags}" STREQUAL "")
+      standard_header_cppflags(have_header_cppflags)
+    endif()
+    set(_bfp_defs ${CMAKE_REQUIRED_DEFINITIONS})
+    if(have_header_cppflags)
+      separate_arguments(_bfp_header_defs NATIVE_COMMAND "${have_header_cppflags}")
+      list(APPEND _bfp_defs ${_bfp_header_defs})
+    endif()
+    list(REMOVE_DUPLICATES _bfp_defs)
     if(NOT DEFINED ${_BFP_VAR})
       file(WRITE "${_bfp_src_dir}/${_BFP_VAR}.c"
         "#ifdef __cplusplus\nextern \"C\"\n#endif\nchar ${_BFP_FUNC}();\nint main(void) { return ${_BFP_FUNC}(); }\n"
       )
     endif()
     if(_BFP_LIBS)
-      _brlcad_register_probe(BATCH FUNC_EXISTS VAR ${_BFP_VAR} LIBS ${_BFP_LIBS})
+      _brlcad_register_probe(
+        BATCH FUNC_EXISTS
+        VAR ${_BFP_VAR}
+        LIBS ${_BFP_LIBS}
+        INCLUDES ${CMAKE_REQUIRED_INCLUDES}
+        DEFINITIONS ${_bfp_defs}
+        FLAGS ${CMAKE_REQUIRED_FLAGS}
+      )
     else()
-      _brlcad_register_probe(BATCH FUNC_EXISTS VAR ${_BFP_VAR})
+      _brlcad_register_probe(
+        BATCH FUNC_EXISTS
+        VAR ${_BFP_VAR}
+        INCLUDES ${CMAKE_REQUIRED_INCLUDES}
+        DEFINITIONS ${_bfp_defs}
+        FLAGS ${CMAKE_REQUIRED_FLAGS}
+      )
     endif()
     unset(_bfp_src_dir)
+    unset(_bfp_defs)
+    unset(_bfp_header_defs)
   endif()
 
   unset(_BFP_FUNC)
@@ -348,7 +441,13 @@ macro(_brlcad_struct_probe)
         "#include <${_BSP_HEADER}>\nint main(void) { ${_BSP_STRUCT} _s; (void)_s.${_BSP_MEMBER}; return 0; }\n"
       )
     endif()
-    _brlcad_register_probe(BATCH STRUCT_PROBE VAR HAVE_${_BSP_VAR})
+    _brlcad_register_probe(
+      BATCH STRUCT_PROBE
+      VAR HAVE_${_BSP_VAR}
+      INCLUDES ${CMAKE_REQUIRED_INCLUDES}
+      DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS}
+      FLAGS ${CMAKE_REQUIRED_FLAGS}
+    )
     unset(_bsp_src_dir)
   endif()
 
