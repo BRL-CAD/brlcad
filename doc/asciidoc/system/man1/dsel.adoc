@@ -1,68 +1,85 @@
 = DSEL(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-dsel - Selectively extract or skip sequences of doubles from a data stream
+dsel - selectively keep or skip doubles from a data stream
 
 == SYNOPSIS
 
 [source]
 ----
-dsel keep < input.doubles > output.doubles
-----
-
-[source]
-----
-dsel skip keep [skip keep ...] < input.doubles > output.doubles
+dsel _keep_ < input.doubles > output.doubles
+dsel _skip_ _keep_ [_skip_ _keep_ ...] < input.doubles > output.doubles
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*dsel* reads a stream of double-precision floating-point numbers from standard input, selectively copies or discards specific numbers of elements based on the provided command-line arguments, and writes the kept elements to standard output.
+*dsel* reads a stream of double-precision floating-point numbers from
+standard input, selectively copies or discards runs of values according to
+its positional arguments, and writes the kept values to standard output.
+Both input and output must be redirected; *dsel* refuses to run if either
+standard input or standard output is a terminal.
 
-If a single argument is provided, *dsel* will copy exactly that many _keep_ elements to the output and then exit.
+If a single argument is given, *dsel* copies exactly that many _keep_
+values to the output and exits.
 
-If two or more arguments are provided, they are treated as alternating _skip_ and _keep_ counts. The tool will first read and discard _skip_ elements, then read and copy _keep_ elements to the output, and repeat this pattern for any additional arguments. If an odd number of arguments greater than one is provided (e.g., `dsel skip keep skip`), the final _keep_ count is implicitly treated as infinity, meaning all remaining data in the stream will be copied to the output.
+With two or more arguments, they are interpreted as alternating _skip_ and
+_keep_ counts: *dsel* reads and discards _skip_ values, then reads and
+copies _keep_ values, repeating for each pair. If the argument list ends
+with an unpaired _skip_ (an odd argument count greater than one), the final
+implied _keep_ is treated as infinite, so all remaining values are copied.
+A _skip_ count of zero or less is ignored, while a _keep_ count of zero or
+less causes *dsel* to stop. If the stream ends before a requested count is
+satisfied, *dsel* stops at end-of-input.
+
+This is the double-precision counterpart of the byte- and short-oriented
+stream selectors used throughout the BRL-CAD signal-processing tools, and
+pairs well with *dconv*(1), *dmod*(1), and *dstats*(1).
 
 [[options]]
 == OPTIONS
 
-*keep*::
-The number of double-precision elements to copy to the output.
+*-h*, *-?*::
+  Print a usage message and exit.
 
 *skip*::
-The number of double-precision elements to read and discard before copying.
+  Number of double-precision values to read and discard.
+
+*keep*::
+  Number of double-precision values to read and copy to the output.
 
 [[examples]]
 == EXAMPLES
 
-.Extracting the First N Elements
-[example]
+.Extract a window of samples
 ====
-**dsel 1024 < data.raw > first1024.raw**
-
-Reads the first 1024 double-precision elements from _data.raw_ and writes them to _first1024.raw_, ignoring the rest of the file.
-====
-
-.Skipping a Header and Keeping a Chunk
-[example]
-====
-**dsel 512 1024 < data.raw > chunk.raw**
-
-Skips the first 512 elements in _data.raw_, then copies the next 1024 elements to _chunk.raw_, and exits.
+[source,bash]
+----
+dsel 512 1024 < data.d > window.d
+----
+Skips the first 512 doubles of _data.d_ (for example, a header or settling
+region) and copies the next 1024 doubles to _window.d_, ignoring the rest.
 ====
 
-.Multiple Skip/Keep Intervals
-[example]
+.Take a leading block and scale it inline
 ====
-**dsel 100 200 50 < data.raw > filtered.raw**
+[source,bash]
+----
+dsel 1024 < signal.d | dmod -m 2.0 > head_scaled.d
+----
+Copies only the first 1024 doubles of _signal.d_ (a single argument is always
+a _keep_ count), then pipes them through *dmod*(1) to scale each value by 2.0
+before writing _head_scaled.d_.
+====
 
-Skips the first 100 elements, keeps the next 200 elements, skips another 50 elements, and then keeps all remaining elements in the file.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dconv*(1), *dmod*(1), *dstats*(1), *dpeak*(1), *d-f*(1), *f-d*(1)
 
 [[author]]
 == AUTHOR
@@ -72,7 +89,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

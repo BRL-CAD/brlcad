@@ -1,10 +1,10 @@
 = DPEAK(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-dpeak - Find the peak value in a stream of doubles
+dpeak - find the dominant peak in each window of a stream of doubles
 
 == SYNOPSIS
 
@@ -17,28 +17,47 @@ dpeak [window_size] < input.doubles > output.doubles
 [[description]]
 == DESCRIPTION
 
-*dpeak* is an experimental signal processing utility that reads a stream of double-precision floating-point numbers from standard input, searches for local maximums (peaks) within discrete windows, and writes the sample index of the largest peak found to standard output. The output is written as a double-precision floating-point value.
+*dpeak* is an experimental signal processing utility that reads a stream of
+double-precision floating-point numbers from standard input, divides it into
+fixed-size windows, and for each window writes the sample index of the single
+highest peak to standard output as a double-precision value.
 
-A "peak" is defined as a negative second difference (i.e., a local maximum where the data value is greater than both its immediate predecessor and the value before that). The search ignores the first 5 samples of each window.
+A "peak" is a local maximum identified by a negative second difference: a
+sample whose value is greater than both its predecessor and its successor.
+Peaks occurring within the first 5 samples of a window are ignored. The
+input is processed in windows of _window_size_ samples (default 512); a final
+short window is zero-padded. Exactly one value, the index of the largest peak
+relative to the start of the window, is emitted per window.
 
-The input data is processed in chunks of size _window_size_ (default 512). For each window, the program identifies all local peaks and then outputs the sample index (relative to the start of the window) of the single highest peak. 
+This is a companion to other double-stream tools such as *dfft*(1), *dmod*(1),
+and *dstats*(1) in the *sig* signal-processing suite.
 
 [[options]]
 == OPTIONS
 
 *window_size*::
-The number of samples per processing window. Defaults to 512 if not specified.
+  The number of samples per processing window. Defaults to 512 if not given.
+  The internal buffers limit the usable window size to 2048 samples.
 
 [[examples]]
 == EXAMPLES
 
-.Finding the Peak in a Signal
-[example]
+.Locating spectral peaks after an FFT
 ====
-**dpeak 1024 < signal.raw > peak_indices.raw**
+[source,bash]
+----
+dfft < signal.doubles | dpeak 1024 > peaks.doubles
+----
+Computes the power spectrum of _signal.doubles_ with *dfft*(1) and pipes it to
+*dpeak*, which reports the bin index of the strongest peak in each 1024-sample
+window. The resulting indices can be converted to text with *d-a*(1) for
+inspection.
+====
 
-Processes the double-precision data in _signal.raw_ using a window size of 1024. For each window, it finds the index of the highest peak and writes that index (as a double) to _peak_indices.raw_.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dfft*(1), *dmod*(1), *dstats*(1), *d-a*(1)
 
 [[author]]
 == AUTHOR
@@ -48,7 +67,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

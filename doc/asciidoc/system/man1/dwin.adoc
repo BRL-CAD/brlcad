@@ -1,10 +1,10 @@
 = DWIN(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-dwin - Extract sliding windows of double-precision values and optionally apply window functions
+dwin - extract sliding windows of doubles and optionally apply a window function
 
 == SYNOPSIS
 
@@ -17,41 +17,64 @@ dwin [options] [width] [step] < input.doubles > output.doubles
 [[description]]
 == DESCRIPTION
 
-*dwin* reads a continuous stream of double-precision floating-point numbers from standard input, extracts sliding windows of data, and writes the windowed data to standard output. It can optionally apply various mathematical window functions (such as Hamming or Bartlett) to the extracted data to taper the edges, which is typically done prior to spectral analysis (e.g., FFT).
+*dwin* reads a stream of double-precision floating-point values from
+standard input, extracts overlapping or non-overlapping windows of data,
+and writes the resulting windows to standard output.  Each option may
+apply a tapering window function to the extracted samples to attenuate
+edge effects prior to spectral analysis, such as the discrete Fourier
+transform performed by *dfft*(1).
 
-The _width_ parameter specifies the number of samples in each window (defaults to 1024). The _step_ parameter determines how far the window slides forward for each iteration. If _step_ is less than 1.0, it is treated as a fraction of the window width (e.g., 0.5 means the window slides by half its width). If _step_ is 1.0 or greater, it specifies the absolute number of samples to advance. By default, the step size is equal to the window width (i.e., non-overlapping windows).
+The _width_ argument sets the number of samples per window (default 1024).
+The _step_ argument controls how far the window advances each iteration:
+if it is less than 1.0 it is treated as a fraction of _width_ (e.g. 0.5
+overlaps each window by half), and if it is 1.0 or greater it is the
+absolute number of samples to advance.  When _step_ is omitted it defaults
+to _width_, producing contiguous non-overlapping windows.  Because input
+may be a pipe, *dwin* only seeks forward.  Both standard input and
+standard output must be redirected.
 
 [[options]]
 == OPTIONS
 
 *-w*::
-Apply an 80% split Cosine window to the extracted data.
+  Apply an 80% split cosine (Tukey) window.
 
 *-H*::
-Apply a Hamming window.
+  Apply a Hamming window.
 
 *-b*::
-Apply a Bartlett (triangle) window.
+  Apply a Bartlett (triangle) window.
 
 *-B*::
-Apply a bias window (half triangle).
+  Apply a bias window (half triangle).
 
 *-e*::
-Start the first window such that the first sample corresponds to the end of the input buffer (effectively starting with the window trailing behind the initial data point).
+  Position the first window so its trailing sample aligns with the start
+  of the input (the window begins ahead of the first data point).
 
 *-m*::
-Start the first window such that the first sample corresponds to the middle of the input buffer.
+  Position the first window so its midpoint aligns with the start of the
+  input.
 
 [[examples]]
 == EXAMPLES
 
-.Overlapping Hamming Windows
-[example]
+.Overlapping Hamming windows feeding an FFT
 ====
-**dwin -H 1024 0.5 < signal.raw > windowed.raw**
+[source,bash]
+----
+dwin -H 1024 0.5 < signal.doubles | dfft > spectrum.doubles
+----
+Extracts 1024-sample windows from _signal.doubles_, advancing 512 samples
+(50% overlap) per step, applies a Hamming taper to each window, and pipes
+the windowed segments directly into *dfft*(1) to produce a sequence of
+power spectra in _spectrum.doubles_.
+====
 
-Extracts 1024-sample windows from _signal.raw_, advancing by 512 samples (0.5 overlap) each time, applies a Hamming window to each segment, and writes the result to _windowed.raw_.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dfft*(1), *dconv*(1), *dmod*(1), *dstats*(1)
 
 [[author]]
 == AUTHOR
@@ -61,7 +84,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

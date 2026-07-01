@@ -25,18 +25,21 @@ To process a *bw*(5) format file, use a value of 1 for _nbytes/pixel_. To proces
 [[examples]]
 == EXAMPLES
 
-.Downsample a 1024x1024 pix image to 256x256
+.Downsample a large pix image so it fits on a framebuffer
 ====
 [source,bash]
 ----
-$ decimate 3 1024 1024 256 256 < input.pix > output.pix
+$ decimate 3 1024 1024 512 512 < input.pix | pix-fb -w 512 -n 512
 ----
+Reduce a 1024x1024 *pix*(5) image (3 bytes/pixel) to 512x512 by discarding
+every other sample and scanline, piping the result straight to *pix-fb*(1)
+for a quick preview of an image too large for the framebuffer.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *bw*(5), *pix*(5)
+*brlcad*(1), *pix-fb*(1), *bw*(5), *pix*(5)
 
 [[author]]
 == AUTHOR
@@ -46,7 +49,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1992-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

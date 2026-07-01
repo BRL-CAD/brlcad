@@ -1,68 +1,100 @@
 = DFFT(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-dfft - Compute Fast Fourier Transforms (FFT) of a stream of doubles
+dfft - compute fast Fourier transforms of a stream of doubles
 
 == SYNOPSIS
 
 [source]
 ----
-dfft [options] < input.doubles > output.data
+dfft [-clpLAN] [-d _dB_] [_width_] < doubles > spectrum
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*dfft* computes the Fast Fourier Transform (FFT) of a stream of double-precision floating-point numbers read from standard input. It processes the data in discrete windows (fixed at 1024 samples) and outputs the resulting spectrum to standard output.
+*dfft* reads a stream of double-precision floating-point samples from
+standard input, computes the real fast Fourier transform of each
+1024-sample record, and writes the resulting spectrum to standard
+output. Both standard input and standard output must be redirected;
+if either is a terminal, *dfft* prints a usage message and exits.
 
-By default, the program outputs the log-magnitude (in decibels) of the spectrum (512 values per 1024-sample record) as double-precision floating-point numbers. Various options are available to modify the output, including returning the phase, applying a critical band filter, using a logarithmic frequency scale, normalizing the output, or generating human-readable ASCII text.
+By default the output is the periodogram-scaled log-magnitude in
+decibels, written as 512 double-precision values per 1024-sample
+record. Options select phase output instead of magnitude, a linear
+(non-dB) magnitude scale, a logarithmic frequency scale, a third-octave
+critical band filter, normalization to the peak magnitude, or
+human-readable ASCII text.
+
+The optional _width_ argument is accepted for historical compatibility
+but is ignored; the transform length is fixed at 1024 samples, yielding
+512 output values. Input is normally produced by a tool such as
+*dconv*(1) or *dmod*(1).
 
 [[options]]
 == OPTIONS
 
 *-d* _dB_::
-Set the minimum dB cutoff for the output magnitude. The default is 120 (interpreted as -120 dB).
+  Set the minimum magnitude in decibels (a positive value, applied as
+  its negative). Magnitudes below this floor are clamped when output is
+  normalized. The default is 120, i.e. -120 dB.
 
 *-l*::
-Interpolate the output to a logarithmic frequency scale.
+  Interpolate the magnitudes onto a logarithmic frequency scale.
 
 *-c*::
-Apply a critical band filter (3rd octave) to the magnitudes.
+  Apply a third-octave critical band filter to the magnitudes.
 
 *-p*::
-Output the phase (in units of pi) instead of the magnitude.
+  Output the phase, in units of pi, instead of the magnitude.
 
 *-N*::
-Normalize the Power Spectral Density (PSD) so that the maximum magnitude is 0 dB (or 1.0 if using linear output).
+  Normalize the power spectral density so the peak is 0 dB (or 1.0 in
+  linear mode).
 
 *-L*::
-Output the linear magnitude instead of the log-magnitude (dB).
+  Output linear magnitude rather than log-magnitude in decibels.
 
 *-A*::
-Generate ASCII text output instead of binary double-precision floating-point numbers. In ASCII mode, the output consists of pairs of (frequency_fraction, magnitude) separated by spaces, with one pair per line.
+  Write human-readable ASCII text instead of binary doubles. Each line
+  holds a frequency fraction and its magnitude separated by a space.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Default Log-Magnitude Output
-[example]
+.Plot a power spectrum
 ====
-**dfft < signal.raw > spectrum.raw**
+[source,bash]
+----
+dfft -A -N < signal.doubles > spectrum.txt
+----
+Computes the FFT of the samples in _signal.doubles_, normalizes the
+power spectral density to a 0 dB peak, and writes (frequency, magnitude)
+pairs as ASCII text suitable for feeding to a plotting program.
+====
 
-Reads double-precision data from _signal.raw_, computes the FFT, and writes the log-magnitude spectrum to _spectrum.raw_.
+.Critical band magnitude on a log frequency scale
+====
+[source,bash]
+----
+dmod -m 32768 < raw.doubles | dfft -c -l > bands.doubles
+----
+Scales the raw samples with *dmod*(1), then computes a third-octave
+critical-band-filtered spectrum interpolated onto a logarithmic
+frequency scale, producing binary doubles for further processing.
 ====
 
-.ASCII Phase Output
-[example]
-====
-**dfft -p -A < signal.raw > phase.txt**
+[[see_also]]
+== SEE ALSO
 
-Computes the FFT phase of the input signal and writes the result as human-readable ASCII text to _phase.txt_.
-====
+*brlcad*(1), *dconv*(1), *dmod*(1), *dauto*(1), *dwin*(1), *dstats*(1)
 
 [[author]]
 == AUTHOR
@@ -72,7 +104,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

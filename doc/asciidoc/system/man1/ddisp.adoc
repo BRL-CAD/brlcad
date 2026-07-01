@@ -1,62 +1,91 @@
 = DDISP(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-ddisp - Data Display utility for plotting doubles on a framebuffer
+ddisp - plot a stream of doubles on a framebuffer
 
 == SYNOPSIS
 
 [source]
 ----
-ddisp [-v] [-b] [-p] [-c] [width] < input.doubles
+ddisp [-v] [-b] [-p] [-c] [-H] < input.doubles
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*ddisp* is a visualization tool that reads a continuous stream of double-precision floating-point numbers from standard input and plots them onto a BRL-CAD framebuffer. It maps the numerical values to a 512x512 framebuffer window in one of several visual formats.
+*ddisp* reads a continuous stream of host double-precision floating-point
+numbers from standard input and plots them onto a 512x512 BRL-CAD
+framebuffer. The data is processed in records of _BU_PAGE_SIZE_ values at a
+time, with each record clamped to the 512-pixel framebuffer width.
 
-By default, *ddisp* processes the input in records of _width_ elements (or a default internal page size if not specified) and draws a grayscale intensity map. Each input element is scaled to a grayscale pixel (magnitude 0.0 to 1.0 mapped to 0-255 intensity) and drawn as a horizontal line. The drawing moves down the screen row by row, wrapping around to the top when the bottom of the screen is reached.
+In the default mode, each record is drawn as one horizontal grayscale line.
+Every value is scaled (magnitude 0.0 to 1.0 mapped to intensity 0-255) and
+written as a pixel; successive records march down the screen, wrapping back to
+the top when the bottom is reached. The *-v* and *-b* options instead plot
+each record as a green waveform centered vertically, where a value of +/- 1.0
+maps to +/- 128 pixels from the center row.
+
+Input is typically produced by signal-processing tools such as *dmod*(1),
+*dfft*(1), or *dconv*(1). If standard input is a terminal, *ddisp* prints its
+usage and exits.
 
 [[options]]
 == OPTIONS
 
 *-v*::
-Enables "vertical" point plotting mode. For each record, the data is plotted as a single green pixel at coordinates (X, Y) where X corresponds to the element's index in the record and Y is proportional to its value (+/- 1.0 maps to +/- 128 pixels from the vertical center).
+  Vertical (point) plot mode. Each value is plotted as a single green pixel
+  whose height above or below the center row is proportional to its value.
+  This option also disables pausing and clearing.
 
 *-b*::
-Enables bar graph mode. Similar to the *-v* mode, but draws a solid green vertical bar from the center line to the value's Y-coordinate.
+  Bar graph mode. Like *-v*, but draws a solid green vertical bar from the
+  center row out to each value, clamped to the +/- 128 pixel range.
 
 *-p*::
-Enables pause mode. The program will pause for 3 seconds after drawing each record.
+  Pause for 3 seconds after drawing each record. Useful for animating
+  successive records frame by frame.
 
 *-c*::
-Enables clear mode. The framebuffer is cleared before drawing each record. This is most useful when combined with the *-v* or *-b* options to animate the data frames.
+  Clear the framebuffer before drawing each record. Most useful with *-v* or
+  *-b* to produce a clean animation of each frame.
 
-*width*::
-Specifies the number of elements to read per record. If not specified, a default internal buffer size is used. Note: The maximum plotted width is constrained by the framebuffer width (512 pixels).
+*-H*::
+  Print the usage message and exit. The *-h* and *-?* flags behave the same
+  way.
 
 [[examples]]
 == EXAMPLES
 
-.Default Intensity Map
-[example]
+.Animate a waveform as a bar graph
 ====
-**ddisp 512 < signal.raw**
+[source,bash]
+----
+dmod -s2.0 < signal.d | ddisp -b -c -p
+----
+Scales a stream of doubles with *dmod*(1), then feeds the result to *ddisp*,
+which clears the framebuffer and draws each record as a green bar graph,
+pausing three seconds between frames to animate the signal.
+====
 
-Reads 512 double-precision values at a time from _signal.raw_ and draws them as consecutive horizontal grayscale lines on the framebuffer.
+.Display a scrolling intensity map
+====
+[source,bash]
+----
+ddisp < spectrogram.d
+----
+Reads records of doubles from _spectrogram.d_ and draws each record as a
+horizontal grayscale line, scrolling down the framebuffer to build up a
+spectrogram-style display.
 ====
 
-.Animated Bar Graph
-[example]
-====
-**ddisp -b -c -p 512 < signal.raw**
+[[see_also]]
+== SEE ALSO
 
-Reads 512 double-precision values per record, clears the screen, draws them as a green bar graph, and pauses for 3 seconds before moving to the next record.
-====
+*brlcad*(1), *dmod*(1), *dfft*(1), *dconv*(1), *fbserv*(1)
 
 [[author]]
 == AUTHOR
@@ -66,7 +95,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

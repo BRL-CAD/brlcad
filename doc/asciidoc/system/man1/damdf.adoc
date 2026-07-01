@@ -1,10 +1,10 @@
 = DAMDF(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-damdf - Compute the Average Magnitude Difference Function for a stream of doubles
+damdf - compute the average magnitude difference function of a stream of doubles
 
 == SYNOPSIS
 
@@ -17,26 +17,39 @@ damdf [window_size] < input.doubles > output.doubles
 [[description]]
 == DESCRIPTION
 
-*damdf* reads a stream of double-precision floating-point numbers from standard input, computes the Average Magnitude Difference Function (AMDF) in overlapping windows, and writes the resulting double-precision values to standard output. This is an experimental signal processing utility primarily used for pitch extraction algorithms.
+*damdf* reads double-precision floating-point samples from standard input,
+computes the Average Magnitude Difference Function (AMDF) over successive
+windows, and writes the resulting doubles to standard output. The AMDF is an
+experimental measure used for pitch extraction: for each lag it accumulates the
+sum of absolute differences between a window and a lag-shifted copy of itself,
+then outputs 1024 minus that sum so that strong periodicities appear as peaks.
 
-The input data is processed in chunks of size _window_size_ (default 512). For each window of length _L_, the tool calculates the sum of the absolute differences for various lag values, subtracts each sum from 1024, and outputs the result.
-
-[[options]]
-== OPTIONS
-
-*window_size*::
-The number of samples per processing window. Defaults to 512 if not specified.
+Input is processed in fixed blocks of _window_size_ samples (default 512). A
+final partial block is zero-padded to a full window. Each block produces
+_window_size_ output values. Because both streams are raw binary doubles,
+*damdf* refuses to run if either standard input or standard output is a
+terminal. It does not take any option flags; the only argument is the optional
+positional _window_size_.
 
 [[examples]]
 == EXAMPLES
 
-.Basic *damdf* Usage
-[example]
+.Estimate pitch periodicity of a sampled signal
 ====
-**damdf 1024 < signal.raw > amdf.raw**
+[source,bash]
+----
+damdf 1024 < signal.doubles > amdf.doubles
+dpeak < amdf.doubles
+----
+Computes the AMDF of a stream of doubles over 1024-sample windows, then locates
+the dominant peaks with *dpeak*(1); the lag of the largest peak corresponds to
+the estimated pitch period.
+====
 
-Computes the AMDF of the double-precision values in _signal.raw_ using a window size of 1024 samples, and writes the output to _amdf.raw_.
-====
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dauto*(1), *dfft*(1), *dpeak*(1), *dmod*(1)
 
 [[author]]
 == AUTHOR
@@ -46,7 +59,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
