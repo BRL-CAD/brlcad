@@ -4,56 +4,131 @@
 :manmanual: BRL-CAD
 
 == NAME
-png-fb - display a Portable Network Graphics (PNG) image file on a framebuffer
+png-fb - display a PNG image file on a framebuffer
 
 == SYNOPSIS
 
 [source]
 ----
-png-fb [-Hicvz1] [-gscreen_gamma] [-Fframebuffer] [-m#lines] [-Ssquarescrsize] [-Wscr_width] [-Nscr_height] [-xfile_xoff] [-yfile_yoff] [-Xscr_xoff] [-Yscr_yoff] [file.png]
+png-fb [-H] [-i] [-c] [-v] [-z] [-1] [-m _#lines_] [-F _framebuffer_] [-g _screen_gamma_] [-S _squarescrsize_] [-W _scr_width_] [-N _scr_height_] [-x _file_xoff_] [-y _file_yoff_] [-X _scr_xoff_] [-Y _scr_yoff_] [_file.png_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*png-fb* reads a _PNG_ format file from the named file, or from standard in if no file is specified, and displays the image on the currently selected framebuffer. The environment variable FB_FILE may be used to specify the current framebuffer, see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+*png-fb* reads a Portable Network Graphics (*PNG*) format image from the named
+file, or from standard input if no file is given, and displays it on the
+currently selected framebuffer. The environment variable *FB_FILE* selects the
+default framebuffer (see *brlcad*(1)); the *-F* option overrides it.
 
-By default, the requested framebuffer size is assumed to be 512x512 pixels.
+If no screen size is requested, the framebuffer is opened to match the size of
+the input image. Grayscale and palette-based images are expanded to RGB, and
+16-bit samples are reduced to 8 bits. The reverse conversion, writing a
+framebuffer image to a PNG file, is performed by *fb-png*(1).
 
-The *-g* option specifies the gamma value for the screen where the image is to be displayed. Larger values will produce lighter colored display.
+[[options]]
+== OPTIONS
 
-If the *-i* flag is specified, the image is inverted.
+*-H*::
+  Print a single line on standard output giving the image dimensions in a form
+  usable in shell scripts (e.g. `WIDTH=42 HEIGHT=17`) and exit without
+  displaying the image.
 
-The *-c* flag causes the screen to be cleared before the image is displayed. The default behavior is to overwrite the current image with the new image without clearing the screen.
+*-i*::
+  Invert the image, drawing it upside-down.
 
-The *-v* option will print verbose information about the PNG file.
+*-c*::
+  Clear the framebuffer to black before displaying. By default the new image is
+  written over whatever is already on the screen.
 
-The *-H* option will print a single line on standard output providing the dimensions of the image in a format readily usable in shell scripts, e.g. WIDTH=42 HEIGHT=17.
+*-v*::
+  Be verbose, reporting the color type, bit depth, image size, gamma, interlace
+  status, and any embedded text or modification-time chunks.
 
-The *-z* flag will zoom and center on the image being displayed to make it fill the display area, using the libfb fb_zoom() routine. fb_zoom only offers integer zoom factors, so displays with non-square screens (such as the SGI 3D machines) may find this option of limited usefulness.
+*-z*::
+  Zoom and center the image so it fills the display area, using the framebuffer
+  *fb_view*() routine. Only integer zoom factors are available, so non-square
+  displays may find this of limited use.
 
-The *-W scr_width* flag specifies the width of each scanline in the display device, in pixels.
+*-1*::
+  Force the image to be written one scanline at a time with *fb_write*(3). This
+  is the default and overrides *-m*.
 
-The *-N scr_height* flag specifies the height in scanlines of the display device.
+*-m* _#lines_::
+  Write the image in rectangular blocks of _#lines_ scanlines using
+  *fb_writerect*(3) rather than one line at a time. This can be significantly
+  faster on some framebuffers. Block writes are only used when the image is not
+  inverted or zoomed and is no wider than the screen; otherwise display falls
+  back to single-line writes.
 
-*-S squarescrsize* set both the height and width to the size given.
+*-F* _framebuffer_::
+  Display on the explicitly named _framebuffer_ instead of the one named by
+  *FB_FILE*.
 
-*-x file_xoff -y file_yoff* and *-X scr_xoff -Y scr_yoff* will offset into the file or onto the screen by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+*-g* _screen_gamma_::
+  Additional gamma correction to apply for the display screen (default 1.0,
+  i.e. none). Larger values produce a lighter image.
 
-The *-1* flag causes the image to be written to the framebuffer one line at a time, using the *fb_write*(3) routine. This is the default behavior. The *-m #lines* flag can be used to specify the number of lines to be written to the framebuffer in rectangular blocks of scanlines, using the *fb_writerect*(3) routine. In some circumstances, this can result in significantly faster image display, at the expense of the image being written less smoothly. If both *-m* and *-1* are specified, *-1* wins.
+*-S* _squarescrsize_::
+  Set both the framebuffer width and height to _squarescrsize_ pixels.
 
+*-W* _scr_width_::
+  Set the framebuffer width, in pixels.
+
+*-N* _scr_height_::
+  Set the framebuffer height, in scanlines.
+
+*-x* _file_xoff_::
+  Skip _file_xoff_ pixels into the image horizontally before displaying.
+
+*-y* _file_yoff_::
+  Skip _file_yoff_ pixels into the image vertically before displaying.
+
+*-X* _scr_xoff_::
+  Offset the displayed image _scr_xoff_ pixels horizontally on the screen.
+
+*-Y* _scr_yoff_::
+  Offset the displayed image _scr_yoff_ pixels vertically on the screen.
+
+The coordinate system for the offsets is first quadrant, with the origin at the
+lower left corner of the image.
+
+[[examples]]
+== EXAMPLES
+
+.Render a model and display the result
+====
+[source,bash]
+----
+rt -o render.png -w 1024 -n 1024 havoc.g havoc
+png-fb -c render.png
+----
+Ray-traces a geometry database to a 1024x1024 PNG file with *rt*(1), then
+clears the framebuffer and displays the rendered image.
+====
+
+.Probe an image size from a script
+====
+[source,bash]
+----
+eval $(png-fb -H earth.png)
+echo "image is ${WIDTH} by ${HEIGHT}"
+----
+Uses *-H* to read back the dimensions of a PNG without displaying it, capturing
+them as shell variables for further processing.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*rt*(1), *fb-png*(1), *libfb*(3), *pix*(5)
+*brlcad*(1), *fb-png*(1), *rt*(1), *pix-fb*(1), *libfb*(3), *pix*(5)
 
 
 [[author]]
 == AUTHOR
 
-John R. Anderson
+BRL-CAD Team
 
 
 [[copyright]]
