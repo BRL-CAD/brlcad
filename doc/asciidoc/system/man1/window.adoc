@@ -1,122 +1,90 @@
 = WINDOW(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-window - Creates a BRL-CAD .g file containing windows.
+window - create a BRL-CAD geometry database of rounded windows
 
 == SYNOPSIS
 
 [source]
 ----
-window [options]...
+window [-h] [-f_name.g_] [-n_count_] [-H_height_] [-w_width_] [-d_depth_] [-r_radius_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*window* creates a BRL-CAD database containing window models. Up to 256 windows of the same size may be generated per run. *window* uses libwdb to create the database file, with each window composed of two arb8s and four cylinders to produce rounded corners.
+*window* creates a BRL-CAD geometry database (a *.g* file) populated with one or
+more identical window models, each having rounded edges and corners. Every window
+is built from two arb8 solids and four cylinders; the front face is centered at the
+origin (0, 0, 0) and the window extends in the negative X direction by its depth.
+Up to 256 windows may be created in a single run. *window* uses the *libwdb*
+library to write the database and can be used as a starting point for further
+editing in *mged*(1).
 
-If run without arguments, the program enters interactive mode and prompts for all required parameters. Alternatively, options may be specified directly on the command line.
-
+If invoked with no arguments, *window* prints a usage message and then prompts
+interactively for the database name, window count, dimensions, and corner radius.
+When any argument is supplied, all parameters are read from the command line and no
+prompting occurs. Note that an option and its value are written together with no
+intervening space (for example, *-n3*, not *-n 3*).
 
 [[options]]
 == OPTIONS
 
+*-h*::
+  Print a brief usage and explanation message, then exit. (*-?* behaves the same.)
 
 *-f* _name.g_::
-BRL-CAD file name.
+  Name of the output BRL-CAD database to create. Defaults to *window.g* in
+  interactive mode if left blank.
 
+*-n* _count_::
+  Number of windows to create. Values greater than 256 are clamped to 256.
 
-*-n #*::
-The number of windows to be created (must be less than or equal to 256).
+*-H* _height_::
+  Height of each window, in millimeters.
 
+*-w* _width_::
+  Width of each window, in millimeters.
 
-*-H #*::
-Height of window in millimeters.
+*-d* _depth_::
+  Depth of each window, in millimeters.
 
-
-*-w #*::
-Width of window in millimeters.
-
-
-*-d #*::
-Depth of window in millimeters.
-
-
-*-r #*::
-Radius of the corner in millimeters.
-
-
-
+*-r* _radius_::
+  Radius of the rounded corners, in millimeters.
 
 [[examples]]
 == EXAMPLES
 
-.Interactive *window* Session
-[example]
+.Generate a set of windows and raytrace them
 ====
-
-
-
-....
-
-The windows are composed of 2 arb8s and 4 cylinders.
-The front of the window is centered at (0, 0, 0) and
-extends in the negative x-direction the depth of the
-window.
-
-Enter the mged file to be created (25 char max).
-	window.g
-Enter the number of windows to create (26 max).
-	3
-Enter the height, width, and depth of the window.
-	200 300 20
-Enter the radius of the corner.
-	30
-
-mged file:  window.g
-height of window:  200.000000 mm
-width of window:  300.000000 mm
-depth of window:  20.000000 mm
-radius of corner:  30.000000 mm
-number of windows:  3
-   
-....
-
-
-
+[source,bash]
+----
+window -fwindows.g -n3 -H200 -w300 -d20 -r30
+rt -o windows.png -s512 windows.g wina winb winc
+----
+Creates a database named *windows.g* containing three identical windows, each
+200 mm high, 300 mm wide, 20 mm deep, with 30 mm rounded corners, then renders the
+three resulting groups (*wina*, *winb*, *winc*) to an image with *rt*(1).
 ====
-
-.Single-Line *window* Command
-[example]
-====
-**window -fwindow.g -n3 -H200 -w300 -d20 -r30**
-
-====
-
-Both of these examples create a database named window.g containing three windows with a height of 200mm, width of 300mm, depth of 20mm, and corner radius of 30mm.
-
-
-[[author]]
-== AUTHOR
-
-Susan A. Coates
-
-
-[[copyright]]
-== COPYRIGHT
-
-This software is Copyright (c) 2005-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
 
 [[see_also]]
 == SEE ALSO
 
-bolt(1), handle(1), window_frame(1), gastank(1)
+*brlcad*(1), *mged*(1), *rt*(1), *window_frame*(1), *gastank*(1), *handle*(1), *bolt*(1)
 
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
