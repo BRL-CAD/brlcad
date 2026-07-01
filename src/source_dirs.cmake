@@ -62,6 +62,7 @@ set_deps(libfft     "")
 set_deps(libpc      "")
 set_deps(libqtcad   "libged;libdm;libbv;libbn;libbu")
 set_deps(libtclcad  "libged;libdm;libbv;libbn;libbu")
+set_deps(libmcpcad  "libged;libbu")
 
 
 # Applications
@@ -94,7 +95,7 @@ set_deps(adrt       "libtclcad")
 set_deps(isst       "libtclcad;libqtcad")
 set_deps(rtwizard   "libtclcad")
 set_deps(archer     "libtclcad")
-set_deps(mged       "libtclcad")
+set_deps(mged       "libtclcad;libmcpcad")
 
 # Local Variables:
 # tab-width: 8

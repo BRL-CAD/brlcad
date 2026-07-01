@@ -242,6 +242,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "mater", cmd_ged_plain_wrapper, ged_exec_mater, NULL},
     {MGED_CMD_MAGIC, "material", cmd_ged_plain_wrapper, ged_exec_material, NULL},
     {MGED_CMD_MAGIC, "matpick", f_matpick, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "mcp_listen", f_mcp_listen, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "mat_ae", cmd_ged_plain_wrapper, ged_exec_mat_ae, NULL},
     {MGED_CMD_MAGIC, "mat_mul", cmd_ged_plain_wrapper, ged_exec_mat_mul, NULL},
     {MGED_CMD_MAGIC, "mat4x3pnt", cmd_ged_plain_wrapper, ged_exec_mat4x3pnt, NULL},
