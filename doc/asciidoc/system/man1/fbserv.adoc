@@ -4,128 +4,143 @@
 :manmanual: BRL-CAD
 
 == NAME
-fbserv - Frame-buffer Server
+fbserv - serve a BRL-CAD framebuffer to remote or local clients
 
 == SYNOPSIS
 
 [source]
 ----
-fbserv [-s | S | square_size] [-w | W | width] [-n | N | height] [-p port_number] [-F frame_buffer] [-v] [-T] [-A] [port_number] [frame_buffer]
-fbserv [-v] [-A] [-F frame_buffer] -I ipc_addr
+fbserv [-v] [-T] [-A] [-{sS} _squaresize_] [-{wW} _width_] [-{nN} _height_] [-p _port_] [-F _framebuffer_] [_port_] [_framebuffer_]
+fbserv [-v] [-A] [-F _framebuffer_] -I _ipc_addr_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbserv* opens a framebuffer that may be used by BRL-CAD routines accessing a framebuffer. The *-s* (or *-S*) option specifies that a square framebuffer of the specified size (in pixels) is desired. The *-n* (or *-N*) option indicates the framebuffer height. The *-w* (or *-W*) option indicates the framebuffer width. The *-v* option (verbosity) yields more information about the current process.
+*fbserv* opens a framebuffer and makes it available to BRL-CAD programs
+(such as *rt*(1), *pix-fb*(1), and *fb-pix*(1)) that access a framebuffer
+over the libpkg protocol. It can run in three ways: as a stand-alone
+daemon that forks a fresh server for each connection, as a
+single-framebuffer server that opens one device and holds it open across
+many interleaved connections, or as an *inetd*(8) remote framebuffer
+server.
 
-By default, *fbserv* listens in TCP mode. The *-p* option supplies a TCP port number and the *-F* option indicates what framebuffer device to use. The framebuffer device may be included on the command line without *-F* if it is the last token on the command line. The TCP port may also be specified without *-p*. If *-F* and *-p* are both omitted, the TCP port must be followed by the framebuffer device on the command line.
+By default *fbserv* listens for TCP connections. The *-p* option sets the
+TCP port and the *-F* option names the framebuffer device. Either may
+instead be given positionally: the first non-option argument is taken as
+the port and the second as the framebuffer device. A port below 1024 has
+5559 added to it, so port 0 maps to the default 5559. When *-F* is given,
+*fbserv* opens that device immediately and keeps it open (a reattachable,
+state-preserving framebuffer); otherwise the framebuffer named in each
+client's open request is opened and closed per connection.
 
-With *-I* _ipc_addr_, *fbserv* uses a libpkg IPC address instead of binding a TCP listener. In this mode, *-p* is ignored. Listener-capable libpkg IPC addresses support repeated local client connections without using TCP; inherited endpoint addresses continue to support the existing single-client IPC mode.
+The *-s* (or *-S*) option requests a square framebuffer of the given size
+in pixels; *-w* (or *-W*) sets width and *-n* (or *-N*) sets height
+independently. If invoked from *inetd*(8) with an open socket on file
+descriptor 0, *fbserv* processes a single connection and exits.
 
-While *fbserv* is running, clients may connect using either the configured TCP port (TCP mode) or the configured IPC address (IPC mode), depending on how *fbserv* was started. For IPC mode, clients use framebuffer names of the form *ipc:*_ipc_addr_. The *fbserv* command may be executed by users at a shell prompt, or it may be used as an inetd remote framebuffer server by specifying *fbserv* as a server program in *inetd.conf*.
+With *-I* _ipc_addr_, *fbserv* uses a libpkg IPC transport instead of
+binding a TCP listener, and *-p* is ignored. Listener-capable IPC
+addresses accept repeated local client connections; inherited endpoint
+addresses serve a single client, for parent/child process handoff.
+Clients reach an IPC server using a framebuffer name of the form
+*ipc:*_ipc_addr_.
 
 [[options]]
 == OPTIONS
 
-*-s* _square_size_, *-S* _square_size_::
-Request a square framebuffer of size _square_size_ by _square_size_ pixels.
-
-*-w* _width_, *-W* _width_::
-Set framebuffer width in pixels.
-
-*-n* _height_, *-N* _height_::
-Set framebuffer height in pixels.
-
-*-p* _port_number_::
-Set the TCP port number in TCP mode.
-
-*-F* _frame_buffer_::
-Set the framebuffer device to open.
-
 *-v*::
-Enable verbose status output.
+  Enable verbose status output.
 
 *-T*::
-Enable TLS encryption for protocol traffic (requires an OpenSSL-enabled build).
+  Enable TLS encryption for protocol traffic. Requires an
+  OpenSSL-enabled build; the *FBSERV_TLS* environment variable has the
+  same effect.
 
 *-A*::
-Enable strict authentication. Clients that do not send authentication are rejected.
+  Strict authentication: reject any client that does not present a valid
+  token via the protocol authentication message.
+
+*-s* _squaresize_, *-S* _squaresize_::
+  Request a square framebuffer of _squaresize_ by _squaresize_ pixels.
+
+*-w* _width_, *-W* _width_::
+  Set the framebuffer width in pixels.
+
+*-n* _height_, *-N* _height_::
+  Set the framebuffer height in pixels.
+
+*-p* _port_::
+  Set the TCP port number. Ports below 1024 have 5559 added.
+
+*-F* _framebuffer_::
+  Open _framebuffer_ at startup and hold it open across all client
+  connections.
 
 *-I* _ipc_addr_::
-Use the libpkg IPC transport at _ipc_addr_ instead of TCP. The address is normally generated by the invoking application and should be treated as opaque. Listener-capable local IPC addresses allow multiple local clients to connect to one *fbserv* instance; inherited endpoint addresses are single-client channels intended for parent/child process handoff.
+  Use the libpkg IPC transport at _ipc_addr_ instead of binding a TCP
+  listener. The address is generated by the invoking application and
+  should be treated as opaque. In this mode *-p* is ignored.
 
-*-h, -?*::
-Print a usage message and exit.
+*-h*, *-?*::
+  Print a usage message and exit.
+
 [[security]]
 == SECURITY
 
-Token authentication is supported with or without TLS. If *FBSERV_TOKEN* is set in the environment before starting *fbserv*, that value is used as the required shared token. If *FBSERV_TOKEN* is not set, *fbserv* generates a fresh token at startup and prints it to standard error. Clients must use the same token value when connecting.
-
+Token authentication works with or without TLS. If *FBSERV_TOKEN* is set
+in the environment (to 64 hex characters) before *fbserv* starts, that
+value is used as the required shared token; clients must set the same
+*FBSERV_TOKEN* value. If *FBSERV_TOKEN* is not set, *fbserv* generates a
+fresh token at startup and prints it to standard error. With *-A*,
+clients that do not authenticate are rejected; without it, unauthenticated
+clients are still accepted.
 
 [[examples]]
 == EXAMPLES
 
+.Reattachable framebuffer for rendering
+====
+[source,bash]
+----
+fbserv -s 1024 0 /dev/wgl &
+rt -F 0 -s 1024 model.g component
+----
+Open a persistent 1024x1024 framebuffer on the local display and bind it
+to port 0 (which maps to default port 5559), then ray trace into it with
+*rt*(1). Because the device stays open, successive renders accumulate in
+the same framebuffer and the image survives between client connections.
+====
 
-....
-
-fbserv 0 &
-....
-
-This command will start a standalone fbserv daemon. Any access of a framebuffer specifying port 0 will result in opening a new framebuffer.
-
-
-....
-
-fbserv -s 1024 0 /dev/sgil &
-....
-
-The above command will open a 1024 X 1024 '/dev/sgil' framebuffer and associate port number 0 with it. Any access of a framebuffer specifying port 0 will use the already opened '/dev/sgil' framebuffer.
-
-
-....
-
-fbserv -F /dev/mem -I <libpkg-ipc-address> &
-....
-
-This command starts *fbserv* in IPC mode at the specified libpkg address. Clients connect using *ipc:*_libpkg-ipc-address_. In IPC mode, *-p* is ignored.
-
-
-....
-
-set FBSERV_TOKEN=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-set FBSERV_TLS=1
+.Authenticated TLS server
+====
+[source,bash]
+----
+export FBSERV_TOKEN=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 fbserv -T -A -p 0 -F /dev/wgl &
 rt -F 0 model.g object
-....
-
-These commands run *fbserv* in authenticated TLS mode and render to it with *rt*. Use the same *FBSERV_TOKEN* value in both environments. *FBSERV_TLS* requests TLS for client connections when available.
-
+----
+Run *fbserv* in encrypted, strictly authenticated mode. Both the server
+and every client must share the same *FBSERV_TOKEN*; the *-T* flag enables
+TLS (in an OpenSSL-enabled build) and *-A* rejects any client that fails
+to authenticate.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*bw-fb*(1), *cell-fb*(1), *cmap-fb*(1), *gif-fb*(1), *pix-fb*(1), *plot3-fb*(1), *polar-fb*(1), *rle-fb*(1), *fbcmap*(1), *fbcmrot*(1), *fbclear*(1), *fbcbars*(1), *fbanin*(1), *fbcolor*(1), *fbfade*(1), *fbframe*(1), *fbfree*(1), *fbgamma*(1), *fbgrid*(1), *fbhelp*(1), *fblabel*(1), *fbline*(1), *fbpoint*(1), *fbscanplot*(1), *fbstretch*(1), *fbzoom*(1)
-
-
-[[diagnostics]]
-== DIAGNOSTICS
-
-Error messages are intended to be self-explanatory.
-
+*brlcad*(1), *rt*(1), *pix-fb*(1), *fb-pix*(1), *fbclear*(1), *fbcmap*(1), *fbgamma*(1), *fbhelp*(1), *fbpoint*(1), *fbzoom*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1994-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

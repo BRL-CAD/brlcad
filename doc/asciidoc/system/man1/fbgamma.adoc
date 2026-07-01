@@ -97,35 +97,48 @@ point.
 [[examples]]
 == EXAMPLES
 
-Linearize a typical monitor with gamma 2.2:
+.Calibrate a framebuffer interactively
+====
+[source,bash]
+----
+fbgamma -i 2.2
+----
+Display the calibration image and load a gamma 2.2 correcting
+colormap. Adjust the value (re-running *fbgamma* with the image still
+on screen) until vertically adjacent ramps of the same color match in
+intensity across all patches. Once matched, that value is the display
+gamma to use for the session.
+====
 
-....
+.Display a pix image with proper gamma correction
+====
+[source,bash]
+----
 fbgamma 2.2
-....
+pix-fb render.pix
+----
+Load a gamma 2.2 correcting colormap into the default framebuffer,
+then send a *pix*(5) image to it with *pix-fb*(1). The image, which
+was computed assuming a linear intensity mapping, is now displayed
+correctly on a non-linear monitor without modifying the pixel data.
+====
 
-Apply separate gamma correction per channel:
-
-....
-fbgamma 2.3 2.1 2.4
-....
-
-Saturate an existing colormap:
-
-....
-fbgamma -o 0.8
-....
-
-Display a calibration image and apply correction:
-
-....
-fbgamma -i 2.5
-....
+.Apply separate per-channel gamma to a named device
+====
+[source,bash]
+----
+fbgamma -F /dev/X 2.3 2.1 2.4
+----
+Load independent red, green, and blue gamma values into the X11
+framebuffer, compensating for a display whose channels respond
+differently.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fbcmap*(1), *cmap-fb*(1), *fb-cmap*(1)
+*brlcad*(1), *fbcmap*(1), *fbcbars*(1), *pix-fb*(1)
 
 
 [[author]]

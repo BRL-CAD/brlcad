@@ -10,43 +10,57 @@ fb-fb - copy a framebuffer image to another framebuffer
 
 [source]
 ----
-fb-fb [-v] [-F output_framebuffer] [-h] [-?] input_framebuffer [output_framebuffer]
+fb-fb [-v] [-F _output_framebuffer_] _input_framebuffer_
+fb-fb [-v] _input_framebuffer_ [_output_framebuffer_]
 ----
 
 [[description]]
 == DESCRIPTION
 
-*fb-fb* copies the image from _input_framebuffer_ to the output
-framebuffer. The output device may be specified with *-F* or as the
-second positional argument.
+*fb-fb* copies the entire image from _input_framebuffer_ to an output
+framebuffer, reading and writing in blocks of scanlines. The output
+size is taken from the input framebuffer.
+
+The output device may be named either with the *-F* option or as a
+second positional argument, but not both. If no output is given, the
+default framebuffer is used (typically set by the *FB_FILE* environment
+variable). The same conventions apply to the input when it is omitted,
+though an input framebuffer is normally required.
 
 [[options]]
 == OPTIONS
 
 *-v*::
-Enable verbose mode.
+  Verbose mode. Print the input and output device names, the detected
+  width and height, and per-block progress to standard error.
 
 *-F* _output_framebuffer_::
-Explicitly specify the output framebuffer device.
+  Specify the output framebuffer device. Mutually exclusive with the
+  positional output argument.
 
-*-h, -?*::
-Print a usage message and exit.
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Copy the default framebuffer to a file-based framebuffer
+.Snapshot a live framebuffer into a file
 ====
 [source,bash]
 ----
-$ fb-fb /dev/Xl /dev/debug
+fb-fb /dev/X /dev/mem
+fb-pix /dev/mem > snapshot.pix
 ----
+Copy whatever is currently displayed on the X11 framebuffer into the
+in-memory framebuffer, then save it to a *pix*(5) file with *fb-pix*(1).
+This captures a render produced by *rt*(1) without re-running the
+raytrace.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fb-bw*(1), *fb-pix*(1)
+*brlcad*(1), *fb-pix*(1), *fb-png*(1), *fb-bw*(1), *pix-fb*(1)
 
 [[author]]
 == AUTHOR

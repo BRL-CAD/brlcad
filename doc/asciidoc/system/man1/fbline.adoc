@@ -10,8 +10,7 @@ fbline - draw a colored line on a framebuffer
 
 [source]
 ----
-fbline [-c] [-F framebuffer] [-s squaresize] [-S squaresize]
-       [-w width] [-W width] [-n height] [-N height]
+fbline [-c] [-F framebuffer] [-s squaresize] [-w width] [-n height]
        [-r red] [-g green] [-b blue] x1 y1 x2 y2
 ----
 
@@ -19,74 +18,75 @@ fbline [-c] [-F framebuffer] [-s squaresize] [-S squaresize]
 [[description]]
 == DESCRIPTION
 
-*fbline* draws a line on the currently selected framebuffer between
-the points (_x1_, _y1_) and (_x2_, _y2_) using a Bresenham line
-algorithm. Points that exceed the framebuffer dimensions are silently
-clamped to the screen edges.
+*fbline* draws a single line on the currently selected framebuffer
+between the points (_x1_, _y1_) and (_x2_, _y2_) using a Bresenham
+line algorithm. Endpoints that fall outside the framebuffer are clamped
+to the screen edges. Coordinates are given in framebuffer pixels with
+the origin at the lower-left corner.
+
+The environment variable FB_FILE specifies the framebuffer to use; see
+*brlcad*(1). The framebuffer may instead be named explicitly with the
+*-F* option. By default the requested framebuffer size is 512x512
+pixels and the line color is white (255, 255, 255).
 
 Use *fbpoint*(1) to interactively determine endpoint coordinates.
-
-The environment variable FB_FILE specifies the current framebuffer;
-see *brlcad*(1). Alternatively, the framebuffer may be explicitly
-specified with the *-F* flag.
-
-By default, the requested framebuffer size is 512x512 pixels and the
-line color is white (255, 255, 255).
 
 
 [[options]]
 == OPTIONS
 
-*-c*
-Clear the screen before drawing the line. The default behavior is to
-draw the line on the current image without clearing the screen.
+*-c*::
+  Clear the framebuffer before drawing. By default the line is drawn
+  over the existing image.
 
-*-F* _framebuffer_
-Explicitly specifies the framebuffer device.
+*-F* _framebuffer_::
+  Explicitly specify the framebuffer device.
 
-*-s* _squaresize_ or *-S* _squaresize_
-Sets both the width and height of the framebuffer to _squaresize_.
+*-s* _squaresize_::
+  Set both the width and height of the framebuffer to _squaresize_
+  pixels. Also available as *-S*.
 
-*-w* _width_ or *-W* _width_
-Sets the framebuffer width.
+*-w* _width_::
+  Set the framebuffer width in pixels. Also available as *-W*.
 
-*-n* _height_ or *-N* _height_
-Sets the framebuffer height.
+*-n* _height_::
+  Set the framebuffer height in pixels. Also available as *-N*.
 
-*-r* _red_
-Specifies the red component [0..255] of the line color.
+*-r* _red_::
+  Red component [0..255] of the line color (default 255).
 
-*-g* _green_
-Specifies the green component [0..255] of the line color.
+*-g* _green_::
+  Green component [0..255] of the line color (default 255).
 
-*-b* _blue_
-Specifies the blue component [0..255] of the line color.
+*-b* _blue_::
+  Blue component [0..255] of the line color (default 255).
 
-*-h* or *-?*
-Prints a usage message.
+*-h*::
+  Print a usage message and exit. Also available as *-?*.
 
 
 [[examples]]
 == EXAMPLES
 
-Draw a white line from (10, 10) to (400, 400) on the default
-framebuffer:
-
-....
-fbline 10 10 400 400
-....
-
-Draw a green line on a cleared 1024x1024 framebuffer:
-
-....
-fbline -s 1024 -c -r 0 -b 0 82 11 300 472
-....
+.Draw crosshairs over an image on the framebuffer
+====
+[source,bash]
+----
+pix-fb -s 512 image.pix
+fbline -r 255 -g 0 -b 0 256 0 256 511
+fbline -r 255 -g 0 -b 0 0 256 511 256
+----
+Display a 512x512 image with *pix-fb*(1), then overlay a red vertical
+and a red horizontal line through the center to mark the image center.
+Because *fbline* draws over the existing image without clearing it,
+successive invocations accumulate on the same framebuffer.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fblabel*(1), *fbpoint*(1), *plot3-fb*(1), *libfb*(3), *pix*(5)
+*brlcad*(1), *fblabel*(1), *fbpoint*(1), *pix-fb*(1), *plot3-fb*(1), *libfb*(3), *pix*(5)
 
 
 [[author]]
@@ -98,7 +98,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1988-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

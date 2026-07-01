@@ -4,89 +4,87 @@
 :manmanual: BRL-CAD
 
 == NAME
-fbframe - place a colored frame around a framebuffer
+fbframe - draw a colored border around a framebuffer
 
 == SYNOPSIS
 
 [source]
 ----
-fbframe [-F framebuffer] [-s squaresize] [-S squaresize] [-w width] \
-     [-W width] [-n height] [-N height]
+fbframe [-F framebuffer] [-s|-S squareframesize] [-w|-W frame_width] [-n|-N frame_height]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbframe* draws a single-pixel-wide colored frame around the border
-of a framebuffer. The frame is drawn counter-clockwise starting from
-the bottom: red along the bottom, green up the right side, blue
-across the top, and white down the left side.
+*fbframe* draws a single-pixel-wide colored border around the edge of
+a framebuffer. The border is drawn counter-clockwise starting from the
+bottom: red along the bottom, green up the right side, blue across the
+top, and white down the left side. It is useful for verifying the
+displayable area and alignment of a framebuffer.
 
-This is primarily useful for framebuffer alignment and verifying
-display dimensions.
+The *-w*/*-W* and *-n*/*-N* options set the width and height of the
+region that *fbframe* opens and frames (not the thickness of the
+border, which is always one pixel). If no size is given, the
+dimensions are taken from the opened framebuffer.
 
-If no size options are given, the dimensions are taken from the
-framebuffer. The *-F* option selects a specific framebuffer; if
-omitted, the *FB_FILE* environment variable is used (see
-*brlcad*(1)).
+The *-F* option selects the framebuffer; if omitted, the *FB_FILE*
+environment variable is consulted (see *brlcad*(1)).
 
 [[options]]
 == OPTIONS
 
 *-F* _framebuffer_::
-Specify the framebuffer device. If not provided, the default frame
-buffer is used.
+  Specify the framebuffer device to use. If omitted, the *FB_FILE*
+  environment variable or the default framebuffer is used.
 
-*-s* _squaresize_::
-*-S* _squaresize_::
-Set both the width and height of the frame.
+*-s* _squareframesize_::
+*-S* _squareframesize_::
+  Set both the width and height of the framed region to the given
+  number of pixels.
 
-*-w* _width_::
-*-W* _width_::
-Set the frame width in pixels.
+*-w* _frame_width_::
+*-W* _frame_width_::
+  Set the width (in pixels) of the framed region.
 
-*-n* _height_::
-*-N* _height_::
-Set the frame height in scanlines.
+*-n* _frame_height_::
+*-N* _frame_height_::
+  Set the height (in scanlines) of the framed region.
 
-*-h* or *-?*::
-Print usage information and exit.
-
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-Draw a frame on the default framebuffer:
-
-....
-fbframe
-....
-
-Draw a 1024x1024 frame on a specific framebuffer:
-
-....
-fbframe -F /dev/fb0 -s 1024
-....
-
+.Frame a 1024x1024 region and verify it visually
+====
+[source,bash]
+----
+fbframe -F /tmp/test.pix -s 1024
+fb-png -F /tmp/test.pix -s 1024 > frame.png
+----
+Opens a 1024x1024 framebuffer (here a memory-mapped *pix*(5) file),
+draws the colored border, then captures the result to a PNG with
+*fb-png*(1). The red/green/blue/white edges make it easy to confirm
+that the full displayable area is being rendered and that no rows or
+columns are being clipped.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fbgrid*(1)
-
+*brlcad*(1), *fbgrid*(1), *fbcbars*(1), *fbclear*(1), *fb-png*(1)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

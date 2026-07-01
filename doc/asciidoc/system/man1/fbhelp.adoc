@@ -4,60 +4,71 @@
 :manmanual: BRL-CAD
 
 == NAME
-fbhelp - provide information on frame buffer selections
+fbhelp - describe how to select a frame buffer and list available devices
 
 == SYNOPSIS
 
 [source]
 ----
-fbhelp [-F framebuffer] [-h]
+fbhelp [-F framebuffer]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbhelp* displays information about how to select a frame buffer
-device, lists all available frame buffer devices compiled into the
-*libfb*(3) library, and then opens the currently selected device to
-display its detailed help information.
+*fbhelp* explains how to select a frame buffer display device, lists
+every frame buffer interface compiled into the *libdm*(3) library, then
+opens the selected device and prints its device-specific help.
 
-The display device is determined first from the *-F* _framebuffer_
-option if given, then from the environment variable __FB_FILE__, or
-finally from whatever the default display device is for the system.
+The device is chosen first from the *-F* _framebuffer_ option if given,
+otherwise from the *FB_FILE* environment variable, and finally from the
+built-in default for the system. Most BRL-CAD frame buffer tools, such
+as *fb-pix*(1) and *pix-fb*(1), accept the same *-F* convention.
 
 
 [[options]]
 == OPTIONS
 
-*-F* _framebuffer_
-Explicitly specifies the frame buffer device to query.
+*-F* _framebuffer_::
+  Specify the frame buffer device to describe rather than using
+  *FB_FILE* or the system default.
 
-*-h* or *-?*
-Prints a usage message.
+*-h*::
+  Print a usage message. *-?* is accepted as a synonym.
 
 
 [[examples]]
 == EXAMPLES
 
-List available frame buffer devices and show help for the default
-device:
-
-....
+.List the available frame buffer devices
+====
+[source,bash]
+----
 fbhelp
-....
+----
+Prints the *FB_FILE* selection instructions, the list of frame buffer
+interfaces built into this installation (for example, the in-memory and
+file-backed devices), and the help text for the default device.
+====
 
-Show help information for a specific frame buffer device:
-
-....
-fbhelp -F /dev/sgil
-....
+.Inspect a specific frame buffer before writing an image to it
+====
+[source,bash]
+----
+fbhelp -F /tmp/output.pix
+pix-fb -F /tmp/output.pix scene.pix
+----
+Queries the file-backed (_/tmp/output.pix_) frame buffer to confirm it
+is available and learn its capabilities, then uses *pix-fb*(1) to
+display a *pix*(5) image on that same device.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*libfb*(3), *brlcad*(1)
+*brlcad*(1), *fb-pix*(1), *pix-fb*(1), *fbclear*(1), *libdm*(3)
 
 
 [[author]]
@@ -69,7 +80,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1988-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

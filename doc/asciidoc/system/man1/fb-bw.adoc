@@ -53,20 +53,25 @@ Print a help message and exit.
 [[examples]]
 == EXAMPLES
 
-*Example 1. Save a full 1024x1024 framebuffer image to a file*
-[example]
+.Grab the current framebuffer and threshold it into a silhouette
 ====
-[cmd]`fb-bw -F /dev/Xl -s 1024 image.bw`
-
-Saves the entire 1024x1024 image from the framebuffer `/dev/Xl` into `image.bw`.
+[source,bash]
+----
+fb-bw -F /dev/X -s 1024 | bwmod -m 4 -c | bw-fb -s 1024
+----
+Reads the entire 1024x1024 framebuffer, converts it to a single grayscale
+channel, brightens and clamps it with *bwmod*(1) to produce a high-contrast
+silhouette, and displays the result back on the framebuffer with *bw-fb*(1).
 ====
 
-*Example 2. Save a specific region of the framebuffer*
-[example]
+.Save a specific region of the framebuffer to a file
 ====
-[cmd]`fb-bw -X 256 -Y 256 -w 512 -n 512 region.bw`
-
-Saves a 512x512 region starting at offset (256, 256) from the default framebuffer into `region.bw`.
+[source,bash]
+----
+fb-bw -X 256 -Y 256 -w 512 -n 512 region.bw
+----
+Captures a 512x512 region starting at screen offset (256, 256) from the
+default framebuffer and writes the grayscale result to `region.bw`.
 ====
 
 

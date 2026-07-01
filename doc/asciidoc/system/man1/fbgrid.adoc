@@ -4,14 +4,13 @@
 :manmanual: BRL-CAD
 
 == NAME
-fbgrid - draw a grid on a frame buffer
+fbgrid - draw a calibration grid on a frame buffer
 
 == SYNOPSIS
 
 [source]
 ----
-fbgrid [-c] [-b] [-d] [-o] [-F framebuffer] [-s squaresize] [-S squaresize] \
-     [-w width] [-W width] [-n height] [-N height]
+fbgrid [-c] [-b | -d | -o] [-F framebuffer] [-s squaresize] [-w width] [-n height]
 ----
 
 
@@ -20,78 +19,84 @@ fbgrid [-c] [-b] [-d] [-o] [-F framebuffer] [-s squaresize] [-S squaresize] \
 
 *fbgrid* draws a calibration grid pattern on a frame buffer. Three
 intensity levels of grid lines are drawn at different spacings, making
-it easy to count pixels and verify display geometry.
+it easy to count pixels and verify display geometry. The dark lines are
+drawn at intensity 64, the grey lines at 128, and the white lines at 255.
 
-The default grid pattern is decimal (*-d*), with dark lines every 10
-pixels, grey lines every 50 pixels, and white lines every 100 pixels.
+The default grid is decimal (*-d*): dark lines every 10 pixels, grey
+lines every 50 pixels, and white lines every 100 pixels.
 
-If the *FB_FILE* environment variable is set, it selects the display
-device (see *brlcad*(1)). If this variable is not set, the default
-device for the system is used.
+The frame buffer is selected with *-F* or, if that option is absent, by
+the *FB_FILE* environment variable; otherwise the system default device
+is used (see *brlcad*(1)).
 
 [[options]]
 == OPTIONS
 
 *-c*::
-Clear the framebuffer to black before drawing the grid.
+  Clear the frame buffer to black before drawing the grid.
 
 *-b*::
-Use binary spacing: dark lines every 8 pixels, grey lines every 64
-pixels, and white lines every 128 pixels.
+  Use binary spacing: dark lines every 8 pixels, grey lines every 64
+  pixels, and white lines every 128 pixels.
 
 *-d*::
-Use decimal spacing (default): dark lines every 10 pixels, grey lines
-every 50 pixels, and white lines every 100 pixels.
+  Use decimal spacing (the default): dark lines every 10 pixels, grey
+  lines every 50 pixels, and white lines every 100 pixels.
 
 *-o*::
-Use the old cross grid pattern.
+  Draw the old-style grid: a dotted background with white diagonals from
+  corner to corner and red lines through the center.
 
 *-F* _framebuffer_::
-Specify the framebuffer device. If not provided, the default frame
-buffer is used.
+  Specify the frame buffer device to draw on.
 
 *-s* _squaresize_::
-*-S* _squaresize_::
-Set both the width and height of the grid.
+  Set both the width and height of the frame buffer to _squaresize_
+  pixels. *-S* is an equivalent synonym.
 
 *-w* _width_::
-*-W* _width_::
-Set the grid width in pixels.
+  Set the frame buffer width to _width_ pixels. *-W* is an equivalent
+  synonym.
 
 *-n* _height_::
-*-N* _height_::
-Set the grid height in scanlines.
+  Set the frame buffer height to _height_ scanlines. *-N* is an
+  equivalent synonym.
 
-*-h* or *-?*::
-Print usage information and exit.
+*-h*, *-?*::
+  Print usage information and exit.
 
 
 [[examples]]
 == EXAMPLES
 
-Draw a default decimal grid on the default framebuffer:
+.Verify the geometry of a rendered image
+====
+[source,bash]
+----
+pix-fb -F /tmp/fb moss.pix
+fbgrid -F /tmp/fb -d
+----
+Display a rendered image on a memory frame buffer and overlay a decimal
+grid. The grid lines at every 10, 50, and 100 pixels make it easy to
+measure feature positions and sizes directly off the screen.
+====
 
-....
-fbgrid
-....
-
-Clear the screen and draw a binary grid at 1024x1024:
-
-....
-fbgrid -c -b -S 1024
-....
-
-Draw a decimal grid on a specific framebuffer:
-
-....
-fbgrid -F /dev/fb0 -d
-....
+.Calibrate a 1024x1024 display with a binary grid
+====
+[source,bash]
+----
+fbgrid -c -b -s 1024
+----
+Clear the frame buffer and draw a binary grid (lines every 8, 64, and
+128 pixels) sized to 1024x1024, useful for checking power-of-two display
+alignment and pixel addressing.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fbpoint*(1), *fbzoom*(1), *fbframe*(1)
+*brlcad*(1), *fbpoint*(1), *fbzoom*(1), *fbframe*(1), *fbclear*(1)
 
 
 [[author]]
@@ -103,7 +108,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

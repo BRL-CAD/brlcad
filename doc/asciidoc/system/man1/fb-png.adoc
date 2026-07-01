@@ -10,70 +10,83 @@ fb-png - save a framebuffer image as a Portable Network Graphics (PNG) file
 
 [source]
 ----
-fb-png [-i] [-c] [-#  nbytes/pixel] [-g gamma] [-F framebuffer] [-s squaresize] [-w width] [-n height] [-h] [-?] [file.png]
+fb-png [-i] [-c] [-# _nbytes/pixel_] [-F _framebuffer_] [-g _gamma_] [-s _squaresize_] [-w _width_] [-n _height_] [file.png]
 ----
 
 [[description]]
 == DESCRIPTION
 
 *fb-png* reads a region of a framebuffer and saves it as a PNG
-file. If no output file is given, data is written to standard
-output.
+(Portable Network Graphics) file. If no output file name is given, the
+data is written to standard output.
 
-By default, the output and framebuffer size are 512x512 pixels,
-with a first-quadrant coordinate system (origin at the lower left).
+By default the region read is 512x512 pixels in first-quadrant order
+(origin at the lower left); use *-s*, *-w*, and *-n* to change the
+size. If the open framebuffer is smaller than the requested size, the
+region is trimmed to fit. Use *png-fb*(1) to display a PNG file in a
+framebuffer.
 
 [[options]]
 == OPTIONS
 
 *-i*::
-Use a fourth-quadrant coordinate system (origin at the upper left).
+  Read the framebuffer bottom-to-top, inverting the image vertically
+  (fourth-quadrant order, origin at the upper left).
 
 *-c*::
-Apply the framebuffer color map to pixel values before writing.
+  Apply ("crunch") the framebuffer color map to pixel values before
+  writing. Ignored if the framebuffer has no map or a linear one.
 
 *-#* _nbytes/pixel_::
-Number of bytes per pixel. Accepted values are 1 (grayscale) and 3
-(color).
-
-*-g* _gamma_::
-Write the specified gamma correction value into the PNG gAMA chunk.
-A value of 0.6 approximates PC display monitors. A negative value
-(the default) disables writing the gAMA chunk entirely.
+  Number of bytes per pixel: 1 for grayscale or 3 for color (the
+  default).
 
 *-F* _framebuffer_::
-Specify the framebuffer device. Defaults to the `FB_FILE`
-environment variable (see *brlcad*(1)).
+  Specify the framebuffer device. Defaults to the *FB_FILE*
+  environment variable (see *brlcad*(1)).
+
+*-g* _gamma_::
+  Write the specified gamma correction value into the PNG gAMA chunk.
+  A value of 0.6 approximates PC display monitors. A non-positive
+  value (the default is -1.0) disables writing the gAMA chunk entirely.
 
 *-s* _squaresize_::
-Set both width and height to _squaresize_.
+  Set both width and height to _squaresize_ pixels (default 512).
 
 *-w* _width_::
-Set the output width in pixels.
+  Set the width in pixels (default 512).
 
 *-n* _height_::
-Set the output height in pixels.
+  Set the height in pixels (default 512).
 
-*-h, -?*::
-Print a usage message and exit.
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Save a 1024x1024 framebuffer image as PNG
+.Render a model and capture the framebuffer to PNG
 ====
 [source,bash]
 ----
-$ fb-png -s 1024 render.png
+rt -s 1024 -F /dev/X moss.g all.g &
+fb-png -F /dev/X -s 1024 moss.png
 ----
+Ray traces the *moss.g* model into a 1024x1024 X11 framebuffer with
+*rt*(1), then grabs that framebuffer and saves it as a PNG image of the
+same size. Matching the *-s* size to the framebuffer ensures the whole
+image is captured.
 ====
 
-.Save with gamma correction for PC monitors
+.Save the lower-left quadrant of the default framebuffer
 ====
 [source,bash]
 ----
-$ fb-png -g 0.6 -s 512 scene.png
+fb-png -w 256 -n 256 crop.png
 ----
+Reads only a 256x256 region (anchored at the origin) from the
+framebuffer named by the *FB_FILE* environment variable and writes it
+to crop.png.
 ====
 
 [[see_also]]
@@ -84,7 +97,7 @@ $ fb-png -g 0.6 -s 512 scene.png
 [[author]]
 == AUTHOR
 
-John R. Anderson
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT

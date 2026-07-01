@@ -28,7 +28,8 @@ with a first-quadrant coordinate system (origin at the lower left).
 
 *-i*::
 Use a fourth-quadrant coordinate system (origin at the upper left),
-affecting both the storage order and offset coordinates.
+reading the framebuffer scanlines from top to bottom instead of
+bottom to top.
 
 *-c*::
 Apply the framebuffer color map to pixel values before writing.
@@ -52,28 +53,33 @@ Print a usage message and exit.
 [[examples]]
 == EXAMPLES
 
-.Save a 1024x1024 framebuffer image to a file
+.Capture a rendered image and convert it to PNG
 ====
 [source,bash]
 ----
-$ fb-pix -s 1024 render.pix
+$ rt -s 1024 -F /dev/fb havoc.g havoc
+$ fb-pix -s 1024 | pix-png -s 1024 > havoc.png
 ----
+Renders a model to the framebuffer with *rt*(1), saves the 1024x1024
+framebuffer contents to a *pix*(5) stream on standard output, and pipes
+it into *pix-png*(1) to produce a PNG file.
 ====
 
-.Save with color map applied
+.Save the framebuffer color map baked into the pixels
 ====
 [source,bash]
 ----
 $ fb-pix -c -F /dev/ogl scene.pix
 ----
-Saves the image from `/dev/ogl` with the framebuffer color map
-baked into the output pixel values.
+Saves the image from the `/dev/ogl` framebuffer with the framebuffer
+color map applied to each pixel value, so the stored file reflects the
+displayed image even if a non-linear color map was loaded.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix-fb*(1), *fb-bw*(1), *pix*(5)
+*brlcad*(1), *pix-fb*(1), *pix-png*(1), *fb-png*(1), *fb-bw*(1), *rt*(1), *pix*(5)
 
 [[author]]
 == AUTHOR

@@ -21,101 +21,102 @@ fblabel [-a] [-c] [-d] [-F framebuffer] [-f fontname] [-C r/g/b]
 [[description]]
 == DESCRIPTION
 
-*fblabel* writes a text string to the image on the currently selected
-framebuffer. The text is anti-aliased (filtered) against the existing
-image by default. Use *fbpoint*(1) to determine where to position the
-text. The lower left corner of the text string begins at the given
-_x_position_ and _y_position_.
+*fblabel* writes a text string onto the image of the currently selected
+framebuffer. By default the text is anti-aliased (Gaussian filtered)
+against the existing image, so the label blends with whatever is already
+displayed. The lower-left corner of the text begins at the given
+_x_position_ and _y_position_ (in pixels); use *fbpoint*(1) to
+interactively locate a position.
 
-The environment variable FB_FILE specifies the current framebuffer;
-see *brlcad*(1). Alternatively, the framebuffer may be explicitly
-specified with the *-F* flag.
+The environment variable FB_FILE specifies the current framebuffer; see
+*brlcad*(1). The framebuffer may instead be named with the *-F* flag.
 
-By default, the requested framebuffer size is assumed to be 512x512
-pixels. The default text color is white (255/255/255).
+The text is drawn using a Berkeley *vfont*-format font. The default font
+is _nonie.r.12_. Fonts are located in BRL-CAD's data directory under
+_vfont/_, falling back to _/usr/lib/vfont_. The default text color is
+white (255/255/255).
 
 
 [[options]]
 == OPTIONS
 
-*-a*
-Disable anti-aliasing. Text is rendered without filtering against
-the background image.
+*-a*::
+  Disable anti-aliasing. Text is rendered with hard edges rather than
+  filtered against the background image.
 
-*-c*
-Clear the screen before displaying the text string. The default
-behavior is to label the current image without clearing the screen.
+*-c*::
+  Clear the framebuffer before drawing the text. By default the existing
+  image is preserved.
 
-*-d*
-Enable debugging output.
+*-d*::
+  Enable debugging output to standard error.
 
-*-F* _framebuffer_
-Explicitly specifies the framebuffer device.
+*-F* _framebuffer_::
+  Use the specified framebuffer device instead of FB_FILE.
 
-*-f* _fontname_
-Specifies the font to use. The default font is nonie.r.12.
+*-f* _fontname_::
+  Use the named *vfont*-format font instead of the default _nonie.r.12_.
 
-*-C* _r/g/b_
-Specifies red, green, and blue color values [0..255] for the text,
-separated by slashes. The default color is white (255/255/255).
+*-C* _r/g/b_::
+  Set the text color from red, green, and blue values in the range
+  [0..255], separated by slashes. The default is white (255/255/255).
 
-*-r* _red_
-Specifies the red component [0..255] of the text color.
+*-r* _red_::
+  Set the red component [0..255] of the text color (backward
+  compatibility; *-C* is preferred).
 
-*-g* _green_
-Specifies the green component [0..255] of the text color.
+*-g* _green_::
+  Set the green component [0..255] of the text color (backward
+  compatibility; *-C* is preferred).
 
-*-b* _blue_
-Specifies the blue component [0..255] of the text color.
+*-b* _blue_::
+  Set the blue component [0..255] of the text color (backward
+  compatibility; *-C* is preferred).
 
-*-s* _squaresize_ or *-S* _squaresize_
-Sets both the width and height of the framebuffer to _squaresize_.
+*-s* _squaresize_, *-S* _squaresize_::
+  Set both the width and height of the framebuffer to _squaresize_
+  pixels.
 
-*-w* _width_ or *-W* _width_
-Sets the framebuffer width.
+*-w* _width_, *-W* _width_::
+  Set the framebuffer width in pixels.
 
-*-n* _height_ or *-N* _height_
-Sets the framebuffer height.
+*-n* _height_, *-N* _height_::
+  Set the framebuffer height in pixels.
 
-*-h* or *-?*
-Prints a usage message.
-
-
-[[fonts]]
-== FONTS
-
-*fblabel* expects the Berkeley fonts in the directory /usr/lib/vfont.
-The fonts are expected to be in Vax byte order, even if that is not
-the natural byte order of the machine, to avoid having to create a
-font converter.
+*-h*, *-?*::
+  Print a usage message.
 
 
 [[examples]]
 == EXAMPLES
 
-Display white text at position (100, 200) on the default framebuffer:
+.Caption a rendered image
+====
+[source,bash]
+----
+pix-fb moss.pix
+fblabel -C 255/255/0 10 10 "moss scene"
+----
+Display a rendered image with *pix-fb*(1), then stamp a yellow caption in
+the lower-left corner, anti-aliased over the existing pixels.
+====
 
-....
-fblabel 100 200 "Hello World"
-....
-
-Display red text with a specific font on a cleared 1024x1024 screen:
-
-....
-fblabel -c -S 1024 -C 255/0/0 -f oldenglish.14 50 300 "Title"
-....
-
-Use *fbpoint* to interactively select a position for the label:
-
-....
-fblabel -f "oldenglish.14" `fbpoint` "Hello"
-....
+.Position a label interactively with fbpoint
+====
+[source,bash]
+----
+fblabel -f oldenglish.14 `fbpoint` "Title"
+----
+Use *fbpoint*(1) to click a location on the framebuffer; its emitted
+coordinates become the _x_position_ and _y_position_ for the label, drawn
+here in the oldenglish.14 font.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fbpoint*(1), *libfb*(3), *pix*(5)
+*brlcad*(1), *fbpoint*(1), *fbline*(1), *fbclear*(1), *pix-fb*(1), *libfb*(3)
 
 
 [[author]]

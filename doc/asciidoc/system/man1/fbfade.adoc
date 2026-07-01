@@ -10,111 +10,97 @@ fbfade - fade a frame buffer image in or out
 
 [source]
 ----
-fbfade [-H] [-f input_image_name] [-s input_square_size] [-w input_width] \
-     [-n input_height] [-S output_square_size] [-W output_width] [-N output_height] \
-     [[-F] output_frame_buffer_name]
+fbfade [-H] [-s _size_] [-w _width_] [-n _height_] [-f _in_fb_file_] [-S _size_] [-W _width_] [-N _height_] [[-F] _out_fb_file_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*fbfade* gradually displays an image on a frame buffer, one randomly
-selected pixel at a time. It requires fast single-pixel write support
-for best effect.
+*fbfade* paints a frame buffer one pixel at a time in a random order,
+producing a dissolve effect. If an input image is given with *-f*, that
+image is faded in; otherwise the output is painted black, fading out
+whatever is currently displayed.
 
-If no input image is specified with *-f*, the program fades the
-existing frame buffer contents to black (fade out). When an input
-image is given, that image is faded in over whatever is currently
-displayed.
+The output frame buffer is selected by *-F* (or as a trailing argument),
+falling back to the *FB_FILE* environment variable or the default frame
+buffer. The effective area is clamped to the smaller of the requested
+size, the actual frame buffer size, and the input image size.
+
+The dissolve uses a shuffled-index algorithm, so the effect is best on a
+frame buffer with fast single-pixel writes.
 
 [[options]]
 == OPTIONS
 
 *-H*::
-Assumes 1024x1024 pixels for the default input image size instead of
-512x512. Explicitly specified sizes override this default. If actual
-input is smaller than requested, the actual size is used. If output
-size is not specified, the revised input size is used.
+  Use 1024x1024 as the default input size instead of 512x512. Explicitly
+  specified sizes override this default.
 
-*-f* _input_image_name_::
-Reads the image to be displayed from the specified frame buffer file,
-instead of using a black background (fade out).
+*-s* _size_::
+  Set both the width and height of the input image.
 
-*-s* _input_square_size_::
-Sets both width and height of the input image.
+*-w* _width_::
+  Set the input image width.
 
-*-w* _input_width_::
-Sets the input image width.
+*-n* _height_::
+  Set the input image height.
 
-*-n* _input_height_::
-Sets the input image height.
+*-f* _in_fb_file_::
+  Read the image to fade in from the named frame buffer. Without this
+  option, the output fades to black.
 
-*-S* _output_square_size_::
-Sets both width and height of the output frame buffer.
+*-S* _size_::
+  Set both the width and height of the output frame buffer.
 
-*-W* _output_width_::
-Sets the output frame buffer width.
+*-W* _width_::
+  Set the output frame buffer width.
 
-*-N* _output_height_::
-Sets the output frame buffer height.
+*-N* _height_::
+  Set the output frame buffer height.
 
-*-F* _output_frame_buffer_name_::
-Writes to the specified frame buffer instead of the one given by the
-*FB_FILE* environment variable (or the default frame buffer). If this
-is the last option specified, the *-F* flag is optional.
+*-F* _out_fb_file_::
+  Write to the named frame buffer instead of the one given by the
+  *FB_FILE* environment variable (or the default). When given as the
+  last argument, the *-F* flag may be omitted.
 
-*-h* or *-?*::
-Print usage information and exit.
-
-
-[[caveat]]
-== CAVEAT
-
-*fbfade* works best in conjunction with a frame buffer having very
-fast single-pixel access.
-
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-The following shell script produces a slide show by fading each image
-in, pausing, then fading to black:
-
-....
+.Slide show with fade transitions
+====
+[source,bash]
+----
 fbclear
-for i in *.pix
-do
-    fbfade -f $i
-    sleep 15
+for i in *.pix; do
+    pix-fb "$i"
+    fbfade -f /dev/mem
+    sleep 5
+    fbfade
 done
-fbfade
-....
-
+----
+Display each PIX image in the current directory with *pix-fb*(1), dissolve
+it into view from the in-memory frame buffer, pause, then fade it back to
+black before the next image.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*libfb*(3), *pix*(5)
+*brlcad*(1), *fbclear*(1), *fb-fb*(1), *pix-fb*(1), *pix*(5)
 
+[[author]]
+== AUTHOR
 
-[[diagnostics]]
-== DIAGNOSTICS
-
-Error messages are intended to be self-explanatory.
-
-
-[[authors]]
-== AUTHORS
-
-Douglas A. Gwyn, BRL/VLD-VMB; Gary S. Moss, BRL/VLD-VMB
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

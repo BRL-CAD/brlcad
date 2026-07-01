@@ -51,22 +51,36 @@ fbcbars [-e | -f | -s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N sc
 [[examples]]
 == EXAMPLES
 
-The following examples demonstrate how to use *fbcbars* to display various color bar patterns on different framebuffers.
-
-.Displaying SMPTE color bars on a specified framebuffer
+.Capture SMPTE bars to a pix file for later use
 ====
-[prompt]#fbcbars -s -F /dev/sgil0 -S 512#
-
-Displays the SMPTE color bar scale on the framebuffer `/dev/sgil0` with a screen size of 512x512 pixels.
-====
-
-.Displaying FCC/EBU color bars with a specific resolution
-====
-[prompt]#fbcbars -f -W 1920 -N 1080#
-
-Displays FCC/EBU color bars with a resolution of 1920x1080 on the default framebuffer.
+[source,bash]
+----
+fbcbars -s -S 512 -F /tmp/bars.pix
+----
+Opens the in-memory pix(5) file framebuffer `/tmp/bars.pix` at 512x512 and
+writes the default SMPTE color bars into it. The resulting file can be
+inspected with *pix-fb*(1) or converted to PNG with *pix-png*(1), which is a
+convenient way to generate a reference test pattern without a physical display.
 ====
 
+.Display FCC/EBU bars at HD resolution on the default framebuffer
+====
+[source,bash]
+----
+FB_FILE=/dev/X fbcbars -f -W 1920 -N 1080
+----
+Displays full-screen FCC/EBU color bars at 1920x1080 on the framebuffer named
+by the *FB_FILE* environment variable, here an X11 display. This is useful for
+checking the color reproduction and geometry of a newly configured display
+device.
+====
+
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbclear*(1), *fbgrid*(1), *fbframe*(1), *pix-fb*(1), *pixbackgnd*(1), *libfb*(3)
 
 
 [[inspirations]]
@@ -86,7 +100,7 @@ Doris Kochanek, National Film Board of Canada
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1988-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
