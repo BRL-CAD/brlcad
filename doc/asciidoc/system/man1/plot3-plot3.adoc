@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD
 
 == NAME
-plot3-plot3 - convert an extended to a simple UnixPlot file
+plot3-plot3 - convert an extended UnixPlot file to a simple UnixPlot file
 
 == SYNOPSIS
 
@@ -17,21 +17,79 @@ plot3-plot3 [-v] [-S] < unix_plot > unix_plot
 [[description]]
 == DESCRIPTION
 
-UnixPlot is a simple machine and device independent plotting file format found on both System V and BSD Unix systems. BRL has extended that format to include color, three dimensional plotting, machine independent floating point coordinates, and a flush command for interactive output.
+UnixPlot is a simple machine and device independent plotting file
+format found on both System V and BSD Unix systems. BRL-CAD has
+extended that format (*plot3*(5)) to include color, three dimensional
+plotting, machine independent floating point coordinates, and a flush
+command for interactive output.
 
-*plot3-plot3* converts an extended UnixPlot file to the simpler format for use by older, and non-extended, programs. It drops color and flush commands, strips the Z coordinate of 3D commands, and converts floating point coordinates to integer. By default, conversion to integer is done by simple truncation. If the *-S* option is given, the "space" command in the plot file is used to center and scale the plot to the full 16 bit signed integer plotting space (-32767 to +32767). This is particularly useful for converting floating point files. The *-v* verbose option causes each plot command to be described as it is being converted.
+*plot3-plot3* reads an extended UnixPlot file on standard input and
+writes the simpler classic format to standard output for use by older,
+non-extended programs. It drops color and flush commands, strips the Z
+coordinate of 3D commands, and converts floating point coordinates to
+integer. By default, conversion to integer is done by simple
+truncation, clamped to the 16 bit signed integer range (-32767 to
++32767).
 
+If the *-S* option is given, the "space" command in the plot file is
+used to center and scale the plot to the full 16 bit signed integer
+plotting space. This is particularly useful for converting floating
+point files whose coordinates would otherwise be clamped. If no space
+command is present, a default space of -32767 to +32767 is assumed.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose. Print the name of each plot command on standard output as it
+  is converted. Note that this intermixes the command names with the
+  converted plot data on standard output.
+
+*-S*::
+  Scale. Use the plot's "space" command to center and scale the output
+  to fill the full 16 bit signed integer plotting space, rather than
+  simply truncating coordinates.
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-A warning message is given if the input plot file did not contain a space command since most older UnixPlot programs require them.
+A warning is issued if *-S* is given but the input contained no space
+command, in which case the default +/-32k space is used. A warning is
+also issued if the input contained space command(s) but *-S* was not
+given, since those commands are ignored without it.
 
+[[examples]]
+== EXAMPLES
+
+.Flatten a 3D BRL-CAD plot for a classic plotter
+====
+[source,bash]
+----
+rt -o model.pl -P1 model.g component.r
+plot3-plot3 -S < model.pl > model2d.plot
+----
+Render a region to an extended BRL-CAD plot file with *rt*(1), then
+convert it to a classic 2D UnixPlot file, scaling the geometry to fill
+the available integer plotting space so nothing is clipped.
+====
+
+.Inspect commands while down-converting
+====
+[source,bash]
+----
+plot3-asc < model.pl
+plot3-plot3 -v < model.pl > model2d.plot
+----
+Use *plot3-asc*(1) to dump the extended commands as ASCII, then run the
+conversion with *-v* to print each command name (on standard output,
+intermixed with the converted data) and confirm which 3D, floating
+point, and color commands are being reduced.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*plot*(1), *plot3rot*(1), *plot3-fb*(1), *plot3debug*(1), *libplot3*(3), *plot3*(5)
+*brlcad*(1), *plot3-asc*(1), *plot3-fb*(1), *plot3-ps*(1), *plot3rot*(1), *plot3color*(1), *libbv*(3), *plot3*(5)
 
 
 [[author]]

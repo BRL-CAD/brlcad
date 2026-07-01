@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD
 
 == NAME
-plot3-asc - convert a Plot3 stream to ASCII
+plot3-asc - convert a binary plot3 stream to an editable ASCII listing
 
 == SYNOPSIS
 
@@ -17,13 +17,57 @@ plot3-asc [-v] [unix_plot]
 [[description]]
 == DESCRIPTION
 
-Reads a stream in *plot3*(5) format and converts it to an ASCII representation. Standard input is read if a file name is not supplied. If the *-v* option is given, the single-character command names are replaced with mnemonic strings and a summary of plot command usage is written to standard error.
+*plot3-asc* reads a binary *plot3*(5) stream and writes a human-readable ASCII
+listing, one plot command per line. Each line begins with the plot command and
+is followed by its decoded arguments (coordinates, color bytes, or strings).
+This text form is convenient for inspecting or hand-editing a plot file; the
+companion tool *asc-plot3*(1) converts the listing back into binary *plot3*(5).
+
+The input file is read from _unix_plot_ if a file name is supplied, otherwise
+from standard input. The ASCII listing is written to standard output.
+
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose mode. Replace each single-character plot command with its mnemonic
+  name (for example *move*, *line*, *space*, *color*) rather than the raw
+  letter, and on completion write a summary of how many times each command was
+  used to standard error.
+
+
+[[examples]]
+== EXAMPLES
+
+.Inspect the contents of a plot file
+====
+[source,bash]
+----
+plot3-asc -v drawing.plot3
+----
+Lists every command in _drawing.plot3_ using mnemonic names and prints a
+usage tally to standard error, making it easy to see what the plot contains.
+====
+
+.Round-trip edit a plot file
+====
+[source,bash]
+----
+plot3-asc drawing.plot3 > drawing.asc
+# edit drawing.asc with any text editor, then convert back
+asc-plot3 < drawing.asc > edited.plot3
+----
+Converts a binary plot to ASCII, allowing the geometry to be tweaked by hand,
+then *asc-plot3*(1) reassembles the edited listing into a binary *plot3*(5)
+stream.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*asc-plot3*(1), *plot3-plot3*(1), *plot3rot*(1), *plot3-fb*(1), *libplot3*(3), *plot3*(5)
+*asc-plot3*(1), *plot3-plot3*(1), *plot3rot*(1), *plot3*(5)
 
 
 [[author]]

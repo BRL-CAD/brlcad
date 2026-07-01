@@ -4,36 +4,86 @@
 :manmanual: BRL-CAD
 
 == NAME
-plot3-ps - convert UnixPlot to PostScript file
+plot3-ps - convert a plot3 UnixPlot file to PostScript
 
 == SYNOPSIS
 
 [source]
 ----
-plot3-ps [-ec] [-s|S square_output_size] [-w|W output_width] [-n|N output_height] [<] unix_plot
+plot3-ps [-e] [-c] [-s|-S _inches_] [-w|-W _inches_] [-n|-N _inches_] [_file.plot3_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*plot3-ps* converts an extended UnixPlot file to a PostScript file suitable for embedding in a larger PostScript document. This is especially useful for creating figures for inclusion in TeX documents. The *-e* option will produce an encapsulated PostScript file. The *-c* option causes the output to be centered on an 8.5 x 11 inch page. The *-s* , *-w* , and *-n* options (alternatively *-S* , *-W* , and *-N*) specify the size of the output image in inches (ignored when used with the *-e* option).
+*plot3-ps* reads an extended (3-D) UnixPlot file in *plot3*(5) format and
+writes a PostScript rendering of it to standard output. The result is
+suitable for printing or for embedding as a figure in a larger document,
+including TeX or LaTeX documents.
 
-All UnixPlot line types are supported.
+The input is read from _file.plot3_ if given, otherwise from standard
+input. All *plot3*(5) line types are supported. If the input contains no
+*space* directive, the drawing space defaults to a cube ranging from
+(0, 0, 0) to (4096, 4096, 4096).
 
-If no UnixPlot *space* directive is seen, the default space ranges from (0, 0, 0) to (4096, 4096, 4096).
+By default the image is drawn at 6.75 inches square. The *-s*, *-w*, and
+*-n* options (and their uppercase synonyms) override the output dimensions;
+they are ignored when *-e* is given, since an encapsulated file is sized in
+plotting units by its bounding box.
 
+[[options]]
+== OPTIONS
 
-[[bugs]]
-== BUGS
+*-e*::
+  Produce an Encapsulated PostScript (EPS) file rather than a complete
+  page. Output size options are ignored in this mode.
 
-This is just the bare bones of a program at the time of this writing.
+*-c*::
+  Center the output on an 8.5 x 11 inch page. Has no effect with *-e*.
+
+*-s* _inches_, *-S* _inches_::
+  Set both the output width and height to _inches_ (a square image).
+
+*-w* _inches_, *-W* _inches_::
+  Set the output width to _inches_.
+
+*-n* _inches_, *-N* _inches_::
+  Set the output height to _inches_.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Embed a wireframe view as an EPS figure
+====
+[source,bash]
+----
+mged -c model.g 'set glob_compat_mode 0; B component; saveview /dev/null' 2>/dev/null
+plot3-ps -e drawing.plot3 > drawing.eps
+----
+Convert a *plot3*(5) wireframe produced by BRL-CAD into an Encapsulated
+PostScript figure (*drawing.eps*) that can be included in a TeX or LaTeX
+document.
+====
+
+.Render a centered 7.5 inch square page
+====
+[source,bash]
+----
+plot3-ps -c -s 7.5 drawing.plot3 > drawing.ps
+----
+Produce a full PostScript page with the plot drawn 7.5 inches square and
+centered on an 8.5 x 11 inch sheet, ready to send to a printer.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*plot3-fb*(1), *plot3-plot3*(1), *plot3-X*(1), *plot3*(5)
+*brlcad*(1), *plot3-fb*(1), *plot3-plot3*(1), *plot3-asc*(1), *plot3*(5)
 
 
 [[trademarks]]

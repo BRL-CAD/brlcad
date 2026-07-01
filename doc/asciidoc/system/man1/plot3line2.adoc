@@ -4,30 +4,70 @@
 :manmanual: BRL-CAD
 
 == NAME
-plot3line2 - output a 2D UnixPlot line
+plot3line2 - output a 2D UNIX plot line segment
 
 == SYNOPSIS
 
 [source]
 ----
-plot3line2 x1 y1 x2 y2 [ r g b] [ <] unix_plot > unix_plot
+plot3line2 x1 y1 x2 y2 [r g b] [< unix_plot] > unix_plot
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*plot3line2* outputs a UnixPlot command to draw a line in the XY plane from the point (*x1 y1*) to the point (*x2 y2*). These points can be floating point and the output is always written as a floating point plotting command. If you need an integer command then feed the output of this through *plot3-plot3*(1). If an optional [_r g b_] is given, where _r_, _g_, and _b_ are values from 0 to 255 representing Red, Green, and Blue color values, the line will be drawn in that color. Otherwise the current drawing color (white by default) is used.
+*plot3line2* writes a *plot3*(5) (UNIX plot) command to draw a line in the
+XY plane from the point (_x1_, _y1_) to the point (_x2_, _y2_). The
+coordinates may be floating point, and the segment is always emitted as a
+double-precision plotting command. If an integer-format command is required,
+pass the output through *plot3-plot3*(1).
 
-To allow this command to be used in pipelines, an optional input file can be given. All of the input will be passed through until end of file, and then the line will be appended to the end.
+If the optional color triple _r_ _g_ _b_ is supplied (each an integer from
+0 to 255 specifying the red, green, and blue intensities), a color command
+is written before the line and the segment is drawn in that color. Otherwise
+the current drawing color (white by default) is used.
 
-This command exists mostly as an aid for making graphs and things from shell commands.
+To allow use within a pipeline, if standard input is not a terminal its
+entire contents are copied through to standard output first, and the new
+line segment is appended at the end. The command refuses to run when
+standard output is a terminal.
 
+This command exists mainly as an aid for building plots and graphs from
+shell scripts.
+
+[[examples]]
+== EXAMPLES
+
+.Draw a red diagonal segment on top of an existing plot
+====
+[source,bash]
+----
+plot3line2 0 0 100 100 255 0 0 < base.plot3 > annotated.plot3
+----
+This copies the contents of _base.plot3_ to _annotated.plot3_ and appends a
+red line from the origin to (100, 100), letting you overlay an annotation on
+an existing UNIX plot file.
+====
+
+.Build a plot incrementally in a pipeline
+====
+[source,bash]
+----
+plot3line2 0 0 50 80 |
+    plot3line2 50 80 100 0 0 255 0 |
+    plot3-plot3 > graph.plot3
+----
+The first *plot3line2* emits one segment; the second reads it from standard
+input, copies it through, and appends a second (green) segment. The combined
+double-precision stream is converted to integer plot commands by
+*plot3-plot3*(1) and saved as _graph.plot3_.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*plot3color*(1), *plot3-plot3*(1), *plot3*(5)
+*brlcad*(1), *plot3color*(1), *plot3-plot3*(1), *plot3*(5)
 
 
 [[author]]
@@ -39,7 +79,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1988-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

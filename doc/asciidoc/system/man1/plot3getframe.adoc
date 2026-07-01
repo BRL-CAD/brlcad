@@ -4,28 +4,67 @@
 :manmanual: BRL-CAD
 
 == NAME
-plot3getframe - extract one frame from a UNIX plot file
+plot3getframe - extract one frame from a multi-frame plot3 file
 
 == SYNOPSIS
 
 [source]
 ----
-plot3getframe [-v] desired_frame < unix_plot
+plot3getframe [-v] desired_frame < unix_plot > frame_plot
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*plot3getframe* extracts a single frame from a multi-frame UNIX plot file. Frames are separated by UNIX plot "erase" commands. Specifying the *-v* (verbose) flag causes the number of each frame being skipped to be printed on stderr.
+*plot3getframe* reads a multi-frame *plot3*(5) (UNIX plot) file on standard
+input and writes a single frame to standard output. Frames are delimited by
+the plot "erase" (*e*) command; the first frame is numbered 0. All plot
+commands belonging to _desired_frame_ are copied verbatim, while commands in
+all other frames are silently discarded.
 
-Note that BRL 3-D UNIX plot is a superset of the standard UNIX plot format, thus this program can process normal plot files as well.
+Because BRL-CAD 3-D UNIX plot is a superset of the standard UNIX plot format,
+this program can process ordinary 2-D plot files as well.
+
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose. Print the number of each frame as it is counted, to standard
+  error.
+
+
+[[examples]]
+== EXAMPLES
+
+.Extract a single frame and convert it to a PostScript image
+====
+[source,bash]
+----
+plot3getframe 2 < animation.plot3 | plot3-ps > frame2.ps
+----
+Pulls the third frame (frame 2) out of a multi-frame plot file produced by an
+animation pipeline and pipes it to *plot3-ps*(1) to render that one frame as a
+PostScript file.
+====
+
+.Report frame numbers while extracting the first frame
+====
+[source,bash]
+----
+plot3getframe -v 0 < animation.plot3 > first.plot3
+----
+Writes frame 0 to first.plot3 and, with *-v*, lists the frame numbers
+encountered on standard error so you can confirm how many frames the input
+contains.
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *libplot3*(3)
+*brlcad*(1), *plot3-ps*(1), *plot3-plot3*(1), *plot3-asc*(1), *plot3stat*(1), *plot3*(5), *libbv*(3)
 
 
 [[author]]
@@ -37,7 +76,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1988-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

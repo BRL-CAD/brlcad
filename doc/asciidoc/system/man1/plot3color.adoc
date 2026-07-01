@@ -10,24 +10,56 @@ plot3color - output a UnixPlot color command
 
 [source]
 ----
-plot3color r g b [ <] unix_plot > unix_plot
+plot3color _r_ _g_ _b_ [< unix_plot] > unix_plot
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*plot3color* outputs a UnixPlot command to set the current drawing color to the given _r g_ and _b_ values. These values should be numbers from 0 to 255 and represent black to full up Red, Green, and Blue values respectively.
+*plot3color* writes a UnixPlot color command to standard output that sets the
+current drawing color to the given _r_, _g_, and _b_ values. Each value is an
+integer from 0 to 255, ranging from black (0) to full intensity for the Red,
+Green, and Blue components respectively.
 
-To allow this command to be used in pipelines, an optional input file can be given. All of the input will be passed through until end of file, and then the color command will be appended to the end.
+To allow use in a pipeline, an optional UnixPlot stream may be supplied on
+standard input. Its entire contents are copied through to standard output
+first, and the new color command is then appended at the end. This makes it
+easy to recolor or extend a plot produced by another tool.
 
-This command exists mostly as an aid for making graphs and things from shell commands.
+Standard output must not be a terminal; *plot3color* refuses to run if stdout
+is a tty. The command is primarily an aid for building *plot3*(5) graphs and
+figures from shell scripts.
+
+
+[[examples]]
+== EXAMPLES
+
+.Append a color command to an existing plot
+====
+[source,bash]
+----
+plot3color 255 0 0 < drawing.plot3 > red.plot3
+----
+Copies the UnixPlot stream from _drawing.plot3_ to _red.plot3_, then appends a
+command that switches the current drawing color to full red (255 0 0).
+====
+
+.Build a colored plot from scratch in a pipeline
+====
+[source,bash]
+----
+plot3color 0 255 0 | plot3line2 0 0 100 100 > line.plot3
+----
+Emits a green color command and pipes it into *plot3line2*(1), producing a
+*plot3*(5) file that draws a green line from (0,0) to (100,100).
+====
 
 
 [[see_also]]
 == SEE ALSO
 
-*plot3line2*(1), *plot3-plot3*(1), *plot3*(5)
+*brlcad*(1), *plot3line2*(1), *plot3-plot3*(1), *plot3*(5)
 
 
 [[author]]
@@ -39,7 +71,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1988-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

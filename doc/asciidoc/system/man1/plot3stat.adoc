@@ -1,10 +1,10 @@
 = PLOT3STAT(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-plot3stat - Print statistics about a Plot3(5) format file
+plot3stat - print statistics about a plot3 format file
 
 == SYNOPSIS
 
@@ -17,26 +17,52 @@ plot3stat [-v] [unix_plot.plot3]
 [[description]]
 == DESCRIPTION
 
-*plot3stat* reads a BRL-CAD 3D UNIX Plot file (typically denoted by a `.plot3` or `.plot` extension) and tallies the total usage of each drawing command. It prints a summary to standard error, detailing the human-readable command names and the frequency of their occurrence within the file.
+*plot3stat* reads a BRL-CAD 3D UNIX plot file (*plot3*(5), typically with a
+`.plot3` or `.plot` extension) and tallies how many times each drawing command
+occurs. It prints a summary to standard error listing the human-readable command
+name (for example `3line`, `color`, or `d_3move`) and its count.
 
-If no file is specified on the command line, *plot3stat* expects to read the plot3 format stream from standard input.
+If no file is given on the command line, *plot3stat* reads the plot3 stream from
+standard input.
 
 [[options]]
 == OPTIONS
 
 *-v*::
-Enable verbose mode. As the file is parsed, *plot3stat* will print the name of each individual plot command encountered directly to standard output, in sequence, separated by spaces. The final statistical summary is still printed to standard error.
+  Verbose. As the file is parsed, print the name of each plot command
+  encountered, in order, to standard output. The statistical summary is still
+  written to standard error.
 
 [[examples]]
 == EXAMPLES
 
-.Summarizing Plot3 Commands
-[example]
+.Summarize the commands in a plot3 file
 ====
-**plot3stat output.plot3**
+[source,bash]
+----
+plot3stat model.plot3
+----
+Reads _model.plot3_ and prints a per-command frequency summary to standard
+error, revealing which drawing primitives (lines, points, color changes, etc.)
+make up the file.
+====
 
-Reads _output.plot3_ and prints a summary of the drawing commands used (e.g., `3line`, `color`, `d_3move`) to standard error.
+.Profile a pipeline that generates plot3 on the fly
 ====
+[source,bash]
+----
+plot3rot -z 45 < model.plot3 | plot3stat -v 2>summary.txt >commands.txt
+----
+Rotates _model.plot3_ with *plot3rot*(1) and pipes the result into *plot3stat*.
+The verbose stream of command names is captured in _commands.txt_ while the count
+summary lands in _summary.txt_, letting you confirm the rotation preserved the
+geometry without writing an intermediate file.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *plot3-asc*(1), *plot3rot*(1), *plot3color*(1), *plot3line2*(1), *plot3*(5)
 
 [[author]]
 == AUTHOR
@@ -46,7 +72,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1990-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1990-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
