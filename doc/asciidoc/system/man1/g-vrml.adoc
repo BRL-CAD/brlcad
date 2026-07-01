@@ -1,79 +1,128 @@
 = G-VRML(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-g-vrml - Perform Boolean evaluations to produce a VRML version 2.0 file
+g-vrml - convert a BRL-CAD geometry database to a VRML 2.0 file
 
 == SYNOPSIS
 
-*g-vrml* [-vbe] [-d _calc_dist_tol_] [-a _abs_tess_tol_] [-n _norm_tess_tol_] [-r _rel_tess_tol_] [-x _librt_debug_flag_] [-X _NMG_debug_flag_] [-u _units_name_] [-o _outfile_] _infile.g_ _object(s)_
+[source]
+----
+g-vrml [-b | -e] [-v] [-d _calc_dist_tol_] [-a _abs_tess_tol_] [-r _rel_tess_tol_] [-n _norm_tess_tol_] [-u _units_] [-x _librt_debug_flag_] [-X _NMG_debug_flag_] [-o _output.wrl_] _database.g_ _object_ [_object_ ...]
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*g-vrml* performs the Boolean operations specified in BRL-CAD database regions and writes the resulting geometry in VRML version 2.0 format to _outfile_ (or to standard output if *-o* is not used).
+*g-vrml* converts the named objects from a BRL-CAD geometry database
+(_database.g_) into a faceted Virtual Reality Modeling Language (VRML)
+version 2.0 file. By default each region is tessellated and its Boolean
+operations are evaluated through the NMG routines, producing a triangulated
+*IndexedFaceSet* per region. Region colors and shaders (plastic, glass,
+texture) are translated into VRML material and texture nodes, and regions
+using the *light* shader are emitted as VRML light sources.
 
+The result is written to the file named with *-o*, or to standard output if
+*-o* is not given. Output units default to millimeters; see *-u* to select a
+different unit. The conversion is the inverse direction of importers such as
+*vrml-g* would be, and complements other geometry exporters such as
+*g-stl*(1) and *g-obj*(1).
+
+[[options]]
 == OPTIONS
 
-*-o* _outfile_::
-	Specify the output file name. If not specified, the output is written to standard output.
-
-*-v*::
-	Verbose output.
-
-*-d* _calc_dist_tol_::
-	Specify calculation distance tolerance (in mm) used to distinguish neighboring vertices. The default value is 0.005.
-
-*-a* _abs_tess_tol_::
-	Specify absolute tessellation tolerance (in mm).
-
-*-n* _norm_tess_tol_::
-	Specify surface normal tessellation tolerance (in degrees).
-
-*-r* _rel_tess_tol_::
-	Specify relative tessellation tolerance (relative to primitive solid size).
-
-*-x* _librt_debug_flag_::
-	Set debug flags for `librt` (hexadecimal format). See `raytrace.h` for values.
-
-*-X* _NMG_debug_flag_::
-	Set NMG debug flags (hexadecimal format). See `nmg.h` for values.
-
-*-u* _units_name_::
-	Specify units for the resulting VRML file. The default is mm. Accepts any units name supported by MGED.
-
 *-b*::
-	Dump BOT (Bag of Triangles) representations directly.
+  Dump *BOT* (Bag of Triangles) primitives directly to the VRML file without
+  performing any Boolean evaluation; non-BOT (CSG) primitives are skipped.
+  Mutually exclusive with *-e*.
 
 *-e*::
-	Evaluate all CSG and BOTs.
+  Evaluate all geometry, tessellating and performing the Boolean evaluation
+  of both CSG and BOT primitives. Mutually exclusive with *-b*.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-v*::
+  Verbose output; report conversion progress on standard error.
 
+*-d* _calc_dist_tol_::
+  Calculational distance tolerance in millimeters, used to distinguish
+  neighboring vertices. The default is 0.005.
+
+*-a* _abs_tess_tol_::
+  Absolute tessellation tolerance in millimeters (maximum chord error).
+  Setting this disables the relative tolerance.
+
+*-r* _rel_tess_tol_::
+  Relative tessellation tolerance, expressed as a fraction of the bounding
+  box of each primitive. The default is 0.01.
+
+*-n* _norm_tess_tol_::
+  Surface normal tessellation tolerance in degrees (maximum allowed angle
+  between approximated and true surface normals). Setting this disables the
+  relative tolerance.
+
+*-u* _units_::
+  Units for the resulting VRML file. The default is mm. Any unit name
+  accepted by BRL-CAD (for example m, cm, in, ft) may be used.
+
+*-x* _librt_debug_flag_::
+  Set the *librt* debug flag (hexadecimal). See raytrace.h for bit values.
+
+*-X* _NMG_debug_flag_::
+  Set the NMG debug flag (hexadecimal). See nmg.h for bit values.
+
+*-o* _output.wrl_::
+  Write output to the named file. If omitted, output is written to standard
+  output.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to a VRML file
+.Convert specific tops objects to a VRML file
+====
 [source,bash]
 ----
-g-vrml -o shell.wrl sample.g sample_object
+g-vrml -o havoc.wrl -u m havoc.g havoc
 ----
+Tessellates and Boolean-evaluates the *havoc* object from havoc.g and writes
+a VRML 2.0 model in meters to havoc.wrl, ready to load in a web or desktop
+VRML viewer.
+====
 
-== DIAGNOSTICS
+.Export only the triangle meshes from a model
+====
+[source,bash]
+----
+g-vrml -b -o meshes.wrl model.g body wheels
+----
+Dumps the *BOT* meshes contained under the *body* and *wheels* objects
+directly, skipping CSG primitives and the comparatively slow Boolean
+evaluation. This is useful when a model is already mostly faceted and you
+want a fast export.
+====
 
-Error messages are intended to be self-explanatory.
+[[see_also]]
+== SEE ALSO
 
+*brlcad*(1), *mged*(1), *g-stl*(1), *g-obj*(1), *g-dxf*(1)
+
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1998-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

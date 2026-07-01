@@ -1,79 +1,121 @@
 = G-RAW(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-g-raw - RAW Translator (BRL-CAD to RAW)
+g-raw - convert BRL-CAD geometry to RAW triangle facet format
 
 == SYNOPSIS
 
-*g-raw* [-v] [-i] [-8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-o _output_file_ | -m _output_directory_] _database.g_ _object(s)_...
+[source]
+----
+g-raw [-vi8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-o _output_file.raw_ | -m _output_directory_] _database.g_ _object_...
+----
 
+[[description]]
 == DESCRIPTION
 
-*g-raw* converts the specified _object(s)_ from a BRL-CAD database _database.g_ to the RAW triangle format.
+*g-raw* converts the named _object(s)_ from a BRL-CAD _database.g_ file into
+the RAW triangle facet format. Each specified region is tessellated using
+the NMG boolean evaluator and written as a list of triangle vertex
+coordinates.
 
+By default all converted geometry is written as a single stream to standard
+output. With *-o* the output is written to a named file, and with *-m* each
+region is written to its own file inside a directory; the two are mutually
+exclusive. When writing to a directory, file names are derived from the
+region's full path name with "/" replaced by "@" and spaces and periods
+replaced by "_".
+
+Coordinates are emitted in millimeters unless *-i* requests inches.
+
+[[options]]
 == OPTIONS
 
-*-o* _output_file_::
-	Specify the output file name (default is standard output).
-
-*-m* _output_directory_::
-	Specify a directory for output files. Each region converted is written to a separate file within this directory. File names are constructed from the region's full path name (replacing "/" with "@", and spaces/periods with "_"). The *-o* and *-m* options are mutually exclusive.
+*-v*::
+  Enable verbose output, reporting the objects processed and the
+  tessellation and calculation tolerances in effect.
 
 *-i*::
-	Use inches as the output units (the default is millimeters).
+  Emit vertex coordinates in inches instead of the default millimeters.
 
 *-8*::
-	Facetize using the marching cubes algorithm.
+  Tessellate using the marching cubes algorithm instead of the standard
+  NMG boolean evaluation.
 
-*-D* _dist_tol_::
-	Specify calculation distance tolerance (in mm) used when checking if vertices are coincident. The default is 0.0005.
+*-o* _output_file.raw_::
+  Write all output to the named file rather than standard output.
+  Mutually exclusive with *-m*.
+
+*-m* _output_directory_::
+  Write each converted region to a separate ".raw" file within the named
+  directory. Mutually exclusive with *-o*.
 
 *-a* _abs_tol_::
-	Specify absolute tessellation tolerance (in mm).
+  Set the absolute tessellation tolerance in millimeters. Specifying this
+  disables the relative tolerance.
 
 *-r* _rel_tol_::
-	Specify relative tessellation tolerance. The default is 0.01.
+  Set the relative tessellation tolerance (fraction of bounding box size).
+  The default is 0.01.
 
 *-n* _norm_tol_::
-	Specify surface normal tessellation tolerance.
+  Set the surface-normal tessellation tolerance in degrees. Specifying this
+  disables the relative tolerance.
+
+*-D* _dist_tol_::
+  Set the calculation distance tolerance in millimeters used to decide
+  whether two vertices are coincident. The default is 0.0005.
 
 *-x* _rt_debug_::
-	Specify an RT debug flag (hexadecimal format).
+  Set the librt debug flags, given as a hexadecimal value.
 
 *-X* _nmg_debug_::
-	Specify an NMG debug flag (hexadecimal format).
+  Set the libnmg debug flags, given as a hexadecimal value.
 
-*-v*::
-	Enable verbose output.
-
-*-h*::
-*-?*::
-	Print the usage message and exit.
-
+[[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to a RAW file
+.Convert selected regions to a single RAW file
+====
 [source,bash]
 ----
-g-raw -o sample.raw sample.g sample_object
+g-raw -o engine.raw engine.g block piston
 ----
+Tessellates the regions named "block" and "piston" from engine.g and
+writes both as triangles into engine.raw.
+====
 
-== DIAGNOSTICS
+.Export every region to its own file in inches
+====
+[source,bash]
+----
+mkdir parts
+g-raw -i -m parts -a 0.1 model.g top_assembly
+----
+Walks the "top_assembly" tree in model.g, tessellating each region with an
+absolute tolerance of 0.1 mm, and writes a separate ".raw" file per region
+into the "parts" directory with coordinates expressed in inches.
+====
 
-Error messages are intended to be self-explanatory.
+[[see_also]]
+== SEE ALSO
 
+*brlcad*(1), *g-stl*(1), *g-obj*(1), *mged*(1)
+
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2013-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,79 +1,117 @@
 = G-PLY(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-g-ply - Stanford PLY exporter (BRL-CAD to PLY)
+g-ply - convert BRL-CAD geometry to a Stanford PLY file
 
 == SYNOPSIS
 
-*g-ply* [-v] [-s] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-t _type_] [-D _dist_tol_] -o _output_file_name_ _database.g_ _object(s)_...
+[source]
+----
+g-ply [-v] [-s] [-t _type_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-x _rt_debug_] [-X _nmg_debug_] -o _output.ply_ _database.g_ _object_ [_object ..._]
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*g-ply* converts the specified _object(s)_ from a BRL-CAD database _database.g_ to the Stanford PLY file format.
+*g-ply* converts the listed _object_(s) from a BRL-CAD _database.g_ to the
+Stanford PLY (Polygon File Format) geometry file named by *-o*.  Each object
+is tessellated into a faceted mesh by way of the NMG booleans before being
+written, so any solid, region, or combination that can be evaluated to a
+triangle mesh may be exported.  The output may be ASCII or binary PLY, and by
+default all requested objects are merged into a single file.
 
+[[options]]
 == OPTIONS
 
-*-o* _output_file_name_::
-	Specify the output file name. This option is required.
+*-o* _output.ply_::
+  Name of the PLY file to write.  This option is required.  When *-s* is given,
+  this name is appended as a suffix to each per-object file, which is named
+  _object_*_*_output.ply_.
 
 *-s*::
-	Write out one object per file instead of merging individual objects into a single PLY file.
+  Write a separate PLY file for each object instead of merging all objects into
+  a single file.
 
 *-t* _type_::
-	Specify the type of PLY file to write. The values can be:
-	* `asc`::: ASCII format
-	* `le`::: Binary little endian format
-	* `be`::: Binary big endian format
-
-*-D* _dist_tol_::
-	Specify calculation distance tolerance (in mm) used when checking if vertices are coincident. The default is 0.0005.
+  Select the PLY encoding.  Valid values are *asc* for ASCII, *le* for binary
+  little-endian, and *be* for binary big-endian.
 
 *-a* _abs_tol_::
-	Specify absolute tessellation tolerance (in mm).
+  Absolute tessellation tolerance in millimeters (the maximum chord distance
+  between the true surface and a facet edge).  Setting this clears the relative
+  tolerance.  Default is 0.0 (disabled).
 
 *-r* _rel_tol_::
-	Specify relative tessellation tolerance. The default is 0.01.
+  Relative tessellation tolerance, expressed as a fraction of the bounding-box
+  size of the object.  Default is 0.01.
 
 *-n* _norm_tol_::
-	Specify surface normal tessellation tolerance.
+  Surface normal tessellation tolerance, the maximum angle in degrees between
+  facet normals.  Setting this clears the relative tolerance.  Default is 0.0
+  (disabled).
+
+*-D* _dist_tol_::
+  Calculational distance tolerance in millimeters used when deciding whether
+  two vertices are coincident.  Default is 0.0005.
 
 *-x* _rt_debug_::
-	Specify an RT debug flag (hexadecimal format).
+  Set the librt debug flag to the given hexadecimal value.
 
 *-X* _nmg_debug_::
-	Specify an NMG debug flag (hexadecimal format).
+  Set the libnmg debug flag to the given hexadecimal value.
 
 *-v*::
-	Enable verbose output.
+  Enable verbose output during conversion.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-h*, *-?*::
+  Print the usage message and exit.
 
+[[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to a PLY file
+.Export a single ASCII PLY for downstream tools
+====
 [source,bash]
 ----
-g-ply -o sample.ply sample.g sample_object
+g-ply -t asc -a 0.5 -o widget.ply widget.g body bracket
 ----
+Tessellates the *body* and *bracket* objects from *widget.g* with a 0.5 mm
+absolute tolerance, merging them into one human-readable ASCII PLY file that
+can be inspected or imported into mesh editors and 3D printing slicers.
+====
 
-== DIAGNOSTICS
+.Write one binary mesh per object
+====
+[source,bash]
+----
+g-ply -s -t le -r 0.005 -o parts.ply assembly.g part1 part2 part3
+----
+Produces a compact little-endian binary PLY for each of *part1*, *part2*, and
+*part3* using a tighter relative tolerance, keeping the individual components
+in separate files for per-part processing.
+====
 
-Error messages are intended to be self-explanatory.
+[[see_also]]
+== SEE ALSO
 
+*brlcad*(1), *ply-g*(1), *g-stl*(1), *g-obj*(1), *mged*(1)
+
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2003-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

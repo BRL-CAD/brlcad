@@ -1,76 +1,118 @@
 = G-X3D(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-g-x3d - Perform Boolean evaluations to produce an X3D facetted model
+g-x3d - convert BRL-CAD geometry to an X3D faceted model
 
 == SYNOPSIS
 
-*g-x3d* [-v] [-d _calc_dist_tol_] [-a _abs_tess_tol_] [-n _norm_tess_tol_] [-r _rel_tess_tol_] [-x _librt_debug_flag_] [-X _NMG_debug_flag_] [-u _units_name_] [-P _ncpu_] [-o _outfile_] _infile.g_ _object(s)_
+[source]
+----
+g-x3d [-v] [-d _calc_dist_tol_] [-a _abs_tess_tol_] [-r _rel_tess_tol_] [-n _norm_tess_tol_] [-u _units_] [-P _ncpu_] [-x _librt_debug_] [-X _nmg_debug_] [-o _out.x3d_] _model.g_ _object(s)_
+----
 
+[[description]]
 == DESCRIPTION
 
-*g-x3d* performs the Boolean operations specified in BRL-CAD database regions and writes the resulting geometry in X3D format to _outfile_ (or to standard output if *-o* is not used).
+*g-x3d* evaluates the Boolean operations defined by the named regions in a
+BRL-CAD database (*.g*) file, tessellates the resulting geometry into NMG
+faceted form, and writes it as an X3D (Extensible 3D) scene. Each
+non-light-source region is emitted as a separate X3D *Shape* with an
+*IndexedFaceSet*, and region colors (or default per-thousand region-id colors)
+are written as X3D *Material* nodes. The output is written to the file named
+with *-o*, or to standard output otherwise.
 
+*g-x3d* is a modified version of *g-vrml*(1) and shares its shader and material
+handling; use it when an XML-based X3D scene is preferred over classic VRML.
+
+[[options]]
 == OPTIONS
 
-*-o* _outfile_::
-	Specify the output file name. If not specified, the output is written to standard output.
-
 *-v*::
-	Verbose output.
+  Enable verbose output, reporting region conversion progress on standard error.
 
 *-d* _calc_dist_tol_::
-	Specify calculation distance tolerance (in mm) used to distinguish neighboring vertices. The default value is 0.005.
+  Calculational distance tolerance, in millimeters, used to distinguish
+  neighboring vertices. The default is 0.0005.
 
 *-a* _abs_tess_tol_::
-	Specify absolute tessellation tolerance (in mm).
-
-*-n* _norm_tess_tol_::
-	Specify surface normal tessellation tolerance (in degrees).
+  Absolute tessellation tolerance, in millimeters (the maximum chord error
+  permitted between an approximating facet and the true surface). Setting this
+  disables the relative tolerance.
 
 *-r* _rel_tess_tol_::
-	Specify relative tessellation tolerance (relative to primitive solid size).
+  Relative tessellation tolerance, expressed as a fraction of the bounding box
+  of each solid. The default is 0.01.
 
-*-x* _librt_debug_flag_::
-	Set debug flags for `librt` (hexadecimal format). See `raytrace.h` for values.
+*-n* _norm_tess_tol_::
+  Surface normal tessellation tolerance, in degrees (the maximum angle between
+  adjacent facet normals). Setting this disables the relative tolerance.
 
-*-X* _NMG_debug_flag_::
-	Set NMG debug flags (hexadecimal format). See `nmg.h` for values.
-
-*-u* _units_name_::
-	Specify units for the resulting X3D file. The default is mm. Accepts any units name supported by MGED.
+*-u* _units_::
+  Units for coordinates in the resulting X3D file. The default is mm. Any units
+  name understood by BRL-CAD (e.g. mm, cm, m, in, ft) is accepted.
 
 *-P* _ncpu_::
-	Specify the number of processors to use. The default is 1.
+  Number of processors to use during tessellation. The default is 1.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-x* _librt_debug_::
+  Set the *librt* debug flags to the given hexadecimal value. See raytrace.h
+  for the bit definitions.
 
+*-X* _nmg_debug_::
+  Set the NMG debug flags to the given hexadecimal value. See nmg.h for the bit
+  definitions.
+
+*-o* _out.x3d_::
+  Write the X3D output to the named file instead of standard output.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to an X3D file
+.Convert selected regions to an X3D file
+====
 [source,bash]
 ----
-g-x3d -o shell.x3d sample.g sample_object
+g-x3d -o havoc.x3d -u m -r 0.005 havoc.g havoc
 ----
+Tessellates the region tree rooted at object *havoc* in *havoc.g* using a
+relative tolerance of 0.005, scales the output to meters, and writes the
+resulting X3D scene to *havoc.x3d* for viewing in a web browser or X3D viewer.
+====
 
-== DIAGNOSTICS
+.Stream output through a pipeline
+====
+[source,bash]
+----
+g-x3d -P 4 sample.g comp1 comp2 > parts.x3d
+----
+Converts two named objects using four processors and redirects the X3D scene to
+*parts.x3d*. Because output defaults to standard output, *g-x3d* can be chained
+with other tools in a pipeline.
+====
 
-Error messages are intended to be self-explanatory.
+[[see_also]]
+== SEE ALSO
 
+*brlcad*(1), *g-vrml*(1), *mged*(1)
+
+[[author]]
 == AUTHOR
 
-Robert Parker (The SURVICE Engineering Co., Aberdeen, MD)
+BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2002-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

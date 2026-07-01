@@ -4,85 +4,98 @@
 :manmanual: BRL-CAD
 
 == NAME
-g-dxf - BRL-CAD to AutoCAD DXF converter
+g-dxf - BRL-CAD geometry to AutoCAD DXF converter
 
 == SYNOPSIS
 
 [source]
 ----
-g-dxf [-v] [-i] [-p] [-x lvl] [-X lvl] [-D calc_tol] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P ncpus] [-o DXF_file] [-h] [-?] database.g object(s)
+g-dxf [-v] [-i] [-p] [-x lvl] [-X lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-D dist_tol] [-P ncpus] [-o output.dxf] database.g object(s)
 ----
 
 [[description]]
 == DESCRIPTION
 
 *g-dxf* converts the specified _object(s)_ from a BRL-CAD
-_database.g_ file to AutoCAD DXF format. By default, output uses
-3DFACE entities; use *-p* for POLYFACE MESH entities instead.
+_database.g_ file to an AutoCAD DXF file. Each region is tessellated
+into triangles via the NMG boolean evaluator and written out, with one
+DXF layer per region colored to the nearest matching DXF color. By
+default geometry is emitted as 3DFACE entities; use *-p* to emit
+POLYFACE MESH entities instead. If no output file is given with *-o*,
+the DXF is written to standard output.
 
 [[options]]
 == OPTIONS
 
 *-v*::
-Verbose output.
+  Verbose output, including object names and the tolerances in use.
 
 *-i*::
-Output in inches (default is mm).
+  Output coordinates in inches instead of the default millimeters.
 
 *-p*::
-Output POLYFACE MESH entities instead of 3DFACE entities.
+  Emit POLYFACE MESH entities instead of the default 3DFACE entities.
 
 *-x* _lvl_::
-Set librt debug flag.
+  Set the librt debug flag to the given hexadecimal value.
 
 *-X* _lvl_::
-Set NMG debug flag.
-
-*-D* _calc_tol_::
-Calculation distance tolerance (mm). Vertices closer than this are
-merged.
+  Set the NMG debug flag to the given hexadecimal value.
 
 *-a* _abs_tol_::
-Absolute tessellation tolerance (mm).
+  Absolute tessellation tolerance in millimeters (the maximum chord
+  error). Setting this disables the relative tolerance.
 
 *-r* _rel_tol_::
-Relative tessellation tolerance.
+  Relative tessellation tolerance, a fraction of the bounding box used
+  to bound the chord error (default 0.01).
 
 *-n* _norm_tol_::
-Surface normal tolerance (degrees).
+  Surface normal tessellation tolerance in degrees. Setting this
+  disables the relative tolerance.
+
+*-D* _dist_tol_::
+  Calculation distance tolerance in millimeters; vertices closer than
+  this are considered identical (default 0.0005).
 
 *-P* _ncpus_::
-Number of CPUs (enables core dumps; currently disabled).
+  Number of CPUs to use. Currently disabled: the value is accepted but
+  not used.
 
-*-o* _DXF_file_::
-Output file (default is stdout).
+*-o* _output.dxf_::
+  Write to the named DXF file instead of standard output.
 
-*-h, -?*::
-Print a usage message and exit.
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to DXF
+.Convert geometry to a DXF file
 ====
 [source,bash]
 ----
-$ g-dxf -o model.dxf sample.g component
+g-dxf -o hull.dxf ship.g hull
 ----
+Tessellate the _hull_ region from _ship.g_ and write the resulting
+3DFACE entities to _hull.dxf_.
 ====
 
-.Convert using POLYFACE MESH entities in inches
+.Tighten tolerances and emit a polyface mesh in inches
 ====
 [source,bash]
 ----
-$ g-dxf -p -i -a 0.5 -o model.dxf sample.g turret
+g-dxf -p -i -a 0.1 -o turret.dxf ship.g turret
 ----
+Export the _turret_ region as POLYFACE MESH entities in inches, using a
+0.1 mm absolute tessellation tolerance for a finer mesh suitable for
+import into AutoCAD-style packages.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*dxf-g*(1)
+*brlcad*(1), *dxf-g*(1), *g-stl*(1), *g-obj*(1)
 
 [[author]]
 == AUTHOR
@@ -92,7 +105,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2003-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

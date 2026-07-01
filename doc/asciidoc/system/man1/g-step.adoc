@@ -5,45 +5,79 @@
 
 == NAME
 
-g-step - STEP Translator/Exporter (BRL-CAD to STEP AP203)
+g-step - convert a BRL-CAD database to a STEP AP203 file
 
 == SYNOPSIS
 
-*g-step* -o _output_file.stp_ _database.g_ [_object(s)_]
+[source]
+----
+g-step -o output.stp database.g [object(s)]
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*g-step* converts the specified objects from a BRL-CAD database _database.g_ to a STEP AP203 file _output_file.stp_.
+*g-step* exports geometry from a BRL-CAD database _database.g_ to a STEP
+AP203 (Configuration Controlled 3D Designs of Mechanical Parts and
+Assemblies) exchange file _output.stp_.
 
-BRL-CAD's CSG models are converted to the STEP NURBS Boundary Representation format. Note that Boolean operations are not supported in AP203.
+One or more named _object_ arguments may be supplied to limit the export
+to those objects; if none are given, every top-level object in the
+database is converted. BRL-CAD CSG primitives are tessellated into the
+STEP NURBS boundary representation, since AP203 has no notion of Boolean
+operations. The input database name may be given as *-* to read the
+database from standard input.
 
+To avoid clobbering data, *g-step* refuses to run when the named output
+file already exists.
+
+[[options]]
 == OPTIONS
 
-*-o* _output_file.stp_::
-	Specify the output STEP file path. This option is required. Note that *g-step* will refuse to run if the output file already exists.
+*-o* _output.stp_::
+  Write the STEP AP203 output to _output.stp_. This option is required.
 
+[[examples]]
 == EXAMPLES
 
-.Export all geometry from a database to a STEP file
+.Export an entire database to STEP
+====
 [source,bash]
 ----
 g-step -o m35.stp m35.g
 ----
+Converts every top-level object in _m35.g_ to STEP AP203 and writes the
+result to _m35.stp_, suitable for import into a mechanical CAD package.
+====
 
-.Export specific parts from a database
+.Export selected assemblies for a downstream CAD tool
+====
 [source,bash]
 ----
-g-step -o m35.stp m35.g cab suspension
+g-step -o cab.stp m35.g cab suspension
 ----
+Exports only the _cab_ and _suspension_ assemblies, producing a smaller
+STEP file containing just the components of interest rather than the
+whole vehicle.
+====
 
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *step-g*(1), *mged*(1), *g-iges*(1)
+
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1993-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

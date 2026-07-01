@@ -4,85 +4,103 @@
 :manmanual: BRL-CAD
 
 == NAME
-g-acad - BRL-CAD to Lockheed Martin ACAD converter
+g-acad - BRL-CAD to Lockheed Martin ACAD facet file converter
 
 == SYNOPSIS
 
 [source]
 ----
-g-acad [-v] [-i] [-x lvl] [-X lvl] [-e error_file] [-D calc_tol] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P ncpus] [-o ACAD_file] [-h] [-?] database.g object(s)
+g-acad [-vi] [-x lvl] [-X lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-D dist_tol] [-P ncpus] [-e error_file] [-o output_file] database.g object(s)
 ----
 
 [[description]]
 == DESCRIPTION
 
-*g-acad* converts the specified _object(s)_ from a BRL-CAD
-_database.g_ file to Lockheed Martin's ACAD file format (formerly
-General Dynamics ACAD). This is not related to Autodesk AutoCAD.
+*g-acad* converts the specified _object(s)_ from a BRL-CAD _database.g_
+file to the Lockheed Martin "Advanced Computer-Aided Design" (ACAD)
+facet file format (formerly from General Dynamics). Each region is
+tessellated into a triangulated mesh using the NMG boolean evaluator
+and written as a separate part. Note that this format has nothing to
+do with the Autodesk AutoCAD software.
+
+If no output file is specified with *-o*, the result is written to
+standard output.
 
 [[options]]
 == OPTIONS
 
 *-v*::
-Verbose output.
+  Enable verbose output, reporting each region as it is processed.
 
 *-i*::
-Output in inches (default is mm).
+  Output vertex coordinates in inches (the default is millimeters).
 
 *-x* _lvl_::
-Set librt debug flag.
+  Set the librt debug flag to the given hexadecimal value.
 
 *-X* _lvl_::
-Set NMG debug flag.
-
-*-e* _error_file_::
-Write error messages to _error_file_ instead of standard error.
-
-*-D* _calc_tol_::
-Calculation distance tolerance (mm). Vertices closer than this are
-merged.
+  Set the NMG debug flag to the given hexadecimal value.
 
 *-a* _abs_tol_::
-Absolute tessellation tolerance (mm).
+  Absolute tessellation tolerance (mm). The maximum permitted distance
+  between a surface and its tessellated approximation. Setting this
+  clears the relative tolerance.
 
 *-r* _rel_tol_::
-Relative tessellation tolerance.
+  Relative tessellation tolerance, expressed as a fraction of the
+  bounding box of each object (default is 0.01).
 
 *-n* _norm_tol_::
-Surface normal tolerance (degrees).
+  Surface normal tolerance (degrees), the maximum angle between
+  adjoining facet normals. Setting this clears the relative tolerance.
+
+*-D* _dist_tol_::
+  Calculational distance tolerance (mm). Vertices closer together than
+  this are considered identical.
 
 *-P* _ncpus_::
-Number of CPUs to use; enables core dumps.
+  Number of processors to request (currently informational only;
+  tessellation runs single-threaded).
 
-*-o* _ACAD_file_::
-Output file (default is stdout).
+*-e* _error_file_::
+  Write error and diagnostic messages to _error_file_ instead of
+  standard error.
 
-*-h, -?*::
-Print a usage message and exit.
+*-o* _output_file_::
+  Write the ACAD output to _output_file_ instead of standard output.
+
+*-h*, *-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to ACAD format
+.Convert a region to an ACAD facet file
 ====
 [source,bash]
 ----
-$ g-acad -o sample.ACAD sample.g sample_object
+g-acad -o hull.acad vehicle.g hull
 ----
+Tessellates the _hull_ region from _vehicle.g_ and writes the result
+to _hull.acad_ in millimeters.
 ====
 
-.Convert with tight tolerances in inches
+.Convert with tighter tolerances and inch units
 ====
 [source,bash]
 ----
-$ g-acad -i -a 0.1 -r 0.01 -o hull.ACAD vehicle.g hull
+g-acad -i -a 0.5 -n 15 -e convert.log -o tank.acad tank.g turret hull tracks
 ----
+Converts three regions to a single ACAD facet file in inches, using a
+0.5 mm absolute tessellation tolerance and a 15-degree normal
+tolerance for finer faceting, while logging diagnostics to
+_convert.log_.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1)
+*brlcad*(1), *g-stl*(1), *g-obj*(1), *g-vrml*(1), *mged*(1)
 
 [[author]]
 == AUTHOR
@@ -92,7 +110,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1997-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

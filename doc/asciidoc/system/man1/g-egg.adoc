@@ -5,71 +5,112 @@
 
 == NAME
 
-g-egg - Panda3D Translator (BRL-CAD to EGG)
+g-egg - convert BRL-CAD geometry to a Panda3D EGG file
 
 == SYNOPSIS
 
-*g-egg* [-v89] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-o _egg_file_] [-P _ncpu_] _database.g_ _object(s)_
+[source]
+----
+g-egg [-v89] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-P _ncpu_] [-o _output.egg_] _database.g_ _object_ [_object ..._]
+----
 
+[[description]]
 == DESCRIPTION
 
-*g-egg* converts the specified geometry _object(s)_ from a BRL-CAD database _database.g_ to a Panda3D `.egg` file.
+*g-egg* converts the specified geometry _object(s)_ from a BRL-CAD
+_database.g_ to a Panda3D EGG file. Each object is tessellated into a
+triangulated NMG via the boolean evaluator and written as an EGG
+`<Group>` containing a vertex pool and the resulting polygons. The
+output uses a Z-Up coordinate system.
 
+If no output file is given with *-o*, the EGG data is written to
+standard output. A count of the triangles produced is printed to
+standard error on completion.
+
+[[options]]
 == OPTIONS
 
 *-a* _abs_tol_::
-	Specify absolute tessellation tolerance (in mm).
+  Absolute tessellation tolerance, in mm. Setting this disables the
+  relative tolerance.
 
 *-r* _rel_tol_::
-	Specify relative tessellation tolerance. The default is 0.01.
+  Relative tessellation tolerance, as a fraction of the bounding box.
+  The default is 0.01.
 
 *-n* _norm_tol_::
-	Specify surface normal tessellation tolerance.
-
-*-o* _egg_file_::
-	Specify the output file name. If not specified, the output is written to standard output.
-
-*-v*::
-	Verbose output (printed to standard error).
-
-*-P* _ncpu_::
-	Specify the number of CPUs to use.
-
-*-x* _rt_debug_::
-	Specify an RT debug flag (hexadecimal format).
-
-*-X* _nmg_debug_::
-	Specify an NMG debug flag (hexadecimal format).
+  Surface normal tessellation tolerance, in degrees. Setting this
+  disables the relative tolerance.
 
 *-D* _dist_tol_::
-	Specify calculation distance tolerance (in mm) used when checking if vertices are coincident.
+  Calculational distance tolerance, in mm, used when deciding whether
+  vertices are coincident.
+
+*-P* _ncpu_::
+  Number of CPUs to use during tessellation.
+
+*-o* _output.egg_::
+  Write output to the named file instead of standard output.
 
 *-8*::
-	Use the marching cubes algorithm for facetization.
+  Use the marching cubes algorithm for facetization.
 
 *-9*::
-	Use the "bottess" algorithm for facetization.
+  Use the experimental "bottess" algorithm for facetization.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-v*::
+  Verbose output (printed to standard error).
 
+*-x* _rt_debug_::
+  Set the librt debugging flags (a hexadecimal bit vector).
+
+*-X* _nmg_debug_::
+  Set the NMG debugging flags (a hexadecimal bit vector).
+
+*-h*, *-?*::
+  Print the usage message and exit.
+
+[[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to a Panda3D EGG file
+.Convert objects from a database to an EGG file
+====
 [source,bash]
 ----
-g-egg -o sample.egg sample.g sample_object
+g-egg -r 0.005 -o havoc.egg havoc.g body wings
 ----
+Tessellates the *body* and *wings* regions from *havoc.g* using a tighter
+relative tolerance of 0.005 and writes the combined Panda3D EGG model to
+*havoc.egg*, ready to be loaded into a Panda3D scene.
+====
 
+.Generate geometry on demand and pipe it onward
+====
+[source,bash]
+----
+g-egg -a 0.5 moss.g all.g > moss.egg
+----
+Facetizes the *all.g* assembly from the *moss.g* sample database with a
+0.5 mm absolute tolerance and redirects the EGG output (which would
+otherwise go to standard output) into *moss.egg*.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g-obj*(1), *g-stl*(1), *gcv*(1), *mged*(1)
+
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

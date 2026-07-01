@@ -4,50 +4,76 @@
 :manmanual: BRL-CAD
 
 == NAME
-g-dot - BRL-CAD to DOT graph language converter
+g-dot - convert a BRL-CAD database to the DOT graph language
 
 == SYNOPSIS
 
 [source]
 ----
-g-dot [-o output.dot] [-h] [-?] database.g object(s)
+g-dot [-o output.dot] input.g [object1 ...]
 ----
+
 
 [[description]]
 == DESCRIPTION
 
-*g-dot* converts the specified _object(s)_ from a BRL-CAD
-_database.g_ file to the DOT graph description language. Programs
-such as Graphviz, Tulip, and OmniGraffle can render the output as
-images.
+*g-dot* exports the hierarchy of a BRL-CAD _input.g_ geometry database
+to the DOT graph description language. Each named _object_ is walked
+recursively and emitted as a directed graph whose edges are labeled
+with the Boolean operation (`u`, `+`, `-`) joining members. Nodes are
+colored by type: regions are blue, groups green, and primitive solids
+red.
+
+If no _object_ is given, all top-level objects in the database are
+exported. If _input.g_ is `-`, the database is read from standard
+input. The resulting graph is written to standard output unless *-o*
+is given.
+
+The output can be rendered to an image by graph-drawing tools such as
+Graphviz (`dot`), Tulip, or OmniGraffle.
 
 [[options]]
 == OPTIONS
 
 *-o* _output.dot_::
-Write output to _output.dot_ instead of stdout.
+  Write the DOT output to _output.dot_ instead of standard output. If
+  the file already exists, output is appended to it.
 
-*-h, -?*::
-Print a usage message and exit.
+*-h*::
+  Print a usage message and exit.
+
+*-?*::
+  Print a usage message and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Export a model hierarchy as a DOT graph and render it
+.Render a model hierarchy as a PNG image
 ====
 [source,bash]
 ----
-$ g-dot -o model.dot sample.g all
-$ dot -Tpng model.dot -o model.png
+g-dot -o moss.dot moss.g all.g
+dot -Tpng moss.dot -o moss.png
 ----
-Exports the hierarchy of `all` from `sample.g` as a DOT file, then
-renders it to PNG using Graphviz.
+Exports the hierarchy rooted at `all.g` from `moss.g` to `moss.dot`,
+then uses the Graphviz *dot* program to render it as a PNG image.
+====
+
+.Pipe a database in and a graph out
+====
+[source,bash]
+----
+mged -c moss.g <<< 'q' >/dev/null 2>&1
+g-dot moss.g | dot -Tsvg -o moss.svg
+----
+Exports all top-level objects of `moss.g` and pipes the DOT stream
+directly into Graphviz to produce an SVG without an intermediate file.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1)
+*brlcad*(1), *mged*(1), *g-vrml*(1)
 
 [[author]]
 == AUTHOR
@@ -57,7 +83,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1997-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

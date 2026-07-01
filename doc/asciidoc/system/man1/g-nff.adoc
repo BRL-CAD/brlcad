@@ -5,72 +5,96 @@
 
 == NAME
 
-g-nff - NFF Translator (BRL-CAD to NFF)
+g-nff - BRL-CAD to Neutral File Format (NFF) translator
 
 == SYNOPSIS
 
-*g-nff* [-v] [-i] [-x _rt_debug_] [-X _nmg_debug_] [-e _error_file_] [-D _dist_tol_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] -o _output.nff_ _database.g_ _object(s)_
+[source]
+----
+g-nff [-v] [-i] [-x _rt_debug_] [-X _nmg_debug_] [-e _error_file_] [-D _dist_tol_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] -o _output.nff_ _database.g_ _object_ ...
+----
 
+[[description]]
 == DESCRIPTION
 
-*g-nff* converts the specified geometry _object(s)_ from a BRL-CAD database _database.g_ to the Neutral File Format (NFF).
+*g-nff* converts the specified geometry _object(s)_ from a BRL-CAD _database.g_
+file to the Neutral File Format (NFF). Each region is evaluated with the NMG
+boolean routines, triangulated, and written as a set of NFF polygons tagged
+with the region's color. *g-nff* also computes a bounding box for the geometry
+and emits a default 45-degree view, light, and 512x512 resolution into the
+output so the result can be rendered directly.
 
+[[options]]
 == OPTIONS
 
 *-o* _output.nff_::
-	Specify the output file name. This option is required.
+  Specify the output NFF file name. This option is required.
 
 *-i*::
-	Request the output file units to be in inches. The default unit is millimeters.
+  Treat the output as being in inches. The default is millimeters.
 
 *-a* _abs_tol_::
-	Specify absolute tessellation tolerance (in mm).
+  Specify the absolute tessellation tolerance in millimeters. Setting this
+  disables the relative tolerance.
 
 *-r* _rel_tol_::
-	Specify relative tessellation tolerance. The default is 0.01.
+  Specify the relative tessellation tolerance as a fraction of the bounding box
+  diagonal. The default is 0.01.
 
 *-n* _norm_tol_::
-	Specify surface normal tessellation tolerance.
-
-*-v*::
-	Verbose output.
-
-*-x* _rt_debug_::
-	Specify an RT debug flag (hexadecimal format).
-
-*-X* _nmg_debug_::
-	Specify an NMG debug flag (hexadecimal format).
+  Specify the surface normal tessellation tolerance in degrees. Setting this
+  disables the relative tolerance.
 
 *-D* _dist_tol_::
-	Specify calculation distance tolerance (in mm) used when checking if vertices are coincident.
+  Specify the calculational distance tolerance in millimeters used when
+  deciding whether two points are coincident.
 
 *-e* _error_file_::
-	Specify a file for receiving error messages. By default, error messages are printed to standard error.
+  Redirect error messages to _error_file_ instead of standard error.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-v*::
+  Enable verbose progress reporting.
 
+*-x* _rt_debug_::
+  Set the librt debug flags (given as a hexadecimal value).
+
+*-X* _nmg_debug_::
+  Set the libnmg debug flags (given as a hexadecimal value).
+
+*-h*, *-?*::
+  Print the usage message and exit.
+
+[[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to an NFF file
+.Convert selected regions to a renderable NFF file
+====
 [source,bash]
 ----
-g-nff -o sample.nff sample.g sample_object
+g-nff -a 0.5 -o engine.nff engine.g block piston
 ----
+Tessellates the *block* and *piston* regions from *engine.g* using a 0.5 mm
+absolute tolerance and writes the triangulated geometry, together with a
+default view and light, to *engine.nff*, ready to be passed to an NFF-capable
+renderer.
+====
 
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Error messages are intended to be self-explanatory.
+*brlcad*(1), *g-obj*(1), *g-stl*(1), *g-vrml*(1), *g-x3d*(1)
 
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -5,43 +5,97 @@
 
 == NAME
 
-g-voxel - generates a list of voxels from a BRL-CAD database
+g-voxel - voxelize BRL-CAD geometry into a list of occupied voxels
 
 == SYNOPSIS
 
-*g-voxel* [-s "_dx dy dz_"] [-d _detail_level_] [-t _threshold_] _model.g_ _object(s)_...
+[source]
+----
+g-voxel [-s "_dx dy dz_"] [-d _n_] [-t _f_] _model.g_ _object_...
+----
 
+[[description]]
 == DESCRIPTION
 
-*g-voxel* generates a list of voxels from a BRL-CAD database _model.g_ for the specified _object(s)_ and appends the voxel coordinates to the file `voxels1.txt`.
+*g-voxel* raytraces the named _object_(s) in a BRL-CAD database _model.g_ and
+samples the geometry onto a regular three-dimensional grid of voxels.  Each
+voxel is sampled by firing a grid of rays through it; the resulting fill
+fraction (the portion of the voxel occupied by geometry, 0.0 to 1.0) is
+compared against a threshold.  Every voxel whose fill fraction meets or
+exceeds the threshold is written, one per line, to the file `voxels1.txt` in
+the current directory.  Output is *appended*, so an existing `voxels1.txt` is
+added to rather than replaced.
 
+Each output line contains the voxel center coordinates (in millimeters,
+relative to the model bounding box), the name of the region occupying the
+voxel, and the fill fraction:
+
+----
+(x, y, z)	region_name	fill
+----
+
+[[options]]
 == OPTIONS
 
 *-s* "_dx dy dz_"::
-	Specify the voxel dimensions (voxel size) in the X, Y, and Z directions (in millimeters). The default is `1.0 1.0 1.0`.
+  Set the voxel dimensions along the X, Y, and Z axes, in millimeters.  The
+  three values must be given as a single quoted argument.  Default is
+  `1.0 1.0 1.0`.
 
-*-d* _detail_level_::
-	Specify the level of detail (number of rays fired per voxel dimension). The default is 4.
+*-d* _n_::
+  Set the level of detail, i.e. the number of rays fired per voxel edge (so
+  _n_ x _n_ rays sample each voxel face).  Higher values yield more accurate
+  fill fractions at greater cost.  Default is 4.
 
-*-t* _threshold_::
-	Specify the fill threshold (0.0 to 1.0) above which a voxel is considered occupied and output. The default is 0.5.
+*-t* _f_::
+  Set the fill threshold in the range 0.0 to 1.0.  A voxel is written only
+  when its fill fraction is greater than or equal to _f_.  Default is 0.5.
 
+[[examples]]
 == EXAMPLES
 
-.Voxelize an object with custom voxel size and threshold
+.Voxelize at a coarse resolution and inspect the result
+====
 [source,bash]
 ----
-g-voxel -s "2.0 2.0 2.0" -t 0.6 sample.g sample_object
+rm -f voxels1.txt
+g-voxel -s "5 5 5" -d 8 -t 0.5 havoc.g havoc
+wc -l voxels1.txt
 ----
+Removes any stale output, then voxelizes the `havoc` object using 5mm cubic
+voxels and 8x8 rays per voxel, keeping voxels that are at least half full.
+Counting the lines of `voxels1.txt` reports how many voxels were occupied.
+The `rm` is important because *g-voxel* appends to the output file.
+====
 
+.Capture only nearly solid voxels at fine resolution
+====
+[source,bash]
+----
+rm -f voxels1.txt
+g-voxel -s "1 1 1" -d 16 -t 0.95 engine.g block
+----
+Uses 1mm voxels with dense 16x16 sampling and a high threshold so that only
+voxels almost entirely filled with material are recorded, producing a tight
+solid-core approximation of the `block` region.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *g-raw*(1), *rtcheck*(1)
+
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

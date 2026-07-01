@@ -1,88 +1,128 @@
 = G-STL(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-g-stl - Stereolithography Translator (BRL-CAD to STL)
+g-stl - convert BRL-CAD geometry to the STL file format
 
 == SYNOPSIS
 
-*g-stl* [-v] [-b] [-i] [-8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-o _output_file_ | -m _output_directory_] _database.g_ _object(s)_...
+[source]
+----
+g-stl [-bvi8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-o _output_file_.stl | -m _directory_] _database.g_ _object_ ...
+----
 
+[[description]]
 == DESCRIPTION
 
-*g-stl* converts the specified _object(s)_ from a BRL-CAD database _database.g_ to the stereolithography (STL) file format.
+*g-stl* converts the specified _object_(s) from a BRL-CAD _database.g_ file into
+the stereolithography (STL) file format by tessellating the geometry into
+triangle facets via the NMG boolean evaluator. STL is widely used for 3D
+printing and rapid prototyping.
 
+By default an ASCII STL stream is written to standard output. With *-o* a single
+STL file (ASCII or, with *-b*, binary) is produced; with *-m* each region is
+written to a separate file in the named directory, with the region's path name
+mangled into the file name ("/" becomes "@" and spaces or periods become "_").
+Binary output cannot be sent to standard output. Output units default to
+millimeters; see *-i*. Related converters include *g-obj*(1), *g-ply*(1), and
+*stl-g*(1) for the reverse direction.
+
+[[options]]
 == OPTIONS
 
-*-o* _output_file_::
-	Specify the output file name (default is standard output). Note that binary output cannot be written to standard output.
-
-*-m* _output_directory_::
-	Specify a directory for output files. Each region converted is written to a separate file within this directory. File names are constructed from the region's full path name (replacing "/" with "@", and spaces/periods with "_"). The *-o* and *-m* options are mutually exclusive.
-
 *-b*::
-	Write output as a binary STL file (the default is ASCII). When using ASCII output, each region is written as a separate solid. When using binary output, all regions are written as a single STL part.
-
-*-i*::
-	Use inches as the output units (the default is millimeters).
-
-*-8*::
-	Facetize using the marching cubes algorithm.
-
-*-D* _dist_tol_::
-	Specify calculation distance tolerance (in mm) used when checking if vertices are coincident. The default is 0.0005.
-
-*-a* _abs_tol_::
-	Specify absolute tessellation tolerance (in mm).
-
-*-r* _rel_tol_::
-	Specify relative tessellation tolerance. The default is 0.01.
-
-*-n* _norm_tol_::
-	Specify surface normal tessellation tolerance.
-
-*-x* _rt_debug_::
-	Specify an RT debug flag (hexadecimal format).
-
-*-X* _nmg_debug_::
-	Specify an NMG debug flag (hexadecimal format).
+  Write a binary STL file instead of the default ASCII format. Binary output
+  cannot be written to standard output, so *-o* or *-m* is required.
 
 *-v*::
-	Enable verbose output.
+  Enable verbose output, reporting object names, tolerances, and conversion
+  statistics.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-i*::
+  Use inches as the output units (the default is millimeters).
 
+*-8*::
+  Tessellate using the marching cubes algorithm rather than the default NMG
+  boolean evaluation.
+
+*-a* _abs_tol_::
+  Set the absolute tessellation tolerance in millimeters (the maximum chord
+  deviation). Setting this clears the relative tolerance.
+
+*-r* _rel_tol_::
+  Set the relative tessellation tolerance as a fraction of the bounding box
+  (default 0.01).
+
+*-n* _norm_tol_::
+  Set the surface normal tessellation tolerance in degrees. Setting this clears
+  the relative tolerance.
+
+*-D* _dist_tol_::
+  Set the calculation distance tolerance in millimeters used to decide whether
+  two vertices are coincident (default 0.0005).
+
+*-x* _rt_debug_::
+  Set the librt debugging flags as a hexadecimal value.
+
+*-X* _nmg_debug_::
+  Set the libnmg debugging flags as a hexadecimal value.
+
+*-o* _output_file_.stl::
+  Write all converted geometry to the named output file. Mutually exclusive
+  with *-m*.
+
+*-m* _directory_::
+  Write each region to its own STL file inside the named directory. Mutually
+  exclusive with *-o*.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
 == EXAMPLES
 
-.Convert a BRL-CAD object to an ASCII STL file
+.Convert a component to a binary STL file for 3D printing
+====
 [source,bash]
 ----
-g-stl -o sample.stl sample.g sample_object
+g-stl -b -i -a 0.1 -o bracket.stl model.g bracket
 ----
+Tessellates the _bracket_ region from _model.g_ with a 0.1 mm absolute
+tolerance, writing a compact binary STL in inch units suitable for slicing and
+printing.
+====
 
-.Convert a BRL-CAD object to a binary STL file
+.Export every region of an assembly to separate files
+====
 [source,bash]
 ----
-g-stl -b -o sample.stl sample.g sample_object
+mkdir parts
+g-stl -m parts model.g assembly
 ----
+Walks the _assembly_ tree and writes one ASCII STL file per region into the
+_parts_ directory, each named after the region's full path. This is convenient
+when downstream tools expect a single solid per file.
+====
 
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Error messages are intended to be self-explanatory.
+*brlcad*(1), *stl-g*(1), *g-obj*(1), *g-ply*(1), *g-dxf*(1), *mged*(1)
 
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2003-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

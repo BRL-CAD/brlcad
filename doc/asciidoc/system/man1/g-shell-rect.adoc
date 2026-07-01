@@ -1,80 +1,133 @@
 = G-SHELL-RECT(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-g-shell-rect - Produce triangulated shell from BRL-CAD model
+g-shell-rect - build a triangulated shell from a BRL-CAD model by raytracing
 
 == SYNOPSIS
 
-*g-shell-rect* [-bi] [-a _rpp_args_] [-R _edge_tol_] [-p _plotfile_] [-X _nmg_debug_] [-d _debug_level_] [-n] [-g _cell_size_] -o _brlcad_output_file_ _database.g_ _object(s)_
+[source]
+----
+g-shell-rect [-b] [-n] [-i _initial_ray_dir_] [-g _cell_size_] [-R _edge_tol_]
+             [-a "_tol min_x min_y min_z max_x max_y max_z_"] [-p _plotfile_]
+             [-d _debug_level_] [-X _nmg_debug_] -o _output.g_ _database.g_ _object_ ...
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*g-shell-rect* converts the specified _object(s)_ from a BRL-CAD database _database.g_ to a single NMG solid or BOT using raytracing.
+*g-shell-rect* converts the specified _object_ arguments from a BRL-CAD
+_database.g_ into a single closed shell, written to a new _output.g_
+geometry file as either an NMG solid or a BOT (see the *-b* option).
 
-Rays are fired in a uniform grid. The direction for the first set of rays is chosen by calculating the presented area of the bounding box of the _object(s)_ and selecting the direction with the largest area. The user may override this by specifying a desired initial ray direction using the *-i* option.
+The shape is captured by raytracing. Rays are fired in a uniform grid
+whose spacing is set by *-g*. The initial firing direction defaults to
+the principal axis with the largest projected bounding-box area, but may
+be forced with *-i*. The initial shell is built from only the first and
+last hit along each ray, which tends to leave large faces whose normals
+are perpendicular to the firing direction. Unless *-n* is given, these
+faces are subdivided and refined by firing additional rays from the other
+two axis directions.
 
-The initial shell is constructed using only the first and last intersections with the _object(s)_. This typically results in some rather large faces with normals at right angles to the ray direction. Unless the *-n* option is specified, these faces are then subdivided (according to the *-g* _cell_size_) and additional rays fired from the other two directions are used to refine their shape. The resulting geometry is written to the specified _brlcad_output_file_.
+The resulting mesh is an approximation of the original geometry and is
+useful for generating lightweight or watertight surface models from
+solid BRL-CAD objects. Output can be further processed with tools such
+as *g-stl*(1) or *g-obj*(1).
 
+[[options]]
 == OPTIONS
 
-*-o* _brlcad_output_file_::
-	Specifies the name of the BRL-CAD geometry file to create. This option is required.
-
-*-g* _cell_size_::
-	Specify the dimensions (in millimeters) of the grid spacing. The default is 50.
-
-*-i* _initial_ray_dir_::
-	Specify the initial ray direction. Valid values are `X`, `Y`, or `Z`. The best results are usually obtained by raytracing in the direction that produces the most hits first.
-
-*-d* _debug_level_::
-	Set the debugging level. Higher values produce more debugging information.
-
-*-n*::
-	Suppress the refinement stage (firing rays from the secondary and tertiary axis directions).
+*-o* _output.g_::
+  Name of the BRL-CAD geometry file to create. This option is required.
 
 *-b*::
-	Output a BOT (Bag of Triangles) rather than an NMG (Non-Manifold Geometry).
+  Output a BOT (Bag of Triangles) primitive instead of the default NMG
+  (Non-Manifold Geometry) solid.
 
-*-a* _rpp_args_::
-	Add a bounding box (RPP) for refining.
+*-n*::
+  Skip the refinement stage. Only the initial coarse shell built from the
+  first and last ray intersections is produced; no rays are fired from the
+  secondary and tertiary axis directions.
+
+*-i* _initial_ray_dir_::
+  Force the initial ray direction. Valid values are _X_, _Y_, or _Z_
+  (case insensitive). By default the direction presenting the largest
+  bounding-box area is chosen.
+
+*-g* _cell_size_::
+  Grid cell spacing in millimeters, controlling resolution. The default
+  is 50.
 
 *-R* _edge_tol_::
-	Specify the edge tolerance for refinement.
+  Enable edge breaking (refinement) and set the edge tolerance used when
+  subdividing faces. The default is 0.
+
+*-a* "_tol min_x min_y min_z max_x max_y max_z_"::
+  Add a refinement bounding box (RPP). The single quoted argument supplies
+  seven whitespace- or comma-separated numbers: an edge tolerance to use
+  inside the box followed by the minimum and maximum XYZ corners. May be
+  repeated to add several boxes.
 
 *-p* _plotfile_::
-	Specify a plotfile for plotting edge-breaking steps.
+  Write a *vdraw*-style plot file recording the edge-breaking refinement
+  steps, useful for debugging the refinement.
+
+*-d* _debug_level_::
+  Set the application debugging level. Higher integers produce more
+  diagnostic output.
 
 *-X* _nmg_debug_::
-	Specify NMG debug flags (hexadecimal format).
+  Set the NMG library debug flags. The value is read as hexadecimal.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-h*, *-?*::
+  Print a usage message and exit.
 
+[[examples]]
 == EXAMPLES
 
-.Produce a shell from a BRL-CAD object
+.Generate a BOT shell and export it to STL
+====
 [source,bash]
 ----
-g-shell-rect -o shell.g sample.g sample_object
+g-shell-rect -b -g 10 -o shell.g model.g hull
+g-stl -o hull.stl shell.g shell
 ----
+Raytrace the _hull_ region of _model.g_ on a 10 mm grid, writing a Bag of
+Triangles named _shell_ into the new database _shell.g_, then convert
+that shell to an STL file for use in external meshing or 3D-printing
+workflows.
+====
 
-== DIAGNOSTICS
+.Force an initial direction and skip refinement for a quick approximation
+====
+[source,bash]
+----
+g-shell-rect -n -i Z -g 25 -o quick.g engine.g block
+----
+Build a coarse NMG shell of the _block_ object using only first/last hits
+along Z-fired rays at 25 mm spacing, skipping the slower refinement pass.
+====
 
-Error messages are intended to be self-explanatory.
+[[see_also]]
+== SEE ALSO
 
+*brlcad*(1), *g-stl*(1), *g-obj*(1), *rt*(1), *mged*(1)
+
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1998-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

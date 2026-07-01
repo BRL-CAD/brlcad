@@ -1,61 +1,101 @@
 = G-VAR(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-g-var - Produce (OpenGL) Vertex Arrays from BOT BRL-CAD geometry
+g-var - convert BRL-CAD BOT geometry to an OpenGL vertex array mesh
 
 == SYNOPSIS
 
-*g-var* [-v] [-y] [-s _scale_] [-f] [-o _outfile_] _infile.g_ _object_
+[source]
+----
+g-var [-v] [-y] [-f] [-s _scale_] [-o _out_file_] _database.g_ _object_
+----
 
+[[description]]
 == DESCRIPTION
 
-*g-var* writes the Bag of Triangles (BOT) primitives of the specified _object_ in a binary vertex array format to _outfile_ or to standard output.
+*g-var* walks the named _object_ in a BRL-CAD _database.g_ file, collects every
+Bag of Triangles (*bot*(5)) primitive beneath it, and writes them to a compact
+binary vertex array format suitable for loading into an OpenGL renderer.
+Non-solid leaves and solids that are not BOTs are skipped with a warning.
 
+The output begins with a header recording byte order, format version, the model
+title, and total mesh, vertex, and face counts, followed by per-mesh records of
+vertices, normals, and face indices. Vertex normals are read from the BOT when
+present and otherwise computed by averaging adjacent face normals. Output is
+written to _out_file_, or to standard output when no output file is given; on
+standard output the stream is set to binary mode.
+
+[[options]]
 == OPTIONS
 
 *-v*::
-	Request verbose output.
+  Verbose mode. Report progress, mesh counts, and whether normals were found or
+  computed on standard error.
 
 *-y*::
-	Transform the coordinate system from XYZ (Z-up) to XZY (Y-up).
-
-*-s* _scale_::
-	Scale the output geometry by the specified factor. By default, the scale factor is 0.001 (converting meters to millimeters).
+  Rotate output -90 degrees about the X axis, converting from BRL-CAD's Z-up
+  (XYZ) coordinate system to a Y-up (XZY) system as used by many OpenGL scenes.
 
 *-f*::
-	Flip face normals. This changes both the vertex order and the output normal directions.
+  Flip face normals. Reverses the vertex winding order of each face and the
+  direction of the corresponding computed normals.
 
-*-o* _outfile_::
-	Specify the output file name. If not specified, the output is written to standard output.
+*-s* _scale_::
+  Scale all output vertices by the given factor. The default is 0.001, which
+  converts BRL-CAD's millimeter units to meters.
 
-*-h*::
-*-?*::
-	Print the usage message and exit.
+*-o* _out_file_::
+  Write the binary mesh to _out_file_ instead of standard output.
 
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
 == EXAMPLES
 
-.Export a BOT object to a vertex array file
+.Export a Y-up mesh for an OpenGL viewer
+====
 [source,bash]
 ----
-g-var -o sample.mesh sample.g sample_object
+g-var -y -o havoc.mesh havoc.g havoc
 ----
+Collects all BOT primitives under the _havoc_ combination in _havoc.g_, rotates
+them into a Y-up coordinate frame, and writes the result to _havoc.mesh_ ready
+for loading by an OpenGL application.
+====
 
-== DIAGNOSTICS
+.Tessellate non-BOT geometry first, then export
+====
+[source,bash]
+----
+mged -c moss.g "facetize -o moss.bot all.g; q"
+g-var -s 1.0 -o moss.mesh moss.g moss.bot
+----
+Because *g-var* only exports BOT primitives, this uses *mged*(1) and its
+*facetize* command to convert other primitives into a single BOT, then exports
+that BOT at unit scale (no millimeter-to-meter conversion).
+====
 
-Error messages are intended to be self-explanatory.
+[[see_also]]
+== SEE ALSO
 
+*brlcad*(1), *mged*(1), *facetize*(n), *g-obj*(1), *g-stl*(1), *bot*(5)
+
+[[author]]
 == AUTHOR
 
 Prasad Silva
 
+[[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2006-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 2002-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
