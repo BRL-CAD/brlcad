@@ -1,102 +1,125 @@
 = MAC-PIX(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: User Commands
+:manmanual: BRL-CAD
 
 == NAME
 
-mac-pix - convert Apple MacPaint bitmap into pix(5) or bw(5) raster image
+mac-pix - convert an Apple MacPaint bitmap into a pix(5) or bw(5) raster image
 
 == SYNOPSIS
 
-*mac-pix* [-c] [-l] [-b] [-s _squareMacSize_] [-w _Mac_width_] [-n _Mac_height_] [-x _Mac_xoff_] [-y _Mac_yoff_] [-X _output_xoff_] [-Y _output_yoff_] [-S _squareOutputSize_] [-W _output_width_] [-N _output_height_] [-C _r/g/b_] [_file.mac_]
+[source]
+----
+mac-pix [-c] [-l] [-b] [-s _squareMacSize_] [-w _Mac_width_] [-n _Mac_height_]
+        [-x _Mac_xoff_] [-y _Mac_yoff_] [-X _output_xoff_] [-Y _output_yoff_]
+        [-S _squareOutputSize_] [-W _output_width_] [-N _output_height_]
+        [-C _r/g/b_] [_file.mac_] > _output.pix_
+----
 
+
+[[description]]
 == DESCRIPTION
 
-*mac-pix* reads an Apple Macintosh MacPaint bitmap file (or standard input if none is specified) and generates a BRL-CAD *pix*(5) or *bw*(5) raster image.
+*mac-pix* reads an Apple Macintosh MacPaint bitmap (from _file.mac_ or, if no file
+is given, from standard input) and writes a BRL-CAD *pix*(5) or *bw*(5) raster
+image to standard output, which must be redirected.
 
-By default, the input image is assumed to be 720x576 pixels (standard MacPaint resolution), and the output *pix*(5) file defaults to 1024x1024 pixels, with the input image located in the lower-left corner (origin). The default color for active ("on") pixels is white (R=G=B=255).
+By default the input bitmap is assumed to be 720x576 (standard MacPaint
+resolution) and the output *pix*(5) image defaults to 1024x1024, with the input
+placed at the lower-left corner. The default color for active ("on") pixels is
+white (R=G=B=255), and inactive pixels and any border are black.
 
+[[options]]
 == OPTIONS
 
 *-c*::
-	Center the input image in the middle of the output image instead of placing it at the lower-left corner.
-
-*-b*::
-	Output a black-and-white *bw*(5) file instead of the default color *pix*(5) file.
+  Center the input image within the output image instead of placing it at the
+  lower-left corner.
 
 *-l*::
-	Set output dimensions to match the input dimensions (low-resolution tracking), equivalent to setting output width and height to 0.
+  Track the input size: set the output width and height to 0 so they assume the
+  input dimensions.
+
+*-b*::
+  Output a single-channel *bw*(5) image instead of the default color *pix*(5).
 
 *-s* _squareMacSize_::
-	Set both the width and height of the input image to the specified number of pixels.
+  Set both the input width and height to the given number of pixels.
 
 *-w* _Mac_width_::
-	Specify the width of the input image in pixels (default is 720).
+  Set the input width in pixels (default 720, clamped to 720).
 
 *-n* _Mac_height_::
-	Specify the height of the input image in pixels (default is 576).
+  Set the input height in pixels (default 576, clamped to 576).
 
 *-x* _Mac_xoff_::
-	Specify the horizontal (X) offset of the input image area to be read.
+  Horizontal (X) offset into the input bitmap at which reading begins.
 
 *-y* _Mac_yoff_::
-	Specify the vertical (Y) offset of the input image area to be read.
+  Vertical (Y) offset into the input bitmap at which reading begins.
 
 *-X* _output_xoff_::
-	Specify a horizontal (X) offset in the output image where the input image will be placed.
+  Add a horizontal (X) offset to where the input is placed in the output.
 
 *-Y* _output_yoff_::
-	Specify a vertical (Y) offset in the output image where the input image will be placed.
+  Add a vertical (Y) offset to where the input is placed in the output.
 
 *-S* _squareOutputSize_::
-	Set both the width and height of the output image to the specified number of pixels.
+  Set both the output width and height to the given number of pixels.
 
 *-W* _output_width_::
-	Specify the width of the output image in pixels (default is 1024).
+  Set the output width in pixels (default 1024).
 
 *-N* _output_height_::
-	Specify the height of the output image in pixels (default is 1024).
+  Set the output height in pixels (default 1024).
 
 *-C* _r/g/b_::
-	Specify the color intensities (each in the range [0..255]) for the active ("on") pixels in the output image. Values should be separated by slashes (e.g. `255/0/0` for red).
+  Slash-separated red/green/blue intensities (each in [0..255]) for active
+  ("on") pixels in the output (e.g. _255/0/0_ for red).
 
-*-h*::
-*-?*::
-	Print usage information and exit.
+*-h*, *-?*::
+  Print a usage message and exit.
 
+[[examples]]
 == EXAMPLES
 
-.Convert a MacPaint document to a standard color PIX file centered on the screen
+.Convert a MacPaint document, centering it on a default canvas
+====
 [source,bash]
 ----
 mac-pix -c drawing.mac > drawing.pix
 ----
+Reads _drawing.mac_ and writes a 1024x1024 color *pix*(5) image with the artwork
+centered, ready to view with *pix-fb*(1) or compose with *pixmerge*(1).
+====
 
-.Convert a MacPaint document to a red-colored PIX image matching the original dimensions
+.Recolor and trim a MacPaint bitmap to its native size
+====
 [source,bash]
 ----
-mac-pix -l -C 255/0/0 drawing.mac > red_drawing.pix
+mac-pix -l -C 255/0/0 drawing.mac | pix-png > drawing.png
 ----
+Produces a red-on-black *pix*(5) image sized to the input dimensions and pipes
+it through *pix-png*(1) to obtain a PNG for sharing.
+====
 
-.Convert to a black-and-white BW file centered in a 512x512 canvas
-[source,bash]
-----
-mac-pix -b -c -S 512 drawing.mac > drawing.bw
-----
-
+[[see_also]]
 == SEE ALSO
 
-*pixmerge*(1), *pixbackgnd*(1), *pix*(5), *bw*(5)
+*brlcad*(1), *pix-fb*(1), *pix-png*(1), *pixmerge*(1), *pixbackgnd*(1), *pix*(5), *bw*(5)
 
+[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
+[[copyright]]
 == COPYRIGHT
 
 This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
+[[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

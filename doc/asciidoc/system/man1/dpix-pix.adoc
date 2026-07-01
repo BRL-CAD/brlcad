@@ -4,35 +4,49 @@
 :manmanual: BRL-CAD
 
 == NAME
-dpix-pix - convert a double precision dpix file to a pix file
+dpix-pix - convert a double-precision dpix file to a pix file
 
 == SYNOPSIS
 
-*dpix-pix* _file.dpix_ > _file.pix_
+[source]
+----
+dpix-pix file.dpix > file.pix
+----
 
 [[description]]
 == DESCRIPTION
 
-*dpix-pix* converts a double-precision image format (dpix) file to a *pix*(5) format file. The program reads the binary input file to determine the minimum and maximum values. It then linearly interpolates all values from this minimum and maximum range into the 8-bit range of 0 to 255, and writes the resulting pixels to standard output. 
+*dpix-pix* converts a double-precision image (dpix) file to a *pix*(5)
+format file.  It scans the entire input file once to find the minimum
+and maximum sample values, then reads the file a second time and
+linearly maps each value from that [min, max] range onto the 8-bit
+range of 0 to 255, writing the resulting bytes to standard output.  The
+discovered minimum and maximum are reported on standard error.
 
-Please note that standard input cannot be used, as the program must read the input file twice (once to find the extrema, and once to interpolate and write the output).
+Because the input must be read twice, the data is taken from a named
+file rather than from standard input.  The output is binary and is
+refused if directed to a terminal.
 
 [[examples]]
 == EXAMPLES
 
-.Convert a dpix file to a pix file
+.Convert a dpix file and view the result
 ====
 [source,bash]
 ----
-$ dpix-pix image.dpix > image.pix
+dpix-pix image.dpix > image.pix
+pix-fb -w 512 -n 512 image.pix
 ----
-Converts the double-precision image `image.dpix` to a *pix*(5) format file named `image.pix`.
+Converts the double-precision image `image.dpix` into a *pix*(5) file,
+auto-scaling its values into the 0-255 range, then displays the result
+on a framebuffer with *pix-fb*(1).  The reported min/max on standard
+error indicate the exposure range used for the conversion.
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*cv*(1), *pix*(5)
+*brlcad*(1), *pix-fb*(1), *cv*(1), *pix*(5)
 
 [[author]]
 == AUTHOR
@@ -42,7 +56,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
