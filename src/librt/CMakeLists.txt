@@ -47,31 +47,17 @@ set(
   primitives/vol/edvol.c
 )
 
+set(RT_ECMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp")
+set(RT_ECMD_SCANNER_TARGET rt_ecmd_scanner)
+add_executable(${RT_ECMD_SCANNER_TARGET} EXCLUDE_FROM_ALL "${RT_ECMD_SCANNER_SRC}")
+set_target_properties(${RT_ECMD_SCANNER_TARGET} PROPERTIES FOLDER "BRL-CAD Build Utilities")
+set(RT_ECMD_SCANNER "$<TARGET_FILE:${RT_ECMD_SCANNER_TARGET}>")
+
 # NOTE - for now this is an internal, build-only header and
 # does not have install logic associated with it.  Eventually,
 # if this API proves out and becomes stable, we may end up
 # installing rt_ecmds.h.  Applications external to the main
 # BRL-CAD build may also want to exploit the callback API.
-set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
-set(RT_ECMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp")
-file(SHA256 "${RT_ECMD_SCANNER_SRC}" RT_ECMD_SCANNER_SRC_HASH)
-set(RT_ECMD_SCANNER_SIGNATURE "${RT_ECMD_SCANNER_SRC_HASH};${CMAKE_CXX_COMPILER};${CMAKE_CXX_COMPILER_VERSION};${CMAKE_GENERATOR}")
-if(NOT EXISTS "${RT_ECMD_SCANNER}" OR NOT DEFINED RT_ECMD_SCANNER_BUILD_SIGNATURE OR NOT "${RT_ECMD_SCANNER_BUILD_SIGNATURE}" STREQUAL "${RT_ECMD_SCANNER_SIGNATURE}")
-  file(REMOVE "${RT_ECMD_SCANNER}")
-  try_compile(
-    rt_ecmd_scanner
-    "${CMAKE_BINARY_DIR}/CMakeTmp"
-    SOURCES "${RT_ECMD_SCANNER_SRC}"
-    OUTPUT_VARIABLE RT_SCANNER_BLD_OUT
-    COPY_FILE "${RT_ECMD_SCANNER}"
-  )
-  if(NOT EXISTS "${RT_ECMD_SCANNER}")
-    message(FATAL_ERROR "Unable to build edit command scanner: ${RT_SCANNER_BLD_OUT}")
-  endif()
-  set(RT_ECMD_SCANNER_BUILD_SIGNATURE "${RT_ECMD_SCANNER_SIGNATURE}" CACHE INTERNAL "rt edit command scanner build signature")
-endif()
-distclean(${RT_ECMD_SCANNER})
-
 set(RT_PFILE_OUT "${CMAKE_BINARY_DIR}/CMakeTmp/rt_primitive_files.txt")
 set(RT_PFILE_IN)
 foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
@@ -86,7 +72,7 @@ add_custom_command(
   OUTPUT ${RT_ECMD_HDR}
   COMMAND ${RT_ECMD_SCANNER} ${RT_PFILE_OUT} ${RT_ECMD_HDR}
   COMMENT "[RT_ECMD_SCANNER] Scanning for RT editing mode flags"
-  DEPENDS "${RT_ECMD_SCANNER_SRC}" ${RT_PFILE_IN}
+  DEPENDS ${RT_ECMD_SCANNER_TARGET} ${RT_PFILE_OUT} ${RT_PFILE_IN}
 )
 distclean(${RT_ECMD_HDR})
 foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
