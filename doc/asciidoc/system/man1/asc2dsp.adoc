@@ -1,10 +1,10 @@
 = ASC2DSP(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-asc2dsp - convert an ASCII dsp file to the BRL-CAD DSP (Displacement map) binary format
+asc2dsp - convert an ASCII displacement map file to BRL-CAD binary dsp format
 
 == SYNOPSIS
 
@@ -30,7 +30,7 @@ The total number of input cells must match the product of the width and length i
 == OPTIONS
 
 *-h*, *-?*, *--help*::
-Print help and exit.
+  Print a usage message and exit.
 
 
 [[examples]]
@@ -71,7 +71,7 @@ Error conditions include invalid input characters or an input value greater than
 
 
 [[author]]
-== AUTHORS
+== AUTHOR
 
 BRL-CAD Team
 
@@ -79,7 +79,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2012-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
