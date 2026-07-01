@@ -45,32 +45,28 @@ _file.plot3_::
 == EXAMPLES
 
 .Convert an ASCII plot3 file to binary
-[example]
 ====
 [source,bash]
 ----
-$ asc-plot3 data.asc data.plot3
+asc-plot3 data.asc data.plot3
 ----
-
 Converts the ASCII file `data.asc` into a binary *plot3*(5) file named `data.plot3`.
 ====
 
-.Create a simple plot3 file from an ASCII command
-[example]
+.Draw a box and view it on a framebuffer
 ====
 [source,bash]
 ----
-$ echo "c 0 0 100" | asc-plot3 > circle.plot3
+printf 's 0 0 100 100\nm 10 10\nn 90 10\nn 90 90\nn 10 90\nn 10 10\n' | asc-plot3 | plot3-fb
 ----
-
-Creates a binary plot3 file containing a single circle instruction.
+Sets the drawing space to the square (0,0)-(100,100) with the `s` command, then moves the pen and draws four connected line segments forming a box. The resulting binary plot3 stream is piped directly to *plot3-fb*(1) for display on a framebuffer.
 ====
 
 
 [[see_also]]
 == SEE ALSO
 
-*plot3-asc*(1), *plot3-plot3*(1), *plot3rot*(1), *plot3-fb*(1), *libplot3*(3), *plot3*(5)
+*plot3-asc*(1), *plot3-plot3*(1), *plot3rot*(1), *plot3-fb*(1), *libbv*(3), *plot3*(5)
 
 
 [[author]]
