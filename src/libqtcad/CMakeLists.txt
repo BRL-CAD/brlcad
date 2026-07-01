@@ -119,6 +119,13 @@ if(BRLCAD_ENABLE_QT)
   endif(Qt6Widgets_FOUND)
   set(QTCAD_SRCS ${QTCAD_SRCS} ${qtcad_moc_srcs} ${qtcad_qrc})
 
+  # We need to set the unity skip on one of the moc sources
+  foreach(moc_src ${qtcad_moc_srcs})
+    if ("${moc_src}" MATCHES ".*moc_QgConsoleListener.cpp$")
+      set_source_files_properties(${moc_src} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+    endif()
+  endforeach()
+
   brlcad_addlib(libqtcad "${QTCAD_SRCS}" "" "${QG_DIRS}" SHARED
     PUBLIC_LIBS ${QTCAD_PUBLIC_LIBS}
   )
