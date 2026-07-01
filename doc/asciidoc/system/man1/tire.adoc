@@ -1,116 +1,119 @@
 = TIRE(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-tire - Generate a tire model, given standard tire dimensional information
+tire - generate a parametric tire model from standard tire dimensions
 
 == SYNOPSIS
 
 [source]
 ----
-tire [options ...]... [name]
-tire --demo-file tire_demo.g
+tire [options] [obj_name]
+tire --list-tread-patterns
+tire --demo-file _file.g_
 ----
 
 
-[[tire_description]]
+[[description]]
 == DESCRIPTION
 
-*tire* creates a curved sidewall tire in either the current open database (when run from within MGED) or in _tire.g_ when run from the command line. If no dimensions are supplied defaults are used. The default is to _not_ model tread (due to performance issues), but tread modeling is implemented and available with named presets via the *-p* flag or a custom JSON definition via *--tread-pattern-file*.
+*tire* creates a curved-sidewall tire, optionally with a wheel and tread, in the
+current open database (when run from within *mged*(1)) or in _tire.g_ when run as
+a standalone command. Dimensions follow the common ISO notation (for example
+235/75R15): width in millimeters, sidewall aspect ratio as a percentage, and rim
+diameter in inches. With no options the default size is 215/55R17 and the wheel
+is included.
 
-*-a #* instructs *tire* to automatically add dimensional information to the toplevel object name used in the generated BRL-CAD database tree. Works with the *-n* option or as stand-alone. Output format uses '-' instead of '/' because the latter has significance in BRL-CAD object trees.
+By default *tire* does _not_ model tread, since tread geometry can significantly
+increase raytracing times. Tread is enabled by selecting a named preset with
+*-p*, supplying a custom JSON definition with *--tread-pattern-file*, or choosing
+a legacy shape with *-t*. The generated assembly stores its resolved settings as
+_tire::_ attributes on the top-level combination, including the normalized ISO
+size and (when tread is generated) the resolved tread pattern JSON.
 
-NOTE: the generated models are intended for procedural geometry, visualization,
-inspection, and BRL-CAD workflow testing.  They are not validated for tire
-engineering design, roadworthiness assessment, load rating, traction or braking
-performance prediction, manufacturing, regulatory compliance, or vehicle safety
-use.
+The generated models are intended for procedural geometry, visualization,
+inspection, and BRL-CAD workflow testing. They are not validated for tire
+engineering design, roadworthiness, load rating, manufacturing, regulatory
+compliance, or vehicle safety use.
 
+If no _obj_name_ is given (and *-n* is not used), a name of the form
+_tire-215-55R17_ is derived from the resolved dimensions.
 
-[[tire_options]]
+[[options]]
 == OPTIONS
 
+*-h*, *-?*::
+  Print a help message and exit. Use *--list-tread-patterns* to see the
+  available tread presets.
 
-*-c count*::
-sets the number of tread _patterns_ used when adding tread to a tire. A tread pattern is the repeated shape or combination of shapes used in tire tread definitions. Values must be between 3 and 512 when tread is enabled.
+*-n* _name_::
+  Set the name of the top-level database object. The same value is used as the
+  suffix for generated child objects.
 
+*-w* _bool_::
+  Enable (1) or disable (0) the wheel. The wheel is included by default.
 
-*-d width/ratioRwheeldiam*::
-This option accepts tire dimensions in the form of width of the tire (in mm), ratio of sidewall height to tire width (percent), and the diameter of the wheel the tire is designed to fit over (in inches). This is a fairly standard method for specifying automotive tire dimensions, and BRL-CAD can use these dimensions to create a model with approximately those dimensions. The supported form is the common ISO-style notation such as 235/75R15.
+*-d* _width/aspectRdiameter_::
+  Specify tire dimensions using ISO-style notation, for example 235/75R15.
+  Width is in mm, aspect ratio in percent, and rim diameter in inches.
 
+*-W* _#_::
+  Tire width in mm, allowing fractional values. Overrides the width from *-d*.
 
-*-W width #*::
-Specify the maximum sidewall width of the tire in mm. This option overrides the -d option if used together, or the default if used alone. Can be used with the -R and -D flags. Unlike the -d flag, this flag allows floating point input - use this flag if you need to specify width more precisely than 1mm.
+*-R* _#_::
+  Sidewall aspect ratio (percent), allowing fractional values. Overrides the
+  ratio from *-d*.
 
+*-D* _#_::
+  Rim diameter in inches, allowing fractional values. Overrides the diameter
+  from *-d*.
 
-*-R ratio #*::
-Specify the ratio of the sidewall height to the maximum tire width. This option overrides the -d option if used together, or the default if used alone. Can be used with the -W and -D flags. Unlike the -d flag, allows floating point input for more precise definition of ratio.
+*-g* _#_::
+  Tread depth in 32nds of an inch (for example, 11 means 11/32 in). The default
+  is 11.
 
+*-j* _#_::
+  Rim (hub) width in inches.
 
-*-D rim diameter #*::
-Specify the diameter of the rim (a.k.a. the steel wheel) in inches. This option overrides the -d option if used together, or the default if used alone. Can be used with the -W and -R flags. Unlike the -d flag, allows floating point input for more precise definition of rim diameter.
+*-s* _#_::
+  Maximum sidewall radius in mm, measured from the tire center to the widest
+  point of the sidewall. Must lie between the rim radius and the tire radius.
 
+*-u* _#_::
+  Tire (wall) thickness in mm.
 
-*-g depth #*::
-Specify the tread depth in 32nds of an inch. So, for example, -g 13 would create a tread depth of 13/32in.
+*-p* _name_::
+  Select a named tread pattern preset (see *--list-tread-patterns*). The legacy
+  aliases 1 and 2 map to the _legacy-rib_ and _legacy-block_ presets. Mutually
+  exclusive with *--tread-pattern-file*.
 
+*-c* _#_::
+  Number of tread patterns repeated around the tire. Each preset has its own
+  valid range (overall 3 to 512); values outside that range are rejected.
 
-*-j width #*::
-Specify the rim width in inches.
+*-t* _#_::
+  Legacy tread shape profile (1 or 2). Normally supplied by the selected preset.
 
-
-*-n name #*::
-allows the user to specify a name other than 'tire' for the root name of the toplevel database object. Works with the *-a* option or as stand-alone.
-
-
-*-p name*::
-Select a named tread pattern preset to model. Legacy aliases 1 and 2 are accepted. Note: tread modeling can SIGNIFICANTLY lengthen raytracing times, depending on the tread.
-
-*-c count*::
-Override the number of tread pattern repeats around the tire.  Each preset has
-a pattern-aware valid range so lug and block designs remain visually plausible;
-values outside that range are rejected.
-
-*--tread-pattern-file file*::
-Read a custom JSON tread pattern definition.  The JSON object must specify
-_type_ and _symmetry_.  Supported optional fields are `$schema`, _schema_version_, _id_, _description_,
-_terrain_, _axle_, _void_, _grooves_, _groove_angle_, _block_, _pitch_,
-_pitch_seq_, _sipes_, _shoulder_, _center_, _tie_bars_, _shape_,
-_pattern_count_, and _sketches_.  Unknown fields are rejected.
+*--tread-pattern-file* _file_::
+  Read a custom JSON tread pattern definition (see CUSTOM TREAD JSON below).
+  Mutually exclusive with *-p*.
 
 *--list-tread-patterns*::
-List available tread pattern presets.
+  List the available named tread presets and exit.
 
-*--demo-file file.g*::
-Write a sampler database to _file.g_ and exit.  The sampler creates an `all`
-combination that arranges varied tire examples in rows by vehicle class and
-increasing scale.  The generated set includes compact-car, sedan, performance,
-SUV, van, pickup, commercial truck, bus, farm tractor, wheel-loader, and mining
-haul-truck tires using appropriate built-in tread presets.
-
-*-s radius#*::
-Set the radius from the tire center of the maximum width point on the sidewall.
-
-
-*-t type#*::
-Select tread shape profile to model. This is normally supplied by the named tread preset, but may be used directly with the legacy aliases.
-
-
-*-u thickness#*::
-Specify tire thickness in mm.
-
-
-*-w #*::
-Specify wheel/rim type. If 0, include no wheel. As of 7.12.6 only one wheel type is included by default.
-
+*--demo-file* _file.g_::
+  Write a sampler database to _file.g_ and exit. The sampler builds an _all_
+  combination arranging varied tire examples (compact car, sedan, performance,
+  SUV, van, pickup, commercial truck, bus, tractor, wheel loader, and mining
+  haul truck) in rows by vehicle class and increasing scale.
 
 [[custom_tread_json]]
 == CUSTOM TREAD JSON
 
-Files supplied with *--tread-pattern-file* are JSON objects.  The required
-fields are _type_ and _symmetry_.  Unknown fields are rejected.
+Files supplied with *--tread-pattern-file* are JSON objects. The required fields
+are _type_ and _symmetry_; unknown fields are rejected.
 
 .Custom tread JSON field contract
 [source,json]
@@ -133,7 +136,7 @@ fields are _type_ and _symmetry_.  Unknown fields are rejected.
   "center": "continuous | broken | ribbed",
   "tie_bars": false,
   "shape": "integer, 1 or 2",
-  "pattern_count": "integer within the selected pattern family's supported range",
+  "pattern_count": "integer within the selected pattern family's range",
   "sketches": [
     [[0.10, 0.20], [0.24, 0.20], [0.24, 0.80], [0.10, 0.80]]
   ]
@@ -141,80 +144,62 @@ fields are _type_ and _symmetry_.  Unknown fields are rejected.
 ----
 
 If _sketches_ is supplied, the listed normalized cut polygons are used as the
-tread geometry instead of procedurally generated sketches.  The other pattern
-fields are retained as documented metadata for round-trip editing, but they do
-not alter the supplied polygons.  Each polygon must have at least three points,
-and each point is a two-number array.
+tread geometry instead of procedurally generated sketches. Each polygon must
+have at least three points, and each point is a two-number array. The remaining
+fields are retained as metadata for round-trip editing.
 
+[[examples]]
+== EXAMPLES
 
-== GENERATED OBJECTS
-
-The requested tire name is used as the top-level assembly combination.  Generated
-child objects are named below that root using dotted subsystem names, for example
-_name.tire.r_, _name.air.r_, _name.wheel.r_, _name.tire.outer.c_, and
-_name.tread.master.c_.  Indexed tread, bolt, and hub-hole objects use
-zero-padded numeric suffixes so database listings sort in generation order.
-
-The top-level assembly combination stores the resolved generation settings as
-attributes with the _tire::_ prefix.  These include the normalized ISO size,
-wheel and tread enable flags, tread pattern source and count, tread depth,
-derived radii and widths, and tire thickness.  If tread is generated, the
-resolved tread pattern JSON is stored as _tire::tread_pattern_json_ so the
-pattern can be inspected, copied, and modified later.
-
-When *--demo-file* is used, the generated `all` combination references the
-individual named tire assemblies with placement transforms for visual
-comparison.  The individual assemblies remain available by their vehicle-target
-names, such as _compact_car_, _pickup_truck_, and _mining_haul_truck_.
-
-
-
-
-[[tire_examples]]
-== EXAMPLE
-
-The following will create a tire with width=185mm, ratio=65, and wheel diameter = 15in. The *-p* flag selects one of the built-in tread presets, and the *-n* flag sets the root name to 'autowheel' instead of tire.
-
-.Creating a 185/65R15 tire with wheel
-[example]
+.Creating a 185/65R15 tire with a highway tread
 ====
-**tire -d 185/65R15 -p highway-rib -n autowheel**
-
+[source,bash]
+----
+tire -d 185/65R15 -p highway-rib -n autowheel
+----
+Generate a 185 mm wide, 65 aspect, 15 in rim tire named _autowheel_ in
+_tire.g_, using the built-in _highway-rib_ tread preset. Use *--list-tread-patterns*
+to see the other presets such as _all-terrain_, _mud-terrain_, and _winter-siped_.
 ====
 
-Generate the built-in tire sampler database:
-
-.Creating a visual tire sampler
-[example]
+.Overriding individual dimensions with fractional values
 ====
-**tire --demo-file tire_demo.g**
-
+[source,bash]
+----
+tire -W 225.5 -R 50 -D 18 -g 13 -c 24 -p mud-terrain -n offroad
+----
+Build a precisely sized tire (225.5 mm wide, 50 aspect, 18 in rim) with a 13/32 in
+tread depth and 24 _mud-terrain_ pattern repeats (each preset has its own valid
+repeat range). The *-W*, *-R*, and *-D* flags
+accept fractional input and override any ISO size from *-d*.
 ====
 
+.Generating the built-in sampler for visual comparison
+====
+[source,bash]
+----
+tire --demo-file tire_demo.g
+mged tire_demo.g
+----
+Write a database of varied example tires (one per vehicle class) into
+_tire_demo.g_, then open it in *mged*(1). Drawing the _all_ combination shows the
+full set laid out in rows for side-by-side comparison.
+====
 
-[[diagnostics]]
-== DIAGNOSTICS
+[[see_also]]
+== SEE ALSO
 
-Not much error checking yet - need to add.
-
+*brlcad*(1), *mged*(1), *coil*(1), *bolt*(1)
 
 [[author]]
 == AUTHOR
 
-Clifford Yapp
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
-
-[[bugs]]
-== BUGS
-
-There is a known problem where specifying very thin tires with a large inner wheel will cause incorrect geometry to be produced - this has to do with how the elliptical torus primitive is handled. Other extreme cases such as extremely thin tire walls would also be expected to cause problems.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
