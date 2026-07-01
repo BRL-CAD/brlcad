@@ -2801,6 +2801,16 @@ set(
 )
 brlcad_adddata(toplevel_DOCFILES ".")
 
+get_property(_brlcad_missing_manpages GLOBAL PROPERTY BRLCAD_EXEC_MISSING_MANPAGES)
+if(_brlcad_missing_manpages)
+  list(REMOVE_DUPLICATES _brlcad_missing_manpages)
+  list(SORT _brlcad_missing_manpages)
+  list(LENGTH _brlcad_missing_manpages _brlcad_missing_manpages_count)
+  message("No man pages defined for ${_brlcad_missing_manpages_count} executables.")
+  string(REPLACE ";" ", " _brlcad_missing_manpages_list "${_brlcad_missing_manpages}")
+  message(VERBOSE "Executables without man pages: ${_brlcad_missing_manpages_list}")
+endif(_brlcad_missing_manpages)
+
 # Now that everything is configured, print a summary of the build
 # settings.
 if(NOT BRLCAD_DISABLE_SUMMARY)
