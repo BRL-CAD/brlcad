@@ -1,38 +1,79 @@
 = PICKET_FENCE(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-picket_fence - Creates a BRL-CAD .g file containing picket fences.
+picket_fence - create a BRL-CAD database of a picket fence following 3D waypoints
 
 == SYNOPSIS
 
 [source]
 ----
-picket_fence [filename] [prefix] [height] [spacing] [-r] [x0] [y0] [z0] ... [xn] [yn] [zn]
+picket_fence filename prefix height spacing [-r] x0 y0 z0 ... xn yn zn
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*picket_fence* generates a BRL-CAD database containing a picket fence. All dimensions are in millimeters. The fence is constructed by specifying two or more 3D coordinate waypoints. The program generates fence sections connecting these waypoints. Fence geometry is initially constructed at the origin—with backing boards in the negative x halfspace and pickets in the positive x halfspace—before being rotated and translated into the specified positions. To create a closed boundary with pickets facing outward, waypoints must be specified in counter-clockwise order.
+*picket_fence* generates a BRL-CAD geometry database (_filename_) containing a
+picket fence. All dimensions are in millimeters. The fence path is given by two
+or more 3D coordinate waypoints; *picket_fence* builds a fence section between
+each consecutive pair of waypoints, complete with posts, pickets, and two
+horizontal backing rails.
 
-The generated geometry parts are named using the provided _prefix_. The _spacing_ parameter controls the gap between individual pickets in millimeters. The optional *-r* flag generates fence posts (round cylinders) at the waypoints.
+Each section is built at the origin -- with the backing boards in the negative
+x halfspace and the pickets in the positive x halfspace -- then rotated and
+translated into place. To enclose an area with the pickets facing outward,
+specify the waypoints in counter-clockwise order.
+
+The _height_ is the overall fence height and must be positive. The _spacing_
+is the gap between adjacent pickets and must be non-negative. All generated
+objects are named using _prefix_; the top-level assembly is _prefix_*fence.c*.
+The result can be viewed and edited with *mged*(1).
+
+
+[[options]]
+== OPTIONS
+
+*-r*::
+  Add a round post (a cylinder) at each waypoint in addition to the default
+  square posts. The flag, when present, must appear immediately after the
+  _spacing_ argument and before the first coordinate.
 
 
 [[examples]]
 == EXAMPLES
 
-.*picket_fence* Example
-[example]
+.A single straight fence run
 ====
-**picket_fence fence.g Imy 2000 15 0 0 0 100 6000 0**
-
+[source,bash]
+----
+picket_fence fence.g Imy 2000 15 0 0 0 100 6000 0
+----
+Creates a fence two meters high and roughly six meters long with fifteen
+millimeter gaps between pickets, running from the origin to (100, 6000, 0).
+Object names are prefixed with "Imy", so the assembly is named "Imyfence.c".
 ====
 
-Creates an example fence two meters high and six meters long with fifteen millimeter spaces between the pickets. "Imy" will be used as a name prefix for the *mged* objects. The fence will be started at the origin and be stretched out to (100,6000,0).
+.An enclosed yard with round posts
+====
+[source,bash]
+----
+picket_fence yard.g yd 1200 10 -r 0 0 0 5000 0 0 5000 5000 0 0 5000 0 0 0 0
+----
+Builds a closed, square fence 1.2 meters high with round posts at every corner.
+The waypoints are listed counter-clockwise and the loop is closed by repeating
+the starting point, so the pickets face outward. Render the result with
+*rt*(1) or inspect it interactively in *mged*(1).
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fence*(1), *mged*(1), *rt*(1)
 
 
 [[author]]
@@ -44,7 +85,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2005-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
