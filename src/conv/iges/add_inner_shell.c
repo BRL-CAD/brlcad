@@ -46,6 +46,12 @@ Add_inner_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
     Readint(&sol_num, "");
     Readint(&no_of_faces, "");
 
+    if (no_of_faces <= 0 || no_of_faces > 10000000) {
+	bu_log("Add_inner_shell: illegal number of faces (%d) for entity D%07d\n",
+	       no_of_faces, dir[entityno]->direct);
+	return 0;
+    }
+
     face_de = (int *)bu_calloc(no_of_faces, sizeof(int), "Add_inner_shell face DE's");
     face_orient = (int *)bu_calloc(no_of_faces, sizeof(int), "Add_inner_shell orients");
     fu = (struct faceuse **)bu_calloc(no_of_faces, sizeof(struct faceuse *), "Get_outer_shell faceuses ");

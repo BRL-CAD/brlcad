@@ -37,6 +37,11 @@ Get_vertex(struct iges_edge_use *edge_use)
 	return (struct vertex **)NULL;
 
     edge_index = edge_use->index-1;
+    if (edge_index < 0 || edge_index >= e_list->no_of_edges) {
+	bu_log("Get_vertex: illegal edge index (%d), edge list has %d edges\n",
+	       edge_index, e_list->no_of_edges);
+	return (struct vertex **)NULL;
+    }
     if (edge_use->orient) {
 	vert_de = e_list->i_edge[edge_index].start_vert_de;
 	vert_index = e_list->i_edge[edge_index].start_vert_index - 1;
@@ -47,6 +52,12 @@ Get_vertex(struct iges_edge_use *edge_use)
 
     if ((v_list = Get_vertex_list(vert_de)) == NULL)
 	return (struct vertex **)NULL;
+
+    if (vert_index < 0 || vert_index >= v_list->no_of_verts) {
+	bu_log("Get_vertex: illegal vertex index (%d), vertex list has %d vertices\n",
+	       vert_index, v_list->no_of_verts);
+	return (struct vertex **)NULL;
+    }
 
     return &v_list->i_verts[vert_index].v;
 }
@@ -103,6 +114,12 @@ Get_edge(struct iges_edge_use *e_use)
 
     if ((e_list = Get_edge_list(e_use)) == NULL)
 	return (struct iges_edge *)NULL;
+
+    if (e_use->index-1 < 0 || e_use->index-1 >= e_list->no_of_edges) {
+	bu_log("Get_edge: illegal edge index (%d), edge list has %d edges\n",
+	       e_use->index-1, e_list->no_of_edges);
+	return (struct iges_edge *)NULL;
+    }
 
     return &e_list->i_edge[e_use->index-1];
 }

@@ -135,6 +135,7 @@ extern int tor_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct b
 extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int brep_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern void iges_init(struct bn_tol *, struct bg_tess_tol *, int, struct db_i *);
 extern void Print_stats(FILE *);
 
@@ -175,7 +176,24 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {nmg_to_iges},	/* ID_EXTRUDE */
     {null_to_iges},	/* ID_SUBMODEL */
     {nmg_to_iges},	/* ID_CLINE */
-    {nmg_to_iges}	/* ID_BOT */
+    {nmg_to_iges},	/* ID_BOT */
+    {null_to_iges},	/* ID_COMBINATION (31) */
+    {null_to_iges},	/* ID_UNUSED1 (32) */
+    {null_to_iges},	/* ID_BINUNIF (33) */
+    {null_to_iges},	/* ID_UNUSED2 (34) */
+    {nmg_to_iges},	/* ID_SUPERELL (35) - faceted */
+    {nmg_to_iges},	/* ID_METABALL (36) - faceted */
+    {brep_to_iges},	/* ID_BREP (37) - faithful NURBS (128/144); trims preserved */
+    {nmg_to_iges},	/* ID_HYP (38) - faceted */
+    {null_to_iges},	/* ID_CONSTRAINT (39) */
+    {nmg_to_iges},	/* ID_REVOLVE (40) - faceted */
+    {null_to_iges},	/* ID_PNTS (41) */
+    {null_to_iges},	/* ID_ANNOT (42) */
+    {nmg_to_iges},	/* ID_HRT (43) - faceted */
+    {null_to_iges},	/* ID_DATUM (44) */
+    {null_to_iges},	/* ID_SCRIPT (45) */
+    {null_to_iges},	/* ID_MATERIAL (46) */
+    {null_to_iges}	/* ID_MAXIMUM (47) - sentinel */
 };
 
 
@@ -808,10 +826,21 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     if (verbose)
 	bu_log("solid - %s\n", dp->d_namep);
 
-    if (rt_db_get_internal(&ip, dp, dbip, (fastf_t *)NULL) < 0)
-	bu_log("Error in import");
+    if (rt_db_get_internal(&ip, dp, dbip, (fastf_t *)NULL) < 0) {
+	bu_log("g-iges: error importing %s, skipping\n", dp->d_namep);
+	solid_error++;
+	return;
+    }
 
     solid_is_brep = 0;
+    if (ip.idb_type < 0 || ip.idb_type > ID_MAXIMUM ||
+	!iges_write[ip.idb_type].do_iges_write) {
+	bu_log("g-iges: no IGES writer for %s (type %d), skipping\n",
+	       dp->d_namep, ip.idb_type);
+	solid_error++;
+	rt_db_free_internal(&ip);
+	return;
+    }
     dp->d_uses = (-iges_write[ip.idb_type].do_iges_write(&ip, dp->d_namep, fp_dir, fp_param, vlfree));
 
     if (!dp->d_uses) {

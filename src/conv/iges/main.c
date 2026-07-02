@@ -76,7 +76,8 @@ mat_t *identity = NULL;
 static int do_splines = 0;
 static int do_drawings = 0;
 static int trimmed_surf = 0;
-int do_bots = 1;
+int do_bots = 0;	/* -m: write boundary-rep as a BoT (triangle mesh) */
+int do_brep = 1;	/* default: write boundary-rep as rt_brep (OpenNURBS) */
 
 static char *iges_file = NULL;
 
@@ -157,7 +158,7 @@ main(int argc, char *argv [])
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "3dntpo:x:X:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "3dmntpo:x:X:N:")) != -1) {
 	switch (c) {
 	    case '3':
 		do_drawings = 1;
@@ -165,6 +166,11 @@ main(int argc, char *argv [])
 		break;
 	    case 'd':
 		do_drawings = 1;
+		break;
+	    case 'm':
+		/* mesh: write boundary-rep as a BoT (triangle mesh) */
+		do_brep = 0;
+		do_bots = 1;
 		break;
 	    case 'n':
 		do_splines = 1;
@@ -176,6 +182,8 @@ main(int argc, char *argv [])
 		trimmed_surf = 1;
 		break;
 	    case 'p':
+		/* polygonal: write boundary-rep as an NMG solid */
+		do_brep = 0;
 		do_bots = 0;
 		break;
 	    case 'N':

@@ -84,6 +84,15 @@ Readname(char **ptr, const char *id)
 
     length = atoi(num);
 
+    /* guard against a malformed Hollerith length that would cause a
+     * huge (or negative) allocation and copy
+     */
+    if (length < 0 || length > 1000000) {
+	bu_log("Readname: illegal name length (%d), ignoring name\n", length);
+	*ptr = bu_strdup("");
+	return;
+    }
+
     /* we may tack on a letter to the name */
     *ptr = (char *)bu_malloc((length + 2)*sizeof(char), "Readname: name");
     ch = *ptr;

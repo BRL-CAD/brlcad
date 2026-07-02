@@ -88,8 +88,9 @@ extern int write_name_entity(char *name, FILE *fp_dir, FILE *fp_param);
 extern int write_att_entity(struct iges_properties *props, FILE *fp_dir, FILE *fp_param);
 extern int nmg_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree);
 
-#define NO_OF_TYPES 31
+#define NO_OF_TYPES 32
 static int type_count[NO_OF_TYPES][2] = {
+    { 102, 0 },	/* Composite Curve */
     { 106, 0 },	/* Copious Data */
     { 110, 0 },	/* Line */
     { 116, 0 },	/* Point */
@@ -125,6 +126,7 @@ static int type_count[NO_OF_TYPES][2] = {
 
 
 static const char *type_label[NO_OF_TYPES] = {
+    "CompCurv",
     "CopiusDa",
     "Line",
     "Point",
@@ -2931,6 +2933,181 @@ comb_to_iges(struct rt_comb_internal *comb, size_t length, int dependent, struct
 	return short_comb_to_iges(props, dependent, de_pointers, fp_dir, fp_param);
     else
 	return tree_to_iges(comb, length, dependent, props, de_pointers, fp_dir, fp_param);
+}
+
+
+/*
+ * Faithful NURBS entity writers, used by the OpenNURBS brep exporter
+ * (brep_iges.cpp).  These live here so they can use the file-static
+ * directory/parameter section sequence counters and the shared record
+ * writers.  Full double precision (%.17g) is used so that knots, weights,
+ * and control points survive the round trip.
+ */
+
+static void
+append_dbls(struct bu_vls *str, const double *v, int n)
+{
+    int i;
+    for (i = 0; i < n; i++)
+	bu_vls_printf(str, ",%.17g", v[i]);
+}
+
+
+int
+write_nurb_surface_entity(int k1, int k2, int m1, int m2, int rational,
+			  const double *uknots, const double *vknots,
+			  const double *weights, const double *ctlpts,
+			  double u0, double u1, double v0, double v1,
+			  FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    int dir_entry[21];
+    int i;
+    int ncv = (k1 + 1) * (k2 + 1);
+
+    for (i = 0; i < 21; i++)
+	dir_entry[i] = DEFAULT;
+
+    /* PROP3 is the polynomial flag: 1 => polynomial, 0 => rational */
+    bu_vls_printf(&str, "128,%d,%d,%d,%d,0,0,%d,0,0",
+		  k1, k2, m1, m2, rational ? 0 : 1);
+    append_dbls(&str, uknots, k1 + m1 + 2);
+    append_dbls(&str, vknots, k2 + m2 + 2);
+    append_dbls(&str, weights, ncv);
+    append_dbls(&str, ctlpts, 3 * ncv);
+    bu_vls_printf(&str, ",%.17g,%.17g,%.17g,%.17g;", u0, u1, v0, v1);
+
+    dir_entry[2] = param_seq + 1;
+    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq + 1, 'P');
+    dir_entry[1] = 128;
+    dir_entry[8] = 0;
+    dir_entry[9] = 10001;	/* subordinate, physically dependent */
+    dir_entry[11] = 128;
+    dir_entry[15] = 0;
+
+    bu_vls_free(&str);
+    return write_dir_entry(fp_dir, dir_entry);
+}
+
+
+int
+write_nurb_curve_entity(int k, int m, int rational, int planar,
+			const double *knots, const double *weights,
+			const double *ctlpts, double v0, double v1,
+			double nx, double ny, double nz,
+			FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    int dir_entry[21];
+    int i;
+
+    for (i = 0; i < 21; i++)
+	dir_entry[i] = DEFAULT;
+
+    bu_vls_printf(&str, "126,%d,%d,%d,0,%d,0",
+		  k, m, planar ? 1 : 0, rational ? 0 : 1);
+    append_dbls(&str, knots, k + m + 2);
+    append_dbls(&str, weights, k + 1);
+    append_dbls(&str, ctlpts, 3 * (k + 1));
+    bu_vls_printf(&str, ",%.17g,%.17g,%.17g,%.17g,%.17g;", v0, v1, nx, ny, nz);
+
+    dir_entry[2] = param_seq + 1;
+    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq + 1, 'P');
+    dir_entry[1] = 126;
+    dir_entry[8] = 0;
+    dir_entry[9] = 10001;
+    dir_entry[11] = 126;
+    dir_entry[15] = 0;
+
+    bu_vls_free(&str);
+    return write_dir_entry(fp_dir, dir_entry);
+}
+
+
+int
+write_composite_curve_entity(const int *members, int n,
+			     FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    int dir_entry[21];
+    int i;
+
+    for (i = 0; i < 21; i++)
+	dir_entry[i] = DEFAULT;
+
+    bu_vls_printf(&str, "102,%d", n);
+    for (i = 0; i < n; i++)
+	bu_vls_printf(&str, ",%d", members[i]);
+    bu_vls_printf(&str, ";");
+
+    dir_entry[2] = param_seq + 1;
+    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq + 1, 'P');
+    dir_entry[1] = 102;
+    dir_entry[8] = 0;
+    dir_entry[9] = 10001;
+    dir_entry[11] = 102;
+    dir_entry[15] = 0;
+
+    bu_vls_free(&str);
+    return write_dir_entry(fp_dir, dir_entry);
+}
+
+
+int
+write_curve_on_surface_entity(int surf_de, int bcurve_de, int ccurve_de,
+			      FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    int dir_entry[21];
+    int i;
+
+    for (i = 0; i < 21; i++)
+	dir_entry[i] = DEFAULT;
+
+    /* CRTN=0 (unspecified how created), PREF=1 (prefer parameter-space B) */
+    bu_vls_printf(&str, "142,0,%d,%d,%d,1;", surf_de, bcurve_de, ccurve_de);
+
+    dir_entry[2] = param_seq + 1;
+    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq + 1, 'P');
+    dir_entry[1] = 142;
+    dir_entry[8] = 0;
+    dir_entry[9] = 10001;
+    dir_entry[11] = 142;
+    dir_entry[15] = 0;
+
+    bu_vls_free(&str);
+    return write_dir_entry(fp_dir, dir_entry);
+}
+
+
+int
+write_trimmed_surface_entity(int surf_de, int outer_de, const int *inner_des,
+			     int n_inner, FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    int dir_entry[21];
+    int i;
+
+    for (i = 0; i < 21; i++)
+	dir_entry[i] = DEFAULT;
+
+    /* N1=1: the outer boundary is given explicitly by PTO (not the surface
+     * natural boundary). */
+    bu_vls_printf(&str, "144,%d,1,%d,%d", surf_de, n_inner, outer_de);
+    for (i = 0; i < n_inner; i++)
+	bu_vls_printf(&str, ",%d", inner_des[i]);
+    bu_vls_printf(&str, ";");
+
+    dir_entry[2] = param_seq + 1;
+    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq + 1, 'P');
+    dir_entry[1] = 144;
+    dir_entry[8] = 0;
+    dir_entry[9] = 0;		/* independent */
+    dir_entry[11] = 144;
+    dir_entry[15] = 0;
+
+    bu_vls_free(&str);
+    return write_dir_entry(fp_dir, dir_entry);
 }
 
 

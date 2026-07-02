@@ -31,6 +31,11 @@ Read_vertex_list(int vert_de)
 
     entityno = (vert_de - 1)/2;
 
+    if (entityno >= dirarraylen) {
+	bu_log("Read_vertex_list: DE=%d is too large, dirarraylen = %zu\n", vert_de, dirarraylen);
+	return (struct iges_vertex_list *)NULL;
+    }
+
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
@@ -52,6 +57,12 @@ Read_vertex_list(int vert_de)
     vertex_list->vert_de = vert_de;
     vertex_list->next = NULL;
     Readint(&vertex_list->no_of_verts, "");
+    if (vertex_list->no_of_verts <= 0 || vertex_list->no_of_verts > 10000000) {
+	bu_log("Read_vertex_list: illegal number of vertices (%d) for entity D%07d\n",
+	       vertex_list->no_of_verts, dir[entityno]->direct);
+	bu_free((char *)vertex_list, "Read_vertex_list: iges_vertex_list");
+	return (struct iges_vertex_list *)NULL;
+    }
     vertex_list->i_verts = (struct iges_vertex *)bu_calloc(vertex_list->no_of_verts, sizeof(struct iges_vertex) ,
 							   "Read_vertex_list: iges_vertex");
 

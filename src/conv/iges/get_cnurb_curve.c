@@ -84,6 +84,8 @@ Get_cnurb_curve(int curve_de, int *linear)
 	}
 	case 126:	/* B-spline */
 	    crv = Get_cnurb(curve);
+	    if (!crv)
+		return (struct edge_g_cnurb *)NULL;
 	    if (crv->order < 3)
 		*linear = 1;
 	    return crv;

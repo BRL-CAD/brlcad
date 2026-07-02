@@ -40,6 +40,7 @@ set(
   get_vertex.c
   get_vertex_list.c
   getcurve.c
+  iges_brep.cpp
   iges_types.c
   main.c
   make_face.c
@@ -77,9 +78,9 @@ set(
   usage.c
   wedge.c
 )
-brlcad_addexec(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbrep;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 
-brlcad_addexec(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(g-iges "g-iges.c;iges.c;brep_iges.cpp" "librt;libnmg;libbrep;libbu;${M_LIBRARY}" FOLDER Conv)
 
 set(
   iges_ignore_files
@@ -87,16 +88,14 @@ set(
   CMakeLists.txt
   PullbackCurve.cpp
   PullbackCurve.h
-  add_face.cpp
   arrange.c
-  brep.cpp
   brlcad_brep.cpp
   brlcad_brep.hpp
   bubbleup.c
   copytree.c
   ge6.igs
-  get_outer_shell.cpp
   iges.h
+  iges_brep.h
   iges_extern.h
   iges_struct.h
   iges_types.h

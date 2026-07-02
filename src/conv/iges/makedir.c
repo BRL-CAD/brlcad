@@ -51,6 +51,14 @@ Makedir(void)
 	if (card[72] != 'D')	/* We are not in the directory section */
 	    break;
 
+	/* guard against a malformed file with more directory entries
+	 * than the "dir" array can hold (sized to "totentities")
+	 */
+	if ((size_t)(entcount + 1) >= totentities) {
+	    bu_log("More directory entries than expected (%zu), ignoring the rest\n", totentities);
+	    break;
+	}
+
 	entcount++;	/* increment count of entities */
 
 	if (entcount%100 == 0) {

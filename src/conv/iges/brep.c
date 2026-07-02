@@ -20,6 +20,7 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "./iges_brep.h"
 
 int
 brep(size_t entityno, struct bu_list *vlfree)
@@ -95,7 +96,17 @@ brep(size_t entityno, struct bu_list *vlfree)
 	nmg_invert_shell(void_shells[i]);
     }
 
-    if (do_bots) {
+    /* Preferred output is a faithful rt_brep (OpenNURBS) built directly
+     * from the NMG's analytic surfaces and trim curves.  Fall back to a
+     * polygonal (NMG) or mesh (BoT) representation only if brep
+     * construction fails or the user requested a mesh/NMG explicitly.
+     */
+    if (do_brep && iges_nmg_to_brep(fdout, dir[entityno]->name, m, &tol)) {
+	/* faithful brep written; nothing else to do */
+    } else if (do_bots) {
+	if (do_brep)
+	    bu_log("Falling back to BoT (mesh) for %s\n", dir[entityno]->name);
+
 	/* Merge all shells into one */
 	for (i = 0; i < num_of_voids; i++)
 	    nmg_js(s_outer, void_shells[i], vlfree, &tol);
@@ -104,6 +115,9 @@ brep(size_t entityno, struct bu_list *vlfree)
 	if (mk_bot_from_nmg(fdout, dir[entityno]->name, s_outer))
 	    goto err;
     } else {
+	if (do_brep)
+	    bu_log("Falling back to NMG for %s\n", dir[entityno]->name);
+
 	/* Compute "geometry" for region and shell */
 	nmg_region_a(r, &tol);
 

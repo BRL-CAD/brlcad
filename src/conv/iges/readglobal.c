@@ -126,7 +126,7 @@ Readglobal(int file_count)
 		inv_scale = 1.0/scale;
 		break;
 	    case 14:	Readint(&units, "Units: ");
-		if (units == 0 || units == 3 || units > 11) {
+		if (units < 0 || units == 0 || units == 3 || units > 11) {
 		    bu_log("Unrecognized units, assuming 'mm'\n");
 		    conv_factor = 1.0;
 		} else

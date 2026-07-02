@@ -28,6 +28,7 @@
 #include "bu/debug.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "./iges_brep.h"
 
 
 /* translations to get knot vectors in first quadrant */
@@ -446,15 +447,15 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 	    Readdbl(&z, "");	/* common Z-coord */
 	    Readdbl(&x, "");	/* center */
 	    Readdbl(&y, "");	/* center */
-	    VSET(center, y+u_translation, x+v_translation, z);
+	    VSET(center, x+u_translation, y+v_translation, z);
 
 	    Readdbl(&x, "");	/* start */
 	    Readdbl(&y, "");	/* start */
-	    VSET(start, y+u_translation, x+v_translation, z);
+	    VSET(start, x+u_translation, y+v_translation, z);
 
 	    Readdbl(&x, "");	/* end */
 	    Readdbl(&y, "");	/* end */
-	    VSET(end, y+u_translation, x+v_translation, z);
+	    VSET(end, x+u_translation, y+v_translation, z);
 
 		/* build edge_g_cnurb arc */
 	    crv = nmg_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
@@ -1421,12 +1422,20 @@ Convtrimsurfs(struct bu_list *vlfree)
     bu_log("Converted %zu Trimmed Surfaces successfully out of %zu total Trimmed Surfaces\n", convsurf, totsurfs);
 
     if (convsurf) {
+	const char *nm = !BU_STR_EMPTY(curr_file->obj_name) ? curr_file->obj_name : "Trimmed_surf";
+
 	(void)nmg_vertex_fuse(&m->magic, vlfree, &tol);
 
-	if (!BU_STR_EMPTY(curr_file->obj_name))
-	    mk_nmg(fdout, curr_file->obj_name, m);
-	else
-	    mk_nmg(fdout, "Trimmed_surf", m);
+	/* Preferred output is a faithful rt_brep (OpenNURBS) built from the
+	 * trimmed NURBS faces; fall back to an NMG solid if requested (-m/-p)
+	 * or if brep construction fails. */
+	if (do_brep && iges_nmg_to_brep(fdout, nm, m, &tol)) {
+	    nmg_km(m);		/* brep did not consume the model */
+	} else {
+	    if (do_brep)
+		bu_log("Falling back to NMG for %s\n", nm);
+	    mk_nmg(fdout, nm, m);	/* consumes m */
+	}
     }
 
     if (!convsurf) {

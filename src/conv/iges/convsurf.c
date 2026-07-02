@@ -27,6 +27,7 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "./iges_brep.h"
 
 
 void
@@ -57,10 +58,19 @@ Convsurfs(void)
     }
 
     if (totsurfs) {
-	if (!BU_STR_EMPTY(curr_file->obj_name))
-	    mk_bspline(fdout, curr_file->obj_name, surfs);
-	else
-	    mk_bspline(fdout, "nurb.s", surfs);
+	const char *nm = !BU_STR_EMPTY(curr_file->obj_name) ? curr_file->obj_name : "nurb.s";
+
+	/* Preferred output is a faithful rt_brep (OpenNURBS) surface model;
+	 * fall back to the older bspline solid if requested (-m/-p) or if brep
+	 * construction fails. */
+	if (do_brep && iges_snurbs_to_brep(fdout, nm, surfs, (int)convsurf)) {
+	    for (i = 0; i < convsurf; i++)
+		nmg_nurb_free_snurb(surfs[i]);
+	} else {
+	    if (do_brep)
+		bu_log("Falling back to a bspline solid for %s\n", nm);
+	    mk_bspline(fdout, nm, surfs);	/* consumes surfs */
+	}
     }
 
     bu_log("Converted %zu NURBS successfully out of %zu total NURBS\n", convsurf, totsurfs);

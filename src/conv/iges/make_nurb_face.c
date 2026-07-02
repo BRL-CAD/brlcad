@@ -189,6 +189,12 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
 	    /* Get NURB curve in parameter space for This edgeuse */
 	    crv = Get_cnurb_curve(param->curve_de, &linear);
+	    if (!crv) {
+		bu_log("Add_nurb_loop_to_face: could not get parameter curve (DE=%d), skipping\n",
+		       param->curve_de);
+		param = param->next;
+		continue;
+	    }
 
 	    coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
 	    VMOVE(end_uv, &crv->ctl_points[(crv->c_size-1)*coords]);

@@ -44,6 +44,7 @@ extern size_t ntypes; /* Number of different types of IGES entities recognized b
 extern int brlcad_att_de; /* DE sequence number for BRL-CAD attribute
 			     definition entity */
 extern int do_bots; /* flag indicating NMG solids should be written as BOT solids */
+extern int do_brep; /* flag indicating boundary-rep solids should be written as rt_brep (OpenNURBS) */
 extern FILE *fd; /* file pointer for IGES file */
 extern struct rt_wdb *fdout; /* file pointer for BRL-CAD output file */
 extern char brlcad_file[]; /* name of brlcad output file (".g" file) */

@@ -31,6 +31,11 @@ Read_edge_list(struct iges_edge_use *edge)
 
     entityno = (edge->edge_de - 1)/2;
 
+    if (entityno >= dirarraylen) {
+	bu_log("Read_edge_list: DE=%d is too large, dirarraylen = %zu\n", edge->edge_de, dirarraylen);
+	return (struct iges_edge_list *)NULL;
+    }
+
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
@@ -52,6 +57,12 @@ Read_edge_list(struct iges_edge_use *edge)
     edge_list->edge_de = edge->edge_de;
     edge_list->next = NULL;
     Readint(&edge_list->no_of_edges, "");
+    if (edge_list->no_of_edges <= 0 || edge_list->no_of_edges > 10000000) {
+	bu_log("Read_edge_list: illegal number of edges (%d) for entity D%07d\n",
+	       edge_list->no_of_edges, dir[entityno]->direct);
+	bu_free((char *)edge_list, "Read_edge_list: iges_edge_list");
+	return (struct iges_edge_list *)NULL;
+    }
     edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(struct iges_edge) ,
 						      "Read_edge_list: iges_edge");
 
