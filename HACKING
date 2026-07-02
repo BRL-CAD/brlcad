@@ -868,7 +868,7 @@ respective library being tested (e.g., src/libbu/tests):
 
 Note that changes to publicly documented tools and library APIs must
 adhere to BRL-CAD's change policy.  This means changes to any tests
-may require thoughtful deployment.  See the CHANGES file for details.
+may require thoughtful deployment.  See CHANGES.adoc for details.
 
 These tests are run nightly on BRL-CAD's server to catch problems
 quickly - developers should be aware of the status of BRL-CAD's tests
@@ -1351,7 +1351,7 @@ Release steps are as follows:
 # 05: Review all commits.
 
     # NON-AUTO: Verify all user-visible changes are in NEWS.
-    # NON-AUTO: Verify all interface changes are in CHANGES.
+    # NON-AUTO: Verify all interface changes are in CHANGES.adoc or doc/changes/.
     # NON-AUTO: Verify usage/options are documented in doc/.
 
     # A useful trick for this step is to use gitk to display all
