@@ -135,6 +135,13 @@ removed at any time.
 MGED commands
 	arb name rot fb -> arb create name rot fb [deprecated 7.44]
 
+include/bu/color.h - rename to avoid risk of system header naming
+	collisions - also makes libbu ownership clear.
+	RED -> BU_COLOR_RED
+	GRN -> BU_COLOR_GREEN
+	BLU -> BU_COLOR_BLUE
+	[deprecated 7.44]
+
 include/bu/vfont.h - fully removed, header and all contents
 	We only use this in fblabel, and there are many other
 	modern options when it comes to fonts - remove vfont
