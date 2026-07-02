@@ -686,12 +686,13 @@ add_custom_command(
   DEPENDS ${GED_CMD_SCANNER_TARGET} ${ged_plugins_static_srcs} ${GED_COMMAND_STATIC_SRCS}
   VERBATIM
 )
-add_custom_target(ged_cmd_generation DEPENDS ${GED_CMD_SRC} ${GED_CMD_HDR} ${GED_STATIC_REGISTRATION_CPP})
-set_target_properties(ged_cmd_generation PROPERTIES FOLDER "BRL-CAD Build Utilities")
-
 foreach(_ged_cmd_generation_target libged libged-static libged-obj libged-brlcad-obj)
   if(TARGET ${_ged_cmd_generation_target})
-    add_dependencies(${_ged_cmd_generation_target} ged_cmd_generation)
+    # Attach the generated header directly to consuming targets rather than
+    # routing through a standalone custom target.  This keeps Ninja/CMake from
+    # having to order libged against an aggregate generation target that can
+    # overlap plugin build steps which themselves link back to libged.
+    target_sources(${_ged_cmd_generation_target} PRIVATE ${GED_CMD_HDR})
   endif()
 endforeach()
 if(TARGET libged)
