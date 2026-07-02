@@ -2,6 +2,7 @@ set(
   articles_EN
   TEMPLATE.adoc
   about.adoc
+  adrt_pathtrace.adoc
   build_pattern.adoc
   build_region.adoc
   camo_shader.adoc
@@ -154,6 +155,8 @@ set(
   images/gallery_gears.png
   images/gallery_helicoil.png
   images/gallery_specimen.png
+  images/gallery_seashell.png
+  images/gallery_seashell_nautilus.png
   images/gallery_sphflake.png
   images/gallery_donuts.png
   images/gallery_menger.png
@@ -222,6 +225,20 @@ set(
   images/renderer_gallery_rthide.png
   images/renderer_gallery_rtdepth.png
   images/renderer_gallery_rtxray.png
+  images/adrt_toyjeep_path.png
+  images/adrt_toyjeep_rt.png
+  images/adrt_toyjeep_rt_ao.png
+  images/adrt_toyjeep_phong.png
+  images/adrt_toyjeep_normal.png
+  images/adrt_toyjeep_depth.png
+  images/adrt_chess_path.png
+  images/adrt_chess_rt.png
+  images/adrt_chess_rt_ao.png
+  images/adrt_castle_path.png
+  images/adrt_castle_rt.png
+  images/adrt_castle_rt_ao.png
+  images/adrt_cornell_path.png
+  images/adrt_cornell_phong.png
 )
 if(TARGET mged OR TARGET qged OR TARGET archer)
   if(BRLCAD_EXTRADOCS)
@@ -242,7 +259,7 @@ if(BRLCAD_GENERATE_GALLERY AND TARGET rt AND TARGET mged)
   # Demo generator programs to build before regenerating (those that exist).
   set(
     GALLERY_DEMO_TARGETS
-    terragen voxelize lattice loftwing gears helicoil specimen sphflake donuts
+    terragen voxelize lattice loftwing gears helicoil specimen seashell sphflake donuts
     menger pyramid torii masonry brickwall mkbuilding cchannel ringworld
     vegetation clutter metaball molecule pdb-g pipe pipetest tube lens
     brep_simple brep_cube brep_cobb brep_surface brep_trimmed brep_invalid
@@ -338,6 +355,51 @@ if(
   set_target_properties(renderer-gallery-snapshot PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 endif()
 
+# ADRT path-tracing gallery -- opt-in regeneration of the committed snapshot.
+#
+# Like the galleries above, the adrt_pathtrace.adoc article is hand-written and
+# the adrt_*.png images are committed documentation.  This target refreshes the
+# images from the built `adrt`, `rt`, and `mged` tools and the sample databases
+# so a developer can review and commit the resulting diff.
+option(BRLCAD_GENERATE_ADRT_GALLERY "Regenerate the ADRT path-tracing snapshot" OFF)
+if(
+  BRLCAD_GENERATE_ADRT_GALLERY
+  AND TARGET adrt
+  AND TARGET rt
+  AND TARGET mged
+  AND TARGET toyjeep.g
+  AND TARGET castle.g
+  AND TARGET cornell-kunigami.g
+  AND TARGET chessboard.g
+)
+  add_custom_target(
+    adrt-pathtrace-snapshot
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DADRT=$<TARGET_FILE:adrt>
+      -DRT=$<TARGET_FILE:rt>
+      -DMGED=$<TARGET_FILE:mged>
+      -DDB=${CMAKE_BINARY_DIR}/${DATA_DIR}/db
+      -DIMGDIR=${CMAKE_CURRENT_SOURCE_DIR}/images
+      -DWORKDIR=${CMAKE_CURRENT_BINARY_DIR}/adrt_gallery_work
+      -DSIZE=512
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/adrt_gallery/generate_adrt_gallery.cmake
+    DEPENDS
+      adrt
+      rt
+      mged
+      toyjeep.g
+      castle.g
+      cornell-kunigami.g
+      chessboard.g
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Regenerating ADRT path-tracing snapshot (images)"
+    VERBATIM
+    USES_TERMINAL
+  )
+  set_target_properties(adrt-pathtrace-snapshot PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+endif()
+
 cmakefiles(
   CMakeLists.txt
   ${articles_EN}
@@ -348,6 +410,7 @@ cmakefiles(
   gallery/generate_gallery.cmake
   renderer_gallery/renderer_gallery_manifest.cmake
   renderer_gallery/generate_renderer_gallery.cmake
+  adrt_gallery/generate_adrt_gallery.cmake
   gallery/inputs/pipe.stdin
   gallery/inputs/wire.stdin
   gallery/inputs/tube.stdin
