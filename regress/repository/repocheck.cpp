@@ -117,6 +117,13 @@ ltrim_sv(std::string_view sv)
     return sv.substr(i);
 }
 
+static bool
+is_cmake_comment_line(std::string_view line)
+{
+    std::string_view trimmed = ltrim_sv(line);
+    return (!trimmed.empty() && trimmed[0] == '#');
+}
+
 /* Identifier char test */
 static inline bool
 is_ident_char(char c)
@@ -825,6 +832,8 @@ scan_file(const RepoConfig &cfg,
 
 	// Platform symbols
 	if (check_platform && !any_regex_match(cfg.platform.exemptions, path) && !in_block_comment) {
+	    if (fclass == FileClass::Build && is_cmake_comment_line(line))
+		continue;
 	    std::string_view sv = ltrim_sv(sanitized);
 	    bool plausible =
 		(!sv.empty() && (sv[0] == '#' ||
