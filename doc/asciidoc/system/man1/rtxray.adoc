@@ -4,83 +4,173 @@
 :manmanual: BRL-CAD
 
 == NAME
-rtxray - compute a pseudo X-Ray image of a model.
+rtxray - ray trace a model and produce a pseudo X-ray image
 
 == SYNOPSIS
 
 [source]
 ----
-rtxray [options]... model.g objects...
+rtxray [options] model.g objects...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*rtxray* operates on the indicated _objects_ in the input _model.g_ and produces a simulated X-Ray image. At present, all materials are treated as having the same density. The total path length of each ray through solid material is computed and the result is divided by the "viewsize" (the length of the diagonal of the bounding box of the model, which represents the longest possible path). This relative thickness is then converted to gray scale where black (1) is the greatest possible thickness, through white (255) which represents a very thin region. The color 0 is reserved for rays which pass through no material at all. This provides good contrast for the object (which would not usually be the case if 255 were chosen) and allows the background to be easily replaced.
+*rtxray* uses *librt*(3) to ray trace the listed _objects_ in the
+database _model.g_ from a single view direction and produces a simulated
+X-ray image.  All materials are treated as having the same density:
+for each ray the total path length through solid material is accumulated,
+divided by the _viewsize_ (the diagonal of the model bounding box, i.e.
+the longest possible path), and mapped to an 8-bit gray value.  Thick
+regions are dark (toward 1) and thin regions are bright (toward 255).
+The value 0 is reserved for rays that strike no material, so the
+background can be keyed out easily while the object retains good
+contrast.
 
-Most models do not fill their bounding volume (a box which just encloses the model) so the "safe" scaling described above usually results in very low contrast (mostly white) objects. Because of this, a default contrast boost of 2.0 is applied before the path lengths are converted to gray scale. This value can be changed with the *-A#* flag. This value must 1.0 or greater. Larger values provide higher contrast but may result in clipping values to black (actually 1).
+Most models do not fill their bounding volume, so the safe scaling above
+yields very low (mostly white) contrast.  To compensate, a contrast
+boost of 2.0 is applied before path lengths are mapped to gray.  Adjust
+it with *-A*; the value must be 1.0 or greater, and larger values give
+more contrast but may clip thick regions to black (1).
 
-The orientation of the rays to be fired may be specified by the *-a* and *-e* options, in which case the model will be autosized, and the grid will be centered on the centroid of the model, with ray spacing chosen to span the entire set of _objects_. Alternatively, with the *-M* option, a transformation matrix may be provided on standard input which maps model-space to view-space. In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space, with the size of the grid (number of rays fired) specified with *-s*. This option is most useful when *rtxray* is being invoked from a shell script created by an *mged*(1) _saveview_ command.
+The view is selected with the *-a* (azimuth) and *-e* (elevation)
+options, in which case the model is auto-sized and the grid is centered
+on the model so the rays span the entire set of _objects_.
+Alternatively, with *-M* a model-to-view matrix is read from standard
+input (with the grid covering -1.0 <= X,Y <= +1.0 in view space); this
+form is convenient when *rtxray* is driven by a script produced by the
+*mged*(1) _saveview_ command.
 
-The following options are recognized.
+By default the image is written to a framebuffer.  Use *-o* to write a
+*pix*(5) or *png*(5) image (a *.bw* extension yields an 8-bit grayscale
+*bw*(5) file).  With the alternate lighting model (*-l 1*) *rtxray*
+writes raw double-precision path lengths instead of gray pixels; this
+mode requires *-o* (it cannot drive a framebuffer) and appends a *.los*
+extension when the output name looks like an image, producing data
+suitable for custom post-processing and scaling.  Because the output
+pixels must be emitted in order, *rtxray* always runs on a single CPU
+regardless of *-P*.
 
+Most of the camera, grid, and debugging options accepted by *rt*(1) are
+also honored; see that manual page for the complete list.
 
-*-s#*::
-Number of rays to fire in X and Y directions (square grid). Default is 512 (512x512).
+[[options]]
+== OPTIONS
 
+*-a* _azimuth_::
+  Set the view azimuth in degrees and enable auto-sizing.  Use with *-e*; conflicts with *-M*.
 
-*-a#*::
-Select azimuth in degrees. Used with *-e* and conflicts with *-M*
-
-
-*-e#*::
-Select elevation in degrees. Used with *-a* and conflicts with *-M*
-
+*-e* _elevation_::
+  Set the view elevation in degrees and enable auto-sizing.  Use with *-a*; conflicts with *-M*.
 
 *-M*::
-Read model2view matrix from standard input. Conflicts with *-a* and *-e*
+  Read a model-to-view transformation matrix (and optional animation script) from standard input instead of using *-a*/*-e*.
 
+*-A* _#_::
+  Contrast boost factor applied before the path-length-to-gray mapping (default 2.0, must be >= 1.0).  Higher values increase contrast but may clip thick regions to black.
 
-*-A#*::
-Contrast enhance the output image by the given factor. Default value is 2.0. See discussion above.
+*-s* _#_::
+  Set the square grid size to _#_ rays on a side (default 512, i.e. a 512x512 image).
 
+*-w* _#_::
+  Set the image width in pixels.
 
-*-o*::
-*output.bw* specifies a named BW(5) file for output. By default, the output is displayed on a frame buffer.
+*-n* _#_::
+  Set the image height in scanlines.
 
+*-g* _mm_::
+  Set the grid cell width in millimeters.  If set without *-G*, cell height defaults to the same value.
 
-*-l1*::
-use the alternate "lighting model". In this mode, double precision floating point numbers are written (*-o* must be used). Each number is the actual solid material path length for that ray. This allows for post processing and scaling.
+*-G* _mm_::
+  Set the grid cell height in millimeters.
 
+*-p* _deg_::
+  Set the perspective angle in degrees (0 <= deg < 180; 0 is orthographic, the default).
 
+*-V* _#[:#]_::
+  Set the view aspect ratio width/height (e.g. 1.33 or 4:3).
 
-See the *rt* manual page for additional arguments that can be used with this program.
+*-l* _#_::
+  Select the lighting (output) model: *-l 0* (default) writes a line-buffered grayscale image; *-l 1* writes raw double-precision solid path lengths (requires *-o*).
 
+*-o* _file_::
+  Write the image to _file_ instead of a framebuffer.  The format follows the extension (e.g. *.pix*, *.png*, or *.bw* for grayscale); with *-l 1* a *.los* extension of doubles is produced.
+
+*-O* _file_::
+  Write a double-precision *.dpix* file for full-resolution post-processing.
+
+*-F* _framebuffer_::
+  Render to the named framebuffer (see the FB_FILE environment variable).
+
+*-i*::
+  Use incremental (progressive-style) rendering.
+
+*-t*::
+  Render top-to-bottom (the default is bottom-up).
+
+*-u* _units_::
+  Set the display units; *-u model* uses the database's local units.
+
+*-P* _#_::
+  Requested processor count.  Accepted for compatibility, but *rtxray* always renders with a single CPU.
+
+*-x* _#_::
+  Set *librt* debug flags as a hexadecimal bit vector (see raytrace.h).
+
+*-X* _#_::
+  Set *rt* program/optical debug flags as a hexadecimal bit vector.
+
+*-? or -h*::
+  Print a usage summary and exit.
+
+See *rt*(1) for the remaining shared options (e.g. *-T* tolerances, *-c*
+script commands, *-U* air handling).  The *-C* and *-W* background
+options of *rt*(1) are disabled in *rtxray*.
+
+[[examples]]
+== EXAMPLES
+
+.Pseudo X-ray from a three-quarter view
+====
+[source,bash]
+----
+rtxray -a 35 -e 25 -s 1024 -A 4.0 -o xray.png model.g all
+----
+Ray traces the group _all_ in _model.g_ from azimuth 35, elevation 25
+degrees on a 1024x1024 grid and writes a grayscale PNG with a contrast
+boost of 4.0.  Thicker portions of the model appear darker, the empty
+background is pure black (value 0), and the boosted contrast keeps a
+sparse model from washing out to white.
+====
+
+.Raw path lengths for post-processing
+====
+[source,bash]
+----
+rtxray -M -l 1 -o paths.los model.g component < component.rt
+----
+Reuses the camera from an *mged*(1) _saveview_ script (the matrix is read
+from standard input via *-M*) and, with the alternate lighting model,
+writes one double-precision solid path length per ray to _paths.los_
+instead of gray pixels.  The resulting array can be scaled or analyzed
+externally to apply true material densities.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*rt*(1), *rtray*(1)
-
-
-[[bugs]]
-== BUGS
-
-This program should do something about material properties (X-Ray density) in order to provide a more realistic result.
-
+*brlcad*(1), *mged*(1), *rt*(1), *rtdepth*(1), *rthide*(1), *bw-fb*(1), *bw*(5), *librt*(3)
 
 [[author]]
 == AUTHOR
 
-Phillip Dykstra
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1990-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
