@@ -53,6 +53,44 @@ TIE_3 **tribuf;
 
 static void load_nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
 
+
+/*
+ * Initialize a mesh's material attributes to physically-sane defaults so the
+ * path tracer treats the surface as an opaque diffuse dielectric.  Without
+ * this the attributes are zeroed, leaving ior == 0 which the path tracer
+ * (mis)reads as a refractive surface, producing black renders.
+ *
+ * Regions whose material shader is a light source -- either the classic
+ * "light" shader or an OSL "emitter" -- are marked emissive so the path
+ * tracer has scene lighting to work with.  Any leading emitter "power" value
+ * is honored, normalized so a typical value renders at unit radiance.
+ */
+static void
+adrt_init_attributes(struct adrt_mesh_attributes_s *attr, const char *shader)
+{
+    attr->density = 1.0;
+    attr->gloss = 0.0;
+    attr->emission = 0.0;
+    attr->ior = 1.0;
+
+    if (shader && shader[0]) {
+	if (strncmp(shader, "light", 5) == 0 || strstr(shader, "emit")) {
+	    fastf_t power = 1.0;
+	    const char *p = strstr(shader, "power");
+	    if (p) {
+		/* OSL form, e.g. "emitter#power#float#75.0" */
+		while (*p && (*p < '0' || *p > '9') && *p != '.')
+		    p++;
+		if (*p)
+		    power = atof(p) / 75.0;
+	    }
+	    if (power <= 0.0)
+		power = 1.0;
+	    attr->emission = power;
+	}
+    }
+}
+
 struct gcv_data {
     struct gcv_region_end_data region_end_data;
     struct adrt_mesh_s **meshes;
@@ -176,6 +214,7 @@ load_nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *p
 
     rt_comb_get_color(dbip, rgb, rci);
     VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
+    adrt_init_attributes(mesh->attributes, bu_vls_cstr(&rci->shader));
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
@@ -232,6 +271,7 @@ load_nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp,
     mesh->matid = tsp->ts_gmater;
 
     VMOVE(mesh->attributes->color.v, tsp->ts_mater.ma_color);
+    adrt_init_attributes(mesh->attributes, tsp->ts_mater.ma_shader);
     bu_strlcpy(mesh->name, db_path_to_string(pathp), sizeof(mesh->name));
 
     load_nmg_to_adrt_internal(mesh, r);
