@@ -40,6 +40,10 @@ building the `procedural-gallery-snapshot` target.
 |*helicoil*: Procedurally builds helical pipe solids (spring, screw, or DNA double helix) swept along a helix centerline via mk_pipe(); the default "spring" mode renders a chrome coil spring on a ground plane with a light, assembled into a top-level group "all".
 |image:images/gallery_specimen.png[specimen,512]
 |*specimen*: Analytic-primitive specimen shelf (rpc, rhc, epa, ehy, hyp, eto, hrt, arbn, particle, tor, tgc, ell); rt autoview frames the shelf.
+|image:images/gallery_seashell.png[seashell,512]
+|*seashell*: A shelf of procedurally grown seashells. Each shell is one watertight BoT solid: a superformula generating curve (the aperture cross-section) is swept along a logarithmic helico-spiral, with the coil radius, axial rise, and cross-section all scaling by the same exponential growth factor per whorl -- the self-similar "gnomonic" growth a real mollusk uses -- so successive whorls nest without intersecting. Four species (a planispiral nautilus, a rounded-pentagon-mouthed conch, a tall fluted turret/auger, and a round snail) come from one parametric model, each with analytically smoothed vertex normals and rounded, tapered ends.
+|image:images/gallery_seashell_nautilus.png[seashell_nautilus,512]
+|*seashell_nautilus*: Single hero shell from the seashell generator: a pearly planispiral nautilus. The logarithmic-spiral sweep of a growing elliptical aperture reproduces the classic equiangular whorl, closed into a ray-traceable BoT solid with smooth shading.
 |===
 
 == Fractals & recursion

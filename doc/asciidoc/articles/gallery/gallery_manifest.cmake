@@ -22,7 +22,7 @@
 #   render    ao (default, adds -c "set ambSamples=64") | noao
 #   caption   one-line description
 
-set(GALLERY_DEMO_COUNT 59)
+set(GALLERY_DEMO_COUNT 61)
 
 # ---- New demonstrations -----------------------------------------------------
 set(GALLERY_DEMO_0  [=[terragen|New demonstrations|exec|terragen|@OUT@|@OUT@|all|terrain.r water.r|ao|Fractal DSP terrain island with reflective water and a cloud environment-map sky; rendered with the new rt autoview command framing terrain+water.]=])
@@ -33,6 +33,8 @@ set(GALLERY_DEMO_4  [=[loftwing_prop|New demonstrations|exec|loftwing|@OUT@ --mo
 set(GALLERY_DEMO_5  [=[gears|New demonstrations|exec|gears|@OUT@|@OUT@|all|ground.r|ao|Builds a meshing involute spur-gear train, demonstrating the sketch->extrude procedural-modeling workflow in libwdb: each gear is one extruded involute tooth profile unioned in rotated copies around a hub with a central bore, laid left-to-right so the teeth interlock, plus a ground plane and a light under a top group "all".]=])
 set(GALLERY_DEMO_6  [=[helicoil|New demonstrations|exec|helicoil|@OUT@|@OUT@|all|coil.r|ao|Procedurally builds helical pipe solids (spring, screw, or DNA double helix) swept along a helix centerline via mk_pipe(); the default "spring" mode renders a chrome coil spring on a ground plane with a light, assembled into a top-level group "all".]=])
 set(GALLERY_DEMO_7  [=[specimen|New demonstrations|exec|specimen|@OUT@|@OUT@|all|ground.r|ao|Analytic-primitive specimen shelf (rpc, rhc, epa, ehy, hyp, eto, hrt, arbn, particle, tor, tgc, ell); rt autoview frames the shelf.]=])
+set(GALLERY_DEMO_59 [=[seashell|New demonstrations|exec|seashell|@OUT@|@OUT@|all||ao|A shelf of procedurally grown seashells. Each shell is one watertight BoT solid: a superformula generating curve (the aperture cross-section) is swept along a logarithmic helico-spiral, with the coil radius, axial rise, and cross-section all scaling by the same exponential growth factor per whorl -- the self-similar "gnomonic" growth a real mollusk uses -- so successive whorls nest without intersecting. Four species (a planispiral nautilus, a rounded-pentagon-mouthed conch, a tall fluted turret/auger, and a round snail) come from one parametric model, each with analytically smoothed vertex normals and rounded, tapered ends.]=])
+set(GALLERY_DEMO_60 [=[seashell_nautilus|New demonstrations|exec|seashell|@OUT@ --mode nautilus|@OUT@|all||ao|Single hero shell from the seashell generator: a pearly planispiral nautilus. The logarithmic-spiral sweep of a growing elliptical aperture reproduces the classic equiangular whorl, closed into a ray-traceable BoT solid with smooth shading.]=])
 
 # ---- Fractals & recursion ---------------------------------------------------
 set(GALLERY_DEMO_8  [=[sphflake|Fractals & recursion|exec|sphflake|-d 3 -f @OUT@|@OUT@|scene.r|depth0.r depth1.r depth2.r depth3.r|ao|Recursive mirror-sphere flake fractal; rendered with rt autoview framing the flake (depth0-3.r) over a checkered plane.]=])
