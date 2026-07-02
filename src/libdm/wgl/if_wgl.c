@@ -405,28 +405,72 @@ wgl_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 LONG WINAPI
 MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    /* When the framebuffer is in interactive mode, input events are reported
+     * to the application via the libfb event queue instead of being consumed
+     * here.  In the default (non-interactive) mode the historical behavior is
+     * preserved so existing libfb clients are unaffected. */
+    int interactive = fb_get_interactive(saveifp);
+    struct fb_event ev;
+    int ex = GET_X_LPARAM(lParam);
+    int ey = saveifp->i->if_height - GET_Y_LPARAM(lParam) - 1;
+
     switch (uMsg) {
 	case WM_PAINT:
 	    if (!WGL(saveifp)->use_ext_ctrl)
 		expose_callback(saveifp, 0);
+	    /* Validate the update region so WM_PAINT is not continuously
+	     * regenerated (which would otherwise spin a PeekMessage drain loop
+	     * forever and starve the application's event polling). */
+	    ValidateRect(hWnd, NULL);
+	    if (interactive) {
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_EXPOSE;
+		fb_enqueue_event(saveifp, &ev);
+	    }
 	    break;
 	case WM_LBUTTONDOWN:
-	    break;
-	case WM_RBUTTONDOWN:
-	    break;
 	case WM_MBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+	    if (interactive) {
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_BUTTON_PRESS;
+		ev.button = (uMsg == WM_LBUTTONDOWN) ? 1 : (uMsg == WM_MBUTTONDOWN) ? 2 : 3;
+		ev.x = ex;
+		ev.y = ey;
+		fb_enqueue_event(saveifp, &ev);
+	    }
 	    break;
 	case WM_CLOSE:
-	    WGL(saveifp)->alive = 0;
+	    if (interactive) {
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_CLOSE;
+		fb_enqueue_event(saveifp, &ev);
+	    } else {
+		WGL(saveifp)->alive = 0;
+	    }
 	    break;
 	case WM_LBUTTONUP:
-	    WGL(saveifp)->alive = 0;
-	    break;
 	case WM_RBUTTONUP:
-	    WGL(saveifp)->alive = 0;
+	    if (interactive) {
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_BUTTON_RELEASE;
+		ev.button = (uMsg == WM_LBUTTONUP) ? 1 : 3;
+		ev.x = ex;
+		ev.y = ey;
+		fb_enqueue_event(saveifp, &ev);
+	    } else {
+		WGL(saveifp)->alive = 0;
+	    }
 	    break;
 	case WM_MBUTTONUP:
-	    {
+	    if (interactive) {
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_BUTTON_RELEASE;
+		ev.button = 2;
+		ev.x = ex;
+		ev.y = ey;
+		fb_enqueue_event(saveifp, &ev);
+	    } else {
 		int x, y;
 		struct fb_pixel *wglp;
 
@@ -446,13 +490,39 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		       x, y, (int)wglp[x].red, (int)wglp[x].green, (int)wglp[x].blue);
 	    }
 	    break;
+	case WM_MOUSEMOVE:
+	    if (interactive) {
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_MOTION;
+		ev.x = ex;
+		ev.y = ey;
+		fb_enqueue_event(saveifp, &ev);
+	    } else {
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	    }
+	    break;
 	case WM_KEYDOWN:
+	    if (interactive) {
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_KEY_PRESS;
+		/* VK codes for digits and letters coincide with ASCII */
+		ev.keycode = (int)wParam;
+		fb_enqueue_event(saveifp, &ev);
+	    }
 	    break;
 	case WM_KEYUP:
-	    WGL(saveifp)->alive = 0;
+	    if (!interactive)
+		WGL(saveifp)->alive = 0;
 	    break;
 	case WM_SIZE:
-	    /* WIP: unimplemented, intentional fall through */
+	    if (interactive) {
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_RESIZE;
+		ev.x = LOWORD(lParam);
+		ev.y = HIWORD(lParam);
+		fb_enqueue_event(saveifp, &ev);
+	    }
+	    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	default:
 	    return DefWindowProc (hWnd, uMsg, wParam, lParam);
     }
@@ -1693,16 +1763,14 @@ static void
 wgl_do_event(struct fb *ifp)
 {
     MSG msg;
-    BOOL bRet;
-    /* Check and Dispatch any messages. */
+    (void)ifp;
 
-    if ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) {
-	if (bRet == -1) {
-	    /* handle the error and possibly exit */
-	} else {
-	    TranslateMessage(&msg);
-	    DispatchMessage(&msg);
-	}
+    /* Dispatch all currently-pending messages without blocking.  Callers use
+     * this as a non-blocking poll (they bu_snooze() between calls), so we must
+     * not block waiting for a message the way GetMessage() would. */
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
     }
 }
 

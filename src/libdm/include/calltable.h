@@ -244,8 +244,24 @@ struct fb_impl {
         char *p;
         size_t l;
     } u1, u2, u3, u4, u5, u6;
+    /* Application-facing input event queue (see fb_set_interactive).  Placed
+     * at the end of the struct so the positional interface initializers in the
+     * fb backends (which stop at the union above) remain valid and leave these
+     * zero-initialized. */
+    int if_interactive;        /**< @brief nonzero to report input events to the application */
+#define FB_EVENT_QUEUE_MAX 128
+    struct fb_event if_equeue[FB_EVENT_QUEUE_MAX]; /**< @brief ring buffer of pending input events */
+    int if_ehead;              /**< @brief event ring buffer head (next slot to write) */
+    int if_etail;              /**< @brief event ring buffer tail (next slot to read) */
 };
 
+
+/**
+ * Internal helper used by windowed backends to push an application-facing input
+ * event onto the framebuffer's event queue.  A no-op unless the framebuffer is
+ * in interactive mode (fb_set_interactive).  Not part of the public API.
+ */
+DM_EXPORT extern void fb_enqueue_event(struct fb *ifp, const struct fb_event *e);
 
 
 __END_DECLS

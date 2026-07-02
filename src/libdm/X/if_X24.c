@@ -807,7 +807,8 @@ x24_setup(struct fb *ifp, int width, int height)
     /*
      * Fill in XSetWindowAttributes struct for XCreateWindow.
      */
-    xswa.event_mask = ExposureMask | ButtonPressMask | StructureNotifyMask;
+    xswa.event_mask = ExposureMask | ButtonPressMask | ButtonReleaseMask |
+	PointerMotionMask | KeyPressMask | StructureNotifyMask;
     xswa.background_pixel = xi->xi_bp;
     xswa.border_pixel = xi->xi_wp;
     xswa.bit_gravity = ForgetGravity;
@@ -820,6 +821,13 @@ x24_setup(struct fb *ifp, int width, int height)
 			       CWBorderPixel | CWBitGravity | CWBackingStore | CWColormap,
 			       &xswa);
     xi->xi_cwinp = xi->xi_win;
+
+    /* Ask the window manager to notify us via a ClientMessage on window close
+     * rather than severing the display connection. */
+    {
+	Atom wmDelete = XInternAtom(xi->xi_dpy, "WM_DELETE_WINDOW", False);
+	XSetWMProtocols(xi->xi_dpy, xi->xi_win, &wmDelete, 1);
+    }
 
     if (xi->xi_win == 0) {
 	fb_log("if_X: Can't create window\n");
@@ -2909,6 +2917,19 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 	    {
 		int button = (int) event->xbutton.button;
 
+		/* In interactive mode, report the event to the application
+		 * rather than consuming it here. */
+		if (fb_get_interactive(ifp)) {
+		    struct fb_event ev;
+		    memset(&ev, 0, sizeof(ev));
+		    ev.type = FB_EVENT_BUTTON_PRESS;
+		    ev.button = button;
+		    ev.x = event->xbutton.x;
+		    ev.y = xi->xi_xheight - event->xbutton.y - 1;
+		    ev.state = (int)event->xbutton.state;
+		    fb_enqueue_event(ifp, &ev);
+		    break;
+		}
 
 		if (button == Button1) {
 		    /* Check for single button mouse remap.
@@ -2972,6 +2993,54 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 		}
 		break;
 	    }
+	case ButtonRelease:
+	    if (fb_get_interactive(ifp)) {
+		struct fb_event ev;
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_BUTTON_RELEASE;
+		ev.button = (int)event->xbutton.button;
+		ev.x = event->xbutton.x;
+		ev.y = xi->xi_xheight - event->xbutton.y - 1;
+		ev.state = (int)event->xbutton.state;
+		fb_enqueue_event(ifp, &ev);
+	    }
+	    break;
+	case MotionNotify:
+	    if (fb_get_interactive(ifp)) {
+		struct fb_event ev;
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_MOTION;
+		ev.x = event->xmotion.x;
+		ev.y = xi->xi_xheight - event->xmotion.y - 1;
+		ev.state = (int)event->xmotion.state;
+		fb_enqueue_event(ifp, &ev);
+	    }
+	    break;
+	case KeyPress:
+	    if (fb_get_interactive(ifp)) {
+		struct fb_event ev;
+		char kbuf[8] = {0};
+		KeySym ks;
+		int n;
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_KEY_PRESS;
+		n = XLookupString(&event->xkey, kbuf, sizeof(kbuf), &ks, NULL);
+		ev.keycode = (n > 0) ? (unsigned char)kbuf[0] : (int)ks;
+		ev.state = (int)event->xkey.state;
+		fb_enqueue_event(ifp, &ev);
+	    }
+	    break;
+	case ClientMessage:
+	    /* Window-manager close request (WM_DELETE_WINDOW). */
+	    if (fb_get_interactive(ifp)) {
+		struct fb_event ev;
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_CLOSE;
+		fb_enqueue_event(ifp, &ev);
+	    } else {
+		alive = 0;
+	    }
+	    break;
 	case ConfigureNotify:
 	    {
 		XConfigureEvent *conf = (XConfigureEvent *)event;
