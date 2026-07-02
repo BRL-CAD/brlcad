@@ -1,4 +1,5 @@
 brlcad_addexec(ged_create_parity_make "create_parity.c;make_cases.c" "libged;libwdb;librt;libbu" TEST)
+brlcad_addexec(ged_create_parity_in   "create_parity.c;in_cases.c"   "libged;libwdb;librt;libbu" TEST)
 
 foreach(t ged_create_parity_make ged_create_parity_in)
   if(TARGET ${t})
@@ -7,12 +8,14 @@ foreach(t ged_create_parity_make ged_create_parity_in)
 endforeach()
 
 brlcad_add_test(NAME ged_create_parity_make COMMAND ged_create_parity_make)
+brlcad_add_test(NAME ged_create_parity_in COMMAND ged_create_parity_in)
 
 cmakefiles(
   CMakeLists.txt
   create_parity.c
   create_parity.h
   make_cases.c
+  in_cases.c
 )
 
 # Local Variables:
