@@ -147,13 +147,16 @@ function(ged_plugin_library name)
       endif()
     endif()
     if (EXISTS ${wsf})
+      string(FIND "${wsf}" "${PROJECT_BINARY_DIR}/" _wsf_in_binary_dir)
       # Only files that exist at configure time can define libged commands for
       # the purposes of static inclusion or API definition.  Anything
       # dynamically generated will be limited to dynamic loading.
-      if(DO_STATIC)
+      if(DO_STATIC AND _wsf_in_binary_dir EQUAL -1)
 	_libged_accumulate_global(GED_COMMAND_STATIC_SRCS "${wsf}")
       endif()
-      _libged_accumulate_global(GED_COMMAND_ALL_SRCS "${wsf}")
+      if(_wsf_in_binary_dir EQUAL -1)
+	_libged_accumulate_global(GED_COMMAND_ALL_SRCS "${wsf}")
+      endif()
 
       # If it exists, tell CMake about it
       cmakefiles(${sf})
@@ -686,21 +689,6 @@ add_custom_command(
   DEPENDS ${GED_CMD_SCANNER_TARGET} ${ged_plugins_static_srcs} ${GED_COMMAND_STATIC_SRCS}
   VERBATIM
 )
-foreach(_ged_cmd_generation_target libged libged-static libged-obj libged-brlcad-obj)
-  if(TARGET ${_ged_cmd_generation_target})
-    # Attach the generated header directly to consuming targets rather than
-    # routing through a standalone custom target.  This keeps Ninja/CMake from
-    # having to order libged against an aggregate generation target that can
-    # overlap plugin build steps which themselves link back to libged.
-    target_sources(${_ged_cmd_generation_target} PRIVATE ${GED_CMD_HDR})
-  endif()
-endforeach()
-if(TARGET libged)
-  target_sources(libged INTERFACE "$<BUILD_INTERFACE:${GED_CMD_HDR}>")
-endif()
-if(TARGET libged-static)
-  target_sources(libged-static INTERFACE "$<BUILD_INTERFACE:${GED_CMD_HDR}>")
-endif()
 
 message("Adding plugin wrapper generation rules... done.")
 
