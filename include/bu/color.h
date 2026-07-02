@@ -45,10 +45,18 @@ struct bu_vls;
 #define BLU 2
 #define ALP 3
 
+#define BU_COLOR_RED 0
+#define BU_COLOR_GREEN 1
+#define BU_COLOR_BLUE 2
+#define BU_COLOR_ALPHA 3
+
 #define HUE 0
 #define SAT 1
 #define VAL 2
 
+#define BU_COLOR_HUE 0
+#define BU_COLOR_SATURATION 1
+#define BU_COLOR_VALUE 2
 
 /**
  * A single color value.

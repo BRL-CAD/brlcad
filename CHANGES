@@ -140,6 +140,10 @@ include/bu/color.h - rename to avoid risk of system header naming
 	RED -> BU_COLOR_RED
 	GRN -> BU_COLOR_GREEN
 	BLU -> BU_COLOR_BLUE
+	ALP -> BU_COLOR_ALPHA
+	HUE -> BU_COLOR_HUE
+	SAT -> BU_COLOR_SATURATION
+	VAL -> BU_COLOR_VALUE
 	[deprecated 7.44]
 
 include/bu/vfont.h - fully removed, header and all contents
