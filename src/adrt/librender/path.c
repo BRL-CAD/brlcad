@@ -24,6 +24,7 @@
 #include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include "adrt_struct.h"
@@ -36,6 +37,7 @@
 typedef struct render_path_s {
     int samples;
     TFLOAT inv_samples;
+    vect_t sky;		/* environment radiance for escaped rays */
 } render_path_t;
 
 
@@ -144,9 +146,29 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 
 		VUNITIZE(new_ray.dir);
 	    } else {
-		new_pix[0] = 0;
-		new_pix[1] = 0;
-		new_pix[2] = 0;
+		/*
+		 * The ray escaped the geometry (or reached the maximum
+		 * bounce depth).  Shade it with the environment rather
+		 * than pure black.  A camera ray that misses paints the
+		 * background; a bounced ray that escapes lets the
+		 * accumulated surface throughput pick up ambient light.
+		 *
+		 * The environment is a vertical gradient of the sky
+		 * color -- full strength overhead, dimming toward and
+		 * below the horizon (Z up).  This "overcast sky" grounds
+		 * open scenes and, with diffuse surfaces, yields soft,
+		 * physically-based ambient occlusion and indirect
+		 * illumination: up-facing faces catch the bright sky
+		 * while crevices and undersides fall into shadow.
+		 */
+		vect_t env;
+		fastf_t f = 0.3 + 0.7 * (0.5 * (new_ray.dir[2] + 1.0));
+		VSCALE(env, rd->sky, f);
+		if (new_ray.depth) {
+		    VELMUL(new_pix, new_pix, env);
+		} else {
+		    VMOVE(new_pix, env);
+		}
 		propagate = 0;
 	    }
 	}
@@ -159,19 +181,38 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 
 
 int
-render_path_init(render_t *render, const char *samples)
+render_path_init(render_t *render, const char *buf)
 {
     render_path_t *d;
-
-    if (samples == NULL)
-	return -1;
 
     render->work = render_path_work;
     render->free = render_path_free;
 
     BU_ALLOC(render->data, render_path_t);
     d = (render_path_t *)render->data;
-    d->samples = atoi(samples);	/* TODO: make this more robust */
+
+    /* Defaults: a modest sample count and a neutral daylight sky. */
+    d->samples = 12;
+    VSET(d->sky, 0.9, 0.93, 1.0);
+
+    /*
+     * Argument string is "samples[,skyR,skyG,skyB]".  The leading integer
+     * is the number of paths traced per pixel; the optional trailing
+     * triple (each 0.0-1.0) overrides the environment radiance.
+     */
+    if (buf != NULL) {
+	int n = atoi(buf);
+	const char *p;
+	if (n > 0)
+	    d->samples = n;
+	p = strchr(buf, ',');
+	if (p) {
+	    double r = 0.0, g = 0.0, b = 0.0;
+	    if (sscanf(p + 1, "%lf,%lf,%lf", &r, &g, &b) == 3)
+		VSET(d->sky, r, g, b);
+	}
+    }
+
     d->inv_samples = 1.0 / d->samples;
     return 0;
 }
