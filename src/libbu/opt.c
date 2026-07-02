@@ -29,6 +29,7 @@
 #include <errno.h> /* for errno */
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -1440,6 +1441,182 @@ bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set
     }
 
     return -1;
+}
+
+
+/* Single-argument validated scanners for classic getopt-style loops.
+ * On failure each returns 0 and leaves *val untouched.  A diagnostic
+ * (program name via bu_getprogname() plus the supplied label) is printed
+ * only when label is non-NULL; passing a NULL label suppresses the
+ * message, which is useful when probing whether a string is a valid
+ * value of a given type. */
+
+int
+bu_opt_scan_int_range(const char *str, int *val, int vmin, int vmax, const char *label)
+{
+    long l;
+    char *endptr = NULL;
+    const char *prog = bu_getprogname();
+
+    if (!val || !str || str[0] == '\0') {
+	if (label)
+	    bu_log("%s: missing %s value\n", prog, label);
+	return 0;
+    }
+
+    errno = 0;
+    l = strtol(str, &endptr, 10);
+    if (endptr == str || *endptr != '\0' || errno != 0 || l < INT_MIN || l > INT_MAX) {
+	if (label)
+	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
+	return 0;
+    }
+    if ((int)l < vmin || (int)l > vmax) {
+	if (label)
+	    bu_log("%s: %s out of range '%s' (expected %d to %d)\n", prog, label, str, vmin, vmax);
+	return 0;
+    }
+
+    *val = (int)l;
+    return 1;
+}
+
+int
+bu_opt_scan_int(const char *str, int *val, const char *label)
+{
+    return bu_opt_scan_int_range(str, val, INT_MIN, INT_MAX, label);
+}
+
+int
+bu_opt_scan_uchar(const char *str, unsigned char *val, const char *label)
+{
+    int i;
+
+    if (!val)
+	return 0;
+    if (!bu_opt_scan_int_range(str, &i, 0, UCHAR_MAX, label))
+	return 0;
+
+    *val = (unsigned char)i;
+    return 1;
+}
+
+int
+bu_opt_scan_long_range(const char *str, long *val, long vmin, long vmax, const char *label)
+{
+    long l;
+    char *endptr = NULL;
+    const char *prog = bu_getprogname();
+
+    if (!val || !str || str[0] == '\0') {
+	if (label)
+	    bu_log("%s: missing %s value\n", prog, label);
+	return 0;
+    }
+
+    errno = 0;
+    l = strtol(str, &endptr, 10);
+    if (endptr == str || *endptr != '\0' || errno != 0) {
+	if (label)
+	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
+	return 0;
+    }
+    if (l < vmin || l > vmax) {
+	if (label)
+	    bu_log("%s: %s out of range '%s' (expected %ld to %ld)\n", prog, label, str, vmin, vmax);
+	return 0;
+    }
+
+    *val = l;
+    return 1;
+}
+
+int
+bu_opt_scan_long(const char *str, long *val, const char *label)
+{
+    return bu_opt_scan_long_range(str, val, LONG_MIN, LONG_MAX, label);
+}
+
+int
+bu_opt_scan_size_t_range(const char *str, size_t *val, size_t vmin, size_t vmax, const char *label)
+{
+    unsigned long long ull;
+    char *endptr = NULL;
+    const char *cp = str;
+    const char *prog = bu_getprogname();
+
+    if (!val || !str || str[0] == '\0') {
+	if (label)
+	    bu_log("%s: missing %s value\n", prog, label);
+	return 0;
+    }
+
+    /* strtoull() silently wraps a leading '-'; reject negative input up front */
+    while (isspace((unsigned char)*cp))
+	cp++;
+    if (*cp == '-') {
+	if (label)
+	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
+	return 0;
+    }
+
+    errno = 0;
+    ull = strtoull(str, &endptr, 10);
+    if (endptr == str || *endptr != '\0' || errno != 0 || ull > (unsigned long long)SIZE_MAX) {
+	if (label)
+	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
+	return 0;
+    }
+    if ((size_t)ull < vmin || (size_t)ull > vmax) {
+	if (label)
+	    bu_log("%s: %s out of range '%s' (expected %zu to %zu)\n", prog, label, str, vmin, vmax);
+	return 0;
+    }
+
+    *val = (size_t)ull;
+    return 1;
+}
+
+int
+bu_opt_scan_size_t(const char *str, size_t *val, const char *label)
+{
+    return bu_opt_scan_size_t_range(str, val, 0, SIZE_MAX, label);
+}
+
+int
+bu_opt_scan_double_range(const char *str, double *val, double vmin, double vmax, const char *label)
+{
+    double d;
+    char *endptr = NULL;
+    const char *prog = bu_getprogname();
+
+    if (!val || !str || str[0] == '\0') {
+	if (label)
+	    bu_log("%s: missing %s value\n", prog, label);
+	return 0;
+    }
+
+    errno = 0;
+    d = strtod(str, &endptr);
+    if (endptr == str || *endptr != '\0' || errno != 0) {
+	if (label)
+	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
+	return 0;
+    }
+    if (d < vmin || d > vmax) {
+	if (label)
+	    bu_log("%s: %s out of range '%s' (expected %g to %g)\n", prog, label, str, vmin, vmax);
+	return 0;
+    }
+
+    *val = d;
+    return 1;
+}
+
+int
+bu_opt_scan_double(const char *str, double *val, const char *label)
+{
+    return bu_opt_scan_double_range(str, val, -DBL_MAX, DBL_MAX, label);
 }
 
 /*
