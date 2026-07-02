@@ -1,233 +1,173 @@
 = RTAREA(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-rtarea - Calculate exposed and presented surface areas
+rtarea - compute exposed and presented surface areas of geometry from a view
 
 == SYNOPSIS
 
 [source]
 ----
-rtarea [options]... model.g objects...
+rtarea [options] model.g objects...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *rtarea* command calculates the exposed, presented and centers of surface areas of specified geometry objects from a particular view. The summary output includes details for individual regions, assemblies (combinations that contain regions), and summarized totals.
+The *rtarea* program uses *librt*(3) to ray trace the listed _objects_ in
+the database _model.g_ from a single view direction and reports the
+projected surface area of each region, each assembly (combination
+containing regions), and overall totals.  The view is set with the
+*-a* (azimuth) and *-e* (elevation) options, or by feeding a
+model-to-view matrix on standard input with *-M*.  All results are
+written to standard output as text.
 
-The *exposed* area corresponds to what a human observer would see looking at the object(s) in question, if all the objects were non-transparent. For example, say rays were cast towards two cubes, each one of which is a region, one in front of the other, grouped into an assembly, with the ray direction pointed into the page:
+Two areas are reported.  The *exposed* area is the occluded 2D
+projection: what an observer would see if every object were opaque, so
+an object hidden behind another contributes only its visible fraction.
+The *presented* area is the unoccluded 2D projection: each region is
+considered in isolation and reports its full silhouette regardless of
+what lies in front.  When totaling presented area for a group, area
+covered by more than one region is counted only once (the union of the
+regions), not the cumulative sum.
 
+Only surfaces whose normal has a component facing back toward the ray
+are counted, so back faces are not reported as presented area.
 
+Accuracy depends on the grid resolution: finer cell spacing (smaller
+*-g*/*-G* or larger *-s*) yields more accurate areas.  Area centers
+are off by default and can be enabled with *-c "set cc=1"*.
+
+[width="100%"]
 ....
 
-|----------------| Rear Cube
-|                |
-|                |
-|        |--------------| Front Cube
-|        |       |      |
-|        |       |      |
-|--------|-------|      |
-         |              |
-         |              |
-         |--------------|
-      
+|----------------| rear region          |----------------| rear region
+|                |                      |****************|
+|        |--------------| front region  |****************-------| front region
+|        |**************|               |***********************|
+|--------|**************|               |--------|**************|
+         |**************|                        |**************|
+         |--------------|                        |--------------|
+
+  exposed = presented area of front       exposed = presented area for groups
+  region (fully visible)                  (e.g. comb of both visible regions)
 ....
 
-The exposed area of the Front Cube corresponds to the total area of the sheet, since it is not occluded by any other object:
-
-
+[width="100%"]
+....
+|----------------| rear region          |----------------| rear region
+|****************|                      |****************|
+|********|--------------| front region  |****************-------| front region
+|********|              |               |****************       |
+|--------|              |               |--------|              |
+         |              |                        |              |
+         |--------------|                        |--------------|
+  exposed area of rear                    presented area of rear
+  region (partially occluded)             region (partically occluded)
 ....
 
-|----------------| Rear Cube
-|                |
-|                |
-|        |--------------| Front Cube
-|        |**************|
-|        |**************|
-|--------|**************|
-         |**************|
-         |**************|
-         |--------------|
-      
-....
+WARNING: The terminology and output format of *rtarea* may change in future releases.
 
-The Rear Cube, on the other hand, IS occluded by the Front Cube and would thus report only a fraction of its area as exposed:
+[[options]]
+== OPTIONS
 
+*-a* _azimuth_::
+  Set the view azimuth in degrees and enable auto-sizing.  Use with *-e*; conflicts with *-M*.
 
-....
+*-e* _elevation_::
+  Set the view elevation in degrees and enable auto-sizing.  Use with *-a*; conflicts with *-M*.
 
-|----------------| Rear Cube
-|****************|
-|****************|
-|********|--------------| Front Cube
-|********|       |      |
-|********|       |      |
-|--------|-------|      |
-         |              |
-         |              |
-         |--------------|
-      
-....
+*-M*::
+  Read a model-to-view transformation matrix (and optional animation script) from standard input instead of using *-a*/*-e*.
 
-An object that combines both of these sheets would thus report as its exposed area the sum of the exposed areas of the individual sheets:
+*-s* _#_::
+  Set the square grid size to _#_ rays on a side (default 512).  More rays improve area accuracy.
 
+*-w* _#_::
+  Set the grid width in rays.
 
-....
+*-n* _#_::
+  Set the grid height in rays (scanlines).
 
-|----------------| Rear Cube
-|****************|
-|****************|
-|****************|------| Front Cube
-|***********************|
-|***********************|
-|--------|**************|
-         |**************|
-         |**************|
-         |--------------|
-      
-....
+*-g* _mm_::
+  Set the grid cell width in millimeters.  If set without *-G*, cell height defaults to the same value (e.g. *-g 25.4* gives 1 inch ray spacing).
 
+*-G* _mm_::
+  Set the grid cell height in millimeters.
 
+*-p* _deg_::
+  Set the perspective angle in degrees (0 <= deg < 180; 0 is orthographic, the default).
 
-*Presented* area, unlike exposed area, does not take occlusion into account. It is the equivalent of taking each object and considering it in isolation. So for the previous case of two sheets of metal, the Front Cube would report the same area:
+*-V* _#[:#]_::
+  Set the view aspect ratio width/height (e.g. 1.33 or 4:3).
 
+*-u* _units_::
+  Report areas in the named units (default mm).  Use *-u model* for the database's local units.
 
-....
+*-U* _#_::
+  Set whether air-coded regions are retained (0 = discard, 1 = keep, the default for *rtarea*).
 
-|----------------| Rear Cube
-|                |
-|                |
-|        |--------------| Front Cube
-|        |**************|
-|        |**************|
-|--------|**************|
-         |**************|
-         |**************|
-         |--------------|
-      
-....
+*-P* _#_::
+  Set the maximum number of processor cores to use (negative = all but _#_).
 
-the Rear Cube, on the other hand, ALSO reports its full area:
+*-c* _command_::
+  Run an *rt* script command before ray tracing; may be repeated.  *rtarea* recognizes *set compute_centers=#* (or the alias *set cc=#*) where 1 enables and 0 disables (default) computation and reporting of area centers.
 
+*-x* _#_::
+  Set *librt* debug flags as a hexadecimal bit vector (see raytrace.h).
 
-....
+*-X* _#_::
+  Set *rt* program/optical debug flags as a hexadecimal bit vector.
 
-|----------------| Rear Cube
-|****************|
-|****************|
-|****************-------| Front Cube
-|****************|      |
-|****************|      |
-|--------|-------|      |
-         |              |
-         |              |
-         |--------------|
-      
-....
-
-When reporting the presented area of the group, there is a subtle point - rtarea does not count area covered by multiple regions multiple times when totaling the presented area. So for the group containing both cubes, the presented area is NOT the cumulative area of both regions' presented areas but the area of the union of those two areas. In this case, that works out to be the same as the exposed area.
-
-
-....
-
-|----------------| Rear Cube
-|****************|
-|****************|
-|****************|------| Front Cube
-|***********************|
-|***********************|
-|--------|**************|
-         |**************|
-         |**************|
-         |--------------|
-      
-....
-
-
-
-It should be noted that rtarea only counts surfaces with a surface normal that has a component looking back in the direction of the ray. So, for example, a cube with only one face looking "back toward" the ray will not report area from other faces as "presented", since their surface normals will indicate they are not surfaces being presented to the ray.
-
-WARNING: _Rtarea_ may not correctly report area or center when instancing is done at the group level. Using *xpush* can be a workaround for this problem.
-
-The model geometry is the list of _objects_ in the input database _model.g_.
-
-
-*-X #*::
-Sets rtarea debug flags to a (hexadecimal) number. A flag value of 1 causes 3-D plot output to be written to stdout. All solid RPPs are plotted as grey boxes, and the walk path is in alternating blue and green segments. A flag value of 2 adds red segments for all attempted steps, as well as the final steps. A flag value of 3 adds some debugging prints to stderr in addition to the plots. This is useful for immediate path review, e.g., **rtarea -X 1 ... | tiris**
-
-
-*-x #*::
-Sets librt debug flags to a (hexadecimal) number.
-
-
-*-n #*::
-Number of steps.
-
-
-
-The *rtarea* program employs *librt*(3) for the geometry interrogation.
-
-
-[[additional_options]]
-== ADDITIONAL OPTIONS
-
-To configure its behavior, *rtarea* makes use of the *-c* option.
-
-Note that this approach is necessitated by the fact that _librt (3)_ has used up nearly the entire alphabet. A transition to GNU-style long option names is planned.
-
-
-*-c "set compute_centers=#"*::
-and
-
-
-*-c "set cc=#"*::
-determine whether area centers should be computed and reported. Valid values are 1 (on) and 0 (off). The default is off.
-
-
-
+*-? or -h*::
+  Print a usage summary and exit.
 
 [[examples]]
 == EXAMPLES
 
-.Rtarea processing of example.g
-[example]
+.Areas of a group with centers, in inches
 ====
-The command **rtarea example.g all** computes the area for model 'example.g' group 'all'.
-
-The command **rtarea -c "set cc=1" example.g all** computes the area and centers for model 'example.g' group 'all'.
-
+[source,bash]
+----
+rtarea -u in -a 35 -e 25 -s 1024 -c "set cc=1" model.g all
+----
+Ray traces the group _all_ in _model.g_ from azimuth 35, elevation 25
+degrees on a 1024x1024 grid, reporting exposed and presented areas in
+square inches along with the center of each area.  Increasing the grid
+size and naming explicit units gives a more accurate, readable report
+than the defaults.
 ====
 
+.Front-view area from a saved MGED view
+====
+[source,bash]
+----
+rtarea -M model.g component < saveview.rt
+----
+Reuses the camera from an *mged*(1) _saveview_ script (the matrix is
+read from standard input via *-M*) so the area of _component_ is
+measured from exactly the view that was set up interactively.
+====
 
 [[see_also]]
 == SEE ALSO
 
-*mged*(1), *rt*(1), *pix-fb*(1), *librt*(3), *pix*(5)
-
-
-[[diagnostics]]
-== DIAGNOSTICS
-
-Numerous error conditions are possible. Descriptive messages are printed on stderr.
-
-
-[[copyright]]
-== COPYRIGHT
-
-This software is Copyright (c) 1987-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
-
-[[bug_reports]]
-== BUG REPORTS
-
-Reports of bugs or problems should be submitted via electronic mail to <bugs@brlcad.org>.
-
+*brlcad*(1), *mged*(1), *rt*(1), *rtweight*(1), *librt*(3)
 
 [[author]]
 == AUTHOR
 
 BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
