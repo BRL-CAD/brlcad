@@ -4,87 +4,86 @@
 :manmanual: BRL-CAD
 
 == NAME
-rtscale - supplements rthide output by plotting a scale to indicate drawing size in arbitrary units.
+rtscale - plot a measuring scale for an rt/rthide UNIX-Plot image
 
 == SYNOPSIS
 
 [source]
 ----
-rtscale width units intervals file.log optional_string > scale.plot3
+rtscale _width_ _units_ _intervals_ _file.log_ [_string_] > scale.plot3
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*rtscale* supplements the use of *rthide* by generating a UNIX-Plot of a scale that permits the accurate measuring of *rthide* plots. *rthide* provides a hidden-line-removed plot of the geometry, and *rtscale* produces an identical plot file containing just a scale. The two files can then be concatenated making sure that the scale precedes the *rthide* file to produce a finished plot with scale.
+*rtscale* generates a UNIX-Plot (see *plot3*(5)) of a labeled measuring
+scale that can be overlaid onto a raytraced image to allow accurate
+measurement of geometry. It is most often paired with *rthide*(1): *rthide*
+produces a hidden-line plot of the geometry, and *rtscale* produces a
+matching plot containing only a scale. Concatenating the two files, with the
+scale first, yields a finished plot complete with a scale.
 
-*Rtscale* operates on the RT log file from the *rthide* run and produces a UNIX-Plot file of a scale with desired units and number of tick marks. The scale's width is given in model units. A descriptive string may be added. The scale and the strings are plotted in the lower left corner of the image.
+*rtscale* reads the RT log file written by the *rt*(1)-family run and uses the
+view, orientation, eye position, and size recorded there to build the
+view-to-model matrix. The scale is laid out in view coordinates, drawn as a
+line with tick marks ending on a "nice" rounded value, and placed in the lower
+left corner of the image. An optional descriptive string is drawn beneath the
+scale to identify the view or model.
 
-The inputs required are: *width,* which specifies the length of the scale in model space, *units,* which may be any units (metric or English), *intervals,* which allows the user to specifies the number of tickmarks on the scale. *filename,* which names the RT log file that is used to calculate the view2model matrix for the raytraced. A view such as azimuth 45, elevation 45, is useful for measuring diagonal dimensions of the geometry. Optionally, a *descriptive string* may be given to identify the view or the model.
+The positional arguments are:
 
+_width_::
+  length of the scale expressed in _units_.
+_units_::
+  unit name passed to *bu_units_conversion*; any metric or English unit
+  is accepted (for example mm, cm, m, in, ft).
+_intervals_::
+  number of tick-mark intervals along the scale.
+_file.log_::
+  RT log file from which the view2model matrix is computed.
+_string_::
+  optional descriptive label drawn under the scale.
 
-[[example]]
-== EXAMPLE
+[[examples]]
+== EXAMPLES
 
-This section shows the ordinary usage of *rtscale*. For example:
-
-
-....
-
-rtscale 30 mm 10 rt.log > scale.plot3
-....
-
-This will result in a 30 mm scale with ten tickmarks being plotted in the lower left corner of the scale.plot3 image. Alternately, a descriptive string may be given to identify the view or the model:
-
-
-....
-
+.Scale a hidden-line rendering and view it
+====
+[source,bash]
+----
+rthide -o model.plot3 model.g component 2> rt.log
 rtscale 30 mm 10 rt.log "UH-60 a90 e0" > scale.plot3
-....
-
-Note that a descriptive string longer than 28 characters will be cut off by *plot3-fb*.
-
-The plot file is now concatenated with the plot file of the image to scale needs to be put on. The order in which they are concatenated is important: the scale is always concatenated over top of the model plot:
-
-
-....
-
-cat scale.plot3 model.plot3 >> model.w.scale.plot3
-....
-
-The resulting UNIX-Plot of the geometry with a scale added to it can be viewed in several ways. It can be overlaid in *mged*, or it can be rotated to the desired azimuth and elevation with *plot3rot* and be stored in a file or view with *plot3-fb*:
-
-
-....
-
-plot3rot -a# -e# -g model.w.scale.plot3 | plot3-fb
-....
-
+cat scale.plot3 model.plot3 > model.w.scale.plot3
+plot3rot -a35 -e25 -g model.w.scale.plot3 | plot3-fb
+----
+*rthide* renders the geometry and records the view in rt.log. *rtscale* then
+emits a 30 mm scale with ten intervals and a descriptive label. The scale must
+be concatenated ahead of the model plot so it survives rotation; *plot3rot*(1)
+reorients the combined plot and *plot3-fb*(1) displays it on a framebuffer.
+Descriptive strings longer than 28 characters are truncated by *plot3-fb*(1).
+====
 
 [[see_also]]
 == SEE ALSO
 
-*mged*(1), *plot3rot*(1), *rt*(1), *rthide*(1), *librt*(3), *libplot3*(3), *plot3*(5), *ray*(5V)
-
+*brlcad*(1), *mged*(1), *plot3rot*(1), *plot3-fb*(1), *rt*(1), *rthide*(1), *librt*(3), *libbv*(3), *plot3*(5), *ray*(5V)
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-Numerous error conditions are possible, usually due to errors in the geometry database. Descriptive messages are printed on standard error (file descriptor 2).
-
+Numerous error conditions are possible, usually due to errors in the geometry
+database or RT log file. Descriptive messages are printed on standard error.
 
 [[author]]
 == AUTHOR
 
-*BRL-CAD Team*
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1991-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS

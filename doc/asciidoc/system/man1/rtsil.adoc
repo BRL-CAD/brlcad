@@ -1,10 +1,10 @@
 = RTSIL(1)
 :doctype: manpage
 :mansource: BRL-CAD
-:manmanual: BRL-CAD User Commands
+:manmanual: BRL-CAD
 
 == NAME
-rtsil - Raytrace a Simple Intersection Lightmap (SIL) image
+rtsil - ray trace a model and produce a binary silhouette image
 
 == SYNOPSIS
 
@@ -17,34 +17,115 @@ rtsil [options] model.g objects...
 [[description]]
 == DESCRIPTION
 
-*rtsil* is a specialized BRL-CAD raytracer that computes a "Simple Intersection Lightmap". Instead of rendering a shaded color image, *rtsil* performs binary hit/miss testing for every ray and outputs a single-byte-per-pixel grayscale (BW) image. 
+*rtsil* uses *librt*(3) to ray trace the listed _objects_ in the
+database _model.g_ and produce a "Simple Intersection Lightmap" (SIL):
+a binary hit/miss silhouette of the geometry.  One ray is fired per
+pixel and stops at the first surface struck (one-hit mode); no shading,
+lighting, or material evaluation is performed.
 
-In the resulting image, pixels where a ray intersected geometry are assigned a value of 1, and pixels where the ray missed all geometry are assigned a value of 255. This binary mapping provides a high-contrast matte or silhouette of the target objects without the overhead of shading, lighting, or material evaluation.
+The result is an 8-bit *bw*(5) image (one byte per pixel) in which a
+pixel that intersected geometry is given the value 1 and a pixel that
+missed all geometry is given the value 255.  This high-contrast matte
+isolates the projected outline of the _objects_ very cheaply.
 
-*rtsil* accepts the standard options of the *rt*(1) program (e.g., *-s* for square resolution, *-o* for output file, *-a* for azimuth, *-e* for elevation). Note that *rtsil* currently operates in single-processor mode (it will automatically disable parallel processing if requested).
+The view is selected with the *-a* (azimuth) and *-e* (elevation)
+options, or with *-M* a model-to-view matrix is read from standard
+input (convenient when driven by an *mged*(1) _saveview_ script).  By
+default the image is written to standard output; use *-o* to write a
+named file.  Because *rtsil* emits scanlines in order it always runs on
+a single CPU regardless of *-P*.  Most of the camera, grid, and
+debugging options accepted by *rt*(1) are also honored; see that manual
+page for the complete list.
 
 [[options]]
 == OPTIONS
 
-*-o* _output.bw_::
-Specify the output file to write the BW (1 byte per pixel) image to. If no output file is specified, the image data is written to standard output.
+*-o* _file.bw_::
+  Write the silhouette image to _file.bw_ instead of standard output.
 
-*model.g*::
-The BRL-CAD geometry database to render.
+*-s* _#_::
+  Set the square grid size to _#_ rays on a side (default 512, i.e. a 512x512 image).
 
-*objects*::
-One or more objects within the database to be raytraced.
+*-w* _#_::
+  Set the image width in pixels.
+
+*-n* _#_::
+  Set the image height in scanlines.
+
+*-a* _deg_::
+  Set the view azimuth in degrees and enable auto-sizing.  Use with *-e*; conflicts with *-M*.
+
+*-e* _deg_::
+  Set the view elevation in degrees and enable auto-sizing.  Use with *-a*; conflicts with *-M*.
+
+*-M*::
+  Read a model-to-view transformation matrix (and optional animation script) from standard input instead of using *-a*/*-e*.
+
+*-p* _deg_::
+  Set the perspective angle in degrees (0 <= deg < 180; 0 is orthographic, the default).
+
+*-V* _#[:#]_::
+  Set the view aspect ratio width/height (e.g. 1.33 or 4:3).
+
+*-g* _mm_::
+  Set the grid cell width in millimeters.
+
+*-G* _mm_::
+  Set the grid cell height in millimeters.
+
+*-u* _units_::
+  Set the display units; *-u model* uses the database's local units.
+
+*-i*::
+  Use incremental (progressive-style) rendering.
+
+*-t*::
+  Render top-to-bottom (the default is bottom-up).
+
+*-P* _#_::
+  Requested processor count.  Accepted for compatibility, but *rtsil* always renders with a single CPU.
+
+*-x* _#_::
+  Set *librt* debug flags as a hexadecimal bit vector (see raytrace.h).
+
+*-X* _#_::
+  Set *rt* program/optical debug flags as a hexadecimal bit vector.
+
+See *rt*(1) for the remaining shared options (e.g. *-T* tolerances and
+*-c* script commands).
 
 [[examples]]
 == EXAMPLES
 
-.Generating a Silhouette Image
-[example]
+.Silhouette matte from a three-quarter view
 ====
-**rtsil -s 1024 -o silhouette.bw sample.g all**
+[source,bash]
+----
+rtsil -a 35 -e 25 -s 1024 model.g all > sil.bw
+----
+Ray traces the group _all_ in _model.g_ from azimuth 35, elevation 25
+degrees on a 1024x1024 grid and writes a *bw*(5) silhouette to
+_sil.bw_, where the object reads 1 and the background reads 255.
+====
 
-Raytraces the object 'all' from 'sample.g' at a resolution of 1024x1024 and saves the binary intersection map to 'silhouette.bw'.
+.Using the silhouette as a compositing mask
 ====
+[source,bash]
+----
+rtsil -M -o mask.bw model.g component < component.rt
+bw-fb mask.bw
+----
+Reuses the camera from an *mged*(1) _saveview_ script (the matrix is
+read from standard input via *-M*) so the matte of _component_ matches a
+view set up interactively, then displays it on a framebuffer with
+*bw-fb*(1).  The resulting binary mask can be fed to tools such as
+*bwmod*(1) or *pixmatte*(1) to key the object into a composited image.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *rtedge*(1), *rthide*(1), *bw-fb*(1), *bw*(5), *librt*(3)
 
 [[author]]
 == AUTHOR
@@ -54,7 +135,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
