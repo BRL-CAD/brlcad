@@ -1,4 +1,4 @@
-/*                 ConnectedFaceSet.h
+/*                 PolyLoop.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2026 United States Government as represented by
@@ -17,48 +17,49 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/ConnectedFaceSet.h
+/** @file step/PolyLoop.h
  *
- * Class definition used to convert STEP "ConnectedFaceSet" to BRL-CAD BREP
+ * Class definition used to convert STEP "PolyLoop" to BRL-CAD BREP
  * structures.
  *
  */
 
-#ifndef CONV_STEP_STEP_G_CONNECTEDFACESET_H
-#define CONV_STEP_STEP_G_CONNECTEDFACESET_H
+#ifndef CONV_STEP_STEP_G_POLYLOOP_H
+#define CONV_STEP_STEP_G_POLYLOOP_H
 
-#include "TopologicalRepresentationItem.h"
+#include "Loop.h"
 
 // forward declaration of class
-class Face;
-typedef list<Face *> LIST_OF_FACES;
+class CartesianPoint;
+class ON_Brep;
 
-class ConnectedFaceSet : public TopologicalRepresentationItem
+typedef list<CartesianPoint *> LIST_OF_POINTS;
+
+class PolyLoop : public Loop
 {
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
-    LIST_OF_FACES cfs_faces;
+    LIST_OF_POINTS polygon;
 
 public:
-    ConnectedFaceSet();
-    virtual ~ConnectedFaceSet();
-    ConnectedFaceSet(STEPWrapper *sw, int step_id);
+    PolyLoop();
+    virtual ~PolyLoop();
+    PolyLoop(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
-    virtual void ReverseFaceSet();
-    const LIST_OF_FACES &Faces() const {
-	return cfs_faces;
+    const LIST_OF_POINTS &GetPolygon() const {
+	return polygon;
     };
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONV_STEP_STEP_G_CONNECTEDFACESET_H */
+#endif /* CONV_STEP_STEP_G_POLYLOOP_H */
 
 /*
  * Local Variables:

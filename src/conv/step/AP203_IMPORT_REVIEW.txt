@@ -1,0 +1,542 @@
+================================================================================
+ STEP AP203 IMPORT REVIEW  (step-g converter)      TEMPORARY WORKING DOCUMENT
+================================================================================
+ Location : src/conv/step/AP203_IMPORT_REVIEW.txt
+ Scope    : src/conv/step/step-g  (STEP -> BRL-CAD .g importer)
+ Date     : 2026-06-30
+ Author   : entity-coverage audit + geometry import work
+
+ This file documents (1) the key architectural findings, (2) a complete
+ entity-by-entity conversion-status summary table for AP203, (3) the
+ user-visible changes made in this pass, and (4) a prioritized TODO plan.
+ It is a scratch/working document intended to be deleted (or folded into
+ the developer docs) once the follow-up work is complete.
+
+--------------------------------------------------------------------------------
+ 1. KEY ARCHITECTURAL FINDINGS
+--------------------------------------------------------------------------------
+
+ * The step-g importer is compiled with -DAP203 against
+     src/conv/step/step-g/ap203.exp
+   whose schema header is:
+     SCHEMA config_control_design;
+   i.e. it targets *classic AP203 (edition 1)*, the CONFIG_CONTROL_DESIGN
+   MIM.  That schema defines 254 ENTITY types.
+
+ * classic AP203 has NO tessellated/mesh entities.  There is no
+   tessellated_shape_representation / triangulated_face /
+   complex_triangulated_surface_set etc. (those were introduced later in
+   AP203e2 / AP242).  The ONLY mesh-like geometry available in AP203 is:
+       faceted_brep      (a manifold_solid_brep whose faces are planar)
+       poly_loop         (an ordered vertex polygon face bound)
+   Before this pass neither was handled, so faceted/polyhedral solids were
+   dropped silently.  Adding them is the single largest "missing geometry"
+   win available inside the AP203 schema and is the flagship change here.
+
+ * Import pipeline (STEPWrapper::convert):
+     - Walks all instances; keys off top-level representation entities:
+         shape_definition_representation, advanced_brep_shape_representation,
+         manifold_surface_shape_representation, shell_based_surface_model,
+         geometric_set, geometrically_bounded_surface_shape_representation,
+         shape_representation_relationship, context_dependent_shape_representation.
+     - AdvancedBrep* -> ON_Brep (OpenNURBS) -> BRL-CAD "brep" primitive.
+     - ShellBasedSurfaceModel -> plate-mode ON_Brep.
+     - Assembly hierarchy from next_assembly_usage_occurrence /
+       context_dependent_shape_representation (as combs w/ transforms).
+     - Entities self-register a factory method (Factory::RegisterClass) and
+       implement LoadONBrep()/LoadONCurve()/LoadONSurface() for geometry.
+
+ * Geometry conversion status was audited for every one of the 254 schema
+   entities (see the table in section 5).  Summary counts:
+       FULL     :  50   geometry/data faithfully imported
+       PARTIAL  :   9   imported but lossy / limited
+       STUB     :  28   class exists but conversion is a no-op / error
+       MISSING  : 101   no class at all - silently dropped
+       METADATA :  65   non-geometric admin/PDM entity (acceptable to skip)
+   (253 rows reported; "effectivity" listed once.)
+   Most MISSING entities are administrative/PDM (person, approval, date,
+   contract, effectivity, ...) which carry no geometry and are correctly
+   ignored.  The geometry-bearing gaps are enumerated in the TODO (section 4).
+
+--------------------------------------------------------------------------------
+ 2. HOW TO BUILD / TEST
+--------------------------------------------------------------------------------
+
+ Build (Windows, Ninja tree):
+     cmake --build out/build/x64-Release --target step-g
+ (from a VS x64 developer environment; see .claude memory "build-on-windows").
+
+ Faceted mesh smoke test (input included alongside this file):
+     step-g -O out.g src/conv/step/test_faceted_tetra.stp
+     mged -c out.g "ls; bot stat tetra.s; bb -q tetra"
+   Expected: region "tetra" over a 4-vertex / 4-face SOLID BoT "tetra.s",
+   bounding box 10 x 10 x 10 mm (volume 1000 mm^3).
+
+--------------------------------------------------------------------------------
+ 3. USER-VISIBLE CHANGES (this pass)   [x] done  [ ] planned
+--------------------------------------------------------------------------------
+
+ [x] NEW: Faceted / mesh solid import.  faceted_brep + poly_loop +
+     faceted_brep_shape_representation are now imported as a BRL-CAD BoT
+     (bag of triangles) solid, wrapped in a region and attached to the
+     product hierarchy.  Previously these were silently dropped.
+       - Planar polygon faces (poly_loop) are fan-triangulated.
+       - Shared vertices are welded (deduplicated by cartesian_point id).
+       - Units are honored (coordinates scaled by the shape rep's length
+         conversion factor); output BoT is RT_BOT_SOLID / RT_BOT_UNORIENTED
+         so ray tracing does not depend on STEP facet winding.
+       New files:
+         step-g/PolyLoop.{h,cpp}
+         step-g/FacetedBrep.{h,cpp}
+         step-g/FacetedBrepShapeRepresentation.{h,cpp}
+       New API:
+         BRLCADWrapper::WriteBoT()
+       Touched:
+         step-g/ConnectedFaceSet.h (Faces() accessor)
+         step-g/Face.h             (Bounds() accessor)
+         step-g/FaceBound.h        (GetBound() accessor)
+         STEPWrapper.cpp           (convert_WriteBoT + convert() wiring)
+         step-g/CMakeLists.txt     (new sources/headers)
+
+ [x] FIX: Bezier curve import.  bezier_curve previously OVERRODE the working
+     B-spline handler with a "not implemented" stub, so every bezier_curve
+     edge was dropped.  It now delegates to BSplineCurve::LoadONBrep (a Bezier
+     is a B-spline with an implicitly clamped knot vector, which that code
+     already generates correctly).
+
+ [x] FIX: Rational Bezier curve import.  Same fix; delegates to
+     RationalBSplineCurve::LoadONBrep.
+
+ [x] FIX: Bezier surface import.  bezier_surface was a stub; now delegates to
+     BSplineSurface::LoadONBrep.
+
+ [x] FIX: Rational Bezier surface import.  Was a stub; now delegates to
+     RationalBSplineSurface::LoadONBrep.
+
+ [x] NEW: Assembly instancing via mapped_item + representation_map.  A
+     mapped_item instances the geometry of a representation_map's
+     mapped_representation, transformed so the map's mapping_origin coincides
+     with the item's mapping_target.  These are now realized as comb
+     memberships (with the placement matrix) of the containing
+     representation's object, so a component defined once can be placed many
+     times (e.g. four wheels from one wheel body).  Previously all mapped_item
+     instances were dropped.
+       New files:
+         step-g/MappedItem.{h,cpp}
+         step-g/RepresentationMap.{h,cpp}
+       Touched:
+         STEPWrapper.cpp  (assembly_placement_matrix() helper + a mapped_item
+                           resolution pass; faceted naming pass now also
+                           records shape-rep -> object name so faceted
+                           components can be instanced)
+         step-g/CMakeLists.txt  (new sources/headers)
+     Validated: src/conv/step/test_mapped_assembly.stp - one 10mm faceted
+     cube instanced 3x at (0,0,0),(30,0,0),(0,40,0) yields an "assembly" comb
+     with 3 correctly-placed "widget" members and an exact 40x50x10 mm bbox.
+
+ Behavioral notes / known limitations of the faceted path:
+   - Fan triangulation is exact for convex faces (the common case, since
+     exporters usually emit triangles/convex quads).  Non-convex planar
+     faces should use ear-clipping (libbg) -- see TODO.
+   - Faceted solids are linked to products through
+     shape_definition_representation.  Faceted geometry reached only through
+     shape_representation_relationship is still imported as a top-level
+     region but not nested under a product comb -- see TODO.
+
+--------------------------------------------------------------------------------
+ 4. PRIORITIZED TODO PLAN
+--------------------------------------------------------------------------------
+
+ TIER 0 - MESH / FACETED GEOMETRY (user's explicit top priority)
+   [x] poly_loop parsing (PolyLoop)
+   [x] faceted_brep -> BoT (FacetedBrep)
+   [x] faceted_brep_shape_representation top-level handling
+   [x] BRLCADWrapper::WriteBoT
+   [x] build + functional verification (tetra smoke test)
+   [ ] non-convex face triangulation via bg_polygon_triangulate (libbg)
+   [ ] faceted geometry linkage through shape_representation_relationship
+   [ ] regression test asset committed under regress/ (currently only the
+       ad-hoc src/conv/step/test_faceted_tetra.stp)
+
+ TIER 1 - CHEAP STUB->WORKING FIXES (geometry currently dropped)
+   [x] bezier_curve            -> delegate to BSplineCurve
+   [x] rational_bezier_curve   -> delegate to RationalBSplineCurve
+   [x] bezier_surface          -> delegate to BSplineSurface
+   [x] rational_bezier_surface -> delegate to RationalBSplineSurface
+   [ ] polyline                -> build ON polyline curve (wireframe/sets)
+
+ TIER 2 - TRIMMED / DERIVED SURFACES & CURVES (high value, still STUB)
+   [ ] rectangular_trimmed_surface  -> trim basis surface to u1/u2,v1/v2
+   [ ] surface_curve                -> delegate to curve_3d
+   [ ] seam_curve                   -> delegate to curve_3d
+   [ ] composite_curve              -> assemble segments into ON curve
+   [ ] composite_curve_on_surface   -> assemble on-surface segments
+   [ ] boundary_curve / outer_boundary_curve -> composite curve chain
+   [ ] offset_surface               -> offset basis_surface by distance
+   [ ] offset_curve_3d              -> offset basis_curve by distance
+   [ ] curve_replica / surface_replica -> apply transform to parent geometry
+   [ ] rectangular_composite_surface / surface_patch -> B-spline patch grid
+   [ ] curve_bounded_surface        -> trim basis surface by boundary curves
+   [ ] pcurve / bounded_pcurve / bounded_surface_curve -> parametric curves
+
+ TIER 3 - INSTANCING / ASSEMBLY REUSE
+   [x] representation_map + mapped_item -> import instanced geometry with
+       its mapping transform (shared sub-parts placed multiple times)
+       -- validated on crafted faceted assembly; see section 6.
+   [ ] geometric_curve_set -> register to the GeometricSet class (same
+       members) so curve/point sets import
+   [ ] FIX product-name uniqueness: pass 1 stores id2name_map[rep] using
+       CleanBRLCADName() WITHOUT uniquifying, so components that share a
+       product name (e.g. every part in moon_buggy_asm.stp is named
+       "Moon_Buggy") collide to a single object and their mapped_item
+       instances self-reference.  Uniquify per-object names to make such
+       real assemblies import.  (Separate from mapped_item; blocks it on
+       poorly-named files.)
+
+ TIER 4 - WIREFRAME & RARE TOPOLOGY (lower priority for a brep importer)
+   [ ] edge_based_wireframe_model / edge_based_wireframe_shape_representation
+   [ ] shell_based_wireframe_model / shell_based_wireframe_shape_representation
+   [ ] geometrically_bounded_wireframe_shape_representation
+       (import as sketch / pipe / BoT edges)
+   [ ] connected_edge_set, wire_shell, vertex_shell, oriented_open_shell,
+       oriented_path
+   [ ] point_on_curve, point_on_surface, point_replica
+   [ ] degenerate_pcurve, evaluated_degenerate_pcurve,
+       degenerate_toroidal_surface, reparametrised_composite_curve_segment
+
+ TIER 5 - HYGIENE
+   [ ] Curve/Surface/Conic/BoundedCurve/etc. abstract-base LoadONBrep stubs
+       print scary "not implemented" errors even though they are never
+       instantiated; downgrade to debug-level messages.
+   [ ] Consider whether a schema upgrade path (AP203e2 / AP242) is desired
+       to gain native tessellated geometry (triangulated_surface_set, etc.);
+       out of scope for the AP203 importer but noted for completeness.
+   [ ] Short-name (abbreviated) STEP files are not imported.  Older CATIA V4
+       exports (e.g. steptools clip.stp) use ISO-10303-21 SHORT_NAME forms
+       (APPCNT, ORGNZT, ...) instead of full entity names; the Factory keys
+       on full names so nothing is dispatched.  Add short->long name mapping.
+   [ ] Class-2 (geometrically_bounded_surface_shape_representation) import is
+       limited to b_spline_surface_with_knots inside geometric_set; files
+       whose class-2 geometry is trimmed/curve-bounded/elementary surfaces or
+       curves (e.g. steptools gear.stp) import nothing.  Extend the class-2
+       path to more surface/curve element types.
+
+--------------------------------------------------------------------------------
+ 4b. SAMPLE-FILE VALIDATION (real AP203 data)
+--------------------------------------------------------------------------------
+ Test corpus: 20 real AP203 files from steptools.com/docs/stpfiles/ap203 plus
+ 7 NIST AP203 files under db/nist, plus two crafted deterministic inputs
+ (src/conv/step/test_faceted_tetra.stp, test_mapped_assembly.stp).
+
+ Faceted (BoT) import - VALIDATED on real data:
+   cylcub.stp  -> cube (8 v/12 f) + faceted cylinder (32 v/60 f), bboxes ok
+   cubsomcy.stp-> faceted cube BoT + advanced-brep alternate, both imported
+   calo.stp    -> 5 BoTs      bernetl.stp -> 4 BoTs
+ BRep path - no regression (representative object/brep counts):
+   rear.stp 88 obj / 40 brep ; as1_pe.stp 12 ; block/bull/piston/valve/... 1 brep
+ mapped_item instancing - VALIDATED on crafted assembly (exact placement/bbox).
+
+ Known non-importing sample files (documented gaps, NOT regressions):
+   gear.stp  - class-2 with non-bspline surfaces (see TODO)
+   clip.stp  - CATIA V4 short-name entity form (see TODO)
+   moon_buggy_asm.stp - every component product is named "Moon_Buggy"
+              (name-collision bug) and its bspline component geometry partly
+              fails in the existing NURBS path; mapped_item logic runs but
+              collapses to one object.  See TIER 3 uniqueness TODO.
+
+--------------------------------------------------------------------------------
+ 5. ENTITY COVERAGE SUMMARY TABLE  (all AP203 / config_control_design entities)
+--------------------------------------------------------------------------------
+ Columns:
+   VERDICT  : FULL | PARTIAL | STUB | MISSING | METADATA  (see section 1)
+   LOAD     : real | inherited | stub | na  (geometry conversion path)
+   CLASS    : Y/N  (C++ entity class present & compiled)
+   ENTITY   : STEP entity name
+ (Generated from the automated audit; see notes appended per row.)
+
+ NOTE: this table records the BASELINE state captured by the audit, i.e.
+ BEFORE the fixes in section 3.  After this pass the following rows are
+ upgraded (table left as-is to preserve the original audit evidence):
+     bezier_curve, rational_bezier_curve          STUB    -> FULL (inherited)
+     bezier_surface, rational_bezier_surface      STUB    -> FULL (inherited)
+     faceted_brep                                 MISSING -> FULL (BoT)
+     faceted_brep_shape_representation            MISSING -> FULL (BoT)
+     poly_loop                                    MISSING -> FULL (BoT input)
+
+
+  === FULL (50) ===
+  VERDICT  LOAD      CLASS ENTITY                                     NOTE
+  --------------------------------------------------------------------------------------------------------------
+  FULL     real      Y     advanced_brep_shape_representation         Registers at line 42; Load() chains ShapeRepresentation::Load. Real geometry: OpenNurbsInterfaces.cpp:108 GetONBrep + LoadONBrep(128) iterate items (M
+  FULL     inherited Y     advanced_face                              AdvancedFace.cpp:94-97 defers to FaceSurface::LoadONBrep. This is the primary face type in the connected_face_set walk.
+  FULL     real      Y     axis2_placement_3d                         Axis2Placement3D.cpp:37 registers; Load parses axis+ref_direction and calls BuildAxis() to construct the 3D coordinate frame (Axis2Placement3D.cpp:218
+  FULL     real      Y     b_spline_curve                             BSplineCurve::LoadONBrep OpenNurbsInterfaces.cpp:201 builds a non-rational ON_NurbsCurve with generated uniform knots from control_points_list. Base f
+  FULL     real      Y     b_spline_curve_with_knots                  BSplineCurveWithKnots::LoadONBrep OpenNurbsInterfaces.cpp:246 honors explicit knots/multiplicities (open and closed cases) and CVs.
+  FULL     real      Y     b_spline_surface                           OpenNurbsInterfaces.cpp:562 builds ON_NurbsSurface, but SYNTHESIZES uniform knots from degree/size (ignores STEP knot data, which base b_spline_surfac
+  FULL     real      Y     b_spline_surface_with_knots                OpenNurbsInterfaces.cpp:650 builds ON_NurbsSurface honoring explicit u/v knots+multiplicities. GetONBrep at 624 flips the face.
+  FULL     real      Y     brep_with_voids                            BrepWithVoids.cpp:134 loads the outer manifold via ManifoldSolidBrep::LoadONBrep then iterates 'voids' (oriented_closed_shell list) into the brep. Sub
+  FULL     real      Y     cartesian_point                            CartesianPoint.cpp:128 LoadONBrep calls AddVertex; AddVertex (OpenNurbsInterfaces.cpp:1087) creates an ON_BrepVertex scaled by LocalUnits::length. Coo
+  FULL     real      Y     circle                                     Circle::LoadONBrep OpenNurbsInterfaces.cpp:2043 builds ON_Circle from plane/radius and emits NURBS arc via AddEdgeCurve.
+  FULL     inherited Y     closed_shell                               ClosedShell.cpp:98-101 defers entirely to ConnectedFaceSet::LoadONBrep (which builds all faces). Reached as the outer shell of manifold_solid_brep.
+  FULL     real      Y     conical_surface                            OpenNurbsInterfaces.cpp:1873 builds ON_Cone.RevSurfaceForm from radius/semi_angle. Reached via faces.
+  FULL     real      Y     connected_face_set                         ConnectedFaceSet.cpp:149 LoadONBrep iterates cfs_faces and calls each face's LoadONBrep - the core face-building loop. Base of closed_shell/open_shell
+  FULL     na        Y     conversion_based_unit                      ConversionBasedUnit.cpp:38 registers; loads name + MeasureWithUnit conversion_factor and forwards conversion factors (ConversionBasedUnit.cpp:58-74), 
+  FULL     real      Y     cylindrical_surface                        OpenNurbsInterfaces.cpp:1821 builds ON_Cylinder.RevSurfaceForm sized to bbox. Reached via faces.
+  FULL     real      Y     edge_curve                                 EdgeCurve::LoadONBrep at OpenNurbsInterfaces.cpp:1252 sets start/end vertices per same_sense, loads the 3D curve geometry, and creates an ON_BrepEdge 
+  FULL     inherited Y     edge_loop                                  EdgeLoop.cpp:101-106 defers to Path::LoadONBrep (multiple-inheritance from Loop+Path). Path builds all oriented edges + trimming curves. This is the s
+  FULL     real      Y     ellipse                                    Ellipse::LoadONBrep OpenNurbsInterfaces.cpp:2245 builds an ON ellipse/NURBS curve; registered at Ellipse.cpp:35.
+  FULL     real      Y     face                                       Face.cpp:35 registers; Face::LoadONBrep at OpenNurbsInterfaces.cpp:1163 iterates face bounds building ON loops. Abstract-ish base but does real bound-
+  FULL     real      Y     face_bound                                 FaceBound::LoadONBrep at OpenNurbsInterfaces.cpp:1206 creates ON_BrepLoop (inner/outer), sets loop index, loads the bound (path/edge_loop), and flips 
+  FULL     real      Y     face_outer_bound                           FaceOuterBound::LoadONBrep at OpenNurbsInterfaces.cpp:1181 calls SetOuter() then FaceBound::LoadONBrep, marking the loop as the outer boundary.
+  FULL     real      Y     face_surface                               FaceSurface::LoadONBrep at OpenNurbsInterfaces.cpp:1015 computes edge bounds, loads the surface geometry, calls AddFace, loads bounds, and applies rev
+  FULL     real      Y     geometric_set                              GeometricSet.cpp:134 LoadONBrep iterates its geometric_set_select elements, loading each. Explicitly consumed as a top-level at STEPWrapper.cpp:327.
+  FULL     real      Y     hyperbola                                  Hyperbola::LoadONBrep OpenNurbsInterfaces.cpp:2468 constructs a weighted rational Bezier/NURBS hyperbola arc from foci and endpoints.
+  FULL     real      Y     intersection_curve                         IntersectionCurve::LoadONBrep IntersectionCurve.cpp:94-107 sets Start/End on curve_3d and delegates to curve_3d->LoadONBrep, adopting its ON id (works
+  FULL     real      Y     item_defined_transformation                CORRECTION of prior PARTIAL/stub verdict. classPresent confirmed (ItemDefinedTransformation.cpp in stepg_SOURCES at CMakeLists.txt:94; .cpp/.h both ex
+  FULL     real      Y     line                                       Line::LoadONBrep OpenNurbsInterfaces.cpp:2738 builds an ON_LineCurve from start/end (trimmed or vertex) and AddEdgeCurve; SetParameterTrim at 2712.
+  FULL     real      Y     manifold_solid_brep                        ManifoldSolidBrep.cpp:123 LoadONBrep delegates to outer->LoadONBrep (the closed_shell). Reached transitively from advanced_brep_shape_representation v
+  FULL     na        Y     measure_with_unit                          MeasureWithUnit.cpp:38 registers; loads MeasureValue value_component + Unit unit_component (lines 105-149) and computes length/plane_angle/solid_angle
+  FULL     inherited Y     open_shell                                 OpenShell.cpp:98-101 defers to ConnectedFaceSet::LoadONBrep. Reached from shell_based_surface_model boundary iteration (OpenNurbsInterfaces.cpp:174).
+  FULL     real      Y     oriented_closed_shell                      OrientedClosedShell.cpp:126 loads its closed_shell_element and copies its ON id; used for brep_with_voids void shells, hence consumed transitively.
+  FULL     real      Y     oriented_edge                              OrientedEdge::LoadONBrep at OpenNurbsInterfaces.cpp:1295 loads start/end vertices and the underlying edge_element, inheriting its ON id. Held in every
+  FULL     real      Y     parabola                                   Parabola::LoadONBrep OpenNurbsInterfaces.cpp:2635 builds a rational Bezier/NURBS parabola from focus and endpoints; SetParameterTrim at 2586.
+  FULL     real      Y     path                                       Path::LoadONBrep at OpenNurbsInterfaces.cpp:1359 iterates oriented_edges building edges then calls LoadONTrimmingCurves (pullback trim construction). 
+  FULL     real      Y     plane                                      OpenNurbsInterfaces.cpp:1762 builds an ON_PlaneSurface sized to the trim bbox. Reached transitively via FaceSurface/AdvancedFace.
+  FULL     inherited Y     quasi_uniform_curve                        QuasiUniformCurve::LoadONBrep OpenNurbsInterfaces.cpp:324 delegates to BSplineCurve::LoadONBrep (real).
+  FULL     inherited Y     quasi_uniform_surface                      OpenNurbsInterfaces.cpp:777 simply defers to BSplineSurface::LoadONBrep (which synthesizes knots).
+  FULL     real      Y     rational_b_spline_curve                    RationalBSplineCurve::LoadONBrep OpenNurbsInterfaces.cpp:357 builds a rational ON_NurbsCurve applying per-CV weights; also base for rational uniform/q
+  FULL     real      Y     rational_b_spline_surface                  OpenNurbsInterfaces.cpp:807 builds rational ON_NurbsSurface with weighted 4d CVs; synthesizes uniform knots. Base rational form carries weights but no
+  FULL     real      Y     shell_based_surface_model                  LoadONBrep at OpenNurbsInterfaces.cpp:167 iterates sbsm_boundary (open_shells) into the brep. Explicitly consumed at STEPWrapper.cpp:478/674 and via m
+  FULL     na        Y     si_unit                                    SiUnit.cpp:35 registers Si_Unit; parses prefix/name enums and provides GetLength/PlaneAngle/SolidAngle ConversionFactor (SiUnit.cpp:110-179) that Glob
+  FULL     real      Y     spherical_surface                          OpenNurbsInterfaces.cpp:2903 builds ON_Sphere.RevSurfaceForm. Reached via faces.
+  FULL     real      Y     surface_of_linear_extrusion                OpenNurbsInterfaces.cpp:2774 chains SweptSurface then builds ON_SumSurface extruding the swept curve along extrusion_axis.
+  FULL     real      Y     surface_of_revolution                      OpenNurbsInterfaces.cpp:2856 chains SweptSurface then builds ON_RevSurface revolving swept curve about axis_position.
+  FULL     real      Y     toroidal_surface                           OpenNurbsInterfaces.cpp:2934 builds ON_Torus.RevSurfaceForm from major/minor radius. Reached via faces.
+  FULL     real      Y     trimmed_curve                              TrimmedCurve::LoadONBrep TrimmedCurve.cpp:213 resolves parameter- or point-trims, calls basis_curve->SetParameterTrim/SetPointTrim then basis_curve->L
+  FULL     inherited Y     uniform_curve                              UniformCurve::LoadONBrep OpenNurbsInterfaces.cpp:524 delegates to BSplineCurve::LoadONBrep (real).
+  FULL     inherited Y     uniform_surface                            OpenNurbsInterfaces.cpp:980 defers to BSplineSurface::LoadONBrep.
+  FULL     real      Y     vertex_loop                                VertexLoop::LoadONBrep at OpenNurbsInterfaces.cpp:2975 loads the loop vertex and builds a singular trim (for degenerate poles on spheres/cones). Reach
+  FULL     real      Y     vertex_point                               VertexPoint.cpp:122 LoadONBrep loads vertex_geometry (cartesian_point -> ON_BrepVertex via AddVertex, OpenNurbsInterfaces.cpp:1087) and records ON id.
+
+  === PARTIAL (9) ===
+  VERDICT  LOAD      CLASS ENTITY                                     NOTE
+  --------------------------------------------------------------------------------------------------------------
+  PARTIAL  stub      Y     axis1_placement                            CONFIRMED. Axis1Placement.cpp:37 registers via Factory::RegisterClass. Load (Axis1Placement.cpp:103-136) defers to Placement::Load for the location Ca
+  PARTIAL  stub      Y     axis2_placement_2d                         CONFIRMED with one refinement. Axis2Placement2D.cpp exists and is in CMakeLists (line 28) with header at line 249. It self-registers as "Axis2_Placeme
+  PARTIAL  stub      Y     cartesian_transformation_operator          CONFIRMED. CartesianTransformationOperator.cpp:37 registers via Factory::RegisterClass("Cartesian_Transformation_Operator"). Load() (lines 63-114) ful
+  PARTIAL  na        Y     composite_curve_segment                    CompositeCurveSegment.cpp:36 registers (subtype of FoundedItem, not a Curve); no LoadONBrep. Data (transition/same_sense/parent_curve) is parsed but n
+  PARTIAL  stub      Y     direction                                  CONFIRMED. Direction.cpp:36 registers via Factory::RegisterClass. Load() fully parses all three direction_ratios (Direction.cpp:72-83, values assigned
+  PARTIAL  inherited Y     geometrically_bounded_surface_shape_representation CONFIRMED with one CORRECTION. classPresent: GeometricallyBoundedSurfaceShapeRepresentation.cpp/.h exist and are compiled. factoryRegistered: yes, Fac
+  PARTIAL  inherited Y     manifold_surface_shape_representation      CONFIRMED (original classification correct). Class file present and in CMakeLists (CMakeLists.txt:108,329). Registers via Factory::RegisterClass at Ma
+  PARTIAL  real      Y     oriented_face                              CONFIRMED PARTIAL but CORRECTED reasoning. Class present (OrientedFace.cpp/.h; CMakeLists.txt:125,345), registers as "Oriented_Face" (OrientedFace.cpp
+  PARTIAL  inherited Y     vector                                     CONFIRMED with minor clarification. Vector.cpp:35 self-registers via Factory::RegisterClass. Vector::Load (Vector.cpp:57-87) parses the orientation Di
+
+  === STUB (28) ===
+  VERDICT  LOAD      CLASS ENTITY                                     NOTE
+  --------------------------------------------------------------------------------------------------------------
+  STUB     stub      Y     bezier_curve                               CONFIRMED. BezierCurve.cpp:35 registers as ENTITYNAME "Bezier_Curve" via Factory::RegisterClass; class is in CMakeLists stepg_SOURCES. BezierCurve.h:4
+  STUB     stub      Y     bezier_surface                             CONFIRMED STUB verdict, but the prior auditor's supporting note is factually WRONG. BezierSurface::LoadONBrep at OpenNurbsInterfaces.cpp:547-558 is in
+  STUB     stub      Y     boundary_curve                             CONFIRMED. BoundaryCurve.cpp exists and is in CMakeLists (lines 36/257); registers as "Boundary_Curve" (BoundaryCurve.cpp:34). Its LoadONBrep (Boundar
+  STUB     stub      Y     bounded_curve                              CONFIRMED with one correction. BoundedCurve.cpp:92-97 LoadONBrep prints 'not implemented for' and returns false; class is present in CMakeLists.txt:37
+  STUB     stub      Y     bounded_pcurve                             CONFIRMED. BoundedPCurve.cpp exists and is in CMakeLists stepg_SOURCES (CMakeLists.txt:38 .cpp, :259 .h). Registers as 'Bounded_Pcurve' via Factory::R
+  STUB     stub      Y     bounded_surface_curve                      CONFIRMED. BoundedSurfaceCurve.cpp exists and is in CMakeLists stepg_SOURCES (line 40). Registers via Factory::RegisterClass at line 34. LoadONBrep (l
+  STUB     stub      Y     cartesian_transformation_operator_3d       CORRECTION (verdict PARTIAL -> STUB). CartesianTransformationOperator3D.cpp:36 registers via Factory::RegisterClass. Load (line 62) defers to Cartesia
+  STUB     stub      Y     composite_curve                            CONFIRMED (with corrected citations). CompositeCurve.cpp/.h exist and are in CMakeLists (lines 50/271); registers as 'Composite_Curve' via Factory::Re
+  STUB     stub      Y     composite_curve_on_surface                 CONFIRMED STUB. CompositeCurveOnSurface.cpp:94-99 LoadONBrep explicitly prints 'not implemented for <entityname>' and returns false. There is NO worki
+  STUB     stub      Y     conic                                      CONFIRMED. Conic.cpp exists and is in CMakeLists (CMakeLists.txt:53); it self-registers via Factory::RegisterClass (Conic.cpp:35). Conic::LoadONBrep (
+  STUB     stub      Y     curve                                      CONFIRMED (with nuance). Curve.cpp:35 self-registers via Factory::RegisterClass("Curve", Curve::Create). Curve::LoadONBrep is defined ONLY in Curve.cp
+  STUB     stub      Y     curve_bounded_surface                      CONFIRMED. CurveBoundedSurface.cpp:35 self-registers via Factory::RegisterClass("Curve_Bounded_Surface"). Load() (lines 61-115) parses basis_surface (
+  STUB     stub      Y     curve_replica                              CONFIRMED. CurveReplica.cpp exists and is in stepg_SOURCES (CMakeLists.txt:61). Registers via Factory::RegisterClass("Curve_Replica", ...) at line 37.
+  STUB     stub      Y     edge                                       CONFIRMED (with a correction to the original note). Edge.cpp:35 registers via Factory::RegisterClass; Edge.cpp is in CMakeLists stepg_SOURCES (line 69
+  STUB     stub      Y     loop                                       CONFIRMED. Loop is an abstract topological base. Loop.cpp:34 registers via Factory::RegisterClass. Loop::LoadONBrep (Loop.cpp:103-107) prints 'not imp
+  STUB     stub      Y     offset_curve_3d                            CONFIRMED. OffsetCurve3D (OffsetCurve3D.h:36, subtype of Curve) is compiled in (CMakeLists.txt:119,340) and self-registers via Factory::RegisterClass 
+  STUB     stub      Y     offset_surface                             CONFIRMED. OffsetSurface.cpp:34 registers via Factory::RegisterClass("Offset_Surface"); present in CMakeLists stepg_SOURCES (lines 120/341). Load() (O
+  STUB     stub      Y     pcurve                                     CONFIRMED. PCurve.cpp exists and is in CMakeLists stepg_SOURCES (line 126); it self-registers via Factory::RegisterClass("Pcurve", PCurve::Create) at 
+  STUB     stub      Y     polyline                                   CONFIRMED. Polyline (Polyline.h:35) derives from BoundedCurve and declares no LoadONBrep/LoadONCurve/AddPolyLine override; grep of OpenNurbsInterfaces
+  STUB     stub      Y     rectangular_composite_surface              CONFIRMED. RectangularCompositeSurface.cpp:130-135 LoadONBrep() unconditionally prints 'not implemented for ...' to std::cerr and returns false; no ov
+  STUB     stub      Y     rectangular_trimmed_surface                CONFIRMED as STUB. RectangularTrimmedSurface.cpp:150-155 LoadONBrep unconditionally prints 'not implemented for <entityname>' and returns false; it is
+  STUB     stub      Y     seam_curve                                 CONFIRMED. SeamCurve.cpp:34 registers 'Seam_Curve' via Factory::RegisterClass; SeamCurve.cpp/.h are in CMakeLists stepg_SOURCES (lines 181/401). SeamC
+  STUB     inherited Y     solid_model                                CORRECTION to prior audit: the prior notes cite 'SolidModel.cpp:90-93 LoadONBrep prints not implemented', but that code (lines 88-95) is entirely COMM
+  STUB     stub      Y     surface_curve                              CONFIRMED verdict=STUB/loadStatus=stub/classPresent=true, but the auditor's rationale is CORRECTED. SurfaceCurve.cpp is compiled (CMakeLists.txt:197) 
+  STUB     stub      Y     surface_patch                              CONFIRMED. SurfacePatch.cpp exists and is in CMakeLists (stepg_SOURCES line 200, header line 420). Registers via Factory::RegisterClass (SurfacePatch.
+  STUB     stub      Y     surface_replica                            CONFIRMED. SurfaceReplica.cpp:135-140 LoadONBrep only prints 'not implemented for <entityname>' and returns false; header (SurfaceReplica.h:49) declar
+  STUB     stub      Y     topological_representation_item            CONFIRMED. TopologicalRepresentationItem.cpp:93-97 LoadONBrep prints 'not implemented for <entityname>' and returns false; this is the sole definition
+  STUB     stub      Y     vertex                                     CONFIRMED. Vertex.cpp:35 registers via Factory::RegisterClass. Neither Vertex.cpp nor OpenNurbsInterfaces.cpp defines Vertex::LoadONBrep (grep 'Vertex
+
+  === MISSING (101) ===
+  VERDICT  LOAD      CLASS ENTITY                                     NOTE
+  --------------------------------------------------------------------------------------------------------------
+  MISSING  na        N     action                                     No Action.cpp; not in CMakeLists stepg_SOURCES. Not referenced by STEPWrapper::convert() (grep found no admin refs) so never instantiated; Factory::Cr
+  MISSING  na        N     action_assignment                          No class file; not in CMakeLists; not walked by convert(). Abstract admin assignment supertype with no geometry role.
+  MISSING  na        N     action_directive                           No class file; not in CMakeLists; unreferenced by convert(). Non-geometric PDM entity.
+  MISSING  na        N     action_method                              No class file; not compiled; unreachable from convert() walk. Non-geometric.
+  MISSING  na        N     action_request_assignment                  No class file; not in stepg_SOURCES; not referenced anywhere in STEPWrapper. Admin assignment entity.
+  MISSING  na        N     action_request_solution                    No class file; not compiled; no geometry role; unreached by convert().
+  MISSING  na        N     action_request_status                      No class file; not in CMakeLists; non-geometric status/PDM entity, silently dropped.
+  MISSING  na        N     action_status                              No class file; not compiled; unreferenced by convert(). Admin status entity.
+  MISSING  na        N     address                                    No Address.cpp; not in stepg_SOURCES. Base admin/contact entity, no geometry; not walked by convert().
+  MISSING  na        N     approval                                   No class file; not compiled; convert() never references approval. Non-geometric PDM entity.
+  MISSING  na        N     approval_assignment                        No class file; not in CMakeLists; abstract admin assignment, no geometry, unreached.
+  MISSING  na        N     approval_date_time                         No class file; not compiled; date/approval admin entity with no geometry role.
+  MISSING  na        N     approval_person_organization               No class file; not in stepg_SOURCES; unreferenced by convert(). PDM approval linkage.
+  MISSING  na        N     approval_relationship                      No class file; not compiled; non-geometric admin relationship, silently dropped.
+  MISSING  na        N     approval_role                              No class file; not in CMakeLists; admin role label, no geometry; unreached by convert().
+  MISSING  na        N     approval_status                            No class file; not compiled; non-geometric status entity.
+  MISSING  na        N     area_measure_with_unit                     No AreaMeasureWithUnit.cpp; no Area_Measure_With_Unit registration. MeasureValue.cpp lacks GetAreaMeasure. Area measures are silently unhandled.
+  MISSING  na        N     calendar_date                              No class file; not in stepg_SOURCES; date entity (subtype of date), no geometry; unreached.
+  MISSING  na        N     cc_design_approval                         No class file; not compiled; config_control_design approval assignment, no geometry.
+  MISSING  na        N     cc_design_certification                    No class file; not in CMakeLists; CC-design certification assignment, non-geometric.
+  MISSING  na        N     cc_design_contract                         No class file; not compiled; CC-design contract assignment, no geometry role.
+  MISSING  na        N     cc_design_date_and_time_assignment         No class file; not in stepg_SOURCES; CC-design date/time assignment, non-geometric.
+  MISSING  na        N     cc_design_person_and_organization_assignment No class file; not compiled; CC-design person/org assignment, no geometry.
+  MISSING  na        N     cc_design_security_classification          No class file; not in CMakeLists; CC-design security classification assignment, non-geometric.
+  MISSING  na        N     cc_design_specification_reference          No class file; not compiled; CC-design document/spec reference assignment, no geometry.
+  MISSING  na        N     certification                              No class file; not in stepg_SOURCES; non-geometric PDM certification entity, unreached by convert().
+  MISSING  na        N     certification_assignment                   No class file; not compiled; abstract admin assignment, no geometry.
+  MISSING  na        N     certification_type                         No class file; not in CMakeLists; type/label admin entity, non-geometric.
+  MISSING  na        N     change                                     No Change.cpp; not compiled; change (action_assignment subtype) PDM entity, no geometry; unreached.
+  MISSING  na        N     change_request                             No class file; not in stepg_SOURCES; change_request PDM entity, non-geometric.
+  MISSING  na        N     configuration_design                       No class file; not compiled; configuration management entity, no geometry; not walked by convert().
+  MISSING  na        N     configuration_effectivity                  No class file; not in CMakeLists; effectivity subtype, non-geometric config data.
+  MISSING  na        N     configuration_item                         No class file; not compiled; configuration item PDM entity, no geometry.
+  MISSING  na        N     connected_edge_set                         No ConnectedEdgeSet.cpp; unreferenced. Only mentioned as a comment in Factory.cpp:118 listing the topological_representation_item ONEOF. Wireframe top
+  MISSING  na        N     contract                                   No Contract.cpp; not in stepg_SOURCES; contract PDM entity, non-geometric, unreached.
+  MISSING  na        N     contract_assignment                        No class file; not compiled; abstract admin assignment, no geometry.
+  MISSING  na        N     contract_type                              No class file; not in CMakeLists; type/label admin entity, non-geometric.
+  MISSING  na        N     coordinated_universal_time_offset          No class file; not compiled; time-zone offset admin entity, no geometry; unreached.
+  MISSING  na        N     date                                       No Date.cpp; not in stepg_SOURCES; abstract date supertype, non-geometric.
+  MISSING  na        N     date_and_time                              No class file; not compiled; date/time admin entity, no geometry; unreached by convert().
+  MISSING  na        N     date_and_time_assignment                   No class file; not in CMakeLists; abstract admin assignment, non-geometric.
+  MISSING  na        N     date_time_role                             No class file; not compiled; role label admin entity, no geometry.
+  MISSING  na        N     dated_effectivity                          No class file; not in stepg_SOURCES; effectivity subtype, non-geometric config data.
+  MISSING  na        N     degenerate_pcurve                          Defined in schema (ap203.exp:1201, subtype of point) but no class file and not in CMakeLists; unmapped in Factory, dropped with a log message.
+  MISSING  na        N     degenerate_toroidal_surface                Present only in ap203.exp:1213; no .cpp/.h and not in CMakeLists. No Factory entry, so any instance would fall through to a generic/unregistered handl
+  MISSING  na        N     directed_action                            No class file; not compiled; action subtype PDM entity, no geometry; unreached.
+  MISSING  na        N     document                                   No Document.cpp; not in stepg_SOURCES; document PDM entity, non-geometric, not walked by convert().
+  MISSING  na        N     document_reference                         No class file; not compiled; document reference admin entity, no geometry.
+  MISSING  na        N     document_relationship                      No class file; not in CMakeLists; document relationship admin entity, non-geometric.
+  MISSING  na        N     document_type                              No class file; not compiled; type/label admin entity, no geometry.
+  MISSING  na        N     document_usage_constraint                  No class file; not in stepg_SOURCES; document usage constraint admin entity, non-geometric.
+  MISSING  na        N     document_with_class                        No class file; not compiled; document subtype PDM entity, no geometry; unreached.
+  MISSING  na        N     edge_based_wireframe_model                 No EdgeBasedWireframeModel.cpp; unreferenced anywhere. Wireframe models are not imported.
+  MISSING  na        N     edge_based_wireframe_shape_representation  Schema entity present (ap203.exp:1301) but no class and not in stepg_SOURCES; unregistered so Factory returns NULL and it is never walked. Edge-based 
+  MISSING  na        N     effectivity                                No Effectivity.cpp; not in stepg_SOURCES; abstract effectivity supertype, non-geometric config-mgmt data.
+  MISSING  na        N     evaluated_degenerate_pcurve                Defined in schema (ap203.exp:1396, subtype of degenerate_pcurve) but no class file, absent from CMakeLists; unmapped in Factory.
+  MISSING  na        N     executed_action                            No class file; not compiled; action subtype PDM entity, no geometry; unreached by convert().
+  MISSING  na        N     faceted_brep                               No FacetedBrep.cpp exists and no reference to faceted_brep anywhere in step-g sources. Factory would emit 'Factory Method not mapped: Faceted_Brep' if
+  MISSING  na        N     faceted_brep_shape_representation          Schema entity present (ap203.exp:1436) but no C++ class exists and it is not in stepg_SOURCES. Factory::CreateObject returns NULL for unregistered nam
+  MISSING  na        N     geometric_curve_set                        No GeometricCurveSet.cpp; unreferenced. geometric_curve_set is a subtype of geometric_set restricting elements to curves/points; without its own class
+  MISSING  na        N     geometrically_bounded_wireframe_shape_representation Schema entity present (ap203.exp:1565) but no class and not in stepg_SOURCES; Factory returns NULL and convert() never references it. Wireframe (curve
+  MISSING  na        N     local_time                                 No class file; not compiled; time-of-day admin entity, no geometry; unreached.
+  MISSING  na        N     lot_effectivity                            No class file; not in CMakeLists; effectivity subtype, non-geometric config data.
+  MISSING  na        N     mapped_item                                No MappedItem.cpp/.h; not in CMakeLists; zero references in step-g. Any mapped_item in a representation would print "Factory Method not mapped: Mapped
+  MISSING  na        N     mass_measure_with_unit                     No MassMeasureWithUnit.cpp exists; grep for Mass_Measure_With_Unit finds no registration. If encountered, Factory would fall back to base Measure_With
+  MISSING  na        N     ordinal_date                               No class file; not in stepg_SOURCES; date subtype admin entity, non-geometric.
+  MISSING  na        N     organization                               No Organization.cpp; not compiled; organization PDM entity, non-geometric, not walked by convert().
+  MISSING  na        N     organization_relationship                  No class file; not in CMakeLists; org relationship admin entity, no geometry.
+  MISSING  na        N     organizational_address                     No class file; not compiled; address subtype admin entity, non-geometric.
+  MISSING  na        N     organizational_project                     No class file; not in stepg_SOURCES; project PDM entity, no geometry; unreached.
+  MISSING  na        N     oriented_open_shell                        No OrientedOpenShell.cpp; not in stepg_SOURCES and unreferenced. (Note: oriented_open_shell is not a standard AP203e1 config_control_design entity, so
+  MISSING  na        N     oriented_path                              No OrientedPath.cpp; unreferenced. (oriented_path is not part of AP203e1 config_control_design, so it should not appear in valid input.)
+  MISSING  na        N     outer_boundary_curve                       Referenced in schema (ap203.exp:1140, subtype of boundary_curve) but no class file and not in CMakeLists; CreateObject logs 'Factory Method not mapped
+  MISSING  na        N     person                                     No Person.cpp; not compiled; person PDM entity, non-geometric, not referenced by convert().
+  MISSING  na        N     person_and_organization                    No class file; not in CMakeLists; person/org pairing PDM entity, no geometry.
+  MISSING  na        N     person_and_organization_assignment         No class file; not compiled; abstract admin assignment, non-geometric.
+  MISSING  na        N     person_and_organization_role               No class file; not in stepg_SOURCES; role label admin entity, no geometry.
+  MISSING  na        N     personal_address                           No class file; not compiled; address subtype admin entity, non-geometric.
+  MISSING  na        N     point_on_curve                             No PointOnCurve.cpp/.h; not in CMakeLists; zero references anywhere in step-g. Factory::CreateObject would print "Factory Method not mapped: Point_On_
+  MISSING  na        N     point_on_surface                           No PointOnSurface.cpp/.h; not in CMakeLists; no references. Would fall through Factory as an unmapped method (Factory.cpp:137).
+  MISSING  na        N     point_replica                              No PointReplica.cpp/.h; not in CMakeLists; no references. Unmapped in Factory (Factory.cpp:137).
+  MISSING  na        N     poly_loop                                  No PolyLoop.cpp; unreferenced. poly_loop (subtype of loop, holds polygon of points) is used by faceted_brep faces, which is also unsupported - so face
+  MISSING  na        N     promissory_usage_occurrence                No class file, no registration, not in CMakeLists. Subtype of assembly_component_usage; not handled.
+  MISSING  na        N     quantified_assembly_component_usage        No class file, no registration; subtype of assembly_component_usage that carries a quantity. If present in a file its subtype instance would still be 
+  MISSING  na        N     reparametrised_composite_curve_segment     In schema at ap203.exp:2388 (subtype of composite_curve_segment) but no class file exists and it is absent from CMakeLists; CreateObject would log 'Fa
+  MISSING  na        N     representation_map                         No RepresentationMap.cpp/.h; not in CMakeLists; no references. Needed as the mapping_source for mapped_item; without it mapped/instanced geometry is s
+  MISSING  na        N     security_classification                    No class file; not in CMakeLists; security classification PDM entity, no geometry; unreached by convert().
+  MISSING  na        N     security_classification_assignment         No class file; not compiled; abstract admin assignment, non-geometric.
+  MISSING  na        N     security_classification_level              No class file; not in stepg_SOURCES; level/label admin entity, no geometry.
+  MISSING  na        N     serial_numbered_effectivity                No class file; not compiled; effectivity subtype, non-geometric config data.
+  MISSING  na        N     shell_based_wireframe_model                No ShellBasedWireframeModel.cpp; unreferenced. Wireframe models not supported.
+  MISSING  na        N     shell_based_wireframe_shape_representation Schema entity present (ap203.exp:2525) but no class and not in stepg_SOURCES; unregistered, never consumed by convert(). Shell-based wireframe models 
+  MISSING  na        N     solid_angle_measure_with_unit              No SolidAngleMeasureWithUnit.cpp; no Solid_Angle_Measure_With_Unit registration, though MeasureValue.cpp:105 does implement GetSolidAngleMeasure and M
+  MISSING  na        N     specified_higher_usage_occurrence          No class file, no registration; a subtype of assembly_component_usage used for deep assembly occurrence paths. Absent so such occurrences are not walk
+  MISSING  na        N     start_request                              No class file; not in CMakeLists; action_request assignment PDM entity, no geometry; unreached.
+  MISSING  na        N     start_work                                 No class file; not compiled; action assignment PDM entity, non-geometric.
+  MISSING  na        N     versioned_action_request                   No class file; not in stepg_SOURCES; action request PDM entity, no geometry; unreached by convert().
+  MISSING  na        N     vertex_shell                               No VertexShell.cpp; only appears as a comment in Factory.cpp:117 topological_representation_item ONEOF list. Not imported.
+  MISSING  na        N     volume_measure_with_unit                   No VolumeMeasureWithUnit.cpp; no Volume_Measure_With_Unit registration; MeasureValue lacks GetVolumeMeasure. Silently dropped.
+  MISSING  na        N     week_of_year_and_day_date                  No class file; not compiled; date subtype admin entity, non-geometric, silently dropped.
+  MISSING  na        N     wire_shell                                 No WireShell.cpp; only a comment in Factory.cpp:118. Not imported.
+
+  === METADATA (65) ===
+  VERDICT  LOAD      CLASS ENTITY                                     NOTE
+  --------------------------------------------------------------------------------------------------------------
+  METADATA na        Y     application_context                        ApplicationContext.cpp:34 registers; LoadONBrep :104-106 not implemented. Top-level admin context, no geometry.
+  METADATA na        Y     application_context_element                ApplicationContextElement.cpp:35 registers; base class for ProductContext/ProductDefinitionContext; LoadONBrep :119-121 not implemented. Non-geometric
+  METADATA na        N     application_protocol_definition            No class file, no registration, not in CMakeLists. Declares the AP203 protocol/edition; pure admin metadata with no geometry.
+  METADATA na        Y     area_unit                                  AreaUnit.cpp:34 registers; empty NamedUnit subclass (AreaUnit.h:32). No geometry/scale role.
+  METADATA na        Y     assembly_component_usage                   AssemblyComponentUsage.cpp:34 registers; subclass of ProductDefinitionUsage; LoadONBrep :104-106 not implemented. Base of NAUO used in assembly hierar
+  METADATA na        N     assembly_component_usage_substitute        No class file, no registration, not in CMakeLists. Substitution admin relationship, no geometry.
+  METADATA na        Y     bounded_surface                            Abstract base (BoundedSurface.cpp:33). LoadONBrep at line 93 prints not-implemented but is never called directly; concrete b_spline/trimmed/etc subtyp
+  METADATA stub      Y     context_dependent_shape_representation     Registers at line 38; Load() (line 187) parses the representation_relationship + rep product defs. convert() (STEPWrapper.cpp:574-657) uses it to buil
+  METADATA na        Y     context_dependent_unit                     ContextDependentUnit.cpp:34 registers; loads only 'name' string (line 70). No conversion factor; carries no geometry. Reachable via units select but c
+  METADATA inherited Y     definitional_representation                Registers at line 34; Load() (line 53) defers to Representation::Load. Referenced by PCurve/BoundedPCurve/PCurveOrSurface/SurfaceCurve (grep) so reach
+  METADATA na        Y     design_context                             DesignContext.cpp:33 registers; subclass of ProductDefinitionContext; LoadONBrep :93-95 not implemented. Life-cycle stage context, no geometry.
+  METADATA na        N     design_make_from_relationship              No class file, no registration. Make-from PDM relationship (subtype of product_definition_relationship), no geometry.
+  METADATA na        Y     dimensional_exponents                      DimensionalExponents.cpp:34 registers; loads all 7 exponent reals (lines 76-82). Non-geometric; referenced by NamedUnit.dimensions. Values parsed but 
+  METADATA na        Y     elementary_surface                         Abstract base (ElementarySurface.cpp:34). Its LoadONBrep at line 111 prints not-implemented but is never called directly; concrete plane/cylinder/etc 
+  METADATA na        Y     founded_item                               FoundedItem.cpp:34 registers; FoundedItem.h:32 derives from STEPEntity with only Print/Load (no LoadONBrep) - a non-geometric abstract base. Not a con
+  METADATA na        Y     functionally_defined_transformation        FunctionallyDefinedTransformation.cpp:34 registers; derives from Transformation (FunctionallyDefinedTransformation.h:34), loads name/description only.
+  METADATA na        Y     geometric_representation_context           Registers at line 34; Load() (line 55) parses coordinate_space_dimension. Loaded as a context of every shape rep (Representation.cpp:199). Supplies di
+  METADATA stub      Y     geometric_representation_item              GeometricRepresentationItem.cpp:34 registers; abstract base of nearly all geometry entities, loads via RepresentationItem (line 60). Provides the defa
+  METADATA na        Y     global_uncertainty_assigned_context        Registers at line 37; Load() (line 58) parses uncertainty measures. Loaded as context (Representation.cpp:210/221). Supplies tolerance/uncertainty met
+  METADATA na        Y     global_unit_assigned_context               Registers at line 53; Load() (line 157) parses the units[] list; drives LocalUnits::length/planeangle/solidangle conversion factors that convert_Write
+  METADATA na        Y     length_measure_with_unit                   LengthMeasureWithUnit.cpp:38 registers; thin MeasureWithUnit subclass adding nothing (lines 56-71). Provides the length conversion pairing used by Con
+  METADATA na        Y     length_unit                                LengthUnit.cpp:34 registers; pure NamedUnit subclass with no added attributes (line 60). It is a marker mixin; actual length scaling comes from the co
+  METADATA na        Y     mass_unit                                  MassUnit.cpp:34 registers; empty NamedUnit subclass (MassUnit.h:32). Mass plays no role in BREP geometry/scale; only reachable if referenced, contribu
+  METADATA na        Y     mechanical_context                         MechanicalContext.cpp:33 registers; subclass of ProductContext; LoadONBrep :93-95 not implemented. Discipline context tag, no geometry.
+  METADATA na        Y     named_unit                                 NamedUnit.cpp:35 registers Named_Unit; abstract supertype of all named units carrying a DimensionalExponents ref (NamedUnit.cpp:75-82). No geometry ro
+  METADATA na        Y     next_assembly_usage_occurrence             NextAssemblyUsageOccurrence.cpp:35 registers; subclass of AssemblyComponentUsage; LoadONBrep :116-118 not implemented. NAUO drives assembly parent/chi
+  METADATA na        Y     parametric_representation_context          Registers at line 34; Load() (line 53) defers to RepresentationContext. Non-geometric context; loaded as context_of_items via Representation::Load (Re
+  METADATA inherited Y     placement                                  Placement.cpp:35 registers as "Placement"; abstract supertype loading the 'location' cartesian_point (Placement.cpp:86). No LoadONBrep override, inher
+  METADATA na        Y     plane_angle_measure_with_unit              PlaneAngleMeasureWithUnit.cpp:38 registers Plane_Angle_Measure_With_Unit; thin MeasureWithUnit subclass. Supplies plane-angle conversion via inherited
+  METADATA na        Y     plane_angle_unit                           PlaneAngleUnit.cpp:34 registers; marker NamedUnit subclass. Angle scaling is delivered by the paired SiUnit (radian) via GlobalUnitAssignedContext.Get
+  METADATA inherited Y     point                                      Point.cpp:35 registers as "Point"; abstract supertype of cartesian_point. Has no LoadONBrep of its own; AddVertex is a warning stub (OpenNurbsInterfac
+  METADATA na        Y     product                                    Product.cpp:35 registers; LoadONBrep at :145-147 prints 'not implemented' (non-geometric). Reached transitively via shape_definition_representation ch
+  METADATA na        Y     product_category                           ProductCategory.cpp:34 registers; LoadONBrep :114-116 not implemented. Pure PDM classification, not referenced by convert()'s geometry walk.
+  METADATA na        N     product_category_relationship              No ProductCategoryRelationship.cpp exists and no Factory registration; not in stepg_SOURCES. Non-geometric PDM relationship, silently dropped but carr
+  METADATA na        N     product_concept                            No class file, no registration. Configuration-management concept entity with no geometry.
+  METADATA na        N     product_concept_context                    No class file, no registration. Non-geometric application-context specialization for product concepts.
+  METADATA na        Y     product_context                            ProductContext.cpp:33 registers; subclass of ApplicationContextElement; LoadONBrep :103-105 not implemented. Parsed for hierarchy context only.
+  METADATA na        Y     product_definition                         ProductDefinition.cpp:37 registers; LoadONBrep :174-176 not implemented. Central PDM node: reached from shape_definition_representation and used by co
+  METADATA na        Y     product_definition_context                 ProductDefinitionContext.cpp:33 registers; subclass of ApplicationContextElement; LoadONBrep :103-105 not implemented. Non-geometric.
+  METADATA na        N     product_definition_effectivity             No class file, no registration, not in CMakeLists. Effectivity/validity admin data, no geometry.
+  METADATA na        Y     product_definition_formation               ProductDefinitionFormation.cpp:35 registers; LoadONBrep :148-150 not implemented. Version node in the shape_definition_representation chain (STEPWrapp
+  METADATA na        Y     product_definition_formation_with_specified_source ProductDefinitionFormationWithSpecifiedSource.cpp:34 registers; subclass of ProductDefinitionFormation; LoadONBrep :131-133 not implemented. Appears i
+  METADATA na        Y     product_definition_relationship            ProductDefinitionRelationship.cpp:35 registers; LoadONBrep :173-175 not implemented. Base for assembly usage occurrences that feed the comb hierarchy 
+  METADATA na        Y     product_definition_shape                   ProductDefinitionShape.cpp:36 registers; subclass of PropertyDefinition; LoadONBrep :121-123 not implemented. Links product_definition to its shape re
+  METADATA na        Y     product_definition_usage                   ProductDefinitionUsage.cpp:34 registers; subclass of ProductDefinitionRelationship; LoadONBrep :93-95 not implemented. Abstract assembly-usage base re
+  METADATA inherited Y     product_definition_with_associated_documents ProductDefinitionWithAssociatedDocuments.cpp:37 registers; subclass of ProductDefinition with no LoadONBrep override, so it inherits ProductDefinition
+  METADATA na        Y     product_related_product_category           ProductRelatedProductCategory.cpp:35 registers; subclass of ProductCategory; LoadONBrep :139-141 not implemented. PDM classification, no geometry.
+  METADATA stub      Y     property_definition                        Registers at line 35; Load() (line 91) parses name/description/definition (characterized_definition). LoadONBrep stub (line 151). PDM/admin entity rea
+  METADATA stub      Y     property_definition_representation         Registers at line 42; Load() (line 120) parses definition + used_representation. Base of ShapeDefinitionRepresentation (ShapeDefinitionRepresentation.
+  METADATA na        Y     representation                             Representation.cpp:45 registers; Load() (line 154) parses items[] + context_of_items[] into containers. No LoadONBrep of its own; it is the abstract d
+  METADATA na        Y     representation_context                     RepresentationContext.cpp:34 registers; Load() (line 59) parses context id/type. Non-geometric; loaded as context_of_items by Representation::Load (Re
+  METADATA stub      Y     representation_item                        RepresentationItem.cpp:34 registers; its virtual LoadONBrep (line 114) is the base stub that prints 'not implemented' and returns false. Concrete geom
+  METADATA stub      Y     representation_relationship                RepresentationRelationship.cpp:35 registers; Load() (line 81) parses rep_1/rep_2 refs. LoadONBrep (line 151) is a not-implemented stub. Base of ShapeR
+  METADATA stub      Y     representation_relationship_with_transformation Registers at line 37; Load() (line 93) chains RepresentationRelationship::Load and parses transformation_operator. LoadONBrep stub (line 161). Used fo
+  METADATA stub      Y     shape_aspect                               Registers at line 35; Load() (line 90) parses name/description/of_shape/product_definitional. LoadONBrep stub (line 152). Reached transitively via sha
+  METADATA stub      Y     shape_aspect_relationship                  Registers at line 35; Load() (line 91) parses relating/related shape_aspect. LoadONBrep stub (line 166). Admin relationship between shape aspects; par
+  METADATA na        Y     shape_definition_representation            Registers at line 36; Load() (line 71) chains PropertyDefinitionRepresentation::Load. Top-level driver entity: convert() (STEPWrapper.cpp:250,687) ite
+  METADATA inherited Y     shape_representation                       ShapeRepresentation.cpp:41 registers; Load() (line 64) defers to Representation::Load. It is the container the walk instantiates (STEPWrapper.cpp:300 
+  METADATA na        Y     shape_representation_relationship          Registers at line 34; Load() (line 57) chains RepresentationRelationship::Load. convert() keys on it (STEPWrapper.cpp:371,511,727) to attach an Advanc
+  METADATA na        Y     solid_angle_unit                           SolidAngleUnit.cpp:34 registers; marker NamedUnit subclass. Solid-angle factor handled by paired SiUnit (steradian).
+  METADATA na        N     supplied_part_relationship                 No class file, no registration. Supplier PDM relationship, no geometry.
+  METADATA na        Y     surface                                    Abstract base (Surface.cpp:32 registers). Surface::Load only chains GeometricRepresentationItem; no LoadONBrep of its own. Concrete subtypes do the ge
+  METADATA na        Y     swept_surface                              Abstract base (SweptSurface.cpp:34). Its LoadONBrep (OpenNurbs line ~112) only loads swept_curve into the brep; concrete extrusion/revolution subclass
+  METADATA na        Y     uncertainty_measure_with_unit              UncertaintyMeasureWithUnit.cpp:36 registers; extends MeasureWithUnit adding name/description (lines 71-72). Represents geometric tolerance; parsed int
+  METADATA na        Y     volume_unit                                VolumeUnit.cpp:34 registers; empty NamedUnit subclass (VolumeUnit.h:32). No geometry/scale role.
+
+================================================================================
+ END OF AP203 IMPORT REVIEW
+================================================================================

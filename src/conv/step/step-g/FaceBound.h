@@ -71,6 +71,9 @@ public:
     void SetFaceIndex(int index) {
 	ON_face_index = index;
     };
+    Loop *GetBound() const {
+	return bound;
+    };
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

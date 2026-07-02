@@ -57,6 +57,9 @@ public:
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     virtual void ReverseFace();
+    const LIST_OF_FACE_BOUNDS &Bounds() const {
+	return bounds;
+    };
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

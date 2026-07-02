@@ -1,4 +1,4 @@
-/*                 ConnectedFaceSet.h
+/*                 FacetedBrepShapeRepresentation.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2026 United States Government as represented by
@@ -17,48 +17,42 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/ConnectedFaceSet.h
+/** @file step/FacetedBrepShapeRepresentation.h
  *
- * Class definition used to convert STEP "ConnectedFaceSet" to BRL-CAD BREP
- * structures.
+ * Class definition used to convert STEP "FacetedBrepShapeRepresentation"
+ * to BRL-CAD structures.
  *
  */
 
-#ifndef CONV_STEP_STEP_G_CONNECTEDFACESET_H
-#define CONV_STEP_STEP_G_CONNECTEDFACESET_H
+#ifndef CONV_STEP_STEP_G_FACETEDBREPSHAPEREPRESENTATION_H
+#define CONV_STEP_STEP_G_FACETEDBREPSHAPEREPRESENTATION_H
 
-#include "TopologicalRepresentationItem.h"
+#include "common.h"
 
-// forward declaration of class
-class Face;
-typedef list<Face *> LIST_OF_FACES;
+#include "ShapeRepresentation.h"
 
-class ConnectedFaceSet : public TopologicalRepresentationItem
+class FacetedBrepShapeRepresentation : public ShapeRepresentation
 {
 private:
-    static string entityname;
+    static std::string entityname;
     static EntityInstanceFunc GetInstance;
 
-protected:
-    LIST_OF_FACES cfs_faces;
-
 public:
-    ConnectedFaceSet();
-    virtual ~ConnectedFaceSet();
-    ConnectedFaceSet(STEPWrapper *sw, int step_id);
+    FacetedBrepShapeRepresentation();
+    FacetedBrepShapeRepresentation(STEPWrapper *sw, int step_id);
+    virtual ~FacetedBrepShapeRepresentation();
+
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-    virtual bool LoadONBrep(ON_Brep *brep);
-    virtual void Print(int level);
-    virtual void ReverseFaceSet();
-    const LIST_OF_FACES &Faces() const {
-	return cfs_faces;
+    std::string Name() {
+	return name;
     };
+    virtual void Print(int level);
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONV_STEP_STEP_G_CONNECTEDFACESET_H */
+#endif /* CONV_STEP_STEP_G_FACETEDBREPSHAPEREPRESENTATION_H */
 
 /*
  * Local Variables:

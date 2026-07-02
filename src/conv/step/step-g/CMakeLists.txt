@@ -79,6 +79,8 @@ set(
   FaceBound.cpp
   FaceOuterBound.cpp
   FaceSurface.cpp
+  FacetedBrep.cpp
+  FacetedBrepShapeRepresentation.cpp
   Factory.cpp
   FoundedItem.cpp
   FunctionallyDefinedTransformation.cpp
@@ -106,6 +108,7 @@ set(
   LuminousIntensityUnit.cpp
   ManifoldSolidBrep.cpp
   ManifoldSurfaceShapeRepresentation.cpp
+  MappedItem.cpp
   MassContextDependentUnit.cpp
   MassConversionBasedUnit.cpp
   MassSiUnit.cpp
@@ -136,6 +139,7 @@ set(
   PlaneAngleSiUnit.cpp
   PlaneAngleUnit.cpp
   Point.cpp
+  PolyLoop.cpp
   Polyline.cpp
   Product.cpp
   ProductCategory.cpp
@@ -174,6 +178,7 @@ set(
   Representation.cpp
   RepresentationContext.cpp
   RepresentationItem.cpp
+  RepresentationMap.cpp
   RepresentationRelationship.cpp
   RepresentationRelationshipWithTransformation.cpp
   RepresentedDefinition.cpp
@@ -300,6 +305,8 @@ set(
   FaceBound.h
   FaceOuterBound.h
   FaceSurface.h
+  FacetedBrep.h
+  FacetedBrepShapeRepresentation.h
   Factory.h
   FoundedItem.h
   FunctionallyDefinedTransformation.h
@@ -327,6 +334,7 @@ set(
   LuminousIntensityUnit.h
   ManifoldSolidBrep.h
   ManifoldSurfaceShapeRepresentation.h
+  MappedItem.h
   MassContextDependentUnit.h
   MassConversionBasedUnit.h
   MassSiUnit.h
@@ -356,6 +364,7 @@ set(
   PlaneAngleSiUnit.h
   PlaneAngleUnit.h
   Point.h
+  PolyLoop.h
   Polyline.h
   Product.h
   ProductCategory.h
@@ -394,6 +403,7 @@ set(
   Representation.h
   RepresentationContext.h
   RepresentationItem.h
+  RepresentationMap.h
   RepresentationRelationship.h
   RepresentationRelationshipWithTransformation.h
   RepresentedDefinition.h

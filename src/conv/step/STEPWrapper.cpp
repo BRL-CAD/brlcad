@@ -45,6 +45,11 @@
 #include "SurfacePatch.h"
 #include "LocalUnits.h"
 #include "ManifoldSurfaceShapeRepresentation.h"
+#include "FacetedBrep.h"
+#include "FacetedBrepShapeRepresentation.h"
+#include "MappedItem.h"
+#include "RepresentationMap.h"
+#include "Representation.h"
 #include "ContextDependentShapeRepresentation.h"
 #include "ProductDefinition.h"
 #include "ShapeDefinitionRepresentation.h"
@@ -223,6 +228,78 @@ convert_WriteBSpline(
 
 	return 0;
     }
+}
+
+int
+convert_WriteBoT(
+	FacetedBrep *fBrep,
+	BRLCADWrapper *dot_g,
+	std::string *name,
+	int dry_run)
+{
+    if (dry_run) return 0;
+
+    std::vector<fastf_t> vertices;
+    std::vector<int> faces;
+    if (!fBrep->GetBoT(vertices, faces)) {
+	bu_log("WARNING: no faceted mesh geometry produced for %s\n", name->c_str());
+	return 1;
+    }
+
+    mat_t mat;
+    MAT_IDN(mat);
+
+    if (!dot_g->WriteBoT(*name, vertices, faces, mat)) {
+	bu_log("WARNING: unable to write faceted BoT mesh %s\n", name->c_str());
+	return 1;
+    }
+
+    return 0;
+}
+
+/* Build the BRL-CAD member matrix that places geometry defined about the
+ * 'from' datum (mapping_origin) at the 'to' datum (mapping_target).  Mirrors
+ * the transform convention used for context_dependent_shape_representation
+ * assemblies.  A NULL axis is treated as the identity placement.
+ */
+static void
+assembly_placement_matrix(mat_t mat, Axis2Placement3D *to, Axis2Placement3D *from)
+{
+    mat_t to_mat, from_mat, toinv_mat;
+    double translate_to[3] = {0.0, 0.0, 0.0};
+    double translate_from[3] = {0.0, 0.0, 0.0};
+
+    MAT_IDN(mat);
+    MAT_IDN(from_mat);
+    MAT_IDN(toinv_mat);
+
+    if (from) {
+	const double *fromXaxis = from->GetXAxis();
+	const double *fromYaxis = from->GetYAxis();
+	const double *fromZaxis = from->GetZAxis();
+	VMOVE(translate_from, from->GetOrigin());
+	VSCALE(translate_from, translate_from, -LocalUnits::length);
+	VMOVE(&from_mat[0], fromXaxis);
+	VMOVE(&from_mat[4], fromYaxis);
+	VMOVE(&from_mat[8], fromZaxis);
+	MAT_DELTAS_VEC(from_mat, translate_from);
+    }
+
+    if (to) {
+	const double *toXaxis = to->GetXAxis();
+	const double *toYaxis = to->GetYAxis();
+	const double *toZaxis = to->GetZAxis();
+	VMOVE(translate_to, to->GetOrigin());
+	VSCALE(translate_to, translate_to, LocalUnits::length);
+	MAT_IDN(to_mat);
+	VMOVE(&to_mat[0], toXaxis);
+	VMOVE(&to_mat[4], toYaxis);
+	VMOVE(&to_mat[8], toZaxis);
+	bn_mat_inv(toinv_mat, to_mat);
+	MAT_DELTAS_VEC(toinv_mat, translate_to);
+    }
+
+    bn_mat_mul(mat, toinv_mat, from_mat);
 }
 
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
@@ -507,6 +584,61 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    Factory::DeleteObjects();
 	}
 
+	// Faceted (planar polyhedral / mesh) solids - name each faceted_brep
+	// and attach it to its product comb.  The mesh geometry itself is
+	// written as a BoT in a later pass.
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_faceted_brep_shape_representation))) {
+	    FacetedBrepShapeRepresentation *fbsr = dynamic_cast<FacetedBrepShapeRepresentation *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (fbsr) {
+		int sr_id = fbsr->GetId();
+		std::string srname = fbsr->Name();
+		srname = dotg->CleanBRLCADName(srname);
+
+		string comb;
+		MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator it = id2productid_map.find(sr_id);
+		bool have_product = (it != id2productid_map.end());
+		if (have_product) {
+		    comb = id2name_map[(*it).second];
+		}
+
+		LIST_OF_REPRESENTATION_ITEMS *items = fbsr->items_();
+		LIST_OF_REPRESENTATION_ITEMS::iterator ii;
+		int fidx = 0;
+		for (ii = items->begin(); ii != items->end(); ++ii) {
+		    FacetedBrep *fb = dynamic_cast<FacetedBrep *>(*ii);
+		    if (!fb) {
+			continue;
+		    }
+		    std::string boname = srname;
+		    if (boname.empty() || (boname.compare("''") == 0)) {
+			std::string str = "FacetedBrep@";
+			boname = dotg->GetBRLCADName(str);
+		    } else if (fidx > 0) {
+			boname = boname + "_" + std::to_string(fidx);
+		    }
+		    id2name_map[fb->GetId()] = boname;
+		    /* Record the shape-rep -> object name so a mapped_item that
+		     * instances this faceted component can resolve its member.
+		     */
+		    if (fidx == 0) {
+			id2name_map[sr_id] = boname;
+		    }
+		    /* Only nest the mesh under the product comb when they are
+		     * genuinely distinct objects; for a single-part product the
+		     * mesh region IS the product and a self-membership must be
+		     * avoided.
+		     */
+		    if (have_product && !comb.empty() && (comb.compare(boname) != 0) && !dry_run) {
+			mat_t mat;
+			MAT_IDN(mat);
+			dotg->AddMember(comb, boname, mat);
+		    }
+		    fidx++;
+		}
+		Factory::DeleteObjects();
+	    }
+	}
+
 
 	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship))) {
 	    ShapeRepresentationRelationship *srr = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
@@ -656,6 +788,77 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 	}
     }
+
+    /*
+     * MAPPED_ITEM instancing (assembly reuse).  A mapped_item is a
+     * representation_item inside some (assembly) shape_representation that
+     * instances the geometry of its representation_map's mapped_representation,
+     * transformed so the map's mapping_origin coincides with the item's
+     * mapping_target.  We realize each mapped_item as a comb membership of the
+     * containing representation's object, referencing the mapped
+     * representation's already-imported object with the placement transform.
+     */
+    {
+	// cheap reverse map: mapped_item id -> containing representation id
+	MAP_OF_ENTITY_ID_TO_PRODUCT_ID mappeditem2rep;
+	for (int i = 0; i < num_ents; i++) {
+	    SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	    if (sse == NULL || sse->STEPfile_id <= 0) {
+		continue;
+	    }
+	    if (!sse->IsA(SCHEMA_NAMESPACE::e_representation)) {
+		continue;
+	    }
+	    LIST_OF_ENTITIES *items = getListOfEntities(sse, "items");
+	    if (items) {
+		LIST_OF_ENTITIES::iterator ei;
+		for (ei = items->begin(); ei != items->end(); ++ei) {
+		    if ((*ei) && (*ei)->IsA(SCHEMA_NAMESPACE::e_mapped_item)) {
+			mappeditem2rep[(*ei)->STEPfile_id] = sse->STEPfile_id;
+		    }
+		}
+		items->clear();
+		delete items;
+	    }
+	}
+
+	for (int i = 0; i < num_ents; i++) {
+	    SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	    if (sse == NULL || sse->STEPfile_id <= 0) {
+		continue;
+	    }
+	    if (!sse->IsA(SCHEMA_NAMESPACE::e_mapped_item)) {
+		continue;
+	    }
+	    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator pit = mappeditem2rep.find(sse->STEPfile_id);
+	    if (pit == mappeditem2rep.end()) {
+		continue;
+	    }
+	    std::string parent = id2name_map[pit->second];
+	    if (parent.empty() || (parent.compare("''") == 0)) {
+		continue;
+	    }
+
+	    MappedItem *mi = dynamic_cast<MappedItem *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (mi && mi->GetMappingSource()) {
+		RepresentationMap *rm = mi->GetMappingSource();
+		Representation *mrep = rm->GetMappedRepresentation();
+		if (mrep) {
+		    std::string member = id2name_map[mrep->GetId()];
+		    if (!member.empty() && (member.compare("''") != 0)) {
+			LocalUnits::length = mrep->GetLengthConversionFactor();
+			mat_t mat;
+			assembly_placement_matrix(mat, mi->GetMappingTarget(), rm->GetMappingOrigin());
+			if (!dry_run) {
+			    dotg->AddMember(parent, member, mat);
+			}
+		    }
+		}
+	    }
+	    Factory::DeleteObjects();
+	}
+    }
+
     if (!dry_run) {
 	if (!dotg->WriteCombs()) {
 	    std::cerr << "Error writing BRL-CAD hierarchy." << std::endl;
@@ -680,6 +883,26 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    delete gr;
 		    bu_exit(1, "ERROR: failure creating shell based surface model from %s\n", stepfile.c_str());
 		}
+	    }
+	}
+
+	/* Faceted (planar polyhedral / mesh) solid -> BoT */
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_faceted_brep_shape_representation))) {
+	    FacetedBrepShapeRepresentation *fbsr = dynamic_cast<FacetedBrepShapeRepresentation *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (fbsr) {
+		LocalUnits::length = fbsr->GetLengthConversionFactor();
+		LIST_OF_REPRESENTATION_ITEMS *items = fbsr->items_();
+		LIST_OF_REPRESENTATION_ITEMS::iterator ii;
+		for (ii = items->begin(); ii != items->end(); ++ii) {
+		    FacetedBrep *fb = dynamic_cast<FacetedBrep *>(*ii);
+		    if (!fb) {
+			continue;
+		    }
+		    std::string boname = id2name_map[fb->GetId()];
+		    /* a failed mesh is reported but does not abort the whole run */
+		    (void)convert_WriteBoT(fb, dot_g, &boname, dry_run);
+		}
+		Factory::DeleteObjects();
 	    }
 	}
 

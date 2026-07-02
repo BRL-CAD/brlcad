@@ -314,6 +314,51 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
     return false;
 }
 
+bool
+BRLCADWrapper::WriteBoT(std::string name, std::vector<fastf_t> &vertices, std::vector<int> &faces, mat_t &mat)
+{
+    std::string sol = name + ".s";
+    std::string reg = name;
+    if (dry_run)
+	return true;
+
+    size_t num_vertices = vertices.size() / 3;
+    size_t num_faces = faces.size() / 3;
+    if (num_vertices < 3 || num_faces < 1)
+	return false;
+
+    /* mk_bot() takes ownership of the vertex/face arrays and frees them with
+     * bu_free(), so they must be allocated with the bu_* allocators.
+     */
+    fastf_t *bot_vertices = (fastf_t *)bu_malloc(vertices.size() * sizeof(fastf_t), "BoT vertices");
+    for (size_t i = 0; i < vertices.size(); i++)
+	bot_vertices[i] = vertices[i];
+    int *bot_faces = (int *)bu_malloc(faces.size() * sizeof(int), "BoT faces");
+    for (size_t i = 0; i < faces.size(); i++)
+	bot_faces[i] = faces[i];
+
+    /* import as an unoriented closed solid so ray tracing does not depend on
+     * consistent facet winding coming out of the STEP file.
+     */
+    if (mk_bot(outfp, sol.c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
+	       num_vertices, num_faces, bot_vertices, bot_faces, NULL, NULL))
+	return false;
+
+    unsigned char rgb[] = {200, 180, 180};
+    BRLCADWrapper::getRandomColor(rgb);
+
+    struct bu_list head;
+    BU_LIST_INIT(&head);
+    if (mk_addmember(sol.c_str(), &head, mat, WMOP_UNION) == WMEMBER_NULL)
+	return false;
+
+    /* mk_comb() returns 0 on success (a negative value indicates failure). */
+    if (mk_comb(outfp, reg.c_str(), &head, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0) < 0)
+	return false;
+
+    return true;
+}
+
 struct db_i *
 BRLCADWrapper::GetDBIP()
 {

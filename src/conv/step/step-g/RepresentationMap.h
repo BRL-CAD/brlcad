@@ -1,4 +1,4 @@
-/*                 ConnectedFaceSet.h
+/*                 RepresentationMap.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2026 United States Government as represented by
@@ -17,48 +17,55 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/ConnectedFaceSet.h
+/** @file step/RepresentationMap.h
  *
- * Class definition used to convert STEP "ConnectedFaceSet" to BRL-CAD BREP
- * structures.
+ * Class definition used to convert STEP "RepresentationMap" to BRL-CAD
+ * structures.  A representation_map ties a source datum (mapping_origin)
+ * to a mapped_representation so that mapped_item can instance the latter.
  *
  */
 
-#ifndef CONV_STEP_STEP_G_CONNECTEDFACESET_H
-#define CONV_STEP_STEP_G_CONNECTEDFACESET_H
+#ifndef CONV_STEP_STEP_G_REPRESENTATIONMAP_H
+#define CONV_STEP_STEP_G_REPRESENTATIONMAP_H
 
-#include "TopologicalRepresentationItem.h"
+#include "STEPEntity.h"
+
+#include "sdai.h"
 
 // forward declaration of class
-class Face;
-typedef list<Face *> LIST_OF_FACES;
+class ON_Brep;
+class Representation;
+class Axis2Placement3D;
 
-class ConnectedFaceSet : public TopologicalRepresentationItem
+class RepresentationMap : virtual public STEPEntity
 {
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
-    LIST_OF_FACES cfs_faces;
+    Axis2Placement3D *mapping_origin;
+    Representation *mapped_representation;
 
 public:
-    ConnectedFaceSet();
-    virtual ~ConnectedFaceSet();
-    ConnectedFaceSet(STEPWrapper *sw, int step_id);
+    RepresentationMap();
+    virtual ~RepresentationMap();
+    RepresentationMap(STEPWrapper *sw, int step_id);
+    Axis2Placement3D *GetMappingOrigin() {
+	return mapping_origin;
+    };
+    Representation *GetMappedRepresentation() {
+	return mapped_representation;
+    };
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
-    virtual void ReverseFaceSet();
-    const LIST_OF_FACES &Faces() const {
-	return cfs_faces;
-    };
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONV_STEP_STEP_G_CONNECTEDFACESET_H */
+#endif /* CONV_STEP_STEP_G_REPRESENTATIONMAP_H */
 
 /*
  * Local Variables:

@@ -30,6 +30,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 /* brlcad headers */
 #include <bu/list.h>
@@ -58,6 +59,7 @@ public:
     bool WriteHeader();
     bool WriteSphere(double *center, double radius);
     bool WriteBrep(std::string name, ON_Brep *brep, mat_t &mat);
+    bool WriteBoT(std::string name, std::vector<fastf_t> &vertices, std::vector<int> &faces, mat_t &mat);
     bool WriteCombs();
     bool AddMember(const std::string &combname,const std::string &member,mat_t mat);
     std::string ReplaceAccented( std::string &str );

@@ -192,8 +192,14 @@ BezierCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
-    return false;
+    // A Bezier curve is a B-spline curve whose (implicitly clamped) knot
+    // vector places all knots at the two ends - exactly what
+    // BSplineCurve::LoadONBrep() generates when there are no interior knots.
+    if (!BSplineCurve::LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 
@@ -348,8 +354,14 @@ RationalBezierCurve::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << " id: " << id << std::endl;
-    return false;
+    // A rational Bezier curve is a rational B-spline curve with an implicitly
+    // clamped knot vector (no interior knots) - delegate to the working
+    // rational B-spline handler which builds the weighted NURBS curve.
+    if (!RationalBSplineCurve::LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 
@@ -551,10 +563,14 @@ BezierSurface::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    //TODO: add bezier surface
-    //ON_BezierSurface* surf = ON_BezierSurface::New(3, false, u_degree+1, v_degree+1);
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    // A Bezier surface is a B-spline surface whose (implicitly clamped) knot
+    // vectors place all knots at the patch corners - exactly what
+    // BSplineSurface::LoadONBrep() generates when there are no interior knots.
+    if (!BSplineSurface::LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 
@@ -797,9 +813,14 @@ RationalBezierSurface::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    //TODO: add rational bezier surface
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    // A rational Bezier surface is a rational B-spline surface with implicitly
+    // clamped knot vectors (no interior knots) - delegate to the working
+    // rational B-spline handler which builds the weighted NURBS surface.
+    if (!RationalBSplineSurface::LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 
