@@ -4,73 +4,153 @@
 :manmanual: BRL-CAD
 
 == NAME
-rtdepth - compute a depth map of a model.
+rtdepth - ray trace a model and produce a grayscale depth image
 
 == SYNOPSIS
 
 [source]
 ----
-rtdepth [options]... model.g objects...
+rtdepth [options] model.g objects...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*rtdepth* operates on the indicated _objects_ in the input _model.g_ and produces a depth map. The distance of each ray to the first solid is computed and the result is divided by the "viewsize" (the length of the diagonal of the bounding box of the model, which represents the longest possible path). This relative distance is then converted to gray scale where black (1) is the greatest possible distance, through white (255) which represents a very close region. The color 0 is reserved for rays which pass through no material at all. This provides good contrast for the object (which would not usually be the case if 255 were chosen) and allows the background to be easily replaced.
+*rtdepth* uses *librt*(3) to ray trace the listed _objects_ in the
+database _model.g_ from a single view direction and produces a
+grayscale depth map.  For each pixel the distance from the eye plane to
+the first object surface struck is divided by the _viewsize_ (the
+diagonal of the model bounding box, i.e. the longest possible path) and
+the relative distance is mapped to an 8-bit gray value.  Near surfaces
+are bright (toward 255) and far surfaces are dark (toward 1).  The value
+0 is reserved for rays that strike nothing, so the background can be
+keyed out easily and the object retains good contrast.
 
-The orientation of the rays to be fired may be specified by the *-a* and *-e* options, in which case the model will be autosized, and the grid will be centered on the centroid of the model, with ray spacing chosen to span the entire set of _objects_. Alternatively, with the *-M* option, a transformation matrix may be provided on standard input which maps model-space to view-space. In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space, with the size of the grid (number of rays fired) specified with *-s*. This option is most useful when *rtdepth* is being invoked from a shell script created by an *mged*(1) _saveview_ command.
+The view is selected with the *-a* (azimuth) and *-e* (elevation)
+options, in which case the model is auto-sized and the grid is centered
+on the model so the rays span the entire set of _objects_.
+Alternatively, with *-M* a model-to-view matrix is read from standard
+input (with the grid covering -1.0 <= X,Y <= +1.0 in view space); this
+form is convenient when *rtdepth* is driven by a script produced by the
+*mged*(1) _saveview_ command.
 
-The following options are recognized.
+By default the image is written to a framebuffer.  Use *-o* to write a
+*pix*(5) or *png*(5) image (a *.bw* extension yields an 8-bit grayscale
+*bw*(5) file).  Because the output pixels must be emitted in order,
+*rtdepth* always runs on a single CPU regardless of *-P*.
 
+Most of the camera, grid, and debugging options accepted by *rt*(1) are
+also honored; see that manual page for the complete list.
 
-*-s#*::
-Number of rays to fire in X and Y directions (square grid). Default is 512 (512x512).
+[[options]]
+== OPTIONS
 
+*-a* _azimuth_::
+  Set the view azimuth in degrees and enable auto-sizing.  Use with *-e*; conflicts with *-M*.
 
-*-a#*::
-Select azimuth in degrees. Used with *-e* and conflicts with *-M*
-
-
-*-e#*::
-Select elevation in degrees. Used with *-a* and conflicts with *-M*
-
+*-e* _elevation_::
+  Set the view elevation in degrees and enable auto-sizing.  Use with *-a*; conflicts with *-M*.
 
 *-M*::
-Read model2view matrix from standard input. Conflicts with *-a* and *-e*
+  Read a model-to-view transformation matrix (and optional animation script) from standard input instead of using *-a*/*-e*.
 
+*-s* _#_::
+  Set the square grid size to _#_ rays on a side (default 512, i.e. a 512x512 image).
 
-*-o*::
-*output.bw* specifies a named BW(5) file for output. By default, the output is displayed on a frame buffer.
+*-w* _#_::
+  Set the image width in pixels.
 
+*-n* _#_::
+  Set the image height in scanlines.
 
+*-g* _mm_::
+  Set the grid cell width in millimeters.  If set without *-G*, cell height defaults to the same value.
 
-See the *rt* manual page for additional arguments that can be used with this program.
+*-G* _mm_::
+  Set the grid cell height in millimeters.
 
+*-p* _deg_::
+  Set the perspective angle in degrees (0 <= deg < 180; 0 is orthographic, the default).
+
+*-V* _#[:#]_::
+  Set the view aspect ratio width/height (e.g. 1.33 or 4:3).
+
+*-o* _file_::
+  Write the depth image to _file_ instead of a framebuffer.  The format follows the extension (e.g. *.pix*, *.png*, or *.bw* for grayscale).
+
+*-O* _file_::
+  Write a double-precision *.dpix* file for full-resolution post-processing.
+
+*-F* _framebuffer_::
+  Render to the named framebuffer (see the FB_FILE environment variable).
+
+*-i*::
+  Use incremental (progressive-style) rendering.
+
+*-t*::
+  Render top-to-bottom (the default is bottom-up).
+
+*-u* _units_::
+  Set the display units; *-u model* uses the database's local units.
+
+*-P* _#_::
+  Requested processor count.  Accepted for compatibility, but *rtdepth* always renders with a single CPU.
+
+*-x* _#_::
+  Set *librt* debug flags as a hexadecimal bit vector (see raytrace.h).
+
+*-X* _#_::
+  Set *rt* program/optical debug flags as a hexadecimal bit vector.
+
+*-? or -h*::
+  Print a usage summary and exit.
+
+See *rt*(1) for the remaining shared options (e.g. *-g*/*-G* grid cell
+sizing, *-T* tolerances, *-c* script commands).  The *-C* and *-W*
+background options of *rt*(1) are disabled in *rtdepth*.
+
+[[examples]]
+== EXAMPLES
+
+.Depth image from a three-quarter view
+====
+[source,bash]
+----
+rtdepth -a 35 -e 25 -s 1024 -o depth.png model.g all
+----
+Ray traces the group _all_ in _model.g_ from azimuth 35, elevation 25
+degrees on a 1024x1024 grid and writes a grayscale PNG.  Nearer
+surfaces appear brighter and the empty background is pure black (value
+0), making it trivial to composite the object over a new background.
+====
+
+.Depth pass matching a saved MGED view
+====
+[source,bash]
+----
+rtdepth -M -o depth.bw model.g component < component.rt
+----
+Reuses the camera from an *mged*(1) _saveview_ script (the matrix is
+read from standard input via *-M*) so the depth map of _component_ is
+rendered from exactly the view set up interactively, writing an 8-bit
+*bw*(5) file that can be fed to *bw-fb*(1) or *pixhist*(1).
+====
 
 [[see_also]]
 == SEE ALSO
 
-*rt*(1), *rtray*(1)
-
-
-[[bugs]]
-== BUGS
-
-None known
-
+*brlcad*(1), *mged*(1), *rt*(1), *rthide*(1), *rtxray*(1), *bw-fb*(1), *bw*(5), *librt*(3)
 
 [[author]]
 == AUTHOR
 
-Phillip Dykstra, Erik Greenwald
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1990-2026 United States Government as represented by the U.S. Army Research Laboratory.
-
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 [[bug_reports]]
 == BUG REPORTS
