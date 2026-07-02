@@ -1,0 +1,87 @@
+= BRL-CAD Interface Change Policy
+:toc: macro
+
+toc::[]
+
+== Scope
+
+This policy defines how BRL-CAD public interfaces may change. Public
+interfaces include developer APIs, command-line interfaces, graphical
+interfaces, documented commands, installed headers, public macros,
+public types, and other behavior users reasonably rely on.
+
+Renaming an application is not minimally impacting: an application
+name is the primary way users find and run the tool.
+
+Every public interface change must be either minimally impacting or
+formally deprecated.
+
+== Minimally Impacting
+
+A minimally impacting change may be made at any time. A change is
+minimally impacting only when it can be represented by the documented
+rule language in
+link:doc/changes/minimally-impacting.rules[doc/changes/minimally-impacting.rules]
+and emitted by the generated update script.
+
+If the rule language cannot express a change, either extend the rule
+language so the generated script can perform the update, or treat the
+change as formally deprecated.
+
+Minimally impacting path includes:
+
+* recently introduced interfaces that have not yet appeared unchanged
+  in two releases;
+* appreciably broken interfaces that have been unusable for at least
+  two releases and have no secondary utility;
+* elementary mechanical changes such as renames, parameter reordering,
+  parameter removal, defaulted parameter insertion, equivalent
+  interface substitutions, and header moves.
+
+For function argument rewrites, BRL-CAD assumes callers are not
+relying on preprocessor-generated call syntax and are not passing
+nested function calls as arguments to the changed function. That
+assumption keeps generated substitutions deterministic and reviewable.
+
+Rule syntax and generated update-script workflow are documented in
+link:doc/changes/README.adoc[doc/changes/README.adoc]. The generated
+build-tree rendering of minimally impacting changes is
+`doc/changes/minimally-impacting.adoc`.
+
+== Formally Deprecated
+
+Any public interface change that is not minimally impacting must
+follow the formal deprecation process.
+
+During a major release, such as 7.x to 8.x, any public interface may
+change without advance notice. Major version changes imply interface
+incompatibility.
+
+During a minor release, such as 7.44.x to 7.46.x, a public interface
+must be deprecated beforehand with advance notice in at least two
+minor releases and at least 90 days elapsed since the initial release
+announcement.
+
+Public interfaces scheduled for change should be listed in
+link:doc/changes/deprecated.adoc[doc/changes/deprecated.adoc] and
+visibly marked in the source code. Appropriate markings include
+`DEPRECATED` declarations, preprocessor warnings, `@DEPRECATED`
+comments, runtime warnings when they do not disrupt valid usage, and
+documentation updates.
+
+After a deprecation window has completed, removed or significantly
+changed interfaces are listed in
+link:doc/changes/obsoleted.adoc[doc/changes/obsoleted.adoc].
+
+== Examples
+
+Removing `rt_shootray()` after it has been published and documented in
+multiple releases is not minimally impacting unless a generated rule
+can update callers to an equivalent interface. Otherwise, it must be
+listed as deprecated, marked in the headers, announced in releases,
+and only later obsoleted.
+
+Renaming `bu_log()` or adding a defaulted first argument can be
+minimally impacting if the change is listed in
+`minimally-impacting.rules` and the generated update script rewrites
+existing callers.
