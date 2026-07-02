@@ -105,7 +105,7 @@ During deprecation, keep the old signatures as RT_DEPRECATED wrappers that
 forward to the new signatures while ignoring the resource argument.  Use regex
 policy for minimally impacting changes and create *_old suffixed versions of
 the original signatures - wrapper functions callers can temporarily reference.
-Delete them after CHANGES deprecation policy is complete.
+Delete them after the deprecation policy is complete.
 
 Also: begin collecting ray-tracing benchmark data on the seg/partition
 hot path on modern glibc and jemalloc so that Phase 7 (the last phase)
@@ -208,7 +208,7 @@ Delete:
   - include/rt/resource.h
   - the forward declaration in include/rt/global.h
 
-Announce the removal in CHANGES, doc/docbook/system/man3/librt.xml,
+Announce the removal in doc/changes/deprecated.adoc, doc/docbook/system/man3/librt.xml,
 and the release notes.
 
 
