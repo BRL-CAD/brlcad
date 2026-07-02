@@ -32,28 +32,12 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 
 
 static const char usage[] = "Usage: plot3color r g b\n";
-
-static int
-parse_color_component(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > 255) {
-	bu_log("plot3color: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
 
 int
 main(int argc, char **argv)
@@ -76,9 +60,9 @@ main(int argc, char **argv)
 	    putchar(c);
     }
 
-    if (!parse_color_component(argv[1], &r, "red component") ||
-	!parse_color_component(argv[2], &g, "green component") ||
-	!parse_color_component(argv[3], &b, "blue component")) {
+    if (!bu_opt_scan_int_range(argv[1], &r, 0, 255, "red component") ||
+	!bu_opt_scan_int_range(argv[2], &g, 0, 255, "green component") ||
+	!bu_opt_scan_int_range(argv[3], &b, 0, 255, "blue component")) {
 	return 1;
     }
 

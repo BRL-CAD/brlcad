@@ -34,6 +34,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "dm.h"
 #include "bn/spm.h"
 
@@ -53,32 +54,6 @@ Usage: spm-fb [-s] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
 	vsize [filename]\n";
 
-static int
-parse_positive_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed <= 0) {
-	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed > INT_MAX) {
-	fprintf(stderr, "%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
-
-
 int
 get_args(int argc, char **argv)
 {
@@ -93,16 +68,16 @@ get_args(int argc, char **argv)
 		square = 1;
 		break;
 	    case 'S':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &scr_height, "screen height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 
@@ -113,7 +88,7 @@ get_args(int argc, char **argv)
 
     if (bu_optind >= argc)
 	return 0;		/* missing positional arg */
-    if (!parse_positive_int_arg(argv[bu_optind++], &vsize, "vsize"))
+    if (!bu_opt_scan_int_range(argv[bu_optind++], &vsize, 1, INT_MAX, "vsize"))
 	return 0;
 
     if (bu_optind >= argc) {

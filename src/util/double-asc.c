@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -62,36 +63,6 @@ static long int file_height = 512L;	/* default input height */
 static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
 
-static int
-parse_positive_long_arg(const char *arg, long int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0) {
-	bu_log("double-asc: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = value;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    long int value = 0;
-
-    if (!parse_positive_long_arg(arg, &value, label) || value > INT_MAX)
-	return 0;
-
-    *out_value = (int)value;
-    return 1;
-}
-
-
 void
 print_usage(void)
 {
@@ -115,18 +86,18 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!parse_positive_long_arg(bu_optarg, &file_width, "input size"))
+		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
 		    print_usage();
 		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!parse_positive_long_arg(bu_optarg, &file_height, "input height"))
+		if (!bu_opt_scan_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
 		    print_usage();
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!parse_positive_long_arg(bu_optarg, &file_width, "input width"))
+		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
 		    print_usage();
 		autosize = 0;
 		break;
@@ -142,7 +113,7 @@ get_args(int argc, char **argv)
 		bu_strlcpy(format, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case '#':
-		if (!parse_positive_int_arg(bu_optarg, &d_per_l, "doubles per line"))
+		if (!bu_opt_scan_int_range(bu_optarg, &d_per_l, 1, INT_MAX, "doubles per line"))
 		    print_usage();
 		break;
 	    default:

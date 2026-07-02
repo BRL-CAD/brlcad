@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/log.h"
 #include "bu/mime.h"
@@ -62,38 +63,6 @@ static const char usage[] = "\
 Usage: pix-bw [-s squaresize] [-w width] [-n height]\n\
               [ [-e ntsc|crt|hdtv|hdr|avg] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
               [-o out_file.bw] [[<] file.pix] [> out_file.bw]\n";
-
-static int
-parse_positive_size_arg(const char *arg, size_t *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0 || parsed > INT_MAX) {
-	bu_log("pix-bw: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *value = (size_t)parsed;
-    return 1;
-}
-
-static int
-parse_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	bu_log("pix-bw: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 int
 get_args(int argc, char **argv)
@@ -138,33 +107,33 @@ get_args(int argc, char **argv)
 		break;
 	    case 'R' :
 		red++;
-		if (!parse_double_arg(bu_optarg, &rweight, "red weight"))
+		if (!bu_opt_scan_double(bu_optarg, &rweight, "red weight"))
 		    return 0;
 		break;
 	    case 'G' :
 		green++;
-		if (!parse_double_arg(bu_optarg, &gweight, "green weight"))
+		if (!bu_opt_scan_double(bu_optarg, &gweight, "green weight"))
 		    return 0;
 		break;
 	    case 'B' :
 		blue++;
-		if (!parse_double_arg(bu_optarg, &bweight, "blue weight"))
+		if (!bu_opt_scan_double(bu_optarg, &bweight, "blue weight"))
 		    return 0;
 		break;
 	    case 'o' :
 		out_file = bu_optarg;
 		break;
             case 's' :
-	       if (!parse_positive_size_arg(bu_optarg, &inx, "input size"))
+	       if (!bu_opt_scan_size_t_range(bu_optarg, &inx, 1, SIZE_MAX, "input size"))
 		   return 0;
 	       iny = inx;
                break;
             case 'w' :
-	       if (!parse_positive_size_arg(bu_optarg, &inx, "input width"))
+	       if (!bu_opt_scan_size_t_range(bu_optarg, &inx, 1, SIZE_MAX, "input width"))
 		   return 0;
                break;
             case 'n' :
-	       if (!parse_positive_size_arg(bu_optarg, &iny, "input height"))
+	       if (!bu_opt_scan_size_t_range(bu_optarg, &iny, 1, SIZE_MAX, "input height"))
 		   return 0;
                break;
 	    default:		/* '?' 'h' */

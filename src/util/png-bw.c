@@ -35,6 +35,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
@@ -43,21 +44,6 @@ static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
 
 static const char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
-
-static int
-parse_double_suffix_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	bu_log("png-bw: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 int
 main(int argc, char **argv)
@@ -115,19 +101,19 @@ main(int argc, char **argv)
 		case 'R':
 		    red++;
 		    if (argv[1][2] != '\0')
-			if (!parse_double_suffix_arg(&argv[1][2], &rweight, "red weight"))
+			if (!bu_opt_scan_double(&argv[1][2], &rweight, "red weight"))
 			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		case 'G':
 		    green++;
 		    if (argv[1][2] != '\0')
-			if (!parse_double_suffix_arg(&argv[1][2], &gweight, "green weight"))
+			if (!bu_opt_scan_double(&argv[1][2], &gweight, "green weight"))
 			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		case 'B':
 		    blue++;
 		    if (argv[1][2] != '\0')
-			if (!parse_double_suffix_arg(&argv[1][2], &bweight, "blue weight"))
+			if (!bu_opt_scan_double(&argv[1][2], &bweight, "blue weight"))
 			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		default:

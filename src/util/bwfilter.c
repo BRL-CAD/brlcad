@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
 #include "bu/log.h"
@@ -80,37 +81,6 @@ Usage: bwfilter [-f type] [-v] [-d div] [-O offset]\n\
 
 char *in_file = NULL;
 char *out_file = NULL;
-
-static int
-parse_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
-	bu_log("bwfilter: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    if (!parse_int_arg(arg, out_value, label))
-	return 0;
-
-    if (*out_value <= 0) {
-	bu_log("bwfilter: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 /*
  * Looks at the command line string and selects a filter
@@ -164,27 +134,27 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		dflag++;
-		if (!parse_int_arg(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
+		if (!bu_opt_scan_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
 		    return 0;
 		break;
 	    case 'O':
 		oflag++;
-		if (!parse_int_arg(bu_optarg, &kernoffset, "offset"))
+		if (!bu_opt_scan_int(bu_optarg, &kernoffset, "offset"))
 		    return 0;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &inx, "width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "width"))
 		    return 0;
 		break;
 	    case 'o':
 		out_file = bu_optarg;
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &iny, "height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "height"))
 		    return 0;
 		break;
 	    case 's':
-		if (!parse_positive_int_arg(bu_optarg, &inx, "size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "size"))
 		    return 0;
 		iny = inx;
 		break;

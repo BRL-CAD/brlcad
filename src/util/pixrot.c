@@ -34,37 +34,20 @@
 
 #include "common.h"
 
-#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 #include "bu/file.h"
 
 
 static const char usage[] = "\
 Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
 	[-w width] [-n height] [file.pix] > file.pix\n";
-
-static int
-parse_positive_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
-	bu_log("pixrot: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
-
 
 /* 4 times bigger than typ. screen */
 /*#define MAXBUFBYTES (1280*1024*3*4) */
@@ -111,24 +94,24 @@ get_args(int argc, char **argv)
 		invert++;
 		break;
 	    case '#':
-		if (!parse_positive_int_arg(bu_optarg, &pixbytes, "bytes-per-pixel"))
+		if (!bu_opt_scan_int_range(bu_optarg, &pixbytes, 1, INT_MAX, "bytes-per-pixel"))
 		    return 0;
 		break;
 	    case 'S':
 	    case 's':
 		/* square size */
-		if (!parse_positive_int_arg(bu_optarg, &nxin, "input size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &nxin, 1, INT_MAX, "input size"))
 		    return 0;
 		nyin = nxin;
 		break;
 	    case 'W':
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &nxin, "input width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &nxin, 1, INT_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'N':
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &nyin, "input height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &nyin, 1, INT_MAX, "input height"))
 		    return 0;
 		break;
 
@@ -139,9 +122,9 @@ get_args(int argc, char **argv)
 
     /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
-	if (!parse_positive_int_arg(argv[bu_optind++], &nxin, "input width"))
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &nxin, 1, INT_MAX, "input width"))
 	    return 0;
-	if (!parse_positive_int_arg(argv[bu_optind++], &nyin, "input height"))
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &nyin, 1, INT_MAX, "input height"))
 	    return 0;
     }
     if (bu_optind >= argc) {

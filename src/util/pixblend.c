@@ -46,6 +46,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -71,40 +72,6 @@ int seed = 0;
 static char usage[] = "\
 Usage: pixblend [-{r|i} value] [-s seed] [-S] [-g gvalue] file1.pix file2.pix > out.pix\n";
 
-static int
-parse_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-    double parsed = 0.0;
-
-    errno = 0;
-    parsed = strtod(arg, &end);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	fprintf(stderr, "pixblend: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = parsed;
-    return 1;
-}
-
-static int
-parse_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < INT_MIN || parsed > INT_MAX) {
-	fprintf(stderr, "pixblend: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)parsed;
-    return 1;
-}
-
 int
 timeseed(void)
 {
@@ -122,7 +89,7 @@ get_args(int argc, char **argv)
 	    case 'r':
 		if (iflg)
 		    return 0;
-		if (!parse_double_arg(bu_optarg, &value, "blend value"))
+		if (!bu_opt_scan_double(bu_optarg, &value, "blend value"))
 		    return 0;
 		++rflg;
 		break;
@@ -133,7 +100,7 @@ get_args(int argc, char **argv)
 		    fprintf(stderr, "The -g and -i options do not make sense together.\n");
 		    return 0;
 		}
-		if (!parse_double_arg(bu_optarg, &value, "interpolate value"))
+		if (!bu_opt_scan_double(bu_optarg, &value, "interpolate value"))
 		    return 0;
 		++iflg;
 		break;
@@ -141,7 +108,7 @@ get_args(int argc, char **argv)
 		seed = timeseed();
 		break;
 	    case 's':
-		if (!parse_int_arg(bu_optarg, &seed, "seed"))
+		if (!bu_opt_scan_int(bu_optarg, &seed, "seed"))
 		    return 0;
 		break;
 	    case 'g':
@@ -150,7 +117,7 @@ get_args(int argc, char **argv)
 		    return 0;
 		}
 		++gflg;
-		if (!parse_double_arg(bu_optarg, &gvalue, "glitter value"))
+		if (!bu_opt_scan_double(bu_optarg, &gvalue, "glitter value"))
 		    return 0;
 		break;
 	    default:		/* 'h' '?' */

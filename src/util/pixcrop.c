@@ -44,6 +44,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/opt.h"
 
 
 #define round(x) ((int)(x+0.5))
@@ -67,53 +68,32 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
 static int
 parse_positive_ssize_arg(const char *arg, ssize_t *out_value, const char *label)
 {
-    char *end = NULL;
-    long long int value;
-
-    errno = 0;
-    value = strtoll(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0) {
-	fprintf(stderr, "pixcrop: invalid %s '%s'\n", label, arg);
+    size_t _s;
+    if (!bu_opt_scan_size_t_range(arg, &_s, 1, SIZE_MAX, label))
 	return 0;
-    }
-
-    *out_value = (ssize_t)value;
+    *out_value = (ssize_t)_s;
     return 1;
 }
 
 static int
 parse_output_dim_arg(const char *arg, unsigned long *out_value, const char *label)
 {
-    char *end = NULL;
-    unsigned long value;
-
-    errno = 0;
-    value = strtoul(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0) {
-	fprintf(stderr, "pixcrop: invalid %s '%s'\n", label, arg);
+    size_t _s;
+    if (!bu_opt_scan_size_t_range(arg, &_s, 1, SIZE_MAX, label))
 	return 0;
-    }
-    if (value > (unsigned long)(INT_MAX - 1))
-	value = (unsigned long)(INT_MAX - 1);
-
-    *out_value = value;
+    if (_s > (size_t)(INT_MAX - 1))
+	_s = (size_t)(INT_MAX - 1);
+    *out_value = (unsigned long)_s;
     return 1;
 }
 
 static int
 parse_float_arg(const char *arg, float *out_value, const char *label)
 {
-    char *end = NULL;
-    double value;
-
-    errno = 0;
-    value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	fprintf(stderr, "pixcrop: invalid %s '%s'\n", label, arg);
+    double _d;
+    if (!bu_opt_scan_double(arg, &_d, label))
 	return 0;
-    }
-
-    *out_value = (float)value;
+    *out_value = (float)_d;
     return 1;
 }
 

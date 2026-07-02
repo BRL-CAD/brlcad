@@ -34,6 +34,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "dm.h"
 #include "pkg.h"
@@ -54,52 +55,6 @@ static int clear_and_reset = 0;
 static char usage[] = "Usage: fbclear [-c] [-F framebuffer]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height] [gray | r g b]\n";
 
-static int
-parse_positive_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed <= 0) {
-	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed > INT_MAX) {
-	fprintf(stderr, "%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
-
-static int
-parse_color_arg(const char *arg, unsigned char *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed < 0 || parsed > 255) {
-	fprintf(stderr, "%s: %s must be between 0 and 255, got '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (unsigned char)parsed;
-    return 1;
-}
-
 int
 get_args(int argc, char **argv)
 {
@@ -116,18 +71,18 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &scr_height, "screen height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 
@@ -154,15 +109,15 @@ main(int argc, char **argv)
 
     remaining = argc - bu_optind;
     if (remaining == 3) {
-	if (!parse_color_arg(argv[bu_optind+0], &pixel[RED], "red value")
-	    || !parse_color_arg(argv[bu_optind+1], &pixel[GRN], "green value")
-	    || !parse_color_arg(argv[bu_optind+2], &pixel[BLU], "blue value")) {
+	if (!bu_opt_scan_uchar(argv[bu_optind+0], &pixel[RED], "red value")
+	    || !bu_opt_scan_uchar(argv[bu_optind+1], &pixel[GRN], "green value")
+	    || !bu_opt_scan_uchar(argv[bu_optind+2], &pixel[BLU], "blue value")) {
 	    (void)fputs(usage, stderr);
 	    bu_exit(1, NULL);
 	}
 	use_custom_pixel = 1;
     } else if (remaining == 1) {
-	if (!parse_color_arg(argv[bu_optind+0], &pixel[RED], "gray value")) {
+	if (!bu_opt_scan_uchar(argv[bu_optind+0], &pixel[RED], "gray value")) {
 	    (void)fputs(usage, stderr);
 	    bu_exit(1, NULL);
 	}

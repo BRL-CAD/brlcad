@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -54,41 +55,6 @@ Usage: pixtile [-s squareinsize] [-w file_width] [-n file_height]\n\
 	[-S squareoutsize] [-W out_width] [-N out_height]\n\
 	[-o startframe] basename [file2 ... fileN] >file.pix\n";
 
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
-	fprintf(stderr, "pixtile: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-static int
-parse_nonnegative_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > INT_MAX) {
-	fprintf(stderr, "pixtile: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-
 int
 get_args(int argc, char **argv)
 {
@@ -98,33 +64,33 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square input file size */
-		if (!parse_positive_int_arg(bu_optarg, &file_width, "input size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "input size"))
 		    return 0;
 		file_height = file_width;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &file_width, "input width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &file_height, "input height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_height, 1, INT_MAX, "input height"))
 		    return 0;
 		break;
 	    case 'S':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "output size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "output width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &scr_height, "output height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'o':
-		if (!parse_nonnegative_int_arg(bu_optarg, &framenumber, "start frame"))
+		if (!bu_opt_scan_int_range(bu_optarg, &framenumber, 0, INT_MAX, "start frame"))
 		    return 0;
 		break;
 	    default:		/* '?''h' */

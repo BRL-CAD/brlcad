@@ -36,11 +36,13 @@
 #include "common.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -69,23 +71,6 @@ int outy = 512;
 static char usage[] = "\
 Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
-
-static int
-parse_positive_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
-	bu_log("pixscale: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
 
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
 
@@ -379,30 +364,30 @@ get_args(int argc, char **argv)
 		break;
 	    case 'S':
 		/* square size */
-		if (!parse_positive_int_arg(bu_optarg, &outx, "output size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
 		    return 0;
 		outy = outx;
 		break;
 	    case 's':
 		/* square size */
-		if (!parse_positive_int_arg(bu_optarg, &inx, "input size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
 		    return 0;
 		iny = inx;
 		break;
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &outx, "output width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &inx, "input width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &outy, "output height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &iny, "input height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
 		    return 0;
 		break;
 
@@ -418,13 +403,13 @@ get_args(int argc, char **argv)
 	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
-	if (!parse_positive_int_arg(argv[bu_optind++], &inx, "input width"))
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &inx, 1, INT_MAX, "input width"))
 	    return 0;
-	if (!parse_positive_int_arg(argv[bu_optind++], &iny, "input height"))
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &iny, 1, INT_MAX, "input height"))
 	    return 0;
-	if (!parse_positive_int_arg(argv[bu_optind++], &outx, "output width"))
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &outx, 1, INT_MAX, "output width"))
 	    return 0;
-	if (!parse_positive_int_arg(argv[bu_optind++], &outy, "output height"))
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &outy, 1, INT_MAX, "output height"))
 	    return 0;
 	return 1;
     }

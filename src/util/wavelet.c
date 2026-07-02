@@ -52,6 +52,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -84,37 +85,9 @@ size_t limit = 0;
 int decomp_recon;
 
 static int
-parse_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-static int
 parse_size_arg(const char *arg, size_t *out_value, const char *label, int allow_zero)
 {
-    char *end = NULL;
-    unsigned long long value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || (!allow_zero && value == 0)) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
+    return bu_opt_scan_size_t_range(arg, out_value, allow_zero ? 0 : 1, SIZE_MAX, label);
 }
 
 
@@ -156,7 +129,7 @@ parse_args(int ac, char **av)
 	    case 'r': decomp_recon = RECONSTRUCT;
 		break;
 	    case 'D':
-		if (!parse_int_arg(bu_optarg, &debug, "debug level"))
+		if (!bu_opt_scan_int(bu_optarg, &debug, "debug level"))
 		    usage("");
 		break;
 	    case 'R':

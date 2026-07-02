@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -38,6 +39,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -60,24 +62,6 @@ int *glines[5];
 int *blines[5];
 
 static int
-parse_positive_size_arg(const char *arg, size_t *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
-	fprintf(stderr, "pixhalve: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *value = (size_t)parsed;
-    return 1;
-}
-
-
-static int
 get_args(int argc, char **argv)
 {
     int c;
@@ -89,12 +73,12 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!parse_positive_size_arg(bu_optarg, &file_width, "input size"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!parse_positive_size_arg(bu_optarg, &file_width, "input width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
 		    return 0;
 		autosize = 0;
 		break;

@@ -46,43 +46,12 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 
 #define INTEGER 0
 #define REAL 1
 #define CHAR 2
-
-static int
-parse_long_arg(const char *arg, long int *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtol(arg, &end, 0);
-    if (errno != 0 || end == arg || *end != '\0') {
-	if (label)
-	    bu_log("loop: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
-static int
-parse_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	if (label)
-	    bu_log("loop: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 void
 usage(void)
@@ -145,9 +114,9 @@ main(int argc, char *argv[])
 
 	if (status == CHAR)
 	    break;
-	if (parse_long_arg(argv[i], &ival, NULL))
+	if (bu_opt_scan_long(argv[i], &ival, NULL))
 	    continue;
-	if (!parse_double_arg(argv[i], &dval, NULL)) {
+	if (!bu_opt_scan_double(argv[i], &dval, NULL)) {
 	    usage();
 	    return 9;
 	}
@@ -160,16 +129,16 @@ main(int argc, char *argv[])
     }
 
     if (status == REAL) {
-	if (!parse_double_arg(argv[1], &dstart, "start")) {
+	if (!bu_opt_scan_double(argv[1], &dstart, "start")) {
 	    return 1;
 	}
 
-	if (!parse_double_arg(argv[2], &dfinish, "finish")) {
+	if (!bu_opt_scan_double(argv[2], &dfinish, "finish")) {
 	    return 1;
 	}
 
 	if (argc == 4) {
-	    if (!parse_double_arg(argv[3], &dincr, "incr")) {
+	    if (!bu_opt_scan_double(argv[3], &dincr, "incr")) {
 		return 1;
 	    }
 	} else {
@@ -241,14 +210,14 @@ main(int argc, char *argv[])
 	    bu_strlcpy(fmt_string, "%d\n", sizeof(fmt_string));
 	fmt_string[50-1] = '\0'; /* sanity */
 
-	if (!parse_long_arg(argv[1], &start, "start"))
+	if (!bu_opt_scan_long(argv[1], &start, "start"))
 	    return 1;
 	if ((start < INT_MIN) || (start > INT_MAX)) {
 	    bu_log("'start' out of range of signed integer.\n");
 	    return 1;
 	}
 
-	if (!parse_long_arg(argv[2], &finish, "finish"))
+	if (!bu_opt_scan_long(argv[2], &finish, "finish"))
 	    return 1;
 	if ((finish < INT_MIN) || (finish > INT_MAX)) {
 	    bu_log("'finish' out of range of signed integer.\n");
@@ -256,7 +225,7 @@ main(int argc, char *argv[])
 	}
 
 	if (argc == 4) {
-	    if (!parse_long_arg(argv[3], &incr, "incr"))
+	    if (!bu_opt_scan_long(argv[3], &incr, "incr"))
 		return 1;
 	    if ((incr < INT_MIN) || (incr > INT_MAX)) {
 		bu_log("'incr' out of range of signed integer.\n");
@@ -295,7 +264,7 @@ main(int argc, char *argv[])
 	    cfinish = ULONG_MAX-1;
 
 	if (argc == 5) {
-	    if (!parse_long_arg(argv[4], &cincr, "incr"))
+	    if (!bu_opt_scan_long(argv[4], &cincr, "incr"))
 		return 1;
 	    if ((cincr < -UCHAR_MAX) || (cincr > UCHAR_MAX)) {
 		bu_log("'incr' out of range of char.\n");

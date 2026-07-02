@@ -36,6 +36,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -69,24 +70,6 @@ struct rasterfile {
     1,		/* equal RGB color map */
     MAPSIZE*3	/* length (bytes) of RGB colormap */
 };
-
-static int
-parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
-{
-    char *end = NULL;
-    unsigned long long value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
-}
-
 
 /* The Sun Rasterfile Colormap
  * This colormap has a 6x6x6 color cube, plus 10 extra values for each of
@@ -361,15 +344,15 @@ main(int ac, char **av)
 	switch (c) {
 	    case 'd'    : dither = !dither; break;
 	    case 'w'    :
-		if (!parse_positive_size_arg(bu_optarg, &ras.ras_width, "input width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_width, 1, SIZE_MAX, "input width"))
 		    usage();
 		break;
 	    case 'n'    :
-		if (!parse_positive_size_arg(bu_optarg, &ras.ras_height, "input height"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_height, 1, SIZE_MAX, "input height"))
 		    usage();
 		break;
 	    case 's'    :
-		if (!parse_positive_size_arg(bu_optarg, &ras.ras_width, "input size"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_width, 1, SIZE_MAX, "input size"))
 		    usage();
 		ras.ras_height = ras.ras_width;
 		break;

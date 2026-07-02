@@ -39,6 +39,7 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -53,21 +54,6 @@ void
 printusage(void)
 {
     bu_exit(1, "Usage: pixsaturate saturation < infile.pix > outfile.pix\n");
-}
-
-static int
-parse_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	bu_log("pixsaturate: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
 }
 
 int
@@ -99,7 +85,7 @@ main(int argc, char **argv)
     	fprintf(stderr,"pixsaturate: need pipes for stdin and stdout\n");
 	printusage ();
     }
-    if (!parse_double_arg(argv[1], &sat, "saturation")) {
+    if (!bu_opt_scan_double(argv[1], &sat, "saturation")) {
 	return 1;
     }
     if (sat < 0.0) {

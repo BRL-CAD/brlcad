@@ -33,6 +33,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
@@ -171,24 +172,6 @@ int factor = 2;
 #define METH_UNDERSAMPLE 2
 int method = METH_BOXCAR;
 
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-
 void
 usage(void)
 {
@@ -211,19 +194,19 @@ parse_args(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'f':
-		if (!parse_positive_int_arg(bu_optarg, &factor, "shrink factor") || factor <= 1)
+		if (!bu_opt_scan_int_range(bu_optarg, &factor, 1, INT_MAX, "shrink factor") || factor <= 1)
 		    usage();
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &height, "height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
 		    usage();
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &width, "width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
 		    usage();
 		break;
 	    case 's':
-		if (!parse_positive_int_arg(bu_optarg, &width, "size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
 		    usage();
 		height = width;
 		break;

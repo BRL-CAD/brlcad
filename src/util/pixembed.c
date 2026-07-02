@@ -27,11 +27,13 @@
 #include "common.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -61,36 +63,6 @@ Usage: pixembed [-b border_inset] \n\
 
 char hyphen[] = "-";
 
-static int
-parse_nonnegative_size_arg(const char *arg, size_t *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < 0) {
-	fprintf(stderr, "pixembed: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *value = (size_t)parsed;
-    return 1;
-}
-
-static int
-parse_positive_size_arg(const char *arg, size_t *value, const char *label)
-{
-    if (!parse_nonnegative_size_arg(arg, value, label))
-	return 0;
-    if (*value == 0) {
-	fprintf(stderr, "pixembed: %s must be greater than zero, got '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
 int
 get_args(int argc, char **argv)
 {
@@ -99,35 +71,35 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "b:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'b':
-		if (!parse_nonnegative_size_arg(bu_optarg, &border_inset, "border inset"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &border_inset, 0, SIZE_MAX, "border inset"))
 		    return 0;
 		break;
 	    case 'S':
 		/* square size */
-		if (!parse_positive_size_arg(bu_optarg, &xout, "output size"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &xout, 1, SIZE_MAX, "output size"))
 		    return 0;
 		yout = xout;
 		break;
 	    case 's':
 		/* square size */
-		if (!parse_positive_size_arg(bu_optarg, &xin, "input size"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &xin, 1, SIZE_MAX, "input size"))
 		    return 0;
 		yin = xin;
 		break;
 	    case 'W':
-		if (!parse_positive_size_arg(bu_optarg, &xout, "output width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &xout, 1, SIZE_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'w':
-		if (!parse_positive_size_arg(bu_optarg, &xin, "input width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &xin, 1, SIZE_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!parse_positive_size_arg(bu_optarg, &yout, "output height"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &yout, 1, SIZE_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_size_arg(bu_optarg, &yin, "input height"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &yin, 1, SIZE_MAX, "input height"))
 		    return 0;
 		break;
 

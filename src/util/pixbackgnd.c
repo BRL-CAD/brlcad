@@ -37,6 +37,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -169,53 +170,6 @@ hsvrgb(double *hsv, double *rgb)
 
 
 static int
-parse_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
-	fprintf(stderr, "pixbackgnd: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    if (!parse_int_arg(arg, out_value, label))
-	return 0;
-
-    if (*out_value <= 0) {
-	fprintf(stderr, "pixbackgnd: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
-static int
-parse_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	fprintf(stderr, "pixbackgnd: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
-
-static int
 get_args(int argc, char **argv)
 {
     int c;
@@ -233,29 +187,29 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!parse_positive_int_arg(bu_optarg, &file_width, "size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "size"))
 		    return 0;
 		file_height = file_width;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &file_width, "width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &file_height, "height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_height, 1, INT_MAX, "height"))
 		    return 0;
 		break;
 	    case 't':
 		/* Title area size */
-		if (!parse_positive_int_arg(bu_optarg, &title_height, "title height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &title_height, 1, INT_MAX, "title height"))
 		    return 0;
 		break;
 	    case 'a':
-		if (!parse_int_arg(bu_optarg, &h_start, "top intensity"))
+		if (!bu_opt_scan_int(bu_optarg, &h_start, "top intensity"))
 		    return 0;
 		break;
 	    case 'b':
-		if (!parse_int_arg(bu_optarg, &h_end, "bottom intensity"))
+		if (!bu_opt_scan_int(bu_optarg, &h_end, "bottom intensity"))
 		    return 0;
 		break;
 
@@ -266,17 +220,17 @@ get_args(int argc, char **argv)
     remaining = argc - bu_optind;
     if (remaining == 2) {
 	/* Parameters are H S */
-	if (!parse_double_arg(argv[bu_optind++], &HSV[0], "hue") ||
-	    !parse_double_arg(argv[bu_optind], &HSV[1], "saturation"))
+	if (!bu_opt_scan_double(argv[bu_optind++], &HSV[0], "hue") ||
+	    !bu_opt_scan_double(argv[bu_optind], &HSV[1], "saturation"))
 	    return 0;
 	HSV[2] = h_start;
 
 	hsvrgb(HSV, RGB);
     } else if (remaining == 3) {
 	/* parameters are R G B */
-	if (!parse_double_arg(argv[bu_optind++], &RGB[0], "red") ||
-	    !parse_double_arg(argv[bu_optind++], &RGB[1], "green") ||
-	    !parse_double_arg(argv[bu_optind++], &RGB[2], "blue"))
+	if (!bu_opt_scan_double(argv[bu_optind++], &RGB[0], "red") ||
+	    !bu_opt_scan_double(argv[bu_optind++], &RGB[1], "green") ||
+	    !bu_opt_scan_double(argv[bu_optind++], &RGB[2], "blue"))
 	    return 0;
 
 	rgbhsv(RGB, HSV);

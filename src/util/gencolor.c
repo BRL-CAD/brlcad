@@ -37,6 +37,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 
 #define MAX_BYTES (128*1024)
 
@@ -57,51 +58,12 @@ unsigned char buf[MAX_BYTES];
 static int
 parse_nonnegative_int32_arg(const char *arg, int32_t *out_value, const char *label)
 {
-    char *end = NULL;
-    long long value;
+    int value;
 
-    errno = 0;
-    value = strtoll(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > INT32_MAX) {
-	bu_log("gencolor: invalid %s '%s'\n", label, arg);
+    if (!bu_opt_scan_int_range(arg, &value, 0, INT32_MAX, label))
 	return 0;
-    }
 
     *out_value = (int32_t)value;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
-	bu_log("gencolor: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-static int
-parse_byte_arg(const char *arg, unsigned char *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > UCHAR_MAX) {
-	bu_log("gencolor: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (unsigned char)value;
     return 1;
 }
 
@@ -139,20 +101,20 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!parse_positive_int_arg(bu_optarg, &width, "size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
 		    printusage(0);
 		height = width;
 		typeselected = 1;
 		break;
 	    case 'n':
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &height, "height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
 		    printusage(0);
 		typeselected = 1;
 		break;
 	    case 'w':
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &width, "width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
 		    printusage(0);
 		typeselected = 1;
 		break;
@@ -189,7 +151,7 @@ main(int argc, char **argv)
 	/* get values from the command line */
 	i = 0;
 	while (argc > 1 && i < MAX_BYTES - 1) {
-	    if (!parse_byte_arg(argv[i+1], &buf[i], "byte value"))
+	    if (!bu_opt_scan_uchar(argv[i+1], &buf[i], "byte value"))
 		return 1;
 	    argc--;
 	    i++;

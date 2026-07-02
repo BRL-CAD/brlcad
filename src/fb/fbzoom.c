@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "vmath.h"
 
@@ -48,40 +49,6 @@
 
 int pars_Argv(int argc, char **argv);
 int doKeyPad(void);
-
-static int
-parse_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	bu_log("%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed < INT_MIN || parsed > INT_MAX) {
-	bu_log("%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *value, const char *label)
-{
-    if (!parse_int_arg(arg, value, label))
-	return 0;
-    if (*value <= 0) {
-	bu_log("%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 /* Zoom rate and limits */
 #define MinZoom (1)
@@ -127,10 +94,10 @@ main(int argc, char **argv)
     }
 
     if (remaining == 4) {
-	if (!parse_int_arg(argv[bu_optind+0], &xPan, "x pan")
-	    || !parse_int_arg(argv[bu_optind+1], &yPan, "y pan")
-	    || !parse_positive_int_arg(argv[bu_optind+2], &xZoom, "x zoom")
-	    || !parse_positive_int_arg(argv[bu_optind+3], &yZoom, "y zoom")) {
+	if (!bu_opt_scan_int(argv[bu_optind+0], &xPan, "x pan")
+	    || !bu_opt_scan_int(argv[bu_optind+1], &yPan, "y pan")
+	    || !bu_opt_scan_int_range(argv[bu_optind+2], &xZoom, 1, INT_MAX, "x zoom")
+	    || !bu_opt_scan_int_range(argv[bu_optind+3], &yZoom, 1, INT_MAX, "y zoom")) {
 	    (void)fputs(usage, stderr);
 	    bu_exit(1, NULL);
 	}
@@ -368,18 +335,18 @@ pars_Argv(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "screen width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &scr_height, "screen height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 

@@ -45,6 +45,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "dm.h"
 
@@ -71,23 +72,6 @@ int doKeyPad(void);
 static char usage[] = "\
 Usage: fbcolor [-F framebuffer]\n\
 	[-s|S squarescrsize] [-w|W scr_width] [-n|N scr_height]\n";
-
-static int
-parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < 0 || parsed > INT_MAX) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
 
 void
 printusage(void)
@@ -332,18 +316,18 @@ pars_Argv(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		if (!parse_nonnegative_int_arg(bu_optarg, &scr_height, "screen height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
 		    return 0;
 		break;
 	    default :

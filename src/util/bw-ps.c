@@ -33,6 +33,7 @@
 #include "bio.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 
 
@@ -62,36 +63,18 @@ Usage: bw-ps [-e] [-c] [-L]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
 
 static int
-parse_positive_size_arg(const char *arg, size_t *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0 || parsed > INT_MAX) {
-	fprintf(stderr, "bw-ps: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *value = (size_t)parsed;
-    return 1;
-}
-
-static int
 parse_positive_double_arg(const char *arg, double *value, const char *label)
 {
-    char *end = NULL;
-    double parsed = 0.0;
+    double _d;
 
-    errno = 0;
-    parsed = strtod(arg, &end);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0.0) {
-	fprintf(stderr, "bw-ps: invalid %s '%s'\n", label, arg);
+    if (!bu_opt_scan_double(arg, &_d, label))
+	return 0;
+    if (_d <= 0.0) {
+	bu_log("%s: %s must be positive '%s'\n", bu_getprogname(), label, arg);
 	return 0;
     }
 
-    *value = parsed;
+    *value = _d;
     return 1;
 }
 
@@ -168,16 +151,16 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!parse_positive_size_arg(bu_optarg, &width, "input size"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input size"))
 		    return 0;
 		height = width;
 		break;
 	    case 'w':
-		if (!parse_positive_size_arg(bu_optarg, &width, "input width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_size_arg(bu_optarg, &height, "input height"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &height, 1, SIZE_MAX, "input height"))
 		    return 0;
 		break;
 	    case 'S':
