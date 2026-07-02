@@ -2515,7 +2515,7 @@ build_cfg_hdr(${CONFIG_H_FILE} ${INCLUDE_DIR}/brlcad)
 set(
   toplevel_DOCFILES
   AUTHORS
-  CHANGES
+  CHANGES.adoc
   COPYING
   HACKING
   INSTALL
