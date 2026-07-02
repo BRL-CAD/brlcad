@@ -1,0 +1,472 @@
+= Deprecated Changes
+:toc: macro
+
+toc::[]
+
+The interfaces listed here are scheduled to significantly change or be removed. They are grouped by the release in which deprecation was first announced. Items marked with a single quote are undocumented and may be removed at any time.
+
+The interfaces announced below are scheduled to significantly change
+or be removed.  They are categorized by the release in which
+deprecation was first announced.  If the interface change involved a
+removal or transition, both the original and new interface names are
+generally listed for reference.
+
+Items marked with a "'" (single quote) are undocumented and may be
+removed at any time.
+
+== 7.44
+
+MGED commands
+	arb name rot fb -> arb create name rot fb [deprecated 7.44]
+
+include/bu/vfont.h - fully removed, header and all contents
+	We only use this in fblabel, and there are many other
+	modern options when it comes to fonts - remove vfont
+	as public facing API.
+	[deprecated 7.44]
+
+include/bu/tc.h - fully removed, header and all contents
+	Code should either use bu/parallel.h APIs or C++11 threading
+	rather than the low level tc.h portability wrappers.
+	[deprecated 7.44]
+
+include/bg/plane.h
+
+	For the following functions, we will trigger pedantic
+	compiler warnings introducing const to plane_t/point_t
+	input ptrs :
+
+	bg_plane_closest_pt -> inputs will become const
+	bg_plane_pt_at -> inputs will become const
+	bg_fit_plane -> inputs will become const
+	[deprecated 7.44]
+
+include/nmg/nurb.h - fully removed, header and all contents
+
+	NURBS support in BRL-CAD is focused on libbrep/OpenNURBS now,
+	libnmg will be simplified to planar geometry only.  Other related
+	changes to libnmg include:
+	[deprecated 7.44]
+
+include/nmg/edge.h - remove:
+
+	GET_EDGE_G_CNURB
+	FREE_EDGE_G_CNURB
+	[deprecated 7.44]
+
+include/nmg/face.h - remove:
+
+	NMG_CK_FACE_G_SNURB
+	NMG_CK_FACE_G_EITHER
+	GET_FACE_G_SNURB
+	FREE_FACE_G_SNURB
+	[deprecated 7.44]
+
+include/nmg/index.h - remove:
+
+	nmg_struct_counts.face_g_snurb
+	nmg_struct_counts.edge_g_cnurb
+	nmg_struct_counts.vertexuse_a_cnurb
+	[deprecated 7.44]
+
+include/nmg/plot.h - remove:
+
+	nmg_snurb_fu_to_vlist
+	nmg_snurb_to_vlist
+	nmg_cnurb_to_vlist
+	[deprecated 7.44]
+
+include/nmg/print.h - signature changes:
+	We'll switch the string container for nmg printing to a libbu vls.
+	In all these functions, char *h -> struct bu_vls *h
+	nmg_pr_r
+	nmg_pr_sa
+	nmg_pr_lg
+	nmg_pr_fg
+	nmg_pr_s
+	nmg_pr_s_briefly
+	nmg_pr_f
+	nmg_pr_fu
+	nmg_pr_fu_briefly
+	nmg_pr_l
+	nmg_pr_lu
+	nmg_pr_lu_briefly
+	nmg_pr_eg
+	nmg_pr_e
+	nmg_pr_eu
+	nmg_pr_eu_briefly
+	nmg_pr_eu_endpoints
+	nmg_pr_vg
+	nmg_pr_v
+	nmg_pr_vu
+	nmg_pr_vu_briefly
+	nmg_pr_vua
+
+	nmg_orientation will return a const char *
+	(NOTE:  It's actually doing this under the hood now...)
+
+
+include/nmg/vertex.h - remove:
+
+	GET_VERTEXUSE_A_CNURB
+	FREE_VERTEXUSE_A_CNURB
+	[deprecated 7.44]
+
+include/nmg/topology.h - remove:
+
+	vertexuse.curb_p
+	edgeuse.cnurb_p
+	face.snurb_p
+	struct knot_vector
+	struct edge_g_cnurb
+	struct face_g_snurb
+	struct vertexuse_a_cnurb
+	[deprecated 7.44]
+
+include/rt/geom.h
+	struct rt_nurb_internal will be removed - bspline loading will
+	use the modern rt_brep_internal container instead.
+	[deprecated 7.44]
+
+	We'll be renaming the following structs:
+	struct line_seg -> struct rt_line_seg
+	struct carc_seg -> struct rt_circ_arc_seg
+	struct seg_knot_vector -> struct rt_seg_knot_vec
+	struct nurb_seg -> struct rt_nurbs_curve_seg
+	struct bezier_seg -> struct rt_bezier_curve_seg
+	struct rt_ant -> struct rt_annot
+	struct txt_seg -> struct rt_annot_text_seg
+	[deprecated 7.44]
+
+include/rt/application.h
+
+	Rename: Change struct application and include/rt/application.h
+	to rt_shootray_context and include/rt/shootray_context.h to reflect
+	that it is a per-thread working container (not a global qApp-style
+	state holder).
+
+	Resource Ownership:
+	rt_i_destroy no longer handles resource bookkeeping.
+	rt_shootray_context_create and _init now set up a default a_resource.
+	a_resource remains public to allow swapping. However, callers who swap
+	it must manage the custom resource's lifetime and either restore the
+	default resource or free the custom resource (and set a_resource to NULL)
+	before calling cleanup/destroy. Callers are responsible for freeing the
+	rt_shootray_context struct itself.
+
+include/rt/db_io.h
+	rt_db_put_internal5 - second to last parameter (resource) will
+	be removed.  New function form is currently available as
+	rt_db_put_internal_v5, which will become the new rt_db_put_internal5
+
+	db_alloc_directory_block -> db_alloc_dir_block
+
+	[deprecated 7.44]
+
+include/rt/directory.h
+	RT_GET_DIRECTORY -> RT_GET_DIR [deprecated 7.44]
+
+include/rt/mater.h librt
+	global-state rt_* material api replaced by per-database db_mater_* api:
+	rt_material_head()      -> db_mater_head(dbip)
+	rt_new_material_head()  -> db_mater_set_head(dbip, newmat)
+	rt_dup_material_head()  -> db_mater_dup(dbip)
+	rt_color_free()         -> db_mater_free(dbip)
+	rt_insert_color()       -> db_mater_insert(dbip, newp)
+	rt_color_addrec()       -> db_mater_add(dbip, low, hi, r, g, b, addr)
+	rt_vls_color_map()      -> db_mater_to_vls(str, dbip)
+	rt_region_color_map()   -> db_mater_color_region(dbip, regp)
+	[deprecated 7.44]
+
+include/rt/primitives/rpc.h  librt
+	rt_mk_parabola(pts, r, b, dtol, ntol) - old 5-argument form
+	deprecated in favor of rt_mk_parabola(pts, r, b, dtol, ntol, min_abs).
+	The old form is still available as rt_mk_parabola_old() during the
+	deprecation period. [deprecated 7.44]
+
+include/rt/primitives/rhc.h  librt
+	rt_mk_hyperbola(pts, r, b, c, dtol, ntol) - old 6-argument form
+	deprecated in favor of rt_mk_hyperbola(pts, r, b, c, dtol, ntol, min_abs).
+	The old form is still available as rt_mk_hyperbola_old() during the
+	deprecation period. [deprecated 7.44]
+
+include/rt/resource.h  librt
+
+	Other than those explicitly marked PUBLIC (re_magic, re_cpu and
+	re_randptr so far) the struct resource entries should be considered
+	private implementation details subject to change.
+	They may not actually end up hidden (struct resource has the potential
+	to be performance sensitive) but once the deprecation period is
+	complete they shouldn't be relied upon by user programs.  (We would
+	like to make struct resource a fully internal implementation detail,
+	but it's not clear yet how practical that will end up being.)
+	[deprecated 7.44]
+
+include/rt/rt_instance.h  librt
+	rt_new_rti -> rt_i_create [deprecated 7.44]
+	rt_free_rti -> rt_i_destroy [deprecated 7.44]
+	rt_clean_resource_complete -> rt_clean_resource_basic [deprecated 7.44]
+
+include/rt/shoot.h librt
+	rt_res_pieces_clean removed (implementation detail) [deprecated 7.44]
+	rt_res_pieces_init removed (implementation detail) [deprecated 7.44]
+
+include/rt/tree.h librt
+	db_tree_del_dbleaf -> db_tree_rm_dbleaf [deprecated 7.44]
+	db_functree - resource parameter removal.  New form is available as
+	db_treewalk_basic until deprecation is complete.  [deprecated 7.44]
+
+== 7.42
+libanalyze
+	analyze_obj_to_pnts and related defines in analyze/pnts.h
+	deprecated in favor of librt's rt_gen_obj_pnts and related
+	defines in rt/shoot.h [deprecated 7.42]
+
+include/raytrace librt
+	db_search_context removed in favor of new db_search params -
+	old db_search function signature can temporarily be obtained
+	under the name db_search_old [deprecated 7.42]
+
+libged "how" command and its exposure in Tcl
+	Currently returning an internal GED numerical value - will
+	either be changed to report a human readable string instead
+	or (more likely) retired as a command outright in favor of
+	a "view obj [name] info mode" subcommand. [deprecated 7.42]
+
+include/ged/commands.h
+	current ged_cmd_valid functionality will be replaced by
+	ged_cmd_exists and ged_cmd_same. [deprecated 7.42]
+
+include/bg/plane.h
+	removing tri_specific structure - only used internally in
+	one place in BRL-CAD code as of v7.40.2. [deprecated 7.42]
+
+MGED features
+	predictor frame for velocity-based navigation will be removed.
+	Early idea in 3D space navigation that doesn't seemed to have
+	panned out in practice. [deprecated 7.42]
+
+GED commands
+	removing command-line-supplied edit string support from the
+	following libged commands.  New method will be to set the
+	desired editor and terminal options in struct ged, or (if
+	operating at the user level) to set the relevant environment
+	variables.
+	edcolor (-E opt)
+	edcodes (-E opt)
+	editit (-e opt)
+	edmater (-E opt)
+	red (-E opt)
+	[deprecated 7.42]
+
+	ability to specify xyz center with trailing arguments on
+	the nirt commad line (i.e. nirt obj1 obj2 ... x y z at
+	MGED command prompt) will be removed in favor of an --xyz
+	option instead (i.e. nirt -xyz x y z obj1 obj2 ...)
+	[deprecated 7.42]
+
+rt
+        rt_bot_minpieces and rt_bot_tri_per_piece variables
+        Obsoleted by new BoT ray tracing. [deprecated 7.42]
+
+rtshot
+        -b and -t options
+        Obsoleted by new BoT ray tracing. [deprecated 7.42]
+
+nirt
+        -B option and bot_minpieces command
+        Obsoleted by new BoT ray tracing. [deprecated 7.42]
+
+== 7.40
+include/bu/process.h
+	bu_process_exec: replaced by bu_process_create
+	bu_process_wait: replaced by bu_process_wait_n
+	bu_process_read: replaced by bu_process_read_n
+	bu_process_open: replaced by bu_process_file_open
+	bu_process_close: replaced by bu_process_file_close
+	bu_process_args: replaced by bu_process_args_n
+	bu_process_id: replaced by bu_pid
+	bu_terminate: replaced by bu_pid_terminate
+	[deprecated 7.40]
+
+MGED commands
+	p, r and g optional arguments to summary command -
+	info can be obtained via search [deprecated 7.40]
+
+	dbip, get_dbip - exposure of low-level pointer information
+        Shouldn't be using this at a user/scripting level
+	[deprecated 7.40]
+
+== 7.38
+MGED commands
+	E (a.k.a "big E") - replaced by "draw -m5"
+	[deprecated 7.38]
+
+== 7.32
+include/bg/chull.h
+        All functions returning point arrays instead of index arrays.
+        Will be replaced by similarly named functions returning
+        indexes into provided points array, to allow the caller
+        to decide if new arrays are needed. [deprecated 7.32]
+        bg_polyline_2d_chull, bg_2d_chull, bg_3d_coplanar_chull,
+        bg_3d_chull [deprecated 7.32]
+
+MGED gui
+	The following will be removed from MGED's menu bar (unused
+	features, can be accomplished another way, or will be exposed
+	only as lower level settings when there are sensible defaults
+	that are seldom changed.)
+
+	Settings->Mouse Behavior->Pick Raytrace-Object(s)
+	[deprecated 7.32]
+
+MGED overlay command
+	Instead of an optional second argument being the view object
+	name, command will take (potentially) multiple plot files
+	as input to overlay.  Optional view object name will be
+	specified with the -N option.
+	[deprecated 7.32]
+
+== 7.30
+~/.density
+        automatic reading of .density file in home directory
+        materials need to be specified or imported [deprecated 7.28]
+
+== 7.28
+MGED commands
+	?devel, ?lib, aproposdevel, aproposlib, %, animmate, db_glob,
+	debugbu, debugdir, debuglib, debugmem, debugnmg, expand,
+	loadtk, match, memprint, preview, regdebug, regdef, rmats, rrt,
+	savekey, shaded_mode, sync
+	Removed as part of distillation effort [deprecated 7.28]
+
+== 7.26
+image tools
+	alias-pix' : incorporating into icv
+	asc2pix' : incorporating into icv
+	Removed as part of distillation effort [deprecated 7.26]
+signal analysis tools
+	a-d', d-a', bw-a', i-a', u-a' : incorporating into cv
+	d-a', d-bw', d-f', d-i', d-u' : incorporating into cv
+	a-d', bw-d', c-d', f-d', i-d', u-d' : incorporating into cv
+	f-d', f-i', d-f', i-f', u-f', u-bw' : incorporating into cv
+	d2-c', double-asc' : incorporating into cv
+	Removed as part of distillation effort [deprecated 7.26]
+include/bu/ptbl.h
+	BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
+	Removed as private implementation detail [deprecated 7.26]
+all global variables
+	global variables are no longer considered published public API [deprecated 7.26]
+	bn_mat_identity -> MAT_INIT_IDN or MAT_IDN() or NULL
+include/ged/view.h
+	remove current forms of dl_erasePathFromDisplay and invent_solid - they
+	expose the struct solid type [deprecated 7.26]
+include/tclcad.h
+	tclcad_rt_rt tclcad_rt_import_from_path, removal of all
+	tcl-specific API functions [deprecated 7.26]
+librt, fast4-g
+	removal of CLINE entity support [deprecated 7.26]
+mged
+	kill, killtree, killall, killrefs - replaced with rm command [deprecated 7.26]
+
+	expand -> replaced by search -name <pattern> (previous docs indicating matching of
+	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
+
+	pathlist, paths -> replaced by search [deprecated 7.26]
+
+== 7.24
+include/raytrace.h librt
+	RT_DBHASH and RT_DBNHASH [deprecated 7.24]
+
+
+== 7.20
+tclscripts/lib
+	Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
+librt
+	bspline primitive [deprecated 7.20]
+	poly primitive [deprecated 7.20]
+	hf primitive [deprecated 7.20]
+
+== 7.18
+include/raytrace.h rt_comb_internal members
+	region_id -> region_id attribute [deprecated 7.18]
+	aircode -> air attribute [deprecated 7.18]
+	GIFTmater -> material_id attribute [deprecated 7.18]
+	los -> los attribute [deprecated 7.18]
+bu.h xdr API
+	BU_GLONGLONG() -> ntohll() [deprecated 7.18]
+	BU_GLONG() -> ntohl() [deprecated 7.18]
+	BU_GSHORT() -> ntohs() [deprecated 7.18]
+	bu_gshort() -> ntohs() [deprecated 7.18]
+	bu_glong() -> ntohl() [deprecated 7.18]
+	bu_pshort() -> htons() [deprecated 7.18]
+	bu_plong() -> htonl() [deprecated 7.18]
+	bu_plonglong() -> htonll() [deprecated 7.18]
+db.h
+	rt_fastf_float() -> ntohf() [deprecated 7.18]
+	rt_mat_dbmat() -> htonf() [deprecated 7.18]
+	rt_dbmat_mat() -> ntohf() [deprecated 7.18]
+mged
+	?(*) -> ? -(*) [deprecated 7.18]
+	apropos(*) -> apropos -(*) [deprecated 7.18]
+	dbconcat -> db concat [deprecated 7.18]
+	dbupgrade -> db upgrade [deprecated 7.18]
+	dbversion -> db version [deprecated 7.18]
+	dbfind -> search [deprecated 7.18]
+	debug* -> debug [deprecated 7.18]
+	comb_std -> comb [deprecated 7.18]
+	comb_color -> comb [deprecated 7.18]
+	combmem -> comb [deprecated 7.18]
+	kill(*) -> kill [deprecated 7.18]
+	rotobj -> rot [deprecated 7.18]
+	qvrot -> rot -q -v [deprecated 7.18]
+	qorot -> rot -q [deprecated 7.18]
+	([amov])rot -> rot -([amv]) [deprecated 7.18]
+	([op])scale -> sca -(p) [deprecated 7.18]
+	([op])translate -> tra -(p) [deprecated 7.18]
+	nmg_(*) -> nmg (*) [deprecated 7.18]
+	bot_(*) -> bot (*) [deprecated 7.18]
+	[so]ed -> edit [deprecated 7.18]
+	[tr]ed -> edit -t [deprecated 7.18]
+	ls -oA -> ls -O [deprecated 7.18]
+	draw -oA -> draw -O [deprecated 7.18]
+	erase -oA -> erase -O [deprecated 7.18]
+	erase_all -> erase -r [deprecated 7.18]
+	move_all -> move -r [deprecated 7.18]
+	query_ray -> nirt [deprecated 7.18]
+	vdraw -> draw -v [deprecated 7.18]
+	vnirt -> nirt -v [deprecated 7.18]
+	vquery_ray -> nirt -v [deprecated 7.18]
+	xpush -> push -x [deprecated 7.18]
+
+== 7.16
+struct bu_structparse 'i' format
+       'i' -> '%p' [deprecated 7.16]
+reserved attributes and case-sensitivity
+	id -> region_id [deprecated 7.16]
+	GIFTmater -> material_id [deprecated 7.16]
+	GIFT_MATERIAL -> material_id [deprecated 7.16]
+	mat -> material_id [deprecated 7.16]
+	AIRCODE -> air [deprecated 7.16]
+	rgb -> color [deprecated 7.16]
+	oshader -> shader [deprecated 7.16]
+include/raytrace.h
+	rt_prep_timer() -> bu_timer() [deprecated 7.16]
+	rt_get_timer() -> bu_elapsed() [deprecated 7.16]
+
+== 7.14
+mged
+	src/tclscripts/mged/bots.tcl [deprecated 7.14]
+
+== 7.12
+include/raytrace.h
+	rt_functab size -> growing ft_label and new callbacks [deprecated 7.12]
+src/rt/viewarea.c
+	terminology and output format [deprecated 7.12]
+
+== pre 7.0
+include/raytrace.h
+	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
+	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
+
+
