@@ -448,6 +448,84 @@ brlcad_add_test(NAME bu_str_to_rgb_12 COMMAND bu_test test_color 3 "#C4D" 204,68
 
 brlcad_add_test(NAME bu_color_to_rgb_floats_1 COMMAND bu_test test_color 4 192,78,214)
 
+# For function #8 (bu_color_from_str) the <args> format is as follows:
+#
+# color_specification expected_rgb
+#
+# Where the color specification is any string form accepted by
+# bu_color_from_str and expected_rgb is a comma-separated 0-255 triple,
+# or the literal "invalid" to assert that the specification is rejected.
+
+# named colors (CSS/SVG), case-insensitive
+brlcad_add_test(NAME bu_color_from_str_name_1 COMMAND bu_test test_color 8 "red" 255,0,0)
+brlcad_add_test(NAME bu_color_from_str_name_2 COMMAND bu_test test_color 8 "Red" 255,0,0)
+brlcad_add_test(NAME bu_color_from_str_name_3 COMMAND bu_test test_color 8 "cornflowerblue" 100,149,237)
+brlcad_add_test(NAME bu_color_from_str_name_4 COMMAND bu_test test_color 8 "navy" 0,0,128)
+brlcad_add_test(NAME bu_color_from_str_name_5 COMMAND bu_test test_color 8 "rebeccapurple" 102,51,153)
+brlcad_add_test(NAME bu_color_from_str_name_6 COMMAND bu_test test_color 8 "grey" 128,128,128)
+brlcad_add_test(NAME bu_color_from_str_name_7 COMMAND bu_test test_color 8 "transparent" 0,0,0)
+brlcad_add_test(NAME bu_color_from_str_name_8 COMMAND bu_test test_color 8 "notacolor" invalid)
+
+# hexadecimal (3, 4, 6, 8 digit) plus whitespace trimming
+brlcad_add_test(NAME bu_color_from_str_hex_1 COMMAND bu_test test_color 8 "#f00" 255,0,0)
+brlcad_add_test(NAME bu_color_from_str_hex_2 COMMAND bu_test test_color 8 "#00ff00" 0,255,0)
+brlcad_add_test(NAME bu_color_from_str_hex_3 COMMAND bu_test test_color 8 "  #0000ff  " 0,0,255)
+brlcad_add_test(NAME bu_color_from_str_hex_4 COMMAND bu_test test_color 8 "#C04ED6" 192,78,214)
+brlcad_add_test(NAME bu_color_from_str_hex_5 COMMAND bu_test test_color 8 "#12345" invalid)
+
+# functional rgb() notation: integer, percentage, float, alt separators
+brlcad_add_test(NAME bu_color_from_str_rgb_1 COMMAND bu_test test_color 8 "rgb(255, 0, 0)" 255,0,0)
+brlcad_add_test(NAME bu_color_from_str_rgb_2 COMMAND bu_test test_color 8 "rgb(100%, 0%, 0%)" 255,0,0)
+brlcad_add_test(NAME bu_color_from_str_rgb_3 COMMAND bu_test test_color 8 "rgb(1.0, 0.0, 0.0)" 255,0,0)
+brlcad_add_test(NAME bu_color_from_str_rgb_4 COMMAND bu_test test_color 8 "rgb(0/255/0)" 0,255,0)
+brlcad_add_test(NAME bu_color_from_str_rgb_5 COMMAND bu_test test_color 8 "rgb(300, 0, 0)" invalid)
+
+# functional hsv()/hsl() notation
+brlcad_add_test(NAME bu_color_from_str_hsv_1 COMMAND bu_test test_color 8 "hsv(120, 1, 1)" 0,255,0)
+brlcad_add_test(NAME bu_color_from_str_hsv_2 COMMAND bu_test test_color 8 "hsv(240, 100%, 100%)" 0,0,255)
+brlcad_add_test(NAME bu_color_from_str_hsl_1 COMMAND bu_test test_color 8 "hsl(0, 100%, 50%)" 255,0,0)
+brlcad_add_test(NAME bu_color_from_str_hsl_2 COMMAND bu_test test_color 8 "hsl(120, 100%, 50%)" 0,255,0)
+
+# functional cmyk() and gray()/grey() notation
+brlcad_add_test(NAME bu_color_from_str_cmyk_1 COMMAND bu_test test_color 8 "cmyk(0, 1, 1, 0)" 255,0,0)
+brlcad_add_test(NAME bu_color_from_str_cmyk_2 COMMAND bu_test test_color 8 "cmyk(1, 0, 1, 0)" 0,255,0)
+brlcad_add_test(NAME bu_color_from_str_gray_1 COMMAND bu_test test_color 8 "gray(128)" 128,128,128)
+brlcad_add_test(NAME bu_color_from_str_gray_2 COMMAND bu_test test_color 8 "grey(20%)" 51,51,51)
+
+# legacy triplet forms still work through the extended parser
+brlcad_add_test(NAME bu_color_from_str_legacy_1 COMMAND bu_test test_color 8 "78/214/192" 78,214,192)
+brlcad_add_test(NAME bu_color_from_str_legacy_2 COMMAND bu_test test_color 8 "1.0 0.0 0.0" 255,0,0)
+
+# For function #9 (bu_color_from_str, alpha) the <args> format is:
+#
+# color_specification expected_rgba
+#
+# Where expected_rgba is a comma-separated 0-255 quadruple.
+brlcad_add_test(NAME bu_color_from_str_alpha_1 COMMAND bu_test test_color 9 "#ff000080" 255,0,0,128)
+brlcad_add_test(NAME bu_color_from_str_alpha_2 COMMAND bu_test test_color 9 "#0f08" 0,255,0,136)
+brlcad_add_test(NAME bu_color_from_str_alpha_3 COMMAND bu_test test_color 9 "rgba(255, 0, 0, 100%)" 255,0,0,255)
+brlcad_add_test(NAME bu_color_from_str_alpha_4 COMMAND bu_test test_color 9 "rgba(0, 255, 0, 20%)" 0,255,0,51)
+brlcad_add_test(NAME bu_color_from_str_alpha_5 COMMAND bu_test test_color 9 "hsva(240, 100%, 100%, 80%)" 0,0,255,204)
+brlcad_add_test(NAME bu_color_from_str_alpha_6 COMMAND bu_test test_color 9 "transparent" 0,0,0,0)
+
+# For function #10 (bu_color_to_str) the <args> format is:
+#
+# rgb_color format expected_string
+#
+# Where rgb_color is a comma-separated 0-255 triple, format is the
+# serialization format ("default" selects the canonical form), and
+# expected_string is the exact expected output.
+brlcad_add_test(NAME bu_color_to_str_1 COMMAND bu_test test_color 10 255,0,0 default "255/0/0")
+brlcad_add_test(NAME bu_color_to_str_2 COMMAND bu_test test_color 10 255,0,0 rgb "255/0/0")
+brlcad_add_test(NAME bu_color_to_str_3 COMMAND bu_test test_color 10 255,0,0 hex "#ff0000")
+brlcad_add_test(NAME bu_color_to_str_4 COMMAND bu_test test_color 10 0,255,0 hex "#00ff00")
+brlcad_add_test(NAME bu_color_to_str_5 COMMAND bu_test test_color 10 255,0,0 rgba "255/0/0/0")
+brlcad_add_test(NAME bu_color_to_str_6 COMMAND bu_test test_color 10 255,0,0 hexa "#ff000000")
+brlcad_add_test(NAME bu_color_to_str_7 COMMAND bu_test test_color 10 255,0,0 float "1/0/0")
+brlcad_add_test(NAME bu_color_to_str_8 COMMAND bu_test test_color 10 0,255,0 hsv "hsv(120,1,1)")
+brlcad_add_test(NAME bu_color_to_str_9 COMMAND bu_test test_color 10 255,0,0 hsl "hsl(0,1,0.5)")
+brlcad_add_test(NAME bu_color_to_str_10 COMMAND bu_test test_color 10 255,0,0 cmyk "cmyk(0,1,1,0)")
+
 #
 # ************ test_str.c tests ************
 #

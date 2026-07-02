@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "bu.h"
 
@@ -215,6 +216,124 @@ test_bu_color_from_rgb_chars(int argc, char *argv[])
 }
 
 
+/* Exercise bu_color_from_str() across all of the supported color
+ * specification notations.  argv[2] is the specification, argv[3] is
+ * either the expected "r, g, b" (0-255) result or the literal
+ * "invalid" to assert that the specification is rejected.
+ */
+static int
+test_bu_color_from_str(int argc, char *argv[])
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    unsigned char actual[3] = {0, 0, 0};
+    unsigned int expected[3] = {0, 0, 0};
+    int ret;
+
+    if (argc != 4) {
+	bu_exit(1, "ERROR: input format is color_spec expected_rgb [%s]\n", argv[0]);
+    }
+
+    ret = bu_color_from_str(&color, argv[2]);
+
+    if (BU_STR_EQUAL(argv[3], "invalid")) {
+	/* the specification is expected to be rejected */
+	return (ret != 0);
+    }
+
+    if (!ret) {
+	bu_log("Failed to parse color specification: %s\n", argv[2]);
+	return 1;
+    }
+
+    sscanf(argv[3], "%u, %u, %u", &expected[RED], &expected[GRN], &expected[BLU]);
+    bu_color_to_rgb_chars(&color, actual);
+    bu_log("Result: %u, %u, %u\n", actual[RED], actual[GRN], actual[BLU]);
+
+    return !(actual[RED] == expected[RED]
+	     && actual[GRN] == expected[GRN]
+	     && actual[BLU] == expected[BLU]);
+}
+
+
+/* Exercise the alpha-bearing notations of bu_color_from_str().
+ * argv[2] is the specification, argv[3] is the expected
+ * "r, g, b, a" (0-255) result.
+ */
+static int
+test_bu_color_from_str_alpha(int argc, char *argv[])
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    unsigned int expected[4] = {0, 0, 0, 0};
+    int actual[4] = {0, 0, 0, 0};
+    int ret;
+
+    if (argc != 4) {
+	bu_exit(1, "ERROR: input format is color_spec expected_rgba [%s]\n", argv[0]);
+    }
+
+    ret = bu_color_from_str(&color, argv[2]);
+    if (!ret) {
+	bu_log("Failed to parse color specification: %s\n", argv[2]);
+	return 1;
+    }
+
+    sscanf(argv[3], "%u, %u, %u, %u",
+	   &expected[RED], &expected[GRN], &expected[BLU], &expected[ALP]);
+
+    actual[RED] = (int)lrint(color.buc_rgb[RED] * 255.0);
+    actual[GRN] = (int)lrint(color.buc_rgb[GRN] * 255.0);
+    actual[BLU] = (int)lrint(color.buc_rgb[BLU] * 255.0);
+    actual[ALP] = (int)lrint(color.buc_rgb[ALP] * 255.0);
+    bu_log("Result: %d, %d, %d, %d\n",
+	   actual[RED], actual[GRN], actual[BLU], actual[ALP]);
+
+    return !((unsigned int)actual[RED] == expected[RED]
+	     && (unsigned int)actual[GRN] == expected[GRN]
+	     && (unsigned int)actual[BLU] == expected[BLU]
+	     && (unsigned int)actual[ALP] == expected[ALP]);
+}
+
+
+/* Exercise bu_color_to_str().  argv[2] is an "r, g, b" (0-255) input
+ * color, argv[3] is the requested format, and argv[4] is the expected
+ * serialized string.
+ */
+static int
+test_bu_color_to_str(int argc, char *argv[])
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    unsigned int in[3] = {0, 0, 0};
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    const char *format;
+    int ret;
+    int result;
+
+    if (argc != 5) {
+	bu_exit(1, "ERROR: input format is rgb format expected [%s]\n", argv[0]);
+    }
+
+    sscanf(argv[2], "%u, %u, %u", &in[RED], &in[GRN], &in[BLU]);
+    color.buc_rgb[RED] = (fastf_t)in[RED] / 255.0;
+    color.buc_rgb[GRN] = (fastf_t)in[GRN] / 255.0;
+    color.buc_rgb[BLU] = (fastf_t)in[BLU] / 255.0;
+
+    /* an empty format string selects the canonical default */
+    format = BU_STR_EQUAL(argv[3], "default") ? "" : argv[3];
+
+    ret = bu_color_to_str(&out, &color, format);
+    if (!ret) {
+	bu_log("bu_color_to_str failed for format: %s\n", argv[3]);
+	bu_vls_free(&out);
+	return 1;
+    }
+
+    bu_log("Result: %s\n", bu_vls_cstr(&out));
+    result = !BU_STR_EQUAL(bu_vls_cstr(&out), argv[4]);
+    bu_vls_free(&out);
+    return result;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -247,6 +366,12 @@ main(int argc, char *argv[])
 	    return test_bu_color_to_rgb_chars(argc, argv);
 	case 7:
 	    return test_bu_color_from_rgb_chars(argc, argv);
+	case 8:
+	    return test_bu_color_from_str(argc, argv);
+	case 9:
+	    return test_bu_color_from_str_alpha(argc, argv);
+	case 10:
+	    return test_bu_color_to_str(argc, argv);
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);
