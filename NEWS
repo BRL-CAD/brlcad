@@ -1175,7 +1175,7 @@ tracing infrastructure including CPU thread affinity locking for
 faster performance, more consistent grazing hit behavior, expanded
 volume and surface area calculations, numerous bug fixes, and more
 robust NURBS evaluation.  Following BRL-CAD's interface deprecation
-policy (see CHANGES file), the Jove text editor is no longer being
+policy (see CHANGES.adoc), the Jove text editor is no longer being
 bundled.  Numerous converters receive robustness improvements
 including the STEP, Patch, and 3DM importers.
 
@@ -3524,8 +3524,8 @@ future.  For those situations, developers using the BRL-CAD libraries
 may need to update to new API features in order to link with newer
 versions of BRL-CAD.
 
-See the CHANGES file for a transcript of features that are deprecated
-or have already become obsolete.
+See doc/changes/deprecated.adoc and doc/changes/obsoleted.adoc for
+features that are deprecated or have already become obsolete.
 
 ---
 See doc/history.txt for more historic information on BRL-CAD.  There
