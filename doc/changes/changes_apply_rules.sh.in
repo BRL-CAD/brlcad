@@ -1,0 +1,231 @@
+#!/bin/sh
+
+RULES_FILE="@CHANGES_RULES_FILE@"
+RULE_COUNT="@CHANGES_RULE_COUNT@"
+
+mode=apply
+case "${1:-}" in
+  --check)
+    mode=check
+    shift
+    ;;
+  --dry-run)
+    mode=dry-run
+    shift
+    ;;
+esac
+
+if [ "$#" -ne 1 ]; then
+  echo "usage: $0 [--check|--dry-run] path" >&2
+  exit 2
+fi
+
+target=$1
+if [ ! -e "$target" ]; then
+  echo "$0: path does not exist: $target" >&2
+  exit 2
+fi
+
+tmpdir=${TMPDIR:-/tmp}/brlcad-change-rules.$$
+mkdir -p "$tmpdir" || exit 2
+trap 'rm -rf "$tmpdir"' EXIT HUP INT TERM
+
+find_files() {
+  if [ -f "$target" ]; then
+    printf '%s\n' "$target"
+    return
+  fi
+  find "$target" \
+    \( -name .git -o -name .svn -o -name build -o -name build-* -o -name CMakeFiles \) -prune -o \
+    -type f \( \
+      -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.cxx' -o -name '*.hpp' -o -name '*.hxx' -o \
+      -name '*.cc' -o -name '*.mm' -o -name '*.m' -o -name '*.tcl' -o -name '*.tk' -o -name '*.itcl' -o \
+      -name '*.itk' -o -name '*.sh' -o -name '*.cmake' -o -name 'CMakeLists.txt' -o -name '*.adoc' \
+    \) -print
+}
+
+perl_literal_replace() {
+  old=$1
+  new=$2
+  file=$3
+  OLD=$old NEW=$new perl -0pi -e 'BEGIN{$old=$ENV{OLD};$new=$ENV{NEW}} s/\Q$old\E/$new/g' "$file"
+}
+
+perl_form_replace() {
+  old=$1
+  new=$2
+  file=$3
+  OLD=$old NEW=$new perl -0pi -e '
+    BEGIN {
+      $old = $ENV{OLD};
+      $new = $ENV{NEW};
+      eval { qr/$old/ } or die "malformed FORM pattern: $old\n";
+    }
+    sub expand_replacement {
+      my ($rep, $text, $starts, $ends) = @_;
+      $rep =~ s/\\([0-9]+)/($1 <= $#$starts && $starts->[$1] >= 0) ? substr($text, $starts->[$1], $ends->[$1] - $starts->[$1]) : ""/ge;
+      $rep =~ s/\\n/\n/g;
+      return $rep;
+    }
+    s{$old}{expand_replacement($new, $_, [@-], [@+])}ge' "$file"
+}
+
+perl_token_replace() {
+  old=$1
+  new=$2
+  file=$3
+  OLD=$old NEW=$new perl -0pi -e 'BEGIN{$old=$ENV{OLD};$new=$ENV{NEW}} s/(?<![A-Za-z0-9_])\Q$old\E(?![A-Za-z0-9_])/$new/g' "$file"
+}
+
+perl_prefix_replace() {
+  old=$1
+  new=$2
+  file=$3
+  OLD=$old NEW=$new perl -0pi -e 'BEGIN{$old=$ENV{OLD};$new=$ENV{NEW}} s/(?<![A-Za-z0-9_])\Q$old\E/$new/g' "$file"
+}
+
+perl_function_rename() {
+  old=$1
+  new=$2
+  file=$3
+  OLD=$old NEW=$new perl -0pi -e 'BEGIN{$old=$ENV{OLD};$new=$ENV{NEW}} s/(?<![A-Za-z0-9_])\Q$old\E[ \t\r\n]*\(/$new(/g' "$file"
+}
+
+perl_command_replace() {
+  old=$1
+  new=$2
+  file=$3
+  OLD=$old NEW=$new perl -0pi -e 'BEGIN{$old=$ENV{OLD};$new=$ENV{NEW}} s{(^|[\n\r;])[ \t]*\Q$old\E(?![A-Za-z0-9_])}{$1$new}g' "$file"
+}
+
+perl_header_rename() {
+  old=$1
+  new=$2
+  prefix=$3
+  file=$4
+  OLD=$old NEW=$new PREFIX=$prefix perl -0pi -e 'BEGIN{$old=$ENV{OLD};$new=$ENV{NEW};$prefix=$ENV{PREFIX};$prefix =~ s/\\n/\n/g} s{(^[ \t]*#[ \t]*include[ \t]+[<"])\Q$old\E([>"])}{$prefix.$1.$new.$2}gme' "$file"
+}
+
+perl_drop_call() {
+  name=$1
+  file=$2
+  NAME=$name perl -0pi -e 'BEGIN{$name=$ENV{NAME}} s/^[^\n]*\b\Q$name\E[ \t\r\n]*\([ \t\r\n]*\)[ \t]*;[ \t]*(?:\n|$)//gm' "$file"
+}
+
+perl_drop_function_param() {
+  name=$1
+  pos=$2
+  file=$3
+  NAME=$name POS=$pos perl -0pi -e '
+    BEGIN{$name=$ENV{NAME};$pos=$ENV{POS}}
+    s{(?<![A-Za-z0-9_])\Q$name\E[ \t\r\n]*\(([^()]*)\)}{
+      my @a = split(/\s*,\s*/, $1, -1);
+      splice(@a, $pos - 1, 1) if $pos > 0 && $pos <= @a;
+      $name . "(" . join(", ", @a) . ")"
+    }gex' "$file"
+}
+
+perl_add_function_param() {
+  name=$1
+  spec=$2
+  file=$3
+  position=${spec%%=*}
+  value=${spec#*=}
+  NAME=$name POS=$position VALUE=$value perl -0pi -e '
+    BEGIN{$name=$ENV{NAME};$pos=$ENV{POS};$value=$ENV{VALUE}}
+    s{(?<![A-Za-z0-9_])\Q$name\E[ \t\r\n]*\(([^()]*)\)}{
+      my @a = length($1) ? split(/\s*,\s*/, $1, -1) : ();
+      splice(@a, $pos - 1, 0, $value);
+      $name . "(" . join(", ", @a) . ")"
+    }gex' "$file"
+}
+
+perl_move_function_params() {
+  name=$1
+  order=$2
+  file=$3
+  NAME=$name ORDER=$order perl -0pi -e '
+    BEGIN{$name=$ENV{NAME};@order=split(/,/, $ENV{ORDER})}
+    s{(?<![A-Za-z0-9_])\Q$name\E[ \t\r\n]*\(([^()]*)\)}{
+      my @a = split(/\s*,\s*/, $1, -1);
+      my @n;
+      for my $i (@order) { push @n, $a[$i - 1] if $i =~ /^[0-9]+$/ && $i > 0 && $i <= @a; }
+      $name . "(" . join(", ", @n) . ")"
+    }gex' "$file"
+}
+
+apply_rule_to_file() {
+  rule=$1
+  file=$2
+  case "$rule" in
+    ""|\#*) return ;;
+  esac
+
+  case "$rule" in
+    *" #"*) rule=${rule%%" #"*} ;;
+  esac
+
+  set -f
+  eval "set -- $rule"
+  set +f
+
+  if [ "$1" = RENAME ]; then
+    kind=$2
+    old=$3
+    if [ "$4" != TO ]; then
+      echo "$0: malformed RENAME rule: $rule" >&2
+      return 2
+    fi
+    new=$5
+    case "$kind" in
+      FUNCTION) perl_function_rename "$old" "$new" "$file" ;;
+      COMMAND) perl_command_replace "$old" "$new" "$file" ;;
+      MACRO|TOKEN) perl_token_replace "$old" "$new" "$file" ;;
+      PREFIX) perl_prefix_replace "$old" "$new" "$file" ;;
+      TYPE|TEXT) perl_literal_replace "$old" "$new" "$file" ;;
+      FORM) perl_form_replace "$old" "$new" "$file" ;;
+      HEADER)
+        prefix=
+        if [ "${8:-}" = PREFIX ]; then
+          prefix=${9:-}
+        fi
+        perl_header_rename "$old" "$new" "$prefix" "$file"
+        ;;
+    esac
+  elif [ "$1" = DROP ] && [ "$2" = CALL ]; then
+    perl_drop_call "$3" "$file"
+  elif [ "$1" = DROP ] && [ "$2" = FUNCTION ] && [ "$4" = PARAMS ]; then
+    perl_drop_function_param "$3" "$5" "$file"
+  elif [ "$1" = ADD ] && [ "$2" = FUNCTION ] && [ "$4" = PARAMS ]; then
+    perl_add_function_param "$3" "$5" "$file"
+  elif [ "$1" = MOVE ] && [ "$2" = FUNCTION ] && [ "$4" = PARAMS ] && [ "$6" = TO ]; then
+    perl_move_function_params "$3" "$7" "$file"
+  fi
+}
+
+changed=0
+files=$(find_files)
+for src_file in $files; do
+  work_file=$src_file
+  if [ "$mode" != apply ]; then
+    work_file="$tmpdir/$(basename "$src_file").work"
+    cp "$src_file" "$work_file" || exit 2
+  fi
+
+  while IFS= read -r rule || [ -n "$rule" ]; do
+    apply_rule_to_file "$rule" "$work_file" || exit 2
+  done < "$RULES_FILE"
+
+  if [ "$mode" != apply ] && ! cmp -s "$src_file" "$work_file"; then
+    changed=1
+    echo "would update: $src_file"
+  fi
+done
+
+if [ "$mode" = check ] && [ "$changed" -ne 0 ]; then
+  exit 1
+fi
+
+if [ "$mode" = dry-run ]; then
+  echo "checked $RULE_COUNT rules"
+fi

@@ -1,0 +1,83 @@
+= BRL-CAD Change Inventories
+:toc: macro
+
+toc::[]
+
+== Files
+
+`deprecated.adoc` lists public interfaces that are scheduled to change or be
+removed after the formal deprecation window.
+
+`obsoleted.adoc` lists public interfaces that have completed a deprecation or
+minimally impacting transition.
+
+`minimally-impacting.rules` is the source of truth for minimally impacting
+changes. The build generates `doc/changes/minimally-impacting.adoc` and
+`doc/changes/changes_apply_rules.sh` from that rule file.
+
+== Rule Syntax
+
+Rules use one record per line. Each rule ends with `SINCE <release>`. Same-line
+comments begin with `#`.
+
+[source,text]
+----
+RENAME FUNCTION old_name TO new_name SINCE 7.46 # optional comment
+RENAME MACRO OLD_NAME TO NEW_NAME SINCE 7.46
+RENAME TYPE "struct old_name" TO "struct new_name" SINCE 7.46
+RENAME HEADER old/header.h TO new/header.h SINCE 7.46
+RENAME COMMAND oldcmd TO newcmd SINCE 7.46
+RENAME TOKEN old_name TO new_name SINCE 7.46
+RENAME PREFIX old_prefix TO new_prefix SINCE 7.46
+RENAME TEXT "literal old text" TO "literal new text" SINCE 7.46
+RENAME FORM "old_regex_form" TO "new_\\1_form" SINCE 7.46
+
+MOVE FUNCTION foo PARAMS 1,2,3 TO 2,1,3 SINCE 7.46
+DROP FUNCTION foo PARAMS 3 SINCE 7.46
+DROP CALL old_noop SINCE 7.46
+ADD FUNCTION foo PARAMS 1=DEFAULT_VALUE SINCE 7.46
+----
+
+`FORM` is reserved for historical or unusual source forms that do not reduce to
+a simple symbol, header, command, or parameter rule. The generated updater
+treats the old form as a Perl substitution pattern and expands numeric capture
+groups in the replacement.
+
+== Generated Script
+
+After configuring a build tree, generate or refresh the change-rule outputs:
+
+[source,sh]
+----
+cmake --build build --target changes-generate-rules
+----
+
+The generated updater is written to:
+
+[source,text]
+----
+build/doc/changes/changes_apply_rules.sh
+----
+
+Use it on a file or source tree:
+
+[source,sh]
+----
+build/doc/changes/changes_apply_rules.sh path/to/source
+build/doc/changes/changes_apply_rules.sh --dry-run path/to/source
+build/doc/changes/changes_apply_rules.sh --check path/to/source
+----
+
+`--check` exits non-zero if any file would change.
+
+== Contributor Workflow
+
+For a minimally impacting public change:
+
+1. Add a rule to `minimally-impacting.rules`.
+2. Run `changes-check-rules`.
+3. Run the generated updater against affected BRL-CAD sources if applicable.
+4. Include the source update and rule change in the same commit.
+
+For any public change that cannot be represented by the rule language, extend
+the rule language or use formal deprecation.
