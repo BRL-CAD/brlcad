@@ -79,16 +79,14 @@
 @BRLCAD_VERSION_AMEND_STR@
 
 /**
- * Compile-time macro for testing whether the current compilation
- * matches or precedes a given version triplet.  Returns false if the
- * triplet come after the current compilation version, true otherwise.
- * Conventional use allows calling code to support multiple API
- * versions simultaneously, particularly with respect to deprecation
- * changes (see CHANGES).
+ * Macro for testing whether a given version precedes the current
+ * compilation API.  Returns false if the version is newer than the
+ * current compilation version, or true otherwise.  This allows codes
+ * to support multiple API versions simultaneously.
  *
  @code
 #if BRLCAD_API(7,24,6)
-... code that worked in 7.24.6 API and prior ...
+... code that worked in 7.24.6 API (and potentially prior) ...
 #else
 ... current API ...
 #endif
