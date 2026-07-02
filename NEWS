@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+* added snail & seashell procedural geometry generator - Sean Morrison
 * additional 3D geometry model examples - Csanyi Pal, Lee Butler
 * fixed fbgamma bug specifying three channel values - Sean Morrison
 * fixed fbgrid -o old grid mode uninitialized data bug - Sean Morrison
