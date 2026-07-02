@@ -410,15 +410,72 @@ function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
     file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH COMPILER FLAG BUILD LOG: ${FLAG_LANG} ===\n${_brfb_build_out}\n${_brfb_build_err}\n")
   endif()
 
+  # Determine pass/fail exactly the way CMake's check_<lang>_compiler_flag does:
+  # a probe passes only if it compiled AND the build output contains no
+  # diagnostic indicating the flag was unrecognized or ignored.  This is
+  # essential on MSVC, where an unknown flag still compiles successfully
+  # (exit 0, artifact produced) but emits command-line warning D9002 - so
+  # artifact existence alone would mark bogus flags as supported and add them
+  # to the real build's flags.  We reuse CMake's own fail-regex set so the
+  # verdict matches the reference try_compile path (verifiable with
+  # misc/CMake/probe_validation/).
+  include(CMakeCheckCompilerFlagCommonPatterns)
+  check_compiler_flag_common_patterns(_brfb_common_patterns)
+  set(_brfb_fail_regex)
+  set(_brfb_take_regex FALSE)
+  foreach(_brfb_tok IN LISTS _brfb_common_patterns)
+    if("${_brfb_tok}" STREQUAL "FAIL_REGEX")
+      set(_brfb_take_regex TRUE)
+    elseif(_brfb_take_regex)
+      list(APPEND _brfb_fail_regex "${_brfb_tok}")
+      set(_brfb_take_regex FALSE)
+    endif()
+  endforeach()
+  # Language-specific "valid for X but not for Y" patterns, matching CMake's
+  # Internal/CheckFlagCommonConfig.cmake.
+  if("${FLAG_LANG}" STREQUAL "CXX")
+    list(APPEND _brfb_fail_regex "command[ -]line option .* is valid for .* but not for C\\+\\+")
+  else()
+    list(APPEND _brfb_fail_regex "command[ -]line option .* is valid for .* but not for C")
+  endif()
+
+  # Split the combined build output into lines for per-probe attribution.
+  # Protect embedded semicolons so foreach() does not split on them; the tokens
+  # we attribute by (the target name and the flag text) contain none.
+  set(_brfb_log "${_brfb_build_out}\n${_brfb_build_err}")
+  string(REPLACE ";" "@@SEMI@@" _brfb_log "${_brfb_log}")
+  string(REPLACE "\n" ";" _brfb_lines "${_brfb_log}")
+
   set(_brfb_report)
   foreach(_brfb_var IN LISTS _brfb_pending)
     if(NOT DEFINED ${_brfb_var})
-      set(_brfb_success FALSE)
+      # Did the probe compile at all?
+      set(_brfb_built FALSE)
       if(_brfb_cfg_result EQUAL 0)
         if(EXISTS "${_brfb_build_dir}/${_brfb_var}" OR EXISTS "${_brfb_build_dir}/${_brfb_var}.exe")
-          set(_brfb_success TRUE)
+          set(_brfb_built TRUE)
         endif()
       endif()
+
+      # A compiled probe still fails if its flag was reported unrecognized.
+      # Attribute a diagnostic line to this probe by the MSBuild project tag
+      # (<target>.vcxproj) or by the quoted flag the compiler echoes back.
+      set(_brfb_success ${_brfb_built})
+      if(_brfb_built)
+        get_property(_brfb_flag GLOBAL PROPERTY "BRLCAD_CFLAG_${_brfb_var}_FLAG")
+        foreach(_brfb_line IN LISTS _brfb_lines)
+          string(FIND "${_brfb_line}" "${_brfb_var}.vcxproj" _brfb_tag_pos)
+          string(FIND "${_brfb_line}" "'${_brfb_flag}'" _brfb_flag_pos)
+          if(NOT _brfb_tag_pos EQUAL -1 OR NOT _brfb_flag_pos EQUAL -1)
+            foreach(_brfb_re IN LISTS _brfb_fail_regex)
+              if("${_brfb_line}" MATCHES "${_brfb_re}")
+                set(_brfb_success FALSE)
+              endif()
+            endforeach()
+          endif()
+        endforeach()
+      endif()
+
       if(_brfb_success)
         set(${_brfb_var} 1 CACHE INTERNAL "Test ${_brfb_var}" FORCE)
         set(_brfb_result_line "Performing Test ${_brfb_var} - Success")
