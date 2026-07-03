@@ -2132,8 +2132,6 @@ CONVERTERS
 * integrate the submitted x3d-g (Web3D, VRML successor) importer
   (pending patch on sf)
 
-* add support to x3d-g for NURBS entities
-
 * compare libIGES (lgpl, https://github.com/cbernardo/libIGES) as
   potential replacement for our complex IGES conversion logic.
   appropriate time for review when IGES gets added to libGCV.
