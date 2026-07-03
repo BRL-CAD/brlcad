@@ -152,7 +152,7 @@ struct Allocator {
 #ifndef APNGMINI_NO_EXCEPTIONS
 	throw std::bad_alloc();
 #else
-	bu_bomb("apngmini allocation failure 2");
+	return nullptr;
 #endif
     }
     void deallocate(T* p, std::size_t) noexcept

@@ -35,7 +35,7 @@ icv_init_bins(icv_image_t* img, size_t n_bins)
     size_t **bins;
 
     bins = (size_t**) bu_malloc(sizeof(size_t*)*img->channels, "icv_init_bins : Histogram Bins");
-    for (c = 0; c <= img->channels; c++) {
+    for (c = 0; c < img->channels; c++) {
 	bins[c] = (size_t*) bu_malloc(sizeof(size_t)*n_bins, "icv_init_bins : Histogram Array for Channels");
 	for (i = 0; i < n_bins; i++) {
 	    bins[c][i] = 0;
@@ -61,9 +61,12 @@ icv_hist(icv_image_t* img, size_t n_bins)
 
     bins = icv_init_bins(img, n_bins);
 
-    for (i = 0; i <= size; i++) {
+    for (i = 0; i < size; i++) {
 	for (j = 0; j < img->channels; j++) {
-	    temp = (*data++)*n_bins;
+	    double val = (*data++) * n_bins;
+	    if (!(val >= 0.0)) val = 0.0;
+	    temp = (size_t)val;
+	    if (temp >= n_bins) temp = n_bins - 1; /* clamp max values to the final bin */
 	    bins[j][temp]++;
 	}
     }
@@ -83,15 +86,17 @@ icv_max(icv_image_t* img)
 
     max = (double *)bu_malloc(sizeof(double)*img->channels, "max values");
 
-    for (i = 0; i < img->channels; i++)
-	max[i] = 0.0;
-
     data = img->data;
+    for (i = 0; i < img->channels; i++)
+	max[i] = (img->width * img->height > 0) ? data[i] : 0.0;
 
-    for (size = img->width*img->height; size>0; size--)
-	for (i = 0; i < img->channels; i++)
-	    if (max[i] > *data++)
-		max[i] = *(data-1);
+    for (size = img->width*img->height; size>0; size--) {
+	for (i = 0; i < img->channels; i++) {
+	    double val = *data++;
+	    if (max[i] < val)
+		max[i] = val;
+	}
+    }
 
     return max;
 }
@@ -155,15 +160,16 @@ icv_min(icv_image_t* img)
 
     min = (double *)bu_malloc(sizeof(double)*img->channels, "min values");
 
-    for (i = 0; i < img->channels; i++)
-	min[i] = 1.0;
-
     data = img->data;
+    for (i = 0; i < img->channels; i++)
+	min[i] = (img->width * img->height > 0) ? data[i] : 0.0;
 
     for (size = (size_t)img->width*img->height; size>0; size--) {
-	for (i = 0; i < img->channels; i++)
-	    if (min[i] < *data++)
-		min[i] = *(data-1);
+	for (i = 0; i < img->channels; i++) {
+	    double val = *data++;
+	    if (min[i] > val)
+		min[i] = val;
+	}
     }
 
     return min;
@@ -181,7 +187,7 @@ icv_var(icv_image_t* img, size_t** bins, size_t n_bins)
 
     ICV_IMAGE_VAL_PTR(img);
 
-    var = (double *) bu_malloc(sizeof(double)*img->channels, "variance values");
+    var = (double *) bu_calloc(img->channels, sizeof(double), "variance values");
 
     size = (size_t) img->height*img->width;
 
@@ -196,6 +202,8 @@ icv_var(icv_image_t* img, size_t** bins, size_t n_bins)
     for (c = 0; c < img->channels; c++) {
 	var[c] /= size;
     }
+
+    bu_free(mean, "mean values");
 
     return var;
 }
@@ -212,7 +220,7 @@ icv_skew(icv_image_t* img, size_t** bins, size_t n_bins)
 
     ICV_IMAGE_VAL_PTR(img);
 
-    skew = (double *)bu_malloc(sizeof(double)*img->channels, "skewness values");
+    skew = (double *)bu_calloc(img->channels, sizeof(double), "skewness values");
 
     size = (size_t) img->height*img->width;
 
@@ -228,6 +236,8 @@ icv_skew(icv_image_t* img, size_t** bins, size_t n_bins)
 	skew[c] /= size;
     }
 
+    bu_free(mean, "mean values");
+
     return skew;
 }
 
@@ -237,23 +247,27 @@ icv_median(icv_image_t* img, size_t** bins, size_t n_bins)
 {
     size_t i,c;
     int *median;
-    double *sum;
     double *partial_sum;
 
     ICV_IMAGE_VAL_PTR(img);
 
     median = (int *)bu_malloc(sizeof(int)*img->channels, "median values");
-    partial_sum = (double *)bu_malloc(sizeof(int)*img->channels, "partial sum values");
+    partial_sum = (double *)bu_malloc(sizeof(double)*img->channels, "partial sum values");
 
-    sum = icv_sum(img);
+    size_t num_pixels = (size_t)img->width * img->height;
 
     for (c = 0; c < img->channels; c++) {
-	partial_sum[c] = 0;
+	median[c] = 0;
+	partial_sum[c] = 0.0;
+    }
+
+    for (c = 0; c < img->channels; c++) {
 	for (i = 0; i < n_bins; i++) {
-	    if (partial_sum[c] < sum[c]/2) {
-		partial_sum[c] += i*bins[c][i];
+	    partial_sum[c] += bins[c][i];
+	    if (partial_sum[c] >= num_pixels / 2.0) {
 		median[c] = i;
-	    } else break;
+		break;
+	    }
 	}
     }
 

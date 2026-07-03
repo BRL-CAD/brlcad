@@ -24,12 +24,11 @@
 
 #pragma once
 
-#include <iostream>
 #include <vector>
-#include <cassert>
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <memory>
+#include <stdexcept>
 
 namespace imghash
 {
@@ -39,7 +38,6 @@ template<class T> struct Image;
 class Preprocess;
 
 template<class T> T convert_pix(uint8_t p);
-template<class T> T convert_pix(uint16_t p);
 template<class T> T convert_pix(float p);
 
 std::vector<size_t> tile_size(size_t a, size_t b);
@@ -157,13 +155,6 @@ void resize(const Image<InT>& in, Image<OutT>& out, std::vector<size_t>& hist)
     }
 }
 
-template<class InT, class OutT, class TmpT = OutT>
-void resize(const Image<InT>& in, Image<OutT>& out)
-{
-    std::vector<size_t> hist;
-    resize(in, out, hist);
-}
-
 template<class T>
 struct Image {
     std::vector<T> *data = NULL;
@@ -178,10 +169,49 @@ struct Image {
     Image(size_t i_height, size_t i_width, size_t i_channels = 1)
 	: Image(i_height, i_width, i_channels, i_height* i_width* i_channels, i_width* i_channels)
     {}
-    Image(const Image& other) = default;
-    Image(Image&& other) = default;
-    Image& operator=(const Image& other) = default;
-    Image& operator=(Image&& other) = default;
+    Image(const Image& other)
+	: data(nullptr), height(other.height), width(other.width), channels(other.channels), size(other.size), row_size(other.row_size)
+    {
+	data = new std::vector<T>(*other.data);
+    }
+    Image(Image&& other) noexcept
+	: data(other.data), height(other.height), width(other.width), channels(other.channels), size(other.size), row_size(other.row_size)
+    {
+	other.data = nullptr;
+    }
+    Image& operator=(const Image& other)
+    {
+	if (this != &other) {
+	    height = other.height;
+	    width = other.width;
+	    channels = other.channels;
+	    size = other.size;
+	    row_size = other.row_size;
+	    if (!data)
+		data = new std::vector<T>;
+	    *data = *other.data;
+	}
+	return *this;
+    }
+    Image& operator=(Image&& other) noexcept
+    {
+	if (this != &other) {
+	    delete data;
+	    data = other.data;
+	    height = other.height;
+	    width = other.width;
+	    channels = other.channels;
+	    size = other.size;
+	    row_size = other.row_size;
+	    other.data = nullptr;
+	}
+	return *this;
+    }
+
+    ~Image()
+    {
+	delete data;
+    }
 
     void allocate()
     {
@@ -216,11 +246,11 @@ struct Image {
 
     T at(size_t i) const
     {
-	return data[i];
+	return (*data)[i];
     }
     T& at(size_t i)
     {
-	return data[i];
+	return (*data)[i];
     }
 
     T operator[](size_t i) const
@@ -255,7 +285,6 @@ class Preprocess
     size_t in_w, in_h, in_c; //input width, height, channels
 public:
 
-    Preprocess();
     Preprocess(size_t w, size_t h);
 
     //by row:
@@ -309,8 +338,6 @@ public:
 
     Image<float> stop();
 
-    //full-frame:
-    Image<float> apply(const Image<uint8_t>& input);
 };
 
 //! Class for implementing image hash functions
@@ -329,22 +356,8 @@ public:
     virtual ~Hasher() {}
     virtual hash_type apply(const Image<float>& image) = 0;
 
-    //return true if the hashes are equal up to the length of the shorter hash
-    static bool match(const hash_type& h1, const hash_type& h2);
-    //return true if the hashes match and are the same length
-    static bool equal(const hash_type& h1, const hash_type& h2);
-
     //bitwise distance, up to the length of the shorter hash
     static uint32_t hamming_distance(const hash_type& h1, const hash_type& h2);
-
-    static uint32_t distance(const hash_type& h1, const hash_type& h2);
-};
-
-//! Block-average hash
-class BlockHasher : public Hasher
-{
-public:
-    hash_type apply(const Image<float>& image);
 };
 
 //! Discrete Cosine Transform hash
@@ -395,8 +408,6 @@ protected:
     std::vector<float> m_;
 
 public:
-    DCTHasher();
-
     //! Construct a DCTHash object with M frequencies
     /*!
       This Hash transforms a square image using the Discrete Cosine Transform, producing MxM bits

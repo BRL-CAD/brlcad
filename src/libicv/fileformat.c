@@ -52,7 +52,7 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 	return BU_MIME_IMAGE_PIX;
 
     /* look for the FMT: header */
-#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {if (trimmedname) bu_vls_sprintf(trimmedname, "%s", filename+strlen(#name)+1); return BU_MIME_IMAGE_##name; }
+#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name)+1)) {if (trimmedname) bu_vls_sprintf(trimmedname, "%s", filename+strlen(#name)+1); return BU_MIME_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(JPEG);
@@ -64,10 +64,10 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 
     /* no format header found, copy the name as it is */
     if (trimmedname)
-	bu_vls_sprintf(trimmedname, filename, BUFSIZ);
+	bu_vls_sprintf(trimmedname, "%s", filename);
 
     /* and guess based on extension */
-#define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_MIME_IMAGE_##name;
+#define CMP(name, ext) if (strlen(filename) > strlen(#ext) && !bu_strncmp(filename+strlen(filename)-strlen(#ext)-1, "."#ext, strlen(#ext)+1)) return BU_MIME_IMAGE_##name;
     CMP(PIX, pix);
     CMP(PNG, png);
     CMP(PPM, ppm);
@@ -75,8 +75,8 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
     CMP(BW, bw);
     CMP(DPIX, dpix);
 #undef CMP
-#define CMP2(name, ext1, ext2) if (!bu_strncmp(filename+strlen(filename)-strlen(#ext1)-1, "."#ext1, strlen(#ext1)+1) || \
-	!bu_strncmp(filename+strlen(filename)-strlen(#ext2)-1, "."#ext2, strlen(#ext2)+1)) return BU_MIME_IMAGE_##name;
+#define CMP2(name, ext1, ext2) if ((strlen(filename) > strlen(#ext1) && !bu_strncmp(filename+strlen(filename)-strlen(#ext1)-1, "."#ext1, strlen(#ext1)+1)) || \
+	(strlen(filename) > strlen(#ext2) && !bu_strncmp(filename+strlen(filename)-strlen(#ext2)-1, "."#ext2, strlen(#ext2)+1))) return BU_MIME_IMAGE_##name;
     CMP2(JPEG, jpg, jpeg);
 #undef CMP2
     /* defaulting to PIX */
@@ -88,15 +88,22 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 icv_image_t *
 icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height)
 {
-    if (format == BU_MIME_IMAGE_AUTO)
-	format = icv_guess_file_format(filename, NULL);
+    struct bu_vls ifilename = BU_VLS_INIT_ZERO;
+    const char *ifname = filename;
 
-    FILE *fp = (!filename) ? stdin : fopen(filename, "rb");
+    if (format == BU_MIME_IMAGE_AUTO) {
+	format = icv_guess_file_format(filename, &ifilename);
+	if (filename)
+	    ifname = bu_vls_cstr(&ifilename);
+    }
+
+    FILE *fp = (!ifname) ? stdin : fopen(ifname, "rb");
     if (!fp) {
 	bu_log("ERROR: Cannot open file %s for reading\n", filename);
+	bu_vls_free(&ifilename);
 	return NULL;
     }
-    if (!filename)
+    if (!ifname)
 	setmode(fileno(fp), O_BINARY);
 
     icv_image_t *oimg = NULL;
@@ -125,11 +132,15 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
 	default:
 	    bu_log("icv_read not implemented for this format\n");
 	    fclose(fp);
+	    bu_vls_free(&ifilename);
 	    return NULL;
     }
 
-    fflush(fp);
-    fclose(fp);
+    if (fp != stdin) {
+	fflush(fp);
+	fclose(fp);
+    }
+    bu_vls_free(&ifilename);
     return oimg;
 }
 
@@ -229,8 +240,10 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 	    ret = pix_write(bif, fp);
     }
 
-    fflush(fp);
-    fclose(fp);
+    if (fp != stdout) {
+	fflush(fp);
+	fclose(fp);
+    }
 
     bu_vls_free(&ofilename);
     return ret;
@@ -337,31 +350,194 @@ icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data)
 }
 
 
+static int
+icv_channels_match_color_space(ICV_COLOR_SPACE color_space, size_t channels)
+{
+    switch (color_space) {
+	case ICV_COLOR_SPACE_RGB:
+	    return channels == 3 || channels == 4;
+	case ICV_COLOR_SPACE_GRAY:
+	    return channels == 1 || channels == 2;
+	default:
+	    return 0;
+    }
+}
+
+icv_image_t *
+icv_create_with_channels(size_t width, size_t height, ICV_COLOR_SPACE color_space, size_t channels)
+{
+    icv_image_t *bif;
+
+    if (!icv_channels_match_color_space(color_space, channels)) {
+	bu_log("icv_create_with_channels : invalid color space/channel combination\n");
+	return NULL;
+    }
+
+    /* Prevent integer overflows on size calculations for massive images. */
+    if (width > 0 && height > (size_t)-1 / width / channels / sizeof(double)) {
+	bu_log("icv_create_with_channels : image dimensions excessively large, causing integer overflow\n");
+	return NULL;
+    }
+
+    BU_ALLOC(bif, struct icv_image);
+    ICV_IMAGE_INIT(bif);
+    bif->width = width;
+    bif->height = height;
+    bif->color_space = color_space;
+    bif->channels = channels;
+    bif->alpha_channel = (channels == 2 || channels == 4) ? 1 : 0;
+    bif->flags = 0;
+    bif->data = (double *)bu_malloc(bif->height*bif->width*bif->channels*sizeof(double), "Image Data");
+
+    return icv_zero(bif);
+}
+
 icv_image_t *
 icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
 {
     icv_image_t *bif;
-    BU_ALLOC(bif, struct icv_image);
-    bif->width = width;
-    bif->height = height;
-    bif->color_space = color_space;
-    bif->alpha_channel = 0;
-    bif->magic = ICV_IMAGE_MAGIC;
+    size_t channels = 0;
+
     switch (color_space) {
 	case ICV_COLOR_SPACE_RGB :
-	    /* Add all the other three channel images here (e.g. HSV, YCbCr, etc.) */
-	    bif->data = (double *) bu_malloc(bif->height*bif->width*3*sizeof(double), "Image Data");
-	    bif->channels = 3;
+	    channels = 3;
 	    break;
 	case ICV_COLOR_SPACE_GRAY :
-	    bif->data = (double *) bu_malloc(bif->height*bif->width*1*sizeof(double), "Image Data");
-	    bif->channels = 1;
+	    channels = 1;
 	    break;
 	default :
-	    bu_exit(1, "icv_create_image : Color Space Not Defined");
-	    break;
+	    bu_bomb("icv_create : Color Space Not Defined\n");
     }
-    return icv_zero(bif);
+
+    bif = icv_create_with_channels(width, height, color_space, channels);
+    if (!bif)
+	bu_bomb("icv_create : image allocation failed\n");
+
+    return bif;
+}
+
+static struct icv_render_info *
+icv_render_info_clone(const struct icv_render_info *src)
+{
+    struct icv_render_info *dst;
+
+    if (!src)
+	return NULL;
+
+    dst = icv_render_info_create();
+    if (src->db_filename)
+	dst->db_filename = bu_strdup(src->db_filename);
+    if (src->objects)
+	dst->objects = bu_strdup(src->objects);
+    memcpy(dst->viewrotscale, src->viewrotscale, sizeof(dst->viewrotscale));
+    memcpy(dst->eye_model, src->eye_model, sizeof(dst->eye_model));
+    dst->viewsize = src->viewsize;
+    dst->aspect = src->aspect;
+    dst->perspective = src->perspective;
+
+    return dst;
+}
+
+icv_image_t *
+icv_clone(const icv_image_t *src)
+{
+    icv_image_t *dst;
+    size_t size;
+
+    if (!ICV_IMAGE_IS_INITIALIZED(src))
+	return NULL;
+
+    dst = icv_create_with_channels(src->width, src->height, src->color_space, src->channels);
+    if (!dst)
+	return NULL;
+
+    dst->gamma_corr = src->gamma_corr;
+    dst->flags = src->flags;
+    size = src->width * src->height * src->channels;
+    if (size && !src->data) {
+	icv_destroy(dst);
+	return NULL;
+    }
+    if (size)
+	memcpy(dst->data, src->data, size * sizeof(double));
+    dst->render_info = icv_render_info_clone(src->render_info);
+
+    return dst;
+}
+
+icv_image_t *
+icv_image_for_write(const icv_image_t *src, ICV_COLOR_SPACE color_space, size_t channels)
+{
+    icv_image_t *dst;
+    size_t npix, i;
+
+    if (!ICV_IMAGE_IS_INITIALIZED(src) || !src->data)
+	return NULL;
+
+    if (!icv_channels_match_color_space(color_space, channels))
+	return NULL;
+
+    /* Writers prepare a temporary image so format-required color conversion
+     * never mutates caller-owned icv_image_t state.  Alpha is preserved only
+     * when the target format can represent it; raw BW/PIX/PPM/DPIX/JPEG
+     * requests intentionally project to one or three channels. */
+    if (color_space == ICV_COLOR_SPACE_GRAY && channels == 1) {
+	dst = icv_clone(src);
+	if (!dst)
+	    return NULL;
+	if (dst->color_space == ICV_COLOR_SPACE_RGB) {
+	    if (icv_rgb2gray(dst, ICV_COLOR_RGB, 0, 0, 0) != 0) {
+		icv_destroy(dst);
+		return NULL;
+	    }
+	} else if (dst->color_space == ICV_COLOR_SPACE_GRAY && dst->channels == 2) {
+	    icv_image_t *gray = icv_create_with_channels(dst->width, dst->height, ICV_COLOR_SPACE_GRAY, 1);
+	    if (!gray) {
+		icv_destroy(dst);
+		return NULL;
+	    }
+	    npix = dst->width * dst->height;
+	    for (i = 0; i < npix; i++)
+		gray->data[i] = dst->data[i * dst->channels];
+	    icv_destroy(dst);
+	    dst = gray;
+	}
+	if (dst->color_space == ICV_COLOR_SPACE_GRAY && dst->channels == 1)
+	    return dst;
+	icv_destroy(dst);
+	return NULL;
+    }
+
+    if (color_space == ICV_COLOR_SPACE_RGB && channels == 3) {
+	if (src->color_space == ICV_COLOR_SPACE_GRAY) {
+	    dst = icv_clone(src);
+	    if (!dst)
+		return NULL;
+	    if (icv_gray2rgb(dst) != 0) {
+		icv_destroy(dst);
+		return NULL;
+	    }
+	    if (dst->channels == 3)
+		return dst;
+	    icv_destroy(dst);
+	    return NULL;
+	}
+
+	if (src->color_space == ICV_COLOR_SPACE_RGB && (src->channels == 3 || src->channels == 4)) {
+	    dst = icv_create_with_channels(src->width, src->height, ICV_COLOR_SPACE_RGB, 3);
+	    if (!dst)
+		return NULL;
+	    npix = src->width * src->height;
+	    for (i = 0; i < npix; i++) {
+		dst->data[i * 3 + 0] = src->data[i * src->channels + 0];
+		dst->data[i * 3 + 1] = src->data[i * src->channels + 1];
+		dst->data[i * 3 + 2] = src->data[i * src->channels + 2];
+	    }
+	    return dst;
+	}
+    }
+
+    return NULL;
 }
 
 

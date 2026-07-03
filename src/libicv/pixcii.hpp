@@ -1,4 +1,4 @@
-﻿// MIT License
+// MIT License
 //
 // Copyright (c) 2025 Ashish
 //
@@ -166,8 +166,12 @@ std::string generateAsciiText(const icv_image_t *i, const AsciiArtParams &params
     bool use_color = params.color && i->channels >= 3;
     const icv_image_t *img = i;
 
-    for (size_t y = img->height-1; y != 0; y--)
+    if (img->height == 0 || img->width == 0)
+	return ascii_text;
+
+    for (size_t y_inv = 0; y_inv < img->height; y_inv++)
     {
+	size_t y = img->height - 1 - y_inv;
 	for (size_t x = 0; x < img->width; x++)
 	{
 	    // Get the information for the current pixel

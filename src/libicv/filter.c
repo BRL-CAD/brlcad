@@ -26,7 +26,7 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "icv.h"
+#include "icv_private.h"
 
 #include "vmath.h"
 
@@ -34,7 +34,7 @@
 
 /* private functions */
 
-static void
+static int
 get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 {
     switch (filter_type) {
@@ -115,7 +115,7 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 	    kern[1] = 0;
 	    kern[2] = 0;
 	    kern[3] = 0;
-	    kern[4] = 0;
+	    kern[4] = 1;
 	    kern[5] = 0;
 	    kern[6] = 0;
 	    kern[7] = 0;
@@ -124,13 +124,12 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 	    break;
 	default :
 	    bu_log("Filter Type not Implemented.\n");
-	    bu_free(kern, "Freeing Kernel, Wrong filter");
-	    kern = NULL;
+	    return -1;
     }
-    return;
+    return 0;
 }
 
-static void
+static int
 get_kernel3(ICV_FILTER3 filter_type, double *kern, double *offset)
 {
     switch (filter_type) {
@@ -268,7 +267,7 @@ get_kernel3(ICV_FILTER3 filter_type, double *kern, double *offset)
 	    kern[10] = 0;
 	    kern[11] = 0;
 	    kern[12] = 0;
-	    kern[13] = 0;
+	    kern[13] = 1;
 	    kern[14] = 0;
 	    kern[15] = 0;
 	    kern[16] = 0;
@@ -286,31 +285,34 @@ get_kernel3(ICV_FILTER3 filter_type, double *kern, double *offset)
 	    break;
 	default :
 	    bu_log("Filter Type not Implemented.\n");
-	    bu_free(kern, "Freeing Kernel, Wrong filter");
-	    kern = NULL;
+	    return -1;
     }
-    return;
+    return 0;
 }
 
 /* end of private functions */
+
+static size_t
+clamped_index(ptrdiff_t coord, size_t limit)
+{
+    if (coord < 0)
+	return 0;
+    if ((size_t)coord >= limit)
+	return limit - 1;
+    return (size_t)coord;
+}
 
 /* begin public functions */
 
 int
 icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 {
-    double *kern = NULL, *kern_p = NULL;
-    double c_val;
-    double *out_data, *in_data, *data_p;
+    double *kern = NULL;
+    double *out_data, *in_data;
     double offset = 0;
-    size_t k_dim = KERN_DEFAULT, k_dim_half, k_dim_half_ceil;
+    size_t k_dim = KERN_DEFAULT;
     size_t size;
-    size_t h, w, k, i;
-    size_t widthstep;
-    size_t index, n_index; /**< index is the index of the pixel in
-			      * out image and n_index corresponds to
-			      * the nearby pixel in input image
-			      */
+    size_t y, x, c, ky, kx;
 
     /* TODO A new Functionality. Update the get_kernel function to
      * accommodate the generalized kernel length. This can be based
@@ -320,53 +322,50 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     ICV_IMAGE_VAL_INT(img);
 
     kern = (double *)bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
-    get_kernel(filter_type, kern, &offset);
+    if (get_kernel(filter_type, kern, &offset) < 0) {
+	bu_free(kern, "icv_filter : Kernel Allocation");
+	return -1;
+    }
 
     if (!kern)
 	return -1;
 
-    widthstep = img->width*img->channels;
-
     in_data = img->data;
     size = img->height*img->width*img->channels;
-    /* Replaces data pointer in place */
+
+    if (size == 0) {
+	bu_free(kern, "icv_filter : Kernel Allocation");
+	return -1;
+    }
+
+    if (img->width > 0 && img->height > (size_t)-1 / img->width / img->channels / sizeof(double)) {
+	bu_free(kern, "icv_filter : Kernel Allocation");
+	return -1;
+    }
+
     img->data = out_data = (double*)bu_malloc(size*sizeof(double), "icv_filter : out_image_data");
 
-    /* Kernel Dimension is always considered to be odd*/
-    k_dim_half = k_dim/2*img->channels;
-    k_dim_half_ceil = (k_dim - k_dim/2)*img->channels;
-    index = 0;
-    for (h = 0; h < img->height; h++) {
-	VMOVEN(out_data, in_data+index, k_dim_half);
-	out_data+=k_dim_half;
-
-	for (w = 0; w < widthstep - k_dim*img->channels; w++) {
-	    c_val = 0;
-	    kern_p = kern;
-
-	    for (k = 0; k <= k_dim; k++) {
-		n_index = index + (k-(k_dim/2))*widthstep;
-		data_p = in_data + n_index;
-		for (i = 0; i<=k_dim; i++) {
-		    /* Ensures that the arguments are given a zero value for
-		     * out of bound pixels. Thus behaves similar to zero padding
-		     */
-		    if (n_index < size) {
-			c_val += (*kern_p++)*(*data_p);
-			data_p += img->channels;
-			/* Ensures out bound in image */
-			n_index += img->channels;
+    /* Convolve in pixel coordinates and clamp border samples to the closest
+     * valid edge pixel.  This avoids scalar row-wrap artifacts and keeps
+     * normalized kernels, such as boxcar and low-pass, normalized on image
+     * borders and on images smaller than the kernel. */
+    for (y = 0; y < img->height; y++) {
+	for (x = 0; x < img->width; x++) {
+	    for (c = 0; c < img->channels; c++) {
+		double c_val = 0.0;
+		for (ky = 0; ky < k_dim; ky++) {
+		    size_t sy = clamped_index((ptrdiff_t)y + (ptrdiff_t)ky - (ptrdiff_t)(k_dim / 2), img->height);
+		    for (kx = 0; kx < k_dim; kx++) {
+			size_t sx = clamped_index((ptrdiff_t)x + (ptrdiff_t)kx - (ptrdiff_t)(k_dim / 2), img->width);
+			size_t in_idx = (sy * img->width + sx) * img->channels + c;
+			c_val += kern[ky * k_dim + kx] * in_data[in_idx];
 		    }
 		}
+		out_data[(y * img->width + x) * img->channels + c] = c_val + offset;
 	    }
-	    *out_data = c_val + offset;
-	    out_data++;
-	    index++;
 	}
-	index = (h+1)*widthstep;
-	VMOVEN(out_data,in_data+index -k_dim_half_ceil*img->channels,k_dim_half_ceil*img->channels);
-	out_data+= k_dim_half_ceil;
     }
+    bu_free(kern, "icv_filter : Kernel Allocation");
     bu_free(in_data, "icv:filter Input Image Data");
     return 0;
 }
@@ -376,80 +375,78 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 {
     icv_image_t *out_img;
     double *kern = NULL;
-    double *kern_old, *kern_curr, *kern_new;
-    double c_val;
     double *out_data;
     double *old_data, *curr_data, *new_data;
-    double *old_data_p, *curr_data_p, *new_data_p;
     double offset = 0;
     size_t k_dim = KERN_DEFAULT;
     size_t size;
-    size_t s, k, i;
-    size_t widthstep;
-    size_t index, n_index; /**< index is the index of the pixel in
-			      * out image and n_index corresponds to
-			      * the nearby pixel in input image
-			      */
+    size_t y, x, c, ky, kx;
 
     ICV_IMAGE_VAL_PTR(old_img);
     ICV_IMAGE_VAL_PTR(curr_img);
     ICV_IMAGE_VAL_PTR(new_img);
 
-    if ((old_img->width == curr_img->width && curr_img->width == new_img->width) && \
-	(old_img->height == curr_img->height && curr_img->height == new_img->height) && \
-	(old_img->channels == curr_img->channels && curr_img->channels == new_img->channels)) {
+    if (old_img->width != curr_img->width || curr_img->width != new_img->width || \
+	old_img->height != curr_img->height || curr_img->height != new_img->height || \
+	old_img->channels != curr_img->channels || curr_img->channels != new_img->channels) {
 	bu_log("icv_filter3 : Image Parameters not Equal");
+	return NULL;
+    }
+    if (old_img->color_space != curr_img->color_space || curr_img->color_space != new_img->color_space) {
+	bu_log("icv_filter3 : Image Color Spaces not Equal");
 	return NULL;
     }
 
     kern = (double *)bu_malloc(k_dim*k_dim*3*sizeof(double), "icv_filter3 : Kernel Allocation");
-    get_kernel3(filter_type, kern, &offset);
+    if (get_kernel3(filter_type, kern, &offset) < 0) {
+	bu_free(kern, "icv_filter3 : Kernel Allocation");
+	return NULL;
+    }
 
     if (!kern)
 	return NULL;
-
-    widthstep = old_img->width*old_img->channels;
 
     old_data = old_img->data;
     curr_data = curr_img->data;
     new_data = new_img->data;
 
     size = old_img->height*old_img->width*old_img->channels;
+    if (size == 0) {
+	bu_free(kern, "icv_filter3 : Kernel Allocation");
+	return NULL;
+    }
 
-    out_img = icv_create(old_img->width, old_img->height, old_img->color_space);
+    out_img = icv_create_with_channels(curr_img->width, curr_img->height, curr_img->color_space, curr_img->channels);
+    if (!out_img) {
+	bu_free(kern, "icv_filter3 : Kernel Allocation");
+	return NULL;
+    }
 
     out_data = out_img->data;
 
-    index = 0;
-
-    for (s = 0; s <= size; s++) {
-	c_val = 0;
-	kern_old = kern;
-	kern_curr = kern + k_dim*k_dim-1;
-	kern_new = kern + 2*k_dim*k_dim-1;
-	for (k = 0; k <= k_dim; k++) {
-	    n_index = index + (k-(k_dim/2))*widthstep;
-	    old_data_p = old_data + n_index;
-	    curr_data_p = curr_data + n_index;
-	    new_data_p = new_data + n_index;
-	    for (i = 0; i<=k_dim; i++) {
-		/* Ensures that the arguments are given a zero value for
-		   out of bound pixels. Thus behaves similar to zero padding */
-		if (n_index < size) {
-		    c_val += (*kern_old++)*(*old_data_p);
-		    c_val += (*kern_curr++)*(*curr_data_p);
-		    c_val += (*kern_new++)*(*new_data_p);
-		    old_data_p += old_img->channels;
-		    curr_data_p += old_img->channels;
-		    new_data_p += old_img->channels;
-		    n_index += old_img->channels;
+    /* Temporal filtering uses the same edge policy as icv_filter for each
+     * frame.  Kernels are laid out as old/current/new 3x3 planes. */
+    for (y = 0; y < curr_img->height; y++) {
+	for (x = 0; x < curr_img->width; x++) {
+	    for (c = 0; c < curr_img->channels; c++) {
+		double c_val = 0.0;
+		for (ky = 0; ky < k_dim; ky++) {
+		    size_t sy = clamped_index((ptrdiff_t)y + (ptrdiff_t)ky - (ptrdiff_t)(k_dim / 2), curr_img->height);
+		    for (kx = 0; kx < k_dim; kx++) {
+			size_t sx = clamped_index((ptrdiff_t)x + (ptrdiff_t)kx - (ptrdiff_t)(k_dim / 2), curr_img->width);
+			size_t pidx = (sy * curr_img->width + sx) * curr_img->channels + c;
+			size_t kidx = ky * k_dim + kx;
+			c_val += kern[kidx] * old_data[pidx];
+			c_val += kern[k_dim * k_dim + kidx] * curr_data[pidx];
+			c_val += kern[2 * k_dim * k_dim + kidx] * new_data[pidx];
+		    }
 		}
+		out_data[(y * curr_img->width + x) * curr_img->channels + c] = c_val + offset;
 	    }
 	}
-	index++;
-	*out_data++ = c_val + offset;
     }
-    return 0;
+    bu_free(kern, "icv_filter3 : Kernel Allocation");
+    return out_img;
 }
 
 
@@ -466,7 +463,7 @@ icv_fade(icv_image_t *img, double fraction)
     if (size == 0)
 	return -1;
 
-    if (fraction<0) {
+    if (fraction < 0.0 || fraction > 1.0) {
 	bu_log("ERROR : Multiplier invalid. Image not Faded.");
 	return -1;
     }

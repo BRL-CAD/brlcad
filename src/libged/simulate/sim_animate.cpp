@@ -589,17 +589,17 @@ SimAnimState::encodeVideo()
 
     if (written == 0) {
         bu_log("simulate: no frames to encode\n");
-        icv_anim_free(anim);
+        icv_anim_destroy(anim);
         return BRLCAD_ERROR;
     }
 
     if (icv_anim_write(anim, m_opts.output_file.c_str()) != 0) {
         bu_log("simulate: failed to write animation '%s'\n", m_opts.output_file.c_str());
-        icv_anim_free(anim);
+        icv_anim_destroy(anim);
         return BRLCAD_ERROR;
     }
 
-    icv_anim_free(anim);
+    icv_anim_destroy(anim);
     return BRLCAD_OK;
 }
 

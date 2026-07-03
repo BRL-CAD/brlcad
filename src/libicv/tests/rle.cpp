@@ -934,6 +934,141 @@ void test_colormap_too_large() {
     END_TEST();
 }
 
+void test_colormap_decode_mem_stream() {
+    TEST("Decoder applies RGB colormap from memory stream");
+
+    rle::Header h;
+    h.xlen = 2;
+    h.ylen = 1;
+    h.flags = rle::FLAG_NO_BACKGROUND;
+    h.ncolors = 3;
+    h.pixelbits = 8;
+    h.ncmap = 3;
+    h.cmaplen = 2;
+    h.colormap = {
+	0x1000, 0x2000, 0x3000, 0x4000,
+	0x5000, 0x6000, 0x7000, 0x8000,
+	0x9000, 0xA000, 0xB000, 0xC000
+    };
+
+    std::vector<uint8_t> bytes;
+    rle::MemWriteStream ws(bytes);
+    EXPECT_TRUE(rle::write_header(ws, h));
+
+    bytes.push_back(rle::OPC_SET_COLOR);
+    bytes.push_back(0);
+    bytes.push_back(rle::OPC_BYTE_DATA);
+    bytes.push_back(1);
+    bytes.push_back(0);
+    bytes.push_back(1);
+
+    bytes.push_back(rle::OPC_SET_COLOR);
+    bytes.push_back(1);
+    bytes.push_back(rle::OPC_BYTE_DATA);
+    bytes.push_back(1);
+    bytes.push_back(2);
+    bytes.push_back(3);
+
+    bytes.push_back(rle::OPC_SET_COLOR);
+    bytes.push_back(2);
+    bytes.push_back(rle::OPC_BYTE_DATA);
+    bytes.push_back(1);
+    bytes.push_back(1);
+    bytes.push_back(2);
+
+    bytes.push_back(rle::OPC_EOF);
+    bytes.push_back(0);
+
+    rle::MemReadStream rs(bytes.data(), bytes.size());
+    rle::Image out;
+    rle::DecoderResult dr = rle::Decoder::read(rs, out);
+
+    EXPECT_TRUE(dr.ok);
+    EXPECT_EQ(dr.error, rle::Error::OK);
+    EXPECT_EQ(out.pixel(0, 0)[0], 0x10);
+    EXPECT_EQ(out.pixel(0, 0)[1], 0x70);
+    EXPECT_EQ(out.pixel(0, 0)[2], 0xA0);
+    EXPECT_EQ(out.pixel(1, 0)[0], 0x20);
+    EXPECT_EQ(out.pixel(1, 0)[1], 0x80);
+    EXPECT_EQ(out.pixel(1, 0)[2], 0xB0);
+
+    END_TEST();
+}
+
+void test_large_comment_discard_file_stream() {
+    TEST("Decoder skips oversized comment block from file stream");
+
+    const char *filename = "test_large_comment_discard.rle";
+    FILE *fp = std::fopen(filename, "wb");
+    EXPECT_TRUE(fp != nullptr);
+    if (fp) {
+	rle::FileWriteStream ws(fp);
+	EXPECT_TRUE(rle::write_u16_le(ws, rle::RLE_MAGIC));
+	EXPECT_TRUE(rle::write_u16_le(ws, 0));
+	EXPECT_TRUE(rle::write_u16_le(ws, 0));
+	EXPECT_TRUE(rle::write_u16_le(ws, 1));
+	EXPECT_TRUE(rle::write_u16_le(ws, 1));
+	EXPECT_TRUE(rle::write_u8(ws, uint8_t(rle::FLAG_NO_BACKGROUND | rle::FLAG_COMMENT)));
+	EXPECT_TRUE(rle::write_u8(ws, 1));
+	EXPECT_TRUE(rle::write_u8(ws, 8));
+	EXPECT_TRUE(rle::write_u8(ws, 0));
+	EXPECT_TRUE(rle::write_u8(ws, 0));
+	EXPECT_TRUE(rle::write_u8(ws, 0));
+	uint16_t clen = uint16_t(rle::MAX_COMMENT_LEN + 1);
+	EXPECT_TRUE(rle::write_u16_le(ws, clen));
+	for (uint16_t i = 0; i < clen; ++i)
+	    EXPECT_TRUE(rle::write_u8(ws, 'x'));
+	EXPECT_TRUE(rle::write_u8(ws, 0));
+	EXPECT_TRUE(rle::write_u8(ws, rle::OPC_EOF));
+	EXPECT_TRUE(rle::write_u8(ws, 0));
+	std::fclose(fp);
+    }
+
+    fp = std::fopen(filename, "rb");
+    EXPECT_TRUE(fp != nullptr);
+    if (fp) {
+	rle::Image out;
+	rle::DecoderResult dr = rle::Decoder::read(fp, out);
+	EXPECT_TRUE(dr.ok);
+	EXPECT_EQ(dr.error, rle::Error::OK);
+	EXPECT_TRUE(out.header.comments.empty());
+	EXPECT_EQ(out.header.width(), 1u);
+	EXPECT_EQ(out.header.height(), 1u);
+	std::fclose(fp);
+    }
+    bu_file_delete(filename);
+
+    END_TEST();
+}
+
+void test_large_comment_discard_mem_stream_truncated() {
+    TEST("Decoder reports truncated oversized comment block from memory stream");
+
+    std::vector<uint8_t> bytes;
+    rle::MemWriteStream ws(bytes);
+    EXPECT_TRUE(rle::write_u16_le(ws, rle::RLE_MAGIC));
+    EXPECT_TRUE(rle::write_u16_le(ws, 0));
+    EXPECT_TRUE(rle::write_u16_le(ws, 0));
+    EXPECT_TRUE(rle::write_u16_le(ws, 1));
+    EXPECT_TRUE(rle::write_u16_le(ws, 1));
+    EXPECT_TRUE(rle::write_u8(ws, uint8_t(rle::FLAG_NO_BACKGROUND | rle::FLAG_COMMENT)));
+    EXPECT_TRUE(rle::write_u8(ws, 1));
+    EXPECT_TRUE(rle::write_u8(ws, 8));
+    EXPECT_TRUE(rle::write_u8(ws, 0));
+    EXPECT_TRUE(rle::write_u8(ws, 0));
+    EXPECT_TRUE(rle::write_u8(ws, 0));
+    EXPECT_TRUE(rle::write_u16_le(ws, uint16_t(rle::MAX_COMMENT_LEN + 1)));
+    bytes.push_back('x');
+
+    rle::MemReadStream rs(bytes.data(), bytes.size());
+    rle::Image out;
+    rle::DecoderResult dr = rle::Decoder::read(rs, out);
+    EXPECT_FALSE(dr.ok);
+    EXPECT_EQ(dr.error, rle::Error::HEADER_TRUNCATED);
+
+    END_TEST();
+}
+
 //==============================================================================
 // SECTION 5: Positional Validation Tests (using rle:: API)
 //==============================================================================
@@ -1504,6 +1639,9 @@ int main(int, const char **av) {
     test_invalid_background();
     test_colormap_validation();
     test_colormap_too_large();
+    test_colormap_decode_mem_stream();
+    test_large_comment_discard_file_stream();
+    test_large_comment_discard_mem_stream_truncated();
 
     // Section 5: Positional Validation Tests
     std::cout << "\n--- Positional Validation Tests ---\n";

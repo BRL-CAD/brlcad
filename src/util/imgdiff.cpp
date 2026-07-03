@@ -81,7 +81,7 @@ main(int ac, const char **av)
     size_t height2 = 0;
     int approx_diff = 0;
     int meta_diff = 0;
-    uint32_t pret = 0;
+    fastf_t apret = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     static bu_mime_image_t in_type_1 = BU_MIME_IMAGE_UNKNOWN;
@@ -218,8 +218,10 @@ main(int ac, const char **av)
     img2 = icv_read(img_path_2, in_type_2, width2, height2);
 
     if (approx_diff) {
-	pret = icv_pdiff(img1, img2);
-	bu_log("Hamming distance: %" PRIu32 "\n", pret);
+	apret = icv_adiff(img1, img2, ICV_DIFF_PHASH);
+	bu_log("Hamming distance: %g\n", apret);
+	apret = icv_adiff(img1, img2, ICV_DIFF_SSIM);
+	bu_log("SSIM: %g\n", apret);
 	ret = 0;
 	goto cleanup;
     }

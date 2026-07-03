@@ -1,6 +1,7 @@
 brlcad_find_package(NETPBM REQUIRED)
 brlcad_find_package(PNG REQUIRED)
 brlcad_find_package(JPEG REQUIRED)
+find_package_opencv()
 
 if(TARGET JPEG::JPEG)
   if(JPEG_INCLUDE_DIRS)
@@ -32,13 +33,13 @@ set(
   color_space.c
   crop.c
   diff.cpp
+  diff_approx.cpp
   dpix.c
   encoding.c
   fileformat.c
   filter.c
   jpeg.c
   operations.c
-  pdiff.cpp
   pix.c
   png.cpp
   ppm.c
@@ -48,9 +49,15 @@ set(
   stat.c
 )
 
+
 # Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(ICV_LIBS ${libicv_deps} PNG::PNG NETPBM::NETPBM JPEG::JPEG)
-set(LOCAL_ICV_INCLUDE_DIRS ${PNG_INCLUDE_DIRS} ${NETPBM_INCLUDE_DIR} ${JPEG_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+set(LOCAL_ICV_INCLUDE_DIRS
+  ${PNG_INCLUDE_DIRS}
+  ${NETPBM_INCLUDE_DIR}
+  ${JPEG_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 brlcad_addlib(libicv "${LIBICV_SOURCES}" "" "${LOCAL_ICV_INCLUDE_DIRS}"
   PRIVATE_LIBS ${ICV_LIBS}

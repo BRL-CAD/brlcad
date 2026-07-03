@@ -150,7 +150,7 @@ unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, con
                 bu_log("Failed to write extracted frame: %s\n", bu_vls_cstr(&out_path));
                 icv_destroy(img);
                 bu_vls_free(&out_path);
-                icv_anim_free(anim);
+                icv_anim_destroy(anim);
                 return -1;
             }
             icv_destroy(img);
@@ -158,13 +158,13 @@ unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, con
         }
     }
 
-    icv_anim_free(anim);
+    icv_anim_destroy(anim);
     return 0;
 }
 
 
 extern "C" int
-img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root)
+img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, fastf_t approximate_check, const char *clear_root, const char *img_root)
 {
     icv_image_t *ctrl, *timg;
     struct bu_vls tname = BU_VLS_INIT_ZERO;
@@ -211,7 +211,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
     int off_by_many_cnt = 0;
     int iret = icv_diff(&matching_cnt, &off_by_1_cnt, &off_by_many_cnt, ctrl, timg);
     if (iret) {
-	if (approximate_check) {
+	if (approximate_check > 0) {
 	    // First, if we're allowing approximate and all we have are off by one errors,
 	    // allow it.
 	    if (!off_by_many_cnt) {
@@ -219,15 +219,16 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 		iret = 0;
 		// We don't need it as a pass/fail, but for information report the
 		// Hamming distance on the approximate match
-		uint32_t pret = icv_pdiff(ctrl, timg);
-		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
+		fastf_t pret = icv_adiff(ctrl, timg, ICV_DIFF_SSIM);
+		bu_log("icv_adiff SSIM metric(%d): %g \n", id, pret);
 	    } else {
 		// We have off by many - do perceptual hashing difference calculation
-		uint32_t pret = icv_pdiff(ctrl, timg);
-		// The return is a Hamming distance .  The scale of possible
-		// returns ranges from 0 (same) to ~500 (completely different)
-		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
-		if (pret < (uint32_t)approximate_check) {
+		fastf_t pret = icv_adiff(ctrl, timg, ICV_DIFF_SSIM);
+		// The return is a Hamming distance.  The fixed 32x32-bit hash
+		// returns values from 0 (same) to 1024 (completely different),
+		// with approximate_check specifying the maximum accepted distance.
+		bu_log("icv_adiff SSIM metric(%d): %g \n", id, pret);
+		if (pret > approximate_check) {
 		    iret = 0;
 		}
 	    }
@@ -308,4 +309,3 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

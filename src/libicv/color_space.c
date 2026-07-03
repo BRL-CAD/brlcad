@@ -53,6 +53,10 @@ icv_gray2rgb(icv_image_t *img)
     }
 
     size = img->height*img->width;
+    if (size > (size_t)-1 / (3 * sizeof(double))) {
+	bu_log("ERROR : Image size too large to convert to RGB");
+	return -1;
+    }
     op = out_data = (double *)bu_malloc(size*3*sizeof(double), "Out Image Data");
     in_data = img->data;
     for (i =0 ; i < size; i++) {
@@ -60,13 +64,14 @@ icv_gray2rgb(icv_image_t *img)
 	*(out_data+1) = *in_data;
 	*(out_data+2) = *in_data;
 	out_data+=3;
-	in_data++;
+	in_data+=img->channels;
     }
 
     bu_free(img->data, "icv_gray2rgb : gray image data");
     img->data = op;
     img->color_space = ICV_COLOR_SPACE_RGB;
     img->channels = 3;
+    img->alpha_channel = 0;
 
     return 0;
 }
@@ -155,7 +160,7 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
     size = img->height*img->width;
     out_data = (double*) bu_malloc(size*sizeof(double), "Out Image Data");
     if (multiple_colors) {
-	for (in = out = 0; out < size; out++, in += 3) {
+	for (in = out = 0; out < size; out++, in += img->channels) {
 	    value = rweight*in_data[in] + gweight*in_data[in+1] + bweight*in_data[in+2];
 	    if (value > 1.0) {
 		out_data[out] = 1.0;
@@ -165,23 +170,24 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 		out_data[out] = value;
 	}
     } else if (red) {
-	for (in = out = 0; out < size; out++, in += 3)
+	for (in = out = 0; out < size; out++, in += img->channels)
 	    out_data[out] = in_data[in];
     } else if (green) {
-	for (in = out = 0; out < size; out++, in += 3)
+	for (in = out = 0; out < size; out++, in += img->channels)
 	    out_data[out] = in_data[in+1];
     } else if (blue) {
-	for (in = out = 0; out < size; out++, in += 3)
+	for (in = out = 0; out < size; out++, in += img->channels)
 	    out_data[out] = in_data[in+2];
     } else {
 	/* uniform weight */
-	for (in = out = 0; out < size; out++, in += 3)
+	for (in = out = 0; out < size; out++, in += img->channels)
 	    out_data[out] = (in_data[in] + in_data[in+1] + in_data[in+2]) / 3.0;
     }
     bu_free(img->data, "icv_image_rgb2gray : rgb image data");
     img->data = out_data;
     img->color_space = ICV_COLOR_SPACE_GRAY;
     img->channels = 1;
+    img->alpha_channel = 0;
 
     return 0;
 }

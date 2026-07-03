@@ -89,12 +89,23 @@ icv_data2uchar(const icv_image_t *bif)
 	}
 
     } else {
-	float *rand_p;
+	float *rand_p = NULL;
 	double ex = 1.0/bif->gamma_corr;
 	bn_rand_init(rand_p, 0);
 
 	while (size--) {
-	    *char_p = floor(pow(*double_p, ex)*255.0 + (double) bn_rand0to1(rand_p) + 0.5);
+	    double val = *double_p;
+	    if (val < 0.0) val = 0.0;
+	    else if (val > 1.0) val = 1.0;
+
+	    long longval = lrint(pow(val, ex)*255.0 + (double) bn_rand0to1(rand_p));
+	    if (longval > 255)
+		*char_p = 255;
+	    else if (longval < 0)
+		*char_p = 0;
+	    else
+		*char_p = (unsigned char)longval;
+
 	    char_p++;
 	    double_p++;
 	}
