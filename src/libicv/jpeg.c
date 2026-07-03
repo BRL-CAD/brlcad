@@ -51,7 +51,8 @@ jpeg_write(icv_image_t *bif, FILE *fp, int quality)
 {
     struct jpeg_compress_struct cinfo;
     struct icv_jpeg_error_mgr jerr;
-    unsigned char *data;
+    unsigned char *data = NULL;
+    icv_image_t *wimg = NULL;
     JSAMPROW row_pointer[1];
     size_t row;
 
@@ -60,19 +61,33 @@ jpeg_write(icv_image_t *bif, FILE *fp, int quality)
     if (UNLIKELY(!fp))
 	return BRLCAD_ERROR;
 
+    wimg = icv_image_for_write(bif, ICV_COLOR_SPACE_RGB, 3);
+    if (!wimg) {
+	bu_log("jpeg_write : Color Space conflict");
+	return BRLCAD_ERROR;
+    }
+
+    if (wimg->channels != 3) {
+	bu_log("jpeg_write : Channel count conflict (expected 3, got %d)", (int)wimg->channels);
+	icv_destroy(wimg);
+	return BRLCAD_ERROR;
+    }
+
     cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = icv_jpeg_error_exit;
 
     if (setjmp(jerr.setjmp_buffer)) {
 	jpeg_destroy_compress(&cinfo);
+	if (data) bu_free(data, "jpeg_write data");
+	if (wimg) icv_destroy(wimg);
 	return BRLCAD_ERROR;
     }
 
     jpeg_create_compress(&cinfo);
     jpeg_stdio_dest(&cinfo, fp);
 
-    cinfo.image_width = (JDIMENSION)bif->width;
-    cinfo.image_height = (JDIMENSION)bif->height;
+    cinfo.image_width = (JDIMENSION)wimg->width;
+    cinfo.image_height = (JDIMENSION)wimg->height;
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_RGB;
 
@@ -99,14 +114,14 @@ jpeg_write(icv_image_t *bif, FILE *fp, int quality)
 
     jpeg_start_compress(&cinfo, TRUE);
 
-    data = icv_data2uchar(bif);
+    data = icv_data2uchar(wimg);
 
     /* Write rows top-to-bottom (JPEG convention).
      * BRL-CAD images are stored bottom-up, so row 0 in data is the
      * bottom of the image.  We flip here so viewers display correctly. */
     while (cinfo.next_scanline < cinfo.image_height) {
-	row = bif->height - 1 - cinfo.next_scanline;
-	row_pointer[0] = data + row * bif->width * 3;
+	row = wimg->height - 1 - cinfo.next_scanline;
+	row_pointer[0] = data + row * wimg->width * 3;
 	jpeg_write_scanlines(&cinfo, row_pointer, 1);
     }
 
@@ -114,6 +129,7 @@ jpeg_write(icv_image_t *bif, FILE *fp, int quality)
     jpeg_destroy_compress(&cinfo);
 
     bu_free(data, "jpeg_write data");
+    icv_destroy(wimg);
     return BRLCAD_OK;
 }
 
@@ -122,7 +138,8 @@ jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int
 {
     struct jpeg_compress_struct cinfo;
     struct icv_jpeg_error_mgr jerr;
-    unsigned char *data;
+    unsigned char *data = NULL;
+    icv_image_t *wimg = NULL;
     JSAMPROW row_pointer[1];
     size_t row;
     unsigned char *mem_buf = NULL;
@@ -136,12 +153,26 @@ jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int
     *outbuffer = NULL;
     *outsize = 0;
 
+    wimg = icv_image_for_write(bif, ICV_COLOR_SPACE_RGB, 3);
+    if (!wimg) {
+	bu_log("jpeg_write_mem : Color Space conflict");
+	return BRLCAD_ERROR;
+    }
+
+    if (wimg->channels != 3) {
+	bu_log("jpeg_write_mem : Channel count conflict (expected 3, got %d)", (int)wimg->channels);
+	icv_destroy(wimg);
+	return BRLCAD_ERROR;
+    }
+
     cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = icv_jpeg_error_exit;
 
     if (setjmp(jerr.setjmp_buffer)) {
 	jpeg_destroy_compress(&cinfo);
-	if (mem_buf) free(mem_buf); // Standard free for libjpeg allocation
+	if (mem_buf) free(mem_buf);
+	if (data) bu_free(data, "jpeg_write_mem data");
+	if (wimg) icv_destroy(wimg);
 	return BRLCAD_ERROR;
     }
 
@@ -150,8 +181,8 @@ jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int
     // Write to a memory buffer instead of FILE*
     jpeg_mem_dest(&cinfo, &mem_buf, &mem_size);
 
-    cinfo.image_width = (JDIMENSION)bif->width;
-    cinfo.image_height = (JDIMENSION)bif->height;
+    cinfo.image_width = (JDIMENSION)wimg->width;
+    cinfo.image_height = (JDIMENSION)wimg->height;
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_RGB;
 
@@ -178,14 +209,14 @@ jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int
 
     jpeg_start_compress(&cinfo, TRUE);
 
-    data = icv_data2uchar(bif);
+    data = icv_data2uchar(wimg);
 
     /* Write rows top-to-bottom (JPEG convention).
      * BRL-CAD images are stored bottom-up, so row 0 in data is the
      * bottom of the image.  We flip here so viewers display correctly. */
     while (cinfo.next_scanline < cinfo.image_height) {
-	row = bif->height - 1 - cinfo.next_scanline;
-	row_pointer[0] = data + row * bif->width * 3;
+	row = wimg->height - 1 - cinfo.next_scanline;
+	row_pointer[0] = data + row * wimg->width * 3;
 	jpeg_write_scanlines(&cinfo, row_pointer, 1);
     }
 
@@ -193,6 +224,8 @@ jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int
     jpeg_destroy_compress(&cinfo);
 
     bu_free(data, "jpeg_write_mem data");
+    icv_destroy(wimg);
+    wimg = NULL;
 
     /* Libjpeg uses standard malloc() for its memory destination buffer, but
      * BRL-CAD expects tracked memory. We copy it into a bu_malloc'd buffer
@@ -203,6 +236,7 @@ jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int
 	memcpy(*outbuffer, mem_buf, *outsize);
 	free(mem_buf);
     } else {
+	if (wimg) icv_destroy(wimg);
 	return BRLCAD_ERROR;
     }
 
@@ -214,10 +248,10 @@ jpeg_read(FILE *fp)
 {
     struct jpeg_decompress_struct cinfo;
     struct icv_jpeg_error_mgr jerr;
-    unsigned char *image;
+    unsigned char *image = NULL;
     JSAMPROW row_pointer[1];
     size_t width, height;
-    icv_image_t *bif;
+    icv_image_t *bif = NULL;
 
     if (UNLIKELY(!fp))
 	return NULL;
@@ -227,6 +261,8 @@ jpeg_read(FILE *fp)
 
     if (setjmp(jerr.setjmp_buffer)) {
 	jpeg_destroy_decompress(&cinfo);
+	if (image) bu_free(image, "jpeg_read image");
+	if (bif) icv_destroy(bif);
 	return NULL;
     }
 
@@ -242,6 +278,12 @@ jpeg_read(FILE *fp)
     if (cinfo.output_components != 3) {
 	bu_log("jpeg_read: unexpected component count: %d\n",
 	       cinfo.output_components);
+	jpeg_destroy_decompress(&cinfo);
+	return NULL;
+    }
+
+    if (width > 0 && height > (size_t)-1 / width / 3 / sizeof(double)) {
+	bu_log("jpeg_read: dimensions excessively large, causing integer overflow\n");
 	jpeg_destroy_decompress(&cinfo);
 	return NULL;
     }
@@ -276,10 +318,10 @@ jpeg_read_mem(const unsigned char *buffer, size_t size)
 {
     struct jpeg_decompress_struct cinfo;
     struct icv_jpeg_error_mgr jerr;
-    unsigned char *image;
+    unsigned char *image = NULL;
     JSAMPROW row_pointer[1];
     size_t width, height;
-    icv_image_t *bif;
+    icv_image_t *bif = NULL;
 
     if (UNLIKELY(!buffer || size == 0))
 	return NULL;
@@ -289,6 +331,8 @@ jpeg_read_mem(const unsigned char *buffer, size_t size)
 
     if (setjmp(jerr.setjmp_buffer)) {
 	jpeg_destroy_decompress(&cinfo);
+	if (image) bu_free(image, "jpeg_read_mem image");
+	if (bif) icv_destroy(bif);
 	return NULL;
     }
 
@@ -307,6 +351,12 @@ jpeg_read_mem(const unsigned char *buffer, size_t size)
     if (cinfo.output_components != 3) {
 	bu_log("jpeg_read_mem: unexpected component count: %d\n",
 	       cinfo.output_components);
+	jpeg_destroy_decompress(&cinfo);
+	return NULL;
+    }
+
+    if (width > 0 && height > (size_t)-1 / width / 3 / sizeof(double)) {
+	bu_log("jpeg_read_mem: dimensions excessively large, causing integer overflow\n");
 	jpeg_destroy_decompress(&cinfo);
 	return NULL;
     }

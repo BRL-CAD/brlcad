@@ -340,7 +340,7 @@ cmd_anim(int ac, const char **av)
 	}
 
 	icv_anim_write(anim, anim_file);
-	icv_anim_free(anim);
+	icv_anim_destroy(anim);
 	return 0;
 
     } else if (BU_STR_EQUAL(action, "extract")) {
@@ -363,7 +363,7 @@ cmd_anim(int ac, const char **av)
 		icv_destroy(img);
 	    }
 	}
-	icv_anim_free(anim);
+	icv_anim_destroy(anim);
 	return 0;
 
     } else if (BU_STR_EQUAL(action, "replace") || BU_STR_EQUAL(action, "insert") || BU_STR_EQUAL(action, "remove")) {
@@ -391,7 +391,7 @@ cmd_anim(int ac, const char **av)
 	    img = icv_read_auto(av[3], type, 0, 0);
 	    if (!img) {
 		bu_log("Failed to read image '%s'\n", av[3]);
-		icv_anim_free(anim);
+		icv_anim_destroy(anim);
 		return 1;
 	    }
 	}
@@ -406,7 +406,7 @@ cmd_anim(int ac, const char **av)
 	if (img) icv_destroy(img);
 
 	icv_anim_write(anim, anim_file);
-	icv_anim_free(anim);
+	icv_anim_destroy(anim);
 	return 0;
 
     } else if (BU_STR_EQUAL(action, "set-fps") || BU_STR_EQUAL(action, "set-delay")) {
@@ -422,19 +422,32 @@ cmd_anim(int ac, const char **av)
 	if (BU_STR_EQUAL(action, "set-fps")) {
 	    int fps = atoi(av[2]);
 	    icv_anim_set_fps(anim, fps);
+	    if (icv_anim_set_fps(anim, fps) != 0) {
+		bu_log("Invalid FPS %d. Must be > 0.\n", fps);
+		icv_anim_destroy(anim);
+		return 1;
+	    }
 	} else {
 	    long idx = strtol(av[2], NULL, 10);
 	    if (idx < 1) {
 		bu_log("Invalid index %ld. Must be >= 1.\n", idx);
-		icv_anim_free(anim);
+		icv_anim_destroy(anim);
 		return 1;
 	    }
 	    uint32_t delay = (uint32_t)strtoul(av[3], NULL, 10);
-	    icv_anim_set_frame_delay(anim, (size_t)(idx - 1), delay);
+	    if (icv_anim_set_frame_delay(anim, (size_t)(idx - 1), delay) != 0) {
+		bu_log("Invalid frame index %ld.\n", idx);
+		icv_anim_destroy(anim);
+		return 1;
+	    }
 	}
 
-	icv_anim_write(anim, anim_file);
-	icv_anim_free(anim);
+	if (icv_anim_write(anim, anim_file) != 0) {
+	    bu_log("Failed to write animation '%s'\n", anim_file);
+	    icv_anim_destroy(anim);
+	    return 1;
+	}
+	icv_anim_destroy(anim);
 	return 0;
     }
 
@@ -647,4 +660,3 @@ cleanup:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

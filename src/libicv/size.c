@@ -28,6 +28,7 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -303,20 +304,35 @@ shrink_image(icv_image_t* bif, size_t factor)
 	bu_log("Cannot shrink image to 0 factor, factor should be a positive value.");
 	return -1;
     }
+    if (factor > bif->width || factor > bif->height) {
+	bu_log("Cannot shrink image: factor is larger than image dimensions.");
+	return -1;
+    }
+    if (factor > (size_t)-1 / factor) {
+	bu_log("Cannot shrink image: factor is too large.");
+	return -1;
+    }
 
     facsq = factor*factor;
     res_p = bif->data;
     p = (double *)bu_malloc(bif->channels*sizeof(double), "shrink_image : Pixel Values Temp Buffer");
 
-    for (y = 0; y < bif->height; y += factor)
-	for (x = 0; x < bif->width; x += factor) {
+    size_t out_w = bif->width / factor;
+    size_t out_h = bif->height / factor;
+    if (out_w == 0 || out_h == 0) {
+	bu_free(p, "shrink_image : Pixel Values Temp Buffer");
+	return -1;
+    }
+
+    for (y = 0; y < out_h * factor; y += factor)
+	for (x = 0; x < out_w * factor; x += factor) {
 
 	    for (c = 0; c < bif->channels; c++) {
 		p[c]= 0;
 	    }
 
 	    for (py = 0; py < factor; py++) {
-		data_p = bif->data + (y+py)*widthstep;
+		data_p = bif->data + (y+py)*widthstep + x*bif->channels;
 		for (px = 0; px < factor; px++) {
 		    for (c = 0; c < bif->channels; c++) {
 			p[c] += *data_p++;
@@ -331,6 +347,7 @@ shrink_image(icv_image_t* bif, size_t factor)
     bif->width = (int)bif->width/factor;
     bif->height = (int)bif->height/factor;
     bif->data = (double *)bu_realloc(bif->data, (size_t)(bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation");
+    bu_free(p, "shrink_image : Pixel Values Temp Buffer");
 
     return 0;
 
@@ -347,13 +364,22 @@ under_sample(icv_image_t* bif, size_t factor)
 	bu_log("Cannot shrink image to 0 factor, factor should be a positive value.");
 	return -1;
     }
+    if (factor > bif->width || factor > bif->height) {
+	bu_log("Cannot under-sample image: factor is larger than image dimensions.");
+	return -1;
+    }
 
     widthstep = bif->width*bif->channels;
     res_p = bif->data;
 
-    for (y = 0; y < bif->height; y += factor) {
+    size_t out_w = bif->width / factor;
+    size_t out_h = bif->height / factor;
+    if (out_w == 0 || out_h == 0)
+	return -1;
+
+    for (y = 0; y < out_h * factor; y += factor) {
 	data_p = bif->data + widthstep*y;
-	for (x = 0; x < bif->width;
+	for (x = 0; x < out_w * factor;
 	     x += factor, res_p += bif->channels, data_p += factor * bif->channels)
 	    VMOVEN(res_p, data_p, bif->channels);
     }
@@ -365,34 +391,54 @@ under_sample(icv_image_t* bif, size_t factor)
     return 0;
 }
 
+static int
+resize_output_valid(const icv_image_t *bif, size_t out_width, size_t out_height)
+{
+    if (out_width == 0 || out_height == 0 || bif->width == 0 || bif->height == 0) {
+	bu_log("icv_resize : input and output dimensions must be non-zero.\n");
+	return 0;
+    }
+    if (out_width > (size_t)-1 / out_height / bif->channels / sizeof(double)) {
+	bu_log("icv_resize : output dimensions excessively large, causing integer overflow.\n");
+	return 0;
+    }
+    return 1;
+}
+
+static double
+mapped_coord(size_t out_index, size_t out_size, size_t in_size)
+{
+    if (out_size <= 1 || in_size <= 1)
+	return 0.0;
+    return ((double)out_index * (double)(in_size - 1)) / (double)(out_size - 1);
+}
 
 static int
 ninterp(icv_image_t* bif, size_t out_width, size_t out_height)
 {
-    double xstep, ystep;
     size_t i, j;
     size_t x, y;
     size_t widthstep;
     double *in_r, *in_c; /* Pointer to row and col of input buffers */
     double *out_data, *out_p;
-    xstep = (double)(bif->width-1) / (double)(out_width) - 1.0e-06;
-    ystep = (double)(bif->height-1) / (double)(out_height) - 1.0e-06;
 
-    if ((xstep < 1.0 && ystep > 1.0) || (xstep > 1.0 && ystep < 1.0)) {
-	bu_log("Operation unsupported.  Cannot stretch one dimension while compressing the other.\n");
+    if (!resize_output_valid(bif, out_width, out_height))
 	return -1;
-    }
 
     out_p = out_data = (double *)bu_malloc(out_width*out_height*bif->channels*sizeof(double), "ninterp : out_data");
 
     widthstep= bif->width*bif->channels;
 
     for (j = 0; j < out_height; j++) {
-	y = (int)(j*ystep);
+	double yc = mapped_coord(j, out_height, bif->height);
+	y = (size_t)(yc + 0.5);
+	if (y >= bif->height) y = bif->height - 1;
 	in_r = bif->data + y*widthstep;
 
 	for (i = 0; i < out_width; i++) {
-	    x = (int)(i*xstep);
+	    double xc = mapped_coord(i, out_width, bif->width);
+	    x = (size_t)(xc + 0.5);
+	    if (x >= bif->width) x = bif->width - 1;
 
 	    in_c = in_r + x*bif->channels;
 
@@ -419,46 +465,54 @@ binterp(icv_image_t *bif, size_t out_width, size_t out_height)
     size_t i, j;
     size_t c;
     double x, y, dx, dy, mid1, mid2;
-    double xstep, ystep;
     double *out_data, *out_p;
     double *upp_r, *low_r; /* upper and lower row */
     double *upp_c, *low_c;
     size_t widthstep;
 
-    xstep = (double)(bif->width - 1) / (double)out_width - 1.0e-6;
-    ystep = (double)(bif->height -1) / (double)out_height - 1.0e-6;
-
-    if ((xstep < 1.0 && ystep > 1.0) || (xstep > 1.0 && ystep < 1.0)) {
-	bu_log("Operation unsupported.  Cannot stretch one dimension while compressing the other.\n");
+    if (!resize_output_valid(bif, out_width, out_height))
 	return -1;
-    }
 
     out_p = out_data = (double *)bu_malloc(out_width*out_height*bif->channels*sizeof(double), "binterp : out data");
 
     widthstep = bif->width*bif->channels;
 
     for (j = 0; j < out_height; j++) {
-	y = j*ystep;
-	dy = y - (int)y;
+	double y_floor;
+	y = mapped_coord(j, out_height, bif->height);
+	y_floor = floor(y);
+	dy = y - y_floor;
 
-	low_r = bif->data + widthstep* (int)y;
-	upp_r = bif->data + widthstep* (int)(y+1);
+	size_t y_low = (size_t)y_floor;
+	size_t y_upp = y_low + 1;
+	if (y_upp >= bif->height) y_upp = bif->height - 1;
+
+	low_r = bif->data + widthstep * y_low;
+	upp_r = bif->data + widthstep * y_upp;
 
 	for (i = 0; i < out_width; i++) {
-	    x = i*xstep;
-	    dx = x - (int)x;
+	    double x_floor;
+	    x = mapped_coord(i, out_width, bif->width);
+	    x_floor = floor(x);
+	    dx = x - x_floor;
 
-	    upp_c = upp_r + (int)x*bif->channels;
-	    low_c = low_r + (int)x*bif->channels;
+	    size_t x_low = (size_t)x_floor;
+	    size_t x_upp = x_low + 1;
+	    if (x_upp >= bif->width) x_upp = bif->width - 1;
+
+	    upp_c = upp_r + x_low * bif->channels;
+	    low_c = low_r + x_low * bif->channels;
+	    double *upp_c_next = upp_r + x_upp * bif->channels;
+	    double *low_c_next = low_r + x_upp * bif->channels;
 
 	    for (c = 0; c < bif->channels; c++) {
-		mid1 = low_c[0] + dx * ((double)low_c[bif->channels] - (double)low_c[0]);
-		mid2 = upp_c[0] + dx * ((double)upp_c[bif->channels] - (double)upp_c[0]);
-		*out_p = mid1 + dy * (mid2 - mid1);
-
-		out_p++;
+		mid1 = low_c[0] + dx * (low_c_next[0] - low_c[0]);
+		mid2 = upp_c[0] + dx * (upp_c_next[0] - upp_c[0]);
+		*out_p++ = mid1 + dy * (mid2 - mid1);
 		upp_c++;
 		low_c++;
+		upp_c_next++;
+		low_c_next++;
 	    }
 	}
     }

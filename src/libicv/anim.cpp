@@ -37,7 +37,7 @@
 #include "bu/process.h"
 #include "bu/app.h"
 
-#include "icv.h"
+#include "icv_private.h"
 #include "icv/anim.h"
 #define APNGMINI_IMPLEMENTATION
 #include "apngmini.hpp"
@@ -98,6 +98,7 @@ extern "C" {
 	for (size_t i = 0; i < anim->frames.size(); ++i) {
 	    anim->frames[i].delay_usec = delay_usec;
 	}
+	return 0;
     }
 
     int
@@ -134,17 +135,19 @@ extern "C" {
 	for (size_t y = 0; y < (size_t)img->height; ++y) {
 	    size_t flip_y = img->height - 1 - y;
 	    for (size_t x = 0; x < (size_t)img->width; ++x) {
-		size_t p_src = flip_y * img->width + x; // img is bottom-up
+		size_t p_src = (flip_y * img->width + x) * img->channels; // img is bottom-up
 		size_t p_dst = y * img->width + x;      // apng is top-down
 		if (img->color_space == ICV_COLOR_SPACE_GRAY) {
 		    uint8_t val = (uint8_t)(img->data[p_src] * 255.0 + 0.5);
 		    f.pixels[p_dst*4 + 0] = val;
 		    f.pixels[p_dst*4 + 1] = val;
 		    f.pixels[p_dst*4 + 2] = val;
+		    if (img->channels >= 2) f.pixels[p_dst*4 + 3] = (uint8_t)(img->data[p_src + 1] * 255.0 + 0.5);
 		} else {
-		    f.pixels[p_dst*4 + 0] = (uint8_t)(img->data[p_src*3 + 0] * 255.0 + 0.5);
-		    f.pixels[p_dst*4 + 1] = (uint8_t)(img->data[p_src*3 + 1] * 255.0 + 0.5);
-		    f.pixels[p_dst*4 + 2] = (uint8_t)(img->data[p_src*3 + 2] * 255.0 + 0.5);
+		    f.pixels[p_dst*4 + 0] = (uint8_t)(img->data[p_src + 0] * 255.0 + 0.5);
+		    f.pixels[p_dst*4 + 1] = (uint8_t)(img->data[p_src + 1] * 255.0 + 0.5);
+		    f.pixels[p_dst*4 + 2] = (uint8_t)(img->data[p_src + 2] * 255.0 + 0.5);
+		    if (img->channels >= 4) f.pixels[p_dst*4 + 3] = (uint8_t)(img->data[p_src + 3] * 255.0 + 0.5);
 		}
 	    }
 	}
@@ -223,6 +226,7 @@ extern "C" {
 			if (fread(sub_id, 1, 4, fp) != 4) break;
 			uint32_t sub_size = avi_read_u32(fp);
 			if (sub_id[0] == '0' && sub_id[1] == '0' && sub_id[2] == 'd' && sub_id[3] == 'c') {
+			    if (sub_size > 256 * 1024 * 1024) break; /* Sanity limit 256MB */
 			    unsigned char *buf = (unsigned char *)bu_malloc(sub_size, "avi jpeg frame");
 			    if (fread(buf, 1, sub_size, fp) == sub_size) {
 				icv_image_t *img = icv_read_mem(buf, sub_size, BU_MIME_IMAGE_JPEG, 0, 0);
@@ -249,7 +253,9 @@ extern "C" {
 			uint32_t sub_size = avi_read_u32(fp);
 			if (sub_id[0] == 'a' && sub_id[1] == 'v' && sub_id[2] == 'i' && sub_id[3] == 'h') {
 			    usec_per_frame = avi_read_u32(fp);
-			    fseek(fp, sub_size - 4, SEEK_CUR);
+			    if (sub_size >= 4) {
+				fseek(fp, sub_size - 4, SEEK_CUR);
+			    }
 			} else {
 			    fseek(fp, sub_size, SEEK_CUR);
 			}
@@ -268,7 +274,7 @@ extern "C" {
 	if (usec_per_frame > 0) anim->fps = 1000000 / usec_per_frame;
 
 	if (anim->frames.empty()) {
-	    icv_anim_free(anim);
+	    icv_anim_destroy(anim);
 	    return NULL;
 	}
 	return anim;
@@ -302,7 +308,7 @@ extern "C" {
 		if (use_composed_frames) {
 		    composed_frames = aapng.compose();
 		    if (composed_frames.size() != aapng.frames.size()) {
-			icv_anim_free(anim);
+			icv_anim_destroy(anim);
 			return NULL;
 		    }
 		}
@@ -311,7 +317,12 @@ extern "C" {
 		    uint32_t frame_width = use_composed_frames ? aapng.canvas_width : aapng.frames[i].width;
 		    uint32_t frame_height = use_composed_frames ? aapng.canvas_height : aapng.frames[i].height;
 		    const apngmini::vector<uint8_t>& frame_pixels = use_composed_frames ? composed_frames[i] : aapng.frames[i].pixels;
-		    icv_image_t *img = icv_create(frame_width, frame_height, ICV_COLOR_SPACE_RGB);
+		    icv_image_t *img = icv_image_create(frame_width, frame_height, ICV_COLOR_SPACE_RGB);
+		    if (!img) {
+			bu_log("Failed to create img!\n");
+			icv_anim_destroy(anim);
+			return NULL;
+		    }
 
 		    // Raw control APNGs keep original frame dimensions.  Delta APNGs
 		    // need composition before exposing frames through the icv API.
@@ -546,11 +557,8 @@ extern "C" {
     {
 	if (!anim || !img) return -1;
 	icv_anim_frame f;
-	f.img = icv_create(img->width, img->height, img->color_space);
-	if (img->data) {
-	    size_t bytes = img->width * img->height * ((img->color_space == ICV_COLOR_SPACE_GRAY) ? 1 : 3) * sizeof(double);
-	    memcpy(f.img->data, img->data, bytes);
-	}
+	f.img = icv_clone(img);
+	if (!f.img) return -1;
 	f.delay_usec = 1000000u / (anim->fps > 0 ? anim->fps : 10);
 	anim->frames.push_back(f);
 	return 0;
@@ -561,11 +569,8 @@ extern "C" {
     {
 	if (!anim || !img || index > anim->frames.size()) return -1;
 	icv_anim_frame f;
-	f.img = icv_create(img->width, img->height, img->color_space);
-	if (img->data) {
-	    size_t bytes = img->width * img->height * ((img->color_space == ICV_COLOR_SPACE_GRAY) ? 1 : 3) * sizeof(double);
-	    memcpy(f.img->data, img->data, bytes);
-	}
+	f.img = icv_clone(img);
+	if (!f.img) return -1;
 	f.delay_usec = 1000000u / (anim->fps > 0 ? anim->fps : 10);
 	anim->frames.insert(anim->frames.begin() + index, f);
 	return 0;
@@ -575,15 +580,13 @@ extern "C" {
     icv_anim_replace_frame(icv_anim_t *anim, size_t index, const icv_image_t *img)
     {
 	if (!anim || !img || index >= anim->frames.size()) return -1;
+	icv_image_t *clone = icv_clone(img);
+	if (!clone) return -1;
 	if (anim->frames[index].img) {
 	    icv_destroy(anim->frames[index].img);
 	}
 	icv_anim_frame f;
-	f.img = icv_create(img->width, img->height, img->color_space);
-	if (img->data) {
-	    size_t bytes = img->width * img->height * ((img->color_space == ICV_COLOR_SPACE_GRAY) ? 1 : 3) * sizeof(double);
-	    memcpy(f.img->data, img->data, bytes);
-	}
+	f.img = clone;
 	// keep old delay
 	f.delay_usec = anim->frames[index].delay_usec;
 	anim->frames[index] = f;
@@ -606,12 +609,7 @@ extern "C" {
     {
 	if (!anim || index >= anim->frames.size()) return NULL;
 	icv_image_t *src = anim->frames[index].img;
-	icv_image_t *dst = icv_create(src->width, src->height, src->color_space);
-	if (src->data) {
-	    size_t bytes = src->width * src->height * ((src->color_space == ICV_COLOR_SPACE_GRAY) ? 1 : 3) * sizeof(double);
-	    memcpy(dst->data, src->data, bytes);
-	}
-	return dst;
+	return icv_clone(src);
     }
 
 } /* extern "C" */

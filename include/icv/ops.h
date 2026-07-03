@@ -164,12 +164,15 @@ typedef enum {
  *  shrinks the image with a factor of 2.
  *
  * c) ICV_RESIZE_NINTERP : This interpolates using nearest neighbor
- * method.
+ * method. Output endpoints map to input endpoints; a one-pixel output
+ * maps to source coordinate zero.
  * e.g. icv_resize(bif, ICV_RESIZE_NINTERP,1024,1024,0);
  *  interpolates the output image to have the size of 1024X1024.
  *
  * d) ICV_RESIZE_BINTERP : This interpolates using bilinear
- * Interpolation Method.
+ * Interpolation Method. Output endpoints map to input endpoints; a
+ * one-pixel output maps to source coordinate zero. Stretching one
+ * dimension while shrinking the other is supported.
  * e.g. icv_resize(bif, ICV_RESIZE_BINTERP,1024,1024,0);
  *  interpolates the output image to have the size of 1024X1024.
  *
@@ -226,7 +229,14 @@ ICV_EXPORT extern icv_image_t *icv_diffimg(icv_image_t *img1, icv_image_t *img2)
  * Compare two images using perceptual image hashing and report the Hamming
  * distance between them.  Useful for approximate image comparisons.
  */
-ICV_EXPORT extern uint32_t icv_pdiff(icv_image_t *img1, icv_image_t *img2);
+DEPRECATED ICV_EXPORT extern uint32_t icv_pdiff(icv_image_t *img1, icv_image_t *img2);
+
+/**
+ * Compare two images using approximate techniques.
+ */
+#define ICV_DIFF_PHASH 0
+#define ICV_DIFF_SSIM 1
+ICV_EXPORT extern fastf_t icv_adiff(icv_image_t *img1, icv_image_t *img2, int m);
 
 /**
  * Compare the embedded render metadata (icv_render_info) of two images.

@@ -128,6 +128,9 @@ ICV_EXPORT extern icv_image_t *icv_read_mem(const unsigned char *buffer, size_t 
  * Saves Image to a file or streams to stdout in respective format
  *
  * To stream it to stdout pass NULL pointer for filename.
+ * Writers do not modify the input image. If a format requires a different
+ * channel layout, conversion is performed on a temporary image; alpha is
+ * dropped only for formats that cannot represent it.
  *
  * @param bif Image structure of file.
  * @param filename Filename of the file to be written.
@@ -138,6 +141,9 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_i
 
 /**
  * Saves Image to a dynamically allocated memory buffer in the respective format.
+ * The input image is not modified. If a format requires a different channel
+ * layout, conversion is performed on a temporary image; alpha is dropped only
+ * for formats that cannot represent it.
  *
  * @param bif Image structure.
  * @param buffer Pointer to an unsigned char pointer to hold the allocated memory.

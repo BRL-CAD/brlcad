@@ -72,20 +72,21 @@ bool icv_to_u8_interleaved(const icv_image_t *img, std::vector<uint8_t> &buf, bo
     }
 
     const double *src = img->data;
+    size_t in_ch = img->channels;
     if (has_alpha) {
 	// Convert RGBA
 	for (uint64_t i = 0; i < npix; ++i) {
-	    buf[4*i + 0] = dbl_to_u8(src[4*i + 0]);  // R
-	    buf[4*i + 1] = dbl_to_u8(src[4*i + 1]);  // G
-	    buf[4*i + 2] = dbl_to_u8(src[4*i + 2]);  // B
-	    buf[4*i + 3] = dbl_to_u8(src[4*i + 3]);  // A
+	    buf[4*i + 0] = dbl_to_u8(src[in_ch*i + 0]);  // R
+	    buf[4*i + 1] = dbl_to_u8(src[in_ch*i + 1]);  // G
+	    buf[4*i + 2] = dbl_to_u8(src[in_ch*i + 2]);  // B
+	    buf[4*i + 3] = dbl_to_u8(src[in_ch*i + 3]);  // A (assumed to be at index 3)
 	}
     } else {
 	// Convert RGB
 	for (uint64_t i = 0; i < npix; ++i) {
-	    buf[3*i + 0] = dbl_to_u8(src[3*i + 0]);  // R
-	    buf[3*i + 1] = dbl_to_u8(src[3*i + 1]);  // G
-	    buf[3*i + 2] = dbl_to_u8(src[3*i + 2]);  // B
+	    buf[3*i + 0] = dbl_to_u8(src[in_ch*i + 0]);  // R
+	    buf[3*i + 1] = dbl_to_u8(src[in_ch*i + 1]);  // G
+	    buf[3*i + 2] = dbl_to_u8(src[in_ch*i + 2]);  // B
 	}
     }
     return true;

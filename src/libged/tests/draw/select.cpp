@@ -35,10 +35,10 @@
 
 #include "../../dbi.h"
 
-#define ADIFF_THRES 20
+#define ADIFF_THRES 0.99
 
 extern "C" void ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
-extern "C" int img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root);
+extern "C" int img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, fastf_t approximate_check, const char *clear_root, const char *img_root);
 extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
 
 int
@@ -776,4 +776,3 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

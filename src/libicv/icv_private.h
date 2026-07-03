@@ -28,6 +28,13 @@
 
 __BEGIN_DECLS
 
+/* Internal image allocation helpers.  icv_create intentionally remains the
+ * public color-space constructor; these preserve exact channel layouts for
+ * internal operations that must not silently drop alpha data. */
+extern icv_image_t *icv_create_with_channels(size_t width, size_t height, ICV_COLOR_SPACE color_space, size_t channels);
+extern icv_image_t *icv_clone(const icv_image_t *src);
+extern icv_image_t *icv_image_for_write(const icv_image_t *src, ICV_COLOR_SPACE color_space, size_t channels);
+
 /* defined in bw.c */
 extern icv_image_t *bw_read(FILE *fp, size_t width, size_t height);
 extern icv_image_t *bw_read_mem(const unsigned char *buffer, size_t size, size_t width, size_t height);

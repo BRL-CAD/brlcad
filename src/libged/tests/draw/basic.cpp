@@ -30,12 +30,12 @@
 #include <dm.h>
 #include <ged.h>
 
-#define ADIFF_THRES 20
+#define ADIFF_THRES 0.99
 
 #include "../../dbi.h"
 
 extern "C" void ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
-extern "C" int img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root);
+extern "C" int img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, fastf_t approximate_check, const char *clear_root, const char *img_root);
 extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
 
 /* We will often want to do multiple different operations with
@@ -544,7 +544,7 @@ main(int ac, char *av[]) {
     s_av[3] = "143";
     s_av[4] = NULL;
     ged_exec_ae(gedp, 4, s_av);
-    ret += img_cmp(15, gedp, lcache, false, clear_images, soft_fail, 50, "clear", "v");
+    ret += img_cmp(15, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "40";
@@ -552,7 +552,7 @@ main(int ac, char *av[]) {
     s_av[3] = "180";
     s_av[4] = NULL;
     ged_exec_ae(gedp, 4, s_av);
-    ret += img_cmp(16, gedp, lcache, false, clear_images, soft_fail, 60, "clear", "v");
+    ret += img_cmp(16, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "250";
@@ -560,7 +560,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-140";
     s_av[4] = NULL;
     ged_exec_ae(gedp, 4, s_av);
-    ret += img_cmp(17, gedp, lcache, true, clear_images, soft_fail, 35, "clear", "v");
+    ret += img_cmp(17, gedp, lcache, true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
 
     // Restore view to ae 35/25
     s_av[0] = "ae";
@@ -677,7 +677,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(23, gedp, lcache, true, clear_images, soft_fail, 35, "clear", "v");
+    ret += img_cmp(23, gedp, lcache, true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 5 drawing (point based triangles)...\n");
@@ -692,9 +692,9 @@ main(int ac, char *av[]) {
     ged_exec_autoview(gedp, 1, s_av);
 
     // The point based sampling can vary quite a bit visually, so this has a
-    // looser tolerance - we just want to be sure we're getting a rendering,
-    // not that the rendering is exactly the same.
-    ret += img_cmp(24, gedp, lcache, true, clear_images, soft_fail, 70, "clear", "v");
+    // looser tolerance than the other tests - we just want to be sure we're
+    // getting a rendering, not that the rendering is exactly the same.
+    ret += img_cmp(24, gedp, lcache, true, clear_images, soft_fail, 0.98, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Test clearing of previous drawing mode (shaded and wireframe)...\n");
@@ -785,4 +785,3 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

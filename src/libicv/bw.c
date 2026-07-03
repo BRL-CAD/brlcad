@@ -32,53 +32,69 @@
 int
 bw_write(icv_image_t *bif, FILE *fp)
 {
+    icv_image_t *wimg;
+    int retc = BRLCAD_OK;
 
     if (UNLIKELY(!bif))
 	return BRLCAD_ERROR;
     if (UNLIKELY(!fp))
 	return BRLCAD_ERROR;
 
-    if (bif->color_space == ICV_COLOR_SPACE_RGB) {
-	icv_rgb2gray(bif, ICV_COLOR_RGB, 0, 0, 0);
-    } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
+    wimg = icv_image_for_write(bif, ICV_COLOR_SPACE_GRAY, 1);
+    if (!wimg) {
 	bu_log("bw_write : Color Space conflict");
 	return BRLCAD_ERROR;
     }
 
-    unsigned char *data = icv_data2uchar(bif);
-    size_t size = bif->height*bif->width;
-    size_t ret = fwrite(data, 1, size, fp);
-    bu_free(data, "bw_write : Unsigned Char data");
-
-    if (ret != size) {
-	bu_log("bw_write : Short Write\n");
+    if (wimg->channels != 1) {
+	bu_log("bw_write : Channel count conflict (expected 1, got %d)", (int)wimg->channels);
+	icv_destroy(wimg);
 	return BRLCAD_ERROR;
     }
 
-    return BRLCAD_OK;
+    unsigned char *data = icv_data2uchar(wimg);
+    size_t size = wimg->height*wimg->width;
+    size_t ret = fwrite(data, 1, size, fp);
+    bu_free(data, "bw_write : Unsigned Char data");
+    icv_destroy(wimg);
+
+    if (ret != size) {
+	bu_log("bw_write : Short Write\n");
+	retc = BRLCAD_ERROR;
+    }
+
+    return retc;
 }
 
 int
 bw_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize)
 {
+    icv_image_t *wimg;
+
     if (UNLIKELY(!bif))
 	return BRLCAD_ERROR;
     if (UNLIKELY(!outbuffer || !outsize))
 	return BRLCAD_ERROR;
 
-    if (bif->color_space == ICV_COLOR_SPACE_RGB) {
-	icv_rgb2gray(bif, ICV_COLOR_RGB, 0, 0, 0);
-    } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
+    wimg = icv_image_for_write(bif, ICV_COLOR_SPACE_GRAY, 1);
+    if (!wimg) {
 	bu_log("bw_write_mem : Color Space conflict");
 	return BRLCAD_ERROR;
     }
 
-    *outsize = (size_t)bif->height * bif->width;
+    if (wimg->channels != 1) {
+	bu_log("bw_write_mem : Channel count conflict (expected 1, got %d)", (int)wimg->channels);
+	icv_destroy(wimg);
+	return BRLCAD_ERROR;
+    }
+
+    *outsize = (size_t)wimg->height * wimg->width;
     *outbuffer = (unsigned char *)bu_malloc(*outsize, "bw_write_mem buffer");
 
-    unsigned char *data = icv_data2uchar(bif);
+    unsigned char *data = icv_data2uchar(wimg);
     memcpy(*outbuffer, data, *outsize);
     bu_free(data, "bw_write_mem : Unsigned Char data");
+    icv_destroy(wimg);
 
     return BRLCAD_OK;
 }
@@ -114,18 +130,23 @@ bw_read(FILE *fp, size_t width, size_t height)
 		data = (unsigned char *)bu_realloc(data, buffsize, "bw_read : increase size to accommodate data");
 	    }
 	}
-	if (size<buffsize) {
+	if (size > 0 && size < buffsize) {
 	    data = (unsigned char *)bu_realloc(data, size, "bw_read : decrease size in overbuffered");
 	}
 
 	bif->height = 1;
 	bif->width = (int) size;
     } else { /* buffer frame wise */
+	if (width > 0 && height > (size_t)-1 / width) {
+	    bu_log("bw_read: dimensions excessively large, causing integer overflow\n");
+	    bu_free(bif, "icv_structure");
+	    return NULL;
+	}
 	size = height*width;
 	data = (unsigned char *)bu_malloc(size, "bw_read : unsigned char data");
 
 	size_t ret = fread(data, 1, size, fp);
-	if (ret!=0 && ferror(fp)) {
+	if (ret != size) {
 	    bu_log("bw_read: Error Occurred while Reading\n");
 	    bu_free(data, "icv_image data");
 	    bu_free(bif, "icv_structure");
@@ -169,6 +190,11 @@ bw_read_mem(const unsigned char *buffer, size_t size, size_t width, size_t heigh
 	bif->height = 1;
 	bif->width = (int)size;
     } else {
+	if (width > 0 && height > (size_t)-1 / width) {
+	    bu_log("bw_read_mem: dimensions excessively large, causing integer overflow\n");
+	    bu_free(bif, "icv_structure");
+	    return NULL;
+	}
 	if (size < width * height) {
 	    bu_log("bw_read_mem: provided size is smaller than width*height\n");
 	    bu_free(bif, "icv_structure");
