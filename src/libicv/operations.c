@@ -89,7 +89,7 @@ int icv_multiply_val(icv_image_t* img, double val)
 
     for (size = img->width*img->height*img->channels; size>0; size--) {
 	*data *= val;
-	 data++;
+	data++;
     }
     if ((img->flags & ICV_OPERATIONS_MODE))
 	img->flags&=(!ICV_SANITIZED);
@@ -112,8 +112,8 @@ int icv_divide_val(icv_image_t* img, double val)
 
     for (size = img->width*img->height*img->channels; size>0; size--) {
 	*data /= val;
-	 data++;
-     }
+	data++;
+    }
 
     if ((img->flags & ICV_OPERATIONS_MODE))
 	img->flags&=(!ICV_SANITIZED);
@@ -134,7 +134,7 @@ int icv_pow_val(icv_image_t* img, double val)
 
     for (size = img->width*img->height*img->channels; size>0; size--) {
 	*data = pow(*data,val);
-	 data++;
+	data++;
     }
 
     if ((img->flags & ICV_OPERATIONS_MODE))

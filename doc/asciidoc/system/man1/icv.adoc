@@ -14,6 +14,7 @@ icv - convert, compare, and report information for image formats
 icv [-w width] [-n height] [--input-format fmt] [--output-format fmt] [-i input] [-o output] [input] [output]
 icv info file [file ...]
 icv diff [options] img1 img2
+icv anim <action> <anim_file> ...
 ----
 
 [[description]]
@@ -50,6 +51,9 @@ Without a subcommand, *icv* acts as an image format converter, reading the input
 
 *diff*::
 	Compare two images and report per-channel match statistics on standard error. When the images differ and no output file is given, a raw PIX difference image is written to standard output (only if stdout is not a terminal), matching the behaviour of *pixdiff*(1). Use *-o* to write the diff image to a named file instead.
+
+*anim*::
+	Manage animation files (APNG, MJPG). Supports actions for adding, extracting, replacing, inserting, and removing frames, as well as setting animation playback speed and per-frame delays.
 
 [[options]]
 == OPTIONS

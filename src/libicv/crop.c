@@ -47,22 +47,22 @@ icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
     errorflag=0;
     if (xnum < 1) {
 	fprintf(stderr,"icv_rect : ERROR: Horizontal Cut Size\n");
-    	errorflag=1;
+	errorflag=1;
     }
     if (ynum < 1) {
 	fprintf(stderr,"icv_rect : ERROR: Vertical Cut Size\n");
-    	errorflag=1;
+	errorflag=1;
     }
     if (errorflag) bu_exit(1,NULL);
 
     errorflag=0;
     if (xorig+xnum > img->width) {
 	fprintf(stderr,"icv_rect : Cut not possible; input parameters exceed the width.\n");
-    	errorflag=1;
+	errorflag=1;
     }
     if (yorig+ynum > img->height) {
 	fprintf(stderr,"icv_rect : Cut not possible; input parameters exceed the height.\n");
-    	errorflag=1;
+	errorflag=1;
     }
     if (errorflag) bu_exit(1,NULL);
 
@@ -70,12 +70,12 @@ icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
     widthstep_in = img->width*img->channels;
     widthstep_out = xnum*img->channels;
     bytes_row = widthstep_out*sizeof(double);
-    out_data = p = (double *)bu_malloc(ynum*bytes_row,"icv_rect : Cropped Image Data" );
+    out_data = p = (double *)bu_malloc(ynum*bytes_row,"icv_rect : Cropped Image Data");
 
     /* Hopes to the initial point to be extracted on the first line */
     in_data = img->data + xorig*img->channels;
 
-    for (row = 0; row < yorig+ynum ;row++) {
+    for (row = 0; row < yorig+ynum ; row++) {
 	VMOVEN(p,in_data,widthstep_out);
 	in_data += widthstep_in;
 	if (row >= yorig)

@@ -80,7 +80,7 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
     int num_color_planes;
 
     double value;
-    int red = 0 , green = 0 , blue = 0 ;
+    int red = 0, green = 0, blue = 0 ;
 
     ICV_IMAGE_VAL_INT(img);
 

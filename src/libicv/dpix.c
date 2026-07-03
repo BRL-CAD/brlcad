@@ -150,6 +150,58 @@ dpix_write(icv_image_t *bif, FILE *fp)
     return BRLCAD_OK;
 }
 
+int
+dpix_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize)
+{
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!outbuffer || !outsize))
+	return BRLCAD_ERROR;
+
+    if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
+	icv_gray2rgb(bif);
+    } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
+	bu_log("dpix_write_mem : Color Space conflict");
+	return BRLCAD_ERROR;
+    }
+
+    /* DPIX uses the raw double data directly */
+    *outsize = (size_t)bif->width * bif->height * 3 * sizeof(bif->data[0]);
+    *outbuffer = (unsigned char *)bu_malloc(*outsize, "dpix_write_mem buffer");
+
+    memcpy(*outbuffer, bif->data, *outsize);
+
+    return BRLCAD_OK;
+}
+
+icv_image_t *
+dpix_read_mem(const unsigned char *buffer, size_t size, size_t width, size_t height)
+{
+    if (UNLIKELY(!buffer || size == 0))
+	return NULL;
+
+    icv_image_t *bif;
+
+    if (width == 0 || height == 0) {
+	bu_log("dpix_read_mem: Using default size.\n");
+	height = 512;
+	width = 512;
+    }
+
+    size_t expected_size = width * height * 3 * sizeof(double);
+    if (size < expected_size) {
+	bu_log("dpix_read_mem: Buffer size too small for dimensions\n");
+	return NULL;
+    }
+
+    bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
+
+    memcpy(bif->data, buffer, expected_size);
+
+    icv_normalize(bif);
+
+    return bif;
+}
 
 /*
  * Local Variables:

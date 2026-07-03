@@ -192,8 +192,8 @@ write_nirt_shots_for_ri(const struct icv_render_info *ri,
 
     const double cell_width  = viewsize / (double)width;
     const double cell_height = (aspect > 0.0)
-	? viewsize / ((double)height * aspect)
-	: viewsize / (double)height;
+			       ? viewsize / ((double)height * aspect)
+			       : viewsize / (double)height;
 
     /* dx_model, dy_model – rotate only, then scale */
     vect_t dx_model, dy_model;
@@ -210,8 +210,8 @@ write_nirt_shots_for_ri(const struct icv_render_info *ri,
 
     /* Precompute the perspective zoomout factor (0 for orthographic) */
     const double zoomout = (ri->perspective > 0.0)
-	? 1.0 / tan(DEG2RAD * ri->perspective / 2.0)
-	: 0.0;
+			   ? 1.0 / tan(DEG2RAD * ri->perspective / 2.0)
+			   : 0.0;
 
     /* viewbase_model – lower-left corner of the view plane */
     point_t viewbase_model;
@@ -264,8 +264,8 @@ write_nirt_shots_for_ri(const struct icv_render_info *ri,
 	    /* Perspective: diverging rays from a single eye point */
 	    vect_t temp;
 	    VSET(temp, -1.0 + 2.0 * (col + 0.5) / (double)width,
-		       (-1.0 / aspect) + 2.0 * (row + 0.5) / ((double)height * aspect),
-		       -zoomout);
+		 (-1.0 / aspect) + 2.0 * (row + 0.5) / ((double)height * aspect),
+		 -zoomout);
 	    vect_t world_dir;
 	    MAT4X3VEC(world_dir, view2model, temp);
 	    VUNITIZE(world_dir);
@@ -366,7 +366,7 @@ icv_diff_nirt_shots(const icv_image_t *img1, const icv_image_t *img2,
 
     /* Collect all differing pixels into a flat tuple array */
     unsigned int *diffs = (unsigned int *)bu_malloc(
-	width * height * 8 * sizeof(unsigned int), "nirt diffs");
+			      width * height * 8 * sizeof(unsigned int), "nirt diffs");
     int ndiff = 0;
 
     for (size_t row = 0; row < height; row++) {
@@ -381,8 +381,12 @@ icv_diff_nirt_shots(const icv_image_t *img1, const icv_image_t *img2,
 	    unsigned int *t = diffs + ndiff * 8;
 	    t[0] = (unsigned int)col;
 	    t[1] = (unsigned int)row;
-	    t[2] = r1p; t[3] = g1p; t[4] = b1p;
-	    t[5] = r2p; t[6] = g2p; t[7] = b2p;
+	    t[2] = r1p;
+	    t[3] = g1p;
+	    t[4] = b1p;
+	    t[5] = r2p;
+	    t[6] = g2p;
+	    t[7] = b2p;
 	    ndiff++;
 	}
     }
@@ -404,9 +408,9 @@ icv_diff_nirt_shots(const icv_image_t *img1, const icv_image_t *img2,
 
 extern "C" int
 icv_diff(
-	int *matching, int *off_by_1, int *off_by_many,
-	icv_image_t *img1, icv_image_t *img2
-	)
+    int *matching, int *off_by_1, int *off_by_many,
+    icv_image_t *img1, icv_image_t *img2
+)
 {
     if (!img1 || !img2)
 	return -1;
@@ -433,13 +437,13 @@ icv_diff(
 	    int diff = c1 - c2;
 	    if (diff < 0) diff = -diff;
 	    if (diff == 0) {
-		if (matching) (*matching)++;
+		if (matching)(*matching)++;
 	    } else if (diff == 1) {
 		ret = 1;
-		if (off_by_1) (*off_by_1)++;
+		if (off_by_1)(*off_by_1)++;
 	    } else {
 		ret = 1;
-		if (off_by_many) (*off_by_many)++;
+		if (off_by_many)(*off_by_many)++;
 	    }
 	}
     }

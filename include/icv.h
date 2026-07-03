@@ -32,6 +32,7 @@
 __BEGIN_DECLS
 
 #include "icv/defines.h"
+#include "icv/anim.h"
 #include "icv/colorspace.h"
 #include "icv/crop.h"
 #include "icv/filters.h"

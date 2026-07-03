@@ -233,7 +233,7 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
     if (buflines != nyin) {
 	/* I won't all fit in the buffer */
 	fprintf(stderr, "Sorry but I can't do an arbitrary rotate of an image this large\n");
-	bu_exit (1, NULL);
+	bu_exit(1, NULL);
     }
     if (buflines > nyin)
 	buflines = nyin;
@@ -270,8 +270,7 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 		&& x2 < (double)nxin
 		&& y2 > 0.0
 		&& ZERO(y2)
-		&& y2 < (double)nyin)
-	    {
+		&& y2 < (double)nyin) {
 		putchar(buf[(int)y2*nyin + (int)x2]);
 	    } else {
 		putchar(0);	/* XXX - settable color? */
@@ -343,7 +342,7 @@ icv_rot(size_t argc, const char *argv[])
 	if (plus90) {
 	    for (x = 0; x < nxin; x++) {
 		obp = obuf;
-		bp = &buffer[ (lasty-firsty)*scanbytes + x*pixbytes ];
+		bp = &buffer[(lasty-firsty)*scanbytes + x*pixbytes ];
 		for (y = lasty+1; y > yin; y--) {
 		    /* firsty? */
 		    for (j = 0; j < pixbytes; j++)
@@ -374,7 +373,7 @@ icv_rot(size_t argc, const char *argv[])
 	} else if (minus90) {
 	    for (x = nxin; x > 0; x--) {
 		obp = obuf;
-		bp = &buffer[ (x-1)*pixbytes ];
+		bp = &buffer[(x-1)*pixbytes ];
 		for (y = firsty+1; (ssize_t)y < lasty; y++) {
 		    for (j = 0; j < pixbytes; j++)
 			*obp++ = *bp++;

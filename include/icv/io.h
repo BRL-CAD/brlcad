@@ -113,6 +113,18 @@ ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_
 ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height);
 
 /**
+ * Load an image from a memory buffer.
+ *
+ * @param buffer Pointer to the memory buffer.
+ * @param size Size of the memory buffer in bytes.
+ * @param format Probable format of the image.
+ * @param width Width when passed as parameter from calling program.
+ * @param height Height when passed as parameter from calling program.
+ * @return A newly allocated struct holding the loaded image info, or NULL on failure.
+ */
+ICV_EXPORT extern icv_image_t *icv_read_mem(const unsigned char *buffer, size_t size, bu_mime_image_t format, size_t width, size_t height);
+
+/**
  * Saves Image to a file or streams to stdout in respective format
  *
  * To stream it to stdout pass NULL pointer for filename.
@@ -123,6 +135,19 @@ ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t fo
  * @return on success 0, on failure -1 with log messages.
  */
 ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_image_t format);
+
+/**
+ * Saves Image to a dynamically allocated memory buffer in the respective format.
+ *
+ * @param bif Image structure.
+ * @param buffer Pointer to an unsigned char pointer to hold the allocated memory.
+ * @param size Pointer to a size_t to hold the size of the written buffer.
+ * @param format Specific format of the file to be written.
+ * @return on success 0, on failure -1 with log messages.
+ *
+ * Note: The caller is responsible for freeing *buffer using bu_free().
+ */
+ICV_EXPORT extern int icv_write_mem(icv_image_t *bif, unsigned char **buffer, size_t *size, bu_mime_image_t format);
 
 /**
  * Write an image line to the data of ICV struct. Can handle unsigned
