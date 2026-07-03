@@ -352,7 +352,7 @@ db_mater_free(struct db_i *dbip)
  *   2. Remove the DEPRECATED block from include/rt/mater.h.
  *   3. Remove the two "DEPRECATED BRIDGE" lines in db_mater_head().
  *   4. Remove the "DEPRECATED BRIDGE" loop in db_mater_color_region().
- *   5. Remove the entry from the CHANGES file.
+ *   5. Remove the entry from doc/changes/deprecated.adoc.
  * ===========================================================================
  */
 
