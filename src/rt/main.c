@@ -246,6 +246,10 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
     int need_fb = 0;
+    int have_tree = 0;
+    int no_tree_input = 0;
+    int saw_cmd = 0;
+    int stdin_is_tty = 0;
     struct rt_i *rtip = NULL;
     const char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
     char idbuf[2048] = {0};			/* First ID record info */
@@ -266,6 +270,7 @@ int main(int argc, char *argv[])
 
     bu_setlinebuf(stdout);
     bu_setlinebuf(stderr);
+    stdin_is_tty = isatty(fileno(stdin));
 
     /* establish defaults managed by option handling */
     initialize_option_defaults();
@@ -561,7 +566,7 @@ int main(int argc, char *argv[])
 #endif
 
     /* First, see if we're handling old style processing of the -M flag. */
-    if (matflag && !isatty(fileno(stdin))) {
+    if (matflag && !stdin_is_tty) {
 	int oret = old_way(stdin);
 	if (oret < 0) {
 	    bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
@@ -574,7 +579,26 @@ int main(int argc, char *argv[])
 	}
     }
 
-    if (!matflag && def_tree(APP.a_rt_i, &title_obj)) {
+    if (!matflag) {
+	if (objv) {
+	    have_tree = def_tree(APP.a_rt_i, &title_obj);
+	} else if (stdin_is_tty) {
+	    have_tree = def_tree(APP.a_rt_i, &title_obj);
+	    no_tree_input = have_tree ? 0 : 1;
+	} else {
+	    int c = fgetc(stdin);
+
+	    if (c == EOF) {
+		have_tree = def_tree(APP.a_rt_i, &title_obj);
+		no_tree_input = have_tree ? 0 : 1;
+	    } else {
+		if (ungetc(c, stdin) != c)
+		    bu_exit(EXIT_FAILURE, "rt: unable to restore command input stream\n");
+	    }
+	}
+    }
+
+    if (have_tree) {
 	int frame_retval;
 
 	/*
@@ -617,6 +641,12 @@ int main(int argc, char *argv[])
 	register char *buf;
 	register int nret;
 
+	if (!matflag && no_tree_input) {
+	    fprintf(stderr, "rt: specify an object on the command line or provide a valid rt command stream on stdin.\n");
+	    ret = 1;
+	    goto rt_cleanup;
+	}
+
 	/*
 	 * Initialize application.
 	 * Note that width & height may not have been set yet,
@@ -640,13 +670,16 @@ int main(int argc, char *argv[])
 	 * called by rt_do_cmd().
 	 */
 
-	if (!matflag && isatty(fileno(stdin))) {
+	if (!matflag && stdin_is_tty) {
 	    fprintf(stderr, "Additional commands needed - cannot complete raytrace\n");
 	    ret = 1;
 	    goto rt_cleanup;
 	}
 
 	while ((buf = rt_read_cmd(stdin)) != (char *)0) {
+	    saw_cmd = 1;
+	    int is_end_cmd = 0;
+	    int is_multiview_cmd = 0;
 	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_PARSE) {
 		fprintf(stderr, "cmd: %s\n", buf);
 	    }
@@ -662,7 +695,9 @@ int main(int argc, char *argv[])
 	     * Postpone fb setup until we're ready to render something
 	     * to avoid backing up stdin's pipe.
 	     */
-	    if (!bu_strncmp(buf, "end", sizeof("end")) || !bu_strncmp(buf, "multiview", sizeof("multiview"))) {
+	    is_end_cmd = !bu_strncmp(buf, "end", sizeof("end"));
+	    is_multiview_cmd = !bu_strncmp(buf, "multiview", sizeof("multiview"));
+	    if (is_end_cmd || is_multiview_cmd) {
 		if (need_fb != 0 && !fbp) {
 		    int fb_status = fb_setup();
 		    if (fb_status) {
@@ -673,8 +708,22 @@ int main(int argc, char *argv[])
 
 	    nret = rt_do_cmd(APP.a_rt_i, buf, rt_do_tab);
 	    bu_free(buf, "rt_read_cmd command buffer");
-	    if (nret < 0)
+	    if (nret < 0) {
+		if ((is_end_cmd || is_multiview_cmd) && APP.a_rt_i &&
+		    BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion) &&
+		    APP.a_rt_i->stats.rti_nrays == 0) {
+		    fprintf(stderr, "rt: no objects were loaded. Specify an object on the command line or provide a valid rt command stream on stdin.\n");
+		}
+		if (!is_multiview_cmd || !APP.a_rt_i || APP.a_rt_i->stats.rti_nrays == 0) {
+		    ret = 1;
+		}
 		break;
+	    }
+	}
+	if (!matflag && !saw_cmd && BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion)) {
+	    fprintf(stderr, "rt: no objects were loaded. Specify an object on the command line or provide a valid rt command stream on stdin.\n");
+	    ret = 1;
+	    goto rt_cleanup;
 	}
 	if (curframe < desiredframe) {
 	    fprintf(stderr,
