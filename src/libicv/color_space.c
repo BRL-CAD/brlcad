@@ -32,6 +32,7 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "icv.h"
+#include "icv_private.h"
 
 int
 icv_gray2rgb(icv_image_t *img)
@@ -67,8 +68,8 @@ icv_gray2rgb(icv_image_t *img)
 	in_data+=img->channels;
     }
 
-    bu_free(img->data, "icv_gray2rgb : gray image data");
-    img->data = op;
+    icv_image_data_free(img, "icv_gray2rgb : gray image data");
+    icv_image_data_set_bu(img, op);
     img->color_space = ICV_COLOR_SPACE_RGB;
     img->channels = 3;
     img->alpha_channel = 0;
@@ -183,8 +184,8 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 	for (in = out = 0; out < size; out++, in += img->channels)
 	    out_data[out] = (in_data[in] + in_data[in+1] + in_data[in+2]) / 3.0;
     }
-    bu_free(img->data, "icv_image_rgb2gray : rgb image data");
-    img->data = out_data;
+    icv_image_data_free(img, "icv_image_rgb2gray : rgb image data");
+    icv_image_data_set_bu(img, out_data);
     img->color_space = ICV_COLOR_SPACE_GRAY;
     img->channels = 1;
     img->alpha_channel = 0;

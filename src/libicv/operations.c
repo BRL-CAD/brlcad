@@ -345,9 +345,9 @@ icv_fit(icv_image_t *img, struct bu_vls *msg, size_t o_width_req, size_t o_heigh
 	    size_t x_orig = 0;
 	    size_t y_orig = (o_n_used - o_height_req) * 0.5;
 
-	    if (icv_rect(img, x_orig, y_orig, o_width_req, o_height_req) < 0) {
+	    if (icv_crop_rect(img, x_orig, y_orig, o_width_req, o_height_req) < 0) {
 		if (msg)
-		    bu_vls_printf(msg, "icv_rect failed");
+		    bu_vls_printf(msg, "icv_crop_rect failed");
 		return BRLCAD_ERROR;
 	    }
 
@@ -363,9 +363,9 @@ icv_fit(icv_image_t *img, struct bu_vls *msg, size_t o_width_req, size_t o_heigh
 	    size_t x_orig = (o_w_used - o_width_req) * 0.5;
 	    size_t y_orig = (o_n_used - o_height_req) * 0.5;
 
-	    if (icv_rect(img, x_orig, y_orig, o_width_req, o_height_req) < 0) {
+	    if (icv_crop_rect(img, x_orig, y_orig, o_width_req, o_height_req) < 0) {
 		if (msg)
-		    bu_vls_printf(msg, "icv_rect failed");
+		    bu_vls_printf(msg, "icv_crop_rect failed");
 		return BRLCAD_ERROR;
 	    }
 

@@ -69,16 +69,17 @@ extern "C" {
 	return anim;
     }
 
-    void
-    icv_anim_free(icv_anim_t *anim)
+    int
+    icv_anim_destroy(icv_anim_t *anim)
     {
-	if (!anim) return;
+	if (!anim) return 0;
 	for (size_t i = 0; i < anim->frames.size(); ++i) {
 	    if (anim->frames[i].img) {
 		icv_destroy(anim->frames[i].img);
 	    }
 	}
 	delete anim;
+	return 0;
     }
 
     size_t
@@ -88,10 +89,10 @@ extern "C" {
 	return anim->frames.size();
     }
 
-    void
+    int
     icv_anim_set_fps(icv_anim_t *anim, int fps)
     {
-	if (!anim) return;
+	if (!anim || fps <= 0) return -1;
 	anim->fps = (fps > 0) ? fps : 10;
 	uint32_t delay_usec = 1000000u / (uint32_t)anim->fps;
 	if (delay_usec == 0) delay_usec = 1;

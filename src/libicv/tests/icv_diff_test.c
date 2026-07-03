@@ -63,7 +63,7 @@ static int tests_passed = 0;
 static icv_image_t *
 make_solid(size_t w, size_t h, double r, double g, double b)
 {
-    icv_image_t *img = icv_create(w, h, ICV_COLOR_SPACE_RGB);
+    icv_image_t *img = icv_image_create(w, h, ICV_COLOR_SPACE_RGB);
     if (!img) return NULL;
     for (size_t i = 0; i < w * h; i++) {
 	img->data[i*3+0] = r;
@@ -137,8 +137,8 @@ test_icv_diffimg_colors(void)
      *                  pixel[1] differs only in green by 1,
      *                  pixel[2] matches.
      */
-    icv_image_t *img1 = icv_create(3, 1, ICV_COLOR_SPACE_RGB);
-    icv_image_t *img2 = icv_create(3, 1, ICV_COLOR_SPACE_RGB);
+    icv_image_t *img1 = icv_image_create(3, 1, ICV_COLOR_SPACE_RGB);
+    icv_image_t *img2 = icv_image_create(3, 1, ICV_COLOR_SPACE_RGB);
 
     /* pixel 0: img1 red=128/255, img2 red=50/255  → diff=78, only red */
     img1->data[0*3+0] = 128.0/255.0;
@@ -223,7 +223,7 @@ test_png_metadata_roundtrip(const char *tmpdir)
     ri->aspect      = 1.0;
     ri->perspective = 0.0;
 
-    icv_image_set_render_info(img, ri);
+    CHECK(icv_image_take_render_info(img, ri) == 0, "attached render metadata to PNG round-trip image");
 
     /* Write to a temp PNG file */
     struct bu_vls fname = BU_VLS_INIT_ZERO;
@@ -293,7 +293,7 @@ test_diff_render_info(void)
     ri1->viewsize = 500.0;
     ri1->aspect = 1.0;
     MAT_IDN(ri1->viewrotscale);
-    icv_image_set_render_info(img1, ri1);
+    CHECK(icv_image_take_render_info(img1, ri1) == 0, "attached render metadata to first image");
 
     struct icv_render_info *ri2 = icv_render_info_create();
     ri2->db_filename = bu_strdup("model.g");
@@ -302,7 +302,7 @@ test_diff_render_info(void)
     ri2->viewsize = 500.0;
     ri2->aspect = 1.0;
     MAT_IDN(ri2->viewrotscale);
-    icv_image_set_render_info(img2, ri2);
+    CHECK(icv_image_take_render_info(img2, ri2) == 0, "attached render metadata to second image");
 
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
     r = icv_diff_render_info(img1, img2, &msgs);
@@ -318,8 +318,8 @@ test_diff_render_info(void)
     ri3->viewsize = 500.0;
     ri3->aspect = 1.0;
     MAT_IDN(ri3->viewrotscale);
-    /* icv_image_set_render_info will free ri2 and install ri3 */
-    icv_image_set_render_info(img2, ri3);
+    /* icv_image_take_render_info will free ri2 and install ri3 */
+    CHECK(icv_image_take_render_info(img2, ri3) == 0, "replaced render metadata");
 
     r = icv_diff_render_info(img1, img2, &msgs);
     CHECK(r == 1, "icv_diff_render_info returns 1 when db_filename differs");
@@ -365,7 +365,7 @@ test_nirt_shots(const char *tmpdir)
     ri->aspect      = 1.0;
     ri->perspective = 0.0;
 
-    icv_image_set_render_info(img1, ri);
+    CHECK(icv_image_take_render_info(img1, ri) == 0, "attached nirt render metadata to first image");
 
     /* Sub-test A: only img1 has metadata → only nirt_out1 is written */
     {
@@ -447,7 +447,7 @@ test_nirt_shots(const char *tmpdir)
 	ri2->viewsize    = 400.0;
 	ri2->aspect      = 1.0;
 	ri2->perspective = 0.0;
-	icv_image_set_render_info(img2, ri2);
+	CHECK(icv_image_take_render_info(img2, ri2) == 0, "attached nirt render metadata to second image");
 
 	struct bu_vls fname1 = BU_VLS_INIT_ZERO;
 	struct bu_vls fname2 = BU_VLS_INIT_ZERO;
@@ -498,7 +498,7 @@ test_nirt_shots(const char *tmpdir)
 	ri3->viewsize    = 400.0;
 	ri3->aspect      = 1.0;
 	ri3->perspective = 0.0;
-	icv_image_set_render_info(img_b, ri3);
+	CHECK(icv_image_take_render_info(img_b, ri3) == 0, "attached nirt render metadata to comparison image");
 
 	struct bu_vls fname_c = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&fname_c, "%s/test_shots_c.nirt", tmpdir);

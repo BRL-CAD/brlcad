@@ -71,8 +71,10 @@ get_args(size_t argc, const char **argv, FILE **ifp, FILE **ofp, double *angle)
     const char *in_file_name = NULL;
     const char *out_file_name = NULL;
 
-    if (!ifp || !ofp || !angle)
-	bu_exit(1, "internal error processing arguments\n");
+    if (!ifp || !ofp || !angle) {
+	bu_log("internal error processing arguments\n");
+	return 0;
+    }
 
     bu_optind = bu_opterr = 1; /* skip the command name */
     while ((c = bu_getopt(argc, (char *const*)argv, "fbri#:a:s:o:w:n:S:W:N:h?")) != -1) {
@@ -219,7 +221,7 @@ reverse_buffer(unsigned char *buf)
  * dx' = -sin(a)
  * dy' = cos(a)
  */
-static void
+static int
 arbrot(double a, FILE *ifp, FILE *ofp, unsigned char *buf)
 {
 #define DtoR(x)	((x)*DEG2RAD)
@@ -232,8 +234,8 @@ arbrot(double a, FILE *ifp, FILE *ofp, unsigned char *buf)
 
     if (buflines != nyin) {
 	/* I won't all fit in the buffer */
-	fprintf(stderr, "Sorry but I can't do an arbitrary rotate of an image this large\n");
-	bu_exit(1, NULL);
+	bu_log("Sorry but I can't do an arbitrary rotate of an image this large\n");
+	return -1;
     }
     if (buflines > nyin)
 	buflines = nyin;
@@ -297,6 +299,7 @@ arbrot(double a, FILE *ifp, FILE *ofp, unsigned char *buf)
 	    y2 += sina;
 	}
     }
+    return 0;
 }
 
 
@@ -328,17 +331,23 @@ icv_rot(size_t argc, const char *argv[])
     bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
-	bu_exit(1, "Usage: %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]\n", argv[0]);
+	bu_log("Usage: %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]\n", argv[0]);
+	ret = 1;
+	goto early_done;
     }
 
     if (nxin <= 0 || nyin <= 0 || (size_t)nxin > MAXPIXELS || (size_t)nyin > MAXPIXELS) {
-	bu_exit(1, "ERROR: %s invalid dimensions (must be > 0)\n", argv[0]);
+	bu_log("ERROR: %s invalid dimensions (must be > 0)\n", argv[0]);
+	ret = 1;
+	goto early_done;
     }
 
     scanbytes = nxin * pixbytes;
     buflines = MAXPIXELS / nxin;
     if (buflines <= 0) {
-	bu_exit(1, "ERROR: %s is not compiled to handle a scanline that long!\n", argv[0]);
+	bu_log("ERROR: %s is not compiled to handle a scanline that long!\n", argv[0]);
+	ret = 1;
+	goto early_done;
     }
     if (buflines > nyin)
 	buflines = nyin;
@@ -349,7 +358,7 @@ icv_rot(size_t argc, const char *argv[])
      * Break out to added arbitrary angle routine
      */
     if (angle > 0.0) {
-	arbrot(angle, ifp, ofp, buffer);
+	ret = arbrot(angle, ifp, ofp, buffer);
 	goto done;
     }
 
@@ -475,6 +484,13 @@ done:
     bu_free(buffer, "buffer");
     bu_free(obuf, "obuf");
 
+    return ret;
+
+early_done:
+    if (ifp && ifp != stdin)
+	fclose(ifp);
+    if (ofp && ofp != stdout)
+	fclose(ofp);
     return ret;
 }
 

@@ -49,7 +49,7 @@ static int failures = 0;
 static icv_image_t *
 demo_rgb(size_t w, size_t h)
 {
-    icv_image_t *img = icv_create(w, h, ICV_COLOR_SPACE_RGB);
+    icv_image_t *img = icv_image_create(w, h, ICV_COLOR_SPACE_RGB);
 
     for (size_t y = 0; y < h; y++) {
 	for (size_t x = 0; x < w; x++) {
@@ -66,7 +66,7 @@ demo_rgb(size_t w, size_t h)
 static icv_image_t *
 clone_image(const icv_image_t *src)
 {
-    icv_image_t *dst = icv_create(src->width, src->height, src->color_space);
+    icv_image_t *dst = icv_image_create(src->width, src->height, src->color_space);
     size_t len = src->width * src->height * src->channels;
 
     memcpy(dst->data, src->data, len * sizeof(double));
@@ -148,7 +148,7 @@ demo_crop_filter_ascii(icv_image_t *base)
 
     print_crop_diagram();
 
-    DEMO_CHECK(icv_rect(rect, 2, 1, 4, 3) == 0, "rectangular crop");
+    DEMO_CHECK(icv_crop_rect(rect, 2, 1, 4, 3) == 0, "rectangular crop");
     printf("rectangular crop result: %zux%zu\n", rect->width, rect->height);
 
     DEMO_CHECK(icv_crop(quad, 1, 5, 6, 4, 7, 0, 0, 1, 4, 5) == 0, "quadrilateral crop");

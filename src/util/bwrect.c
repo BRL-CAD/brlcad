@@ -132,7 +132,10 @@ main(int argc, char **argv)
     img = icv_read(in_file, BU_MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
-    icv_rect(img, xorig, yorig, outx, outy);
+    if (icv_crop_rect(img, xorig, yorig, outx, outy) != 0) {
+	icv_destroy(img);
+	return 1;
+    }
     icv_write(img, out_file, BU_MIME_IMAGE_BW);
     if (!isatty(fileno(stdout)) && out_file != NULL) {
 	icv_write(img, NULL, BU_MIME_IMAGE_BW);

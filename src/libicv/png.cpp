@@ -481,7 +481,7 @@ png_read(FILE *fp)
 		    if (json_to_render_info(text_ptr[i].text, ri)) {
 			bif->render_info = ri;
 		    } else {
-			icv_render_info_free(ri);
+			icv_render_info_destroy(ri);
 		    }
 		    break;
 		}

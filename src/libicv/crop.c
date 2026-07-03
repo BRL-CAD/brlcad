@@ -29,43 +29,40 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "vmath.h"
 #include "icv.h"
+#include "icv_private.h"
 
 
 int
-icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
+icv_crop_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
 {
     size_t row;
     double *p, *in_data, *out_data;
     size_t widthstep_in, widthstep_out, bytes_row; /**<  */
-    int errorflag;
 
     ICV_IMAGE_VAL_INT(img);
 
-    errorflag=0;
     if (xnum < 1) {
-	fprintf(stderr,"icv_rect : ERROR: Horizontal Cut Size\n");
-	errorflag=1;
+	bu_log("icv_crop_rect : ERROR: Horizontal Cut Size\n");
+	return -1;
     }
     if (ynum < 1) {
-	fprintf(stderr,"icv_rect : ERROR: Vertical Cut Size\n");
-	errorflag=1;
+	bu_log("icv_crop_rect : ERROR: Vertical Cut Size\n");
+	return -1;
     }
-    if (errorflag) bu_exit(1,NULL);
 
-    errorflag=0;
     if (xnum > img->width || xorig > img->width - xnum) {
-	fprintf(stderr,"icv_rect : Cut not possible; input parameters exceed the width.\n");
-	errorflag=1;
+	bu_log("icv_crop_rect : Cut not possible; input parameters exceed the width.\n");
+	return -1;
     }
     if (ynum > img->height || yorig > img->height - ynum) {
-	fprintf(stderr,"icv_rect : Cut not possible; input parameters exceed the height.\n");
-	errorflag=1;
+	bu_log("icv_crop_rect : Cut not possible; input parameters exceed the height.\n");
+	return -1;
     }
-    if (errorflag) bu_exit(1,NULL);
 
     /* initialization of variables to insure cropping and copying */
     widthstep_in = img->width*img->channels;
@@ -81,18 +78,28 @@ icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
 	p += widthstep_out;
     }
 
-    bu_free(img->data, "icv image input data");
+    icv_image_data_free(img, "icv image input data");
     img->width = xnum;
     img->height = ynum;
-    img->data = out_data;
+    icv_image_data_set_bu(img, out_data);
     return 0;
+}
+
+int
+icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum)
+{
+    int ret = icv_crop_rect(img, xorig, yorig, xnum, ynum);
+    if (ret < 0)
+	bu_exit(1, NULL);
+    return ret;
 }
 
 int
 icv_crop(icv_image_t *img, size_t ulx, size_t uly, size_t urx, size_t ury, size_t lrx, size_t lry, size_t llx, size_t lly, size_t ynum, size_t xnum)
 {
     size_t row, col;
-    double *data, *p;
+    double *data, *out_data, *p;
+    uint16_t data_flags;
 
     ICV_IMAGE_VAL_INT(img);
 
@@ -104,7 +111,8 @@ icv_crop(icv_image_t *img, size_t ulx, size_t uly, size_t urx, size_t ury, size_
 
     /* Allocates output data and assigns to image*/
     data = img->data;
-    img->data = p = (double *)bu_malloc(ynum*xnum*img->channels*sizeof(double), "icv_crop: Out Image");
+    data_flags = img->flags;
+    out_data = p = (double *)bu_malloc(ynum*xnum*img->channels*sizeof(double), "icv_crop: Out Image");
 
     for (row = 0; row < ynum; row++) {
 	double row_t = (double)row / (double)(ynum - 1);
@@ -149,7 +157,10 @@ icv_crop(icv_image_t *img, size_t ulx, size_t uly, size_t urx, size_t ury, size_
 	    p += img->channels;
 	}
     }
-    bu_free(data, "icv_crop : frees input image buffer");
+    img->data = data;
+    img->flags = data_flags;
+    icv_image_data_free(img, "icv_crop : frees input image buffer");
+    icv_image_data_set_bu(img, out_data);
     img->width = xnum;
     img->height = ynum;
     return 0;

@@ -113,8 +113,7 @@
 #include <functional>
 #include <stdexcept>
 #include <optional>
-
-#include "bu/exit.h" // use bu_bomb instead of std::abort()
+#include <new>
 
 #ifndef APNGMINI_MAX_PIXELS
 #define APNGMINI_MAX_PIXELS 268435456  // 256 megapixels
@@ -145,7 +144,7 @@ struct Allocator {
 #ifndef APNGMINI_NO_EXCEPTIONS
 	    throw std::bad_alloc();
 #else
-	    bu_bomb("apngmini allocation failure 1");
+	    return nullptr;
 #endif
 	}
 	if (auto p = static_cast<T*>(APNGMINI_MALLOC(n * sizeof(T)))) return p;

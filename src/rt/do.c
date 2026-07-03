@@ -1103,10 +1103,10 @@ do_frame(int framenumber)
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
-	    bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
+	    bif = icv_image_create(width, height, ICV_COLOR_SPACE_RGB);
 
-	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
-		perror(framename);
+	    if (bif == NULL) {
+		bu_log("failed to create icv image for output\n");
 		if (matflag)
 		    return 0;	/* OK */
 		return -1;			/* Bad */
@@ -1304,7 +1304,10 @@ do_frame(int framenumber)
 	    ri->aspect      = aspect;
 	    ri->perspective = rt_perspective;
 
-	    icv_image_set_render_info(bif, ri);
+	    if (icv_image_take_render_info(bif, ri) != 0) {
+		icv_render_info_destroy(ri);
+		ri = NULL;
+	    }
 	}
 
 	icv_write(bif, framename, BU_MIME_IMAGE_AUTO);
