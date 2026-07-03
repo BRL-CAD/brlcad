@@ -1958,7 +1958,7 @@ BUGS should be formatted to column 70 (M-q in emacs), no tabs.
   directly as one might expect like the ray-tracers, only regions.
 
 * BUG: bot-bldxf fails in db_walk_tree(), interface may have changed
-  [DONE] bot-bldxf removed in distillation effort, deprecated 7.26 per CHANGES:740; no bot-bldxf.c in src/conv/dxf
+  [DONE] bot-bldxf removed in distillation effort, deprecated 7.26 per CHANGES.adoc; no bot-bldxf.c in src/conv/dxf
 
 * ensure datum objects convert out via g2asc and back (currently
   writes "a Tcl output routine for this type of object has not yet
@@ -3414,7 +3414,7 @@ lookup check to ensure none are missing.
 * add callback data parameters to libpkg hook functions
   [DONE] pks_user_data field present in struct pkg_switch (include/pkg.h:63)
 
-* see the CHANGES file for items that have been marked as deprecated
+* see doc/changes/deprecated.adoc for items that have been marked as deprecated
   or available to be removed as obsolete items.
 
 
@@ -3675,4 +3675,3 @@ TODO items should be formatted to column 70 (M-q in emacs), no tabs.
 
 * make bv/plot3.h functions parallel-safe so callers do not have to
   manually wrap with bu_semaphore_acquire().
-
