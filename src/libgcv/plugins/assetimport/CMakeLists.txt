@@ -12,6 +12,7 @@ if(BRLCAD_ENABLE_ASSETIMPORT)
       libwdb
       librt
       libbu
+      OPENNURBS::OPENNURBS
       assimp::assimp
       pugixml::pugixml
     )

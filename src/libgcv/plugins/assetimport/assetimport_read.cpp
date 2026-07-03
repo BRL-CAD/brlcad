@@ -26,18 +26,30 @@
 
 #include "common.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstring>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "gcv/api.h"
 #include "wdb.h"
 #include "bg/trimesh.h"
+#include "bu/color.h"
+#include "bu/opt.h"
+#include "bu/path.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
 /* assimp headers */
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
+/* pugixml headers */
+#include <pugixml.hpp>
 
 typedef struct shader_properties {
     char *name;		                            /* shader name, or NULL */
@@ -75,6 +87,7 @@ typedef struct assetimport_read_state {
     int id_no;                                      /* region ident number */
     unsigned int dfs;                               /* number of nodes visited */
     unsigned int converted;                         /* number of meshes converted */
+    unsigned int converted_nurbs;                   /* number of X3D NURBS objects converted */
     assetimport_read_state() {
 	gcv_options = NULL;
 	assetimport_read_options = NULL;
@@ -85,9 +98,29 @@ typedef struct assetimport_read_state {
 	id_no = 0;
 	dfs = 0;
 	converted = 0;
+	converted_nurbs = 0;
     }
     ~assetimport_read_state() {}
 } assetimport_read_state_t;
+
+static int
+assetimport_rgb_from_floats(unsigned char rgb[3], fastf_t r, fastf_t g, fastf_t b)
+{
+    vect_t rgbf;
+    vect_t min_rgb;
+    vect_t max_rgb;
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+
+    VSET(rgbf, r, g, b);
+    VSETALL(min_rgb, 0.0);
+    VSETALL(max_rgb, 1.0);
+    VMAX(rgbf, min_rgb);
+    VMIN(rgbf, max_rgb);
+
+    if (!bu_color_from_rgb_floats(&color, rgbf))
+	return 0;
+    return bu_color_to_rgb_chars(&color, rgb);
+}
 
 static void
 aimatrix_to_arr16(aiMatrix4x4 aimat, fastf_t* ret)
@@ -157,6 +190,7 @@ static shader_properties_t*
 generate_shader(assetimport_read_state_t* pstate, unsigned int mesh_idx)
 {
     aiColor3D* mesh_color = (aiColor3D*)pstate->scene->mMeshes[mesh_idx]->mColors[0];
+    aiColor3D diffuse_color(1);	/* diffuse color -> defaults to white */
     if (!pstate->scene->HasMaterials() && !mesh_color)
 	return NULL;
 
@@ -215,9 +249,8 @@ generate_shader(assetimport_read_state_t* pstate, unsigned int mesh_idx)
 
 	/* check for vertex colors, otherwise try to use diffuse color */
         if (!mesh_color) {
-            aiColor3D diff(1);	/* diffuse color -> defaults to white */
-            mat->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
-            mesh_color = &diff;
+            mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse_color);
+            mesh_color = &diffuse_color;
         }
     }
 
@@ -228,12 +261,13 @@ generate_shader(assetimport_read_state_t* pstate, unsigned int mesh_idx)
      * 2) each vertex in the triangle is the same color
      */
     if (mesh_color) {
-	ret->rgb = new unsigned char[3];
-	ret->rgb[0] = (unsigned char)(mesh_color->r * 255);
-	ret->rgb[1] = (unsigned char)(mesh_color->g * 255);
-	ret->rgb[2] = (unsigned char)(mesh_color->b * 255);
-	if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose)
-	    bu_log("color data (%d, %d, %d)\n", (int)ret->rgb[0], (int)ret->rgb[1], (int)ret->rgb[2]);
+	unsigned char rgb[3];
+	if (assetimport_rgb_from_floats(rgb, mesh_color->r, mesh_color->g, mesh_color->b)) {
+	    ret->rgb = new unsigned char[3];
+	    VMOVEN(ret->rgb, rgb, 3);
+	    if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose)
+		bu_log("color data (%d, %d, %d)\n", (int)ret->rgb[0], (int)ret->rgb[1], (int)ret->rgb[2]);
+	}
     }
 
     return ret;
@@ -244,28 +278,30 @@ generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
 {
     static std::unordered_map<std::string, int>used_names; /* used names in db */
 
-    std::string name(curr_name);
+    const char *fallback_name = BU_STR_EMPTY(def_name) ? "assetimport" : def_name;
+    std::string name(BU_STR_EMPTY(curr_name) ? fallback_name : curr_name);
     std::string suffix = is_mesh ? ".s" : ".r";
 
-    /* get last instance of '/' and keep everything after it */
-    const char* trim = strrchr(curr_name, '/');
-    if (trim)
-	name = ++trim;
+    /* get last path component */
+    struct bu_vls basename = BU_VLS_INIT_ZERO;
+    if (!BU_STR_EMPTY(curr_name) && bu_path_component(&basename, curr_name, BU_PATH_BASENAME))
+	name = bu_vls_cstr(&basename);
+    bu_vls_free(&basename);
 
-    /* strip .r at end if it exists */
-    size_t dotr = name.find(".r\0");
-    if (dotr != std::string::npos)
+    /* strip region/solid suffix at end if it exists */
+    size_t dotr = name.rfind(suffix);
+    if (dotr != std::string::npos && dotr + suffix.size() == name.size())
         name = name.substr(0, dotr);
 
     /* if curr_name is empty, give a generic name */
     if (!name.size())
-	name = def_name;
+	name = fallback_name;
 
     /* cleanup name - remove spaces, slashes and non-standard characters */
     bu_vls scrub = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&scrub, "%s", name.c_str());
     bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
-    name = scrub.vls_len > 0 ? std::string(bu_vls_cstr(&scrub)) : def_name;   /* somemtimes we scrub out the entire name */
+    name = scrub.vls_len > 0 ? std::string(bu_vls_cstr(&scrub)) : fallback_name;   /* somemtimes we scrub out the entire name */
 
     /* check for name collisions */
     auto handle = used_names.find(name);
@@ -279,6 +315,755 @@ generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
     name.append(suffix);
 
     return name;
+}
+
+static const char *
+x3d_lname(const pugi::xml_node &node)
+{
+    const char *name = node.name();
+    const char *colon = strrchr(name, ':');
+    return colon ? colon + 1 : name;
+}
+
+static int
+x3d_name_is(const pugi::xml_node &node, const char *name)
+{
+    return BU_STR_EQUAL(x3d_lname(node), name);
+}
+
+static pugi::xml_node
+x3d_first_descendant(const pugi::xml_node &node, const char *name)
+{
+    for (pugi::xml_node child: node.children()) {
+	if (x3d_name_is(child, name))
+	    return child;
+	pugi::xml_node ret = x3d_first_descendant(child, name);
+	if (ret)
+	    return ret;
+    }
+    return pugi::xml_node();
+}
+
+static std::vector<double>
+x3d_parse_doubles(const char *text)
+{
+    std::vector<double> ret;
+    if (BU_STR_EMPTY(text))
+	return ret;
+
+    std::string clean(text);
+    for (char &c: clean) {
+	if (c == ',')
+	    c = ' ';
+    }
+
+    std::vector<char *> argv(clean.size() + 1, NULL);
+    size_t argc = bu_argv_from_string(argv.data(), argv.size() - 1, &clean[0]);
+    ret.reserve(argc);
+
+    for (size_t i = 0; i < argc; i++) {
+	fastf_t val = 0.0;
+	const char *av = argv[i];
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	if (bu_opt_fastf_t(&msg, 1, &av, &val) == 1) {
+	    ret.push_back((double)val);
+	} else {
+	    bu_vls_trimspace(&msg);
+	    bu_log("WARNING: skipping invalid X3D numeric value '%s'%s%s\n", argv[i],
+		    bu_vls_strlen(&msg) ? ": " : "", bu_vls_cstr(&msg));
+	}
+	bu_vls_free(&msg);
+    }
+
+    return ret;
+}
+
+static std::vector<double>
+x3d_attr_doubles(const pugi::xml_node &node, const char *name)
+{
+    pugi::xml_attribute attr = node.attribute(name);
+    return x3d_parse_doubles(attr ? attr.value() : NULL);
+}
+
+static int
+x3d_attr_int(const pugi::xml_node &node, const char *name, int def)
+{
+    pugi::xml_attribute attr = node.attribute(name);
+    int val = def;
+    if (!attr)
+	return def;
+
+    const char *av = attr.value();
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    if (bu_opt_int(&msg, 1, &av, &val) == 1) {
+	bu_vls_free(&msg);
+	return val;
+    }
+
+    bu_vls_trimspace(&msg);
+    bu_log("WARNING: invalid X3D integer value '%s' for %s; using %d%s%s%s\n", attr.value(), name, def,
+	    bu_vls_strlen(&msg) ? " (" : "", bu_vls_cstr(&msg), bu_vls_strlen(&msg) ? ")" : "");
+    bu_vls_free(&msg);
+    return def;
+}
+
+static int
+x3d_attr_bool(const pugi::xml_node &node, const char *name, int def)
+{
+    pugi::xml_attribute attr = node.attribute(name);
+    if (!attr)
+	return def;
+    const char *v = attr.value();
+    if (BU_STR_EMPTY(v))
+	return def;
+    if (bu_str_false(v))
+	return 0;
+    return 1;
+}
+
+static void
+x3d_vec3_attr(const pugi::xml_node &node, const char *name, vect_t v, const vect_t def)
+{
+    VMOVE(v, def);
+
+    pugi::xml_attribute attr = node.attribute(name);
+    if (!attr)
+	return;
+
+    vect_t parsed;
+    const char *av = attr.value();
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    if (bu_opt_vect_t(&msg, 1, &av, (void *)&parsed) > 0) {
+	VMOVE(v, parsed);
+    } else {
+	bu_vls_trimspace(&msg);
+	bu_log("WARNING: invalid X3D vector value '%s' for %s%s%s%s\n", attr.value(), name,
+		bu_vls_strlen(&msg) ? " (" : "", bu_vls_cstr(&msg), bu_vls_strlen(&msg) ? ")" : "");
+    }
+    bu_vls_free(&msg);
+}
+
+static void
+x3d_rotation_attr(const pugi::xml_node &node, const char *name, hvect_t v, const hvect_t def)
+{
+    HMOVE(v, def);
+    std::vector<double> vals = x3d_attr_doubles(node, name);
+    if (vals.size() >= 4)
+	HSET(v, vals[0], vals[1], vals[2], vals[3]);
+}
+
+static void
+x3d_scale_mat(mat_t m, const vect_t s)
+{
+    MAT_IDN(m);
+    MAT_SCALE_VEC(m, s);
+}
+
+static void
+x3d_rotation_mat(mat_t m, const hvect_t r)
+{
+    vect_t dir;
+    point_t origin;
+    double mag;
+
+    VSET(dir, r[X], r[Y], r[Z]);
+    VSETALL(origin, 0.0);
+    mag = MAGNITUDE(dir);
+
+    if (NEAR_ZERO(mag, SMALL_FASTF)) {
+	MAT_IDN(m);
+	return;
+    }
+
+    VUNITIZE(dir);
+    bn_mat_arb_rot(m, origin, dir, r[W]);
+}
+
+static void
+x3d_post_mul(mat_t accum, const mat_t rhs)
+{
+    mat_t tmp;
+    bn_mat_mul(tmp, accum, rhs);
+    MAT_COPY(accum, tmp);
+}
+
+static void
+x3d_transform_mat(const pugi::xml_node &node, mat_t m)
+{
+    static const vect_t zero3 = VINIT_ZERO;
+    static const vect_t one3 = VINITALL(1.0);
+    static const hvect_t zero_rot = {0.0, 0.0, 1.0, 0.0};
+    vect_t center, scale, translation;
+    hvect_t rotation, scale_orientation, inv_scale_orientation;
+    mat_t tm, cm, rm, sm, som, isom, icm;
+
+    MAT_IDN(m);
+    x3d_vec3_attr(node, "center", center, zero3);
+    x3d_vec3_attr(node, "scale", scale, one3);
+    x3d_vec3_attr(node, "translation", translation, zero3);
+    x3d_rotation_attr(node, "rotation", rotation, zero_rot);
+    x3d_rotation_attr(node, "scaleOrientation", scale_orientation, zero_rot);
+
+    HMOVE(inv_scale_orientation, scale_orientation);
+    inv_scale_orientation[W] = -inv_scale_orientation[W];
+
+    MAT_IDN(tm);
+    MAT_DELTAS_VEC(tm, translation);
+    MAT_IDN(cm);
+    MAT_DELTAS_VEC(cm, center);
+    x3d_rotation_mat(rm, rotation);
+    x3d_rotation_mat(som, scale_orientation);
+    x3d_scale_mat(sm, scale);
+    x3d_rotation_mat(isom, inv_scale_orientation);
+    MAT_IDN(icm);
+    MAT_DELTAS_VEC_NEG(icm, center);
+
+    x3d_post_mul(m, tm);
+    x3d_post_mul(m, cm);
+    x3d_post_mul(m, rm);
+    x3d_post_mul(m, som);
+    x3d_post_mul(m, sm);
+    x3d_post_mul(m, isom);
+    x3d_post_mul(m, icm);
+}
+
+static void
+x3d_ancestor_transform(const pugi::xml_node &node, mat_t m)
+{
+    std::vector<pugi::xml_node> transforms;
+    for (pugi::xml_node parent = node.parent(); parent; parent = parent.parent()) {
+	if (x3d_name_is(parent, "Transform"))
+	    transforms.push_back(parent);
+    }
+
+    MAT_IDN(m);
+    for (std::vector<pugi::xml_node>::reverse_iterator it = transforms.rbegin(); it != transforms.rend(); ++it) {
+	mat_t tm;
+	x3d_transform_mat(*it, tm);
+	x3d_post_mul(m, tm);
+    }
+}
+
+static ON_3dPoint
+x3d_point3(const std::vector<double> &vals, size_t point_index, const mat_t xform, double scale_factor)
+{
+    point_t in, out;
+    size_t offset = point_index * 3;
+    VSET(in, vals[offset], vals[offset + 1], vals[offset + 2]);
+    MAT4X3PNT(out, xform, in);
+    VSCALE(out, out, scale_factor);
+    return ON_3dPoint(out[X], out[Y], out[Z]);
+}
+
+static std::vector<double>
+x3d_control_points3(const pugi::xml_node &node)
+{
+    pugi::xml_node coord = x3d_first_descendant(node, "Coordinate");
+    if (!coord)
+	coord = x3d_first_descendant(node, "CoordinateDouble");
+    return coord ? x3d_attr_doubles(coord, "point") : std::vector<double>();
+}
+
+static std::vector<double>
+x3d_control_points2(const pugi::xml_node &node)
+{
+    std::vector<double> ret = x3d_attr_doubles(node, "controlPoint");
+    if (ret.size())
+	return ret;
+
+    pugi::xml_node coord = x3d_first_descendant(node, "Coordinate");
+    if (!coord)
+	coord = x3d_first_descendant(node, "CoordinateDouble");
+    return coord ? x3d_attr_doubles(coord, "point") : std::vector<double>();
+}
+
+static void
+x3d_set_surface_knots(ON_NurbsSurface *surface, int dir, const std::vector<double> &knots)
+{
+    int knot_count = surface->KnotCount(dir);
+
+    if (!knots.size()) {
+	surface->MakeClampedUniformKnotVector(dir, 1.0);
+	return;
+    }
+
+    if ((int)knots.size() == knot_count + 2) {
+	for (int i = 0; i < knot_count; i++)
+	    surface->SetKnot(dir, i, knots[i + 1]);
+	return;
+    }
+
+    if ((int)knots.size() == knot_count) {
+	for (int i = 0; i < knot_count; i++)
+	    surface->SetKnot(dir, i, knots[i]);
+	return;
+    }
+
+    bu_log("WARNING: X3D NURBS surface knot count mismatch; using clamped uniform knots\n");
+    surface->MakeClampedUniformKnotVector(dir, 1.0);
+}
+
+static void
+x3d_set_curve_knots(ON_NurbsCurve *curve, const std::vector<double> &knots)
+{
+    int knot_count = curve->KnotCount();
+
+    if (!knots.size()) {
+	curve->MakeClampedUniformKnotVector();
+	return;
+    }
+
+    if ((int)knots.size() == knot_count + 2) {
+	for (int i = 0; i < knot_count; i++)
+	    curve->SetKnot(i, knots[i + 1]);
+	return;
+    }
+
+    if ((int)knots.size() == knot_count) {
+	for (int i = 0; i < knot_count; i++)
+	    curve->SetKnot(i, knots[i]);
+	return;
+    }
+
+    bu_log("WARNING: X3D NURBS curve knot count mismatch; using clamped uniform knots\n");
+    curve->MakeClampedUniformKnotVector();
+}
+
+static ON_NurbsSurface *
+x3d_make_surface(const pugi::xml_node &node, const mat_t xform, double scale_factor)
+{
+    int u_dim = x3d_attr_int(node, "uDimension", 0);
+    int v_dim = x3d_attr_int(node, "vDimension", 0);
+    int u_order = x3d_attr_int(node, "uOrder", 3);
+    int v_order = x3d_attr_int(node, "vOrder", 3);
+    std::vector<double> points = x3d_control_points3(node);
+    std::vector<double> weights = x3d_attr_doubles(node, "weight");
+    size_t point_count = points.size() / 3;
+
+    if (!u_dim && v_dim && point_count % (size_t)v_dim == 0)
+	u_dim = (int)(point_count / (size_t)v_dim);
+    if (!v_dim && u_dim && point_count % (size_t)u_dim == 0)
+	v_dim = (int)(point_count / (size_t)u_dim);
+
+    if (u_dim < 2 || v_dim < 2 || u_order < 2 || v_order < 2 || u_order > u_dim || v_order > v_dim ||
+	    points.size() < (size_t)(u_dim * v_dim * 3)) {
+	bu_log("WARNING: skipping malformed X3D NURBS surface\n");
+	return NULL;
+    }
+
+    bool rational = (weights.size() == (size_t)(u_dim * v_dim));
+    if (weights.size() && !rational)
+	bu_log("WARNING: X3D NURBS surface weight count mismatch; importing as non-rational\n");
+
+    ON_NurbsSurface *surface = ON_NurbsSurface::New(3, rational, u_order, v_order, u_dim, v_dim);
+    if (!surface)
+	return NULL;
+
+    x3d_set_surface_knots(surface, 0, x3d_attr_doubles(node, "uKnot"));
+    x3d_set_surface_knots(surface, 1, x3d_attr_doubles(node, "vKnot"));
+
+    for (int v = 0; v < v_dim; v++) {
+	for (int u = 0; u < u_dim; u++) {
+	    size_t pindex = (size_t)v * (size_t)u_dim + (size_t)u;
+	    ON_3dPoint p = x3d_point3(points, pindex, xform, scale_factor);
+	    if (rational)
+		surface->SetCV(u, v, ON_4dPoint(p.x, p.y, p.z, weights[pindex]));
+	    else
+		surface->SetCV(u, v, p);
+	}
+    }
+
+    return surface;
+}
+
+static ON_NurbsCurve *
+x3d_make_curve3(const pugi::xml_node &node, const mat_t xform, double scale_factor)
+{
+    int order = x3d_attr_int(node, "order", 3);
+    std::vector<double> points = x3d_control_points3(node);
+    std::vector<double> weights = x3d_attr_doubles(node, "weight");
+    int cv_count = (int)(points.size() / 3);
+
+    if (cv_count < 2 || order < 2 || order > cv_count) {
+	bu_log("WARNING: skipping malformed X3D NURBS curve\n");
+	return NULL;
+    }
+
+    bool rational = (weights.size() == (size_t)cv_count);
+    if (weights.size() && !rational)
+	bu_log("WARNING: X3D NURBS curve weight count mismatch; importing as non-rational\n");
+
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, rational, order, cv_count);
+    if (!curve)
+	return NULL;
+
+    x3d_set_curve_knots(curve, x3d_attr_doubles(node, "knot"));
+    for (int i = 0; i < cv_count; i++) {
+	ON_3dPoint p = x3d_point3(points, (size_t)i, xform, scale_factor);
+	if (rational)
+	    curve->SetCV(i, ON_4dPoint(p.x, p.y, p.z, weights[(size_t)i]));
+	else
+	    curve->SetCV(i, p);
+    }
+
+    return curve;
+}
+
+static ON_Curve *
+x3d_make_curve2(const pugi::xml_node &node)
+{
+    std::vector<double> points;
+
+    if (x3d_name_is(node, "ContourPolyline2D") || x3d_name_is(node, "Polyline2D")) {
+	points = x3d_attr_doubles(node, "controlPoint");
+	if (!points.size())
+	    points = x3d_attr_doubles(node, "lineSegments");
+	if (points.size() < 4)
+	    return NULL;
+
+	ON_3dPointArray pnts;
+	for (size_t i = 0; i + 1 < points.size(); i += 2)
+	    pnts.Append(ON_3dPoint(points[i], points[i + 1], 0.0));
+	if (pnts.Count() > 2 && pnts[0].DistanceTo(pnts[pnts.Count() - 1]) > ON_ZERO_TOLERANCE)
+	    pnts.Append(pnts[0]);
+	return new ON_PolylineCurve(pnts);
+    }
+
+    if (!x3d_name_is(node, "NurbsCurve2D"))
+	return NULL;
+
+    int order = x3d_attr_int(node, "order", 3);
+    points = x3d_control_points2(node);
+    std::vector<double> weights = x3d_attr_doubles(node, "weight");
+    int cv_count = (int)(points.size() / 2);
+
+    if (cv_count < 2 || order < 2 || order > cv_count)
+	return NULL;
+
+    bool rational = (weights.size() == (size_t)cv_count);
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(2, rational, order, cv_count);
+    if (!curve)
+	return NULL;
+
+    x3d_set_curve_knots(curve, x3d_attr_doubles(node, "knot"));
+    for (int i = 0; i < cv_count; i++) {
+	size_t offset = (size_t)i * 2;
+	if (rational)
+	    curve->SetCV(i, ON_4dPoint(points[offset], points[offset + 1], 0.0, weights[(size_t)i]));
+	else
+	    curve->SetCV(i, ON_3dPoint(points[offset], points[offset + 1], 0.0));
+    }
+
+    return curve;
+}
+
+static ON_Curve *
+x3d_curve_on_surface_approx(const ON_Surface *surface, const ON_Curve *curve2d)
+{
+    ON_Interval domain = curve2d->Domain();
+    int samples = std::max(16, curve2d->SpanCount() * 8 + 1);
+    ON_3dPointArray pnts;
+
+    for (int i = 0; i < samples; i++) {
+	double t = domain.ParameterAt((double)i / (double)(samples - 1));
+	ON_3dPoint uv = curve2d->PointAt(t);
+	pnts.Append(surface->PointAt(uv.x, uv.y));
+    }
+
+    ON_PolylineCurve *curve3d = new ON_PolylineCurve(pnts);
+    curve3d->SetDomain(domain.Min(), domain.Max());
+    return curve3d;
+}
+
+static int
+x3d_add_trim_loop(ON_Brep *brep, ON_BrepFace &face, const pugi::xml_node &contour, ON_BrepLoop::TYPE loop_type)
+{
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface)
+	return 0;
+
+    std::vector<ON_Curve *> curves2d;
+    for (pugi::xml_node child: contour.children()) {
+	if (x3d_name_is(child, "NurbsCurve2D") || x3d_name_is(child, "ContourPolyline2D") || x3d_name_is(child, "Polyline2D")) {
+	    ON_Curve *curve = x3d_make_curve2(child);
+	    if (curve)
+		curves2d.push_back(curve);
+	}
+    }
+
+    if (!curves2d.size())
+	return 0;
+
+    ON_BrepLoop &loop = brep->NewLoop(loop_type, face);
+    int first_vi = -1;
+    int prev_vi = -1;
+    ON_3dPoint first_point;
+
+    for (size_t i = 0; i < curves2d.size(); i++) {
+	ON_Curve *c2d = curves2d[i];
+	ON_Curve *c3d = x3d_curve_on_surface_approx(surface, c2d);
+	ON_3dPoint start2d = c2d->PointAtStart();
+	ON_3dPoint end2d = c2d->PointAtEnd();
+	ON_3dPoint start3d = surface->PointAt(start2d.x, start2d.y);
+	ON_3dPoint end3d = surface->PointAt(end2d.x, end2d.y);
+
+	int v0 = prev_vi;
+	if (v0 < 0 || start3d.DistanceTo(brep->m_V[v0].Point()) > ON_ZERO_TOLERANCE) {
+	    ON_BrepVertex &v = brep->NewVertex(start3d);
+	    v.m_tolerance = 0.0;
+	    v0 = v.m_vertex_index;
+	}
+	if (first_vi < 0) {
+	    first_vi = v0;
+	    first_point = start3d;
+	}
+
+	int v1 = -1;
+	if (i == curves2d.size() - 1 && end3d.DistanceTo(first_point) <= ON_ZERO_TOLERANCE) {
+	    v1 = first_vi;
+	} else {
+	    ON_BrepVertex &v = brep->NewVertex(end3d);
+	    v.m_tolerance = 0.0;
+	    v1 = v.m_vertex_index;
+	}
+
+	int c3i = brep->AddEdgeCurve(c3d);
+	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[v0], brep->m_V[v1], c3i);
+	edge.m_tolerance = 0.0;
+
+	int c2i = brep->m_C2.Count();
+	brep->m_C2.Append(c2d);
+
+	ON_BrepTrim &trim = brep->NewTrim(edge, false, loop, c2i);
+	trim.m_iso = surface->IsIsoparametric(*c2d);
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_tolerance[0] = 0.0;
+	trim.m_tolerance[1] = 0.0;
+
+	prev_vi = v1;
+    }
+
+    return 1;
+}
+
+static void
+x3d_add_natural_loop(ON_Brep *brep, ON_BrepFace &face)
+{
+    const ON_Surface *surface = face.SurfaceOf();
+    double u0, u1, v0, v1;
+    ON_3dPoint corners[4];
+
+    surface->GetDomain(0, &u0, &u1);
+    surface->GetDomain(1, &v0, &v1);
+    corners[0] = surface->PointAt(u0, v0);
+    corners[1] = surface->PointAt(u1, v0);
+    corners[2] = surface->PointAt(u1, v1);
+    corners[3] = surface->PointAt(u0, v1);
+
+    int vi[4];
+    for (int i = 0; i < 4; i++) {
+	ON_BrepVertex &v = brep->NewVertex(corners[i]);
+	v.m_tolerance = 0.0;
+	vi[i] = v.m_vertex_index;
+    }
+
+    ON_BrepLoop &loop = brep->NewLoop(ON_BrepLoop::outer, face);
+    struct side_def {
+	int v0i;
+	int v1i;
+	int dir;
+	double c;
+	int reverse;
+	ON_2dPoint from;
+	ON_2dPoint to;
+	ON_Surface::ISO iso;
+    } sides[4] = {
+	{0, 1, 0, v0, 0, ON_2dPoint(u0, v0), ON_2dPoint(u1, v0), ON_Surface::S_iso},
+	{1, 2, 1, u1, 0, ON_2dPoint(u1, v0), ON_2dPoint(u1, v1), ON_Surface::E_iso},
+	{2, 3, 0, v1, 1, ON_2dPoint(u1, v1), ON_2dPoint(u0, v1), ON_Surface::N_iso},
+	{3, 0, 1, u0, 1, ON_2dPoint(u0, v1), ON_2dPoint(u0, v0), ON_Surface::W_iso}
+    };
+
+    for (int i = 0; i < 4; i++) {
+	ON_Curve *c3d = surface->IsoCurve(sides[i].dir, sides[i].c);
+	if (sides[i].reverse)
+	    c3d->Reverse();
+	int c3i = brep->AddEdgeCurve(c3d);
+	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[vi[sides[i].v0i]], brep->m_V[vi[sides[i].v1i]], c3i);
+	edge.m_tolerance = 0.0;
+
+	ON_Curve *c2d = new ON_LineCurve(sides[i].from, sides[i].to);
+	ON_Interval domain = c3d->Domain();
+	c2d->SetDomain(domain.Min(), domain.Max());
+	int c2i = brep->m_C2.Count();
+	brep->m_C2.Append(c2d);
+
+	ON_BrepTrim &trim = brep->NewTrim(edge, false, loop, c2i);
+	trim.m_iso = sides[i].iso;
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_tolerance[0] = 0.0;
+	trim.m_tolerance[1] = 0.0;
+    }
+}
+
+static ON_Brep *
+x3d_make_surface_brep(const pugi::xml_node &node, const mat_t xform, double scale_factor)
+{
+    ON_NurbsSurface *surface = x3d_make_surface(node, xform, scale_factor);
+    if (!surface)
+	return NULL;
+
+    ON_Brep *brep = ON_Brep::New();
+    int si = brep->AddSurface(surface);
+    ON_BrepFace &face = brep->NewFace(si);
+    face.m_bRev = !x3d_attr_bool(node, "ccw", 1);
+
+    int added_trim_loop = 0;
+    if (x3d_name_is(node, "NurbsTrimmedSurface")) {
+	int loop_count = 0;
+	for (pugi::xml_node child: node.children()) {
+	    if (x3d_name_is(child, "Contour2D")) {
+		ON_BrepLoop::TYPE type = (loop_count == 0) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
+		if (x3d_add_trim_loop(brep, face, child, type))
+		    added_trim_loop = 1;
+		loop_count++;
+	    }
+	}
+	if (loop_count && !added_trim_loop)
+	    bu_log("WARNING: unable to import X3D NURBS trim contours; using natural surface boundary\n");
+    }
+
+    if (!added_trim_loop)
+	x3d_add_natural_loop(brep, face);
+
+    brep->Compact();
+    return brep;
+}
+
+static ON_Brep *
+x3d_make_curve_brep(const pugi::xml_node &node, const mat_t xform, double scale_factor)
+{
+    ON_NurbsCurve *curve = x3d_make_curve3(node, xform, scale_factor);
+    if (!curve)
+	return NULL;
+
+    ON_Brep *brep = ON_Brep::New();
+    int c3i = brep->AddEdgeCurve(curve);
+    ON_BrepVertex &v0 = brep->NewVertex(curve->PointAtStart());
+    ON_BrepVertex &v1 = brep->NewVertex(curve->PointAtEnd());
+    v0.m_tolerance = 0.0;
+    v1.m_tolerance = 0.0;
+    ON_BrepEdge &edge = brep->NewEdge(v0, v1, c3i);
+    edge.m_tolerance = 0.0;
+    brep->Compact();
+    return brep;
+}
+
+static int
+x3d_find_material_rgb(const pugi::xml_node &node, unsigned char rgb[3])
+{
+    for (pugi::xml_node parent = node.parent(); parent; parent = parent.parent()) {
+	if (!x3d_name_is(parent, "Shape"))
+	    continue;
+
+	pugi::xml_node app = x3d_first_descendant(parent, "Appearance");
+	pugi::xml_node mat = app ? x3d_first_descendant(app, "Material") : pugi::xml_node();
+	if (!mat)
+	    return 0;
+
+	std::vector<double> vals = x3d_attr_doubles(mat, "diffuseColor");
+	if (vals.size() < 3)
+	    return 0;
+
+	return assetimport_rgb_from_floats(rgb, vals[RED], vals[GRN], vals[BLU]);
+    }
+
+    return 0;
+}
+
+static const char *
+x3d_node_name(const pugi::xml_node &node, const char *def_name)
+{
+    pugi::xml_attribute def = node.attribute("DEF");
+    if (def)
+	return def.value();
+    for (pugi::xml_node parent = node.parent(); parent; parent = parent.parent()) {
+	if (x3d_name_is(parent, "Shape")) {
+	    def = parent.attribute("DEF");
+	    if (def)
+		return def.value();
+	}
+    }
+    return def_name;
+}
+
+static int
+x3d_write_brep(assetimport_read_state_t *pstate, const pugi::xml_node &node, ON_Brep *brep)
+{
+    std::string solid_name = generate_unique_name(x3d_node_name(node, "nurbs"), pstate->gcv_options->default_name, 1);
+    std::string region_name = generate_unique_name(x3d_node_name(node, "nurbs"), pstate->gcv_options->default_name, 0);
+    struct wmember region;
+    unsigned char rgb[3];
+    unsigned char *rgbp = NULL;
+
+    if (!brep)
+	return 0;
+
+    if (x3d_find_material_rgb(node, rgb))
+	rgbp = rgb;
+
+    if (mk_brep(pstate->fd_out, solid_name.c_str(), (void *)brep)) {
+	bu_log("WARNING: failed to write X3D NURBS brep %s\n", solid_name.c_str());
+	delete brep;
+	return 0;
+    }
+
+    BU_LIST_INIT(&region.l);
+    (void)mk_addmember(solid_name.c_str(), &region.l, NULL, WMOP_UNION);
+    mk_lrcomb(pstate->fd_out, region_name.c_str(), &region, 1, (char *)NULL, (char *)NULL, rgbp,
+	    pstate->id_no, 0, pstate->assetimport_read_options->mat_code, 100, 0);
+    (void)mk_addmember(region_name.c_str(), &pstate->all.l, NULL, WMOP_UNION);
+
+    if (!pstate->assetimport_read_options->const_id)
+	pstate->id_no++;
+    pstate->converted_nurbs++;
+
+    delete brep;
+    return 1;
+}
+
+static void
+x3d_convert_nurbs_node(assetimport_read_state_t *pstate, const pugi::xml_node &node)
+{
+    mat_t xform;
+
+    if (x3d_name_is(node, "NurbsPatchSurface") || x3d_name_is(node, "NurbsTrimmedSurface")) {
+	x3d_ancestor_transform(node, xform);
+	x3d_write_brep(pstate, node, x3d_make_surface_brep(node, xform, pstate->gcv_options->scale_factor));
+    } else if (x3d_name_is(node, "NurbsCurve")) {
+	x3d_ancestor_transform(node, xform);
+	x3d_write_brep(pstate, node, x3d_make_curve_brep(node, xform, pstate->gcv_options->scale_factor));
+    }
+
+    for (pugi::xml_node child: node.children())
+	x3d_convert_nurbs_node(pstate, child);
+}
+
+static int
+convert_x3d_nurbs(assetimport_read_state_t *pstate)
+{
+    pugi::xml_document doc;
+    pugi::xml_parse_result result = doc.load_file(pstate->input_file.c_str());
+    if (!result)
+	return 0;
+
+    pugi::xml_node root = doc.document_element();
+    if (!root || !x3d_name_is(root, "X3D"))
+	return 0;
+
+    unsigned int before = pstate->converted_nurbs;
+    x3d_convert_nurbs_node(pstate, root);
+    return (int)(pstate->converted_nurbs - before);
 }
 
 static void
@@ -305,24 +1090,22 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
 
     /* add all faces */
     for (size_t i = 0; i < mesh->mNumFaces; i++) {
-	faces[i * 3   ] = mesh->mFaces[i].mIndices[0];
-	faces[i * 3 +1] = mesh->mFaces[i].mIndices[1];
-	faces[i * 3 +2] = mesh->mFaces[i].mIndices[2];
+	VMOVEN(&faces[i * 3], mesh->mFaces[i].mIndices, 3);
     }
 
     /* add all vertices */
     for (size_t i = 0; i < mesh->mNumVertices; i++) {
-	vertices[i * 3   ] = mesh->mVertices[i].x * pstate->gcv_options->scale_factor;
-	vertices[i * 3 +1] = mesh->mVertices[i].y * pstate->gcv_options->scale_factor;
-	vertices[i * 3 +2] = mesh->mVertices[i].z * pstate->gcv_options->scale_factor;
+	point_t vertex;
+	VSET(vertex, mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+	VSCALE(vertex, vertex, pstate->gcv_options->scale_factor);
+	VMOVE(&vertices[i * 3], vertex);
     }
 
     /* check bot mode */
     unsigned char orientation = RT_BOT_CCW; /* default ccw https://assimp.sourceforge.net/lib_html/data.html*/
     unsigned char mode = RT_BOT_SURFACE;
     {
-	rt_bot_internal bot;
-	std::memset(&bot, 0, sizeof(bot));
+	rt_bot_internal bot = {};
 	bot.magic = RT_BOT_INTERNAL_MAGIC;
 	bot.orientation = orientation;
 	bot.num_vertices = mesh->mNumVertices;
@@ -345,10 +1128,10 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
     if (mesh->HasNormals()) {
 	normals = new fastf_t[mesh->mNumVertices * 3];
 	for (size_t i = 0; i < mesh->mNumVertices; i++) {
-	    aiVector3D normalized = mesh->mNormals[i].Normalize();
-	    normals[i * 3   ] = normalized.x;
-	    normals[i * 3 +1] = normalized.y;
-	    normals[i * 3 +2] = normalized.z;
+	    vect_t normal;
+	    VSET(normal, mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+	    VUNITIZE(normal);
+	    VMOVE(&normals[i * 3], normal);
 	}
 
 	mk_bot_w_normals(pstate->fd_out, mesh_name.c_str(), mode, orientation, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, thickness, bitv, mesh->mNumVertices, normals, faces);
@@ -447,6 +1230,9 @@ handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regi
 static int
 convert_input(assetimport_read_state_t* pstate)
 {
+    BU_LIST_INIT(&pstate->all.l);
+    convert_x3d_nurbs(pstate);
+
     /* have importer remove points and lines as we can't do anything with them */
     aiPropertyStore* props = aiCreatePropertyStore();
     aiSetImportPropertyInteger(props, AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
@@ -461,7 +1247,14 @@ convert_input(assetimport_read_state_t* pstate)
 						 props);
     
     if (!pstate->scene) {
+	if (pstate->converted_nurbs) {
+	    mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_log("Converted %d X3D NURBS objects\n", pstate->converted_nurbs);
+	    aiReleasePropertyStore(props);
+	    return 1;
+	}
 	bu_log("ERROR: bad scene conversion\n");
+	aiReleasePropertyStore(props);
 	return 0;
     }
 
@@ -474,23 +1267,27 @@ convert_input(assetimport_read_state_t* pstate)
 	bu_log("Scene num Cameras: %d\n\n", pstate->scene->mNumCameras);
     }
 
-    /* create around the root node */
-    BU_LIST_INIT(&pstate->all.l);
-    if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose)
-	bu_log("-- root node --\n");
-    handle_node(pstate, &pstate->scene->mRootNode[0], pstate->all);
+    if (pstate->scene->mNumMeshes) {
+	if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose)
+	    bu_log("-- root node --\n");
+	handle_node(pstate, &pstate->scene->mRootNode[0], pstate->all);
+    }
 
     /* make a top level 'all.g' */
-    mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+    if (!BU_LIST_IS_EMPTY(&pstate->all.l))
+	mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
     /* import handles triangulation and scrubs extra shapes - this should *in theory* always report 100% */
-    bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", pstate->converted, pstate->scene->mNumMeshes, (float)pstate->converted / (float)pstate->scene->mNumMeshes * 100.0);
+    if (pstate->scene->mNumMeshes)
+	bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", pstate->converted, pstate->scene->mNumMeshes, (float)pstate->converted / (float)pstate->scene->mNumMeshes * 100.0);
+    if (pstate->converted_nurbs)
+	bu_log("Converted %d X3D NURBS objects\n", pstate->converted_nurbs);
 
     /* cleanup */
     aiReleaseImport(pstate->scene);
     aiReleasePropertyStore(props);
 
-    return 1;
+    return (pstate->converted || pstate->converted_nurbs);
 }
 
 static void
@@ -538,14 +1335,21 @@ assetimport_read(struct gcv_context *context, const struct gcv_opts* gcv_options
      * checks using file extension if no --format is supplied
      * this is likely all a 'can_read' function would need
      */
-    const char* extension = strrchr(source_path, '.');
-    if (state.assetimport_read_options->format)       /* intentional setting format trumps file extension */
+    std::string extension;
+    if (!BU_STR_EMPTY(state.assetimport_read_options->format)) {
+	/* intentional setting format trumps file extension */
 	extension = state.assetimport_read_options->format;
-    if (!extension) {
+    } else {
+	struct bu_vls ext = BU_VLS_INIT_ZERO;
+	if (bu_path_component(&ext, source_path, BU_PATH_EXT))
+	    extension = "." + std::string(bu_vls_cstr(&ext));
+	bu_vls_free(&ext);
+    }
+    if (extension.empty()) {
 	bu_log("ERROR: Please provide a file with a valid extension, or specify format with --format\n");
 	return 0;
     }
-    if (AI_FALSE == aiIsExtensionSupported(extension)) {
+    if (AI_FALSE == aiIsExtensionSupported(extension.c_str())) {
 	bu_log("ERROR: The specified model file type is currently unsupported in assetimport conversion.\n");
 	return 0;
     }
