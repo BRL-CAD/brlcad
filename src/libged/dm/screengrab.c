@@ -152,7 +152,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s: display manager did not return image data.", argv[1]);
 	    return BRLCAD_ERROR;
 	}
-	bif = icv_create(dm_get_width(dmp), dm_get_height(dmp), ICV_COLOR_SPACE_RGB);
+	bif = icv_image_create(dm_get_width(dmp), dm_get_height(dmp), ICV_COLOR_SPACE_RGB);
 	if (bif == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, ": could not create icv_image write structure.");
 	    return BRLCAD_ERROR;

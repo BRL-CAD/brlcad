@@ -112,6 +112,7 @@ typedef struct icv_image icv_image_t;
 	(_i)->width = (_i)->height = (_i)->channels = (_i)->alpha_channel = 0; \
 	(_i)->gamma_corr = 0.0; \
 	(_i)->data = NULL; \
+	(_i)->flags = 0; \
 	(_i)->render_info = NULL; \
     }
 

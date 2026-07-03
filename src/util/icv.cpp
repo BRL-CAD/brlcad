@@ -421,7 +421,6 @@ cmd_anim(int ac, const char **av)
 
 	if (BU_STR_EQUAL(action, "set-fps")) {
 	    int fps = atoi(av[2]);
-	    icv_anim_set_fps(anim, fps);
 	    if (icv_anim_set_fps(anim, fps) != 0) {
 		bu_log("Invalid FPS %d. Must be > 0.\n", fps);
 		icv_anim_destroy(anim);

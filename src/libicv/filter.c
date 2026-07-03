@@ -343,7 +343,7 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 	return -1;
     }
 
-    img->data = out_data = (double*)bu_malloc(size*sizeof(double), "icv_filter : out_image_data");
+    out_data = (double*)bu_malloc(size*sizeof(double), "icv_filter : out_image_data");
 
     /* Convolve in pixel coordinates and clamp border samples to the closest
      * valid edge pixel.  This avoids scalar row-wrap artifacts and keeps
@@ -366,7 +366,8 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 	}
     }
     bu_free(kern, "icv_filter : Kernel Allocation");
-    bu_free(in_data, "icv:filter Input Image Data");
+    icv_image_data_free(img, "icv:filter Input Image Data");
+    icv_image_data_set_bu(img, out_data);
     return 0;
 }
 

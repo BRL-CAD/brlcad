@@ -73,8 +73,9 @@ ICV_EXPORT extern int icv_anim_write(const icv_anim_t *anim, const char *filenam
  * Free an animation object.
  *
  * @param anim The animation object.
+ * @return 0 on success.
  */
-ICV_EXPORT extern void icv_anim_free(icv_anim_t *anim);
+ICV_EXPORT extern int icv_anim_destroy(icv_anim_t *anim);
 
 /**
  * Append a frame to the end of the animation.
@@ -132,8 +133,9 @@ ICV_EXPORT extern size_t icv_anim_num_frames(const icv_anim_t *anim);
  *
  * @param anim The animation object.
  * @param fps The frames per second.
+ * @return 0 on success, -1 on invalid input.
  */
-ICV_EXPORT extern void icv_anim_set_fps(icv_anim_t *anim, int fps);
+ICV_EXPORT extern int icv_anim_set_fps(icv_anim_t *anim, int fps);
 
 /**
  * Set a specific frame's delay in microseconds. This overrides the global FPS

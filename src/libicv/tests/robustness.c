@@ -59,7 +59,7 @@ near_equal(double a, double b)
 static icv_image_t *
 make_gray(size_t w, size_t h)
 {
-    icv_image_t *img = icv_create(w, h, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *img = icv_image_create(w, h, ICV_COLOR_SPACE_GRAY);
     for (size_t y = 0; y < h; y++) {
 	for (size_t x = 0; x < w; x++) {
 	    img->data[y * w + x] = (double)(y * 10 + x);
@@ -71,7 +71,7 @@ make_gray(size_t w, size_t h)
 static icv_image_t *
 make_unit_gray(size_t w, size_t h)
 {
-    icv_image_t *img = icv_create(w, h, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *img = icv_image_create(w, h, ICV_COLOR_SPACE_GRAY);
     size_t npix = w * h;
     for (size_t i = 0; i < npix; i++) {
 	img->data[i] = (npix > 1) ? (double)i / (double)(npix - 1) : 0.0;
@@ -82,7 +82,7 @@ make_unit_gray(size_t w, size_t h)
 static icv_image_t *
 make_rgb(size_t w, size_t h)
 {
-    icv_image_t *img = icv_create(w, h, ICV_COLOR_SPACE_RGB);
+    icv_image_t *img = icv_image_create(w, h, ICV_COLOR_SPACE_RGB);
     for (size_t y = 0; y < h; y++) {
 	for (size_t x = 0; x < w; x++) {
 	    size_t off = (y * w + x) * 3;
@@ -97,7 +97,7 @@ make_rgb(size_t w, size_t h)
 static icv_image_t *
 make_unit_rgb(size_t w, size_t h)
 {
-    icv_image_t *img = icv_create(w, h, ICV_COLOR_SPACE_RGB);
+    icv_image_t *img = icv_image_create(w, h, ICV_COLOR_SPACE_RGB);
     for (size_t y = 0; y < h; y++) {
 	for (size_t x = 0; x < w; x++) {
 	    size_t off = (y * w + x) * 3;
@@ -112,7 +112,7 @@ make_unit_rgb(size_t w, size_t h)
 static icv_image_t *
 make_solid_rgb(size_t w, size_t h, double r, double g, double b)
 {
-    icv_image_t *img = icv_create(w, h, ICV_COLOR_SPACE_RGB);
+    icv_image_t *img = icv_image_create(w, h, ICV_COLOR_SPACE_RGB);
     for (size_t i = 0; i < w * h; i++) {
 	img->data[i * 3 + 0] = r;
 	img->data[i * 3 + 1] = g;
@@ -175,19 +175,22 @@ fill_render_info(struct icv_render_info *ri, const char *db, const char *objects
 static void
 test_create_zero_and_pixel_io(void)
 {
-    icv_image_t *rgb = icv_create(2, 3, ICV_COLOR_SPACE_RGB);
+    icv_image_t *rgb = icv_image_create(2, 3, ICV_COLOR_SPACE_RGB);
     double px[3] = {0.25, 0.50, 0.75};
     unsigned char row_uc[6] = {0, 64, 128, 255, 127, 1};
     double row_d[6] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
 
-    CHECK(rgb != NULL, "icv_create returns an image");
-    CHECK(rgb->magic == ICV_IMAGE_MAGIC, "icv_create initializes magic");
-    CHECK(rgb->width == 2 && rgb->height == 3, "icv_create records dimensions");
-    CHECK(rgb->color_space == ICV_COLOR_SPACE_RGB && rgb->channels == 3, "icv_create records RGB layout");
-    CHECK(rgb->render_info == NULL, "icv_create starts without render metadata");
+    CHECK(rgb != NULL, "icv_image_create returns an image");
+    CHECK(rgb->magic == ICV_IMAGE_MAGIC, "icv_image_create initializes magic");
+    CHECK(rgb->width == 2 && rgb->height == 3, "icv_image_create records dimensions");
+    CHECK(rgb->color_space == ICV_COLOR_SPACE_RGB && rgb->channels == 3, "icv_image_create records RGB layout");
+    CHECK(rgb->render_info == NULL, "icv_image_create starts without render metadata");
     for (size_t i = 0; i < 18; i++) {
-	CHECK(near_equal(rgb->data[i], 0.0), "icv_create zero-fills image data");
+	CHECK(near_equal(rgb->data[i], 0.0), "icv_image_create zero-fills image data");
     }
+    CHECK(icv_image_create(1, 1, (ICV_COLOR_SPACE)999) == NULL, "icv_image_create rejects invalid color space without terminating");
+    CHECK(icv_image_create(0, 1, ICV_COLOR_SPACE_RGB) == NULL, "icv_image_create rejects zero width without terminating");
+    CHECK(icv_image_create(1, 0, ICV_COLOR_SPACE_RGB) == NULL, "icv_image_create rejects zero height without terminating");
 
     CHECK(icv_writepixel(rgb, 1, 2, px) == 0, "icv_writepixel accepts valid coordinates");
     CHECK(near_equal(rgb->data[(2 * 2 + 1) * 3 + 0], 0.25), "icv_writepixel writes red channel");
@@ -219,7 +222,7 @@ test_data_conversion_and_size_guessing(void)
 {
     unsigned char src[4] = {0, 127, 128, 255};
     double *dbl = icv_uchar2double(src, 4);
-    icv_image_t *img = icv_create(4, 1, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *img = icv_image_create(4, 1, ICV_COLOR_SPACE_GRAY);
     unsigned char *uch = NULL;
     size_t w = 0;
     size_t h = 0;
@@ -276,7 +279,7 @@ test_data_conversion_and_size_guessing(void)
 static void
 test_colorspace_conversions(void)
 {
-    icv_image_t *gray = icv_create(2, 1, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *gray = icv_image_create(2, 1, ICV_COLOR_SPACE_GRAY);
     gray->data[0] = 0.2;
     gray->data[1] = 0.8;
 
@@ -289,7 +292,7 @@ test_colorspace_conversions(void)
     CHECK(icv_gray2rgb(gray) == 0, "icv_gray2rgb is a no-op on RGB images");
     icv_destroy(gray);
 
-    icv_image_t *rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    icv_image_t *rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.2;
     rgb->data[1] = 0.4;
     rgb->data[2] = 0.8;
@@ -299,54 +302,54 @@ test_colorspace_conversions(void)
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_RGB, 0, 0, 0) == 0, "icv_rgb2gray is a no-op on grayscale images");
     icv_destroy(rgb);
 
-    rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     CHECK(icv_rgb2gray(rgb, (ICV_COLOR)999, 0, 0, 0) == -1, "icv_rgb2gray rejects invalid channel selector");
     icv_destroy(rgb);
 
-    rgb = icv_create(2, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(2, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.1; rgb->data[1] = 0.2; rgb->data[2] = 0.3;
     rgb->data[3] = 0.9; rgb->data[4] = 0.8; rgb->data[5] = 0.7;
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_G, 0, 0, 0) == 0, "icv_rgb2gray selects a single channel");
     CHECK(near_equal(rgb->data[0], 0.2) && near_equal(rgb->data[1], 0.8), "icv_rgb2gray copies selected channel values");
     icv_destroy(rgb);
 
-    rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.1; rgb->data[1] = 0.4; rgb->data[2] = 0.9;
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_R, 0, 0, 0) == 0, "icv_rgb2gray selects red channel");
     CHECK(near_equal(rgb->data[0], 0.1), "red channel conversion value");
     icv_destroy(rgb);
 
-    rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.1; rgb->data[1] = 0.4; rgb->data[2] = 0.9;
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_B, 0, 0, 0) == 0, "icv_rgb2gray selects blue channel");
     CHECK(near_equal(rgb->data[0], 0.9), "blue channel conversion value");
     icv_destroy(rgb);
 
-    rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.2; rgb->data[1] = 0.6; rgb->data[2] = 1.0;
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_RG, 0, 0, 0) == 0, "icv_rgb2gray averages red and green");
     CHECK(near_equal(rgb->data[0], 0.4), "red-green conversion value");
     icv_destroy(rgb);
 
-    rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.2; rgb->data[1] = 0.6; rgb->data[2] = 1.0;
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_RB, 0, 0, 0) == 0, "icv_rgb2gray averages red and blue");
     CHECK(near_equal(rgb->data[0], 0.6), "red-blue conversion value");
     icv_destroy(rgb);
 
-    rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.2; rgb->data[1] = 0.6; rgb->data[2] = 1.0;
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_BG, 0, 0, 0) == 0, "icv_rgb2gray averages blue and green");
     CHECK(near_equal(rgb->data[0], 0.8), "blue-green conversion value");
     icv_destroy(rgb);
 
-    rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.9; rgb->data[1] = 0.6; rgb->data[2] = 0.3;
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_RGB, 0, 0, 0) == 0, "icv_rgb2gray applies uniform RGB weights by default");
     CHECK(near_equal(rgb->data[0], 0.6), "uniform RGB conversion value");
     icv_destroy(rgb);
 
-    rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.9; rgb->data[1] = 0.6; rgb->data[2] = 0.3;
     CHECK(icv_rgb2gray(rgb, ICV_COLOR_RGB, 2.0, 0.0, 0.0) == 0, "icv_rgb2gray clamps weighted high values");
     CHECK(near_equal(rgb->data[0], 1.0), "weighted RGB conversion clamps above one");
@@ -356,7 +359,7 @@ test_colorspace_conversions(void)
 static void
 test_scalar_and_image_operations(void)
 {
-    icv_image_t *img = icv_create(4, 1, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *img = icv_image_create(4, 1, ICV_COLOR_SPACE_GRAY);
     img->data[0] = -0.5;
     img->data[1] = NAN;
     img->data[2] = 0.5;
@@ -382,8 +385,8 @@ test_scalar_and_image_operations(void)
     CHECK(near_equal(img->data[0], 0.5625), "icv_pow_val raises scalar");
     icv_destroy(img);
 
-    icv_image_t *a = icv_create(2, 1, ICV_COLOR_SPACE_GRAY);
-    icv_image_t *b = icv_create(2, 1, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *a = icv_image_create(2, 1, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *b = icv_image_create(2, 1, ICV_COLOR_SPACE_GRAY);
     a->data[0] = 0.75; a->data[1] = 0.25;
     b->data[0] = 0.50; b->data[1] = 0.50;
     icv_image_t *out = icv_add(a, b);
@@ -403,7 +406,7 @@ test_scalar_and_image_operations(void)
 	  "icv_divide returns sanitized quotient image");
     icv_destroy(out);
 
-    icv_image_t *mismatch = icv_create(3, 1, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *mismatch = icv_image_create(3, 1, ICV_COLOR_SPACE_GRAY);
     CHECK(icv_add(a, mismatch) == NULL, "icv_add rejects mismatched dimensions");
     CHECK(icv_sub(a, mismatch) == NULL, "icv_sub rejects mismatched dimensions");
     CHECK(icv_multiply(a, mismatch) == NULL, "icv_multiply rejects mismatched dimensions");
@@ -429,7 +432,7 @@ test_scalar_and_image_operations(void)
 static void
 test_saturate_fade_resize_and_fit(void)
 {
-    icv_image_t *rgb = icv_create(1, 1, ICV_COLOR_SPACE_RGB);
+    icv_image_t *rgb = icv_image_create(1, 1, ICV_COLOR_SPACE_RGB);
     rgb->data[0] = 0.2;
     rgb->data[1] = 0.4;
     rgb->data[2] = 0.8;
@@ -439,7 +442,7 @@ test_saturate_fade_resize_and_fit(void)
     CHECK(near_equal(rgb->data[0], 0.37), "icv_saturate uses documented luminance weights");
     icv_destroy(rgb);
 
-    icv_image_t *gray = icv_create(1, 1, ICV_COLOR_SPACE_GRAY);
+    icv_image_t *gray = icv_image_create(1, 1, ICV_COLOR_SPACE_GRAY);
     CHECK(icv_saturate(gray, 1.0) == -1, "icv_saturate rejects grayscale images");
     gray->data[0] = 0.8;
     CHECK(icv_fade(gray, 0.25) == 0, "icv_fade accepts valid fraction");
@@ -506,10 +509,14 @@ test_crop_filters_and_stats(void)
 {
     icv_image_t *img = make_gray(4, 4);
 
-    CHECK(icv_rect(img, 1, 2, 2, 1) == 0, "icv_rect accepted valid 2x1 crop");
-    CHECK(img->width == 2 && img->height == 1, "icv_rect output dimensions");
-    CHECK(near_equal(img->data[0], 21.0), "icv_rect copied x=1,y=2 first pixel");
-    CHECK(near_equal(img->data[1], 22.0), "icv_rect copied x=2,y=2 second pixel");
+    CHECK(icv_crop_rect(img, 1, 2, 2, 1) == 0, "icv_crop_rect accepted valid 2x1 crop");
+    CHECK(img->width == 2 && img->height == 1, "icv_crop_rect output dimensions");
+    CHECK(near_equal(img->data[0], 21.0), "icv_crop_rect copied x=1,y=2 first pixel");
+    CHECK(near_equal(img->data[1], 22.0), "icv_crop_rect copied x=2,y=2 second pixel");
+    icv_destroy(img);
+
+    img = make_gray(4, 4);
+    CHECK(icv_crop_rect(img, 3, 3, 2, 2) == -1, "icv_crop_rect rejects out-of-bounds crop without terminating");
     icv_destroy(img);
 
     img = make_gray(4, 4);
@@ -539,7 +546,7 @@ test_crop_filters_and_stats(void)
     CHECK(icv_filter(img, (ICV_FILTER)999) == -1, "icv_filter rejects invalid filter type");
     icv_destroy(img);
 
-    img = icv_create(1, 1, ICV_COLOR_SPACE_GRAY);
+    img = icv_image_create(1, 1, ICV_COLOR_SPACE_GRAY);
     img->data[0] = 0.25;
     CHECK(icv_filter(img, ICV_FILTER_BOXCAR_AVERAGE) == 0, "icv_filter accepts image smaller than kernel");
     CHECK(near_equal(img->data[0], 0.25), "boxcar filter keeps constant single-pixel image with clamped border");
@@ -607,7 +614,7 @@ test_crop_filters_and_stats(void)
     icv_destroy(curr_img);
     icv_destroy(new_img);
 
-    img = icv_create(5, 1, ICV_COLOR_SPACE_GRAY);
+    img = icv_image_create(5, 1, ICV_COLOR_SPACE_GRAY);
     img->data[0] = -0.10;
     img->data[1] = 0.00;
     img->data[2] = 0.25;
@@ -1044,9 +1051,12 @@ test_ascii_render_info_and_diff(void)
     struct icv_render_info *ri2 = icv_render_info_create();
     fill_render_info(ri1, "model.g", "box.s");
     fill_render_info(ri2, "model.g", "box.s");
-    icv_image_set_render_info(img1, ri1);
-    icv_image_set_render_info(img2, ri2);
-    CHECK(icv_image_get_render_info(img1) == ri1, "icv_image_set_render_info attaches metadata");
+    CHECK(icv_image_take_render_info(img1, ri1) == 0, "icv_image_take_render_info attaches metadata");
+    CHECK(icv_image_take_render_info(img2, ri2) == 0, "icv_image_take_render_info attaches comparison metadata");
+    CHECK(icv_image_get_render_info(img1) == ri1, "icv_image_take_render_info stores metadata pointer");
+    struct icv_render_info *ri_bad = icv_render_info_create();
+    CHECK(icv_image_take_render_info(NULL, ri_bad) == -1, "icv_image_take_render_info rejects null image without taking ownership");
+    CHECK(icv_render_info_destroy(ri_bad) == 0, "icv_render_info_destroy releases unattached metadata");
 
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
     CHECK(icv_diff_render_info(img1, img2, &msgs) == 0, "icv_diff_render_info accepts identical metadata");
@@ -1055,8 +1065,8 @@ test_ascii_render_info_and_diff(void)
     img2->render_info->viewsize = 3.0;
     CHECK(icv_diff_render_info(img1, img2, &msgs) == 1, "icv_diff_render_info detects metadata differences");
     bu_vls_free(&msgs);
-    icv_image_set_render_info(img1, NULL);
-    icv_image_set_render_info(img2, NULL);
+    CHECK(icv_image_take_render_info(img1, NULL) == 0, "icv_image_take_render_info clears metadata");
+    CHECK(icv_image_take_render_info(img2, NULL) == 0, "icv_image_take_render_info clears comparison metadata");
     CHECK(icv_diff_render_info(img1, img2, NULL) == -1, "icv_diff_render_info reports missing metadata");
 
     int matching = 0;
@@ -1092,7 +1102,7 @@ test_ascii_render_info_and_diff(void)
     img2->data[0] = 1.0;
     ri1 = icv_render_info_create();
     fill_render_info(ri1, "model.g", "box.s");
-    icv_image_set_render_info(img1, ri1);
+    CHECK(icv_image_take_render_info(img1, ri1) == 0, "icv_image_take_render_info attaches nirt metadata");
     FILE *nirt = tmpfile();
     CHECK(nirt != NULL, "tmpfile available for nirt shot test");
     if (nirt) {
@@ -1156,7 +1166,8 @@ test_animation_frame_management(void)
     CHECK(icv_anim_num_frames(anim) == 1, "icv_anim_remove_frame updates count");
     CHECK(icv_anim_get_frame(anim, 5) == NULL, "icv_anim_get_frame rejects invalid index");
     CHECK(icv_anim_remove_frame(anim, 5) == -1, "icv_anim_remove_frame rejects invalid index");
-    icv_anim_set_fps(anim, 24);
+    CHECK(icv_anim_set_fps(anim, 24) == 0, "icv_anim_set_fps accepts positive FPS");
+    CHECK(icv_anim_set_fps(anim, 0) == -1, "icv_anim_set_fps rejects invalid FPS");
 
     char path[MAXPATHLEN] = {0};
     FILE *fp = bu_temp_file(path, MAXPATHLEN);

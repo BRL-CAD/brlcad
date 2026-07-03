@@ -47,9 +47,15 @@ __BEGIN_DECLS
  * @param width Width of the image to be created
  * @param height Height of the image to be created
  * @param color_space Color space of the image (RGB, grayscale)
- * @return Image structure with allocated space and zeroed data array
+ * @return Image structure with allocated space and zeroed data array, or
+ * NULL if the arguments are invalid or allocation fails.
  */
-ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
+ICV_EXPORT extern icv_image_t *icv_image_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
+
+/**
+ * @deprecated Use icv_image_create.
+ */
+DEPRECATED ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
 
 /**
  * This function zeroes all the data entries of an image
@@ -243,20 +249,35 @@ ICV_EXPORT extern char *icv_ascii_art(icv_image_t *i, struct icv_ascii_art_param
 /**
  * Allocate and zero-initialise a new icv_render_info struct.
  * Caller is responsible for filling in the fields and eventually
- * calling icv_render_info_free().
+ * calling icv_render_info_destroy().
  */
 ICV_EXPORT extern struct icv_render_info *icv_render_info_create(void);
 
 /**
  * Release all memory owned by an icv_render_info, including the struct itself.
+ *
+ * @return 0 on success.
  */
-ICV_EXPORT extern void icv_render_info_free(struct icv_render_info *info);
+ICV_EXPORT extern int icv_render_info_destroy(struct icv_render_info *info);
+
+/**
+ * @deprecated Use icv_render_info_destroy.
+ */
+DEPRECATED ICV_EXPORT extern void icv_render_info_free(struct icv_render_info *info);
 
 /**
  * Attach render metadata to an image.  Any existing render_info on the
- * image is first freed.  Passing NULL clears the metadata.
+ * image is first freed.  Passing NULL clears the metadata.  On success,
+ * ownership of info transfers to img.
+ *
+ * @return 0 on success, -1 if img is NULL.
  */
-ICV_EXPORT extern void icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info);
+ICV_EXPORT extern int icv_image_take_render_info(icv_image_t *img, struct icv_render_info *info);
+
+/**
+ * @deprecated Use icv_image_take_render_info.
+ */
+DEPRECATED ICV_EXPORT extern void icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info);
 
 /**
  * Return the render metadata attached to an image, or NULL if none.

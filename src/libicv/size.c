@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 
 #include "icv.h"
+#include "icv_private.h"
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -346,7 +347,10 @@ shrink_image(icv_image_t* bif, size_t factor)
 
     bif->width = (int)bif->width/factor;
     bif->height = (int)bif->height/factor;
-    bif->data = (double *)bu_realloc(bif->data, (size_t)(bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation");
+    if (icv_image_data_realloc(bif, (size_t)(bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation") != 0) {
+	bu_free(p, "shrink_image : Pixel Values Temp Buffer");
+	return -1;
+    }
     bu_free(p, "shrink_image : Pixel Values Temp Buffer");
 
     return 0;
@@ -386,7 +390,8 @@ under_sample(icv_image_t* bif, size_t factor)
 
     bif->width = (int)bif->width/factor;
     bif->height = (int)bif->height/factor;
-    bif->data = (double *)bu_realloc(bif->data, (size_t)(bif->width*bif->height*bif->channels)*sizeof(double), "under_sample : Reallocation");
+    if (icv_image_data_realloc(bif, (size_t)(bif->width*bif->height*bif->channels)*sizeof(double), "under_sample : Reallocation") != 0)
+	return -1;
 
     return 0;
 }
@@ -447,9 +452,8 @@ ninterp(icv_image_t* bif, size_t out_width, size_t out_height)
 	}
     }
 
-    bu_free(bif->data, "ninterp : in_data");
-
-    bif->data = out_data;
+    icv_image_data_free(bif, "ninterp : in_data");
+    icv_image_data_set_bu(bif, out_data);
 
     bif->width = out_width;
     bif->height = out_height;
@@ -516,8 +520,8 @@ binterp(icv_image_t *bif, size_t out_width, size_t out_height)
 	    }
 	}
     }
-    bu_free(bif->data, "binterp : Input Data");
-    bif->data = out_data;
+    icv_image_data_free(bif, "binterp : Input Data");
+    icv_image_data_set_bu(bif, out_data);
     bif->width = out_width;
     bif->height = out_height;
     return 0;

@@ -28,6 +28,7 @@
 #include "bio.h"
 
 #include "bu/str.h"
+#include "bu/exit.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -38,6 +39,71 @@
 #include "icv_private.h"
 
 /* private functions */
+
+#define ICV_IMAGE_ALLOC_STDLIB 0x0008
+#define ICV_DATA_ALLOC_STDLIB 0x0010
+#define ICV_OWNERSHIP_FLAGS (ICV_IMAGE_ALLOC_STDLIB | ICV_DATA_ALLOC_STDLIB)
+
+void
+icv_image_data_free(icv_image_t *img, const char *label)
+{
+    if (!img || !img->data)
+	return;
+
+    if (img->flags & ICV_DATA_ALLOC_STDLIB)
+	free(img->data);
+    else
+	bu_free(img->data, label);
+
+    img->data = NULL;
+    img->flags &= (uint16_t)~ICV_DATA_ALLOC_STDLIB;
+}
+
+
+void
+icv_image_data_set_bu(icv_image_t *img, double *data)
+{
+    if (!img)
+	return;
+
+    img->data = data;
+    img->flags &= (uint16_t)~ICV_DATA_ALLOC_STDLIB;
+}
+
+
+void
+icv_image_data_set_stdlib(icv_image_t *img, double *data)
+{
+    if (!img)
+	return;
+
+    img->data = data;
+    if (data)
+	img->flags |= ICV_DATA_ALLOC_STDLIB;
+    else
+	img->flags &= (uint16_t)~ICV_DATA_ALLOC_STDLIB;
+}
+
+
+int
+icv_image_data_realloc(icv_image_t *img, size_t size, const char *label)
+{
+    double *data;
+
+    if (!img || size == 0)
+	return -1;
+
+    if (img->flags & ICV_DATA_ALLOC_STDLIB) {
+	data = (double *)realloc(img->data, size);
+	if (!data)
+	    return -1;
+	img->data = data;
+	return 0;
+    }
+
+    img->data = (double *)bu_realloc(img->data, size, label);
+    return 0;
+}
 
 /*
  * Attempt to guess the file type. Understands ImageMagick style
@@ -367,9 +433,15 @@ icv_image_t *
 icv_create_with_channels(size_t width, size_t height, ICV_COLOR_SPACE color_space, size_t channels)
 {
     icv_image_t *bif;
+    size_t data_size;
 
     if (!icv_channels_match_color_space(color_space, channels)) {
 	bu_log("icv_create_with_channels : invalid color space/channel combination\n");
+	return NULL;
+    }
+
+    if (width == 0 || height == 0) {
+	bu_log("icv_create_with_channels : image dimensions must be greater than zero\n");
 	return NULL;
     }
 
@@ -379,21 +451,32 @@ icv_create_with_channels(size_t width, size_t height, ICV_COLOR_SPACE color_spac
 	return NULL;
     }
 
-    BU_ALLOC(bif, struct icv_image);
+    data_size = height * width * channels * sizeof(double);
+    bif = (icv_image_t *)calloc(1, sizeof(struct icv_image));
+    if (!bif) {
+	bu_log("icv_create_with_channels : image structure allocation failed\n");
+	return NULL;
+    }
+
     ICV_IMAGE_INIT(bif);
     bif->width = width;
     bif->height = height;
     bif->color_space = color_space;
     bif->channels = channels;
     bif->alpha_channel = (channels == 2 || channels == 4) ? 1 : 0;
-    bif->flags = 0;
-    bif->data = (double *)bu_malloc(bif->height*bif->width*bif->channels*sizeof(double), "Image Data");
+    bif->flags = ICV_IMAGE_ALLOC_STDLIB;
+    icv_image_data_set_stdlib(bif, (double *)calloc(1, data_size));
+    if (!bif->data) {
+	free(bif);
+	bu_log("icv_create_with_channels : image data allocation failed\n");
+	return NULL;
+    }
 
     return icv_zero(bif);
 }
 
 icv_image_t *
-icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
+icv_image_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
 {
     icv_image_t *bif;
     size_t channels = 0;
@@ -406,13 +489,28 @@ icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
 	    channels = 1;
 	    break;
 	default :
-	    bu_bomb("icv_create : Color Space Not Defined\n");
+	    bu_log("icv_image_create : Color Space Not Defined\n");
+	    return NULL;
     }
 
     bif = icv_create_with_channels(width, height, color_space, channels);
-    if (!bif)
-	bu_bomb("icv_create : image allocation failed\n");
+    if (!bif) {
+	bu_log("icv_image_create : image allocation failed\n");
+	return NULL;
+    }
 
+    return bif;
+}
+
+icv_image_t *
+icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
+{
+    icv_image_t *bif = icv_image_create(width, height, color_space);
+    if (!bif) {
+	if (color_space != ICV_COLOR_SPACE_RGB && color_space != ICV_COLOR_SPACE_GRAY)
+	    bu_bomb("icv_create : Color Space Not Defined\n");
+	bu_bomb("icv_create : image allocation failed\n");
+    }
     return bif;
 }
 
@@ -452,7 +550,7 @@ icv_clone(const icv_image_t *src)
 	return NULL;
 
     dst->gamma_corr = src->gamma_corr;
-    dst->flags = src->flags;
+    dst->flags = (uint16_t)((src->flags & ~ICV_OWNERSHIP_FLAGS) | (dst->flags & ICV_OWNERSHIP_FLAGS));
     size = src->width * src->height * src->channels;
     if (size && !src->data) {
 	icv_destroy(dst);
@@ -563,10 +661,13 @@ icv_destroy(icv_image_t *bif)
 {
     ICV_IMAGE_VAL_INT(bif);
 
-    bu_free(bif->data, "Image Data");
+    icv_image_data_free(bif, "Image Data");
     if (bif->render_info)
-	icv_render_info_free(bif->render_info);
-    bu_free(bif, "ICV IMAGE Structure");
+	icv_render_info_destroy(bif->render_info);
+    if (bif->flags & ICV_IMAGE_ALLOC_STDLIB)
+	free(bif);
+    else
+	bu_free(bif, "ICV IMAGE Structure");
     return 0;
 }
 
@@ -592,27 +693,43 @@ icv_render_info_create(void)
 }
 
 
-void
-icv_render_info_free(struct icv_render_info *info)
+int
+icv_render_info_destroy(struct icv_render_info *info)
 {
     if (!info)
-	return;
+	return 0;
     if (info->db_filename)
 	bu_free(info->db_filename, "render_info db_filename");
     if (info->objects)
 	bu_free(info->objects, "render_info objects");
     bu_free(info, "icv_render_info");
+    return 0;
+}
+
+
+void
+icv_render_info_free(struct icv_render_info *info)
+{
+    (void)icv_render_info_destroy(info);
+}
+
+
+int
+icv_image_take_render_info(icv_image_t *img, struct icv_render_info *info)
+{
+    if (!img)
+	return -1;
+    if (img->render_info)
+	icv_render_info_destroy(img->render_info);
+    img->render_info = info;
+    return 0;
 }
 
 
 void
 icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info)
 {
-    if (!img)
-	return;
-    if (img->render_info)
-	icv_render_info_free(img->render_info);
-    img->render_info = info;
+    (void)icv_image_take_render_info(img, info);
 }
 
 
