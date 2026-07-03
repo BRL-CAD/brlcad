@@ -61,11 +61,6 @@
 
 #include "sim_animate.hpp"
 
-
-/* ------------------------------------------------------------------ */
-/* RIFF/AVI MJPEG writer (only needed when libjpeg is available)       */
-/* ------------------------------------------------------------------ */
-
 namespace
 {
 
@@ -79,216 +74,6 @@ static const double CHASE_DIST_MM = 35000.0; /**< Camera-to-subject distance in 
 
 /* rt process timeout in seconds (5 minutes per frame). */
 static const int RT_TIMEOUT_SECONDS = 300;
-
-#ifdef HAVE_JPEGLIB_H
-
-/* Write a 4-byte little-endian uint32 to a file. */
-static void
-avi_write_u32(FILE *fp, uint32_t v)
-{
-    unsigned char buf[4];
-    buf[0] = (unsigned char)(v & 0xFF);
-    buf[1] = (unsigned char)((v >>  8) & 0xFF);
-    buf[2] = (unsigned char)((v >> 16) & 0xFF);
-    buf[3] = (unsigned char)((v >> 24) & 0xFF);
-    fwrite(buf, 1, 4, fp);
-}
-
-/* Write a 2-byte little-endian uint16 to a file. */
-static void
-avi_write_u16(FILE *fp, uint16_t v)
-{
-    unsigned char buf[2];
-    buf[0] = (unsigned char)(v & 0xFF);
-    buf[1] = (unsigned char)((v >> 8) & 0xFF);
-    fwrite(buf, 1, 2, fp);
-}
-
-/* Write an ASCII FourCC (4 bytes, no NUL). */
-static void
-avi_write_cc(FILE *fp, const char *cc)
-{
-    fwrite(cc, 1, 4, fp);
-}
-
-/* Seek to @p pos and patch a previously-written size field. */
-static void
-avi_patch_size(FILE *fp, long size_pos, uint32_t size)
-{
-    long save = ftell(fp);
-    fseek(fp, size_pos, SEEK_SET);
-    avi_write_u32(fp, size);
-    fseek(fp, save, SEEK_SET);
-}
-
-/**
- * Write a minimal MJPEG AVI file.
- *
- * @p frames  vector of raw JPEG byte buffers (one per frame)
- * @p width   frame width in pixels
- * @p height  frame height in pixels
- * @p fps     frames per second
- * @p out_path output file path
- */
-static int
-write_mjpeg_avi(const std::vector<std::vector<unsigned char> > &frames,
-		int width, int height, int fps,
-		const std::string &out_path)
-{
-    FILE *fp = fopen(out_path.c_str(), "wb");
-    if (!fp) {
-	bu_log("simulate: cannot open '%s' for writing\n", out_path.c_str());
-	return BRLCAD_ERROR;
-    }
-
-    uint32_t num_frames = (uint32_t)frames.size();
-    uint32_t usec_per_frame = (fps > 0) ? (1000000u / (uint32_t)fps) : 41667u;
-
-    /* Compute max frame size for buffer-size hints */
-    uint32_t max_frame_bytes = 0;
-    for (size_t i = 0; i < frames.size(); ++i) {
-	if ((uint32_t)frames[i].size() > max_frame_bytes)
-	    max_frame_bytes = (uint32_t)frames[i].size();
-    }
-
-    /* ----- RIFF 'AVI ' header ---------------------------------------- */
-    avi_write_cc(fp, "RIFF");
-    long riff_size_pos = ftell(fp);
-    avi_write_u32(fp, 0); /* patched later */
-    avi_write_cc(fp, "AVI ");
-
-    /* ----- LIST 'hdrl' ----------------------------------------------- */
-    avi_write_cc(fp, "LIST");
-    long hdrl_size_pos = ftell(fp);
-    avi_write_u32(fp, 0); /* patched later */
-    long hdrl_start = ftell(fp);
-    avi_write_cc(fp, "hdrl");
-
-    /* 'avih' - AVI main header (56 bytes of data) */
-    avi_write_cc(fp, "avih");
-    avi_write_u32(fp, 56); /* chunk data size */
-    avi_write_u32(fp, usec_per_frame);  /* dwMicroSecPerFrame */
-    avi_write_u32(fp, max_frame_bytes * (uint32_t)fps); /* dwMaxBytesPerSec */
-    avi_write_u32(fp, 0);              /* dwPaddingGranularity */
-    avi_write_u32(fp, 0x10);           /* dwFlags: AVIF_HASINDEX=0x10 */
-    avi_write_u32(fp, num_frames);     /* dwTotalFrames */
-    avi_write_u32(fp, 0);              /* dwInitialFrames */
-    avi_write_u32(fp, 1);              /* dwStreams */
-    avi_write_u32(fp, max_frame_bytes);/* dwSuggestedBufferSize */
-    avi_write_u32(fp, (uint32_t)width);  /* dwWidth */
-    avi_write_u32(fp, (uint32_t)height); /* dwHeight */
-    avi_write_u32(fp, 0); /* dwReserved[0] */
-    avi_write_u32(fp, 0); /* dwReserved[1] */
-    avi_write_u32(fp, 0); /* dwReserved[2] */
-    avi_write_u32(fp, 0); /* dwReserved[3] */
-
-    /* LIST 'strl' - stream list */
-    avi_write_cc(fp, "LIST");
-    long strl_size_pos = ftell(fp);
-    avi_write_u32(fp, 0); /* patched later */
-    long strl_start = ftell(fp);
-    avi_write_cc(fp, "strl");
-
-    /* 'strh' - stream header (56 bytes of data) */
-    avi_write_cc(fp, "strh");
-    avi_write_u32(fp, 56); /* chunk data size */
-    avi_write_cc(fp, "vids"); /* fccType */
-    avi_write_cc(fp, "MJPG"); /* fccHandler */
-    avi_write_u32(fp, 0);    /* dwFlags */
-    avi_write_u16(fp, 0);    /* wPriority */
-    avi_write_u16(fp, 0);    /* wLanguage */
-    avi_write_u32(fp, 0);    /* dwInitialFrames */
-    avi_write_u32(fp, 1);    /* dwScale */
-    avi_write_u32(fp, (uint32_t)fps); /* dwRate */
-    avi_write_u32(fp, 0);    /* dwStart */
-    avi_write_u32(fp, num_frames); /* dwLength */
-    avi_write_u32(fp, max_frame_bytes); /* dwSuggestedBufferSize */
-    avi_write_u32(fp, (uint32_t)-1); /* dwQuality (-1 = default) */
-    avi_write_u32(fp, 0);    /* dwSampleSize */
-    avi_write_u16(fp, 0);    /* rcFrame.left */
-    avi_write_u16(fp, 0);    /* rcFrame.top */
-    avi_write_u16(fp, (uint16_t)width);  /* rcFrame.right */
-    avi_write_u16(fp, (uint16_t)height); /* rcFrame.bottom */
-
-    /* 'strf' - stream format (BITMAPINFOHEADER, 40 bytes) */
-    avi_write_cc(fp, "strf");
-    avi_write_u32(fp, 40); /* chunk data size */
-    avi_write_u32(fp, 40); /* biSize */
-    avi_write_u32(fp, (uint32_t)width);  /* biWidth */
-    /* Positive height = bottom-up DIB; our JPEG frames are already
-     * top-to-bottom, but most MJPEG decoders ignore this field and
-     * rely on the JPEG SOF marker, so positive is safe here. */
-    avi_write_u32(fp, (uint32_t)height); /* biHeight */
-    avi_write_u16(fp, 1);   /* biPlanes */
-    avi_write_u16(fp, 24);  /* biBitCount */
-    avi_write_cc(fp, "MJPG"); /* biCompression */
-    avi_write_u32(fp, (uint32_t)(width * height * 3)); /* biSizeImage */
-    avi_write_u32(fp, 0);   /* biXPelsPerMeter */
-    avi_write_u32(fp, 0);   /* biYPelsPerMeter */
-    avi_write_u32(fp, 0);   /* biClrUsed */
-    avi_write_u32(fp, 0);   /* biClrImportant */
-
-    /* Patch strl size */
-    long strl_end = ftell(fp);
-    avi_patch_size(fp, strl_size_pos, (uint32_t)(strl_end - strl_start));
-
-    /* Patch hdrl size */
-    long hdrl_end = ftell(fp);
-    avi_patch_size(fp, hdrl_size_pos, (uint32_t)(hdrl_end - hdrl_start));
-
-    /* ----- LIST 'movi' ----------------------------------------------- */
-    avi_write_cc(fp, "LIST");
-    long movi_size_pos = ftell(fp);
-    avi_write_u32(fp, 0); /* patched later */
-    long movi_start = ftell(fp);
-    avi_write_cc(fp, "movi");
-
-    /* Track frame offsets relative to movi_start+4 for the index */
-    std::vector<uint32_t> frame_offsets;
-    std::vector<uint32_t> frame_sizes;
-
-    for (size_t i = 0; i < frames.size(); ++i) {
-	const std::vector<unsigned char> &jpeg = frames[i];
-	uint32_t data_size = (uint32_t)jpeg.size();
-	/* Pad to even byte boundary as required by AVI spec */
-	uint32_t padded = (data_size + 1) & ~1u;
-
-	/* Offset = position of this chunk's data from movi_start+4 */
-	frame_offsets.push_back((uint32_t)(ftell(fp) - movi_start - 4));
-
-	avi_write_cc(fp, "00dc"); /* video frame chunk */
-	avi_write_u32(fp, data_size);
-	fwrite(jpeg.data(), 1, data_size, fp);
-	if (padded != data_size)
-	    fputc(0, fp); /* padding byte */
-
-	frame_sizes.push_back(data_size);
-    }
-
-    /* Patch movi size */
-    long movi_end = ftell(fp);
-    avi_patch_size(fp, movi_size_pos, (uint32_t)(movi_end - movi_start));
-
-    /* ----- 'idx1' - legacy AVI index ---------------------------------- */
-    avi_write_cc(fp, "idx1");
-    avi_write_u32(fp, num_frames * 16u); /* 16 bytes per entry */
-
-    for (uint32_t i = 0; i < num_frames; ++i) {
-	avi_write_cc(fp, "00dc");
-	avi_write_u32(fp, 0x10); /* AVIIF_KEYFRAME */
-	avi_write_u32(fp, frame_offsets[i]);
-	avi_write_u32(fp, frame_sizes[i]);
-    }
-
-    /* Patch root RIFF size */
-    long file_end = ftell(fp);
-    avi_patch_size(fp, riff_size_pos, (uint32_t)(file_end - 8));
-
-    fclose(fp);
-    return BRLCAD_OK;
-}
-
-#endif /* HAVE_JPEGLIB_H */
 
 
 /* ------------------------------------------------------------------ */
@@ -761,121 +546,63 @@ int
 SimAnimState::encodeVideo()
 {
     if (m_opts.output_file.empty() || m_frame_count == 0)
-	return BRLCAD_OK;
+        return BRLCAD_OK;
 
-#ifdef HAVE_JPEGLIB_H
-    /* --------------------------------------------------------------- */
-    /* JPEG-encode every PIX frame                                      */
-    /* --------------------------------------------------------------- */
-    std::vector<std::vector<unsigned char> > jpeg_frames;
-    jpeg_frames.reserve((size_t)m_frame_count);
-
-    for (int i = 1; i <= m_frame_count; ++i) {
-	std::string ppath = framePixPath(i);
-	if (!bu_file_exists(ppath.c_str(), NULL)) {
-	    bu_log("simulate: missing frame file '%s', skipping\n",
-		   ppath.c_str());
-	    continue;
-	}
-
-	/* Read PIX and encode to JPEG */
-	icv_image_t *img = icv_read(ppath.c_str(), BU_MIME_IMAGE_PIX,
-				    (size_t)m_opts.width,
-				    (size_t)m_opts.height);
-	if (!img) {
-	    bu_log("simulate: could not read frame '%s'\n", ppath.c_str());
-	    continue;
-	}
-
-	/* Write to a temp file and read back as bytes */
-	char tmp_jpg[MAXPATHLEN];
-	bu_dir(tmp_jpg, MAXPATHLEN, BU_DIR_TEMP, NULL);
-	std::ostringstream tss;
-	tss << std::string(tmp_jpg) << "/sim_jpgtmp_"
-	    << std::setfill('0') << std::setw(4) << i << ".jpg";
-	std::string tmp_jpg_path = tss.str();
-
-	if (icv_write(img, tmp_jpg_path.c_str(), BU_MIME_IMAGE_JPEG) != BRLCAD_OK) {
-	    icv_destroy(img);
-	    bu_log("simulate: JPEG encode failed for frame %d\n", i);
-	    continue;
-	}
-	icv_destroy(img);
-
-	/* Read the JPEG bytes */
-	FILE *jfp = fopen(tmp_jpg_path.c_str(), "rb");
-	if (!jfp) {
-	    bu_file_delete(tmp_jpg_path.c_str());
-	    continue;
-	}
-	fseek(jfp, 0, SEEK_END);
-	long jsize = ftell(jfp);
-	fseek(jfp, 0, SEEK_SET);
-
-	std::vector<unsigned char> buf;
-	if (jsize > 0) {
-	    buf.resize((size_t)jsize);
-	    if ((long)fread(buf.data(), 1, (size_t)jsize, jfp) != jsize)
-		buf.clear();
-	}
-	fclose(jfp);
-	bu_file_delete(tmp_jpg_path.c_str());
-
-	if (!buf.empty())
-	    jpeg_frames.push_back(buf);
+    icv_anim_format_t fmt = ICV_ANIM_UNKNOWN;
+    if (m_opts.output_file.find(".apng") != std::string::npos ||
+        m_opts.output_file.find(".png") != std::string::npos) {
+        fmt = ICV_ANIM_APNG;
+    } else if (m_opts.output_file.find(".avi") != std::string::npos ||
+               m_opts.output_file.find(".mjpg") != std::string::npos) {
+        fmt = ICV_ANIM_MJPG;
+    } else {
+        bu_log("simulate: output file extension not recognized for animation, defaulting to AVI\n");
+        fmt = ICV_ANIM_MJPG;
     }
 
-    if (jpeg_frames.empty()) {
-	bu_log("simulate: no frames to encode\n");
-	return BRLCAD_ERROR;
+    icv_anim_t *anim = icv_anim_create(fmt, m_opts.width, m_opts.height, m_opts.fps);
+    if (!anim) {
+        bu_log("simulate: failed to create animation context\n");
+        return BRLCAD_ERROR;
     }
-
-    return write_mjpeg_avi(jpeg_frames, m_opts.width, m_opts.height,
-			   m_opts.fps, m_opts.output_file);
-
-#else
-    /* --------------------------------------------------------------- */
-    /* No JPEG support: fall back to writing numbered PNG files         */
-    /* --------------------------------------------------------------- */
-    bu_log("simulate: libjpeg not available; writing PNG frames instead.\n");
-
-    /* Derive output base name by stripping extension */
-    std::string base = m_opts.output_file;
-    size_t dot = base.rfind('.');
-    if (dot != std::string::npos)
-	base = base.substr(0, dot);
 
     int written = 0;
     for (int i = 1; i <= m_frame_count; ++i) {
-	std::string ppath = framePixPath(i);
-	if (!bu_file_exists(ppath.c_str(), NULL))
-	    continue;
+        std::string ppath = framePixPath(i);
+        if (!bu_file_exists(ppath.c_str(), NULL)) {
+            bu_log("simulate: missing frame file '%s', skipping\n", ppath.c_str());
+            continue;
+        }
 
-	icv_image_t *img = icv_read(ppath.c_str(), BU_MIME_IMAGE_PIX,
-				    (size_t)m_opts.width,
-				    (size_t)m_opts.height);
-	if (!img)
-	    continue;
+        icv_image_t *img = icv_read(ppath.c_str(), BU_MIME_IMAGE_PIX,
+                                    (size_t)m_opts.width,
+                                    (size_t)m_opts.height);
+        if (!img) {
+            bu_log("simulate: could not read frame '%s'\n", ppath.c_str());
+            continue;
+        }
 
-	std::ostringstream pss;
-	pss << base << "_" << std::setfill('0') << std::setw(4) << i << ".png";
-	std::string png_path = pss.str();
-
-	if (icv_write(img, png_path.c_str(), BU_MIME_IMAGE_PNG) == BRLCAD_OK)
-	    ++written;
-
-	icv_destroy(img);
+        icv_anim_add_frame(anim, img);
+        icv_destroy(img);
+        written++;
     }
 
-    bu_log("simulate: wrote %d PNG frame(s) with base name '%s_NNNN.png'.\n"
-	   "  To create a video: ffmpeg -framerate %d -i '%s_%%04d.png' "
-	   "-c:v libx264 '%s'\n",
-	   written, base.c_str(), m_opts.fps, base.c_str(),
-	   m_opts.output_file.c_str());
+    if (written == 0) {
+        bu_log("simulate: no frames to encode\n");
+        icv_anim_free(anim);
+        return BRLCAD_ERROR;
+    }
 
+    if (icv_anim_write(anim, m_opts.output_file.c_str()) != 0) {
+        bu_log("simulate: failed to write animation '%s'\n", m_opts.output_file.c_str());
+        icv_anim_free(anim);
+        return BRLCAD_ERROR;
+    }
+
+    icv_anim_free(anim);
     return BRLCAD_OK;
-#endif
 }
+
 
 
 } /* namespace simulate */

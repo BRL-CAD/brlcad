@@ -111,6 +111,59 @@ scene_clear(struct ged *gedp)
 }
 
 extern "C" int
+unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix)
+{
+    // copy empty.png
+    struct bu_vls empty_src = BU_VLS_INIT_ZERO;
+    struct bu_vls empty_dst = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&empty_src, "%s/empty.png", src_dir);
+    bu_vls_sprintf(&empty_dst, "%s/empty.png", out_dir);
+    {
+        std::ifstream empty_in(bu_vls_cstr(&empty_src), std::ios::binary);
+        std::ofstream empty_out(bu_vls_cstr(&empty_dst), std::ios::binary);
+        if (empty_in && empty_out) {
+            empty_out << empty_in.rdbuf();
+        }
+    }
+    bu_vls_free(&empty_src);
+    bu_vls_free(&empty_dst);
+
+    // read apng
+    struct bu_vls apng_path = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&apng_path, "%s/%s", src_dir, apng_name);
+
+    icv_anim_t *anim = icv_anim_read(bu_vls_cstr(&apng_path));
+    if (!anim) {
+        bu_log("Failed to read APNG: %s\n", bu_vls_cstr(&apng_path));
+        bu_vls_free(&apng_path);
+        return -1;
+    }
+    bu_vls_free(&apng_path);
+
+    size_t num = icv_anim_num_frames(anim);
+    for (size_t i = 0; i < num; ++i) {
+        icv_image_t *img = icv_anim_get_frame(anim, i);
+        if (img) {
+            struct bu_vls out_path = BU_VLS_INIT_ZERO;
+            bu_vls_sprintf(&out_path, "%s/%s%03zu_ctrl.png", out_dir, prefix, i + 1);
+            if (icv_write(img, bu_vls_cstr(&out_path), BU_MIME_IMAGE_PNG) != 0) {
+                bu_log("Failed to write extracted frame: %s\n", bu_vls_cstr(&out_path));
+                icv_destroy(img);
+                bu_vls_free(&out_path);
+                icv_anim_free(anim);
+                return -1;
+            }
+            icv_destroy(img);
+            bu_vls_free(&out_path);
+        }
+    }
+
+    icv_anim_free(anim);
+    return 0;
+}
+
+
+extern "C" int
 img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root)
 {
     icv_image_t *ctrl, *timg;

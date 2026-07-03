@@ -49,12 +49,12 @@ file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "input file");
 
-    if (!bu_file_exists(argv[0], NULL)){
+    if (!bu_file_exists(argv[0], NULL)) {
 	if (msg) bu_vls_sprintf(msg, "Error - file %s does not exist!\n", argv[0]);
 	return -1;
     }
 
-    if (file_set) (*file_set) = bu_strdup(argv[0]);
+    if (file_set)(*file_set) = bu_strdup(argv[0]);
 
     return 1;
 }
@@ -66,12 +66,12 @@ file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "output file");
 
-    if (bu_file_exists(argv[0], NULL)){
+    if (bu_file_exists(argv[0], NULL)) {
 	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", argv[0]);
 	return -1;
     }
 
-    if (file_set) (*file_set) = bu_strdup(argv[0]);
+    if (file_set)(*file_set) = bu_strdup(argv[0]);
 
     return 1;
 }
@@ -91,7 +91,7 @@ image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 	if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
 	return -1;
     }
-    if (set_type) (*set_type) = type;
+    if (set_type)(*set_type) = type;
     return 1;
 }
 
@@ -209,14 +209,14 @@ cmd_diff(int ac, const char **av)
     struct bu_opt_desc diff_opt_desc[] = {
 	{"h", "help",          "",       NULL,         &need_help,            "Print help and exit."                             },
 	{"?", "",              "",       NULL,         &need_help,            "",                                                },
-	{"o", "output",        "file",   &bu_opt_str,  (void *)&out_path_str, "Output diff image file."                         },
-	{"",  "output-format", "format", &image_mime,  (void *)&out_type,     "File format for output image."                   },
-	{"",  "format-img1",   "format", &image_mime,  (void *)&in_type_1,    "File format of first input image."               },
-	{"",  "format-img2",   "format", &image_mime,  (void *)&in_type_2,    "File format of second input image."              },
-	{"",  "width-img1",    "#",      &bu_opt_int,  (void *)&width1,       "Width of first input image (raw formats only)."  },
-	{"",  "height-img1",   "#",      &bu_opt_int,  (void *)&height1,      "Height of first input image (raw formats only)." },
-	{"",  "width-img2",    "#",      &bu_opt_int,  (void *)&width2,       "Width of second input image (raw formats only)." },
-	{"",  "height-img2",   "#",      &bu_opt_int,  (void *)&height2,      "Height of second input image (raw formats only)."},
+	{"o", "output",        "file",   &bu_opt_str, (void *)&out_path_str, "Output diff image file."                         },
+	{"",  "output-format", "format", &image_mime, (void *)&out_type,     "File format for output image."                   },
+	{"",  "format-img1",   "format", &image_mime, (void *)&in_type_1,    "File format of first input image."               },
+	{"",  "format-img2",   "format", &image_mime, (void *)&in_type_2,    "File format of second input image."              },
+	{"",  "width-img1",    "#",      &bu_opt_int, (void *)&width1,       "Width of first input image (raw formats only)."  },
+	{"",  "height-img1",   "#",      &bu_opt_int, (void *)&height1,      "Height of first input image (raw formats only)." },
+	{"",  "width-img2",    "#",      &bu_opt_int, (void *)&width2,       "Width of second input image (raw formats only)." },
+	{"",  "height-img2",   "#",      &bu_opt_int, (void *)&height2,      "Height of second input image (raw formats only)."},
 	BU_OPT_DESC_NULL
     };
 
@@ -291,6 +291,158 @@ cmd_diff(int ac, const char **av)
 }
 
 
+/* ---- icv anim subcommand ---------------------------------------------- */
+
+static int
+cmd_anim(int ac, const char **av)
+{
+    if (ac < 2) {
+	bu_log("Usage:\n"
+	       "  icv anim add <anim_file> <img1> [<img2> ...]\n"
+	       "  icv anim extract <anim_file> <out_prefix>\n"
+	       "  icv anim replace <anim_file> <index> <img_file>\n"
+	       "  icv anim insert <anim_file> <index> <img_file>\n"
+	       "  icv anim remove <anim_file> <index>\n"
+	       "  icv anim set-fps <anim_file> <fps>\n"
+	       "  icv anim set-delay <anim_file> <index> <delay_usec>\n"
+	       "Note: <index> is 1-based.\n"
+	       "When creating a new animation via 'add', format is inferred from the extension (.apng or .avi).\n");
+	return 1;
+    }
+
+    const char *action = av[0];
+    const char *anim_file = av[1];
+
+    if (BU_STR_EQUAL(action, "add")) {
+	if (ac < 3) return 1;
+
+	icv_anim_t *anim = icv_anim_read(anim_file);
+	if (!anim) {
+	    icv_anim_format_t fmt = ICV_ANIM_UNKNOWN;
+	    if (strstr(anim_file, ".apng") || strstr(anim_file, ".png")) fmt = ICV_ANIM_APNG;
+	    else if (strstr(anim_file, ".avi") || strstr(anim_file, ".mjpg")) fmt = ICV_ANIM_MJPG;
+	    if (fmt == ICV_ANIM_UNKNOWN) {
+		bu_log("Unknown animation format for '%s'. Use .apng or .avi extension.\n", anim_file);
+		return 1;
+	    }
+	    anim = icv_anim_create(fmt, 0, 0, 10);
+	}
+
+	for (int i = 2; i < ac; ++i) {
+	    bu_mime_image_t type = mime_from_path(av[i]);
+	    icv_image_t *img = icv_read_auto(av[i], type, 0, 0);
+	    if (!img) {
+		bu_log("Failed to read image '%s'\n", av[i]);
+		continue;
+	    }
+	    icv_anim_add_frame(anim, img);
+	    icv_destroy(img);
+	}
+
+	icv_anim_write(anim, anim_file);
+	icv_anim_free(anim);
+	return 0;
+
+    } else if (BU_STR_EQUAL(action, "extract")) {
+	if (ac < 3) return 1;
+	const char *out_prefix = av[2];
+
+	icv_anim_t *anim = icv_anim_read(anim_file);
+	if (!anim) {
+	    bu_log("Failed to read animation '%s'\n", anim_file);
+	    return 1;
+	}
+
+	size_t num = icv_anim_num_frames(anim);
+	for (size_t i = 0; i < num; ++i) {
+	    icv_image_t *img = icv_anim_get_frame(anim, i);
+	    if (img) {
+		char out_name[1024];
+		snprintf(out_name, sizeof(out_name), "%s%03zu_ctrl.png", out_prefix, i + 1);
+		icv_write(img, out_name, BU_MIME_IMAGE_PNG);
+		icv_destroy(img);
+	    }
+	}
+	icv_anim_free(anim);
+	return 0;
+
+    } else if (BU_STR_EQUAL(action, "replace") || BU_STR_EQUAL(action, "insert") || BU_STR_EQUAL(action, "remove")) {
+	if (BU_STR_EQUAL(action, "remove")) {
+	    if (ac < 3) return 1;
+	} else {
+	    if (ac < 4) return 1;
+	}
+	long idx = strtol(av[2], NULL, 10);
+	if (idx < 1) {
+	    bu_log("Invalid index %ld. Must be >= 1.\n", idx);
+	    return 1;
+	}
+
+	icv_anim_t *anim = icv_anim_read(anim_file);
+	if (!anim) {
+	    bu_log("Failed to read animation '%s'\n", anim_file);
+	    return 1;
+	}
+
+	size_t i = (size_t)(idx - 1);
+	icv_image_t *img = NULL;
+	if (!BU_STR_EQUAL(action, "remove")) {
+	    bu_mime_image_t type = mime_from_path(av[3]);
+	    img = icv_read_auto(av[3], type, 0, 0);
+	    if (!img) {
+		bu_log("Failed to read image '%s'\n", av[3]);
+		icv_anim_free(anim);
+		return 1;
+	    }
+	}
+
+	if (BU_STR_EQUAL(action, "replace")) {
+	    icv_anim_replace_frame(anim, i, img);
+	} else if (BU_STR_EQUAL(action, "insert")) {
+	    icv_anim_insert_frame(anim, i, img);
+	} else if (BU_STR_EQUAL(action, "remove")) {
+	    icv_anim_remove_frame(anim, i);
+	}
+	if (img) icv_destroy(img);
+
+	icv_anim_write(anim, anim_file);
+	icv_anim_free(anim);
+	return 0;
+
+    } else if (BU_STR_EQUAL(action, "set-fps") || BU_STR_EQUAL(action, "set-delay")) {
+	if (BU_STR_EQUAL(action, "set-fps") && ac < 3) return 1;
+	if (BU_STR_EQUAL(action, "set-delay") && ac < 4) return 1;
+
+	icv_anim_t *anim = icv_anim_read(anim_file);
+	if (!anim) {
+	    bu_log("Failed to read animation '%s'\n", anim_file);
+	    return 1;
+	}
+
+	if (BU_STR_EQUAL(action, "set-fps")) {
+	    int fps = atoi(av[2]);
+	    icv_anim_set_fps(anim, fps);
+	} else {
+	    long idx = strtol(av[2], NULL, 10);
+	    if (idx < 1) {
+		bu_log("Invalid index %ld. Must be >= 1.\n", idx);
+		icv_anim_free(anim);
+		return 1;
+	    }
+	    uint32_t delay = (uint32_t)strtoul(av[3], NULL, 10);
+	    icv_anim_set_frame_delay(anim, (size_t)(idx - 1), delay);
+	}
+
+	icv_anim_write(anim, anim_file);
+	icv_anim_free(anim);
+	return 0;
+    }
+
+    bu_log("Unknown action '%s'\n", action);
+    return 1;
+}
+
+
 /* ---- top-level usage -------------------------------------------------- */
 
 static void
@@ -298,10 +450,12 @@ print_usage(void)
 {
     bu_log("Usage: icv [options] input output\n"
 	   "       icv info filename [filename ...]\n"
-	   "       icv diff [options] img1 img2\n\n"
+	   "       icv diff [options] img1 img2\n"
+	   "       icv anim <action> <anim_file> ...\n\n"
 	   "Subcommands:\n"
 	   "  info   Report image size, format, and other information.\n"
-	   "  diff   Compare two images (pixdiff-compatible; see 'icv diff -h').\n\n"
+	   "  diff   Compare two images (pixdiff-compatible; see 'icv diff -h').\n"
+	   "  anim   Manage animation files (APNG, MJPG). Run 'icv anim' for usage.\n\n"
 	   "Without a subcommand, icv converts the input image to the output format\n"
 	   "as inferred from the file extensions (or specified with --input-format /\n"
 	   "--output-format).\n");
@@ -340,16 +494,17 @@ main(int ac, const char **av)
     struct bu_opt_desc icv_opt_desc[] = {
 	{"h", "help",             "",           NULL,          &need_help,            "Print help and exit."        },
 	{"?", "",                 "",           NULL,          &need_help,            "",                           },
-	{"i", "input",            "file",       &file_stat,   (void *)&in_path_str,   "Input file.",                },
-	{"o", "output",           "file",       &file_null,   (void *)&out_path_str,  "Output file.",               },
-	{"w", "width",            "#",          &bu_opt_int,  (void *)&width,         "Image width.",               },
-	{"n", "height",           "#",          &bu_opt_int,  (void *)&height,        "Image height.",              },
-	{"",  "input-format",     "format",     &image_mime,  (void *)&in_type,       "File format of input file.", },
-	{"",  "output-format",    "format",     &image_mime,  (void *)&out_type,      "File format of output file." },
+	{"i", "input",            "file",       &file_stat, (void *)&in_path_str,   "Input file.",                },
+	{"o", "output",           "file",       &file_null, (void *)&out_path_str,  "Output file.",               },
+	{"w", "width",            "#",          &bu_opt_int, (void *)&width,         "Image width.",               },
+	{"n", "height",           "#",          &bu_opt_int, (void *)&height,        "Image height.",              },
+	{"",  "input-format",     "format",     &image_mime, (void *)&in_type,       "File format of input file.", },
+	{"",  "output-format",    "format",     &image_mime, (void *)&out_type,      "File format of output file." },
 	BU_OPT_DESC_NULL
     };
 
-    ac-=(ac>0); av+=(ac>0); /* skip program name argv[0] if present */
+    ac-=(ac>0);
+    av+=(ac>0); /* skip program name argv[0] if present */
 
     if (ac == 0) {
 	print_usage();
@@ -361,6 +516,8 @@ main(int ac, const char **av)
 	return cmd_info(ac - 1, av + 1);
     if (BU_STR_EQUAL(av[0], "diff"))
 	return cmd_diff(ac - 1, av + 1);
+    if (BU_STR_EQUAL(av[0], "anim"))
+	return cmd_anim(ac - 1, av + 1);
 
     uac = bu_opt_parse(&parse_msgs, ac, av, icv_opt_desc);
 

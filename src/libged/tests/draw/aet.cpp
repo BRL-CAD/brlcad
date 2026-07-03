@@ -36,6 +36,7 @@
 
 #include "../../dbi.h"
 
+extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
 void
 dm_refresh(struct ged *gedp, int vnum)
 {
@@ -177,6 +178,11 @@ main(int ac, char *av[]) {
     bu_mkdir(lcache);
     bu_setenv("BU_DIR_CACHE", lcache, 1);
 
+    unpack_apng(av[1], "aet_00.apng", lcache, "aet_00_");
+    unpack_apng(av[1], "aet_01.apng", lcache, "aet_01_");
+    unpack_apng(av[1], "aet_02.apng", lcache, "aet_02_");
+    unpack_apng(av[1], "aet_03.apng", lcache, "aet_03_");
+
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;
@@ -284,10 +290,10 @@ main(int ac, char *av[]) {
     ged_exec_draw(gedp, 4, s_av);
 
     // Sanity
-    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(1, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(2, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(3, 1, gedp, lcache, soft_fail);
 
     // Resize dm to larger dimensions
     bu_log("Resize to 600x600...\n");
@@ -303,10 +309,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    ret += img_cmp(0, 2, gedp, av[1], soft_fail);
-    ret += img_cmp(1, 2, gedp, av[1], soft_fail);
-    ret += img_cmp(2, 2, gedp, av[1], soft_fail);
-    ret += img_cmp(3, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 2, gedp, lcache, soft_fail);
+    ret += img_cmp(1, 2, gedp, lcache, soft_fail);
+    ret += img_cmp(2, 2, gedp, lcache, soft_fail);
+    ret += img_cmp(3, 2, gedp, lcache, soft_fail);
 
     // Shrink back to default dimensions
     bu_log("Shrink to 512x512...\n");
@@ -322,10 +328,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(1, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(2, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(3, 1, gedp, lcache, soft_fail);
 
     // Cycle through a bunch of resizes
     bu_log("Cycle through multiple resizes...\n");
@@ -354,10 +360,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(1, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(2, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(3, 1, gedp, lcache, soft_fail);
 
     ged_close(gedp);
 

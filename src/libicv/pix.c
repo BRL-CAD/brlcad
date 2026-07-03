@@ -55,6 +55,30 @@ pix_write(icv_image_t *bif, FILE *fp)
     return BRLCAD_OK;
 }
 
+int
+pix_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize)
+{
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!outbuffer || !outsize))
+	return BRLCAD_ERROR;
+
+    if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
+	icv_gray2rgb(bif);
+    } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
+	bu_log("pix_write_mem : Color Space conflict");
+	return BRLCAD_ERROR;
+    }
+
+    *outsize = (size_t)bif->width * bif->height * 3;
+    *outbuffer = (unsigned char *)bu_malloc(*outsize, "pix_write_mem buffer");
+
+    unsigned char *data = icv_data2uchar(bif);
+    memcpy(*outbuffer, data, *outsize);
+    bu_free(data, "pix_write_mem : Unsigned Char data");
+
+    return BRLCAD_OK;
+}
 
 icv_image_t *
 pix_read(FILE *fp, size_t width, size_t height)
@@ -116,6 +140,45 @@ pix_read(FILE *fp, size_t width, size_t height)
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 3;
     bif->color_space = ICV_COLOR_SPACE_RGB;
+    return bif;
+}
+
+icv_image_t *
+pix_read_mem(const unsigned char *buffer, size_t size, size_t width, size_t height)
+{
+    if (UNLIKELY(!buffer || size == 0))
+	return NULL;
+
+    icv_image_t *bif;
+    BU_ALLOC(bif, struct icv_image);
+    ICV_IMAGE_INIT(bif);
+
+    if (width == 0 || height == 0) {
+	bif->height = 1;
+	bif->width = (int)(size / 3);
+	size = bif->width * 3; // Align to 3 bytes
+    } else {
+	if (size < width * height * 3) {
+	    bu_log("pix_read_mem: provided size is smaller than width*height*3\n");
+	    bu_free(bif, "icv_structure");
+	    return NULL;
+	}
+	bif->height = height;
+	bif->width = width;
+	size = width * height * 3;
+    }
+
+    if (size == 0) {
+	bu_free(bif, "icv container");
+	return NULL;
+    }
+
+    bif->data = icv_uchar2double((unsigned char *)buffer, size);
+    bif->magic = ICV_IMAGE_MAGIC;
+    bif->channels = 3;
+    bif->color_space = ICV_COLOR_SPACE_RGB;
+    bif->gamma_corr = 0.0;
+
     return bif;
 }
 

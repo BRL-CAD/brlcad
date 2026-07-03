@@ -23,6 +23,8 @@
  *
  */
 
+#include "common.h"
+#include <string.h>
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "icv_private.h"
@@ -55,6 +57,32 @@ bw_write(icv_image_t *bif, FILE *fp)
 
     return BRLCAD_OK;
 }
+
+int
+bw_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize)
+{
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!outbuffer || !outsize))
+	return BRLCAD_ERROR;
+
+    if (bif->color_space == ICV_COLOR_SPACE_RGB) {
+	icv_rgb2gray(bif, ICV_COLOR_RGB, 0, 0, 0);
+    } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
+	bu_log("bw_write_mem : Color Space conflict");
+	return BRLCAD_ERROR;
+    }
+
+    *outsize = (size_t)bif->height * bif->width;
+    *outbuffer = (unsigned char *)bu_malloc(*outsize, "bw_write_mem buffer");
+
+    unsigned char *data = icv_data2uchar(bif);
+    memcpy(*outbuffer, data, *outsize);
+    bu_free(data, "bw_write_mem : Unsigned Char data");
+
+    return BRLCAD_OK;
+}
+
 
 icv_image_t *
 bw_read(FILE *fp, size_t width, size_t height)
@@ -119,6 +147,39 @@ bw_read(FILE *fp, size_t width, size_t height)
 
     bu_free(data, "bw_read : unsigned char data");
 
+    bif->magic = ICV_IMAGE_MAGIC;
+    bif->channels = 1;
+    bif->color_space = ICV_COLOR_SPACE_GRAY;
+    bif->gamma_corr = 0.0;
+
+    return bif;
+}
+
+icv_image_t *
+bw_read_mem(const unsigned char *buffer, size_t size, size_t width, size_t height)
+{
+    if (UNLIKELY(!buffer || size == 0))
+	return NULL;
+
+    icv_image_t *bif;
+    BU_ALLOC(bif, struct icv_image);
+    ICV_IMAGE_INIT(bif);
+
+    if (width == 0 || height == 0) {
+	bif->height = 1;
+	bif->width = (int)size;
+    } else {
+	if (size < width * height) {
+	    bu_log("bw_read_mem: provided size is smaller than width*height\n");
+	    bu_free(bif, "icv_structure");
+	    return NULL;
+	}
+	bif->height = height;
+	bif->width = width;
+	size = width * height;
+    }
+
+    bif->data = icv_uchar2double((unsigned char *)buffer, size);
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 1;
     bif->color_space = ICV_COLOR_SPACE_GRAY;

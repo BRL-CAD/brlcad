@@ -26,6 +26,7 @@ endif()
 set(
   LIBICV_SOURCES
   PImgHash.cpp
+  anim.cpp
   asciiart.cpp
   bw.c
   color_space.c
@@ -72,10 +73,11 @@ add_subdirectory(tests)
 
 cmakefiles(
   CMakeLists.txt
-  TODO
   PImgHash.h
-  pixcii.hpp
+  TODO
+  apngmini.hpp
   icv_private.h
+  pixcii.hpp
   rle.hpp
 )
 

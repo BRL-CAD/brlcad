@@ -64,7 +64,7 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 
     /* no format header found, copy the name as it is */
     if (trimmedname)
-        bu_vls_sprintf(trimmedname, filename, BUFSIZ);
+	bu_vls_sprintf(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
 #define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_MIME_IMAGE_##name;
@@ -133,6 +133,47 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
     return oimg;
 }
 
+icv_image_t *
+icv_read_mem(const unsigned char *buffer, size_t size, bu_mime_image_t format, size_t width, size_t height)
+{
+    if (!buffer || size == 0) {
+	return NULL;
+    }
+
+    (void)width;
+    (void)height;
+
+    icv_image_t *oimg = NULL;
+    switch (format) {
+	case BU_MIME_IMAGE_JPEG:
+	    oimg = jpeg_read_mem(buffer, size);
+	    break;
+	case BU_MIME_IMAGE_PNG:
+	    oimg = png_read_mem(buffer, size);
+	    break;
+	case BU_MIME_IMAGE_PIX:
+	    oimg = pix_read_mem(buffer, size, width, height);
+	    break;
+	case BU_MIME_IMAGE_BW:
+	    oimg = bw_read_mem(buffer, size, width, height);
+	    break;
+	case BU_MIME_IMAGE_DPIX:
+	    oimg = dpix_read_mem(buffer, size, width, height);
+	    break;
+	case BU_MIME_IMAGE_PPM:
+	    oimg = ppm_read_mem(buffer, size);
+	    break;
+	case BU_MIME_IMAGE_RLE:
+	    oimg = rle_read_mem(buffer, size);
+	    break;
+	default:
+	    bu_log("icv_read_mem not implemented for this format\n");
+	    return NULL;
+    }
+
+    return oimg;
+}
+
 
 int
 icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
@@ -195,6 +236,49 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
     return ret;
 }
 
+int
+icv_write_mem(icv_image_t *bif, unsigned char **buffer, size_t *size, bu_mime_image_t format)
+{
+    int ret = 0;
+
+    if (!bif || !buffer || !size) {
+	return BRLCAD_ERROR;
+    }
+
+    *buffer = NULL;
+    *size = 0;
+
+    ICV_IMAGE_VAL_INT(bif);
+
+    switch (format) {
+	case BU_MIME_IMAGE_JPEG:
+	    ret = jpeg_write_mem(bif, buffer, size, 90);
+	    break;
+	case BU_MIME_IMAGE_PNG:
+	    ret = png_write_mem(bif, buffer, size);
+	    break;
+	case BU_MIME_IMAGE_PPM:
+	    ret = ppm_write_mem(bif, buffer, size);
+	    break;
+	case BU_MIME_IMAGE_BW:
+	    ret = bw_write_mem(bif, buffer, size);
+	    break;
+	case BU_MIME_IMAGE_PIX:
+	    ret = pix_write_mem(bif, buffer, size);
+	    break;
+	case BU_MIME_IMAGE_DPIX:
+	    ret = dpix_write_mem(bif, buffer, size);
+	    break;
+	case BU_MIME_IMAGE_RLE:
+	    ret = rle_write_mem(bif, buffer, size);
+	    break;
+	default:
+	    bu_log("ERROR: icv_write_mem not implemented for this format\n");
+	    return BRLCAD_ERROR;
+    }
+
+    return ret;
+}
 
 int
 icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type)
@@ -209,7 +293,7 @@ icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type)
     ICV_IMAGE_VAL_INT(bif);
 
     if (y >= bif->height)
-        return -1;
+	return -1;
 
     width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
@@ -217,9 +301,9 @@ icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type)
     if (type == ICV_DATA_UCHAR) {
 	p = (unsigned char *)data;
 	for (; width_size > 0; width_size--) {
-		*dst = ICV_CONV_8BIT(*p);
-		p++;
-		dst++;
+	    *dst = ICV_CONV_8BIT(*p);
+	    p++;
+	    dst++;
 	}
     } else
 	memcpy(dst, data, width_size*sizeof(double));
@@ -237,13 +321,13 @@ icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data)
     ICV_IMAGE_VAL_INT(bif);
 
     if (x >= bif->width)
-        return -1;
+	return -1;
 
     if (y >= bif->height)
-        return -1;
+	return -1;
 
     if (data == NULL)
-        return -1;
+	return -1;
 
     dst = bif->data + (y*bif->width + x)*bif->channels;
 

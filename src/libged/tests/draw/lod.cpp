@@ -38,6 +38,7 @@
 
 extern "C" void ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
 extern "C" int img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root);
+extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
 
 int
 main(int ac, char *av[]) {
@@ -83,9 +84,11 @@ main(int ac, char *av[]) {
 
     /* We want a local working dir cache */
     char lcache[MAXPATHLEN] = {0};
-    bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_draw_test_lod_cache", NULL);
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_lod_test_cache", NULL);
     bu_mkdir(lcache);
     bu_setenv("BU_DIR_CACHE", lcache, 1);
+
+    unpack_apng(av[1], "lod.apng", lcache, "lod");
 
     /* We are going to generate geometry from the basic moss data,
      * so we make a temporary copy */
@@ -197,7 +200,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(1, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(1, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
     bu_log("Done.\n");
 
     bu_log("Enable LoD, using coarse scale to enhance visual change...\n");
@@ -215,7 +218,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(2, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(2, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Disable LoD\n");
     s_av[0] = "view";
@@ -225,7 +228,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(1, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(1, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Re-enable LoD\n");
     s_av[0] = "view";
@@ -235,7 +238,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(2, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(2, gedp, lcache, true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Done.\n");
 
@@ -273,7 +276,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(3, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(3, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
     bu_log("Done.\n");
 
     bu_log("Enable LoD, keeping above coarse scale to enhance visual change...\n");
@@ -284,7 +287,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(4, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(4, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Disable LoD\n");
     s_av[0] = "view";
@@ -294,7 +297,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(3, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(3, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Re-enable LoD\n");
     s_av[0] = "view";
@@ -304,7 +307,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(4, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(4, gedp, lcache, true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Done.\n");
 
@@ -328,7 +331,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(5, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(5, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
     bu_log("Done.\n");
 
     bu_log("Enable LoD...\n");
@@ -339,7 +342,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(6, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(6, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Disable LoD\n");
     s_av[0] = "view";
@@ -349,7 +352,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(5, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(5, gedp, lcache, false, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Re-enable LoD\n");
     s_av[0] = "view";
@@ -359,7 +362,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec_view(gedp, 4, s_av);
 
-    ret += img_cmp(6, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(6, gedp, lcache, true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     bu_log("Done.\n");
 
@@ -405,7 +408,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(2, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(2, gedp, lcache, true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
@@ -417,7 +420,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(4, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
+    ret += img_cmp(4, gedp, lcache, true, clear_images, soft_fail, ADIFF_THRES, "lod_clear", "lod");
 
     /* Fully clear any cached LoD data */
     s_av[0] = "view";
