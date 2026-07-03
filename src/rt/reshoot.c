@@ -425,7 +425,9 @@ main(int argc, char **argv)
 	}
 	bu_vls_trunc(&buf, 0);
     }
-    status |= do_shot(&sh, &ap);
+    if (BU_LIST_NON_EMPTY(&sh.regions)) {
+	status |= do_shot(&sh, &ap);
+    }
 
 
     return status;
