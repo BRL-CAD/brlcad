@@ -71,7 +71,7 @@ revolve(size_t entityno)
     fastf_t hmax, hmin;		/* Max and Min distances along axis of rotation */
     fastf_t rmax;			/* Max radius */
     int cutop = Intersect;	/* Operator for cutting solid */
-    struct bu_vls cutname;	/* Name for cutting solid */
+    struct bu_vls cutname = BU_VLS_INIT_ZERO;	/* Name for cutting solid */
     struct subtracts *subp;
     int i;
 
@@ -298,6 +298,8 @@ revolve(size_t entityno)
 	fastf_t theta = 0.0;
 	point_t pts[8];
 
+	bu_vls_sprintf(&cutname, "rev.%zu.cut", entityno);
+
 	/* Calculate direction from axis to curve */
 	len = 0.0;
 	ptr = curv_pts;
@@ -364,6 +366,7 @@ revolve(size_t entityno)
 	if (mk_arb8(fdout, bu_vls_cstr(&cutname), &pts[0][X]) < 0) {
 	    bu_log("Unable to write ARB8 for entity D%07d (%s)\n" ,
 		   dir[entityno]->direct, dir[entityno]->name);
+	    bu_vls_free(&cutname);
 	    return 0;
 	}
     }
@@ -395,6 +398,7 @@ revolve(size_t entityno)
 		 (char *)0, (char *)0, (unsigned char *)0, 0) < 0) {
 	bu_log("Unable to make combination for entity D%07d (%s)\n" ,
 	       dir[entityno]->direct, dir[entityno]->name);
+	bu_vls_free(&cutname);
 	return 0;
     }
 
@@ -407,6 +411,7 @@ revolve(size_t entityno)
 	bu_free((char *)trcptr, "Revolve: trcptr");
 	trcptr = trcptr_tmp;
     }
+    bu_vls_free(&cutname);
     return 1;
 }
 
