@@ -37,9 +37,6 @@
 #include "optical/light.h"
 
 
-/* from view.c */
-extern double AmbientIntensity;
-
 /* Local information */
 struct cook_specific {
     double m;		/* rms slope - should be a vector of these XXX*/
