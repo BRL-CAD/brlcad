@@ -58,13 +58,11 @@ extern FILE *fdopen(int fd, const char *mode);
 #endif
 
 /***** Variables shared with viewing model *** */
-extern FILE *outfp;			/* optional pixel output file */
 extern mat_t view2model;
 extern mat_t model2view;
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with opt.c *****/
-extern int	orientflag;		/* 1 means orientation has been set */
 /***** end variables shared with opt.c *****/
 
 /***** variables shared with rt.c *****/
@@ -524,8 +522,6 @@ parse_deprecated(const struct bu_structparse *UNUSED(sp), const char *name, void
 }
 
 
-/* viewing module specific variables */
-extern struct bu_structparse view_parse[];
 static int rt_bot_minpieces_deprecated = 0;
 
 /* Per-application CLINE beam radius override.  Negative means "no override".

@@ -62,11 +62,6 @@
 
 void part_compact(register struct application *ap, register struct partition *PartHeadp, fastf_t tolerance);
 
-extern fastf_t gift_grid_rounding;
-extern point_t viewbase_model;
-
-extern int rpt_overlap;
-
 struct bu_vls ray_data_file = BU_VLS_INIT_ZERO;  /* file name for ray data output */
 FILE *shot_fp;				/* FILE pointer for ray data output */
 static long line_num;			/* count of lines output to shotline file */

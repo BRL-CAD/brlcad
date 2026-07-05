@@ -83,31 +83,16 @@ struct icv_image *bif = NULL;
 /***** variables shared with worker() ******/
 struct application APP;
 int		report_progress;	/* !0 = user wants progress report */
-extern int	incr_mode;		/* !0 for incremental resolution */
-extern size_t	incr_nlevel;		/* number of levels */
 /***** end variables shared with worker() *****/
 
 
 /***** variables shared with do.c *****/
-extern int	pix_start;		/* pixel to start at */
-extern int	pix_end;		/* pixel to end at */
 size_t		n_malloc;		/* Totals at last check */
 size_t		n_free;
 size_t		n_realloc;
-extern int	matflag;		/* read matrix from stdin */
-extern int	orientflag;		/* 1 means orientation has been set */
-extern int	desiredframe;		/* frame to start at */
-extern int	curframe;		/* current frame number,
-					 * also shared with view.c */
-extern char	*outputfile;		/* name of base of output file */
 /***** end variables shared with do.c *****/
 
 
-extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
-extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
-extern char	*framebuffer;		/* desired framebuffer */
-
-extern struct command_tab rt_do_tab[];
 
 
 void

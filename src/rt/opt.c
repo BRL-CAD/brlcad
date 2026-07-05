@@ -188,9 +188,6 @@ int space_partition = RT_PART_NUBSPT;
 #define MAX_WIDTH (32*1024)
 
 
-extern struct command_tab rt_do_tab[];
-
-
 /* this helper function is used to increase a bit variable through
  * five levels (8 bits set at a time, 0 through level 4).  this can be
  * used to incrementally increase uint32 bits as typically used for

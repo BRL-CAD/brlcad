@@ -41,8 +41,6 @@
 #include "./ext.h"
 
 
-extern FILE *outfp;
-extern size_t width, height;
 static unsigned char *scanline;
 
 /*

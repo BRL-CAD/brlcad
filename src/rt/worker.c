@@ -56,14 +56,6 @@
 extern fastf_t** timeTable_init(int x, int y);
 extern void timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
 
-extern int query_x;
-extern int query_y;
-extern int Query_one_pixel;
-extern int query_optical_debug;
-extern int query_debug;
-
-extern unsigned char *pixmap;	/* pixmap for rerendering of black pixels */
-
 int per_processor_chunk = 0;	/* how many pixels to do at once */
 
 int fullfloat_mode = 0;

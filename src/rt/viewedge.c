@@ -112,13 +112,6 @@
 #endif
 
 
-extern struct fb *fbp;	/* Framebuffer handle */
-extern fastf_t viewsize;
-extern int lightmodel;
-extern size_t width, height;
-extern int per_processor_chunk;
-extern int default_background;
-
 static int pixsize = 0;	/* bytes per pixel in scanline */
 
 struct cell {
