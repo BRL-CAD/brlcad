@@ -66,6 +66,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "vmath.h"  /* Needed only for the deprecated functions below using fastf_t */
 #include "nmg.h"    /* for struct nmg_rec */
 
@@ -73,8 +75,11 @@ __BEGIN_DECLS
 
 #define NAMESIZE		16
 
-/* don't use bu_strlcpy for NAMEMOVE */
-#define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
+/* Fixed-width database name fields need truncation and zero fill. */
+#define NAMEMOVE(from,to) do { \
+	memset((to), 0, NAMESIZE); \
+	memcpy((to), (from), strnlen((const char *)(from), NAMESIZE - 1)); \
+    } while (0)
 
 /*
  *  Define the database format for storing binary floating point values.

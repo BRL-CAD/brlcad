@@ -35,10 +35,10 @@
 #include "bu/parallel.h"
 #include "bu/str.h"
 
-#ifndef HAVE_DECL_STRLCAT
+#if defined(HAVE_STRLCAT) && !defined(HAVE_DECL_STRLCAT) && !defined(strlcat)
 extern size_t strlcat(char *, const char *, size_t);
 #endif
-#ifndef HAVE_DECL_STRLCPY
+#if defined(HAVE_STRLCPY) && !defined(HAVE_DECL_STRLCPY) && !defined(strlcpy)
 extern size_t strlcpy(char *, const char *, size_t);
 #endif
 
