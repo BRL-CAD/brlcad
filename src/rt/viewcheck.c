@@ -49,17 +49,10 @@
 
 #define OVLP_TOL 0.1
 
-extern int rpt_overlap;		/* report overlapping region names */
-extern int output_is_binary;
-
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
-
-
-extern FILE *outfp;
 
 
 EXTERNCPP const char title[] = "RT Check";

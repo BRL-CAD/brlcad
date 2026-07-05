@@ -99,9 +99,6 @@ struct application APP;
 int report_progress = 0;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
-/* Variables shared elsewhere */
-extern fastf_t rt_dist_tol;	/* Value for rti_tol.dist */
-extern fastf_t rt_perp_tol;	/* Value for rti_tol.perp */
 static char idbuf[132] = {0};		/* First ID record info */
 
 /* State flags */
@@ -713,8 +710,6 @@ process_cmd(char *buf)
     char *sp;
     char *ep;
     int len;
-    extern struct command_tab rt_do_tab[];	/* from do.c */
-
     /* Parse the string */
     len = strlen(buf);
     ep = buf+len;

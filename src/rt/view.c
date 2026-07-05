@@ -63,15 +63,6 @@
 #include "./ext.h"
 
 
-extern struct fb *fbp;			/* Framebuffer handle */
-
-extern int curframe;		/* from main.c */
-extern double airdensity;	/* from opt.c */
-extern double haze[3];		/* from opt.c */
-extern int do_kut_plane;        /* from opt.c */
-extern plane_t kut_plane;       /* from opt.c */
-extern struct icv_image *bif;
-extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 extern fastf_t** timeTable_init(int x, int y);  /* from heatgraph.c */
 extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct fb *efbp); /* from heatgraph.c */
 extern void free_scanlines(int, struct scanline *);
@@ -1403,11 +1394,6 @@ reproject_splat(int ix, int iy, struct floatpixel *ip, const fastf_t *new_view_p
 
 
 /* Local communication a.la. worker() */
-extern int per_processor_chunk;	/* how many pixels to do at once */
-extern int cur_pixel;		/* current pixel number, 0..last_pixel */
-extern int last_pixel;		/* last pixel number */
-extern int pix_start;		/* starting pixel of frame, from do.c */
-
 void
 reproject_worker(int UNUSED(cpu), void *UNUSED(arg))
 {

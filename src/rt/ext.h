@@ -28,6 +28,7 @@
 
 #include "optical.h"
 #include "dm.h"
+#include "rt/cmd.h"
 #include "bu/parallel.h" /* for MAX_PSW */
 #include "bu/ptbl.h"
 
@@ -70,8 +71,10 @@ extern int rt_verbosity; /* from opt.c */
 /***** Variables declared in opt.c *****/
 extern char *framebuffer;		/* desired framebuffer */
 extern fastf_t azimuth, elevation;
+extern int doubles_out;			/* u_char or double .pix output file */
 extern int Query_one_pixel;
 extern int benchmark;
+extern int default_background;		/* default background enabled */
 extern int lightmodel;			/* Select lighting model */
 extern int query_debug;
 extern int query_optical_debug;
@@ -88,6 +91,9 @@ extern int top_down;			/* reverse the order of grid traversal */
 extern int use_air;			/* Handling of air in librt */
 extern int random_mode;                 /* Mode to shoot rays at random directions */
 extern int opencl_mode;			/* enable/disable OpenCL */
+extern int default_units;		/* default output units enabled */
+extern int model_units;			/* output model units */
+extern double units;			/* local units conversion */
 
 /***** variables from grid.c *****/
 extern mat_t model2view;
@@ -96,6 +102,7 @@ extern point_t viewbase_model;		/* model-space location of viewplane corner */
 extern fastf_t gift_grid_rounding;
 
 /***** variables from main.c *****/
+extern struct fb *fbp;			/* framebuffer handle */
 extern FILE *outfp;			/* optional output file */
 extern int output_is_binary;		/* !0 means output is binary */
 extern int report_progress;		/* !0 = user wants progress report */
@@ -114,15 +121,19 @@ extern fastf_t eye_backoff;		/* dist from eye to center */
 extern fastf_t rt_perspective;		/* presp (degrees X) 0 => ortho */
 extern fastf_t viewsize;
 extern int cell_newsize;		/* new grid cell size (for worker) */
+extern int cur_pixel;			/* current pixel number, 0..last_pixel */
 extern int fullfloat_mode;
 extern int hypersample;			/* number of extra rays to fire */
 extern int incr_mode;			/* !0 for incremental resolution */
+extern int last_pixel;			/* last pixel number */
+extern int per_processor_chunk;		/* work chunk size */
 extern int full_incr_mode;              /* !0 for fully incremental resolution */
 extern ssize_t npsw;			/* number of worker PSWs to run */
 extern int reproj_cur;			/* number of pixels reprojected this frame */
 extern int reproj_max;			/* out of total number of pixels */
 extern int reproject_mode;
 extern int stereo;			/* stereo viewing */
+extern unsigned char *pixmap;		/* pixmap for rerendering of black pixels */
 extern mat_t Viewrotscale;
 extern point_t eye_model;		/* model-space location of eye */
 extern size_t height;			/* # of lines in Y */
@@ -155,13 +166,27 @@ extern int objc;			/* Number of cmd-line treetops */
 extern char **objv;			/* array of treetop strings */
 extern struct bu_ptbl *cmd_objs;               /* container to hold cmd specified objects */
 extern char *outputfile;		/* name of base of output file */
+extern char *string_pix_end;		/* string spec of ending pixel */
+extern char *string_pix_start;		/* string spec of starting pixel */
 extern int benchmark;			/* No random numbers:  benchmark */
 extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
+extern int finalframe;			/* frame to halt at */
 extern int matflag;			/* read matrix from stdin */
+extern int orientflag;			/* 1 means orientation has been set */
 extern int pix_end;			/* pixel to end at */
 extern int pix_start;			/* pixel to start at */
 /***** end variables shared with do.c *****/
+
+extern fastf_t rt_dist_tol;		/* Value for rti_tol.dist */
+extern fastf_t rt_perp_tol;		/* Value for rti_tol.perp */
+extern struct command_tab rt_do_tab[];
+extern struct bu_structparse view_parse[];
+extern double airdensity;
+extern double haze[3];
+extern int do_kut_plane;
+extern plane_t kut_plane;
+extern const char *densityfile;
 
 /*** do.c ***/
 extern int def_tree(struct rt_i *rtip, const char **first_obj);

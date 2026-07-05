@@ -48,10 +48,6 @@
 #include "./ext.h"
 
 
-extern	struct fb *fbp;
-extern	FILE	*outfp;
-extern	fastf_t	viewsize;
-
 unsigned char *scanbuf;
 static int pixsize = 0;		/* bytes per pixel in scanbuf */
 

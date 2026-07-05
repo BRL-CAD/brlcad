@@ -52,8 +52,6 @@
 #include "./ext.h"
 
 
-extern struct resource resource[];
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
@@ -76,15 +74,6 @@ struct datapoint {
     fastf_t weight;
     fastf_t volume;
 };
-
-
-extern int rpt_overlap;     	/* report region verbosely */
-extern fastf_t cell_width;      /* model space grid cell width */
-extern fastf_t cell_height;     /* model space grid cell height */
-extern FILE *outfp;          	/* optional output file */
-extern char *outputfile;     	/* name of base of output file */
-extern const char *densityfile;
-extern int output_is_binary;	/* !0 means output is binary */
 
 
 int

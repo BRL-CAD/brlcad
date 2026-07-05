@@ -53,11 +53,6 @@
 #define	LGT_FLOAT	1
 
 
-extern	struct fb *fbp;
-extern	FILE	*outfp;
-extern	fastf_t	viewsize;
-extern	int	lightmodel;
-
 unsigned char *scanbuf;
 static int pixsize = 0;		/* bytes per pixel in scanbuf */
 static double	contrast_boost = 2.0;

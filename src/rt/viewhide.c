@@ -63,8 +63,6 @@ struct cell {
     vect_t	c_rdir;			/* ray direction, permits perspective */
 };
 
-extern size_t	width;			/* # of pixels in X; picture width */
-
 fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
 fastf_t		maxangle;		/* value of the cosine of the angle bet. surface normals that triggers shading */
 
