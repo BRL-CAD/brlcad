@@ -132,7 +132,7 @@ struct f_string_view {
     union {
         const char *cstr;
 #ifdef FT_HAVE_WCHAR
-        const wchar_t *wstr;
+        const ft_wchar_t *wstr;
 #endif
 #ifdef FT_HAVE_UTF8
         const void *u8str;
@@ -186,7 +186,7 @@ struct f_conv_context {
     union {
         char *buf;
 #ifdef FT_HAVE_WCHAR
-        wchar_t *wbuf;
+        ft_wchar_t *wbuf;
 #endif
 #ifdef FT_HAVE_UTF8
         const void *u8str;
@@ -224,7 +224,7 @@ size_t number_of_columns_in_format_buffer(const f_string_buffer_t *fmt);
 
 #if defined(FT_HAVE_WCHAR)
 FT_INTERNAL
-wchar_t *fort_wcsdup(const wchar_t *str);
+ft_wchar_t *fort_wcsdup(const ft_wchar_t *str);
 #endif
 
 
@@ -237,7 +237,7 @@ FT_INTERNAL
 int ft_nprint(f_conv_context_t *cntx, const char *str, size_t strlen);
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-int ft_nwprint(f_conv_context_t *cntx, const wchar_t *str, size_t strlen);
+int ft_nwprint(f_conv_context_t *cntx, const ft_wchar_t *str, size_t strlen);
 #endif /* FT_HAVE_WCHAR */
 #ifdef FT_HAVE_UTF8
 FT_INTERNAL
@@ -367,7 +367,7 @@ size_t vector_index_of(const f_vector_t *, const void *item);
 #include <wchar.h>
 
 FT_INTERNAL
-int mk_wcswidth(const wchar_t *pwcs, size_t n);
+int mk_wcswidth(const ft_wchar_t *pwcs, size_t n);
 
 #endif /* FT_HAVE_WCHAR */
 
@@ -1777,7 +1777,7 @@ struct f_string_buffer {
     union {
         char *cstr;
 #ifdef FT_HAVE_WCHAR
-        wchar_t *wstr;
+        ft_wchar_t *wstr;
 #endif
 #ifdef FT_HAVE_UTF8
         void *u8str;
@@ -1805,7 +1805,7 @@ f_status fill_buffer_from_string(f_string_buffer_t *buffer, const char *str);
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-f_status fill_buffer_from_wstring(f_string_buffer_t *buffer, const wchar_t *str);
+f_status fill_buffer_from_wstring(f_string_buffer_t *buffer, const ft_wchar_t *str);
 #endif /* FT_HAVE_WCHAR */
 
 #ifdef FT_HAVE_UTF8
@@ -2112,7 +2112,7 @@ f_status fill_cell_from_string(f_cell_t *cell, const char *str);
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-f_status fill_cell_from_wstring(f_cell_t *cell, const wchar_t *str);
+f_status fill_cell_from_wstring(f_cell_t *cell, const ft_wchar_t *str);
 #endif
 
 FT_INTERNAL
@@ -2207,7 +2207,7 @@ int snprintf_row(const f_row_t *row, f_conv_context_t *cntx, size_t *col_width_a
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-f_row_t *create_row_from_wstring(const wchar_t *str);
+f_row_t *create_row_from_wstring(const ft_wchar_t *str);
 #endif
 
 
@@ -2533,7 +2533,7 @@ f_status fill_cell_from_string(f_cell_t *cell, const char *str)
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-f_status fill_cell_from_wstring(f_cell_t *cell, const wchar_t *str)
+f_status fill_cell_from_wstring(f_cell_t *cell, const ft_wchar_t *str)
 {
     assert(str);
     assert(cell);
@@ -3002,7 +3002,7 @@ int FT_PRINTF_LN(ft_table_t *table, const char *fmt, ...)
 #undef FT_PRINTF_LN
 
 #ifdef FT_HAVE_WCHAR
-int ft_wprintf(ft_table_t *table, const wchar_t *fmt, ...)
+int ft_wprintf(ft_table_t *table, const ft_wchar_t *fmt, ...)
 {
     assert(table);
     va_list va;
@@ -3016,7 +3016,7 @@ int ft_wprintf(ft_table_t *table, const wchar_t *fmt, ...)
     return result;
 }
 
-int ft_wprintf_ln(ft_table_t *table, const wchar_t *fmt, ...)
+int ft_wprintf_ln(ft_table_t *table, const ft_wchar_t *fmt, ...)
 {
     assert(table);
     va_list va;
@@ -3090,7 +3090,7 @@ static int ft_u8write_impl(ft_table_t *table, const void *cell_content)
 #endif /* FT_HAVE_UTF8 */
 
 #ifdef FT_HAVE_WCHAR
-static int ft_wwrite_impl(ft_table_t *table, const wchar_t *cell_content)
+static int ft_wwrite_impl(ft_table_t *table, const ft_wchar_t *cell_content)
 {
     f_string_view_t content;
     content.type = W_CHAR_BUF;
@@ -3153,7 +3153,7 @@ int ft_nwrite_ln(ft_table_t *table, size_t count, const char *cell_content, ...)
 
 #ifdef FT_HAVE_WCHAR
 
-int ft_nwwrite(ft_table_t *table, size_t n, const wchar_t *cell_content, ...)
+int ft_nwwrite(ft_table_t *table, size_t n, const ft_wchar_t *cell_content, ...)
 {
     size_t i = 0;
     assert(table);
@@ -3165,7 +3165,7 @@ int ft_nwwrite(ft_table_t *table, size_t n, const wchar_t *cell_content, ...)
     va_start(va, cell_content);
     --n;
     for (i = 0; i < n; ++i) {
-        const wchar_t *cell = va_arg(va, const wchar_t *);
+        const ft_wchar_t *cell = va_arg(va, const ft_wchar_t *);
         status = ft_wwrite_impl(table, cell);
         if (FT_IS_ERROR(status)) {
             va_end(va);
@@ -3176,7 +3176,7 @@ int ft_nwwrite(ft_table_t *table, size_t n, const wchar_t *cell_content, ...)
     return status;
 }
 
-int ft_nwwrite_ln(ft_table_t *table, size_t n, const wchar_t *cell_content, ...)
+int ft_nwwrite_ln(ft_table_t *table, size_t n, const ft_wchar_t *cell_content, ...)
 {
     size_t i = 0;
     assert(table);
@@ -3188,7 +3188,7 @@ int ft_nwwrite_ln(ft_table_t *table, size_t n, const wchar_t *cell_content, ...)
     va_start(va, cell_content);
     --n;
     for (i = 0; i < n; ++i) {
-        const wchar_t *cell = va_arg(va, const wchar_t *);
+        const ft_wchar_t *cell = va_arg(va, const ft_wchar_t *);
         status = ft_wwrite_impl(table, cell);
         if (FT_IS_ERROR(status)) {
             va_end(va);
@@ -3228,7 +3228,7 @@ int ft_row_write_ln(ft_table_t *table, size_t cols, const char *cells[])
 }
 
 #ifdef FT_HAVE_WCHAR
-int ft_row_wwrite(ft_table_t *table, size_t cols, const wchar_t *cells[])
+int ft_row_wwrite(ft_table_t *table, size_t cols, const ft_wchar_t *cells[])
 {
     size_t i = 0;
     assert(table);
@@ -3244,7 +3244,7 @@ int ft_row_wwrite(ft_table_t *table, size_t cols, const wchar_t *cells[])
     return FT_SUCCESS;
 }
 
-int ft_row_wwrite_ln(ft_table_t *table, size_t cols, const wchar_t *cells[])
+int ft_row_wwrite_ln(ft_table_t *table, size_t cols, const ft_wchar_t *cells[])
 {
     assert(table);
     int status = ft_row_wwrite(table, cols, cells);
@@ -3287,12 +3287,12 @@ int ft_table_write_ln(ft_table_t *table, size_t rows, size_t cols, const char *t
 
 
 #ifdef FT_HAVE_WCHAR
-int ft_table_wwrite(ft_table_t *table, size_t rows, size_t cols, const wchar_t *table_cells[])
+int ft_table_wwrite(ft_table_t *table, size_t rows, size_t cols, const ft_wchar_t *table_cells[])
 {
     size_t i = 0;
     assert(table);
     for (i = 0; i < rows; ++i) {
-        int status = ft_row_wwrite(table, cols, (const wchar_t **)&table_cells[i * cols]);
+        int status = ft_row_wwrite(table, cols, (const ft_wchar_t **)&table_cells[i * cols]);
         if (FT_IS_ERROR(status)) {
             /* todo: maybe current pos in case of error should be equal
              * to the one before function call?
@@ -3305,7 +3305,7 @@ int ft_table_wwrite(ft_table_t *table, size_t rows, size_t cols, const wchar_t *
     return FT_SUCCESS;
 }
 
-int ft_table_wwrite_ln(ft_table_t *table, size_t rows, size_t cols, const wchar_t *table_cells[])
+int ft_table_wwrite_ln(ft_table_t *table, size_t rows, size_t cols, const ft_wchar_t *table_cells[])
 {
     assert(table);
     int status = ft_table_wwrite(table, rows, cols, table_cells);
@@ -3419,9 +3419,9 @@ const char *ft_to_string(const ft_table_t *table)
 }
 
 #ifdef FT_HAVE_WCHAR
-const wchar_t *ft_to_wstring(const ft_table_t *table)
+const ft_wchar_t *ft_to_wstring(const ft_table_t *table)
 {
-    return (const wchar_t *)ft_to_string_impl(table, W_CHAR_BUF);
+    return (const ft_wchar_t *)ft_to_string_impl(table, W_CHAR_BUF);
 }
 #endif
 
@@ -3885,13 +3885,13 @@ char *fort_strdup(const char *str)
 
 #if defined(FT_HAVE_WCHAR)
 FT_INTERNAL
-wchar_t *fort_wcsdup(const wchar_t *str)
+ft_wchar_t *fort_wcsdup(const ft_wchar_t *str)
 {
     if (str == NULL)
         return NULL;
 
     size_t sz = wcslen(str);
-    wchar_t *str_copy = (wchar_t *)F_MALLOC((sz + 1) * sizeof(wchar_t));
+    ft_wchar_t *str_copy = (ft_wchar_t *)F_MALLOC((sz + 1) * sizeof(ft_wchar_t));
     if (str_copy == NULL)
         return NULL;
 
@@ -3919,10 +3919,10 @@ size_t columns_number_in_fmt_string(const char *fmt)
 
 #if defined(FT_HAVE_WCHAR)
 static
-size_t columns_number_in_fmt_wstring(const wchar_t *fmt)
+size_t columns_number_in_fmt_wstring(const ft_wchar_t *fmt)
 {
     size_t separator_counter = 0;
-    const wchar_t *pos = fmt;
+    const ft_wchar_t *pos = fmt;
     while (1) {
         pos = wcschr(pos, g_col_separator);
         if (pos == NULL)
@@ -4036,7 +4036,7 @@ int snprint_n_strings(f_conv_context_t *cntx, size_t n, const char *str)
 
 #if defined(FT_HAVE_WCHAR)
 static
-int wsnprint_n_string(wchar_t *buf, size_t length, size_t n, const char *str);
+int wsnprint_n_string(ft_wchar_t *buf, size_t length, size_t n, const char *str);
 #endif
 
 #if defined(FT_HAVE_UTF8)
@@ -4061,7 +4061,7 @@ int print_n_strings(f_conv_context_t *cntx, size_t n, const char *str)
             cod_w = wsnprint_n_string(cntx->u.wbuf, cntx->raw_avail, n, str);
             if (cod_w < 0)
                 return cod_w;
-            raw_written = sizeof(wchar_t) * cod_w;
+            raw_written = sizeof(ft_wchar_t) * cod_w;
 
             cntx->u.buf += raw_written;
             cntx->raw_avail -= raw_written;
@@ -4100,20 +4100,20 @@ int ft_nprint(f_conv_context_t *cntx, const char *str, size_t strlen)
 }
 
 #ifdef FT_HAVE_WCHAR
-int ft_nwprint(f_conv_context_t *cntx, const wchar_t *str, size_t strlen)
+int ft_nwprint(f_conv_context_t *cntx, const ft_wchar_t *str, size_t strlen)
 {
     if (cntx->raw_avail + 1/* for 0 */ < strlen)
         return -1;
 
-    size_t raw_len = strlen * sizeof(wchar_t);
+    size_t raw_len = strlen * sizeof(ft_wchar_t);
 
     memcpy(cntx->u.buf, str, raw_len);
     cntx->u.buf += raw_len;
     cntx->raw_avail -= raw_len;
 
     /* Do we need this ? */
-    wchar_t end_of_string = L'\0';
-    memcpy(cntx->u.buf, &end_of_string, sizeof(wchar_t));
+    ft_wchar_t end_of_string = L'\0';
+    memcpy(cntx->u.buf, &end_of_string, sizeof(ft_wchar_t));
     return (int)strlen;
 }
 #endif /* FT_HAVE_WCHAR */
@@ -4140,7 +4140,7 @@ int ft_nu8print(f_conv_context_t *cntx, const void *beg, const void *end)
 #define WCS_SIZE 64
 
 static
-int wsnprint_n_string(wchar_t *buf, size_t length, size_t n, const char *str)
+int wsnprint_n_string(ft_wchar_t *buf, size_t length, size_t n, const char *str)
 {
     size_t str_len = strlen(str);
 
@@ -4153,7 +4153,7 @@ int wsnprint_n_string(wchar_t *buf, size_t length, size_t n, const char *str)
             if (*p <= 127)
                 p++;
             else {
-                wchar_t wcs[WCS_SIZE];
+                ft_wchar_t wcs[WCS_SIZE];
                 const char *ptr = str;
                 size_t wcs_len;
                 mbstate_t mbst;
@@ -4198,7 +4198,7 @@ int wsnprint_n_string(wchar_t *buf, size_t length, size_t n, const char *str)
     for (i = 0; i < n; ++i) {
         const char *str_p = str;
         while (*str_p)
-            *(buf++) = (wchar_t) * (str_p++);
+            *(buf++) = (ft_wchar_t) * (str_p++);
     }
     return (int)(n * str_len);
 }
@@ -5879,12 +5879,12 @@ clear:
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-f_row_t *create_row_from_wstring(const wchar_t *str)
+f_row_t *create_row_from_wstring(const ft_wchar_t *str)
 {
-    typedef wchar_t char_type;
+    typedef ft_wchar_t char_type;
     char_type *(*strdup_)(const char_type * str) = F_WCSDUP;
     const char_type zero_char = L'\0';
-    f_status(*fill_cell_from_string_)(f_cell_t *cell, const wchar_t *str) = fill_cell_from_wstring;
+    f_status(*fill_cell_from_string_)(f_cell_t *cell, const ft_wchar_t *str) = fill_cell_from_wstring;
     const char_type *const zero_string = L"";
 #define STRCHR wcschr
 
@@ -6208,7 +6208,7 @@ static ptrdiff_t str_iter_width(const char *beg, const char *end)
 
 
 #ifdef FT_HAVE_WCHAR
-static ptrdiff_t wcs_iter_width(const wchar_t *beg, const wchar_t *end)
+static ptrdiff_t wcs_iter_width(const ft_wchar_t *beg, const ft_wchar_t *end)
 {
     assert(end >= beg);
     return mk_wcswidth(beg, (size_t)(end - beg));
@@ -6256,7 +6256,7 @@ size_t strchr_count(const char *str, char ch)
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-size_t wstrchr_count(const wchar_t *str, wchar_t ch)
+size_t wstrchr_count(const ft_wchar_t *str, ft_wchar_t ch)
 {
     if (str == NULL)
         return 0;
@@ -6324,7 +6324,7 @@ const char *str_n_substring_beg(const char *str, char ch_separator, size_t n)
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-const wchar_t *wstr_n_substring_beg(const wchar_t *str, wchar_t ch_separator, size_t n)
+const ft_wchar_t *wstr_n_substring_beg(const ft_wchar_t *str, ft_wchar_t ch_separator, size_t n)
 {
     if (str == NULL)
         return NULL;
@@ -6392,16 +6392,16 @@ void str_n_substring(const char *str, char ch_separator, size_t n, const char **
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-void wstr_n_substring(const wchar_t *str, wchar_t ch_separator, size_t n, const wchar_t **begin, const wchar_t **end)
+void wstr_n_substring(const ft_wchar_t *str, ft_wchar_t ch_separator, size_t n, const ft_wchar_t **begin, const ft_wchar_t **end)
 {
-    const wchar_t *beg = wstr_n_substring_beg(str, ch_separator, n);
+    const ft_wchar_t *beg = wstr_n_substring_beg(str, ch_separator, n);
     if (beg == NULL) {
         *begin = NULL;
         *end = NULL;
         return;
     }
 
-    const wchar_t *en = wcschr(beg, ch_separator);
+    const ft_wchar_t *en = wcschr(beg, ch_separator);
     if (en == NULL) {
         en = str + wcslen(str);
     }
@@ -6446,7 +6446,7 @@ f_string_buffer_t *create_string_buffer(size_t n_chars, enum f_string_type type)
             break;
 #ifdef FT_HAVE_WCHAR
         case W_CHAR_BUF:
-            char_sz = sizeof(wchar_t);
+            char_sz = sizeof(ft_wchar_t);
             break;
 #endif
 #ifdef FT_HAVE_UTF8
@@ -6564,12 +6564,12 @@ f_status fill_buffer_from_string(f_string_buffer_t *buffer, const char *str)
 
 #ifdef FT_HAVE_WCHAR
 FT_INTERNAL
-f_status fill_buffer_from_wstring(f_string_buffer_t *buffer, const wchar_t *str)
+f_status fill_buffer_from_wstring(f_string_buffer_t *buffer, const ft_wchar_t *str)
 {
     assert(buffer);
     assert(str);
 
-    wchar_t *copy = F_WCSDUP(str);
+    ft_wchar_t *copy = F_WCSDUP(str);
     if (copy == NULL)
         return FT_MEMORY_ERROR;
 
@@ -6685,8 +6685,8 @@ size_t buffer_text_visible_width(const f_string_buffer_t *buffer)
     } else if (buffer->type == W_CHAR_BUF) {
         size_t n = 0;
         while (1) {
-            const wchar_t *beg = NULL;
-            const wchar_t *end = NULL;
+            const ft_wchar_t *beg = NULL;
+            const ft_wchar_t *end = NULL;
             wstr_n_substring(buffer->str.wstr, L'\n', n, &beg, &end);
             if (beg == NULL || end == NULL)
                 return max_length;
@@ -6730,9 +6730,9 @@ buffer_substring(const f_string_buffer_t *buffer, size_t buffer_row, const void 
             break;
 #ifdef FT_HAVE_WCHAR
         case W_CHAR_BUF:
-            wstr_n_substring(buffer->str.wstr, L'\n', buffer_row, (const wchar_t **)begin, (const wchar_t **)end);
-            if ((*(const wchar_t **)begin) && (*(const wchar_t **)end))
-                *str_it_width = wcs_iter_width(*(const wchar_t **)begin, *(const wchar_t **)end);
+            wstr_n_substring(buffer->str.wstr, L'\n', buffer_row, (const ft_wchar_t **)begin, (const ft_wchar_t **)end);
+            if ((*(const ft_wchar_t **)begin) && (*(const ft_wchar_t **)end))
+                *str_it_width = wcs_iter_width(*(const ft_wchar_t **)begin, *(const ft_wchar_t **)end);
             break;
 #endif /* FT_HAVE_WCHAR */
 #ifdef FT_HAVE_UTF8
@@ -6758,8 +6758,8 @@ buffer_print_range(f_conv_context_t *cntx, const void *beg, const void *end)
             return ft_nprint(cntx, (const char *)beg, len);
 #ifdef FT_HAVE_WCHAR
         case W_CHAR_BUF:
-            len = (size_t)((const wchar_t *)end - (const wchar_t *)beg);
-            return ft_nwprint(cntx, (const wchar_t *)beg, len);
+            len = (size_t)((const ft_wchar_t *)end - (const ft_wchar_t *)beg);
+            return ft_nwprint(cntx, (const ft_wchar_t *)beg, len);
 #endif /* FT_HAVE_WCHAR */
 #ifdef FT_HAVE_UTF8
         case UTF8_BUF:
@@ -6844,7 +6844,7 @@ size_t string_buffer_width_capacity(const f_string_buffer_t *buffer)
             return buffer->data_sz;
 #ifdef FT_HAVE_WCHAR
         case W_CHAR_BUF:
-            return buffer->data_sz / sizeof(wchar_t);
+            return buffer->data_sz / sizeof(ft_wchar_t);
 #endif
 #ifdef FT_HAVE_UTF8
         case UTF8_BUF:
@@ -6875,7 +6875,7 @@ int buffer_check_align(f_string_buffer_t *buffer)
             return 1;
 #ifdef FT_HAVE_WCHAR
         case W_CHAR_BUF:
-            return (((unsigned long)(uintptr_t)buffer->str.data) & (sizeof(wchar_t) - 1)) == 0;
+            return (((unsigned long)(uintptr_t)buffer->str.data) & (sizeof(ft_wchar_t) - 1)) == 0;
 #endif
 #ifdef FT_HAVE_UTF8
         case UTF8_BUF:
@@ -7631,11 +7631,11 @@ static int bisearch(int32_t ucs, const struct interval *table, int max)
  *      ISO 8859-1 and WGL4 characters, Unicode control characters,
  *      etc.) have a column width of 1.
  *
- * This implementation assumes that wchar_t characters are encoded
+ * This implementation assumes that ft_wchar_t characters are encoded
  * in ISO 10646.
  */
 
-static int mk_wcwidth(wchar_t wcs)
+static int mk_wcwidth(ft_wchar_t wcs)
 {
     /* sorted list of non-overlapping intervals of non-spacing characters */
     /* generated by "uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B c" */
@@ -7690,7 +7690,7 @@ static int mk_wcwidth(wchar_t wcs)
         { 0xE0100, 0xE01EF }
     };
 
-    /* We convert wchar_t to int32_t to avoid compiler warnings
+    /* We convert ft_wchar_t to int32_t to avoid compiler warnings
      * about implicit integer conversions
      * https://github.com/seleznevae/libfort/issues/20
      *
@@ -7729,7 +7729,7 @@ static int mk_wcwidth(wchar_t wcs)
 
 
 FT_INTERNAL
-int mk_wcswidth(const wchar_t *pwcs, size_t n)
+int mk_wcswidth(const ft_wchar_t *pwcs, size_t n)
 {
     int width = 0;
 
