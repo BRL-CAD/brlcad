@@ -42,9 +42,6 @@
 #include "optical.h"
 #include "optical/light.h"
 
-/* from view.c */
-extern double AmbientIntensity;
-
 /* Local information */
 struct brdf_specific {
     uint32_t magic;
