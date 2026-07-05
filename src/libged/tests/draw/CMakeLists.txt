@@ -14,7 +14,7 @@ set(
 )
 
 set(basic_view_test_ctrls basic.apng)
-brlcad_addexec(ged_test_draw "basic.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB" TEST)
+brlcad_addexec(ged_test_draw "basic.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
 if(TARGET ged_test_draw)
   foreach(tdp ${test_deps})
     if (TARGET tdp)
@@ -25,7 +25,7 @@ endif(TARGET ged_test_draw)
 brlcad_add_test(NAME ged_test_drawing_basic COMMAND ged_test_draw -c "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(faceplate_test_ctrls faceplate.apng)
-brlcad_addexec(ged_test_faceplate "faceplate.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB" TEST)
+brlcad_addexec(ged_test_faceplate "faceplate.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
 if(TARGET ged_test_faceplate)
   foreach(tdp ${test_deps})
     if (TARGET tdp)
@@ -36,7 +36,7 @@ endif(TARGET ged_test_faceplate)
 brlcad_add_test(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate -c "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(lod_test_ctrls lod.apng)
-brlcad_addexec(ged_test_lod "lod.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB" TEST)
+brlcad_addexec(ged_test_lod "lod.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
 if(TARGET ged_test_lod)
   foreach(tdp ${test_deps})
     if (TARGET tdp)
@@ -48,7 +48,7 @@ brlcad_add_test(NAME ged_test_drawing_lod COMMAND ged_test_lod -c "${CMAKE_CURRE
 distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_lod_tmp.g)
 
 set(select_test_ctrls select.apng)
-brlcad_addexec(ged_test_select_draw "select.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB" TEST)
+brlcad_addexec(ged_test_select_draw "select.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
 if(TARGET ged_test_select_draw)
   foreach(tdp ${test_deps})
     if (TARGET tdp)
@@ -60,7 +60,7 @@ brlcad_add_test(NAME ged_test_drawing_select COMMAND ged_test_select_draw -c "${
 distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_select_tmp.g)
 
 set(quad_test_ctrls quad_00.apng quad_01.apng quad_02.apng quad_03.apng)
-brlcad_addexec(ged_test_quad "quad.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB" TEST)
+brlcad_addexec(ged_test_quad "quad.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
 if(TARGET ged_test_quad)
   foreach(tdp ${test_deps})
     if (TARGET tdp)
@@ -79,7 +79,7 @@ distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_quad_tmp.g)
 # the unfilled space. This is purely visual when viewed natively, and the 
 # extraction tool recovers the original exact frame dimensions perfectly.
 set(aet_test_ctrls aet_00.apng aet_01.apng aet_02.apng aet_03.apng)
-brlcad_addexec(ged_test_aet "aet.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB" TEST)
+brlcad_addexec(ged_test_aet "aet.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
 if(TARGET ged_test_aet)
   foreach(tdp ${test_deps})
     if (TARGET tdp)
