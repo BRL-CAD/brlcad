@@ -38,7 +38,7 @@
 #include "ged.h"
 #include "./include/plugin.h"
 
-extern "C" int
+int
 main(int argc, const char *argv[])
 {
     bu_setprogname(argv[0]);
