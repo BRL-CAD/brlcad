@@ -775,8 +775,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     if (host == NULL || strlen(host) == 0 || strcmp(host, "unix")==0) {
 	/* UNIX Domain socket, port = pathname */
 	sunhim.sun_family = AF_UNIX;
-	strncpy(sunhim.sun_path, service, sizeof(sunhim.sun_path));
-	sunhim.sun_path[sizeof(sunhim.sun_path) - 1] = '\0';
+	snprintf(sunhim.sun_path, sizeof(sunhim.sun_path), "%s", service);
 	addr = (struct sockaddr *) &sunhim;
 	addrlen = strlen(sunhim.sun_path) + 2;
 	goto ready;
