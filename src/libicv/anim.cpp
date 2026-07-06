@@ -93,6 +93,11 @@ extern "C" {
     {
 	if (!anim) return;
 	anim->fps = (fps > 0) ? fps : 10;
+	uint32_t delay_usec = 1000000u / (uint32_t)anim->fps;
+	if (delay_usec == 0) delay_usec = 1;
+	for (size_t i = 0; i < anim->frames.size(); ++i) {
+	    anim->frames[i].delay_usec = delay_usec;
+	}
     }
 
     int
@@ -283,21 +288,41 @@ extern "C" {
 
 		icv_anim_t *anim = icv_anim_create(ICV_ANIM_APNG, aapng.canvas_width, aapng.canvas_height, 10);
 
+		bool use_composed_frames = false;
 		for (size_t i = 0; i < aapng.frames.size(); ++i) {
-		    icv_image_t *img = icv_create(aapng.frames[i].width, aapng.frames[i].height, ICV_COLOR_SPACE_RGB);
+		    if (aapng.frames[i].x_offset != 0 || aapng.frames[i].y_offset != 0 ||
+			aapng.frames[i].dispose_op != apngmini::DisposeOp::None ||
+			aapng.frames[i].blend_op != apngmini::BlendOp::Source) {
+			use_composed_frames = true;
+			break;
+		    }
+		}
 
-		    // Do NOT compose, extract the raw frames to preserve original PNG data exactly
-		    // (including original width/height and avoiding alpha blend artifacts)
-		    // Note: BRL-CAD icv_image_t expects bottom-up row order, but apngmini
-		    // reads top-down. We must flip the image vertically.
-		    for (size_t y = 0; y < (size_t)aapng.frames[i].height; ++y) {
-			size_t flip_y = aapng.frames[i].height - 1 - y;
-			for (size_t x = 0; x < (size_t)aapng.frames[i].width; ++x) {
-			    size_t p_src = y * aapng.frames[i].width + x;
-			    size_t p_dst = flip_y * aapng.frames[i].width + x;
-			    img->data[p_dst*3 + 0] = aapng.frames[i].pixels[p_src*4 + 0] / 255.0;
-			    img->data[p_dst*3 + 1] = aapng.frames[i].pixels[p_src*4 + 1] / 255.0;
-			    img->data[p_dst*3 + 2] = aapng.frames[i].pixels[p_src*4 + 2] / 255.0;
+		apngmini::vector<apngmini::vector<uint8_t>> composed_frames;
+		if (use_composed_frames) {
+		    composed_frames = aapng.compose();
+		    if (composed_frames.size() != aapng.frames.size()) {
+			icv_anim_free(anim);
+			return NULL;
+		    }
+		}
+
+		for (size_t i = 0; i < aapng.frames.size(); ++i) {
+		    uint32_t frame_width = use_composed_frames ? aapng.canvas_width : aapng.frames[i].width;
+		    uint32_t frame_height = use_composed_frames ? aapng.canvas_height : aapng.frames[i].height;
+		    const apngmini::vector<uint8_t>& frame_pixels = use_composed_frames ? composed_frames[i] : aapng.frames[i].pixels;
+		    icv_image_t *img = icv_create(frame_width, frame_height, ICV_COLOR_SPACE_RGB);
+
+		    // Raw control APNGs keep original frame dimensions.  Delta APNGs
+		    // need composition before exposing frames through the icv API.
+		    for (size_t y = 0; y < (size_t)frame_height; ++y) {
+			size_t flip_y = frame_height - 1 - y;
+			for (size_t x = 0; x < (size_t)frame_width; ++x) {
+			    size_t p_src = y * frame_width + x;
+			    size_t p_dst = flip_y * frame_width + x;
+			    img->data[p_dst*3 + 0] = frame_pixels[p_src*4 + 0] / 255.0;
+			    img->data[p_dst*3 + 1] = frame_pixels[p_src*4 + 1] / 255.0;
+			    img->data[p_dst*3 + 2] = frame_pixels[p_src*4 + 2] / 255.0;
 			}
 		    }
 
@@ -484,7 +509,7 @@ extern "C" {
 		aapng.frames.push_back(icv_to_apng(anim->frames[i].img, anim->frames[i].delay_usec));
 	    }
 
-	    if (!apngmini::write_file(filename, aapng)) {
+	    if (!apngmini::write_file(filename, aapng, 9)) {
 		return -1;
 	    }
 	    return 0;
