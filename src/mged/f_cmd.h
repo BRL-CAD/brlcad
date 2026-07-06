@@ -63,6 +63,7 @@ extern int f_knob(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_list(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_make(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_matpick(ClientData, Tcl_Interp *, int, const char *[]);
+extern int f_mcp_listen(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_mirface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_model2view(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_mouse(ClientData, Tcl_Interp *, int, const char *[]);

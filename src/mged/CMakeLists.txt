@@ -32,6 +32,7 @@ set(
   grid.c
   history.c
   mater.c
+  mcp.c
   menu.c
   mged.c
   mover.c
@@ -65,6 +66,7 @@ endif(HAVE_WINDOWS_H)
 set(
   mged_libs
   libtclcad
+  libmcpcad
   libged
   libwdb
   libdm
