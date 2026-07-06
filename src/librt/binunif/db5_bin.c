@@ -454,8 +454,8 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     return 0;
 }
 
-C_DECL void
-rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_binunif_internal *bip;
 
@@ -471,6 +471,7 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     bip->type = DB5_MINORTYPE_BINU_8BITINT;
     bip->count = 0;
     bip->u.int8 = NULL;
+    return BRLCAD_OK;
 }
 
 C_DECL int

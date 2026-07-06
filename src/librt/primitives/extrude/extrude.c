@@ -2949,8 +2949,8 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
     return BRLCAD_OK;
 }
 
-C_DECL void
-rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_extrude_internal* ip;
 
@@ -2965,6 +2965,7 @@ rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
     ip->sketch_name = bu_strdup("");
+    return BRLCAD_OK;
 }
 
 

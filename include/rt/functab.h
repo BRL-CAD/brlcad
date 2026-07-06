@@ -216,8 +216,9 @@ struct rt_functab {
     int (*ft_form)(struct bu_vls *, const struct rt_functab *);
 #define RTFUNCTAB_FUNC_FORM_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_functab *))((void (*)(void))_func))
 
-    void (*ft_make)(const struct rt_functab *, struct rt_db_internal * /*ip*/);
-#define RTFUNCTAB_FUNC_MAKE_CAST(_func) ((void (*)(const struct rt_functab *, struct rt_db_internal *))((void (*)(void))_func))
+    int (*ft_make)(const struct rt_functab *, struct rt_db_internal * /*ip*/,
+		   const char * /*variant*/, const point_t /*origin*/, double /*scale*/);
+#define RTFUNCTAB_FUNC_MAKE_CAST(_func) ((int (*)(const struct rt_functab *, struct rt_db_internal *, const char *, const point_t, double))((void (*)(void))_func))
 
     int (*ft_params)(struct pc_pc_set *, const struct rt_db_internal * /*ip*/);
 #define RTFUNCTAB_FUNC_PARAMS_CAST(_func) ((int (*)(struct pc_pc_set *, const struct rt_db_internal *))((void (*)(void))_func))

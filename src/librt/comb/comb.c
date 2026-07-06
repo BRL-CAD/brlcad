@@ -1161,8 +1161,8 @@ rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  * Create a blank combination with appropriate values.  Called via
  * OBJ[ID_COMBINATION].ft_make().
  */
-C_DECL void
-rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern)
+C_DECL int
+rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_comb_internal *comb;
 
@@ -1175,6 +1175,7 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
     RT_COMB_INTERNAL_INIT(comb);
     bu_vls_init(&comb->shader);
     bu_vls_init(&comb->material);
+    return BRLCAD_OK;
 }
 
 

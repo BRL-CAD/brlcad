@@ -2223,8 +2223,8 @@ rt_ehy_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-C_DECL void
-rt_ehy_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_ehy_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_ehy_internal* ehy_ip;
 
@@ -2244,6 +2244,7 @@ rt_ehy_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     ehy_ip->ehy_r1 = 1.0;
     ehy_ip->ehy_r2 = 1.0;
     ehy_ip->ehy_c = 1.0;
+    return BRLCAD_OK;
 }
 
 

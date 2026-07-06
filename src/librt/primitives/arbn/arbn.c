@@ -1326,8 +1326,8 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     return BRLCAD_OK;
 }
 
-C_DECL void
-rt_arbn_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_arbn_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_arbn_internal *aip;
 
@@ -1343,6 +1343,7 @@ rt_arbn_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     aip->magic = RT_ARBN_INTERNAL_MAGIC;
     aip->neqn = 1;
     aip->eqn = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "arbn plane");
+    return BRLCAD_OK;
 }
 
 

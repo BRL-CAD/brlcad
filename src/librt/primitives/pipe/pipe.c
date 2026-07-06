@@ -4968,8 +4968,8 @@ rt_pipe_adjust(
     return (rt_pipe_ck(&pip->pipe_segs_head) == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
-C_DECL void
-rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_pipe_internal* pipe_ip;
     struct wdb_pipe_pnt* pipe_pp;
@@ -4996,6 +4996,7 @@ rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 	pipe_pp->pp_bendradius = pipe_pp->pp_od;
 	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &pipe_pp->l);
     }
+    return BRLCAD_OK;
 }
 
 

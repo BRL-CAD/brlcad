@@ -337,8 +337,8 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
     return BRLCAD_OK;
 }
 
-C_DECL void
-rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_script_internal* ip;
 
@@ -353,6 +353,7 @@ rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
     BU_VLS_INIT(&ip->s_type);
+    return BRLCAD_OK;
 }
 
 

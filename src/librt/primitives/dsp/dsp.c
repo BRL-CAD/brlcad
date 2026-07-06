@@ -4121,8 +4121,8 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-C_DECL void
-rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_dsp_internal *dsp;
 
@@ -4143,6 +4143,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     MAT_IDN(dsp->dsp_stom);
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
+    return BRLCAD_OK;
 }
 
 

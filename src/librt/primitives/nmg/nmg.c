@@ -2023,8 +2023,8 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-C_DECL void
-rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct model *m;
 
@@ -2033,6 +2033,7 @@ rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_NMG;
     intern->idb_meth = ftp;
+    return BRLCAD_OK;
 }
 
 

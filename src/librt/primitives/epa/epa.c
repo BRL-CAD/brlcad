@@ -2105,8 +2105,8 @@ rt_epa_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-C_DECL void
-rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_epa_internal* epa_ip;
 
@@ -2125,6 +2125,7 @@ rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     VSET(epa_ip->epa_Au, 0.0, 1.0, 0.0);
     epa_ip->epa_r1 = 1.0;
     epa_ip->epa_r2 = 1.0;
+    return BRLCAD_OK;
 }
 
 

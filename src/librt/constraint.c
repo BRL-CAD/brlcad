@@ -157,8 +157,8 @@ rt_constraint_describe(struct bu_vls *str, const struct rt_db_internal *ip, int 
     return 0;
 }
 
-C_DECL void
-rt_constraint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_constraint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_constraint_internal* ip;
 
@@ -175,6 +175,7 @@ rt_constraint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     ip->id = 1;
     ip->type = 0;
     BU_VLS_INIT(&ip->expression);
+    return BRLCAD_OK;
 }
 
 

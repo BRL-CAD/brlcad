@@ -24,33 +24,23 @@
 
 
 int
-rt_obj_make(const struct rt_functab *ftp, struct rt_db_internal *ip)
+rt_obj_make(const char *label, const point_t origin, double scale, struct rt_db_internal *ip)
 {
-    int id;
-    const struct rt_functab *ft;
+    const struct rt_functab *ftp;
 
-    if (!ftp || !ip)
-	return -1;
+    if (!label || !ip)
+	return BRLCAD_ERROR;
 
-    RT_CK_FUNCTAB(ftp);
     RT_CK_DB_INTERNAL(ip);
 
-    id = ip->idb_minor_type;
-    if (id < 0)
-	return -2;
+    /* minimal gate since there's no actual callers of this yet
+     * TODO: variant->base alias table + deny list
+     */
+    ftp = rt_get_functab_by_label(label);
+    if (!ftp || !ftp->ft_make)
+	return BRLCAD_ERROR;
 
-    ft = &OBJ[id];
-    if (!ft)
-	return -3;
-    if (!ft->ft_make)
-	return -4;
-
-    /* extra insanity checking */
-    if (ft->ft_make != ftp->ft_make)
-	return -5;
-
-    ft->ft_make(ftp, ip);
-    return 0;
+    return ftp->ft_make(ftp, ip, label, origin, scale);
 }
 
 

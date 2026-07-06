@@ -889,8 +889,8 @@ rt_metaball_add_point(struct rt_metaball_internal *mb, const point_t *loc, const
     return 0;
 }
 
-C_DECL void
-rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_metaball_internal* ip;
 
@@ -905,6 +905,7 @@ rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     ip->magic = RT_METABALL_INTERNAL_MAGIC;
     BU_LIST_INIT(&ip->metaball_ctrl_head);
+    return BRLCAD_OK;
 }
 
 

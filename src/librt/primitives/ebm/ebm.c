@@ -1921,8 +1921,8 @@ rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  * Routine to make a new EBM solid. The only purpose of this routine
  * is to initialize the matrix and height to legal values.
  */
-C_DECL void
-rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_ebm_internal *ebm;
 
@@ -1939,6 +1939,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     ebm->datasrc = RT_EBM_SRC_FILE;
 
     ebm->tallness = 1.0;
+    return BRLCAD_OK;
 }
 
 

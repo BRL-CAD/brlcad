@@ -66,7 +66,7 @@ extern "C" {
     extern int rt_##name##_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr); \
     extern int rt_##name##_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv); \
     extern int rt_##name##_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local); \
-    extern void rt_##name##_make(const struct rt_functab *ftp, struct rt_db_internal *intern); \
+    extern int rt_##name##_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale); \
     extern int rt_##name##_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip); \
     extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
     extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol); \
@@ -156,7 +156,7 @@ extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_extern
 extern int rt_binunif_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
 extern void rt_binunif_ifree(struct rt_db_internal *ip);
 extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-extern void rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+extern int rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale);
 extern int rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
 extern int rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
 
@@ -166,7 +166,7 @@ extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *
 extern int rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item);
 extern int rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
 extern int rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp);
-extern void rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+extern int rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale);
 extern void rt_comb_ifree(struct rt_db_internal *ip);
 extern int rt_comb_mat(struct rt_db_internal *op, const mat_t mat, const struct rt_db_internal *ip);
 extern int rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);

@@ -526,8 +526,8 @@ rt_joint_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     return -1;
 }
 
-C_DECL void
-rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_joint_internal* ip;
 
@@ -546,6 +546,7 @@ rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     ip->reference_path_2 = empty;
     VSET(ip->vector1, 0.0, 1.0, 0.0);
     VSET(ip->vector2, 0.0, 1.0, 0.0);
+    return BRLCAD_OK;
 }
 
 

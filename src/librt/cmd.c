@@ -369,7 +369,8 @@ rt_cmd_put(struct bu_vls *msg, struct rt_wdb *wdbp, int argc, const char **argv)
     RT_DB_INTERNAL_INIT(&intern);
 
     if (ftp->ft_make) {
-	ftp->ft_make(ftp, &intern);
+	point_t origin = {0.0, 0.0, 0.0};
+	ftp->ft_make(ftp, &intern, NULL, origin, 1.0);
     } else {
 	rt_generic_make(ftp, &intern);
     }
