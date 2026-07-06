@@ -150,9 +150,11 @@ include/rt/application.h
 	rt_shootray_context_create and _init now set up a default a_resource.
 	a_resource remains public to allow swapping. However, callers who swap
 	it must manage the custom resource's lifetime and either restore the
-	default resource or free the custom resource (and set a_resource to NULL)
+	default resource or free it themselves and set a_resource to NULL
 	before calling cleanup/destroy. Callers are responsible for freeing the
-	rt_shootray_context struct itself.
+	rt_shootray_context struct itself.  The idea here is to allow callers
+	to avoid having to manage or care about resources unless they are
+	specifically using them to do their own custom data collection.
 
 include/rt/db_io.h
 	rt_db_put_internal5 - second to last parameter (resource) will
