@@ -602,6 +602,12 @@ struct LibpngBackend {
 	if (compression_level != -1) {
 	    png_set_compression_level(png, compression_level);
 	}
+	png_set_filter(png, 0, PNG_FILTER_SUB | PNG_FILTER_UP | PNG_FILTER_PAETH);
+#ifndef APNGMINI_NO_ZLIB_CRC
+	png_set_compression_strategy(png, Z_FILTERED);
+#else
+	png_set_compression_strategy(png, 1);
+#endif
 
 	png_write_info(png, info);
 
@@ -639,6 +645,175 @@ inline void write_chunk(apngmini::vector<uint8_t>& out, uint32_t type, const uin
     }
     uint32_t crc = crc32_data(&out[start + 4], 4 + len);
     write_be32(&out[start + 8 + len], crc);
+}
+
+struct PixelBounds {
+    uint32_t x_min = 0;
+    uint32_t y_min = 0;
+    uint32_t x_max = 0;
+    uint32_t y_max = 0;
+    bool empty = true;
+};
+
+inline bool
+frame_has_expected_pixels(const Frame& frame)
+{
+    uint64_t expected = static_cast<uint64_t>(frame.width) * frame.height * 4;
+    return expected <= frame.pixels.size();
+}
+
+inline bool
+can_optimize_full_canvas_animation(const Animation& anim)
+{
+    if (anim.frames.size() < 2 || anim.canvas_width == 0 || anim.canvas_height == 0) {
+	return false;
+    }
+
+    uint64_t total_pixels = static_cast<uint64_t>(anim.canvas_width) * anim.canvas_height;
+    if (total_pixels > APNGMINI_MAX_PIXELS) {
+	return false;
+    }
+
+    for (const auto& frame : anim.frames) {
+	if (frame.width != anim.canvas_width || frame.height != anim.canvas_height ||
+	    frame.x_offset != 0 || frame.y_offset != 0 ||
+	    frame.dispose_op != DisposeOp::None || frame.blend_op != BlendOp::Source ||
+	    !frame_has_expected_pixels(frame)) {
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+inline PixelBounds
+changed_pixel_bounds(const apngmini::vector<uint8_t>& previous, const apngmini::vector<uint8_t>& current,
+		     uint32_t width, uint32_t height)
+{
+    PixelBounds bounds;
+
+    for (uint32_t y = 0; y < height; ++y) {
+	for (uint32_t x = 0; x < width; ++x) {
+	    size_t idx = (static_cast<size_t>(y) * width + x) * 4;
+	    if (std::memcmp(previous.data() + idx, current.data() + idx, 4) != 0) {
+		if (bounds.empty) {
+		    bounds.x_min = bounds.x_max = x;
+		    bounds.y_min = bounds.y_max = y;
+		    bounds.empty = false;
+		} else {
+		    bounds.x_min = std::min(bounds.x_min, x);
+		    bounds.y_min = std::min(bounds.y_min, y);
+		    bounds.x_max = std::max(bounds.x_max, x);
+		    bounds.y_max = std::max(bounds.y_max, y);
+		}
+	    }
+	}
+    }
+
+    if (!bounds.empty) {
+	bounds.x_max++;
+	bounds.y_max++;
+    }
+
+    return bounds;
+}
+
+inline bool
+over_reproduces_pixel(const uint8_t *src, const uint8_t *dst)
+{
+    uint8_t src_a = src[3];
+
+    if (src_a == 255) {
+	return true;
+    }
+    if (src_a == 0) {
+	return std::memcmp(src, dst, 4) == 0;
+    }
+
+    uint8_t dst_a = dst[3];
+    if (dst_a == 0) {
+	return true;
+    }
+
+    uint32_t u = src_a * 255;
+    uint32_t v = (255 - src_a) * dst_a;
+    uint32_t al = u + v;
+    if (al == 0) {
+	return src_a == 0;
+    }
+
+    return static_cast<uint8_t>((src[0] * u + dst[0] * v) / al) == src[0] &&
+	   static_cast<uint8_t>((src[1] * u + dst[1] * v) / al) == src[1] &&
+	   static_cast<uint8_t>((src[2] * u + dst[2] * v) / al) == src[2] &&
+	   static_cast<uint8_t>(al / 255) == src[3];
+}
+
+inline bool
+bounds_can_use_over(const apngmini::vector<uint8_t>& previous, const apngmini::vector<uint8_t>& current,
+		    uint32_t canvas_width, const PixelBounds& bounds)
+{
+    for (uint32_t y = bounds.y_min; y < bounds.y_max; ++y) {
+	for (uint32_t x = bounds.x_min; x < bounds.x_max; ++x) {
+	    size_t idx = (static_cast<size_t>(y) * canvas_width + x) * 4;
+	    if (!over_reproduces_pixel(current.data() + idx, previous.data() + idx)) {
+		return false;
+	    }
+	}
+    }
+
+    return true;
+}
+
+inline Frame
+crop_frame_to_bounds(const Frame& frame, const PixelBounds& bounds)
+{
+    Frame cropped;
+    cropped.width = bounds.x_max - bounds.x_min;
+    cropped.height = bounds.y_max - bounds.y_min;
+    cropped.x_offset = bounds.x_min;
+    cropped.y_offset = bounds.y_min;
+    cropped.delay = frame.delay;
+    cropped.dispose_op = DisposeOp::None;
+    cropped.pixels.resize(static_cast<size_t>(cropped.width) * cropped.height * 4);
+
+    for (uint32_t y = 0; y < cropped.height; ++y) {
+	size_t src_idx = (static_cast<size_t>(bounds.y_min + y) * frame.width + bounds.x_min) * 4;
+	size_t dst_idx = static_cast<size_t>(y) * cropped.width * 4;
+	std::memcpy(cropped.pixels.data() + dst_idx, frame.pixels.data() + src_idx, static_cast<size_t>(cropped.width) * 4);
+    }
+
+    return cropped;
+}
+
+inline Animation
+optimize_full_canvas_animation(const Animation& anim)
+{
+    Animation optimized;
+    optimized.canvas_width = anim.canvas_width;
+    optimized.canvas_height = anim.canvas_height;
+    optimized.num_plays = anim.num_plays;
+    optimized.frames.reserve(anim.frames.size());
+    optimized.frames.push_back(anim.frames[0]);
+
+    const apngmini::vector<uint8_t> *previous = &anim.frames[0].pixels;
+    for (size_t i = 1; i < anim.frames.size(); ++i) {
+	const Frame& frame = anim.frames[i];
+	PixelBounds bounds = changed_pixel_bounds(*previous, frame.pixels, anim.canvas_width, anim.canvas_height);
+	if (bounds.empty) {
+	    bounds.empty = false;
+	    bounds.x_min = 0;
+	    bounds.y_min = 0;
+	    bounds.x_max = 1;
+	    bounds.y_max = 1;
+	}
+
+	Frame cropped = crop_frame_to_bounds(frame, bounds);
+	cropped.blend_op = bounds_can_use_over(*previous, frame.pixels, anim.canvas_width, bounds) ? BlendOp::Over : BlendOp::Source;
+	optimized.frames.push_back(std::move(cropped));
+	previous = &frame.pixels;
+    }
+
+    return optimized;
 }
 
 } // namespace detail
@@ -812,10 +987,17 @@ apngmini::vector<uint8_t> write(const Animation& anim, int compression_level)
 	return {};
     }
 
-    Writer writer(anim.canvas_width, anim.canvas_height,
-		  static_cast<uint32_t>(anim.frames.size()), anim.num_plays, {}, compression_level);
+    Animation optimized_anim;
+    const Animation *write_anim = &anim;
+    if (detail::can_optimize_full_canvas_animation(anim)) {
+	optimized_anim = detail::optimize_full_canvas_animation(anim);
+	write_anim = &optimized_anim;
+    }
 
-    for (const auto& frame : anim.frames) {
+    Writer writer(write_anim->canvas_width, write_anim->canvas_height,
+		  static_cast<uint32_t>(write_anim->frames.size()), write_anim->num_plays, {}, compression_level);
+
+    for (const auto& frame : write_anim->frames) {
 	writer.add_frame(frame);
     }
 
