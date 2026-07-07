@@ -2158,6 +2158,105 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
+ * Create a default arb at point 'origin', scaled by 'scale'.
+ * 'variants' are stored as ID_ARB8; the variant switch selects which points
+ *   are collapsed.
+ */
+C_DECL int
+rt_arb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale)
+{
+    struct rt_arb_internal *arb_ip;
+    size_t i;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_ARB8;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(arb_ip, struct rt_arb_internal);
+    intern->idb_ptr = (void *)arb_ip;
+    arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
+
+    VSET(arb_ip->pt[0],
+	 origin[X] + 0.5*scale,
+	 origin[Y] - 0.5*scale,
+	 origin[Z] - 0.5*scale);
+    for (i = 1; i < 8; i++)
+	VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
+
+    /* switch on variant type */
+    if (BU_STR_EQUAL(variant, "arb7")) {
+	/* NOTE: for some reason we scale origin[Z] by .25 instead of .5 like
+	 * everything else. But this dates back to commit 58501018 */
+	VSET(arb_ip->pt[0],
+	     origin[X] + 0.5*scale,
+	     origin[Y] - 0.5*scale,
+	     origin[Z] - 0.25*scale);
+	for (i = 1; i < 8; i++)
+	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Z] += 0.5*scale;
+	for (i = 4; i < 8; i++)
+	    arb_ip->pt[i][X] -= scale;
+	arb_ip->pt[5][Y] += scale;
+	arb_ip->pt[6][Y] += scale;
+	arb_ip->pt[6][Z] += 0.5*scale;
+    } else if (BU_STR_EQUAL(variant, "arb6")) {
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Z] += scale;
+	for (i = 4; i < 8; i++)
+	    arb_ip->pt[i][X] -= scale;
+	arb_ip->pt[4][Y] += 0.5*scale;
+	arb_ip->pt[5][Y] += 0.5*scale;
+	arb_ip->pt[6][Y] += 0.5*scale;
+	arb_ip->pt[6][Z] += scale;
+	arb_ip->pt[7][Y] += 0.5*scale;
+	arb_ip->pt[7][Z] += scale;
+    } else if (BU_STR_EQUAL(variant, "arb5")) {
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Z] += scale;
+	for (i = 4; i < 8; i++)
+	{
+	    arb_ip->pt[i][X] -= scale;
+	    arb_ip->pt[i][Y] += 0.5*scale;
+	    arb_ip->pt[i][Z] += 0.5*scale;
+	}
+    } else if (BU_STR_EQUAL(variant, "arb4")) {
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Y] += scale;
+	arb_ip->pt[3][Z] += scale;
+	for (i = 4; i < 8; i++)
+	{
+	    arb_ip->pt[i][X] -= scale;
+	    arb_ip->pt[i][Y] += scale;
+	}
+    } else {
+	/* default arb8 - also silently catches rpp / NULL / (unknown) */
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Z] += scale;
+	for (i = 4; i < 8; i++)
+	    arb_ip->pt[i][X] -= scale;
+	arb_ip->pt[5][Y] += scale;
+	arb_ip->pt[6][Y] += scale;
+	arb_ip->pt[6][Z] += scale;
+	arb_ip->pt[7][Z] += scale;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+/**
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */

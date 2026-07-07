@@ -145,124 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "arb8") ||
-	BU_STR_EQUAL(argv[bu_optind+1],  "rpp")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ARB8;
-	internal.idb_meth = &OBJ[ID_ARB8];
-	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
-	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
-	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
-	VSET(arb_ip->pt[0] ,
-	     origin[X] + 0.5*scale,
-	     origin[Y] - 0.5*scale,
-	     origin[Z] - 0.5*scale);
-	for (i = 1; i < 8; i++)
-	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
-	arb_ip->pt[1][Y] += scale;
-	arb_ip->pt[2][Y] += scale;
-	arb_ip->pt[2][Z] += scale;
-	arb_ip->pt[3][Z] += scale;
-	for (i = 4; i < 8; i++)
-	    arb_ip->pt[i][X] -= scale;
-	arb_ip->pt[5][Y] += scale;
-	arb_ip->pt[6][Y] += scale;
-	arb_ip->pt[6][Z] += scale;
-	arb_ip->pt[7][Z] += scale;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arb7")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ARB8;
-	internal.idb_meth = &OBJ[ID_ARB8];
-	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
-	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
-	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
-	VSET(arb_ip->pt[0] ,
-	     origin[X] + 0.5*scale,
-	     origin[Y] - 0.5*scale,
-	     origin[Z] - 0.25*scale);
-	for (i = 1; i < 8; i++)
-	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
-	arb_ip->pt[1][Y] += scale;
-	arb_ip->pt[2][Y] += scale;
-	arb_ip->pt[2][Z] += scale;
-	arb_ip->pt[3][Z] += 0.5*scale;
-	for (i = 4; i < 8; i++)
-	    arb_ip->pt[i][X] -= scale;
-	arb_ip->pt[5][Y] += scale;
-	arb_ip->pt[6][Y] += scale;
-	arb_ip->pt[6][Z] += 0.5*scale;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arb6")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ARB8;
-	internal.idb_meth = &OBJ[ID_ARB8];
-	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
-	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
-	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
-	VSET(arb_ip->pt[0],
-	     origin[X] + 0.5*scale,
-	     origin[Y] - 0.5*scale,
-	     origin[Z] - 0.5*scale);
-	for (i = 1; i < 8; i++)
-	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
-	arb_ip->pt[1][Y] += scale;
-	arb_ip->pt[2][Y] += scale;
-	arb_ip->pt[2][Z] += scale;
-	arb_ip->pt[3][Z] += scale;
-	for (i = 4; i < 8; i++)
-	    arb_ip->pt[i][X] -= scale;
-	arb_ip->pt[4][Y] += 0.5*scale;
-	arb_ip->pt[5][Y] += 0.5*scale;
-	arb_ip->pt[6][Y] += 0.5*scale;
-	arb_ip->pt[6][Z] += scale;
-	arb_ip->pt[7][Y] += 0.5*scale;
-	arb_ip->pt[7][Z] += scale;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arb5")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ARB8;
-	internal.idb_meth = &OBJ[ID_ARB8];
-	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
-	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
-	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
-	VSET(arb_ip->pt[0] ,
-	     origin[X] + 0.5*scale,
-	     origin[Y] - 0.5*scale,
-	     origin[Z] - 0.5*scale);
-	for (i = 1; i < 8; i++)
-	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
-	arb_ip->pt[1][Y] += scale;
-	arb_ip->pt[2][Y] += scale;
-	arb_ip->pt[2][Z] += scale;
-	arb_ip->pt[3][Z] += scale;
-	for (i = 4; i < 8; i++)
-	{
-	    arb_ip->pt[i][X] -= scale;
-	    arb_ip->pt[i][Y] += 0.5*scale;
-	    arb_ip->pt[i][Z] += 0.5*scale;
-	}
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arb4")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ARB8;
-	internal.idb_meth = &OBJ[ID_ARB8];
-	BU_ALLOC(internal.idb_ptr, struct rt_arb_internal);
-	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
-	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
-	VSET(arb_ip->pt[0] ,
-	     origin[X] + 0.5*scale,
-	     origin[Y] - 0.5*scale,
-	     origin[Z] - 0.5*scale);
-	for (i = 1; i < 8; i++)
-	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
-	arb_ip->pt[1][Y] += scale;
-	arb_ip->pt[2][Y] += scale;
-	arb_ip->pt[2][Z] += scale;
-	arb_ip->pt[3][Y] += scale;
-	arb_ip->pt[3][Z] += scale;
-	for (i = 4; i < 8; i++)
-	{
-	    arb_ip->pt[i][X] -= scale;
-	    arb_ip->pt[i][Y] += scale;
-	}
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arbn")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "arbn")) {
 	point_t view_center;
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -924,6 +807,8 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_ptr = (struct rt_brep_internal *)brep_ip;
 	brep_ip->magic = RT_BREP_INTERNAL_MAGIC;
 	brep_ip->brep = (ON_Brep *)brep_create();
+    } else if (rt_obj_make(argv[bu_optind+1], origin, scale, &internal) == BRLCAD_OK) {
+	bu_log("SUCCESS for type %s\n", argv[bu_optind+1]);
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
