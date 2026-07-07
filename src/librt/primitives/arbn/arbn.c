@@ -1327,9 +1327,10 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 }
 
 C_DECL int
-rt_arbn_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
+rt_arbn_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_arbn_internal *aip;
+    point_t view_center;
 
     intern->idb_type = ID_ARBN;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1341,8 +1342,29 @@ rt_arbn_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const 
     intern->idb_ptr = (void *)aip;
 
     aip->magic = RT_ARBN_INTERNAL_MAGIC;
-    aip->neqn = 1;
-    aip->eqn = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "arbn plane");
+    aip->neqn = 8;
+    aip->eqn = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "arbn plane eqns");
+    VSET(aip->eqn[0], 1, 0, 0);
+    aip->eqn[0][W] = 0.5*scale;
+    VSET(aip->eqn[1], -1, 0, 0);
+    aip->eqn[1][W] = 0.5*scale;
+    VSET(aip->eqn[2], 0, 1, 0);
+    aip->eqn[2][W] = 0.5*scale;
+    VSET(aip->eqn[3], 0, -1, 0);
+    aip->eqn[3][W] = 0.5*scale;
+    VSET(aip->eqn[4], 0, 0, 1);
+    aip->eqn[4][W] = 0.5*scale;
+    VSET(aip->eqn[5], 0, 0, -1);
+    aip->eqn[5][W] = 0.5*scale;
+    VSET(aip->eqn[6], 0.57735, 0.57735, 0.57735);
+    aip->eqn[6][W] = 0.5*scale;
+    VSET(aip->eqn[7], -0.57735, -0.57735, -0.57735);
+    aip->eqn[7][W] = 0.5*scale;
+    VSET(view_center, origin[X], origin[Y], origin[Z]);
+    for (size_t i = 0; i < aip->neqn; i++) {
+	aip->eqn[i][W] += VDOT(view_center, aip->eqn[i]);
+    }
+
     return BRLCAD_OK;
 }
 

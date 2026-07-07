@@ -145,43 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "arbn")) {
-	point_t view_center;
-
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ARBN;
-	internal.idb_meth = &OBJ[ID_ARBN];
-	BU_ALLOC(internal.idb_ptr, struct rt_arbn_internal);
-	arbn_ip = (struct rt_arbn_internal *)internal.idb_ptr;
-	arbn_ip->magic = RT_ARBN_INTERNAL_MAGIC;
-	arbn_ip->neqn = 8;
-	arbn_ip->eqn = (plane_t *)bu_calloc(arbn_ip->neqn,
-					    sizeof(plane_t), "arbn plane eqns");
-	VSET(arbn_ip->eqn[0], 1, 0, 0);
-	arbn_ip->eqn[0][W] = 0.5*scale;
-	VSET(arbn_ip->eqn[1], -1, 0, 0);
-	arbn_ip->eqn[1][W] = 0.5*scale;
-	VSET(arbn_ip->eqn[2], 0, 1, 0);
-	arbn_ip->eqn[2][W] = 0.5*scale;
-	VSET(arbn_ip->eqn[3], 0, -1, 0);
-	arbn_ip->eqn[3][W] = 0.5*scale;
-	VSET(arbn_ip->eqn[4], 0, 0, 1);
-	arbn_ip->eqn[4][W] = 0.5*scale;
-	VSET(arbn_ip->eqn[5], 0, 0, -1);
-	arbn_ip->eqn[5][W] = 0.5*scale;
-	VSET(arbn_ip->eqn[6], 0.57735, 0.57735, 0.57735);
-	arbn_ip->eqn[6][W] = 0.5*scale;
-	VSET(arbn_ip->eqn[7], -0.57735, -0.57735, -0.57735);
-	arbn_ip->eqn[7][W] = 0.5*scale;
-	VSET(view_center,
-	     origin[X],
-	     origin[Y],
-	     origin[Z]);
-	for (i = 0; i < arbn_ip->neqn; i++) {
-	    arbn_ip->eqn[i][W] +=
-		VDOT(view_center, arbn_ip->eqn[i]);
-	}
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "ars")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "ars")) {
 	size_t curve;
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARS;
