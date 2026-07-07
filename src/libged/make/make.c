@@ -145,58 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "ars")) {
-	size_t curve;
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ARS;
-	internal.idb_meth = &OBJ[ID_ARS];
-	BU_ALLOC(internal.idb_ptr, struct rt_ars_internal);
-	ars_ip = (struct rt_ars_internal *)internal.idb_ptr;
-	ars_ip->magic = RT_ARS_INTERNAL_MAGIC;
-	ars_ip->ncurves = 3;
-	ars_ip->pts_per_curve = 3;
-	ars_ip->curves = (fastf_t **)bu_malloc((ars_ip->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
-
-	for (curve=0; curve < ars_ip->ncurves; curve++) {
-	    ars_ip->curves[curve] = (fastf_t *)bu_calloc(
-		(ars_ip->pts_per_curve + 1) * 3,
-		sizeof(fastf_t), "ARS points");
-
-	    if (curve == 0) {
-		VSET(&(ars_ip->curves[0][0]),
-		     origin[X],
-		     origin[Y],
-		     origin[Z]);
-		VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
-		VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
-	    } else if (curve == (ars_ip->ncurves - 1)) {
-		VSET(&(ars_ip->curves[curve][0]),
-		     origin[X],
-		     origin[Y],
-		     origin[Z]+curve*0.5*scale);
-		VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
-		VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
-
-	    } else {
-		fastf_t x, y, z;
-		x = origin[X]+curve*0.5*scale;
-		y = origin[Y]+curve*0.5*scale;
-		z = origin[Z]+curve*0.5*scale;
-
-		VSET(&ars_ip->curves[curve][0],
-		     origin[X],
-		     origin[Y],
-		     z);
-		VSET(&ars_ip->curves[curve][3],
-		     x,
-		     origin[Y],
-		     z);
-		VSET(&ars_ip->curves[curve][6],
-		     x, y, z);
-	    }
-	}
-
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "sph")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "sph")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ELL;
 	internal.idb_meth = &OBJ[ID_ELL];

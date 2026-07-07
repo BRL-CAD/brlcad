@@ -1046,6 +1046,67 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 
 C_DECL int
+rt_ars_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_ars_internal *ars_ip;
+    size_t curve;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_ARS;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ars_ip, struct rt_ars_internal);
+    intern->idb_ptr = (void *)ars_ip;
+    ars_ip->magic = RT_ARS_INTERNAL_MAGIC;
+    ars_ip->ncurves = 3;
+    ars_ip->pts_per_curve = 3;
+    ars_ip->curves = (fastf_t **)bu_malloc((ars_ip->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
+
+    for (curve=0; curve < ars_ip->ncurves; curve++) {
+	ars_ip->curves[curve] = (fastf_t *)bu_calloc(
+	    (ars_ip->pts_per_curve + 1) * 3,
+	    sizeof(fastf_t), "ARS points");
+
+	if (curve == 0) {
+	    VSET(&(ars_ip->curves[0][0]),
+		 origin[X],
+		 origin[Y],
+		 origin[Z]);
+	    VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
+	    VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
+	} else if (curve == (ars_ip->ncurves - 1)) {
+	    VSET(&(ars_ip->curves[curve][0]),
+		 origin[X],
+		 origin[Y],
+		 origin[Z]+curve*0.5*scale);
+	    VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
+	    VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
+
+	} else {
+	    fastf_t x, y, z;
+	    x = origin[X]+curve*0.5*scale;
+	    y = origin[Y]+curve*0.5*scale;
+	    z = origin[Z]+curve*0.5*scale;
+
+	    VSET(&ars_ip->curves[curve][0],
+		 origin[X],
+		 origin[Y],
+		 z);
+	    VSET(&ars_ip->curves[curve][3],
+		 x,
+		 origin[Y],
+		 z);
+	    VSET(&ars_ip->curves[curve][6],
+		 x, y, z);
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
