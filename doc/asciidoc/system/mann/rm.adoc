@@ -23,18 +23,29 @@ database editing.
 Each operand may be:
 
 * an _object_ name
-* a simple parent/child _path_ of the form _comb/member_
+* a parent/child _path_ of the form _comb/member_ or _top/.../comb/member_
 * a shell-style glob pattern expanded against the current database
 
 Without options, *rm* performs a safe delete:
 
-* primitives are deleted only if they are not referenced by other objects
+* primitives are deleted only if they are not referenced by other objects and do
+  not reference support objects
 * combinations are deleted only if they are unreferenced and empty
 * non-empty combinations are rejected unless *-r* or *-f* is used
 
 If an operand contains a slash, *rm* treats it as a combination/member path and
 removes only that child reference from the parent combination. This edits the
-combination tree but does not delete the child object itself.
+combination tree but does not delete the child object itself. If the parent
+combination contains multiple same-name child references, append a one-based
+instance suffix to the child name, such as _assembly.c/bolt.s@2_, to remove the
+second matching child instance.
+
+To protect users of the historic combination-editing syntax, *rm* rejects an
+unforced command of the form _rm comb obj ..._ when _comb_ is a combination and
+later operands are bare object names. In that case no objects are deleted. Use
+*remove comb obj ...* to remove members from the combination, use an explicit
+path such as *rm comb/obj*, or use *rm -f comb obj ...* if direct object deletion
+was intended.
 
 Unlike the legacy *remove* command, *rm* also supports direct object deletion,
 dry-run reporting, and glob expansion.
@@ -50,16 +61,22 @@ Print help and exit.
 *--force*::
 Force deletion. For object operands this uses the same direct-delete behavior as
 *kill*: the named object is removed immediately, even if it is referenced
-elsewhere. For path operands, a missing parent combination is ignored when
-*--force* is used, but a found parent combination is still updated only if the
-named child member is present.
+elsewhere. For path operands, missing paths or instances are ignored when
+*--force* is used; ambiguous same-name members still require an explicit _@N_
+instance suffix.
 
 *-r*::
 *--recursive*::
-Recursive deletion. Walk the hierarchy below each named object and delete
-unshared members. Objects still referenced outside the walked subtree are left
-in place. If *-f* is also supplied, the top-level object is deleted even if it
-remains referenced elsewhere after the recursive pass.
+Recursive safe deletion. The named object and all child objects reachable below
+it are deleted only if the entire subtree is safe: every object exists, no object
+in the subtree is referenced from outside the subtree, and all child references
+can also be deleted. If any object in the subtree is externally referenced, the
+recursive delete for that operand is rejected and no objects from that subtree
+are deleted.
++
+When *-r* is combined with *-f*, the top-level named object is deleted even if it
+is externally referenced, and descendants that are not referenced outside the
+walked subtree are also deleted. Shared descendants are left in place.
 
 *-n*::
 *--dry-run*::
@@ -92,6 +109,24 @@ database.
 
 ====
 
+.Remove a specific duplicate child reference.
+[example]
+====
+mged> **rm assembly.c/bolt.s@2**::
+Removes the second _bolt.s_ member from _assembly.c_. This is required when a
+combination contains multiple same-name members with different matrices.
+
+====
+
+.Reject the old combination/member command shape.
+[example]
+====
+mged> **rm assembly.c bolt.s**::
+Reports an ambiguous command and leaves both _assembly.c_ and _bolt.s_ unchanged.
+Use *remove assembly.c bolt.s* or *rm assembly.c/bolt.s* for member removal.
+
+====
+
 .Force-delete an object.
 [example]
 ====
@@ -113,7 +148,18 @@ Lists matching database objects or paths that would be removed.
 ====
 mged> **rm -r scratch_group.c**::
 Deletes _scratch_group.c_ and any members that are only referenced within that
-hierarchy. Shared children referenced elsewhere are preserved.
+hierarchy. If any object below _scratch_group.c_ is referenced from outside the
+hierarchy, the command reports an error and leaves the hierarchy unchanged.
+
+====
+
+.Force a recursive top-level delete while preserving shared descendants.
+[example]
+====
+mged> **rm -rf scratch_group.c**::
+Deletes _scratch_group.c_ even if other objects reference it, and deletes
+unshared descendants below it. Descendants still referenced elsewhere remain in
+the database.
 
 ====
 
