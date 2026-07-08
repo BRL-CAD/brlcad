@@ -36,11 +36,6 @@
 
 #include "bnetwork.h"
 
-/* Make sure this comes after bio.h (for Windows) */
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
 #include "vmath.h"
 #include "bu/env.h"
 #include "bu/ptbl.h"

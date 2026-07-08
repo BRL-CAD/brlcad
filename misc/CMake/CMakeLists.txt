@@ -47,7 +47,6 @@ set(
   FindOSMESA.cmake
   FindOpenCL.cmake
   FindOpenCV.cmake
-  FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake

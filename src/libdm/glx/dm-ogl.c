@@ -48,41 +48,11 @@
 #  include <X11/extensions/XInput.h>
 #endif /* HAVE_X11_XINPUT_H */
 
-/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
- * parameter names that shadow system symbols.  protect the system
- * symbols by redefining the parameters prior to header inclusion.
- */
-#define j1 J1
-#define y1 Y1
-#define read rd
-#define index idx
-#define access acs
-#define remainder rem
-#ifdef HAVE_GL_GLX_H
-#  include <GL/glx.h>
-#  ifdef HAVE_XRENDER
-#    include <X11/extensions/Xrender.h>
-#  endif
-#endif
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
-#undef remainder
-#undef access
-#undef index
-#undef read
-#undef y1
-#undef j1
-
 #include "png.h"
-
-#include "tk.h"
 
 #if defined(__clang__)
 #  pragma clang diagnostic pop /* end ignoring warnings */
 #endif
-
 
 #undef VMIN		/* is used in vmath.h, too */
 
@@ -93,9 +63,10 @@
 #include "bv/defines.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
-#include "../dm-gl.h"
 #include "./fb_ogl.h"
 #include "./dm-ogl.h"
+
+#include "tk.h"
 
 #include "../include/private.h"
 

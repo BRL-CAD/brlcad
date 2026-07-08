@@ -1747,6 +1747,117 @@ function(find_package_reset pname trigger_var)
   unset(${pname}_PREFIX_STR CACHE)
 endfunction(find_package_reset pname trigger_var)
 
+# OpenGL can get complicated.  Define a macro to centralize the "right" way to
+# hunt for this.
+#
+# Will set an OPENGL_TARGETS variable, which is what should be used linking
+# OpenGL in target_link_libraries lines.
+function(find_package_opengl)
+  cmake_parse_arguments(O "REQUIRED" "" "" ${ARGN})
+
+  # Initialize to empty
+  set(OPENGL_TARGETS "" PARENT_SCOPE)
+
+  # If we're X11, we don't want the OSX framework
+  set(_TMP_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK})
+
+  # Core component is always required
+  set(OPENGL_COMPONENTS OpenGL)
+
+  # Check if we are intentionally targeting X11/GLX
+  set(USING_X11 FALSE)
+  if(APPLE AND NOT BRLCAD_ENABLE_AQUA)
+    set(USING_X11 TRUE)
+  elseif(WIN32 AND BRLCAD_ENABLE_X11)
+    set(USING_X11 TRUE)
+  elseif(UNIX AND NOT APPLE)
+    # Linux/BSD default to X11 unless wayland-only (handled by GLX component)
+    set(USING_X11 TRUE)
+  endif()
+
+  if(USING_X11)
+    # If we're trying X11 on Mac, it currently (07/2026) doesn't work reliably
+    # - most Xquartz packages aren't built for M chips and will now crash at
+    # runtime due to Rosetta being removed from OSX.  Rather than set us up
+    # for crashing, don't try the X11+OpenGL detection there.
+    if (APPLE)
+      return()
+    endif()
+
+    # Append GLX for X11 environments
+    list(APPEND OPENGL_COMPONENTS GLX)
+
+    # Windows might need some help.
+    if(WIN32)
+      # MSYS2/Cygwin X11 paths if building in those environments
+      list(APPEND CMAKE_PREFIX_PATH "/usr/X11R6" "/usr/include/X11")
+    endif()
+  endif()
+
+  # OpenGL find_package execution
+  if(O_REQUIRED)
+    find_package(OpenGL REQUIRED COMPONENTS ${OPENGL_COMPONENTS})
+  else()
+    find_package(OpenGL COMPONENTS ${OPENGL_COMPONENTS})
+  endif()
+
+  # find_package done - restoring framework setting
+  set(CMAKE_FIND_FRAMEWORK ${_TMP_FIND_FRAMEWORK})
+
+  # Use the portable legacy-GL abstraction target when it exists.  Our
+  # FindOpenGL.cmake maps this to either libGL directly or the GLVND
+  # OpenGL+GLX pair, which is what the desktop OpenGL code wants.
+  set(OPENGL_TARGETS)
+  if(TARGET OpenGL::GL)
+    list(APPEND OPENGL_TARGETS OpenGL::GL)
+  elseif(TARGET OpenGL::OpenGL)
+    list(APPEND OPENGL_TARGETS OpenGL::OpenGL)
+  endif()
+  if(USING_X11 AND TARGET OpenGL::GLX AND NOT TARGET OpenGL::GL)
+    list(APPEND OPENGL_TARGETS OpenGL::GLX)
+  endif()
+
+  # All done - result to parent scope
+  set(OPENGL_TARGETS "${OPENGL_TARGETS}" PARENT_SCOPE)
+
+  if(OPENGL_TARGETS)
+
+    brlcad_deferred_define("BRLCAD_OPENGL 1")
+
+    # Check for headers
+    include(CheckIncludeFiles)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    check_include_files(GL/gl.h HAVE_GL_GL_H)
+    if (HAVE_GL_GL_H)
+      brlcad_deferred_define("HAVE_GL_GL_H 1")
+    endif()
+    check_include_files(gl/device.h HAVE_GL_DEVICE_H)
+    if (HAVE_GL_DEVICE_H)
+      brlcad_deferred_define("HAVE_GL_DEVICE_H 1")
+    endif()
+    check_include_files(gl/glext.h HAVE_GL_GLEXT_H)
+    if (HAVE_GL_GLEXT_H)
+      brlcad_deferred_define("HAVE_GL_GLEXT_H 1")
+    endif()
+    check_include_files(gl/wglext.h HAVE_GL_WGLEXT_H)
+    if (HAVE_GL_WGLEXT_H)
+      brlcad_deferred_define("HAVE_GL_WGLEXT_H 1")
+    endif()
+    cmake_pop_check_state()
+
+    if(USING_X11 AND TARGET OpenGL::GLX)
+      brlcad_deferred_define("HAVE_GL_GLX_H 1")
+    endif()
+
+    if(OPENGL_USING_FRAMEWORK)
+      brlcad_deferred_define("HAVE_OPENGL_GL_H 1")
+    endif()
+
+  endif()
+
+endfunction()
+
 # zlib compression/decompression library
 # https://zlib.net
 #

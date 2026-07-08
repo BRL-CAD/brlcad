@@ -41,11 +41,9 @@
 #ifdef OSMESA
 #  include "OSMesa/gl.h"
 #else
-#  ifdef HAVE_GL_GL_H
+#  if defined(HAVE_GL_GL_H)
 #    include <GL/gl.h>
-#  endif
-
-#  ifdef HAVE_OPENGL_GL_H
+#  elif defined(HAVE_OPENGL_GL_H)
 #    include <OpenGL/gl.h>
 #  endif
 #endif
@@ -211,7 +209,7 @@ DMGL_EXPORT extern void gl_zbuffer_hook(const struct bu_structparse *sdp, const 
 DMGL_EXPORT extern void gl_zclip_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 __END_DECLS
 
-#endif /* DM_OGL_H */
+#endif /* DM_GL_H */
 
 /** @} */
 /*

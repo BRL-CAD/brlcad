@@ -39,7 +39,9 @@
 #include "bu/vls.h"
 #include "dm.h"
 #include "./fbserv.h"
-#include "qtcad/QgGL.h"
+#ifdef BRLCAD_OPENGL
+#  include "qtcad/QgGL.h"
+#endif
 #include "qtcad/QgSW.h"
 
 void

@@ -176,23 +176,26 @@ else()
   unset(TCL_TK_SYSTEM_GRAPHICS CACHE)
 endif(BRLCAD_ENABLE_X11)
 
-find_package(OpenGL)
+# Do our OpenGL setup
+if(NOT DEFINED BRLCAD_ENABLE_OPENGL OR BRLCAD_ENABLE_OPENGL)
+  find_package_opengl()
+endif()
 set(BRLCAD_ENABLE_OPENGL_DEFAULT OFF)
-if(OPENGL_FOUND)
+if(OPENGL_TARGETS)
   set(BRLCAD_ENABLE_OPENGL_DEFAULT ON)
-endif(OPENGL_FOUND)
+endif(OPENGL_TARGETS)
 brlcad_option(BRLCAD_ENABLE_OPENGL ${BRLCAD_ENABLE_OPENGL_DEFAULT}
   TYPE BOOL
   ALIASES ENABLE_OPENGL
 )
-
-if(BRLCAD_ENABLE_OPENGL)
-  config_h_append(BRLCAD "#define BRLCAD_OPENGL 1\n")
-endif(BRLCAD_ENABLE_OPENGL)
-
-if(BRLCAD_ENABLE_AQUA)
+if(BRLCAD_ENABLE_OPENGL AND NOT OPENGL_TARGETS)
+  message(WARNING "OpenGL requested, but not available for this configuration or system - disabling.\n")
+  set(BRLCAD_ENABLE_OPENGL OFF)
+  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled due to OpenGL not found/working" FORCE)
+endif()
+if(BRLCAD_ENABLE_AQUA AND OPENGL_TARGETS)
   set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
-endif(BRLCAD_ENABLE_AQUA)
+endif()
 
 # Enable features requiring Bullet Physics SDK
 option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" ON)

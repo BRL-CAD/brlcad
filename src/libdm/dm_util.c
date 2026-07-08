@@ -29,10 +29,6 @@
 
 #include "./include/private.h"
 
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
-
 int
 draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2)
 {

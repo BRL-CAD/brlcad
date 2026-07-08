@@ -44,9 +44,7 @@
 #include "bio.h"
 #include <windowsx.h>
 
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
+#include "./fb_wgl.h"
 #undef RED
 
 #include "tk.h"
@@ -59,8 +57,12 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "../include/private.h"
-#include "./fb_wgl.h"
 
+// Unity building may result in our not getting the bu definition due to the
+// undef above - make sure we have it
+#ifndef RED
+#  define RED 0
+#endif
 
 /* Internal callbacks etc.*/
 static void wgl_do_event(struct fb *ifp);

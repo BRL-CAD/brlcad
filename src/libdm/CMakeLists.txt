@@ -30,6 +30,7 @@ set(
   view.c
   vers.c
 )
+
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 set_property(
   SOURCE dm_init.cpp
@@ -38,68 +39,77 @@ set_property(
 )
 
 brlcad_find_package(PNG REQUIRED)
-
-if(BRLCAD_ENABLE_OPENGL)
-  set(DM_INCLUDE_DIRS ${DM_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
-endif(BRLCAD_ENABLE_OPENGL)
-
-# local includes
-set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${PNG_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/libbg)
-
 find_package(OpenSSL QUIET)
 
-# Optional TLS support for if_remote.c and fbserv/tls_wrap.h.
+set(DM_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${PNG_INCLUDE_DIRS}
+  ${BRLCAD_SOURCE_DIR}/src/libbg
+)
+
 set(LIBDM_PUBLIC_LIBS ${libdm_deps})
 if(OpenSSL_FOUND OR OPENSSL_FOUND)
   list(APPEND LIBDM_PUBLIC_LIBS OpenSSL::SSL OpenSSL::Crypto)
 endif()
 
 # Note - libdm_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-brlcad_addlib(libdm "${LIBDM_SRCS}" "${DM_INCLUDE_DIRS}" "${DM_LOCAL_INCLUDE_DIRS}"
+brlcad_addlib(libdm "${LIBDM_SRCS}" "" "${DM_LOCAL_INCLUDE_DIRS}"
   PUBLIC_LIBS ${LIBDM_PUBLIC_LIBS}
   PRIVATE_LIBS PNG::PNG ${WINSOCK_LIB}
   UNITY_BUILD_SKIP dm_init.cpp
-  )
-set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
+)
+set_target_properties(libdm PROPERTIES
+  VERSION 20.0.1
+  SOVERSION 20
+)
 
 if(OpenSSL_FOUND OR OPENSSL_FOUND)
   target_compile_definitions(libdm PRIVATE HAVE_OPENSSL_SSL_H=1)
   if(TARGET libdm-obj)
     target_compile_definitions(libdm-obj PRIVATE HAVE_OPENSSL_SSL_H=1)
-  endif(TARGET libdm-obj)
+  endif()
   if(TARGET libdm-brlcad-obj)
     target_compile_definitions(libdm-brlcad-obj PRIVATE HAVE_OPENSSL_SSL_H=1)
     brlcad_register_aggregate_link_libs(OpenSSL::SSL OpenSSL::Crypto)
-  endif(TARGET libdm-brlcad-obj)
+  endif()
 endif()
+
 if(TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
-endif(TARGET profont_ProFont_ttf_cp)
+endif()
 
 # Many of the backends use the same OpenGL drawing logic for much of their
-# functionality.  If OpenGL support is available, We encapsulate the common
+# functionality. If OpenGL support is available, encapsulate the common
 # elements of this logic in a libdmgl library used by those plugins.
-set(LIBDMGL_SRCS dm-gl.c dm-gl_lod.cpp)
-if(BRLCAD_ENABLE_OPENGL)
-  find_package(OpenGL)
+set(LIBDMGL_SRCS
+  dm-gl.c
+  dm-gl_lod.cpp
+)
 
-  if(OPENGL_opengl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-  endif(OPENGL_opengl_LIBRARY)
-  if(OPENGL_gl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-  endif(OPENGL_gl_LIBRARY)
-
-  brlcad_addlib(libdmgl "${LIBDMGL_SRCS}" "" "${DM_INCLUDE_DIRS}" PRIVATE_LIBS libdm libbn libbu ${OPENGL_LIBS}
+if(BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
+  set(_libdmgl_private_libs
+    libdm
+    libbn
+    libbu
+    ${OPENGL_TARGETS}
   )
-  set_target_properties(libdmgl PROPERTIES VERSION 20.0.1 SOVERSION 20)
-endif(BRLCAD_ENABLE_OPENGL)
+
+  message("OPENGL_TARGETS: ${OPENGL_TARGETS}")
+
+  brlcad_addlib(libdmgl "${LIBDMGL_SRCS}" "" "${DM_LOCAL_INCLUDE_DIRS}"
+    PRIVATE_LIBS ${_libdmgl_private_libs}
+  )
+  set_target_properties(libdmgl PROPERTIES
+    VERSION 20.0.1
+    SOVERSION 20
+  )
+endif()
 
 add_custom_command(
   OUTPUT "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
   COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/dm_plugins.sentinel"
 )
-add_custom_target(dm_plugins_sentinel DEPENDS ${CMAKE_BINARY_DIR}/dm_plugins.sentinel)
+add_custom_target(dm_plugins_sentinel DEPENDS "${CMAKE_BINARY_DIR}/dm_plugins.sentinel")
 set_target_properties(dm_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/dm")
 
 function(dm_plugin_library name)
@@ -108,7 +118,7 @@ function(dm_plugin_library name)
   # On some platforms distclean has additional cleanup to do
   distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dm/${name}.exp")
   distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dm/${name}.pdb")
-endfunction(dm_plugin_library name)
+endfunction()
 
 # This target is supplied so applications wanting to run libdm
 # commands at build time can depend on the plugins being built as well as

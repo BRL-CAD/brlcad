@@ -1,6 +1,11 @@
-set(QTGL_SRCS dm-qtgl.cpp fb-qtgl.cpp qtglwin.cpp)
+set(QTGL_SRCS
+  dm-qtgl.cpp
+  fb-qtgl.cpp
+  qtglwin.cpp
+)
 
-if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
+if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
+
   find_package_qt(REQUIRED)
 
   include_directories(
@@ -8,62 +13,48 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include
     ${BU_INCLUDE_DIRS}
-    ${OPENGL_INCLUDE_DIR}
   )
 
   set_property(SOURCE dm-qtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
   set_property(SOURCE fb-qtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
-  add_definitions(-DDM_PLUGIN)
-
-  if(OPENGL_opengl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-  endif(OPENGL_opengl_LIBRARY)
-  if(OPENGL_gl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-  endif(OPENGL_gl_LIBRARY)
+  set(qtgl_linklibs
+    libqtcad
+    libdmgl
+    libdm
+    libbu
+  )
 
   if(Qt6Widgets_FOUND)
     qt6_wrap_cpp(qtgl_moc_srcs qtglwin.h)
-  else()
-    qt5_wrap_cpp(qtgl_moc_srcs qtglwin.h)
-  endif(Qt6Widgets_FOUND)
-  set(QTGL_SRCS ${QTGL_SRCS} ${qtgl_moc_srcs})
-
-  dm_plugin_library(dm-qtgl SHARED ${QTGL_SRCS})
-  if(Qt6Widgets_FOUND)
-    target_link_libraries(
-      dm-qtgl
-      libqtcad
-      libdmgl
-      libdm
-      libbu
+    list(APPEND qtgl_linklibs
       Qt6::Core
       Qt6::Widgets
       Qt6::OpenGL
       Qt6::OpenGLWidgets
-      ${OPENGL_LIBS}
+      ${OPENGL_TARGETS}
     )
   else()
-    target_link_libraries(
-      dm-qtgl
-      libqtcad
-      libdmgl
-      libdm
-      libbu
+    qt5_wrap_cpp(qtgl_moc_srcs qtglwin.h)
+    list(APPEND qtgl_linklibs
       Qt5::Core
       Qt5::Widgets
       Qt5::OpenGL
-      ${OPENGL_LIBS}
+      ${OPENGL_TARGETS}
     )
-  endif(Qt6Widgets_FOUND)
-  set_property(TARGET dm-qtgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  validate_style(dm-qtgl "${QTGL_SRCS}")
+  endif()
 
+  set(QTGL_SRCS ${QTGL_SRCS} ${qtgl_moc_srcs})
+
+  dm_plugin_library(dm-qtgl SHARED ${QTGL_SRCS})
+  target_link_libraries(dm-qtgl ${qtgl_linklibs})
+  set_property(TARGET dm-qtgl APPEND PROPERTY COMPILE_DEFINITIONS DM_PLUGIN BRLCADBUILD HAVE_CONFIG_H)
+  validate_style(dm-qtgl "${QTGL_SRCS}")
   plugin_setup(dm-qtgl dm)
 
   distclean(moc_qtglwin.cpp_parameters)
-endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
+
+endif()
 
 cmakefiles(
   CMakeLists.txt

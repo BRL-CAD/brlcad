@@ -1,25 +1,19 @@
-set(QG_DIRS)
+set(QG_DIRS
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 if(BRLCAD_ENABLE_QT)
   find_package_qt(REQUIRED)
 
-  if(BRLCAD_ENABLE_OPENGL)
-    if(OPENGL_opengl_LIBRARY)
-      set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-    endif(OPENGL_opengl_LIBRARY)
-    if(OPENGL_gl_LIBRARY)
-      set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-    endif(OPENGL_gl_LIBRARY)
-  endif(BRLCAD_ENABLE_OPENGL)
-  if(OPENGL_LIBS)
+  if(BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
     if(Qt6Widgets_FOUND)
-      set(OPENGL_LIBS "Qt6::OpenGL;Qt6::OpenGLWidgets;${OPENGL_LIBS}")
+      set(QT_OPENGL_LIBS "Qt6::OpenGL;Qt6::OpenGLWidgets")
     else()
-      set(OPENGL_LIBS "Qt5::OpenGL;${OPENGL_LIBS}")
+      set(QT_OPENGL_LIBS "Qt5::OpenGL")
     endif(Qt6Widgets_FOUND)
-  endif(OPENGL_LIBS)
+  endif()
 
-  set(QG_DIRS ${QG_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${OPENGL_INCLUDE_DIR_GL})
 endif(BRLCAD_ENABLE_QT)
 
 # We build the resources in at this level, but list them out
@@ -57,9 +51,9 @@ set(
   QgView.cpp
   QgViewCtrl.cpp
 )
-if(OPENGL_LIBS)
+if(BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
   set(qtcad_srcs ${qtcad_srcs} QgGL.cpp)
-endif(OPENGL_LIBS)
+endif()
 
 # We need to run Qt's Meta-Object Compiler on some of the
 # libqtcad headers - prepare that list here.  We will also
@@ -92,9 +86,9 @@ set(
   QgView
   QgViewCtrl
 )
-if(OPENGL_LIBS)
+if(BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
   set(qth_names ${qth_names} QgGL)
-endif(OPENGL_LIBS)
+endif()
 
 foreach(qh ${qth_names})
   set(qtcad_moc_hdrs ${qtcad_moc_hdrs} ${QTCAD_HDR_DIR}/${qh}.h)
@@ -111,11 +105,11 @@ if(BRLCAD_ENABLE_QT)
   if(Qt6Widgets_FOUND)
     qt6_wrap_cpp(qtcad_moc_srcs ${qtcad_moc_hdrs})
     qt6_add_resources(qtcad_qrc qtcad_resources.qrc)
-    set(QTCAD_PUBLIC_LIBS ${QTCAD_PUBLIC_LIBS} Qt6::Core Qt6::Widgets ${OPENGL_LIBS})
+    set(QTCAD_PUBLIC_LIBS ${QTCAD_PUBLIC_LIBS} Qt6::Core Qt6::Widgets ${QT_OPENGL_LIBS} ${OPENGL_TARGETS})
   else()
     qt5_wrap_cpp(qtcad_moc_srcs ${qtcad_moc_hdrs})
     qt5_add_resources(qtcad_qrc qtcad_resources.qrc)
-    set(QTCAD_PUBLIC_LIBS ${QTCAD_PUBLIC_LIBS} Qt5::Core Qt5::Widgets ${OPENGL_LIBS})
+    set(QTCAD_PUBLIC_LIBS ${QTCAD_PUBLIC_LIBS} Qt5::Core Qt5::Widgets ${QT_OPENGL_LIBS} ${OPENGL_TARGETS})
   endif(Qt6Widgets_FOUND)
   set(QTCAD_SRCS ${QTCAD_SRCS} ${qtcad_moc_srcs} ${qtcad_qrc})
 
@@ -130,7 +124,7 @@ if(BRLCAD_ENABLE_QT)
     PUBLIC_LIBS ${QTCAD_PUBLIC_LIBS}
   )
   set_target_properties(libqtcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
-  if(OPENGL_LIBS)
+  if(OPENGL_TARGETS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
     if(TARGET libqtcad-obj)
       set_property(TARGET libqtcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
@@ -138,7 +132,7 @@ if(BRLCAD_ENABLE_QT)
     if(TARGET libqtcad-brlcad-obj)
       set_property(TARGET libqtcad-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
     endif(TARGET libqtcad-brlcad-obj)
-  endif(OPENGL_LIBS)
+  endif(OPENGL_TARGETS)
 
   distclean(qtcad_resources.qrc.depends)
   # Generate the cpp_parameters cleanup commands for the headers

@@ -74,9 +74,12 @@ brlcad_manage_files(tie_HDRS ${INCLUDE_DIR}/tie)
 
 # Tcl/Tk based ISST
 
-if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-  set(isst_dirs ${OPENGL_INCLUDE_DIR_GL} ${OPENGL_INCLUDE_DIR_GLX})
-  set(local_isst_dirs ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/librender)
+if(BRLCAD_ENABLE_OPENGL AND OPEGL_TARGETS AND BRLCAD_ENABLE_TK)
+
+  set(local_isst_dirs
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/librender
+  )
 
   set(
     isst_libs
@@ -84,21 +87,17 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
     librender
     libdm
     ${TCL_LIBRARY}
-    ${OPENGL_LIBRARIES}
+    ${OPENGL_TARGETS}
     ${IMM32_LIBRARY}
     ${COMCTL32_LIBRARY}
-    ${OPENGL32_LIBRARY}
     ${M_LIBRARY}
     )
 
   brlcad_adddata(isst.tcl tclscripts/isst)
   brlcad_addexec(isst isst.c "${isst_libs}" GUI)
-  if(isst_dirs)
-    target_include_directories(isst PRIVATE ${isst_dirs})
-  endif(isst_dirs)
   target_include_directories(isst BEFORE PRIVATE ${local_isst_dirs})
   add_target_deps(isst isst_tcl_cp TclIndexBld dm_plugins)
-endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
+endif()
 
 cmakefiles(isst.tcl)
 cmakefiles(isst.c)

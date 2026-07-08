@@ -29,9 +29,7 @@
 
 #include "common.h"
 
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
+#include "../dm-gl.h"
 
 #include "tk.h"
 #define HAVE_X11_TYPES 1
