@@ -10,16 +10,45 @@ rt - raytrace an mged model, giving a shaded picture
 
 [source]
 ----
-rt [options]... model.g objects...
+rt [options]... model.g [objects...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *rt* program is a simple front-end to *librt*(3) which can be invoked directly, or via the *rt* command in *mged*(1).
+The *rt* program is a simple front-end to *librt*(3) which can be
+invoked directly, or via the *rt* command in *mged*(1).
 
-*rt* operates on the indicated _objects_ in the input _model.g_ and produces a color-shaded image as the output. By default, the output is placed on the current framebuffer as it is computed. The environment variable FB_FILE specifies the current framebuffer, see *brlcad*(1). Alternatively, the output can be stored in a pixel file (*pix*(5) format) by specifying *-o* _output.pix_ or in a PNG image file by specifying *-o* _output.png_ in the option list. The orientation of the rays to be fired may be specified by the *-a* and *-e* options, in which case the model will be autosized, and the grid will be centered on the centroid of the model, with ray spacing chosen to span the entire set of _objects_. Alternatively, with the *-M* option, a transformation matrix may be provided on standard input which maps model-space to view-space. In this case, the grid ranges from -1.0 = X,Y = +1.0 in view space, with the size of the grid (number of rays fired) specified with *-s*. The *-M* option is most useful when *rt* is being invoked from a shell script created by an *mged*(1) _saveview_ command.
+*rt* operates on the indicated _objects_ in the input _model.g_ and
+produces a color-shaded image as the output. By default, the output is
+placed on the current framebuffer as it is computed. The environment
+variable FB_FILE specifies the current framebuffer, see
+*brlcad*(1). Alternatively, the output can be stored in a pixel file
+(*pix*(5) format) by specifying *-o* _output.pix_ or in a PNG image
+file by specifying *-o* _output.png_ in the option list. The
+orientation of the rays to be fired may be specified by the *-a* and
+*-e* options, in which case the model will be autosized, and the grid
+will be centered on the centroid of the model, with ray spacing chosen
+to span the selected object set. Alternatively, with the *-M* option,
+a transformation matrix may be provided on standard input which maps
+model-space to view-space. In this case, the grid ranges from -1.0 =
+X,Y = +1.0 in view space, with the size of the grid (number of rays
+fired) specified with *-s*. The *-M* option is most useful when *rt*
+is being invoked from a shell script created by an *mged*(1)
+_saveview_ command.
+
+If no object names are supplied on the command line, by
+*--objects-file*, or by an input command stream, *rt* will use a
+deterministic database default object.  The selection succeeds only
+when a single usable geometry object can be resolved, such as a valid
+*_GLOBAL* `default_object` attribute, exactly one top-level geometry
+object, exactly one combination, exactly one combination matching the
+database filename, or exactly one top-level combination whose name
+begins with `all` or `scene`.  If default selection is disabled, names
+an unusable geometry object, is ambiguous, or has no deterministic
+match, *rt* prints the explanation from the default-object resolver, a
+list of available top-level objects, and aborts without rendering.
 
 The following options are recognized:
 
