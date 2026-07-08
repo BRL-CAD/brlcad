@@ -22,7 +22,7 @@ set(RENDERER_GALLERY_ITEM_4  [=[rt_l4|RT lighting models|rt|png|-l4|rt -l4 curva
 set(RENDERER_GALLERY_ITEM_5  [=[rt_l5|RT lighting models|rt|png|-l5|rt -l5 principal direction|Principal curvature direction debug display.]=])
 set(RENDERER_GALLERY_ITEM_6  [=[rt_l6|RT lighting models|rt|png|-l6|rt -l6 UV|UV coordinate test-map style; U appears in red and V in blue.]=])
 set(RENDERER_GALLERY_ITEM_7  [=[rt_l7|RT lighting models|rt|png|-l7,1024,0,8,60.0,1,0,0,0,1.0,|rt -l7 photon map|Photon-mapping global illumination using a small deterministic photon count so regeneration remains quick enough for documentation snapshots.]=])
-set(RENDERER_GALLERY_ITEM_8  [=[rt_l8|RT lighting models|rt|png|-l8|rt -l8 heat graph|Heat-graph mode. Current PNG file output matches the shaded image while heat timing is reported in the render log.]=])
+set(RENDERER_GALLERY_ITEM_8  [=[rt_l8|RT lighting models|rt|png|-l8|rt -l8 heat graph|Heat-graph diagnostic mode maps per-pixel elapsed render time to grayscale; brighter pixels took longer to render.]=])
 
 set(RENDERER_GALLERY_ITEM_9  [=[rt_haze|RT output options|rt|png|-m 0.0008,0.55,0.72,0.92|rt haze|Full lighting with atmospheric haze enabled.]=])
 set(RENDERER_GALLERY_ITEM_10 [=[rt_cutaway|RT output options|rt|png|-k 0,1,0,260|rt cut plane|Full lighting with a view-wide cutting plane applied at render time.]=])
