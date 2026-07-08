@@ -10,7 +10,7 @@ rtg3 - raytrace a model, writing a COVART (GIFT) 3-component shotline file
 
 [source]
 ----
-rtg3 [options] model.g objects... > shotlines.cov
+rtg3 [options] model.g [objects...] > shotlines.cov
 ----
 
 
@@ -26,10 +26,14 @@ ray partition is followed by air, the air code and the line-of-sight
 thickness of that air are recorded on the shotline header card.  The format
 is the one consumed by the JTCG-approved *covart*(1V) vulnerability codes.
 
+If no _objects_ are listed, *rtg3* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before writing shotlines.
+
 The ray grid is aimed either by azimuth/elevation or by an explicit matrix:
 
 * With *-a* and *-e* the model is autosized, the grid is centered on the
-  centroid of the _objects_, and ray spacing is chosen to span them.
+  centroid of the selected object set, and ray spacing is chosen to span it.
 * With *-M* a model-to-view matrix is read from standard input, mapping
   model space into the view-space range -1.0 <= X,Y <= +1.0; the grid
   resolution is then set with *-s*.  This form is most useful when *rtg3*

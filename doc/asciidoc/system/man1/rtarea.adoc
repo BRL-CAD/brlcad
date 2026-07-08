@@ -10,7 +10,7 @@ rtarea - compute exposed and presented surface areas of geometry from a view
 
 [source]
 ----
-rtarea [options] model.g objects...
+rtarea [options] model.g [objects...]
 ----
 
 
@@ -24,6 +24,10 @@ containing regions), and overall totals.  The view is set with the
 *-a* (azimuth) and *-e* (elevation) options, or by feeding a
 model-to-view matrix on standard input with *-M*.  All results are
 written to standard output as text.
+
+If no _objects_ are listed, *rtarea* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before computing areas.
 
 Two areas are reported.  The *exposed* area is the occluded 2D
 projection: what an observer would see if every object were opaque, so

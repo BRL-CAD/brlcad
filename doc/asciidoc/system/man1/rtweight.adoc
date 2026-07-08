@@ -10,7 +10,7 @@ rtweight - calculate mass, volume, and centroid of geometry via ray tracing
 
 [source]
 ----
-rtweight [options] model.g objects...
+rtweight [options] model.g [objects...]
 ----
 
 
@@ -23,6 +23,10 @@ region, combined with per-material density, to compute the volume,
 mass, and overall geometric centroid of the geometry.  Boolean
 operations are honored, so overlapping or subtracted solids are
 accounted for correctly.
+
+If no _objects_ are listed, *rtweight* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before computing mass properties.
 
 Density information is obtained, in order of preference, from a density
 file named with *-d*, from a *_DENSITIES* table embedded in _model.g_,

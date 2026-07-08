@@ -10,7 +10,7 @@ rthide - ray-trace a model and write a hidden-line UNIX-Plot file
 
 [source]
 ----
-rthide [options] model.g objects... > output.plot3
+rthide [options] model.g [objects...] > output.plot3
 ----
 
 
@@ -25,6 +25,10 @@ and surface height.  This lets pits, protrusions, and curvature changes appear
 as relief: the result looks flat when viewed head-on but shows detail when
 rotated.  The plot is written to standard output by default, or to a named file
 with *-o*.
+
+If no _objects_ are listed, *rthide* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before rendering.
 
 The view is normally specified with *-a* (azimuth) and *-e* (elevation), in
 which case the model is auto-sized and the grid is centered on its bounding box.
