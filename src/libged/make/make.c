@@ -145,18 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "sph")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ELL;
-	internal.idb_meth = &OBJ[ID_ELL];
-	BU_ALLOC(internal.idb_ptr, struct rt_ell_internal);
-	ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
-	ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
-	VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
-	VSET(ell_ip->a, 0.5*scale, 0.0, 0.0);	/* A */
-	VSET(ell_ip->b, 0.0, 0.5*scale, 0.0);	/* B */
-	VSET(ell_ip->c, 0.0, 0.0, 0.5*scale);	/* C */
-    } else if ((BU_STR_EQUAL(argv[bu_optind+1], "grp")) ||
+    if ((BU_STR_EQUAL(argv[bu_optind+1], "grp")) ||
 	       (BU_STR_EQUAL(argv[bu_optind+1], "grip"))) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_GRIP;
@@ -168,28 +157,6 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	     origin[Z]);
 	VSET(grp_ip->normal, 1.0, 0.0, 0.0);
 	grp_ip->mag = 0.375*scale;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "ell1")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ELL;
-	internal.idb_meth = &OBJ[ID_ELL];
-	BU_ALLOC(internal.idb_ptr, struct rt_ell_internal);
-	ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
-	ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
-	VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
-	VSET(ell_ip->a, 0.5*scale, 0.0, 0.0);	/* A */
-	VSET(ell_ip->b, 0.0, 0.25*scale, 0.0);	/* B */
-	VSET(ell_ip->c, 0.0, 0.0, 0.25*scale);	/* C */
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "ell")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ELL;
-	internal.idb_meth = &OBJ[ID_ELL];
-	BU_ALLOC(internal.idb_ptr, struct rt_ell_internal);
-	ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
-	ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
-	VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
-	VSET(ell_ip->a, 0.5*scale, 0.0, 0.0);		/* A */
-	VSET(ell_ip->b, 0.0, 0.25*scale, 0.0);	/* B */
-	VSET(ell_ip->c, 0.0, 0.0, 0.125*scale);	/* C */
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "tor")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TOR;

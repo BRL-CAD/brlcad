@@ -1891,6 +1891,44 @@ rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED
 }
 
 
+/**
+ * Create a default ellipsoid, at point 'origin', scaled by 'scale'
+ * 'variants' are stored as ID_ELL; variant switch selects which axis
+ *   are equal (ell: a,b,c | ell1: a,b=c | sph: a=b=c)
+ */
+C_DECL int
+rt_ell_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale)
+{
+    struct rt_ell_internal *ell_ip;
+
+    /* default ellipse */
+    fastf_t a = 0.5, b = 0.25, c = 0.125;
+    /* switch on variant (silently ignore NULL / (unknown) */
+    if (BU_STR_EQUAL(variant, "sph")) {
+	b = a;
+	c = a;
+    } else if (BU_STR_EQUAL(variant, "ell1")) {
+	b = c;
+    }
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_ELL;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ell_ip, struct rt_ell_internal);
+    intern->idb_ptr = (void *)ell_ip;
+    ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
+
+    VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(ell_ip->a, a * scale, 0.0, 0.0);	/* A */
+    VSET(ell_ip->b, 0.0, b * scale, 0.0);	/* B */
+    VSET(ell_ip->c, 0.0, 0.0, c * scale);	/* C */
+
+    return BRLCAD_OK;
+}
+
+
 /*
  * Used by EHY, EPA, HYP.  See librt_private.h for details.
  */
