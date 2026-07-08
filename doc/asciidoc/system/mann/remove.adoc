@@ -17,23 +17,29 @@ remove {combination} {member}...
 [[description]]
 == DESCRIPTION
 
-The *remove* command is the legacy combination-editing command used to delete
-member references from a specified _combination_.
+The *remove* command is the legacy combination-editing command used to
+delete member references from a specified _combination_.
 
-The first argument names the parent combination. Each following argument names a
-child object to remove from that combination's tree. Successful removal updates
-the stored combination and removes the affected _combination/member_ paths from
-active display lists.
+The first argument names the parent combination. Each following
+argument names a child object to remove from that combination's
+tree. Successful removal updates the stored combination and removes
+the affected _combination/member_ paths from active display lists.
 
-This command edits only the specified parent combination. It does *not* delete
-the removed child objects from the database.
+This command edits only the specified parent combination. It does
+*not* delete the removed child objects from the database.
 
-If the named parent object is not a combination, or if a listed member cannot be
-found in the combination tree, *remove* reports an error.
+If the named parent object is not a combination, or if a listed member
+cannot be found in the combination tree, *remove* reports an error.
 
-For the newer UNIX-style command surface that also supports safe object deletion,
-force deletion, recursive deletion, dry-run reporting, and glob expansion, see
-*rm*.
+For the newer UNIX-style command surface that also supports safe
+object deletion, force deletion, recursive deletion, dry-run
+reporting, and glob expansion, see *rm*.
+
+The *rm* command intentionally rejects the old _rm comb member ..._
+command pattern because that form now means direct object deletion
+rather than member removal. To remove members, use *remove group1
+regiona* or, with *rt*, specify explicit paths such as *rm
+group1/regiona*.
 
 
 [[examples]]
