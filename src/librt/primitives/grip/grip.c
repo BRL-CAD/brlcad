@@ -513,6 +513,28 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 C_DECL int
+rt_grp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_grip_internal *grp_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_GRIP;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(grp_ip, struct rt_grip_internal);
+    intern->idb_ptr = (void *)grp_ip;
+    grp_ip->magic = RT_GRIP_INTERNAL_MAGIC;
+
+    VSET(grp_ip->center, origin[X], origin[Y], origin[Z]);
+    VSET(grp_ip->normal, 1.0, 0.0, 0.0);
+    grp_ip->mag = 0.375 * scale;
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_grp_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
