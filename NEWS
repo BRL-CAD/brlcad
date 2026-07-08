@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 * added 'icv anim' for APNG and MJPEG animation files - Clifford Yapp
 * added BREP/NURBS import support to gcv x3d importer - Sean Morrison
+* added snail & seashell procedural geometry generator - Sean Morrison
 * additional 3D geometry model examples - Csanyi Pal, Lee Butler
 * fixed fbgamma bug specifying three channel values - Sean Morrison
 * fixed fbgrid -o old grid mode uninitialized data bug - Sean Morrison
