@@ -17,21 +17,31 @@ rtshot {-p|-d|-a} _x_ _y_ _z_ {-p|-d|-a} _x_ _y_ _z_ [options] model.g [objects.
 [[description]]
 == DESCRIPTION
 
-*rtshot* fires a single ray at the listed _objects_ in the BRL-CAD database
-_model.g_ and prints a textual summary of every region the ray passes through:
-the in and out hit points, surface normals, surface curvature, claiming regions
-for any overlaps, and optionally selected region attributes. If no _objects_ are
-named, the database's default (top-level) object is used.
+*rtshot* fires a single ray at the listed _objects_ in the BRL-CAD
+database _model.g_ and prints a textual summary of every region the
+ray passes through: the in and out hit points, surface normals,
+surface curvature, claiming regions for any overlaps, and optionally
+selected region attributes. If no _objects_ are named, *rtshot* will
+attempt to use a deterministic database default object. Object
+omission succeeds only when that resolver finds a single usable
+geometry object, such as a valid *_GLOBAL* `default_object` attribute,
+exactly one top-level geometry object, exactly one combination,
+exactly one combination matching the database filename, or exactly one
+top-level combination whose name begins with `all` or `scene`. If
+default selection is disabled, names an unusable geometry object, is
+ambiguous, or has no deterministic match, *rtshot* prints the
+resolver's explanation and exits with "no objects specified."
 
-The ray is defined by supplying *exactly two* of the following three options:
-a start point (*-p*), a direction vector (*-d*), and a point to shoot "at"
-(*-a*). When *-a* is combined with *-d*, the start point is backed off from the
-"at" point by half the model diagonal so the ray begins outside the geometry.
-The direction vector is always normalized.
+The ray is defined by supplying *exactly two* of the following three
+options: a start point (*-p*), a direction vector (*-d*), and a point
+to shoot "at" (*-a*). When *-a* is combined with *-d*, the start point
+is backed off from the "at" point by half the model diagonal so the
+ray begins outside the geometry.  The direction vector is always
+normalized.
 
-*rtshot* is a thin front-end to *librt*(3) intended for inspecting and debugging
-geometry; it is the command-line analog of the ray a single pixel of *rt*(1)
-would cast.
+*rtshot* is a thin front-end to *librt*(3) intended for inspecting and
+debugging geometry; it is the command-line analog of the ray a single
+pixel of *rt*(1) would cast.
 
 [[options]]
 == OPTIONS
@@ -100,10 +110,11 @@ would cast.
 *-N* _#_::
   Set the NMG debug flags (hexadecimal).
 
-A ray bundle can be cast in two ways. Supplying both *-n* and *-c* (with an
-optional *-R* radius) fires a spiral ring bundle whose results are merged as a
-single ray. Supplying only *-R* (with an optional *-g* grid spacing) fires a
-circular grid of parallel rays. The default is to fire a single ray.
+A ray bundle can be cast in two ways. Supplying both *-n* and *-c*
+(with an optional *-R* radius) fires a spiral ring bundle whose
+results are merged as a single ray. Supplying only *-R* (with an
+optional *-g* grid spacing) fires a circular grid of parallel
+rays. The default is to fire a single ray.
 
 [[examples]]
 == EXAMPLES
@@ -128,6 +139,18 @@ Fires a ray toward the point (-1000, 0, 500) heading in the -X direction, with
 the start point automatically placed outside the geometry, and prints the
 _material_id_ attribute of every region the ray strikes. This is a quick way to
 verify which components and materials lie along a line of sight.
+====
+
+.Use the database default object
+====
+[source,bash]
+----
+rtshot -p 0 0 0 -d 1 0 0 single.g
+----
+Shoots the ray at _single.g_'s automatically selected default object.  This
+form is valid only when the database default-object rules resolve exactly one
+usable object.  In a database with multiple top-level candidates and no explicit
+*_GLOBAL* `default_object`, name the intended object after _model.g_.
 ====
 
 [[see_also]]
