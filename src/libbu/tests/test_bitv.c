@@ -326,6 +326,41 @@ ERROR_RETURN:
     return test_results;
 }
 
+static int
+test_bu_bitv_to_hex_partial_byte(void)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    struct bu_bitv *bv = bu_bitv_new(3);
+    int test_results = BRLCAD_ERROR;
+
+    if (!bv) {
+	bu_log("\nERROR: NULL from bu_bitv_new.");
+	goto ERROR_RETURN;
+    }
+
+    BU_BITSET(bv, 0);
+    BU_BITSET(bv, 2);
+    bu_bitv_to_hex(&result, bv);
+
+    if (BU_STR_EQUAL(bu_vls_cstr(&result), "05")) {
+	test_results = BRLCAD_OK;
+	printf("\nbu_bitv_to_hex partial byte PASSED");
+    } else {
+	printf("\nbu_bitv_to_hex partial byte FAILED");
+    }
+
+    printf("\n  Output:   '%s'", bu_vls_cstr(&result));
+    printf("\n  Expected: '%s'", "05");
+
+ERROR_RETURN:
+
+    if (bv)
+	bu_bitv_free(bv);
+    bu_vls_free(&result);
+
+    return test_results;
+}
+
 
 static unsigned int
 power(const unsigned int base, const size_t exponent)
@@ -1100,6 +1135,9 @@ main(int argc, char *argv[])
 	    break;
 	case 15:
 	    return test_bu_bitv_macros();
+	    break;
+	case 16:
+	    return test_bu_bitv_to_hex_partial_byte();
 	    break;
     }
 

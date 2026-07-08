@@ -395,7 +395,7 @@ bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    exact_bytes = bv->nbits / BITS_PER_BYTE;
+    exact_bytes = (bv->nbits + (BITS_PER_BYTE - 1)) / BITS_PER_BYTE;
     if (exact_bytes == 0)
         return;
 
