@@ -1856,6 +1856,31 @@ rt_part_ifree(struct rt_db_internal *ip)
 
 
 C_DECL int
+rt_part_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_part_internal *part_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_PARTICLE;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(part_ip, struct rt_part_internal);
+    intern->idb_ptr = (void *)part_ip;
+    part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
+
+    VSET(part_ip->part_V, origin[X], origin[Y], origin[Z] - scale*0.25);
+    VSET(part_ip->part_H, 0.0, 0.0, 0.5*scale);
+    part_ip->part_vrad = scale*0.25;
+    part_ip->part_hrad = scale*0.125;
+    /* TODO: type variants */
+    part_ip->part_type = RT_PARTICLE_TYPE_CONE;
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);

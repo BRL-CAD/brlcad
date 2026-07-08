@@ -145,19 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "part")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_PARTICLE;
-	internal.idb_meth = &OBJ[ID_PARTICLE];
-	BU_ALLOC(internal.idb_ptr, struct rt_part_internal);
-	part_ip = (struct rt_part_internal *)internal.idb_ptr;
-	part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
-	VSET(part_ip->part_V, origin[X], origin[Y], origin[Z]-scale*0.25);
-	VSET(part_ip->part_H, 0.0, 0.0, 0.5*scale);
-	part_ip->part_vrad = scale*0.25;
-	part_ip->part_hrad = scale*0.125;
-	part_ip->part_type = RT_PARTICLE_TYPE_CONE;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "nmg")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "nmg")) {
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
