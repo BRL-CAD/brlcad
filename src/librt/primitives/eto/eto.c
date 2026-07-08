@@ -1960,9 +1960,10 @@ rt_eto_ifree(struct rt_db_internal *ip)
 }
 
 C_DECL int
-rt_eto_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
+rt_eto_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_eto_internal* eto_ip;
+    fastf_t mag;
 
     intern->idb_type = ID_ETO;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1974,11 +1975,13 @@ rt_eto_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const c
     intern->idb_ptr = (void *)eto_ip;
 
     eto_ip->eto_magic = RT_ETO_INTERNAL_MAGIC;
-    VSETALL(eto_ip->eto_V, 0);
+    VSET(eto_ip->eto_V, origin[X], origin[Y], origin[Z]);
     VSET(eto_ip->eto_N, 0.0, 0.0, 1.0);
-    VSET(eto_ip->eto_C, 1.0, 0.0, 0.0);
-    eto_ip->eto_r = 1.0;
-    eto_ip->eto_rd = 1.0;
+    VSET(eto_ip->eto_C, scale*0.1, 0.0, scale*0.1);
+    mag = MAGNITUDE(eto_ip->eto_C);
+    /* Close enough for now.*/
+    eto_ip->eto_r = scale*0.5 - mag*cos(M_PI_4);
+    eto_ip->eto_rd = scale*0.05;
     return BRLCAD_OK;
 }
 

@@ -145,22 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "eto")) {
-	fastf_t mag;
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_ETO;
-	internal.idb_meth = &OBJ[ID_ETO];
-	BU_ALLOC(internal.idb_ptr, struct rt_eto_internal);
-	eto_ip = (struct rt_eto_internal *)internal.idb_ptr;
-	eto_ip->eto_magic = RT_ETO_INTERNAL_MAGIC;
-	VSET(eto_ip->eto_V, origin[X], origin[Y], origin[Z]);
-	VSET(eto_ip->eto_N, 0.0, 0.0, 1.0);
-	VSET(eto_ip->eto_C, scale*0.1, 0.0, scale*0.1);
-	mag = MAGNITUDE(eto_ip->eto_C);
-	/* Close enough for now.*/
-	eto_ip->eto_r = scale*0.5 - mag*cos(M_PI_4);
-	eto_ip->eto_rd = scale*0.05;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "hyp")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "hyp")) {
 	vect_t vertex, height, vectA;
 	VSET(vertex, origin[X], origin[Y], origin[Z] - scale*0.5);
 	VSET(height, 0.0, 0.0, scale);
