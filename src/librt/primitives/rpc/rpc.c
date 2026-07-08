@@ -1723,7 +1723,7 @@ rt_rpc_ifree(struct rt_db_internal *ip)
 }
 
 C_DECL int
-rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
+rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_rpc_internal* rpc_ip;
 
@@ -1737,10 +1737,10 @@ rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const c
     intern->idb_ptr = (void *)rpc_ip;
 
     rpc_ip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
-    VSETALL(rpc_ip->rpc_V, 0);
-    VSET(rpc_ip->rpc_H, 0.0, 0.0, 1.0);
-    VSET(rpc_ip->rpc_B, 0.0, 1.0, 0.0);
-    rpc_ip->rpc_r = 1.0;
+    VSET(rpc_ip->rpc_V, origin[X], origin[Y]-scale*0.25, origin[Z]-scale*0.5);
+    VSET(rpc_ip->rpc_H, 0.0, 0.0, scale);
+    VSET(rpc_ip->rpc_B, 0.0, (scale*0.5), 0.0);
+    rpc_ip->rpc_r = scale*0.25;
 
     return BRLCAD_OK;
 }
