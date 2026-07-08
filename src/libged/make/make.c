@@ -145,21 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "tor")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_TOR;
-	internal.idb_meth = &OBJ[ID_TOR];
-	BU_ALLOC(internal.idb_ptr, struct rt_tor_internal);
-	tor_ip = (struct rt_tor_internal *)internal.idb_ptr;
-	tor_ip->magic = RT_TOR_INTERNAL_MAGIC;
-	VSET(tor_ip->v, origin[X], origin[Y], origin[Z]);
-	VSET(tor_ip->h, 1.0, 0.0, 0.0);	/* unit normal */
-	tor_ip->r_h = 0.1*scale;
-	tor_ip->r_a = 0.4*scale;
-	tor_ip->r_b = tor_ip->r_a;
-	VSET(tor_ip->a, 0.0, 1, 0.0);
-	VSET(tor_ip->b, 0.0, 0.0, 1);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "tgc")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "tgc")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &OBJ[ID_TGC];

@@ -1973,6 +1973,32 @@ rt_tor_ifree(struct rt_db_internal *ip)
 
 
 C_DECL int
+rt_tor_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_tor_internal *tor_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_TOR;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(tor_ip, struct rt_tor_internal);
+    intern->idb_ptr = (void *)tor_ip;
+    tor_ip->magic = RT_TOR_INTERNAL_MAGIC;
+
+    VSET(tor_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(tor_ip->h, 1.0, 0.0, 0.0);	/* unit normal */
+    tor_ip->r_h = 0.1 * scale;
+    tor_ip->r_a = 0.4 * scale;
+    tor_ip->r_b = tor_ip->r_a;
+    VSET(tor_ip->a, 0.0, 1, 0.0);
+    VSET(tor_ip->b, 0.0, 0.0, 1);
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
