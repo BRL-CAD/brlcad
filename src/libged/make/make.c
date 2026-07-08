@@ -145,16 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "half")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_HALF;
-	internal.idb_meth = &OBJ[ID_HALF];
-	BU_ALLOC(internal.idb_ptr, struct rt_half_internal);
-	half_ip = (struct rt_half_internal *)internal.idb_ptr;
-	half_ip->magic = RT_HALF_INTERNAL_MAGIC;
-	VSET(half_ip->eqn, 0.0, 0.0, 1.0);
-	half_ip->eqn[W] = (origin[Z]);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "rpc")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "rpc")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_RPC;
 	internal.idb_meth = &OBJ[ID_RPC];

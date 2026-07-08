@@ -779,6 +779,27 @@ rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 C_DECL int
+rt_hlf_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
+{
+    struct rt_half_internal *half_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_HALF;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(half_ip, struct rt_half_internal);
+    intern->idb_ptr = (void *)half_ip;
+    half_ip->magic = RT_HALF_INTERNAL_MAGIC;
+
+    VSET(half_ip->eqn, 0.0, 0.0, 1.0);
+    half_ip->eqn[W] = origin[Z];
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_hlf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
