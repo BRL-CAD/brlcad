@@ -50,6 +50,15 @@ Runs the _rt_ program to produce a ambient occlusion color-shaded image of the c
 
 ====
 
+.Run _rt_ to visualize per-pixel render timing for the current view.
+[example]
+====
+mged>**rt -l8 -o current_view_heat.png**
+
+Runs the _rt_ program in heat-graph mode. Each pixel is shaded by its elapsed render time, with brighter grayscale pixels indicating rays that took longer to complete. The image is written to _current_view_heat.png_ using MGED's current viewing parameters.
+
+====
+
 
 [[author]]
 == AUTHOR
