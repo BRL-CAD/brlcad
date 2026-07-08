@@ -4,26 +4,30 @@
 :manmanual: BRL-CAD MGED Commands
 
 == NAME
-apropos - Searches through the one-line usage messages for each _mged_ command and displays the name of each command where a match is found.
+apropos - Searches _mged_ command help and manual pages for keywords.
 
 == SYNOPSIS
 
 [source]
 ----
-apropos {keyword}
+apropos [-k|-K] {keyword}
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *apropos* command searches through the one-line usage messages for specified _mged_ commands and displays the commands that match.
+The *apropos* command searches _mged_ command manual pages and displays the
+commands that match in ranked order.
+
+By default, or with *-k*, *apropos* searches command names, synopses, and brief
+descriptions. With *-K*, it searches the full text of the command manual pages.
 
 
 [[examples]]
 == EXAMPLES
 
-.List all commands having "region" in their one-line usage messages.
+.List commands having "region" in their names, synopses, or descriptions.
 [example]
 ====
 mged>**apropos region**
@@ -39,6 +43,19 @@ regdef regions reid remat summary wcodes whatid whichair whichid
 ....
 
 
+
+====
+
+.List commands whose full manual page text contains "boolean operations."
+[example]
+====
+mged>**apropos -K "boolean operations"**
+
+....
+
+bev ev region facetize search npush comb r bigE nmg_fix_normals exists tol
+
+....
 
 ====
 
