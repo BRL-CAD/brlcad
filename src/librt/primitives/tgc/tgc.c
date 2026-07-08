@@ -3789,6 +3789,49 @@ rt_tgc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 }
 
 
+/**
+ * Create a default truncated general cone at 'origin', scaled by 'scale'
+ * 'variants' are stored as ID_TGC; the variant switch selects the 
+ *   cross-section radii.
+ */
+C_DECL int
+rt_tgc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale)
+{
+    struct rt_tgc_internal *tgc_ip;
+
+    /* default tgc */
+    fastf_t ax=0.25, by=0.125, cx=0.125, dy=0.25;
+    /* switch on variant type; silently ignore NULL / (unknown) */
+    if (BU_STR_EQUAL(variant, "tec")) {
+	by = 0.125; cx = 0.125; dy = 0.0625;
+    } else if (BU_STR_EQUAL(variant, "rec")) {
+	by = 0.125; cx = 0.25; dy = 0.125;
+    } else if (BU_STR_EQUAL(variant, "trc")) {
+	by = 0.25; cx = 0.125; dy = 0.125;
+    } else if (BU_STR_EQUAL(variant, "rcc")) {
+	by = 0.25; cx = 0.25; dy = 0.25;
+    }
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_TGC;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(tgc_ip, struct rt_tgc_internal);
+    intern->idb_ptr = (void *)tgc_ip;
+    tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
+
+    VSET(tgc_ip->v, origin[X], origin[Y], origin[Z] - 0.5 * scale);
+    VSET(tgc_ip->h, 0.0, 0.0, scale);
+    VSET(tgc_ip->a, ax * scale, 0.0, 0.0);
+    VSET(tgc_ip->b, 0.0, by * scale, 0.0);
+    VSET(tgc_ip->c, cx * scale, 0.0, 0.0);
+    VSET(tgc_ip->d, 0.0, dy * scale, 0.0);
+
+    return BRLCAD_OK;
+}
+
+
 C_DECL int
 rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

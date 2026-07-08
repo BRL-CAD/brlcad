@@ -145,72 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "tgc")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_TGC;
-	internal.idb_meth = &OBJ[ID_TGC];
-	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
-	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
-	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
-	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]-0.5*scale);
-	VSET(tgc_ip->h,  0.0, 0.0, scale);
-	VSET(tgc_ip->a,  0.25*scale, 0.0, 0.0);
-	VSET(tgc_ip->b,  0.0, 0.125*scale, 0.0);
-	VSET(tgc_ip->c,  0.125*scale, 0.0, 0.0);
-	VSET(tgc_ip->d,  0.0, 0.25*scale, 0.0);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "tec")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_TGC;
-	internal.idb_meth = &OBJ[ID_TGC];
-	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
-	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
-	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
-	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]-0.5*scale);
-	VSET(tgc_ip->h,  0.0, 0.0, scale);
-	VSET(tgc_ip->a,  0.25*scale, 0.0, 0.0);
-	VSET(tgc_ip->b,  0.0, 0.125*scale, 0.0);
-	VSET(tgc_ip->c,  0.125*scale, 0.0, 0.0);
-	VSET(tgc_ip->d,  0.0, (0.0625*scale), 0.0);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "rec")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_TGC;
-	internal.idb_meth = &OBJ[ID_TGC];
-	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
-	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
-	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
-	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]- 0.5*scale);
-	VSET(tgc_ip->h,  0.0, 0.0, scale);
-	VSET(tgc_ip->a,  0.25*scale, 0.0, 0.0);
-	VSET(tgc_ip->b,  0.0, 0.125*scale, 0.0);
-	VSET(tgc_ip->c,  0.25*scale, 0.0, 0.0);
-	VSET(tgc_ip->d,  0.0, 0.125*scale, 0.0);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "trc")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_TGC;
-	internal.idb_meth = &OBJ[ID_TGC];
-	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
-	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
-	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
-	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]-0.5*scale);
-	VSET(tgc_ip->h,  0.0, 0.0, scale);
-	VSET(tgc_ip->a,  0.25*scale, 0.0, 0.0);
-	VSET(tgc_ip->b,  0.0, 0.25*scale, 0.0);
-	VSET(tgc_ip->c,  0.125*scale, 0.0, 0.0);
-	VSET(tgc_ip->d,  0.0, 0.125*scale, 0.0);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "rcc")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_TGC;
-	internal.idb_meth = &OBJ[ID_TGC];
-	BU_ALLOC(internal.idb_ptr, struct rt_tgc_internal);
-	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
-	tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
-	VSET(tgc_ip->v, origin[X], origin[Y], origin[Z]- 0.5*scale);
-	VSET(tgc_ip->h,  0.0, 0.0, scale);
-	VSET(tgc_ip->a,  0.25*scale, 0.0, 0.0);
-	VSET(tgc_ip->b,  0.0, 0.25*scale, 0.0);
-	VSET(tgc_ip->c,  0.25*scale, 0.0, 0.0);
-	VSET(tgc_ip->d,  0.0, 0.25*scale, 0.0);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "half")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "half")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_HALF;
 	internal.idb_meth = &OBJ[ID_HALF];
