@@ -46,6 +46,7 @@
 #include "bu/time.h"
 #include "vmath.h"
 #include "rt/db4.h"
+#include "rt/db5.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -543,6 +544,8 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 {
     register struct directory *dp;
     struct bu_external ext;
+    int append_only = 0;
+    struct directory *out_global = RT_DIR_NULL;
 
     RT_CK_DBI(dbip);
     RT_CK_WDB(wdbp);
@@ -553,15 +556,17 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 	return -1;
     }
 
-    //struct directory *out_global = db_lookup(wdbp->dbip, "_GLOBAL", LOOKUP_QUIET);
+    append_only = (wdbp->type == RT_WDB_TYPE_DB_DISK_APPEND_ONLY
+	    || wdbp->type == RT_WDB_TYPE_DB_INMEM_APPEND_ONLY
+	    || wdbp->type == RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY);
+    if (append_only)
+	out_global = db_lookup(wdbp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
 
     /* Output all directory entries */
     FOR_ALL_DIRECTORY_START(dp, dbip)
 	RT_CK_DIR(dp);
-	//if (out_global && BU_STR_EQUAL(dp->d_namep, "_GLOBAL")) {
-	    //bu_log("db_dump() - in append-only mode, and target db already has a _GLOBAL object");
-	    //continue;
-	//}
+	if (out_global && BU_STR_EQUAL(dp->d_namep, DB5_GLOBAL_OBJECT_NAME))
+	    continue;
 	/* XXX Need to go to internal form, if database versions don't match */
 	if (db_get_external(&ext, dp, dbip) < 0) {
 	    bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep);
