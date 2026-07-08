@@ -106,11 +106,21 @@ _gcv_brlcad_write(struct gcv_context *context,
 	}
     } else {
 	dbip = db_open(dest_path, DB_OPEN_READWRITE);
-	if (!out_wdbp) {
+	if (!dbip) {
 	    bu_log("db_open() failed for '%s'\n", dest_path);
 	    return 0;
 	}
+	if (db_dirbuild(dbip)) {
+	    bu_log("db_dirbuild() failed for '%s'\n", dest_path);
+	    db_close(dbip);
+	    return 0;
+	}
 	out_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+	if (!out_wdbp) {
+	    bu_log("wdb_dbopen() failed for '%s'\n", dest_path);
+	    db_close(dbip);
+	    return 0;
+	}
     }
 
     int ret = 1;
