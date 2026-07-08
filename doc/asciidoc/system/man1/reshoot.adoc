@@ -10,36 +10,48 @@ reshoot - re-shoot a list of rays and compare results to a previous run
 
 [source]
 ----
-reshoot geom.g [obj...] < rayfile
+reshoot _geom.g_ [_obj_ ...] < _rayfile_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*reshoot* re-shoots a set of previously recorded rays against the geometry
-database _geom.g_ and compares the results to the values recorded for each
-ray.  It is geared towards regression testing of the BRL-CAD ray tracing
-libraries.  If one or more _obj_ arguments are given they select the object
-trees to prepare; otherwise the database default object is used.  Differences
-are reported to standard error as they are found, and *reshoot* exits with a
-non-zero status if any ray result differs from its recorded value, or 0 if all
-results match.
+*reshoot* re-shoots a set of previously recorded rays against the
+geometry database _geom.g_ and compares the results to the values
+recorded for each ray.  It is geared towards regression testing of the
+BRL-CAD ray tracing libraries.  If one or more _obj_ arguments are
+given they select the object trees to prepare.  If no _obj_ arguments
+are given, *reshoot* uses a deterministic database default object.
+Object omission succeeds only when that resolver finds a single usable
+geometry object, such as a valid *_GLOBAL* `default_object` attribute,
+exactly one top-level geometry object, exactly one combination,
+exactly one combination matching the database filename, or exactly one
+top-level combination whose name begins with `all` or `scene`.  If
+default selection is disabled, names an unusable geometry object, is
+ambiguous, or has no deterministic match, *reshoot* prints the
+resolver's explanation, a list of available top-level objects, and
+exits with "no objects specified."
 
-The list of rays is read from standard input.  Each ray begins with a *Pnt*
-line giving its origin and a *Dir* line giving its direction, followed by one
-*region* line for each region the ray was expected to cross.  The three
-coordinate values of *Pnt* and *Dir* must be comma-separated with no embedded
-whitespace, and the *Pnt* and *Dir* keywords must start their lines.  A new
-*Pnt* keyword begins the next ray, so any number of rays may appear in the
-file.
+Differences are reported to standard error as they are found, and
+*reshoot* exits with a non-zero status if any ray result differs from
+its recorded value, or 0 if all results match.
 
-The recorded ray file is normally produced from a candidate application (for
-example *rt*(1)) that is run with the *RT_G_DEBUG* flag *DEBUG_ALLHITS* set.
-That flag causes *librt* to log every call to the application _hit_ routine,
-together with the contents of each *struct partition*, on standard error.  The
-verbose log is then reduced to *reshoot* input with an *awk*(1) program.  A
-suitable p.awk is:
+The list of rays is read from standard input.  Each ray begins with a
+*Pnt* line giving its origin and a *Dir* line giving its direction,
+followed by one *region* line for each region the ray was expected to
+cross.  The three coordinate values of *Pnt* and *Dir* must be
+comma-separated with no embedded whitespace, and the *Pnt* and *Dir*
+keywords must start their lines.  A new *Pnt* keyword begins the next
+ray, so any number of rays may appear in the file.
+
+The recorded ray file is normally produced from a candidate
+application (for example *rt*(1)) that is run with the *RT_G_DEBUG*
+flag *DEBUG_ALLHITS* set.  That flag causes *librt* to log every call
+to the application _hit_ routine, together with the contents of each
+*struct partition*, on standard error.  The verbose log is then
+reduced to *reshoot* input with an *awk*(1) program.  A suitable p.awk
+is:
 
 ....
 /Pnt/ { START=index($0,"(") + 1
@@ -72,9 +84,10 @@ Dir=0,0,-1
 	region=r1.r in=p1.s indist=10016.8 out=p2.s outdist=10017.8
 ....
 
-For each ray that disagrees, *reshoot* prints the ray's point and direction
-followed by one or more mismatch lines describing the inhit distance, outhit
-distance, region name, or in/out primitive name that did not match.
+For each ray that disagrees, *reshoot* prints the ray's point and
+direction followed by one or more mismatch lines describing the inhit
+distance, outhit distance, region name, or in/out primitive name that
+did not match.
 
 [[examples]]
 == EXAMPLES
@@ -94,6 +107,21 @@ Feeding that list back into *reshoot* re-traces the same rays and reports any
 result that changed.  A non-zero exit status signals that the geometry or the
 ray tracer now produces different intersections, making this a convenient
 regression check after editing a model or modifying *librt*.
+====
+
+.Use the database default object when it can be inferred
+====
+[source,bash]
+----
+rt -x 2 -o /dev/null single.g 2> log
+awk -f p.awk < log > shotlist
+reshoot single.g < shotlist
+----
+When _single.g_ has a resolvable default object, the omitted object list in
+both commands selects that same object.  If the database has no usable default,
+or has several plausible defaults and no explicit *_GLOBAL* `default_object`
+attribute, name the object explicitly; otherwise *reshoot* fails before reading
+the ray list because no geometry was prepared.
 ====
 
 [[bugs]]
