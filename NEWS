@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 * added new documentation on adrt rendering - Sean Morrison
 * added snail & seashell procedural geometry generator - Sean Morrison
+* rt -l8 rendering time heat graphs - Stephen Kennedy, Sean Morrison
 * added 'icv anim' for APNG and MJPEG animation files - Clifford Yapp
 * added BREP/NURBS import support to gcv x3d importer - Sean Morrison
 * added new documentation on adrt rendering - Sean Morrison
