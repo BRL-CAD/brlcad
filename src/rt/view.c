@@ -63,7 +63,8 @@
 #include "./ext.h"
 
 
-extern fastf_t** timeTable_init(int x, int y);  /* from heatgraph.c */
+extern fastf_t** timeTable_init(size_t x, size_t y);  /* from heatgraph.c */
+extern void timeTable_clear(size_t x, size_t y);  /* from heatgraph.c */
 extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct fb *efbp); /* from heatgraph.c */
 extern void free_scanlines(int, struct scanline *);
 extern struct scanline* alloc_scanlines(int);
@@ -1521,6 +1522,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
     }
 
     pwidth = 3;
+
+    if (lightmodel == 8)
+	timeTable_clear(width, height);
 
     /* Always allocate the scanline[] array (unless we already have
      * one in incremental mode)

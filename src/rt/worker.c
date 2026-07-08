@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "bu/log.h"
+#include "bu/time.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -53,7 +54,7 @@
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
 #define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
 
-extern fastf_t** timeTable_init(int x, int y);
+extern fastf_t** timeTable_init(size_t x, size_t y);
 extern void timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
 
 int per_processor_chunk = 0;	/* how many pixels to do at once */
@@ -151,15 +152,13 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     int samplenum = 0;
     static const double one_over_255 = 1.0 / 255.0;
     const int pindex = (pixelnum * sizeof(RGBpixel));
+    int64_t pixel_start = 0;
 
     /* for stereo output */
     vect_t left_eye_delta = VINIT_ZERO;
 
     if (lightmodel == 8) {
-	/* Add timer here to start pixel-time for heat
-	 * graph, when asked.
-	 */
-	rt_prep_timer();
+	pixel_start = bu_gettime();
     }
 
     /* Obtain fresh copy of global application struct */
@@ -426,7 +425,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	fastf_t pixelTime;
 	fastf_t **timeTable;
 
-	pixelTime = rt_get_timer(NULL,NULL); /* FIXME: needs to use bu_gettime() */
+	pixelTime = (fastf_t)(bu_gettime() - pixel_start) / 1000000.0;
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 	timeTable = timeTable_init(width, height);

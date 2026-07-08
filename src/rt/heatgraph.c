@@ -37,6 +37,7 @@
 
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "icv.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -47,18 +48,55 @@
 #include "./ext.h"
 
 
+static fastf_t **heatgraph_table = NULL;
+static size_t table_width = 0;
+static size_t table_height = 0;
+
+
+static unsigned char
+heat_pixel_value(fastf_t timeval, int positivePixels, fastf_t minPositiveTime, fastf_t maxTime, fastf_t range)
+{
+    fastf_t norm = 0.0;
+
+    if (timeval < 0.0)
+	return 0;
+
+    if (positivePixels == 0) {
+	norm = 0.0;
+    } else if (range <= SMALL_FASTF) {
+	norm = (timeval > 0.0) ? 1.0 : 0.0;
+    } else if (timeval > 0.0) {
+	/* Timing values tend to cluster near zero.  Normalize the
+	 * distance from the fastest measured pixel on a log scale so
+	 * microsecond-level variation remains visible. */
+	if (minPositiveTime > SMALL_FASTF) {
+	    fastf_t denom = log1p((maxTime - minPositiveTime) / minPositiveTime);
+	    if (denom > SMALL_FASTF)
+		norm = log1p((timeval - minPositiveTime) / minPositiveTime) / denom;
+	    else
+		norm = (timeval - minPositiveTime) / range;
+	}
+	else
+	    norm = (timeval - minPositiveTime) / range;
+    }
+
+    if (norm < 0.0)
+	norm = 0.0;
+    if (norm > 1.0)
+	norm = 1.0;
+
+    return (unsigned char)((norm * 254.0) + ((timeval > 0.0) ? 1 : 0));
+}
+
+
 /**
  * This function creates the table of values that will store the
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
  */
 fastf_t**
-timeTable_init(int x, int y)
+timeTable_init(size_t x, size_t y)
 {
-    static fastf_t **timeTable = NULL;
-
-    bu_log("Initializing heatgraph timers\n");
-
     /*
      * Time table will be initialized to the size of the current
      * framebuffer by using a malloc.
@@ -67,25 +105,57 @@ timeTable_init(int x, int y)
      */
 
     if (x && y) {
-	int i=0;
-	int w=0;
+	size_t i=0;
+	size_t w=0;
 
 	/* Semaphore Acquire goes here */
-	if (timeTable == NULL) {
-	    timeTable = (fastf_t **)bu_malloc(x * sizeof(fastf_t *), "timeTable");
+	if (heatgraph_table != NULL && (x != table_width || y != table_height)) {
+	    for (i = 0; i < table_width; i++)
+		bu_free(heatgraph_table[i], "timeTable[]");
+	    bu_free(heatgraph_table, "timeTable");
+	    heatgraph_table = NULL;
+	    table_width = 0;
+	    table_height = 0;
+	}
+	if (heatgraph_table == NULL) {
+	    bu_log("Initializing heatgraph timers (%zu x %zu)\n", x, y);
+	    heatgraph_table = (fastf_t **)bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	    for (i = 0; i < x; i++) {
-		timeTable[i] = (fastf_t *)bu_malloc(y * sizeof(fastf_t), "timeTable[i]");
+		heatgraph_table[i] = (fastf_t *)bu_malloc(y * sizeof(fastf_t), "timeTable[i]");
 	    }
+	    table_width = x;
+	    table_height = y;
 	    for (i = 0; i < x; i++) {
 		for (w = 0; w < y; w++) {
-		    timeTable[i][w] = -1;
+		    heatgraph_table[i][w] = -1;
 		}
 	    }
 
 	}
 	/* Semaphore release goes here */
     }
-    return timeTable;
+    return heatgraph_table;
+}
+
+
+/**
+ * Clears the time table for a new frame.
+ */
+void
+timeTable_clear(size_t x, size_t y)
+{
+    fastf_t **timeTable = timeTable_init(x, y);
+    size_t i = 0;
+    size_t w = 0;
+
+    if (!timeTable)
+	return;
+
+    for (i = 0; i < x; i++) {
+	for (w = 0; w < y; w++) {
+	    timeTable[i][w] = -1;
+	}
+    }
 }
 
 
@@ -93,15 +163,20 @@ timeTable_init(int x, int y)
  * Frees up the time table array.
  */
 void
-timeTable_free(fastf_t **timeTable)
+timeTable_free(fastf_t **tt)
 {
-    /* Temporarily assigned variables, until real ones are found */
-    int y = height;
-    int i = 0;
+    size_t i = 0;
 
-    for (i = 0; i < y; i++)
-	bu_free(timeTable[i], "timeTable[]");
-    bu_free(timeTable, "timeTable");
+    if (!tt)
+	return;
+
+    for (i = 0; i < table_width; i++)
+	bu_free(tt[i], "timeTable[]");
+    bu_free(tt, "timeTable");
+    if (tt == heatgraph_table)
+	heatgraph_table = NULL;
+    table_width = 0;
+    table_height = 0;
 }
 
 
@@ -118,10 +193,14 @@ timeTable_input(int x, int y, fastf_t timeval, fastf_t **timeTable)
 	x = 0;
     if (y < 0)
 	y = 0;
-    if ((size_t)y > height)
+    if ((size_t)y >= height) {
 	bu_log("Error, putting in values greater than height!\n");
-    if ((size_t)x > width)
+	return;
+    }
+    if ((size_t)x >= width) {
 	bu_log("Error, putting in values greater than width!\n");
+	return;
+    }
     timeTable[x][y] = timeval;
     /* bu_log("Input %lf into timeTable %d %d\n", timeval, x, y); */
 }
@@ -184,19 +263,19 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
     fastf_t minTime = MAX_FASTF; 		/* The 1 value */
+    fastf_t minPositiveTime = MAX_FASTF;
     fastf_t totalTime = 0;
     fastf_t meanTime = 0;			/* the 128 value */
     fastf_t range = 0;				/* All times should fall in this range */
     int pixels = 0;				/* Used for calculating averages */
-    RGBpixel p;					/* Pixel colors for particular pixel */
-    int maxX = width;
-    int maxY = height; 	/* Maximum render size, uses evil globals */
-    int Rcolor = 0;
-    int Gcolor = 0;
-    int Bcolor = 0;
-    int npix = 0;
+    int positivePixels = 0;
+    size_t maxX = width;
+    size_t maxY = height; 	/* Maximum render size, uses evil globals */
+    ssize_t npix = 0;
     int zoomH = 0;
     int zoomW = 0;
+    int outfp_error = 0;
+    RGBpixel *line = NULL;
 
     /* The following loop will work as follows, it will loop through
      * timeTable and search for pixels which have a non-negative value.
@@ -204,8 +283,12 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
      * depending on time taken. ((time / maxTime) * 255), or similar
      * function.
      */
-    int x = 0, y = 0;
-    bu_log("MaxX =%d MaxY =%d\n", maxX, maxY);
+    size_t x = 0, y = 0;
+    if (timeTable == NULL) {
+	bu_log("ERROR: heatgraph timer table is not initialized\n");
+	return;
+    }
+    bu_log("MaxX =%zu MaxY =%zu\n", maxX, maxY);
     for (x = 0; x < maxX; x++) {
 	for (y = 0; y < maxY; y++) {
 	    if (!(timeTable[x][y] < 0.0)) {
@@ -214,49 +297,63 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
 		    maxTime = timeTable[x][y];
 		if (timeTable[x][y] < minTime)
 		    minTime = timeTable[x][y];
+		if (timeTable[x][y] > 0.0 && timeTable[x][y] < minPositiveTime)
+		    minPositiveTime = timeTable[x][y];
 		/* Semaphore release goes here */
 		pixels++;
+		if (timeTable[x][y] > 0.0)
+		    positivePixels++;
 		totalTime += timeTable[x][y];
 	    }
 	}
     }
+    if (pixels == 0) {
+	bu_log("ERROR: heatgraph timer table has no populated pixels\n");
+	return;
+    }
     meanTime = totalTime / pixels;
-    range = maxTime - minTime;
+    if (positivePixels > 0 && minPositiveTime < MAX_FASTF)
+	range = maxTime - minPositiveTime;
+    else
+	range = maxTime - minTime;
     bu_log("Time: %lf\n  Max = %lf\n  Min = %lf\n  Mean = %lf\n  Range = %lf\n", totalTime, maxTime, minTime, meanTime, range);
 
     /* Now fill out the framebuffer with the Heat Graph information */
+    line = (RGBpixel *)bu_malloc(maxX * sizeof(RGBpixel), "heatgraph scanline");
 
-    for (x = 0; x < maxX; x++) {
-	for (y = 0; y < maxY; y++) {
-	    if (timeTable[x][y] < minTime) {
-		/* error pixels, time is less than minTime */
-		Rcolor = 0;
-		Gcolor = 255;
-		Bcolor = 0;
-	    }
-	    if (timeTable[x][y] < minTime || EQUAL(timeTable[x][y], minTime)) {
-		Rcolor = Gcolor = Bcolor = 1;
-	    }
-	    if (timeTable[x][y] > minTime
-		&& (timeTable[x][y] < maxTime || EQUAL(timeTable[x][y], maxTime))) {
-		Rcolor = Gcolor = Bcolor = (255/range)*timeTable[x][y];
-	    }
-	    if (timeTable[x][y] > maxTime)
-		Rcolor = 255;
+    for (y = 0; y < maxY; y++) {
+	for (x = 0; x < maxX; x++) {
+	    fastf_t timeval = timeTable[x][y];
+	    unsigned char value = heat_pixel_value(timeval, positivePixels, minPositiveTime, maxTime, range);
 
-	    p[0]=Rcolor;
-	    p[1]=Gcolor;
-	    p[2]=Bcolor;
+	    line[x][RED] = value;
+	    line[x][GRN] = value;
+	    line[x][BLU] = value;
+	}
 
-	    if (out_fbp != FB_NULL) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		npix = fb_write(out_fbp, x, y, (unsigned char *)p, 1);
-		bu_semaphore_release(BU_SEM_SYSCALL);
-		if (npix < 1)
-		    bu_exit(EXIT_FAILURE, "pixel fb_write error");
+	if (bif != NULL && icv_writeline(bif, y, (unsigned char *)line, ICV_DATA_UCHAR) != 0)
+	    bu_log("WARNING: heatgraph icv_writeline error at row %zu\n", y);
+
+	if (outfp != NULL && !outfp_error) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    if (bu_fseek(outfp, y * maxX * sizeof(RGBpixel), 0) != 0 ||
+		fwrite(line, sizeof(RGBpixel), maxX, outfp) != maxX) {
+		outfp_error = 1;
+		bu_log("WARNING: heatgraph file write error\n");
 	    }
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
+
+	if (out_fbp != FB_NULL) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    npix = fb_write(out_fbp, 0, (int)y, (unsigned char *)line, maxX);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	    if (npix != (ssize_t)maxX)
+		bu_exit(EXIT_FAILURE, "heatgraph fb_write error");
 	}
     }
+    bu_free(line, "heatgraph scanline");
+
     if (out_fbp != FB_NULL) {
       zoomH = fb_getheight(out_fbp) / height;
       zoomW = fb_getwidth(out_fbp) / width;
