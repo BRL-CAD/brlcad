@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+* rt -l8 rendering time heat graphs - Stephen Kennedy, Sean Morrison
 * added 'icv anim' for APNG and MJPEG animation files - Clifford Yapp
 * added BREP/NURBS import support to gcv x3d importer - Sean Morrison
 * added new documentation on adrt rendering - Sean Morrison
