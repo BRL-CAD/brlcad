@@ -10,7 +10,7 @@ rtcheck - raytrace a model to detect and plot overlapping geometry
 
 [source]
 ----
-rtcheck [options] model.g objects... > overlaps.plot3
+rtcheck [options] model.g [objects...] > overlaps.plot3
 ----
 
 
@@ -25,9 +25,13 @@ overlaid on the geometry for visualization, and a textual summary of the
 overlapping region pairs and their maximum depths is written to standard
 error.  Overlaps shallower than 0.1mm are ignored.
 
+If no _objects_ are listed, *rtcheck* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before checking overlaps.
+
 The orientation of the rays may be set with the *-a* and *-e* options, in
 which case the model is autosized, the grid is centered on the model
-centroid, and ray spacing is chosen to span the _objects_.  Alternatively,
+centroid, and ray spacing is chosen to span the selected object set.  Alternatively,
 with *-M* a model-to-view matrix is read from standard input; the grid then
 ranges from -1.0 to +1.0 in view space and its resolution is set with *-s*.
 The *-M* form is what *mged*(1) uses when it invokes the *rtcheck* command

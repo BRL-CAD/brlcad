@@ -10,7 +10,7 @@ rtxray - ray trace a model and produce a pseudo X-ray image
 
 [source]
 ----
-rtxray [options] model.g objects...
+rtxray [options] model.g [objects...]
 ----
 
 
@@ -28,6 +28,10 @@ The value 0 is reserved for rays that strike no material, so the
 background can be keyed out easily while the object retains good
 contrast.
 
+If no _objects_ are listed, *rtxray* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before rendering.
+
 Most models do not fill their bounding volume, so the safe scaling above
 yields very low (mostly white) contrast.  To compensate, a contrast
 boost of 2.0 is applied before path lengths are mapped to gray.  Adjust
@@ -36,7 +40,7 @@ more contrast but may clip thick regions to black (1).
 
 The view is selected with the *-a* (azimuth) and *-e* (elevation)
 options, in which case the model is auto-sized and the grid is centered
-on the model so the rays span the entire set of _objects_.
+on the model so the rays span the selected object set.
 Alternatively, with *-M* a model-to-view matrix is read from standard
 input (with the grid covering -1.0 <= X,Y <= +1.0 in view space); this
 form is convenient when *rtxray* is driven by a script produced by the

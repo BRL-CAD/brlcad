@@ -10,7 +10,7 @@ rtsil - ray trace a model and produce a binary silhouette image
 
 [source]
 ----
-rtsil [options] model.g objects...
+rtsil [options] model.g [objects...]
 ----
 
 
@@ -23,10 +23,14 @@ a binary hit/miss silhouette of the geometry.  One ray is fired per
 pixel and stops at the first surface struck (one-hit mode); no shading,
 lighting, or material evaluation is performed.
 
+If no _objects_ are listed, *rtsil* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before rendering.
+
 The result is an 8-bit *bw*(5) image (one byte per pixel) in which a
 pixel that intersected geometry is given the value 1 and a pixel that
 missed all geometry is given the value 255.  This high-contrast matte
-isolates the projected outline of the _objects_ very cheaply.
+isolates the projected outline of the selected object set very cheaply.
 
 The view is selected with the *-a* (azimuth) and *-e* (elevation)
 options, or with *-M* a model-to-view matrix is read from standard

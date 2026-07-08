@@ -10,7 +10,7 @@ rtdepth - ray trace a model and produce a grayscale depth image
 
 [source]
 ----
-rtdepth [options] model.g objects...
+rtdepth [options] model.g [objects...]
 ----
 
 
@@ -27,9 +27,13 @@ are bright (toward 255) and far surfaces are dark (toward 1).  The value
 0 is reserved for rays that strike nothing, so the background can be
 keyed out easily and the object retains good contrast.
 
+If no _objects_ are listed, *rtdepth* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before rendering.
+
 The view is selected with the *-a* (azimuth) and *-e* (elevation)
 options, in which case the model is auto-sized and the grid is centered
-on the model so the rays span the entire set of _objects_.
+on the model so the rays span the selected object set.
 Alternatively, with *-M* a model-to-view matrix is read from standard
 input (with the grid covering -1.0 <= X,Y <= +1.0 in view space); this
 form is convenient when *rtdepth* is driven by a script produced by the

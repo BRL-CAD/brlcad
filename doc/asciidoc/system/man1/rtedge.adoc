@@ -10,7 +10,7 @@ rtedge - ray-trace a model and render an edge (hidden-line) image
 
 [source]
 ----
-rtedge [options] model.g objects...
+rtedge [options] model.g [objects...]
 ----
 
 
@@ -22,6 +22,10 @@ and produces an edge (hidden-line) image rather than a shaded rendering.
 By default it writes white edges on a near-black background to a framebuffer;
 with *-o* it writes a *pix*(5) or *png* image file instead.
 
+If no _objects_ are listed, *rtedge* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before rendering.
+
 An edge is drawn wherever adjacent rays differ enough in one of four
 detectable properties: region id (*detect_ids*, on), line-of-sight hit
 distance (*detect_distance*, on), surface normal (*detect_normals*, on), or
@@ -31,7 +35,8 @@ silhouettes, occluding contours, pits, protrusions, and changes in
 curvature. *rtedge* replaced the obsolete *lgt* utility.
 
 The view may be specified two ways. With *-a* and *-e* the model is
-autosized and a grid is centered on the model so the rays span all _objects_.
+autosized and a grid is centered on the model so the rays span the selected
+object set.
 Alternatively, with *-M*, a model-to-view matrix (and optional animation
 script) is read from standard input; this is the form produced by the *mged*(1)
 _saveview_ command, with the grid size set by *-s*. *-M* conflicts with
