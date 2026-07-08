@@ -145,19 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "epa")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_EPA;
-	internal.idb_meth = &OBJ[ID_EPA];
-	BU_ALLOC(internal.idb_ptr, struct rt_epa_internal);
-	epa_ip = (struct rt_epa_internal *)internal.idb_ptr;
-	epa_ip->epa_magic = RT_EPA_INTERNAL_MAGIC;
-	VSET(epa_ip->epa_V, origin[X], origin[Y], origin[Z]-scale*0.5);
-	VSET(epa_ip->epa_H, 0.0, 0.0, scale);
-	VSET(epa_ip->epa_Au, 0.0, 1.0, 0.0);
-	epa_ip->epa_r1 = scale*0.5;
-	epa_ip->epa_r2 = scale*0.25;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "ehy")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "ehy")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_EHY;
 	internal.idb_meth = &OBJ[ID_EHY];
