@@ -145,15 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "hyp")) {
-	vect_t vertex, height, vectA;
-	VSET(vertex, origin[X], origin[Y], origin[Z] - scale*0.5);
-	VSET(height, 0.0, 0.0, scale);
-	VSET(vectA, 0.0, scale*0.5, 0.0);
-	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	int ret = mk_hyp(wdbp, argv[save_bu_optind], vertex, height, vectA, scale*0.25, 0.4);
-	return ret;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "part")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "part")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PARTICLE;
 	internal.idb_meth = &OBJ[ID_PARTICLE];

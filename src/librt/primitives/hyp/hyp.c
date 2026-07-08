@@ -1493,6 +1493,30 @@ rt_hyp_ifree(struct rt_db_internal *ip)
 
 
 C_DECL int
+rt_hyp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_hyp_internal *hyp_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_HYP;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(hyp_ip, struct rt_hyp_internal);
+    intern->idb_ptr = (void *)hyp_ip;
+    hyp_ip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
+
+    VSET(hyp_ip->hyp_Vi, origin[X], origin[Y], origin[Z] - scale*0.5);
+    VSET(hyp_ip->hyp_Hi, 0.0, 0.0, scale);
+    VSET(hyp_ip->hyp_A, 0.0, scale*0.5, 0.0);
+    hyp_ip->hyp_b = scale*0.25;
+    hyp_ip->hyp_bnr = 0.4;
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
