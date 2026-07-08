@@ -557,13 +557,13 @@ main(int ac, const char **av)
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last arguments supplied */
-    if (in_str && !out_str) {
+    if (in_str && !out_str && ac > 0) {
 	bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
 	av[ac - 1] = NULL;
 	ac--;
 	unknown_ac--;
     }
-    if (!in_str && out_str) {
+    if (!in_str && out_str && ac > 0) {
 	bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
 	av[ac - 1] = NULL;
 	ac--;
