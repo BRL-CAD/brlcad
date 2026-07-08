@@ -1905,7 +1905,7 @@ rt_rhc_ifree(struct rt_db_internal *ip)
 }
 
 C_DECL int
-rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
+rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_rhc_internal* rhc_ip;
 
@@ -1919,11 +1919,11 @@ rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const c
     intern->idb_ptr = (void *)rhc_ip;
 
     rhc_ip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
-    VSETALL(rhc_ip->rhc_V, 0);
-    VSET(rhc_ip->rhc_H, 0.0, 0.0, 1.0);
-    VSET(rhc_ip->rhc_B, 0.0, 1.0, 0.0);
-    rhc_ip->rhc_r = 1.0;
-    rhc_ip->rhc_c = 1.0;
+    VSET(rhc_ip->rhc_V, origin[X], origin[Y]-0.25*scale, origin[Z]-0.25*scale);
+    VSET(rhc_ip->rhc_H, 0.0, 0.0, 0.5*scale);
+    VSET(rhc_ip->rhc_B, 0.0, 0.5*scale, 0.0);
+    rhc_ip->rhc_r = scale*0.25;
+    rhc_ip->rhc_c = scale*0.10;
     return BRLCAD_OK;
 }
 
