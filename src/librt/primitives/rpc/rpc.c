@@ -1968,6 +1968,57 @@ rt_rpc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     return BRLCAD_OK;
 }
 
+int
+rt_rpc_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_rpc_internal *rpc;
+    fastf_t mag_b, mag_h;
+    fastf_t f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(rpc);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_b = MAGNITUDE(rpc->rpc_B);
+    mag_h = MAGNITUDE(rpc->rpc_H);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_h, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_h_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_b, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_b_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(rpc->rpc_r, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_r_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_b > SQRT_SMALL_FASTF && mag_h > SQRT_SMALL_FASTF) {
+        f = VDOT(rpc->rpc_B, rpc->rpc_H) / (mag_b * mag_h);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"b_not_perp_h\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+    return issues;
+}
 
 /*
  * Local Variables:

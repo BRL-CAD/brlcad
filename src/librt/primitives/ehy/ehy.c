@@ -1982,6 +1982,70 @@ rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     return BRLCAD_OK;
 }
 
+int
+rt_ehy_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_ehy_internal *ehy;
+    fastf_t mag_h, f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_h = MAGNITUDE(ehy->ehy_H);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_h, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_h_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (!NEAR_EQUAL(MAGSQ(ehy->ehy_Au), 1.0, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"au_not_unit_length\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (ehy->ehy_r1 <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_r1_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (ehy->ehy_r2 <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_r2_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (ehy->ehy_c <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_c_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_h > SQRT_SMALL_FASTF) {
+        f = VDOT(ehy->ehy_Au, ehy->ehy_H) / mag_h;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"au_not_perp_h\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+    return issues;
+}
+
 
 /**
  * Import an EHY from the database format to the internal format.

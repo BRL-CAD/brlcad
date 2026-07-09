@@ -2334,6 +2334,63 @@ rt_epa_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     return BRLCAD_OK;
 }
 
+int
+rt_epa_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_epa_internal *epa;
+    fastf_t mag_h, f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    epa = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(epa);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_h = MAGNITUDE(epa->epa_H);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_h, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_h_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (!NEAR_EQUAL(MAGSQ(epa->epa_Au), 1.0, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"au_not_unit_length\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (epa->epa_r1 <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_r1_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (epa->epa_r2 <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_r2_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_h > SQRT_SMALL_FASTF) {
+        f = VDOT(epa->epa_Au, epa->epa_H) / mag_h;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"au_not_perp_h\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+    return issues;
+}
 
 /** @} */
 /*
