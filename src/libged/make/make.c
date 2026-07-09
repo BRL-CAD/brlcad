@@ -145,21 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
-
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_CLINE;
-	internal.idb_meth = &OBJ[ID_CLINE];
-	BU_ALLOC(internal.idb_ptr, struct rt_cline_internal);
-	cline_ip = (struct rt_cline_internal *)internal.idb_ptr;
-	cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
-	VSET(cline_ip->v, origin[X], origin[Y], origin[Z]);
-	VSET(cline_ip->h, 0.0, 0.0, scale);
-	cline_ip->radius = .5 * scale;
-	cline_ip->thickness = .1 * scale;
-	fprintf(stdout, "cline being made with radius %f and thickness %f\n", cline_ip->radius, cline_ip->thickness);
-
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "hf")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "hf")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
 	return BRLCAD_ERROR;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "pg") ||

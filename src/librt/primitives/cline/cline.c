@@ -1124,6 +1124,29 @@ rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
 
 C_DECL int
+rt_cline_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_cline_internal *cline_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_CLINE;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(cline_ip, struct rt_cline_internal);
+    intern->idb_ptr = (void *)cline_ip;
+    cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
+
+    VSET(cline_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(cline_ip->h, 0.0, 0.0, scale);
+    cline_ip->radius = 0.5 * scale;
+    cline_ip->thickness = 0.1 * scale;
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
