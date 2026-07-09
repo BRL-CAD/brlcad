@@ -55,7 +55,7 @@ Runs the _rt_ program to produce a ambient occlusion color-shaded image of the c
 ====
 mged>**rt -l8 -o current_view_heat.png**
 
-Runs the _rt_ program in heat-graph mode. Each pixel is shaded by the elapsed CPU time needed by the rendering worker thread to render that fully shaded pixel, with brighter grayscale pixels indicating pixels that took longer to complete. If a current-thread CPU timer is not available, _rt_ falls back to wall-clock timing. The timing includes shader work such as light visibility and shadow rays, and the grayscale image is normalized for comparative display. The image is written to _current_view_heat.png_ using MGED's current viewing parameters.
+Runs the _rt_ program in heat-graph mode. Each pixel is shaded by the high-resolution current-thread CPU time needed by the rendering worker to render that fully shaded pixel, with brighter grayscale pixels indicating pixels that took longer to complete. If a current-thread CPU timer is not available, _rt_ falls back to wall-clock timing. The timing includes shader work such as light visibility and shadow rays, and the grayscale image is normalized for comparative display. The image is written to _current_view_heat.png_ using MGED's current viewing parameters.
 
 ====
 
