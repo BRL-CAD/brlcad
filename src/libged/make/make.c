@@ -145,24 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "superell")) {
-
-
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_SUPERELL;
-	internal.idb_meth = &OBJ[ID_SUPERELL];
-	BU_ALLOC(internal.idb_ptr, struct rt_superell_internal);
-	superell_ip = (struct rt_superell_internal *)internal.idb_ptr;
-	superell_ip->magic = RT_SUPERELL_INTERNAL_MAGIC;
-	VSET(superell_ip->v, origin[X], origin[Y], origin[Z]);
-	VSET(superell_ip->a, 0.5*scale, 0.0, 0.0);	/* A */
-	VSET(superell_ip->b, 0.0, 0.25*scale, 0.0);	/* B */
-	VSET(superell_ip->c, 0.0, 0.0, 0.125*scale);	/* C */
-	superell_ip->n = 1.0;
-	superell_ip->e = 1.0;
-	fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
-
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_CLINE;

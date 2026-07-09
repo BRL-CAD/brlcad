@@ -1100,6 +1100,31 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 */
 
 C_DECL int
+rt_superell_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_superell_internal *superell_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_SUPERELL;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(superell_ip, struct rt_superell_internal);
+    intern->idb_ptr = (void *)superell_ip;
+    superell_ip->magic = RT_SUPERELL_INTERNAL_MAGIC;
+
+    VSET(superell_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(superell_ip->a, 0.5*scale, 0.0, 0.0);	    /* A */
+    VSET(superell_ip->b, 0.0, 0.25*scale, 0.0);	    /* B */
+    VSET(superell_ip->c, 0.0, 0.0, 0.125*scale);    /* C */
+    superell_ip->n = 1.0;
+    superell_ip->e = 1.0;
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
