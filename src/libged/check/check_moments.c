@@ -25,28 +25,28 @@
 #include "../ged_private.h"
 #include "./check_private.h"
 
-int check_moments(struct ged *gedp, struct current_state *state,
-		  struct db_i *dbip,
-		  char **tobjtab,
-		  int tnobjs,
-		  struct check_parameters *options)
+int check_format_moments(struct ged *gedp,
+			 struct analyze_results *res,
+			 struct check_parameters *options)
 {
-    int i;
+    size_t i;
     mat_t moments;
+    struct bu_vls title = BU_VLS_INIT_ZERO;
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS|ANALYSIS_MOMENTS)) return BRLCAD_ERROR;
+    (void)options; /* units not applied to moment tensor */
 
-    print_verbose_debug(gedp, options);
-
-    for (i=0; i < tnobjs; i++){
-	struct bu_vls title = BU_VLS_INIT_ZERO;
-	analyze_moments(state, tobjtab[i], moments);
-	bu_vls_printf(&title, "Moments and Products of Inertia For %s", tobjtab[i]);
+    for (i = 0; i < res->n_objects; i++) {
+	MAT_COPY(moments, res->objects[i].moments_of_inertia);
+	bu_vls_sprintf(&title, "Moments and Products of Inertia For %s",
+		       res->objects[i].name);
 	bn_mat_print_vls(bu_vls_addr(&title), moments, gedp->ged_result_str);
     }
-    analyze_moments_total(state, moments);
+    bu_vls_free(&title);
+
+    MAT_COPY(moments, res->moments_of_inertia);
     bn_mat_print_vls("For the Moments and Products of Inertia For\n\tAll Specified Objects",
 		     moments, gedp->ged_result_str);
+
     return BRLCAD_OK;
 }
 
