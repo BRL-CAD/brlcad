@@ -161,14 +161,6 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	       BU_STR_EQUAL(argv[bu_optind+1], "vol")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
 	return BRLCAD_ERROR;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "brep")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_BREP;
-	internal.idb_meth = &OBJ[ID_BREP];
-	BU_ALLOC(brep_ip, struct rt_brep_internal);
-	internal.idb_ptr = (struct rt_brep_internal *)brep_ip;
-	brep_ip->magic = RT_BREP_INTERNAL_MAGIC;
-	brep_ip->brep = (ON_Brep *)brep_create();
     } else if (rt_obj_make(argv[bu_optind+1], origin, scale, &internal) == BRLCAD_OK) {
 	bu_log("SUCCESS for type %s\n", argv[bu_optind+1]);
     } else {
