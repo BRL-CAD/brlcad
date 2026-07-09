@@ -43,7 +43,7 @@ regenerate them from the built tools by configuring with
 |image:images/renderer_gallery_rt_l7.png[rt_l7,512]
 |*rt -l7 photon map*: Photon-mapping global illumination using a small deterministic photon count so regeneration remains quick enough for documentation snapshots.
 |image:images/renderer_gallery_rt_l8.png[rt_l8,512]
-|*rt -l8 heat graph*: Heat-graph diagnostic mode maps per-pixel elapsed render time to grayscale; brighter pixels took longer to render.
+|*rt -l8 heat graph*: Heat-graph diagnostic mode maps the elapsed CPU time needed to render each fully shaded pixel to grayscale; brighter pixels took longer to render.
 |===
 
 == RT output options
