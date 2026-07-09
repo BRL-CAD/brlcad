@@ -2950,7 +2950,7 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 }
 
 C_DECL int
-rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
+rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_extrude_internal* ip;
 
@@ -2964,7 +2964,15 @@ rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern, con
     intern->idb_ptr = (void *)ip;
 
     ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+    VSET(ip->V, origin[X], origin[Y], origin[Z]);
+    VSET(ip->h, 0.0, 0.0, scale);
+    VSET(ip->u_vec, 1.0, 0.0, 0.0);
+    VSET(ip->v_vec, 0.0, 1.0, 0.0);
+    ip->keypoint = 0;
+    /* do we want to create the extrude with an empty sketch? */
     ip->sketch_name = bu_strdup("");
+    ip->skt = (struct rt_sketch_internal *)NULL;
+
     return BRLCAD_OK;
 }
 

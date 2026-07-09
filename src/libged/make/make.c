@@ -145,40 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "extrude")) {
-	char *av[8];
-	char center_str[512];
-	char scale_str[128];
-
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_EXTRUDE;
-	internal.idb_meth = &OBJ[ID_EXTRUDE];
-	BU_ALLOC(internal.idb_ptr, struct rt_extrude_internal);
-	extrude_ip = (struct rt_extrude_internal *)internal.idb_ptr;
-	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
-	VSET(extrude_ip->V, origin[X], origin[Y], origin[Z]);
-	VSET(extrude_ip->h, 0.0, 0.0, scale);
-	VSET(extrude_ip->u_vec, 1.0, 0.0, 0.0);
-	VSET(extrude_ip->v_vec, 0.0, 1.0, 0.0);
-	extrude_ip->keypoint = 0;
-	av[0] = "make_name";
-	av[1] = "skt_";
-	ged_exec_make_name(gedp, 2, (const char **)av);
-	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(gedp->ged_result_str));
-	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
-
-	sprintf(center_str, "%f %f %f", V3ARGS(origin));
-	sprintf(scale_str, "%f", scale);
-	av[0] = "make";
-	av[1] = "-o";
-	av[2] = center_str;
-	av[3] = "-s";
-	av[4] = scale_str;
-	av[5] = extrude_ip->sketch_name;
-	av[6] = "sketch";
-	av[7] = (char *)0;
-	ged_make_core(gedp, 7, (const char **)av);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "sketch")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "sketch")) {
 	const char *make_default = NULL;
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -424,6 +391,42 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
+    }
+
+    /* TODO/FIXME: extrude relies on a sketch. Create said sketch as a post-process check.
+     * is this how we want to handle this, should extrude's ft_make create it's own sketch,
+     * or should an extrude without a sketch be legal?
+     */
+    if (BU_STR_EQUAL(argv[bu_optind+1], "extrude")) {
+	char *av[8];
+	char center_str[512];
+	char scale_str[128];
+	extrude_ip = (struct rt_extrude_internal *)internal.idb_ptr;
+
+	/* sanity */
+	if (!extrude_ip)
+	    return BRLCAD_ERROR;
+
+	/* attach a sketch name to the extrude */
+	av[0] = "make_name";
+	av[1] = "skt_";
+	ged_exec_make_name(gedp, 2, (const char **)av);
+	if (extrude_ip->sketch_name)
+	    bu_free(extrude_ip->sketch_name, "empty sketch_name");
+	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(gedp->ged_result_str));
+
+	sprintf(center_str, "%f %f %f", V3ARGS(origin));
+	sprintf(scale_str, "%f", scale);
+	av[0] = "make";
+	av[1] = "-o";
+	av[2] = center_str;
+	av[3] = "-s";
+	av[4] = scale_str;
+	av[5] = extrude_ip->sketch_name;
+	av[6] = "sketch";
+	av[7] = (char *)0;
+	/* TODO: should probably validate the sketch was made successfully */
+	ged_make_core(gedp, 7, (const char **)av);
     }
 
     /* no interrupts */
