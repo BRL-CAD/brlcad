@@ -281,7 +281,7 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_t
     int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
     if (mkeysize <= 0)
 	return 0;
-    if (strlen(key) > (size_t)mkeysize) {
+    if ((strlen(key)+1) > (size_t)mkeysize) {
 	if (mdb_env_get_maxkeysize(c->i->env) >= BU_CACHE_KEY_MAXLEN) {
 	    bu_log("bu_cache_get called with a key string larger than the supported length (%d):\n%s\n", BU_CACHE_KEY_MAXLEN, key);
 	    return 0;
@@ -399,8 +399,8 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, st
 	return 0;
 
     int rc = 0;
-    int mkeysize = mdb_env_get_maxkeysize(c->i->env);
-    if (mkeysize <= 0 || strlen(key) > (size_t)mkeysize)
+    int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
+    if (mkeysize <= 0 || ((strlen(key) + 1) > (size_t)mkeysize))
 	return 0;
 
     // Prepare inputs for writing
