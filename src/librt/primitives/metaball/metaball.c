@@ -890,9 +890,10 @@ rt_metaball_add_point(struct rt_metaball_internal *mb, const point_t *loc, const
 }
 
 C_DECL int
-rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
+rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
 {
     struct rt_metaball_internal* ip;
+    struct wdb_metaball_pnt *mbpt;
 
     intern->idb_type = ID_METABALL;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -904,7 +905,22 @@ rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern, co
     intern->idb_ptr = (void *)ip;
 
     ip->magic = RT_METABALL_INTERNAL_MAGIC;
+    ip->threshold = 1.0;
+    ip->method = 1;
     BU_LIST_INIT(&ip->metaball_ctrl_head);
+
+    BU_ALLOC(mbpt, struct wdb_metaball_pnt);
+    mbpt->field_strength = 1.0;
+    mbpt->blobbiness = 1.0;
+    VSET(mbpt->coord, origin[X] - 1.0, origin[Y], origin[Z]);
+    BU_LIST_INSERT(&ip->metaball_ctrl_head, &mbpt->l);
+
+    BU_ALLOC(mbpt, struct wdb_metaball_pnt);
+    mbpt->field_strength = 1.0;
+    mbpt->blobbiness = 1.0;
+    VSET(mbpt->coord, origin[X] + 1.0, origin[Y], origin[Z]);
+    BU_LIST_INSERT(&ip->metaball_ctrl_head, &mbpt->l);
+
     return BRLCAD_OK;
 }
 

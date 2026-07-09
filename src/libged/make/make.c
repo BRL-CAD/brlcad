@@ -161,33 +161,6 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	       BU_STR_EQUAL(argv[bu_optind+1], "vol")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
 	return BRLCAD_ERROR;
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "metaball")) {
-	struct wdb_metaball_pnt *mbpt;
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_METABALL;
-	internal.idb_meth = &OBJ[ID_METABALL];
-	BU_ALLOC(internal.idb_ptr, struct rt_metaball_internal);
-	metaball_ip = (struct rt_metaball_internal *)internal.idb_ptr;
-	metaball_ip->magic = RT_METABALL_INTERNAL_MAGIC;
-	metaball_ip->threshold = 1.0;
-	metaball_ip->method = 1;
-	BU_LIST_INIT(&metaball_ip->metaball_ctrl_head);
-
-	mbpt = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
-	mbpt->field_strength = 1.0;
-	mbpt->blobbiness = 1.0;
-	VSET(mbpt->coord, origin[X] - 1.0, origin[Y], origin[Z]);
-	BU_LIST_INSERT(&metaball_ip->metaball_ctrl_head, &mbpt->l);
-
-	mbpt = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
-	mbpt->field_strength = 1.0;
-	mbpt->blobbiness = 1.0;
-	VSET(mbpt->coord, origin[X] + 1.0, origin[Y], origin[Z]);
-	BU_LIST_INSERT(&metaball_ip->metaball_ctrl_head, &mbpt->l);
-
-	bu_log("metaball being made with %f threshold and two points using the %s rendering method\n",
-	       metaball_ip->threshold, rt_metaball_lookup_type_name(metaball_ip->method));
-
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "datum")) {
 	struct rt_datum_internal *datum_ip;
 	struct rt_datum_internal *next_ip;
