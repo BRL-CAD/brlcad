@@ -53,6 +53,9 @@ add_subdirectory(gcv)
 # GQA Regression Tests
 add_subdirectory(gqa)
 
+# Analyze cross-tool parity tests
+add_subdirectory(analyze_parity)
+
 # IGES Regression Tests
 add_subdirectory(iges)
 
