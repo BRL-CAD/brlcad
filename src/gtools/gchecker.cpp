@@ -37,9 +37,8 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include <regex>
+#include <map>
 #include <set>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -47,6 +46,7 @@
 #include "bu/file.h"
 #include "bu/opt.h"
 #include "bu/path.h"
+#include "analyze.h"
 #include "ged.h"
 
 static void
@@ -219,103 +219,77 @@ main(int argc, const char **argv)
 	bu_exit(1, "view incrementing error\n");
     }
 
-    // Run rtcheck equiv.
+    // Run overlap analysis via libanalyze for each top-level object.
+    // Previously this was two nested loops (rtcheck equiv + gqa equiv)
+    // that called `check overlaps` as a GED command and parsed the text
+    // output with a regex.  Now we call analyze_run() directly to get
+    // structured overlap records, which is faster, more reliable, and
+    // avoids the regex text-parsing fragility.
     if (!dry_run) {
-	std::regex oregex("<(.*),.(.*)>: ([0-9]*).* (.*).mm");
 	for (size_t i = 0; i < objs.size(); i++) {
-	    for (int az = 0; az < 180; az+=45) {
-		for (int el = 0; el < 180; el+=45) {
-		    struct bu_vls str = BU_VLS_INIT_ZERO;
-		    const char **av = (const char **)bu_calloc(8, sizeof(char *), "cmd array");
-		    av[0] = bu_strdup("check");
-		    av[1] = bu_strdup("overlaps");
-		    av[2] = bu_strdup("-G1024");
-		    bu_vls_sprintf(&str, "-a%d", az);
-		    av[3] = bu_strdup(bu_vls_cstr(&str));
-		    bu_vls_sprintf(&str, "-e%d", el);
-		    av[4] = bu_strdup(bu_vls_cstr(&str));
-		    av[5] = bu_strdup("-q");
-		    av[6] = bu_strdup(objs[i]->d_namep);
-		    bu_vls_trunc(gedp->ged_result_str, 0);
-		    if (ged_exec_check(gedp, 7, av) != BRLCAD_OK) {
-			bu_exit(1, "error running ged 'check' command\n");
-		    }
-		    for (int j = 0; j < 7; j++) bu_free((void *)av[j], "str");
-		    bu_free(av, "av array");
-		    bu_vls_free(&str);
+	    char *names[1];
+	    names[0] = objs[i]->d_namep;
 
-		    // Split up results into something we can process with regex
-		    std::istringstream sres(bu_vls_cstr(gedp->ged_result_str));
-		    std::string line;
-		    while (std::getline(sres, line)) {
-			std::smatch nvar;
-			if (!std::regex_search(line, nvar, oregex) || nvar.size() != 5) {
-			    continue;
-			}
-			if (verbose) {
-			    bu_log("%zd: %s\n", nvar.size(), line.c_str());
-			    for (size_t m = 0; m < nvar.size(); m++) {
-				bu_log("   %zd: %s\n", m, nvar.str(m).c_str());
-			    }
-			}
-			std::pair<std::string, std::string> key;
-			// sort left and right strings lexicographically to produce unique pairing keys
-			key = (nvar.str(1) < nvar.str(2)) ? std::make_pair(nvar.str(1), nvar.str(2)) :  std::make_pair(nvar.str(2), nvar.str(1));
-			// size = count * depth
-			double val = std::stod(nvar.str(3)) * std::stod(nvar.str(4));
-			unique_pairs.insert(key);
-			pair_sizes.insert(std::make_pair(key, val));
-			if (verbose) {
-			    bu_log("Inserting: %s,%s -> %f\n", key.first.c_str(), key.second.c_str(), val);
-			}
+	    // First pass: high-resolution fixed-grid (analogous to old rtcheck equiv,
+	    // 1024×1024 cells per view direction).
+	    {
+		struct analyze_config cfg = ANALYZE_CONFIG_INIT_ZERO;
+		cfg.grid_width  = 1024;
+		cfg.grid_height = 1024;
+		cfg.quiet_missed = 1;
+		struct analyze_results *res =
+		    analyze_run(&cfg, gedp->dbip, names, 1, ANALYZE_OVERLAPS);
+		if (!res) {
+		    bu_exit(1, "error running analyze_run (high-res pass) on '%s'\n",
+			   objs[i]->d_namep);
+		}
+		for (size_t k = 0; k < BU_PTBL_LEN(&res->overlaps); k++) {
+		    struct analyze_overlap_record *ov =
+			(struct analyze_overlap_record *)BU_PTBL_GET(&res->overlaps, k);
+		    const std::string r1(ov->region1 ? ov->region1 : "");
+		    const std::string r2(ov->region2 ? ov->region2 : "");
+		    std::pair<std::string, std::string> key =
+			(r1 < r2) ? std::make_pair(r1, r2) : std::make_pair(r2, r1);
+		    double val = (double)ov->count * ov->max_dist;
+		    unique_pairs.insert(key);
+		    pair_sizes.insert(std::make_pair(key, val));
+		    if (verbose) {
+			bu_log("Inserting (hi-res): %s,%s -> %f\n",
+			       key.first.c_str(), key.second.c_str(), val);
 		    }
 		}
+		analyze_results_free(res);
 	    }
-	}
 
-	// Run gqa equiv.
-	for (size_t i = 0; i < objs.size(); i++) {
-	    for (int az = 0; az < 180; az+=45) {
-		for (int el = 0; el < 180; el+=45) {
-		    const char **av = (const char **)bu_calloc(6, sizeof(char *), "cmd array");
-		    av[0] = bu_strdup("check");
-		    av[1] = bu_strdup("overlaps");
-		    av[2] = bu_strdup("-g1mm,1mm");
-		    av[3] = bu_strdup("-q");
-		    av[4] = bu_strdup(objs[i]->d_namep);
-		    bu_vls_trunc(gedp->ged_result_str, 0);
-		    if (ged_exec_check(gedp, 5, av) != BRLCAD_OK) {
-			bu_exit(1, "error running ged 'check' command\n");
-		    }
-		    for (int j = 0; j < 5; j++) bu_free((void *)av[j], "str");
-		    bu_free(av, "av array");
-
-		    // Split up results into something we can process with regex
-		    std::istringstream sres(bu_vls_cstr(gedp->ged_result_str));
-		    std::string line;
-		    while (std::getline(sres, line)) {
-			std::smatch nvar;
-			if (!std::regex_search(line, nvar, oregex) || nvar.size() != 5) {
-			    continue;
-			}
-			if (verbose) {
-			    bu_log("%zd: %s\n", nvar.size(), line.c_str());
-			    for (size_t m = 0; m < nvar.size(); m++) {
-				bu_log("   %zd: %s\n", m, nvar.str(m).c_str());
-			    }
-			}
-			std::pair<std::string, std::string> key;
-			// sort left and right strings lexicographically to produce unique pairing keys
-			key = (nvar.str(1) < nvar.str(2)) ? std::make_pair(nvar.str(1), nvar.str(2)) :  std::make_pair(nvar.str(2), nvar.str(1));
-			// size = count * depth
-			double val = std::stod(nvar.str(3)) * std::stod(nvar.str(4));
-			unique_pairs.insert(key);
-			pair_sizes.insert(std::make_pair(key, val));
-			if (verbose) {
-			    bu_log("Inserting: %s,%s -> %f\n", key.first.c_str(), key.second.c_str(), val);
-			}
+	    // Second pass: fine uniform grid spacing (analogous to old gqa equiv,
+	    // 1 mm grid spacing).
+	    {
+		struct analyze_config cfg = ANALYZE_CONFIG_INIT_ZERO;
+		cfg.grid_spacing     = 1.0; /* 1 mm initial */
+		cfg.grid_spacing_min = 1.0; /* 1 mm limit   */
+		cfg.quiet_missed = 1;
+		struct analyze_results *res =
+		    analyze_run(&cfg, gedp->dbip, names, 1, ANALYZE_OVERLAPS);
+		if (!res) {
+		    bu_exit(1, "error running analyze_run (fine-grid pass) on '%s'\n",
+			   objs[i]->d_namep);
+		}
+		for (size_t k = 0; k < BU_PTBL_LEN(&res->overlaps); k++) {
+		    struct analyze_overlap_record *ov =
+			(struct analyze_overlap_record *)BU_PTBL_GET(&res->overlaps, k);
+		    const std::string r1(ov->region1 ? ov->region1 : "");
+		    const std::string r2(ov->region2 ? ov->region2 : "");
+		    std::pair<std::string, std::string> key =
+			(r1 < r2) ? std::make_pair(r1, r2) : std::make_pair(r2, r1);
+		    double val = (double)ov->count * ov->max_dist;
+		    unique_pairs.insert(key);
+		    pair_sizes.insert(std::make_pair(key, val));
+		    if (verbose) {
+			bu_log("Inserting (fine-grid): %s,%s -> %f\n",
+			       key.first.c_str(), key.second.c_str(), val);
 		    }
 		}
+		analyze_results_free(res);
 	    }
 	}
     }

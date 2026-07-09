@@ -25,47 +25,37 @@
 #include "../ged_private.h"
 #include "./check_private.h"
 
-int check_surf_area(struct ged *gedp, struct current_state *state,
-		    struct db_i *dbip,
-		    char **tobjtab,
-		    int tnobjs,
-		    struct check_parameters *options)
+int check_format_surf_area(struct ged *gedp,
+			   struct analyze_results *res,
+			   struct check_parameters *options)
 {
-    int i;
-    double units = options->units[LINE]->val*options->units[LINE]->val;
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_SURF_AREA)) return BRLCAD_ERROR;
-
-    print_verbose_debug(gedp, options);
+    size_t i;
+    double units2 = options->units[LINE]->val * options->units[LINE]->val;
 
     bu_vls_printf(gedp->ged_result_str, "Surface Area:\n");
 
-    for (i=0; i < tnobjs; i++){
-	fastf_t surf_area;
-	surf_area = analyze_surf_area(state, tobjtab[i]);
+    for (i = 0; i < res->n_objects; i++) {
 	bu_vls_printf(gedp->ged_result_str, "\t%s %g %s^2\n",
-		      tobjtab[i],
-		      surf_area/units,
+		      res->objects[i].name,
+		      res->objects[i].surf_area / units2,
 		      options->units[LINE]->name);
     }
 
-    bu_vls_printf(gedp->ged_result_str, "\n  Average total surface area: %g %s^2\n", analyze_total_surf_area(state)/units, options->units[LINE]->name);
+    bu_vls_printf(gedp->ged_result_str,
+		  "\n  Average total surface area: %g %s^2\n",
+		  res->total_surf_area / units2,
+		  options->units[LINE]->name);
 
     if (options->print_per_region_stats) {
-	int num_regions = analyze_get_num_regions(state);
 	bu_vls_printf(gedp->ged_result_str, "\tregions:\n");
-	for (i = 0; i < num_regions; i++) {
-	    char *reg_name = NULL;
-	    double surf_area;
-	    double high, low;
-	    analyze_surf_area_region(state, i, &reg_name, &surf_area, &high, &low);
-	    bu_vls_printf(gedp->ged_result_str, "\t%s surf_area:%g %s^2 +(%g) -(%g)\n",
-			  reg_name,
-			  surf_area/units,
-			  options->units[LINE]->name,
-			  high/units,
-			  low/units);
+	for (i = 0; i < res->n_regions; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "\t%s surf_area:%g %s^2\n",
+			  res->regions[i].name,
+			  res->regions[i].surf_area / units2,
+			  options->units[LINE]->name);
 	}
     }
+
     return BRLCAD_OK;
 }
 

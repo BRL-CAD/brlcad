@@ -3,6 +3,7 @@ set(PLUGIN_LIBS libged libbu)
 set(
   CHECK_SRCS
   check_adj_air.c
+  check_bbox.c
   check.c
   check_centroid.c
   check_exp_air.c

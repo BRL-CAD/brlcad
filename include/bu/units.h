@@ -36,6 +36,57 @@ __BEGIN_DECLS
 /** @{ */
 /** @file bu/units.h */
 
+
+/**
+ * One entry in a unit-conversion table.
+ *
+ * val  - conversion factor from this unit to the BRL-CAD internal unit
+ *        (mm for length, mm^3 for volume, grams for mass).
+ * name - human-readable unit name used on the command line.
+ *        An empty string marks the sentinel (last) entry in each table.
+ */
+struct bu_cvt_tab {
+    double val;
+    char   name[32];
+};
+
+/** Dimension-type index constants for bu_units_tab[][]. */
+#define BU_UNITS_LENGTH 0  /**< index into bu_units_tab for length (mm)    */
+#define BU_UNITS_VOLUME 1  /**< index into bu_units_tab for volume (mm^3)  */
+#define BU_UNITS_MASS   2  /**< index into bu_units_tab for mass (grams)   */
+
+/**
+ * Array of three conversion-table pointers: length (index 0), volume (index
+ * 1), and mass (index 2).  Each row is a null-name-terminated sequence of
+ * struct bu_cvt_tab entries.
+ *
+ * Usage:
+ *   const struct bu_cvt_tab *len = bu_units_tab[BU_UNITS_LENGTH];
+ *   for (; len->name[0]; len++) { ... }
+ */
+BU_EXPORT extern const struct bu_cvt_tab * const bu_units_tab[3];
+
+
+/**
+ * Parse a floating-point value optionally followed by a unit string.
+ *
+ * Reads @p buf with sscanf, looks up the (optional) unit suffix in @p cvt
+ * (one of bu_units_tab[BU_UNITS_*]), multiplies by the conversion factor,
+ * and stores the result in @p val.  Error messages (if any) are appended to
+ * @p msgs.
+ *
+ * @param msgs  destination vls for error messages; may be NULL.
+ * @param val   output: parsed value in internal units (mm / mm^3 / grams).
+ * @param buf   input string, e.g. "5.0mm", "1in", "0.5".
+ * @param cvt   conversion table row (one of bu_units_tab[BU_UNITS_*]).
+ * @return 0 on success, 1 on parse or unknown-unit error.
+ */
+BU_EXPORT extern int
+bu_units_parse_double(struct bu_vls *msgs, double *val,
+		      const char *buf,
+		      const struct bu_cvt_tab *cvt);
+
+
 /**
  * Convert the provided string into a units conversion factor.
  *
