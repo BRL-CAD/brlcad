@@ -2613,6 +2613,108 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 
 
 C_DECL int
+rt_sketch_make(const struct rt_functab *ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
+{
+    struct rt_sketch_internal *sketch_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_SKETCH;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(sketch_ip, struct rt_sketch_internal);
+    intern->idb_ptr = (void *)sketch_ip;
+    sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
+
+    VSET(sketch_ip->u_vec, 1.0, 0.0, 0.0);
+    VSET(sketch_ip->v_vec, 0.0, 1.0, 0.0);
+    VSET(sketch_ip->V, origin[X], origin[Y], origin[Z]);
+
+    /* empty sketch */
+    sketch_ip->vert_count = 0;
+    sketch_ip->verts = (point2d_t *)NULL;
+    sketch_ip->curve.count = 0;
+    sketch_ip->curve.reverse = (int *)NULL;
+    sketch_ip->curve.segment = (void **)NULL;
+#if 0
+    /* Historically 'make' had a LIBGED_MAKE_SKETCH env var that produced a
+     * fitted 7-vertex sketch scaled (below). This isn't really in the spirit of
+     * a default 'make', but may be useful for debugging in the future; leaving
+     * here for that reason.
+     */
+    struct carc_seg *csg;
+    struct line_seg *lsg;
+
+    /* this creates a "default" sketch object -- useful for debugging purposes. */
+
+    sketch_ip->vert_count = 7;
+    sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->verts");
+    sketch_ip->verts[0][0] = 0.25*scale;
+    sketch_ip->verts[0][1] = 0.0;
+    sketch_ip->verts[1][0] = 0.5*scale;
+    sketch_ip->verts[1][1] = 0.0;
+    sketch_ip->verts[2][0] = 0.5*scale;
+    sketch_ip->verts[2][1] = 0.5*scale;
+    sketch_ip->verts[3][0] = 0.0;
+    sketch_ip->verts[3][1] = 0.5*scale;
+    sketch_ip->verts[4][0] = 0.0;
+    sketch_ip->verts[4][1] = 0.25*scale;
+    sketch_ip->verts[5][0] = 0.25*scale;
+    sketch_ip->verts[5][1] = 0.25*scale;
+    sketch_ip->verts[6][0] = 0.125*scale;
+    sketch_ip->verts[6][1] = 0.125*scale;
+    sketch_ip->curve.count = 6;
+    sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
+    sketch_ip->curve.segment = (void **)bu_calloc(sketch_ip->curve.count, sizeof(void *), "sketch_ip->curve.segment");
+
+    BU_ALLOC(csg, struct carc_seg);
+    sketch_ip->curve.segment[0] = (void *)csg;
+    csg->magic = CURVE_CARC_MAGIC;
+    csg->start = 4;
+    csg->end = 0;
+    csg->radius = 0.25*scale;
+    csg->center_is_left = 1;
+    csg->orientation = 0;
+
+    BU_ALLOC(lsg, struct line_seg);
+    sketch_ip->curve.segment[1] = (void *)lsg;
+    lsg->magic = CURVE_LSEG_MAGIC;
+    lsg->start = 0;
+    lsg->end = 1;
+
+    BU_ALLOC(lsg, struct line_seg);
+    sketch_ip->curve.segment[2] = (void *)lsg;
+    lsg->magic = CURVE_LSEG_MAGIC;
+    lsg->start = 1;
+    lsg->end = 2;
+
+    BU_ALLOC(lsg, struct line_seg);
+    sketch_ip->curve.segment[3] = (void *)lsg;
+    lsg->magic = CURVE_LSEG_MAGIC;
+    lsg->start = 2;
+    lsg->end = 3;
+
+    BU_ALLOC(lsg, struct line_seg);
+    sketch_ip->curve.segment[4] = (void *)lsg;
+    lsg->magic = CURVE_LSEG_MAGIC;
+    lsg->start = 3;
+    lsg->end = 4;
+
+    BU_ALLOC(csg, struct carc_seg);
+    sketch_ip->curve.segment[5] = (void *)csg;
+    csg->magic = CURVE_CARC_MAGIC;
+    csg->start = 6;
+    csg->end = 5;
+    csg->radius = -1.0;
+    csg->center_is_left = 1;
+    csg->orientation = 0;
+#endif
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_sketch_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
