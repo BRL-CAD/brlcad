@@ -40,7 +40,6 @@
 int
 ged_make_core(struct ged *gedp, int argc, const char *argv[])
 {
-    size_t i;
     int k;
     int save_bu_optind;
     struct directory *dp;
@@ -50,29 +49,6 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     double origin[3] = {0.0, 0.0, 0.0};
 
     struct rt_db_internal internal;
-    struct rt_arb_internal *arb_ip;
-    struct rt_ars_internal *ars_ip;
-    struct rt_tgc_internal *tgc_ip;
-    struct rt_ell_internal *ell_ip;
-    struct rt_tor_internal *tor_ip;
-    struct rt_grip_internal *grp_ip;
-    struct rt_half_internal *half_ip;
-    struct rt_rpc_internal *rpc_ip;
-    struct rt_rhc_internal *rhc_ip;
-    struct rt_epa_internal *epa_ip;
-    struct rt_ehy_internal *ehy_ip;
-    struct rt_eto_internal *eto_ip;
-    struct rt_part_internal *part_ip;
-    struct rt_pipe_internal *pipe_ip;
-    struct rt_sketch_internal *sketch_ip;
-    struct rt_extrude_internal *extrude_ip;
-    struct rt_bot_internal *bot_ip;
-    struct rt_arbn_internal *arbn_ip;
-    struct rt_superell_internal *superell_ip;
-    struct rt_metaball_internal *metaball_ip;
-    struct rt_pnts_internal *pnts_ip;
-    struct rt_cline_internal *cline_ip;
-	struct rt_brep_internal *brep_ip;
 
     /* intentionally not included: cline */
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|brep|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
@@ -176,7 +152,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	char *av[8];
 	char center_str[512];
 	char scale_str[128];
-	extrude_ip = (struct rt_extrude_internal *)internal.idb_ptr;
+	struct rt_extrude_internal* extrude_ip = (struct rt_extrude_internal *)internal.idb_ptr;
 
 	/* sanity */
 	if (!extrude_ip)
