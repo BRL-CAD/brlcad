@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">Primitive registration flow</title>
+  <desc id="desc">Diagram showing how superellipsoid identity, source files, build lists, OBJ table, EDOBJ table, and applications are connected.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#32506c"/>
+    </marker>
+    <style>
+      .box { fill: #ffffff; stroke: #c6d3df; stroke-width: 1.5; rx: 8; }
+      .main { fill: #e9f4f8; stroke: #32506c; stroke-width: 2; rx: 8; }
+      .edit { fill: #f2eef9; stroke: #7357a8; stroke-width: 2; rx: 8; }
+      .text { font-family: Arial, Helvetica, sans-serif; fill: #26384a; }
+      .small { font-size: 12px; }
+      .med { font-size: 14px; }
+      .head { font-size: 17px; font-weight: 700; }
+      .arrow { stroke: #32506c; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="960" height="560" fill="#f8fbfd"/>
+  <text x="42" y="48" class="text" font-size="26" font-weight="700">How the superellipsoid becomes a BRL-CAD primitive</text>
+
+  <rect x="42" y="86" width="242" height="112" class="box"/>
+  <text x="62" y="116" class="text head">Identity headers</text>
+  <text x="62" y="142" class="text small">include/rt/defines.h</text>
+  <text x="62" y="160" class="text small">include/rt/db5.h</text>
+  <text x="62" y="178" class="text small">include/bu/magic.h</text>
+
+  <rect x="354" y="86" width="252" height="112" class="box"/>
+  <text x="374" y="116" class="text head">Internal data</text>
+  <text x="374" y="142" class="text small">include/rt/geom.h</text>
+  <text x="374" y="160" class="text small">struct rt_superell_internal</text>
+  <text x="374" y="178" class="text small">V, A, B, C, n, e</text>
+
+  <rect x="676" y="86" width="236" height="112" class="box"/>
+  <text x="696" y="116" class="text head">Build registration</text>
+  <text x="696" y="142" class="text small">src/librt/CMakeLists.txt</text>
+  <text x="696" y="160" class="text small">LIBRT_SOURCES</text>
+  <text x="696" y="178" class="text small">LIBRT_PRIMEDIT_SOURCES, CL_FILES</text>
+
+  <rect x="164" y="258" width="252" height="126" class="main"/>
+  <text x="184" y="289" class="text head">OBJ[ID_SUPERELL]</text>
+  <text x="184" y="315" class="text small">src/librt/primitives/table.cpp</text>
+  <text x="184" y="336" class="text small">prep, shot, norm, plot</text>
+  <text x="184" y="354" class="text small">import/export, bbox, brep</text>
+  <text x="184" y="372" class="text small">measure, keypoint, transform</text>
+
+  <rect x="548" y="258" width="252" height="126" class="edit"/>
+  <text x="568" y="289" class="text head">EDOBJ[ID_SUPERELL]</text>
+  <text x="568" y="315" class="text small">src/librt/primitives/edtable.cpp</text>
+  <text x="568" y="336" class="text small">edit, edit_xy, menu_item</text>
+  <text x="568" y="354" class="text small">write/read params</text>
+  <text x="568" y="372" class="text small">edit_desc metadata</text>
+
+  <rect x="42" y="438" width="252" height="82" class="box"/>
+  <text x="62" y="468" class="text head">Raytrace and display</text>
+  <text x="62" y="493" class="text small">rt, draw, gdiff, bounds, labels</text>
+
+  <rect x="354" y="438" width="252" height="82" class="box"/>
+  <text x="374" y="468" class="text head">Commands and MGED</text>
+  <text x="374" y="493" class="text small">in, make, analyze, pscale, tedit</text>
+
+  <rect x="666" y="438" width="246" height="82" class="box"/>
+  <text x="686" y="468" class="text head">GUI and tests</text>
+  <text x="686" y="493" class="text small">Archer edit frame, edit tests, regressions</text>
+
+  <path d="M 284 142 L 354 142" class="arrow"/>
+  <path d="M 606 142 L 676 142" class="arrow"/>
+  <path d="M 162 198 L 235 258" class="arrow"/>
+  <path d="M 478 198 L 386 258" class="arrow"/>
+  <path d="M 794 198 L 728 258" class="arrow"/>
+  <path d="M 480 198 L 612 258" class="arrow"/>
+  <path d="M 290 384 L 184 438" class="arrow"/>
+  <path d="M 416 384 L 456 438" class="arrow"/>
+  <path d="M 674 384 L 780 438" class="arrow"/>
+  <path d="M 548 321 L 504 438" class="arrow"/>
+</svg>
