@@ -65,6 +65,20 @@ if test ! -f "$GQABIN" ; then
     exit 1
 fi
 
+pair_lines() {
+    printf '%s\n' "$1" | grep -E '^[[:space:]]*/.*(outer\.r.*clip\.r|clip\.r.*outer\.r)'
+}
+
+canonical_pair() {
+    pair_lines "$1" | head -1 | sed -n \
+	-e 's/.*\(outer\.r\).*\(clip\.r\).*/outer.r,clip.r/p' \
+	-e 's/.*\(clip\.r\).*\(outer\.r\).*/clip.r,outer.r/p'
+}
+
+pair_count() {
+    pair_lines "$1" | sed '/^$/d' | wc -l | tr -d ' '
+}
+
 # ---- Build geometry ---------------------------------------------------
 # Two overlapping boxes: box_outer fully contains box_inner, plus box_clip
 # that overlaps box_outer laterally so there is one deterministic overlap
@@ -100,9 +114,10 @@ log "gqa output:"
 log "$GQA_OUT"
 
 # gqa prints pairs like: <outer.r, clip.r>: N overlap ...
-GQA_PAIR=`echo "$GQA_OUT" | grep -o 'outer\.r.*clip\.r\|clip\.r.*outer\.r' | head -1`
-if test "x$GQA_PAIR" = "x" ; then
-    log "FAILED: gqa did not report the expected overlap between outer.r and clip.r"
+GQA_PAIR_COUNT=`pair_count "$GQA_OUT"`
+GQA_PAIR=`canonical_pair "$GQA_OUT"`
+if test "$GQA_PAIR_COUNT" -ne 1 || test "x$GQA_PAIR" = "x" ; then
+    log "FAILED: gqa did not report exactly one overlap pair between outer.r and clip.r"
     log "(gqa output was: $GQA_OUT)"
     exit 1
 fi
@@ -115,27 +130,20 @@ log "check output:"
 log "$CHECK_OUT"
 
 # 'check overlaps' prints pairs like: outer.r and clip.r overlap
-CHECK_PAIR=`echo "$CHECK_OUT" | grep -o 'outer\.r.*clip\.r\|clip\.r.*outer\.r' | head -1`
-if test "x$CHECK_PAIR" = "x" ; then
-    log "FAILED: check overlaps did not report the expected overlap between outer.r and clip.r"
+CHECK_PAIR_COUNT=`pair_count "$CHECK_OUT"`
+CHECK_PAIR=`canonical_pair "$CHECK_OUT"`
+if test "$CHECK_PAIR_COUNT" -ne 1 || test "x$CHECK_PAIR" = "x" ; then
+    log "FAILED: check overlaps did not report exactly one overlap pair between outer.r and clip.r"
     log "(check output was: $CHECK_OUT)"
     exit 1
 fi
 log "check found overlap pair: $CHECK_PAIR"
 
 # ---- parity check -----------------------------------------------------
-# Both tools should find the same two region names (order may differ).
-GQA_HAS_OUTER=`echo "$GQA_OUT"   | grep -c 'outer\.r'`
-GQA_HAS_CLIP=`echo "$GQA_OUT"    | grep -c 'clip\.r'`
-CHECK_HAS_OUTER=`echo "$CHECK_OUT" | grep -c 'outer\.r'`
-CHECK_HAS_CLIP=`echo "$CHECK_OUT"  | grep -c 'clip\.r'`
-
-if test "$GQA_HAS_OUTER" -eq 0 || test "$GQA_HAS_CLIP" -eq 0 ; then
-    log "FAILED: gqa did not mention both outer.r and clip.r in overlap output"
-    exit 1
-fi
-if test "$CHECK_HAS_OUTER" -eq 0 || test "$CHECK_HAS_CLIP" -eq 0 ; then
-    log "FAILED: check overlaps did not mention both outer.r and clip.r in overlap output"
+if test "x$GQA_PAIR" != "x$CHECK_PAIR" ; then
+    log "FAILED: gqa and check disagreed on the overlap pair"
+    log "gqa pair  : $GQA_PAIR"
+    log "check pair: $CHECK_PAIR"
     exit 1
 fi
 
