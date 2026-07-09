@@ -550,6 +550,10 @@ endif(BRLCAD_PRINT_MSGS)
 # functions
 include(BRLCAD_CheckFunctions)
 
+# Differential-validation support for the configure probe system (opt-in via
+# BRLCAD_PROBE_SNAPSHOT_FILE - see misc/CMake/probe_validation/).
+include(BRLCAD_Probe_Validation)
+
 # A variety of tools, such as the benchmark utilities, need
 # a Bourne shell and other commands - check for them.
 include(FindShellDeps)
@@ -607,7 +611,15 @@ clear_build_flags()
 set(CMAKE_C_FLAGS "${C_STANDARD_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CXX_STANDARD_FLAGS}")
 
-if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES AND NOT MSVC)
+# Pre-warm the compiler-flag cache with one batched parallel build so the
+# individual check_c_flag/check_cxx_flag calls below resolve from cache instead
+# of each spawning a serial try_compile.  This was previously gated to non-MSVC
+# because the batch judged success by artifact existence alone, which is wrong
+# on MSVC (an unknown flag still compiles, emitting only command-line warning
+# D9002).  _brlcad_run_flag_batch now scans for those diagnostics and matches
+# check_compiler_flag exactly (validated via misc/CMake/probe_validation/), so
+# the batch is safe - and most valuable - on MSVC.
+if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
   foreach(_brlcad_early_flag IN ITEMS
       pipe
       fvisibility=hidden
@@ -825,160 +837,105 @@ if(ERROR_FLAG)
 endif(ERROR_FLAG)
 
 # Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_PRINTF12_ATTRIBUTE
   "int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}"
-  HAVE_PRINTF12_ATTRIBUTE
 )
-if(HAVE_PRINTF12_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_PRINTF12_ATTRIBUTE 1")
-endif(HAVE_PRINTF12_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_PRINTF23_ATTRIBUTE
   "int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}"
-  HAVE_PRINTF23_ATTRIBUTE
 )
-if(HAVE_PRINTF23_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_PRINTF23_ATTRIBUTE 1")
-endif(HAVE_PRINTF23_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_SCANF23_ATTRIBUTE
   "int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}"
-  HAVE_SCANF23_ATTRIBUTE
 )
-if(HAVE_SCANF23_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_SCANF23_ATTRIBUTE 1")
-endif(HAVE_SCANF23_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((deprecated))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_DEPRECATED_ATTRIBUTE
   "__attribute__((deprecated)) void func(void); void func(void){} void func2(void){} int main(int argc, char *argv[]) {func2(); return 0;}"
-  HAVE_DEPRECATED_ATTRIBUTE
 )
-if(HAVE_DEPRECATED_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_DEPRECATED_ATTRIBUTE 1")
-endif(HAVE_DEPRECATED_ATTRIBUTE)
 
 # Check whether the compiler supports __declspec(deprecated())
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_DEPRECATED_DECLSPEC
   "__declspec(deprecated(\"DEPRECATED\")) void func(void); void func(void){} void func2(void){} int main(int argc, char *argv[]) {func2(); return 0;}"
-  HAVE_DEPRECATED_DECLSPEC
 )
-if(HAVE_DEPRECATED_DECLSPEC)
-  brlcad_deferred_define("HAVE_DEPRECATED_DECLSPEC 1")
-endif(HAVE_DEPRECATED_DECLSPEC)
 
 # Check whether the compiler supports __attribute__((__noreturn__))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_NORETURN_ATTRIBUTE
   "#include <stdlib.h>
 __attribute__((__noreturn__)) void noret(void); void noret(void){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}"
-  HAVE_NORETURN_ATTRIBUTE
 )
-if(HAVE_NORETURN_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_NORETURN_ATTRIBUTE 1")
-endif(HAVE_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __declspec(noreturn)
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_NORETURN_DECLSPEC
   "#include <stdlib.h>
 __declspec(noreturn) void noret(void) {exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}"
-  HAVE_NORETURN_DECLSPEC
 )
-if(HAVE_NORETURN_DECLSPEC)
-  brlcad_deferred_define("HAVE_NORETURN_DECLSPEC 1")
-endif(HAVE_NORETURN_DECLSPEC)
 
 # Check whether the compiler supports __attribute__((analyzer_noreturn))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_ANALYZER_NORETURN_ATTRIBUTE
   "__attribute__((analyzer_noreturn)) void anoret(void); void anoret(void){return;} int main(int argc, char *argv[]) {anoret(); return 0;}"
-  HAVE_ANALYZER_NORETURN_ATTRIBUTE
 )
-if(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_ANALYZER_NORETURN_ATTRIBUTE 1")
-endif(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((always_inline))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_ALWAYS_INLINE_ATTRIBUTE
   "__attribute__((always_inline)) inline void always_inline(void); inline void always_inline(void){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}"
-  HAVE_ALWAYS_INLINE_ATTRIBUTE
 )
-if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_ALWAYS_INLINE_ATTRIBUTE 1")
-endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
 
 # Check whether the compiler supports __forceinline
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_FORCEINLINE
   "__forceinline inline void always_inline(void); inline void always_inline(void){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}"
-  HAVE_FORCEINLINE
 )
-if(HAVE_FORCEINLINE)
-  brlcad_deferred_define("HAVE_FORCEINLINE 1")
-endif(HAVE_FORCEINLINE)
 
 # Check whether the compiler supports __attribute__((const))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_CONST_ATTRIBUTE
   "__attribute__((const)) void func(void); void func(void){return;} int main(int argc, char *argv[]) {func(); return 0;}"
-  HAVE_CONST_ATTRIBUTE
 )
-if(HAVE_CONST_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_CONST_ATTRIBUTE 1")
-endif(HAVE_CONST_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((pure))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_PURE_ATTRIBUTE
   "__attribute__((pure)) void func(void); void func(void){return;} int main(int argc, char *argv[]) {func(); return 0;}"
-  HAVE_PURE_ATTRIBUTE
 )
-if(HAVE_PURE_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_PURE_ATTRIBUTE 1")
-endif(HAVE_PURE_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((cold))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_COLD_ATTRIBUTE
   "__attribute__((cold)) void func(void); void func(void){return;} int main(int argc, char *argv[]) {func(); return 0;}"
-  HAVE_COLD_ATTRIBUTE
 )
-if(HAVE_COLD_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_COLD_ATTRIBUTE 1")
-endif(HAVE_COLD_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((hot))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_HOT_ATTRIBUTE
   "__attribute__((hot)) void func(void); void func(void){return;} int main(int argc, char *argv[]) {func(); return 0;}"
-  HAVE_HOT_ATTRIBUTE
 )
-if(HAVE_HOT_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_HOT_ATTRIBUTE 1")
-endif(HAVE_HOT_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((nonnull))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_NONNULL_ATTRIBUTE
   "__attribute__((nonnull)) int *func(int *); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}"
-  HAVE_NONNULL_ATTRIBUTE
 )
-if(HAVE_NONNULL_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_NONNULL_ATTRIBUTE 1")
-endif(HAVE_NONNULL_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((warn_unused_result))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE
   "__attribute__((warn_unused_result)) int *func(int *); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}"
-  HAVE_WARN_UNUSED_RESULT_ATTRIBUTE
 )
-if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1")
-endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((flatten))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_FLATTEN_ATTRIBUTE
   "__attribute__((flatten)) int *func(int *v){(*v)-=1; return v;} __attribute((flatten)) int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}"
-  HAVE_FLATTEN_ATTRIBUTE
 )
-if(HAVE_FLATTEN_ATTRIBUTE)
-  brlcad_deferred_define("HAVE_FLATTEN_ATTRIBUTE 1")
-endif(HAVE_FLATTEN_ATTRIBUTE)
 
+# Run the batched source-compile probes registered above (the attribute/keyword
+# checks).  Each probe carries its own -Werror context (captured from
+# CMAKE_REQUIRED_FLAGS), so an ignored attribute is a hard failure rather than a
+# warning.  No-op when parallel probes are disabled (each probe already ran
+# serially).
+_brlcad_run_probe_batch(SRCCOMPILE)
+
+# Second flag-batch pre-warm (optimization, sanitizer and warning flags).
+# Unlike the first batch, every consumer of these flags lives under the
+# "if(NOT MSVC)" optimization/warning blocks below, so on MSVC the reference
+# build never tests them.  Keep this batch gated to non-MSVC to match that -
+# pre-warming them on MSVC would test flags nothing consumes and diverge from
+# the reference (caught by misc/CMake/probe_validation/).
 if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES AND NOT MSVC)
   _brlcad_register_flag_probe(C Qunused-arguments)
   _brlcad_register_flag_probe(CXX Qunused-arguments)
@@ -1828,22 +1785,21 @@ if(MSVC)
 endif(MSVC)
 
 # custom sys/sysctl.h test due to BSDisms when compiling
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_SYS_SYSCTL_H
   "typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <sys/sysctl.h>\nint main(void) { return 0; }"
-  HAVE_SYS_SYSCTL_H
+  SRCCOMPILE_HDR
 )
-if(HAVE_SYS_SYSCTL_H)
-  brlcad_deferred_define("HAVE_SYS_SYSCTL_H 1")
-endif(HAVE_SYS_SYSCTL_H)
 
 # custom libproc.h test due to BSDisms when compiling
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_LIBPROC_H
   "typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <libproc.h>\nint main(void) { return 0; }"
-  HAVE_LIBPROC_H
+  SRCCOMPILE_HDR
 )
-if(HAVE_LIBPROC_H)
-  brlcad_deferred_define("HAVE_LIBPROC_H 1")
-endif(HAVE_LIBPROC_H)
+
+# Resolve the header source-compile probes now: HAVE_SYS_SYSCTL_H feeds the
+# standard-header cppflags used by later function probes, so it must be set
+# before the function-checking stage.
+_brlcad_run_probe_batch(SRCCOMPILE_HDR)
 
 _brlcad_include_probe(termios.h HAVE_TERMIOS_H)
 _brlcad_include_probe(termio.h HAVE_TERMIO_H)
@@ -2215,7 +2171,7 @@ if(HAVE_WORKING_REALPATH)
 endif(HAVE_WORKING_REALPATH)
 
 # GetFullPathName
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_GETFULLPATHNAME
   "
 #include <windows.h>
 int main(void) {
@@ -2225,15 +2181,12 @@ char *resolved_path;
 return 0;
 }
 "
-  HAVE_GETFULLPATHNAME
+  SRCCOMPILE_WIN
 )
-if(HAVE_GETFULLPATHNAME)
-  brlcad_deferred_define("HAVE_GETFULLPATHNAME 1")
-endif(HAVE_GETFULLPATHNAME)
 
 # If we have GetProcessTimes, we need it instead of clock() for CPU time.
 # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/clock
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_GETPROCESSTIMES
   "
 #include <windows.h>
 int main(void) {
@@ -2242,14 +2195,11 @@ FILETIME a,b,c,d;
 return 0;
 }
 "
-  HAVE_GETPROCESSTIMES
+  SRCCOMPILE_WIN
 )
-if(HAVE_GETPROCESSTIMES)
-  brlcad_deferred_define("HAVE_GETPROCESSTIMES 1")
-endif(HAVE_GETPROCESSTIMES)
 
 # GetCurrentProcessId
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_GETCURRENTPROCESSID
   "
 #include <windows.h>
 int main(void) {
@@ -2257,11 +2207,11 @@ DWORD cpid = GetCurrentProcessId();
 return 0;
 }
 "
-  HAVE_GETCURRENTPROCESSID
+  SRCCOMPILE_WIN
 )
-if(HAVE_GETCURRENTPROCESSID)
-  brlcad_deferred_define("HAVE_GETCURRENTPROCESSID 1")
-endif(HAVE_GETCURRENTPROCESSID)
+
+# Resolve the Windows-API source-compile probes registered above.
+_brlcad_run_probe_batch(SRCCOMPILE_WIN)
 
 
 if(HAVE_NETDB_H)
@@ -3039,6 +2989,15 @@ execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/dreport" "Elapsed configur
 
 # Write out the Doxygen feature list
 doxygen_feature_summary("${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox")
+
+# If requested, emit a snapshot of all configure test results.  This runs
+# last so it captures every probe outcome, and is used to differentially
+# validate that batched (and, later, Ninja-driven) probes produce results
+# identical to the reference try_compile path.  See
+# misc/CMake/probe_validation/ for the comparison tooling.
+if(BRLCAD_PROBE_SNAPSHOT_FILE)
+  brlcad_write_probe_snapshot("${BRLCAD_PROBE_SNAPSHOT_FILE}")
+endif(BRLCAD_PROBE_SNAPSHOT_FILE)
 
 add_custom_target(
   print-warning-message

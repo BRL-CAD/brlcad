@@ -191,6 +191,86 @@ macro(_brlcad_register_probe)
 endmacro()
 
 ###
+# One-time detection of whether the throwaway probe mini-projects can be built
+# with Ninja instead of the (much slower to configure) Visual Studio generator.
+# Ninja needs the MSVC toolchain environment that the VS generator sets up
+# internally but never exports, so we also record vcvarsall.bat and the target
+# arch; each sub-build is wrapped in a generated batch that sources vcvars
+# first.  If anything required is missing we leave BRLCAD_PROBE_USE_NINJA off
+# and fall back to the parent generator (no behavior change).
+###
+function(_brlcad_probe_batch_ninja_setup)
+  if(DEFINED BRLCAD_PROBE_NINJA_READY)
+    return()
+  endif()
+  set(BRLCAD_PROBE_NINJA_READY TRUE CACHE INTERNAL "probe batch generator detected")
+  set(BRLCAD_PROBE_USE_NINJA FALSE CACHE INTERNAL "use Ninja for probe batch mini-projects")
+
+  if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
+    return()
+  endif()
+  get_filename_component(_pcmdir "${CMAKE_COMMAND}" DIRECTORY)
+  find_program(BRLCAD_PROBE_NINJA_EXE NAMES ninja ninja-build HINTS "${_pcmdir}/../../Ninja")
+  mark_as_advanced(BRLCAD_PROBE_NINJA_EXE)
+  if(NOT BRLCAD_PROBE_NINJA_EXE)
+    return()
+  endif()
+  if(NOT CMAKE_GENERATOR_INSTANCE)
+    return()
+  endif()
+  set(_vcv "${CMAKE_GENERATOR_INSTANCE}/VC/Auxiliary/Build/vcvarsall.bat")
+  if(NOT EXISTS "${_vcv}")
+    return()
+  endif()
+  set(_arch "x64")
+  if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32")
+    set(_arch "x86")
+  elseif("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "ARM64")
+    set(_arch "arm64")
+  elseif("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "ARM")
+    set(_arch "arm")
+  endif()
+
+  # Source vcvars ONCE and capture the toolchain environment, so each sub-build
+  # gets it via `cmake -E env` rather than paying vcvars' (~3s) startup cost on
+  # every invocation (which would make Ninja slower than the VS generator).
+  set(_cap_bat "${CMAKE_BINARY_DIR}/CMakeTmp/brlcad_probe_vcvars_capture.bat")
+  file(WRITE "${_cap_bat}" "@echo off\r\ncall \"${_vcv}\" ${_arch} >nul 2>nul\r\nset\r\n")
+  execute_process(COMMAND cmd /c "${_cap_bat}" OUTPUT_VARIABLE _env_dump RESULT_VARIABLE _env_res)
+  if(NOT _env_res EQUAL 0)
+    return()
+  endif()
+  # Extract each toolchain variable as a whole line (regex, not list ops, so the
+  # embedded ';' path separators survive).
+  foreach(_nm INCLUDE LIB LIBPATH PATH)
+    string(REGEX MATCH "(^|[\r\n])(${_nm}=[^\r\n]*)" _m "${_env_dump}")
+    set(BRLCAD_PROBE_ENV_${_nm} "${CMAKE_MATCH_2}" CACHE INTERNAL "probe vcvars ${_nm}")
+  endforeach()
+  if(NOT BRLCAD_PROBE_ENV_INCLUDE)
+    return()  # vcvars did not populate the environment; keep the VS fallback
+  endif()
+
+  set(BRLCAD_PROBE_USE_NINJA TRUE CACHE INTERNAL "use Ninja for probe batch mini-projects")
+  message(STATUS "Configure probe batches will build with Ninja + captured MSVC env (${_arch})")
+endfunction()
+
+###
+# Build the `cmake -E env` argument list (INCLUDE/LIB/LIBPATH/PATH captured from
+# vcvars).  Embedded semicolons are escaped so each entry expands to a single
+# argument when the returned list is used unquoted in a COMMAND.
+###
+function(_brlcad_probe_env_args _out_var)
+  set(_a)
+  foreach(_nm INCLUDE LIB LIBPATH PATH)
+    if(BRLCAD_PROBE_ENV_${_nm})
+      string(REPLACE ";" "\\;" _e "${BRLCAD_PROBE_ENV_${_nm}}")
+      list(APPEND _a "${_e}")
+    endif()
+  endforeach()
+  set(${_out_var} "${_a}" PARENT_SCOPE)
+endfunction()
+
+###
 # Execute all probes registered in a named batch as one generated C project,
 # building its targets in parallel.  Successful probes are cached as "1";
 # failed probes are cached as "".
@@ -199,6 +279,7 @@ function(_brlcad_run_probe_batch BATCH_NAME)
   if(NOT BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
     return()
   endif()
+  _brlcad_probe_batch_ninja_setup()
 
   cmake_parse_arguments(_BRPB "" "C_FLAGS" "" ${ARGN})
 
@@ -261,35 +342,57 @@ function(_brlcad_run_probe_batch BATCH_NAME)
       endif()
     endforeach()
 
-    set(_cfg_cmd
-      "${CMAKE_COMMAND}"
-      "-S" "${_src_dir}"
-      "-B" "${_build_dir}"
-      "-G" "${CMAKE_GENERATOR}"
-      "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
-    )
-    if(CMAKE_GENERATOR_PLATFORM)
-      list(APPEND _cfg_cmd "-A" "${CMAKE_GENERATOR_PLATFORM}")
-    endif()
-    if(CMAKE_GENERATOR_TOOLSET)
-      list(APPEND _cfg_cmd "-T" "${CMAKE_GENERATOR_TOOLSET}")
-    endif()
-    if(CMAKE_MAKE_PROGRAM)
-      list(APPEND _cfg_cmd "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}")
-    endif()
-    if(CMAKE_BUILD_TYPE)
-      list(APPEND _cfg_cmd "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+    if(BRLCAD_PROBE_USE_NINJA)
+      # cl is found on PATH via the sourced vcvars environment; -A/-T are
+      # Visual Studio only and must be omitted for Ninja.
+      set(_cfg_cmd
+        "${CMAKE_COMMAND}"
+        "-S" "${_src_dir}"
+        "-B" "${_build_dir}"
+        "-G" "Ninja"
+        "-DCMAKE_MAKE_PROGRAM=${BRLCAD_PROBE_NINJA_EXE}"
+      )
+    else()
+      set(_cfg_cmd
+        "${CMAKE_COMMAND}"
+        "-S" "${_src_dir}"
+        "-B" "${_build_dir}"
+        "-G" "${CMAKE_GENERATOR}"
+        "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
+      )
+      if(CMAKE_GENERATOR_PLATFORM)
+        list(APPEND _cfg_cmd "-A" "${CMAKE_GENERATOR_PLATFORM}")
+      endif()
+      if(CMAKE_GENERATOR_TOOLSET)
+        list(APPEND _cfg_cmd "-T" "${CMAKE_GENERATOR_TOOLSET}")
+      endif()
+      if(CMAKE_MAKE_PROGRAM)
+        list(APPEND _cfg_cmd "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}")
+      endif()
+      if(CMAKE_BUILD_TYPE)
+        list(APPEND _cfg_cmd "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+      endif()
     endif()
     if(_BRPB_C_FLAGS)
       list(APPEND _cfg_cmd "-DCMAKE_C_FLAGS=${_BRPB_C_FLAGS}")
     endif()
 
-    execute_process(
-      COMMAND ${_cfg_cmd}
-      RESULT_VARIABLE _cfg_result
-      OUTPUT_VARIABLE _cfg_out
-      ERROR_VARIABLE _cfg_err
-    )
+    if(BRLCAD_PROBE_USE_NINJA)
+      _brlcad_probe_env_args(_penv)
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env ${_penv} -- ${_cfg_cmd}
+        RESULT_VARIABLE _cfg_result
+        OUTPUT_VARIABLE _cfg_out
+        ERROR_VARIABLE _cfg_err
+      )
+    else()
+      execute_process(
+        COMMAND ${_cfg_cmd}
+        RESULT_VARIABLE _cfg_result
+        OUTPUT_VARIABLE _cfg_out
+        ERROR_VARIABLE _cfg_err
+      )
+    endif()
     file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH PROBE CONFIGURE LOG: ${BATCH_NAME} ===\n${_cfg_out}\n${_cfg_err}\n")
 
     if(_cfg_result EQUAL 0)
@@ -298,7 +401,7 @@ function(_brlcad_run_probe_batch BATCH_NAME)
         set(_ncpus 1)
       endif()
 
-      if(CMAKE_GENERATOR MATCHES "Ninja")
+      if(BRLCAD_PROBE_USE_NINJA OR CMAKE_GENERATOR MATCHES "Ninja")
         set(_keepgoing "--" "-k" "0")
       elseif(CMAKE_GENERATOR MATCHES "Makefiles")
         set(_keepgoing "--" "-k")
@@ -312,12 +415,22 @@ function(_brlcad_run_probe_batch BATCH_NAME)
       if(CMAKE_BUILD_TYPE AND NOT _keepgoing)
         list(APPEND _build_all "--config" "${CMAKE_BUILD_TYPE}")
       endif()
-      execute_process(
-        COMMAND ${_build_all}
-        RESULT_VARIABLE _ignored_result
-        OUTPUT_VARIABLE _build_out
-        ERROR_VARIABLE _build_err
-      )
+      if(BRLCAD_PROBE_USE_NINJA)
+        _brlcad_probe_env_args(_penv)
+        execute_process(
+          COMMAND ${CMAKE_COMMAND} -E env ${_penv} -- ${_build_all}
+          RESULT_VARIABLE _ignored_result
+          OUTPUT_VARIABLE _build_out
+          ERROR_VARIABLE _build_err
+        )
+      else()
+        execute_process(
+          COMMAND ${_build_all}
+          RESULT_VARIABLE _ignored_result
+          OUTPUT_VARIABLE _build_out
+          ERROR_VARIABLE _build_err
+        )
+      endif()
       file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH PROBE BUILD LOG: ${BATCH_NAME} ===\n${_build_out}\n${_build_err}\n")
     endif()
   endif()
@@ -372,6 +485,54 @@ macro(_brlcad_include_probe HEADER VAR)
     )
     unset(_bip_src_dir)
   endif()
+endmacro()
+
+###
+# Probe whether a C source snippet compiles.  With parallel probes enabled the
+# snippet is registered into a batch and tested later, in one parallel build, by
+# _brlcad_run_probe_batch(<batch> ...); otherwise it falls back to an immediate
+# check_c_source_compiles.  Either way <VAR> is cached and, on success, "<VAR> 1"
+# is emitted to the deferred config header (matching the batch runner's own
+# deferred_define behavior).
+#
+# The active check context (CMAKE_REQUIRED_INCLUDES/DEFINITIONS/FLAGS) is
+# captured per-probe so the batched build compiles each snippet exactly as the
+# serial check_c_source_compiles would have.  Pass/fail is decided purely by
+# compile success, so snippets must fail hard when the feature is absent - e.g.
+# the attribute checks set CMAKE_REQUIRED_FLAGS to -Werror so that an ignored
+# attribute becomes an error rather than a warning.
+#
+# An optional third argument selects the batch name (default SRCCOMPILE).
+# Groups that must resolve at different points in configure (each before its own
+# consumers) use distinct batch names, so one batch run does not re-emit another
+# group's deferred defines.
+###
+macro(_brlcad_srccompile_probe _bscp_var _bscp_src)
+  set(_bscp_batch "SRCCOMPILE")
+  if(${ARGC} GREATER 2)
+    set(_bscp_batch "${ARGV2}")
+  endif()
+  if(NOT BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+    check_c_source_compiles("${_bscp_src}" ${_bscp_var})
+    if(${_bscp_var} AND CONFIG_H_FILE)
+      brlcad_deferred_define("${_bscp_var} 1")
+    endif()
+  else()
+    set(_bscp_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/${_bscp_batch}_sources")
+    file(MAKE_DIRECTORY "${_bscp_src_dir}")
+    if(NOT DEFINED ${_bscp_var})
+      file(WRITE "${_bscp_src_dir}/${_bscp_var}.c" "${_bscp_src}\n")
+    endif()
+    _brlcad_register_probe(
+      BATCH ${_bscp_batch}
+      VAR ${_bscp_var}
+      INCLUDES ${CMAKE_REQUIRED_INCLUDES}
+      DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS}
+      FLAGS ${CMAKE_REQUIRED_FLAGS}
+    )
+    unset(_bscp_src_dir)
+  endif()
+  unset(_bscp_batch)
 endmacro()
 
 macro(_brlcad_func_probe)
