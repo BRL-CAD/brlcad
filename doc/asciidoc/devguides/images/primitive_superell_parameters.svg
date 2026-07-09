@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Superellipsoid parameter anatomy</title>
+  <desc id="desc">Diagram showing the superellipsoid center V, semi-axis vectors A, B, C, and exponent parameters n and e.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#244260"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#1d2c3a" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="900" height="520" fill="#f8fbfd"/>
+  <text x="44" y="54" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#203040">Superellipsoid internal parameters</text>
+  <text x="44" y="84" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#4f6174">The database stores V, A, B, C, n, and e.  Prep derives matrices and cached ray data from these fields.</text>
+
+  <g transform="translate(28 10)" filter="url(#shadow)">
+    <path d="M 219 260 C 220 131 358 73 514 107 C 666 140 719 247 669 341 C 622 429 474 458 337 416 C 242 387 198 329 219 260 Z"
+          fill="#d9eff7" stroke="#244260" stroke-width="2.5"/>
+    <path d="M 221 260 C 302 214 470 190 665 260" fill="none" stroke="#5d91ad" stroke-width="2" opacity="0.8"/>
+    <path d="M 218 260 C 312 305 482 327 668 260" fill="none" stroke="#5d91ad" stroke-width="2" opacity="0.55" stroke-dasharray="7 6"/>
+    <path d="M 340 119 C 285 210 291 332 367 413" fill="none" stroke="#78aac1" stroke-width="1.7" opacity="0.65"/>
+    <path d="M 523 110 C 579 207 571 331 509 430" fill="none" stroke="#78aac1" stroke-width="1.7" opacity="0.65"/>
+
+    <circle cx="444" cy="260" r="5" fill="#16283a"/>
+    <line x1="444" y1="260" x2="635" y2="219" stroke="#244260" stroke-width="3" marker-end="url(#arrow)"/>
+    <line x1="444" y1="260" x2="326" y2="347" stroke="#244260" stroke-width="3" marker-end="url(#arrow)"/>
+    <line x1="444" y1="260" x2="444" y2="120" stroke="#244260" stroke-width="3" marker-end="url(#arrow)"/>
+    <line x1="444" y1="260" x2="444" y2="400" stroke="#244260" stroke-width="2" stroke-dasharray="6 6"/>
+
+    <circle cx="635" cy="219" r="5" fill="#f05a42"/>
+    <circle cx="326" cy="347" r="5" fill="#24a07a"/>
+    <circle cx="444" cy="120" r="5" fill="#5e6bd8"/>
+
+    <text x="456" y="278" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#16283a">V</text>
+    <text x="650" y="217" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#a63b2f">V + A</text>
+    <text x="268" y="371" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#1f745d">V + B</text>
+    <text x="455" y="112" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#454fb7">V + C</text>
+  </g>
+
+  <g transform="translate(626 128)">
+    <rect x="0" y="0" width="226" height="228" rx="10" fill="#ffffff" stroke="#cad6df"/>
+    <text x="20" y="35" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#203040">Stored fields</text>
+    <text x="20" y="69" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#314255">V: center point</text>
+    <text x="20" y="98" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#314255">A: semi-axis vector</text>
+    <text x="20" y="127" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#314255">B: semi-axis vector</text>
+    <text x="20" y="156" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#314255">C: semi-axis vector</text>
+    <text x="20" y="185" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#314255">n: north-south power</text>
+    <text x="20" y="214" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#314255">e: east-west power</text>
+  </g>
+
+  <g transform="translate(80 438)">
+    <rect x="0" y="0" width="740" height="42" rx="6" fill="#eef5f8" stroke="#cad6df"/>
+    <text x="20" y="27" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#314255">In the source, dimensional fields are unit-converted; n and e remain dimensionless through import, export, and editing.</text>
+  </g>
+</svg>

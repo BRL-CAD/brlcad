@@ -1,11 +1,15 @@
 set(
   devguides_EN
+  adding_new_primitive_superellipsoid.adoc
   bool_eval_development.adoc
   iterate_geometry.adoc
 )
 
 set(
   devguides_EN_IMAGES
+  images/primitive_hook_lifecycle.svg
+  images/primitive_registration_flow.svg
+  images/primitive_superell_parameters.svg
   images/ccx_overlap_event.png
   images/ssx_transverse_event.png
   images/ssx_tangent_event.png
