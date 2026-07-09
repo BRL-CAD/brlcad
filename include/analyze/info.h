@@ -314,7 +314,7 @@ struct analyze_results {
     mat_t   moments_of_inertia;  /**< 4x4 inertia tensor (total for all objects) */
     point_t bbox_min;            /**< axis-aligned bounding box minimum */
     point_t bbox_max;            /**< axis-aligned bounding box maximum */
-    double  final_grid_spacing;  /**< last grid spacing used before convergence (mm) */
+    double  final_grid_spacing;  /**< spacing used by the last sampled pass (mm), or 0 if not applicable */
     int     sampler_type;        /**< ANALYZE_SAMPLER_* value used for this run */
     int     is_stochastic;       /**< non-zero if the run used stochastic sampling */
 
