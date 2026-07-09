@@ -199,6 +199,14 @@ struct current_state {
      *  Set before calling perform_raytracing() to select the backend.  */
     int sampler;
 
+    /** Grid spacing used by the last completed sampling pass.
+     *
+     *  For grid-based samplers this is the spacing actually used by the
+     *  final ray pass.  For Crofton and other non-grid paths it remains 0.0.
+     *  analyze::run() copies this into analyze_results::final_grid_spacing
+     *  for reporting. */
+    double last_sampled_grid_spacing;
+
     /** Cell area (mm²) for the current parallel firing pass.
      *
      *  Set by the main thread immediately before each bu_parallel() call so

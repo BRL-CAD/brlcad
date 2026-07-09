@@ -69,6 +69,7 @@ analyze_current_state_init(void)
     state->background_mv = 1;
 
     state->sampler = ANALYZE_SAMPLER_TRIPLE_GRID;
+    state->last_sampled_grid_spacing = 0.0;
     state->sem_crofton = 0;
     state->crofton_crossings = 0;
     state->crofton_n_rays = 0;
