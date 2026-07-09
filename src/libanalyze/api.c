@@ -1101,9 +1101,10 @@ shoot_rays_crofton(struct current_state *state, size_t n_rays)
      * something sensible so we don't divide by zero if the path is hit. */
     VSETALL(state->steps, 1);
 
-    /* Fire all rays. */
-    state->current_cell_area = state->area[0] / (double)n_rays;
-    bu_parallel(analyze_worker_crofton, state->ncpu, (void *)state);
+	/* Fire all rays. */
+	state->current_cell_area = state->area[0] / (double)n_rays;
+	state->last_sampled_grid_spacing = 0.0;
+	bu_parallel(analyze_worker_crofton, state->ncpu, (void *)state);
 
     /* After workers finish, shots[0] holds the actual ray count. */
     state->crofton_n_rays = state->shots[0];
@@ -1248,17 +1249,18 @@ shoot_rays_rotated(struct current_state *state)
 
 	bu_log("Processing with rotated grid spacing %g mm\n", state->gridSpacing);
 
-	for (view = 0; view < state->num_views; view++) {
-	    if (state->verbose)
-		bu_vls_printf(state->verbose_str, "  view %d\n", view);
-	    state->curr_view = state->i_axis = view;
-	    state->u_axis    = (view + 1) % 3;
-	    state->v_axis    = (view + 2) % 3;
-	    state->rot_grid[view].current     = 0;
-	    state->rot_grid[view].refine_flag = state->grid->refine_flag;
-	    /* The rotated grid's projection plane is NOT axis-aligned, so its
-	     * effective area (u_count × v_count × spacing²) differs from the
-	     * bbox-face area stored in state->area[] at startup.  Update
+	    for (view = 0; view < state->num_views; view++) {
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "  view %d\n", view);
+		state->curr_view = state->i_axis = view;
+		state->u_axis    = (view + 1) % 3;
+		state->v_axis    = (view + 2) % 3;
+		state->rot_grid[view].current     = 0;
+		state->rot_grid[view].refine_flag = state->grid->refine_flag;
+		state->last_sampled_grid_spacing = state->gridSpacing;
+		/* The rotated grid's projection plane is NOT axis-aligned, so its
+		 * effective area (u_count × v_count × spacing²) differs from the
+		 * bbox-face area stored in state->area[] at startup.  Update
 	     * area[view] to the actual grid projection area so that the volume
 	     * formula m_len * (area / shots) yields the correct cell_area. */
 	    state->area[view] = (double)state->rot_grid[view].total
@@ -1711,6 +1713,7 @@ shoot_rays(struct current_state *state)
 		state->elevation_deg = RAND_ANGLE;
 		analyze_setup_ae(state);
 		analyze_single_grid_setup(state);
+		state->last_sampled_grid_spacing = state->gridSpacing;
 		/* analyze_single_grid_setup() always writes the effective
 		 * projection area (viewsize²) into area[0].  When view > 0,
 		 * the volume formula later reads area[view], which would still
@@ -1726,21 +1729,22 @@ shoot_rays(struct current_state *state)
 	    analyze_single_grid_setup(state);
 	    state->current_cell_area = state->gridSpacing * state->gridSpacing;
 	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
-	} else {
-	    int view;
-	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
-		    state->gridSpacing,
-		    state->steps[0]-1,
-		    state->steps[1]-1,
-		    state->steps[2]-1);
-	    state->current_cell_area = state->gridSpacing * state->gridSpacing;
-	    for (view = 0; view < state->num_views; view++) {
-		if (state->verbose)
-		    bu_vls_printf(state->verbose_str, "  view %d\n", view);
-		analyze_triple_grid_setup(view, state);
-		bu_parallel(analyze_worker, state->ncpu, (void *)state);
-		if (state->aborted)
-		    break;
+	    } else {
+		int view;
+		bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
+			state->gridSpacing,
+			state->steps[0]-1,
+			state->steps[1]-1,
+			state->steps[2]-1);
+		state->current_cell_area = state->gridSpacing * state->gridSpacing;
+		for (view = 0; view < state->num_views; view++) {
+		    if (state->verbose)
+			bu_vls_printf(state->verbose_str, "  view %d\n", view);
+		    state->last_sampled_grid_spacing = state->gridSpacing;
+		    analyze_triple_grid_setup(view, state);
+		    bu_parallel(analyze_worker, state->ncpu, (void *)state);
+		    if (state->aborted)
+			break;
 	    }
 	}
 	state->grid->refine_flag = 1;
@@ -1848,6 +1852,7 @@ shoot_rays_clustered(struct current_state *state, struct bu_ptbl *clusters)
 	state->gridSpacing = cl_spacing;
 	inv_spacing = 1.0 / cl_spacing;
 	VSCALE(state->steps, state->span, inv_spacing);
+	state->last_sampled_grid_spacing = cl_spacing;
 
 	bu_log("  Cluster %zu/%zu: %zu region(s), grid spacing %g mm, "
 	       "%ld x %ld x %ld cells\n",
@@ -1968,6 +1973,7 @@ shoot_rays_rotated_clustered(struct current_state *state, struct bu_ptbl *cluste
 
 	state->gridSpacing = cl_spacing;
 	VSCALE(state->steps, state->span, 1.0 / cl_spacing);
+	state->last_sampled_grid_spacing = cl_spacing;
 
 	bu_log("  Cluster %zu/%zu: %zu region(s), rotated-grid spacing %g mm, "
 	       "%ld x %ld x %ld cells\n",
@@ -2012,6 +2018,7 @@ shoot_rays_rotated_clustered(struct current_state *state, struct bu_ptbl *cluste
 	    state->v_axis    = (view + 2) % 3;
 	    state->rot_grid[view].current     = 0;
 	    state->rot_grid[view].refine_flag = state->grid->refine_flag;
+	    state->last_sampled_grid_spacing = cl_spacing;
 	    state->area[view] = (double)state->rot_grid[view].total
 			       * cl_spacing * cl_spacing;
 	    bu_parallel(analyze_worker_rotated, state->ncpu, (void *)state);

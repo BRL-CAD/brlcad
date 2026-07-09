@@ -607,12 +607,17 @@ summary_reports(struct ged *gedp, struct cstate *state,
     double units3 = units2 * state->units[LINE]->val;
     double gs = res->final_grid_spacing;
 
-    if (gs <= 0.0) gs = 0.0; /* Crofton: no grid spacing */
-
-    if (state->multiple_analyses)
-	bu_vls_printf(gedp->ged_result_str, "Summaries (%gmm grid spacing):\n", gs);
-    else
-	bu_vls_printf(gedp->ged_result_str, "Summary (%gmm grid spacing):\n", gs);
+    if (gs > 0.0) {
+	if (state->multiple_analyses)
+	    bu_vls_printf(gedp->ged_result_str, "Summaries (%gmm last sampled spacing):\n", gs);
+	else
+	    bu_vls_printf(gedp->ged_result_str, "Summary (%gmm last sampled spacing):\n", gs);
+    } else {
+	if (state->multiple_analyses)
+	    bu_vls_printf(gedp->ged_result_str, "Summaries (last sampled spacing: n/a):\n");
+	else
+	    bu_vls_printf(gedp->ged_result_str, "Summary (last sampled spacing: n/a):\n");
+    }
 
     /* -- Weights -- */
     if (state->analysis_flags & ANALYSIS_WEIGHTS) {

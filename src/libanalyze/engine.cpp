@@ -1009,10 +1009,9 @@ return nullptr; /* res_owner and state_owner freed automatically */
     /* ------------------------------------------------------------------
      * Record analysis metadata.
      * ------------------------------------------------------------------ */
-    if (state->sampler != ANALYZE_SAMPLER_CROFTON && state->gridSpacing > 0.0)
-raw_res->final_grid_spacing = state->gridSpacing * 2.0;
+    raw_res->final_grid_spacing = state->last_sampled_grid_spacing;
     raw_res->sampler_type  = state->sampler;
-    raw_res->is_stochastic = ((flags & ~ANALYZE_BOX) != 0) ? 1 : 0;
+    raw_res->is_stochastic = (state->sampler == ANALYZE_SAMPLER_CROFTON) ? 1 : 0;
 
     if (flags & ANALYZE_BOX)
 analyze_bbox(dbip, names, num_names, raw_res->bbox_min, raw_res->bbox_max);
