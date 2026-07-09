@@ -54,6 +54,14 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     const char *bin;
     char rt[256] = {0};
 
+    /* NOTE: when invoked as 'rtweight', this function spawns an external rt
+     * subprocess.  For programmatic mass/weight computation, prefer the
+     * structured API instead:
+     *   check mass [options] <objects>   (GED command, uses libanalyze)
+     *   gqa -Aw [options] <objects>      (GED command, uses libanalyze)
+     * Both return structured results via analyze_results and do not
+     * require an external subprocess. */
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);

@@ -25,28 +25,30 @@
 #include "../ged_private.h"
 #include "./check_private.h"
 
-int check_centroid(struct ged *gedp, struct current_state *state,
-		   struct db_i *dbip,
-		   char **tobjtab,
-		   int tnobjs,
-		   struct check_parameters *options)
+int check_format_centroid(struct ged *gedp,
+			  struct analyze_results *res,
+			  struct check_parameters *options)
 {
-    int i;
-    point_t centroid;
+    size_t i;
+    point_t cen;
+    double inv_scale = 1.0 / options->units[LINE]->val;
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS)) return BRLCAD_ERROR;
-
-    print_verbose_debug(gedp, options);
     bu_vls_printf(gedp->ged_result_str, "Centroid:\n");
 
-    for (i=0; i < tnobjs; i++){
-	analyze_centroid(state, tobjtab[i], centroid);
-	VSCALE(centroid, centroid, 1/options->units[LINE]->val);
-	bu_vls_printf(gedp->ged_result_str, "\t\t%s: (%g %g %g) %s\n", tobjtab[i], V3ARGS(centroid), options->units[LINE]->name);
+    for (i = 0; i < res->n_objects; i++) {
+	VMOVE(cen, res->objects[i].centroid);
+	VSCALE(cen, cen, inv_scale);
+	bu_vls_printf(gedp->ged_result_str, "\t\t%s: (%g %g %g) %s\n",
+		      res->objects[i].name,
+		      V3ARGS(cen),
+		      options->units[LINE]->name);
     }
-    analyze_total_centroid(state, centroid);
-    VSCALE(centroid, centroid, 1/options->units[LINE]->val);
-    bu_vls_printf(gedp->ged_result_str, "\n  Average centroid: (%g %g %g) %s\n", V3ARGS(centroid), options->units[LINE]->name);
+
+    VMOVE(cen, res->centroid);
+    VSCALE(cen, cen, inv_scale);
+    bu_vls_printf(gedp->ged_result_str,
+		  "\n  Average centroid: (%g %g %g) %s\n",
+		  V3ARGS(cen), options->units[LINE]->name);
 
     return BRLCAD_OK;
 }

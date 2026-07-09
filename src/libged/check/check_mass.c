@@ -25,41 +25,33 @@
 #include "../ged_private.h"
 #include "./check_private.h"
 
-int check_mass(struct ged *gedp, struct current_state *state,
-		 struct db_i *dbip,
-		 char **tobjtab,
-		 int tnobjs,
-		 struct check_parameters *options)
+int check_format_mass(struct ged *gedp,
+		      struct analyze_results *res,
+		      struct check_parameters *options)
 {
-    int i;
+    size_t i;
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS)) return BRLCAD_ERROR;
-
-    print_verbose_debug(gedp, options);
     bu_vls_printf(gedp->ged_result_str, "Mass:\n");
 
-    for (i=0; i < tnobjs; i++){
-	fastf_t mass = 0;
-	mass = analyze_mass(state, tobjtab[i]);
-	bu_vls_printf(gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], mass / options->units[MASS]->val, options->units[MASS]->name);
+    for (i = 0; i < res->n_objects; i++) {
+	bu_vls_printf(gedp->ged_result_str, "\t%s %g %s\n",
+		      res->objects[i].name,
+		      res->objects[i].mass / options->units[MASS]->val,
+		      options->units[MASS]->name);
     }
 
-    bu_vls_printf(gedp->ged_result_str, "\n  Average total mass: %g %s\n", analyze_total_mass(state) / options->units[MASS]->val, options->units[MASS]->name);
+    bu_vls_printf(gedp->ged_result_str,
+		  "\n  Average total mass: %g %s\n",
+		  res->total_mass / options->units[MASS]->val,
+		  options->units[MASS]->name);
 
     if (options->print_per_region_stats) {
-	int num_regions = analyze_get_num_regions(state);
 	bu_vls_printf(gedp->ged_result_str, "\tregions:\n");
-	for (i = 0; i < num_regions; i++) {
-	    char *reg_name = NULL;
-	    double mass;
-	    double high, low;
-	    analyze_mass_region(state, i, &reg_name, &mass, &high, &low);
-	    bu_vls_printf(gedp->ged_result_str, "\t%s mass:%g %s +(%g) -(%g)\n",
-			  reg_name,
-			  mass/options->units[MASS]->val,
-			  options->units[MASS]->name,
-			  high/options->units[MASS]->val,
-			  low/options->units[MASS]->val);
+	for (i = 0; i < res->n_regions; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "\t%s mass:%g %s\n",
+			  res->regions[i].name,
+			  res->regions[i].mass / options->units[MASS]->val,
+			  options->units[MASS]->name);
 	}
     }
 

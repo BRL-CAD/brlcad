@@ -26,6 +26,8 @@
 
 #include "bu/log.h"
 #include "bu/getopt.h"
+#include "bv/vlist.h"
+#include "bv/plot3.h"
 
 #include "../ged_private.h"
 #include "./check_private.h"
@@ -33,7 +35,6 @@
 #include "analyze.h"
 
 #define MAX_WIDTH (32*1024)
-
 
 static void
 check_show_help(struct ged *gedp)
@@ -44,6 +45,7 @@ check_show_help(struct ged *gedp)
 
     bu_vls_printf(&str, "Subcommands:\n\n");
     bu_vls_printf(&str, "  adj_air - Detects air volumes which are next to each other but have different air_code values applied to the region.\n");
+    bu_vls_printf(&str, "  bbox - Reports the axis-aligned bounding box of the specified objects (no rays needed).\n");
     bu_vls_printf(&str, "  centroid - Computes the centroid of the objects specified.\n");
     bu_vls_printf(&str, "  exp_air - Check if the ray encounters air regions before (or after all) solid objects.\n");
     bu_vls_printf(&str, "  gap - This reports when there is more than overlap tolerance distance between objects on the ray path.\n");
@@ -94,7 +96,7 @@ check_show_help(struct ged *gedp)
  * 0 Success
  */
 static int
-read_units_double(struct ged *gedp, double *val, char *buf, const struct cvt_tab *cvt)
+read_units_double(struct ged *gedp, double *val, char *buf, const cvt_tab *cvt)
 {
     double a;
 #define UNITS_STRING_SZ 256
@@ -133,7 +135,7 @@ read_units_double(struct ged *gedp, double *val, char *buf, const struct cvt_tab
 
 
 static int
-parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* options, struct current_state *state)
+parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* options, struct analyze_config *cfg)
 {
     int c;
     double a;
@@ -153,26 +155,26 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 		    bu_vls_printf(gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
 		    return -1;
 		}
-		analyze_set_azimuth(state, options->azimuth_deg);
+		cfg->azimuth_deg = options->azimuth_deg;
 		options->getfromview = 0;
 		break;
 	    case 'd':
 		options->debug = 1;
 		options->debug_str = bu_vls_vlsinit();
-		analyze_enable_debug(state, options->debug_str);
+		cfg->log_str = options->debug_str;
 		break;
 	    case 'e':
 		if (bn_decode_angle(&(options->elevation_deg), bu_optarg) == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
 		    return -1;
 		}
-		analyze_set_elevation(state, options->elevation_deg);
+		cfg->elevation_deg = options->elevation_deg;
 		options->getfromview = 0;
 		break;
 
 	    case 'f':
 		options->densityFileName = bu_optarg;
-		analyze_set_densityfile(state, options->densityFileName);
+		cfg->density_file = options->densityFileName;
 		break;
 
 	    case 'g':
@@ -213,7 +215,8 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 
 			options->gridSpacing = 0.0; /* flag it */
 		    }
-		    analyze_set_grid_spacing(state, options->gridSpacing, options->gridSpacingLimit);
+		    cfg->grid_spacing     = options->gridSpacing;
+		    cfg->grid_spacing_min = options->gridSpacingLimit;
 		    break;
 		}
 	    case 'G':
@@ -239,10 +242,12 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 			    bu_vls_printf(gedp->ged_result_str,"mentioned grid size is out of range\n");
 			    return -1;
 			}
-			analyze_set_grid_size(state, width, height);
+			cfg->grid_width  = (int)width;
+			cfg->grid_height = (int)height;
 		    } else {
 			/* square grid */
-			analyze_set_grid_size(state, width, width);
+			cfg->grid_width  = (int)width;
+			cfg->grid_height = (int)width;
 		    }
 		    break;
 		}
@@ -254,7 +259,7 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 		    bu_vls_printf(gedp->ged_result_str, "error in mass tolerance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
-		analyze_set_mass_tolerance(state, options->mass_tolerance);
+		cfg->mass_tol = options->mass_tolerance;
 		break;
 	    case 'n':
 		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
@@ -262,11 +267,11 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 		    return -1;
 		}
 		options->require_num_hits = (size_t) c;
-		analyze_set_required_number_hits(state, options->require_num_hits);
+		cfg->required_hits = options->require_num_hits;
 		break;
 	    case 'N':
 		options->num_views = atoi(bu_optarg);
-		analyze_set_num_views(state, options->num_views);
+		cfg->num_views = options->num_views;
 		break;
 	    case 'o':
 		options->overlaps_overlay_flag = 1;
@@ -279,10 +284,10 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 		c = atoi(bu_optarg);
 		if (c > 0 && c <= (int) bu_avail_cpus())
 		    options->ncpu = c;
-		analyze_set_ncpu(state, options->ncpu);
+		cfg->ncpu = options->ncpu;
 		break;
 	    case 'q':
-		analyze_set_quiet_missed_report(state);
+		cfg->quiet_missed = 1;
 		break;
 	    case 'r':
 		options->print_per_region_stats = 1;
@@ -292,7 +297,7 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 		break;
 	    case 's':
 		options->surf_area_tolerance = atof(bu_optarg);
-		analyze_set_surf_area_tolerance(state, options->surf_area_tolerance);
+		cfg->surf_area_tol = options->surf_area_tolerance;
 		break;
 	    case 'S':
 		if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
@@ -300,26 +305,27 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 		    break;
 		}
 		options->samples_per_model_axis = a + 1;
-		analyze_set_samples_per_model_axis(state, options->samples_per_model_axis);
+		cfg->samples_per_model_axis = options->samples_per_model_axis;
 		break;
 	    case 't':
 		if (read_units_double(gedp, &(options->overlap_tolerance), bu_optarg, units_tab[0])) {
 		    bu_vls_printf(gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
-		analyze_set_overlap_tolerance(state, options->overlap_tolerance);
+		cfg->overlap_tol = options->overlap_tolerance;
 		break;
 	    case 'v':
 		options->verbose = 1;
 		options->verbose_str = bu_vls_vlsinit();
-		analyze_enable_verbose(state, options->verbose_str);
+		cfg->verbose  = 1;
+		cfg->log_str  = options->verbose_str;
 		break;
 	    case 'V':
 		if (read_units_double(gedp, &(options->volume_tolerance), bu_optarg, units_tab[1])) {
 		    bu_vls_printf(gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
-		analyze_set_volume_tolerance(state, options->volume_tolerance);
+		cfg->volume_tol = options->volume_tolerance;
 		break;
 	    case 'U':
 		errno = 0;
@@ -328,13 +334,13 @@ parse_check_args(struct ged *gedp, int ac, char *av[], struct check_parameters* 
 		    bu_vls_printf(gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
 		    return -1;
 		}
-		analyze_set_use_air(state, options->use_air);
+		cfg->use_air = options->use_air;
 		break;
 	    case 'u':
 		{
 		    int i;
 		    char *ptr = bu_optarg;
-		    const struct cvt_tab *cv;
+		    const cvt_tab *cv;
 		    static const char *dim[3] = {"length", "volume", "mass"};
 		    char *units_name[3] = {NULL, NULL, NULL};
 		    char **units_ap;
@@ -445,7 +451,7 @@ add_to_list(struct regions_list *list,
 
 
 void
-print_list(struct ged *gedp, struct regions_list *list, const struct cvt_tab *units[3], char* name)
+print_list(struct ged *gedp, struct regions_list *list, const cvt_tab *units[3], char* name)
 {
     struct regions_list *rp;
 
@@ -465,6 +471,43 @@ print_list(struct ged *gedp, struct regions_list *list, const struct cvt_tab *un
 	    bu_vls_printf(gedp->ged_result_str, "\t%s count: %lu dist: %g%s @ (%g %g %g)\n",
 			  rp->region1, rp->count,
 			  rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
+	}
+    }
+}
+
+
+/**
+ * Format a bu_ptbl of analyze_overlap_record entries (gaps, air, etc.)
+ * in the same style as print_list().
+ */
+void
+print_results_list(struct ged *gedp, struct bu_ptbl *tbl,
+		   const cvt_tab *const units[3], const char *label)
+{
+    size_t i;
+
+    if (BU_PTBL_LEN(tbl) == 0) {
+	bu_vls_printf(gedp->ged_result_str, "No %s\n", label);
+	return;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "list %s:\n", label);
+
+    for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
+	struct analyze_overlap_record *r =
+	    (struct analyze_overlap_record *)BU_PTBL_GET(tbl, i);
+	if (r->region2) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "\t%s %s count: %lu dist: %g%s @ (%g %g %g)\n",
+			  r->region1, r->region2, r->count,
+			  r->max_dist / units[LINE]->val, units[LINE]->name,
+			  V3ARGS(r->coord));
+	} else {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "\t%s count: %lu dist: %g%s @ (%g %g %g)\n",
+			  r->region1, r->count,
+			  r->max_dist / units[LINE]->val, units[LINE]->name,
+			  V3ARGS(r->coord));
 	}
     }
 }
@@ -491,6 +534,149 @@ print_verbose_debug(struct ged *gedp, struct check_parameters *options)
 }
 
 
+/* ======================================================================
+ * Per-event render hook helpers.
+ *
+ * These static functions are installed as analyze_config render hooks
+ * before calling analyze_run().  Each writes to plot files, adds overlay
+ * geometry, or produces real-time console output per detected event.
+ * The data pointers point into local structs on ged_check_core's stack.
+ * ====================================================================== */
+
+struct check_overlap_rd {
+    FILE              *plot_file;
+    int                overlap_color[3];
+    int                overlay_flag;
+    struct bv_vlblock *vbp;
+    struct bu_list    *vhead;
+    struct ged        *gedp;
+    size_t             noverlaps; /* total overlap instances seen */
+    int                rpt_overlap_flag;
+    int                sem; /* serialises output, counter, vlist, plot */
+};
+
+static void
+check_overlap_render_fn_impl(const char *r1, const char *r2,
+			     double depth, point_t ihit, point_t ohit,
+			     void *data)
+{
+    struct check_overlap_rd *rd = (struct check_overlap_rd *)data;
+    size_t noverlaps;
+
+    bu_semaphore_acquire(rd->sem);
+    noverlaps = ++rd->noverlaps;
+    bu_semaphore_release(rd->sem);
+
+    if (!rd->rpt_overlap_flag) {
+	/* Immediate output: print each occurrence as it occurs. */
+	bu_semaphore_acquire(rd->sem);
+	bu_vls_printf(rd->gedp->ged_result_str,
+		      "OVERLAP %zu: %s\nOVERLAP %zu: %s\nOVERLAP %zu: depth %gmm\n"
+		      "OVERLAP %zu: in_hit_point (%g, %g, %g) mm\n"
+		      "OVERLAP %zu: out_hit_point (%g, %g, %g) mm\n"
+		      "------------------------------------------------------------\n",
+		      noverlaps, r1, noverlaps, r2, noverlaps, depth,
+		      noverlaps, V3ARGS(ihit), noverlaps, V3ARGS(ohit));
+	bu_semaphore_release(rd->sem);
+    }
+
+    if (rd->overlay_flag && rd->vbp && rd->vhead) {
+	bu_semaphore_acquire(rd->sem);
+	BV_ADD_VLIST(rd->vbp->free_vlist_hd, rd->vhead, ihit, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(rd->vbp->free_vlist_hd, rd->vhead, ohit, BV_VLIST_LINE_DRAW);
+	bu_semaphore_release(rd->sem);
+    }
+
+    if (rd->plot_file) {
+	bu_semaphore_acquire(rd->sem);
+	pl_color(rd->plot_file, V3ARGS(rd->overlap_color));
+	pdv_3line(rd->plot_file, ihit, ohit);
+	bu_semaphore_release(rd->sem);
+    }
+}
+
+
+struct check_gap_rd {
+    FILE *plot_file;
+    int   gap_color[3];
+    int   sem;
+};
+
+static void
+check_gap_render_fn_impl(const char *UNUSED(r1), const char *UNUSED(r2),
+			 double UNUSED(dist),
+			 point_t gap_start, point_t gap_end, void *data)
+{
+    struct check_gap_rd *rd = (struct check_gap_rd *)data;
+    if (rd->plot_file) {
+	bu_semaphore_acquire(rd->sem);
+	pl_color(rd->plot_file, V3ARGS(rd->gap_color));
+	pdv_3line(rd->plot_file, gap_start, gap_end);
+	bu_semaphore_release(rd->sem);
+    }
+}
+
+
+struct check_adj_air_rd {
+    FILE *plot_file;
+    int   adjAir_color[3];
+    int   sem;
+};
+
+static void
+check_adj_air_render_fn_impl(const char *UNUSED(r1), const char *UNUSED(r2),
+			     point_t in_pt, point_t out_pt, void *data)
+{
+    struct check_adj_air_rd *rd = (struct check_adj_air_rd *)data;
+    if (rd->plot_file) {
+	bu_semaphore_acquire(rd->sem);
+	pl_color(rd->plot_file, V3ARGS(rd->adjAir_color));
+	pdv_3line(rd->plot_file, in_pt, out_pt);
+	bu_semaphore_release(rd->sem);
+    }
+}
+
+
+struct check_exp_air_rd {
+    FILE *plot_file;
+    int   expAir_color[3];
+    int   sem;
+};
+
+static void
+check_exp_air_render_fn_impl(const char *UNUSED(region_name),
+			     point_t in_pt, point_t out_pt, void *data)
+{
+    struct check_exp_air_rd *rd = (struct check_exp_air_rd *)data;
+    if (rd->plot_file) {
+	bu_semaphore_acquire(rd->sem);
+	pl_color(rd->plot_file, V3ARGS(rd->expAir_color));
+	pdv_3line(rd->plot_file, in_pt, out_pt);
+	bu_semaphore_release(rd->sem);
+    }
+}
+
+
+struct check_unconf_air_rd {
+    FILE *plot_file;
+    int   unconfAir_color[3];
+    int   sem;
+};
+
+static void
+check_unconf_air_render_fn_impl(const char *UNUSED(r1), const char *UNUSED(r2),
+				point_t in_pt, point_t out_pt, void *data)
+{
+    struct check_unconf_air_rd *rd = (struct check_unconf_air_rd *)data;
+    if (rd->plot_file) {
+	bu_semaphore_acquire(rd->sem);
+	pl_color(rd->plot_file, V3ARGS(rd->unconfAir_color));
+	pdv_3line(rd->plot_file, in_pt, out_pt);
+	bu_semaphore_release(rd->sem);
+    }
+}
+
+
 int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
@@ -498,14 +684,31 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     const char *cmd = argv[0];
     const char *sub = NULL;
     size_t len;
+    int flags = 0;
 
-    struct current_state *state = NULL;
+    struct analyze_config cfg = ANALYZE_CONFIG_INIT_ZERO;
+    struct analyze_results *res = NULL;
+
+    /* Per-event render hook storage (stack-allocated; pointers into cfg). */
+    struct check_overlap_rd   overlap_rd;
+    struct check_gap_rd       gap_rd;
+    struct check_adj_air_rd   adj_air_rd;
+    struct check_exp_air_rd   exp_air_rd;
+    struct check_unconf_air_rd unconf_air_rd;
+
+    /* Plot file handles (opened on demand when options.plot_files is set). */
+    FILE *plot_overlaps   = NULL;
+    FILE *plot_gaps       = NULL;
+    FILE *plot_adj_air    = NULL;
+    FILE *plot_exp_air    = NULL;
+    FILE *plot_unconf_air = NULL;
+    FILE *plot_volume     = NULL;
 
     struct check_parameters options;
-    const char *check_subcommands[] = {"adj_air", "centroid", "exp_air", "gap",
+    const char *check_subcommands[] = {"adj_air", "bbox", "centroid", "exp_air", "gap",
 				       "mass", "moments", "overlaps", "surf_area",
 				       "unconf_air", "volume", NULL};
-    const struct cvt_tab *units[3] = {
+    const cvt_tab *units[3] = {
 	&units_tab[0][0],	/* linear */
 	&units_tab[1][0],	/* volume */
 	&units_tab[2][0]	/* mass */
@@ -518,9 +721,8 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     int nobjs = 0;			/* Number of cmd-line treetops */
     const char **objtab;		/* array of treetop strings */
     int error = 0;
+    struct bu_list *vlfree = &rt_vlfree;
     VMOVE(options.units, units);
-
-    state = analyze_current_state_init();
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -560,11 +762,15 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     options.verbose = 0;
     options.rpt_overlap_flag = 1;
 
+    /* Propagate defaults that libanalyze needs to know about. */
+    cfg.use_air = options.use_air = 1;
+    cfg.ncpu    = options.ncpu;
+
     /* shift to subcommand args */
     argc -= opt_argc;
     argv = &argv[opt_argc];
 
-    arg_count = parse_check_args(gedp, argc, (char **)argv, &options, state);
+    arg_count = parse_check_args(gedp, argc, (char **)argv, &options, &cfg);
 
     if (arg_count < 0 ) {
 	check_show_help(gedp);
@@ -582,8 +788,6 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     if (tnobjs <= 0) {
 	bu_vls_printf(gedp->ged_result_str,"no objects specified or in view -- raytrace aborted\n");
-	analyze_free_current_state(state);
-	state = NULL;
 	return BRLCAD_ERROR;
     }
 
@@ -607,76 +811,252 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     tnobjs = nvobjs + nobjs;
 
-    /* determine subcommand */
+    /* ------------------------------------------------------------------
+     * Determine analysis flags from the subcommand name.
+     * ------------------------------------------------------------------ */
     sub = argv[0];
     len = strlen(sub);
     if (bu_strncmp(sub, "adj_air", len) == 0) {
-	if (check_adj_air(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
-	}
+	flags = ANALYZE_ADJ_AIR;
+    } else if (bu_strncmp(sub, "bbox", len) == 0) {
+	flags = ANALYZE_BOX;
     } else if (bu_strncmp(sub, "centroid", len) == 0) {
-	if (check_centroid(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
-	}
+	flags = ANALYZE_MASS | ANALYZE_CENTROIDS;
     } else if (bu_strncmp(sub, "exp_air", len) == 0) {
-	if (check_exp_air(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
-	}
+	flags = ANALYZE_EXP_AIR;
     } else if (bu_strncmp(sub, "gap", len) == 0) {
-	if (check_gap(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
-	}
+	flags = ANALYZE_GAP;
     } else if (bu_strncmp(sub, "mass", len) == 0) {
-	if (check_mass(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
-	}
+	flags = ANALYZE_MASS;
     } else if (bu_strncmp(sub, "moments", len) == 0) {
-	if (check_moments(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
+	flags = ANALYZE_MASS | ANALYZE_CENTROIDS | ANALYZE_MOMENTS;
+    } else if (bu_strncmp(sub, "overlaps", len) == 0) {
+	flags = ANALYZE_OVERLAPS;
+    } else if (bu_strncmp(sub, "surf_area", len) == 0) {
+	flags = ANALYZE_SURF_AREA;
+    } else if (bu_strncmp(sub, "unconf_air", len) == 0) {
+	flags = ANALYZE_UNCONF_AIR;
+    } else if (bu_strncmp(sub, "volume", len) == 0) {
+	flags = ANALYZE_VOLUME;
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
+	error = 1;
+	goto freemem;
+    }
+
+    /* ------------------------------------------------------------------
+     * VIEW_PLANE sampler: populate cfg from the current GED view for the
+     * overlaps subcommand when -i was given.
+     * ------------------------------------------------------------------ */
+    if (options.getfromview && bu_strncmp(sub, "overlaps", len) == 0) {
+	if (!gedp->ged_gvp) {
+	    bu_vls_printf(gedp->ged_result_str, "no view active; -i requires a view\n");
 	    error = 1;
 	    goto freemem;
 	}
-    } else if (bu_strncmp(sub, "overlaps", len) == 0) {
-	if (options.getfromview) {
+	{
 	    point_t eye_model;
 	    quat_t quat;
 	    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
 	    _ged_rt_set_eye_model(gedp, eye_model);
-	    analyze_set_view_information(state, gedp->ged_gvp->gv_size, &eye_model, &quat);
+	    cfg.sampler   = ANALYZE_SAMPLER_VIEW_PLANE;
+	    cfg.view_size = gedp->ged_gvp->gv_size;
+	    VMOVE(cfg.view_eye, eye_model);
+	    HMOVE(cfg.view_quat, quat);
 	}
-	if (check_overlaps(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
+    }
+
+    /* ------------------------------------------------------------------
+     * Open plot files and install render hooks for subcommands that need
+     * per-segment drawing.
+     * ------------------------------------------------------------------ */
+    if (bu_strncmp(sub, "overlaps", len) == 0) {
+	memset(&overlap_rd, 0, sizeof(overlap_rd));
+	overlap_rd.overlap_color[0] = 255;
+	overlap_rd.overlap_color[1] = 255;
+	overlap_rd.overlap_color[2] = 0; /* yellow */
+	overlap_rd.overlay_flag     = options.overlaps_overlay_flag;
+	overlap_rd.rpt_overlap_flag = options.rpt_overlap_flag;
+	overlap_rd.gedp             = gedp;
+	overlap_rd.sem = bu_semaphore_register("check_overlap_rd");
+
+	if (options.overlaps_overlay_flag) {
+	    overlap_rd.vbp   = bv_vlblock_init(vlfree, 32);
+	    overlap_rd.vhead = bv_vlblock_find(overlap_rd.vbp, 0xFF, 0xFF, 0x00);
 	}
-    } else if (bu_strncmp(sub, "surf_area", len) == 0) {
-	if (check_surf_area(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
+	if (options.plot_files) {
+	    plot_overlaps = fopen("overlaps.plot3", "wb");
+	    if (!plot_overlaps)
+		bu_vls_printf(gedp->ged_result_str, "cannot open overlaps.plot3\n");
+	    overlap_rd.plot_file = plot_overlaps;
 	}
+
+	cfg.overlap_render      = check_overlap_render_fn_impl;
+	cfg.overlap_render_data = &overlap_rd;
+
+    } else if (bu_strncmp(sub, "gap", len) == 0) {
+	memset(&gap_rd, 0, sizeof(gap_rd));
+	gap_rd.gap_color[0] = 128;
+	gap_rd.gap_color[1] = 192;
+	gap_rd.gap_color[2] = 255; /* cyan */
+	gap_rd.sem = bu_semaphore_register("check_gap_rd");
+	if (options.plot_files) {
+	    plot_gaps = fopen("gaps.plot3", "wb");
+	    if (!plot_gaps)
+		bu_vls_printf(gedp->ged_result_str, "cannot open gaps.plot3\n");
+	    gap_rd.plot_file = plot_gaps;
+	}
+	cfg.gap_render      = check_gap_render_fn_impl;
+	cfg.gap_render_data = &gap_rd;
+
+    } else if (bu_strncmp(sub, "adj_air", len) == 0) {
+	memset(&adj_air_rd, 0, sizeof(adj_air_rd));
+	adj_air_rd.adjAir_color[0] = 128;
+	adj_air_rd.adjAir_color[1] = 255;
+	adj_air_rd.adjAir_color[2] = 192; /* pale green */
+	adj_air_rd.sem = bu_semaphore_register("check_adj_air_rd");
+	if (options.plot_files) {
+	    plot_adj_air = fopen("adj_air.plot3", "wb");
+	    if (!plot_adj_air)
+		bu_vls_printf(gedp->ged_result_str, "cannot open adj_air.plot3\n");
+	    adj_air_rd.plot_file = plot_adj_air;
+	}
+	cfg.adj_air_render      = check_adj_air_render_fn_impl;
+	cfg.adj_air_render_data = &adj_air_rd;
+
+    } else if (bu_strncmp(sub, "exp_air", len) == 0) {
+	memset(&exp_air_rd, 0, sizeof(exp_air_rd));
+	exp_air_rd.expAir_color[0] = 255;
+	exp_air_rd.expAir_color[1] = 128;
+	exp_air_rd.expAir_color[2] = 255; /* magenta */
+	exp_air_rd.sem = bu_semaphore_register("check_exp_air_rd");
+	if (options.plot_files) {
+	    plot_exp_air = fopen("exp_air.plot3", "wb");
+	    if (!plot_exp_air)
+		bu_vls_printf(gedp->ged_result_str, "cannot open exp_air.plot3\n");
+	    exp_air_rd.plot_file = plot_exp_air;
+	}
+	cfg.exp_air_render      = check_exp_air_render_fn_impl;
+	cfg.exp_air_render_data = &exp_air_rd;
+
     } else if (bu_strncmp(sub, "unconf_air", len) == 0) {
-	if (check_unconf_air(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
+	memset(&unconf_air_rd, 0, sizeof(unconf_air_rd));
+	unconf_air_rd.unconfAir_color[0] = 0;
+	unconf_air_rd.unconfAir_color[1] = 255;
+	unconf_air_rd.unconfAir_color[2] = 0; /* green */
+	unconf_air_rd.sem = bu_semaphore_register("check_unconf_air_rd");
+	if (options.plot_files) {
+	    plot_unconf_air = fopen("unconf_air.plot3", "wb");
+	    if (!plot_unconf_air)
+		bu_vls_printf(gedp->ged_result_str, "cannot open unconf_air.plot3\n");
+	    unconf_air_rd.plot_file = plot_unconf_air;
 	}
+	cfg.unconf_air_render      = check_unconf_air_render_fn_impl;
+	cfg.unconf_air_render_data = &unconf_air_rd;
+
     } else if (bu_strncmp(sub, "volume", len) == 0) {
-	if (check_volume(gedp, state, gedp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
+	if (options.plot_files) {
+	    plot_volume = fopen("volume.plot3", "wb");
+	    if (!plot_volume)
+		bu_vls_printf(gedp->ged_result_str, "cannot open volume.plot3\n");
+	    cfg.volume_plot_file = plot_volume;
 	}
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
+    }
+
+    /* ------------------------------------------------------------------
+     * Run the analysis via libanalyze.
+     * ------------------------------------------------------------------ */
+    res = analyze_run(&cfg, gedp->dbip, tobjtab, tnobjs, flags);
+    if (!res) {
+	bu_vls_printf(gedp->ged_result_str, "analysis failed\n");
 	error = 1;
+	goto cleanup_plots;
+    }
+
+    /* ------------------------------------------------------------------
+     * Emit verbose / debug log to result string.
+     * ------------------------------------------------------------------ */
+    print_verbose_debug(gedp, &options);
+
+    /* ------------------------------------------------------------------
+     * Dispatch to the appropriate formatter.
+     * ------------------------------------------------------------------ */
+    if (bu_strncmp(sub, "adj_air", len) == 0) {
+	if (check_format_adj_air(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "bbox", len) == 0) {
+	if (check_format_bbox(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "centroid", len) == 0) {
+	if (check_format_centroid(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "exp_air", len) == 0) {
+	if (check_format_exp_air(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "gap", len) == 0) {
+	if (check_format_gap(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "mass", len) == 0) {
+	if (check_format_mass(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "moments", len) == 0) {
+	if (check_format_moments(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "overlaps", len) == 0) {
+	if (check_format_overlaps(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "surf_area", len) == 0) {
+	if (check_format_surf_area(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "unconf_air", len) == 0) {
+	if (check_format_unconf_air(gedp, res, &options)) error = 1;
+    } else if (bu_strncmp(sub, "volume", len) == 0) {
+	if (check_format_volume(gedp, res, &options)) error = 1;
+    }
+
+    analyze_results_free(res);
+    res = NULL;
+
+    /* ------------------------------------------------------------------
+     * Commit overlay geometry (overlaps -o).
+     * ------------------------------------------------------------------ */
+    if (bu_strncmp(sub, "overlaps", len) == 0 && options.overlaps_overlay_flag
+	&& overlap_rd.vbp) {
+	if (gedp->new_cmd_forms) {
+	    struct bview *view = gedp->ged_gvp;
+	    bv_vlblock_obj(overlap_rd.vbp, view, "check::overlaps");
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, overlap_rd.vbp, "OVERLAPS", 0);
+	}
+	bv_vlblock_free(overlap_rd.vbp);
+	overlap_rd.vbp = NULL;
+    }
+
+cleanup_plots:
+    /* Close all plot files and emit names. */
+    if (plot_overlaps) {
+	fclose(plot_overlaps);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as overlaps.plot3");
+    }
+    if (plot_gaps) {
+	fclose(plot_gaps);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as gaps.plot3");
+    }
+    if (plot_adj_air) {
+	fclose(plot_adj_air);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as adj_air.plot3");
+    }
+    if (plot_exp_air) {
+	fclose(plot_exp_air);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as exp_air.plot3");
+    }
+    if (plot_unconf_air) {
+	fclose(plot_unconf_air);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as unconf_air.plot3");
+    }
+    if (plot_volume) {
+	fclose(plot_volume);
+	bu_vls_printf(gedp->ged_result_str, "\nplot file saved as volume.plot3");
     }
 
 freemem:
+    if (res) {
+	analyze_results_free(res);
+	res = NULL;
+    }
     bu_free(tobjtab, "free tobjtab");
     tobjtab = NULL;
-    analyze_free_current_state(state);
-    state = NULL;
     if (options.verbose) bu_vls_free(options.verbose_str);
     if (options.debug) bu_vls_free(options.debug_str);
     return (error) ? BRLCAD_ERROR : BRLCAD_OK;

@@ -44,21 +44,16 @@
 #include "bu/vls.h"
 
 
-struct cvt_tab {
-    double val;
-    char name[32];
-};
-
 
 struct conv_table {
-    struct cvt_tab *cvttab;
+    const struct bu_cvt_tab *cvttab;
 };
 
 
 /* Keep table sorted sorted small-to-large.  Algorithms below may rely
  * on the ordering.
  */
-static struct cvt_tab bu_units_length_tab[] = {
+static const struct bu_cvt_tab bu_units_length_tab[] = {
     {0.0,		"none"},
     {1.0e-21,		"ym"},
     {1.0e-21,		"yoctometer"},
@@ -138,54 +133,67 @@ static struct cvt_tab bu_units_length_tab[] = {
     {3.08568025e+19,	"parsec"},
     {0.0,		""}			/* LAST ENTRY */
 };
-#define BU_UNITS_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
+#define BU_UNITS_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct bu_cvt_tab) - 1)
 
 /* Keep table sorted sorted small-to-large.  Algorithms below may rely
  * on the ordering.
  */
-static struct cvt_tab bu_units_volume_tab[] = {
+static const struct bu_cvt_tab bu_units_volume_tab[] = {
     {0.0,		"none"},
     {1.0,		"mm^3"},		/* default */
-    {1.0, 		"cu mm"},
-    {1.0e3, 		"cm^3"},
-    {1.0e3, 		"cu cm"},
-    {1.0e3, 		"cc"},
-    {1.0e6, 		"l"},
-    {1.0e6, 		"liter"},
-    {1.0e6, 		"litre"},
-    {1.0e9, 		"m^3"},
+    {1.0,		"cu mm"},
+    {1.0e3,		"cm^3"},
+    {1.0e3,		"cu cm"},
+    {1.0e3,		"cc"},
+    {1.0e6,		"l"},
+    {1.0e6,		"liter"},
+    {1.0e6,		"litre"},
+    {1.0e9,		"m^3"},
     {1.0e9,		"cu m"},
-    {16387.064, 	"in^3"},
-    {16387.064, 	"cu in"},
-    {28316846.592, 	"ft^3"},
-    {28316846.592, 	"cu ft"},
-    {764554857.984, 	"yds^3"},
-    {764554857.984, 	"yards^3"},
-    {764554857.984, 	"cu yards"},
-    {0.0,               ""}                     /* LAST ENTRY */
+    {16387.064,		"in^3"},
+    {16387.064,		"cu in"},
+    {28316846.592,	"ft^3"},
+    {28316846.592,	"cu ft"},
+    {764554857.984,	"yds^3"},
+    {764554857.984,	"yards^3"},
+    {764554857.984,	"cu yards"},
+    {0.0,		""}			/* LAST ENTRY */
 };
 
 
 /* Keep table sorted sorted small-to-large.  Algorithms below may rely
  * on the ordering.
  */
-static struct cvt_tab bu_units_mass_tab[] = {
+static const struct bu_cvt_tab bu_units_mass_tab[] = {
     {0.0,		"none"},
     {1.0,		"grams"},		/* default */
-    {1.0, 		"g"},
-    {1.0e3, 		"kilogram"},
+    {1.0,		"g"},
+    {1.0e3,		"kilogram"},
     {1.0e3,		"kg"},
-    {0.0648, 		"gr"},
+    {1.0e3,		"kilos"},		/* alias */
+    {0.0648,		"gr"},
     {0.0648,		"grain"},
+    {0.0648,		"grains"},		/* plural */
     {453.6,		"lb"},
+    {453.6,		"lbs"},			/* plural/alias */
     {28.35,		"oz"},
     {28.35,		"ounce"},
-    {0.0,               ""}                     /* LAST ENTRY */
+    {0.0,		""}			/* LAST ENTRY */
 };
 
 
 static const struct conv_table unit_lists[4] = {
     {bu_units_length_tab}, {bu_units_volume_tab}, {bu_units_mass_tab}, {NULL}
+};
+
+/**
+ * Exported array of three conversion-table pointers (length / volume / mass).
+ * Indexed with BU_UNITS_LENGTH, BU_UNITS_VOLUME, or BU_UNITS_MASS.
+ */
+const struct bu_cvt_tab * const bu_units_tab[3] = {
+    bu_units_length_tab,
+    bu_units_volume_tab,
+    bu_units_mass_tab
 };
 
 
@@ -255,7 +263,7 @@ units_name_matches(const char *input, const char *name)
 double
 bu_units_conversion(const char *str)
 {
-    const struct cvt_tab *tp;
+    const struct bu_cvt_tab *tp;
     const struct conv_table *cvtab;
     double factor = 1.0;
 
@@ -285,7 +293,7 @@ bu_units_conversion(const char *str)
 const char *
 bu_units_string(register const double mm)
 {
-    register const struct cvt_tab *tp;
+    register const struct bu_cvt_tab *tp;
 
     if (UNLIKELY(mm <= 0))
 	return (const char *)NULL;
@@ -321,7 +329,7 @@ bu_units_string(register const double mm)
 struct bu_vls *
 bu_units_strings_vls(void)
 {
-    register const struct cvt_tab *tp;
+    register const struct bu_cvt_tab *tp;
     struct bu_vls *vlsp;
     double prev_val = 0.0;
 
@@ -345,7 +353,7 @@ bu_units_strings_vls(void)
 const char *
 bu_nearest_units_string(register const double mm)
 {
-    register const struct cvt_tab *tp;
+    register const struct bu_cvt_tab *tp;
 
     const char *nearest = NULL;
     double nearer = DBL_MAX;
@@ -389,7 +397,7 @@ bu_mm_value(const char *s)
 {
     double v;
     char *ptr;
-    register const struct cvt_tab *tp;
+    register const struct bu_cvt_tab *tp;
 
     v = strtod(s, &ptr);
 
@@ -434,6 +442,57 @@ bu_mm_cvt(const struct bu_structparse *sdp,
 
     /* reconvert with optional units */
     *p = bu_mm_value(value);
+}
+
+
+int
+bu_units_parse_double(struct bu_vls *msgs, double *val,
+		      const char *buf,
+		      const struct bu_cvt_tab *cvt)
+{
+    double a;
+#define BU_UNITS_STR_SZ 256
+    char units_string[BU_UNITS_STR_SZ + 1] = {0};
+    int i;
+    const struct bu_cvt_tab *cv;
+
+    if (!buf || !val || !cvt) {
+	if (msgs)
+	    bu_vls_printf(msgs, "bu_units_parse_double: NULL argument\n");
+	return 1;
+    }
+
+    i = sscanf(buf, "%lg %256s", &a, units_string);
+
+    if (i < 0) {
+	if (msgs)
+	    bu_vls_printf(msgs, "bu_units_parse_double: empty input\n");
+	return 1;
+    }
+
+    if (i == 1) {
+	*val = a;
+	return 0;
+    }
+
+    if (i == 2) {
+	*val = a;
+	for (cv = cvt; cv->name[0] != '\0'; cv++) {
+	    if (BU_STR_EQUAL(cv->name, units_string)) {
+		*val = a * cv->val;
+		return 0;
+	    }
+	}
+	if (msgs)
+	    bu_vls_printf(msgs, "Bad units specifier \"%s\" on value \"%s\"\n",
+			 units_string, buf);
+	return 1;
+    }
+
+    if (msgs)
+	bu_vls_printf(msgs, "bu_units_parse_double: sscanf problem on \"%s\" (got %d)\n",
+		      buf, i);
+    return 1;
 }
 
 

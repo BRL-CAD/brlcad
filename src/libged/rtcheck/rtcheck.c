@@ -192,6 +192,13 @@ extern int ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[]);
 /*
  * Check for overlaps in the current view.
  *
+ * NOTE: rtcheck is a legacy command that spawns an external rt subprocess.
+ * For programmatic or batch overlap checking, prefer the structured API:
+ *   check overlaps [options] <objects>   (GED command, uses libanalyze)
+ *   gqa -Ao [options] <objects>          (GED command, uses libanalyze)
+ * Both return structured overlap records via analyze_results and do not
+ * require an external subprocess.
+ *
  * Usage:
  * rtcheck options
  *
