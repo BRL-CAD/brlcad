@@ -1,6 +1,6 @@
 #include <algorithm>
+#include <cerrno>
 #include <cctype>
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -10,8 +10,17 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <chrono>
+#include <thread>
 #include <utility>
 #include <vector>
+
+#ifndef _WIN32
+#  include <sys/types.h>
+#  include <sys/wait.h>
+#endif
+
+#include "bu/process.h"
 
 namespace fs = std::filesystem;
 
@@ -594,16 +603,90 @@ static std::string quote_arg(const std::string &arg)
 
 static int run_command(const std::vector<std::string> &cmd)
 {
+    if (cmd.empty()) {
+        return 1;
+    }
+
     std::ostringstream joined;
+    std::vector<const char *> argv;
+    argv.reserve(cmd.size() + 1);
     for (std::size_t i = 0; i < cmd.size(); ++i) {
         if (i) {
             joined << ' ';
         }
         joined << quote_arg(cmd[i]);
+        argv.push_back(cmd[i].c_str());
     }
+    argv.push_back(NULL);
+
     std::string command = joined.str();
     std::cout << "  " << command << "\n";
-    return std::system(command.c_str());
+
+    struct bu_process *proc = NULL;
+    bu_process_create(&proc, argv.data(), BU_PROCESS_DEFAULT);
+    if (!proc || bu_process_pid(proc) <= 0) {
+        if (proc) {
+            (void)bu_process_wait_n(&proc, 0);
+        }
+        return 1;
+    }
+
+    int stdout_fd = bu_process_fileno(proc, BU_PROCESS_STDOUT);
+    int stderr_fd = bu_process_fileno(proc, BU_PROCESS_STDERR);
+    bool stdout_open = stdout_fd >= 0;
+    bool stderr_open = stderr_fd >= 0;
+    char buffer[4096];
+
+    while (stdout_open || stderr_open || bu_process_alive(proc)) {
+        bool progressed = false;
+
+        if (stdout_open && bu_process_pending(stdout_fd)) {
+            int got = bu_process_read_n(proc, BU_PROCESS_STDOUT, (int)sizeof(buffer), buffer);
+            if (got > 0) {
+                std::cout.write(buffer, got);
+                std::cout.flush();
+            } else {
+                stdout_open = false;
+            }
+            progressed = true;
+        }
+
+        if (stderr_open && bu_process_pending(stderr_fd)) {
+            int got = bu_process_read_n(proc, BU_PROCESS_STDERR, (int)sizeof(buffer), buffer);
+            if (got > 0) {
+                std::cerr.write(buffer, got);
+                std::cerr.flush();
+            } else {
+                stderr_open = false;
+            }
+            progressed = true;
+        }
+
+        if (!progressed) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+
+    int rc = 1;
+#ifdef _WIN32
+    rc = bu_process_wait_n(&proc, 0);
+#else
+    int status = 0;
+    pid_t pid = bu_process_pid(proc);
+    while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
+    }
+    if (WIFEXITED(status)) {
+        rc = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+        rc = 128 + WTERMSIG(status);
+    }
+#endif
+
+    if (proc) {
+        (void)bu_process_wait_n(&proc, 0);
+    }
+
+    return rc;
 }
 
 static std::vector<std::string> strip_generator(const std::vector<std::string> &args)
