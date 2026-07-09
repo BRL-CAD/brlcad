@@ -450,11 +450,9 @@ check_primitive(lint_data *ldata, struct directory *dp,
 	RT_DB_INTERNAL_INIT(&intern);
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) >= 0) {
 	    if (intern.idb_minor_type >= 0 && intern.idb_minor_type < ID_MAXIMUM) {
-		const struct rt_functab *ft = &OBJ[intern.idb_minor_type];
-
 		if (!BU_SETJUMP) {
-		    if (ft->ft_surf_area) ft->ft_surf_area(&analytic_sa, &intern);
-		    if (ft->ft_volume)    ft->ft_volume(&analytic_vol, &intern);
+		    rt_obj_surf_area(&analytic_sa, &intern);
+		    rt_obj_volume(&analytic_vol, &intern);
 		} else {
 		    BU_UNSETJUMP;
 		    analytic_sa = analytic_vol = -1.0;

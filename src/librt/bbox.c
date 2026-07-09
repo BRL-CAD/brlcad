@@ -435,6 +435,20 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
     int bbret = -1;
     if (ip->idb_meth->ft_bbox)
 	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
+    if (bbret == 0) {
+	mat_t nonuniform_mat;
+	int have_nonuniform = _rt_nonuniform_attr_get(nonuniform_mat, ip);
+	if (have_nonuniform < 0) {
+	    rt_db_free_internal(&dbintern);
+	    return -1;
+	}
+	if (have_nonuniform > 0) {
+	    point_t tbmin, tbmax;
+	    _rt_nonuniform_transform_bbox(&tbmin, &tbmax, nonuniform_mat, *bmin, *bmax);
+	    VMOVE(*bmin, tbmin);
+	    VMOVE(*bmax, tbmax);
+	}
+    }
 
     if (bbret < 0 && ip->idb_meth->ft_plot) {
 	/* As a fallback for primitives that don't have a bbox
@@ -446,6 +460,14 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 	struct bu_list vhead;
 	BU_LIST_INIT(&(vhead));
 	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, NULL) >= 0) {
+	    mat_t nonuniform_mat;
+	    int have_nonuniform = _rt_nonuniform_attr_get(nonuniform_mat, ip);
+	    if (have_nonuniform < 0) {
+		rt_db_free_internal(&dbintern);
+		return -1;
+	    }
+	    if (have_nonuniform > 0)
+		_rt_nonuniform_transform_vlist(&vhead, nonuniform_mat);
 	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL)) {
 		rt_db_free_internal(&dbintern);
 		return -1;

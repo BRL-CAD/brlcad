@@ -45,6 +45,16 @@ rt_obj_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
     if (!ft->ft_curve)
 	return -4;
 
+    if (stp->st_nu_inv_matp) {
+	if (ft->ft_curve_affine)
+	    return ft->ft_curve_affine(cvp, hitp, stp, stp->st_nu_matp, stp->st_nu_inv_matp);
+
+	VSETALL(cvp->crv_pdir, 0.0);
+	cvp->crv_c1 = 0.0;
+	cvp->crv_c2 = 0.0;
+	return -5;
+    }
+
     ft->ft_curve(cvp, hitp, stp);
     return 0;
 }

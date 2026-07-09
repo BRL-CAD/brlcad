@@ -387,6 +387,14 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
     } else {
 	stp->st_matp = (matp_t)0;
     }
+    stp->st_nu_matp = (matp_t)0;
+    stp->st_nu_inv_matp = (matp_t)0;
+    stp->st_nu_norm_matp = (matp_t)0;
+    VSETALL(stp->st_nu_body_center, 0.0);
+    VSETALL(stp->st_nu_body_min, 0.0);
+    VSETALL(stp->st_nu_body_max, 0.0);
+    stp->st_nu_body_aradius = 0.0;
+    stp->st_nu_body_bradius = 0.0;
 
     /* Add to the appropriate soltab list head */
     /* PARALLEL NOTE:  Uses critical section on rt_solidheads element */
@@ -620,6 +628,7 @@ rt_free_soltab(struct soltab *stp)
     }
     if (stp->st_matp) bu_free((char *)stp->st_matp, "st_matp");
     stp->st_matp = (matp_t)0;	/* Sanity */
+    _rt_nonuniform_soltab_free(stp);
 
     bu_ptbl_free(&stp->st_regions);
 

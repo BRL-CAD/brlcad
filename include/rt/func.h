@@ -122,6 +122,21 @@ RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struc
 RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
+ * calculate object volume
+ */
+RT_EXPORT extern int rt_obj_volume(fastf_t *volume, const struct rt_db_internal *ip);
+
+/**
+ * calculate object surface area
+ */
+RT_EXPORT extern int rt_obj_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+
+/**
+ * calculate object centroid
+ */
+RT_EXPORT extern int rt_obj_centroid(point_t *cent, const struct rt_db_internal *ip);
+
+/**
  * tessellate an object (into NURBS NMG form)
  */
 RT_EXPORT extern int rt_obj_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol);

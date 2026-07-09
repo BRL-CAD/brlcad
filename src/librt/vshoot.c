@@ -105,7 +105,7 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 	    /* do scalar call, place results in segp array */
 	    ret = -1;
 	    if (OBJ[stp[i]->st_id].ft_shot) {
-		ret = OBJ[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
+		ret = _rt_nonuniform_shot(stp[i], rp[i], ap, &seghead);
 	    }
 	    if (ret <= 0) {
 		segp[i].seg_stp=(struct soltab *) 0;
@@ -306,6 +306,7 @@ rt_vshootray(struct application *ap)
     /* For each solid type present, batch-shoot all instances. */
     for (id = 1; id <= ID_MAX_SOLID; id++) {
 	int nsol = (int)rtip->i->rti_nsol_by_type[id];
+	int use_stub = 0;
 	if (nsol <= 0)
 	    continue;
 	if (!OBJ[id].ft_vshot && !OBJ[id].ft_shot)
@@ -315,13 +316,15 @@ rt_vshootray(struct application *ap)
 	    struct soltab *stp = rtip->i->rti_sol_by_type[id][i];
 	    ary_stp[i] = stp;
 	    ary_rp[i] = &ap->a_ray;
+	    if (stp->st_nu_inv_matp)
+		use_stub = 1;
 	    ary_seg[i].seg_stp = SOLTAB_NULL;
 	    BU_BITSET(solidbits, stp->st_bit);	/* mark as shot */
 	}
 
 	resp->re_shots += nsol;
 
-	if (OBJ[id].ft_vshot && !vshoot_force_scalar()) {
+	if (!use_stub && OBJ[id].ft_vshot && !vshoot_force_scalar()) {
 	    OBJ[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
 	} else {
 	    vshot_stub(ary_stp, ary_rp, ary_seg, nsol, ap);

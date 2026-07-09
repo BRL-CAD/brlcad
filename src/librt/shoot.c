@@ -818,7 +818,7 @@ rt_shootray(register struct application *ap)
 
 		ret = -1;
 		if (stp->st_meth->ft_shot) {
-		    ret = stp->st_meth->ft_shot(stp, &ss.newray, ap, &new_segs);
+		    ret = _rt_nonuniform_shot(stp, &ss.newray, ap, &new_segs);
 		}
 		if (ret <= 0) {
 		    resp->re_shot_miss++;
