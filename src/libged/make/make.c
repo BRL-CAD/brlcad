@@ -145,29 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind + 1], "pnts")) {
-	struct pnt *point;
-	struct pnt *headPoint;
-
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_PNTS;
-	internal.idb_meth = &OBJ[ID_PNTS];
-	internal.idb_ptr = (void *) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
-
-	pnts_ip = (struct rt_pnts_internal *) internal.idb_ptr;
-	pnts_ip->magic = RT_PNTS_INTERNAL_MAGIC;
-	pnts_ip->count = 1;
-	pnts_ip->type = RT_PNT_TYPE_PNT;
-	pnts_ip->scale = 0;
-
-	BU_ALLOC(pnts_ip->point, struct pnt);
-	headPoint = (struct pnt *)pnts_ip->point;
-	BU_LIST_INIT(&headPoint->l);
-	BU_ALLOC(point, struct pnt);
-	VSET(point->v, origin[X], origin[Y], origin[Z]);
-	BU_LIST_PUSH(&headPoint->l, &point->l);
-
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "bot")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "bot")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_BOT;
 	internal.idb_meth = &OBJ[ID_BOT];

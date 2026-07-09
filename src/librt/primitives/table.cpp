@@ -2366,7 +2366,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_pnts_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_pnts_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_pnts_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_pnts_make), /* make */
 	NULL, /* params */
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_pnts_bbox),
 	NULL, /* volume */

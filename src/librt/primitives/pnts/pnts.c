@@ -247,6 +247,37 @@ pnts_data_free(struct rt_pnts_internal *pnts)
 }
 
 
+C_DECL int
+rt_pnts_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
+{
+    struct rt_pnts_internal *pnts_ip;
+    struct pnt *point;
+    struct pnt *headPoint;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_PNTS;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(pnts_ip, struct rt_pnts_internal);
+    intern->idb_ptr = (void *)pnts_ip;
+    pnts_ip->magic = RT_PNTS_INTERNAL_MAGIC;
+    pnts_ip->count = 1;
+    /* TODO: variants for more type makers */
+    pnts_ip->type = RT_PNT_TYPE_PNT;
+    pnts_ip->scale = 0;
+
+    BU_ALLOC(pnts_ip->point, struct pnt);
+    headPoint = (struct pnt *)pnts_ip->point;
+    BU_LIST_INIT(&headPoint->l);
+    BU_ALLOC(point, struct pnt);
+    VSET(point->v, origin[X], origin[Y], origin[Z]);
+    BU_LIST_PUSH(&headPoint->l, &point->l);
+
+    return BRLCAD_OK;
+}
+
+
 /**
  * Calculate a bounding box for a set of points
  */
