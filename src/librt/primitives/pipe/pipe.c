@@ -4969,7 +4969,7 @@ rt_pipe_adjust(
 }
 
 C_DECL int
-rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
+rt_pipe_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_pipe_internal* pipe_ip;
     struct wdb_pipe_pnt* pipe_pp;
@@ -4984,18 +4984,24 @@ rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const 
     intern->idb_ptr = (void *)pipe_ip;
 
     pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-
     BU_LIST_INIT(&pipe_ip->pipe_segs_head);
-    for (int i = 0; i < 2; i++) {
-	BU_ALLOC(pipe_pp, struct wdb_pipe_pnt);
-	pipe_pp->l.magic = WDB_PIPESEG_MAGIC;
-	VSETALL(pipe_pp->pp_coord, i);
 
-	pipe_pp->pp_od = 1;
-	pipe_pp->pp_id = 0.1 * pipe_pp->pp_od;
-	pipe_pp->pp_bendradius = pipe_pp->pp_od;
-	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &pipe_pp->l);
-    }
+    BU_ALLOC(pipe_pp, struct wdb_pipe_pnt);
+    pipe_pp->l.magic = WDB_PIPESEG_MAGIC;
+    VSET(pipe_pp->pp_coord, origin[X], origin[Y], origin[Z]-0.5*scale);
+    pipe_pp->pp_od = 0.25*scale;
+    pipe_pp->pp_id = 0.25*pipe_pp->pp_od;
+    pipe_pp->pp_bendradius = pipe_pp->pp_od;
+    BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &pipe_pp->l);
+
+    BU_ALLOC(pipe_pp, struct wdb_pipe_pnt);
+    pipe_pp->l.magic = WDB_PIPESEG_MAGIC;
+    VSET(pipe_pp->pp_coord, origin[X], origin[Y], origin[Z]+0.5*scale);
+    pipe_pp->pp_od = 0.25*scale;
+    pipe_pp->pp_id = 0.25*pipe_pp->pp_od;
+    pipe_pp->pp_bendradius = pipe_pp->pp_od;
+    BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &pipe_pp->l);
+
     return BRLCAD_OK;
 }
 
