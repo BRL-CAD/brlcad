@@ -467,6 +467,88 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 }
 
 
+C_DECL int
+rt_datum_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
+{
+    struct rt_datum_internal *datum_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_DATUM;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    /* Set a default color for datum objects */
+    bu_avs_add(&intern->idb_avs, "color", "255/255/0");
+
+    BU_ALLOC(intern->idb_ptr, struct rt_datum_internal);
+    datum_ip = (struct rt_datum_internal *)intern->idb_ptr;
+    datum_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+
+    /* center point */
+    VSET(datum_ip->pnt, origin[X], origin[Y], origin[Z]);
+
+    /* just a point */
+    VSETALL(datum_ip->dir, 0.0);
+    datum_ip->w = 0.0;
+    datum_ip->next = NULL;
+
+#if 0
+    /* Historically 'make' would create a full demo coordinate system datum: 7 
+     * datums chained (one center point, three axis vectors, and three planes)
+     * This isn't really in the spirit of a "default" make, but is still a good
+     * example
+     */
+    struct rt_datum_internal *next_ip;
+
+    /* X-axis */
+    BU_ALLOC(next_ip, struct rt_datum_internal);
+    next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+    VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+    VSET(next_ip->dir, 1.0, 0.0, 0.0);
+    datum_ip->next = next_ip;
+
+    /* Y-axis */
+    BU_ALLOC(next_ip, struct rt_datum_internal);
+    next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+    VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+    VSET(next_ip->dir, 0.0, 1.0, 0.0);
+    datum_ip->next->next = next_ip;
+
+    /* Z-axis */
+    BU_ALLOC(next_ip, struct rt_datum_internal);
+    next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+    VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+    VSET(next_ip->dir, 0.0, 0.0, 1.0);
+    datum_ip->next->next->next = next_ip;
+
+    /* X-plane */
+    BU_ALLOC(next_ip, struct rt_datum_internal);
+    next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+    VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+    VSET(next_ip->dir, 1.0, 0.0, 0.0);
+    next_ip->w = 1.0;
+    datum_ip->next->next->next->next = next_ip;
+
+    /* Y-plane */
+    BU_ALLOC(next_ip, struct rt_datum_internal);
+    next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+    VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+    VSET(next_ip->dir, 0.0, 1.0, 0.0);
+    next_ip->w = 1.0;
+    datum_ip->next->next->next->next->next = next_ip;
+
+    /* Z-plane */
+    BU_ALLOC(next_ip, struct rt_datum_internal);
+    next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+    VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+    VSET(next_ip->dir, 0.0, 0.0, 1.0);
+    next_ip->w = 1.0;
+    datum_ip->next->next->next->next->next->next = next_ip;
+#endif
+
+    return BRLCAD_OK;
+}
+
 /**
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one

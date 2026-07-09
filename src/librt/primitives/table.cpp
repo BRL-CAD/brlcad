@@ -2523,7 +2523,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_datum_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_datum_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_datum_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_datum_make), /* make */
 	NULL, /* params */
 	NULL, /* bbox */
 	NULL, /* volume */
