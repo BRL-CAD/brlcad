@@ -860,6 +860,8 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_CLINE) return -1;
+    if (_rt_nonuniform_export4_check("rt_cline_export4", ip) < 0)
+	return -1;
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
 
@@ -896,14 +898,33 @@ rt_cline_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
     struct rt_cline_internal *top = (struct rt_cline_internal *)rop->idb_ptr;
     RT_CLINE_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t cv, ch;
     VMOVE(cv, tip->v);
     VMOVE(ch, tip->h);
 
-    MAT4X3PNT(top->v, mat, cv);
-    MAT4X3VEC(top->h, mat, ch);
-    top->thickness = tip->thickness / mat[15];
-    top->radius = tip->radius / mat[15];
+    MAT4X3PNT(top->v, effective_mat, cv);
+    MAT4X3VEC(top->h, effective_mat, ch);
+    top->thickness = tip->thickness / effective_mat[15];
+    top->radius = tip->radius / effective_mat[15];
 
     return BRLCAD_OK;
 }

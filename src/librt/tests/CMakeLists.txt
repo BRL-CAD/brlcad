@@ -121,9 +121,15 @@ brlcad_add_test(NAME rt_dsp_sa_vol_check COMMAND rt_dsp_sa_vol_check)
 # "-c" compares against Crofton
 brlcad_add_test(NAME rt_dsp_sa_vol_compare COMMAND rt_dsp_sa_vol_check -c)
 
-# DSP raytrace consistency + timing check (HBB+DDA path)
-brlcad_addexec(rt_dsp_raytrace_check dsp_raytrace_check.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
-brlcad_add_test(NAME rt_dsp_raytrace_check COMMAND rt_dsp_raytrace_check)
+
+brlcad_addexec(rt_nonuniform_curve nonuniform_curve.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_nonuniform_curve COMMAND rt_nonuniform_curve)
+
+brlcad_addexec(rt_nonuniform_ray nonuniform_ray.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_nonuniform_ray COMMAND rt_nonuniform_ray)
+
+brlcad_addexec(rt_pipe_shotline pipe_shotline.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_pipe_shotline COMMAND rt_pipe_shotline)
 
 set(
   distcheck_files
@@ -138,6 +144,9 @@ set(
   cyclic_tests.g
   extreme_ssi_test.g
   matrix_tests.g
+  nonuniform_curve.c
+  nonuniform_ray.c
+  pipe_shotline.c
   nurbs_surfaces.g
   rt_datum.c
   rt_perturb.c

@@ -151,10 +151,8 @@ add_solid(const struct directory *dp,
 	/* create the NMG version of this solid */
 	eptr->l.m = nmg_mm();
 
-	if (!OBJ[id].ft_tessellate ||
-	    OBJ[id].ft_tessellate(&r, eptr->l.m, &intern,
-					 &dgcdp->wdbp->wdb_ttol,
-					 &dgcdp->wdbp->wdb_tol) < 0)
+	if (rt_obj_tess(&r, eptr->l.m, &intern, &dgcdp->wdbp->wdb_ttol,
+		&dgcdp->wdbp->wdb_tol) < 0)
 	{
 	    nmg_km(eptr->l.m);
 	    eptr->l.m = NULL;

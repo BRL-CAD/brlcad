@@ -143,6 +143,7 @@ set(
   mater.c
   memalloc.c
   mkbundle.c
+  nonuniform.c
   op.c
   pr.c
   prep.cpp
@@ -233,6 +234,7 @@ set(
   primitives/obj_ifree.c
   primitives/obj_import.c
   primitives/obj_make.c
+  primitives/obj_metrics.c
   primitives/obj_mirror.c
   primitives/obj_norm.c
   primitives/obj_params.c

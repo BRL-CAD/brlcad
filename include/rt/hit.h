@@ -46,6 +46,9 @@
 
 __BEGIN_DECLS
 
+struct application;
+struct soltab;
+
 /**
  * @brief
  * Information about where a ray hits the surface.
@@ -72,6 +75,8 @@ struct hit {
 #define RT_CK_HIT(_p) BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 #define RT_HIT_INIT_ZERO { RT_HIT_MAGIC, 0.0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, NULL, 0, NULL }
 
+RT_EXPORT extern int rt_obj_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+
 /**
  * Compute normal into (_hitp)->hit_normal.
  *
@@ -90,7 +95,7 @@ struct hit {
 	{ \
 	    void *_n = (void *)_normal; \
 	    if ((_stp)->st_meth->ft_norm) { \
-		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+		rt_obj_norm(_hitp, _stp, (_hitp)->hit_rayp); \
 	    } \
 	    if (_n != NULL) { \
 		int _f = (int)_flipflag; \
@@ -123,6 +128,8 @@ struct curvature {
 #define CURVE_NULL      ((struct curvature *)0)
 #define RT_CURVATURE_INIT_ZERO { VINIT_ZERO, 0.0, 0.0 }
 
+RT_EXPORT extern int rt_obj_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
+
 /**
  * Use this macro after having computed the normal, to compute the
  * curvature at a hit point.
@@ -135,7 +142,7 @@ struct curvature {
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
 	if ((_stp)->st_meth->ft_curve) { \
-	    (_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
+	    rt_obj_curve(_curvp, _hitp, _stp); \
 	} \
 	if (_flipflag) { \
 	    (_curvp)->crv_c1 = - (_curvp)->crv_c1; \
@@ -155,12 +162,14 @@ struct uvcoord {
     fastf_t uv_du;      /**< @brief delta in u */
     fastf_t uv_dv;      /**< @brief delta in v */
 };
+RT_EXPORT extern int rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
+
 #define RT_HIT_UVCOORD(ap, _stp, _hitp, uvp) { \
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
 	if ((_stp)->st_meth->ft_uv) { \
-	    (_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); \
+	    rt_obj_uv(ap, _stp, _hitp, uvp); \
 	} \
     }
 

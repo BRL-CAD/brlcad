@@ -62,6 +62,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+#include "../../librt_private.h"
 #include "metaball.h"
 
 #define SQ(a) ((a)*(a))
@@ -674,6 +675,8 @@ rt_metaball_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_
     if (!rop || !mat)
 	return BRLCAD_OK;
 
+    const struct rt_db_internal *src = ip ? ip : rop;
+
     // For the moment, we only support applying a mat to a metaball in place - the
     // input and output must be the same.
     if (ip && rop != ip) {
@@ -684,12 +687,30 @@ rt_metaball_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_
     struct rt_metaball_internal *top = (struct rt_metaball_internal *)rop->idb_ptr;
     RT_METABALL_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, src, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    if (_rt_nonuniform_attr_copy(rop, src) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, src) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     struct wdb_metaball_pnt *mbpt;
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &top->metaball_ctrl_head)) {
 	vect_t ctmp;
 	VMOVE(ctmp, mbpt->coord);
-	MAT4X3PNT(mbpt->coord, mat, ctmp);
-	mbpt->field_strength = mbpt->field_strength / mat[15];
+	MAT4X3PNT(mbpt->coord, effective_mat, ctmp);
+	mbpt->field_strength = mbpt->field_strength / effective_mat[15];
     }
 
     return BRLCAD_OK;

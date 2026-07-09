@@ -82,7 +82,7 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
 
     m = nmg_mm();
 
-    if (ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
+    if (rt_obj_tess(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
 	bu_log("ERROR(%s): tessellation failure\n", dp->d_namep);
 	return TREE_NULL;
     }

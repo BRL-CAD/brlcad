@@ -282,7 +282,7 @@ arbin(struct ged *gedp,
 	m = nmg_mm();
 
 	/* get an NMG version of this arb7 */
-	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &wdbp->wdb_tol)) {
+	if (rt_obj_tess(&r, m, ip, &ttol, &wdbp->wdb_tol)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal(ip);
 	    return BRLCAD_ERROR;

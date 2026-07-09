@@ -1736,6 +1736,8 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (ip->idb_type != ID_TOR) return -1;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
+    if (_rt_nonuniform_export4_check("rt_tor_export4", ip) < 0)
+	return -1;
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
@@ -1812,6 +1814,25 @@ rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_tor_internal *top = (struct rt_tor_internal *)rop->idb_ptr;
     RT_TOR_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     double r_a, r_h;
     vect_t v, h;
     VMOVE(v, tip->v);
@@ -1820,12 +1841,12 @@ rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     r_h = tip->r_h;
 
     /* Apply modeling transformations */
-    MAT4X3PNT(top->v, mat, v);
-    MAT4X3VEC(top->h, mat, h);
+    MAT4X3PNT(top->v, effective_mat, v);
+    MAT4X3VEC(top->h, effective_mat, h);
     VUNITIZE(top->h);			/* just to be sure */
 
-    top->r_a = r_a / mat[15];
-    top->r_h = r_h / mat[15];
+    top->r_a = r_a / effective_mat[15];
+    top->r_h = r_h / effective_mat[15];
 
     /* Prepare the extra information */
     top->r_b = top->r_a;
@@ -1873,9 +1894,6 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (bn_mat_is_non_unif (mat)) {
-	bu_log("------------------ WARNING ----------------\nNon-uniform matrix transform on torus.  Ignored\n");
-    }
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
