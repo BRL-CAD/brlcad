@@ -20,6 +20,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "bu/malloc.h"
 
 #include "analyze.h"
@@ -60,6 +62,18 @@ analyze_current_state_init(void)
     state->samples_per_model_axis = 2.0;
     state->aborted = 0;
     state->grid_size_flag = 0;
+
+    state->start_time_us = 0;
+    state->timeout_ms = 0;
+    state->required_digits = 0.0;
+    state->background_mv = 1;
+
+    state->sampler = ANALYZE_SAMPLER_TRIPLE_GRID;
+    state->sem_crofton = 0;
+    state->crofton_crossings = 0;
+    state->crofton_n_rays = 0;
+    state->crofton_radius = 0.0;
+    memset(&state->crofton_g, 0, sizeof(state->crofton_g));
 
     state->exp_air_callback = NULL;
     state->exp_air_callback_data = NULL;
@@ -421,6 +435,28 @@ analyze_set_view_information(struct current_state *state, double viewsize, point
     quat_quat2mat(state->Viewrotscale, *orientation);
     state->use_view_information = 1;
     state->use_single_grid = 1;
+}
+
+
+/*
+ * Set a wall-clock timeout for the analysis loop.
+ * 0 = no limit (default).
+ */
+void
+analyze_set_timeout(struct current_state *state, long timeout_ms)
+{
+    state->timeout_ms = timeout_ms;
+}
+
+
+/*
+ * Set the significant-digit convergence criterion.
+ * 0.0 = disabled, use only absolute tolerances (default).
+ */
+void
+analyze_set_required_digits(struct current_state *state, double required_digits)
+{
+    state->required_digits = (required_digits >= 0.0) ? required_digits : 0.0;
 }
 
 
