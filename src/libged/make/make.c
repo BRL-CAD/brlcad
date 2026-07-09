@@ -145,31 +145,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
-    if (BU_STR_EQUAL(argv[bu_optind+1], "bot")) {
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_BOT;
-	internal.idb_meth = &OBJ[ID_BOT];
-	BU_ALLOC(bot_ip, struct rt_bot_internal);
-	internal.idb_ptr = (void *)bot_ip;
-	bot_ip = (struct rt_bot_internal *)internal.idb_ptr;
-	bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
-	bot_ip->mode = RT_BOT_SOLID;
-	bot_ip->orientation = RT_BOT_UNORIENTED;
-	bot_ip->num_vertices = 4;
-	bot_ip->num_faces = 4;
-	bot_ip->faces = (int *)bu_calloc(bot_ip->num_faces * 3, sizeof(int), "BOT faces");
-	bot_ip->vertices = (fastf_t *)bu_calloc(bot_ip->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
-	bot_ip->thickness = (fastf_t *)NULL;
-	bot_ip->face_mode = (struct bu_bitv *)NULL;
-	VSET(&bot_ip->vertices[0],  origin[X], origin[Y], origin[Z]);
-	VSET(&bot_ip->vertices[3], origin[X]-0.5*scale, origin[Y]+0.5*scale, origin[Z]-scale);
-	VSET(&bot_ip->vertices[6], origin[X]-0.5*scale, origin[Y]-0.5*scale, origin[Z]-scale);
-	VSET(&bot_ip->vertices[9], origin[X]+0.5*scale, origin[Y]+0.5*scale, origin[Z]-scale);
-	VSET(&bot_ip->faces[0], 0, 3, 1);
-	VSET(&bot_ip->faces[3], 0, 1, 2);
-	VSET(&bot_ip->faces[6], 0, 2, 3);
-	VSET(&bot_ip->faces[9], 1, 3, 2);
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "extrude")) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "extrude")) {
 	char *av[8];
 	char center_str[512];
 	char scale_str[128];

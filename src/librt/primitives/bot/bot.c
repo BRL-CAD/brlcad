@@ -3850,6 +3850,40 @@ rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
 
 C_DECL int
+rt_bot_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_bot_internal *bot_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_BOT;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(bot_ip, struct rt_bot_internal);
+    intern->idb_ptr = (void *)bot_ip;
+    bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
+    bot_ip->mode = RT_BOT_SOLID;
+    bot_ip->orientation = RT_BOT_UNORIENTED;
+    bot_ip->num_vertices = 4;
+    bot_ip->num_faces = 4;
+    bot_ip->faces = (int *)bu_calloc(bot_ip->num_faces * 3, sizeof(int), "BOT faces");
+    bot_ip->vertices = (fastf_t *)bu_calloc(bot_ip->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
+    bot_ip->thickness = (fastf_t *)NULL;
+    bot_ip->face_mode = (struct bu_bitv *)NULL;
+    VSET(&bot_ip->vertices[0],  origin[X], origin[Y], origin[Z]);
+    VSET(&bot_ip->vertices[3], origin[X]-0.5*scale, origin[Y]+0.5*scale, origin[Z]-scale);
+    VSET(&bot_ip->vertices[6], origin[X]-0.5*scale, origin[Y]-0.5*scale, origin[Z]-scale);
+    VSET(&bot_ip->vertices[9], origin[X]+0.5*scale, origin[Y]+0.5*scale, origin[Z]-scale);
+    VSET(&bot_ip->faces[0], 0, 3, 1);
+    VSET(&bot_ip->faces[3], 0, 1, 2);
+    VSET(&bot_ip->faces[6], 0, 2, 3);
+    VSET(&bot_ip->faces[9], 1, 3, 2);
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_bot_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
