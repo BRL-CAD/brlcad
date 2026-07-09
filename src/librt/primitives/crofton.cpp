@@ -666,6 +666,12 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
 	tmp_intern.idb_meth = &OBJ[ip->idb_minor_type];
     else
 	tmp_intern.idb_meth = ip->idb_meth; /* last resort: trust the caller */
+    if (ip->idb_avs.magic == BU_AVS_MAGIC) {
+	bu_avs_init(&tmp_intern.idb_avs, ip->idb_avs.count, "crofton tmp attrs");
+	bu_avs_merge(&tmp_intern.idb_avs, &ip->idb_avs);
+    } else {
+	bu_avs_init_empty(&tmp_intern.idb_avs);
+    }
 
     struct bu_external ext;
     BU_EXTERNAL_INIT(&ext);
@@ -673,6 +679,7 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
     if (rt_db_cvt_to_ext5(&ext, scratch, &tmp_intern, 1.0,
 				dbip, ip->idb_major_type) < 0) {
 	bu_log("rt_crofton: rt_db_cvt_to_ext5() failed\n");
+	bu_avs_free(&tmp_intern.idb_avs);
 	bu_free_external(&ext);
 	db_close(dbip);
 	return -1;
@@ -684,10 +691,12 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
 			    (unsigned char)ip->idb_minor_type) < 0) {
 	bu_log("rt_crofton: wdb_export_external() failed\n");
 	/* ext.ext_buf stolen by db_inmem on success; free any remainder */
+	bu_avs_free(&tmp_intern.idb_avs);
 	bu_free_external(&ext);
 	db_close(dbip);
 	return -1;
     }
+    bu_avs_free(&tmp_intern.idb_avs);
     /* In the INMEM path ext_buf is stolen; this is safe to call regardless */
     bu_free_external(&ext);
 

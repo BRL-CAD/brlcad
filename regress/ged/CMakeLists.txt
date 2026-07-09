@@ -21,6 +21,13 @@ if(TARGET libged)
   brlcad_regression_test(regress-ged_facetize "regress_facetize;ged-facetize;ged_exec" EXEC regress_facetize)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_facetize.log")
 
+  brlcad_addexec(regress_nonuniform nonuniform.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
+  if(TARGET regress_nonuniform)
+    add_dependencies(regress_nonuniform ged_plugins)
+  endif(TARGET regress_nonuniform)
+  brlcad_regression_test(regress-ged_nonuniform "regress_nonuniform;ged-facetize;ged_exec" EXEC regress_nonuniform)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_nonuniform.log")
+
   # lint --raytrace regression: Crofton vs analytic / BoT validation pass.
   # Exercises the raytrace validation pipeline in lint/raytrace.cpp:
   brlcad_addexec(regress_lint_raytrace regress_lint_raytrace.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
@@ -34,6 +41,7 @@ endif(TARGET libged)
 cmakefiles(
   CMakeLists.txt
   mater.c
+  nonuniform.cpp
   push.cpp
   regress_facetize.cpp
   regress_lint_raytrace.cpp
@@ -45,6 +53,7 @@ cmakefiles(
   regress-ged_mater.cmake.in
   regress-ged_push.cmake.in
   regress-ged_facetize.cmake.in
+  regress-ged_nonuniform.cmake.in
   regress-ged_lint_raytrace.cmake.in
   rpush_tests.g
   xpush_tests.g

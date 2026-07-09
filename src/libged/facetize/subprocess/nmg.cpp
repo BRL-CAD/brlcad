@@ -59,7 +59,7 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, te
     struct nmgregion *r1 = (struct nmgregion *)NULL;
     // Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
     if (!BU_SETJUMP) {
-	status = intern->idb_meth->ft_tessellate(&r1, m, intern, &s->nmg_options.ttol, &s->nmg_options.tol);
+	status = rt_obj_tess(&r1, m, intern, &s->nmg_options.ttol, &s->nmg_options.tol);
     } else {
 	BU_UNSETJUMP;
 	status = -1;
@@ -111,4 +111,3 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, te
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

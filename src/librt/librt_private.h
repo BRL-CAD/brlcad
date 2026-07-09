@@ -65,6 +65,8 @@
 
 __BEGIN_DECLS
 
+#define RT_MATRIX_NONUNIFORM_ATTR "matrix:nonuniform"
+
 struct db_i_internal {
     uint32_t dbi_magic;
 
@@ -108,6 +110,26 @@ struct db_i_internal {
 
 struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
+
+int _rt_nonuniform_mat_validate(const mat_t mat);
+int _rt_nonuniform_attr_get(mat_t mat, const struct rt_db_internal *ip);
+int _rt_nonuniform_attr_set(struct rt_db_internal *ip, const mat_t mat);
+int _rt_nonuniform_attr_remove(struct rt_db_internal *ip);
+int _rt_nonuniform_attr_compose(struct rt_db_internal *ip, const mat_t mat);
+int _rt_nonuniform_attr_copy(struct rt_db_internal *op, const struct rt_db_internal *ip);
+int _rt_nonuniform_export4_check(const char *func, const struct rt_db_internal *ip);
+int _rt_nonuniform_transform_needed(const struct rt_db_internal *ip, const mat_t mat);
+int _rt_nonuniform_transform_resolve(mat_t effective, int *remove_attr, const struct rt_db_internal *ip, const mat_t mat);
+fastf_t _rt_nonuniform_volume_scale(const mat_t mat);
+int _rt_nonuniform_soltab_setup(struct soltab *stp, const mat_t mat, const struct bn_tol *tol);
+void _rt_nonuniform_soltab_free(struct soltab *stp);
+int _rt_nonuniform_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
+int _rt_nonuniform_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+int _rt_nonuniform_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
+int _rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp, const mat_t body_to_model, const mat_t model_to_body);
+void _rt_nonuniform_transform_bbox(point_t *omin, point_t *omax, const mat_t mat, const point_t imin, const point_t imax);
+void _rt_nonuniform_transform_vlist(struct bu_list *vhead, const mat_t mat);
+void _rt_nonuniform_transform_nmgregion(struct nmgregion *r, const mat_t mat, const struct bn_tol *tol);
 
 
 /**

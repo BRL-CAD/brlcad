@@ -24,12 +24,17 @@
 #include "bn.h"
 #include "raytrace.h"
 
+#include "../librt_private.h"
+
 
 int
 rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int id;
     const struct rt_functab *ft;
+    mat_t nonuniform_mat;
+    int have_nonuniform;
+    int ret;
 
     if (!vhead || !ip)
 	return -1;
@@ -49,7 +54,15 @@ rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     if (!ft->ft_plot)
 	return -4;
 
-    return ft->ft_plot(vhead, ip, ttol, tol, NULL);
+    have_nonuniform = _rt_nonuniform_attr_get(nonuniform_mat, ip);
+    if (have_nonuniform < 0)
+	return -5;
+
+    ret = ft->ft_plot(vhead, ip, ttol, tol, NULL);
+    if (ret == 0 && have_nonuniform > 0)
+	_rt_nonuniform_transform_vlist(vhead, nonuniform_mat);
+
+    return ret;
 }
 
 

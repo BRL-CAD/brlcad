@@ -280,7 +280,7 @@ rt_shaded_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct b
 
     struct model *m = nmg_mm();
     struct nmgregion *r = (struct nmgregion *)NULL;
-    if (ip->idb_meth->ft_tessellate(&r, m, ip, ttol, tol) < 0) {
+    if (rt_obj_tess(&r, m, ip, ttol, tol) < 0) {
         bu_log("ERROR: tessellation failure\n");
         return BRLCAD_ERROR;
     }

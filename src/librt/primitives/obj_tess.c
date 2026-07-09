@@ -24,12 +24,17 @@
 #include "bn.h"
 #include "raytrace.h"
 
+#include "../librt_private.h"
+
 
 int
 rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int id;
     const struct rt_functab *ft;
+    mat_t nonuniform_mat;
+    int have_nonuniform;
+    int ret;
 
     if (!r || !ip)
 	return -1;
@@ -50,7 +55,15 @@ rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (!ft->ft_tessellate)
 	return -4;
 
-    return ft->ft_tessellate(r, m, ip, ttol, tol);
+    have_nonuniform = _rt_nonuniform_attr_get(nonuniform_mat, ip);
+    if (have_nonuniform < 0)
+	return -5;
+
+    ret = ft->ft_tessellate(r, m, ip, ttol, tol);
+    if (ret == 0 && have_nonuniform > 0 && r && *r)
+	_rt_nonuniform_transform_nmgregion(*r, nonuniform_mat, tol);
+
+    return ret;
 }
 
 

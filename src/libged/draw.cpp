@@ -68,7 +68,7 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 
     struct model *m = nmg_mm();
     struct nmgregion *r = (struct nmgregion *)NULL;
-    if (ip->idb_meth->ft_tessellate(&r, m, ip, ttol, tol) < 0) {
+    if (rt_obj_tess(&r, m, ip, ttol, tol) < 0) {
 	bu_log("ERROR(%s): tessellation failure\n", dp->d_namep);
 	return -1;
     }
@@ -1048,4 +1048,3 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
