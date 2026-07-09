@@ -85,6 +85,10 @@ struct per_region_data {
     double *r_area;
     double *r_surf_area;
     struct per_obj_data *optr;
+
+    /* Crofton-specific: boundary crossing count for Crofton SA estimation.
+     * Protected by current_state.sem_crofton during the Crofton pass. */
+    unsigned long crofton_crossings;
 };
 
 /* Some defines for re-using the values from the application structure
@@ -151,6 +155,21 @@ struct current_state {
     int aborted;
     char *densityFileName;
 
+    /* ---- Runtime halting controls ---- */
+    int64_t start_time_us;  /**< bu_gettime() in µs at perform_raytracing() entry */
+    long    timeout_ms;     /**< 0 = no timeout; >0 = max wall-clock ms allowed */
+    double  required_digits;/**< 0 = disabled; else log10(avg/spread) convergence */
+
+    /**
+     * When non-zero (the default) chord lengths are accumulated into
+     * o_len[] / r_len[] for every partition even when ANALYSIS_VOLUME
+     * is not in analysis_flags.  These "background" accumulators cost
+     * essentially nothing (one add per partition) and allow
+     * check_terminate() to use volume convergence as a sampling proxy
+     * for validation-only analyses (overlaps, exposed air, etc.).
+     */
+    int     background_mv;
+
     FILE *plot_volume;
 
     struct bu_vls *log_str;
@@ -174,6 +193,41 @@ struct current_state {
 
     struct rt_i *rtip;
     struct resource *resp;
+
+    /* ---- Sampler selection ---- */
+    /** ANALYZE_SAMPLER_* constant; 0 (TRIPLE_GRID) is the default.
+     *  Set before calling perform_raytracing() to select the backend.  */
+    int sampler;
+
+    /** Cell area (mm²) for the current parallel firing pass.
+     *
+     *  Set by the main thread immediately before each bu_parallel() call so
+     *  that the overlap callback can accumulate per-hit depth × cell_area
+     *  into analyze_overlap_record::estimated_volume without needing to
+     *  know the grid geometry itself.  Never written by worker threads.
+     *
+     *  For the triple-grid and rotated-grid samplers this equals
+     *  gridSpacing².  For cluster-focused passes it equals the per-cluster
+     *  spacing².  For the Crofton sampler it equals π·R²/n_rays.
+     *  Initialised to 0.0 by analyze_current_state_init(). */
+    double current_cell_area;
+
+    /* ---- Rotated-grid sampler state ---- */
+    /** Pre-computed grids for up to 3 views (ANALYZE_SAMPLER_ROTATED).
+     *  Populated by shoot_rays_rotated() before each convergence pass. */
+    struct rotated_grid rot_grid[3];
+
+    /* ---- Crofton-specific state ---- */
+    /** Semaphore protecting crofton_crossings during parallel ray firing. */
+    int sem_crofton;
+    /** Total model-wide boundary crossings accumulated by analyze_worker_crofton(). */
+    size_t crofton_crossings;
+    /** Number of rays requested / actually fired during the Crofton pass. */
+    size_t crofton_n_rays;
+    /** Bounding sphere radius used by the Crofton generator (set by shoot_rays_crofton()). */
+    double crofton_radius;
+    /** Crofton ray generator state (embedded; set up by shoot_rays_crofton()). */
+    struct crofton_grid crofton_g;
 
     struct region_pair *overlapList;
     overlap_callback_t overlaps_callback;

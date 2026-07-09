@@ -2,6 +2,9 @@ brlcad_addexec(analyze_raydiff raydiff.c "libanalyze;librt;libbu" TEST)
 brlcad_addexec(analyze_sp solid_partitions.c "libanalyze;librt;libbu" TEST)
 brlcad_addexec(analyze_nhit nhit.cpp "libanalyze;librt;libbu" TEST_USESDATA)
 
+# Sampler comparison / stress-test program (run manually with havoc.g)
+brlcad_addexec(analyze_sampler_compare analyze_sampler_compare.cpp "libanalyze;librt;libbu" TEST)
+
 #####################################
 #      analyze_densities testing    #
 #####################################
@@ -14,6 +17,7 @@ cmakefiles(
   CMakeLists.txt
   arbs.g
   raydiff.g
+  analyze_sampler_compare.cpp
 )
 
 # Local Variables:

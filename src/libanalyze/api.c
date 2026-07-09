@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -32,9 +33,11 @@
 #include "raytrace.h"
 #include "vmath.h"
 #include "bu/parallel.h"
+#include "bu/time.h"
 
 #include "analyze.h"
 #include "./analyze_private.h"
+#include "./engine.h"
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_CENTROIDS 2
@@ -49,6 +52,35 @@
 #define ANALYSIS_FIRST_AIR 1024
 #define ANALYSIS_LAST_AIR 2048
 #define ANALYSIS_UNCONF_AIR 4096
+
+/*
+ * Minimum fractional volume reduction required for the overlap AABB pre-filter
+ * union-bbox fallback to be considered worthwhile.  The candidate union bbox
+ * must be smaller than (1 - OV_PREFILTER_MIN_REDUCTION) of the full model
+ * volume before we restrict the grid; otherwise the full model bbox is used.
+ *
+ * With the default of 0.9 the grid is only restricted when the union of
+ * candidate intersection AABBs covers less than 90% of the model volume.
+ * This constant is used only in the dense-cluster fallback path; the normal
+ * path uses per-cluster focused sampling which is always more targeted.
+ */
+#define OV_PREFILTER_MIN_REDUCTION 0.9
+
+/*
+ * Maximum number of AABB-overlap clusters for which the per-cluster focused
+ * sampling strategy is applied.  Each cluster gets one independent grid pass
+ * restricted to just its members' intersection-volume union.
+ *
+ * Clusters are the connected components of the region AABB-intersection graph,
+ * so this count is always ≤ the number of candidate pairs.  For dense models
+ * many pairs collapse into a small number of large clusters; the threshold is
+ * deliberately higher than the old per-pair limit.
+ *
+ * When the number of clusters exceeds this threshold, fall back to the
+ * union-bbox strategy: restrict rtip->mdl_min/max to the union of all cluster
+ * intersection volumes and run the normal shoot_rays() refinement loop.
+ */
+#define OV_CLUSTER_MAX 256
 
 /*
  * returns a random angle between 0 and 360 degrees
@@ -274,26 +306,39 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	/* compute the surface area of the object */
 	if(state->analysis_flags & ANALYSIS_SURF_AREA) {
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
-	    fastf_t Lx = state->span[0] / state->steps[0];
-	    fastf_t Ly = state->span[1] / state->steps[1];
-	    fastf_t Lz = state->span[2] / state->steps[2];
-	    fastf_t cell_area;
-	    vect_t inormal = VINIT_ZERO;
-	    vect_t onormal = VINIT_ZERO;
-	    double icos, ocos;
-	    switch(state->i_axis) {
-		case 0:
-		    cell_area = Ly*Ly;
-		    break;
-		case 1:
-		    cell_area = Lz*Lz;
-		    break;
-		case 2:
-		default:
-		    cell_area = Lx*Lx;
-	    }
 
-	    {
+	    if (state->sampler == ANALYZE_SAMPLER_CROFTON) {
+		/* Crofton path: count surface boundary crossings.
+		 * Each solid partition contributes 2 crossings (entry + exit).
+		 * The Crofton SA formula is applied in shoot_rays_crofton() after
+		 * all rays have been fired:
+		 *   SA = (4 * π * R²) * total_crossings / (2 * N)
+		 */
+		bu_semaphore_acquire(state->sem_crofton);
+		state->crofton_crossings += 2;
+		prd->crofton_crossings += 2;
+		bu_semaphore_release(state->sem_crofton);
+	    } else {
+		/* Grid-based path: project cell area through the incidence angle. */
+		fastf_t Lx = state->span[0] / state->steps[0];
+		fastf_t Ly = state->span[1] / state->steps[1];
+		fastf_t Lz = state->span[2] / state->steps[2];
+		fastf_t cell_area;
+		vect_t inormal = VINIT_ZERO;
+		vect_t onormal = VINIT_ZERO;
+		double icos, ocos;
+		switch(state->i_axis) {
+		    case 0:
+			cell_area = Ly*Ly;
+			break;
+		    case 1:
+			cell_area = Lz*Lz;
+			break;
+		    case 2:
+		    default:
+			cell_area = Lx*Lx;
+		}
+
 		bu_semaphore_acquire(state->sem_worker);
 		/* factor in the normal vector to find how 'skew' the surface is */
 		RT_HIT_NORMAL(inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
@@ -316,37 +361,45 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 	}
 
-	/* compute the volume of the object */
-	if (state->analysis_flags & ANALYSIS_VOLUME) {
+	/* compute the volume of the object.
+	 *
+	 * When state->background_mv is set we always accumulate chord
+	 * lengths into A_LEN / r_len / o_len even if ANALYSIS_VOLUME is
+	 * not in analysis_flags.  This is essentially free (one fp-add per
+	 * partition) and lets check_terminate() use volume convergence as
+	 * a proxy for "have we sampled densely enough?" when running
+	 * validation-only analyses (overlaps, air checks, etc.).
+	 */
+	if ((state->analysis_flags & ANALYSIS_VOLUME) || state->background_mv) {
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
-	    ap->A_LEN += dist; /* add to total volume */
+	    ap->A_LEN += dist; /* accumulate total chord length */
 	    {
 		bu_semaphore_acquire(state->sem_worker);
-
 		/* add to region volume */
 		prd->r_len[state->curr_view] += dist;
-
-		/* add to object volume */
-		prd->optr->o_len[state->curr_view] += dist;
-
+		/* add to object volume (optr may be NULL for unmapped regions) */
+		if (prd->optr)
+		    prd->optr->o_len[state->curr_view] += dist;
 		bu_semaphore_release(state->sem_worker);
 	    }
-	    if (state->debug) {
-		bu_semaphore_acquire(BU_SEM_GENERAL);
-		bu_vls_printf(state->debug_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
-			      pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
-		bu_semaphore_release(BU_SEM_GENERAL);
-	    }
-	    if (state->plot_volume) {
-		bu_semaphore_acquire(state->sem_plot);
-		if (ap->a_user & 1) {
-		    pl_color(state->plot_volume, 128, 255, 192);  /* pale green */
-		} else {
-		    pl_color(state->plot_volume, 128, 192, 255);  /* cyan */
+	    /* optional debug/plot output only for explicitly requested volume */
+	    if (state->analysis_flags & ANALYSIS_VOLUME) {
+		if (state->debug) {
+		    bu_semaphore_acquire(BU_SEM_GENERAL);
+		    bu_vls_printf(state->debug_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
+				  pp->pt_regionp->reg_name, dist, prd->optr ? prd->optr->o_len[state->curr_view] : 0.0, prd->optr ? prd->optr->o_name : "?");
+		    bu_semaphore_release(BU_SEM_GENERAL);
 		}
-
-		pdv_3line(state->plot_volume, pt, opt);
-		bu_semaphore_acquire(state->sem_plot);
+		if (state->plot_volume) {
+		    bu_semaphore_acquire(state->sem_plot);
+		    if (ap->a_user & 1) {
+			pl_color(state->plot_volume, 128, 255, 192);  /* pale green */
+		    } else {
+			pl_color(state->plot_volume, 128, 192, 255);  /* cyan */
+		    }
+		    pdv_3line(state->plot_volume, pt, opt);
+		    bu_semaphore_release(state->sem_plot);
+		}
 	    }
 	}
 
@@ -625,14 +678,25 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 		bu_vls_printf(state->verbose_str, "\t%s running avg mass %g gram hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low );
 
 	    if (delta > state->mass_tolerance) {
-		/* this object differs too much in each view, so we
-		 * need to refine the grid. signal that we cannot
-		 * terminate.
-		 */
-		can_terminate = 0;
-		if (state->verbose)
-		    bu_vls_printf(state->verbose_str, "\t%s differs too much in mass per view.\n",
-			    state->objs[obj].o_name);
+		/* Absolute tolerance not met; check significant-digits criterion */
+		int digits_ok = 0;
+		if (state->required_digits > 0.0) {
+		    double avg = tmp / state->num_views;
+		    if (delta <= 0.0)
+			digits_ok = 1;
+		    else if (avg > 0.0)
+			digits_ok = (log10(avg / delta) >= state->required_digits);
+		}
+		if (!digits_ok) {
+		    /* this object differs too much in each view, so we
+		     * need to refine the grid. signal that we cannot
+		     * terminate.
+		     */
+		    can_terminate = 0;
+		    if (state->verbose)
+			bu_vls_printf(state->verbose_str, "\t%s differs too much in mass per view.\n",
+				state->objs[obj].o_name);
+		}
 	    }
 	}
 	if (can_terminate) {
@@ -667,13 +731,24 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 		bu_vls_printf(state->verbose_str, "\t%s running avg volume %g cu mm hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
 
 	    if (delta > state->volume_tolerance) {
-		/* this object differs too much in each view, so we
-		 * need to refine the grid.
-		 */
-		can_terminate = 0;
-		if (state->verbose)
-		    bu_vls_printf(state->verbose_str, "\tvolume tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
-		break;
+		/* Absolute tolerance not met; check significant-digits criterion */
+		int digits_ok = 0;
+		if (state->required_digits > 0.0) {
+		    double avg = tmp / state->num_views;
+		    if (delta <= 0.0)
+			digits_ok = 1;
+		    else if (avg > 0.0)
+			digits_ok = (log10(avg / delta) >= state->required_digits);
+		}
+		if (!digits_ok) {
+		    /* this object differs too much in each view, so we
+		     * need to refine the grid.
+		     */
+		    can_terminate = 0;
+		    if (state->verbose)
+			bu_vls_printf(state->verbose_str, "\tvolume tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
+		    break;
+		}
 	    }
 	}
     }
@@ -705,13 +780,24 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 		bu_vls_printf(state->verbose_str, "\t%s running avg surface area %g mm^2 hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
 
 	    if (delta > state->sa_tolerance) {
-		/* this object differs too much in each view, so we
-		 * need to refine the grid.
-		 */
-		can_terminate = 0;
-		if (state->verbose)
-		    bu_vls_printf(state->verbose_str, "\tsurface area tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
-		break;
+		/* Absolute tolerance not met; check significant-digits criterion */
+		int digits_ok = 0;
+		if (state->required_digits > 0.0) {
+		    double avg = tmp / state->num_views;
+		    if (delta <= 0.0)
+			digits_ok = 1;
+		    else if (avg > 0.0)
+			digits_ok = (log10(avg / delta) >= state->required_digits);
+		}
+		if (!digits_ok) {
+		    /* this object differs too much in each view, so we
+		     * need to refine the grid.
+		     */
+		    can_terminate = 0;
+		    if (state->verbose)
+			bu_vls_printf(state->verbose_str, "\tsurface area tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
+		    break;
+		}
 	    }
 	}
 
@@ -746,6 +832,20 @@ check_terminate(struct current_state *state)
     int wv_status;
     int view, obj;
 
+    /* --- Wall-clock timeout check ---
+     * This is tested before the (potentially expensive) convergence check
+     * so that the loop exits promptly when the budget is exhausted.
+     */
+    if (state->timeout_ms > 0) {
+	int64_t elapsed_us = bu_gettime() - state->start_time_us;
+	long elapsed_ms = (long)(elapsed_us / 1000);
+	if (elapsed_ms >= state->timeout_ms) {
+	    bu_log("NOTE: Stopped, timeout of %ld ms reached (elapsed %ld ms).\n",
+		   state->timeout_ms, elapsed_ms);
+	    return 0;
+	}
+    }
+
     /* this computation is done first, because there are side effects
      * that must be obtained whether we terminate or not
      */
@@ -762,6 +862,66 @@ check_terminate(struct current_state *state)
 	    if (state->verbose)
 		bu_vls_printf(state->verbose_str, "%s: Volume/mass tolerance met. Terminate\n", CPP_FILELINE);
 	    return 0; /* terminate */
+	}
+    }
+
+    /* --- Background volume convergence proxy ---
+     *
+     * When the caller only requested validation analyses (overlaps, air
+     * checks, etc.) without any quantitative analysis (V/M/SA), we use
+     * the background chord-length accumulation as a proxy for sampling
+     * adequacy.  Once the implied volume estimates agree across views to
+     * within 1% (or the required_digits criterion), we consider the
+     * sample density sufficient for the validation pass as well.
+     *
+     * Rationale: the probability of discovering a new overlap or air
+     * boundary on the next grid-refinement pass falls off as the grid
+     * spacing decreases, just as measurement variance falls off.  Using
+     * volume convergence as a halting signal is a conservative proxy
+     * that avoids an unbounded refinement loop when no explicit V/M/SA
+     * tolerance was supplied.
+     */
+    if (state->background_mv &&
+	!(state->analysis_flags & (ANALYSIS_MASS|ANALYSIS_VOLUME|ANALYSIS_SURF_AREA))) {
+
+	/* 1% relative spread as the default background proxy threshold */
+	static const double BG_REL_TOL = 0.01;
+	int bg_converged = 1;
+
+	for (obj = 0; obj < state->num_objects; obj++) {
+	    double low = INFINITY, hi = -INFINITY, tmp = 0.0;
+	    for (view = 0; view < state->num_views; view++) {
+		double val;
+		if (state->shots[view] == 0) continue;
+		val = state->objs[obj].o_len[view] *
+		    (state->area[view] / (double)state->shots[view]);
+		if (val < low) low = val;
+		if (val > hi)  hi  = val;
+		tmp += val;
+	    }
+	    if (state->num_views < 1) continue;
+
+	    double avg   = tmp / state->num_views;
+	    double delta = hi - low;
+
+	    /* Absolute relative test */
+	    if (avg > 0.0 && delta > avg * BG_REL_TOL) {
+		/* Not yet converged by relative tolerance; check digits */
+		int digits_ok = 0;
+		if (state->required_digits > 0.0 && delta > 0.0)
+		    digits_ok = (log10(avg / delta) >= state->required_digits);
+		if (!digits_ok) {
+		    bg_converged = 0;
+		    break;
+		}
+	    }
+	}
+
+	if (bg_converged) {
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str,
+			      "Background volume proxy converged; sampling adequate for validation.\n");
+	    return 0;
 	}
     }
     for (view=0; view < state->num_views; view++) {
@@ -826,6 +986,298 @@ analyze_worker(int cpu, void *ptr)
     state->m_len[state->curr_view] += ap.A_LEN; /* add our volume value */
     bu_semaphore_release(state->sem_stats);
 }
+
+
+/**
+ * Worker function for the Crofton isotropic random sampler.
+ *
+ * Mirrors analyze_worker() but uses crofton_grid_generator() to obtain rays,
+ * accumulating results into view index 0 (the Crofton pass uses num_views=1).
+ *
+ * Thread safety: the generator call is serialised under sem_worker (the same
+ * mechanism used by analyze_worker for the rectangular grid), so the PRNG
+ * state in crofton_g is always updated atomically.
+ */
+static void
+analyze_worker_crofton(int cpu, void *ptr)
+{
+    struct application ap;
+    struct current_state *state = (struct current_state *)ptr;
+    unsigned long shot_cnt;
+
+    if (state->aborted)
+	return;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = (struct rt_i *)state->rtip;
+    ap.a_hit = analyze_hit;
+    ap.a_miss = analyze_miss;
+    ap.a_resource = &state->resp[cpu];
+    ap.a_logoverlap = rt_silent_logoverlap;
+    ap.A_LENDEN = 0.0;
+    ap.A_LEN = 0.0;
+    ap.A_STATE = ptr;
+    ap.a_overlap = analyze_overlap;
+    ap.a_user = 0; /* no view-row index needed for Crofton */
+
+    shot_cnt = 0;
+    while (1) {
+	struct xray ray;
+	bu_semaphore_acquire(state->sem_worker);
+	if (crofton_grid_generator(&ray, &state->crofton_g) == 1) {
+	    bu_semaphore_release(state->sem_worker);
+	    break;
+	}
+	VMOVE(ap.a_ray.r_pt,  ray.r_pt);
+	VMOVE(ap.a_ray.r_dir, ray.r_dir);
+	bu_semaphore_release(state->sem_worker);
+
+	(void)rt_shootray(&ap);
+	if (state->aborted)
+	    return;
+	shot_cnt++;
+    }
+
+    bu_semaphore_acquire(state->sem_stats);
+    state->shots[0] += shot_cnt;           /* Crofton uses view index 0 */
+    state->m_lenDensity[0] += ap.A_LENDEN;
+    state->m_len[0] += ap.A_LEN;
+    bu_semaphore_release(state->sem_stats);
+}
+
+
+/**
+ * shoot_rays_crofton - fire n_rays isotropic Crofton rays in parallel.
+ *
+ * After all rays have been fired the function applies the Crofton formulas to
+ * fill the per-region surface-area fields (when ANALYSIS_SURF_AREA is set) so
+ * that the existing analyze_surf_area*() getter functions return correct values.
+ *
+ * The existing volume / mass / centroid getters already return correct values
+ * for the Crofton case once state->area[0] and state->shots[0] are overridden
+ * to π*R² and n_rays respectively (see setup block below).
+ *
+ * @param state  fully initialised current_state (rtip ready, allocate_region_data done)
+ * @param n_rays number of isotropic random rays to fire
+ */
+static void
+shoot_rays_crofton(struct current_state *state, size_t n_rays)
+{
+    int i;
+
+    /* Initialise the Crofton generator from the model bounding box. */
+    crofton_grid_setup(&state->crofton_g,
+		       state->rtip->mdl_min,
+		       state->rtip->mdl_max,
+		       n_rays,
+		       0 /* time-based seed */);
+    state->crofton_radius = state->crofton_g.radius;
+
+    /* Reset per-model Crofton accumulators. */
+    state->crofton_crossings = 0;
+    state->crofton_n_rays    = 0;
+
+    /* Zero per-region crossing counts. */
+    for (i = 0; i < state->num_regions; i++)
+	state->reg_tbl[i].crofton_crossings = 0;
+
+    /* Override area and num_views so that the existing getter functions
+     * (analyze_total_volume, analyze_total_mass, analyze_centroid, …) give
+     * correct Crofton estimates once shots[0] is filled in by the workers:
+     *
+     *   volume = m_len[0]        * (area[0] / shots[0])
+     *          = chord_sum        * (π*R²    / n_rays)     ← Crofton formula ✓
+     *   mass   = m_lenDensity[0] * (area[0] / shots[0])   ← same ✓
+     */
+    state->num_views = 1;
+    state->curr_view = 0;
+    state->i_axis    = 0;
+    state->u_axis    = 1;
+    state->v_axis    = 2;
+    state->area[0]   = M_PI * state->crofton_radius * state->crofton_radius;
+    state->area[1]   = state->area[0];
+    state->area[2]   = state->area[0];
+    /* steps[] are referenced by the grid SA formula only, but set them to
+     * something sensible so we don't divide by zero if the path is hit. */
+    VSETALL(state->steps, 1);
+
+    /* Fire all rays. */
+    state->current_cell_area = state->area[0] / (double)n_rays;
+    bu_parallel(analyze_worker_crofton, state->ncpu, (void *)state);
+
+    /* After workers finish, shots[0] holds the actual ray count. */
+    state->crofton_n_rays = state->shots[0];
+
+    /* Apply the Cauchy-Crofton surface-area formula per-region and aggregate
+     * to the per-object surface-area arrays.
+     *
+     * SA_region = (4 * π * R²) * region_crossings / (2 * N)
+     *
+     * This is the correct formula because each Crofton ray is an isotropic
+     * line through the bounding sphere of radius R.  The total crossing count
+     * for the model equals the sum of per-region counts (boundaries not
+     * shared between distinct regions each contribute to exactly one region).
+     */
+    if ((state->analysis_flags & ANALYSIS_SURF_AREA) && state->crofton_n_rays > 0) {
+	for (i = 0; i < state->num_regions; i++) {
+	    double r_sa = crofton_surface_area(
+		    state->reg_tbl[i].crofton_crossings,
+		    state->crofton_n_rays,
+		    state->crofton_radius);
+	    /* Store in both r_surf_area and r_area so the getter functions that
+	     * read r_surf_area[0] (set by mass_volume_surf_area_terminate_check)
+	     * and r_area[0] (used as input there) both see the correct value. */
+	    state->reg_tbl[i].r_surf_area[0] = r_sa;
+	    state->reg_tbl[i].r_area[0]      = r_sa;
+
+	    if (state->reg_tbl[i].optr) {
+		state->reg_tbl[i].optr->o_surf_area[0] += r_sa;
+		state->reg_tbl[i].optr->o_area[0]      += r_sa;
+	    }
+	}
+    }
+
+    if (state->verbose)
+	bu_vls_printf(state->verbose_str,
+		      "Crofton: fired %zu rays, %zu boundary crossings.\n",
+		      state->crofton_n_rays, state->crofton_crossings);
+}
+
+/**
+ * Worker function for the rotated-grid sampler (ANALYZE_SAMPLER_ROTATED).
+ *
+ * Mirrors analyze_worker() but consults state->rot_grid[state->curr_view]
+ * instead of the rectangular grid, allowing an arbitrary ray direction.
+ */
+static void
+analyze_worker_rotated(int cpu, void *ptr)
+{
+    struct application ap;
+    struct current_state *state = (struct current_state *)ptr;
+    unsigned long shot_cnt;
+    int view;
+
+    if (state->aborted)
+	return;
+
+    view = state->curr_view;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i     = (struct rt_i *)state->rtip;
+    ap.a_hit      = analyze_hit;
+    ap.a_miss     = analyze_miss;
+    ap.a_resource = &state->resp[cpu];
+    ap.a_logoverlap = rt_silent_logoverlap;
+    ap.A_LENDEN   = 0.0;
+    ap.A_LEN      = 0.0;
+    ap.A_STATE    = ptr;
+    ap.a_overlap  = analyze_overlap;
+    ap.a_user     = view;
+
+    shot_cnt = 0;
+    while (1) {
+	struct xray ray;
+	bu_semaphore_acquire(state->sem_worker);
+	if (rotated_grid_generator(&ray, &state->rot_grid[view]) == 1) {
+	    bu_semaphore_release(state->sem_worker);
+	    break;
+	}
+	VMOVE(ap.a_ray.r_pt,  ray.r_pt);
+	VMOVE(ap.a_ray.r_dir, ray.r_dir);
+	bu_semaphore_release(state->sem_worker);
+
+	(void)rt_shootray(&ap);
+	if (state->aborted)
+	    return;
+	shot_cnt++;
+    }
+
+    bu_semaphore_acquire(state->sem_stats);
+    state->shots[state->curr_view] += shot_cnt;
+    state->m_lenDensity[state->curr_view] += ap.A_LENDEN;
+    state->m_len[state->curr_view]        += ap.A_LEN;
+    bu_semaphore_release(state->sem_stats);
+}
+
+
+/**
+ * shoot_rays_rotated - convergence loop using the rotated-grid sampler.
+ *
+ * Mirrors shoot_rays() but calls rotated_grid_setup_ae() / rotated_grid_setup()
+ * to orient each view along an arbitrary direction (state->azimuth_deg /
+ * state->elevation_deg) and fires analyze_worker_rotated() workers.
+ *
+ * The view-0 direction is derived from the user az/el; views 1 and 2 are
+ * orthogonal directions computed with bn_vec_perp() and VCROSS so that the
+ * three views are mutually perpendicular (same algorithm as gqa's rotated
+ * mode).
+ */
+static void
+shoot_rays_rotated(struct current_state *state)
+{
+    struct rt_i *rtip = (struct rt_i *)state->rtip;
+    int view;
+
+    do {
+	double inv_spacing = 1.0 / state->gridSpacing;
+	VSCALE(state->steps, state->span, inv_spacing);
+
+	/* Build the three rotated grids. */
+	rotated_grid_setup_ae(&state->rot_grid[0],
+			      rtip->mdl_min, rtip->mdl_max,
+			      state->azimuth_deg, state->elevation_deg,
+			      state->gridSpacing);
+
+	if (state->num_views > 1) {
+	    vect_t v1_dir;
+	    bn_vec_perp(v1_dir, state->rot_grid[0].ray_dir);
+	    VUNITIZE(v1_dir);
+	    rotated_grid_setup(&state->rot_grid[1],
+			      rtip->mdl_min, rtip->mdl_max,
+			      v1_dir, state->gridSpacing);
+	}
+
+	if (state->num_views > 2) {
+	    vect_t v2_dir;
+	    VCROSS(v2_dir, state->rot_grid[0].ray_dir, state->rot_grid[1].ray_dir);
+	    VUNITIZE(v2_dir);
+	    rotated_grid_setup(&state->rot_grid[2],
+			      rtip->mdl_min, rtip->mdl_max,
+			      v2_dir, state->gridSpacing);
+	}
+
+	bu_log("Processing with rotated grid spacing %g mm\n", state->gridSpacing);
+
+	for (view = 0; view < state->num_views; view++) {
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "  view %d\n", view);
+	    state->curr_view = state->i_axis = view;
+	    state->u_axis    = (view + 1) % 3;
+	    state->v_axis    = (view + 2) % 3;
+	    state->rot_grid[view].current     = 0;
+	    state->rot_grid[view].refine_flag = state->grid->refine_flag;
+	    /* The rotated grid's projection plane is NOT axis-aligned, so its
+	     * effective area (u_count × v_count × spacing²) differs from the
+	     * bbox-face area stored in state->area[] at startup.  Update
+	     * area[view] to the actual grid projection area so that the volume
+	     * formula m_len * (area / shots) yields the correct cell_area. */
+	    state->area[view] = (double)state->rot_grid[view].total
+			       * state->gridSpacing * state->gridSpacing;
+	    state->current_cell_area = state->gridSpacing * state->gridSpacing;
+	    bu_parallel(analyze_worker_rotated, state->ncpu, (void *)state);
+	    if (state->aborted)
+		return;
+	}
+
+	state->grid->refine_flag = 1;
+	state->gridSpacing *= 0.5;
+
+    } while (check_terminate(state));
+
+    if (state->verbose)
+	bu_vls_printf(state->verbose_str, "Computation Done\n");
+}
+
 
 /**
  * Do some computations prior to raytracing based upon options the
@@ -1259,12 +1711,20 @@ shoot_rays(struct current_state *state)
 		state->elevation_deg = RAND_ANGLE;
 		analyze_setup_ae(state);
 		analyze_single_grid_setup(state);
+		/* analyze_single_grid_setup() always writes the effective
+		 * projection area (viewsize²) into area[0].  When view > 0,
+		 * the volume formula later reads area[view], which would still
+		 * hold the stale bbox-face value set at startup.  Copy area[0]
+		 * to area[view] so every view uses the correct projection area. */
+		state->area[view] = state->area[0];
 		state->curr_view = view;
+		state->current_cell_area = state->gridSpacing * state->gridSpacing;
 		bu_parallel(analyze_worker, state->ncpu, (void *)state);
 	    }
 	} else if (state->use_single_grid) {
 	    state->num_views = 1;
 	    analyze_single_grid_setup(state);
+	    state->current_cell_area = state->gridSpacing * state->gridSpacing;
 	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
 	} else {
 	    int view;
@@ -1273,6 +1733,7 @@ shoot_rays(struct current_state *state)
 		    state->steps[0]-1,
 		    state->steps[1]-1,
 		    state->steps[2]-1);
+	    state->current_cell_area = state->gridSpacing * state->gridSpacing;
 	    for (view = 0; view < state->num_views; view++) {
 		if (state->verbose)
 		    bu_vls_printf(state->verbose_str, "  view %d\n", view);
@@ -1291,6 +1752,289 @@ shoot_rays(struct current_state *state)
 }
 
 
+/**
+ * shoot_rays_clustered - Focused overlap ray sampling over AABB clusters.
+ *
+ * Each cluster is a connected component of the region AABB-intersection graph
+ * (computed by analyze_cluster_overlapping_pairs()).  For each cluster this
+ * function:
+ *
+ *   1. Restricts rtip->mdl_min/max to the cluster's pre-computed pairwise
+ *      intersection-AABB union (isect_union_min / isect_union_max).
+ *   2. Computes a grid spacing appropriate for that volume (target: 50 cells
+ *      across the shortest axis, floored at gridSpacingLimit).
+ *   3. Runs one triple-grid pass of rays through the restricted volume.
+ *   4. Restores rtip->mdl_min/max and all derived state before the next cluster.
+ *
+ * Grouping pairs into clusters before shooting has two benefits over the older
+ * per-pair approach:
+ *   - N mutually-overlapping regions form one cluster → one pass instead of
+ *     O(N²) passes.
+ *   - The ray grid for each cluster still covers only the candidates relevant
+ *     to that cluster, keeping ray counts small for sparse models.
+ *
+ * The existing overlap callback (analyze_overlap) fires normally for any
+ * geometric overlap found within each sub-pass.
+ *
+ * Timeout is checked between clusters so callers can bound total runtime.
+ */
+static void
+shoot_rays_clustered(struct current_state *state, struct bu_ptbl *clusters)
+{
+    size_t k;
+    size_t nclusters = BU_PTBL_LEN(clusters);
+
+    /* Save the full-model state we temporarily replace per cluster. */
+    point_t saved_mdl_min, saved_mdl_max;
+    vect_t  saved_span;
+    double  saved_area[3];
+    double  saved_gridSpacing;
+
+    VMOVE(saved_mdl_min, state->rtip->mdl_min);
+    VMOVE(saved_mdl_max, state->rtip->mdl_max);
+    VMOVE(saved_span, state->span);
+    saved_area[0] = state->area[0];
+    saved_area[1] = state->area[1];
+    saved_area[2] = state->area[2];
+    saved_gridSpacing = state->gridSpacing;
+
+    state->grid->refine_flag = 1; /* indicate this is a focused pass */
+
+    for (k = 0; k < nclusters; k++) {
+	struct overlap_cluster *cl;
+	vect_t isect_span;
+	double min_span, cl_spacing, inv_spacing;
+	int view;
+	size_t nreg;
+
+	if (state->aborted)
+	    break;
+
+	/* Respect wall-clock timeout between clusters. */
+	if (state->timeout_ms > 0) {
+	    long elapsed_ms = (long)((bu_gettime() - state->start_time_us) / 1000);
+	    if (elapsed_ms >= state->timeout_ms) {
+		bu_log("NOTE: Clustered overlap scan: timeout of %ld ms reached "
+		       "after %zu of %zu clusters.\n",
+		       state->timeout_ms, k, nclusters);
+		break;
+	    }
+	}
+
+	cl = (struct overlap_cluster *)BU_PTBL_GET(clusters, k);
+	nreg = BU_PTBL_LEN(&cl->regions);
+
+	/* Guard against degenerate intersection volumes. */
+	VSUB2(isect_span, cl->isect_union_max, cl->isect_union_min);
+	if (isect_span[X] <= 0.0 || isect_span[Y] <= 0.0 || isect_span[Z] <= 0.0)
+	    continue;
+
+	/* Restrict the sampling grid to this cluster's intersection volume. */
+	VMOVE(state->rtip->mdl_min, cl->isect_union_min);
+	VMOVE(state->rtip->mdl_max, cl->isect_union_max);
+	VSUB2(state->span, cl->isect_union_max, cl->isect_union_min);
+	state->area[0] = state->span[1] * state->span[2];
+	state->area[1] = state->span[2] * state->span[0];
+	state->area[2] = state->span[0] * state->span[1];
+
+	/* Grid spacing: 50 cells across the shortest axis, >= gridSpacingLimit. */
+	min_span = state->span[X];
+	V_MIN(min_span, state->span[Y]);
+	V_MIN(min_span, state->span[Z]);
+	cl_spacing = min_span / 50.0;
+	if (cl_spacing < state->gridSpacingLimit)
+	    cl_spacing = state->gridSpacingLimit;
+
+	state->gridSpacing = cl_spacing;
+	inv_spacing = 1.0 / cl_spacing;
+	VSCALE(state->steps, state->span, inv_spacing);
+
+	bu_log("  Cluster %zu/%zu: %zu region(s), grid spacing %g mm, "
+	       "%ld x %ld x %ld cells\n",
+	       k + 1, nclusters, nreg, cl_spacing,
+	       (long)state->steps[0],
+	       (long)state->steps[1],
+	       (long)state->steps[2]);
+
+	/* Set cell area for overlap volume estimation. */
+	state->current_cell_area = cl_spacing * cl_spacing;
+
+	/* Run one triple-grid pass over this cluster's intersection volume. */
+	for (view = 0; view < state->num_views; view++) {
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "    view %d\n", view);
+	    analyze_triple_grid_setup(view, state);
+	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
+	    if (state->aborted)
+		break;
+	}
+    }
+
+    /* Restore full-model state. */
+    VMOVE(state->rtip->mdl_min, saved_mdl_min);
+    VMOVE(state->rtip->mdl_max, saved_mdl_max);
+    VMOVE(state->span, saved_span);
+    state->area[0] = saved_area[0];
+    state->area[1] = saved_area[1];
+    state->area[2] = saved_area[2];
+    state->gridSpacing = saved_gridSpacing;
+
+    if (state->verbose)
+	bu_vls_printf(state->verbose_str,
+		      "Clustered overlap scan done (%zu cluster(s)).\n", nclusters);
+}
+
+
+/**
+ * shoot_rays_rotated_clustered - cluster-focused overlap detection using the rotated-grid sampler.
+ *
+ * Mirrors shoot_rays_clustered() but fires rays through each cluster's
+ * intersection volume using the rotated-grid sampler (ANALYZE_SAMPLER_ROTATED)
+ * rather than the axis-aligned triple-grid.  The primary ray direction is
+ * taken from state->azimuth_deg / state->elevation_deg; two orthogonal
+ * companion views are derived with bn_vec_perp() and VCROSS.
+ *
+ * Using the rotated-grid sampler with cluster-focused sampling avoids the
+ * axis-aligned ray artifact that causes touching / kissing surfaces to be
+ * reported as overlaps by the triple-grid sampler.
+ */
+static void
+shoot_rays_rotated_clustered(struct current_state *state, struct bu_ptbl *clusters)
+{
+    struct rt_i *rtip = (struct rt_i *)state->rtip;
+    size_t k;
+    size_t nclusters = BU_PTBL_LEN(clusters);
+
+    /* Save the full-model state we temporarily replace per cluster. */
+    point_t saved_mdl_min, saved_mdl_max;
+    vect_t  saved_span;
+    double  saved_area[3];
+    double  saved_gridSpacing;
+
+    VMOVE(saved_mdl_min, rtip->mdl_min);
+    VMOVE(saved_mdl_max, rtip->mdl_max);
+    VMOVE(saved_span, state->span);
+    saved_area[0] = state->area[0];
+    saved_area[1] = state->area[1];
+    saved_area[2] = state->area[2];
+    saved_gridSpacing = state->gridSpacing;
+
+    state->grid->refine_flag = 1; /* indicate this is a focused pass */
+
+    for (k = 0; k < nclusters; k++) {
+	struct overlap_cluster *cl;
+	vect_t isect_span;
+	double min_span, cl_spacing;
+	int view;
+	size_t nreg;
+
+	if (state->aborted)
+	    break;
+
+	/* Respect wall-clock timeout between clusters. */
+	if (state->timeout_ms > 0) {
+	    long elapsed_ms = (long)((bu_gettime() - state->start_time_us) / 1000);
+	    if (elapsed_ms >= state->timeout_ms) {
+		bu_log("NOTE: Clustered rotated-grid overlap scan: timeout of %ld ms reached "
+		       "after %zu of %zu clusters.\n",
+		       state->timeout_ms, k, nclusters);
+		break;
+	    }
+	}
+
+	cl = (struct overlap_cluster *)BU_PTBL_GET(clusters, k);
+	nreg = BU_PTBL_LEN(&cl->regions);
+
+	/* Guard against degenerate intersection volumes. */
+	VSUB2(isect_span, cl->isect_union_max, cl->isect_union_min);
+	if (isect_span[X] <= 0.0 || isect_span[Y] <= 0.0 || isect_span[Z] <= 0.0)
+	    continue;
+
+	/* Restrict the sampling grid to this cluster's intersection volume. */
+	VMOVE(rtip->mdl_min, cl->isect_union_min);
+	VMOVE(rtip->mdl_max, cl->isect_union_max);
+	VSUB2(state->span, cl->isect_union_max, cl->isect_union_min);
+	state->area[0] = state->span[1] * state->span[2];
+	state->area[1] = state->span[2] * state->span[0];
+	state->area[2] = state->span[0] * state->span[1];
+
+	/* Grid spacing: 50 cells across the shortest axis, >= gridSpacingLimit. */
+	min_span = state->span[X];
+	V_MIN(min_span, state->span[Y]);
+	V_MIN(min_span, state->span[Z]);
+	cl_spacing = min_span / 50.0;
+	if (cl_spacing < state->gridSpacingLimit)
+	    cl_spacing = state->gridSpacingLimit;
+
+	state->gridSpacing = cl_spacing;
+	VSCALE(state->steps, state->span, 1.0 / cl_spacing);
+
+	bu_log("  Cluster %zu/%zu: %zu region(s), rotated-grid spacing %g mm, "
+	       "%ld x %ld x %ld cells\n",
+	       k + 1, nclusters, nreg, cl_spacing,
+	       (long)state->steps[0],
+	       (long)state->steps[1],
+	       (long)state->steps[2]);
+
+	/* Set cell area for overlap volume estimation (spacing² per cell). */
+	state->current_cell_area = cl_spacing * cl_spacing;
+
+	/* Build three mutually perpendicular rotated grids for this cluster bbox. */
+	rotated_grid_setup_ae(&state->rot_grid[0],
+			      rtip->mdl_min, rtip->mdl_max,
+			      state->azimuth_deg, state->elevation_deg,
+			      cl_spacing);
+
+	if (state->num_views > 1) {
+	    vect_t v1_dir;
+	    bn_vec_perp(v1_dir, state->rot_grid[0].ray_dir);
+	    VUNITIZE(v1_dir);
+	    rotated_grid_setup(&state->rot_grid[1],
+			      rtip->mdl_min, rtip->mdl_max,
+			      v1_dir, cl_spacing);
+	}
+
+	if (state->num_views > 2) {
+	    vect_t v2_dir;
+	    VCROSS(v2_dir, state->rot_grid[0].ray_dir, state->rot_grid[1].ray_dir);
+	    VUNITIZE(v2_dir);
+	    rotated_grid_setup(&state->rot_grid[2],
+			      rtip->mdl_min, rtip->mdl_max,
+			      v2_dir, cl_spacing);
+	}
+
+	/* Fire one rotated-grid pass per view for this cluster. */
+	for (view = 0; view < state->num_views; view++) {
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "    view %d\n", view);
+	    state->curr_view = state->i_axis = view;
+	    state->u_axis    = (view + 1) % 3;
+	    state->v_axis    = (view + 2) % 3;
+	    state->rot_grid[view].current     = 0;
+	    state->rot_grid[view].refine_flag = state->grid->refine_flag;
+	    state->area[view] = (double)state->rot_grid[view].total
+			       * cl_spacing * cl_spacing;
+	    bu_parallel(analyze_worker_rotated, state->ncpu, (void *)state);
+	    if (state->aborted)
+		break;
+	}
+    }
+
+    /* Restore full-model state. */
+    VMOVE(rtip->mdl_min, saved_mdl_min);
+    VMOVE(rtip->mdl_max, saved_mdl_max);
+    VMOVE(state->span, saved_span);
+    state->area[0] = saved_area[0];
+    state->area[1] = saved_area[1];
+    state->area[2] = saved_area[2];
+    state->gridSpacing = saved_gridSpacing;
+
+    if (state->verbose)
+	bu_vls_printf(state->verbose_str,
+		      "Clustered rotated-grid overlap scan done (%zu cluster(s)).\n", nclusters);
+}
+
+
 int
 perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[], int num_objects, int flags)
 {
@@ -1301,6 +2045,11 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     struct resource resp[MAX_PSW];
     struct rectangular_grid grid;
     struct region_pair overlapList;
+
+    /* Per-cluster focused overlap sampling state (set in the prefilter block
+     * below; used in place of shoot_rays() when cluster-focused mode is active). */
+    struct bu_ptbl *pairwise_candidates_p = NULL;
+    int use_pairwise = 0;
 
     /* local copy for overlaps list to check later for hits */
     BU_LIST_INIT(&overlapList.l);
@@ -1336,9 +2085,122 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 
     rt_prep_parallel(rtip, state->ncpu);
 
+    /* Record start time for timeout enforcement in check_terminate() */
+    state->start_time_us = bu_gettime();
+
+    /* --- AABB overlap pre-filter with cluster-based focused sampling ---
+     *
+     * When the caller only wants overlap detection (no volume / mass /
+     * surface-area / gap / air checks), we avoid shooting rays over the
+     * entire model bounding box.  Instead:
+     *
+     *   1. Find all AABB-intersecting region pairs (R-Tree query).
+     *   2. Cluster the pairs into connected components of the AABB-
+     *      intersection graph (transitive-closure BFS, same algorithm
+     *      as gdiff's cluster_content()).  Dense sub-regions produce
+     *      large but few clusters; sparse models produce many small ones.
+     *   3. For each cluster, shoot a focused grid restricted to the union
+     *      of the cluster's pairwise intersection AABBs.
+     *
+     * This is strictly better than either the per-pair approach (which
+     * shoots O(pairs) passes) or the union-all approach (which shoots one
+     * large grid).  For N mutually-overlapping regions we get one pass
+     * instead of O(N²).
+     *
+     * Fall-back: when the number of clusters exceeds OV_CLUSTER_MAX (a
+     * very dense model), restrict rtip->mdl_min/max to the union of all
+     * cluster intersection volumes and run the normal shoot_rays() loop.
+     */
+    if ((flags & ANALYSIS_OVERLAPS) &&
+	!(flags & (ANALYSIS_VOLUME | ANALYSIS_MASS | ANALYSIS_SURF_AREA |
+		   ANALYSIS_GAP | ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR |
+		   ANALYSIS_FIRST_AIR | ANALYSIS_LAST_AIR | ANALYSIS_UNCONF_AIR))) {
+
+	struct bu_ptbl raw_pairs;
+	int n_pairs = analyze_overlapping_region_pairs(rtip, &raw_pairs);
+
+	if (n_pairs > 0) {
+	    /* Cluster the raw pairs into connected components */
+	    pairwise_candidates_p =
+		(struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "overlap clusters");
+	    int n_clusters = analyze_cluster_overlapping_pairs(&raw_pairs, pairwise_candidates_p);
+	    analyze_free_region_overlap_pairs(&raw_pairs);
+
+	    if (n_clusters > 0 && n_clusters <= OV_CLUSTER_MAX) {
+		/* Per-cluster focused sampling path */
+		bu_log("Overlap prefilter: %d candidate pair(s) → %d cluster(s) — "
+		       "using cluster-focused sampling.\n",
+		       n_pairs, n_clusters);
+		use_pairwise = 1;
+
+	    } else if (n_clusters > OV_CLUSTER_MAX) {
+		/* Dense-cluster fallback: union-bbox strategy */
+		size_t k;
+		point_t union_min, union_max;
+		VSETALL(union_min,  INFINITY);
+		VSETALL(union_max, -INFINITY);
+
+		for (k = 0; k < BU_PTBL_LEN(pairwise_candidates_p); k++) {
+		    struct overlap_cluster *cl =
+			(struct overlap_cluster *)BU_PTBL_GET(pairwise_candidates_p, k);
+		    VMIN(union_min, cl->isect_union_min);
+		    VMAX(union_max, cl->isect_union_max);
+		}
+		analyze_free_overlap_clusters(pairwise_candidates_p);
+		bu_free(pairwise_candidates_p, "overlap clusters");
+		pairwise_candidates_p = NULL;
+
+		{
+		    vect_t full_span, cand_span;
+		    double full_vol, cand_vol;
+		    VSUB2(full_span, rtip->mdl_max, rtip->mdl_min);
+		    VSUB2(cand_span, union_max, union_min);
+		    full_vol = full_span[X] * full_span[Y] * full_span[Z];
+		    cand_vol = cand_span[X] * cand_span[Y] * cand_span[Z];
+
+		    if (full_vol > 0.0 && cand_vol < full_vol * OV_PREFILTER_MIN_REDUCTION) {
+			bu_log("Overlap prefilter: %d cluster(s) (> %d threshold — "
+			       "very dense model), restricting grid to "
+			       "%.1f%% of model volume.\n",
+			       n_clusters, OV_CLUSTER_MAX,
+			       100.0 * cand_vol / full_vol);
+			VMOVE(rtip->mdl_min, union_min);
+			VMOVE(rtip->mdl_max, union_max);
+		    } else {
+			bu_log("Overlap prefilter: %d cluster(s) (> %d threshold — "
+			       "very dense model, union bbox not substantially "
+			       "smaller; using full grid).\n",
+			       n_clusters, OV_CLUSTER_MAX);
+		    }
+		}
+
+	    } else {
+		/* n_clusters <= 0: clustering failed; fall through to full grid */
+		bu_log("Overlap prefilter: clustering failed, using full model bbox.\n");
+		if (pairwise_candidates_p) {
+		    analyze_free_overlap_clusters(pairwise_candidates_p);
+		    bu_free(pairwise_candidates_p, "overlap clusters");
+		    pairwise_candidates_p = NULL;
+		}
+	    }
+
+	} else if (n_pairs == 0) {
+	    bu_log("Overlap prefilter: no AABB-intersecting region pairs — "
+		   "geometric overlaps are not possible.\n");
+	    bu_ptbl_free(&raw_pairs);
+	} else {
+	    /* n_pairs < 0: AABB query error; proceed with full bbox */
+	    bu_log("Overlap prefilter: AABB query failed, using full model bbox.\n");
+	}
+    }
+
     /* setup azimuth and elevation angles in case of single grid */
     if (state->use_single_grid && !state->use_view_information) {
 	if (analyze_setup_ae(state)) {
+	    if (pairwise_candidates_p) {
+		analyze_free_overlap_clusters(pairwise_candidates_p);
+		bu_free(pairwise_candidates_p, "overlap clusters");
+	    }
 	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
@@ -1398,6 +2260,10 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 
     if (options_set(state) != ANALYZE_OK) {
 	bu_log("Couldn't set up the options correctly!\n");
+	if (pairwise_candidates_p) {
+	    analyze_free_overlap_clusters(pairwise_candidates_p);
+	    bu_free(pairwise_candidates_p, "overlap clusters");
+	}
 	return ANALYZE_ERROR;
     }
 
@@ -1407,7 +2273,83 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     state->sem_plot = bu_semaphore_register("analyze_sem_plot");
     allocate_region_data(state, names);
     grid.refine_flag = 0;
-    shoot_rays(state);
+
+    /* Cluster-focused sampling replaces the normal shoot_rays() loop for
+     * overlap-only analyses.  shoot_rays_clustered() processes each
+     * connected component of the AABB-intersection graph in isolation,
+     * restricting rays to just that cluster's intersection-volume union.
+     * For all other analyses (or when the cluster count exceeded
+     * OV_CLUSTER_MAX), the normal refinement loop in shoot_rays() is used.
+     *
+     * The Crofton sampler bypasses both the cluster and grid paths: it fires
+     * a fixed number of isotropic random rays in a single parallel pass.
+     */
+    if (state->sampler == ANALYZE_SAMPLER_CROFTON) {
+	/* Default ray count if the caller left crofton_n_rays at zero. */
+	size_t n_crofton = (state->crofton_n_rays > 0)
+	    ? state->crofton_n_rays
+	    : (size_t)100000;
+
+	state->sem_crofton = bu_semaphore_register("analyze_sem_crofton");
+
+	if (pairwise_candidates_p) {
+	    analyze_free_overlap_clusters(pairwise_candidates_p);
+	    bu_free(pairwise_candidates_p, "overlap clusters");
+	    pairwise_candidates_p = NULL;
+	}
+
+	bu_log("Crofton: firing %zu isotropic random rays.\n", n_crofton);
+	if (state->verbose)
+	    bu_vls_printf(state->verbose_str,
+			 "Crofton: firing %zu isotropic random rays.\n", n_crofton);
+	shoot_rays_crofton(state, n_crofton);
+
+	/* Fill in per-object mass/volume so the getter functions that read
+	 * o_mass[view] / o_volume[view] return correct values.  (These are
+	 * normally filled by mass_volume_surf_area_terminate_check() inside
+	 * check_terminate() which the Crofton path skips.) */
+	if (state->analysis_flags & (ANALYSIS_MASS | ANALYSIS_VOLUME)) {
+	    int obj, view;
+	    for (obj = 0; obj < state->num_objects; obj++) {
+		for (view = 0; view < state->num_views; view++) {
+		    double cell_area = (state->shots[view] > 0)
+			? state->area[view] / (double)state->shots[view]
+			: 0.0;
+		    state->objs[obj].o_volume[view] =
+			state->objs[obj].o_len[view] * cell_area;
+		    state->objs[obj].o_mass[view] =
+			state->objs[obj].o_lenDensity[view] * cell_area;
+		}
+	    }
+	}
+    } else if (state->sampler == ANALYZE_SAMPLER_ROTATED) {
+	/* Rotated-grid sampler: fires rays along a user-specified az/el
+	 * direction with two orthogonal companions.  When cluster-focused
+	 * sampling is active (use_pairwise), use shoot_rays_rotated_clustered()
+	 * to restrict each pass to the cluster's intersection volume — the same
+	 * optimization applied to the triple-grid sampler.  Otherwise fall back
+	 * to the whole-model shoot_rays_rotated() convergence loop. */
+	if (use_pairwise && pairwise_candidates_p) {
+	    shoot_rays_rotated_clustered(state, pairwise_candidates_p);
+	    analyze_free_overlap_clusters(pairwise_candidates_p);
+	    bu_free(pairwise_candidates_p, "overlap clusters");
+	    pairwise_candidates_p = NULL;
+	} else {
+	    if (pairwise_candidates_p) {
+		analyze_free_overlap_clusters(pairwise_candidates_p);
+		bu_free(pairwise_candidates_p, "overlap clusters");
+		pairwise_candidates_p = NULL;
+	    }
+	    shoot_rays_rotated(state);
+	}
+    } else if (use_pairwise && pairwise_candidates_p) {
+	shoot_rays_clustered(state, pairwise_candidates_p);
+	analyze_free_overlap_clusters(pairwise_candidates_p);
+	bu_free(pairwise_candidates_p, "overlap clusters");
+	pairwise_candidates_p = NULL;
+    } else {
+	shoot_rays(state);
+    }
 
     /* print any logs in main thread */
     bu_log("%s", bu_vls_strgrab(state->log_str));
@@ -1461,6 +2403,105 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 
     rt_i_destroy(rtip);
     return ANALYZE_OK;
+}
+
+
+int
+analyze_bbox(struct db_i *dbip, char *names[], int num_objects,
+	     point_t bbox_min, point_t bbox_max)
+{
+    int i;
+    struct rt_i *rtip;
+
+    if (!dbip || !names || num_objects <= 0 || !bbox_min || !bbox_max)
+	return -1;
+
+    rtip = rt_i_create(dbip);
+    if (!rtip)
+	return -1;
+
+    for (i = 0; i < num_objects; i++) {
+	if (rt_gettree(rtip, names[i]) < 0) {
+	    bu_log("analyze_bbox: failed to load '%s'\n", names[i]);
+	    rt_i_destroy(rtip);
+	    return -1;
+	}
+    }
+
+    /* Prepare the space partition (needed to compute mdl_min/mdl_max).
+     * Use a single CPU; we are not shooting rays. */
+    rt_prep_parallel(rtip, 1);
+
+    VMOVE(bbox_min, rtip->mdl_min);
+    VMOVE(bbox_max, rtip->mdl_max);
+
+    rt_i_destroy(rtip);
+    return 0;
+}
+
+
+struct analyze_results *
+analyze_run(const struct analyze_config *cfg, struct db_i *dbip,
+	    char *names[], int num_names, int flags)
+{
+    if (!dbip || !names || num_names <= 0)
+	return NULL;
+    return analyze_engine_run(cfg, dbip, names, num_names, flags);
+}
+
+
+
+void
+analyze_results_free(struct analyze_results *res)
+{
+    size_t i;
+
+    if (!res)
+	return;
+
+    if (res->objects) {
+	/* Object names in this array are strdup'd by analyze_run(). */
+	for (i = 0; i < res->n_objects; i++) {
+	    if (res->objects[i].name)
+		bu_free((void *)res->objects[i].name, "object name");
+	}
+	bu_free(res->objects, "analyze_results objects");
+	res->objects = NULL;
+    }
+
+    if (res->regions) {
+	/* Region names in this array are strdup'd by analyze_run(). */
+	for (i = 0; i < res->n_regions; i++) {
+	    if (res->regions[i].name)
+		bu_free((void *)res->regions[i].name, "region name");
+	}
+	bu_free(res->regions, "analyze_results regions");
+	res->regions = NULL;
+    }
+
+    /* Free overlap / issue record lists.  region1 and region2 strings are
+     * always strdup'd by the capture callbacks in analyze_run(). */
+#define AR_FREE_PTBL(tbl) do { \
+    for (i = 0; i < BU_PTBL_LEN(&res->tbl); i++) { \
+	struct analyze_overlap_record *_r = \
+	    (struct analyze_overlap_record *)BU_PTBL_GET(&res->tbl, i); \
+	bu_free((void *)_r->region1, "ar region1"); \
+	if (_r->region2) bu_free((void *)_r->region2, "ar region2"); \
+	bu_free(_r, "analyze_overlap_record"); \
+    } \
+    bu_ptbl_free(&res->tbl); \
+} while (0)
+
+    AR_FREE_PTBL(overlaps);
+    AR_FREE_PTBL(gaps);
+    AR_FREE_PTBL(adj_air);
+    AR_FREE_PTBL(exp_air);
+    AR_FREE_PTBL(first_air);
+    AR_FREE_PTBL(last_air);
+    AR_FREE_PTBL(unconf_air);
+#undef AR_FREE_PTBL
+
+    bu_free(res, "analyze_results");
 }
 
 
