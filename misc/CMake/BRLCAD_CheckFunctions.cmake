@@ -310,6 +310,8 @@ function(_brlcad_run_probe_batch BATCH_NAME)
       "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY \"\${CMAKE_BINARY_DIR}\")\n"
       "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG \"\${CMAKE_BINARY_DIR}\")\n"
       "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE \"\${CMAKE_BINARY_DIR}\")\n"
+      "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO \"\${CMAKE_BINARY_DIR}\")\n"
+      "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL \"\${CMAKE_BINARY_DIR}\")\n"
     )
     foreach(_var IN LISTS _pending_vars)
       file(APPEND "${_cml}" "add_executable(${_var} \"${_src_dir}/${_var}.c\")\n")
@@ -441,6 +443,14 @@ function(_brlcad_run_probe_batch BATCH_NAME)
       set(_success FALSE)
       if(_cfg_result EQUAL 0)
         if(EXISTS "${_build_dir}/${_var}" OR EXISTS "${_build_dir}/${_var}.exe")
+          set(_success TRUE)
+        elseif(EXISTS "${_build_dir}/Debug/${_var}" OR EXISTS "${_build_dir}/Debug/${_var}.exe")
+          set(_success TRUE)
+        elseif(EXISTS "${_build_dir}/Release/${_var}" OR EXISTS "${_build_dir}/Release/${_var}.exe")
+          set(_success TRUE)
+        elseif(EXISTS "${_build_dir}/RelWithDebInfo/${_var}" OR EXISTS "${_build_dir}/RelWithDebInfo/${_var}.exe")
+          set(_success TRUE)
+        elseif(EXISTS "${_build_dir}/MinSizeRel/${_var}" OR EXISTS "${_build_dir}/MinSizeRel/${_var}.exe")
           set(_success TRUE)
         endif()
       endif()
