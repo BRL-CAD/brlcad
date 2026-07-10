@@ -197,14 +197,6 @@ parse_zip(zip_t *archive)
 	e.compressed.assign(file_data.begin() + (std::ptrdiff_t)data_offset,
 	    file_data.begin() + (std::ptrdiff_t)(data_offset + csize));
 
-	if (method == 0) {
-	    e.uncompressed = e.compressed;
-	    if (e.uncompressed.size() != usize)
-		return false;
-	} else if (!inflate_raw(e.compressed, usize, e.uncompressed)) {
-	    return false;
-	}
-
 	archive->entries[name] = std::move(e);
 	pos += 46u + name_len + extra_len + comment_len;
     }
@@ -252,7 +244,19 @@ zip_fopen(zip_t *archive, const char *fname, int)
 	return nullptr;
 
     zip_file_t *f = new zip_file;
-    f->data = it->second.uncompressed;
+    const zip_entry &entry = it->second;
+    if (!entry.uncompressed.empty() || entry.uncompressed_size == 0) {
+	f->data = entry.uncompressed;
+    } else if (entry.method == 0) {
+	f->data = entry.compressed;
+	if (f->data.size() != entry.uncompressed_size) {
+	    delete f;
+	    return nullptr;
+	}
+    } else if (!inflate_raw(entry.compressed, entry.uncompressed_size, f->data)) {
+	delete f;
+	return nullptr;
+    }
     return f;
 }
 
@@ -293,7 +297,7 @@ zip_stat(zip_t *archive, const char *fname, int, zip_stat_t *st)
 	return -1;
     zip_stat_init(st);
     st->valid = ZIP_STAT_SIZE;
-    st->size = it->second.uncompressed.size();
+    st->size = it->second.uncompressed_size;
     return 0;
 }
 
