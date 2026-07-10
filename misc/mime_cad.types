@@ -34,6 +34,7 @@ model/gltf					gltf glb
 model/jt					jt
 model/obj					obj
 model/ply					ply
+model/vnd.freecad				fcstd FCStd
 model/shp					shp
 model/step					stp step
 model/stl					stl
