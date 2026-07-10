@@ -54,7 +54,6 @@ set(
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
-  FindSCL.cmake
   FindSPSR.cmake
   FindSTL.cmake
   FindShellDeps.cmake
