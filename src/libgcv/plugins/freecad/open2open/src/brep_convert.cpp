@@ -56,10 +56,34 @@
 #include <map>
 #include <set>
 #include <tuple>
+#include <unordered_map>
 #include <cmath>
 #include <functional>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
 
 namespace open2open {
+
+using BrepClock = std::chrono::steady_clock;
+
+static bool BrepTimingEnabled()
+{
+    const char* val = std::getenv("GCV_FREECAD_TIMING");
+    return val && val[0] && val[0] != '0';
+}
+
+static long long BrepElapsedMs(const BrepClock::time_point& start,
+                               const BrepClock::time_point& end)
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+}
+
+static long long BrepElapsedUs(const BrepClock::time_point& start,
+                               const BrepClock::time_point& end)
+{
+    return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+}
 
 // ---------------------------------------------------------------------------
 // Helper: convert any ON_Curve to a Geom_Curve (NURBS fallback)
@@ -997,6 +1021,22 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
 
     if (shape.IsNull()) return false;
 
+    bool timing = BrepTimingEnabled();
+    BrepClock::time_point t_start = BrepClock::now();
+    BrepClock::time_point t_pass1 = t_start;
+    BrepClock::time_point t_pass2 = t_start;
+    BrepClock::time_point t_pass3 = t_start;
+    BrepClock::time_point t_flags = t_start;
+    BrepClock::time_point t_seam_repair = t_start;
+    BrepClock::time_point t_gap_repair = t_start;
+    BrepClock::time_point t_edge_tol = t_start;
+    BrepClock::time_point t_tangent = t_start;
+    BrepClock::time_point t_iso = t_start;
+    BrepClock::time_point t_valid = t_start;
+    long long pass3_surface_us = 0;
+    long long pass3_pcurve_us = 0;
+    long long pass3_gap_us = 0;
+
     // Maps from OCCT shape (by pointer/hash) to openNURBS index.
     // vertex_map is keyed on (TShape*, rounded_3D_position) so that the same
     // underlying vertex TShape instantiated at different locations (e.g. on a
@@ -1020,6 +1060,7 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
     std::map<PntKey, int>          vertex_map;  // rounded 3D pos → vertex index
     std::map<EdgeKey, int>         edge_map;    // (TShape*, start_pos) → edge index
     std::map<Standard_Address, int> surface_map;// TShape* → surface index
+    std::unordered_map<int,int> trim_curve_refcount; // c2i -> trims created so far
     // Original OCCT surface periods, stored per surface index (si) so that the
     // gap-snap code can apply period-shift corrections even when the converted
     // ON_NurbsSurface does not report IsClosed() correctly (e.g. a cylinder face
@@ -1059,6 +1100,7 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
             ON_3dPoint(p.X(), p.Y(), p.Z()), tol);
         vertex_map[key] = ov.m_vertex_index;
     }
+    t_pass1 = BrepClock::now();
 
     // ------------------------------------------------------------------
     // Pass 2 — collect and translate all 3-D edge curves
@@ -1377,12 +1419,16 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
         brep.m_E[this_ei].m_tolerance = edge_tol;
         edge_map[ek] = this_ei;
     }
+    t_pass2 = BrepClock::now();
 
     // ------------------------------------------------------------------
     // Pass 3 — translate faces
     // ------------------------------------------------------------------
     for (TopExp_Explorer fex(shape, TopAbs_FACE); fex.More(); fex.Next()) {
         const TopoDS_Face& face = TopoDS::Face(fex.Current());
+        BrepClock::time_point t_face_start;
+        if (timing)
+            t_face_start = BrepClock::now();
 
         // Translate surface
         Handle(Geom_Surface) gs = BRep_Tool::Surface(face);
@@ -1789,6 +1835,8 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
             if (it != surface_map.end())
                 si = it->second;
         }
+        if (timing)
+            pass3_surface_us += BrepElapsedUs(t_face_start, BrepClock::now());
 
         if (si < 0) continue; // cannot translate this face
 
@@ -1884,6 +1932,9 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
 
                 // Translate 2D pcurve for this edge on this face
                 double pc_t0, pc_t1;
+                BrepClock::time_point t_pcurve_start;
+                if (timing)
+                    t_pcurve_start = BrepClock::now();
                 Handle(Geom2d_Curve) gc2 =
                     BRep_Tool::CurveOnSurface(edge, face, pc_t0, pc_t1);
 
@@ -2052,6 +2103,8 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
                         }
                     }
                 }
+                if (timing)
+                    pass3_pcurve_us += BrepElapsedUs(t_pcurve_start, BrepClock::now());
 
                 // Trim orientation
                 bool bRev3d = (edge.Orientation() == TopAbs_REVERSED);
@@ -2087,6 +2140,8 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
 
                     ON_BrepTrim& strim = brep.NewSingularTrim(
                         brep.m_V[pole_vi], ol, ON_Surface::not_iso, c2i);
+                    if (c2i >= 0)
+                        ++trim_curve_refcount[c2i];
                     strim.m_tolerance[0] = BRep_Tool::Tolerance(edge);
                     strim.m_tolerance[1] = strim.m_tolerance[0];
                     if (c2i >= 0) {
@@ -2103,6 +2158,8 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
 
                 ON_BrepTrim& trim =
                     brep.NewTrim(brep.m_E[ei], bRev3d, ol, c2i);
+                if (c2i >= 0)
+                    ++trim_curve_refcount[c2i];
                 trim.m_tolerance[0] = BRep_Tool::Tolerance(edge);
                 trim.m_tolerance[1] = trim.m_tolerance[0];
                 if (c2i >= 0) {
@@ -2151,6 +2208,9 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
             //    domain start, so this makes the two trim endpoints exactly
             //    equal at the machine-epsilon level.
             {
+                BrepClock::time_point t_gap_start;
+                if (timing)
+                    t_gap_start = BrepClock::now();
                 const int li = ol.m_loop_index;
                 const int fi = (li >= 0 && li < brep.m_L.Count())
                                    ? brep.m_L[li].m_fi
@@ -2185,17 +2245,6 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
                         (vp_it != surface_vperiod.end()) ? vp_it->second : 0.0;
 
                     const int nc = ol.m_ti.Count();
-
-                    // Build a pcurve reference-count map for this loop so
-                    // that the shared-pcurve guard inside the gap loop can
-                    // answer "is c2i exclusive to this trim?" in O(1) rather
-                    // than rescanning all brep trims for every gap.
-                    std::unordered_map<int,int> c2i_refcount;
-                    for (int ti_s = 0; ti_s < brep.m_T.Count(); ++ti_s) {
-                        const int c2i_s = brep.m_T[ti_s].m_c2i;
-                        if (c2i_s >= 0)
-                            ++c2i_refcount[c2i_s];
-                    }
 
                     for (int k = 0; k < nc; ++k) {
                         ON_BrepTrim& tk  = brep.m_T[ol.m_ti[k]];
@@ -2429,9 +2478,9 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
                                     const double delta_y = pe.y - ps.y;
                                     // Use precomputed refcount map (O(1)).
                                     const int c2i_check = tk1.m_c2i;
-                                    auto rc_it = c2i_refcount.find(c2i_check);
+                                    auto rc_it = trim_curve_refcount.find(c2i_check);
                                     const int c2i_refs =
-                                        (rc_it != c2i_refcount.end())
+                                        (rc_it != trim_curve_refcount.end())
                                             ? rc_it->second : 0;
                                     if (c2i_refs <= 1) {
                                         // Pcurve is exclusive to tk1; safe to
@@ -2464,6 +2513,8 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
                         }
                     }
                 }
+                if (timing)
+                    pass3_gap_us += BrepElapsedUs(t_gap_start, BrepClock::now());
             }
 
             // Fix up loop type based on outer-wire detection above.
@@ -2472,8 +2523,10 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
         }
         } // end face_wires scope
     }
+    t_pass3 = BrepClock::now();
 
     brep.SetTolerancesBoxesAndFlags(/*bLazy=*/true);
+    t_flags = BrepClock::now();
 
     // ---------------------------------------------------------------------------
     // Post-processing pass: repair seam/singular trim m_iso corruption.
@@ -3006,6 +3059,8 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
         }
     }
 
+    t_seam_repair = BrepClock::now();
+
     // Rebuild loop pboxes after seam/singular trim CV snapping.
     // SetTolerancesBoxesAndFlags computed loop pboxes from the original CVs;
     // our snapping may have moved a trim's pbox outside the loop's pbox.
@@ -3112,6 +3167,8 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
 
 
 
+    t_gap_repair = BrepClock::now();
+
     // ---------------------------------------------------------------------------
     // Post-processing pass: fix edge tolerances so that ON_Brep::IsValid() passes
     // the "distance from trim endpoint to 3d edge" check.
@@ -3166,6 +3223,7 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
         if (new_etol > edge.m_tolerance)
             edge.m_tolerance = new_etol;
     }
+    t_edge_tol = BrepClock::now();
 
     // ---------------------------------------------------------------------------
     // Post-processing pass: fix the tangent-direction check for closed trims on
@@ -3457,6 +3515,8 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
         }
     }
 
+    t_tangent = BrepClock::now();
+
     // Final post-processing: re-run SetTrimIsoFlags for ALL trims to ensure
     // m_iso is consistent with the current pcurve geometry.
     //
@@ -3474,8 +3534,34 @@ bool OCCTToON_Brep(const TopoDS_Shape& shape, ON_Brep& brep,
     // SetTolerancesBoxesAndFlags() to avoid resetting the edge tolerances
     // adjusted by the previous pass.
     brep.SetTrimIsoFlags();
+    t_iso = BrepClock::now();
 
-    if (!brep.IsValid())
+    bool valid = brep.IsValid();
+    t_valid = BrepClock::now();
+    if (timing) {
+        std::fprintf(stderr,
+                     "OCCTToON_Brep timing: V=%d E=%d F=%d C2=%d C3=%d S=%d pass1_vertices=%lld pass2_edges=%lld pass3_faces=%lld pass3_surface_us=%lld pass3_pcurve_us=%lld pass3_loop_gap_us=%lld flags=%lld seam_repair=%lld gap_repair=%lld edge_tol=%lld tangent=%lld iso=%lld valid=%lld total=%lld result=%d\n",
+                     brep.m_V.Count(), brep.m_E.Count(), brep.m_F.Count(),
+                     brep.m_C2.Count(), brep.m_C3.Count(), brep.m_S.Count(),
+                     BrepElapsedMs(t_start, t_pass1),
+                     BrepElapsedMs(t_pass1, t_pass2),
+                     BrepElapsedMs(t_pass2, t_pass3),
+                     pass3_surface_us,
+                     pass3_pcurve_us,
+                     pass3_gap_us,
+                     BrepElapsedMs(t_pass3, t_flags),
+                     BrepElapsedMs(t_flags, t_seam_repair),
+                     BrepElapsedMs(t_seam_repair, t_gap_repair),
+                     BrepElapsedMs(t_gap_repair, t_edge_tol),
+                     BrepElapsedMs(t_edge_tol, t_tangent),
+                     BrepElapsedMs(t_tangent, t_iso),
+                     BrepElapsedMs(t_iso, t_valid),
+                     BrepElapsedMs(t_start, t_valid),
+                     valid ? 1 : 0);
+        std::fflush(stderr);
+    }
+
+    if (!valid)
         return false;
     return true;
 }
