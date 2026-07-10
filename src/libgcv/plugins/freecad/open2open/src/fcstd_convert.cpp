@@ -18,8 +18,11 @@
 #include "open2open/fcstd_convert.h"
 
 #include <cstdint>
+#include <chrono>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -51,6 +54,26 @@
 #endif // OPEN2OPEN_HAVE_LIBZIP
 
 namespace open2open {
+
+using FcstdClock = std::chrono::steady_clock;
+
+static long long ElapsedMs(const FcstdClock::time_point& start,
+                           const FcstdClock::time_point& end)
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+}
+
+static bool FcstdTimingEnabled()
+{
+    const char* val = std::getenv("GCV_FREECAD_TIMING");
+    return val && val[0] && val[0] != '0';
+}
+
+static bool FcstdImportHidden()
+{
+    const char* val = std::getenv("GCV_FREECAD_IMPORT_HIDDEN");
+    return val && val[0] && val[0] != '0';
+}
 
 // ---------------------------------------------------------------------------
 // ParseDiffuseColors: decode a binary DiffuseColor blob.
@@ -596,10 +619,20 @@ int FCStdFileToONX_Model(const std::string& path,
                          ONX_Model&         model,
                          double             tol)
 {
+    bool timing = FcstdTimingEnabled();
+    bool import_hidden = FcstdImportHidden();
+    FcstdClock::time_point total_start = FcstdClock::now();
+
     FcstdDoc doc;
     if (!ReadFcstdDoc(path, doc)) {
         std::fprintf(stderr, "FCStd conversion summary for %s: ReadFcstdDoc failed\n", path.c_str());
         return 0;
+    }
+    FcstdClock::time_point doc_done = FcstdClock::now();
+    if (timing) {
+        std::fprintf(stderr, "FCStd timing: %s document objects=%zu read_ms=%lld\n",
+                     path.c_str(), doc.objects.size(), ElapsedMs(total_start, doc_done));
+        std::fflush(stderr);
     }
 
     // Open the archive a second time for B-Rep reading
@@ -615,42 +648,119 @@ int FCStdFileToONX_Model(const std::string& path,
     int nShapeNull = 0;
     int nConversionFailed = 0;
     int nInvalid = 0;
+    int nHiddenSkipped = 0;
+    int nCacheHits = 0;
+    std::map<std::string, std::unique_ptr<ON_Brep>> brep_cache;
 
+    int obj_index = 0;
     for (const FcstdObject& obj : doc.objects) {
+        ++obj_index;
         if (obj.brp_file.empty()) continue;
+        if (!import_hidden && !obj.visible) {
+            ++nHiddenSkipped;
+            if (timing) {
+                std::fprintf(stderr,
+                             "FCStd timing: skip %d/%zu name=\"%s\" type=\"%s\" hidden brp=\"%s\"\n",
+                             obj_index, doc.objects.size(), obj.name.c_str(), obj.type.c_str(),
+                             obj.brp_file.c_str());
+                std::fflush(stderr);
+            }
+            continue;
+        }
+
+        FcstdClock::time_point obj_start = FcstdClock::now();
+        if (timing) {
+            std::fprintf(stderr,
+                         "FCStd timing: begin %d/%zu name=\"%s\" type=\"%s\" visible=%d brp=\"%s\"\n",
+                         obj_index, doc.objects.size(), obj.name.c_str(), obj.type.c_str(),
+                         obj.visible ? 1 : 0, obj.brp_file.c_str());
+            std::fflush(stderr);
+        }
 
         // Read the OCCT BRep text from the archive
         std::string brp_content = ZipReadEntry(raw_zip, obj.brp_file.c_str());
+        FcstdClock::time_point zip_done = FcstdClock::now();
         if (brp_content.empty()) {
             ++nBrpEmpty;
+            if (timing) {
+                std::fprintf(stderr, "FCStd timing: skip %s empty read_ms=%lld\n",
+                             obj.name.c_str(), ElapsedMs(obj_start, zip_done));
+                std::fflush(stderr);
+            }
             continue;
         }
         if (BrpHasExtremeNumbers(brp_content)) {
             ++nBrpExtreme;
+            if (timing) {
+                std::fprintf(stderr, "FCStd timing: skip %s extreme read_ms=%lld size=%zu\n",
+                             obj.name.c_str(), ElapsedMs(obj_start, zip_done), brp_content.size());
+                std::fflush(stderr);
+            }
             continue;
         }
 
+        ON_Brep* brep = nullptr;
+        bool cache_hit = false;
+        FcstdClock::time_point read_done = zip_done;
+        FcstdClock::time_point convert_done = zip_done;
+        FcstdClock::time_point valid_done = zip_done;
+
+        auto cache_it = brep_cache.find(brp_content);
+        if (cache_it != brep_cache.end()) {
+            brep = ON_Brep::New(*cache_it->second);
+            cache_hit = true;
+            ++nCacheHits;
+        } else {
         // Parse the BRep using OCCT BRep reader
         BRep_Builder builder;
         TopoDS_Shape shape;
         std::istringstream iss(brp_content);
         BRepTools::Read(shape, iss, builder);
+        read_done = FcstdClock::now();
         if (shape.IsNull()) {
             ++nShapeNull;
+            if (timing) {
+                std::fprintf(stderr, "FCStd timing: skip %s null read_ms=%lld brep_read_ms=%lld size=%zu\n",
+                             obj.name.c_str(), ElapsedMs(obj_start, zip_done),
+                             ElapsedMs(zip_done, read_done), brp_content.size());
+                std::fflush(stderr);
+            }
             continue;
         }
 
         // Convert to ON_Brep
-        ON_Brep* brep = new ON_Brep();
+        brep = new ON_Brep();
         if (!open2open::OCCTToON_Brep(shape, *brep, tol)) {
             delete brep;
             ++nConversionFailed;
+            if (timing) {
+                FcstdClock::time_point convert_done = FcstdClock::now();
+                std::fprintf(stderr,
+                             "FCStd timing: skip %s conversion_failed read_ms=%lld brep_read_ms=%lld convert_ms=%lld size=%zu\n",
+                             obj.name.c_str(), ElapsedMs(obj_start, zip_done),
+                             ElapsedMs(zip_done, read_done), ElapsedMs(read_done, convert_done),
+                             brp_content.size());
+                std::fflush(stderr);
+            }
             continue;
         }
+        convert_done = FcstdClock::now();
         if (!brep->IsValid()) {
             delete brep;
             ++nInvalid;
+            if (timing) {
+                FcstdClock::time_point valid_done = FcstdClock::now();
+                std::fprintf(stderr,
+                             "FCStd timing: skip %s invalid read_ms=%lld brep_read_ms=%lld convert_ms=%lld valid_ms=%lld size=%zu\n",
+                             obj.name.c_str(), ElapsedMs(obj_start, zip_done),
+                             ElapsedMs(zip_done, read_done), ElapsedMs(read_done, convert_done),
+                             ElapsedMs(convert_done, valid_done), brp_content.size());
+                std::fflush(stderr);
+            }
             continue;
+        }
+        valid_done = FcstdClock::now();
+        brep_cache.emplace(brp_content, std::unique_ptr<ON_Brep>(ON_Brep::New(*brep)));
         }
 
         // Build attributes
@@ -709,13 +819,39 @@ int FCStdFileToONX_Model(const std::string& path,
 
         model.AddManagedModelGeometryComponent(brep, attrs);
         ++nConverted;
+        FcstdClock::time_point add_done = FcstdClock::now();
+        if (timing) {
+            if (cache_hit) {
+                std::fprintf(stderr,
+                             "FCStd timing: cached %s read_ms=%lld clone_add_ms=%lld size=%zu faces=%d\n",
+                             obj.name.c_str(), ElapsedMs(obj_start, zip_done),
+                             ElapsedMs(zip_done, add_done), brp_content.size(), brep->m_F.Count());
+            } else {
+                std::fprintf(stderr,
+                             "FCStd timing: done %s read_ms=%lld brep_read_ms=%lld convert_ms=%lld valid_ms=%lld add_ms=%lld size=%zu faces=%d\n",
+                             obj.name.c_str(), ElapsedMs(obj_start, zip_done),
+                             ElapsedMs(zip_done, read_done), ElapsedMs(read_done, convert_done),
+                             ElapsedMs(convert_done, valid_done), ElapsedMs(valid_done, add_done),
+                             brp_content.size(), brep->m_F.Count());
+            }
+            std::fflush(stderr);
+        }
+    }
+
+    if (timing) {
+        FcstdClock::time_point total_done = FcstdClock::now();
+        std::fprintf(stderr,
+                     "FCStd timing: total converted=%d objects=%zu total_ms=%lld hidden=%d cached=%d empty=%d extreme=%d null_shapes=%d conversion_failed=%d invalid=%d\n",
+                     nConverted, doc.objects.size(), ElapsedMs(total_start, total_done), nHiddenSkipped,
+                     nCacheHits, nBrpEmpty, nBrpExtreme, nShapeNull, nConversionFailed, nInvalid);
+        std::fflush(stderr);
     }
 
     if (nConverted == 0 && !doc.objects.empty()) {
         std::fprintf(stderr,
-                     "FCStd conversion summary for %s: objects=%zu empty=%d extreme=%d null_shapes=%d conversion_failed=%d invalid=%d\n",
-                     path.c_str(), doc.objects.size(), nBrpEmpty, nBrpExtreme,
-                     nShapeNull, nConversionFailed, nInvalid);
+                     "FCStd conversion summary for %s: objects=%zu hidden=%d empty=%d extreme=%d null_shapes=%d conversion_failed=%d invalid=%d\n",
+                     path.c_str(), doc.objects.size(), nHiddenSkipped, nBrpEmpty,
+                     nBrpExtreme, nShapeNull, nConversionFailed, nInvalid);
     }
 
     return nConverted;
