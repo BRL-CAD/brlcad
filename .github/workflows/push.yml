@@ -409,7 +409,7 @@ jobs:
         if: steps.build_parallel.outcome == 'failure'
         shell: cmd
         run: |
-          cmake --build build_winstd --config Release mged
+          cmake --build build_winstd --config Release --target mged
 
       - name: Check
         shell: cmd
