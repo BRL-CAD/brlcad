@@ -1,0 +1,104 @@
+FreeCAD GCV plugin improvement targets
+======================================
+
+Current measured baseline
+-------------------------
+
+Sample: (https://github.com/starseeker/open2open)
+
+  open2open/phasma-mech-assembly/FreeCAD native models/Simple structure w.  panels.FCStd
+
+Recent full import result:
+  .build/bin/gcv -i <sample.FCStd> -o /tmp/brlcad_freecad_simple_optimized.g
+  real 70.64s
+  output size 276M
+
+With GCV_FREECAD_TIMING=1:
+  importer total_ms=47456
+  wall real=69.89s
+  converted=196
+  hidden=107
+  cached=64
+  conversion_failed=2
+
+This means roughly 22s of the wall time is outside the measured FreeCAD
+reader/converter path, most likely in downstream .g serialization.
+
+Completed performance fix
+-------------------------
+
+OCCTToON_Brep loop-gap repair previously rebuilt a pcurve reference-count map
+inside every loop by scanning all trims created so far.  On large BReps this was
+effectively O(loop count * trim count).  It has been replaced with an incremental
+trim_curve_refcount map.
+
+Measured example:
+  b_ClydeSpace_30Wh_battery_pack__simplified__001_
+  before: convert_ms=14486, pass3_loop_gap_us=13812995
+  after:  convert_ms=689,   pass3_loop_gap_us=18837
+
+Next targets
+------------
+
+1. Attribute the post-import .g writing cost.
+
+   The timed importer reports about 47.5s, while the complete gcv run takes
+   about 69.9s.  Add or reuse timing around the GCV/database output path to
+   identify whether the remaining ~22s is object insertion, directory updates,
+   final db close/write, or BRep serialization.
+
+2. Investigate large FeaturePython BRep entries.
+
+   The largest remaining successful object cost in the sample is:
+     b_CubeADCS_Gen_2_001_
+       FCStd entry size: 62631280 bytes
+       faces: 28576
+       read_ms=1122
+       brep_read_ms=2500
+       convert_ms=7659
+       add_ms=289
+
+   Similar large objects dominate the importer time.  The immediate work is to
+   profile these individually and decide whether the cost is unavoidable geometry
+   size or whether more caching/instancing is possible.
+
+3. Test file-backed OCCT BRep reads for large BRP payloads.
+
+   Current path reads BRP content from the FCStd zip into memory and then uses an
+   in-memory stream for BRepTools::Read.  For tens-of-megabytes BRP payloads,
+   test extracting to a temporary file and using the filename-based OCCT read
+   API.  Compare read_ms and brep_read_ms on CubeADCS-scale entries.
+
+4. Avoid converting repeated assembly instances as full standalone BReps.
+
+   Exact BRP text caching helps when the payloads are byte-identical, but many
+   assembly repetitions differ by placement or generated payload.  If FreeCAD
+   object placement/link metadata can be mapped to BRL-CAD comb instances with
+   transforms, this would reduce both conversion time and .g size.  This is
+   likely the largest architectural improvement.
+
+5. Handle or cheaply reject expensive conversion failures.
+
+   In the sample, two large antenna mechanism objects failed after expensive
+   parse/conversion work:
+     b_Phasma_Primus_Antenna_Deployment_Mechanism__001_001
+       read_ms=708, brep_read_ms=1456, convert_ms=3192
+     b_Phasma_Primus_Antenna_Deployment_Mechanism__001_002
+       read_ms=721, brep_read_ms=1488, convert_ms=3214
+
+   Determine why OCCTToON_Brep returns invalid for these and either fix the
+   conversion or add a cheaper preflight/skip path if they are out of scope.
+
+6. Further split remaining Pass 3 face conversion time if needed.
+
+   After the loop-gap refcount fix, pass3_loop_gap_us is no longer dominant.
+   Remaining Pass 3 time is mostly surface conversion, pcurve conversion, and
+   miscellaneous face/loop/trim construction.  If #1-#5 are exhausted, add finer
+   counters around NewFace/NewLoop/NewTrim, wire traversal, pcurve domain
+   remapping, and surface cache hits/misses.
+
+7. Keep diagnostics gated.
+
+   GCV_FREECAD_TIMING is the current opt-in switch for detailed importer and
+   OCCTToON_Brep timings.  Any additional instrumentation should stay behind this
+   environment variable, especially if placed inside face/edge/trim loops.
