@@ -148,6 +148,9 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies");
     curiX++;
+    img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "File Size", TO_BOLD);
+    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("fileSize"));
+    curiX++;
     img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions", TO_BOLD);
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "x: " + info.getFormattedInfo("dimX"));
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "y: " + info.getFormattedInfo("dimY"));

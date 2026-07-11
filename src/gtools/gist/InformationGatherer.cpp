@@ -292,6 +292,33 @@ formatDouble(double d)
     return str;
 }
 
+static std::string
+formatFileSize(long long bytes)
+{
+    if (bytes < 0) {
+	return "N/A";
+    }
+
+    static const char *units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
+    double value = static_cast<double>(bytes);
+    size_t unit = 0;
+
+    while (value >= 1024.0 && unit < (sizeof(units) / sizeof(units[0])) - 1) {
+	value /= 1024.0;
+	unit++;
+    }
+
+    std::stringstream ss;
+    if (unit == 0) {
+	ss << bytes;
+    } else {
+	ss << std::fixed << std::setprecision(value >= 100.0 ? 0 : 1) << value;
+    }
+    ss << " " << units[unit];
+
+    return ss.str();
+}
+
 boundingBox
 InformationGatherer::getBBData(std::string component)
 {
@@ -715,12 +742,19 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     }
 
     //Gather last date updated
-    struct stat info;
-    stat(opt->getInFile().c_str(), &info);
-    std::time_t update = info.st_mtime;
-    tm* ltm = localtime(&update);
-    std::string date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
-    infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
+    struct stat info = {};
+    std::string date;
+    tm* ltm = NULL;
+    if (stat(opt->getInFile().c_str(), &info) == 0) {
+	std::time_t update = info.st_mtime;
+	ltm = localtime(&update);
+	date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
+	infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
+	infoMap["fileSize"] = formatFileSize(static_cast<long long>(info.st_size));
+    } else {
+	infoMap["lastUpdate"] = "N/A";
+	infoMap["fileSize"] = "N/A";
+    }
 
     //Gather source file
     std::string file = opt->getInFile();
