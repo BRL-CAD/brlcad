@@ -4,7 +4,10 @@ if(HIDE_INTERNAL_SYMBOLS)
 endif(HIDE_INTERNAL_SYMBOLS)
 brlcad_add_test(NAME bottess_test COMMAND test_bottess)
 
-cmakefiles(CMakeLists.txt)
+brlcad_addexec(test_gcv_context test_context.c libgcv NO_INSTALL)
+brlcad_add_test(NAME gcv_context_test COMMAND test_gcv_context)
+
+cmakefiles(CMakeLists.txt test_context.c)
 
 # Local Variables:
 # tab-width: 8
