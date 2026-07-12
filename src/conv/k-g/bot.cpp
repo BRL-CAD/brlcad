@@ -67,7 +67,7 @@ static int add_normal
     // normal already there?
     for (; ret < static_cast<int>(bot.num_normals); ++ret) {
 	tmp[0] = bot.normals[ret * 3];
-    tmp[1] = bot.normals[ret * 3 + 1];
+	tmp[1] = bot.normals[ret * 3 + 1];
 	tmp[2] = bot.normals[ret * 3 + 2];
 
 	if (VNEAR_EQUAL(normal, tmp, VUNITIZE_TOL))
