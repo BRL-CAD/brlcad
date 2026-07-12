@@ -452,11 +452,14 @@ gcv_context_destroy(struct gcv_context *context)
     }
     bu_ptbl_free(context->i->handles);
     BU_PUT(context->i->handles, struct bu_ptbl);
-    BU_PUT(context->i, struct gcv_context_internal);
+    context->i->handles = NULL;
 
-    // TODO - clean up the inmem db so db_close will
-    // do the job correctly here...
     bu_avs_free(&context->messages);
+    db_close(context->dbip);
+    context->dbip = NULL;
+
+    BU_PUT(context->i, struct gcv_context_internal);
+    context->i = NULL;
 }
 
 
