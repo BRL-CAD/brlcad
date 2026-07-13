@@ -109,7 +109,7 @@ dpix_read(FILE *fp, size_t width, size_t height)
 	return NULL;
     }
 
-    bif = icv_image_create(width, height, ICV_COLOR_SPACE_RGB);
+    bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
     if (!bif)
 	return NULL;
 
@@ -227,7 +227,7 @@ dpix_read_mem(const unsigned char *buffer, size_t size, size_t width, size_t hei
 	return NULL;
     }
 
-    bif = icv_image_create(width, height, ICV_COLOR_SPACE_RGB);
+    bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
     if (!bif)
 	return NULL;
 

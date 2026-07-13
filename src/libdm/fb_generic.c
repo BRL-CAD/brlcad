@@ -811,7 +811,7 @@ fb_read_icv(struct fb *ifp, icv_image_t *img_in, int file_xoff_in, int file_yoff
     int scr_height;
 
     /* Make a copy so we can edit if the options require */
-    icv_image_t *img = icv_image_create(img_in->width, img_in->height, img_in->color_space);
+    icv_image_t *img = icv_create(img_in->width, img_in->height, img_in->color_space);
     if (!img) {
 	if (result)
 	    bu_vls_printf(result, "failed to create image copy");
@@ -968,7 +968,7 @@ fb_read_icv(struct fb *ifp, icv_image_t *img_in, int file_xoff_in, int file_yoff
 icv_image_t *
 fb_write_icv(struct fb *ifp, int UNUSED(scr_xoff), int UNUSED(scr_yoff), int UNUSED(width), int UNUSED(height))
 {
-    icv_image_t *fbimg = icv_image_create(fb_getwidth(ifp), fb_getheight(ifp), ICV_COLOR_SPACE_RGB);
+    icv_image_t *fbimg = icv_create(fb_getwidth(ifp), fb_getheight(ifp), ICV_COLOR_SPACE_RGB);
     if (!fbimg)
 	return NULL;
 

@@ -28,9 +28,10 @@
 
 __BEGIN_DECLS
 
-/* Internal image allocation helpers.  icv_image_create is the public
- * color-space constructor; these preserve exact channel layouts for internal
- * operations that must not silently drop alpha data. */
+/* Internal image allocation helpers.  icv_create is the public
+ * color-space constructor; these preserve exact channel layouts for
+ * internal operations that must not silently drop alpha data.
+ */
 extern icv_image_t *icv_create_with_channels(size_t width, size_t height, ICV_COLOR_SPACE color_space, size_t channels);
 extern icv_image_t *icv_clone(const icv_image_t *src);
 extern icv_image_t *icv_image_for_write(const icv_image_t *src, ICV_COLOR_SPACE color_space, size_t channels);

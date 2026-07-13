@@ -16,7 +16,7 @@ LIBICV To Do List
 
 * Support dynamically loading formats (e.g., define a plug-in API).
 
-* icv_image_t *icv_image_create(width, height)
+* icv_image_t *icv_create(width, height)
   icv_image_t *icv_clone(image)
   int icv_destroy(image)
   icv_image_t *icv_subimage(image, x, y, w, h)
