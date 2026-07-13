@@ -73,7 +73,7 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
     int textHeight = 3 * height / 8;
     int textYOffset = (height - textHeight) / 2;
     constexpr double fileSizeSuffixFontScale = 0.65;
-    const std::string fileSizeSuffix = " [" + info.getInfo("fileSize") + "]";
+    const std::string fileSizeSuffix = " [" + info.getInfo("fileSize") + "] ";
     std::vector<std::string> text;
     std::vector<std::string> text2;
 
