@@ -37,6 +37,10 @@ package require Itcl
 package require hv3
 package require cadwidgets::Accordion 1.0
 
+if {[llength [info commands manpage_search_terms]] == 0} {
+    source [file join [bu_dir data] "tclscripts" "helpcomm.tcl"]
+}
+
 ::itcl::class ::ManBrowser {
     inherit iwidgets::Dialog
 
@@ -51,9 +55,11 @@ package require cadwidgets::Accordion 1.0
 	method setManType	{}
 	method loadPage		{pageName}
 	method select		{pageName}
+	method search		{query {mode full}}
     }
     protected {
 	method getPages		{section}
+	method refreshPageList	{}
 	method accordianCallback {_item _state}
     }
 
@@ -62,6 +68,8 @@ package require cadwidgets::Accordion 1.0
 	common pages
 	variable current_section
 	variable mAccordianCallbackActive 0
+	variable search_query ""
+	variable search_mode full
     }
 
     constructor {args} {}
@@ -142,6 +150,69 @@ package require cadwidgets::Accordion 1.0
     return $result
 }
 
+##
+# Filter/rank the current table-of-contents list using the search box.
+#
+::itcl::body ManBrowser::refreshPageList {} {
+    if {!$itk_option(-useToC)} {
+	return
+    }
+    if {![info exists pages($current_section)]} {
+	return
+    }
+
+    set toc $itk_component(manpagelistbox)
+    $toc selection clear 0 [$toc index end]
+    $toc delete 0 [$toc size]
+
+    set query [string trim $search_query]
+    if {$query == ""} {
+	foreach pg $pages($current_section) {
+	    $toc insert end $pg
+	}
+	return
+    }
+
+    set ranked {}
+    foreach pg $pages($current_section) {
+	set pagepath [file join $path $current_section $pg.html]
+	set section_label [manpage_search_section_label $current_section]
+	set record [manpage_search_index_file $pg $section_label $pagepath html]
+	if {$record == ""} {
+	    continue
+	}
+	set score [manpage_search_rank_record $query $search_mode $record]
+	if {$score >= 0} {
+	    lappend ranked [list $score $pg]
+	}
+    }
+
+    foreach result [lsort -decreasing -integer -index 0 $ranked] {
+	$toc insert end [lindex $result 1]
+    }
+}
+
+##
+# Programmatic search entry point used by MGED menu items.
+#
+::itcl::body ManBrowser::search {query {mode full}} {
+    set search_query $query
+    if {$mode == "short"} {
+	set search_mode short
+    } else {
+	set search_mode full
+    }
+    refreshPageList
+
+    set toc $itk_component(manpagelistbox)
+    if {[$toc size] > 0} {
+	$toc selection set 0
+	$toc activate 0
+	$toc see 0
+	loadPage [$toc get 0]
+    }
+}
+
 # ------------------------------------------------------------
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
@@ -194,8 +265,36 @@ package require cadwidgets::Accordion 1.0
     # Table of Contents
     if {$itk_option(-useToC)} {
 
+	itk_component add toc_panel {
+	    ::tk::frame $parent.toc_panel
+	} {}
+
+	itk_component add search_frame {
+	    ::tk::frame $itk_component(toc_panel).search_frame
+	} {}
+	label $itk_component(search_frame).label -text "Search:"
+	entry $itk_component(search_frame).entry \
+	    -textvariable [::itcl::scope search_query] \
+	    -width 16
+	checkbutton $itk_component(search_frame).full \
+	    -text "Full text" \
+	    -variable [::itcl::scope search_mode] \
+	    -onvalue full \
+	    -offvalue short \
+	    -command [::itcl::code $this refreshPageList]
+	button $itk_component(search_frame).clear \
+	    -text "Clear" \
+	    -command [::itcl::code $this search "" short]
+	pack $itk_component(search_frame).label -side left
+	pack $itk_component(search_frame).entry -side left -fill x -expand yes
+	pack $itk_component(search_frame).full -side left
+	pack $itk_component(search_frame).clear -side left
+	bind $itk_component(search_frame).entry <KeyRelease> [::itcl::code $this refreshPageList]
+	bind $itk_component(search_frame).entry <Return> [::itcl::code $this refreshPageList]
+	pack $itk_component(search_frame) -side top -fill x
+
 	itk_component add treeAccordian {
-	    ::cadwidgets::Accordion $parent.treeAccordian
+	    ::cadwidgets::Accordion $itk_component(toc_panel).treeAccordian
 	} {}
 	$itk_component(treeAccordian) addTogglePanelCallback [::itcl::code $this accordianCallback]
 	$itk_component(treeAccordian) insert 0 "MGED (mann)"
@@ -221,7 +320,8 @@ package require cadwidgets::Accordion 1.0
 	if {$current_section == "man5"} {$itk_component(treeAccordian) togglePanel "Conventions (man5)"}
 	if {$current_section == "mann"} {$itk_component(treeAccordian) togglePanel "MGED (mann)"}
 
-	pack $itk_component(treeAccordian) -side left -expand no -fill y
+	pack $itk_component(treeAccordian) -side top -expand yes -fill both
+	pack $itk_component(toc_panel) -side left -expand no -fill y
     }
 
     # Main HTML window
@@ -296,13 +396,7 @@ package require cadwidgets::Accordion 1.0
 
     set childsite [$itk_component(treeAccordian) itemChildsite $_item]
 
-    $itk_component(manpagelistbox) selection clear 0 [$itk_component(manpagelistbox) index end]
-    $itk_component(manpagelistbox) delete 0 [$itk_component(manpagelistbox) size]
-    if {[info exists pages]} {
-	foreach pg $pages($current_section) {
-	    $itk_component(manpagelistbox) insert end $pg
-	}
-    }
+    refreshPageList
     grid $itk_component(manpagelistbox) $itk_component(toc_scrollbar) -sticky nsew -in $childsite
 
     grid columnconfigure $childsite 0 -weight 1
