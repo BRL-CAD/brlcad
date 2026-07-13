@@ -54,13 +54,13 @@ jt_read(struct gcv_context *context, const struct gcv_opts *options,
 	}
     }
 
+    struct rt_wdb *wdb = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    mk_id_units(wdb, "Conversion from JT format", "mm");
     if (meshes.empty()) {
-	bu_log("JT import failed: %s: no supported JT 8 unquantized Tri-Strip geometry found\n", source_path);
+	bu_log("JT import failed: %s: no supported renderable mesh geometry found\n", source_path);
 	return 0;
     }
 
-    struct rt_wdb *wdb = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
-    mk_id_units(wdb, "Conversion from JT format", "mm");
     struct wmember all = WMEMBER_INIT_ZERO;
     BU_LIST_INIT(&all.l);
     for (size_t i = 0; i < meshes.size(); ++i) {
