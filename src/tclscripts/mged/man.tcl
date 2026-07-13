@@ -21,7 +21,7 @@
 
 encoding system utf-8
 
-proc man {{cmdname {}}} {
+proc man {args} {
     global mged_console_mode
     global tcl_platform
     if {![info exists mged_console_mode]} {
@@ -33,26 +33,63 @@ proc man {{cmdname {}}} {
 	    ManBrowser .mgedMan -useToC 1 -defaultDir n -parentName MGED
 	}
 
-	if {$cmdname != {} && ![.mgedMan select $cmdname]} {
-	    error "couldn't find manual page \"$cmdname\""
+	set search_mode ""
+	set query {}
+	set page_args {}
+	for {set i 0} {$i < [llength $args]} {incr i} {
+	    set arg [lindex $args $i]
+	    switch -- $arg {
+		-k {
+		    set search_mode short
+		    if {$i + 1 < [llength $args]} {
+			incr i
+			lappend query [lindex $args $i]
+		    }
+		}
+		-K {
+		    set search_mode full
+		    if {$i + 1 < [llength $args]} {
+			incr i
+			lappend query [lindex $args $i]
+		    }
+		}
+		default {
+		    if {$search_mode != ""} {
+			lappend query $arg
+		    } else {
+			lappend page_args $arg
+		    }
+		}
+	    }
+	}
+
+	if {$search_mode != ""} {
+	    if {[llength $query] == 0} {
+		error "Usage: man ?-k|-K? keyword"
+	    }
+	    .mgedMan search [join $query " "] $search_mode
+	} elseif {[llength $page_args] == 1 && ![.mgedMan select [lindex $page_args 0]]} {
+	    error "couldn't find manual page \"[lindex $page_args 0]\""
+	} elseif {[llength $page_args] > 1} {
+	    error "Usage: man ?command?"
 	}
 	.mgedMan activate
     }
     if {$mged_console_mode == "classic" || $mged_console_mode == "batch"} {
-	if {$cmdname != {}} {
+	if {[llength $args] != 0} {
 	    set exe_ext ""
 	    if {$::tcl_platform(platform) == "windows"} {
 		set exe_ext ".exe"
 	    }
-	    set cmd [list [file join [bu_dir bin] brlman$exe_ext]]
-	    exec $cmd $cmdname
+	    set cmd [file join [bu_dir bin] brlman$exe_ext]
+	    exec $cmd {*}$args
 	}
     }
 }
 
-proc brlman {{cmdname {}}} {
+proc brlman {args} {
     # simple (intentionally undocumented) pass-through alias
-    man $cmdname
+    man {*}$args
 }
 
 # Local Variables:
