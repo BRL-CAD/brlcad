@@ -35,6 +35,7 @@ constexpr size_t LEGACY_ELEMENT_HEADER_LENGTH = 4 + GUID_LENGTH + 1;
 constexpr size_t OBJECT_ID_LENGTH = 4;
 constexpr size_t MAX_TOC_ENTRIES = 1000000;
 constexpr size_t MAX_PACKET_VALUES = 100000000;
+constexpr size_t MAX_CONTEXT_ENTRIES = 8192;
 
 class Reader {
   public:
@@ -562,6 +563,11 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
     std::function<bool(size_t, unsigned, int32_t, std::vector<int32_t> &, size_t &)> decode;
     decode = [&](size_t packet_offset, unsigned depth, int32_t inherited_count,
 	std::vector<int32_t> &output, size_t &consumed) {
+	output.clear();
+	if (depth > max_chopper_depth) {
+	    error = "JT Int32 CDP2 recursion limit exceeded";
+	    return false;
+	}
 	if (packet_offset > bytes_.size()) {
 	    error = "JT Int32 CDP2 offset is outside the file";
 	    return false;
@@ -598,10 +604,10 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 		error = "invalid JT Int32 CDP2 Bitlength code text size";
 		return false;
 	    }
-	    const size_t packed_byte_count = ((static_cast<size_t>(bit_count) + 31) / 32) * sizeof(uint32_t);
-	    const size_t byte_count = header_.major_version >= 10 && packed_byte_count <= bytes_.size() - reader.offset() ?
-		packed_byte_count : (static_cast<size_t>(bit_count) + 7) / 8;
-	    const bool revised_bitlength = header_.major_version >= 10 && byte_count == packed_byte_count;
+	    const bool revised_bitlength = header_.major_version >= 10;
+	    const size_t byte_count = revised_bitlength ?
+		((static_cast<size_t>(bit_count) + 31) / 32) * sizeof(uint32_t) :
+		(static_cast<size_t>(bit_count) + 7) / 8;
 	    if (byte_count > bytes_.size() - reader.offset()) {
 		error = "truncated JT Int32 CDP2 Bitlength code text";
 		return false;
@@ -617,14 +623,10 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    const bool decoded = revised_bitlength ?
 		decode_bitlength2(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error) :
 		decode_bitlength(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error);
-	    if (!decoded) {
-		if (inherited_count < 0) return false;
-		error.clear();
-		output.assign(static_cast<size_t>(count), 4);
-	    }
+	    if (!decoded) return false;
 	} else if (codec == 3) {
 	    int32_t bit_count = 0;
-	    if (!reader.i32(bit_count) || bit_count < 16) {
+	    if (!reader.i32(bit_count) || bit_count < 0) {
 		error = "invalid JT Int32 CDP2 Arithmetic code text size";
 		return false;
 	    }
@@ -654,7 +656,8 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 		return false;
 	    }
 	    const int32_t minimum = static_cast<int32_t>(minimum_bits);
-	    if (entry_count == 0 || occurrence_bits == 0 || occurrence_bits > 16 || value_bits > 32) {
+	    if (entry_count == 0 || entry_count > MAX_CONTEXT_ENTRIES || occurrence_bits == 0 ||
+		occurrence_bits > 32 || value_bits > 32) {
 		error = "invalid JT Int32 CDP2 probability context";
 		return false;
 	    }
@@ -667,7 +670,7 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 		uint32_t occurrence = 0;
 		uint32_t associated = 0;
 		if (!read_bits(1, escape) || !read_bits(occurrence_bits, occurrence) ||
-		    !read_bits(value_bits, associated) || occurrence == 0 || total + occurrence > 65535) {
+		    !read_bits(value_bits, associated) || occurrence == 0 || occurrence > 65535 - total) {
 		    error = "invalid JT Int32 CDP2 probability entry";
 		    return false;
 		}
@@ -689,10 +692,23 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    if (oob_count > 0) {
 		if (!decode(oob_reader.offset(), depth + 1, oob_count, oob_values, oob_size)) return false;
 	    }
+	    if (bit_count == 0) {
+		if (oob_values.size() != static_cast<size_t>(count)) {
+		    error = "JT Arithmetic CODEC with empty code text does not contain all values out-of-band";
+		    return false;
+		}
+		output = std::move(oob_values);
+		consumed = oob_reader.offset() + oob_size - packet_offset;
+		return true;
+	    }
 
 	    size_t code_bit = 0;
+	    bool code_text_exhausted = false;
 	    const auto next_code_bit = [&]() -> uint16_t {
-		if (code_bit >= static_cast<size_t>(bit_count)) return 0;
+		if (code_bit >= static_cast<size_t>(bit_count)) {
+		    code_text_exhausted = true;
+		    return 0;
+		}
 		const size_t byte = code_bit / 8;
 		const size_t source_byte = header_.little_endian ? (byte & ~size_t(3)) + (3 - byte % 4) : byte;
 		const uint16_t bit = (code_text[source_byte] >> (7 - code_bit % 8)) & 1u;
@@ -738,6 +754,14 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 		    high = static_cast<uint16_t>((high << 1) | 1);
 		    code = static_cast<uint16_t>((code << 1) | next_code_bit());
 		}
+	    }
+	    if (code_text_exhausted) {
+		error = "JT Arithmetic CODEC exhausted its code text";
+		return false;
+	    }
+	    if (oob_index != oob_values.size()) {
+		error = "JT Arithmetic CODEC did not consume all out-of-band values";
+		return false;
 	    }
 	    consumed = oob_reader.offset() + oob_size - packet_offset;
 	    return true;
@@ -896,35 +920,37 @@ File::topological_mesh(const Element &element, Mesh &mesh, std::string &error) c
 	for (int32_t value : lower) masks.push_back(static_cast<uint32_t>(value));
     }
     std::vector<int32_t> upper_masks;
-    if (!symbols.face_attribute_masks[7].empty()) {
-	if (!packet(Predictor::None, upper_masks) ||
-	    upper_masks.size() != symbols.face_attribute_masks[7].size()) {
-	    error = "JT topological face attribute mask streams have inconsistent lengths";
+    if (!packet(Predictor::None, upper_masks) ||
+	upper_masks.size() != symbols.face_attribute_masks[7].size()) {
+	error = "JT topological face attribute mask streams have inconsistent lengths";
+	return false;
+    }
+    for (size_t i = 0; i < upper_masks.size(); ++i)
+	symbols.face_attribute_masks[7][i] |= static_cast<uint64_t>(static_cast<uint32_t>(upper_masks[i])) << 32;
+    /* Unlike the surrounding fields, the high-degree masks are an ordinary
+     * VecU32, not an Int32 CDP.  Omitting its count and payload shifts both
+     * split streams and makes every genuine split appear to lack symbols. */
+    Reader high_mask_reader(bytes_, header_.little_endian, offset);
+    int32_t high_mask_count = 0;
+    if (!high_mask_reader.i32(high_mask_count) || high_mask_count < 0 ||
+	static_cast<size_t>(high_mask_count) > MAX_PACKET_VALUES) {
+	error = "invalid JT high-degree face attribute mask count";
+	return false;
+    }
+    symbols.high_degree_attribute_masks.reserve(static_cast<size_t>(high_mask_count));
+    for (int32_t i = 0; i < high_mask_count; ++i) {
+	uint32_t mask = 0;
+	if (!high_mask_reader.u32(mask)) {
+	    error = "truncated JT high-degree face attribute masks";
 	    return false;
 	}
-	for (size_t i = 0; i < upper_masks.size(); ++i)
-	    symbols.face_attribute_masks[7][i] |= static_cast<uint64_t>(static_cast<uint32_t>(upper_masks[i])) << 32;
+	symbols.high_degree_attribute_masks.push_back(mask);
     }
+    offset = high_mask_reader.offset();
     if (!packet(Predictor::Lag1, symbols.split_face_offsets) ||
 	!packet(Predictor::None, symbols.split_face_positions)) return false;
 
-    const size_t element_end = static_cast<size_t>(element.data_offset + element.data_length);
-    size_t vertex_offset = offset + sizeof(uint32_t);
-    for (size_t candidate = offset; candidate + sizeof(uint64_t) + 4 <= element_end; ++candidate) {
-	Reader candidate_reader(bytes_, header_.little_endian, candidate);
-	uint64_t candidate_bindings = 0;
-	uint8_t candidate_quantization[4] = {};
-	if (!candidate_reader.u64(candidate_bindings)) break;
-	bool quantization_read = true;
-	for (uint8_t &value : candidate_quantization) quantization_read &= candidate_reader.u8(value);
-	if (quantization_read && candidate_bindings == outer_bindings &&
-	    std::all_of(std::begin(candidate_quantization), std::end(candidate_quantization),
-		[](uint8_t value) { return value <= 24; })) {
-	    vertex_offset = candidate;
-	    break;
-	}
-    }
-    Reader vertex_reader(bytes_, header_.little_endian, vertex_offset);
+    Reader vertex_reader(bytes_, header_.little_endian, offset + sizeof(uint32_t));
     uint64_t bindings = 0;
     uint8_t quantization[4] = {};
     int32_t topological_vertex_count = 0;
@@ -971,25 +997,8 @@ File::topological_mesh(const Element &element, Mesh &mesh, std::string &error) c
 	}
     }
     TopologyMesh topology;
-    if (decode_topology(symbols, topology, error)) {
-	mesh.faces.assign(topology.triangles.begin(), topology.triangles.end());
-    } else {
-	/* Coordinate records are emitted in topology traversal order.  Retain a
-	 * renderable approximation when a writer uses topology symbols newer than
-	 * the decoder by grouping each visited triple into an independent facet. */
-	error.clear();
-	for (int32_t vertex = 0; vertex + 2 < coordinate_count; vertex += 3) {
-	    const double *a = &mesh.vertices[static_cast<size_t>(vertex) * 3];
-	    const double *b = &mesh.vertices[static_cast<size_t>(vertex + 1) * 3];
-	    const double *c = &mesh.vertices[static_cast<size_t>(vertex + 2) * 3];
-	    const double ab[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
-	    const double ac[3] = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
-	    const double cross[3] = {ab[1] * ac[2] - ab[2] * ac[1],
-		ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0]};
-	    if (cross[0] != 0.0 || cross[1] != 0.0 || cross[2] != 0.0)
-		mesh.faces.insert(mesh.faces.end(), {vertex, vertex + 1, vertex + 2});
-	}
-    }
+    if (!decode_topology(symbols, topology, error)) return false;
+    mesh.faces.assign(topology.triangles.begin(), topology.triangles.end());
     for (int index : mesh.faces) {
 	if (index < 0 || index >= coordinate_count) {
 	    error = "JT topology references a coordinate outside the vertex array";

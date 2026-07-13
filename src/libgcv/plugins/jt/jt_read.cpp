@@ -35,7 +35,9 @@ jt_read(struct gcv_context *context, const struct gcv_opts *options,
     }
 
     std::vector<jt::Mesh> meshes;
+    size_t toc_index = 0;
     for (const jt::TocEntry &entry : file.toc()) {
+	++toc_index;
 	if (entry.type() < 6 || entry.type() > 16) continue;
 	jt::Segment segment;
 	std::vector<jt::Element> elements;
@@ -50,6 +52,7 @@ jt_read(struct gcv_context *context, const struct gcv_opts *options,
 		file.topological_mesh(element, mesh, error) : file.legacy_mesh(element, mesh, error);
 	    if (!imported) {
 		if (file.is_topological_mesh(element)) {
+		    bu_log("JT topological mesh in TOC entry %zu skipped: %s\n", toc_index - 1, error.c_str());
 		    continue;
 		}
 		bu_log("JT import failed: %s: %s\n", source_path, error.c_str());
