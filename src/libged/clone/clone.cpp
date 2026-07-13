@@ -241,7 +241,7 @@ clone_reserve_name(struct db_i *dbip, const std::string& candidate,
 	return db_lookup(dbip, candidate.c_str(), LOOKUP_QUIET)
 	    == RT_DIR_NULL;
 
-	if (!cache->names.insert(candidate).second)
+    if (!cache->names.insert(candidate).second)
 	return false;
 
     return db_lookup(dbip, candidate.c_str(), LOOKUP_QUIET) == RT_DIR_NULL;
@@ -963,10 +963,10 @@ copy_regions_node(struct db_i *dbip, const std::string &obj_name,
     if (wdbp)
 	comb->region_id = wdbp->wdb_item_default++;
 
-	std::string new_name = clone_next_name(dbip, obj_name, state->incr,
-					       (int)state->updpos,
-					       state->subs_src, state->subs_dst,
-					       state->name_cachep);
+    std::string new_name = clone_next_name(dbip, obj_name, state->incr,
+					   (int)state->updpos,
+					   state->subs_src, state->subs_dst,
+					   state->name_cachep);
     state->names[obj_name] = { new_name };
 
     int minor = dp->d_minor_type;
