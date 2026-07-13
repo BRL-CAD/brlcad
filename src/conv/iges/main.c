@@ -321,6 +321,18 @@ main(int argc, char *argv [])
 	    Convtree();	/* Convert Boolean Trees */
 
 	    Convassem();	/* Convert solid assemblies */
+
+	    /* Also import any Trimmed Parametric Surfaces (IGES 144) present.
+	     * These are how faithful boundary-rep geometry (e.g. g-iges brep
+	     * output) is expressed, so importing them here lets such files
+	     * round-trip without requiring the -t option. */
+	    for (i = 0; (size_t)i < totentities; i++) {
+		if (dir[i]->type == 144) {
+		    Do_subfigs();	/* Look for Singular Subfigure Instances */
+		    Convtrimsurfs(vlfree);
+		    break;
+		}
+	    }
 	}
 
 	Free_dir();

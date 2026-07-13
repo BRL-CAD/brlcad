@@ -29,7 +29,11 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #include "./iges_brep.h"
+#include "./iges_surf.h"
 
+
+/* evaluate a cubic parametric-spline coefficient set (from splinef.c) */
+extern fastf_t splinef(fastf_t c[4], fastf_t s);
 
 /* translations to get knot vectors in first quadrant */
 static fastf_t u_translation = 0.0;
@@ -313,6 +317,468 @@ Get_cnurb(size_t entity_no)
 }
 
 
+/* arc-sinh, matching getcurve.c */
+#define IGES_ARCSINH(a) log((a) + sqrt((a)*(a) + 1.0))
+
+/* number of samples used per conic quadrant / per spline segment when
+ * approximating a curved trimming entity by a degree-1 polyline
+ */
+#define UV_SAMPLES_PER_SEG 8
+
+/*
+ * Build an order-2 (degree-1) parameter-space (u, v) edge_g_cnurb whose
+ * control points ARE the supplied sample points (a polyline), using a
+ * clamped uniform knot vector.  The caller supplies "num_pts" (u, v)
+ * samples in the "uv" array (packed u0, v0, u1, v1, ...).  The
+ * u_translation/v_translation shifts are NOT applied here (the sampling
+ * routines apply them, mirroring the existing 100/110 cases).
+ *
+ * Returns a newly allocated cnurb, or NULL on failure.
+ */
+static struct edge_g_cnurb *
+Make_uv_polyline_cnurb(const fastf_t *uv, int num_pts)
+{
+    struct edge_g_cnurb *crv;
+    int pt_type;
+    int n_knots;
+    int i;
+
+    if (!uv || num_pts < 2) {
+	bu_log("Make_uv_polyline_cnurb: need at least 2 points (got %d)\n", num_pts);
+	return (struct edge_g_cnurb *)NULL;
+    }
+
+    pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);
+
+    /* order-2 polyline: knot vector length = num_pts + order */
+    n_knots = num_pts + 2;
+    crv = nmg_nurb_new_cnurb(2, n_knots, num_pts, pt_type);
+    if (!crv)
+	return (struct edge_g_cnurb *)NULL;
+
+    /* clamped uniform knot vector: 0, 0, 1, 2, ..., num_pts-1, num_pts-1 */
+    crv->k.knots[0] = 0.0;
+    for (i = 1; i <= num_pts; i++)
+	crv->k.knots[i] = (fastf_t)(i - 1);
+    crv->k.knots[num_pts + 1] = (fastf_t)(num_pts - 1);
+
+    /* control points are the samples themselves (2 coords: u, v) */
+    for (i = 0; i < num_pts; i++) {
+	crv->ctl_points[i*2] = uv[i*2];
+	crv->ctl_points[i*2 + 1] = uv[i*2 + 1];
+    }
+
+    return crv;
+}
+
+
+/*
+ * Read and evaluate an IGES Conic Arc (type 104) or Parametric Spline
+ * Curve (type 112) as a parameter-space trimming curve, returning an
+ * order-2 (degree-1) UV polyline edge_g_cnurb.  The entity's x, y
+ * coordinates ARE the u, v parameters (z is ignored); u_translation and
+ * v_translation are applied to each sample and the entity's rotation
+ * matrix is applied, matching the existing 100/110/126 cases.
+ *
+ * Returns a newly allocated cnurb, or NULL on any parse failure or
+ * unhandled sub-form (graceful skip).
+ */
+static struct edge_g_cnurb *
+Get_uv_curve(size_t entity_no)
+{
+    struct edge_g_cnurb *crv = (struct edge_g_cnurb *)NULL;
+    fastf_t *uv = (fastf_t *)NULL;
+    int num_pts = 0;
+    int entity_type = 0;
+    int i, j;
+    double pi;
+
+    pi = atan2(0.0, -1.0);
+
+    if (dir[entity_no]->param <= pstart) {
+	bu_log("Get_uv_curve: Illegal parameter pointer for entity D%07d (%s)\n" ,
+	       dir[entity_no]->direct, dir[entity_no]->name);
+	return (struct edge_g_cnurb *)NULL;
+    }
+
+    Readrec(dir[entity_no]->param);
+    Readint(&entity_type, "");
+
+    if (entity_type == 112) {
+	/* parametric spline curve */
+	struct spline *splroot;
+	struct segment *seg, *seg1;
+	double a;
+	int seg_no;
+	int idx;
+
+	Readint(&i, "");	/* spline type */
+	Readint(&i, "");	/* continuity */
+
+	BU_ALLOC(splroot, struct spline);
+	splroot->start = NULL;
+
+	Readint(&splroot->ndim, "");	/* 2->planar, 3->3d */
+	Readint(&splroot->nsegs, "");	/* number of segments */
+	Readdbl(&a, "");		/* first breakpoint */
+
+	if (splroot->ndim != 2 && splroot->ndim != 3) {
+	    bu_log("Get_uv_curve: entity D%07d has invalid ndim: %d\n",
+		   dir[entity_no]->direct, splroot->ndim);
+	    bu_free((char *)splroot, "Get_uv_curve: splroot");
+	    return (struct edge_g_cnurb *)NULL;
+	}
+	if (splroot->nsegs < 1) {
+	    bu_log("Get_uv_curve: entity D%07d has nsegs == %d\n",
+		   dir[entity_no]->direct, splroot->nsegs);
+	    bu_free((char *)splroot, "Get_uv_curve: splroot");
+	    return (struct edge_g_cnurb *)NULL;
+	}
+
+	/* build a linked list of segments, reading the breakpoints */
+	seg = splroot->start;
+	for (i = 0; i < splroot->nsegs; i++) {
+	    if (seg == NULL) {
+		BU_ALLOC(seg, struct segment);
+		splroot->start = seg;
+	    } else {
+		BU_ALLOC(seg->next, struct segment);
+		seg = seg->next;
+	    }
+	    seg->segno = i+1;
+	    seg->next = NULL;
+	    seg->tmin = a;		/* minimum T for this segment */
+	    Readflt(&seg->tmax, "");	/* maximum T for this segment */
+	    a = seg->tmax;
+	}
+
+	/* read polynomial coefficients */
+	seg = splroot->start;
+	for (i = 0; i < splroot->nsegs; i++) {
+	    for (j = 0; j < 4; j++)
+		Readflt(&seg->cx[j], "");	/* x (== u) coeff's */
+	    for (j = 0; j < 4; j++)
+		Readflt(&seg->cy[j], "");	/* y (== v) coeff's */
+	    for (j = 0; j < 4; j++)
+		Readflt(&seg->cz[j], "");	/* z coeff's (ignored) */
+	    seg = seg->next;
+	}
+
+	/* sample UV_SAMPLES_PER_SEG points per segment; adjacent
+	 * segments share an endpoint, so drop the duplicated first
+	 * sample of every segment after the first
+	 */
+	num_pts = splroot->nsegs * UV_SAMPLES_PER_SEG - (splroot->nsegs - 1);
+	uv = (fastf_t *)bu_calloc((size_t)num_pts * 2, sizeof(fastf_t),
+				  "Get_uv_curve: spline uv");
+
+	idx = 0;
+	seg_no = 0;
+	seg = splroot->start;
+	while (seg != NULL) {
+	    int start = (seg_no == 0) ? 0 : 1;
+
+	    for (i = start; i < UV_SAMPLES_PER_SEG; i++) {
+		point_t pt, pt2;
+
+		a = (fastf_t)i/(fastf_t)(UV_SAMPLES_PER_SEG - 1)*(seg->tmax - seg->tmin);
+		pt[X] = splinef(seg->cx, a) + u_translation;
+		pt[Y] = splinef(seg->cy, a) + v_translation;
+		pt[Z] = 0.0;
+
+		MAT4X3PNT(pt2, *dir[entity_no]->rot, pt);
+		uv[idx*2] = pt2[X];
+		uv[idx*2 + 1] = pt2[Y];
+		idx++;
+	    }
+	    seg_no++;
+	    seg = seg->next;
+	}
+	num_pts = idx;
+
+	/* free segment list */
+	seg = splroot->start;
+	while (seg != NULL) {
+	    seg1 = seg;
+	    seg = seg->next;
+	    bu_free((char *)seg1, "Get_uv_curve: seg1");
+	}
+	bu_free((char *)splroot, "Get_uv_curve: splroot");
+
+    } else if (entity_type == 104) {
+	/* conic arc */
+	double A, B, C, D, E, F, a, b, c, del, I, theta, dpi, t1, t2, xc, yc;
+	point_t v1, v2;
+	int type;
+	int num_points;
+	int idx = 0;
+
+	/* read coefficients */
+	Readdbl(&A, "");
+	Readdbl(&B, "");
+	Readdbl(&C, "");
+	Readdbl(&D, "");
+	Readdbl(&E, "");
+	Readdbl(&F, "");
+
+	/* read common z-coordinate (ignored for UV) */
+	Readflt(&v1[2], "");
+	v2[2] = v1[2];
+
+	/* read start point */
+	Readflt(&v1[0], "");
+	Readflt(&v1[1], "");
+
+	/* read terminate point */
+	Readflt(&v2[0], "");
+	Readflt(&v2[1], "");
+
+	type = 0;
+	if (dir[entity_no]->form == 1) {
+	    /* Ellipse */
+	    if (fabs(E) < SQRT_SMALL_FASTF)
+		E = 0.0;
+	    if (fabs(B) < SQRT_SMALL_FASTF)
+		B = 0.0;
+	    if (fabs(D) < SQRT_SMALL_FASTF)
+		D = 0.0;
+
+	    if (ZERO(B) && ZERO(D) && ZERO(E))
+		type = 1;
+	    else
+		bu_log("Get_uv_curve: entity D%07d is an incorrectly formatted ellipse\n",
+		       dir[entity_no]->direct);
+	}
+
+	/* make coeff of X**2 equal to 1.0 */
+	a = A*C - B*B/4.0;
+	if (fabs(a) < 1.0 && fabs(a) > TOL) {
+	    a = fabs(A);
+	    if (fabs(B) < a && !ZERO(B))
+		a = fabs(B);
+	    V_MIN(a, fabs(C));
+
+	    A = A/a;
+	    B = B/a;
+	    C = C/a;
+	    D = D/a;
+	    E = E/a;
+	    F = F/a;
+	    a = A*C - B*B/4.0;
+	}
+
+	if (!type) {
+	    /* classify the conic */
+	    del = A*(C*F-E*E/4.0)-0.5*B*(B*F/2.0-D*E/4.0)+0.5*D*(B*E/4.0-C*D/2.0);
+	    I = A+C;
+	    if (ZERO(del)) {
+		bu_log("Get_uv_curve: entity D%07d claims to be a conic arc, but isn't\n",
+		       dir[entity_no]->direct);
+		return (struct edge_g_cnurb *)NULL;
+	    } else if (a > 0.0 && del*I < 0.0)
+		type = 1;	/* ellipse */
+	    else if (a < 0.0)
+		type = 2;	/* hyperbola */
+	    else if (ZERO(a))
+		type = 3;	/* parabola */
+	    else {
+		bu_log("Get_uv_curve: entity D%07d is an imaginary ellipse\n",
+		       dir[entity_no]->direct);
+		return (struct edge_g_cnurb *)NULL;
+	    }
+	}
+
+	num_points = UV_SAMPLES_PER_SEG * 4;	/* samples over whole conic */
+
+	if (type == 3) {
+	    /* parabola */
+	    double p, r1;
+
+	    /* make A+C == 1.0 */
+	    if (!EQUAL(A+C, 1.0)) {
+		b = A+C;
+		A = A/b;
+		B = B/b;
+		C = C/b;
+		D = D/b;
+		E = E/b;
+		F = F/b;
+	    }
+
+	    /* theta: rotation of parabola axis from x-axis */
+	    theta = 0.5*atan2(B, C-A);
+
+	    /* p: distance from vertex to directrix */
+	    p = (-E*sin(theta) - D*cos(theta))/4.0;
+	    if (fabs(p) < TOL) {
+		bu_log("Get_uv_curve: cannot evaluate parabola entity D%07d, p=%g\n",
+		       dir[entity_no]->direct, p);
+		return (struct edge_g_cnurb *)NULL;
+	    }
+
+	    /* vertex (xc, yc) via parametric form */
+	    a = 1.0/(4.0*p);
+	    b = ((v1[0]-v2[0])*cos(theta) + (v1[1]-v2[1])*sin(theta))/a;
+	    c = ((v1[1]-v2[1])*cos(theta) - (v1[0]-v2[0])*sin(theta));
+	    if (fabs(c) < TOL*TOL) {
+		bu_log("Get_uv_curve: cannot evaluate parabola entity D%07d\n",
+		       dir[entity_no]->direct);
+		return (struct edge_g_cnurb *)NULL;
+	    }
+	    b = b/c;
+	    t1 = (b + c)/2.0;	/* value of 't' at v1 */
+	    t2 = (b - c)/2.0;	/* value of 't' at v2 */
+	    xc = v1[0] - a*t1*t1*cos(theta) + t1*sin(theta);
+	    yc = v1[1] - a*t1*t1*sin(theta) - t1*cos(theta);
+
+	    uv = (fastf_t *)bu_calloc((size_t)num_points * 2, sizeof(fastf_t),
+				      "Get_uv_curve: parabola uv");
+
+	    dpi = (t2-t1)/(double)(num_points - 1);	/* parameter increment */
+	    b = cos(theta);
+	    c = sin(theta);
+	    for (i = 0; i < num_points; i++) {
+		point_t pt, pt2;
+
+		r1 = t1 + dpi*i;
+		pt[X] = xc + a*r1*r1*b - r1*c + u_translation;
+		pt[Y] = yc + a*r1*r1*c + r1*b + v_translation;
+		pt[Z] = 0.0;
+
+		MAT4X3PNT(pt2, *dir[entity_no]->rot, pt);
+		uv[idx*2] = pt2[X];
+		uv[idx*2 + 1] = pt2[Y];
+		idx++;
+	    }
+	    num_pts = idx;
+
+	} else {
+	    /* ellipse (type 1) or hyperbola (type 2) */
+	    double A1, C1, F1, alpha, beta;
+	    mat_t rot1, rot2;
+	    mat_t rot_idn = MAT_INIT_IDN;
+	    point_t tmp = VINIT_ZERO;
+
+	    /* center of ellipse or hyperbola */
+	    xc = (B*E/4.0 - D*C/2.0)/a;
+	    yc = (B*D/4.0 - A*E/2.0)/a;
+
+	    /* theta: rotation of curve axis from x-axis */
+	    if (!ZERO(B))
+		theta = 0.5*atan2(B, A-C);
+	    else
+		theta = 0.0;
+
+	    /* coeff's for same curve at origin with theta == 0 */
+	    A1 = A + 0.5*B*tan(theta);
+	    C1 = C - 0.5*B*tan(theta);
+	    F1 = F - A*xc*xc - B*xc*yc - C*yc*yc;
+
+	    if (type == 2 && F1/A1 > 0.0)
+		theta += pi/2.0;
+
+	    /* translate and rotate start/terminate points to the
+	     * simpler curve
+	     */
+	    for (i = 0; i < 16; i++)
+		rot1[i] = rot_idn[i];
+	    MAT_DELTAS(rot1, -xc, -yc, 0.0);
+	    MAT4X3PNT(tmp, rot1, v1);
+	    VMOVE(v1, tmp);
+	    MAT4X3PNT(tmp, rot1, v2);
+	    VMOVE(v2, tmp);
+	    MAT_DELTAS(rot1, 0.0, 0.0, 0.0);
+	    rot1[0] = cos(theta);
+	    rot1[1] = sin(theta);
+	    rot1[4] = (-rot1[1]);
+	    rot1[5] = rot1[0];
+	    MAT4X3PNT(tmp, rot1, v1);
+	    VMOVE(v1, tmp);
+	    MAT4X3PNT(tmp, rot1, v2);
+	    VMOVE(v2, tmp);
+	    MAT_DELTAS(rot1, 0.0, 0.0, 0.0);
+
+	    /* alpha = start angle, beta = terminate angle */
+	    beta = 0.0;
+	    if (EQUAL(v2[0], v1[0]) && EQUAL(v2[1], v1[1])) {
+		/* full circle */
+		beta = 2.0*pi;
+	    }
+	    a = sqrt(fabs(F1/A1));	/* semi-axis length */
+	    b = sqrt(fabs(F1/C1));	/* semi-axis length */
+
+	    if (type == 1) {
+		/* ellipse */
+		alpha = atan2(a*v1[1], b*v1[0]);
+		if (ZERO(beta)) {
+		    beta = atan2(a*v2[1], b*v2[0]);
+		    beta = beta - alpha;
+		}
+	    } else {
+		/* hyperbola */
+		alpha = IGES_ARCSINH(v1[1]/b);
+		beta = IGES_ARCSINH(v2[1]/b);
+		if (fabs(a*cosh(beta) - v2[0]) > 0.01)
+		    a = (-a);
+		beta = beta - alpha;
+	    }
+
+	    /* matrix to rotate/translate the simple curve back */
+	    MAT_DELTAS(rot1, xc, yc, 0.0);
+	    rot1[1] = (-rot1[1]);
+	    rot1[4] = (-rot1[4]);
+#if defined(USE_BN_MULT_)
+	    bn_mat_mul(rot2, *(dir[entity_no]->rot), rot1);
+#else
+	    Matmult(*(dir[entity_no]->rot), rot1, rot2);
+#endif
+
+	    uv = (fastf_t *)bu_calloc((size_t)(num_points + 1) * 2, sizeof(fastf_t),
+				      "Get_uv_curve: conic uv");
+
+	    for (i = 0; i <= num_points; i++) {
+		point_t tmp2 = VINIT_ZERO;
+		point_t pt2;
+
+		theta = alpha + (double)i/(double)num_points*beta;
+		if (type == 2) {
+		    tmp2[0] = a*cosh(theta);
+		    tmp2[1] = b*sinh(theta);
+		} else {
+		    tmp2[0] = a*cos(theta);
+		    tmp2[1] = b*sin(theta);
+		}
+		tmp2[2] = 0.0;
+
+		MAT4X3PNT(pt2, rot2, tmp2);
+		uv[idx*2] = pt2[X] + u_translation;
+		uv[idx*2 + 1] = pt2[Y] + v_translation;
+		idx++;
+	    }
+	    num_pts = idx;
+	}
+
+    } else {
+	bu_log("Get_uv_curve: expected conic arc (104) or parametric spline (112), got type %d\n",
+	       entity_type);
+	return (struct edge_g_cnurb *)NULL;
+    }
+
+    if (!uv || num_pts < 2) {
+	if (uv)
+	    bu_free((char *)uv, "Get_uv_curve: uv");
+	bu_log("Get_uv_curve: entity D%07d produced too few points (%d)\n",
+	       dir[entity_no]->direct, num_pts);
+	return (struct edge_g_cnurb *)NULL;
+    }
+
+    crv = Make_uv_polyline_cnurb(uv, num_pts);
+    bu_free((char *)uv, "Get_uv_curve: uv");
+
+    return crv;
+}
+
+
 void
 Assign_vu_geom(struct vertexuse *vu, fastf_t u, fastf_t v, struct face_g_snurb *srf)
 {
@@ -492,7 +958,35 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 	    break;
 
 	case 104:	/* conic arc */
-	    bu_log("Conic Arc not yet handled as a trimming curve\n");
+	case 112:	/* parametric spline curve */
+	    /* Evaluate the curve to a UV polyline cnurb */
+	    crv = Get_uv_curve(entity_no);
+	    if (!crv) {
+		/* graceful skip: don't add anything to the loop */
+		break;
+	    }
+
+	    ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+
+	    /* add a new edge to loop */
+	    eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
+	    new_eu = nmg_eusplit((struct vertex *)NULL, eu, 0);
+	    vp = eu->vu_p->v_p;
+
+	    /* if old edge doesn't have vertex geometry, assign some */
+	    if (!vp->vg_p) {
+		Assign_vu_geom(eu->vu_p, crv->ctl_points[0],
+			       crv->ctl_points[1], srf);
+	    }
+
+	    /* Assign geometry to new vertex */
+	    Assign_vu_geom(new_eu->vu_p, crv->ctl_points[(crv->c_size-1)*ncoords],
+			   crv->ctl_points[(crv->c_size-1)*ncoords+1], srf);
+
+	    /* Assign edge geometry */
+	    Assign_cnurb_to_eu(eu, crv);
+
+	    nmg_nurb_free_cnurb(crv);
 	    break;
 
 	case 126:	/* spline curve */
@@ -656,7 +1150,65 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    break;
 
 	case 104:	/* conic arc */
-	    bu_log("Conic Arc not yet handled as a trimming curve\n");
+	case 112: {
+	    /* conic arc / parametric spline (may form the whole loop) */
+	    struct edge_g_cnurb *crv;
+	    struct edge_g_cnurb *crv1, *crv2;
+	    struct bu_list curv_hd;
+
+	    /* Evaluate the curve to a UV polyline cnurb */
+	    crv = Get_uv_curve(entity_no);
+	    if (!crv) {
+		/* graceful skip: leave the (single-vertex) loop as-is */
+		break;
+	    }
+
+	    ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+
+	    /* split curve into two pieces so the loop has >1 edge */
+	    BU_LIST_INIT(&curv_hd);
+	    nmg_nurb_c_split(&curv_hd, crv);
+	    crv1 = BU_LIST_FIRST(edge_g_cnurb, &curv_hd);
+	    crv2 = BU_LIST_LAST(edge_g_cnurb, &curv_hd);
+	    /* Split last edge in loop */
+	    eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
+	    new_eu = nmg_eusplit((struct vertex *)NULL, eu, 0);
+	    vp = eu->vu_p->v_p;
+
+	    /* if old edge doesn't have vertex geometry, assign some */
+	    if (!vp->vg_p) {
+		/* Don't divide out rational coord */
+		if (RT_NURB_IS_PT_RATIONAL(crv1->pt_type)) {
+		    u = crv1->ctl_points[0]/crv1->ctl_points[ncoords-1];
+		    v = crv1->ctl_points[1]/crv1->ctl_points[ncoords-1];
+		} else {
+		    u = crv1->ctl_points[0];
+		    v = crv1->ctl_points[1];
+		}
+		Assign_vu_geom(eu->vu_p, u, v, srf);
+	    }
+
+	    /* Assign geometry to new_eu vertex */
+	    vp = new_eu->vu_p->v_p;
+	    if (!vp->vg_p) {
+		if (RT_NURB_IS_PT_RATIONAL(crv2->pt_type)) {
+		    u = crv2->ctl_points[0]/crv2->ctl_points[ncoords-1];
+		    v = crv2->ctl_points[1]/crv2->ctl_points[ncoords-1];
+		} else {
+		    u = crv2->ctl_points[0];
+		    v = crv2->ctl_points[1];
+		}
+		Assign_vu_geom(new_eu->vu_p, u, v, srf);
+	    }
+
+	    /* Assign edge geometry */
+	    Assign_cnurb_to_eu(eu, crv1);
+	    Assign_cnurb_to_eu(new_eu, crv2);
+
+	    nmg_nurb_free_cnurb(crv);
+	    nmg_nurb_free_cnurb(crv1);
+	    nmg_nurb_free_cnurb(crv2);
+	}
 	    break;
 
 	case 126: {
@@ -962,7 +1514,18 @@ trim_surf(size_t entityno, struct shell *s)
 	    Readint(&inner_loop[i], "");
     }
 
-    if ((srf = Get_nurb_surf((surf_de-1)/2, m)) == (struct face_g_snurb *)NULL) {
+    if (dir[(surf_de-1)/2]->type == 128) {
+	srf = Get_nurb_surf((surf_de-1)/2, m);
+    } else {
+	/* Analytic / spline base surface (118/120/122/140/114): build it via
+	 * OpenNURBS.  These surfaces use their own (unshifted) parameter
+	 * domain, so clear the knot translations that Get_nurb_surf would
+	 * otherwise set for the trim curves. */
+	u_translation = 0.0;
+	v_translation = 0.0;
+	srf = Get_iges_nurb_surf((surf_de-1)/2, m);
+    }
+    if (srf == (struct face_g_snurb *)NULL) {
 	if (inner_loop_count)
 	    bu_free((char *)inner_loop, "trim_surf: inner_loop");
 	return (struct faceuse *)NULL;

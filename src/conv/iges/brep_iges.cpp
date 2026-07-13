@@ -42,6 +42,7 @@
 #include "brep.h"
 
 #include "vmath.h"
+#include "bn/tol.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -201,30 +202,14 @@ write_loop(const ON_BrepLoop *loop, int surf_de, FILE *fp_dir, FILE *fp_param)
     return write_curve_on_surface_entity(surf_de, bcurve, ccurve, fp_dir, fp_param);
 }
 
-} /* anonymous namespace */
-
-
-/* g-iges "solid is a brep" flag, set for boundary-representation output. */
-extern "C" int solid_is_brep;
-
-
-extern "C" int
-brep_to_iges(struct rt_db_internal *ip, char *name,
-	     FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
+/* Walk an ON_Brep and write each face as a Trimmed Surface (144), with its
+ * surface as a 128 and its loops as 142/126/102.  Returns the DE of the
+ * last face written, or 0 if nothing usable was written. */
+int
+write_on_brep(ON_Brep *brep, FILE *fp_dir, FILE *fp_param)
 {
-    (void)vlfree;
-
-    RT_CK_DB_INTERNAL(ip);
-    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
-    if (!bi || bi->magic != RT_BREP_INTERNAL_MAGIC || !bi->brep) {
-	bu_log("brep_to_iges: %s is not a valid brep\n", name ? name : "(null)");
+    if (!brep)
 	return 0;
-    }
-    ON_Brep *brep = bi->brep;
-
-    ON::Begin();
-
-    solid_is_brep = 1;
 
     int last_de = 0;
     for (int fi = 0; fi < brep->m_F.Count(); fi++) {
@@ -265,12 +250,83 @@ brep_to_iges(struct rt_db_internal *ip, char *name,
 					       fp_dir, fp_param);
     }
 
-    if (!last_de) {
-	bu_log("brep_to_iges: no faces written for %s\n", name ? name : "(null)");
+    return last_de;
+}
+
+
+} /* anonymous namespace */
+
+
+/* g-iges globals / helpers (C linkage). */
+extern "C" int solid_is_brep;
+extern "C" int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+
+
+extern "C" int
+brep_to_iges(struct rt_db_internal *ip, char *name,
+	     FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
+{
+    (void)vlfree;
+
+    RT_CK_DB_INTERNAL(ip);
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
+    if (!bi || bi->magic != RT_BREP_INTERNAL_MAGIC || !bi->brep) {
+	bu_log("brep_to_iges: %s is not a valid brep\n", name ? name : "(null)");
 	return 0;
     }
 
-    return last_de;
+    ON::Begin();
+    solid_is_brep = 1;
+
+    const int de = write_on_brep(bi->brep, fp_dir, fp_param);
+    if (!de) {
+	bu_log("brep_to_iges: no faces written for %s\n", name ? name : "(null)");
+	return 0;
+    }
+    return de;
+}
+
+
+/* Export a non-brep primitive by first converting it to an ON_Brep via its
+ * ft_brep callback, so curved analytic primitives (eto, rpc, rhc, epa, ehy,
+ * hyp, superell, revolve, particle, ...) are written as faithful NURBS
+ * surfaces rather than being dropped or faceted.  Falls back to the faceted
+ * NMG exporter when no brep callback exists or the brep is unusable. */
+extern "C" int
+primitive_brep_to_iges(struct rt_db_internal *ip, char *name,
+		       FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
+{
+    RT_CK_DB_INTERNAL(ip);
+
+    if (ip->idb_type > 0 && ip->idb_type <= ID_MAXIMUM && OBJ[ip->idb_type].ft_brep) {
+	struct bn_tol tol;
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.0005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1.0e-6;
+	tol.para = 1.0 - tol.perp;
+
+	ON::Begin();
+
+	ON_Brep *brep = NULL;
+	OBJ[ip->idb_type].ft_brep(&brep, ip, &tol);
+	if (brep) {
+	    if (brep->IsValid()) {
+		solid_is_brep = 1;
+		const int de = write_on_brep(brep, fp_dir, fp_param);
+		delete brep;
+		if (de)
+		    return de;
+	    } else {
+		bu_log("primitive_brep_to_iges: %s brep invalid, tessellating instead\n",
+		       name ? name : "(null)");
+		delete brep;
+	    }
+	}
+    }
+
+    /* fall back to a faceted (tessellated) export */
+    return nmg_to_iges(ip, name, fp_dir, fp_param, vlfree);
 }
 
 

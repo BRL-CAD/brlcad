@@ -136,6 +136,7 @@ extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct b
 extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern int brep_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int primitive_brep_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern void iges_init(struct bn_tol *, struct bg_tess_tol *, int, struct db_i *);
 extern void Print_stats(FILE *);
 
@@ -162,12 +163,12 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {null_to_iges},	/* ID_VOL */
     {nmg_to_iges},	/* ID_ARBN */
     {nmg_to_iges},	/* ID_PIPE */
-    {null_to_iges},	/* ID_PARTICLE */
-    {null_to_iges},	/* ID_RPC */
-    {null_to_iges},	/* ID_RHC */
-    {null_to_iges},	/* ID_EPA */
-    {null_to_iges},	/* ID_EHY */
-    {null_to_iges},	/* ID_ETO */
+    {primitive_brep_to_iges},	/* ID_PARTICLE - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_RPC - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_RHC - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_EPA - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_EHY - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_ETO - faithful NURBS via ft_brep */
     {null_to_iges},	/* ID_GRIP */
     {null_to_iges},	/* ID_JOINT */
     {nmg_to_iges},	/* ID_HF */
@@ -181,12 +182,12 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {null_to_iges},	/* ID_UNUSED1 (32) */
     {null_to_iges},	/* ID_BINUNIF (33) */
     {null_to_iges},	/* ID_UNUSED2 (34) */
-    {nmg_to_iges},	/* ID_SUPERELL (35) - faceted */
-    {nmg_to_iges},	/* ID_METABALL (36) - faceted */
+    {primitive_brep_to_iges},	/* ID_SUPERELL (35) - faithful NURBS via ft_brep */
+    {nmg_to_iges},	/* ID_METABALL (36) - faceted (no ft_brep) */
     {brep_to_iges},	/* ID_BREP (37) - faithful NURBS (128/144); trims preserved */
-    {nmg_to_iges},	/* ID_HYP (38) - faceted */
+    {primitive_brep_to_iges},	/* ID_HYP (38) - faithful NURBS via ft_brep */
     {null_to_iges},	/* ID_CONSTRAINT (39) */
-    {nmg_to_iges},	/* ID_REVOLVE (40) - faceted */
+    {primitive_brep_to_iges},	/* ID_REVOLVE (40) - faithful NURBS via ft_brep */
     {null_to_iges},	/* ID_PNTS (41) */
     {null_to_iges},	/* ID_ANNOT (42) */
     {nmg_to_iges},	/* ID_HRT (43) - faceted */

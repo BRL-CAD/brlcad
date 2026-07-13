@@ -41,6 +41,7 @@ set(
   get_vertex_list.c
   getcurve.c
   iges_brep.cpp
+  iges_surf.cpp
   iges_types.c
   main.c
   make_face.c
@@ -96,6 +97,7 @@ set(
   ge6.igs
   iges.h
   iges_brep.h
+  iges_surf.h
   iges_extern.h
   iges_struct.h
   iges_types.h

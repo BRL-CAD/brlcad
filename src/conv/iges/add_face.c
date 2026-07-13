@@ -20,6 +20,7 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "./iges_surf.h"
 
 struct faceuse *
 Add_face_to_shell(struct shell *s, size_t entityno, int face_orient, struct bu_list *vlfree)
@@ -67,6 +68,53 @@ Add_face_to_shell(struct shell *s, size_t entityno, int face_orient, struct bu_l
 	struct face *f;
 
 	fu = Make_nurb_face(s, (surf_de-1)/2);
+	NMG_CK_FACEUSE(fu);
+	if (!face_orient) {
+	    f = fu->f_p;
+	    NMG_CK_FACE(f);
+	    f->flip = 1;
+	}
+
+	NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
+
+	for (loop = 0; loop < no_of_loops; loop++) {
+	    if (!Add_nurb_loop_to_face(s, fu, ((loop_de[loop]-1)/2)))
+		goto err;
+	}
+	NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
+    } else if (dir[(surf_de-1)/2]->type == 114 ||
+	       dir[(surf_de-1)/2]->type == 118 ||
+	       dir[(surf_de-1)/2]->type == 120 ||
+	       dir[(surf_de-1)/2]->type == 122 ||
+	       dir[(surf_de-1)/2]->type == 140) {
+	/* Analytic / spline surface types converted to an NMG rational
+	 * B-spline surface (face_g_snurb) via OpenNURBS.  Build the face
+	 * exactly as Make_nurb_face() does for a 128, then attach the
+	 * loops as in the 128 branch. */
+	struct face *f;
+	struct face_g_snurb *srf;
+	struct model *m;
+	struct vertex *verts[1];
+	struct loopuse *lu;
+
+	m = nmg_find_model(&s->l.magic);
+
+	srf = Get_iges_nurb_surf((surf_de-1)/2, m);
+	if (!srf) {
+	    fu = (struct faceuse *)NULL;
+	    bu_log("Add_face_to_shell: could not convert surface (type %s) at DE%d, ignoring face\n",
+		   iges_type(dir[(surf_de-1)/2]->type), surf_de);
+	    goto err;
+	}
+
+	verts[0] = (struct vertex *)NULL;
+	fu = nmg_cface(s, verts, 1);
+	Assign_surface_to_fu(fu, srf);
+
+	/* remove the throwaway loop created by nmg_cface */
+	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	(void)nmg_klu(lu);
+
 	NMG_CK_FACEUSE(fu);
 	if (!face_orient) {
 	    f = fu->f_p;
