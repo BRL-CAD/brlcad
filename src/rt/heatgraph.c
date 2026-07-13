@@ -29,7 +29,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
@@ -37,6 +36,7 @@
 
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/sort.h"
 #include "icv.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -52,33 +52,66 @@ static fastf_t **heatgraph_table = NULL;
 static size_t table_width = 0;
 static size_t table_height = 0;
 
+/* Lift the near-zero floor when choosing the display scale.  The raw timings
+ * still report the true min/max; these percentiles only control grayscale
+ * normalization. */
+#define HEATGRAPH_LOW_PERCENTILE 0.05
+#define HEATGRAPH_HIGH_PERCENTILE 1.0
+
+
+static int
+fastf_compare(const void *a, const void *b, void *UNUSED(context))
+{
+    const fastf_t av = *(const fastf_t *)a;
+    const fastf_t bv = *(const fastf_t *)b;
+
+    if (av < bv)
+	return -1;
+    if (av > bv)
+	return 1;
+    return 0;
+}
+
+
+static fastf_t
+heat_percentile(const fastf_t *samples, size_t sample_count, fastf_t pct)
+{
+    size_t index;
+
+    if (sample_count == 0)
+	return 0.0;
+    if (pct <= 0.0)
+	return samples[0];
+    if (pct >= 1.0)
+	return samples[sample_count - 1];
+
+    index = (size_t)(pct * (fastf_t)(sample_count - 1));
+    if (index >= sample_count)
+	index = sample_count - 1;
+
+    return samples[index];
+}
+
 
 static unsigned char
-heat_pixel_value(fastf_t timeval, int positivePixels, fastf_t minPositiveTime, fastf_t maxTime, fastf_t range)
+heat_pixel_value(fastf_t timeval, fastf_t scaleMin, fastf_t scaleMax)
 {
     fastf_t norm = 0.0;
+    fastf_t range = scaleMax - scaleMin;
 
     if (timeval < 0.0)
 	return 0;
 
-    if (positivePixels == 0) {
-	norm = 0.0;
-    } else if (range <= SMALL_FASTF) {
+    if (timeval <= 0.0)
+	return 0;
+
+    if (timeval <= scaleMin)
+	return 1;
+
+    if (range <= SMALL_FASTF) {
 	norm = (timeval > 0.0) ? 1.0 : 0.0;
-    } else if (timeval > 0.0) {
-	/* Timing values tend to cluster near zero.  Normalize the
-	 * distance from the fastest measured pixel on a log scale so
-	 * microsecond-level variation remains visible. */
-	if (minPositiveTime > SMALL_FASTF) {
-	    fastf_t denom = log1p((maxTime - minPositiveTime) / minPositiveTime);
-	    if (denom > SMALL_FASTF)
-		norm = log1p((timeval - minPositiveTime) / minPositiveTime) / denom;
-	    else
-		norm = (timeval - minPositiveTime) / range;
-	}
-	else
-	    norm = (timeval - minPositiveTime) / range;
-    }
+    } else
+	norm = (timeval - scaleMin) / range;
 
     if (norm < 0.0)
 	norm = 0.0;
@@ -267,14 +300,17 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
     fastf_t totalTime = 0;
     fastf_t meanTime = 0;			/* the 128 value */
     fastf_t range = 0;				/* All times should fall in this range */
-    int pixels = 0;				/* Used for calculating averages */
-    int positivePixels = 0;
+    fastf_t scaleMin = 0;
+    fastf_t scaleMax = 0;
+    size_t pixels = 0;				/* Used for calculating averages */
+    size_t positivePixels = 0;
     size_t maxX = width;
     size_t maxY = height; 	/* Maximum render size, uses evil globals */
     ssize_t npix = 0;
     int zoomH = 0;
     int zoomW = 0;
     int outfp_error = 0;
+    fastf_t *samples = NULL;
     RGBpixel *line = NULL;
 
     /* The following loop will work as follows, it will loop through
@@ -316,7 +352,30 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
 	range = maxTime - minPositiveTime;
     else
 	range = maxTime - minTime;
-    bu_log("Time: %lf\n  Max = %lf\n  Min = %lf\n  Mean = %lf\n  Range = %lf\n", totalTime, maxTime, minTime, meanTime, range);
+
+    if (positivePixels > 0) {
+	size_t sample_count = 0;
+
+	samples = (fastf_t *)bu_malloc(positivePixels * sizeof(fastf_t), "heatgraph timing samples");
+	for (x = 0; x < maxX; x++) {
+	    for (y = 0; y < maxY; y++) {
+		if (timeTable[x][y] > 0.0)
+		    samples[sample_count++] = timeTable[x][y];
+	    }
+	}
+	bu_sort(samples, sample_count, sizeof(fastf_t), fastf_compare, NULL);
+	scaleMin = heat_percentile(samples, sample_count, HEATGRAPH_LOW_PERCENTILE);
+	scaleMax = heat_percentile(samples, sample_count, HEATGRAPH_HIGH_PERCENTILE);
+	if (scaleMin <= 0.0)
+	    scaleMin = minPositiveTime;
+	if (scaleMax <= scaleMin)
+	    scaleMax = maxTime;
+    } else {
+	scaleMin = minTime;
+	scaleMax = maxTime;
+    }
+
+    bu_log("Time: %lf\n  Max = %lf\n  Min = %lf\n  Mean = %lf\n  Range = %lf\n  Visual Min = %lf\n  Visual Max = %lf\n", totalTime, maxTime, minTime, meanTime, range, scaleMin, scaleMax);
 
     /* Now fill out the framebuffer with the Heat Graph information */
     line = (RGBpixel *)bu_malloc(maxX * sizeof(RGBpixel), "heatgraph scanline");
@@ -324,7 +383,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
     for (y = 0; y < maxY; y++) {
 	for (x = 0; x < maxX; x++) {
 	    fastf_t timeval = timeTable[x][y];
-	    unsigned char value = heat_pixel_value(timeval, positivePixels, minPositiveTime, maxTime, range);
+	    unsigned char value = heat_pixel_value(timeval, scaleMin, scaleMax);
 
 	    line[x][RED] = value;
 	    line[x][GRN] = value;
@@ -353,6 +412,8 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
 	}
     }
     bu_free(line, "heatgraph scanline");
+    if (samples)
+	bu_free(samples, "heatgraph timing samples");
 
     if (out_fbp != FB_NULL) {
       zoomH = fb_getheight(out_fbp) / height;
