@@ -27,6 +27,10 @@
 
 #include <string.h>
 #include <ctype.h> /* for isdigit */
+#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
 #include "bresource.h"
 
 #include "bnetwork.h"
@@ -55,6 +59,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/mapped_file.h"
 #include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/str.h"
@@ -73,6 +78,591 @@
 #endif
 
 /* Supported man sections */
+
+struct man_page {
+    std::string name;
+    char section;
+    std::string path;
+    std::string summary;
+    std::string synopsis;
+    std::string text;
+};
+
+struct man_search_result {
+    int score;
+    size_t page;
+};
+
+static std::string
+trim_copy(const std::string &s)
+{
+    size_t b = 0;
+    size_t e = s.size();
+
+    while (b < e && isspace((unsigned char)s[b]))
+	b++;
+    while (e > b && isspace((unsigned char)s[e - 1]))
+	e--;
+
+    return s.substr(b, e - b);
+}
+
+
+static std::string
+lower_copy(const std::string &s)
+{
+    std::string ret = s;
+
+    for (size_t i = 0; i < ret.size(); i++)
+	ret[i] = (char)tolower((unsigned char)ret[i]);
+
+    return ret;
+}
+
+
+static std::string
+normalize_space(const std::string &s)
+{
+    std::string ret;
+    bool inspace = false;
+
+    for (size_t i = 0; i < s.size(); i++) {
+	unsigned char c = (unsigned char)s[i];
+	if (isspace(c)) {
+	    if (!inspace && !ret.empty())
+		ret.push_back(' ');
+	    inspace = true;
+	} else {
+	    ret.push_back((char)c);
+	    inspace = false;
+	}
+    }
+
+    return trim_copy(ret);
+}
+
+
+static bool
+read_file_to_string(const char *path, std::string &out)
+{
+    struct bu_mapped_file *mf = bu_open_mapped_file(path, NULL);
+    if (!mf)
+	return false;
+
+    out.assign((const char *)mf->buf, mf->buflen);
+    bu_close_mapped_file(mf);
+    return true;
+}
+
+
+static std::string
+clean_roff_inline(const std::string &s)
+{
+    std::string ret;
+
+    for (size_t i = 0; i < s.size(); i++) {
+	char c = s[i];
+
+	if (c != '\\') {
+	    ret.push_back(c);
+	    continue;
+	}
+
+	if (i + 1 >= s.size())
+	    continue;
+
+	char n = s[i + 1];
+	if (n == 'f' && i + 2 < s.size()) {
+	    i += 2;
+	    continue;
+	}
+	if (n == '(' && i + 3 < s.size()) {
+	    std::string esc = s.substr(i + 2, 2);
+	    if (esc == "em")
+		ret.append("--");
+	    else if (esc == "aq")
+		ret.push_back('\'');
+	    else if (esc == "en")
+		ret.push_back('-');
+	    i += 3;
+	    continue;
+	}
+	if (n == '-' || n == 'e') {
+	    ret.push_back(n == '-' ? '-' : '\\');
+	    i++;
+	    continue;
+	}
+	if (n == '&') {
+	    i++;
+	    continue;
+	}
+	if (isspace((unsigned char)n)) {
+	    ret.push_back(' ');
+	    i++;
+	    continue;
+	}
+
+	ret.push_back(n);
+	i++;
+    }
+
+    return ret;
+}
+
+
+static std::string
+roff_macro_text(const std::string &line)
+{
+    if (line.size() < 2 || line[0] != '.')
+	return clean_roff_inline(line);
+
+    if (line.compare(0, 4, ".SH ") == 0)
+	return clean_roff_inline(line.substr(4));
+    if (line.compare(0, 4, ".SS ") == 0)
+	return clean_roff_inline(line.substr(4));
+    if (line.compare(0, 3, ".B ") == 0 || line.compare(0, 3, ".I ") == 0)
+	return clean_roff_inline(line.substr(3));
+    if (line.compare(0, 4, ".BR ") == 0 || line.compare(0, 4, ".IR ") == 0 ||
+	line.compare(0, 4, ".BI ") == 0 || line.compare(0, 4, ".IB ") == 0)
+	return clean_roff_inline(line.substr(4));
+
+    return std::string();
+}
+
+
+static std::string
+strip_roff(const std::string &raw)
+{
+    std::string ret;
+    size_t pos = 0;
+
+    while (pos < raw.size()) {
+	size_t eol = raw.find('\n', pos);
+	std::string line = (eol == std::string::npos) ? raw.substr(pos) : raw.substr(pos, eol - pos);
+	std::string txt = roff_macro_text(line);
+
+	if (!txt.empty()) {
+	    ret.append(txt);
+	    ret.push_back('\n');
+	}
+
+	if (eol == std::string::npos)
+	    break;
+	pos = eol + 1;
+    }
+
+    return normalize_space(ret);
+}
+
+
+static std::string
+html_entity_decode(const std::string &s)
+{
+    std::string ret = s;
+    struct repl {
+	const char *from;
+	const char *to;
+    } reps[] = {
+	{"&lt;", "<"},
+	{"&gt;", ">"},
+	{"&amp;", "&"},
+	{"&quot;", "\""},
+	{"&#34;", "\""},
+	{"&#39;", "'"},
+	{"&apos;", "'"},
+	{"&nbsp;", " "},
+	{NULL, NULL}
+    };
+
+    for (int i = 0; reps[i].from; i++) {
+	size_t pos = 0;
+	size_t flen = strlen(reps[i].from);
+	while ((pos = ret.find(reps[i].from, pos)) != std::string::npos) {
+	    ret.replace(pos, flen, reps[i].to);
+	    pos += strlen(reps[i].to);
+	}
+    }
+
+    return ret;
+}
+
+
+static std::string
+strip_html(const std::string &raw)
+{
+    std::string filtered = raw;
+    std::string lower = lower_copy(filtered);
+
+    for (int pass = 0; pass < 2; pass++) {
+	const char *open_tag = (pass == 0) ? "<style" : "<script";
+	const char *close_tag = (pass == 0) ? "</style>" : "</script>";
+	size_t pos = 0;
+	while ((pos = lower.find(open_tag, pos)) != std::string::npos) {
+	    size_t tag_end = lower.find('>', pos);
+	    size_t close = lower.find(close_tag, (tag_end == std::string::npos) ? pos : tag_end);
+	    size_t erase_end = (close == std::string::npos) ? ((tag_end == std::string::npos) ? pos + 1 : tag_end + 1) : close + strlen(close_tag);
+	    filtered.erase(pos, erase_end - pos);
+	    lower.erase(pos, erase_end - pos);
+	}
+    }
+
+    std::string ret;
+    bool intag = false;
+    for (size_t i = 0; i < filtered.size(); i++) {
+	char c = filtered[i];
+	if (c == '<') {
+	    intag = true;
+	    ret.push_back(' ');
+	    continue;
+	}
+	if (c == '>') {
+	    intag = false;
+	    ret.push_back(' ');
+	    continue;
+	}
+	if (!intag)
+	    ret.push_back(c);
+    }
+
+    return normalize_space(html_entity_decode(ret));
+}
+
+
+static std::string
+extract_roff_section(const std::string &raw, const char *section)
+{
+    std::string ret;
+    std::string want = lower_copy(section);
+    bool active = false;
+    size_t pos = 0;
+
+    while (pos < raw.size()) {
+	size_t eol = raw.find('\n', pos);
+	std::string line = (eol == std::string::npos) ? raw.substr(pos) : raw.substr(pos, eol - pos);
+
+	if (line.compare(0, 4, ".SH ") == 0) {
+	    std::string heading = lower_copy(normalize_space(clean_roff_inline(line.substr(4))));
+	    if (!heading.empty() && heading[0] == '"' && heading[heading.size() - 1] == '"')
+		heading = heading.substr(1, heading.size() - 2);
+	    active = (heading == want);
+	} else if (active) {
+	    std::string txt = roff_macro_text(line);
+	    if (!txt.empty()) {
+		ret.append(txt);
+		ret.push_back('\n');
+	    }
+	}
+
+	if (eol == std::string::npos)
+	    break;
+	pos = eol + 1;
+    }
+
+    return normalize_space(ret);
+}
+
+
+static std::string
+extract_html_section(const std::string &raw, const char *section)
+{
+    std::string lower = lower_copy(raw);
+    std::string id = std::string("id=\"_") + lower_copy(section) + "\"";
+    size_t idpos = lower.find(id);
+    if (idpos == std::string::npos)
+	return std::string();
+
+    size_t h2end = lower.find("</h2>", idpos);
+    if (h2end == std::string::npos)
+	return std::string();
+    h2end += 5;
+
+    size_t next = lower.find("<h2", h2end);
+    std::string section_html = (next == std::string::npos) ? raw.substr(h2end) : raw.substr(h2end, next - h2end);
+
+    return strip_html(section_html);
+}
+
+
+static std::string
+page_section_text(const std::string &raw, const char *section, int html)
+{
+    return html ? extract_html_section(raw, section) : extract_roff_section(raw, section);
+}
+
+
+static std::string
+page_plain_text(const std::string &raw, int html)
+{
+    return html ? strip_html(raw) : strip_roff(raw);
+}
+
+
+static std::string
+summary_from_name_section(const std::string &name_section)
+{
+    std::string s = normalize_space(name_section);
+    size_t pos = s.find(" - ");
+
+    if (pos != std::string::npos)
+	return trim_copy(s.substr(pos + 3));
+
+    pos = s.find("-");
+    if (pos != std::string::npos)
+	return trim_copy(s.substr(pos + 1));
+
+    return s;
+}
+
+
+static std::vector<std::string>
+search_terms(const char *query)
+{
+    std::vector<std::string> terms;
+    std::string term;
+
+    if (!query)
+	return terms;
+
+    for (size_t i = 0; query[i] != '\0'; i++) {
+	unsigned char c = (unsigned char)query[i];
+	if (isalnum(c)) {
+	    term.push_back((char)tolower(c));
+	} else if (!term.empty()) {
+	    terms.push_back(term);
+	    term.clear();
+	}
+    }
+    if (!term.empty())
+	terms.push_back(term);
+
+    return terms;
+}
+
+
+static int
+term_count(const std::string &haystack, const std::string &needle)
+{
+    int cnt = 0;
+    size_t pos = 0;
+
+    if (needle.empty())
+	return 0;
+
+    while ((pos = haystack.find(needle, pos)) != std::string::npos) {
+	cnt++;
+	pos += needle.size();
+    }
+
+    return cnt;
+}
+
+
+static int
+weighted_match_score(const std::vector<std::string> &terms, const std::vector<std::pair<int, std::string> > &fields)
+{
+    int score = 0;
+
+    for (size_t i = 0; i < terms.size(); i++) {
+	int term_score = 0;
+
+	for (size_t j = 0; j < fields.size(); j++) {
+	    int cnt = term_count(fields[j].second, terms[i]);
+	    if (cnt > 0) {
+		if (cnt > 20)
+		    cnt = 20;
+		term_score += fields[j].first * cnt;
+	    }
+	}
+
+	if (term_score == 0)
+	    return -1;
+
+	score += term_score;
+    }
+
+    return score;
+}
+
+
+static int
+section_sort_order(char section)
+{
+    switch (section) {
+	case '1':
+	    return 1;
+	case '3':
+	    return 3;
+	case '5':
+	    return 5;
+	case 'n':
+	    return 9;
+	default:
+	    return 99;
+    }
+}
+
+
+static void
+man_file_info(char section, int gui, std::string &dir, std::string &ext)
+{
+    if (section == 'n') {
+	dir = "mann";
+	ext = gui ? "html" : "nged";
+    } else {
+	dir = std::string("man") + section;
+	ext = gui ? "html" : std::string(1, section);
+    }
+}
+
+
+static bool
+man_section_dir(struct bu_vls *mdir, const char *lang, char section, int gui)
+{
+    const char *ddir = NULL;
+    std::string dir;
+    std::string ext;
+
+    man_file_info(section, gui, dir, ext);
+    ddir = gui ? bu_dir(NULL, 0, BU_DIR_DOC, "html", NULL) : bu_dir(NULL, 0, BU_DIR_MAN, NULL);
+
+    bu_vls_sprintf(mdir, "%s/%s/%s", ddir, lang, dir.c_str());
+    if (bu_file_directory(bu_vls_cstr(mdir)))
+	return true;
+
+    bu_vls_sprintf(mdir, "%s/%s", ddir, dir.c_str());
+    return bu_file_directory(bu_vls_cstr(mdir));
+}
+
+
+static size_t
+collect_man_pages(std::vector<man_page> &pages, const char *lang, char wanted_section, int gui, int include_full_text)
+{
+    const char sections[] = BRLCAD_MAN_SECTIONS;
+    size_t total = 0;
+
+    for (size_t si = 0; sections[si] != '\0'; si++) {
+	char section = sections[si];
+	if (wanted_section != '\0' && wanted_section != section)
+	    continue;
+
+	std::string dir;
+	std::string ext;
+	struct bu_vls mdir = BU_VLS_INIT_ZERO;
+	struct bu_vls pattern = BU_VLS_INIT_ZERO;
+	char **mfiles = NULL;
+	size_t mcnt = 0;
+
+	man_file_info(section, gui, dir, ext);
+	if (!man_section_dir(&mdir, lang, section, gui)) {
+	    bu_vls_free(&mdir);
+	    continue;
+	}
+
+	bu_vls_sprintf(&pattern, "*.%s", ext.c_str());
+	mcnt = bu_file_list(bu_vls_cstr(&mdir), bu_vls_cstr(&pattern), &mfiles);
+
+	for (size_t i = 0; i < mcnt; i++) {
+	    struct bu_vls mname = BU_VLS_INIT_ZERO;
+	    struct bu_vls mpath = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&mpath, "%s/%s", bu_vls_cstr(&mdir), mfiles[i]);
+	    if (bu_path_component(&mname, mfiles[i], BU_PATH_BASENAME_EXTLESS)) {
+		std::string raw;
+		if (read_file_to_string(bu_vls_cstr(&mpath), raw)) {
+		    man_page mp;
+		    mp.name = bu_vls_cstr(&mname);
+		    mp.section = section;
+		    mp.path = bu_vls_cstr(&mpath);
+		    mp.summary = summary_from_name_section(page_section_text(raw, "name", gui));
+		    mp.synopsis = page_section_text(raw, "synopsis", gui);
+		    if (include_full_text)
+			mp.text = page_plain_text(raw, gui);
+		    pages.push_back(mp);
+		    total++;
+		}
+	    }
+	    bu_vls_free(&mpath);
+	    bu_vls_free(&mname);
+	}
+
+	if (mcnt)
+	    bu_argv_free(mcnt, mfiles);
+	bu_vls_free(&pattern);
+	bu_vls_free(&mdir);
+    }
+
+    return total;
+}
+
+
+static int
+search_man_pages(const char *query, const char *lang, char section, int full_text)
+{
+    std::vector<man_page> pages;
+    std::vector<man_search_result> results;
+    std::vector<std::string> terms = search_terms(query);
+
+    if (terms.empty())
+	return BRLCAD_ERROR;
+
+#ifdef MAN_CMDLINE
+    int gui_docs = 0;
+#else
+    int gui_docs = 1;
+#endif
+
+    collect_man_pages(pages, lang, section, gui_docs, full_text);
+    for (size_t i = 0; i < pages.size(); i++) {
+	std::vector<std::pair<int, std::string> > fields;
+	int score = -1;
+
+	fields.push_back(std::make_pair(200, lower_copy(pages[i].name)));
+	fields.push_back(std::make_pair(80, lower_copy(pages[i].summary)));
+	fields.push_back(std::make_pair(40, lower_copy(pages[i].synopsis)));
+	if (full_text)
+	    fields.push_back(std::make_pair(8, lower_copy(pages[i].text)));
+
+	score = weighted_match_score(terms, fields);
+	if (score >= 0) {
+	    man_search_result r;
+	    r.score = score;
+	    r.page = i;
+	    results.push_back(r);
+	}
+    }
+
+    struct result_less {
+	const std::vector<man_page> *pages;
+	bool operator()(const man_search_result &a, const man_search_result &b) const {
+	    const man_page &ap = (*pages)[a.page];
+	    const man_page &bp = (*pages)[b.page];
+
+	    if (a.score != b.score)
+		return a.score > b.score;
+	    if (section_sort_order(ap.section) != section_sort_order(bp.section))
+		return section_sort_order(ap.section) < section_sort_order(bp.section);
+	    return ap.name < bp.name;
+	}
+    } less_results;
+    less_results.pages = &pages;
+
+    std::stable_sort(results.begin(), results.end(), less_results);
+
+    if (results.empty()) {
+	bu_log("No matches found for \"%s\".\n", query);
+	return BRLCAD_ERROR;
+    }
+
+    for (size_t i = 0; i < results.size(); i++) {
+	const man_page &mp = pages[results[i].page];
+	if (!mp.summary.empty()) {
+	    bu_log("%s(%c) - %s\n", mp.name.c_str(), mp.section, mp.summary.c_str());
+	} else {
+	    bu_log("%s(%c)\n", mp.name.c_str(), mp.section);
+	}
+    }
+
+    return BRLCAD_OK;
+}
 
 static char *
 find_man_file(const char *man_name, const char *lang, char section, int gui)
@@ -472,13 +1062,17 @@ BRLMAN_MAIN(
 #endif
     int disable_gui = 0;
     int print_help = 0;
+    int search_mode = 0;
+    const char *short_search = NULL;
+    const char *full_search = NULL;
     const char *man_cmd = NULL;
     const char *man_name = NULL;
     const char *man_file = NULL;
     char man_section = '\0';
+    struct bu_vls search_query = BU_VLS_INIT_ZERO;
     struct bu_vls lang = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[6];
+    struct bu_opt_desc d[8];
 
 #ifdef HAVE_WINDOWS_H
     const char **argv;
@@ -498,7 +1092,9 @@ BRLMAN_MAIN(
     BU_OPT(d[2], "",  "no-gui",      "",                NULL, &disable_gui, "Disable GUI");
     BU_OPT(d[3], "L", "language",  "lg",        &bu_opt_lang, &lang,        "Set language");
     BU_OPT(d[4], "S", "section",    "#", &bu_opt_man_section, &man_section, "Set section");
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[5], "k", "keyword",    "kw",          &bu_opt_str, &short_search, "Search names, synopses, and brief descriptions");
+    BU_OPT(d[6], "K", "full-text",  "kw",          &bu_opt_str, &full_search,  "Search full manual page text");
+    BU_OPT_NULL(d[7]);
 
     /* Skip first arg */
     argv++; argc--;
@@ -517,6 +1113,25 @@ BRLMAN_MAIN(
 	}
 	bu_free(option_help, "help str");
 	bu_exit(EXIT_SUCCESS, NULL);
+    }
+
+    if (short_search && full_search) {
+	bu_exit(EXIT_FAILURE, "Error: specify only one of -k or -K\n");
+    }
+    if (short_search) {
+	search_mode = 1;
+	bu_vls_sprintf(&search_query, "%s", short_search);
+    }
+    if (full_search) {
+	search_mode = 2;
+	bu_vls_sprintf(&search_query, "%s", full_search);
+    }
+
+    if (search_mode && uac > 0) {
+	for (i = 0; i < uac; i++) {
+	    bu_vls_printf(&search_query, " %s", argv[i]);
+	}
+	uac = 0;
     }
 
     /* If we only have one non-option arg, assume it's the man name */
@@ -571,13 +1186,13 @@ BRLMAN_MAIN(
 #endif
     }
 
-    /* If we're not graphical and we don't have a name at this point, we're done. */
-    if (!enable_gui && !man_name) {
+    /* If we're not graphical and we don't have a name or search at this point, we're done. */
+    if (!enable_gui && !man_name && !search_mode) {
 	bu_exit(EXIT_FAILURE, "Error: Please specify man page");
     }
 
-    /* If we're not graphical, make sure we have a man command to use */
-    if (!enable_gui) {
+    /* If we're not graphical, make sure we have a man command to use for page display. */
+    if (!enable_gui && !search_mode) {
 #ifndef MAN_CMDLINE
 	bu_exit(EXIT_FAILURE, "Error: Non-graphical man display is not supported.");
 #else
@@ -606,6 +1221,13 @@ BRLMAN_MAIN(
     /* If we *still* don't have a language, use en */
     if (!bu_vls_strlen(&lang)) {
 	bu_vls_sprintf(&lang, "en");
+    }
+
+    if (search_mode) {
+	status = search_man_pages(bu_vls_cstr(&search_query), bu_vls_cstr(&lang), man_section, (search_mode == 2));
+	bu_vls_free(&lang);
+	bu_vls_free(&search_query);
+	return (status == BRLCAD_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 
     /* Now we have a lang and name - find the file */
@@ -665,4 +1287,3 @@ BRLMAN_MAIN(
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
