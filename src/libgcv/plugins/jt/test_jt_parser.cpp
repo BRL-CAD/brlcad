@@ -273,5 +273,18 @@ int main()
     if (!expect(file.load(data, error), error.c_str())) return 1;
     if (!expect(file.int32_packet2(packet2_offset, jt::Predictor::None, values, bytes_read, error), error.c_str())) return 1;
     if (!expect(values == std::vector<int32_t>({1, 2}), "wrong JT Int32 CDP2 Chopper output")) return 1;
+
+    data = sample_file(10, 3, true);
+    const uint64_t packet2_bitlength_offset = data.size();
+    append_u32(data, 2, true);
+    data.push_back(1);
+    append_u32(data, 8, true);
+    data.push_back(0xcbu);
+    if (!expect(file.load(data, error), error.c_str())) return 1;
+    if (!expect(file.int32_packet2(packet2_bitlength_offset, jt::Predictor::None,
+	values, bytes_read, error), error.c_str())) return 1;
+    if (!expect(values == std::vector<int32_t>({1, -1}),
+	"wrong JT 10 byte-packed Bitlength output")) return 1;
+    if (!expect(bytes_read == 10, "wrong JT 10 byte-packed Bitlength packet length")) return 1;
     return 0;
 }

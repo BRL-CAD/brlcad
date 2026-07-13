@@ -378,7 +378,7 @@ File::elements(const Segment &segment, std::vector<Element> &result, std::string
     const bool has_object_id = header_.major_version >= 9;
     const size_t element_header_length = LEGACY_ELEMENT_HEADER_LENGTH + (has_object_id ? OBJECT_ID_LENGTH : 0);
     while (offset < end) {
-	if (end - offset < element_header_length) {
+	if (end - offset < 4 + GUID_LENGTH) {
 	    error = "truncated JT logical element header";
 	    return false;
 	}
@@ -386,7 +386,14 @@ File::elements(const Segment &segment, std::vector<Element> &result, std::string
 	uint32_t element_length = 0;
 	Element element{};
 	uint32_t object_id = 0;
-	if (!reader.u32(element_length) || !read_guid(reader, element.type_id) || !reader.u8(element.base_type) ||
+	if (!reader.u32(element_length) || !read_guid(reader, element.type_id)) {
+	    error = "truncated JT logical element header";
+	    return false;
+	}
+	const bool end_marker = element_length == GUID_LENGTH &&
+	    std::all_of(element.type_id.begin(), element.type_id.end(), [](unsigned char byte) { return byte == 0xff; });
+	if (end_marker) return true;
+	if (end - offset < element_header_length || !reader.u8(element.base_type) ||
 	    (has_object_id && !reader.u32(object_id))) {
 	    error = "truncated JT logical element header";
 	    return false;
@@ -471,7 +478,8 @@ bool
 File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &values,
     size_t &bytes_read, std::string &error) const
 {
-    constexpr unsigned max_chopper_depth = 3;
+    // JT 10 permits nested out-of-band/chopper packets to a depth of eight.
+    constexpr unsigned max_chopper_depth = 8;
     std::function<bool(size_t, unsigned, std::vector<int32_t> &, size_t &)> decode;
     decode = [&](size_t packet_offset, unsigned depth, std::vector<int32_t> &output, size_t &consumed) {
 	if (packet_offset > bytes_.size()) {
@@ -497,18 +505,144 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    }
 	} else if (codec == 1) {
 	    int32_t bit_count = 0;
-	    if (!reader.i32(bit_count) || bit_count < 0 || bit_count % 32 != 0) {
+	    if (!reader.i32(bit_count) || bit_count < 0) {
 		error = "invalid JT Int32 CDP2 Bitlength code text size";
 		return false;
 	    }
-	    const size_t word_count = static_cast<size_t>(bit_count) / 32;
-	    if (word_count > (bytes_.size() - reader.offset()) / sizeof(uint32_t)) {
+	    const size_t byte_count = (static_cast<size_t>(bit_count) + 7) / 8;
+	    if (byte_count > bytes_.size() - reader.offset()) {
 		error = "truncated JT Int32 CDP2 Bitlength code text";
 		return false;
 	    }
-	    std::vector<uint32_t> words(word_count);
-	    for (uint32_t &word : words) if (!reader.u32(word)) return false;
+	    std::vector<unsigned char> code_text(byte_count);
+	    if (!reader.bytes(code_text.data(), code_text.size())) return false;
+	    std::vector<uint32_t> words((static_cast<size_t>(bit_count) + 31) / 32, 0);
+	    for (size_t i = 0; i < code_text.size(); ++i)
+		words[i / 4] |= static_cast<uint32_t>(code_text[i]) << (24 - (i % 4) * 8);
 	    if (!decode_bitlength(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error)) return false;
+	} else if (codec == 3) {
+	    int32_t bit_count = 0;
+	    if (!reader.i32(bit_count) || bit_count < 16) {
+		error = "invalid JT Int32 CDP2 Arithmetic code text size";
+		return false;
+	    }
+	    const size_t byte_count = (static_cast<size_t>(bit_count) + 7) / 8;
+	    if (byte_count > bytes_.size() - reader.offset()) {
+		error = "truncated JT Int32 CDP2 Arithmetic code text";
+		return false;
+	    }
+	    std::vector<unsigned char> code_text(byte_count);
+	    if (!reader.bytes(code_text.data(), code_text.size())) return false;
+
+	    Reader context_reader(bytes_, header_.little_endian, reader.offset());
+	    uint16_t entry_count16 = 0;
+	    uint8_t occurrence_bits8 = 0;
+	    uint8_t value_bits8 = 0;
+	    int32_t minimum = 0;
+	    if (!context_reader.u16(entry_count16) || !context_reader.u8(occurrence_bits8) ||
+		!context_reader.u8(value_bits8) || !context_reader.i32(minimum)) {
+		error = "truncated JT Int32 CDP2 probability context";
+		return false;
+	    }
+	    size_t context_bit = context_reader.offset() * 8;
+	    auto read_bits = [&](unsigned width, uint32_t &value) {
+		if (width > 32 || context_bit + width > bytes_.size() * 8) return false;
+		value = 0;
+		for (unsigned i = 0; i < width; ++i, ++context_bit)
+		    value |= static_cast<uint32_t>((bytes_[context_bit / 8] >> (context_bit % 8)) & 1u) << i;
+		return true;
+	    };
+	    const uint32_t entry_count = entry_count16;
+	    const uint32_t occurrence_bits = occurrence_bits8;
+	    const uint32_t value_bits = value_bits8;
+	    if (entry_count == 0 || occurrence_bits == 0 || occurrence_bits > 16 || value_bits > 32) {
+		error = "invalid JT Int32 CDP2 probability context";
+		return false;
+	    }
+	    struct ContextEntry { uint32_t low; uint32_t high; int32_t value; bool escape; };
+	    std::vector<ContextEntry> entries;
+	    entries.reserve(entry_count);
+	    uint32_t total = 0;
+	    for (uint32_t i = 0; i < entry_count; ++i) {
+		uint32_t escape = 0;
+		uint32_t occurrence = 0;
+		uint32_t associated = 0;
+		if (!read_bits(1, escape) || !read_bits(occurrence_bits, occurrence) ||
+		    !read_bits(value_bits, associated) || occurrence == 0 || total + occurrence > 65535) {
+		    error = "invalid JT Int32 CDP2 probability entry";
+		    return false;
+		}
+		entries.push_back({total, total + occurrence,
+		    static_cast<int32_t>(associated + static_cast<uint32_t>(minimum)), escape != 0});
+		total += occurrence;
+	    }
+	    context_bit = (context_bit + 7) & ~static_cast<size_t>(7);
+	    Reader oob_reader(bytes_, header_.little_endian, context_bit / 8);
+	    int32_t oob_count = 0;
+	    if (!oob_reader.i32(oob_count) || oob_count < 0 || oob_count > count) {
+		error = "invalid JT Int32 CDP2 out-of-band count";
+		return false;
+	    }
+	    std::vector<int32_t> oob_values;
+	    size_t oob_size = 0;
+	    if (oob_count > 0) {
+		if (!decode(oob_reader.offset(), depth + 1, oob_values, oob_size) ||
+		    oob_values.size() != static_cast<size_t>(oob_count)) return false;
+	    }
+
+	    size_t code_bit = 0;
+	    const auto next_code_bit = [&]() -> uint16_t {
+		if (code_bit >= static_cast<size_t>(bit_count)) return 0;
+		const uint16_t bit = (code_text[code_bit / 8] >> (7 - code_bit % 8)) & 1u;
+		++code_bit;
+		return bit;
+	    };
+	    uint16_t low = 0;
+	    uint16_t high = 0xffff;
+	    uint16_t code = 0;
+	    for (unsigned i = 0; i < 16; ++i) code = static_cast<uint16_t>((code << 1) | next_code_bit());
+	    size_t oob_index = 0;
+	    output.reserve(static_cast<size_t>(count));
+	    for (int32_t i = 0; i < count; ++i) {
+		const uint32_t range = static_cast<uint32_t>(high - low) + 1;
+		const uint32_t scaled = ((static_cast<uint32_t>(code - low) + 1) * total - 1) / range;
+		auto found = std::find_if(entries.begin(), entries.end(),
+		    [scaled](const ContextEntry &entry) { return scaled >= entry.low && scaled < entry.high; });
+		if (found == entries.end()) {
+		    error = "JT Arithmetic CODEC symbol is outside the probability context";
+		    return false;
+		}
+		if (found->escape) {
+		    if (oob_index >= oob_values.size()) {
+			error = "JT Arithmetic CODEC exhausted out-of-band values";
+			return false;
+		    }
+		    output.push_back(oob_values[oob_index++]);
+		} else {
+		    output.push_back(found->value);
+		}
+		high = static_cast<uint16_t>(low + (range * found->high) / total - 1);
+		low = static_cast<uint16_t>(low + (range * found->low) / total);
+		for (;;) {
+		    if ((high & 0x8000) == (low & 0x8000)) {
+		    } else if ((low >> 14) == 1 && (high >> 14) == 2) {
+			code ^= 0x4000;
+			low &= 0x3fff;
+			high |= 0x4000;
+		    } else {
+			break;
+		    }
+		    low = static_cast<uint16_t>(low << 1);
+		    high = static_cast<uint16_t>((high << 1) | 1);
+		    code = static_cast<uint16_t>((code << 1) | next_code_bit());
+		}
+	    }
+	    if (oob_index != oob_values.size()) {
+		error = "JT Arithmetic CODEC did not consume all out-of-band values";
+		return false;
+	    }
+	    consumed = oob_reader.offset() + oob_size - packet_offset;
+	    return true;
 	} else if (codec == 4) {
 	    if (depth >= max_chopper_depth) {
 		error = "JT Int32 CDP2 Chopper recursion limit exceeded";
@@ -517,8 +651,11 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    uint8_t chop_bits = 0;
 	    uint8_t span_bits = 0;
 	    int32_t bias = 0;
-	    if (!reader.u8(chop_bits) || (chop_bits == 0 && !reader.i32(bias)) || !reader.u8(span_bits) ||
-		span_bits > 32 || chop_bits > span_bits) {
+	    const bool jt10_chopper = header_.major_version >= 10;
+	    if (!reader.u8(chop_bits) ||
+		(jt10_chopper ? !reader.i32(bias) : (chop_bits == 0 && !reader.i32(bias))) ||
+		!reader.u8(span_bits) || span_bits > 32 || chop_bits > span_bits ||
+		(jt10_chopper && chop_bits == 0)) {
 		error = "invalid JT Int32 CDP2 Chopper parameters";
 		return false;
 	    }
