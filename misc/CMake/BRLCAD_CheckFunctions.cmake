@@ -125,6 +125,67 @@ endif("${C_STANDARD_FLAGS}" STREQUAL "")
 set(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES ON CACHE BOOL "Batch compatible configure probes into parallel mini-project builds")
 mark_as_advanced(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
 
+# Keep the normally-quiet probe machinery inspectable when diagnosing a new
+# compiler/generator combination.  The generated source and mini-projects are
+# already retained under CMakeTmp, but execute_process captures their output;
+# without this switch the information needed to diagnose a failed batch never
+# reaches a CI log.  This option writes one log per batch under
+# CMakeTmp/probe_diagnostics.  It is intentionally off by default so normal
+# configure output remains compact.
+set(BRLCAD_CONFIG_PROBE_DIAGNOSTICS OFF CACHE BOOL "Record detailed parallel configure-probe diagnostics")
+mark_as_advanced(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+
+function(_brlcad_probe_diagnostic filename content)
+  if(NOT BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+    return()
+  endif()
+
+  set(_diag_dir "${CMAKE_BINARY_DIR}/CMakeTmp/probe_diagnostics")
+  set(_diag_content "${content}")
+  foreach(_diag_part IN LISTS ARGN)
+    string(APPEND _diag_content "${_diag_part}")
+  endforeach()
+  file(MAKE_DIRECTORY "${_diag_dir}")
+  file(APPEND "${_diag_dir}/${filename}.log" "${_diag_content}\n")
+endfunction()
+
+# Return the generated executable for a probe target, if it was built.  The
+# batch projects force runtime output into their build directory, but the
+# multi-config generators still put some configurations in a subdirectory.
+function(_brlcad_probe_target_output build_dir target found_var output_var)
+  set(_probe_output "")
+  foreach(_probe_config IN ITEMS "" Debug Release RelWithDebInfo MinSizeRel)
+    foreach(_probe_ext IN ITEMS "" ".exe")
+      if(_probe_config)
+        set(_probe_candidate "${build_dir}/${_probe_config}/${target}${_probe_ext}")
+      else()
+        set(_probe_candidate "${build_dir}/${target}${_probe_ext}")
+      endif()
+      if(EXISTS "${_probe_candidate}")
+        set(_probe_output "${_probe_candidate}")
+        break()
+      endif()
+    endforeach()
+    if(_probe_output)
+      break()
+    endif()
+  endforeach()
+
+  if(_probe_output)
+    set(${found_var} TRUE PARENT_SCOPE)
+  else()
+    set(${found_var} FALSE PARENT_SCOPE)
+  endif()
+  set(${output_var} "${_probe_output}" PARENT_SCOPE)
+endfunction()
+
+function(_brlcad_probe_ninja_setup_note note)
+  _brlcad_probe_diagnostic("ninja-setup" "${note}")
+  if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+    message(STATUS "Parallel configure-probe diagnostic: ${note}")
+  endif()
+endfunction()
+
 ###
 # Register a compile/link probe into a named batch.  The source file must be
 # written to ${CMAKE_BINARY_DIR}/CMakeTmp/<BATCH>_sources/<VAR>.c before the
@@ -194,10 +255,11 @@ endmacro()
 # One-time detection of whether the throwaway probe mini-projects can be built
 # with Ninja instead of the (much slower to configure) Visual Studio generator.
 # Ninja needs the MSVC toolchain environment that the VS generator sets up
-# internally but never exports, so we also record vcvarsall.bat and the target
-# arch; each sub-build is wrapped in a generated batch that sources vcvars
-# first.  If anything required is missing we leave BRLCAD_PROBE_USE_NINJA off
-# and fall back to the parent generator (no behavior change).
+# internally but never exports, so we record vcvarsall.bat and the target arch,
+# capture that environment once, and provide it to each sub-build with
+# `cmake -E env`.  If anything required is missing we leave
+# BRLCAD_PROBE_USE_NINJA off and fall back to the parent generator (no behavior
+# change).
 ###
 function(_brlcad_probe_batch_ninja_setup)
   if(DEFINED BRLCAD_PROBE_NINJA_READY)
@@ -207,19 +269,33 @@ function(_brlcad_probe_batch_ninja_setup)
   set(BRLCAD_PROBE_USE_NINJA FALSE CACHE INTERNAL "use Ninja for probe batch mini-projects")
 
   if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
-    return()
-  endif()
-  get_filename_component(_pcmdir "${CMAKE_COMMAND}" DIRECTORY)
-  find_program(BRLCAD_PROBE_NINJA_EXE NAMES ninja ninja-build HINTS "${_pcmdir}/../../Ninja")
-  mark_as_advanced(BRLCAD_PROBE_NINJA_EXE)
-  if(NOT BRLCAD_PROBE_NINJA_EXE)
+    _brlcad_probe_ninja_setup_note("Ninja probe subprojects are not needed: parent generator is '${CMAKE_GENERATOR}'.")
     return()
   endif()
   if(NOT CMAKE_GENERATOR_INSTANCE)
+    _brlcad_probe_ninja_setup_note("Ninja probe subprojects are unavailable: CMAKE_GENERATOR_INSTANCE is empty for '${CMAKE_GENERATOR}'.")
+    return()
+  endif()
+
+  # Visual Studio installs Ninja with its CMake integration, but it is not
+  # generally added to PATH by vcvars.  Search the selected VS instance first;
+  # get-cmake may supply a different CMake installation, so looking only next
+  # to CMAKE_COMMAND can miss the Ninja that VS guarantees is present.
+  get_filename_component(_pcmdir "${CMAKE_COMMAND}" DIRECTORY)
+  set(_ninja_hints
+    "${CMAKE_GENERATOR_INSTANCE}/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja"
+    "${CMAKE_GENERATOR_INSTANCE}/Common7/IDE/CommonExtensions/Microsoft/CMake"
+    "${_pcmdir}/../../Ninja"
+  )
+  find_program(BRLCAD_PROBE_NINJA_EXE NAMES ninja ninja-build HINTS ${_ninja_hints})
+  mark_as_advanced(BRLCAD_PROBE_NINJA_EXE)
+  if(NOT BRLCAD_PROBE_NINJA_EXE)
+    _brlcad_probe_ninja_setup_note("Ninja probe subprojects are unavailable: Ninja was not found in the selected Visual Studio instance '${CMAKE_GENERATOR_INSTANCE}' or beside CMake ('${_pcmdir}').")
     return()
   endif()
   set(_vcv "${CMAKE_GENERATOR_INSTANCE}/VC/Auxiliary/Build/vcvarsall.bat")
   if(NOT EXISTS "${_vcv}")
+    _brlcad_probe_ninja_setup_note("Ninja probe subprojects are unavailable: vcvarsall.bat was not found at '${_vcv}'.")
     return()
   endif()
   set(_arch "x64")
@@ -238,6 +314,7 @@ function(_brlcad_probe_batch_ninja_setup)
   file(WRITE "${_cap_bat}" "@echo off\r\ncall \"${_vcv}\" ${_arch} >nul 2>nul\r\nset\r\n")
   execute_process(COMMAND cmd /c "${_cap_bat}" OUTPUT_VARIABLE _env_dump RESULT_VARIABLE _env_res)
   if(NOT _env_res EQUAL 0)
+    _brlcad_probe_ninja_setup_note("Ninja probe subprojects are unavailable: vcvarsall capture failed with exit code ${_env_res}.")
     return()
   endif()
   # Extract each toolchain variable as a whole line (regex, not list ops, so the
@@ -247,11 +324,15 @@ function(_brlcad_probe_batch_ninja_setup)
     set(BRLCAD_PROBE_ENV_${_nm} "${CMAKE_MATCH_2}" CACHE INTERNAL "probe vcvars ${_nm}")
   endforeach()
   if(NOT BRLCAD_PROBE_ENV_INCLUDE)
+    _brlcad_probe_ninja_setup_note("Ninja probe subprojects are unavailable: vcvarsall did not set INCLUDE.")
     return()  # vcvars did not populate the environment; keep the VS fallback
   endif()
 
+  set(BRLCAD_PROBE_VCVARS "${_vcv}" CACHE INTERNAL "vcvarsall used by probe batches")
+  set(BRLCAD_PROBE_VCVARS_ARCH "${_arch}" CACHE INTERNAL "architecture used by probe batches")
   set(BRLCAD_PROBE_USE_NINJA TRUE CACHE INTERNAL "use Ninja for probe batch mini-projects")
   message(STATUS "Configure probe batches will build with Ninja + captured MSVC env (${_arch})")
+  _brlcad_probe_ninja_setup_note("Ninja probe subprojects enabled: Ninja='${BRLCAD_PROBE_NINJA_EXE}', vcvarsall='${_vcv}', architecture='${_arch}'.")
 endfunction()
 
 ###
@@ -379,6 +460,29 @@ function(_brlcad_run_probe_batch BATCH_NAME)
       list(APPEND _cfg_cmd "-DCMAKE_C_FLAGS=${_BRPB_C_FLAGS}")
     endif()
 
+    if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+      string(JOIN ", " _pending_report ${_pending_vars})
+      string(JOIN " " _cfg_cmd_report ${_cfg_cmd})
+      if(BRLCAD_PROBE_USE_NINJA)
+        set(_probe_generator "Ninja (with captured MSVC environment)")
+      else()
+        set(_probe_generator "${CMAKE_GENERATOR} (parent generator)")
+      endif()
+      _brlcad_probe_diagnostic("${BATCH_NAME}"
+        "=== BATCH PROBE SETUP: ${BATCH_NAME} ===\n"
+        "Parent generator: ${CMAKE_GENERATOR}\n"
+        "Parent generator platform: ${CMAKE_GENERATOR_PLATFORM}\n"
+        "Parent generator toolset: ${CMAKE_GENERATOR_TOOLSET}\n"
+        "Probe generator: ${_probe_generator}\n"
+        "C compiler: ${CMAKE_C_COMPILER}\n"
+        "C flags: ${_BRPB_C_FLAGS}\n"
+        "Pending probes: ${_pending_report}\n"
+        "Source directory: ${_src_dir}\n"
+        "Build directory: ${_build_dir}\n"
+        "Configure command: ${_cfg_cmd_report}\n"
+      )
+    endif()
+
     if(BRLCAD_PROBE_USE_NINJA)
       _brlcad_probe_env_args(_penv)
       execute_process(
@@ -396,6 +500,12 @@ function(_brlcad_run_probe_batch BATCH_NAME)
       )
     endif()
     file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH PROBE CONFIGURE LOG: ${BATCH_NAME} ===\n${_cfg_out}\n${_cfg_err}\n")
+    _brlcad_probe_diagnostic("${BATCH_NAME}"
+      "=== BATCH PROBE CONFIGURE RESULT: ${BATCH_NAME} ===\n"
+      "Exit code: ${_cfg_result}\n"
+      "stdout:\n${_cfg_out}\n"
+      "stderr:\n${_cfg_err}\n"
+    )
 
     if(_cfg_result EQUAL 0)
       cmake_host_system_information(RESULT _ncpus QUERY NUMBER_OF_PHYSICAL_CORES)
@@ -413,9 +523,22 @@ function(_brlcad_run_probe_batch BATCH_NAME)
         set(_keepgoing "")
       endif()
 
-      set(_build_all "${CMAKE_COMMAND}" "--build" "${_build_dir}" "-j" "${_ncpus}" ${_keepgoing})
+      set(_build_all "${CMAKE_COMMAND}" "--build" "${_build_dir}" "-j" "${_ncpus}")
+      if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+        list(APPEND _build_all "--verbose")
+      endif()
+      list(APPEND _build_all ${_keepgoing})
       if(CMAKE_BUILD_TYPE AND NOT _keepgoing)
         list(APPEND _build_all "--config" "${CMAKE_BUILD_TYPE}")
+      endif()
+      if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+        string(JOIN " " _build_cmd_report ${_build_all})
+        string(JOIN " " _keepgoing_report ${_keepgoing})
+        _brlcad_probe_diagnostic("${BATCH_NAME}"
+          "=== BATCH PROBE BUILD COMMAND: ${BATCH_NAME} ===\n"
+          "Command: ${_build_cmd_report}\n"
+          "Keep-going arguments: ${_keepgoing_report}\n"
+        )
       endif()
       if(BRLCAD_PROBE_USE_NINJA)
         _brlcad_probe_env_args(_penv)
@@ -434,25 +557,22 @@ function(_brlcad_run_probe_batch BATCH_NAME)
         )
       endif()
       file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH PROBE BUILD LOG: ${BATCH_NAME} ===\n${_build_out}\n${_build_err}\n")
+      _brlcad_probe_diagnostic("${BATCH_NAME}"
+        "=== BATCH PROBE BUILD RESULT: ${BATCH_NAME} ===\n"
+        "Exit code: ${_ignored_result}\n"
+        "stdout:\n${_build_out}\n"
+        "stderr:\n${_build_err}\n"
+      )
     endif()
   endif()
 
   set(_batch_report)
+  set(_probe_target_report)
   foreach(_var IN LISTS _batch_vars)
     if(NOT DEFINED ${_var})
       set(_success FALSE)
       if(_cfg_result EQUAL 0)
-        if(EXISTS "${_build_dir}/${_var}" OR EXISTS "${_build_dir}/${_var}.exe")
-          set(_success TRUE)
-        elseif(EXISTS "${_build_dir}/Debug/${_var}" OR EXISTS "${_build_dir}/Debug/${_var}.exe")
-          set(_success TRUE)
-        elseif(EXISTS "${_build_dir}/Release/${_var}" OR EXISTS "${_build_dir}/Release/${_var}.exe")
-          set(_success TRUE)
-        elseif(EXISTS "${_build_dir}/RelWithDebInfo/${_var}" OR EXISTS "${_build_dir}/RelWithDebInfo/${_var}.exe")
-          set(_success TRUE)
-        elseif(EXISTS "${_build_dir}/MinSizeRel/${_var}" OR EXISTS "${_build_dir}/MinSizeRel/${_var}.exe")
-          set(_success TRUE)
-        endif()
+        _brlcad_probe_target_output("${_build_dir}" "${_var}" _success _probe_artifact)
       endif()
       if(_success)
         set(${_var} 1 CACHE INTERNAL "Test ${_var}" FORCE)
@@ -466,6 +586,13 @@ function(_brlcad_run_probe_batch BATCH_NAME)
       else()
         string(APPEND _batch_report "${_batch_result_line}")
       endif()
+      if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+        if(_success)
+          string(APPEND _probe_target_report "${_var}: built (${_probe_artifact})\n")
+        else()
+          string(APPEND _probe_target_report "${_var}: no executable produced\n")
+        endif()
+      endif()
     endif()
 
     if(${_var} AND CONFIG_H_FILE)
@@ -474,6 +601,11 @@ function(_brlcad_run_probe_batch BATCH_NAME)
   endforeach()
   if(_batch_report)
     message(STATUS "${_batch_report}")
+  endif()
+  if(_probe_target_report)
+    _brlcad_probe_diagnostic("${BATCH_NAME}"
+      "=== BATCH PROBE TARGET RESULTS: ${BATCH_NAME} ===\n${_probe_target_report}"
+    )
   endif()
 endfunction()
 

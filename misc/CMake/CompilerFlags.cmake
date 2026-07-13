@@ -372,6 +372,21 @@ function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
   if(CMAKE_${_brfb_lang_kw}_FLAGS)
     list(APPEND _brfb_cfg_cmd "-DCMAKE_${_brfb_lang_kw}_FLAGS=${CMAKE_${_brfb_lang_kw}_FLAGS}")
   endif()
+  if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+    string(JOIN ", " _brfb_pending_report ${_brfb_pending})
+    string(JOIN " " _brfb_cfg_cmd_report ${_brfb_cfg_cmd})
+    _brlcad_probe_diagnostic("CFLAG_${FLAG_LANG}"
+      "=== BATCH COMPILER FLAG SETUP: ${FLAG_LANG} ===\n"
+      "Parent generator: ${CMAKE_GENERATOR}\n"
+      "Parent generator platform: ${CMAKE_GENERATOR_PLATFORM}\n"
+      "Parent generator toolset: ${CMAKE_GENERATOR_TOOLSET}\n"
+      "Compiler: ${CMAKE_${_brfb_lang_kw}_COMPILER}\n"
+      "Pending flag probes: ${_brfb_pending_report}\n"
+      "Source directory: ${_brfb_src_dir}\n"
+      "Build directory: ${_brfb_build_dir}\n"
+      "Configure command: ${_brfb_cfg_cmd_report}\n"
+    )
+  endif()
 
   execute_process(
     COMMAND ${_brfb_cfg_cmd}
@@ -380,6 +395,14 @@ function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
     ERROR_VARIABLE _brfb_cfg_err
   )
   file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH COMPILER FLAG CONFIGURE LOG: ${FLAG_LANG} ===\n${_brfb_cfg_out}\n${_brfb_cfg_err}\n")
+  if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+    _brlcad_probe_diagnostic("CFLAG_${FLAG_LANG}"
+      "=== BATCH COMPILER FLAG CONFIGURE RESULT: ${FLAG_LANG} ===\n"
+      "Exit code: ${_brfb_cfg_result}\n"
+      "stdout:\n${_brfb_cfg_out}\n"
+      "stderr:\n${_brfb_cfg_err}\n"
+    )
+  endif()
 
   if(_brfb_cfg_result EQUAL 0)
     cmake_host_system_information(RESULT _brfb_ncpus QUERY NUMBER_OF_PHYSICAL_CORES)
@@ -397,9 +420,22 @@ function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
       set(_brfb_keepgoing "")
     endif()
 
-    set(_brfb_build_cmd "${CMAKE_COMMAND}" "--build" "${_brfb_build_dir}" "-j" "${_brfb_ncpus}" ${_brfb_keepgoing})
+    set(_brfb_build_cmd "${CMAKE_COMMAND}" "--build" "${_brfb_build_dir}" "-j" "${_brfb_ncpus}")
+    if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+      list(APPEND _brfb_build_cmd "--verbose")
+    endif()
+    list(APPEND _brfb_build_cmd ${_brfb_keepgoing})
     if(CMAKE_BUILD_TYPE AND NOT _brfb_keepgoing)
       list(APPEND _brfb_build_cmd "--config" "${CMAKE_BUILD_TYPE}")
+    endif()
+    if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+      string(JOIN " " _brfb_build_cmd_report ${_brfb_build_cmd})
+      string(JOIN " " _brfb_keepgoing_report ${_brfb_keepgoing})
+      _brlcad_probe_diagnostic("CFLAG_${FLAG_LANG}"
+        "=== BATCH COMPILER FLAG BUILD COMMAND: ${FLAG_LANG} ===\n"
+        "Command: ${_brfb_build_cmd_report}\n"
+        "Keep-going arguments: ${_brfb_keepgoing_report}\n"
+      )
     endif()
     execute_process(
       COMMAND ${_brfb_build_cmd}
@@ -408,6 +444,14 @@ function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
       ERROR_VARIABLE _brfb_build_err
     )
     file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH COMPILER FLAG BUILD LOG: ${FLAG_LANG} ===\n${_brfb_build_out}\n${_brfb_build_err}\n")
+    if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+      _brlcad_probe_diagnostic("CFLAG_${FLAG_LANG}"
+        "=== BATCH COMPILER FLAG BUILD RESULT: ${FLAG_LANG} ===\n"
+        "Exit code: ${_brfb_ignored_result}\n"
+        "stdout:\n${_brfb_build_out}\n"
+        "stderr:\n${_brfb_build_err}\n"
+      )
+    endif()
   endif()
 
   # Determine pass/fail exactly the way CMake's check_<lang>_compiler_flag does:
