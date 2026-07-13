@@ -208,8 +208,15 @@ useful for inspecting form and orientation without lighting:
 * Materials are approximated: regions render as opaque diffuse surfaces using
   their region color, `light`/`emitter` regions become area lights, and
   specular/refractive shaders are not yet modeled.
-* Only triangle-representable geometry contributes; non-tessellatable solids
-  (for example infinite half-spaces) are skipped.
+* Only triangle-representable geometry contributes.  Non-tessellatable solids
+  (for example infinite half-spaces) are skipped outright.
+* More subtly, a CSG region whose on-the-fly NMG boolean evaluation *fails* is
+  silently omitted -- it contributes no triangles and simply disappears, while
+  the rest of the model still renders.  The load log flags these as `FAILED in
+  boolean evaluation: <path>`.  Because the failure is per region, the result
+  can look complete while quietly missing parts (a wheel, a roll bar).  When
+  fidelity matters, facetize the model first with the far more robust
+  Manifold facetizer (see <<Complex CSG: facetize first>>) and render the mesh.
 
 [NOTE]
 ====
