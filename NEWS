@@ -16,6 +16,7 @@ changes made.  See document footer for additional details.
 * added new documentation on adrt rendering - Sean Morrison
 * added snail & seashell procedural geometry generator - Sean Morrison
 * rm ged command now behfaves like the system rm, kills objects&paths
+* added preliminary support for mirroring brep objects - Sean Morrison
 * fixed dbupgrade corruption of RHC entities - Sean Morrison
 * fixed archer bug opening database named same as cmd - Sean Morrison 
 * fixed mged bug where pasted text captured by prompt - Sean Morrison
