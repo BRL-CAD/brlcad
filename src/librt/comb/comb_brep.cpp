@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include "raytrace.h"
+#include "bn/mat.h"
 #include "rt/geom.h"
 #include "rt/comb.h"
 #include "nmg.h"
@@ -120,6 +121,8 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 			    ON_Xform xform(t->tr_l.tl_mat);
 			    ret = -1;
 			    if ((*b)->Transform(xform)) {
+				if (bn_mat_det3(t->tr_l.tl_mat) < 0.0)
+				    (*b)->Flip();
 				ret = 0;
 			    }
 			}
