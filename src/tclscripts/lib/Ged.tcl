@@ -939,14 +939,15 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::constructor {_gedOrFile args} {
     global tcl_platform
 
-    if {[catch {$_gedOrFile ls}]} {
-	set mGedFile $_gedOrFile
-	set mGed [subst $this]_ged
-	go_open $mGed db $mGedFile
-    } else {
+    if {[llength [info commands ::go_open]] &&
+	[lsearch -exact [::go_open] $_gedOrFile] != -1} {
 	set mGedFile ""
 	set mGed $_gedOrFile
 	set mSharedGed 1
+    } else {
+	set mGedFile $_gedOrFile
+	set mGed [subst $this]_ged
+	go_open $mGed db $mGedFile
     }
     iwidgets::Panedwindow::add upper
     iwidgets::Panedwindow::add lower
@@ -2531,7 +2532,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::open {args} {
     catch {rename $mRay ""}
     set mRayNeedGettrees 1
-    set $mGedFile [eval $mGed open $args]
+    set mGedFile [eval $mGed open $args]
 }
 
 ::itcl::body cadwidgets::Ged::opendb {args} {
