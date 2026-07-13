@@ -390,6 +390,13 @@ IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 }
 
 int
+IFPainter::getTextWidthAtScale(double fontScale, std::string text, int flags)
+{
+    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+    return getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontScale, fontWeight, 0).width;
+}
+
+int
 IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text)
 {
     int fontSize = getFontSizeFromHeight(height);
@@ -431,6 +438,14 @@ IFPainter::drawText(int x, int y, int height, int width, std::string text, int f
 	// Draw the line using the same color as the text
 	cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
     }
+}
+
+void
+IFPainter::drawTextAtScale(int x, int baselineY, double fontScale, std::string text, int flags)
+{
+    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
+    cv::putText(img, text, cv::Point(x, baselineY), cv::FONT_HERSHEY_DUPLEX, fontScale, color, fontWeight);
 }
 
 void
@@ -513,12 +528,15 @@ IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string
  * how many words there are
  */
 int
-IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
+IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags, std::string suffix, double suffixFontScale)
 {
     int totalTextWidth = 0;
     for (size_t i = 0; i < text.size(); i++) {
 	totalTextWidth += getTextWidth(height, width, text[i], flags);
     }
+    bool hasSuffix = !suffix.empty() && suffixFontScale > 0.0;
+    int suffixWidth = hasSuffix ? getTextWidthAtScale(suffixFontScale, suffix, flags & ~TO_BOLD) : 0;
+    totalTextWidth += suffixWidth;
     if (totalTextWidth >= width) {
 	throw std::invalid_argument("Text is larger than the bounding box");
 	return -1;
@@ -530,7 +548,12 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
     for (size_t i = 0; i < text.size(); i++) {
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text[i]);
 	cv::putText(img, text[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-	xPosition += spacing + getTextWidth(height, width, text[i], flags);
+	xPosition += getTextWidth(height, width, text[i], flags);
+	if (hasSuffix && i == text.size() - 1) {
+	    drawTextAtScale(xPosition, y + height, suffixFontScale, suffix, flags & ~TO_BOLD);
+	    xPosition += suffixWidth;
+	}
+	xPosition += spacing;
     }
     return xPosition-spacing;	//end of text xPosition
 }
@@ -544,7 +567,7 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
  * between the words.
  */
 void
-IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
+IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags, std::string suffix, double suffixFontScale)
 {
     int confidentialWidth = getTextWidth(height, width, centerWord, flags | TO_BOLD);
     drawTextCentered(width / 2, y, height, width, centerWord, flags | TO_BOLD);
@@ -553,9 +576,12 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
 	totalLeftWidth += getTextWidth(height, width, leftText[i], flags);
     }
     int totalRightWidth = 0;
-    for (size_t i = 0; i < leftText.size(); i++) {
+    for (size_t i = 0; i < rightText.size(); i++) {
 	totalRightWidth += getTextWidth(height, width, rightText[i], flags);
     }
+    bool hasSuffix = !suffix.empty() && suffixFontScale > 0.0;
+    int suffixWidth = hasSuffix ? getTextWidthAtScale(suffixFontScale, suffix, flags & ~TO_BOLD) : 0;
+    totalRightWidth += suffixWidth;
     if (totalLeftWidth >= (width / 2) - (confidentialWidth / 2) || totalRightWidth >= (width / 2) - (confidentialWidth / 2)) {
 	throw std::invalid_argument("Text is larger than either the left or right side");
 	return;
@@ -582,7 +608,12 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
     for (size_t i = 0; i < rightText.size(); i++) {
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, rightText[i]);
 	cv::putText(img, rightText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-	xPosition = xPosition + spacing + getTextWidth(height, width, rightText[i], flags);
+	xPosition += getTextWidth(height, width, rightText[i], flags);
+	if (hasSuffix && i == rightText.size() - 1) {
+	    drawTextAtScale(xPosition, y + height, suffixFontScale, suffix, flags & ~TO_BOLD);
+	    xPosition += suffixWidth;
+	}
+	xPosition += spacing;
     }
 }
 
