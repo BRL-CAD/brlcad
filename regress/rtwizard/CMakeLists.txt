@@ -92,6 +92,8 @@ if(TARGET rtwizard)
   set(OPTIONS "-l component --benchmark -z 2 --line-color 100/200/255 -C 30/30/30")
   brlcad_regression_test(regress-rtwiz_m35_edge_only_color "rtwizard;pixcmp;m35.g" TEST_SCRIPT "${TSCRIPT}" EXEC rtwizard)
   distclean(${LOG_FILE} ${TARGET_IMAGE})
+
+  distclean(${CMAKE_CURRENT_BINARY_DIR}/rtedge.log)
 endif()
 
 cmakefiles(

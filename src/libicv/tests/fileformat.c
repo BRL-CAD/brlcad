@@ -96,7 +96,7 @@ write_auto_pix(const char *path, const char *msg)
     if (!img)
 	return;
 
-    (void)remove(path);
+    bu_file_delete(path);
     ret = icv_write(img, path, BU_MIME_IMAGE_AUTO);
     CHECK(ret == BRLCAD_OK, msg);
     CHECK(bu_file_exists(path, NULL), "AUTO write created the target file");
@@ -105,7 +105,7 @@ write_auto_pix(const char *path, const char *msg)
     if (ret == BRLCAD_OK)
 	check_pixel_file(path, "AUTO-written PIX file reads back");
 
-    (void)remove(path);
+    bu_file_delete(path);
 }
 
 
@@ -133,7 +133,7 @@ test_auto_write_prefixed_filename(void)
     if (!img)
 	return;
 
-    (void)remove("icv_prefixed.pix");
+    bu_file_delete("icv_prefixed.pix");
     ret = icv_write(img, "PIX:icv_prefixed.pix", BU_MIME_IMAGE_AUTO);
     CHECK(ret == BRLCAD_OK, "AUTO write honors FMT:filename prefixes");
     CHECK(bu_file_exists("icv_prefixed.pix", NULL), "prefixed AUTO write created trimmed target path");
@@ -142,7 +142,7 @@ test_auto_write_prefixed_filename(void)
     if (ret == BRLCAD_OK)
 	check_pixel_file("icv_prefixed.pix", "prefixed AUTO-written PIX file reads back");
 
-    (void)remove("icv_prefixed.pix");
+    bu_file_delete("icv_prefixed.pix");
 }
 
 

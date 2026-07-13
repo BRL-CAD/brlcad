@@ -96,6 +96,7 @@ if(TARGET qged AND XVFB_RUN AND XDOTOOL)
     ${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh
     COPYONLY
   )
+  distclean(${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh)
   file(CHMOD ${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                 GROUP_READ GROUP_EXECUTE

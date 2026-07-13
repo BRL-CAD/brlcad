@@ -1,15 +1,23 @@
 /*                     T E S T _ J T _ T O P O L O G Y . C P P
  * BRL-CAD
  *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
 #include "jt_topology.h"
 
+#include "bu/app.h"
+
 #include <iostream>
 
-int main()
+int main(int argc, char **argv)
 {
+    (void)argc;
+    bu_setprogname(argv[0]);
+
     /* A single triangle plus its cover face.  In the dual representation this
      * is two valence-three vertices joined by three degree-two faces. */
     jt::TopologySymbols symbols;

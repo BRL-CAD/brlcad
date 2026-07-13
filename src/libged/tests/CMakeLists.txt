@@ -37,6 +37,7 @@ brlcad_add_test(NAME ged_test_gqa COMMAND ged_test_gqa "${CMAKE_CURRENT_SOURCE_D
 if(TARGET ged_test_gqa)
   set_property(TEST ged_test_gqa APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
 endif(TARGET ged_test_gqa)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/gqa_ovlps.plot3)
 
 brlcad_addexec(ged_test_plugins plugins.cpp libged TEST)
 if(TARGET ged_test_plugins)

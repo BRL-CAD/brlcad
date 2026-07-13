@@ -46,6 +46,7 @@
 #include <string.h>
 
 #include "bu/exit.h"
+#include "bu/file.h"
 #include "bu/parallel.h"
 
 #include "test_api.h"
@@ -166,6 +167,7 @@ test_bomb_capture_child(const char *self_path)
 	pid_t cpid;
 	ssize_t got = 0;
 	int status = 0;
+	struct bu_vls trace_file = BU_VLS_INIT_ZERO;
 
 	TEST_API_CHECK(pipe(pipe_fds) == 0, "pipe() failed for bu_bomb child capture");
 	if (errors) {
@@ -210,6 +212,15 @@ test_bomb_capture_child(const char *self_path)
 	TEST_API_CHECK(test_api_text_contains(bu_vls_addr(&stderr_text), message),
 		       "bu_bomb stderr did not include the bomb message: %s",
 		       bu_vls_addr(&stderr_text));
+
+	/* bu_bomb writes a debug crash report for this intentional child bomb. */
+	bu_vls_sprintf(&trace_file, "%s-%ld-bomb.log", bu_getprogname(), (long)cpid);
+	if (bu_file_exists(bu_vls_addr(&trace_file), NULL)) {
+	    TEST_API_CHECK(bu_file_delete(bu_vls_addr(&trace_file)),
+			   "could not remove expected bomb report %s",
+			   bu_vls_addr(&trace_file));
+	}
+	bu_vls_free(&trace_file);
     }
 #else
     (void)self_path;

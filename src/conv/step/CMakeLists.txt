@@ -70,6 +70,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     # the later PCH compile trying to include a header that no longer exists.
     set(PRECOMPILE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/precompile_${SCHEMA_NAME}_${TARGET_SUFFIX}.h)
     file(WRITE "${PRECOMPILE_HEADER}" "// Precompiled header for STEPcode generated files\n")
+    distclean("${PRECOMPILE_HEADER}")
     foreach(header ${express_hdrs})
       # Use relative include for portability
       get_filename_component(header_name "${header}" NAME)
