@@ -108,10 +108,6 @@ Recent Bugs
   unintuitive.  specifying gqa -p"" annoyingly outputs ""exp_air.plot3
   with quotes embedded in the name.
 
-* rtweight/gqa volumes seem wrong with simple sphere test case, with
-  values consistently and quickly converging less than the actual
-  volume regardless of the grid size.
-
 * raytracing a revolved sketch seems to work fine, but rtarea and gqa
   seem to be crashing on that same revolve.  curiously, the brep
   revolve from the csgbrep proc-db has the same failure as well as the
