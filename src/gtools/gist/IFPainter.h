@@ -50,6 +50,8 @@ private:
 
     int getFontSizeFromHeight(int height);
     int getFontSizeFromHeightAndWidth(int height, int width, std::string text);
+    int getTextWidthAtScale(double fontScale, std::string text, int flags);
+    void drawTextAtScale(int x, int baselineY, double fontScale, std::string text, int flags);
 
 public:
     IFPainter(int width, int height);
@@ -70,8 +72,8 @@ public:
     void drawCirc(int x, int y, int radius, int width, cv::Scalar color);
     // void drawArc(int x, int y, int width, cv::Scalar color);
     int getTextWidth(int height, int width, std::string text, int flags = 0);
-    int justify(int x, int y, int height, int width, std::vector<std::string> text, int flags = 0);
-    void justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags);
+    int justify(int x, int y, int height, int width, std::vector<std::string> text, int flags = 0, std::string suffix = "", double suffixFontScale = 0.0);
+    void justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags, std::string suffix = "", double suffixFontScale = 0.0);
     void textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags = 0);
 
     void openInGUI();

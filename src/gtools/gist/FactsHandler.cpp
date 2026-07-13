@@ -72,6 +72,8 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
 
     int textHeight = 3 * height / 8;
     int textYOffset = (height - textHeight) / 2;
+    constexpr double fileSizeSuffixFontScale = 0.65;
+    const std::string fileSizeSuffix = " [" + info.getInfo("fileSize") + "]";
     std::vector<std::string> text;
     std::vector<std::string> text2;
 
@@ -80,13 +82,13 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
 	text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 	text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
 	text2.push_back("Source File: " + info.getInfo("file"));
-	img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
+	img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE, fileSizeSuffix, fileSizeSuffixFontScale);
     } else {
 	text.push_back("Owner: " + info.getInfo("owner"));
 	text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 	text.push_back("Last Updated: " + info.getInfo("lastUpdate"));
 	text.push_back("Source File: " + info.getInfo("file"));
-	img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE, fileSizeSuffix, fileSizeSuffixFontScale);
     }
 }
 
@@ -147,9 +149,6 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
     img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, summaryTitle, TO_BOLD);
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies");
-    curiX++;
-    img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "File Size", TO_BOLD);
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("fileSize"));
     curiX++;
     img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions", TO_BOLD);
     img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "x: " + info.getFormattedInfo("dimX"));
