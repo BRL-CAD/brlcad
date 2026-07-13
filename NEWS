@@ -13,7 +13,8 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
-* rm ged command now behfaves like the system rm, kills objects&paths
+* added -k/-K manpage full text keyword search options - Sean Morrison
+* rm ged command now behaves like the system rm, kills objects&paths
 	- Cliff Yapp, Sean Morrison
 * fixed gqa exactly symmetric volumetric estimates - Sean Morrison
 * added support to rtedge for perspective renderings - Sean Morrison
