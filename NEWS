@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed dbupgrade corruption of RHC entities - Sean Morrison
 * fixed archer bug opening database named same as cmd - Sean Morrison 
 * fixed mged bug where pasted text captured by prompt - Sean Morrison
 * added -k/-K manpage full text keyword search options - Sean Morrison

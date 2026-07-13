@@ -144,9 +144,6 @@ Recent Bugs
 * fbclear -c appears to hang indefinitely inside pkg_bwaitfor,
   possible protocol mismatch or capability removed/changed in fbserv.
 
-* dbupgrade -r produces an invalid rhc with the default v5 rhc produced
-  by MGED with  "make rhc rhc"
-
 * apparently all four BRL-CAD Tutorial Series volumes are missing from
   our bibliography...
 

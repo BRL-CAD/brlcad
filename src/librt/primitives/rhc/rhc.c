@@ -1651,7 +1651,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     xip->rhc_r = v1[X] / mat[15];
-    xip->rhc_c = v2[Y] / mat[15];
+    xip->rhc_c = v1[Y] / mat[15];
 
     if (xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF) {
 	bu_log("rt_rhc_import4: r or c are zero\n");
