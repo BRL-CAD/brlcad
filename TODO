@@ -51,6 +51,20 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make sph sph
+  clone -i 1 -t 1000 0 0 -n 100 sph
+  kill sph
+  g line sph*
+  clone -i 1 -t 0 1000 0 -n 100 line
+  kill line
+  g square line*
+  clone -i 1 -t 0 0 1000 -n 100 square
+  ... takes a crazy long time ...
+
+  This should be merely 1M spheres, but it chokes with non-linear time
+  increase.  Appears to be excessively reading/writing objects and
+  getting slower as it progresses.  Needs to be optimized.
+
 * Add two-tiered option handling to tire, propeller and naca456
   For most uses we'll want a few pre-baked high level settings -
   those can be command line flags.  For full control of the complex
