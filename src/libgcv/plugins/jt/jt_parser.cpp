@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <limits>
 #include <regex>
 
@@ -467,6 +468,97 @@ File::int32_packet(uint64_t offset, Predictor predictor, std::vector<int32_t> &v
 }
 
 bool
+File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &values,
+    size_t &bytes_read, std::string &error) const
+{
+    constexpr unsigned max_chopper_depth = 3;
+    std::function<bool(size_t, unsigned, std::vector<int32_t> &, size_t &)> decode;
+    decode = [&](size_t packet_offset, unsigned depth, std::vector<int32_t> &output, size_t &consumed) {
+	if (packet_offset > bytes_.size()) {
+	    error = "JT Int32 CDP2 offset is outside the file";
+	    return false;
+	}
+	Reader reader(bytes_, header_.little_endian, packet_offset);
+	int32_t count = 0;
+	uint8_t codec = 0;
+	if (!reader.i32(count) || !reader.u8(codec) || count < 0 ||
+	    static_cast<uint32_t>(count) > MAX_PACKET_VALUES) {
+	    error = "invalid or truncated JT Int32 CDP2 header";
+	    return false;
+	}
+	if (codec == 0) {
+	    if (static_cast<size_t>(count) > (bytes_.size() - reader.offset()) / sizeof(int32_t)) {
+		error = "truncated JT Int32 CDP2 Null values";
+		return false;
+	    }
+	    output.resize(static_cast<size_t>(count));
+	    for (int32_t &value : output) {
+		if (!reader.i32(value)) return false;
+	    }
+	} else if (codec == 1) {
+	    int32_t bit_count = 0;
+	    if (!reader.i32(bit_count) || bit_count < 0 || bit_count % 32 != 0) {
+		error = "invalid JT Int32 CDP2 Bitlength code text size";
+		return false;
+	    }
+	    const size_t word_count = static_cast<size_t>(bit_count) / 32;
+	    if (word_count > (bytes_.size() - reader.offset()) / sizeof(uint32_t)) {
+		error = "truncated JT Int32 CDP2 Bitlength code text";
+		return false;
+	    }
+	    std::vector<uint32_t> words(word_count);
+	    for (uint32_t &word : words) if (!reader.u32(word)) return false;
+	    if (!decode_bitlength(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error)) return false;
+	} else if (codec == 4) {
+	    if (depth >= max_chopper_depth) {
+		error = "JT Int32 CDP2 Chopper recursion limit exceeded";
+		return false;
+	    }
+	    uint8_t chop_bits = 0;
+	    uint8_t span_bits = 0;
+	    int32_t bias = 0;
+	    if (!reader.u8(chop_bits) || (chop_bits == 0 && !reader.i32(bias)) || !reader.u8(span_bits) ||
+		span_bits > 32 || chop_bits > span_bits) {
+		error = "invalid JT Int32 CDP2 Chopper parameters";
+		return false;
+	    }
+	    std::vector<int32_t> most_significant;
+	    std::vector<int32_t> least_significant;
+	    size_t msb_size = 0;
+	    size_t lsb_size = 0;
+	    if (!decode(reader.offset(), depth + 1, most_significant, msb_size) ||
+		!decode(reader.offset() + msb_size, depth + 1, least_significant, lsb_size) ||
+		most_significant.size() != static_cast<size_t>(count) ||
+		least_significant.size() != static_cast<size_t>(count)) {
+		error = "JT Int32 CDP2 Chopper child packets have inconsistent lengths";
+		return false;
+	    }
+	    output.resize(static_cast<size_t>(count));
+	    const unsigned shift = span_bits - chop_bits;
+	    for (size_t i = 0; i < output.size(); ++i) {
+		const uint32_t combined = static_cast<uint32_t>(least_significant[i]) |
+		    (static_cast<uint32_t>(most_significant[i]) << shift);
+		output[i] = static_cast<int32_t>(combined + static_cast<uint32_t>(bias));
+	    }
+	    consumed = reader.offset() + msb_size + lsb_size - packet_offset;
+	    return true;
+	} else {
+	    error = "unsupported JT Int32 CDP2 CODEC type " + std::to_string(codec);
+	    return false;
+	}
+	consumed = reader.offset() - packet_offset;
+	return true;
+    };
+
+    values.clear();
+    bytes_read = 0;
+    if (offset > std::numeric_limits<size_t>::max() ||
+	!decode(static_cast<size_t>(offset), 0, values, bytes_read)) return false;
+    unpack_residuals(values, predictor);
+    return true;
+}
+
+bool
 File::is_legacy_mesh(const Element &element) const
 {
     static const std::array<unsigned char, 8> jt_tail = {{0x9b, 0x6b, 0x00, 0x80, 0xc7, 0xbb, 0x59, 0x97}};
@@ -514,8 +606,9 @@ File::legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const
 	error = "unsupported JT 8 Tri-Strip element version";
 	return false;
     }
-    if (quantization[0] != 0 || representation_quantization[0] != 0) {
-	error = "quantized JT 8 vertex coordinates are not yet supported";
+    const bool quantized = representation_quantization[0] != 0;
+    if ((quantization[0] == 0) != !quantized) {
+	error = "inconsistent JT 8 vertex quantization parameters";
 	return false;
     }
     if (normal_binding > 1 || texture_binding > 1 || color_binding > 1) {
@@ -527,6 +620,65 @@ File::legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const
     std::vector<int32_t> primitive_starts;
     size_t packet_size = 0;
     if (!int32_packet(reader.offset(), Predictor::Stride1, primitive_starts, packet_size, error)) return false;
+    const size_t vertex_data_offset = reader.offset() + packet_size;
+    size_t floats_per_vertex = 3;
+    size_t vertex_count = 0;
+
+    if (quantized) {
+	if (normal_binding != 0 || texture_binding != 0 || color_binding != 0) {
+	    error = "quantized JT 8 vertex attributes are not yet supported";
+	    return false;
+	}
+	Reader quantized_reader(bytes_, header_.little_endian, vertex_data_offset);
+	struct Quantizer { float minimum; float maximum; uint8_t bits; } quantizers[3] = {};
+	for (Quantizer &quantizer : quantizers) {
+	    if (!quantized_reader.f32(quantizer.minimum) || !quantized_reader.f32(quantizer.maximum) ||
+		!quantized_reader.u8(quantizer.bits) || quantizer.bits == 0 || quantizer.bits > 32 ||
+		quantizer.maximum < quantizer.minimum) {
+		error = "invalid JT 8 point quantizer";
+		return false;
+	    }
+	}
+	int32_t unique_count = 0;
+	if (!quantized_reader.i32(unique_count) || unique_count < 0) {
+	    error = "invalid JT 8 quantized vertex count";
+	    return false;
+	}
+	size_t quantized_offset = quantized_reader.offset();
+	std::vector<int32_t> codes[3];
+	for (std::vector<int32_t> &component_codes : codes) {
+	    size_t component_size = 0;
+	    if (!int32_packet(quantized_offset, Predictor::Lag1, component_codes, component_size, error)) return false;
+	    if (component_codes.size() != static_cast<size_t>(unique_count)) {
+		error = "JT 8 quantized coordinate arrays have inconsistent lengths";
+		return false;
+	    }
+	    quantized_offset += component_size;
+	}
+	std::vector<int32_t> vertex_indices;
+	size_t index_size = 0;
+	if (!int32_packet(quantized_offset, Predictor::StripIndex, vertex_indices, index_size, error)) return false;
+	(void)index_size;
+	mesh.vertices.reserve(vertex_indices.size() * 3);
+	for (int32_t index : vertex_indices) {
+	    if (index < 0 || index >= unique_count) {
+		error = "JT 8 quantized vertex index is outside the coordinate arrays";
+		return false;
+	    }
+	    for (size_t component = 0; component < 3; ++component) {
+		const Quantizer &quantizer = quantizers[component];
+		const uint64_t maximum_code = quantizer.bits == 32 ? 0xffffffffULL : (1ULL << quantizer.bits) - 1;
+		const uint32_t code = static_cast<uint32_t>(codes[component][static_cast<size_t>(index)]);
+		if (code > maximum_code) {
+		    error = "JT 8 quantized coordinate code exceeds its bit range";
+		    return false;
+		}
+		const double scale = (quantizer.maximum - quantizer.minimum) / static_cast<double>(maximum_code);
+		mesh.vertices.push_back(quantizer.minimum + code * scale);
+	    }
+	}
+	vertex_count = vertex_indices.size();
+    } else {
     Reader vertex_reader(bytes_, header_.little_endian, reader.offset() + packet_size);
     int32_t uncompressed_size = 0;
     int32_t compressed_size = 0;
@@ -559,13 +711,13 @@ File::legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const
     const size_t texture_components = texture_binding ? 2 : 0;
     const size_t color_components = color_binding ? 3 : 0;
     const size_t normal_components = normal_binding ? 3 : 0;
-    const size_t floats_per_vertex = texture_components + color_components + normal_components + 3;
+    floats_per_vertex = texture_components + color_components + normal_components + 3;
     const size_t bytes_per_vertex = floats_per_vertex * sizeof(float);
     if (raw.empty() || raw.size() % bytes_per_vertex != 0) {
 	error = "JT 8 vertex data does not match its attribute bindings";
 	return false;
     }
-    const size_t vertex_count = raw.size() / bytes_per_vertex;
+    vertex_count = raw.size() / bytes_per_vertex;
     Reader raw_reader(raw, header_.little_endian);
     mesh.vertices.reserve(vertex_count * 3);
     for (size_t i = 0; i < vertex_count; ++i) {
@@ -577,6 +729,7 @@ File::legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const
 	    if (!raw_reader.f32(coordinate)) return false;
 	    mesh.vertices.push_back(coordinate);
 	}
+    }
     }
 
     if (primitive_starts.size() < 2 || primitive_starts.front() != 0) {
