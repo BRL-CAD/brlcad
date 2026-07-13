@@ -33,11 +33,13 @@
 
 #include "common.h"
 
+#include <ctype.h>
 #include <stddef.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
+#include "bu/path.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -65,6 +67,47 @@ struct submodel_specific {
 };
 #define RT_SUBMODEL_SPECIFIC_MAGIC 0x73756253	/* subS */
 #define RT_CK_SUBMODEL_SPECIFIC(_p) BU_CKMAG(_p, RT_SUBMODEL_SPECIFIC_MAGIC, "submodel_specific")
+
+static int
+rt_submodel_is_absolute_path(const char *path)
+{
+    if (!path || !path[0])
+	return 0;
+
+    if (path[0] == '/' || path[0] == BU_DIR_SEPARATOR)
+	return 1;
+
+    if (isalpha((unsigned char)path[0]) && path[1] == ':' &&
+	(path[2] == '/' || path[2] == BU_DIR_SEPARATOR))
+	return 1;
+
+    return 0;
+}
+
+static void
+rt_submodel_resolve_path(struct bu_vls *resolved_path, const char *db_file, const char *submodel_file)
+{
+    char *db_dir = NULL;
+    const char *normalized = NULL;
+
+    BU_ASSERT(resolved_path);
+
+    bu_vls_trunc(resolved_path, 0);
+
+    if (!submodel_file || !submodel_file[0])
+	return;
+
+    if (rt_submodel_is_absolute_path(submodel_file) || !db_file || !db_file[0]) {
+	bu_vls_sprintf(resolved_path, "%s", submodel_file);
+	return;
+    }
+
+    db_dir = bu_path_dirname(db_file);
+    bu_vls_sprintf(resolved_path, "%s/%s", db_dir, submodel_file);
+    normalized = bu_path_normalize(bu_vls_addr(resolved_path));
+    bu_vls_sprintf(resolved_path, "%s", normalized);
+    bu_free(db_dir, "submodel db dir");
+}
 
 static struct resource *
 rt_submodel_resource_get(struct rt_i *rtip, size_t cpu)
@@ -127,6 +170,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     vect_t diam;
     char *argv[2];
     struct rt_i **rtipp;
+    struct bu_vls resolved_path = BU_VLS_INIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
@@ -142,13 +186,18 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	sub_dbip = rtip->rti_dbip;
     } else {
 	/* db_open will cache dbip's via bu_open_mapped_file() */
-	if ((sub_dbip = db_open(bu_vls_addr(&sip->file), DB_OPEN_READONLY)) == DBI_NULL)
+	rt_submodel_resolve_path(&resolved_path, rtip->rti_dbip->dbi_filename, bu_vls_addr(&sip->file));
+	if ((sub_dbip = db_open(bu_vls_addr(&resolved_path), DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_vls_free(&resolved_path);
+	    bu_semaphore_release(RT_SEM_MODEL);
 	    return -1;
+	}
 
 	if (!db_is_directory_non_empty(sub_dbip)) {
 	    /* This is first open of db, build directory */
 	    if (db_dirbuild(sub_dbip) < 0) {
 		db_close(sub_dbip);
+		bu_vls_free(&resolved_path);
 		bu_semaphore_release(RT_SEM_MODEL);
 		return -1;
 	    }
@@ -213,6 +262,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     argv[0] = bu_vls_addr(&sip->treetop);
     argv[1] = NULL;
     if (rt_gettrees(sub_rtip, 1, (const char **)argv, 1) < 0) {
+	bu_vls_free(&resolved_path);
 	bu_log("submodel(%s) rt_gettrees(%s) failed\n", stp->st_name, argv[0]);
 	/* Can't call rt_i_destroy(sub_rtip) because it may have
 	 * already been instanced!
@@ -222,7 +272,9 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     if (sub_rtip->stats.nsolids <= 0) {
 	bu_log("rt_submodel_prep(%s): %s No primitives found\n",
-	       stp->st_dp->d_namep, bu_vls_addr(&sip->file));
+	       stp->st_dp->d_namep,
+	       bu_vls_strlen(&resolved_path) ? bu_vls_addr(&resolved_path) : bu_vls_addr(&sip->file));
+	bu_vls_free(&resolved_path);
 	/* Can't call rt_i_destroy(sub_rtip) because it may have
 	 * already been instanced!
 	 */
@@ -259,6 +311,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	       stp->st_dp->d_namep, sub_dbip->dbi_filename);
     }
 
+    bu_vls_free(&resolved_path);
     return 0;		/* OK */
 }
 
@@ -679,6 +732,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     int ret;
     char *argv[2];
     struct goodies good;
+    struct bu_vls resolved_path = BU_VLS_INIT_ZERO;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -697,8 +751,10 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     if (bu_vls_strlen(&sip->file) != 0) {
 	/* db_open will cache dbip's via bu_open_mapped_file() */
-	if ((good.dbip = db_open(bu_vls_addr(&sip->file), DB_OPEN_READONLY)) == DBI_NULL) {
-	    bu_log("Cannot open geometry database file (%s) to store plot\n", bu_vls_addr(&sip->file));
+	rt_submodel_resolve_path(&resolved_path, sip->dbip->dbi_filename, bu_vls_addr(&sip->file));
+	if ((good.dbip = db_open(bu_vls_addr(&resolved_path), DB_OPEN_READONLY)) == DBI_NULL) {
+	    bu_log("Cannot open geometry database file (%s) to store plot\n", bu_vls_addr(&resolved_path));
+	    bu_vls_free(&resolved_path);
 	    return -1;
 	}
 	if (!db_is_directory_non_empty(good.dbip)) {
@@ -706,6 +762,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    if (db_dirbuild(good.dbip) < 0) {
 		bu_log("rt_submodel_plot() db_dirbuild() failure\n");
 		db_close(good.dbip);
+		bu_vls_free(&resolved_path);
 		return -1;
 	    }
 	}
@@ -730,6 +787,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     if (ret < 0) bu_log("rt_submodel_plot() db_walk_tree(%s) failure\n", bu_vls_addr(&sip->treetop));
     if (bu_vls_strlen(&sip->file) != 0)
 	db_close(good.dbip);
+    bu_vls_free(&resolved_path);
     return ret;
 }
 
@@ -927,9 +985,9 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
-    if (ep->ext_nbytes <= 0)
-	return 0;
-    ep->ext_nbytes = bu_vls_strlen(&str);
+    ep->ext_nbytes = bu_vls_strlen(&str) + 1;
+    if (ep->ext_nbytes <= 1)
+	return -1;
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
 
     bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
