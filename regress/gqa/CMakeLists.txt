@@ -18,8 +18,14 @@ set(
   gqa.g
   gqa.gaps.plot3
   gqa.log
+  gqa.mass_air.am.out
+  gqa.mass_air.aw.out
+  gqa.mass_mix.am.out
+  gqa.mass_mix.aw.out
+  gqa.mass_mix.u0.out
   gqa.mged
   gqa.overlaps.plot3
+  gqa.sphere_adaptive.out
   gqa.volume.plot3
   ovlp_overlaps.plot3
   ovlpmulti_overlaps.plot3

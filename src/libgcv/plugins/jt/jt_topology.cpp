@@ -1,6 +1,9 @@
 /*                       J T _ T O P O L O G Y . C P P
  * BRL-CAD
  *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 

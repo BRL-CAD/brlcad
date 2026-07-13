@@ -10,6 +10,10 @@ set_tests_properties(icv_fileformat_test PROPERTIES WORKING_DIRECTORY "${CMAKE_C
 
 brlcad_addexec(icv_rle rle.cpp "libicv;libbu" TEST)
 brlcad_add_test(NAME icv_rle  COMMAND icv_rle)
+distclean(
+  ${CMAKE_CURRENT_BINARY_DIR}/test_invalid_channels.rle
+  ${CMAKE_CURRENT_BINARY_DIR}/test_oversized.rle
+)
 
 brlcad_addexec(icv_diff_test icv_diff_test.c "libicv;libbu" TEST)
 brlcad_add_test(NAME icv_diff_test COMMAND icv_diff_test ${CMAKE_CURRENT_BINARY_DIR})

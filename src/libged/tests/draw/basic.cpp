@@ -233,9 +233,14 @@ main(int ac, char *av[]) {
 
     /* We want a local working dir cache */
     char lcache[MAXPATHLEN] = {0};
+    char runtime_cache[MAXPATHLEN] = {0};
     bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_draw_test_cache", NULL);
     bu_mkdir(lcache);
-    bu_setenv("BU_DIR_CACHE", lcache, 1);
+    bu_dir(runtime_cache, MAXPATHLEN, BU_DIR_CURR, "ged_draw_test_cache",
+	   "cache", NULL);
+    bu_mkdir(runtime_cache);
+    /* Cache maintenance must not erase extracted image controls. */
+    bu_setenv("BU_DIR_CACHE", runtime_cache, 1);
 
     unpack_apng(av[1], "basic.apng", lcache, "v");
 

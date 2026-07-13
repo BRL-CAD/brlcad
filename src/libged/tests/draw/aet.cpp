@@ -174,9 +174,14 @@ main(int ac, char *av[]) {
     /* Use a local working-directory cache so we do not pollute the user's
      * real BRL-CAD cache and so the test is fully self-contained. */
     char lcache[MAXPATHLEN] = {0};
+    char runtime_cache[MAXPATHLEN] = {0};
     bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_aet_test_cache", NULL);
     bu_mkdir(lcache);
-    bu_setenv("BU_DIR_CACHE", lcache, 1);
+    bu_dir(runtime_cache, MAXPATHLEN, BU_DIR_CURR, "ged_aet_test_cache",
+	   "cache", NULL);
+    bu_mkdir(runtime_cache);
+    /* Runtime cache maintenance must not remove extracted controls. */
+    bu_setenv("BU_DIR_CACHE", runtime_cache, 1);
 
     unpack_apng(av[1], "aet_00.apng", lcache, "aet_00_");
     unpack_apng(av[1], "aet_01.apng", lcache, "aet_01_");
@@ -379,4 +384,3 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

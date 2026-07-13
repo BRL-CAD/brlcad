@@ -388,9 +388,14 @@ main(int ac, char *av[]) {
 
     /* We want a local working dir cache */
     char lcache[MAXPATHLEN] = {0};
+    char runtime_cache[MAXPATHLEN] = {0};
     bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_draw_test_quad_cache", NULL);
     bu_mkdir(lcache);
-    bu_setenv("BU_DIR_CACHE", lcache, 1);
+    bu_dir(runtime_cache, MAXPATHLEN, BU_DIR_CURR,
+	   "ged_draw_test_quad_cache", "cache", NULL);
+    bu_mkdir(runtime_cache);
+    /* Runtime cache resets must not delete extracted controls. */
+    bu_setenv("BU_DIR_CACHE", runtime_cache, 1);
 
     unpack_apng(av[1], "quad_00.apng", lcache, "quad_00_");
     unpack_apng(av[1], "quad_01.apng", lcache, "quad_01_");
@@ -1082,4 +1087,3 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

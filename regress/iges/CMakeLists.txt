@@ -13,6 +13,7 @@ set(
   iges_outfiles
   iges.export.iges
   iges.export.stdout.iges
+  iges.export.stdout.norm.iges
   iges.g
   iges.import.export.iges
   iges.import.g

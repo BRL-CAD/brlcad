@@ -114,6 +114,18 @@ while(HAVE_EMPTY_DIRS)
 endwhile(HAVE_EMPTY_DIRS)
 message("Removing empty directories in the build directory... done.")
 
+# An out-of-source build should now be empty.  Do not remove unexpected
+# artifacts here: they must be registered by the producer or diagnosed.
+# Ninja requires its log while this target is executing, so it is exempt.
+if(NOT "@BRLCAD_BINARY_DIR@" STREQUAL "@CMAKE_SOURCE_DIR@")
+  file(GLOB_RECURSE remaining_files LIST_DIRECTORIES FALSE RELATIVE "@BRLCAD_BINARY_DIR@" "@BRLCAD_BINARY_DIR@/*")
+  list(REMOVE_ITEM remaining_files .ninja_log distclean.cmake)
+  if(remaining_files)
+    list(JOIN remaining_files "\n  " remaining_files_report)
+    message(FATAL_ERROR "Untracked files remain after distclean:\n  ${remaining_files_report}")
+  endif()
+endif()
+
 # Done - now remove the output form of this script
 file(REMOVE "@BRLCAD_BINARY_DIR@/distclean.cmake")
 

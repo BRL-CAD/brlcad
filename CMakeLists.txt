@@ -288,7 +288,7 @@ include(Path_Setup)
 # For cleaning files as part of the distclean command, CMake needs
 # to be aware of what various generators will (or might) write out
 # in each build directory.
-set(DISTCLEAN_OUTFILES CTestTestfile.cmake Testing/Temporary/CTestCostData.txt Testing/Temporary/LastTest.log)
+set(DISTCLEAN_OUTFILES CTestTestfile.cmake Testing/Temporary/CTestCostData.txt Testing/Temporary/LastTest.log Testing/Temporary/LastTestsFailed.log)
 if("${CMAKE_GENERATOR}" MATCHES "Make")
   set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} Makefile)
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
@@ -2382,6 +2382,8 @@ endif()
 set(BRLCAD_HAVE_QT FALSE)
 if(BRLCAD_ENABLE_QT)
   set(BRLCAD_HAVE_QT TRUE)
+  # Qt creates deployment support files while configuring the build tree.
+  distclean("${BRLCAD_BINARY_DIR}/.qt")
 endif()
 
 set(BRLCAD_HAVE_STEP FALSE)
@@ -2423,12 +2425,14 @@ configure_package_config_file(
     BRLCAD_LIB_INSTALL_DIR
     BRLCAD_DATA_INSTALL_DIR
 )
+distclean("${BRLCAD_BINARY_DIR}/BRLCADConfig.cmake")
 
 write_basic_package_version_file(
   "${BRLCAD_BINARY_DIR}/BRLCADConfigVersion.cmake"
   VERSION "${BRLCAD_VERSION}"
   COMPATIBILITY SameMajorVersion
 )
+distclean("${BRLCAD_BINARY_DIR}/BRLCADConfigVersion.cmake")
 
 file(MAKE_DIRECTORY "${BRLCAD_BUILD_MODULE_DIR}")
 foreach(_brlcad_module_file ${BRLCAD_PACKAGE_MODULE_FILES})
@@ -2439,18 +2443,21 @@ foreach(_brlcad_module_file ${BRLCAD_PACKAGE_MODULE_FILES})
     COPYONLY
   )
 endforeach()
+distclean("${BRLCAD_BUILD_MODULE_DIR}")
 
 export(
   EXPORT BRLCADTargets
   NAMESPACE BRLCAD::
   FILE "${BRLCAD_BINARY_DIR}/BRLCADTargets.cmake"
 )
+distclean("${BRLCAD_BINARY_DIR}/BRLCADTargets.cmake")
 if(BUILD_STATIC_LIBS)
   export(
     EXPORT BRLCADStaticTargets
     NAMESPACE BRLCAD::
     FILE "${BRLCAD_BINARY_DIR}/BRLCADStaticTargets.cmake"
   )
+  distclean("${BRLCAD_BINARY_DIR}/BRLCADStaticTargets.cmake")
 endif()
 
 # Install-tree package files use the final installation prefix.

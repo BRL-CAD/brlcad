@@ -34,6 +34,7 @@ if(TARGET ged_test_faceplate)
   endforeach()
 endif(TARGET ged_test_faceplate)
 brlcad_add_test(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate -c "${CMAKE_CURRENT_SOURCE_DIR}")
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_draw_test_fp_cache)
 
 set(lod_test_ctrls lod.apng)
 brlcad_addexec(ged_test_lod "lod.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
@@ -87,6 +88,8 @@ if(TARGET ged_test_aet)
     endif ()
   endforeach()
 endif(TARGET ged_test_aet)
+# TODO - not ready yet
+#brlcad_add_test(NAME ged_test_drawing_aet COMMAND ged_test_aet -c "${CMAKE_CURRENT_SOURCE_DIR}")
 
 cmakefiles(
   README
