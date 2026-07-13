@@ -125,6 +125,26 @@ given keyword."} { see_also apropos }} OK Cancel] == 1 } {
     ia_help $parent $screen [apropos $keyword]
 }
 
+proc ia_man_search { parent screen } {
+    set w $parent.mansearch
+
+    catch { destroy $w }
+    if { [cad_input_dialog $w $screen "Manual Search" \
+	      "Enter keyword to search for:" keyword ""\
+	      0 {{ summary "This is where the keyword, on which to search,
+is entered. The keyword is used to search
+full manual page text."} { see_also "apropos, man" }} OK Cancel] == 1 } {
+	return
+    }
+
+    package require ManBrowser 1.0
+    if {![winfo exists .mgedMan]} {
+	ManBrowser .mgedMan -useToC 1 -defaultDir n -parentName MGED
+    }
+    .mgedMan search $keyword full
+    .mgedMan activate
+}
+
 proc ia_changestate { args } {
     global mged_display
     global mged_gui
