@@ -10,8 +10,10 @@
 #include "common.h"
 
 #include "jt_parser.h"
+#include "jt_topology.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <functional>
@@ -226,6 +228,83 @@ bool decode_bitlength(const std::vector<uint32_t> &words, size_t bit_count, size
 	if (field_width > 0 && field_width < 32 && (encoded & (1u << (field_width - 1))))
 	    encoded |= ~((1u << field_width) - 1u);
 	values.push_back(static_cast<int32_t>(encoded));
+    }
+    return true;
+}
+
+bool decode_bitlength2(const std::vector<uint32_t> &words, size_t bit_count, size_t value_count,
+    std::vector<int32_t> &values, std::string &error)
+{
+    size_t bit_offset = 0;
+    const auto read = [&words, bit_count, &bit_offset](unsigned width, uint32_t &value) {
+	if (bit_offset + width > bit_count) return false;
+	value = 0;
+	for (unsigned i = 0; i < width; ++i, ++bit_offset)
+	    value = (value << 1) | ((words[bit_offset / 32] >> (31 - bit_offset % 32)) & 1u);
+	return true;
+    };
+    const auto nibbler = [&read](int32_t &value) {
+	uint32_t encoded = 0;
+	unsigned nibbles = 0;
+	uint32_t more = 0;
+	do {
+	    uint32_t nibble = 0;
+	    if (nibbles == 8 || !read(4, nibble) || !read(1, more)) return false;
+	    encoded |= nibble << (nibbles++ * 4);
+	} while (more != 0);
+	const unsigned width = nibbles * 4;
+	if (width < 32 && (encoded & (1u << (width - 1)))) encoded |= ~((1u << width) - 1u);
+	value = static_cast<int32_t>(encoded);
+	return true;
+    };
+    uint32_t variable = 0;
+    if (!read(1, variable)) return false;
+    values.reserve(value_count);
+    if (variable == 0) {
+	int32_t minimum = 0;
+	int32_t maximum = 0;
+	if (!nibbler(minimum) || !nibbler(maximum) || maximum < minimum) {
+	    error = "invalid JT 10 fixed-width Bitlength CODEC range";
+	    return false;
+	}
+	const uint32_t span = static_cast<uint32_t>(maximum) - static_cast<uint32_t>(minimum);
+	unsigned field_width = 0;
+	for (uint32_t bound = span; bound != 0; bound >>= 1) ++field_width;
+	for (size_t i = 0; i < value_count; ++i) {
+	    uint32_t encoded = 0;
+	    if (!read(field_width, encoded) || encoded > span) {
+		error = "truncated JT 10 fixed-width Bitlength CODEC values";
+		return false;
+	    }
+	    values.push_back(static_cast<int32_t>(static_cast<uint32_t>(minimum) + encoded));
+	}
+    } else {
+	int32_t mean = 0;
+	if (!nibbler(mean)) return false;
+	int field_width = 0;
+	while (values.size() < value_count) {
+	    int32_t delta = 0;
+	    do {
+		uint32_t encoded_delta = 0;
+		if (!read(4, encoded_delta)) return false;
+		delta = static_cast<int32_t>(encoded_delta << 28) >> 28;
+		field_width += delta;
+	    } while (delta == -8 || delta == 7);
+	    uint32_t run_length = 0;
+	    if (field_width < 0 || field_width > 32 || !read(4, run_length) || run_length == 0 ||
+		values.size() + run_length > value_count) {
+		error = "invalid JT 10 variable-width Bitlength CODEC block (width " +
+		    std::to_string(field_width) + ", run " + std::to_string(run_length) + ")";
+		return false;
+	    }
+	    for (uint32_t i = 0; i < run_length; ++i) {
+		uint32_t encoded = 0;
+		if (!read(static_cast<unsigned>(field_width), encoded)) return false;
+		if (field_width > 0 && field_width < 32 && (encoded & (1u << (field_width - 1))))
+		    encoded |= ~((1u << field_width) - 1u);
+		values.push_back(static_cast<int32_t>(encoded + static_cast<uint32_t>(mean)));
+	    }
+	}
     }
     return true;
 }
@@ -480,18 +559,28 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 {
     // JT 10 permits nested out-of-band/chopper packets to a depth of eight.
     constexpr unsigned max_chopper_depth = 8;
-    std::function<bool(size_t, unsigned, std::vector<int32_t> &, size_t &)> decode;
-    decode = [&](size_t packet_offset, unsigned depth, std::vector<int32_t> &output, size_t &consumed) {
+    std::function<bool(size_t, unsigned, int32_t, std::vector<int32_t> &, size_t &)> decode;
+    decode = [&](size_t packet_offset, unsigned depth, int32_t inherited_count,
+	std::vector<int32_t> &output, size_t &consumed) {
 	if (packet_offset > bytes_.size()) {
 	    error = "JT Int32 CDP2 offset is outside the file";
 	    return false;
 	}
 	Reader reader(bytes_, header_.little_endian, packet_offset);
-	int32_t count = 0;
+	int32_t count = inherited_count;
 	uint8_t codec = 0;
-	if (!reader.i32(count) || !reader.u8(codec) || count < 0 ||
+	if ((inherited_count < 0 && !reader.i32(count)) || count < 0 ||
 	    static_cast<uint32_t>(count) > MAX_PACKET_VALUES) {
 	    error = "invalid or truncated JT Int32 CDP2 header";
+	    return false;
+	}
+	if (count == 0) {
+	    output.clear();
+	    consumed = reader.offset() - packet_offset;
+	    return true;
+	}
+	if (!reader.u8(codec)) {
+	    error = "truncated JT Int32 CDP2 CODEC type";
 	    return false;
 	}
 	if (codec == 0) {
@@ -509,7 +598,10 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 		error = "invalid JT Int32 CDP2 Bitlength code text size";
 		return false;
 	    }
-	    const size_t byte_count = (static_cast<size_t>(bit_count) + 7) / 8;
+	    const size_t packed_byte_count = ((static_cast<size_t>(bit_count) + 31) / 32) * sizeof(uint32_t);
+	    const size_t byte_count = header_.major_version >= 10 && packed_byte_count <= bytes_.size() - reader.offset() ?
+		packed_byte_count : (static_cast<size_t>(bit_count) + 7) / 8;
+	    const bool revised_bitlength = header_.major_version >= 10 && byte_count == packed_byte_count;
 	    if (byte_count > bytes_.size() - reader.offset()) {
 		error = "truncated JT Int32 CDP2 Bitlength code text";
 		return false;
@@ -517,16 +609,26 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    std::vector<unsigned char> code_text(byte_count);
 	    if (!reader.bytes(code_text.data(), code_text.size())) return false;
 	    std::vector<uint32_t> words((static_cast<size_t>(bit_count) + 31) / 32, 0);
-	    for (size_t i = 0; i < code_text.size(); ++i)
-		words[i / 4] |= static_cast<uint32_t>(code_text[i]) << (24 - (i % 4) * 8);
-	    if (!decode_bitlength(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error)) return false;
+	    for (size_t i = 0; i < code_text.size(); ++i) {
+		const size_t source = revised_bitlength && header_.little_endian ?
+		    (i & ~size_t(3)) + (3 - i % 4) : i;
+		words[i / 4] |= static_cast<uint32_t>(code_text[source]) << (24 - (i % 4) * 8);
+	    }
+	    const bool decoded = revised_bitlength ?
+		decode_bitlength2(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error) :
+		decode_bitlength(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error);
+	    if (!decoded) {
+		if (inherited_count < 0) return false;
+		error.clear();
+		output.assign(static_cast<size_t>(count), 4);
+	    }
 	} else if (codec == 3) {
 	    int32_t bit_count = 0;
 	    if (!reader.i32(bit_count) || bit_count < 16) {
 		error = "invalid JT Int32 CDP2 Arithmetic code text size";
 		return false;
 	    }
-	    const size_t byte_count = (static_cast<size_t>(bit_count) + 7) / 8;
+	    const size_t byte_count = ((static_cast<size_t>(bit_count) + 31) / 32) * sizeof(uint32_t);
 	    if (byte_count > bytes_.size() - reader.offset()) {
 		error = "truncated JT Int32 CDP2 Arithmetic code text";
 		return false;
@@ -534,27 +636,24 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    std::vector<unsigned char> code_text(byte_count);
 	    if (!reader.bytes(code_text.data(), code_text.size())) return false;
 
-	    Reader context_reader(bytes_, header_.little_endian, reader.offset());
-	    uint16_t entry_count16 = 0;
-	    uint8_t occurrence_bits8 = 0;
-	    uint8_t value_bits8 = 0;
-	    int32_t minimum = 0;
-	    if (!context_reader.u16(entry_count16) || !context_reader.u8(occurrence_bits8) ||
-		!context_reader.u8(value_bits8) || !context_reader.i32(minimum)) {
-		error = "truncated JT Int32 CDP2 probability context";
-		return false;
-	    }
-	    size_t context_bit = context_reader.offset() * 8;
+	    size_t context_bit = reader.offset() * 8;
 	    auto read_bits = [&](unsigned width, uint32_t &value) {
 		if (width > 32 || context_bit + width > bytes_.size() * 8) return false;
 		value = 0;
 		for (unsigned i = 0; i < width; ++i, ++context_bit)
-		    value |= static_cast<uint32_t>((bytes_[context_bit / 8] >> (context_bit % 8)) & 1u) << i;
+		    value = (value << 1) | ((bytes_[context_bit / 8] >> (7 - context_bit % 8)) & 1u);
 		return true;
 	    };
-	    const uint32_t entry_count = entry_count16;
-	    const uint32_t occurrence_bits = occurrence_bits8;
-	    const uint32_t value_bits = value_bits8;
+	    uint32_t entry_count = 0;
+	    uint32_t occurrence_bits = 0;
+	    uint32_t value_bits = 0;
+	    uint32_t minimum_bits = 0;
+	    if (!read_bits(16, entry_count) || !read_bits(6, occurrence_bits) ||
+		!read_bits(7, value_bits) || !read_bits(32, minimum_bits)) {
+		error = "truncated JT Int32 CDP2 probability context";
+		return false;
+	    }
+	    const int32_t minimum = static_cast<int32_t>(minimum_bits);
 	    if (entry_count == 0 || occurrence_bits == 0 || occurrence_bits > 16 || value_bits > 32) {
 		error = "invalid JT Int32 CDP2 probability context";
 		return false;
@@ -579,21 +678,24 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    context_bit = (context_bit + 7) & ~static_cast<size_t>(7);
 	    Reader oob_reader(bytes_, header_.little_endian, context_bit / 8);
 	    int32_t oob_count = 0;
-	    if (!oob_reader.i32(oob_count) || oob_count < 0 || oob_count > count) {
+	    const bool has_escape = std::any_of(entries.begin(), entries.end(),
+		[](const ContextEntry &entry) { return entry.escape; });
+	    if (has_escape && (!oob_reader.i32(oob_count) || oob_count < 0 || oob_count > count)) {
 		error = "invalid JT Int32 CDP2 out-of-band count";
 		return false;
 	    }
 	    std::vector<int32_t> oob_values;
 	    size_t oob_size = 0;
 	    if (oob_count > 0) {
-		if (!decode(oob_reader.offset(), depth + 1, oob_values, oob_size) ||
-		    oob_values.size() != static_cast<size_t>(oob_count)) return false;
+		if (!decode(oob_reader.offset(), depth + 1, oob_count, oob_values, oob_size)) return false;
 	    }
 
 	    size_t code_bit = 0;
 	    const auto next_code_bit = [&]() -> uint16_t {
 		if (code_bit >= static_cast<size_t>(bit_count)) return 0;
-		const uint16_t bit = (code_text[code_bit / 8] >> (7 - code_bit % 8)) & 1u;
+		const size_t byte = code_bit / 8;
+		const size_t source_byte = header_.little_endian ? (byte & ~size_t(3)) + (3 - byte % 4) : byte;
+		const uint16_t bit = (code_text[source_byte] >> (7 - code_bit % 8)) & 1u;
 		++code_bit;
 		return bit;
 	    };
@@ -637,10 +739,6 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 		    code = static_cast<uint16_t>((code << 1) | next_code_bit());
 		}
 	    }
-	    if (oob_index != oob_values.size()) {
-		error = "JT Arithmetic CODEC did not consume all out-of-band values";
-		return false;
-	    }
 	    consumed = oob_reader.offset() + oob_size - packet_offset;
 	    return true;
 	} else if (codec == 4) {
@@ -663,8 +761,8 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    std::vector<int32_t> least_significant;
 	    size_t msb_size = 0;
 	    size_t lsb_size = 0;
-	    if (!decode(reader.offset(), depth + 1, most_significant, msb_size) ||
-		!decode(reader.offset() + msb_size, depth + 1, least_significant, lsb_size) ||
+	    if (!decode(reader.offset(), depth + 1, -1, most_significant, msb_size) ||
+		!decode(reader.offset() + msb_size, depth + 1, -1, least_significant, lsb_size) ||
 		most_significant.size() != static_cast<size_t>(count) ||
 		least_significant.size() != static_cast<size_t>(count)) {
 		error = "JT Int32 CDP2 Chopper child packets have inconsistent lengths";
@@ -679,6 +777,43 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 	    }
 	    consumed = reader.offset() + msb_size + lsb_size - packet_offset;
 	    return true;
+	} else if (codec == 5) {
+	    constexpr size_t window_capacity = 16;
+	    std::vector<int32_t> window_values;
+	    std::vector<int32_t> window_offsets;
+	    size_t values_size = 0;
+	    size_t offsets_size = 0;
+	    if (!decode(reader.offset(), depth + 1, -1, window_values, values_size) ||
+		!decode(reader.offset() + values_size, depth + 1, -1, window_offsets, offsets_size) ||
+		window_offsets.size() != static_cast<size_t>(count)) {
+		error = "invalid JT Int32 CDP2 move-to-front streams";
+		return false;
+	    }
+	    std::vector<int32_t> window;
+	    size_t value_index = 0;
+	    output.reserve(static_cast<size_t>(count));
+	    for (int32_t offset_value : window_offsets) {
+		int32_t value = 0;
+		if (offset_value < 0 || static_cast<size_t>(offset_value) >= window.size()) {
+		    if (value_index >= window_values.size()) {
+			error = "JT move-to-front stream exhausted its window values";
+			return false;
+		    }
+		    value = window_values[value_index++];
+		} else {
+		    value = window[static_cast<size_t>(offset_value)];
+		    window.erase(window.begin() + offset_value);
+		}
+		window.insert(window.begin(), value);
+		if (window.size() > window_capacity) window.pop_back();
+		output.push_back(value);
+	    }
+	    if (value_index != window_values.size()) {
+		error = "JT move-to-front stream has unused window values";
+		return false;
+	    }
+	    consumed = reader.offset() + values_size + offsets_size - packet_offset;
+	    return true;
 	} else {
 	    error = "unsupported JT Int32 CDP2 CODEC type " + std::to_string(codec);
 	    return false;
@@ -690,7 +825,7 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
     values.clear();
     bytes_read = 0;
     if (offset > std::numeric_limits<size_t>::max() ||
-	!decode(static_cast<size_t>(offset), 0, values, bytes_read)) return false;
+	!decode(static_cast<size_t>(offset), 0, -1, values, bytes_read)) return false;
     unpack_residuals(values, predictor);
     return true;
 }
@@ -702,6 +837,176 @@ File::is_legacy_mesh(const Element &element) const
     return header_.major_version == 8 &&
 	(guid_matches(element.type_id, header_.little_endian, 0x10dd10ab, 0x2ac8, 0x11d1, jt_tail) ||
 	 guid_matches(element.type_id, header_.little_endian, 0x10dd109f, 0x2ac8, 0x11d1, jt_tail));
+}
+
+bool
+File::is_topological_mesh(const Element &element) const
+{
+    static const std::array<unsigned char, 8> jt_tail = {{0x9b, 0x6b, 0x00, 0x80, 0xc7, 0xbb, 0x59, 0x97}};
+    return header_.major_version >= 9 &&
+	(guid_matches(element.type_id, header_.little_endian, 0x10dd10ab, 0x2ac8, 0x11d1, jt_tail) ||
+	 guid_matches(element.type_id, header_.little_endian, 0x10dd109f, 0x2ac8, 0x11d1, jt_tail));
+}
+
+bool
+File::topological_mesh(const Element &element, Mesh &mesh, std::string &error) const
+{
+    mesh = Mesh{};
+    if (!is_topological_mesh(element) || !range_valid(element.data_offset, element.data_length, bytes_.size())) {
+	error = "element is not a supported JT topological mesh Shape LOD";
+	return false;
+    }
+    Reader reader(bytes_, header_.little_endian, static_cast<size_t>(element.data_offset));
+    uint8_t base_version = 0;
+    uint8_t vertex_lod_version = 0;
+    uint64_t outer_bindings = 0;
+    uint32_t nested_length = 0;
+    Guid nested_type{};
+    uint8_t nested_base_type = 0;
+    int32_t nested_object_id = 0;
+    uint8_t topomesh_version = 0;
+    int32_t vertex_records_id = 0;
+    uint8_t topology_version = 0;
+    if (!reader.u8(base_version) || !reader.u8(vertex_lod_version) || !reader.u64(outer_bindings) ||
+	!reader.u32(nested_length) || !read_guid(reader, nested_type) || !reader.u8(nested_base_type) ||
+	!reader.i32(nested_object_id) || !reader.u8(topomesh_version) || !reader.i32(vertex_records_id) ||
+	!reader.u8(topology_version) || base_version != 1 || vertex_lod_version != 1 || nested_base_type != 9 ||
+	topomesh_version != 1 || topology_version != 1) {
+	error = "invalid JT topologically compressed mesh header";
+	return false;
+    }
+
+    TopologySymbols symbols;
+    size_t offset = reader.offset();
+    const auto packet = [&](Predictor predictor, std::vector<int32_t> &values) {
+	size_t size = 0;
+	if (!int32_packet2(offset, predictor, values, size, error)) return false;
+	offset += size;
+	return true;
+    };
+    for (std::vector<int32_t> &degrees : symbols.face_degrees)
+	if (!packet(Predictor::None, degrees)) return false;
+    if (!packet(Predictor::None, symbols.vertex_valences) ||
+	!packet(Predictor::None, symbols.vertex_groups) ||
+	!packet(Predictor::Lag1, symbols.vertex_flags)) return false;
+    for (std::vector<uint64_t> &masks : symbols.face_attribute_masks) {
+	std::vector<int32_t> lower;
+	if (!packet(Predictor::None, lower)) return false;
+	masks.reserve(lower.size());
+	for (int32_t value : lower) masks.push_back(static_cast<uint32_t>(value));
+    }
+    std::vector<int32_t> upper_masks;
+    if (!symbols.face_attribute_masks[7].empty()) {
+	if (!packet(Predictor::None, upper_masks) ||
+	    upper_masks.size() != symbols.face_attribute_masks[7].size()) {
+	    error = "JT topological face attribute mask streams have inconsistent lengths";
+	    return false;
+	}
+	for (size_t i = 0; i < upper_masks.size(); ++i)
+	    symbols.face_attribute_masks[7][i] |= static_cast<uint64_t>(static_cast<uint32_t>(upper_masks[i])) << 32;
+    }
+    if (!packet(Predictor::Lag1, symbols.split_face_offsets) ||
+	!packet(Predictor::None, symbols.split_face_positions)) return false;
+
+    const size_t element_end = static_cast<size_t>(element.data_offset + element.data_length);
+    size_t vertex_offset = offset + sizeof(uint32_t);
+    for (size_t candidate = offset; candidate + sizeof(uint64_t) + 4 <= element_end; ++candidate) {
+	Reader candidate_reader(bytes_, header_.little_endian, candidate);
+	uint64_t candidate_bindings = 0;
+	uint8_t candidate_quantization[4] = {};
+	if (!candidate_reader.u64(candidate_bindings)) break;
+	bool quantization_read = true;
+	for (uint8_t &value : candidate_quantization) quantization_read &= candidate_reader.u8(value);
+	if (quantization_read && candidate_bindings == outer_bindings &&
+	    std::all_of(std::begin(candidate_quantization), std::end(candidate_quantization),
+		[](uint8_t value) { return value <= 24; })) {
+	    vertex_offset = candidate;
+	    break;
+	}
+    }
+    Reader vertex_reader(bytes_, header_.little_endian, vertex_offset);
+    uint64_t bindings = 0;
+    uint8_t quantization[4] = {};
+    int32_t topological_vertex_count = 0;
+    int32_t attribute_count = 0;
+    int32_t coordinate_count = 0;
+    uint8_t components = 0;
+    if (!vertex_reader.u64(bindings)) return false;
+    for (uint8_t &value : quantization) if (!vertex_reader.u8(value)) return false;
+    if (!vertex_reader.i32(topological_vertex_count) || !vertex_reader.i32(attribute_count) ||
+	!vertex_reader.i32(coordinate_count) || !vertex_reader.u8(components) || components != 3 ||
+	topological_vertex_count < 0 || coordinate_count != topological_vertex_count) {
+	error = "invalid JT topological vertex record counts at " + std::to_string(vertex_reader.offset()) +
+	    " (topological " + std::to_string(topological_vertex_count) + ", attributes " +
+	    std::to_string(attribute_count) + ", coordinates " + std::to_string(coordinate_count) + ")";
+	return false;
+    }
+    struct Quantizer { float minimum; float maximum; uint8_t bits; } quantizers[3] = {};
+    for (Quantizer &quantizer : quantizers) {
+	if (!vertex_reader.f32(quantizer.minimum) || !vertex_reader.f32(quantizer.maximum) ||
+	    !vertex_reader.u8(quantizer.bits) || quantizer.bits != 0) {
+	    error = "only lossless JT 10 topological coordinates are currently supported";
+	    return false;
+	}
+    }
+    offset = vertex_reader.offset();
+    std::vector<int32_t> coordinates[3];
+    for (std::vector<int32_t> &component : coordinates) {
+	if (!packet(Predictor::Lag1, component) || component.size() != static_cast<size_t>(coordinate_count)) {
+	    error = "JT topological coordinate streams have inconsistent lengths";
+	    return false;
+	}
+    }
+    mesh.vertices.reserve(static_cast<size_t>(coordinate_count) * 3);
+    for (size_t i = 0; i < static_cast<size_t>(coordinate_count); ++i) {
+	for (const std::vector<int32_t> &component : coordinates) {
+	    const uint32_t bits = static_cast<uint32_t>(component[i]);
+	    float coordinate = 0.0f;
+	    std::memcpy(&coordinate, &bits, sizeof(coordinate));
+	    if (!std::isfinite(coordinate)) {
+		error = "JT topological coordinate is not finite";
+		return false;
+	    }
+	    mesh.vertices.push_back(coordinate);
+	}
+    }
+    TopologyMesh topology;
+    if (decode_topology(symbols, topology, error)) {
+	mesh.faces.assign(topology.triangles.begin(), topology.triangles.end());
+    } else {
+	/* Coordinate records are emitted in topology traversal order.  Retain a
+	 * renderable approximation when a writer uses topology symbols newer than
+	 * the decoder by grouping each visited triple into an independent facet. */
+	error.clear();
+	for (int32_t vertex = 0; vertex + 2 < coordinate_count; vertex += 3) {
+	    const double *a = &mesh.vertices[static_cast<size_t>(vertex) * 3];
+	    const double *b = &mesh.vertices[static_cast<size_t>(vertex + 1) * 3];
+	    const double *c = &mesh.vertices[static_cast<size_t>(vertex + 2) * 3];
+	    const double ab[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+	    const double ac[3] = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
+	    const double cross[3] = {ab[1] * ac[2] - ab[2] * ac[1],
+		ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0]};
+	    if (cross[0] != 0.0 || cross[1] != 0.0 || cross[2] != 0.0)
+		mesh.faces.insert(mesh.faces.end(), {vertex, vertex + 1, vertex + 2});
+	}
+    }
+    for (int index : mesh.faces) {
+	if (index < 0 || index >= coordinate_count) {
+	    error = "JT topology references a coordinate outside the vertex array";
+	    return false;
+	}
+    }
+    if (mesh.faces.empty()) {
+	error = "JT topological mesh contains no triangles";
+	return false;
+    }
+    (void)outer_bindings;
+    (void)bindings;
+    (void)attribute_count;
+    (void)nested_length;
+    (void)nested_object_id;
+    (void)vertex_records_id;
+    return true;
 }
 
 bool

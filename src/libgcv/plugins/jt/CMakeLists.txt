@@ -6,7 +6,7 @@ set_property(TARGET gcv-jt APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_
 validate_style(gcv-jt "${JT_SRCS}")
 plugin_setup(gcv-jt gcv)
 
-brlcad_addexec(test_jt_parser "test_jt_parser.cpp;jt_parser.cpp" "libbu;ZLIB::ZLIB" NO_INSTALL)
+brlcad_addexec(test_jt_parser "test_jt_parser.cpp;jt_parser.cpp;jt_topology.cpp" "libbu;ZLIB::ZLIB" NO_INSTALL)
 brlcad_add_test(NAME jt_parser_test COMMAND test_jt_parser)
 
 brlcad_addexec(test_jt_topology "test_jt_topology.cpp;jt_topology.cpp" "libbu" NO_INSTALL)
