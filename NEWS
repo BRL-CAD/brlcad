@@ -15,6 +15,8 @@ changes made.  See document footer for additional details.
 
 * added new documentation on adrt rendering - Sean Morrison
 * added snail & seashell procedural geometry generator - Sean Morrison
+* rm ged command now behfaves like the system rm, kills objects&paths
+	- Cliff Yapp, Sean Morrison
 * fixed gqa exactly symmetric volumetric estimates - Sean Morrison
 * added support to rtedge for perspective renderings - Sean Morrison
 * rt -l8 rendering time heat graphs - Stephen Kennedy, Sean Morrison
