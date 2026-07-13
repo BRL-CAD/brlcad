@@ -57,8 +57,6 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "bu/opt.h"
@@ -78,49 +76,6 @@
 
 /** Maps each source name to its per-copy destination name list. */
 typedef std::map<std::string, std::vector<std::string>> NameMap;
-typedef std::unordered_set<std::string> NameSet;
-
-struct NameSequenceKey {
-    std::string prefix;
-    std::string suffix;
-    size_t width = 0;
-    int step = 1;
-    long long residue = 0;
-
-    bool operator==(const NameSequenceKey& other) const
-    {
-	return width == other.width && step == other.step
-	    && residue == other.residue && prefix == other.prefix
-	    && suffix == other.suffix;
-    }
-};
-
-struct NameSequenceKeyHash {
-    size_t operator()(const NameSequenceKey& key) const
-    {
-	size_t h = std::hash<std::string>{}(key.prefix);
-	h ^= std::hash<std::string>{}(key.suffix) + 0x9e3779b9
-	    + (h << 6) + (h >> 2);
-	h ^= std::hash<size_t>{}(key.width) + 0x9e3779b9
-	    + (h << 6) + (h >> 2);
-	h ^= std::hash<int>{}(key.step) + 0x9e3779b9
-	    + (h << 6) + (h >> 2);
-	h ^= std::hash<long long>{}(key.residue) + 0x9e3779b9
-	    + (h << 6) + (h >> 2);
-	return h;
-    }
-};
-
-/**
- * Names already tested or reserved during one clone operation.  Numeric
- * names additionally keep occupied ranges, allowing a dense run of names
- * to be skipped in one operation instead of probing every candidate.
- */
-struct NameCache {
-    NameSet names;
-    std::unordered_map<NameSequenceKey, std::map<long long, long long>,
-	NameSequenceKeyHash> numeric_ranges;
-};
 
 /* NOTE: avoid using SPH — it is #defined as 11 in rt/db4.h */
 enum class PatternMode { LINEAR, RECT, SPHERICAL, CYL };
@@ -213,12 +168,6 @@ struct CloneState {
     /* Output */
     struct bu_vls olist = BU_VLS_INIT_ZERO;
     NameMap        names;
-
-    /* Names tested or allocated during this clone operation.  Name
-     * generation can otherwise probe the same occupied database names once
-     * for every source object in a large hierarchy. */
-    NameCache      name_cache;
-    NameCache      *name_cachep = &name_cache;
 };
 
 
@@ -226,113 +175,11 @@ struct CloneState {
  * Unique-name generation
  * ----------------------------------------------------------------------- */
 
-/**
- * Test and reserve a candidate clone name.
- *
- * A clone operation may generate a very large number of names.  Cache both
- * names already present in the database and names reserved by this
- * operation, so a candidate that was rejected once is not looked up again.
- */
-static bool
-clone_reserve_name(struct db_i *dbip, const std::string& candidate,
-			   NameCache *cache)
+static int
+_clone_uniq(struct bu_vls *n, void *data)
 {
-    if (!cache)
-	return db_lookup(dbip, candidate.c_str(), LOOKUP_QUIET)
-	    == RT_DIR_NULL;
-
-	if (!cache->names.insert(candidate).second)
-	return false;
-
-    return db_lookup(dbip, candidate.c_str(), LOOKUP_QUIET) == RT_DIR_NULL;
-}
-
-
-static void
-clone_reserve_numeric_value(std::map<long long, long long>& ranges,
-			    long long value, int step)
-{
-    auto it = ranges.lower_bound(value);
-    long long first = value;
-    long long last = value;
-
-    if (it != ranges.begin()) {
-	--it;
-	if (it->second == value - step) {
-	    first = it->first;
-	    ranges.erase(it);
-	}
-    }
-
-    it = ranges.lower_bound(value);
-    if (it != ranges.end() && it->first == last + step) {
-	last = it->second;
-	ranges.erase(it);
-    }
-
-    ranges.emplace(first, last);
-}
-
-
-static bool
-clone_reserve_numeric_name(struct db_i *dbip, const std::string& prefix,
-			   const std::string& suffix, size_t width,
-			   bool zero_padded, int step, long long *value,
-			   NameCache *cache, std::string *result)
-{
-    NameSequenceKey key;
-    key.prefix = prefix;
-    key.suffix = suffix;
-    key.width = width;
-    key.step = step;
-    key.residue = *value % step;
-    if (key.residue < 0)
-	key.residue += step;
-
-    std::map<long long, long long> *ranges = nullptr;
-    if (cache)
-	ranges = &cache->numeric_ranges[key];
-
-    for (;;) {
-	if (ranges) {
-	    auto it = ranges->upper_bound(*value);
-	    if (it != ranges->begin()) {
-		--it;
-		if (it->second >= *value) {
-		    *value = it->second + step;
-		    continue;
-		}
-	    }
-	}
-
-	char buf[64];
-	if (zero_padded)
-	    snprintf(buf, sizeof(buf), "%0*lld", (int)width, *value);
-	else
-	    snprintf(buf, sizeof(buf), "%lld", *value);
-	std::string candidate = prefix + buf + suffix;
-
-	if (cache && cache->names.find(candidate) != cache->names.end()) {
-	    clone_reserve_numeric_value(*ranges, *value, step);
-	    *value += step;
-	    continue;
-	}
-
-	if (cache)
-	    cache->names.insert(candidate);
-	if (!dbip || db_lookup(dbip, candidate.c_str(), LOOKUP_QUIET)
-		== RT_DIR_NULL) {
-	    if (ranges)
-		clone_reserve_numeric_value(*ranges, *value, step);
-	    if (result)
-		*result = candidate;
-	    return true;
-	}
-
-	if (ranges)
-	    clone_reserve_numeric_value(*ranges, *value, step);
-	*value += step;
-    }
+    return (db_lookup((struct db_i *)data, bu_vls_cstr(n), LOOKUP_QUIET)
+	    == RT_DIR_NULL) ? 1 : 0;
 }
 
 
@@ -341,14 +188,13 @@ clone_reserve_numeric_name(struct db_i *dbip, const std::string& prefix,
  *
  * The @a updpos-th (0-indexed) run of digits in @a proto is incremented
  * by @a step.  Zero-padding width is preserved.  When no digit run exists
- * a new number.
+ * bu_vls_incr appends a new number.
  */
 static std::string
 clone_next_name(struct db_i *dbip, const std::string& proto,
 		int step, int updpos,
-	const std::string& subs_src = std::string(),
-	const std::string& subs_dst = std::string(),
-		NameCache *cache = nullptr)
+		const std::string& subs_src = std::string(),
+		const std::string& subs_dst = std::string())
 {
     /* Apply optional name substitution before number-increment logic.
      * Replace only the first occurrence so that e.g. "-s tank tread" on
@@ -359,12 +205,6 @@ clone_next_name(struct db_i *dbip, const std::string& proto,
 	if (p != std::string::npos)
 	    work.replace(p, subs_src.size(), subs_dst);
     }
-
-    /* A zero or negative step cannot make progress through a collision
-     * sequence.  The public clone options reject zero increments, but the
-     * internal name generator is also used by combination copies. */
-    if (step <= 0)
-	step = 1;
 
     struct Run { size_t start, end; };
     std::vector<Run> runs;
@@ -380,27 +220,36 @@ clone_next_name(struct db_i *dbip, const std::string& proto,
     }
 
     if (runs.empty()) {
-	for (long long value = step; ; value += step) {
-	    std::string candidate = work + std::to_string(value);
-	    if (clone_reserve_name(dbip, candidate, cache))
-		return candidate;
-	}
+	struct bu_vls vn = BU_VLS_INIT_ZERO;
+	struct bu_vls sp = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&vn, "%s", work.c_str());
+	bu_vls_sprintf(&sp, "0:0:0:%d", step);
+	bu_vls_incr(&vn, nullptr, bu_vls_cstr(&sp), &_clone_uniq, dbip);
+	std::string r(bu_vls_cstr(&vn));
+	bu_vls_free(&vn);
+	bu_vls_free(&sp);
+	return r;
     }
 
     int ridx = (updpos < (int)runs.size()) ? updpos : (int)runs.size() - 1;
     const Run& run = runs[(size_t)ridx];
     std::string prefix = work.substr(0, run.start);
-	long long cur = std::stoll(work.substr(run.start, run.end - run.start));
+    int cur = std::stoi(work.substr(run.start, run.end - run.start));
     std::string suffix = work.substr(run.end);
     size_t width = run.end - run.start;
     bool zero_padded = (width > 1 && work[run.start] == '0');
 
-	long long value = cur + step;
-	std::string candidate;
-	clone_reserve_numeric_name(dbip, prefix, suffix, width,
-				   zero_padded, step, &value, cache,
-				   &candidate);
-	return candidate;
+    for (int i = 1; ; ++i) {
+	int val = cur + i * step;
+	char buf[64];
+	if (zero_padded)
+	    snprintf(buf, sizeof(buf), "%0*d", (int)width, val);
+	else
+	    snprintf(buf, sizeof(buf), "%d", val);
+	std::string cand = prefix + buf + suffix;
+	if (db_lookup(dbip, cand.c_str(), LOOKUP_QUIET) == RT_DIR_NULL)
+	    return cand;
+    }
 }
 
 
@@ -486,9 +335,16 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, CloneState *state)
 	std::string dest = clone_next_name(dbip, src_name, state->incr,
 					   (int)state->updpos,
 					   (i == 0) ? state->subs_src : std::string(),
-					   (i == 0) ? state->subs_dst : std::string(),
-					   state->name_cachep);
+					   (i == 0) ? state->subs_dst : std::string());
 	state->names[proto->d_namep][i] = dest;
+
+	const char *cp_av[4] = { "copy", proto->d_namep, dest.c_str(), nullptr };
+	if (ged_exec_copy(state->gedp, 3, cp_av) != BRLCAD_OK) {
+	    bu_vls_printf(state->gedp->ged_result_str,
+			 "clone: failed to copy \"%s\" to \"%s\"\n",
+			 proto->d_namep, dest.c_str());
+	    continue;
+	}
 
 	struct rt_db_internal intern;
 	if (rt_db_get_internal(&intern, src_dp, dbip, matrix) < 0) {
@@ -499,21 +355,9 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, CloneState *state)
 	}
 	RT_CK_DB_INTERNAL(&intern);
 
-	/* The old implementation called the GED copy command to create a
-	 * destination record, then immediately overwrote it with the transformed
-	 * internal object.  That command-layer round trip dominates large clone
-	 * operations, so add and write the destination directly here. */
-	int minor = proto->d_minor_type;
-	struct directory *new_dp = db_diradd(dbip, dest.c_str(), RT_DIR_PHONY_ADDR,
-					     0, proto->d_flags, (void *)&minor);
-	if (!new_dp || rt_db_put_internal(new_dp, dbip, &intern) < 0) {
-	    if (new_dp)
-		db_dirdelete(dbip, new_dp);
-	    bu_vls_printf(state->gedp->ged_result_str,
-			 "clone: failed to write \"%s\"\n", dest.c_str());
-	    rt_db_free_internal(&intern);
-	    continue;
-	}
+	struct directory *new_dp = db_lookup(dbip, dest.c_str(), LOOKUP_QUIET);
+	if (new_dp)
+	    rt_db_put_internal(new_dp, dbip, &intern);
 
 	bu_vls_printf(&state->olist, "%s ", dest.c_str());
 	rt_db_free_internal(&intern);
@@ -539,8 +383,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, CloneState *state)
 
 	std::string dest = clone_next_name(dbip, prev, 1, (int)state->updpos,
 					   (i == 0) ? state->subs_src : std::string(),
-					   (i == 0) ? state->subs_dst : std::string(),
-					   state->name_cachep);
+					   (i == 0) ? state->subs_dst : std::string());
 	state->names[proto->d_namep][i] = dest;
 
 	struct directory *proto_dp = db_lookup(dbip, proto->d_namep,
@@ -615,6 +458,11 @@ static struct directory *
 copy_tree(struct directory *dp, CloneState *state)
 {
     struct db_i *dbip = state->gedp->dbip;
+    int step = (dp->d_flags & (RT_DIR_SOLID | RT_DIR_REGION))
+	? state->incr : 1;
+    std::string expected = clone_next_name(dbip, dp->d_namep, step,
+					   (int)state->updpos,
+					   state->subs_src, state->subs_dst);
 
     if (dp->d_flags & RT_DIR_COMB)
 	db_treewalk_basic(dbip, dp, copy_comb_cb, copy_solid_cb, state);
@@ -627,16 +475,15 @@ copy_tree(struct directory *dp, CloneState *state)
 	return nullptr;
     }
 
-
-    auto it = state->names.find(dp->d_namep);
-    if (it == state->names.end() || it->second.empty()
-	|| it->second[0].empty()) {
+    std::string now = clone_next_name(dbip, dp->d_namep, step,
+				      (int)state->updpos,
+				      state->subs_src, state->subs_dst);
+    if (expected == now) {
 	bu_vls_printf(state->gedp->ged_result_str,
-			     "clone: failed to create a copy of \"%s\"\n",
-			     dp->d_namep);
+		     "clone: failed to create \"%s\"\n", expected.c_str());
 	return nullptr;
     }
-    return db_lookup(dbip, it->second[0].c_str(), LOOKUP_QUIET);
+    return db_lookup(dbip, expected.c_str(), LOOKUP_QUIET);
 }
 
 static struct directory *
@@ -940,8 +787,7 @@ copy_regions_node(struct db_i *dbip, const std::string &obj_name,
 
 	std::string new_name = clone_next_name(dbip, obj_name, 1,
 					       (int)state->updpos,
-					       state->subs_src, state->subs_dst,
-					       state->name_cachep);
+					       state->subs_src, state->subs_dst);
 	state->names[obj_name] = { new_name };
 
 	int minor = dp->d_minor_type;
@@ -963,10 +809,9 @@ copy_regions_node(struct db_i *dbip, const std::string &obj_name,
     if (wdbp)
 	comb->region_id = wdbp->wdb_item_default++;
 
-	std::string new_name = clone_next_name(dbip, obj_name, state->incr,
-					       (int)state->updpos,
-					       state->subs_src, state->subs_dst,
-					       state->name_cachep);
+    std::string new_name = clone_next_name(dbip, obj_name, state->incr,
+					   (int)state->updpos,
+					   state->subs_src, state->subs_dst);
     state->names[obj_name] = { new_name };
 
     int minor = dp->d_minor_type;
@@ -1030,8 +875,7 @@ apply_one_position(CloneState *state, struct directory *src,
 	    ? state->incr : 1;
 	std::string dest = clone_next_name(dbip, src->d_namep, step,
 					   (int)state->updpos,
-					   state->subs_src, state->subs_dst,
-					   state->name_cachep);
+					   state->subs_src, state->subs_dst);
 	struct directory *dp = create_wrapper_comb(state->gedp, src->d_namep,
 						   dest.c_str(), mat);
 	return dp ? dest : std::string();
@@ -1051,7 +895,6 @@ apply_one_position(CloneState *state, struct directory *src,
     tmp.override_matrix = mat;
     tmp.subs_src        = state->subs_src;
     tmp.subs_dst        = state->subs_dst;
-    tmp.name_cachep     = state->name_cachep;
     bu_vls_init(&tmp.olist);
 
     state->names.clear();
@@ -2040,13 +1883,7 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
     state->pattern = PatternMode::LINEAR;
     int pat_idx = -1;
     for (int j = 0; j < opt_ret; j++) {
-	/* Pattern names are positional tokens, but old clone syntax permits
-	 * objects named "lin", "rect", "sph", or "cyl".  Prefer a real
-	 * database object so the pattern vocabulary does not break those names.
-	 * A pattern keyword remains available whenever no object with that name
-	 * exists. */
-	if (is_pattern_keyword(av[j])
-	    && db_lookup(gedp->dbip, av[j], LOOKUP_QUIET) == RT_DIR_NULL) {
+	if (is_pattern_keyword(av[j])) {
 	    if (pat_idx >= 0) {
 		bu_vls_printf(gedp->ged_result_str,
 			     "clone: multiple pattern keywords given "
