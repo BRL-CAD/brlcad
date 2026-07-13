@@ -45,6 +45,7 @@
 #include "bu/opt.h"
 #include "bu/time.h"
 #include "brep.h"
+#include "bn/mat.h"
 #include "bn/dvec.h"
 
 #include "raytrace.h"
@@ -77,6 +78,7 @@ extern "C" {
     int rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
     int rt_brep_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip);
+    int rt_brep_mirror(struct rt_db_internal *ip, const plane_t plane);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
     int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
@@ -2450,10 +2452,52 @@ rt_brep_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     RT_BREP_CK_MAGIC(bi);
 
     ON_Xform xform(mat);
-    if (!xform.IsIdentity())
+    if (!xform.IsIdentity()) {
 	bi->brep->Transform(xform);
+	if (bn_mat_det3(mat) < 0.0)
+	    bi->brep->Flip();
+    }
 
     return BRLCAD_OK;
+}
+
+int
+rt_brep_mirror(struct rt_db_internal *ip, const plane_t plane)
+{
+    mat_t mirmat;
+    mat_t rmat;
+    mat_t temp;
+    vect_t nvec;
+    vect_t xvec;
+    vect_t mirror_dir;
+    point_t mirror_pt;
+    fastf_t ang;
+
+    static point_t origin = {0.0, 0.0, 0.0};
+
+    RT_CK_DB_INTERNAL(ip);
+
+    MAT_IDN(mirmat);
+
+    VMOVE(mirror_dir, plane);
+    VSCALE(mirror_pt, plane, plane[W]);
+
+    mirmat[0] = -1.0;
+
+    VSET(xvec, 1, 0, 0);
+    VCROSS(nvec, xvec, mirror_dir);
+    VUNITIZE(nvec);
+    ang = -acos(VDOT(xvec, mirror_dir));
+    bn_mat_arb_rot(rmat, origin, nvec, ang*2.0);
+
+    MAT_COPY(temp, mirmat);
+    bn_mat_mul(mirmat, temp, rmat);
+
+    mirmat[3 + X*4] += mirror_pt[X] * mirror_dir[X];
+    mirmat[3 + Y*4] += mirror_pt[Y] * mirror_dir[Y];
+    mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
+
+    return rt_brep_mat(ip, mirmat, NULL);
 }
 
 int
