@@ -309,60 +309,6 @@ Be specific.
   arguments or objects with '-' at the beginning of the name and how
   argv processing will be handled.
 
-* 'rm' command: replace most or all of the kill* commands with a
-  UNIX style rm command.  Before we can complete this, we need:
-
-  - URI/filesystem model method for addressing non-uniquely named
-    instances in object combs.  For example, if comb.c has three
-    different instances of obj.s, could address them by number:
-
-     comb.c
-	|
-	u obj.s -> comb.c/obj.s@1
-	|
-	u obj.s -> comb.c/obj.s@2
-	|
-	u obj.s -> comb.c/obj.s@3
-
-   - An equivalent to the UNIX ability to do glob matching on .g
-     paths.  OpenBSD glob code offers a possible starting point -
-     libbu repo history has commits with some work on this, e.g
-     r72153.
-
-  Existing rm command work is reverted in commit r67394
-
-  Notes from Sean:
-
-  rm deletes an object/primitive/instance iff
-     1) it exists
-     2) it is not externally instanced
-     3) it has no children
-
-  rm -f deletes an object/primitive/instance iff
-     1) it exists
-
-  rm -r deletes an object/primitive/instance and all children recursively iff
-     1) it exists
-     2) it is not externally instanced
-     3) all children instances could be deleted ("safe" delete)
-
-  * Makes "rm -f" akin to "kill"
-  * "rm obj" will succeed on most top-level primitives but shouldn't on extrude,
-    dsp, ebm,... maybe new callback
-  * No difference between "rm path/to/inst" and "rm -f path/to/inst" other than
-    error suppression on non-existent paths/instances
-
-  Common cases (have some questions here... CY):
-  "rm prim" -> deletes prim if no */prim instance exists
-  "rm -f prim" -> deletes prim (children untouched)
-  "rm -rf prim" -> deletes prim and any children without */child ref.
-  "rm comb" -> always fails unless comb is empty and no */comb instance exists
-  "rm -f comb" -> deletes comb object
-  "rm -rf comb" -> deletes comb and safe-deletes children
-  "rm path/inst" -> deletes inst (if no */path/inst exists??)
-  "rm -f path/inst" -> deletes inst
-  "rm -rf path/inst" -> deletes inst
-
 * 'select' command: creates a selection set based on specified
   sampling parameters or object lists.  Should also provide a basic
   command-line mechanism for implementing band selection based on

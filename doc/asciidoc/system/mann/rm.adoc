@@ -86,9 +86,16 @@ edited, but do not modify the database.
 All database changes made by *rm* update reference counts and remove affected
 names or paths from active display lists.
 
-
-[[examples]]
-== EXAMPLES
+Common cases:
+  "rm prim" -> deletes prim if no */prim instance exists
+  "rm -f prim" -> deletes prim (children untouched)
+  "rm -rf prim" -> deletes prim and any children without */child ref.
+  "rm comb" -> always fails unless comb is empty and no */comb instance exists
+  "rm -f comb" -> deletes comb object
+  "rm -rf comb" -> deletes comb and safe-deletes children
+  "rm path/inst" -> deletes inst (if no */path/inst exists??)
+  "rm -f path/inst" -> deletes inst
+  "rm -rf path/inst" -> deletes inst
 
 The examples below show the primary *rm* modes.
 
