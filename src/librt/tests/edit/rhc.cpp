@@ -124,6 +124,36 @@ rhc_reset(struct rt_edit *s, struct rt_rhc_internal *edit_rhc,
     s->mv_context = 1;
 }
 
+static int
+rhc_v4_roundtrip(const struct rt_db_internal *intern, const struct rt_rhc_internal *orig_rhc)
+{
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+    struct rt_db_internal v4_intern;
+    RT_DB_INTERNAL_INIT(&v4_intern);
+
+    if (OBJ[ID_RHC].ft_export4(&ext, intern, 1.0, DBI_NULL) != 0) {
+	bu_log("ERROR: RHC v4 export failed\n");
+	return 1;
+    }
+
+    if (OBJ[ID_RHC].ft_import4(&v4_intern, &ext, bn_mat_identity, DBI_NULL) != 0) {
+	bu_free_external(&ext);
+	bu_log("ERROR: RHC v4 import failed\n");
+	return 1;
+    }
+
+    struct rt_rhc_internal *v4_rhc = (struct rt_rhc_internal *)v4_intern.idb_ptr;
+    int ret = rhc_diff("RHC v4 roundtrip", orig_rhc, v4_rhc);
+
+    rt_db_free_internal(&v4_intern);
+    bu_free_external(&ext);
+
+    if (!ret)
+	bu_log("RHC v4 roundtrip SUCCESS\n");
+
+    return ret;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -141,6 +171,9 @@ main(int argc, char *argv[])
     struct rt_rhc_internal *orig_rhc = (struct rt_rhc_internal *)intern.idb_ptr;
     rt_db_get_internal(&cmpintern, dp, dbip, NULL);
     struct rt_rhc_internal *cmp_rhc = (struct rt_rhc_internal *)cmpintern.idb_ptr;
+
+    if (rhc_v4_roundtrip(&intern, orig_rhc))
+	bu_exit(1, "ERROR: RHC v4 roundtrip failed\n");
 
     struct bn_tol tol = BN_TOL_INIT_TOL;
     struct db_full_path fp;
