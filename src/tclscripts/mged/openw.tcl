@@ -2016,6 +2016,13 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	MGED's commands." }
 	    { see_also "apropos" } }
 
+    .$id.menubar.help add command -label "Manual Search" -underline 7\
+	-command "ia_man_search .$id $screen"
+    hoc_register_menu_data "Help" "Manual Search" "Manual Search"\
+	{ { summary "Search full MGED command manual pages and open the
+	manual page browser with ranked results." }
+	    { see_also "apropos man" } }
+
     if {$::tcl_platform(os) == "Windows NT"} {
 	set web_cmd "exec \$mged_browser \$mged_html_dir/index.html &"
     } elseif {$::tcl_platform(os) == "Darwin"} {
