@@ -4,6 +4,10 @@ brlcad_add_test(NAME icv_robustness COMMAND icv_robustness)
 brlcad_addexec(icv_demo demo.c "libicv;libbu" TEST)
 brlcad_add_test(NAME icv_demo COMMAND icv_demo)
 
+brlcad_addexec(icv_fileformat_test fileformat.c "libicv;libbu" TEST)
+brlcad_add_test(NAME icv_fileformat_test COMMAND icv_fileformat_test)
+set_tests_properties(icv_fileformat_test PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+
 brlcad_addexec(icv_rle rle.cpp "libicv;libbu" TEST)
 brlcad_add_test(NAME icv_rle  COMMAND icv_rle)
 

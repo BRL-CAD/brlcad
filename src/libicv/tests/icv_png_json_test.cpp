@@ -94,7 +94,7 @@ dbl_eq(double a, double b)
 static icv_image_t *
 make_solid(size_t w, size_t h, double r, double g, double b)
 {
-    icv_image_t *img = icv_image_create(w, h, ICV_COLOR_SPACE_RGB);
+    icv_image_t *img = icv_create(w, h, ICV_COLOR_SPACE_RGB);
     if (!img) return NULL;
     for (size_t i = 0; i < w * h; i++) {
 img->data[i*3+0] = r;
@@ -206,7 +206,7 @@ test_json_chunk_structure(const char *tmpdir)
     ri->aspect      = 1.333;
     ri->perspective = 30.0;
 
-    CHECK(icv_image_take_render_info(img, ri) == 0, "attached render metadata to JSON struct test image");
+    CHECK(icv_image_set_render_info(img, ri) == 0, "attached render metadata to JSON struct test image");
 
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_printf(&fname, "%s/json_struct_test.png", tmpdir);
@@ -321,7 +321,7 @@ test_double_precision(const char *tmpdir)
     ri->aspect      = 1.0;
     ri->perspective = 0.0;
 
-    CHECK(icv_image_take_render_info(img, ri) == 0, "attached render metadata to precision test image");
+    CHECK(icv_image_set_render_info(img, ri) == 0, "attached render metadata to precision test image");
 
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_printf(&fname, "%s/json_precision_test.png", tmpdir);
@@ -410,7 +410,7 @@ test_single_object(const char *tmpdir)
     ri->viewsize    = 500.0;
     ri->aspect      = 1.0;
     ri->perspective = 0.0;
-    CHECK(icv_image_take_render_info(img, ri) == 0, "attached render metadata to single object test image");
+    CHECK(icv_image_set_render_info(img, ri) == 0, "attached render metadata to single object test image");
 
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_printf(&fname, "%s/json_single_obj.png", tmpdir);

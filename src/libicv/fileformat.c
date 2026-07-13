@@ -113,38 +113,49 @@ icv_image_data_realloc(icv_image_t *img, size_t size, const char *label)
 static bu_mime_image_t
 icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 {
-    // If we have no filename, there's nothing to go on
+    static const struct {
+	const char *prefix;
+	bu_mime_image_t format;
+    } prefixed_formats[] = {
+	{"PIX:", BU_MIME_IMAGE_PIX},
+	{"PNG:", BU_MIME_IMAGE_PNG},
+	{"JPEG:", BU_MIME_IMAGE_JPEG},
+	{"PPM:", BU_MIME_IMAGE_PPM},
+	{"BMP:", BU_MIME_IMAGE_BMP},
+	{"BW:", BU_MIME_IMAGE_BW},
+	{"DPIX:", BU_MIME_IMAGE_DPIX},
+	{"RLE:", BU_MIME_IMAGE_RLE}
+    };
+    struct bu_vls ext = BU_VLS_INIT_ZERO;
+    int mime_type = -1;
+    size_t i = 0;
+
+    /* If we have no filename, there's nothing to go on */
     if (!filename)
 	return BU_MIME_IMAGE_PIX;
 
     /* look for the FMT: header */
-#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name)+1)) {if (trimmedname) bu_vls_sprintf(trimmedname, "%s", filename+strlen(#name)+1); return BU_MIME_IMAGE_##name; }
-    CMP(PIX);
-    CMP(PNG);
-    CMP(JPEG);
-    CMP(PPM);
-    CMP(BMP);
-    CMP(BW);
-    CMP(DPIX)
-#undef CMP
+    for (i = 0; i < sizeof(prefixed_formats) / sizeof(prefixed_formats[0]); i++) {
+	size_t prefix_len = strlen(prefixed_formats[i].prefix);
+	if (!bu_strncmp(filename, prefixed_formats[i].prefix, prefix_len)) {
+	    if (trimmedname)
+		bu_vls_sprintf(trimmedname, "%s", filename + prefix_len);
+	    return prefixed_formats[i].format;
+	}
+    }
 
     /* no format header found, copy the name as it is */
     if (trimmedname)
 	bu_vls_sprintf(trimmedname, "%s", filename);
 
     /* and guess based on extension */
-#define CMP(name, ext) if (strlen(filename) > strlen(#ext) && !bu_strncmp(filename+strlen(filename)-strlen(#ext)-1, "."#ext, strlen(#ext)+1)) return BU_MIME_IMAGE_##name;
-    CMP(PIX, pix);
-    CMP(PNG, png);
-    CMP(PPM, ppm);
-    CMP(BMP, bmp);
-    CMP(BW, bw);
-    CMP(DPIX, dpix);
-#undef CMP
-#define CMP2(name, ext1, ext2) if ((strlen(filename) > strlen(#ext1) && !bu_strncmp(filename+strlen(filename)-strlen(#ext1)-1, "."#ext1, strlen(#ext1)+1)) || \
-	(strlen(filename) > strlen(#ext2) && !bu_strncmp(filename+strlen(filename)-strlen(#ext2)-1, "."#ext2, strlen(#ext2)+1))) return BU_MIME_IMAGE_##name;
-    CMP2(JPEG, jpg, jpeg);
-#undef CMP2
+    if (bu_path_component(&ext, filename, BU_PATH_EXT)) {
+	mime_type = bu_file_mime(bu_vls_cstr(&ext), BU_MIME_IMAGE);
+    }
+    bu_vls_free(&ext);
+    if (mime_type >= 0)
+	return (bu_mime_image_t)mime_type;
+
     /* defaulting to PIX */
     return BU_MIME_IMAGE_PIX;
 }
@@ -476,7 +487,7 @@ icv_create_with_channels(size_t width, size_t height, ICV_COLOR_SPACE color_spac
 }
 
 icv_image_t *
-icv_image_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
+icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
 {
     icv_image_t *bif;
     size_t channels = 0;
@@ -489,28 +500,16 @@ icv_image_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
 	    channels = 1;
 	    break;
 	default :
-	    bu_log("icv_image_create : Color Space Not Defined\n");
+	    bu_log("icv_create : Color Space Not Defined\n");
 	    return NULL;
     }
 
     bif = icv_create_with_channels(width, height, color_space, channels);
     if (!bif) {
-	bu_log("icv_image_create : image allocation failed\n");
+	bu_log("icv_create : image allocation failed\n");
 	return NULL;
     }
 
-    return bif;
-}
-
-icv_image_t *
-icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space)
-{
-    icv_image_t *bif = icv_image_create(width, height, color_space);
-    if (!bif) {
-	if (color_space != ICV_COLOR_SPACE_RGB && color_space != ICV_COLOR_SPACE_GRAY)
-	    bu_bomb("icv_create : Color Space Not Defined\n");
-	bu_bomb("icv_create : image allocation failed\n");
-    }
     return bif;
 }
 
@@ -707,15 +706,8 @@ icv_render_info_destroy(struct icv_render_info *info)
 }
 
 
-void
-icv_render_info_free(struct icv_render_info *info)
-{
-    (void)icv_render_info_destroy(info);
-}
-
-
 int
-icv_image_take_render_info(icv_image_t *img, struct icv_render_info *info)
+icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info)
 {
     if (!img)
 	return -1;
@@ -723,13 +715,6 @@ icv_image_take_render_info(icv_image_t *img, struct icv_render_info *info)
 	icv_render_info_destroy(img->render_info);
     img->render_info = info;
     return 0;
-}
-
-
-void
-icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info)
-{
-    (void)icv_image_take_render_info(img, info);
 }
 
 

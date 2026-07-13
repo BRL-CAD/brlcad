@@ -318,7 +318,7 @@ extern "C" {
 		    uint32_t frame_width = use_composed_frames ? aapng.canvas_width : aapng.frames[i].width;
 		    uint32_t frame_height = use_composed_frames ? aapng.canvas_height : aapng.frames[i].height;
 		    const apngmini::vector<uint8_t>& frame_pixels = use_composed_frames ? composed_frames[i] : aapng.frames[i].pixels;
-		    icv_image_t *img = icv_image_create(frame_width, frame_height, ICV_COLOR_SPACE_RGB);
+		    icv_image_t *img = icv_create(frame_width, frame_height, ICV_COLOR_SPACE_RGB);
 		    if (!img) {
 			bu_log("Failed to create img!\n");
 			icv_anim_destroy(anim);
