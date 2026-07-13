@@ -43,6 +43,10 @@
 
 #define LIGHT_O(m) bu_offsetof(struct light_specific, m)
 
+/* The shader UI exposes shadows in the range 0..64.  Keep that common
+ * visibility flag working set off the heap during per-pixel shading. */
+#define LIGHT_STACK_FLAG_SAMPLES (SOME_LIGHT_SAMPLES * 64)
+
 
 /** Heads linked list of lights */
 struct light_specific LightHead;
@@ -1524,8 +1528,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     static int rand_idx;
     int flag_size = 0;
 
-    /* use a constant buffer to minimize number of malloc/free calls per ray */
-    char static_flags[SOME_LIGHT_SAMPLES] = {0};
+    char static_flags[LIGHT_STACK_FLAG_SAMPLES];
     char *flags = static_flags;
 
     if (optical_debug & OPTICAL_DEBUG_LIGHT) {
@@ -1543,7 +1546,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	    flag_size = lsp->lt_pt_count;
 	}
     }
-    if (flag_size > SOME_LIGHT_SAMPLES) {
+    if (flag_size > LIGHT_STACK_FLAG_SAMPLES) {
 	flags = (char *)bu_calloc(flag_size, sizeof(char), "callocate flags array");
     }
 
