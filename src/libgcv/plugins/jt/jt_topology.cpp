@@ -179,7 +179,12 @@ class Decoder {
         }
         int32_t face = active[active.size() - static_cast<size_t>(offset)];
         if (face < 0 || removed[face] || slot < 0 || static_cast<size_t>(slot) >= faces[face].vertices.size()) {
-            fail("JT topology split face position is out of range");
+            std::ostringstream message;
+            message << "JT topology split face position " << slot << " is out of range for face " << face
+                    << " degree " << (face >= 0 ? faces[face].vertices.size() : 0)
+                    << " (offset " << offset << ", active " << active.size() << ", split "
+                    << split_slot_pos << '/' << s.split_face_positions.size() << ')';
+            err = message.str();
             return -2;
         }
         vertices[vertex].faces[vertex_slot] = face;
@@ -277,13 +282,18 @@ class Decoder {
         while (!active.empty() && removed[active.back()]) active.pop_back();
         int32_t selected = -1;
         size_t lowest = std::numeric_limits<size_t>::max();
-        size_t begin = active.size() > kActiveSearchWidth ? active.size() - kActiveSearchWidth : 0;
-        for (size_t i = active.size(); i-- > begin;) {
-            int32_t face = active[i];
-            if (!removed[face] && faces[face].empty < lowest) {
-                lowest = faces[face].empty;
-                selected = face;
-            }
+        for (size_t i = active.size(); i > 0;) {
+	    --i;
+	    if (active.size() - i > kActiveSearchWidth) break;
+	    int32_t face = active[i];
+	    if (removed[face]) {
+		active.erase(active.begin() + static_cast<std::ptrdiff_t>(i));
+		continue;
+	    }
+	    if (faces[face].empty < lowest) {
+		lowest = faces[face].empty;
+		selected = face;
+	    }
         }
         return selected;
     }

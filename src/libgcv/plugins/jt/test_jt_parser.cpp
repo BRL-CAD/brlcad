@@ -275,16 +275,22 @@ int main()
     if (!expect(values == std::vector<int32_t>({1, 2}), "wrong JT Int32 CDP2 Chopper output")) return 1;
 
     data = sample_file(10, 3, true);
-    const uint64_t packet2_bitlength_offset = data.size();
-    append_u32(data, 2, true);
-    data.push_back(1);
-    append_u32(data, 8, true);
-    data.push_back(0xcbu);
+    const uint64_t arithmetic_offset = data.size();
+    const unsigned char table_arithmetic_packet[] = {
+	0x90, 0x00, 0x00, 0x00, 0x03, 0x18, 0x01, 0x00, 0x00, 0x2c, 0xe2, 0xed, 0x80,
+	0x4e, 0xa8, 0xa0, 0xdc, 0xa1, 0xd9, 0x28, 0xd4, 0x0b, 0x67, 0x81, 0x0f, 0x7e,
+	0xf9, 0xbb, 0x5a, 0x23, 0x02, 0x8d, 0x92, 0x34, 0x99, 0x76, 0xae, 0xf2, 0x3a,
+	0x98, 0x53, 0x00, 0x00, 0x00, 0x06, 0x00, 0x05, 0x1c, 0x18, 0x00, 0x00, 0x00,
+	0x04, 0x20, 0x0f, 0x02, 0x15, 0x2b, 0x11, 0xf0, 0x04, 0x00, 0x00, 0x00, 0x01,
+	0x2d, 0x00, 0x00, 0x00, 0x14, 0x30, 0x01, 0x44, 0x00, 0x00, 0x40, 0x01
+    };
+    data.insert(data.end(), std::begin(table_arithmetic_packet), std::end(table_arithmetic_packet));
     if (!expect(file.load(data, error), error.c_str())) return 1;
-    if (!expect(file.int32_packet2(packet2_bitlength_offset, jt::Predictor::None,
+    if (!expect(file.int32_packet2(arithmetic_offset, jt::Predictor::None,
 	values, bytes_read, error), error.c_str())) return 1;
-    if (!expect(values == std::vector<int32_t>({1, -1}),
-	"wrong JT 10 byte-packed Bitlength output")) return 1;
-    if (!expect(bytes_read == 10, "wrong JT 10 byte-packed Bitlength packet length")) return 1;
+    int64_t weighted_sum = 0;
+    for (size_t i = 0; i < values.size(); ++i) weighted_sum += static_cast<int64_t>(i + 1) * values[i];
+    if (!expect(values.size() == 144 && bytes_read == sizeof(table_arithmetic_packet) &&
+	weighted_sum == 66179, "wrong table.jt Arithmetic CODEC output")) return 1;
     return 0;
 }
