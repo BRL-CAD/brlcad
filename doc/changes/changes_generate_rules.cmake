@@ -56,7 +56,7 @@ while(NOT _rules_text STREQUAL "")
 
   if(NOT _release STREQUAL _current_release)
     set(_current_release "${_release}")
-    string(APPEND _adoc "== ${_release}\n\n")
+    string(APPEND _adoc "\n== ${_release}\n\n")
   endif()
 
   math(EXPR _rule_count "${_rule_count} + 1")
