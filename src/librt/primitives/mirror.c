@@ -68,12 +68,12 @@ RT_DECLARE_MIRROR(superell);
 RT_DECLARE_MIRROR(comb);
 RT_DECLARE_MIRROR(bot);
 RT_DECLARE_MIRROR(nurb);
+RT_DECLARE_MIRROR(brep);
 
 
 /*
   FIXME: missing mirror implementations
 
-  RT_DECLARE_MIRROR(brep);
   RT_DECLARE_MIRROR(cline);
   RT_DECLARE_MIRROR(ehy);
   RT_DECLARE_MIRROR(extrude);
@@ -224,6 +224,10 @@ rt_mirror(struct db_i *dbip,
 	}
 	case ID_BOT: {
 	    err = rt_bot_mirror(ip, plane);
+	    return err ? NULL : ip;
+	}
+	case ID_BREP: {
+	    err = rt_brep_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 	default: {

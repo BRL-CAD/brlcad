@@ -175,9 +175,6 @@ Recent Bugs
   results in an object that cannot be deleted/renamed.  bad behavior
   presumably extends to any name with path separators.
 
-* mirror command rejects brep solids and turns faces inside-out when
-  mirroring a comb with brep solids below it.
-
 * rtsil command works if do what usage says and redirect output to
   file, but mentions .pix when data is actually .bw; and using the -o
   option results in a black image.  it is also inconsistent, writing a
