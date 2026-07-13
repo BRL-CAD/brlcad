@@ -40,7 +40,7 @@ set mged_help_data(adjust)	$helplib_data(wdb_adjust)
 set mged_help_data(ae)		$helplib_data(vo_aet)
 set mged_help_data(ae2dir)	{{[-i] az el}	{return direction vector using inputted azimuth and elevation}}	
 set mged_help_data(analyze)	{{[arbname]}	{analyze faces of ARB}}
-set mged_help_data(apropos)	{{keyword}	{finds commands whose descriptions contain the given keyword}}
+set mged_help_data(apropos)	{{[-k|-K] keyword}	{finds commands whose descriptions or manual pages contain the given keyword}}
 set mged_help_data(aproposdevel)	{{keyword}	{finds commands used for development whose descriptions
     contain the given keyword}}
 set mged_help_data(aproposlib)	{{keyword}	{finds library commands whose descriptions contain the given keyword}}
@@ -406,8 +406,38 @@ proc ? {} {
     return [?_comm mged_help_data 20 4]
 }
 
-proc apropos key {
+proc apropos {args} {
     global mged_help_data
+
+    set mode short
+    set query {}
+
+    foreach arg $args {
+	switch -- $arg {
+	    -k {
+		set mode short
+	    }
+	    -K {
+		set mode full
+	    }
+	    -h - --help {
+		return "Usage: apropos ?-k|-K? keyword\n\t-k searches names, synopses, and brief descriptions\n\t-K searches full manual page text"
+	    }
+	    default {
+		lappend query $arg
+	    }
+	}
+    }
+
+    if {[llength $query] == 0} {
+	error "Usage: apropos ?-k|-K? keyword"
+    }
+
+    set key [join $query " "]
+    set results [manpage_search $key -mode $mode -sections {mann} -format names]
+    if {$results != "" || $mode == "full"} {
+	return $results
+    }
 
     return [apropos_comm mged_help_data $key]
 }
