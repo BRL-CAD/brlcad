@@ -218,16 +218,6 @@ Recent Bugs
   neighbor distance coming into play that is not affected by
   max_dist).  eoes not happen in non-perspective ray-traces.
 
-* a character is (still) sometimes captured by the cursor box.  steps
-  to reproduce:
-    1) write a word on the mged command prompt ("e.g. hello")
-    2) select the word to end of line with mouse
-    3) paste the word (e.g., middle mouse) and press enter
-    4) type "hello" again and press enter
-
-  you should now see an "o" in the yellow cursor box.  sometimes
-  you'll see the "o" after step 3.  running "clear" resets the cursor.
-
 * get_regions tcl command doesn't respond well to situations where
   child object names in combs have dashes (the "-" character) in
   names.  It tries to interpret the dash as an argument delimiter.
