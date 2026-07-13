@@ -31,6 +31,7 @@ image/sun					sun
 image/yuv					yuv
 model/dxf					dxf
 model/gltf					gltf glb
+model/jt					jt
 model/obj					obj
 model/ply					ply
 model/shp					shp
