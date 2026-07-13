@@ -177,6 +177,10 @@ adjust mass_air.r GIFTmater 2
 g mass_air_only.g mass_air.r
 g mass_air_mix.g mass_solid.r mass_air.r
 
+in sphere.s sph 0 0 0 1
+r sphere.r u sphere.s
+adjust sphere.r GIFTmater 5
+
 q
 EOF
 
@@ -238,18 +242,21 @@ run_capture gqa.mass_air.am.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Am gqa.g mass
 run_capture gqa.mass_mix.aw.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Aw gqa.g mass_air_mix.g
 run_capture gqa.mass_mix.am.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Am gqa.g mass_air_mix.g
 run_capture gqa.mass_mix.u0.out $GQABIN -u m,m^3,kg -g 250mm-50mm -U 0 -Aw gqa.g mass_air_mix.g
+run_capture gqa.sphere_adaptive.out $GQABIN -u m,m^3,kg -q -Av -g 0.05m gqa.g sphere.r
 
 MASS_AIR_AW="`extract_last_number 'Average total weight:' gqa.mass_air.aw.out`"
 MASS_AIR_AM="`extract_last_number 'Average total weight:' gqa.mass_air.am.out`"
 MASS_MIX_AW="`extract_last_number 'Average total weight:' gqa.mass_mix.aw.out`"
 MASS_MIX_AM="`extract_last_number 'Average total weight:' gqa.mass_mix.am.out`"
 MASS_MIX_U0="`extract_last_number 'Average total weight:' gqa.mass_mix.u0.out`"
+SPHERE_VOLUME="`extract_last_number 'Average total volume:' gqa.sphere_adaptive.out`"
 
 assert_close 1 "$MASS_AIR_AW" 0.001 "pure modeled air weight with -Aw"
 assert_close "$MASS_AIR_AW" "$MASS_AIR_AM" 0.001 "-Aw and -Am agree on pure modeled air"
 assert_close 1001 "$MASS_MIX_AW" 0.001 "mixed solid+air modeled weight with -Aw"
 assert_close "$MASS_MIX_AW" "$MASS_MIX_AM" 0.001 "-Aw and -Am agree on mixed modeled air"
 assert_close 1000 "$MASS_MIX_U0" 0.001 "-U 0 excludes modeled air from weight"
+assert_close 4.18879 "$SPHERE_VOLUME" 0.01 "adaptive sphere volume refines beyond symmetric first pass"
 
 
 if [ $STATUS = 0 ] ; then
