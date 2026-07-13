@@ -47,7 +47,7 @@ Read_att(size_t att_de, struct brlcad_att *att)
 
     /* Acquiring Data */
 
-    entityno = (att_de-1)/2;
+    entityno = IGES_DE2INDEX(att_de);
 
     if (dir[entityno]->param <= pstart) {
 	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,

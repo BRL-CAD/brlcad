@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * block() converts an IGES 150 Block entity into a BRL-CAD ARB8.
+ */
 int
 block(size_t entityno)
 {
@@ -62,6 +65,7 @@ block(size_t entityno)
     }
 
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&xscale, "");
     Readcnv(&yscale, "");
@@ -92,6 +96,7 @@ block(size_t entityno)
      * Make and unitize necessary vectors.
      */
 
+    /* The IGES X-direction and Z-direction vectors are assumed orthonormal. */
     VSET(xdir, x_2, y_2, z_2);			/* Makes x-dir vector */
     VUNITIZE(xdir);
     VSET(zdir, x_3, y_3, z_3);			/* Make z-dir vector */

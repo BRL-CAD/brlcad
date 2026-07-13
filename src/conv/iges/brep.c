@@ -22,6 +22,15 @@
 #include "./iges_extern.h"
 #include "./iges_brep.h"
 
+/*
+ * Convert an IGES 186 Manifold Solid BREP entity into an NMG model.
+ *
+ * The outer shell and any inner void shells are read and assembled into
+ * an NMG region, loop orientations and shell normals are fixed up, and
+ * the result is written out.  The preferred output is a faithful
+ * rt_brep (OpenNURBS); if that is not requested or fails, a polygonal
+ * NMG or a mesh (BoT) is written depending on the do_bots/do_brep flags.
+ */
 int
 brep(size_t entityno, struct bu_list *vlfree)
 {
@@ -76,7 +85,7 @@ brep(size_t entityno, struct bu_list *vlfree)
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 
     /* Put outer shell in region */
-    if ((s_outer = Get_outer_shell(r, (shell_de - 1)/2, vlfree)) == (struct shell *)NULL)
+    if ((s_outer = Get_outer_shell(r, IGES_DE2INDEX(shell_de), vlfree)) == (struct shell *)NULL)
 	goto err;
 
     /* Put voids in */

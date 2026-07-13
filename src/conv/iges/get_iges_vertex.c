@@ -21,6 +21,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Reverse lookup: find the cached IGES 502 vertex entry that owns the
+ * given NMG vertex.
+ *
+ * Scans every vertex in every cached vertex list (the global vertex_root
+ * linked list) for one whose NMG vertex pointer matches v, returning
+ * NULL if none is found.
+ */
 struct iges_vertex *
 Get_iges_vertex(struct vertex *v)
 {

@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * cyl() converts an IGES 154 Right Circular Cylinder entity into a BRL-CAD RCC.
+ */
 int
 cyl(size_t entityno)
 {
@@ -52,6 +55,7 @@ cyl(size_t entityno)
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&scale_height, "");
     Readcnv(&radius, "");

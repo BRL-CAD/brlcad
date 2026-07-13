@@ -21,6 +21,13 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Convert an IGES 514 Shell entity (the outer shell) into an NMG shell.
+ *
+ * Reads the list of face DEs and orientations, builds a face for each
+ * via Add_face_to_shell(), glues the coincident faces together, and
+ * returns the resulting NMG shell.
+ */
 struct shell *
 Get_outer_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
 {

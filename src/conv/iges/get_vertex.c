@@ -24,6 +24,16 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Look up the NMG vertex pointer for one end of an IGES edge use.
+ *
+ * The IGES 504 edge list and IGES 502 vertex list entities are cached
+ * globally in the edge_root and vertex_root linked lists (each node
+ * keyed by its directory-entry sequence number, populated lazily by
+ * Get_edge_list()/Get_vertex_list()).  This resolves the edge use to its
+ * edge, then to the start or end vertex (depending on orientation), and
+ * returns the address of that vertex's cached NMG vertex slot.
+ */
 struct vertex **
 Get_vertex(struct iges_edge_use *edge_use)
 {
@@ -63,6 +73,10 @@ Get_vertex(struct iges_edge_use *edge_use)
 }
 
 
+/*
+ * Store an NMG vertex pointer into the cached IGES vertex slot that
+ * corresponds to one end of an IGES edge use.
+ */
 int
 Put_vertex(struct vertex *v, struct iges_edge_use *edge)
 {
@@ -107,6 +121,9 @@ Put_vertex(struct vertex *v, struct iges_edge_use *edge)
 }
 
 
+/*
+ * Return the cached IGES edge referenced by an IGES edge use.
+ */
 struct iges_edge *
 Get_edge(struct iges_edge_use *e_use)
 {
@@ -125,6 +142,9 @@ Get_edge(struct iges_edge_use *e_use)
 }
 
 
+/*
+ * Return the cached NMG vertex at the start of an IGES edge.
+ */
 struct vertex *
 Get_edge_start_vertex(struct iges_edge *edge)
 {
@@ -137,6 +157,9 @@ Get_edge_start_vertex(struct iges_edge *edge)
 }
 
 
+/*
+ * Return the cached NMG vertex at the end of an IGES edge.
+ */
 struct vertex *
 Get_edge_end_vertex(struct iges_edge *edge)
 {

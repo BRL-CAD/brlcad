@@ -36,6 +36,12 @@
 #define MAX_NUM 4096
 
 
+/*
+ * Read the next field from the shared global "card" buffer, parse it as a
+ * floating-point value, and store the result in "inum" (no unit/scale
+ * conversion is applied).  Advances the field "counter" and auto-advances
+ * to the next record when the field spans a record boundary.
+ */
 void
 Readflt(fastf_t *inum, const char *id)
 {
@@ -62,6 +68,9 @@ Readflt(fastf_t *inum, const char *id)
 	       (num[i] = card[counter++]) != eofd &&
 	       num[i] != eord && counter <= lencard)
 	{
+	    /* IGES writes exponents in Fortran style (e.g. 1.0D+00);
+	     * translate the 'D' exponent marker to 'e' so atof() parses it
+	     */
 	    if (num[i] == 'D') {
 		num[i] = 'e';
 	    }

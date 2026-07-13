@@ -44,6 +44,14 @@ const char *iges_version[NO_OF_VERSIONS] = {
     "5.0",
     "5.1" };
 
+/*
+ * Parse the IGES Global Section from the shared global "card" buffer.
+ * First determines the field and record delimiters, then walks the
+ * remaining global parameter fields, dispatching each to the appropriate
+ * Read* routine and recording the scale, units, conversion factor, etc.
+ * Auto-advances to the next record when a field crosses a record boundary.
+ * The switch "case" values below are the IGES Global Section field numbers.
+ */
 void
 Readglobal(int file_count)
 {
@@ -92,8 +100,9 @@ Readglobal(int file_count)
 	    break;
 	}
 
+	/* each "case" is the IGES Global Section field number being read */
 	switch (++field) {
-	    case 3:		Readname(&name, "Product ID: ");
+	    case 3:		Readname(&name, "Product ID: ");	/* field 3: product identification (sending system) */
 		if (!file_count) {
 		    if (name != NULL) {
 			mk_id(fdout, name);
@@ -102,30 +111,30 @@ Readglobal(int file_count)
 			mk_id(fdout, "Un-named Product");
 		}
 		break;
-	    case 4:		Readstrg("File Name: ");
+	    case 4:		Readstrg("File Name: ");	/* field 4: file name */
 		break;
-	    case 5:		Readstrg("System ID: ");
+	    case 5:		Readstrg("System ID: ");	/* field 5: native system ID */
 		break;
-	    case 6:		Readstrg("Version: ");
+	    case 6:		Readstrg("Version: ");	/* field 6: preprocessor version */
 		break;
-	    case 7:		Readint(&i, "Integer Bits: ");
+	    case 7:		Readint(&i, "Integer Bits: ");	/* field 7: number of bits per integer */
 		break;
-	    case 8:		Readint(&i, "Max Power of ten(single precision): ");
+	    case 8:		Readint(&i, "Max Power of ten(single precision): ");	/* field 8: single-precision max power of ten */
 		break;
-	    case 9:		Readint(&i, "Max significant digits (single precision): ");
+	    case 9:		Readint(&i, "Max significant digits (single precision): ");	/* field 9: single-precision significant digits */
 		break;
-	    case 10:	Readint(&i, "Max Power of ten(double precision): ");
+	    case 10:	Readint(&i, "Max Power of ten(double precision): ");	/* field 10: double-precision max power of ten */
 		break;
-	    case 11:	Readint(&i, "Max significant digits (single precision): ");
+	    case 11:	Readint(&i, "Max significant digits (single precision): ");	/* field 11: double-precision significant digits */
 		break;
-	    case 12:	Readstrg("Product ID: ");
+	    case 12:	Readstrg("Product ID: ");	/* field 12: product identification (receiving system) */
 		break;
-	    case 13:	Readflt(&scale, "Scale: ");
+	    case 13:	Readflt(&scale, "Scale: ");	/* field 13: model space scale */
 		if (ZERO(scale))
 		    scale = 1.0;
 		inv_scale = 1.0/scale;
 		break;
-	    case 14:	Readint(&units, "Units: ");
+	    case 14:	Readint(&units, "Units: ");	/* field 14: units flag */
 		if (units < 0 || units == 0 || units == 3 || units > 11) {
 		    bu_log("Unrecognized units, assuming 'mm'\n");
 		    conv_factor = 1.0;
@@ -135,31 +144,31 @@ Readglobal(int file_count)
 		   scale factor */
 		conv_factor *= inv_scale;
 		break;
-	    case 15:	Readstrg("Units: ");
+	    case 15:	Readstrg("Units: ");	/* field 15: units name */
 		break;
-	    case 16:	Readint(&i, "Line Weight Gradations: ");
+	    case 16:	Readint(&i, "Line Weight Gradations: ");	/* field 16: max number of line weight gradations */
 		break;
-	    case 17:	Readflt(&a, "Line Width: ");
+	    case 17:	Readflt(&a, "Line Width: ");	/* field 17: width of max line weight */
 		break;
-	    case 18:	Readtime("Exchange File Created On: ");
+	    case 18:	Readtime("Exchange File Created On: ");	/* field 18: file generation date/time */
 		break;
-	    case 19:	Readflt(&a, "Resolution: ");
+	    case 19:	Readflt(&a, "Resolution: ");	/* field 19: minimum resolution (granularity) */
 		break;
-	    case 20:	Readflt(&a, "Maximum value: ");
+	    case 20:	Readflt(&a, "Maximum value: ");	/* field 20: approximate maximum coordinate value */
 		break;
-	    case 21:	Readstrg("Author: ");
+	    case 21:	Readstrg("Author: ");	/* field 21: author name */
 		break;
-	    case 22:	Readstrg("Organization: ");
+	    case 22:	Readstrg("Organization: ");	/* field 22: author's organization */
 		break;
-	    case 23:	Readint(&i, "");
+	    case 23:	Readint(&i, "");	/* field 23: IGES version (specification) flag */
 		if (i < 1 || i >= NO_OF_VERSIONS)
 		    bu_log("Unrecognized IGES version\n");
 		else
 		    bu_log("IGES version: %s\n", iges_version[i]);
 		break;
-	    case 24:	Readint(&i, "");
+	    case 24:	Readint(&i, "");	/* field 24: drafting standard flag */
 		break;
-	    case 25:	Readtime("Model Last Modified: ");
+	    case 25:	Readtime("Model Last Modified: ");	/* field 25: model creation/modification date/time */
 		break;
 	}
     }

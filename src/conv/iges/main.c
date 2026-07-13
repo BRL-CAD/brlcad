@@ -191,10 +191,17 @@ main(int argc, char *argv [])
 		solid_name = bu_optarg;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		/* rt_debug is an unsigned int; read it directly */
+		sscanf(bu_optarg, "%x", &rt_debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		{
+		    /* nmg_debug is a uint32_t; read into an unsigned int first
+		     * rather than type-punning &nmg_debug to unsigned int * */
+		    unsigned int dbg = 0;
+		    sscanf(bu_optarg, "%x", &dbg);
+		    nmg_debug = dbg;
+		}
 		break;
 	    default:
 		usage(argv[0]);

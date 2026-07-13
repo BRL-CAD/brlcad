@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/* Report a tally of how many entities of each IGES type were found, and a
+ * count of the independent (non-subordinate) entities.
+ */
 void
 Summary(void)
 {
@@ -44,6 +47,7 @@ Summary(void)
 }
 
 
+/* Reset the per-type entity counters to zero. */
 void
 Zero_counts(void)
 {

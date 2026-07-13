@@ -43,6 +43,11 @@
 #define Intersect 2
 #define Subtract 3
 
+/* IGES directory entries are assigned odd sequence numbers (1, 3, 5, ...);
+ * the index of an entry in the global "dir" array is (DE - 1) / 2.  Use this
+ * macro instead of open-coding the conversion. */
+#define IGES_DE2INDEX(de) (((de) - 1) / 2)
+
 /* Circularly linked list of files and names for external references */
 struct file_list
 {

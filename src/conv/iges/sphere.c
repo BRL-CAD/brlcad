@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * sphere() converts an IGES 158 Sphere entity into a BRL-CAD ELL (via mk_sph).
+ */
 int
 sphere(size_t entityno)
 {
@@ -45,6 +48,7 @@ sphere(size_t entityno)
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&radius, "");
     Readcnv(&x, "");

@@ -34,6 +34,13 @@ struct loop_list
 
 static struct loop_list *loop_root;
 
+/*
+ * Recursively build the nesting hierarchy of loops within a faceuse.
+ *
+ * Finds every loop directly contained in lptr->lu (excluding those that
+ * are contained in another inner loop), links them as lptr->inner_loops,
+ * then recurses to find the loops nested inside each of those.
+ */
 void
 Find_inner_loops(struct faceuse *fu, struct loop_list *lptr, struct bu_list *vlfree)
 {
@@ -108,6 +115,13 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr, struct bu_list *vlf
 }
 
 
+/*
+ * Set the loop orientations of a planar NMG faceuse.
+ *
+ * Determines the outermost loop, builds the loop-nesting hierarchy with
+ * Find_inner_loops(), and then alternates loop orientation between
+ * OT_SAME and OT_OPPOSITE from the outermost level inward.
+ */
 void
 Orient_face_loops(struct faceuse *fu, struct bu_list *vlfree)
 {
@@ -198,6 +212,13 @@ Orient_face_loops(struct faceuse *fu, struct bu_list *vlfree)
 }
 
 
+/*
+ * Set the loop orientations of a NURBS (SNURB) NMG faceuse.
+ *
+ * Uses the loop's signed area in parametric (uv) space, combined with
+ * the face's flip flag, to decide whether each loop should be OT_SAME
+ * or OT_OPPOSITE.
+ */
 void
 Orient_nurb_face_loops(struct faceuse *fu)
 {
@@ -231,7 +252,7 @@ Orient_nurb_face_loops(struct faceuse *fu)
 
 	/* if area is in +Z-direction loop encloses area counter-clockwise
 	 * and must be OT_SAME. if area is in -Z-direction, loop encloses
-	 * area in clockwise direction and must be OT_OPPOOSITE
+	 * area in clockwise direction and must be OT_OPPOSITE
 	 */
 	if ((loop_uv_orient == OT_SAME && !flipped) ||
 	    (loop_uv_orient == OT_OPPOSITE && flipped)) {
@@ -248,6 +269,13 @@ Orient_nurb_face_loops(struct faceuse *fu)
 }
 
 
+/*
+ * Fix the loop orientations for every face in an NMG region.
+ *
+ * Walks all shells and their OT_SAME faceuses, dispatching to
+ * Orient_face_loops() for planar faces and Orient_nurb_face_loops() for
+ * NURBS faces.
+ */
 void
 Orient_loops(struct nmgregion *r, struct bu_list *vlfree)
 {

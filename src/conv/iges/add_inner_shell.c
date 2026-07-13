@@ -21,6 +21,13 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Convert an IGES 514 Shell entity (an inner void shell) into an NMG shell.
+ *
+ * Reads the list of face DEs, builds a face for each via
+ * Add_face_to_shell(), glues the coincident faces together, and returns
+ * the resulting NMG shell to be added to the region as a void.
+ */
 struct shell *
 Add_inner_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
 {

@@ -21,6 +21,11 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/* Process IGES Solid Instance entities (type 430).  If an instance carries a
+ * BRL-CAD attribute it becomes a single-member region or group; otherwise the
+ * instanced object's info is copied into the instance entry and, when both
+ * carry transformations, the two matrices are combined.
+ */
 void
 Convinst(void)
 {
@@ -55,7 +60,7 @@ Convinst(void)
 	Readint(&pointer, "");
 
 	/* convert pointer to a "dir" index */
-	pointer = (pointer - 1)/2;
+	pointer = IGES_DE2INDEX(pointer);
 	if (pointer < 0 || (size_t)pointer >= totentities) {
 	    bu_log("Primitive instance D%07d (%s) does not point to a legal primitive\n",
 		   dir[i]->direct, dir[i]->name);
@@ -72,8 +77,8 @@ Convinst(void)
 	Readint(&no_of_props, "");
 	for (k = 0; k < no_of_props; k++) {
 	    Readint(&j, "");
-	    if (dir[(j-1)/2]->type == 422 &&
-		dir[(j-1)/2]->referenced == brlcad_att_de) {
+	    if (dir[IGES_DE2INDEX(j)]->type == 422 &&
+		dir[IGES_DE2INDEX(j)]->referenced == brlcad_att_de) {
 		/* this is one of our attribute instances */
 		att_de = j;
 	    }

@@ -38,6 +38,11 @@ struct solid_list
 };
 
 
+/* Convert every IGES Solid Assembly entity (type 184) into a BRL-CAD
+ * combination.  Each member's stored transformation is combined with any
+ * per-member matrix from the assembly, BRL-CAD attributes and color are
+ * applied, and the group is written to the output database.
+ */
 void
 Convassem(void)
 {
@@ -142,8 +147,8 @@ Convassem(void)
 	Readint(&no_of_props, "");
 	for (k = 0; k < no_of_props; k++) {
 	    Readint(&j, "");
-	    if (dir[(j-1)/2]->type == 422 &&
-		dir[(j-1)/2]->referenced == brlcad_att_de) {
+	    if (dir[IGES_DE2INDEX(j)]->type == 422 &&
+		dir[IGES_DE2INDEX(j)]->referenced == brlcad_att_de) {
 		/* this is one of our attribute instances */
 		att_de = j;
 	    }

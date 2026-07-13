@@ -68,7 +68,11 @@ Freeknots(void)
 }
 
 
-/* Evaluate the Basis functions */
+/*
+ * Evaluate the i-th B-spline basis function of order k at parameter t,
+ * using the recursive Cox-de-Boor formula against the current knot
+ * vector.
+ */
 fastf_t
 Basis(int i /* interval number (0 through k) */, int k /* degree of basis function */, fastf_t t /* parameter value */)
 {
@@ -81,11 +85,15 @@ Basis(int i /* interval number (0 through k) */, int k /* degree of basis functi
     }
 
     if (k == 1) {
+	/* base case: order-1 basis is 1 inside its knot span, else 0 */
 	if (t >= knots[i] && t < knots[i+1])
 	    return 1.0;
 	else
 	    return 0.0;
     } else {
+	/* recursive case: blend the two lower-order basis functions.
+	 * Denominators that are zero (repeated knots) contribute nothing.
+	 */
 	denom1 = knots[i+k-1] - knots[i];
 	denom2 = knots[i+k] - knots[i+1];
 

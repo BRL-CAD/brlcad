@@ -22,6 +22,12 @@
 #include "./iges_extern.h"
 
 
+/*
+ * extrude() converts an IGES 164 Solid of Linear Extrusion entity into a
+ * BRL-CAD primitive.  The result depends on the extruded base curve: a
+ * circular arc yields an RCC (via Extrudcirc), a conic arc an TGC (via
+ * Extrudcon), and other supported curve types a BOT from an extruded NMG face.
+ */
 int
 extrude(size_t entityno, struct bu_list *vlfree)
 {
@@ -46,6 +52,7 @@ extrude(size_t entityno, struct bu_list *vlfree)
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
 
     /* Read pointer to directory entry for curve to be extruded */
@@ -54,7 +61,7 @@ extrude(size_t entityno, struct bu_list *vlfree)
 
     /* Convert this to a "dir" index */
 
-    curve = (curve-1)/2;
+    curve = IGES_DE2INDEX(curve);
 
     Readcnv(&length, "");
     Readflt(&edir[X], "");

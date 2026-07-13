@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * ell() converts an IGES 168 Ellipsoid entity into a BRL-CAD ELL.
+ */
 int
 ell(size_t entityno)
 {
@@ -51,6 +54,7 @@ ell(size_t entityno)
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&xscale, "");
     Readcnv(&yscale, "");
@@ -77,6 +81,7 @@ ell(size_t entityno)
      * and call mk_ell.
      */
 
+    /* The IGES X-direction and Z-direction vectors are assumed orthonormal. */
     VUNITIZE(xdir);
     VUNITIZE(zdir);
     VCROSS(ydir, zdir, xdir);		/* Make y-dir vector */

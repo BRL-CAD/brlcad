@@ -24,6 +24,15 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Build an NMG planar face from an IGES 508 Loop entity (the loop of an
+ * IGES 510 Face).
+ *
+ * Reads the loop's edge uses, collects their vertices in the correct
+ * order (reversed when face_orient is false), drops zero-length edges,
+ * creates the NMG face with nmg_cmface(), associates vertex geometry and
+ * the plane equation, and ensures the OT_SAME faceuse points outward.
+ */
 struct faceuse *
 Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_list *vlfree)
 {

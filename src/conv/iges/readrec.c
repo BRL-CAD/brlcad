@@ -25,7 +25,7 @@
  * record is located by calculating the offset into the file and doing
  * an "fseek".  This obviously depends on the "UNIX" characteristic of
  * "fseek" understanding offsets in bytes.  The record length is
- * calculated by the routine "recsize".  This routine id typically
+ * calculated by the routine "recsize".  This routine is typically
  * called before calling the other "read" routines to get to the
  * desired record.  The "read" routines then call this routine if the
  * buffer empties.
@@ -35,6 +35,11 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Seek to and read record number "recno" (1-based) into the shared global
+ * "card" buffer, updating "currec" and resetting the field "counter".
+ * Returns 1 on end-of-file, 0 on success.
+ */
 int
 Readrec(int recno)
 {

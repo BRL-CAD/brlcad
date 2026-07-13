@@ -51,6 +51,11 @@ struct trclist
 void Addsub(struct trclist *, struct trclist *);
 
 
+/*
+ * revolve() converts an IGES 162 Solid of Revolution entity into a BRL-CAD
+ * combination of TRC primitives (approximating the revolved curve), optionally
+ * intersected/subtracted with an ARB8 cutting solid for partial revolutions.
+ */
 int
 revolve(size_t entityno)
 {
@@ -90,6 +95,7 @@ revolve(size_t entityno)
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
 
     /* Read pointer to directory entry for curve to be extruded */
@@ -98,7 +104,7 @@ revolve(size_t entityno)
 
     /* Convert this to a "dir" index */
 
-    curve = (curve-1)/2;
+    curve = IGES_DE2INDEX(curve);
 
     Readflt(&fract, "");
     Readflt(&pt[X], "");

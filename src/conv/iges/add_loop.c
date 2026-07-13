@@ -21,6 +21,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Add an IGES 508 Loop entity as an additional loop of an existing
+ * NMG face.
+ *
+ * A temporary planar face is built from the loop (Make_planar_face),
+ * oriented to match the target faceuse fu, and then joined into fu with
+ * nmg_jf().
+ */
 int
 Add_loop_to_face(struct shell *s, struct faceuse *fu, size_t entityno, int face_orient, struct bu_list *vlfree)
 {
@@ -48,7 +56,7 @@ Add_loop_to_face(struct shell *s, struct faceuse *fu, size_t entityno, int face_
     if (fu_tmp->orientation != OT_SAME)
 	fu_tmp = fu_tmp->fumate_p;
     if (fu_tmp->orientation != OT_SAME) {
-	bu_log("fu_tmp %p (%s) nad mate %p (%s) have no OT_SAME use\n" ,
+	bu_log("fu_tmp %p (%s) and mate %p (%s) have no OT_SAME use\n" ,
 	       (void *)fu_tmp, nmg_orientation(fu_tmp->orientation),
 	       (void *)fu_tmp->fumate_p, nmg_orientation(fu_tmp->fumate_p->orientation));
 	bu_exit(1, "Faceuse and mate have no OT_SAME use\n");

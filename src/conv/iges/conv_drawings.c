@@ -581,7 +581,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
     for (i = 0; i < 6; i++) {
 	clip_de[i] = 0;
 	Readint(&clip_de[i], "");
-	clip_de[i] = (clip_de[i] - 1)/2;
+	clip_de[i] = IGES_DE2INDEX(clip_de[i]);
     }
 
     xform = dir[entno]->rot;
@@ -675,7 +675,7 @@ Get_drawing(size_t entno, struct bu_ptbl *view_vis_list, struct bu_list *vlfree)
     ang = (fastf_t *)bu_calloc(no_of_views, sizeof(fastf_t), "Get_drawing: ang");
     for (i = 0; i < no_of_views; i++) {
 	Readint(&view_entno[i], "");
-	view_entno[i] = (view_entno[i] - 1)/2;
+	view_entno[i] = IGES_DE2INDEX(view_entno[i]);
 	Readflt(&x[i], "");
 	Readflt(&y[i], "");
 	if (dir[i]->form == 1)

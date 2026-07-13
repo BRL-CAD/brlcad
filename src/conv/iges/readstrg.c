@@ -37,6 +37,13 @@
 #define MAX_NUM 4096
 
 
+/*
+ * Read the next field from the shared global "card" buffer, expecting a
+ * Hollerith string of the form "nHstring".  If "id" is non-empty the
+ * string is echoed; the field is otherwise just skipped.  Advances the
+ * field "counter" and auto-advances to the next record when the field
+ * spans a record boundary.
+ */
 void
 Readstrg(const char *id)
 {

@@ -171,6 +171,11 @@ Sfreestack(void)
     return;
 }
 
+/* Print a human-readable, fully-parenthesized infix representation of the
+ * boolean tree rooted at "root" (e.g. "((a+b)-c)").  Uses this file's private
+ * node and string stacks to traverse the tree in LRN order and build up the
+ * result string.
+ */
 void
 Showtree(struct node *root)
 {

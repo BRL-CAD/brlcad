@@ -46,6 +46,12 @@
 		   * there are no LF's
 		   */
 
+/*
+ * Sample the first few records of the IGES file to determine the actual
+ * on-disk record length (accounting for optional trailing CR/LF), and
+ * return it.  Returns 0 if the sampled records have inconsistent lengths.
+ * The file position is rewound to the beginning before returning.
+ */
 int
 Recsize(void)
 {

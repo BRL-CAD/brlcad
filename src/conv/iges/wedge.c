@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * wedge() converts an IGES 152 Right Angular Wedge entity into a BRL-CAD ARB8.
+ */
 int
 wedge(size_t entityno)
 {
@@ -60,6 +63,7 @@ wedge(size_t entityno)
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&xscale, "");
     Readcnv(&yscale, "");

@@ -36,6 +36,13 @@
 #define MAX_NUM 4096
 
 
+/*
+ * Read the next field from the shared global "card" buffer, expecting a
+ * Hollerith string of the form "nHstring", and return a newly allocated
+ * copy (with room for one extra character) via "ptr" (NULL for an empty
+ * field).  Advances the field "counter" and auto-advances to the next
+ * record when the field spans a record boundary.
+ */
 void
 Readname(char **ptr, const char *id)
 {

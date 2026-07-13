@@ -31,6 +31,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Read the terminate (last) record of the IGES file into the shared global
+ * "card" buffer to learn how many records each section contains, then
+ * compute the starting record numbers of the directory ("dstart") and
+ * parameter ("pstart") sections and allocate the "dir" array of directory
+ * entries.  Restores the previously current record before returning
+ * "pstart".
+ */
 int
 Findp(void)
 {
@@ -91,6 +99,10 @@ Findp(void)
 }
 
 
+/*
+ * Free the "dir" array of directory entries (and any per-entry
+ * transformation matrices) allocated by Findp.
+ */
 void
 Free_dir(void)
 {

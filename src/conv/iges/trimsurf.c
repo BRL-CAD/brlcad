@@ -864,7 +864,7 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 		Readint(&curve_list[i], "");
 
 	    for (i = 0; i < curve_count; i++)
-		Add_trim_curve((curve_list[i]-1)/2, lu, srf);
+		Add_trim_curve(IGES_DE2INDEX(curve_list[i]), lu, srf);
 
 	    bu_free((char *)curve_list, "Add_trim_curve: curve_list");
 	}
@@ -1070,7 +1070,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 		Readint(&curve_list[i], "");
 
 	    for (i = 0; i < curve_count; i++)
-		Add_trim_curve((curve_list[i]-1)/2, lu, srf);
+		Add_trim_curve(IGES_DE2INDEX(curve_list[i]), lu, srf);
 
 	    bu_free((char *)curve_list, "Make_trim_loop: curve_list");
 
@@ -1322,7 +1322,7 @@ Make_loop(size_t entity_no, int orientation, int on_surf_de, struct face_g_snurb
     Readint(&param_curve_de, "");
     Readint(&model_curve_de, "");
 
-    lu = Make_trim_loop((param_curve_de-1)/2, orientation, srf, fu);
+    lu = Make_trim_loop(IGES_DE2INDEX(param_curve_de), orientation, srf, fu);
 
     return lu;
 }
@@ -1514,8 +1514,8 @@ trim_surf(size_t entityno, struct shell *s)
 	    Readint(&inner_loop[i], "");
     }
 
-    if (dir[(surf_de-1)/2]->type == 128) {
-	srf = Get_nurb_surf((surf_de-1)/2, m);
+    if (dir[IGES_DE2INDEX(surf_de)]->type == 128) {
+	srf = Get_nurb_surf(IGES_DE2INDEX(surf_de), m);
     } else {
 	/* Analytic / spline base surface (118/120/122/140/114): build it via
 	 * OpenNURBS.  These surfaces use their own (unshifted) parameter
@@ -1523,7 +1523,7 @@ trim_surf(size_t entityno, struct shell *s)
 	 * otherwise set for the trim curves. */
 	u_translation = 0.0;
 	v_translation = 0.0;
-	srf = Get_iges_nurb_surf((surf_de-1)/2, m);
+	srf = Get_iges_nurb_surf(IGES_DE2INDEX(surf_de), m);
     }
     if (srf == (struct face_g_snurb *)NULL) {
 	if (inner_loop_count)
@@ -1546,7 +1546,7 @@ trim_surf(size_t entityno, struct shell *s)
     if (!has_outer_boundary) {
 	lu = Make_default_loop(srf, fu);
     } else {
-	lu = Make_loop((outer_loop-1)/2, OT_SAME, surf_de, srf, fu);
+	lu = Make_loop(IGES_DE2INDEX(outer_loop), OT_SAME, surf_de, srf, fu);
     }
 
     (void)nmg_klu(kill_lu);
@@ -1562,7 +1562,7 @@ trim_surf(size_t entityno, struct shell *s)
     }
 
     for (i = 0; i < inner_loop_count; i++) {
-	lu = Make_loop((inner_loop[i]-1)/2, OT_OPPOSITE, surf_de, srf, fu);
+	lu = Make_loop(IGES_DE2INDEX(inner_loop[i]), OT_OPPOSITE, surf_de, srf, fu);
 
 	/* These loops must all be OT_OPPOSITE */
 	lu_uv_orient = nmg_snurb_calc_lu_uv_orient(lu);

@@ -21,6 +21,15 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Read an IGES 502 Vertex List entity from the file into a newly
+ * allocated iges_vertex_list.
+ *
+ * The vert_de is converted to a dir[] index, the entity is verified to
+ * be type 502, and each vertex coordinate triple is read (and unit
+ * converted); the NMG vertex pointer for each is initialized to NULL.
+ * Returns NULL on any error.
+ */
 struct iges_vertex_list *
 Read_vertex_list(int vert_de)
 {
@@ -29,7 +38,7 @@ Read_vertex_list(int vert_de)
     int sol_num = 0;
     int i;
 
-    entityno = (vert_de - 1)/2;
+    entityno = IGES_DE2INDEX(vert_de);
 
     if (entityno >= dirarraylen) {
 	bu_log("Read_vertex_list: DE=%d is too large, dirarraylen = %zu\n", vert_de, dirarraylen);

@@ -32,6 +32,17 @@ extern void B_spline(fastf_t t, int m, int k, point_t P[], fastf_t weights[], po
 mat_t idn = MAT_INIT_IDN;
 
 
+/*
+ * Evaluate an IGES curve entity into a polyline (a doubly-linked
+ * ptlist).
+ *
+ * Dispatches on the entity type stored in dir[curve]->type and
+ * approximates the curve by a series of points, returning the number of
+ * points produced (0 on error).  Supported types include: 110 (line),
+ * 100 (circular arc), 106 (copious data), 112 (parametric spline), 104
+ * (conic arc: ellipse/hyperbola/parabola), 102 (composite curve, which
+ * recurses over its member curves), and 126 (rational B-spline).
+ */
 int
 Getcurve(size_t curve, struct ptlist **curv_pts)
 {
@@ -46,6 +57,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
     (*curv_pts) = NULL;
     prev = NULL;
 
+    /* dispatch on the IGES entity type of this curve */
     switch (dir[curve]->type) {
 	case 110: {
 	    /* line */

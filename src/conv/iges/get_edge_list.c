@@ -21,11 +21,20 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Return the IGES 504 edge list referenced by an IGES edge use.
+ *
+ * Edge lists are cached in the global edge_root singly-linked list, each
+ * node keyed by its edge_de.  If a matching node is already present it is
+ * returned; otherwise the list is read from the file with
+ * Read_edge_list() and appended to the cache.
+ */
 struct iges_edge_list *
 Get_edge_list(struct iges_edge_use *edge)
 {
     struct iges_edge_list *e_list;
 
+    /* empty cache: read the first list and make it the cache root */
     if (edge_root == NULL) {
 	edge_root = Read_edge_list(edge);
 	if (edge_root != NULL) {
@@ -34,14 +43,17 @@ Get_edge_list(struct iges_edge_use *edge)
 	} else
 	    return (struct iges_edge_list *)NULL;
     } else {
+	/* walk the cache looking for a node keyed by this edge_de */
 	e_list = edge_root;
 	while (e_list->next != NULL && e_list->edge_de != edge->edge_de)
 	    e_list = e_list->next;
     }
 
+    /* cache hit */
     if (e_list->edge_de == edge->edge_de)
 	return e_list;
 
+    /* cache miss: read the list and append it to the end of the cache */
     e_list->next = Read_edge_list(edge);
     if (e_list->next == NULL)
 	return (struct iges_edge_list *)NULL;

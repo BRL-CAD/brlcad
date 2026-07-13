@@ -21,6 +21,11 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Read and echo the IGES Start Section: read successive records into the
+ * shared global "card" buffer and print them until a record is reached
+ * whose section-ID column (73) is no longer 'S'.
+ */
 void
 Readstart(void)
 {

@@ -31,6 +31,14 @@
 
 #define CR '\015'
 
+/*
+ * Read the IGES Directory Section, one entity at a time, into the shared
+ * global "card" buffer and populate the "dir" array of directory-entry
+ * structures (type, parameter pointer, transformation, color, form, etc.),
+ * tallying per-type counts.  Directory-entry sequence numbers are converted
+ * to "dir" indices, and transformation entities (types 124/700) have their
+ * matrices read via Readmatrix.
+ */
 void
 Makedir(void)
 {

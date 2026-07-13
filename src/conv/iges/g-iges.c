@@ -281,10 +281,17 @@ main(int argc, char *argv[])
 		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		/* rt_debug is an unsigned int; read it directly */
+		sscanf(bu_optarg, "%x", &rt_debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		{
+		    /* nmg_debug is a uint32_t; read into an unsigned int first
+		     * rather than type-punning &nmg_debug to unsigned int * */
+		    unsigned int dbg = 0;
+		    sscanf(bu_optarg, "%x", &dbg);
+		    nmg_debug = dbg;
+		}
 		NMG_debug = nmg_debug;
 		break;
 	    case 'o':		/* Output file name. */

@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * torus() converts an IGES 160 Torus entity into a BRL-CAD TOR.
+ */
 int
 torus(size_t entityno)
 {
@@ -52,6 +55,7 @@ torus(size_t entityno)
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&rad, "");
     Readcnv(&rad2, "");

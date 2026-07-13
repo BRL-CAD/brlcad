@@ -226,8 +226,8 @@ Get_name(size_t entityno, int skip)
     for (k = 0; k < no_of_props; k++) {
 	j = 0;
 	Readint(&j, "");
-	if (dir[(j-1)/2]->type == 406 &&
-	    dir[(j-1)/2]->form == 15) {
+	if (dir[IGES_DE2INDEX(j)]->type == 406 &&
+	    dir[IGES_DE2INDEX(j)]->form == 15) {
 	    /* this is a name */
 	    name_de = j;
 	    break;
@@ -237,7 +237,7 @@ Get_name(size_t entityno, int skip)
     if (!name_de)
 	return;
 
-    Readrec(dir[(name_de-1)/2]->param);
+    Readrec(dir[IGES_DE2INDEX(name_de)]->param);
     Readint(&sol_num, "");
     if (sol_num != 406) {
 	/* this is not a property entity */
@@ -302,8 +302,8 @@ Get_drawing_name(size_t entityno)
     for (k = 0; k < no_of_props; k++) {
 	j = 0;
 	Readint(&j, "");
-	if (dir[(j-1)/2]->type == 406 &&
-	    dir[(j-1)/2]->form == 15) {
+	if (dir[IGES_DE2INDEX(j)]->type == 406 &&
+	    dir[IGES_DE2INDEX(j)]->form == 15) {
 	    /* this is a name */
 	    name_de = j;
 	    break;
@@ -313,7 +313,7 @@ Get_drawing_name(size_t entityno)
     if (!name_de)
 	return;
 
-    Readrec(dir[(name_de-1)/2]->param);
+    Readrec(dir[IGES_DE2INDEX(name_de)]->param);
     Readint(&entity_type, "");
     if (entity_type != 406) {
 	/* this is not a property entity */
@@ -376,8 +376,8 @@ Get_csg_name(size_t entityno)
     for (k = 0; k < no_of_props; k++) {
 	j = 0;
 	Readint(&j, "");
-	if (dir[(j-1)/2]->type == 406 &&
-	    dir[(j-1)/2]->form == 15) {
+	if (dir[IGES_DE2INDEX(j)]->type == 406 &&
+	    dir[IGES_DE2INDEX(j)]->form == 15) {
 	    /* this is a name */
 	    name_de = j;
 	    break;
@@ -387,7 +387,7 @@ Get_csg_name(size_t entityno)
     if (!name_de)
 	return;
 
-    Readrec(dir[(name_de-1)/2]->param);
+    Readrec(dir[IGES_DE2INDEX(name_de)]->param);
     Readint(&sol_num, "");
     if (sol_num != 406) {
 	/* this is not a property entity */
@@ -449,8 +449,8 @@ Get_brep_name(size_t entityno)
     for (k = 0; k < no_of_props; k++) {
 	j = 0;
 	Readint(&j, "");
-	if (dir[(j-1)/2]->type == 406 &&
-	    dir[(j-1)/2]->form == 15) {
+	if (dir[IGES_DE2INDEX(j)]->type == 406 &&
+	    dir[IGES_DE2INDEX(j)]->form == 15) {
 	    /* this is a name */
 	    name_de = j;
 	    break;
@@ -460,7 +460,7 @@ Get_brep_name(size_t entityno)
     if (!name_de)
 	return;
 
-    Readrec(dir[(name_de-1)/2]->param);
+    Readrec(dir[IGES_DE2INDEX(name_de)]->param);
     Readint(&sol_num, "");
     if (sol_num != 406) {
 	/* this is not a property entity */
@@ -580,63 +580,63 @@ Check_names(void)
 	if (dir[i]->name == (char *)NULL) {
 	    switch (dir[i]->type) {
 		case 150:
-		    sprintf(tmp_name, "block.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "block.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 152:
-		    sprintf(tmp_name, "wedge.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "wedge.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 154:
-		    sprintf(tmp_name, "cyl.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "cyl.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 156:
-		    sprintf(tmp_name, "cone.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "cone.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 158:
-		    sprintf(tmp_name, "sphere.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "sphere.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 160:
-		    sprintf(tmp_name, "torus.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "torus.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 162:
-		    sprintf(tmp_name, "revolution.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "revolution.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 164:
-		    sprintf(tmp_name, "extrusion.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "extrusion.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 168:
-		    sprintf(tmp_name, "ell.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "ell.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 180:
-		    sprintf(tmp_name, "region.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "region.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 184:
-		    sprintf(tmp_name, "group.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "group.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 186:
-		    sprintf(tmp_name, "brep.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "brep.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 404:
-		    sprintf(tmp_name, "drawing.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "drawing.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 410:
-		    sprintf(tmp_name, "view.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "view.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 430:
-		    sprintf(tmp_name, "inst.%d", (int)i);
+		    snprintf(tmp_name, sizeof(tmp_name), "inst.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 	    }

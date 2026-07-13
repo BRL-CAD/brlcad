@@ -104,6 +104,11 @@ struct types typecount[NTYPES+1] = {
     { 700, "Transformation Matrix (4X4)", 0 }
 };
 
+/*
+ * Return the human-readable name for an IGES entity type number by looking
+ * it up in the "typecount" table; returns the "Unknown entity type" name if
+ * the type is not found.
+ */
 const char *
 iges_type(int type)
 {

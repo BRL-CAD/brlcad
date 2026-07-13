@@ -22,6 +22,11 @@
 #include "./iges_extern.h"
 
 
+/*
+ * Extrudcirc() is a helper for extrude() (IGES 164 Solid of Linear
+ * Extrusion) for the case where the extruded base curve is an IGES 100
+ * Circular Arc.  It produces a BRL-CAD RCC.
+ */
 int
 Extrudcirc(size_t entityno, int curve, vect_t evect)
     /* extrusion entity number */
@@ -44,6 +49,7 @@ Extrudcirc(size_t entityno, int curve, vect_t evect)
 	return 0;
     }
     Readrec(dir[curve]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&base[Z], "");
     Readcnv(&base[X], "");

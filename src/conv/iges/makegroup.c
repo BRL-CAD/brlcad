@@ -27,6 +27,10 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/* Gather every unreferenced CSG entity (and any NURBS) into a single BRL-CAD
+ * combination named "all", so that top-level, otherwise-orphaned objects are
+ * reachable.  Only created when there is more than one such member.
+ */
 void
 Makegroup(void)
 {

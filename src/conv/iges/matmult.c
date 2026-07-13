@@ -25,7 +25,9 @@
 #include "vmath.h"
 
 /*
- * FIXME: candidate for refactoring--see src/libbn/mat.c for a substitute
+ * FIXME: candidate for refactoring--replace with bn_mat_mul() from libbn
+ * (src/libbn/mat.c), which performs the identical 4x4 matrix product; toggle
+ * the USE_BN_MULT_ define in iges_struct.h once callers are switched over.
  *
  * Used in:
  *
@@ -41,7 +43,9 @@
  */
 
 #if !defined(USE_BN_MULT_)
-/* a X b => o */
+/* Multiply two 4x4 matrices, storing the product a X b into c.  A temporary
+ * is used internally so that c may alias a or b.
+ */
 void Matmult(mat_t a, mat_t b, mat_t c)
 {
     mat_t tmp;

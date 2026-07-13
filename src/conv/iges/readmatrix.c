@@ -30,6 +30,14 @@
 
 #define CR '\015'
 
+/*
+ * Read the transformation matrix whose parameter data begins at record
+ * "xform" into "rot".  The parameter entry is read into the shared global
+ * "card" buffer.  Handles both the 3x4 (type 124) and 4x4 (type 700)
+ * forms, converting the translation components (via Readcnv) while leaving
+ * the rotation components unconverted; falls back to the identity matrix on
+ * an unexpected entity type.
+ */
 void
 Readmatrix(int xform, mat_t rot)
 {

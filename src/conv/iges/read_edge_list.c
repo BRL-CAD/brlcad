@@ -21,6 +21,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Read an IGES 504 Edge List entity from the file into a newly allocated
+ * iges_edge_list.
+ *
+ * The edge use's edge_de is converted to a dir[] index, the entity is
+ * verified to be type 504, and each edge's curve DE plus start/end
+ * vertex DE and index are read in.  Returns NULL on any error.
+ */
 struct iges_edge_list *
 Read_edge_list(struct iges_edge_use *edge)
 {

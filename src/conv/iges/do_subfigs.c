@@ -22,6 +22,12 @@
 #include "./iges_extern.h"
 
 
+/* Process IGES Singular Subfigure Instance entities (type 408).  Each
+ * instance references a Subfigure Definition (type 308); its members (which
+ * may include external file references, type 416) are gathered into a BRL-CAD
+ * combination, and every instance is placed under the top-level object for
+ * the current file.
+ */
 void
 Do_subfigs(void)
 {
@@ -61,7 +67,7 @@ Do_subfigs(void)
 	}
 
 	Readint(&subfigdef_de, "");
-	subfigdef_index = (subfigdef_de - 1)/2;
+	subfigdef_index = IGES_DE2INDEX(subfigdef_de);
 	if (subfigdef_index >= totentities) {
 	    bu_log("Singular Subfigure Instance Entity gives Subfigure Definition");
 	    bu_log("\tEntity DE of %d, largest DE in file is %zu\n",

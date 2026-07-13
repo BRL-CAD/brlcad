@@ -19,13 +19,18 @@
  */
 /** @file iges/extrudcon.c
  *
- * Create a TGC from a ellipse extrusion.
+ * Create a TGC from an ellipse extrusion.
  *
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Extrudcon() is a helper for extrude() (IGES 164 Solid of Linear
+ * Extrusion) for the case where the extruded base curve is an IGES 104
+ * Conic Arc that is an ellipse.  It produces a BRL-CAD TGC.
+ */
 int
 Extrudcon(size_t entityno, int curve, vect_t evect)
     /* extrusion entity number */
@@ -61,6 +66,7 @@ Extrudcon(size_t entityno, int curve, vect_t evect)
 	return 0;
     }
     Readrec(dir[curve]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readflt(&a, "");
     Readflt(&b, "");

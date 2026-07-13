@@ -28,6 +28,11 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Copy "cols" characters from the shared global "card" buffer, starting at
+ * the current field "counter", into the caller's buffer "id", advancing
+ * "counter" past them.
+ */
 void
 Readcols(char *id, int cols)
 {

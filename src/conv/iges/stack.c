@@ -25,6 +25,9 @@
 static union tree **tree_stk;
 static int tree_jtop, tree_stklen;
 
+/* Allocate and initialize the growable stack of "union tree" pointers used
+ * while evaluating IGES boolean trees (see Readtree()).
+ */
 void
 Initstack(void)
 {
@@ -80,6 +83,7 @@ Pop(void)
 }
 
 
+/* Reset the stack to empty.  The backing storage is retained for reuse. */
 void
 Freestack(void)
 {
