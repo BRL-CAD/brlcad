@@ -1584,7 +1584,13 @@ proc text_paste { w } {
     global mged_gui
 
     if {!$mged_gui($w,moveView)} {
-	catch {$w insert insert [selection get -displayof $w]}
+	set paste_status [catch {$w insert insert [selection get -displayof $w]}]
+	if {$paste_status == 0} {
+	    # Text insertion can leave the hlt tag attached to the character
+	    # that was under the cursor before the paste.  Re-anchor it at the
+	    # insertion mark so pasted text cannot capture the cursor box.
+	    cursor_highlight $w
+	}
 	$w see insert
     }
 
