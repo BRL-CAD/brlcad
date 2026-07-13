@@ -120,7 +120,7 @@ rt_submodel_resource_get(struct rt_i *rtip, size_t cpu)
     resp = rtip->i->rti_submodel_resources[cpu];
     if (!resp) {
 	BU_ALLOC(resp, struct resource);
-	rt_init_resource(resp, (int)cpu, NULL);
+	rt_init_resource(resp, (int)cpu, rtip);
 	rtip->i->rti_submodel_resources[cpu] = resp;
     }
 
@@ -140,6 +140,7 @@ rt_submodel_resources_free(struct rt_i *rtip)
 
 	RT_CK_RESOURCE(resp);
 	rt_clean_resource_basic(rtip, resp);
+	BU_PTBL_SET(&rtip->rti_resources, i, NULL);
 	bu_free(resp, "struct resource (submodel)");
 	rtip->i->rti_submodel_resources[i] = NULL;
     }
