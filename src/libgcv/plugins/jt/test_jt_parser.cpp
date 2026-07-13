@@ -127,6 +127,36 @@ std::vector<unsigned char> sample_tristrip()
     return data;
 }
 
+std::vector<unsigned char> sample_quantized_tristrip()
+{
+    std::vector<unsigned char> data = sample_tristrip();
+    data.resize(216);
+    data[188] = 8;
+    data[199] = 8;
+    for (size_t component = 0; component < 3; ++component) {
+	append_f32(data, 0.0f);
+	append_f32(data, component < 2 ? 1.0f : 0.0f);
+	data.push_back(8);
+    }
+    append_u32(data, 3, true);
+    const uint32_t codes[3][3] = {{0, 255, 0}, {0, 0, 255}, {0, 0, 0}};
+    for (const auto &component : codes) {
+	data.push_back(0);
+	append_u32(data, 3, true);
+	for (uint32_t code : component) append_u32(data, code, true);
+    }
+    data.push_back(0);
+    append_u32(data, 3, true);
+    for (uint32_t index : {0u, 1u, 2u}) append_u32(data, index, true);
+
+    const uint32_t element_length = static_cast<uint32_t>(data.size() - 161 - 4);
+    const uint32_t segment_length = static_cast<uint32_t>(data.size() - 137);
+    write_u32(data, 161, element_length);
+    write_u32(data, 129, segment_length);
+    write_u32(data, 157, segment_length);
+    return data;
+}
+
 bool expect(bool condition, const char *message)
 {
     if (!condition) std::fprintf(stderr, "%s\n", message);
@@ -217,5 +247,31 @@ int main()
     if (!expect(file.elements(mesh_segment, elements, error), error.c_str())) return 1;
     if (!expect(file.legacy_mesh(elements[0], mesh, error), error.c_str())) return 1;
     if (!expect(mesh.faces == std::vector<int>({0, 1, 2}), "wrong JT 8 polygon mesh")) return 1;
+
+    data = sample_quantized_tristrip();
+    if (!expect(file.load(data, error), error.c_str())) return 1;
+    if (!expect(file.segment(file.toc()[0], mesh_segment, error), error.c_str())) return 1;
+    if (!expect(file.elements(mesh_segment, elements, error), error.c_str())) return 1;
+    if (!expect(file.legacy_mesh(elements[0], mesh, error), error.c_str())) return 1;
+    if (!expect(mesh.vertices == std::vector<double>({0, 0, 0, 1, 0, 0, 0, 1, 0}),
+	"wrong JT 8 quantized coordinates")) return 1;
+
+    data = sample_file(9, 5, true);
+    const uint64_t packet2_offset = data.size();
+    append_u32(data, 2, true);
+    data.push_back(4);
+    data.push_back(1);
+    data.push_back(2);
+    append_u32(data, 2, true);
+    data.push_back(0);
+    append_u32(data, 0, true);
+    append_u32(data, 1, true);
+    append_u32(data, 2, true);
+    data.push_back(0);
+    append_u32(data, 1, true);
+    append_u32(data, 0, true);
+    if (!expect(file.load(data, error), error.c_str())) return 1;
+    if (!expect(file.int32_packet2(packet2_offset, jt::Predictor::None, values, bytes_read, error), error.c_str())) return 1;
+    if (!expect(values == std::vector<int32_t>({1, 2}), "wrong JT Int32 CDP2 Chopper output")) return 1;
     return 0;
 }

@@ -72,6 +72,8 @@ class File {
     bool elements(const Segment &segment, std::vector<Element> &result, std::string &error) const;
     bool int32_packet(uint64_t offset, Predictor predictor, std::vector<int32_t> &values,
 	size_t &bytes_read, std::string &error) const;
+    bool int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &values,
+	size_t &bytes_read, std::string &error) const;
     bool is_legacy_mesh(const Element &element) const;
     bool legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const;
 
