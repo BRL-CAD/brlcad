@@ -5364,10 +5364,12 @@ namespace eval ArcherCore {
 
     set mTarget $target
     set mDbType "BRL-CAD"
+    set mDbShared 0
     set mCopyObj ""
     set mCombWarningList ""
 
-    if {![catch {$mTarget ls}]} {
+    if {[llength [info commands ::go_open]] &&
+	[lsearch -exact [::go_open] $mTarget] != -1} {
 	set mDbShared 1
 	set mDbReadOnly 1
     } elseif {[file exists $mTarget]} {
@@ -5394,7 +5396,7 @@ namespace eval ArcherCore {
     }
 
     if {$mDbShared} {
-	$itk_component(ged) sharedGed $mTarget
+	$itk_component(ged) shareGed $mTarget
     } elseif {$mDbNoCopy || $mDbReadOnly} {
 	$itk_component(ged) open $mTarget
     } else {

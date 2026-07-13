@@ -118,9 +118,6 @@ Recent Bugs
 * running archer "" at least on windows results in a file type dialog
   and errors with "can't read "_conv_log": no such variable
 
-* opening a database in archer with the same name as a command doesn't
-  work.
-
 * in mged, running the 'attach' command (confirmed issues with X and
   ogl), closing the window, and then issuing a 'draw' results in mged
   crashing.
