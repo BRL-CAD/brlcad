@@ -44,9 +44,14 @@ jt_read(struct gcv_context *context, const struct gcv_opts *options,
 	    return 0;
 	}
 	for (const jt::Element &element : elements) {
-	    if (!file.is_legacy_mesh(element)) continue;
+	    if (!file.is_legacy_mesh(element) && !file.is_topological_mesh(element)) continue;
 	    jt::Mesh mesh;
-	    if (!file.legacy_mesh(element, mesh, error)) {
+	    const bool imported = file.is_topological_mesh(element) ?
+		file.topological_mesh(element, mesh, error) : file.legacy_mesh(element, mesh, error);
+	    if (!imported) {
+		if (file.is_topological_mesh(element)) {
+		    continue;
+		}
 		bu_log("JT import failed: %s: %s\n", source_path, error.c_str());
 		return 0;
 	    }

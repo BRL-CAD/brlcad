@@ -76,6 +76,8 @@ class File {
 	size_t &bytes_read, std::string &error) const;
     bool is_legacy_mesh(const Element &element) const;
     bool legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const;
+    bool is_topological_mesh(const Element &element) const;
+    bool topological_mesh(const Element &element, Mesh &mesh, std::string &error) const;
 
     const Header &header() const { return header_; }
     const std::vector<TocEntry> &toc() const { return toc_; }
