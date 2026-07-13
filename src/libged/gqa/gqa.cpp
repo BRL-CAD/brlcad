@@ -152,6 +152,7 @@ struct cstate {
     double *m_weight;
     unsigned long *shots;
     int first;     /* this is the first time we've computed a set of views */
+    int have_previous_estimates;
 
     vect_t u_dir;  /* direction of U vector for "current view" */
     vect_t v_dir;  /* direction of V vector for "current view" */
@@ -180,6 +181,8 @@ static struct per_obj_data {
     double *o_lenDensity;
     double *o_volume;
     double *o_weight;
+    double *o_prev_volume;
+    double *o_prev_weight;
     fastf_t *o_lenTorque; /* torque vector for each view */
     fastf_t *o_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
     fastf_t *o_poi;       /* one vector per view for collecting the partial products of inertia calculation */
@@ -1481,6 +1484,8 @@ allocate_per_region_data(struct ged *gedp, struct cstate *state, int start, int 
 	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
 	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
 	obj_tbl[i].o_weight = (double *)bu_calloc(num_views, sizeof(double), "o_weight");
+	obj_tbl[i].o_prev_volume = (double *)bu_calloc(num_views, sizeof(double), "o_prev_volume");
+	obj_tbl[i].o_prev_weight = (double *)bu_calloc(num_views, sizeof(double), "o_prev_weight");
 	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
 	obj_tbl[i].o_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
 	obj_tbl[i].o_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
@@ -1933,6 +1938,7 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
      * are done.
      */
     int can_terminate = 1;
+    int have_previous_estimates = state->have_previous_estimates;
 
     double low, hi, val, delta;
 
@@ -1943,6 +1949,7 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 	for (obj = 0; obj < num_objects; obj++) {
 	    int view;
 	    double tmp;
+	    double refinement_delta = 0.0;
 
 	    if (verbose)
 		bu_vls_printf(gedp->ged_result_str, "object %d\n", obj);
@@ -1954,6 +1961,12 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 	    for (view = 0; view < num_views; view++) {
 		val = obj_tbl[obj].o_weight[view] =
 		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+		if (have_previous_estimates) {
+		    double view_delta = fabs(val - obj_tbl[obj].o_prev_weight[view]);
+		    if (view_delta > refinement_delta)
+			refinement_delta = view_delta;
+		}
+		obj_tbl[obj].o_prev_weight[view] = val;
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -1979,6 +1992,22 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 		    bu_vls_printf(gedp->ged_result_str, "\t%s differs too much in weight per view.\n",
 				  obj_tbl[obj].o_name);
 	    }
+	    if (!have_previous_estimates || refinement_delta > weight_tolerance) {
+		can_terminate = 0;
+		if (verbose) {
+		    if (have_previous_estimates) {
+			bu_vls_printf(gedp->ged_result_str,
+				      "\t%s differs too much in weight from previous grid (%g %s).\n",
+				      obj_tbl[obj].o_name,
+				      refinement_delta / units[WGT]->val,
+				      units[WGT]->name);
+		    } else {
+			bu_vls_printf(gedp->ged_result_str,
+				      "\t%s needs another weight grid refinement.\n",
+				      obj_tbl[obj].o_name);
+		    }
+		}
+	    }
 	}
 	if (can_terminate) {
 	    if (verbose)
@@ -1994,6 +2023,7 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 	for (obj = 0; obj < num_objects; obj++) {
 	    int view;
 	    double tmp;
+	    double refinement_delta = 0.0;
 
 	    /* compute volume of object for given view */
 	    low = INFINITY;
@@ -2002,6 +2032,12 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 	    for (view = 0; view < num_views; view++) {
 		val = obj_tbl[obj].o_volume[view] =
 		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+		if (have_previous_estimates) {
+		    double view_delta = fabs(val - obj_tbl[obj].o_prev_volume[view]);
+		    if (view_delta > refinement_delta)
+			refinement_delta = view_delta;
+		}
+		obj_tbl[obj].o_prev_volume[view] = val;
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -2024,10 +2060,27 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 		if (verbose)
 		    bu_vls_printf(gedp->ged_result_str, "\tvolume tol not met on %s.  Refine grid\n",
 				  obj_tbl[obj].o_name);
-		break;
+	    }
+	    if (!have_previous_estimates || refinement_delta > volume_tolerance) {
+		can_terminate = 0;
+		if (verbose) {
+		    if (have_previous_estimates) {
+			bu_vls_printf(gedp->ged_result_str,
+				      "\t%s differs too much in volume from previous grid (%g %s).\n",
+				      obj_tbl[obj].o_name,
+				      refinement_delta / units[VOL]->val,
+				      units[VOL]->name);
+		    } else {
+			bu_vls_printf(gedp->ged_result_str,
+				      "\t%s needs another volume grid refinement.\n",
+				      obj_tbl[obj].o_name);
+		    }
+		}
 	    }
 	}
     }
+
+    state->have_previous_estimates = 1;
 
     if (can_terminate) {
 	return 0; /* signal we don't want to go onward */
@@ -2651,6 +2704,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     state.sem_plot = bu_semaphore_register("gqa_sem_plot");
     state.rtip = rtip;
     state.first = 1;
+    state.have_previous_estimates = 0;
     allocate_per_region_data(gedp, &state, start_objs, argc, argv);
 
     /* compute */
@@ -2768,6 +2822,8 @@ aborted:
 	bu_free(obj_tbl[i].o_lenDensity, "o_lenDensity");
 	bu_free(obj_tbl[i].o_volume, "o_volume");
 	bu_free(obj_tbl[i].o_weight, "o_weight");
+	bu_free(obj_tbl[i].o_prev_volume, "o_prev_volume");
+	bu_free(obj_tbl[i].o_prev_weight, "o_prev_weight");
 	bu_free(obj_tbl[i].o_lenTorque, "o_lenTorque");
 	bu_free(obj_tbl[i].o_moi, "o_moi");
 	bu_free(obj_tbl[i].o_poi, "o_poi");
