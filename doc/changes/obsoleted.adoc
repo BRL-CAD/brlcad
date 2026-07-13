@@ -6,14 +6,18 @@ toc::[]
 The interfaces listed here have completed their deprecation or minimally impacting transition and are now obsolete.
 
 == 7.44.0
+
 include/rt/geom.h
-        removed 'tie' void pointer from rt_bot_internal as TIE
-        obsoleted as of 7.42) [deprecated N/A]
+
+	removed 'tie' void pointer from rt_bot_internal as TIE
+	obsoleted as of 7.42) [deprecated N/A]
 
 include/rt/db_instance.h
-        PRIVATE-labeled members of db_i struct made actually private
+
+	PRIVATE-labeled members of db_i struct made actually private
 
 include/rt - struct resource param removals
+
 	The following functions had struct resource * being passed in
 	as their last parameter, but it was unused - we simplify the
 	signature to not require it.  On most platforms this will be
@@ -34,13 +38,16 @@ include/rt - struct resource param removals
 		   db_mkbool_tree, db_mkgift_tree
 
 include/raytrace.h librt
+
 	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecated 7.22]
 
 include/vmath.h
-        VCOMB3, VCOMB3N, VJOIN4
-        Removed as inconsistent and unused API [deprecated 7.28]
+
+	VCOMB3, VCOMB3N, VJOIN4
+	Removed as inconsistent and unused API [deprecated 7.28]
 
 mged
+
 	rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
 	original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
 	NOTE: old rm behavior is available via "remove".
@@ -48,6 +55,7 @@ mged
 == 7.42.2
 
 include/bu/redblack.h
+
 	All redblack related functions, structures and macros
 	defined in libbu's redblack.h.  Functions are:
 	bu_rb_create, bu_rb_delete, bu_rb_diagnose_tree,
@@ -59,7 +67,9 @@ include/bu/redblack.h
 	Use C++ containers set/map from std [deprecated 7.30]
 
 == 7.42.0
+
 include/bu.h
+
 	bu_brlcad_root: replaced by bu_dir [deprecated 7.32]
 	bu_brlcad_dir:  replaced by bu_dir [deprecated 7.32]
 
@@ -73,9 +83,11 @@ include/bu.h
 	bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
 
 include/bn.h
+
 	tp_setup, no longer needs to be public API [deprecated 7.26]
 
 include/raytrace.h
+
 	global variables in RTG (except the vlfree list, renamed
 	to rt_vlfree) are removed - rtg_parallel and rtg_headwdb
 	[deprecated 7.26]
@@ -98,6 +110,7 @@ include/raytrace.h
 	arb_edit.h contents were relocated to arb8.h
 
 libged headers
+
 	Removed libged command specific headers analyze.h, rt.h, framebuffer.h,
 	view/matrix.h, view/select.h and view/slate.h - the functions these defined
 	were all replaced by ged_exec calls.  Also removed similar command specific
@@ -106,57 +119,74 @@ libged headers
 	up with the migration to ged_exec.
 
 include/ged/defines.h
+
 	remove struct ged_drawable -  shouldn't be public API [deprecated 7.26]
 
 include/tclcad.h
+
 	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
 	tclcad_rt_pr_hit [deprecated 7.26]
 
 	tclcad_rt_setup is now a no-op - function declaration removed
 
 nirt
+
 	-T - new BoT raytracing makes obsolete [deprecated 7.26]
 
 GNU Autotools configure compatibility script
+
 	./configure -> cmake . [deprecated 7.20]
 
 == 7.38.0
+
 burst
+
 	Point Burst Damage Assessment Model (PDAM) input preparation
 	tool.  Obsolete, no longer in use by upstream tools,
 	removed [deprecated 7.32]
 
 libtermio, libcursor
+
 	Public API scope reduction - any client code that needs
 	to interact with the terminal at these levels should handle
 	what is needed locally. [deprecated 7.28]
 
 == 7.34.0
+
 nirt
+
 	Behavior available under the --old flag [deprecated 7.30]
 
 include/rt/solid.h
+
 	shouldn't be public API - this level of detail belongs inside the display
-        manager [deprecated 7.26]
+	manager [deprecated 7.26]
 
 include/ged/defines.h
+
 	remove freesolid from struct ged - exposes struct solid [deprecated 7.26]
 
 == 7.30.4
+
 include/bu/hash.h
-        bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value,
+
+	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value,
 	bu_get_hash_key, bu_hash_tbl_add, bu_hash_tbl_print,
 	bu_hash_tbl_free, bu_hash_tbl_first, bu_hash_tbl_next,
 	bu_hash_tbl_traverse, bu_hash_record.  public structs
 	bu_hash_entry and bu_hash_tbl will be made private.
-        Replaced with new API [deprecated 7.26]
+	Replaced with new API [deprecated 7.26]
 
 == 7.30.2
+
 ray tracing tools
+
 	lgt : functionally replaced by nirt
 	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
 	Removed as part of distillation effort [deprecated 7.26]
+
 converter tools
+
 	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
 	g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
 	plot3-X, plot3-hpgl, plot3-tek : obsolete interface, see overlay command
@@ -164,114 +194,181 @@ converter tools
 	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
 	poly-bot, rt_bot_faces, : primitive-specific converters
 	Removed as part of distillation effort [deprecated 7.26]
+
 image tools
+
 	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
 	fbed, cell-fb : outside scope
 	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
 	png_info : incorporating into icv
 	pix-yuv', yuv-pix' : obsolete non-standard format
 	texturescale : obsolete implementation
-        pixcut, pixpaste : license, copyright cleanup
+	pixcut, pixpaste : license, copyright cleanup
 	Removed as part of distillation effort [deprecated 7.26]
+
 video & animation tools
+
 	anim_*', fbanim, chan_add', chan_mult, chan_permute,
 	pixflip-fb' : outside scope
 	pixfields', pixfieldsep' : outside scope
 	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
 	azel, bary
 	Removed as part of distillation effort [deprecated 7.26]
+
 infrared & shapefactor tools
+
 	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
 	Removed as part of distillation effort [deprecated 7.26]
+
 misc tools
+
 	fix_polysolids' : obsolete primitive
 	remapid : superseded by reid+remat
 	buffer : unnecessary network/stream buffering tool
 	hex : superseded by hexdump
 	Removed as part of distillation effort [deprecated 7.26]
+
 fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
+
 	All tools focused specifically on the RLE image format. [deprecated 7.26]
+
 burst
+
 	remove termlib-based interactive menu interface [deprecated 7.26]
+
 include/bu/hash.h
+
 	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value,
 	bu_get_hash_key, bu_hash_tbl_add, bu_hash_tbl_print,
 	bu_hash_tbl_free, bu_hash_tbl_first, bu_hash_tbl_next,
 	bu_hash_tbl_traverse, bu_hash_record.  public structs
 	bu_hash_entry and bu_hash_tbl will be made private.
-        Replaced with new API [deprecated 7.26]
+	Replaced with new API [deprecated 7.26]
 
 include/rt/mem.h
+
 	rt_memprint [deprecated 7.28]
 
 == 7.30.0
+
 fbed, pp-fb
+
 	removes termcap use, no known users [deprecated 7.24]
+
 src/irprep
+
 	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
+
 include/raytrace librt
+
 	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
 	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
 	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
 	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 	db_regexp_match_all() -> db_ls() [deprecated 7.26]
+
 mged
+
 	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 	ps command renamed to postscript [minimally impacting]
+
 include/bu.h
+
 	bu_parse_mm() [deprecated 7.22]
 
 == 7.28.0
+
 rt -f framerate
+
 	removed [minimally impacting]
+
 pixdsplit, rt -d
+
 	removed, broken tool [minimally impacting]
+
 libmultispectral, rttherm, ssamp-bw, ssampview, ssampview.tcl
+
 	removed, broken tools [minimally impacting]
+
 dem-g
+
 	removed, superseded by gcv+GDAL [minimally impacting]
 
 == 7.26.0
+
 dbcp
+
 	dbcp -> dd [deprecated 7.18]
+
 pov (mged)
+
 	removed, undocumented command with many alternatives [minimally impacting]
+
 polybinout (mged)
+
 	removed, undocumented command, use plot [minimally impacting]
+
 pl (mged)
+
 	removed, use plot [minimally impacting]
+
 conf.h
+
 	removed - replaced with common.h [deprecated 7.0]
+
 UtahRLE image tools
+
 	no longer installed by default with BRL-CAD - not used directly by
 	BRL-CAD tools [minimally impacting]
+
 Tcl in libbu and libbn
+
 	no longer utilize or require Tcl [dependency eliminated]
+
 Tcl/Tk man pages
+
 	no longer installed by default with BRL-CAD when the bundled Tcl/Tk is used
 	to build [minimally impacting]
+
 include/dg.h
+
 	implementation detail no longer being exposed, use libged [deprecated 7.22]
+
 autogen.sh && configure
+
 	GNU Autotools build system -> CMake build system [deprecated 7.20]
+
 Dunn camera and Canon printer tools
+
 	dunncolor [deprecated 7.16]
 	dunnsnap [deprecated 7.16]
 	canonize [deprecated 7.16]
+
 genptr_t/GENPTR_NULL
+
 	genptr_t -> void* [deprecated 7.16]
+
 include/bu.h
+
 	bu_argv0() -> bu_basename(bu_argv0_full_path(), NULL) [deprecated 7.16]
+
 include/dm_color.h
+
 	dm_color.h -> dm.h [deprecated 7.14]
+
 include/fb.h
+
 	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
+
 include/raytrace.h
+
 	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
 	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
 	DIR_* -> RT_DIR_* [deprecated 7.14]
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
+
 include/vmath.h
+
 	VADD2_2D -> V2ADD2 [deprecated 7.14]
 	VSUB2_2D -> V2SUB2 [deprecated 7.14]
 	MAGSQ_2D -> MAG2SQ [deprecated 7.14]
@@ -279,126 +376,205 @@ include/vmath.h
 	VMOVE_2D -> V2MOVE [deprecated 7.14]
 	VSCALE_2D -> V2SCALE [deprecated 7.14]
 	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
+
 liborle
 include/orle.h
+
 	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
 	pix-orle [deprecated 7.20]
+
 mged
+
 	make_bb -> bb [deprecated 7.16]
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
 	per_line [deprecated 7.14]
+
 SGI-specific tools
+
 	pl-sgi -> pl-fb [deprecated 7.16]
+
 src/gtools
+
 	g_diff, g_lint, g_qa, g_transfer -> gdiff, glint, gqa, gtransfer [deprecated 7.14]
+
 src/librt/cmd.c
+
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
+
 any-png.sh
+
 	use pix tools [deprecated 7.16]
+
 cadbug.sh
+
 	use sf.net tracker [deprecated 7.16]
+
 cray.sh
+
 	obsolete hardware [deprecated 7.16]
+
 pixwrite.sh
+
 	obsolete hardware [deprecated 7.16]
+
 pixread.sh
+
 	obsolete hardware [deprecated 7.16]
+
 sgisnap.sh
+
 	obsolete hardware [deprecated 7.16]
+
 librtserver and Java Native Interface (JNI) bindings
+
 	removed, unused and undocumented, modern approach would be to
 	use a tool such as swig to generate bindings [minimally impacting]
 
 == 7.24.2
+
 .pl file suffix
+
 	.pl -> .plot3 [deprecated 7.16]
+
 *-pl
+
 	*-pl -> *-plot3 [deprecated 7.16]
+
 pl*
+
 	pl* -> plot3* [deprecated 7.16]
 
 include/raytrace.h
+
 	db_full_path_appendresult tcl_obj_to_int_array
 	tcl_obj_to_fastf_array tcl_list_to_int_array
 	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
 	API functions from librt to libtclcad
 
 == 7.24.0
+
 include/bu.h
+
 	bu_get_public_cpus() [deprecated 7.16]
 	bu_get_load_average() [deprecated 7.12]
 	bu_fopen_uniq() -> fopen() [deprecated 7.14]
+
 src/other/jove
+
 	jove -> emacs [deprecated 7.14]
 
 == 7.22.0
+
 include/bu.h
+
 	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 
 == 7.20.2
+
 cat-fb
+
 	obsolete hardware
+
 include/vmath.h
+
 	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT [deprecated 7.12]
 	HVECT_LEN -> ELEMENTS_PER_HVECT [deprecated 7.12]
 	HPT_LEN -> ELEMENTS_PER_HPOINT [deprecated 7.12]
 
 == 7.20.0
+
 include/bu.h
+
 	bu_mro and related macros -> bu_attribute_value_set
 
 == 7.18.2
+
 include/raytrace.h
+
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
+
 g-shell.rect
+
 	g-shell.rect renamed to g-shell-rect [minor tool rename]
 
 == 7.18.0
+
 include/raytrace.h
+
 	db_free_external -> bu_free_external [deprecated pre-7.0]
+
 include/wdb.h
+
 	mk_fastgen_region() -> mk_comb() [deprecated 7.12]
+
 src/librt/bomb.c
+
 	rt_bomb() -> bu_bomb() [deprecated 7.10]
+
 include/machine.h
+
 	machine.h -> common.h && bu.h [deprecated 7.10]
+
 src/vas4
+
 	vas4 [deprecated 7.12]
 
 == 7.16.4
+
 include/raytrace.h
+
 	get_solidbitv() -> rt_get_solidbitv() [deprecated 7.16]
 
 == 7.14.4
+
 include/pkg.h
+
 	uses size_t for lengths in API calls
+
 include/bu.h
+
 	bu_association() [unused]
 
 == 7.14.0
+
 include/raytrace.h
+
 	GET_HITMISS -> NMG_GET_HITMISS
+
 mged
+
 	edcolor -> color -e
+
 include/vmath.h
+
 	PI -> M_PI
 	M_SQRT2_DIV2 -> M_SQRT1_2
 
 == 7.12.6
+
 mged
+
 	binary -> bo [rename]
 
 == 7.12.4
+
 include/mater.h
+
 	rt_material_head -> rt_material_head()  [deprecated 7.12]
+
 include/raytrace.h
+
 	removed iterator from NMG_CK_HITMISS_LIST
+
 include/bu.h
+
 	BU_QFLSTR -> BU_FLSTR
 
 == 7.12.2
+
 include/wdb.h
+
 	mk_trc() -> mk_trc_h() and mk_trc_top() [deprecated pre-7.0]
 	mk_bsolid() [deprecated pre-7.0]
 	mk_bsurf() [deprecated pre-7.0]
@@ -407,57 +583,92 @@ include/wdb.h
 	mk_fwrite_internal() [deprecated pre-7.0]
 
 == 7.12.0
+
 include/common.h
+
 	NATURAL_IEEE -> bu_byteorder() == BU_BIG_ENDIAN || defined(WORDS_BIGENDIAN)
 	REVERSE_IEEE -> bu_byteorder() == BU_LITTLE_ENDIAN
+
 include/bu.h
+
 	bu_log(char *, ...) -> bu_log(const char *, ...) [const]
 	bu_flog(FILE *, char *, ...) -> bu_flog(FILE *, const char *, ...) [const]
 	bu_vls_printf(struct bu_vls *, char *) -> bu_vls_printf(struct bu_vls *, const char *) [const]
 	bu_vls_sprintf(struct bu_vls *, char *) -> bu_vls_sprintf(struct bu_vls *, const char *) [const]
+
 include/wdb.h
+
 	removed mk_poly() [deprecated pre-7.0]
 	removed mk_polysolid() [deprecated pre-7.0]
 	removed mk_fpoly() [deprecated pre-7.0]
 	removed write_shell_as_polysolid() [deprecated 6.0]
+
 include/bu.h
+
 	char *bu_brlcad_path() -> const char *bu_brlcad_path() [const]
+
 include/bn.h
+
 	bn_mat_zero() -> MAT_ZERO() [deprecated pre-7.0]
 	bn_mat_idn() -> MAT_IDN() [deprecated pre-7.0]
 	bn_mat_copy() -> MAT_COPY() [deprecated pre-7.0]
+
 include/compat4.h
+
 	compat4.h -> bu.h && bn.h [deprecated 5.0]
+
 include/raytrace.h
+
 	rt_overlap_quietly() -> struct application.a_logoverlap = rt_silent_logoverlap [deprecated pre 7.0]
+
 include/bu.h
+
 	bu_brlcad_path() -> bu_brlcad_root() || bu_brlcad_data() [deprecated 7.4]
 	bu_tcl_brlcad_path() -> bu_tcl_brlcad_root() || bu_tcl_brlcad_data() [deprecated 7.4]
+
 include/fb.h
+
 	fb_log(char *fmt) -> fb_log(const char *fmt) [const]
+
 include/noalias-prag.h
+
 	removed [non-stdc]
+
 include/noalias.h
+
 	removed [non-stdc]
+
 src/librt/wdb_obj.c -> src/librt/db_obj.c
+
 	removed wdb_tree_cmd(), added dgo_tree_cmd() [rename]
+
 mged
+
 	dbbinary -> binary [rename]
 
 == 7.10.4
+
 include/msr.h [pre 7.0]
+
 	msr.h -> bu.h
+
 include/rtlist.h [pre 7.0]
+
 	rtlist.h -> bu.h
+
 include/rtstring.h [pre 7.0]
+
 	rtstring.h -> bu.h
+
 include/shortvect.h [pre 7.0]
 include/shortvect-pr.h [pre 7.0]
 
 == 7.10.2
+
 include/raytrace.h
+
 	rt_version -> rt_version() [private]
+
 include/[library].h (several)
+
 	[library]_version -> [library]_version() [private]
-
-
