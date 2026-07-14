@@ -224,8 +224,7 @@ main(int argc, char **argv)
 
     TIENET_BUFFER_INIT(buffer);
 
-    bu_log("Rendering %dx%d, mode=%s%s ...\n", width, height, mode,
-	   BU_STR_EQUAL(mode, "path") ? "" : "");
+    bu_log("Rendering %dx%d, mode=%s ...\n", width, height, mode);
     t_start = bu_gettime();
     render_camera_render(&camera, &tie, &tile, &buffer);
     t_end = bu_gettime();
