@@ -234,7 +234,7 @@ bool decode_bitlength(const std::vector<uint32_t> &words, size_t bit_count, size
 }
 
 bool decode_bitlength2(const std::vector<uint32_t> &words, size_t bit_count, size_t value_count,
-    std::vector<int32_t> &values, std::string &error)
+    std::vector<int32_t> &values, bool jt10_scheme, std::string &error)
 {
     size_t bit_offset = 0;
     const auto read = [&words, bit_count, &bit_offset](unsigned width, uint32_t &value) {
@@ -242,6 +242,13 @@ bool decode_bitlength2(const std::vector<uint32_t> &words, size_t bit_count, siz
 	value = 0;
 	for (unsigned i = 0; i < width; ++i, ++bit_offset)
 	    value = (value << 1) | ((words[bit_offset / 32] >> (31 - bit_offset % 32)) & 1u);
+	return true;
+    };
+    const auto read_signed = [&read](unsigned width, int32_t &value) {
+	uint32_t raw = 0;
+	if (!read(width, raw)) return false;
+	if (width > 0 && width < 32 && (raw & (1u << (width - 1)))) raw |= ~((1u << width) - 1u);
+	value = static_cast<int32_t>(raw);
 	return true;
     };
     const auto nibbler = [&read](int32_t &value) {
@@ -261,6 +268,72 @@ bool decode_bitlength2(const std::vector<uint32_t> &words, size_t bit_count, siz
     uint32_t variable = 0;
     if (!read(1, variable)) return false;
     values.reserve(value_count);
+    if (!jt10_scheme) {
+	/* JT 9.x Bitlength2: fixed-width encodes the range as two 6-bit widths
+	 * followed by signed min/max; variable-width uses 3-bit change/run
+	 * widths.  (JT 10.x replaced this with the nibble scheme below.) */
+	if (variable == 0) {
+	    uint32_t min_bits = 0;
+	    uint32_t max_bits = 0;
+	    if (!read(6, min_bits) || !read(6, max_bits) || min_bits > 32 || max_bits > 32) {
+		error = "invalid JT 9 fixed-width Bitlength CODEC widths";
+		return false;
+	    }
+	    int32_t minimum = 0;
+	    int32_t maximum = 0;
+	    if (!read_signed(min_bits, minimum) || !read_signed(max_bits, maximum)) {
+		error = "truncated JT 9 fixed-width Bitlength CODEC range";
+		return false;
+	    }
+	    const int64_t range = static_cast<int64_t>(maximum) - minimum;
+	    if (range <= 0) {
+		values.assign(value_count, minimum);
+		return true;
+	    }
+	    unsigned field_width = 0;
+	    for (uint64_t bound = static_cast<uint64_t>(range); bound != 0; bound >>= 1) ++field_width;
+	    for (size_t i = 0; i < value_count; ++i) {
+		uint32_t encoded = 0;
+		if (!read(field_width, encoded)) {
+		    error = "truncated JT 9 fixed-width Bitlength CODEC values";
+		    return false;
+		}
+		values.push_back(static_cast<int32_t>(static_cast<uint32_t>(minimum) + encoded));
+	    }
+	    return true;
+	}
+	int32_t mean = 0;
+	uint32_t chg_width_bits = 0;
+	uint32_t run_len_bits = 0;
+	if (!read_signed(32, mean) || !read(3, chg_width_bits) || !read(3, run_len_bits) ||
+	    chg_width_bits == 0 || chg_width_bits > 32 || run_len_bits == 0 || run_len_bits > 32) {
+	    error = "invalid JT 9 variable-width Bitlength CODEC header";
+	    return false;
+	}
+	const int32_t chg_min = -(static_cast<int32_t>(1) << (chg_width_bits - 1));
+	const int32_t chg_max = (static_cast<int32_t>(1) << (chg_width_bits - 1)) - 1;
+	int field_width = 0;
+	while (values.size() < value_count) {
+	    int32_t delta = 0;
+	    do {
+		if (!read_signed(chg_width_bits, delta)) return false;
+		field_width += delta;
+	    } while (delta == chg_min || delta == chg_max);
+	    uint32_t run_length = 0;
+	    if (field_width < 0 || field_width > 32 || !read(run_len_bits, run_length) || run_length == 0 ||
+		values.size() + run_length > value_count) {
+		error = "invalid JT 9 variable-width Bitlength CODEC block (width " +
+		    std::to_string(field_width) + ", run " + std::to_string(run_length) + ")";
+		return false;
+	    }
+	    for (uint32_t i = 0; i < run_length; ++i) {
+		int32_t value = 0;
+		if (field_width > 0 && !read_signed(static_cast<unsigned>(field_width), value)) return false;
+		values.push_back(static_cast<int32_t>(static_cast<uint32_t>(value) + static_cast<uint32_t>(mean)));
+	    }
+	}
+	return true;
+    }
     if (variable == 0) {
 	int32_t minimum = 0;
 	int32_t maximum = 0;
@@ -458,10 +531,11 @@ File::elements(const Segment &segment, std::vector<Element> &result, std::string
     const bool has_object_id = header_.major_version >= 9;
     const size_t element_header_length = LEGACY_ELEMENT_HEADER_LENGTH + (has_object_id ? OBJECT_ID_LENGTH : 0);
     while (offset < end) {
-	if (end - offset < 4 + GUID_LENGTH) {
-	    error = "truncated JT logical element header";
-	    return false;
-	}
+	/* Fewer bytes remain than a logical-element header needs: treat the
+	 * trailing bytes as end-of-segment padding rather than a hard error.
+	 * Some writers omit the explicit 0xFF end-of-elements marker. */
+	if (end - offset < 4 + GUID_LENGTH)
+	    break;
 	Reader reader(bytes_, header_.little_endian, offset);
 	uint32_t element_length = 0;
 	Element element{};
@@ -623,7 +697,8 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 		words[i / 4] |= static_cast<uint32_t>(code_text[source]) << (24 - (i % 4) * 8);
 	    }
 	    const bool decoded = revised_bitlength ?
-		decode_bitlength2(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error) :
+		decode_bitlength2(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output,
+		    header_.major_version >= 10, error) :
 		decode_bitlength(words, static_cast<size_t>(bit_count), static_cast<size_t>(count), output, error);
 	    if (!decoded) return false;
 	} else if (codec == 3) {
@@ -958,26 +1033,41 @@ File::topological_mesh(const Element &element, Mesh &mesh, std::string &error) c
     }
     for (size_t i = 0; i < upper_masks.size(); ++i)
 	symbols.face_attribute_masks[7][i] |= static_cast<uint64_t>(static_cast<uint32_t>(upper_masks[i])) << 32;
-    /* Unlike the surrounding fields, the high-degree masks are an ordinary
-     * VecU32, not an Int32 CDP.  Omitting its count and payload shifts both
-     * split streams and makes every genuine split appear to lack symbols. */
-    Reader high_mask_reader(bytes_, header_.little_endian, offset);
-    int32_t high_mask_count = 0;
-    if (!high_mask_reader.i32(high_mask_count) || high_mask_count < 0 ||
-	static_cast<size_t>(high_mask_count) > MAX_PACKET_VALUES) {
-	error = "invalid JT high-degree face attribute mask count";
-	return false;
-    }
-    symbols.high_degree_attribute_masks.reserve(static_cast<size_t>(high_mask_count));
-    for (int32_t i = 0; i < high_mask_count; ++i) {
-	uint32_t mask = 0;
-	if (!high_mask_reader.u32(mask)) {
-	    error = "truncated JT high-degree face attribute masks";
+
+    if (header_.major_version < 10) {
+	/* JT 9.x splits the context-7 attribute masks across two Int32 CDP
+	 * streams and encodes the high-degree (>64) masks as an Int32 CDP too
+	 * (JT 10.x merged the first and made the high-degree masks a raw VecU32).
+	 * The masks only drive attribute assignment, not triangle connectivity,
+	 * so the extra stream is consumed to stay byte-aligned. */
+	std::vector<int32_t> extra_masks;
+	if (!packet(Predictor::None, extra_masks)) return false;
+	std::vector<int32_t> high;
+	if (!packet(Predictor::None, high)) return false;
+	symbols.high_degree_attribute_masks.reserve(high.size());
+	for (int32_t value : high) symbols.high_degree_attribute_masks.push_back(static_cast<uint32_t>(value));
+    } else {
+	/* JT 10.x: the high-degree masks are an ordinary VecU32, not an Int32 CDP.
+	 * Omitting its count and payload shifts both split streams and makes every
+	 * genuine split appear to lack symbols. */
+	Reader high_mask_reader(bytes_, header_.little_endian, offset);
+	int32_t high_mask_count = 0;
+	if (!high_mask_reader.i32(high_mask_count) || high_mask_count < 0 ||
+	    static_cast<size_t>(high_mask_count) > MAX_PACKET_VALUES) {
+	    error = "invalid JT high-degree face attribute mask count";
 	    return false;
 	}
-	symbols.high_degree_attribute_masks.push_back(mask);
+	symbols.high_degree_attribute_masks.reserve(static_cast<size_t>(high_mask_count));
+	for (int32_t i = 0; i < high_mask_count; ++i) {
+	    uint32_t mask = 0;
+	    if (!high_mask_reader.u32(mask)) {
+		error = "truncated JT high-degree face attribute masks";
+		return false;
+	    }
+	    symbols.high_degree_attribute_masks.push_back(mask);
+	}
+	offset = high_mask_reader.offset();
     }
-    offset = high_mask_reader.offset();
     if (!packet(Predictor::Lag1, symbols.split_face_offsets) ||
 	!packet(Predictor::None, symbols.split_face_positions)) return false;
 
@@ -1116,10 +1206,6 @@ File::legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const
     size_t vertex_count = 0;
 
     if (quantized) {
-	if (normal_binding != 0 || texture_binding != 0 || color_binding != 0) {
-	    error = "quantized JT 8 vertex attributes are not yet supported";
-	    return false;
-	}
 	Reader quantized_reader(bytes_, header_.little_endian, vertex_data_offset);
 	struct Quantizer { float minimum; float maximum; uint8_t bits; } quantizers[3] = {};
 	for (Quantizer &quantizer : quantizers) {
@@ -1145,6 +1231,30 @@ File::legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const
 		return false;
 	    }
 	    quantized_offset += component_size;
+	}
+	/* Skip quantized per-vertex normals (Deering codec: bits, count, then
+	 * four Int32 CDP streams for sextant/octant/theta/psi) -- only the
+	 * positions are needed for a renderable BoT. */
+	if (normal_binding != 0) {
+	    Reader normal_reader(bytes_, header_.little_endian, quantized_offset);
+	    uint8_t normal_bits = 0;
+	    int32_t normal_count = 0;
+	    if (!normal_reader.u8(normal_bits) || !normal_reader.i32(normal_count) || normal_count < 0) {
+		error = "invalid JT 8 quantized normal header";
+		return false;
+	    }
+	    (void)normal_bits;
+	    quantized_offset = normal_reader.offset();
+	    for (int stream = 0; stream < 4; ++stream) {
+		std::vector<int32_t> discard;
+		size_t stream_size = 0;
+		if (!int32_packet(quantized_offset, Predictor::Lag1, discard, stream_size, error)) return false;
+		quantized_offset += stream_size;
+	    }
+	}
+	if (texture_binding != 0 || color_binding != 0) {
+	    error = "quantized JT 8 texture or color attributes are not yet supported";
+	    return false;
 	}
 	std::vector<int32_t> vertex_indices;
 	size_t index_size = 0;
