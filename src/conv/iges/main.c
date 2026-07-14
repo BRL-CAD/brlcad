@@ -150,6 +150,29 @@ Suggestions(void)
 }
 
 
+/*
+ * Return 1 if the output database already holds at least one user-visible
+ * geometry object (anything not named with a leading underscore, which
+ * marks the internal _GLOBAL bookkeeping object), else 0.  Used to decide
+ * whether a conversion produced anything renderable.
+ */
+static int
+Have_geometry(void)
+{
+    struct directory *dp;
+
+    if (!fdout || !fdout->dbip)
+	return 0;
+
+    FOR_ALL_DIRECTORY_START(dp, fdout->dbip) {
+	if (dp->d_namep && dp->d_namep[0] != '_')
+	    return 1;
+    } FOR_ALL_DIRECTORY_END;
+
+    return 0;
+}
+
+
 int
 main(int argc, char *argv [])
 {
@@ -343,6 +366,29 @@ main(int argc, char *argv [])
 		    Convtrimsurfs(vlfree);
 		    break;
 		}
+	    }
+	}
+
+	/* Fallback: if brep output was requested but the faithful conversion
+	 * produced nothing renderable (common for trimmed-surface or
+	 * manifold-BREP files whose face loops we cannot yet fully
+	 * reconstruct), import the raw NURBS/analytic surfaces as an
+	 * untrimmed brep so the geometry is still usable.  (The -n path has
+	 * already done this, so skip it there.) */
+	if (do_brep && !do_drawings && !do_splines && !Have_geometry()) {
+	    int have_surf = 0;
+	    for (i = 0; (size_t)i < totentities; i++) {
+		int t = dir[i]->type;
+		if (t == 128 || t == 114 || t == 118 ||
+		    t == 120 || t == 122 || t == 140) {
+		    have_surf = 1;
+		    break;
+		}
+	    }
+	    if (have_surf) {
+		bu_log("\nNo faithful solids were produced; "
+		       "importing raw surfaces as an untrimmed brep\n");
+		Convsurfs();
 	    }
 	}
 
