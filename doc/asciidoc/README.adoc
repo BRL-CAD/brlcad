@@ -4,15 +4,14 @@
 
 == Overview
 
-This directory contains BRL-CAD documentation in AsciiDoc format, converted
-from the original DocBook 5 XML sources in `../docbook/`.  The conversion was
-performed once using
-link:../../misc/tools/db2adoc/db2adoc.xsl[db2adoc.xsl] (an XSLT stylesheet)
-applied via `xsltproc`.
+This directory contains BRL-CAD documentation in AsciiDoc format.  The `.adoc`
+files here are the authoritative documentation sources and are committed to
+version control.  The one-time conversion from the original DocBook 5 XML
+sources is complete, and those legacy XML sources have been removed; edit the
+`.adoc` files directly.
 
-The `.adoc` files here are committed to version control as authoritative
-sources.  They are built into HTML and man-page outputs at compile time using
-**asciiquack**, BRL-CAD's self-contained AsciiDoc processor.
+The `.adoc` files are built into HTML and man-page outputs at compile time
+using **asciiquack**, BRL-CAD's self-contained AsciiDoc processor.
 
 == Directory Structure
 
@@ -43,28 +42,17 @@ When `BRLCAD_EXTRADOCS=ON` is set at CMake configuration time:
 
 The build logic is in `brlcad/misc/CMake/AsciiDoc.cmake`.
 
-== Re-running the Conversion
+== Authoritative Sources
 
-If the upstream DocBook sources change and you need to re-generate the AsciiDoc
-files, run the XSLT stylesheet from the repository root:
+The `.adoc` files in this directory are the authoritative documentation
+sources.  The one-time conversion from the retired DocBook 5 XML sources is
+complete, so there is no conversion step to re-run: make all documentation
+changes by editing the `.adoc` files directly.
 
-[source,bash]
-----
-BEXT=/path/to/bext_output
-
-for f in $(find doc/docbook -name "*.xml" -not -path "*/resources/*"); do
-  rel=${f#doc/docbook/}
-  out=doc/asciidoc/${rel%.xml}.adoc
-  mkdir -p "$(dirname "$out")"
-  $BEXT/noinstall/bin/xsltproc -xinclude \
-      misc/tools/db2adoc/db2adoc.xsl "$f" > "$out"
-done
-----
-
-Alternatively, use `db2adoc.py` (requires pandoc ≥ 2.0) for a Python-driven
-approach with better round-trip fidelity for complex markup:
-
-[source,bash]
-----
-python3 misc/tools/db2adoc/db2adoc.py
-----
+[NOTE]
+====
+Documentation is built only when CMake is configured with
+`BRLCAD_EXTRADOCS=ON`.  With the default configuration the documentation
+targets are skipped, so remember to enable this option when working on or
+verifying documentation.
+====
