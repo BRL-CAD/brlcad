@@ -43,7 +43,6 @@ cmakefiles(
   source_dirs.cmake
   libtermio/libtermio.h
   libtermio/linenoise.hpp
-  launcher
 )
 
 # Local Variables:
