@@ -1,0 +1,203 @@
+= Authoring a New libged Command
+:doctype: article
+:toc: left
+:toclevels: 3
+:sectlinks:
+:sectanchors:
+
+`libged` is BRL-CAD's geometry-editing library.  It provides the `ged_*`
+commands that front-end applications such as MGED, Archer, and `qged` dispatch
+when a user types a command.  This guide describes, at an architectural level,
+how to add a new `libged` command: how commands are structured, how they are
+registered and dispatched, and the argument and result conventions they follow.
+
+This page does not reproduce full function prototypes.  For exact signatures
+and structure fields, consult `include/ged.h`, the headers under
+`include/ged/`, and the sources under `src/libged/`, along with the
+Doxygen-generated link:api_reference.html[API Reference].
+
+== The shape of a command
+
+Every `libged` command is a C function with a uniform signature: it takes a
+`struct ged *`, an argument count, and an argument vector, and returns an `int`
+status code.  Conceptually:
+
+[source,c]
+----
+int ged_example_core(struct ged *gedp, int argc, const char *argv[]);
+----
+
+* `gedp` carries the editing context: the open database, view state, and, among
+  other things, the result string `gedp->ged_result_str`.
+* `argc`/`argv` follow the usual command-line convention, with `argv[0]` being
+  the command name itself.
+* The return value is `BRLCAD_OK` on success or `BRLCAD_ERROR` on failure
+  (defined alongside the other status codes in `include/ged/defines.h`).
+
+By convention the implementation function is named `ged_<name>_core`.  Existing
+commands under `src/libged/` are the best templates; the `echo` command in
+`src/libged/echo/echo.c` is a minimal, self-contained example.
+
+== Where a command lives
+
+Each command (or closely related group of commands) lives in its own
+subdirectory under `src/libged/`, for example `src/libged/echo/`.  A directory
+typically contains:
+
+* one or more `.c`/`.cpp` source files implementing the command, and
+* a `CMakeLists.txt` that builds the command as a `libged` plugin.
+
+The new subdirectory must be registered in `src/libged/CMakeLists.txt` with an
+`add_subdirectory(<name>)` entry so it is included in the build.
+
+== Argument and result conventions
+
+`libged` commands communicate results through the context, not through return
+values or `stdout`:
+
+* *Clear the result first.*  Truncate `gedp->ged_result_str` at the start so
+  stale output from a previous command does not leak into yours.
+* *Write output to `ged_result_str`.*  Use `bu_vls_printf()` (and related
+  `bu_vls` functions) to build the textual result the caller will read.  Do not
+  print directly to `stdout`/`stderr` for normal results.
+* *Return a status code.*  Return `BRLCAD_OK` or `BRLCAD_ERROR`; on error,
+  place a human-readable message in `ged_result_str`.
+
+`libged` provides guard macros in `include/ged/defines.h` to enforce common
+preconditions cleanly.  For example, `GED_CHECK_ARGC_GT_0()` verifies that a
+command name was actually supplied, emitting a diagnostic into
+`ged_result_str` and returning early if not.  Other `GED_CHECK_*` macros guard
+conditions such as an open database or a writable (non-read-only) database.
+Use them at the top of your implementation to keep error handling uniform with
+the rest of the library.
+
+== Registration
+
+`libged` supports two deployment models from the same source: commands can be
+compiled into the library as a static core, or loaded as plugins.  A small set
+of macros, declared in `src/libged/include/plugin.h`, generates the correct
+registration code for both models so that individual commands do not have to
+care which one is in effect.
+
+A command file registers itself with two steps at file scope, after the
+implementation:
+
+. Define a *command-set list macro* that enumerates the commands the file
+  provides, mapping each command name to its implementation function and a set
+  of option flags.
+. Invoke `GED_DECLARE_COMMAND_SET()` and `GED_DECLARE_PLUGIN_MANIFEST()` on
+  that list.
+
+Using the `echo` command as a concrete example:
+
+[source,c]
+----
+#include "../include/plugin.h"
+
+#define GED_ECHO_COMMANDS(X, XID) \
+    X(echo, ged_echo_core, GED_CMD_DEFAULT)
+
+GED_DECLARE_COMMAND_SET(GED_ECHO_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_echo", 1, GED_ECHO_COMMANDS)
+----
+
+Each list entry has the form `X(token, fn, opts)`:
+
+* `token` is the command name as a C identifier (it becomes the command
+  string).
+* `fn` is the implementation function (for example, `ged_echo_core`).
+* `opts` is a bitmask of `GED_CMD_*` option flags from
+  `src/libged/include/plugin.h`.  `GED_CMD_DEFAULT` requests no special
+  behavior; other flags mark a command as interactive, or as updating the scene
+  or view, and so on.
+
+When a command name cannot be written as a plain C identifier (for example the
+`?` command), use the `XID(symbol, "cmdname", fn, opts)` form instead, which
+lets you supply an explicit symbol name and an arbitrary command string.  A
+single list may contain multiple entries, which is also how aliases (several
+names bound to the same implementation) are expressed.
+
+`GED_DECLARE_COMMAND_SET()` emits the command metadata (and, in static-core
+builds, the registration anchors that let the library find the command).
+`GED_DECLARE_PLUGIN_MANIFEST()` emits the plugin export manifest when the file
+is compiled as a plugin.  Because both are driven by the same list macro, you
+describe your commands in exactly one place.
+
+== Building the command
+
+The command's `CMakeLists.txt` builds it as a plugin with the
+`ged_plugin_library()` helper defined in `src/libged/CMakeLists.txt`.  Following
+the `echo` example (`src/libged/echo/CMakeLists.txt`):
+
+[source,cmake]
+----
+set(PLUGIN_LIBS libged libbu)
+
+ged_plugin_library(ged-echo
+  echo.c
+  LIBS ${PLUGIN_LIBS}
+)
+
+cmakefiles(
+  CMakeLists.txt
+)
+----
+
+Adjust the plugin target name, source files, and `LIBS` to match your command's
+needs, then add the corresponding `add_subdirectory()` line in
+`src/libged/CMakeLists.txt`.
+
+== Dispatch: how the command is invoked
+
+Front-end applications do not call your `ged_<name>_core` function directly.
+Instead they call `ged_exec()` (declared in `include/ged/commands.h`) with the
+command name and arguments.  `ged_exec()` looks the name up in the command
+registry, runs any registered pre-command callbacks, invokes your
+implementation, and runs any post-command callbacks.  This indirection is what
+makes registration necessary: `ged_exec()` is the single entry point through
+which every command is reached, and it is also where scene/view update
+callbacks associated with your `GED_CMD_*` flags are honored.
+
+Because dispatch always flows through `ged_exec()`, command implementations
+should not invoke that machinery themselves; they simply do their work and
+return a status code.
+
+== Checklist for a new command
+
+. Create `src/libged/<name>/` with your source file(s).
+. Implement `ged_<name>_core(struct ged *gedp, int argc, const char *argv[])`.
+. Clear `gedp->ged_result_str`, validate inputs with the `GED_CHECK_*` macros,
+  do the work, write results to `ged_result_str`, and return
+  `BRLCAD_OK`/`BRLCAD_ERROR`.
+. Register the command with a list macro plus `GED_DECLARE_COMMAND_SET()` and
+  `GED_DECLARE_PLUGIN_MANIFEST()`.
+. Add a `CMakeLists.txt` using `ged_plugin_library()`.
+. Add `add_subdirectory(<name>)` to `src/libged/CMakeLists.txt`.
+. Build and exercise the command through a front end (for example, MGED) so it
+  runs via `ged_exec()`.
+
+== Where to look next
+
+[cols="1,2",options="header"]
+|===
+| Location
+| Contents
+
+| `include/ged.h`
+| Public `libged` entry points.
+
+| `include/ged/defines.h`
+| `struct ged`, status codes, and the `GED_CHECK_*` guard macros.
+
+| `include/ged/commands.h`
+| `ged_exec()` and command dispatch.
+
+| `src/libged/include/plugin.h`
+| The registration macros, option flags, and `struct ged_cmd_impl`.
+
+| `src/libged/echo/`
+| A minimal, complete command to use as a template.
+|===
+
+For generated API documentation covering these headers, build and consult the
+link:api_reference.html[API Reference].
