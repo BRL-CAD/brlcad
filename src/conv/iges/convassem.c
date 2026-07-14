@@ -93,11 +93,11 @@ Convassem(void)
 	/* Read pointers to group members */
 	for (j = 0; j < comblen; j++) {
 	    if (ptr == NULL) {
-		root = (struct solid_list *)bu_malloc(sizeof(struct solid_list),
+		root = (struct solid_list *)bu_malloc(sizeof(*root),
 						      "Convassem: root");
 		ptr = root;
 	    } else {
-		ptr->next = (struct solid_list *)bu_malloc(sizeof(struct solid_list),
+		ptr->next = (struct solid_list *)bu_malloc(sizeof(*ptr->next),
 							   "Convassem: ptr->next");
 		ptr = ptr->next;
 	    }

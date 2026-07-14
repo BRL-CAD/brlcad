@@ -67,9 +67,9 @@ brep(size_t entityno, struct bu_list *vlfree)
     Readint(&num_of_voids, "");
 
     if (num_of_voids) {
-	void_shell_de = (int *)bu_calloc(num_of_voids, sizeof(int), "BREP: void shell DE's");
-	void_orient = (int *)bu_calloc(num_of_voids, sizeof(int), "BREP: void shell orients");
-	void_shells = (struct shell **)bu_calloc(num_of_voids, sizeof(struct shell *), "BREP: void shell pointers");
+	void_shell_de = (int *)bu_calloc(num_of_voids, sizeof(*void_shell_de), "BREP: void shell DE's");
+	void_orient = (int *)bu_calloc(num_of_voids, sizeof(*void_orient), "BREP: void shell orients");
+	void_shells = (struct shell **)bu_calloc(num_of_voids, sizeof(*void_shells), "BREP: void shell pointers");
 	for (i = 0; i < num_of_voids; i++) {
 	    Readint(&void_shell_de[i], "");
 	    Readint(&void_orient[i], "");

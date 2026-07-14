@@ -128,7 +128,7 @@ Do_subfigs(void)
 	memcpy(wmem->wm_mat, *dir[i]->rot, sizeof(mat_t));
 
 	Readint(&no_of_members, "");	/* get number of members */
-	members = (int *)bu_calloc(no_of_members, sizeof(int), "Do_subfigs: members");
+	members = (int *)bu_calloc(no_of_members, sizeof(*members), "Do_subfigs: members");
 	for (j = 0; j < no_of_members; j++)
 	    Readint(&members[j], "");
 
@@ -136,6 +136,7 @@ Do_subfigs(void)
 	for (j = 0; j < no_of_members; j++) {
 	    size_t idx;
 
+	    /* convert the member's IGES directory entry number to a dir[] index */
 	    idx = (members[j] - 1)/2;
 
 	    if (idx >= totentities) {

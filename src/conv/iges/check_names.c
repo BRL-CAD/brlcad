@@ -173,7 +173,7 @@ Skip_field(void)
     } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;

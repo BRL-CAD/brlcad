@@ -59,9 +59,9 @@ Get_outer_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
 	return 0;
     }
 
-    face_de = (int *)bu_calloc(no_of_faces, sizeof(int), "Get_outer_shell face DE's");
-    face_orient = (int *)bu_calloc(no_of_faces, sizeof(int), "Get_outer_shell orients");
-    fu = (struct faceuse **)bu_calloc(no_of_faces, sizeof(struct faceuse *), "Get_outer_shell faceuses ");
+    face_de = (int *)bu_calloc(no_of_faces, sizeof(*face_de), "Get_outer_shell face DE's");
+    face_orient = (int *)bu_calloc(no_of_faces, sizeof(*face_orient), "Get_outer_shell orients");
+    fu = (struct faceuse **)bu_calloc(no_of_faces, sizeof(*fu), "Get_outer_shell faceuses ");
 
     for (face = 0; face < no_of_faces; face++) {
 	Readint(&face_de[face], "");

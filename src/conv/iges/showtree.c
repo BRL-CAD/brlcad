@@ -42,7 +42,7 @@ Initastack(void)
 
     jtop = (-1);
     stklen = STKBLK;
-    stk = (char **)bu_malloc(stklen*sizeof(char *), "Initastack: stk");
+    stk = (char **)bu_malloc(stklen*sizeof(*stk), "Initastack: stk");
     if (stk == NULL) {
 	bu_log("Cannot allocate stack space\n");
 	perror("Initastack");
@@ -114,7 +114,7 @@ Initsstack(void) /* initialize the stack */
 
     sjtop = (-1);
     sstklen = STKBLK;
-    sstk_p = (struct node **)bu_malloc(sstklen*sizeof(struct node *), "Initsstack: sstk_p");
+    sstk_p = (struct node **)bu_malloc(sstklen*sizeof(*sstk_p), "Initsstack: sstk_p");
     if (sstk_p == NULL) {
 	bu_log("Cannot allocate stack space\n");
 	perror("Initsstack");

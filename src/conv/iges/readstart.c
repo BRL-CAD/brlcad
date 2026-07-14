@@ -36,10 +36,10 @@ Readstart(void)
 	if (Readrec(++i))
 	    bu_exit(1, "End of file encountered\n");
 
-	if (card[72] != 'S') {
+	if (card[IGES_SECTION_COL] != 'S') {
 	    break;
 	}
-	card[72] = '\0';
+	card[IGES_SECTION_COL] = '\0';
 	bu_log("%s\n", card);
     }
     bu_log("%c", '\n');

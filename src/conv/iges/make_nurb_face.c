@@ -21,6 +21,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/**
+ * Add the boundary described by an IGES Loop entity (type 508) to the NMG
+ * faceuse fu of a NURBS face.  Reads the loop's edge uses, builds the loop,
+ * merges shared vertices, assigns 3D vertex geometry evaluated on the
+ * surface, and attaches each edge's parameter-space (cnurb) geometry,
+ * splitting edges as needed to match the parameter curves.  Returns 1 on
+ * success.
+ */
 int
 Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 {
@@ -63,7 +71,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
     Readint(&no_of_edges, "");
 
-    edge_uses = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(struct iges_edge_use) ,
+    edge_uses = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(*edge_uses) ,
 						  "Add_nurb_loop_to_face (edge_uses)");
     for (i = 0; i < no_of_edges; i++) {
 	Readint(&edge_uses[i].edge_is_vertex, "");
@@ -92,7 +100,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	}
     }
 
-    verts = (struct vertex **)bu_calloc(no_of_edges, sizeof(struct vertex *) ,
+    verts = (struct vertex **)bu_calloc(no_of_edges, sizeof(*verts) ,
 					"Add_nurb_loop_to_face: vertex_list **");
 
     for (i = 0; i < no_of_edges; i++) {
@@ -340,6 +348,12 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 }
 
 
+/**
+ * Create an NMG faceuse in shell s for an IGES NURBS surface entity
+ * (type 128).  Builds the surface geometry, makes a trivial face, assigns
+ * the surface to it, and discards the placeholder loop so boundary loops
+ * can later be added.  Returns the faceuse, or NULL on error.
+ */
 struct faceuse *
 Make_nurb_face(struct shell *s, int surf_entityno)
 {

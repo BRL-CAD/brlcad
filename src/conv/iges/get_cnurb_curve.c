@@ -174,7 +174,7 @@ Get_uv_polyline_curve(size_t curve)
 	 * sample of every segment after the first
 	 */
 	num_pts = splroot->nsegs * UV_SAMPLES_PER_SEG - (splroot->nsegs - 1);
-	uv = (fastf_t *)bu_calloc((size_t)num_pts * 2, sizeof(fastf_t),
+	uv = (fastf_t *)bu_calloc((size_t)num_pts * 2, sizeof(*uv),
 				  "Get_uv_polyline_curve: spline uv");
 
 	idx = 0;
@@ -336,7 +336,7 @@ Get_uv_polyline_curve(size_t curve)
 	    xc = v1[0] - a*t1*t1*cos(theta) + t1*sin(theta);
 	    yc = v1[1] - a*t1*t1*sin(theta) - t1*cos(theta);
 
-	    uv = (fastf_t *)bu_calloc((size_t)num_points * 2, sizeof(fastf_t),
+	    uv = (fastf_t *)bu_calloc((size_t)num_points * 2, sizeof(*uv),
 				      "Get_uv_polyline_curve: parabola uv");
 
 	    dpi = (t2-t1)/(double)(num_points - 1);	/* parameter increment */
@@ -438,7 +438,7 @@ Get_uv_polyline_curve(size_t curve)
 	    Matmult(*(dir[curve]->rot), rot1, rot2);
 #endif
 
-	    uv = (fastf_t *)bu_calloc((size_t)(num_points + 1) * 2, sizeof(fastf_t),
+	    uv = (fastf_t *)bu_calloc((size_t)(num_points + 1) * 2, sizeof(*uv),
 				      "Get_uv_polyline_curve: conic uv");
 
 	    for (i = 0; i <= num_points; i++) {

@@ -56,7 +56,7 @@ Makedir(void)
     Readrec(dstart+1);	/* read first record in directory section */
 
     while (1) {
-	if (card[72] != 'D')	/* We are not in the directory section */
+	if (card[IGES_SECTION_COL] != 'D')	/* We are not in the directory section */
 	    break;
 
 	/* guard against a malformed file with more directory entries
@@ -74,7 +74,7 @@ Makedir(void)
 	}
 
 	/* save the directory record number for this entity */
-	dir[entcount]->direct = atoi(&card[73]);
+	dir[entcount]->direct = atoi(&card[IGES_SEQNUM_COL]);
 
 	/* set reference count to 0 */
 	dir[entcount]->referenced = 0;

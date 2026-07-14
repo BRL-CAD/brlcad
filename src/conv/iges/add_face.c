@@ -48,7 +48,7 @@ Add_face_to_shell(struct shell *s, size_t entityno, int face_orient, struct bu_l
     Readint(&surf_de, "");
     Readint(&no_of_loops, "");
     Readint(&outer_loop_flag, "");
-    loop_de = (int *)bu_calloc(no_of_loops, sizeof(int), "Get_outer_face loop DE's");
+    loop_de = (int *)bu_calloc(no_of_loops, sizeof(*loop_de), "Get_outer_face loop DE's");
     for (loop = 0; loop < no_of_loops; loop++)
 	Readint(&loop_de[loop], "");
 

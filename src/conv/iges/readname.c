@@ -33,8 +33,6 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-#define MAX_NUM 4096
-
 
 /*
  * Read the next field from the shared global "card" buffer, expecting a
@@ -61,7 +59,7 @@ Readname(char **ptr, const char *id)
 	return;
     }
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;

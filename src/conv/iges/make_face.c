@@ -64,7 +64,7 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_li
     }
 
     Readint(&no_of_edges, "");
-    edge_list = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(struct iges_edge_use) ,
+    edge_list = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(*edge_list) ,
 						  "Make_face (edge_list)");
     for (i = 0; i < no_of_edges; i++) {
 	Readint(&edge_list[i].edge_is_vertex, "");
@@ -100,7 +100,7 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_li
 	}
     }
 
-    verts = (struct vertex ***)bu_calloc(no_of_edges, sizeof(struct vertex **) ,
+    verts = (struct vertex ***)bu_calloc(no_of_edges, sizeof(*verts) ,
 					 "Make_face: vertex_list **");
 
     for (i = 0; i < no_of_edges; i++) {

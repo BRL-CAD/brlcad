@@ -470,6 +470,15 @@ main(int argc, char *argv[])
 }
 
 
+/*
+ * Fuse the NMG model and evaluate the boolean tree for one region,
+ * under BU_SETJUMP bomb protection.
+ *
+ * On success returns the resulting evaluated tree.  On failure (a
+ * caught NMG bomb) the offending tree and model are freed, a fresh
+ * model is installed in *tsp->ts_m for the next pass, and the stale
+ * static result pointer is returned.
+ */
 static union tree *
 process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
@@ -683,6 +692,16 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 static int de_pointer_number;
 
+/*
+ * Recursively walk a combination's boolean tree, collecting the IGES
+ * directory-entry (DE) pointers of its leaf members into de_pointers[].
+ *
+ * The running index is kept in the file-static de_pointer_number.  For
+ * a leaf carrying a non-identity matrix a solid instance entity is
+ * written and its DE recorded; otherwise the member's own DE is used.
+ * Returns non-zero on error (unwritten member, missing member, or an
+ * unrecognized operator).
+ */
 int
 get_de_pointers(union tree *tp, struct directory *dp, int de_len,
 		int *de_pointers)
@@ -736,6 +755,15 @@ get_de_pointers(union tree *tp, struct directory *dp, int de_len,
 }
 
 
+/*
+ * Tree-walk callback (db_treewalk_basic) that writes a combination as
+ * an IGES CSG Boolean-tree entity.
+ *
+ * Skips regions when in facet mode and combinations already written.
+ * Gathers member DE pointers via get_de_pointers(), fills in the
+ * combination's IGES properties, and emits the entity, recording the
+ * negated DE in dp->d_uses.
+ */
 void
 csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
@@ -783,7 +811,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 	return;
     }
     comb_len = db_tree_nleaves(comb->tree);
-    de_pointers = (int *)bu_calloc(comb_len, sizeof(int), "csg_comb_func");
+    de_pointers = (int *)bu_calloc(comb_len, sizeof(*de_pointers), "csg_comb_func");
 
     comb_form = 0;
 
@@ -821,6 +849,15 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 }
 
 
+/*
+ * Tree-walk callback (db_treewalk_basic) that writes a single solid as
+ * an IGES entity.
+ *
+ * Skips solids already written.  Imports the solid, dispatches through
+ * the iges_write[] function table by primitive type (tessellating to a
+ * BREP when there is no direct CSG equivalent), and records the negated
+ * DE in dp->d_uses and the BREP flag in dp->d_nref.
+ */
 void
 csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
@@ -865,6 +902,10 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 }
 
 
+/*
+ * Per-leaf callback (db_tree_funcleaf) that increments the reference
+ * count (d_nref) of the directory entry named by a combination member.
+ */
 void
 incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, void *UNUSED(user_ptr1), void *UNUSED(user_ptr2), void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
@@ -881,6 +922,14 @@ incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, void
 }
 
 
+/*
+ * Tree-walk callback (db_treewalk_basic) that tallies how many times
+ * each object is referenced.
+ *
+ * For every combination it walks the member leaves via incr_refs(),
+ * bumping each referenced directory entry's d_nref.  Non-combinations
+ * are ignored.
+ */
 void
 count_refs(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {

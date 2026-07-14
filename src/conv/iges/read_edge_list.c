@@ -71,7 +71,7 @@ Read_edge_list(struct iges_edge_use *edge)
 	bu_free((char *)edge_list, "Read_edge_list: iges_edge_list");
 	return (struct iges_edge_list *)NULL;
     }
-    edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(struct iges_edge) ,
+    edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(*edge_list->i_edge) ,
 						      "Read_edge_list: iges_edge");
 
     for (i = 0; i < edge_list->no_of_edges; i++) {

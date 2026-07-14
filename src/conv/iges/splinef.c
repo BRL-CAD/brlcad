@@ -26,7 +26,14 @@
 
 #include "bu/defines.h"
 
-/* spline functionality */
+/*
+ * Evaluate a cubic polynomial at parameter s.
+ *
+ * Given the four coefficients c[0..3] of a cubic (constant, linear,
+ * quadratic, and cubic terms), returns c[0] + c[1]*s + c[2]*s^2 +
+ * c[3]*s^3.  Used to evaluate a single coordinate of an IGES
+ * parametric spline (entity type 112) segment.
+ */
 fastf_t
 splinef(fastf_t c[4], fastf_t s)
 {

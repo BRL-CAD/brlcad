@@ -50,7 +50,7 @@ Knot(int n /* number of values in knot sequence */, fastf_t values[] /* knot val
     if (numknots)
 	bu_free((char *)knots, "Knot: knots");
 
-    knots = (fastf_t *)bu_calloc(n, sizeof(fastf_t), "Knot: knots");
+    knots = (fastf_t *)bu_calloc(n, sizeof(*knots), "Knot: knots");
 
     numknots = n;
 

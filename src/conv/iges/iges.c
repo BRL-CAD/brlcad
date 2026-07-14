@@ -208,6 +208,8 @@ static unsigned char colortab[9][4] = {
     { 8, 255, 255, 255 }};
 
 
+/* Extract IGES attribute properties (material name/params, region flag,
+ * ident/air/material/los codes, color, inheritance) from a combination. */
 void
 get_props(struct iges_properties *props,
 	  struct rt_comb_internal *comb)
@@ -250,6 +252,9 @@ get_props(struct iges_properties *props,
 }
 
 
+/* Look up a named combination in the database and fill in its IGES
+ * attribute properties.  Returns nonzero if the object is not a usable
+ * combination. */
 int
 lookup_props(struct iges_properties *props,
 	     char *name)
@@ -304,6 +309,12 @@ lookup_props(struct iges_properties *props,
 }
 
 
+/* Emit a parameter/global/start-section string as one or more fixed-width
+ * IGES records (64 data columns for parameter 'P', 72 for global 'G' and
+ * start 'S'), appending the section letter and sequence number in columns
+ * 73-80.  Records are broken only at field ('H' string / comma / semicolon)
+ * boundaries so that numeric fields are never split across lines.  Returns
+ * the number of records written. */
 int
 write_freeform(FILE *fp,	/* output file */
 	       char *s,		/* the string to be output (must not contain any NL's) */
@@ -468,6 +479,7 @@ write_freeform(FILE *fp,	/* output file */
 }
 
 
+/* Write a Color Definition Entity (IGES type 314) for an RGB color. */
 int
 write_color_entity(unsigned char color[3],
 		   FILE *fp_dir, FILE *fp_param)
@@ -501,6 +513,9 @@ write_color_entity(unsigned char color[3],
 }
 
 
+/* Return an IGES color number for an RGB color: a small positive index for
+ * one of the predefined colors, otherwise the negated DE of a newly written
+ * Color Definition Entity (314). */
 int
 get_color(unsigned char color[3],
 	  FILE *fp_dir, FILE *fp_param)
@@ -521,6 +536,9 @@ get_color(unsigned char color[3],
 }
 
 
+/* Write the Attribute Table Definition Entity (IGES type 322) describing the
+ * BRL-CAD attributes (material name/params, region flag, ident, air/material
+ * codes, los density, inheritance, color) attached to exported entities. */
 int
 write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 {
@@ -565,6 +583,8 @@ write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 }
 
 
+/* Initialize the exporter: store tolerances and database pointer and reset
+ * the section sequence-number counters. */
 void
 iges_init(struct bn_tol *set_tol,
 	  struct bg_tess_tol *set_ttol,
@@ -585,6 +605,7 @@ iges_init(struct bn_tol *set_tol,
 }
 
 
+/* Print a summary of the counts of each IGES entity type written. */
 void
 Print_stats(FILE *fp)
 {
@@ -605,6 +626,9 @@ Print_stats(FILE *fp)
 }
 
 
+/* Write the two-line Directory Entry (DE) record for one entity, filling in
+ * the entity-type label and per-type sequence count, and the two DE sequence
+ * numbers.  Returns the DE sequence number of the entity just written. */
 int
 write_dir_entry(FILE *fp, int entry[])
 {
@@ -648,6 +672,9 @@ write_dir_entry(FILE *fp, int entry[])
 }
 
 
+/* Write the IGES Start and Global sections (file/creator identification,
+ * units, tolerances, timestamps), and, unless in trimmed-surface mode, the
+ * attribute definition entity. */
 void
 w_start_global(
     FILE *fp_dir,
@@ -720,6 +747,10 @@ w_start_global(
 }
 
 
+/* Convert an NMG region to IGES.  Writes the vertex list, edge list, and
+ * face/loop/shell entities for each outer shell as a Manifold Solid BREP
+ * Object (186); if there is more than one outer shell they are combined with
+ * a Solid Assembly (184).  Returns the DE of the resulting entity. */
 int
 nmgregion_to_iges(char *name,
 		  struct nmgregion *r,
@@ -778,7 +809,7 @@ nmgregion_to_iges(char *name,
     /* Find outer shells and void shells and their associations */
     outer_shell_count = nmg_find_outer_and_void_shells(r, &shells, vlfree, &tol);
 
-    brep_de = (int *)bu_calloc(outer_shell_count, sizeof(int), "nmgregion_to_iges: brep_de");
+    brep_de = (int *)bu_calloc(outer_shell_count, sizeof(*brep_de), "nmgregion_to_iges: brep_de");
 
     for (i = 0; i < outer_shell_count; i++) {
 	int j;
@@ -833,6 +864,8 @@ nmgregion_to_iges(char *name,
 }
 
 
+/* Write a closed polyline of vertices as a Copious Data Entity (IGES type
+ * 106): form 63 for 2D (parameter-space) points, form 12 for 3D points. */
 int
 verts_to_copious_data(point_t *pts,
 		      size_t vert_count,
@@ -889,6 +922,9 @@ verts_to_copious_data(point_t *pts,
 }
 
 
+/* Write an NMG loop as a Curve on a Parametric Surface Entity (IGES type
+ * 142), pairing a parameter-space (2D) copious-data curve with a model-space
+ * (3D) copious-data curve on the given surface. */
 int
 nmg_loop_to_tcurve(
     struct loopuse *lu,
@@ -919,8 +955,8 @@ nmg_loop_to_tcurve(
 	return 0;
 
     /* Allocate memory for points */
-    model_pts = (point_t *)bu_calloc(vert_count, sizeof(point_t), "nmg_loop_to_tcurve: model_pts");
-    param_pts = (point_t *)bu_calloc(vert_count, sizeof(point_t), "nmg_loop_to_tcurve: param_pts");
+    model_pts = (point_t *)bu_calloc(vert_count, sizeof(*model_pts), "nmg_loop_to_tcurve: model_pts");
+    param_pts = (point_t *)bu_calloc(vert_count, sizeof(*param_pts), "nmg_loop_to_tcurve: param_pts");
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
@@ -979,6 +1015,8 @@ nmg_loop_to_tcurve(
 }
 
 
+/* Write an NMG faceuse as a Trimmed (Parametric) Surface Entity (IGES type
+ * 144): an underlying planar NURB surface trimmed by one curve per loop. */
 void
 nmg_fu_to_tsurf(struct faceuse *fu,
 		FILE *fp_dir, FILE *fp_param)
@@ -1019,7 +1057,7 @@ nmg_fu_to_tsurf(struct faceuse *fu,
     surf_de = write_planar_nurb(fu, u_dir, v_dir, &u_max, &v_max, base_pt, fp_dir, fp_param);
 
     /* allocate space to hold DE for each trimming curve */
-    curve_de = (int *)bu_calloc(loop_count, sizeof(int), "nmg_fu_to_tsurf: curve_de");
+    curve_de = (int *)bu_calloc(loop_count, sizeof(*curve_de), "nmg_fu_to_tsurf: curve_de");
 
     i = (-1);
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
@@ -1056,6 +1094,7 @@ nmg_fu_to_tsurf(struct faceuse *fu,
 }
 
 
+/* Write every outward faceuse of an NMG region as a trimmed surface (144). */
 int nmgregion_to_tsurf(char *UNUSED(name), struct nmgregion *r, FILE *fp_dir, FILE *fp_param)
 {
     struct shell *s;
@@ -1080,6 +1119,8 @@ int nmgregion_to_tsurf(char *UNUSED(name), struct nmgregion *r, FILE *fp_dir, FI
 }
 
 
+/* Write the Vertex List Entity (IGES type 502) tabulating every vertex in
+ * the region; the vertex table is filled in for later index lookups. */
 int
 write_vertex_list(struct nmgregion *r,
 		  struct bu_ptbl *vtab,   /* vertex table */
@@ -1140,6 +1181,7 @@ write_vertex_list(struct nmgregion *r,
 }
 
 
+/* Write a Line Entity (IGES type 110) between two vertex geometry points. */
 int
 write_line_entity(struct vertex_g *start_vg,
 		  struct vertex_g *end_vg,
@@ -1184,6 +1226,8 @@ write_line_entity(struct vertex_g *start_vg,
 }
 
 
+/* Write a straight segment as a degree-1 Rational B-spline Curve Entity
+ * (IGES type 126) between two vertex geometry points. */
 int
 write_linear_bspline(struct vertex_g *start_vg,
 		     struct vertex_g *end_vg,
@@ -1228,6 +1272,9 @@ write_linear_bspline(struct vertex_g *start_vg,
 }
 
 
+/* Write the Edge List Entity (IGES type 504) tabulating every edge in the
+ * region; each edge references its underlying line/b-spline curve and its
+ * start/end vertices (by index) in the vertex list. */
 int
 write_edge_list(struct nmgregion *r,
 		int vert_de,		/* DE# for vertex list */
@@ -1306,6 +1353,7 @@ write_edge_list(struct nmgregion *r,
 }
 
 
+/* Write a Point Entity (IGES type 116). */
 int
 write_point_entity(point_t pt,
 		   FILE *fp_dir, FILE *fp_param)
@@ -1340,6 +1388,7 @@ write_point_entity(point_t pt,
 }
 
 
+/* Write a Direction Entity (IGES type 123). */
 int
 write_direction_entity(point_t pt,
 		       FILE *fp_dir, FILE *fp_param)
@@ -1374,6 +1423,8 @@ write_direction_entity(point_t pt,
 }
 
 
+/* Write a Plane Surface Entity (IGES type 190) from a plane equation,
+ * referencing a point-on-plane (116) and a normal direction (123). */
 int
 write_plane_entity(plane_t plane,
 		   FILE *fp_dir, FILE *fp_param)
@@ -1411,6 +1462,9 @@ write_plane_entity(plane_t plane,
 }
 
 
+/* Write a planar faceuse as a Rational B-spline Surface Entity (IGES type
+ * 128), and return via the output parameters the in-plane u/v basis vectors,
+ * their extents, and the base point (surface u,v == 0) for later trimming. */
 int
 write_planar_nurb(struct faceuse *fu,
 		  vect_t u_dir, vect_t v_dir,	   /* output */
@@ -1526,6 +1580,9 @@ write_planar_nurb(struct faceuse *fu,
 }
 
 
+/* Write the Loop (508), Face (510), and Shell (514) entities for a region,
+ * then a Manifold Solid BREP Object (186) referencing them (plus optional
+ * name/attribute/color entities).  Returns the DE of the BREP object. */
 int
 write_shell_face_loop(char *name,
 		      struct nmgregion *r,
@@ -1558,7 +1615,7 @@ write_shell_face_loop(char *name,
 	shell_count++;
 
     /* make space for the list of shell DE's */
-    shell_list = (int *)bu_calloc(shell_count, sizeof(int), "write_shell_face_loop: shell_list");
+    shell_list = (int *)bu_calloc(shell_count, sizeof(*shell_list), "write_shell_face_loop: shell_list");
 
     shell_count = 0;
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
@@ -1573,7 +1630,7 @@ write_shell_face_loop(char *name,
 		continue;
 	    face_count++;
 	}
-	face_list = (int *)bu_calloc(face_count, sizeof(int), "face_list");
+	face_list = (int *)bu_calloc(face_count, sizeof(*face_list), "face_list");
 	face_count = 0;
 
 	/* Shell is made of faces. */
@@ -1593,7 +1650,7 @@ write_shell_face_loop(char *name,
 		    exterior_loop = (long)loop_count;
 		loop_count++;
 	    }
-	    loop_list = (int *)bu_calloc(loop_count, sizeof(int), "loop_list");
+	    loop_list = (int *)bu_calloc(loop_count, sizeof(*loop_list), "loop_list");
 
 	    loop_count = 0;
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
@@ -1808,6 +1865,7 @@ write_shell_face_loop(char *name,
 }
 
 
+/* Write the IGES Terminate section recording the length of each section. */
 void
 w_terminate(FILE *fp)
 {
@@ -1815,6 +1873,8 @@ w_terminate(FILE *fp)
 }
 
 
+/* Return nonzero if an ARB8 is a right rectangular parallelepiped (equal,
+ * mutually perpendicular edge vectors), i.e. representable as an IGES Block. */
 int
 arb_is_rpp(struct rt_arb_internal *arb)
 {
@@ -1878,6 +1938,7 @@ arb_is_rpp(struct rt_arb_internal *arb)
 }
 
 
+/* Write a name as a Property Entity (IGES type 406, form 15: entity label). */
 int
 write_name_entity(char *name,
 		  FILE *fp_dir, FILE *fp_param)
@@ -1918,6 +1979,7 @@ write_name_entity(char *name,
 }
 
 
+/* Write a torus primitive as an IGES Torus Entity (type 160). */
 int
 tor_to_iges(struct rt_db_internal *ip,
 	    char *name,
@@ -1969,6 +2031,7 @@ tor_to_iges(struct rt_db_internal *ip,
 }
 
 
+/* Write a sphere primitive as an IGES Sphere Entity (type 158). */
 int
 sph_to_iges(struct rt_db_internal *ip,
 	    char *name,
@@ -2021,6 +2084,7 @@ sph_to_iges(struct rt_db_internal *ip,
 }
 
 
+/* Write an ellipsoid primitive as an IGES Ellipsoid Entity (type 168). */
 int
 ell_to_iges(struct rt_db_internal *ip,
 	    char *name,
@@ -2090,6 +2154,8 @@ ell_to_iges(struct rt_db_internal *ip,
 }
 
 
+/* Write an RPP-shaped ARB8 as an IGES Block Entity (type 150), reordering the
+ * edge directions if needed so they form a right-handed system. */
 int
 rpp_to_iges(struct rt_db_internal *ip,
 	    char *name,
@@ -2173,6 +2239,8 @@ rpp_to_iges(struct rt_db_internal *ip,
 }
 
 
+/* Write an ARB8: as an IGES Block (150) if it is an RPP, otherwise via NMG
+ * tessellation to a BREP object. */
 int
 arb_to_iges(struct rt_db_internal *ip,
 	    char *name,
@@ -2196,6 +2264,8 @@ arb_to_iges(struct rt_db_internal *ip,
 }
 
 
+/* Write a TGC: as an IGES Right Circular Cylinder (154) or Right Circular
+ * Cone Frustum (156) when it is an rcc/trc, otherwise via NMG tessellation. */
 int
 tgc_to_iges(struct rt_db_internal *ip,
 	    char *name,
@@ -2306,6 +2376,8 @@ tgc_to_iges(struct rt_db_internal *ip,
 }
 
 
+/* Write a Boolean Tree Entity (IGES type 180) that unions the listed member
+ * DEs (with optional name/attribute/color entities). */
 int
 write_tree_of_unions(char *name,
 		     int de_list[],
@@ -2379,6 +2451,8 @@ write_tree_of_unions(char *name,
 }
 
 
+/* Write a Solid Assembly Entity (IGES type 184) referencing the listed member
+ * DEs (with optional name/attribute/color entities). */
 int
 write_solid_assembly(char *name,
 		     int de_list[],
@@ -2454,6 +2528,9 @@ write_solid_assembly(char *name,
 }
 
 
+/* Convert an arbitrary primitive to IGES via NMG: tessellating it if needed,
+ * then writing each region as a BREP object and, for multi-region models,
+ * unioning them in a Boolean tree.  Returns the DE of the result. */
 int
 nmg_to_iges(struct rt_db_internal *ip,
 	    char *name,
@@ -2499,7 +2576,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 	    /* make a boolean tree unioning all the regions */
 
 	    /* space to save the iges location of each nmgregion */
-	    region_de = (int *)bu_calloc(region_count, sizeof(int), "nmg_to_iges");
+	    region_de = (int *)bu_calloc(region_count, sizeof(*region_de), "nmg_to_iges");
 
 	    /* loop through all nmgregions in the model */
 	    region_count = 0;
@@ -2535,6 +2612,8 @@ nmg_to_iges(struct rt_db_internal *ip,
 }
 
 
+/* Sketch primitive export: not yet supported; writes only a name entity and
+ * logs a message. */
 int
 sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param, struct bu_list *UNUSED(vlfree))
 {
@@ -2557,6 +2636,7 @@ sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_par
 }
 
 
+/* No-op exporter for primitive types that are not written to IGES. */
 int
 null_to_iges(struct rt_db_internal *UNUSED(ip), char *UNUSED(name), FILE *UNUSED(fp_dir), FILE *UNUSED(fp_param), struct bu_list *UNUSED(vlfree))
 {
@@ -2564,6 +2644,8 @@ null_to_iges(struct rt_db_internal *UNUSED(ip), char *UNUSED(name), FILE *UNUSED
 }
 
 
+/* Write a Transformation Matrix Entity (IGES type 124) from the first twelve
+ * elements (3x3 rotation plus translation) of a 4x4 matrix. */
 int
 write_xform_entity(mat_t mat,
 		   FILE *fp_dir, FILE *fp_param)
@@ -2597,6 +2679,8 @@ write_xform_entity(mat_t mat,
 }
 
 
+/* Write a Solid Instance Entity (IGES type 430) referencing an original
+ * entity by DE, with an associated transformation matrix (124). */
 int
 write_solid_instance(int orig_de,
 		     mat_t mat,
@@ -2630,6 +2714,9 @@ write_solid_instance(int orig_de,
 }
 
 
+/* Write an Attribute Table Instance Entity (IGES type 422) holding the
+ * BRL-CAD attribute values for an object, referencing the attribute table
+ * definition (322) via the DE cross-reference in field 3. */
 int
 write_att_entity(struct iges_properties *props,
 		 FILE *fp_dir, FILE *fp_param)
@@ -2763,6 +2850,8 @@ short_comb_to_iges(struct iges_properties *props,
 }
 
 
+/* Return nonzero if a boolean tree contains any non-union operation
+ * (intersection or subtraction). */
 int
 has_non_union_ops(union tree *tp)
 {
@@ -2781,6 +2870,9 @@ has_non_union_ops(union tree *tp)
 }
 
 
+/* Recursively append a boolean tree to the parameter string in IGES Boolean
+ * Tree (180) postfix form: leaf operands as negated member DEs, operators as
+ * 1 (union), 2 (intersection), or 3 (difference). */
 void
 igs_tree(struct bu_vls *str,
 	 union tree *tp,
@@ -2817,6 +2909,8 @@ igs_tree(struct bu_vls *str,
 }
 
 
+/* Begin a Boolean Tree Entity (180) parameter record and append the combination's
+ * tree in postfix form. */
 void
 write_igs_tree(struct bu_vls *str,
 	       struct rt_comb_internal *comb,
@@ -2833,6 +2927,9 @@ write_igs_tree(struct bu_vls *str,
 }
 
 
+/* Write a multi-member combination as either a Boolean Tree Entity (180, in
+ * CSG mode or when it has non-union ops) or a Solid Assembly Entity (184),
+ * along with its name/attribute/color entities. */
 int
 tree_to_iges(struct rt_comb_internal *comb,
 	     size_t length, int dependent,
@@ -2924,6 +3021,8 @@ tree_to_iges(struct rt_comb_internal *comb,
 }
 
 
+/* Write a combination to IGES: a single member becomes a Solid Instance,
+ * multiple members become a Boolean tree or solid assembly. */
 int
 comb_to_iges(struct rt_comb_internal *comb, size_t length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param)
 {
@@ -2944,6 +3043,7 @@ comb_to_iges(struct rt_comb_internal *comb, size_t length, int dependent, struct
  * and control points survive the round trip.
  */
 
+/* Append n doubles to the parameter string, each in full double precision. */
 static void
 append_dbls(struct bu_vls *str, const double *v, int n)
 {
@@ -2953,6 +3053,8 @@ append_dbls(struct bu_vls *str, const double *v, int n)
 }
 
 
+/* Write a Rational B-spline Surface Entity (IGES type 128) from explicit
+ * knot vectors, weights, and control points. */
 int
 write_nurb_surface_entity(int k1, int k2, int m1, int m2, int rational,
 			  const double *uknots, const double *vknots,
@@ -2990,6 +3092,8 @@ write_nurb_surface_entity(int k1, int k2, int m1, int m2, int rational,
 }
 
 
+/* Write a Rational B-spline Curve Entity (IGES type 126) from explicit knots,
+ * weights, and control points. */
 int
 write_nurb_curve_entity(int k, int m, int rational, int planar,
 			const double *knots, const double *weights,
@@ -3024,6 +3128,8 @@ write_nurb_curve_entity(int k, int m, int rational, int planar,
 }
 
 
+/* Write a Composite Curve Entity (IGES type 102) from a list of member curve
+ * DEs. */
 int
 write_composite_curve_entity(const int *members, int n,
 			     FILE *fp_dir, FILE *fp_param)
@@ -3053,6 +3159,8 @@ write_composite_curve_entity(const int *members, int n,
 }
 
 
+/* Write a Curve on a Parametric Surface Entity (IGES type 142) linking a
+ * surface with its parameter-space (B) and model-space (C) curves. */
 int
 write_curve_on_surface_entity(int surf_de, int bcurve_de, int ccurve_de,
 			      FILE *fp_dir, FILE *fp_param)
@@ -3080,6 +3188,8 @@ write_curve_on_surface_entity(int surf_de, int bcurve_de, int ccurve_de,
 }
 
 
+/* Write a Trimmed (Parametric) Surface Entity (IGES type 144) from a surface,
+ * an explicit outer boundary curve, and zero or more inner boundary curves. */
 int
 write_trimmed_surface_entity(int surf_de, int outer_de, const int *inner_des,
 			     int n_inner, FILE *fp_dir, FILE *fp_param)

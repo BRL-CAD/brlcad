@@ -48,7 +48,7 @@ Convsurfs(void)
 	    totsurfs++;
     }
 
-    surfs = (struct face_g_snurb **)bu_calloc(totsurfs+1, sizeof(struct face_g_snurb *), "surfs");
+    surfs = (struct face_g_snurb **)bu_calloc(totsurfs+1, sizeof(*surfs), "surfs");
 
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 128) {

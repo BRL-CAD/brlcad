@@ -177,7 +177,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    break;
 	}
 	case 106: {
-	    /* copius data */
+	    /* copious data */
 	    int interpflag;	/* interpretation flag */
 				/* 1 => x, y pairs (common z-coord) */
 				/* 2 => x, y, z coords */
@@ -739,7 +739,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    }
 
 	    Readint(&ncurves, "");
-	    curvptr = (int *)bu_calloc(ncurves, sizeof(int), "Getcurve: curvptr");
+	    curvptr = (int *)bu_calloc(ncurves, sizeof(*curvptr), "Getcurve: curvptr");
 	    for (i = 0; i < ncurves; i++) {
 		Readint(&curvptr[i], "");
 		curvptr[i] = (curvptr[i]-1)/2;
@@ -799,16 +799,16 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    n = k - m + 1;
 	    a = n + 2 * m;
 
-	    t = (fastf_t *)bu_calloc(a+1, sizeof(fastf_t), "Getcurve: spline t");
+	    t = (fastf_t *)bu_calloc(a+1, sizeof(*t), "Getcurve: spline t");
 	    for (i = 0; i < a+1; i++)
 		Readflt(&t[i], "");
 	    Knot(a+1, t);
 
-	    w = (fastf_t *)bu_calloc(k+1, sizeof(fastf_t), "Getcurve: spline w");
+	    w = (fastf_t *)bu_calloc(k+1, sizeof(*w), "Getcurve: spline w");
 	    for (i = 0; i < k+1; i++)
 		Readflt(&w[i], "");
 
-	    cntrl_pts = (point_t *)bu_calloc(k+1, sizeof(point_t), "Getcurve: spline cntrl_pts");
+	    cntrl_pts = (point_t *)bu_calloc(k+1, sizeof(*cntrl_pts), "Getcurve: spline cntrl_pts");
 	    for (i = 0; i < k+1; i++) {
 		fastf_t tmp;
 

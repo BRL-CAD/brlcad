@@ -34,8 +34,6 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-#define MAX_NUM 4096
-
 
 /*
  * Read the next field from the shared global "card" buffer, parse it as a
@@ -56,7 +54,7 @@ Readcnv(fastf_t *inum, const char *id)
     } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;
