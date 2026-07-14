@@ -604,6 +604,24 @@ Prints all BoT primitives using "plate" mode, instead of the closed-mesh-requiri
 
 ====
 
+.Returning all Combinations That Have Given Object As a Member
+[example]
+====
+**search -above=1 -name example.s**
+
+Prints all combinations that have example.s as a member. This behavior is identical to the deprecated command dbfind.
+
+====
+
+.Returning the Full Path(s) of a Given Object
+[example]
+====
+**search / -name example.s**
+
+Prints all paths to example.s. This behavior is identical to the deprecated command dbfindtree.
+
+====
+
 .Verbose Reporting of Search Information
 [example]
 ====
