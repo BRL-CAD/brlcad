@@ -341,6 +341,22 @@ add_trim(ON_Brep *brep, ON_Surface *surf, const ON_Plane *plane,
 }
 
 
+/* True if every edgeuse of this loop carries the parameter-space (cnurb)
+ * geometry that a trimmed NURBS face needs.  Loops that fail this (e.g. an
+ * IGES 186 face whose 508 loop could not be reconstructed) cannot be turned
+ * into valid brep trims. */
+bool
+loop_has_cnurb_geometry(const struct loopuse *lu)
+{
+    const struct edgeuse *eu;
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	if (!eu->g.magic_p || *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC)
+	    return false;
+    }
+    return true;
+}
+
+
 /* Convert one OT_SAME faceuse and its loops. */
 bool
 add_face(ON_Brep *brep, const struct faceuse *fu, long *vmap, long *emap,
@@ -353,9 +369,11 @@ add_face(ON_Brep *brep, const struct faceuse *fu, long *vmap, long *emap,
     ON_Surface *surf = NULL;
     ON_Plane plane;
     const ON_Plane *plane_ptr = NULL;
+    bool is_snurb = false;
 
     if (*f->g.magic_p == NMG_FACE_G_SNURB_MAGIC) {
 	surf = snurb_to_on(f->g.snurb_p);
+	is_snurb = true;
     } else if (*f->g.magic_p == NMG_FACE_G_PLANE_MAGIC) {
 	surf = plane_to_on(fu, plane);
 	plane_ptr = &plane;
@@ -366,15 +384,44 @@ add_face(ON_Brep *brep, const struct faceuse *fu, long *vmap, long *emap,
     if (!surf)
 	return false;
 
+    const struct loopuse *lu;
+    const struct edgeuse *eu;
+
+    /* Decide whether this face has any boundary loop we can actually trim
+     * with.  A NURBS face needs parameter-space geometry on every edgeuse; a
+     * planar face is trimmed from its vertices, so its loops are always
+     * usable. */
+    bool have_usable_loop = false;
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+	    continue;	/* single-vertex loop */
+	if (!is_snurb || loop_has_cnurb_geometry(lu)) {
+	    have_usable_loop = true;
+	    break;
+	}
+    }
+
+    /* No usable trim loop: emit the natural (untrimmed) surface boundary so
+     * the face still renders.  This keeps the solid's real face geometry
+     * (just without hole/trim detail) rather than failing the whole brep. */
+    if (!have_usable_loop) {
+	ON_BrepFace *bf = brep->NewFace(*surf);
+	delete surf;
+	if (!bf)
+	    return false;
+	bf->m_bRev = f->flip ? true : false;
+	return true;
+    }
+
     const int sidx = brep->AddSurface(surf);
     ON_BrepFace &face = brep->NewFace(sidx);
     face.m_bRev = f->flip ? true : false;
 
-    const struct loopuse *lu;
-    const struct edgeuse *eu;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	    continue;	/* single-vertex loop, skip */
+	if (is_snurb && !loop_has_cnurb_geometry(lu))
+	    continue;	/* drop a loop we cannot trim rather than corrupt the face */
 	const ON_BrepLoop::TYPE lt =
 	    (lu->orientation == OT_SAME) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
 	ON_BrepLoop &loop = brep->NewLoop(lt, face);
