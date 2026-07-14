@@ -761,15 +761,27 @@ process_entities_polyline_vertex_code(int code)
 	case 0:
 	    get_layer();
 	    if (vertex_flag == POLY_VERTEX_FACE) {
-		add_triangle(polyline_vert_indices[face[0]-1],
-			     polyline_vert_indices[face[1]-1],
-			     polyline_vert_indices[face[2]-1],
-			     curr_layer);
-		if (face[3] > 0) {
-		    add_triangle(polyline_vert_indices[face[2]-1],
-				 polyline_vert_indices[face[3]-1],
-				 polyline_vert_indices[face[0]-1],
+		if (face[0] >= 1 && face[0] <= polyline_vert_indices_count &&
+		    face[1] >= 1 && face[1] <= polyline_vert_indices_count &&
+		    face[2] >= 1 && face[2] <= polyline_vert_indices_count) {
+		    add_triangle(polyline_vert_indices[face[0]-1],
+				 polyline_vert_indices[face[1]-1],
+				 polyline_vert_indices[face[2]-1],
 				 curr_layer);
+		} else {
+		    bu_log("Warning: Invalid face corner indices, skipping triangle.\n");
+		}
+		if (face[3] > 0) {
+		    if (face[2] >= 1 && face[2] <= polyline_vert_indices_count &&
+			face[3] >= 1 && face[3] <= polyline_vert_indices_count &&
+			face[0] >= 1 && face[0] <= polyline_vert_indices_count) {
+			add_triangle(polyline_vert_indices[face[2]-1],
+				     polyline_vert_indices[face[3]-1],
+				     polyline_vert_indices[face[0]-1],
+				     curr_layer);
+		    } else {
+			bu_log("Warning: Invalid face corner indices for second triangle, skipping.\n");
+		    }
 		}
 	    } else if (vertex_flag & POLY_VERTEX_3D_M) {
 		point_t tmp_pt1, tmp_pt2;
