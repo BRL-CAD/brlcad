@@ -9,7 +9,6 @@ set(
   ebm_primitive.adoc
   gcv.adoc
   ged.adoc
-  main_menu.adoc
   mged.adoc
   mgedrc.adoc
   nirt.adoc

@@ -1,0 +1,346 @@
+= Command-Line Tools (man1)
+:doctype: article
+:toc: left
+:toclevels: 1
+
+// GENERATED from the .adoc files in doc/asciidoc/system/man1/. Do not hand-edit entries; regenerate when tools are added or removed.
+
+BRL-CAD command-line tools. See also link:mann_index.html[MGED / GED Commands] and the link:command_reference.html[Command Reference] overview.
+
+
+== 0-9
+
+* link:man1/3dm-g.html[3dm-g]
+
+== A
+
+* link:man1/a-d.html[a-d]
+* link:man1/adrt_master.html[adrt_master]
+* link:man1/adrt_slave.html[adrt_slave]
+* link:man1/alias-pix.html[alias-pix]
+* link:man1/ap-pix.html[ap-pix]
+* link:man1/ap203e2-g.html[ap203e2-g]
+* link:man1/ap214-g.html[ap214-g]
+* link:man1/ap242-g.html[ap242-g]
+* link:man1/archer.html[archer]
+* link:man1/art.html[art]
+* link:man1/asc-nmg.html[asc-nmg]
+* link:man1/asc-plot3.html[asc-plot3]
+* link:man1/asc2dsp.html[asc2dsp]
+* link:man1/asc2g.html[asc2g]
+
+== B
+
+* link:man1/benchmark.html[benchmark]
+* link:man1/bolt.html[bolt]
+* link:man1/bombardier.html[bombardier]
+* link:man1/bot_dump.html[bot_dump]
+* link:man1/brep_simple.html[brep_simple]
+* link:man1/brlcad.html[brlcad]
+* link:man1/brledit.html[brledit]
+* link:man1/brlman.html[brlman]
+* link:man1/btclsh.html[btclsh]
+* link:man1/bw-a.html[bw-a]
+* link:man1/bw-d.html[bw-d]
+* link:man1/bw-fb.html[bw-fb]
+* link:man1/bw-pix.html[bw-pix]
+* link:man1/bw-png.html[bw-png]
+* link:man1/bw-ps.html[bw-ps]
+* link:man1/bwcrop.html[bwcrop]
+* link:man1/bwdiff.html[bwdiff]
+* link:man1/bwfilter.html[bwfilter]
+* link:man1/bwhist.html[bwhist]
+* link:man1/bwhisteq.html[bwhisteq]
+* link:man1/bwish.html[bwish]
+* link:man1/bwmod.html[bwmod]
+* link:man1/bwrect.html[bwrect]
+* link:man1/bwrot.html[bwrot]
+* link:man1/bwscale.html[bwscale]
+* link:man1/bwshrink.html[bwshrink]
+* link:man1/bwstat.html[bwstat]
+* link:man1/bwthresh.html[bwthresh]
+
+== C
+
+* link:man1/c-d.html[c-d]
+* link:man1/cad_boundp.html[cad_boundp]
+* link:man1/cad_parea.html[cad_parea]
+* link:man1/coil.html[coil]
+* link:man1/comgeom-g.html[comgeom-g]
+* link:man1/conv-vg2g.html[conv-vg2g]
+* link:man1/cv.html[cv]
+
+== D
+
+* link:man1/d-a.html[d-a]
+* link:man1/d-bw.html[d-bw]
+* link:man1/d-f.html[d-f]
+* link:man1/d-i.html[d-i]
+* link:man1/d-u.html[d-u]
+* link:man1/d2-c.html[d2-c]
+* link:man1/damdf.html[damdf]
+* link:man1/dauto.html[dauto]
+* link:man1/dauto2.html[dauto2]
+* link:man1/dbclean.html[dbclean]
+* link:man1/dbupgrade.html[dbupgrade]
+* link:man1/dconv.html[dconv]
+* link:man1/ddisp.html[ddisp]
+* link:man1/decimate.html[decimate]
+* link:man1/dfft.html[dfft]
+* link:man1/dm_ogl_probe.html[dm_ogl_probe]
+* link:man1/dmod.html[dmod]
+* link:man1/double-asc.html[double-asc]
+* link:man1/dpeak.html[dpeak]
+* link:man1/dpix-pix.html[dpix-pix]
+* link:man1/dsel.html[dsel]
+* link:man1/dstats.html[dstats]
+* link:man1/dwin.html[dwin]
+* link:man1/dxf-g.html[dxf-g]
+
+== E
+
+* link:man1/enf-g.html[enf-g]
+
+== F
+
+* link:man1/f-d.html[f-d]
+* link:man1/f-i.html[f-i]
+* link:man1/fast4-g.html[fast4-g]
+* link:man1/fb-bw.html[fb-bw]
+* link:man1/fb-fb.html[fb-fb]
+* link:man1/fb-pix.html[fb-pix]
+* link:man1/fb-png.html[fb-png]
+* link:man1/fbcbars.html[fbcbars]
+* link:man1/fbclear.html[fbclear]
+* link:man1/fbcmap.html[fbcmap]
+* link:man1/fbcolor.html[fbcolor]
+* link:man1/fbfade.html[fbfade]
+* link:man1/fbframe.html[fbframe]
+* link:man1/fbfree.html[fbfree]
+* link:man1/fbgamma.html[fbgamma]
+* link:man1/fbgrid.html[fbgrid]
+* link:man1/fbhelp.html[fbhelp]
+* link:man1/fblabel.html[fblabel]
+* link:man1/fbline.html[fbline]
+* link:man1/fbpoint.html[fbpoint]
+* link:man1/fbserv.html[fbserv]
+* link:man1/fbstretch.html[fbstretch]
+* link:man1/fbzoom.html[fbzoom]
+* link:man1/fence.html[fence]
+
+== G
+
+* link:man1/g-acad.html[g-acad]
+* link:man1/g-ap203e2.html[g-ap203e2]
+* link:man1/g-ap214.html[g-ap214]
+* link:man1/g-ap242.html[g-ap242]
+* link:man1/g-dot.html[g-dot]
+* link:man1/g-dxf.html[g-dxf]
+* link:man1/g-egg.html[g-egg]
+* link:man1/g-iges.html[g-iges]
+* link:man1/g-jack.html[g-jack]
+* link:man1/g-nff.html[g-nff]
+* link:man1/g-obj.html[g-obj]
+* link:man1/g-off.html[g-off]
+* link:man1/g-ply.html[g-ply]
+* link:man1/g-raw.html[g-raw]
+* link:man1/g-shell-rect.html[g-shell-rect]
+* link:man1/g-step.html[g-step]
+* link:man1/g-stl.html[g-stl]
+* link:man1/g-var.html[g-var]
+* link:man1/g-vdb.html[g-vdb]
+* link:man1/g-voxel.html[g-voxel]
+* link:man1/g-vrml.html[g-vrml]
+* link:man1/g-x3d.html[g-x3d]
+* link:man1/g2asc.html[g2asc]
+* link:man1/gastank.html[gastank]
+* link:man1/gchecker.html[gchecker]
+* link:man1/gcv.html[gcv]
+* link:man1/gdiff.html[gdiff]
+* link:man1/gencolor.html[gencolor]
+* link:man1/gex.html[gex]
+* link:man1/gif-fb.html[gif-fb]
+* link:man1/gif2fb.html[gif2fb]
+* link:man1/gist.html[gist]
+* link:man1/glint.html[glint]
+* link:man1/gltf-g.html[gltf-g]
+* link:man1/gqa.html[gqa]
+* link:man1/gsh.html[gsh]
+
+== H
+
+* link:man1/halftone.html[halftone]
+* link:man1/handle.html[handle]
+* link:man1/human.html[human]
+
+== I
+
+* link:man1/i-a.html[i-a]
+* link:man1/i-d.html[i-d]
+* link:man1/i-f.html[i-f]
+* link:man1/icv.html[icv]
+* link:man1/ifc-g.html[ifc-g]
+* link:man1/iges-g.html[iges-g]
+* link:man1/ihist.html[ihist]
+* link:man1/imgdiff.html[imgdiff]
+* link:man1/imgdims.html[imgdims]
+* link:man1/imod.html[imod]
+* link:man1/isst.html[isst]
+* link:man1/istats.html[istats]
+
+== J
+
+* link:man1/jack-g.html[jack-g]
+
+== L
+
+* link:man1/loop.html[loop]
+* link:man1/lowp.html[lowp]
+
+== M
+
+* link:man1/mac-pix.html[mac-pix]
+* link:man1/mged.html[mged]
+
+== N
+
+* link:man1/naca456.html[naca456]
+* link:man1/nastran-g.html[nastran-g]
+* link:man1/nirt.html[nirt]
+
+== O
+
+* link:man1/obj-g.html[obj-g]
+* link:man1/off-g.html[off-g]
+
+== P
+
+* link:man1/patch-g.html[patch-g]
+* link:man1/picket_fence.html[picket_fence]
+* link:man1/pix-alias.html[pix-alias]
+* link:man1/pix-bw.html[pix-bw]
+* link:man1/pix-fb.html[pix-fb]
+* link:man1/pix-png.html[pix-png]
+* link:man1/pix-ppm.html[pix-ppm]
+* link:man1/pix-ps.html[pix-ps]
+* link:man1/pix-spm.html[pix-spm]
+* link:man1/pix-sun.html[pix-sun]
+* link:man1/pix2asc.html[pix2asc]
+* link:man1/pix3filter.html[pix3filter]
+* link:man1/pixautosize.html[pixautosize]
+* link:man1/pixbackgnd.html[pixbackgnd]
+* link:man1/pixbgstrip.html[pixbgstrip]
+* link:man1/pixblend.html[pixblend]
+* link:man1/pixborder.html[pixborder]
+* link:man1/pixbustup.html[pixbustup]
+* link:man1/pixclump.html[pixclump]
+* link:man1/pixcmp.html[pixcmp]
+* link:man1/pixcolors.html[pixcolors]
+* link:man1/pixcount.html[pixcount]
+* link:man1/pixcrop.html[pixcrop]
+* link:man1/pixdiff.html[pixdiff]
+* link:man1/pixelswap.html[pixelswap]
+* link:man1/pixembed.html[pixembed]
+* link:man1/pixfade.html[pixfade]
+* link:man1/pixfilter.html[pixfilter]
+* link:man1/pixhalve.html[pixhalve]
+* link:man1/pixhist.html[pixhist]
+* link:man1/pixhist3d.html[pixhist3d]
+* link:man1/pixhist3d-plot3.html[pixhist3d-plot3]
+* link:man1/pixinterp2x.html[pixinterp2x]
+* link:man1/pixmatte.html[pixmatte]
+* link:man1/pixmerge.html[pixmerge]
+* link:man1/pixmorph.html[pixmorph]
+* link:man1/pixrect.html[pixrect]
+* link:man1/pixrot.html[pixrot]
+* link:man1/pixsaturate.html[pixsaturate]
+* link:man1/pixscale.html[pixscale]
+* link:man1/pixshrink.html[pixshrink]
+* link:man1/pixstat.html[pixstat]
+* link:man1/pixsubst.html[pixsubst]
+* link:man1/pixtile.html[pixtile]
+* link:man1/pixuntile.html[pixuntile]
+* link:man1/plot3-asc.html[plot3-asc]
+* link:man1/plot3-dm.html[plot3-dm]
+* link:man1/plot3-fb.html[plot3-fb]
+* link:man1/plot3-plot3.html[plot3-plot3]
+* link:man1/plot3-ps.html[plot3-ps]
+* link:man1/plot3color.html[plot3color]
+* link:man1/plot3getframe.html[plot3getframe]
+* link:man1/plot3line2.html[plot3line2]
+* link:man1/plot3rot.html[plot3rot]
+* link:man1/plot3stat.html[plot3stat]
+* link:man1/ply-g.html[ply-g]
+* link:man1/png-bw.html[png-bw]
+* link:man1/png-fb.html[png-fb]
+* link:man1/png-pix.html[png-pix]
+* link:man1/propeller.html[propeller]
+
+== Q
+
+* link:man1/qisst.html[qisst]
+
+== R
+
+* link:man1/random.html[random]
+* link:man1/raw-g.html[raw-g]
+* link:man1/remrt.html[remrt]
+* link:man1/reshoot.html[reshoot]
+* link:man1/rpatch.html[rpatch]
+* link:man1/rt.html[rt]
+* link:man1/rtarea.html[rtarea]
+* link:man1/rtcheck.html[rtcheck]
+* link:man1/rtdepth.html[rtdepth]
+* link:man1/rtedge.html[rtedge]
+* link:man1/rtexample.html[rtexample]
+* link:man1/rtg3.html[rtg3]
+* link:man1/rthide.html[rthide]
+* link:man1/rtscale.html[rtscale]
+* link:man1/rtshot.html[rtshot]
+* link:man1/rtsil.html[rtsil]
+* link:man1/rtsrv.html[rtsrv]
+* link:man1/rtsurf.html[rtsurf]
+* link:man1/rtweight.html[rtweight]
+* link:man1/rtwizard.html[rtwizard]
+* link:man1/rtxray.html[rtxray]
+
+== S
+
+* link:man1/showshot.html[showshot]
+* link:man1/shp-g.html[shp-g]
+* link:man1/smod.html[smod]
+* link:man1/spm-fb.html[spm-fb]
+* link:man1/step-g.html[step-g]
+* link:man1/stl-g.html[stl-g]
+* link:man1/sun-pix.html[sun-pix]
+
+== T
+
+* link:man1/tankill-g.html[tankill-g]
+* link:man1/terrain.html[terrain]
+* link:man1/tgf-g.html[tgf-g]
+* link:man1/tire.html[tire]
+* link:man1/tree.html[tree]
+* link:man1/ttcp.html[ttcp]
+
+== U
+
+* link:man1/u-a.html[u-a]
+* link:man1/u-bw.html[u-bw]
+* link:man1/u-d.html[u-d]
+* link:man1/u-f.html[u-f]
+* link:man1/ug-g.html[ug-g]
+* link:man1/umod.html[umod]
+* link:man1/ustats.html[ustats]
+
+== V
+
+* link:man1/vdeck.html[vdeck]
+
+== W
+
+* link:man1/wavelet.html[wavelet]
+* link:man1/wdb_example.html[wdb_example]
+* link:man1/window.html[window]
+* link:man1/window_frame.html[window_frame]
+* link:man1/wire.html[wire]

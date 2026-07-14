@@ -1,6 +1,8 @@
 set(
   man3_EN
+  libbu.adoc
   libbv.adoc
+  libdm.adoc
   libicv.adoc
   libpkg.adoc
   librt.adoc
@@ -29,8 +31,6 @@ endforeach(mp ${man3_EN})
 
 cmakefiles(
   ${man3_EN}
-  libbu.adoc
-  libdm.adoc
   TODO
   CMakeLists.txt
 )

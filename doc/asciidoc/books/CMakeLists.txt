@@ -4,6 +4,7 @@ set(
   BRL-CAD_Tutorial_Series-VolumeII.adoc
   BRL-CAD_Tutorial_Series-VolumeIII.adoc
   BRL-CAD_Tutorial_Series-VolumeIV.adoc
+  HACKING_BRL-CAD.adoc
 )
 
 if(BRLCAD_EXTRADOCS)
@@ -65,6 +66,7 @@ set(
 if(TARGET mged OR TARGET qged OR TARGET archer)
   if(BRLCAD_EXTRADOCS)
     add_doc(books_EN_IMAGES html/books/images)
+    add_doc(hacking_brlcad_images html/books/images)
   endif(BRLCAD_EXTRADOCS)
 endif(TARGET mged OR TARGET qged OR TARGET archer)
 
@@ -102,7 +104,6 @@ cmakefiles(
   ${books_ADOC}
   ${books_EN_IMAGES}
   ${hacking_brlcad_images}
-  HACKING_BRL-CAD.adoc
 )
 
 # Local Variables:

@@ -1,0 +1,21 @@
+= Developer Documentation
+:doctype: article
+:toc: left
+:toclevels: 2
+
+== Developer Guides
+
+* link:devguides/adding_new_primitive_superellipsoid.html[Adding a New Primitive to BRL-CAD: Superellipsoid Walkthrough]
+* link:devguides/bool_eval_development.html[NURBS Boolean Evaluation Development Guide]
+* link:devguides/iterate_geometry.html[BRL-CAD Geometry Database Traversal APIs]
+
+== Reference Book
+
+* link:books/HACKING_BRL-CAD.html[HACKING BRL-CAD]
+
+== Presentations
+
+* link:presentations/brlcad-app-devel.html[Application Development]
+* link:presentations/intro-to-tcltk.html[Introduction to Tcl/Tk]
+* link:presentations/Introduction-brlcad-app-devel.html[Application Development with BRL-CAD (Overview)]
+* link:presentations/Introduction-to-tcltk.html[Tcl/Tk Overview]

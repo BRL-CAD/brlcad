@@ -1,0 +1,14 @@
+= Library APIs (man3)
+:doctype: article
+:toc: left
+:toclevels: 2
+
+BRL-CAD C library programming interfaces.
+
+* link:man3/libbv.html[libbv - view/display list library]
+* link:man3/libbu.html[libbu - basic utility library]
+* link:man3/libdm.html[libdm - display manager library]
+* link:man3/libicv.html[libicv - image conversion library]
+* link:man3/libpkg.html[libpkg - network package library]
+* link:man3/librt.html[librt - ray tracing library]
+* link:man3/libwdb.html[libwdb - write-only database library]

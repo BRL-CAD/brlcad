@@ -1,0 +1,50 @@
+= BRL-CAD Documentation
+:doctype: article
+:toc: left
+:toclevels: 2
+
+Welcome to the BRL-CAD documentation. Choose a section below.
+
+== Getting Started
+
+New to BRL-CAD? Start here for an introduction and your first tutorial.
+
+* link:articles/about.html[About BRL-CAD]
+* link:books/BRL-CAD_Tutorial_Series-VolumeI.html[Tutorial Series Volume I - An Overview]
+* link:articles/mged.html[MGED Tutorial]
+
+== Tutorials
+
+Step-by-step tutorial series and numbered MGED lessons.
+
+* link:tutorials.html[Browse all tutorials]
+
+== Guides & How-To
+
+Task-focused guides for tools, primitives, and shaders.
+
+* link:guides.html[Browse all guides]
+
+== Developer Documentation
+
+For contributors and application developers.
+
+* link:developer.html[Developer documentation]
+
+== Command Reference
+
+Reference for every command-line tool and MGED/GED command.
+
+* link:command_reference.html[Command Reference]
+
+== Library APIs
+
+C library programming interfaces.
+
+* link:man3_index.html[Library APIs]
+
+== File Formats & Specifications
+
+File-format man pages and the .g database format specifications.
+
+* link:formats.html[File formats & specifications]
