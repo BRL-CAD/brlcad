@@ -71,11 +71,11 @@ More paragraphs...
 
 [CAUTION]
 ====
-There's a lot more you can do with Docbook/XML. Search the web for references and examples:
+There's a lot more you can do with AsciiDoc. Consult the reference documentation for syntax and examples:
 
 
-* http://www.docbook.org/tdg5/en/html/article.html[http://www.docbook.org/tdg5/en/html/article.html]
-* http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html[http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html]
+* https://docs.asciidoctor.org/asciidoc/latest/[AsciiDoc Language Documentation]
+* https://docs.asciidoctor.org/asciidoc/latest/syntax-quick-reference/[AsciiDoc Syntax Quick Reference]
 
 ====
 
