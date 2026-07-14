@@ -78,6 +78,29 @@ STEPWrapper::~STEPWrapper()
  * shape representation's geometry from its axis2_placement_3d. */
 static void assembly_placement_matrix(mat_t mat, Axis2Placement3D *to, Axis2Placement3D *from);
 
+/* Reserve a unique BRL-CAD object name derived from 'base'.  Product names in
+ * STEP are frequently non-unique (e.g. every component in an assembly can share
+ * the same product name), but BRL-CAD object names must be unique.  Names are
+ * assigned in the naming pass before any objects are written, so the database
+ * cannot be consulted for uniqueness yet; instead we track assigned names here
+ * and append _1, _2, ... on collision. */
+static std::string
+reserve_unique_name(std::set<std::string> &used, const std::string &base_in)
+{
+    std::string base = base_in;
+    if (base.empty() || (base.compare("''") == 0)) {
+	base = "obj";
+    }
+    std::string name = base;
+    int n = 1;
+    while (used.find(name) != used.end()) {
+	name = base + "_" + std::to_string(n);
+	n++;
+    }
+    used.insert(name);
+    return name;
+}
+
 int
 convert_WriteBrep(
 	AdvancedBrepShapeRepresentation *aBrep,
@@ -93,6 +116,14 @@ convert_WriteBrep(
     ON_Brep *onBrep = aBrep->GetONBrep();
     if (!onBrep) {
 	return 1;
+    } else if (onBrep->m_F.Count() < 1) {
+	/* An advanced_brep_shape_representation with no faces carries no solid
+	 * geometry of its own - e.g. a pure assembly container whose items are
+	 * only mapped_items and an axis.  Skip writing a (degenerate) brep so
+	 * that any assembly comb sharing this name (built from its mapped_item
+	 * instances) is preserved rather than overwritten. */
+	delete onBrep;
+	return 0;
     } else {
 	ON_TextLog tl;
 
@@ -276,6 +307,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     MAP_OF_ENTITY_ID_TO_PRODUCT_NAME id2name_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID id2productid_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID process_map;
+    std::set<std::string> used_names; // ensures assigned object names stay unique
 
     if (!dot_g) {
 	return false;
@@ -310,12 +342,13 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    if (pname.empty() || (pname.compare("''") == 0)) {
 			std::string str = "Product@";
 			pname = dotg->GetBRLCADName(str);
-			id2name_map[aBrep->GetId()] = pname;
-			id2name_map[product_id] = pname;
-		    } else {
-			id2name_map[aBrep->GetId()] = pname;
-			id2name_map[product_id] = pname;
 		    }
+		    /* STEP product names are frequently shared across the parts
+		     * of an assembly; ensure each imported object gets a unique
+		     * BRL-CAD name so they don't collapse into one object. */
+		    pname = reserve_unique_name(used_names, pname);
+		    id2name_map[aBrep->GetId()] = pname;
+		    id2name_map[product_id] = pname;
 		    id2productid_map[aBrep->GetId()] = product_id;
 		    /* This length is used in the hierarchy build - this is how
 		     * it was getting set when the Brep build came before the
@@ -328,6 +361,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			std::string str = "Assembly@";
 			pname = dotg->GetBRLCADName(str);
 		    }
+		    pname = reserve_unique_name(used_names, pname);
 		    ShapeRepresentation *aSR = sdr->GetShapeRepresentation();
 		    if (aSR) {
 			int sr_id = aSR->GetId();
@@ -898,6 +932,14 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 		AdvancedBrepShapeRepresentation *aBrep = sdr->GetAdvancedBrepShapeRepresentation();
 		if (aBrep) {
+
+		    /* use the unique name assigned during the naming pass so the
+		     * written object matches the hierarchy and shared product
+		     * names do not collide */
+		    std::string uname = id2name_map[aBrep->GetId()];
+		    if (!uname.empty() && (uname.compare("''") != 0)) {
+			pname = uname;
+		    }
 
 		    if (Verbose()) {
 			if (!pname.empty() && (pname.compare("''") != 0)) {
