@@ -28,6 +28,18 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #include "./iges_brep.h"
+#include "./iges_surf.h"
+
+
+/* Analytic / spline surface types (other than 128) that Get_iges_nurb_surf()
+ * can convert to a NURBS surface: ruled (118), surface of revolution (120),
+ * tabulated cylinder (122), offset (140), and parametric spline (114). */
+static int
+is_analytic_surf(int type)
+{
+    return (type == 114 || type == 118 || type == 120 ||
+	    type == 122 || type == 140);
+}
 
 
 void
@@ -42,9 +54,10 @@ Convsurfs(void)
 
     bu_log("\n\nConverting NURB entities:\n");
 
-    /* First count the number of surfaces */
+    /* First count the number of surfaces (rational B-spline plus the analytic
+     * and spline surface types we can convert to NURBS) */
     for (i = 0; i < totentities; i++) {
-	if (dir[i]->type == 128)
+	if (dir[i]->type == 128 || is_analytic_surf(dir[i]->type))
 	    totsurfs++;
     }
 
@@ -53,6 +66,11 @@ Convsurfs(void)
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 128) {
 	    if (iges_spline(i, &srf))
+		surfs[convsurf++] = srf;
+	} else if (is_analytic_surf(dir[i]->type)) {
+	    /* built as an independent snurb (no NMG model needed here) */
+	    srf = Get_iges_nurb_surf(i, (struct model *)NULL);
+	    if (srf)
 		surfs[convsurf++] = srf;
 	}
     }

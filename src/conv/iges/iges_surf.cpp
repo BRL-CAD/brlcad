@@ -97,27 +97,36 @@ snurb_from_on(const ON_NurbsSurface *ns, struct model *m)
     const int n_v = n_rows + v_order;	/* full v knot count */
 
     struct face_g_snurb *srf;
-    GET_FACE_G_SNURB(srf, m);
-    BU_LIST_INIT(&srf->l);
-    BU_LIST_INIT(&srf->f_hd);
-    srf->l.magic = NMG_FACE_G_SNURB_MAGIC;
-    srf->order[0] = u_order;
-    srf->order[1] = v_order;
-    srf->dir = RT_NURB_SPLIT_ROW;
-    srf->u.magic = NMG_KNOT_VECTOR_MAGIC;
-    srf->v.magic = NMG_KNOT_VECTOR_MAGIC;
-    srf->u.k_size = n_u;
-    srf->v.k_size = n_v;
-    srf->u.knots = (fastf_t *)bu_malloc(n_u * sizeof(fastf_t),
-					"snurb_from_on: u knots");
-    srf->v.knots = (fastf_t *)bu_malloc(n_v * sizeof(fastf_t),
-					"snurb_from_on: v knots");
-    srf->s_size[0] = n_rows;
-    srf->s_size[1] = n_cols;
-    srf->pt_type = pt_type;
-    srf->ctl_points = (fastf_t *)bu_malloc(
-	sizeof(fastf_t) * n_rows * n_cols * ncoords,
-	"snurb_from_on: control mesh points");
+    if (m) {
+	/* surface attached to an NMG model (186/144 face path) */
+	GET_FACE_G_SNURB(srf, m);
+	BU_LIST_INIT(&srf->l);
+	BU_LIST_INIT(&srf->f_hd);
+	srf->l.magic = NMG_FACE_G_SNURB_MAGIC;
+	srf->order[0] = u_order;
+	srf->order[1] = v_order;
+	srf->dir = RT_NURB_SPLIT_ROW;
+	srf->u.magic = NMG_KNOT_VECTOR_MAGIC;
+	srf->v.magic = NMG_KNOT_VECTOR_MAGIC;
+	srf->u.k_size = n_u;
+	srf->v.k_size = n_v;
+	srf->u.knots = (fastf_t *)bu_malloc(n_u * sizeof(fastf_t),
+					    "snurb_from_on: u knots");
+	srf->v.knots = (fastf_t *)bu_malloc(n_v * sizeof(fastf_t),
+					    "snurb_from_on: v knots");
+	srf->s_size[0] = n_rows;
+	srf->s_size[1] = n_cols;
+	srf->pt_type = pt_type;
+	srf->ctl_points = (fastf_t *)bu_malloc(
+	    sizeof(fastf_t) * n_rows * n_cols * ncoords,
+	    "snurb_from_on: control mesh points");
+    } else {
+	/* standalone surface (e.g. gathered by the -n path); allocate an
+	 * independent snurb with its own knot/control-point storage */
+	srf = nmg_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type);
+	if (!srf)
+	    return NULL;
+    }
 
     /* u knots: clamped end knot, ON internal knots, clamped end knot */
     srf->u.knots[0] = ns->SuperfluousKnot(0, 0);
@@ -796,9 +805,10 @@ build_offset_on(size_t entityno)
  * control points) and the M*N patches are assembled into one non-rational
  * bicubic ON_NurbsSurface: order 4 in u and v, interior breakpoints of
  * multiplicity 3 (a C0 join between cubic patches), 3*M+1 control points
- * in u and 3*N+1 in v, with adjacent patches sharing boundary CVs.  Only
- * the common cubic Cartesian case (CTYPE 3, PTYPE 1) is built; other
- * sub-cases are a graceful skip. */
+ * in u and 3*N+1 in v, with adjacent patches sharing boundary CVs.  All
+ * CTYPE fit methods are read (the stored data is always bicubic); only the
+ * Cartesian patch case (PTYPE 1) is built, other sub-cases being a graceful
+ * skip. */
 ON_NurbsSurface *
 build_spline_surf_on(size_t entityno)
 {
@@ -822,13 +832,13 @@ build_spline_surf_on(size_t entityno)
     Readint(&M, "");
     Readint(&N, "");
 
-    /* Only the cubic Cartesian case is built; anything else is a graceful
-     * skip so we never emit wrong geometry.  (Lower-degree coefficient
-     * sets are still stored as full bicubics in the file, so treating them
-     * as cubic would be exact, but we stay conservative and require the
-     * common CTYPE 3 that real files use.) */
-    if (ctype != 3) {
-	bu_log("build_spline_surf_on: spline boundary type %d not supported (only cubic, CTYPE 3), skipping D%07d (%s)\n",
+    /* Regardless of the fit method recorded in CTYPE (1=linear, 2=quadratic,
+     * 3=cubic, 4=Wilson-Fowler, 5=modified Wilson-Fowler, 6=B-spline), an
+     * IGES 114 entity always stores its patches as full bicubic polynomial
+     * coefficients (lower-degree fits simply have zero high-order terms), so
+     * every CTYPE reduces to reading the same 4x4 coefficient block. */
+    if (ctype < 1 || ctype > 6) {
+	bu_log("build_spline_surf_on: unrecognized spline boundary type %d, skipping D%07d (%s)\n",
 	       ctype, dir[entityno]->direct, dir[entityno]->name);
 	return NULL;
     }
@@ -1032,9 +1042,8 @@ build_surface_on(size_t entityno)
 extern "C" struct face_g_snurb *
 Get_iges_nurb_surf(size_t entityno, struct model *m)
 {
-    if (!m)
-	return NULL;
-
+    /* m may be NULL: standalone surfaces (e.g. gathered by the -n path) are
+     * built as independent snurbs by snurb_from_on(). */
     if (entityno >= dirarraylen) {
 	bu_log("Get_iges_nurb_surf: entity index %zu out of range (dirarraylen=%zu)\n",
 	       entityno, dirarraylen);
