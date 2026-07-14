@@ -1952,10 +1952,9 @@ Convtrimsurfs(struct bu_list *vlfree)
 
 	BU_LIST_INIT(&hit_list);
 	if (Find_pt_in_fu(fu, mid_pt, ray_dir)) {
-	    bu_log("Convtrimsurfs: Cannot find a point in fu (%p)\n", (void *)fu);
-	    char nstr[2] = {' ', '\0'};
-	    nmg_pr_fu(fu, nstr);
-	    bu_exit(1, "Convtrimsurfs: Cannot find a point in fu\n");
+	    bu_log("Convtrimsurfs: cannot find a point in fu (%p), skipping normal adjustment for this face\n",
+		   (void *)fu);
+	    continue;
 	}
 
 	/* find intersections with all the faces
@@ -1990,14 +1989,19 @@ Convtrimsurfs(struct bu_list *vlfree)
 	(void)nmg_vertex_fuse(&m->magic, vlfree, &tol);
 
 	/* Preferred output is a faithful rt_brep (OpenNURBS) built from the
-	 * trimmed NURBS faces; fall back to an NMG solid if requested (-m/-p)
-	 * or if brep construction fails. */
+	 * trimmed NURBS faces.  Fall back to an NMG solid only when the user
+	 * explicitly asked for one (-m/-p); when brep output was requested but
+	 * construction fails, write nothing so main() can import the raw
+	 * surfaces as an untrimmed brep instead of emitting an unrenderable
+	 * NMG solid. */
 	if (do_brep && iges_nmg_to_brep(fdout, nm, m, &tol)) {
 	    nmg_km(m);		/* brep did not consume the model */
-	} else {
-	    if (do_brep)
-		bu_log("Falling back to NMG for %s\n", nm);
+	} else if (!do_brep) {
 	    mk_nmg(fdout, nm, m);	/* consumes m */
+	} else {
+	    bu_log("Faithful brep construction failed for %s; "
+		   "deferring to untrimmed-surface import\n", nm);
+	    nmg_km(m);
 	}
     }
 
