@@ -1,0 +1,66 @@
+= GANALYZE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+ganalyze - command-line interface to BRL-CAD geometry analysis capabilities
+
+== SYNOPSIS
+
+[source]
+----
+ganalyze
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ganalyze* is a command-line front end to the analysis routines provided
+by BRL-CAD's *libanalyze* library. It presents a command-driven prompt
+from which geometry analysis operations can be requested.
+
+*ganalyze* runs in one of two modes, selected automatically according to
+how it is invoked:
+
+Interactive mode::
+  When standard input is a terminal, *ganalyze* presents an interactive
+  *ganalyze:* prompt with line editing and command history. The special
+  input *clear screen* clears the terminal, and *q* or *quit* exits the
+  program.
+
+Batch mode::
+  When standard input is not a terminal, *ganalyze* reads commands from
+  standard input one line at a time, which allows it to be driven from a
+  script or a pipeline.
+
+The command interpreter is under active development; at present it
+recognizes only a small set of commands (for example a *draw* command
+that names an object, and *q* / *quit* to exit). Unrecognized commands
+and commands given the wrong number of arguments are reported without
+terminating the session.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *gqa*(1), *mged*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2019-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

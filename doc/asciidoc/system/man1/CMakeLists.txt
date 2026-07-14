@@ -15,6 +15,7 @@ set(
   asc-plot3.adoc
   asc2dsp.adoc
   asc2g.adoc
+  beset.adoc
   bolt.adoc
   bombardier.adoc
   bot_dump.adoc
@@ -119,6 +120,9 @@ set(
   g-vrml.adoc
   g-x3d.adoc
   g2asc.adoc
+  g4-g5.adoc
+  g5-g4.adoc
+  ganalyze.adoc
   gastank.adoc
   gchecker.adoc
   gcv.adoc
@@ -132,6 +136,7 @@ set(
   gltf-g.adoc
   gqa.adoc
   gsh.adoc
+  gtransfer.adoc
   halftone.adoc
   handle.adoc
   human.adoc
@@ -260,6 +265,7 @@ set(
   umod.adoc
   ustats.adoc
   vdeck.adoc
+  walk_example.adoc
   wavelet.adoc
   wdb_example.adoc
   window.adoc

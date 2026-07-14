@@ -1,0 +1,70 @@
+= WALK_EXAMPLE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+walk_example - example of traversing a BRL-CAD database hierarchy
+
+== SYNOPSIS
+
+[source]
+----
+walk_example [-h] [-d hexflags] input.g object ...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*walk_example* is a sample application that demonstrates how to traverse a
+portion of a BRL-CAD geometry database using the *librt*(3) function
+`db_walk_tree()`. It builds a directory index for the database _input.g_
+and then walks the directed acyclic graph rooted at each named _object_
+(tree top), invoking callback routines as regions, the ends of regions,
+and leaf primitives are encountered.
+
+The program itself performs no useful work beyond illustrating the
+traversal mechanism; the leaf callback contains stub cases showing where
+per-primitive processing (for example of BOT and ARB8 primitives) would
+be added. It is intended as a starting point for writing custom database
+parsers and analysis tools.
+
+At least one _object_ name must be supplied in addition to the database
+file.
+
+
+[[options]]
+== OPTIONS
+
+*-h*::
+  Print a usage message and exit.
+
+*-d hexflags*::
+  Set the internal debug flags to the given hexadecimal value. When the
+  name-printing bit is set, the name of each region and leaf is echoed as
+  it is visited during the traversal.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *librt*(3)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
