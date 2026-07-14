@@ -80,6 +80,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <vector>
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -172,6 +173,17 @@
 struct resource* resources;
 size_t samples = 25;
 size_t light_intensity = 200; // make ambient light match rt
+
+/* Light-source regions discovered while walking the .g database in
+ * register_region().  build_project() turns each into an Appleseed light at
+ * its model-space centroid; if none are found it falls back to a single
+ * default light.  Replaces the previous single hardcoded PointLight. */
+struct ArtLight {
+    std::string name;
+    double pos[3];
+    float color[3];
+};
+static std::vector<ArtLight> art_lights;
 //size_t light_intensity = 30.0;
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
@@ -476,6 +488,37 @@ register_region(struct db_tree_state* tsp,
     int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
 
     bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
+
+    /* If this region uses the BRL-CAD "light" shader, treat it as a light
+     * source rather than renderable geometry: record its centroid and color
+     * for build_project() to turn into an Appleseed light.  We intentionally
+     * do NOT emit geometry for it -- otherwise the light solid would be an
+     * opaque blob shadowing its own light.
+     *
+     * NOTE: position (region centroid) and color (region rgb) are honored;
+     * per-light "bright"/"fract" intensity from the shader string is not yet
+     * mapped -- all discovered lights share the light_intensity multiplier.
+     */
+    if (bu_vls_strlen(&combp->shader) >= 5 &&
+	bu_strncmp(bu_vls_cstr(&combp->shader), "light", 5) == 0) {
+	ArtLight L;
+	L.name = std::string(name) + "_light";
+	L.pos[0] = (min[X] + max[X]) * 0.5;
+	L.pos[1] = (min[Y] + max[Y]) * 0.5;
+	L.pos[2] = (min[Z] + max[Z]) * 0.5;
+	if (combp->rgb_valid) {
+	    L.color[0] = (float)(combp->rgb[0] / 255.0);
+	    L.color[1] = (float)(combp->rgb[1] / 255.0);
+	    L.color[2] = (float)(combp->rgb[2] / 255.0);
+	} else {
+	    L.color[0] = L.color[1] = L.color[2] = 1.0f;
+	}
+	art_lights.push_back(L);
+	bu_log("art: light source '%s' at %g %g %g\n",
+	       name, L.pos[0], L.pos[1], L.pos[2]);
+	ged_close(gedp);
+	return 0;
+    }
 
     /*
       create object paramArray to pass to constructor
@@ -828,6 +871,9 @@ build_project(const char* file, const char* UNUSED(objects))
     struct db_i* dbip = db_open(file, DB_OPEN_READONLY);
     state.ts_dbip = dbip;
 
+    /* discovered lights are collected by register_region() during the walk */
+    art_lights.clear();
+
     if (objc) {
 	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
     }
@@ -844,28 +890,60 @@ build_project(const char* file, const char* UNUSED(objects))
     // Light
     //------------------------------------------------------------------------
 
-    // Create a color called "light_intensity" and insert it into the assembly.
-    static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
-    light_intensity *= AmbientIntensity; // multiplying by factor
-    // FIXME
-    assembly->colors().insert(
-	asr::ColorEntityFactory::create(
-	    "light_intensity",
-	    asr::ParamArray()
-	    .insert("color_space", "srgb")
-	    .insert("multiplier", light_intensity),
-	    asr::ColorValueArray(3, LightRadiance)));
+    if (art_lights.empty()) {
+	// No light-source regions found in the .g database: fall back to a
+	// single default point light so the scene is still lit (this preserves
+	// the previous behavior for scenes without explicit lights).
+	static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
+	light_intensity *= AmbientIntensity; // multiplying by factor
+	// FIXME
+	assembly->colors().insert(
+	    asr::ColorEntityFactory::create(
+		"light_intensity",
+		asr::ParamArray()
+		.insert("color_space", "srgb")
+		.insert("multiplier", light_intensity),
+		asr::ColorValueArray(3, LightRadiance)));
 
-    // Create a point light called "light" and insert it into the assembly.
-    asf::auto_release_ptr<asr::Light> light(
-	asr::PointLightFactory().create(
-	    "light",
-	    asr::ParamArray()
-	    .insert("intensity", "light_intensity")));
-    light->set_transform(
-	asf::Transformd::from_local_to_parent(
-	    asf::Matrix4d::make_translation(asf::Vector3d(0.6, 2.0, 1.0))));
-    assembly->lights().insert(light);
+	// Create a point light called "light" and insert it into the assembly.
+	asf::auto_release_ptr<asr::Light> light(
+	    asr::PointLightFactory().create(
+		"light",
+		asr::ParamArray()
+		.insert("intensity", "light_intensity")));
+	light->set_transform(
+	    asf::Transformd::from_local_to_parent(
+		asf::Matrix4d::make_translation(asf::Vector3d(0.6, 2.0, 1.0))));
+	assembly->lights().insert(light);
+    } else {
+	// Create one Appleseed point light per BRL-CAD light-source region,
+	// positioned at the region's model-space centroid with its color.
+	for (size_t i = 0; i < art_lights.size(); i++) {
+	    const ArtLight& L = art_lights[i];
+
+	    std::string color_name = L.name + "_color";
+	    assembly->colors().insert(
+		asr::ColorEntityFactory::create(
+		    color_name.c_str(),
+		    asr::ParamArray()
+		    .insert("color_space", "srgb")
+		    .insert("multiplier", light_intensity),
+		    asr::ColorValueArray(3, L.color)));
+
+	    asf::auto_release_ptr<asr::Light> light(
+		asr::PointLightFactory().create(
+		    L.name.c_str(),
+		    asr::ParamArray()
+		    .insert("intensity", color_name.c_str())));
+	    light->set_transform(
+		asf::Transformd::from_local_to_parent(
+		    asf::Matrix4d::make_translation(
+			asf::Vector3d(L.pos[0], L.pos[1], L.pos[2]))));
+	    assembly->lights().insert(light);
+	}
+	bu_log("art: created %zu light(s) from .g light-source region(s)\n",
+	       art_lights.size());
+    }
 
     //------------------------------------------------------------------------
     // Assembly instance
