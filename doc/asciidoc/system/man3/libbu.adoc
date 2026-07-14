@@ -1,84 +1,70 @@
-= Command History Object Documentation
-Mark L. Ulferts <mulferts@austin.dsccc.com>; Glenn Durfee
-:doctype: book
-:toc:
-:toclevels: 3
+= LIBBU(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
 
-== 
+== NAME
+libbu - BRL-CAD utility library
 
-=== Name
+== SYNOPSIS
 
-ch_open - create and manipulate a command history object.
-
-
-=== SYNOPSIS
-
-__ch_open__[_chName_]
-
-
-=== DESCRIPTION
-
-The *ch_open* command creates a new command history object (given by the _chName_ argument). The *ch_open* command returns its _chName_ argument. At the time this command is invoked, there must not exist a command history object named _chName_.
-
-
-=== METHODS
-
-The *ch_open* command creates a new Tcl command whose name is _chName_. This command may be used to invoke various operations on the command history object. It has the following general form:
-
-_chName option ?arg arg ...?_
-
-_Option_ and the _args_ determine the exact behavior of the command. The following commands are possible for command history objects:
-
-_chName_ *add command_string _chName_ *addM* command_string*
-
-Add a command to the history and reset the current command pointer.
-
-_chName_ *curr*
-
-Return the current command in the history.
-
-_chName_ *history*
-
-Return the entire history.
-
-_chName_ *next*
-
-Return the next command in the history making that the current command.
-
-_chName_ *prev*
-
-Return the previous command in the history making that the current command.
-
-
-=== EXAMPLE
-
-The following sequence creates a command history object, adds commands and traverses the history.
-
-
-
-
+[source,c]
+----
+#include <bu.h>
 ----
 
-cwish> ch_open ch
-ch
-cwish> ch add "cmd1"
-cwish> ch add "cmd2"
-cwish> ch prev
-cmd2
-cwish> ch prev
-cmd1
-cwish> ch curr
-cmd1
-cwish> ch add "cmd3"
-cwish> ch prev
-cmd3
-cwish> ch prev
-cmd2
-cwish> ch next
-cmd3
-cwish> ch next
-cwish> ch history
-cmd1
-cmd2
-cmd3
-----
+Link with *-lbu*.
+
+The public interface is organized across the headers included by
+_bu.h_, including _bu/app.h_, _bu/avs.h_, _bu/bitv.h_, _bu/cmd.h_,
+_bu/color.h_, _bu/list.h_, _bu/log.h_, _bu/malloc.h_, _bu/opt.h_,
+_bu/parallel.h_, _bu/ptbl.h_, _bu/str.h_, and _bu/vls.h_, among others.
+
+== DESCRIPTION
+
+LIBBU is BRL-CAD's utility library; the two letters "BU" stand for
+"BRL-CAD" and "Utility". It provides several layers of low-level utility
+routines that make cross-platform coding easier, serving as a general
+extension to the data types offered by the C language and to the basic C
+runtime provided by the system C library.
+
+Facilities provided by the library include parallel-processing support
+(threads, semaphores, and parallel-safe memory allocation), consolidated
+logging and error handling (_bu_log()_, _bu_exit()_, and _bu_bomb()_),
+dynamic memory management (_bu_malloc()_ and related routines),
+variable-length strings (_struct bu_vls_), linked lists, pointer and
+bit vectors, attribute/value sets, command dispatch, option parsing, and
+numerous string and path helpers. All routines in LIBBU are designed to
+be parallel-safe (thread-safe) to ease development for multiprocessor
+systems.
+
+By design, none of the routines in this library depend on data types
+defined in other BRL-CAD headers such as _vmath.h_; numerical routines
+that build on those types are found in libbn. All truly fatal errors
+detected by the library use _bu_bomb()_ to exit with a status of 12, and
+the LIBBU variants of system calls (for example _bu_malloc()_) do not
+return to the caller unless they succeed, sparing the programmer from
+constant NULL checks.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBBU module.
+
+== SEE ALSO
+
+*brlcad*(1), *libbn*(3), *libbg*(3), *librt*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBBU routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
