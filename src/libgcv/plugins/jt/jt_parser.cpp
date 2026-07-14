@@ -604,7 +604,9 @@ File::int32_packet2(uint64_t offset, Predictor predictor, std::vector<int32_t> &
 		error = "invalid JT Int32 CDP2 Bitlength code text size";
 		return false;
 	    }
-	    const bool revised_bitlength = header_.major_version >= 10;
+	    /* The Int32 CDP2 (Load2) path always uses the revised (word-aligned
+	     * Bitlength2) CODEC, in both JT 9.x and 10.x. */
+	    const bool revised_bitlength = true;
 	    const size_t byte_count = revised_bitlength ?
 		((static_cast<size_t>(bit_count) + 31) / 32) * sizeof(uint32_t) :
 		(static_cast<size_t>(bit_count) + 7) / 8;
@@ -881,23 +883,52 @@ File::topological_mesh(const Element &element, Mesh &mesh, std::string &error) c
 	return false;
     }
     Reader reader(bytes_, header_.little_endian, static_cast<size_t>(element.data_offset));
-    uint8_t base_version = 0;
-    uint8_t vertex_lod_version = 0;
-    uint64_t outer_bindings = 0;
-    uint32_t nested_length = 0;
-    Guid nested_type{};
-    uint8_t nested_base_type = 0;
-    int32_t nested_object_id = 0;
-    uint8_t topomesh_version = 0;
-    int32_t vertex_records_id = 0;
-    uint8_t topology_version = 0;
-    if (!reader.u8(base_version) || !reader.u8(vertex_lod_version) || !reader.u64(outer_bindings) ||
-	!reader.u32(nested_length) || !read_guid(reader, nested_type) || !reader.u8(nested_base_type) ||
-	!reader.i32(nested_object_id) || !reader.u8(topomesh_version) || !reader.i32(vertex_records_id) ||
-	!reader.u8(topology_version) || base_version != 1 || vertex_lod_version != 1 || nested_base_type != 9 ||
-	topomesh_version != 1 || topology_version != 1) {
-	error = "invalid JT topologically compressed mesh header";
-	return false;
+    if (header_.major_version >= 10) {
+	/* JT 10.x wraps the Topologically Compressed Rep in a nested logical
+	 * element (length, GUID, base type, object id) with u8 version words. */
+	uint8_t base_version = 0;
+	uint8_t vertex_lod_version = 0;
+	uint64_t outer_bindings = 0;
+	uint32_t nested_length = 0;
+	Guid nested_type{};
+	uint8_t nested_base_type = 0;
+	int32_t nested_object_id = 0;
+	uint8_t topomesh_version = 0;
+	int32_t vertex_records_id = 0;
+	uint8_t topology_version = 0;
+	if (!reader.u8(base_version) || !reader.u8(vertex_lod_version) || !reader.u64(outer_bindings) ||
+	    !reader.u32(nested_length) || !read_guid(reader, nested_type) || !reader.u8(nested_base_type) ||
+	    !reader.i32(nested_object_id) || !reader.u8(topomesh_version) || !reader.i32(vertex_records_id) ||
+	    !reader.u8(topology_version) || base_version != 1 || vertex_lod_version != 1 || nested_base_type != 9 ||
+	    topomesh_version != 1 || topology_version != 1) {
+	    error = "invalid JT 10 topologically compressed mesh header";
+	    return false;
+	}
+	(void)outer_bindings;
+	(void)nested_length;
+	(void)nested_object_id;
+	(void)vertex_records_id;
+    } else {
+	/* JT 9.x uses a flat layout with 16-bit version words and no nested
+	 * element: base ver, vertex-LOD ver, VertexBinding2, TopoMesh-LOD ver,
+	 * TriID, and the Compressed-Rep-Data version, then the symbol streams. */
+	uint16_t base_version = 0;
+	uint16_t vertex_lod_version = 0;
+	uint64_t bindings = 0;
+	uint16_t topomesh_lod_version = 0;
+	int32_t tri_id = 0;
+	uint16_t comp_rep_version = 0;
+	if (!reader.u16(base_version) || !reader.u16(vertex_lod_version) || !reader.u64(bindings) ||
+	    !reader.u16(topomesh_lod_version) || !reader.i32(tri_id) || !reader.u16(comp_rep_version)) {
+	    error = "invalid JT 9 topologically compressed mesh header";
+	    return false;
+	}
+	(void)base_version;
+	(void)vertex_lod_version;
+	(void)bindings;
+	(void)topomesh_lod_version;
+	(void)tri_id;
+	(void)comp_rep_version;
     }
 
     TopologySymbols symbols;
@@ -970,8 +1001,8 @@ File::topological_mesh(const Element &element, Mesh &mesh, std::string &error) c
     struct Quantizer { float minimum; float maximum; uint8_t bits; } quantizers[3] = {};
     for (Quantizer &quantizer : quantizers) {
 	if (!vertex_reader.f32(quantizer.minimum) || !vertex_reader.f32(quantizer.maximum) ||
-	    !vertex_reader.u8(quantizer.bits) || quantizer.bits != 0) {
-	    error = "only lossless JT 10 topological coordinates are currently supported";
+	    !vertex_reader.u8(quantizer.bits) || quantizer.bits > 32) {
+	    error = "invalid JT topological coordinate quantizer";
 	    return false;
 	}
     }
@@ -983,12 +1014,25 @@ File::topological_mesh(const Element &element, Mesh &mesh, std::string &error) c
 	    return false;
 	}
     }
+    /* Coordinates are either lossless (bits==0, the integer is the raw IEEE-754
+     * bit pattern) or uniformly quantized: value = min + (code - 0.5)*(max-min)/2^bits. */
     mesh.vertices.reserve(static_cast<size_t>(coordinate_count) * 3);
     for (size_t i = 0; i < static_cast<size_t>(coordinate_count); ++i) {
-	for (const std::vector<int32_t> &component : coordinates) {
-	    const uint32_t bits = static_cast<uint32_t>(component[i]);
-	    float coordinate = 0.0f;
-	    std::memcpy(&coordinate, &bits, sizeof(coordinate));
+	for (size_t c = 0; c < 3; ++c) {
+	    const Quantizer &quantizer = quantizers[c];
+	    const uint32_t code = static_cast<uint32_t>(coordinates[c][i]);
+	    double coordinate;
+	    if (quantizer.bits != 0) {
+		const double max_code = quantizer.bits >= 32 ? 4294967295.0 :
+		    static_cast<double>(static_cast<uint32_t>(1) << quantizer.bits);
+		coordinate = static_cast<double>(quantizer.minimum) +
+		    (static_cast<double>(code) - 0.5) *
+		    (static_cast<double>(quantizer.maximum) - static_cast<double>(quantizer.minimum)) / max_code;
+	    } else {
+		float value = 0.0f;
+		std::memcpy(&value, &code, sizeof(value));
+		coordinate = value;
+	    }
 	    if (!std::isfinite(coordinate)) {
 		error = "JT topological coordinate is not finite";
 		return false;
@@ -1009,12 +1053,8 @@ File::topological_mesh(const Element &element, Mesh &mesh, std::string &error) c
 	error = "JT topological mesh contains no triangles";
 	return false;
     }
-    (void)outer_bindings;
     (void)bindings;
     (void)attribute_count;
-    (void)nested_length;
-    (void)nested_object_id;
-    (void)vertex_records_id;
     return true;
 }
 
@@ -1187,14 +1227,17 @@ File::legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const
 	error = "JT 8 triangle strip index list has no valid boundaries";
 	return false;
     }
+    /* The JT 8 Primitive List Indices are direct vertex indices into the
+     * (per-vertex) raw vertex array -- not byte or float offsets.  The last
+     * entry equals the total vertex count and each entry marks a strip start. */
     std::vector<size_t> starts;
     starts.reserve(primitive_starts.size());
     for (int32_t start : primitive_starts) {
-	if (start < 0 || static_cast<size_t>(start) % floats_per_vertex != 0) {
+	if (start < 0) {
 	    error = "invalid JT 8 triangle strip boundary";
 	    return false;
 	}
-	const size_t vertex = static_cast<size_t>(start) / floats_per_vertex;
+	const size_t vertex = static_cast<size_t>(start);
 	if (vertex > vertex_count || (!starts.empty() && vertex < starts.back())) {
 	    error = "JT 8 triangle strip boundary is outside the vertex data";
 	    return false;
