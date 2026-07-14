@@ -777,6 +777,7 @@ brlcad_add_test(NAME bu_hook_basic COMMAND bu_test test_hook basic)
 brlcad_add_test(NAME bu_hook_multiadd COMMAND bu_test test_hook multiadd)
 brlcad_add_test(NAME bu_hook_saverestore COMMAND bu_test test_hook saverestore)
 brlcad_add_test(NAME bu_log_mutation COMMAND bu_test test_log mutation)
+brlcad_add_test(NAME bu_log_nonblocking COMMAND bu_test test_log nonblocking)
 brlcad_add_test(NAME bu_log_parallel COMMAND bu_test test_log parallel)
 brlcad_add_test(NAME bu_log_recursive COMMAND bu_test test_log recursive)
 

@@ -12,9 +12,12 @@
 #include "common.h"
 
 #include <atomic>
+#include <chrono>
+#include <string>
 #include <thread>
 #include <vector>
 
+#include "bio.h"
 #include "bu.h"
 
 
@@ -136,6 +139,85 @@ test_log_mutation(void)
 }
 
 
+/* A terminal or pipe can be made non-blocking by another subsystem.  bu_log
+ * must wait for room and preserve the complete message rather than bombing
+ * after a short write. */
+static int
+test_log_nonblocking(void)
+{
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
+    printf("\nbu_log_nonblocking SKIPPED");
+    return BRLCAD_OK;
+#else
+    int pipe_fd[2] = {-1, -1};
+    int saved_stderr = -1;
+    int flags;
+    int ret = BRLCAD_ERROR;
+    bool reader_started = false;
+    const size_t msg_len = 128 * 1024;
+    std::string message(msg_len, 'x');
+    std::string received;
+    std::thread reader;
+
+    message[msg_len - 1] = '\n';
+    if (pipe(pipe_fd) != 0)
+	goto cleanup;
+
+    saved_stderr = dup(fileno(stderr));
+    if (saved_stderr < 0 || dup2(pipe_fd[1], fileno(stderr)) < 0)
+	goto cleanup;
+    close(pipe_fd[1]);
+    pipe_fd[1] = -1;
+
+    flags = fcntl(fileno(stderr), F_GETFL);
+    if (flags < 0 || fcntl(fileno(stderr), F_SETFL, flags | O_NONBLOCK) < 0)
+	goto cleanup;
+
+    reader = std::thread([&]() {
+	char buffer[4096];
+	std::this_thread::sleep_for(std::chrono::milliseconds(20));
+	while (received.size() < message.size()) {
+	    size_t remain = message.size() - received.size();
+	    ssize_t count = read(pipe_fd[0], buffer,
+		remain < sizeof(buffer) ? remain : sizeof(buffer));
+	    if (count <= 0)
+		return;
+	    received.append(buffer, (size_t)count);
+	}
+    });
+    reader_started = true;
+
+    bu_log("%s", message.c_str());
+    reader.join();
+    reader_started = false;
+
+    if (received == message)
+	ret = BRLCAD_OK;
+
+cleanup:
+    if (reader_started && reader.joinable())
+	reader.join();
+    if (saved_stderr >= 0) {
+	(void)dup2(saved_stderr, fileno(stderr));
+	close(saved_stderr);
+	clearerr(stderr);
+    }
+    if (pipe_fd[0] >= 0)
+	close(pipe_fd[0]);
+    if (pipe_fd[1] >= 0)
+	close(pipe_fd[1]);
+
+    if (ret != BRLCAD_OK) {
+	printf("\nbu_log_nonblocking FAILED");
+	return BRLCAD_ERROR;
+    }
+
+    printf("\nbu_log_nonblocking PASSED");
+    return BRLCAD_OK;
+#endif
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -143,10 +225,12 @@ main(int argc, char *argv[])
 	bu_setprogname(argv[0]);
 
     if (argc != 2)
-	bu_exit(1, "Usage: %s {mutation|parallel|recursive}\n", argv[0]);
+	bu_exit(1, "Usage: %s {mutation|nonblocking|parallel|recursive}\n", argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "mutation"))
 	return test_log_mutation();
+    if (BU_STR_EQUAL(argv[1], "nonblocking"))
+	return test_log_nonblocking();
     if (BU_STR_EQUAL(argv[1], "parallel"))
 	return test_log_parallel();
     if (BU_STR_EQUAL(argv[1], "recursive"))

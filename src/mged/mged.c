@@ -1635,7 +1635,8 @@ void
 stdin_input(ClientData clientData, int UNUSED(mask))
 {
     int count;
-    char ch;
+    int to_read;
+    char buf[BU_PAGE_SIZE];
     struct stdio_data *sd = (struct stdio_data *)clientData;
     struct mged_state *s = sd->s;
 
@@ -1759,21 +1760,19 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	return;
     }
 
-    /*XXXXX*/
-#define TRY_STDIN_INPUT_HACK
-#ifdef TRY_STDIN_INPUT_HACK
-    /* Grab everything --- assuming everything is <= page size */
-    {
-	char buf[BU_PAGE_SIZE];
+    /* Tcl_Read on a blocking channel waits to satisfy its entire request.
+     * Read one byte first, which a readable-channel notification guarantees
+     * is available.  Then drain only input Tcl has already buffered; this
+     * preserves paste performance without risking another blocking read.
+     *
+     * Keeping the canonical stdin channel blocking is important: changing
+     * it to non-blocking can also change stdout/stderr when a terminal
+     * supplied all three descriptors from the same open file description.
+     */
+    to_read = 1;
+    for (;;) {
 	int idx;
-	/* Use Tcl_Read on the channel — consistent with how the channel handler
-	 * was registered and works cross-platform (POSIX and Windows). */
-	count = Tcl_Read(sd->chan, buf, BU_PAGE_SIZE);
-
-#else
-	/* Grab single character from stdin */
-	count = Tcl_Read(sd->chan, &ch, 1);
-#endif
+	count = Tcl_Read(sd->chan, buf, to_read);
 
 	if (count < 0)
 	    perror("READ ERROR");
@@ -1783,30 +1782,29 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    return;
 	}
 
-	/* On a non-blocking channel Tcl_Read returns 0 for EAGAIN (no data
-	 * available right now).  Guard here so we don't crash on buf[0]. */
 	if (count <= 0)
 	    return;
 
 	if (buf[0] == '\0')
 	    bu_bomb("Read a buf with a 0 starting it?\n");
 
-#ifdef TRY_STDIN_INPUT_HACK
-	/* Process everything in buf */
-	for (idx = 0, ch = buf[idx]; idx < count; ch = buf[++idx]) {
-	    int c = ch;
+	for (idx = 0; idx < count; idx++) {
+	    int c = buf[idx];
 
-	    /* explicit input sanitization */
+	    /* Preserve the legacy line editor's byte sanitization. */
 	    if (c < 0)
 		c = 0;
 	    if (c > CHAR_MAX)
 		c = CHAR_MAX;
-#endif
 	    mged_process_char(s, c);
-#ifdef TRY_STDIN_INPUT_HACK
 	}
+
+	to_read = Tcl_InputBuffered(sd->chan);
+	if (to_read <= 0)
+	    break;
+	if (to_read > BU_PAGE_SIZE)
+	    to_read = BU_PAGE_SIZE;
     }
-#endif
 }
 
 void
@@ -3162,17 +3160,16 @@ main(int argc, char *argv[])
 	    mged_finish(s, 1);
 	}
 
-	/* Set non-blocking mode so that Tcl_Read/Tcl_Gets inside the channel
-	 * handler returns whatever bytes are immediately available rather than
-	 * looping until the full requested count is accumulated.  Without this,
-	 * Tcl_Read(chan, buf, BU_PAGE_SIZE) on a blocking channel calls read()
-	 * repeatedly in cbreak mode — each call returning just one character —
-	 * until 4096 characters have been accumulated, permanently stalling the
-	 * event loop. */
-	Tcl_SetChannelOption(NULL, sd->chan, "-blocking", "0");
-
 	s->stdin_chan = sd->chan;
 	s->stdin_data = sd;
+	/* Tcl_Gets needs a non-blocking channel in the non-cbreak path: a
+	 * readable pipe may contain only a partial line, and Tcl_Gets otherwise
+	 * waits for its newline from inside the event callback.  Cbreak input
+	 * instead reads one guaranteed-ready byte, so leave its terminal channel
+	 * blocking; changing terminal status flags here can also affect its
+	 * stdout/stderr descriptors. */
+	if (!cbreak_mode)
+	    Tcl_SetChannelOption(NULL, sd->chan, "-blocking", "0");
 	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
 
 #ifdef SIGINT

@@ -20,14 +20,17 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
 
+#include "bio.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 
 
 /**
@@ -42,6 +45,100 @@ int BU_SEM_LOG_HOOK;
 static int log_first_time = 1;
 static THREADLOCAL int log_hooks_called = 0;
 static int log_indent_level = 0;
+
+
+/* A log call has historically blocked until its output is accepted.  Preserve
+ * that behavior if an application has made its standard stream non-blocking. */
+static int
+log_retryable_error(int error)
+{
+    if (error == EINTR || error == EAGAIN)
+	return 1;
+#ifdef EWOULDBLOCK
+    if (error == EWOULDBLOCK)
+	return 1;
+#endif
+    return 0;
+}
+
+
+/*
+ * Write all of a log message through a standard-stream file descriptor.
+ * stdio is unsuitable here: after a short non-blocking write it may accept
+ * additional bytes into its private buffer, making the retry boundary
+ * unknowable.  Raw writes have an unambiguous partial-write result on both
+ * the POSIX and Microsoft CRT interfaces.  The caller holds BU_SEM_SYSCALL.
+ *
+ * Returns 1 on success, 0 when no part of this message was written, and -1
+ * when an unrecoverable error follows a partial write.
+ */
+static int
+log_std_stream_write(FILE *fp, const char *buf, size_t len)
+{
+    size_t written = 0;
+    int fd;
+
+    if (!fp || !buf || !len)
+	return 0;
+
+    fd = fileno(fp);
+    if (fd < 0)
+	return 0;
+
+    while (written < len) {
+	size_t to_write = len - written;
+	int ret;
+
+	if (to_write > BU_PAGE_SIZE)
+	    to_write = BU_PAGE_SIZE;
+	errno = 0;
+#ifdef HAVE_WINDOWS_H
+	ret = _write(fd, buf + written, (unsigned int)to_write);
+#else
+	ret = (int)write(fd, buf + written, to_write);
+#endif
+	if (ret > 0) {
+	    written += (size_t)ret;
+	    continue;
+	}
+
+	int error = errno;
+	if (ret < 0 && log_retryable_error(error)) {
+	    if (error != EINTR)
+		(void)bu_snooze(1000);
+	    continue;
+	}
+
+	return written ? -1 : 0;
+    }
+    return 1;
+}
+
+
+static int
+log_output(const char *buf, size_t len, int set_line_buffer)
+{
+    int ret = 0;
+
+    if (stderr != NULL) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	if (set_line_buffer && UNLIKELY(log_first_time)) {
+	    bu_setlinebuf(stderr);
+	    log_first_time = 0;
+	}
+	ret = log_std_stream_write(stderr, buf, len);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+
+    /* Only fall back when stderr accepted none of this message. */
+    if (ret == 0 && stdout != NULL) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	ret = log_std_stream_write(stdout, buf, len);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+
+    return ret;
+}
 
 
 void
@@ -156,23 +253,13 @@ log_do_indent_level(struct bu_vls *new_vls, register const char *old_vls)
 void
 bu_putchar(int c)
 {
-    int ret = EOF;
     char buf[2];
 
     buf[0] = (char)c;
     buf[1] = '\0';
 
     if (!log_call_hooks(buf)) {
-
-	if (LIKELY(stderr != NULL)) {
-	    ret = fputc(c, stderr);
-	}
-
-	if (UNLIKELY(ret == EOF && stdout)) {
-	    ret = fputc(c, stdout);
-	}
-
-	if (UNLIKELY(ret == EOF)) {
+	if (UNLIKELY(log_output(buf, 1, 0) != 1)) {
 	    bu_bomb("bu_putchar: write error");
 	}
     }
@@ -214,35 +301,14 @@ bu_log(const char *fmt, ...)
     len = bu_vls_strlen(&output);
 
     if (!log_call_hooks(bu_vls_addr(&output))) {
-	size_t ret = 0;
-
 	if (UNLIKELY(len <= 0)) {
 	    bu_vls_free(&output);
 	    return len;
 	}
 
-	if (LIKELY(stderr != NULL)) {
+	if (UNLIKELY(log_output(bu_vls_addr(&output), len, 1) != 1)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    if (UNLIKELY(log_first_time)) {
-		bu_setlinebuf(stderr);
-		log_first_time = 0;
-	    }
-	    ret = fwrite(bu_vls_addr(&output), len, 1, stderr);
-	    fflush(stderr);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-
-	if (UNLIKELY(ret == 0 && stdout)) {
-	    /* if stderr fails, try stdout instead */
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fwrite(bu_vls_addr(&output), len, 1, stdout);
-	    fflush(stdout);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-
-	if (UNLIKELY(ret == 0)) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    perror("fwrite failed");
+	    perror("write failed");
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	    bu_bomb("bu_log: write error");
 	}
@@ -277,9 +343,8 @@ bu_flog(FILE *fp, const char *fmt, ...)
     len = bu_vls_strlen(&output);
 
     if (!log_call_hooks(bu_vls_addr(&output))) {
-	size_t ret;
-
 	if (LIKELY(len)) {
+	    size_t ret;
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = fwrite(bu_vls_addr(&output), len, 1, fp);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
