@@ -6,6 +6,19 @@
 == NAME
 brlcad - BRL-CAD programs for solid modeling, raytracing, graphics, and image processing
 
+== SYNOPSIS
+
+[source]
+----
+brlcad
+----
+
+*brlcad* is not a single program but the name of the overall software
+suite; it is a collection of many individual tools. Refer to the man
+page for a specific command (for example *mged*(1) or *rt*(1)) for that
+command's own synopsis and options.
+
+
 [[description]]
 == DESCRIPTION
 
@@ -33,7 +46,7 @@ A "message-passing" interface layered on top of TCP network links, to ease const
 
 
 *libfb*::
-A generic frame-buffer library which includes support for a number of display devices, as well as file, network, and debugging interfaces. Most programs which use this library have the letters "fb" in their names. To override your system default frame-buffer, the environment variable `FB_FILE` can be set. In addition, some commands also support a *-F* _framebuffer_ option. Note that the disk file format of _libfb_ is that of *pix*(5), allowing "framebuffer" files to be later processed by any of the "pix" family of programs. See *libfb*(3), *pix-fb*(3), *pix*(5), etc.
+A generic frame-buffer library which includes support for a number of display devices, as well as file, network, and debugging interfaces. Most programs which use this library have the letters "fb" in their names. To override your system default frame-buffer, the environment variable `FB_FILE` can be set. In addition, some commands also support a *-F* _framebuffer_ option. Note that the disk file format of _libfb_ is that of *pix*(5), allowing "framebuffer" files to be later processed by any of the "pix" family of programs. See *pix-fb*(1), *pix*(5), etc.
 
 
 *fbserv*::
@@ -41,11 +54,11 @@ TCP-based network server which implements remote frame-buffer services.
 
 
 *libplot3*::
-A public-domain version of the UNIX-Plot library which differs from that of the standard *libplot*(3), by the addition of 3-D primitives, color, floating point coordinate routines, and the use of a file pointer parameter. See *libplot3*(3), *plot3*(5).
+A public-domain version of the UNIX-Plot library which differs from that of the standard *libplot*(3), by the addition of 3-D primitives, color, floating point coordinate routines, and the use of a file pointer parameter. See *plot3*(5).
 
 
 *librle*::
-A Run-Length-Encoding (RLE) library, providing functions originally from the University of Utah in a library package. Note that the current version of this library reads Edition-3 RLE files. See *rle-fb*(1), *fb-rle*(1), *rle-pix*(1), *pix-rle*(1), *librle*(3).
+A Run-Length-Encoding (RLE) library, providing functions originally from the University of Utah in a library package. Note that the current version of this library reads Edition-3 RLE files. See *rle-fb*(1), *fb-rle*(1), *rle-pix*(1), *pix-rle*(1).
 
 
 *util*::
@@ -65,7 +78,7 @@ Whenever a framebuffer is needed, and the *-F* option has not been specified, th
 
 If `FB_FILE` is not set, the default for your system will be used.
 
-The use of `/dev/` before the __device_name__ is simply to distinguish them from filenames. See the end of the *libfb*(3) manual page for a list of the device names and the meanings of any _num_ parameters they may take, and for a more detailed discussion.
+The use of `/dev/` before the __device_name__ is simply to distinguish them from filenames.
 
 
 [[options]]
