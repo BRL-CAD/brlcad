@@ -182,6 +182,8 @@ struct ArtLight {
     std::string name;
     double pos[3];
     float color[3];
+    double bright;	/* raw "bright"/lt_intensity from shader (default 1.0) */
+    double fract;	/* "fract"/lt_fraction; <0 => derive from bright */
 };
 static std::vector<ArtLight> art_lights;
 //size_t light_intensity = 30.0;
@@ -451,6 +453,52 @@ art_validate_options(void)
 namespace asf = foundation;
 namespace asr = renderer;
 
+/* Extract the BRL-CAD "light" shader's intensity controls from a region's
+ * shader string.  We cannot use bu_struct_parse() here: liboptical's
+ * light_parse table is static, and bu_struct_parse() aborts on the first key
+ * it doesn't know (angle, target, visible, ...), so it would fail on real
+ * light specs.  Instead tokenize manually, which is robust to unknown keys.
+ *
+ * Recognizes bright|b|inten -> bright, and fract|f -> fract, matching the
+ * aliases in liboptical/sh_light.c.  Defaults mirror that shader: bright=1.0,
+ * fract=-1.0 (meaning "derive it later").
+ */
+static void
+art_parse_light_intensity(const struct bu_vls* shader, double* bright, double* fract)
+{
+    *bright = 1.0;
+    *fract = -1.0;
+
+    const char* s = bu_vls_cstr(shader);
+    if (bu_strncmp(s, "light", 5) == 0)
+	s += 5;		/* skip the shader name */
+
+    struct bu_vls norm = BU_VLS_INIT_ZERO;
+    bu_vls_strcpy(&norm, s);
+
+    /* turn key/value separators into spaces so one whitespace tokenizer
+     * handles both "key=value" and list "{key value}" forms */
+    for (char* cp = bu_vls_addr(&norm); *cp; cp++) {
+	if (*cp == '=' || *cp == '{' || *cp == '}' || *cp == ';' || *cp == ',')
+	    *cp = ' ';
+    }
+
+    size_t maxtok = bu_vls_strlen(&norm) / 2 + 2;
+    char** av = (char**)bu_calloc(maxtok + 1, sizeof(char*), "art light argv");
+    size_t ac = bu_argv_from_string(av, maxtok, bu_vls_addr(&norm));
+
+    for (size_t i = 0; i + 1 < ac; i++) {
+	if (BU_STR_EQUAL(av[i], "bright") || BU_STR_EQUAL(av[i], "b") || BU_STR_EQUAL(av[i], "inten"))
+	    *bright = atof(av[i + 1]);
+	else if (BU_STR_EQUAL(av[i], "fract") || BU_STR_EQUAL(av[i], "f"))
+	    *fract = atof(av[i + 1]);
+    }
+
+    bu_free(av, "art light argv");
+    bu_vls_free(&norm);
+}
+
+
 /* db_walk_tree() callback to register all regions within the scene
  * using either a disney shader with rgb color set on combination regions
  * or specified material OSL optical shader
@@ -513,9 +561,10 @@ register_region(struct db_tree_state* tsp,
 	} else {
 	    L.color[0] = L.color[1] = L.color[2] = 1.0f;
 	}
+	art_parse_light_intensity(&combp->shader, &L.bright, &L.fract);
 	art_lights.push_back(L);
-	bu_log("art: light source '%s' at %g %g %g\n",
-	       name, L.pos[0], L.pos[1], L.pos[2]);
+	bu_log("art: light source '%s' at %g %g %g (bright=%g)\n",
+	       name, L.pos[0], L.pos[1], L.pos[2], L.bright);
 	ged_close(gedp);
 	return 0;
     }
@@ -916,10 +965,24 @@ build_project(const char* file, const char* UNUSED(objects))
 		asf::Matrix4d::make_translation(asf::Vector3d(0.6, 2.0, 1.0))));
 	assembly->lights().insert(light);
     } else {
+	// Normalize intensities the way liboptical/sh_light.c does: a light's
+	// fraction is bright/max_bright unless it explicitly set "fract", so the
+	// brightest light gets the full light_intensity and dimmer lights scale
+	// down proportionally.
+	double max_bright = 0.0;
+	for (size_t i = 0; i < art_lights.size(); i++) {
+	    if (art_lights[i].bright > max_bright)
+		max_bright = art_lights[i].bright;
+	}
+	if (max_bright <= 0.0)
+	    max_bright = 1.0;
+
 	// Create one Appleseed point light per BRL-CAD light-source region,
 	// positioned at the region's model-space centroid with its color.
 	for (size_t i = 0; i < art_lights.size(); i++) {
 	    const ArtLight& L = art_lights[i];
+	    double fract = (L.fract > 0.0) ? L.fract : (L.bright / max_bright);
+	    double multiplier = (double)light_intensity * fract;
 
 	    std::string color_name = L.name + "_color";
 	    assembly->colors().insert(
@@ -927,7 +990,7 @@ build_project(const char* file, const char* UNUSED(objects))
 		    color_name.c_str(),
 		    asr::ParamArray()
 		    .insert("color_space", "srgb")
-		    .insert("multiplier", light_intensity),
+		    .insert("multiplier", multiplier),
 		    asr::ColorValueArray(3, L.color)));
 
 	    asf::auto_release_ptr<asr::Light> light(
