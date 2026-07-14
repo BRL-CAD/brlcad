@@ -3,6 +3,8 @@ set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(TNAME "@TNAME@")
 set(LOGFILE "@LOG_FILE@")
+set(TEST_DB "@TEST_DB@")
+set(TEST_EXPECT "@TEST_EXPECT@")
 
 set(BU_DIR_CACHE ${CBDIR}/cache_${TNAME})
 set(LIBRT_CACHE ${CBDIR}/rtcache_${TNAME})
@@ -25,17 +27,26 @@ if(NOT EXISTS "${MGED_EXEC}")
   message(FATAL_ERROR "Unable to find mged, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
 endif(NOT EXISTS "${MGED_EXEC}")
 
-# Create the .g file
+# Create the .g file, or copy a test-specific input database.
 set(GFILE "${CBDIR}/${TNAME}.g")
 execute_process(
   COMMAND "@CMAKE_COMMAND@" -E remove -f "${GFILE}"
 )
-execute_process(
-  COMMAND "${MGED_EXEC}" -c "${GFILE}" ls
-  RESULT_VARIABLE mged_result
-  OUTPUT_VARIABLE mged_log
-  ERROR_VARIABLE mged_log
-)
+if(TEST_DB)
+  execute_process(
+    COMMAND "@CMAKE_COMMAND@" -E copy "${TEST_DB}" "${GFILE}"
+    RESULT_VARIABLE mged_result
+    OUTPUT_VARIABLE mged_log
+    ERROR_VARIABLE mged_log
+  )
+else()
+  execute_process(
+    COMMAND "${MGED_EXEC}" -c "${GFILE}" ls
+    RESULT_VARIABLE mged_result
+    OUTPUT_VARIABLE mged_log
+    ERROR_VARIABLE mged_log
+  )
+endif()
 file(APPEND "${LOGFILE}" "${mged_log}")
 set(mged_log)
 if(mged_result)
@@ -45,17 +56,22 @@ endif(mged_result)
 
 # Run the core test
 execute_process(
-  COMMAND "${MGED_EXEC}" -c "${GFILE}" < "${CBDIR}/regress_${TNAME}.mged"
+  COMMAND "${MGED_EXEC}" -c "${GFILE}"
+  INPUT_FILE "${CBDIR}/regress_${TNAME}.mged"
   RESULT_VARIABLE mged_result
   OUTPUT_VARIABLE mged_log
   ERROR_VARIABLE mged_log
 )
 file(APPEND "${LOGFILE}" "${mged_log}")
-set(mged_log)
 if(mged_result)
   file(READ "${LOGFILE}" LOG)
   message(FATAL_ERROR "[mged ${TNAME}] Failure: ${mged_result}. See ${LOGFILE} for more info.\n${LOG}")
 endif(mged_result)
+if(TEST_EXPECT AND NOT mged_log MATCHES "${TEST_EXPECT}")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[mged ${TNAME}] Expected output was not found. See ${LOGFILE} for more info.\n${LOG}")
+endif()
+set(mged_log)
 
 # Clean up
 execute_process(

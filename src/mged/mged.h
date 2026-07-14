@@ -273,12 +273,11 @@ struct mged_state {
     int pipe_mode;
 
     /* Secondary Tcl interpreter used exclusively for search -exec evaluation.
-     * Created by mged_search_pre_clbk at the start of each search command,
-     * reused for all -exec callbacks during that search, and destroyed by
-     * mged_search_post_clbk when the search finishes.  NULL at all other
-     * times.  Must not be persisted across search invocations because the
-     * user environment (procs, variables) may change between searches. */
+     * search_snapshot is captured from interp before an asynchronous search
+     * starts, then replayed when the worker creates search_interp. */
     Tcl_Interp *search_interp;
+    char *search_snapshot;
+    int search_snapshot_len;
 };
 extern struct mged_state *MGED_STATE;
 

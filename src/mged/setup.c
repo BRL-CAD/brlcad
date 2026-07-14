@@ -510,9 +510,10 @@ mged_setup(struct mged_state *s)
     if (s->interp != NULL)
 	Tcl_DeleteInterp(s->interp);
 
-    /* Initialise search_interp to NULL; it will be created/destroyed around
-     * each search command by mged_search_pre_clbk / mged_search_post_clbk. */
+    /* These are created and destroyed around each search command. */
     s->search_interp = NULL;
+    s->search_snapshot = NULL;
+    s->search_snapshot_len = 0;
 
     /* Create the interpreter */
     s->interp = Tcl_CreateInterp();

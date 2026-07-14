@@ -64,6 +64,7 @@ set(
   saveview.mged
   sca_edit.mged
   sca_view.mged
+  search_exec.mged
   sed.mged
   set_perspective.mged
   setview.mged
@@ -94,6 +95,9 @@ if(TARGET mged)
     endif(TNAME STREQUAL "")
 
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}" TEST_CONTENTS)
+    if(TNAME STREQUAL "search_exec")
+      string(CONFIGURE "${TEST_CONTENTS}" TEST_CONTENTS @ONLY)
+    endif()
     file(
       WRITE
       "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}"
@@ -103,7 +107,16 @@ if(TARGET mged)
 
     set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-mged_${TNAME}.log")
 
-    brlcad_regression_test(regress-mged_${TNAME} "mged;rtarea;rt;rtcheck" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
+    set(TEST_DB "")
+    set(TEST_EXPECT "")
+    set(TEST_DEPS "mged;rtarea;rt;rtcheck")
+    if(TNAME STREQUAL "search_exec")
+      set(TEST_DB "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g")
+      set(TEST_EXPECT "PASS search -exec sourced Tcl state")
+      list(APPEND TEST_DEPS "m35.g")
+    endif()
+
+    brlcad_regression_test(regress-mged_${TNAME} "${TEST_DEPS}" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
     distclean("${LOG_FILE}")
   endforeach(testfile ${MGED_TESTS})
 
@@ -129,6 +142,7 @@ cmakefiles(
   CMakeLists.txt
   mged.tcl
   regression_resources.tcl
+  search_exec_procs.tcl
   regress-mged.cmake.in
   ${MGED_TESTS}
 )

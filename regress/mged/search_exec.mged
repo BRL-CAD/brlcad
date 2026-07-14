@@ -1,0 +1,11 @@
+puts "*** Testing search -exec with sourced Tcl state ***"
+
+source @CMAKE_CURRENT_SOURCE_DIR@/search_exec_procs.tcl
+
+search /all.g/component/power.train/r1 -maxdepth 0 -exec search_exec_global "{}" ";"
+search /all.g/component/power.train/r2 -maxdepth 0 -exec ::search_exec_test::nested::mark "{}" ";"
+search /all.g/component/power.train/r5 -maxdepth 0 -exec search_exec_alias ";"
+
+search_exec_verify
+
+puts "*** search -exec sourced Tcl state testing completed ***"

@@ -383,13 +383,22 @@ _create_search_interp(struct mged_state *s)
 	    mged_search_ged_exec, (ClientData)s,
 	    (Tcl_CmdDeleteProc *)NULL);
 
-    /* Sync the main interp state (procs, variables, namespaces).
+    /* Sync the main interp state (procs, variables, namespaces, aliases).
      * This must happen BEFORE installing the custom 'unknown' proc below,
      * because the snapshot includes the standard Tcl 'unknown' and replaying
      * it would overwrite our bridge if we installed it first. */
-    Tcl_Obj *snap = BuildInterpSnapshot(s->interp);
+    Tcl_Obj *snap = NULL;
+    if (s->search_snapshot) {
+	snap = Tcl_NewStringObj(s->search_snapshot, s->search_snapshot_len);
+	Tcl_IncrRefCount(snap);
+    } else if (!s->cmd_running) {
+	/* Synchronous callers own the main interpreter and may snapshot it here.
+	 * An asynchronous worker must only use the snapshot captured by cmd_search. */
+	snap = BuildInterpSnapshot(s->interp);
+    }
+
     if (!snap) {
-	bu_log("search interp: BuildInterpSnapshot failed\n");
+	bu_log("search interp: no main interpreter snapshot is available\n");
     } else {
 	if (ReplayInterpSnapshot(search_interp, snap) != TCL_OK)
 	    bu_log("search interp: snapshot replay error: %s\n",
@@ -411,6 +420,38 @@ _create_search_interp(struct mged_state *s)
     }
 
     return search_interp;
+}
+
+
+static void
+_clear_search_snapshot(struct mged_state *s)
+{
+    if (s->search_snapshot)
+	bu_free(s->search_snapshot, "search Tcl snapshot");
+    s->search_snapshot = NULL;
+    s->search_snapshot_len = 0;
+}
+
+
+/* Capture on the main Tcl thread.  Tcl objects are not transferred between
+ * threads; only the snapshot's canonical list string crosses to the worker. */
+static int
+_capture_search_snapshot(struct mged_state *s)
+{
+    _clear_search_snapshot(s);
+
+    Tcl_Obj *snapshot = BuildInterpSnapshot(s->interp);
+    if (!snapshot)
+	return TCL_ERROR;
+
+    int len = 0;
+    const char *str = Tcl_GetStringFromObj(snapshot, &len);
+    s->search_snapshot = (char *)bu_malloc((size_t)len + 1, "search Tcl snapshot");
+    memcpy(s->search_snapshot, str, (size_t)len);
+    s->search_snapshot[len] = '\0';
+    s->search_snapshot_len = len;
+    Tcl_DecrRefCount(snapshot);
+    return TCL_OK;
 }
 
 
@@ -449,11 +490,10 @@ _exec_in_search_interp(Tcl_Interp *search_interp, int argc, const char *argv[])
  * PRE-execution callback for the "search" command.
  *
  * Creates a fresh, lifecycle-scoped secondary Tcl interpreter and stores it
- * in s->search_interp.  This interpreter is initialised once (snapshotting the
- * current main-interp state) and then reused for every -exec invocation fired
+ * in s->search_interp.  This interpreter replays the main-interp snapshot
+ * captured by cmd_search and is then reused for every -exec invocation fired
  * by mged_db_search_callback during this search run.  Creating the interpreter
- * here rather than inside each DURING callback avoids the overhead of repeated
- * snapshot replay.
+ * here rather than inside each DURING callback avoids repeated snapshot replay.
  *
  * If a leftover interpreter from a previously interrupted search is found it is
  * cleaned up first, so we never accumulate dangling interpreters.
@@ -2376,7 +2416,11 @@ cmd_search(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
     if (s->gedp == GED_NULL)
 	return TCL_OK;
 
+    if (_capture_search_snapshot(s) != TCL_OK)
+	bu_log("search interp: failed to capture the main Tcl interpreter state\n");
+
     ret = run_ged_async(s, [&]() -> int { return ged_exec(s->gedp, argc, (const char **)argv); });
+    _clear_search_snapshot(s);
     GED_OUTPUT;
 
     if (ret)
