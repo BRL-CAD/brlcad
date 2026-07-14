@@ -155,6 +155,10 @@
 #include "rt/db_fullpath.h"
 #include "rt/calc.h"
 #include "optical/defines.h"
+#include "icv.h"		/* image save/convert */
+#include "bu/file.h"	/* bu_file_delete */
+#include "bu/mime.h"	/* BU_MIME_IMAGE_AUTO */
+#include "bu/str.h"	/* BU_STR_EQUIV */
 
 #include "brlcad_ident.h"
 
@@ -298,7 +302,7 @@ init_defaults(void)
     background[1] = 0.80;
     background[2] = 1.0;
 
-    // option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
+    option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
     option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
     // option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
     // option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
@@ -1148,6 +1152,49 @@ def_tree(struct rt_i* rtip)
 }
 
 
+/* Write the rendered Appleseed frame to 'filename', honoring the file
+ * extension the same way rt does -- via libicv -- so BRL-CAD-native formats
+ * (.pix, .bw, .ppm, ...) work in addition to the formats Appleseed writes
+ * natively.  Output goes to exactly the requested path; unlike the older
+ * code there is no forced "output/" prefix, matching rt's -o semantics.
+ *
+ * Appleseed can only emit formats its image writer understands (png, exr,
+ * ...).  For anything else we let Appleseed produce a temporary PNG -- its
+ * color pipeline is trustworthy -- and convert that to the requested format
+ * with libicv (icv reads the sRGB 8-bit PNG and writes by extension).
+ */
+static void
+art_save_image(asr::Project& project, const char* filename)
+{
+    const char* dot = strrchr(filename, '.');
+
+    /* Formats Appleseed writes directly: skip the round-trip. */
+    if (dot && (BU_STR_EQUIV(dot, ".png") || BU_STR_EQUIV(dot, ".exr"))) {
+	project.get_frame()->write_main_image(filename);
+	return;
+    }
+
+    /* Otherwise render to a temporary PNG and convert via libicv. */
+    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&tmpname, "%s.tmp.png", filename);
+    project.get_frame()->write_main_image(bu_vls_cstr(&tmpname));
+
+    icv_image_t* img = icv_read(bu_vls_cstr(&tmpname), BU_MIME_IMAGE_AUTO, 0, 0);
+    if (img) {
+	if (icv_write(img, filename, BU_MIME_IMAGE_AUTO) != 0)
+	    bu_log("art: warning: could not write '%s'; PNG left at '%s'\n",
+		   filename, bu_vls_cstr(&tmpname));
+	else
+	    (void)bu_file_delete(bu_vls_cstr(&tmpname));
+	icv_destroy(img);
+    } else {
+	bu_log("art: warning: could not read temporary render '%s'; "
+	       "leaving it in place\n", bu_vls_cstr(&tmpname));
+    }
+    bu_vls_free(&tmpname);
+}
+
+
 static int
 art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
@@ -1199,10 +1246,9 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
     // Render the frame.
     renderer->render(renderer_controller);
 
-    // Save the frame to disk using outputfile name
-    // we append output/ directory to it for sorting
-    std::string add_base = "output/" + std::string(outputfile);
-    project->get_frame()->write_main_image(add_base.c_str());
+    // Save the frame to disk to the requested output path, honoring its
+    // extension via libicv.
+    art_save_image(project.ref(), outputfile);
 
     // Save the project to disk.
     asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
@@ -1383,10 +1429,9 @@ main(int argc, char **argv)
         // Render the frame.
         renderer->render(renderer_controller);
 
-        // Save the frame to disk using outputfile name
-        // we append output/ directory to it for sorting
-        std::string add_base = "output/" + std::string(outputfile);
-        project->get_frame()->write_main_image(add_base.c_str());
+        // Save the frame to disk to the requested output path, honoring its
+        // extension via libicv.
+        art_save_image(project.ref(), outputfile);
 
         // Save the project to disk.
         asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
@@ -1407,10 +1452,9 @@ main(int argc, char **argv)
         // Render the frame.
         renderer->render(renderer_controller);
 
-        // Save the frame to disk using outputfile name
-        // we append output/ directory to it for sorting
-        std::string add_base = "output/" + std::string(outputfile);
-        project->get_frame()->write_main_image(add_base.c_str());
+        // Save the frame to disk to the requested output path, honoring its
+        // extension via libicv.
+        art_save_image(project.ref(), outputfile);
 
         // Save the project to disk.
         asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");

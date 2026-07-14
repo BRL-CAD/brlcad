@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
+* art command-line UI/UX usability improvements - Sean Morrison
 * added new documentation on adrt rendering - Sean Morrison
 * added snail & seashell procedural geometry generator - Sean Morrison
 * rm ged command now behfaves like the system rm, kills objects&paths
