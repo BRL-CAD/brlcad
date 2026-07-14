@@ -20,6 +20,8 @@
 
 /** @file adrt.h
  *
+ * Shared ADRT definitions: network/work message opcodes, load formats, and the
+ * load_g geometry loader declaration.
  *
  */
 
