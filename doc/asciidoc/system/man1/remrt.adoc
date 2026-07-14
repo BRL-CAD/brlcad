@@ -109,7 +109,7 @@ are:
   _file.N_. With no *-o* and no *-F*, frames go to temporary files.
 
 *-F* _framebuffer_::
-  Send pixels to the named framebuffer (see *libfb*(3)).
+  Send pixels to the named framebuffer.
 
 *-M*::
   Read a model2view matrix and animation script from standard input,
@@ -202,7 +202,7 @@ the distributed-computation machinery.
 == SEE ALSO
 
 *brlcad*(1), *rt*(1), *rtsrv*(1), *mged*(1), *fbserv*(1),
-*fb-png*(1), *ssh*(1), *libfb*(3), *libpkg*(3), *librt*(3), *pix*(5)
+*fb-png*(1), *ssh*(1), *libpkg*(3), *librt*(3), *pix*(5)
 
 M. Muuss, "Workstations, Networking, Distributed Graphics, and Parallel
 Processing", in "Computer Graphics Techniques: Theory and Practice", ed:

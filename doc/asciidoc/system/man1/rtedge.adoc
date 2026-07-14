@@ -61,7 +61,7 @@ sets (see ADDITIONAL OPTIONS and OCCLUSION CHECKING).
 
 *-F* _framebuffer_::
   Send output to the named framebuffer. Required (instead of *-o*) for overlay
-  and occlusion renderings. See *libfb*(3).
+  and occlusion renderings.
 
 *-s* _#_::
   Square grid size: fire _#_ rays in X and Y (default 512, i.e. 512x512).
@@ -380,7 +380,7 @@ required for overlay and occlusion modes.
 == SEE ALSO
 
 *brlcad*(1), *rt*(1), *mged*(1), *pix-fb*(1), *dpix-pix*(1), *fbserv*(1),
-*pix*(5), *librt*(3), *libfb*(3)
+*pix*(5), *librt*(3)
 
 [[author]]
 == AUTHOR
