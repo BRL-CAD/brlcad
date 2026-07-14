@@ -4,11 +4,9 @@
 :manmanual: BRL-CAD
 
 == NAME
-librt - library for raytracing an MGED database
+librt - library for raytracing a BRL-CAD geometry database
 
 == SYNOPSIS
-This file seems to be out of date with the sources. Consult the headers for up-to-date information. Use the below interface documentation at your own discretion.
-
 
 [source,c]
 ----
@@ -49,6 +47,12 @@ To fire a ray at the model, an _application_ structure must be prepared and its 
 To obtain a report of CPU usage for a portion or portions of your program, frame the statements with calls to `rt_prep_timer()` and `rt_read_timer()`. Each call to `rt_prep_timer()` resets the timing process, after which `rt_read_timer()` can be called to get a double which is the elapsed CPU time in seconds since `rt_prep_timer()` was last called. In addition, up to `len` bytes of system-specific detailing of resource consumption is placed in the user-supplied buffer `buf`.
 
 __bu_bomb__ can be used to exit your program with _msg_ printed on the standard error output.
+
+This page describes the core ray-tracing entry points at an overview
+level. The authoritative and complete API -- including all data
+structures and function signatures -- is defined in _raytrace.h_ and the
+headers in the _rt/_ subdirectory, and is documented in the
+Doxygen-generated reference for the LIBRT module.
 
 
 [[warning]]
@@ -186,7 +190,7 @@ ____
 [[see_also]]
 == SEE ALSO
 
-*mged*(1B), *rt*(1B).
+*brlcad*(1), *mged*(1), *rt*(1), *libbu*(3), *libbn*(3), *libbg*(3), *libnmg*(3), *libbrep*(3), *libwdb*(3).
 
 
 [[diagnostics]]
