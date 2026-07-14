@@ -78,8 +78,15 @@ Add_face_to_shell(struct shell *s, size_t entityno, int face_orient, struct bu_l
 	NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
 
 	for (loop = 0; loop < no_of_loops; loop++) {
-	    if (!Add_nurb_loop_to_face(s, fu, (IGES_DE2INDEX(loop_de[loop]))))
+	    if (!Add_nurb_loop_to_face(s, fu, (IGES_DE2INDEX(loop_de[loop])))) {
+		/* the loop could not be reconstructed; drop this whole face
+		 * rather than leave a partial loop that would corrupt the
+		 * shell (the caller skips NULL faces, and an untrimmed brep
+		 * fallback still recovers the geometry) */
+		nmg_kfu(fu);
+		fu = (struct faceuse *)NULL;
 		goto err;
+	    }
 	}
 	NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
     } else if (dir[IGES_DE2INDEX(surf_de)]->type == 114 ||
@@ -125,8 +132,11 @@ Add_face_to_shell(struct shell *s, size_t entityno, int face_orient, struct bu_l
 	NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
 
 	for (loop = 0; loop < no_of_loops; loop++) {
-	    if (!Add_nurb_loop_to_face(s, fu, (IGES_DE2INDEX(loop_de[loop]))))
+	    if (!Add_nurb_loop_to_face(s, fu, (IGES_DE2INDEX(loop_de[loop])))) {
+		nmg_kfu(fu);
+		fu = (struct faceuse *)NULL;
 		goto err;
+	    }
 	}
 	NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
     } else {
