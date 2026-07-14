@@ -42,7 +42,7 @@ render_depth_work(render_t *UNUSED(render), struct tie_s *tieptr, struct tie_ray
 
     /* Visualize ray depth, must put ray->depth++ hack into bsp for this to be of any use */
     if (TIE_WORK(tieptr, ray, &id, render_hit, NULL) != NULL)
-	*pixel[0] = 0.0075 * ray->kdtree_depth;
+	(*pixel)[0] = 0.0075 * ray->kdtree_depth;
 }
 
 

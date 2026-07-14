@@ -32,6 +32,7 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "adrt.h"
 #include "adrt_struct.h"
 #include "render.h"
 
@@ -98,9 +99,9 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
 
     /* Draw spall Cone */
     if (TIE_WORK(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-	*pixel[0] = (TFLOAT)0.4;
-	*pixel[1] = (TFLOAT)0.4;
-	*pixel[2] = (TFLOAT)0.4;
+	(*pixel)[0] = (TFLOAT)0.4;
+	(*pixel)[1] = (TFLOAT)0.4;
+	(*pixel)[2] = (TFLOAT)0.4;
     }
 
     /*
@@ -151,7 +152,7 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
     dot = fabs(dot);
 
 
-    if (hit.mesh->flags == 1) {
+    if (hit.mesh->flags & ADRT_MESH_HIT) {
 	VSET(color, 0.9, 0.2, 0.2);
     } else {
 	/* Mix actual color with white 4:1, shade 50% darker */
@@ -165,9 +166,9 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
     VSCALE(color,  color,  (dot*0.50));
     VADD2(*pixel,  *pixel,  color);
 
-    *pixel[0] += (TFLOAT)0.1;
-    *pixel[1] += (TFLOAT)0.1;
-    *pixel[2] += (TFLOAT)0.1;
+    (*pixel)[0] += (TFLOAT)0.1;
+    (*pixel)[1] += (TFLOAT)0.1;
+    (*pixel)[2] += (TFLOAT)0.1;
 }
 
 

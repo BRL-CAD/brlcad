@@ -95,8 +95,9 @@ static void* shot_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri
 	    shotline->seglist[i].complete = 1;
 	    shotline->seglist[i].thickness = sqrt(id->dist) - sqrt(shotline->seglist[i].thickness);
 
-	    /* Advance to next !complete */
-	    while (shotline->seglist[shotline->segind].complete && shotline->segind <= i)
+	    /* Advance to next !complete (test the bound before indexing so the
+	     * array is never read one past the current segment) */
+	    while (shotline->segind <= i && shotline->seglist[shotline->segind].complete)
 		shotline->segind++;
 	    break;
 	}

@@ -60,16 +60,16 @@ render_component_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ra
 	    VSCALE(id.norm,  id.norm,  -1.0);
 
 	/* shade solid */
-	*pixel[0] = mesh->flags & ADRT_MESH_HIT ? 0.8 : 0.2;
-	*pixel[1] = (TFLOAT)0.2;
-	*pixel[2] = mesh->flags & ADRT_MESH_SELECT ? 0.8 : 0.2;
+	(*pixel)[0] = mesh->flags & ADRT_MESH_HIT ? 0.8 : 0.2;
+	(*pixel)[1] = (TFLOAT)0.2;
+	(*pixel)[2] = mesh->flags & ADRT_MESH_SELECT ? 0.8 : 0.2;
 	VSUB2(vec,  ray->pos,  id.pos);
 	VUNITIZE(vec);
 	VSCALE((*pixel), (*pixel), VDOT(vec, id.norm) * 0.8);
     } else if (ray->depth) {
-	*pixel[0] += (TFLOAT)0.2;
-	*pixel[1] += (TFLOAT)0.2;
-	*pixel[2] += (TFLOAT)0.2;
+	(*pixel)[0] += (TFLOAT)0.2;
+	(*pixel)[1] += (TFLOAT)0.2;
+	(*pixel)[2] += (TFLOAT)0.2;
     }
 }
 

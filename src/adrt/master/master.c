@@ -489,8 +489,11 @@ master_networking(void *ptr)
 			while (i < ADRT_MAX_WORKSPACE_NUM && master.wid_list[i])
 			    i++;
 
-			/* Mark this ID as being in use. */
-			master.wid_list[i] = 1;
+			/* Mark this ID as being in use.  Guard against the
+			 * table being full, which would otherwise index one
+			 * past wid_list[]. */
+			if (i < ADRT_MAX_WORKSPACE_NUM)
+			    master.wid_list[i] = 1;
 
 			/* Send this WID to the client application. */
 			tienet_send(sock->num, &i, 2);
@@ -514,8 +517,12 @@ master_networking(void *ptr)
 		    {
 			uint16_t wid;
 
-			/* Size */
+			/* Size.  Clamp to the fixed slave_data[] buffer so a
+			 * bogus or oversized length off the network cannot
+			 * overrun it. */
 			tienet_recv(sock->num, &master.slave_data_len, 4);
+			if (master.slave_data_len > sizeof(master.slave_data))
+			    master.slave_data_len = sizeof(master.slave_data);
 			tienet_recv(sock->num, master.slave_data, master.slave_data_len);
 
 			op = master.slave_data[0];

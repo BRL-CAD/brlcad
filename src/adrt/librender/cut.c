@@ -162,9 +162,9 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
     /* Shade using inhit */
     VSCALE((*pixel), color, (dot*0.90));
 
-    *pixel[0] += (TFLOAT)0.1;
-    *pixel[1] += (TFLOAT)0.1;
-    *pixel[2] += (TFLOAT)0.1;
+    (*pixel)[0] += (TFLOAT)0.1;
+    (*pixel)[1] += (TFLOAT)0.1;
+    (*pixel)[2] += (TFLOAT)0.1;
 }
 
 

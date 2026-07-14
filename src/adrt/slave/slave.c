@@ -126,7 +126,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_SELECT:
 	{
 	    uint8_t c;
-	    char string[255] = { 0 };
+	    char string[256] = { 0 };
 	    uint32_t n, i, num;
 
 	    ind = 1;	/* ind is too far in for some reason, force it back to 1? */
@@ -147,8 +147,10 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 		TCOPY(uint8_t, work->data, ind, &c, 0);	/* this likes to break, 'num' is way too big. */
 		ind += 1;
 
-		/* string */
+		/* string (NUL-terminate before the strstr below; c can be
+		 * up to 255, so string[] must have room for the terminator) */
 		memcpy(string, &work->data[ind], c);
+		string[c] = '\0';
 		ind += c;
 
 		/* set select flag */
@@ -373,6 +375,10 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	case ADRT_WORK_MINMAX:
 	{
+	    /* result was only sized for the 3-byte op/wid header; grow it
+	     * before writing the two TIE_3 min/max vectors. */
+	    TIENET_BUFFER_SIZE((*result), result->ind + 2 * sizeof (TIE_3));
+
 	    TCOPY(TIE_3, &adrt_workspace_list[wid].tie.min, 0, result->data, result->ind);
 	    result->ind += sizeof (TIE_3);
 

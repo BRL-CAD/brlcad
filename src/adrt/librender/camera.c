@@ -651,6 +651,7 @@ LOADED:
 	    bu_free(t, "unload shader");
 	    return 0;
 	}
+	s = s->next;
     }
 
     bu_log("Could not find shader \"%s\"\n", name);

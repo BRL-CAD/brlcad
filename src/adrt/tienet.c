@@ -59,8 +59,8 @@ tienet_recv(int tsocket, void* data, size_t size)
     do {
 	select(tsocket+1, NULL, &set, NULL, NULL);
 	r = read(tsocket, &((char*)data)[ind], size-ind);
-	ind += r;
 	if (r <= 0) return 1;	/* Error, socket is probably dead */
+	ind += r;		/* only advance after confirming a good read */
     } while (ind < size);
 
     return 0;
