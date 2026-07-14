@@ -19,6 +19,9 @@
  */
 /** @file dispatcher.c
  *
+ * Work dispatcher: splits a frame into tiles and pushes each tile as
+ * a work unit onto the tienet master work buffer.
+ *
  */
 
 #include "common.h"

@@ -19,6 +19,10 @@
  */
 /** @file load.c
  *
+ * Slave-side dispatch for ADRT load messages: decodes the load opcode from an
+ * incoming buffer and routes to the appropriate loader (.g file, region soup,
+ * or KD-tree).
+ *
  */
 
 #include "common.h"
@@ -36,22 +40,6 @@ adrt_mesh_t *slave_load_mesh_list;
 void
 slave_load_free(void)
 {
-#if 0
-    int i;
-
-    /* Free texture data */
-    for (i = 0; i < texture_num; i++)
-	texture_list[i].texture->free (texture_list[i].texture);
-    free (texture_list);
-
-    /* Free mesh data */
-    for (i = 0; i < db->mesh_num; i++) {
-	/* Free triangle data */
-	free (db->mesh_list[i]->tri_list);
-	free (db->mesh_list[i]);
-    }
-    free (db->mesh_list);
-#endif
 }
 
 int
@@ -86,7 +74,11 @@ slave_load(struct tie_s *tie, void *data)
     switch ( *meh ) {
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
 	    {
-		const char *db = NULL; /* FIXME */
+		/* FIXME: the .g filename should be extracted from the message
+		 * payload; passing NULL here will make load_g fail to open a
+		 * database.
+		 */
+		const char *db = NULL;
 		const char *ugh[2];
 		ugh[0] = (char *)(meh + 1 + sizeof(int));
 		ugh[1] = NULL;

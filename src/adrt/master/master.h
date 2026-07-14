@@ -19,6 +19,8 @@
  */
 /** @file master.h
  *
+ * Interface to the ADRT master (master_init and its listener state).
+ *
  */
 
 #ifndef ADRT_MASTER_MASTER_H

@@ -44,6 +44,9 @@ struct render_shader_s {
 
 static struct render_shader_s *shaders = NULL;
 
+/* number of leading characters compared when matching a shader by name */
+#define RENDER_SHADER_NAME_CMP_LEN	8
+
 void render_camera_render_thread(int cpu, void *ptr);	/* for bu_parallel */
 static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
@@ -618,9 +621,9 @@ render_shader_unload_plugin(render_t *r, const char *name)
 {
 #ifdef HAVE_DLFCN_H
     struct render_shader_s *t, *s = shaders, *meh;
-    if (!bu_strncmp(s->name, name, 8)) {
+    if (!bu_strncmp(s->name, name, RENDER_SHADER_NAME_CMP_LEN)) {
 	t = s->next;
-	if (r && r->shader && !bu_strncmp(r->shader, name, 8)) {
+	if (r && r->shader && !bu_strncmp(r->shader, name, RENDER_SHADER_NAME_CMP_LEN)) {
 	    meh = s->next;
 	    while (meh) {
 		if (render_shader_init(r, meh->name, NULL) != -1)
@@ -639,7 +642,7 @@ LOADED:
     }
 
     while (s->next) {
-	if (!bu_strncmp(s->next->name, name, 8)) {
+	if (!bu_strncmp(s->next->name, name, RENDER_SHADER_NAME_CMP_LEN)) {
 	    if (r)
 		render_shader_init(r, s->name, NULL);
 	    if (s->next->dlh)
@@ -664,7 +667,7 @@ render_shader_init(render_t *r, const char *name, const char *buf)
 {
     struct render_shader_s *s = shaders;
     while (s) {
-	if (!bu_strncmp(s->name, name, 8)) {
+	if (!bu_strncmp(s->name, name, RENDER_SHADER_NAME_CMP_LEN)) {
 	    s->init(r, buf);
 	    r->shader = s->name;
 	    return 0;

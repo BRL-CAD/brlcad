@@ -19,6 +19,9 @@
  */
 /** @file librender/camera.h
  *
+ * Camera and shader interface for the ADRT renderer: camera setup,
+ * per-scanline threaded rendering, and shader plugin registration.
+ *
  */
 
 #ifndef ADRT_LIBRENDER_CAMERA_H

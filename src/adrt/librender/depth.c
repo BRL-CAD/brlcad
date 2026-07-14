@@ -19,6 +19,9 @@
  */
 /** @file librender/depth.c
  *
+ * Depth render shader: visualizes the kd-tree traversal depth of the
+ * ray that produced each pixel.
+ *
  */
 
 #include "adrt_struct.h"

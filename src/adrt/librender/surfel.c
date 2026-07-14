@@ -93,10 +93,7 @@ render_surfel_init(render_t *render, const char *buf)
     d = (render_surfel_t *)render->data;
     d->num = 0;
     d->list = NULL;
-    /*
-      d->list = (render_surfel_pt_t *)bu_malloc(d->num * sizeof(render_surfel_pt_t), "data list");
-    */
-    /* do something to extract num and list from buf */
+    /* TODO: extract num and list from buf */
     return 0;
 }
 

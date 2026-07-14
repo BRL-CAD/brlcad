@@ -19,6 +19,10 @@
  */
 /** @file librender/flos.c
  *
+ * Fragment line-of-sight render shader: shades geometry green, then
+ * marks points that have a direct line of sight to a given fragment
+ * position red.
+ *
  */
 
 #include "adrt_struct.h"

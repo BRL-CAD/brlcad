@@ -19,6 +19,8 @@
  */
 /** @file compnet.h
  *
+ * Interface to the ADRT component networking routines.
+ *
  */
 
 #ifndef ADRT_MASTER_COMPNET_H

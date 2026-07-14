@@ -19,6 +19,9 @@
  */
 /** @file librender/render.h
  *
+ * Public interface declaring the per-shader init functions and the
+ * ray hit callback for the ADRT renderer.
+ *
  */
 
 #ifndef ADRT_LIBRENDER_RENDER_H

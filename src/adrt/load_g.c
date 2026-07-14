@@ -20,11 +20,12 @@
 
 /** @file load_g.c
  *
- * Attempt to load a single top-level comb from a named .g file. The file must
- * exist on the machine the 'slave' program is running, with the correct path
- * passed to it. Only one combination is used, intended to be the top of the
- * tree of concern. It's assumed that only BOT's are to be loaded, non-bots will
- * be silently ignored for now. No KD-TREE caching is assumed. I like tacos.
+ * Attempt to load top-level objects from a named .g file. The file must exist
+ * on the machine the 'slave' program is running, with the correct path passed
+ * to it. The named objects are walked as the tops of the trees of concern.
+ * BoT and NMG solids are consumed directly as triangle soup; other solids are
+ * tessellated into an NMG and triangulated before being handed to the tie
+ * engine. No KD-TREE caching is assumed.
  */
 
 #include "common.h"
@@ -171,8 +172,9 @@ int
 load_nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, void *UNUSED(client_data))
 {
     /*
-     * if it's a simple single bot region, just eat the bots and return -1.
-     * Omnomnom. Return 0 to do nmg eval.
+     * If it's a simple single BoT (or NMG) region, consume it directly and
+     * return -1 to skip the boolean/NMG evaluation.  Return 0 to fall back to
+     * NMG evaluation for anything more complex.
      */
     struct directory *dir;
     struct rt_db_internal intern;
@@ -285,7 +287,8 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     struct bg_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
-    cur_tie = tie;	/* blehhh, global... need locking. */
+    cur_tie = tie;	/* NOTE: cur_tie is a file-scope global; this is not
+			 * reentrant and would need locking to be thread-safe. */
 
     RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;

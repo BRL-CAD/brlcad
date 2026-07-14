@@ -19,6 +19,9 @@
  */
 /** @file librender/render_util.h
  *
+ * Utility routines for the ADRT renderer: shotline and spall ray
+ * traversal helpers.
+ *
  */
 
 #ifndef ADRT_LIBRENDER_RENDER_UTIL_H

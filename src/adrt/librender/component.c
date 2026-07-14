@@ -19,6 +19,9 @@
  */
 /** @file librender/component.c
  *
+ * Component render shader: shades hit geometry, highlighting meshes that
+ * are selected or hit, with a translucent tint for background meshes.
+ *
  */
 
 #include "common.h"

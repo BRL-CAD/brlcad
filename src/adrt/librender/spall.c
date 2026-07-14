@@ -19,6 +19,9 @@
  */
 /** @file librender/spall.c
  *
+ * Spall cone rendering: intersects each ray with a splitting plane and
+ * shades the geometry behind it, drawing a tessellated spall cone.
+ *
  */
 
 #include "render_util.h"
@@ -144,7 +147,7 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
      */
 
     dot = VDOT(ray->dir,  hit.id.norm);
-    /* flip normal */
+    /* use magnitude so the normal is treated as facing the ray */
     dot = fabs(dot);
 
 
@@ -158,21 +161,9 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
 	VSCALE(color,  color,  0.125);
     }
 
-#if 0
-    if (dot < 0) {
-#endif
-	/* Shade using inhit */
-	VSCALE(color,  color,  (dot*0.50));
-	VADD2(*pixel,  *pixel,  color);
-#if 0
-    } else {
-	/* shade solid */
-	VSUB2(vec,  ray->pos,  hit.id.pos);
-	VUNITIZE(vec);
-	angle = vec[0]*hit.mod*-hit.plane[0] + vec[1]*-hit.mod*hit.plane[1] + vec[2]*-hit.mod*hit.plane[2];
-	VSCALE((*pixel),  color,  (angle*0.50));
-    }
-#endif
+    /* Shade using inhit */
+    VSCALE(color,  color,  (dot*0.50));
+    VADD2(*pixel,  *pixel,  color);
 
     *pixel[0] += (TFLOAT)0.1;
     *pixel[1] += (TFLOAT)0.1;

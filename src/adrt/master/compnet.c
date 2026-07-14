@@ -19,6 +19,9 @@
  */
 /** @file compnet.c
  *
+ * Component networking: connects the ADRT master to a component
+ * server and sends component name/status updates over the network.
+ *
  */
 
 /* interface header */

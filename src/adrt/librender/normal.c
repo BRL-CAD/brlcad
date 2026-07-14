@@ -19,6 +19,9 @@
  */
 /** @file librender/normal.c
  *
+ * Renderer that visualizes surface normals by mapping each normal
+ * component into the pixel color.
+ *
  */
 
 #include "common.h"

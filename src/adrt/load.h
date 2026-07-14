@@ -19,6 +19,9 @@
  */
 /** @file load.h
  *
+ * Interface for the ADRT slave loader: message dispatch entry point and the
+ * loaded mesh list shared with the rest of the slave.
+ *
  */
 
 #ifndef ADRT_LOAD_H

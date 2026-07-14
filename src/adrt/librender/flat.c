@@ -19,6 +19,9 @@
  */
 /** @file librender/flat.c
  *
+ * Flat render shader: colors each hit pixel with the mesh's base
+ * material color, applying its texture if one is present.
+ *
  */
 
 #include "adrt_struct.h"

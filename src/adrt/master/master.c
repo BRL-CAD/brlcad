@@ -19,6 +19,9 @@
  */
 /** @file master.c
  *
+ * ADRT master: coordinates rendering by dispatching work units to
+ * connected slaves and relaying assembled results to observers.
+ *
  */
 
 #include "common.h"
@@ -116,7 +119,7 @@ master_setup(void)
     TIENET_BUFFER_INIT(master.buf);
     TIENET_BUFFER_INIT(master.buf_comp);
 
-    /* -1 indicates this slot is not used and thus does not contain an open project. */
+    /* 0 indicates this slot is not used and thus does not contain an open project. */
     for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
 	master.wid_list[i] = 0;
 }

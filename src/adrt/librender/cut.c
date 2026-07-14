@@ -19,6 +19,10 @@
  */
 /** @file librender/cut.c
  *
+ * Cutting-plane render shader: renders geometry clipped by a plane
+ * defined from a picked ray, drawing the cut ray as a blue arrow and
+ * marking intersected meshes as hit.
+ *
  */
 
 #include "common.h"
@@ -111,8 +115,8 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
     }
 
     /*
-     * I don't think this needs to be done for every pixel?
-     * Flip plane normal to face us.
+     * Determine which side of the cutting plane the ray origin is on so
+     * the plane normal can be oriented to face the viewer.
      */
     t = ray->pos[0]*rd->plane[0] + ray->pos[1]*rd->plane[1] + ray->pos[2]*rd->plane[2] + rd->plane[3];
     hit.mod = t < 0 ? 1 : -1;
@@ -146,7 +150,7 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
      * If the point after the splitting plane is an inhit, then just shade as usual.
      */
 
-    /* flipped normal */
+    /* magnitude of the cosine between ray and surface normal, sign-independent */
     dot = fabs(VDOT(ray->dir, hit.id.norm));
 
     if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
@@ -224,7 +228,7 @@ render_cut_init(render_t *render, const char *buf)
     /* Construct the plane */
     d->plane[3] = -VDOT(d->plane, ray_pos); /* up is really new ray_pos */
 
-    /* generate the shtuff for the blue line */
+    /* generate the geometry for the blue line */
     TIE_INIT(&d->tie, 2, TIE_KDTREE_FAST);
 
     /* Triangle 1 */

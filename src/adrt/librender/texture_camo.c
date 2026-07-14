@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file librender/texture.h
+/** @file librender/texture_camo.c
  *
  * Comments -
  * Texture Library - Applies a 3 color camouflage

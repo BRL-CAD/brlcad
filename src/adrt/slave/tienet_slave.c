@@ -155,7 +155,7 @@ void tienet_slave_worker(int port, char *host) {
 	exit(1);
     }
 
-    /* receive endian of master (going away) */
+    /* receive endian of master (currently unused, kept for protocol compatibility) */
     {
 	short tienet_endian;
 	tienet_recv(slave_socket, &tienet_endian, sizeof(short));
@@ -168,12 +168,6 @@ void tienet_slave_worker(int port, char *host) {
     tienet_recv(slave_socket, &op, sizeof(short));
     if (op == TN_OP_COMPLETE)
 	return;
-
-    /* Request Work Unit */
-    /*
-    op = TN_OP_REQWORK;
-    tienet_send(slave_socket, &op, sizeof(short));
-    */
 
     while (1) {
 	tienet_recv(slave_socket, &op, sizeof(short));

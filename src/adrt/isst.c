@@ -276,6 +276,7 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
     }
 
     CLAMP(resolution, 1, 20);
+    /* gs is the render grid size; 0 means render at full window resolution */
     if (resolution == 20)
 	isst->gs = 0;
     else
@@ -340,7 +341,7 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
     if (objc == 4)
 	buf = Tcl_GetString(objv[3]);
 
-    /* pack the 'rest' into buf - probably should use a vls for this*/
+    /* pack the 'rest' into buf - probably should use a vls for this */
     if ( strlen(mode) == 3 && bu_strncmp("cut", mode, 3) == 0 ) {
 	struct adrt_mesh_s *mesh;
 
@@ -550,7 +551,7 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
     dmp = dm_open(NULL, (void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
-	printf("dm failed?\n");
+	printf("Failed to open display manager\n");
 	return TCL_ERROR;
     }
 
@@ -628,7 +629,7 @@ const char *fullname;
     argv = __argv;
 #endif
 
-    /* initialize progname for run-tim resource finding */
+    /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
 
 #ifdef HAVE_WINDOWS_H
