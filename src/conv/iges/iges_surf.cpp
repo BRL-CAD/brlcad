@@ -291,6 +291,93 @@ read_line_on(size_t curve)
 }
 
 
+/* Read an IGES 100 (circular arc) at directory-array index @p curve into a
+ * rational ON_NurbsCurve in model space.  The arc is defined in the entity's
+ * XY definition plane (at depth ZT) by its center and start/end points and
+ * sweeps counter-clockwise from start to end; coincident endpoints denote a
+ * full circle.  The arc is built cleanly in that plane and its control
+ * vertices are then carried into model space by the entity transform.  Uses
+ * Readcnv() so the file-unit scale is applied (matching read_line_on()). */
+ON_NurbsCurve *
+read_arc_on(size_t curve)
+{
+    int entity_type = 0;
+    fastf_t zt = 0.0;
+    fastf_t cx = 0.0, cy = 0.0;
+    fastf_t sx = 0.0, sy = 0.0;
+    fastf_t ex = 0.0, ey = 0.0;
+
+    Readrec(dir[curve]->param);
+    Readint(&entity_type, "");
+    if (entity_type != 100) {
+	bu_log("read_arc_on: expected circular arc, got type %d\n", entity_type);
+	return NULL;
+    }
+
+    Readcnv(&zt, "");
+    Readcnv(&cx, "");
+    Readcnv(&cy, "");
+    Readcnv(&sx, "");
+    Readcnv(&sy, "");
+    Readcnv(&ex, "");
+    Readcnv(&ey, "");
+
+    const ON_3dPoint center(cx, cy, zt);
+    const ON_3dPoint ps(sx, sy, zt);
+    const ON_3dPoint pe(ex, ey, zt);
+
+    const double r = center.DistanceTo(ps);
+    if (r <= SMALL_FASTF) {
+	bu_log("read_arc_on: degenerate arc (zero radius) at D%07d\n", dir[curve]->direct);
+	return NULL;
+    }
+
+    /* definition plane: x-axis toward the start point, +Z normal (IGES arcs
+     * are measured counter-clockwise in their XY plane) */
+    ON_3dVector xaxis = ps - center;
+    xaxis.Unitize();
+    const ON_3dVector zaxis(0.0, 0.0, 1.0);
+    ON_3dVector yaxis = ON_CrossProduct(zaxis, xaxis);
+    const ON_Plane plane(center, xaxis, yaxis);
+    const ON_Circle circle(plane, r);
+
+    /* sweep from the start (angle 0) to the end, CCW in (0, 2pi] */
+    const ON_3dVector ve = pe - center;
+    double ang = atan2(ON_DotProduct(ve, yaxis), ON_DotProduct(ve, xaxis));
+    if (ps.DistanceTo(pe) <= SMALL_FASTF)
+	ang = 2.0 * ON_PI;		/* coincident endpoints => full circle */
+    else if (ang <= ON_ZERO_TOLERANCE)
+	ang += 2.0 * ON_PI;
+
+    const ON_Arc arc(circle, ang);
+    if (!arc.IsValid()) {
+	bu_log("read_arc_on: invalid arc at D%07d\n", dir[curve]->direct);
+	return NULL;
+    }
+
+    ON_NurbsCurve *nc = ON_NurbsCurve::New();
+    if (!nc)
+	return NULL;
+    if (!arc.GetNurbForm(*nc)) {
+	delete nc;
+	return NULL;
+    }
+
+    /* carry the (homogeneous) control vertices into model space */
+    for (int i = 0; i < nc->CVCount(); i++) {
+	ON_4dPoint h;
+	nc->GetCV(i, h);
+	const double w = (h.w != 0.0) ? h.w : 1.0;
+	point_t ep = { h.x / w, h.y / w, h.z / w };
+	point_t xp = VINIT_ZERO;
+	MAT4X3PNT(xp, *dir[curve]->rot, ep);
+	nc->SetCV(i, ON_4dPoint(xp[X] * w, xp[Y] * w, xp[Z] * w, w));
+    }
+
+    return nc;
+}
+
+
 /* Read a referenced IGES curve (by directory-sequence-number DE) into an
  * ON_NurbsCurve.  Handles lines (110) and rational B-spline curves
  * (126).  Returns a new curve (caller owns) or NULL. */
@@ -305,6 +392,8 @@ read_curve_on(int curve_de)
     }
 
     switch (dir[curve]->type) {
+	case 100:
+	    return read_arc_on(curve);
 	case 110:
 	    return read_line_on(curve);
 	case 126:
