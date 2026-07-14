@@ -62,6 +62,8 @@ render_surfel_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, v
     d = (render_surfel_t *)render->data;
 
     if (TIE_WORK(tie, ray, &id, render_hit, NULL) != NULL) {
+	int matched = 0;
+
 	for (i = 0; i < d->num; i++) {
 	    dist_sq = (d->list[i].pos[0]-id.pos[0]) * (d->list[i].pos[0]-id.pos[0]) +
 		(d->list[i].pos[1]-id.pos[1]) * (d->list[i].pos[1]-id.pos[1]) +
@@ -69,11 +71,16 @@ render_surfel_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, v
 
 	    if (dist_sq < d->list[i].radius*d->list[i].radius) {
 		VMOVE(*pixel, d->list[i].color);
+		matched = 1;
 		break;
 	    }
 	}
 
-	VSET(*pixel, 0.8, 0.8, 0.8);
+	/* Points not covered by any surfel fall back to a neutral gray;
+	 * previously this ran unconditionally and clobbered the matched
+	 * surfel color above. */
+	if (!matched)
+	    VSET(*pixel, 0.8, 0.8, 0.8);
     }
 }
 
