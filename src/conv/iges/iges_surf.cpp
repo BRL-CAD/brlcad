@@ -35,7 +35,7 @@
  *   120  Surface of Revolution  (ON_RevSurface -> NURBS)
  *   122  Tabulated Cylinder     (extrude directrix along generatrix)
  *   140  Offset Surface         (base surface offset by a distance)
- *   114  Parametric Spline      (graceful skip -- not yet supported)
+ *   114  Parametric Spline      (bicubic patches -> bicubic NURBS)
  */
 
 #include "common.h"
@@ -767,6 +767,234 @@ build_offset_on(size_t entityno)
 }
 
 
+/* --- 114 Parametric Spline Surface ------------------------------------
+ *
+ * Parameters (after the entity type number):
+ *   CTYPE  spline boundary type (1 linear, 2 quadratic, 3 cubic,
+ *          4/5 Wilson-Fowler, 6 B-spline) -- every coefficient set is
+ *          stored as a full bicubic, so we treat them all as degree 3.
+ *   PTYPE  patch type (1 = Cartesian).
+ *   M      number of u segments.
+ *   N      number of v segments.
+ *   TU[0..M]   (M+1) u breakpoint values.
+ *   TV[0..N]   (N+1) v breakpoint values.
+ *   Then, for each patch, the coefficients A(i,j)..S(i,j) for X, then Y,
+ *   then Z.  Per the IGES spec the patches are written with the u-segment
+ *   index i as the OUTER loop and the v-segment index j as the INNER loop
+ *   (running from patch (1,1) to (M,N)).  Within a coordinate block the 16
+ *   coefficients are ordered with the t-power (v) grouping outer and the
+ *   s-power (u) inner, i.e. the sequence
+ *        A  B  C  D   (t^0: s^0 s^1 s^2 s^3)
+ *        E  F  G  H   (t^1: s^0 s^1 s^2 s^3)
+ *        K  L  M  N   (t^2: s^0 s^1 s^2 s^3)
+ *        P  Q  R  S   (t^3: s^0 s^1 s^2 s^3)
+ *   so coefficient c[q][p] multiplies s^p * t^q (p is the u/s power, q is
+ *   the v/t power), each patch's polynomial being valid over the local
+ *   domain s in [0, TU[i+1]-TU[i]], t in [0, TV[j+1]-TV[j]].
+ *
+ * Each patch is converted from the power basis to a bicubic Bezier (4x4
+ * control points) and the M*N patches are assembled into one non-rational
+ * bicubic ON_NurbsSurface: order 4 in u and v, interior breakpoints of
+ * multiplicity 3 (a C0 join between cubic patches), 3*M+1 control points
+ * in u and 3*N+1 in v, with adjacent patches sharing boundary CVs.  Only
+ * the common cubic Cartesian case (CTYPE 3, PTYPE 1) is built; other
+ * sub-cases are a graceful skip. */
+ON_NurbsSurface *
+build_spline_surf_on(size_t entityno)
+{
+    int entity_type = 0;
+    int ctype = 0;
+    int ptype = 0;
+    int M = 0;
+    int N = 0;
+    int i, j, p, q, c;
+
+    Readrec(dir[entityno]->param);
+    Readint(&entity_type, "");
+    if (entity_type != 114) {
+	bu_log("build_spline_surf_on: expected parametric spline surface, got type %d\n",
+	       entity_type);
+	return NULL;
+    }
+
+    Readint(&ctype, "");
+    Readint(&ptype, "");
+    Readint(&M, "");
+    Readint(&N, "");
+
+    /* Only the cubic Cartesian case is built; anything else is a graceful
+     * skip so we never emit wrong geometry.  (Lower-degree coefficient
+     * sets are still stored as full bicubics in the file, so treating them
+     * as cubic would be exact, but we stay conservative and require the
+     * common CTYPE 3 that real files use.) */
+    if (ctype != 3) {
+	bu_log("build_spline_surf_on: spline boundary type %d not supported (only cubic, CTYPE 3), skipping D%07d (%s)\n",
+	       ctype, dir[entityno]->direct, dir[entityno]->name);
+	return NULL;
+    }
+    if (ptype != 1) {
+	bu_log("build_spline_surf_on: patch type %d not supported (only Cartesian, PTYPE 1), skipping D%07d (%s)\n",
+	       ptype, dir[entityno]->direct, dir[entityno]->name);
+	return NULL;
+    }
+    if (M < 1 || N < 1) {
+	bu_log("build_spline_surf_on: illegal segment counts M=%d N=%d\n", M, N);
+	return NULL;
+    }
+
+    /* breakpoints */
+    fastf_t *TU = (fastf_t *)bu_malloc((M + 1) * sizeof(fastf_t),
+				       "build_spline_surf_on: TU");
+    fastf_t *TV = (fastf_t *)bu_malloc((N + 1) * sizeof(fastf_t),
+				       "build_spline_surf_on: TV");
+    for (i = 0; i <= M; i++)
+	Readflt(&TU[i], "");
+    for (j = 0; j <= N; j++)
+	Readflt(&TV[j], "");
+
+    /* control-point counts and the ON surface */
+    const int ucv = 3 * M + 1;
+    const int vcv = 3 * N + 1;
+
+    ON_NurbsSurface *ns = ON_NurbsSurface::New(3, false, 4, 4, ucv, vcv);
+    if (!ns) {
+	bu_free(TU, "build_spline_surf_on: TU");
+	bu_free(TV, "build_spline_surf_on: TV");
+	return NULL;
+    }
+
+    /* Knot vectors: ON stores the interior knots only (KnotCount ==
+     * order + cv - 2).  For a chain of cubic Bezier patches joined C0 the
+     * full clamped knot vector is the start breakpoint with
+     * multiplicity 4 (== order), each interior breakpoint with
+     * multiplicity 3, and the end breakpoint with multiplicity 4.  ON
+     * drops one clamped knot from each end, so its stored form is the
+     * start breakpoint x3, each interior breakpoint x3, and the end
+     * breakpoint x3.
+     *
+     * u: KnotCount(0) == 4 + ucv - 2 == 3*M + 3 */
+    {
+	int k = 0;
+	ns->SetKnot(0, k++, TU[0]);
+	ns->SetKnot(0, k++, TU[0]);
+	ns->SetKnot(0, k++, TU[0]);
+	for (i = 1; i < M; i++) {
+	    ns->SetKnot(0, k++, TU[i]);
+	    ns->SetKnot(0, k++, TU[i]);
+	    ns->SetKnot(0, k++, TU[i]);
+	}
+	ns->SetKnot(0, k++, TU[M]);
+	ns->SetKnot(0, k++, TU[M]);
+	ns->SetKnot(0, k++, TU[M]);
+    }
+    {
+	int k = 0;
+	ns->SetKnot(1, k++, TV[0]);
+	ns->SetKnot(1, k++, TV[0]);
+	ns->SetKnot(1, k++, TV[0]);
+	for (j = 1; j < N; j++) {
+	    ns->SetKnot(1, k++, TV[j]);
+	    ns->SetKnot(1, k++, TV[j]);
+	    ns->SetKnot(1, k++, TV[j]);
+	}
+	ns->SetKnot(1, k++, TV[N]);
+	ns->SetKnot(1, k++, TV[N]);
+	ns->SetKnot(1, k++, TV[N]);
+    }
+
+    /* Read the patches (i outer, j inner) and fill the control net.
+     * Each patch is a bicubic power-basis polynomial per coordinate; we
+     * convert it to a 4x4 Bezier control-point grid over its local domain
+     * and place those into the shared control net at the appropriate
+     * 3*i .. 3*i+3 (u) and 3*j .. 3*j+3 (v) block, so adjacent patches
+     * share their boundary CVs. */
+    for (i = 0; i < M; i++) {
+	const fastf_t hu = TU[i + 1] - TU[i];
+	for (j = 0; j < N; j++) {
+	    const fastf_t hv = TV[j + 1] - TV[j];
+
+	    /* power-basis coefficients: coef[coord][q][p] multiplies
+	     * s^p * t^q; coord 0=X 1=Y 2=Z */
+	    double coef[3][4][4];
+	    for (c = 0; c < 3; c++) {
+		for (q = 0; q < 4; q++) {
+		    for (p = 0; p < 4; p++) {
+			double a = 0.0;
+			Readdbl(&a, "");
+			coef[c][q][p] = a;
+		    }
+		}
+	    }
+
+	    /* Power-to-Bezier conversion of a cubic on [0,h]:
+	     *   b0 = a0
+	     *   b1 = a0 + a1*h/3
+	     *   b2 = a0 + 2*a1*h/3 + a2*h*h/3
+	     *   b3 = a0 + a1*h + a2*h*h + a3*h*h*h
+	     * Apply tensor-product-wise: first along u (s / index p) for
+	     * each of the 4 t-rows, then along v (t / index q) for each of
+	     * the 4 resulting u-columns.  Done per coordinate. */
+	    for (c = 0; c < 3; c++) {
+		double tmp[4][4];	/* [q][p] after u-conversion */
+		double bez[4][4];	/* [q][p] final Bezier control values */
+
+		/* u (s, power index p) conversion, one row per t-power q */
+		for (q = 0; q < 4; q++) {
+		    const double a0 = coef[c][q][0];
+		    const double a1 = coef[c][q][1];
+		    const double a2 = coef[c][q][2];
+		    const double a3 = coef[c][q][3];
+		    tmp[q][0] = a0;
+		    tmp[q][1] = a0 + a1 * hu / 3.0;
+		    tmp[q][2] = a0 + 2.0 * a1 * hu / 3.0 + a2 * hu * hu / 3.0;
+		    tmp[q][3] = a0 + a1 * hu + a2 * hu * hu + a3 * hu * hu * hu;
+		}
+
+		/* v (t, power index q) conversion, one column per u-Bezier
+		 * index p; the tmp rows are still power-basis in t. */
+		for (p = 0; p < 4; p++) {
+		    const double a0 = tmp[0][p];
+		    const double a1 = tmp[1][p];
+		    const double a2 = tmp[2][p];
+		    const double a3 = tmp[3][p];
+		    bez[0][p] = a0;
+		    bez[1][p] = a0 + a1 * hv / 3.0;
+		    bez[2][p] = a0 + 2.0 * a1 * hv / 3.0 + a2 * hv * hv / 3.0;
+		    bez[3][p] = a0 + a1 * hv + a2 * hv * hv + a3 * hv * hv * hv;
+		}
+
+		/* overwrite this coordinate's grid with its Bezier CVs */
+		for (q = 0; q < 4; q++)
+		    for (p = 0; p < 4; p++)
+			coef[c][q][p] = bez[q][p];
+	    }
+
+	    /* place the 4x4 Bezier control points (transformed) into the
+	     * shared net; p indexes u (columns), q indexes v (rows) */
+	    for (p = 0; p < 4; p++) {
+		for (q = 0; q < 4; q++) {
+		    point_t pt = VINIT_ZERO;
+		    point_t xpt = VINIT_ZERO;
+		    pt[X] = coef[0][q][p];
+		    pt[Y] = coef[1][q][p];
+		    pt[Z] = coef[2][q][p];
+
+		    MAT4X3PNT(xpt, *dir[entityno]->rot, pt);
+
+		    ns->SetCV(3 * i + p, 3 * j + q,
+			      ON_3dPoint(xpt[X], xpt[Y], xpt[Z]));
+		}
+	    }
+	}
+    }
+
+    bu_free(TU, "build_spline_surf_on: TU");
+    bu_free(TV, "build_spline_surf_on: TV");
+
+    return ns;
+}
+
+
 /* Dispatch on IGES surface type and build an ON_NurbsSurface. */
 ON_NurbsSurface *
 build_surface_on(size_t entityno)
@@ -789,8 +1017,7 @@ build_surface_on(size_t entityno)
 	case 140:
 	    return build_offset_on(entityno);
 	case 114:
-	    bu_log("IGES 114 parametric spline surface not yet supported\n");
-	    return NULL;
+	    return build_spline_surf_on(entityno);
 	default:
 	    bu_log("build_surface_on: surface type %s not supported\n",
 		   iges_type(dir[entityno]->type));

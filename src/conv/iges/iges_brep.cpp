@@ -177,21 +177,51 @@ snurb_edge_uv_curve(const struct edgeuse *eu)
  * so shared edges stay watertight. */
 ON_Curve *
 push_up_edge(const ON_Surface *srf, const ON_Curve *uv,
-	     const ON_3dPoint &p_start, const ON_3dPoint &p_end)
+	     const ON_3dPoint &p_start, const ON_3dPoint &p_end, double tol)
 {
     const int nsamp = 32;
-    ON_3dPointArray pts(nsamp + 1);
     const ON_Interval dom = uv->Domain();
+    const double mtol = (tol > 0.0) ? tol : SMALL_FASTF;
 
+    /* sample the surface along the parameter-space curve */
+    ON_3dPointArray raw(nsamp + 1);
     for (int i = 0; i <= nsamp; i++) {
 	const double t = dom.ParameterAt((double)i / (double)nsamp);
 	const ON_3dPoint p2 = uv->PointAt(t);
-	pts.Append(srf->PointAt(p2.x, p2.y));
+	raw.Append(srf->PointAt(p2.x, p2.y));
     }
-    pts[0] = p_start;
-    pts[pts.Count() - 1] = p_end;
 
-    return new ON_PolylineCurve(pts);
+    /* Keep only finite points, dropping any that coincide (within tol) with
+     * the previous kept point, so the polyline has neither non-finite vertices
+     * nor zero-length segments (either of which makes it invalid).  The
+     * endpoints are forced to the exact brep vertices so shared edges stay
+     * watertight. */
+    ON_3dPointArray pts(raw.Count());
+    pts.Append(p_start);
+    for (int i = 1; i < raw.Count() - 1; i++) {
+	if (!raw[i].IsValid())
+	    continue;
+	if (raw[i].DistanceTo(pts[pts.Count() - 1]) > mtol)
+	    pts.Append(raw[i]);
+    }
+    if (p_end.DistanceTo(pts[pts.Count() - 1]) > mtol)
+	pts.Append(p_end);
+    else if (pts.Count() >= 2)
+	pts[pts.Count() - 1] = p_end;	/* replace near-duplicate tail */
+    else
+	pts.Append(p_end);		/* degenerate edge: minimal 2-pt line */
+
+    /* A straight two-point curve is a cleaner, more robust representation than
+     * a degenerate polyline; and if the polyline somehow fails validation, fall
+     * back to a line so a single edge can never invalidate the whole brep. */
+    if (pts.Count() == 2)
+	return new ON_LineCurve(pts[0], pts[1]);
+
+    ON_PolylineCurve *pc = new ON_PolylineCurve(pts);
+    if (pc->IsValid())
+	return pc;
+    delete pc;
+    return new ON_LineCurve(p_start, p_end);
 }
 
 
@@ -287,7 +317,7 @@ add_trim(ON_Brep *brep, ON_Surface *surf, const ON_Plane *plane,
 	    c3d = new ON_LineCurve(brep->m_V[a].Point(), brep->m_V[b].Point());
 	} else {
 	    /* push_up runs v0 -> v1; reverse if the edge is stored v1 -> v0 */
-	    c3d = push_up_edge(surf, c2d, brep->m_V[vi0].Point(), brep->m_V[vi1].Point());
+	    c3d = push_up_edge(surf, c2d, brep->m_V[vi0].Point(), brep->m_V[vi1].Point(), tol->dist);
 	    if (a == vi1)
 		c3d->Reverse();
 	}
