@@ -10,7 +10,7 @@ view - Gets/sets the view parameters (local units).
 
 [source]
 ----
-view ae|aet|auto|center|eye|knob|lookat|print|quat|save|size|ypr [args]
+view ae|aet|auto|center|dir|eye|knob|lookat|print|quat|save|size|ypr [args]
 ----
 
 

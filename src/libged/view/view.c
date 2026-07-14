@@ -85,6 +85,28 @@ _view_cmd_center(void *bs, int argc, const char **argv)
 }
 
 int
+_view_cmd_dir(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] dir [-i] [x y z [twist]]";
+    const char *purpose_string = "get/set view direction and optional twist";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    /* A direction query is viewdir; a supplied vector and optional twist are
+     * qvrot.  Both use the eye-from-center convention, and -i consistently
+     * selects its inverse. */
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = (argc < 4) ?
+	ged_viewdir_core(gd->gedp, argc, argv) :
+	ged_qvrot_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
+}
+
+int
 _view_cmd_eye(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -640,6 +662,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "ae",         _view_cmd_aet},
     { "aet",        _view_cmd_aet},
     { "center",     _view_cmd_center},
+    { "dir",        _view_cmd_dir},
     { "eye",        _view_cmd_eye},
     { "faceplate",  _view_cmd_faceplate},
     { "gobjs",      _view_cmd_gobjs},

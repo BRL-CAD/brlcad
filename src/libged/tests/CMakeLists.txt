@@ -29,6 +29,12 @@ if(TARGET ged_test_list)
 endif(TARGET ged_test_list)
 brlcad_add_test(NAME ged_test_list COMMAND ged_test_list 2)
 
+brlcad_addexec(ged_test_view_dir test_view_dir.c libged TEST)
+brlcad_add_test(NAME ged_test_view_dir COMMAND ged_test_view_dir)
+if(TARGET ged_test_view_dir)
+  set_property(TEST ged_test_view_dir APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_view_dir)
+
 brlcad_addexec(ged_test_gqa test_gqa.c libged TEST)
 if(TARGET ged_test_gqa)
   add_dependencies(ged_test_gqa ged_plugins)
