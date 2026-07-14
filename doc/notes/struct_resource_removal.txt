@@ -208,7 +208,7 @@ Delete:
   - include/rt/resource.h
   - the forward declaration in include/rt/global.h
 
-Announce the removal in doc/changes/deprecated.adoc, doc/docbook/system/man3/librt.xml,
+Announce the removal in doc/changes/deprecated.adoc, doc/asciidoc/system/man3/librt.adoc,
 and the release notes.
 
 

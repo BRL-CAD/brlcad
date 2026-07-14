@@ -115,13 +115,12 @@ Emacs .emacs file:
     (switch-to-buffer termbuf))) 
 
 
-;; Nxml mode for DocBook:
-;; https://www.gnu.org/software/emacs/manual/html_mono/nxml-mode.html
-;; To set the DocBook 5 schema, select the file
-;; <path/to/brlcad>/doc/docbook/resources/other/docbook5xi.rnc
-;; using XMl->Set Schema->File... from the GUI or C-c C-s C-f in
-;; the editor itself.
-(add-to-list 'auto-mode-alist (cons (concat "\\." (regexp-opt '("xml") t) "\\'") 'nxml-mode))
+;; AsciiDoc mode for editing BRL-CAD documentation:
+;; BRL-CAD documentation sources now live under doc/asciidoc/ as .adoc
+;; files (the legacy DocBook XML sources have been removed).  Install
+;; adoc-mode from MELPA for syntax highlighting; see
+;; https://github.com/sensorflo/adoc-mode
+(add-to-list 'auto-mode-alist (cons (concat "\\." (regexp-opt '("adoc" "asciidoc") t) "\\'") 'adoc-mode))
 
 ;; Vim keybindings - see https://www.emacswiki.org/emacs/Evil for install
 ;; instructions
