@@ -13,8 +13,6 @@ set(
   README.MacOSX
   README.Windows
   README.BSD
-  README.Solaris
-  README.VAX
   checklist.txt
   description.txt
   optimization_ideas.adoc
@@ -217,6 +215,8 @@ endif(TARGET mged)
 
 cmakefiles(
   CMakeLists.txt
+  README.Solaris
+  README.VAX
   README.adoc
   STARTERS
   STRATEGY
