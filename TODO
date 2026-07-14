@@ -18,9 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* verify MGED exit behavior on Windows - reports of non-zero exit
-  being returned.
-
 * update change policy to 1) expand definition of minimally impacting
   to allow an assuption of non-embedding in function calls (i.e., no
   function or macro calls as function arguments), 2) migrate change
