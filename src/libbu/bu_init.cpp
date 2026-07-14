@@ -48,6 +48,7 @@ int BU_SEM_MAPPEDFILE;
 /* These ARE NOT exported outside LIBBU */
 extern "C" int BU_SEM_DATETIME;
 extern "C" int BU_SEM_DIR;
+extern "C" int BU_SEM_LOG_HOOK;
 extern "C" int BU_SEM_MALLOC;
 extern "C" int BU_SEM_THREAD;
 
@@ -64,6 +65,7 @@ libbu_init(void)
     BU_SEMAPHORE_DEFINE(BU_SEM_MALLOC);
     BU_SEMAPHORE_DEFINE(BU_SEM_DATETIME);
     BU_SEMAPHORE_DEFINE(BU_SEM_DIR);
+    BU_SEMAPHORE_DEFINE(BU_SEM_LOG_HOOK);
 
     bu_getiwd(iwd, MAXPATHLEN);
 }

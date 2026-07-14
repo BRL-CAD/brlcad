@@ -88,9 +88,10 @@ static int output_as_return = 1;
 Tk_Window tkwin = NULL;
 
 
-/* GUI output hooks use this variable to store the Tcl function used to run to
- * produce output. */
+/* GUI output hooks use these variables to track the Tcl command which receives
+ * output and whether MGED's process-global bu_log hook is installed. */
 static struct bu_vls tcl_output_cmd = BU_VLS_INIT_ZERO;
+static int gui_output_hook_active = 0;
 
 /* Thread-safe buffer: bu_log output from any thread is accumulated here under
  * MGED_SEM_LOG protection.  The main thread drains it to the Tcl interp via
@@ -153,10 +154,11 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
 	bu_snooze(10000); /* 10 ms — keeps CPU low while staying responsive */
     }
 
-    /* Final drain to pick up anything written just before thread exit. */
-    mged_pr_output(s->interp);
-
     worker.join();
+
+    /* Join establishes that neither the command nor any worker-side cleanup
+     * can append more output before the final drain. */
+    mged_pr_output(s->interp);
     s->cmd_running = 0;
     return result.load();
 }
@@ -233,6 +235,9 @@ mged_stop_log_drain_timer(struct mged_state *s)
 int
 gui_output(void *UNUSED(clientData), void *str)
 {
+    if (!str)
+	return 0;
+
     bu_semaphore_acquire(MGED_SEM_LOG);
     bu_vls_printf(&tcl_log_str, "%s", (const char *)str);
     bu_semaphore_release(MGED_SEM_LOG);
@@ -252,11 +257,13 @@ void
 mged_pr_output(Tcl_Interp *interp)
 {
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
+    struct bu_vls output_cmd = BU_VLS_INIT_ZERO;
 
     /* Grab and clear the accumulated text under the lock. */
     bu_semaphore_acquire(MGED_SEM_LOG);
     if (!bu_vls_strlen(&tcl_output_cmd))
 	bu_vls_sprintf(&tcl_output_cmd, "output_callback");
+    bu_vls_vlscat(&output_cmd, &tcl_output_cmd);
     if (bu_vls_strlen(&tcl_log_str)) {
 	bu_vls_vlscat(&tmp, &tcl_log_str);
 	bu_vls_trunc(&tcl_log_str, 0);
@@ -267,7 +274,7 @@ mged_pr_output(Tcl_Interp *interp)
     if (bu_vls_strlen(&tmp)) {
 	Tcl_DString tclcommand;
 	Tcl_DStringInit(&tclcommand);
-	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tcl_output_cmd));
+	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&output_cmd));
 	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tmp));
 	Tcl_Obj *save_result = Tcl_GetObjResult(interp);
 	Tcl_IncrRefCount(save_result);
@@ -278,6 +285,7 @@ mged_pr_output(Tcl_Interp *interp)
     }
 
     bu_vls_free(&tmp);
+    bu_vls_free(&output_cmd);
 }
 
 
@@ -1412,8 +1420,8 @@ cmd_tk(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
 
 
 /**
- * Hooks the output to the given output hook.  Removes the existing
- * output hook!
+ * Routes output to the named Tcl command.  With no command argument, removes
+ * MGED's bu_log hook.
  */
 int
 cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
@@ -1434,10 +1442,13 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const 
 	return TCL_ERROR;
     }
 
-    bu_log_delete_hook(gui_output, (void *)s);/* Delete the existing hook */
-
-    if (argc < 2)
+    if (argc < 2) {
+	if (gui_output_hook_active) {
+	    bu_log_delete_hook(gui_output, (void *)s);
+	    gui_output_hook_active = 0;
+	}
 	return TCL_OK;
+    }
 
     /* Make sure the command exists before putting in the hook! */
     /* Note - the parameters to proc could be wrong and/or the proc
@@ -1460,11 +1471,15 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const 
 	return TCL_ERROR;
     }
 
-    /* Set up the command */
+    /* Update the callback name without removing a functioning hook. */
+    bu_semaphore_acquire(MGED_SEM_LOG);
     bu_vls_sprintf(&tcl_output_cmd, "%s", argv[1]);
+    bu_semaphore_release(MGED_SEM_LOG);
 
-    /* Set up the libbu hook */
-    bu_log_add_hook(gui_output, (void *)s);
+    if (!gui_output_hook_active) {
+	bu_log_add_hook(gui_output, (void *)s);
+	gui_output_hook_active = 1;
+    }
 
     Tcl_ResetResult(interpreter);
     return TCL_OK;

@@ -29,6 +29,7 @@ set(
   test_hook.c
   test_humanize_number.c
   test_list.c
+  test_log.cpp
   test_mappedfile.c
   test_observer.c
   test_opt.c
@@ -775,6 +776,9 @@ brlcad_add_test(NAME bu_ptbl_trunc COMMAND bu_test test_ptbl trunc)
 brlcad_add_test(NAME bu_hook_basic COMMAND bu_test test_hook basic)
 brlcad_add_test(NAME bu_hook_multiadd COMMAND bu_test test_hook multiadd)
 brlcad_add_test(NAME bu_hook_saverestore COMMAND bu_test test_hook saverestore)
+brlcad_add_test(NAME bu_log_mutation COMMAND bu_test test_log mutation)
+brlcad_add_test(NAME bu_log_parallel COMMAND bu_test test_log parallel)
+brlcad_add_test(NAME bu_log_recursive COMMAND bu_test test_log recursive)
 
 #
 #  *********** test_process.c tests ************

@@ -83,6 +83,14 @@ test_bu_hook_basic(void)
 	return BRLCAD_ERROR;
     }
 
+    /* Removing the first item from a multi-item list must move only the
+     * remaining active items. */
+    bu_hook_delete(&hl, NULL, NULL);
+    if (hl.size != 1 || hl.hooks[0].hookfunc != test_bu_hook_basic_hook) {
+	printf("\nbu_hook_basic FAILED");
+	return BRLCAD_ERROR;
+    }
+
     bu_hook_call(&hl, NULL);
 
     if (!was_called[which_hook]) {
@@ -103,6 +111,8 @@ test_bu_hook_basic(void)
 	printf("\nbu_hook_basic FAILED");
 	return BRLCAD_ERROR;
     }
+
+    bu_hook_delete_all(&hl);
 
     printf("\nbu_hook_basic PASSED");
     return BRLCAD_OK;

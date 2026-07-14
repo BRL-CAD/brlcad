@@ -1824,8 +1824,8 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
      * channel buffer and must be consumed with Tcl_Read, not read(). */
     Tcl_Channel chan = (Tcl_Channel)clientData;
     int count;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char line[RT_MAXLINE+1] = {0};
+    Tcl_DString tclcommand;
     Tcl_Obj *save_result;
 
     count = Tcl_Read(chan, line, RT_MAXLINE);
@@ -1835,15 +1835,18 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 
     line[count] = '\0';
 
+    /* Treat bytes read from the pipe as one Tcl argument.  Constructing this
+     * as "output_callback {%s}" breaks on unmatched braces in program output. */
+    Tcl_DStringInit(&tclcommand);
+    (void)Tcl_DStringAppendElement(&tclcommand, "output_callback");
+    (void)Tcl_DStringAppendElement(&tclcommand, line);
+
     save_result = Tcl_GetObjResult(s->interp);
     Tcl_IncrRefCount(save_result);
-
-    bu_vls_printf(&vls, "output_callback {%s}", line);
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
+    (void)Tcl_Eval(s->interp, Tcl_DStringValue(&tclcommand));
     Tcl_SetObjResult(s->interp, save_result);
     Tcl_DecrRefCount(save_result);
+    Tcl_DStringFree(&tclcommand);
 }
 
 
@@ -3213,20 +3216,14 @@ main(int argc, char *argv[])
 	 * _get_osfhandle), not the raw CRT fd — see the fix below. */
 #ifdef HAVE_PIPE
 	{
-	    (void)close(fileno(stdout));
-
-	    /* since we just closed stdout, fd 1 is what dup() should return */
-	    result = dup(pipe_out[1]);
+	    result = dup2(pipe_out[1], fileno(stdout));
 	    if (result == -1)
-		perror("dup");
+		perror("dup2");
 	    (void)close(pipe_out[1]); /* only a write pipe */
 
-	    (void)close(fileno(stderr));
-
-	    /* since we just closed stderr, fd 2 is what dup() should return */
-	    result = dup(pipe_err[1]);
+	    result = dup2(pipe_err[1], fileno(stderr));
 	    if (result == -1)
-		perror("dup");
+		perror("dup2");
 	    (void)close(pipe_err[1]); /* only a write pipe */
 
 #ifdef HAVE_WINDOWS_H
@@ -3236,7 +3233,7 @@ main(int argc, char *argv[])
 	     * any attempt by Tcl to write to them — including `puts test` — fails
 	     * with "error writing 'stdout': invalid argument".
 	     *
-	     * After the dup() calls above, CRT fd 1/fd 2 now point to the write
+	     * After the dup2() calls above, CRT fd 1/fd 2 now point to the write
 	     * ends of our pipes.  Create new Tcl writable channels from those
 	     * HANDLEs and install them as Tcl's stdout/stderr so that `puts`
 	     * writes into the pipe (and thus reaches std_out_or_err below).

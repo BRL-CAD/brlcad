@@ -37,10 +37,10 @@
  * context instead of as a library-stateful set of callback functions
  */
 static struct bu_hook_list log_hook_list = BU_HOOK_LIST_INIT_ZERO;
-static int log_call_hooks_semaphore = -1;
+int BU_SEM_LOG_HOOK;
 
 static int log_first_time = 1;
-static int log_hooks_called = 0;
+static THREADLOCAL int log_hooks_called = 0;
 static int log_indent_level = 0;
 
 
@@ -62,54 +62,68 @@ bu_log_indent_vls(struct bu_vls *v)
 void
 bu_log_add_hook(bu_hook_t func, void *clientdata)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_add(&log_hook_list, func, clientdata);
-
-    if(LIKELY(log_call_hooks_semaphore == -1))
-    {
-	/* initialize log_call_hooks_semaphore */
-	log_call_hooks_semaphore = bu_semaphore_register("log_call_hooks_semaphore");
-    }
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
 void
 bu_log_delete_hook(bu_hook_t func, void *clientdata)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_delete(&log_hook_list, func, clientdata);
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
-static void
+static int
 log_call_hooks(void *buf)
 {
-    if(LIKELY(log_call_hooks_semaphore != -1))
-	bu_semaphore_acquire(log_call_hooks_semaphore);
+    int called = 0;
 
-    bu_hook_call(&log_hook_list, buf);
+    /* A hook which logs must not recursively dispatch the same hook list. */
+    if (log_hooks_called)
+	return 0;
 
-    if(LIKELY(log_call_hooks_semaphore != -1))
-	bu_semaphore_release(log_call_hooks_semaphore);
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
+
+    if (log_hook_list.size) {
+	log_hooks_called = 1;
+	bu_hook_call(&log_hook_list, buf);
+	log_hooks_called = 0;
+	called = 1;
+    }
+
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
+    return called;
 }
 
 
 void
 bu_log_hook_save_all(struct bu_hook_list *save_hlp)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_save_all(&log_hook_list, save_hlp);
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
 void
 bu_log_hook_delete_all(void)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_delete_all(&log_hook_list);
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
 void
 bu_log_hook_restore_all(struct bu_hook_list *restore_hlp)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_restore_all(&log_hook_list, restore_hlp);
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
@@ -143,8 +157,12 @@ void
 bu_putchar(int c)
 {
     int ret = EOF;
+    char buf[2];
 
-    if (log_hook_list.size == 0) {
+    buf[0] = (char)c;
+    buf[1] = '\0';
+
+    if (!log_call_hooks(buf)) {
 
 	if (LIKELY(stderr != NULL)) {
 	    ret = fputc(c, stderr);
@@ -157,13 +175,6 @@ bu_putchar(int c)
 	if (UNLIKELY(ret == EOF)) {
 	    bu_bomb("bu_putchar: write error");
 	}
-
-    } else {
-	char buf[2];
-	buf[0] = (char)c;
-	buf[1] = '\0';
-
-	log_call_hooks(buf);
     }
 
     if (log_indent_level > 0 && c == '\n') {
@@ -202,13 +213,8 @@ bu_log(const char *fmt, ...)
 
     len = bu_vls_strlen(&output);
 
-    if (log_hook_list.size == 0 || log_hooks_called) {
+    if (!log_call_hooks(bu_vls_addr(&output))) {
 	size_t ret = 0;
-
-	if (UNLIKELY(log_first_time)) {
-	    bu_setlinebuf(stderr);
-	    log_first_time = 0;
-	}
 
 	if (UNLIKELY(len <= 0)) {
 	    bu_vls_free(&output);
@@ -217,6 +223,10 @@ bu_log(const char *fmt, ...)
 
 	if (LIKELY(stderr != NULL)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    if (UNLIKELY(log_first_time)) {
+		bu_setlinebuf(stderr);
+		log_first_time = 0;
+	    }
 	    ret = fwrite(bu_vls_addr(&output), len, 1, stderr);
 	    fflush(stderr);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -236,9 +246,6 @@ bu_log(const char *fmt, ...)
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	    bu_bomb("bu_log: write error");
 	}
-
-    } else {
-	log_call_hooks(bu_vls_addr(&output));
     }
 
     bu_vls_free(&output);
@@ -269,7 +276,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
 
     len = bu_vls_strlen(&output);
 
-    if (log_hook_list.size == 0 || log_hooks_called) {
+    if (!log_call_hooks(bu_vls_addr(&output))) {
 	size_t ret;
 
 	if (LIKELY(len)) {
@@ -280,9 +287,6 @@ bu_flog(FILE *fp, const char *fmt, ...)
 	    if (UNLIKELY(ret != 1))
 		bu_bomb("bu_flog: write error");
 	}
-
-    } else {
-	log_call_hooks(bu_vls_addr(&output));
     }
 
     bu_vls_free(&output);

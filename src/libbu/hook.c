@@ -81,13 +81,12 @@ bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 	if (crt->hookfunc == func && crt->clientdata == clientdata) {
 	    if (i < hlp->size - 1) {
 		// If there's anything beyond crt, shift it down the array
-		memmove(crt, crt + 1, sizeof (struct bu_hook) * (hlp->size - i));
-	    } else {
-		// Target is last entry
-		crt->hookfunc = NULL;
-		crt->clientdata = NULL;
+		memmove(crt, crt + 1, sizeof(struct bu_hook) * (hlp->size - i - 1));
 	    }
 	    hlp->size--;
+	    hlp->hooks[hlp->size].hookfunc = NULL;
+	    hlp->hooks[hlp->size].clientdata = NULL;
+	    return;
 	}
     }
 }

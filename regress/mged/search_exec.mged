@@ -2,7 +2,24 @@ puts "*** Testing search -exec with sourced Tcl state ***"
 
 source @CMAKE_CURRENT_SOURCE_DIR@/search_exec_procs.tcl
 
+# A rejected output-hook replacement must leave the active hook installed.
+# The following search drains the marker queued by echo into this callback.
+set search_exec_output ""
+proc search_exec_output_capture {text} {
+    append ::search_exec_output $text
+}
+output_hook search_exec_output_capture
+if {![catch {output_hook __search_exec_missing_output_command__}]} {
+    error "FAIL output_hook accepted a missing command"
+}
+echo SEARCH_EXEC_OUTPUT_HOOK_ALIVE
+
 search /all.g/component/power.train/r1 -maxdepth 0 -exec search_exec_global "{}" ";"
+if {[string first SEARCH_EXEC_OUTPUT_HOOK_ALIVE $search_exec_output] < 0} {
+    error "FAIL invalid output_hook replacement removed the active hook"
+}
+output_hook
+
 search /all.g/component/power.train/r2 -maxdepth 0 -exec ::search_exec_test::nested::mark "{}" ";"
 search /all.g/component/power.train/r5 -maxdepth 0 -exec search_exec_alias ";"
 
