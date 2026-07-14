@@ -48,9 +48,9 @@ texture_gradient_work(struct texture_s *texture, void *mesh, struct tie_ray_s *U
     if (td->axis == 1) {
 	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1] > TIE_PREC ? (pt[1] - ADRT_MESH(mesh)->min[1]) / (ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1]) : 0.0;
     } else if (td->axis == 2) {
-	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[2] > TIE_PREC ? (pt[2] - ADRT_MESH(mesh)->min[2]) / (ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[1]) : 0.0;
+	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[2] > TIE_PREC ? (pt[2] - ADRT_MESH(mesh)->min[2]) / (ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[2]) : 0.0;
     } else {
-	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > TIE_PREC ? (pt[0] - ADRT_MESH(mesh)->min[0]) / (ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[1]) : 0.0;
+	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > TIE_PREC ? (pt[0] - ADRT_MESH(mesh)->min[0]) / (ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0]) : 0.0;
     }
 }
 
