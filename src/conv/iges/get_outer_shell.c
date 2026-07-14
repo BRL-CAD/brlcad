@@ -44,7 +44,7 @@ Get_outer_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -71,16 +71,16 @@ Get_outer_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
     s = nmg_msv(r);
 
     for (face = 0; face < no_of_faces; face++) {
-	fu[face_count] = Add_face_to_shell(s, (face_de[face]-1)/2, face_orient[face], vlfree);
+	fu[face_count] = Add_face_to_shell(s, IGES_DE2INDEX(face_de[face]), face_orient[face], vlfree);
 	if (fu[face_count] != (struct faceuse *)NULL)
 	    face_count++;
     }
 
     nmg_gluefaces(fu, face_count, vlfree, &tol);
 
-    bu_free((char *)fu, "Get_outer_shell: faceuse list");
-    bu_free((char *)face_de, "Get_outer_shell: face DE's");
-    bu_free((char *)face_orient, "Get_outer_shell: face orients");
+    bu_free(fu, "Get_outer_shell: faceuse list");
+    bu_free(face_de, "Get_outer_shell: face DE's");
+    bu_free(face_orient, "Get_outer_shell: face orients");
     return s;
 }
 

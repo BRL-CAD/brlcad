@@ -59,6 +59,9 @@
 #define IGES_SECTION_COL 72
 #define IGES_SEQNUM_COL 73
 
+/* Each field of an IGES Directory Entry record is 8 columns wide. */
+#define IGES_DE_FIELD_WIDTH 8
+
 /* Circularly linked list of files and names for external references */
 struct file_list
 {

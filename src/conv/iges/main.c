@@ -345,8 +345,8 @@ main(int argc, char *argv [])
 	Free_dir();
 
 	BU_LIST_DEQUEUE(&curr_file->l);
-	bu_free((char *)curr_file->file_name, "iges-g: curr_file->file_name");
-	bu_free((char *)curr_file, "iges-g: curr_file");
+	bu_free(curr_file->file_name, "iges-g: curr_file->file_name");
+	bu_free(curr_file, "iges-g: curr_file");
 	file_count++;
     }
 

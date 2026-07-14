@@ -48,7 +48,7 @@ Knot(int n /* number of values in knot sequence */, fastf_t values[] /* knot val
     }
 
     if (numknots)
-	bu_free((char *)knots, "Knot: knots");
+	bu_free(knots, "Knot: knots");
 
     knots = (fastf_t *)bu_calloc(n, sizeof(*knots), "Knot: knots");
 
@@ -63,7 +63,7 @@ Knot(int n /* number of values in knot sequence */, fastf_t values[] /* knot val
 void
 Freeknots(void)
 {
-    bu_free((char *)knots, "Freeknots: knots");
+    bu_free(knots, "Freeknots: knots");
     numknots = 0;
 }
 

@@ -110,12 +110,12 @@ Free_dir(void)
 
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 124 || dir[i]->type == 700)
-	    bu_free((char *)dir[i]->rot, "Free_dir: dir[i]->rot");
-	bu_free((char *)dir[i], "Free_dir: dir[i]");
+	    bu_free(dir[i]->rot, "Free_dir: dir[i]->rot");
+	bu_free(dir[i], "Free_dir: dir[i]");
     }
 
     if (totentities > 0)
-	bu_free((char *)dir, "Free_dir: dir");
+	bu_free(dir, "Free_dir: dir");
 }
 
 

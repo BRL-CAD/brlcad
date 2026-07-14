@@ -55,7 +55,7 @@ brep(size_t entityno, struct bu_list *vlfree)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -90,7 +90,7 @@ brep(size_t entityno, struct bu_list *vlfree)
 
     /* Put voids in */
     for (i = 0; i < num_of_voids; i++) {
-	if ((void_shells[i] = Add_inner_shell(r, (void_shell_de[i] - 1)/2, vlfree))
+	if ((void_shells[i] = Add_inner_shell(r, IGES_DE2INDEX(void_shell_de[i]), vlfree))
 	    == (struct shell *)NULL)
 	    goto err;
     }
@@ -137,16 +137,16 @@ brep(size_t entityno, struct bu_list *vlfree)
     }
 
     if (num_of_voids) {
-	bu_free((char *)void_shell_de, "BREP: void shell DE's");
-	bu_free((char *)void_orient, "BREP: void shell orients");
-	bu_free((char *)void_shells, "brep: void shell list");
+	bu_free(void_shell_de, "BREP: void shell DE's");
+	bu_free(void_orient, "BREP: void shell orients");
+	bu_free(void_shells, "brep: void shell list");
     }
 
     v_list = vertex_root;
     while (v_list != NULL) {
 	v_list_tmp = v_list->next;
-	bu_free((char *)v_list->i_verts, "brep: iges_vertex");
-	bu_free((char *)v_list, "brep: vertex list");
+	bu_free(v_list->i_verts, "brep: iges_vertex");
+	bu_free(v_list, "brep: vertex list");
 	v_list = v_list_tmp;
     }
     vertex_root = NULL;
@@ -154,8 +154,8 @@ brep(size_t entityno, struct bu_list *vlfree)
     e_list = edge_root;
     while (e_list != NULL) {
 	e_list_tmp = e_list->next;
-	bu_free((char *)e_list->i_edge, "brep:iges_edge");
-	bu_free((char *)e_list, "brep: edge list");
+	bu_free(e_list->i_edge, "brep:iges_edge");
+	bu_free(e_list, "brep: edge list");
 	e_list = e_list_tmp;
     }
     edge_root = NULL;
@@ -171,9 +171,9 @@ brep(size_t entityno, struct bu_list *vlfree)
 
     err :
 	if (num_of_voids) {
-	    bu_free((char *)void_shell_de, "BREP: void shell DE's");
-	    bu_free((char *)void_orient, "BREP: void shell orients");
-	    bu_free((char *)void_shells, "brep: void shell list");
+	    bu_free(void_shell_de, "BREP: void shell DE's");
+	    bu_free(void_orient, "BREP: void shell orients");
+	    bu_free(void_shells, "brep: void shell list");
 	}
 
     /* perform nmg kill model if make nmg was not executed since

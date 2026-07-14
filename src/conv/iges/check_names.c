@@ -206,7 +206,7 @@ Get_name(size_t entityno, int skip)
     char *name;
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return;
     }
@@ -253,7 +253,7 @@ Get_name(size_t entityno, int skip)
 
     Readname(&name, "");
     dir[entityno]->name = Make_unique_brl_name(name);
-    bu_free((char *)name, "Get_name: name");
+    bu_free(name, "Get_name: name");
 
 }
 
@@ -271,7 +271,7 @@ Get_drawing_name(size_t entityno)
     char *name;
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return;
     }
@@ -329,7 +329,7 @@ Get_drawing_name(size_t entityno)
 
     Readname(&name, "");
     dir[entityno]->name = Make_unique_brl_name(name);
-    bu_free((char *)name, "Get_name: name");
+    bu_free(name, "Get_name: name");
 }
 
 
@@ -346,7 +346,7 @@ Get_csg_name(size_t entityno)
     char *name;
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return;
     }
@@ -403,7 +403,7 @@ Get_csg_name(size_t entityno)
 
     Readname(&name, "");
     dir[entityno]->name = Make_unique_brl_name(name);
-    bu_free((char *)name, "Get_name: name");
+    bu_free(name, "Get_name: name");
 }
 
 
@@ -420,7 +420,7 @@ Get_brep_name(size_t entityno)
     char *name;
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return;
     }
@@ -476,7 +476,7 @@ Get_brep_name(size_t entityno)
 
     Readname(&name, "");
     dir[entityno]->name = Make_unique_brl_name(name);
-    bu_free((char *)name, "Get_name: name");
+    bu_free(name, "Get_name: name");
 }
 
 
@@ -496,7 +496,7 @@ Get_subfig_name(size_t entityno)
     }
 
     if (dir[entityno]->param <= pstart) {
-	bu_exit(1, "Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_exit(1, "Illegal parameter pointer for entity D%07d (%s)\n",
 		dir[entityno]->direct, dir[entityno]->name);
     }
 
@@ -512,7 +512,7 @@ Get_subfig_name(size_t entityno)
     Readname(&name, "");	/* get subfigure name */
 
     dir[entityno]->name = Add_brl_name(name);
-    bu_free((char *)name, "Get_name: name");
+    bu_free(name, "Get_name: name");
 }
 
 

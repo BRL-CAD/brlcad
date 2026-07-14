@@ -52,7 +52,7 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_li
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -64,7 +64,7 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_li
     }
 
     Readint(&no_of_edges, "");
-    edge_list = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(*edge_list) ,
+    edge_list = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(*edge_list),
 						  "Make_face (edge_list)");
     for (i = 0; i < no_of_edges; i++) {
 	Readint(&edge_list[i].edge_is_vertex, "");
@@ -100,7 +100,7 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_li
 	}
     }
 
-    verts = (struct vertex ***)bu_calloc(no_of_edges, sizeof(*verts) ,
+    verts = (struct vertex ***)bu_calloc(no_of_edges, sizeof(*verts),
 					 "Make_face: vertex_list **");
 
     for (i = 0; i < no_of_edges; i++) {
@@ -145,7 +145,7 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_li
 	    for (i = 0; i < v_list->no_of_verts; i++) {
 		if (v_list->i_verts[i].v != NULL && v_list->i_verts[i].v->vg_p == NULL) {
 		    NMG_CK_VERTEX(v_list->i_verts[i].v);
-		    nmg_vertex_gv(v_list->i_verts[i].v ,
+		    nmg_vertex_gv(v_list->i_verts[i].v,
 				  v_list->i_verts[i].pt);
 		}
 	    }
@@ -188,8 +188,8 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_li
 	bu_log("No edges left!\n");
 
 err:
-    bu_free((char *)edge_list, "Make_face (edge_list)");
-    bu_free((char *)verts, "Make_face (vertexlist)");
+    bu_free(edge_list, "Make_face (edge_list)");
+    bu_free(verts, "Make_face (vertexlist)");
     return fu;
 }
 

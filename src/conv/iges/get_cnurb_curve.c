@@ -104,7 +104,7 @@ Get_uv_polyline_curve(size_t curve)
     Readrec(dir[curve]->param);
     Readint(&type, "");
     if (type != dir[curve]->type) {
-	bu_log("Get_uv_polyline_curve: looking for curve type %d, found %d\n" ,
+	bu_log("Get_uv_polyline_curve: looking for curve type %d, found %d\n",
 	       dir[curve]->type, type);
 	return (struct edge_g_cnurb *)NULL;
     }
@@ -130,13 +130,13 @@ Get_uv_polyline_curve(size_t curve)
 	if (splroot->ndim != 2 && splroot->ndim != 3) {
 	    bu_log("Get_uv_polyline_curve: entity D%07d has invalid ndim: %d\n",
 		   dir[curve]->direct, splroot->ndim);
-	    bu_free((char *)splroot, "Get_uv_polyline_curve: splroot");
+	    bu_free(splroot, "Get_uv_polyline_curve: splroot");
 	    return (struct edge_g_cnurb *)NULL;
 	}
 	if (splroot->nsegs < 1) {
 	    bu_log("Get_uv_polyline_curve: entity D%07d has nsegs == %d\n",
 		   dir[curve]->direct, splroot->nsegs);
-	    bu_free((char *)splroot, "Get_uv_polyline_curve: splroot");
+	    bu_free(splroot, "Get_uv_polyline_curve: splroot");
 	    return (struct edge_g_cnurb *)NULL;
 	}
 
@@ -206,9 +206,9 @@ Get_uv_polyline_curve(size_t curve)
 	while (seg != NULL) {
 	    seg1 = seg;
 	    seg = seg->next;
-	    bu_free((char *)seg1, "Get_uv_polyline_curve: seg1");
+	    bu_free(seg1, "Get_uv_polyline_curve: seg1");
 	}
-	bu_free((char *)splroot, "Get_uv_polyline_curve: splroot");
+	bu_free(splroot, "Get_uv_polyline_curve: splroot");
 
     } else if (dir[curve]->type == 104) {
 	/* conic arc */
@@ -471,14 +471,14 @@ Get_uv_polyline_curve(size_t curve)
 
     if (!uv || num_pts < 2) {
 	if (uv)
-	    bu_free((char *)uv, "Get_uv_polyline_curve: uv");
+	    bu_free(uv, "Get_uv_polyline_curve: uv");
 	bu_log("Get_uv_polyline_curve: entity D%07d produced too few points (%d)\n",
 	       dir[curve]->direct, num_pts);
 	return (struct edge_g_cnurb *)NULL;
     }
 
     crv = Make_uv_polyline(uv, num_pts);
-    bu_free((char *)uv, "Get_uv_polyline_curve: uv");
+    bu_free(uv, "Get_uv_polyline_curve: uv");
 
     return crv;
 }
@@ -510,7 +510,7 @@ Get_cnurb_curve(int curve_de, int *linear)
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
 	    if (type != dir[curve]->type) {
-		bu_log("Error in Get_cnurb_curve, looking for curve type %d, found %d\n" ,
+		bu_log("Error in Get_cnurb_curve, looking for curve type %d, found %d\n",
 		       dir[curve]->type, type);
 		return (struct edge_g_cnurb *)NULL;
 

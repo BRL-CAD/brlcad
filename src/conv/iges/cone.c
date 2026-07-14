@@ -51,7 +51,7 @@ cone(size_t entityno)
 
     /* Acquiring Data */
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -69,7 +69,7 @@ cone(size_t entityno)
     Readcnv(&z_2, "");
 
     if (scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0) {
-	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	if (ZERO(scale_height)) {
 	    bu_log("\tCone height is zero!!\n");

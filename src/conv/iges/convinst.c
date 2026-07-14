@@ -51,7 +51,7 @@ Convinst(void)
 
 	/* read parameters */
 	if (dir[i]->param <= pstart) {
-	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		   dir[i]->direct, dir[i]->name);
 	    continue;
 	}
@@ -101,7 +101,7 @@ Convinst(void)
 	    else
 		rgb = (unsigned char *)0;
 
-	    mk_lrcomb(fdout ,
+	    mk_lrcomb(fdout,
 		      dir[i]->name,		/* name */
 		      &head,			/* members */
 		      brl_att.region_flag,	/* region flag */

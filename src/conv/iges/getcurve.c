@@ -66,7 +66,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
 	    if (type != dir[curve]->type) {
-		bu_log("Error in Getcurve, looking for curve type %d, found %d\n" ,
+		bu_log("Error in Getcurve, looking for curve type %d, found %d\n",
 		       dir[curve]->type, type);
 		npts = 0;
 		break;
@@ -107,7 +107,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
 	    if (type != dir[curve]->type) {
-		bu_log("Error in Getcurve, looking for curve type %d, found %d\n" ,
+		bu_log("Error in Getcurve, looking for curve type %d, found %d\n",
 		       dir[curve]->type, type);
 		npts = 0;
 		break;
@@ -172,7 +172,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 		ptr->prev = prev;
 	    }
 	    ptr = prev;
-	    bu_free((char *)ptr->next, "Getcurve: ptr->next");
+	    bu_free(ptr->next, "Getcurve: ptr->next");
 	    ptr->next = NULL;
 	    break;
 	}
@@ -189,7 +189,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
 	    if (type != dir[curve]->type) {
-		bu_log("Error in Getcurve, looking for curve type %d, found %d\n" ,
+		bu_log("Error in Getcurve, looking for curve type %d, found %d\n",
 		       dir[curve]->type, type);
 		npts = 0;
 		break;
@@ -230,7 +230,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 		    }
 		    ptr = ptr->prev;
 		    if (ptr) {
-			bu_free((char *)ptr->next, "Getcurve: ptr->next");
+			bu_free(ptr->next, "Getcurve: ptr->next");
 			ptr->next = NULL;
 		    }
 		    npts = ntuples;
@@ -262,7 +262,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 		    }
 		    ptr = ptr->prev;
 		    if (ptr) {
-			bu_free((char *)ptr->next, "Getcurve: ptr->next");
+			bu_free(ptr->next, "Getcurve: ptr->next");
 			ptr->next = NULL;
 		    }
 		    npts = ntuples;
@@ -287,7 +287,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
 	    if (type != dir[curve]->type) {
-		bu_log("Error in Getcurve, looking for curve type %d, found %d\n" ,
+		bu_log("Error in Getcurve, looking for curve type %d, found %d\n",
 		       dir[curve]->type, type);
 		npts = 0;
 		break;
@@ -376,7 +376,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    }
 	    ptr = ptr->prev;
 	    if (ptr) {
-		bu_free((char *)ptr->next, "Getcurve: ptr->next");
+		bu_free(ptr->next, "Getcurve: ptr->next");
 		ptr->next = NULL;
 	    }
 
@@ -385,9 +385,9 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    while (seg != NULL) {
 		seg1 = seg;
 		seg = seg->next;
-		bu_free((char *)seg1, "Getcurve: seg1");
+		bu_free(seg1, "Getcurve: seg1");
 	    }
-	    bu_free((char *)splroot, "Getcurve: splroot");
+	    bu_free(splroot, "Getcurve: splroot");
 	    splroot = NULL;
 
 	    break;
@@ -402,7 +402,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
 	    if (type != dir[curve]->type) {
-		bu_log("Error in Getcurve, looking for curve type %d, found %d\n" ,
+		bu_log("Error in Getcurve, looking for curve type %d, found %d\n",
 		       dir[curve]->type, type);
 		npts = 0;
 		break;
@@ -732,7 +732,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
 	    if (type != dir[curve]->type) {
-		bu_log("Error in Getcurve, looking for curve type %d, found %d\n" ,
+		bu_log("Error in Getcurve, looking for curve type %d, found %d\n",
 		       dir[curve]->type, type);
 		npts = 0;
 		break;
@@ -742,7 +742,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    curvptr = (int *)bu_calloc(ncurves, sizeof(*curvptr), "Getcurve: curvptr");
 	    for (i = 0; i < ncurves; i++) {
 		Readint(&curvptr[i], "");
-		curvptr[i] = (curvptr[i]-1)/2;
+		curvptr[i] = IGES_DE2INDEX(curvptr[i]);
 	    }
 
 	    npts = 0;
@@ -763,7 +763,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 			ptr->next = ptr->next->next;
 			if (ptr->next != NULL)
 			    ptr->next->prev = ptr;
-			bu_free((char *)tmp_ptr, "Getcurve: tmp_ptr");
+			bu_free(tmp_ptr, "Getcurve: tmp_ptr");
 			npts--;
 		    }
 		}
@@ -783,7 +783,7 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
 	    if (type != dir[curve]->type) {
-		bu_log("Error in Getcurve, looking for curve type %d, found %d\n" ,
+		bu_log("Error in Getcurve, looking for curve type %d, found %d\n",
 		       dir[curve]->type, type);
 		npts = 0;
 		break;
@@ -852,9 +852,9 @@ Getcurve(size_t curve, struct ptlist **curv_pts)
 
 	    /* Free memory */
 	    Freeknots();
-	    bu_free((char *)cntrl_pts, "Getcurve: spline cntrl_pts");
-	    bu_free((char *)w, "Getcurve: spline w");
-	    bu_free((char *)t, "Getcurve: spline t");
+	    bu_free(cntrl_pts, "Getcurve: spline cntrl_pts");
+	    bu_free(w, "Getcurve: spline w");
+	    bu_free(t, "Getcurve: spline t");
 
 	    break;
 	}

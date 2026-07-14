@@ -206,7 +206,7 @@ read_bspline_curve_on(size_t curve)
 	Readdbl(&knots[i], "");
     for (i = 0; i < nc->KnotCount(); i++)
 	nc->SetKnot(i, knots[i + 1]);
-    bu_free((char *)knots, "read_bspline_curve_on: knots");
+    bu_free(knots, "read_bspline_curve_on: knots");
 
     /* weights */
     double *wts = (double *)bu_malloc(num_pts * sizeof(double),
@@ -234,7 +234,7 @@ read_bspline_curve_on(size_t curve)
 	    nc->SetCV(i, ON_3dPoint(xpt[X], xpt[Y], xpt[Z]));
     }
 
-    bu_free((char *)wts, "read_bspline_curve_on: weights");
+    bu_free(wts, "read_bspline_curve_on: weights");
 
     return nc;
 }
@@ -366,7 +366,7 @@ read_bspline_surf_on(size_t entityno)
 	Readdbl(&uk[i], "");
     for (i = 0; i < ns->KnotCount(0); i++)
 	ns->SetKnot(0, i, uk[i + 1]);
-    bu_free((char *)uk, "read_bspline_surf_on: uk");
+    bu_free(uk, "read_bspline_surf_on: uk");
 
     /* v knots */
     double *vk = (double *)bu_malloc(n_v * sizeof(double), "read_bspline_surf_on: vk");
@@ -374,7 +374,7 @@ read_bspline_surf_on(size_t entityno)
 	Readdbl(&vk[i], "");
     for (i = 0; i < ns->KnotCount(1); i++)
 	ns->SetKnot(1, i, vk[i + 1]);
-    bu_free((char *)vk, "read_bspline_surf_on: vk");
+    bu_free(vk, "read_bspline_surf_on: vk");
 
     /* weights, stored col-fastest (u fastest) as row-major in IGES */
     const int npts = n_cols * n_rows;
@@ -406,7 +406,7 @@ read_bspline_surf_on(size_t entityno)
 	}
     }
 
-    bu_free((char *)wts, "read_bspline_surf_on: wts");
+    bu_free(wts, "read_bspline_surf_on: wts");
 
     return ns;
 }

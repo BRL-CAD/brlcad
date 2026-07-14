@@ -53,7 +53,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
     NMG_CK_FACE_G_SNURB(srf);
 
     if (dir[loop_entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s), loop ignored\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s), loop ignored\n",
 	       dir[loop_entityno]->direct, dir[loop_entityno]->name);
 	return 0;
     }
@@ -71,7 +71,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
     Readint(&no_of_edges, "");
 
-    edge_uses = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(*edge_uses) ,
+    edge_uses = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(*edge_uses),
 						  "Add_nurb_loop_to_face (edge_uses)");
     for (i = 0; i < no_of_edges; i++) {
 	Readint(&edge_uses[i].edge_is_vertex, "");
@@ -100,7 +100,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	}
     }
 
-    verts = (struct vertex **)bu_calloc(no_of_edges, sizeof(*verts) ,
+    verts = (struct vertex **)bu_calloc(no_of_edges, sizeof(*verts),
 					"Add_nurb_loop_to_face: vertex_list **");
 
     for (i = 0; i < no_of_edges; i++) {
@@ -318,7 +318,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
 		    tmp_crv = BU_LIST_FIRST(edge_g_cnurb, &split_hd);
 		    BU_LIST_DEQUEUE(&tmp_crv->l);
-		    bu_free((char *)tmp_crv, "Add_nurb_loop_to_face: tmp_crv");
+		    bu_free(tmp_crv, "Add_nurb_loop_to_face: tmp_crv");
 		}
 	    } else {
 		nmg_vertexuse_a_cnurb(eu->vu_p, start_uv);
@@ -330,9 +330,9 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 		    Assign_cnurb_to_eu(eu, crv);
 	    }
 
-	    bu_free((char *)crv->k.knots, "Add_nurb_loop_to_face: crv->k.knots");
-	    bu_free((char *)crv->ctl_points, "Add_nurb_loop_to_face: crv->ctl_points");
-	    bu_free((char *)crv, "Add_nurb_loop_to_face: crv");
+	    bu_free(crv->k.knots, "Add_nurb_loop_to_face: crv->k.knots");
+	    bu_free(crv->ctl_points, "Add_nurb_loop_to_face: crv->ctl_points");
+	    bu_free(crv, "Add_nurb_loop_to_face: crv");
 
 	    if (new_eu)
 		eu = new_eu;

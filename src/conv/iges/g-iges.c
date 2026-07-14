@@ -818,7 +818,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     de_pointer_number = 0;
     if (get_de_pointers(comb->tree, dp, (int)comb_len, de_pointers)) {
 	bu_log("Error in combination %s\n", dp->d_namep);
-	bu_free((char *)de_pointers, "csg_comb_func de_pointers");
+	bu_free(de_pointers, "csg_comb_func de_pointers");
 	rt_db_free_internal(&intern);
 	return;
     }
@@ -844,7 +844,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     }
 
     rt_db_free_internal(&intern);
-    bu_free((char *)de_pointers, "csg_comb_func de_pointers");
+    bu_free(de_pointers, "csg_comb_func de_pointers");
 
 }
 

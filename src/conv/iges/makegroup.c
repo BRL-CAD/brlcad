@@ -75,7 +75,7 @@ Makegroup(void)
 	    (void)mk_addmember("nurb.s", &head.l, NULL, operators[Union]);
 	}
 	/* Make the group named "all" */
-	mk_lcomb(fdout, "all", &head, 0 ,
+	mk_lcomb(fdout, "all", &head, 0,
 		 (char *)0, (char *)0, (unsigned char *)0, 0);
     }
 }

@@ -102,7 +102,7 @@ Afreestack(void)
 
     jtop = (-1);
     stklen = 0;
-    bu_free((char *)stk, "Afreestack: stk");
+    bu_free(stk, "Afreestack: stk");
     return;
 }
 
@@ -167,7 +167,7 @@ static void
 Sfreestack(void)
 {
     sjtop = (-1);
-    bu_free((char *)sstk_p, "Sfreestack: sstk_p");
+    bu_free(sstk_p, "Sfreestack: sstk_p");
     return;
 }
 

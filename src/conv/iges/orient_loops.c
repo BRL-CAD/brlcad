@@ -94,7 +94,7 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr, struct bu_list *vlf
 			lptr->inner_loops = inner1->next;
 
 		    inner1 = inner1->next;
-		    bu_free((char *)tmp, "Find_inner_loops: tmp");
+		    bu_free(tmp, "Find_inner_loops: tmp");
 		    deleted = 1;
 		}
 	    }

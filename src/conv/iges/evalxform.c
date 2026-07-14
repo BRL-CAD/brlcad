@@ -100,7 +100,7 @@ Evalxform(void)
 	    while (ptr) {
 		ptr1 = ptr;
 		ptr = ptr->prev;
-		bu_free((char *)ptr1, "Evalxform: ptr1");
+		bu_free(ptr1, "Evalxform: ptr1");
 	    }
 	}
     }

@@ -53,7 +53,7 @@ Do_subfigs(void)
 	    continue;
 
 	if (dir[i]->param <= pstart) {
-	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		   dir[i]->direct, dir[i]->name);
 	    continue;
 	}
@@ -81,7 +81,7 @@ Do_subfigs(void)
 	}
 
 	if (dir[subfigdef_index]->param <= pstart) {
-	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		   dir[subfigdef_index]->direct, dir[subfigdef_index]->name);
 	    continue;
 	}
@@ -137,7 +137,7 @@ Do_subfigs(void)
 	    size_t idx;
 
 	    /* convert the member's IGES directory entry number to a dir[] index */
-	    idx = (members[j] - 1)/2;
+	    idx = IGES_DE2INDEX(members[j]);
 
 	    if (idx >= totentities) {
 		bu_log("Subfigure Definition Entity gives Member Entity");
@@ -146,7 +146,7 @@ Do_subfigs(void)
 		continue;
 	    }
 	    if (dir[idx]->param <= pstart) {
-		bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		       dir[idx]->direct, dir[idx]->name);
 		continue;
 	    }
@@ -202,7 +202,7 @@ Do_subfigs(void)
 
 		    name = list_ptr->obj_name;
 		} else {
-		    bu_free((char *)file_name, "Do_subfigs: file_name");
+		    bu_free(file_name, "Do_subfigs: file_name");
 		}
 
 	    } else {

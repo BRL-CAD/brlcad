@@ -54,14 +54,14 @@ Extrudcon(size_t entityno, int curve, vect_t evect)
 
     if (dir[curve]->form > 1) {
 	bu_log("Conic arc for extrusion is not closed:\n");
-	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
+	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
 	return 0;
     }
 
     if (dir[curve]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[curve]->direct, dir[curve]->name);
 	return 0;
     }
@@ -108,7 +108,7 @@ Extrudcon(size_t entityno, int curve, vect_t evect)
 
     if (!ZERO(start[X] - stop[X]) || !ZERO(start[Y] - stop[Y])) {
 	bu_log("Conic arc for extrusion is not closed:\n");
-	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
+	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
 	return 0;
@@ -133,7 +133,7 @@ Extrudcon(size_t entityno, int curve, vect_t evect)
 
     if (!ellipse) {
 	bu_log("Conic arc for extrusion is not an ellipse:\n");
-	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
+	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
 	return 0;

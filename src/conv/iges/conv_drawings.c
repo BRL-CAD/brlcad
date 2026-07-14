@@ -196,12 +196,12 @@ Note_to_vlist(size_t entno, struct bu_list *vhead)
 		tmp_y -= ydel;
 		one_char[0] = str[j];
 
-		bv_vlist_2string(vhead, &free_hd, one_char ,
+		bv_vlist_2string(vhead, &free_hd, one_char,
 				 tmp_x, tmp_y, local_scale,
 				 (double)(rot_ang*RAD2DEG));
 	    }
 	} else
-	    bv_vlist_2string(vhead, &free_hd, str ,
+	    bv_vlist_2string(vhead, &free_hd, str,
 			     (double)loc[X], (double)loc[Y], local_scale,
 			     (double)(rot_ang*RAD2DEG));
 
@@ -488,7 +488,7 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 		    struct ptlist *tmp_ptr;
 
 		    tmp_ptr = ptr->next;
-		    bu_free((char *)ptr, "Draw_entities: ptr");
+		    bu_free(ptr, "Draw_entities: ptr");
 		    ptr = tmp_ptr;
 		}
 		break;
@@ -687,7 +687,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
 
     Draw_entities(m, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, xform, vlfree);
 
-    bu_free((char *)de_list, "Do_view: de_list");
+    bu_free(de_list, "Do_view: de_list");
 }
 
 
@@ -758,10 +758,10 @@ Get_drawing(size_t entno, struct bu_ptbl *view_vis_list, struct bu_list *vlfree)
     (void)mk_lfcomb(fdout, dir[entno]->name, &headp, 0)
 
 /*	if (no_of_views) {
-	bu_free((char *)view_entno, "Get_drawing: view_entno");
-	bu_free((char *)x, "Get_drawing: x");
-	bu_free((char *)y, "Get_drawing: y");
-	bu_free((char *)ang, "Get_drawing: ang");
+	bu_free(view_entno, "Get_drawing: view_entno");
+	bu_free(x, "Get_drawing: x");
+	bu_free(y, "Get_drawing: y");
+	bu_free(ang, "Get_drawing: ang");
 	}
 */
 	}
@@ -816,8 +816,8 @@ Conv_drawings(struct bu_list *vlfree)
 	/* free views visible list */
 	for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 	    vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
-	    bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
-	    bu_free((char *)vv, "Conv_drawings: vv");
+	    bu_free(vv->view_de, "Conv_drawings: vv->view_de");
+	    bu_free(vv, "Conv_drawings: vv");
 	}
 	bu_ptbl_free(&view_vis_list);
 	return;
@@ -861,8 +861,8 @@ Conv_drawings(struct bu_list *vlfree)
 	    /* free views visible list */
 	    for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 		vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
-		bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
-		bu_free((char *)vv, "Conv_drawings: vv");
+		bu_free(vv->view_de, "Conv_drawings: vv->view_de");
+		bu_free(vv, "Conv_drawings: vv");
 	    }
 	bu_ptbl_free(&view_vis_list);
 
@@ -891,8 +891,8 @@ Conv_drawings(struct bu_list *vlfree)
     /* free views visible list */
     for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 	vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
-	bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
-	bu_free((char *)vv, "Conv_drawings: vv");
+	bu_free(vv->view_de, "Conv_drawings: vv->view_de");
+	bu_free(vv, "Conv_drawings: vv");
     }
     bu_ptbl_free(&view_vis_list);
 }

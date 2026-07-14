@@ -76,7 +76,7 @@ Convassem(void)
 	totass++;
 
 	if (dir[i]->param <= pstart) {
-	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		   dir[i]->direct, dir[i]->name);
 	    continue;
 	}
@@ -109,7 +109,7 @@ Convassem(void)
 		ptr->item = (-ptr->item);
 
 	    /* Convert pointer to a "dir" index */
-	    ptr->item = (ptr->item-1)/2;
+	    ptr->item = IGES_DE2INDEX(ptr->item);
 
 	    /* Save name of object */
 	    ptr->name = dir[ptr->item]->name;
@@ -131,7 +131,7 @@ Convassem(void)
 
 	    /* Convert to a "dir" index */
 	    if (ptr->matrix)
-		ptr->matrix = (ptr->matrix-1)/2;
+		ptr->matrix = IGES_DE2INDEX(ptr->matrix);
 	    else
 		ptr->matrix = (-1); /* flag to indicate "none" */
 
@@ -189,7 +189,7 @@ Convassem(void)
 	else
 	    rgb = (unsigned char *)0;
 
-	mk_lrcomb(fdout ,
+	mk_lrcomb(fdout,
 		  dir[i]->name,		/* name */
 		  &head,			/* members */
 		  brl_att.region_flag,	/* region flag */
@@ -210,7 +210,7 @@ Convassem(void)
 	ptr = root;
 	while (ptr != NULL) {
 	    ptr_tmp = ptr->next;
-	    bu_free((char *)ptr, "convassem: ptr");
+	    bu_free(ptr, "convassem: ptr");
 	    ptr = ptr_tmp;
 	}
     }

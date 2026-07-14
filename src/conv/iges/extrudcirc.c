@@ -44,7 +44,7 @@ Extrudcirc(size_t entityno, int curve, vect_t evect)
     /* Acquiring Data */
 
     if (dir[curve]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[curve]->direct, dir[curve]->name);
 	return 0;
     }
@@ -63,7 +63,7 @@ Extrudcirc(size_t entityno, int curve, vect_t evect)
 
     if (!ZERO(x_1 - x_2) || !ZERO(y_1 - y_2)) {
 	bu_log("Circular arc for extrusion is not closed:\n");
-	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
+	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
 	return 0;

@@ -47,7 +47,7 @@ Read_edge_list(struct iges_edge_use *edge)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return (struct iges_edge_list *)NULL;
     }
@@ -68,10 +68,10 @@ Read_edge_list(struct iges_edge_use *edge)
     if (edge_list->no_of_edges <= 0 || edge_list->no_of_edges > 10000000) {
 	bu_log("Read_edge_list: illegal number of edges (%d) for entity D%07d\n",
 	       edge_list->no_of_edges, dir[entityno]->direct);
-	bu_free((char *)edge_list, "Read_edge_list: iges_edge_list");
+	bu_free(edge_list, "Read_edge_list: iges_edge_list");
 	return (struct iges_edge_list *)NULL;
     }
-    edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(*edge_list->i_edge) ,
+    edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(*edge_list->i_edge),
 						      "Read_edge_list: iges_edge");
 
     for (i = 0; i < edge_list->no_of_edges; i++) {

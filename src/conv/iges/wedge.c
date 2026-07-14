@@ -58,7 +58,7 @@ wedge(size_t entityno)
 
     /* Acquiring Data */
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -80,7 +80,7 @@ wedge(size_t entityno)
     Readcnv(&z_3, "");
 
     if (xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0) {
-	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }

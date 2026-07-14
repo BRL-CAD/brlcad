@@ -70,7 +70,7 @@ Get_nurb_surf(size_t entityno, struct model *m)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return (struct face_g_snurb *)NULL;
     }
@@ -118,15 +118,15 @@ Get_nurb_surf(size_t entityno, struct model *m)
 	srf->u.k_size = n_u;
 	srf->v.k_size = n_v;
 	srf->u.knots = (fastf_t *) bu_malloc (
-	    n_u * sizeof (fastf_t), "Get_nurb_surf: u kv knot values");
+	    n_u * sizeof(fastf_t), "Get_nurb_surf: u kv knot values");
 	srf->v.knots = (fastf_t *) bu_malloc (
-	    n_v * sizeof (fastf_t), "Get_nurb_surf: v kv knot values");
+	    n_v * sizeof(fastf_t), "Get_nurb_surf: v kv knot values");
 
 	srf->s_size[0] = n_rows;
 	srf->s_size[1] = n_cols;
 	srf->pt_type = pt_type;
 
-	pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
+	pnum = sizeof(fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
 	srf->ctl_points = (fastf_t *) bu_malloc(
 	    pnum, "Get_nurb_surf: control mesh points");
 
@@ -247,7 +247,7 @@ Get_cnurb(size_t entity_no)
     point_t pt2 = VINIT_ZERO;
 
     if (dir[entity_no]->param <= pstart) {
-	bu_log("Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entity_no]->direct, dir[entity_no]->name);
 	return (struct edge_g_cnurb *)NULL;
     }
@@ -396,7 +396,7 @@ Get_uv_curve(size_t entity_no)
     pi = atan2(0.0, -1.0);
 
     if (dir[entity_no]->param <= pstart) {
-	bu_log("Get_uv_curve: Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Get_uv_curve: Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entity_no]->direct, dir[entity_no]->name);
 	return (struct edge_g_cnurb *)NULL;
     }
@@ -425,13 +425,13 @@ Get_uv_curve(size_t entity_no)
 	if (splroot->ndim != 2 && splroot->ndim != 3) {
 	    bu_log("Get_uv_curve: entity D%07d has invalid ndim: %d\n",
 		   dir[entity_no]->direct, splroot->ndim);
-	    bu_free((char *)splroot, "Get_uv_curve: splroot");
+	    bu_free(splroot, "Get_uv_curve: splroot");
 	    return (struct edge_g_cnurb *)NULL;
 	}
 	if (splroot->nsegs < 1) {
 	    bu_log("Get_uv_curve: entity D%07d has nsegs == %d\n",
 		   dir[entity_no]->direct, splroot->nsegs);
-	    bu_free((char *)splroot, "Get_uv_curve: splroot");
+	    bu_free(splroot, "Get_uv_curve: splroot");
 	    return (struct edge_g_cnurb *)NULL;
 	}
 
@@ -501,9 +501,9 @@ Get_uv_curve(size_t entity_no)
 	while (seg != NULL) {
 	    seg1 = seg;
 	    seg = seg->next;
-	    bu_free((char *)seg1, "Get_uv_curve: seg1");
+	    bu_free(seg1, "Get_uv_curve: seg1");
 	}
-	bu_free((char *)splroot, "Get_uv_curve: splroot");
+	bu_free(splroot, "Get_uv_curve: splroot");
 
     } else if (entity_type == 104) {
 	/* conic arc */
@@ -766,14 +766,14 @@ Get_uv_curve(size_t entity_no)
 
     if (!uv || num_pts < 2) {
 	if (uv)
-	    bu_free((char *)uv, "Get_uv_curve: uv");
+	    bu_free(uv, "Get_uv_curve: uv");
 	bu_log("Get_uv_curve: entity D%07d produced too few points (%d)\n",
 	       dir[entity_no]->direct, num_pts);
 	return (struct edge_g_cnurb *)NULL;
     }
 
     crv = Make_uv_polyline_cnurb(uv, num_pts);
-    bu_free((char *)uv, "Get_uv_curve: uv");
+    bu_free(uv, "Get_uv_curve: uv");
 
     return crv;
 }
@@ -842,7 +842,7 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
     NMG_CK_SNURB(srf);
 
     if (dir[entity_no]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entity_no]->direct, dir[entity_no]->name);
 	return;
     }
@@ -866,7 +866,7 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 	    for (i = 0; i < curve_count; i++)
 		Add_trim_curve(IGES_DE2INDEX(curve_list[i]), lu, srf);
 
-	    bu_free((char *)curve_list, "Add_trim_curve: curve_list");
+	    bu_free(curve_list, "Add_trim_curve: curve_list");
 	}
 	    break;
 	case 110:	/* line */
@@ -1043,7 +1043,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
     NMG_CK_FACEUSE(fu);
 
     if (dir[entity_no]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entity_no]->direct, dir[entity_no]->name);
 	return (struct loopuse *)NULL;
     }
@@ -1072,7 +1072,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    for (i = 0; i < curve_count; i++)
 		Add_trim_curve(IGES_DE2INDEX(curve_list[i]), lu, srf);
 
-	    bu_free((char *)curve_list, "Make_trim_loop: curve_list");
+	    bu_free(curve_list, "Make_trim_loop: curve_list");
 
 	    /* if last EU is zero length, kill it */
 	    eu = BU_LIST_LAST(edgeuse, &lu->down_hd);
@@ -1303,7 +1303,7 @@ Make_loop(size_t entity_no, int orientation, int on_surf_de, struct face_g_snurb
 
     /* Acquiring Data */
     if (dir[entity_no]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entity_no]->direct, dir[entity_no]->name);
 	return 0;
     }
@@ -1493,7 +1493,7 @@ trim_surf(size_t entityno, struct shell *s)
 
     /* Acquiring Data */
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -1527,7 +1527,7 @@ trim_surf(size_t entityno, struct shell *s)
     }
     if (srf == (struct face_g_snurb *)NULL) {
 	if (inner_loop_count)
-	    bu_free((char *)inner_loop, "trim_surf: inner_loop");
+	    bu_free(inner_loop, "trim_surf: inner_loop");
 	return (struct faceuse *)NULL;
     }
 
@@ -1580,7 +1580,7 @@ trim_surf(size_t entityno, struct shell *s)
     }
 
     if (inner_loop_count)
-	bu_free((char *)inner_loop, "trim_surf: inner_loop");
+	bu_free(inner_loop, "trim_surf: inner_loop");
 
     NMG_CK_FACE_G_SNURB(fu->f_p->g.snurb_p);
 
@@ -1678,7 +1678,7 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 		if (nmg_debug & NMG_DEBUG_RT_ISECT)
 		    bu_log("\tNot a hit\n");
 
-		bu_free((char *)hp, "nurb_uv_hit");
+		bu_free(hp, "nurb_uv_hit");
 		hp = next;
 		continue;
 	    }
@@ -1726,7 +1726,7 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 		}
 	    }
 
-	    bu_free((char *)hp, "nurb_uv_hit");
+	    bu_free(hp, "nurb_uv_hit");
 	    hp = next;
 	}
 	nmg_nurb_free_snurb(srf);
@@ -1977,7 +1977,7 @@ Convtrimsurfs(struct bu_list *vlfree)
 	    myhit = BU_LIST_FIRST(snurb_hit, &hit_list);
 	    BU_LIST_DEQUEUE(&myhit->l);
 
-	    bu_free((char *)myhit, "myhit");
+	    bu_free(myhit, "myhit");
 	}
 
     }

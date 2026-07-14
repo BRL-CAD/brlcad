@@ -38,7 +38,7 @@ Add_face_to_shell(struct shell *s, size_t entityno, int face_orient, struct bu_l
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return (struct faceuse *)NULL;
     }
@@ -135,7 +135,7 @@ Add_face_to_shell(struct shell *s, size_t entityno, int face_orient, struct bu_l
     }
 
     err :
-	bu_free((char *)loop_de, "Add_face_to_shell: loop DE's");
+	bu_free(loop_de, "Add_face_to_shell: loop DE's");
     return fu;
 }
 
