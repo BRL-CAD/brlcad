@@ -67,8 +67,10 @@ usage(const char *name)
     bu_log("  -s N        square image size in pixels (default 512)\n");
     bu_log("  -w N        image width  (overrides -s)\n");
     bu_log("  -n N        image height (overrides -s)\n");
-    bu_log("  -m mode     shader: path, phong, normal, depth, flat (default path)\n");
+    bu_log("  -m mode     shader: path, phong, normal, depth, flat, spall, cut (default path)\n");
     bu_log("  -H N        path-tracer samples per pixel (default 32)\n");
+    bu_log("  -b buf      raw init string for shaders that take one (cut, spall, ...)\n");
+    bu_log("  -A angle    spall cone full angle in degrees (default 30)\n");
     bu_log("  -a az       view azimuth in degrees (default 35)\n");
     bu_log("  -e el       view elevation in degrees (default 25)\n");
     bu_log("  -E x,y,z    explicit eye point in model units (overrides -a/-e)\n");
@@ -92,8 +94,10 @@ main(int argc, char **argv)
 
     const char *output = "adrt.png";
     const char *mode = "path";
+    const char *shaderarg = NULL;
     int size = 512, width = 0, height = 0, samples = 32, threads = 0;
     double az = 35.0, el = 25.0, fov = 25.0;
+    double spall_angle = 30.0;
     double sky[3] = { 230.0/255.0, 237.0/255.0, 255.0/255.0 };
     double eye[3], look[3];
     int have_eye = 0, have_look = 0;
@@ -108,13 +112,15 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "o:s:w:n:m:H:a:e:E:L:p:C:P:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:s:w:n:m:H:a:e:E:L:p:C:P:b:A:h?")) != -1) {
 	switch (c) {
 	    case 'o': output = bu_optarg; break;
 	    case 's': size = atoi(bu_optarg); break;
 	    case 'w': width = atoi(bu_optarg); break;
 	    case 'n': height = atoi(bu_optarg); break;
 	    case 'm': mode = bu_optarg; break;
+	    case 'b': shaderarg = bu_optarg; break;
+	    case 'A': spall_angle = atof(bu_optarg); break;
 	    case 'H': samples = atoi(bu_optarg); break;
 	    case 'a': az = atof(bu_optarg); break;
 	    case 'e': el = atof(bu_optarg); break;
@@ -207,8 +213,31 @@ main(int argc, char **argv)
 		       samples, sky[0], sky[1], sky[2]);
 	if (render_shader_init(&camera.render, "path", bu_vls_cstr(&shaderbuf)) != 0)
 	    return EXIT_FAILURE;
+    } else if (BU_STR_EQUAL(mode, "spall")) {
+	/*
+	 * The spall shader wants "(pos) (dir) angle".  Use an explicit -b
+	 * string if given; otherwise synthesize a shot from the current view
+	 * through the model center so the cutaway cone is visible.  Coordinates
+	 * are in the tie's (meter) space.
+	 */
+	if (shaderarg) {
+	    if (render_shader_init(&camera.render, "spall", shaderarg) != 0)
+		return EXIT_FAILURE;
+	} else {
+	    /* Fire the shot horizontally across the model (90 degrees off the
+	     * view azimuth) so the cone is seen from the side rather than down
+	     * its axis. */
+	    vect_t sdir;
+	    bn_vec_ae(sdir, (az + 90.0) * DEG2RAD, 0.0);
+	    bu_vls_sprintf(&shaderbuf, "(%.6f %.6f %.6f) (%.6f %.6f %.6f) %f",
+			   V3ARGS(camera.focus), V3ARGS(sdir), spall_angle);
+	    if (render_shader_init(&camera.render, "spall", bu_vls_cstr(&shaderbuf)) != 0)
+		return EXIT_FAILURE;
+	}
     } else {
-	if (render_shader_init(&camera.render, mode, NULL) != 0)
+	/* shaderarg may be NULL; shaders that need an argument (cut, flos)
+	 * accept one via -b. */
+	if (render_shader_init(&camera.render, mode, shaderarg) != 0)
 	    return EXIT_FAILURE;
     }
 

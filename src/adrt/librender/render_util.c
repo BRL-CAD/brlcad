@@ -27,8 +27,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "bu/malloc.h"
+#include "vmath.h"
 
 
 struct render_segment_s {
@@ -46,38 +48,37 @@ struct render_shotline_s {
 };
 
 
-/* Generate vector list for a spall cone given a reference angle */
+/* Generate vector list for a spall cone given a reference angle (in degrees) */
 void
-render_util_spall_vec(vect_t UNUSED(dir), fastf_t UNUSED(angle), int UNUSED(vec_num), vect_t *UNUSED(vec_list)) {
-#if 0
-    TIE_3 vec;
-    TFLOAT radius, t;
+render_util_spall_vec(vect_t dir, fastf_t angle, int vec_num, vect_t *vec_list) {
+    vect_t vec;
+    fastf_t radius, t;
     int i;
-
 
     /* Otherwise the cone would be twice the angle */
     angle *= 0.5;
 
-    /* Figure out the rotations of the ray direction */
-    vec = dir;
-    vec.v[2] = 0;
+    /* Figure out the rotation (azimuth) of the ray direction in the XY plane */
+    VMOVE(vec, dir);
+    vec[2] = 0;
 
-    radius = sqrt(vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1]);
-    vec.v[0] /= radius;
-    vec.v[1] /= radius;
-
-    vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG;
-
-    /* triangles to approximate */
-    for (i = 0; i < vec_num; i++) {
-	t = angle * sin((i * 360 / vec_num) * MATH_DEG2RAD);
-	vec_list[i].v[0] = cos((vec.v[0] + t) * MATH_DEG2RAD);
-	vec_list[i].v[1] = sin((vec.v[0] + t) * MATH_DEG2RAD);
-
-	t = angle * cos((i * 360 / vec_num) * MATH_DEG2RAD);
-	vec_list[i].v[2] = cos(acos(dir.v[2]) + t * MATH_DEG2RAD);
+    radius = sqrt(vec[0]*vec[0] + vec[1]*vec[1]);
+    if (radius > TIE_PREC) {
+	vec[0] /= radius;
+	vec[1] /= radius;
     }
-#endif
+
+    vec[0] = vec[1] < 0 ? 360.0 - acos(vec[0])*RAD2DEG : acos(vec[0])*RAD2DEG;
+
+    /* spread vec_num directions around the cone about 'dir' */
+    for (i = 0; i < vec_num; i++) {
+	t = angle * sin((i * 360.0 / vec_num) * DEG2RAD);
+	vec_list[i][0] = cos((vec[0] + t) * DEG2RAD);
+	vec_list[i][1] = sin((vec[0] + t) * DEG2RAD);
+
+	t = angle * cos((i * 360.0 / vec_num) * DEG2RAD);
+	vec_list[i][2] = cos(acos(dir[2]) + t * DEG2RAD);
+    }
 }
 
 

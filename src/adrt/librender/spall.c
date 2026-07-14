@@ -176,7 +176,8 @@ int
 render_spall_init(render_t *render, const char *buf)
 {
     struct render_spall_s *d;
-    vect_t *tri_list, *vec_list, normal, up;
+    vect_t *vec_list, normal, up;
+    TIE_3 *tri_list, **tlist;
     fastf_t plane[4], angle;
     int i;
 
@@ -223,30 +224,40 @@ render_spall_init(render_t *render, const char *buf)
     /* The spall Cone */
     /******************/
     vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELLATION, "vec_list");
-    tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELLATION * 3, "tri_list");
+    tri_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELLATION * 3, "tri_list");
+    tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * TESSELLATION * 3, "tlist");
 
     render_util_spall_vec(d->ray_dir, angle, TESSELLATION, vec_list);
 
-    /* triangles to approximate */
+    /* triangles approximating the cone: apex at ray_pos, base ring at
+     * ray_pos + SPALL_LEN * vec_list[] */
     for (i = 0; i < TESSELLATION; i++) {
-	VMOVE(tri_list[3*i+0], ray_pos);
+	VMOVE(tri_list[3*i+0].v, ray_pos);
 
-	VSCALE(tri_list[3*i+1],  vec_list[i],  SPALL_LEN);
-	VADD2(tri_list[3*i+1],  tri_list[3*i+1],  ray_pos);
+	VSCALE(tri_list[3*i+1].v,  vec_list[i],  SPALL_LEN);
+	VADD2(tri_list[3*i+1].v,  tri_list[3*i+1].v,  ray_pos);
 
 	if (i == TESSELLATION - 1) {
-	    VSCALE(tri_list[3*i+2],  vec_list[0],  SPALL_LEN);
-	    VADD2(tri_list[3*i+2],  tri_list[3*i+2],  ray_pos);
+	    VSCALE(tri_list[3*i+2].v,  vec_list[0],  SPALL_LEN);
+	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos);
 	} else {
-	    VSCALE(tri_list[3*i+2],  vec_list[i+1],  SPALL_LEN);
-	    VADD2(tri_list[3*i+2],  tri_list[3*i+2],  ray_pos);
+	    VSCALE(tri_list[3*i+2].v,  vec_list[i+1],  SPALL_LEN);
+	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos);
 	}
     }
+
+    /* Push the cone triangles into the tie before prepping it; previously the
+     * geometry was built but never pushed, so render_arrow_hit could never fire
+     * and the spall cone was invisible. */
+    for (i = 0; i < TESSELLATION * 3; i++)
+	tlist[i] = &tri_list[i];
+    TIE_PUSH(&d->tie, tlist, TESSELLATION, NULL, 0);
 
     TIE_PREP(&d->tie);
 
     bu_free(vec_list, "vec_list");
     bu_free(tri_list, "tri_list");
+    bu_free(tlist, "tlist");
     return 0;
 }
 
