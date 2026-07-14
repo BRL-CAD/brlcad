@@ -84,7 +84,7 @@ One advantage to using the GUI, if you aren't familiar with UNIX file management
 [[assign_title]]
 == Assigning a Title to Your Database
 
-You can title your new database to provide an audit trail for you or others who might use your database. After the prompt, in the Command Window, type title followed by a space and a name that reflects the database you are going to make. When you are done, press the ENTER key. For example: mged>title MySphere[ENTER] Note that in _BRL-CAD_ versions prior to release 6.0, the title is limited to 72 characters.
+You can title your new database to provide an audit trail for you or others who might use your database. After the prompt, in the Command Window, type title followed by a space and a name that reflects the database you are going to make. When you are done, press the ENTER key. For example: mged>title MySphere[ENTER]
 
 
 [[set_units]]

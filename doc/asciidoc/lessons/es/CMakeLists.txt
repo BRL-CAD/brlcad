@@ -25,8 +25,8 @@ set(
   images/mged01_terminal.png
   images/mged02_coordsys.png
   images/mged02_defaultradio.png
-  images/mged02_flower_zooomin.png
-  images/mged02_flower_zooomout.png
+  images/mged02_flower_zoomin.png
+  images/mged02_flower_zoomout.png
   images/mged02_multipane.png
   images/mged02_radio_35_25.png
   images/mged02_radio_front.png
@@ -43,6 +43,10 @@ set(
   images/mged02_truck_left.png
   images/mged02_truck_rear.png
   images/mged02_truck_right.png
+  images/mged03_shapes_in_command.png
+  images/mged03_shapes_make_command.png
+  images/mged03_wireframe_sph.png
+  images/mged03_wireframe_sph_rcc.png
   images/mged04_commandwindow.png
   images/mged04_fb_overlay_mode.png
   images/mged04_raytracedshapes.png
@@ -55,7 +59,7 @@ set(
   images/mged05_subtractionspheres.png
   images/mged05_twoprimitivespheres.png
   images/mged05_unionspheres.png
-  images/mged06_base_substracted_vol.png
+  images/mged06_base_subtracted_vol.png
   images/mged06_goblet1stsphere.png
   images/mged06_gobletbase.png
   images/mged06_gobletbasestembasin.png
