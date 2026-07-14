@@ -127,8 +127,81 @@ OffsetSurface::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 OffsetSurface::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
+
+    if (basis_surface == NULL) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - no basis_surface." << std::endl;
+	return false;
+    }
+
+    // propagate trimming-curve bounds so infinite basis surfaces
+    // (plane/cylinder/cone) get finite extents, as FaceSurface does
+    if (trim_curve_3d_bbox) {
+	basis_surface->SetCurveBounds(trim_curve_3d_bbox);
+    }
+
+    // load the underlying surface into the brep
+    if (!basis_surface->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading basis_surface." << std::endl;
+	return false;
+    }
+
+    ON_Surface *base = brep->m_S[basis_surface->GetONId()];
+    if (!base) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - basis_surface not in brep." << std::endl;
+	return false;
+    }
+
+    // convert to NURBS so we can offset control points along the
+    // surface normal (coords already in local units from the basis load)
+    ON_NurbsSurface *surf = ON_NurbsSurface::New();
+    if (!base->GetNurbForm(*surf)) {
+	delete surf;
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - could not get NURBS form of basis_surface." << std::endl;
+	return false;
+    }
+
+    double offset = distance * LocalUnits::length;
+
+    int u_count = surf->CVCount(0);
+    int v_count = surf->CVCount(1);
+    for (int i = 0; i < u_count; i++) {
+	for (int j = 0; j < v_count; j++) {
+	    // parameter at greville abcissa for this control point
+	    double u = surf->GrevilleAbcissa(0, i);
+	    double v = surf->GrevilleAbcissa(1, j);
+
+	    ON_3dPoint pnt;
+	    ON_3dVector du, dv;
+	    if (!surf->Ev1Der(u, v, pnt, du, dv)) {
+		continue;
+	    }
+	    ON_3dVector normal = ON_CrossProduct(du, dv);
+	    if (!normal.Unitize()) {
+		continue;
+	    }
+
+	    ON_4dPoint cv;
+	    surf->GetCV(i, j, cv);
+	    double w = (cv.w != 0.0) ? cv.w : 1.0;
+	    ON_3dPoint p(cv.x / w, cv.y / w, cv.z / w);
+	    p = p + offset * normal;
+	    surf->SetCV(i, j, ON_4dPoint(p.x * w, p.y * w, p.z * w, w));
+	}
+    }
+
+    surf->BoundingBox(); // update cached bbox
+
+    ON_id = brep->AddSurface(surf);
+
+    return true;
 }
 
 

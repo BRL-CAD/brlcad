@@ -154,6 +154,8 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     }
 
     LIST_OF_FACES::iterator i;
+    int loaded = 0;
+    int failed = 0;
 #ifdef _DEBUG_TESTING_
     int facecnt = 0;
 #endif
@@ -165,15 +167,24 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 	    std::cerr << "We're here." << std::endl;
 	}
 #endif
+	/* Be resilient: a single malformed face (e.g. a degenerate edge in one
+	 * of many otherwise-valid faces) should not discard the whole solid.
+	 * Skip the offending face and keep the rest so the model still imports. */
 	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    return false;
+	    std::cerr << "Warning: " << entityname << "::LoadONBrep() - skipping a face that failed to load." << std::endl;
+	    failed++;
+	} else {
+	    loaded++;
 	}
 #ifdef _DEBUG_TESTING_
 	facecnt++;
 #endif
     }
-    return true;
+    if (failed > 0) {
+	std::cerr << "Warning: " << entityname << "::LoadONBrep() - imported " << loaded
+		  << " of " << (loaded + failed) << " faces (" << failed << " skipped)." << std::endl;
+    }
+    return (loaded > 0);
 }
 
 // Local Variables:

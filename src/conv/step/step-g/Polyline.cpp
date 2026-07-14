@@ -145,6 +145,55 @@ Polyline::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
+bool
+Polyline::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
+
+    int num_points = (int)points.size();
+    if (num_points < 2) {
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) insufficient points for polyline " << entityname << std::endl;
+	return false;
+    }
+
+    // A STEP polyline is a degree-1 (order 2) piecewise-linear curve whose
+    // control vertices are the polyline points.  Represent it as a single
+    // ON_NurbsCurve so it can be consumed as one edge geometry, mirroring
+    // BSplineCurveWithKnots::LoadONBrep().
+    int degree = 1;
+    int order = degree + 1;
+
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, order, num_points);
+
+    // Open uniform knot vector for a degree-1 curve: knot count is
+    // (order + num_points - 2) == num_points.  Values 0,1,2,...,num_points-1.
+    int knot_count = order + num_points - 2;
+    for (int knot_index = 0; knot_index < knot_count; knot_index++) {
+	curve->SetKnot(knot_index, (double)knot_index);
+    }
+
+    LIST_OF_POINTS::iterator i;
+    int cv_index = 0;
+    for (i = points.begin(); i != points.end(); ++i) {
+	CartesianPoint *cp = (*i);
+	curve->SetCV(cv_index, ON_3dPoint(cp->X() * LocalUnits::length,
+					  cp->Y() * LocalUnits::length,
+					  cp->Z() * LocalUnits::length));
+	cv_index++;
+    }
+
+    ON_id = brep->AddEdgeCurve(curve);
+
+    return true;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

@@ -151,6 +151,104 @@ OffsetCurve3D::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
+bool
+OffsetCurve3D::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    if (ON_id >= 0) {
+	return true; // already loaded
+    }
+
+    if (!basis_curve) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - no basis_curve." << std::endl;
+	return false;
+    }
+
+    // Propagate any trim/endpoint info to the basis curve so it builds the
+    // same span we intend to offset.
+    if (trimmed) {
+	basis_curve->SetPointTrim(trim_startpoint, trim_endpoint);
+    }
+    if (start && end) {
+	basis_curve->Start(start);
+	basis_curve->End(end);
+    }
+
+    // Build the underlying basis curve geometry (delegation pattern from
+    // SurfaceOfRevolution::LoadONBrep, OpenNurbsInterfaces.cpp).
+    if (!basis_curve->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading basis_curve." << std::endl;
+	return false;
+    }
+
+    int basis_id = basis_curve->GetONId();
+    if (basis_id < 0 || basis_id >= brep->m_C3.Count()) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - basis_curve produced no 3d curve." << std::endl;
+	return false;
+    }
+    const ON_Curve *base = brep->m_C3[basis_id];
+    if (!base) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - null basis 3d curve." << std::endl;
+	return false;
+    }
+
+    if (!ref_direction) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - no ref_direction." << std::endl;
+	return false;
+    }
+    double *dr = ref_direction->DirectionRatios();
+    ON_3dVector refdir(dr[0], dr[1], dr[2]);
+    refdir.Unitize();
+
+    double d = distance * LocalUnits::length;
+
+    // ISO 10303-42 offset_curve_3d: at each parameter the offset point is the
+    // basis point displaced by 'distance' along V = normalize(T x ref_direction),
+    // where T is the basis-curve unit tangent.  No ON_Curve::Offset() exists in
+    // this OpenNURBS build, so we sample the basis span and fit a degree-1
+    // (polyline) ON_NurbsCurve through the offset points, matching the
+    // control-point-driven ON_NurbsCurve construction used throughout this file.
+    ON_Interval dom = base->Domain();
+    const int nsamp = 128;                 // samples across the span
+    const int cv_count = nsamp + 1;
+
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, 2, cv_count);
+
+    for (int i = 0; i <= nsamp; i++) {
+	double par = dom.ParameterAt((double)i / (double)nsamp);
+	ON_3dPoint p;
+	ON_3dVector tang;
+	if (!base->EvTangent(par, p, tang)) {
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - basis curve evaluation failed." << std::endl;
+	    delete curve;
+	    return false;
+	}
+	ON_3dVector offdir = ON_CrossProduct(tang, refdir);
+	if (offdir.Length() < ON_ZERO_TOLERANCE) {
+	    // tangent parallel to ref_direction: offset direction undefined here,
+	    // leave the point on the basis curve.
+	    offdir.Zero();
+	} else {
+	    offdir.Unitize();
+	}
+	ON_3dPoint op = p + d * offdir;
+	curve->SetCV(i, op);
+    }
+
+    // Uniform clamped knot vector for the degree-1 curve.
+    for (int i = 0; i < curve->KnotCount(); i++) {
+	curve->SetKnot(i, (double)i);
+    }
+
+    ON_id = brep->AddEdgeCurve(curve);
+
+    return true;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

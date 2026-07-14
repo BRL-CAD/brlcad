@@ -32,6 +32,11 @@
 #define CLASSNAME "BoundaryCurve"
 #define ENTITYNAME "Boundary_Curve"
 string BoundaryCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BoundaryCurve::Create);
+/* outer_boundary_curve is a subtype of boundary_curve with identical structure
+ * (it only adds a WHERE rule identifying it as the outer boundary); reuse this
+ * class so files that use it are dispatched instead of hitting an unmapped-
+ * factory error. */
+static string outer_boundary_curve_reg = Factory::RegisterClass("Outer_Boundary_Curve", (FactoryMethod)BoundaryCurve::Create);
 
 BoundaryCurve::BoundaryCurve()
 {

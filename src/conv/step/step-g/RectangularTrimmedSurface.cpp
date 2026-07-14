@@ -150,8 +150,45 @@ RectangularTrimmedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *ss
 bool
 RectangularTrimmedSurface::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
+
+    if (!basis_surface) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - no basis_surface." << std::endl;
+	return false;
+    }
+
+    // Propagate the trimming-curve 3D bounds (supplied to us by the owning
+    // FaceSurface via SetCurveBounds) down to the basis surface so that
+    // infinitely-defined basis surfaces (plane/cylinder/cone/etc.) can be
+    // sized correctly.  Mirrors FaceSurface::LoadONBrep() which calls
+    // face_geometry->SetCurveBounds(bb) before face_geometry->LoadONBrep().
+    if (trim_curve_3d_bbox) {
+	basis_surface->SetCurveBounds(trim_curve_3d_bbox);
+    }
+
+    // Delegate geometry creation to the basis surface; it registers itself
+    // with the brep via brep->AddSurface() and records its own ON_id.
+    if (!basis_surface->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading basis_surface." << std::endl;
+	return false;
+    }
+
+    // Expose the basis surface's registered NURBS surface as our own, so the
+    // owning FaceSurface::AddFace() picks it up through our GetONId().  The
+    // u1/u2/v1/v2 rectangular parameter bounds are enforced by the face's
+    // trim loops (built from the edge Path/FaceBound), matching how the rest
+    // of this importer relies on 3D edge trimming rather than surface-domain
+    // restriction.
+    ON_id = basis_surface->GetONId();
+
+    return true;
 }
 
 

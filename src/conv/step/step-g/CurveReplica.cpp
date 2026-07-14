@@ -150,8 +150,39 @@ CurveReplica::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 CurveReplica::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    if (ON_id >= 0) {
+	return true;    // already loaded
+    }
+
+    if (parent_curve == NULL) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - no parent_curve." << std::endl;
+	return false;
+    }
+
+    // Push our inherited trim vertices onto the parent curve, matching the
+    // IntersectionCurve/SurfaceCurve delegation pattern.
+    parent_curve->Start(start);
+    parent_curve->End(end);
+
+    if (!parent_curve->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading parent curve openNURBS brep." << std::endl;
+	return false;
+    }
+
+    // NOTE: 'transformation' (a CartesianTransformationOperator) should be
+    // applied to the replicated geometry here.  The codebase currently has no
+    // ON_Xform infrastructure for curves and CartesianTransformationOperator
+    // exposes no accessors for its axis/origin/scale, so the replica is emitted
+    // coincident with its parent (transform treated as identity), consistent
+    // with the existing simplifications for related delegating curves.
+    ON_id = parent_curve->GetONId();
+
+    return true;
 }
 
 // Local Variables:

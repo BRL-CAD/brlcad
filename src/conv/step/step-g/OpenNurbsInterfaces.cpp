@@ -2496,8 +2496,33 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
     ON_Line bs2(P2, P2 + bisector);
     ON_3dPoint P1;
     if (intersectLines(bs0, bs2, P1) != 1) {
-	std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
-	return false;
+	/* The focal-chord bisector intersection is ill-conditioned for some
+	 * valid arcs (near-parallel bisectors) and for near-degenerate
+	 * endpoints, dropping the whole edge/face.  Fall back to an analytic
+	 * sampling of the hyperbola branch and fit a piecewise-linear NURBS
+	 * through it.  The STEP hyperbola parametrization is
+	 *   P(u) = center + a*cosh(u)*xaxis + b*sinh(u)*yaxis ,
+	 * so the parameter of a point is u = asinh(((P - center) . yaxis)/b). */
+	if (a == 0.0 || b == 0.0) {
+	    std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
+	    return false;
+	}
+	double s0 = ((P0 - center) * yaxis) / b;
+	double s2 = ((P2 - center) * yaxis) / b;
+	double u0 = asinh(s0);
+	double u2 = asinh(s2);
+	const int nseg = 32;
+	ON_NurbsCurve *hc = ON_NurbsCurve::New(3, false, 2, nseg + 1);
+	for (int i = 0; i <= nseg; i++) {
+	    double u = u0 + (u2 - u0) * ((double)i / (double)nseg);
+	    ON_3dPoint p = center + (a * cosh(u)) * xaxis + (b * sinh(u)) * yaxis;
+	    hc->SetCV(i, p);
+	}
+	for (int i = 0; i < hc->KnotCount(); i++) {
+	    hc->SetKnot(i, (double)i);
+	}
+	ON_id = brep->AddEdgeCurve(hc);
+	return true;
     }
 
     ON_Line l1(focus, P1);
@@ -2647,8 +2672,29 @@ Parabola::LoadONBrep(ON_Brep *brep)
 
     ON_3dPoint P1;
     if (intersectLines(tangent1, tangent2, P1) != 1) {
-	std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
-	return false;
+	/* The tangent-bisector intersection is ill-conditioned for arcs near the
+	 * vertex (where P0-focus is nearly antiparallel to the axis) and for
+	 * near-degenerate endpoints, so it can fail for otherwise-valid parabolas.
+	 * A parabola arc is EXACTLY a quadratic Bezier, so recover the middle
+	 * control point analytically: with B(0.5) = 0.25*P0 + 0.5*P1 + 0.25*P2
+	 * equal to the parabola point at the parameter midpoint,
+	 *   P1 = 2*Pmid - (P0 + P2)/2 .
+	 * The STEP parabola parametrization (see Parabola::SetParameterTrim) is
+	 * x = 2*fd*t along yaxis, y = x^2/(4*fd) along xaxis, so the parameter of
+	 * a point is t = ((P - center) . yaxis) / (2*fd). */
+	ON_3dVector yax(GetYAxis()); yax.Unitize();
+	ON_3dVector xax(GetXAxis()); xax.Unitize();
+	if (fd == 0.0) {
+	    std::cerr << entityname << ": Error: Control point can not be calculated." << std::endl;
+	    return false;
+	}
+	double t0 = ((P0 - center) * yax) / (2.0 * fd);
+	double t2 = ((P2 - center) * yax) / (2.0 * fd);
+	double tm = 0.5 * (t0 + t2);
+	double xm = 2.0 * fd * tm;
+	double ym = (xm * xm) / (4.0 * fd);
+	ON_3dPoint Pmid = center + xm * yax + ym * xax;
+	P1 = 2.0 * Pmid - 0.5 * (P0 + P2);
     }
 
     // make parabola from bezier
