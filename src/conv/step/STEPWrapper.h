@@ -38,6 +38,7 @@
 /* system headers */
 #include <list>
 #include <map>
+#include <set>
 #include <vector>
 
 /* interface headers */
