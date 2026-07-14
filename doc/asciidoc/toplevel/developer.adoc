@@ -5,9 +5,16 @@
 
 == Developer Guides
 
+* link:devguides/getting_started_as_contributor.html[Getting Started as a BRL-CAD Contributor]
 * link:devguides/adding_new_primitive_superellipsoid.html[Adding a New Primitive to BRL-CAD: Superellipsoid Walkthrough]
+* link:devguides/raytracing_pipeline.html[The librt Ray Tracing Pipeline]
+* link:devguides/libged_command_authoring.html[Authoring a New libged Command]
 * link:devguides/bool_eval_development.html[NURBS Boolean Evaluation Development Guide]
 * link:devguides/iterate_geometry.html[BRL-CAD Geometry Database Traversal APIs]
+
+== API Reference
+
+* link:devguides/api_reference.html[The BRL-CAD API Reference]
 
 == Reference Book
 

@@ -32,6 +32,7 @@ BRL-CAD command-line tools. See also link:mann_index.html[MGED / GED Commands] a
 == B
 
 * link:man1/benchmark.html[benchmark]
+* link:man1/beset.html[beset]
 * link:man1/bolt.html[bolt]
 * link:man1/bombardier.html[bombardier]
 * link:man1/bot_dump.html[bot_dump]
@@ -153,6 +154,9 @@ BRL-CAD command-line tools. See also link:mann_index.html[MGED / GED Commands] a
 * link:man1/g-vrml.html[g-vrml]
 * link:man1/g-x3d.html[g-x3d]
 * link:man1/g2asc.html[g2asc]
+* link:man1/g4-g5.html[g4-g5]
+* link:man1/g5-g4.html[g5-g4]
+* link:man1/ganalyze.html[ganalyze]
 * link:man1/gastank.html[gastank]
 * link:man1/gchecker.html[gchecker]
 * link:man1/gcv.html[gcv]
@@ -166,6 +170,7 @@ BRL-CAD command-line tools. See also link:mann_index.html[MGED / GED Commands] a
 * link:man1/gltf-g.html[gltf-g]
 * link:man1/gqa.html[gqa]
 * link:man1/gsh.html[gsh]
+* link:man1/gtransfer.html[gtransfer]
 
 == H
 
@@ -339,6 +344,7 @@ BRL-CAD command-line tools. See also link:mann_index.html[MGED / GED Commands] a
 
 == W
 
+* link:man1/walk_example.html[walk_example]
 * link:man1/wavelet.html[wavelet]
 * link:man1/wdb_example.html[wdb_example]
 * link:man1/window.html[window]

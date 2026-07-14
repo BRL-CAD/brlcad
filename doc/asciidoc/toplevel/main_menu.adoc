@@ -42,6 +42,7 @@ Reference for every command-line tool and MGED/GED command.
 C library programming interfaces.
 
 * link:man3_index.html[Library APIs]
+* link:devguides/api_reference.html[The BRL-CAD API Reference (Doxygen)]
 
 == File Formats & Specifications
 

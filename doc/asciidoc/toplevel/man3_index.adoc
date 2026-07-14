@@ -5,10 +5,26 @@
 
 BRL-CAD C library programming interfaces.
 
-* link:man3/libbv.html[libbv - view/display list library]
+For symbol-level API documentation generated from the source, see
+link:devguides/api_reference.html[The BRL-CAD API Reference].
+
+* link:man3/libanalyze.html[libanalyze - geometry analysis library]
+* link:man3/libbg.html[libbg - geometric algorithms library]
+* link:man3/libbn.html[libbn - numerical functions library]
+* link:man3/libbrep.html[libbrep - boundary representation (NURBS) library]
 * link:man3/libbu.html[libbu - basic utility library]
+* link:man3/libbv.html[libbv - view/display list library]
 * link:man3/libdm.html[libdm - display manager library]
+* link:man3/libfft.html[libfft - fast Fourier transform library]
+* link:man3/libgcv.html[libgcv - geometry conversion library]
+* link:man3/libged.html[libged - geometry editing/command library]
 * link:man3/libicv.html[libicv - image conversion library]
+* link:man3/libnmg.html[libnmg - non-manifold geometry library]
+* link:man3/liboptical.html[liboptical - optical shader library]
+* link:man3/libpc.html[libpc - parametric constraint library]
 * link:man3/libpkg.html[libpkg - network package library]
+* link:man3/libqtcad.html[libqtcad - Qt widget library]
 * link:man3/librt.html[librt - ray tracing library]
+* link:man3/libtclcad.html[libtclcad - Tcl/Tk integration library]
+* link:man3/libtermio.html[libtermio - terminal I/O library]
 * link:man3/libwdb.html[libwdb - write-only database library]
