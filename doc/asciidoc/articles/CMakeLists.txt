@@ -230,6 +230,7 @@ set(
   images/adrt_toyjeep_phong.png
   images/adrt_toyjeep_normal.png
   images/adrt_toyjeep_depth.png
+  images/adrt_toyjeep_spall.png
   images/adrt_chess_path.png
   images/adrt_chess_rt.png
   images/adrt_chess_rt_ao.png

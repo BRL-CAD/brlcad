@@ -80,7 +80,14 @@ adrt -s 512 -H 256 -a 35 -e 25 -o toyjeep.png toyjeep.g all
 
 `adrt` reports the triangle count, load time, and render time, then writes the
 PNG.  The camera is a perspective camera aimed at the model center; `-a`/`-e`
-orbit it and `-p` sets the field of view.  For scenes that are not simply
+orbit it and `-p` sets the field of view.
+
+NOTE: Heavily-booleaned models can lose parts that fail on-the-fly
+tessellation -- the toy jeep's front wheels and roll bar among them.  See
+<<facetize_first>> to render such models faithfully; the jeep panels later in
+this article were produced that way.
+
+For scenes that are not simply
 oriented -- an enclosed, Y-up Cornell box, for instance -- give an explicit eye
 and look-at point instead:
 
@@ -159,18 +166,35 @@ tint the neighboring surfaces.
 |*Phong:* direct lighting only, no indirect light
 |===
 
+[[facetize_first]]
 == Complex CSG: facetize first
 
-ADRT tessellates as it loads, but a few heavily-booleaned models do not survive
-on-the-fly NMG evaluation -- the sample `castle`, whose whole structure is one
-region unioning dozens of instanced solids, is one.  `rt` traces it natively as
-CSG, but for ADRT the robust path is to convert it to a triangle mesh once with
-the Manifold-based facetizer, then render the mesh:
+ADRT tessellates as it loads, but two kinds of geometry do not come through: a
+solid with no finite triangulation (an infinite half-space) is skipped, and --
+more subtly -- a CSG region whose on-the-fly NMG boolean evaluation *fails* is
+dropped silently, contributing no triangles while the rest of the model still
+renders.  The load log flags the latter as `FAILED in boolean evaluation:
+<path>`.  `rt` traces such models natively, but for ADRT the robust fix is to
+convert them to triangles once with the far more capable Manifold facetizer and
+render the resulting mesh.
+
+Two of the sample models here need this.  The toy jeep drops its front wheels,
+roll bar, and windshield frame on a direct load.  Facetizing with `--regions`
+rebuilds each region as a BoT while preserving the region hierarchy -- and thus
+the colors inherited from parent combinations -- so the jeep comes back
+complete *and* in full color:
 
 ----
 # in mged, on a working copy of the database
-facetize -o castle_bot all.g/castle
+facetize --regions all all_fac
+adrt -s 512 -H 256 -a 35 -e 25 -o toyjeep.png toyjeep.g all_fac
+----
 
+The castle is a single region unioning dozens of instanced solids; there a
+single merged BoT is simplest, carrying one material for the whole model:
+
+----
+facetize -o castle_bot all.g/castle
 adrt -s 512 -H 256 -a 135 -e 30 -o castle.png castle.g castle_bot
 ----
 
@@ -200,6 +224,19 @@ useful for inspecting form and orientation without lighting:
 |*`-m depth`* camera depth
 |===
 
+The `spall` shader is a ballistic-analysis mode: it fires a shot into the model
+and draws the resulting fragmentation cone while cutting the geometry away at the
+impact plane to reveal the interior.  `adrt` synthesizes a shot across the model
+from the current view (tune the cone's full angle with `-A`), or takes an
+explicit `"(pos) (dir) angle"` via `-b`:
+
+----
+adrt -s 512 -m spall -a 35 -e 25 -A 45 -o spall.png toyjeep.g all
+----
+
+.`adrt -m spall`: the fragmentation cone with the vehicle cut away at the impact plane
+image::images/adrt_toyjeep_spall.png[spall,384]
+
 == Notes and limitations
 
 * The path tracer is a straightforward forward tracer with no next-event
@@ -216,7 +253,7 @@ useful for inspecting form and orientation without lighting:
   boolean evaluation: <path>`.  Because the failure is per region, the result
   can look complete while quietly missing parts (a wheel, a roll bar).  When
   fidelity matters, facetize the model first with the far more robust
-  Manifold facetizer (see <<Complex CSG: facetize first>>) and render the mesh.
+  Manifold facetizer (see <<facetize_first,Complex CSG: facetize first>>) and render the mesh.
 
 [NOTE]
 ====
