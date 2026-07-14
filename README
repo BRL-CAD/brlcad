@@ -1,5 +1,5 @@
 			    BRL-CAD
-			 Release 7.42.2
+			 Release 7.43.0
 		       http://brlcad.org/
 
 BRL-CAD is a powerful cross-platform open source combinatorial
@@ -97,15 +97,13 @@ comparing the results of the benchmark tests in more detail.
 COMMUNICATION
 -------------
 
-There are various BRL-CAD mailing lists available including three
-developer-oriented lists, a user list, and a read-only news
-announcement list:
-
-  http://sourceforge.net/mail/?group_id=105292
-
 For interactive discussion, please join our Zulip chat:
 
   https://brlcad.zulipchat.com
+
+For questions, answers, and general discussion, use GitHub Discussions:
+
+  https://github.com/BRL-CAD/brlcad/discussions
 
 
 BUG REPORTS AND FEATURE REQUESTS
