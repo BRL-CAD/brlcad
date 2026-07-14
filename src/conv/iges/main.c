@@ -52,6 +52,8 @@ FILE *fd = NULL;
 struct rt_wdb *fdout = NULL;
 char brlcad_file[256] = {0};
 int reclen = 0;
+b_off_t *rec_offset = NULL;
+size_t nrecords = 0;
 int currec = 0;
 size_t ntypes = 0;
 int brlcad_att_de = 0;
@@ -290,6 +292,8 @@ main(int argc, char *argv [])
 	if (reclen == 0)
 	    bu_exit(1, "File (%s) not in IGES ASCII format\n", iges_file);
 
+	Build_rec_index();	/* Index the byte offset of every record */
+
 	Freestack();	/* Set node stack to empty */
 
 	Zero_counts();	/* Set summary information to all zeros */
@@ -343,6 +347,7 @@ main(int argc, char *argv [])
 	}
 
 	Free_dir();
+	Free_rec_index();
 
 	BU_LIST_DEQUEUE(&curr_file->l);
 	bu_free(curr_file->file_name, "iges-g: curr_file->file_name");

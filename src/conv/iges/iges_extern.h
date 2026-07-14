@@ -37,7 +37,9 @@ extern int pstart; /* record number where parameter section starts */
 extern int dstart; /* record number where directory section starts */
 extern size_t totentities; /* total number of entities in the IGES file */
 extern size_t dirarraylen;	/* number of elements in the "dir" array */
-extern int reclen; /* IGES file record length (in bytes) */
+extern int reclen; /* IGES file record length (data columns, always 80) */
+extern b_off_t *rec_offset; /* byte offset of the start of each on-disk record */
+extern size_t nrecords; /* number of records indexed in rec_offset */
 extern int currec; /* current record number in the "card" buffer */
 extern size_t ntypes; /* Number of different types of IGES entities recognized by
 			 this code */

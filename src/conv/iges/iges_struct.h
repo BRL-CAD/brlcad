@@ -278,6 +278,8 @@ extern void Push(union tree *ptr);
 extern union tree *Pop(void);
 extern void Freestack(void);
 extern int Recsize(void);
+extern void Build_rec_index(void);
+extern void Free_rec_index(void);
 extern void Zero_counts(void);
 extern void Summary(void);
 extern void Readstart(void);

@@ -19,18 +19,18 @@
  */
 /** @file iges/recsize.c
  *
- * Routine to determine record size of IGES file.
+ * Routines to validate that a file is IGES ASCII and to build a record
+ * index for it.
  *
- * According to the spec, the file should be 80 characters per record.
- * The spec does not mention anything about CR or LF at the end of
- * records, so this routine looks for LF's and returns the actual
- * record length.
- *
- * Note: this will work for files with records that are 80 characters
- * long without any CR or LF at end of records, also for files with
- * CR-LF at end of records, and for files with just LF at end of
- * records.  It will not work for files with just CR at end of records
- * (but I haven't seen such an animal yet)
+ * According to the spec every IGES record is 80 columns of data.  Real
+ * files terminate records with LF, CR-LF, or (rarely) nothing at all, and
+ * some non-conforming writers (e.g. Open CASCADE) leave the free-format
+ * Start/Global records short of 80 columns rather than padding them.  To
+ * read all of these uniformly we do not rely on a fixed on-disk record
+ * stride; instead Build_rec_index() records the byte offset of every
+ * record so Readrec() can seek to it directly and space-pad the data
+ * columns.  reclen is therefore the logical data width (80), not the
+ * on-disk byte count.
  *
  */
 
@@ -41,57 +41,132 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-#define NRECS 20  /* Maximum number of records to sample */
-#define NCHAR 256 /* Maximum number of characters to read in case
-		   * there are no LF's
-		   */
+#define NCHAR 256 /* Maximum characters to scan for a line terminator */
+#define IGES_RECLEN 80 /* IGES records are 80 data columns */
 
 /*
- * Sample the first few records of the IGES file to determine the actual
- * on-disk record length (accounting for optional trailing CR/LF), and
- * return it.  Returns 0 if the sampled records have inconsistent lengths.
- * The file position is rewound to the beginning before returning.
+ * Probe the file to confirm it looks like ASCII IGES and return the logical
+ * record length (IGES_RECLEN) if so, or 0 for an empty/unreadable file.
+ * The file position is rewound to the beginning before returning.  Line
+ * terminators (LF, CR-LF, or none) and short, unpadded records are all
+ * tolerated; the actual record positions are resolved by Build_rec_index().
  */
 int
 Recsize(void)
 {
-
-    int i, j, k = (-1), recl = 0, length[NRECS] = {0}, ch;
-
-    for (j = 0; j < NRECS; j++) {
-	i = 1;
-	while ((ch = getc(fd)) != '\n' && i < NCHAR && ch != EOF)
-	    i++;
-	if (i == NCHAR) {
-	    recl = 80;
-	    break;
-	} else if (ch == EOF) {
-	    k = j - 1;
-	    break;
-	} else
-	    length[j] = i; /* record this record length */
-    }
-    if (k == (-1))	/* We didn't encounter an early EOF */
-	k = NRECS;
+    int ch;
+    int saw_any = 0;
 
     if (bu_fseek(fd, 0, 0)) {
-	/* rewind file */
 	bu_log("Cannot rewind file\n");
 	perror("Recsize");
 	bu_exit(1, NULL);
     }
 
-    if (recl == 0) {
-	/* then LF's were found */
-	recl = length[1];	/* don't use length[0] */
+    while ((ch = getc(fd)) != EOF) {
+	saw_any = 1;
+	break;
+    }
 
-	/* check for consistent record lengths */
-	for (j = 2; j < k; j++) {
-	    if (recl != length[j])
-		return 0;
+    if (bu_fseek(fd, 0, 0)) {
+	bu_log("Cannot rewind file\n");
+	perror("Recsize");
+	bu_exit(1, NULL);
+    }
+
+    return saw_any ? IGES_RECLEN : 0;
+}
+
+
+/*
+ * Scan the whole file once and record the byte offset at which each on-disk
+ * record begins into the global rec_offset[] array (nrecords entries).
+ * Records are taken to be LF-delimited (a trailing CR is stripped later by
+ * Readrec); if the file contains no LF at all it is treated as a stream of
+ * fixed IGES_RECLEN-column records.  The file position is rewound before
+ * returning.
+ */
+void
+Build_rec_index(void)
+{
+    b_off_t pos = 0;
+    int ch;
+    int saw_lf = 0;
+    size_t cap = 1024;
+    size_t n = 0;
+
+    Free_rec_index();
+
+    if (bu_fseek(fd, 0, 0)) {
+	bu_log("Cannot rewind file\n");
+	perror("Build_rec_index");
+	bu_exit(1, NULL);
+    }
+
+    rec_offset = (b_off_t *)bu_malloc(cap * sizeof(b_off_t), "rec_offset");
+    rec_offset[n++] = 0;	/* first record begins at the start of the file */
+
+    while ((ch = getc(fd)) != EOF) {
+	pos++;
+	if (ch == '\n') {
+	    int nxt = getc(fd);
+	    saw_lf = 1;
+	    if (nxt == EOF)
+		break;		/* trailing newline, no further record */
+	    (void)ungetc(nxt, fd);
+	    if (n >= cap) {
+		cap *= 2;
+		rec_offset = (b_off_t *)bu_realloc(rec_offset, cap * sizeof(b_off_t), "rec_offset");
+	    }
+	    rec_offset[n++] = pos;	/* next record starts just past the LF */
 	}
     }
-    return recl;
+
+    if (!saw_lf) {
+	/* No line terminators: fixed IGES_RECLEN-column records. */
+	b_off_t filelen;
+	b_off_t o;
+
+	if (bu_fseek(fd, 0, 2)) {
+	    bu_log("Cannot seek to end of file\n");
+	    perror("Build_rec_index");
+	    bu_exit(1, NULL);
+	}
+	filelen = bu_ftell(fd);
+
+	n = 0;
+	for (o = 0; o + IGES_RECLEN <= filelen; o += IGES_RECLEN) {
+	    if (n >= cap) {
+		cap *= 2;
+		rec_offset = (b_off_t *)bu_realloc(rec_offset, cap * sizeof(b_off_t), "rec_offset");
+	    }
+	    rec_offset[n++] = o;
+	}
+	if (n == 0 && filelen > 0)
+	    rec_offset[n++] = 0;
+    }
+
+    nrecords = n;
+
+    if (bu_fseek(fd, 0, 0)) {
+	bu_log("Cannot rewind file\n");
+	perror("Build_rec_index");
+	bu_exit(1, NULL);
+    }
+}
+
+
+/*
+ * Release the record index built by Build_rec_index().
+ */
+void
+Free_rec_index(void)
+{
+    if (rec_offset) {
+	bu_free(rec_offset, "rec_offset");
+	rec_offset = NULL;
+    }
+    nrecords = 0;
 }
 
 

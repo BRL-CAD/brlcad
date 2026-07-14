@@ -44,7 +44,6 @@ Findp(void)
 {
     int saverec, rec2;
     size_t i;
-    b_off_t offset;
     char str[8];
 
     str[7] = '\0';
@@ -52,14 +51,7 @@ Findp(void)
 
     saverec = currec;	/* save current record number */
 
-    if (bu_fseek(fd, 0, 2)) {
-	/* go to end of file */
-	bu_log("Cannot seek to end of file\n");
-	perror("Findp");
-	bu_exit(1, NULL);
-    }
-    offset = bu_ftell(fd);	/* get file length */
-    rec2 = offset/reclen;	/* calculate record number for last record */
+    rec2 = (int)nrecords;	/* the terminate record is the last one indexed */
     Readrec(rec2);	/* read last record into "card" buffer */
     dstart = 0;
     pstart = 0;

@@ -21,14 +21,15 @@
  *
  * This routine reads record number "recno" from the IGES file and
  * places it in the "card" buffer (available for reading by
- * "readstrg", "readint", "readflt", "readtime", "readcols", etc.  The
- * record is located by calculating the offset into the file and doing
- * an "fseek".  This obviously depends on the "UNIX" characteristic of
- * "fseek" understanding offsets in bytes.  The record length is
- * calculated by the routine "recsize".  This routine is typically
- * called before calling the other "read" routines to get to the
- * desired record.  The "read" routines then call this routine if the
- * buffer empties.
+ * "readstrg", "readint", "readflt", "readtime", "readcols", etc.).
+ * The record is located via the byte-offset index built by
+ * Build_rec_index(), so it works regardless of whether records are
+ * LF, CR-LF, or unterminated and whether they are padded to 80
+ * columns.  The data columns of "card" are space-padded to "reclen"
+ * so column-based reads are always well-defined.  This routine is
+ * typically called before calling the other "read" routines to get to
+ * the desired record; those routines call it again when the buffer
+ * empties.
  *
  */
 
@@ -38,17 +39,22 @@
 /*
  * Seek to and read record number "recno" (1-based) into the shared global
  * "card" buffer, updating "currec" and resetting the field "counter".
- * Returns 1 on end-of-file, 0 on success.
+ * A trailing CR is stripped and short records are space-padded to the full
+ * data width.  Returns 1 if "recno" is out of range (treated as EOF),
+ * 0 on success.
  */
 int
 Readrec(int recno)
 {
-
     int i, ch;
     b_off_t offset;
 
     currec = recno;
-    offset = (recno - 1) * reclen;
+
+    if (recno < 1 || !rec_offset || (size_t)recno > nrecords)
+	return 1;
+
+    offset = rec_offset[recno - 1];
     if (bu_fseek(fd, offset, 0)) {
 	bu_log("Error in seek\n");
 	perror("Readrec");
@@ -56,11 +62,21 @@ Readrec(int recno)
     }
     counter = 0;
 
-    for (i = 0; i < reclen; i++) {
-	if ((ch = getc(fd)) == EOF)
-	    return 1;
-	card[i] = ch;
+    i = 0;
+    while (i < reclen) {
+	ch = getc(fd);
+	if (ch == EOF || ch == '\n')
+	    break;
+	if (ch == '\r')
+	    continue;	/* strip CR of a CR-LF terminator */
+	card[i++] = ch;
     }
+
+    /* space-pad the remaining data columns (short/unpadded records) and
+     * bound the column just past the last one so atoi() on a trailing
+     * field cannot run into stale buffer contents */
+    for (; i <= reclen; i++)
+	card[i] = ' ';
 
     return 0;
 }

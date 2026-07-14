@@ -72,7 +72,7 @@ namespace {
 struct face_g_snurb *
 snurb_from_on(const ON_NurbsSurface *ns, struct model *m)
 {
-    if (!ns || !m)
+    if (!ns)
 	return NULL;
 
     /* OpenNURBS dimension must be 3 (XYZ) for us to store XYZ(W). */
