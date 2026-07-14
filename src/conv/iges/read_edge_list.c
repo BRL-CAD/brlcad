@@ -37,7 +37,7 @@ Read_edge_list(struct iges_edge_use *edge)
     int sol_num = 0;
     int i;
 
-    entityno = (edge->edge_de - 1)/2;
+    entityno = IGES_DE2INDEX(edge->edge_de);
 
     if (entityno >= dirarraylen) {
 	bu_log("Read_edge_list: DE=%d is too large, dirarraylen = %zu\n", edge->edge_de, dirarraylen);
