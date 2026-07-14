@@ -76,6 +76,102 @@
  3. USER-VISIBLE CHANGES (this pass)   [x] done  [ ] planned
 --------------------------------------------------------------------------------
 
+ --- 2026-07-14 session: curve/surface stub entities + outer_boundary_curve ---
+
+ [x] NEW: polyline import.  polyline was previously unhandled (no LoadONBrep),
+     so poly-line edge geometry was dropped.  It is now built as a single
+     degree-1 (order-2) ON_NurbsCurve whose control vertices are the polyline
+     points, registered as an edge curve.  (Polyline.{h,cpp})
+
+ [x] NEW: offset_curve_3d import.  Was an unmapped/stub curve.  It now builds
+     the basis curve, then samples that span and emits a degree-1 ON_NurbsCurve
+     offset at each parameter by distance along normalize(T x ref_direction)
+     (ISO 10303-42 offset_curve_3d semantics).  There is no ON_Curve::Offset in
+     this OpenNURBS build, hence the sample-and-fit approach.  (OffsetCurve3D.{h,cpp})
+
+ [x] NEW: curve_replica import.  Was a "not implemented" stub.  It now delegates
+     to its parent_curve (forwarding the trim vertices).  LIMITATION: the
+     CartesianTransformationOperator 'transformation' is treated as identity
+     (the codebase has no ON_Xform accessor infrastructure for it), so a replica
+     is emitted coincident with its parent.  (CurveReplica.cpp)
+
+ [x] NEW: offset_surface import.  Was a "not implemented" stub.  It now loads
+     the basis surface, takes its NURBS form, and displaces every control point
+     by distance along the local surface normal (Ev1Der cross product), matching
+     ISO 10303-42 offset_surface.  Trim-curve bounds are propagated to size
+     infinite basis surfaces.  (OffsetSurface.cpp)
+
+ [x] NEW: rectangular_trimmed_surface import.  Was a "not implemented" stub.  It
+     now propagates trim-curve bounds and delegates geometry to the basis
+     surface, exposing that surface via GetONId(); the u1/u2/v1/v2 rectangular
+     bounds are enforced by the owning face's 3D edge trim loops, consistent with
+     the rest of this importer's 3D-edge trimming approach.  (RectangularTrimmedSurface.cpp)
+
+ [x] FIX: outer_boundary_curve dispatch.  outer_boundary_curve is a pure subtype
+     of boundary_curve (adds only a WHERE rule).  It was unregistered, producing
+     64 "not mapped: Outer_Boundary_Curve" factory errors on gear.stp.  It is now
+     registered to reuse BoundaryCurve::Create.  NOTE: BoundaryCurve::LoadONBrep
+     itself is still a stub (part of the deep class-2 curve_bounded_surface trim
+     pipeline, TODO), so this removes the dispatch error but full geometry import
+     of boundary curves still awaits that pipeline.  (BoundaryCurve.cpp)
+
+     NOT DONE: surface_replica.  Correct import requires applying its
+     CartesianTransformationOperator, which needs an ON_Xform builder and
+     accessors on CartesianTransformationOperator[3d] that do not yet exist.
+     Left as a stub rather than emitting incorrect (untransformed) geometry.
+
+     Regression: all 32 corpus files (.step-samples + .step-samples2) still
+     import with zero new failures; the only two empty outputs (clip, gear)
+     remain the pre-existing documented deep gaps (short-name parser; class-2
+     curve_bounded_surface).  None of the 32 corpus files exercise the five new
+     entities above -- coverage for them is pending the next sample batch.
+
+ [x] FIX: parabola / hyperbola conic robustness.  Both Parabola::LoadONBrep and
+     Hyperbola::LoadONBrep computed the middle (rational-)Bezier control point by
+     intersecting tangent/focal-chord-bisector lines.  That intersection is
+     ill-conditioned for arcs near the vertex (parabola: P0-focus nearly anti-
+     parallel to the axis) and for near-degenerate endpoints, so it returned
+     false and DROPPED the whole edge -> face -> solid.  On st203-bapl.stp this
+     killed 49 parabola + 13 hyperbola edges, skipping 62 faces and leaving the
+     brep empty (blank render).  Added analytic fallbacks that run ONLY on the
+     previous failure path (zero regression by construction):
+       - parabola: a parabola arc is EXACTLY a quadratic Bezier, so the middle
+         control point is recovered from the arc midpoint,
+         P1 = 2*Pmid - (P0+P2)/2, using the STEP parametrization
+         t = ((P-center).yaxis)/(2*fd).
+       - hyperbola: sample the branch analytically,
+         P(u) = center + a*cosh(u)*xaxis + b*sinh(u)*yaxis with
+         u = asinh(((P-center).yaxis)/b), and fit a piecewise-linear NURBS.
+     (OpenNurbsInterfaces.cpp, Parabola::LoadONBrep / Hyperbola::LoadONBrep.)
+     VERIFIED: on st203-bapl.stp the 62 "Control point can not be calculated"
+     failures dropped to 0 and the faces now load (.g 7.9 -> 9.2 MB).  That file
+     still renders blank, but for unrelated reasons: it is a malformed CATIA
+     export (7 incomplete Trimmed_Curve instances, 14 invalid SELECT values)
+     leaving one invalid brep face that SEGFAULTS librt's brep raytracer -- a
+     file-defect / librt-robustness issue, not conic import.  All 32 batch-1/2
+     corpus files and the 8 passing batch-3 files show zero regression.
+
+ --- Newly-identified gaps (2026-07-14 batch-3 sampling, still open) ---
+
+ [ ] GAP: edge_based_wireframe_shape_representation + edge_based_wireframe_model
+     (class-4 wireframe).  No class files exist; convert() has no wireframe path.
+     Seen in st203-bapl.stp ("Factory Method not mapped").  That file's SOLID
+     geometry still imports (7.9 MB .g); the wireframe rep is supplementary.
+     Full support needs new class files + a BRL-CAD wire representation (sketch/
+     edge geometry) -- deep, lower priority since it does not block solids.
+
+ [ ] GAP: advanced-brep trim-loop closure on some class-6 solids (e.g. chair.stp).
+     Faces import but OpenNURBS validity reports "loop m_type is not outer" and
+     trim start/end points "do not match" (open trim loops) on toroidal / cylin-
+     drical / b-spline faces, so the breps are invalid and ray-trace blank.  This
+     is the same libbrep/step-g trim-closure family as the other brep-validity
+     deep gaps, not a regression (chair is new to the corpus).
+
+ [ ] GAP (external): CATIA V4 short-name entity form.  socks.stp (like clip.stp)
+     is emitted with abbreviated ("APPCNT", ...) short names; stepcode's parser
+     reports thousands of "Unknown ENTITY type", so nothing imports.  Resolving
+     this is at the bext/stepcode layer, not step-g.
+
  [x] NEW: Faceted / mesh solid import.  faceted_brep + poly_loop +
      faceted_brep_shape_representation are now imported as a BRL-CAD BoT
      (bag of triangles) solid, wrapped in a region and attached to the
@@ -175,6 +271,34 @@
      gear) import byte-for-byte identically to baseline - no regression.
      (The 11/20 component-conversion rate is set by libbrep's B-spline handling,
      independent of this import logic.)
+
+ [x] FIX: Robustness against degenerate geometry + partial-import resilience.
+     Driven by a second batch of 12 web-downloaded AP203 parts (steptools).
+     clevis21.stp CRASHED the importer: intersectLines() -> bg_isect_line3_line3()
+     bu_bomb()s when a line direction is below tolerance, which a sub-micron
+     (~4e-05 mm, inch round-off) edge triggered.  Fixes:
+       - intersectLines() now returns "no intersection" for degenerate (near
+         zero-length) line directions instead of aborting;
+       - Connected_Face_Set::LoadONBrep() is resilient: a single malformed face
+         is skipped (with a warning) rather than discarding the whole solid.
+     clevis21 now imports 36/48 faces and both renders and round-trips.  Fully
+     valid parts are unaffected (0 faces skipped => identical output; the 27
+     round-trip PASS files are byte-stable).
+
+ [x] FIX: surface_curve / seam_curve edge geometry.  Both were STUB (dropped),
+     causing brep edges that use them to fail.  They now delegate to their 3D
+     curve (curve_3d), matching the already-working intersection_curve path.
+
+ [x] FIX: geometric_curve_set registered to the GeometricSet class (it is a
+     geometric_set subtype) so files using it dispatch instead of aborting with
+     an unmapped-factory error.
+
+ Round-trip verification corpus (temporary, for review):
+   step_roundtrip_review/  (batch 1: 16 PASS + rear import-only)
+   step_roundtrip_review2/ (batch 2: 11 PASS + jack_in_the_box import-only)
+   = 29 distinct real-world AP203 parts; 27 fully round-trip (.g->STEP->.g with
+   non-blank rt renders on both sides), 2 import-only (g-step segfaults on
+   large 39/53-brep assemblies - an EXPORTER/scale limitation, not import).
 
  Behavioral notes / known limitations of the faceted path:
    - Fan triangulation is exact for convex faces (the common case, since
