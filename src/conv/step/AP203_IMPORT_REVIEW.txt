@@ -146,11 +146,13 @@
      GetAxis2Placement3d() added to that class to match the other shape reps).
      Identity placement when the representation has no axis, so files without
      one are unchanged.
-     NOTE: not yet compiled (bext/Tcl build down); verified by static review
-     (brace/paren balance, forward-decl/definition signature match, type
-     visibility, reuse of already-built APIs).  Needs a build + a test file
-     whose manifold-surface / geometrically-bounded shape rep carries a
-     non-identity axis to confirm placement.
+     Validated: src/conv/step/test_gbss_axis.stp - a geometrically_bounded
+     surface rep whose container axis origin is (100,0,0) with a flat 10x10
+     bilinear B-spline patch.  The imported patch region carries member matrix
+     [100,0,0] (region center 105,5,0), i.e. the container axis is applied;
+     with the old code it would sit at 0..10.  Full pre-existing suite
+     (faceted tetra, mapped assembly, cylcub BoTs, block brep) still passes
+     (identity axes -> unchanged), confirming no regression.
 
  Behavioral notes / known limitations of the faceted path:
    - Fan triangulation is exact for convex faces (the common case, since
