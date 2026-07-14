@@ -271,7 +271,7 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	double knot_value = (*r);
 
 	if ((multiplicity < degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
+	    //skip first multiplicity and knot value
 	    m++;
 	    r++;
 	}
@@ -437,7 +437,7 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	double knot_value = (*r);
 
 	if ((multiplicity < degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
+	    //skip first multiplicity and knot value
 	    m++;
 	    r++;
 	}
@@ -682,7 +682,7 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	int multiplicity = (*m);
 	double knot_value = (*r);
 	if ((multiplicity < u_degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
+	    //skip first multiplicity and knot value
 	    m++;
 	    r++;
 	}
@@ -730,7 +730,7 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	int multiplicity = (*m);
 	double knot_value = (*r);
 	if ((multiplicity < v_degree) && (knot_value < 0.0)) {
-	    //skip fist multiplicity and knot value
+	    //skip first multiplicity and knot value
 	    m++;
 	    r++;
 	}
@@ -1059,10 +1059,6 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 
     AddFace(brep);
 
-    //TODO: remove debugging code
-    if ((false) && (ON_id == 72)) {
-	std::cerr << "Debug:LoadONBrep for FaceSurface:" << ON_id << std::endl;
-    }
     if (!Face::LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
@@ -1282,10 +1278,6 @@ EdgeCurve::LoadONBrep(ON_Brep *brep)
 	return true;    // already loaded
     }
 
-    if ((false) && (brep->m_E.Count() == 484)) {
-	std::cerr << "Debug:LoadONBrep for EdgeCurve:" << brep->m_E.Count() << std::endl;
-    }
-
     Vertex *start = NULL;
     Vertex *end = NULL;
     if (same_sense == 1) {
@@ -1325,11 +1317,6 @@ OrientedEdge::LoadONBrep(ON_Brep *brep)
 	return true;    //already loaded
     }
 
-    //TODO: remove debugging code
-    //if ((false) && (brep->m_E.Count() == 5)) {
-    //std::cerr << "Debug:LoadONBrep for OrientedEdge:" << brep->m_E.Count() << std::endl;
-    //}
-
     if (!edge_start->LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
@@ -1345,10 +1332,6 @@ OrientedEdge::LoadONBrep(ON_Brep *brep)
 
     ON_id = edge_element->GetONId();
 
-    //TODO: remove debugging code
-    //if ((true) && (ON_id == 12)) {
-    //std::cerr << "Debug:LoadONBrep for OrientedEdge:" << ON_id << std::endl;
-    //}
     return true;
 }
 
@@ -1383,19 +1366,11 @@ Path::LoadONBrep(ON_Brep *brep)
     ON_TextLog tl;
     LIST_OF_ORIENTED_EDGES::iterator i;
 
-    if ((false) && (id == 29429)) {
-	std::cerr << "Debug:LoadONBrep for Path:" << id << std::endl;
-    }
-
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
-    }
-    //TODO: remove debugging code
-    if ((false) && (id == 26089)) {
-	std::cerr << "Debug:LoadONBrep for Path:" << id << std::endl;
     }
     if (!LoadONTrimmingCurves(brep)) {
 	return false;
@@ -1487,18 +1462,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     ON_BrepFace *face = loop->Face();
     const ON_Surface *surface = face->SurfaceOf();
 
-#if 0
-    if (surface) {
-	double surface_width, surface_height;
-	if (surface->GetSurfaceSize(&surface_width, &surface_height)) {
-	    // reparameterization of the face's surface and transforms the "u"
-	    // and "v" coordinates of all the face's parameter space trimming
-	    // curves to minimize distortion in the map from parameter space to 3d..
-	    face->SetDomain(0, 0.0, surface_width);
-	    face->SetDomain(1, 0.0, surface_height);
-	}
-    }
-#endif
 #ifdef _DEBUG_TESTING_
     if (_debug_print_) {
 	int curve_cnt = 0;
@@ -1521,10 +1484,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     // since currently building trims and need full tree
     // bool removeTrimmed = false;
 
-    //TODO: remove debugging code
-    if ((false) && (id == 24894)) {
-	std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
-    }
     PBCData *data = NULL;
     LIST_OF_ORIENTED_EDGES::iterator prev, next;
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
@@ -1533,9 +1492,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	const ON_Curve *curve = edge->EdgeCurveOf();
 	bool orientWithCurve = (*i)->OrientWithEdge();
 
-	if ((false) && (id == 34193)) {
-	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
-	}
 	data = pullback_samples(surface, curve);
 	if (data == NULL) {
 	    continue;
@@ -1620,10 +1576,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		continue;
 	    }
 	    int trimCurve = brep->m_C2.Count();
-	    //TODO: remove debugging code
-	    if ((false) && (trimCurve == 68)) {
-		std::cerr << "Debug:LoadONTrimmingCurves for Path:" << trimCurve << std::endl;
-	    }
 	    ON_Curve *c2d = interpolateCurve(*samples);
 	    brep->m_C2.Append(c2d);
 
@@ -1634,21 +1586,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    trim.m_iso = surface->IsIsoparametric(*c2d, &PD);
 
 	    if (!trim.IsValid(&tl)) {
-		//TODO: remove debugging code
-		if (false) {
-		    ON_NurbsCurve nurbs_curve;
-		    c2d->GetNurbForm(nurbs_curve);
-		    std::cerr << "Num_knots - " << nurbs_curve.KnotCount() << std::endl;
-		    std::cerr << "CV count - " << nurbs_curve.CVCount() << std::endl;
-		    for (int knot_index = 0; knot_index < nurbs_curve.KnotCount(); knot_index++) {
-			std::cerr << "Knot[" << knot_index << "] - " << nurbs_curve.Knot(knot_index) << std::endl;
-		    }
-		    for (int cv_index = 0; cv_index < nurbs_curve.CVCount(); cv_index++) {
-			ON_3dPoint p;
-			nurbs_curve.GetCV(cv_index, p);
-			std::cerr << "CV[" << cv_index << "] - " << p.x << ", " << p.y << std::endl;
-		    }
-		}
 	    }
 
 	    // check for bridging trim, trims along singularities
@@ -1850,9 +1787,6 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
     //if (ON_id >= 0)
     //	return true; // already loaded
 
-    if ((false) && (brep->m_S.Count() == 56)) {
-	std::cerr << "LoadONBrep for CylindricalSurface: " << 55 << std::endl;
-    }
     ON_3dPoint origin(GetOrigin());
     ON_3dVector xaxis(GetXAxis());
     ON_3dVector yaxis(GetYAxis());
@@ -2072,9 +2006,6 @@ Circle::LoadONBrep(ON_Brep *brep)
 
     //if (ON_id >= 0)
     //	return true; // already loaded
-    if ((false) && ((brep->m_C3.Count() == 3) || (id == 1723))) {
-	std::cerr << "Debug:LoadONBrep for Circle:ID:" << id << std::endl;
-    }
 
     ON_3dPoint origin(GetOrigin());
     ON_3dVector xaxis(GetXAxis());

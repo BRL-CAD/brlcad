@@ -91,7 +91,7 @@ Conic::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	return false;
     }
 
-    // need to do this for local attributes to makes sure we have
+    // need to do this for local attributes to make sure we have
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 

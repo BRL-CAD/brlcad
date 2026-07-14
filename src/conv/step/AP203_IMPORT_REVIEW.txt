@@ -134,6 +134,24 @@
      cube instanced 3x at (0,0,0),(30,0,0),(0,40,0) yields an "assembly" comb
      with 3 correctly-placed "widget" members and an exact 40x50x10 mm bbox.
 
+ [x] FIX: Plate-mode and geometrically-bounded geometry now honor their
+     container's axis placement.  convert_WritePlateBrep()/convert_WriteBSpline()
+     previously ignored the shape representation's axis2_placement_3d - a dead
+     '#if 0' block there referenced a non-existent 'aBrep' variable copy-pasted
+     from convert_WriteBrep, so it never compiled (which is why it was disabled
+     rather than fixed).  Both functions now take an Axis2Placement3D* and apply
+     it via assembly_placement_matrix(axis, NULL), sourced from the containing
+     ManifoldSurfaceShapeRepresentation (plate) or
+     GeometricallyBoundedSurfaceShapeRepresentation (bspline;
+     GetAxis2Placement3d() added to that class to match the other shape reps).
+     Identity placement when the representation has no axis, so files without
+     one are unchanged.
+     NOTE: not yet compiled (bext/Tcl build down); verified by static review
+     (brace/paren balance, forward-decl/definition signature match, type
+     visibility, reuse of already-built APIs).  Needs a build + a test file
+     whose manifold-surface / geometrically-bounded shape rep carries a
+     non-identity axis to confirm placement.
+
  Behavioral notes / known limitations of the faceted path:
    - Fan triangulation is exact for convex faces (the common case, since
      exporters usually emit triangles/convex quads).  Non-convex planar

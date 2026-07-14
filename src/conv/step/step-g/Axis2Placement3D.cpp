@@ -225,7 +225,7 @@ Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	goto step_error;
     }
 
-    // need to do this for local attributes to makes sure we have
+    // need to do this for local attributes to make sure we have
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 
@@ -306,7 +306,6 @@ bool
 Axis2Placement3D::LoadONBrep(ON_Brep *UNUSED(brep))
 {
     //TODO: check other axis2placement3d usage notice being loaded from advanced brep in some instances
-    //std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
     return true;
 }
 

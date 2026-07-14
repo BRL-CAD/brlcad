@@ -71,13 +71,11 @@ RepresentationItem::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     id = sse->STEPfile_id;
 
 
-    // need to do this for local attributes to makes sure we have
+    // need to do this for local attributes to make sure we have
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 
     name = step->getStringAttribute(sse, "name");
-
-    //std::cout << "name:" << name << std::endl;
 
     sw->entity_status[id] = STEP_LOADED;
 

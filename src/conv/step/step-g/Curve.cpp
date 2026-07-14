@@ -95,7 +95,6 @@ Curve::PointAtEnd()
     } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
 	return end->Point3d();
     } else {
-	//std::cerr << "Error: endpoints not specified for curve " << entityname << std::endl;
 	return NULL;
     }
 }
@@ -108,7 +107,6 @@ Curve::PointAtStart()
     } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
 	return start->Point3d();
     } else {
-	//std::cerr << "Error: endpoints not specified for curve " << entityname << std::endl;
 	return NULL;
     }
 }

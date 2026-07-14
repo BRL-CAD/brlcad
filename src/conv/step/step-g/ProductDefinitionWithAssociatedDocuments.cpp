@@ -69,14 +69,7 @@ bool ProductDefinitionWithAssociatedDocuments::Load(STEPWrapper *sw, SDAI_Applic
 	return false;
     }
 
-#if 0
-    // TODO - unused right now - presumably we need to do some work to read
-    // info from the ProductDefinitionWithAssociatedDocuments entity?
-
-    // need to do this for local attributes to makes sure we have
-    // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse, ENTITYNAME);
-#endif
+    /* TODO: read info from the ProductDefinitionWithAssociatedDocuments entity via step->getEntity(sse, ENTITYNAME) */
 
     sw->entity_status[id] = STEP_LOADED;
 

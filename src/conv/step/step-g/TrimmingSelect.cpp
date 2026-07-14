@@ -91,7 +91,6 @@ TrimmingSelect::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
 
-    //std::cout << sse->UnderlyingTypeName() << std::endl;
     SdaiTrimming_select *v = (SdaiTrimming_select *)sse;
 
     if (v->IsCartesian_point()) {

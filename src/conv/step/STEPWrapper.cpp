@@ -72,6 +72,12 @@ STEPWrapper::~STEPWrapper()
     dotg = NULL;
 }
 
+/* Defined below (just before STEPWrapper::convert).  Builds the BRL-CAD
+ * placement matrix for geometry defined about 'from' and placed at 'to';
+ * with from == NULL it yields the single-axis placement used to position a
+ * shape representation's geometry from its axis2_placement_3d. */
+static void assembly_placement_matrix(mat_t mat, Axis2Placement3D *to, Axis2Placement3D *from);
+
 int
 convert_WriteBrep(
 	AdvancedBrepShapeRepresentation *aBrep,
@@ -133,7 +139,8 @@ convert_WritePlateBrep(
 	ShellBasedSurfaceModel *sBrep,
 	BRLCADWrapper *dot_g,
 	std::string *name,
-	int dry_run)
+	int dry_run,
+	Axis2Placement3D *axis)
 {
     if (dry_run) return 0;
     ON_Brep *onBrep = sBrep->GetONBrep();
@@ -146,31 +153,11 @@ convert_WritePlateBrep(
 	    bu_log("WARNING: %s is not valid\n", name->c_str());
 	}
 
+	/* position the geometry using the containing shape representation's
+	 * axis2_placement_3d (identity when the representation has none) */
 	mat_t mat;
-	MAT_IDN(mat);
+	assembly_placement_matrix(mat, axis, NULL);
 
-#if 0
-	// TODO - manifold surface container has an axis...
-	Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
-	if (axis != NULL) {
-	    //assign matrix values
-	    double translate_to[3];
-	    const double *toXaxis = axis->GetXAxis();
-	    const double *toYaxis = axis->GetYAxis();
-	    const double *toZaxis = axis->GetZAxis();
-	    mat_t rot_mat;
-
-	    VMOVE(translate_to,axis->GetOrigin());
-	    VSCALE(translate_to,translate_to,LocalUnits::length);
-
-	    MAT_IDN(rot_mat);
-	    VMOVE(&rot_mat[0], toXaxis);
-	    VMOVE(&rot_mat[4], toYaxis);
-	    VMOVE(&rot_mat[8], toZaxis);
-	    bn_mat_inv(mat, rot_mat);
-	    MAT_DELTAS_VEC(mat, translate_to);
-	}
-#endif
 	dot_g->WriteBrep(*name, onBrep, mat);
 
 	delete onBrep;
@@ -184,7 +171,8 @@ convert_WriteBSpline(
 	BSplineSurfaceWithKnots *sB,
 	BRLCADWrapper *dot_g,
 	std::string *name,
-	int dry_run)
+	int dry_run,
+	Axis2Placement3D *axis)
 {
     if (dry_run) return 0;
     ON_Brep *onBrep = sB->GetONBrep();
@@ -197,31 +185,11 @@ convert_WriteBSpline(
 	    bu_log("WARNING: %s is not valid\n", name->c_str());
 	}
 
+	/* position the geometry using the containing shape representation's
+	 * axis2_placement_3d (identity when the representation has none) */
 	mat_t mat;
-	MAT_IDN(mat);
+	assembly_placement_matrix(mat, axis, NULL);
 
-#if 0
-	// TODO - manifold surface container has an axis...
-	Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
-	if (axis != NULL) {
-	    //assign matrix values
-	    double translate_to[3];
-	    const double *toXaxis = axis->GetXAxis();
-	    const double *toYaxis = axis->GetYAxis();
-	    const double *toZaxis = axis->GetZAxis();
-	    mat_t rot_mat;
-
-	    VMOVE(translate_to,axis->GetOrigin());
-	    VSCALE(translate_to,translate_to,LocalUnits::length);
-
-	    MAT_IDN(rot_mat);
-	    VMOVE(&rot_mat[0], toXaxis);
-	    VMOVE(&rot_mat[4], toYaxis);
-	    VMOVE(&rot_mat[8], toZaxis);
-	    bn_mat_inv(mat, rot_mat);
-	    MAT_DELTAS_VEC(mat, translate_to);
-	}
-#endif
 	dot_g->WriteBrep(*name, onBrep, mat);
 
 	delete onBrep;
@@ -512,7 +480,6 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		if (aSR && aBS) {
 		    mat_t mat;
 		    MAT_IDN(mat);
-		    //std::cout << "GeometricallyBoundedSurfaceShapeRepresentation\n";
 		    LIST_OF_REPRESENTATION_ITEMS *items = aBS->items_();
 		    LIST_OF_REPRESENTATION_ITEMS::iterator ii;
 		    for (ii = items->begin(); ii != items->end(); ++ii) {
@@ -530,7 +497,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 				if (!dry_run)
 				    dotg->AddMember(comb,kname,mat);
 
-				convert_WriteBSpline(ks, dotg, &kname, dry_run);
+				convert_WriteBSpline(ks, dotg, &kname, dry_run, aBS->GetAxis2Placement3d());
 			    }
 			}
 		    }
@@ -879,7 +846,21 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    if (gr) {
 		int id = gr->GetId();
 		name = id2name_map[id];
-		if (convert_WritePlateBrep(gr, dot_g, &name, dry_run)) {
+		/* recover the containing manifold_surface_shape_representation's
+		 * axis placement (mapped shell->representation in the naming
+		 * pass) so the plate geometry is positioned consistently with
+		 * advanced brep shapes; NULL yields an identity placement. */
+		Axis2Placement3D *axis = NULL;
+		MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator sit = id2productid_map.find(id);
+		if (sit != id2productid_map.end()) {
+		    SDAI_Application_instance *msse = getEntity(sit->second);
+		    if (msse) {
+			ManifoldSurfaceShapeRepresentation *msr = dynamic_cast<ManifoldSurfaceShapeRepresentation *>(Factory::CreateObject(this, msse));
+			if (msr)
+			    axis = msr->GetAxis2Placement3d();
+		    }
+		}
+		if (convert_WritePlateBrep(gr, dot_g, &name, dry_run, axis)) {
 		    delete gr;
 		    bu_exit(1, "ERROR: failure creating shell based surface model from %s\n", stepfile.c_str());
 		}
@@ -1318,8 +1299,6 @@ STEPWrapper::getListOfListOfPoints(int STEPid, const char *attrName)
 	if (name.compare(attrName) == 0) {
 	    ErrorDescriptor errdesc;
 
-	    //std::cout << attr->asStr(attrval) << std::endl;
-	    //std::cout << attr->TypeName() << std::endl;
 
 
 	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
@@ -1333,7 +1312,6 @@ STEPWrapper::getListOfListOfPoints(int STEPid, const char *attrName)
 	    LIST_OF_POINTS *points;
 	    while (sn != NULL) {
 		//sn->STEPwrite(std::cout);
-		//std::cout << std::endl;
 		eaStr = sn->asStr(attrval);
 		points = parseListOfPointEntities(eaStr);
 		l->push_back(points);
@@ -1483,7 +1461,6 @@ STEPWrapper::getEnumAttribute(SDAI_Application_instance *sse, const char *name)
 
 	if (attrname.compare(name) == 0) {
 	    retValue = (*attr->ptr.e).asInt();
-	    //std::cout << "debug enum: " << (*attr->ptr.e).asStr(attrval) << std::endl;
 	    break;
 	}
     }
@@ -1507,8 +1484,6 @@ STEPWrapper::getEntityAttribute(SDAI_Application_instance *sse, const char *name
 	}
 	if (attrname.compare(name) == 0) {
 	    std::string attrval;
-	    //std::cout << "attr:" << name << ":" << attr->TypeName() << ":" << attr->Name() << std::endl;
-	    //std::cout << "attr:" << attr->asStr(attrval) << std::endl;
 	    retValue = (SDAI_Application_instance *)*attr->ptr.c;
 	    break;
 	}
@@ -1674,8 +1649,6 @@ STEPWrapper::getListOfListOfPatches(SDAI_Application_instance *sse, const char *
 	if (name.compare(attrName) == 0) {
 	    ErrorDescriptor errdesc;
 
-	    //std::cout << attr->asStr(attrval) << std::endl;
-	    //std::cout << attr->TypeName() << std::endl;
 
 
 	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
@@ -1689,7 +1662,6 @@ STEPWrapper::getListOfListOfPatches(SDAI_Application_instance *sse, const char *
 	    LIST_OF_PATCHES *patches;
 	    while (sn != NULL) {
 		//sn->STEPwrite(std::cout);
-		//std::cout << std::endl;
 		eaStr = sn->asStr(attrval);
 		patches = parseListOfPatchEntities(eaStr);
 		l->push_back(patches);
@@ -1718,8 +1690,6 @@ STEPWrapper::getListOfListOfPoints(SDAI_Application_instance *sse, const char *a
 	if (name.compare(attrName) == 0) {
 	    ErrorDescriptor errdesc;
 
-	    //std::cout << attr->asStr(attrval) << std::endl;
-	    //std::cout << attr->TypeName() << std::endl;
 
 
 	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
@@ -1733,7 +1703,6 @@ STEPWrapper::getListOfListOfPoints(SDAI_Application_instance *sse, const char *a
 	    LIST_OF_POINTS *points;
 	    while (sn != NULL) {
 		//sn->STEPwrite(std::cout);
-		//std::cout << std::endl;
 		eaStr = sn->asStr(attrval);
 		points = parseListOfPointEntities(eaStr);
 		l->push_back(points);
@@ -1976,7 +1945,6 @@ STEPWrapper::printEntity(SDAI_Application_instance *se, int level)
 	}
 
     }
-    //std::cout << std::endl << std::endl;
 }
 
 
@@ -2002,11 +1970,9 @@ STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
 	} else {
 	    std::cout << "Instance Type not handled:" << std::endl;
 	}
-	//std::cout << "sn - " << sn->asStr(attrval) << std::endl;
 
 	sn = (EntityNode *)sn->NextNode();
     }
-    //std::cout << std::endl << std::endl;
 }
 
 
