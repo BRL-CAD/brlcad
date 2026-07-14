@@ -154,6 +154,28 @@
      (faceted tetra, mapped assembly, cylcub BoTs, block brep) still passes
      (identity axes -> unchanged), confirming no regression.
 
+ [x] FIX: Unique object names + assembly hierarchy for real assemblies.
+     STEP product names are frequently shared across every part of an assembly
+     (e.g. every component in steptools moon_buggy_asm.stp is named
+     "Moon_Buggy").  The naming pass previously assigned those raw, so all
+     components collapsed onto one BRL-CAD object.  Names are now reserved
+     uniquely (reserve_unique_name(): base, base_1, base_2, ...) in the naming
+     pass and the brep write pass uses the assigned name, so each component
+     imports as a distinct object.  Additionally, an advanced_brep_shape_
+     representation whose items are only mapped_items + an axis (a pure
+     assembly container) yields a faceless brep; convert_WriteBrep() now skips
+     writing such degenerate breps so the mapped_item comb of the same name is
+     preserved instead of being overwritten by an empty region.
+     Validated: moon_buggy_asm.stp - was 2 objects (everything collapsed);
+     now imports 11 distinct component breps nested under 11 assembly combs
+     with correct placement transforms, including nested sub-assemblies
+     instanced multiple times (e.g. Moon_Buggy_7 = {Moon_Buggy_2,
+     Moon_Buggy_1 [0,0,-190.5], Moon_Buggy_1 [0,0,1714.5]}).  All 8 sampled
+     brep/faceted files (block, cylcub, cubsomcy, calo, bernetl, as1_pe, rear,
+     gear) import byte-for-byte identically to baseline - no regression.
+     (The 11/20 component-conversion rate is set by libbrep's B-spline handling,
+     independent of this import logic.)
+
  Behavioral notes / known limitations of the faceted path:
    - Fan triangulation is exact for convex faces (the common case, since
      exporters usually emit triangles/convex quads).  Non-convex planar
@@ -205,13 +227,11 @@
        -- validated on crafted faceted assembly; see section 6.
    [ ] geometric_curve_set -> register to the GeometricSet class (same
        members) so curve/point sets import
-   [ ] FIX product-name uniqueness: pass 1 stores id2name_map[rep] using
-       CleanBRLCADName() WITHOUT uniquifying, so components that share a
-       product name (e.g. every part in moon_buggy_asm.stp is named
-       "Moon_Buggy") collide to a single object and their mapped_item
-       instances self-reference.  Uniquify per-object names to make such
-       real assemblies import.  (Separate from mapped_item; blocks it on
-       poorly-named files.)
+   [x] FIX product-name uniqueness: uniquify per-object names so components
+       that share a STEP product name no longer collide to a single object.
+       Done via reserve_unique_name(); see section 3.  Also fixed the
+       assembly-container overwrite (faceless-brep skip) so mapped_item
+       hierarchy survives.  moon_buggy_asm.stp now imports with full nesting.
 
  TIER 4 - WIREFRAME & RARE TOPOLOGY (lower priority for a brep importer)
    [ ] edge_based_wireframe_model / edge_based_wireframe_shape_representation
