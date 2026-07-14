@@ -80,6 +80,23 @@ brep(size_t entityno, struct bu_list *vlfree)
 	void_shells = NULL;
     }
 
+    /* The NMG-based reconstruction of an IGES 186 manifold BREP is fragile
+     * for many real-world files (loop reconstruction can fail or bomb deep
+     * inside libnmg).  When producing the default rt_brep output we skip it
+     * and let main() import the entity's NURBS surfaces as an untrimmed brep,
+     * which is reliable and renders correctly.  The NMG reconstruction is
+     * retained for the explicit mesh (-m) and NMG (-p) output modes. */
+    if (do_brep && !do_bots) {
+	bu_log("Manifold BREP D%07d (%s): importing surfaces as an untrimmed brep\n",
+	       dir[entityno]->direct, dir[entityno]->name);
+	if (num_of_voids) {
+	    bu_free(void_shell_de, "BREP: void shell DE's");
+	    bu_free(void_orient, "BREP: void shell orients");
+	    bu_free(void_shells, "BREP: void shell pointers");
+	}
+	return 0;
+    }
+
     /* start building */
     m = nmg_mmr();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
@@ -93,6 +110,14 @@ brep(size_t entityno, struct bu_list *vlfree)
 	if ((void_shells[i] = Add_inner_shell(r, IGES_DE2INDEX(void_shell_de[i]), vlfree))
 	    == (struct shell *)NULL)
 	    goto err;
+    }
+
+    /* if every face was dropped (e.g. unreconstructable loops), there is
+     * nothing to build here; defer to the untrimmed-surface fallback */
+    if (BU_LIST_IS_EMPTY(&s_outer->fu_hd)) {
+	bu_log("Faithful brep construction produced no usable faces for %s; "
+	       "deferring to untrimmed-surface import\n", dir[entityno]->name);
+	goto err;
     }
 
     /* orient loops */
@@ -123,9 +148,8 @@ brep(size_t entityno, struct bu_list *vlfree)
 	/* write out BOT */
 	if (mk_bot_from_nmg(fdout, dir[entityno]->name, s_outer))
 	    goto err;
-    } else {
-	if (do_brep)
-	    bu_log("Falling back to NMG for %s\n", dir[entityno]->name);
+    } else if (!do_brep) {
+	/* user explicitly asked for an NMG solid (-p) */
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a(r, &tol);
@@ -134,6 +158,13 @@ brep(size_t entityno, struct bu_list *vlfree)
 	mk_nmg_executed_flag = 1;
 	if (mk_nmg(fdout, dir[entityno]->name, m))
 	    goto err;
+    } else {
+	/* brep output was requested but faithful construction failed; do not
+	 * write a (likely unrenderable) NMG solid.  Leaving nothing behind
+	 * lets main() import the raw surfaces as an untrimmed brep instead. */
+	bu_log("Faithful brep construction failed for %s; "
+	       "deferring to untrimmed-surface import\n", dir[entityno]->name);
+	goto err;
     }
 
     if (num_of_voids) {
