@@ -35,8 +35,6 @@ RENDER_EXPORT extern int slave_load(struct tie_s *tie, void *);
 RENDER_EXPORT extern uint32_t slave_load_mesh_num;
 RENDER_EXPORT extern adrt_mesh_t *slave_load_mesh_list;
 
-RENDER_EXPORT extern int slave_load_g (struct tie_s *tie, char *data);
-
 #endif
 
 /*

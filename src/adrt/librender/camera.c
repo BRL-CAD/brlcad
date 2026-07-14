@@ -27,7 +27,6 @@
 
 #include "bu/parallel.h"
 #include "bu/dylib.h"
-#include "bu/parallel.h"
 #include "bu/log.h"
 #include "bu/str.h"
 

@@ -24,7 +24,6 @@
 #include "bresource.h"
 #include "bsocket.h"
 #include "bnetwork.h"
-#include "bio.h"
 
 int
 tienet_send(int tsocket, void* data, size_t size)
