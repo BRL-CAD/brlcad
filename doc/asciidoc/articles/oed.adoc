@@ -528,7 +528,7 @@ Selection of a particular primitive when using *oed* will depend on the particul
 [[Flexible_Manipulation]]
 == Flexible Manipulation with keypoint
 
-It might be reasonable to expect the *oed* command to use the center of the combination bounding box as a default if no primitive is supplied and/or take as an optional parameter an explicit keypoint setting, but this is not the current behavior of BRL-CAD as of version 7.12 - a primitive is required. As seen in the previous section, the *oed* uses the specified primitive to select a point from which translations/rotations/etc. are defined. BRL-CAD's term for this point is the _keypoint_. For cases where it is not practical to select a primitive that will provide the correct keypoint, BRL-CAD does offer an option for explicitly setting the keypoint.
+It might be reasonable to expect the *oed* command to use the center of the combination bounding box as a default if no primitive is supplied and/or take as an optional parameter an explicit keypoint setting, but this is not the current behavior of BRL-CAD - a primitive is required. As seen in the previous section, the *oed* uses the specified primitive to select a point from which translations/rotations/etc. are defined. BRL-CAD's term for this point is the _keypoint_. For cases where it is not practical to select a primitive that will provide the correct keypoint, BRL-CAD does offer an option for explicitly setting the keypoint.
 
 For example, to rotate object2.c around the z axis intersecting point (2,2,0) the keypoint must be set explicitly - this is not a point that can be selected by identifying a primitive.
 
