@@ -196,6 +196,37 @@ extern "C" {
     extern mat_t model2view;
     extern mat_t view2model;
     extern point_t viewbase_model;
+
+    /* Options parsed by the shared rt/opt.c but NOT honored by art's
+     * Appleseed backend.  Declared here so art_validate_options() can
+     * detect when a user set one and warn instead of silently ignoring
+     * it.  All are defined in rt/opt.c (which art links); worker.c-only
+     * globals (fullfloat_mode, reproject_mode) are deliberately omitted
+     * since art does not link worker.c.
+     */
+    extern int lightmodel;		/* -l  (art is always a path tracer) */
+    extern int hypersample;		/* -H */
+    extern unsigned int jitter;		/* -J */
+    extern int stereo;			/* -S */
+    extern int use_air;			/* -U */
+    extern double airdensity;		/* -m */
+    extern const char *densityfile;	/* -d */
+    extern int do_kut_plane;		/* -k */
+    extern int sub_grid_mode;		/* -j */
+    extern int cell_newsize;		/* -g / -G */
+    extern int benchmark;		/* -B */
+    extern int incr_mode;		/* -i */
+    extern int full_incr_mode;		/* -i (fully incremental) */
+    extern int top_down;		/* -t */
+    extern int random_mode;		/* random-order rendering */
+    extern int opencl_mode;		/* -z */
+    extern int doubles_out;		/* -O */
+    extern int output_is_binary;	/* +t  (default 1; 0 => text output) */
+    extern int Query_one_pixel;		/* -Q */
+    extern char *string_pix_start;	/* -b */
+    extern int desiredframe;		/* -D */
+    extern int finalframe;		/* -K (default -1) */
+
     size_t n_free;
     size_t n_malloc;		/* Totals at last check */
     size_t n_realloc;
@@ -305,6 +336,98 @@ init_defaults(void)
     option("Developer", "-B", "Disable randomness for \"benchmark\"-style repeatability", 100);
     option("Developer", "-b \"x y\"", "Only shoot one ray at pixel coordinates (quotes required)", 100);
     option("Developer", "-Q x, y", "Shoot one pixel with debugging; compute others without", 100);
+}
+
+
+/* Warn about options that the shared rt/opt.c parses but that art's
+ * Appleseed backend does not act on.  Because art links the same opt.c as
+ * rt, every rt flag parses successfully; without this pass those flags
+ * would be silently dropped and an rt user copying a command line would
+ * get a plausible-but-wrong image with no indication anything was ignored.
+ *
+ * Each check compares a global against its rt/opt.c default; a mismatch
+ * means the user actually passed the flag.  These are warnings (not fatal)
+ * so existing scripts still render -- but nothing is dropped silently.
+ * Returns the number of ignored options detected.
+ */
+static int
+art_validate_options(void)
+{
+    int n = 0;
+
+#define ART_WARN(msg) do { bu_log("art: warning: %s\n", (msg)); n++; } while (0)
+
+    /* Fundamental model differences: no path-tracer equivalent. */
+    if (lightmodel != 0)
+	ART_WARN("-l lighting-model selection is ignored; art always renders "
+		 "with the Appleseed global-illumination path tracer "
+		 "(this includes -l7 photon mapping and -l8 heat-graph)");
+
+    if (hypersample != 0 || jitter != 0)
+	ART_WARN("-H hypersample / -J jitter are ignored; control art's "
+		 "path-tracer quality with -c \"set samples=<N>\" instead "
+		 "(current default is 25)");
+
+    if (use_air != 0 || airdensity != 0.0 || densityfile != NULL)
+	ART_WARN("-U air-region handling, -m atmospheric haze, and -d density "
+		 "file are ignored; art has no participating-media model");
+
+    if (stereo != 0)
+	ART_WARN("-S stereo rendering is not supported and is ignored");
+
+    /* Not-yet-implemented plumbing (mappable onto Appleseed in future). */
+    if (do_kut_plane != 0)
+	ART_WARN("-k cutting plane is not yet supported and is ignored");
+
+    if (sub_grid_mode != 0)
+	ART_WARN("-j sub-rectangle rendering is not yet supported and is ignored");
+
+    if (cell_newsize != 0)
+	ART_WARN("-g / -G grid cell sizing is ignored; art derives resolution "
+		 "from -s / -w / -n only");
+
+    if (incr_mode != 0 || full_incr_mode != 0)
+	ART_WARN("-i incremental/progressive rendering is not supported and is ignored");
+
+    if (benchmark != 0)
+	ART_WARN("-B benchmark mode is ignored; art output is not guaranteed "
+		 "bit-reproducible");
+
+    if (top_down != 0)
+	ART_WARN("-t top-down scan order is ignored (art renders in tiles)");
+
+    if (random_mode != 0)
+	ART_WARN("random-order rendering is ignored (art uses Appleseed's sampler)");
+
+    if (opencl_mode != 0)
+	ART_WARN("-z OpenCL acceleration is ignored by art");
+
+    /* Output-format divergences: art writes 8-bit images via Appleseed. */
+    if (doubles_out != 0)
+	ART_WARN("-O double-precision (.dpix) output is not supported; "
+		 "art writes 8-bit images only");
+
+    if (output_is_binary == 0)
+	ART_WARN("+t text output is not supported and is ignored");
+
+    /* Diagnostics with no path-tracer analogue. */
+    if (Query_one_pixel != 0 || string_pix_start != NULL)
+	ART_WARN("-b / -Q single-pixel debugging is not supported and is ignored");
+
+    /* Animation: art only loops frames when driven by an -M/stdin script
+     * (rt_do_tab's "end" command is remapped to art_cm_end).  In plain flag
+     * mode the -D/-K frame range has no effect. */
+    if (!matflag && (desiredframe != 0 || finalframe != -1))
+	ART_WARN("-D / -K frame ranges are ignored in flag mode; multi-frame "
+		 "animation requires an -M stdin script");
+
+#undef ART_WARN
+
+    if (n)
+	bu_log("art: %d rt option(s) above were parsed but not applied; "
+	       "the rendered image may differ from rt's.\n", n);
+
+    return n;
 }
 
 
@@ -1140,6 +1263,10 @@ main(int argc, char **argv)
 	usage(argv[0], 99);
 	return 0;
     }
+
+    /* Warn about any rt options that parsed but that art will not honor,
+     * so nothing is silently dropped. */
+    art_validate_options();
 
     if (bu_optind >= argc) {
 	RENDERER_LOG_INFO("%s: BRL-CAD geometry database not specified\n", argv[0]);
