@@ -82,21 +82,18 @@ name recognition.
 INTERNET RESOURCES
 ------------------
 
-Main Website: http://brlcad.org/
-Website Mirror: http://ftp.brlcad.org/
-Sourceforge Project Site: http://sourceforge.net/projects/brlcad/
-Freshmeat Entry: http://freshmeat.net/projects/BRL-CAD/
-Commercial Support: http://brlcad.com/
+Main Website: https://brlcad.org/
+Source Repository: https://github.com/BRL-CAD/brlcad
+Commercial Support: https://brlcad.com/
 
-Bug Reports: http://sourceforge.net/tracker/?group_id=105292&atid=640802
-Feature Requests: http://sourceforge.net/tracker/?group_id=105292&atid=640805
-Support Requests: http://sourceforge.net/tracker/?group_id=105292&atid=640803
-Patch Contributions: http://sourceforge.net/tracker/?group_id=105292&atid=640804
+Bug Reports: https://github.com/BRL-CAD/brlcad/issues
+Feature Requests: https://github.com/BRL-CAD/brlcad/issues
+Support Requests: https://github.com/BRL-CAD/brlcad/discussions
+Patch Contributions: https://github.com/BRL-CAD/brlcad/pulls
 
-Internet Relay Chat: irc://irc.freenode.net/brlcad i.e. #brlcad on the Freenode network
-Mailing Lists: http://sourceforge.net/mail/?group_id=105292
-Forums: http://sourceforge.net/forum/?group_id=105292
-SVN Access: http://sourceforge.net/svn/?group_id=105292
+Chat: https://brlcad.zulipchat.com
+Questions & Discussion: https://github.com/BRL-CAD/brlcad/discussions
+Git Access: https://github.com/BRL-CAD/brlcad
 
 
 KEYWORDS & CATEGORIES
