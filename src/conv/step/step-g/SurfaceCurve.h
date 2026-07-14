@@ -55,6 +55,7 @@ public:
 	return SURFACE_CURVE;
     };
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
     virtual const double *PointAtEnd();
     virtual const double *PointAtStart();
     virtual void Print(int level);

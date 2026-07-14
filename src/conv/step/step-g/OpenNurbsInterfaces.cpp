@@ -1897,6 +1897,14 @@ intersectLines(const ON_Line &l1, const ON_Line &l2, ON_3dPoint &out)
     VMOVE(l2_dir, d);
 
     fastf_t l1_dist, l2_dist;
+    /* A degenerate (near zero-length) line has no well-defined direction.
+     * bg_isect_line3_line3() bu_bomb()s when a direction's magnitude falls
+     * below the tolerance, which some real AP203 files trigger (e.g. sub-micron
+     * edges from inch-unit round-off).  Report "no intersection" instead of
+     * aborting the whole import. */
+    if ((MAGSQ(l1_dir) < tol.dist_sq) || (MAGSQ(l2_dir) < tol.dist_sq)) {
+	return 0;
+    }
     int i = bg_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
 				 l2_from, l2_dir, &tol);
     if (i == 1) {

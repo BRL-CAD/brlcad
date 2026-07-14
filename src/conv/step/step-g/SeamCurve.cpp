@@ -93,8 +93,8 @@ SeamCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 SeamCurve::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    /* a seam_curve is a surface_curve; use its 3D curve for the edge geometry */
+    return SurfaceCurve::LoadONBrep(brep);
 }
 
 // Local Variables:

@@ -206,6 +206,43 @@ SurfaceCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
+bool
+SurfaceCurve::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	return false;
+    }
+    if (ON_id >= 0) {
+	return true; // already loaded
+    }
+    if (!curve_3d) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - no 3D curve geometry." << std::endl;
+	return false;
+    }
+
+    /* A surface_curve (and its seam_curve / intersection_curve subtypes) carries
+     * an explicit 3D curve (curve_3d) alongside parametric pcurve representations
+     * on the associated surface(s).  For solid BRep edge geometry the 3D curve is
+     * what we need, so forward our trim/endpoints to it and defer. */
+    if (trimmed) {
+	if (parameter_trim) {
+	    curve_3d->SetParameterTrim(t, s);
+	} else {
+	    curve_3d->SetPointTrim(trim_startpoint, trim_endpoint);
+	}
+    }
+    curve_3d->Start(start);
+    curve_3d->End(end);
+
+    if (!curve_3d->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    ON_id = curve_3d->GetONId();
+
+    return true;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

@@ -33,6 +33,10 @@
 #define CLASSNAME "GeometricSet"
 #define ENTITYNAME "Geometric_Set"
 string GeometricSet::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod) GeometricSet::Create);
+/* geometric_curve_set is a subtype of geometric_set with identical structure
+ * (a set of geometric_set_select elements); reuse this class so files that use
+ * it are dispatched instead of aborting with an unmapped-factory error. */
+static string geometric_curve_set_reg = Factory::RegisterClass("Geometric_Curve_Set", (FactoryMethod) GeometricSet::Create);
 
 GeometricSet::GeometricSet()
 {
