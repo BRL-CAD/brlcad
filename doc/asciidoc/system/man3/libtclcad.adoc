@@ -1,0 +1,56 @@
+= LIBTCLCAD(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libtclcad - Tcl/Tk integration library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <tclcad.h>
+----
+
+Link with *-ltclcad*.
+
+The public interface is organized across the headers included by
+_tclcad.h_, namely _tclcad/defines.h_, _tclcad/setup.h_,
+_tclcad/draw.h_, and _tclcad/misc.h_.
+
+== DESCRIPTION
+
+LIBTCLCAD contains convenience routines for preparing and initializing
+Tcl (and Tk) for use with BRL-CAD. It provides the setup logic that
+registers BRL-CAD functionality with a Tcl interpreter and supplies the
+drawing and utility helpers used by BRL-CAD's Tcl/Tk-based applications,
+such as *mged*(1) and *archer*(1).
+
+The library ties the geometry editing capabilities of libged and the
+display managers of libdm to a scripting environment, exposing them so
+that geometry can be created, queried, edited, and rendered from Tcl
+scripts and interactive command shells.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBTCLCAD module.
+
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *archer*(1), *libged*(3), *libdm*(3), *libqtcad*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBTCLCAD routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

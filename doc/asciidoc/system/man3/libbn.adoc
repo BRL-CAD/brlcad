@@ -1,0 +1,62 @@
+= LIBBN(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libbn - numerical computation library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <bn.h>
+----
+
+Link with *-lbn*.
+
+The public interface is organized across the headers included by
+_bn.h_, including _bn/tol.h_, _bn/anim.h_, _bn/complex.h_, _bn/mat.h_,
+_bn/msr.h_, _bn/noise.h_, _bn/poly.h_, _bn/multipoly.h_, _bn/qmath.h_,
+_bn/rand.h_, _bn/randmt.h_, _bn/wavelet.h_, _bn/sobol.h_, _bn/str.h_,
+_bn/ulp.h_, and _bn/tabdata.h_.
+
+== DESCRIPTION
+
+LIBBN is BRL-CAD's numerical computation library. It provides a broad
+assortment of numerical algorithms and computational routines, including
+pseudorandom number generation, vector and matrix math, quaternion math,
+complex arithmetic, polynomial synthetic division and root finding,
+noise generation, wavelet transforms, quasi-random (Sobol) sequences,
+tabulated data handling, and floating-point tolerance and unit-in-the-last
+-place utilities.
+
+LIBBN sits above the utility library (libbu) and supplies the numerical
+foundation used throughout the rest of the BRL-CAD libraries. Strictly
+numerical algorithms that do not involve three-dimensional geometry
+concepts belong here, whereas generic geometry algorithms belong in
+libbg. Many core vector and matrix macros used by LIBBN are declared in
+_vmath.h_.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBBN module.
+
+== SEE ALSO
+
+*brlcad*(1), *libbu*(3), *libbg*(3), *librt*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBBN routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

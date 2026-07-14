@@ -1,0 +1,66 @@
+= LIBGED(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libged - geometry editing library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <ged.h>
+----
+
+Link with *-lged*.
+
+The public interface is organized across the headers included by
+_ged.h_, including _ged/defines.h_, _ged/database.h_, _ged/commands.h_,
+_ged/objects.h_, _ged/view.h_, and _ged/debug.h_.
+
+== DESCRIPTION
+
+LIBGED provides the procedural basis for the geometry editing
+capabilities available in BRL-CAD. It exposes the commands used to
+create, query, edit, and display geometry, and is the shared engine
+behind interactive front ends such as *mged*(1) and *archer*(1). The
+library is tightly coupled to librt for geometric representation and
+analysis, and it assumes the libdm interface for commands that
+manipulate geometric views.
+
+Commands follow a consistent "action noun" (verb-noun) pattern, support
+both short and long option flags, and provide automatic help
+generation. They are invoked through an argc/argv interface, which makes
+them equally accessible from C code and from scripting languages bound
+to the API.
+
+Because command inputs pass through string processing, calling LIBGED
+commands programmatically incurs overhead and forgoes some compiler
+checking compared with calling lower-level librt routines directly.
+Where a lower-level interface exists, C and C++ developers are
+encouraged to use it; LIBGED is most valuable as the command surface for
+interactive and scripted workflows.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBGED module.
+
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *archer*(1), *librt*(3), *libdm*(3), *libbv*(3), *libanalyze*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBGED routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

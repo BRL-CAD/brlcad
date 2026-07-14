@@ -1,0 +1,61 @@
+= LIBBREP(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libbrep - boundary representation (NURBS) library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <brep.h>
+----
+
+Link with *-lbrep*.
+
+The public interface is organized across the headers included by
+_brep.h_, including _brep/defines.h_, _brep/util.h_, _brep/ray.h_,
+_brep/curvetree.h_, _brep/surfacetree.h_, _brep/edit.h_,
+_brep/pullback.h_, _brep/quality.h_, _brep/intersect.h_,
+_brep/boolean.h_, _brep/cdt.h_, and _brep/csg.h_.
+
+== DESCRIPTION
+
+LIBBREP provides BRL-CAD's boundary representation (B-rep) support,
+defining surface and curve structures for Non-Uniform Rational B-Spline
+(NURBS) curves and surfaces. The library builds upon the openNURBS
+library for its underlying geometric representation.
+
+Facilities provided by the library include acceleration structures for
+curves and surfaces (curve trees, surface trees, and bounding-box
+nodes), ray/B-rep intersection, curve/surface intersection, pullback of
+three-dimensional points into surface parameter space, boolean
+evaluation of B-rep solids, constrained Delaunay triangulation (CDT) for
+tessellation, B-rep quality assessment, editing operations, and
+conversion between B-rep and constructive solid geometry (CSG)
+representations.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBBREP module.
+
+== SEE ALSO
+
+*brlcad*(1), *librt*(3), *libnmg*(3), *libbn*(3), *libbu*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBBREP routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2007-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,53 @@
+= LIBPC(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libpc - parametrics and constraints library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <pc.h>
+----
+
+Link with *-lpc*.
+
+== DESCRIPTION
+
+LIBPC provides the data structures and evaluation interface for
+parametrics and constraints in BRL-CAD. Its scope is to serve as a
+wrapper over a geometric constraint evaluation system, defining the
+representations for parameters, constraints, and constraint sets used to
+describe relationships between geometric quantities.
+
+The library is intended to underpin parametric constraint solving and
+joint articulation, with the expectation that one or more third-party
+solvers may be incorporated to evaluate the constraint networks. The
+longer-term intent is for librt to rely on this library for the
+associated data types and evaluation.
+
+The complete API, including data structures and function signatures, is
+documented in _pc.h_ and its included files, and in the
+Doxygen-generated reference for the LIBPC module.
+
+== SEE ALSO
+
+*brlcad*(1), *librt*(3), *libbn*(3), *libbu*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBPC routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
