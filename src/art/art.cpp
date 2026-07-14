@@ -76,6 +76,9 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef _WIN32
+#  include <malloc.h>	/* _heapchk for ARTDBG */
+#endif
 
 #include <cstddef>
 #include <memory>
@@ -186,6 +189,18 @@ struct ArtLight {
     double fract;	/* "fract"/lt_fraction; <0 => derive from bright */
 };
 static std::vector<ArtLight> art_lights;
+
+static void
+art_heapchk(const char* where)
+{
+#ifdef _WIN32
+    int r = _heapchk();
+    bu_log("ARTDBG: heapchk[%s] = %d (%s)\n", where, r,
+	   (r == _HEAPOK) ? "OK" : "CORRUPT");
+#else
+    (void)where;
+#endif
+}
 //size_t light_intensity = 30.0;
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
@@ -766,7 +781,6 @@ register_region(struct db_tree_state* tsp,
 	    asf::Transformd::identity(),
 	    asf::StringDictionary()
 	    .insert("default", material_mat.c_str())
-	    .insert("default2", material_mat.c_str())
 	    ));
 
     // add assembly to assemblies array in scene
@@ -787,6 +801,7 @@ register_region(struct db_tree_state* tsp,
 	    asf::Transformd::identity());
     scene->assembly_instances().insert(assembly_instance);
 
+    art_heapchk(name);
     return 0;
 }
 
@@ -923,10 +938,13 @@ build_project(const char* file, const char* UNUSED(objects))
     /* discovered lights are collected by register_region() during the walk */
     art_lights.clear();
 
+    if (getenv("ART_SKIP_OBJECTS")) {
+	bu_log("ARTDBG: skipping all region registration (experiment)\n");
+    } else
     if (objc) {
 	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
     }
-    if (cmd_objs) {
+    if (!getenv("ART_SKIP_OBJECTS") && cmd_objs) {
 
 	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
 	const char** cmdobjv = (const char**)cmd_objs->buffer;
@@ -1165,6 +1183,7 @@ build_project(const char* file, const char* UNUSED(objects))
     // Bind the scene to the project.
     project->set_scene(scene);
 
+    art_heapchk("build_project end");
     return project;
 }
 
@@ -1568,7 +1587,10 @@ main(int argc, char **argv)
 		&artcallback));
 
         // Render the frame.
+        art_heapchk("pre-render");
+        bu_log("ARTDBG: pre-render\n");
         renderer->render(renderer_controller);
+        bu_log("ARTDBG: post-render\n");
 
         // Save the frame to disk to the requested output path, honoring its
         // extension via libicv.
@@ -1591,7 +1613,10 @@ main(int argc, char **argv)
 		resource_search_paths));
 
         // Render the frame.
+        art_heapchk("pre-render");
+        bu_log("ARTDBG: pre-render\n");
         renderer->render(renderer_controller);
+        bu_log("ARTDBG: post-render\n");
 
         // Save the frame to disk to the requested output path, honoring its
         // extension via libicv.
