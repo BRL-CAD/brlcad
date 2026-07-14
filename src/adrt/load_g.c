@@ -214,8 +214,20 @@ load_nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *p
     BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
-    rt_comb_get_color(dbip, rgb, rci);
-    VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
+    /*
+     * Prefer the color inherited down the tree state (which honors colors set
+     * on parent combinations), matching the NMG path in
+     * load_nmg_to_adrt_gcvwrite().  Fall back to the region's own color only
+     * when no color has been inherited.  Without this, BoT regions -- including
+     * everything produced by facetizing a colored hierarchy -- would lose any
+     * color set above the region and render in the default gray.
+     */
+    if (ts->ts_mater.ma_color_valid) {
+	VMOVE(mesh->attributes->color.v, ts->ts_mater.ma_color);
+    } else {
+	rt_comb_get_color(dbip, rgb, rci);
+	VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
+    }
     adrt_init_attributes(mesh->attributes, bu_vls_cstr(&rci->shader));
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
