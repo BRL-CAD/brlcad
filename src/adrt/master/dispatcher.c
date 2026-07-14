@@ -87,7 +87,7 @@ master_dispatcher_free (void)
 void
 master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, int image_format)
 {
-    int i, n, size;
+    int tx, ty, base_x, base_y, size;
     camera_tile_t tile;
 
     size = data_len + sizeof (camera_tile_t);
@@ -99,15 +99,24 @@ master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, 
     /* Copy data payload to front */
     memcpy(dispatcher_mesg.data, data, data_len);
 
-    tile.size_x = image_w / DISPATCHER_TILE_NUM;
-    tile.size_y = image_h / DISPATCHER_TILE_NUM;
+    /*
+     * Emit exactly DISPATCHER_TILE_NUM x DISPATCHER_TILE_NUM tiles (which is
+     * what master.tile_num expects for the frame-complete count).  The base
+     * tile size floors the division; the last row/column absorbs the remainder
+     * so the tiles cover the whole image without gaps or writing past its
+     * edges when the dimensions are not evenly divisible.
+     */
+    base_x = image_w / DISPATCHER_TILE_NUM;
+    base_y = image_h / DISPATCHER_TILE_NUM;
     tile.format = image_format;
     tile.frame = dispatcher_frame;
 
-    for (i = 0; i < image_h; i += tile.size_y) {
-	tile.orig_y = i;
-	for (n = 0; n < image_w; n += tile.size_x) {
-	    tile.orig_x = n;
+    for (ty = 0; ty < DISPATCHER_TILE_NUM; ty++) {
+	tile.orig_y = (uint16_t)(ty * base_y);
+	tile.size_y = (uint16_t)((ty == DISPATCHER_TILE_NUM - 1) ? (image_h - ty * base_y) : base_y);
+	for (tx = 0; tx < DISPATCHER_TILE_NUM; tx++) {
+	    tile.orig_x = (uint16_t)(tx * base_x);
+	    tile.size_x = (uint16_t)((tx == DISPATCHER_TILE_NUM - 1) ? (image_w - tx * base_x) : base_x);
 	    TCOPY(camera_tile_t, &tile, 0, dispatcher_mesg.data, data_len);
 	    tienet_master_push(dispatcher_mesg.data, size);
 	}

@@ -190,7 +190,7 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
 void tienet_master_free(void)
 {
     int i;
-    tienet_master_socket_t *sock;
+    tienet_master_socket_t *sock, *next;
 
     tienet_sem_free(&tienet_master_sem_fill);
     tienet_sem_free(&tienet_master_sem_read);
@@ -205,8 +205,13 @@ void tienet_master_free(void)
 
     bu_free(tienet_master_buffer, "tienet master buffer");
 
-    for (sock = tienet_master_socket_list->next; sock; sock = sock->next)
-	bu_free(sock->prev, "master socket");
+    /* Free every node exactly once.  The previous loop freed each node's
+     * ->prev, which leaked the tail node and left the list head dangling. */
+    for (sock = tienet_master_socket_list; sock; sock = next) {
+	next = sock->next;
+	bu_free(sock, "master socket");
+    }
+    tienet_master_socket_list = NULL;
 }
 
 

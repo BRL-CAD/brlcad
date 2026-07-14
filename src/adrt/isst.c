@@ -119,7 +119,13 @@ resize_isst(struct isst_s *isstp)
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    isstp->texdata = realloc(isstp->texdata, isstp->camera.w * isstp->camera.h * 3);
+    {
+	/* realloc through a temporary so a failure does not leak (and null out)
+	 * the existing buffer. */
+	void *tmp = realloc(isstp->texdata, isstp->camera.w * isstp->camera.h * 3);
+	if (tmp)
+	    isstp->texdata = tmp;
+    }
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, isstp->camera.w, isstp->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, isstp->texdata);
     glDisable(GL_LIGHTING);
 
@@ -320,6 +326,13 @@ isst_zap(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	return TCL_ERROR;
     }
 
+    /* Release the buffers owned directly by the workspace before the struct
+     * itself.  (The tie and mesh list have a more involved lifecycle and are
+     * left for a dedicated teardown.) */
+    TIENET_BUFFER_FREE(isst->buffer_image);
+    if (isst->texdata)
+	free(isst->texdata);
+
     bu_free(isst, "isst free");
     isst = NULL;
 
@@ -378,11 +391,15 @@ zero_view(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 
 
 static int
-move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *objv)
+move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     vect_t vec;
     int flag;
 
+    if (objc < 3) {
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName flag");
+	return TCL_ERROR;
+    }
     if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
 	return TCL_ERROR;
 
@@ -402,12 +419,16 @@ move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), T
 }
 
 static int
-move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *objv)
+move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     vect_t vec, dir, up;
 
     int flag;
 
+    if (objc < 3) {
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName flag");
+	return TCL_ERROR;
+    }
     if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
 	return TCL_ERROR;
 
@@ -530,10 +551,14 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	VSCALE(vecdfoc, vecdfoc, mag_focus);
 	VADD2(isst->camera.focus, isst->camera_focus_init, vecdfoc);
     }
-    /* Update the tcl copies of the az/el vars */
+    /* Update the tcl copies of the az/el vars.  Store them in the same units
+     * as isst_load_g (radians via -DEG2RAD); previously aerotate wrote the raw
+     * degrees from bn_ae_vec, leaving the Tcl vars inconsistent after a drag. */
     VSUB2(vec, isst->camera.focus, isst->camera.pos);
     VUNITIZE(vec);
     bn_ae_vec(&az, &el, vec);
+    az = az * -DEG2RAD;
+    el = el * -DEG2RAD;
     bu_vls_sprintf(&tclstr, "%f", az);
     Tcl_SetVar(interp, "az", bu_vls_addr(&tclstr), 0);
     bu_vls_sprintf(&tclstr, "%f", el);

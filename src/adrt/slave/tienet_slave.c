@@ -208,6 +208,11 @@ void tienet_slave_worker(int port, char *host) {
 	    compress(buffer_comp.data, &dest_len, result.data, result.ind);
 	    size = (uint32_t)dest_len;
 
+	    /* buffer was only sized for the uncompressed result; compression can
+	     * expand incompressible data past result.ind, so grow it to hold the
+	     * compressed length + data before packing them. */
+	    TIENET_BUFFER_SIZE(buffer, buffer.ind + sizeof(uint32_t) + size);
+
 	    /* Pack Compressed Result Length */
 	    TCOPY(uint32_t, &size, 0, buffer.data, buffer.ind);
 	    buffer.ind += sizeof(uint32_t);
