@@ -969,6 +969,22 @@ main(int ac, char *av[])
     CHECK(find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "split") != NULL,
 	"brep should complete a subcommand after its fixed object operand");
     ged_cmd_completion_result_clear(&completion_result);
+    completion_count = ged_cmd_complete_result(gedp, "brep all.g split -", std::strlen("brep all.g split -"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "-t") != NULL &&
+	find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "-o") != NULL &&
+	find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "--object-per-face") != NULL,
+	"brep should complete options from a child schema after its fixed object operand");
+    ged_cmd_completion_result_clear(&completion_result);
+    completion_count = ged_cmd_complete_result(gedp, "brep all.g brep -", std::strlen("brep all.g brep -"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "--no-evaluation") != NULL &&
+	find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "--suffix") != NULL,
+	"brep should complete options from its BREP-conversion child schema");
+    ged_cmd_completion_result_clear(&completion_result);
+    completion_count = ged_cmd_complete_result(gedp, "brep all.g plot C", std::strlen("brep all.g plot C"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "C2") != NULL &&
+	find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "CDT") != NULL,
+	"brep plot should complete its operation vocabulary");
+    ged_cmd_completion_result_clear(&completion_result);
     CHECK(ged_cmd_validate(gedp, "brep --color 1;2;3 all.g split -t 1 -o plates 0-3",
 	std::strlen("brep --color 1;2;3 all.g split -t 1 -o plates 0-3"), &validation) == 0 &&
 	validation.state == BU_CMD_VALIDATE_VALID,
@@ -6696,6 +6712,47 @@ main(int ac, char *av[])
 
 	gedp = ged_open("db", av[2], 1);
 	CHECK(gedp != NULL, "ged_open failed for optional m35 database");
+	{
+	    const char *brep_argv[] = {"brep", "s52", "brep", "brep_completion", NULL};
+	    CHECK(ged_exec(gedp, 4, brep_argv) == BRLCAD_OK,
+		"m35 should provide a primitive that can be converted to BREP for plot completion tests");
+	    completion_count = ged_cmd_complete_result(gedp,
+		"brep brep_completion plot F ",
+		std::strlen("brep brep_completion plot F "), &completion_result);
+	    CHECK(completion_count > 0 &&
+		find_completion(completion_result.completion_candidates,
+		    (int)completion_result.completion_count, "0") != NULL,
+		"brep plot should offer indices from the selected BREP face collection");
+	    ged_cmd_completion_result_clear(&completion_result);
+	    {
+		const char *plot_modes[] = {"E", "L", "S", NULL};
+		for (const char **mode = plot_modes; *mode; mode++) {
+		    std::string plot_input = std::string("brep brep_completion plot ") + *mode + " ";
+		    completion_count = ged_cmd_complete_result(gedp, plot_input.c_str(),
+			plot_input.size(), &completion_result);
+		    CHECK(completion_count > 0 &&
+			find_completion(completion_result.completion_candidates,
+			    (int)completion_result.completion_count, "0") != NULL,
+			"brep plot should map each topological mode to its component collection");
+		    ged_cmd_completion_result_clear(&completion_result);
+		}
+	    }
+	    CHECK(ged_cmd_validate(gedp, "brep brep_completion plot F 999999",
+		std::strlen("brep brep_completion plot F 999999"), &validation) == 0 &&
+		validation.state == BU_CMD_VALIDATE_INVALID,
+		"brep plot should reject an out-of-range face index");
+	    ged_cmd_validate_result_clear(&validation);
+	    CHECK(ged_cmd_validate(gedp, "brep brep_completion plot F 0",
+		std::strlen("brep brep_completion plot F 0"), &validation) == 0 &&
+		validation.state == BU_CMD_VALIDATE_VALID,
+		"brep plot should accept an in-range face index");
+	    ged_cmd_validate_result_clear(&validation);
+	    {
+		const char *bad_plot_argv[] = {"brep", "brep_completion", "plot", "F", "999999", NULL};
+		CHECK(ged_exec(gedp, 5, bad_plot_argv) != BRLCAD_OK,
+		    "brep plot execution should reject an out-of-range component index");
+	    }
+	}
 	CHECK(check_completion_order(gedp, "draw component/suspension/r2",
 		    expected_m35_order, sizeof(expected_m35_order) / sizeof(expected_m35_order[0])),
 		"m35 suspension path completions should be alphanum sorted");
