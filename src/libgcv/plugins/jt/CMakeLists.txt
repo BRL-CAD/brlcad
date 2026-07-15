@@ -1,3 +1,5 @@
+find_package_zlib(REQUIRED)
+
 set(JT_SRCS jt_parser.cpp jt_read.cpp jt_topology.cpp)
 
 gcv_plugin_library(gcv-jt SHARED ${JT_SRCS})
