@@ -18,16 +18,29 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* update change policy to 1) expand definition of minimally impacting
-  to allow an assuption of non-embedding in function calls (i.e., no
-  function or macro calls as function arguments), 2) migrate change
-  tracking to a doc subfolder, 3) split deprecation from minimally
-  impacting to separate docs, 4) invert minimally impacting list to be
-  a functional description of the change (e.g., "rename A -> B", "drop
-  arg 3 C", etc), 5) auto-generate and publish robust regular
-  expressions from the functional descriptions, 6) publish an
-  auto-update script that warns about deprecated use and/or applies
-  minimally impacting changes to a given file.
+* release notes, release bullet review
+
+* check mann commands with mged availability, either defer publishing
+  unavailable or make available
+
+* compilation testing, distcheck-full and bext builds
+
+* search -exec 
+
+* DEFERRED mouse sweep rect
+
+* manual not working (mged -> help -> manual)
+
+* DEFERRED apropos (view command
+
+* rename the remove command (update rm docs and code printings)
+
+* DEFFERED design comb command, need -o
+
+* restore/check view subcommands - dir, print, auto, lookat, and save
+
+* jepr is 2-20x slower, check search command
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
