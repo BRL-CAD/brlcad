@@ -61,6 +61,24 @@
 static constexpr int STATUS_TIMEOUT_SECONDS = 4;
 static constexpr int MIN_PAGE_SCROLL = 1;
 
+static bool
+is_help_option(const char *argument)
+{
+    if (!argument)
+	return false;
+    const std::string option(argument);
+    return option == "-h" || option == "-?" || option == "--help";
+}
+
+static int
+print_usage(const char *program)
+{
+    std::cout << "Usage: " << (program ? program : "brledit")
+	<< " [file]\n"
+	<< "Edit a text file in the terminal.\n";
+    return 0;
+}
+
 /* Alternate screen RAII */
 struct AltScreenRAII {
     AltScreenRAII()  { termio_write(STDOUT_FILENO, "\033[?1049h", 8); }
@@ -771,6 +789,11 @@ static void event_loop(){
 }
 
 int main(int argc,char *argv[]){
+	for (int i = 1; i < argc; ++i) {
+	    if (is_help_option(argv[i]))
+		return print_usage(argv[0]);
+	}
+
     const char *replace_file = std::getenv("BRLEDIT_REPLACE_FILE");
     if (replace_file && replace_file[0] != '\0') {
         if (argc < 2) {
