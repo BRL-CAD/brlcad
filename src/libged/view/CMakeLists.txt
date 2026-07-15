@@ -27,6 +27,7 @@ set(
   size.c
   snap.c
   view.c
+  view_completion.cpp
   viewdir.c
   ypr.c
 )

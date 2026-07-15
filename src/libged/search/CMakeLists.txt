@@ -2,6 +2,7 @@ set(PLUGIN_LIBS libged libbu)
 
 ged_plugin_library(ged-search
   search.c
+  search_completion.cpp
   LIBS ${PLUGIN_LIBS}
 )
 

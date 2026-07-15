@@ -6170,15 +6170,19 @@ main(int ac, char *av[])
 	const struct db_search_syntax_term *search_terms = db_search_syntax_terms(&search_term_count);
 	const struct db_search_syntax_term *type_term = NULL;
 	const struct db_search_syntax_term *exec_term = NULL;
+	const struct db_search_syntax_term *bool_term = NULL;
 	CHECK(search_terms && search_term_count > 0, "search should publish its parser-owned syntax terms");
 	for (size_t i = 0; i < search_term_count; i++) {
 	    if (BU_STR_EQUAL(search_terms[i].name, "-type")) type_term = &search_terms[i];
 	    if (BU_STR_EQUAL(search_terms[i].name, "-exec")) exec_term = &search_terms[i];
+	    if (BU_STR_EQUAL(search_terms[i].name, "-bool")) bool_term = &search_terms[i];
 	}
 	CHECK(type_term && type_term->argument == DB_SEARCH_SYNTAX_TYPE_ARGUMENT,
 	    "published search -type syntax should be typed");
 	CHECK(exec_term && exec_term->argument == DB_SEARCH_SYNTAX_EXEC_ARGUMENTS,
 	    "published search -exec syntax should be variadic");
+	CHECK(bool_term && bool_term->argument == DB_SEARCH_SYNTAX_STRING_ARGUMENT,
+	    "published search -bool syntax should be typed");
 	CHECK(db_search_syntax_plan_start("-type") && !db_search_syntax_plan_start("/all.g"),
 	    "published search plan-start recognition should match the parser");
 	CHECK(db_search_syntax_exec_substitution("draw {}") && !db_search_syntax_exec_substitution("draw object"),
@@ -6206,12 +6210,35 @@ main(int ac, char *av[])
     CHECK(completion != NULL, "search -ty should offer -type");
     ged_cmd_completion_result_clear(&completion_result);
 
+    completion_count = ged_cmd_complete_result(gedp, "search -bool ", std::strlen("search -bool "), &completion_result);
+    CHECK(completion_count == 3 && completion_result.completion_type == BU_CMD_VALUE_KEYWORD,
+	    "search -bool should offer all three boolean operation spellings");
+    CHECK(find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "u") != NULL &&
+	    find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "+") != NULL &&
+	    find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "-") != NULL,
+	    "search -bool completion should offer union, intersection, and subtraction");
+    ged_cmd_completion_result_clear(&completion_result);
+
+    completion_count = ged_cmd_complete_result(gedp, "search -bool -", std::strlen("search -bool -"), &completion_result);
+    CHECK(completion_count == 1 &&
+	    find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "-") != NULL,
+	    "search -bool prefix should retain the subtraction candidate");
+    ged_cmd_completion_result_clear(&completion_result);
+
     completion_count = ged_cmd_complete_result(gedp, "search -type regi", std::strlen("search -type regi"), &completion_result);
     CHECK(completion_count > 0, "search -type regi should find type keywords");
     CHECK(completion_result.completion_type == BU_CMD_VALUE_KEYWORD, "search -type completion should report keyword type");
     CHECK(completion_result.prefix && BU_STR_EQUAL(completion_result.prefix, "regi"), "search type completion should preserve prefix");
     completion = find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "region");
     CHECK(completion != NULL, "search -type regi should offer region");
+    ged_cmd_completion_result_clear(&completion_result);
+
+    completion_count = ged_cmd_complete_result(gedp, "search -type ", std::strlen("search -type "), &completion_result);
+    CHECK(completion_count > 0, "search -type should offer user-facing type keywords");
+    CHECK(find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "UNUSED1") == NULL &&
+	find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "UNUSED2") == NULL &&
+	find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, ">id_max") == NULL,
+	"search -type should hide primitive-table placeholders and its sentinel");
     ged_cmd_completion_result_clear(&completion_result);
 
     completion_count = ged_cmd_complete_result(gedp, "search all.g -Q", std::strlen("search all.g -Q"), &completion_result);
