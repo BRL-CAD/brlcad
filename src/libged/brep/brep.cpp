@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -1541,7 +1542,23 @@ BREP_RAW_SCHEMA(brep_geo_schema, "geo", "Inspect or edit BREP geometry");
 BREP_RAW_SCHEMA(brep_info_schema, "info", "Report BREP information");
 BREP_RAW_SCHEMA(brep_pick_schema, "pick", "Pick BREP elements");
 BREP_RAW_SCHEMA(brep_plate_mode_schema, "plate_mode", "Query or set plate-mode properties");
-BREP_RAW_SCHEMA(brep_plot_schema, "plot", "Plot BREP diagnostics");
+static const char * const brep_plot_modes[] = {
+    "C2", "C3", "E", "F", "F2d", "FSBB", "FSBB2d", "FTBB", "FTBB2d",
+    "FTD", "I", "L", "L2d", "S", "SCV", "SK", "SK2d", "SN", "SUV",
+    "SUVP", "T", "T2d", "V", "CDT", "CDT2d", "CDTm2d", "CDTp2d", "CDTw",
+    "CDTn", "CDTn2d", "CDTnw", NULL
+};
+static const struct bu_cmd_operand brep_plot_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Plot operation", NULL, brep_plot_modes),
+    BU_CMD_OPERAND("indices", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Optional component indices or ranges", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brep_plot_schema = {
+    "plot", "Plot BREP diagnostics", NULL, brep_plot_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 BREP_RAW_SCHEMA(brep_repair_schema, "repair", "Repair BREP topology");
 BREP_RAW_SCHEMA(brep_selection_schema, "selection", "Manage BREP selections");
 BREP_RAW_SCHEMA(brep_solid_schema, "solid", "Convert plate mode to solid");
@@ -1617,6 +1634,285 @@ static const struct bu_cmd_tree brep_tree = {
     &brep_root_schema, brep_subcommands, BU_CMD_TREE_CHILD_AFTER_FIXED_OPERANDS
 };
 
+struct brep_completion_line {
+    char *copy;
+    char **argv;
+    size_t argc;
+    size_t cursor_arg;
+};
+
+static int
+brep_completion_line_parse(struct brep_completion_line *line, const char *input,
+	size_t cursor_pos)
+{
+    size_t input_len;
+    size_t p;
+    int in_token = 0;
+    int in_quote = 0;
+    int escaped = 0;
+
+    if (!line || !input)
+	return -1;
+    memset(line, 0, sizeof(*line));
+    input_len = strlen(input);
+    if (cursor_pos > input_len)
+	cursor_pos = input_len;
+    line->copy = bu_strdup(input);
+    while (input_len > 0 && isspace((unsigned char)line->copy[input_len - 1]))
+	line->copy[--input_len] = '\0';
+    line->argv = (char **)bu_calloc(input_len + 2, sizeof(char *),
+	"brep completion argv");
+    line->argc = bu_argv_from_string(line->argv, input_len + 1, line->copy);
+
+	for (p = 0; p < cursor_pos && input[p]; p++) {
+	unsigned char c = (unsigned char)input[p];
+	if (escaped) {
+	    escaped = 0;
+	    in_token = 1;
+	    continue;
+	}
+	if (c == '\\') {
+	    escaped = 1;
+	    in_token = 1;
+	    continue;
+	}
+	if (c == '"') {
+	    in_quote = !in_quote;
+	    in_token = 1;
+	    continue;
+	}
+	if (!in_quote && isspace(c)) {
+	    if (in_token) {
+		line->cursor_arg++;
+		in_token = 0;
+	    }
+	} else {
+	    in_token = 1;
+	}
+    }
+    if (line->cursor_arg > line->argc)
+	line->cursor_arg = line->argc;
+    return 0;
+}
+
+static void
+brep_completion_line_free(struct brep_completion_line *line)
+{
+    if (!line)
+	return;
+    if (line->argv)
+	bu_free(line->argv, "brep completion argv");
+    if (line->copy)
+	bu_free(line->copy, "brep completion input");
+    memset(line, 0, sizeof(*line));
+}
+
+static int
+brep_plot_component_count(const struct rt_brep_internal *bip, const char *mode)
+{
+    const ON_Brep *brep = bip ? bip->brep : NULL;
+    if (!brep || !mode)
+	return 0;
+    if (BU_STR_EQUAL(mode, "C2")) return brep->m_C2.Count();
+    if (BU_STR_EQUAL(mode, "C3")) return brep->m_C3.Count();
+    if (BU_STR_EQUAL(mode, "E")) return brep->m_E.Count();
+    if (BU_STR_EQUAL(mode, "L") || BU_STR_EQUAL(mode, "L2d")) return brep->m_L.Count();
+    if (BU_STR_EQUAL(mode, "S") || BU_STR_EQUAL(mode, "SCV") ||
+	BU_STR_EQUAL(mode, "SK") || BU_STR_EQUAL(mode, "SK2d") ||
+	BU_STR_EQUAL(mode, "SN") || BU_STR_EQUAL(mode, "SUV") ||
+	BU_STR_EQUAL(mode, "SUVP")) return brep->m_S.Count();
+    if (BU_STR_EQUAL(mode, "T") || BU_STR_EQUAL(mode, "T2d")) return brep->m_T.Count();
+    if (BU_STR_EQUAL(mode, "V")) return brep->m_V.Count();
+    if (BU_STR_EQUAL(mode, "F") || BU_STR_EQUAL(mode, "F2d") ||
+	BU_STR_EQUAL(mode, "FSBB") || BU_STR_EQUAL(mode, "FSBB2d") ||
+	BU_STR_EQUAL(mode, "FTBB") || BU_STR_EQUAL(mode, "FTBB2d") ||
+	BU_STR_EQUAL(mode, "FTD") || BU_STR_EQUAL(mode, "I") ||
+	BU_STR_EQUAL(mode, "CDT") || BU_STR_EQUAL(mode, "CDT2d") ||
+	BU_STR_EQUAL(mode, "CDTm2d") || BU_STR_EQUAL(mode, "CDTp2d") ||
+	BU_STR_EQUAL(mode, "CDTw") || BU_STR_EQUAL(mode, "CDTn") ||
+	BU_STR_EQUAL(mode, "CDTn2d") || BU_STR_EQUAL(mode, "CDTnw")) return brep->m_F.Count();
+    return 0;
+}
+
+static int
+brep_plot_index_value(int *value, const char *text, int limit)
+{
+    if (!value || !text || !text[0] || limit <= 0 ||
+	!bu_cmd_integer_from_str(value, text) || *value < 0 || *value >= limit)
+	return 0;
+    return 1;
+}
+
+static int
+brep_plot_index_token_valid(const char *token, int limit)
+{
+    std::string text = token ? token : "";
+    size_t start = 0;
+    while (start <= text.size()) {
+	size_t end = text.find_first_of(",/;", start);
+	std::string part = text.substr(start, end == std::string::npos ?
+	    std::string::npos : end - start);
+	if (part.empty())
+	    return 0;
+	size_t range = part.find_first_of("-:");
+	if (range == std::string::npos) {
+	    int value = 0;
+	    if (!brep_plot_index_value(&value, part.c_str(), limit))
+		return 0;
+	} else {
+	    int first = 0, last = 0;
+	    std::string first_text = part.substr(0, range);
+	    std::string last_text = part.substr(range + 1);
+	    if (!brep_plot_index_value(&first, first_text.c_str(), limit) ||
+		!brep_plot_index_value(&last, last_text.c_str(), limit))
+		return 0;
+	}
+	if (end == std::string::npos)
+	    break;
+	start = end + 1;
+    }
+    return 1;
+}
+
+static int
+brep_plot_index_token_prefix(const char *token)
+{
+    if (!token)
+	return 0;
+    for (const char *p = token; *p; p++) {
+	if (!isdigit((unsigned char)*p) && *p != '-' && *p != ':' &&
+	    *p != ',' && *p != '/' && *p != ';')
+	    return 0;
+    }
+    return 1;
+}
+
+/* Validate the plot arguments against the selected BREP.  The generic
+ * command schema deliberately treats the index operand as raw text so it can
+ * represent the historical list/range syntax; this command-owned layer adds
+ * the geometry-dependent bounds check. */
+static int
+brep_plot_indices_valid(const struct rt_brep_internal *bip, const char *mode,
+	int argc, const char * const *indices)
+{
+    int component_count = brep_plot_component_count(bip, mode);
+    if (!bip || !bip->brep || !mode || component_count <= 0)
+	return argc == 0;
+    for (int i = 0; i < argc; i++) {
+	if (!brep_plot_index_token_valid(indices[i], component_count))
+	    return 0;
+    }
+    return 1;
+}
+
+static void
+brep_plot_context_complete(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    struct brep_completion_line line;
+    size_t plot_index = (size_t)-1;
+    size_t mode_index = (size_t)-1;
+    const char *object_name = NULL;
+    struct directory *dp = RT_DIR_NULL;
+    struct rt_db_internal intern;
+    int component_count;
+
+    if (!gedp || !gedp->dbip || !input || !result ||
+	brep_completion_line_parse(&line, input, cursor_pos) != 0)
+	return;
+
+    for (size_t i = 1; i + 1 < line.argc; i++) {
+	if (!BU_STR_EQUAL(line.argv[i], "plot"))
+	    continue;
+	for (size_t m = 0; brep_plot_modes[m]; m++) {
+	    if (BU_STR_EQUAL(line.argv[i + 1], brep_plot_modes[m])) {
+		plot_index = i;
+		mode_index = i + 1;
+		break;
+	    }
+	}
+	if (mode_index != (size_t)-1)
+	    break;
+    }
+    if (mode_index == (size_t)-1 || line.cursor_arg <= mode_index || plot_index <= 1) {
+	brep_completion_line_free(&line);
+	return;
+    }
+
+    object_name = line.argv[plot_index - 1];
+    dp = db_lookup(gedp->dbip, object_name, LOOKUP_QUIET);
+    RT_DB_INTERNAL_INIT(&intern);
+    if (dp == RT_DIR_NULL || rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
+	brep_completion_line_free(&line);
+	return;
+    }
+    if (intern.idb_type != ID_BREP) {
+	rt_db_free_internal(&intern);
+	brep_completion_line_free(&line);
+	return;
+    }
+    component_count = brep_plot_component_count((struct rt_brep_internal *)intern.idb_ptr,
+	line.argv[mode_index]);
+    if (line.argc == mode_index + 2 &&
+	(BU_STR_EQUAL(line.argv[mode_index + 1], HELPFLAG) ||
+	 BU_STR_EQUAL(line.argv[mode_index + 1], PURPOSEFLAG))) {
+	rt_db_free_internal(&intern);
+	brep_completion_line_free(&line);
+	return;
+    }
+
+    /* Validate completed index tokens against the selected BREP.  A partial
+     * current token remains editable; complete numeric values and ranges must
+     * be in bounds before execution is allowed to proceed. */
+    for (size_t i = mode_index + 1; i < line.argc; i++) {
+	if (!brep_plot_index_token_valid(line.argv[i], component_count)) {
+	    int current = (i == line.cursor_arg);
+	    int numeric = line.argv[i][0] &&
+		strspn(line.argv[i], "0123456789") == strlen(line.argv[i]);
+	    if (!current || numeric || !brep_plot_index_token_prefix(line.argv[i]) ||
+		line.cursor_arg >= line.argc) {
+		result->state = BU_CMD_VALIDATE_INVALID;
+		result->hint = "BREP plot component index is out of range or malformed";
+		if (result->completion_candidates) {
+		    bu_argv_free(result->completion_count,
+			(char **)result->completion_candidates);
+		    result->completion_candidates = NULL;
+		}
+		result->completion_count = 0;
+		rt_db_free_internal(&intern);
+		brep_completion_line_free(&line);
+		return;
+	    }
+	}
+    }
+
+    if (line.cursor_arg > mode_index) {
+	const char *seed = line.cursor_arg < line.argc ? line.argv[line.cursor_arg] : "";
+	if (!seed[0] || strspn(seed, "0123456789") == strlen(seed)) {
+	    if (result->completion_candidates)
+		bu_argv_free(result->completion_count,
+		    (char **)result->completion_candidates);
+	    result->completion_candidates = (const char **)bu_calloc(
+		(size_t)component_count + 1, sizeof(char *), "BREP plot index completions");
+	    result->completion_count = 0;
+	    for (int i = 0; i < component_count; i++) {
+		char value[32] = {0};
+		snprintf(value, sizeof(value), "%d", i);
+		if (!seed[0] || !strncmp(value, seed, strlen(seed)))
+		    result->completion_candidates[result->completion_count++] = bu_strdup(value);
+	    }
+	    result->completion_type = BU_CMD_VALUE_INTEGER;
+	    if (!result->completion_count) {
+		bu_free((void *)result->completion_candidates, "empty BREP plot index completions");
+		result->completion_candidates = NULL;
+	    }
+	}
+    }
+
+    rt_db_free_internal(&intern);
+    brep_completion_line_free(&line);
+}
+
 static void
 brep_show_help(struct ged *gedp)
 {
@@ -1649,6 +1945,17 @@ brep_tree_execute(void *context, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 	bu_cmd_validate_result_clear(&validation);
+    }
+
+	if (node->schema == &brep_plot_schema && argc > 1 &&
+	    gb->intern.idb_type == ID_BREP &&
+	    !(argc == 3 && (BU_STR_EQUAL(argv[2], HELPFLAG) ||
+		BU_STR_EQUAL(argv[2], PURPOSEFLAG))) &&
+	    !brep_plot_indices_valid((const struct rt_brep_internal *)gb->intern.idb_ptr,
+		argv[1], argc - 2, argv + 2)) {
+	bu_vls_printf(gb->gedp->ged_result_str,
+	    "BREP plot component index is out of range or malformed\n");
+	return BRLCAD_ERROR;
     }
 
     if (bu_cmd(_brep_cmds, argc, argv, 0, context, &ret) != BRLCAD_OK) {
@@ -1782,7 +2089,10 @@ static int
 ged_brep_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result)
 {
-    return ged_cmd_tree_validate(gedp, &brep_tree, input, cursor_pos, result);
+    int ret = ged_cmd_tree_validate(gedp, &brep_tree, input, cursor_pos, result);
+    if (ret == 0)
+	brep_plot_context_complete(gedp, input, cursor_pos, result);
+    return ret;
 }
 
 static int
