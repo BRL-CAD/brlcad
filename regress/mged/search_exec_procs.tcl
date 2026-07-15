@@ -39,13 +39,47 @@ namespace eval ::search_exec_test {
     }
 }
 
-interp alias {} search_exec_alias {} attr set r5 search_exec_alias \
+# Exercise MGED's public alias command in a headless session.  It must be
+# available without auto-loading Tkcon or Tk.
+
+# Alias to a Tcl proc copied into the search interpreter, with both a fixed
+# prefix argument and a dynamic argument supplied by search -exec.
+proc search_exec_alias_target {key path} {
+    attr set [file tail $path] $key {alias to copied proc}
+    return 1
+}
+alias search_exec_proc_alias search_exec_alias_target \
+    search_exec_proc_alias
+
+# Namespaced alias directly to a GED command.  The target is resolved by the
+# search interpreter's GED bridge and the fixed arguments must be preserved.
+alias ::search_exec_test::nested::ged_alias attr set r7 \
+    search_exec_namespaced_alias {namespaced alias to GED}
+
+# Global alias directly to a GED command, including Tcl-special characters in
+# its fixed argument list.
+alias search_exec_alias attr set r5 search_exec_alias \
     {alias value {with braces} \path}
+
+# Run inside the search interpreter and use the copied public helper to query
+# an alias which was replayed from MGED's main interpreter.
+proc search_exec_alias_query {path} {
+    set expected [list search_exec_alias_target search_exec_proc_alias]
+    set actual [alias search_exec_proc_alias]
+    if {$actual ne $expected} {
+	error "FAIL replayed alias: expected '$expected', got '$actual'"
+    }
+    attr set [file tail $path] search_exec_alias_query $actual
+    return 1
+}
 
 proc search_exec_verify {} {
     foreach {obj key expected} {
 	r1 search_exec_global {global default {with braces} \path}
 	r2 search_exec_namespace {namespace default {with braces} \path}
+	r6 search_exec_proc_alias {alias to copied proc}
+	r7 search_exec_namespaced_alias {namespaced alias to GED}
+	r8 search_exec_alias_query {search_exec_alias_target search_exec_proc_alias}
 	r5 search_exec_alias {alias value {with braces} \path}
     } {
 	set actual [attr get $obj $key]

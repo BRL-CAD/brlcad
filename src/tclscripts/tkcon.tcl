@@ -4033,32 +4033,9 @@ proc tkcon_clear {{pcnt 100}} {
     }
 }
 
-## alias - akin to the csh alias command
-## If called with no args, then it dumps out all current aliases
-## If called with one arg, returns the alias of that arg (or {} if none)
-# ARGS:	newcmd	- (optional) command to bind alias to
-# 	args	- command and args being aliased
-##
-proc alias {{newcmd {}} args} {
-    if {[string match {} $newcmd]} {
-	set res {}
-	foreach a [interp aliases] {
-	    lappend res [list $a -> [interp alias {} $a]]
-	}
-	return [join $res \n]
-    } elseif {![llength $args]} {
-	interp alias {} $newcmd
-    } else {
-	eval interp alias [list {} $newcmd {}] $args
-    }
-}
-
-## unalias - unaliases an alias'ed command
-# ARGS:	cmd	- command to unbind as an alias
-##
-proc unalias {cmd} {
-    interp alias {} $cmd {}
-}
+# Keep the command alias helpers independent of Tkcon.  In particular, MGED
+# needs them while processing .mgedrc in classic sessions where Tk is absent.
+source [file join [file dirname [info script]] alias.tcl]
 
 ## dump - outputs variables/procedure/widget info in source'able form.
 ## Accepts glob style pattern matching for the names

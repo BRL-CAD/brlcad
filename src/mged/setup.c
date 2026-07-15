@@ -525,6 +525,17 @@ mged_setup(struct mged_state *s)
 	bu_log("tclcad_init error:\n%s\n", bu_vls_addr(&tlog));
     }
     bu_vls_free(&tlog);
+
+    /* Make command aliases available before .mgedrc is evaluated, including
+     * in classic sessions where Tk is intentionally not initialized.  Do not
+     * rely on tkcon's auto-loaded alias proc here: sourcing tkcon requires Tk
+     * and consequently fails in classic/headless MGED. */
+    const char *alias_script = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "alias.tcl", NULL);
+    if (!alias_script || Tcl_EvalFile(s->interp, alias_script) != TCL_OK) {
+	bu_log("MGED alias initialization error:\n%s\n", Tcl_GetStringResult(s->interp));
+	Tcl_ResetResult(s->interp);
+    }
+
     Tcl_SetVar(s->interp, "mged_shutting_down", "0", TCL_GLOBAL_ONLY);
 
     mged_global_db_ctx.s = s;
