@@ -2184,7 +2184,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     .$id.t tag configure sel -background #fefe8e
     .$id.t tag configure result -foreground blue3
-    .$id.t tag configure oldcmd -foreground red3
+    .$id.t tag configure error_result -foreground red3
+    .$id.t tag configure oldcmd -foreground gray35
     .$id.t tag configure prompt -foreground red1
 
     #==============================================================================

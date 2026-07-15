@@ -22,6 +22,9 @@ Generates an image file containing the current display manager's rendered scene.
 `image_file` is required. The output format is inferred from the file extension; use `--format` to override.
 
 This command is also available as *screen_grab* (with an underscore). Both names invoke identical behavior.
+They share one native command schema, so option completion, incremental
+validation, generated help, and execution use the same syntax.  `--help` may
+be used without an active view or display manager.
 
 === Options
 
@@ -34,7 +37,7 @@ Specify the name of the display manager to capture. If omitted, the active displ
 *--format fmt*::
 Force the output image format (e.g. `png`, `jpg`). If not specified, the format is inferred from the file extension.
 
-*-h*::
+*-h*, *--help*::
 Print usage help.
 
 

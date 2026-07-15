@@ -29,10 +29,23 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
 extern "C" {
 #include "./ged_draw.h"
 }
+
+static const struct bu_cmd_operand loadview_schema_operands[] = {
+    BU_CMD_OPERAND("filename", BU_CMD_VALUE_FILE, 1, 1,
+	"View script file", "ged.file_path"),
+    BU_CMD_OPERAND_NULL
+};
+
+extern "C" const struct bu_cmd_schema ged_loadview_native_schema = {
+    "loadview", "Load a view script", NULL, loadview_schema_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 /**
  * here we define a minimal table of commands that are supported by the
@@ -176,7 +189,10 @@ _ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **
     char *eye_argv[5] = {NULL};
     bu_argv_from_string(eye_argv+1, 3, bu_vls_addr(&eye));
     eye_argv[0] = bu_strdup("eye");
-    ged_exec_eye(gedp, 4, (const char **)eye_argv);
+    /* ``eye`` is a registered GED command, not a generated static-core
+     * wrapper.  Dispatch through the public command registry so this path
+     * works for both plugin and statically linked builds. */
+    ged_exec(gedp, 4, (const char **)eye_argv);
     bu_free(eye_argv[0], "argv0");
     bu_vls_free(&eye);
 
@@ -305,6 +321,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     const char *editArgv[3];
 
     static const char *usage = "filename";
+    int operand_index;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -317,6 +334,13 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
+    }
+
+    operand_index = bu_cmd_schema_parse_complete(&ged_loadview_native_schema,
+	NULL, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
     }
 
     /* make sure the file exists */

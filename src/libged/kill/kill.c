@@ -27,10 +27,43 @@
 
 #include <string.h>
 
-#include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+
+struct kill_args {
+    int force;
+    int no_delete;
+    int quiet;
+};
+
+static const struct bu_cmd_option kill_options[] = {
+    BU_CMD_FLAG("f", NULL, struct kill_args, force,
+	"Permit deletion of protected global data"),
+    BU_CMD_FLAG("n", NULL, struct kill_args, no_delete,
+	"Report objects without deleting them"),
+    BU_CMD_FLAG("q", NULL, struct kill_args, quiet,
+	"Suppress lookup messages"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand kill_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Database objects to delete or report", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const char *kill_schema_exclusive_flags[] = {"f", "n", NULL};
+static const struct bu_cmd_constraint kill_schema_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(kill_schema_exclusive_flags, 0, 1,
+	"-f and -n are mutually exclusive"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_schema kill_cmd_schema = {
+    "kill", "Delete database objects", kill_options, kill_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, kill_schema_constraints)
+};
 
 
 int
@@ -38,11 +71,12 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
-    int c;
     int is_phony;
     int verbose = LOOKUP_NOISY;
-    int force = 0;
-    int nflag = 0;
+    struct kill_args args = {0, 0, 0};
+    int operand_index = 0;
+    int object_count = 0;
+    const char **objects = NULL;
     static const char *usage = "[-f|-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -59,44 +93,31 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "fnq")) != -1) {
-	switch (c) {
-	    case 'f':
-		force = 1;
-		break;
-	    case 'n':
-		nflag = 1;
-		break;
-	    case 'q':
-		verbose = LOOKUP_QUIET;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	}
-    }
-
-    if ((force + nflag) > 1) {
+	operand_index = bu_cmd_schema_parse_complete(&kill_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
+    object_count = argc - 1 - operand_index;
+    objects = argv + 1 + operand_index;
+    if (args.quiet) {
+	verbose = LOOKUP_QUIET;
+    }
 
-    if (nflag) {
+	if (args.no_delete) {
 	bu_vls_printf(gedp->ged_result_str, "{");
-	for (i = 1; i < argc; i++)
-	    bu_vls_printf(gedp->ged_result_str, "%s ", argv[i]);
+	for (i = 0; i < object_count; i++)
+	    bu_vls_printf(gedp->ged_result_str, "%s ", objects[i]);
 	bu_vls_printf(gedp->ged_result_str, "} {}");
 
 	return BRLCAD_OK;
     }
 
-    for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->dbip,  argv[i], verbose)) != RT_DIR_NULL) {
-	    if (!force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
+	for (i = 0; i < object_count; i++) {
+	if ((dp = db_lookup(gedp->dbip, objects[i], verbose)) != RT_DIR_NULL) {
+	    if (!args.force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
 		bu_vls_printf(gedp->ged_result_str, "You attempted to delete the _GLOBAL object.\n");
 		bu_vls_printf(gedp->ged_result_str, "\tIf you delete the \"_GLOBAL\" object you will be losing some important information\n");
 		bu_vls_printf(gedp->ged_result_str, "\tsuch as your preferred units and the title of the database.\n");
@@ -110,11 +131,11 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 	    if (is_phony)
 		continue;
 
-	    _dl_eraseAllNamesFromDisplay(gedp, argv[i], 0);
+	    _dl_eraseAllNamesFromDisplay(gedp, objects[i], 0);
 
 	    if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */
-		bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[i]);
+		bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", objects[i]);
 		return BRLCAD_ERROR;
 	    }
 	}
@@ -129,10 +150,10 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_KILL_COMMANDS(X, XID) \
-    X(kill, ged_kill_core, GED_CMD_DEFAULT) \
+    X(kill, ged_kill_core, GED_CMD_DEFAULT, &kill_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_KILL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_kill", 1, GED_KILL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_KILL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_kill", 1, GED_KILL_COMMANDS)
 
 /*
  * Local Variables:

@@ -44,7 +44,21 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "bu/cmdschema.h"
 #include "ged.h"
+
+
+static const struct bu_cmd_operand track_schema_operands[] = {
+    BU_CMD_OPERAND("basename", BU_CMD_VALUE_STRING, 1, 1,
+	"Track object basename", NULL),
+    BU_CMD_OPERAND("dimensions", BU_CMD_VALUE_NUMBER, 13, 13,
+	"Track geometry dimensions", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema track_cmd_schema = {
+    "track", "Create track geometry", NULL,
+    track_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 /*
  *
@@ -55,6 +69,7 @@ int
 ged_track_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "basename rX1 rX2 rZ rR dX dZ dR iX iZ iR minX minY th";
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -69,7 +84,10 @@ ged_track_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 15) {
+    /* ged_track2 receives argv including the command name, so validate the
+     * positional suffix without shifting its legacy calling convention. */
+    if (bu_cmd_schema_parse_complete(&track_cmd_schema, &parse_dummy,
+		gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
@@ -83,10 +101,10 @@ ged_track_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_TRACK_COMMANDS(X, XID) \
-    X(track, ged_track_core, GED_CMD_DEFAULT) \
+    X(track, ged_track_core, GED_CMD_DEFAULT, &track_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_TRACK_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_track", 1, GED_TRACK_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_TRACK_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_track", 1, GED_TRACK_COMMANDS)
 
 /*
  * Local Variables:

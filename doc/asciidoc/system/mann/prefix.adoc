@@ -10,7 +10,7 @@ prefix - Changes the name of all the _objects_ listed by adding the specified __
 
 [source]
 ----
-prefix {new_prefix objects>}
+prefix new_prefix object [object ...]
 ----
 
 

@@ -29,6 +29,8 @@
 #include <unordered_map>
 
 #include "vmath.h"
+#include "bu/cmdschema.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "bg/trimesh.h"
 #include "rt/db5.h"
@@ -42,9 +44,93 @@
 #include "ged/objects.h"
 #include "./ged_bot.h"
 
+struct bot_decimate_subcommand_args {
+    int print_help;
+    double feature_size;
+    fastf_t max_chord_error;
+    fastf_t max_normal_error;
+    fastf_t min_edge_length;
+    double merge_tol;
+};
+
+static int
+bot_decimate_subcommand_method_count(const struct bot_decimate_subcommand_args *args)
+{
+    int old_method = (args->max_chord_error > 0.0 ||
+	args->max_normal_error > 0.0 || args->min_edge_length > 0.0) ? 1 : 0;
+    int simple_method = (args->merge_tol > -FLT_MAX) ? 1 : 0;
+    int gct_method = (NEAR_EQUAL(args->feature_size, 1.0, VUNITIZE_TOL)) ? 0 : 1;
+
+    return old_method + simple_method + gct_method;
+}
+
+static int
+bot_decimate_subcommand_schema_validate(const struct bu_cmd_schema *schema,
+	size_t argc, const char **argv, size_t cursor_arg,
+	struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    struct bot_decimate_subcommand_args args = {0, 1.0, -1.0, -1.0, -1.0, -FLT_MAX};
+    std::vector<const char *> parse_argv(argv, argv + argc);
+    int help;
+    int ret;
+
+    help = bu_cmd_schema_option_present(schema, argc, argv, "help");
+    flat.validation.custom_validate = NULL;
+    if (help)
+	flat.operands = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state != BU_CMD_VALIDATE_VALID || help)
+	return ret;
+
+    if (bu_cmd_schema_parse(schema, &args, NULL, (int)argc,
+		parse_argv.data()) < 0)
+	return BRLCAD_ERROR;
+    if (bot_decimate_subcommand_method_count(&args) > 1) {
+	bu_cmd_validate_result_clear(result);
+	result->state = BU_CMD_VALIDATE_INVALID;
+	result->token_start = cursor_arg < argc ? cursor_arg : argc;
+	result->token_end = result->token_start;
+	result->expected = BU_CMD_EXPECT_OPTION;
+	result->completion_type = BU_CMD_VALUE_NUMBER;
+	result->hint = "select one decimation method";
+    }
+
+    return 0;
+}
+
+static const struct bu_cmd_option bot_decimate_subcommand_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_decimate_subcommand_args, print_help,
+	"Print command help"),
+    BU_CMD_NUMBER("c", "max-cord-error", struct bot_decimate_subcommand_args,
+	max_chord_error, "error", "Maximum chord error length"),
+    BU_CMD_NUMBER("n", "max-normal-error", struct bot_decimate_subcommand_args,
+	max_normal_error, "error", "Maximum normal error"),
+    BU_CMD_NUMBER("e", "min-edge-length", struct bot_decimate_subcommand_args,
+	min_edge_length, "length", "Minimum edge length"),
+    BU_CMD_NUMBER("f", "feature-size", struct bot_decimate_subcommand_args,
+	feature_size, "size", "Feature size for the GCT decimator"),
+    BU_CMD_NUMBER("t", "merge-tol", struct bot_decimate_subcommand_args,
+	merge_tol, "tolerance", "Tolerance for merging vertices"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_decimate_subcommand_operands[] = {
+    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Input BoT object", "ged.db_object"),
+    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+	"Optional output BoT name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_bot_decimate_subcommand_schema = {
+    "decimate", "Reduce BoT triangle count", bot_decimate_subcommand_options,
+    bot_decimate_subcommand_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(bot_decimate_subcommand_schema_validate, NULL)
+};
+
 static void
-decimate_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
-    char *option_help = bu_opt_describe(d, NULL);
+decimate_usage(struct bu_vls *str, const char *cmd)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_bot_decimate_subcommand_schema);
     bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
     if (option_help) {
 	bu_vls_printf(str, "Options:\n%s\n", option_help);
@@ -69,55 +155,42 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	return BRLCAD_OK;
     }
 
-    int print_help = 0;
-    double feature_size = 1.0;
-    fastf_t max_chord_error = -1.0;
-    fastf_t max_normal_error = -1.0;
-    fastf_t min_edge_length = -1.0;
-    double merge_tol = -FLT_MAX;
-
-    struct bu_opt_desc d[8];
-    BU_OPT(d[0], "h", "help",              "",            NULL, &print_help,       "Print help");
-    BU_OPT(d[1], "?", "",                  "",            NULL, &print_help,       "");
-    BU_OPT(d[2], "c", "max-cord-error",   "#", &bu_opt_fastf_t, &max_chord_error,  "Maximum chord error length");
-    BU_OPT(d[3], "n", "max-normal-error", "#", &bu_opt_fastf_t, &max_normal_error, "Maximum normal error length");
-    BU_OPT(d[4], "e", "min-edge-length",  "#", &bu_opt_fastf_t, &min_edge_length,  "Minimum edge length");
-    BU_OPT(d[5], "f", "feature-size",     "#", &bu_opt_fastf_t, &feature_size,     "Feature size");
-    BU_OPT(d[6], "t", "merge-tol",        "#", &bu_opt_fastf_t, &merge_tol,        "Tolerance for merging vertices");
-    BU_OPT_NULL(d[7]);
+    struct bot_decimate_subcommand_args args = {0, 1.0, -1.0, -1.0, -1.0, -FLT_MAX};
+    int operand_count;
+    int operand_index;
+    const char **operands;
 
     // We know we're the decimate command - start processing args
     argc--; argv++;
 
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
-
-    if (print_help || !argc) {
-	decimate_usage(gedp->ged_result_str, "bot decimate", d);
+	if (!argc) {
+	decimate_usage(gedp->ged_result_str, "bot decimate");
 	return GED_HELP;
     }
 
+    operand_index = bu_cmd_schema_parse_complete(&ged_bot_decimate_subcommand_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0)
+	return BRLCAD_ERROR;
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    if (args.print_help) {
+	decimate_usage(gedp->ged_result_str, "bot decimate");
+	return GED_HELP;
+	}
+
     /* Sanity checks */
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    int old_method = (max_chord_error > 0 || max_normal_error > 0 || min_edge_length > 0) ? 1 : 0;
-    int simple_method = (merge_tol > 0) ? 1 : 0;
-    int gct_method = (NEAR_EQUAL(feature_size, 1.0, VUNITIZE_TOL)) ? 0 : 1;
-    int mcnt = old_method + simple_method + gct_method;
-    if (mcnt > 1) {
-	decimate_usage(gedp->ged_result_str, "bot decimate", d);
-	return BRLCAD_ERROR;
-    }
-
 
     // Setup
-    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+    if (_bot_obj_setup(gb, operands[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
     const char* input_bot_name = gb->dp->d_namep;
     struct bu_vls output_bot_name = BU_VLS_INIT_ZERO;
-    if (argc > 1) {
-	bu_vls_sprintf(&output_bot_name, "%s", argv[1]);
+    if (operand_count > 1) {
+	bu_vls_sprintf(&output_bot_name, "%s", operands[1]);
     } else {
 	bu_vls_sprintf(&output_bot_name, "%s-out_decimate.bot", input_bot_name);
     }
@@ -129,16 +202,18 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 
 
     /* Old method */
-    if (max_chord_error > 0 || max_normal_error > 0 || min_edge_length > 0) {
+	if (args.max_chord_error > 0 || args.max_normal_error > 0 ||
+	args.min_edge_length > 0) {
 	/* convert maximum error, edge length, and feature size to mm */
-	if (max_chord_error > 0.0)
-	    max_chord_error = max_chord_error * gedp->dbip->dbi_local2base;
+	if (args.max_chord_error > 0.0)
+	    args.max_chord_error = args.max_chord_error * gedp->dbip->dbi_local2base;
 
-	if (min_edge_length > 0.0)
-	    min_edge_length = min_edge_length * gedp->dbip->dbi_local2base;
+	if (args.min_edge_length > 0.0)
+	    args.min_edge_length = args.min_edge_length * gedp->dbip->dbi_local2base;
 
 	/* use the old decimation routine */
-	if (rt_bot_decimate(input_bot, max_chord_error, max_normal_error, min_edge_length) < 0) {
+	if (rt_bot_decimate(input_bot, args.max_chord_error, args.max_normal_error,
+		args.min_edge_length) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "rt_bot_decimate error\n");
 	    return BRLCAD_ERROR;
 	}
@@ -148,25 +223,25 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	    bu_vls_free(&output_bot_name);
 	    return BRLCAD_ERROR;
 	}
-	bu_vls_free(&output_bot_name);
-
 	if (rt_db_put_internal(dp, dbip, gb->intern) < 0) {
 	    bu_log("Failed to write %s to database\n", bu_vls_cstr(&output_bot_name));
+	    bu_vls_free(&output_bot_name);
 	    return BRLCAD_ERROR;
 	}
+	bu_vls_free(&output_bot_name);
 
 	return BRLCAD_OK;
     }
 
 
-    if (merge_tol > -FLT_MAX) {
+    if (args.merge_tol > -FLT_MAX) {
 
-	bu_log("INPUT BoT has %zu vertices and %zu faces, merge_tol = %f\n", input_bot->num_vertices, input_bot->num_faces, merge_tol);
+	bu_log("INPUT BoT has %zu vertices and %zu faces, merge_tol = %f\n", input_bot->num_vertices, input_bot->num_faces, args.merge_tol);
 
 	int *ofaces = NULL;
 	int n_ofaces = 0;
 	struct bg_trimesh_decimation_settings s= BG_TRIMESH_DECIMATION_SETTINGS_INIT;
-	s.feature_size = merge_tol;
+	s.feature_size = args.merge_tol;
 	int ret = bg_trimesh_decimate(&ofaces, &n_ofaces, input_bot->faces, (int)input_bot->num_faces, (point_t *)input_bot->vertices, (int)input_bot->num_vertices, &s);
 	if (bu_vls_strlen(&s.msgs)) {
 	    bu_log("%s", bu_vls_cstr(&s.msgs));
@@ -227,8 +302,6 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	    bu_vls_free(&output_bot_name);
 	    return BRLCAD_ERROR;
 	}
-	bu_vls_free(&output_bot_name);
-
 	if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	    bu_free(gcfaces, "gcfaces");
 	    bu_free(opnts , "opnts");
@@ -237,11 +310,12 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	    bu_vls_free(&output_bot_name);
 	    return BRLCAD_ERROR;
 	}
+	bu_vls_free(&output_bot_name);
 
 	return BRLCAD_OK;
     }
 
-    bu_log("INPUT BoT has %zu vertices and %zu faces, feature_size = %f\n", input_bot->num_vertices, input_bot->num_faces, feature_size);
+    bu_log("INPUT BoT has %zu vertices and %zu faces, feature_size = %f\n", input_bot->num_vertices, input_bot->num_faces, args.feature_size);
 
     struct directory *dp = db_diradd(dbip, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type);
     if (dp == RT_DIR_NULL) {
@@ -260,8 +334,8 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 
     // Decimate with GCT
     size_t edges_removed;
-    feature_size *= gedp->dbip->dbi_local2base;
-    edges_removed = rt_bot_decimate_gct(obot, feature_size);
+    args.feature_size *= gedp->dbip->dbi_local2base;
+    edges_removed = rt_bot_decimate_gct(obot, args.feature_size);
     bu_log("[GCT] OUTPUT BoT has %zu vertices and %zu faces (%zu edges removed)\n", obot->num_vertices, obot->num_faces, edges_removed);
 
     // Write decimation to disk
@@ -282,4 +356,3 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

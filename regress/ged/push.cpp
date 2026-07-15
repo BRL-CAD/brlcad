@@ -34,13 +34,61 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "ged.h"
 
+
+struct regress_push_args {
+    int print_help;
+    int xpush;
+    int to_regions;
+    int to_solids;
+    int max_depth;
+    int verbosity;
+    int local_changes_only;
+    int dry_run;
+};
+
+static const struct bu_cmd_option regress_push_options[] = {
+    BU_CMD_FLAG("h", "help", struct regress_push_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_COUNTING_FLAG("v", "verbosity", struct regress_push_args, verbosity,
+	"Increase output verbosity"),
+    BU_CMD_FLAG("f", "force", struct regress_push_args, xpush,
+	"Create new objects if needed to push matrices (xpush)"),
+    BU_CMD_ALIAS_SHORT("x", "force", 0),
+    BU_CMD_ALIAS_LONG("xpush", "force", 0),
+    BU_CMD_FLAG("r", "regions", struct regress_push_args, to_regions,
+	"Halt push at regions (matrix will be above region reference)"),
+    BU_CMD_FLAG("s", "solids", struct regress_push_args, to_solids,
+	"Halt push at solids (matrix will be above solid reference)"),
+    BU_CMD_INTEGER("d", "max-depth", struct regress_push_args, max_depth, "depth",
+	"Halt at depth from tree root (matrix will be above item layers deep)"),
+    BU_CMD_FLAG("L", "local", struct regress_push_args, local_changes_only,
+	"Ensure push operations do not impact geometry outside the specified trees"),
+    BU_CMD_FLAG("D", "dry-run", struct regress_push_args, dry_run,
+	"Calculate the changes but do not apply them"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand regress_push_operands[] = {
+    BU_CMD_OPERAND("control.g", BU_CMD_VALUE_FILE, 1, 1, "Control database", NULL),
+    BU_CMD_OPERAND("working.g", BU_CMD_VALUE_FILE, 1, 1, "Working database", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema regress_push_schema = {
+    "regress_push", "Compare npush results against a control database",
+    regress_push_options, regress_push_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-regress_push_usage(struct bu_vls *str, struct bu_opt_desc *d) {
-    char *option_help = bu_opt_describe(d, NULL);
+regress_push_usage(struct bu_vls *str)
+{
+    char *option_help = bu_cmd_schema_describe(&regress_push_schema);
     bu_vls_sprintf(str, "Usage: regress_push [options] control.g working.g\n");
     bu_vls_printf(str, "\nRuns the specified push configuration on a series of pre-defined objects in the working.g file, then compares the results to those from the control.g file.\n  \n");
     if (option_help) {
@@ -53,26 +101,7 @@ int
 main(int argc, const char **argv)
 {
 
-    int print_help = 0;
-    int xpush = 0;
-    int to_regions = 0;
-    int to_solids = 0;
-    int max_depth = 0;
-    int verbosity = 0;
-    int local_changes_only = 0;
-    int dry_run = 0;
-    struct bu_opt_desc d[11];
-    BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,  "Print help and exit");
-    BU_OPT(d[1], "?", "",          "",   NULL,         &print_help,  "");
-    BU_OPT(d[2], "v", "verbosity",  "",  &bu_opt_incr_long, &verbosity,     "Increase output verbosity (multiple specifications of -v increase verbosity)");
-    BU_OPT(d[3], "f", "force",     "",   NULL,         &xpush,       "Create new objects if needed to push matrices (xpush)");
-    BU_OPT(d[4], "x", "xpush",     "",   NULL,         &xpush,       "");
-    BU_OPT(d[5], "r", "regions",   "",   NULL,         &to_regions,  "Halt push at regions (matrix will be above region reference)");
-    BU_OPT(d[6], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
-    BU_OPT(d[7], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
-    BU_OPT(d[8], "L", "local", "",       NULL,  &local_changes_only,   "Ensure push operations do not impact geometry outside the specified trees.");
-    BU_OPT(d[9], "D", "dry-run", "",       NULL,  &dry_run,   "Calculate the changes but do not apply them.");
-    BU_OPT_NULL(d[10]);
+    struct regress_push_args args = {};
 
     bu_setprogname(argv[0]);
 
@@ -84,14 +113,21 @@ main(int argc, const char **argv)
 
     /* parse standard options */
     argc--;argv++;
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    int opt_ret = bu_cmd_schema_parse_complete(&regress_push_schema, &args,
+	NULL, argc, argv);
 
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
+    /* The interspersed parser compacts options first and leaves operands as
+     * one contiguous suffix. */
+    if (opt_ret >= 0) {
+	argc -= opt_ret;
+	argv += opt_ret;
+    } else {
+	argc = 0;
+    }
 
-    if (argc != 2 || print_help) {
+    if (argc != 2 || args.print_help) {
 	struct bu_vls push_help = BU_VLS_INIT_ZERO;
-	regress_push_usage(&push_help, d);
+	regress_push_usage(&push_help);
 	bu_log("%s", bu_vls_cstr(&push_help));
 	bu_vls_free(&push_help);
 	return -1;
@@ -172,7 +208,7 @@ main(int argc, const char **argv)
     // difference, since both trees encode identical geometry with distinct
     // matrix arrangements.
     std::set<size_t> vol_only_check;
-    if (!xpush && !to_regions) {
+    if (!args.xpush && !args.to_regions) {
 	vol_only_check.insert(17);
     }
 
@@ -260,7 +296,7 @@ main(int argc, const char **argv)
 	// without a depth limit, and without a region halt.  Both a depth
 	// limit and a region halt constrain how far changes propagate, so
 	// external objects are not guaranteed to see changes.
-	if (!local_changes_only && xpush && !max_depth && !to_regions) {
+	if (!args.local_changes_only && args.xpush && !args.max_depth && !args.to_regions) {
 	    if (!dvol) {
 		std::cout << "ERROR: expected volume change not found\n";
 		have_diff_vol = true;

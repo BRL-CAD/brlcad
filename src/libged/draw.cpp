@@ -35,8 +35,8 @@
 #include "bsocket.h"
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/hash.h"
-#include "bu/opt.h"
 #include "bu/sort.h"
 #include "bu/str.h"
 #include "bv/defines.h"
@@ -807,7 +807,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
 	int region_id = -1;
 	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	if (region_id_val) {
-	    bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+	    (void)bu_cmd_integer_from_str(&region_id, region_id_val);
 	} else if (dp->d_flags & RT_DIR_REGION) {
 	    // If we have a region flag but no region_id, for color table
 	    // purposes treat the region_id as 0
@@ -842,7 +842,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
 	color_val = bu_avs_get(&c_avs, "rgb");
     }
     if (color_val) {
-	bu_opt_color(NULL, 1, &color_val, (void *)&dd->c);
+	(void)bu_cmd_color_from_argv(&dd->c, 1, &color_val);
     }
 
     // Check for an inherit flag
@@ -1048,4 +1048,3 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -54,11 +54,13 @@ ged_isize_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_ISIZE_COMMANDS(X, XID) \
-    X(isize, ged_isize_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(isize, "isize", "Report inverse view size", "operands", BU_CMD_VALUE_RAW, 0, 0, "No operands");
 
-GED_DECLARE_COMMAND_SET(GED_ISIZE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_isize", 1, GED_ISIZE_COMMANDS)
+#define GED_ISIZE_COMMANDS(X, XID) \
+    X(isize, ged_isize_core, GED_CMD_DEFAULT, &isize_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ISIZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_isize", 1, GED_ISIZE_COMMANDS)
 
 /*
  * Local Variables:

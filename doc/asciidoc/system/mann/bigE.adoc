@@ -22,7 +22,9 @@ The *E* command draws one or more objects using Boolean evaluation. Unlike *draw
 === Options
 
 *-C r/g/b*::
-Override the display color for all drawn objects using the specified RGB values (each 0–255), separated by `/`.
+Override the display color for all drawn objects with 8-bit RGB values.
+Specify the channels as `r/g/b`, `r,g,b`, `r;g;b`, or as three separate
+arguments.  Each channel must be in the range 0–255.
 
 *-s*::
 Enable shading on the evaluated result display.

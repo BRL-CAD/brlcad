@@ -49,9 +49,12 @@ Specifies descending (z-a) sort order.
 *-2*
 *-3*
 *-4*
-*-5*
-*-6*::
-Specifies sort column 1, 2, 3, 4, 5, or 6 (referring to columns listed in the description of this command); 1 is default. If 0 is specified, the regions are listed in the order in which they are stored, but this will be overridden if *-d*, *-m*, or *-s* options are used, because of the sorting which needs to be done when either of those options is used.
+*-5*::
+Selects the sort key. *-1* through *-5* sort by region ID, material ID, LOS,
+air code, and region name respectively; *-1* is the default. *-0* keeps the
+stored order. The duplicate-filtering options *-d*, *-m*, and *-s* may still
+sort records as needed to detect matching codes. The displayed region-parent
+column is not a sort-key option.
 
 
 *-f FileName*::

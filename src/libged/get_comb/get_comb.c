@@ -29,7 +29,19 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "../ged_private.h"
+
+static const struct bu_cmd_operand get_comb_operands[] = {
+    BU_CMD_OPERAND("combination", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Combination to query or initialize", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema get_comb_cmd_schema = {
+    "get_comb", "Return editable combination data", NULL, get_comb_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 static void
@@ -67,6 +79,9 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     size_t node_count;
     size_t actual_count;
+    int parse_dummy = 0;
+    int operand_index = 0;
+    const char *comb_name = NULL;
     static const char *usage = "comb";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -82,16 +97,19 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 2) {
+	operand_index = bu_cmd_schema_parse_complete(&get_comb_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    comb_name = argv[1 + operand_index];
 
-    dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
 
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", comb_name);
 	    return BRLCAD_ERROR;
 	}
 
@@ -177,7 +195,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
     } else {
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	bu_vls_printf(gedp->ged_result_str, "%s {} {} No {} Yes %d %d %d %d",
-		      argv[1],
+		      comb_name,
 		      wdbp->wdb_item_default,
 		      wdbp->wdb_air_default,
 		      wdbp->wdb_mat_default,
@@ -190,10 +208,10 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GET_COMB_COMMANDS(X, XID) \
-    X(get_comb, ged_get_comb_core, GED_CMD_DEFAULT) \
+    X(get_comb, ged_get_comb_core, GED_CMD_DEFAULT, &get_comb_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GET_COMB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_get_comb", 1, GED_GET_COMB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GET_COMB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_get_comb", 1, GED_GET_COMB_COMMANDS)
 
 /*
  * Local Variables:

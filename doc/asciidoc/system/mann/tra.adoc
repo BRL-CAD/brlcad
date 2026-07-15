@@ -10,14 +10,15 @@ tra - Translates the view or an object.
 
 [source]
 ----
-tra {dx} {dy} {dz}
+tra [-m|-v] {dx} {dy} {dz}
+tra [-m|-v] "dx dy dz"
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Translates the view or an object. Exactly what is done is determined by MGEDs state as well as the state of the current display manager. The parameters _dx, dy,_ and _dz_ are in local units.
+Translates the view or an object. Exactly what is done is determined by MGEDs state as well as the state of the current display manager. The parameters _dx, dy,_ and _dz_ are finite local-unit values supplied either separately or in one quoted three-value vector. The optional *-m* and *-v* flags select model or view coordinates, respectively, and cannot be combined.
 
 
 [[examples]]

@@ -27,24 +27,24 @@
 
 #include <stdlib.h>
 
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "bu/process.h"
 #include "../ged_private.h"
 
 
+static char *process_native_help(void);
+
+
 static void
 _process_show_help(struct ged *gedp)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
+    char *help = process_native_help();
 
-    bu_vls_sprintf(&str, "Usage: process [subcommand]\n\n");
-    bu_vls_printf(&str, "Subcommands:\n\n");
-    bu_vls_printf(&str, "  list          - List all currently running subprocesses.\n");
-    bu_vls_printf(&str, "  pabort <pid>  - Abort the specified subprocess.\n\n");
-    bu_vls_printf(&str, "  gabort <glob> - Abort all subprocesses whose command matches the glob expression.\n\n");
-
-    bu_vls_vlscat(gedp->ged_result_str, &str);
-    bu_vls_free(&str);
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "process native tree help");
+    }
 }
 
 
@@ -115,7 +115,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 	int ppid = bu_process_pid(rrp->p);
 	for (int j = 0; j < argc; j++) {
 	    int pid;
-	    if (bu_opt_int(NULL, 1, (const char **)&argv[j], (void *)&pid) < 0) {
+	    if (!bu_cmd_integer_from_str(&pid, argv[j])) {
 		bu_vls_printf(gedp->ged_result_str, "PID argument %s is not a valid process id.", argv[j]);
 		return BRLCAD_ERROR;
 	    }
@@ -161,9 +161,111 @@ _ged_process_gabort(struct ged *gedp, int argc, const char **argv)
 }
 
 
+static const struct bu_cmd_operand process_pid_operands[] = {
+    BU_CMD_OPERAND("process_ids", BU_CMD_VALUE_INTEGER, 1, BU_CMD_COUNT_UNLIMITED,
+	"Process identifiers to abort", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand process_glob_operands[] = {
+    BU_CMD_OPERAND("command_patterns", BU_CMD_VALUE_STRING, 1, BU_CMD_COUNT_UNLIMITED,
+	"Command-name glob patterns", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema process_root_schema = {
+    "process", "Manage GED subprocesses", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema process_list_schema = {
+    "list", "List running GED subprocesses", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema process_pabort_schema = {
+    "pabort", "Abort subprocesses by PID", NULL, process_pid_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema process_gabort_schema = {
+    "gabort", "Abort subprocesses by command glob", NULL, process_glob_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static int
+process_tree_parse(struct ged *gedp, const struct bu_cmd_schema *schema,
+	int argc, const char *argv[])
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int ret = BRLCAD_ERROR;
+
+    if (bu_cmd_schema_parse_complete(schema, NULL, &msg, argc - 1, argv + 1) >= 0)
+	ret = BRLCAD_OK;
+    else if (bu_vls_strlen(&msg))
+	bu_vls_vlscat(gedp->ged_result_str, &msg);
+    else
+	bu_vls_printf(gedp->ged_result_str, "Invalid %s command arguments.", schema->name);
+    bu_vls_free(&msg);
+    return ret;
+}
+
+
+static int
+process_tree_list(void *data, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)data;
+
+    if (process_tree_parse(gedp, &process_list_schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    return _ged_process_list(gedp);
+}
+
+
+static int
+process_tree_pabort(void *data, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)data;
+
+    if (process_tree_parse(gedp, &process_pabort_schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    return _ged_process_pabort(gedp, argc - 1, argv + 1);
+}
+
+
+static int
+process_tree_gabort(void *data, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)data;
+
+    if (process_tree_parse(gedp, &process_gabort_schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    return _ged_process_gabort(gedp, argc - 1, argv + 1);
+}
+
+
+static const struct bu_cmd_tree_node process_subcommands[] = {
+    BU_CMD_TREE_NODE(&process_list_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, process_tree_list),
+    BU_CMD_TREE_NODE(&process_pabort_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, process_tree_pabort),
+    BU_CMD_TREE_NODE(&process_gabort_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, process_tree_gabort),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree ged_process_tree = {
+    &process_root_schema, process_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+
+static char *
+process_native_help(void)
+{
+    return bu_cmd_tree_describe(&ged_process_tree);
+}
+
+
 int
 ged_process_core(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret = BRLCAD_ERROR;
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -175,41 +277,56 @@ ged_process_core(struct ged *gedp, int argc, const char *argv[])
 	_process_show_help(gedp);
 	return BRLCAD_ERROR;
     }
+    if (bu_cmd_tree_dispatch(&ged_process_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+	return ret;
 
-    if (argc == 2 && !BU_STR_EQUAL(argv[1], "list")) {
-	_process_show_help(gedp);
-	return BRLCAD_ERROR;
-    }
-
-
-    if (argc == 3 && (!BU_STR_EQUAL(argv[1], "gabort") && !BU_STR_EQUAL(argv[1], "pabort"))) {
-	_process_show_help(gedp);
-	return BRLCAD_ERROR;
-    }
-
-    if (argc == 2) {
-	return _ged_process_list(gedp);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "gabort")) {
-	return _ged_process_gabort(gedp, argc - 2, (const char **)&argv[2]);
-    }
-
-    if (BU_STR_EQUAL(argv[1], "pabort")) {
-	return _ged_process_pabort(gedp, argc - 2, (const char **)&argv[2]);
-    }
-
+    _process_show_help(gedp);
     return BRLCAD_ERROR;
 }
 
 
 #include "../include/plugin.h"
 
-#define GED_PROCESS_COMMANDS(X, XID) \
-    X(process, ged_process_core, GED_CMD_DEFAULT) \
+static int
+ged_process_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &ged_process_tree, input, cursor_pos, result);
+}
 
-GED_DECLARE_COMMAND_SET(GED_PROCESS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_process", 1, GED_PROCESS_COMMANDS)
+
+static int
+ged_process_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &ged_process_tree, input, analysis);
+}
+
+
+static char *
+ged_process_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&ged_process_tree);
+}
+
+
+static int
+ged_process_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&ged_process_tree, msgs);
+}
+
+
+static const struct ged_cmd_grammar ged_process_grammar = {
+    "process", "Manage GED subprocesses", ged_process_grammar_validate,
+    ged_process_grammar_analyze, ged_process_grammar_json, ged_process_grammar_lint
+};
+
+#define GED_PROCESS_COMMANDS(X, XID) \
+    X(process, ged_process_core, GED_CMD_DEFAULT, &ged_process_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_PROCESS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_process", 1, GED_PROCESS_COMMANDS)
 
 /*
  * Local Variables:

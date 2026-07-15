@@ -32,7 +32,6 @@
 #include <vector>
 
 extern "C" {
-#include "bu/opt.h"
 #include "ged.h"
 #include "rt/db_fullpath.h"
 #include "rt/directory.h"
@@ -44,6 +43,7 @@ extern "C" {
 
 #include "../alphanum.h"
 #include "../ged_private.h"
+#include "who_solids.h"
 
 #define LAST_SOLID(_sp) DB_FULL_PATH_CUR_DIR(&(_sp)->s_fullpath)
 
@@ -91,8 +91,7 @@ who_solids_level(const char *arg, int *lvl)
     if (!arg || !lvl)
 	return 0;
 
-    const char *av[1] = {arg};
-    if (bu_opt_int(NULL, 1, av, (void *)lvl) != 1)
+    if (!bu_cmd_integer_from_str(lvl, arg))
 	return 0;
 
     if (*lvl > 3)
@@ -349,17 +348,9 @@ who_solids_print_display(struct bu_list *hdlp, struct db_i *dbip, int lvl, struc
 static int
 who_solids_impl(struct ged *gedp, int argc, const char *argv[], int subcmd_usage)
 {
-    int print_help = 0;
     int lvl = 0;
-    int mode = -1;
-    struct bu_vls cvls = BU_VLS_INIT_ZERO;
+    struct ged_solid_report_args args = {0, BU_VLS_INIT_ZERO, -1};
     const char *cmd_name = argv[0];
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "h", "help", "",     NULL,        &print_help, "Print help and exit");
-    BU_OPT(d[1], "?", "",     "",     NULL,        &print_help, "");
-    BU_OPT(d[2], "V", "view", "name", &bu_opt_vls, &cvls,       "Specify view to report");
-    BU_OPT(d[3], "m", "mode", "#",    &bu_opt_int, &mode,       "Only report objects drawn in the specified drawing mode");
-    BU_OPT_NULL(d[4]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -370,7 +361,7 @@ who_solids_impl(struct ged *gedp, int argc, const char *argv[], int subcmd_usage
     if (subcmd_usage) {
 	if (argc < 2) {
 	    who_solids_usage(gedp, cmd_name, 1);
-	    bu_vls_free(&cvls);
+	    bu_vls_free(&args.view);
 	    return BRLCAD_ERROR;
 	}
 	argc--;
@@ -383,55 +374,59 @@ who_solids_impl(struct ged *gedp, int argc, const char *argv[], int subcmd_usage
 	argv++;
     }
 
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    const struct bu_cmd_schema *schema = subcmd_usage ? &ged_who_solids_schema :
+	ged_solid_report_native_schema();
+    int opt_ret = bu_cmd_schema_parse(schema, &args,
+	gedp->ged_result_str, argc, argv);
     if (opt_ret < 0) {
 	who_solids_usage(gedp, cmd_name, subcmd_usage);
-	bu_vls_free(&cvls);
+	bu_vls_free(&args.view);
 	return BRLCAD_ERROR;
     }
 
-    argc = opt_ret;
+    argc -= opt_ret;
+    argv += opt_ret;
 
-    if (print_help) {
+    if (args.print_help) {
 	who_solids_usage(gedp, subcmd_usage ? "who" : cmd_name, subcmd_usage);
-	bu_vls_free(&cvls);
+	bu_vls_free(&args.view);
 	return BRLCAD_OK;
     }
 
     if (argc > 1 || (argc == 1 && !who_solids_level(argv[0], &lvl))) {
 	who_solids_usage(gedp, subcmd_usage ? "who" : cmd_name, subcmd_usage);
-	bu_vls_free(&cvls);
+	bu_vls_free(&args.view);
 	return BRLCAD_ERROR;
     }
 
     if (!gedp->new_cmd_forms) {
-	if (bu_vls_strlen(&cvls) || mode != -1) {
+	if (bu_vls_strlen(&args.view) || args.mode != -1) {
 	    who_solids_usage(gedp, subcmd_usage ? "who" : cmd_name, subcmd_usage);
-	    bu_vls_free(&cvls);
+	    bu_vls_free(&args.view);
 	    return BRLCAD_ERROR;
 	}
 	who_solids_print_display(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, lvl, gedp->ged_result_str);
-	bu_vls_free(&cvls);
+	bu_vls_free(&args.view);
 	return BRLCAD_OK;
     }
 
     struct bview *v = gedp->ged_gvp;
-    if (bu_vls_strlen(&cvls)) {
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+    if (bu_vls_strlen(&args.view)) {
+	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&args.view));
 	if (!v) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&args.view));
+	    bu_vls_free(&args.view);
 	    return BRLCAD_ERROR;
 	}
     }
-    bu_vls_free(&cvls);
+    bu_vls_free(&args.view);
 
     if (!v) {
 	bu_vls_printf(gedp->ged_result_str, "No view specified and no current view defined in GED");
 	return BRLCAD_ERROR;
     }
 
-    who_solids_print_view(v, gedp->dbip, mode, lvl, gedp->ged_result_str);
+    who_solids_print_view(v, gedp->dbip, args.mode, lvl, gedp->ged_result_str);
     return BRLCAD_OK;
 }
 

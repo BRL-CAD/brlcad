@@ -104,9 +104,69 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <float.h>
+#include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "ged.h"
+
+
+struct annotate_args {
+    const char *name;
+    fastf_t point[3];
+};
+
+static const struct bu_cmd_arg_shape annotate_point_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_TOKEN_SEQUENCE, 3, 3, "XYZ components");
+
+static int
+annotate_point_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
+{
+    fastf_t *point = (fastf_t *)storage;
+
+    if (argc != 3) {
+	if (msg)
+	    bu_vls_printf(msg, "annotation point requires X Y Z components");
+	return -1;
+    }
+    for (size_t i = 0; i < argc; i++) {
+	char *end = NULL;
+	double value;
+
+	errno = 0;
+	value = strtod(argv[i], &end);
+	if (errno == ERANGE || !end || *end || !isfinite(value) ||
+	    (sizeof(fastf_t) == sizeof(float) && (value > FLT_MAX || value < -FLT_MAX))) {
+	    if (msg)
+		bu_vls_printf(msg, "invalid annotation point component: %s", argv[i]);
+	    return -1;
+	}
+	if (point)
+	    point[i] = (fastf_t)value;
+    }
+    return 0;
+}
+
+static const struct bu_cmd_option annotate_schema_options[] = {
+    BU_CMD_STRING("n", NULL, struct annotate_args, name, "name", "Annotation name"),
+    BU_CMD_OPTION_SHAPED("p", NULL, "p", struct annotate_args, point,
+	BU_CMD_VALUE_VECTOR, "x y z", "Annotation point", BU_CMD_ARG_REQUIRED,
+	&annotate_point_shape, annotate_point_consume),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand annotate_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+	"Objects to annotate", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema annotate_cmd_schema = {
+    "annotate", "Create an annotation for objects", annotate_schema_options,
+    annotate_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
 
 
 void
@@ -124,8 +184,10 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
     char **object_argv;
     const char *argv0 = argv[0];
     struct bu_vls objects = BU_VLS_INIT_ZERO;
+    struct annotate_args args = {NULL, {0.0, 0.0, 0.0}};
     int object_count = 0;
     int i;
+    int operand_index;
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -140,18 +202,24 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
+
+    operand_index = bu_cmd_schema_parse_complete(&annotate_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	annotate_help(gedp->ged_result_str, argv0);
+	return BRLCAD_ERROR;
+    }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
+
     /* stash objects, quoting them if they include spaces */
-    for (i = 1; i < argc; i++) {
+    for (i = 0; i < argc; i++) {
 	bu_log("DEBUG: argv[%d] == %s\n", i, argv[i]);
 
-	if (argv[i][0] != '-') {
-	    object_count++;
-	    if (i != 1)
-		bu_vls_putc(&objects, ' ');
-	    bu_vls_from_argv(&objects, 1, &(argv[i]));
-	} else {
-	    break;
-	}
+	object_count++;
+	if (i != 0)
+	    bu_vls_putc(&objects, ' ');
+	bu_vls_from_argv(&objects, 1, &(argv[i]));
     }
     bu_log("DEBUG: objects: [%s]\n", bu_vls_addr(&objects));
 
@@ -170,10 +238,10 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_ANNOTATE_COMMANDS(X, XID) \
-    X(annotate, ged_annotate_core, GED_CMD_DEFAULT) \
+    X(annotate, ged_annotate_core, GED_CMD_DEFAULT, &annotate_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_ANNOTATE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_annotate", 1, GED_ANNOTATE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ANNOTATE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_annotate", 1, GED_ANNOTATE_COMMANDS)
 
 /*
  * Local Variables:

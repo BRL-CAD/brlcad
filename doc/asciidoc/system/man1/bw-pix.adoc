@@ -34,6 +34,7 @@ to the length of the longest.
 Output is written to the file named by *-o*, or to a final positional
 filename, or to standard output if neither is given. When an output file is
 named and standard output is also redirected, the result is written to both.
+Supplying both *-o* and a positional output filename is an error.
 With no input file, input is read from standard input.
 
 
@@ -42,7 +43,7 @@ With no input file, input is read from standard input.
 
 *-o* _out.pix_::
   Write the color *pix* output to _out.pix_. May also be supplied as the
-  final positional argument instead. If standard output is simultaneously
+  final positional argument instead, but not both. If standard output is simultaneously
   redirected or piped, the same data is written to both destinations.
 
 *-h*, *--help*::

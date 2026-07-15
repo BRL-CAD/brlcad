@@ -25,6 +25,9 @@
 
 #include "common.h"
 
+#define BU_OPT_COMPATIBILITY_BUILD 1
+
+#include <limits.h>
 #include <string.h>
 
 #include "vmath.h"
@@ -51,6 +54,34 @@
 struct gcv_context_internal {
     struct bu_ptbl *handles;
 };
+
+
+static struct bu_ptbl gcv_filter_schema_table = BU_PTBL_INIT_ZERO;
+
+
+static const struct gcv_filter_schema *
+_gcv_filter_schema_find(const struct gcv_filter *filter)
+{
+    size_t i;
+
+    for (i = 0; i < BU_PTBL_LEN(&gcv_filter_schema_table); i++) {
+	const struct gcv_filter_schema *entry = (const struct gcv_filter_schema *)BU_PTBL_GET(&gcv_filter_schema_table, i);
+	if (entry && entry->filter == filter)
+	    return entry;
+    }
+    return NULL;
+}
+
+
+static void
+_gcv_filter_schema_register(const struct gcv_filter_schema *schema)
+{
+    if (!schema || !schema->filter || !schema->create_opts_fn)
+	bu_bomb("invalid native GCV filter schema");
+    if (_gcv_filter_schema_find(schema->filter))
+	bu_bomb("duplicate native GCV filter schema");
+    bu_ptbl_ins(&gcv_filter_schema_table, (long *)schema);
+}
 
 
 static int
@@ -202,8 +233,13 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 	    bu_bomb("unknown filter type");
     }
 
-    if (!filter->create_opts_fn != !filter->free_opts_fn)
-	bu_bomb("must have none or both of create_opts_fn and free_opts_fn");
+    const struct gcv_filter_schema *native_schema = _gcv_filter_schema_find(filter);
+    if (filter->create_opts_fn && native_schema) {
+	bu_bomb("filter cannot provide both legacy and native option creators");
+    }
+    if (!(filter->create_opts_fn || native_schema) != !filter->free_opts_fn) {
+	bu_bomb("must have none or both of an option creator and free_opts_fn");
+    }
 
     if (!filter->filter_fn)
 	bu_bomb("null filter_fn");
@@ -219,27 +255,24 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
     bu_ptbl_ins(filter_table, (long *)filter);
 }
 
-
 static void
-_gcv_filter_options_create(const struct gcv_filter *filter,
-			   struct bu_opt_desc **options_desc, void **options_data)
+_gcv_filter_legacy_options_create(const struct gcv_filter *filter,
+                                  struct bu_opt_desc **options_desc, void **options_data)
 {
     if (!filter || !options_desc || !options_data)
-	bu_bomb("missing arguments");
+        bu_bomb("missing arguments");
 
     if (filter->create_opts_fn) {
-	*options_desc = NULL;
-	*options_data = NULL;
-
-	filter->create_opts_fn(options_desc, options_data);
-
-	if (!*options_desc || !*options_data)
-	    bu_bomb("filter->create_opts_fn() set null result");
+        *options_desc = NULL;
+        *options_data = NULL;
+        filter->create_opts_fn(options_desc, options_data);
+        if (!*options_desc || !*options_data)
+            bu_bomb("create_opts_fn() set null result");
     } else {
-	*options_desc = (struct bu_opt_desc *)bu_malloc(sizeof(struct bu_opt_desc),
-			"options_desc");
-	BU_OPT_NULL(**options_desc);
-	*options_data = NULL;
+        *options_desc = (struct bu_opt_desc *)bu_malloc(sizeof(struct bu_opt_desc),
+                "legacy options_desc");
+        BU_OPT_NULL(**options_desc);
+        *options_data = NULL;
     }
 }
 
@@ -247,17 +280,32 @@ _gcv_filter_options_create(const struct gcv_filter *filter,
 static void
 _gcv_filter_options_free(const struct gcv_filter *filter, void *options_data)
 {
-    if (!filter || (!filter->create_opts_fn != !options_data))
-	bu_bomb("missing arguments");
+    int has_creator;
 
-    if (filter->create_opts_fn)
-	filter->free_opts_fn(options_data);
+    if (!filter)
+        bu_bomb("missing filter");
+    has_creator = filter->create_opts_fn || _gcv_filter_schema_find(filter);
+    if (has_creator != !!options_data)
+        bu_bomb("invalid filter option storage");
+
+    if (has_creator)
+        filter->free_opts_fn(options_data);
 }
 
 
+/* This compatibility path is intentionally isolated for out-of-tree plugins
+ * still built against the deprecated bu_opt descriptor API.  In-tree plugins
+ * use _gcv_filter_schema_options_process below. */
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 static int
-_gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
-			    const char * const *argv, void **options_data)
+_gcv_filter_legacy_options_process(const struct gcv_filter *filter, size_t argc,
+                                   const char * const *argv, void **options_data)
 {
     int ret_argc;
     struct bu_opt_desc *options_desc;
@@ -266,41 +314,103 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
     int i;
 
     if (argc)
-	temp = (const char **)bu_calloc(argc, sizeof(const char *), "temp");
+        temp = (const char **)bu_calloc(argc, sizeof(const char *), "legacy option argv");
     else
-	temp = NULL;
+        temp = NULL;
 
     for (i = 0; (size_t)i < argc; ++i)
-	temp[i] = argv[i];
+        temp[i] = argv[i];
 
-    _gcv_filter_options_create(filter, &options_desc, options_data);
+    _gcv_filter_legacy_options_create(filter, &options_desc, options_data);
     BU_VLS_INIT(&messages);
     ret_argc = argc ? bu_opt_parse(&messages, argc, temp, options_desc) : 0;
-    bu_free(options_desc, "options_desc");
+    bu_free(options_desc, "legacy options_desc");
     bu_log("%s", bu_vls_addr(&messages));
     bu_vls_free(&messages);
 
     if (ret_argc) {
-	if (ret_argc == -1)
-	    bu_log("fatal error in bu_opt_parse()\n");
-	else {
-	    bu_log("unknown arguments: ");
+        if (ret_argc == -1)
+            bu_log("fatal error in deprecated bu_opt_parse()\n");
+        else {
+            bu_log("unknown arguments: ");
+            for (i = 0; i < ret_argc - 1; ++i)
+                bu_log("%s, ", temp[i]);
+            bu_log("%s\n", temp[i]);
+        }
 
-	    for (i = 0; i < ret_argc - 1; ++i)
-		bu_log("%s, ", temp[i]);
-
-	    bu_log("%s\n", temp[i]);
-	}
-
-	bu_free((void *)temp, "temp");
-
-	_gcv_filter_options_free(filter, *options_data);
-	return 0;
+        bu_free((void *)temp, "legacy option argv");
+        _gcv_filter_options_free(filter, *options_data);
+        *options_data = NULL;
+        return 0;
     }
 
-    bu_free((void *)temp, "temp");
-
+    bu_free((void *)temp, "legacy option argv");
     return 1;
+}
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+
+
+static int
+_gcv_filter_schema_options_process(const struct gcv_filter *filter,
+				   const struct gcv_filter_schema *native_schema, size_t argc,
+                                   const char * const *argv, void **options_data)
+{
+    const struct bu_cmd_schema *schema = NULL;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    const char **temp = NULL;
+    int parsed;
+    size_t i;
+
+    if (argc > INT_MAX) {
+        bu_log("too many filter options\n");
+        return 0;
+    }
+    if (argc)
+        temp = (const char **)bu_calloc(argc, sizeof(const char *), "native filter option argv");
+    for (i = 0; i < argc; i++)
+        temp[i] = argv[i];
+
+    *options_data = NULL;
+    native_schema->create_opts_fn(&schema, options_data);
+    if (!schema || !*options_data)
+	bu_bomb("native filter schema creator set null result");
+
+    parsed = bu_cmd_schema_parse(schema, *options_data, &messages, (int)argc, temp);
+    if (bu_vls_strlen(&messages))
+        bu_log("%s", bu_vls_cstr(&messages));
+    bu_vls_free(&messages);
+
+    if (parsed < 0 || (size_t)parsed != argc) {
+        if (parsed >= 0) {
+            bu_log("unknown arguments: ");
+            for (i = (size_t)parsed; i < argc; i++)
+                bu_log("%s%s", i == (size_t)parsed ? "" : ", ", temp[i]);
+            bu_log("\n");
+        }
+        bu_free((void *)temp, "native filter option argv");
+        _gcv_filter_options_free(filter, *options_data);
+        *options_data = NULL;
+        return 0;
+    }
+
+    bu_free((void *)temp, "native filter option argv");
+    return 1;
+}
+
+
+static int
+_gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
+                            const char * const *argv, void **options_data)
+{
+    const struct gcv_filter_schema *native_schema = _gcv_filter_schema_find(filter);
+
+    if (native_schema)
+        return _gcv_filter_schema_options_process(filter, native_schema, argc, argv, options_data);
+    return _gcv_filter_legacy_options_process(filter, argc, argv, options_data);
 }
 
 
@@ -341,8 +451,11 @@ static void
 _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path, struct gcv_context *c)
 {
     void *info_val;
+    void *native_info_val;
     const struct gcv_plugin *(*plugin_info)(void);
     const struct gcv_plugin *plugin;
+    gcv_plugin_native_info_t native_plugin_info;
+    const struct gcv_native_plugin *native_plugin;
     const struct gcv_filter * const *current;
     void *dl_handle;
 
@@ -377,6 +490,20 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path, struct gcv_con
 	bu_log("Invalid plugin encountered from '%s' (skipping)\n", path);
 	bu_dlclose(dl_handle);
 	return;
+    }
+
+    /* Native option schemas are an ABI-preserving extension point: old
+     * plugins need not provide this symbol, while migrated in-tree plugins
+     * publish a schema binding for each filter that owns options. */
+    native_info_val = bu_dlsym(dl_handle, "gcv_plugin_native_info");
+    native_plugin_info = (gcv_plugin_native_info_t)(intptr_t)native_info_val;
+    if (native_plugin_info) {
+	native_plugin = native_plugin_info();
+	if (!native_plugin || !native_plugin->filter_schemas)
+	    bu_bomb("native GCV plugin metadata is incomplete");
+	for (const struct gcv_filter_schema *schema = native_plugin->filter_schemas;
+	     schema->filter; schema++)
+	    _gcv_filter_schema_register(schema);
     }
 
     bu_ptbl_ins(c->i->handles, (long *)dl_handle);

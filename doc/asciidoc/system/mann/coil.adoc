@@ -41,7 +41,8 @@ Distance between adjacent turns along the coil axis. Must be ≥ wire diameter; 
 Number of full coil turns.
 
 *-s start_cap_type*::
-End cap style at the start of the coil: `0` = open (no cap), `1` = squared, `2` = squared and ground.
+End cap style at the start of the coil: `0` = open (no cap), `1` = squared,
+`2` = ground, or `3` = squared and ground.
 
 *-e end_cap_type*::
 End cap style at the end of the coil. Same values as `-s`.
@@ -53,7 +54,11 @@ Constrain the coil to a total axial length. When set, pitch and/or number of tur
 Use left-hand winding (default is right-hand).
 
 *-S coil_data_structure*::
-Advanced: provide an explicit section data structure to override the automatic coil generation.
+Advanced: provide one explicit section as
+`turns,outer_diameter,wire_diameter,helix_angle,pitch,handedness`. Multiple
+`-S` options stack sections in the coil. `handedness` is `1` for right-handed
+and `0` for left-handed winding. This form overrides automatic single-section
+generation.
 
 [[examples]]
 == EXAMPLES

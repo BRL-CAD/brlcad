@@ -28,8 +28,28 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+
+static const struct bu_cmd_operand cat_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Database objects to describe", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema cat_cmd_schema = {
+    "cat", "Tersely describe database objects", NULL, cat_schema_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
+
+static void
+cat_show_help(struct ged *gedp, const char *command)
+{
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s object ...", command);
+}
 
 
 int
@@ -37,7 +57,8 @@ ged_cat_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int arg;
-    static const char *usage = "<objects>";
+    int operand_index = 0;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -47,11 +68,20 @@ ged_cat_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	cat_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    for (arg = 1; arg < argc; arg++) {
+    operand_index = bu_cmd_schema_parse_complete(&cat_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index < 1) {
+	cat_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
+    }
+    argv += operand_index + 1;
+    argc -= operand_index + 1;
+
+	for (arg = 0; arg < argc; arg++) {
 	if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
@@ -64,10 +94,10 @@ ged_cat_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_CAT_COMMANDS(X, XID) \
-    X(cat, ged_cat_core, GED_CMD_DEFAULT) \
+    X(cat, ged_cat_core, GED_CMD_DEFAULT, &cat_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_CAT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_cat", 1, GED_CAT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_CAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_cat", 1, GED_CAT_COMMANDS)
 
 /*
  * Local Variables:

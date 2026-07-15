@@ -20,6 +20,16 @@ libged commands
 
 	find, dbfind -> db find
 	version, dbversion -> db version
+
+include/bu/opt.h
+
+	The complete `bu_opt` descriptor API, including `bu_opt_*` scalar
+	reader callbacks and the experimental command-metadata validator, is
+	deprecated in favor of `bu/cmdschema.h`.  Use a `bu_cmd_schema` as the
+	canonical source for parsing, help, validation, completion, and typed
+	storage binding.  The old interface remains for source and binary
+	compatibility during the required deprecation window; NIRT and GCV retain
+	narrow adapters only for external callers and plug-ins.
 	[deprecated 7.44]
 
 include/icv/io.h

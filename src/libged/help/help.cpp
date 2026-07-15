@@ -24,8 +24,35 @@
 #include <string>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
 #include "ged.h"
+
+static const struct bu_cmd_operand help_operands[] = {
+    BU_CMD_OPERAND("topic", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+	"Help topic", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema questionmark_cmd_schema = {
+    "?", "Search command help", NULL, help_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
+static const struct bu_cmd_schema apropos_cmd_schema = {
+    "apropos", "Search command help", NULL, help_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
+static const struct bu_cmd_schema help_cmd_schema = {
+    "help", "Search command help", NULL, help_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
+static const struct bu_cmd_schema info_cmd_schema = {
+    "info", "Search command help", NULL, help_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 /**
@@ -284,13 +311,13 @@ ged_help_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_HELP_COMMANDS(X, XID) \
-    XID(questionmark, "?", ged_help_core,  GED_CMD_DEFAULT) \
-    X(apropos,             ged_help_core,  GED_CMD_DEFAULT) \
-    X(help,                ged_help_core,  GED_CMD_DEFAULT) \
-    X(info,                ged_help_core,  GED_CMD_DEFAULT)
+    XID(questionmark, "?", ged_help_core,  GED_CMD_DEFAULT, &questionmark_cmd_schema) \
+    X(apropos,             ged_help_core,  GED_CMD_DEFAULT, &apropos_cmd_schema) \
+    X(help,                ged_help_core,  GED_CMD_DEFAULT, &help_cmd_schema) \
+    X(info,                ged_help_core,  GED_CMD_DEFAULT, &info_cmd_schema)
 
-GED_DECLARE_COMMAND_SET(GED_HELP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_help", 1, GED_HELP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_HELP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_help", 1, GED_HELP_COMMANDS)
 
 
 #ifdef STANDALONE
@@ -315,4 +342,3 @@ int main(int ac, char *av[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

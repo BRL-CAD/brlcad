@@ -48,6 +48,7 @@
 #include <limits.h>
 #include <string.h>
 #include "bu.h"
+#include "bu/cmdschema.h"
 
 /* how many debug items to print */
 #define PRINT_LIMIT 10
@@ -1065,10 +1066,7 @@ main(int argc, char **argv)
     bu_mkdir(cache_dir);
 
     if (argc > 1) {
-	const char *av[2] = {NULL};
-	av[0] = argv[1];
-	int iret = bu_opt_int(NULL, 1, av, &item_cnt);
-	if (iret != 1)
+	if (!bu_cmd_integer_from_str(&item_cnt, argv[1]))
 	    bu_exit(-1, "Invalid item count specifier\n");
     }
 

@@ -30,7 +30,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -42,8 +42,6 @@
 #define DEFAULT_COIL_OBJECT "coil"
 #define DEFAULT_COIL_FILENAME "coil.g"
 
-int usedefaults;
-
 struct coil_data_t {
     struct bu_list l;
     int nt;     /*Number of Turns*/
@@ -52,6 +50,117 @@ struct coil_data_t {
     fastf_t ha; /*Helix Angle*/
     fastf_t p;  /*Pitch*/
     int lhf; /*Winding Direction - 1 is Right Handed, -1 is Left Handed*/
+};
+
+
+struct coil_args {
+    fastf_t mean_outer_diameter;
+    fastf_t wire_diameter;
+    fastf_t helix_angle;
+    fastf_t pitch;
+    int number_of_turns;
+    int start_cap_type;
+    int end_cap_type;
+    fastf_t overall_length;
+    int left_handed;
+    int help;
+    struct bu_list sections;
+};
+
+
+static int
+coil_cap_type_validate(struct bu_vls *msg, const char *arg)
+{
+    int value = 0;
+
+    if (!bu_cmd_integer_from_str(&value, arg) || value < 0 || value > 3) {
+	if (msg)
+	    bu_vls_printf(msg, "coil cap type must be an integer from 0 through 3: %s", arg ? arg : "");
+	return -1;
+    }
+    return 0;
+}
+
+
+static int
+coil_section_consume(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int nt = 0;
+    int handedness = 0;
+    double od = 0.0;
+    double wd = 0.0;
+    double ha = 0.0;
+    double pitch = 0.0;
+    char trailing = '\0';
+
+    if (!arg || sscanf(arg, "%d,%lf,%lf,%lf,%lf,%d%c", &nt, &od, &wd, &ha,
+		    &pitch, &handedness, &trailing) != 6 || nt < 0 || od < 0.0 ||
+	    wd < 0.0 || ha < 0.0 || pitch < 0.0 || handedness < 0 ||
+	    handedness > 1 || !isfinite(od) || !isfinite(wd) || !isfinite(ha) ||
+	    !isfinite(pitch)) {
+	if (msg)
+	    bu_vls_printf(msg, "coil section must be turns,outer_diameter,wire_diameter,helix_angle,pitch,handedness");
+	return -1;
+    }
+
+    if (storage) {
+	struct coil_data_t *section;
+	BU_ALLOC(section, struct coil_data_t);
+	section->nt = nt;
+	section->od = (fastf_t)od;
+	section->wd = (fastf_t)wd;
+	section->ha = (fastf_t)ha;
+	section->p = (fastf_t)pitch;
+	section->lhf = handedness ? 1 : -1;
+	BU_LIST_INSERT((struct bu_list *)storage, &section->l);
+    }
+    return 0;
+}
+
+
+static void
+coil_sections_free(struct bu_list *sections)
+{
+    while (!BU_LIST_IS_EMPTY(sections)) {
+	struct coil_data_t *section = BU_LIST_FIRST(coil_data_t, sections);
+	BU_LIST_DEQUEUE(&section->l);
+	BU_PUT(section, struct coil_data_t);
+    }
+}
+
+
+static const struct bu_cmd_option coil_schema_options[] = {
+    BU_CMD_NONNEGATIVE_NUMBER("d", NULL, struct coil_args, mean_outer_diameter,
+	"diameter", "Mean outer diameter"),
+    BU_CMD_NONNEGATIVE_NUMBER("w", NULL, struct coil_args, wire_diameter,
+	"diameter", "Wire diameter"),
+    BU_CMD_NONNEGATIVE_NUMBER("H", NULL, struct coil_args, helix_angle,
+	"angle", "Helix angle"),
+    BU_CMD_NONNEGATIVE_NUMBER("p", NULL, struct coil_args, pitch,
+	"pitch", "Pitch"),
+    BU_CMD_NONNEGATIVE_INTEGER("n", NULL, struct coil_args, number_of_turns,
+	"turns", "Number of turns"),
+    BU_CMD_INTEGER_VALIDATE("s", NULL, struct coil_args, start_cap_type,
+	coil_cap_type_validate, "type", "Start cap type (0 through 3)"),
+    BU_CMD_INTEGER_VALIDATE("e", NULL, struct coil_args, end_cap_type,
+	coil_cap_type_validate, "type", "End cap type (0 through 3)"),
+    BU_CMD_CUSTOM("S", NULL, struct coil_args, sections, coil_section_consume,
+	"section", "Section: turns,diameter,wire,angle,pitch,handedness"),
+    BU_CMD_NONNEGATIVE_NUMBER("l", NULL, struct coil_args, overall_length,
+	"length", "Overall length"),
+    BU_CMD_FLAG("L", NULL, struct coil_args, left_handed, "Use left-handed winding"),
+    BU_CMD_FLAG("h", NULL, struct coil_args, help, "Print command usage"),
+    BU_CMD_ALIAS_SHORT("?", "h", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand coil_schema_operands[] = {
+    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 0, 1,
+	"Optional new coil object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema coil_cmd_schema = {
+    "coil", "Create coil geometry", coil_schema_options, coil_schema_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
 };
 
 
@@ -315,95 +424,16 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 static void
 coil_usage(struct ged *gedp)
 {
-    bu_vls_printf(gedp->ged_result_str, "Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]\n");
-    bu_vls_printf(gedp->ged_result_str, "            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
-    bu_vls_printf(gedp->ged_result_str, "            [-S coil_data_structure] [-l overall_length] [-L]\n");
-    bu_vls_printf(gedp->ged_result_str, "       (units mm)\n");
-}
+    char *option_help = bu_cmd_schema_describe(&coil_cmd_schema);
 
-
-/* Process command line arguments */
-int
-ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, struct bu_list *sections, fastf_t *mean_outer_diameter, fastf_t *wire_diameter, fastf_t *helix_angle, fastf_t *pitch, int *nt, int *start_cap_type, int *end_cap_type, fastf_t *overall_length, int *lhf)
-{
-    int c = 0;
-    char *options="d:w:H:p:n:s:e:S:l:Lh?";
-    int numturns, stype, etype, lhflag;
-    float mean_od, wired, h_angle, ptch, lngth;
-    int d1, d6;
-    float d2, d3, d4, d5;
-    char s1, s2, s3, s4, s5;
-    int have_name = 0;
-    struct coil_data_t *coil_data;
-
-    usedefaults = (argc == 1) ;
-
-    while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
-	switch (c) {
-	    case 'd' :
-		sscanf(bu_optarg, "%f", &mean_od);
-		*mean_outer_diameter = mean_od;
-		break;
-	    case 'w':
-		sscanf(bu_optarg, "%f", &wired);
-		*wire_diameter = wired;
-		break;
-	    case 'H':
-		sscanf(bu_optarg, "%f", &h_angle);
-		*helix_angle = h_angle;
-		break;
-	    case 'L':
-		lhflag = -1;
-		*lhf = lhflag;
-		break;
-	    case 'p':
-		sscanf(bu_optarg, "%f", &ptch);
-		*pitch = ptch;
-		break;
-	    case 'n':
-		sscanf(bu_optarg, "%d", &numturns);
-		*nt = numturns;
-		break;
-	    case 's':
-		sscanf(bu_optarg, "%d", &stype);
-		*start_cap_type = stype;
-		break;
-	    case 'e':
-		sscanf(bu_optarg, "%d", &etype);
-		*end_cap_type = etype;
-		break;
-	    case 'l':
-		sscanf(bu_optarg, "%f", &lngth);
-		*overall_length = lngth;
-		break;
-	    case 'S':
-		BU_ALLOC(coil_data, struct coil_data_t);
-		sscanf(bu_optarg, "%d%c%f%c%f%c%f%c%f%c%d", &d1, &s1, &d2, &s2, &d3, &s3, &d4, &s4, &d5, &s5, &d6);
-		coil_data->nt = d1;
-		coil_data->od = d2;
-		coil_data->wd = d3;
-		coil_data->ha = d4;
-		coil_data->p = d5;
-		if (d6 == 1)
-		    coil_data->lhf = 1;
-		else
-		    coil_data->lhf = -1;
-		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
-		break;
-	    default:
-		coil_usage(gedp);
-		return BRLCAD_ERROR;
-	}
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: coil [-d diameter] [-w diameter] [-H angle] [-p pitch]\n"
+	"            [-n turns] [-s type] [-e type] [-S section] [-l length] [-L] [name]\n"
+	"       (units mm)");
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "coil native option help");
     }
-    if ((argc - bu_optind) == 1) {
-	have_name = 1;
-	bu_vls_sprintf(name, "%s", argv[bu_optind]);
-    }
-    if (!have_name) {
-	bu_vls_sprintf(name, "%s", DEFAULT_COIL_OBJECT);
-    }
-
-    return BRLCAD_OK;
 }
 
 
@@ -412,46 +442,82 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    struct bu_vls name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct coil_args args = {0};
+    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+    const char **operands = NULL;
+    int operand_index;
+    int operand_count;
+    int usedefaults;
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
     struct coil_data_t *coil_data = NULL;
-    struct bu_list sections;
 
     int nt; /* Number of turns */
     int start_cap_type, end_cap_type;
     int lhf; /* Winding flag */
 
     /* initialize result */
-    bu_vls_init(&name);
-    BU_LIST_INIT(&sections);
-
-    mean_outer_diameter = 0;
-    wire_diameter = 0;
-    helix_angle = 0;
-    pitch = 0;
-    nt = 0;
-    start_cap_type = 0;
-    end_cap_type = 0;
-    overall_length = 0;
-    lhf = 1;
-
-    /* Process arguments */
-    if (ReadArgs(gedp, argc, argv, &name, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type, &overall_length, &lhf) != BRLCAD_OK) {
+    BU_LIST_INIT(&args.sections);
+    usedefaults = argc == 1;
+    operand_index = bu_cmd_schema_parse(&coil_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	coil_usage(gedp);
+	coil_sections_free(&args.sections);
+	bu_vls_free(&name);
 	return BRLCAD_ERROR;
     }
+    if (args.help) {
+	coil_usage(gedp);
+	coil_sections_free(&args.sections);
+	bu_vls_free(&name);
+	return GED_HELP;
+    }
+    if (bu_cmd_schema_validate(&coil_cmd_schema, (size_t)(argc - 1), argv + 1,
+		(size_t)(argc - 1), &validation) != 0 ||
+	validation.state != BU_CMD_VALIDATE_VALID) {
+	if (validation.hint)
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", validation.hint);
+	bu_cmd_validate_result_clear(&validation);
+	coil_usage(gedp);
+	coil_sections_free(&args.sections);
+	bu_vls_free(&name);
+	return BRLCAD_ERROR;
+    }
+    bu_cmd_validate_result_clear(&validation);
+
+    operand_count = argc - 1 - operand_index;
+    operands = argv + 1 + operand_index;
+    if (operand_count == 1)
+	bu_vls_strcpy(&name, operands[0]);
+    else
+	bu_vls_strcpy(&name, DEFAULT_COIL_OBJECT);
+
+    mean_outer_diameter = args.mean_outer_diameter;
+    wire_diameter = args.wire_diameter;
+    helix_angle = args.helix_angle;
+    pitch = args.pitch;
+    nt = args.number_of_turns;
+    start_cap_type = args.start_cap_type;
+    end_cap_type = args.end_cap_type;
+    overall_length = args.overall_length;
+    lhf = args.left_handed ? -1 : 1;
 
     /* Handle various potential errors in args and set defaults if nothing supplied */
 
-    if (BU_LIST_IS_EMPTY(&sections)) {
+    if (BU_LIST_IS_EMPTY(&args.sections)) {
 
 	if (usedefaults)
 	    bu_vls_printf(gedp->ged_result_str, "Creating %s with default parameters.\n", bu_vls_addr(&name));
 
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "negative value in one or more arguments supplied to coil");
+	    coil_sections_free(&args.sections);
+	    bu_vls_free(&name);
 	    return BRLCAD_ERROR;
 	}
 
@@ -485,9 +551,9 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 	coil_data->p = pitch;
 	coil_data->lhf = lhf;
 
-	BU_LIST_APPEND(&(sections), &((*coil_data).l));
+	BU_LIST_APPEND(&args.sections, &coil_data->l);
 
-	coil_data = BU_LIST_FIRST(coil_data_t, &sections);
+	coil_data = BU_LIST_FIRST(coil_data_t, &args.sections);
     }
 
     /* If hard clamping the length, have to check some things and maybe clamp some values */
@@ -548,8 +614,9 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 
     /* do it. */
     struct rt_wdb *db_fp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
+    make_coil(db_fp, bu_vls_addr(&name), &args.sections, start_cap_type, end_cap_type);
 
+    coil_sections_free(&args.sections);
     bu_vls_free(&name);
 
     return BRLCAD_OK;
@@ -558,10 +625,10 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_COIL_COMMANDS(X, XID) \
-    X(coil, ged_coil_core, GED_CMD_DEFAULT) \
+    X(coil, ged_coil_core, GED_CMD_DEFAULT, &coil_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_COIL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_coil", 1, GED_COIL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COIL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_coil", 1, GED_COIL_COMMANDS)
 
 /*
  * Local Variables:

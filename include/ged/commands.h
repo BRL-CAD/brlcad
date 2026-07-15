@@ -30,10 +30,137 @@
 #define GED_COMMANDS_H
 
 #include "common.h"
+#include "bu/cmdschema.h"
 #include "ged/defines.h"
 
 
 __BEGIN_DECLS
+
+typedef enum {
+    GED_CMD_TOKEN_UNKNOWN = 0,
+    GED_CMD_TOKEN_COMMAND,
+    GED_CMD_TOKEN_SUBCOMMAND,
+    GED_CMD_TOKEN_OPTION,
+    GED_CMD_TOKEN_OPTION_ARG,
+    GED_CMD_TOKEN_OPERAND
+} ged_cmd_token_role_t;
+
+typedef enum {
+    GED_CMD_SEMANTIC_UNKNOWN = 0,
+    GED_CMD_SEMANTIC_VALID,
+    GED_CMD_SEMANTIC_INVALID,
+    GED_CMD_SEMANTIC_INCOMPLETE,
+    GED_CMD_SEMANTIC_PENDING
+} ged_cmd_semantic_state_t;
+
+struct ged_cmd_analysis_token {
+    size_t token_start;
+    size_t token_end;
+    size_t char_start;
+    size_t char_end;
+    ged_cmd_token_role_t role;
+    bu_cmd_value_t value_type;
+    ged_cmd_semantic_state_t semantic_state;
+    const char *validator;
+    const char *hint;
+};
+
+struct ged_cmd_analysis {
+    size_t token_count;
+    struct ged_cmd_analysis_token *tokens;
+};
+
+struct ged_cmd_completion_result {
+    size_t completion_count;
+    const char **completion_candidates;
+    size_t replacement_start;
+    size_t replacement_end;
+    char *prefix;
+    bu_cmd_value_t completion_type;
+    unsigned int expected;
+    const char *hint;
+    char *active_command_path;
+    char *active_role;
+    int options_legal;
+    int starts_new_phase;
+};
+
+#define GED_CMD_COMPLETION_RESULT_NULL {0, NULL, 0, 0, NULL, BU_CMD_VALUE_UNKNOWN, BU_CMD_EXPECT_NONE, NULL, NULL, NULL, 0, 0}
+
+/*
+ * GED enriches the native result with source-character spans.  Native schemas
+ * work in argv indexes; editors need the precise byte range to redraw.
+ */
+struct ged_cmd_validate_result {
+    bu_cmd_validate_state_t state;
+    size_t token_start;
+    size_t token_end;
+    unsigned int expected;
+    const char *hint;
+    size_t completion_count;
+    const char **completion_candidates;
+    bu_cmd_value_t completion_type;
+    const char *semantic_provider;
+    size_t char_start;
+    size_t char_end;
+};
+
+#define GED_CMD_VALIDATE_RESULT_NULL {BU_CMD_VALIDATE_UNKNOWN, 0, 0, BU_CMD_EXPECT_NONE, NULL, 0, NULL, BU_CMD_VALUE_UNKNOWN, NULL, 0, 0}
+
+GED_EXPORT extern void ged_cmd_validate_result_clear(struct ged_cmd_validate_result *result);
+
+typedef ged_cmd_semantic_state_t (*ged_cmd_semantic_validate_func_t)(struct ged *gedp, bu_cmd_value_t type, const char *token, void *data);
+typedef int (*ged_cmd_semantic_complete_func_t)(struct ged *gedp, const char *seed, struct ged_cmd_validate_result *result, void *data);
+
+struct ged_cmd_semantic_provider {
+    const char *name;
+    ged_cmd_semantic_validate_func_t validate;
+    ged_cmd_semantic_complete_func_t complete;
+    void *data;
+};
+
+
+/**
+ * Parser-owned command grammar adapter.
+ *
+ * Flat commands publish a bu_cmd_schema.  Commands such as search have a
+ * non-flat language whose parser is owned elsewhere, so they register this
+ * adapter instead.  The execution callback remains the ordinary ged command
+ * implementation; these hooks supply the same cursor-aware validation,
+ * token analysis, JSON description, and lint contract consumed by frontends.
+ */
+typedef int (*ged_cmd_grammar_validate_func_t)(struct ged *gedp, const char *input,
+	size_t cursor_pos, struct ged_cmd_validate_result *result);
+typedef int (*ged_cmd_grammar_analyze_func_t)(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis);
+typedef char *(*ged_cmd_grammar_json_func_t)(void);
+typedef int (*ged_cmd_grammar_lint_func_t)(struct bu_vls *msgs);
+
+struct ged_cmd_grammar {
+    const char *name;
+    const char *help;
+    ged_cmd_grammar_validate_func_t validate;
+    ged_cmd_grammar_analyze_func_t analyze;
+    ged_cmd_grammar_json_func_t describe_json;
+    ged_cmd_grammar_lint_func_t lint;
+};
+
+struct bu_cmd_tree;
+
+/**
+ * Validate or analyze a native command tree from a grammar adapter.
+ *
+ * These adapters honor each level's native option phase, canonical child
+ * names and aliases, and child schema.  They are exported so dynamically
+ * loaded GED command plugins can publish native trees without duplicating the
+ * editor-facing parser.
+ */
+GED_EXPORT int ged_cmd_tree_validate(struct ged *gedp,
+	const struct bu_cmd_tree *tree, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result);
+GED_EXPORT int ged_cmd_tree_analyze(struct ged *gedp,
+	const struct bu_cmd_tree *tree, const char *input,
+	struct ged_cmd_analysis *analysis);
 
 /** @addtogroup ged_plugins */
 /** @{ */
@@ -112,6 +239,50 @@ ged_cmd_completions(const char ***completions, const char *seed);
  */
 GED_EXPORT extern int
 ged_geom_completions(const char ***completions, struct bu_vls *cprefix, struct db_i *dbip, const char *seed);
+
+/* Report whether a GED command has schema metadata available. */
+GED_EXPORT extern int
+ged_cmd_schema_exists(const char *cmd);
+
+/* Return JSON schema metadata for a GED command.  Caller must free with bu_free. */
+GED_EXPORT extern char *
+ged_cmd_schema_json(const char *cmd);
+
+/* Register a named semantic provider for command schemas. */
+GED_EXPORT extern int
+ged_cmd_semantic_provider_register(const struct ged_cmd_semantic_provider *provider);
+
+/* Report whether a named semantic provider is available. */
+GED_EXPORT extern int
+ged_cmd_semantic_provider_exists(const char *name);
+
+/* Lint one command schema, or all registered schemas if cmd is NULL. */
+GED_EXPORT extern int
+ged_cmd_schema_lint(const char *cmd, struct bu_vls *msgs);
+
+/* Validate a GED command line against available schema metadata. */
+GED_EXPORT extern int
+ged_cmd_validate(struct ged *gedp, const char *input, size_t cursor_pos, struct ged_cmd_validate_result *result);
+
+/* Complete the token at cursor_pos using schema metadata and existing fallbacks. */
+GED_EXPORT extern int
+ged_cmd_complete(const char ***completions, struct bu_vls *prefix, struct ged *gedp, const char *input, size_t cursor_pos);
+
+/* Complete the token at cursor_pos, including the original-input range to replace. */
+GED_EXPORT extern int
+ged_cmd_complete_result(struct ged *gedp, const char *input, size_t cursor_pos, struct ged_cmd_completion_result *result);
+
+/* Free data owned by a ged_cmd_completion_result. */
+GED_EXPORT extern void
+ged_cmd_completion_result_clear(struct ged_cmd_completion_result *result);
+
+/* Analyze all command-line tokens for structured highlighting and diagnostics. */
+GED_EXPORT extern int
+ged_cmd_analyze(struct ged *gedp, const char *input, struct ged_cmd_analysis *analysis);
+
+/* Free data owned by a ged_cmd_analysis result. */
+GED_EXPORT extern void
+ged_cmd_analysis_clear(struct ged_cmd_analysis *analysis);
 
 
 /**

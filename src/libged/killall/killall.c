@@ -106,11 +106,26 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_KILLALL_COMMANDS(X, XID) \
-    X(killall, ged_killall_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_option killall_schema_options[] = {
+    BU_CMD_FLAG_UNBOUND("n", NULL, "n", "Report affected objects without changing the database"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand killall_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_STRING, 1, BU_CMD_COUNT_UNLIMITED,
+	"Objects to delete with all references", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema killall_cmd_schema = {
+    "killall", "Delete objects and all references to them", killall_schema_options,
+    killall_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    {NULL}
+};
 
-GED_DECLARE_COMMAND_SET(GED_KILLALL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_killall", 1, GED_KILLALL_COMMANDS)
+#define GED_KILLALL_COMMANDS(X, XID) \
+    X(killall, ged_killall_core, GED_CMD_DEFAULT, &killall_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_KILLALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_killall", 1, GED_KILLALL_COMMANDS)
 
 /*
  * Local Variables:

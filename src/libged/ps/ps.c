@@ -25,12 +25,8 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-
-
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
+#include "bu/color.h"
 #include "vmath.h"
 #include "bn.h"
 #include "bg/clip.h"
@@ -38,7 +34,7 @@
 #include "../ged_private.h"
 
 static void
-ps_draw_header(FILE *fp, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset)
+ps_draw_header(FILE *fp, const char *font, const char *title, const char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset)
 {
     fprintf(fp, "%%!PS-Adobe-1.0\n\
 %%begin(plot)\n\
@@ -285,7 +281,7 @@ ps_draw_footer(FILE *fp)
 
 
 static void
-dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue)
+dl_ps(struct bu_list *hdlp, FILE *fp, int border, const char *font, const char *title, const char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue)
 {
     ps_draw_header(fp, font, title, creator, linewidth, scale, xoffset, yoffset);
     if (border)
@@ -296,22 +292,52 @@ dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char 
 }
 
 static fastf_t ps_default_ppi = 72.0;
-static fastf_t ps_default_scale = 4.5 * 72.0 / 4096.0;
+
+struct ps_args {
+    const char *author;
+    int border;
+    struct bu_color border_color;
+    const char *font;
+    fastf_t size;
+    const char *title;
+    fastf_t xoffset;
+    fastf_t yoffset;
+};
+
+static const struct bu_cmd_option ps_options[] = {
+    BU_CMD_STRING("a", NULL, struct ps_args, author, "author", "Document author"),
+    BU_CMD_FLAG("b", NULL, struct ps_args, border, "Draw a border"),
+    BU_CMD_RGB("c", NULL, struct ps_args, border_color, "r/g/b", "Border color"),
+    BU_CMD_STRING("f", NULL, struct ps_args, font, "font", "PostScript font"),
+    BU_CMD_NUMBER("s", NULL, struct ps_args, size, "size", "Image size in inches"),
+    BU_CMD_STRING("t", NULL, struct ps_args, title, "title", "Document title"),
+    BU_CMD_NUMBER("x", NULL, struct ps_args, xoffset, "offset", "Horizontal offset in inches"),
+    BU_CMD_NUMBER("y", NULL, struct ps_args, yoffset, "offset", "Vertical offset in inches"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand ps_operands[] = {
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+	"PostScript output file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema postscript_cmd_schema = {
+    "postscript", "Write the current view as PostScript", ps_options,
+    ps_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_schema ps_cmd_schema = {
+    "ps", "Write the current view as PostScript", ps_options,
+    ps_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
 
 int
 ged_ps_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
-    struct bu_vls creator = BU_VLS_INIT_ZERO;
-    struct bu_vls title = BU_VLS_INIT_ZERO;
-    struct bu_vls font = BU_VLS_INIT_ZERO;
-    fastf_t scale = ps_default_scale;
+    struct ps_args args = {0};
+    fastf_t scale;
     int linewidth = 4;
-    int xoffset = 0;
-    int yoffset = 0;
-    int border = 0;
-    int k;
-    int r, g, b;
+    int operand_index;
+    unsigned char border_rgb[3] = {0, 0, 0};
 
     float border_red = 0.0;
     float border_green = 0.0;
@@ -333,136 +359,55 @@ ged_ps_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    /* Initialize var defaults */
-    bu_vls_printf(&font, "Courier");
-    bu_vls_printf(&title, "No Title");
-    bu_vls_printf(&creator, "LIBGED ps");
 
-    /* Process options */
-    bu_optind = 1;
-    while ((k = bu_getopt(argc, (char * const *)argv, "a:bc:f:s:t:x:y:")) != -1) {
-	double tmp_f;
-
-	switch (k) {
-	    case 'a':
-		bu_vls_trunc(&creator, 0);
-		bu_vls_printf(&creator, "%s", bu_optarg);
-
-		break;
-	    case 'b':
-		border = 1;
-		break;
-	    case 'c':
-		if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
-		    return BRLCAD_ERROR;
-		}
-
-		/* Clamp color values */
-		if (r < 0)
-		    r = 0;
-		else if (r > 255)
-		    r = 255;
-
-		if (g < 0)
-		    g = 0;
-		else if (g > 255)
-		    g = 255;
-
-		if (b < 0)
-		    b = 0;
-		else if (b > 255)
-		    b = 255;
-
-		border_red = PS_COLOR(r);
-		border_green = PS_COLOR(g);
-		border_blue = PS_COLOR(b);
-
-		break;
-	    case 'f':
-		bu_vls_trunc(&font, 0);
-		bu_vls_printf(&font, "%s", bu_optarg);
-
-		break;
-	    case 's':
-		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
-		    goto bad;
-		}
-
-		if (tmp_f < 0.0 || NEAR_ZERO(tmp_f, 0.1)) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
-		    goto bad;
-		}
-
-		scale = tmp_f * ps_default_ppi / 4096.0;
-
-		break;
-	    case 't':
-		bu_vls_trunc(&title, 0);
-		bu_vls_printf(&title, "%s", bu_optarg);
-
-		break;
-	    case 'x':
-		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
-		    goto bad;
-		}
-		xoffset = (int)(tmp_f * ps_default_ppi);
-
-		break;
-	    case 'y':
-		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
-		    goto bad;
-		}
-		yoffset = (int)(tmp_f * ps_default_ppi);
-
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
-		goto bad;
-	}
-    }
-
-    if ((argc - bu_optind) != 1) {
+    args.author = "LIBGED ps";
+    args.font = "Courier";
+    args.title = "No Title";
+    args.size = 4.5;
+    operand_index = bu_cmd_schema_parse_complete(&ps_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	goto bad;
+	return BRLCAD_ERROR;
     }
 
-    fp = fopen(argv[bu_optind], "wb");
+    if (args.size < 0.0 || NEAR_ZERO(args.size, 0.1)) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad size, must be greater than 0.1 inches\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    scale = args.size * ps_default_ppi / 4096.0;
+    bu_color_to_rgb_chars(&args.border_color, border_rgb);
+    border_red = PS_COLOR(border_rgb[RED]);
+    border_green = PS_COLOR(border_rgb[GRN]);
+    border_blue = PS_COLOR(border_rgb[BLU]);
+
+    fp = fopen(argv[operand_index + 1], "wb");
     if (fp == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[bu_optind]);
-	goto bad;
+	bu_vls_printf(gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[operand_index + 1]);
+	return BRLCAD_ERROR;
     }
 
-    dl_ps(gedp->i->ged_gdp->gd_headDisplay, fp, border, bu_vls_addr(&font), bu_vls_addr(&title), bu_vls_addr(&creator), linewidth, scale, xoffset, yoffset, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_perspective, gedp->ged_gvp->gv_eye_pos, border_red, border_green, border_blue);
+    dl_ps(gedp->i->ged_gdp->gd_headDisplay, fp, args.border, args.font, args.title,
+	args.author, linewidth, scale, (int)(args.xoffset * ps_default_ppi),
+	(int)(args.yoffset * ps_default_ppi), gedp->ged_gvp->gv_model2view,
+	gedp->ged_gvp->gv_perspective, gedp->ged_gvp->gv_eye_pos,
+	border_red, border_green, border_blue);
 
     fclose(fp);
 
-    bu_vls_free(&font);
-    bu_vls_free(&title);
-    bu_vls_free(&creator);
-
     return BRLCAD_OK;
-
-bad:
-    bu_vls_free(&font);
-    bu_vls_free(&title);
-    bu_vls_free(&creator);
-
-    return BRLCAD_ERROR;
 }
 
 
 #include "../include/plugin.h"
 
 #define GED_PS_COMMANDS(X, XID) \
-    X(postscript, ged_ps_core, GED_CMD_DEFAULT) \
-    X(ps, ged_ps_core, GED_CMD_DEFAULT) \
+    X(postscript, ged_ps_core, GED_CMD_DEFAULT, &postscript_cmd_schema) \
+    X(ps, ged_ps_core, GED_CMD_DEFAULT, &ps_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_ps", 1, GED_PS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_ps", 1, GED_PS_COMMANDS)
 
 /*
  * Local Variables:

@@ -69,11 +69,18 @@ ged_model2view_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_MODEL2VIEW_COMMANDS(X, XID) \
-    X(model2view, ged_model2view_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand model2view_schema_operands[] = {
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_NUMBER, 0, 3, "Optional X Y Z model point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(model2view, 0, 3, GED_SCHEMA_COUNT_NONE)
+static const struct bu_cmd_schema model2view_cmd_schema = {"model2view", "Query the transform or convert a model point", NULL, model2view_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {model2view_schema_validate}};
 
-GED_DECLARE_COMMAND_SET(GED_MODEL2VIEW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_model2view", 1, GED_MODEL2VIEW_COMMANDS)
+#define GED_MODEL2VIEW_COMMANDS(X, XID) \
+    X(model2view, ged_model2view_core, GED_CMD_DEFAULT, &model2view_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_MODEL2VIEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_model2view", 1, GED_MODEL2VIEW_COMMANDS)
 
 /*
  * Local Variables:

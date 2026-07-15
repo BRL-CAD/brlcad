@@ -10,7 +10,8 @@ gltf-g - convert a glTF model to a BRL-CAD database
 
 [source]
 ----
-gltf-g [-h] [-v] [-E] [-o _output_file.g_] _input_file_ [_output_file.g_]
+gltf-g [-h] [-v] [-E] -o _output_file.g_ _input_file_
+gltf-g [-h] [-v] [-E] _input_file_ _output_file.g_
 ----
 
 
@@ -30,8 +31,8 @@ stored as signed or unsigned 16- or 32-bit integers, and vertex
 positions may be single- or double-precision floating point; other
 component types are skipped with a warning.
 
-The output database may be named either positionally as the second
-argument or with the *-o* option, but not both.
+An output database name is required.  Supply it either positionally as the
+second argument or with the *-o* option, but not both.
 
 [[options]]
 == OPTIONS
@@ -46,8 +47,8 @@ argument or with the *-o* option, but not both.
   data.
 
 *-o* _output_file.g_, *--output* _output_file.g_::
-  Set the name of the output BRL-CAD database. Mutually exclusive with
-  giving the output file as a positional argument.
+  Set the required output BRL-CAD database name instead of giving the output
+  file as a positional argument.
 
 *-E*, *--extensions*::
   Preserve the original JSON for glTF extras and extensions while parsing.

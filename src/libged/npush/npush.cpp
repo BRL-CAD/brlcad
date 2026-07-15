@@ -34,8 +34,8 @@
 #include <iterator>
 #include <limits>
 
-#include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
+#include "bu/malloc.h"
 
 #include "../ged_private.h"
 
@@ -215,6 +215,48 @@ struct push_state {
      * store them prior to the database writing step. */
     std::map<struct directory *, struct rt_db_internal *> updated;
     std::map<struct directory *, struct rt_db_internal *> added;
+};
+
+struct npush_args {
+    int print_help;
+    int xpush;
+    int to_regions;
+    int to_solids;
+    int max_depth;
+    int verbosity;
+    int local_changes_only;
+    int dry_run;
+};
+
+static const struct bu_cmd_option npush_options[] = {
+    BU_CMD_FLAG("h", "help", struct npush_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_COUNTING_FLAG("v", "verbosity", struct npush_args, verbosity,
+	"Increase output verbosity"),
+    BU_CMD_FLAG("x", "xpush", struct npush_args, xpush,
+	"Create new objects if needed to push matrices"),
+    BU_CMD_ALIAS_SHORT("f", "xpush", 1),
+    BU_CMD_ALIAS_LONG("force", "xpush", 1),
+    BU_CMD_FLAG("r", "regions", struct npush_args, to_regions,
+	"Halt push at regions"),
+    BU_CMD_FLAG("s", "solids", struct npush_args, to_solids,
+	"Halt push at solids"),
+    BU_CMD_INTEGER("d", "max-depth", struct npush_args, max_depth, "depth",
+	"Halt at depth from tree root"),
+    BU_CMD_FLAG("L", "local", struct npush_args, local_changes_only,
+	"Restrict changes to selected trees"),
+    BU_CMD_FLAG("D", "dry-run", struct npush_args, dry_run,
+	"Calculate changes without applying them"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand npush_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Root objects whose matrices are pushed", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema npush_cmd_schema = {
+    "npush", "Push matrices down object trees", npush_options, npush_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /* Tree walks terminate at leaves.  However, what constitutes a leaf is not always
@@ -1134,8 +1176,9 @@ tree_update_walk(
 
 
 static void
-npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
-    char *option_help = bu_opt_describe(d, NULL);
+npush_usage(struct bu_vls *str)
+{
+    char *option_help = bu_cmd_schema_describe(&npush_cmd_schema);
     bu_vls_sprintf(str, "Usage: npush [options] obj\n");
     bu_vls_printf(str, "\nPushes position/rotation matrices 'down' the tree hierarchy, altering existing geometry as needed.  Default behavior clears all matrices from tree, unless push requires creation of new geometry objects.\n\n");
     if (option_help) {
@@ -1148,41 +1191,43 @@ npush_usage(struct bu_vls *str, struct bu_opt_desc *d) {
 extern "C" int
 ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help = 0;
-    int xpush = 0;
-    int to_regions = 0;
-    int to_solids = 0;
-    int max_depth = 0;
-    int verbosity = 0;
-    int local_changes_only = 0;
-    int dry_run = 0;
-    struct bu_opt_desc d[11];
-    BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,  "Print help and exit");
-    BU_OPT(d[1], "?", "",          "",   NULL,         &print_help,  "");
-    BU_OPT(d[2], "v", "verbosity",  "",  &bu_opt_incr_long, &verbosity,     "Increase output verbosity (multiple specifications of -v increase verbosity)");
-    BU_OPT(d[3], "f", "force",     "",   NULL,         &xpush,       "Create new objects if needed to push matrices (xpush)");
-    BU_OPT(d[4], "x", "xpush",     "",   NULL,         &xpush,       "");
-    BU_OPT(d[5], "r", "regions",   "",   NULL,         &to_regions,  "Halt push at regions (matrix will be above region reference)");
-    BU_OPT(d[6], "s", "solids",    "",   NULL,         &to_solids,   "Halt push at solids (matrix will be above solid reference)");
-    BU_OPT(d[7], "d", "max-depth", "",   &bu_opt_int,  &max_depth,   "Halt at depth # from tree root (matrix will be above item # layers deep)");
-    BU_OPT(d[8], "L", "local", "",       NULL,  &local_changes_only,   "Ensure push operations do not impact geometry outside the specified trees.");
-    BU_OPT(d[9], "D", "dry-run", "",       NULL,  &dry_run,   "Calculate the changes but do not apply them.");
-
-    BU_OPT_NULL(d[10]);
+    struct npush_args args = {0, 0, 0, 0, 0, 0, 0, 0};
+    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+    int opt_ret;
 
     /* Skip command name */
     argc--; argv++;
 
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
-
-    if (!argc || print_help) {
+	/* Preserve the legacy no-argument usage form without accepting an
+	 * option-only invocation as complete. */
+    if (!argc) {
 	struct bu_vls npush_help = BU_VLS_INIT_ZERO;
-	npush_usage(&npush_help, d);
+	npush_usage(&npush_help);
 	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&npush_help));
 	bu_vls_free(&npush_help);
 	return BRLCAD_OK;
     }
+
+    opt_ret = bu_cmd_schema_parse(&npush_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (opt_ret < 0)
+	return BRLCAD_ERROR;
+    if (args.print_help) {
+	struct bu_vls npush_help = BU_VLS_INIT_ZERO;
+	npush_usage(&npush_help);
+	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&npush_help));
+	bu_vls_free(&npush_help);
+	return BRLCAD_OK;
+    }
+    if (bu_cmd_schema_validate(&npush_cmd_schema, (size_t)argc, argv,
+	    (size_t)argc, &validation) != 0 ||
+	validation.state != BU_CMD_VALIDATE_VALID) {
+	if (validation.hint)
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", validation.hint);
+	bu_cmd_validate_result_clear(&validation);
+	return BRLCAD_ERROR;
+    }
+    bu_cmd_validate_result_clear(&validation);
 
     /* adjust argc to match the leftovers of the options parsing */
     argc = opt_ret;
@@ -1203,12 +1248,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     /* Based on the push arg list, walk the specified trees to identify
      * instances involved with matrices */
     struct push_state s;
-    s.verbosity = verbosity;
+    s.verbosity = args.verbosity;
     s.tol = &wdbp->wdb_tol;
-    s.max_depth = max_depth;
-    s.stop_at_regions = (to_regions) ? true : false;
-    s.stop_at_shapes = (to_solids) ? true : false;
-    s.dry_run = (dry_run) ? true : false;
+    s.max_depth = args.max_depth;
+    s.stop_at_regions = args.to_regions ? true : false;
+    s.stop_at_shapes = args.to_solids ? true : false;
+    s.dry_run = args.dry_run ? true : false;
     s.dbip = gedp->dbip;
     s.msgs = gedp->ged_result_str;
     for (int i = 0; i < argc; i++) {
@@ -1284,7 +1329,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (local_changes_only) {
+    if (args.local_changes_only) {
 	/* Because pushes have potentially global consequences, we provide an
 	 * option that records ALL unique object instances in the database.
 	 * That information will allow the push operation to tell if any given
@@ -1350,7 +1395,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
     // If we don't have force-push on, and we have non-unique mapping between
     // dp pointers and instances, we can't proceed.
-    if (!xpush) {
+    if (!args.xpush) {
 	bool conflict = false;
 	struct bu_vls msgs = BU_VLS_INIT_ZERO;
 	for (size_t i = 0; i < uniq_instances.size(); i++) {
@@ -1381,7 +1426,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 	    // If we're not being verbose, the first failure means we can just
 	    // immediately bail.
-	    if (!verbosity) {
+	if (!args.verbosity) {
 		bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
 		return BRLCAD_ERROR;
 	    }
@@ -1708,11 +1753,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_NPUSH_COMMANDS(X, XID) \
-    X(npush, ged_npush_core, GED_CMD_DEFAULT) \
+#define GED_NPUSH_COMMANDS(X, XID, N, NID, G, GID) \
+    N(npush, ged_npush_core, GED_CMD_DEFAULT, &npush_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_NPUSH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_npush", 1, GED_NPUSH_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_NPUSH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_npush", 1, GED_NPUSH_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

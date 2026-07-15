@@ -1,0 +1,183 @@
+NATIVE COMMAND SCHEMAS, COMPLETION, AND bu_opt RETIREMENT
+=========================================================
+
+Status
+------
+
+The native `bu_cmd_schema` system in `bu/cmdschema.h` is the canonical
+in-tree command description and parser support.  It replaces both the old
+`bu_opt_desc` option rows and the experimental bu_opt command-metadata layer;
+there is no internal compatibility layer between either of those formats and
+the native registry.
+
+All GED command registrations, command execution schemas, help/JSON
+publication, validation, and completion now use the native schema, native
+tree, or a native grammar adapter.  GSH, MGED, and QGED consume the resulting
+libged analysis types rather than bu_opt result types.
+
+`bu_opt` is now a deprecated public compatibility API.  The retirement unit is
+the complete API: descriptor table, parser, help/JSON metadata functions,
+validator functions, and all `bu_opt_*` reader callbacks.  None is a new
+internal helper API.  The distinct getopt-compatible `bu_getopt` interface
+and its `bu_optind`/`bu_optarg` state variables are not part of this retirement.
+
+
+Architecture rules
+------------------
+
+1. A command owns one canonical executable description.  It is either a
+   `bu_cmd_schema`, a `bu_cmd_tree`, a native form selector, or a native
+   grammar adapter.  Help, JSON, parsing, validation, and completion are
+   projections of that description, not separately maintained tables.
+
+2. `libbu` supplies compact reusable scalar and shape primitives for semantics
+   that recur: flags, booleans, signed/hex integers and longs, numbers,
+   strings/VLS, static vocabularies and aliases, RGB/color, vector3, matrices,
+   optional arguments, bounded token sequences, and parser policy.  A new
+   primitive is added only when at least two command migrations demonstrate
+   the same semantics.  A one-command mini-language remains a command-owned
+   side-effect-free consumer or validator.
+
+3. Native rows bind their destination storage directly.  They do not need a
+   parallel `bu_opt_desc` table, a callback table just for conversion, or a
+   central command manifest.
+
+4. A grammar adapter is the correct representation for a true language, such
+   as `search`, rather than flattening that language into option rows.  It must
+   return the normal GED analysis/completion result and publish help/JSON.
+
+5. Completion and validation must be conservative.  A delegated or currently
+   unsupported syntax is explicitly raw/unknown/pass-through; it must not be
+   reported as invalid merely because the generic layer cannot interpret it.
+
+6. Presentation belongs to the frontend.  Libged publishes replacements,
+   candidates, roles, spans, and semantic states.  Linenoise/GSH/MGED/QGED
+   decide cycling, popups, colors, and prompt redraw behavior.
+
+
+Completed native capability
+---------------------------
+
+[x] `bu/cmdschema.h` and `src/libbu/cmdschema.c` provide the compact native
+    option, operand, shape, schema, parser, validator, help, and JSON API.
+
+[x] Native schemas support aliases with a canonical completion spelling,
+    required/optional/no arguments, fixed and bounded multiword shapes,
+    interspersed/options-first/stop-at-first-operand policy, static value
+    vocabularies, conflicts, and count constraints.
+
+[x] Native command trees, form selection, and grammar adapters represent
+    nested and context-selected command languages without a second metadata
+    format.  `search`, `arb`, `select`, `view`, `pnts`, `vdraw`, `bot`, `dm`,
+    and `who` are the representative coverage cases.
+
+[x] Semantic providers cover database objects and paths, path patterns,
+    attributes, region IDs, primitive types, search types, views/display
+    modes, files, units, RGB/color, matrices, vectors, and command names.
+
+[x] Shared RGB parsing accepts packed `r/g/b`, `r,g,b`, and `r;g;b` forms as
+    well as three separate `r g b` words.  Native RGB, full compatible color,
+    and vector3 shapes have focused parser/validation/JSON tests.  The legacy
+    `bu_opt_color` reader delegates to the common RGB parser only as a
+    compatibility implementation.
+
+[x] All registered GED commands and aliases publish a native schema or native
+    grammar adapter.  `ged_cmd_schema_lint(NULL)` and the completion
+    round-trip audit exercise the live registry, including both legacy and
+    new-command forms where relevant.
+
+[x] GSH, MGED, and QGED use the native `bu_cmd_value_t` and GED validation
+    result.  They do not retain bu_opt completion metadata or result handling.
+
+[x] Completion supports editable cycling, path continuation, contextual
+    search grammar completion, semantic token coloring, configurable frontend
+    colors, and command-acceptance color finalization.  Shared line-editing
+    color configuration and its AsciiDoc documentation are installed with the
+    library documentation.
+
+[x] Public documentation describes `bu_cmd_schema`, scalar/shape use,
+    completion behavior, color configuration, and the bu_opt replacement and
+    deprecation policy.
+
+[x] The complete bu_opt public API and every standard `bu_opt_*` reader are
+    marked deprecated.  `doc/changes/deprecated.adoc` and NEWS name the
+    complete replacement and the compatibility window.
+
+[x] The only intentional in-tree uses of the deprecated descriptor API are
+    narrow compatibility adapters for NIRT external callers and GCV external
+    plug-ins, plus the compatibility library's own tests and implementation.
+    They define `BU_OPT_COMPATIBILITY_BUILD` to avoid internal deprecation
+    warnings.  They are deleted when the public compatibility window ends.
+
+[x] `ged_test_no_legacy_buopt` scans all internal source for the retired
+    parser/metadata/reader API.  It deliberately permits `bu_getopt`,
+    `bu_optind`, and `bu_optarg`, and has a narrow documented allowlist for
+    the compatibility implementation/tests and NIRT/GCV external adapters.
+
+[x] The mutation-heavy command analysis test now copies its database fixture
+    into the build tree before execution, so repeated CTest runs do not alter
+    the source fixture.
+
+
+Near-term verification checklist
+--------------------------------
+
+[x] Register the native-only static guard and isolated command-analysis
+    launcher with CTest.
+
+[x] From a healthy build tree, build `libbu`, `libged`, `ged_test_cmd_analysis`,
+    GSH, MGED, and QGED with `BRLCAD_ENABLE_QT=ON`.
+
+[x] Run `bu_cmdschema`, `ged_test_completion_corpus`, and
+    `ged_test_no_legacy_buopt` from CTest.  Run `ged_test_cmd_analysis`
+    through the CTest-installed copy launcher against a pristine fixture
+    copy.  The analysis test must never receive a source-tree database path.
+
+[x] Run frontend completion smoke coverage: line-edit policy/palette tests,
+    MGED completion bridge and CLI schema tests, QGED offscreen console tests,
+    and a GSH terminal session.  These cover cycling, editable previews,
+    Space acceptance, popup replacement, queued `bu_log`, path continuation,
+    preview styling, and Enter color finalization.  Popup placement is
+    determined from the available screen geometry by the frontend and remains
+    subject to ordinary desktop visual review.
+
+[x] Run the command-analysis test with moss.g and m35.g, including nested
+    paths, invalid typed values, search `-exec`, draw mode values, aliases,
+    and a large candidate set.  Candidate ordering must remain stable and
+    alphanumeric.
+
+[x] Review generated help and JSON for a representative flat schema, tree,
+    form selector, and grammar adapter.  Execution, validation, and published
+    syntax must agree.
+
+
+Future extensions, only when a real command requires them
+----------------------------------------------------------
+
+[ ] Add declarative dependencies, implications, and precedence relationships
+    only when simple conflict/count constraints and a command-local validator
+    cannot express a real parser rule cleanly.
+
+[ ] Reuse the `search` adapter for another command only after confirming that
+    it has the same execution grammar; do not force `stat -F` or another
+    superficially similar feature through it.
+
+[ ] Promote any new scalar, mini-language, or provider to libbu only after two
+    independently maintained commands demonstrate an identical contract.  Add
+    parser, validation, completion, help, and JSON tests with that promotion.
+
+[ ] Migrate NIRT and GCV external extension contracts to native schemas if and
+    when their public plug-in/caller APIs are revised.  Until then their
+    compatibility adapters are deliberately isolated from native in-tree
+    command processing.
+
+
+Definition of done for the migration
+------------------------------------
+
+The native migration is complete when the near-term verification checklist
+passes in CI and the native-only guard remains clean.  `bu_opt` itself then
+remains only for the documented source/binary compatibility period.  At the
+scheduled API-removal release, remove `bu/opt.h`, `src/libbu/opt.c`, their
+tests, and the NIRT/GCV compatibility adapters together; do not retain a
+reader-callback subset.

@@ -29,6 +29,24 @@
 
 #include "ged.h"
 
+static const struct bu_cmd_value_keyword log_action_keywords[] = {
+    {"get", NULL, "Copy the current log buffer to the command result"},
+    {"start", NULL, "Begin collecting bu_log output"},
+    {"stop", NULL, "Stop collecting bu_log output"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_cmd_operand log_operands[] = {
+	BU_CMD_OPERAND_KEYWORD_VALUES("action", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Log action", NULL, log_action_keywords),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema log_cmd_schema = {
+    "log", "Manage the libged log buffer", NULL, log_operands,
+    BU_CMD_PARSE_INTERSPERSED, {NULL}
+};
+
 
 /**
  * Get the output from bu_log and append it to clientdata vls.
@@ -95,10 +113,10 @@ ged_log_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_LOG_COMMANDS(X, XID) \
-    X(log, ged_log_core, GED_CMD_DEFAULT) \
+    X(log, ged_log_core, GED_CMD_DEFAULT, &log_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_LOG_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_log", 1, GED_LOG_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_LOG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_log", 1, GED_LOG_COMMANDS)
 
 /*
  * Local Variables:

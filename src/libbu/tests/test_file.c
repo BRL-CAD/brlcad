@@ -229,6 +229,34 @@ main(int ac, char *av[])
 	}
     }
 
+    /* platform-neutral path completion */
+    {
+	char **matches = NULL;
+	size_t count = bu_file_complete("bu_file_test_dir/bu_file_10", 0, NULL, &matches);
+	int found = 0;
+	for (size_t i = 0; i < count; i++)
+	    if (BU_STR_EQUAL(matches[i], "bu_file_test_dir/bu_file_10")) found = 1;
+	if (!found)
+	    bu_exit(1, "%s [FAIL] bu_file_complete did not preserve and complete a directory prefix\n", av[0]);
+	if (matches) bu_argv_free(count, matches);
+
+	matches = NULL;
+	count = bu_file_complete("bu_file_test", BU_FILE_COMPLETE_DIRS_ONLY | BU_FILE_COMPLETE_APPEND_SLASH, NULL, &matches);
+	found = 0;
+	for (size_t i = 0; i < count; i++)
+	    if (BU_STR_EQUAL(matches[i], "bu_file_test_dir/")) found = 1;
+	if (!found)
+	    bu_exit(1, "%s [FAIL] directory-only completion did not append a path separator\n", av[0]);
+	if (matches) bu_argv_free(count, matches);
+
+	const char *extensions[] = {".g", NULL};
+	matches = NULL;
+	count = bu_file_complete("bu_file_test_dir/bu_file_", 0, extensions, &matches);
+	if (count)
+	    bu_exit(1, "%s [FAIL] extension filtering returned non-.g files\n", av[0]);
+	if (matches) bu_argv_free(count, matches);
+    }
+
     /* realpath */
     {
 	char *rpath = bu_file_realpath(bu_vls_cstr(&fname), NULL);

@@ -25,8 +25,22 @@
 
 #include "common.h"
 
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+
+static const struct bu_cmd_operand otranslate_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"Object path to translate", "ged.db_path"),
+    BU_CMD_OPERAND("translation", BU_CMD_VALUE_NUMBER, 3, 3,
+	"X Y Z translation", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema otranslate_cmd_schema = {
+    "otranslate", "Translate an object", NULL, otranslate_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 int
@@ -44,6 +58,11 @@ ged_otranslate_core(struct ged *gedp, int argc, const char *argv[])
     point_t rpp_min;
     point_t rpp_max;
     static const char *usage = "obj dx dy dz";
+    int operand_index = 0;
+    int parse_dummy = 0;
+    const char *object = NULL;
+    const char *translation[3] = {NULL, NULL, NULL};
+    const char *object_argv[1] = {NULL};
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -58,32 +77,40 @@ ged_otranslate_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 5) {
+	operand_index = bu_cmd_schema_parse_complete(&otranslate_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    if (_ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) & BRLCAD_ERROR)
+    object = argv[1 + operand_index];
+    object_argv[0] = object;
+    translation[0] = argv[2 + operand_index];
+    translation[1] = argv[3 + operand_index];
+    translation[2] = argv[4 + operand_index];
+
+	if (_ged_get_obj_bounds2(gedp, 1, object_argv, &gtd, rpp_min, rpp_max) & BRLCAD_ERROR)
 	return BRLCAD_ERROR;
 
     dp = gtd.gtd_obj[gtd.gtd_objpos-1];
     if (!(dp->d_flags & RT_DIR_SOLID)) {
-	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, argv+1, 1, rpp_min, rpp_max) == BRLCAD_ERROR)
+	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, object_argv, 1, rpp_min, rpp_max) == BRLCAD_ERROR)
 	    return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &scan[X]) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad x value - %s", argv[0], argv[2]);
+	if (sscanf(translation[0], "%lf", &scan[X]) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad x value - %s", argv[0], translation[0]);
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &scan[Y]) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad y value - %s", argv[0], argv[3]);
+	if (sscanf(translation[1], "%lf", &scan[Y]) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad y value - %s", argv[0], translation[1]);
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &scan[Z]) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad z value - %s", argv[0], argv[4]);
+	if (sscanf(translation[2], "%lf", &scan[Z]) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad z value - %s", argv[0], translation[2]);
 	return BRLCAD_ERROR;
     }
 
@@ -106,10 +133,10 @@ ged_otranslate_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_OTRANSLATE_COMMANDS(X, XID) \
-    X(otranslate, ged_otranslate_core, GED_CMD_DEFAULT) \
+    X(otranslate, ged_otranslate_core, GED_CMD_DEFAULT, &otranslate_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_OTRANSLATE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_otranslate", 1, GED_OTRANSLATE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_OTRANSLATE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_otranslate", 1, GED_OTRANSLATE_COMMANDS)
 
 /*
  * Local Variables:

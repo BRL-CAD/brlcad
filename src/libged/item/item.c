@@ -25,7 +25,24 @@
 
 #include "common.h"
 #include <stdlib.h>
+#include "bu/cmdschema.h"
 #include "ged.h"
+
+
+static const struct bu_cmd_operand item_schema_operands[] = {
+    BU_CMD_OPERAND("region", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Region object", "ged.db_object"),
+    BU_CMD_OPERAND("ident", BU_CMD_VALUE_INTEGER, 1, 1,
+	"Region identifier", NULL),
+    BU_CMD_OPERAND("air_material_los", BU_CMD_VALUE_INTEGER, 0, 3,
+	"Optional air, material, and LOS values", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema item_cmd_schema = {
+    "item", "Set region item attributes", NULL,
+    item_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
 
 int
 ged_item_core(struct ged *gedp, int argc, const char *argv[])
@@ -41,6 +58,8 @@ ged_item_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
     static const char *usage = "region ident [air [material [los]]]";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -55,33 +74,38 @@ ged_item_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3 || 6 < argc) {
+
+    operand_index = bu_cmd_schema_parse_complete(&item_cmd_schema,
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[0], LOOKUP_NOISY, BRLCAD_ERROR);
     GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
     GED_CHECK_REGION(gedp, dp, BRLCAD_ERROR);
 
-    ident = atoi(argv[2]);
+    ident = (int)strtol(argv[1], NULL, 0);
 
     /*
      * If <air> is not included, it is assumed to be zero.
      * If, on the other hand, either of <GIFTmater> and <los>
      * is not included, it is left unchanged.
      */
-    if (argc > 3) {
-	air = atoi(argv[3]);
+    if (argc > 2) {
+	air = (int)strtol(argv[2], NULL, 0);
     }
 
-    if (argc > 4) {
-	GIFTmater = atoi(argv[4]);
+    if (argc > 3) {
+	GIFTmater = (int)strtol(argv[3], NULL, 0);
 	GIFTmater_set = 1;
     }
 
-    if (argc > 5) {
-	los = atoi(argv[5]);
+    if (argc > 4) {
+	los = (int)strtol(argv[4], NULL, 0);
 	los_set = 1;
     }
 
@@ -109,10 +133,10 @@ ged_item_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_ITEM_COMMANDS(X, XID) \
-    X(item, ged_item_core, GED_CMD_DEFAULT) \
+    X(item, ged_item_core, GED_CMD_DEFAULT, &item_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_ITEM_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_item", 1, GED_ITEM_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ITEM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_item", 1, GED_ITEM_COMMANDS)
 
 /*
  * Local Variables:

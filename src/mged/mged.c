@@ -58,7 +58,7 @@
 
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
@@ -573,12 +573,13 @@ mged_dm_during_clbk(int ac, const char **av, void *UNUSED(u1), void *u2)
 
 
 /*
- * Helper struct for colour options that use bu_opt_color.  The .set flag
+ * Helper struct for colour options that use the native shared color parser.
+ * The .set flag
  * distinguishes "not supplied on command line" from an explicit black (0 0 0).
  * Defined here so it can be embedded in struct mged_cli_overrides below.
  */
 struct mged_color_opt {
-    struct bu_color color;  /* populated by bu_opt_color */
+    struct bu_color color;  /* populated by the native color consumer */
     int set;                /* 1 once the option has been parsed */
 };
 
@@ -590,13 +591,13 @@ struct mged_color_opt {
  *
  * Two usage phases:
  *   (a) Early options (attach, classic_mged, …) are applied immediately
- *       after bu_opt_parse returns, before Tcl/DM initialisation.
+ *       after the command-schema parser returns, before Tcl/DM initialisation.
  *   (b) Deferred options (mged_variables, grid, colours, …) are applied by
  *       apply_cli_overrides() after do_rc() so that CLI flags always win
  *       over any .mgedrc settings.
  */
 struct mged_cli_overrides {
-    /* --- Phase (a): applied immediately after bu_opt_parse() --- */
+    /* --- Phase (a): applied immediately after native option parsing --- */
     const char *attach;         /* -a / --attach */
     const char *dpy_string;     /* -d / --display */
     int classic_mode;           /* -c / --classic  (set to 1 when given) */
@@ -679,90 +680,122 @@ struct mged_cli_overrides {
 };
 
 
-/* ---------------------------------------------------------------------------
- * bu_opt helper: set the pointed-to int to 0 (used by --no-X boolean flags).
- * Returns 0 (no argv element consumed).
- * -------------------------------------------------------------------------- */
+/* Native no-argument state transition used by --no-X boolean flags. */
 static int
-flag_set_zero(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	      const char **UNUSED(argv), void *set_var)
+mged_flag_set_zero(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage)
 {
-    *(int *)set_var = 0;
+    if (storage)
+	*((int *)storage) = 0;
     return 0;
 }
 
 
-/* ---------------------------------------------------------------------------
- * bu_opt helper: parse a hex unsigned int (for -x / -X debug flags).
- * Consumes one argv element.
- * -------------------------------------------------------------------------- */
+/* The standard color consumer writes the first member, then mark the option
+ * present so an explicit black color remains distinguishable from omission. */
 static int
-parse_debug_uint(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+mged_color_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    unsigned int *val = (unsigned int *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "hex value");
-    if (sscanf(argv[0], "%x", val) != 1) {
-	if (msg)
-	    bu_vls_printf(msg, "ERROR: expected hex integer, got \"%s\"\n", argv[0]);
-	return -1;
-    }
-    return 1;
-}
+    struct mged_color_opt *color_opt = (struct mged_color_opt *)storage;
+    int ret = bu_cmd_color_consume(msg, argc, argv,
+	storage ? (void *)&color_opt->color : NULL);
 
-
-/* ---------------------------------------------------------------------------
- * bu_opt_color wrapper: stores the parsed colour in a struct that also holds
- * a "was this option given?" flag.  Used for --bg and --geo-color so that
- * apply_cli_overrides() can reliably distinguish "not supplied" from an
- * explicit black (0 0 0).
- * struct mged_color_opt is defined above (before mged_cli_overrides).
- * -------------------------------------------------------------------------- */
-static int
-parse_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    struct mged_color_opt *co = (struct mged_color_opt *)set_var;
-    int ret = bu_opt_color(msg, argc, argv, &co->color);
-    if (ret > 0)
-	co->set = 1;
+    if (!ret && color_opt)
+	color_opt->set = 1;
     return ret;
 }
 
 
-/* ---------------------------------------------------------------------------
- * bu_opt helper: collect a --set VAR=VALUE string into a bu_ptbl.
- * Validates the '=' separator; stores the original argv pointer (valid for
- * the duration of main()).  Consumes one argv element.
- * -------------------------------------------------------------------------- */
+/* Collect a --set VAR=VALUE string.  Validation is side-effect free when
+ * storage is NULL, as required by command-schema completion/validation. */
 static int
-parse_mged_set(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+mged_set_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    struct bu_ptbl *t = (struct bu_ptbl *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "VAR=VALUE");
-    if (!strchr(argv[0], '=')) {
+    if (!arg || !strchr(arg, '=')) {
 	if (msg)
 	    bu_vls_printf(msg, "ERROR: --set requires VAR=VALUE format (no '=' in \"%s\")\n",
-			  argv[0]);
+			  arg ? arg : "");
 	return -1;
     }
-    bu_ptbl_ins(t, (long *)argv[0]);
-    return 1;
+    if (storage)
+	bu_ptbl_ins((struct bu_ptbl *)storage, (long *)arg);
+    return 0;
 }
 
 
-/* ---------------------------------------------------------------------------
- * bu_opt helper: collect a --rset ARGS string into a bu_ptbl.
- * The ARGS string should contain everything that would follow "rset " on the
- * MGED command line, e.g. "g snap 1" or "ax model_draw 1".
- * Consumes one argv element.
- * -------------------------------------------------------------------------- */
+/* Collect one quoted --rset argument string for later Tcl evaluation. */
 static int
-parse_rset(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+mged_rset_parse(struct bu_vls *UNUSED(msg), const char *arg, void *storage)
 {
-    struct bu_ptbl *t = (struct bu_ptbl *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "ARGS");
-    bu_ptbl_ins(t, (long *)argv[0]);
-    return 1;
+    if (!arg)
+	return -1;
+    if (storage)
+	bu_ptbl_ins((struct bu_ptbl *)storage, (long *)arg);
+    return 0;
 }
+
+
+static const struct bu_cmd_option mged_cli_options[] = {
+    BU_CMD_STRING("a", "attach", struct mged_cli_overrides, attach, "type", "display manager attach target"),
+    BU_CMD_STRING("d", "display", struct mged_cli_overrides, dpy_string, "string", "X display string"),
+    BU_CMD_FLAG("r", "read-only", struct mged_cli_overrides, read_only, "open database read-only"),
+    BU_CMD_FLAG("p", "pipe", struct mged_cli_overrides, pipe_mode, "pipe mode (emit CMD_DONE sentinels)"),
+    BU_CMD_FLAG("c", "classic", struct mged_cli_overrides, classic_mode, "classic text-only mode"),
+    BU_CMD_FLAG("C", "gui", struct mged_cli_overrides, gui_mode, "GUI (non-classic) mode"),
+    BU_CMD_FLAG("b", "background", struct mged_cli_overrides, background, "run in background (fork)"),
+    BU_CMD_HEX_INTEGER("x", "rt-debug", struct mged_cli_overrides, rt_debug_val, "hex", "set librt debug flags (hex)"),
+    BU_CMD_HEX_INTEGER("X", "bu-debug", struct mged_cli_overrides, bu_debug_val, "hex", "set libbu debug flags (hex)"),
+    BU_CMD_FLAG("v", "version", struct mged_cli_overrides, print_version, "print version info and exit"),
+    BU_CMD_FLAG("h", "help", struct mged_cli_overrides, print_help, "print help and exit"),
+    BU_CMD_FLAG("?", NULL, struct mged_cli_overrides, print_help, "print help and exit"),
+    BU_CMD_FLAG("o", NULL, struct mged_cli_overrides, old_gui_flag, "[developer] use old GUI"),
+    BU_CMD_STRING(NULL, "rcfile", struct mged_cli_overrides, rcfile, "file", "use FILE instead of .mgedrc"),
+    BU_CMD_FLAG(NULL, "no-rc", struct mged_cli_overrides, skip_rc, "skip loading any .mgedrc file"),
+    BU_CMD_CUSTOM(NULL, "set", struct mged_cli_overrides, set_pairs, mged_set_parse, "VAR=VALUE", "set an mged variable (e.g. --set use_air=1); applied after .mgedrc"),
+    BU_CMD_CUSTOM(NULL, "rset", struct mged_cli_overrides, rset_pairs, mged_rset_parse, "ARGS", "set an rset resource (e.g. --rset \"g snap 1\"); applied after .mgedrc"),
+    BU_CMD_FLAG(NULL, "use-air", struct mged_cli_overrides, use_air, "enable use_air"),
+    BU_CMD_CUSTOM_FLAG(NULL, "no-use-air", "no-use-air", struct mged_cli_overrides, use_air, mged_flag_set_zero, "disable use_air"),
+    BU_CMD_FLAG(NULL, "dlist", struct mged_cli_overrides, dlist, "enable display lists"),
+    BU_CMD_CUSTOM_FLAG(NULL, "no-dlist", "no-dlist", struct mged_cli_overrides, dlist, mged_flag_set_zero, "disable display lists"),
+    BU_CMD_FLAG(NULL, "faceplate", struct mged_cli_overrides, faceplate, "show faceplate overlay"),
+    BU_CMD_CUSTOM_FLAG(NULL, "no-faceplate", "no-faceplate", struct mged_cli_overrides, faceplate, mged_flag_set_zero, "hide faceplate overlay"),
+    BU_CMD_FLAG(NULL, "predictor", struct mged_cli_overrides, predictor, "enable view predictor"),
+    BU_CMD_CUSTOM_FLAG(NULL, "no-predictor", "no-predictor", struct mged_cli_overrides, predictor, mged_flag_set_zero, "disable view predictor"),
+    BU_CMD_INTEGER(NULL, "linewidth", struct mged_cli_overrides, linewidth, "#", "wireframe line width (pixels, >=1)"),
+    BU_CMD_CHAR(NULL, "linestyle", struct mged_cli_overrides, linestyle, "s|d", "line style: s=solid, d=dashed"),
+    BU_CMD_NUMBER(NULL, "perspective", struct mged_cli_overrides, perspective, "#", "perspective angle in degrees (-1=off)"),
+    BU_CMD_NUMBER(NULL, "eye-sep-dist", struct mged_cli_overrides, eye_sep_dist, "#", "stereo eye separation (mm, 0=mono)"),
+    BU_CMD_INTEGER(NULL, "port", struct mged_cli_overrides, port, "#", "framebuffer server listen port (0-65535)"),
+    BU_CMD_CHAR(NULL, "coords", struct mged_cli_overrides, coords, "m|v", "constraint coords: m=model v=view"),
+    BU_CMD_CHAR(NULL, "rotate-about", struct mged_cli_overrides, rotate_about, "m|v|e", "rotate center: m=model v=view e=eye"),
+    BU_CMD_CHAR(NULL, "transform", struct mged_cli_overrides, transform, "v|a|e", "mouse transform: v=view a=adc e=edit"),
+    BU_CMD_NUMBER(NULL, "nmg-eu-dist", struct mged_cli_overrides, nmg_eu_dist, "#", "NMG edge-use distance tolerance"),
+    BU_CMD_CHAR(NULL, "mouse-behavior", struct mged_cli_overrides, mouse_behavior, "v|a|e", "mouse behavior mode"),
+    BU_CMD_NUMBER(NULL, "predictor-advance", struct mged_cli_overrides, predictor_advance, "#", "predictor advance time (s)"),
+    BU_CMD_NUMBER(NULL, "predictor-length", struct mged_cli_overrides, predictor_length, "#", "predictor trail length (s)"),
+    BU_CMD_INTEGER(NULL, "perspective-mode", struct mged_cli_overrides, perspective_mode, "0|1", "enable/disable perspective mode"),
+    BU_CMD_INTEGER(NULL, "context", struct mged_cli_overrides, context, "0|1", "context mode (0=off)"),
+    BU_CMD_INTEGER(NULL, "sliders", struct mged_cli_overrides, sliders, "0|1", "show sliders"),
+    BU_CMD_INTEGER(NULL, "hot-key", struct mged_cli_overrides, hot_key, "#", "hot key character code"),
+    BU_CMD_INTEGER(NULL, "fb-overlay", struct mged_cli_overrides, fb_overlay, "0|1|2", "framebuffer overlay: 0=under 1=inter 2=over"),
+    BU_CMD_STRING(NULL, "dm-type", struct mged_cli_overrides, dm_type, "type", "display manager type (e.g. ogl, swrast)"),
+    BU_CMD_STRING(NULL, "geom", struct mged_cli_overrides, geom, "WxH+X+Y", "command window geometry"),
+    BU_CMD_STRING(NULL, "ggeom", struct mged_cli_overrides, ggeom, "WxH+X+Y", "graphics window geometry"),
+    BU_CMD_INTEGER(NULL, "grid-draw", struct mged_cli_overrides, grid_draw, "0|1", "show/hide grid"),
+    BU_CMD_INTEGER(NULL, "grid-snap", struct mged_cli_overrides, grid_snap, "0|1", "enable/disable grid snap"),
+    BU_CMD_NUMBER(NULL, "grid-rh", struct mged_cli_overrides, grid_rh, "#", "horizontal grid resolution"),
+    BU_CMD_NUMBER(NULL, "grid-rv", struct mged_cli_overrides, grid_rv, "#", "vertical grid resolution"),
+    BU_CMD_INTEGER(NULL, "grid-mrh", struct mged_cli_overrides, grid_mrh, "#", "horizontal major grid interval"),
+    BU_CMD_INTEGER(NULL, "grid-mrv", struct mged_cli_overrides, grid_mrv, "#", "vertical major grid interval"),
+    BU_CMD_OPTION_SHAPED(NULL, "bg", "bg", struct mged_cli_overrides, bg_color, BU_CMD_VALUE_COLOR, "R G B", "background colour (0-255 per component, or #RRGGBB)", BU_CMD_ARG_REQUIRED, &bu_cmd_color_arg_shape, mged_color_consume),
+    BU_CMD_OPTION_SHAPED(NULL, "geo-color", "geo-color", struct mged_cli_overrides, geo_def_color, BU_CMD_VALUE_COLOR, "R G B", "default geometry wireframe colour", BU_CMD_ARG_REQUIRED, &bu_cmd_color_arg_shape, mged_color_consume),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_schema mged_cli_schema = {
+    "mged", "Multi-display interactive combinatorial solid geometry editor",
+    mged_cli_options, NULL, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 /**
@@ -893,21 +926,61 @@ do_tab_expansion(struct mged_state *s)
     Tcl_Obj *result;
     Tcl_Obj *newCommand;
     Tcl_Obj *matches;
+    Tcl_Obj *completionCountObj = NULL;
+    Tcl_Obj *cursorObj = NULL;
+    Tcl_Obj *objv[4];
+    const char *request_line = bu_vls_addr(&s->input_str);
+    size_t request_cursor = s->input_str_index;
+    size_t result_cursor = 0;
+    int cycle_index = -1;
+    int completion_count = 0;
     int numExpansions=0;
-    struct bu_vls tab_expansion = BU_VLS_INIT_ZERO;
+    static struct bu_vls completion_base_line = BU_VLS_INIT_ZERO;
+    static struct bu_vls completion_last_line = BU_VLS_INIT_ZERO;
+    static size_t completion_base_cursor = 0;
+    static size_t completion_last_cursor = 0;
+    static int completion_last_index = -1;
+    static int completion_last_count = 0;
 
-    bu_vls_printf(&tab_expansion, "tab_expansion {%s}", bu_vls_addr(&s->input_str));
-    ret = Tcl_Eval(s->interp, bu_vls_addr(&tab_expansion));
-    bu_vls_free(&tab_expansion);
+    if (completion_last_count > 1 &&
+	    s->input_str_index == completion_last_cursor &&
+	    BU_STR_EQUAL(bu_vls_addr(&s->input_str), bu_vls_cstr(&completion_last_line))) {
+	request_line = bu_vls_cstr(&completion_base_line);
+	request_cursor = completion_base_cursor;
+	cycle_index = completion_last_index + 1;
+    } else {
+	bu_vls_strcpy(&completion_base_line, bu_vls_addr(&s->input_str));
+	completion_base_cursor = s->input_str_index;
+	completion_last_index = -1;
+    }
+
+    objv[0] = Tcl_NewStringObj("tab_expansion", -1);
+    objv[1] = Tcl_NewStringObj(request_line, -1);
+    objv[2] = Tcl_NewWideIntObj((Tcl_WideInt)request_cursor);
+    int objc = (cycle_index >= 0) ? 4 : 3;
+    if (cycle_index >= 0)
+	objv[3] = Tcl_NewIntObj(cycle_index);
+    for (int i = 0; i < objc; i++)
+	Tcl_IncrRefCount(objv[i]);
+    ret = Tcl_EvalObjv(s->interp, objc, objv, 0);
+    for (int i = 0; i < objc; i++)
+	Tcl_DecrRefCount(objv[i]);
 
     if (ret == TCL_OK) {
 	result = Tcl_GetObjResult(s->interp);
 	Tcl_ListObjIndex(s->interp, result, 0, &newCommand);
 	Tcl_ListObjIndex(s->interp, result, 1, &matches);
+	Tcl_ListObjIndex(s->interp, result, 2, &completionCountObj);
+	Tcl_ListObjIndex(s->interp, result, 3, &cursorObj);
 	Tcl_ListObjLength(s->interp, matches, &numExpansions);
-	if (numExpansions > 1) {
-	    /* show the possible matches */
-	    bu_log("\n%s\n", Tcl_GetString(matches));
+	if (completionCountObj)
+	    Tcl_GetIntFromObj(s->interp, completionCountObj, &completion_count);
+	else
+	    completion_count = numExpansions;
+	if (cursorObj) {
+	    Tcl_WideInt cursor_wide = 0;
+	    if (Tcl_GetWideIntFromObj(s->interp, cursorObj, &cursor_wide) == TCL_OK && cursor_wide > 0)
+		result_cursor = (size_t)cursor_wide;
 	}
 
 	/* display the expanded line */
@@ -917,12 +990,33 @@ do_tab_expansion(struct mged_state *s)
 	bu_vls_strcat(&s->input_str, Tcl_GetString(newCommand));
 
 	/* only one match remaining, pad space so we can keep going */
-	if (numExpansions == 1)
+	if (numExpansions == 1) {
 	    bu_vls_strcat(&s->input_str, " ");
+	    result_cursor++;
+	}
 
-	s->input_str_index = bu_vls_strlen(&s->input_str);
 	bu_log("%s", bu_vls_addr(&s->input_str));
+	if (result_cursor > bu_vls_strlen(&s->input_str))
+	    result_cursor = bu_vls_strlen(&s->input_str);
+	for (size_t i = result_cursor; i < bu_vls_strlen(&s->input_str); i++)
+	    bu_log("\b");
+	s->input_str_index = result_cursor;
+
+	if (completion_count > 1) {
+	    completion_last_count = completion_count;
+	    completion_last_index = cycle_index;
+	    completion_last_cursor = result_cursor;
+	    bu_vls_strcpy(&completion_last_line, bu_vls_addr(&s->input_str));
+	} else {
+	    completion_last_count = 0;
+	    completion_last_index = -1;
+	    completion_last_cursor = 0;
+	    bu_vls_trunc(&completion_last_line, 0);
+	    bu_vls_trunc(&completion_base_line, 0);
+	}
     } else {
+	completion_last_count = 0;
+	completion_last_index = -1;
 	bu_log("ERROR\n");
 	bu_log("%s\n", Tcl_GetStringResult(s->interp));
     }
@@ -1922,8 +2016,8 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
      * channel buffer and must be consumed with Tcl_Read, not read(). */
     Tcl_Channel chan = (Tcl_Channel)clientData;
     int count;
-    char line[RT_MAXLINE+1] = {0};
     Tcl_DString tclcommand;
+    char line[RT_MAXLINE+1] = {0};
     Tcl_Obj *save_result;
 
     count = Tcl_Read(chan, line, RT_MAXLINE);
@@ -2588,7 +2682,7 @@ main(int argc, char *argv[])
 #endif
 
     /*
-     * Parse command-line options using bu_opt.  All values are collected into
+     * Parse command-line options with the native schema.  All values are collected into
      * the mged_cli_overrides struct; "early" options (that affect behaviour
      * before Tcl/DM initialisation) are applied immediately below, while
      * "deferred" options (mged_variables, grid, colour) are applied after
@@ -2640,84 +2734,51 @@ main(int argc, char *argv[])
     bu_ptbl_init(&cl.rset_pairs, 8, "mged_cli_rset_pairs");
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    const char **option_argv = (const char **)bu_calloc((size_t)argc, sizeof(const char *), "mged native option argv");
+    const char **command_argv = (const char **)bu_calloc((size_t)argc, sizeof(const char *), "mged command argv");
+    int option_argc = 0;
+    int command_argc = 0;
 
-    /* Option table: the BU_OPT macro takes (slot, shortopt, longopt, arghelp,
-     * argprocess, set_var, help) — 7 arguments.  Long-only options use NULL for
-     * shortopt.  No-argument options use "" for arghelp and NULL for argprocess. */
-    struct bu_opt_desc opt_defs[54];
-    /* ---- Existing short options, now with long aliases ---- */
-    BU_OPT(opt_defs[0],  "a", "attach",           "type",    bu_opt_str,      &cl.attach,           "display manager attach target");
-    BU_OPT(opt_defs[1],  "d", "display",           "string",  bu_opt_str,      &cl.dpy_string,       "X display string");
-    BU_OPT(opt_defs[2],  "r", "read-only",         "",        NULL,            &cl.read_only,        "open database read-only");
-    BU_OPT(opt_defs[3],  "p", "pipe",              "",        NULL,            &cl.pipe_mode,        "pipe mode (emit CMD_DONE sentinels)");
-    BU_OPT(opt_defs[4],  "c", "classic",           "",        NULL,            &cl.classic_mode,     "classic text-only mode");
-    BU_OPT(opt_defs[5],  "C", "gui",               "",        NULL,            &cl.gui_mode,         "GUI (non-classic) mode");
-    BU_OPT(opt_defs[6],  "b", "background",        "",        NULL,            &cl.background,       "run in background (fork)");
-    BU_OPT(opt_defs[7],  "x", "rt-debug",          "hex",     parse_debug_uint,&cl.rt_debug_val,     "set librt debug flags (hex)");
-    BU_OPT(opt_defs[8],  "X", "bu-debug",          "hex",     parse_debug_uint,&cl.bu_debug_val,     "set libbu debug flags (hex)");
-    BU_OPT(opt_defs[9],  "v", "version",           "",        NULL,            &cl.print_version,    "print version info and exit");
-    BU_OPT(opt_defs[10], "h", "help",              "",        NULL,            &cl.print_help,       "print help and exit");
-    BU_OPT(opt_defs[11], "?", NULL,                "",        NULL,            &cl.print_help,       "print help and exit");
-    /* -o is a developer option: preserved but not promoted with a long alias */
-    BU_OPT(opt_defs[12], "o", NULL,                "",        NULL,            &cl.old_gui_flag,     "[developer] use old GUI");
-    /* ---- rc file control ---- */
-    BU_OPT(opt_defs[13], NULL, "rcfile",           "file",    bu_opt_str,      &cl.rcfile,           "use FILE instead of .mgedrc");
-    BU_OPT(opt_defs[14], NULL, "no-rc",            "",        NULL,            &cl.skip_rc,          "skip loading any .mgedrc file");
-    /* ---- general escape hatches ---- */
-    BU_OPT(opt_defs[15], NULL, "set",              "VAR=VALUE",parse_mged_set, &cl.set_pairs,
-	   "set an mged variable (e.g. --set use_air=1); applied after .mgedrc");
-    BU_OPT(opt_defs[16], NULL, "rset",             "ARGS",    parse_rset,      &cl.rset_pairs,
-	   "set an rset resource (e.g. --rset \"g snap 1\"); applied after .mgedrc");
-    /* ---- mged_variables: boolean on/off pairs ---- */
-    BU_OPT(opt_defs[17], NULL, "use-air",          "",        NULL,            &cl.use_air,          "enable use_air");
-    BU_OPT(opt_defs[18], NULL, "no-use-air",       "",        flag_set_zero,   &cl.use_air,          "disable use_air");
-    BU_OPT(opt_defs[19], NULL, "dlist",            "",        NULL,            &cl.dlist,            "enable display lists");
-    BU_OPT(opt_defs[20], NULL, "no-dlist",         "",        flag_set_zero,   &cl.dlist,            "disable display lists");
-    BU_OPT(opt_defs[21], NULL, "faceplate",        "",        NULL,            &cl.faceplate,        "show faceplate overlay");
-    BU_OPT(opt_defs[22], NULL, "no-faceplate",     "",        flag_set_zero,   &cl.faceplate,        "hide faceplate overlay");
-    BU_OPT(opt_defs[23], NULL, "predictor",        "",        NULL,            &cl.predictor,        "enable view predictor");
-    BU_OPT(opt_defs[24], NULL, "no-predictor",     "",        flag_set_zero,   &cl.predictor,        "disable view predictor");
-    /* ---- mged_variables: valued options ---- */
-    BU_OPT(opt_defs[25], NULL, "linewidth",        "#",       bu_opt_int,      &cl.linewidth,        "wireframe line width (pixels, >=1)");
-    BU_OPT(opt_defs[26], NULL, "linestyle",        "s|d",     bu_opt_char,     &cl.linestyle,        "line style: s=solid, d=dashed");
-    BU_OPT(opt_defs[27], NULL, "perspective",      "#",       bu_opt_fastf_t,  &cl.perspective,      "perspective angle in degrees (-1=off)");
-    BU_OPT(opt_defs[28], NULL, "eye-sep-dist",     "#",       bu_opt_fastf_t,  &cl.eye_sep_dist,     "stereo eye separation (mm, 0=mono)");
-    BU_OPT(opt_defs[29], NULL, "port",             "#",       bu_opt_int,      &cl.port,             "framebuffer server listen port (0-65535)");
-    BU_OPT(opt_defs[30], NULL, "coords",           "m|v",     bu_opt_char,     &cl.coords,           "constraint coords: m=model v=view");
-    BU_OPT(opt_defs[31], NULL, "rotate-about",     "m|v|e",   bu_opt_char,     &cl.rotate_about,     "rotate center: m=model v=view e=eye");
-    BU_OPT(opt_defs[32], NULL, "transform",        "v|a|e",   bu_opt_char,     &cl.transform,        "mouse transform: v=view a=adc e=edit");
-    BU_OPT(opt_defs[33], NULL, "nmg-eu-dist",      "#",       bu_opt_fastf_t,  &cl.nmg_eu_dist,      "NMG edge-use distance tolerance");
-    BU_OPT(opt_defs[34], NULL, "mouse-behavior",   "v|a|e",   bu_opt_char,     &cl.mouse_behavior,   "mouse behavior mode");
-    BU_OPT(opt_defs[35], NULL, "predictor-advance","#",       bu_opt_fastf_t,  &cl.predictor_advance,"predictor advance time (s)");
-    BU_OPT(opt_defs[36], NULL, "predictor-length", "#",       bu_opt_fastf_t,  &cl.predictor_length, "predictor trail length (s)");
-    BU_OPT(opt_defs[37], NULL, "perspective-mode", "0|1",     bu_opt_int,      &cl.perspective_mode, "enable/disable perspective mode");
-    BU_OPT(opt_defs[38], NULL, "context",          "0|1",     bu_opt_int,      &cl.context,          "context mode (0=off)");
-    BU_OPT(opt_defs[39], NULL, "sliders",          "0|1",     bu_opt_int,      &cl.sliders,          "show sliders");
-    BU_OPT(opt_defs[40], NULL, "hot-key",          "#",       bu_opt_int,      &cl.hot_key,          "hot key character code");
-    BU_OPT(opt_defs[41], NULL, "fb-overlay",       "0|1|2",   bu_opt_int,      &cl.fb_overlay,       "framebuffer overlay: 0=under 1=inter 2=over");
-    /* ---- window/display (Tcl mged_default array) ---- */
-    BU_OPT(opt_defs[42], NULL, "dm-type",          "type",    bu_opt_str,      &cl.dm_type,          "display manager type (e.g. ogl, swrast)");
-    BU_OPT(opt_defs[43], NULL, "geom",             "WxH+X+Y", bu_opt_str,      &cl.geom,             "command window geometry");
-    BU_OPT(opt_defs[44], NULL, "ggeom",            "WxH+X+Y", bu_opt_str,      &cl.ggeom,            "graphics window geometry");
-    /* ---- grid (rset g …) ---- */
-    BU_OPT(opt_defs[45], NULL, "grid-draw",        "0|1",     bu_opt_int,      &cl.grid_draw,        "show/hide grid");
-    BU_OPT(opt_defs[46], NULL, "grid-snap",        "0|1",     bu_opt_int,      &cl.grid_snap,        "enable/disable grid snap");
-    BU_OPT(opt_defs[47], NULL, "grid-rh",          "#",       bu_opt_fastf_t,  &cl.grid_rh,          "horizontal grid resolution");
-    BU_OPT(opt_defs[48], NULL, "grid-rv",          "#",       bu_opt_fastf_t,  &cl.grid_rv,          "vertical grid resolution");
-    BU_OPT(opt_defs[49], NULL, "grid-mrh",         "#",       bu_opt_int,      &cl.grid_mrh,         "horizontal major grid interval");
-    BU_OPT(opt_defs[50], NULL, "grid-mrv",         "#",       bu_opt_int,      &cl.grid_mrv,         "vertical major grid interval");
-    /* ---- colour scheme subset (rset cs …) ---- */
-    BU_OPT(opt_defs[51], NULL, "bg",               "R G B",   parse_opt_color, &cl.bg_color,         "background colour (0-255 per component, or #RRGGBB)");
-    BU_OPT(opt_defs[52], NULL, "geo-color",        "R G B",   parse_opt_color, &cl.geo_def_color,    "default geometry wireframe colour");
-    BU_OPT_NULL(opt_defs[53]);
-
-    /* bu_opt_parse does not consume argv[0] (the program name).
-     * Skip it manually so that the remaining args match what the
-     * original bu_getopt-based code expected after optind adjustment. */
+    /* mged_cli_schema above is the single source of launcher option syntax,
+     * storage binding, validation, and generated help. */
     int orig_argc = argc;
     argc--;
     argv++;
-    argc = bu_opt_parse(&parse_msgs, (size_t)argc, (const char **)argv, opt_defs);
+
+    /* Preserve unknown dash-leading words for the optional MGED command while
+     * the native schema owns every recognized launcher option.  This matches
+     * the historic launcher's interspersed, pass-through option behavior. */
+    for (int i = 0; i < argc;) {
+	int span = bu_cmd_schema_option_span(&mged_cli_schema, (size_t)(argc - i), (const char **)(argv + i));
+	if (span > 0) {
+	    if (BU_STR_EQUAL(argv[i], "--")) {
+		for (i++; i < argc; i++)
+		    command_argv[command_argc++] = argv[i];
+		break;
+	    }
+	    for (int si = 0; si < span; si++)
+		option_argv[option_argc++] = argv[i + si];
+	    i += span;
+	    continue;
+	}
+	if (span < 0) {
+	    (void)bu_cmd_schema_parse(&mged_cli_schema, &cl, &parse_msgs,
+		argc - i, (const char **)(argv + i));
+	    break;
+	}
+	command_argv[command_argc++] = argv[i++];
+    }
+
+    if (bu_vls_strlen(&parse_msgs) == 0 &&
+	bu_cmd_schema_parse(&mged_cli_schema, &cl, &parse_msgs, option_argc, option_argv) >= 0) {
+	for (int i = 0; i < command_argc; i++)
+	    argv[i] = (char *)command_argv[i];
+	argc = command_argc;
+    } else {
+	argc = -1;
+    }
+    bu_free((void *)option_argv, "mged native option argv");
+    bu_free((void *)command_argv, "mged command argv");
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
 	/* Print any warnings/errors from the parser */
@@ -2749,10 +2810,10 @@ main(int argc, char *argv[])
     if (cl.print_help) {
 	struct bu_vls usage = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&usage, "Usage:  mged [options] [database [command]]\n\n");
-	char *help_str = bu_opt_describe(opt_defs, NULL);
+	char *help_str = bu_cmd_schema_describe(&mged_cli_schema);
 	if (help_str) {
 	    bu_vls_printf(&usage, "Options:\n%s", help_str);
-	    bu_free(help_str, "bu_opt_describe");
+	    bu_free(help_str, "mged native option help");
 	}
 	bu_exit(1, "%s\n", bu_vls_cstr(&usage));
     }
@@ -2763,8 +2824,8 @@ main(int argc, char *argv[])
 	old_mged_gui = 0;
     }
 
-    /* -x / --rt-debug  and  -X / --bu-debug: parse_debug_uint() stores the
-     * parsed hex value in cl.rt_debug_val / cl.bu_debug_val.  Both fields
+    /* -x / --rt-debug and -X / --bu-debug store native hexadecimal values in
+     * cl.rt_debug_val / cl.bu_debug_val.  Both fields
      * were initialised to the current values of rt_debug / bu_debug (see
      * below) so an unconditional copy here is safe: if the user did not
      * supply -x/-X the value is unchanged. */

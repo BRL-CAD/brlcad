@@ -142,11 +142,20 @@ ged_orotate_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_OROTATE_COMMANDS(X, XID) \
-    X(orotate, ged_orotate_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand orotate_schema_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1, "Object path", NULL),
+    BU_CMD_OPERAND("rotation", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z rotation angles", NULL),
+    BU_CMD_OPERAND("keypoint", BU_CMD_VALUE_NUMBER, 0, 3, "Optional X Y Z keypoint", NULL),
+    BU_CMD_OPERAND_NULL
+};
+GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(orotate, 4, 7, GED_SCHEMA_COUNT_NONE)
+static const struct bu_cmd_schema orotate_cmd_schema = {"orotate", "Rotate an object about a keypoint", NULL, orotate_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {orotate_schema_validate}};
 
-GED_DECLARE_COMMAND_SET(GED_OROTATE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_orotate", 1, GED_OROTATE_COMMANDS)
+#define GED_OROTATE_COMMANDS(X, XID) \
+    X(orotate, ged_orotate_core, GED_CMD_DEFAULT, &orotate_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_OROTATE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_orotate", 1, GED_OROTATE_COMMANDS)
 
 /*
  * Local Variables:

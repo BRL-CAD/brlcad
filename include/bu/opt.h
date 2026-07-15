@@ -26,11 +26,23 @@
 #include "bu/ptbl.h"
 #include "bu/vls.h"
 
+/*
+ * Deprecated compatibility interface.  New code uses bu/cmdschema.h for
+ * declarative parsing, validation, help, and completion.  Implementations of
+ * this compatibility layer define BU_OPT_COMPATIBILITY_BUILD to avoid
+ * self-referential compiler diagnostics while preserving warnings for users.
+ */
+#ifdef BU_OPT_COMPATIBILITY_BUILD
+#  define BU_OPT_DEPRECATED
+#else
+#  define BU_OPT_DEPRECATED DEPRECATED
+#endif
+
 __BEGIN_DECLS
 
 /** @addtogroup bu_opt
  * @brief
- * Generalized option handling.
+ * Deprecated generalized option handling.
  *
  * This module implements a callback and assignment based mechanism
  * for generalized handling of option handling.  Functionally it is
@@ -43,7 +55,8 @@ __BEGIN_DECLS
  * values, unless a user defines an option definition array that
  * passes in pointers to global variables for setting.
  *
- * To set up a bu_opt parsing system, an array of bu_opt_desc (option
+ * This interface is deprecated.  New code should use bu/cmdschema.h.  To set
+ * up a bu_opt parsing system, an array of bu_opt_desc (option
  * description) structures is defined and terminated with a
  * BU_OPT_DESC_NULL entry.  This array is then used by @link
  * bu_opt_parse @endlink to process an argv array.
@@ -223,13 +236,13 @@ struct bu_opt_desc {
  *                     unused args to the beginning of the array
  * @param[in] ds       option structure
  */
-BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, size_t ac, const char **argv, const struct bu_opt_desc *ds);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, size_t ac, const char **argv, const struct bu_opt_desc *ds);
 
 
 /** Output format options for bu_opt documentation generation */
 typedef enum {
     BU_OPT_ASCII,
-    BU_OPT_DOCBOOK /* TODO */
+    BU_OPT_JSON
 } bu_opt_format_t;
 
 
@@ -349,7 +362,7 @@ struct bu_opt_desc_opts {
  * memory and it is the responsibility of the caller to free it with
  * @link bu_free @endlink.
  */
-BU_EXPORT extern char *bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
+BU_OPT_DEPRECATED BU_EXPORT extern char *bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 
 
 /** @} */
@@ -375,54 +388,57 @@ BU_EXPORT extern char *bu_opt_describe(const struct bu_opt_desc *ds, struct bu_o
 /**
  * Process 1 argument to set a boolean type
  */
-BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set an integer
  */
-BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a long
  */
-BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /**
  * Process 1 argument (hex style) to set a long
  */
-BU_EXPORT extern int bu_opt_long_hex(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_long_hex(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a @link fastf_t @endlink (either a float
  * or a double, depending on how BRL-CAD was compiled)
  */
-BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a char
  */
-BU_EXPORT extern int bu_opt_char(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_char(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a char pointer (uses the original argv
  * string, does not make a copy)
  */
-BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to append to a vls (places a space before the
  * new entry if the target vls is not empty)
  */
-BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
- * Process 1 or 3 arguments to set a bu_color
+ * Process one packed color or three separate arguments to set a bu_color.
+ * Integer RGB accepts r/g/b, r,g,b, r;g;b, or r g b through the shared
+ * bu_rgb_from_argv parser; established packed hexadecimal and normalized
+ * floating-point forms remain accepted for compatibility.
  */
-BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 or 3 arguments to set a vect_t
  */
-BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /** @} */
 
@@ -432,19 +448,248 @@ BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char *
  * intended to change output, such as multiple -v options to increase
  * verbosity.
  */
-BU_EXPORT extern int bu_opt_incr_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_incr_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Looking for a string that defines a language per ISO 639-1 language codes.
  */
-BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Look for a valid man page section identifier (for BRL-CAD purposes valid
  * choices are 1, 3, 5, n)
  */
 #define BRLCAD_MAN_SECTIONS {'1', '3', '5', 'n', '\0'}
-BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
+
+
+
+/***********************************************************
+ * EXPERIMENTAL - work on supporting a way to machine parse
+ * libbu options for increased flexibility with help,
+ * tab completion, etc.
+ *
+ * Still very much a work in progress, but don't want it to
+ * fall out of sync.
+ ***********************************************************/
+
+/** Machine readable option argument cardinality. */
+typedef enum {
+    BU_OPT_ARG_FLAG = 0,
+    BU_OPT_ARG_REQUIRED,
+    BU_OPT_ARG_OPTIONAL
+} bu_opt_arg_requirement_t;
+
+
+/** Machine readable command option parsing policy. */
+typedef enum {
+    BU_OPT_PARSE_OPTIONS_INTERSPERSED = 0,
+    BU_OPT_PARSE_OPTIONS_BEFORE_OPERANDS,
+    BU_OPT_PARSE_OPTIONS_BEFORE_SUBCOMMAND,
+    BU_OPT_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_OPT_PARSE_CUSTOM_SEMANTIC
+} bu_opt_parse_policy_t;
+
+
+/** Machine readable value-shape hints for option and operand arguments. */
+typedef enum {
+    BU_OPT_SHAPE_SCALAR = 0,
+    BU_OPT_SHAPE_TOKEN_SEQUENCE,
+    BU_OPT_SHAPE_COMMA_LIST,
+    BU_OPT_SHAPE_KEY_VALUE_LIST,
+    BU_OPT_SHAPE_AXIS_KEYED,
+    BU_OPT_SHAPE_RANGE_PATTERN,
+    BU_OPT_SHAPE_CUSTOM
+} bu_opt_value_shape_t;
+
+
+/** Optional multi-token and mini-language argument-shape metadata. */
+struct bu_opt_arg_shape {
+    bu_opt_value_shape_t shape;
+    size_t min_tokens;
+    size_t max_tokens;
+    const char *description;
+};
+
+
+#define BU_OPT_ARG_SHAPE_NULL {BU_OPT_SHAPE_SCALAR, 0, 0, NULL}
+
+
+/** Machine readable option/operand value type hints. */
+typedef enum {
+    BU_OPT_VAL_UNKNOWN = 0,
+    BU_OPT_VAL_BOOL,
+    BU_OPT_VAL_INTEGER,
+    BU_OPT_VAL_NUMBER,
+    BU_OPT_VAL_VECTOR,
+    BU_OPT_VAL_MATRIX,
+    BU_OPT_VAL_COLOR,
+    BU_OPT_VAL_KEYWORD,
+    BU_OPT_VAL_STRING,
+    BU_OPT_VAL_DB_OBJECT,
+    BU_OPT_VAL_DB_PATH,
+    BU_OPT_VAL_FILE_PATH,
+    BU_OPT_VAL_RAW
+} bu_opt_value_type_t;
+
+
+/**
+ * Optional metadata for a bu_opt_desc entry.  The opt entry is matched to
+ * either the shortopt or longopt spelling of a bu_opt_desc record.  The array
+ * is terminated by BU_OPT_DESC_META_NULL.
+ */
+struct bu_opt_desc_meta {
+    const char *opt;
+    bu_opt_arg_requirement_t arg_requirement;
+    bu_opt_value_type_t arg_type;
+    int repeat;
+    const char * const *value_keywords;
+    const char *semantic_validator;
+    const struct bu_opt_arg_shape *arg_shape;
+    const char *canonical;
+    const char *conflict_group;
+    const char *requires_opt;
+    int hidden;
+};
+
+
+#define BU_OPT_DESC_META_NULL {NULL, BU_OPT_ARG_FLAG, BU_OPT_VAL_UNKNOWN, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0}
+
+
+/** Optional positional operand metadata for a command. */
+struct bu_opt_operand_desc {
+    const char *name;
+    bu_opt_value_type_t type;
+    size_t min_count;
+    size_t max_count;
+    const char *help_string;
+    const char * const *value_keywords;
+    const char *semantic_validator;
+    const struct bu_opt_arg_shape *arg_shape;
+};
+
+
+#define BU_OPT_OPERAND_DESC_NULL {NULL, BU_OPT_VAL_UNKNOWN, 0, 0, NULL, NULL, NULL, NULL}
+
+
+/** max_count value indicating that an operand may repeat without a fixed bound. */
+#define BU_OPT_COUNT_UNLIMITED ((size_t)-1)
+
+
+/** Command/subcommand schema for bu_opt metadata APIs. */
+struct bu_opt_cmd_desc;
+struct bu_opt_validate_result;
+typedef int (*bu_opt_cmd_validate_func_t)(const struct bu_opt_cmd_desc *cmd,
+	size_t argc, const char **argv, size_t cursor_arg, void *context,
+	struct bu_opt_validate_result *result);
+
+struct bu_opt_cmd_desc {
+    const char *name;
+    const char *help_string;
+    const struct bu_opt_desc *options;
+    const struct bu_opt_desc_meta *option_meta;
+    const struct bu_opt_operand_desc *operands;
+    const struct bu_opt_cmd_desc *subcommands;
+    const char *semantic_validator;
+    bu_opt_parse_policy_t parse_policy;
+    unsigned int schema_version;
+    bu_opt_cmd_validate_func_t custom_validate;
+};
+
+
+#define BU_OPT_CMD_DESC_NULL {NULL, NULL, NULL, NULL, NULL, NULL, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 0, NULL}
+
+
+/** Incremental validation result states. */
+typedef enum {
+    BU_OPT_VALIDATE_UNKNOWN = 0,
+    BU_OPT_VALIDATE_VALID,
+    BU_OPT_VALIDATE_INCOMPLETE,
+    BU_OPT_VALIDATE_INVALID
+} bu_opt_validate_state_t;
+
+
+/** Expected token classes for incremental validation. */
+typedef enum {
+    BU_OPT_EXPECT_NONE = 0,
+    BU_OPT_EXPECT_OPTION = 1,
+    BU_OPT_EXPECT_OPTION_ARG = 2,
+    BU_OPT_EXPECT_OPERAND = 4,
+    BU_OPT_EXPECT_SUBCOMMAND = 8
+} bu_opt_expected_t;
+
+
+/** Result container filled in by bu_opt_validate_* APIs. */
+struct bu_opt_validate_result {
+    bu_opt_validate_state_t state;
+    size_t token_start;
+    size_t token_end;
+    unsigned int expected;
+    const char *hint;
+    size_t completion_count;
+    const char **completion_candidates;
+    /**
+     * Dynamic completion type hint.  When completion_candidates is empty, this
+     * tells callers what kind of external completion source to query.  For
+     * example, BU_OPT_VAL_DB_OBJECT means the client should ask the geometry
+     * database for object names, BU_OPT_VAL_FILE_PATH means filesystem
+     * completion.  BU_OPT_VAL_UNKNOWN means static list candidates suffice or
+     * no completion hint is available.
+     */
+    bu_opt_value_type_t completion_type;
+    /**
+     * Byte offset of the token of interest in the original input string.
+     * Only populated by bu_opt_validate_string; zero otherwise.
+     */
+    size_t char_start;
+    /**
+     * Byte offset one past the end of the token of interest.
+     * Only populated by bu_opt_validate_string; zero otherwise.
+     */
+    size_t char_end;
+};
+
+
+#define BU_OPT_VALIDATE_RESULT_NULL {BU_OPT_VALIDATE_UNKNOWN, 0, 0, BU_OPT_EXPECT_NONE, NULL, 0, NULL, BU_OPT_VAL_UNKNOWN, 0, 0}
+
+
+/**
+ * Free any dynamically allocated completion-candidate data stored in a
+ * bu_opt_validate_result and reset it to the NULL initializer state.
+ */
+BU_OPT_DEPRECATED BU_EXPORT extern void bu_opt_validate_result_clear(struct bu_opt_validate_result *result);
+
+
+/**
+ * Generate a JSON command schema from optional side metadata and existing
+ * bu_opt_desc records.  The returned string must be released with bu_free.
+ */
+BU_OPT_DEPRECATED BU_EXPORT extern char *bu_opt_describe_json(const struct bu_opt_cmd_desc *cmd);
+
+
+/**
+ * Incrementally validate an argv array against a bu_opt command schema.
+ *
+ * @p cursor_arg identifies the token of interest; pass argc to validate the
+ * end-of-line position after the last argument.
+ */
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_validate_argv(const struct bu_opt_cmd_desc *cmd, size_t argc, const char **argv, size_t cursor_arg, struct bu_opt_validate_result *result);
+
+/** Context-aware form used by command-local custom semantic parsers. */
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_validate_argv_ctx(const struct bu_opt_cmd_desc *cmd, size_t argc, const char **argv, size_t cursor_arg, void *context, struct bu_opt_validate_result *result);
+
+
+/**
+ * Incrementally validate a command string against a bu_opt command schema.
+ *
+ * @p cursor_pos identifies the character position of interest in @p input.
+ */
+BU_OPT_DEPRECATED BU_EXPORT extern int bu_opt_validate_string(const struct bu_opt_cmd_desc *cmd, const char *input, size_t cursor_pos, struct bu_opt_validate_result *result);
+
+/***********************************************************
+  END EXPERIMENTAL JSON output support
+ ***********************************************************/
 
 __END_DECLS
 

@@ -25,6 +25,7 @@
 
 #include <QTimer>
 #include <QMessageBox>
+#include <QActionGroup>
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdMainWindow.h"
@@ -60,6 +61,13 @@ QgEdMainWindow::QgEdMainWindow(int canvas_type, int quad_view)
 {
     QgEdApp *ap = (QgEdApp *)qApp;
     ap->w = this;
+
+    completion_mode = bu_cmd_completion_mode_from_env("BRLCAD_QGED_COMPLETION_MODE", BU_CMD_COMPLETE_FILTER);
+    QSettings completion_settings("BRL-CAD", "QGED");
+    if (completion_settings.contains("completionMode")) {
+	QByteArray mode_name = completion_settings.value("completionMode").toString().toLocal8Bit();
+	(void)bu_cmd_completion_mode_parse(mode_name.constData(), &completion_mode);
+    }
 
 #ifdef BRLCAD_OPENGL
     // Define the surface format for OpenGL drawing
@@ -155,6 +163,7 @@ QgEdMainWindow::CreateWidgets(int canvas_type)
     // contents and GED commands.
     GEDShellCompleter *cshellcomp = new GEDShellCompleter(console, gedp);
     console->setCompleter(cshellcomp);
+    console->setCompletionMode(completion_mode);
 
     /* Geometry Tree */
     treeview = new QgTreeView(tree_dock, ap->mdl);
@@ -353,6 +362,33 @@ QgEdMainWindow::SetupMenu()
 
     QMenu *view_menu = menuBar()->addMenu("View");
     vm_treeview_mode_toggle = new QAction("Toggle Hierarchy (ls/tops)", this);
+
+    QMenu *completion_menu = menuBar()->addMenu("Completion");
+    QActionGroup *completion_group = new QActionGroup(this);
+    completion_group->setExclusive(true);
+    struct completion_action {
+	const char *label;
+	bu_cmd_completion_mode_t mode;
+    } completion_actions[] = {
+	{"Filter candidates", BU_CMD_COMPLETE_FILTER},
+	{"Cycle candidates", BU_CMD_COMPLETE_CYCLE},
+	{"Complete common prefix", BU_CMD_COMPLETE_PREFIX},
+	{"Legacy behavior", BU_CMD_COMPLETE_LEGACY},
+	{"Disabled", BU_CMD_COMPLETE_OFF}
+    };
+    for (const struct completion_action &entry : completion_actions) {
+	QAction *action = completion_menu->addAction(entry.label);
+	action->setCheckable(true);
+	action->setChecked(completion_mode == entry.mode);
+	completion_group->addAction(action);
+	connect(action, &QAction::triggered, this, [this, entry]() {
+	    completion_mode = entry.mode;
+	    if (console)
+		console->setCompletionMode(completion_mode);
+	    QSettings settings("BRL-CAD", "QGED");
+	    settings.setValue("completionMode", bu_cmd_completion_mode_name(completion_mode));
+	});
+    }
     view_menu->addAction(vm_treeview_mode_toggle);
     vm_panels = view_menu->addMenu("Panels");
 
@@ -421,6 +457,7 @@ QgEdMainWindow::closeEvent(QCloseEvent* e)
     // https://bugreports.qt.io/browse/QTBUG-16252?focusedCommentId=250562&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-250562
     settings.setValue("geometry", QVariant(geometry()));
     settings.setValue("windowState", saveState());
+    settings.setValue("completionMode", bu_cmd_completion_mode_name(completion_mode));
     bu_log("mainwindow write settings\n");
     if (!e)
 	return;

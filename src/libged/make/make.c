@@ -29,7 +29,7 @@
 #include <string.h>
 
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bu/interrupt.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -37,17 +37,108 @@
 #include "../ged_private.h"
 
 
+struct make_args {
+    point_t origin;
+    fastf_t scale;
+    int help;
+    int list_types;
+};
+
+
+static int
+make_validation_result(struct bu_cmd_validate_result *result,
+	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+	const char *hint)
+{
+    bu_cmd_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = BU_CMD_EXPECT_NONE;
+    result->completion_type = type;
+    result->hint = hint;
+    return 0;
+}
+
+
+static int
+make_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    size_t operands;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    if (bu_cmd_schema_option_present(schema, argc, argv, "h"))
+	return make_validation_result(result, BU_CMD_VALIDATE_VALID,
+	    cursor_arg < argc ? cursor_arg : argc, BU_CMD_VALUE_FLAG, "command help");
+    if (!bu_cmd_schema_option_present(schema, argc, argv, "t"))
+	return 0;
+    operands = bu_cmd_schema_operand_count(schema, argc, argv);
+    if (operands != 0)
+	return make_validation_result(result, BU_CMD_VALIDATE_INVALID,
+	    cursor_arg < argc ? cursor_arg : argc, BU_CMD_VALUE_STRING,
+	    "-t does not accept object or primitive operands");
+    return make_validation_result(result, BU_CMD_VALIDATE_VALID, argc,
+	BU_CMD_VALUE_FLAG, "primitive type listing");
+}
+
+
+static const struct bu_cmd_option make_schema_options[] = {
+    BU_CMD_FLAG("h", NULL, struct make_args, help, "Print command usage"),
+    BU_CMD_ALIAS_SHORT("H", "h", 1),
+    BU_CMD_ALIAS_SHORT("?", "h", 1),
+    BU_CMD_FLAG("t", NULL, struct make_args, list_types, "List supported primitive types"),
+    BU_CMD_ALIAS_SHORT("T", "t", 1),
+    BU_CMD_VECTOR3("o", NULL, struct make_args, origin, "x/y/z", "Primitive origin"),
+    BU_CMD_ALIAS_SHORT("O", "o", 1),
+    BU_CMD_NUMBER("s", NULL, struct make_args, scale, "scale", "Initial size scale"),
+    BU_CMD_ALIAS_SHORT("S", "s", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand make_schema_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "New object name", NULL),
+    BU_CMD_OPERAND("primitive_type", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Primitive type", "ged.primitive_type"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema make_cmd_schema = {
+    "make", "Create a default primitive", make_schema_options,
+    make_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(make_schema_validate, NULL)
+};
+
+
+static void
+make_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&make_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: %s [-o x/y/z] [-s scale] name primitive_type\n       %s -t\n       %s -h",
+	command, command, command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "make native option help");
+    }
+}
+
+
 int
 ged_make_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
-    int k;
+    int operand_index;
+    int bu_optind;
     int save_bu_optind;
     struct directory *dp;
-
-    /* intentionally double for sscanf */
-    double scale = 1.0;
-    double origin[3] = {0.0, 0.0, 0.0};
+    struct make_args args = {{0.0, 0.0, 0.0}, 1.0, 0, 0};
+    fastf_t scale;
+    point_t origin;
 
     struct rt_db_internal internal;
     struct rt_arb_internal *arb_ip;
@@ -74,9 +165,6 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_cline_internal *cline_ip;
 	struct rt_brep_internal *brep_ip;
 
-    /* intentionally not included: cline */
-    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|brep|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -86,59 +174,35 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	make_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    bu_optind = 1;
-
-    /* Process arguments */
-    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT?")) != -1) {
-	if (bu_optopt == '?') k='h';
-	switch (k) {
-	    case 'o':
-	    case 'O':
-		if (sscanf(bu_optarg, "%lf %lf %lf",
-			   &origin[X],
-			   &origin[Y],
-			   &origin[Z]) != 3) {
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case 's':
-	    case 'S':
-		if (sscanf(bu_optarg, "%lf", &scale) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case 't':
-	    case 'T':
-		if (argc == 2) {
-		    /* intentionally not included: cline */
-		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot brep datum ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
-		    return GED_HELP;
-		}
-
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	    case 'h':
-	    case 'H':
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_HELP;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	}
+    operand_index = bu_cmd_schema_parse_complete(&make_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	make_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
     }
-
+    if (args.help) {
+	make_show_help(gedp, argv[0]);
+	return GED_HELP;
+    }
+    if (args.list_types) {
+	/* Intentionally not included: cline. */
+	bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot brep datum ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
+	return GED_HELP;
+    }
+    bu_optind = operand_index + 1;
     argc -= bu_optind;
 
     if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	make_show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
+
+    VMOVE(origin, args.origin);
+    scale = args.scale;
 
     save_bu_optind = bu_optind;
 
@@ -925,7 +989,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	brep_ip->magic = RT_BREP_INTERNAL_MAGIC;
 	brep_ip->brep = (ON_Brep *)brep_create();
     } else {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	make_show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -942,10 +1006,10 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_MAKE_COMMANDS(X, XID) \
-    X(make, ged_make_core, GED_CMD_DEFAULT) \
+    X(make, ged_make_core, GED_CMD_DEFAULT, &make_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_MAKE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_make", 1, GED_MAKE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_MAKE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_make", 1, GED_MAKE_COMMANDS)
 
 /*
  * Local Variables:

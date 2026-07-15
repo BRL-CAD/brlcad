@@ -84,12 +84,20 @@ ged_orient_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_ORIENT_COMMANDS(X, XID) \
-    X(orient, ged_orient_core, GED_CMD_DEFAULT) \
-    X(orientation, ged_orient_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand orient_schema_operands[] = {
+    BU_CMD_OPERAND("quaternion", BU_CMD_VALUE_VECTOR, 1, 4, "Packed quaternion or four components", NULL),
+    BU_CMD_OPERAND_NULL
+};
+GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(orient, 1, 4, GED_SCHEMA_COUNT_NONE)
+static const struct bu_cmd_schema orient_cmd_schema = {"orient", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {orient_schema_validate}};
+static const struct bu_cmd_schema orientation_cmd_schema = {"orientation", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {orient_schema_validate}};
 
-GED_DECLARE_COMMAND_SET(GED_ORIENT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_orient", 1, GED_ORIENT_COMMANDS)
+#define GED_ORIENT_COMMANDS(X, XID) \
+    X(orient, ged_orient_core, GED_CMD_DEFAULT, &orient_cmd_schema) \
+    X(orientation, ged_orient_core, GED_CMD_DEFAULT, &orientation_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ORIENT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_orient", 1, GED_ORIENT_COMMANDS)
 
 /*
  * Local Variables:

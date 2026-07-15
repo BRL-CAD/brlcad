@@ -28,6 +28,7 @@
 /* Includes for C++17 threading support (used for async ged_exec) */
 #include <atomic>
 #include <functional>
+#include <string>
 #include <thread>
 
 #include "./mged.h"
@@ -49,6 +50,7 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
+#include "bu/lineedit.h"
 #include "bu/path.h"
 #include "bu/time.h"
 #include "bu/snooze.h"
@@ -1573,6 +1575,481 @@ cmd_nop(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     (void)interp;
     (void)argc;
     (void)argv;
+    return TCL_OK;
+}
+
+static std::string
+mged_common_completion(const struct ged_cmd_completion_result *result)
+{
+    if (!result || result->completion_count == 0 || !result->completion_candidates)
+	return std::string();
+
+    const char *first = result->completion_candidates[0];
+    if (!first)
+	return std::string();
+
+    std::string common(first);
+    for (size_t i = 1; i < result->completion_count; i++) {
+	const char *candidate = result->completion_candidates[i];
+	if (!candidate) {
+	    common.clear();
+	    break;
+	}
+
+	size_t j = 0;
+	while (j < common.size() && candidate[j] && common[j] == candidate[j])
+	    j++;
+	common.erase(j);
+	if (common.empty())
+	    break;
+    }
+
+    return common;
+}
+
+struct mged_analysis_word {
+    std::string value;
+    size_t start = 0;
+    size_t end = 0;
+    int dynamic = 0;
+    int glob_sensitive = 0;
+};
+
+static int
+mged_word_has_glob(const char *start, size_t len)
+{
+    int escaped = 0;
+    for (size_t i = 0; i < len; i++) {
+	if (!escaped && (start[i] == '*' || start[i] == '?' || start[i] == '['))
+	    return 1;
+	if (!escaped && start[i] == '\\')
+	    escaped = 1;
+	else
+	    escaped = 0;
+    }
+    return 0;
+}
+
+static std::string
+mged_quote_analysis_word(const std::string &word)
+{
+    std::string quoted("\"");
+    const std::string &value = word.empty() ? std::string("__MGED_EMPTY_WORD__") : word;
+    for (char c : value) {
+	if (c == '\\' || c == '"')
+	    quoted.push_back('\\');
+	quoted.push_back(c);
+    }
+    quoted.push_back('"');
+    return quoted;
+}
+
+static void
+mged_tcl_parse_words(const char *line, Tcl_Parse *parse, std::vector<mged_analysis_word> &words)
+{
+    if (!line || !parse)
+	return;
+
+    for (int ti = 0; ti < parse->numTokens;) {
+	Tcl_Token *word_token = &parse->tokenPtr[ti];
+	if (word_token->type != TCL_TOKEN_WORD && word_token->type != TCL_TOKEN_SIMPLE_WORD &&
+		word_token->type != TCL_TOKEN_EXPAND_WORD) {
+	    ti++;
+	    continue;
+	}
+
+	mged_analysis_word word;
+	word.start = (size_t)Tcl_NumUtfChars(line, (int)(word_token->start - line));
+	word.end = word.start + (size_t)Tcl_NumUtfChars(word_token->start, word_token->size);
+	word.glob_sensitive = mged_word_has_glob(word_token->start, (size_t)word_token->size);
+	if (word_token->type == TCL_TOKEN_EXPAND_WORD)
+	    word.dynamic = 1;
+
+	for (int ci = 1; ci <= word_token->numComponents; ci++) {
+	    Tcl_Token *component = &parse->tokenPtr[ti + ci];
+	    if (component->type == TCL_TOKEN_TEXT) {
+		word.value.append(component->start, (size_t)component->size);
+	    } else if (component->type == TCL_TOKEN_BS) {
+		char collapsed[TCL_UTF_MAX + 1] = {0};
+		int read = 0;
+		int written = Tcl_UtfBackslash(component->start, &read, collapsed);
+		if (written > 0)
+		    word.value.append(collapsed, (size_t)written);
+	    } else {
+		word.dynamic = 1;
+	    }
+	}
+	words.push_back(word);
+	ti += word_token->numComponents + 1;
+    }
+}
+
+static void
+mged_append_analysis_token(Tcl_Interp *interp, Tcl_Obj *tokens,
+	const mged_analysis_word &word, const struct ged_cmd_analysis_token *analysis_token,
+	int force_pending, int parse_incomplete)
+{
+    ged_cmd_token_role_t role = GED_CMD_TOKEN_UNKNOWN;
+    ged_cmd_semantic_state_t state = GED_CMD_SEMANTIC_UNKNOWN;
+    bu_cmd_value_t value_type = BU_CMD_VALUE_UNKNOWN;
+    const char *hint = "Tcl word requires runtime evaluation";
+
+    if (analysis_token) {
+	role = analysis_token->role;
+	state = analysis_token->semantic_state;
+	value_type = analysis_token->value_type;
+	hint = analysis_token->hint ? analysis_token->hint : "";
+    }
+    if (word.dynamic) {
+	state = GED_CMD_SEMANTIC_UNKNOWN;
+	hint = "Tcl substitution requires runtime evaluation";
+    } else if (force_pending) {
+	state = GED_CMD_SEMANTIC_PENDING;
+	hint = "MGED glob compatibility may rewrite this word";
+    } else if (parse_incomplete && state != GED_CMD_SEMANTIC_INVALID) {
+	state = GED_CMD_SEMANTIC_INCOMPLETE;
+	hint = "incomplete Tcl command syntax";
+    }
+
+    Tcl_Obj *entry = Tcl_NewListObj(0, NULL);
+    Tcl_ListObjAppendElement(interp, entry, Tcl_NewWideIntObj((Tcl_WideInt)word.start));
+    Tcl_ListObjAppendElement(interp, entry, Tcl_NewWideIntObj((Tcl_WideInt)word.end));
+    Tcl_ListObjAppendElement(interp, entry, Tcl_NewIntObj((int)role));
+    Tcl_ListObjAppendElement(interp, entry, Tcl_NewIntObj((int)state));
+    Tcl_ListObjAppendElement(interp, entry, Tcl_NewIntObj((int)value_type));
+    Tcl_ListObjAppendElement(interp, entry, Tcl_NewStringObj(hint, -1));
+    const char *style = "none";
+    if (state == GED_CMD_SEMANTIC_INVALID)
+	style = "invalid";
+    else if (state == GED_CMD_SEMANTIC_INCOMPLETE || state == GED_CMD_SEMANTIC_PENDING)
+	style = "incomplete";
+    else if (state == GED_CMD_SEMANTIC_VALID &&
+	    (role == GED_CMD_TOKEN_COMMAND || role == GED_CMD_TOKEN_SUBCOMMAND))
+	style = "command";
+    else if (state == GED_CMD_SEMANTIC_VALID && role == GED_CMD_TOKEN_OPTION)
+	style = "option";
+    else if (state == GED_CMD_SEMANTIC_VALID &&
+	    (value_type == BU_CMD_VALUE_DB_OBJECT || value_type == BU_CMD_VALUE_DB_PATH))
+	style = "valid";
+    Tcl_ListObjAppendElement(interp, entry, Tcl_NewStringObj(style, -1));
+    Tcl_ListObjAppendElement(interp, tokens, entry);
+}
+
+int
+cmd_cmd_analyze(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+    Tcl_Obj *tokens = Tcl_NewListObj(0, NULL);
+
+    if (argc != 2) {
+	Tcl_AppendResult(interpreter, "Usage: _mged_cmd_analyze line", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    const char *line = argv[1];
+    size_t line_len = strlen(line);
+    size_t offset = 0;
+    while (offset < line_len) {
+	Tcl_Parse parse;
+	memset(&parse, 0, sizeof(parse));
+	int parse_status = Tcl_ParseCommand(interpreter, line + offset, (int)(line_len - offset), 0, &parse);
+	std::vector<mged_analysis_word> words;
+
+	mged_tcl_parse_words(line, &parse, words);
+
+	if (!words.empty()) {
+	    std::string normalized;
+	    for (const mged_analysis_word &word : words) {
+		if (!normalized.empty())
+		    normalized.push_back(' ');
+		normalized.append(mged_quote_analysis_word(word.value));
+	    }
+
+	    struct ged_cmd_analysis analysis = {0, NULL};
+	    (void)ged_cmd_analyze(s->gedp, normalized.c_str(), &analysis);
+	    int glob_pending = 0;
+	    for (size_t wi = 0; wi < words.size(); wi++) {
+		const struct ged_cmd_analysis_token *atoken = (wi < analysis.token_count) ? &analysis.tokens[wi] : NULL;
+		if (glob_compat_mode && words[wi].glob_sensitive)
+		    glob_pending = 1;
+		if (atoken && atoken->role == GED_CMD_TOKEN_COMMAND &&
+			atoken->semantic_state == GED_CMD_SEMANTIC_INVALID && !words[wi].dynamic) {
+		    Tcl_CmdInfo info;
+		    if (Tcl_GetCommandInfo(interpreter, words[wi].value.c_str(), &info)) {
+			struct ged_cmd_analysis_token adjusted = *atoken;
+			adjusted.semantic_state = GED_CMD_SEMANTIC_VALID;
+			adjusted.hint = "Tcl command";
+			mged_append_analysis_token(interpreter, tokens, words[wi], &adjusted,
+				glob_pending, parse_status != TCL_OK && wi + 1 == words.size());
+			continue;
+		    }
+		}
+		mged_append_analysis_token(interpreter, tokens, words[wi], atoken,
+			glob_pending, parse_status != TCL_OK && wi + 1 == words.size());
+	    }
+	    ged_cmd_analysis_clear(&analysis);
+	}
+
+	size_t consumed = (parse.commandSize > 0) ? (size_t)parse.commandSize : line_len - offset;
+	Tcl_FreeParse(&parse);
+	if (!consumed)
+	    break;
+	offset += consumed;
+	if (parse_status != TCL_OK)
+	    break;
+    }
+
+    Tcl_ResetResult(interpreter);
+    Tcl_SetObjResult(interpreter, tokens);
+    return TCL_OK;
+}
+
+
+int
+cmd_lineedit_colors(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    (void)clientData;
+    (void)argv;
+
+    if (argc != 1) {
+	Tcl_AppendResult(interpreter, "Usage: _mged_lineedit_colors", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    struct bu_lineedit_palette palette = BU_LINEEDIT_PALETTE_INIT_ZERO;
+    (void)bu_lineedit_palette_load_user(&palette);
+    Tcl_Obj *result = Tcl_NewDictObj();
+    for (int i = 0; i < BU_LINEEDIT_ROLE_COUNT; i++) {
+	const struct bu_lineedit_style &style = palette.roles[i];
+	if (!style.flags)
+	    continue;
+
+	Tcl_Obj *value = Tcl_NewDictObj();
+	if (style.flags & BU_LINEEDIT_STYLE_COLOR) {
+	    char color[8] = {0};
+	    snprintf(color, sizeof(color), "#%02x%02x%02x",
+		    (unsigned int)style.rgb[0],
+		    (unsigned int)style.rgb[1],
+		    (unsigned int)style.rgb[2]);
+	    Tcl_DictObjPut(interpreter, value, Tcl_NewStringObj("color", -1),
+		    Tcl_NewStringObj(color, -1));
+	}
+	if (style.flags & BU_LINEEDIT_STYLE_DIM_SET) {
+	    Tcl_DictObjPut(interpreter, value, Tcl_NewStringObj("dim", -1),
+		    Tcl_NewBooleanObj((style.flags & BU_LINEEDIT_STYLE_DIM) != 0));
+	}
+	Tcl_DictObjPut(interpreter, result,
+	    Tcl_NewStringObj(bu_lineedit_role_name((bu_lineedit_role_t)i), -1), value);
+    }
+
+    Tcl_SetObjResult(interpreter, result);
+    return TCL_OK;
+}
+
+struct mged_completion_context {
+    std::string normalized;
+    size_t normalized_cursor = 0;
+    size_t normalized_value_start = 0;
+    size_t normalized_value_end = 0;
+    size_t replacement_start = 0;
+    size_t replacement_end = 0;
+    size_t replacement_start_chars = 0;
+};
+
+/* Return 1 for a Tcl-resolved completion context, 0 to use the legacy raw
+ * path, and -1 when runtime substitution or glob expansion makes completion
+ * unsafe to predict. */
+static int
+mged_tcl_completion_context(Tcl_Interp *interp, const char *line, size_t cursor_chars,
+	struct mged_completion_context *context)
+{
+    size_t line_len = strlen(line);
+    size_t offset = 0;
+    std::vector<mged_analysis_word> active_words;
+
+    while (offset < line_len) {
+	Tcl_Parse parse;
+	memset(&parse, 0, sizeof(parse));
+	int status = Tcl_ParseCommand(interp, line + offset, (int)(line_len - offset), 0, &parse);
+	size_t consumed = (parse.commandSize > 0) ? (size_t)parse.commandSize : line_len - offset;
+	size_t command_end_chars = (size_t)Tcl_NumUtfChars(line, (int)(offset + consumed));
+	int ended_by_separator = consumed &&
+	    (line[offset + consumed - 1] == ';' || line[offset + consumed - 1] == '\n');
+	if (cursor_chars == command_end_chars && ended_by_separator) {
+	    Tcl_FreeParse(&parse);
+	    return -1;
+	}
+	if (cursor_chars < command_end_chars || offset + consumed >= line_len) {
+	    mged_tcl_parse_words(line, &parse, active_words);
+	    Tcl_FreeParse(&parse);
+	    if (status != TCL_OK && active_words.empty())
+		return 0;
+	    break;
+	}
+	Tcl_FreeParse(&parse);
+	if (!consumed)
+	    break;
+	offset += consumed;
+    }
+
+    if (active_words.empty())
+	return 0;
+
+    size_t current = active_words.size();
+    for (size_t i = 0; i < active_words.size(); i++) {
+	if (cursor_chars >= active_words[i].start && cursor_chars <= active_words[i].end) {
+	    current = i;
+	    break;
+	}
+    }
+    if (current < active_words.size() && cursor_chars != active_words[current].end)
+	return 0;
+
+    for (size_t i = 0; i <= current && i < active_words.size(); i++) {
+	if (active_words[i].dynamic)
+	    return -1;
+	if (glob_compat_mode && active_words[i].glob_sensitive)
+	    return -1;
+    }
+
+    for (size_t i = 0; i < active_words.size(); i++) {
+	if (!context->normalized.empty())
+	    context->normalized.push_back(' ');
+	std::string quoted = mged_quote_analysis_word(active_words[i].value);
+	if (i == current) {
+	    context->normalized_value_start = context->normalized.size() + 1;
+	    context->normalized_value_end = context->normalized_value_start + active_words[i].value.size();
+	}
+	context->normalized.append(quoted);
+	if (i == current)
+	    context->normalized_cursor = context->normalized_value_end;
+    }
+
+    if (current == active_words.size()) {
+	if (!context->normalized.empty())
+	    context->normalized.push_back(' ');
+	context->normalized_cursor = context->normalized.size();
+	context->replacement_start = (size_t)(Tcl_UtfAtIndex(line, (int)cursor_chars) - line);
+	context->replacement_end = context->replacement_start;
+	context->replacement_start_chars = cursor_chars;
+	return 1;
+    }
+
+    const mged_analysis_word &word = active_words[current];
+	const char *raw_start = Tcl_UtfAtIndex(line, (int)word.start);
+	const char *raw_end = Tcl_UtfAtIndex(line, (int)word.end);
+	if (raw_end > raw_start + 1 && raw_start[0] == '"' && raw_end[-1] == '"') {
+	    raw_start++;
+	    raw_end--;
+	    context->replacement_start_chars = word.start + 1;
+	} else if (raw_end > raw_start && raw_start[0] == '{') {
+	    return -1;
+	} else {
+	    context->replacement_start_chars = word.start;
+	}
+	context->replacement_start = (size_t)(raw_start - line);
+	context->replacement_end = (size_t)(raw_end - line);
+	return 1;
+}
+
+int
+cmd_cmd_complete(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+    struct ged_cmd_completion_result result = GED_CMD_COMPLETION_RESULT_NULL;
+    Tcl_Obj *outer = Tcl_NewListObj(0, NULL);
+    Tcl_Obj *matches = Tcl_NewListObj(0, NULL);
+    int completion_count = 0;
+    int cursor_pos = 0;
+    int cycle_index = -1;
+    struct mged_completion_context tcl_context;
+    int tcl_context_status = 0;
+
+    if (argc != 3 && argc != 4) {
+	Tcl_AppendResult(interpreter, "Usage: _mged_cmd_complete line cursor_pos ?cycle_index?", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (Tcl_GetInt(interpreter, argv[2], &cursor_pos) != TCL_OK)
+	return TCL_ERROR;
+    if (cursor_pos < 0)
+	cursor_pos = 0;
+
+    if (argc == 4) {
+	if (Tcl_GetInt(interpreter, argv[3], &cycle_index) != TCL_OK)
+	    return TCL_ERROR;
+    }
+
+    tcl_context_status = mged_tcl_completion_context(interpreter, argv[1], (size_t)cursor_pos, &tcl_context);
+    if (tcl_context_status > 0)
+	completion_count = ged_cmd_complete_result(s->gedp, tcl_context.normalized.c_str(), tcl_context.normalized_cursor, &result);
+    else if (tcl_context_status == 0)
+	completion_count = ged_cmd_complete_result(s->gedp, argv[1], (size_t)cursor_pos, &result);
+    if (tcl_context_status > 0 &&
+	    result.replacement_start >= tcl_context.normalized_value_start &&
+	    result.replacement_end <= tcl_context.normalized_value_end) {
+	size_t start_delta = result.replacement_start - tcl_context.normalized_value_start;
+	size_t end_delta = result.replacement_end - tcl_context.normalized_value_start;
+	tcl_context.replacement_start += start_delta;
+	tcl_context.replacement_end = tcl_context.replacement_start + (end_delta - start_delta);
+	tcl_context.replacement_start_chars +=
+	    (size_t)Tcl_NumUtfChars(tcl_context.normalized.c_str() + tcl_context.normalized_value_start, (int)start_delta);
+    }
+    if (completion_count <= 0) {
+	Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewIntObj(0));
+	Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewStringObj(argv[1], -1));
+	Tcl_ListObjAppendElement(interpreter, outer, matches);
+	Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewIntObj(0));
+	Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewWideIntObj((Tcl_WideInt)cursor_pos));
+	Tcl_SetObjResult(interpreter, outer);
+	ged_cmd_completion_result_clear(&result);
+	return TCL_OK;
+    }
+
+    std::string common = mged_common_completion(&result);
+    std::string line(argv[1]);
+    size_t new_cursor = (size_t)cursor_pos;
+    size_t replacement_start = (tcl_context_status > 0) ? tcl_context.replacement_start : result.replacement_start;
+    size_t replacement_end = (tcl_context_status > 0) ? tcl_context.replacement_end : result.replacement_end;
+
+    if (replacement_start > line.size())
+	replacement_start = line.size();
+    if (replacement_end > line.size())
+	replacement_end = line.size();
+    if (replacement_end < replacement_start)
+	replacement_end = replacement_start;
+
+    if (cycle_index >= 0 && result.completion_count > 0) {
+	size_t candidate_index = (size_t)cycle_index % result.completion_count;
+	const char *candidate = result.completion_candidates[candidate_index];
+	if (candidate) {
+	    line.replace(replacement_start, replacement_end - replacement_start, candidate);
+	    new_cursor = (tcl_context_status > 0) ?
+		tcl_context.replacement_start_chars + (size_t)Tcl_NumUtfChars(candidate, -1) :
+		replacement_start + std::strlen(candidate);
+	}
+    } else if (!common.empty()) {
+	line.replace(replacement_start, replacement_end - replacement_start, common);
+	new_cursor = (tcl_context_status > 0) ?
+	    tcl_context.replacement_start_chars + (size_t)Tcl_NumUtfChars(common.c_str(), -1) :
+	    replacement_start + common.size();
+    }
+
+    if (cycle_index < 0 && result.completion_count == 1 && result.completion_candidates[0])
+	Tcl_ListObjAppendElement(interpreter, matches, Tcl_NewStringObj(result.completion_candidates[0], -1));
+
+    Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewIntObj(1));
+    Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewStringObj(line.c_str(), -1));
+    Tcl_ListObjAppendElement(interpreter, outer, matches);
+    Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewIntObj((int)result.completion_count));
+    Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewWideIntObj((Tcl_WideInt)new_cursor));
+    Tcl_SetObjResult(interpreter, outer);
+
+    ged_cmd_completion_result_clear(&result);
     return TCL_OK;
 }
 

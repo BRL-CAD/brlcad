@@ -44,8 +44,8 @@ extern "C" b_off_t ftello(FILE *);
 #include "vmath.h"
 #include "brlcad_ident.h"
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/env.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/process.h"
 #include "bu/units.h"
@@ -447,17 +447,13 @@ main(int argc, const char **argv)
     struct bu_vls launch_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_vls ncmd = BU_VLS_INIT_ZERO;
-    struct bu_vls nirt_debug = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls state_file = BU_VLS_INIT_ZERO;
     struct db_i *dbip;
     struct nirt_io_data io_data = IO_DATA_NULL;
     struct nirt_state *ns = NULL;
 
-    /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
-    struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 15, 65, NULL, NULL, NULL, 1, NULL, NULL };
     struct nirt_opt_vals optv = NIRT_OPT_INIT;
-    struct bu_opt_desc *d = nirt_opt_desc(&optv);
 
     if (argc == 0 || !argv)
 	return -1;
@@ -483,25 +479,13 @@ main(int argc, const char **argv)
 
     argv++; argc--;
 
-    ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
-    if (ac < 0) {
-	bu_free(d, "nirt opt desc");
+    int operand_start = bu_cmd_schema_parse(nirt_opt_schema(), &optv, &optparse_msg, argc, argv);
+    if (operand_start < 0) {
 	nirt_opt_vals_free(&optv);
 	bu_exit(EXIT_FAILURE, "ERROR: option parsing failed\n%s", bu_vls_cstr(&optparse_msg));
-    } else if (ac > 0) {
-	size_t badopts = 0;
-	for (i=0; i<(size_t)ac; i++) {
-	    if (argv[i][0] == '-') {
-		bu_log("ERROR: unrecognized option %s\n", argv[i]);
-		badopts++;
-	    }
-	}
-	if (badopts) {
-	    bu_free(d, "nirt opt desc");
-	    nirt_opt_vals_free(&optv);
-	    bu_exit(EXIT_FAILURE, "Exiting.\n");
-	}
     }
+    ac = argc - operand_start;
+    argv += operand_start;
     bu_vls_free(&optparse_msg);
 
     BU_GET(io_data.outfile, struct bu_vls);
@@ -525,17 +509,9 @@ main(int argc, const char **argv)
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
     if (optv.print_help || (optv.silent_mode == NIRT_SILENT_YES && optv.verbose_mode)) {
-	char *help = bu_opt_describe(d, &dopts);
+	char *help = bu_cmd_schema_describe(nirt_opt_schema());
 	ret = (optv.print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
-	/* if nirt_debug exists, we assume we are being run from libged, so don't print
-	 * output not relevant in embedded context
-	 */
-	if (bu_vls_strlen(&nirt_debug) > 0) {
-	    dopts.reject = "M"; // reject 'M' option when printing within libged
-	    bu_vls_sprintf(&msg, "Usage: nirt [options] [objects] [x y z]...\n\nOptions:\n%s\n", help);
-	} else {
-	    bu_vls_sprintf(&msg, "Usage: nirt [options] model.g [objects]...\n\nOptions:\n%s\n", help);
-	}
+	bu_vls_sprintf(&msg, "Usage: nirt [options] model.g [objects]...\n\nOptions:\n%s\n", help ? help : "");
 	nirt_out(&io_data, bu_vls_cstr(&msg));
 	if (help)
 	    bu_free(help, "help str");
@@ -857,7 +833,6 @@ done:
     bu_vls_free(&ncmd);
     bu_vls_free(&iline);
     nirt_opt_vals_free(&optv);
-    bu_free(d, "nirt opt desc");
 
     if (io_data.using_pipe) {
 	pclose(io_data.out);
@@ -889,4 +864,3 @@ done:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -33,7 +33,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bu/sort.h"
 #include "bu/ptbl.h"
 
@@ -48,6 +48,134 @@ struct region_record
     const char *obj_name;
     const char *obj_parent;
 };
+
+
+struct lc_file_option {
+    const char *path;
+    int count;
+};
+
+struct lc_args {
+    int duplicates;
+    int mismatched;
+    int unique_codes;
+    int skip_subtracted;
+    int descending;
+    int sort0;
+    int sort1;
+    int sort2;
+    int sort3;
+    int sort4;
+    int sort5;
+    struct lc_file_option output_file;
+};
+
+
+static int
+lc_file_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "output file name is required");
+	return -1;
+    }
+    if (storage) {
+	struct lc_file_option *file = (struct lc_file_option *)storage;
+	file->path = arg;
+	file->count++;
+    }
+    return 0;
+}
+
+
+static const struct bu_cmd_option lc_schema_options[] = {
+    BU_CMD_COUNTING_FLAG("d", NULL, struct lc_args, duplicates,
+	"List duplicate region codes"),
+    BU_CMD_COUNTING_FLAG("m", NULL, struct lc_args, mismatched,
+	"List duplicate region IDs with mismatched codes"),
+    BU_CMD_COUNTING_FLAG("s", NULL, struct lc_args, unique_codes,
+	"List duplicate region IDs with distinct code records"),
+    BU_CMD_COUNTING_FLAG("r", NULL, struct lc_args, skip_subtracted,
+	"Skip regions subtracted from a parent region"),
+    BU_CMD_COUNTING_FLAG("z", NULL, struct lc_args, descending,
+	"Sort descending"),
+    BU_CMD_COUNTING_FLAG("0", NULL, struct lc_args, sort0,
+	"Keep stored order"),
+    BU_CMD_COUNTING_FLAG("1", NULL, struct lc_args, sort1,
+	"Sort by region ID"),
+    BU_CMD_COUNTING_FLAG("2", NULL, struct lc_args, sort2,
+	"Sort by material ID"),
+    BU_CMD_COUNTING_FLAG("3", NULL, struct lc_args, sort3,
+	"Sort by LOS"),
+    BU_CMD_COUNTING_FLAG("4", NULL, struct lc_args, sort4,
+	"Sort by air code"),
+    BU_CMD_COUNTING_FLAG("5", NULL, struct lc_args, sort5,
+	"Sort by region name"),
+    BU_CMD_CUSTOM("f", NULL, struct lc_args, output_file, lc_file_parse,
+	"file", "Write output to a new file"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand lc_schema_operands[] = {
+    BU_CMD_OPERAND("group", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Group or combination to list", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static int lc_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+static const struct bu_cmd_schema lc_cmd_schema = {
+    "lc", "List region codes in a group", lc_schema_options, lc_schema_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(lc_schema_validate, NULL)
+};
+
+
+static int
+lc_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    struct lc_args args = {0};
+    int sort_count;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    /* A generic incomplete result can legitimately be caused by a missing
+     * option argument.  Keep that result intact rather than turning it into
+     * a validator failure just because there is not enough argv to populate
+     * the temporary record. */
+    if (bu_cmd_schema_parse(&flat, &args, NULL, (int)argc, argv) < 0)
+	return 0;
+
+    sort_count = args.sort0 + args.sort1 + args.sort2 + args.sort3 +
+	args.sort4 + args.sort5;
+    if (args.output_file.count > 1 || sort_count > 1) {
+	bu_cmd_validate_result_clear(result);
+	result->state = BU_CMD_VALIDATE_INVALID;
+	result->token_start = cursor_arg < argc ? cursor_arg : argc;
+	result->token_end = result->token_start;
+	result->expected = BU_CMD_EXPECT_NONE;
+	result->completion_type = BU_CMD_VALUE_FLAG;
+	result->hint = args.output_file.count > 1 ?
+	    "-f may be specified only once" : "only one sort-column option may be specified";
+    }
+    return 0;
+}
+
+
+static void
+lc_usage(struct ged *gedp)
+{
+    char *option_help = bu_cmd_schema_describe(&lc_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: lc [-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f file] group");
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "lc native option help");
+    }
+}
 
 /**
  * Sorts the region lists such that identical entries are next to each
@@ -146,7 +274,11 @@ get_attr(const struct bu_attribute_value_set *avp, const char *attribute)
 int
 ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 {
-    char *file_name = NULL;
+    struct lc_args args = {0};
+    int operand_index;
+    int operand_count;
+    const char **operands = NULL;
+    const char *file_name = NULL;
     int file_name_flag_cnt = 0;
     int sort_column = 1;
     int find_mismatched = 0;
@@ -155,14 +287,10 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     int skip_special_duplicates_flag = 0;
     int skip_subtracted_regions_flag = 0;
     int descending_sort_flag = 0;
-    int unrecognized_flag_cnt = 0;
 
     int orig_argc;
     const char **orig_argv;
 
-    static const char *usage = "[-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}";
-
-    int c;
     int error_cnt = 0;
 
     FILE *outfile = NULL;
@@ -194,52 +322,39 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage);
+	lc_usage(gedp);
 	return GED_HELP;
     }
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    bu_optind = 1; /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "dmsrz012345f:")) != -1) {
-	switch (c) {
-	    case '0':
-	    case '1':
-	    case '2':
-	    case '3':
-	    case '4':
-	    case '5':
-		sort_column_flag_cnt++;
-		sort_column = c - '0';
-		break;
-	    case 'f':
-		file_name_flag_cnt++;
-		file_name = bu_optarg;
-		break;
-	    case 'm':
-		find_mismatched = 1;
-		break;
-	    case 's':
-		skip_special_duplicates_flag = 1;
-		/* FALLTHROUGH */
-	    case 'd':
-		find_duplicates_flag = 1;
-		break;
-	    case 'r':
-		skip_subtracted_regions_flag = 1;
-		break;
-	    case 'z':
-		descending_sort_flag = 1;
-		break;
-	    default:
-		unrecognized_flag_cnt++;
-	}
+    operand_index = bu_cmd_schema_parse(&lc_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	lc_usage(gedp);
+	return BRLCAD_ERROR;
     }
     orig_argc = argc;
     orig_argv = argv;
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
+    operand_count = argc - 1 - operand_index;
+    operands = argv + 1 + operand_index;
+
+    file_name = args.output_file.path;
+    file_name_flag_cnt = args.output_file.count;
+    sort_column_flag_cnt = args.sort0 + args.sort1 + args.sort2 + args.sort3 +
+	args.sort4 + args.sort5;
+    if (args.sort0) sort_column = 0;
+    if (args.sort1) sort_column = 1;
+    if (args.sort2) sort_column = 2;
+    if (args.sort3) sort_column = 3;
+    if (args.sort4) sort_column = 4;
+    if (args.sort5) sort_column = 5;
+    find_mismatched = args.mismatched > 0;
+    skip_special_duplicates_flag = args.unique_codes > 0;
+    find_duplicates_flag = args.duplicates > 0 || skip_special_duplicates_flag;
+    skip_subtracted_regions_flag = args.skip_subtracted > 0;
+    descending_sort_flag = args.descending > 0;
 
     /* Attempt to recreate the exact error messages from the original lc.tcl */
 
@@ -253,18 +368,16 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	error_cnt++;
     }
 
-    if (file_name_flag_cnt + argc + unrecognized_flag_cnt > 3) {
+
+    if (operand_count > 1) {
 	bu_vls_printf(gedp->ged_result_str, "Error: More than one group name and/or file name was specified.\n");
 	error_cnt++;
-    } else if (argc < 2) {
+    } else if (operand_count < 1) {
 	if (file_name_flag_cnt && !file_name) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: Group name and file name not specified\n");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Error: Group name not specified.\n");
 	}
-	error_cnt++;
-    } else if (argc + unrecognized_flag_cnt > 2) {
-	bu_vls_printf(gedp->ged_result_str, "Error: More than one group name was specified.\n");
 	error_cnt++;
     } else if (file_name_flag_cnt && !file_name) {
 	bu_vls_printf(gedp->ged_result_str, "Error: File name not specified.\n");
@@ -304,7 +417,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
      * needs nref to be current to work correctly. */
     db_update_nref(gedp->dbip);
 
-    group_name = argv[1];
+    group_name = operands[0];
 
     /* The 7 is for the "-name" and '\0' */
     plan = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 7), "ged_lc_core");
@@ -512,10 +625,10 @@ print_results:
 #include "../include/plugin.h"
 
 #define GED_LC_COMMANDS(X, XID) \
-    X(lc, ged_lc_core, GED_CMD_DEFAULT) \
+    X(lc, ged_lc_core, GED_CMD_DEFAULT, &lc_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_LC_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_lc", 1, GED_LC_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_LC_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_lc", 1, GED_LC_COMMANDS)
 
 /*
  * Local Variables:

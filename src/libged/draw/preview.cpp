@@ -32,7 +32,7 @@
 #include "bsocket.h"
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
 extern "C" {
@@ -47,7 +47,57 @@ static int preview_finalframe;
 static int preview_currentframe;
 static int preview_tree_walk_needed;
 static int draw_eye_path;
-static char *image_name = NULL;
+static const char *image_name = NULL;
+
+
+struct preview_args {
+    fastf_t delay;
+    int eye_path;
+    int visual;
+    int start_frame;
+    int last_frame;
+    const char *output;
+};
+
+
+static const struct bu_cmd_option preview_schema_options[] = {
+    BU_CMD_NUMBER("d", NULL, struct preview_args, delay, "seconds",
+	"Set inter-frame delay"),
+    BU_CMD_FLAG("e", NULL, struct preview_args, eye_path,
+	"Overlay a plot of the eye path"),
+    BU_CMD_FLAG("v", NULL, struct preview_args, visual,
+	"Use evaluated polygon rendering"),
+    BU_CMD_INTEGER("D", NULL, struct preview_args, start_frame, "frame",
+	"Set the desired starting frame"),
+    BU_CMD_INTEGER("K", NULL, struct preview_args, last_frame, "frame",
+	"Set the final frame"),
+    BU_CMD_FILE("o", NULL, struct preview_args, output, "image_name.ext",
+	"Write each frame using the output name and extension"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand preview_schema_operands[] = {
+    BU_CMD_OPERAND("rt_script_file", BU_CMD_VALUE_FILE, 1, 1,
+	"RT animation script file", "ged.file_path"),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_preview_native_schema = {
+    "preview", "Preview an RT animation script", preview_schema_options,
+    preview_schema_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static void
+preview_usage(struct ged *gedp, const char *cmd)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_preview_native_schema);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [options] rt_script_file\n", cmd);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
+	bu_free(option_help, "preview native option help");
+    }
+}
 
 /* FIXME: this shouldn't exist as a static array and doesn't even seem
  * to be necessary.  gd_rt_cmd points into it as an argv, but the
@@ -287,16 +337,13 @@ _loadframe(struct ged *gedp, vect_t *v, mat_t *m, FILE *fp)
 int
 ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[-v] [-e] [-o image_name.ext]  [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
-
     FILE *fp;
-    int c;
     vect_t temp;
     char **vp;
     size_t args = 0;
     struct bu_vls extension = BU_VLS_INIT_ZERO;
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    char *dot;
+    const char *dot;
     struct bu_list *vlfree = &rt_vlfree;
     vect_t *ged_eye_model = &gedp->i->i->ged_eye_model;
     mat_t *ged_viewrot = &gedp->i->i->ged_viewrot;
@@ -312,68 +359,42 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	preview_usage(gedp, argv[0]);
 	return GED_HELP;
     }
 
     if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	preview_usage(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
 
-    preview_delay = 0;			/* Full speed, by default */
-    preview_mode = 1;			/* wireframe drawing */
-    preview_desiredframe = 0;
-    preview_finalframe = 0;
-    draw_eye_path = 0;
-    image_name = NULL;
-
-    /* Parse options */
-    bu_optind = 1;			/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "d:evD:K:o:")) != -1) {
-	switch (c) {
-	    case 'd':
-		preview_delay = atof(bu_optarg);
-		break;
-	    case 'D':
-		preview_desiredframe = atof(bu_optarg);
-		break;
-	    case 'e':
-		draw_eye_path = 1;
-		break;
-	    case 'K':
-		preview_finalframe = atof(bu_optarg);
-		break;
-	    case 'o':
-		image_name = bu_optarg;
-		break;
-	    case 'v':
-		preview_mode = 3;	/* Like "ev" */
-		break;
-	    default: {
-			 bu_vls_printf(gedp->ged_result_str, "option '%c' unknown\n", c);
-			 bu_vls_printf(gedp->ged_result_str, "        -d#     inter-frame delay\n");
-			 bu_vls_printf(gedp->ged_result_str, "        -e      overlay plot of eye path\n");
-			 bu_vls_printf(gedp->ged_result_str, "        -v      polygon rendering (visual)\n");
-			 bu_vls_printf(gedp->ged_result_str, "        -D#     desired starting frame\n");
-			 bu_vls_printf(gedp->ged_result_str, "        -K#     final frame\n");
-			 bu_vls_printf(gedp->ged_result_str, "        -o image_name.ext     output frame to file typed by extension(defaults to PIX)\n");
-			 return BRLCAD_ERROR;
-		     }
-
-		     break;
-	}
+    struct preview_args pargs = {0.0, 0, 0, 0, 0, NULL};
+    int operand_index = bu_cmd_schema_parse_complete(&ged_preview_native_schema, &pargs,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	preview_usage(gedp, argv[0]);
+	return BRLCAD_ERROR;
     }
-    argc -= bu_optind-1;
-    argv += bu_optind-1;
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
-    fp = fopen(argv[1], "r");
+    preview_delay = pargs.delay;		/* Full speed, by default */
+    preview_mode = pargs.visual ? 3 : 1;	/* Like "ev" when requested */
+    preview_desiredframe = pargs.start_frame;
+    preview_finalframe = pargs.last_frame;
+    draw_eye_path = pargs.eye_path;
+    image_name = pargs.output;
+
+    fp = fopen(argv[0], "r");
     if (fp == NULL) {
-	perror(argv[1]);
+	perror(argv[0]);
 	return BRLCAD_ERROR;
     }
 
-    args = argc + 2 + ged_who_argc(gedp);
+    /* The legacy allocation counted the command token before the option
+     * parser compacted argv.  Keep the same spare capacity now that argv is
+     * the operand-only suffix. */
+    args = argc + 3 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
     vp = &gd_rt_cmd[0];
     *vp++ = bu_strdup("tree");

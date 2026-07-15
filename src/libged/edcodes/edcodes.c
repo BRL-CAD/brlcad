@@ -30,15 +30,55 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
 #include "bu/sort.h"
+#include "bu/str.h"
 #include "../ged_private.h"
 
 
 #define EDCODES_OK BRLCAD_OK
 #define EDCODES_NOTOK BRLCAD_ERROR
 #define EDCODES_HALT -99
+
+
+struct edcodes_args {
+    const char *editor;
+    int sort_by_ident;
+    int name_mode;
+    int sort_by_region;
+};
+
+
+#include "../include/plugin.h"
+
+static const struct bu_cmd_option edcodes_schema_options[] = {
+    BU_CMD_STRING("E", NULL, struct edcodes_args, editor, "editor", "Editor command"),
+    BU_CMD_FLAG("i", NULL, struct edcodes_args, sort_by_ident, "Sort by identifier"),
+    BU_CMD_FLAG("n", NULL, struct edcodes_args, name_mode, "List region names without editing"),
+    BU_CMD_FLAG("r", NULL, struct edcodes_args, sort_by_region, "Sort by region"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand edcodes_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 0, BU_CMD_COUNT_UNLIMITED,
+	"Objects whose region codes are edited", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const char *edcodes_schema_modes[] = {"i", "n", "r", NULL};
+static const char *edcodes_schema_name_mode[] = {"n", NULL};
+static const struct bu_cmd_constraint edcodes_schema_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(edcodes_schema_modes, 0, 1,
+	"-i, -n, and -r are mutually exclusive"),
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT,
+	edcodes_schema_name_mode, 1, BU_CMD_COUNT_UNLIMITED,
+	"object required for region-code editing"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_schema edcodes_cmd_schema = {
+    "edcodes", "Edit region codes", edcodes_schema_options,
+    edcodes_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, edcodes_schema_constraints)
+};
 
 
 static int
@@ -143,15 +183,14 @@ int
 ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
-    int nflag = 0;
     int status;
-    int sort_by_ident=0;
-    int sort_by_region=0;
-    int c;
     char **av;
     FILE *fp = NULL;
     char tmpfil[MAXPATHLEN] = {0};
-    const char *editstring = NULL;
+    struct edcodes_args args = {NULL, 0, 0, 0};
+    int operand_index = 0;
+    int object_count = 0;
+    const char **objects = NULL;
 
     static const char *usage = "[-i|-n|-r|-E editor] object(s)";
 
@@ -168,37 +207,21 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:inr")) != -1) {
-	switch (c) {
-	    case 'E' :
-		editstring = bu_optarg;
-		break;
-	    case 'i':
-		sort_by_ident = 1;
-		break;
-	    case 'n':
-		nflag = 1;
-		break;
-	    case 'r':
-		sort_by_region = 1;
-		break;
-	}
-    }
-
-    if ((nflag + sort_by_ident + sort_by_region) > 1) {
+    operand_index = bu_cmd_schema_parse_complete(&edcodes_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    argc -= bu_optind - 1;
-    argv += bu_optind - 1;
+    object_count = argc - 1 - operand_index;
+    objects = argv + 1 + operand_index;
 
-    if (nflag) {
+    if (args.name_mode) {
 	struct directory *dp;
 
-	for (i = 1; i < argc; ++i) {
-	    if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
+	for (i = 0; i < object_count; ++i) {
+	    if ((dp = db_lookup(gedp->dbip, objects[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 		status = edcodes_collect_regnames(gedp, dp, 0);
 
 		if (status != EDCODES_OK) {
@@ -217,23 +240,23 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
     if (!fp)
 	return BRLCAD_ERROR;
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "ged_edcodes_core av");
+    av = (char **)bu_malloc(sizeof(char *) * (object_count + 3), "ged_edcodes_core av");
     av[0] = "wcodes";
     av[1] = tmpfil;
-    for (i = 2; i < argc + 1; ++i)
-	av[i] = (char *)argv[i-1];
+    for (i = 0; i < object_count; ++i)
+	av[i + 2] = (char *)objects[i];
 
-    av[i] = NULL;
+    av[object_count + 2] = NULL;
 
     (void)fclose(fp);
 
-    if (ged_exec_wcodes(gedp, argc + 1, (const char **)av) & BRLCAD_ERROR) {
+    if (ged_exec_wcodes(gedp, object_count + 2, (const char **)av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "ged_edcodes_core av");
 	return BRLCAD_ERROR;
     }
 
-    if (sort_by_ident || sort_by_region) {
+    if (args.sort_by_ident || args.sort_by_region) {
 	char **line_array;
 	char aline[RT_MAXLINE];
 	FILE *f_srt;
@@ -264,7 +287,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* sort the array of lines */
-	if (sort_by_ident) {
+	if (args.sort_by_ident) {
 	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_id_compare, NULL);
 	} else {
 	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_reg_compare, NULL);
@@ -280,7 +303,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	fclose(f_srt);
     }
 
-    if (_ged_editit(gedp, editstring, tmpfil)) {
+    if (_ged_editit(gedp, args.editor, tmpfil)) {
 	av[0] = "rcodes";
 	av[2] = NULL;
 	status = ged_exec_rcodes(gedp, 2, (const char **)av);
@@ -293,13 +316,11 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#include "../include/plugin.h"
-
 #define GED_EDCODES_COMMANDS(X, XID) \
-    X(edcodes, ged_edcodes_core, GED_CMD_DEFAULT) \
+    X(edcodes, ged_edcodes_core, GED_CMD_DEFAULT, &edcodes_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_EDCODES_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_edcodes", 1, GED_EDCODES_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_EDCODES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_edcodes", 1, GED_EDCODES_COMMANDS)
 
 /*
  * Local Variables:

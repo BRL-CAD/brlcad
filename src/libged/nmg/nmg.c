@@ -30,6 +30,7 @@
 
 
 #include "raytrace.h"
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -197,7 +198,7 @@ extern int ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 int
 ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "nmg object subcommand [V|F|R|S] [suffix]";
+    static const char *usage = "nmg mm name | nmg object {cmface|kill|move|make} ...";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
@@ -242,35 +243,41 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* advance CLI arguments for subcommands */
+    const char *subcmd = argv[1];
+    if( BU_STR_EQUAL( "mm", subcmd ) ) {
+	return ged_nmg_mm_core(gedp, argc - 1, argv + 1);
+    }
+    if (argc < 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    subcmd = argv[2];
+    /* The operation implementations take an argv beginning with the NMG
+     * object, followed by their operation selector. */
     --argc;
     ++argv;
-
-    const char *subcmd = argv[0];
-    if( BU_STR_EQUAL( "mm", subcmd ) ) {
-	ged_nmg_mm_core(gedp, argc, argv);
-    }
-    else if( BU_STR_EQUAL( "cmface", subcmd ) ) {
-	ged_nmg_cmface_core(gedp, argc, argv);
+    if( BU_STR_EQUAL( "cmface", subcmd ) ) {
+	return ged_nmg_cmface_core(gedp, argc, argv);
     }
     else if( BU_STR_EQUAL( "kill", subcmd ) ) {
 	const char* opt = argv[2];
 	if ( BU_STR_EQUAL( "V", opt ) ) {
-	    ged_nmg_kill_v_core(gedp, argc, argv);
+	    return ged_nmg_kill_v_core(gedp, argc, argv);
 	} else if ( BU_STR_EQUAL( "F", opt ) ) {
-	    ged_nmg_kill_f_core(gedp, argc, argv);
+	    return ged_nmg_kill_f_core(gedp, argc, argv);
 	}
     }
     else if( BU_STR_EQUAL( "move", subcmd ) ) {
 	const char* opt = argv[2];
 	if ( BU_STR_EQUAL( "V", opt ) ) {
-	    ged_nmg_move_v_core(gedp, argc, argv);
+	    return ged_nmg_move_v_core(gedp, argc, argv);
 	}
     }
     else if( BU_STR_EQUAL( "make", subcmd ) ) {
 	const char* opt = argv[2];
 	if ( BU_STR_EQUAL( "V", opt ) ) {
-	    ged_nmg_make_v_core(gedp, argc, argv);
+	    return ged_nmg_make_v_core(gedp, argc, argv);
 	}
     }
     else {
@@ -282,23 +289,186 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+static int
+nmg_alias_call(struct ged *gedp, int argc, const char *argv[], const char *op, const char *kind,
+	int (*func)(struct ged *, int, const char **))
+{
+    if (argc < 2)
+	return (*func)(gedp, argc, argv);
+    size_t extra = kind ? 2 : 1;
+    const char **nargv = (const char **)bu_calloc((size_t)argc + extra, sizeof(char *), "nmg alias argv");
+    size_t n = 0;
+    nargv[n++] = argv[1];
+    nargv[n++] = op;
+    if (kind) nargv[n++] = kind;
+    for (int i = 2; i < argc; i++) nargv[n++] = argv[i];
+    int ret = (*func)(gedp, (int)n, nargv);
+    bu_free((void *)nargv, "nmg alias argv");
+    return ret;
+}
+
+static int nmg_cmface_alias(struct ged *g, int ac, const char *av[]) { return nmg_alias_call(g, ac, av, "cmface", NULL, ged_nmg_cmface_core); }
+static int nmg_kill_f_alias(struct ged *g, int ac, const char *av[]) { return nmg_alias_call(g, ac, av, "kill", "F", ged_nmg_kill_f_core); }
+static int nmg_kill_v_alias(struct ged *g, int ac, const char *av[]) { return nmg_alias_call(g, ac, av, "kill", "V", ged_nmg_kill_v_core); }
+static int nmg_make_v_alias(struct ged *g, int ac, const char *av[]) { return nmg_alias_call(g, ac, av, "make", "V", ged_nmg_make_v_core); }
+static int nmg_move_v_alias(struct ged *g, int ac, const char *av[]) { return nmg_alias_call(g, ac, av, "move", "V", ged_nmg_move_v_core); }
+
+
 #include "../include/plugin.h"
 
-#define GED_NMG_COMMANDS(X, XID) \
-    X(nmg, ged_nmg_core, GED_CMD_DEFAULT) \
-    X(labelface, ged_labelface_core, GED_CMD_DEFAULT) \
-    X(nmg_cmface, ged_nmg_cmface_core, GED_CMD_DEFAULT) \
-    X(nmg_collapse, ged_nmg_collapse_core, GED_CMD_DEFAULT) \
-    X(nmg_fix_normals, ged_nmg_fix_normals_core, GED_CMD_DEFAULT) \
-    X(nmg_kill_f, ged_nmg_kill_f_core, GED_CMD_DEFAULT) \
-    X(nmg_kill_v, ged_nmg_kill_v_core, GED_CMD_DEFAULT) \
-    X(nmg_make_v, ged_nmg_make_v_core, GED_CMD_DEFAULT) \
-    X(nmg_mm, ged_nmg_mm_core, GED_CMD_DEFAULT) \
-    X(nmg_move_v, ged_nmg_move_v_core, GED_CMD_DEFAULT) \
-    X(nmg_simplify, ged_nmg_simplify_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand labelface_schema_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Displayed NMG objects whose faces will be labeled", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand nmg_mm_schema_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "New NMG object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand nmg_cmface_schema_operands[] = {
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_CMD_OPERAND("vertices", BU_CMD_VALUE_NUMBER, 9, BU_CMD_COUNT_UNLIMITED,
+	"Three or more XYZ vertices", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand nmg_kill_f_schema_operands[] = {
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_CMD_OPERAND("face", BU_CMD_VALUE_INTEGER, 1, 1, "Face index", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand nmg_kill_v_schema_operands[] = {
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_CMD_OPERAND("vertex", BU_CMD_VALUE_NUMBER, 3, 3, "XYZ vertex coordinates", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand nmg_make_v_schema_operands[] = {
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_CMD_OPERAND("vertices", BU_CMD_VALUE_NUMBER, 3, BU_CMD_COUNT_UNLIMITED,
+	"One or more XYZ vertices", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand nmg_move_v_schema_operands[] = {
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_CMD_OPERAND("coordinates", BU_CMD_VALUE_NUMBER, 6, 6,
+	"Old XYZ followed by new XYZ", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand nmg_collapse_schema_operands[] = {
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Input NMG object", "ged.db_object"),
+    BU_CMD_OPERAND("new_name", BU_CMD_VALUE_STRING, 1, 1, "New object name", NULL),
+    BU_CMD_OPERAND("max_error", BU_CMD_VALUE_NUMBER, 1, 1, "Maximum collapse error", NULL),
+    BU_CMD_OPERAND("min_angle", BU_CMD_VALUE_NUMBER, 0, 1, "Optional minimum angle", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const nmg_simplify_modes[] = {"arb", "tgc", "poly", NULL};
+static const struct bu_cmd_operand nmg_simplify_schema_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("mode", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"Optional output primitive type", NULL, nmg_simplify_modes),
+    BU_CMD_OPERAND("new_name", BU_CMD_VALUE_STRING, 1, 1, "New object name", NULL),
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Input NMG object", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(nmg_simplify, 2, 3, GED_SCHEMA_COUNT_NONE)
+static const char * const nmg_actions[] = {"cmface", "kill", "move", "make", NULL};
+static const struct bu_cmd_operand nmg_schema_operands[] = {
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"NMG edit operation", NULL, nmg_actions),
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Operation-specific arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+#define NMG_SCHEMA(_id, _name, _help, _operands, _policy, _validator) \
+    static const struct bu_cmd_schema _id##_cmd_schema = {_name, _help, NULL, _operands, _policy, {_validator}}
+NMG_SCHEMA(labelface, "labelface", "Label faces of displayed NMG objects", labelface_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_cmface, "nmg_cmface", "Create a manifold NMG face", nmg_cmface_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_collapse, "nmg_collapse", "Collapse short NMG edges", nmg_collapse_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_fix_normals, "nmg_fix_normals", "Repair NMG face normals", labelface_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_kill_f, "nmg_kill_f", "Delete an NMG face", nmg_kill_f_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_kill_v, "nmg_kill_v", "Delete an NMG vertex", nmg_kill_v_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_make_v, "nmg_make_v", "Create NMG vertices", nmg_make_v_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_mm, "nmg_mm", "Create an empty NMG model", nmg_mm_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_move_v, "nmg_move_v", "Move an NMG vertex", nmg_move_v_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_simplify, "nmg_simplify", "Simplify an NMG to another primitive", nmg_simplify_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, nmg_simplify_schema_validate);
+#undef NMG_SCHEMA
+static const struct bu_cmd_schema nmg_root_schema = {
+    "nmg", "Edit NMG topology or create an empty NMG", NULL,
+    nmg_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+static const struct bu_cmd_tree_node nmg_subcommands[] = {
+    BU_CMD_TREE_NODE(&nmg_mm_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree nmg_tree = {
+    &nmg_root_schema, nmg_subcommands, BU_CMD_TREE_CHILD_FIRST
+};
+static const struct ged_cmd_native_form nmg_native_forms[] = {
+    {"subcommands", NULL, &nmg_tree},
+    {"legacy_topology", &nmg_root_schema, NULL},
+    {NULL, NULL, NULL}
+};
 
-GED_DECLARE_COMMAND_SET(GED_NMG_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_nmg", 1, GED_NMG_COMMANDS)
+static const struct ged_cmd_native_form *
+nmg_select_native_form(const struct ged *UNUSED(gedp), size_t argc,
+	const char * const *argv)
+{
+    const char *word = argc > 1 ? argv[1] : "";
+    size_t length = word ? strlen(word) : 0;
+
+    if (!length || !strncmp("mm", word, length))
+	return &nmg_native_forms[0];
+    return &nmg_native_forms[1];
+}
+
+static int
+nmg_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_forms_validate(gedp, nmg_native_forms,
+	nmg_select_native_form, input, cursor_pos, result);
+}
+
+static int
+nmg_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_native_forms_analyze(gedp, nmg_native_forms,
+	nmg_select_native_form, input, analysis);
+}
+
+static char *
+nmg_grammar_json(void)
+{
+    return ged_cmd_native_forms_describe_json("nmg",
+	"Edit NMG topology or create an empty NMG", nmg_native_forms);
+}
+
+static int
+nmg_grammar_lint(struct bu_vls *msgs)
+{
+    return ged_cmd_native_forms_lint("nmg", nmg_native_forms, msgs);
+}
+
+static const struct ged_cmd_grammar nmg_grammar = {
+    "nmg", "Edit NMG topology or create an empty NMG", nmg_grammar_validate,
+    nmg_grammar_analyze, nmg_grammar_json, nmg_grammar_lint
+};
+
+#define GED_NMG_COMMANDS(X, XID, N, NID, G, GID) \
+    G(nmg, ged_nmg_core, GED_CMD_DEFAULT, &nmg_grammar) \
+    N(labelface, ged_labelface_core, GED_CMD_DEFAULT, &labelface_cmd_schema) \
+    N(nmg_cmface, nmg_cmface_alias, GED_CMD_DEFAULT, &nmg_cmface_cmd_schema) \
+    N(nmg_collapse, ged_nmg_collapse_core, GED_CMD_DEFAULT, &nmg_collapse_cmd_schema) \
+    N(nmg_fix_normals, ged_nmg_fix_normals_core, GED_CMD_DEFAULT, &nmg_fix_normals_cmd_schema) \
+    N(nmg_kill_f, nmg_kill_f_alias, GED_CMD_DEFAULT, &nmg_kill_f_cmd_schema) \
+    N(nmg_kill_v, nmg_kill_v_alias, GED_CMD_DEFAULT, &nmg_kill_v_cmd_schema) \
+    N(nmg_make_v, nmg_make_v_alias, GED_CMD_DEFAULT, &nmg_make_v_cmd_schema) \
+    N(nmg_mm, ged_nmg_mm_core, GED_CMD_DEFAULT, &nmg_mm_cmd_schema) \
+    N(nmg_move_v, nmg_move_v_alias, GED_CMD_DEFAULT, &nmg_move_v_cmd_schema) \
+    N(nmg_simplify, ged_nmg_simplify_core, GED_CMD_DEFAULT, &nmg_simplify_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_NMG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_nmg", 1, GED_NMG_COMMANDS)
 
 /*
  * Local Variables:

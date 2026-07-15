@@ -100,7 +100,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/interrupt.h"
 #include "bn.h"
 #include "vmath.h"
@@ -726,27 +726,158 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 }
 
 
+/* The historical operation callbacks receive both the root command and the
+ * selected child word.  Keep that ABI locally while the native tree owns the
+ * published command vocabulary and dispatch decision. */
+static int
+vdraw_tree_call_legacy(void *data, int argc, const char *argv[],
+	bu_cmd_tree_execute_t execute)
+{
+    const char **full_argv = NULL;
+    int ret = BRLCAD_ERROR;
+
+    if (!execute || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+    full_argv = (const char **)bu_calloc((size_t)argc + 1, sizeof(*full_argv),
+	"vdraw native tree argv");
+    full_argv[0] = "vdraw";
+    for (int i = 0; i < argc; i++)
+	full_argv[i + 1] = argv[i];
+    ret = execute(data, argc + 1, full_argv);
+    bu_free((void *)full_argv, "vdraw native tree argv");
+    return ret;
+}
+
+#define VDRAW_TREE_EXEC(_name, _func) \
+    static int vdraw_tree_##_name(void *data, int argc, const char *argv[]) \
+    { return vdraw_tree_call_legacy(data, argc, argv, _func); }
+VDRAW_TREE_EXEC(write, vdraw_write)
+VDRAW_TREE_EXEC(insert, vdraw_insert)
+VDRAW_TREE_EXEC(delete, vdraw_delete)
+VDRAW_TREE_EXEC(read, vdraw_read)
+VDRAW_TREE_EXEC(send, vdraw_send)
+VDRAW_TREE_EXEC(params, vdraw_params)
+VDRAW_TREE_EXEC(open, vdraw_open)
+VDRAW_TREE_EXEC(vlist, vdraw_vlist)
+#undef VDRAW_TREE_EXEC
+
+static const struct bu_cmd_operand vdraw_write_operands[] = {
+    BU_CMD_OPERAND("index", BU_CMD_VALUE_STRING, 1, 1, "Point index or next", NULL),
+    BU_CMD_OPERAND("command", BU_CMD_VALUE_INTEGER, 1, 1, "VList drawing command", NULL),
+    /* The established executor accepts either one packed point or three
+     * separate coordinates.  Keep the variable representation raw until that
+     * operation is converted to the shared vector shape. */
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_RAW, 1, 3, "Packed or XYZ point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand vdraw_insert_operands[] = {
+    BU_CMD_OPERAND("index", BU_CMD_VALUE_INTEGER, 1, 1, "Insertion index", NULL),
+    BU_CMD_OPERAND("command", BU_CMD_VALUE_INTEGER, 1, 1, "VList drawing command", NULL),
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand vdraw_delete_operands[] = {
+    BU_CMD_OPERAND("index", BU_CMD_VALUE_STRING, 1, 1, "Point index, last, or all", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand vdraw_read_operands[] = {
+    BU_CMD_OPERAND("field", BU_CMD_VALUE_STRING, 1, 1, "Point index or curve field", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand vdraw_params_operands[] = {
+    BU_CMD_OPERAND("parameter", BU_CMD_VALUE_STRING, 1, 1, "Curve parameter", NULL),
+    BU_CMD_OPERAND("value", BU_CMD_VALUE_STRING, 1, 1, "Parameter value", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand vdraw_open_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 0, 1, "VList name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand vdraw_vlist_delete_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "VList name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+#define VDRAW_TREE_SCHEMA(_name, _help, _operands) \
+    static const struct bu_cmd_schema vdraw_##_name##_schema = { \
+	#_name, _help, NULL, _operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    }
+VDRAW_TREE_SCHEMA(write, "Write a VList point", vdraw_write_operands);
+VDRAW_TREE_SCHEMA(insert, "Insert a VList point", vdraw_insert_operands);
+VDRAW_TREE_SCHEMA(delete, "Delete VList points", vdraw_delete_operands);
+VDRAW_TREE_SCHEMA(read, "Read VList data", vdraw_read_operands);
+VDRAW_TREE_SCHEMA(send, "Send the current VList to the display", NULL);
+VDRAW_TREE_SCHEMA(params, "Set VList parameters", vdraw_params_operands);
+VDRAW_TREE_SCHEMA(open, "Query or open a VList", vdraw_open_operands);
+VDRAW_TREE_SCHEMA(vlist, "Manage named VLists", NULL);
+VDRAW_TREE_SCHEMA(list, "List VLists", NULL);
+#undef VDRAW_TREE_SCHEMA
+static const struct bu_cmd_schema vdraw_vlist_delete_schema = {
+    "delete", "Delete a VList", NULL, vdraw_vlist_delete_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const char *vdraw_write_aliases[] = {"w", NULL};
+static const char *vdraw_insert_aliases[] = {"i", NULL};
+static const char *vdraw_delete_aliases[] = {"d", NULL};
+static const char *vdraw_read_aliases[] = {"r", NULL};
+static const char *vdraw_send_aliases[] = {"s", NULL};
+static const char *vdraw_params_aliases[] = {"p", NULL};
+static const char *vdraw_open_aliases[] = {"o", NULL};
+static const char *vdraw_vlist_aliases[] = {"v", NULL};
+static const char *vdraw_list_aliases[] = {"l", NULL};
+static const char *vdraw_vlist_delete_aliases[] = {"d", NULL};
+
+static const struct bu_cmd_tree_node vdraw_vlist_subcommands[] = {
+    BU_CMD_TREE_NODE(&vdraw_list_schema, vdraw_list_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&vdraw_vlist_delete_schema, vdraw_vlist_delete_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree_node vdraw_subcommands[] = {
+    BU_CMD_TREE_NODE(&vdraw_write_schema, vdraw_write_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_write),
+    BU_CMD_TREE_NODE(&vdraw_insert_schema, vdraw_insert_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_insert),
+    BU_CMD_TREE_NODE(&vdraw_delete_schema, vdraw_delete_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_delete),
+    BU_CMD_TREE_NODE(&vdraw_read_schema, vdraw_read_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_read),
+    BU_CMD_TREE_NODE(&vdraw_send_schema, vdraw_send_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_send),
+    BU_CMD_TREE_NODE(&vdraw_params_schema, vdraw_params_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_params),
+    BU_CMD_TREE_NODE(&vdraw_open_schema, vdraw_open_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_open),
+    BU_CMD_TREE_NODE(&vdraw_vlist_schema, vdraw_vlist_aliases, vdraw_vlist_subcommands,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_vlist),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_schema vdraw_root_schema = {
+    "vdraw", "Manage vector drawing lists", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_tree ged_vdraw_tree = {
+    &vdraw_root_schema, vdraw_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+static void
+vdraw_tree_show_help(struct ged *gedp)
+{
+    char *help = bu_cmd_tree_describe(&ged_vdraw_tree);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "vdraw native tree help");
+    }
+}
+
 static int
 vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret;
-
-    /**
-     * view draw command table
-     */
-    static struct bu_cmdtab vdraw_cmds[] = {
-	{"write",		vdraw_write},
-	{"insert",		vdraw_insert},
-	{"delete",		vdraw_delete},
-	{"read",		vdraw_read},
-	{"send",		vdraw_send},
-	{"params",		vdraw_params},
-	{"open",		vdraw_open},
-	{"vlist",		vdraw_vlist},
-	{(const char *)NULL, BU_CMD_NULL}
-    };
-
-    static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";
+    int ret = BRLCAD_ERROR;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -757,15 +888,15 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	vdraw_tree_show_help(gedp);
 	return GED_HELP;
     }
 
 
-    if (bu_cmd(vdraw_cmds, argc, argv, 1, gedp, &ret) == BRLCAD_OK)
+    if (bu_cmd_tree_dispatch(&ged_vdraw_tree, gedp, argc - 1, argv + 1, &ret) == 0)
 	return ret;
 
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    vdraw_tree_show_help(gedp);
 
     return BRLCAD_ERROR;
 }
@@ -780,11 +911,46 @@ ged_vdraw_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_VDRAW_COMMANDS(X, XID) \
-    X(vdraw, ged_vdraw_core, GED_CMD_DEFAULT) \
+static int
+ged_vdraw_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &ged_vdraw_tree, input, cursor_pos, result);
+}
 
-GED_DECLARE_COMMAND_SET(GED_VDRAW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_vdraw", 1, GED_VDRAW_COMMANDS)
+
+static int
+ged_vdraw_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &ged_vdraw_tree, input, analysis);
+}
+
+
+static char *
+ged_vdraw_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&ged_vdraw_tree);
+}
+
+
+static int
+ged_vdraw_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&ged_vdraw_tree, msgs);
+}
+
+
+static const struct ged_cmd_grammar ged_vdraw_grammar = {
+    "vdraw", "Manage vector drawing lists", ged_vdraw_grammar_validate,
+    ged_vdraw_grammar_analyze, ged_vdraw_grammar_json, ged_vdraw_grammar_lint
+};
+
+#define GED_VDRAW_COMMANDS(X, XID) \
+    X(vdraw, ged_vdraw_core, GED_CMD_DEFAULT, &ged_vdraw_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_VDRAW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_vdraw", 1, GED_VDRAW_COMMANDS)
 
 /*
  * Local Variables:

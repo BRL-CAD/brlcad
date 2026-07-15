@@ -27,7 +27,34 @@
 
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "ged.h"
+
+
+static int
+arced_path_validate(struct bu_vls *msg, const char *arg)
+{
+    if (arg && strchr(arg, '/'))
+	return 0;
+
+    if (msg)
+	bu_vls_printf(msg, "arc path must contain a parent/member separator");
+    return -1;
+}
+
+
+static const struct bu_cmd_operand arced_schema_operands[] = {
+    BU_CMD_OPERAND_VALIDATE("arc_path", BU_CMD_VALUE_DB_PATH, 1, 1,
+	arced_path_validate, "Arc path to animate", "ged.db_path"),
+    BU_CMD_OPERAND("animation_command", BU_CMD_VALUE_RAW, 1,
+	BU_CMD_COUNT_UNLIMITED, "Animation command and arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema arced_cmd_schema = {
+    "arced", "Apply an animation command to an arc", NULL,
+    arced_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 int
@@ -40,6 +67,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     union tree *tp;
     static const char *usage = "a/b anim_cmd ...";
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -54,15 +82,12 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3) {
+    if (bu_cmd_schema_parse_complete(&arced_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    if (!strchr(argv[1], '/')) {
-	bu_vls_printf(gedp->ged_result_str, "arced: bad path specification '%s'", argv[1]);
-	return BRLCAD_ERROR;
-    }
     anp = db_parse_1anim(gedp->dbip, argc, (const char **)argv);
     if (!anp) {
 	bu_vls_printf(gedp->ged_result_str, "arced: unable to parse command");
@@ -134,10 +159,10 @@ fail:
 #include "../include/plugin.h"
 
 #define GED_ARCED_COMMANDS(X, XID) \
-    X(arced, ged_arced_core, GED_CMD_DEFAULT) \
+    X(arced, ged_arced_core, GED_CMD_DEFAULT, &arced_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_ARCED_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_arced", 1, GED_ARCED_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ARCED_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_arced", 1, GED_ARCED_COMMANDS)
 
 /*
  * Local Variables:

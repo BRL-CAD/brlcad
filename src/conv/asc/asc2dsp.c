@@ -44,8 +44,8 @@
 
 #include "bnetwork.h"
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/log.h"
-#include "bu/opt.h"
 
 
 static char usage[] = "\
@@ -54,6 +54,30 @@ Convert an ASCII DSP file to DSP binary form\n\
 ";
 
 #define BUFSZ 6
+
+struct asc2dsp_args {
+    int help;
+};
+
+static const struct bu_cmd_option asc2dsp_options[] = {
+    BU_CMD_FLAG("h", "help", struct asc2dsp_args, help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand asc2dsp_operands[] = {
+    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 1, 1,
+	"ASCII input file", NULL),
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Binary DSP output file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema asc2dsp_schema = {
+    "asc2dsp", "Convert ASCII DSP samples to binary DSP data",
+    asc2dsp_options, asc2dsp_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 static void
@@ -105,31 +129,33 @@ main(int argc, char **argv)
 {
     FILE *fpi = NULL;
     FILE *fpo = NULL;
-    int need_help = 0;
+    struct asc2dsp_args args = {0};
 
     char buf[BUFSZ] = {0};
     unsigned nchars = 0;
 
     bu_setprogname(argv[0]);
 
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help   and exit");
-    BU_OPT(d[1], "?", "",            "",         NULL,        &need_help, "");
-    BU_OPT_NULL(d[2]);
-
     /* Skip first arg */
     argv++; argc--;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    int uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+    int help_requested = bu_cmd_schema_option_present(&asc2dsp_schema,
+	(size_t)argc, (const char **)argv, "help");
+    int uac = help_requested ?
+	bu_cmd_schema_parse(&asc2dsp_schema, &args, &optparse_msg, argc,
+	    (const char **)argv) :
+	bu_cmd_schema_parse_complete(&asc2dsp_schema, &args, &optparse_msg, argc,
+	    (const char **)argv);
 
     if (uac == -1) {
-	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
+	bu_exit(EXIT_FAILURE, "%s%s", bu_vls_addr(&optparse_msg), usage);
     }
     bu_vls_free(&optparse_msg);
 
-    argc = uac;
+    argc -= uac;
+    argv += uac;
 
-    if (need_help) {
+    if (args.help) {
 	bu_exit(EXIT_SUCCESS, "%s", usage);
     }
 

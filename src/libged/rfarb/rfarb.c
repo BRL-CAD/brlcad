@@ -29,8 +29,30 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema *rfarb_schema(void);
+
+static int
+rfarb_thickness_validate(struct bu_vls *msg, const char *arg)
+{
+    char *end = NULL;
+    double value;
+
+    if (!arg || !arg[0])
+	goto invalid;
+    value = strtod(arg, &end);
+    if (!end || *end || ZERO(value))
+	goto invalid;
+    return 0;
+
+invalid:
+    if (msg)
+	bu_vls_printf(msg, "thickness must be nonzero");
+    return -1;
+}
 
 
 int
@@ -53,6 +75,8 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
     double fba;
 
     static const char *usage = "name pX pY pZ rA fbA c X Y c X Y c X Y th";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -67,7 +91,10 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 16) {
+
+    operand_index = bu_cmd_schema_parse_complete(rfarb_schema(),
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
@@ -242,11 +269,40 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_RFARB_COMMANDS(X, XID) \
-    X(rfarb, ged_rfarb_core, GED_CMD_DEFAULT) \
+static const char * const rfarb_coord_keywords[] = {"x", "y", "z", NULL};
+static const struct bu_cmd_operand rfarb_schema_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "New ARB name", NULL),
+    BU_CMD_OPERAND("known_point", BU_CMD_VALUE_NUMBER, 3, 3, "Known X Y Z point", NULL),
+    BU_CMD_OPERAND("angles", BU_CMD_VALUE_NUMBER, 2, 2, "Rotation and fallback angles", NULL),
+    BU_CMD_OPERAND_KEYWORDS("coordinate_1", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"First coordinate to solve", NULL, rfarb_coord_keywords),
+    BU_CMD_OPERAND("point_1", BU_CMD_VALUE_NUMBER, 2, 2, "First pair of known coordinates", NULL),
+    BU_CMD_OPERAND_KEYWORDS("coordinate_2", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Second coordinate to solve", NULL, rfarb_coord_keywords),
+    BU_CMD_OPERAND("point_2", BU_CMD_VALUE_NUMBER, 2, 2, "Second pair of known coordinates", NULL),
+    BU_CMD_OPERAND_KEYWORDS("coordinate_3", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Third coordinate to solve", NULL, rfarb_coord_keywords),
+    BU_CMD_OPERAND("point_3", BU_CMD_VALUE_NUMBER, 2, 2, "Third pair of known coordinates", NULL),
+    BU_CMD_OPERAND_VALIDATE("thickness", BU_CMD_VALUE_NUMBER, 1, 1,
+	rfarb_thickness_validate, "Nonzero ARB thickness", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema rfarb_cmd_schema = {
+    "rfarb", "Create an ARB from a point and plane angles", NULL,
+    rfarb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
-GED_DECLARE_COMMAND_SET(GED_RFARB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rfarb", 1, GED_RFARB_COMMANDS)
+static const struct bu_cmd_schema *
+rfarb_schema(void)
+{
+    return &rfarb_cmd_schema;
+}
+
+#define GED_RFARB_COMMANDS(X, XID) \
+    X(rfarb, ged_rfarb_core, GED_CMD_DEFAULT, &rfarb_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RFARB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rfarb", 1, GED_RFARB_COMMANDS)
 
 /*
  * Local Variables:

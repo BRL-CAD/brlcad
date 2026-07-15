@@ -426,21 +426,33 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     pstate->meshes.push_back(curr_mesh);
 }
 
-static void
-assetimport_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+static const struct bu_cmd_option assetimport_write_schema_options[] = {
+    BU_CMD_STRING(NULL, "format", assetimport_write_options_t, format, "format",
+	"Specify the output file format."),
+    BU_CMD_STRING(NULL, "model", assetimport_write_options_t, model_workaround, "object",
+	"Specify a single object to convert."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema assetimport_write_schema = {
+    "assetimport-write", "Asset import writer options.", assetimport_write_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+extern "C" void
+assetimport_write_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     assetimport_write_options_t* options_data;
 
     BU_ALLOC(options_data, assetimport_write_options_t);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
 
     options_data->format = NULL;
     options_data->model_workaround = NULL;
 
-    BU_OPT((*options_desc)[0], NULL, "format", "string", bu_opt_str, &options_data->format, "specify the output file format");
-    BU_OPT((*options_desc)[1], NULL, "model", "string", bu_opt_str, &options_data->model_workaround, "specify a single object to convert");
-    BU_OPT_NULL((*options_desc)[2]);
+    *schema = &assetimport_write_schema;
 }
 
 
@@ -573,7 +585,7 @@ extern "C"
 {
     extern const struct gcv_filter gcv_conv_assetimport_write = {
 	"Assetimport Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_ASSETIMPORT, NULL,
-	assetimport_write_create_opts, assetimport_write_free_opts, assetimport_write
+	NULL, assetimport_write_free_opts, assetimport_write
     };
 }
 

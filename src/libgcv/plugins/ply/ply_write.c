@@ -570,14 +570,44 @@ leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(p
     return (union tree *)NULL; /* just to keep the compilers happy */
 }
 
-static void
-ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+static const struct bu_cmd_option ply_write_schema_options[] = {
+    BU_CMD_NUMBER("r", "rel_tess_tol", struct ply_write_options, rel, "decimal",
+	"Specify the relative tessellation tolerance."),
+    BU_CMD_NUMBER("a", "abs_tess_tol", struct ply_write_options, abs, "decimal",
+	"Specify the absolute tessellation tolerance."),
+    BU_CMD_NUMBER("n", "norm_tess_tol", struct ply_write_options, norm, "decimal",
+	"Specify the surface-normal tessellation tolerance."),
+    BU_CMD_NUMBER("D", "dist_calc_tol", struct ply_write_options, dist, "decimal",
+	"Specify the distance calculation tolerance."),
+    BU_CMD_STRING("o", "output_file", struct ply_write_options, o_file, "path",
+	"Specify the output file name."),
+    BU_CMD_STRING("t", "type", struct ply_write_options, type, "type",
+	"Specify output type: asc, le, or be."),
+    BU_CMD_FLAG("s", "separate", struct ply_write_options, separate,
+	"Generate a separate file per object."),
+    BU_CMD_FLAG("v", "verbose", struct ply_write_options, verbose,
+	"Print verbose conversion output."),
+    BU_CMD_STRING("x", "rt-debug", struct ply_write_options, x, "script",
+	"Specify an rt_debug script."),
+    BU_CMD_STRING("X", "nmg-debug", struct ply_write_options, X, "script",
+	"Specify an nmg_debug script."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema ply_write_schema = {
+    "ply-write", "PLY writer options.", ply_write_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+void
+ply_write_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct ply_write_options *options_data;
 
     BU_ALLOC(options_data, struct ply_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(11 * sizeof(struct bu_opt_desc), "options_desc");
 
     /* most options defaults are handled by gcv_opts */
     options_data->rel = -1;
@@ -591,17 +621,7 @@ ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
     options_data->x = NULL;
     options_data->X = NULL;
 
-    BU_OPT((*options_desc)[0],  "r", "rel_tess_tol",  "decimal", bu_opt_fastf_t, &options_data->rel,       "specify the relative tessolation tolerance");
-    BU_OPT((*options_desc)[1],  "a", "abs_tess_tol",  "decimal", bu_opt_fastf_t, &options_data->abs,       "specify the absolute tessolation tolerance");
-    BU_OPT((*options_desc)[2],  "n", "norm_tess_tol", "decimal", bu_opt_fastf_t, &options_data->norm,      "specify the surface normal tessolation tolerance");
-    BU_OPT((*options_desc)[3],  "D", "dist_calc_tol", "decimal", bu_opt_fastf_t, &options_data->dist,      "specify the distance calculation tolerance");
-    BU_OPT((*options_desc)[4],  "o", "output_file",   "str",   bu_opt_str,     &options_data->o_file,    "specify the output file name");
-    BU_OPT((*options_desc)[5],  "t", "type",          "str",   bu_opt_str,     &options_data->type,      "specify the output file type (asc: ascii), (le: little endian), (be: big endian)");
-    BU_OPT((*options_desc)[6],  "s", "separate",      "",      NULL,           &options_data->separate, "specify a flag to generate a separate file per object");
-    BU_OPT((*options_desc)[7],  "v", "verbose",       "",      NULL,           &options_data->verbose,   "specify a flag for verbose output");
-    BU_OPT((*options_desc)[8],  "x", "rt_dubug",      "str",   bu_opt_str,     &options_data->o_file,    "specify debug script for rt_debug");
-    BU_OPT((*options_desc)[9],  "X", "nmg_debug",     "str",   bu_opt_str,     &options_data->o_file,    "specify debug script for nmg_debug");
-    BU_OPT_NULL((*options_desc)[10]);
+    *schema = &ply_write_schema;
 }
 
 static void
@@ -832,7 +852,7 @@ free_all:
 /* filter setup */
 const struct gcv_filter gcv_conv_ply_write = {
     "PLY Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL,
-    ply_write_create_opts, ply_write_free_opts, ply_write_gcv
+    NULL, ply_write_free_opts, ply_write_gcv
 };
 
 /*

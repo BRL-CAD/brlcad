@@ -125,7 +125,11 @@ ged_trace(struct directory *dp,
     /* check for desired path */
     if (gtdp->gtd_flag == _GED_CPEVAL) {
 	for (i = 0; i <= pathpos; i++) {
-	    if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
+	    /* A combination branch can extend beyond the requested path.  In
+	     * that case gtd_obj has no corresponding component, so it is not a
+	     * candidate path rather than a reason to dereference an unset slot. */
+	    if (!gtdp->gtd_path[i] || !gtdp->gtd_obj[i] ||
+		gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
 		/* not the desired path */
 		return;
 	    }

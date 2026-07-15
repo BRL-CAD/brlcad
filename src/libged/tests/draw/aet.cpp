@@ -35,6 +35,7 @@
 #include <ged.h>
 
 #include "../../dbi.h"
+#include "./test_opts.h"
 
 extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
 void
@@ -147,21 +148,33 @@ int
 main(int ac, char *av[]) {
     struct ged *gedp;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
-    int need_help = 0;
-    int run_unstable_tests = 0;
-    int soft_fail = 0;
+    struct ged_draw_test_args args = {};
+    int soft_fail;
     int ret = BRLCAD_OK;
 
     bu_setprogname(av[0]);
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",            "", NULL,          &need_help, "Print help and exit");
-    BU_OPT(d[1], "U", "enable-unstable", "", NULL, &run_unstable_tests, "Test drawing routines known to differ between build configs/platforms.");
-    BU_OPT(d[2], "c", "continue",        "", NULL,          &soft_fail, "Continue testing if a failure is encountered.");
-    BU_OPT_NULL(d[3]);
-
-    /* Done with program name */
-    (void)bu_opt_parse(NULL, ac, (const char **)av, d);
+    static const struct bu_cmd_option options[] = {
+	BU_CMD_FLAG("h", "help", struct ged_draw_test_args, help, "Print help and exit"),
+	BU_CMD_FLAG("U", "enable-unstable", struct ged_draw_test_args, enable_unstable,
+	    "Test drawing routines known to differ between build configurations"),
+	BU_CMD_FLAG("c", "continue", struct ged_draw_test_args, continue_on_failure,
+	    "Continue testing if a failure is encountered"),
+	BU_CMD_OPTION_NULL
+    };
+    static const struct bu_cmd_schema schema = {
+	"ged_test_aet", "Run azimuth/elevation/twist drawing tests", options,
+	ged_draw_test_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    };
+    int user_ac = ac - 1;
+    const char **user_av = (const char **)(av + 1);
+    int operand_index = bu_cmd_schema_parse(&schema, &args, NULL, user_ac, user_av);
+    if (args.help || operand_index < 0 || user_ac - operand_index != 1) {
+	bu_log("Usage: %s [-h] [-U] [-c] <directory>\n", av[0]);
+	return args.help ? 0 : 1;
+    }
+    av[1] = (char *)user_av[operand_index];
+    soft_fail = args.continue_on_failure;
 
     if (!bu_file_directory(av[1])) {
 	printf("ERROR: [%s] is not a directory.  Expecting control image directory\n", av[1]);

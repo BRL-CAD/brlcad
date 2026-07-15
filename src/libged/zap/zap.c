@@ -27,10 +27,34 @@
 
 #include <stdlib.h>
 
-
 #include "../ged_private.h"
+#include "zap.h"
 
 extern int ged_zap2_core(struct ged *gedp, int argc, const char *argv[]);
+
+static const struct bu_cmd_option zap_schema_options[] = {
+    BU_CMD_FLAG("h", "help", struct zap_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    {"V", "view", "view", "name", "Specify view to clear", BU_CMD_VALUE_STRING,
+	offsetof(struct zap_args, view), NULL, NULL, "ged.view", NULL, 0, 0, NULL,
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    BU_CMD_FLAG("S", "shared", struct zap_args, shared_only, "Clear shared view objects"),
+    BU_CMD_FLAG("v", "view-objs", struct zap_args, clear_view_objs,
+	"Clear view-local objects"),
+    BU_CMD_FLAG("g", "solid-objs", struct zap_args, clear_solid_objs,
+	"Clear database solid objects"),
+    BU_CMD_FLAG(NULL, "all", struct zap_args, clear_all_views, "Clear all scene objects"),
+    BU_CMD_OPTION_NULL
+};
+
+const struct bu_cmd_schema ged_Z_cmd_schema = {
+    "Z", "Clear displayed geometry", zap_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, {NULL}
+};
+const struct bu_cmd_schema ged_zap_cmd_schema = {
+    "zap", "Clear displayed geometry", zap_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, {NULL}
+};
 
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
 #define FREE_BV_SCENE_OBJ(p, fp) { \
@@ -122,11 +146,11 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_ZAP_COMMANDS(X, XID) \
-    X(Z, ged_zap_core, GED_CMD_DEFAULT) \
-    X(zap, ged_zap_core, GED_CMD_DEFAULT) \
+    X(Z, ged_zap_core, GED_CMD_DEFAULT, &ged_Z_cmd_schema) \
+    X(zap, ged_zap_core, GED_CMD_DEFAULT, &ged_zap_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_ZAP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_zap", 1, GED_ZAP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ZAP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_zap", 1, GED_ZAP_COMMANDS)
 
 /*
  * Local Variables:

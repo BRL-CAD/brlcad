@@ -34,22 +34,48 @@
 #include <QTextStream>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/log.h"
-#include "bu/opt.h"
 #include "brlcad_version.h"
 
 #include "QgEdApp.h"
 #include "fbserv.h"
 
+struct qged_args {
+    int help;
+    int console_mode;
+    int swrast_mode;
+    int quad_mode;
+};
+
+static const struct bu_cmd_option qged_options[] = {
+    BU_CMD_FLAG("h", "help", struct qged_args, help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("c", "no-gui", struct qged_args, console_mode, "Run without GUI"),
+    BU_CMD_FLAG("s", "swrast", struct qged_args, swrast_mode, "Use software rendering for the 3D view"),
+    BU_CMD_FLAG("4", "quad", struct qged_args, quad_mode, "Launch using quad view"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand qged_operands[] = {
+    BU_CMD_OPERAND("database", BU_CMD_VALUE_FILE, 0, 1, "Geometry database file", "ged.file_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema qged_schema = {
+    "qged", "Launch the QGED geometry editor", qged_options, qged_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-qged_usage(const char *cmd, struct bu_opt_desc *d) {
+qged_usage(const char *cmd)
+{
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help = bu_opt_describe(d, NULL);
+    char *option_help = bu_cmd_schema_describe(&qged_schema);
     bu_vls_sprintf(&str, "Usage: %s [options] [file.g]\n", cmd);
-    if (option_help) {
+	if (option_help) {
 	bu_vls_printf(&str, "Options:\n%s\n", option_help);
     }
-    bu_free(option_help, "help str");
+    if (option_help)
+	bu_free(option_help, "qged native option help");
     bu_log("%s", bu_vls_cstr(&str));
     bu_vls_free(&str);
 }
@@ -69,10 +95,7 @@ main(int argc, char **argv)
 {
 #endif
 
-    int console_mode = 0;
-    int swrast_mode = 0;
-    int quad_mode = 0;
-    int print_help = 0;
+    struct qged_args args = {0, 0, 0, 0};
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     const char *exec_name = argv[0];
 
@@ -82,15 +105,6 @@ main(int argc, char **argv)
 
     /* Done with command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
-
-    /* Handle top level application options */
-    struct bu_opt_desc d[6];
-    BU_OPT(d[0],  "h", "help",   "", NULL, &print_help,    "Print help and exit");
-    BU_OPT(d[1],  "?", "",       "", NULL, &print_help,    "");
-    BU_OPT(d[2],  "c", "no-gui", "", NULL, &console_mode,  "Run without GUI");
-    BU_OPT(d[3],  "s", "swrast", "", NULL, &swrast_mode,   "Use software rendering for 3D view");
-    BU_OPT(d[4],  "4", "quad",   "", NULL, &quad_mode,     "Launch using quad view");
-    BU_OPT_NULL(d[5]);
 
     // High level options are only defined prior to the file argument (if there
     // is one).  See if we need to limit our processing
@@ -104,45 +118,39 @@ main(int argc, char **argv)
     }
 
     // Process high level args
-    int opt_ac = bu_opt_parse(&msg, acmax, (const char **)argv, d);
+    int opt_ac = bu_cmd_schema_parse(&qged_schema, &args, &msg, acmax,
+	(const char **)argv);
     if (opt_ac < 0) {
 	bu_log("%s\n", bu_vls_cstr(&msg));
 	bu_vls_free(&msg);
 	return BRLCAD_ERROR;
     }
 
-    // Shift everything not processed by bu_opt_parse down in argv to the last
-    // option left behind by bu_opt_parse (or the beginning of the array if
-    // opt_ac == 0
-    int opt_rem = opt_ac;
-    for (int i = acmax; i < argc; i++) {
-	argv[opt_ac + (i - acmax)] = argv[i];
-	opt_rem++;
-    }
+    // Root options precede the optional database argument.  The native parser
+    // returns that operand boundary without rewriting the caller's argv.
+    argc -= opt_ac;
+    argv += opt_ac;
 
-    // Set argc to the full count of whatever is left
-    argc = opt_rem;
-
-    if (print_help) {
-	qged_usage(exec_name, d);
+    if (args.help) {
+	qged_usage(exec_name);
 	bu_vls_free(&msg);
 	return BRLCAD_OK;
     }
 
     // TODO - if we have commands beyond a .g file, we're supposed to process
     // and exit...
-    if (argc > 1 && !console_mode) {
+    if (argc > 1 && !args.console_mode) {
 	bu_log("For qged GUI mode need either zero or one .g files specified\n");
 	return BRLCAD_ERROR;
     }
 
-    if (console_mode) {
+    if (args.console_mode) {
 	bu_log("Unimplemented\n");
 	return BRLCAD_ERROR;
     }
 
     // We derive our own app type from QApplication
-    QgEdApp app(argc, argv, swrast_mode, quad_mode);
+    QgEdApp app(argc, argv, args.swrast_mode, args.quad_mode);
 
     // Setup complete - time to enter the interactive event loop
     return app.exec();

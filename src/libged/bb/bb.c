@@ -30,11 +30,66 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bu/units.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
+
+
+struct bb_args {
+    const char *bb_name;
+    int print_dim;
+    int print_midpt;
+    int print_rpp;
+    int quiet;
+    int exclude_air;
+    int print_vol;
+    int oriented;
+};
+
+static const char *bb_oriented_option[] = {"o", NULL};
+static const struct bu_cmd_constraint bb_constraints[] = {
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+	bb_oriented_option, 1, 1, "-o requires exactly one BoT object"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_option bb_schema_options[] = {
+    BU_CMD_STRING("c", NULL, struct bb_args, bb_name, "name",
+	"Create a bounding-box object with this name"),
+    BU_CMD_FLAG("d", NULL, struct bb_args, print_dim, "Print dimensions"),
+    BU_CMD_FLAG("m", NULL, struct bb_args, print_midpt, "Print midpoint"),
+    BU_CMD_FLAG("e", NULL, struct bb_args, print_rpp, "Print extents"),
+    BU_CMD_FLAG("q", NULL, struct bb_args, quiet, "Suppress the header"),
+    BU_CMD_FLAG("u", NULL, struct bb_args, exclude_air, "Exclude air regions"),
+    BU_CMD_FLAG("v", NULL, struct bb_args, print_vol, "Print volume"),
+    BU_CMD_FLAG("o", NULL, struct bb_args, oriented, "Compute an oriented bounding box"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bb_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Objects to bound", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema bb_cmd_schema = {
+    "bb", "Report or create object bounds", bb_schema_options,
+    bb_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, bb_constraints)
+};
+
+static void
+bb_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&bb_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: %s [-c name] [-d] [-m] [-e] [-q] [-u] [-v] [-o] object [object ...]",
+	command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "bb native option help");
+    }
+}
 
 
 int
@@ -42,7 +97,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t rpp_min, rpp_max;
     point_t obj_min, obj_max;
-    int c;
+    int operand_index;
     int use_air = 1;
     int print_header = 1;
     int print_rpp = 0;
@@ -52,14 +107,14 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     int make_bb = 0;
     int oriented_bb = 0;
     int i;
-    static const char *usage = "[options] object1 [object2 object3 ...]";
+    struct bb_args args = {NULL, 0, 0, 0, 0, 0, 0, 0};
     const char *str;
     double xlen;
     double ylen;
     double zlen;
     double vol;
     double oriented_bbox_tol = BN_TOL_DIST;
-    char bbname[64];
+    const char *bbname = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -68,46 +123,26 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bb_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "c:dmequvo")) != -1) {
-	switch (c) {
-	    case 'c':
-		make_bb = 1;
-		memset(bbname, 0, 64);
-		bu_strlcpy(bbname, bu_optarg, 64);
-		break;
-	    case 'd':
-		print_dim = 1;
-		break;
-	    case 'm':
-		print_midpt = 1;
-		break;
-	    case 'e':
-		print_rpp = 1;
-		break;
-	    case 'q':
-		print_header = 0;
-		break;
-	    case 'u':
-		use_air = 0;
-		break;
-	    case 'v':
-		print_vol = 1;
-		break;
-	    case 'o':
-		oriented_bb = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return BRLCAD_ERROR;
-	}
+    operand_index = bu_cmd_schema_parse_complete(&bb_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bb_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
     }
+    make_bb = args.bb_name != NULL;
+    bbname = args.bb_name;
+    print_dim = args.print_dim;
+    print_midpt = args.print_midpt;
+    print_rpp = args.print_rpp;
+    print_header = !args.quiet;
+    use_air = !args.exclude_air;
+    print_vol = args.print_vol;
+    oriented_bb = args.oriented;
 
     /* Don't want to print NO info, so default to dim and vol printout if nothing specified. */
     if (print_rpp == 0 && print_vol == 0 && print_dim == 0 && print_midpt == 0) {
@@ -115,15 +150,8 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	print_vol = 1;
     }
 
-    /* skip options processed plus command name, should just leave object names */
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    /* must be wanting help */
-    if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: bb %s", usage);
-	return GED_HELP;
-    }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     if (!oriented_bb) {
 
@@ -325,10 +353,10 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_BB_COMMANDS(X, XID) \
-    X(bb, ged_bb_core, GED_CMD_DEFAULT) \
+    X(bb, ged_bb_core, GED_CMD_DEFAULT, &bb_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_BB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_bb", 1, GED_BB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_BB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_bb", 1, GED_BB_COMMANDS)
 
 /*
  * Local Variables:

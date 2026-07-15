@@ -28,12 +28,51 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "rt/db_fullpath.h"
 #include "rt/db_diff.h"
 #include "analyze.h"
 
 #include "../ged_private.h"
+
+
+struct gdiff_args {
+    int print_help;
+    fastf_t grid_spacing;
+    int view_left;
+    int view_overlap;
+    int view_right;
+    int grazing_report;
+    int structure_diff;
+};
+
+static const struct bu_cmd_option gdiff_options[] = {
+    BU_CMD_FLAG("h", "help", struct gdiff_args, print_help, "Print help"),
+    BU_CMD_NUMBER("g", "grid-spacing", struct gdiff_args, grid_spacing,
+	"distance", "Controls spacing of test ray grids (units are mm)"),
+    BU_CMD_FLAG("l", "view-left", struct gdiff_args, view_left,
+	"Visualize volumes occurring only in the left object"),
+    BU_CMD_FLAG("b", "view-both", struct gdiff_args, view_overlap,
+	"Visualize volumes common to both objects"),
+    BU_CMD_FLAG("r", "view-right", struct gdiff_args, view_right,
+	"Visualize volumes occurring only in the right object"),
+    BU_CMD_FLAG("G", "grazing", struct gdiff_args, grazing_report,
+	"Report differences in grazing hits"),
+    BU_CMD_FLAG("S", "structure", struct gdiff_args, structure_diff,
+	"Compare tree structures instead of raytrace results"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand gdiff_operands[] = {
+    BU_CMD_OPERAND("left_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Left object", "ged.db_object"),
+    BU_CMD_OPERAND("right_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Right object", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema gdiff_cmd_schema = {
+    "gdiff", "Compare two geometry objects", gdiff_options, gdiff_operands,
+    BU_CMD_PARSE_INTERSPERSED, {NULL}
+};
 
 static void check_walk(
 	int *diff,
@@ -197,41 +236,33 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     struct analyze_raydiff_results *results;
     struct bn_tol tol = BN_TOL_INIT_TOL;
-
-    int structure_diff = 0;
-    int view_left = 0;
-    int view_right = 0;
-    int view_overlap = 0;
-    int grazereport = 0;
-    int print_help = 0;
+    struct gdiff_args args = {0, 0.0, 0, 0, 0, 0, 0};
     const char *left_obj;
     const char *right_obj;
-    fastf_t len_tol = 0;
     int ret_ac = 0;
+    int operand_index = 0;
     /* Skip command name */
     int ac = argc - 1;
     const char **av = argv+1;
 
-    struct bu_opt_desc d[8];
-    BU_OPT(d[0], "h", "help",         "",  NULL,            &print_help,   "Print help.");
-    BU_OPT(d[1], "g", "grid-spacing", "#", &bu_opt_fastf_t, &len_tol,      "Controls spacing of test ray grids (units are mm.)");
-    BU_OPT(d[2], "l", "view-left",    "",  NULL,            &view_left,    "Visualize volumes occurring only in the left object");
-    BU_OPT(d[3], "b", "view-both",    "",  NULL,            &view_overlap, "Visualize volumes common to both objects");
-    BU_OPT(d[4], "r", "view-right",   "",  NULL,            &view_right,   "Visualize volumes occurring only in the right object");
-    BU_OPT(d[5], "G", "grazing",      "",  NULL,            &grazereport,  "Report differences in grazing hits");
-    BU_OPT(d[6], "S", "structure",    "",  NULL,            &structure_diff,  "Do a diff of tree structures (matrices and objects, ignoring object names.)  This mode is not raytrace based.");
-    BU_OPT_NULL(d[7]);
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    ret_ac = bu_opt_parse(NULL, ac, av, d);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (print_help) {
-	char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
+    operand_index = bu_cmd_schema_parse(&gdiff_cmd_schema, &args,
+	gedp->ged_result_str, ac, av);
+    if (operand_index < 0) {
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\n");
+	return BRLCAD_ERROR;
+    }
+    ret_ac = ac - operand_index;
+
+
+    if (args.print_help) {
+	char *usage = bu_cmd_schema_describe(&gdiff_cmd_schema);
 	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\n");
 	bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", usage);
 	bu_vls_printf(gedp->ged_result_str, "When visualizing raytrace based diff results, red segments are those generated\nonly from intersections with \"left_obj\" while blue segments represent\nintersections unique to \"right_obj\".  White segments represent intersections\ncommon to both objects. By default, in raytracing mode, segments unique to left and right objects are displayed.  ");
@@ -241,16 +272,16 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (ret_ac != 2) {
-	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
+	char *usage = bu_cmd_schema_describe(&gdiff_cmd_schema);
 	bu_vls_printf(gedp->ged_result_str, "wrong number of args.\nUsage: gdiff [opts] left_obj right_obj\nOptions:\n%s", usage);
-	bu_free((char *)usage, "help str");
+	bu_free(usage, "help str");
 	return BRLCAD_ERROR;
     } else {
-	left_obj = av[0];
-	right_obj = av[1];
+	left_obj = av[operand_index];
+	right_obj = av[operand_index + 1];
     }
 
-    if (structure_diff) {
+    if (args.structure_diff) {
 	int diff = 0;
 	struct bu_vls smsgs = BU_VLS_INIT_ZERO;
 	struct db_full_path *lp, *rp;
@@ -329,7 +360,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* If we don't have a tolerance, try to guess something sane from the bbox */
-    if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
+    if (NEAR_ZERO(args.grid_spacing, RT_LEN_TOL)) {
 	point_t rpp_min, rpp_max;
 	point_t obj_min, obj_max;
 	VSETALL(rpp_min, INFINITY);
@@ -340,11 +371,11 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&right_obj, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-	len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
+	args.grid_spacing = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
     }
-    tol.dist = len_tol;
+    tol.dist = args.grid_spacing;
 
-    analyze_raydiff(&results, gedp->dbip, left_obj, right_obj, &tol, !grazereport);
+    analyze_raydiff(&results, gedp->dbip, left_obj, right_obj, &tol, !args.grazing_report);
 
     /* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
      * some thought. */
@@ -356,13 +387,13 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 
     /* For now, graphical output is the main output of this mode, so if we don't have any
      * specifics do left and right */
-    if (!view_left && !view_overlap && !view_right) {
-	view_left = 1;
-	view_right = 1;
-	view_overlap = 0;
+    if (!args.view_left && !args.view_overlap && !args.view_right) {
+	args.view_left = 1;
+	args.view_right = 1;
+	args.view_overlap = 0;
     }
 
-    if (view_left || view_overlap || view_right) {
+    if (args.view_left || args.view_overlap || args.view_right) {
 	/* Visualize the differences */
 	struct bu_list *vhead;
 	point_t a, b;
@@ -380,7 +411,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	    dl_erasePathFromDisplay(gedp, "diff_visualffffff", 1);
 
 	/* Draw left-only lines */
-	if (view_left) {
+	if (args.view_left) {
 	    for (i = 0; i < BU_PTBL_LEN(results->left); i++) {
 		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
 		VMOVE(a, dseg->in_pt);
@@ -391,7 +422,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	/* Draw overlap lines */
-	if (view_overlap) {
+	if (args.view_overlap) {
 	    for (i = 0; i < BU_PTBL_LEN(results->both); i++) {
 		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
 		VMOVE(a, dseg->in_pt);
@@ -403,7 +434,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	/* Draw right lines */
-	if (view_right) {
+	if (args.view_right) {
 	    for (i = 0; i < BU_PTBL_LEN(results->right); i++) {
 		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
 		VMOVE(a, dseg->in_pt);
@@ -432,10 +463,10 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GDIFF_COMMANDS(X, XID) \
-    X(gdiff, ged_gdiff_core, GED_CMD_DEFAULT) \
+    X(gdiff, ged_gdiff_core, GED_CMD_DEFAULT, &gdiff_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GDIFF_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_gdiff", 1, GED_GDIFF_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GDIFF_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_gdiff", 1, GED_GDIFF_COMMANDS)
 
 /*
  * Local Variables:

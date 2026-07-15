@@ -29,7 +29,23 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
+
+
+static const struct bu_cmd_operand fracture_operands[] = {
+    BU_CMD_OPERAND("nmg_solid", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"NMG solid", "ged.db_object"),
+    BU_CMD_OPERAND("prefix", BU_CMD_VALUE_STRING, 0, 1,
+	"Output name prefix", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema fracture_cmd_schema = {
+    "fracture", "Fracture an NMG solid", NULL, fracture_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 static int frac_stat;
@@ -100,6 +116,10 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
     struct vertex *v_new, *v;
     size_t tw, tf, tp;
     static const char *usage = "nmg_solid [prefix]";
+    int operand_index = 0;
+    int parse_dummy = 0;
+    const char *nmg_solid_name = NULL;
+    const char *prefix_arg = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -114,17 +134,22 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (3 < argc) {
+	operand_index = bu_cmd_schema_parse_complete(&fracture_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index < 1 || argc - 1 - operand_index > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+
+    nmg_solid_name = argv[1 + operand_index];
+    prefix_arg = argc - 1 - operand_index > 1 ? argv[2 + operand_index] : nmg_solid_name;
 
     bu_vls_printf(gedp->ged_result_str, "fracture:");
     for (i = 0; i < argc; i++)
 	bu_vls_printf(gedp->ged_result_str, " %s", argv[i]);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    if ((old_dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((old_dp = db_lookup(gedp->dbip, nmg_solid_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
     if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity) < 0) {
@@ -154,7 +179,7 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 
     /* get the prefix for the solids to be created. */
     memset(prefix, 0, sizeof(prefix));
-    bu_strlcpy(prefix, argv[argc-1], sizeof(prefix));
+    bu_strlcpy(prefix, prefix_arg, sizeof(prefix));
     bu_strlcat(prefix, "_", sizeof(prefix));
 
     /* Bust it up here */
@@ -216,10 +241,10 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_FRACTURE_COMMANDS(X, XID) \
-    X(fracture, ged_fracture_core, GED_CMD_DEFAULT) \
+    X(fracture, ged_fracture_core, GED_CMD_DEFAULT, &fracture_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_FRACTURE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_fracture", 1, GED_FRACTURE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_FRACTURE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_fracture", 1, GED_FRACTURE_COMMANDS)
 
 /*
  * Local Variables:

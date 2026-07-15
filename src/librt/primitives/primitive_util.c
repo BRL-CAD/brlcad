@@ -28,7 +28,7 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/app.h"
 #include "vmath.h"
 #include "../librt_private.h"
@@ -546,7 +546,7 @@ _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len)
     }
 
     for (i = 0; i < len && i < *array_len; i++) {
-	(void)bu_opt_int(NULL, 1, &argv[i], &((*array)[i]));
+	(void)bu_cmd_integer_from_str(&((*array)[i]), argv[i]);
     }
 
     bu_free((char *)argv, "argv");
@@ -575,7 +575,7 @@ _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
     }
 
     for (i = 0; i < len && i < *array_len; i++) {
-	(void)bu_opt_fastf_t(NULL, 1, &argv[i], &((*array)[i]));
+	(void)bu_cmd_number_from_str(&((*array)[i]), argv[i]);
     }
 
     bu_free((char *)argv, "argv");

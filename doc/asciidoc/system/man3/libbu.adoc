@@ -1,4 +1,4 @@
-= Command History Object Documentation
+= libbu Command History and Command Schema API
 Mark L. Ulferts <mulferts@austin.dsccc.com>; Glenn Durfee
 :doctype: book
 :toc:
@@ -82,3 +82,454 @@ cmd1
 cmd2
 cmd3
 ----
+
+== Compact command schemas
+
+The `bu_cmd_schema` API in `bu/cmdschema.h` describes the common,
+flat command shape in one compact, code-native table.  It is intended for
+commands whose option spelling, type, help text, and execution storage binding
+are all known by the command implementation.  It is separate from the older
+`bu_opt_desc` and `bu_opt_desc_meta` mechanism and is the replacement for
+libbu's internal command implementations.  A command uses one mechanism or
+the other and does not generate duplicate compatibility rows.  The older
+`bu_opt` API is formally deprecated and remains only as a public compatibility
+interface; new code must use `bu_cmd_schema`.
+
+That retirement applies to the complete `bu_opt` family, including its
+`bu_opt_*` scalar, color, vector, string, and vocabulary reader callbacks.
+They are not a permanently supported helper subset.  Each semantics used by
+new code has a native
+`bu_cmd_schema` value binding, shape consumer, validator, or explicit
+command-owned conversion; callers can then move as a unit to the native API.
+The remaining descriptor entry points in NIRT and GCV are transition adapters
+for external callers and plug-ins, not the preferred implementation path.
+
+The API provides three views of the same schema:
+
+* `bu_cmd_schema_parse` binds command-line options to a caller-owned argument
+  structure.  The argument pointer may be null for an optionless schema,
+  because there is then no storage to bind.  `bu_cmd_schema_parse_complete`
+  additionally requires all positional roles to satisfy their declared
+  cardinality and scalar rules.
+* `bu_cmd_schema_describe` produces command help, while
+  `bu_cmd_schema_describe_json` produces machine-readable metadata.
+* `bu_cmd_schema_validate` performs side-effect-free incremental syntax and
+  scalar-type validation, returning static candidates for completion and
+  highlighting.  `bu_cmd_schema_validate_ctx` adds an optional host context
+  for semantic rules that need live application state, while preserving the
+  same native option and operand grammar.
+
+The validation result owns its candidate array.  Initialize it with
+`BU_CMD_VALIDATE_RESULT_NULL` and release it with
+`bu_cmd_validate_result_clear` after each use.
+
+=== Declaring a simple schema
+
+Define an argument structure with the command defaults, then declare options
+using the `BU_CMD_*` helpers.  Each option names its short spelling, long
+spelling, storage field, value type, argument label, and help text once.
+
+Use `BU_CMD_COUNTING_FLAG` for a repeatable no-argument option whose integer
+storage field must count occurrences (for example, `-vv`).  Ordinary
+`BU_CMD_FLAG` options remain boolean even when they are repeated.
+`BU_CMD_CUSTOM_FLAG` is the deliberate escape hatch for an order-sensitive
+no-argument state transition; its parser receives a NULL argument and the
+selected storage-field address.
+
+Use `BU_CMD_OPTIONAL_STRING` for a conventional `--option [text]` form.  It
+binds the next non-option word when present, but leaves a following option for
+the regular option scanner; pass a literal text value beginning with `-` using
+the attached `--option=value` spelling.
+
+`BU_CMD_DB_OBJECT` and `BU_CMD_DB_PATH` are compact typed-option forms for
+database object and path values.  They keep libbu application-neutral: an
+application such as GED may infer its default semantic provider from the value
+type, while a specialized role may name an explicit provider in its full
+`bu_cmd_option` or `bu_cmd_operand` row.
+
+[source,c]
+----
+struct example_args {
+    int verbose;
+    fastf_t scale;
+    const char *output;
+};
+
+static const struct bu_cmd_option example_options[] = {
+    BU_CMD_FLAG("v", "verbose", struct example_args, verbose,
+                "Enable diagnostic output"),
+    BU_CMD_NUMBER("s", "scale", struct example_args, scale, "factor",
+                  "Scale the result"),
+    BU_CMD_FILE("o", "output", struct example_args, output, "file",
+                "Write the result to a file"),
+    BU_CMD_OPTION_NULL
+};
+----
+
+Aliases use `BU_CMD_ALIAS_SHORT` or `BU_CMD_ALIAS_LONG` and name the canonical
+option.  Hidden aliases remain accepted by the parser but are omitted from
+help and completion.  Custom values use `BU_CMD_CUSTOM`; their parser receives
+a pointer to that option's storage during execution and a null storage pointer
+during validation, so custom parsers must treat a null pointer as a
+side-effect-free syntax check.
+
+Typed options and operands may also use a `BU_CMD_*_VALIDATE` helper
+(`BU_CMD_OPERAND_VALIDATE` for a positional role).  Its validator is called
+without storage during incremental validation; option parsing applies it when
+binding execution storage, and a command's positional parser can reuse the
+same function.  This publishes constraints such as an integer range without
+reducing the value to an opaque custom value.
+
+For common scalar ranges, use `BU_CMD_POSITIVE_INTEGER`,
+`BU_CMD_NONNEGATIVE_INTEGER`, `BU_CMD_POSITIVE_NUMBER`, or
+`BU_CMD_NONNEGATIVE_NUMBER`.  Their libbu validators use the same strict
+base-zero integer or finite floating-point spelling accepted by the matching
+typed option and produce a shared range diagnostic.  Use a command-specific
+validator only when its range or error explanation is genuinely
+domain-specific.
+
+When a typed positional role must be stored after schema validation, use
+`bu_cmd_bool_from_str`, `bu_cmd_integer_from_str`, `bu_cmd_hex_integer_from_str`,
+`bu_cmd_long_from_str`, `bu_cmd_hex_long_from_str`, `bu_cmd_number_from_str`, or
+`bu_cmd_char_from_str` instead of adding another `strtol`, `strtod`, or
+first-character reader to the command.  They return nonzero on success and
+leave the destination unchanged on failure, using exactly the native scalar
+grammar.  `BU_CMD_HEX_INTEGER`, `BU_CMD_LONG`, `BU_CMD_HEX_LONG`, and
+`BU_CMD_CHAR` bind the same types to option storage.  `BU_CMD_COUNTING_LONG_FLAG` is the long-counter
+form for repeated flags, and `BU_CMD_VLS_APPEND` appends repeated text values
+to a `bu_vls`, separating nonempty existing content with a space.  These are
+also the appropriate common readers and bindings for a command-owned record
+assembled from several positional roles.
+
+`BU_CMD_CHAR_VALIDATE` and `BU_CMD_VLS_APPEND_VALIDATE` attach a normal
+side-effect-free validator to those storage forms.  `BU_CMD_ISO639_1` uses the
+latter with `bu_cmd_iso639_1_validate` to accept a lower-case ISO 639-1 code;
+`BU_CMD_MAN_SECTION` uses `bu_cmd_man_section_validate` to accept one of the
+BRL-CAD manual-page sections.  Both validators reject input before altering
+the command's storage, unlike the historical callback layering.
+
+Use `bu_cmd_units_from_str` when execution needs the positive conversion
+factor represented by a BRL-CAD unit expression such as `cm`, `in`, or
+`25cm`; it leaves its destination unchanged on failure.  `BU_CMD_UNITS`
+binds a string-valued option with the corresponding
+`bu_cmd_units_validate` preflight, so invalid units are rejected consistently
+by completion, validation, and execution before a command applies its own
+direction of conversion.
+
+=== Canonical keyword values
+
+Use a `bu_cmd_value_keyword` table when a keyword vocabulary needs stable
+canonical spellings, accepted aliases, or per-value descriptions.  Each row
+contains a canonical spelling, an optional null-terminated alias list, and an
+optional description.  `BU_CMD_KEYWORD_VALUES` attaches such a table to a
+keyword option; `BU_CMD_OPERAND_KEYWORD_VALUES` does the same for a positional
+role.
+
+Aliases are accepted during validation and parsing, but static completion
+offers only the canonical spelling.  For a keyword option, parsing also stores
+the canonical spelling in its `const char *` field, so execution does not need
+to duplicate alias normalization.  JSON retains the compatible `values` array
+of canonical spellings and adds `keyword_values`, whose entries include
+`canonical`, `aliases`, and `description`.  A string-valued role may publish
+the same table as completion hints while a validator accepts a wider expression
+grammar; in that case its original string is intentionally retained.
+
+Native schema lint rejects an option or operand that mixes the legacy simple
+keyword array with rich values, and rejects empty or duplicate canonical or
+alias spellings.
+
+=== Optional and shaped values
+
+Every typed `BU_CMD_*` option takes one required scalar argument unless it is
+a flag.  Native schemas may instead declare `BU_CMD_ARG_OPTIONAL` or an
+explicit `bu_cmd_arg_shape` using `BU_CMD_OPTION_SHAPED`.  The shape records
+the token range and one of `scalar`, `token_sequence`, `comma_list`,
+`key_value_list`, `axis_keyed`, `range_pattern`, `rgb`, `color`, `vector3`,
+or `custom`. It is emitted in JSON as `argument_requirement` and
+`argument_shape`, so documentation and completion clients do not need a
+separate mini-language table.
+
+When a `comma_list` role also publishes static keyword values, completion
+matches and replaces only the active list element.  It retains all preceding
+elements and preserves a leading `!` on that element, which supports sort
+forms such as `name,!si` completing to `name,!size`.  String or VLS-backed
+roles may publish this vocabulary as completion guidance without rejecting
+application-defined values such as attribute names.
+
+An optional argument consumes zero or one following token; when supplied, it
+is still checked as the option's declared value type.  This deliberately
+makes a command such as `make_name -s [num]` unambiguous: a following word is
+the optional reset value and is rejected if it is not an integer, rather than
+silently becoming a positional template.
+
+For a multi-token shape, supply a `bu_cmd_value_consume_t` consumer.  It
+receives the complete selected token sequence and the address selected by the
+option's `storage_offset`.  With a null storage pointer it must perform only
+side-effect-free validation; with storage it binds the execution value.
+libbu therefore invokes the same shape parser for execution and incremental
+validation.  A multi-token shape without a consumer is rejected by native
+schema lint.
+
+A positional role whose value has a one-token mini-language may use
+`BU_CMD_OPERAND_SHAPED`.  Its shape is published as the operand's `shape` in
+JSON and must describe exactly one token; the operand's normal cardinality
+still determines how many such tokens the command accepts.  For example, an
+integer-or-inclusive-range operand can use `range_pattern` together with a
+side-effect-free validator, making `100-200` and `100:200` visible as range
+syntax without misrepresenting the role as a plain integer.
+
+=== Declarative command relationships
+
+Use a `bu_cmd_constraint` table for relationships that cannot be represented
+by an individual option or positional role alone.  The compact rows support
+distinct-option counts (such as mutually exclusive modes) and conditional
+operand counts (such as either `-f file` or exactly two object-name operands).
+Options in a row are canonical names without dashes.  `BU_CMD_CONSTRAINT_OPTIONS`
+limits the number of selected options; `BU_CMD_CONSTRAINT_OPERANDS` applies an
+operand range when any, none, or all of its named options are selected.
+
+Attach the table with `BU_CMD_SCHEMA_CONSTRAINTS` in the final schema slot:
+
+[source,c]
+----
+static const char *mapping_file_option[] = {"f", NULL};
+static const struct bu_cmd_constraint rename_constraints[] = {
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+        mapping_file_option, 0, 0, "-f cannot be combined with object names"),
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT,
+        mapping_file_option, 2, 2, "source and destination are required"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
+static const struct bu_cmd_schema rename_schema = {
+    "rename", "Rename objects", rename_options, rename_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, rename_constraints)
+};
+----
+
+libbu applies these rows to complete execution parsing and complete
+incremental validation, and publishes them in generated help and JSON.  They
+therefore cannot silently disagree across parsing, validation, and completion.
+
+For a genuinely command-specific side-effect-free syntax rule that cannot be
+expressed as a constraint row, provide a validator in
+`schema.validation.custom_validate`.  The callback receives the token array
+and cursor position and returns a normal `bu_cmd_validate_result`.  It should
+copy the schema, clear `flat.validation.custom_validate`, call
+`bu_cmd_schema_validate` for the ordinary flat rules, then add only its
+command-specific rule.  `bu_cmd_schema_option_present`,
+`bu_cmd_schema_operand_count`, and `bu_cmd_schema_option_span` expose the
+parser's own alias-, cluster-,
+shape-, and `--`-aware interpretation when such a rule depends on a selected
+canonical option or the number of positional operands; do not duplicate an
+option scanner in the command.  Reserve non-flat languages for an explicit
+grammar adapter.
+
+When that additional rule needs host state--for example, a GED database lookup
+to select primitive-specific operations--put it in
+`BU_CMD_SCHEMA_CONTEXT_VALIDATOR(callback)` in the schema validation slot and
+call `bu_cmd_schema_validate_ctx`.  The callback receives an opaque context
+pointer.  It should copy the schema, clear
+`flat.validation.constraint_data.context_validate`, and call
+`bu_cmd_schema_validate` for the ordinary flat grammar before adding only the
+context-dependent candidates or semantic checks.  libbu itself never
+interprets the context; command hosts choose when to provide it.  This keeps
+one native schema for execution, help, JSON, and completion without reviving
+a parallel metadata table.
+
+Positional roles use `BU_CMD_OPERAND`.  Alongside their scalar type they may
+carry an opaque semantic-provider identifier.  libbu preserves that identifier
+without depending on any application; GED uses identifiers such as
+`ged.db_object` and `ged.db_path` to supply database-aware validation and
+completion.  A native schema therefore keeps its library-neutral core while
+still describing application-specific operands precisely.
+
+The compact parser is deliberately for flat option grammars.  Commands with
+subcommands, context-dependent expression languages, or nested commands
+should publish an explicit syntax adapter instead of forcing that grammar into
+option rows.  Its execution parser preserves argv order for options-first and
+stop-at-first-operand forms.  For a flat interspersed-option command,
+`bu_cmd_schema_parse` compacts recognized options and their arguments at the
+front of the caller-owned argv pointer array, preserving positional operand
+order in the remaining suffix; execution can therefore consume the same
+native rows without a second option scanner.  A schema-only option for such a
+command uses
+`BU_CMD_FLAG_UNBOUND`; it participates in help, validation, and completion but
+deliberately refuses `bu_cmd_schema_parse`, which prevents a metadata table
+from silently writing through an invented storage offset.
+
+For conventional flat flag sets, the execution parser and validator accept a
+compact short-option cluster when every member is a no-argument flag: `-ah`
+has the same meaning as `-a -h`.  Attached values and clusters containing an
+option argument remain explicit, avoiding ambiguous getopt-style guessing.
+An optionless schema treats ordinary leading-dash text as an operand, which
+keeps raw commands such as `echo -literal` from inventing an option grammar.
+For a schema with options, a dash-leading integer, long, hexadecimal long, or
+finite-number token is likewise accepted as the next numeric positional role
+(for example, `x -2`) without a preceding `--`; this narrow compatibility rule
+does not apply to string or raw operands, so an unrecognized dash-leading
+string is still reported as an option error.  The standalone `--` marker
+remains available to make every other operand phase explicit.
+
+=== Native command trees
+
+Use `bu_cmd_tree` when a command has a normal root option phase followed by
+named subcommands.  A tree root references its existing `bu_cmd_schema`; each
+`bu_cmd_tree_node` references the existing schema for one child and may supply
+its executor.  The child name and help text come from that schema, so a tree
+does not introduce a second option, help, or completion table.  An optional
+null-terminated alias list adds accepted child spellings without changing the
+canonical child schema name.
+
+`BU_CMD_TREE_NODE` and `BU_CMD_TREE_NODE_NULL` keep static declarations
+compact.  Set the root or node child phase to
+`BU_CMD_TREE_CHILD_AFTER_OPTIONS` when the subcommand follows the parent's
+option phase, or `BU_CMD_TREE_CHILD_FIRST` when it is the first parent
+argument.  Use `BU_CMD_TREE_CHILD_AFTER_FIXED_OPERANDS` for the common
+`command [options] object subcommand` form: the child follows the parent's
+fixed, scalar positional prefix.  This phase deliberately rejects an
+interspersed or variable-width root prefix, so the tree can identify the child
+boundary without guessing whether a word is an operand or a subcommand.  Nodes
+may recursively reference further child arrays; a leaf node normally supplies
+a `bu_cmd_tree_execute_t` callback.  A grammar-only leaf may omit that callback
+when its enclosing command owns execution dispatch.
+
+`bu_cmd_tree_find_subcommand` resolves a direct canonical child or alias.
+`bu_cmd_tree_dispatch` invokes that child's callback and reports dispatch
+failure separately from the callback's command result.  The generic
+`bu_cmd_tree_describe`, `bu_cmd_tree_describe_json`, and `bu_cmd_tree_lint`
+functions derive help, machine-readable structure, and duplicate-name/alias
+checks from the same tree.  A GED grammar adapter should use the tree for its
+subcommand completion, child-schema validation, and analysis rather than
+rebuilding a string list.  `ged_cmd_tree_validate` and
+`ged_cmd_tree_analyze`, declared by `ged/commands.h`, are the public adapter
+entry points for an executable GED grammar.  They recurse through nested node
+arrays, preserving each child schema's option phase, operand validation, and
+semantic token roles.
+
+Some grammars have a parser-owned prefix before the reusable tree, such as an
+object name followed by an operation.  In that case use
+`bu_cmd_tree_validate_argv` after the prefix has been recognized.  Its `argv`
+begins at the tree's root option/child phase (rather than at the root command
+name), and it returns canonical child candidates, aliases, nested validation,
+and `BU_CMD_EXPECT_SUBCOMMAND` exactly as `bu_cmd_tree_dispatch` would
+interpret them.  The prefix adapter remains responsible for adding its token
+offset to the returned result and for any execution setup associated with the
+prefix.  This avoids maintaining a second hard-coded child vocabulary for
+completion or help.
+
+For an `AFTER_OPTIONS` root, a grammar adapter must find the child boundary
+with `bu_cmd_schema_option_span`, not by searching for a word that happens to
+match a child name.  The function uses the schema's own option argument shape,
+so a value such as `--view list` cannot be mistaken for a `list` subcommand.
+
+=== GED registration
+
+A native command uses `GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA` and
+`GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA`; the latter publishes the
+native plugin schema manifest.  Command-schema metadata is an internal
+interface under active development, so a plugin must be rebuilt with the
+matching libged headers rather than relying on a compatibility adapter.
+
+Once registered, native schemas participate in `ged_cmd_schema_json`,
+`ged_cmd_validate`, `ged_cmd_complete_result`, `ged_cmd_analyze`, and
+`ged_cmd_schema_lint`.  This makes application frontends such as GSH, MGED,
+and QGED consume the same command metadata without owning separate option
+tables.
+
+=== RGB command values
+
+libbu provides one strict parser for ordinary 8-bit RGB command values.
+`bu_rgb_from_argv` accepts a packed integer triple written as `r/g/b`,
+`r,g,b`, `r;g;b`, or `r g b`, or it accepts three separate argument tokens
+(`r g b`).  Whitespace around a packed delimiter is accepted.  Every channel
+is a base-ten integer from 0 through 255; mixed packed delimiters, partial
+values, decimal values, and trailing text are rejected.  On success the
+function reports whether it consumed one packed token or three channel tokens.
+
+Use `bu_rgb_channel_validate` for command grammars that explicitly expose
+three separate `red`, `green`, and `blue` operands.  The legacy
+`bu_opt_color` reader delegates integer RGB parsing to this API while retaining
+its established packed hexadecimal and normalized floating-point compatibility
+forms for external callers.
+
+For a native command option bound to a `struct bu_color` field, use
+`BU_CMD_RGB`.  It publishes the standard `rgb` argument shape and accepts both
+the one-token and three-token forms.  Its parser determines the actual token
+boundary: a packed color consumes one token and leaves the following operand
+alone, while three separate channels are consumed together.  `BU_CMD_COLOR`
+is the scalar packed-color form when a command intentionally accepts the
+broader `bu_color_from_str` syntax instead.
+
+`BU_CMD_COLOR_COMPAT` is the one-or-three-token native replacement for the
+full `bu_opt_color` value grammar.  It accepts every one-token
+`bu_color_from_str` spelling (including hexadecimal and normalized
+floating-point triples) and also three separate RGB components.  It publishes
+the `color` shape, so a packed value preserves the following operand while an
+unfinished numeric triple is reported as incomplete.  Prefer `BU_CMD_RGB` for
+new 8-bit command colors; use this compatibility form only when a migrated
+command intentionally retains the broader legacy grammar.
+
+For a positional query-or-set color rather than an option binding, use
+`bu_cmd_rgb_optional_validate` for strict 8-bit RGB or
+`bu_cmd_color_optional_validate` for the compatibility grammar.  Both accept
+zero arguments as a query, one packed value, or three separate components;
+they classify a valid unfinished component sequence as incomplete.  After a
+successful validation, `bu_cmd_color_from_argv` converts the accepted one- or
+three-token group without a second local color parser.
+
+New command implementations must use these native helpers rather than
+reintroducing `sscanf`, `strtol`, delimiter checks, range clamps, or bespoke
+RGB completion validators.
+
+=== Three-component vector command values
+
+For an ordinary finite XYZ point or vector, `bu_cmd_vector3_from_argv`
+accepts the corresponding packed forms `x/y/z`, `x,y,z`, and `x;y;z`, a
+single quoted `x y z` argument, or three separate numeric arguments.  All
+components use the native finite-number grammar, so partial values, nonfinite
+values, and trailing text are rejected.  It reports one or three consumed
+tokens and does not alter the output vector on failure.
+
+Use `BU_CMD_VECTOR3` for a native option bound to a `point_t` or `vect_t`
+field.  Its published `vector3` shape lets the parser preserve the operand
+boundary after a packed or quoted vector, consume three separate components
+when supplied, and classify an unfinished separate vector as incomplete for
+completion.  New command implementations should use this shared reader and
+shape instead of `sscanf` or command-local XYZ token scans.
+
+For a common _count x y z_ form, use
+`bu_cmd_counted_vector3_from_argv` and
+`bu_cmd_counted_vector3_arg_shape`.  They accept an integer count followed by
+either one packed vector or three separate components, consuming two or four
+tokens.  The reader keeps the count and vector as separate outputs so a
+command-specific consumer can bind them to its own record without duplicating
+the token-selection or finite-number grammar.
+
+For positional query/set triples, `bu_cmd_vector3_optional_validate` accepts
+zero or one/three vector words; `bu_cmd_vector3_required_validate` is the
+set-only form.  `bu_cmd_integer_pair_optional_validate` provides the matching
+zero-or-two integer pattern.  Commands with a domain range (for example,
+nonnegative screen coordinates) add the appropriate shared scalar validator
+instead of replacing these cardinality helpers with another argv scan.
+
+=== Expression languages
+
+Some commands have a grammar that is not a flat option list.  For example,
+the parser-owned find-style vocabulary of `db_search` is available through
+`db_search_syntax_terms` in `rt/search.h`.  Its terms report argument kinds
+such as ordinary strings, integers, primitive types, and variadic `-exec`
+commands.  Completion clients should use that exported view rather than copy
+the `db_search` parser table.  `db_search_syntax_plan_start` and
+`db_search_syntax_exec_substitution` expose the parser's boundary and `{}`
+substitution rules for the same reason.
+
+GED registers such a command with a `ged_cmd_grammar` adapter rather than
+inventing flat option rows.  The adapter supplies cursor-aware validation,
+whole-line token analysis, JSON description, and lint hooks; the command's
+ordinary GED execution callback remains responsible for execution.  Its JSON
+uses `kind: grammar_adapter` and must describe parser-owned terms from the
+same vocabulary used by execution.  Consequently GSH, MGED, and QGED invoke
+the same adapter through the normal GED completion and analysis APIs without
+special-casing a command name.

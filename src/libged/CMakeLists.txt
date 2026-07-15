@@ -332,6 +332,8 @@ set(
   points_eval.c
   polyclip.cpp
   qray.cpp
+  erase_syntax.c
+  search_syntax.c
   tab_complete.cpp
   trace.c
   vers.c

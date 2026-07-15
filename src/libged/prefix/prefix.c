@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
 
 
@@ -63,6 +65,19 @@ prefix_do(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *
 }
 
 
+static const struct bu_cmd_operand prefix_schema_operands[] = {
+    BU_CMD_OPERAND("prefix", BU_CMD_VALUE_STRING, 1, 1,
+	"Prefix to add to object names", NULL),
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1,
+	BU_CMD_COUNT_UNLIMITED, "Database objects to rename", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema prefix_cmd_schema = {
+    "prefix", "Prefix database object names and update references", NULL,
+    prefix_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
+
 int
 ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -74,6 +89,8 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls tempstring_v5 = BU_VLS_INIT_ZERO;
     char *tempstring;
     int len = NAMESIZE+1;
+    int operand_index;
+    int parse_dummy = 0;
     static const char *usage = "new_prefix object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -89,35 +106,40 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3) {
+
+    operand_index = bu_cmd_schema_parse_complete(&prefix_cmd_schema,
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     bu_log("!!! ged_prefix_core: step 1\n");
 
     /* First, check validity, and change node names */
-    for (i = 2; i < argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    argv[i] = "";
 	    continue;
 	}
 
-	if (db_version(gedp->dbip) < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
+	if (db_version(gedp->dbip) < 5 && (int)(strlen(argv[0]) + strlen(argv[i])) > NAMESIZE) {
 	    bu_vls_printf(gedp->ged_result_str, "'%s%s' too long, must be %d characters or less.\n",
-			  argv[1], argv[i], NAMESIZE);
+			  argv[0], argv[i], NAMESIZE);
 
 	    argv[i] = "";
 	    continue;
 	}
 
 	if (db_version(gedp->dbip) < 5) {
-	    bu_strlcpy(tempstring_v4, argv[1], len);
+	    bu_strlcpy(tempstring_v4, argv[0], len);
 	    bu_strlcat(tempstring_v4, argv[i], len);
 	    tempstring = tempstring_v4;
 	} else {
 	    bu_vls_trunc(&tempstring_v5, 0);
-	    bu_vls_strcpy(&tempstring_v5, argv[1]);
+	    bu_vls_strcpy(&tempstring_v5, argv[0]);
 	    bu_vls_strcat(&tempstring_v5, argv[i]);
 	    tempstring = bu_vls_addr(&tempstring_v5);
 	}
@@ -161,9 +183,9 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	for (k = 2; k < argc; k++)
+	for (k = 1; k < argc; k++)
 	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, prefix_do,
-			     (void *)argv[1], (void *)argv[k], (void *)NULL, (void *)NULL);
+			     (void *)argv[0], (void *)argv[k], (void *)NULL, (void *)NULL);
 	if (rt_db_put_internal(dp, gedp->dbip, &intern)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
@@ -177,10 +199,10 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PREFIX_COMMANDS(X, XID) \
-    X(prefix, ged_prefix_core, GED_CMD_DEFAULT) \
+    X(prefix, ged_prefix_core, GED_CMD_DEFAULT, &prefix_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PREFIX_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_prefix", 1, GED_PREFIX_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PREFIX_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_prefix", 1, GED_PREFIX_COMMANDS)
 
 /*
  * Local Variables:

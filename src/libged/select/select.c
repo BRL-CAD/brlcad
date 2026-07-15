@@ -28,8 +28,68 @@
 #include <string.h>
 
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "../ged_private.h"
+
+
+struct select_args {
+    const char *bot_path;
+    int partial;
+    fastf_t vminz;
+};
+
+
+static const struct bu_cmd_option select_native_options[] = {
+    BU_CMD_STRING("b", NULL, struct select_args, bot_path, "bot",
+	"Select points from a BOT object or path"),
+    BU_CMD_FLAG("p", NULL, struct select_args, partial,
+	"Select partial display paths"),
+    BU_CMD_NUMBER("z", NULL, struct select_args, vminz, "vminz",
+	"Minimum view-space Z coordinate"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand select_native_operands[] = {
+    BU_CMD_OPERAND("coordinates", BU_CMD_VALUE_NUMBER, 3, 4,
+	"View X, Y, and radius or width/height", NULL),
+    BU_CMD_OPERAND_NULL
+};
+GED_EXPORT const struct bu_cmd_schema ged_select_legacy_schema = {
+    "select", "Select displayed objects within a view region",
+    select_native_options, select_native_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+GED_EXPORT const struct bu_cmd_schema ged_rselect_legacy_schema = {
+    "rselect", "Select displayed objects within the current rubber-band region",
+    select_native_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static int
+select_import_bot(struct ged *gedp, const char *cmd, const char *bot_path,
+	struct rt_wdb *wdbp, struct rt_db_internal *intern,
+	struct rt_bot_internal **botip)
+{
+    mat_t mat;
+
+    if (!bot_path)
+	return BRLCAD_OK;
+    if (wdb_import_from_path2(gedp->ged_result_str, intern, bot_path, wdbp,
+	mat) & BRLCAD_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bot_path);
+	return BRLCAD_ERROR;
+    }
+    if (intern->idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bot_path);
+	rt_db_free_internal(intern);
+	return BRLCAD_ERROR;
+    }
+
+    *botip = (struct rt_bot_internal *)intern->idb_ptr;
+    return BRLCAD_OK;
+}
+
 
 static int
 _ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, double vy, double vwidth, double vheight, double vminz, int rflag)
@@ -358,14 +418,13 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
     if (gedp->new_cmd_forms)
 	return ged_select2_core(gedp, argc, argv);
 
-    int c;
     double vx, vy, vw, vh, vr;
     static const char *usage = "[-b bot] [-p] [-z vminz] vx vy {vr | vw vh}";
     const char *cmd = argv[0];
     struct rt_db_internal intern;
     struct rt_bot_internal *botip = NULL;
-    int pflag = 0;
-    double vminz = -1000.0;
+    struct select_args args = {NULL, 0, -1000.0};
+    int operand_index;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -375,67 +434,24 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    /* Get command line options. */
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
-	switch (c) {
-	case 'b':
-	{
-	    mat_t mat;
-
-	    /* skip subsequent bot specifications */
-	    if (botip != (struct rt_bot_internal *)NULL)
-		break;
-
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, wdbp, mat) & BRLCAD_ERROR) {
-		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
-		return BRLCAD_ERROR;
-	    }
-
-	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
-		intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
-		rt_db_free_internal(&intern);
-
-		return BRLCAD_ERROR;
-	    }
-
-	    botip = (struct rt_bot_internal *)intern.idb_ptr;
-	}
-
-	break;
-	case 'p':
-	    pflag = 1;
-	    break;
-	case 'z':
-	    if (sscanf(bu_optarg, "%lf", &vminz) != 1) {
-		if (botip != (struct rt_bot_internal *)NULL)
-		    rt_db_free_internal(&intern);
-
-		bu_vls_printf(gedp->ged_result_str, "%s: bad vminz - %s", cmd, bu_optarg);
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    }
-
-	    break;
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return BRLCAD_ERROR;
-	}
-    }
-
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
-
-    if (argc < 4 || 5 < argc) {
+    operand_index = bu_cmd_schema_parse_complete(&ged_select_legacy_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return BRLCAD_ERROR;
     }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
-    if (argc == 4) {
-	if (sscanf(argv[1], "%lf", &vx) != 1 ||
-	    sscanf(argv[2], "%lf", &vy) != 1 ||
-	    sscanf(argv[3], "%lf", &vr) != 1) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (select_import_bot(gedp, cmd, args.bot_path, wdbp, &intern, &botip) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
+
+
+    if (argc == 3) {
+	if (sscanf(argv[0], "%lf", &vx) != 1 ||
+	    sscanf(argv[1], "%lf", &vy) != 1 ||
+	    sscanf(argv[2], "%lf", &vr) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	    return BRLCAD_ERROR;
 	}
@@ -443,21 +459,21 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	if (botip != (struct rt_bot_internal *)NULL) {
 	    int ret;
 
-	    ret = _ged_select_botpts(gedp, botip, vx, vy, vr, vr, vminz, 1);
+	    ret = _ged_select_botpts(gedp, botip, vx, vy, vr, vr, args.vminz, 1);
 	    rt_db_free_internal(&intern);
 
 	    return ret;
 	} else {
-	    if (pflag)
+	    if (args.partial)
 		return dl_select_partial(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, vx, vy, vr, vr, 1);
 	    else
 		return dl_select(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, vx, vy, vr, vr, 1);
 	}
     } else {
-	if (sscanf(argv[1], "%lf", &vx) != 1 ||
-	    sscanf(argv[2], "%lf", &vy) != 1 ||
-	    sscanf(argv[3], "%lf", &vw) != 1 ||
-	    sscanf(argv[4], "%lf", &vh) != 1) {
+	if (sscanf(argv[0], "%lf", &vx) != 1 ||
+	    sscanf(argv[1], "%lf", &vy) != 1 ||
+	    sscanf(argv[2], "%lf", &vw) != 1 ||
+	    sscanf(argv[3], "%lf", &vh) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	    return BRLCAD_ERROR;
 	}
@@ -465,12 +481,12 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	if (botip != (struct rt_bot_internal *)NULL) {
 	    int ret;
 
-	    ret = _ged_select_botpts(gedp, botip, vx, vy, vw, vh, vminz, 0);
+	    ret = _ged_select_botpts(gedp, botip, vx, vy, vw, vh, args.vminz, 0);
 	    rt_db_free_internal(&intern);
 
 	    return ret;
 	} else {
-	    if (pflag)
+	    if (args.partial)
 		return dl_select_partial(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, vx, vy, vw, vh, 0);
 	    else
 		return dl_select(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, vx, vy, vw, vh, 0);
@@ -489,13 +505,12 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 int
 ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int c;
     static const char *usage = "[-b bot] [-p] [-z vminz]";
     const char *cmd = argv[0];
     struct rt_db_internal intern;
     struct rt_bot_internal *botip = (struct rt_bot_internal *)NULL;
-    int pflag = 0;
-    double vminz = -1000.0;
+    struct select_args args = {NULL, 0, -1000.0};
+    int operand_index;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -505,62 +520,16 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    /* Get command line options. */
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
-	switch (c) {
-	case 'b':
-	{
-	    mat_t mat;
-
-	    /* skip subsequent bot specifications */
-	    if (botip != (struct rt_bot_internal *)NULL)
-		break;
-
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, wdbp, mat) == BRLCAD_ERROR) {
-		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
-		return BRLCAD_ERROR;
-	    }
-
-	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
-		intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
-		rt_db_free_internal(&intern);
-
-		return BRLCAD_ERROR;
-	    }
-
-	    botip = (struct rt_bot_internal *)intern.idb_ptr;
-	}
-
-	break;
-	case 'p':
-	    pflag = 1;
-	    break;
-	case 'z':
-	    if (sscanf(bu_optarg, "%lf", &vminz) != 1) {
-		if (botip != (struct rt_bot_internal *)NULL)
-		    rt_db_free_internal(&intern);
-
-		bu_vls_printf(gedp->ged_result_str, "%s: bad vminz - %s", cmd, bu_optarg);
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    }
-
-	    break;
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return BRLCAD_ERROR;
-	}
-    }
-
-    argc -= (bu_optind - 1);
-
-    if (argc != 1) {
+    operand_index = bu_cmd_schema_parse_complete(&ged_rselect_legacy_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return BRLCAD_ERROR;
     }
+
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (select_import_bot(gedp, cmd, args.bot_path, wdbp, &intern, &botip) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     if (botip != (struct rt_bot_internal *)NULL) {
 	int ret;
@@ -570,13 +539,13 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 				  gedp->ged_gvp->gv_s->gv_rect.y,
 				  gedp->ged_gvp->gv_s->gv_rect.width,
 				  gedp->ged_gvp->gv_s->gv_rect.height,
-				  vminz,
+				  args.vminz,
 				  0);
 
 	rt_db_free_internal(&intern);
 	return ret;
     } else {
-	if (pflag)
+	if (args.partial)
 	    return dl_select_partial(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_s->gv_rect.x,
 				     gedp->ged_gvp->gv_s->gv_rect.y,
 				     gedp->ged_gvp->gv_s->gv_rect.width,
@@ -594,12 +563,15 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_SELECT_COMMANDS(X, XID) \
-    X(select, ged_select_core, GED_CMD_DEFAULT) \
-    X(rselect, ged_rselect_core, GED_CMD_DEFAULT) \
+extern GED_EXPORT const struct ged_cmd_grammar ged_select_grammar;
+extern GED_EXPORT const struct ged_cmd_grammar ged_rselect_grammar;
 
-GED_DECLARE_COMMAND_SET(GED_SELECT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_select", 1, GED_SELECT_COMMANDS)
+#define GED_SELECT_COMMANDS(X, XID) \
+    X(select, ged_select_core, GED_CMD_DEFAULT, &ged_select_grammar) \
+    X(rselect, ged_rselect_core, GED_CMD_DEFAULT, &ged_rselect_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_SELECT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_select", 1, GED_SELECT_COMMANDS)
 
 /*
  * Local Variables:

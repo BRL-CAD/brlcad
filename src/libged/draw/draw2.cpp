@@ -34,7 +34,7 @@
 #include "bsocket.h"
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/sort.h"
 #include "nmg.h"
 #include "rt/view.h"
@@ -43,17 +43,107 @@
 #include "../ged_private.h"
 #include "../dbi.h"
 
+struct draw2_args {
+    int help;
+    int mode;
+    int wireframe;
+    int shaded;
+    int shaded_all;
+    int evaluate;
+    int hidden_line;
+    int add_mode;
+    fastf_t transparency;
+    int bot_threshold;
+    int no_subtract;
+    int no_dash;
+    struct bu_color color;
+    int line_width;
+    int no_autoview;
+    const char *view;
+};
+
 static int
-draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
+draw2_mode_validate(struct bu_vls *msg, const char *arg)
 {
-    struct bv_obj_settings *vs = (struct bv_obj_settings *)data;
-    struct bu_color c;
-    int ret = bu_opt_color(msg, argc, argv, (void *)&c);
-    if (ret == 1 || ret == 3) {
-	vs->color_override = 1;
-	bu_color_to_rgb_chars(&c, vs->color);
+    int mode = -1;
+
+    if (!bu_cmd_integer_from_str(&mode, arg) || mode < 0 || mode > 5) {
+	if (msg)
+	    bu_vls_printf(msg, "draw mode must be an integer from 0 through 5");
+	return -1;
     }
-    return ret;
+    return 0;
+}
+
+static const struct bu_cmd_option draw2_schema_options[] = {
+    BU_CMD_FLAG("h", "help", struct draw2_args, help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 0),
+    {"m", "mode", "mode", "0..5",
+	"0=wireframe; 1=shaded BoTs; 2=shaded; 3=evaluated; 4=hidden-line; 5=points",
+	BU_CMD_VALUE_INTEGER, offsetof(struct draw2_args, mode), NULL,
+	draw2_mode_validate, "ged.draw_mode", NULL, 0, 0, NULL,
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    BU_CMD_FLAG(NULL, "wireframe", struct draw2_args, wireframe, "Draw using only wireframes (mode = 0)"),
+    BU_CMD_FLAG(NULL, "shaded", struct draw2_args, shaded, "Shade BoTs, B-reps, and polysolids (mode = 1)"),
+    BU_CMD_FLAG(NULL, "shaded-all", struct draw2_args, shaded_all, "Shade all solids, not evaluated (mode = 2)"),
+    BU_CMD_FLAG("E", "evaluate", struct draw2_args, evaluate, "Wireframe with evaluated booleans (mode = 3)"),
+    BU_CMD_FLAG(NULL, "hidden-line", struct draw2_args, hidden_line, "Draw hidden-line wireframes (mode = 4)"),
+    BU_CMD_FLAG("A", "add-mode", struct draw2_args, add_mode, "Do not erase other modes for the specified paths"),
+    BU_CMD_NUMBER("t", "transparency", struct draw2_args, transparency, "level", "Set transparency level (0=clear, 1=opaque)"),
+    BU_CMD_ALIAS_SHORT("x", "transparency", 1),
+    BU_CMD_INTEGER("L", NULL, struct draw2_args, bot_threshold, "count", "Draw BoT bounding boxes above this face count"),
+    BU_CMD_FLAG("S", "no-subtract", struct draw2_args, no_subtract, "Do not draw subtraction solids"),
+    BU_CMD_FLAG(NULL, "no-dash", struct draw2_args, no_dash, "Use solid lines for subtraction solids"),
+    BU_CMD_COLOR_COMPAT("C", "color", struct draw2_args, color, "color", "Override object colors"),
+    BU_CMD_INTEGER(NULL, "line-width", struct draw2_args, line_width, "pixels", "Override default line width"),
+    BU_CMD_FLAG("R", "no-autoview", struct draw2_args, no_autoview, "Do not automatically fit an empty scene"),
+    {"V", "view", "view", "name", "Draw on the named view",
+	BU_CMD_VALUE_STRING, offsetof(struct draw2_args, view), NULL, NULL,
+	"ged.view", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand draw2_schema_operands[] = {
+    BU_CMD_OPERAND("paths", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+	"Database object paths to draw", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_draw_native_schema = {
+    "draw", "Draw database objects", draw2_schema_options, draw2_schema_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+extern "C" const struct bu_cmd_schema ged_draw_alias_native_schema = {
+    "e", "Draw database objects", draw2_schema_options, draw2_schema_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+struct redraw2_args {
+    const char *view;
+};
+static const struct bu_cmd_option redraw2_schema_options[] = {
+    BU_CMD_STRING("V", "view", struct redraw2_args, view, "name", "Redraw on the named view"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand redraw2_schema_operands[] = {
+    BU_CMD_OPERAND("paths", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+	"Displayed database object paths to redraw", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_redraw_native_schema = {
+    "redraw", "Redraw displayed database objects", redraw2_schema_options,
+    redraw2_schema_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static void
+draw2_usage(struct ged *gedp, const char *cmd)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_draw_native_schema);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [options] path1 [path2 ...]\n", cmd);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s", option_help);
+	bu_free(option_help, "draw native option help");
+    }
 }
 
 /*
@@ -62,55 +152,68 @@ draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help = 0;
-    int bot_threshold = -1;
-    int no_autoview = 0;
-    static const char *usage = "[options] path1 [path2 ...]";
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
+    const char *command = argc > 0 ? argv[0] : "draw";
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
+
+    struct draw2_args args = {};
+    args.mode = -1;
+    args.bot_threshold = -1;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* Draw may operate on a specific user specified view.  If it does so,
-     * we want the default settings to reflect those set in that particular
-     * view.  In order to set up the correct default views, we need to know
-     * if a specific view has in fact been specified.  We do a preliminary
-     * option check to figure this out */
-    struct bview *cv = gedp->ged_gvp;
-    struct bu_vls cvls = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc vd[2];
-    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
-    BU_OPT_NULL(vd[1]);
-    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
-    argc = opt_ret;
-    if (argc < 0) {
-	bu_vls_free(&cvls);
-	return BRLCAD_ERROR;
+    if (!argc) {
+	draw2_usage(gedp, command);
+	return BRLCAD_OK;
     }
 
-    if (bu_vls_strlen(&cvls)) {
-	cv = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+    const int color_override = bu_cmd_schema_option_present(&ged_draw_native_schema,
+	(size_t)argc, argv, "color");
+    const int help_requested = bu_cmd_schema_option_present(&ged_draw_native_schema,
+	(size_t)argc, argv, "help");
+    struct bu_vls omsg = BU_VLS_INIT_ZERO;
+    int operand_index = help_requested ?
+	bu_cmd_schema_parse(&ged_draw_native_schema, &args, &omsg, argc, argv) :
+	bu_cmd_schema_parse_complete(&ged_draw_native_schema, &args, &omsg, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "option parsing error: %s\n", bu_vls_cstr(&omsg));
+	bu_vls_free(&omsg);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&omsg);
+    if (args.help) {
+	draw2_usage(gedp, command);
+	return BRLCAD_OK;
+    }
+    const int path_count = argc - operand_index;
+    const char **path_argv = argv + operand_index;
+
+    /* Draw may operate on a specific user specified view.  If it does so,
+     * we want the default settings to reflect those set in that particular
+     * view. */
+    struct bview *cv = gedp->ged_gvp;
+
+    if (args.view) {
+	cv = bv_set_find_view(&gedp->ged_views, args.view);
 	if (!cv) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", args.view);
 	    return BRLCAD_ERROR;
 	}
 
 	if (!cv->independent) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, he command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, he command 'view independent %s 1' may be applied.\n", args.view, args.view);
 	    return BRLCAD_ERROR;
 	}
     }
 
     // If we don't have a specified view, and the default view isn't a shared view, see if
     // we can find a shared view in the view set.
-    if (!bu_vls_strlen(&cvls) && (!cv || cv->independent)) {
+    if (!args.view && (!cv || cv->independent)) {
 	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
 	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	    struct bview *bv = (struct bview *)BU_PTBL_GET(views, i);
@@ -121,63 +224,26 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_vls_free(&cvls);
-
     // We need a current view, either from gedp or from the options
     if (!cv) {
 	bu_vls_printf(gedp->ged_result_str, "No view specified and no shared views found");
 	return BRLCAD_ERROR;
     }
 
-    /* User settings may override various options - set up to collect them.
-     * Option defaults may be overridden for the purposes of the current draw
-     * command by command line options. */
+    /* Bind native command-line settings after the selected view is known. */
     struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
-
-    int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
-    struct bu_opt_desc d[18];
-    BU_OPT(d[0],  "h", "help",          "",                 NULL, &print_help,         "Print help and exit");
-    BU_OPT(d[1],  "?", "",              "",                 NULL, &print_help,         "");
-    BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
-    BU_OPT(d[3],   "", "wireframe",     "",                 NULL, &drawing_modes[1],  "Draw using only wireframes (mode = 0)");
-    BU_OPT(d[4],   "", "shaded",        "",                 NULL, &drawing_modes[2],  "Shade bots, breps and polysolids (mode = 1)");
-    BU_OPT(d[5],   "", "shaded-all",    "",                 NULL, &drawing_modes[3],  "Shade all solids, not evaluated (mode = 2)");
-    BU_OPT(d[6],  "E", "evaluate",      "",                 NULL, &drawing_modes[4],  "Wireframe with evaluate booleans (mode = 3)");
-    BU_OPT(d[7],   "", "hidden-line",   "",                 NULL, &drawing_modes[5],  "Hidden line wireframes");
-    BU_OPT(d[8],  "A", "add-mode",      "",                 NULL, &vs.mixed_modes,    "Don't erase other drawn modes for specified paths (allows simultaneous shaded and wireframe drawing for the same object)");
-    BU_OPT(d[9],  "t", "transparency", "#",      &bu_opt_fastf_t, &vs.transparency,   "Set transparency level in drawing: range 0 (clear) to 1 (opaque)");
-    BU_OPT(d[10], "x", "",             "#",      &bu_opt_fastf_t, &vs.transparency,   "");
-    BU_OPT(d[11], "L", "",             "#",          &bu_opt_int, &bot_threshold,     "Set face count level for drawing bounding boxes instead of BoT triangles (NOTE: passing this updates the global view setting - bot_threshold is a view property).");
-    BU_OPT(d[12], "S", "no-subtract",   "",                 NULL, &vs.draw_non_subtract_only,  "Do not draw subtraction solids");
-    BU_OPT(d[13],  "", "no-dash",       "",                 NULL, &vs.draw_solid_lines_only,  "Use solid lines rather than dashed for subtraction solids");
-    BU_OPT(d[14], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
-    BU_OPT(d[15],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
-    BU_OPT(d[16], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
-    BU_OPT_NULL(d[17]);
-
-    /* If no args, must be wanting help */
-    if (!argc) {
-	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_OK;
+    vs.mixed_modes = args.add_mode;
+    vs.transparency = args.transparency;
+    vs.draw_non_subtract_only = args.no_subtract;
+    vs.draw_solid_lines_only = args.no_dash;
+    vs.s_line_width = args.line_width;
+    if (color_override) {
+	vs.color_override = 1;
+	bu_color_to_rgb_chars(&args.color, vs.color);
     }
 
-    /* Process command line args into vs with bu_opt */
-    struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    opt_ret = bu_opt_parse(&omsg, argc, argv, d);
-    if (opt_ret < 0) {
-	bu_vls_printf(gedp->ged_result_str, "option parsing error: %s\n", bu_vls_cstr(&omsg));
-	bu_vls_free(&omsg);
-	return BRLCAD_ERROR;
-    }
-    bu_vls_free(&omsg);
-
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_OK;
-    }
-
-    // Whatever is left after argument processing are the potential draw paths
-    argc = opt_ret;
+    int drawing_modes[6] = {args.mode, args.wireframe, args.shaded,
+	args.shaded_all, args.evaluate, args.hidden_line};
 
     // Drawing modes may be set either by -m or by the more verbose options,
     // with the latter taking precedence if both are set.
@@ -198,6 +264,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 	}
+    }
+    if (drawing_modes[0] < -1 || drawing_modes[0] > 5) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid draw mode %d (expected an integer from 0 through 5)\n", drawing_modes[0]);
+	return BRLCAD_ERROR;
     }
     if (drawing_modes[0] > -1) {
 	vs.s_dmode = drawing_modes[0];
@@ -221,11 +291,11 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     if (cv->independent) {
 	DbiState *dbis = (DbiState *)gedp->dbi_state;
 	BViewState *bvs = dbis->get_view_state(cv);
-	for (size_t i = 0; i < (size_t)argc; ++i)
-	    bvs->add_path(argv[i]);
+	for (int i = 0; i < path_count; ++i)
+	    bvs->add_path(path_argv[i]);
 	std::unordered_set<struct bview *> vset;
 	vset.insert(cv);
-	bvs->redraw(&vs, vset, !(blank_slate && !no_autoview));
+	bvs->redraw(&vs, vset, !(blank_slate && !args.no_autoview));
 	return BRLCAD_OK;
     }
 
@@ -247,9 +317,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
     std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
     for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-	for (size_t i = 0; i < (size_t)argc; ++i)
-	    bv_it->first->add_path(argv[i]);
-	bv_it->first->redraw(&vs, bv_it->second, !(blank_slate && !no_autoview));
+	for (int i = 0; i < path_count; ++i)
+	    bv_it->first->add_path(path_argv[i]);
+	bv_it->first->redraw(&vs, bv_it->second, !(blank_slate && !args.no_autoview));
     }
 
     return BRLCAD_OK;
@@ -284,25 +354,29 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
     /* redraw may operate on a specific user specified view, or on
      * all views (default) */
     struct bview *cv = NULL;
-    struct bu_vls cvls = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc vd[2];
-    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
-    BU_OPT_NULL(vd[1]);
-    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
-    argc = opt_ret;
-    if (bu_vls_strlen(&cvls)) {
-	cv = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+    struct redraw2_args args = {};
+    struct bu_vls omsg = BU_VLS_INIT_ZERO;
+    int operand_index = bu_cmd_schema_parse_complete(&ged_redraw_native_schema, &args,
+	&omsg, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "option parsing error: %s\n", bu_vls_cstr(&omsg));
+	bu_vls_free(&omsg);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&omsg);
+    const int path_count = argc - operand_index;
+    const char **path_argv = argv + operand_index;
+    if (args.view) {
+	cv = bv_set_find_view(&gedp->ged_views, args.view);
 	if (!cv) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", args.view);
 	    return BRLCAD_ERROR;
 	}
     }
-    bu_vls_free(&cvls);
 
     int ret = BRLCAD_OK;
     if (cv) {
-	return _ged_redraw_view(gedp, cv, argc, argv);
+	return _ged_redraw_view(gedp, cv, path_count, path_argv);
     } else {
 	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
 	if (!BU_PTBL_LEN(views)) {
@@ -315,7 +389,7 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
 		bu_log("WARNING, draw2.cpp:%d - null view stored in ged_views index %zu, skipping\n", __LINE__, i);
 		continue;
 	    }
-	    int nret = _ged_redraw_view(gedp, v, argc, argv);
+	int nret = _ged_redraw_view(gedp, v, path_count, path_argv);
 	    if (nret != BRLCAD_OK)
 		ret = nret;
 	}
@@ -331,4 +405,3 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

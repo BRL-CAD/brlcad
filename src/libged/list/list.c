@@ -29,10 +29,60 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bu/units.h"
 
 #include "../ged_private.h"
+
+
+struct list_args {
+    int recurse;
+    int verbosity;
+};
+
+static int
+list_terse_parse(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage)
+{
+    if (storage)
+	*((int *)storage) = 0;
+    return 0;
+}
+
+static const struct bu_cmd_option list_schema_options[] = {
+    BU_CMD_FLAG("r", NULL, struct list_args, recurse,
+	"Recursively list evaluated contents"),
+    BU_CMD_CUSTOM_FLAG("t", NULL, "t", struct list_args, verbosity,
+	list_terse_parse, "Use terse output"),
+    BU_CMD_COUNTING_FLAG("v", NULL, struct list_args, verbosity,
+	"Increase output verbosity"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand list_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+	"Database objects or paths to describe", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema list_cmd_schema = {
+    "list", "Describe database objects", list_schema_options, list_schema_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_schema l_cmd_schema = {
+    "l", "Describe database objects", list_schema_options, list_schema_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+
+
+static void
+list_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&list_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [-r] [-t] [-v] object ...", command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "list native option help");
+    }
+}
 
 int
 ged_list_core(struct ged *gedp, int argc, const char *argv[])
@@ -40,51 +90,39 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     int arg;
     int id;
-    int c;
-    int recurse = 0;
-    int verbose = 99;
+    struct list_args args = {0, 99};
+    const struct bu_cmd_schema *schema = NULL;
+    int operand_index = 0;
     char *terse_parm = "-t";
     struct rt_db_internal intern;
-    static const char *usage = "[-r] [-t] [-v] <objects>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    schema = BU_STR_EQUAL(argv[0], "l") ? &l_cmd_schema : &list_cmd_schema;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	list_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "rtv")) != -1) {
-	switch (c) {
-	    case 'r':
-		recurse = 1;
-		break;
-	    case 't': /* terse */
-		verbose = 0;
-		break;
-	    case 'v': /* verbose */
-		verbose++;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return BRLCAD_ERROR;
-	}
+    operand_index = bu_cmd_schema_parse_complete(schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index < 1) {
+	list_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
     }
-
-    /* skip options processed plus command name */
-    argc -= bu_optind;
-    argv += bu_optind;
+    argv += operand_index + 1;
+    argc -= operand_index + 1;
 
     for (arg = 0; arg < argc; arg++) {
-	if (recurse) {
+	if (args.recurse) {
 	    char *tmp_argv[3] = {"listeval", NULL, NULL};
-	    if (verbose) {
+	    if (args.verbosity) {
 		tmp_argv[1] = (char *)argv[arg];
 		ged_exec_listeval(gedp, 2, (const char **)tmp_argv);
 	    } else {
@@ -102,7 +140,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	     NOTE: this only works if the user is requesting a top-level name with a slash.
 	     A slashed name anywhere else in the hierarchy will fail the db_lookup */
 	    if (strchr(dp->d_namep, '/')) {
-		_ged_do_list(gedp, dp, verbose);	/* very verbose */
+		_ged_do_list(gedp, dp, args.verbosity);	/* very verbose */
 		continue;
 	    }
 
@@ -128,7 +166,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s:  ", argv[arg]);
 
 	    if (!OBJ[id].ft_describe
-		|| OBJ[id].ft_describe(gedp->ged_result_str, &intern, verbose, gedp->dbip->dbi_base2local) < 0)
+		|| OBJ[id].ft_describe(gedp->ged_result_str, &intern, args.verbosity, gedp->dbip->dbi_base2local) < 0)
 	    {
 		bu_vls_printf(gedp->ged_result_str, "%s: describe error", dp->d_namep);
 	    }
@@ -138,7 +176,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 
-	    _ged_do_list(gedp, dp, verbose);	/* very verbose */
+	    _ged_do_list(gedp, dp, args.verbosity);	/* very verbose */
 	}
     }
 
@@ -148,11 +186,11 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_LIST_COMMANDS(X, XID) \
-    X(list, ged_list_core, GED_CMD_DEFAULT) \
-    X(l, ged_list_core, GED_CMD_DEFAULT) \
+    X(list, ged_list_core, GED_CMD_DEFAULT, &list_cmd_schema) \
+    X(l, ged_list_core, GED_CMD_DEFAULT, &l_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_LIST_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_list", 1, GED_LIST_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_LIST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_list", 1, GED_LIST_COMMANDS)
 
 /*
  * Local Variables:

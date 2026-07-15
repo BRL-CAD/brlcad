@@ -38,7 +38,7 @@
 #include "vmath.h"
 #include "bu/debug.h"
 #include "bu/cv.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -2403,10 +2403,10 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'S':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&lsg->start);
+			(void)bu_cmd_integer_from_str(&lsg->start, sval);
 			break;
 		    case 'E':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&lsg->end);
+			(void)bu_cmd_integer_from_str(&lsg->end, sval);
 			break;
 		}
 	    }
@@ -2422,7 +2422,7 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'D': /* degree */
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&bsg->degree);
+			(void)bu_cmd_integer_from_str(&bsg->degree, sval);
 			break;
 		    case 'P': /* list of control points */
 			num_points = 0;
@@ -2446,19 +2446,19 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'S':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&csg->start);
+			(void)bu_cmd_integer_from_str(&csg->start, sval);
 			break;
 		    case 'E':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&csg->end);
+			(void)bu_cmd_integer_from_str(&csg->end, sval);
 			break;
 		    case 'R':
-			(void)bu_opt_fastf_t(NULL, 1, &sval, (void *)&csg->radius);
+			(void)bu_cmd_number_from_str(&csg->radius, sval);
 			break;
 		    case 'L' :
-			(void)bu_opt_bool(NULL, 1, &sval, (void *)&csg->center_is_left);
+			(void)bu_cmd_bool_from_str(&csg->center_is_left, sval);
 			break;
 		    case 'O':
-			(void)bu_opt_bool(NULL, 1, &sval, (void *)&csg->orientation);
+			(void)bu_cmd_bool_from_str(&csg->orientation, sval);
 			break;
 		}
 	    }
@@ -2473,10 +2473,10 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'O':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&nsg->order);
+			(void)bu_cmd_integer_from_str(&nsg->order, sval);
 			break;
 		    case 'T':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&nsg->pt_type);
+			(void)bu_cmd_integer_from_str(&nsg->pt_type, sval);
 			break;
 		    case 'K':
 			(void)_rt_tcl_list_to_fastf_array(sval, &nsg->k.knots, &nsg->k.k_size);

@@ -10,9 +10,8 @@ brlman - manual page viewer for BRL-CAD
 
 [source]
 ----
-brlman [options] [manpage] [section]
-brlman -k keyword
-brlman -K keyword
+brlman [--gui|--no-gui] [-L language] [-S section] [-k words | -K words] [manual_page [section]]
+brlman [-h|--help]
 ----
 
 
@@ -33,10 +32,8 @@ given, *brlman* searches sections 1, 3, 5, and n in that order and shows the
 first match. With no arguments at all, the graphical viewer (where available)
 opens to a browsable index.
 
-Search mode lists matching manual pages in ranked order instead of opening a
-single page. The *-k* option searches page names, synopsis text, and brief
-descriptions. The *-K* option searches the full manual page text. When no
-section is selected, all BRL-CAD manual sections are searched.
+The *-k* and *-K* options search the installed BRL-CAD manual corpus instead
+of opening a page. Positional words after either option extend its query.
 
 
 [[options]]
@@ -54,9 +51,9 @@ section is selected, all BRL-CAD manual sections are searched.
   *brlman* will fail. Primarily useful in scripting.
 
 *-L* _lg_, *--language* _lg_::
-  Two-letter language code (e.g. *en*) used when selecting man pages. If not
-  given, *brlman* uses the first two characters of the *LANG* environment
-  variable, falling back to *en*.
+  Lower-case ISO 639-1 two-letter language code (e.g. *en*) used when
+  selecting man pages. If not given, *brlman* uses the first two characters of
+  the *LANG* environment variable, falling back to *en*.
 
 *-S* _#_, *--section* _#_::
   Section to search. Useful when a program and a GED command share a name; the
@@ -64,14 +61,11 @@ section is selected, all BRL-CAD manual sections are searched.
   page instead. Allowed sections are 1 (programs), 3 (libraries), 5
   (conventions/formats), and n (GED commands).
 
-*-k* _keyword_, *--keyword* _keyword_::
-  Search manual page names, synopses, and brief descriptions. Matching pages
-  are listed in ranked order.
+*-k* _words_, *--keyword* _words_::
+  Search manual-page names, synopses, and brief descriptions.
 
-*-K* _keyword_, *--full-text* _keyword_::
-  Search the full text of manual pages. Matching pages are listed in ranked
-  order.
-
+*-K* _words_, *--full-text* _words_::
+  Search full manual-page text. This is mutually exclusive with *-k*.
 
 [[examples]]
 == EXAMPLES
@@ -107,16 +101,15 @@ Forces the graphical viewer and, because no page was named, opens a browsable
 index of all installed programs, libraries, conventions, and GED commands.
 ====
 
-.Searching all manual page text
+.Finding a command by a keyword
 ====
 [source,bash]
 ----
-brlman -K "boolean operations"
+brlman -k matrix transformation
 ----
-Lists pages whose full text contains the search terms, with higher-ranked
-matches first.
+Searches manual-page names, synopses, and descriptions for both words. Use
+`-K` to search full page text instead.
 ====
-
 
 [[see_also]]
 == SEE ALSO

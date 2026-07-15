@@ -148,11 +148,13 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_RMAP_COMMANDS(X, XID) \
-    X(rmap, ged_rmap_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(rmap, "rmap", "List regions by identifier", "operands", BU_CMD_VALUE_RAW, 0, 0, "No operands");
 
-GED_DECLARE_COMMAND_SET(GED_RMAP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rmap", 1, GED_RMAP_COMMANDS)
+#define GED_RMAP_COMMANDS(X, XID) \
+    X(rmap, ged_rmap_core, GED_CMD_DEFAULT, &rmap_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RMAP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rmap", 1, GED_RMAP_COMMANDS)
 
 /*
  * Local Variables:

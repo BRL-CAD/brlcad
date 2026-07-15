@@ -25,113 +25,68 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-
-#include "rt/geom.h"
-
 #include "../ged_private.h"
 
-extern int ged_lod2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 {
-    if (gedp->new_cmd_forms)
-	return ged_lod2_core(gedp, argc, argv);
-
-    struct bview *gvp;
-    int printUsage = 0;
-    static const char *usage = "lod (on|off|enabled)\n"
-			       "lod scale (points|curves) <factor>\n";
-
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc >= 2 && BU_STR_EQUAL(argv[1], "-h")) {
-	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return GED_HELP;
-    }
-
-    gvp = gedp->ged_gvp;
-    if (gvp == NULL) {
-	return BRLCAD_OK;
-    }
-
-    /* Print current state if no args are supplied */
-    if (argc == 1) {
-	if (gvp->gv_s->adaptive_plot_csg) {
-	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: disabled\n");
-	}
-	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", gvp->gv_s->point_scale);
-	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", gvp->gv_s->curve_scale);
-	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", gvp->gv_s->bot_threshold);
-	return BRLCAD_OK;
-    }
-
-    /* determine subcommand */
-    --argc;
-    ++argv;
-    printUsage = 0;
-    if (argc == 1 && BU_STR_EQUAL(argv[0], "on")) {
-	/* lod on */
-	gvp->gv_s->adaptive_plot_csg = 1;
-    } else if (argc == 1 && BU_STR_EQUAL(argv[0], "off")) {
-	/* lod off */
-	gvp->gv_s->adaptive_plot_csg = 0;
-    } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
-	/* lod enabled - return on state */
-	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot_csg);
-    } else if (BU_STR_EQUAL(argv[0], "scale")) {
-	if (argc == 2 || argc == 3) {
-	    if (BU_STR_EQUAL(argv[1], "points")) {
-		if (argc == 2) {
-		    /* lod scale points - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_s->point_scale);
-		} else {
-		    /* lod scale points f - set value */
-		    gvp->gv_s->point_scale = atof(argv[2]);
-		}
-	    } else if (BU_STR_EQUAL(argv[1], "curves")) {
-		if (argc == 2) {
-		    /* lod scale curves - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_s->curve_scale);
-		} else {
-		    /* lod scale curves f - set value */
-		    gvp->gv_s->curve_scale = atof(argv[2]);
-		}
-	    } else {
-		printUsage = 1;
-	    }
-	} else {
-	    printUsage = 1;
-	}
-    } else {
-	printUsage = 1;
-    }
-
-    if (printUsage) {
-	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
+    return ged_view_lod_core(gedp, gedp->ged_gvp, argc, argv);
 }
+
+
+static const struct ged_cmd_native_form ged_lod_native_forms[] = {
+    {"action_grammar", &ged_view_lod_schema, NULL},
+    {NULL, NULL, NULL}
+};
+
+
+static const struct ged_cmd_native_form *
+ged_lod_select_native_form(const struct ged *UNUSED(gedp), size_t UNUSED(argc),
+	const char * const *UNUSED(argv))
+{
+    return &ged_lod_native_forms[0];
+}
+
+
+static int
+ged_lod_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_forms_validate(gedp, ged_lod_native_forms,
+	ged_lod_select_native_form, input, cursor_pos, result);
+}
+
+
+static int
+ged_lod_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_native_forms_analyze(gedp, ged_lod_native_forms,
+	ged_lod_select_native_form, input, analysis);
+}
+
+
+static int
+ged_lod_grammar_lint(struct bu_vls *msgs)
+{
+    return ged_cmd_native_forms_lint("lod", ged_lod_native_forms, msgs);
+}
+
+
+static const struct ged_cmd_grammar ged_lod_grammar = {
+    "lod", "Manage level-of-detail drawing settings", ged_lod_grammar_validate,
+    ged_lod_grammar_analyze, ged_view_lod_grammar_json, ged_lod_grammar_lint
+};
 
 
 #include "../include/plugin.h"
 
-#define GED_LOD_COMMANDS(X, XID) \
-    X(lod, ged_lod_core, GED_CMD_DEFAULT) \
+#define GED_LOD_COMMANDS(X, XID, N, NID, G, GID) \
+    G(lod, ged_lod_core, GED_CMD_DEFAULT, &ged_lod_grammar) \
 
-GED_DECLARE_COMMAND_SET(GED_LOD_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_lod", 1, GED_LOD_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_LOD_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_lod", 1, GED_LOD_COMMANDS)
 
 /*
  * Local Variables:

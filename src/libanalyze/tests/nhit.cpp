@@ -37,7 +37,7 @@
 #include <fstream>
 
 #include "bu/app.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "analyze.h"
 
 #define IO_DATA_NULL { NULL, NULL }
@@ -45,6 +45,46 @@
 struct nirt_io_data {
     struct bu_vls *out;
     struct bu_vls *err;
+};
+
+struct nhit_args {
+    int help;
+    int backout;
+    int should_miss;
+    int use_air;
+    fastf_t los;
+};
+
+static const struct bu_cmd_option nhit_options[] = {
+    BU_CMD_FLAG("h", "help", struct nhit_args, help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("b", "backout", struct nhit_args, backout,
+	"Back out of geometry before shot"),
+    BU_CMD_FLAG("M", "miss", struct nhit_args, should_miss,
+	"Expect the shot to miss"),
+    BU_CMD_INTEGER("u", "use-air", struct nhit_args, use_air, "n",
+	"Set use_air=n (default 0)"),
+    BU_CMD_NUMBER("L", "los", struct nhit_args, los, "distance",
+	"Expected line-of-sight distance"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand nhit_operands[] = {
+    BU_CMD_OPERAND("database", BU_CMD_VALUE_FILE, 1, 1,
+	"BRL-CAD database", NULL),
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_STRING, 1, 1,
+	"Object to shoot", NULL),
+    BU_CMD_OPERAND("x", BU_CMD_VALUE_NUMBER, 1, 1, "Shot X coordinate", NULL),
+    BU_CMD_OPERAND("y", BU_CMD_VALUE_NUMBER, 1, 1, "Shot Y coordinate", NULL),
+    BU_CMD_OPERAND("z", BU_CMD_VALUE_NUMBER, 1, 1, "Shot Z coordinate", NULL),
+    BU_CMD_OPERAND("azimuth", BU_CMD_VALUE_NUMBER, 1, 1, "Shot azimuth", NULL),
+    BU_CMD_OPERAND("elevation", BU_CMD_VALUE_NUMBER, 1, 1, "Shot elevation", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema nhit_schema = {
+    "nhit", "Run a non-interactive NIRT shot", nhit_options, nhit_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int
@@ -82,23 +122,9 @@ main(int argc, const char **argv)
     struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 
     int ret = EXIT_FAILURE;
-    int backout = 0;
-    int print_help = 0;
-    int should_miss= 0;
-    int use_air = 0;
-    fastf_t los = -1;
+    struct nhit_args args = {0, 0, 0, 0, -1};
 
     bu_setprogname(argv[0]);
-
-    struct bu_opt_desc d[7] = {BU_OPT_DESC_NULL};
-
-    BU_OPT(d[0],  "?", "help",     "",       NULL,             &print_help,   "print help and exit");
-    BU_OPT(d[1],  "h", "help",     "",       NULL,             &print_help,   "print help and exit");
-    BU_OPT(d[2],  "b", "backout",  "",       NULL,             &backout,      "back out of geometry before shot");
-    BU_OPT(d[3],  "M", "miss",     "",       NULL, 	       &should_miss,  "expected result is a miss");
-    BU_OPT(d[4],  "u", "use-air",  "n",      &bu_opt_int,      &use_air,      "set use_air=n (default 0)");
-    BU_OPT(d[5],  "L", "los",      "n",      &bu_opt_fastf_t,  &los,          "expected Line-of-Sight distance");
-    BU_OPT_NULL(d[6]);
 
     if (argc == 0 || !argv)
 	return -1;
@@ -109,11 +135,19 @@ main(int argc, const char **argv)
     argv++; argc--;
 
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    int ac = bu_opt_parse(&msg, argc, (const char **)argv, d);
-    if (ac < 0) {
+    int help_requested = bu_cmd_schema_option_present(&nhit_schema,
+	(size_t)argc, (const char **)argv, "help");
+    int operand_index = help_requested ?
+	bu_cmd_schema_parse(&nhit_schema, &args, &msg, argc, (const char **)argv) :
+	bu_cmd_schema_parse_complete(&nhit_schema, &args, &msg, argc,
+	    (const char **)argv);
+    if (operand_index < 0) {
 	bu_exit(EXIT_FAILURE, "ERROR: option parsing failed\n%s", bu_vls_addr(&msg));
     }
     bu_vls_free(&msg);
+
+    argc -= operand_index;
+    argv += operand_index;
 
     BU_GET(io_data.out, struct bu_vls);
     BU_GET(io_data.err, struct bu_vls);
@@ -122,9 +156,9 @@ main(int argc, const char **argv)
 
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
-    if (print_help || argc < 7) {
-	char *help = bu_opt_describe(d, NULL);
-	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
+    if (args.help) {
+	char *help = bu_cmd_schema_describe(&nhit_schema);
+	ret = EXIT_SUCCESS;
 	bu_log("Usage: 'nhit [options] model.g obj X Y Z AZ EL'\n\nOptions:\n%s\n", help);
 	if (help)
 	    bu_free(help, "help str");
@@ -164,12 +198,12 @@ main(int argc, const char **argv)
     bu_vls_sprintf(&ncmd, "state silent_mode 1");
     (void)nirt_exec(ns, bu_vls_addr(&ncmd));
 
-    if (backout) {
+    if (args.backout) {
 	(void)nirt_exec(ns, "backout 1");
     }
 
-    if (use_air) {
-	bu_vls_sprintf(&ncmd, "useair %d", use_air);
+    if (args.use_air) {
+	bu_vls_sprintf(&ncmd, "useair %d", args.use_air);
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
     }
 
@@ -203,7 +237,7 @@ main(int argc, const char **argv)
 
     // IFF we're expecting a particular length back per the -L option,
     // set up to print it
-    if (los > 0) {
+    if (args.los > 0) {
 	bu_vls_sprintf(&ncmd, "fmt p \"%%.17f\" los");
 	if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
     }
@@ -220,7 +254,7 @@ main(int argc, const char **argv)
 
 
     // See if what we got back matches what we expected
-    if (should_miss) {
+    if (args.should_miss) {
 	if (!BU_STR_EQUAL(bu_vls_cstr(io_data.out), "miss")) {
 	    ret = 1;
 	    if (bu_vls_strlen(io_data.out)) {
@@ -234,7 +268,7 @@ main(int argc, const char **argv)
 	goto done;
     }
 
-    if (los > 0) {
+    if (args.los > 0) {
 	double los_result;
 	char *endptr = NULL;
 	errno = 0;
@@ -249,12 +283,12 @@ main(int argc, const char **argv)
 	    goto done;
 	}
 
-	if (los_result > 0 && los_result > los - BN_TOL_DIST && los_result < los + BN_TOL_DIST) {
+	if (los_result > 0 && los_result > args.los - BN_TOL_DIST && los_result < args.los + BN_TOL_DIST) {
 	    ret = 0;
 	    goto done;
 	} else {
 	    ret = 1;
-	    bu_log("Error: unexpected los value: \"%.2f\" instead of \"%.2f\"!\n", los_result, los);
+	    bu_log("Error: unexpected los value: \"%.2f\" instead of \"%.2f\"!\n", los_result, args.los);
 	    goto done;
 	}
 

@@ -10,14 +10,14 @@ preview - Allows the user to _preview_ animation scripts in MGED.
 
 [source]
 ----
-preview [-v] [-d delay] [-D start_frame_number] [K end_frame_number] {rt_script_file}
+preview [-e] [-v] [-d delay] [-D start_frame_number] [-K end_frame_number] [-o image_name.ext] rt_script_file
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Allows the user to _preview_ animation scripts in MGED. The _-d_ option provides a delay in seconds to be applied between each frame (the default is no delay). The _-D_ option allows the user to specify a starting frame number, and the _-K_ option allows the specification of an ending frame number. The _-v_ flag indicates that the objects displayed in the MGED graphics window should be displayed in evaluated mode, as would be the result of the *ev* command. Note that this may significantly slow the _preview_.
+Allows the user to _preview_ animation scripts in MGED. The _-d_ option provides a delay in seconds to be applied between each frame (the default is no delay). The _-D_ option allows the user to specify a starting frame number, and the _-K_ option allows the specification of an ending frame number. The _-v_ flag indicates that the objects displayed in the MGED graphics window should be displayed in evaluated mode, as would be the result of the *ev* command. Note that this may significantly slow the _preview_.  The _-e_ option retains an overlay of the camera eye path.  With _-o image_name.ext_, each displayed frame is written using the supplied base name and extension (or the default PIX form when no extension is supplied).
 
 
 [[examples]]

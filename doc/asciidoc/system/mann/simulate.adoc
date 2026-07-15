@@ -46,6 +46,44 @@ _ray_::
 Draw all of the rays fired by the internal collision detection algorithm.
 
 
+*--steps=_COUNT_*::
+Run the simulation in _COUNT_ incremental steps.  The default is one.
+
+
+*--plot=_PREFIX_*::
+Write a wireframe plot after each step, using _PREFIX_ plus a zero-padded
+step number.
+
+
+*--resume*::
+Resume from a previously saved simulation state.
+
+
+*-o _FILE_, --output=_FILE_*::
+Write the rendered animation to an MJPEG AVI file.
+
+
+*--width=_PIXELS_, --height=_PIXELS_, --fps=_COUNT_*::
+Set the animation frame dimensions and frame rate.  All three values must be
+positive integers; their defaults are 1280, 720, and 24 respectively.
+
+
+*--view-quat=_X,Y,Z,W_*::
+Set a fixed camera orientation quaternion.
+
+
+*--view-ae=_AZ,EL_*::
+Set a fixed camera azimuth and elevation in degrees.
+
+
+*--view-eye=_X,Y,Z_*, *--view-center=_X,Y,Z_*::
+Set the fixed eye position or override the view center in model coordinates.
+
+
+*--view-size=_SIZE_*::
+Set the view size in millimeters.  The value must be non-negative.
+
+
 
 
 

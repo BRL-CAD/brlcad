@@ -33,6 +33,8 @@
 
 __BEGIN_DECLS
 
+struct bu_cmd_schema;
+
 struct ged_solid_data {
     struct display_list *gdlp;
     int draw_solid_lines_only;
@@ -111,6 +113,15 @@ extern int ged_E_core(struct ged *gedp, int argc, const char *argv[]);
 
 extern int ged_loadview_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
+
+/* Native syntax definitions shared by the draw command registration and
+ * their execution implementations. */
+extern const struct bu_cmd_schema ged_draw_native_schema;
+extern const struct bu_cmd_schema ged_draw_alias_native_schema;
+extern const struct bu_cmd_schema ged_redraw_native_schema;
+extern const struct bu_cmd_schema ged_bigE_native_schema;
+extern const struct bu_cmd_schema ged_loadview_native_schema;
+extern const struct bu_cmd_schema ged_preview_native_schema;
 
 __END_DECLS
 

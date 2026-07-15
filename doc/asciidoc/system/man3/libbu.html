@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="asciiquack 0.1.0">
+<meta name="author" content="Mark L. Ulferts, Glenn Durfee">
+<title>libbu Command History and Command Schema API</title>
+<style>
+/* asciiquack default stylesheet (minimal) */
+body{font-family:sans-serif;max-width:900px;margin:0 auto;padding:1em 2em;line-height:1.6;color:#333}
+h1,h2,h3,h4,h5,h6{color:#2c5282;line-height:1.2;margin-top:1.4em}
+h1{font-size:2em;border-bottom:2px solid #2c5282;padding-bottom:.25em}
+h2{font-size:1.6em;border-bottom:1px solid #ccc}
+code,pre{font-family:monospace;background:#f5f5f5;border-radius:3px}
+pre{padding:1em;overflow:auto;border-left:4px solid #ccc}
+code{padding:.1em .3em}
+.listingblock pre{background:#282c34;color:#abb2bf;border:none}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #ddd;padding:.5em .75em;text-align:left}
+th{background:#f0f0f0;font-weight:bold}
+.admonitionblock table{border:none;width:100%}
+.admonitionblock td.icon{width:80px;font-weight:bold;text-transform:uppercase}
+.admonitionblock td.content{padding:.5em 1em}
+.admonitionblock.note td.icon{color:#31708f}
+.admonitionblock.tip td.icon{color:#3c763d}
+.admonitionblock.warning td.icon{color:#8a6d3b}
+.admonitionblock.important td.icon{color:#a94442}
+.admonitionblock.caution td.icon{color:#a94442}
+blockquote{border-left:4px solid #ccc;padding:.5em 1em;margin:1em 0;color:#555;font-style:italic}
+.sidebarblock{background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:1em;margin:1em 0}
+#header,#content,#footer{margin-bottom:1em}
+#footer{border-top:1px solid #ccc;padding-top:.5em;color:#666;font-size:.9em}
+#header .details{font-size:.9em;color:#666}
+mark{background:#ff9}
+.exampleblock{border:1px solid #ddd;border-radius:4px;padding:1em;margin:1em 0}
+img{max-width:100%;height:auto}
+.imageblock{text-align:center;margin:1em 0}
+.imageblock .title{font-style:italic;color:#666;margin-top:.5em}
+video,audio{max-width:100%}
+.videoblock,.audioblock{margin:1em 0}
+.sectnum{margin-right:.25em}
+#toc{background:#f8f8f8;border:1px solid #ddd;border-radius:4px;padding:1em 1.5em;margin:1em 0;display:inline-block;min-width:200px}
+#toctitle{font-weight:bold;margin-bottom:.5em}
+#toc ul{list-style:none;padding-left:0;margin:0}
+#toc ul ul{padding-left:1.5em}
+#toc a{text-decoration:none;color:#2c5282}
+#toc a:hover{text-decoration:underline}
+#toc li{margin:.25em 0}
+#footnotes{border-top:1px solid #ccc;margin-top:1em;padding-top:.5em}
+.footnote{font-size:.9em;color:#666;margin:.25em 0}
+sup.footnote{font-size:.75em;vertical-align:super;line-height:0}
+sup.footnote a{color:#2c5282;text-decoration:none}
+kbd{font-family:monospace;border:1px solid #ccc;border-radius:3px;padding:.1em .35em;font-size:.9em;background:#f5f5f5}
+.keyseq{font-family:monospace;font-size:.9em}
+b.button{border:1px solid #aaa;border-radius:3px;padding:.1em .35em;font-size:.9em;background:#f0f0f0;font-weight:normal}
+.menuseq,.menu,.menuitem{font-style:italic}
+.caret{font-style:normal;font-weight:bold}
+b.conum,span.conum{display:inline-block;background:#555;color:#fff;border-radius:50%;width:1.2em;height:1.2em;text-align:center;line-height:1.2em;font-size:.8em;font-weight:bold;font-style:normal;margin:0 .1em}
+.colist{margin:.5em 0}
+.colist ol{list-style:none;padding-left:0}
+.stemblock{margin:1em 0}
+</style>
+</head>
+<body class="book">
+<div id="header">
+<h1>libbu Command History and Command Schema API</h1>
+<div class="details">
+<span id="author" class="author">Mark L. Ulferts</span><br>
+<span id="email" class="email"><a href="mailto:mulferts@austin.dsccc.com">mulferts@austin.dsccc.com</a></span><br>
+<span id="author2" class="author">Glenn Durfee</span><br>
+</div>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_"></a><ul class="sectlevel2">
+<li><a href="#_name">Name</a></li>
+<li><a href="#_synopsis">SYNOPSIS</a></li>
+<li><a href="#_description">DESCRIPTION</a></li>
+<li><a href="#_methods">METHODS</a></li>
+<li><a href="#_example">EXAMPLE</a></li>
+</ul>
+</li>
+<li><a href="#_compact_command_schemas">Compact command schemas</a><ul class="sectlevel2">
+<li><a href="#_declaring_a_simple_schema">Declaring a simple schema</a></li>
+<li><a href="#_canonical_keyword_values">Canonical keyword values</a></li>
+<li><a href="#_optional_and_shaped_values">Optional and shaped values</a></li>
+<li><a href="#_declarative_command_relationships">Declarative command relationships</a></li>
+<li><a href="#_ged_registration">GED registration</a></li>
+<li><a href="#_expression_languages">Expression languages</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_"></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_name">Name</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>ch_open - create and manipulate a command history object.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_synopsis">SYNOPSIS</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p><em>ch_open</em>[<em>chName</em>]</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description">DESCRIPTION</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <strong>ch_open</strong> command creates a new command history object (given by the <em>chName</em> argument). The <strong>ch_open</strong> command returns its <em>chName</em> argument. At the time this command is invoked, there must not exist a command history object named <em>chName</em>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_methods">METHODS</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <strong>ch_open</strong> command creates a new Tcl command whose name is <em>chName</em>. This command may be used to invoke various operations on the command history object. It has the following general form:</p>
+</div>
+<div class="paragraph">
+<p><em>chName option ?arg arg &#8230;&#8203;?</em></p>
+</div>
+<div class="paragraph">
+<p><em>Option</em> and the <em>args</em> determine the exact behavior of the command. The following commands are possible for command history objects:</p>
+</div>
+<div class="paragraph">
+<p><em>chName</em> <strong>add command_string <em>chName</em> *addM</strong> command_string*</p>
+</div>
+<div class="paragraph">
+<p>Add a command to the history and reset the current command pointer.</p>
+</div>
+<div class="paragraph">
+<p><em>chName</em> <strong>curr</strong></p>
+</div>
+<div class="paragraph">
+<p>Return the current command in the history.</p>
+</div>
+<div class="paragraph">
+<p><em>chName</em> <strong>history</strong></p>
+</div>
+<div class="paragraph">
+<p>Return the entire history.</p>
+</div>
+<div class="paragraph">
+<p><em>chName</em> <strong>next</strong></p>
+</div>
+<div class="paragraph">
+<p>Return the next command in the history making that the current command.</p>
+</div>
+<div class="paragraph">
+<p><em>chName</em> <strong>prev</strong></p>
+</div>
+<div class="paragraph">
+<p>Return the previous command in the history making that the current command.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example">EXAMPLE</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following sequence creates a command history object, adds commands and traverses the history.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>
+cwish&gt; ch_open ch
+ch
+cwish&gt; ch add "cmd1"
+cwish&gt; ch add "cmd2"
+cwish&gt; ch prev
+cmd2
+cwish&gt; ch prev
+cmd1
+cwish&gt; ch curr
+cmd1
+cwish&gt; ch add "cmd3"
+cwish&gt; ch prev
+cmd3
+cwish&gt; ch prev
+cmd2
+cwish&gt; ch next
+cmd3
+cwish&gt; ch next
+cwish&gt; ch history
+cmd1
+cmd2
+cmd3</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_compact_command_schemas">Compact command schemas</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>bu_cmd_schema</code> API in <code>bu/cmdschema.h</code> describes the common, flat command shape in one compact, code-native table.  It is intended for commands whose option spelling, type, help text, and execution storage binding are all known by the command implementation.  It is separate from the older <code>bu_opt_desc</code> and <code>bu_opt_desc_meta</code> mechanism; a command uses one mechanism or the other and does not generate duplicate compatibility rows.</p>
+</div>
+<div class="paragraph">
+<p>The API provides three views of the same schema:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>bu_cmd_schema_parse</code> binds command-line options to a caller-owned argument   structure.  <code>bu_cmd_schema_parse_complete</code> additionally requires all   positional roles to satisfy their declared cardinality and scalar rules.</p>
+</li>
+<li>
+<p><code>bu_cmd_schema_describe</code> produces command help, while   <code>bu_cmd_schema_describe_json</code> produces machine-readable metadata.</p>
+</li>
+<li>
+<p><code>bu_cmd_schema_validate</code> performs side-effect-free incremental syntax and   scalar-type validation, returning static candidates for completion and   highlighting.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The validation result owns its candidate array.  Initialize it with <code>BU_CMD_VALIDATE_RESULT_NULL</code> and release it with <code>bu_cmd_validate_result_clear</code> after each use.</p>
+</div>
+<div class="sect2">
+<h3 id="_declaring_a_simple_schema">Declaring a simple schema</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Define an argument structure with the command defaults, then declare options using the <code>BU_CMD_*</code> helpers.  Each option names its short spelling, long spelling, storage field, value type, argument label, and help text once.</p>
+</div>
+<div class="paragraph">
+<p>Use <code>BU_CMD_COUNTING_FLAG</code> for a repeatable no-argument option whose integer storage field must count occurrences (for example, <code>-vv</code>).  Ordinary <code>BU_CMD_FLAG</code> options remain boolean even when they are repeated. <code>BU_CMD_CUSTOM_FLAG</code> is the deliberate escape hatch for an order-sensitive no-argument state transition; its parser receives a NULL argument and the selected storage-field address.</p>
+</div>
+<div class="paragraph">
+<p><code>BU_CMD_DB_OBJECT</code> and <code>BU_CMD_DB_PATH</code> are compact typed-option forms for database object and path values.  They keep libbu application-neutral: an application such as GED may infer its default semantic provider from the value type, while a specialized role may name an explicit provider in its full <code>bu_cmd_option</code> or <code>bu_cmd_operand</code> row.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-c" data-lang="c">struct example_args {
+    int verbose;
+    fastf_t scale;
+    const char *output;
+};
+
+static const struct bu_cmd_option example_options[] = {
+    BU_CMD_FLAG("v", "verbose", struct example_args, verbose,
+                "Enable diagnostic output"),
+    BU_CMD_NUMBER("s", "scale", struct example_args, scale, "factor",
+                  "Scale the result"),
+    BU_CMD_FILE("o", "output", struct example_args, output, "file",
+                "Write the result to a file"),
+    BU_CMD_OPTION_NULL
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Aliases use <code>BU_CMD_ALIAS_SHORT</code> or <code>BU_CMD_ALIAS_LONG</code> and name the canonical option.  Hidden aliases remain accepted by the parser but are omitted from help and completion.  Custom values use <code>BU_CMD_CUSTOM</code>; their parser receives a pointer to that option&#8217;s storage during execution and a null storage pointer during validation, so custom parsers must treat a null pointer as a side-effect-free syntax check.</p>
+</div>
+<div class="paragraph">
+<p>Typed options and operands may also use a <code>BU_CMD_*_VALIDATE</code> helper (<code>BU_CMD_OPERAND_VALIDATE</code> for a positional role).  Its validator is called without storage during incremental validation; option parsing applies it when binding execution storage, and a command&#8217;s positional parser can reuse the same function.  This publishes constraints such as an integer range without reducing the value to an opaque custom value.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_canonical_keyword_values">Canonical keyword values</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Use a <code>bu_cmd_value_keyword</code> table when a keyword vocabulary needs stable canonical spellings, accepted aliases, or per-value descriptions.  Each row contains a canonical spelling, an optional null-terminated alias list, and an optional description.  <code>BU_CMD_KEYWORD_VALUES</code> attaches such a table to a keyword option; <code>BU_CMD_OPERAND_KEYWORD_VALUES</code> does the same for a positional role.</p>
+</div>
+<div class="paragraph">
+<p>Aliases are accepted during validation and parsing, but static completion offers only the canonical spelling.  For a keyword option, parsing also stores the canonical spelling in its <code>const char *</code> field, so execution does not need to duplicate alias normalization.  JSON retains the compatible <code>values</code> array of canonical spellings and adds <code>keyword_values</code>, whose entries include <code>canonical</code>, <code>aliases</code>, and <code>description</code>.  A string-valued role may publish the same table as completion hints while a validator accepts a wider expression grammar; in that case its original string is intentionally retained.</p>
+</div>
+<div class="paragraph">
+<p>Native schema lint rejects an option or operand that mixes the legacy simple keyword array with rich values, and rejects empty or duplicate canonical or alias spellings.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_optional_and_shaped_values">Optional and shaped values</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Every typed <code>BU_CMD_*</code> option takes one required scalar argument unless it is a flag.  Native schemas may instead declare <code>BU_CMD_ARG_OPTIONAL</code> or an explicit <code>bu_cmd_arg_shape</code> using <code>BU_CMD_OPTION_SHAPED</code>.  The shape records the token range and one of <code>scalar</code>, <code>token_sequence</code>, <code>comma_list</code>, <code>key_value_list</code>, <code>axis_keyed</code>, <code>range_pattern</code>, or <code>custom</code>.  It is emitted in JSON as <code>argument_requirement</code> and <code>argument_shape</code>, so documentation and completion clients do not need a separate mini-language table.</p>
+</div>
+<div class="paragraph">
+<p>An optional argument consumes zero or one following token; when supplied, it is still checked as the option&#8217;s declared value type.  This deliberately makes a command such as <code>make_name -s [num]</code> unambiguous: a following word is the optional reset value and is rejected if it is not an integer, rather than silently becoming a positional template.</p>
+</div>
+<div class="paragraph">
+<p>For a multi-token shape, supply a <code>bu_cmd_value_consume_t</code> consumer.  It receives the complete selected token sequence and the address selected by the option&#8217;s <code>storage_offset</code>.  With a null storage pointer it must perform only side-effect-free validation; with storage it binds the execution value. libbu therefore invokes the same shape parser for execution and incremental validation.  A multi-token shape without a consumer is rejected by native schema lint.</p>
+</div>
+<div class="paragraph">
+<p>A positional role whose value has a one-token mini-language may use <code>BU_CMD_OPERAND_SHAPED</code>.  Its shape is published as the operand&#8217;s <code>shape</code> in JSON and must describe exactly one token; the operand&#8217;s normal cardinality still determines how many such tokens the command accepts.  For example, an integer-or-inclusive-range operand can use <code>range_pattern</code> together with a side-effect-free validator, making <code>100-200</code> and <code>100:200</code> visible as range syntax without misrepresenting the role as a plain integer.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_declarative_command_relationships">Declarative command relationships</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Use a <code>bu_cmd_constraint</code> table for relationships that cannot be represented by an individual option or positional role alone.  The compact rows support distinct-option counts (such as mutually exclusive modes) and conditional operand counts (such as either <code>-f file</code> or exactly two object-name operands). Options in a row are canonical names without dashes.  <code>BU_CMD_CONSTRAINT_OPTIONS</code> limits the number of selected options; <code>BU_CMD_CONSTRAINT_OPERANDS</code> applies an operand range when any, none, or all of its named options are selected.</p>
+</div>
+<div class="paragraph">
+<p>Attach the table with <code>BU_CMD_SCHEMA_CONSTRAINTS</code> in the final schema slot:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-c" data-lang="c">static const char *mapping_file_option[] = {"f", NULL};
+static const struct bu_cmd_constraint rename_constraints[] = {
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+        mapping_file_option, 0, 0, "-f cannot be combined with object names"),
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT,
+        mapping_file_option, 2, 2, "source and destination are required"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
+static const struct bu_cmd_schema rename_schema = {
+    "rename", "Rename objects", rename_options, rename_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, rename_constraints)
+};</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>libbu applies these rows to complete execution parsing and complete incremental validation, and publishes them in generated help and JSON.  They therefore cannot silently disagree across parsing, validation, and completion.</p>
+</div>
+<div class="paragraph">
+<p>For a genuinely command-specific side-effect-free syntax rule that cannot be expressed as a constraint row, provide a validator in <code>schema.validation.custom_validate</code>.  The callback receives the token array and cursor position and returns a normal <code>bu_cmd_validate_result</code>.  It should copy the schema, clear <code>flat.validation.custom_validate</code>, call <code>bu_cmd_schema_validate</code> for the ordinary flat rules, then add only its command-specific rule.  <code>bu_cmd_schema_option_present</code> and <code>bu_cmd_schema_operand_count</code> expose the parser&#8217;s own alias-, cluster-, shape-, and <code>--</code>-aware interpretation when such a rule depends on a selected canonical option or the number of positional operands; do not duplicate an option scanner in the command.  Reserve non-flat languages for an explicit grammar adapter.</p>
+</div>
+<div class="paragraph">
+<p>Positional roles use <code>BU_CMD_OPERAND</code>.  Alongside their scalar type they may carry an opaque semantic-provider identifier.  libbu preserves that identifier without depending on any application; GED uses identifiers such as <code>ged.db_object</code> and <code>ged.db_path</code> to supply database-aware validation and completion.  A native schema therefore keeps its library-neutral core while still describing application-specific operands precisely.</p>
+</div>
+<div class="paragraph">
+<p>The compact parser is deliberately for flat option grammars.  Commands with subcommands, context-dependent expression languages, or nested commands should publish an explicit syntax adapter instead of forcing that grammar into option rows.  Its execution parser preserves argv order for options-first and stop-at-first-operand forms.  For a flat interspersed-option command, <code>bu_cmd_schema_parse</code> compacts recognized options and their arguments at the front of the caller-owned argv pointer array, preserving positional operand order in the remaining suffix; execution can therefore consume the same native rows without a second option scanner.  A schema-only option for such a command uses <code>BU_CMD_FLAG_UNBOUND</code>; it participates in help, validation, and completion but deliberately refuses <code>bu_cmd_schema_parse</code>, which prevents a metadata table from silently writing through an invented storage offset.</p>
+</div>
+<div class="paragraph">
+<p>For conventional flat flag sets, the execution parser and validator accept a compact short-option cluster when every member is a no-argument flag: <code>-ah</code> has the same meaning as <code>-a -h</code>.  Attached values and clusters containing an option argument remain explicit, avoiding ambiguous getopt-style guessing. An optionless schema treats ordinary leading-dash text as an operand, which keeps raw commands such as <code>echo -literal</code> from inventing an option grammar. The standalone <code>--</code> marker remains available to make an operand phase explicit.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_ged_registration">GED registration</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A native command uses <code>GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA</code> and <code>GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA</code>; the latter publishes the native plugin schema manifest.  Command-schema metadata is an internal interface under active development, so a plugin must be rebuilt with the matching libged headers rather than relying on a compatibility adapter.</p>
+</div>
+<div class="paragraph">
+<p>Once registered, native schemas participate in <code>ged_cmd_schema_json</code>, <code>ged_cmd_validate</code>, <code>ged_cmd_complete_result</code>, <code>ged_cmd_analyze</code>, and <code>ged_cmd_schema_lint</code>.  This makes application frontends such as GSH, MGED, and QGED consume the same command metadata without owning separate option tables.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_expression_languages">Expression languages</h3>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Some commands have a grammar that is not a flat option list.  For example, the parser-owned find-style vocabulary of <code>db_search</code> is available through <code>db_search_syntax_terms</code> in <code>rt/search.h</code>.  Its terms report argument kinds such as ordinary strings, integers, primitive types, and variadic <code>-exec</code> commands.  Completion clients should use that exported view rather than copy the <code>db_search</code> parser table.  <code>db_search_syntax_plan_start</code> and <code>db_search_syntax_exec_substitution</code> expose the parser&#8217;s boundary and <code>{}</code> substitution rules for the same reason.</p>
+</div>
+<div class="paragraph">
+<p>GED registers such a command with a <code>ged_cmd_grammar</code> adapter rather than inventing flat option rows.  The adapter supplies cursor-aware validation, whole-line token analysis, JSON description, and lint hooks; the command&#8217;s ordinary GED execution callback remains responsible for execution.  Its JSON uses <code>kind: grammar_adapter</code> and must describe parser-owned terms from the same vocabulary used by execution.  Consequently GSH, MGED, and QGED invoke the same adapter through the normal GED completion and analysis APIs without special-casing a command name.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

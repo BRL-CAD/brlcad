@@ -10,14 +10,17 @@ tol - Used with no arguments, *tol* lists the current tolerance settings.
 
 [source]
 ----
-tol [abs#] [rel#] [norm#] [dist#] [perp#]
+tol [keyword [tolerance]] ...
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *tol* command, with no arguments, lists the current tolerance settings. If the command line includes any of the keywords followed by a number, then that tolerance setting will be modified. The keywords are as follows:
+The *tol* command, with no arguments, lists the current tolerance settings. A
+single keyword queries that setting. One or more keyword/tolerance pairs modify
+the selected settings. Tolerances must be finite numbers; negative values are
+accepted and normalized to zero. The keywords are as follows:
 
 *Tessellation tolerances:* The tessellation tolerances are used to control the facetization of primitive shapes. If more than one tolerance value is specified, the tessellation is performed to meet the most stringent.
 
@@ -31,6 +34,15 @@ The *tol* command, with no arguments, lists the current tolerance settings. If t
 
 * dist -- The _distance_ tolerance is specified in mm and represents the minimum distance required between two vertices to consider them distinct.
 * perp -- The _perpendicularity_ tolerance is specified as the cosine of an angle. Two objects will be considered perpendicular if the cosine of the angle between them is less than the _perpendicularity_ tolerance. Similarly, two objects will be considered parallel if the cosine of the angle between them is greater than 1.0, the _perpendicularity_ tolerance.
+
+*BRep-specific tessellation tolerances:*
+
+* absmax and absmin -- Maximum and minimum absolute tessellation tolerances.
+* relmax and relmin -- Maximum and minimum relative tessellation tolerances.
+* lmax and lmin -- Maximum and minimum relative edge-length tolerances.
+
+The relative forms (*rel*, *relmax*, *relmin*, *lmax*, and *lmin*) must be
+less than 1.  *norm* must not exceed 90 degrees, and *perp* must not exceed 1.
 
 
 [[examples]]

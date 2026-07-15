@@ -35,9 +35,8 @@
 #include <cstring>
 #include <map>
 
-#include "bu/cmd.h"
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/vls.h"
 #include "bv.h"
 
@@ -188,18 +187,68 @@ _gobjs_cmd_delete(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-const struct bu_cmdtab _gobjs_cmds[] = {
-    { "create",     _gobjs_cmd_create},
-    { "del",        _gobjs_cmd_delete},
-    { (char *)NULL,      NULL}
+struct gobjs_root_args {
+    int help = 0;
 };
+
+static const struct bu_cmd_option gobjs_root_options[] = {
+    BU_CMD_FLAG("h", "help", gobjs_root_args, help, "Print help"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema gobjs_root_schema = {
+    "gobjs", "Manage graphical view objects", gobjs_root_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_operand gobjs_create_operands[] = {
+    BU_CMD_OPERAND("database_object", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"Database object path", "ged.db_path"),
+    BU_CMD_OPERAND("view_object", BU_CMD_VALUE_STRING, 1, 1,
+	"New graphical view-object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema gobjs_create_schema = {
+    "create", "Create an editable view object from a database object", NULL,
+    gobjs_create_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_operand gobjs_delete_operands[] = {
+    BU_CMD_OPERAND("view_object", BU_CMD_VALUE_STRING, 0, 1,
+	"Graphical view-object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema gobjs_delete_schema = {
+    "del", "Delete a graphical view object", NULL, gobjs_delete_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const char * const gobjs_delete_aliases[] = {"delete", NULL};
+static const struct bu_cmd_tree_node gobjs_subcommands[] = {
+    BU_CMD_TREE_NODE(&gobjs_create_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _gobjs_cmd_create),
+    BU_CMD_TREE_NODE(&gobjs_delete_schema, gobjs_delete_aliases, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _gobjs_cmd_delete),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree gobjs_tree = {
+    &gobjs_root_schema, gobjs_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+static void
+gobjs_show_help(struct ged *gedp)
+{
+    char *help = bu_cmd_tree_describe(&gobjs_tree);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "gobjs native tree help");
+    }
+}
 
 extern "C" int
 _view_cmd_gobjs(void *bs, int argc, const char **argv)
 {
-    int help = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
+    struct gobjs_root_args args = {};
 
     const char *usage_string = "view [options] gobjs [options] [args]";
     const char *purpose_string = "view-only scene objects based on geometry solids/combs";
@@ -211,31 +260,39 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // See if we have any high level options set
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",        "",  NULL,  &help,      "Print help");
-    BU_OPT_NULL(d[1]);
-
-    gd->gopts = d;
+    gd->gopts = NULL;
 
     // We know we're the gobjs command - start processing args
     argc--; argv++;
 
-    // High level options are only defined prior to the subcommand
+    // Root options are accepted only before the subcommand.
     int cmd_pos = -1;
     for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_gobjs_cmds, argv[i]) == BRLCAD_OK) {
+	int option_span = bu_cmd_schema_option_span(&gobjs_root_schema,
+	    (size_t)(argc - i), argv + i);
+	if (option_span > 0) {
+	    i += option_span - 1;
+	    continue;
+	}
+	if (option_span < 0 || (argv[i][0] == '-' && argv[i][1]))
+	    break;
+	if (bu_cmd_tree_find_subcommand(&gobjs_tree, argv[i])) {
 	    cmd_pos = i;
 	    break;
 	}
+	cmd_pos = i;
+	break;
     }
 
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int ac = bu_opt_parse(NULL, acnt, argv, d);
+    int ac = bu_cmd_schema_parse(&gobjs_root_schema, &args,
+	gedp->ged_result_str, acnt, argv);
+    if (ac < 0 || ac != acnt)
+	return BRLCAD_ERROR;
 
     // If we're not wanting help and we have no subcommand, list current gobjs objects
     struct bview *v = gd->cv;
-    if (!ac && cmd_pos < 0 && !help) {
+	if (!ac && cmd_pos < 0 && !args.help) {
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	if (view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -253,15 +310,41 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
+    if (args.help) {
+	if (cmd_pos >= 0 && bu_cmd_tree_find_subcommand(&gobjs_tree, argv[cmd_pos])) {
+	    const char *child_help[] = {argv[cmd_pos], HELPFLAG};
+	    int ignored = BRLCAD_OK;
+	    (void)bu_cmd_tree_dispatch(&gobjs_tree, gd, 2, child_help, &ignored);
+	} else {
+	    gobjs_show_help(gedp);
+	}
+	return BRLCAD_OK;
+    }
+
+    if (cmd_pos < 0) {
+	gobjs_show_help(gedp);
+	return BRLCAD_ERROR;
+    }
+
+    const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(&gobjs_tree,
+	argv[cmd_pos]);
+    if (!node || bu_cmd_schema_parse_complete(node->schema, NULL,
+	gedp->ged_result_str, argc - cmd_pos - 1, argv + cmd_pos + 1) < 0)
+	return BRLCAD_ERROR;
+
     gd->s = NULL;
 
     if (!gd->s) {
 	// View object doesn't already exist.  subcommands will either need to create it
 	// or handle the error case
     }
-
-    return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_gobjs_cmds,
-			    "view gobjs", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
+    int ret;
+    if (bu_cmd_tree_dispatch(&gobjs_tree, gd, argc - cmd_pos, argv + cmd_pos, &ret) == 0)
+	return ret;
+    bu_vls_printf(gedp->ged_result_str, "unknown graphical view-object subcommand: %s\n",
+	argv[cmd_pos]);
+    gobjs_show_help(gedp);
+    return BRLCAD_ERROR;
 }
 
 // Local Variables:
@@ -272,4 +355,3 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

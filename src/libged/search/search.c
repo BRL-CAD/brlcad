@@ -37,6 +37,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/defines.h"
@@ -327,32 +328,9 @@ search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
  * next  v: will print types
  */
 static void
-_handle_verbosity(int* search_flags, int* fp_flags)
+_handle_verbosity(int *search_flags, int *fp_flags)
 {
-    if (bu_optarg) {
-	// unless succeeded by another flag, bu_getopt assumes -v is either supplied
-	// an argument or is at the end of the string, neither of which are likely
-	// for search - filter out a following arg from the optarg if it's not a 'v'
-	if (bu_optarg[0] != 'v')
-	    bu_optind--;
-	else {
-	    // handle -vv, -vvv, -vvvv..
-	    switch (strnlen(bu_optarg, 2)) {
-	        case 2:
-		    *fp_flags |= DB_FP_PRINT_TYPE;
-		    /* fallthrough */
-	        case 1:
-		    *fp_flags |= DB_FP_PRINT_BOOL;
-		    /* fallthrough */
-	        default:
-		    *search_flags |= DB_SEARCH_PRINT_TOTAL;
-		    break;
-	    }
-	    return;
-	}
-    }
-
-    // else - handle separate instance of -v (ie -v -v -v)
+    /* Handle separate -v instances and compact -vv... forms identically. */
     if (!(*search_flags & DB_SEARCH_PRINT_TOTAL)) {
 	*search_flags |= DB_SEARCH_PRINT_TOTAL;
 	return;					// first time, enable totals
@@ -366,13 +344,72 @@ _handle_verbosity(int* search_flags, int* fp_flags)
     *fp_flags |= DB_FP_PRINT_TYPE;		// max verbosity, enable types (everything else is already on)
 }
 
+/* Search accepts its few leading flags only before a path or expression.  This
+ * parser intentionally models the command grammar directly instead of using
+ * global getopt state: -v may repeat as -v -v or as -vv, while the other
+ * flags remain single-token forms. */
+static int
+_ged_search_parse_options(struct ged *gedp, int argc, const char *argv[], int *consumed,
+	int *aflag, int *wflag, int *flags, int *want_help, int *print_verbose_info)
+{
+    int index = 1;
+
+    if (!gedp || !argv || !consumed || !aflag || !wflag || !flags || !want_help || !print_verbose_info)
+	return -1;
+
+    while (index < argc) {
+	const char *arg = argv[index];
+	size_t len = arg ? strlen(arg) : 0;
+	enum ged_search_top_option_kind kind = GED_SEARCH_TOP_OPTION_UNKNOWN;
+	size_t occurrences = 0;
+
+	if (!arg || arg[0] != '-')
+	    break;
+	if (ged_search_top_option_parse(arg, &kind, &occurrences)) {
+	    switch (kind) {
+		case GED_SEARCH_TOP_OPTION_HIDDEN:
+		    *aflag = 1;
+		    *flags |= DB_SEARCH_HIDDEN;
+		    break;
+		case GED_SEARCH_TOP_OPTION_QUIET:
+		    *wflag = 1;
+		    *flags |= DB_SEARCH_QUIET;
+		    break;
+		case GED_SEARCH_TOP_OPTION_HELP:
+		    *want_help = 1;
+		    break;
+		case GED_SEARCH_TOP_OPTION_VERBOSE:
+		    for (size_t i = 0; i < occurrences; i++)
+			_handle_verbosity(flags, print_verbose_info);
+		    break;
+		case GED_SEARCH_TOP_OPTION_UNKNOWN:
+		default:
+		    break;
+	    }
+	    index++;
+	    continue;
+	}
+
+	/* Preserve the established options-first grammar: a longer word that is
+	 * not a compact verbosity form begins the path/expression phase. */
+	if (len != 2)
+	    break;
+
+	bu_vls_printf(gedp->ged_result_str,
+		"Error: option %s is unknown.\nUsage: [-a] [-v[v..]] [-Q] [-h] [path] [expressions...]\n",
+		arg);
+	return -1;
+    }
+
+    *consumed = index - 1;
+    return 0;
+}
+
 
 int
 ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
     size_t i;
-    int c;
-    int optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
     int wflag = 0; /* flag controlling whether to fail quietly or not */
     int flags = 0;
@@ -402,51 +439,12 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	return BRLCAD_ERROR;
     }
 
-    /* Find how many options we have. Once we get support
-     * for long options, this logic will have to get more sophisticated
-     * (do db_lookup on things to see if they are paths, recognize
-     * toplevel path specifiers, etc. */
-    optcnt = 0;
-    for (i = 1; i < (size_t)argc; i++) {
-	if ((argv_orig[i][0] == '-')) {
-	    int len = strlen(argv_orig[i]);
-	    if ((len == 2) || (len > 1 && argv_orig[i][1] == 'v'))
-		// ugly, but verbosity is currently the only option that can have more than 1 character
-		optcnt++;
-	} else {
-	    break;
-	}
-    }
-
-    /* Options have to come before paths and search expressions, so don't look
-     * any further than the max possible option count */
-    bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv::")) != -1)) {
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'a':
-		aflag = 1;
-		flags |= DB_SEARCH_HIDDEN;
-		break;
-	    case 'v':
-		_handle_verbosity(&flags, &print_verbose_info);
-		break;
-
-	    case 'Q':
-		wflag = 1;
-		flags |= DB_SEARCH_QUIET;
-		break;
-	    case 'h':
-		want_help = 1;
-		break;
-	    default:
-		bu_vls_sprintf(gedp->ged_result_str, "Error: option %s is unknown.\nUsage: %s", argv_orig[0], usage);
-		return BRLCAD_ERROR;
-	}
-    }
-
-    argc -= (bu_optind - 1);
-    argv_orig += (bu_optind - 1);
+    int consumed = 0;
+    if (_ged_search_parse_options(gedp, argc, argv_orig, &consumed, &aflag, &wflag,
+		&flags, &want_help, &print_verbose_info) != 0)
+	return BRLCAD_ERROR;
+    argc -= consumed;
+    argv_orig += consumed;
 
     if (want_help || argc == 1) {
 	if (!wflag) {
@@ -799,11 +797,13 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 #include "../include/plugin.h"
 
-#define GED_SEARCH_COMMANDS(X, XID) \
-    X(search, ged_search_core, GED_CMD_DEFAULT) \
+extern GED_EXPORT const struct ged_cmd_grammar ged_search_grammar;
 
-GED_DECLARE_COMMAND_SET(GED_SEARCH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_search", 1, GED_SEARCH_COMMANDS)
+#define GED_SEARCH_COMMANDS(X, XID) \
+    X(search, ged_search_core, GED_CMD_DEFAULT, &ged_search_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_SEARCH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_search", 1, GED_SEARCH_COMMANDS)
 
 /*
  * Local Variables:

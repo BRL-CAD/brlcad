@@ -25,8 +25,14 @@
 
 #include "common.h"
 
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema get_eyemodel_cmd_schema = {
+    "get_eyemodel", "Report the current view eye point and orientation",
+    NULL, NULL, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
 
 
 /*
@@ -41,6 +47,7 @@ ged_get_eyemodel_core(struct ged *gedp, int argc, const char *argv[])
 {
     quat_t quat;
     vect_t eye_model;
+    int parse_dummy = 0;
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -49,7 +56,8 @@ ged_get_eyemodel_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc != 1) {
+    if (bu_cmd_schema_parse_complete(&get_eyemodel_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1) != argc - 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -69,10 +77,10 @@ ged_get_eyemodel_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GET_EYEMODEL_COMMANDS(X, XID) \
-    X(get_eyemodel, ged_get_eyemodel_core, GED_CMD_DEFAULT) \
+    X(get_eyemodel, ged_get_eyemodel_core, GED_CMD_DEFAULT, &get_eyemodel_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GET_EYEMODEL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_get_eyemodel", 1, GED_GET_EYEMODEL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GET_EYEMODEL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_get_eyemodel", 1, GED_GET_EYEMODEL_COMMANDS)
 
 /*
  * Local Variables:

@@ -35,6 +35,12 @@ object hierarchy and placing the copies in a regular spatial pattern.
 It can produce a simple linear series, a rectangular grid, or radial
 layouts on spherical and cylindrical coordinate systems.
 
+Where an option takes an XYZ vector, it accepts either three separate
+numbers or one packed value using _x/y/z_, _x,y,z_, or _x;y;z_ notation.
+A quoted _"x y z"_ value is also accepted for Tcl-compatible command
+input.  This applies to *--origin*, *--pivot*, *--dir*, *--translate*,
+*--rotate*, *--atrans*, and *--arot*.
+
 == AXIS-AWARE OPTIONS
 
 Each pattern publishes a fixed list of axes that any of the four
@@ -120,6 +126,9 @@ be repeated for the third, fourth, etc. number.
 Controls how deeply the copy hierarchy is constructed. Default is
 *top* for any pattern that produces more than one copy, *primitives*
 for the single-copy linear case.
+
+The short spellings *reg* and *prim* are accepted aliases for
+*regions* and *primitives*, respectively.
 +
 *top* — wrapper combination, source geometry shared. +
 *regions* — every combination down to (and including) the first region

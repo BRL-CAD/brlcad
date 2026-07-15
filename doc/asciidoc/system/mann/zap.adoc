@@ -10,17 +10,38 @@ zap - erase all displayed objects from the graphics window
 
 [source]
 ----
-zap
-Z
+zap [options]
+Z [options]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *zap* command (also available as *Z*) removes all objects from the current display. The geometry remains in the database — only the display list is cleared. After running `zap`, the graphics window will be empty. Use `draw` or `e` to display objects again.
+The *zap* command (also available as *Z*) removes objects from the display.
+The geometry remains in the database — only the display list is cleared. After
+running `zap`, the graphics window will be empty. Use `draw` or `e` to display
+objects again.
 
-No arguments are accepted. Providing any argument returns a usage error.
+With no target options, `zap` clears database and view-local display objects
+from the shared views. The following options select a scope or object class:
+
+*-V name*, *--view name*::
+Clear the named view only.
+
+*-S*, *--shared*::
+Clear shared objects only; do not clear view-local objects.
+
+*-v*, *--view-objs*::
+Clear non-database view objects only.
+
+*-g*, *--solid-objs*::
+Clear database solid objects only.
+
+*--all*::
+Clear shared and independent views. This takes precedence over `--view`.
+
+`--shared` cannot be combined with `--view`.
 
 [[examples]]
 == EXAMPLES

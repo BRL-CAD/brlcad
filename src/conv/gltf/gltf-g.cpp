@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "bg/trimesh.h"
 #include "wdb.h"
@@ -280,46 +280,84 @@ process_mesh(struct rt_wdb *outfp, const tinygltf::Model &model, const tinygltf:
     mk_bot(outfp, shape_name.c_str(), type, RT_BOT_CCW, 0, numverts, numfaces, o_vertices, o_faces, NULL, NULL);
 }
 
+struct gltf_args {
+    int help;
+    int verbosity;
+    const char *output_path;
+    int extensions;
+};
+
+static const struct bu_cmd_option gltf_options[] = {
+    BU_CMD_FLAG("h", "help", struct gltf_args, help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_COUNTING_FLAG("v", "verbosity", struct gltf_args, verbosity,
+	"Increase verbosity level"),
+    BU_CMD_FILE("o", "output", struct gltf_args, output_path, "file.g",
+	"Set output filename"),
+    BU_CMD_FLAG("E", "extensions", struct gltf_args, extensions,
+	"Store original JSON for extensions"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand gltf_operands[] = {
+    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Input glTF or GLB file", NULL),
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 0, 1,
+	"Output BRL-CAD database", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const char *gltf_output_option[] = {"output", NULL};
+static const struct bu_cmd_constraint gltf_constraints[] = {
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+	gltf_output_option, 1, 1,
+	"--output accepts exactly one input file"),
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT,
+	gltf_output_option, 2, 2,
+	"input and output files are required without --output"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
+static const struct bu_cmd_schema gltf_schema = {
+    "gltf-g", "Convert a glTF model to a BRL-CAD database", gltf_options,
+    gltf_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, gltf_constraints)
+};
+
 int main(int argc, char **argv)
 {
     const char * const usage = "Usage: gltf-g [options] input_file [output_file.g]\n";
-    int verbosity = 0;
-    int print_help = 0;
-    int extensions = 0;
-    struct bu_vls output_path = BU_VLS_INIT_ZERO;
-
-    struct bu_opt_desc d[6];
-    BU_OPT(d[0], "h", "help",       "", NULL,              &print_help,   "Print help and exit");
-    BU_OPT(d[1], "?", "",           "", NULL,              &print_help,   "");
-    BU_OPT(d[2], "v", "verbosity",  "", &bu_opt_incr_long, &verbosity,    "Increase verbosity level");
-    BU_OPT(d[3], "o", "output",     "", &bu_opt_str,       &output_path,  "Set output filename");
-    BU_OPT(d[4], "E", "extensions", "", NULL,              &extensions,   "Store original JSON for extensions");
-    BU_OPT_NULL(d[5]);
+    struct gltf_args args = {0, 0, NULL, 0};
 
     bu_setprogname(argv[0]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
-    /* Parse options */
-    int opt_ret = bu_opt_parse(NULL, argc, (const char**)argv, d);
+    int help_requested = bu_cmd_schema_option_present(&gltf_schema,
+	(size_t)argc, (const char **)argv, "help");
+    struct bu_vls parse_msg = BU_VLS_INIT_ZERO;
+    int operand_index = help_requested ?
+	bu_cmd_schema_parse(&gltf_schema, &args, &parse_msg, argc,
+	    (const char **)argv) :
+	bu_cmd_schema_parse_complete(&gltf_schema, &args, &parse_msg, argc,
+	    (const char **)argv);
 
-    if (print_help) {
-	char* help = bu_opt_describe(d, NULL);
+    if (args.help) {
+	char *help = bu_cmd_schema_describe(&gltf_schema);
 	bu_log("%s\nOptions:\n%s", usage, help);
 	if (help)
 	    bu_free(help, "help str");
-	bu_vls_free(&output_path);
+	bu_vls_free(&parse_msg);
 	return 1;
     }
 
-    /* See what is left */
-    argc = opt_ret;
-    if (argc < 2 && !bu_vls_strlen(&output_path))
-	bu_exit(BRLCAD_ERROR, "Need input glTF filename\n");
-    if (argc > 2 || (argc == 2 && bu_vls_strlen(&output_path)))
-	bu_exit(BRLCAD_ERROR, "Multiple inputs specified.\n");
-    if (argc == 2)
-	bu_vls_sprintf(&output_path, "%s", argv[1]);
+    if (operand_index < 0)
+	bu_exit(BRLCAD_ERROR, "%s", bu_vls_cstr(&parse_msg));
+    bu_vls_free(&parse_msg);
+
+    argc -= operand_index;
+    argv += operand_index;
+    const char *output_path = args.output_path ? args.output_path : argv[1];
 
     /* Start reading */
     tinygltf::Model model;
@@ -334,21 +372,21 @@ int main(int argc, char **argv)
 	    read_ascii = false;
 
     tinygltf::TinyGLTF gltf_ctx;
-    gltf_ctx.SetStoreOriginalJSONForExtrasAndExtensions(extensions);
+    gltf_ctx.SetStoreOriginalJSONForExtrasAndExtensions(args.extensions);
 
 
     bool ret = false;
     if (read_ascii) {
-	if (verbosity)
+	if (args.verbosity)
 	    std::cout << "Reading as ascii glTF\n";
 	ret = gltf_ctx.LoadASCIIFromFile(&model, &err, &warn, input_filename);
     } else {
-	if (verbosity)
+	if (args.verbosity)
 	    std::cout << "Reading as binary glTF (glb)\n";
 	ret = gltf_ctx.LoadBinaryFromFile(&model, &err, &warn, input_filename);
     }
 
-    if (verbosity && !warn.empty())
+    if (args.verbosity && !warn.empty())
 	std::cerr << "Warn:" << warn.c_str() << "\n";
 
     if (!err.empty())
@@ -362,7 +400,7 @@ int main(int argc, char **argv)
 
     // Write out to .g file
     // TODO - check if pre-existing output is present
-    struct rt_wdb *outfp = wdb_fopen(bu_vls_cstr(&output_path));
+    struct rt_wdb *outfp = wdb_fopen(output_path);
     std::string title = "gltf-g import of " + input_filename;
     mk_id(outfp, title.c_str());
 
@@ -371,7 +409,7 @@ int main(int argc, char **argv)
     std::cout << "Mesh count: " << model.meshes.size() << "\n";
     for (size_t i = 0; i < model.meshes.size(); i++) {
 	tinygltf::Mesh &mesh = model.meshes[i];
-	process_mesh(outfp, model, mesh, verbosity, i);
+	process_mesh(outfp, model, mesh, args.verbosity, i);
     }
 
     db_close(outfp->dbip);

@@ -207,8 +207,49 @@ namespace linenoise
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 4096
+#define LINENOISE_HISTORY_NEXT 0
+#define LINENOISE_HISTORY_PREV 1
 
 typedef std::function<void (const char*, std::vector<std::string>&)> CompletionCallback;
+
+enum ColorMode {
+    COLOR_AUTO = 0,
+    COLOR_NEVER,
+    COLOR_ALWAYS
+};
+
+enum HighlightStyle {
+    HIGHLIGHT_NORMAL = 0,
+    HIGHLIGHT_COMMAND,
+    HIGHLIGHT_OPTION,
+    HIGHLIGHT_VALID,
+    HIGHLIGHT_INVALID,
+    HIGHLIGHT_INCOMPLETE,
+    HIGHLIGHT_DIM
+};
+
+enum CompletionMode {
+    COMPLETION_FILTER = 0,
+    COMPLETION_CYCLE,
+    COMPLETION_PREFIX,
+    COMPLETION_LEGACY,
+    COMPLETION_DISABLED
+};
+
+struct CompletionResult {
+    std::vector<std::string> candidates;
+    size_t replacement_start = 0;
+    size_t replacement_end = 0;
+};
+
+struct HighlightSpan {
+    size_t start = 0;
+    size_t end = 0;
+    HighlightStyle style = HIGHLIGHT_NORMAL;
+};
+
+typedef std::function<void (const char*, size_t, CompletionResult&)> StructuredCompletionCallback;
+typedef std::function<void (const char*, std::vector<HighlightSpan>&)> HighlightCallback;
 
 /* The linenoiseState structure represents the state during line editing, and
  * provides methods by which user programs can act on that state. */
@@ -245,6 +286,40 @@ public:
 	completionCallback = fn;
     };
 
+    void SetCompletionCallback(StructuredCompletionCallback fn)
+    {
+	structuredCompletionCallback = fn;
+    };
+
+    void SetHighlightCallback(HighlightCallback fn)
+    {
+	highlightCallback = fn;
+    };
+
+    /**
+     * Override the ANSI SGR sequence used for one semantic highlight role.
+     * An empty sequence restores the built-in terminal default for @p style.
+     */
+    void SetHighlightStyleSequence(HighlightStyle style, const std::string &sequence)
+    {
+	if (style < HIGHLIGHT_NORMAL || style > HIGHLIGHT_DIM)
+	    return;
+	if (highlightStyleSequences_.size() <= (size_t)style)
+	    highlightStyleSequences_.resize((size_t)HIGHLIGHT_DIM + 1);
+	highlightStyleSequences_[(size_t)style] = sequence;
+    };
+
+    void SetCompletionMode(CompletionMode mode)
+    {
+	completionMode_ = mode;
+    };
+
+    void SetColorMode(ColorMode mode)
+    {
+	colorMode_ = mode;
+	colorEnabled_ = -1;
+    };
+
 private:
     std::string Readline(bool &quit);
     std::string Readline();
@@ -263,8 +338,16 @@ private:
     void refreshSingleLine();
     void refreshMultiLine();
     int completeLine(char *cbuf, int *c);
+    int completeStructuredLine(char *cbuf, int *c);
+    void setLineBuffer(const std::string &line, size_t cursor_pos);
+    bool colorEnabled();
+    void appendHighlightedBuffer(std::string &ab);
+    const char *highlightStyleSequence(HighlightStyle style) const;
 
     CompletionCallback completionCallback;
+    StructuredCompletionCallback structuredCompletionCallback;
+    HighlightCallback highlightCallback;
+    std::vector<std::string> highlightStyleSequences_;
 
     int ifd_ = STDIN_FILENO;          /* Terminal stdin file descriptor. */
     int ofd_ = STDOUT_FILENO;         /* Terminal stdout file descriptor. */
@@ -278,6 +361,13 @@ private:
     long int history_index_ = -INT_MAX; /* The history index we are currently editing. */
     char wbuf_[LINENOISE_MAX_LINE] = {'\0'};
     bool mlmode_ = false;  /* Multi line mode. Default is single line. */
+    ColorMode colorMode_ = COLOR_AUTO;
+    int colorEnabled_ = -1;
+    bool colorDiagnosticPrinted_ = false;
+    CompletionMode completionMode_ = COMPLETION_LEGACY;
+    bool completionPreview_ = false;
+    size_t completionPreviewStart_ = 0;
+    size_t completionPreviewEnd_ = 0;
     std::mutex mutex_;
     std::string prompt_ = std::string("> "); /* Prompt to display. */
 
@@ -1990,7 +2080,301 @@ inline void linenoiseBeep(void)
     fflush(stderr);
 }
 
+inline bool linenoiseEnvSet(const char *name)
+{
+    const char *v = getenv(name);
+    return v && v[0] != '\0';
+}
+
+inline bool linenoiseTermIsDumb()
+{
+    const char *term = getenv("TERM");
+    if (!term || term[0] == '\0')
+	return true;
+
+    std::string sterm(term);
+    std::transform(sterm.begin(), sterm.end(), sterm.begin(), [](unsigned char c) {
+	return std::tolower(c);
+    });
+    return sterm == "dumb";
+}
+
+inline bool linenoiseTermSuggestsColor()
+{
+    if (linenoiseEnvSet("COLORTERM"))
+	return true;
+
+    const char *term = getenv("TERM");
+    if (!term)
+	return false;
+
+    std::string sterm(term);
+    std::transform(sterm.begin(), sterm.end(), sterm.begin(), [](unsigned char c) {
+	return std::tolower(c);
+    });
+
+    static const char *color_terms[] = {
+	"color", "ansi", "xterm", "screen", "tmux", "rxvt", "linux",
+	"cygwin", "konsole", "putty", "vt100-color", NULL
+    };
+    for (int i = 0; color_terms[i]; i++) {
+	if (sterm.find(color_terms[i]) != std::string::npos)
+	    return true;
+    }
+
+    return false;
+}
+
+inline const char *linenoiseDefaultStyleSequence(HighlightStyle style)
+{
+    switch (style) {
+	case HIGHLIGHT_COMMAND:
+	    return "\x1b[32m";
+	case HIGHLIGHT_OPTION:
+	    return "\x1b[33m";
+	case HIGHLIGHT_VALID:
+	    return "\x1b[36m";
+	case HIGHLIGHT_INVALID:
+	    return "\x1b[31m";
+	case HIGHLIGHT_INCOMPLETE:
+	    return "\x1b[35m";
+	case HIGHLIGHT_DIM:
+	    return "\x1b[2m";
+	case HIGHLIGHT_NORMAL:
+	default:
+	    return "\x1b[0m";
+    }
+}
+
+inline const char *
+linenoiseState::highlightStyleSequence(HighlightStyle style) const
+{
+    if (style >= HIGHLIGHT_NORMAL && style <= HIGHLIGHT_DIM &&
+	highlightStyleSequences_.size() > (size_t)style &&
+	!highlightStyleSequences_[(size_t)style].empty())
+	return highlightStyleSequences_[(size_t)style].c_str();
+
+    return linenoiseDefaultStyleSequence(style);
+}
+
 /* ============================== Completion ================================ */
+
+inline void
+linenoiseState::setLineBuffer(const std::string &line, size_t cursor_pos)
+{
+    size_t copy_len = line.size();
+    if (copy_len >= (size_t)buf_len_)
+	copy_len = (size_t)buf_len_ - 1;
+
+    memcpy(wbuf_, line.c_str(), copy_len);
+    wbuf_[copy_len] = '\0';
+    buf_ = wbuf_;
+    len_ = (int)copy_len;
+    pos_ = (cursor_pos > copy_len) ? (int)copy_len : (int)cursor_pos;
+}
+
+inline int
+linenoiseState::completeStructuredLine(char *cbuf, int *c)
+{
+    CompletionResult result;
+    int nread = 0;
+    *c = 0;
+
+    result.replacement_start = (size_t)pos_;
+    result.replacement_end = (size_t)pos_;
+    structuredCompletionCallback(buf_, (size_t)pos_, result);
+
+    if (result.candidates.empty()) {
+	linenoiseBeep();
+	return nread;
+    }
+
+    if (result.replacement_start > (size_t)len_)
+	result.replacement_start = (size_t)len_;
+    if (result.replacement_end > (size_t)len_)
+	result.replacement_end = (size_t)len_;
+    if (result.replacement_end < result.replacement_start)
+	result.replacement_end = result.replacement_start;
+
+    std::string current(buf_, len_);
+    size_t current_cursor = (size_t)pos_;
+    std::vector<std::string> lines;
+    std::vector<size_t> cursor_positions;
+    std::vector<size_t> preview_starts;
+    std::vector<size_t> preview_ends;
+    std::string typed = current.substr(result.replacement_start,
+	    result.replacement_end - result.replacement_start);
+    for (size_t i = 0; i < result.candidates.size(); i++) {
+	std::string candidate_line = current;
+	candidate_line.replace(result.replacement_start,
+		result.replacement_end - result.replacement_start,
+		result.candidates[i]);
+	lines.push_back(candidate_line);
+	cursor_positions.push_back(result.replacement_start + result.candidates[i].size());
+	size_t confirmed = 0;
+	while (confirmed < typed.size() && confirmed < result.candidates[i].size() &&
+		typed[confirmed] == result.candidates[i][confirmed])
+	    confirmed++;
+	preview_starts.push_back(result.replacement_start + confirmed);
+	preview_ends.push_back(result.replacement_start + result.candidates[i].size());
+    }
+
+    if (completionMode_ == COMPLETION_PREFIX) {
+	std::string common = result.candidates[0];
+	for (size_t i = 1; i < result.candidates.size() && !common.empty(); i++) {
+	    size_t j = 0;
+	    while (j < common.size() && j < result.candidates[i].size() && common[j] == result.candidates[i][j])
+		j++;
+	    common.erase(j);
+	}
+	if (!common.empty()) {
+	    current.replace(result.replacement_start,
+		    result.replacement_end - result.replacement_start, common);
+	    setLineBuffer(current, result.replacement_start + common.size());
+	    RefreshLine();
+	} else {
+	    linenoiseBeep();
+	}
+	return nread;
+    }
+
+    if (lines.size() == 1 && completionMode_ == COMPLETION_LEGACY) {
+	setLineBuffer(lines[0], cursor_positions[0]);
+	RefreshLine();
+	return nread;
+    }
+
+    int stop = 0;
+    int i = 0;
+    while (!stop) {
+	if (i < static_cast<int>(lines.size())) {
+	    int old_len = len_;
+	    int old_pos = pos_;
+	    char *old_buf = buf_;
+	    len_ = static_cast<int>(lines[i].size());
+	    pos_ = (cursor_positions[i] > lines[i].size()) ? len_ : (int)cursor_positions[i];
+	    buf_ = &lines[i][0];
+	    completionPreview_ = preview_ends[i] > preview_starts[i];
+	    completionPreviewStart_ = preview_starts[i];
+	    completionPreviewEnd_ = preview_ends[i];
+	    RefreshLine();
+	    completionPreview_ = false;
+	    len_ = old_len;
+	    pos_ = old_pos;
+	    buf_ = old_buf;
+	} else {
+	    completionPreview_ = false;
+	    RefreshLine();
+	}
+
+#ifdef _WIN32
+	nread = win32read(cbuf, c);
+#else
+	nread = unicodeReadUTF8Char(ifd_,cbuf,c);
+#endif
+	if (nread <= 0) {
+	    *c = -1;
+	    return nread;
+	}
+
+	switch (*c) {
+	    case 9:
+		if (completionMode_ == COMPLETION_FILTER || completionMode_ == COMPLETION_CYCLE) {
+		    i = (i+1) % lines.size();
+		} else {
+		    i = (i+1) % (lines.size()+1);
+		    if (i == static_cast<int>(lines.size())) linenoiseBeep();
+		}
+		break;
+	    case 27:
+		#ifndef _WIN32
+		{
+		    char seq[2] = {0, 0};
+		    bool have_sequence = (read(ifd_, seq, 1) == 1 && read(ifd_, seq + 1, 1) == 1);
+		    if (have_sequence && seq[0] == '[' && seq[1] == 'Z') {
+			i = (i + static_cast<int>(lines.size()) - 1) % static_cast<int>(lines.size());
+			break;
+		    }
+
+		    setLineBuffer(current, current_cursor);
+		    if (have_sequence && seq[0] == '[') {
+			if (seq[1] == '3') {
+			    char terminator = 0;
+			    if (read(ifd_, &terminator, 1) == 1 && terminator == '~')
+				EditDelete();
+			    else
+				RefreshLine();
+			} else {
+			switch (seq[1]) {
+			    case 'A': EditHistoryNext(LINENOISE_HISTORY_PREV); break;
+			    case 'B': EditHistoryNext(LINENOISE_HISTORY_NEXT); break;
+			    case 'C': EditMoveRight(); break;
+			    case 'D': EditMoveLeft(); break;
+			    case 'H': EditMoveHome(); break;
+			    case 'F': EditMoveEnd(); break;
+			    default: RefreshLine(); break;
+			}
+			}
+		    } else {
+			RefreshLine();
+		    }
+		    *c = 0;
+		    stop = 1;
+		    break;
+		}
+		#else
+		setLineBuffer(current, current_cursor);
+		RefreshLine();
+		*c = 0;
+		stop = 1;
+		#endif
+		break;
+	    default:
+		if (completionMode_ == COMPLETION_FILTER && *c != ' ' && *c != '/' &&
+			*c != 127 && *c != 8 &&
+			*c != '\r' && *c != '\n') {
+		/* A filtering edit normally applies to the original seed.  If that
+		 * interpretation has no completions but extending the displayed
+		 * candidate does, promote the candidate to editable text.  This
+		 * preserves predictable filtering while permitting, for example,
+		 * an extra character to turn a completed object name into another
+		 * valid object name. */
+		bool extend_preview = false;
+		if (*c >= 32 && nread > 0 && i < static_cast<int>(lines.size())) {
+		    std::string edit(cbuf, (size_t)nread);
+		    std::string original_edit = current;
+		    original_edit.insert(current_cursor, edit);
+		    CompletionResult original_result;
+		    original_result.replacement_start = current_cursor + edit.size();
+		    original_result.replacement_end = original_result.replacement_start;
+		    structuredCompletionCallback(original_edit.c_str(),
+			    current_cursor + edit.size(), original_result);
+
+		    if (original_result.candidates.empty()) {
+			std::string preview_edit = lines[i];
+			preview_edit.insert(cursor_positions[i], edit);
+			CompletionResult preview_result;
+			preview_result.replacement_start = cursor_positions[i] + edit.size();
+			preview_result.replacement_end = preview_result.replacement_start;
+			structuredCompletionCallback(preview_edit.c_str(),
+				cursor_positions[i] + edit.size(), preview_result);
+			extend_preview = !preview_result.candidates.empty();
+		    }
+		}
+		if (extend_preview)
+		    setLineBuffer(lines[i], cursor_positions[i]);
+		else
+		    setLineBuffer(current, current_cursor);
+		} else if (i < static_cast<int>(lines.size())) {
+		    setLineBuffer(lines[i], cursor_positions[i]);
+		}
+		stop = 1;
+		break;
+	}
+    }
+
+    return nread;
+}
 
 /* This is an helper function for Edit() and is called when the
  * user types the <tab> key in order to complete the string currently in the
@@ -2003,6 +2387,9 @@ inline int linenoiseState::completeLine(char *cbuf, int *c)
     std::vector<std::string> lc;
     int nread = 0, nwritten;
     *c = 0;
+
+    if (structuredCompletionCallback != NULL)
+	return completeStructuredLine(cbuf, c);
 
     completionCallback(buf_,lc);
     if (lc.empty()) {
@@ -2062,6 +2449,124 @@ inline int linenoiseState::completeLine(char *cbuf, int *c)
     return nread;
 }
 
+inline bool
+linenoiseState::colorEnabled()
+{
+    if (colorMode_ == COLOR_NEVER)
+	return false;
+    if (colorMode_ == COLOR_ALWAYS)
+	return true;
+    if (colorEnabled_ >= 0)
+	return colorEnabled_ ? true : false;
+
+    bool enabled = false;
+    bool no_color = linenoiseEnvSet("NO_COLOR");
+    bool dumb_term = linenoiseTermIsDumb();
+    int tty_out = isatty(ofd_);
+    bool term_color = linenoiseTermSuggestsColor();
+    if (!no_color && !dumb_term && tty_out) {
+#ifdef _WIN32
+	HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+	enabled = ln_win32_is_console_handle(hout) || term_color;
+#else
+	enabled = term_color;
+#endif
+    }
+
+    colorEnabled_ = enabled ? 1 : 0;
+    if (!colorDiagnosticPrinted_ && linenoiseEnvSet("LINENOISE_COLOR_DIAGNOSTICS")) {
+	const char *term = getenv("TERM");
+	const char *colorterm = getenv("COLORTERM");
+	fprintf(stderr,
+		"linenoise color diagnostics: mode=auto enabled=%d isatty(stdout)=%d NO_COLOR=%d TERM=%s COLORTERM=%s term_dumb=%d term_suggests_color=%d\n",
+		enabled ? 1 : 0,
+		tty_out ? 1 : 0,
+		no_color ? 1 : 0,
+		(term && term[0]) ? term : "(unset)",
+		(colorterm && colorterm[0]) ? colorterm : "(unset)",
+		dumb_term ? 1 : 0,
+		term_color ? 1 : 0);
+	colorDiagnosticPrinted_ = true;
+    }
+    return enabled;
+}
+
+inline void
+linenoiseState::appendHighlightedBuffer(std::string &ab)
+{
+    if ((highlightCallback == NULL && !completionPreview_) || !colorEnabled()) {
+	ab.append(buf_, len_);
+	return;
+    }
+
+    std::vector<HighlightSpan> spans;
+    std::string line(buf_, len_);
+    if (highlightCallback != NULL)
+	highlightCallback(line.c_str(), spans);
+
+    if (completionPreview_) {
+	std::vector<HighlightSpan> adjusted;
+	for (size_t i = 0; i < spans.size(); i++) {
+	    if (spans[i].end <= completionPreviewStart_ || spans[i].start >= completionPreviewEnd_) {
+		adjusted.push_back(spans[i]);
+		continue;
+	    }
+	    if (spans[i].start < completionPreviewStart_)
+		adjusted.push_back({spans[i].start, completionPreviewStart_, spans[i].style});
+	    if (spans[i].end > completionPreviewEnd_)
+		adjusted.push_back({completionPreviewEnd_, spans[i].end, spans[i].style});
+	}
+	adjusted.push_back({completionPreviewStart_, completionPreviewEnd_, HIGHLIGHT_DIM});
+	spans.swap(adjusted);
+    }
+    if (linenoiseEnvSet("LINENOISE_COLOR_DIAGNOSTICS")) {
+	fprintf(stderr,
+		"linenoise highlight diagnostics: line=\"%s\" spans=%zu\n",
+		line.c_str(),
+		spans.size());
+    }
+
+    if (spans.empty()) {
+	ab.append(buf_, len_);
+	return;
+    }
+
+    std::sort(spans.begin(), spans.end(), [](const HighlightSpan &a, const HighlightSpan &b) {
+	return a.start < b.start;
+    });
+
+    size_t pos = 0;
+    bool styled = false;
+    for (size_t i = 0; i < spans.size(); i++) {
+	size_t start = spans[i].start;
+	size_t end = spans[i].end;
+
+	if (start > (size_t)len_)
+	    start = (size_t)len_;
+	if (end > (size_t)len_)
+	    end = (size_t)len_;
+	if (end <= start || start < pos)
+	    continue;
+
+	if (start > pos)
+	    ab.append(buf_ + pos, start - pos);
+
+	if (spans[i].style != HIGHLIGHT_NORMAL) {
+	    ab += highlightStyleSequence(spans[i].style);
+	    styled = true;
+	}
+	ab.append(buf_ + start, end - start);
+	if (spans[i].style != HIGHLIGHT_NORMAL)
+	    ab += highlightStyleSequence(HIGHLIGHT_NORMAL);
+	pos = end;
+    }
+
+    if (pos < (size_t)len_)
+	ab.append(buf_ + pos, (size_t)len_ - pos);
+    if (styled)
+	ab += highlightStyleSequence(HIGHLIGHT_NORMAL);
+}
+
 /* =========================== Line editing ================================= */
 
 /* Single line low level line refresh.
@@ -2093,7 +2598,7 @@ inline void linenoiseState::refreshSingleLine()
     ab += seq;
     /* Write the prompt and the current buffer content */
     ab += prompt_;
-    ab.append(buf_, len_);
+    appendHighlightedBuffer(ab);
     /* Erase to right */
     snprintf(seq,64,"\x1b[0K");
     ab += seq;
@@ -2146,7 +2651,7 @@ inline void linenoiseState::refreshMultiLine()
 
     /* Write the prompt and the current buffer content */
     ab += prompt_;
-    ab.append(buf_, len_);
+    appendHighlightedBuffer(ab);
 
     /* Get text width to cursor position */
     colpos2 = unicodeColumnPosForMultiLine(buf_, len_, pos_, cols_, pcolwid);
@@ -2227,7 +2732,8 @@ inline int linenoiseState::EditInsert(const char* cbuf, int clen)
 	    pos_+=clen;
 	    len_+=clen;;
 	    buf_[len_] = '\0';
-	    if ((!mlmode_ && unicodeColumnPos(prompt_.c_str(), static_cast<int>(prompt_.length()))+unicodeColumnPos(buf_,len_) < cols_) /* || mlmode_ */) {
+	    bool can_fast_insert = (highlightCallback == NULL || !colorEnabled());
+	    if (can_fast_insert && (!mlmode_ && unicodeColumnPos(prompt_.c_str(), static_cast<int>(prompt_.length()))+unicodeColumnPos(buf_,len_) < cols_) /* || mlmode_ */) {
 		/* Avoid a full update of the line in the
 		 * trivial case. */
 		if (write(ofd_,cbuf,clen) == -1) return -1;
@@ -2284,8 +2790,6 @@ inline void linenoiseState::EditMoveEnd()
 
 /* Substitute the currently edited line with the next or previous history
  * entry as specified by 'dir'. */
-#define LINENOISE_HISTORY_NEXT 0
-#define LINENOISE_HISTORY_PREV 1
 inline void linenoiseState::EditHistoryNext(int dir)
 {
     long int index_cnt = static_cast<long int>(history_.size());
@@ -2399,7 +2903,8 @@ inline int linenoiseState::Edit()
 	/* Only autocomplete when the callback is set. It returns < 0 when
 	 * there was an error reading from fd. Otherwise it will return the
 	 * character that should be handled next. */
-	if (c == 9 && completionCallback != NULL) {
+	if (c == 9 && completionMode_ != COMPLETION_DISABLED &&
+		(completionCallback != NULL || structuredCompletionCallback != NULL)) {
 	    nread = completeLine(cbuf, &c);
 	    /* Return on errors */
 	    if (c < 0) return len_;
@@ -2409,7 +2914,14 @@ inline int linenoiseState::Edit()
 
 	switch (c) {
 	    case ENTER:    /* enter */
-		if (mlmode_) EditMoveEnd();
+		/* A completion preview is transient.  Redraw the accepted line
+		 * without its dim suffix before leaving raw editing mode so the
+		 * command retained in the terminal has its normal highlighting. */
+		completionPreview_ = false;
+		if (mlmode_)
+		    EditMoveEnd();
+		else
+		    RefreshLine();
 		return (int)len_;
 	    case CTRL_C:     /* ctrl-c */
 		errno = EAGAIN;

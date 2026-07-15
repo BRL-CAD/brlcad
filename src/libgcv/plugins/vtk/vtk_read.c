@@ -2053,14 +2053,48 @@ sg_cleanup:
 }
 
 
+static const struct bu_cmd_option vtk_read_schema_options[] = {
+    BU_CMD_STRING(NULL, "scalar-array", struct vtk_read_options, scalar_array, "name",
+	"POINT_DATA SCALARS array driving per-point scale and color."),
+    BU_CMD_STRING(NULL, "vector-array", struct vtk_read_options, vector_array, "name",
+	"POINT_DATA VECTORS array driving per-point normals."),
+    BU_CMD_NUMBER(NULL, "point-scale", struct vtk_read_options, point_scale, "factor",
+	"Multiplier applied to per-point scale values."),
+    BU_CMD_STRING(NULL, "units", struct vtk_read_options, units, "unit",
+	"Units of the input model."),
+    BU_CMD_STRING(NULL, "vertices", struct vtk_read_options, vertices, "datum|pnts|sph",
+	"How POLYDATA VERTICES map."),
+    BU_CMD_NUMBER(NULL, "vertex-radius", struct vtk_read_options, vertex_radius, "factor",
+	"Sphere radius for --vertices sph."),
+    BU_CMD_INTEGER(NULL, "vertex-max", struct vtk_read_options, vertex_max, "n",
+	"Maximum per-vertex solids before falling back to pnts."),
+    BU_CMD_STRING(NULL, "lines", struct vtk_read_options, lines, "datum|pipe|rcc",
+	"How POLYDATA LINES map."),
+    BU_CMD_NUMBER(NULL, "line-radius", struct vtk_read_options, line_radius, "factor",
+	"Pipe or RCC radius for --lines."),
+    BU_CMD_STRING(NULL, "cells", struct vtk_read_options, cells, "arb|bot",
+	"How solid cells map."),
+    BU_CMD_INTEGER(NULL, "cell-max", struct vtk_read_options, cell_max, "n",
+	"Maximum per-cell solids before falling back to one BoT."),
+    BU_CMD_STRING(NULL, "grid", struct vtk_read_options, grid, "auto|vol|dsp|ebm|cells",
+	"How structured and rectilinear grids map."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema vtk_read_schema = {
+    "vtk-read", "VTK reader options.", vtk_read_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
 static void
-vtk_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+vtk_read_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct vtk_read_options *options_data;
 
     BU_ALLOC(options_data, struct vtk_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(13 * sizeof(struct bu_opt_desc), "options_desc");
 
     options_data->scalar_array = NULL;
     options_data->vector_array = NULL;
@@ -2076,55 +2110,7 @@ vtk_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
     options_data->cell_max = 50000;
     options_data->grid = NULL;		/* NULL -> "auto" at use */
 
-    BU_OPT((*options_desc)[0], NULL, "scalar-array", "name",
-	    bu_opt_str, &options_data->scalar_array,
-	    "name of the POINT_DATA SCALARS array to drive per-point scale/color");
-
-    BU_OPT((*options_desc)[1], NULL, "vector-array", "name",
-	    bu_opt_str, &options_data->vector_array,
-	    "name of the POINT_DATA VECTORS array to drive per-point normals");
-
-    BU_OPT((*options_desc)[2], NULL, "point-scale", "factor",
-	    bu_opt_fastf_t, &options_data->point_scale,
-	    "multiplier applied to per-point scale values (default 1.0)");
-
-    BU_OPT((*options_desc)[3], NULL, "units", "unit",
-	    bu_opt_str, &options_data->units,
-	    "units of the input model (default mm)");
-
-    BU_OPT((*options_desc)[4], NULL, "vertices", "datum|pnts|sph",
-	    bu_opt_str, &options_data->vertices,
-	    "how POLYDATA VERTICES map: datum, pnts (default), or sph");
-
-    BU_OPT((*options_desc)[5], NULL, "vertex-radius", "factor",
-	    bu_opt_fastf_t, &options_data->vertex_radius,
-	    "sphere radius for --vertices sph (default 0 -> auto)");
-
-    BU_OPT((*options_desc)[6], NULL, "vertex-max", "n",
-	    bu_opt_int, &options_data->vertex_max,
-	    "max per-vertex solids before falling back to pnts (default 5000)");
-
-    BU_OPT((*options_desc)[7], NULL, "lines", "datum|pipe|rcc",
-	    bu_opt_str, &options_data->lines,
-	    "how POLYDATA LINES map: datum (default), pipe, or rcc");
-
-    BU_OPT((*options_desc)[8], NULL, "line-radius", "factor",
-	    bu_opt_fastf_t, &options_data->line_radius,
-	    "pipe/rcc radius for --lines (default 0 -> auto)");
-
-    BU_OPT((*options_desc)[9], NULL, "cells", "arb|bot",
-	    bu_opt_str, &options_data->cells,
-	    "how solid cells map: arb (default) or bot");
-
-    BU_OPT((*options_desc)[10], NULL, "cell-max", "n",
-	    bu_opt_int, &options_data->cell_max,
-	    "max per-cell solids before falling back to a single bot (default 50000)");
-
-    BU_OPT((*options_desc)[11], NULL, "grid", "auto|vol|dsp|ebm|cells",
-	    bu_opt_str, &options_data->grid,
-	    "how structured/rectilinear grids map: auto (default), vol, dsp, ebm, or cells");
-
-    BU_OPT_NULL((*options_desc)[12]);
+    *schema = &vtk_read_schema;
 }
 
 
@@ -2132,7 +2118,7 @@ static void
 vtk_read_free_opts(void *options_data)
 {
     /* scalar_array/vector_array/units are non-owning pointers into the
-     * caller's argv strings (bu_opt_str does not copy), so only the
+     * caller's argv strings (the historical string reader does not copy), so only the
      * options struct itself is freed here. */
     bu_free(options_data, "options_data");
 }
@@ -2369,23 +2355,33 @@ fail:
 
 static const struct gcv_filter gcv_conv_vtk_read = {
     "VTK Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_VTK, vtk_can_read,
-    vtk_read_create_opts, vtk_read_free_opts, vtk_read
+    NULL, vtk_read_free_opts, vtk_read
 };
 
 static const struct gcv_filter gcv_conv_vtk_read_auto = {
     "VTK Reader (auto)", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, vtk_can_read,
-    vtk_read_create_opts, vtk_read_free_opts, vtk_read
+    NULL, vtk_read_free_opts, vtk_read
 };
 
 
 static const struct gcv_filter * const filters[] = {
     &gcv_conv_vtk_read, &gcv_conv_vtk_read_auto, NULL
 };
+static const struct gcv_filter_schema filter_schemas[] = {
+    {&gcv_conv_vtk_read, vtk_read_create_schema_opts},
+    {&gcv_conv_vtk_read_auto, vtk_read_create_schema_opts},
+    {NULL, NULL}
+};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
+static const struct gcv_native_plugin gcv_plugin_native_info_s = { filter_schemas };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+
+COMPILER_DLLEXPORT const struct gcv_native_plugin *
+gcv_plugin_native_info(void){ return &gcv_plugin_native_info_s; }
 
 /*
  * Local Variables:

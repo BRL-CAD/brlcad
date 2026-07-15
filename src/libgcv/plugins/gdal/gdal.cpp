@@ -401,23 +401,35 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     return 1;
 }
 
+static const struct bu_cmd_option gdal_read_schema_options[] = {
+    BU_CMD_FLAG("c", "center", struct gdal_read_options, center,
+        "Center the dsp terrain at global (0,0)."),
+    BU_CMD_INTEGER(NULL, "utm-zone", struct gdal_read_options, zone, "zone",
+        "When performing UTM projection, use the specified zone."),
+    BU_CMD_STRING(NULL, "projection", struct gdal_read_options, proj, "proj",
+        "Projection to apply to terrain data before exporting to a .g file."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema gdal_read_schema = {
+    "gdal-read", "GDAL reader options.", gdal_read_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
 static void
-gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
+gdal_read_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct gdal_read_options *odata;
 
     BU_ALLOC(odata, struct gdal_read_options);
     *dest_options_data = odata;
-    *odesc = (struct bu_opt_desc *)bu_malloc(4*sizeof(struct bu_opt_desc), "gdal option descriptions");
 
     odata->center = 0;
     odata->proj = NULL;
     odata->zone = INT_MAX;
-
-    BU_OPT((*odesc)[0], "c", "center", NULL, NULL, &(odata->center), "Center the dsp terrain at global (0,0)");
-    BU_OPT((*odesc)[1], "",  "utm-zone", "zone", &bu_opt_int, &(odata->zone), "When performing UTM project use the specified zone.");
-    BU_OPT((*odesc)[2], "", "projection", "proj", &bu_opt_str, &(odata->proj), "Projection to apply to the terrain data before exporting to a .g file");
-    BU_OPT_NULL((*odesc)[3]);
+    *schema = &gdal_read_schema;
 }
 
 static void
@@ -429,11 +441,17 @@ gdal_read_free_opts(void *options_data)
 extern "C"
 {
     struct gcv_filter gcv_conv_gdal_read =
-    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_GDAL, gdal_can_read, gdal_read_create_opts, gdal_read_free_opts, gdal_read};
+    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_GDAL, gdal_can_read, NULL, gdal_read_free_opts, gdal_read};
 
     static const struct gcv_filter * const filters[] = {&gcv_conv_gdal_read, NULL};
+    static const struct gcv_filter_schema filter_schemas[] = {
+        {&gcv_conv_gdal_read, gdal_read_create_schema_opts},
+        {NULL, NULL}
+    };
     const struct gcv_plugin gcv_plugin_info_s = { filters };
+    static const struct gcv_native_plugin gcv_plugin_native_info_s = { filter_schemas };
     COMPILER_DLLEXPORT const struct gcv_plugin *gcv_plugin_info(){return &gcv_plugin_info_s;}
+    COMPILER_DLLEXPORT const struct gcv_native_plugin *gcv_plugin_native_info(){return &gcv_plugin_native_info_s;}
 }
 
 // Local Variables:

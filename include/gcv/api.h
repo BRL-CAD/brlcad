@@ -30,6 +30,7 @@
 #include "vmath.h"
 
 #include "bu/avs.h"
+#include "bu/cmdschema.h"
 #include "bu/opt.h"
 #include "bu/mime.h"
 #include "bn/tol.h"
@@ -163,12 +164,15 @@ struct gcv_filter {
     /**
      * PRIVATE
      *
-     * Allocate and initialize a bu_opt_desc block and associated memory for
+     * Deprecated compatibility hook: allocate and initialize a bu_opt_desc
+     * block and associated memory for
      * storing the option data.
      *
      * Must set *options_desc and *options_data.
      *
-     * May be NULL.
+     * May be NULL.  New plugins must publish gcv_filter_schema records via
+     * gcv_plugin_native_info; this field remains only for binary/API
+     * transition compatibility.
      */
     void (* const create_opts_fn)(struct bu_opt_desc **options_desc, void **options_data);
 
@@ -201,6 +205,28 @@ struct gcv_filter {
 struct gcv_plugin {
     const struct gcv_filter * const * const filters;
 };
+
+
+/**
+ * Native option-schema extension for a gcv_filter.  This remains outside
+ * struct gcv_filter so binaries built against the older plugin ABI can still
+ * register their legacy filter records safely.  Native plugins expose a
+ * null-terminated array through the optional gcv_plugin_native_info symbol.
+ */
+struct gcv_filter_schema {
+    const struct gcv_filter *filter;
+    void (* const create_opts_fn)(const struct bu_cmd_schema **schema,
+	void **options_data);
+};
+
+
+struct gcv_native_plugin {
+    const struct gcv_filter_schema *filter_schemas;
+};
+
+
+/** Optional plugin entry point for native filter option schemas. */
+typedef const struct gcv_native_plugin *(*gcv_plugin_native_info_t)(void);
 
 
 /*

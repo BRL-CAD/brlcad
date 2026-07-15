@@ -22,6 +22,7 @@ a `.g` file. Its default mode is to report which regions are using one or more
 specified air-code values or ranges. If a root object is specified, it reports
 only for regions in that object's tree. If *-U* or *--unused* is specified, the
 report is inverted and the command lists unused air-code ranges instead.
+Inclusive ranges may use either `start-end` or `start:end`.
 
 The *eac* command will perform a similar search, but will draw the qualifying regions in the MGED display rather than listing them.
 

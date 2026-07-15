@@ -4,13 +4,15 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-draw - Adds _objects_> to the display list so that they will appear on the _MGED_ display. The *e* command is a synonym for *draw*.
+draw - Adds _objects_ to the display list so that they will appear on the display. The *e* command is a synonym for *draw*.
 
 == SYNOPSIS
 
 [source]
 ----
 draw [-A attribute name/value pairs] [-s] [-A -o attribute name/value pairs] [-C#/#/#] [-L #] [-R] [-S] [-m1] {objects}
+
+draw [--mode 0|1|2|3|4|5] [options] {objects}
 ----
 
 
@@ -23,7 +25,7 @@ Adds _objects_ to the display list so that they will appear on the MGED display.
 * The _-C_ option provides the user a way to specify a color that overrides all other color specifications including combination colors and region-id-based colors.
 * The _-s_ option specifies that subtracted and intersected objects should be drawn with shape lines rather than dot-dash lines.
 * The _-A_ option specifies that the arguments provided to this command are attribute name/value pairs, and only objects having the specified attributes and values are to be displayed. The default (without _-o_) is that only objects having all the specified attribute name/value pairs will be displayed. With _-o_, objects that match any of the specified attribute name/value pairs will be displayed.
-* The _-m1_ option will display BOTs shaded if the display manager is OpenGL and the zbuffer and lighting is enabled. To enable these settings, from the MGED GUI, choose "Modes/Display Manager/OpenGL", "Misc/Z-buffer" and "Misc/Lighting". If the zbuffer and lighting is already enabled, toggle them off then back on to ensure they are enabled.
+* The _-m_ or _--mode_ option accepts an integer from 0 through 5. The value may be a separate argument, as in _--mode 1_, joined with an equals sign, as in _--mode=1_, or joined to the short option, as in _-m1_. In QGED and GSH's _--new-cmds_ mode, the meanings are 0 (wireframe), 1 (shaded BoTs, B-Reps, and polysolids), 2 (all solids shaded without evaluating Boolean operations), 3 (wireframe with Boolean operations evaluated), 4 (hidden-line), and 5 (point-sampled triangles). In the legacy MGED and GSH draw implementation, modes 3 and 5 instead mean evaluated shading and evaluated wireframe, respectively. Values outside 0 through 5 are invalid.
 * The _-L_ option allows the user to specify a face count. BoT primitives with more faces than the user set threshold will be represented in wireframe drawing by their bounding boxes rather than the full BoT wireframe.
 * The _-R_ option tells draw to not change the view size when drawing new objects. Without this flag, *draw* will automatically size the view to make the new object(s) visible when the view was previously empty.
 * The _-S_ option tells draw to be "simplified" by skipping subtraction objects when drawing, not drawing NMG interior surfaces, and potentially more. Skipping subtractions is useful in situations where an object has many large objects subtracted from it but those objects have relatively minimal impact on the shape. This results in the default wireframe bearing little resemablance to the evaluated shape.

@@ -29,8 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "bu/parallel.h"
-#include "bu/getopt.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -38,6 +38,76 @@
 
 static union tree *bev_facetize_tree;
 static struct model *bev_nmg_model;
+
+struct bev_args {
+    int triangulate;
+};
+
+static const struct bu_cmd_option bev_schema_options[] = {
+    BU_CMD_FLAG("t", NULL, struct bev_args, triangulate, "Triangulate the result"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bev_schema_operands[] = {
+    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 1, 1,
+	"New evaluated object", NULL),
+    BU_CMD_OPERAND("boolean_expression", BU_CMD_VALUE_RAW, 1,
+	BU_CMD_COUNT_UNLIMITED, "Object/operator expression", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static int
+bev_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const char **argv,
+	size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    size_t first;
+    size_t positional;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+
+    first = bu_cmd_schema_option_present(schema, argc, argv, "t") ? 1 : 0;
+    positional = argc - first;
+    if (cursor_arg > first && cursor_arg < argc) {
+	size_t expr_index = cursor_arg - first - 1;
+	bu_cmd_validate_result_clear(result);
+	result->state = BU_CMD_VALIDATE_VALID;
+	result->token_start = cursor_arg;
+	result->token_end = cursor_arg;
+	result->expected = BU_CMD_EXPECT_OPERAND;
+	if (expr_index % 2) {
+	    result->completion_type = BU_CMD_VALUE_KEYWORD;
+	    result->hint = "boolean operation";
+	} else {
+	    result->completion_type = BU_CMD_VALUE_DB_OBJECT;
+	    result->semantic_provider = "ged.db_object";
+	    result->hint = "input object";
+	}
+    }
+    if (cursor_arg >= argc && (positional < 2 || ((positional - 1) % 2) == 0)) {
+	bu_cmd_validate_result_clear(result);
+	result->state = BU_CMD_VALIDATE_INCOMPLETE;
+	result->token_start = argc;
+	result->token_end = argc;
+	result->expected = BU_CMD_EXPECT_OPERAND;
+	if (positional < 2 || ((positional - 1) % 2) == 0) {
+	    result->completion_type = BU_CMD_VALUE_DB_OBJECT;
+	    result->semantic_provider = "ged.db_object";
+	} else {
+	    result->completion_type = BU_CMD_VALUE_KEYWORD;
+	}
+	result->hint = "incomplete boolean expression";
+    }
+    return 0;
+}
+
+static const struct bu_cmd_schema bev_cmd_schema = {
+    "bev", "Evaluate a boolean expression into an NMG object", bev_schema_options,
+    bev_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {bev_schema_validate}
+};
 
 
 static union tree *
@@ -83,8 +153,9 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-t] new_obj obj1 op obj2 op obj3 ...";
 
     int i;
-    int c;
     int ncpu;
+    int operand_index;
+    struct bev_args args = {0};
     const char *cmdname;
     char *newname;
     struct rt_db_internal intern;
@@ -110,33 +181,19 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
     cmdname = argv[0];
 
     /* Initial values for options, must be reset each time */
     ncpu = 1;
-    triangulate = 0;
-
-    /* Parse options. */
-    bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "t")) != -1) {
-	switch (c) {
-	    case 't':
-		triangulate = 1;
-		break;
-	    default: {
-		bu_vls_printf(gedp->ged_result_str, "%s: option '%c' unknown\n", cmdname, c);
-	    }
-
-		break;
-	}
+    operand_index = bu_cmd_schema_parse_complete(&bev_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdname, usage);
+	return BRLCAD_ERROR;
     }
-    argc -= bu_optind;
-    argv += bu_optind;
+    triangulate = args.triangulate;
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     newname = (char *)argv[0];
     argv++;
@@ -306,10 +363,10 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_BEV_COMMANDS(X, XID) \
-    X(bev, ged_bev_core, GED_CMD_DEFAULT) \
+    X(bev, ged_bev_core, GED_CMD_DEFAULT, &bev_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_BEV_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_bev", 1, GED_BEV_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_BEV_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_bev", 1, GED_BEV_COMMANDS)
 
 /*
  * Local Variables:

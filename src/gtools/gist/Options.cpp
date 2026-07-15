@@ -20,6 +20,8 @@
 
 #include "Options.h"
 
+#include "bu/cmdschema.h"
+
 Options::Options()
 {
     inFile = "";
@@ -53,126 +55,178 @@ Options::~Options()
 
 }
 
-static int _param_set_std_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var) {
-    std::string* s_set = (std::string*)set_var;
+struct gist_args {
+    int print_help;
+    int overwrite;
+    int ppi;
+    int left_handed;
+    int y_up;
+    std::string input_file;
+    std::string output_file;
+    std::string input_folder;
+    std::string output_folder;
+    int open_gui;
+    int reuse_images;
+    std::string top_component;
+    std::string logo_path;
+    std::string preparer;
+    std::string owner;
+    std::string executable_dir;
+    std::string classification;
+    std::string notes;
+    std::string density_file;
+    std::string length_units;
+    std::string mass_units;
+    std::string working_dir;
+    int ncpu;
+    int verbose;
+};
 
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_param_set_std_str");
 
-    if (s_set)
-	*s_set = std::string(argv[0]);
-    return 1;
+static int
+gist_string_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "string argument expected\n");
+	return -1;
+    }
+    if (storage)
+	*((std::string *)storage) = arg;
+    return 0;
 }
+
+
+static const struct bu_cmd_option gist_options[] = {
+    BU_CMD_CUSTOM("i", "input", gist_args, input_file, gist_string_parse, "filename.g", "Input .g file"),
+    BU_CMD_CUSTOM("o", "output", gist_args, output_file, gist_string_parse, "filename.png", "Output file name"),
+    BU_CMD_CUSTOM("F", "folder", gist_args, input_folder, gist_string_parse, "folder", "Folder of .g models to generate"),
+    BU_CMD_CUSTOM("e", "export-folder", gist_args, output_folder, gist_string_parse, "directory", "Set export folder name"),
+    BU_CMD_FLAG("g", "gui", gist_args, open_gui, "Display report in a popup window"),
+    BU_CMD_FLAG("f", "force", gist_args, overwrite, "Overwrite an existing report"),
+    BU_CMD_FLAG("Z", "reuse-images", gist_args, reuse_images, "Reuse renders from an existing .working directory"),
+    BU_CMD_CUSTOM("t", "top-component", gist_args, top_component, gist_string_parse, "component", "Specify the primary report component"),
+    BU_CMD_CUSTOM("m", "logo", gist_args, logo_path, gist_string_parse, "image", "Path to logo image"),
+    BU_CMD_INTEGER("p", "ppi", gist_args, ppi, "pixels", "Pixels per inch (default 300)"),
+    BU_CMD_CUSTOM("n", "preparer", gist_args, preparer, gist_string_parse, "name", "Preparer name"),
+    BU_CMD_CUSTOM("r", "owner", gist_args, owner, gist_string_parse, "name", "Model owner name"),
+    BU_CMD_CUSTOM("T", "executables", gist_args, executable_dir, gist_string_parse, "directory", "Path to rt and rtwizard executables"),
+    BU_CMD_CUSTOM("c", "classification", gist_args, classification, gist_string_parse, "text", "Classification in the report banner"),
+    BU_CMD_CUSTOM("N", "notes", gist_args, notes, gist_string_parse, "text", "Additional report notes"),
+    BU_CMD_FLAG("L", "left-handed", gist_args, left_handed, "Use left-handed coordinates"),
+    BU_CMD_FLAG("A", "y-up", gist_args, y_up, "Use +Y-up geometry (default: +Z-up)"),
+    BU_CMD_CUSTOM("d", "density-file", gist_args, density_file, gist_string_parse, "file", "Material density file, or 0 to skip density calculations"),
+    BU_CMD_CUSTOM("l", "length-units", gist_args, length_units, gist_string_parse, "units", "Length units"),
+    BU_CMD_CUSTOM("w", "weight-units", gist_args, mass_units, gist_string_parse, "units", "Weight units"),
+    BU_CMD_CUSTOM("a", "working-directory", gist_args, working_dir, gist_string_parse, "directory", "Directory for cached work"),
+    BU_CMD_INTEGER("P", "processors", gist_args, ncpu, "count", "Number of CPUs to use"),
+    BU_CMD_FLAG("v", "verbose", gist_args, verbose, "Enable verbose output"),
+    BU_CMD_FLAG("h", "help", gist_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_operand gist_operands[] = {
+    BU_CMD_OPERAND("input", BU_CMD_VALUE_FILE, 0, 1,
+	"Input .g file when --input or --folder is not used", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+
+static const struct bu_cmd_schema gist_schema = {
+    "gist",
+    "Generate an image-based report from a BRL-CAD model or directory.",
+    gist_options,
+    gist_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    NULL
+};
 
 bool Options::readParameters(int argc, const char **argv) {
     const char* usage = "[options] (-F model/dir | model.g)";
-
-    int print_help = 0;			// user requested help
-    int param_overwrite = 0;		// user requested to overwrite existing report
-    int param_ppi = 0;			// user requested ppi
-    int param_Lhand = 0;		// user requested left-handed coordinates
-    int param_Yup = 0;			// user requested y-up
-    std::string param_Ulength = "";	// user requested length units
-    std::string param_Umass = "";	// user requested mass units
-    std::string param_oFile = "";	// user supplied output file
-    std::string param_densityFile = "";	// user requested density file
-    int param_ncpu = 0;			// user requested num CPUs to use
-
-    struct bu_opt_desc options[26] = {
-	{"i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g"					    },
-	{"o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name"				    },
-	{"F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate"		    },
-	{"e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name"			    },
-	{"g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window"		    },
-	{"f", "",     "",                  NULL,                    &param_overwrite,      "overwrite existing report if it exists"	    },
-	{"Z", "",     "",                  NULL,                    &this->reuseImages,    "reuse renders if .working directory is found"   },
-	{"t", "",     "component",         &_param_set_std_str,     &this->topComp,        "specify primary component of the report"	    },
-	{"m", "",     "path/to/image",     &_param_set_std_str,     &this->logopath,       "path to logo image to be used in report"	    },
-	{"p", "",     "#",		   &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)"		    },
-	{"n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report"	    },
-	{"r", "",     "\"owner name\"",    &_param_set_std_str,     &this->owner,          "name of model's owner, to be used in report"    },
-	{"T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables"	    },
-	{"c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner"  },
-	{"N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report"		    },
-	{"L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system"		    },
-	{"A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)"	    },
-	{"d", "",     "densityFile",	   &_param_set_std_str,	    &param_densityFile,	   "specify density file for materials (or '0' to skip density calculations)"    },
-	{"l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units"			    },
-	{"w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units"			    },
-	{"a", "",     "path/to/dir",	   &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to"	    },
-	{"P", "",     "#cpus",             &bu_opt_int,             &param_ncpu,           "number of CPUs to use"			    },
-	{"v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing"				    },
-	{"h", "help", "",                  NULL,                    &print_help,           "Print help and exit"			    },
-	{"?", "",     "",                  NULL,                    &print_help,           ""						    },
-	BU_OPT_DESC_NULL
-    };
-
-    /* set progname and move on */
+    struct gist_args args = {};
+    int parsed = 0;
+    int operand_count = 0;
+    const char **operands = NULL;
+    /* Set program name before parsing and preserve the ordinary input-file
+     * shorthand as the single positional operand. */
     const char* cmd_progname = argv[0];
     bu_setprogname(argv[0]);
     argc--; argv++;
 
-    /* parse options */
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    int ret_ac = bu_opt_parse(&msg, argc, argv, options);
-
-    if (ret_ac) {   // assume a leftover option is a .g file
-	setInFile(argv[0]);
-	ret_ac--;
+    parsed = bu_cmd_schema_parse(&gist_schema, &args, &msg, argc, argv);
+    if (parsed >= 0) {
+        operand_count = argc - parsed;
+        operands = argv + parsed;
+        if (operand_count) {
+            args.input_file = operands[0];
+            operand_count--;
+        }
     }
 
-    /* usage help */
-    if (ret_ac < 0) {		// error in parsing
-	bu_log("ERROR: option parsing failed\n");
-	if (msg.vls_len > 0)
-	    bu_log("%s\n", bu_vls_cstr(&msg));
-
-	bu_vls_free(&msg);
-	return false;
-    } else if (ret_ac != 0) {	// extra / bad options
-	bu_log("ERROR: bad / unknown option (%s). Use -h for all options\n", argv[0]);
-	if (msg.vls_len > 0)
-	    bu_log("%s\n", bu_vls_cstr(&msg));
-
-	bu_vls_free(&msg);
-	return false;
+    if (parsed < 0) {
+        bu_log("ERROR: option parsing failed\n");
+        if (msg.vls_len > 0)
+            bu_log("%s\n", bu_vls_cstr(&msg));
+        bu_vls_free(&msg);
+        return false;
     }
-    if (print_help) {
-	char *options_help = bu_opt_describe(options, NULL);
-
+    if (operand_count != 0) {
+        bu_log("ERROR: bad / unknown option (%s). Use -h for all options\n", operands[1]);
+        bu_vls_free(&msg);
+        return false;
+    }
+    if (args.print_help) {
+        char *options_help = bu_cmd_schema_describe(&gist_schema);
         bu_log("\nUsage:  %s %s\n", cmd_progname, usage);
-        bu_log("\nOptions:\n%s\n", options_help);
-
-	bu_vls_free(&msg);
+        bu_log("\nOptions:\n%s\n", options_help ? options_help : "");
+        bu_vls_free(&msg);
         bu_free(options_help, "options help str");
-	return false;
+        return false;
     }
+
+    this->inFile = args.input_file;
+    this->inFolderName = args.input_folder;
+    this->outFolderName = args.output_folder;
+    this->openGUI = args.open_gui;
+    this->reuseImages = args.reuse_images;
+    this->topComp = args.top_component;
+    this->logopath = args.logo_path;
+    this->preparer = args.preparer;
+    this->owner = args.owner;
+    this->exeDir = args.executable_dir;
+    this->classification = args.classification;
+    this->notes = args.notes;
+    this->workingDir = args.working_dir;
 
     /* use internal setters for options that require extra attention */
-    if (param_oFile.empty() && this->inFolderName.empty()) {
-	// no output file supplied, and not working with folder: default to gui pop-up
-	bu_log("WARNING: no output file given, use (-o) to save report\n");
-	setOpenGUI();
-    } else if (!setOutFile(param_oFile))    // out file was supplied, make sure .png
-	return false;
-    if (param_ppi)
-	setPPI(param_ppi);
-    if (param_Lhand)
-	setCoordSystem(LEFT_HAND);
-    if (param_Yup)
-	setUpAxis(POS_Y_UP);
-    if (!param_Ulength.empty())
-	setUnitLength(param_Ulength);
-    if (!param_Umass.empty())
-	setUnitMass(param_Umass);
+    if (args.output_file.empty() && this->inFolderName.empty()) {
+        // no output file supplied, and not working with folder: default to gui pop-up
+        bu_log("WARNING: no output file given, use (-o) to save report\n");
+        setOpenGUI();
+    } else if (!setOutFile(args.output_file))    // out file was supplied, make sure .png
+        return false;
+    if (args.ppi)
+        setPPI(args.ppi);
+    if (args.left_handed)
+        setCoordSystem(LEFT_HAND);
+    if (args.y_up)
+        setUpAxis(POS_Y_UP);
+    if (!args.length_units.empty())
+        setUnitLength(args.length_units);
+    if (!args.mass_units.empty())
+        setUnitMass(args.mass_units);
     if (!this->inFolderName.empty()) {
-	setIsFolder();
-	setExportToFile();  // dont want to flood screen with gui popups if we're using a folder
+        setIsFolder();
+        setExportToFile();  // dont want to flood screen with gui popups if we're using a folder
     }
     if (!this->exeDir.empty())
-	setExeDir(this->exeDir);
-    setNCPU(param_ncpu);
-    if (!param_densityFile.empty())
-	setDensityFile(param_densityFile);
+        setExeDir(this->exeDir);
+    setNCPU(args.ncpu);
+    if (!args.density_file.empty())
+        setDensityFile(args.density_file);
 
     /* make sure valid input .g or folder is supplied */
     if ((getIsFolder() && !bu_file_directory(this->inFolderName.c_str())) ||
@@ -192,14 +246,14 @@ bool Options::readParameters(int argc, const char **argv) {
 
     /* make sure we're not unintentionally overwriting an existing report */
     if (bu_file_exists(this->outFile.c_str(), NULL)) {
-	if (!param_overwrite) {
+	if (!args.overwrite) {
 	    bu_log("ERROR: output file \"%s\" already exists. Re-run with force flag (-f) or remove file.", this->outFile.c_str());
 	    return false;
 	} else {
 	    bu_file_delete(this->outFile.c_str());
 	}
     } else if (bu_file_directory(this->outFolderName.c_str())) {
-	if (!param_overwrite) {
+	if (!args.overwrite) {
 	    bu_log("ERROR: output folder \"%s\" already exists. Re-run with force flag (-f) or remove directory.", this->outFolderName.c_str());
 	    return false;
 	} else {

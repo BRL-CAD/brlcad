@@ -38,7 +38,7 @@
 #include "wdb.h"
 #include "bg/trimesh.h"
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -364,15 +364,11 @@ x3d_parse_doubles(const char *text)
     for (size_t i = 0; i < argc; i++) {
 	fastf_t val = 0.0;
 	const char *av = argv[i];
-	struct bu_vls msg = BU_VLS_INIT_ZERO;
-	if (bu_opt_fastf_t(&msg, 1, &av, &val) == 1) {
+	if (bu_cmd_number_from_str(&val, av)) {
 	    ret.push_back((double)val);
 	} else {
-	    bu_vls_trimspace(&msg);
-	    bu_log("WARNING: skipping invalid X3D numeric value '%s'%s%s\n", argv[i],
-		    bu_vls_strlen(&msg) ? ": " : "", bu_vls_cstr(&msg));
+	    bu_log("WARNING: skipping invalid X3D numeric value '%s'\n", argv[i]);
 	}
-	bu_vls_free(&msg);
     }
 
     return ret;
@@ -394,16 +390,11 @@ x3d_attr_int(const pugi::xml_node &node, const char *name, int def)
 	return def;
 
     const char *av = attr.value();
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    if (bu_opt_int(&msg, 1, &av, &val) == 1) {
-	bu_vls_free(&msg);
+    if (bu_cmd_integer_from_str(&val, av)) {
 	return val;
     }
 
-    bu_vls_trimspace(&msg);
-    bu_log("WARNING: invalid X3D integer value '%s' for %s; using %d%s%s%s\n", attr.value(), name, def,
-	    bu_vls_strlen(&msg) ? " (" : "", bu_vls_cstr(&msg), bu_vls_strlen(&msg) ? ")" : "");
-    bu_vls_free(&msg);
+    bu_log("WARNING: invalid X3D integer value '%s' for %s; using %d\n", attr.value(), name, def);
     return def;
 }
 
@@ -432,15 +423,11 @@ x3d_vec3_attr(const pugi::xml_node &node, const char *name, vect_t v, const vect
 
     vect_t parsed;
     const char *av = attr.value();
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    if (bu_opt_vect_t(&msg, 1, &av, (void *)&parsed) > 0) {
+    if (bu_cmd_vector3_from_argv(parsed, 1, &av) > 0) {
 	VMOVE(v, parsed);
     } else {
-	bu_vls_trimspace(&msg);
-	bu_log("WARNING: invalid X3D vector value '%s' for %s%s%s%s\n", attr.value(), name,
-		bu_vls_strlen(&msg) ? " (" : "", bu_vls_cstr(&msg), bu_vls_strlen(&msg) ? ")" : "");
+	bu_log("WARNING: invalid X3D vector value '%s' for %s\n", attr.value(), name);
     }
-    bu_vls_free(&msg);
 }
 
 static void
@@ -1290,14 +1277,34 @@ convert_input(assetimport_read_state_t* pstate)
     return (pstate->converted || pstate->converted_nurbs);
 }
 
+static const struct bu_cmd_option assetimport_read_schema_options[] = {
+    BU_CMD_INTEGER(NULL, "starting-ident", assetimport_read_options_t, starting_id, "number",
+	"Specify the starting ident for created regions."),
+    BU_CMD_FLAG(NULL, "constant-ident", assetimport_read_options_t, const_id,
+	"Keep the starting ident constant."),
+    BU_CMD_INTEGER(NULL, "material", assetimport_read_options_t, mat_code, "number",
+	"Specify the material code assigned to created regions."),
+    BU_CMD_FLAG("v", "verbose", assetimport_read_options_t, verbose,
+	"Print verbose conversion output."),
+    BU_CMD_STRING(NULL, "format", assetimport_read_options_t, format, "format",
+	"Specify the input file format."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema assetimport_read_schema = {
+    "assetimport-read", "Asset import reader options.", assetimport_read_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
 static void
-assetimport_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+assetimport_read_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     assetimport_read_options_t* options_data;
 
     BU_ALLOC(options_data, assetimport_read_options_t);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(6 * sizeof(struct bu_opt_desc), "options_desc");
 
     options_data->starting_id = 1000;
     options_data->const_id = 0;
@@ -1305,12 +1312,7 @@ assetimport_read_create_opts(struct bu_opt_desc **options_desc, void **dest_opti
     options_data->verbose = 0;
     options_data->format = NULL;
 
-    BU_OPT((*options_desc)[0], NULL, "starting-ident", "number", bu_opt_int, options_data, "specify the starting ident for the regions created");
-    BU_OPT((*options_desc)[1], NULL, "constant-ident", NULL, NULL, &options_data->const_id, "specify that the starting ident should remain constant");
-    BU_OPT((*options_desc)[2], NULL, "material", "number", bu_opt_int, &options_data->mat_code, "specify the material code that will be assigned to created regions");
-    BU_OPT((*options_desc)[3], "v", "verbose", NULL, NULL, &options_data->verbose, "specify for verbose output");
-    BU_OPT((*options_desc)[4], NULL, "format", NULL, bu_opt_str, &options_data->format, "specify the output file format");
-    BU_OPT_NULL((*options_desc)[5]);
+    *schema = &assetimport_read_schema;
 }
 
 static void
@@ -1377,16 +1379,27 @@ extern "C"
 {
     static const struct gcv_filter gcv_conv_assetimport_read = {
 	"Assetimport Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_ASSETIMPORT, assetimport_can_read,
-	assetimport_read_create_opts, assetimport_read_free_opts, assetimport_read
+	NULL, assetimport_read_free_opts, assetimport_read
     };
 
     extern const struct gcv_filter gcv_conv_assetimport_write;
+    extern void assetimport_write_create_schema_opts(const struct bu_cmd_schema **schema,
+	void **dest_options_data);
     static const struct gcv_filter * const filters[] = { &gcv_conv_assetimport_read, &gcv_conv_assetimport_write, NULL };
+    static const struct gcv_filter_schema filter_schemas[] = {
+	{&gcv_conv_assetimport_read, assetimport_read_create_schema_opts},
+	{&gcv_conv_assetimport_write, assetimport_write_create_schema_opts},
+	{NULL, NULL}
+    };
 
     const struct gcv_plugin gcv_plugin_info_s = { filters };
+    static const struct gcv_native_plugin gcv_plugin_native_info_s = { filter_schemas };
 
     COMPILER_DLLEXPORT const struct gcv_plugin *
 	gcv_plugin_info() { return &gcv_plugin_info_s; }
+
+    COMPILER_DLLEXPORT const struct gcv_native_plugin *
+	gcv_plugin_native_info() { return &gcv_plugin_native_info_s; }
 }
 
 // Local Variables:

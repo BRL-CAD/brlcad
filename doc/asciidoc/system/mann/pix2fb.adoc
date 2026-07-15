@@ -22,9 +22,9 @@ The *pix2fb* command reads a raw RGB pixel file (bottom-up row order) and sends 
 
 *Input size*
 
-* *-w width* : Width of the input pixel file in pixels (default 512).
-* *-n height* : Height of the input pixel file in pixels (default 512).
-* *-s size* : Set both input width and height to `size` (square input).
+* *-w width* : Positive width of the input pixel file in pixels (default 512).
+* *-n height* : Positive height of the input pixel file in pixels (default 512).
+* *-s size* : Set both input width and height to positive `size` (square input).
 * *-a* : Autosize the input — attempt to determine dimensions from the file.
 
 *Input region (crop)*
@@ -34,9 +34,9 @@ The *pix2fb* command reads a raw RGB pixel file (bottom-up row order) and sends 
 
 *Output (framebuffer) size*
 
-* *-W scr_width* : Width of the framebuffer display area in pixels.
-* *-N scr_height* : Height of the framebuffer display area in pixels.
-* *-S scr_size* : Set both framebuffer width and height to `scr_size` (square output).
+* *-W scr_width* : Positive width of the framebuffer display area in pixels.
+* *-N scr_height* : Positive height of the framebuffer display area in pixels.
+* *-S scr_size* : Set both framebuffer width and height to positive `scr_size` (square output).
 
 *Output position*
 
@@ -50,7 +50,7 @@ The *pix2fb* command reads a raw RGB pixel file (bottom-up row order) and sends 
 * *-i* : Inverse (upside-down) — draw the image with inverted row order.
 * *-1* : Force single-line writes (one row at a time).
 * *-m lines* : Streamlined multi-line writes; write `lines` rows per call.
-* *-p seconds* : Pause for `seconds` before closing the framebuffer and exiting.
+* *-p seconds* : Pause for nonnegative `seconds` before closing the framebuffer and exiting.
 
 [[examples]]
 == EXAMPLES

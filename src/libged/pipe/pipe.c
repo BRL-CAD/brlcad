@@ -38,14 +38,196 @@
 #include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+
+static int
+pipe_packed_point_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+static int
+pipe_find_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+
+
+static const struct bu_cmd_option pipe_move_schema_options[] = {
+    BU_CMD_FLAG_UNBOUND("r", NULL, "r", "Interpret the point relative to the pipe point"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand pipe_find_schema_operands[] = {
+    BU_CMD_OPERAND("pipe", BU_CMD_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_VECTOR, 1, 3,
+	"Packed XYZ point or three coordinates", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand pipe_index_schema_operands[] = {
+    BU_CMD_OPERAND("pipe", BU_CMD_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
+    BU_CMD_OPERAND("segment", BU_CMD_VALUE_INTEGER, 1, 1, "Pipe point index", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand pipe_insert_schema_operands[] = {
+    BU_CMD_OPERAND("pipe", BU_CMD_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_VECTOR, 1, 1, "Packed XYZ point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand pipe_move_schema_operands[] = {
+    BU_CMD_OPERAND("pipe", BU_CMD_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
+    BU_CMD_OPERAND("segment", BU_CMD_VALUE_INTEGER, 1, 1, "Pipe point index", NULL),
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_VECTOR, 1, 1, "Packed XYZ point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+#define PIPE_SCHEMA(_id, _name, _help, _opts, _operands, _policy, _validate) \
+    static const struct bu_cmd_schema _id##_cmd_schema = { \
+	_name, _help, _opts, _operands, _policy, \
+	BU_CMD_SCHEMA_CONSTRAINTS(_validate, NULL) \
+    }
+PIPE_SCHEMA(find_pipe_pnt, "find_pipe_pnt", "Find the pipe point nearest a model point", NULL,
+	pipe_find_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_find_schema_validate);
+PIPE_SCHEMA(pipe_move_pnt, "pipe_move_pnt", "Move a pipe point", pipe_move_schema_options,
+	pipe_move_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, pipe_packed_point_schema_validate);
+PIPE_SCHEMA(pipe_append_pnt, "pipe_append_pnt", "Append a point to a pipe", NULL,
+	pipe_insert_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
+PIPE_SCHEMA(pipe_prepend_pnt, "pipe_prepend_pnt", "Prepend a point to a pipe", NULL,
+	pipe_insert_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
+PIPE_SCHEMA(pipe_delete_pnt, "pipe_delete_pnt", "Delete a pipe point", NULL,
+	pipe_index_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+PIPE_SCHEMA(mouse_move_pipe_pnt, "mouse_move_pipe_pnt", "Move a pipe point from mouse input", pipe_move_schema_options,
+	pipe_move_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, pipe_packed_point_schema_validate);
+PIPE_SCHEMA(mouse_append_pipe_pnt, "mouse_append_pipe_pnt", "Append a pipe point from mouse input", NULL,
+	pipe_insert_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
+PIPE_SCHEMA(mouse_prepend_pipe_pnt, "mouse_prepend_pipe_pnt", "Prepend a pipe point from mouse input", NULL,
+	pipe_insert_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
+#undef PIPE_SCHEMA
+
+
+static const struct bu_cmd_schema *
+pipe_schema_for_command(const char *name)
+{
+    if (BU_STR_EQUAL(name, "find_pipe_pnt"))
+	return &find_pipe_pnt_cmd_schema;
+    if (BU_STR_EQUAL(name, "pipe_move_pnt"))
+	return &pipe_move_pnt_cmd_schema;
+    if (BU_STR_EQUAL(name, "mouse_move_pipe_pnt"))
+	return &mouse_move_pipe_pnt_cmd_schema;
+    if (BU_STR_EQUAL(name, "pipe_append_pnt"))
+	return &pipe_append_pnt_cmd_schema;
+    if (BU_STR_EQUAL(name, "mouse_append_pipe_pnt"))
+	return &mouse_append_pipe_pnt_cmd_schema;
+    if (BU_STR_EQUAL(name, "pipe_prepend_pnt"))
+	return &pipe_prepend_pnt_cmd_schema;
+    if (BU_STR_EQUAL(name, "mouse_prepend_pipe_pnt"))
+	return &mouse_prepend_pipe_pnt_cmd_schema;
+    if (BU_STR_EQUAL(name, "pipe_delete_pnt"))
+	return &pipe_delete_pnt_cmd_schema;
+    return NULL;
+}
+
+
+static void
+pipe_usage(struct ged *gedp, const struct bu_cmd_schema *schema)
+{
+    char *help = bu_cmd_schema_describe(schema);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "pipe native schema help");
+    }
+}
+
+
+static int
+pipe_schema_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+	int argc, const char *argv[])
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int ret = BRLCAD_ERROR;
+
+    if (schema && bu_cmd_schema_parse_complete(schema, NULL, &msg,
+	argc - 1, argv + 1) >= 0) {
+	ret = BRLCAD_OK;
+	} else if (bu_vls_strlen(&msg)) {
+	bu_vls_vlscat(gedp->ged_result_str, &msg);
+    }
+    bu_vls_free(&msg);
+    return ret;
+}
+
+
+static void
+pipe_vector_validation_result(struct bu_cmd_validate_result *result,
+	const struct bu_cmd_validate_result *vector_result, size_t offset)
+{
+    bu_cmd_validate_result_clear(result);
+    *result = *vector_result;
+    result->token_start += offset;
+    result->token_end += offset;
+    result->completion_count = 0;
+    result->completion_candidates = NULL;
+}
+
+
+static int
+pipe_packed_point_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *cmd;
+    fastf_t point[3] = {0.0, 0.0, 0.0};
+    size_t point_index = BU_STR_EQUAL(cmd->name, "pipe_move_pnt") ||
+	BU_STR_EQUAL(cmd->name, "mouse_move_pipe_pnt") ? 2 : 1;
+    int ret = 0;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (point_index == 2 && bu_cmd_schema_option_present(cmd, argc, argv, "r"))
+	point_index++;
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc <= point_index)
+	return ret;
+    if (bu_cmd_vector3_from_argv(point, 1, (const char * const *)argv + point_index) != 1) {
+	bu_cmd_validate_result_clear(result);
+	result->state = BU_CMD_VALIDATE_INVALID;
+	result->token_start = point_index;
+	result->token_end = point_index;
+	result->expected = BU_CMD_EXPECT_OPERAND;
+	result->hint = "packed finite XYZ point required";
+	result->completion_type = BU_CMD_VALUE_VECTOR;
+	result->semantic_provider = "ged.vector_group";
+    } else {
+	/* The command validator owns the whole packed point.  Suppress the
+	 * one-token vector semantic check from reinterpreting a quoted argument. */
+	result->semantic_provider = "ged.vector_group";
+    }
+    return 0;
+}
+
+
+static int
+pipe_find_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *cmd;
+    struct bu_cmd_validate_result vector_result = BU_CMD_VALIDATE_RESULT_NULL;
+    int ret = 0;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc <= 1)
+	return ret;
+    if (bu_cmd_vector3_optional_validate(argc - 1, argv + 1,
+	cursor_arg > 1 ? cursor_arg - 1 : 0, &vector_result) == 0) {
+	vector_result.semantic_provider = "ged.vector_group";
+	pipe_vector_validation_result(result, &vector_result, 1);
+    }
+    bu_cmd_validate_result_clear(&vector_result);
+    return 0;
+}
 
 int
 _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t))
 {
     struct directory *dp;
-    static const char *usage = "pipe pt";
+    const struct bu_cmd_schema *schema = pipe_schema_for_command(argv[0]);
     struct rt_db_internal intern;
     struct rt_pipe_internal *pipeip;
     mat_t mat;
@@ -53,7 +235,6 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
     point_t view_pp_coord;
     point_t ps_pt;
     struct wdb_pipe_pnt *prevpp;
-    double scan[3];
     char *last;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -65,12 +246,12 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	pipe_usage(gedp, schema);
 	return GED_HELP;
     }
 
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (pipe_schema_preflight(gedp, schema, argc, argv) != BRLCAD_OK) {
+	pipe_usage(gedp, schema);
 	return BRLCAD_ERROR;
     }
 
@@ -90,12 +271,10 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
+    if (bu_cmd_vector3_from_argv(view_ps_pt, 1, argv + 2) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
-    /* convert from double to fastf_t */
-    VMOVE(view_ps_pt, scan);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
@@ -157,7 +336,7 @@ int
 ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    static const char *usage = "pipe seg_i";
+    const struct bu_cmd_schema *schema = pipe_schema_for_command(argv[0]);
     struct rt_db_internal intern;
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip;
@@ -172,12 +351,12 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	pipe_usage(gedp, schema);
 	return GED_HELP;
     }
 
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (pipe_schema_preflight(gedp, schema, argc, argv) != BRLCAD_OK) {
+	pipe_usage(gedp, schema);
 	return BRLCAD_ERROR;
     }
 
@@ -197,8 +376,8 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%d", &seg_i) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[3]);
+    if (!bu_cmd_integer_from_str(&seg_i, argv[2])) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
@@ -239,11 +418,10 @@ int
 ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    static const char *usage = "pipe x y z";
+    const struct bu_cmd_schema *schema = pipe_schema_for_command(argv[0]);
     struct rt_db_internal intern;
     struct wdb_pipe_pnt *nearest;
     point_t model_pt;
-    double scan[3];
     mat_t mat;
     int seg_i;
     char *last;
@@ -257,12 +435,12 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	pipe_usage(gedp, schema);
 	return GED_HELP;
     }
 
-    if (argc != 3 && argc != 5) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (pipe_schema_preflight(gedp, schema, argc, argv) != BRLCAD_OK) {
+	pipe_usage(gedp, schema);
 	return BRLCAD_ERROR;
     }
 
@@ -282,19 +460,10 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 	return BRLCAD_ERROR;
     }
 
-    if (argc == 3) {
-	if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
-	    return BRLCAD_ERROR;
-	}
-    } else if (sscanf(argv[2], "%lf", &scan[X]) != 1 ||
-	       sscanf(argv[3], "%lf", &scan[Y]) != 1 ||
-	       sscanf(argv[4], "%lf", &scan[Z]) != 1) {
+    if (bu_cmd_vector3_from_argv(model_pt, argc - 2, argv + 2) != argc - 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad X, Y or Z", argv[0]);
 	return BRLCAD_ERROR;
     }
-    /* convert from double to fastf_t */
-    VMOVE(model_pt, scan);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
@@ -320,13 +489,12 @@ int
 ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    static const char *usage = "[-r] pipe seg_i pt";
+    const struct bu_cmd_schema *schema = pipe_schema_for_command(argv[0]);
     struct rt_db_internal intern;
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip;
     mat_t mat;
     point_t ps_pt;
-    double scan[3];
     int seg_i;
     int rflag = 0;
     char *last;
@@ -339,21 +507,16 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	pipe_usage(gedp, schema);
 	return GED_HELP;
     }
 
-    if (argc < 4 || 5 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (pipe_schema_preflight(gedp, schema, argc, argv) != BRLCAD_OK) {
+	pipe_usage(gedp, schema);
 	return BRLCAD_ERROR;
     }
 
     if (argc == 5) {
-	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
-
 	rflag = 1;
 	--argc;
 	++argv;
@@ -375,16 +538,16 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%d", &seg_i) != 1) {
+    if (!bu_cmd_integer_from_str(&seg_i, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
+    if (bu_cmd_vector3_from_argv(ps_pt, 1, argv + 3) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }
-    VSCALE(ps_pt, scan, gedp->dbip->dbi_local2base);
+    VSCALE(ps_pt, ps_pt, gedp->dbip->dbi_local2base);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
@@ -445,17 +608,17 @@ ged_pipe_prepend_pnt_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PIPE_COMMANDS(X, XID) \
-    X(find_pipe_pnt, ged_find_pipe_pnt_nearest_pnt_core, GED_CMD_DEFAULT) \
-    X(pipe_move_pnt, ged_pipe_move_pnt_core, GED_CMD_DEFAULT) \
-    X(pipe_append_pnt, ged_pipe_append_pnt_core, GED_CMD_DEFAULT) \
-    X(pipe_prepend_pnt, ged_pipe_prepend_pnt_core, GED_CMD_DEFAULT) \
-    X(pipe_delete_pnt, ged_pipe_delete_pnt_core, GED_CMD_DEFAULT) \
-    X(mouse_move_pipe_pnt, ged_pipe_move_pnt_core, GED_CMD_DEFAULT) \
-    X(mouse_append_pipe_pnt, ged_pipe_append_pnt_core, GED_CMD_DEFAULT) \
-    X(mouse_prepend_pipe_pnt, ged_pipe_prepend_pnt_core, GED_CMD_DEFAULT) \
+    X(find_pipe_pnt, ged_find_pipe_pnt_nearest_pnt_core, GED_CMD_DEFAULT, &find_pipe_pnt_cmd_schema) \
+    X(pipe_move_pnt, ged_pipe_move_pnt_core, GED_CMD_DEFAULT, &pipe_move_pnt_cmd_schema) \
+    X(pipe_append_pnt, ged_pipe_append_pnt_core, GED_CMD_DEFAULT, &pipe_append_pnt_cmd_schema) \
+    X(pipe_prepend_pnt, ged_pipe_prepend_pnt_core, GED_CMD_DEFAULT, &pipe_prepend_pnt_cmd_schema) \
+    X(pipe_delete_pnt, ged_pipe_delete_pnt_core, GED_CMD_DEFAULT, &pipe_delete_pnt_cmd_schema) \
+    X(mouse_move_pipe_pnt, ged_pipe_move_pnt_core, GED_CMD_DEFAULT, &mouse_move_pipe_pnt_cmd_schema) \
+    X(mouse_append_pipe_pnt, ged_pipe_append_pnt_core, GED_CMD_DEFAULT, &mouse_append_pipe_pnt_cmd_schema) \
+    X(mouse_prepend_pipe_pnt, ged_pipe_prepend_pnt_core, GED_CMD_DEFAULT, &mouse_prepend_pipe_pnt_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PIPE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_pipe", 1, GED_PIPE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PIPE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_pipe", 1, GED_PIPE_COMMANDS)
 
 /*
  * Local Variables:

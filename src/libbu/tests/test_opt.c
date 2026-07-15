@@ -811,6 +811,18 @@ desc_2(int test_num)
 	    av[0] = "-C0/0/50";
 	    EXPECT_SUCCESS_COLOR("color", color, 0, 0, 50);
 	    break;
+	case 17:
+	    ac = 2;
+	    av[0] = "-C";
+	    av[1] = "200;10;30";
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
+	case 18:
+	    ac = 2;
+	    av[0] = "-C";
+	    av[1] = "200,10,30";
+	    EXPECT_SUCCESS_COLOR("color", color, 200, 10, 30);
+	    break;
     }
 
     if (ret > 0) {
@@ -907,6 +919,378 @@ desc_3(int test_num)
 }
 
 
+static int
+desc_4(int test_num)
+{
+    static const char *pattern_keywords[] = {"alpha", "beta", NULL};
+    static const char *mode_keywords[] = {"fast", "slow", NULL};
+    int help = 0;
+    int verbose = 0;
+    const char *output = NULL;
+    const char *point = NULL;
+    const char *mode = NULL;
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    struct bu_opt_validate_result vr = BU_OPT_VALIDATE_RESULT_NULL;
+    int ret = 0;
+    char *json = NULL;
+    static const struct bu_opt_arg_shape point_shape = {BU_OPT_SHAPE_TOKEN_SEQUENCE, 3, 3, "x y z"};
+
+    struct bu_opt_desc root_opts[] = {
+	{"h", "help", "", NULL, (void *)&help, help_str},
+	{"?", "help-alt", "", NULL, (void *)&help, help_str},
+	{"v", "verbose", "[#]", &d1_verb, (void *)&verbose, "Set verbosity"},
+	{"o", "output", "file", &bu_opt_str, (void *)&output, "Output file"},
+	{"C", "color", "r/g/b", &dc_color, (void *)&color, "Set color"},
+	{"p", "point", "x y z", &bu_opt_str, (void *)&point, "Set point"},
+	BU_OPT_DESC_NULL
+    };
+    struct bu_opt_desc_meta root_meta[] = {
+	{"help", BU_OPT_ARG_FLAG, BU_OPT_VAL_BOOL, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0},
+	{"verbose", BU_OPT_ARG_OPTIONAL, BU_OPT_VAL_INTEGER, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0},
+	{"output", BU_OPT_ARG_REQUIRED, BU_OPT_VAL_FILE_PATH, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0},
+	{"color", BU_OPT_ARG_REQUIRED, BU_OPT_VAL_COLOR, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0},
+	{"point", BU_OPT_ARG_REQUIRED, BU_OPT_VAL_VECTOR, 0, NULL, NULL, &point_shape, "point", "geometry", NULL, 0},
+	BU_OPT_DESC_META_NULL
+    };
+    struct bu_opt_operand_desc root_operands[] = {
+	{"object", BU_OPT_VAL_DB_OBJECT, 1, 2, "Database object", NULL, NULL, NULL},
+	BU_OPT_OPERAND_DESC_NULL
+    };
+    struct bu_opt_desc list_opts[] = {
+	{"l", "long", "", NULL, (void *)&help, "Long listing"},
+	BU_OPT_DESC_NULL
+    };
+    struct bu_opt_operand_desc list_operands[] = {
+	{"pattern", BU_OPT_VAL_KEYWORD, 0, 1, "Optional pattern", pattern_keywords, NULL, NULL},
+	BU_OPT_OPERAND_DESC_NULL
+    };
+    struct bu_opt_desc deep_opts[] = {
+	{"m", "mode", "mode", &bu_opt_str, (void *)&mode, "Mode"},
+	BU_OPT_DESC_NULL
+    };
+    struct bu_opt_desc_meta deep_meta[] = {
+	{"mode", BU_OPT_ARG_REQUIRED, BU_OPT_VAL_KEYWORD, 0, mode_keywords, NULL, NULL, NULL, NULL, NULL, 0},
+	BU_OPT_DESC_META_NULL
+    };
+    struct bu_opt_cmd_desc deep_cmds[] = {
+	{"deep", "Nested command", deep_opts, deep_meta, NULL, NULL, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 0, NULL},
+	BU_OPT_CMD_DESC_NULL
+    };
+    struct bu_opt_cmd_desc subcmds[] = {
+	{"list", "List things", list_opts, NULL, list_operands, deep_cmds, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 0, NULL},
+	BU_OPT_CMD_DESC_NULL
+    };
+    struct bu_opt_cmd_desc cmd = {"testcmd", "Test command", root_opts, root_meta, root_operands, subcmds, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 0, NULL};
+
+    switch (test_num) {
+	case 0:
+	    json = bu_opt_describe_json(&cmd);
+	    ret = (!json ||
+		!strstr(json, "\"parse_policy\":\"options_interspersed\"") ||
+		!strstr(json, "\"schema_version\":0") ||
+		!strstr(json, "\"short\":\"p\"") ||
+		!strstr(json, "\"argument_type\":\"vector\"") ||
+		!strstr(json, "\"kind\":\"token_sequence\"") ||
+		!strstr(json, "\"min_tokens\":3") ||
+		!strstr(json, "\"max_tokens\":3") ||
+		!strstr(json, "\"canonical\":\"point\"") ||
+		!strstr(json, "\"conflict_group\":\"geometry\""));
+	    if (ret) {
+		bu_log("JSON missing expected Wave 0 metadata:\n%s\n", json ? json : "(null)");
+	    }
+	    bu_free(json, "json");
+	    break;
+	case 1:
+	{
+	    const char *av[] = {"-v", "2", "--output", "out.g", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 5, av, 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 2:
+	{
+	    const char *av[] = {"--bogus", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 2, av, 0, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID && vr.token_start == 0);
+	    break;
+	}
+	case 3:
+	{
+	    const char *av[] = {"--output"};
+	    (void)bu_opt_validate_argv(&cmd, 1, av, 1, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE && (vr.expected & BU_OPT_EXPECT_OPTION_ARG));
+	    break;
+	}
+	case 4:
+	{
+	    const char *av[] = {"--output", "out.g"};
+	    (void)bu_opt_validate_argv(&cmd, 2, av, 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE && (vr.expected & BU_OPT_EXPECT_OPERAND));
+	    break;
+	}
+	case 5:
+	{
+	    const char *av[] = {"obj1", "obj2", "obj3"};
+	    (void)bu_opt_validate_argv(&cmd, 3, av, 3, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID);
+	    break;
+	}
+	case 6:
+	{
+	    const char *av[] = {"--output", "a", "--output", "b", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 5, av, 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID);
+	    break;
+	}
+	case 7:
+	{
+	    const char *av[] = {"-v", "1", "-v", "2", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 5, av, 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 8:
+	{
+	    const char *av[] = {"list", "--long"};
+	    (void)bu_opt_validate_argv(&cmd, 2, av, 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 9:
+	{
+	    const char *av[] = {"list", "deep", "--mode", "fast"};
+	    (void)bu_opt_validate_argv(&cmd, 4, av, 4, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 10:
+	    (void)bu_opt_validate_string(&cmd, "--output", 8, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE && (vr.expected & BU_OPT_EXPECT_OPTION_ARG));
+	    break;
+	case 11:
+	    (void)bu_opt_validate_string(&cmd, "", 0, &vr);
+	    ret = !(vr.completion_count >= 2 && vr.completion_candidates
+		&& vr.state == BU_OPT_VALIDATE_INCOMPLETE);
+	    if (!ret) {
+		int have_output = 0;
+		int have_list = 0;
+		size_t i = 0;
+		for (i = 0; i < vr.completion_count; i++) {
+		    if (BU_STR_EQUAL(vr.completion_candidates[i], "--output"))
+			have_output = 1;
+		    if (BU_STR_EQUAL(vr.completion_candidates[i], "list"))
+			have_list = 1;
+		}
+		ret = !(have_output && have_list);
+	    }
+	    break;
+	case 12:
+	    (void)bu_opt_validate_string(&cmd, "--out", 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID && vr.completion_count == 1
+		&& vr.completion_candidates
+		&& BU_STR_EQUAL(vr.completion_candidates[0], "--output"));
+	    break;
+	case 13:
+	    (void)bu_opt_validate_string(&cmd, "li", 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID && vr.completion_count >= 1
+		&& vr.completion_candidates
+		&& BU_STR_EQUAL(vr.completion_candidates[0], "list"));
+	    break;
+	case 14:
+	    (void)bu_opt_validate_string(&cmd, "list deep --mode fa", 19, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID && vr.expected == BU_OPT_EXPECT_OPTION_ARG
+		&& vr.completion_count == 1 && vr.completion_candidates
+		&& BU_STR_EQUAL(vr.completion_candidates[0], "fast"));
+	    break;
+	case 15:
+	{
+	    const char *av[] = {"-hh", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 2, av, 0, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID);
+	    break;
+	}
+	case 16:
+	    /* completion_type: option needing a file path arg */
+	    (void)bu_opt_validate_string(&cmd, "--output", 8, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE
+		&& vr.completion_type == BU_OPT_VAL_FILE_PATH);
+	    break;
+	case 17:
+	    /* completion_type: db_object operand position */
+	    (void)bu_opt_validate_string(&cmd, "--help ", 7, &vr);
+	    ret = !(vr.completion_type == BU_OPT_VAL_DB_OBJECT);
+	    break;
+	case 18:
+	    /* completion_type: keyword option arg */
+	    (void)bu_opt_validate_string(&cmd, "list deep --mode ", 17, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE
+		&& vr.completion_type == BU_OPT_VAL_KEYWORD);
+	    break;
+	case 19:
+	{
+	    /* char_start/char_end: bad option highlighted at correct offset */
+	    /* "--out" starts at char 0, ends at char 5 */
+	    (void)bu_opt_validate_string(&cmd, "--out", 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID
+		&& vr.char_start == 0 && vr.char_end == 5);
+	    break;
+	}
+	case 20:
+	{
+	    /* char_start/char_end: bad option in the middle of a string */
+	    /* "obj --out" → bad option "--out" starts at byte 4, ends at 9 */
+	    (void)bu_opt_validate_string(&cmd, "obj --out", 9, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID
+		&& vr.char_start == 4 && vr.char_end == 9);
+	    break;
+	}
+	case 21:
+	{
+	    struct bu_opt_cmd_desc policy_cmd = cmd;
+	    const char *av[] = {"obj", "--output"};
+	    policy_cmd.parse_policy = BU_OPT_PARSE_OPTIONS_BEFORE_OPERANDS;
+	    (void)bu_opt_validate_argv(&policy_cmd, 2, av, 2, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 22:
+	{
+	    const char *av[] = {"--point", "1", "2", "3", "obj"};
+	    (void)bu_opt_validate_argv(&cmd, 5, av, 5, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 23:
+	{
+	    const char *av[] = {"--point", "1", "2"};
+	    (void)bu_opt_validate_argv(&cmd, 3, av, 3, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INCOMPLETE && (vr.expected & BU_OPT_EXPECT_OPTION_ARG));
+	    break;
+	}
+	case 24:
+	{
+	    int shared_schema_storage = 0;
+	    struct bu_opt_desc opts[] = {
+		{"a", "alpha", "", NULL, &shared_schema_storage, "Alpha"},
+		{"b", "beta", "", NULL, &shared_schema_storage, "Beta"},
+		BU_OPT_DESC_NULL
+	    };
+	    struct bu_opt_desc_meta metas[] = {
+		{"alpha", BU_OPT_ARG_FLAG, BU_OPT_VAL_BOOL, 0, NULL, NULL, NULL, "--alpha", NULL, NULL, 0},
+		{"beta", BU_OPT_ARG_FLAG, BU_OPT_VAL_BOOL, 0, NULL, NULL, NULL, "--beta", NULL, NULL, 0},
+		BU_OPT_DESC_META_NULL
+	    };
+	    struct bu_opt_cmd_desc scmd = {"shared", "", opts, metas, root_operands, NULL, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 1, NULL};
+	    const char *av[] = {"-a", "-b", "obj"};
+	    (void)bu_opt_validate_argv(&scmd, 3, av, 3, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    if (!ret) {
+		struct bu_opt_desc legacy_opts[] = {
+		    {"noleaf", "noleaf", "", NULL, &shared_schema_storage, "No leaf"},
+		    BU_OPT_DESC_NULL
+		};
+		struct bu_opt_desc_meta legacy_meta[] = {
+		    {"noleaf", BU_OPT_ARG_FLAG, BU_OPT_VAL_BOOL, 0, NULL, NULL, NULL, "--noleaf", NULL, NULL, 0},
+		    BU_OPT_DESC_META_NULL
+		};
+		struct bu_opt_cmd_desc legacy_cmd = {"legacy", "", legacy_opts, legacy_meta, NULL, NULL, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 1, NULL};
+		const char *legacy_av[] = {"-noleaf"};
+		bu_opt_validate_result_clear(&vr);
+		(void)bu_opt_validate_argv(&legacy_cmd, 1, legacy_av, 1, &vr);
+		ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    }
+	    break;
+	}
+	case 25:
+	{
+	    int shared_schema_storage = 0;
+	    struct bu_opt_desc opts[] = {
+		{"a", "alpha", "", NULL, &shared_schema_storage, "Alpha"},
+		{"A", "", "", NULL, &shared_schema_storage, "Alpha alias"},
+		BU_OPT_DESC_NULL
+	    };
+	    struct bu_opt_desc_meta metas[] = {
+		{"alpha", BU_OPT_ARG_FLAG, BU_OPT_VAL_BOOL, 0, NULL, NULL, NULL, "--alpha", NULL, NULL, 0},
+		{"A", BU_OPT_ARG_FLAG, BU_OPT_VAL_BOOL, 0, NULL, NULL, NULL, "--alpha", NULL, NULL, 0},
+		BU_OPT_DESC_META_NULL
+	    };
+	    struct bu_opt_cmd_desc scmd = {"aliases", "", opts, metas, root_operands, NULL, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 1, NULL};
+	    const char *av[] = {"-a", "-A", "obj"};
+	    (void)bu_opt_validate_argv(&scmd, 3, av, 3, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_INVALID);
+	    break;
+	}
+	case 26:
+	{
+	    int storage = 0;
+	    struct bu_opt_desc opts[] = {
+		{"x", "", "", NULL, &storage, "Actual spelling"},
+		BU_OPT_DESC_NULL
+	    };
+	    struct bu_opt_desc_meta metas[] = {
+		{"x", BU_OPT_ARG_FLAG, BU_OPT_VAL_BOOL, 0, NULL, NULL, NULL, "--missing", NULL, NULL, 0},
+		BU_OPT_DESC_META_NULL
+	    };
+	    struct bu_opt_cmd_desc scmd = {"canonical", "", opts, metas, NULL, NULL, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 1, NULL};
+	    (void)bu_opt_validate_string(&scmd, "-", 1, &vr);
+	    ret = !(vr.completion_count == 1 && vr.completion_candidates &&
+		    BU_STR_EQUAL(vr.completion_candidates[0], "-x"));
+	    break;
+	}
+	case 27:
+	{
+	    int storage = 0;
+	    struct bu_opt_desc opts[] = {
+		{"", "format=json", "", NULL, &storage, "Literal equals spelling"},
+		BU_OPT_DESC_NULL
+	    };
+	    struct bu_opt_cmd_desc scmd = {"equals", "", opts, NULL, NULL, NULL, NULL, BU_OPT_PARSE_OPTIONS_INTERSPERSED, 1, NULL};
+	    const char *av[] = {"--format=json"};
+	    (void)bu_opt_validate_argv(&scmd, 1, av, 1, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    break;
+	}
+	case 28:
+	{
+	    static const char *keywords[] = {"--id", "--name", NULL};
+	    struct bu_opt_operand_desc operands[] = {
+		{"mode", BU_OPT_VAL_KEYWORD, 1, 1, "Dash-prefixed operand", keywords, NULL, NULL},
+		BU_OPT_OPERAND_DESC_NULL
+	    };
+	    struct bu_opt_cmd_desc scmd = {"operand", "", NULL, NULL, operands, NULL, NULL, BU_OPT_PARSE_STOP_AT_FIRST_OPERAND, 1, NULL};
+	    const char *av[] = {"--id"};
+	    (void)bu_opt_validate_argv(&scmd, 1, av, 1, &vr);
+	    ret = !(vr.state == BU_OPT_VALIDATE_VALID);
+	    if (!ret) {
+		bu_opt_validate_result_clear(&vr);
+		(void)bu_opt_validate_string(&scmd, "--i", 3, &vr);
+		ret = !(vr.completion_count == 1 && vr.completion_candidates &&
+			BU_STR_EQUAL(vr.completion_candidates[0], "--id"));
+	    }
+	    break;
+	}
+	default:
+	    ret = -1;
+	    break;
+    }
+
+    if (ret) {
+	bu_log("bu_opt metadata test %d failed: state=%d start=%lu end=%lu "
+	    "expected=%u completions=%lu comp_type=%d char=[%lu,%lu) hint=%s\n",
+	    test_num, vr.state,
+	    (unsigned long)vr.token_start, (unsigned long)vr.token_end,
+	    vr.expected, (unsigned long)vr.completion_count,
+	    (int)vr.completion_type,
+	    (unsigned long)vr.char_start, (unsigned long)vr.char_end,
+	    vr.hint ? vr.hint : "(null)");
+    }
+
+    bu_opt_validate_result_clear(&vr);
+
+    return ret;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -953,6 +1337,8 @@ main(int argc, char *argv[])
 	case 3:
 	    return desc_3(test_num);
 	    break;
+	case 4:
+	    return desc_4(test_num);
     }
 
     return ret;

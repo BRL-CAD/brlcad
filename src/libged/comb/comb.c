@@ -28,13 +28,26 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bu/sort.h"
 #include "bg/trimesh.h"
 #include "wdb.h"
 #include "analyze.h"
 
 #include "../ged_private.h"
+
+
+struct comb_args {
+    int set_comb;
+    int do_decimation;
+    int set_region;
+    int wrap;
+    int flatten;
+    int lift_region;
+    int require_new;
+};
+
+static const struct bu_cmd_schema *comb_schema(void);
 
 static int
 region_flag_set(struct ged *gedp, struct directory *dp) {
@@ -551,221 +564,16 @@ comb_decimate_memfree:
     return ret;
 }
 
-
-enum comb_command {
-    COMB_COMMAND_NONE = 0,
-    COMB_COMMAND_RM,
-    COMB_COMMAND_WRAP,
-    COMB_COMMAND_FLATTEN,
-    COMB_COMMAND_LIFT,
-    COMB_COMMAND_REGION,
-    COMB_COMMAND_UNREGION,
-    COMB_COMMAND_DECIMATE
-};
-
-
-static enum comb_command
-comb_command_id(const char *command)
-{
-    if (BU_STR_EQUAL(command, "rm"))
-	return COMB_COMMAND_RM;
-    if (BU_STR_EQUAL(command, "wrap"))
-	return COMB_COMMAND_WRAP;
-    if (BU_STR_EQUAL(command, "flatten"))
-	return COMB_COMMAND_FLATTEN;
-    if (BU_STR_EQUAL(command, "lift"))
-	return COMB_COMMAND_LIFT;
-    if (BU_STR_EQUAL(command, "region"))
-	return COMB_COMMAND_REGION;
-    if (BU_STR_EQUAL(command, "unregion"))
-	return COMB_COMMAND_UNREGION;
-    if (BU_STR_EQUAL(command, "decimate"))
-	return COMB_COMMAND_DECIMATE;
-
-    return COMB_COMMAND_NONE;
-}
-
-
-static const char *
-comb_command_name(enum comb_command command)
-{
-    switch (command) {
-	case COMB_COMMAND_RM:
-	    return "rm";
-	case COMB_COMMAND_WRAP:
-	    return "wrap";
-	case COMB_COMMAND_FLATTEN:
-	    return "flatten";
-	case COMB_COMMAND_LIFT:
-	    return "lift";
-	case COMB_COMMAND_REGION:
-	    return "region";
-	case COMB_COMMAND_UNREGION:
-	    return "unregion";
-	case COMB_COMMAND_DECIMATE:
-	    return "decimate";
-	case COMB_COMMAND_NONE:
-	    break;
-    }
-
-    return "unknown";
-}
-
-
-static int
-comb_remove_members(struct ged *gedp, struct directory *dp, int argc, const char *argv[])
-{
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    int ret = BRLCAD_OK;
-    int i;
-
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	return BRLCAD_ERROR;
-    }
-
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-
-    for (i = 0; i < argc; i++) {
-	if (db_tree_rm_dbleaf(&(comb->tree), argv[i], 0) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
-	    ret = BRLCAD_ERROR;
-	} else {
-	    struct bu_vls path = BU_VLS_INIT_ZERO;
-
-	    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
-	    _dl_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
-	    bu_vls_free(&path);
-	    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
-	}
-    }
-
-    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	return BRLCAD_ERROR;
-    }
-    return ret;
-}
-
-
-static int
-comb_execute_command(struct ged *gedp, enum comb_command command, const char *comb_name, int argc, const char *argv[])
-{
-    struct directory *dp;
-    int ret;
-
-
-    if (!comb_name) {
-	bu_vls_printf(gedp->ged_result_str, "comb: no combination specified\n");
-	return BRLCAD_ERROR;
-    }
-
-    dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB)) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
-	return BRLCAD_ERROR;
-    }
-
-    if (command == COMB_COMMAND_RM) {
-	if (argc < 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: comb combination rm member(s)");
-	    return BRLCAD_ERROR;
-	}
-	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-	ret = comb_remove_members(gedp, dp, argc, argv);
-	db_update_nref(gedp->dbip);
-	return ret;
-    }
-
-    if (argc != 0) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: comb combination %s", comb_command_name(command));
-	return BRLCAD_ERROR;
-    }
-
-    if (command == COMB_COMMAND_REGION)
-	return region_flag_set(gedp, dp);
-    if (command == COMB_COMMAND_UNREGION)
-	return region_flag_clear(gedp, dp);
-
-    if (command != COMB_COMMAND_WRAP &&
-	command != COMB_COMMAND_FLATTEN &&
-	command != COMB_COMMAND_LIFT &&
-	command != COMB_COMMAND_DECIMATE) {
-	bu_vls_printf(gedp->ged_result_str, "comb: invalid command\n");
-	return BRLCAD_ERROR;
-    }
-
-    db_update_nref(gedp->dbip);
-    switch (command) {
-	case COMB_COMMAND_WRAP:
-	    ret = comb_wrap(gedp, dp);
-	    break;
-	case COMB_COMMAND_FLATTEN:
-	    ret = comb_flatten(gedp, dp);
-	    break;
-	case COMB_COMMAND_LIFT:
-	    ret = comb_lift_region(gedp, dp);
-	    break;
-	case COMB_COMMAND_DECIMATE:
-	    ret = comb_decimate(gedp, dp);
-	    break;
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "comb: invalid command\n");
-	    return BRLCAD_ERROR;
-    }
-
-    if (ret == BRLCAD_OK)
-	db_update_nref(gedp->dbip);
-    return ret;
-}
-
-
-int ged_comb_core(struct ged *gedp, int argc, const char *argv[]);
-
-
-static int
-comb_execute_selector_first_operator(struct ged *gedp, int argc, const char *argv[])
-{
-    const int legacy_argc = argc - 1;
-    const char **legacy_argv;
-    int i;
-    int ret;
-
-    legacy_argv = (const char **)bu_calloc((size_t)legacy_argc, sizeof(*legacy_argv), "comb legacy argv");
-    legacy_argv[0] = argv[0];
-    legacy_argv[1] = argv[3];
-    legacy_argv[2] = argv[1];
-    for (i = 4; i < argc; i++)
-	legacy_argv[i - 1] = argv[i];
-
-    ret = ged_comb_core(gedp, legacy_argc, legacy_argv);
-    bu_free((void *)legacy_argv, "comb legacy argv");
-    return ret;
-}
-
 int
 ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    const char *cmd_name;
     char *comb_name;
-    int i,c, sum;
+    int i;
+    int operand_index;
     db_op_t oper;
-    int do_decimation = 0;
-    int set_region = 0;
-    int set_comb = 0;
-    int standard_comb_build = 1;
-    int wrap_comb = 0;
-    int flatten_comb = 0;
-    int lift_region_comb = 0;
-    int alter_existing = 1;
-    static const char *usage =
-	"[options] <combination> [<operator> <member> ...]\n"
-	"       <combination> <command> [arguments ...]\n"
-	"       <command> -C|--comb <combination> [arguments ...]";
-    enum comb_command command;
+    struct comb_args args = {0, 0, 0, 0, 0, 0, 0};
+    static const char *usage = "[-c|-r] [-w|-f|-l] [-d] [-S] comb_name [<operation object>]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -774,107 +582,31 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    cmd_name = argv[0];
-
-    if (argc >= 3 && (BU_STR_EQUAL(argv[2], "-C") || BU_STR_EQUAL(argv[2], "--comb"))) {
-	command = comb_command_id(argv[1]);
-	if (command != COMB_COMMAND_NONE) {
-	    if (argc < 4) {
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	    }
-	    return comb_execute_command(gedp, command, argv[3], argc - 4, argv + 4);
-	}
-
-	if (db_str2op(argv[1]) != DB_OP_NULL) {
-	    if (argc < 4) {
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	    }
-	    return comb_execute_selector_first_operator(gedp, argc, argv);
-	}
-    }
-
-    if (argc >= 3 && argv[1][0] != '-' &&
-	(command = comb_command_id(argv[2])) != COMB_COMMAND_NONE) {
-	return comb_execute_command(gedp, command, argv[1], argc - 3, argv + 3);
-    }
-
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
-    if (argc < 3) {
+    operand_index = bu_cmd_schema_parse_complete(comb_schema(), &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-
-    /* First, handle options, if any */
-
-    bu_optind = 1;
-    /* Grab any arguments off of the argv list */
-    while ((c = bu_getopt(argc, (char **)argv, "cdflrswFS")) != -1) {
-	switch (c) {
-	    case 'c' :
-		set_comb = 1;
-		break;
-	    case 'd' :
-		do_decimation = 1;
-		break;
-	    case 'r' :
-		set_region = 1;
-		break;
-	    case 'w' :
-		wrap_comb = 1;
-		standard_comb_build = 0;
-		break;
-	    case 'f' :
-		flatten_comb = 1;
-		standard_comb_build = 0;
-		break;
-	    case 'l' :
-		lift_region_comb = 1;
-		standard_comb_build = 0;
-		break;
-	    case 'S' :
-		alter_existing = 0;
-		break;
-	    default :
-		break;
-	}
-    }
-
-    argc -= bu_optind - 1;
-    argv += bu_optind - 1;
-
-    if (set_comb && set_region) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], cmd_name);
-	return BRLCAD_ERROR;
-    }
-
-    sum = wrap_comb + flatten_comb + lift_region_comb;
-    if (sum > 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
-    if ((wrap_comb || flatten_comb || lift_region_comb) && argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
 
     /* Get target combination info */
-    comb_name = (char *)argv[1];
+    comb_name = (char *)argv[0];
     dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
 	    return BRLCAD_ERROR;
 	}
-	if (!alter_existing && !do_decimation) {
+	if (args.require_new && !args.do_decimation) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists.", comb_name);
 	    return BRLCAD_ERROR;
 	}
@@ -885,26 +617,31 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     db_update_nref(gedp->dbip);
 
     /* Do decimation, if that's enabled */
-    if (do_decimation) {
+
+    if (args.do_decimation) {
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not an existing combination", comb_name);
+	    return BRLCAD_ERROR;
+	}
 	return comb_decimate(gedp, dp);
     }
 
     /* If we aren't performing one of the option operations,
      * proceed with the standard comb build */
-    if (standard_comb_build) {
+    if (!args.wrap && !args.flatten && !args.lift_region) {
 
 	/* Now, we're ready to process operation/object pairs, if any */
 	/* Check for odd number of arguments */
-	if (argc & 01) {
+	if ((argc - 1) & 01) {
 	    bu_vls_printf(gedp->ged_result_str, "error in number of args!");
 	    return BRLCAD_ERROR;
 	}
 
 	/* Get operation and solid name for each solid */
-	for (i = 2; i < argc; i += 2) {
+	for (i = 1; i < argc; i += 2) {
 	    /* they come in pairs */
 	    if (i+1 >= argc) {
-		bu_vls_printf(gedp->ged_result_str, "Invalid syntax near '%s', ignored.  Expecting object name after operator.\n", argv[i+1]);
+		bu_vls_printf(gedp->ged_result_str, "Invalid syntax near '%s', ignored.  Expecting object name after operator.\n", argv[i]);
 		return BRLCAD_ERROR;
 	    }
 
@@ -929,7 +666,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Handle the -w option for "wrapping" the contents of the comb */
-    if (wrap_comb) {
+    if (args.wrap) {
 	if (!dp || dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
 	    return BRLCAD_ERROR;
@@ -945,7 +682,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (flatten_comb) {
+    if (args.flatten) {
 	if (!dp || dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
 	    return BRLCAD_ERROR;
@@ -961,7 +698,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (lift_region_comb) {
+    if (args.lift_region) {
 	if (!dp || dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
 	    return BRLCAD_ERROR;
@@ -979,13 +716,14 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
 
     /* Make sure the region flag is set appropriately */
-    if (set_comb || set_region) {
+
+    if (args.set_comb || args.set_region) {
 	if ((dp = db_lookup(gedp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
-	    if (set_region) {
+	    if (args.set_region) {
 		if (region_flag_set(gedp, dp) == BRLCAD_ERROR)
 		    return BRLCAD_ERROR;
 	    }
-	    if (set_comb) {
+	    if (args.set_comb) {
 		if (region_flag_clear(gedp, dp) == BRLCAD_ERROR)
 		    return BRLCAD_ERROR;
 	    }
@@ -1000,11 +738,183 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_COMB_COMMANDS(X, XID) \
-    X(comb, ged_comb_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_option comb_schema_options[] = {
+    BU_CMD_FLAG("c", NULL, struct comb_args, set_comb, "Clear the region flag"),
+    BU_CMD_FLAG("d", NULL, struct comb_args, do_decimation, "Decimate the combination's BoT members"),
+    BU_CMD_FLAG("f", NULL, struct comb_args, flatten, "Flatten a union-only combination"),
+    BU_CMD_FLAG("l", NULL, struct comb_args, lift_region, "Lift a region flag to the combination"),
+    BU_CMD_FLAG("r", NULL, struct comb_args, set_region, "Set the region flag"),
+    BU_CMD_FLAG("w", NULL, struct comb_args, wrap, "Wrap the combination contents"),
+    BU_CMD_FLAG("S", NULL, struct comb_args, require_new, "Require a new combination name"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand comb_schema_operands[] = {
+    BU_CMD_OPERAND("combination", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Combination to create or modify", "ged.db_object"),
+    BU_CMD_OPERAND("operation_members", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Repeated boolean-operation/member-object pairs", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const comb_op_keywords[] = {"u", "-", "+", NULL};
 
-GED_DECLARE_COMMAND_SET(GED_COMB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_comb", 1, GED_COMB_COMMANDS)
+static void
+comb_operation_candidates(struct bu_cmd_validate_result *result, const char *prefix)
+{
+    size_t count = 0;
+
+    for (size_t i = 0; comb_op_keywords[i]; i++)
+	if (!prefix || !prefix[0] || strncmp(comb_op_keywords[i], prefix, strlen(prefix)) == 0)
+	    count++;
+    if (!count)
+	return;
+    result->completion_candidates = (const char **)bu_calloc(count + 1,
+	sizeof(char *), "comb operation candidates");
+    for (size_t i = 0, oi = 0; comb_op_keywords[i]; i++)
+	if (!prefix || !prefix[0] || strncmp(comb_op_keywords[i], prefix, strlen(prefix)) == 0)
+	    result->completion_candidates[oi++] = bu_strdup(comb_op_keywords[i]);
+    result->completion_count = count;
+}
+
+static int
+comb_validation_result(struct bu_cmd_validate_result *result,
+	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+	const char *hint, const char *provider)
+{
+    bu_cmd_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->completion_type = type;
+    result->hint = hint;
+    result->semantic_provider = provider;
+    return 0;
+}
+
+
+static int
+comb_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    size_t operands = 0;
+    size_t previous_operands = 0;
+    int set_comb = 0;
+    int set_region = 0;
+    int wrap = 0;
+    int flatten = 0;
+    int lift_region = 0;
+    int decimate = 0;
+    int require_new = 0;
+    int ret = 0;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+
+    set_comb = bu_cmd_schema_option_present(schema, argc, argv, "c");
+    set_region = bu_cmd_schema_option_present(schema, argc, argv, "r");
+    wrap = bu_cmd_schema_option_present(schema, argc, argv, "w");
+    flatten = bu_cmd_schema_option_present(schema, argc, argv, "f");
+    lift_region = bu_cmd_schema_option_present(schema, argc, argv, "l");
+    decimate = bu_cmd_schema_option_present(schema, argc, argv, "d");
+    require_new = bu_cmd_schema_option_present(schema, argc, argv, "S");
+    operands = bu_cmd_schema_operand_count(schema, argc, argv);
+
+    if (decimate && (set_comb || set_region || wrap || flatten || lift_region || require_new)) {
+	comb_validation_result(result, BU_CMD_VALIDATE_INVALID,
+	    cursor_arg < argc ? cursor_arg : argc, BU_CMD_VALUE_STRING,
+	    "-d cannot be combined with another comb action", NULL);
+	return 0;
+    }
+
+    if (cursor_arg < argc && argv[cursor_arg] && argv[cursor_arg][0] == '-' &&
+	argv[cursor_arg][1] && (result->expected & BU_CMD_EXPECT_OPTION))
+	return 0;
+    if (!operands || wrap || flatten || lift_region || decimate)
+	return 0;
+
+    /* Every accepted prefix must already contain complete, valid operation
+     * tokens.  The cursor token is handled below so a user may still edit an
+     * operation prefix without the preceding pair being misclassified. */
+    for (size_t i = 0; i < cursor_arg; i++) {
+	size_t before = bu_cmd_schema_operand_count(schema, i, argv);
+	size_t after = bu_cmd_schema_operand_count(schema, i + 1, argv);
+	if (after == before || before == 0 || (before - 1) % 2)
+	    continue;
+	if (db_str2op(argv[i]) == DB_OP_NULL) {
+	    comb_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
+		BU_CMD_VALUE_KEYWORD, "invalid boolean operation", NULL);
+	    return 0;
+	}
+    }
+
+    if (operands == 1) {
+	if (!set_comb && !set_region && !require_new && cursor_arg >= argc) {
+	    comb_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc,
+		BU_CMD_VALUE_KEYWORD, "boolean operation expected", NULL);
+	    comb_operation_candidates(result, "");
+	}
+	return 0;
+    }
+
+    if (cursor_arg >= argc) {
+	if ((operands - 1) % 2) {
+	    comb_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc,
+		BU_CMD_VALUE_DB_OBJECT, "member object expected", "ged.db_object");
+	}
+	return 0;
+    }
+
+    previous_operands = bu_cmd_schema_operand_count(schema, cursor_arg, argv);
+    if (previous_operands < 1)
+	return 0;
+    if ((previous_operands - 1) % 2 == 0) {
+	const char *operation = argv[cursor_arg];
+	bu_cmd_validate_state_t state = db_str2op(operation) != DB_OP_NULL ?
+	    BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INVALID;
+	comb_validation_result(result, state, cursor_arg, BU_CMD_VALUE_KEYWORD,
+	    state == BU_CMD_VALIDATE_VALID ? "boolean operation" : "invalid boolean operation", NULL);
+	comb_operation_candidates(result, operation);
+	return 0;
+    }
+
+    comb_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	BU_CMD_VALUE_DB_OBJECT, "member object", "ged.db_object");
+    return 0;
+}
+
+
+static const char * const comb_region_options[] = {"c", "r", NULL};
+static const char * const comb_tree_options[] = {"w", "f", "l", NULL};
+static const char * const comb_decimate_options[] = {"d", NULL};
+static const struct bu_cmd_constraint comb_schema_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(comb_region_options, 0, 1, "-c and -r are mutually exclusive"),
+    BU_CMD_CONSTRAINT_OPTIONS(comb_tree_options, 0, 1, "-w, -f, and -l are mutually exclusive"),
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT, comb_tree_options, 1, 1,
+	"tree-action options accept only a combination name"),
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT, comb_decimate_options, 1, 1,
+	"-d accepts only an existing combination name"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_schema comb_cmd_schema = {
+    "comb", "Create or modify combinations", comb_schema_options,
+    comb_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(comb_schema_validate, comb_schema_constraints)
+};
+
+static const struct bu_cmd_schema *
+comb_schema(void)
+{
+    return &comb_cmd_schema;
+}
+
+#define GED_COMB_COMMANDS(X, XID) \
+    X(comb, ged_comb_core, GED_CMD_DEFAULT, &comb_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COMB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_comb", 1, GED_COMB_COMMANDS)
 
 /*
  * Local Variables:

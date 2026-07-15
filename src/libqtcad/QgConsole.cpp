@@ -46,6 +46,7 @@
 
 #include <QAbstractItemView>
 #include <QApplication>
+#include <QByteArray>
 #include <QClipboard>
 #include <QCompleter>
 #include <QKeyEvent>
@@ -62,6 +63,15 @@
 #include "bu.h"
 #include "ged.h"
 
+static int
+qstring_pos_from_local8bit_offset(const QByteArray& bytes, size_t offset)
+{
+    if (offset > (size_t)bytes.size())
+	offset = (size_t)bytes.size();
+
+    return QString::fromLocal8Bit(bytes.constData(), (int)offset).length();
+}
+
 GEDShellCompleter::GEDShellCompleter(
 	QWidget* parent, struct ged *ged_ptr)
 {
@@ -73,83 +83,117 @@ void
 GEDShellCompleter::updateCompletionModel(const QString& console_txt)
 {
     setModel(NULL);
+    replace_start = -1;
+    replace_end = -1;
+
     if (console_txt.isEmpty())
 	return;
 
-    // If the last char is a space, don't offer any completions - the prior
-    // contents are presumed to be complete
-    if (console_txt.at(console_txt.length() - 1) == ' ')
-	return;
-
-    // We're going to be splitting up and processing this string's components
-    // with libged C style, so get the data out of QString into a stable form
-    char *ct = bu_strdup(console_txt.toLocal8Bit().constData());
-
-    // Break the console text down into an argc/argv array, so we can examine
-    // the components
-    int ac = 0;
-    char **av = NULL;
-    av = (char **)bu_calloc(strlen(ct) + 1, sizeof(char *), "av array");
-    ac = bu_argv_from_string(av, strlen(ct), ct);
-    if (!ac) {
-	bu_free(ct, "strcpy");
-	bu_free(av, "av");
+    QByteArray cbytes = console_txt.toLocal8Bit();
+    struct ged_cmd_completion_result result = GED_CMD_COMPLETION_RESULT_NULL;
+    int completion_cnt = ged_cmd_complete_result(gedp, cbytes.constData(), (size_t)cbytes.size(), &result);
+    if (completion_cnt <= 0) {
+	ged_cmd_completion_result_clear(&result);
 	return;
     }
 
-    // If we only have 1 argument, it needs to be a command of some sort
-    if (ac == 1) {
-	char *seed = av[0];
-	const char **completions = NULL;
-	int completion_cnt = ged_cmd_completions(&completions, seed);
-	QStringList clist = QStringList();
-	for (int i = 0; i < completion_cnt; i++) {
-	    clist.append(QString(completions[i]));
-	}
-	bu_argv_free(completion_cnt, (char **)completions);
-	if (!clist.isEmpty()) {
-	    setCompletionMode(QCompleter::PopupCompletion);
-	    setModel(new QStringListModel(clist, this));
-	    setCaseSensitivity(Qt::CaseSensitive);
-	    setCompletionPrefix(QString(seed));
-	    if (popup())
-		popup()->setCurrentIndex(completionModel()->index(0, 0));
-	}
-	bu_free(ct, "strcpy");
-	bu_free(av, "av");
-	return;
-    }
-
-    // If we've got more than one argument, the last element (the one we are
-    // looking to complete) is some sort of db geometry object/path element.
-    // TODO - does QComplete allow for mid-string insertions?
-
-    if (!gedp)
-	return;
-
-    char *seed = av[ac - 1];
-    const char **completions = NULL;
-    struct bu_vls prefix = BU_VLS_INIT_ZERO;
-    int completion_cnt = ged_geom_completions(&completions, &prefix, gedp->dbip, seed);
-    ((QgConsole *)(parent()))->split_slash = 0;
-    if (!BU_STR_EQUAL(bu_vls_cstr(&prefix), seed))
-	((QgConsole *)(parent()))->split_slash = 1;
     QStringList clist = QStringList();
     for (int i = 0; i < completion_cnt; i++) {
-	clist.append(QString(completions[i]));
+	clist.append(QString::fromLocal8Bit(result.completion_candidates[i]));
     }
-    bu_argv_free(completion_cnt, (char **)completions);
-    if (!clist.isEmpty()) {
-	setCompletionMode(QCompleter::PopupCompletion);
-	setModel(new QStringListModel(clist, this));
-	setCaseSensitivity(Qt::CaseSensitive);
-	setCompletionPrefix(QString(bu_vls_cstr(&prefix)));
-	if (popup())
-	    popup()->setCurrentIndex(completionModel()->index(0, 0));
+
+    replace_start = qstring_pos_from_local8bit_offset(cbytes, result.replacement_start);
+    replace_end = qstring_pos_from_local8bit_offset(cbytes, result.replacement_end);
+
+    setCompletionMode(QCompleter::PopupCompletion);
+    setModel(new QStringListModel(clist, this));
+    setCaseSensitivity(Qt::CaseSensitive);
+    setCompletionPrefix(QString::fromLocal8Bit(result.prefix ? result.prefix : ""));
+    if (popup())
+	popup()->setCurrentIndex(completionModel()->index(0, 0));
+
+    ged_cmd_completion_result_clear(&result);
+}
+
+void
+GEDShellCompleter::analyze(const QString& console_txt, std::vector<QgConsoleHighlight>& highlights)
+{
+    highlights.clear();
+    if (!gedp || console_txt.isEmpty())
+	return;
+
+    QByteArray cbytes = console_txt.toLocal8Bit();
+    struct ged_cmd_analysis analysis = {0, NULL};
+    if (ged_cmd_analyze(gedp, cbytes.constData(), &analysis) != 0)
+	return;
+
+    for (size_t i = 0; i < analysis.token_count; i++) {
+	const struct ged_cmd_analysis_token *token = &analysis.tokens[i];
+	QgConsoleHighlight h;
+	if (token->char_end <= token->char_start)
+	    continue;
+	h.start = qstring_pos_from_local8bit_offset(cbytes, token->char_start);
+	h.end = qstring_pos_from_local8bit_offset(cbytes, token->char_end);
+	if (token->semantic_state == GED_CMD_SEMANTIC_INVALID)
+	    h.style = QG_CONSOLE_INVALID;
+	else if (token->semantic_state == GED_CMD_SEMANTIC_INCOMPLETE ||
+		token->semantic_state == GED_CMD_SEMANTIC_PENDING)
+	    h.style = QG_CONSOLE_INCOMPLETE;
+	else if (token->role == GED_CMD_TOKEN_COMMAND || token->role == GED_CMD_TOKEN_SUBCOMMAND)
+	    h.style = QG_CONSOLE_COMMAND;
+	else if (token->role == GED_CMD_TOKEN_OPTION)
+	    h.style = QG_CONSOLE_OPTION;
+	else if (token->semantic_state == GED_CMD_SEMANTIC_VALID &&
+		(token->value_type == BU_CMD_VALUE_DB_OBJECT || token->value_type == BU_CMD_VALUE_DB_PATH))
+	    h.style = QG_CONSOLE_VALID;
+	else
+	    continue;
+	highlights.push_back(h);
     }
-    bu_vls_free(&prefix);
-    bu_free(ct, "strcpy");
-    bu_free(av, "av");
+    ged_cmd_analysis_clear(&analysis);
+}
+
+extern "C" int
+qg_console_log_hook(void *console_data, void *log_data)
+{
+    QgConsole *console = (QgConsole *)console_data;
+    const char *output = (const char *)log_data;
+    if (!console || !output)
+	return 0;
+
+    Q_EMIT console->queued_log(QString::fromLocal8Bit(output));
+    return (int)strlen(output);
+}
+
+extern "C" int
+qg_ged_search_exec_callback(int argc, const char **argv, void *ged_data, void *console_data)
+{
+    struct ged *gedp = (struct ged *)ged_data;
+    QgConsole *console = (QgConsole *)console_data;
+    if (!gedp || argc < 1 || !argv)
+	return 0;
+
+    struct bu_vls saved = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&saved, "%s", bu_vls_cstr(gedp->ged_result_str));
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    gedp->ged_skip_clbks++;
+    int ret = ged_exec(gedp, argc, argv);
+    gedp->ged_skip_clbks--;
+
+    if (bu_vls_strlen(gedp->ged_result_str)) {
+	const char *output = bu_vls_cstr(gedp->ged_result_str);
+	size_t olen = bu_vls_strlen(gedp->ged_result_str);
+	QString qoutput = QString::fromLocal8Bit(output);
+	if (!olen || output[olen - 1] != '\n')
+	    qoutput.append('\n');
+	if (console)
+	    qg_console_log_hook((void *)console, (void *)qoutput.toLocal8Bit().constData());
+	else
+	    bu_log("%s", qoutput.toLocal8Bit().constData());
+    }
+    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&saved));
+    bu_vls_free(&saved);
+    return (ret == BRLCAD_OK) ? 1 : 0;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -164,6 +208,8 @@ class QgConsole::pqImplementation :
 	    Parent(p),
 	    InteractivePosition(documentEnd())
     {
+	bu_lineedit_palette_init(&LineeditPalette);
+	(void)bu_lineedit_palette_load_user(&LineeditPalette);
 	this->setTabChangesFocus(false);
 	this->setAcceptDrops(false);
 	this->setUndoRedoEnabled(false);
@@ -178,6 +224,212 @@ class QgConsole::pqImplementation :
 	this->CommandHistory.append("");
 	this->CommandPosition = 0;
     }
+
+	void applyExtraSelections()
+	{
+	    QList<QTextEdit::ExtraSelection> selections = SemanticSelections;
+	    selections.append(CompletionSelections);
+	    setExtraSelections(selections);
+	}
+
+	QColor semanticColor(QgConsoleHighlightStyle style) const
+	{
+	    bu_lineedit_role_t role = BU_LINEEDIT_ROLE_COUNT;
+	    switch (style) {
+		case QG_CONSOLE_COMMAND: role = BU_LINEEDIT_ROLE_COMMAND; break;
+		case QG_CONSOLE_OPTION: role = BU_LINEEDIT_ROLE_OPTION; break;
+		case QG_CONSOLE_VALID: role = BU_LINEEDIT_ROLE_VALID; break;
+		case QG_CONSOLE_INVALID: role = BU_LINEEDIT_ROLE_INVALID; break;
+		case QG_CONSOLE_INCOMPLETE: role = BU_LINEEDIT_ROLE_INCOMPLETE; break;
+	    }
+	    bool dark = palette().color(QPalette::Base).lightness() < 128;
+	    QColor color;
+	    switch (style) {
+		case QG_CONSOLE_COMMAND: color = dark ? QColor(90, 220, 110) : QColor(0, 125, 25); break;
+		case QG_CONSOLE_OPTION: color = dark ? QColor(235, 205, 75) : QColor(155, 105, 0); break;
+		case QG_CONSOLE_VALID: color = dark ? QColor(70, 215, 220) : QColor(0, 125, 135); break;
+		case QG_CONSOLE_INVALID: color = dark ? QColor(255, 105, 105) : QColor(190, 25, 25); break;
+		case QG_CONSOLE_INCOMPLETE: color = dark ? QColor(225, 120, 225) : QColor(150, 45, 150); break;
+	    }
+	    if (!color.isValid())
+		color = palette().color(QPalette::Text);
+	    if (role != BU_LINEEDIT_ROLE_COUNT) {
+		const struct bu_lineedit_style &configured = LineeditPalette.roles[role];
+		if (configured.flags & BU_LINEEDIT_STYLE_COLOR)
+		    color = QColor(configured.rgb[0], configured.rgb[1], configured.rgb[2]);
+		if ((configured.flags & (BU_LINEEDIT_STYLE_DIM_SET | BU_LINEEDIT_STYLE_DIM)) ==
+		    (BU_LINEEDIT_STYLE_DIM_SET | BU_LINEEDIT_STYLE_DIM))
+		    color.setAlphaF(0.45);
+	    }
+	    return color;
+	}
+
+	void updateSemanticSelections()
+	{
+	    SemanticSelections.clear();
+	    if (Completer) {
+		std::vector<QgConsoleHighlight> highlights;
+		Completer->analyze(commandBuffer(), highlights);
+		for (const QgConsoleHighlight &h : highlights) {
+		    if (h.end <= h.start || h.start < 0 || h.end > commandBuffer().size())
+			continue;
+		    QTextEdit::ExtraSelection selection;
+		    selection.cursor = QTextCursor(document());
+		    selection.cursor.setPosition(InteractivePosition + h.start);
+		    selection.cursor.setPosition(InteractivePosition + h.end, QTextCursor::KeepAnchor);
+		    selection.format.setForeground(semanticColor(h.style));
+		    SemanticSelections.append(selection);
+		}
+	    }
+	    applyExtraSelections();
+	}
+
+	void clearCompletionState(bool hide_popup = true)
+	{
+	    CompletionActive = false;
+	    CompletionBase.clear();
+	    CompletionBaseCursor = 0;
+	    CompletionIndex = -1;
+	    if (hide_popup && this->Completer && this->Completer->popup())
+		this->Completer->popup()->hide();
+	    CompletionSelections.clear();
+	    applyExtraSelections();
+	}
+
+	void showCompletionPreview(int start, int end)
+	{
+	    CompletionSelections.clear();
+	    if (end > start) {
+		QTextEdit::ExtraSelection preview;
+		preview.cursor = QTextCursor(document());
+		preview.cursor.setPosition(InteractivePosition + start);
+		preview.cursor.setPosition(InteractivePosition + end, QTextCursor::KeepAnchor);
+		const struct bu_lineedit_style &configured =
+		    LineeditPalette.roles[BU_LINEEDIT_ROLE_COMPLETION_PREVIEW];
+		QColor preview_color = (configured.flags & BU_LINEEDIT_STYLE_COLOR) ?
+		    QColor(configured.rgb[0], configured.rgb[1], configured.rgb[2]) :
+		    palette().color(QPalette::Text);
+		bool dim = true;
+		if (configured.flags & BU_LINEEDIT_STYLE_DIM_SET)
+		    dim = (configured.flags & BU_LINEEDIT_STYLE_DIM) != 0;
+		preview_color.setAlphaF(dim ? 0.45 : 1.0);
+		preview.format.setForeground(preview_color);
+		CompletionSelections.append(preview);
+	    }
+	    applyExtraSelections();
+	}
+
+	void restoreCompletionBase()
+	{
+	    if (!CompletionActive)
+		return;
+	    replaceCommandBuffer(CompletionBase);
+	    QTextCursor c = textCursor();
+	    c.setPosition(InteractivePosition + CompletionBaseCursor);
+	    setTextCursor(c);
+	}
+
+	bool filterEditExtendsPreview(const QString &edit)
+	{
+	    if (!CompletionActive || !Completer || edit.isEmpty())
+		return false;
+
+	    QString original = CompletionBase.left(CompletionBaseCursor) + edit;
+	    Completer->updateCompletionModel(original);
+	    if (Completer->completionCount() > 0)
+		return false;
+
+	    int preview_cursor = textCursor().position() - InteractivePosition;
+	    QString preview = commandBuffer().left(preview_cursor) + edit;
+	    Completer->updateCompletionModel(preview);
+	    return Completer->completionCount() > 0;
+	}
+
+	QString completionAt(int index) const
+	{
+	    if (!this->Completer || !this->Completer->completionModel() || index < 0)
+		return QString();
+	    return this->Completer->completionModel()->index(index, 0).data().toString();
+	}
+
+	bool insertCompletionAtReplacement(const QString &completion)
+	{
+	    if (!this->Completer)
+		return false;
+	    int rstart = this->Completer->completionReplacementStart();
+	    int rend = this->Completer->completionReplacementEnd();
+	    int clen = commandBuffer().length();
+	    if (rstart < 0 || rend < rstart || rstart > clen || rend > clen)
+		return false;
+
+	    QTextCursor rtc(document());
+	    rtc.setPosition(InteractivePosition + rstart, QTextCursor::MoveAnchor);
+	    rtc.setPosition(InteractivePosition + rend, QTextCursor::KeepAnchor);
+	    rtc.insertText(completion);
+	    setTextCursor(rtc);
+	    updateCommandBuffer();
+	    return true;
+	}
+
+	void previewCompletion(int direction = 1)
+	{
+	    if (!this->Completer)
+		return;
+
+	    if (!CompletionActive) {
+		CompletionBase = commandBuffer();
+		CompletionBaseCursor = textCursor().position() - InteractivePosition;
+		updateCompleter();
+		if (this->Completer->completionCount() <= 0)
+		    return;
+		CompletionActive = true;
+		CompletionIndex = (direction < 0) ? this->Completer->completionCount() - 1 : 0;
+	    } else {
+		int count = this->Completer->completionCount();
+		if (count <= 0) {
+		    clearCompletionState();
+		    return;
+		}
+		CompletionIndex = (CompletionIndex + direction + count) % count;
+	    }
+
+	    restoreCompletionBase();
+	    QString candidate = completionAt(CompletionIndex);
+	    if (!candidate.isNull()) {
+		int rstart = this->Completer->completionReplacementStart();
+		int rend = this->Completer->completionReplacementEnd();
+		QString typed = CompletionBase.mid(rstart, rend - rstart);
+		int confirmed = 0;
+		while (confirmed < typed.size() && confirmed < candidate.size() &&
+			typed[confirmed] == candidate[confirmed])
+		    confirmed++;
+		insertCompletionAtReplacement(candidate);
+		showCompletionPreview(rstart + confirmed, rstart + candidate.size());
+	    }
+	    if (this->Completer->popup())
+		this->Completer->popup()->setCurrentIndex(this->Completer->completionModel()->index(CompletionIndex, 0));
+	}
+
+	void prefixCompletion()
+	{
+	    if (!this->Completer)
+		return;
+	    updateCompleter();
+	    int count = this->Completer->completionCount();
+	    if (count <= 0)
+		return;
+	    QString common = completionAt(0);
+	    for (int i = 1; i < count && !common.isEmpty(); i++) {
+		QString candidate = completionAt(i);
+		int j = 0;
+		while (j < common.size() && j < candidate.size() && common[j] == candidate[j])
+		    j++;
+		common.truncate(j);
+	    }
+	    if (!common.isEmpty())
+		Parent.insertCompletion(common);
+	    clearCompletionState();
+	}
 
 	void setFont(const QFont& i_font)
 	{
@@ -248,17 +500,50 @@ class QgConsole::pqImplementation :
 	    if (this->Completer && this->Completer->popup()->isVisible()) {
 		// The following keys are forwarded by the completer to the widget
 		switch (e->key()) {
-		    case Qt::Key_Tab:
-		    case Qt::Key_Enter:
-		    case Qt::Key_Return:
-		    case Qt::Key_Escape:
-		    case Qt::Key_Backtab:
+		case Qt::Key_Enter:
+		case Qt::Key_Return:
+		    if (CompletionMode != BU_CMD_COMPLETE_LEGACY && CompletionActive) {
+			QModelIndex selected = this->Completer->popup()->currentIndex();
+			QString candidate = selected.isValid() ? selected.data().toString() : QString();
+			if (!candidate.isEmpty())
+			    Parent.insertCompletion(candidate);
+			else
+			    clearCompletionState();
+			e->accept();
+			return;
+		    }
 			e->ignore();
 			return; // let the completer do default behavior
+		    case Qt::Key_Tab:
+		    case Qt::Key_Backtab:
+			if (CompletionMode != BU_CMD_COMPLETE_LEGACY)
+			    break;
+			e->ignore();
+			return; // let the completer do default behavior
+		    case Qt::Key_Escape:
+			if (CompletionActive)
+			    restoreCompletionBase();
+			clearCompletionState();
+			e->accept();
+			return;
 		    default:
 			break;
 		}
 	    }
+
+	if (CompletionActive && e->key() != Qt::Key_Tab && e->key() != Qt::Key_Backtab) {
+	    if (CompletionMode == BU_CMD_COMPLETE_FILTER && e->key() != Qt::Key_Space &&
+		    e->key() != Qt::Key_Slash &&
+		    e->key() != Qt::Key_Backspace && e->key() != Qt::Key_Delete &&
+		    e->key() != Qt::Key_Return && e->key() != Qt::Key_Enter) {
+		/* Prefer refining the original seed.  When that produces no
+		 * candidates, retain the preview if appending this text to the
+		 * selected candidate does produce a valid completion. */
+		if (!filterEditExtendsPreview(e->text()))
+		    restoreCompletionBase();
+	    }
+	    clearCompletionState();
+	}
 
 	    QTextCursor text_cursor = this->textCursor();
 
@@ -354,6 +639,16 @@ class QgConsole::pqImplementation :
 
 		case Qt::Key_Tab:
 		    e->accept();
+		    if (CompletionMode == BU_CMD_COMPLETE_OFF)
+			break;
+		    if (CompletionMode == BU_CMD_COMPLETE_FILTER || CompletionMode == BU_CMD_COMPLETE_CYCLE) {
+			previewCompletion((e->modifiers() & Qt::ShiftModifier) ? -1 : 1);
+			break;
+		    }
+		    if (CompletionMode == BU_CMD_COMPLETE_PREFIX) {
+			prefixCompletion();
+			break;
+		    }
 		    {
 			int anchor = text_cursor.anchor();
 			int position = text_cursor.position();
@@ -369,6 +664,12 @@ class QgConsole::pqImplementation :
 			    this->selectCompletion();
 			}
 		    }
+		    break;
+
+		case Qt::Key_Backtab:
+		    e->accept();
+		    if (CompletionMode == BU_CMD_COMPLETE_FILTER || CompletionMode == BU_CMD_COMPLETE_CYCLE)
+			previewCompletion(-1);
 		    break;
 
 		case Qt::Key_Home:
@@ -445,12 +746,12 @@ class QgConsole::pqImplementation :
 
 		// Place and show the completer if there are available completions
 		if (this->Completer->completionCount()) {
-		    // Get a QRect for the cursor at the start of the
-		    // current word and then translate it down 8 pixels.
+		    // Anchor the popup below the full cursor rectangle so it does
+		    // not cover the command line being completed.
 		    text_cursor = this->textCursor();
 		    text_cursor.movePosition(QTextCursor::StartOfWord);
 		    QRect cr = this->cursorRect(text_cursor);
-		    cr.translate(0, 8);
+		    cr.translate(0, cr.height() + 4);
 		    cr.setWidth(this->Completer->popup()->sizeHintForColumn(0) +
 			    this->Completer->popup()->verticalScrollBar()->sizeHint().width());
 		    this->Completer->complete(cr);
@@ -464,6 +765,7 @@ class QgConsole::pqImplementation :
 	void updateCommandBuffer()
 	{
 	    this->commandBuffer() = this->toPlainText().mid(this->InteractivePosition);
+	    updateSemanticSelections();
 	}
 
 	/// Replace the contents of the command buffer, updating the display
@@ -476,6 +778,7 @@ class QgConsole::pqImplementation :
 	    c.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
 	    c.removeSelectedText();
 	    c.insertText(Text);
+	    updateSemanticSelections();
 	}
 
 	/// References the buffer where the current un-executed command is stored
@@ -500,6 +803,9 @@ class QgConsole::pqImplementation :
 	    c.insertText("\n");
 
 	    this->InteractivePosition = this->documentEnd();
+	    SemanticSelections.clear();
+	    CompletionSelections.clear();
+	    applyExtraSelections();
 	    this->Parent.internalExecuteCommand(command);
 	}
 
@@ -514,6 +820,7 @@ class QgConsole::pqImplementation :
 		this->Completer->setWidget(this);
 		QObject::connect(this->Completer, QOverload<const QString &>::of(&QCompleter::activated), &this->Parent, &QgConsole::insertCompletion);
 	    }
+	    updateSemanticSelections();
 	}
 
 	/// Stores a back-reference to our owner
@@ -521,6 +828,14 @@ class QgConsole::pqImplementation :
 
 	/// A custom completer
 	QPointer<QgConsoleWidgetCompleter> Completer;
+	struct bu_lineedit_palette LineeditPalette;
+	bu_cmd_completion_mode_t CompletionMode = BU_CMD_COMPLETE_FILTER;
+	bool CompletionActive = false;
+	QString CompletionBase;
+	int CompletionBaseCursor = 0;
+	int CompletionIndex = -1;
+	QList<QTextEdit::ExtraSelection> SemanticSelections;
+	QList<QTextEdit::ExtraSelection> CompletionSelections;
 
 	/** Stores the beginning of the area of interactive input, outside which
 	  changes can't be made to the text edit contents */
@@ -648,9 +963,47 @@ void QgConsole::setCompleter(QgConsoleWidgetCompleter* completer)
 }
 
 //-----------------------------------------------------------------------------
+void QgConsole::setCompletionMode(bu_cmd_completion_mode_t mode)
+{
+    this->Implementation->clearCompletionState();
+    this->Implementation->CompletionMode = mode;
+}
+
+//-----------------------------------------------------------------------------
+bu_cmd_completion_mode_t QgConsole::completionMode() const
+{
+    return this->Implementation->CompletionMode;
+}
+
+//-----------------------------------------------------------------------------
 void QgConsole::insertCompletion(const QString& completion)
 {
     QTCAD_SLOT("QgConsole::insertCompletion", 1);
+    /* Popup selection must replace the original seed, not the currently
+     * displayed preview.  Otherwise selecting a different item can leave the
+     * suffix from the preview behind (for example, tgc -> tor becomes torgc). */
+    if (this->Implementation->CompletionActive) {
+	this->Implementation->restoreCompletionBase();
+	this->Implementation->clearCompletionState();
+    }
+    if (this->Implementation->insertCompletionAtReplacement(completion))
+	return;
+
+    if (this->Implementation->Completer) {
+	int rstart = this->Implementation->Completer->completionReplacementStart();
+	int rend = this->Implementation->Completer->completionReplacementEnd();
+	int clen = this->Implementation->commandBuffer().length();
+	if (rstart >= 0 && rend >= rstart && rstart <= clen && rend <= clen) {
+	    QTextCursor rtc(this->Implementation->document());
+	    rtc.setPosition(this->Implementation->InteractivePosition + rstart, QTextCursor::MoveAnchor);
+	    rtc.setPosition(this->Implementation->InteractivePosition + rend, QTextCursor::KeepAnchor);
+	    rtc.insertText(completion);
+	    this->Implementation->setTextCursor(rtc);
+	    this->Implementation->updateCommandBuffer();
+	    return;
+	}
+    }
+
     QTextCursor tc = this->Implementation->textCursor();
     tc.setPosition(tc.position(), QTextCursor::MoveAnchor);
     QString text = tc.selectedText();

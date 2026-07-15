@@ -25,11 +25,14 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <float.h>
+#include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "../ged_private.h"
 
 enum etypes {
@@ -41,6 +44,207 @@ enum etypes {
     ETYPES_ROT_ARBITRARY_AXIS,
     ETYPES_TRA,
     ETYPES_SCA
+};
+
+struct combmem_args {
+    int input_type;
+    int replacement_type;
+};
+
+static const char * const combmem_operations[] = {"u", "-", "+", NULL};
+
+static int
+combmem_type_validate(struct bu_vls *msg, const char *arg)
+{
+    char *end = NULL;
+    long value;
+
+    errno = 0;
+    value = strtol(arg, &end, 0);
+    if (!arg || !arg[0] || errno == ERANGE || !end || *end ||
+	value < ETYPES_ABS || value > ETYPES_SCA) {
+	if (msg)
+	    bu_vls_printf(msg, "combmem representation type must be from %d through %d",
+		ETYPES_ABS, ETYPES_SCA);
+	return -1;
+    }
+    return 0;
+}
+
+static int
+combmem_number_valid(const char *arg)
+{
+    char *end = NULL;
+    double value;
+
+    errno = 0;
+    value = strtod(arg, &end);
+    return arg && arg[0] && errno != ERANGE && end && !*end && isfinite(value) &&
+	!(sizeof(fastf_t) == sizeof(float) && (value > FLT_MAX || value < -FLT_MAX));
+}
+
+static void
+combmem_operation_candidates(struct bu_cmd_validate_result *result, const char *prefix)
+{
+    size_t count = 0;
+
+    for (size_t i = 0; combmem_operations[i]; i++)
+	if (!prefix || !prefix[0] || bu_strncmp(combmem_operations[i], prefix, strlen(prefix)) == 0)
+	    count++;
+    if (!count)
+	return;
+    result->completion_candidates = (const char **)bu_calloc(count + 1,
+	sizeof(char *), "combmem operation candidates");
+    for (size_t i = 0, oi = 0; combmem_operations[i]; i++)
+	if (!prefix || !prefix[0] || bu_strncmp(combmem_operations[i], prefix, strlen(prefix)) == 0)
+	    result->completion_candidates[oi++] = bu_strdup(combmem_operations[i]);
+    result->completion_count = count;
+}
+
+static int
+combmem_validation_result(struct bu_cmd_validate_result *result,
+	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+	const char *hint, const char *provider)
+{
+    bu_cmd_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->completion_type = type;
+    result->hint = hint;
+    result->semantic_provider = provider;
+    return 0;
+}
+
+static size_t
+combmem_first_operand(size_t argc, const char **argv, int *replacement_type,
+	int *have_replacement)
+{
+    size_t first = 0;
+
+    if (replacement_type)
+	*replacement_type = ETYPES_NULL;
+    if (have_replacement)
+	*have_replacement = 0;
+    while (first < argc) {
+	if (BU_STR_EQUAL(argv[first], "--")) {
+	    first++;
+	    break;
+	}
+	if ((!BU_STR_EQUAL(argv[first], "-i") && !BU_STR_EQUAL(argv[first], "-r")) ||
+	    first + 1 >= argc)
+	    break;
+	if (BU_STR_EQUAL(argv[first], "-r")) {
+	    if (replacement_type)
+		*replacement_type = (int)strtol(argv[first + 1], NULL, 0);
+	    if (have_replacement)
+		*have_replacement = 1;
+	}
+	first += 2;
+    }
+    return first;
+}
+
+static int
+combmem_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *cmd;
+    size_t first;
+    size_t members;
+    size_t width = 15;
+    int replacement_type;
+    int have_replacement;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    if (cursor_arg < argc && argv[cursor_arg] && argv[cursor_arg][0] == '-' &&
+	argv[cursor_arg][1] && (result->expected & BU_CMD_EXPECT_OPTION))
+	return 0;
+
+    first = combmem_first_operand(argc, argv, &replacement_type, &have_replacement);
+    if (first >= argc)
+	return 0;
+    if (replacement_type == ETYPES_ROT_AET || replacement_type == ETYPES_ROT_XYZ)
+	width = 8;
+    if (replacement_type == ETYPES_ROT_ARBITRARY_AXIS || replacement_type == ETYPES_SCA)
+	width = 9;
+    if (replacement_type == ETYPES_TRA)
+	width = 5;
+    members = argc - first - 1;
+
+    for (size_t i = 0; i < argc; i++) {
+	size_t ri;
+	if (i == cursor_arg || i <= first)
+	    continue;
+	ri = (i - first - 1) % width;
+	if (ri == 0 && !BU_STR_EQUAL(argv[i], "u") &&
+	    !BU_STR_EQUAL(argv[i], "-") && !BU_STR_EQUAL(argv[i], "+"))
+	    return combmem_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
+		BU_CMD_VALUE_KEYWORD, "invalid boolean operation", NULL);
+	if (ri > 1 && !combmem_number_valid(argv[i]))
+	    return combmem_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
+		BU_CMD_VALUE_NUMBER, "invalid transform value", NULL);
+    }
+
+    if (cursor_arg > first && cursor_arg < argc) {
+	size_t ri = (cursor_arg - first - 1) % width;
+	if (ri == 0) {
+	    bu_cmd_validate_state_t state =
+		(BU_STR_EQUAL(argv[cursor_arg], "u") || BU_STR_EQUAL(argv[cursor_arg], "-") ||
+		 BU_STR_EQUAL(argv[cursor_arg], "+")) ? BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INCOMPLETE;
+	    combmem_validation_result(result, state, cursor_arg, BU_CMD_VALUE_KEYWORD,
+		state == BU_CMD_VALIDATE_VALID ? "boolean operation" : "boolean operation expected", NULL);
+	    combmem_operation_candidates(result, argv[cursor_arg]);
+	} else if (ri == 1) {
+	    combmem_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+		BU_CMD_VALUE_DB_OBJECT, "member object", "ged.db_object");
+	} else {
+	    bu_cmd_validate_state_t state = combmem_number_valid(argv[cursor_arg]) ?
+		BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INVALID;
+	    combmem_validation_result(result, state, cursor_arg, BU_CMD_VALUE_NUMBER,
+		state == BU_CMD_VALIDATE_VALID ? "transform value" : "invalid transform value", NULL);
+	}
+	return 0;
+    }
+
+    if (cursor_arg >= argc && members && (members % width)) {
+	size_t ri = members % width;
+	bu_cmd_value_t type = ri == 1 ? BU_CMD_VALUE_DB_OBJECT :
+	    (ri == 0 ? BU_CMD_VALUE_KEYWORD : BU_CMD_VALUE_NUMBER);
+	const char *hint = ri == 1 ? "member object expected" :
+	    (ri == 0 ? "boolean operation expected" : "transform value expected");
+	combmem_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc, type, hint,
+	    ri == 1 ? "ged.db_object" : NULL);
+	if (ri == 0)
+	    combmem_operation_candidates(result, "");
+    }
+    if (!have_replacement && members && members < width)
+	result->state = BU_CMD_VALIDATE_INCOMPLETE;
+    return 0;
+}
+
+static const struct bu_cmd_option combmem_schema_options[] = {
+    BU_CMD_INTEGER_VALIDATE("i", NULL, struct combmem_args, input_type,
+	combmem_type_validate, "type", "Input matrix representation type"),
+    BU_CMD_INTEGER_VALIDATE("r", NULL, struct combmem_args, replacement_type,
+	combmem_type_validate, "type", "Replacement matrix representation type"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand combmem_schema_operands[] = {
+    BU_CMD_OPERAND("combination", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Combination to inspect or replace", "ged.db_object"),
+    BU_CMD_OPERAND("member_records", BU_CMD_VALUE_RAW, 0,
+	BU_CMD_COUNT_UNLIMITED, "Operation, member, and transform records", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema combmem_cmd_schema = {
+    "combmem", "Inspect or replace combination members", combmem_schema_options,
+    combmem_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {combmem_schema_validate}
 };
 
 
@@ -986,11 +1190,12 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 int
 ged_combmem_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int c;
-    enum etypes iflag = ETYPES_ABS;
-    enum etypes rflag = ETYPES_NULL;
+    struct combmem_args args = {ETYPES_ABS, ETYPES_NULL};
+    enum etypes iflag;
+    enum etypes rflag;
     const char *cmd_name = argv[0];
     static const char *usage = "[-i type] [-r type] comb [op1 name1 az1 el1 tw1 x1 y1 z1 sa1 sx1 sy1 sz1 ...]";
+    int operand_index;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1001,39 +1206,19 @@ ged_combmem_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bu_optind = 1;
+    operand_index = bu_cmd_schema_parse_complete(&combmem_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0)
+	goto bad;
 
-    /* Get command line options. */
-    while ((c = bu_getopt(argc, (char * const *)argv, "i:r:")) != -1) {
-	switch (c) {
-	    case 'i':
-		{
-		    int d;
-
-		    if (sscanf(bu_optarg, "%d", &d) != 1 || d < ETYPES_ABS || d > ETYPES_SCA) {
-			goto bad;
-		    }
-
-		    iflag = (enum etypes)d;
-		}
-		break;
-	    case 'r':
-		{
-		    int d;
-
-		    if (sscanf(bu_optarg, "%d", &d) != 1 || d < ETYPES_ABS || d > ETYPES_SCA) {
-			goto bad;
-		    }
-
-		    rflag = (enum etypes)d;
-		}
-		break;
-	    default:
-		break;
-	}
-    }
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
+    /* The longstanding helper routines expect argv[1] to be the target
+     * combination.  Moving to argv + operand_index preserves that contract:
+     * with options, argv[0] is the final option argument; without them it is
+     * the command name. */
+    argc -= operand_index;
+    argv += operand_index;
+    iflag = (enum etypes)args.input_type;
+    rflag = (enum etypes)args.replacement_type;
 
     if (argc == 2) {
 	if (rflag == ETYPES_NULL)
@@ -1088,10 +1273,10 @@ bad:
 #include "../include/plugin.h"
 
 #define GED_COMBMEM_COMMANDS(X, XID) \
-    X(combmem, ged_combmem_core, GED_CMD_DEFAULT) \
+    X(combmem, ged_combmem_core, GED_CMD_DEFAULT, &combmem_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_COMBMEM_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_combmem", 1, GED_COMBMEM_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COMBMEM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_combmem", 1, GED_COMBMEM_COMMANDS)
 
 /*
  * Local Variables:

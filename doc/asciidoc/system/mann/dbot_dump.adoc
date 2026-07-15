@@ -10,7 +10,7 @@ dbot_dump - export currently displayed BOT objects to a mesh file format
 
 [source]
 ----
-dbot_dump [-b] [-n|--normals] [-F|--full-precision]
+dbot_dump [--help] [-b] [-n|--normals] [-F|--full-precision]
           [-m|--output-directory dir] [-o|--output-file file]
           [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
           [--no-materials]
@@ -33,6 +33,9 @@ No BOT names are taken as arguments; the set of objects to export is determined 
 All other options are identical to *bot_dump*, including `--no-materials` to explicitly suppress color/material export.
 
 === Options
+
+*-h*, *--help*::
+Print command help without requiring a display manager.
 
 *-b*::
 Write output in binary format where supported.

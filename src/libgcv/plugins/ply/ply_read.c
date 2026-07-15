@@ -34,9 +34,10 @@
 #include "wdb.h"
 #include "rply.h"
 
-double scale_factor;                    // without refactor to callbacks there's no easy way to avoid this global
+double scale_factor;                    // rply callbacks do not carry the conversion option record
 struct ply_read_options
 {
+    double scale_factor;
     int verbose;                        /* verbose output flag */
     int debug;                          /* debug output flag */
 };
@@ -310,23 +311,35 @@ ply_can_read(const char* data)
     return 1;
 }
 
+static const struct bu_cmd_option ply_read_schema_options[] = {
+    BU_CMD_NUMBER("s", "scale_factor", struct ply_read_options, scale_factor, "float",
+	"Specify the scale factor."),
+    BU_CMD_FLAG("v", "verbose", struct ply_read_options, verbose,
+	"Print verbose conversion output."),
+    BU_CMD_FLAG("d", "debug", struct ply_read_options, debug,
+	"Enable conversion debugging output."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema ply_read_schema = {
+    "ply-read", "PLY reader options.", ply_read_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
 static void
-ply_read_create_opts(struct bu_opt_desc** options_desc, void** dest_options_data)
+ply_read_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct ply_read_options *options_data;
 
     BU_ALLOC(options_data, struct ply_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(4 * sizeof(struct bu_opt_desc), "options_desc");
 
-    scale_factor = 1000.0;                      /* default units are meters */
+    options_data->scale_factor = 1000.0;        /* default units are meters */
     options_data->verbose = 0;                  /* default flag = off */
     options_data->debug = 0;                    /* default flag = off */
-
-    BU_OPT((*options_desc)[0], "s", "scale_factor", "float", bu_opt_fastf_t, &scale_factor, "specify the scale factor");
-    BU_OPT((*options_desc)[1], "v", "verbose",      "",      NULL,           &options_data->verbose,      "specify to run with verbose output");
-    BU_OPT((*options_desc)[2], "d", "debug",        "",      NULL,           &options_data->debug,        "specify specify to run with debug output");
-    BU_OPT_NULL((*options_desc)[3]);
+    *schema = &ply_read_schema;
 }
 
 static void
@@ -344,6 +357,7 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 
     state.gcv_options = gcv_options;
     state.ply_read_options = (struct ply_read_options*)options_data;
+    scale_factor = state.ply_read_options->scale_factor;
     state.input_file = source_path;
     state.fd_out = wdbp;
 
@@ -374,16 +388,28 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 /* filter setup */
 static const struct gcv_filter gcv_conv_ply_read = {
     "PLY Reader", GCV_FILTER_READ, BU_MIME_MODEL_PLY, ply_can_read,
-    ply_read_create_opts, ply_read_free_opts, ply_read_gcv
+    NULL, ply_read_free_opts, ply_read_gcv
 };
 
 extern const struct gcv_filter gcv_conv_ply_write;
+extern void ply_write_create_schema_opts(const struct bu_cmd_schema **schema,
+	void **dest_options_data);
 static const struct gcv_filter* const filters[] = {&gcv_conv_ply_read, &gcv_conv_ply_write, NULL};
+static const struct gcv_filter_schema filter_schemas[] = {
+    {&gcv_conv_ply_read, ply_read_create_schema_opts},
+    {&gcv_conv_ply_write, ply_write_create_schema_opts},
+    {NULL, NULL}
+};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
+static const struct gcv_native_plugin gcv_plugin_native_info_s = { filter_schemas };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+
+COMPILER_DLLEXPORT const struct gcv_native_plugin *
+gcv_plugin_native_info(void){ return &gcv_plugin_native_info_s; }
 
 /*
  * Local Variables:

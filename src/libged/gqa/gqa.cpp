@@ -42,6 +42,7 @@
 
 
 #include "bu/parallel.h"
+#include "bu/cmdschema.h"
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -2857,11 +2858,21 @@ aborted:
 
 #include "../include/plugin.h"
 
-#define GED_GQA_COMMANDS(X, XID) \
-    X(gqa, ged_gqa_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand gqa_schema_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 1, BU_CMD_COUNT_UNLIMITED,
+	"GQA options and database objects", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema gqa_cmd_schema = {
+    "gqa", "Analyze geometric overlaps, gaps, volume, and mass", NULL,
+    gqa_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
-GED_DECLARE_COMMAND_SET(GED_GQA_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_gqa", 1, GED_GQA_COMMANDS)
+#define GED_GQA_COMMANDS(X, XID) \
+    X(gqa, ged_gqa_core, GED_CMD_DEFAULT, &gqa_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GQA_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_gqa", 1, GED_GQA_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

@@ -24,6 +24,8 @@
 #include <string.h>
 
 
+#include "bu/cmdschema.h"
+#include "bu/color.h"
 #include "vmath.h"
 #include "ged.h"
 
@@ -33,6 +35,7 @@
 static void qray_print_fmts(struct ged *gedp);
 static void qray_print_vars(struct ged *gedp);
 static int qray_get_fmt_index(struct ged *gedp, char c);
+static int qray_execute(struct ged *gedp, int argc, const char *argv[]);
 
 
 static void
@@ -97,8 +100,31 @@ qray_get_fmt_index(struct ged *gedp,
 }
 
 
-int
-ged_qray_core(struct ged *gedp,
+static int
+qray_color_command(struct ged *gedp, const char *name, struct ged_qray_color *color,
+	int argc, const char *argv[])
+{
+    unsigned char rgb[3] = {0, 0, 0};
+
+    if (!gedp || !name || !color || argc < 0 || (argc && !argv))
+	return BRLCAD_ERROR;
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "%d %d %d", color->r, color->g, color->b);
+	return BRLCAD_OK;
+    }
+    if (bu_rgb_from_argv(rgb, (size_t)argc, (const char * const *)argv) != argc) {
+	bu_vls_printf(gedp->ged_result_str, "qray %s - bad RGB value", name);
+	return BRLCAD_ERROR;
+    }
+    color->r = rgb[RED];
+    color->g = rgb[GRN];
+    color->b = rgb[BLU];
+    return BRLCAD_OK;
+}
+
+
+static int
+qray_execute(struct ged *gedp,
 	 int argc,
 	 const char *argv[])
 {
@@ -259,143 +285,23 @@ ged_qray_core(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "oddcolor")) {
-	if (argc == 2) {
-	    /* get value */
-	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->i->ged_gdp->gd_qray_odd_color.r,
-			  gedp->i->ged_gdp->gd_qray_odd_color.g,
-			  gedp->i->ged_gdp->gd_qray_odd_color.b);
-
-	    return BRLCAD_OK;
-	} else if (argc == 5) {
-	    /* set value */
-	    int r, g, b;
-
-	    if (sscanf(argv[2], "%d", &r) != 1 ||
-		sscanf(argv[3], "%d", &g) != 1 ||
-		sscanf(argv[4], "%d", &b) != 1 ||
-		r < 0 || g < 0 || b < 0 ||
-		255 < r || 255 < g || 255 < b) {
-		bu_vls_printf(gedp->ged_result_str, "qray oddcolor %s %s %s - bad value",
-			      argv[2], argv[3], argv[4]);
-
-		return BRLCAD_ERROR;
-	    }
-
-	    gedp->i->ged_gdp->gd_qray_odd_color.r = r;
-	    gedp->i->ged_gdp->gd_qray_odd_color.g = g;
-	    gedp->i->ged_gdp->gd_qray_odd_color.b = b;
-
-	    return BRLCAD_OK;
-	}
-
-	bu_vls_printf(gedp->ged_result_str, "The 'qray oddcolor' command accepts 0 or 3 arguments\n");
-	return BRLCAD_ERROR;
+	return qray_color_command(gedp, "oddcolor", &gedp->i->ged_gdp->gd_qray_odd_color,
+	    argc - 2, argv + 2);
     }
 
     if (BU_STR_EQUAL(argv[1], "evencolor")) {
-	if (argc == 2) {
-	    /* get value */
-	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->i->ged_gdp->gd_qray_even_color.r,
-			  gedp->i->ged_gdp->gd_qray_even_color.g,
-			  gedp->i->ged_gdp->gd_qray_even_color.b);
-
-	    return BRLCAD_OK;
-	} else if (argc == 5) {
-	    /* set value */
-	    int r, g, b;
-
-	    if (sscanf(argv[2], "%d", &r) != 1 ||
-		sscanf(argv[3], "%d", &g) != 1 ||
-		sscanf(argv[4], "%d", &b) != 1 ||
-		r < 0 || g < 0 || b < 0 ||
-		255 < r || 255 < g || 255 < b) {
-		bu_vls_printf(gedp->ged_result_str, "qray evencolor %s %s %s - bad value",
-			      argv[2], argv[3], argv[4]);
-
-		return BRLCAD_ERROR;
-	    }
-
-	    gedp->i->ged_gdp->gd_qray_even_color.r = r;
-	    gedp->i->ged_gdp->gd_qray_even_color.g = g;
-	    gedp->i->ged_gdp->gd_qray_even_color.b = b;
-
-	    return BRLCAD_OK;
-	}
-
-	bu_vls_printf(gedp->ged_result_str, "The 'qray evencolor' command accepts 0 or 3 arguments\n");
-	return BRLCAD_ERROR;
+	return qray_color_command(gedp, "evencolor", &gedp->i->ged_gdp->gd_qray_even_color,
+	    argc - 2, argv + 2);
     }
 
     if (BU_STR_EQUAL(argv[1], "voidcolor")) {
-	if (argc == 2) {
-	    /* get value */
-	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->i->ged_gdp->gd_qray_void_color.r,
-			  gedp->i->ged_gdp->gd_qray_void_color.g,
-			  gedp->i->ged_gdp->gd_qray_void_color.b);
-
-	    return BRLCAD_OK;
-	} else if (argc == 5) {
-	    /* set value */
-	    int r, g, b;
-
-	    if (sscanf(argv[2], "%d", &r) != 1 ||
-		sscanf(argv[3], "%d", &g) != 1 ||
-		sscanf(argv[4], "%d", &b) != 1 ||
-		r < 0 || g < 0 || b < 0 ||
-		255 < r || 255 < g || 255 < b) {
-		bu_vls_printf(gedp->ged_result_str, "qray voidcolor %s %s %s - bad value",
-			      argv[2], argv[3], argv[4]);
-
-		return BRLCAD_ERROR;
-	    }
-
-	    gedp->i->ged_gdp->gd_qray_void_color.r = r;
-	    gedp->i->ged_gdp->gd_qray_void_color.g = g;
-	    gedp->i->ged_gdp->gd_qray_void_color.b = b;
-
-	    return BRLCAD_OK;
-	}
-
-	bu_vls_printf(gedp->ged_result_str, "The 'qray voidcolor' command accepts 0 or 3 arguments\n");
-	return BRLCAD_ERROR;
+	return qray_color_command(gedp, "voidcolor", &gedp->i->ged_gdp->gd_qray_void_color,
+	    argc - 2, argv + 2);
     }
 
     if (BU_STR_EQUAL(argv[1], "overlapcolor")) {
-	if (argc == 2) {
-	    /* get value */
-	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->i->ged_gdp->gd_qray_overlap_color.r,
-			  gedp->i->ged_gdp->gd_qray_overlap_color.g,
-			  gedp->i->ged_gdp->gd_qray_overlap_color.b);
-
-	    return BRLCAD_OK;
-	} else if (argc == 5) {
-	    /* set value */
-	    int r, g, b;
-
-	    if (sscanf(argv[2], "%d", &r) != 1 ||
-		sscanf(argv[3], "%d", &g) != 1 ||
-		sscanf(argv[4], "%d", &b) != 1 ||
-		r < 0 || g < 0 || b < 0 ||
-		255 < r || 255 < g || 255 < b) {
-		bu_vls_printf(gedp->ged_result_str,
-			      "qray overlapcolor %s %s %s - bad value",
-			      argv[2], argv[3], argv[4]);
-		return BRLCAD_ERROR;
-	    }
-
-	    gedp->i->ged_gdp->gd_qray_overlap_color.r = r;
-	    gedp->i->ged_gdp->gd_qray_overlap_color.g = g;
-	    gedp->i->ged_gdp->gd_qray_overlap_color.b = b;
-
-	    return BRLCAD_OK;
-	}
-
-	bu_vls_printf(gedp->ged_result_str, "The 'qray overlapcolor' command accepts 0 or 3 arguments\n");
-	return BRLCAD_ERROR;
+	return qray_color_command(gedp, "overlapcolor", &gedp->i->ged_gdp->gd_qray_overlap_color,
+	    argc - 2, argv + 2);
     }
 
     if (BU_STR_EQUAL(argv[1], "vars")) {
@@ -419,11 +325,190 @@ ged_qray_core(struct ged *gedp,
 
 #include "../include/plugin.h"
 
-#define GED_QRAY_COMMANDS(X, XID) \
-    X(qray, ged_qray_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand qray_string_operands[] = {
+    BU_CMD_OPERAND("value", BU_CMD_VALUE_STRING, 0, 1, "Optional new value", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const qray_effect_keywords[] = {"t", "g", "b", NULL};
+static const struct bu_cmd_operand qray_effect_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("effects", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"Text, graphical, or both", NULL, qray_effect_keywords),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const qray_bool_keywords[] = {"0", "1", NULL};
+static const struct bu_cmd_operand qray_bool_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("enabled", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"Boolean setting", NULL, qray_bool_keywords),
+    BU_CMD_OPERAND_NULL
+};
+static int
+qray_color_schema_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    return bu_cmd_rgb_optional_validate(argc, argv, cursor_arg, result);
+}
+static const struct bu_cmd_operand qray_color_operands[] = {
+    BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_COLOR, 0, 3, NULL,
+	"Optional packed or red, green, and blue components", NULL, &bu_cmd_rgb_arg_shape),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const qray_fmt_keywords[] = {"r", "h", "p", "f", "m", "o", "g", NULL};
+static const struct bu_cmd_operand qray_fmt_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("format_type", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"Ray format type", NULL, qray_fmt_keywords),
+    BU_CMD_OPERAND("format", BU_CMD_VALUE_STRING, 0, 1, "Optional format string", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema qray_root_schema = {
+    "qray", "Configure query-ray reporting", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema qray_vars_schema = {
+    "vars", "Print all qray variables", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema qray_help_schema = {
+    "help", "Print qray help", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+#define QRAY_SCHEMA(_id, _name, _help, _operands, _validation) \
+    static const struct bu_cmd_schema _id##_schema = { \
+	_name, _help, NULL, _operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, _validation \
+    }
+QRAY_SCHEMA(qray_basename, "basename", "Query or set the result basename", qray_string_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+QRAY_SCHEMA(qray_script, "script", "Query or set the nirt script", qray_string_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+QRAY_SCHEMA(qray_effects, "effects", "Query or set ray effects", qray_effect_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+QRAY_SCHEMA(qray_echo, "echo", "Query or set command echo", qray_bool_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+QRAY_SCHEMA(qray_oddcolor, "oddcolor", "Query or set odd-partition color", qray_color_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(qray_color_schema_validate, NULL));
+QRAY_SCHEMA(qray_evencolor, "evencolor", "Query or set even-partition color", qray_color_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(qray_color_schema_validate, NULL));
+QRAY_SCHEMA(qray_voidcolor, "voidcolor", "Query or set void color", qray_color_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(qray_color_schema_validate, NULL));
+QRAY_SCHEMA(qray_overlapcolor, "overlapcolor", "Query or set overlap color", qray_color_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(qray_color_schema_validate, NULL));
+QRAY_SCHEMA(qray_fmt, "fmt", "Query or set ray format strings", qray_fmt_operands,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+#undef QRAY_SCHEMA
 
-GED_DECLARE_COMMAND_SET(GED_QRAY_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_qray", 1, GED_QRAY_COMMANDS)
+
+static int
+qray_tree_execute(void *data, int argc, const char *argv[])
+{
+    const char **full_argv = NULL;
+    int ret = BRLCAD_ERROR;
+
+    if (!data || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+    full_argv = (const char **)bu_calloc((size_t)argc + 1, sizeof(*full_argv),
+	"qray native tree argv");
+    full_argv[0] = "qray";
+    for (int i = 0; i < argc; i++)
+	full_argv[i + 1] = argv[i];
+    ret = qray_execute((struct ged *)data, argc + 1, full_argv);
+    bu_free((void *)full_argv, "qray native tree argv");
+    return ret;
+}
+
+
+static const struct bu_cmd_tree_node qray_subcommands[] = {
+    BU_CMD_TREE_NODE(&qray_vars_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_help_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_basename_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_script_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_effects_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_echo_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_oddcolor_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_evencolor_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_voidcolor_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_overlapcolor_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE(&qray_fmt_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, qray_tree_execute),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree ged_qray_tree = {
+    &qray_root_schema, qray_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+
+int
+ged_qray_core(struct ged *gedp, int argc, const char *argv[])
+{
+    const struct bu_cmd_tree_node *node = NULL;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int ret = BRLCAD_ERROR;
+
+    if (!gedp || argc <= 0 || !argv)
+	return BRLCAD_ERROR;
+    if (argc == 1)
+	return qray_execute(gedp, argc, argv);
+    /* Preserve the historical corrupt-.mgedrc diagnosis before ordinary
+     * syntax validation sees the malformed words. */
+    if ((argc >= 4 && BU_STR_EQUAL(argv[3], "A database is not open!")) ||
+	(argc == 7 && BU_STR_EQUAL(argv[2], "A") && BU_STR_EQUAL(argv[3], "database") &&
+	 BU_STR_EQUAL(argv[4], "is") && BU_STR_EQUAL(argv[5], "not") && BU_STR_EQUAL(argv[6], "open!")))
+	return qray_execute(gedp, argc, argv);
+    node = bu_cmd_tree_find_subcommand(&ged_qray_tree, argv[1]);
+    if (!node)
+	return qray_execute(gedp, argc, argv);
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    if (bu_cmd_schema_parse_complete(node->schema, NULL, &msg, argc - 2, argv + 2) < 0) {
+	if (bu_vls_strlen(&msg))
+	    bu_vls_vlscat(gedp->ged_result_str, &msg);
+	qray_usage(gedp, argv[0]);
+	bu_vls_free(&msg);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&msg);
+    if (bu_cmd_tree_dispatch(&ged_qray_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+	return ret;
+    return BRLCAD_ERROR;
+}
+
+
+static int
+ged_qray_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &ged_qray_tree, input, cursor_pos, result);
+}
+
+
+static int
+ged_qray_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &ged_qray_tree, input, analysis);
+}
+
+
+static char *
+ged_qray_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&ged_qray_tree);
+}
+
+
+static int
+ged_qray_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&ged_qray_tree, msgs);
+}
+
+
+static const struct ged_cmd_grammar ged_qray_grammar = {
+    "qray", "Configure query-ray reporting", ged_qray_grammar_validate,
+    ged_qray_grammar_analyze, ged_qray_grammar_json, ged_qray_grammar_lint
+};
+
+#define GED_QRAY_COMMANDS(X, XID) \
+    X(qray, ged_qray_core, GED_CMD_DEFAULT, &ged_qray_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_QRAY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_qray", 1, GED_QRAY_COMMANDS)
 
 /*
  * Local Variables:

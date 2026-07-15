@@ -32,8 +32,8 @@
 #include "regex.h"
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 
@@ -41,6 +41,27 @@
 
 
 char _ged_tmpfil[MAXPATHLEN] = {0};
+
+struct red_args {
+    const char *editor;
+    int force;
+};
+
+static const struct bu_cmd_option red_schema_options[] = {
+    BU_CMD_STRING("E", NULL, struct red_args, editor, "editor", "Editor command"),
+    BU_CMD_FLAG("f", "force", struct red_args, force,
+	"Replace an existing renamed combination"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand red_schema_operands[] = {
+    BU_CMD_OPERAND("combination", BU_CMD_VALUE_STRING, 1, 1,
+	"Combination to edit or create", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema red_cmd_schema = {
+    "red", "Edit a combination as text", red_schema_options,
+    red_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
 
 static const char combseparator[] = "---------- Combination Tree ----------\n";
 static const char *combtree_header = "---*[[:space:]]*Combination Tree[[:space:]]*---*\r?\n";
@@ -731,20 +752,21 @@ int
 ged_red_core(struct ged *gedp, int argc, const char **argv)
 {
     FILE *fp;
-    int c, counter;
+    int counter;
     int ret = BRLCAD_ERROR; /* needs to be error */
     int have_tmp_name = 0;
     struct directory *dp, *tmp_dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    static const char *usage = "{combination}";
-    const char *editstring = NULL;
+    static const char *usage = "[-f] [-E editor] combination";
+    struct red_args args = {NULL, 0};
+    const char *combination;
+    int operand_index;
     const char *av[3];
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     struct bu_vls temp_name = BU_VLS_INIT_ZERO;
     struct bu_vls final_name = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_ged_result_str = BU_VLS_INIT_ZERO;
-    int force_flag = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -758,28 +780,15 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	return GED_HELP;
     }
 
-    if (argc > 4) {
+    operand_index = bu_cmd_schema_parse_complete(&red_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", "red", usage);
 	return BRLCAD_ERROR;
     }
+    combination = argv[operand_index + 1];
 
-    bu_optind = 1;
-    /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char **)argv, "E:")) != -1) {
-	switch (c) {
-	    case 'E' :
-		editstring = bu_optarg;
-		break;
-	    case 'f' :
-		force_flag = 1;
-	    default :
-		break;
-	}
-    }
-
-    argv += bu_optind - 1;
-
-    dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, combination, LOOKUP_QUIET);
 
     /* Now, sanity check to make sure a comb is listed instead of a
      * primitive, and either write out existing contents for an
@@ -804,7 +813,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	    }
 	}
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s must be a combination\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s must be a combination\n", combination);
 	    bu_vls_free(&comb_name);
 	    bu_vls_free(&temp_name);
 	    return BRLCAD_ERROR;
@@ -814,8 +823,8 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     } else {
-	bu_vls_sprintf(&comb_name, "%s", argv[1]);
-	bu_vls_sprintf(&temp_name, "%s", argv[1]);
+	bu_vls_sprintf(&comb_name, "%s", combination);
+	bu_vls_sprintf(&temp_name, "%s", combination);
 
 	comb = (struct rt_comb_internal *)NULL;
     }
@@ -823,7 +832,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
     /* Make a file for the text editor, stash name in _ged_tmpfil */
     fp = bu_temp_file(_ged_tmpfil, MAXPATHLEN);
     if (fp == (FILE *)0) {
-	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", combination);
 	bu_vls_printf(gedp->ged_result_str, "Unable to create %s\n", _ged_tmpfil);
 	bu_vls_free(&comb_name);
 	bu_vls_free(&temp_name);
@@ -834,13 +843,13 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
     (void)fclose(fp);
 
     /* Write the combination components to the file */
-    if (write_comb(gedp, comb, argv[1])) {
-	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", argv[1]);
+    if (write_comb(gedp, comb, combination)) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to edit %s\n", combination);
 	goto cleanup;
     }
 
     /* Edit the file */
-    if (_ged_editit(gedp, editstring, _ged_tmpfil)) {
+    if (_ged_editit(gedp, args.editor, _ged_tmpfil)) {
 
 	/* specifically avoid CHECK_READ_ONLY; above so that we can
 	 * delay checking if the geometry is read-only until here so
@@ -919,7 +928,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	if (bu_vls_strlen(&final_name) > 0) {
 	    if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&final_name))) {
 		if (db_lookup(gedp->dbip, bu_vls_addr(&final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
-		    if (force_flag) {
+		    if (args.force) {
 			av[0] = "kill";
 			av[1] = bu_vls_addr(&final_name);
 			av[2] = NULL;
@@ -996,10 +1005,10 @@ cleanup:
 #include "../include/plugin.h"
 
 #define GED_RED_COMMANDS(X, XID) \
-    X(red, ged_red_core, GED_CMD_DEFAULT) \
+    X(red, ged_red_core, GED_CMD_DEFAULT, &red_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_RED_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_red", 1, GED_RED_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RED_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_red", 1, GED_RED_COMMANDS)
 
 /*
  * Local Variables:

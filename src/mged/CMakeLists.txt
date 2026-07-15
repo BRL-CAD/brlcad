@@ -97,6 +97,26 @@ if(BRLCAD_ENABLE_TCL)
     PROPERTY CPACK_START_MENU_SHORTCUTS "MGED ${BRLCAD_VERSION}"
   )
   set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>" PROPERTY CPACK_DESKTOP_SHORTCUTS "MGED ${BRLCAD_VERSION}")
+
+  add_test(
+    NAME mged_cmd_complete_bridge
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DMGED_EXECUTABLE=$<TARGET_FILE:mged>
+      -DDB_FILE=${CMAKE_SOURCE_DIR}/src/libged/tests/draw/moss.g
+      -DINPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/tests/cmd_complete.in
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmd_complete_test.cmake
+  )
+  set_tests_properties(mged_cmd_complete_bridge PROPERTIES ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+
+  add_test(
+    NAME mged_cli_schema
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DMGED_EXECUTABLE=$<TARGET_FILE:mged>
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_schema_test.cmake
+  )
+  set_tests_properties(mged_cli_schema PROPERTIES ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
 else(BRLCAD_ENABLE_TCL)
   cmakefiles(${MGED_SOURCES})
 endif(BRLCAD_ENABLE_TCL)
@@ -119,6 +139,9 @@ set(
   mged_impl.h
   mged_wdb.h
   sedit.h
+  tests/cmd_complete.in
+  tests/cmd_complete_test.cmake
+  tests/cli_schema_test.cmake
 )
 cmakefiles(${mged_ignore_files})
 

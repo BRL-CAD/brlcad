@@ -31,43 +31,93 @@
 #include <inttypes.h>
 
 #include "bu.h"
+#include "bu/cmdschema.h"
 #include "icv.h"
 
-int
-file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+struct imgdiff_args {
+    int need_help;
+    const char *out_path;
+    const char *nirt_prefix;
+    int width1;
+    int height1;
+    int width2;
+    int height2;
+    bu_mime_image_t in_type_1;
+    bu_mime_image_t in_type_2;
+    bu_mime_image_t out_type;
+    int approx_diff;
+    int meta_diff;
+};
+
+static int
+imgdiff_new_output_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    char **file_set = (char **)set_var;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "output file");
-
-    if (bu_file_exists(argv[0], NULL)){
-	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", argv[0]);
+    if (!arg || !arg[0]) {
+	if (msg) bu_vls_printf(msg, "output file is required\n");
 	return -1;
     }
-
-    if (file_set) (*file_set) = bu_strdup(argv[0]);
-
-    return 1;
+    if (bu_file_exists(arg, NULL)) {
+	if (msg) bu_vls_printf(msg, "output file already exists: %s\n", arg);
+	return -1;
+    }
+    if (storage)
+	*(const char **)storage = arg;
+    return 0;
 }
 
-int
-image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
+static int
+imgdiff_image_mime_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int type_int;
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
-
-    type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
+    int type_int = arg ? bu_file_mime(arg, BU_MIME_IMAGE) : -1;
+    bu_mime_image_t type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
     if (type == BU_MIME_IMAGE_UNKNOWN) {
-	if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
+	if (msg) bu_vls_printf(msg, "unknown image format: %s\n", arg ? arg : "");
 	return -1;
     }
-    if (set_type) (*set_type) = type;
-    return 1;
+    if (storage)
+	*(bu_mime_image_t *)storage = type;
+    return 0;
 }
+
+static const struct bu_cmd_option imgdiff_options[] = {
+    BU_CMD_FLAG("h", "help", struct imgdiff_args, need_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_CUSTOM("o", "output", struct imgdiff_args, out_path, imgdiff_new_output_parse,
+	"file", "Output diff image file"),
+    BU_CMD_STRING("n", "nirt-output", struct imgdiff_args, nirt_prefix, "prefix",
+	"Write NIRT shotline scripts for differing pixels"),
+    BU_CMD_INTEGER_VALIDATE(NULL, "width-img1", struct imgdiff_args, width1,
+	bu_cmd_nonnegative_integer_validate, "pixels", "Image width of first image"),
+    BU_CMD_INTEGER_VALIDATE(NULL, "height-img1", struct imgdiff_args, height1,
+	bu_cmd_nonnegative_integer_validate, "pixels", "Image height of first image"),
+    BU_CMD_INTEGER_VALIDATE(NULL, "width-img2", struct imgdiff_args, width2,
+	bu_cmd_nonnegative_integer_validate, "pixels", "Image width of second image"),
+    BU_CMD_INTEGER_VALIDATE(NULL, "height-img2", struct imgdiff_args, height2,
+	bu_cmd_nonnegative_integer_validate, "pixels", "Image height of second image"),
+    BU_CMD_CUSTOM(NULL, "format-img1", struct imgdiff_args, in_type_1, imgdiff_image_mime_parse,
+	"format", "File format of first input file"),
+    BU_CMD_CUSTOM(NULL, "format-img2", struct imgdiff_args, in_type_2, imgdiff_image_mime_parse,
+	"format", "File format of second input file"),
+    BU_CMD_CUSTOM(NULL, "output-format", struct imgdiff_args, out_type, imgdiff_image_mime_parse,
+	"format", "File format of output file"),
+    BU_CMD_FLAG("A", "approximate", struct imgdiff_args, approx_diff,
+	"Calculate approximate difference metric"),
+    BU_CMD_FLAG("m", "metadata", struct imgdiff_args, meta_diff,
+	"Compare embedded render metadata (PNG only)"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand imgdiff_operands[] = {
+    BU_CMD_OPERAND("img1", BU_CMD_VALUE_FILE, 1, 1, "First input image", NULL),
+    BU_CMD_OPERAND("img2", BU_CMD_VALUE_FILE, 1, 1, "Second input image", NULL),
+    BU_CMD_OPERAND("output", BU_CMD_VALUE_FILE, 0, 1, "Optional output image", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema imgdiff_schema = {
+    "imgdiff", "Compare two images", imgdiff_options, imgdiff_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 int
@@ -79,17 +129,15 @@ main(int ac, const char **av)
     size_t height1 = 0;
     size_t width2 = 0;
     size_t height2 = 0;
-    int approx_diff = 0;
-    int meta_diff = 0;
+    struct imgdiff_args args = {};
     fastf_t apret = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
-    static bu_mime_image_t in_type_1 = BU_MIME_IMAGE_UNKNOWN;
-    static bu_mime_image_t in_type_2 = BU_MIME_IMAGE_UNKNOWN;
-    static bu_mime_image_t out_type = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_image_t in_type_1 = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_image_t in_type_2 = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_image_t out_type = BU_MIME_IMAGE_UNKNOWN;
     const char *out_path = NULL;
     const char *nirt_prefix = NULL;
-    int need_help = 0;
     int matching = 0;
     int off_by_1 = 0;
     int off_by_many = 0;
@@ -100,40 +148,34 @@ main(int ac, const char **av)
     const char *img_path_2 = NULL;
     bu_setprogname(av[0]);
 
-    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
 
     const char *diff_usage = "imgdiff [options] img1 img2";
-    struct bu_opt_desc icv_opt_desc[] = {
-	{"h", "help",             "",           NULL,         &need_help,             "Print help and exit."                      },
-	{"?", "",                 "",           NULL,         &need_help,             "",                                         },
-	{"o", "output",           "file",       &file_null,   (void *)&out_path,      "Output diff image file.",                  },
-	{"n", "nirt-output",      "prefix",     &bu_opt_str,  (void *)&nirt_prefix,   "Write nirt shotline script(s) for differing pixels. One file is produced per image that has PNG render metadata: <prefix>_img1.nirt and/or <prefix>_img2.nirt." },
-	{"",  "width-img1",       "#",          &bu_opt_int,  (void *)&width1,        "Image width of first image.",              },
-	{"",  "height-img1",      "#",          &bu_opt_int,  (void *)&height1,       "Image height of first image.",             },
-	{"",  "width-img2",       "#",          &bu_opt_int,  (void *)&width2,        "Image width of second image.",             },
-	{"",  "height-img2",      "#",          &bu_opt_int,  (void *)&height2,       "Image height of second image.",            },
-	{"",  "format-img1",      "format",     &image_mime,  (void *)&in_type_1,     "File format of first input file.",         },
-	{"",  "format-img2",      "format",     &image_mime,  (void *)&in_type_2,     "File format of second input file.",        },
-	{"",  "output-format",    "format",     &image_mime,  (void *)&out_type,      "File format of output file."               },
-	{"A", "approximate",      "",           NULL,         (void *)&approx_diff,   "Calculate approximate difference metric."  },
-	{"m", "metadata",         "",           NULL,         (void *)&meta_diff,     "Compare embedded render metadata (PNG only)." },
-	BU_OPT_DESC_NULL
-    };
-
     ac-=(ac>0); av+=(ac>0); /* skip program name argv[0] if present */
 
-    uac = bu_opt_parse(&parse_msgs, ac, av, icv_opt_desc);
+    uac = bu_cmd_schema_parse(&imgdiff_schema, &args, &slog, ac, av);
 
     if (uac == -1) {
-	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
+	bu_log("Parsing error: %s\n", bu_vls_addr(&slog));
 	goto cleanup;
     }
 
+    uac = ac - uac;
+    av += ac - uac;
+    width1 = (size_t)args.width1;
+    height1 = (size_t)args.height1;
+    width2 = (size_t)args.width2;
+    height2 = (size_t)args.height2;
+    in_type_1 = args.in_type_1;
+    in_type_2 = args.in_type_2;
+    out_type = args.out_type;
+    out_path = args.out_path;
+    nirt_prefix = args.nirt_prefix;
+
     /* First, see if help was requested or needed */
-    if (uac < 2 || uac > 3 || need_help) {
+    if (uac < 2 || uac > 3 || args.need_help) {
 	/* Print help */
-	char *help = bu_opt_describe(icv_opt_desc, NULL);
+	char *help = bu_cmd_schema_describe(&imgdiff_schema);
 	bu_log("%s\nOptions:\n", diff_usage);
 	bu_log("%s\n", help);
 	bu_free(help, "help str");
@@ -217,7 +259,7 @@ main(int ac, const char **av)
     img1 = icv_read(img_path_1, in_type_1, width1, height1);
     img2 = icv_read(img_path_2, in_type_2, width2, height2);
 
-    if (approx_diff) {
+    if (args.approx_diff) {
 	apret = icv_adiff(img1, img2, ICV_DIFF_PHASH);
 	bu_log("Hamming distance: %g\n", apret);
 	apret = icv_adiff(img1, img2, ICV_DIFF_SSIM);
@@ -238,7 +280,7 @@ main(int ac, const char **av)
     }
 
     /* Optional metadata comparison */
-    if (meta_diff) {
+    if (args.meta_diff) {
 	struct bu_vls meta_report = BU_VLS_INIT_ZERO;
 	int mret = icv_diff_render_info(img1, img2, &meta_report);
 	if (mret == -1) {
@@ -306,7 +348,6 @@ cleanup:
     bu_free((char *)in_fmt, "input format string");
     bu_free((char *)out_fmt, "output format string");
     bu_vls_free(&slog);
-    bu_vls_free(&parse_msgs);
     return ret;
 }
 
@@ -319,4 +360,3 @@ cleanup:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

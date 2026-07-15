@@ -25,13 +25,38 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../ged_private.h"
+#include "../move_arb.h"
+
+struct move_arb_face_args {
+    int relative;
+};
+
+static const struct bu_cmd_option move_arb_face_schema_options[] = {
+    BU_CMD_FLAG("r", NULL, struct move_arb_face_args, relative,
+	"Interpret point relative to current face"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand move_arb_face_schema_operands[] = {
+    BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
+    BU_CMD_OPERAND_VALIDATE("face", BU_CMD_VALUE_INTEGER, 1, 1,
+	ged_arb_positive_integer_validate, "One-based face index", NULL),
+    BU_CMD_OPERAND_VALIDATE("point", BU_CMD_VALUE_VECTOR, 1, 1,
+	ged_arb_vector3_validate, "Packed XYZ point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema move_arb_face_cmd_schema = {
+    "move_arb_face", "Move an ARB face", move_arb_face_schema_options,
+    move_arb_face_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
 
 
 /* The arbX_faces arrays are used for relative face movement. */
@@ -74,7 +99,11 @@ ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     fastf_t save_tol_dist;
     int arb_type;
     int face;
-    int rflag = 0;
+    struct move_arb_face_args args = {0};
+    int operand_index;
+    const char *arb_path;
+    const char *face_arg;
+    const char *point_arg;
     point_t pt;
     double scan[3];
     mat_t mat;
@@ -95,39 +124,33 @@ ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 4 || 5 < argc) {
+    operand_index = bu_cmd_schema_parse_complete(&move_arb_face_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    arb_path = argv[operand_index + 1];
+    face_arg = argv[operand_index + 2];
+    point_arg = argv[operand_index + 3];
 
-    if (argc == 5) {
-	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
-
-	rflag = 1;
-	--argc;
-	++argv;
-    }
-
-    if ((last = strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
+    if ((last = strrchr(arb_path, '/')) == NULL)
+	last = (char *)arb_path;
     else
 	++last;
 
     if (last[0] == '\0') {
-	bu_vls_printf(gedp->ged_result_str, "illegal input - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "illegal input - %s", arb_path);
 	return BRLCAD_ERROR;
     }
 
     if ((dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s not found", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s not found", arb_path);
 	return BRLCAD_ERROR;
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, arb_path, wdbp, mat) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
@@ -139,21 +162,11 @@ ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (sscanf(argv[2], "%d", &face) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]);
-	rt_db_free_internal(&intern);
-
-	return BRLCAD_ERROR;
-    }
+    face = (int)strtol(face_arg, NULL, 0);
 
     face -= 1;
 
-    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "bad point - %s", argv[3]);
-	rt_db_free_internal(&intern);
-
-	return BRLCAD_ERROR;
-    }
+    (void)ged_arb_vector3_parse(point_arg, scan);
     /* convert from double to fastf_t */
     VMOVE(pt, scan);
 
@@ -171,13 +184,25 @@ ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     VSCALE(pt, pt, gedp->dbip->dbi_local2base);
 
 #define CHECK_FACE(face_idx, max_idx) \
-if (face_idx > max_idx) { \
-    bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]); \
+if (face_idx < 0 || face_idx > max_idx) { \
+    bu_vls_printf(gedp->ged_result_str, "bad face - %s", face_arg); \
     rt_db_free_internal(&intern); \
     return BRLCAD_ERROR; \
 }
 
-    if (rflag) {
+    switch (arb_type) {
+	case ARB4: CHECK_FACE(face, ARB4_MAX_FACE_INDEX); break;
+	case ARB5: CHECK_FACE(face, ARB5_MAX_FACE_INDEX); break;
+	case ARB6: CHECK_FACE(face, ARB6_MAX_FACE_INDEX); break;
+	case ARB7: CHECK_FACE(face, ARB7_MAX_FACE_INDEX); break;
+	case ARB8: CHECK_FACE(face, ARB8_MAX_FACE_INDEX); break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "unrecognized arb type");
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+    }
+
+    if (args.relative) {
 	int arb_pt_index;
 
 	switch (arb_type) {
@@ -247,10 +272,10 @@ if (face_idx > max_idx) { \
 #include "../include/plugin.h"
 
 #define GED_MOVE_ARB_FACE_COMMANDS(X, XID) \
-    X(move_arb_face, ged_move_arb_face_core, GED_CMD_DEFAULT) \
+    X(move_arb_face, ged_move_arb_face_core, GED_CMD_DEFAULT, &move_arb_face_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_MOVE_ARB_FACE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_move_arb_face", 1, GED_MOVE_ARB_FACE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_MOVE_ARB_FACE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_move_arb_face", 1, GED_MOVE_ARB_FACE_COMMANDS)
 
 /*
  * Local Variables:

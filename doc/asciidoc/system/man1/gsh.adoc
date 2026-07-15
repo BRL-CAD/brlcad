@@ -56,6 +56,20 @@ display window of its own.
   update logic instead of the traditional command set. Primarily of use for
   development and testing of the next-generation command behavior.
 
+*--completion-mode=mode*::
+  Select the interactive completion policy.  Supported values are *filter*,
+  *cycle*, *prefix*, *legacy*, and *off*.  See *brlcad-completion*(5).
+
+[[environment]]
+== ENVIRONMENT
+
+*BRLCAD_GSH_COMPLETION_MODE*::
+  Sets GSH's completion mode when *--completion-mode* is not specified.
+
+*BRLCAD_COMPLETION_MODE*::
+  Sets the shared BRL-CAD completion mode when no GSH-specific setting is
+  present.  See *brlcad-completion*(5) for mode behavior and precedence.
+
 [[examples]]
 == EXAMPLES
 
@@ -100,7 +114,7 @@ LIBGED commands available here are shared with *mged*(1) and *archer*(1).
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *mged*(1), *archer*(1), *btclsh*(1)
+*brlcad*(1), *mged*(1), *archer*(1), *btclsh*(1), *brlcad-completion*(5)
 
 [[author]]
 == AUTHOR

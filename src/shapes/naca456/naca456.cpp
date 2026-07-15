@@ -53,7 +53,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "raytrace.h"
@@ -228,10 +228,10 @@ struct options {
 
 
 static void
-usage(const char *argv0, struct bu_opt_desc *d)
+usage(const char *argv0, const struct bu_cmd_schema *schema)
 {
     bu_log("Usage: %s [options]\n\n", argv0);
-    char *option_help = bu_opt_describe(d, NULL);
+    char *option_help = bu_cmd_schema_describe(schema);
     if (option_help) {
 	bu_log("%s", option_help);
 	bu_free(option_help, "option help");
@@ -669,118 +669,104 @@ parse_airfoil(const std::string &code, double six_a_param)
 }
 
 
-static struct bu_opt_desc *
-option_desc(options &opts, struct bu_vls &outfile, struct bu_vls &name, struct bu_vls &airfoil, struct bu_vls &tip_airfoil, struct bu_vls &mode, struct bu_vls &brep_surface, struct bu_vls &tip_style, struct bu_vls &tip_spec_file, struct bu_vls &demo_file, struct bu_vls &section_file, bool &help)
+struct naca_cli_args {
+    options opts;
+    const char *outfile = NULL;
+    const char *name = NULL;
+    const char *airfoil = NULL;
+    const char *tip_airfoil = NULL;
+    const char *mode = NULL;
+    const char *brep_surface = NULL;
+    const char *tip_style = NULL;
+    const char *tip_spec_file = NULL;
+    const char *demo_file = NULL;
+    const char *section_file = NULL;
+    int help = 0;
+};
+
+
+static int
+naca_set_true(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage)
 {
-    static struct bu_opt_desc d[30];
-
-    BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help and exit");
-    BU_OPT(d[1], "?", "", "", NULL, &help, "");
-    BU_OPT(d[2], "o", "output", "file.g", &bu_opt_vls, &outfile, "Output .g file for a single wing");
-    BU_OPT(d[3], "n", "name", "name", &bu_opt_vls, &name, "Base object name");
-    BU_OPT(d[4], "a", "airfoil", "code", &bu_opt_vls, &airfoil, "Root NACA airfoil code");
-    BU_OPT(d[5], "A", "tip-airfoil", "code", &bu_opt_vls, &tip_airfoil, "Tip NACA airfoil code");
-    BU_OPT(d[6], "m", "mode", "bot|brep", &bu_opt_vls, &mode, "Output geometry type");
-    BU_OPT(d[7], "", "brep-surface", "ruled|smooth", &bu_opt_vls, &brep_surface, "BREP side-surface construction mode");
-    BU_OPT(d[8], "", "tip-style", "rounded|flat", &bu_opt_vls, &tip_style, "Wing tip closure style");
-    BU_OPT(d[9], "", "tip-specification", "file.json", &bu_opt_vls, &tip_spec_file, "Advanced JSON tip specification");
-    BU_OPT(d[10], "s", "semi-span", "length", &bu_opt_fastf_t, &opts.semi_span, "Root-to-tip semi-span length");
-    BU_OPT(d[11], "r", "root-chord", "length", &bu_opt_fastf_t, &opts.root_chord, "Root chord length");
-    BU_OPT(d[12], "t", "tip-chord", "length", &bu_opt_fastf_t, &opts.tip_chord, "Tip chord length");
-    BU_OPT(d[13], "w", "sweep-angle", "degrees", &bu_opt_fastf_t, &opts.sweep_angle_deg, "Tip leading-edge sweep angle");
-    BU_OPT(d[14], "d", "dihedral", "degrees", &bu_opt_fastf_t, &opts.dihedral_deg, "Tip dihedral angle");
-    BU_OPT(d[15], "T", "tip-twist", "degrees", &bu_opt_fastf_t, &opts.tip_twist_deg, "Tip twist angle");
-    BU_OPT(d[16], "u", "six-a", "a", &bu_opt_fastf_t, &opts.six_a_param, "6-series mean-line loading parameter");
-    BU_OPT(d[17], "S", "stations", "count", &bu_opt_int, &opts.stations, "Spanwise station count");
-    BU_OPT(d[18], "c", "samples", "count", &bu_opt_int, &opts.samples, "Chordwise sample count");
-    BU_OPT(d[19], "x", "x-offset", "offset", &bu_opt_fastf_t, &opts.offset_x, "Model X offset");
-    BU_OPT(d[20], "y", "y-offset", "offset", &bu_opt_fastf_t, &opts.offset_y, "Model Y offset");
-    BU_OPT(d[21], "z", "z-offset", "offset", &bu_opt_fastf_t, &opts.offset_z, "Model Z offset");
-    BU_OPT(d[22], "p", "sharp-te", "", NULL, &opts.sharp_te, "Use sharp trailing-edge coefficient for 4/5-series thickness");
-    BU_OPT(d[23], "f", "force", "", NULL, &opts.overwrite, "Overwrite output file");
-    BU_OPT(d[24], "j", "append", "", NULL, &opts.append, "Append objects to an existing output .g file");
-    BU_OPT(d[25], "", "demo-file", "file.g", &bu_opt_vls, &demo_file, "Write a 36-wing BoT/BREP sampler database");
-    BU_OPT(d[26], "", "section-file", "file.tsv", &bu_opt_vls, &section_file, "Write normalized section coordinates for regression/reference checks");
-    BU_OPT(d[27], "", "full-span", "length", &bu_opt_fastf_t, &opts.full_span, "Full aircraft span; generated semi-span is half this value");
-    BU_OPT(d[28], "", "sweep-offset", "length", &bu_opt_fastf_t, &opts.sweep_offset, "Tip leading-edge X offset");
-    BU_OPT_NULL(d[29]);
-
-    return d;
+    if (storage)
+	*((bool *)storage) = true;
+    return 0;
 }
+
+
+static const struct bu_cmd_option naca_options[] = {
+    BU_CMD_FLAG("h", "help", naca_cli_args, help, "Print help and exit."),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_STRING("o", "output", naca_cli_args, outfile, "file.g", "Output .g file for a single wing."),
+    BU_CMD_STRING("n", "name", naca_cli_args, name, "name", "Base object name."),
+    BU_CMD_STRING("a", "airfoil", naca_cli_args, airfoil, "code", "Root NACA airfoil code."),
+    BU_CMD_STRING("A", "tip-airfoil", naca_cli_args, tip_airfoil, "code", "Tip NACA airfoil code."),
+    BU_CMD_STRING("m", "mode", naca_cli_args, mode, "bot|brep", "Output geometry type."),
+    BU_CMD_STRING(NULL, "brep-surface", naca_cli_args, brep_surface, "ruled|smooth", "BREP side-surface construction mode."),
+    BU_CMD_STRING(NULL, "tip-style", naca_cli_args, tip_style, "rounded|flat", "Wing tip closure style."),
+    BU_CMD_STRING(NULL, "tip-specification", naca_cli_args, tip_spec_file, "file.json", "Advanced JSON tip specification."),
+    BU_CMD_NUMBER("s", "semi-span", naca_cli_args, opts.semi_span, "length", "Root-to-tip semi-span length."),
+    BU_CMD_NUMBER("r", "root-chord", naca_cli_args, opts.root_chord, "length", "Root chord length."),
+    BU_CMD_NUMBER("t", "tip-chord", naca_cli_args, opts.tip_chord, "length", "Tip chord length."),
+    BU_CMD_NUMBER("w", "sweep-angle", naca_cli_args, opts.sweep_angle_deg, "degrees", "Tip leading-edge sweep angle."),
+    BU_CMD_NUMBER("d", "dihedral", naca_cli_args, opts.dihedral_deg, "degrees", "Tip dihedral angle."),
+    BU_CMD_NUMBER("T", "tip-twist", naca_cli_args, opts.tip_twist_deg, "degrees", "Tip twist angle."),
+    BU_CMD_NUMBER("u", "six-a", naca_cli_args, opts.six_a_param, "a", "6-series mean-line loading parameter."),
+    BU_CMD_INTEGER("S", "stations", naca_cli_args, opts.stations, "count", "Spanwise station count."),
+    BU_CMD_INTEGER("c", "samples", naca_cli_args, opts.samples, "count", "Chordwise sample count."),
+    BU_CMD_NUMBER("x", "x-offset", naca_cli_args, opts.offset_x, "offset", "Model X offset."),
+    BU_CMD_NUMBER("y", "y-offset", naca_cli_args, opts.offset_y, "offset", "Model Y offset."),
+    BU_CMD_NUMBER("z", "z-offset", naca_cli_args, opts.offset_z, "offset", "Model Z offset."),
+    BU_CMD_CUSTOM_FLAG("p", "sharp-te", "sharp-te", naca_cli_args, opts.sharp_te, naca_set_true, "Use sharp trailing-edge coefficient."),
+    BU_CMD_CUSTOM_FLAG("f", "force", "force", naca_cli_args, opts.overwrite, naca_set_true, "Overwrite output file."),
+    BU_CMD_CUSTOM_FLAG("j", "append", "append", naca_cli_args, opts.append, naca_set_true, "Append objects to an existing output file."),
+    BU_CMD_STRING(NULL, "demo-file", naca_cli_args, demo_file, "file.g", "Write a 36-wing sampler database."),
+    BU_CMD_STRING(NULL, "section-file", naca_cli_args, section_file, "file.tsv", "Write normalized section coordinates."),
+    BU_CMD_NUMBER(NULL, "full-span", naca_cli_args, opts.full_span, "length", "Full aircraft span."),
+    BU_CMD_NUMBER(NULL, "sweep-offset", naca_cli_args, opts.sweep_offset, "length", "Tip leading-edge X offset."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema naca_schema = {
+    "naca456", "Procedural NACA wing generator.", naca_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 static options
 parse_args(int argc, char **argv)
 {
-    options opts;
-    struct bu_vls outfile = BU_VLS_INIT_ZERO;
-    struct bu_vls name = BU_VLS_INIT_ZERO;
-    struct bu_vls airfoil = BU_VLS_INIT_ZERO;
-    struct bu_vls tip_airfoil = BU_VLS_INIT_ZERO;
-    struct bu_vls mode = BU_VLS_INIT_ZERO;
-    struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
-    struct bu_vls tip_style = BU_VLS_INIT_ZERO;
-    struct bu_vls tip_spec_file = BU_VLS_INIT_ZERO;
-    struct bu_vls demo_file = BU_VLS_INIT_ZERO;
-    struct bu_vls section_file = BU_VLS_INIT_ZERO;
-    bool help = false;
-    struct bu_opt_desc *d = option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, tip_spec_file, demo_file, section_file, help);
+    naca_cli_args args;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    const int parsed = bu_opt_parse(&msg, argc - 1, (const char **)(argv + 1), d);
+    const int parsed = bu_cmd_schema_parse(&naca_schema, &args, &msg, argc - 1, (const char **)(argv + 1));
 
     if (parsed < 0) {
 	const char *err = bu_vls_addr(&msg);
 	std::string msg_str = err ? err : "";
 	bu_vls_free(&msg);
-	bu_vls_free(&outfile);
-	bu_vls_free(&name);
-	bu_vls_free(&airfoil);
-	bu_vls_free(&tip_airfoil);
-	bu_vls_free(&mode);
-	bu_vls_free(&brep_surface);
-	bu_vls_free(&tip_style);
-	bu_vls_free(&tip_spec_file);
-	bu_vls_free(&demo_file);
-	bu_vls_free(&section_file);
 	throw std::runtime_error(msg_str.empty() ? "option parsing failed" : msg_str);
     }
     bu_vls_free(&msg);
 
-    if (help) {
-	usage(argv[0], d);
+    if (args.help) {
+	usage(argv[0], &naca_schema);
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    if (bu_vls_strlen(&outfile) > 0)
-	opts.outfile = bu_vls_cstr(&outfile);
-    if (bu_vls_strlen(&name) > 0)
-	opts.name = bu_vls_cstr(&name);
-    if (bu_vls_strlen(&airfoil) > 0)
-	opts.airfoil = bu_vls_cstr(&airfoil);
-    if (bu_vls_strlen(&tip_airfoil) > 0)
-	opts.tip_airfoil = bu_vls_cstr(&tip_airfoil);
-    if (bu_vls_strlen(&tip_spec_file) > 0)
-	opts.tip_spec_file = bu_vls_cstr(&tip_spec_file);
-    if (bu_vls_strlen(&demo_file) > 0)
-	opts.demo_file = bu_vls_cstr(&demo_file);
-    if (bu_vls_strlen(&section_file) > 0)
-	opts.section_file = bu_vls_cstr(&section_file);
-    std::string mode_str = bu_vls_strlen(&mode) > 0 ? bu_vls_cstr(&mode) : "bot";
-    std::string brep_surface_str = bu_vls_strlen(&brep_surface) > 0 ? bu_vls_cstr(&brep_surface) : "ruled";
-    std::string tip_style_str = bu_vls_strlen(&tip_style) > 0 ? bu_vls_cstr(&tip_style) : "rounded";
+    options opts = args.opts;
+    if (args.outfile) opts.outfile = args.outfile;
+    if (args.name) opts.name = args.name;
+    if (args.airfoil) opts.airfoil = args.airfoil;
+    if (args.tip_airfoil) opts.tip_airfoil = args.tip_airfoil;
+    if (args.tip_spec_file) opts.tip_spec_file = args.tip_spec_file;
+    if (args.demo_file) opts.demo_file = args.demo_file;
+    if (args.section_file) opts.section_file = args.section_file;
+    std::string mode_str = args.mode ? args.mode : "bot";
+    std::string brep_surface_str = args.brep_surface ? args.brep_surface : "ruled";
+    std::string tip_style_str = args.tip_style ? args.tip_style : "rounded";
 
-    bu_vls_free(&outfile);
-    bu_vls_free(&name);
-    bu_vls_free(&airfoil);
-    bu_vls_free(&tip_airfoil);
-    bu_vls_free(&mode);
-    bu_vls_free(&brep_surface);
-    bu_vls_free(&tip_style);
-    bu_vls_free(&tip_spec_file);
-    bu_vls_free(&demo_file);
-    bu_vls_free(&section_file);
-
-    if (parsed != 0) {
+    if (parsed != argc - 1) {
 	throw std::runtime_error("unexpected positional arguments");
     }
     if (mode_str == "bot") {
@@ -2772,29 +2758,7 @@ main(int argc, char **argv)
 	return write_single_wing(opts);
     } catch (const std::exception &e) {
 	bu_log("ERROR: %s\n", e.what());
-	options opts;
-	struct bu_vls outfile = BU_VLS_INIT_ZERO;
-	struct bu_vls name = BU_VLS_INIT_ZERO;
-	struct bu_vls airfoil = BU_VLS_INIT_ZERO;
-	struct bu_vls tip_airfoil = BU_VLS_INIT_ZERO;
-	struct bu_vls mode = BU_VLS_INIT_ZERO;
-	struct bu_vls brep_surface = BU_VLS_INIT_ZERO;
-	struct bu_vls tip_style = BU_VLS_INIT_ZERO;
-	struct bu_vls tip_spec_file = BU_VLS_INIT_ZERO;
-	struct bu_vls demo_file = BU_VLS_INIT_ZERO;
-	struct bu_vls section_file = BU_VLS_INIT_ZERO;
-	bool help = false;
-	usage(argv[0], option_desc(opts, outfile, name, airfoil, tip_airfoil, mode, brep_surface, tip_style, tip_spec_file, demo_file, section_file, help));
-	bu_vls_free(&outfile);
-	bu_vls_free(&name);
-	bu_vls_free(&airfoil);
-	bu_vls_free(&tip_airfoil);
-	bu_vls_free(&mode);
-	bu_vls_free(&brep_surface);
-	bu_vls_free(&tip_style);
-	bu_vls_free(&tip_spec_file);
-	bu_vls_free(&demo_file);
-	bu_vls_free(&section_file);
+	usage(argv[0], &naca_schema);
 	return EXIT_FAILURE;
     }
 

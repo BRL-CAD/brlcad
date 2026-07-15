@@ -144,39 +144,78 @@ static void find_execute_plans(struct db_i *dbip, struct bu_ptbl *results, struc
 static int find_execute_nested_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t *db_node, struct db_plan_t *plan);
 
 
-/* NB: the following table must be sorted lexically. */
+/*
+ * NB: these rows must remain sorted lexically.  The parser and the public
+ * completion/highlighting vocabulary are deliberately expanded from this one
+ * list so an interactive client cannot silently drift from db_search.
+ */
+#define DB_SEARCH_PLAN_TERMS(X) \
+    X("!",          N_NOT,          c_not,          O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("(",          N_OPENPAREN,    c_openparen,    O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X(")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-a",         N_AND,          NULL,           O_NONE, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-ab",        N_ABOVE,        c_above,        O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-above",     N_ABOVE,        c_above,        O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-and",       N_AND,          NULL,           O_NONE, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-attr",      N_ATTR,         c_attr,         O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-below",     N_BELOW,        c_below,        O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-bl",        N_BELOW,        c_below,        O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-bool",      N_BOOL,         c_bool,         O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-depth",     N_DEPTH,        c_depth,        O_ARGV, DB_SEARCH_SYNTAX_INTEGER_ARGUMENT) \
+    X("-exec",      N_EXEC,         c_exec,         O_ARGVP, DB_SEARCH_SYNTAX_EXEC_ARGUMENTS) \
+    X("-iname",     N_INAME,        c_iname,        O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-iregex",    N_IREGEX,       c_iregex,       O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-matrix",    N_MATRIX,       c_matrix,       O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV, DB_SEARCH_SYNTAX_INTEGER_ARGUMENT) \
+    X("-mindepth",  N_MINDEPTH,     c_mindepth,     O_ARGV, DB_SEARCH_SYNTAX_INTEGER_ARGUMENT) \
+    X("-name",      N_NAME,         c_name,         O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-nnodes",    N_NNODES,       c_nnodes,       O_ARGV, DB_SEARCH_SYNTAX_INTEGER_ARGUMENT) \
+    X("-not",       N_NOT,          c_not,          O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-o",         N_OR,           c_or,           O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-or",        N_OR,           c_or,           O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-param",     N_PARAM,        c_objparam,     O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-path",      N_PATH,         c_path,         O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-print",     N_PRINT,        c_print,        O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-regex",     N_REGEX,        c_regex,        O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-size",      N_SIZE,         c_size,         O_ARGV, DB_SEARCH_SYNTAX_STRING_ARGUMENT) \
+    X("-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO, DB_SEARCH_SYNTAX_NO_ARGUMENT) \
+    X("-type",      N_TYPE,         c_type,         O_ARGV, DB_SEARCH_SYNTAX_TYPE_ARGUMENT)
+
+#define DB_SEARCH_OPTION_ROW(name, node, compile, option_kind, argument) {name, node, compile, option_kind},
 static OPTION options[] = {
-    { "!",          N_NOT,          c_not,          O_ZERO },
-    { "(",          N_OPENPAREN,    c_openparen,    O_ZERO },
-    { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
-    { "-a",         N_AND,          NULL,           O_NONE },
-    { "-ab",        N_ABOVE,        c_above,        O_ZERO },
-    { "-above",     N_ABOVE,        c_above,        O_ZERO },
-    { "-and",       N_AND,          NULL,           O_NONE },
-    { "-attr",	    N_ATTR,	    c_attr,	    O_ARGV },
-    { "-below",     N_BELOW,        c_below,        O_ZERO },
-    { "-bl",        N_BELOW,        c_below,        O_ZERO },
-    { "-bool",      N_BOOL,         c_bool,	    O_ARGV },
-    { "-depth",     N_DEPTH,        c_depth,        O_ARGV },
-    { "-exec",      N_EXEC,         c_exec,         O_ARGVP},
-    { "-iname",     N_INAME,        c_iname,        O_ARGV },
-    { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
-    { "-matrix",    N_MATRIX,       c_matrix,       O_ARGV },
-    { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
-    { "-mindepth",  N_MINDEPTH,     c_mindepth,     O_ARGV },
-    { "-name",      N_NAME,         c_name,         O_ARGV },
-    { "-nnodes",    N_NNODES,       c_nnodes,       O_ARGV },
-    { "-not",       N_NOT,          c_not,          O_ZERO },
-    { "-o",         N_OR,           c_or,	    O_ZERO },
-    { "-or", 	    N_OR, 	    c_or, 	    O_ZERO },
-    { "-param",	    N_PARAM,	    c_objparam,	    O_ARGV },
-    { "-path",      N_PATH,         c_path,         O_ARGV },
-    { "-print",     N_PRINT,        c_print,        O_ZERO },
-    { "-regex",     N_REGEX,        c_regex,        O_ARGV },
-    { "-size",      N_SIZE,         c_size,         O_ARGV },
-    { "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
-    { "-type",      N_TYPE,         c_type,	    O_ARGV },
+    DB_SEARCH_PLAN_TERMS(DB_SEARCH_OPTION_ROW)
 };
+#undef DB_SEARCH_OPTION_ROW
+
+#define DB_SEARCH_SYNTAX_ROW(name, node, compile, option_kind, argument) {name, argument},
+static const struct db_search_syntax_term search_syntax_terms[] = {
+    DB_SEARCH_PLAN_TERMS(DB_SEARCH_SYNTAX_ROW)
+};
+#undef DB_SEARCH_SYNTAX_ROW
+
+extern "C" const struct db_search_syntax_term *
+db_search_syntax_terms(size_t *count)
+{
+    if (count)
+	*count = sizeof(search_syntax_terms) / sizeof(search_syntax_terms[0]);
+    return search_syntax_terms;
+}
+
+extern "C" int
+db_search_syntax_plan_start(const char *word)
+{
+    if (!word)
+	return 0;
+    return (word[0] == '-' || word[0] == '!' || word[0] == '(');
+}
+
+extern "C" int
+db_search_syntax_exec_substitution(const char *word)
+{
+    return (word && strstr(word, "{}")) ? 1 : 0;
+}
+
+#undef DB_SEARCH_PLAN_TERMS
 
 
 /* Search client data container */

@@ -1185,24 +1185,31 @@ vrml_write_make_units_str(double scale_factor)
 }
 
 
+static const struct bu_cmd_option vrml_write_schema_options[] = {
+    BU_CMD_FLAG(NULL, "bot-dump", struct vrml_write_options, bot_dump,
+	"Write a BoT dump."),
+    BU_CMD_FLAG(NULL, "evaluate-all", struct vrml_write_options, eval_all,
+	"Evaluate all CSG and BoT objects."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema vrml_write_schema = {
+    "vrml-write", "VRML writer options.", vrml_write_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
 static void
-vrml_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+vrml_write_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct vrml_write_options *options_data;
 
     BU_ALLOC(options_data, struct vrml_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
-
-    BU_OPT((*options_desc)[0], NULL, "bot-dump", NULL,
-	    NULL, &options_data->bot_dump,
-	    "BoT dump");
-
-    BU_OPT((*options_desc)[1], NULL, "evaluate-all", NULL,
-	    NULL, &options_data->eval_all,
-	    "evaluate all, CSG and BoTs");
-
-    BU_OPT_NULL((*options_desc)[2]);
+    options_data->bot_dump = 0;
+    options_data->eval_all = 0;
+    *schema = &vrml_write_schema;
 }
 
 
@@ -1380,16 +1387,25 @@ out:
 
 static const struct gcv_filter gcv_conv_vrml_write = {
     "VRML Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VRML, NULL,
-    vrml_write_create_opts, vrml_write_free_opts, vrml_write
+    NULL, vrml_write_free_opts, vrml_write
 };
 
 extern const struct gcv_filter gcv_conv_vrml_read;
 static const struct gcv_filter * const filters[] = {&gcv_conv_vrml_read, &gcv_conv_vrml_write, NULL};
+static const struct gcv_filter_schema filter_schemas[] = {
+    {&gcv_conv_vrml_write, vrml_write_create_schema_opts},
+    {NULL, NULL}
+};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
+static const struct gcv_native_plugin gcv_plugin_native_info_s = { filter_schemas };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+
+COMPILER_DLLEXPORT const struct gcv_native_plugin *
+gcv_plugin_native_info(void){ return &gcv_plugin_native_info_s; }
 
 /*
  * Local Variables:

@@ -520,37 +520,39 @@ Convert_input(struct conversion_state *pstate)
 }
 
 
+static const struct bu_cmd_option stl_read_schema_options[] = {
+    BU_CMD_FLAG(NULL, "binary", struct stl_read_options, binary,
+        "Specify that the input is in binary STL format."),
+    BU_CMD_INTEGER(NULL, "starting-ident", struct stl_read_options, starting_id, "number",
+        "Specify the starting ident for the regions created."),
+    BU_CMD_FLAG(NULL, "constant-ident", struct stl_read_options, const_id,
+        "Specify that the starting ident should remain constant."),
+    BU_CMD_INTEGER(NULL, "material", struct stl_read_options, mat_code, "code",
+        "Specify the material code assigned to created regions."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema stl_read_schema = {
+    "stl-read", "STL reader options.", stl_read_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
 static void
-stl_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+stl_read_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct stl_read_options *options_data;
 
     BU_ALLOC(options_data, struct stl_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(5 * sizeof(struct bu_opt_desc), "options_desc");
 
     options_data->binary = 0;
     options_data->starting_id = 1000;
     options_data->const_id = 0;
     options_data->mat_code = 1;
 
-    BU_OPT((*options_desc)[0], NULL, "binary", NULL,
-	    NULL, &options_data->binary,
-	    "specify that the input is in binary STL format");
-
-    BU_OPT((*options_desc)[1], NULL, "starting-ident", "number",
-	    bu_opt_int, options_data,
-	    "specify the starting ident for the regions created");
-
-    BU_OPT((*options_desc)[2], NULL, "constant-ident", NULL,
-	    NULL, &options_data->const_id,
-	    "specify that the starting ident should remain constant");
-
-    BU_OPT((*options_desc)[3], NULL, "material", "code",
-	    bu_opt_int, &options_data->mat_code,
-	    "specify the material code that will be assigned to created regions");
-
-    BU_OPT_NULL((*options_desc)[4]);
+    *schema = &stl_read_schema;
 }
 
 
@@ -676,17 +678,29 @@ stl_can_read(const char *data)
 
 static const struct gcv_filter gcv_conv_stl_read = {
     "STL Reader", GCV_FILTER_READ, BU_MIME_MODEL_STL, stl_can_read,
-    stl_read_create_opts, stl_read_free_opts, stl_read
+    NULL, stl_read_free_opts, stl_read
 };
 
 
 extern const struct gcv_filter gcv_conv_stl_write;
+extern void stl_write_create_schema_opts(const struct bu_cmd_schema **schema,
+	void **dest_options_data);
 static const struct gcv_filter * const filters[] = {&gcv_conv_stl_read, &gcv_conv_stl_write, NULL};
+static const struct gcv_filter_schema filter_schemas[] = {
+    {&gcv_conv_stl_read, stl_read_create_schema_opts},
+    {&gcv_conv_stl_write, stl_write_create_schema_opts},
+    {NULL, NULL}
+};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
+static const struct gcv_native_plugin gcv_plugin_native_info_s = { filter_schemas };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+
+COMPILER_DLLEXPORT const struct gcv_native_plugin *
+gcv_plugin_native_info(void){ return &gcv_plugin_native_info_s; }
 
 /*
  * Local Variables:

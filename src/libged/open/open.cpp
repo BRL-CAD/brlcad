@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bv/lod.h"
 #include "../../librt/librt_private.h"
 
@@ -36,15 +36,73 @@
 
 #include "../dbi.h"
 
+struct open_args {
+    int create_requested;
+    int flip_endian;
+    int help;
+    int open_only;
+};
+
+static const struct bu_cmd_option open_schema_options[] = {
+    BU_CMD_FLAG("c", "create", struct open_args, create_requested,
+	"Create a new database if the file does not already exist"),
+    BU_CMD_FLAG("f", "flip-endian", struct open_args, flip_endian,
+	"Open a binary-incompatible v4 geometry database"),
+    BU_CMD_FLAG("h", "help", struct open_args, help,
+	"Print command usage"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("o", "open", struct open_args, open_only,
+	"Require an existing database file unless --create is supplied"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand open_operands[] = {
+    BU_CMD_OPERAND("filename", BU_CMD_VALUE_FILE, 1, 1,
+	"Database filename", "ged.file_path"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema open_cmd_schema = {
+    "open", "Open a geometry database", open_schema_options, open_operands,
+    BU_CMD_PARSE_INTERSPERSED, {NULL}
+};
+static const struct bu_cmd_schema opendb_cmd_schema = {
+    "opendb", "Open a geometry database", open_schema_options, open_operands,
+    BU_CMD_PARSE_INTERSPERSED, {NULL}
+};
+static const struct bu_cmd_schema reopen_cmd_schema = {
+    "reopen", "Reopen a geometry database", NULL, open_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
+
+static void
+open_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&open_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [options] filename", command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "open native option help");
+    }
+}
+
+
+static void
+reopen_show_help(struct ged *gedp)
+{
+    bu_vls_printf(gedp->ged_result_str, "Usage: reopen filename");
+}
+
 extern "C" int
 ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int flip_endian = 0;
-    int force_create = 1;
-    int open_only = 0;
-    int print_help = 0;
+    struct open_args args = {0, 0, 0, 0};
+    int operand_index;
+    int operand_count;
+    const char **operands;
+    int is_reopen;
     const char *cmdname = argv[0];
-    static const char *usage = "[options] [filename]\n";
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -61,38 +119,49 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (!BU_STR_EQUAL(cmdname, "reopen")) {
-	struct bu_opt_desc d[5];
-	BU_OPT(d[0], "c", "create",  "",  NULL,  &force_create,  "Creates a new database if not already extant (default).");
-	BU_OPT(d[1], "f", "flip-endian",  "",  NULL,  &flip_endian,  "Opens file as a binary-incompatible v4 geometry database.");
-	BU_OPT(d[2], "h", "help",  "",  NULL,  &print_help,  "Print help.");
-	BU_OPT(d[3], "o", "open",  "",  NULL,  &open_only,  "Do not force creation of non-extant database.  Overridden by -c.");
-	BU_OPT_NULL(d[4]);
 
-	// We know we're the opendb command - start processing args
-	argc--; argv++;
-
-	int ac = bu_opt_parse(NULL, argc, argv, d);
-	argc = ac;
-
-	if (argc != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s ", cmdname);
-	    _ged_cmd_help(gedp, usage, d);
+    is_reopen = BU_STR_EQUAL(cmdname, "reopen");
+    if (!is_reopen) {
+	operand_index = bu_cmd_schema_parse(&open_cmd_schema, &args,
+	    gedp->ged_result_str, argc - 1, argv + 1);
+	if (operand_index < 0) {
+	    open_show_help(gedp, cmdname);
 	    return BRLCAD_ERROR;
 	}
+	if (args.help) {
+	    open_show_help(gedp, cmdname);
+	    return GED_HELP;
+	}
+	struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+	if (bu_cmd_schema_validate(&open_cmd_schema, (size_t)(argc - 1), argv + 1,
+		(size_t)(argc - 1), &validation) != 0 ||
+		validation.state != BU_CMD_VALIDATE_VALID) {
+	    if (validation.hint)
+		bu_vls_printf(gedp->ged_result_str, "%s\n", validation.hint);
+	    bu_cmd_validate_result_clear(&validation);
+	    open_show_help(gedp, cmdname);
+	    return BRLCAD_ERROR;
+	}
+	bu_cmd_validate_result_clear(&validation);
     } else {
-	// If we're doing reopen, the options aren't active
-	bu_vls_printf(gedp->ged_result_str, "%s filename", cmdname);
-	return BRLCAD_ERROR;
+	operand_index = bu_cmd_schema_parse_complete(&reopen_cmd_schema, NULL,
+	    gedp->ged_result_str, argc - 1, argv + 1);
+	if (operand_index < 0) {
+	    reopen_show_help(gedp);
+	    return BRLCAD_ERROR;
+	}
     }
+
+    operand_count = argc - 1 - operand_index;
+    operands = argv + 1 + operand_index;
 
     /* Before proceeding with the full open logic, see if
      * we can actually open what the caller provided */
     struct db_i *new_dbip = NULL;
-    int existing_only = (!force_create && open_only);
-    if ((new_dbip = _ged_open_dbip(argv[0], existing_only)) == DBI_NULL) {
+    int existing_only = is_reopen || (args.open_only && !args.create_requested);
+    if ((new_dbip = _ged_open_dbip(operands[0], existing_only)) == DBI_NULL) {
 
-	bu_vls_printf(gedp->ged_result_str, "ged_opendb_core: failed to open %s\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "ged_opendb_core: failed to open %s\n", operands[0]);
 
 	// If the caller has work to do after opendb call, trigger it - even
 	// though the open in its current form can't succeed, the caller may
@@ -104,20 +173,20 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 	void *opendb_clbk_data = NULL;
 	ged_clbk_get(&opendb_clbk, &opendb_clbk_data, gedp, "opendb", BU_CLBK_POST);
 	if (opendb_clbk)
-	    (*opendb_clbk)(argc, argv, (void *)gedp, opendb_clbk_data);
+	    (*opendb_clbk)(operand_count, operands, (void *)gedp, opendb_clbk_data);
 
 	return BRLCAD_ERROR;
     }
 
     /* Handle forced endian flipping, if needed and requested */
-    if (flip_endian) {
+    if (args.flip_endian) {
 	if (db_version(new_dbip) != 4) {
-	    bu_vls_printf(gedp->ged_result_str, "WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", operands[0]);
 	} else {
 	    if (new_dbip->i->dbi_version < 0) {
-		bu_vls_printf(gedp->ged_result_str, "Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", operands[0]);
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, "Treating [%s] as a binary-incompatible v4 geometry database.\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "Treating [%s] as a binary-incompatible v4 geometry database.\n", operands[0]);
 		bu_vls_printf(gedp->ged_result_str, "Endianness flipped.  Converting to READ ONLY.\n");
 		/* flip the version number to indicate a flipped database. */
 		new_dbip->i->dbi_version *= -1;
@@ -139,7 +208,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     // LoD context creation (DbiState initialization can use info
     // stored here, so do this first)
     if (gedp->new_cmd_forms)
-	gedp->ged_lod = bv_mesh_lod_context_create(argv[0]);
+	gedp->ged_lod = bv_mesh_lod_context_create(operands[0]);
 
     // If enabled, set up the DbiState container for fast structure access
     if (gedp->new_cmd_forms)
@@ -157,12 +226,12 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_OPEN_COMMANDS(X, XID) \
-    X(reopen, ged_opendb_core, GED_CMD_DEFAULT) \
-    X(opendb, ged_opendb_core, GED_CMD_DEFAULT) \
-    X(open, ged_opendb_core, GED_CMD_DEFAULT) \
+    X(reopen, ged_opendb_core, GED_CMD_DEFAULT, &reopen_cmd_schema) \
+    X(opendb, ged_opendb_core, GED_CMD_DEFAULT, &opendb_cmd_schema) \
+    X(open, ged_opendb_core, GED_CMD_DEFAULT, &open_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_OPEN_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_open", 1, GED_OPEN_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_OPEN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_open", 1, GED_OPEN_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

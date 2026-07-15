@@ -26,6 +26,7 @@
 #include <QLineEdit>
 #include <QButtonGroup>
 #include <QGroupBox>
+#include "bu/cmdschema.h"
 #include "../../../QgEdApp.h"
 #include "QEll.h"
 
@@ -202,9 +203,9 @@ QEll::update_obj_wireframe()
 
     // At least for now, mimic the MGED behavior and make editing wireframes white
     const char *wcolor = "255/255/255";
-    const char *av[2] = {wcolor, NULL};
     struct bu_color cval;
-    bu_opt_color(NULL, 1, (const char **)&av[0], (void *)&cval);
+    if (!bu_cmd_color_from_argv(&cval, 1, &wcolor))
+	return;
     bu_color_to_rgb_chars(&cval, p->s_color);
 
     // When editing, we show the labels (if any)

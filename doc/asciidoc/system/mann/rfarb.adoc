@@ -10,14 +10,20 @@ rfarb - Creates a new ARB8 shape based on rotation and fallback angles.
 
 [source]
 ----
-rfarb
+rfarb name px py pz rotation_angle fallback_angle coord1 u1 v1 coord2 u2 v2 coord3 u3 v3 thickness
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Creates a new ARB8 shape based on rotation and fallback angles. The command prompts the user for all the required information. In addition to the name for the new shape and the rotation and fallback angles, the user is prompted for the coordinates of one corner of the ARB8 and for two of the three coordinates of the other three vertices of one face of the ARB8. The other coordinate of each of these vertices is calculated in order to ensure that the face is planar. The user is then prompted for a thickness, and the first face is extruded normally by the specified thickness to complete the ARB8.
+Creates a new ARB8 shape based on rotation and fallback angles.  _px_, _py_,
+and _pz_ specify one corner of the first face.  For each of the other three
+face vertices, _coord1_, _coord2_, and _coord3_ select the coordinate to solve
+(_x_, _y_, or _z_), while the following _u_ and _v_ values provide the other
+two coordinates.  The missing coordinate is calculated so that the face is
+planar.  _thickness_ must be nonzero; the first face is extruded normally by
+that amount to complete the ARB8.
 
 
 [[examples]]
@@ -28,9 +34,10 @@ The example shows the use of the *rfarb* command to create a new ARB8 shape.
 .Create a new ARB8 shape.
 [example]
 ====
-mged>**rfarb**
+mged>**rfarb wedge.s 0 0 0 45 30 x 1 1 y 1 1 z 1 1 1**
 
-Creates a new ARB8 shape according to arguments supplied in responses to prompts.
+Creates the ARB8 _wedge.s_ using a point at the origin, the specified plane
+angles, three planar face vertices, and a thickness of 1.
 
 ====
 

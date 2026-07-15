@@ -28,9 +28,23 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
+
+
+static const struct bu_cmd_operand sphgroup_schema_operands[] = {
+    BU_CMD_OPERAND("group_name", BU_CMD_VALUE_STRING, 1, 1,
+	"Output group name", NULL),
+    BU_CMD_OPERAND("target_sphere", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Existing bounding sphere", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema sphgroup_cmd_schema = {
+    "sphgroup", "Create a group around a target sphere", NULL,
+    sphgroup_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 int
@@ -44,6 +58,8 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal sph_intern;
     struct rt_ell_internal *bsph;
     static const char *usage = "gname target_sphere.s";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -53,10 +69,21 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc != 3) {
+
+    if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+
+
+    operand_index = bu_cmd_schema_parse_complete(&sphgroup_cmd_schema,
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     if ((sphdp = db_lookup(gedp->dbip, argv[argc-1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Specified bounding sphere %s not found\n", argv[argc-1]);
@@ -108,10 +135,10 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_SPHGROUP_COMMANDS(X, XID) \
-    X(sphgroup, ged_sphgroup_core, GED_CMD_DEFAULT) \
+    X(sphgroup, ged_sphgroup_core, GED_CMD_DEFAULT, &sphgroup_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_SPHGROUP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_sphgroup", 1, GED_SPHGROUP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SPHGROUP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_sphgroup", 1, GED_SPHGROUP_COMMANDS)
 
 /*
  * Local Variables:

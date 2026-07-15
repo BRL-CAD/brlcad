@@ -28,14 +28,28 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+static const struct bu_cmd_operand title_operands[] = {
+    BU_CMD_OPERAND("title", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Database title words", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema title_cmd_schema = {
+    "title", "Get or set the database title", NULL, title_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
 
 
 int
 ged_title_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls title = BU_VLS_INIT_ZERO;
+    int parse_dummy = 0;
+    int operand_index = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -43,8 +57,15 @@ ged_title_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    operand_index = bu_cmd_schema_parse_complete(&title_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s [title words...]", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
     /* get title */
-    if (argc == 1) {
+	if (argc - 1 - operand_index == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_title);
 	return BRLCAD_OK;
     }
@@ -52,7 +73,7 @@ ged_title_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* set title */
-    bu_vls_from_argv(&title, argc-1, (const char **)argv+1);
+    bu_vls_from_argv(&title, argc - 1 - operand_index, (const char **)argv + 1 + operand_index);
 
     if (db_update_ident(gedp->dbip, bu_vls_addr(&title), gedp->dbip->dbi_local2base) < 0) {
 	bu_vls_free(&title);
@@ -67,10 +88,10 @@ ged_title_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_TITLE_COMMANDS(X, XID) \
-    X(title, ged_title_core, GED_CMD_DEFAULT) \
+    X(title, ged_title_core, GED_CMD_DEFAULT, &title_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_TITLE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_title", 1, GED_TITLE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_TITLE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_title", 1, GED_TITLE_COMMANDS)
 
 /*
  * Local Variables:

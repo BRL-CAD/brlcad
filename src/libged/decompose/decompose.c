@@ -29,16 +29,32 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
+
+
+static const struct bu_cmd_operand decompose_operands[] = {
+    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"NMG object", "ged.db_object"),
+    BU_CMD_OPERAND("prefix", BU_CMD_VALUE_STRING, 0, 1,
+	"Output name prefix", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema decompose_cmd_schema = {
+    "decompose", "Decompose an NMG object", NULL, decompose_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 int
 ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 {
     int count;
     struct bu_vls solid_name = BU_VLS_INIT_ZERO;
-    char *nmg_solid_name;
-    char *prefix;
-    char *def_prefix="sh";
+    const char *nmg_solid_name;
+    const char *prefix;
+    const char *def_prefix = "sh";
     struct model *m;
     struct nmgregion *r;
     struct model *new_m;
@@ -48,6 +64,8 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal nmg_intern;
     static const char *usage = "nmg [prefix]";
     struct bu_list *vlfree = &rt_vlfree;
+    int operand_index = 0;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -63,16 +81,18 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 2 || 3 < argc) {
+	operand_index = bu_cmd_schema_parse_complete(&decompose_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index < 1 || argc - 1 - operand_index > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
     count = 0;
-    nmg_solid_name = (char *)argv[1];
+    nmg_solid_name = argv[1 + operand_index];
 
-    if (argc > 2) {
-	prefix = (char *)argv[2];
+	if (argc - 1 - operand_index > 1) {
+	prefix = argv[2 + operand_index];
 	if (db_version(gedp->dbip) < 5 && strlen(prefix) > NAMESIZE) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Prefix %s is too long", argv[0], prefix);
 	    return BRLCAD_ERROR;
@@ -205,10 +225,10 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_DECOMPOSE_COMMANDS(X, XID) \
-    X(decompose, ged_decompose_core, GED_CMD_DEFAULT) \
+    X(decompose, ged_decompose_core, GED_CMD_DEFAULT, &decompose_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_DECOMPOSE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_decompose", 1, GED_DECOMPOSE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DECOMPOSE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_decompose", 1, GED_DECOMPOSE_COMMANDS)
 
 /*
  * Local Variables:

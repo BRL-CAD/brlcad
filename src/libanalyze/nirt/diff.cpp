@@ -150,7 +150,7 @@ struct nirt_diff_state {
     struct nirt_state *nss;
     bool run_complete = false;
 
-    struct bu_opt_desc *d = NULL;
+    const struct bu_cmd_schema *schema = NULL;
     const struct bu_cmdtab *cmds = NULL;
 };
 
@@ -1115,7 +1115,6 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
     }
     if (argc == 2) {
 	//set setting
-	struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
 	bool *setting_bool = NULL;
 	fastf_t *setting_fastf_t = NULL;
 	if (BU_STR_EQUAL(argv[0], "partitions")) setting_bool = &(nds->partitions);
@@ -1133,20 +1132,20 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 	if (BU_STR_EQUAL(argv[0], "scaled_los_tol")) setting_fastf_t = &(nds->scaled_los_tol);
 
 	if (setting_bool) {
-	    if (bu_opt_bool(&opt_msg, 1, (const char **)&argv[1], (void *)setting_bool) == -1) {
-		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_cstr(&opt_msg));
-		bu_vls_free(&opt_msg);
+	    int value = 0;
+	    if (!bu_cmd_bool_from_str(&value, argv[1])) {
+		nerr(nss, "Error: invalid boolean value: %s\n", argv[1]);
 		return -1;
 	    }
+	    *setting_bool = value != 0;
 	    return 0;
 	}
 	if (setting_fastf_t) {
 	    if (BU_STR_EQUAL(argv[1], "BN_TOL_DIST") || BU_STR_EQUIV(argv[1], "default")) {
 		*setting_fastf_t = BN_TOL_DIST;
 	    } else {
-		if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&argv[1], (void *)setting_fastf_t) == -1) {
-		    nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_cstr(&opt_msg));
-		    bu_vls_free(&opt_msg);
+		if (!bu_cmd_number_from_str(setting_fastf_t, argv[1])) {
+		    nerr(nss, "Error: invalid numeric value: %s\n", argv[1]);
 		    return -1;
 		}
 	    }
@@ -1167,8 +1166,8 @@ _nirt_diff_help(void *ndsv, int argc, const char **argv)
 
     if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
 	nout(nss, "diff [options] subcommand [args]\n");
-	if (nds->d) {
-	    char *option_help = bu_opt_describe(nds->d, NULL);
+	if (nds->schema) {
+	    char *option_help = bu_cmd_schema_describe(nds->schema);
 	    if (option_help) {
 		nout(nss, "Options:\n%s\n", option_help);
 		bu_free(option_help, "help str");
@@ -1217,19 +1216,32 @@ const struct bu_cmdtab _nirt_diff_cmds[] = {
 
 //#define NIRT_DIFF_DEBUG 1
 
+struct nirt_diff_args {
+    int help;
+};
+
+
+static const struct bu_cmd_option nirt_diff_options[] = {
+    BU_CMD_FLAG("h", "help", nirt_diff_args, help, "Print help and exit."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema nirt_diff_schema = {
+    "diff", "Compare NIRT ray results.", nirt_diff_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 extern "C" int
 _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 {
     if (!ns) return -1;
     struct nirt_state *nss = (struct nirt_state *)ns;
     struct nirt_diff_state *nds = nss->i->diff_state;
-    int help = 0;
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0],  "h", "help",       "",             NULL,   &help, "print help and exit");
-    BU_OPT_NULL(d[1]);
+    struct nirt_diff_args args = {0};
 
     // Need for help printing
-    nds->d = (struct bu_opt_desc *)d;
+    nds->schema = &nirt_diff_schema;
     nds->cmds = _nirt_diff_cmds;
 
     argv++; argc--;
@@ -1253,7 +1265,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
 
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    if (bu_opt_parse(&optparse_msg, acnt, argv, d) == -1) {
+    if (bu_cmd_schema_parse(&nirt_diff_schema, &args, &optparse_msg, acnt, argv) < 0) {
 	nerr(nss, "%s", bu_vls_cstr(&optparse_msg));
 	bu_vls_free(&optparse_msg);
 	nss->i->local2base = l2base;
@@ -1262,7 +1274,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     }
     bu_vls_free(&optparse_msg);
 
-    if (help) {
+    if (args.help) {
 	if (cmd_pos >= 0) {
 	    argc = argc - cmd_pos;
 	    argv = &argv[cmd_pos];

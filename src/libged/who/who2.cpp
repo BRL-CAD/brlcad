@@ -27,6 +27,7 @@
 
 #include <set>
 
+#include "bu/cmdschema.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "ged.h"
@@ -35,6 +36,47 @@
 #include "../ged_private.h"
 
 extern "C" int ged_who_solids_core(struct ged *gedp, int argc, const char *argv[]);
+
+
+struct who2_args {
+    int print_help;
+    struct bu_vls view;
+    int mode;
+    int expand;
+};
+
+
+static const struct bu_cmd_option who2_schema_options[] = {
+    BU_CMD_FLAG("h", "help", struct who2_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_VLS_APPEND("V", "view", struct who2_args, view, "name",
+	"Specify the view"),
+    BU_CMD_INTEGER("m", "mode", struct who2_args, mode, "number",
+	"Restrict the drawing mode"),
+    BU_CMD_FLAG("E", "expand", struct who2_args, expand,
+	"Report individual drawn objects"),
+    BU_CMD_OPTION_NULL
+};
+extern "C" const struct bu_cmd_schema ged_who_new_schema = {
+    "who", "List individually drawn objects", who2_schema_options,
+    NULL, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static void
+who2_usage(struct ged *gedp)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_who_new_schema);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage:\n"
+	"  who [options]\n"
+	"  who solids [-V view] [-m #] [level]\n");
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
+	bu_free(option_help, "who native option help");
+    }
+}
 
 /*
  * List the db objects currently drawn
@@ -52,50 +94,43 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     if (argc > 1 && (BU_STR_EQUAL(argv[1], "solids") || BU_STR_EQUAL(argv[1], "report")))
 	return ged_who_solids_core(gedp, argc, argv);
 
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    int expand = 0;
-    int print_help = 0;
-    struct bu_vls cvls = BU_VLS_INIT_ZERO;
-    static const char *usage =
-	"Usage:\n"
-	"  who [options]\n"
-	"  who solids [-V view] [-m #] [level]\n";
-    struct bu_opt_desc vd[6];
-    int mode = -1;
-    BU_OPT(vd[0],  "h", "help",    "",          NULL,        &print_help, "Print help and exit");
-    BU_OPT(vd[1],  "?", "",        "",          NULL,        &print_help, "");
-    BU_OPT(vd[2],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to work with");
-    BU_OPT(vd[3],  "m", "mode",    "#",         &bu_opt_int, &mode,   "only report paths drawn in the specified drawing mode");
-    BU_OPT(vd[4],  "E", "expand",  "",          NULL,        &expand, "report individual drawn objects");
-    BU_OPT_NULL(vd[5]);
-    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
-    if (opt_ret < 0) {
-	_ged_cmd_help(gedp, usage, vd);
-	bu_vls_free(&cvls);
+    struct who2_args args = {0, BU_VLS_INIT_ZERO, -1, 0};
+    int opt_ret = bu_cmd_schema_parse_complete(&ged_who_new_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (opt_ret < 0 || opt_ret != argc - 1) {
+	who2_usage(gedp);
+	bu_vls_free(&args.view);
 	return BRLCAD_ERROR;
     }
 
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, vd);
-	bu_vls_free(&cvls);
+    if (args.print_help) {
+	who2_usage(gedp);
+	bu_vls_free(&args.view);
 	return BRLCAD_OK;
     }
 
+    if (!ged_dl(gedp)) {
+	bu_vls_free(&args.view);
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	bu_vls_printf(gedp->ged_result_str, "A drawable does not exist.");
+	return BRLCAD_ERROR;
+    }
+
     struct bview *v = gedp->ged_gvp;
-    if (bu_vls_strlen(&cvls)) {
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	if (bu_vls_strlen(&args.view)) {
+	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&args.view));
 	if (!v) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&args.view));
+	    bu_vls_free(&args.view);
 	    return BRLCAD_ERROR;
 	}
     }
-    bu_vls_free(&cvls);
+	bu_vls_free(&args.view);
 
     /* Check that we have a view */
     if (!v) {
@@ -105,7 +140,7 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 
     DbiState *dbis = (DbiState *)gedp->dbi_state;
     BViewState *bvs = dbis->get_view_state(v);
-    std::vector<std::string> paths = bvs->list_drawn_paths(mode, (bool)!expand);
+    std::vector<std::string> paths = bvs->list_drawn_paths(args.mode, (bool)!args.expand);
     for (size_t i = 0; i < paths.size(); i++) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", paths[i].c_str());
     }

@@ -34,6 +34,7 @@
 #include "bresource.h"
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
 
@@ -324,12 +325,22 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 
 
 #include "../include/plugin.h"
+static const struct bu_cmd_operand rtcheck_schema_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Overlap-check options and objects", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema rtcheck_cmd_schema = {
+    "rtcheck", "Check displayed geometry for overlaps", NULL,
+    rtcheck_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 #define GED_RTCHECK_COMMANDS(X, XID) \
-    X(rtcheck, ged_rtcheck_core, GED_CMD_DEFAULT) \
+    X(rtcheck, ged_rtcheck_core, GED_CMD_DEFAULT, &rtcheck_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_RTCHECK_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rtcheck", 1, GED_RTCHECK_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RTCHECK_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rtcheck", 1, GED_RTCHECK_COMMANDS)
 
 /*
  * Local Variables:

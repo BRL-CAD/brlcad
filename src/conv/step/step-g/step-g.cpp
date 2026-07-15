@@ -31,7 +31,7 @@
 #include "bu/time.h"
 #include "bu/file.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/vls.h"
 
 //
@@ -55,26 +55,64 @@ usage()
 }
 
 struct OutputFile {
-    char *filename;
+    const char *filename;
     bool overwrite;
 };
 
 static int
-parse_opt_O(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+parse_opt_O(struct bu_vls *error_msg, const char *arg, void *set_var)
 {
-    int ret;
     OutputFile *ofile = (OutputFile *)set_var;
 
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "-O");
-
-    ofile->overwrite = true;
-    if (ofile) {
-	ret = bu_opt_str(error_msg, argc, argv, &ofile->filename);
-	return ret;
-    } else {
+    if (!ofile || !arg || !arg[0]) {
+	if (error_msg)
+	    bu_vls_printf(error_msg, "-O requires an output filename\n");
 	return -1;
     }
+    ofile->filename = arg;
+    ofile->overwrite = true;
+    return 0;
 }
+
+struct step_g_args {
+    int dry_run;
+    int verbose;
+    OutputFile overwrite_output;
+    const char *output_file;
+    const char *summary_log_file;
+};
+
+static const struct bu_cmd_option step_g_options[] = {
+    BU_CMD_FLAG("D", NULL, struct step_g_args, dry_run,
+	"Dry run (output file is not written)"),
+    BU_CMD_FLAG("v", NULL, struct step_g_args, verbose, "Verbose output"),
+    BU_CMD_CUSTOM("O", NULL, struct step_g_args, overwrite_output, parse_opt_O,
+	"file.g", "Set output file and permit overwrite"),
+    BU_CMD_FILE("o", NULL, struct step_g_args, output_file, "file.g",
+	"Set output file"),
+    BU_CMD_FILE("S", NULL, struct step_g_args, summary_log_file, "file",
+	"Write a conversion summary log"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand step_g_operands[] = {
+    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Input STEP file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const char *step_g_output_options[] = {"O", "o", NULL};
+static const struct bu_cmd_constraint step_g_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(step_g_output_options, 1, 1,
+	"specify exactly one of -o or -O"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
+static const struct bu_cmd_schema step_g_schema = {
+    "step-g", "Convert an ISO 10303 STEP file to a BRL-CAD database",
+    step_g_options, step_g_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, step_g_constraints)
+};
 
 int
 main(int argc, const char *argv[])
@@ -100,30 +138,28 @@ main(int argc, const char *argv[])
     // STEPfile sfile (registry, instance_list);
 
     // process command line arguments
-    static OutputFile ofile = {NULL, false};
-    static bool verbose = false;
-    static int dry_run = 0;
-    static char *summary_log_file = (char *)NULL;
+    struct step_g_args args = {0, 0, {NULL, false}, NULL, NULL};
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc options[] = {
-	{"D", "", "",         NULL,        &dry_run,          "dry run (output file not written)"},
-	{"v", "", "",         NULL,        &verbose,          "verbose"},
-	{"O", "", "filename", parse_opt_O, &ofile,            "output file (overwrite)"},
-	{"o", "", "filename", bu_opt_str,  &ofile.filename,   "output file"},
-	{"S", "", "filename", bu_opt_str,  &summary_log_file, "summary file"},
-	BU_OPT_DESC_NULL
-    };
 
     ++argv; --argc;
-    argc = bu_opt_parse(&parse_msgs, argc, argv, options);
+    int operand_index = bu_cmd_schema_parse_complete(&step_g_schema, &args,
+	&parse_msgs, argc, argv);
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
 	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
     }
-    if (argc != 1 || BU_STR_EMPTY(ofile.filename)) {
+    if (operand_index < 0) {
 	usage();
 	bu_exit(1, NULL);
     }
+    bu_vls_free(&parse_msgs);
+
+    argc -= operand_index;
+    argv += operand_index;
+    OutputFile ofile = args.overwrite_output;
+    if (!ofile.filename)
+	ofile.filename = args.output_file;
+
     if (!ofile.overwrite) {
 	/* check our inputs/outputs */
 	if (bu_file_exists(ofile.filename, NULL)) {
@@ -142,10 +178,10 @@ main(int argc, const char *argv[])
 
     STEPWrapper *step = new STEPWrapper();
 
-    step->dry_run = dry_run;
-    step->summary_log_file= summary_log_file;
+    step->dry_run = args.dry_run;
+    step->summary_log_file= const_cast<char *>(args.summary_log_file);
 
-    step->Verbose(verbose);
+    step->Verbose(args.verbose);
 
     /* load STEP file */
     if (step->load(iflnm)) {
@@ -174,7 +210,7 @@ main(int argc, const char *argv[])
 	    ret = 3;
 	} else {
 
-	    dotg->dry_run = dry_run;
+	    dotg->dry_run = args.dry_run;
 	    std::cerr << "Writing output file [" << oflnm << "] ...";
 	    if (dotg->OpenFile(oflnm)) {
 		step->convert(dotg);

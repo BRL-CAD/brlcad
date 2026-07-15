@@ -48,10 +48,10 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/glob.h"
 #include "bu/hash.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/vls.h"
 #include "raytrace.h"
 
@@ -1128,34 +1128,67 @@ _rm_execute_delete_set(struct ged *gedp, struct rm_obj_set *delete_set)
  * Main command
  * --------------------------------------------------------------------- */
 
+struct rm_args {
+    int force;
+    int recursive;
+    int dry_run;
+    int print_help;
+};
+
+static const struct bu_cmd_option rm_options[] = {
+    BU_CMD_FLAG("f", "force", struct rm_args, force, "Force deletion"),
+    BU_CMD_ALIAS_SHORT("F", "force", 1),
+    BU_CMD_FLAG("r", "recursive", struct rm_args, recursive,
+	"Recursively delete unshared descendants"),
+    BU_CMD_ALIAS_SHORT("R", "recursive", 1),
+    BU_CMD_FLAG("n", "dry-run", struct rm_args, dry_run,
+	"Report what would be deleted without modifying the database"),
+    BU_CMD_ALIAS_SHORT("N", "dry-run", 1),
+    BU_CMD_FLAG("h", "help", struct rm_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_arg_shape rm_pattern_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_CUSTOM, 1, 1,
+	"Database object, path, or glob pattern");
+static const struct bu_cmd_operand rm_operands[] = {
+    BU_CMD_OPERAND_SHAPED("objects", BU_CMD_VALUE_DB_PATH, 1,
+	BU_CMD_COUNT_UNLIMITED, NULL, "Database objects, paths, or glob patterns",
+	"ged.db_path_or_pattern", &rm_pattern_shape),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema rm_cmd_schema = {
+    "rm", "Remove database objects, paths, or matching patterns", rm_options,
+    rm_operands, BU_CMD_PARSE_INTERSPERSED, {NULL}
+};
+
+
+static void
+rm_show_help(struct ged *gedp)
+{
+    char *option_help = bu_cmd_schema_describe(&rm_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: rm [-f | --force] [-r | --recursive] [-n | --dry-run] object|path ...\n");
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s", option_help);
+	bu_free(option_help, "rm native option help");
+    }
+}
+
 int
 ged_rm_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int fflag = 0;   /* force */
-    int rflag = 0;   /* recursive */
-    int nflag = 0;   /* dry-run */
-    int print_help = 0;
+    struct rm_args options = {0, 0, 0, 0};
     int ret = BRLCAD_OK;
-    int opt_ret;
+    int operand_index = 0;
+    int operand_count = 0;
     size_t i;
     int has_object_operands = 0;
-    struct bu_opt_desc d[9];
-    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_ptbl operands = BU_PTBL_INIT_ZERO;
     struct rm_ref_graph graph;
     struct rm_obj_set delete_set;
-    static const char *usage = "Usage: rm [-f | --force] [-r | --recursive] [-n | --dry-run] object|path ...";
-
-    BU_OPT(d[0], "f", "force",     "", NULL, &fflag,      "Force deletion");
-    BU_OPT(d[1], "r", "recursive", "", NULL, &rflag,      "Recursively delete unshared descendants");
-    BU_OPT(d[2], "n", "dry-run",   "", NULL, &nflag,      "Report what would be deleted without modifying the database");
-    /* Preserve legacy uppercase short-option aliases. */
-    BU_OPT(d[3], "F", "",          "", NULL, &fflag,      "");
-    BU_OPT(d[4], "R", "",          "", NULL, &rflag,      "");
-    BU_OPT(d[5], "N", "",          "", NULL, &nflag,      "");
-    BU_OPT(d[6], "h", "help",      "", NULL, &print_help, "Print help and exit");
-    BU_OPT(d[7], "?", "",          "", NULL, &print_help, "");
-    BU_OPT_NULL(d[8]);
+    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -1165,39 +1198,36 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
-	_ged_cmd_help(gedp, usage, d);
+	rm_show_help(gedp);
 	return GED_HELP;
     }
 
-    opt_ret = bu_opt_parse(&optparse_msg, argc, argv, d);
-    if (opt_ret < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&optparse_msg));
-	bu_vls_free(&optparse_msg);
+    operand_index = bu_cmd_schema_parse(&rm_cmd_schema, &options,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	rm_show_help(gedp);
 	return BRLCAD_ERROR;
     }
-
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
-	bu_vls_free(&optparse_msg);
+    operand_count = argc - 1 - operand_index;
+    if (options.print_help) {
+	rm_show_help(gedp);
 	return GED_HELP;
     }
 
-    /* bu_opt_parse leaves unused argv entries at the front of argv,
-     * including the command name in argv[0].  Skip that command token
-     * so the remaining argc/argv pair describes only rm operands. */
-    argc = opt_ret;
-    if (argc > 0) {
-	argv++;
-	argc--;
-    }
-    bu_vls_free(&optparse_msg);
-
-    if (argc < 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+    if (bu_cmd_schema_validate(&rm_cmd_schema, (size_t)(argc - 1), argv + 1,
+	    (size_t)(argc - 1), &validation) != 0 ||
+	validation.state != BU_CMD_VALIDATE_VALID) {
+	if (validation.hint && validation.hint[0])
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", validation.hint);
+	bu_cmd_validate_result_clear(&validation);
+	rm_show_help(gedp);
 	return BRLCAD_ERROR;
     }
+    bu_cmd_validate_result_clear(&validation);
+    argv += operand_index + 1;
+    argc = operand_count;
 
-    if (!fflag && _rm_check_legacy_form(gedp, argc, argv))
+    if (!options.force && _rm_check_legacy_form(gedp, argc, argv))
 	return BRLCAD_ERROR;
 
     /* Expand glob patterns; build flat list of resolved operands */
@@ -1209,7 +1239,7 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < BU_PTBL_LEN(&operands); i++) {
 	struct bu_vls *vop = (struct bu_vls *)BU_PTBL_GET(&operands, i);
 	int handled = 0;
-	int pret = _rm_process_path_operand(gedp, bu_vls_cstr(vop), fflag, nflag, &handled);
+	int pret = _rm_process_path_operand(gedp, bu_vls_cstr(vop), options.force, options.dry_run, &handled);
 
 	if (handled && pret != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
@@ -1239,11 +1269,11 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 
 	if (_rm_plan_object_operand(gedp, &graph, &delete_set, operand,
-		    fflag, rflag, nflag) != BRLCAD_OK)
+		    options.force, options.recursive, options.dry_run) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
     }
 
-    if (!nflag && _rm_execute_delete_set(gedp, &delete_set) != BRLCAD_OK)
+    if (!options.dry_run && _rm_execute_delete_set(gedp, &delete_set) != BRLCAD_OK)
 	ret = BRLCAD_ERROR;
 
     db_update_nref(gedp->dbip);
@@ -1259,10 +1289,10 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_RM_COMMANDS(X, XID) \
-    X(rm, ged_rm_core, GED_CMD_DEFAULT) \
+    X(rm, ged_rm_core, GED_CMD_DEFAULT, &rm_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_RM_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rm", 1, GED_RM_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rm", 1, GED_RM_COMMANDS)
 
 /*
  * Local Variables:

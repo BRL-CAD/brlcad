@@ -30,10 +30,12 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/vls.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
+#include "./faceplate/faceplate.h"
 
 int
 _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
@@ -341,21 +343,29 @@ _view_cmd_ypr(void *bs, int argc, const char **argv)
 }
 
 
-struct vZ_opt {
-    int set;
-    struct bu_vls vn;
+struct view_vZ_args {
+    int help;
+    const char *near;
+    const char *far;
 };
 
-static
-int vZ_opt_read(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    struct vZ_opt *vZ = (struct vZ_opt *)set_var;
-    vZ->set = 1;
-    if (bu_opt_vls(msg, argc, argv, (void *)&vZ->vn) == 1) {
-	return 1;
-    }
-    return 0;
-}
+static const struct bu_cmd_option view_vZ_options[] = {
+    BU_CMD_FLAG("h", "help", struct view_vZ_args, help, "Print help"),
+    BU_CMD_OPTIONAL_STRING("N", "near", struct view_vZ_args, near, "obj",
+	"Find the closest view-object vertex"),
+    BU_CMD_OPTIONAL_STRING("F", "far", struct view_vZ_args, far, "obj",
+	"Find the furthest view-object vertex"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand view_vZ_operands[] = {
+    BU_CMD_OPERAND("value_or_point", BU_CMD_VALUE_RAW, 0, 3,
+	"A view-space Z value, or a model-space point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema view_vZ_native_schema = {
+    "vZ", "Query or set view-space depth", view_vZ_options, view_vZ_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 int
 _view_cmd_vZ(void *bs, int argc, const char **argv)
@@ -370,37 +380,42 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    int print_help = 0;
-    struct vZ_opt calc_near = { 0, BU_VLS_INIT_ZERO };
-    struct vZ_opt calc_far = { 0, BU_VLS_INIT_ZERO };
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help", "",       NULL,  &print_help, "Print help");
-    BU_OPT(d[1], "N", "near", "[obj]",  &vZ_opt_read,  &calc_near,  "Find vZ value of closest view obj vertex");
-    BU_OPT(d[2], "F", "far",  "[obj]",  &vZ_opt_read,  &calc_far,   "Find vZ value of furthest view obj vertex");
-    BU_OPT_NULL(d[3]);
-
     // We know we're the vZ command - start processing args
     argc--; argv++;
 
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
+    struct view_vZ_args args = {0, NULL, NULL};
+    int calc_near = bu_cmd_schema_option_present(&view_vZ_native_schema,
+	(size_t)argc, argv, "near");
+    int calc_far = bu_cmd_schema_option_present(&view_vZ_native_schema,
+	(size_t)argc, argv, "far");
+    struct bu_vls parse_msg = BU_VLS_INIT_ZERO;
+    int operand_index = bu_cmd_schema_parse(&view_vZ_native_schema, &args,
+	&parse_msg, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&parse_msg));
+    bu_vls_free(&parse_msg);
+	return BRLCAD_ERROR;
+    }
+	bu_vls_free(&parse_msg);
+    argc -= operand_index;
+    argv += operand_index;
 
-    if (print_help || (calc_near.set && calc_far.set)) {
+    if (args.help || (calc_near && calc_far)) {
 	bu_vls_printf(gedp->ged_result_str, "[WARNING] this command is deprecated - vZ values should be set on data objects\n\nUsage:\n%s", usage_string);
 	return GED_HELP;
     }
 
     int calc_mode = -1;
     struct bu_vls calc_target = BU_VLS_INIT_ZERO;
-    if (calc_near.set) {
+    if (calc_near) {
 	calc_mode = 0;
-	bu_vls_sprintf(&calc_target, "%s", bu_vls_cstr(&calc_near.vn));
-	bu_vls_free(&calc_near.vn);
+	if (args.near)
+	    bu_vls_sprintf(&calc_target, "%s", args.near);
     }
-    if (calc_far.set) {
+    if (calc_far) {
 	calc_mode = 1;
-	bu_vls_sprintf(&calc_target, "%s", bu_vls_cstr(&calc_far.vn));
-	bu_vls_free(&calc_far.vn);
+	if (args.far)
+	    bu_vls_sprintf(&calc_target, "%s", args.far);
     }
 
     if (calc_mode != -1) {
@@ -547,7 +562,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     // First, see if it's a direct low level view space Z value
     if (argc == 1) {
 	fastf_t val;
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) == 1) {
+	if (bu_cmd_number_from_str(&val, argv[0])) {
 	    gd->cv->gv_tcl.gv_data_vZ = val;
 	    return BRLCAD_OK;
 	}
@@ -556,7 +571,8 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     // If not, try it as a model space point
     if (argc == 1 || argc == 3) {
 	vect_t mpt;
-	int acnt = bu_opt_vect_t(NULL, argc, (const char **)argv, (void *)&mpt);
+	int acnt = bu_cmd_vector3_from_argv(mpt, (size_t)argc,
+	    (const char * const *)argv);
 	if (acnt != 1 && acnt != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return BRLCAD_ERROR;
@@ -641,63 +657,6 @@ _view_cmd_print(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-typedef int (*view_core_func_t)(struct ged *, int, const char **);
-
-static int
-_view_cmd_core(void *bs, int argc, const char **argv, view_core_func_t func)
-{
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    struct bview *cv = gd->gedp->ged_gvp;
-    gd->gedp->ged_gvp = gd->cv;
-    int ret = func(gd->gedp, argc, argv);
-    gd->gedp->ged_gvp = cv;
-    return ret;
-}
-
-static int
-_view_cmd_auto(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "view [options] auto [options] [object ...]";
-    const char *purpose_string = "size and center the view to frame geometry";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    return _view_cmd_core(bs, argc, argv, ged_autoview_core);
-}
-
-static int
-_view_cmd_lookat(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "view [options] lookat x y z";
-    const char *purpose_string = "point the view at model coordinates";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    return _view_cmd_core(bs, argc, argv, ged_lookat_core);
-}
-
-static int
-_view_cmd_print_subcmd(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "view [options] print";
-    const char *purpose_string = "print the current view parameters";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    return _view_cmd_core(bs, argc, argv, _view_cmd_print);
-}
-
-static int
-_view_cmd_save(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "view [options] save [-e command] [-i input] [-l log] [-o output] file [args]";
-    const char *purpose_string = "save the current view as a raytrace script";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    return _view_cmd_core(bs, argc, argv, ged_saveview_core);
-}
-
 int
 _view_cmd_knob(void *bs, int argc, const char **argv)
 {
@@ -715,51 +674,121 @@ _view_cmd_knob(void *bs, int argc, const char **argv)
     return ret;
 }
 
-const struct bu_cmdtab _view_cmds[] = {
-    { "ae",         _view_cmd_aet},
-    { "aet",        _view_cmd_aet},
-    { "auto",       _view_cmd_auto},
-    { "autoview",   _view_cmd_auto},
-    { "center",     _view_cmd_center},
-    { "dir",        _view_cmd_dir},
-    { "eye",        _view_cmd_eye},
-    { "faceplate",  _view_cmd_faceplate},
-    { "gobjs",      _view_cmd_gobjs},
-    { "height",     _view_cmd_height},
-    { "independent",_view_cmd_independent},
-    { "knob",       _view_cmd_knob},
-    { "list",       _view_cmd_list},
-    { "lod",        _view_cmd_lod},
-    { "lookat",     _view_cmd_lookat},
-    { "obj",        _view_cmd_objs},
-    { "objs",       _view_cmd_objs},
-    { "print",      _view_cmd_print_subcmd},
-    { "quat",       _view_cmd_quat},
-    { "save",       _view_cmd_save},
-    { "saveview",   _view_cmd_save},
-    { "selections", _view_cmd_selections},
-    { "size",       _view_cmd_size},
-    { "snap",       _view_cmd_snap},
-    { "vZ",         _view_cmd_vZ},
-    { "width",      _view_cmd_width},
-    { "ypr",        _view_cmd_ypr},
-    { (char *)NULL,      NULL}
+struct view_root_args {
+    int help;
+    long verbosity;
+    struct bu_vls vname;
 };
+
+static const struct bu_cmd_option view_root_options[] = {
+    BU_CMD_FLAG("h", "help", struct view_root_args, help, "Print help"),
+    BU_CMD_COUNTING_LONG_FLAG("v", "verbose", struct view_root_args, verbosity,
+	"Increase output detail"),
+    {"V", "view", "view", "name", "Target view name", BU_CMD_VALUE_VLS,
+	offsetof(struct view_root_args, vname), NULL, NULL, "ged.view", NULL, 0,
+	0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    BU_CMD_OPTION_NULL
+};
+GED_EXPORT const struct bu_cmd_schema ged_view_native_schema = {
+    "view", "Inspect and manipulate named views", view_root_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+GED_EXPORT const struct bu_cmd_schema ged_view2_native_schema = {
+    "view2", "Inspect and manipulate named views", view_root_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_operand view_tree_raw_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"View operation arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const char *view_ae_aliases[] = {"aet", NULL};
+static const char *view_obj_aliases[] = {"objs", NULL};
+
+/* The root tree replaces the old command table.  Most child schemas remain
+ * deliberately raw until their executors are migrated; native leaves such as
+ * vZ attach directly below.  This preserves one canonical child vocabulary
+ * and dispatch path while keeping the still-unmigrated syntax conservative. */
+#define GED_VIEW_TREE_CHILDREN(X) \
+    X(ae, _view_cmd_aet, "Query or set azimuth, elevation, and twist", view_ae_aliases, &view_tree_ae_schema) \
+    X(center, _view_cmd_center, "Query or set the view center", NULL, &view_tree_center_schema) \
+    X(dir, _view_cmd_dir, "Query or set view direction and optional twist", NULL, &view_tree_dir_schema) \
+    X(eye, _view_cmd_eye, "Query or set the eye point", NULL, &view_tree_eye_schema) \
+    X(gobjs, _view_cmd_gobjs, "Manage graphical view objects", NULL, &view_tree_gobjs_schema) \
+    X(height, _view_cmd_height, "Report view height", NULL, &view_tree_height_schema) \
+    X(independent, _view_cmd_independent, "Query or set independent-view state", NULL, &view_tree_independent_schema) \
+    X(knob, _view_cmd_knob, "Apply low-level view controls", NULL, &ged_view_knob_schema) \
+    X(list, _view_cmd_list, "List views", NULL, &view_tree_list_schema) \
+    X(lod, _view_cmd_lod, "Manage level-of-detail settings", NULL, &ged_view_lod_schema) \
+    X(obj, _view_cmd_objs, "Manage view objects", view_obj_aliases, &ged_view_obj_schema) \
+    X(quat, _view_cmd_quat, "Query or set view quaternion", NULL, &view_tree_quat_schema) \
+    X(selections, _view_cmd_selections, "Manage view selections", NULL, &view_tree_selections_schema) \
+    X(size, _view_cmd_size, "Query or set view size", NULL, &view_tree_size_schema) \
+    X(snap, _view_cmd_snap, "Snap view coordinates", NULL, &view_tree_snap_schema) \
+    X(width, _view_cmd_width, "Report view width", NULL, &view_tree_width_schema) \
+    X(ypr, _view_cmd_ypr, "Set yaw, pitch, and roll", NULL, &view_tree_ypr_schema)
+
+#define GED_VIEW_TREE_SCHEMA(_name, _func, _help, _aliases, _schema_ptr) \
+    static const struct bu_cmd_schema view_tree_##_name##_schema = { \
+	#_name, _help, NULL, view_tree_raw_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    };
+GED_VIEW_TREE_CHILDREN(GED_VIEW_TREE_SCHEMA)
+#undef GED_VIEW_TREE_SCHEMA
+
+#define GED_VIEW_TREE_NODE(_name, _func, _help, _aliases, _schema_ptr) \
+    BU_CMD_TREE_NODE(_schema_ptr, _aliases, NULL, \
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _func),
+static const struct bu_cmd_tree_node view_tree_subcommands[] = {
+    GED_VIEW_TREE_CHILDREN(GED_VIEW_TREE_NODE)
+    BU_CMD_TREE_NODE(&ged_faceplate_native_schema, NULL, ged_faceplate_subcommands,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _view_cmd_faceplate),
+    BU_CMD_TREE_NODE(&view_vZ_native_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _view_cmd_vZ),
+    BU_CMD_TREE_NODE_NULL
+};
+#undef GED_VIEW_TREE_NODE
+
+GED_EXPORT const struct bu_cmd_tree ged_view_tree = {
+    &ged_view_native_schema, view_tree_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+GED_EXPORT const struct bu_cmd_tree ged_view2_tree = {
+    &ged_view2_native_schema, view_tree_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+#undef GED_VIEW_TREE_CHILDREN
+
+static void
+view_tree_show_help(struct ged *gedp, const struct bu_cmd_tree *tree)
+{
+    char *help = bu_cmd_tree_describe(tree);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "view native tree help");
+    }
+}
 
 int
 ged_view_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int help = 0;
     struct _ged_view_info gd;
-    gd.gedp = gedp;
-    gd.cmds = _view_cmds;
-    gd.cv = NULL;
-    gd.verbosity = 0;
+    struct view_root_args args = {0, 0, BU_VLS_INIT_ZERO};
+    const struct bu_cmd_tree *tree = NULL;
+    const char *subcommand = NULL;
+    int cmd_pos = -1;
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
 	return BRLCAD_ERROR;
     }
+
+    tree = BU_STR_EQUAL(argv[0], "view2") ? &ged_view2_tree : &ged_view_tree;
+    gd.gedp = gedp;
+    gd.cmds = NULL;
+    gd.gopts = NULL;
+    gd.cv = NULL;
+    gd.verbosity = 0;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -767,69 +796,68 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
     // We know we're the dm command - start processing args
     argc--; argv++;
 
-    // See if we have any high level options set
-    struct bu_vls vname = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",    "",      NULL,               &help,         "Print help");
-    BU_OPT(d[1], "v", "verbose", "",      &bu_opt_incr_long,  &gd.verbosity, "Verbose output");
-    BU_OPT(d[2], "V", "view",    "name",  &bu_opt_vls,        &vname,        "Specified view (default is GED current)");
-    BU_OPT_NULL(d[3]);
-
-    gd.gopts = d;
-
     // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
     for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_view_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
+	int option_span = bu_cmd_schema_option_span(tree->root_schema,
+	    (size_t)(argc - i), argv + i);
+	if (option_span > 0) {
+	    i += option_span - 1;
+	    continue;
 	}
+	/* Keep a malformed or unknown option in the root phase so its native
+	 * parse error wins over a misleading "subcommand" diagnosis. */
+	if (option_span < 0 || (argv[i][0] == '-' && argv[i][1]))
+	    break;
+	cmd_pos = i;
+	subcommand = argv[i];
+	break;
     }
 
     // Clear out any high level opts prior to subcommand
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int ac_ret = bu_opt_parse(NULL, acnt, argv, d);
-    if (ac_ret) {
-	help = 1;
+    int ac_ret = bu_cmd_schema_parse(tree->root_schema, &args,
+	gedp->ged_result_str, acnt, argv);
+    if (ac_ret < 0 || ac_ret != acnt) {
+	args.help = 1;
     } else {
-	for (int i = 0; i < acnt; i++) {
-	    argc--; argv++;
-	}
+	argc -= acnt;
+	argv += acnt;
     }
+    gd.verbosity = args.verbosity;
 
-    if (help) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
-	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, argc, argv);
+    if (args.help) {
+	if (subcommand) {
+	    const char *sub_help[] = {subcommand, HELPFLAG};
+	    int ignored = BRLCAD_OK;
+	    (void)bu_cmd_tree_dispatch(tree, &gd, 2, sub_help, &ignored);
 	} else {
-	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
+	    view_tree_show_help(gedp, tree);
 	}
-	bu_vls_free(&vname);
+	bu_vls_free(&args.vname);
 	return BRLCAD_OK;
     }
 
     // Must have a subcommand
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
-	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
-	bu_vls_free(&vname);
+	view_tree_show_help(gedp, tree);
+	bu_vls_free(&args.vname);
 	return BRLCAD_ERROR;
     }
 
     // Either a view was specified, or we use the current view
-    if (bu_vls_strlen(&vname)) {
+    if (bu_vls_strlen(&args.vname)) {
 	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
 	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	    if (BU_STR_EQUAL(bu_vls_cstr(&vname), bu_vls_cstr(&v->gv_name))) {
+	    if (BU_STR_EQUAL(bu_vls_cstr(&args.vname), bu_vls_cstr(&v->gv_name))) {
 		gd.cv = v;
 		break;
 	    }
 	}
 	if (!gd.cv) {
-	    bu_vls_printf(gedp->ged_result_str, ": invalid view name: %s", bu_vls_cstr(&vname));
-	    bu_vls_free(&vname);
+	    bu_vls_printf(gedp->ged_result_str, ": invalid view name: %s", bu_vls_cstr(&args.vname));
+	    bu_vls_free(&args.vname);
 	    return BRLCAD_ERROR;
 	}
     } else {
@@ -838,19 +866,19 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!gd.cv) {
 	bu_vls_printf(gedp->ged_result_str, ": no view specified and no view listed as current in GED");
-	bu_vls_free(&vname);
+	bu_vls_free(&args.vname);
 	return BRLCAD_ERROR;
     }
 
     int ret;
-    if (bu_cmd(_view_cmds, argc, argv, 0, (void *)&gd, &ret) == BRLCAD_OK) {
-	bu_vls_free(&vname);
+    if (bu_cmd_tree_dispatch(tree, &gd, argc, argv, &ret) == 0) {
+	bu_vls_free(&args.vname);
 	return ret;
     } else {
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
-    bu_vls_free(&vname);
+    bu_vls_free(&args.vname);
     return BRLCAD_ERROR;
 }
 
@@ -952,29 +980,187 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_VIEW_COMMANDS(X, XID) \
-    X(ae, ged_aet_core, GED_CMD_DEFAULT) \
-    X(aet, ged_aet_core, GED_CMD_DEFAULT) \
-    X(autoview, ged_autoview_core, GED_CMD_DEFAULT) \
-    X(center, ged_center_core, GED_CMD_DEFAULT) \
-    X(data_lines, ged_view_data_lines, GED_CMD_DEFAULT) \
-    X(eye, ged_eye_core, GED_CMD_DEFAULT) \
-    X(eye_pt, ged_eye_core, GED_CMD_DEFAULT) \
-    X(lookat, ged_lookat_core, GED_CMD_DEFAULT) \
-    X(print, _view_cmd_print, GED_CMD_DEFAULT) \
-    X(quat, ged_quat_core, GED_CMD_DEFAULT) \
-    X(qvrot, ged_qvrot_core, GED_CMD_DEFAULT) \
-    X(saveview, ged_saveview_core, GED_CMD_DEFAULT) \
-    X(sdata_lines, ged_view_data_lines, GED_CMD_DEFAULT) \
-    X(size, ged_size_core, GED_CMD_DEFAULT) \
-    X(view, ged_view_core, GED_CMD_DEFAULT) \
-    X(view2, ged_view_core, GED_CMD_DEFAULT) \
-    X(view_func, ged_view_func_core, GED_CMD_DEFAULT) \
-    X(viewdir, ged_viewdir_core, GED_CMD_DEFAULT) \
-    X(ypr, ged_ypr_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand view_child_args[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"View operation arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_option view_increment_options[] = {
+    BU_CMD_FLAG_UNBOUND("i", NULL, "i", "Apply an incremental change"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand view_aet_operands[] = {
+    BU_CMD_OPERAND("angles", BU_CMD_VALUE_RAW, 0, 3,
+	"Packed AET vector, or azimuth elevation and optional twist", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand view_center_operands[] = {
+    BU_CMD_OPERAND("center", BU_CMD_VALUE_RAW, 0, 3,
+	"Packed center point, XYZ components, or -v", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand view_point_operands[] = {
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_RAW, 1, 3, "Packed point or XYZ components", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand view_xyz_operands[] = {
+    BU_CMD_OPERAND("components", BU_CMD_VALUE_NUMBER, 3, 3, "XYZ components", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand view_quat_operands[] = {
+    BU_CMD_OPERAND("quaternion", BU_CMD_VALUE_NUMBER, 4, 4, "Quaternion components", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand view_size_operands[] = {
+    BU_CMD_OPERAND("size", BU_CMD_VALUE_NUMBER, 0, 1, "Optional new view size", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand view_qvrot_operands[] = {
+    BU_CMD_OPERAND("axis_and_angle", BU_CMD_VALUE_NUMBER, 3, 4,
+	"Rotation axis and optional angle", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_option autoview_schema_options[] = {
+    BU_CMD_FLAG_UNBOUND("h", "help", "help", "Print help"),
+    BU_CMD_FLAG_UNBOUND(NULL, "all-objs", "all-objs", "Bound all non-faceplate view objects"),
+    BU_CMD_VALUE_UNBOUND("s", "scale", "scale", BU_CMD_VALUE_NUMBER, "number", "View scale"),
+    {"V", "view", "view", "name", "Target view", BU_CMD_VALUE_STRING,
+	BU_CMD_STORAGE_NONE, NULL, NULL, "ged.view", NULL, 0, 0, NULL,
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand autoview_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+	"Objects to bound", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_option saveview_options[] = {
+    BU_CMD_VALUE_UNBOUND("e", NULL, "e", BU_CMD_VALUE_FILE, "program", "Raytrace executable"),
+    BU_CMD_VALUE_UNBOUND("i", NULL, "i", BU_CMD_VALUE_FILE, "file", "Input database file"),
+    BU_CMD_VALUE_UNBOUND("l", NULL, "l", BU_CMD_VALUE_FILE, "file", "Log output file"),
+    BU_CMD_VALUE_UNBOUND("o", NULL, "o", BU_CMD_VALUE_FILE, "file", "Pixel output file"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand saveview_operands[] = {
+    BU_CMD_OPERAND("script", BU_CMD_VALUE_FILE, 1, 1, "Output shell script", "ged.file_path"),
+    BU_CMD_OPERAND("rt_arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Additional raytrace arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+#define VIEW_SCHEMA(_id, _name, _help, _opts, _ops, _policy) \
+    static const struct bu_cmd_schema _id##_cmd_schema = { \
+	_name, _help, _opts, _ops, _policy, {NULL} \
+    }
+VIEW_SCHEMA(ae, "ae", "Query or set azimuth, elevation, and twist", view_increment_options, view_aet_operands, BU_CMD_PARSE_INTERSPERSED);
+VIEW_SCHEMA(aet, "aet", "Query or set azimuth, elevation, and twist", view_increment_options, view_aet_operands, BU_CMD_PARSE_INTERSPERSED);
+VIEW_SCHEMA(autoview, "autoview", "Fit the view to objects", autoview_schema_options, autoview_operands, BU_CMD_PARSE_INTERSPERSED);
+VIEW_SCHEMA(center, "center", "Query or set the view center", NULL, view_center_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+VIEW_SCHEMA(eye, "eye", "Query or set the eye point", NULL, view_point_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+VIEW_SCHEMA(eye_pt, "eye_pt", "Query or set the eye point", NULL, view_point_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+VIEW_SCHEMA(lookat, "lookat", "Aim the view at a point", NULL, view_xyz_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+VIEW_SCHEMA(print, "print", "Print view parameters", NULL, NULL, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+VIEW_SCHEMA(quat, "quat", "Set the view quaternion", NULL, view_quat_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+VIEW_SCHEMA(qvrot, "qvrot", "Rotate the view about an axis", view_increment_options, view_qvrot_operands, BU_CMD_PARSE_INTERSPERSED);
+VIEW_SCHEMA(saveview, "saveview", "Write a raytrace shell script for the view", saveview_options, saveview_operands, BU_CMD_PARSE_INTERSPERSED);
+VIEW_SCHEMA(size, "size", "Query or set view size", NULL, view_size_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+VIEW_SCHEMA(viewdir, "viewdir", "Report the view direction", view_increment_options, NULL, BU_CMD_PARSE_INTERSPERSED);
+VIEW_SCHEMA(ypr, "ypr", "Set yaw, pitch, and roll", NULL, view_xyz_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+#undef VIEW_SCHEMA
 
-GED_DECLARE_COMMAND_SET(GED_VIEW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_view", 1, GED_VIEW_COMMANDS)
+#define VIEW_LINES_SCHEMA(_id, _name, _help) \
+    static const struct bu_cmd_schema _id##_schema = { \
+	_name, _help, NULL, view_child_args, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL} \
+    }
+VIEW_LINES_SCHEMA(view_lines_draw, "draw", "Query or set line drawing");
+VIEW_LINES_SCHEMA(view_lines_color, "color", "Query or set line color");
+VIEW_LINES_SCHEMA(view_lines_width, "line_width", "Query or set line width");
+VIEW_LINES_SCHEMA(view_lines_points, "points", "Query or set line points");
+VIEW_LINES_SCHEMA(view_lines_snap, "snap", "Query or set line snapping");
+#undef VIEW_LINES_SCHEMA
+static const struct bu_cmd_tree_node view_lines_subcommands[] = {
+    BU_CMD_TREE_NODE(&view_lines_draw_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&view_lines_color_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&view_lines_width_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&view_lines_points_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&view_lines_snap_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_schema data_lines_root_schema = {
+    "data_lines", "Manage transient view lines", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_schema sdata_lines_root_schema = {
+    "sdata_lines", "Manage shared transient view lines", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_tree data_lines_tree = {
+    &data_lines_root_schema, view_lines_subcommands, BU_CMD_TREE_CHILD_FIRST
+};
+static const struct bu_cmd_tree sdata_lines_tree = {
+    &sdata_lines_root_schema, view_lines_subcommands, BU_CMD_TREE_CHILD_FIRST
+};
+static const char * const autoview_aliases[] = {"auto", NULL};
+static const char * const saveview_aliases[] = {"save", NULL};
+static const struct bu_cmd_schema view_func_root_schema = {
+    "view_func", "Legacy view operation dispatcher", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_tree_node view_func_subcommands[] = {
+    BU_CMD_TREE_NODE(&ae_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&autoview_cmd_schema, autoview_aliases, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&center_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&eye_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&lookat_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&print_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&quat_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&qvrot_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&saveview_cmd_schema, saveview_aliases, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&size_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&ypr_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree view_func_tree = {
+    &view_func_root_schema, view_func_subcommands, BU_CMD_TREE_CHILD_FIRST
+};
+
+#define VIEW_TREE_GRAMMAR(_id, _tree, _name, _help) \
+    static int _id##_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos, struct ged_cmd_validate_result *result) \
+    { return ged_cmd_tree_validate(gedp, &_tree, input, cursor_pos, result); } \
+    static int _id##_grammar_analyze(struct ged *gedp, const char *input, struct ged_cmd_analysis *analysis) \
+    { return ged_cmd_tree_analyze(gedp, &_tree, input, analysis); } \
+    static char *_id##_grammar_json(void) { return bu_cmd_tree_describe_json(&_tree); } \
+    static int _id##_grammar_lint(struct bu_vls *msgs) { return bu_cmd_tree_lint(&_tree, msgs); } \
+    static const struct ged_cmd_grammar _id##_grammar = { \
+	_name, _help, _id##_grammar_validate, _id##_grammar_analyze, _id##_grammar_json, _id##_grammar_lint \
+    }
+VIEW_TREE_GRAMMAR(data_lines, data_lines_tree, "data_lines", "Manage transient view lines");
+VIEW_TREE_GRAMMAR(sdata_lines, sdata_lines_tree, "sdata_lines", "Manage shared transient view lines");
+VIEW_TREE_GRAMMAR(view_func, view_func_tree, "view_func", "Legacy view operation dispatcher");
+#undef VIEW_TREE_GRAMMAR
+
+#define GED_VIEW_COMMANDS(X, XID, N, NID, G, GID) \
+    N(ae, ged_aet_core, GED_CMD_DEFAULT, &ae_cmd_schema) \
+    N(aet, ged_aet_core, GED_CMD_DEFAULT, &aet_cmd_schema) \
+    N(autoview, ged_autoview_core, GED_CMD_DEFAULT, &autoview_cmd_schema) \
+    N(center, ged_center_core, GED_CMD_DEFAULT, &center_cmd_schema) \
+    G(data_lines, ged_view_data_lines, GED_CMD_DEFAULT, &data_lines_grammar) \
+    N(eye, ged_eye_core, GED_CMD_DEFAULT, &eye_cmd_schema) \
+    N(eye_pt, ged_eye_core, GED_CMD_DEFAULT, &eye_pt_cmd_schema) \
+    N(lookat, ged_lookat_core, GED_CMD_DEFAULT, &lookat_cmd_schema) \
+    N(print, _view_cmd_print, GED_CMD_DEFAULT, &print_cmd_schema) \
+    N(quat, ged_quat_core, GED_CMD_DEFAULT, &quat_cmd_schema) \
+    N(qvrot, ged_qvrot_core, GED_CMD_DEFAULT, &qvrot_cmd_schema) \
+    N(saveview, ged_saveview_core, GED_CMD_DEFAULT, &saveview_cmd_schema) \
+    G(sdata_lines, ged_view_data_lines, GED_CMD_DEFAULT, &sdata_lines_grammar) \
+    N(size, ged_size_core, GED_CMD_DEFAULT, &size_cmd_schema) \
+    G(view, ged_view_core, GED_CMD_DEFAULT, &ged_view_grammar) \
+    G(view2, ged_view_core, GED_CMD_DEFAULT, &ged_view2_grammar) \
+    G(view_func, ged_view_func_core, GED_CMD_DEFAULT, &view_func_grammar) \
+    N(viewdir, ged_viewdir_core, GED_CMD_DEFAULT, &viewdir_cmd_schema) \
+    N(ypr, ged_ypr_core, GED_CMD_DEFAULT, &ypr_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_VIEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_view", 1, GED_VIEW_COMMANDS)
 
 /*
  * Local Variables:
