@@ -4,20 +4,35 @@
 :manmanual: BRL-CAD MGED Commands
 
 == NAME
-view - Gets/sets the view parameters (local units).
+view, view2 - get or set view parameters (local units).
 
 == SYNOPSIS
 
 [source]
 ----
-view ae|aet|auto|center|dir|eye|knob|lookat|print|quat|save|size|ypr [args]
+view [*-h* | *--help*] [*-v* | *--verbose*] [*-V* _name_ | *--view* _name_] _subcommand_ [_args_]
+view2 [*-h* | *--help*] [*-v* | *--verbose*] [*-V* _name_ | *--view* _name_] _subcommand_ [_args_]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Gets/sets view parameters in local units. The *view* command accepts the following subcommands:
+Gets/sets view parameters in local units. The *view* and *view2* commands use
+the same parser-owned command tree: top-level options must precede the
+subcommand, after which the selected operation owns its arguments. This keeps
+option completion and validation in the correct phase instead of mistaking an
+operation argument for a top-level option.
+
+The direct tree subcommands are *ae* (with accepted compatibility alias
+*aet*), *center*, *dir*, *eye*, *faceplate*, *gobjs*, *height*, *independent*, *knob*,
+*list*, *lod*, *obj* (with accepted compatibility alias *objs*), *quat*,
+*selections*, *size*, *snap*, *vZ*, *width*, and *ypr*. Completion suggests
+the canonical spellings *ae* and *obj*. A `--` marker ends top-level option
+parsing before the subcommand.
+
+The operation descriptions below include the established classic view forms
+and the syntax implemented by their individual operation commands.
 
 
 [[options]]
@@ -69,6 +84,31 @@ Manipulate options for the faceplate.
 
 *lookat* _x y z_::
 Adjusts the current view such that the eye is looking in the direction of the given coordinates, but does not move the eye point nor change the view size. Center, azimuth, and elevation will change.
+
+
+*obj* _name_ *axes* [_options_] _subcommand_ [_args_]::
+Create or edit a model-space data-axes view object.  The axes subcommands are
+`create`, `pos`, `size`, `line_width`, and `axes_color`; see
+*view_obj_axes*(nged) for their syntax and query/set behavior.
+
+*obj* [*-L*] [*-G* | *--view_only*] [_name_ [_operation_ [_args_]]]::
+List view objects when _name_ is omitted, or operate on the named view object.
+`-L` limits lookup or creation to the current view; `-G` selects
+geometry-backed objects and `--view_only` selects view-only objects.  The
+operations `draw [UP|DOWN]`, `del`, `lcnt`, and `update [x y]` respectively
+query/set drawing state, delete a view-only object, report vlist entities, and
+refresh an object (with an optional nonnegative screen-coordinate pair).
+`color [-r|--recursive] [color]` queries or sets the object color; a color may
+be a packed color accepted by the common color parser or three separate RGB
+components.  `arrow [0|1|width [size]|length [size]]` controls an arrow for
+objects that support one.  `label`, `line`, and `polygon` select their
+corresponding object-operation families.  `line` has native `create` and
+`append` operations, each accepting a packed XYZ point or three finite
+coordinates.  `label create text x y [z] [px py pz]` creates a label at a
+screen or model point, with an optional target line.  `polygon` retains its
+native `create`, point-editing, contour, fill, import/export, overlap, and
+CSG operations; see *view_obj_polygon*(nged) for their syntax and validation
+rules.
 
 
 *print*::

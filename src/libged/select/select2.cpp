@@ -107,7 +107,8 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "../ged_private.h"
 
 #include "../dbi.h"
@@ -115,7 +116,64 @@
 struct _ged_select_info {
     struct ged *gedp;
     struct bu_vls curr_set;
+    int help;
 };
+
+
+static const struct bu_cmd_option select2_root_options[] = {
+    BU_CMD_FLAG("h", "help", struct _ged_select_info, help,
+	"Print help and exit"),
+    BU_CMD_VLS_APPEND("S", "set", struct _ged_select_info, curr_set, "name",
+	"Specify the selection set to operate on"),
+    BU_CMD_OPTION_NULL
+};
+extern "C" GED_EXPORT const struct bu_cmd_schema ged_select_new_schema = {
+    "select", "Manage selection sets", select2_root_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_operand select2_path_operands[] = {
+    BU_CMD_OPERAND("paths", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+	"Database paths", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand select2_set_pattern_operands[] = {
+    BU_CMD_OPERAND("set_name_pattern", BU_CMD_VALUE_STRING, 0, 1,
+	"Selection-set name or pattern", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema select2_add_schema = {
+    "add", "Add paths to a selection set", NULL, select2_path_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema select2_rm_schema = {
+    "rm", "Remove paths from a selection set", NULL, select2_path_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema select2_clear_schema = {
+    "clear", "Clear one or more selection sets", NULL, select2_set_pattern_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema select2_collapse_schema = {
+    "collapse", "Collapse one or more selection sets", NULL, select2_set_pattern_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema select2_expand_schema = {
+    "expand", "Expand one or more selection sets", NULL, select2_set_pattern_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema select2_list_schema = {
+    "list", "List selection sets or their contents", NULL, select2_set_pattern_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static int
+select2_parse_subcommand(struct ged *gedp, const struct bu_cmd_schema *schema,
+	int argc, const char *argv[])
+{
+    return bu_cmd_schema_parse_complete(schema, NULL, gedp->ged_result_str,
+	argc, argv) < 0 ? BRLCAD_ERROR : BRLCAD_OK;
+}
 
 int
 _select_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
@@ -145,6 +203,8 @@ _select_cmd_list(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
+    if (select2_parse_subcommand(gedp, &select2_list_schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
     if (!gedp->dbi_state || argc > 1)
 	return BRLCAD_ERROR;
 
@@ -188,6 +248,8 @@ _select_cmd_clear(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
+    if (select2_parse_subcommand(gedp, &select2_clear_schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
@@ -230,10 +292,8 @@ _select_cmd_add(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
-    if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "need at least one path to add");
+    if (select2_parse_subcommand(gedp, &select2_add_schema, argc, argv) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-    }
 
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
@@ -284,10 +344,8 @@ _select_cmd_rm(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
-    if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "need at least one path to remove");
+    if (select2_parse_subcommand(gedp, &select2_rm_schema, argc, argv) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-    }
 
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
@@ -336,6 +394,8 @@ _select_cmd_collapse(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
+    if (select2_parse_subcommand(gedp, &select2_collapse_schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
@@ -384,6 +444,8 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
+    if (select2_parse_subcommand(gedp, &select2_expand_schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
@@ -420,21 +482,44 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-const struct bu_cmdtab _select_cmds[] = {
-    { "add",        _select_cmd_add},
-    { "clear",      _select_cmd_clear},
-    { "collapse",   _select_cmd_collapse},
-    { "expand",     _select_cmd_expand},
-    { "list",       _select_cmd_list},
-    { "rm",         _select_cmd_rm},
-    { (char *)NULL,      NULL}
+#define GED_SELECT2_SUBCOMMANDS(X) \
+    X(add, _select_cmd_add, &select2_add_schema) \
+    X(clear, _select_cmd_clear, &select2_clear_schema) \
+    X(collapse, _select_cmd_collapse, &select2_collapse_schema) \
+    X(expand, _select_cmd_expand, &select2_expand_schema) \
+    X(list, _select_cmd_list, &select2_list_schema) \
+    X(rm, _select_cmd_rm, &select2_rm_schema)
+
+#define GED_SELECT2_TREE_ENTRY(_name, _func, _schema) \
+    BU_CMD_TREE_NODE(_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _func),
+static const struct bu_cmd_tree_node select2_subcommands[] = {
+    GED_SELECT2_SUBCOMMANDS(GED_SELECT2_TREE_ENTRY)
+    BU_CMD_TREE_NODE_NULL
 };
+#undef GED_SELECT2_TREE_ENTRY
+
+extern "C" GED_EXPORT const struct bu_cmd_tree ged_select_new_tree = {
+    &ged_select_new_schema, select2_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+#undef GED_SELECT2_SUBCOMMANDS
+
+
+static void
+select2_show_help(struct ged *gedp)
+{
+    char *help = bu_cmd_tree_describe(&ged_select_new_tree);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "select native tree help");
+    }
+}
 
 
 extern "C" int
 ged_select2_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int help = 0;
     struct _ged_select_info gd;
 
     // Sanity
@@ -445,6 +530,7 @@ ged_select2_core(struct ged *gedp, int argc, const char *argv[])
     // Initialize select info
     gd.gedp = gedp;
     bu_vls_init(&gd.curr_set);
+    gd.help = 0;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -452,46 +538,50 @@ ged_select2_core(struct ged *gedp, int argc, const char *argv[])
     // We know we're the select command - start processing args
     argc--; argv++;
 
-    // See if we have any high level options set
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help", "",      NULL,          &help,         "Print help");
-    BU_OPT(d[1], "S", "set",  "name",  &bu_opt_vls,   &gd.curr_set,  "Specify set to operate on");
-    BU_OPT_NULL(d[2]);
-
     // High level options are only defined prior to the subcommand
     int cmd_pos = -1;
+    const char *subcommand = NULL;
     for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_select_cmds, argv[i]) == BRLCAD_OK) {
+	if (bu_cmd_tree_find_subcommand(&ged_select_new_tree, argv[i])) {
 	    cmd_pos = i;
+	    subcommand = argv[i];
 	    break;
 	}
     }
 
-    // Clear out any high level opts prior to subcommand
+    // Consume only the native root options preceding the selected subcommand.
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int ac_ret = bu_opt_parse(NULL, acnt, argv, d);
-    if (ac_ret) {
-	help = 1;
+    int ac_ret = bu_cmd_schema_parse(&ged_select_new_schema, &gd,
+	gedp->ged_result_str, acnt, argv);
+    if (ac_ret < 0 || ac_ret != acnt) {
+	gd.help = 1;
     } else {
-	for (int i = 0; i < acnt; i++) {
-	    argc--; argv++;
-	}
+	argc -= acnt;
+	argv += acnt;
     }
 
-    if (help) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
-	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_select_cmds, "select", "[options] subcommand [args]", &gd, argc, argv);
-	} else {
-	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_select_cmds, "select", "[options] subcommand [args]", &gd, 0, NULL);
+
+    if (gd.help) {
+	select2_show_help(gedp);
+	if (subcommand) {
+	    const char *sub_help[] = {subcommand, HELPFLAG};
+	    int ignored = BRLCAD_OK;
+	    (void)bu_cmd_tree_dispatch(&ged_select_new_tree, (void *)&gd,
+		2, sub_help, &ignored);
 	}
 	bu_vls_free(&gd.curr_set);
 	return BRLCAD_OK;
     }
 
+
+    if (!argc) {
+	select2_show_help(gedp);
+	bu_vls_free(&gd.curr_set);
+	return GED_HELP;
+    }
+
     int ret;
-    if (bu_cmd(_select_cmds, argc, argv, 0, (void *)&gd, &ret) == BRLCAD_OK) {
+    if (bu_cmd_tree_dispatch(&ged_select_new_tree, (void *)&gd, argc, argv, &ret) == 0) {
 	bu_vls_free(&gd.curr_set);
 	return ret;
     } else {

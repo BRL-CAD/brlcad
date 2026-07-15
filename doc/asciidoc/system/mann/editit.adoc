@@ -10,9 +10,7 @@ editit - open a file in an external text editor
 
 [source]
 ----
-editit [opts] <filename>
-editit -f <file>
-editit -e <editstring> <filename>
+editit [-e editstring] (-f file | file)
 ----
 
 
@@ -21,7 +19,8 @@ editit -e <editstring> <filename>
 
 The *editit* command opens a file in an external text editor. The editor used is determined by the current environment (typically the `EDITOR` environment variable or a system default).
 
-The file to edit can be specified as a positional argument or via the `-f` option. Only one file specification is allowed per invocation.
+The file to edit can be specified as a positional argument or via the `-f`
+option. Exactly one file specification is required per invocation.
 
 === Options
 

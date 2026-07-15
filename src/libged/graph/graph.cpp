@@ -68,10 +68,109 @@
 #include <limits>
 
 #include "bu/vls.h"
+#include "bu/cmdschema.h"
 #include "bu/malloc.h"
 #include "bu/hash.h"
-#include "bu/opt.h"
 #include "ged.h"
+
+struct graph_args {
+    int print_help;
+    int tree_mode;
+    int skip_routing;
+    int depth_limit;
+    std::vector<std::string> roots;
+    int igraph_mode;
+};
+
+static int
+graph_root_object_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "root object is required\n");
+	return -1;
+    }
+    if (storage)
+	static_cast<std::vector<std::string> *>(storage)->emplace_back(arg);
+    return 0;
+}
+
+static int
+graph_svg_output_validate(struct bu_vls *msg, const char *arg)
+{
+    size_t len;
+
+    if (!arg || !(len = strlen(arg)) || len < 4 ||
+	strcmp(arg + len - 4, ".svg")) {
+	if (msg)
+	    bu_vls_printf(msg, "graph output file must end in .svg\n");
+	return -1;
+    }
+    return 0;
+}
+
+static const struct bu_cmd_option graph_options[] = {
+    BU_CMD_FLAG("h", "help", struct graph_args, print_help,
+	"Show help and exit"),
+    BU_CMD_FLAG(NULL, "tree", struct graph_args, tree_mode,
+	"Collapse layout to a spanning tree"),
+    BU_CMD_FLAG(NULL, "skip-routing", struct graph_args, skip_routing,
+	"Skip connector routing"),
+    BU_CMD_NONNEGATIVE_INTEGER(NULL, "depth", struct graph_args, depth_limit,
+	"depth", "Limit traversal depth"),
+    {NULL, "root-obj", "root-obj", "object", "Specify a traversal root",
+	BU_CMD_VALUE_CUSTOM, offsetof(struct graph_args, roots), graph_root_object_parse,
+	NULL, "ged.db_object", NULL, 1, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    BU_CMD_FLAG(NULL, "igraph", struct graph_args, igraph_mode,
+	"Use legacy textual graph mode"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand graph_svg_operands[] = {
+    BU_CMD_OPERAND_VALIDATE("output_svg", BU_CMD_VALUE_FILE, 1, 1,
+	graph_svg_output_validate, "SVG output file", "ged.file_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const graph_igraph_keywords[] = {"show", "positions", NULL};
+static const struct bu_cmd_operand graph_igraph_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("igraph_command", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Legacy graph operation", NULL, graph_igraph_keywords),
+    BU_CMD_OPERAND_NULL
+};
+
+static int
+graph_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema mode = *schema;
+    int igraph;
+    int ret;
+
+    mode.validation.custom_validate = NULL;
+    igraph = bu_cmd_schema_option_present(schema, argc, argv, "igraph");
+    mode.operands = igraph ? graph_igraph_operands : graph_svg_operands;
+    ret = bu_cmd_schema_validate(&mode, argc, argv, cursor_arg, result);
+    if (ret || !igraph || bu_cmd_schema_operand_count(schema, argc, argv) ||
+	cursor_arg < argc)
+	return ret;
+
+    /* Once legacy mode is selected, the next meaningful word is its
+     * operation.  Prefer that vocabulary over interspersed root options. */
+    bu_cmd_validate_result_clear(result);
+    result->state = BU_CMD_VALIDATE_INCOMPLETE;
+    result->token_start = cursor_arg;
+    result->token_end = cursor_arg;
+    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->completion_type = BU_CMD_VALUE_KEYWORD;
+    result->hint = "legacy graph operation";
+    bu_cmd_keyword_candidates(result, graph_igraph_keywords, "");
+    return 0;
+}
+
+static const struct bu_cmd_schema graph_cmd_schema = {
+    "graph", "Generate an SVG hierarchy graph or legacy graph data",
+    graph_options, graph_svg_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(graph_schema_validate, NULL)
+};
 
 #ifdef HAVE_ADAPTAGRAMS
 
@@ -898,70 +997,21 @@ hl_layout_and_output(struct ged *gedp, const graph_opts &opts)
     ofs.close();
 }
 
-/* -------------------------------------------------------------------- */
-/* bu_opt option parsing callbacks                                      */
-/* -------------------------------------------------------------------- */
-/* Signature: int cb(struct bu_vls *msgs, size_t argc, const char **argv, void *set)
- * Return number of argv entries consumed (1 for flag, 2 for flag+arg), or -1 on error.
- */
-
-static int
-opt_igraph_cb(struct bu_vls * /*msgs*/, size_t argc, const char **argv, void *set)
+static void
+graph_usage(struct ged *gedp)
 {
-    if (argc < 1) return 0;
-    (void)argv;
-    graph_opts *go = (graph_opts *)set;
-    go->igraph_mode = true;
-    return 1;
-}
+    char *option_help = bu_cmd_schema_describe(&graph_cmd_schema);
 
-static int
-opt_tree_cb(struct bu_vls * /*msgs*/, size_t argc, const char **argv, void *set)
-{
-    if (argc < 1) return 0;
-    (void)argv;
-    graph_opts *go = (graph_opts *)set;
-    go->tree_mode = true;
-    return 1;
-}
-
-static int
-opt_skip_rt_cb(struct bu_vls * /*msgs*/, size_t argc, const char **argv, void *set)
-{
-    if (argc < 1) return 0;
-    (void)argv;
-    graph_opts *go = (graph_opts *)set;
-    go->skip_routing = true;
-    return 1;
-}
-
-static int
-opt_depth_cb(struct bu_vls *msgs, size_t argc, const char **argv, void *set)
-{
-    if (argc < 2) {
-	if (msgs) bu_vls_printf(msgs, "--depth requires a value\n");
-	return -1;
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage:\n"
+	"  graph [options] output.svg\n"
+	"  graph --igraph [show|positions]\n");
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s", option_help);
+	bu_free(option_help, "native graph option help");
     }
-    char *endp = NULL;
-    long v = strtol(argv[1], &endp, 10);
-    if (!endp || *endp != '\0' || v < 0) {
-	if (msgs) bu_vls_printf(msgs, "Invalid depth value: %s\n", argv[1]);
-	return -1;
-    }
-    graph_opts *go = (graph_opts *)set;
-    go->have_depth_limit = true;
-    go->depth_limit = (int)v;
-    return 2;
 }
 
-static int
-opt_root_cb(struct bu_vls * /*msgs*/, size_t argc, const char **argv, void *set)
-{
-    if (argc < 2) return -1;
-    graph_opts *go = (graph_opts *)set;
-    go->roots.emplace_back(argv[1]);
-    return 2;
-}
 
 /* -------------------------------------------------------------------- */
 /* Dispatcher                                                           */
@@ -973,49 +1023,38 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    graph_args args = {0, 0, 0, -1, std::vector<std::string>(), 0};
     graph_opts opts;
-    int print_help = 0;
-
-    const struct bu_opt_desc d[] = {
-	{"h", "help",        "",    NULL,    (void *)&print_help, "Show help and exit"},
-	{"",  "tree",        "",    opt_tree_cb,   (void *)&opts, "Collapse layout to spanning tree"},
-	{"",  "skip-routing","",    opt_skip_rt_cb,(void *)&opts, "Skip connector routing in new mode"},
-	{"",  "depth",       "D",   opt_depth_cb,  (void *)&opts, "Limit traversal depth (non-negative)"},
-	{"",  "root-obj",    "OBJ", opt_root_cb,   (void *)&opts, "Specify a root object (repeatable)"},
-	{"",  "igraph",      "",    opt_igraph_cb, (void *)&opts, "Enable legacy igraph textual mode"},
-	BU_OPT_DESC_NULL
-    };
+    const char **operands;
+    int operand_index;
+    int operand_count;
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
-    int optargc = bu_opt_parse(NULL, (size_t)argc, argv, d);
-    if (optargc < 0) {
-	bu_vls_printf(gedp->ged_result_str, "graph: option parse error\n");
+    operand_index = bu_cmd_schema_parse(&graph_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0)
 	return BRLCAD_ERROR;
-    }
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    opts.igraph_mode = args.igraph_mode;
+    opts.tree_mode = args.tree_mode;
+    opts.skip_routing = args.skip_routing;
+    opts.have_depth_limit = args.depth_limit >= 0;
+    opts.depth_limit = args.depth_limit;
+    opts.roots.swap(args.roots);
 
-    if (!opts.igraph_mode && (print_help || optargc != 1)) {
-	    bu_vls_printf(gedp->ged_result_str,
-		    "Usage (SVG): graph [options] output.svg\n"
-		    "Options:\n"
-		    "  --tree\n"
-		    "  --skip-routing\n"
-		    "  --depth D\n"
-		    "  --root-obj OBJ (repeatable)\n"
-		    "  --igraph (legacy textual mode)\n");
-	    return (optargc != 1) ? BRLCAD_ERROR : BRLCAD_OK;
+    if (!opts.igraph_mode && (args.print_help || operand_count != 1)) {
+	graph_usage(gedp);
+	return operand_count != 1 ? BRLCAD_ERROR : BRLCAD_OK;
     }
 
     if (opts.igraph_mode) {
-	/* Expect exactly one subcommand: show | positions.  Advance
-	 * past --igraph option. */
-	argc-=(argc>0); argv+=(argc>0);
-	if (argc != 1) {
-	    bu_vls_printf(gedp->ged_result_str,
-		    "Usage (igraph): graph --igraph [show|positions]\n");
+	if (operand_count != 1) {
+	    graph_usage(gedp);
 	    return BRLCAD_ERROR;
 	}
-	opts.igraph_subcmd = argv[0];
+	opts.igraph_subcmd = operands[0];
 	if (BU_STR_EQUAL(opts.igraph_subcmd.c_str(), "show")) {
 	    return legacy::show(gedp);
 	} else if (BU_STR_EQUAL(opts.igraph_subcmd.c_str(), "positions")) {
@@ -1027,13 +1066,7 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
     } else {
-	opts.svg_filename = argv[0];
-	if (opts.svg_filename.size() < 4 ||
-		opts.svg_filename.substr(opts.svg_filename.size() - 4) != ".svg") {
-	    bu_vls_printf(gedp->ged_result_str,
-		    "graph: output file must end in .svg\n");
-	    return BRLCAD_ERROR;
-	}
+	opts.svg_filename = operands[0];
 	hl_layout_and_output(gedp, opts);
 	return BRLCAD_OK;
     }
@@ -1067,11 +1100,11 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_GRAPH_COMMANDS(X, XID) \
-    X(graph,  ged_graph,   GED_CMD_DEFAULT)
+#define GED_GRAPH_COMMANDS(X, XID, N, NID, G, GID) \
+    N(graph, ged_graph, GED_CMD_DEFAULT, &graph_cmd_schema)
 
-GED_DECLARE_COMMAND_SET(GED_GRAPH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_graph", 1, GED_GRAPH_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_GRAPH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_graph", 1, GED_GRAPH_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

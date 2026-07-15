@@ -10,7 +10,7 @@ bot_dump - export Bag-of-Triangles (BOT) geometry to a mesh file format
 
 [source]
 ----
-bot_dump [-b] [-n|--normals] [-F|--full-precision]
+bot_dump [--help] [-b] [-n|--normals] [-F|--full-precision]
          [-m|--output-directory dir] [-o|--output-file file]
          [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
          [--materials|--no-materials]
@@ -33,6 +33,9 @@ Output formats supported:
 * *gltf* — glTF JSON format.
 
 === Options
+
+*-h*, *--help*::
+Print command help without opening a database.
 
 *-b*::
 Write output in binary format where supported (e.g., binary STL, binary glTF/GLB).

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="asciiquack 0.1.0">
+<title>MOVE(nged)</title>
+<style>
+/* asciiquack default stylesheet (minimal) */
+body{font-family:sans-serif;max-width:900px;margin:0 auto;padding:1em 2em;line-height:1.6;color:#333}
+h1,h2,h3,h4,h5,h6{color:#2c5282;line-height:1.2;margin-top:1.4em}
+h1{font-size:2em;border-bottom:2px solid #2c5282;padding-bottom:.25em}
+h2{font-size:1.6em;border-bottom:1px solid #ccc}
+code,pre{font-family:monospace;background:#f5f5f5;border-radius:3px}
+pre{padding:1em;overflow:auto;border-left:4px solid #ccc}
+code{padding:.1em .3em}
+.listingblock pre{background:#282c34;color:#abb2bf;border:none}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #ddd;padding:.5em .75em;text-align:left}
+th{background:#f0f0f0;font-weight:bold}
+.admonitionblock table{border:none;width:100%}
+.admonitionblock td.icon{width:80px;font-weight:bold;text-transform:uppercase}
+.admonitionblock td.content{padding:.5em 1em}
+.admonitionblock.note td.icon{color:#31708f}
+.admonitionblock.tip td.icon{color:#3c763d}
+.admonitionblock.warning td.icon{color:#8a6d3b}
+.admonitionblock.important td.icon{color:#a94442}
+.admonitionblock.caution td.icon{color:#a94442}
+blockquote{border-left:4px solid #ccc;padding:.5em 1em;margin:1em 0;color:#555;font-style:italic}
+.sidebarblock{background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:1em;margin:1em 0}
+#header,#content,#footer{margin-bottom:1em}
+#footer{border-top:1px solid #ccc;padding-top:.5em;color:#666;font-size:.9em}
+#header .details{font-size:.9em;color:#666}
+mark{background:#ff9}
+.exampleblock{border:1px solid #ddd;border-radius:4px;padding:1em;margin:1em 0}
+img{max-width:100%;height:auto}
+.imageblock{text-align:center;margin:1em 0}
+.imageblock .title{font-style:italic;color:#666;margin-top:.5em}
+video,audio{max-width:100%}
+.videoblock,.audioblock{margin:1em 0}
+.sectnum{margin-right:.25em}
+#toc{background:#f8f8f8;border:1px solid #ddd;border-radius:4px;padding:1em 1.5em;margin:1em 0;display:inline-block;min-width:200px}
+#toctitle{font-weight:bold;margin-bottom:.5em}
+#toc ul{list-style:none;padding-left:0;margin:0}
+#toc ul ul{padding-left:1.5em}
+#toc a{text-decoration:none;color:#2c5282}
+#toc a:hover{text-decoration:underline}
+#toc li{margin:.25em 0}
+#footnotes{border-top:1px solid #ccc;margin-top:1em;padding-top:.5em}
+.footnote{font-size:.9em;color:#666;margin:.25em 0}
+sup.footnote{font-size:.75em;vertical-align:super;line-height:0}
+sup.footnote a{color:#2c5282;text-decoration:none}
+kbd{font-family:monospace;border:1px solid #ccc;border-radius:3px;padding:.1em .35em;font-size:.9em;background:#f5f5f5}
+.keyseq{font-family:monospace;font-size:.9em}
+b.button{border:1px solid #aaa;border-radius:3px;padding:.1em .35em;font-size:.9em;background:#f0f0f0;font-weight:normal}
+.menuseq,.menu,.menuitem{font-style:italic}
+.caret{font-style:normal;font-weight:bold}
+b.conum,span.conum{display:inline-block;background:#555;color:#fff;border-radius:50%;width:1.2em;height:1.2em;text-align:center;line-height:1.2em;font-size:.8em;font-weight:bold;font-style:normal;margin:0 .1em}
+.colist{margin:.5em 0}
+.colist ol{list-style:none;padding-left:0}
+.stemblock{margin:1em 0}
+</style>
+</head>
+<body class="manpage">
+<div id="header">
+<h1>MOVE(nged) Manual Page</h1>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_name">NAME</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>move, mv - rename a database object</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_synopsis">SYNOPSIS</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre>move from to
+mv from to</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="description">DESCRIPTION</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <strong>move</strong> command (also available as <strong>mv</strong>) renames an existing database object from <code>from</code> to <code>to</code>. It is a pure rename operation — the object&#8217;s geometry is unchanged; only its name in the database directory is updated. The destination is a database object name, not a path, and may not contain a slash.</p>
+</div>
+<div class="paragraph">
+<p>The command performs the following steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Looks up <code>from</code> in the database; returns an error if it does not exist. 2. Verifies that <code>to</code> does not already exist; returns an error if it does. 3. Reads the object&#8217;s internal data, renames it in the in-memory directory via <code>db_rename</code>, then writes it back under the new name. 4. Updates the current display list: if the top-level path element of any displayed object matches <code>from</code>, it is updated to <code>to</code> so the display remains consistent.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="examples">EXAMPLES</h2>
+<div class="sectionbody">
+<div class="exampleblock">
+<div class="title">Example 1. Rename an object</div>
+<div class="content">
+<div class="paragraph">
+<p>mged&gt; <strong>move old_name.s new_name.s</strong></p>
+</div>
+<div class="paragraph">
+<p>Renames the solid <code>old_name.s</code> to <code>new_name.s</code> in the database.</p>
+</div>
+</div>
+</div>
+<div class="exampleblock">
+<div class="title">Example 2. Using the mv alias</div>
+<div class="content">
+<div class="paragraph">
+<p>mged&gt; <strong>mv wing_left.r wing.r</strong></p>
+</div>
+<div class="paragraph">
+<p>Renames <code>wing_left.r</code> to <code>wing.r</code>. The <code>mv</code> alias is equivalent to <code>move</code>.</p>
+</div>
+</div>
+</div>
+<div class="exampleblock">
+<div class="title">Example 3. Attempting to rename to an existing name</div>
+<div class="content">
+<div class="paragraph">
+<p>mged&gt; <strong>move box.s sphere.s</strong></p>
+</div>
+<div class="paragraph">
+<p><code>sphere.s: already exists</code></p>
+</div>
+<div class="paragraph">
+<p>Returns an error if <code>sphere.s</code> already exists in the database. The original <code>box.s</code> is left unchanged.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="author">AUTHOR</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>BRL-CAD Team</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="bug_reports">BUG REPORTS</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

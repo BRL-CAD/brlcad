@@ -51,6 +51,8 @@ and extensively improving existing docs.
 	- Cliff Yapp, Sean Morrison
 * fixed gqa exactly symmetric volumetric estimates - Sean Morrison
 * added support to rtedge for perspective renderings - Sean Morrison
+* deprecated the complete libbu bu_opt API, including bu_opt_* reader callbacks,
+  in favor of bu_cmd_schema - BRL-CAD
 * rt -l8 rendering time heat graphs - Stephen Kennedy, Sean Morrison
 * added 'icv anim' for APNG and MJPEG animation files - Clifford Yapp
 * added BREP/NURBS import support to gcv x3d importer - Sean Morrison

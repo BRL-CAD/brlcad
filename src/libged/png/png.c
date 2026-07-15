@@ -31,7 +31,8 @@
 #include "png.h"
 
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
+#include "bu/color.h"
 #include "vmath.h"
 #include "bn.h"
 #include "bg/clip.h"
@@ -40,12 +41,53 @@
 #include "../ged_private.h"
 
 
-static unsigned int img_size = 512;
-static unsigned int img_half_size = 256;
+struct png_args {
+    struct bu_color background;
+    int size;
+};
 
-static unsigned char bg_red = 255;
-static unsigned char bg_green = 255;
-static unsigned char bg_blue = 255;
+static int
+png_size_validate(struct bu_vls *msg, const char *arg)
+{
+    int size = 0;
+
+    if (bu_cmd_integer_from_str(&size, arg) && size >= 50)
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "PNG size must be an integer of at least 50 pixels: %s\n", arg ? arg : "");
+    return -1;
+}
+
+static const struct bu_cmd_option png_schema_options[] = {
+    BU_CMD_RGB("c", NULL, struct png_args, background, "r/g/b", "Set background color"),
+    BU_CMD_INTEGER_VALIDATE("s", NULL, struct png_args, size, png_size_validate, "pixels",
+	"Set square image size (at least 50)"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand png_schema_operands[] = {
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1, "PNG output file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema png_cmd_schema = {
+    "png", "Render the current view to PNG", png_schema_options,
+    png_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_schema pngwf_cmd_schema = {
+    "pngwf", "Render the current view to PNG", png_schema_options,
+    png_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+
+static void
+png_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&png_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [-c r/g/b] [-s pixels] file", command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "png native option help");
+    }
+}
 
 struct coord {
     short x;
@@ -316,7 +358,8 @@ dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_p
 
 
 static int
-draw_png(struct ged *gedp, FILE *fp)
+draw_png(struct ged *gedp, FILE *fp, size_t img_size, size_t img_half_size,
+	const unsigned char *background)
 {
     long i;
     png_structp png_p;
@@ -330,13 +373,13 @@ draw_png(struct ged *gedp, FILE *fp)
     unsigned char *bytes = (unsigned char *)bu_malloc(num_bytes, "draw_png, bytes");
 
     /* Initialize bytes using the background color */
-    if (bg_red == bg_green && bg_red == bg_blue)
-	memset((void *)bytes, bg_red, num_bytes);
+    if (background[RED] == background[GRN] && background[RED] == background[BLU])
+	memset((void *)bytes, background[RED], num_bytes);
     else {
 	for (i = 0; (size_t)i < num_bytes; i += 3) {
-	    bytes[i] = bg_red;
-	    bytes[i+1] = bg_green;
-	    bytes[i+2] = bg_blue;
+	    bytes[i] = background[RED];
+	    bytes[i+1] = background[GRN];
+	    bytes[i+2] = background[BLU];
 	}
     }
 
@@ -372,7 +415,7 @@ draw_png(struct ged *gedp, FILE *fp)
 	image[i] = (unsigned char *)(bytes + ((img_size-i) * num_bytes_per_row));
     }
 
-    dl_png(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_perspective, gedp->ged_gvp->gv_eye_pos, (size_t)img_size, (size_t)img_half_size, image);
+    dl_png(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_perspective, gedp->ged_gvp->gv_eye_pos, img_size, img_half_size, image);
 
     /* Write out pixels */
     png_write_image(png_p, image);
@@ -389,10 +432,10 @@ int
 ged_png_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
-    int k;
     int ret;
-    int r, g, b;
-    static const char *png_usage = "[-c r/g/b] [-s size] file";
+    int operand_index;
+    unsigned char background[3] = {255, 255, 255};
+    struct png_args args = {BU_COLOR_INIT_ZERO, 512};
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -401,76 +444,27 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png_usage);
+	png_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    /* Process options */
-    bu_optind = 1;
-    while ((k = bu_getopt(argc, (char * const *)argv, "c:s:")) != -1) {
-	switch (k) {
-	    case 'c':
-		/* parse out a delimited rgb color value */
-		if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
-		    return BRLCAD_ERROR;
-		}
-
-		/* Clamp color values */
-		if (r < 0)
-		    r = 0;
-		else if (r > 255)
-		    r = 255;
-
-		if (g < 0)
-		    g = 0;
-		else if (g > 255)
-		    g = 255;
-
-		if (b < 0)
-		    b = 0;
-		else if (b > 255)
-		    b = 255;
-
-		bg_red = (unsigned char)r;
-		bg_green = (unsigned char)g;
-		bg_blue = (unsigned char)b;
-
-		break;
-	    case 's':
-		if (sscanf(bu_optarg, "%u", &img_size) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
-		    return BRLCAD_ERROR;
-		}
-
-		if (img_size < 50) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: bad size - %s, must be greater than or equal to 50\n", argv[0], bu_optarg);
-		    return BRLCAD_ERROR;
-		}
-
-		img_half_size = img_size * 0.5;
-
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
-		return BRLCAD_ERROR;
-	}
-    }
-
-    if ((argc - bu_optind) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png_usage);
+	bu_color_from_rgb_chars(&args.background, background);
+    operand_index = bu_cmd_schema_parse_complete(&png_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	png_show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
+    bu_color_to_rgb_chars(&args.background, background);
 
-    fp = fopen(argv[bu_optind], "wb");
+    fp = fopen(argv[operand_index + 1], "wb");
     if (fp == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[bu_optind]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[operand_index + 1]);
 	return BRLCAD_ERROR;
     }
 
-    ret = draw_png(gedp, fp);
+    ret = draw_png(gedp, fp, (size_t)args.size, (size_t)(args.size / 2), background);
     fclose(fp);
 
     return ret;
@@ -480,11 +474,11 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PNG_COMMANDS(X, XID) \
-    X(png, ged_png_core, GED_CMD_DEFAULT) \
-    X(pngwf, ged_png_core, GED_CMD_DEFAULT) \
+    X(png, ged_png_core, GED_CMD_DEFAULT, &png_cmd_schema) \
+    X(pngwf, ged_png_core, GED_CMD_DEFAULT, &pngwf_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PNG_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_png", 1, GED_PNG_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PNG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_png", 1, GED_PNG_COMMANDS)
 
 /*
  * Local Variables:

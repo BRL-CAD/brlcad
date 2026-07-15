@@ -45,6 +45,7 @@ set(
   bu_init.cpp
   cache.cpp
   cmd.c
+  cmdschema.c
   color.cpp
   convert.c
   crashreport.c
@@ -77,6 +78,8 @@ set(
   interrupt.c
   lex.c
   linebuf.c
+  lineedit.c
+  lineedit_color.cpp
   list.c
   log.c
   magic.c

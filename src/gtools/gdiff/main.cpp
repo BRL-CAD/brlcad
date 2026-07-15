@@ -22,8 +22,133 @@
 
 extern "C" {
 #include "bu/app.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "./gdiff.h"
+}
+
+
+/* Keep command-line storage independent from the long-lived diff and grouping
+ * state.  The schema owns this record completely; after parsing, main copies
+ * the selected values into the execution records appropriate to the selected
+ * mode. */
+struct gdiff_args {
+    int print_help;
+    int return_added;
+    int return_removed;
+    int return_changed;
+    int return_unchanged;
+    struct bu_vls search_filter;
+    struct bu_vls merge_file;
+    fastf_t diff_tolerance;
+    long verbosity;
+    long quiet;
+    int grouping_mode;
+    long filename_threshold;
+    long threshold;
+    int use_names;
+    int use_geometry;
+    int geom_fast;
+    struct bu_vls file_pattern;
+    struct bu_vls hash_infile;
+    struct bu_vls hash_outfile;
+    int path_display_mode;
+};
+
+
+static int
+gdiff_path_display_parse(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int value;
+
+    if (BU_STR_EQUAL(arg, "auto")) {
+	value = 0;
+    } else if (BU_STR_EQUAL(arg, "relative")) {
+	value = GDIFF_PATH_DISPLAY_RELATIVE;
+    } else if (BU_STR_EQUAL(arg, "absolute")) {
+	value = GDIFF_PATH_DISPLAY_ABSOLUTE;
+    } else {
+	if (msg)
+	    bu_vls_printf(msg, "invalid value '%s' for path display option; expected auto, relative, or absolute\n", arg ? arg : "");
+	return -1;
+    }
+
+    if (storage)
+	*((int *)storage) = value;
+    return 0;
+}
+
+
+static const struct bu_cmd_option gdiff_options[] = {
+    BU_CMD_FLAG("h", "help", gdiff_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("a", "added", gdiff_args, return_added, "Report added objects"),
+    BU_CMD_FLAG("d", "deleted", gdiff_args, return_removed, "Report deleted objects"),
+    BU_CMD_FLAG("m", "modified", gdiff_args, return_changed, "Report modified objects"),
+    BU_CMD_FLAG("u", "unchanged", gdiff_args, return_unchanged, "Report unchanged objects"),
+    BU_CMD_VLS_APPEND("F", "filter", gdiff_args, search_filter, "string", "Specify filter to use on results"),
+    BU_CMD_VLS_APPEND("M", "merge-file", gdiff_args, merge_file, "merge.g", "Specify merge file"),
+    BU_CMD_NUMBER("t", "tolerance", gdiff_args, diff_tolerance, "distance", "Numerical distance tolerance for same/different decisions (RT_LEN_TOL is default)"),
+    BU_CMD_COUNTING_LONG_FLAG("v", "verbosity", gdiff_args, verbosity, "Increase output verbosity; repeat for more detail"),
+    BU_CMD_COUNTING_LONG_FLAG("q", "quiet", gdiff_args, quiet, "Decrease output verbosity; repeat for less detail"),
+    BU_CMD_FLAG("G", "group", gdiff_args, grouping_mode, "Group files into similar bins; grouping options refine the comparison"),
+    BU_CMD_LONG(NULL, "filename-threshold", gdiff_args, filename_threshold, "distance", "Use filenames within this edit distance to establish top-level groupings"),
+    BU_CMD_LONG(NULL, "threshold", gdiff_args, threshold, "distance", "Grouping tolerance (larger values produce looser groups; default is 30)"),
+    BU_CMD_FLAG(NULL, "use-objnames", gdiff_args, use_names, "Incorporate object names into similarity checking"),
+    BU_CMD_FLAG(NULL, "use-geometry", gdiff_args, use_geometry, "Incorporate object geometry into similarity checking"),
+    BU_CMD_FLAG(NULL, "fast-geometry", gdiff_args, geom_fast, "Use a faster, more sensitive geometry difference test"),
+    BU_CMD_VLS_APPEND("P", "file-pattern", gdiff_args, file_pattern, "pattern", "Pattern for files below a root directory (default: *.g)"),
+    BU_CMD_VLS_APPEND(NULL, "read-hashes", gdiff_args, hash_infile, "file", "Read reusable precomputed hashes (grouping mode only)"),
+    BU_CMD_VLS_APPEND(NULL, "write-hashes", gdiff_args, hash_outfile, "file", "Write computed hashes (grouping mode only)"),
+    BU_CMD_CUSTOM(NULL, "display-paths", gdiff_args, path_display_mode, gdiff_path_display_parse, "auto|relative|absolute", "Display report paths as automatic, relative, or absolute"),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_operand gdiff_operands[] = {
+    BU_CMD_OPERAND("input", BU_CMD_VALUE_FILE, 0, BU_CMD_COUNT_UNLIMITED,
+	"Two or three database files, or grouping roots/patterns with --group", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+
+static const struct bu_cmd_schema gdiff_schema = {
+    "gdiff",
+    "Compare geometry databases or group geometry files by similarity.",
+    gdiff_options,
+    gdiff_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    NULL
+};
+
+
+static void
+gdiff_args_init(struct gdiff_args *args, const struct diff_state *state)
+{
+    *args = {};
+    args->return_added = state->return_added;
+    args->return_removed = state->return_removed;
+    args->return_changed = state->return_changed;
+    args->return_unchanged = state->return_unchanged;
+    args->diff_tolerance = state->diff_tol->dist;
+    args->verbosity = state->verbosity;
+    args->filename_threshold = -1;
+    args->threshold = -1;
+    bu_vls_init(&args->search_filter);
+    bu_vls_init(&args->merge_file);
+    bu_vls_init(&args->file_pattern);
+    bu_vls_init(&args->hash_infile);
+    bu_vls_init(&args->hash_outfile);
+}
+
+
+static void
+gdiff_args_free(struct gdiff_args *args)
+{
+    bu_vls_free(&args->search_filter);
+    bu_vls_free(&args->merge_file);
+    bu_vls_free(&args->file_pattern);
+    bu_vls_free(&args->hash_infile);
+    bu_vls_free(&args->hash_outfile);
 }
 
 /*******************************************************************/
@@ -220,33 +345,11 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
     return diff3_state;
 }
 
-int
-pdisplay_type(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    static const char *display_path_opts[] = {"auto", "relative", "absolute", NULL};
-    int *val = (int *)set_var;
-    if (!val)
-	return -1;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "pdisplay_type_t");
-    for (size_t i = 0; display_path_opts[i] != NULL; i++) {
-	if (BU_STR_EQUAL(argv[0], display_path_opts[i])) {
-	    *val = i;
-	    return 1;
-	}
-    }
-
-    if (msg)
-	bu_vls_printf(msg, "Invalid value '%s' for path display option.\n", argv[0]);
-
-    return -1;
-}
-
-
 static void
-gdiff_usage(const char *cmd, struct bu_opt_desc *d) {
+gdiff_usage(const char *cmd)
+{
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help = bu_opt_describe(d, NULL);
+    char *option_help = bu_cmd_schema_describe(&gdiff_schema);
     bu_vls_sprintf(&str, "Usage: %s [options] left.g [ancestor.g] right.g\n", cmd);
     bu_vls_printf(&str,  "Usage: %s -G [options] [pattern1 pattern2 ...]\n", cmd);
     if (option_help) {
@@ -264,7 +367,6 @@ int
 main(int argc, const char **argv)
 {
     int diff_return = 0;
-    int print_help = 0;
     struct diff_state *state;
     struct db_i *left_dbip = DBI_NULL;
     struct db_i *right_dbip = DBI_NULL;
@@ -272,7 +374,10 @@ main(int argc, const char **argv)
     const char *diff_prog_name = argv[0];
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct gdiff_group_opts gopts = GDIFF_GROUP_OPTS_DEFAULT;
-    int grouping_mode = 0;
+    struct gdiff_args args = {};
+    int parsed = 0;
+    int operand_count = 0;
+    const char **operands = NULL;
 
     bu_setprogname(argv[0]);
 
@@ -281,66 +386,69 @@ main(int argc, const char **argv)
 
     BU_GET(state, struct diff_state);
     diff_state_init(state);
+    gdiff_args_init(&args, state);
 
-    struct bu_opt_desc d[22];
-    BU_OPT(d[0],  "h", "help",       "",        NULL,              &print_help,              "Print help and exit");
-    BU_OPT(d[1],  "?", "",           "",        NULL,              &print_help,              "");
-    BU_OPT(d[2],  "a", "added",      "",        NULL,              &state->return_added,     "Report added objects");
-    BU_OPT(d[3],  "d", "deleted",    "",        NULL,              &state->return_removed,   "Report deleted objects");
-    BU_OPT(d[4],  "m", "modified",   "",        NULL,              &state->return_changed,   "Report modified objects");
-    BU_OPT(d[5],  "u", "unchanged",  "",        NULL,              &state->return_unchanged, "Report unchanged objects");
-    BU_OPT(d[6],  "F", "filter",     "string",  &bu_opt_vls,       state->search_filter,     "Specify filter to use on results");
-    BU_OPT(d[7],  "M", "merge-file", "merge.g", &bu_opt_vls,       state->merge_file,        "Specify merge file");
-    BU_OPT(d[8],  "t", "tolerance",  "#",       &bu_opt_fastf_t,   &state->diff_tol->dist,   "numerical distance tolerance for same/different decisions (RT_LEN_TOL is default)");
-    BU_OPT(d[9],  "v", "verbosity",  "",        &bu_opt_incr_long, &state->verbosity,        "increase output verbosity (multiple specifications of -v increase verbosity more)");
-    BU_OPT(d[10], "q", "quiet",      "",        &bu_opt_incr_long, &state->quiet,            "decrease output verbosity (multiple specifications of -q decrease verbosity more)");
-
-    // Options for "grouping" mode
-    BU_OPT(d[11], "G", "group",                "",  NULL,         &grouping_mode,             "group files into similar bins.  (Multiple grouping options, may be controlled by specifying other options.)");
-    BU_OPT(d[12], "",  "filename-threshold",   "#", &bu_opt_long, &gopts.filename_threshold,  "Use filenames with an edit distance <=# to establish top level groupings ");
-    BU_OPT(d[13], "",  "threshold",            "#", &bu_opt_long, &gopts.threshold,           "Grouping tolerance (larger numbers mean looser grouping criteria - default value is 30)");
-    BU_OPT(d[14], "",  "use-objnames",         "",  NULL,         &gopts.use_names,           "Incorporate object names into similarity checking");
-    BU_OPT(d[15], "",  "use-geometry",         "",  NULL,         &gopts.use_geometry,        "Incorporate object geometry into similarity checking");
-    BU_OPT(d[16], "",  "fast-geometry",        "",  NULL,         &gopts.geom_fast,           "Use a faster but much more sensitive geometry difference test - will decrease similarity results (how much depends on the files, but it is typically substantial).");
-    BU_OPT(d[17], "P", "file-pattern",  "pattern", &bu_opt_vls,   &gopts.fpattern,            "Pattern to match for files in root-dir.  If no root-dir is specified, use current working dir.  Default pattern is '*.g'");
-    BU_OPT(d[18], "",  "read-hashes",      "file", &bu_opt_vls,   &gopts.hash_infile,         "Read precomputed hashes from file and reuse if possible (grouping mode only)");
-    BU_OPT(d[19], "",  "write-hashes",     "file", &bu_opt_vls,   &gopts.hash_outfile,        "Write computed hashes (for all processed files) to file (grouping mode only)");
-    BU_OPT(d[20], "",  "display-paths",  "auto|relative|absolute", &pdisplay_type, &gopts.path_display_mode, "How to display file paths in reports: auto (default), relative, or absolute");
-    BU_OPT_NULL(d[21]);
-
-    int ret_ac = bu_opt_parse(&msg, argc, argv, d);
-    if (ret_ac < 0) {
+    parsed = bu_cmd_schema_parse(&gdiff_schema, &args, &msg, argc, argv);
+    if (parsed < 0) {
         bu_log("%s\n", bu_vls_cstr(&msg));
         bu_vls_free(&msg);
+	gdiff_args_free(&args);
         bu_vls_free(state->search_filter);
         bu_vls_free(state->merge_file);
 	BU_PUT(state, struct diff_state);
         return BRLCAD_ERROR;
     }
-    if (print_help) {
-	gdiff_usage(diff_prog_name, d);
+    if (args.print_help) {
+	gdiff_usage(diff_prog_name);
         bu_vls_free(&msg);
+	gdiff_args_free(&args);
         bu_vls_free(state->search_filter);
         bu_vls_free(state->merge_file);
 	BU_PUT(state, struct diff_state);
         return BRLCAD_OK;
     }
 
+    operand_count = argc - parsed;
+    operands = argv + parsed;
+    state->return_added = args.return_added;
+    state->return_removed = args.return_removed;
+    state->return_changed = args.return_changed;
+    state->return_unchanged = args.return_unchanged;
+    state->diff_tol->dist = args.diff_tolerance;
+    state->verbosity = args.verbosity;
+    state->quiet = args.quiet;
+    bu_vls_sprintf(state->search_filter, "%s", bu_vls_cstr(&args.search_filter));
+    bu_vls_sprintf(state->merge_file, "%s", bu_vls_cstr(&args.merge_file));
+
     // If we have a non-negative group_threshold, we're doing a different
     // comparison.
-    if (grouping_mode) {
+    if (args.grouping_mode) {
 
 	/* Carry verbosity setting into grouping mode */
 	gopts.verbosity = state->verbosity;
+	gopts.filename_threshold = args.filename_threshold;
+	gopts.threshold = args.threshold;
+	gopts.use_names = args.use_names;
+	gopts.use_geometry = args.use_geometry;
+	gopts.geom_fast = args.geom_fast;
+	gopts.path_display_mode = args.path_display_mode;
+	bu_vls_sprintf(&gopts.fpattern, "%s", bu_vls_cstr(&args.file_pattern));
+	bu_vls_sprintf(&gopts.hash_infile, "%s", bu_vls_cstr(&args.hash_infile));
+	bu_vls_sprintf(&gopts.hash_outfile, "%s", bu_vls_cstr(&args.hash_outfile));
 
 	// Clean up standard gdiff processing structures
 	bu_vls_free(&msg);
 	bu_vls_free(state->search_filter);
 	bu_vls_free(state->merge_file);
+	gdiff_args_free(&args);
 	BU_PUT(state, struct diff_state);
 
 	// Run grouping mode
-	return gdiff_group(ret_ac, argv, &gopts);
+	int group_ret = gdiff_group(operand_count, operands, &gopts);
+	bu_vls_free(&gopts.fpattern);
+	bu_vls_free(&gopts.hash_infile);
+	bu_vls_free(&gopts.hash_outfile);
+	return group_ret;
     }
 
     if (bu_vls_strlen(state->search_filter)) {
@@ -362,7 +470,8 @@ main(int argc, const char **argv)
 	state->return_added = 1; state->return_removed = 1; state->return_changed = 1;
     }
 
-    argc = ret_ac;
+    argc = operand_count;
+    argv = operands;
 
     if (argc != 2 && argc != 3) {
 	bu_log("Error - please specify either two or three .g files\n");
@@ -474,6 +583,7 @@ main(int argc, const char **argv)
 	diff_return = do_diff3(left_dbip, ancestor_dbip, right_dbip, state);
     }
 
+    gdiff_args_free(&args);
     diff_state_free(state);
     BU_PUT(state, struct diff_state);
 

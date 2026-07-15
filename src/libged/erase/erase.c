@@ -28,8 +28,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+
+static void
+erase_legacy_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_erase_legacy_schema);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: %s [-r] object ... | %s [-o] -A attribute value [attribute value ...]",
+	command, command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "erase legacy native option help");
+    }
+}
+
 
 extern int ged_erase2_core(struct ged *gedp, int argc, const char **argv);
 /*
@@ -43,12 +60,9 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_erase2_core(gedp, argc, argv);
 
     size_t i;
-    int flag_A_attr=0;
-    int flag_o_nonunique=1;
-    int last_opt=0;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-    static const char *usage = "[[-r] | [[-o] -A attribute=value]] [object(s)]";
-    const char *cmdName = argv[0];
+    int operand_index;
+    int operand_count;
+    struct ged_erase_legacy_args args = {0, 0, 0};
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -58,84 +72,41 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
+	erase_legacy_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    /* skip past cmd */
-    --argc;
-    ++argv;
 
-    /* check args for options */
-    for (i = 0; i < (size_t)argc; i++) {
-		/* Erase all and quit (ignore other options) */
-	char *ptr_A=NULL;
-	char *ptr_o=NULL;
-
-	if (*argv[i] != '-')
-	    break;
-
-	if (strchr(argv[i], 'r')) {
-		for (i = 1; i < (size_t)argc; ++i)
-		_dl_eraseAllPathsFromDisplay(gedp, argv[i], 0);
-	    return BRLCAD_OK;
-	}
-
-	ptr_A=strchr(argv[i], 'A');
-	if (ptr_A)
-	    flag_A_attr = 1;
-
-	ptr_o = strchr(argv[i], 'o');
-	if (ptr_o)
-	    flag_o_nonunique = 2;
-
-	last_opt = i;
-
-	if (!ptr_A && !ptr_o) {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
-	    return BRLCAD_ERROR;
-	}
-
-	if (strlen(argv[i]) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
-	    /* argv[i] is just a "-A" or "-o" */
-	    continue;
-	}
-
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
+    operand_index = bu_cmd_schema_parse_complete(&ged_erase_legacy_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	erase_legacy_show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
+    operand_count = argc - 1 - operand_index;
+    argv += operand_index + 1;
+    argc = operand_count;
 
-    if (flag_A_attr) {
+    if (args.recursive) {
+	for (i = 0; i < (size_t)argc; ++i)
+	    _dl_eraseAllPathsFromDisplay(gedp, argv[i], 0);
+	return BRLCAD_OK;
+    }
+
+    if (args.attributes) {
 	/* args are attribute name/value pairs */
 	struct bu_attribute_value_set avs;
-	int max_count=0;
-	int remaining_args=0;
-	int new_argc=0;
-	char **new_argv=NULL;
 	struct bu_ptbl *tbl;
 
-	remaining_args = argc - last_opt - 1;
-	if (remaining_args < 2 || remaining_args%2) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
-	    bu_vls_free(&vls);
-	    return BRLCAD_ERROR;
-	}
 	if (!gedp->dbip) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: -A option requires an open database\n");
-	    bu_vls_free(&vls);
 	    return BRLCAD_ERROR;
 	}
 
-	bu_avs_init(&avs, (argc - last_opt)/2, "ged_erase_core avs");
+	bu_avs_init(&avs, argc/2, "ged_erase_core avs");
 	i = 0;
 	while (i < (size_t)argc) {
-	    if (*argv[i] == '-') {
-		i++;
-		continue;
-	    }
-
-	    /* this is a name/value pair */
-	    if (flag_o_nonunique == 2) {
+	    if (args.match_any) {
 		bu_avs_add_nonunique(&avs, argv[i], argv[i+1]);
 	    } else {
 		bu_avs_add(&avs, argv[i], argv[i+1]);
@@ -143,39 +114,28 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr(gedp->dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
+	tbl = db_lookup_by_attr(gedp->dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB,
+		&avs, args.match_any ? 2 : 1);
 	bu_avs_free(&avs);
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
-	    bu_vls_free(&vls);
 	    return BRLCAD_ERROR;
 	}
 	if (BU_PTBL_LEN(tbl) < 1) {
 	    /* nothing matched, just return */
-	    bu_vls_free(&vls);
+	    bu_ptbl_free(tbl);
+	    bu_free((char *)tbl, "ged_erase_core ptbl");
 	    return BRLCAD_OK;
 	}
 	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
 
 	    dp = (struct directory *)BU_PTBL_GET(tbl, i);
-	    bu_vls_putc(&vls, ' ');
-	    bu_vls_strcat(&vls, dp->d_namep);
+	    dl_erasePathFromDisplay(gedp, dp->d_namep, 1);
 	}
 
-	max_count = BU_PTBL_LEN(tbl) + last_opt + 1;
 	bu_ptbl_free(tbl);
 	bu_free((char *)tbl, "ged_erase_core ptbl");
-	new_argv = (char **)bu_calloc(max_count+1, sizeof(char *), "ged_erase_core new_argv");
-	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
-
-	for (i = 0; i < (size_t)new_argc; ++i) {
-	    /* Skip any options */
-	    if (new_argv[i][0] == '-')
-		continue;
-
-	    dl_erasePathFromDisplay(gedp, new_argv[i], 1);
-	}
     } else {
 	for (i = 0; i < (size_t)argc; ++i)
 	    dl_erasePathFromDisplay(gedp, argv[i], 1);
@@ -186,12 +146,14 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_ERASE_COMMANDS(X, XID) \
-    X(erase, ged_erase_core, GED_CMD_DEFAULT) \
-    X(d, ged_erase_core, GED_CMD_DEFAULT) \
+extern GED_EXPORT const struct ged_cmd_grammar ged_erase_grammar;
 
-GED_DECLARE_COMMAND_SET(GED_ERASE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_erase", 1, GED_ERASE_COMMANDS)
+#define GED_ERASE_COMMANDS(X, XID) \
+    X(erase, ged_erase_core, GED_CMD_DEFAULT, &ged_erase_grammar) \
+    X(d, ged_erase_core, GED_CMD_DEFAULT, &ged_erase_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_ERASE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_erase", 1, GED_ERASE_COMMANDS)
 
 /*
  * Local Variables:

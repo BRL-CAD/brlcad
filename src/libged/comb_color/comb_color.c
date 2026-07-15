@@ -25,16 +25,37 @@
 
 #include "ged.h"
 
+#include "bu/color.h"
+#include "bu/cmdschema.h"
+
+
+static const struct bu_cmd_operand comb_color_schema_operands[] = {
+    BU_CMD_OPERAND("combination", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Combination to color", "ged.db_object"),
+    BU_CMD_OPERAND_VALIDATE("red", BU_CMD_VALUE_INTEGER, 1, 1,
+	bu_rgb_channel_validate, "Red channel, 0 through 255", NULL),
+    BU_CMD_OPERAND_VALIDATE("green", BU_CMD_VALUE_INTEGER, 1, 1,
+	bu_rgb_channel_validate, "Green channel, 0 through 255", NULL),
+    BU_CMD_OPERAND_VALIDATE("blue", BU_CMD_VALUE_INTEGER, 1, 1,
+	bu_rgb_channel_validate, "Blue channel, 0 through 255", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema comb_color_cmd_schema = {
+    "comb_color", "Set a combination's RGB color", NULL,
+    comb_color_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
 
 int
 ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
-    int val;
+    unsigned char rgb[3] = {0, 0, 0};
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     static const char *usage = "combination R G B";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -49,26 +70,25 @@ ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 5) {
+
+    operand_index = bu_cmd_schema_parse_complete(&comb_color_cmd_schema,
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index + 1;
 
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[0], LOOKUP_NOISY, BRLCAD_ERROR);
     GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
     GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    for (i = 0; i < 3; ++i) {
-	if (sscanf(argv[i+2], "%d", &val) != 1 || val < 0 || 255 < val) {
-	    bu_vls_printf(gedp->ged_result_str, "RGB value out of range: %s", argv[i + 2]);
-	    rt_db_free_internal(&intern);
-	    return BRLCAD_ERROR;
-	} else
-	    comb->rgb[i] = val;
-    }
+    if (bu_rgb_from_argv(rgb, 3, argv + 1) != 3)
+	return BRLCAD_ERROR;
+    VMOVE(comb->rgb, rgb);
 
     comb->rgb_valid = 1;
     GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
@@ -79,10 +99,10 @@ ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_COMB_COLOR_COMMANDS(X, XID) \
-    X(comb_color, ged_comb_color_core, GED_CMD_DEFAULT) \
+    X(comb_color, ged_comb_color_core, GED_CMD_DEFAULT, &comb_color_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_COMB_COLOR_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_comb_color", 1, GED_COMB_COLOR_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COMB_COLOR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_comb_color", 1, GED_COMB_COLOR_COMMANDS)
 
 /*
  * Local Variables:

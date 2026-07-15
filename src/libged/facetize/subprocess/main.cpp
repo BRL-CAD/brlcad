@@ -33,14 +33,27 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/env.h"
-#include "bu/opt.h"
 #include "bg/trimesh.h"
 #include "rt/primitives/bot.h"
 #include "ged.h"
 #define TESS_OPTS_IMPLEMENTATION
 #include "../tess_opts.h"
 #include "./tessellate.h"
+
+
+struct facetize_process_args {
+    int print_help = 0;
+    int list_methods = 0;
+    int overwrite = 0;
+    method_options_t *method_options = NULL;
+    int max_time = 0;
+    int max_pnts = 0;
+    const char *cache_dir = NULL;
+};
+
+static const struct bu_cmd_schema *facetize_process_schema(void);
 
 static void
 rt_pnts_free(struct rt_pnts_internal *pnts)
@@ -305,52 +318,44 @@ facetize_process(int argc, const char **argv)
     argc--; argv++;
 
     static const char *usage = "Usage: ged_exec facetize_process [options] file.g input_obj [input_object_2 ...]\n";
-    int print_help = 0;
     struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
     tess_opts s;
+    struct facetize_process_args args;
 
-    int list_methods = 0;
-    int max_time = 0;
-    int max_pnts = 0;
+    args.method_options = &s.method_opts;
 
-    struct bu_opt_desc d[ 9];
-    BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
-    BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
-    BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
-    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...", &_tess_active_methods,        &s.method_opts, "List of active methods to use for this tessellation attempt");
-    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,        &s.method_opts, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
-    BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,             &max_time, "Maximum number of seconds to allow for runtime (not supported by all methods).");
-    BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,             &max_pnts, "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT(d[ 7],   "",     "cache-dir",                     "dir",           &bu_opt_vls,            &cache_dir, "Directory to use for cached outputs (default is libbu cache directory).");
-    BU_OPT_NULL(d[ 8]);
-
-    /* parse options */
+    /* Parse the same native method syntax used by the parent command. */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    argc = bu_opt_parse(&omsg, argc, argv, d);
-    if (argc < 0) {
+    int operand_start = bu_cmd_schema_parse(facetize_process_schema(), &args, &omsg, argc, argv);
+    if (operand_start < 0) {
 	bu_log("Option parsing error: %s\n", bu_vls_cstr(&omsg));
 	bu_vls_free(&omsg);
 	bu_exit(BRLCAD_ERROR, "%s failed", bu_getprogname());
     }
     bu_vls_free(&omsg);
+    argc -= operand_start;
+    argv += operand_start;
+    s.overwrite_obj = args.overwrite;
+    if (args.cache_dir)
+	bu_vls_strcpy(&cache_dir, args.cache_dir);
 
-    if (list_methods && print_help) {
+    if (args.list_methods && args.print_help) {
 	print_methods_info();
 	return BRLCAD_OK;
     }
 
-    if (list_methods) {
+    if (args.list_methods) {
 	print_tess_methods();
 	return BRLCAD_OK;
     }
 
-    if (print_help) {
+    if (args.print_help) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	char *option_help;
+	char *option_help = NULL;
 
 	bu_vls_sprintf(&str, "%s", usage);
 
-	if ((option_help = bu_opt_describe(d, NULL))) {
+	if ((option_help = bu_cmd_schema_describe(facetize_process_schema()))) {
 	    bu_vls_printf(&str, "Options:\n%s\n", option_help);
 	    bu_free(option_help, "help str");
 	}
@@ -440,6 +445,44 @@ facetize_process(int argc, const char **argv)
     bu_vls_free(&cache_dir);
 
     return BRLCAD_OK;
+}
+
+static const struct bu_cmd_option facetize_process_options[] = {
+    BU_CMD_FLAG("h", "help", facetize_process_args, print_help, "Print help and exit"),
+    BU_CMD_FLAG(NULL, "list-methods", facetize_process_args, list_methods,
+	"List available tessellation methods"),
+    BU_CMD_FLAG("O", "overwrite", facetize_process_args, overwrite,
+	"Replace the original object with a BoT"),
+    BU_CMD_CUSTOM(NULL, "methods", facetize_process_args, method_options,
+	tess_active_methods_from_str, "method[,method...]", "Active tessellation methods"),
+    BU_CMD_CUSTOM(NULL, "method-opts", facetize_process_args, method_options,
+	tess_method_opts_from_str, "\"METHOD option=value ...\"", "Method-specific options"),
+    BU_CMD_INTEGER(NULL, "max-time", facetize_process_args, max_time, "seconds",
+	"Maximum process runtime"),
+    BU_CMD_INTEGER(NULL, "max-pnts", facetize_process_args, max_pnts, "count",
+	"Maximum sampling points"),
+    BU_CMD_FILE(NULL, "cache-dir", facetize_process_args, cache_dir, "directory",
+	"Cache directory"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand facetize_process_operands[] = {
+    BU_CMD_OPERAND("database", BU_CMD_VALUE_FILE, 1, 1, "Input .g database", "ged.file_path"),
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Objects to tessellate", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema facetize_process_cmd_schema = {
+    "facetize_process", "Tessellate geometry in a worker process",
+    facetize_process_options, facetize_process_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_schema *
+facetize_process_schema(void)
+{
+    return &facetize_process_cmd_schema;
 }
 
 #include "../../include/plugin.h"

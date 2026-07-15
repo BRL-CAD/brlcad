@@ -30,8 +30,10 @@
 #include <regex>
 #include <string>
 #include <sstream>
+#include <vector>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "analyze.h"
 #include "ged.h"
@@ -454,7 +456,6 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	const char *mat_id = NULL;
 	const char *oname = NULL;
 	long int curr_id = -1;
-	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 	dp = *dp_it;
 	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
@@ -467,13 +468,11 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    mat_names.insert(std::string(oname));
 	}
 	if (mat_id) {
-	    if (bu_opt_long(&msg, 1, (const char **)(&mat_id), (void *)&curr_id) < 0 || curr_id < 0) {
+	    if (!bu_cmd_long_from_str(&curr_id, mat_id) || curr_id < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Object %s has an invalid value set for it's material_id attribute: %s\n", dp->d_namep, mat_id);
-		bu_vls_free(&msg);
 		bu_avs_free(&avs);
 		continue;
 	    }
-	    bu_vls_free(&msg);
 	    mat_ids.insert(curr_id);
 	}
 	if (oname && mat_id) {
@@ -564,7 +563,6 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	// report.  If there is an associated material id with object that
 	// corresponds to a known name, report that as well.
 	for (dp_it = mns.begin(); dp_it != mns.end(); dp_it++) {
-	    struct bu_vls msg = BU_VLS_INIT_ZERO;
 	    const char *mat_id = NULL;
 	    char *id_name = NULL;
 	    long int curr_id = -1;
@@ -583,12 +581,10 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 
 		mat_id = bu_avs_get(&avs, "material_id");
 		if (mat_id) {
-		    if (bu_opt_long(&msg, 1, (const char **)(&mat_id), (void *)&curr_id) < 0 || curr_id < 0) {
+		    if (!bu_cmd_long_from_str(&curr_id, mat_id) || curr_id < 0) {
 			bu_avs_free(&avs);
-			bu_vls_free(&msg);
 			continue;
 		    }
-		    bu_vls_free(&msg);
 		    id_name = analyze_densities_name(a, curr_id);
 		    if (id_name) {
 			bu_vls_printf(gedp->ged_result_str, " (material_id:%ld -> %s)\n", curr_id, id_name);
@@ -610,7 +606,6 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	// and report.  If there is an associated material name that
 	// corresponds to a known id, report that as well.
 	for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
-	    struct bu_vls msg = BU_VLS_INIT_ZERO;
 	    const char *mat_id = NULL;
 	    char *id_name = NULL;
 	    long int curr_id = -1;
@@ -624,12 +619,10 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    }
 
 	    mat_id = bu_avs_get(&avs, "material_id");
-	    if (bu_opt_long(&msg, 1, (const char **)(&mat_id), (void *)&curr_id) < 0 || curr_id < 0) {
+	    if (!mat_id || !bu_cmd_long_from_str(&curr_id, mat_id) || curr_id < 0) {
 		bu_avs_free(&avs);
-		bu_vls_free(&msg);
 		continue;
 	    }
-	    bu_vls_free(&msg);
 	    id_name = analyze_densities_name(a, curr_id);
 	    if (!id_name) {
 		bu_vls_printf(gedp->ged_result_str, "%s[material_id:%ld] unknown material_id", (*dp_it)->d_namep, curr_id);
@@ -758,304 +751,293 @@ mater_export(struct ged *gedp, size_t argc, const char *argv[])
 }
 
 
-struct _id_opt_info {
-    int lflag;
-    int gflag;
-    int eflag;
-    std::set<long int> *id_numbers;
-    std::set<std::string> *id_patterns;
+enum mater_filter_operator {
+    MATER_FILTER_EQUAL = 0,
+    MATER_FILTER_LESS,
+    MATER_FILTER_LESS_EQUAL,
+    MATER_FILTER_GREATER,
+    MATER_FILTER_GREATER_EQUAL
+};
+
+struct mater_id_filter {
+    mater_filter_operator op;
+    long int value;
+    std::string pattern;
+    int is_pattern;
+};
+
+struct mater_density_filter {
+    mater_filter_operator op;
+    fastf_t value;
+};
+
+struct mater_get_args {
+    std::vector<mater_id_filter> id_filters;
+    std::vector<mater_density_filter> density_filters;
+    std::vector<std::string> name_patterns;
+    fastf_t tolerance = BN_TOL_DIST;
 };
 
 
-static int
-_ged_id_opt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+static const char *
+mater_filter_operator_parse(const char *arg, mater_filter_operator *op)
 {
-    struct _id_opt_info *id_info = (struct _id_opt_info *)set_var;
-    const char *av0 = argv[0];
-    std::string av_orig(argv[0]);
-    long int id_number = 0;
+    if (!arg || !op)
+	return NULL;
 
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
-
-    id_info->lflag = 0;
-    id_info->gflag = 0;
-    id_info->eflag = 0;
-
-    if (av0[0] == '<') {
-	id_info->lflag = 1;
-	av0++;
-    } else if (av0[0] == '>') {
-	id_info->gflag = 1;
-	av0++;
+    *op = MATER_FILTER_EQUAL;
+    if (arg[0] == '<') {
+	*op = arg[1] == '=' ? MATER_FILTER_LESS_EQUAL : MATER_FILTER_LESS;
+	return arg + (arg[1] == '=' ? 2 : 1);
     }
-    if (av0[0] == '=') {
-	id_info->eflag = 1;
-	av0++;
+    if (arg[0] == '>') {
+	*op = arg[1] == '=' ? MATER_FILTER_GREATER_EQUAL : MATER_FILTER_GREATER;
+	return arg + (arg[1] == '=' ? 2 : 1);
     }
-    argv[0] = av0;
-
-    if (bu_opt_long(msg, argc, argv, (void *)&id_number) < 0) {
-	// Not a number or range - just go with the original string
-	id_info->lflag = 0;
-	id_info->gflag = 0;
-	id_info->eflag = 0;
-	id_info->id_patterns->insert(av_orig);
-	return 1;
-    }
-
-    if (!id_info->lflag && !id_info->gflag) {
-	id_info->eflag = 1;
-    }
-
-    id_info->id_numbers->insert(id_number);
-
-    return 1;
+    if (arg[0] == '=')
+	return arg + 1;
+    return arg;
 }
 
 
-struct _density_opt_info {
-    int lflag;
-    int gflag;
-    int eflag;
-    std::set<fastf_t> *densities;
-};
-
-
 static int
-_ged_density_opt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+mater_get_id_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    const char *av0 = argv[0];
-    fastf_t den;
-    struct _density_opt_info *dens_opt = (struct _density_opt_info *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
+    mater_filter_operator op;
+    const char *value = mater_filter_operator_parse(arg, &op);
+    long int id = 0;
 
-    dens_opt->lflag = 0;
-    dens_opt->gflag = 0;
-    dens_opt->eflag = 0;
-
-    if (av0[0] == '<') {
-	dens_opt->lflag = 1;
-	av0++;
-    } else if (av0[0] == '>') {
-	dens_opt->gflag = 1;
-	av0++;
-    }
-    if (av0[0] == '=') {
-	dens_opt->eflag = 1;
-	av0++;
-    }
-    argv[0] = av0;
-
-    if (!dens_opt->lflag && !dens_opt->gflag) {
-	dens_opt->eflag = 1;
-    }
-
-    if (bu_opt_fastf_t(msg, argc, argv, (void *)&den) < 0) {
+    if (!arg || !arg[0] || !value || !value[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "material id filter requires an id or pattern\n");
 	return -1;
     }
 
-    dens_opt->densities->insert(den);
-    return 1;
+    if (!bu_cmd_long_from_str(&id, value)) {
+	if (storage) {
+	    mater_id_filter filter = {MATER_FILTER_EQUAL, 0, arg, 1};
+	    static_cast<std::vector<mater_id_filter> *>(storage)->push_back(filter);
+	}
+	return 0;
+    }
+
+    if (storage) {
+	mater_id_filter filter = {op, id, std::string(), 0};
+	static_cast<std::vector<mater_id_filter> *>(storage)->push_back(filter);
+    }
+    return 0;
 }
 
 
 static int
-_ged_name_opt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+mater_get_density_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    std::set<std::string> *name_patterns = (std::set<std::string> *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
-    name_patterns->insert(std::string(argv[0]));
-    return 1;
+    mater_filter_operator op;
+    const char *value = mater_filter_operator_parse(arg, &op);
+    fastf_t density = 0.0;
+
+    if (!arg || !arg[0] || !value || !value[0] ||
+	!bu_cmd_number_from_str(&density, value)) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid density filter: %s\n", arg ? arg : "");
+	return -1;
+    }
+
+    if (storage) {
+	mater_density_filter filter = {op, density};
+	static_cast<std::vector<mater_density_filter> *>(storage)->push_back(filter);
+    }
+    return 0;
 }
+
+
+static int
+mater_get_name_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "material name filter requires a pattern\n");
+	return -1;
+    }
+    if (storage)
+	static_cast<std::vector<std::string> *>(storage)->push_back(std::string(arg));
+    return 0;
+}
+
+
+static int
+mater_filter_long_match(long int candidate, const mater_id_filter &filter)
+{
+    if (filter.is_pattern)
+	return 0;
+    switch (filter.op) {
+	case MATER_FILTER_LESS: return candidate < filter.value;
+	case MATER_FILTER_LESS_EQUAL: return candidate <= filter.value;
+	case MATER_FILTER_GREATER: return candidate > filter.value;
+	case MATER_FILTER_GREATER_EQUAL: return candidate >= filter.value;
+	case MATER_FILTER_EQUAL: return candidate == filter.value;
+	}
+    return 0;
+}
+
+
+static int
+mater_filter_density_match(fastf_t candidate, const mater_density_filter &filter,
+	fastf_t tolerance)
+{
+    switch (filter.op) {
+	case MATER_FILTER_LESS: return candidate < filter.value;
+	case MATER_FILTER_LESS_EQUAL: return candidate <= filter.value;
+	case MATER_FILTER_GREATER: return candidate > filter.value;
+	case MATER_FILTER_GREATER_EQUAL: return candidate >= filter.value;
+	case MATER_FILTER_EQUAL: return NEAR_EQUAL(candidate, filter.value, tolerance);
+	}
+    return 0;
+}
+
+
+static const struct bu_cmd_option mater_get_options[] = {
+    BU_CMD_CUSTOM(NULL, "id", struct mater_get_args, id_filters, mater_get_id_from_str,
+	"id-or-pattern", "Match a material id, range, or glob pattern"),
+    BU_CMD_CUSTOM(NULL, "density", struct mater_get_args, density_filters,
+	mater_get_density_from_str, "comparison", "Match a density value or range"),
+    BU_CMD_CUSTOM(NULL, "name", struct mater_get_args, name_patterns,
+	mater_get_name_from_str, "pattern", "Match a material name glob pattern"),
+    BU_CMD_NUMBER(NULL, "tol", struct mater_get_args, tolerance, "tolerance",
+	"Density equality tolerance (default is BN_TOL_DIST)"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand mater_get_operands[] = {
+    BU_CMD_OPERAND("pattern", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Material id or name glob pattern", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema mater_get_schema = {
+    "get", "Query density records", mater_get_options, mater_get_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 static int
 mater_get(struct ged *gedp, size_t argc, const char *argv[])
 {
-    /* BN_TOL_DIST doesn't really make sense here, but SMALL_FASTF is
-     * too small to be a useful density tolerance for searching
-     * purposes.
-     */
-    double dtol = BN_TOL_DIST;
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
-    struct bu_vls tolhelp = BU_VLS_INIT_ZERO;
     struct directory *dp;
     struct rt_binunif_internal *bip;
     struct rt_db_internal intern;
-    char *buf;
-    int ac;
-    struct analyze_densities *a;
+    struct analyze_densities *a = NULL;
+    char *buf = NULL;
+    mater_get_args args;
+    std::vector<std::string> greedy_patterns;
+    int operand_start;
     int ret = 0;
     int ecnt = 0;
-    std::set<std::string> *name_patterns = new std::set<std::string>;
-    std::set<std::string> *greedy_patterns = new std::set<std::string>;
-    std::set<std::string>::iterator i_it, n_it;
-    std::set<fastf_t>::iterator f_it;
-    std::set<long int>::iterator ln_it;
+    int result = BRLCAD_ERROR;
     long int curr_id = -1;
-    struct _density_opt_info dens_opt;
-    dens_opt.lflag = 0;
-    dens_opt.gflag = 0;
-    dens_opt.eflag = 0;
-    dens_opt.densities = new std::set<fastf_t>;
-    struct _id_opt_info id_opt;
-    id_opt.lflag = 0;
-    id_opt.gflag = 0;
-    id_opt.eflag = 0;
-    id_opt.id_numbers = new std::set<long int>;
-    id_opt.id_patterns = new std::set<std::string>;
-
-    bu_vls_sprintf(&tolhelp, "Search for density matches with the specified matching tolerance (unspecified default is %g)", BN_TOL_DIST);
-
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "", "id",       "<[[>|<][=]id]|[id pattern]>",   &_ged_id_opt,       &id_opt,   "Search using a material id number key or range");
-    BU_OPT(d[1], "", "density",  "<[>|<][=]value>",   &_ged_density_opt,  &dens_opt,     "Search using a density value (above/below with prefix modifiers, else matches within tolerance)");
-    BU_OPT(d[2], "", "name",     "<name pattern>", &_ged_name_opt,     name_patterns, "Search using a material name");
-    BU_OPT(d[3], "", "tol",      "<tolerance>",    &bu_opt_fastf_t,    &dtol,         bu_vls_cstr(&tolhelp));
-    BU_OPT_NULL(d[4]);
 
     argc--; argv++;
-
     if (argc < 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
-	goto ged_mater_get_fail;
+	goto done;
     }
 
-    ac = bu_opt_parse(&msgs, argc, argv, d);
-    if (ac < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&msgs));
-	bu_vls_free(&msgs);
-	goto ged_mater_get_fail;
-    }
+    operand_start = bu_cmd_schema_parse(&mater_get_schema, &args,
+	gedp->ged_result_str, (int)argc, argv);
+    if (operand_start < 0)
+	goto done;
+    for (size_t i = (size_t)operand_start; i < argc; i++)
+	greedy_patterns.push_back(argv[i]);
 
     if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "no density information found in database.  To insert density information, use the mater -d set and/or mater -d import commands.\n");
-	goto ged_mater_get_fail;
-    }
-
-    if (ac > 0) {
-	for (int i = 0; i < ac; i++) {
-	    greedy_patterns->insert(std::string(argv[i]));
-	}
+	goto done;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
-	goto ged_mater_get_fail;
+	goto done;
     }
 
     RT_CK_DB_INTERNAL(&intern);
-
     bip = (struct rt_binunif_internal *)intern.idb_ptr;
     if (bip->count < 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s has no contents", GED_DB_DENSITY_OBJECT);
 	rt_db_free_internal(&intern);
-	goto ged_mater_get_fail;
+	goto done;
     }
 
-    analyze_densities_create(&a);
-    buf = (char *)bu_calloc(bip->count+1, sizeof(char), "density buffer");
+    buf = (char *)bu_calloc(bip->count + 1, sizeof(char), "density buffer");
     memcpy(buf, bip->u.int8, bip->count);
     rt_db_free_internal(&intern);
+    analyze_densities_create(&a);
     ret = analyze_densities_load(a, buf, &msgs, &ecnt);
     bu_free(buf, "free density buffer");
     if (!ret) {
 	bu_vls_printf(gedp->ged_result_str, "no density information found when reading database:\n%s\nTo insert density information, use the mater -d set and/or mater -d import commands.\n", bu_vls_cstr(&msgs));
-	bu_vls_free(&msgs);
-	analyze_densities_destroy(a);
-	goto ged_mater_get_fail;
+	goto done;
     }
     if (ecnt) {
 	bu_vls_printf(gedp->ged_result_str, "errors found when reading database:\n%s\n", bu_vls_cstr(&msgs));
-	bu_vls_free(&msgs);
-	analyze_densities_destroy(a);
-	goto ged_mater_get_fail;
+	goto done;
     }
 
-    // Have data, start looking
     while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
-	int have_id_match = -1;
-	int have_den_match = -1;
-	int have_name_match = -1;
+	int have_id_match = args.id_filters.empty() ? -1 : 0;
+	int have_density_match = args.density_filters.empty() ? -1 : 0;
+	int have_name_match = args.name_patterns.empty() ? -1 : 0;
 	int have_greedy_match = 0;
-	fastf_t curr_d = analyze_densities_density(a, curr_id);
-	char *curr_n = analyze_densities_name(a, curr_id);
+	fastf_t curr_density = analyze_densities_density(a, curr_id);
+	char *curr_name = analyze_densities_name(a, curr_id);
 	struct bu_vls curr_id_str = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&curr_id_str, "%ld", curr_id);
 
-	for (i_it = greedy_patterns->begin(); i_it != greedy_patterns->end(); i_it++) {
-	    if (!bu_path_match(i_it->c_str(), bu_vls_cstr(&curr_id_str), 0)) {
+	for (const std::string &pattern : greedy_patterns) {
+	    if (!bu_path_match(pattern.c_str(), bu_vls_cstr(&curr_id_str), 0) ||
+		!bu_path_match(pattern.c_str(), curr_name, 0)) {
 		have_greedy_match = 1;
 		break;
 	    }
-	    if (!bu_path_match(i_it->c_str(), curr_n, 0)) {
-		have_greedy_match = 1;
+	}
+	for (const mater_id_filter &filter : args.id_filters) {
+	    if ((filter.is_pattern && !bu_path_match(filter.pattern.c_str(),
+		bu_vls_cstr(&curr_id_str), 0)) ||
+		(!filter.is_pattern && mater_filter_long_match(curr_id, filter))) {
+		have_id_match = 1;
 		break;
 	    }
 	}
-
-	if (id_opt.lflag || id_opt.gflag || id_opt.eflag) {
-	    have_id_match = 0;
-	    for (ln_it = id_opt.id_numbers->begin(); ln_it != id_opt.id_numbers->end(); ln_it++) {
-		if ((id_opt.lflag && (curr_id < *ln_it)) || (id_opt.gflag && (curr_id > *ln_it)) ||
-		    (id_opt.eflag && (*ln_it == curr_id))) {
-		    have_id_match = 1;
-		    break;
-		}
-	    }
-	}
-	if (have_id_match <= 0) {
-	    for (i_it = id_opt.id_patterns->begin(); i_it != id_opt.id_patterns->end(); i_it++) {
-		have_id_match = 0;
-		if (!bu_path_match(i_it->c_str(), bu_vls_cstr(&curr_id_str), 0)) {
-		    have_id_match = 1;
-		    break;
-		}
-	    }
-	}
-	for (f_it = dens_opt.densities->begin(); f_it != dens_opt.densities->end(); f_it++) {
-	    have_den_match = 0;
-	    if ((dens_opt.lflag && (curr_d < *f_it)) || (dens_opt.gflag && (curr_d > *f_it)) ||
-		(dens_opt.eflag && NEAR_EQUAL(*f_it, curr_d, dtol))) {
-		have_den_match = 1;
+	for (const mater_density_filter &filter : args.density_filters) {
+	    if (mater_filter_density_match(curr_density, filter, args.tolerance)) {
+		have_density_match = 1;
 		break;
 	    }
 	}
-	for (n_it = name_patterns->begin(); n_it != name_patterns->end(); n_it++) {
-	    have_name_match = 0;
-	    if (!bu_path_match(n_it->c_str(), curr_n, 0)) {
+	for (const std::string &pattern : args.name_patterns) {
+	    if (!bu_path_match(pattern.c_str(), curr_name, 0)) {
 		have_name_match = 1;
 		break;
 	    }
 	}
-	if (((have_id_match && have_den_match && have_name_match) && (have_id_match > 0 || have_den_match > 0 || have_name_match > 0))
-	   || (have_greedy_match && (have_id_match != 0 && have_den_match != 0 && have_name_match != 0))) {
-	    bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", curr_id, curr_d, curr_n);
+
+	if (((have_id_match && have_density_match && have_name_match) &&
+		(have_id_match > 0 || have_density_match > 0 || have_name_match > 0)) ||
+	    (have_greedy_match && (have_id_match != 0 && have_density_match != 0 &&
+		 have_name_match != 0))) {
+	    bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", curr_id,
+		curr_density, curr_name);
 	}
-	bu_free(curr_n, "name copy");
+	bu_free(curr_name, "name copy");
 	bu_vls_free(&curr_id_str);
     }
+    result = BRLCAD_OK;
 
+done:
+    if (a)
+	analyze_densities_destroy(a);
     bu_vls_free(&msgs);
-    bu_vls_free(&tolhelp);
-    analyze_densities_destroy(a);
-
-    delete id_opt.id_numbers;
-    delete id_opt.id_patterns;
-    delete dens_opt.densities;
-    delete name_patterns;
-    delete greedy_patterns;
-
-    return BRLCAD_OK;
-
-ged_mater_get_fail:
-    bu_vls_free(&tolhelp);
-    delete id_opt.id_numbers;
-    delete id_opt.id_patterns;
-    delete dens_opt.densities;
-    delete name_patterns;
-    delete greedy_patterns;
-    return BRLCAD_ERROR;
+    return result;
 }
 
 
@@ -1090,26 +1072,22 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 	if (std::regex_search(dstr, sm, d_reg)) {
 	    if (sm.size() == 4) {
 		int parse_error = 0;
-		const char *id_str = bu_strdup(sm[1].str().c_str());
-		if (bu_opt_long(NULL, 1, (const char **)&id_str, &id) <= 0) {
-		    bu_vls_printf(gedp->ged_result_str, "Error parsing material id: %s\n", id_str);
+		std::string id_str = sm[1].str();
+		if (!bu_cmd_long_from_str(&id, id_str.c_str())) {
+		    bu_vls_printf(gedp->ged_result_str, "Error parsing material id: %s\n", id_str.c_str());
 		    parse_error = 1;
 		}
-		bu_free((void *)id_str, "str cpy");
-		const char *den_str = bu_strdup(sm[2].str().c_str());
-		if (bu_opt_fastf_t(NULL, 1, (const char **)&den_str, &density) <= 0) {
-		    bu_vls_printf(gedp->ged_result_str, "Error parsing density: %s\n", den_str);
+		std::string den_str = sm[2].str();
+		if (!bu_cmd_number_from_str(&density, den_str.c_str())) {
+		    bu_vls_printf(gedp->ged_result_str, "Error parsing density: %s\n", den_str.c_str());
 		    parse_error = 1;
 		}
-		bu_free((void *)den_str, "str cpy");
-		const char *name_str = bu_strdup(sm[3].str().c_str());
+		std::string name_str = sm[3].str();
 		if (!parse_error) {
-		    analyze_densities_set(a, id, density, name_str, NULL);
-		    bu_free((void *)name_str, "str cpy");
+		    analyze_densities_set(a, id, density, name_str.c_str(), NULL);
 		} else {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
 		    analyze_densities_destroy(a);
-		    bu_free((void *)name_str, "str cpy");
 		    return BRLCAD_ERROR;
 		}
 	    } else {
@@ -1318,15 +1296,68 @@ mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, std::s
 }
 
 
+struct mater_map_args {
+    int ids_from_names;
+    int names_from_ids;
+    struct bu_vls density_file;
+    struct bu_vls map_file;
+};
+
+
+static int
+mater_vls_replace_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_strcat(msg, "file name is required\n");
+	return -1;
+    }
+    if (storage)
+	bu_vls_strcpy((struct bu_vls *)storage, arg);
+    return 0;
+}
+
+
+static const char * const mater_map_mode_options[] = {
+    "ids-from-names", "names-from-ids", NULL
+};
+
+static const struct bu_cmd_constraint mater_map_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(mater_map_mode_options, 1, 1,
+	"exactly one mapping mode is required"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
+static const struct bu_cmd_option mater_map_options[] = {
+    BU_CMD_FLAG(NULL, "ids-from-names", struct mater_map_args, ids_from_names,
+	"Assign material_id values from material_name attributes"),
+    BU_CMD_FLAG(NULL, "names-from-ids", struct mater_map_args, names_from_ids,
+	"Assign material_name values from material_id attributes"),
+    BU_CMD_CUSTOM("d", "density-file", struct mater_map_args, density_file,
+	mater_vls_replace_from_str, "file", "Use this density data file"),
+    BU_CMD_CUSTOM("m", "map-file", struct mater_map_args, map_file,
+	mater_vls_replace_from_str, "file", "Use this material-name mapping file"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand mater_map_operands[] = {
+    BU_CMD_OPERAND("file", BU_CMD_VALUE_FILE, 0, 2,
+	"Optional density and mapping files", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema mater_map_schema = {
+    "map", "Synchronize material_id and material_name attributes", mater_map_options,
+    mater_map_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, mater_map_constraints)
+};
+
+
 static int
 mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 {
-    struct bu_vls msgs = BU_VLS_INIT_ZERO;
-    struct bu_vls dfilename = BU_VLS_INIT_ZERO;
-    struct bu_vls mfilename = BU_VLS_INIT_ZERO;
+    struct mater_map_args args = {0, 0, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
     int ac;
-    int names_from_ids = 0;
-    int ids_from_names = 0;
     struct directory *dp;
     struct analyze_densities *a = NULL;
     std::set<std::string> listed_materials;
@@ -1349,48 +1380,45 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     int id_found_cnt;
     int nid;
 
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "",  "ids-from-names",  "", NULL,   &ids_from_names,   "Assign material_id based on material_name");
-    BU_OPT(d[1], "",  "names-from-ids",  "", NULL,   &names_from_ids,   "Assign material_name based on material_id");
-    BU_OPT(d[2], "d", "density-file",  "<density_file>", &bu_opt_vls,   &dfilename, "Make assignments using the specified density file");
-    BU_OPT(d[3], "m", "map-file",   "<map_file>",     &bu_opt_vls,  &mfilename, "Use the specified material name mappings.");
-    BU_OPT_NULL(d[4]);
-
     argc--; argv++;
 
-    ac = bu_opt_parse(&msgs, argc, argv, d);
+    ac = bu_cmd_schema_parse(&mater_map_schema, &args, gedp->ged_result_str,
+	(int)argc, argv);
     if (ac < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&msgs));
 	goto ged_mater_mat_id_fail;
     }
 
-    if (!names_from_ids && !ids_from_names) {
+    argc -= (size_t)ac;
+    argv += ac;
+    ac = (int)argc;
+
+	if ((args.names_from_ids + args.ids_from_names) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_mat_id_fail;
     }
 
-    if (ac > 3) {
+	if (ac > 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_mat_id_fail;
     }
 
-    if (ac == 2 && (bu_vls_strlen(&dfilename) || bu_vls_strlen(&mfilename))) {
+	if (ac == 2 && (bu_vls_strlen(&args.density_file) || bu_vls_strlen(&args.map_file))) {
 	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_mat_id_fail;
     }
 
-    if (ac == 1 && bu_vls_strlen(&dfilename) && names_from_ids) {
+	if (ac == 1 && bu_vls_strlen(&args.density_file) && args.names_from_ids) {
 	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_mat_id_fail;
     }
 
-    if (bu_vls_strlen(&dfilename) && !bu_file_exists(bu_vls_cstr(&dfilename), NULL)) {
-	bu_vls_printf(gedp->ged_result_str, "density file %s doesn't exist", bu_vls_cstr(&dfilename));
+	if (bu_vls_strlen(&args.density_file) && !bu_file_exists(bu_vls_cstr(&args.density_file), NULL)) {
+	bu_vls_printf(gedp->ged_result_str, "density file %s doesn't exist", bu_vls_cstr(&args.density_file));
 	goto ged_mater_mat_id_fail;
     }
 
-    if (bu_vls_strlen(&mfilename) && !bu_file_exists(bu_vls_cstr(&mfilename), NULL)) {
-	bu_vls_printf(gedp->ged_result_str, "mapping file %s doesn't exist", bu_vls_cstr(&mfilename));
+	if (bu_vls_strlen(&args.map_file) && !bu_file_exists(bu_vls_cstr(&args.map_file), NULL)) {
+	bu_vls_printf(gedp->ged_result_str, "mapping file %s doesn't exist", bu_vls_cstr(&args.map_file));
 	goto ged_mater_mat_id_fail;
     }
 
@@ -1407,30 +1435,30 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	}
     }
 
-    if (ac && !bu_vls_strlen(&dfilename)) {
+	if (ac && !bu_vls_strlen(&args.density_file)) {
 	if (!mater_try_densities_load(gedp, &a, defined_materials, listed_to_defined, argv[0])) {
-	    if (ac == 2 || names_from_ids) {
+	    if (ac == 2 || args.names_from_ids) {
 		bu_vls_printf(gedp->ged_result_str, "density file %s did not load successfully", argv[0]);
 		goto ged_mater_mat_id_fail;
 	    } else {
-		// May be a mapping file, but we can't try loading it until we
-		// have the density information
-	    }
-	} else {
-	    bu_vls_sprintf(&dfilename, "%s", argv[0]);
-	    ac--; argv++;
+	    // May be a mapping file, but we can't try loading it until we
+	    // have the density information
 	}
+    } else {
+	bu_vls_sprintf(&args.density_file, "%s", argv[0]);
+	ac--; argv++;
+    }
     }
 
-    if (bu_vls_strlen(&dfilename) && !a) {
-	if (!mater_try_densities_load(gedp, &a, defined_materials, listed_to_defined, bu_vls_cstr(&dfilename))) {
-	    bu_vls_printf(gedp->ged_result_str, "density file %s did not load successfully", bu_vls_cstr(&dfilename));
+	if (bu_vls_strlen(&args.density_file) && !a) {
+	if (!mater_try_densities_load(gedp, &a, defined_materials, listed_to_defined, bu_vls_cstr(&args.density_file))) {
+	    bu_vls_printf(gedp->ged_result_str, "density file %s did not load successfully", bu_vls_cstr(&args.density_file));
 	    goto ged_mater_mat_id_fail;
 
 	}
     }
 
-    if (!bu_vls_strlen(&dfilename)) {
+	if (!bu_vls_strlen(&args.density_file)) {
 	// If we don't have a density file, we can't proceed unless the
 	// database has density information.
 	dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
@@ -1453,25 +1481,25 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	}
     }
 
-    if (ac && bu_vls_strlen(&mfilename)) {
+	if (ac && bu_vls_strlen(&args.map_file)) {
 	bu_vls_printf(gedp->ged_result_str, "more than one mapping file supplied.");
 	goto ged_mater_mat_id_fail;
     }
     if (ac) {
-	bu_vls_sprintf(&mfilename, "%s", argv[0]);
+	bu_vls_sprintf(&args.map_file, "%s", argv[0]);
     }
 
-    if (bu_vls_strlen(&mfilename)) {
-	mfile = bu_open_mapped_file(bu_vls_cstr(&mfilename), "mapping file");
+	if (bu_vls_strlen(&args.map_file)) {
+	mfile = bu_open_mapped_file(bu_vls_cstr(&args.map_file), "mapping file");
 	if (!mfile) {
-	    bu_vls_printf(gedp->ged_result_str, "could not open mapping file %s", bu_vls_cstr(&mfilename));
+	    bu_vls_printf(gedp->ged_result_str, "could not open mapping file %s", bu_vls_cstr(&args.map_file));
 	    goto ged_mater_mat_id_fail;
 	}
 
 	mbuff = (char *)(mfile->buf);
 
 	if (_ged_read_msmap(gedp, mbuff, defined_materials, listed_to_defined) !=  BRLCAD_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "file %s is not a valid mapping file, aborting", bu_vls_cstr(&mfilename));
+	    bu_vls_printf(gedp->ged_result_str, "file %s is not a valid mapping file, aborting", bu_vls_cstr(&args.map_file));
 	    bu_close_mapped_file(mfile);
 	    goto ged_mater_mat_id_fail;
 	} else {
@@ -1495,7 +1523,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     db_search_free(&id_objs);
 
 
-    if (names_from_ids) {
+    if (args.names_from_ids) {
 	for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
 	    BU_GET(avs, struct bu_attribute_value_set);
 	    dp = *dp_it;
@@ -1538,9 +1566,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	    bu_free(nname, "free name");
 	}
 
-	bu_vls_free(&msgs);
-	bu_vls_free(&dfilename);
-	bu_vls_free(&mfilename);
+	bu_vls_free(&args.density_file);
+	bu_vls_free(&args.map_file);
 	analyze_densities_destroy(a);
 	return BRLCAD_OK;
     } else {
@@ -1599,9 +1626,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	}
     }
 
-    bu_vls_free(&msgs);
-    bu_vls_free(&dfilename);
-    bu_vls_free(&mfilename);
+    bu_vls_free(&args.density_file);
+    bu_vls_free(&args.map_file);
     analyze_densities_destroy(a);
     return BRLCAD_OK;
 
@@ -1609,9 +1635,176 @@ ged_mater_mat_id_fail:
     if (a) {
 	analyze_densities_destroy(a);
     }
-    bu_vls_free(&msgs);
-    bu_vls_free(&dfilename);
-    bu_vls_free(&mfilename);
+    bu_vls_free(&args.density_file);
+    bu_vls_free(&args.map_file);
+    return BRLCAD_ERROR;
+}
+
+
+struct mater_import_args {
+    int validate_input;
+};
+
+static const struct bu_cmd_option mater_import_options[] = {
+    BU_CMD_FLAG("v", NULL, struct mater_import_args, validate_input,
+	"Validate the density file before importing it"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand mater_file_operand[] = {
+    BU_CMD_OPERAND("density_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Density data file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_operand mater_audit_operands[] = {
+    BU_CMD_OPERAND("density_file", BU_CMD_VALUE_FILE, 0, 1,
+	"Optional density data file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_operand mater_set_operands[] = {
+    BU_CMD_OPERAND("record", BU_CMD_VALUE_RAW, 1, BU_CMD_COUNT_UNLIMITED,
+	"Quoted id, density, name record", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema mater_source_schema = {
+    "source", "Report the active density-data source", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema mater_clear_schema = {
+    "clear", "Remove the database density table", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema mater_import_schema = {
+    "import", "Import a density table into the database", mater_import_options,
+    mater_file_operand, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema mater_export_schema = {
+    "export", "Export the database density table", NULL, mater_file_operand,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema mater_audit_schema = {
+    "audit", "Audit material attributes against density data", NULL, mater_audit_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema mater_validate_schema = {
+    "validate", "Validate a density data file", NULL, mater_file_operand,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema mater_set_schema = {
+    "set", "Add or replace density records", NULL, mater_set_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema mater_density_schema = {
+    "density", "Manage the database density table", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_tree_node mater_density_subcommands[] = {
+    BU_CMD_TREE_NODE(&mater_audit_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&mater_clear_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&mater_export_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&mater_get_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&mater_import_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&mater_map_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&mater_set_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&mater_source_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&mater_validate_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+
+static const struct bu_cmd_option mater_short_density_options[] = {
+    BU_CMD_FLAG_UNBOUND("d", NULL, "density",
+	"Select density-table management mode"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema mater_short_density_root_schema = {
+    "mater", "Manage legacy material properties", mater_short_density_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema mater_long_density_root_schema = {
+    "mater", "Manage legacy material properties", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_tree_node mater_long_density_subcommands[] = {
+    BU_CMD_TREE_NODE(&mater_density_schema, NULL, mater_density_subcommands,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree mater_short_density_tree = {
+    &mater_short_density_root_schema, mater_density_subcommands,
+    BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+static const struct bu_cmd_tree mater_long_density_tree = {
+    &mater_long_density_root_schema, mater_long_density_subcommands,
+    BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+static const struct bu_cmd_option mater_shader_options[] = {
+    BU_CMD_FLAG_UNBOUND("s", NULL, "shader",
+	"Force shader mode when the object name resembles a density subcommand"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand mater_shader_operands[] = {
+    BU_CMD_OPERAND("shader_argument", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Combination, shader, RGB, and inheritance arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema mater_shader_schema = {
+    "mater", "Assign shader, RGB, and inheritance properties", mater_shader_options,
+    mater_shader_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+/* A short-option prefix has two possible command forms.  It is intentionally
+ * separate so completion can offer both -d and -s before the choice is made. */
+static const struct bu_cmd_option mater_prefix_options[] = {
+    BU_CMD_FLAG_UNBOUND("d", NULL, "density", "Select density-table management mode"),
+    BU_CMD_FLAG_UNBOUND("s", NULL, "shader", "Force shader mode"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema mater_prefix_schema = {
+    "mater", "Select a mater command form", mater_prefix_options, mater_shader_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static const struct bu_cmd_schema *
+mater_density_schema_for_command(const char *command)
+{
+    const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(
+	&mater_short_density_tree, command);
+    return node ? node->schema : NULL;
+}
+
+
+static int
+mater_density_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+	size_t argc, const char *argv[])
+{
+    struct bu_cmd_validate_result result = BU_CMD_VALIDATE_RESULT_NULL;
+
+    if (!schema || argc < 2)
+	return BRLCAD_ERROR;
+    if (bu_cmd_schema_validate(schema, argc - 2, argv + 2, argc - 2, &result) != 0 ||
+	result.state != BU_CMD_VALIDATE_VALID) {
+	if (result.hint)
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", result.hint);
+	bu_cmd_validate_result_clear(&result);
+	return BRLCAD_ERROR;
+    }
+    bu_cmd_validate_result_clear(&result);
     return BRLCAD_OK;
 }
 
@@ -1625,6 +1818,14 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	return GED_HELP;
     }
+
+    const struct bu_cmd_schema *schema = mater_density_schema_for_command(argv[1]);
+    if (!schema) {
+	bu_vls_printf(gedp->ged_result_str, "Unknown -d subcommand: %s\n%s", argv[1], mater_usage);
+	return BRLCAD_ERROR;
+    }
+    if (mater_density_preflight(gedp, schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     if (BU_STR_EQUAL(argv[1], "get")) {
 	argv[1] = argv[0];
@@ -1676,8 +1877,7 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
 	return mater_mat_id(gedp, argc, argv);
     }
 
-    bu_vls_printf(gedp->ged_result_str, "Unknown -d subcommand: %s\n%s", argv[1], mater_usage);
-    return BRLCAD_ERROR;
+	return BRLCAD_ERROR;
 }
 
 
@@ -1717,11 +1917,77 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_MATER_COMMANDS(X, XID) \
-    X(mater, ged_mater_core, GED_CMD_DEFAULT) \
+static const struct ged_cmd_native_form mater_native_forms[] = {
+    {"density", NULL, &mater_long_density_tree},
+    {"density_short", NULL, &mater_short_density_tree},
+    {"shader", &mater_shader_schema, NULL},
+    {"option_prefix", &mater_prefix_schema, NULL},
+    {NULL, NULL, NULL}
+};
 
-GED_DECLARE_COMMAND_SET(GED_MATER_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_mater", 1, GED_MATER_COMMANDS)
+
+static const struct ged_cmd_native_form *
+mater_select_native_form(const struct ged *UNUSED(gedp), size_t argc,
+	const char * const *argv)
+{
+    const char *word = argc > 1 && argv[1] ? argv[1] : "";
+    size_t length = strlen(word);
+
+    if (!length)
+	return &mater_native_forms[0];
+    if (BU_STR_EQUAL(word, "-"))
+	return &mater_native_forms[3];
+    if (!strncmp("-d", word, length))
+	return &mater_native_forms[1];
+    if (!strncmp("density", word, length))
+	return &mater_native_forms[0];
+    return &mater_native_forms[2];
+}
+
+
+static int
+mater_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_native_forms_validate(gedp, mater_native_forms,
+	mater_select_native_form, input, cursor_pos, result);
+}
+
+
+static int
+mater_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_native_forms_analyze(gedp, mater_native_forms,
+	mater_select_native_form, input, analysis);
+}
+
+
+static char *
+mater_grammar_json(void)
+{
+    return ged_cmd_native_forms_describe_json("mater",
+	"Query and assign legacy material properties", mater_native_forms);
+}
+
+
+static int
+mater_grammar_lint(struct bu_vls *msgs)
+{
+    return ged_cmd_native_forms_lint("mater", mater_native_forms, msgs);
+}
+
+
+static const struct ged_cmd_grammar mater_grammar = {
+    "mater", "Query and assign legacy material properties", mater_grammar_validate,
+    mater_grammar_analyze, mater_grammar_json, mater_grammar_lint
+};
+
+#define GED_MATER_COMMANDS(X, XID) \
+    X(mater, ged_mater_core, GED_CMD_DEFAULT, &mater_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_MATER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_mater", 1, GED_MATER_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

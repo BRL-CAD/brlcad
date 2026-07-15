@@ -10,42 +10,42 @@ pnts - Creates/writes/generates a "pnts" (i.e. point cloud) primitive.
 
 [source]
 ----
-pnts {subcommand} {subcommand arguments}
+pnts {read|write|gen|tri} {subcommand arguments}
 ----
 
 
 
 [source]
 ----
-read [-f [xyzijksrgb]] [-u unit] [--size #] {input_file} {pnts_obj}
+pnts read [-f [xyzijksrgb]] [-u unit] [--size #] {input_file} {pnts_obj}
 ----
 
 
 
 [source]
 ----
-write [-p #] [--ply] {pnts_obj} {output_filepnts}
+pnts write [-p #] [--ply] {pnts_obj} {output_file}
 ----
 
 
 
 [source]
 ----
-gen [-t #] [--surface] [--grid] [--rand] [--sobol] [--max-pnts] [--max-time] {obj} {output_pnts}
+pnts gen [-t #] [--surface] [--grid] [--rand] [--sobol] [--max-pnts #] [--max-time #] {obj} {output_pnts}
 ----
 
 
 
 [source]
 ----
-tri [unit] [-s #]
+pnts tri [unit] [-s #] {input_pnts} {output_bot}
 ----
 
 
 
 [source]
 ----
-tri spsr
+pnts tri spsr [options] {input_pnts} {output_bot}
 ----
 
 
@@ -59,6 +59,12 @@ Allows the user to create/write/generate "pnts" primitives. See also the
 
 Most *pnts* subcommands accept *-h* or *--help* to print subcommand-specific
 usage details.
+
+The *tri* subcommand has three reconstruction methods: *unit*, *ballpivot*,
+and *spsr*.  For compatibility, the method may be omitted when using the
+*unit* method: `pnts tri input_pnts output_bot` is equivalent to
+`pnts tri unit input_pnts output_bot`.  Interactive completion presents the
+explicit method names, while the omitted form remains accepted.
 
 
 [[subcommands]]
@@ -143,6 +149,13 @@ Specifies the scale factor to apply to unit triangles - scales the triangle to s
 
 *tri spsr*::
 Apply the Screened Poisson Surface Reconstruction methodology to generate a mesh from the point cloud. See the *-h* option for the various controls available for this methodology.
+
+
+
+*tri ballpivot*::
+Apply ball-pivoting surface reconstruction to oriented points.  The optional
+*-r*/*--radius* option may be repeated; *--radii* accepts a comma-separated
+radius list.  This method is primarily intended for algorithm experimentation.
 
 
 

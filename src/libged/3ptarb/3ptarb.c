@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "ged/objects.h"
 
@@ -257,11 +258,31 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_3PTARB_COMMANDS(X, XID) \
-    XID(threeptarb, "3ptarb", ged_3ptarb_core,  GED_CMD_DEFAULT)
+static const char * const threeptarb_coord_keywords[] = {"x", "y", "z", NULL};
+static const struct bu_cmd_operand threeptarb_schema_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1,
+	"New ARB name", NULL),
+    BU_CMD_OPERAND("face_points", BU_CMD_VALUE_NUMBER, 9, 9,
+	"Three X Y Z face points", NULL),
+    BU_CMD_OPERAND_KEYWORDS("solved_coordinate", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Coordinate to solve", NULL, threeptarb_coord_keywords),
+    BU_CMD_OPERAND("fourth_point_coordinates", BU_CMD_VALUE_NUMBER, 2, 2,
+	"Known coordinates of the fourth point", NULL),
+    BU_CMD_OPERAND("thickness", BU_CMD_VALUE_NUMBER, 1, 1,
+	"ARB thickness", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema threeptarb_cmd_schema = {
+    "3ptarb", "Create an ARB from three points", NULL,
+    threeptarb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
-GED_DECLARE_COMMAND_SET(GED_3PTARB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_3ptarb", 1, GED_3PTARB_COMMANDS)
+#define GED_3PTARB_COMMANDS(X, XID) \
+    XID(threeptarb, "3ptarb", ged_3ptarb_core, GED_CMD_DEFAULT, &threeptarb_cmd_schema)
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_3PTARB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_3ptarb", 1, GED_3PTARB_COMMANDS)
 
 /*
  * Local Variables:

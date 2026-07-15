@@ -12,6 +12,8 @@ who - Lists the top-level objects that are currently displayed.
 ----
 who [[real] | [phony] | [both]]
 who solids [level]
+who [--view name] [--mode number] [--expand]
+who solids [--view name] [--mode number] [level]
 ----
 
 
@@ -21,6 +23,8 @@ who solids [level]
 Lists the top-level objects that are currently displayed. The _phony_ flag asks for just _phony_ objects. _Phony_ objects are typically objects that are drawn in the MGED display, but are not actual database objects. Some _phony_ objects are drawings from the *vdraw* command and the edgeuses drawn by the *ev -u* command. The _real_ flag asks for just _real_ objects, and the _both_ flag asks for both _real_ and _phony_ objects. The default is just _real_ objects. Any of the flags may be abbreviated by its first letter.
 
 The *solids* subcommand reports the fully expanded set of displayed solids. The optional _level_ controls how much detail is shown. A _level_ of `-2` or less prints only primitive names, `-1` prints full paths, `0` adds illumination state, `1` adds center/size/region/color information, `2` adds vector-list counts, and `3` or greater adds the vector-list commands themselves. The *solid_report* and *x* commands remain available as compatibility aliases for this detailed report.
+
+When the application enables the newer command form, *who* also accepts `--view name`, `--mode number`, and `--expand`. `--view` selects a named view, `--mode` restricts the report to one drawing mode, and `--expand` reports individual drawn objects. These options also apply to *who solids*. The original form accepts only the display-kind selection and `who solids [level]`.
 
 
 [[examples]]

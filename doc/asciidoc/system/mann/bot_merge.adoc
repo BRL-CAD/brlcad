@@ -10,7 +10,7 @@ bot_merge - merge multiple BOT meshes into a single BOT object
 
 [source]
 ----
-bot_merge bot_dest bot1_src [botn_src ...]
+bot_merge [--help] bot_dest bot1_src [botn_src ...]
 ----
 
 
@@ -20,6 +20,11 @@ bot_merge bot_dest bot1_src [botn_src ...]
 The *bot_merge* command combines two or more BOT (Bag-of-Triangles) primitive objects into a single new BOT named `bot_dest`. All source BOTs (`bot1_src`, `botn_src`, ...) are merged by concatenating their vertex and face lists. The source objects are not modified or deleted.
 
 At least one source BOT must be specified in addition to the destination name.
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database.
 
 NOTE: *bot_merge* concatenates vertex lists without fusing shared vertices. If the input BOTs share vertices at the same position, those vertices will be duplicated in the result. Use *bot_fuse* afterward to merge duplicate vertices.
 

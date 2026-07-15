@@ -10,7 +10,7 @@ facetize - Creates __new_object__ using __old_object__ as a guide, creating an e
 
 [source]
 ----
-facetize [-h] [-v] [-q] [-n] [-r] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
+facetize [-h] [-v] [-q] [-n] [-r] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts "METHOD opt1=val opt2=val..."] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
 ----
 
 
@@ -109,7 +109,7 @@ Accepts a comma separated list of one or more facetization methods to use. The d
 
 
 *--method-opts*::
-This option can be used to pass parameter values to specific facetize methods. The argument format is "METHOD opt1=val1 opt2=val2 ...". See the *--help* output for which methods and parameters are supported by *facetize*.
+This option can be used to pass parameter values to specific facetize methods. Its complete argument must be quoted: *--method-opts "METHOD opt1=val1 opt2=val2 ..."*. Each setting is a *key=value* pair. See the *--help* output for which methods and parameters are supported by *facetize*.
 
 
 *--no-empty*::

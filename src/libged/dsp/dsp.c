@@ -29,13 +29,103 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "wdb.h"
 #include "../ged_private.h"
 
 /* FIXME - we want the DSP macro for convenience here - should this be in include/rt/dsp.h ? */
 #include "../librt/primitives/dsp/dsp.h"
+
+
+static const char * const dsp_command_keywords[] = {"xy", "diff", NULL};
+static const struct bu_cmd_operand dsp_schema_operands[] = {
+    BU_CMD_OPERAND("dsp_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"DSP object", "ged.db_object"),
+    BU_CMD_OPERAND_KEYWORDS("command", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"DSP query command", NULL, dsp_command_keywords),
+    BU_CMD_OPERAND("command_arguments", BU_CMD_VALUE_RAW, 1, 2,
+	"Command-specific arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+
+static int
+dsp_validation_result(struct bu_cmd_validate_result *result,
+	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+	const char *hint, const char *provider)
+{
+    bu_cmd_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->completion_type = type;
+    result->hint = hint;
+    result->semantic_provider = provider;
+    return 0;
+}
+
+
+static int
+dsp_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    int ret;
+    int xy;
+    size_t required;
+    size_t maximum;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc < 2)
+	return ret;
+
+    xy = BU_STR_EQUAL(argv[1], "xy");
+    required = xy ? 4 : 3;
+    maximum = xy ? 4 : 4;
+    if (argc > maximum)
+	return dsp_validation_result(result, BU_CMD_VALIDATE_INVALID, maximum,
+	    BU_CMD_VALUE_RAW, "too many command arguments", NULL);
+    if (argc < required) {
+	bu_cmd_value_t expected = xy ? BU_CMD_VALUE_INTEGER :
+	    (argc == 2 ? BU_CMD_VALUE_DB_OBJECT : BU_CMD_VALUE_NUMBER);
+	return dsp_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc,
+	    expected, xy ? "DSP grid coordinate expected" :
+	    (argc == 2 ? "comparison DSP object expected" : "minimum difference expected"),
+	    !xy && argc == 2 ? "ged.db_object" : NULL);
+    }
+    if (xy) {
+	int value;
+	for (size_t i = 2; i < 4; i++) {
+	    if (!bu_cmd_integer_from_str(&value, argv[i]) || value < 0)
+		return dsp_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
+		    BU_CMD_VALUE_INTEGER, "nonnegative DSP grid coordinate expected", NULL);
+	}
+	return dsp_validation_result(result, BU_CMD_VALIDATE_VALID,
+	    cursor_arg < argc ? cursor_arg : argc, BU_CMD_VALUE_INTEGER,
+	    "DSP grid coordinate", NULL);
+    }
+    if (argc == 4) {
+	fastf_t value;
+	if (!bu_cmd_number_from_str(&value, argv[3]))
+	    return dsp_validation_result(result, BU_CMD_VALIDATE_INVALID, 3,
+		BU_CMD_VALUE_NUMBER, "finite minimum difference expected", NULL);
+    }
+    return dsp_validation_result(result, BU_CMD_VALIDATE_VALID,
+	cursor_arg < argc ? cursor_arg : argc,
+	cursor_arg == 2 ? BU_CMD_VALUE_DB_OBJECT : BU_CMD_VALUE_NUMBER,
+	cursor_arg == 2 ? "comparison DSP object" : "minimum difference",
+	cursor_arg == 2 ? "ged.db_object" : NULL);
+}
+
+
+static const struct bu_cmd_schema dsp_cmd_schema = {
+    "dsp", "Inspect DSP height data", NULL, dsp_schema_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(dsp_schema_validate, NULL)
+};
 
 int
 ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
@@ -64,6 +154,10 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (bu_cmd_schema_parse_complete(&dsp_cmd_schema, NULL,
+	gedp->ged_result_str, argc - 1, argv + 1) < 0)
+	return BRLCAD_ERROR;
+
     /* get dsp */
     primitive = argv[1];
     GED_DB_LOOKUP(gedp, dsp_dp, primitive, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
@@ -82,11 +176,11 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
     sub = argv[2];
     if (BU_STR_EQUAL(sub, "xy")) {
 	unsigned short elev;
-	unsigned int gx = 0;
-	unsigned int gy = 0;
-	(void)bu_opt_int(NULL, 1, &argv[3], &gx);
-	(void)bu_opt_int(NULL, 1, &argv[4], &gy);
-	if (gx > dsp->dsp_xcnt || gy > dsp->dsp_ycnt) {
+	int gx = 0;
+	int gy = 0;
+	if (!bu_cmd_integer_from_str(&gx, argv[3]) || gx < 0 ||
+		!bu_cmd_integer_from_str(&gy, argv[4]) || gy < 0 ||
+		(unsigned int)gx >= dsp->dsp_xcnt || (unsigned int)gy >= dsp->dsp_ycnt) {
 	    bu_vls_printf(gedp->ged_result_str, "Error - xy coordinate (%d,%d) is outside max data bounds of dsp: (%d,%d)", gx, gy, dsp->dsp_xcnt, dsp->dsp_ycnt);
 	    rt_db_free_internal(&intern);
 	    return BRLCAD_ERROR;
@@ -101,8 +195,9 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dsp_dp2;
 	struct rt_db_internal intern2;
 	struct rt_dsp_internal *dsp2;
-	if (argc < 4) {
-	    bu_vls_printf(gedp->ged_result_str, "Error - diff subcommand specified, but not the object to diff against.");
+	fastf_t min_diff = 0.0;
+	if (argc == 5 && !bu_cmd_number_from_str(&min_diff, argv[4])) {
+	    bu_vls_printf(gedp->ged_result_str, "Error - invalid minimum difference: %s", argv[4]);
 	    rt_db_free_internal(&intern);
 	    return BRLCAD_ERROR;
 	}
@@ -116,7 +211,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	dsp2 = (struct rt_dsp_internal *)intern.idb_ptr;
+	dsp2 = (struct rt_dsp_internal *)intern2.idb_ptr;
 	RT_DSP_CK_MAGIC(dsp2);
 
 	if (dsp->dsp_xcnt != dsp2->dsp_xcnt || dsp->dsp_ycnt != dsp2->dsp_ycnt) {
@@ -130,9 +225,10 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 		for (j = 0; j < dsp->dsp_ycnt; j++) {
 		    unsigned short e1 = DSP(dsp, i, j);
 		    unsigned short e2 = DSP(dsp2, i, j);
-		    if (e1 != e2) {
-			unsigned short delta = (e1 > e2) ? e1 - e2 : e2 - e1;
-			bu_vls_printf(gedp->ged_result_str, "(%d,%d): %d\n", i, j, delta);
+			if (e1 != e2) {
+			    unsigned short delta = (e1 > e2) ? e1 - e2 : e2 - e1;
+			    if ((fastf_t)delta >= min_diff)
+				bu_vls_printf(gedp->ged_result_str, "(%d,%d): %d\n", i, j, delta);
 		    }
 		}
 	    }
@@ -151,10 +247,10 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_DSP_COMMANDS(X, XID) \
-    X(dsp, ged_dsp_core, GED_CMD_DEFAULT) \
+    X(dsp, ged_dsp_core, GED_CMD_DEFAULT, &dsp_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_DSP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_dsp", 1, GED_DSP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DSP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_dsp", 1, GED_DSP_COMMANDS)
 
 /*
  * Local Variables:
@@ -165,4 +261,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_dsp", 1, GED_DSP_COMMANDS)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

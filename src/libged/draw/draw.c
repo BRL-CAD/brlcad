@@ -29,6 +29,7 @@
 #include <string.h>
 
 
+#include "bu/cmdschema.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "bu/time.h"
@@ -36,6 +37,16 @@
 
 #include "../ged_private.h"
 #include "./ged_draw.h"
+
+static const struct bu_cmd_operand ev_schema_operands[] = {
+    BU_CMD_OPERAND("paths", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+	"Database object paths to draw as NMG polygons", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema ev_native_schema = {
+    "ev", "Draw evaluated NMG polygon database objects", NULL, ev_schema_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
@@ -1073,8 +1084,20 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		case 'h':
 		    shaded_mode_override = _GED_HIDDEN_LINE;
 		    break;
-		case 'm':
-		    shaded_mode_override = atoi(bu_optarg);
+	case 'm':
+		    {
+			char *end = NULL;
+			long requested_mode = bu_optarg ? strtol(bu_optarg, &end, 10) : -1;
+			if (!bu_optarg || !bu_optarg[0] || !end || *end != '\0' ||
+			    requested_mode < 0 || requested_mode > 5) {
+			    bu_vls_printf(gedp->ged_result_str,
+				    "Invalid draw mode '%s' (expected an integer from 0 through 5)\n",
+				    bu_optarg ? bu_optarg : "");
+			    --drawtrees_depth;
+			    return BRLCAD_ERROR;
+			}
+			shaded_mode_override = (int)requested_mode;
+		    }
 
 		    switch (shaded_mode_override) {
 			case 0:
@@ -1095,12 +1118,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			case 5:
 			    shaded_mode_override = _GED_WIREFRAME_EVAL;
 			    break;
-			default:
-			    if (shaded_mode_override < 0) {
-				shaded_mode_override = _GED_SHADED_MODE_UNSET;
-			    } else {
-				shaded_mode_override = _GED_SHADED_MODE_ALL;
-			    }
 		    }
 		    break;
 		case 'x':
@@ -1624,7 +1641,31 @@ ged_draw_core(struct ged *gedp, int argc, const char *argv[])
     if (gedp->new_cmd_forms)
 	return ged_draw2_core(gedp, argc, argv);
 
-    return ged_draw_guts(gedp, argc, argv, _GED_DRAW_WIREFRAME);
+    /* The command schema is shared by all frontends and advertises the long
+     * --mode spelling.  Normalize that spelling for the legacy getopt parser
+     * so GSH accepts the same separate and equals forms as newer frontends. */
+    const char **legacy_argv = (const char **)bu_calloc((size_t)argc, sizeof(char *), "legacy draw argv");
+    char **owned_argv = (char **)bu_calloc((size_t)argc, sizeof(char *), "owned legacy draw argv");
+    for (int i = 0; i < argc; i++) {
+	legacy_argv[i] = argv[i];
+	if (BU_STR_EQUAL(argv[i], "--mode")) {
+	    legacy_argv[i] = "-m";
+	} else if (strncmp(argv[i], "--mode=", 7) == 0) {
+	    size_t mode_len = strlen(argv[i] + 7);
+	    owned_argv[i] = (char *)bu_malloc(mode_len + 3, "legacy draw mode option");
+	    snprintf(owned_argv[i], mode_len + 3, "-m%s", argv[i] + 7);
+	    legacy_argv[i] = owned_argv[i];
+	}
+    }
+
+    int ret = ged_draw_guts(gedp, argc, legacy_argv, _GED_DRAW_WIREFRAME);
+    for (int i = 0; i < argc; i++) {
+	if (owned_argv[i])
+	    bu_free(owned_argv[i], "legacy draw mode option");
+    }
+    bu_free(owned_argv, "owned legacy draw argv");
+    bu_free(legacy_argv, "legacy draw argv");
+    return ret;
 }
 
 
@@ -1718,16 +1759,16 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_DRAW_COMMANDS(X, XID) \
-    X(draw, ged_draw_core, GED_CMD_DEFAULT) \
-    X(E, ged_E_core, GED_CMD_DEFAULT) \
-    X(e, ged_draw_core, GED_CMD_DEFAULT) \
-    X(ev, ged_ev_core, GED_CMD_DEFAULT) \
-    X(redraw, ged_redraw_core, GED_CMD_DEFAULT) \
-    X(loadview, ged_loadview_core, GED_CMD_DEFAULT) \
-    X(preview, ged_preview_core, GED_CMD_DEFAULT)
+    X(draw, ged_draw_core, GED_CMD_DEFAULT, &ged_draw_native_schema) \
+    X(E, ged_E_core, GED_CMD_DEFAULT, &ged_bigE_native_schema) \
+    X(e, ged_draw_core, GED_CMD_DEFAULT, &ged_draw_alias_native_schema) \
+    X(ev, ged_ev_core, GED_CMD_DEFAULT, &ev_native_schema) \
+    X(redraw, ged_redraw_core, GED_CMD_DEFAULT, &ged_redraw_native_schema) \
+    X(loadview, ged_loadview_core, GED_CMD_DEFAULT, &ged_loadview_native_schema) \
+    X(preview, ged_preview_core, GED_CMD_DEFAULT, &ged_preview_native_schema)
 
-GED_DECLARE_COMMAND_SET(GED_DRAW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_draw", 1, GED_DRAW_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DRAW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_draw", 1, GED_DRAW_COMMANDS)
 
 /*
  * Local Variables:
@@ -1738,4 +1779,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_draw", 1, GED_DRAW_COMMANDS)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

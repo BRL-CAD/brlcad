@@ -33,7 +33,7 @@
 
 #include "bu/app.h"
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "raytrace.h"
 #include "ged.h"
@@ -57,16 +57,62 @@ void print_help_msg(struct bu_vls *str)
     bu_vls_printf(str, "YOUR GEOMETRY FILE BEFORE RUNNING 'garbage_collect'.\n");
 }
 
+
+struct garbage_collect_args {
+    int help;
+    int confirm;
+};
+
+
+static const struct bu_cmd_option garbage_collect_schema_options[] = {
+    BU_CMD_FLAG("h", "help", struct garbage_collect_args, help,
+	"Print help and exit"),
+    BU_CMD_FLAG("c", "confirm", struct garbage_collect_args, confirm,
+	"Execute the garbage-collection operation"),
+    BU_CMD_OPTION_NULL
+};
+
+
+static int
+garbage_collect_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state != BU_CMD_VALIDATE_VALID)
+	return ret;
+    if (bu_cmd_schema_option_present(schema, argc, argv, "help") ||
+	bu_cmd_schema_option_present(schema, argc, argv, "confirm"))
+	return 0;
+
+    result->state = BU_CMD_VALIDATE_INCOMPLETE;
+    result->token_start = cursor_arg < argc ? cursor_arg : argc;
+    result->token_end = result->token_start;
+    result->expected = BU_CMD_EXPECT_OPTION;
+    result->completion_type = BU_CMD_VALUE_FLAG;
+    result->hint = "--confirm is required to execute (or use --help)";
+    return 0;
+}
+
+
+static const struct bu_cmd_schema garbage_collect_cmd_schema = {
+    "garbage_collect", "Rewrite the database without unreachable records",
+    garbage_collect_schema_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(garbage_collect_schema_validate, NULL)
+};
+
 extern "C" int
 ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *av[10] = {NULL};
     fastf_t fs_percent = 0.0;
-    int confirmed = 0;
+    struct garbage_collect_args args = {0, 0};
     int new_file_size = 0;
     int old_file_size = 0;
     int path_cnt = 0;
-    int print_help = 0;
     int ret = BRLCAD_OK;
     int verify_failure = 0;
     std::set<std::string> missing_new_top_objs;
@@ -90,11 +136,6 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     std::ifstream cfile;
     std::ofstream ofile;
 
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",      "",             NULL,        &print_help,   "Print help and exit");
-    BU_OPT(d[1], "c", "confirm",   "",             NULL,        &confirmed,    "Execute garbage collect operation");
-    BU_OPT_NULL(d[2]);
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     if (db_version(gedp->dbip) < 5) {
@@ -113,17 +154,14 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    if (bu_cmd_schema_parse_complete(&garbage_collect_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv) < 0)
+	return BRLCAD_ERROR;
 
-    if (print_help) {
+
+    if (args.help) {
 	print_help_msg(gedp->ged_result_str);
 	return BRLCAD_OK;
-    }
-
-    if (!confirmed || opt_ret) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: garbage_collect [-c|--confirm] [-h|--help]");
-	return BRLCAD_ERROR;
     }
 
     /* See if we have a stale backup file */
@@ -374,10 +412,10 @@ gc_cleanup:
 #include "../include/plugin.h"
 
 #define GED_GARBAGE_COLLECT_COMMANDS(X, XID) \
-    X(garbage_collect, ged_garbage_collect_core, GED_CMD_DEFAULT) \
+    X(garbage_collect, ged_garbage_collect_core, GED_CMD_DEFAULT, &garbage_collect_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GARBAGE_COLLECT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_garbage_collect", 1, GED_GARBAGE_COLLECT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GARBAGE_COLLECT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_garbage_collect", 1, GED_GARBAGE_COLLECT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

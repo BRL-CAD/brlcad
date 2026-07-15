@@ -36,6 +36,7 @@
 #include "common.h"
 
 #include "bu.h"
+#include "bu/cmdschema.h"
 
 
 static int DEFAULT_HOW_MANY = 32;
@@ -244,8 +245,11 @@ main(int argc, char *argv[])
     if (BU_STR_EQUAL(argv[1], "init")) {
 	ptbl_size = 100;
 	if (argc > 2) {
-	    if (bu_opt_long(NULL, 2, (const char **) argv, (void *) &ptbl_size) < 0) {
+	    long requested_size = 0;
+	    if (!bu_cmd_long_from_str(&requested_size, argv[2]) || requested_size < 0) {
 		bu_log("\nINFO: init: could not convert argument, using size=100\n");
+	    } else {
+		ptbl_size = (size_t)requested_size;
 	    }
 	}
 

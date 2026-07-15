@@ -10,14 +10,25 @@ put_comb - Insert combinations and regions - allows definition of both boolean e
 
 [source]
 ----
-put_comb {comb_name} [is_Region  [[id] | [air] | [material] | [los]]] {color} {shader} {inherit} {boolean_expr}
+put_comb {comb_name} {color} {shader} {inherit} {boolean_expr} {is_region} [region_id air_id material_id los]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Command for inserting regions and combinations with attributes set using a single line command - useful in scripting situations.
+Creates or replaces a combination with its attributes set in one command,
+which is particularly useful in scripts.  The first five operands are always
+required: the combination name, color, shader, inheritance flag, and quoted
+Boolean expression.  The next operand selects the kind of combination.  If
+_is_region_ is true, it must be followed by exactly _region_id_, _air_id_,
+_material_id_, and _los_.  If it is false, no trailing region fields are
+allowed.
+
+The color is one command argument.  Integer RGB may be written as
+`r/g/b`, `r,g,b`, `r;g;b`, or, when quoted, `r g b`; each channel is in the
+range 0 through 255.  The ordinary libbu packed color forms, such as
+hexadecimal and normalized floating-point triples, are also accepted.
 
 
 [[examples]]
@@ -28,7 +39,7 @@ The *put_comb* expects one of two particular forms of input - combination or reg
 .Specifying a combination using *put_comb*
 [example]
 ====
-mged>**put_comb test.c n 255/255/255 plastic n "u sph.s u arb8.s"**
+mged>**put_comb test.c 255/255/255 plastic n "u sph.s u arb8.s" n**
 
 Creates a combination that is not a region, using the plastic shader, consisting of the union of sph.s and arb8.s".
 
@@ -49,7 +60,7 @@ oshader {plastic}
 .Specifying a region using *put_comb*
 [example]
 ====
-mged>**put_comb test.r y 1001 0 32 1 255/255/255 plastic y "u sph.s u arb8.s"**
+mged>**put_comb test.r 255/255/255 plastic y "u sph.s u arb8.s" y 1001 0 32 1**
 
 Creates a combination that is a region, with region id 1001, air flag off, material 32, los 1, white in color, using the plastic shader, inheriting, consisting of the union of sph.s and arb8.s"
 

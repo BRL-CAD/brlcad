@@ -14,6 +14,7 @@ set(
   test_booleanize.c
   test_cache.cpp
   test_cmd.c
+  test_cmdschema.c
   test_color.c
   test_datetime.c
   test_dir.c
@@ -30,6 +31,7 @@ set(
   test_humanize_number.c
   test_list.c
   test_log.cpp
+  test_lineedit.c
   test_mappedfile.c
   test_observer.c
   test_opt.c
@@ -102,6 +104,7 @@ validate_style("${bu_test_srcs}" bu_test)
 brlcad_addexec(bu_sscanf test_sscanf.c libbu TEST)
 brlcad_addexec(bu_gethostname test_gethostname.c libbu TEST)
 brlcad_add_test(NAME bu_argv COMMAND bu_test test_argv)
+brlcad_add_test(NAME bu_cmdschema COMMAND bu_test test_cmdschema)
 brlcad_add_test(NAME bu_backtrace COMMAND bu_test test_backtrace)
 brlcad_add_test(NAME bu_bomb COMMAND bu_test test_bomb "$<TARGET_FILE:bu_test>")
 brlcad_add_test(NAME bu_dir COMMAND bu_test test_dir)
@@ -442,6 +445,10 @@ brlcad_add_test(NAME bu_str_to_rgb_10 COMMAND bu_test test_color 3 "#fff" 255,25
 brlcad_add_test(NAME bu_str_to_rgb_11 COMMAND bu_test test_color 3 "#C04ED6" 192,78,214)
 brlcad_add_test(NAME bu_str_to_rgb_12 COMMAND bu_test test_color 3 "#C4D" 204,68,221)
 
+# Function #8 verifies the shared one-or-three-token RGB parser, including
+# all supported packed delimiters and rejected ambiguous or out-of-range forms.
+brlcad_add_test(NAME bu_rgb_from_argv COMMAND bu_test test_color 8)
+
 # For function #4 (bu_color_to_rgb_floats) the <args> format is as follows:
 #
 # rgb_color
@@ -706,6 +713,8 @@ brlcad_add_test(NAME bu_opt_2_color_13  COMMAND bu_test test_opt 2 C 13)
 brlcad_add_test(NAME bu_opt_2_color_14  COMMAND bu_test test_opt 2 C 14)
 brlcad_add_test(NAME bu_opt_2_color_15  COMMAND bu_test test_opt 2 C 15)
 brlcad_add_test(NAME bu_opt_2_color_16  COMMAND bu_test test_opt 2 C 16)
+brlcad_add_test(NAME bu_opt_2_color_17  COMMAND bu_test test_opt 2 C 17)
+brlcad_add_test(NAME bu_opt_2_color_18  COMMAND bu_test test_opt 2 C 18)
 
 # vector tests
 brlcad_add_test(NAME bu_opt_3_vect_00  COMMAND bu_test test_opt 3 V 0)
@@ -713,6 +722,37 @@ brlcad_add_test(NAME bu_opt_3_vect_01  COMMAND bu_test test_opt 3 V 1)
 brlcad_add_test(NAME bu_opt_3_vect_02  COMMAND bu_test test_opt 3 V 2)
 brlcad_add_test(NAME bu_opt_3_vect_03  COMMAND bu_test test_opt 3 V 3)
 brlcad_add_test(NAME bu_opt_3_vect_04  COMMAND bu_test test_opt 3 V 4)
+
+brlcad_add_test(NAME bu_opt_4_json_schema       COMMAND bu_test test_opt 4 schema 0)
+brlcad_add_test(NAME bu_opt_4_validate_valid    COMMAND bu_test test_opt 4 schema 1)
+brlcad_add_test(NAME bu_opt_4_validate_bad_opt  COMMAND bu_test test_opt 4 schema 2)
+brlcad_add_test(NAME bu_opt_4_validate_need_arg COMMAND bu_test test_opt 4 schema 3)
+brlcad_add_test(NAME bu_opt_4_validate_operand  COMMAND bu_test test_opt 4 schema 4)
+brlcad_add_test(NAME bu_opt_4_validate_too_many COMMAND bu_test test_opt 4 schema 5)
+brlcad_add_test(NAME bu_opt_4_validate_repeat   COMMAND bu_test test_opt 4 schema 6)
+brlcad_add_test(NAME bu_opt_4_validate_repeated COMMAND bu_test test_opt 4 schema 7)
+brlcad_add_test(NAME bu_opt_4_validate_subcmd   COMMAND bu_test test_opt 4 schema 8)
+brlcad_add_test(NAME bu_opt_4_validate_nested   COMMAND bu_test test_opt 4 schema 9)
+brlcad_add_test(NAME bu_opt_4_validate_string   COMMAND bu_test test_opt 4 schema 10)
+brlcad_add_test(NAME bu_opt_4_complete_initial  COMMAND bu_test test_opt 4 schema 11)
+brlcad_add_test(NAME bu_opt_4_complete_option   COMMAND bu_test test_opt 4 schema 12)
+brlcad_add_test(NAME bu_opt_4_complete_subcmd   COMMAND bu_test test_opt 4 schema 13)
+brlcad_add_test(NAME bu_opt_4_complete_keyword  COMMAND bu_test test_opt 4 schema 14)
+brlcad_add_test(NAME bu_opt_4_grouped_repeat    COMMAND bu_test test_opt 4 schema 15)
+brlcad_add_test(NAME bu_opt_4_comptype_file    COMMAND bu_test test_opt 4 schema 16)
+brlcad_add_test(NAME bu_opt_4_comptype_dbo     COMMAND bu_test test_opt 4 schema 17)
+brlcad_add_test(NAME bu_opt_4_comptype_kw      COMMAND bu_test test_opt 4 schema 18)
+brlcad_add_test(NAME bu_opt_4_charspan_single  COMMAND bu_test test_opt 4 schema 19)
+brlcad_add_test(NAME bu_opt_4_charspan_middle  COMMAND bu_test test_opt 4 schema 20)
+brlcad_add_test(NAME bu_opt_4_parse_policy     COMMAND bu_test test_opt 4 schema 21)
+brlcad_add_test(NAME bu_opt_4_arg_shape_valid  COMMAND bu_test test_opt 4 schema 22)
+brlcad_add_test(NAME bu_opt_4_arg_shape_need   COMMAND bu_test test_opt 4 schema 23)
+brlcad_add_test(NAME bu_opt_4_schema_storage   COMMAND bu_test test_opt 4 schema 24)
+brlcad_add_test(NAME bu_opt_4_canonical_alias  COMMAND bu_test test_opt 4 schema 25)
+brlcad_add_test(NAME bu_opt_4_canonical_fallback COMMAND bu_test test_opt 4 schema 26)
+brlcad_add_test(NAME bu_opt_4_literal_equals COMMAND bu_test test_opt 4 schema 27)
+brlcad_add_test(NAME bu_opt_4_dash_operand COMMAND bu_test test_opt 4 schema 28)
+brlcad_add_test(NAME bu_lineedit_completion_mode COMMAND bu_test test_lineedit ${CMAKE_CURRENT_SOURCE_DIR}/lineedit-colors.json)
 
 #
 #  *********** test_datetime.c tests ************

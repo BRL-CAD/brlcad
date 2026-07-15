@@ -11,6 +11,8 @@ rotate_arb_face - rotate a face of an ARB primitive about a fixed vertex
 [source]
 ----
 rotate_arb_face arb face pt "rx ry rz"
+
+rotate_arb_face arb face pt rx/ry/rz
 ----
 
 [[description]]
@@ -23,7 +25,7 @@ The command requires exactly four arguments:
 * *arb* — The name of the ARB primitive to modify. Path prefixes are accepted; the trailing component name is used. The object must be an ARB type (ARB4–ARB8).
 * *face* — The face index to rotate, given as an integer from 1 to 6 (valid range depends on ARB type).
 * *pt* — The vertex index that serves as the fixed anchor point for the rotation, given as an integer from 1 to 8. The face's plane is rotated about this vertex so it remains fixed in space.
-* *"rx ry rz"* — A single quoted string of three floating-point rotation angles in degrees (X, Y, Z Euler angles). The face normal is rotated by this amount using `bn_mat_angles`, and the face's plane equation is then re-anchored at the fixed vertex.
+* *rotation* — Three finite floating-point rotation angles in degrees (X, Y, Z Euler angles). Supply them as one quoted spaced string (`"rx ry rz"`) or one slash-, comma-, or semicolon-separated token (`rx/ry/rz`, `rx,ry,rz`, or `rx;ry;rz`). The face normal is rotated by this amount using `bn_mat_angles`, and the face's plane equation is then re-anchored at the fixed vertex.
 
 === ARB type constraints and special cases
 
@@ -33,7 +35,7 @@ The command accepts all standard ARB types (ARB4, ARB5, ARB6, ARB7, ARB8). The f
 * *ARB6*: vertex indices ≥ 5 are remapped to index 6 internally.
 * *ARB7*: if the specified face contains vertex 5, the anchor is automatically forced to vertex 5 regardless of the provided index.
 
-After the face plane is rotated and re-anchored, all ARB vertices are recomputed from the new set of plane equations.
+After the face plane is rotated and re-anchored, all ARB vertices are recomputed from the new set of plane equations. The command rejects a face number that is not present on the specific ARB type before it changes the object.
 
 [[examples]]
 == EXAMPLES

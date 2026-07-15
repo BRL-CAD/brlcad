@@ -125,11 +125,13 @@ ged_prcolor_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_PRCOLOR_COMMANDS(X, XID) \
-    X(prcolor, ged_prcolor_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(prcolor, "prcolor", "Print the region color table", "operands", BU_CMD_VALUE_RAW, 0, 0, "No operands");
 
-GED_DECLARE_COMMAND_SET(GED_PRCOLOR_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_prcolor", 1, GED_PRCOLOR_COMMANDS)
+#define GED_PRCOLOR_COMMANDS(X, XID) \
+    X(prcolor, ged_prcolor_core, GED_CMD_DEFAULT, &prcolor_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PRCOLOR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_prcolor", 1, GED_PRCOLOR_COMMANDS)
 
 /*
  * Local Variables:

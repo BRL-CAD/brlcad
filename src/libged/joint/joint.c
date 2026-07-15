@@ -32,6 +32,7 @@
 
 
 #include "bu/getopt.h"
+#include "bu/cmdschema.h"
 
 #include "raytrace.h"
 
@@ -3578,12 +3579,94 @@ struct funtab joint_tab[] = {
 };
 
 #include "../include/plugin.h"
+static const struct bu_cmd_operand joint_args[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Joint-specific arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand joint_file[] = {
+    BU_CMD_OPERAND("file", BU_CMD_VALUE_FILE, 1, 1,
+	"Joint definition file", "ged.file_path"),
+    BU_CMD_OPERAND_NULL
+};
 
-#define GED_JOINT_COMMANDS(X, XID) \
-    X(joint, ged_joint_core, GED_CMD_DEFAULT) \
+#define JOINT_SCHEMA(_id, _name, _help, _ops) \
+    static const struct bu_cmd_schema _id##_schema = { \
+	_name, _help, NULL, _ops, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL} \
+    }
+JOINT_SCHEMA(joint_root, "joint", "Load, inspect, solve, and move articulated joints", NULL);
+JOINT_SCHEMA(joint_help, "?", "List joint commands", joint_args);
+JOINT_SCHEMA(joint_accept, "accept", "Accept joint moves", joint_args);
+JOINT_SCHEMA(joint_debug, "debug", "Query or set joint debugging", joint_args);
+JOINT_SCHEMA(joint_usage, "help", "Print joint command help", joint_args);
+JOINT_SCHEMA(joint_holds, "holds", "List constraints", joint_args);
+JOINT_SCHEMA(joint_list, "list", "List joints", joint_args);
+JOINT_SCHEMA(joint_load, "load", "Load joint definitions", joint_file);
+JOINT_SCHEMA(joint_mesh, "mesh", "Build the grip mesh", NULL);
+JOINT_SCHEMA(joint_move, "move", "Adjust a joint", joint_args);
+JOINT_SCHEMA(joint_reject, "reject", "Reject joint motions", joint_args);
+JOINT_SCHEMA(joint_save, "save", "Save joint definitions", joint_file);
+JOINT_SCHEMA(joint_solve, "solve", "Solve constraints", joint_args);
+JOINT_SCHEMA(joint_unload, "unload", "Unload joint definitions", NULL);
+#undef JOINT_SCHEMA
 
-GED_DECLARE_COMMAND_SET(GED_JOINT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_joint", 1, GED_JOINT_COMMANDS)
+static const struct bu_cmd_tree_node joint_subcommands[] = {
+    BU_CMD_TREE_NODE(&joint_help_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_accept_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_debug_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_usage_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_holds_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_list_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_load_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_mesh_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_move_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_reject_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_save_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_solve_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&joint_unload_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree joint_tree = {
+    &joint_root_schema, joint_subcommands, BU_CMD_TREE_CHILD_FIRST
+};
+
+static int
+joint_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &joint_tree, input, cursor_pos, result);
+}
+
+static int
+joint_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &joint_tree, input, analysis);
+}
+
+static char *
+joint_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&joint_tree);
+}
+
+static int
+joint_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&joint_tree, msgs);
+}
+
+static const struct ged_cmd_grammar joint_grammar = {
+    "joint", "Load, inspect, solve, and move articulated joints",
+    joint_grammar_validate, joint_grammar_analyze, joint_grammar_json,
+    joint_grammar_lint
+};
+
+#define GED_JOINT_COMMANDS(X, XID, NX, NXID, GX, GXID) \
+    GX(joint, ged_joint_core, GED_CMD_DEFAULT, &joint_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_JOINT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_joint", 1, GED_JOINT_COMMANDS)
 
 /*
  * Local Variables:

@@ -17,7 +17,7 @@ adc [-i] subcommand
 [[description]]
 == DESCRIPTION
 
-This command controls the angle/distance cursor. The *adc* command with no arguments toggles the display of the angle/distance cursor (ADC). The _-i_ option, if specified, causes the given value(s) to be treated as increments. Note that the _-i_ option is ignored when getting values or when used with subcommands where this option makes no sense. You can also control the position, angles, and radius of the ADC using a knob or the knob command. This command accepts the following subcommands:
+This command controls the angle/distance cursor. A subcommand is required. The _-i_ option, if specified before the subcommand, causes applicable value-setting operations to treat their values as increments. It is ignored by query and reset operations. You can also control the position, angles, and radius of the ADC using a knob or the knob command. This command accepts the following subcommands:
 
 
 *vars*::
@@ -36,20 +36,20 @@ Set or get angle1 in degrees.
 Set or get angle2 in degrees.
 
 
-*dist [distance]*::
+*dst [distance]*::
 Set or get radius (distance) of tick in local units.
 
 
-*odist [distance]*::
+*odst [distance]*::
 Set or get radius (distance) of tick (+-2047).
 
 
-*hv [position]*::
-Set or get position (grid coordinates and local units).
+*hv [horizontal vertical]*::
+Set or get position using exactly two grid-coordinate values in local units.
 
 
-*xyz [position]*::
-Set or get position (model coordinates and local units).
+*xyz [x y z]*::
+Set or get position using exactly three model-coordinate values in local units.
 
 
 *x [xpos]*::
@@ -80,8 +80,8 @@ Add to _y_ position (model coordinates and local units).
 Add to _z_ position (model coordinates and local units).
 
 
-*anchor_pos [0|1]*::
-Anchor ADC to current position in model coordinates.
+*anchor_pos [0|1|2]*::
+Set or get position anchoring: 0 is free, 1 anchors to model coordinates, and 2 anchors to grid coordinates.
 
 
 *anchor_a1 [0|1]*::
@@ -96,16 +96,16 @@ Anchor angle2 to go through anchorpoint_a2.
 Anchor tick distance to go through anchorpoint_dst.
 
 
-*anchorpoint_a1[x y z]*::
-Set or get anchor point for angle1 (model coordinates and local units).
+*anchorpoint_a1 [x y z]*::
+Set or get anchor point for angle1 using exactly three model-coordinate values in local units.
 
 
 *anchorpoint_a2 [x y z]*::
-Set or get anchor point for angle2 (model coordinates and local units).
+Set or get anchor point for angle2 using exactly three model-coordinate values in local units.
 
 
 *anchorpoint_dst [x y z]*::
-Set or get anchor point for tick distance (model coordinates and local units).
+Set or get anchor point for tick distance using exactly three model-coordinate values in local units.
 
 
 *reset*::
@@ -121,17 +121,7 @@ Print the help message.
 [[examples]]
 == EXAMPLES
 
-The examples show the use of the *adc* command with no arguments, with _i_, and with subcommands.
-
-[example]
-====
-
-mged> **adc**::
-Toggle display of angle/distance cursor.
-
-
-
-====
+The examples show querying and setting ADC values.
 
 [example]
 ====
@@ -146,7 +136,7 @@ Sets angle1 to 37.5 degrees.
 [example]
 ====
 
-mged> **adc a1 37.5**::
+mged> **adc a1**::
 Gets angle1.
 
 

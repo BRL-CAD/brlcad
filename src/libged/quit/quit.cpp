@@ -25,7 +25,27 @@
 
 #include "common.h"
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema exit_cmd_schema = {
+    "exit", "Exit the command interpreter", NULL, NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    {NULL}
+};
+
+static const struct bu_cmd_schema q_cmd_schema = {
+    "q", "Exit the command interpreter", NULL, NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    {NULL}
+};
+
+static const struct bu_cmd_schema quit_cmd_schema = {
+    "quit", "Exit the command interpreter", NULL, NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    {NULL}
+};
 
 // quit is a no-op at the libged level - it's purpose is to support ged_exec
 // callback hooks that call any application callback functions assigned to this
@@ -39,12 +59,12 @@ ged_quit_core(struct ged *UNUSED(gedp), int UNUSED(argc), const char **UNUSED(ar
 #include "../include/plugin.h"
 
 #define GED_QUIT_COMMANDS(X, XID) \
-    X(exit, ged_quit_core, GED_CMD_DEFAULT) \
-    X(q, ged_quit_core, GED_CMD_DEFAULT) \
-    X(quit, ged_quit_core, GED_CMD_DEFAULT) \
+    X(exit, ged_quit_core, GED_CMD_DEFAULT, &exit_cmd_schema) \
+    X(q, ged_quit_core, GED_CMD_DEFAULT, &q_cmd_schema) \
+    X(quit, ged_quit_core, GED_CMD_DEFAULT, &quit_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_QUIT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_quit", 1, GED_QUIT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_QUIT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_quit", 1, GED_QUIT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

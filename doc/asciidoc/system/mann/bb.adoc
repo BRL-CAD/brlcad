@@ -10,7 +10,7 @@ bb - Report dimensional information about objects using Bounding Boxes
 
 [source]
 ----
-bb [-c] [-q] [-v] object1 [object2 object3 ...]
+bb [-c name] [-d] [-m] [-e] [-q] [-u] [-v] [-o] object [object ...]
 ----
 
 
@@ -39,7 +39,7 @@ Report the midpoint / center (x y z) of the bounding box.
 
 
 *-o*::
-Calculate an oriented bounding box instead of an axis aligned bounding box. This will produce tighter bounding volumes if the geometry is not symmetric to the XYZ grid. Uses the algorithms and code from Barequet and Har-Peled - see the papers http://valis.cs.uiuc.edu/~sariel/papers/98/bbox.html[Efficiently Approximating the Minimum-Volume Bounding Box of a Point Set in Three Dimensions](SODA 99) and http://valis.cs.uiuc.edu/~sariel/research/papers/00/diam.html[A Practical Approach for Computing the Diameter of a Point-Set] for details.
+Calculate an oriented bounding box instead of an axis aligned bounding box. This option requires exactly one BoT object. It will produce tighter bounding volumes if the geometry is not symmetric to the XYZ grid. Uses the algorithms and code from Barequet and Har-Peled - see the papers http://valis.cs.uiuc.edu/~sariel/papers/98/bbox.html[Efficiently Approximating the Minimum-Volume Bounding Box of a Point Set](SODA 99) and http://valis.cs.uiuc.edu/~sariel/research/papers/00/diam.html[A Practical Approach for Computing the Diameter of a Point-Set] for details.
 
 
 *-q*::

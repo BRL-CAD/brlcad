@@ -10,7 +10,7 @@ postscript - Temporarily attaches the _Postscript_ display manager and outputs t
 
 [source]
 ----
-postscript [-f font] [-t title] [-c creator] [-s size_in_inches] [-l line_width] {output_file}
+postscript [-a author] [-b] [-c r/g/b] [-f font] [-s size] [-t title] [-x offset] [-y offset] output_file
 ----
 
 
@@ -28,7 +28,9 @@ Set the PostScript creator/author string.
 Draw a border around the output.
 
 *-c* _r/g/b_::
-Set the border color.
+Set the border color. Each channel is a base-ten integer from 0 through 255.
+The color may be written as _r/g/b_, _r,g,b_, _r;g;b_, or as three separate
+arguments (_r g b_).
 
 *-f* _font_::
 Set the PostScript font.
@@ -49,7 +51,7 @@ Set the Y offset in inches.
 [[examples]]
 == EXAMPLES
 
-The first example shows the use of the *postscript* command to place a _PostScript_ version of the current MGED display in a specified file and give it a particular title. The second example is much like the first except that a line width is specified and the title and output file names are different.
+The first example shows the use of the *postscript* command to place a _PostScript_ version of the current MGED display in a specified file and give it a particular title. The second example adds a border and sets its color.
 
 .Place a _PostScript_ version of the current MGED display in a specified file.
 [example]
@@ -60,12 +62,13 @@ Places a _PostScript_ version of the current MGED display in a file named _test.
 
 ====
 
-.Specify the line width of a _PostScript_ version of the current MGED display in a specified file.
+.Specify a border color for a _PostScript_ version of the current MGED display.
 [example]
 ====
-mged>**postscript -l 10 -t "Test Fat Lines" fat_lines.ps**
+mged>**postscript -b -c "40;80;160" -t "Bordered View" bordered.ps**
 
-Places a _PostScript_ version of the current MGED display with fat lines in a file named __fat_lines.ps__ and titles it Test Fat Lines.
+Places a _PostScript_ version of the current MGED display in __bordered.ps__
+with a blue border.
 
 ====
 

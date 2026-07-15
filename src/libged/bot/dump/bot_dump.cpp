@@ -34,10 +34,9 @@
 #include "bnetwork.h"
 
 #include "bu/app.h" // bu_mkdir
+#include "bu/cmdschema.h"
 #include "bu/color.h"
 #include "bu/cv.h"
-#include "bu/getopt.h"
-#include "bu/units.h"
 #include "bu/path.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -71,7 +70,7 @@ bot_path_color(struct bu_color *c, const struct db_full_path *pathp, struct db_i
 
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val) {
-		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+		(void)bu_cmd_integer_from_str(&region_id, region_id_val);
 	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
 		region_id = 0;
 	    }
@@ -100,8 +99,8 @@ bot_path_color(struct bu_color *c, const struct db_full_path *pathp, struct db_i
 	const char *color_val = bu_avs_get(&c_avs, "color");
 	if (!color_val)
 	    color_val = bu_avs_get(&c_avs, "rgb");
-	if (inherit && color_val) {
-	    bu_opt_color(NULL, 1, &color_val, (void *)c);
+	if (inherit && color_val &&
+	    bu_cmd_color_from_argv(c, 1, &color_val) > 0) {
 	    bu_avs_free(&c_avs);
 	    return 1;
 	}
@@ -114,8 +113,7 @@ bot_path_color(struct bu_color *c, const struct db_full_path *pathp, struct db_i
 	const char *color_val = bu_avs_get(&c_avs, "color");
 	if (!color_val)
 	    color_val = bu_avs_get(&c_avs, "rgb");
-	if (color_val) {
-	    bu_opt_color(NULL, 1, &color_val, (void *)c);
+	if (color_val && bu_cmd_color_from_argv(c, 1, &color_val) > 0) {
 	    bu_avs_free(&c_avs);
 	    return 1;
 	}
@@ -366,8 +364,6 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     return curtree;
 }
 
-static char usage[] = "bot dump [-b] [-n] [-F] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials|--no-materials] [bot1 bot2 ...]\n\n";
-
 enum otype
 bot_fmt_type(const char *t)
 {
@@ -416,46 +412,130 @@ bot_fmt_ext(enum otype o, int UNUSED(binary))
     return NULL;
 }
 
+struct bot_dump_args {
+    int print_help;
+    int binary;
+    int normals;
+    int full_precision;
+    int write_displayed;
+    int view_data;
+    int material_info;
+    const char *format;
+    const char *units;
+    struct bu_vls output_file;
+    struct bu_vls output_directory;
+};
+
+static const struct bu_cmd_value_keyword bot_dump_formats[] = {
+    {"dxf", NULL, "Drawing Interchange Format"},
+    {"glb", NULL, "Binary glTF"},
+    {"gltf", NULL, "glTF"},
+    {"obj", NULL, "Wavefront OBJ"},
+    {"sat", NULL, "ACIS SAT"},
+    {"stl", NULL, "STL"},
+    {NULL, NULL, NULL}
+};
+static const char * const bot_dump_material_options[] = {
+    "materials", "no-materials", NULL
+};
+static const char * const bot_dump_output_options[] = {
+    "output-file", "output-directory", NULL
+};
+static const struct bu_cmd_constraint bot_dump_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(bot_dump_material_options, 0, 1,
+	"--materials and --no-materials are mutually exclusive"),
+    BU_CMD_CONSTRAINT_OPTIONS(bot_dump_output_options, 0, 1,
+	"--output-file and --output-directory are mutually exclusive"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
 static int
-bot_opt_fmt(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+bot_dump_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg,
+	struct bu_cmd_validate_result *result)
 {
-    enum otype *otype = (enum otype *)set_var;
-    if (!otype)
-	return 0;
+    struct bu_cmd_schema flat = *schema;
+    int help = bu_cmd_schema_option_present(schema, argc, argv, "help");
 
-    if (!argc) {
-	(*otype) = OTYPE_UNSET;
-	return 0;
-    }
-
-    (*otype) = bot_fmt_type(argv[0]);
-
-    if ((*otype) == OTYPE_UNSET)
-	return -1;
-
-    return 1;
+    flat.validation.custom_validate = NULL;
+    if (help)
+	flat.validation.constraint_data.constraints = NULL;
+    return bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
 }
 
 static int
-bot_opt_unit(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+bot_dump_disable_materials(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
 {
-    double *cfactor = (double *)set_var;
-    if (!cfactor)
-	return 0;
+    if (storage)
+	*((int *)storage) = 0;
+    return 0;
+}
 
-    if (!argc) {
-	(*cfactor) = 1.0;
-	return 0;
+static const struct bu_cmd_option bot_dump_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_dump_args, print_help,
+	"Print command help"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("b", NULL, struct bot_dump_args, binary,
+	"Use binary output when the selected format supports it"),
+    BU_CMD_FLAG("n", "normals", struct bot_dump_args, normals,
+	"Write normals when the selected format supports them"),
+    BU_CMD_VLS_APPEND("m", "output-directory", struct bot_dump_args,
+	output_directory, "directory", "Write one file per BoT into this directory"),
+    BU_CMD_VLS_APPEND("o", "output-file", struct bot_dump_args,
+	output_file, "file", "Write to this output file"),
+    {"t", NULL, "format", "format", "Select dxf, glb, gltf, obj, sat, or stl output",
+	BU_CMD_VALUE_KEYWORD, offsetof(struct bot_dump_args, format), NULL, NULL,
+	NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, bot_dump_formats},
+    BU_CMD_UNITS("u", NULL, struct bot_dump_args, units, "units",
+	"Scale exported coordinates to these units"),
+    BU_CMD_FLAG("F", "full-precision", struct bot_dump_args, full_precision,
+	"Write full floating-point precision (nonstandard for glTF)"),
+    BU_CMD_FLAG(NULL, "displayed", struct bot_dump_args, write_displayed,
+	"Write displayed geometry"),
+    BU_CMD_FLAG(NULL, "viewdata", struct bot_dump_args, view_data,
+	"Write non-geometry view data"),
+    BU_CMD_FLAG(NULL, "materials", struct bot_dump_args, material_info,
+	"Write material and color information"),
+    {NULL, "no-materials", "no-materials", NULL,
+	"Do not write material or color information", BU_CMD_VALUE_CUSTOM,
+	offsetof(struct bot_dump_args, material_info), bot_dump_disable_materials,
+	NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL},
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_dump_operands[] = {
+    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+	"BoT object or path (defaults to all BoTs)", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_bot_dump_schema = {
+    "bot_dump", "Export BoT geometry", bot_dump_options, bot_dump_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(bot_dump_schema_validate, bot_dump_constraints)
+};
+/* The direct command keeps its public bot_dump spelling.  The parent tree
+ * reuses these executable rows through the canonical child-name view. */
+extern "C" const struct bu_cmd_schema ged_bot_dump_subcommand_schema = {
+    "dump", "Export BoT geometry", bot_dump_options, bot_dump_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(bot_dump_schema_validate, bot_dump_constraints)
+};
+extern "C" const struct bu_cmd_schema ged_dbot_dump_schema = {
+    "dbot_dump", "Export displayed BoT geometry", bot_dump_options,
+    bot_dump_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(bot_dump_schema_validate, bot_dump_constraints)
+};
+
+static void
+bot_dump_usage(struct bu_vls *str, const char *cmd)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_bot_dump_schema);
+
+    bu_vls_sprintf(str, "Usage: %s [options] [bot ...]\n\n", cmd);
+    if (option_help) {
+	bu_vls_printf(str, "Options:\n%s\n", option_help);
+	bu_free(option_help, "help str");
     }
-
-    (*cfactor) = bu_units_conversion(argv[0]);
-    if (ZERO(*cfactor)) {
-	(*cfactor) = 1.0;
-    } else {
-	(*cfactor) = 1.0 / (*cfactor);
-    }
-
-    return 1;
 }
 
 // TODO - right now this is not at all general, and in fact will only write out a few
@@ -617,9 +697,6 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_bot_internal *bot;
     struct directory *dp;
     int i;
-    int print_help = 0;
-    int write_displayed = 0;
-    int no_material_info = 0;
     const char *cmd_name;
 
     struct _ged_bot_dump_client_data ld;
@@ -634,55 +711,61 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bu_opt_desc od[14];
-    BU_OPT(od[ 0], "h", "help",             "",      NULL,          &print_help,          "Print help and exit");
-    BU_OPT(od[ 1], "?", "",                 "",      NULL,          &print_help,          "");
-    BU_OPT(od[ 2], "b", "",                 "",      NULL,          &d->binary,           "Use binary version of output format");
-    BU_OPT(od[ 3], "n", "normals",          "",      NULL,          &d->normals,          "If supported, write out normals");
-    BU_OPT(od[ 4], "m", "output-directory", "dir",   &bu_opt_vls,   &d->output_directory, "Output multiple files into this directory");
-    BU_OPT(od[ 5], "o", "output-file",      "file",  &bu_opt_vls,   &d->output_file,      "Specify an output filename");
-    BU_OPT(od[ 6], "t", "",                 "fmt",   &bot_opt_fmt,  &d->output_type,      "Specify an output format type");
-    BU_OPT(od[ 7], "u", "",                 "unit",  &bot_opt_unit, &d->cfactor,          "Specify an output unit");
-    BU_OPT(od[ 8], "F", "full-precision",   "",      NULL,          &d->full_precision,   "Write full floating point precision (non-standard for glTF).");
-    // TODO - use these options to fold dbot variations into the core function, and then
-    // rework dbot version to just construct a new argc/argv array and call this.
-    BU_OPT(od[ 9], "",  "displayed",        "",      NULL,          &write_displayed,     "Write out displayed geometry");
-    BU_OPT(od[10], "",  "viewdata",         "",      NULL,          &d->view_data,        "Write out non-geometry view data");
-    BU_OPT(od[11], "",  "materials",        "",      NULL,          &d->material_info,    "Write out material and color info (default when supported)");
-    BU_OPT(od[12], "",  "no-materials",     "",      NULL,          &no_material_info,    "Do not write out material or color info");
-    BU_OPT_NULL(od[13]);
+    struct bot_dump_args args = {0, 0, 0, 0, 0, 0, 1, NULL, NULL,
+	BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
+    int operand_index;
 
     /* must be wanting help */
     if (!argc) {
-	_ged_cmd_help(gedp, usage, od);
+	bot_dump_usage(gedp->ged_result_str, cmd_name);
 	bot_client_data_cleanup(d);
 	return GED_HELP;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, od);
-
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, od);
-	bot_client_data_cleanup(d);
-	return BRLCAD_OK;
-    }
-
-    argc = opt_ret;
-
-    if (no_material_info)
-	d->material_info = 0;
-
-    if (bu_vls_strlen(&d->output_file) && bu_vls_strlen(&d->output_directory)) {
-	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
+	operand_index = bu_cmd_schema_parse_complete(&ged_bot_dump_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_free(&args.output_file);
+	bu_vls_free(&args.output_directory);
 	bot_client_data_cleanup(d);
 	return BRLCAD_ERROR;
     }
+    if (args.print_help) {
+	bot_dump_usage(gedp->ged_result_str, cmd_name);
+	bu_vls_free(&args.output_file);
+	bu_vls_free(&args.output_directory);
+	bot_client_data_cleanup(d);
+	return GED_HELP;
+    }
 
-    if (d->view_data || write_displayed) {
+    d->binary = args.binary;
+    d->normals = args.normals;
+    d->full_precision = args.full_precision;
+    d->view_data = args.view_data;
+    d->material_info = args.material_info;
+    if (args.format)
+	d->output_type = bot_fmt_type(args.format);
+    if (args.units) {
+	double unit_factor;
+	if (!bu_cmd_units_from_str(&unit_factor, args.units)) {
+	    bu_vls_free(&args.output_file);
+	    bu_vls_free(&args.output_directory);
+	    bot_client_data_cleanup(d);
+	    return BRLCAD_ERROR;
+	}
+	d->cfactor = 1.0 / unit_factor;
+    }
+    bu_vls_strcpy(&d->output_file, bu_vls_cstr(&args.output_file));
+    bu_vls_strcpy(&d->output_directory, bu_vls_cstr(&args.output_directory));
+    bu_vls_free(&args.output_file);
+    bu_vls_free(&args.output_directory);
+    argc -= operand_index;
+    argv += operand_index;
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+
+    if (d->view_data || args.write_displayed) {
 	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 	GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     }
@@ -776,7 +859,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (argc < 1 && !write_displayed) {
+    if (argc < 1 && !args.write_displayed) {
 	mat_t mat;
 	MAT_IDN(mat);
 	/* dump all the bots */
@@ -802,7 +885,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
-    } else if (write_displayed) {
+    } else if (args.write_displayed) {
 	dl_botdump(d);
     } else {
 	int ac = 1;

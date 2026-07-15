@@ -30,8 +30,8 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/color.h"
-#include "bu/opt.h"
 #include "bu/vls.h"
 #include "bv.h"
 
@@ -72,7 +72,7 @@ _fp_irect_cmd_draw(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+    if (!bu_cmd_integer_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -112,7 +112,7 @@ _fp_irect_cmd_line_width(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+    if (!bu_cmd_integer_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -152,7 +152,7 @@ _fp_irect_cmd_line_style(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+    if (!bu_cmd_integer_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -192,11 +192,11 @@ _fp_irect_cmd_pos(void *bs, int argc, const char **argv)
     }
 
     int pos[2];
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&(pos[0])) != 1) {
+    if (!bu_cmd_integer_from_str(&pos[0], argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&(pos[1])) != 1) {
+    if (!bu_cmd_integer_from_str(&pos[1], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -234,11 +234,11 @@ _fp_irect_cmd_dim(void *bs, int argc, const char **argv)
     }
 
     int dim[2];
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&(dim[0])) != 1) {
+    if (!bu_cmd_integer_from_str(&dim[0], argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&(dim[1])) != 1) {
+    if (!bu_cmd_integer_from_str(&dim[1], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -366,7 +366,7 @@ _fp_irect_cmd_bg(void *bs, int argc, const char **argv)
     }
 
     struct bu_color c;
-    int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
+    int opt_ret = bu_cmd_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
 	return BRLCAD_ERROR;
@@ -407,7 +407,7 @@ _fp_irect_cmd_color(void *bs, int argc, const char **argv)
     }
 
     struct bu_color c;
-    int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
+    int opt_ret = bu_cmd_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
 	return BRLCAD_ERROR;
@@ -447,11 +447,11 @@ _fp_irect_cmd_cdim(void *bs, int argc, const char **argv)
     }
 
     int cdim[2];
-    if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&(cdim[0])) != 1) {
+    if (!bu_cmd_integer_from_str(&cdim[0], argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&(cdim[1])) != 1) {
+    if (!bu_cmd_integer_from_str(&cdim[1], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -482,7 +482,7 @@ const struct bu_cmdtab _fp_irect_cmds[] = {
 int
 _fp_cmd_irect(void *bs, int argc, const char **argv)
 {
-    int help = 0;
+    struct ged_faceplate_subcommand_args args = {0};
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
     struct bview *v = gedp->ged_gvp;
@@ -511,30 +511,25 @@ _fp_cmd_irect(void *bs, int argc, const char **argv)
 	}
     }
 
-    // See if we have any high level options set
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h", "help",  "",  NULL,  &help,      "Print help");
-    BU_OPT_NULL(d[1]);
-
-    gd->gopts = d;
-
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_fp_irect_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    int subcommand_index = bu_cmd_schema_parse(&ged_faceplate_subcommand_schema,
+	&args, &parse_msgs, argc, argv);
+    if (subcommand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&parse_msgs));
+	bu_vls_free(&parse_msgs);
+	return BRLCAD_ERROR;
     }
-
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    (void)bu_opt_parse(NULL, acnt, argv, d);
+    bu_vls_free(&parse_msgs);
+    argc -= subcommand_index;
+    argv += subcommand_index;
 
     struct _ged_fp_irect_info rinfo;
     rinfo.gd = gd;
     rinfo.r = &v->gv_s->gv_rect;
 
-    return _ged_subcmd_exec(gedp, d, _fp_irect_cmds, "view faceplate irect", "[options] subcommand [args]", (void *)&rinfo, argc, argv, help, cmd_pos);
+    return _fp_subcmd_exec(gedp, &ged_faceplate_subcommand_schema,
+	_fp_irect_cmds, "view faceplate irect", "[options] subcommand [args]",
+	(void *)&rinfo, argc, argv, args.help);
 }
 
 /*

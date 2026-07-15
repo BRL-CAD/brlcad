@@ -28,8 +28,22 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+
+static const struct bu_cmd_operand copyeval_schema_operands[] = {
+    BU_CMD_OPERAND("input_path", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"Path to an existing primitive", "ged.db_path"),
+    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 1, 1,
+	"Name for the transformed primitive copy", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema copyeval_cmd_schema = {
+    "copyeval", "Copy a primitive with its path transform applied", NULL,
+    copyeval_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 int
@@ -42,9 +56,11 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
     struct rt_db_internal new_int = RT_DB_INTERNAL_INIT_ZERO;
 
-    char *tok;
     int endpos = 0;
     int i;
+    int operand_index;
+    int parse_dummy = 0;
+    const char *command;
     mat_t start_mat;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -53,6 +69,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+    command = argv[0];
 
     /* must be wanting help */
     if (argc == 1) {
@@ -60,36 +77,54 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 3) {
+
+    operand_index = bu_cmd_schema_parse_complete(&copyeval_cmd_schema,
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index + 1;
 
     /* initialize gtd */
+    memset(&gtd, 0, sizeof(gtd));
     gtd.gtd_gedp = gedp;
     gtd.gtd_flag = _GED_CPEVAL;
     gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */
-    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
 
     MAT_IDN(start_mat);
 
     /* build directory pointer array for desired path */
-    if (strchr(argv[1], '/')) {
-	tok = strtok((char *)argv[1], "/");
+
+    if (strchr(argv[0], '/')) {
+	char *path_copy = bu_strdup(argv[0]);
+	char *tok = strtok(path_copy, "/");
 	while (tok) {
-	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+	    if (endpos >= _GED_TRACE_MAX_LEVELS) {
+		bu_vls_printf(gedp->ged_result_str, "Path exceeds %d levels\n",
+		    _GED_TRACE_MAX_LEVELS);
+		bu_free(path_copy, "copyeval path copy");
+		return BRLCAD_ERROR;
+	    }
+	    gtd.gtd_obj[endpos] = db_lookup(gedp->dbip, tok, LOOKUP_NOISY);
+	    if (gtd.gtd_obj[endpos] == RT_DIR_NULL) {
+		bu_free(path_copy, "copyeval path copy");
+		return BRLCAD_ERROR;
+	    }
 	    endpos++;
 	    tok = strtok((char *)NULL, "/");
 	}
+	bu_free(path_copy, "copyeval path copy");
     } else {
-	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[0], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 	endpos++;
     }
 
     if (endpos < 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", command, usage);
 	return BRLCAD_ERROR;
     }
 
@@ -137,7 +172,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    dp = db_diradd(gedp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
+    dp = db_diradd(gedp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)
@@ -174,10 +209,10 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_COPYEVAL_COMMANDS(X, XID) \
-    X(copyeval, ged_copyeval_core, GED_CMD_DEFAULT) \
+    X(copyeval, ged_copyeval_core, GED_CMD_DEFAULT, &copyeval_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_COPYEVAL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_copyeval", 1, GED_COPYEVAL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COPYEVAL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_copyeval", 1, GED_COPYEVAL_COMMANDS)
 
 /*
  * Local Variables:

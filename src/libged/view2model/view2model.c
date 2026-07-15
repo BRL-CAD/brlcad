@@ -54,11 +54,13 @@ ged_view2model_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_VIEW2MODEL_COMMANDS(X, XID) \
-    X(view2model, ged_view2model_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(view2model, "view2model", "Report the view-to-model matrix", "operands", BU_CMD_VALUE_RAW, 0, 0, "No operands");
 
-GED_DECLARE_COMMAND_SET(GED_VIEW2MODEL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_view2model", 1, GED_VIEW2MODEL_COMMANDS)
+#define GED_VIEW2MODEL_COMMANDS(X, XID) \
+    X(view2model, ged_view2model_core, GED_CMD_DEFAULT, &view2model_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_VIEW2MODEL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_view2model", 1, GED_VIEW2MODEL_COMMANDS)
 
 /*
  * Local Variables:

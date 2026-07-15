@@ -10,7 +10,7 @@ bot_smooth - compute and store surface normals in a BOT mesh
 
 [source]
 ----
-bot_smooth [-t angle_tolerance] new_bot old_bot
+bot_smooth [--help] [-t angle_tolerance] new_bot old_bot
 ----
 
 
@@ -24,6 +24,9 @@ Normals are computed by averaging the normals of adjacent faces. The `angle_tole
 NOTE: This command requires the database to be at the current version with support for BOT surface normals. If the database is too old, use `dbupgrade` first.
 
 === Options
+
+*-h*, *--help*::
+Print command help without requiring an open database.
 
 *-t angle_tolerance*::
 Maximum angle (in degrees) between adjacent face normals for them to be averaged together. Faces separated by a larger angle produce a hard edge in the normal map. Default is `180.0` (all faces smoothed together).

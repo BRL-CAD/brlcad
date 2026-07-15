@@ -34,6 +34,10 @@ is written to _input.g_*.compressed.g*.  This is a lossless alternative
 to round-tripping a model through *g2asc*(1) and *asc2g*(1), which can
 introduce numerical error.
 
+The optional positional _output.g_ is valid only with *-c*; without
+compression, *gex* performs inspection only and accepts exactly the input
+database path.
+
 The *-d* option hex-dumps the raw bytes of a single named object, which is
 useful for low-level inspection of how an object is encoded on disk.
 
@@ -44,8 +48,8 @@ useful for low-level inspection of how an object is encoded on disk.
   Print a usage message and exit.
 
 *-f*, *--force*::
-  Allow an existing _output.g_ file to be overwritten.  Without this
-  option, *gex* refuses to clobber an existing output file.
+  With *-c*, allow an existing _output.g_ file to be overwritten.  Without
+  this option, *gex* refuses to clobber an existing compressed output file.
 
 *-c*, *--compress*::
   Write a copy of the database to _output.g_ with all free-storage

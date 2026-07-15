@@ -10,7 +10,7 @@ bot_flip - Reverse (i.e. flip) all the facet normals within a BOT primitive.
 
 [source]
 ----
-bot_flip {bot} [bot2 bot3]...
+bot_flip [--help] bot [bot2 ...]
 ----
 
 
@@ -20,6 +20,11 @@ bot_flip {bot} [bot2 bot3]...
 Reverse (i.e. flip) all the facet normals within a BOT primitive. When viewing a BOT with the MGED 'e -m1' or 'draw -m1' command, if all the exterior facets are black and all interior facets are shaded (red by default), then this command will flip the normals resulting in all exterior facets to become shaded and all interior facets to become black. It is recommended to run the commands 'bot_vertex_fuse' then 'bot_face_fuse' before running 'bot_flip'.
 
 Note: using the *bot_flip* will toggle the orientation of right and left-handed BOT primitives. The orientation of unoriented BOT primitives will not change.
+
+=== Options
+
+*-h*, *--help*::
+Print command help without requiring an open database.
 
 [[examples]]
 == EXAMPLES

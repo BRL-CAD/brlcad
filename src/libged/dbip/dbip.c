@@ -28,8 +28,21 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema dbip_cmd_schema = {
+    "dbip", "Report the current database instance pointer", NULL, NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    {NULL}
+};
+
+static const struct bu_cmd_schema get_dbip_cmd_schema = {
+    "get_dbip", "Report the current database instance pointer", NULL, NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    {NULL}
+};
 
 
 int
@@ -60,11 +73,11 @@ ged_dbip_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_DBIP_COMMANDS(X, XID) \
-    X(dbip, ged_dbip_core, GED_CMD_DEFAULT) \
-    X(get_dbip, ged_dbip_core, GED_CMD_DEFAULT) \
+    X(dbip, ged_dbip_core, GED_CMD_DEFAULT, &dbip_cmd_schema) \
+    X(get_dbip, ged_dbip_core, GED_CMD_DEFAULT, &get_dbip_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_DBIP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_dbip", 1, GED_DBIP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DBIP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_dbip", 1, GED_DBIP_COMMANDS)
 
 /*
  * Local Variables:

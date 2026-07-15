@@ -23,6 +23,8 @@
  *
  */
 
+#include <string.h>
+
 #include "ged.h"
 
 /*
@@ -62,12 +64,116 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_BLAST_COMMANDS(X, XID) \
-    X(B,     ged_blast_core, GED_CMD_DEFAULT) \
-    X(blast, ged_blast_core, GED_CMD_DEFAULT)
 
-GED_DECLARE_COMMAND_SET(GED_BLAST_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_blast", 1, GED_BLAST_COMMANDS)
+static int
+blast_draw_line(struct bu_vls *line, const char *input, size_t *command_len)
+{
+    size_t len = 0;
+
+    if (!line || !input)
+	return -1;
+    while (input[len] && input[len] != ' ' && input[len] != '\t')
+	len++;
+    if (!len)
+	return -1;
+    bu_vls_trunc(line, 0);
+    bu_vls_strcat(line, "draw");
+    bu_vls_strcat(line, input + len);
+    if (command_len)
+	*command_len = len;
+    return 0;
+}
+
+
+static int
+blast_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    struct bu_vls line = BU_VLS_INIT_ZERO;
+    struct ged_cmd_validate_result delegated = GED_CMD_VALIDATE_RESULT_NULL;
+    size_t command_len = 0;
+    size_t draw_cursor = cursor_pos;
+    int ret = -1;
+
+    if (!input || !result || blast_draw_line(&line, input, &command_len) != 0)
+	return -1;
+    if (cursor_pos >= command_len)
+	draw_cursor = cursor_pos - command_len + strlen("draw");
+    ret = ged_cmd_validate(gedp, bu_vls_cstr(&line), draw_cursor, &delegated);
+    if (!ret) {
+	ged_cmd_validate_result_clear(result);
+	*result = delegated;
+	delegated.completion_count = 0;
+	delegated.completion_candidates = NULL;
+	result->hint = result->hint ? result->hint : "draw argument";
+    }
+    ged_cmd_validate_result_clear(&delegated);
+    bu_vls_free(&line);
+    return ret;
+}
+
+
+static int
+blast_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    struct bu_vls line = BU_VLS_INIT_ZERO;
+    struct ged_cmd_analysis delegated = {0, NULL};
+    int ret = -1;
+
+    if (!input || !analysis || !analysis->tokens || blast_draw_line(&line, input, NULL) != 0)
+	return -1;
+    ret = ged_cmd_analyze(gedp, bu_vls_cstr(&line), &delegated);
+    if (!ret) {
+	for (size_t i = 0; i < analysis->token_count && i < delegated.token_count; i++) {
+	    analysis->tokens[i].role = delegated.tokens[i].role;
+	    analysis->tokens[i].value_type = delegated.tokens[i].value_type;
+	    analysis->tokens[i].semantic_state = delegated.tokens[i].semantic_state;
+	    analysis->tokens[i].validator = delegated.tokens[i].validator;
+	    analysis->tokens[i].hint = delegated.tokens[i].hint;
+	}
+	if (analysis->token_count) {
+	    analysis->tokens[0].role = GED_CMD_TOKEN_COMMAND;
+	    analysis->tokens[0].semantic_state = GED_CMD_SEMANTIC_VALID;
+	    analysis->tokens[0].hint = "draw-compatible command";
+	}
+    }
+    ged_cmd_analysis_clear(&delegated);
+    bu_vls_free(&line);
+    return ret;
+}
+
+
+static char *
+blast_grammar_json(void)
+{
+    return bu_strdup("{\"kind\":\"delegated_grammar\",\"delegate\":\"draw\",\"help\":\"Clear the display and draw objects\"}");
+}
+
+
+static int
+blast_grammar_lint(struct bu_vls *msgs)
+{
+    if (!ged_cmd_exists("draw")) {
+	if (msgs)
+	    bu_vls_strcat(msgs, "blast: delegated draw command is unavailable\n");
+	return 1;
+    }
+    return 0;
+}
+
+
+static const struct ged_cmd_grammar blast_grammar = {
+    "blast", "Clear the display and draw objects", blast_grammar_validate,
+    blast_grammar_analyze, blast_grammar_json, blast_grammar_lint
+};
+
+#define GED_BLAST_COMMANDS(X, XID) \
+    X(B, ged_blast_core, GED_CMD_DEFAULT, &blast_grammar) \
+    X(blast, ged_blast_core, GED_CMD_DEFAULT, &blast_grammar)
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_BLAST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_blast", 1, GED_BLAST_COMMANDS)
 
 /*
  * Local Variables:

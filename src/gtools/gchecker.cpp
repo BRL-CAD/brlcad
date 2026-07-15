@@ -44,20 +44,53 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "ged.h"
 
+struct gchecker_args {
+    int dry_run;
+    int verbose;
+    int force;
+    int help;
+};
+
+static const struct bu_cmd_option gchecker_options[] = {
+    BU_CMD_FLAG("d", "dry-run", struct gchecker_args, dry_run,
+	"Step through the checker stages, but do not raytrace"),
+    BU_CMD_FLAG("v", "verbose", struct gchecker_args, verbose,
+	"Print verbose information about result processing"),
+    BU_CMD_FLAG("f", "force", struct gchecker_args, force,
+	"Overwrite an existing .ck directory"),
+    BU_CMD_FLAG("h", "help", struct gchecker_args, help,
+	"Print help and exit"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand gchecker_operands[] = {
+    BU_CMD_OPERAND("database", BU_CMD_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database", NULL),
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+	"Optional object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema gchecker_schema = {
+    "gchecker", "Generate geometry-overlap data for the MGED Overlap Tool",
+    gchecker_options, gchecker_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-_cmd_help(const char *usage, struct bu_opt_desc *d)
+_cmd_help(const char *usage, const struct bu_cmd_schema *schema)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     char *option_help;
 
     bu_vls_sprintf(&str, "%s", usage);
 
-    if ((option_help = bu_opt_describe(d, NULL))) {
+    if ((option_help = bu_cmd_schema_describe(schema))) {
         bu_vls_printf(&str, "Options:\n%s\n", option_help);
         bu_free(option_help, "help str");
     }
@@ -70,17 +103,8 @@ _cmd_help(const char *usage, struct bu_opt_desc *d)
 int
 main(int argc, const char **argv)
 {
-    int print_help = 0;
-    int dry_run = 0;
-    int verbose = 0;
-    int force = 0;
+    struct gchecker_args args = {0, 0, 0, 0};
     const char *usage = "Usage: gchecker [options] file.g  [objects ...]\n\n";
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "d", "dry-run", "",  NULL, &dry_run,     "Step through the checker stages, but don't raytrace");
-    BU_OPT(d[1], "v", "verbose", "",  NULL, &verbose,     "Print verbose information about result processing");
-    BU_OPT(d[2], "f", "force",   "",  NULL, &force,       "Overwrite existing .ck directory");
-    BU_OPT(d[3], "h", "help",    "",  NULL, &print_help,  "Print help and exit");
-    BU_OPT_NULL(d[4]);
 
     std::set<std::pair<std::string, std::string>> unique_pairs;
     std::multimap<std::pair<std::string, std::string>, double> pair_sizes;
@@ -93,23 +117,27 @@ main(int argc, const char **argv)
 
        /* must be wanting help */
     if (argc < 1) {
-        _cmd_help(usage, d);
+        _cmd_help(usage, &gchecker_schema);
         return 0;
     }
 
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    int help_requested = bu_cmd_schema_option_present(&gchecker_schema,
+	(size_t)argc, argv, "help");
+    int operand_index = help_requested ?
+	bu_cmd_schema_parse(&gchecker_schema, &args, NULL, argc, argv) :
+	bu_cmd_schema_parse_complete(&gchecker_schema, &args, NULL, argc, argv);
 
-    if (print_help) {
-        _cmd_help(usage, d);
+    if (args.help || operand_index < 0) {
+        _cmd_help(usage, &gchecker_schema);
         return 0;
     }
 
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
+    /* Advance to the contiguous operand suffix selected by the native parser. */
+    argc -= operand_index;
+    argv += operand_index;
 
     if (argc < 1) {
-	_cmd_help(usage, d);
+	_cmd_help(usage, &gchecker_schema);
 	return 1;
     }
 
@@ -134,7 +162,7 @@ main(int argc, const char **argv)
     struct bu_vls wdir = BU_VLS_INIT_ZERO;
     bu_vls_printf(&wdir, "%s.ck", bu_vls_cstr(&gbasename));
     if (bu_file_exists(bu_vls_cstr(&wdir), NULL)) {
-	if (force) {
+	if (args.force) {
 	    bu_dirclear(bu_vls_cstr(&wdir));
 	} else {
 	    bu_vls_free(&gfile);
@@ -144,7 +172,7 @@ main(int argc, const char **argv)
     }
 
 
-    if (dry_run) {
+    if (args.dry_run) {
 	bu_log("(Note: dry run - skipping rtcheck)\n");
     }
 
@@ -164,7 +192,7 @@ main(int argc, const char **argv)
 	bu_exit(1, "Failed to chdir to \"%s\" ", bu_vls_cstr(&wdir));
     }
 
-    if (verbose) {
+    if (args.verbose) {
 	bu_log("Working on a copy in %s\n", bu_vls_cstr(&wdir));
     }
 
@@ -220,7 +248,7 @@ main(int argc, const char **argv)
     }
 
     // Run rtcheck equiv.
-    if (!dry_run) {
+    if (!args.dry_run) {
 	std::regex oregex("<(.*),.(.*)>: ([0-9]*).* (.*).mm");
 	for (size_t i = 0; i < objs.size(); i++) {
 	    for (int az = 0; az < 180; az+=45) {
@@ -252,7 +280,7 @@ main(int argc, const char **argv)
 			if (!std::regex_search(line, nvar, oregex) || nvar.size() != 5) {
 			    continue;
 			}
-			if (verbose) {
+			if (args.verbose) {
 			    bu_log("%zd: %s\n", nvar.size(), line.c_str());
 			    for (size_t m = 0; m < nvar.size(); m++) {
 				bu_log("   %zd: %s\n", m, nvar.str(m).c_str());
@@ -265,7 +293,7 @@ main(int argc, const char **argv)
 			double val = std::stod(nvar.str(3)) * std::stod(nvar.str(4));
 			unique_pairs.insert(key);
 			pair_sizes.insert(std::make_pair(key, val));
-			if (verbose) {
+			if (args.verbose) {
 			    bu_log("Inserting: %s,%s -> %f\n", key.first.c_str(), key.second.c_str(), val);
 			}
 		    }
@@ -298,7 +326,7 @@ main(int argc, const char **argv)
 			if (!std::regex_search(line, nvar, oregex) || nvar.size() != 5) {
 			    continue;
 			}
-			if (verbose) {
+			if (args.verbose) {
 			    bu_log("%zd: %s\n", nvar.size(), line.c_str());
 			    for (size_t m = 0; m < nvar.size(); m++) {
 				bu_log("   %zd: %s\n", m, nvar.str(m).c_str());
@@ -311,7 +339,7 @@ main(int argc, const char **argv)
 			double val = std::stod(nvar.str(3)) * std::stod(nvar.str(4));
 			unique_pairs.insert(key);
 			pair_sizes.insert(std::make_pair(key, val));
-			if (verbose) {
+			if (args.verbose) {
 			    bu_log("Inserting: %s,%s -> %f\n", key.first.c_str(), key.second.c_str(), val);
 			}
 		    }
@@ -320,29 +348,29 @@ main(int argc, const char **argv)
 	}
     }
 
-    if (verbose) {
+    if (args.verbose) {
 	bu_log("Found %zd unique pairings: \n", unique_pairs.size());
     }
     std::set<std::pair<std::string, std::string>>::iterator p_it;
     for (p_it = unique_pairs.begin(); p_it != unique_pairs.end(); p_it++) {
-	if (verbose) {
+	if (args.verbose) {
 	    bu_log("     %s + %s: \n", p_it->first.c_str(), p_it->second.c_str());
 	}
 	// For each pairing, get the average size
 	size_t scnt = pair_sizes.count(*p_it);
 	double ssum = 0.0;
-	if (verbose) {
+	if (args.verbose) {
 	    bu_log("     Have %zd sizes: \n", scnt);
 	}
 	std::multimap<std::pair<std::string, std::string>, double>::iterator s_it;
 	for (s_it = pair_sizes.equal_range(*p_it).first; s_it != pair_sizes.equal_range(*p_it).second; s_it++) {
 	    double s = (*s_it).second;
 	    ssum += s;
-	    if (verbose) {
+	    if (args.verbose) {
 		bu_log("                   %f \n", s);
 	    }
 	}
-	if (verbose) {
+	if (args.verbose) {
 	    bu_log("     Avg: %f\n", ssum/(double)scnt);
 	}
 	pair_avg_sizes[*p_it] = ssum/(double)scnt;

@@ -84,6 +84,7 @@
 #include <time.h>
 
 #include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -2491,12 +2492,21 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 }
 
 #include "../include/plugin.h"
+static const struct bu_cmd_operand human_schema_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Human dimensions, pose, naming, and output options", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema human_cmd_schema = {
+    "human", "Generate a parameterized human model", NULL,
+    human_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 #define GED_HUMAN_COMMANDS(X, XID) \
-    X(human, ged_human_core, GED_CMD_DEFAULT) \
+    X(human, ged_human_core, GED_CMD_DEFAULT, &human_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_HUMAN_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_human", 1, GED_HUMAN_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_HUMAN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_human", 1, GED_HUMAN_COMMANDS)
 
 /*
  * Local Variables:

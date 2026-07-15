@@ -28,11 +28,14 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+#define BU_OPT_COMPATIBILITY_BUILD 1
+
 #include <iostream>
 #include <map>
 #include <string>
 
 #include "bu/malloc.h"
+#include "bu/cmdschema.h"
 #include "bu/opt.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
@@ -41,6 +44,173 @@
 #include "analyze/nirt.h"
 
 #include "./nirt.h"
+
+/* Native-schema readers.  They deliberately return zero on success, unlike
+ * the retired bu_opt callback convention.  A NULL storage pointer is the
+ * side-effect-free validation path used by completion and syntax analysis. */
+static int
+nirt_cmd_arg_required(struct bu_vls *msg, const char *arg, const char *name)
+{
+    if (arg && arg[0])
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "argument expected for %s\n", name);
+    return -1;
+}
+
+
+static int
+nirt_overlap_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int value;
+
+    if (nirt_cmd_arg_required(msg, arg, "nirt overlap handling") != 0)
+	return -1;
+    if (BU_STR_EQUAL(arg, "resolve") || BU_STR_EQUAL(arg, "0")) {
+	value = NIRT_OVLP_RESOLVE;
+    } else if (BU_STR_EQUAL(arg, "rebuild_fastgen") || BU_STR_EQUAL(arg, "1")) {
+	value = NIRT_OVLP_REBUILD_FASTGEN;
+    } else if (BU_STR_EQUAL(arg, "rebuild_all") || BU_STR_EQUAL(arg, "2")) {
+	value = NIRT_OVLP_REBUILD_ALL;
+    } else if (BU_STR_EQUAL(arg, "retain") || BU_STR_EQUAL(arg, "3")) {
+	value = NIRT_OVLP_RETAIN;
+    } else {
+	if (msg)
+	    bu_vls_printf(msg, "Illegal overlap_claims specification: '%s'\n", arg);
+	return -1;
+    }
+
+    if (storage)
+	*((int *)storage) = value;
+    return 0;
+}
+
+
+static int
+nirt_attrs_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct bu_ptbl *attrs = (struct bu_ptbl *)storage;
+
+    if (nirt_cmd_arg_required(msg, arg, "nirt attribute") != 0)
+	return -1;
+    if (!attrs)
+	return 0;
+
+    // Original container was a C++ set, so mimic sorted uniqueness while
+    // retaining the vls pointers and bu_ptbl container.
+    std::map<std::string, char *> vlsmp;
+    for (size_t i = 0; i < BU_PTBL_LEN(attrs); i++) {
+	char *a = (char *)BU_PTBL_GET(attrs, i);
+	vlsmp[std::string(a)] = a;
+    }
+
+    if (vlsmp.find(std::string(arg)) == vlsmp.end()) {
+	char *attr = bu_strdup(arg);
+	vlsmp[std::string(attr)] = attr;
+
+	bu_ptbl_reset(attrs);
+	for (std::map<std::string, char *>::iterator v_it = vlsmp.begin(); v_it != vlsmp.end(); v_it++)
+	    bu_ptbl_ins(attrs, (long *)v_it->second);
+    }
+
+    return 0;
+}
+
+
+static int
+nirt_script_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct nirt_opt_vals *v = (struct nirt_opt_vals *)storage;
+
+    if (nirt_cmd_arg_required(msg, arg, "nirt script") != 0)
+	return -1;
+    if (!v)
+	return 0;
+
+    char *script = bu_strdup(arg);
+    bu_ptbl_ins(&v->init_scripts, (long *)script);
+    v->script_set = 1;
+    return 0;
+}
+
+
+static int
+nirt_format_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    std::string s;
+    std::ifstream file;
+    struct nirt_opt_vals *v = (struct nirt_opt_vals *)storage;
+
+    if (nirt_cmd_arg_required(msg, arg, "nirt format") != 0)
+	return -1;
+    /* Native schema validation must not touch the file system. */
+    if (!v)
+	return 0;
+
+    file.open(arg);
+    if (!file.is_open()) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&str, "%s/%s.nrt", bu_dir(NULL, 0, BU_DIR_DATA, "nirt", NULL), arg);
+	file.clear();
+	file.open(bu_vls_cstr(&str));
+	bu_vls_free(&str);
+
+	if (!file.is_open()) {
+	    if (msg)
+		bu_vls_printf(msg, "ERROR: -f [%s] does not exist as a file or predefined format\n", arg);
+	    return -1;
+	}
+    }
+
+    while (std::getline(file, s)) {
+	char *script = bu_strdup(s.c_str());
+	bu_ptbl_ins(&v->init_scripts, (long *)script);
+    }
+    file.close();
+
+    bu_vls_sprintf(&v->filename, "%s", arg);
+    v->file_cnt++;
+    v->fmt_set = 1;
+    return 0;
+}
+
+
+static int
+nirt_clear_scripts(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage)
+{
+    struct nirt_opt_vals *v = (struct nirt_opt_vals *)storage;
+
+    if (!v)
+	return 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(&v->init_scripts); i++) {
+	char *s = (char *)BU_PTBL_GET(&v->init_scripts, i);
+	bu_free(s, "script");
+    }
+    bu_ptbl_reset(&v->init_scripts);
+    v->fmt_set = 0;
+    v->script_set = 0;
+    return 0;
+}
+
+
+static int
+nirt_librt_debug_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int value;
+
+    if (!bu_cmd_integer_from_str(&value, arg)) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid librt debug value: %s\n", arg ? arg : "");
+	return -1;
+    }
+    if (storage) {
+	*((int *)storage) = value;
+	rt_debug = value;
+    }
+    return 0;
+}
+
 
 static int
 decode_overlap(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
@@ -183,6 +353,13 @@ enqueue_format(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
 }
 
 
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 struct bu_opt_desc *
 nirt_opt_desc(struct nirt_opt_vals *v)
 {
@@ -219,6 +396,66 @@ nirt_opt_desc(struct nirt_opt_vals *v)
 
     return d;
 }
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+
+
+static const struct bu_cmd_option nirt_options[] = {
+    BU_CMD_FLAG("h", "help", nirt_opt_vals, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 0),
+    {"A", NULL, "A", "name", "Add an attribute to report", BU_CMD_VALUE_CUSTOM,
+	offsetof(nirt_opt_vals, attrs), nirt_attrs_from_str, NULL, NULL, NULL, 0, 0, NULL,
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    BU_CMD_FLAG("M", NULL, nirt_opt_vals, read_matrix, "Read a view matrix from standard input"),
+    BU_CMD_FLAG("b", NULL, nirt_opt_vals, deprecated_backout,
+	"Deprecated no-op; backing out is now the default"),
+    BU_CMD_FLAG("c", NULL, nirt_opt_vals, current_center, "Shoot from the current center"),
+    {"e", NULL, "e", "script", "Run a script before interacting", BU_CMD_VALUE_CUSTOM,
+	0, nirt_script_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    {"f", NULL, "f", "format", "Load a predefined format or script file", BU_CMD_VALUE_CUSTOM,
+	0, nirt_format_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL},
+    {"E", NULL, "E", NULL, "Ignore earlier -e and -f options", BU_CMD_VALUE_CUSTOM,
+	0, nirt_clear_scripts, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL},
+    BU_CMD_FLAG("L", NULL, nirt_opt_vals, show_formats, "List output formatting options"),
+    BU_CMD_FLAG("s", NULL, nirt_opt_vals, silent_mode, "Run in silent mode"),
+    BU_CMD_FLAG("v", NULL, nirt_opt_vals, verbose_mode, "Run in verbose mode"),
+    BU_CMD_INTEGER("H", NULL, nirt_opt_vals, header_mode, "n", "Enable or disable the informational header"),
+    BU_CMD_INTEGER("u", NULL, nirt_opt_vals, use_air, "n", "Set use_air"),
+    BU_CMD_CUSTOM("O", NULL, nirt_opt_vals, overlap_claims, nirt_overlap_from_str,
+	"action", "Set overlap handling"),
+    BU_CMD_CUSTOM("x", NULL, nirt_opt_vals, librt_debug, nirt_librt_debug_from_str,
+	"value", "Set librt diagnostic flags"),
+    BU_CMD_VLS_APPEND("X", NULL, nirt_opt_vals, nirt_debug, "value", "Set nirt diagnostic flags"),
+    BU_CMD_VECTOR3(NULL, "center", nirt_opt_vals, center_model, "x,y,z", "Set the ray center"),
+    BU_CMD_ALIAS_LONG("xyz", "center", 0),
+    BU_CMD_VLS_APPEND(NULL, "plotfile", nirt_opt_vals, plotfile, "filename", "Write graphical plot output"),
+    BU_CMD_COLOR_COMPAT(NULL, "color_odd", nirt_opt_vals, color_odd, "r/g/b", "Color for odd segments"),
+    BU_CMD_COLOR_COMPAT(NULL, "color_even", nirt_opt_vals, color_even, "r/g/b", "Color for even segments"),
+    BU_CMD_COLOR_COMPAT(NULL, "color_gap", nirt_opt_vals, color_gap, "r/g/b", "Color for gaps"),
+    BU_CMD_COLOR_COMPAT(NULL, "color_ovlp", nirt_opt_vals, color_ovlp, "r/g/b", "Color for overlap segments"),
+    BU_CMD_FLAG("B", NULL, nirt_opt_vals, deprecated_backout, "Deprecated no-op"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand nirt_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Database, objects, and deprecated x y z coordinates", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+const struct bu_cmd_schema nirt_command_schema = {
+    "nirt", "Query geometry along a ray", nirt_options, nirt_operands,
+    BU_CMD_PARSE_INTERSPERSED, NULL
+};
+
+const struct bu_cmd_schema *
+nirt_opt_schema(void)
+{
+    return &nirt_command_schema;
+}
 
 void
 nirt_opt_vals_reset(struct nirt_opt_vals *v)
@@ -237,6 +474,8 @@ nirt_opt_vals_reset(struct nirt_opt_vals *v)
     v->silent_mode = opt_defaults.silent_mode;
     v->use_air = opt_defaults.use_air;
     v->verbose_mode = opt_defaults.verbose_mode;
+    v->deprecated_backout = opt_defaults.deprecated_backout;
+    v->librt_debug = opt_defaults.librt_debug;
 
     // Reset colors
     struct bu_color cyan = BU_COLOR_CYAN;

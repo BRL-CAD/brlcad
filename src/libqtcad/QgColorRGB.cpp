@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <QLabel>
+#include "bu/cmdschema.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "qtcad/QgColorRGB.h"
@@ -86,7 +87,8 @@ QgColorRGB::set_color_from_button()
 	// Sync bu_color
 	QString colstr = rgbtext->text();
 	char *ccstr = bu_strdup(colstr.toLocal8Bit().data());
-	bu_opt_color(NULL, 1, (const char **)&ccstr, (void *)&bc);
+	const char *argv[] = {ccstr};
+	(void)bu_cmd_color_from_argv(&bc, 1, argv);
 	bu_free(ccstr, "ccstr");
 
 	emit color_changed(&bc);
@@ -107,11 +109,14 @@ QgColorRGB::set_color_from_text()
     char *ccstr = bu_strdup(colstr.toLocal8Bit().data());
     char **av = (char **)bu_calloc(strlen(ccstr) + 1, sizeof(char *), "argv array");
     int nargs = bu_argv_from_string(av, strlen(ccstr), ccstr);
-    int acnt = bu_opt_color(NULL, nargs, (const char **)av, (void *)&bc);
+    int acnt = bu_cmd_color_from_argv(&bc, nargs, (const char * const *)av);
     bu_free(av, "av");
     bu_free(ccstr, "ccstr");
 
-    if (acnt != 1)
+
+    /* A packed value consumes one argument; the shared color grammar also
+     * accepts three separately tokenized RGB components. */
+    if (acnt != nargs)
 	return;
 
     int rgb[3];
@@ -138,5 +143,4 @@ QgColorRGB::set_color_from_text()
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
 

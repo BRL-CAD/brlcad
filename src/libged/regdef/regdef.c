@@ -103,11 +103,13 @@ ged_regdef_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_REGDEF_COMMANDS(X, XID) \
-    X(regdef, ged_regdef_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(regdef, "regdef", "Set region defaults", "item_air_los_material", BU_CMD_VALUE_INTEGER, 4, 4, "Item, air, LOS, and material defaults");
 
-GED_DECLARE_COMMAND_SET(GED_REGDEF_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_regdef", 1, GED_REGDEF_COMMANDS)
+#define GED_REGDEF_COMMANDS(X, XID) \
+    X(regdef, ged_regdef_core, GED_CMD_DEFAULT, &regdef_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_REGDEF_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_regdef", 1, GED_REGDEF_COMMANDS)
 
 /*
  * Local Variables:

@@ -30,11 +30,46 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
 
 
 #include "../ged_private.h"
+
+
+struct saveview_args {
+    const char *rt_command;
+    const char *input_geometry;
+    const char *log_file;
+    const char *pix_file;
+};
+
+
+static const struct bu_cmd_option saveview_schema_options[] = {
+    BU_CMD_STRING("e", NULL, struct saveview_args, rt_command, "command",
+	"Raytrace command to invoke"),
+    BU_CMD_FILE("i", NULL, struct saveview_args, input_geometry, "file",
+	"Input geometry file"),
+    BU_CMD_FILE("l", NULL, struct saveview_args, log_file, "file",
+	"Write diagnostics to file"),
+    BU_CMD_FILE("o", NULL, struct saveview_args, pix_file, "file",
+	"Write pixels to file"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand saveview_schema_operands[] = {
+    BU_CMD_OPERAND("filename", BU_CMD_VALUE_FILE, 1, 1,
+	"Shell script to create", NULL),
+    /* Everything following the script name is passed through to the selected
+     * raytrace program.  Options must therefore precede filename. */
+    BU_CMD_OPERAND("args", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+	"Additional raytrace arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema saveview_native_schema = {
+    "saveview", "Write a raytrace shell script for the view",
+    saveview_schema_options, saveview_schema_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 /**
@@ -77,12 +112,13 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
     int i;
     FILE *fp;
     char *base;
-    int c;
     char rtcmd[255] = {'r', 't', 0};
     char outlog[255] = {0};
     char outpix[255] = {0};
     char inputg[255] = {0};
     const char *cmdname = argv[0];
+    struct saveview_args args = {0, 0, 0, 0};
+    int operand_index;
     static const char *usage = "[-e] [-i] [-l] [-o] filename [args]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -98,39 +134,27 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "e:i:l:o:")) != -1) {
-	switch (c) {
-	    case 'e':
-		snprintf(rtcmd, 255, "%s", bu_optarg);
-		break;
-	    case 'l':
-		snprintf(outlog, 255, "%s", bu_optarg);
-		break;
-	    case 'o':
-		snprintf(outpix, 255, "%s", bu_optarg);
-		break;
-	    case 'i':
-		snprintf(inputg, 255, "%s", bu_optarg);
-		break;
-	    default: {
-		bu_vls_printf(gedp->ged_result_str, "Option '%c' unknown\n", c);
-		bu_vls_printf(gedp->ged_result_str, "help saveview");
-		return BRLCAD_ERROR;
-	    }
-	}
-    }
-    argc -= bu_optind-1;
-    argv += bu_optind-1;
-
-    if (argc < 2) {
+    operand_index = bu_cmd_schema_parse_complete(&saveview_native_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdname, usage);
 	return BRLCAD_ERROR;
     }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
-    fp = fopen(argv[1], "a");
+    if (args.rt_command)
+	snprintf(rtcmd, 255, "%s", args.rt_command);
+    if (args.log_file)
+	snprintf(outlog, 255, "%s", args.log_file);
+    if (args.pix_file)
+	snprintf(outpix, 255, "%s", args.pix_file);
+    if (args.input_geometry)
+	snprintf(inputg, 255, "%s", args.input_geometry);
+
+    fp = fopen(argv[0], "a");
     if (fp == NULL) {
-	perror(argv[1]);
+	perror(argv[0]);
 	return BRLCAD_ERROR;
     }
     (void)bu_fchmod(fileno(fp), 0755);	/* executable */
@@ -147,7 +171,7 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    base = basename_without_suffix(argv[1], ".sh");
+    base = basename_without_suffix(argv[0], ".sh");
     if (outpix[0] == '\0') {
 	snprintf(outpix, 255, "%s.pix", base);
     }
@@ -159,7 +183,7 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
     fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
     if (gedp->ged_gvp->gv_perspective > 0)
 	fprintf(fp, "-p%g ", gedp->ged_gvp->gv_perspective);
-    for (i = 2; i < argc; i++)
+    for (i = 1; i < argc; i++)
 	fprintf(fp, "%s ", argv[i]);
 
     if (bu_strncmp(rtcmd, "nirt", 4) != 0)

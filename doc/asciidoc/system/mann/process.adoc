@@ -22,13 +22,13 @@ process list
 
 [source]
 ----
-process pabort {pid}
+process pabort {pid}...
 ----
 
 
 [source]
 ----
-process gabort {glob}
+process gabort {glob}...
 ----
 
 
@@ -36,6 +36,9 @@ process gabort {glob}
 == DESCRIPTION
 
 The *process* offers a program-agnostic means of managing subprocesses launched by a GED application. The most common instances of this phenomena are long running *rt* commands on large models, but there are other commands such as *rtcheck* that also operate in this asynchronous manner. If one of these processes is running too long or consuming too many resources, *process* allows users to identify and stop these processes from the GED command line.
+
+The `pabort` subcommand accepts one or more integer process IDs.  The `gabort`
+subcommand accepts one or more command-name glob patterns.
 
 
 [[examples]]
@@ -51,14 +54,13 @@ mged>**process**
 
 ....
 
-Usage: process [subcommand]
+Usage: process [options] subcommand [args]
 
 Subcommands:
 
-  list          - List all currently running subprocesses.
-  pabort <pid>  - Abort the specified subprocess.
-
-  gabort <glob> - Abort all subprocesses whose command matches the glob expression.
+  list         List running GED subprocesses
+  pabort       Abort subprocesses by PID
+  gabort       Abort subprocesses by command glob
       
 ....
 

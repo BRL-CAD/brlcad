@@ -50,10 +50,25 @@
 #include <QPlainTextEdit>
 #include <QFont>
 #include <map>
+#include <vector>
 
 #include "ged.h"
 #include "qtcad/defines.h"
 #include "qtcad/QgConsoleListener.h"
+
+enum QgConsoleHighlightStyle {
+  QG_CONSOLE_COMMAND = 0,
+  QG_CONSOLE_OPTION,
+  QG_CONSOLE_VALID,
+  QG_CONSOLE_INVALID,
+  QG_CONSOLE_INCOMPLETE
+};
+
+struct QgConsoleHighlight {
+  int start = 0;
+  int end = 0;
+  QgConsoleHighlightStyle style = QG_CONSOLE_COMMAND;
+};
 
 class QTCAD_EXPORT QgConsoleWidgetCompleter : public QCompleter
 {
@@ -64,6 +79,9 @@ public:
    * the line.
    */
   virtual void updateCompletionModel(const QString& str) = 0;
+  virtual void analyze(const QString&, std::vector<QgConsoleHighlight>&) {}
+  virtual int completionReplacementStart() const { return -1; }
+  virtual int completionReplacementEnd() const { return -1; }
 };
 
 /* Completion class specific to GED command line */
@@ -72,8 +90,21 @@ class QTCAD_EXPORT GEDShellCompleter : public QgConsoleWidgetCompleter
 public:
   GEDShellCompleter(QWidget *p, struct ged *ged_ptr);
   void updateCompletionModel(const QString& console_txt) override;
+  void analyze(const QString& console_txt, std::vector<QgConsoleHighlight>& highlights) override;
+  int completionReplacementStart() const override { return replace_start; }
+  int completionReplacementEnd() const override { return replace_end; }
   struct ged *gedp = NULL;
+  int replace_start = -1;
+  int replace_end = -1;
 };
+
+extern "C" QTCAD_EXPORT int qg_ged_search_exec_callback(int argc, const char **argv, void *ged_data, void *console_data);
+
+/**
+ * bu_log hook which forwards output to a QgConsole's prompt-preserving queue.
+ * Register and remove this hook with the QgConsole pointer as client data.
+ */
+extern "C" QTCAD_EXPORT int qg_console_log_hook(void *console_data, void *log_data);
 
 /**
   Qt widget that provides an interactive console - you can send text to the
@@ -101,6 +132,10 @@ public:
   /// Set a completer for this console widget
   void setCompleter(QgConsoleWidgetCompleter* completer);
 
+  /// Select how completion candidates are previewed and accepted.
+  void setCompletionMode(bu_cmd_completion_mode_t mode);
+  bu_cmd_completion_mode_t completionMode() const;
+
   QPoint getCursorPosition();
 
   // combine multiple history lines and replace them with the combination
@@ -111,8 +146,8 @@ public:
   void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
   std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *> listeners;
 
-  // When inserting a completion, need a setting to control
-  // how we handle slashes
+  // Legacy fallback used when a completer does not provide an explicit
+  // replacement range.
   int split_slash = 0;
 
 signals:
@@ -146,8 +181,7 @@ public slots:
   void prompt(const QString& text);
 
   /// Inserts the given completion string at the cursor.  This will replace
-  /// the current word that the cursor is touching with the given text.
-  /// Determines the word using QTextCursor::StartOfWord, EndOfWord.
+  /// the range reported by the completer, or fall back to local word scanning.
   void insertCompletion(const QString& text);
 
 private:
@@ -189,4 +223,3 @@ private:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

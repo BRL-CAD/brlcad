@@ -10,7 +10,7 @@ constraint - manage parametric geometric constraints stored on database objects
 
 [source]
 ----
-constraint set constraint_name key [expression_parts ...]
+constraint set object key [expression_parts ...]
 constraint get constraint_name1 [constraint_name2 ...]
 constraint show constraint_name1 [constraint_name2 ...]
 constraint eval constraint_name1 [constraint_name2 ...]
@@ -27,8 +27,8 @@ Constraints are stored as named attributes on database objects. The *constraint*
 
 === Subcommands
 
-*set constraint_name key [expression_parts ...]*::
-Add or update the constraint attribute named `key` on the existing database object `constraint_name`. The expression value is assembled from all remaining arguments `expression_parts`. The `constraint_name` object must already exist in the database.
+*set object key [expression_parts ...]*::
+Add or update the constraint attribute named `key` on the existing database object `object`. The expression value is assembled from all remaining arguments `expression_parts`. The `object` must already exist in the database.
 
 *get constraint_name1 [constraint_name2 ...]*::
 Print the raw constraint attributes for one or more named objects. Output format per attribute: `object_name attribute_name value`.

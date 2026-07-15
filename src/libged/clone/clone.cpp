@@ -24,9 +24,8 @@
  * C++17 rewrite of clone.c.  Improvements over the original:
  *
  *  - Per-call name table (no module-level global) for safe re-entrancy.
- *  - bu_opt argument parsing with full long-option support.  Multi-value
- *    options (-t, -a, -b, -m, --center-pat, etc.) use custom
- *    bu_opt_arg_process_t callbacks instead of a hand-rolled pre-scan.
+ *  - Native command-schema parsing with full long-option support.  Multi-value
+ *    options use shape consumers instead of a hand-rolled pre-scan.
  *  - bu_vls_incr-based unique name generation; handles embedded numbers
  *    at any position, preserves zero-padding, honours -c (second number).
  *  - V4 database support removed (dbupgrade first).
@@ -61,7 +60,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn/mat.h"
@@ -1416,11 +1415,10 @@ make_xpushed_src(struct ged *gedp, struct directory *src)
 
 
 /* -----------------------------------------------------------------------
- * Custom bu_opt_arg_process_t callbacks
+ * Native command-schema shape consumers.
  *
- * Pattern from libbu/opt.c and src/rtwizard/main.c:
- *   - use BU_OPT_CHECK_ARGV0 to guard against empty argv
- *   - return count of argv entries consumed, or -1 on error
+ * A consumer returns zero after accepting the token group chosen by its
+ * shape.  A NULL storage pointer is the side-effect-free validation path.
  * ----------------------------------------------------------------------- */
 
 /** Vec3Opt: flag + vect_t.  Used for -t / -r / -p. */
@@ -1429,46 +1427,30 @@ struct Vec3Opt {
     bool   set = false;
 };
 
-/**
- * Parse a 3-component vector from either 3 separate tokens ("x" "y" "z") or
- * a single space-separated string ("x y z") — the Tcl lappend form.
- * Returns argv entries consumed (3 or 1), or -1 on failure.
- */
 static int
-parse_vec3_argv(struct bu_vls *msg, size_t argc, const char **argv, vect_t v)
+clone_vec3_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    /* Try 3-separate-token form first (standard CLI and explicit expand). */
-    if (argc >= 3) {
-	char *ep0 = NULL, *ep1 = NULL, *ep2 = NULL;
-	fastf_t x = strtod(argv[0], &ep0);
-	fastf_t y = strtod(argv[1], &ep1);
-	fastf_t z = strtod(argv[2], &ep2);
-	if (ep0 && !*ep0 && ep1 && !*ep1 && ep2 && !*ep2) {
-	    VSET(v, x, y, z);
-	    return 3;
+    vect_t value = VINIT_ZERO;
+    int consumed = bu_cmd_vector3_from_argv(value, argc, (const char * const *)argv);
+
+    if (consumed == (int)argc) {
+	if (storage) {
+	    Vec3Opt *opt = (Vec3Opt *)storage;
+	    VMOVE(opt->v, value);
+	    opt->set = true;
 	}
-    }
-    /* Fall back to a single "x y z" string (Tcl lappend form). */
-    if (argc >= 1) {
-	fastf_t x = 0, y = 0, z = 0;
-	if (sscanf(argv[0], "%lf %lf %lf", &x, &y, &z) == 3) {
-	    VSET(v, x, y, z);
-	    return 1;
-	}
+	return 0;
     }
     if (msg)
-	bu_vls_printf(msg, "parse_vec3_argv: expected 'x y z' (3 numbers)\n");
+	bu_vls_printf(msg, "expected an XYZ vector\n");
     return -1;
 }
 
-static int
-opt_vec3(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+
+static size_t
+clone_pair_token_count(size_t available, const char **UNUSED(argv))
 {
-    Vec3Opt *opt = (Vec3Opt *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "vec3");
-    int ret = parse_vec3_argv(msg, argc, argv, opt->v);
-    if (ret > 0) opt->set = true;
-    return ret;
+    return available < 2 ? available : 2;
 }
 
 
@@ -1482,23 +1464,31 @@ struct NVec3Opt {
 /**
  * Read "n x y z" — n as a separate first arg, then x/y/z as either
  * 3 separate tokens or a single "x y z" string (Tcl lappend form).
- * Returns total argv entries consumed (4 or 2 respectively).
+ * The common libbu count-plus-vector shape accepts either two words (a count
+ * and packed vector) or four words (a count and three components).
  */
 static int
-opt_n_vec3(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+clone_nvec_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    NVec3Opt *opt = (NVec3Opt *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "n_vec3");
-    if (argc < 2) {
+    vect_t value = VINIT_ZERO;
+    int count;
+    int consumed;
+
+
+    consumed = bu_cmd_counted_vector3_from_argv(&count, value, argc,
+	(const char * const *)argv);
+    if (consumed <= 0 || (size_t)consumed != argc) {
 	if (msg)
-	    bu_vls_printf(msg, "opt_n_vec3: requires n and x y z\n");
+	    bu_vls_printf(msg, "expected a count followed by an XYZ vector\n");
 	return -1;
     }
-    if (bu_opt_int(msg, 1, argv, (void *)&opt->n) < 0) return -1;
-    int vret = parse_vec3_argv(msg, argc - 1, argv + 1, opt->v);
-    if (vret < 0) return -1;
-    opt->set = true;
-    return 1 + vret;
+    if (storage) {
+	NVec3Opt *opt = (NVec3Opt *)storage;
+	opt->n = count;
+	VMOVE(opt->v, value);
+	opt->set = true;
+    }
+    return 0;
 }
 
 
@@ -1509,29 +1499,39 @@ struct MirrorOpt {
 };
 
 /**
- * Read mirror axis (x|y|z) and plane distance.  Returns 2.
+ * Read mirror axis (x|y|z) and plane distance.
  */
 static int
-opt_mirror(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+clone_mirror_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    MirrorOpt *opt = (MirrorOpt *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mirror");
-    if (argc < 2) {
+    int axis;
+    fastf_t distance;
+
+    if (argc != 2) {
 	if (msg)
-	    bu_vls_printf(msg, "opt_mirror: requires axis (x|y|z) and distance\n");
+	    bu_vls_printf(msg, "mirror requires axis (x|y|z) and distance\n");
 	return -1;
     }
     char ax = (char)tolower((unsigned char)argv[0][0]);
-    if      (ax == 'x') opt->axis = X;
-    else if (ax == 'y') opt->axis = Y;
-    else if (ax == 'z') opt->axis = Z;
+    if      (ax == 'x') axis = X;
+    else if (ax == 'y') axis = Y;
+    else if (ax == 'z') axis = Z;
     else {
 	if (msg)
-	    bu_vls_printf(msg, "opt_mirror: axis must be x, y, or z\n");
+	    bu_vls_printf(msg, "mirror axis must be x, y, or z\n");
 	return -1;
     }
-    if (bu_opt_fastf_t(msg, 1, argv + 1, (void *)&opt->dist) < 0) return -1;
-    return 2;
+    if (!bu_cmd_number_from_str(&distance, argv[1])) {
+	if (msg)
+	    bu_vls_printf(msg, "mirror distance must be a number\n");
+	return -1;
+    }
+    if (storage) {
+	MirrorOpt *opt = (MirrorOpt *)storage;
+	opt->axis = axis;
+	opt->dist = distance;
+    }
+    return 0;
 }
 
 
@@ -1543,53 +1543,29 @@ struct SubsOpt {
 
 /**
  * Read search-string and replacement-string for name substitution.
- * Consumes two argv tokens; returns 2.
+ * The fixed two-token shape keeps a following source object from being
+ * mistaken for the replacement string.
  */
 static int
-opt_subs(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+clone_subs_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    SubsOpt *opt = (SubsOpt *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "subs");
-    if (argc < 2) {
+    if (argc != 2) {
 	if (msg)
-	    bu_vls_printf(msg, "opt_subs: requires search string and replacement string\n");
+	    bu_vls_printf(msg, "substitution requires search and replacement strings\n");
 	return -1;
     }
-    opt->src = argv[0];
-    if (opt->src.empty()) {
+    if (!argv[0][0]) {
 	if (msg)
-	    bu_vls_printf(msg, "opt_subs: search string must not be empty\n");
+	    bu_vls_printf(msg, "substitution search string must not be empty\n");
 	return -1;
     }
-    opt->dst = argv[1];
-    opt->set = true;
-    return 2;
-}
-
-
-/**
- * Parse depth choice "top"|"regions"|"primitives" into int*:
- *   2 = top, 1 = regions, 0 = primitives.
- * Returns 1 on success.
- */
-static int
-opt_depth(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
-{
-    int *d = (int *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "depth");
-    if (BU_STR_EQUAL(argv[0], "top")) {
-	*d = 2; return 1;
+    if (storage) {
+	SubsOpt *opt = (SubsOpt *)storage;
+	opt->src = argv[0];
+	opt->dst = argv[1];
+	opt->set = true;
     }
-    if (BU_STR_EQUAL(argv[0], "regions")) {
-	*d = 1; return 1;
-    }
-    if (BU_STR_EQUAL(argv[0], "primitives") || BU_STR_EQUAL(argv[0], "prim")) {
-	*d = 0; return 1;
-    }
-    if (msg)
-	bu_vls_printf(msg, "opt_depth: must be 'top', 'regions', or 'primitives', "
-		      "got '%s'\n", argv[0]);
-    return -1;
+    return 0;
 }
 
 
@@ -1680,63 +1656,72 @@ split_axis_kv(const char *tok, std::string& axis_out, std::string& rest_out)
 }
 
 
-/** Parse "<n>" or "AXIS=<n>" into AxisKV. Consumes 1 argv entry. */
+/** Parse "<n>" or "AXIS=<n>" into AxisKV. */
 static int
-opt_axis_int(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+clone_axis_int_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    std::vector<AxisKV> *vec = (std::vector<AxisKV> *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "axis_int");
-
     AxisKV kv;
     std::string rest;
+    int value;
+
+    if (argc != 1 || !argv || !argv[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected an integer or AXIS=integer\n");
+	return -1;
+    }
     split_axis_kv(argv[0], kv.axis, rest);
 
-    char *ep = NULL;
-    long v = strtol(rest.c_str(), &ep, 10);
-    if (!ep || *ep || rest.empty()) {
+    if (!bu_cmd_integer_from_str(&value, rest.c_str())) {
 	if (msg)
 	    bu_vls_printf(msg, "expected integer (or AXIS=integer), got '%s'\n",
 			  argv[0]);
 	return -1;
     }
-    kv.value = (fastf_t)v;
-    vec->push_back(kv);
-    return 1;
+    kv.value = (fastf_t)value;
+	if (storage)
+	    ((std::vector<AxisKV> *)storage)->push_back(kv);
+    return 0;
 }
 
-/** Parse "<f>" or "AXIS=<f>" into AxisKV. Consumes 1 argv entry. */
+/** Parse "<f>" or "AXIS=<f>" into AxisKV. */
 static int
-opt_axis_float(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+clone_axis_number_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    std::vector<AxisKV> *vec = (std::vector<AxisKV> *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "axis_float");
-
     AxisKV kv;
     std::string rest;
+    fastf_t value;
+
+	if (argc != 1 || !argv || !argv[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected a number or AXIS=number\n");
+	return -1;
+    }
     split_axis_kv(argv[0], kv.axis, rest);
 
-    char *ep = NULL;
-    fastf_t v = strtod(rest.c_str(), &ep);
-    if (!ep || *ep || rest.empty()) {
+    if (!bu_cmd_number_from_str(&value, rest.c_str())) {
 	if (msg)
 	    bu_vls_printf(msg, "expected number (or AXIS=number), got '%s'\n",
 			  argv[0]);
 	return -1;
     }
-    kv.value = v;
-    vec->push_back(kv);
-    return 1;
+    kv.value = value;
+	if (storage)
+	    ((std::vector<AxisKV> *)storage)->push_back(kv);
+    return 0;
 }
 
-/** Parse "AXIS=v1 v2 ..." into AxisListKV. Consumes 1 argv entry. */
+/** Parse "AXIS=v1 v2 ..." into AxisListKV. */
 static int
-opt_axis_list(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+clone_axis_list_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    std::vector<AxisListKV> *vec = (std::vector<AxisListKV> *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "axis_list");
-
     AxisListKV kv;
     std::string rest;
+
+    if (argc != 1 || !argv || !argv[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "--list requires AXIS=v1,v2,...\n");
+	return -1;
+    }
     if (!split_axis_kv(argv[0], kv.axis, rest)) {
 	if (msg)
 	    bu_vls_printf(msg, "--list requires AXIS=v1 v2 ... (got '%s')\n",
@@ -1745,19 +1730,34 @@ opt_axis_list(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
     }
     if (parse_float_list_str(msg, rest.c_str(), kv.values) < 0)
 	return -1;
-    vec->push_back(kv);
-    return 1;
+    if (storage)
+	((std::vector<AxisListKV> *)storage)->push_back(kv);
+    return 0;
 }
 
 /**
  * Parse "AXIS x y z" into AxisDirKV. AXIS is a separate token.
- * Consumes 4 (or 2 with "x y z" packed) argv entries.
  */
-static int
-opt_axis_dir(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+static size_t
+clone_axis_dir_token_count(size_t available, const char **argv)
 {
-    std::vector<AxisDirKV> *vec = (std::vector<AxisDirKV> *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "axis_dir");
+    fastf_t value[3] = {0.0, 0.0, 0.0};
+    int consumed;
+
+    if (!available || !argv || !argv[0] || !argv[0][0])
+	return 0;
+    if (available == 1)
+	return 1;
+    consumed = bu_cmd_vector3_from_argv(value, available - 1,
+	(const char * const *)(argv + 1));
+    return consumed > 0 ? (size_t)consumed + 1 : 1;
+}
+
+
+static int
+clone_axis_dir_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
+{
+    int consumed;
 
     if (argc < 2) {
 	if (msg)
@@ -1771,11 +1771,41 @@ opt_axis_dir(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
 	    bu_vls_printf(msg, "--dir AXIS must not be empty\n");
 	return -1;
     }
-    int vret = parse_vec3_argv(msg, argc - 1, argv + 1, kv.dir);
-    if (vret < 0) return -1;
-    vec->push_back(kv);
-    return 1 + vret;
+    consumed = bu_cmd_vector3_from_argv(kv.dir, argc - 1,
+	(const char * const *)(argv + 1));
+    if (consumed <= 0 || (size_t)consumed + 1 != argc) {
+	if (msg)
+	    bu_vls_printf(msg, "--dir requires AXIS and an XYZ vector\n");
+	return -1;
+    }
+	if (storage)
+	    ((std::vector<AxisDirKV> *)storage)->push_back(kv);
+    return 0;
 }
+
+
+/** Native execution storage for the clone command's option schema. */
+struct CloneParseArgs {
+    int help = 0;
+    int increment = 0;
+    long second_number = 0;
+    const char *depth = NULL;
+    int xpush = 0;
+    const char *group = NULL;
+    SubsOpt subs;
+    AxisOpts axes;
+    Vec3Opt origin;
+    Vec3Opt pivot;
+    const char *align = NULL;
+    Vec3Opt translate;
+    Vec3Opt rotate;
+    NVec3Opt atrans;
+    NVec3Opt arot;
+    MirrorOpt mirror;
+};
+
+
+static const struct bu_cmd_schema *clone_schema(void);
 
 
 /* -----------------------------------------------------------------------
@@ -1968,106 +1998,61 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
     /* Skip argv[0] (command name) */
     argc--; argv++;
 
-    /* ---- Scalar option targets ------------------------------------- */
-    int print_help    = 0;
-    int depth_flag    = -1;   /* -1 = not set; 2=top; 1=regions; 0=primitives */
-    int incr_opt      = 0;
-    int xpush_flag    = 0;
-    const char *group_cstr = nullptr;
-    const char *align_cstr = nullptr;
+    CloneParseArgs args;
 
-    /* Custom-callback option targets */
-    Vec3Opt   trans_opt, rot_opt, origin_opt, pivot_opt;
-    NVec3Opt  atrans_opt, arot_opt;
-    MirrorOpt mirror_opt;
-    SubsOpt   subs_opt;
-    AxisOpts  axopts;
-
-    /* Build the option table.  Entry layout follows the surface-area plan:
-     *   1 help + 6 housekeeping + 4 axis + 4 spatial/orientation/dir
-     *   + 5 frozen linear-only + NULL = 21 slots. */
-    struct bu_opt_desc d[22];
-
-    /* Housekeeping */
-    BU_OPT(d[0],  "h", "help",         "",         NULL,            &print_help,         "Print help");
-    BU_OPT(d[1],  "i", "increment",    "#",        bu_opt_int,      &incr_opt,           "Name increment");
-    BU_OPT(d[2],  "c", "second-number","",         bu_opt_incr_long,&state->updpos,      "Increment next number");
-    BU_OPT(d[3],  "",  "depth",        "top|reg|prim", opt_depth,   &depth_flag,         "Copy depth");
-    BU_OPT(d[4],  "",  "xpush",        "",         NULL,            &xpush_flag,         "Flatten matrices");
-    BU_OPT(d[5],  "g", "group",        "name",     bu_opt_str,      &group_cstr,         "Group clones");
-    BU_OPT(d[6],  "s", "subs",         "sstr rstr",opt_subs,        &subs_opt,           "Name substitution");
-
-    /* Axis options (global, axis-keyed) */
-    BU_OPT(d[7],  "n", "copies",       "N|AXIS=N",      opt_axis_int,   &axopts.n_kv,     "Per-axis copy count");
-    BU_OPT(d[8],  "d", "delta",        "D|AXIS=D",      opt_axis_float, &axopts.d_kv,     "Per-axis step (deg or units)");
-    BU_OPT(d[9],  "",  "start",        "V|AXIS=V",      opt_axis_float, &axopts.start_kv, "Per-axis start value");
-    BU_OPT(d[10], "",  "list",         "AXIS=v1 v2 ...",opt_axis_list,  &axopts.list_kv,  "Per-axis explicit list");
-
-    /* Spatial / orientation (global) */
-    BU_OPT(d[11], "O", "origin",       "x y z",    opt_vec3,        &origin_opt,         "Pattern origin");
-    BU_OPT(d[12], "p", "pivot",        "x y z",    opt_vec3,        &pivot_opt,          "Rotation pivot");
-    BU_OPT(d[13], "",  "align",        "KEYS",     bu_opt_str,      &align_cstr,         "Orientation keys");
-    BU_OPT(d[14], "",  "dir",          "AXIS x y z",opt_axis_dir,   &axopts.dir_kv,      "Per-axis direction");
-
-    /* Frozen linear compact forms */
-    BU_OPT(d[15], "t", "translate",    "x y z",    opt_vec3,        &trans_opt,          "Per-copy translation");
-    BU_OPT(d[16], "r", "rotate",       "x y z",    opt_vec3,        &rot_opt,            "Per-copy rotation");
-    BU_OPT(d[17], "a", "atrans",       "n x y z",  opt_n_vec3,      &atrans_opt,         "Total translation");
-    BU_OPT(d[18], "b", "arot",         "n x y z",  opt_n_vec3,      &arot_opt,           "Total rotation");
-    BU_OPT(d[19], "m", "mirror",       "axis d",   opt_mirror,      &mirror_opt,         "Mirror copy");
-    BU_OPT_NULL(d[20]);
-
-    /* bu_opt_parse rewrites argv[] in-place — work on a private copy so
-     * the caller's argv (used by cmd_ged_edit_wrapper) is left intact. */
+    /* Interspersed native parsing can reorder its private pointer array so
+     * the positional suffix is contiguous, without changing the caller's
+     * argv used by cmd_ged_edit_wrapper. */
     std::vector<const char *> argv_local(argv, argv + argc);
     const char **av = argv_local.data();
 
-    int opt_ret = bu_opt_parse(gedp->ged_result_str, (size_t)argc, av, d);
+    int operand_start = bu_cmd_schema_parse_complete(clone_schema(), &args,
+	gedp->ged_result_str, argc, av);
 
-    if (print_help) {
+    if (args.help) {
 	print_usage(gedp->ged_result_str);
 	return GED_HELP;
     }
-    if (opt_ret < 0) {
+    if (operand_start < 0) {
 	print_usage(gedp->ged_result_str);
 	return BRLCAD_ERROR;
     }
 
+    state->updpos += args.second_number;
+
     /* ---- Pattern keyword extraction --------------------------------
-     * After bu_opt_parse, av[0..opt_ret-1] holds positional tokens.
-     * The pattern keyword (lin/rect/sph/cyl) — if present — appears
-     * among them.  The remaining positionals are object names. */
+     * The native interspersed parser leaves one contiguous operand suffix.
+     * The pattern keyword (lin/rect/sph/cyl), if present, is one of those
+     * operands; the rest are source objects. */
+    std::vector<const char *> positionals(av + operand_start, av + argc);
     state->pattern = PatternMode::LINEAR;
     int pat_idx = -1;
-    for (int j = 0; j < opt_ret; j++) {
+    for (size_t j = 0; j < positionals.size(); j++) {
 	/* Pattern names are positional tokens, but old clone syntax permits
 	 * objects named "lin", "rect", "sph", or "cyl".  Prefer a real
 	 * database object so the pattern vocabulary does not break those names.
 	 * A pattern keyword remains available whenever no object with that name
 	 * exists. */
-	if (is_pattern_keyword(av[j])
-	    && db_lookup(gedp->dbip, av[j], LOOKUP_QUIET) == RT_DIR_NULL) {
+	if (is_pattern_keyword(positionals[j])
+	    && db_lookup(gedp->dbip, positionals[j], LOOKUP_QUIET) == RT_DIR_NULL) {
 	    if (pat_idx >= 0) {
 		bu_vls_printf(gedp->ged_result_str,
 			     "clone: multiple pattern keywords given "
-			     "('%s' and '%s')\n", av[pat_idx], av[j]);
+			     "('%s' and '%s')\n", positionals[pat_idx], positionals[j]);
 		return BRLCAD_ERROR;
 	    }
-	    pat_idx = j;
+	    pat_idx = (int)j;
 	}
     }
     if (pat_idx >= 0) {
-	state->pattern = parse_pattern_keyword(av[pat_idx]);
-	/* Remove the pattern token from positionals. */
-	for (int j = pat_idx; j < opt_ret - 1; j++)
-	    av[j] = av[j + 1];
-	opt_ret--;
+	state->pattern = parse_pattern_keyword(positionals[pat_idx]);
+	positionals.erase(positionals.begin() + pat_idx);
     }
 
     /* Positional arguments → source objects */
-    for (int j = 0; j < opt_ret; j++) {
+    for (const char *positional : positionals) {
 	struct directory *dp;
-	GED_DB_LOOKUP(gedp, dp, av[j], LOOKUP_NOISY, BRLCAD_ERROR);
+	GED_DB_LOOKUP(gedp, dp, positional, LOOKUP_NOISY, BRLCAD_ERROR);
 	state->srcs.push_back(dp);
     }
     if (state->srcs.empty()) {
@@ -2079,10 +2064,10 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
     /* ---- Reject linear-only options when in a pattern mode --------- */
     if (state->pattern != PatternMode::LINEAR) {
 	const char *bad = nullptr;
-	if (rot_opt.set)     bad = "-r";
-	else if (atrans_opt.set) bad = "-a";
-	else if (arot_opt.set)   bad = "-b";
-	else if (mirror_opt.axis != W) bad = "-m";
+	if (args.rotate.set)     bad = "-r";
+	else if (args.atrans.set) bad = "-a";
+	else if (args.arot.set)   bad = "-b";
+	else if (args.mirror.axis != W) bad = "-m";
 	if (bad) {
 	    bu_vls_printf(gedp->ged_result_str,
 			 "clone %s: option %s is linear-only\n",
@@ -2101,18 +2086,18 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
     }
 
     /* Apply -n/-d/--start key/value bindings. */
-    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, axopts.n_kv,
+    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, args.axes.n_kv,
 			 axes, "-n", exp_n, set_n) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, axopts.d_kv,
+    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, args.axes.d_kv,
 			 axes, "-d", exp_d, set_d) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, axopts.start_kv,
+    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, args.axes.start_kv,
 			 axes, "--start", exp_start, set_start) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
     /* Apply --list (AXIS= form only). */
-    for (const auto& lkv : axopts.list_kv) {
+    for (const auto& lkv : args.axes.list_kv) {
 	bool found = false;
 	for (auto& ax : axes) {
 	    if (ax.name == lkv.axis) {
@@ -2141,7 +2126,7 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	    return nm == "az" || nm == "h";
 	return true;  /* lin: step; rect: x,y,z all settable */
     };
-    for (const auto& dkv : axopts.dir_kv) {
+    for (const auto& dkv : args.axes.dir_kv) {
 	bool found = false;
 	for (auto& ax : axes) {
 	    if (ax.name == dkv.axis) {
@@ -2185,8 +2170,8 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 
     /* ---- Resolve --align ------------------------------------------- */
     bool rotaz = false, rotel = false, rot_cyl = false;
-    if (align_cstr && *align_cstr) {
-	std::string s(align_cstr);
+    if (args.align && *args.align) {
+	std::string s(args.align);
 	for (char& c : s) if (c == ',') c = ' ';
 	std::istringstream iss(s);
 	std::string key;
@@ -2218,19 +2203,19 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
     }
 
     /* ---- Common scalar transfers ----------------------------------- */
-    if (incr_opt > 0) state->incr = incr_opt;
-    if (subs_opt.set) {
-	state->subs_src = subs_opt.src;
-	state->subs_dst = subs_opt.dst;
+    if (args.increment > 0) state->incr = args.increment;
+    if (args.subs.set) {
+	state->subs_src = args.subs.src;
+	state->subs_dst = args.subs.dst;
     }
-    state->do_xpush = (xpush_flag != 0);
-    if (group_cstr) state->group_name = group_cstr;
+    state->do_xpush = (args.xpush != 0);
+    if (args.group) state->group_name = args.group;
 
     /* Depth */
-    if (depth_flag >= 0) {
-	if (depth_flag == 2)      state->depth = DepthMode::TOP;
-	else if (depth_flag == 1) state->depth = DepthMode::REGIONS;
-	else                      state->depth = DepthMode::PRIMITIVES;
+    if (args.depth) {
+	if (BU_STR_EQUAL(args.depth, "top")) state->depth = DepthMode::TOP;
+	else if (BU_STR_EQUAL(args.depth, "regions")) state->depth = DepthMode::REGIONS;
+	else state->depth = DepthMode::PRIMITIVES;
     } else if (state->pattern != PatternMode::LINEAR) {
 	state->depth = DepthMode::TOP;
     }
@@ -2267,8 +2252,8 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	    state->lz = az->list;
 	    if (az->has_dir) VMOVE(state->zdir, az->dir);
 	}
-	if (origin_opt.set) {
-	    VSCALE(state->center_pat, origin_opt.v, l2b);
+	if (args.origin.set) {
+	    VSCALE(state->center_pat, args.origin.v, l2b);
 	}
     } else if (state->pattern == PatternMode::SPHERICAL) {
 	const ResolvedAxis *aaz = find_ax("az");
@@ -2296,11 +2281,11 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	}
 	state->rotaz = rotaz;
 	state->rotel = rotel;
-	if (origin_opt.set) {
-	    VMOVE(state->center_pat, origin_opt.v);
+	if (args.origin.set) {
+	    VMOVE(state->center_pat, args.origin.v);
 	}
-	if (pivot_opt.set) {
-	    VMOVE(state->center_obj, pivot_opt.v);
+	if (args.pivot.set) {
+	    VMOVE(state->center_obj, args.pivot.v);
 	}
     } else if (state->pattern == PatternMode::CYL) {
 	const ResolvedAxis *aaz = find_ax("az");
@@ -2329,11 +2314,11 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	    if (ah->has_dir) VMOVE(state->height_dir, ah->dir);
 	}
 	state->do_rot = rot_cyl;
-	if (origin_opt.set) {
-	    VMOVE(state->center_base, origin_opt.v);
+	if (args.origin.set) {
+	    VMOVE(state->center_base, args.origin.v);
 	}
-	if (pivot_opt.set) {
-	    VMOVE(state->center_obj, pivot_opt.v);
+	if (args.pivot.set) {
+	    VMOVE(state->center_obj, args.pivot.v);
 	}
     } else {
 	/* LINEAR */
@@ -2341,56 +2326,56 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	if (as && as->n_assigned) state->n_copies = (size_t)as->n;
 	/* If only -d step=<val> and --dir step=<vec> were given, synthesize
 	 * the equivalent -t when no explicit -t was supplied. */
-	if (as && !trans_opt.set && as->d_assigned) {
+	if (as && !args.translate.set && as->d_assigned) {
 	    vect_t dir;
 	    if (as->has_dir) VMOVE(dir, as->dir);
 	    else VSET(dir, 1, 0, 0);
 	    fastf_t mag = MAGNITUDE(dir);
 	    if (mag > SMALL_FASTF) {
 		VSCALE(dir, dir, as->d / mag);
-		VMOVE(trans_opt.v, dir);
-		trans_opt.set = true;
+		VMOVE(args.translate.v, dir);
+		args.translate.set = true;
 	    }
 	}
     }
 
     /* ---- Frozen linear compact forms (-t/-r/-a/-b/-m/-p) ----------- */
 
-    if (atrans_opt.set) {
-	if (atrans_opt.n > 0) {
-	    state->n_copies = (size_t)atrans_opt.n;
-	    VSCALE(atrans_opt.v, atrans_opt.v, 1.0 / atrans_opt.n);
+    if (args.atrans.set) {
+	if (args.atrans.n > 0) {
+	    state->n_copies = (size_t)args.atrans.n;
+	    VSCALE(args.atrans.v, args.atrans.v, 1.0 / args.atrans.n);
 	}
-	VMOVE(trans_opt.v, atrans_opt.v);
-	trans_opt.set = true;
+	VMOVE(args.translate.v, args.atrans.v);
+	args.translate.set = true;
     }
-    if (arot_opt.set) {
-	if (arot_opt.n > 0) {
-	    state->n_copies = (size_t)arot_opt.n;
-	    VSCALE(arot_opt.v, arot_opt.v, 1.0 / arot_opt.n);
+    if (args.arot.set) {
+	if (args.arot.n > 0) {
+	    state->n_copies = (size_t)args.arot.n;
+	    VSCALE(args.arot.v, args.arot.v, 1.0 / args.arot.n);
 	}
-	VMOVE(rot_opt.v, arot_opt.v);
-	rot_opt.set = true;
+	VMOVE(args.rotate.v, args.arot.v);
+	args.rotate.set = true;
     }
 
-    if (trans_opt.set) {
-	VSCALE(trans_opt.v, trans_opt.v, l2b);
-	VMOVE(state->trans, trans_opt.v);
+    if (args.translate.set) {
+	VSCALE(args.translate.v, args.translate.v, l2b);
+	VMOVE(state->trans, args.translate.v);
 	state->trans[W] = 1;
     }
-    if (rot_opt.set) {
-	VMOVE(state->rot, rot_opt.v);
+    if (args.rotate.set) {
+	VMOVE(state->rot, args.rotate.v);
 	state->rot[W] = 1;
     }
     /* -p (pivot) doubles as the linear rotation centre (legacy --rpoint). */
-    if (pivot_opt.set && state->pattern == PatternMode::LINEAR) {
-	VSCALE(pivot_opt.v, pivot_opt.v, l2b);
-	VMOVE(state->rpnt, pivot_opt.v);
+    if (args.pivot.set && state->pattern == PatternMode::LINEAR) {
+	VSCALE(args.pivot.v, args.pivot.v, l2b);
+	VMOVE(state->rpnt, args.pivot.v);
 	state->rpnt[W] = 1;
     }
 
-    state->miraxis = mirror_opt.axis;
-    state->mirpos  = mirror_opt.dist * l2b;
+    state->miraxis = args.mirror.axis;
+    state->mirpos  = args.mirror.dist * l2b;
 
     /* Note: center_pat / center_obj / center_base are scaled to model
      * units later by the runners (they multiply by l2b internally for
@@ -2557,11 +2542,103 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_CLONE_COMMANDS(X, XID) \
-    X(clone, ged_clone_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_arg_shape clone_pair_shape = {
+    BU_CMD_ARG_SHAPE_TOKEN_SEQUENCE, 2, 2, "two tokens", clone_pair_token_count
+};
+static const struct bu_cmd_arg_shape clone_dir_shape = {
+    BU_CMD_ARG_SHAPE_AXIS_KEYED, 2, 4,
+    "axis plus packed or three-component XYZ vector", clone_axis_dir_token_count
+};
+static const struct bu_cmd_arg_shape clone_axis_shape = {
+    BU_CMD_ARG_SHAPE_AXIS_KEYED, 1, 1, "value or AXIS=value", NULL
+};
 
-GED_DECLARE_COMMAND_SET(GED_CLONE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_clone", 1, GED_CLONE_COMMANDS)
+static const char * const clone_regions_aliases[] = {"reg", NULL};
+static const char * const clone_primitives_aliases[] = {"prim", NULL};
+static const struct bu_cmd_value_keyword clone_depth_values[] = {
+    {"top", NULL, "Create top-level wrappers"},
+    {"regions", clone_regions_aliases, "Copy combinations down to regions"},
+    {"primitives", clone_primitives_aliases, "Deep-copy primitive geometry"},
+    {NULL, NULL, NULL}
+};
+static const char * const clone_patterns[] = {"lin", "rect", "sph", "cyl", NULL};
+
+static const struct bu_cmd_option clone_options[] = {
+    BU_CMD_FLAG("h", "help", CloneParseArgs, help, "Print help"),
+    BU_CMD_INTEGER("i", "increment", CloneParseArgs, increment, "number", "Name increment"),
+    BU_CMD_COUNTING_LONG_FLAG("c", "second-number", CloneParseArgs, second_number,
+	"Increment the next embedded number"),
+    {NULL, "depth", "depth", "mode", "Copy depth", BU_CMD_VALUE_KEYWORD,
+	offsetof(CloneParseArgs, depth), NULL, NULL, NULL, NULL, 0, 0, NULL,
+	BU_CMD_ARG_REQUIRED, NULL, NULL, clone_depth_values},
+    BU_CMD_FLAG(NULL, "xpush", CloneParseArgs, xpush, "Flatten instance matrices first"),
+    BU_CMD_STRING("g", "group", CloneParseArgs, group, "name", "Collect clones in a combination"),
+    BU_CMD_OPTION_SHAPED("s", "subs", "subs", CloneParseArgs, subs, BU_CMD_VALUE_STRING,
+	"search replacement", "Substitute a name fragment", BU_CMD_ARG_REQUIRED,
+	&clone_pair_shape, clone_subs_consume),
+    BU_CMD_OPTION_SHAPED("n", "copies", "copies", CloneParseArgs, axes.n_kv, BU_CMD_VALUE_INTEGER,
+	"N|AXIS=N", "Per-axis copy count", BU_CMD_ARG_REQUIRED,
+	&clone_axis_shape, clone_axis_int_consume),
+    BU_CMD_OPTION_SHAPED("d", "delta", "delta", CloneParseArgs, axes.d_kv, BU_CMD_VALUE_NUMBER,
+	"D|AXIS=D", "Per-axis step (degrees or model units)", BU_CMD_ARG_REQUIRED,
+	&clone_axis_shape, clone_axis_number_consume),
+    BU_CMD_OPTION_SHAPED(NULL, "start", "start", CloneParseArgs, axes.start_kv, BU_CMD_VALUE_NUMBER,
+	"V|AXIS=V", "Per-axis start value", BU_CMD_ARG_REQUIRED,
+	&clone_axis_shape, clone_axis_number_consume),
+    BU_CMD_OPTION_SHAPED(NULL, "list", "list", CloneParseArgs, axes.list_kv, BU_CMD_VALUE_NUMBER,
+	"AXIS=v1,v2,...", "Per-axis explicit value list", BU_CMD_ARG_REQUIRED,
+	&clone_axis_shape, clone_axis_list_consume),
+    BU_CMD_OPTION_SHAPED("O", "origin", "origin", CloneParseArgs, origin, BU_CMD_VALUE_VECTOR,
+	"x y z", "Pattern origin", BU_CMD_ARG_REQUIRED,
+	&bu_cmd_vector3_arg_shape, clone_vec3_consume),
+    BU_CMD_OPTION_SHAPED("p", "pivot", "pivot", CloneParseArgs, pivot, BU_CMD_VALUE_VECTOR,
+	"x y z", "Rotation pivot", BU_CMD_ARG_REQUIRED,
+	&bu_cmd_vector3_arg_shape, clone_vec3_consume),
+    BU_CMD_STRING(NULL, "align", CloneParseArgs, align, "keys", "Orientation keys"),
+    BU_CMD_OPTION_SHAPED(NULL, "dir", "dir", CloneParseArgs, axes.dir_kv, BU_CMD_VALUE_VECTOR,
+	"axis x y z", "Per-axis direction", BU_CMD_ARG_REQUIRED,
+	&clone_dir_shape, clone_axis_dir_consume),
+    BU_CMD_OPTION_SHAPED("t", "translate", "translate", CloneParseArgs, translate, BU_CMD_VALUE_VECTOR,
+	"x y z", "Per-copy translation", BU_CMD_ARG_REQUIRED,
+	&bu_cmd_vector3_arg_shape, clone_vec3_consume),
+    BU_CMD_OPTION_SHAPED("r", "rotate", "rotate", CloneParseArgs, rotate, BU_CMD_VALUE_VECTOR,
+	"x y z", "Per-copy rotation in degrees", BU_CMD_ARG_REQUIRED,
+	&bu_cmd_vector3_arg_shape, clone_vec3_consume),
+    BU_CMD_OPTION_SHAPED("a", "atrans", "atrans", CloneParseArgs, atrans, BU_CMD_VALUE_VECTOR,
+	"count x y z", "Total translation split across copies", BU_CMD_ARG_REQUIRED,
+	&bu_cmd_counted_vector3_arg_shape, clone_nvec_consume),
+    BU_CMD_OPTION_SHAPED("b", "arot", "arot", CloneParseArgs, arot, BU_CMD_VALUE_VECTOR,
+	"count x y z", "Total rotation split across copies", BU_CMD_ARG_REQUIRED,
+	&bu_cmd_counted_vector3_arg_shape, clone_nvec_consume),
+    BU_CMD_OPTION_SHAPED("m", "mirror", "mirror", CloneParseArgs, mirror, BU_CMD_VALUE_NUMBER,
+	"axis distance", "Mirror about an X, Y, or Z plane", BU_CMD_ARG_REQUIRED,
+	&clone_pair_shape, clone_mirror_consume),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand clone_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("objects_or_pattern", BU_CMD_VALUE_DB_OBJECT, 0,
+	BU_CMD_COUNT_UNLIMITED,
+	"Source objects with at most one optional pattern keyword", "ged.db_object",
+	clone_patterns),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema clone_cmd_schema = {
+    "clone", "Clone objects using linear, rectangular, spherical, or cylindrical patterns",
+    clone_options, clone_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_schema *
+clone_schema(void)
+{
+    return &clone_cmd_schema;
+}
+
+#define GED_CLONE_COMMANDS(X, XID) \
+    X(clone, ged_clone_core, GED_CMD_DEFAULT, &clone_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_CLONE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_clone", 1, GED_CLONE_COMMANDS)
 
 /*
  * Local Variables:

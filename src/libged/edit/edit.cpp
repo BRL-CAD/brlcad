@@ -40,6 +40,7 @@
 #include "./uri.hh"
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/opt.h"
 #include "bn/rand.h"
 #include "rt/db4.h"
@@ -166,19 +167,26 @@ _edit_cli_view_init(struct bview *v)
 }
 
 static int
-_parse_ged_edit_opt(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+_parse_ged_edit_opt(struct bu_vls *msg, const char *arg, void *set_var)
 {
-    if (argc < 1 || !argv || !argv[0]) return 0;
-    std::vector<std::pair<std::string, std::string>> *opts = 
-        (std::vector<std::pair<std::string, std::string>> *)set_var;
-    std::string arg(argv[0]);
-    size_t pos = arg.find('=');
-    if (pos == std::string::npos) {
-        opts->push_back(std::make_pair(arg, "1"));
-    } else {
-        opts->push_back(std::make_pair(arg.substr(0, pos), arg.substr(pos + 1)));
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "edit option must be key=value\n");
+	return -1;
     }
-    return 1;
+    if (!set_var)
+	return 0;
+
+    std::vector<std::pair<std::string, std::string>> *opts =
+        (std::vector<std::pair<std::string, std::string>> *)set_var;
+    std::string value(arg);
+    size_t pos = value.find('=');
+    if (pos == std::string::npos) {
+	opts->push_back(std::make_pair(value, "1"));
+    } else {
+        opts->push_back(std::make_pair(value.substr(0, pos), value.substr(pos + 1)));
+    }
+    return 0;
 }
 
 
@@ -400,13 +408,14 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		    int n_coord_flags_l = x_only + y_only + z_only;
 		    if (n_coord_flags_l == 0) {
 			/* Try 3-vector, then 1-scalar, then object name */
-			int vret = bu_opt_vect_t(NULL, argc - i, argv + i, &to_vec);
+			int vret = bu_cmd_vector3_from_argv(to_vec, (size_t)(argc - i),
+				(const char * const *)(argv + i));
 			if (vret > 0) {
 			    have_to = true;
 			    i += vret;
 			} else {
 			    fastf_t f;
-			    if (bu_opt_fastf_t(NULL, 1, &argv[i], &f) >= 0) {
+			    if (bu_cmd_number_from_str(&f, argv[i])) {
 				to_vec[X] = to_vec[Y] = to_vec[Z] = f;
 				have_to = true;
 				i++;
@@ -419,7 +428,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		    } else {
 			/* Per-axis mode: each axis flag consumes one value or object name */
 			if (x_only) {
-			    if (bu_opt_fastf_t(NULL, 1, &argv[i], &to_vec[X]) >= 0) {
+			if (bu_cmd_number_from_str(&to_vec[X], argv[i])) {
 				i++;
 			    } else {
 				to_name = argv[i];
@@ -427,7 +436,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 			    }
 			}
 			if (y_only && i < argc) {
-			    if (bu_opt_fastf_t(NULL, 1, &argv[i], &to_vec[Y]) >= 0) {
+			if (bu_cmd_number_from_str(&to_vec[Y], argv[i])) {
 				i++;
 			    } else if (!to_name) {
 				to_name = argv[i];
@@ -435,7 +444,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 			    }
 			}
 			if (z_only && i < argc) {
-			    if (bu_opt_fastf_t(NULL, 1, &argv[i], &to_vec[Z]) >= 0) {
+			if (bu_cmd_number_from_str(&to_vec[Z], argv[i])) {
 				i++;
 			    } else if (!to_name) {
 				to_name = argv[i];
@@ -574,7 +583,8 @@ cmd_tra::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     argc--; argv++;   /* skip "tra" */
 
     vect_t delta = VINIT_ZERO;
-    int vret = bu_opt_vect_t(NULL, argc, argv, &delta);
+	int vret = bu_cmd_vector3_from_argv(delta, (size_t)argc,
+		(const char * const *)argv);
     if (vret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
 	return BRLCAD_ERROR;
@@ -605,15 +615,15 @@ _parse_pos_or_obj(point_t *pos, const char **argv, int argc, struct ged *gedp)
 	return -1;
 
     fastf_t f0;
-    if (bu_opt_fastf_t(NULL, 1, argv, &f0) >= 0) {
+	if (bu_cmd_number_from_str(&f0, argv[0])) {
 	/* Numeric — consume 1–3 floats */
 	(*pos)[X] = (*pos)[Y] = (*pos)[Z] = f0;
 	int n = 1;
 	fastf_t f1, f2;
-	if (n < argc && bu_opt_fastf_t(NULL, 1, argv + n, &f1) >= 0) {
+	if (n < argc && bu_cmd_number_from_str(&f1, argv[n])) {
 	    (*pos)[Y] = f1;
 	    n++;
-	    if (n < argc && bu_opt_fastf_t(NULL, 1, argv + n, &f2) >= 0) {
+	    if (n < argc && bu_cmd_number_from_str(&f2, argv[n])) {
 		(*pos)[Z] = f2;
 		n++;
 	    }
@@ -720,7 +730,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	/* ---- Two-token options ------------------------------------ */
 	if (BU_STR_EQUAL(argv[i], "-d") && i + 1 < argc) {
 	    i++;
-	    if (bu_opt_fastf_t(NULL, 1, &argv[i], &d_angle) < 0) {
+	    if (!bu_cmd_number_from_str(&d_angle, argv[i])) {
 		bu_vls_printf(gedp->ged_result_str,
 		    "rotate: bad -d angle '%s'\n", argv[i]);
 		return BRLCAD_ERROR;
@@ -822,13 +832,14 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	/* ---- Positional angle values ------------------------------- */
 	if (argv[i][0] != '-') {
 	    /* Read up to 3 floats (Euler angles or single rotation amount) */
-	    int vret = bu_opt_vect_t(NULL, argc - i, argv + i, &angles);
+	    int vret = bu_cmd_vector3_from_argv(angles, (size_t)(argc - i),
+		(const char * const *)(argv + i));
 	    if (vret > 0) {
 		n_angle_vals = vret;
 		i += vret;
 	    } else {
 		fastf_t f;
-		if (bu_opt_fastf_t(NULL, 1, &argv[i], &f) >= 0) {
+		if (bu_cmd_number_from_str(&f, argv[i])) {
 		    angles[X] = angles[Y] = angles[Z] = f;
 		    n_angle_vals = 1;
 		    i++;
@@ -993,7 +1004,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	/* Two or three angles: already in angles[X/Y/Z] */
     } else if (n_coord_flags == 1) {
 	/* Single axis flag: the angle is in the positional arg (may *
-	 * already be in angles[X] after bu_opt_vect_t) or -d. */
+	 * already be in angles[X] after vector parsing) or -d. */
 	fastf_t a = (have_d_angle ? d_angle : (n_angle_vals >= 1 ? angles[X] : 0.0));
 	VSETALL(angles, 0.0);
 	if (x_only) angles[X] = a;
@@ -1121,7 +1132,7 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		i += nr;
 	    } else {
 		fastf_t f = 0.0;
-		if (bu_opt_fastf_t(NULL, 1, &argv[i], &f) < 0) {
+		if (!bu_cmd_number_from_str(&f, argv[i])) {
 		    bu_vls_printf(gedp->ged_result_str,
 			"scale: bad -r value '%s'\n", argv[i]);
 		    return BRLCAD_ERROR;
@@ -1150,13 +1161,14 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	    i++;
 	} else if (argv[i][0] != '-') {
 	    /* Positional: the scale factor (1 or 3 numbers) */
-	    int vret = bu_opt_vect_t(NULL, argc - i, argv + i, &pos_vals);
+	    int vret = bu_cmd_vector3_from_argv(pos_vals, (size_t)(argc - i),
+		(const char * const *)(argv + i));
 	    if (vret > 0) {
 		n_pos = vret;
 		i += vret;
 	    } else {
 		fastf_t f = 0.0;
-		if (bu_opt_fastf_t(NULL, 1, &argv[i], &f) < 0) {
+		if (!bu_cmd_number_from_str(&f, argv[i])) {
 		    bu_vls_printf(gedp->ged_result_str,
 			"scale: bad factor value '%s'\n", argv[i]);
 		    return BRLCAD_ERROR;
@@ -1472,7 +1484,7 @@ cmd_mat::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 
     mat_t mat;
     for (int mi = 0; mi < 16; mi++) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[mi], &mat[mi]) < 0) {
+	if (!bu_cmd_number_from_str(&mat[mi], argv[mi])) {
 	    bu_vls_printf(gedp->ged_result_str,
 		"mat: bad matrix element [%d]: '%s'\n", mi, argv[mi]);
 	    return BRLCAD_ERROR;
@@ -1570,7 +1582,7 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (bu_opt_fastf_t(NULL, 1, argv, (void *)&factor) != 1) {
+	if (!bu_cmd_number_from_str(&factor, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
 	return BRLCAD_ERROR;
     }
@@ -1924,7 +1936,7 @@ _exec_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		    return BRLCAD_ERROR;
 		}
 		fastf_t val;
-		if (bu_opt_fastf_t(NULL, 1, argv + argi, &val) < 0) {
+		if (!bu_cmd_number_from_str(&val, argv[argi])) {
 		    if (gedp)
 			bu_vls_printf(gedp->ged_result_str,
 			    "edit: cannot parse '%s' as a number for '%s'\n",
@@ -1949,7 +1961,7 @@ _exec_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 3; ci++) {
 		    fastf_t val;
-		    if (bu_opt_fastf_t(NULL, 1, argv + argi, &val) < 0) {
+		    if (!bu_cmd_number_from_str(&val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse '%s' as a number\n",
@@ -1975,7 +1987,7 @@ _exec_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 3; ci++) {
 		    fastf_t val;
-		    if (bu_opt_fastf_t(NULL, 1, argv + argi, &val) < 0) {
+		    if (!bu_cmd_number_from_str(&val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse color component '%s'\n",
@@ -2000,7 +2012,7 @@ _exec_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 16; ci++) {
 		    fastf_t val;
-		    if (bu_opt_fastf_t(NULL, 1, argv + argi, &val) < 0) {
+		    if (!bu_cmd_number_from_str(&val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse matrix element '%s'\n",
@@ -2070,6 +2082,185 @@ _exec_desc_cmd(struct ged *gedp, struct ged_edit_ctx *ctx,
 }
 
 
+/* The historical spelling --list-all-prim-ops=json is a separate no-value
+ * switch, not an option whose following operand is a format argument.  The
+ * native parser still accepts the attached form through the custom consumer,
+ * while this shape keeps a bare switch from consuming a geometry name. */
+static size_t
+_edit_attached_only_arg(size_t UNUSED(available), const char **UNUSED(argv))
+{
+    return 0;
+}
+
+
+static const struct bu_cmd_arg_shape edit_attached_only_arg_shape = {
+    BU_CMD_ARG_SHAPE_CUSTOM, 0, 1, "[=json]", _edit_attached_only_arg
+};
+
+
+static int
+_parse_edit_list_all(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int *value = (int *)storage;
+
+    if (!value)
+	return arg && !BU_STR_EQUAL(arg, "json") ? -1 : 0;
+    if (!arg) {
+	*value = 1;
+	return 0;
+    }
+    if (BU_STR_EQUAL(arg, "json")) {
+	*value = 2;
+	return 0;
+    }
+    if (msg)
+	bu_vls_printf(msg, "invalid format for --list-all-prim-ops: %s (expected json)\n", arg);
+    return -1;
+}
+
+
+static const char * const edit_global_ops[] = {
+    "rot", "rotate", "tra", "translate", "sca", "scale", "perturb",
+    "checkpoint", "revert", "reset", "mat", NULL
+};
+
+
+static const struct bu_cmd_option edit_options[] = {
+    BU_CMD_FLAG("h", "help", struct ged_edit_ctx, help, "Print help"),
+    BU_CMD_FLAG("v", "verbose", struct ged_edit_ctx, verbosity, "Verbose output"),
+    BU_CMD_FLAG("S", "selection", struct ged_edit_ctx, flag_S, "Operate on selection (ignore cmd-line specifier)"),
+    BU_CMD_FLAG("f", "force", struct ged_edit_ctx, flag_f, "Force: apply op, write to disk, clear conflict"),
+    BU_CMD_FLAG("F", "abandon", struct ged_edit_ctx, flag_F, "Abandon: discard intermediate state, use on-disk"),
+    BU_CMD_FLAG("i", "intermediate", struct ged_edit_ctx, flag_i, "Intermediate: apply to temp buffer only (no disk write)"),
+    {NULL, "list-all-prim-ops", "list-all-prim-ops", "[=json]", "List all available primitive edit operations (use =json for JSON)",
+	BU_CMD_VALUE_CUSTOM, offsetof(struct ged_edit_ctx, list_all_prim_ops), _parse_edit_list_all, NULL, NULL, NULL,
+	0, 0, NULL, BU_CMD_ARG_OPTIONAL, &edit_attached_only_arg_shape, NULL, NULL},
+    BU_CMD_CUSTOM("O", "option", struct ged_edit_ctx, options, _parse_ged_edit_opt, "key=value", "Pass dynamic option to edit session"),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_operand edit_native_operands[] = {
+    BU_CMD_OPERAND("geometry", BU_CMD_VALUE_RAW, 0, 1, "Database object or primitive type", "ged.geometry_or_primitive"),
+    BU_CMD_OPERAND("operation", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"Generic or primitive-specific edit operation", NULL),
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED, "Operation-specific arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+
+static int
+edit_schema_context_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, void *context,
+	struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    struct ged *gedp = (struct ged *)context;
+    int type_id = -1;
+    std::set<std::string> matches;
+    std::string prefix;
+
+    flat.validation.constraint_data.context_validate = NULL;
+    if (bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result) != 0 ||
+	!argc || !((argc == 1 && cursor_arg == argc) || cursor_arg == 1))
+	return 0;
+
+    type_id = _prim_type_id_from_str(argv[0]);
+    if (type_id < 0 && gedp && gedp->dbip) {
+	struct directory *dp = db_lookup(gedp->dbip, argv[0], LOOKUP_QUIET);
+	type_id = _get_prim_type_for_dp(dp, gedp->dbip);
+    }
+    extern const struct rt_edit_functab EDOBJ[];
+    if (type_id < 0 || !EDOBJ[type_id].ft_edit_desc)
+	return 0;
+
+    if (cursor_arg == 1 && argc > 1)
+	prefix = argv[1];
+    for (size_t i = 0; edit_global_ops[i]; i++) {
+	if (prefix.empty() || !bu_strncmp(edit_global_ops[i], prefix.c_str(), prefix.size()))
+	    matches.insert(edit_global_ops[i]);
+    }
+    const struct rt_edit_prim_desc *desc = (*EDOBJ[type_id].ft_edit_desc)();
+    for (int i = 0; desc && i < desc->ncmd; i++) {
+	std::string slug = _prim_cmd_slug(desc->cmds[i].label);
+	if (prefix.empty() || slug.compare(0, prefix.size(), prefix) == 0)
+	    matches.insert(slug);
+	if (desc->cmds[i].nparam == 1 && desc->cmds[i].params &&
+	    desc->cmds[i].params[0].name) {
+	    std::string pname(desc->cmds[i].params[0].name);
+	    if (prefix.empty() || pname.compare(0, prefix.size(), prefix) == 0)
+		matches.insert(pname);
+	}
+    }
+
+    if (result->completion_candidates)
+	bu_argv_free(result->completion_count, (char **)result->completion_candidates);
+    result->completion_count = matches.size();
+    result->completion_candidates = (const char **)bu_calloc(matches.size() + 1,
+	sizeof(char *), "edit operation candidates");
+    size_t oi = 0;
+    for (const std::string &match : matches)
+	result->completion_candidates[oi++] = bu_strdup(match.c_str());
+    return 0;
+}
+
+
+static const struct bu_cmd_schema edit_option_schema = {
+    "edit", "Descriptor-driven primitive editing", edit_options, edit_native_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONTEXT_VALIDATOR(edit_schema_context_validate)
+};
+
+
+static int
+_edit_help(struct ged *gedp, std::map<std::string, ged_subcmd *> &subcmds,
+	   const char *cmdname, const char *cmdargs)
+{
+    if (!gedp || !cmdname)
+	return BRLCAD_ERROR;
+
+    if (BU_STR_EQUAL(cmdname, "edit") || BU_STR_EQUAL(cmdname, "help")) {
+	char *option_help = bu_cmd_schema_describe(&edit_option_schema);
+	bu_vls_printf(gedp->ged_result_str, "edit %s\n", cmdargs);
+	if (option_help) {
+	    bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
+	    bu_free(option_help, "edit native help");
+	}
+	bu_vls_printf(gedp->ged_result_str, "Available subcommands:\n");
+
+	std::map<ged_subcmd *, std::set<std::string>> names;
+	for (const auto &subcmd : subcmds)
+	    names[subcmd.second].insert(subcmd.first);
+	std::map<ged_subcmd *, std::string> labels;
+	size_t longest = 0;
+	for (const auto &entry : names) {
+	    std::string label;
+	    for (const auto &name : entry.second) {
+		if (!label.empty())
+		    label += ",";
+		label += name;
+	    }
+	    labels[entry.first] = label;
+	    longest = std::max(longest, label.length());
+	}
+	std::set<ged_subcmd *> printed;
+	for (const auto &subcmd : subcmds) {
+	    if (!printed.insert(subcmd.second).second)
+		continue;
+	    const std::string &label = labels[subcmd.second];
+	    bu_vls_printf(gedp->ged_result_str, "  %s%*s%s\n", label.c_str(),
+		(int)(longest - label.length()) + 2, " ", subcmd.second->purpose().c_str());
+	}
+	return BRLCAD_OK;
+    }
+
+    std::map<std::string, ged_subcmd *>::iterator subcmd = subcmds.find(std::string(cmdname));
+    if (subcmd == subcmds.end())
+	return BRLCAD_ERROR;
+    bu_vls_printf(gedp->ged_result_str, "%s", subcmd->second->usage().c_str());
+    return BRLCAD_OK;
+}
+
+
 /* ================================================================== *
  * Main entry point — three-pass parser
  * ================================================================== */
@@ -2077,13 +2268,11 @@ _exec_desc_cmd(struct ged *gedp, struct ged_edit_ctx *ctx,
 extern "C" int
 ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int help = 0;
-    int list_all_prim_ops = 0;
-    int list_all_prim_ops_json = 0;
-
     /* ---- Initialise context ---------------------------------------- */
     struct ged_edit_ctx ctx;
     ctx.gedp         = gedp;
+    ctx.help          = 0;
+    ctx.list_all_prim_ops = 0;
     ctx.verbosity    = 0;
     ctx.prand        = NULL;
     ctx.flag_S       = 0;
@@ -2117,23 +2306,10 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     edit_cmds["reset"]      = &edit_reset_cmd;
     edit_cmds["mat"]        = &edit_mat_cmd;
 
-    /* ---- Global option descriptors --------------------------------- */
-    struct bu_opt_desc d[10];
-    BU_OPT(d[0], "h", "help",         "",  NULL, &help,        "Print help");
-    BU_OPT(d[1], "v", "verbose",      "",  NULL, &ctx.verbosity,"Verbose output");
-    BU_OPT(d[2], "S", "selection",    "",  NULL, &ctx.flag_S,  "Operate on selection (ignore cmd-line specifier)");
-    BU_OPT(d[3], "f", "force",        "",  NULL, &ctx.flag_f,  "Force: apply op, write to disk, clear conflict");
-    BU_OPT(d[4], "F", "abandon",      "",  NULL, &ctx.flag_F,  "Abandon: discard intermediate state, use on-disk");
-    BU_OPT(d[5], "i", "intermediate", "",  NULL, &ctx.flag_i,  "Intermediate: apply to temp buffer only (no disk write)");
-    BU_OPT(d[6], "", "list-all-prim-ops", "", NULL, &list_all_prim_ops, "List all available primitive edit operations");
-    BU_OPT(d[7], "", "list-all-prim-ops=json", "", NULL, &list_all_prim_ops_json, "List all primitive edit operations as JSON");
-    BU_OPT(d[8], "O", "option",       "key=value", &_parse_ged_edit_opt, &ctx.options, "Pass dynamic option to edit session");
-    BU_OPT_NULL(d[9]);
-
     const char *bargs_help = "[options] <geometry_specifier> subcommand [args]";
 
     if (!argc) {
-	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds, "edit", bargs_help, 0, NULL);
+	_edit_help(gedp, edit_cmds, "edit", bargs_help);
 	return BRLCAD_OK;
     }
 
@@ -2195,8 +2371,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     bool maybe_opts = (argv[0][0] == '-');
 
     /* ---- Pass 1: find positions of first geometry spec and subcommand
-     *              so we know how many leading tokens to feed to
-     *              bu_opt_parse as global options.                      */
+     *              so we know how many leading tokens are global options. */
     DbiState *dbis = (DbiState *)gedp->dbi_state;
 
     int geom_pos = INT_MAX;
@@ -2279,27 +2454,24 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	if (maybe_opts) {
-	    /* --list-all-prim-ops[=json]: handled before regular opt parse */
-	    if (argc >= 1) {
-		bool lap      = BU_STR_EQUAL(argv[0], "--list-all-prim-ops");
-		bool lap_json = BU_STR_EQUAL(argv[0], "--list-all-prim-ops=json");
-		if (lap || lap_json) {
-		    return _print_all_prim_ops(gedp, lap_json ? 1 : 0);
-		}
-	    }
 	    struct bu_vls opterrs = BU_VLS_INIT_ZERO;
-	    bu_opt_parse(&opterrs, argc, argv, d);
+	    int opt_ret = bu_cmd_schema_parse(&edit_option_schema, &ctx, &opterrs,
+		argc, argv);
+	    if (opt_ret < 0) {
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&opterrs));
+		_edit_help(gedp, edit_cmds, "edit", bargs_help);
+		bu_vls_free(&opterrs);
+		return BRLCAD_ERROR;
+	    }
 	    bu_vls_free(&opterrs);
-	    if (help) {
-		_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-		    "edit", bargs_help, 0, NULL);
+	    if (ctx.help) {
+		_edit_help(gedp, edit_cmds, "edit", bargs_help);
 		return BRLCAD_OK;
 	    }
-	    if (list_all_prim_ops || list_all_prim_ops_json) {
-		return _print_all_prim_ops(gedp, list_all_prim_ops_json ? 1 : 0);
+	    if (ctx.list_all_prim_ops) {
+		return _print_all_prim_ops(gedp, ctx.list_all_prim_ops == 2 ? 1 : 0);
 	    }
-	    _ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-		"edit", bargs_help, 0, NULL);
+	    _edit_help(gedp, edit_cmds, "edit", bargs_help);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str,
 		"Invalid geometry specifier: %s\n", argv[0]);
@@ -2313,11 +2485,11 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     /* Parse global options from the prefix */
     if (opt_prefix_len > 0) {
 	struct bu_vls opterrs = BU_VLS_INIT_ZERO;
-	int opt_ret = bu_opt_parse(&opterrs, opt_prefix_len, argv, d);
+	int opt_ret = bu_cmd_schema_parse(&edit_option_schema, &ctx, &opterrs,
+	    opt_prefix_len, argv);
 	if (opt_ret < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&opterrs));
-	    _ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-		"edit", bargs_help, 0, NULL);
+	    _edit_help(gedp, edit_cmds, "edit", bargs_help);
 	    bu_vls_free(&opterrs);
 	    return BRLCAD_ERROR;
 	}
@@ -2335,22 +2507,20 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Handle -h after option processing */
-    if (help) {
+    if (ctx.help) {
 	const char *cmd_name_for_help = (cmd_pos != INT_MAX) ? argv[cmd_pos] : "edit";
-	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-	    cmd_name_for_help, bargs_help, 0, NULL);
+	_edit_help(gedp, edit_cmds, cmd_name_for_help, bargs_help);
 	return BRLCAD_OK;
     }
 
-    if (list_all_prim_ops || list_all_prim_ops_json) {
-	return _print_all_prim_ops(gedp, list_all_prim_ops_json ? 1 : 0);
+    if (ctx.list_all_prim_ops) {
+	return _print_all_prim_ops(gedp, ctx.list_all_prim_ops == 2 ? 1 : 0);
     }
 
     /* Sanity: geometry must come before command if both present */
     if (geom_pos != INT_MAX && cmd_pos != INT_MAX &&
 	    (geom_pos > cmd_pos || cmd_pos != geom_pos + 1)) {
-	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-	    "edit", bargs_help, 0, NULL);
+	_edit_help(gedp, edit_cmds, "edit", bargs_help);
 	return BRLCAD_ERROR;
     }
 
@@ -2444,8 +2614,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		"No subcommand specified for \"%s\"\n",
 		geom_str ? geom_str : "(selection)");
 	} else {
-	    _ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-		"edit", bargs_help, 0, NULL);
+	    _edit_help(gedp, edit_cmds, "edit", bargs_help);
 	}
 	return BRLCAD_ERROR;
     }
@@ -2526,8 +2695,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_vls_printf(gedp->ged_result_str,
 	    "Unknown subcommand: %s\n", argv[0]);
-	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-	    "edit", bargs_help, 0, NULL);
+	_edit_help(gedp, edit_cmds, "edit", bargs_help);
 	return BRLCAD_ERROR;
     }
 
@@ -2535,8 +2703,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     if (ctx.geom_specs.empty()) {
 	bu_vls_printf(gedp->ged_result_str,
 	    "No valid geometry specifier found; nothing to edit.\n");
-	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-	    "edit", bargs_help, 0, NULL);
+	_edit_help(gedp, edit_cmds, "edit", bargs_help);
 	return BRLCAD_ERROR;
     }
 
@@ -2553,15 +2720,115 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 #include "./ged_edit.h"
 
-#define GED_EDIT_COMMANDS(X, XID) \
-    X(edit, ged_edit_core, GED_CMD_DEFAULT) \
-    X(edarb, ged_edarb_core, GED_CMD_DEFAULT) \
-    X(protate, ged_protate_core, GED_CMD_DEFAULT) \
-    X(pscale, ged_pscale_core, GED_CMD_DEFAULT) \
-    X(ptranslate, ged_ptranslate_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand edarb_args[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 1, BU_CMD_COUNT_UNLIMITED,
+	"ARB and operation-specific arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema edarb_root_schema = {
+    "edarb", "Apply legacy ARB edit operations", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+static const struct bu_cmd_schema edarb_edgedir_schema = {
+    "edgedir", "Set an ARB edge direction", NULL, edarb_args,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+static const struct bu_cmd_schema edarb_extrude_schema = {
+    "extrude", "Extrude an ARB face", NULL, edarb_args,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+static const struct bu_cmd_schema edarb_mirror_schema = {
+    "mirror", "Mirror an ARB", NULL, edarb_args,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+static const struct bu_cmd_schema edarb_permute_schema = {
+    "permute", "Permute ARB vertices", NULL, edarb_args,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+static const struct bu_cmd_tree_node edarb_subcommands[] = {
+    BU_CMD_TREE_NODE(&edarb_edgedir_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&edarb_extrude_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&edarb_mirror_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&edarb_permute_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree edarb_tree = {
+    &edarb_root_schema, edarb_subcommands, BU_CMD_TREE_CHILD_FIRST
+};
+static int
+edarb_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &edarb_tree, input, cursor_pos, result);
+}
+static int
+edarb_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &edarb_tree, input, analysis);
+}
+static char *
+edarb_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&edarb_tree);
+}
+static int
+edarb_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&edarb_tree, msgs);
+}
+static const struct ged_cmd_grammar edarb_grammar = {
+    "edarb", "Apply legacy ARB edit operations", edarb_grammar_validate,
+    edarb_grammar_analyze, edarb_grammar_json, edarb_grammar_lint
+};
 
-GED_DECLARE_COMMAND_SET(GED_EDIT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_edit", 1, GED_EDIT_COMMANDS)
+struct pedit_schema_args {
+    int relative;
+};
+static const struct bu_cmd_option pedit_options[] = {
+    BU_CMD_FLAG("r", NULL, struct pedit_schema_args, relative, "Apply a relative edit"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand protate_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
+    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
+    BU_CMD_OPERAND("rotation", BU_CMD_VALUE_VECTOR, 1, 1, "Packed rotation vector", "ged.vector"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand pscale_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
+    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
+    BU_CMD_OPERAND("scale", BU_CMD_VALUE_NUMBER, 1, 1, "Scale factor", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand ptranslate_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
+    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
+    BU_CMD_OPERAND("translation", BU_CMD_VALUE_VECTOR, 1, 1, "Packed translation vector", "ged.vector"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema protate_cmd_schema = {
+    "protate", "Rotate a primitive attribute", NULL, protate_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+static const struct bu_cmd_schema pscale_cmd_schema = {
+    "pscale", "Scale a primitive attribute", pedit_options, pscale_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_schema ptranslate_cmd_schema = {
+    "ptranslate", "Translate a primitive attribute", pedit_options,
+    ptranslate_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+
+#define GED_EDIT_COMMANDS(X, XID, NX, NXID, GX, GXID) \
+    NX(edit, ged_edit_core, GED_CMD_DEFAULT, &edit_option_schema) \
+    GX(edarb, ged_edarb_core, GED_CMD_DEFAULT, &edarb_grammar) \
+    NX(protate, ged_protate_core, GED_CMD_DEFAULT, &protate_cmd_schema) \
+    NX(pscale, ged_pscale_core, GED_CMD_DEFAULT, &pscale_cmd_schema) \
+    NX(ptranslate, ged_ptranslate_core, GED_CMD_DEFAULT, &ptranslate_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_EDIT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_edit", 1, GED_EDIT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

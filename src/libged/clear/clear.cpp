@@ -25,7 +25,15 @@
 
 #include "common.h"
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema clear_cmd_schema = {
+    "clear", "Clear the command console", NULL, NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    {NULL}
+};
 
 // clear is a no-op at the libged level - it's purpose is to support ged_exec
 // callback hooks that call any application callback functions assigned to this
@@ -39,10 +47,10 @@ ged_clear_core(struct ged *UNUSED(gedp), int UNUSED(argc), const char **UNUSED(a
 #include "../include/plugin.h"
 
 #define GED_CLEAR_COMMANDS(X, XID) \
-    X(clear, ged_clear_core, GED_CMD_DEFAULT) \
+    X(clear, ged_clear_core, GED_CMD_DEFAULT, &clear_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_CLEAR_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_clear", 1, GED_CLEAR_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_CLEAR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_clear", 1, GED_CLEAR_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

@@ -31,15 +31,371 @@
 #include <queue>
 
 extern "C" {
-#include "bu/cmd.h"
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/vls.h"
 #include "bv.h"
 #include "raytrace.h"
 }
 #include "./ged_view.h"
 #include "../ged_private.h"
+
+struct ged_view_obj_args {
+    int print_help;
+    int local_only;
+    int geom_only;
+    int view_only;
+};
+
+struct ged_view_obj_color_args {
+    int recurse;
+};
+
+int _objs_cmd_draw(void *bs, int argc, const char **argv);
+int _objs_cmd_delete(void *bs, int argc, const char **argv);
+int _objs_cmd_color(void *bs, int argc, const char **argv);
+int _objs_cmd_arrow(void *bs, int argc, const char **argv);
+int _objs_cmd_lcnt(void *bs, int argc, const char **argv);
+int _objs_cmd_update(void *bs, int argc, const char **argv);
+
+static int ged_view_obj_validate(const struct bu_cmd_schema *schema, size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+static int ged_view_obj_color_validate(const struct bu_cmd_schema *schema, size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+static int ged_view_obj_arrow_validate(const struct bu_cmd_schema *schema, size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+static int ged_view_obj_update_validate(const struct bu_cmd_schema *schema, size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+
+static const struct bu_cmd_option ged_view_obj_options[] = {
+    BU_CMD_FLAG("h", "help", struct ged_view_obj_args, print_help,
+	"Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("L", "local", struct ged_view_obj_args, local_only,
+	"Restrict lookup or creation to the current view"),
+    BU_CMD_FLAG("G", "geom_only", struct ged_view_obj_args, geom_only,
+	"List or select geometry-backed scene objects"),
+    BU_CMD_FLAG(NULL, "view_only", struct ged_view_obj_args, view_only,
+	"List or select view-only scene objects"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand ged_view_obj_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_STRING, 0, 1,
+	"View-object name", NULL),
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Object operation and arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" GED_EXPORT const struct bu_cmd_schema ged_view_obj_schema = {
+    "obj", "Manage view objects", ged_view_obj_options, ged_view_obj_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(ged_view_obj_validate, NULL)
+};
+
+static const struct bu_cmd_operand ged_view_obj_raw_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Object-operation arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const ged_view_obj_draw_states[] = {"UP", "DOWN", NULL};
+static const char * const ged_view_obj_arrow_actions[] = {
+    "0", "1", "width", "length", NULL
+};
+static const struct bu_cmd_operand ged_view_obj_draw_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("state", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"UP or DOWN", NULL, ged_view_obj_draw_states),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand ged_view_obj_color_operands[] = {
+    BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_RAW, 0, 3, NULL,
+	"Packed color or three RGB components", "ged.color", &bu_cmd_color_arg_shape),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand ged_view_obj_arrow_operands[] = {
+    BU_CMD_OPERAND("action", BU_CMD_VALUE_RAW, 0, 2,
+	"Arrow action and optional numeric value", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand ged_view_obj_update_operands[] = {
+    BU_CMD_OPERAND_VALIDATE("x", BU_CMD_VALUE_INTEGER, 0, 1,
+	bu_cmd_nonnegative_integer_validate, "Nonnegative screen X coordinate", NULL),
+    BU_CMD_OPERAND_VALIDATE("y", BU_CMD_VALUE_INTEGER, 0, 1,
+	bu_cmd_nonnegative_integer_validate, "Nonnegative screen Y coordinate", NULL),
+    BU_CMD_OPERAND_NULL
+};
+#define GED_VIEW_OBJ_RAW_SCHEMA(_name, _help) \
+    static const struct bu_cmd_schema ged_view_obj_##_name##_schema = { \
+	#_name, _help, NULL, ged_view_obj_raw_operands, \
+	BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+	}
+static const struct bu_cmd_option ged_view_obj_color_options[] = {
+    BU_CMD_FLAG("r", "recursive", struct ged_view_obj_color_args, recurse,
+	"Report or set this object's child colors too"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema ged_view_obj_draw_schema = {
+    "draw", "Query or set object drawing state", NULL, ged_view_obj_draw_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema ged_view_obj_del_schema = {
+    "del", "Delete a view-only object", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema ged_view_obj_update_schema = {
+    "update", "Update a view object", NULL, ged_view_obj_update_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(ged_view_obj_update_validate, NULL)
+};
+static const struct bu_cmd_schema ged_view_obj_color_schema = {
+    "color", "Query or set object color", ged_view_obj_color_options,
+    ged_view_obj_color_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(ged_view_obj_color_validate, NULL)
+};
+static const struct bu_cmd_schema ged_view_obj_arrow_schema = {
+    "arrow", "Query or set object arrow drawing", NULL, ged_view_obj_arrow_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(ged_view_obj_arrow_validate, NULL)
+};
+static const struct bu_cmd_schema ged_view_obj_lcnt_schema = {
+    "lcnt", "Report object vlist entity count", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+#undef GED_VIEW_OBJ_RAW_SCHEMA
+
+static const struct bu_cmd_schema ged_view_obj_child_root_schema = {
+    "view_obj", "View-object operation", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_tree_node ged_view_obj_children[] = {
+    BU_CMD_TREE_NODE(&ged_view_obj_draw_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _objs_cmd_draw),
+    BU_CMD_TREE_NODE(&ged_view_obj_del_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _objs_cmd_delete),
+    BU_CMD_TREE_NODE(&ged_view_obj_update_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _objs_cmd_update),
+    BU_CMD_TREE_NODE(&ged_view_obj_color_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _objs_cmd_color),
+	BU_CMD_TREE_NODE(&ged_view_axes_schema, NULL, ged_view_axes_subcommands,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _view_cmd_axes),
+    BU_CMD_TREE_NODE(&ged_view_obj_arrow_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _objs_cmd_arrow),
+	BU_CMD_TREE_NODE(&ged_view_label_schema, NULL, ged_view_label_subcommands,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _view_cmd_labels),
+    BU_CMD_TREE_NODE(&ged_view_obj_lcnt_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _objs_cmd_lcnt),
+	BU_CMD_TREE_NODE(&ged_view_line_schema, NULL, ged_view_line_subcommands,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _view_cmd_lines),
+	BU_CMD_TREE_NODE(&ged_view_polygon_schema, NULL, ged_view_polygon_subcommands,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _view_cmd_polygons),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree ged_view_obj_child_tree = {
+    &ged_view_obj_child_root_schema, ged_view_obj_children,
+    BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+static size_t
+ged_view_obj_name_index(const struct bu_cmd_schema *schema, size_t argc,
+    const char **argv)
+{
+    int options_allowed = 1;
+
+    for (size_t i = 0; i < argc; i++) {
+	int span;
+	if (options_allowed && BU_STR_EQUAL(argv[i], "--")) {
+	    options_allowed = 0;
+	    continue;
+	}
+	span = options_allowed ? bu_cmd_schema_option_span(schema, argc - i, argv + i) : 0;
+	if (span > 0) {
+	    i += (size_t)span - 1;
+	    continue;
+	}
+	if (options_allowed && argv[i][0] == '-' && argv[i][1])
+	    return argc;
+	return i;
+    }
+    return argc;
+}
+
+/* The compact parser deliberately owns all option spelling and option-value
+ * details.  These two adapters only locate the first positional word after a
+ * successful options-first phase so a parent command can delegate its
+ * remaining words to a native value or child grammar. */
+static size_t
+ged_view_obj_operand_index(const struct bu_cmd_schema *schema, size_t argc,
+    const char **argv)
+{
+    int options_allowed = 1;
+
+    for (size_t i = 0; i < argc; i++) {
+	int span;
+	if (options_allowed && BU_STR_EQUAL(argv[i], "--")) {
+	    options_allowed = 0;
+	    continue;
+	}
+	span = options_allowed ? bu_cmd_schema_option_span(schema, argc - i, argv + i) : 0;
+	if (span > 0) {
+	    i += (size_t)span - 1;
+	    continue;
+	}
+	return i;
+    }
+    return argc;
+}
+
+static void
+ged_view_obj_set_validation(struct bu_cmd_validate_result *result,
+    bu_cmd_validate_state_t state, size_t token, unsigned int expected,
+    bu_cmd_value_t value_type, const char *hint)
+{
+    bu_cmd_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = expected;
+    result->completion_type = value_type;
+    result->hint = hint;
+}
+
+static int
+ged_view_obj_color_validate(const struct bu_cmd_schema *schema, size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    size_t operand_start;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    operand_start = ged_view_obj_operand_index(schema, argc, argv);
+    if (cursor_arg < operand_start)
+	return 0;
+    ret = bu_cmd_color_optional_validate(argc - operand_start, argv + operand_start,
+	cursor_arg - operand_start, result);
+    if (!ret) {
+	result->token_start += operand_start;
+	result->token_end += operand_start;
+	result->semantic_provider = "ged.color";
+    }
+    return ret;
+}
+
+static int
+ged_view_obj_arrow_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    const char *action = argc ? argv[0] : "";
+    fastf_t numeric_value = 0.0;
+    int action_known = 0;
+    int numeric_action = 0;
+
+    if (!result || cursor_arg > argc)
+	return -1;
+    for (size_t i = 0; ged_view_obj_arrow_actions[i]; i++) {
+	if (BU_STR_EQUAL(action, ged_view_obj_arrow_actions[i])) {
+	    action_known = 1;
+	    break;
+	}
+    }
+    numeric_action = BU_STR_EQUAL(action, "width") || BU_STR_EQUAL(action, "length");
+
+    if (!argc) {
+	ged_view_obj_set_validation(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	    BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_KEYWORD, "arrow action");
+	bu_cmd_keyword_candidates(result, ged_view_obj_arrow_actions, "");
+	return 0;
+    }
+    if (!action_known) {
+	ged_view_obj_set_validation(result, BU_CMD_VALIDATE_INVALID, 0,
+	    BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_KEYWORD, "unknown arrow action");
+	bu_cmd_keyword_candidates(result, ged_view_obj_arrow_actions, action);
+	return 0;
+    }
+    if (cursor_arg == 0) {
+	ged_view_obj_set_validation(result, BU_CMD_VALIDATE_VALID, 0,
+	    BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_KEYWORD, "arrow action");
+	bu_cmd_keyword_candidates(result, ged_view_obj_arrow_actions, action);
+	return 0;
+    }
+    if (!numeric_action) {
+	if (argc != 1) {
+	    ged_view_obj_set_validation(result, BU_CMD_VALIDATE_INVALID, 1,
+		BU_CMD_EXPECT_NONE, BU_CMD_VALUE_STRING,
+		"arrow 0 and 1 do not take a value");
+	    return 0;
+	}
+	ged_view_obj_set_validation(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	    BU_CMD_EXPECT_NONE, BU_CMD_VALUE_KEYWORD, "arrow state");
+	return 0;
+    }
+    if (argc > 2) {
+	ged_view_obj_set_validation(result, BU_CMD_VALIDATE_INVALID, 2,
+	    BU_CMD_EXPECT_NONE, BU_CMD_VALUE_STRING, "too many arrow arguments");
+	return 0;
+    }
+    if (argc == 2 && !bu_cmd_number_from_str(&numeric_value, argv[1])) {
+	ged_view_obj_set_validation(result, BU_CMD_VALIDATE_INVALID, 1,
+	    BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_NUMBER, "invalid arrow size");
+	return 0;
+    }
+    ged_view_obj_set_validation(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_NUMBER,
+	argc == 1 ? "optional arrow size" : "arrow size");
+    return 0;
+}
+
+static int
+ged_view_obj_update_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    int ret = bu_cmd_integer_pair_optional_validate(argc, argv, cursor_arg, result);
+
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    for (size_t i = 0; i < argc; i++) {
+	if (bu_cmd_nonnegative_integer_validate(NULL, argv[i]) != 0) {
+	    ged_view_obj_set_validation(result, BU_CMD_VALIDATE_INVALID, i,
+		BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_INTEGER,
+		"screen coordinates must be nonnegative integers");
+	    break;
+	}
+    }
+    return 0;
+}
+
+static int
+ged_view_obj_validate(const struct bu_cmd_schema *schema, size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    size_t name_index;
+    size_t child_start;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    name_index = ged_view_obj_name_index(schema, argc, argv);
+    if (name_index >= argc || cursor_arg <= name_index)
+	return 0;
+    child_start = name_index + 1;
+    ret = bu_cmd_tree_validate_argv(&ged_view_obj_child_tree, argc - child_start,
+	argv + child_start, cursor_arg - child_start, result);
+    if (!ret) {
+	result->token_start += child_start;
+	result->token_end += child_start;
+    }
+    return ret;
+}
+
+static int
+ged_view_obj_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+    void *args, int argc, const char **argv)
+{
+    return bu_cmd_schema_parse_complete(schema, args, gedp->ged_result_str,
+	argc - 1, argv + 1) < 0 ? BRLCAD_ERROR : BRLCAD_OK;
+}
 
 int
 _objs_cmd_draw(void *bs, int argc, const char **argv)
@@ -50,6 +406,9 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
     const char *purpose_string = "toggle view polygons";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
+
+    if (ged_view_obj_preflight(gedp, &ged_view_obj_draw_schema, NULL, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     argc--; argv++;
 
@@ -94,6 +453,9 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
 
+    if (ged_view_obj_preflight(gedp, &ged_view_obj_del_schema, NULL, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
     argc--; argv++;
 
     /* initialize result */
@@ -123,15 +485,14 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
 
+    struct ged_view_obj_color_args args = {0};
+    int color_start = bu_cmd_schema_parse_complete(&ged_view_obj_color_schema,
+	&args, gedp->ged_result_str, argc - 1, argv + 1);
+    if (color_start < 0)
+	return BRLCAD_ERROR;
+
     argc--; argv++;
-
-    int recurse = 0;
-
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "r", "recursive",       "",  NULL,  &recurse,  "Report (or set) color of all child objects");
-    BU_OPT_NULL(d[1]);
-
-    int ac = bu_opt_parse(NULL, argc, argv, d);
+    int color_count = argc - color_start;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -142,9 +503,9 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (ac == 0) {
+    if (color_count == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", s->s_color[0], s->s_color[1], s->s_color[2]);
-	if (recurse) {
+	if (args.recurse) {
 	    std::queue<struct bv_scene_obj *> sobjs;
 	    sobjs.push(s);
 	    while (!sobjs.empty()) {
@@ -159,25 +520,24 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
 	}
 	return BRLCAD_OK;
     }
-    struct bu_color val;
-    if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+    struct bu_color val = BU_COLOR_INIT_ZERO;
+    if (bu_cmd_color_from_argv(&val, (size_t)color_count,
+	(const char * const *)(argv + color_start)) != color_count) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid color argument\n");
 	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_chars(&val, s->s_color);
-    if (recurse) {
-	if (recurse) {
-	    std::queue<struct bv_scene_obj *> sobjs;
-	    sobjs.push(s);
-	    while (!sobjs.empty()) {
-		struct bv_scene_obj *sc = sobjs.front();
-		sobjs.pop();
-		bu_color_to_rgb_chars(&val, sc->s_color);
-		for (size_t i = 0; i < BU_PTBL_LEN(&sc->children); i++) {
-		    struct bv_scene_obj *scn = (struct bv_scene_obj *)BU_PTBL_GET(&sc->children, i);
-		    sobjs.push(scn);
-		}
+    if (args.recurse) {
+	std::queue<struct bv_scene_obj *> sobjs;
+	sobjs.push(s);
+	while (!sobjs.empty()) {
+	    struct bv_scene_obj *sc = sobjs.front();
+	    sobjs.pop();
+	    bu_color_to_rgb_chars(&val, sc->s_color);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&sc->children); i++) {
+		struct bv_scene_obj *scn = (struct bv_scene_obj *)BU_PTBL_GET(&sc->children, i);
+		sobjs.push(scn);
 	    }
 	}
     }
@@ -193,6 +553,9 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
     const char *purpose_string = "toggle arrow drawing, for those objects that support it";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
+
+    if (ged_view_obj_preflight(gedp, &ged_view_obj_arrow_schema, NULL, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     argc--; argv++;
 
@@ -220,8 +583,8 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
     }
     if (BU_STR_EQUAL(argv[0], "width"))  {
 	if (argc == 2) {
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_os->s_arrow_tip_width) != 1) {
-		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	    if (!bu_cmd_number_from_str(&s->s_os->s_arrow_tip_width, argv[1])) {
+		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 		return BRLCAD_ERROR;
 	    }
 	    return BRLCAD_OK;
@@ -233,8 +596,8 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "length"))  {
 	if (argc == 2) {
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_os->s_arrow_tip_length) != 1) {
-		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	    if (!bu_cmd_number_from_str(&s->s_os->s_arrow_tip_length, argv[1])) {
+		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 		return BRLCAD_ERROR;
 	    }
 	    return BRLCAD_OK;
@@ -257,6 +620,9 @@ _objs_cmd_lcnt(void *bs, int argc, const char **argv)
     const char *purpose_string = "print the number of vlist entities";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
+
+    if (ged_view_obj_preflight(gedp, &ged_view_obj_lcnt_schema, NULL, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     argc--; argv++;
 
@@ -295,6 +661,9 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
 
+    if (ged_view_obj_preflight(gedp, &ged_view_obj_update_schema, NULL, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
     argc--; argv++;
 
     /* initialize result */
@@ -315,11 +684,11 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     struct bview *v = gd->cv;
     if (argc) {
 	int x, y;
-	if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&x) != 1 || x < 0) {
+	if (!bu_cmd_integer_from_str(&x, argv[0]) || x < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
-	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&y) != 1 || y < 0) {
+	if (!bu_cmd_integer_from_str(&y, argv[1]) || y < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
@@ -333,75 +702,68 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-const struct bu_cmdtab _obj_cmds[] = {
-    { "draw",       _objs_cmd_draw},
-    { "del",        _objs_cmd_delete},
-    //{ "info",       _objs_cmd_info},
-    { "update",     _objs_cmd_update},
-    { "color",      _objs_cmd_color},
-    { "axes",       _view_cmd_axes},
-    { "arrow",      _objs_cmd_arrow},
-    { "label",      _view_cmd_labels},
-    { "lcnt",       _objs_cmd_lcnt},
-    { "line",       _view_cmd_lines},
-    { "polygon",    _view_cmd_polygons},
-    { (char *)NULL,      NULL}
-};
+static void
+ged_view_obj_usage(struct ged *gedp)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_view_obj_schema);
+    char *child_help = bu_cmd_tree_describe(&ged_view_obj_child_tree);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: view obj [options] [object [subcommand [args]]]\n");
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s", option_help);
+	bu_free(option_help, "view object native option help");
+    }
+    if (child_help) {
+	bu_vls_strcat(gedp->ged_result_str, child_help);
+	bu_free(child_help, "view object native child help");
+    }
+}
 
 extern "C" int
 _view_cmd_objs(void *bs, int argc, const char **argv)
 {
-    int help = 0;
-    int list_view = 0;
-    int list_db = 0;
-    int not_shared = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-
-    const char *usage_string = "view [options] obj [options] [args]";
-    const char *purpose_string = "manipulate view objects";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
+    struct ged_view_obj_args args = {0, 0, 0, 0};
+    size_t name_index;
+    int root_argc;
+    int ret = BRLCAD_ERROR;
 
     if (!gd->cv) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
 	return BRLCAD_ERROR;
     }
 
-    // See if we have any high level options set
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "h", "help",        "",  NULL,  &help,       "Print help");
-    BU_OPT(d[1], "L", "local",       "",  NULL,  &not_shared, "Object is scoped only to current/specified view");
-    BU_OPT(d[2], "G", "geom_only",   "",  NULL,  &list_db,    "List view scene objects representing .g database objs");
-    BU_OPT(d[3],  "", "view_only",   "",  NULL,  &list_view,  "List view-only scene objects (default)");
-    BU_OPT_NULL(d[4]);
-
-    gd->gopts = d;
-
-    // We know we're the obj command - start processing args
+    /* The parent view tree has selected obj.  Its options end at the object
+     * name; the native child tree owns every later operation word. */
     argc--; argv++;
+    if (argc == 1 && BU_STR_EQUAL(argv[0], HELPFLAG)) {
+	ged_view_obj_usage(gedp);
+	return BRLCAD_OK;
+    }
+    name_index = ged_view_obj_name_index(&ged_view_obj_schema, (size_t)argc, argv);
+    root_argc = (name_index < (size_t)argc) ? (int)name_index : argc;
+    if (bu_cmd_schema_parse(&ged_view_obj_schema, &args, gedp->ged_result_str,
+	root_argc, argv) != root_argc) {
+	ged_view_obj_usage(gedp);
+	return BRLCAD_ERROR;
+    }
+    gd->gopts = NULL;
+    gd->local_obj = args.local_only;
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_obj_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
+    if (args.print_help) {
+	ged_view_obj_usage(gedp);
+	return BRLCAD_OK;
     }
 
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int ac = bu_opt_parse(NULL, acnt, argv, d);
-
-    if (!list_db && !list_view)
-	list_view = 1;
-
-    gd->local_obj = not_shared;
+    if (!args.geom_only && !args.view_only)
+	args.view_only = 1;
 
     // If we're not wanting help and we have no subcommand, list defined view objects
     struct bview *v = gd->cv;
-    if (!ac && cmd_pos < 0 && !help) {
-	if (list_db) {
+	if (name_index >= (size_t)argc) {
+	if (args.geom_only) {
 	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
 	    if (db_objs) {
 		for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
@@ -431,7 +793,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 		}
 	    }
 	}
-	if (list_view) {
+	if (args.view_only) {
 	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	    if (view_objs) {
 		for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -453,19 +815,11 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 
     // We need a name, even if it doesn't exist yet.  Check if it does, since subcommands
     // will react differently based on that status.
-    if (ac < 1) {
-	bu_vls_printf(gd->gedp->ged_result_str, "need view object name");
-	return BRLCAD_ERROR;
-    }
-    gd->vobj = argv[0];
+    gd->vobj = argv[name_index];
     gd->s = NULL;
-    // Clear out vobj name and any high level opts prior to subcommand
-    for (int i = 0; i < acnt; i++) {
-	argc--; argv++;
-    }
 
     // View-only objects take priority, unless we're explicitly excluding them by only specifying -G
-    if (list_view) {
+	if (args.view_only) {
 	if (!gd->local_obj) {
 	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -531,8 +885,23 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	}
     }
 
-    return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_obj_cmds,
-			    "view obj", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
+    /* The object name is a parent-owned operand, not a child-tree word.  Once
+     * it has been resolved, dispatch the remaining canonical operation tree
+     * exactly as completion and validation do. */
+    size_t child_start = name_index + 1;
+    if (child_start >= (size_t)argc) {
+	bu_vls_printf(gedp->ged_result_str, "view object subcommand required\n");
+	ged_view_obj_usage(gedp);
+	return BRLCAD_ERROR;
+    }
+    if (bu_cmd_tree_dispatch(&ged_view_obj_child_tree, gd,
+	argc - (int)child_start, argv + child_start, &ret) == 0)
+	return ret;
+
+    bu_vls_printf(gedp->ged_result_str, "unknown view-object subcommand: %s\n",
+	argv[child_start]);
+    ged_view_obj_usage(gedp);
+    return BRLCAD_ERROR;
 }
 
 
@@ -631,4 +1000,3 @@ _view_cmd_old_obj(struct ged *gedp, int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

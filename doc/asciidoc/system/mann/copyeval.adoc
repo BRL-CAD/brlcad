@@ -10,7 +10,7 @@ copyeval - Creates a new primitive object called __new_ primitive__ by applying 
 
 [source]
 ----
-copyeval {new_primitive path_to_old_primitive}
+copyeval path_to_old_primitive new_primitive
 ----
 
 
@@ -28,7 +28,7 @@ The example shows the use of the *copyeval* command to create a new primitive by
 .Create a new primitive object by applying the transformation matrices along the path to the old primitive.
 [example]
 ====
-mged>**copyeval shapeb comb1/comb2/comb3/shapea**
+mged>**copyeval comb1/comb2/comb3/shapea shapeb**
 
 Creates _shapeb_ from _shapea_ by applying the accumulated transformation matrices from the path comb1/comb2/comb3.
 

@@ -217,6 +217,11 @@ _MGED_ searches for a startup configuration file (`.mgedrc`) in three locations,
 . If the environment variable `HOME` is set, `$HOME/.mgedrc` is used.
 . If `.mgedrc` exists in the current working directory, it is used.
 
+The command prompt completion policy may be persisted with
+`set mged_default(completion_mode) mode` in _.mgedrc_, or selected with the
+*BRLCAD_MGED_COMPLETION_MODE* and *BRLCAD_COMPLETION_MODE* environment
+variables.  See *brlcad-completion*(5) for the supported modes and precedence.
+
 The first file found is used and the others are ignored. Use *--rcfile* to specify an explicit path, or *--no-rc* to skip rc file processing entirely.
 
 Command-line options that affect MGED variables (all the long options listed above) are applied _after_ the rc file is processed, so they always take precedence.
@@ -350,7 +355,7 @@ user:~**mged --rset "g snap 1" --rset "g rh 10" model.g**
 
 _Computer Graphics for Target Descriptions_, BRL Technical Report ARBRL-TR-02480, _GED: An Interactive Solid Modeling System for Vulnerability Assessments_
 
-*brlcad*(1), *rt*(1), *comgeom-g*(1), *vdeck*(1), *librt*(3)
+*brlcad*(1), *rt*(1), *comgeom-g*(1), *vdeck*(1), *librt*(3), *brlcad-completion*(5)
 
 
 [[diagnostics]]

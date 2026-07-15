@@ -158,11 +158,13 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_RCODES_COMMANDS(X, XID) \
-    X(rcodes, ged_rcodes_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(rcodes, "rcodes", "Apply region codes from a file", "input_file", BU_CMD_VALUE_FILE, 1, 1, "Region-code input file");
 
-GED_DECLARE_COMMAND_SET(GED_RCODES_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rcodes", 1, GED_RCODES_COMMANDS)
+#define GED_RCODES_COMMANDS(X, XID) \
+    X(rcodes, ged_rcodes_core, GED_CMD_DEFAULT, &rcodes_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RCODES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rcodes", 1, GED_RCODES_COMMANDS)
 
 /*
  * Local Variables:

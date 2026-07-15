@@ -28,36 +28,12 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../ged_private.h"
 #include "wdb.h"
-
-typedef enum {
-    MATERIAL_ASSIGN,
-    MATERIAL_CREATE,
-    MATERIAL_DESTROY,
-    MATERIAL_GET,
-    MATERIAL_HELP,
-    MATERIAL_IMPORT,
-    MATERIAL_REMOVE,
-    MATERIAL_SET,
-    ATTR_UNKNOWN
-} material_cmd_t;
-
-static const char *material_usage = " help \n\n"
-    "material create {objectName} {materialName}\n\n"
-    "material destroy {object}\n\n"
-    "material assign {object} {materialName}\n\n"
-    "material get {object} [propertyGroupName] {propertyName}\n\n"
-    "material set {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
-    "material remove {object} [propertyGroupName] {propertyName}\n\n"
-    "material import [--id | --name] {fileName}\n\n"
-    "  --id       - Specifies the id the material will be imported with\n\n"
-    "  --name     - Specifies the name the material will be imported with\n\n"
-    "Note: Object, property, and group names are case sensitive.";
 
 static const char *possibleProperties = "The following are properties of material objects that can be set/modified: \n"
     "- name\n"
@@ -70,39 +46,14 @@ static const char *possibleProperties = "The following are properties of materia
     "- thermal\n";
 
 
-static material_cmd_t
-get_material_cmd(const char* arg)
-{
-    /* sub-commands */
-    if (BU_STR_EQUIV("assign", arg))
-	return MATERIAL_ASSIGN;
-    else if (BU_STR_EQUIV("create", arg))
-	return MATERIAL_CREATE;
-    else if (BU_STR_EQUIV("destroy", arg))
-	return MATERIAL_DESTROY;
-    else if (BU_STR_EQUIV("set", arg))
-	return MATERIAL_SET;
-    else if (BU_STR_EQUIV("get", arg))
-	return MATERIAL_GET;
-    else if (BU_STR_EQUIV("help", arg))
-	return MATERIAL_HELP;
-    else if (BU_STR_EQUIV("import", arg))
-	return MATERIAL_IMPORT;
-    else if (BU_STR_EQUIV("remove", arg))
-	return MATERIAL_REMOVE;
-    else
-	return ATTR_UNKNOWN;
-}
-
-
 static int
 assign_material(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct bu_attribute_value_set avs;
 
-    if (argc < 4) {
-        bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
+    if (argc != 3) {
+        bu_vls_printf(gedp->ged_result_str, "assign requires an object and material name.");
         return BRLCAD_ERROR;
     }
 
@@ -111,14 +62,14 @@ assign_material(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip,  argv[1], 0)) != RT_DIR_NULL) {
         bu_avs_init_empty(&avs);
 
         if (db5_get_attributes(gedp->dbip, &avs, dp)) {
             bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
             return BRLCAD_ERROR;
         } else {
-            bu_avs_add(&avs, "material_name", argv[3]);
+            bu_avs_add(&avs, "material_name", argv[2]);
             bu_avs_add(&avs, "material_id", "1");
         }
 
@@ -127,7 +78,7 @@ assign_material(struct ged *gedp, int argc, const char *argv[])
             return BRLCAD_ERROR;
         }
     } else {
-        bu_vls_printf(gedp->ged_result_str, "Cannot get object %s\n", argv[2]);
+        bu_vls_printf(gedp->ged_result_str, "Cannot get object %s\n", argv[1]);
         return BRLCAD_ERROR;
     }
 
@@ -148,12 +99,13 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     const char* flag;
     char buffer[BUFSIZ] = {0};
 
-    if (argc < 3) {
+    if (argc != 3) {
         bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	return BRLCAD_ERROR;
     }
 
-    flag = argv[2];
-    fileName = argv[3];
+    flag = argv[1];
+    fileName = argv[2];
 
     FILE *densityTable = fopen(fileName, "r");
     if (!densityTable) {
@@ -247,8 +199,8 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (aborted) {
-	    bu_free(buffer, "free buffer copy");
 	    bu_vls_free(&name);
+	    fclose(densityTable);
 	    return BRLCAD_ERROR;
 	}
 
@@ -309,6 +261,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	memset(buffer, 0, BUFSIZ);
     }
 
+    fclose(densityTable);
     return 0;
 }
 
@@ -345,18 +298,18 @@ create_material(struct ged *gedp, int argc, const char *argv[])
     bu_avs_init_empty(&opticalProperties);
     bu_avs_init_empty(&thermalProperties);
 
-    if (argc < 4) {
+    if (argc != 3) {
         bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
         return BRLCAD_ERROR;
     }
 
-    db_name = argv[2];
-    name = argv[3];
+    db_name = argv[1];
+    name = argv[2];
     parent = NULL;
     source = NULL;
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    mk_material(wdbp,
+    int ret = mk_material(wdbp,
 		db_name,
 		name,
 		parent,
@@ -366,7 +319,7 @@ create_material(struct ged *gedp, int argc, const char *argv[])
 		&opticalProperties,
 		&thermalProperties);
 
-    return 0;
+    return ret;
 }
 
 
@@ -380,7 +333,7 @@ destroy_material(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    if (argc != 3) {
+    if (argc != 2) {
         bu_vls_printf(gedp->ged_result_str, "ERROR, incorrect number of arguments.");
         return BRLCAD_ERROR;
     }
@@ -388,17 +341,18 @@ destroy_material(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    _dl_eraseAllNamesFromDisplay(gedp, argv[2], 0);
+    _dl_eraseAllNamesFromDisplay(gedp, argv[1], 0);
 
-    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+
+    if ((dp = db_lookup(gedp->dbip,  argv[1], 0)) != RT_DIR_NULL) {
 	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
-            bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[2]);
+            bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[1]);
 	    return BRLCAD_ERROR;
 	}
 
         if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 	    /* Abort kill processing on first error */
-            bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[2]);
+            bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[1]);
             return BRLCAD_ERROR;
 	}
     }
@@ -417,8 +371,8 @@ get_material(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
 
-    if (argc < 4) {
-        bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
+    if (argc != 3 && argc != 4) {
+        bu_vls_printf(gedp->ged_result_str, "get requires a material object and property.");
         return BRLCAD_ERROR;
     }
 
@@ -427,36 +381,36 @@ get_material(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip,  argv[1], 0)) != RT_DIR_NULL) {
         GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
-        if (BU_STR_EQUAL(argv[3], "name")) {
+        if (BU_STR_EQUAL(argv[2], "name")) {
             bu_vls_printf(gedp->ged_result_str, "%s", material->name.vls_str);
-        } else if (BU_STR_EQUAL(argv[3], "parent")) {
+        } else if (BU_STR_EQUAL(argv[2], "parent")) {
             bu_vls_printf(gedp->ged_result_str, "%s", material->parent.vls_str);
-        } else if (BU_STR_EQUAL(argv[3], "source")) {
+        } else if (BU_STR_EQUAL(argv[2], "source")) {
             bu_vls_printf(gedp->ged_result_str, "%s", material->source.vls_str);
         } else {
-            if (argc == 4) {
-                bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[3]);
+            if (argc == 3) {
+                bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[2]);
                 return BRLCAD_ERROR;
-            } else if (BU_STR_EQUAL(argv[3], "physical")) {
-                print_avs_value(gedp, &material->physicalProperties, argv[4], argv[3]);
-            }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
-                print_avs_value(gedp, &material->mechanicalProperties, argv[4], argv[3]);
-            } else if (BU_STR_EQUAL(argv[3], "optical")) {
-                print_avs_value(gedp, &material->opticalProperties, argv[4], argv[3]);
-            } else if (BU_STR_EQUAL(argv[3], "thermal")) {
-                print_avs_value(gedp, &material->thermalProperties, argv[4], argv[3]);
+            } else if (BU_STR_EQUAL(argv[2], "physical")) {
+                print_avs_value(gedp, &material->physicalProperties, argv[3], argv[2]);
+            }  else if (BU_STR_EQUAL(argv[2], "mechanical")) {
+                print_avs_value(gedp, &material->mechanicalProperties, argv[3], argv[2]);
+            } else if (BU_STR_EQUAL(argv[2], "optical")) {
+                print_avs_value(gedp, &material->opticalProperties, argv[3], argv[2]);
+            } else if (BU_STR_EQUAL(argv[2], "thermal")) {
+                print_avs_value(gedp, &material->thermalProperties, argv[3], argv[2]);
             } else {
-                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[2]);
                 return BRLCAD_ERROR;
             }
         }
     } else {
-        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
+        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[1]);
         return BRLCAD_ERROR;
     }
 
@@ -471,8 +425,8 @@ set_material(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
 
-    if (argc < 5) {
-        bu_vls_printf(gedp->ged_result_str, "you must provide at least five arguments.");
+    if (argc != 4 && argc != 5) {
+        bu_vls_printf(gedp->ged_result_str, "set requires a material object, property, and value.");
         return BRLCAD_ERROR;
     }
 
@@ -481,45 +435,45 @@ set_material(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip,  argv[1], 0)) != RT_DIR_NULL) {
         GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
-        if (BU_STR_EQUAL(argv[3], "name")) {
+        if (BU_STR_EQUAL(argv[2], "name")) {
             BU_VLS_INIT(&material->name);
-            bu_vls_strcpy(&material->name, argv[4]);
-        } else if (BU_STR_EQUAL(argv[3], "parent")) {
+            bu_vls_strcpy(&material->name, argv[3]);
+        } else if (BU_STR_EQUAL(argv[2], "parent")) {
             BU_VLS_INIT(&material->parent);
-            bu_vls_strcpy(&material->parent, argv[4]);
-        } else if (BU_STR_EQUAL(argv[3], "source")) {
+            bu_vls_strcpy(&material->parent, argv[3]);
+        } else if (BU_STR_EQUAL(argv[2], "source")) {
             BU_VLS_INIT(&material->source);
-            bu_vls_strcpy(&material->source, argv[4]);
+            bu_vls_strcpy(&material->source, argv[3]);
         } else {
-            if (BU_STR_EQUAL(argv[3], "physical")) {
-                bu_avs_remove(&material->physicalProperties, argv[4]);
-                bu_avs_add(&material->physicalProperties, argv[4], argv[5]);
-            }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
-                bu_avs_remove(&material->mechanicalProperties, argv[4]);
-                bu_avs_add(&material->mechanicalProperties, argv[4], argv[5]);
-            } else if (BU_STR_EQUAL(argv[3], "optical")) {
-                bu_avs_remove(&material->opticalProperties, argv[4]);
-                bu_avs_add(&material->opticalProperties, argv[4], argv[5]);
-            } else if (BU_STR_EQUAL(argv[3], "thermal")) {
-                bu_avs_remove(&material->thermalProperties, argv[4]);
-                bu_avs_add(&material->thermalProperties, argv[4], argv[5]);
+            if (BU_STR_EQUAL(argv[2], "physical")) {
+                bu_avs_remove(&material->physicalProperties, argv[3]);
+                bu_avs_add(&material->physicalProperties, argv[3], argv[4]);
+            }  else if (BU_STR_EQUAL(argv[2], "mechanical")) {
+                bu_avs_remove(&material->mechanicalProperties, argv[3]);
+                bu_avs_add(&material->mechanicalProperties, argv[3], argv[4]);
+            } else if (BU_STR_EQUAL(argv[2], "optical")) {
+                bu_avs_remove(&material->opticalProperties, argv[3]);
+                bu_avs_add(&material->opticalProperties, argv[3], argv[4]);
+            } else if (BU_STR_EQUAL(argv[2], "thermal")) {
+                bu_avs_remove(&material->thermalProperties, argv[3]);
+                bu_avs_add(&material->thermalProperties, argv[3], argv[4]);
             } else {
-                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[2]);
                 return BRLCAD_ERROR;
             }
         }
     } else {
-        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
+        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[1]);
         return BRLCAD_ERROR;
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    int ret = wdb_put_internal(wdbp, argv[2], &intern, mk_conv2mm);
+    int ret = wdb_put_internal(wdbp, argv[1], &intern, mk_conv2mm);
     return ret;
 }
 
@@ -531,8 +485,8 @@ remove_material(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
 
-    if (argc < 4) {
-        bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
+    if (argc != 3 && argc != 4) {
+        bu_vls_printf(gedp->ged_result_str, "remove requires a material object and property.");
         return BRLCAD_ERROR;
     }
 
@@ -541,105 +495,358 @@ remove_material(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip,  argv[1], 0)) != RT_DIR_NULL) {
         GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
-        if (BU_STR_EQUAL(argv[3], "name")) {
-            BU_VLS_INIT(&material->name);
-            bu_vls_strcpy(&material->name, NULL);
-        } else if (BU_STR_EQUAL(argv[3], "parent")) {
-            BU_VLS_INIT(&material->parent);
-            bu_vls_strcpy(&material->parent, NULL);
-        } else if (BU_STR_EQUAL(argv[3], "source")) {
-            BU_VLS_INIT(&material->source);
-            bu_vls_strcpy(&material->source, NULL);
+        if (BU_STR_EQUAL(argv[2], "name")) {
+            bu_vls_trunc(&material->name, 0);
+        } else if (BU_STR_EQUAL(argv[2], "parent")) {
+            bu_vls_trunc(&material->parent, 0);
+        } else if (BU_STR_EQUAL(argv[2], "source")) {
+            bu_vls_trunc(&material->source, 0);
         } else {
-            if (BU_STR_EQUAL(argv[3], "physical")) {
-                bu_avs_remove(&material->physicalProperties, argv[4]);
-            }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
-                bu_avs_remove(&material->mechanicalProperties, argv[4]);
-            } else if (BU_STR_EQUAL(argv[3], "optical")) {
-                bu_avs_remove(&material->opticalProperties, argv[4]);
-            } else if (BU_STR_EQUAL(argv[3], "thermal")) {
-                bu_avs_remove(&material->thermalProperties, argv[4]);
+            if (BU_STR_EQUAL(argv[2], "physical")) {
+                bu_avs_remove(&material->physicalProperties, argv[3]);
+            }  else if (BU_STR_EQUAL(argv[2], "mechanical")) {
+                bu_avs_remove(&material->mechanicalProperties, argv[3]);
+            } else if (BU_STR_EQUAL(argv[2], "optical")) {
+                bu_avs_remove(&material->opticalProperties, argv[3]);
+            } else if (BU_STR_EQUAL(argv[2], "thermal")) {
+                bu_avs_remove(&material->thermalProperties, argv[3]);
             } else {
-                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[2]);
                 return BRLCAD_ERROR;
             }
         }
     } else {
-        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
+        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[1]);
         return BRLCAD_ERROR;
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    int ret = wdb_put_internal(wdbp, argv[2], &intern, mk_conv2mm);
+    int ret = wdb_put_internal(wdbp, argv[1], &intern, mk_conv2mm);
     return ret;
+}
+
+
+#include "../include/plugin.h"
+
+/* A material property is either a direct named field or a key in one of the
+ * four attribute-value property groups.  Keep the vocabulary in the schema:
+ * it drives completion, highlighting, JSON, help, and execution validation. */
+static const char * const material_property_or_group_values[] = {
+    "name", "parent", "source", "physical", "mechanical", "optical", "thermal", NULL
+};
+static const char * const material_import_mode_options[] = {"id", "name", NULL};
+
+static int
+material_is_property_group(const char *property)
+{
+    return BU_STR_EQUAL(property, "physical") || BU_STR_EQUAL(property, "mechanical") ||
+	BU_STR_EQUAL(property, "optical") || BU_STR_EQUAL(property, "thermal");
+}
+
+
+static int
+material_is_direct_property(const char *property)
+{
+    return BU_STR_EQUAL(property, "name") || BU_STR_EQUAL(property, "parent") ||
+	BU_STR_EQUAL(property, "source");
+}
+
+
+static void
+material_property_validation_result(struct bu_cmd_validate_result *result,
+	bu_cmd_validate_state_t state, size_t token, const char *hint)
+{
+    bu_cmd_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->completion_type = BU_CMD_VALUE_STRING;
+    result->hint = hint;
+}
+
+
+static int
+material_property_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    size_t operand_count;
+    size_t supplied_tail;
+    size_t expected_tail;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    operand_count = bu_cmd_schema_operand_count(schema, argc, argv);
+    if (operand_count < 2)
+	return ret;
+
+    supplied_tail = operand_count - 2;
+    if (material_is_property_group(argv[1])) {
+	expected_tail = BU_STR_EQUAL(schema->name, "set") ? 2 : 1;
+    } else if (material_is_direct_property(argv[1])) {
+	expected_tail = BU_STR_EQUAL(schema->name, "set") ? 1 : 0;
+    } else {
+	/* The keyword operand reports this case first, but retain a complete
+	 * result if a future schema changes that operand to a semantic provider. */
+	material_property_validation_result(result, BU_CMD_VALIDATE_INVALID,
+	    cursor_arg < argc ? cursor_arg : argc,
+	    "material property must be name, parent, source, or a property group");
+	return 0;
+    }
+    if (supplied_tail == expected_tail)
+	return ret;
+
+    material_property_validation_result(result,
+	supplied_tail < expected_tail ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID,
+	cursor_arg < argc ? cursor_arg : argc,
+	supplied_tail < expected_tail ? "additional material property argument required" :
+	"too many material property arguments");
+    return 0;
+}
+
+
+static const struct bu_cmd_operand material_create_operands[] = {
+    BU_CMD_OPERAND("material_object", BU_CMD_VALUE_STRING, 1, 1,
+	"New material database object name", NULL),
+    BU_CMD_OPERAND("material_name", BU_CMD_VALUE_STRING, 1, 1,
+	"Initial material name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand material_assign_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Geometry object to receive the material", NULL),
+    BU_CMD_OPERAND("material_name", BU_CMD_VALUE_STRING, 1, 1,
+	"Assigned material name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand material_object_operands[] = {
+    BU_CMD_OPERAND("material_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Material database object", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand material_get_operands[] = {
+    BU_CMD_OPERAND("material_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Material database object", NULL),
+    BU_CMD_OPERAND_KEYWORDS("property_or_group", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Direct property or property group", NULL, material_property_or_group_values),
+    BU_CMD_OPERAND("group_property", BU_CMD_VALUE_STRING, 0, 1,
+	"Property key within a property group", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand material_set_operands[] = {
+    BU_CMD_OPERAND("material_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Material database object", NULL),
+    BU_CMD_OPERAND_KEYWORDS("property_or_group", BU_CMD_VALUE_KEYWORD, 1, 1,
+	"Direct property or property group", NULL, material_property_or_group_values),
+    BU_CMD_OPERAND("property_or_value", BU_CMD_VALUE_STRING, 1, 1,
+	"Direct-property value or property-group key", NULL),
+    BU_CMD_OPERAND("group_value", BU_CMD_VALUE_STRING, 0, 1,
+	"New value for a property-group key", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand material_import_operands[] = {
+    BU_CMD_OPERAND("density_table", BU_CMD_VALUE_FILE, 1, 1,
+	"Density table file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_option material_import_options[] = {
+    BU_CMD_FLAG_UNBOUND(NULL, "id", "id", "Name imported material objects by density-table ID"),
+    BU_CMD_FLAG_UNBOUND(NULL, "name", "name", "Name imported material objects by density-table name"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_constraint material_import_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(material_import_mode_options, 1, 1,
+	"exactly one of --id or --name is required"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
+#define MATERIAL_TREE_SCHEMA(_name, _help, _options, _operands, _validator) \
+    static const struct bu_cmd_schema material_##_name##_schema = { \
+	#_name, _help, _options, _operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_CMD_SCHEMA_CONSTRAINTS(_validator, NULL) \
+    }
+MATERIAL_TREE_SCHEMA(create, "Create a material object", NULL, material_create_operands, NULL);
+MATERIAL_TREE_SCHEMA(assign, "Assign a material name to geometry", NULL, material_assign_operands, NULL);
+MATERIAL_TREE_SCHEMA(destroy, "Destroy a material object", NULL, material_object_operands, NULL);
+MATERIAL_TREE_SCHEMA(get, "Retrieve a material property", NULL, material_get_operands, material_property_schema_validate);
+MATERIAL_TREE_SCHEMA(set, "Set a material property", NULL, material_set_operands, material_property_schema_validate);
+MATERIAL_TREE_SCHEMA(remove, "Remove a material property", NULL, material_get_operands, material_property_schema_validate);
+MATERIAL_TREE_SCHEMA(help, "Print material command help", NULL, NULL, NULL);
+#undef MATERIAL_TREE_SCHEMA
+static const struct bu_cmd_schema material_import_schema = {
+    "import", "Import a density table", material_import_options, material_import_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, material_import_constraints)
+};
+static const struct bu_cmd_schema material_root_schema = {
+    "material", "Manage material objects and assignments", NULL, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static int material_tree_execute(void *data, int argc, const char *argv[]);
+static const struct bu_cmd_tree_node material_subcommands[] = {
+    BU_CMD_TREE_NODE(&material_assign_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_CMD_TREE_NODE(&material_create_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_CMD_TREE_NODE(&material_destroy_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_CMD_TREE_NODE(&material_get_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_CMD_TREE_NODE(&material_import_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_CMD_TREE_NODE(&material_remove_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_CMD_TREE_NODE(&material_set_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_CMD_TREE_NODE(&material_help_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree ged_material_tree = {
+    &material_root_schema, material_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+
+static const struct bu_cmd_schema *
+material_schema_for_command(const char *command)
+{
+    const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(&ged_material_tree, command);
+    return node ? node->schema : NULL;
+}
+
+
+static int
+material_tree_parse(struct ged *gedp, const struct bu_cmd_schema *schema,
+	int argc, const char *argv[])
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int ret = BRLCAD_ERROR;
+
+    if (bu_cmd_schema_parse_complete(schema, NULL, &msg, argc - 1, argv + 1) >= 0) {
+	ret = BRLCAD_OK;
+    } else if (bu_vls_strlen(&msg)) {
+	bu_vls_vlscat(gedp->ged_result_str, &msg);
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Invalid material %s arguments.", schema->name);
+    }
+    bu_vls_free(&msg);
+    return ret;
+}
+
+
+static void
+material_tree_show_help(struct ged *gedp)
+{
+    char *help = bu_cmd_tree_describe(&ged_material_tree);
+
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "material native tree help");
+    }
+    bu_vls_printf(gedp->ged_result_str, "\n%s", possibleProperties);
+}
+
+
+static int
+material_tree_execute(void *data, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)data;
+    const struct bu_cmd_schema *schema = material_schema_for_command(argv[0]);
+
+    if (!schema || material_tree_parse(gedp, schema, argc, argv) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (BU_STR_EQUAL(argv[0], "assign"))
+	return assign_material(gedp, argc, argv);
+    if (BU_STR_EQUAL(argv[0], "create"))
+	return create_material(gedp, argc, argv);
+    if (BU_STR_EQUAL(argv[0], "destroy"))
+	return destroy_material(gedp, argc, argv);
+    if (BU_STR_EQUAL(argv[0], "get"))
+	return get_material(gedp, argc, argv);
+    if (BU_STR_EQUAL(argv[0], "import"))
+	return import_materials(gedp, argc, argv);
+    if (BU_STR_EQUAL(argv[0], "remove"))
+	return remove_material(gedp, argc, argv);
+    if (BU_STR_EQUAL(argv[0], "set"))
+	return set_material(gedp, argc, argv);
+    if (BU_STR_EQUAL(argv[0], "help")) {
+	material_tree_show_help(gedp);
+	return GED_HELP;
+    }
+    return BRLCAD_ERROR;
 }
 
 
 static int
 ged_material_core(struct ged *gedp, int argc, const char *argv[])
 {
-    material_cmd_t scmd;
+    int ret = BRLCAD_ERROR;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialization */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* incorrect arguments */
-    if (argc < 2) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], material_usage);
-        return GED_HELP;
+    if (argc == 1) {
+	material_tree_show_help(gedp);
+	return GED_HELP;
     }
+    if (bu_cmd_tree_dispatch(&ged_material_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+	return ret;
 
-    scmd = get_material_cmd(argv[1]);
-
-    if (scmd == MATERIAL_ASSIGN) {
-        // assign routine
-        assign_material(gedp, argc, argv);
-    } else if (scmd == MATERIAL_CREATE) {
-        // create routine
-        create_material(gedp, argc, argv);
-    } else if (scmd == MATERIAL_DESTROY) {
-        // destroy routine
-        destroy_material(gedp, argc, argv);
-    } else if (scmd == MATERIAL_IMPORT) {
-        // import routine
-        import_materials(gedp, argc, argv);
-    } else if (scmd == MATERIAL_GET) {
-        // get routine
-        get_material(gedp, argc, argv);
-    } else if (scmd == MATERIAL_HELP) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], material_usage);
-        bu_vls_printf(gedp->ged_result_str, "%s", possibleProperties);
-    }
-    else if (scmd == MATERIAL_REMOVE) {
-        // set routine
-        remove_material(gedp, argc, argv);
-    }
-    else if (scmd == MATERIAL_SET) {
-        // set routine
-        set_material(gedp, argc, argv);
-    } else {
-        bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid subcommand.\n", argv[1]);
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], material_usage);
-    }
-
-    return 0;
+    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid material subcommand.\n", argv[1]);
+    material_tree_show_help(gedp);
+    return BRLCAD_ERROR;
 }
 
-#include "../include/plugin.h"
+
+static int
+ged_material_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &ged_material_tree, input, cursor_pos, result);
+}
+
+
+static int
+ged_material_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &ged_material_tree, input, analysis);
+}
+
+
+static char *
+ged_material_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&ged_material_tree);
+}
+
+
+static int
+ged_material_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&ged_material_tree, msgs);
+}
+
+
+static const struct ged_cmd_grammar ged_material_grammar = {
+    "material", "Manage material objects and assignments", ged_material_grammar_validate,
+    ged_material_grammar_analyze, ged_material_grammar_json, ged_material_grammar_lint
+};
 
 #define GED_MATERIAL_COMMANDS(X, XID) \
-    X(material, ged_material_core, GED_CMD_DEFAULT) \
+    X(material, ged_material_core, GED_CMD_DEFAULT, &ged_material_grammar) \
 
-GED_DECLARE_COMMAND_SET(GED_MATERIAL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_material", 1, GED_MATERIAL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_MATERIAL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_material", 1, GED_MATERIAL_COMMANDS)
 
 /*
  * Local Variables:

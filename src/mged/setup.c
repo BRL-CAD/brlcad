@@ -128,6 +128,8 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "check", cmd_ged_plain_wrapper, ged_exec_check, NULL},
     {MGED_CMD_MAGIC, "clone", cmd_ged_edit_wrapper, ged_exec_clone, NULL},
     {MGED_CMD_MAGIC, "closedb", f_closedb, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "cmd_complete", cmd_cmd_complete, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "cmd_analyze", cmd_cmd_analyze, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "coil", cmd_ged_plain_wrapper, ged_exec_coil, NULL},
     {MGED_CMD_MAGIC, "color", cmd_ged_plain_wrapper, ged_exec_color, NULL},
@@ -528,6 +530,11 @@ cmd_setup(struct mged_state *s)
 	(void)Tcl_CreateCommand(s->interp, bu_vls_addr(&temp), ctp->tcl_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
+
+    /* Tcl helper for the text-widget prompt; do not expose this as an MGED
+     * command or include it in the user-visible completion set. */
+    (void)Tcl_CreateCommand(s->interp, "_mged_lineedit_colors",
+	    cmd_lineedit_colors, (ClientData)s, (Tcl_CmdDeleteProc *)NULL);
 
     /* Init mged's Tcl interface to libwdb */
     Wdb_Init(s->interp);

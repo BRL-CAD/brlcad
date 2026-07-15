@@ -1,0 +1,32 @@
+cmd_complete {draw all.g/t rest} 12
+cmd_complete {draw all.g/t rest} 12 0
+cmd_complete {search -exec dr} 15
+cmd_complete {search -exec draw "a"} 21
+cmd_complete {search -exec draw {}} 20
+cmd_complete {search -exec draw "{}" ;} 24
+set mged_default(completion_mode) filter
+puts "completion-mode:[mged_completion_mode]"
+set glob_compat_mode 0
+set analysis [cmd_analyze {search -exec draw "{}" ";"}]
+set styles {}
+foreach token $analysis {lappend styles [lindex $token 6]}
+puts "analysis-count:[llength $analysis]"
+puts "analysis-styles:$styles"
+set analysis [cmd_analyze {search -exec draw {} ";"}]
+puts "analysis-empty-style:[lindex [lindex $analysis 3] 6]"
+set analysis [cmd_analyze {search -exec draw "{}" ;}]
+puts "analysis-bare-semicolon:[lindex [lindex $analysis 3] 6]"
+set analysis [cmd_analyze {search -exec $cmd "{}" ";"}]
+puts "analysis-dynamic-command:[lindex [lindex $analysis 2] 6]"
+proc local_search_exec {args} {return 1}
+set analysis [cmd_analyze {search -exec local_search_exec "{}" ";"}]
+puts "analysis-tcl-command:[lindex [lindex $analysis 2] 6]"
+proc test_glob_analysis {} {
+    global glob_compat_mode
+    set glob_compat_mode 1
+    set result [cmd_analyze {search -name *.s}]
+    set glob_compat_mode 0
+    return [lindex [lindex $result 2] 6]
+}
+puts "analysis-glob-style:[test_glob_analysis]"
+quit

@@ -29,11 +29,75 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
+
+
+struct metaball_move_args {
+    int relative;
+};
+
+
+static int
+metaball_point_validate(struct bu_vls *msg, const char *arg)
+{
+    fastf_t point[3] = {0.0, 0.0, 0.0};
+    const char *argv[1] = {arg};
+
+    if (bu_cmd_vector3_from_argv(point, 1, argv) == 1)
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "metaball point must be a packed finite XYZ value\n");
+    return -1;
+}
+
+
+static const struct bu_cmd_operand metaball_delete_operands[] = {
+    BU_CMD_OPERAND("metaball", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"Metaball object or path", "ged.db_path"),
+    BU_CMD_OPERAND("point_index", BU_CMD_VALUE_INTEGER, 1, 1,
+	"Metaball point index", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand metaball_move_operands[] = {
+    BU_CMD_OPERAND("metaball", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"Metaball object or path", "ged.db_path"),
+    BU_CMD_OPERAND("point_index", BU_CMD_VALUE_INTEGER, 1, 1,
+	"Metaball point index", NULL),
+    BU_CMD_OPERAND_VALIDATE("point", BU_CMD_VALUE_VECTOR, 1, 1,
+	metaball_point_validate, "Packed XYZ point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand metaball_add_operands[] = {
+    BU_CMD_OPERAND("metaball", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"Metaball object or path", "ged.db_path"),
+    BU_CMD_OPERAND_VALIDATE("point", BU_CMD_VALUE_VECTOR, 1, 1,
+	metaball_point_validate, "Packed XYZ point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_option metaball_move_options[] = {
+    BU_CMD_FLAG("r", NULL, struct metaball_move_args, relative,
+	"Interpret point relative to current point"),
+    BU_CMD_OPTION_NULL
+};
+#define METABALL_SCHEMA(_id, _name, _help, _options, _operands) \
+    static const struct bu_cmd_schema _id = { \
+	_name, _help, _options, _operands, BU_CMD_PARSE_OPTIONS_FIRST, \
+	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    }
+METABALL_SCHEMA(metaball_delete_schema, "metaball_delete_pnt", "Delete a metaball point",
+    NULL, metaball_delete_operands);
+METABALL_SCHEMA(metaball_move_schema, "metaball_move_pnt", "Move a metaball point",
+    metaball_move_options, metaball_move_operands);
+METABALL_SCHEMA(mouse_move_metaball_schema, "mouse_move_metaball_pnt", "Move a metaball point from mouse input",
+    metaball_move_options, metaball_move_operands);
+METABALL_SCHEMA(mouse_add_metaball_schema, "mouse_add_metaball_pnt", "Add a metaball point from mouse input",
+    NULL, metaball_add_operands);
+#undef METABALL_SCHEMA
 
 /*
  * Returns the index for the metaball point matching mbpp.
@@ -239,6 +303,11 @@ ged_metaball_add_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    if (bu_cmd_schema_parse_complete(&mouse_add_metaball_schema, NULL,
+	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
@@ -260,9 +329,15 @@ ged_metaball_add_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
+	{
+	fastf_t parsed[3] = {0.0, 0.0, 0.0};
+	const char *point_argv[1] = {argv[2]};
+	if (bu_cmd_vector3_from_argv(parsed, 1, point_argv) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
+	}
+	for (size_t i = 0; i < 3; i++)
+	    scan[i] = parsed[i];
     }
     /* convert from double to fastf_t */
     VMOVE(view_mb_pt, scan);
@@ -375,6 +450,11 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    if (bu_cmd_schema_parse_complete(&metaball_delete_schema, NULL,
+	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
@@ -396,8 +476,9 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%d", &pt_i) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[3]);
+
+    if (!bu_cmd_integer_from_str(&pt_i, argv[2])) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
@@ -448,6 +529,7 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     int seg_i;
     int rflag = 0;
     const char *last;
+    struct metaball_move_args options = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -461,17 +543,17 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    if (bu_cmd_schema_parse_complete(&metaball_move_schema, &options,
+	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
     if (argc < 4 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    if (argc == 5) {
-	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
-
+    if (options.relative) {
 	rflag = 1;
 	--argc;
 	++argv;
@@ -493,14 +575,20 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%d", &seg_i) != 1) {
+    if (!bu_cmd_integer_from_str(&seg_i, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
+	{
+	fastf_t parsed[3] = {0.0, 0.0, 0.0};
+	const char *point_argv[1] = {argv[3]};
+	if (bu_cmd_vector3_from_argv(parsed, 1, point_argv) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
+	}
+	for (size_t i = 0; i < 3; i++)
+	    scan[i] = parsed[i];
     }
     VSCALE(mb_pt, scan, gedp->dbip->dbi_local2base);
 
@@ -552,13 +640,13 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_METABALL_COMMANDS(X, XID) \
-    X(metaball_delete_pnt, ged_metaball_delete_pnt_core, GED_CMD_DEFAULT) \
-    X(metaball_move_pnt, ged_metaball_move_pnt_core, GED_CMD_DEFAULT) \
-    X(mouse_move_metaball_pnt, ged_metaball_move_pnt_core, GED_CMD_DEFAULT) \
-    X(mouse_add_metaball_pnt, ged_metaball_add_pnt_core, GED_CMD_DEFAULT) \
+    X(metaball_delete_pnt, ged_metaball_delete_pnt_core, GED_CMD_DEFAULT, &metaball_delete_schema) \
+    X(metaball_move_pnt, ged_metaball_move_pnt_core, GED_CMD_DEFAULT, &metaball_move_schema) \
+    X(mouse_move_metaball_pnt, ged_metaball_move_pnt_core, GED_CMD_DEFAULT, &mouse_move_metaball_schema) \
+    X(mouse_add_metaball_pnt, ged_metaball_add_pnt_core, GED_CMD_DEFAULT, &mouse_add_metaball_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_METABALL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_metaball", 1, GED_METABALL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_METABALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_metaball", 1, GED_METABALL_COMMANDS)
 
 /*
  * Local Variables:

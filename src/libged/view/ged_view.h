@@ -34,9 +34,9 @@ __BEGIN_DECLS
 
 struct _ged_view_info {
     struct ged *gedp;
-    int verbosity;
+    long verbosity;
     const struct bu_cmdtab *cmds;
-    struct bu_opt_desc *gopts;
+    void *gopts;
     const char *vobj;
     struct bview *cv;
     struct bv_scene_obj *s;
@@ -50,6 +50,19 @@ extern int _view_cmd_lod(void *bs, int argc, const char **argv);
 extern int _view_cmd_polygons(void *bs, int argc, const char **argv);
 extern int _view_cmd_objs(void *bs, int argc, const char **argv);
 extern int _view_cmd_gobjs(void *bs, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_view_axes_schema;
+extern const struct bu_cmd_tree_node ged_view_axes_subcommands[];
+extern const struct bu_cmd_tree ged_view_axes_tree;
+extern const struct bu_cmd_schema ged_view_line_schema;
+extern const struct bu_cmd_tree_node ged_view_line_subcommands[];
+extern const struct bu_cmd_tree ged_view_line_tree;
+extern const struct bu_cmd_schema ged_view_label_schema;
+extern const struct bu_cmd_tree_node ged_view_label_subcommands[];
+extern const struct bu_cmd_tree ged_view_label_tree;
+extern const struct bu_cmd_schema ged_view_polygon_schema;
+extern const struct bu_cmd_tree_node ged_view_polygon_subcommands[];
+extern const struct bu_cmd_tree ged_view_polygon_tree;
+extern const struct bu_cmd_schema ged_view_obj_schema;
 
 extern int ged_aet_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_align_core(struct ged *gedp, int argc, const char **argv);

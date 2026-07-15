@@ -35,7 +35,7 @@ extern "C" {
 #include "../alphanum.h"
 }
 
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/ptbl.h"
 #include "bu/sort.h"
 #include "bu/tbl.h"
@@ -430,9 +430,91 @@ stat_output(struct bu_tbl *table, struct ged *gedp, struct directory *dp, const 
  * Command function and user option handling *
  *********************************************/
 
+struct stat_args {
+    int print_help;
+    long verbosity;
+    long quiet;
+    int raw;
+    struct bu_vls search_filter;
+    struct bu_vls sort_str;
+    struct bu_vls keys_str;
+    const char *output_file;
+};
+
+
+static const struct bu_cmd_arg_shape stat_filter_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_CUSTOM, 1, 1, "Search expression language");
+static const struct bu_cmd_arg_shape stat_columns_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_COMMA_LIST, 1, 1, "Comma-separated column names");
+static const struct bu_cmd_arg_shape stat_pattern_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_RANGE_PATTERN, 1, 1, "Database name or glob pattern");
+static const char * const stat_column_keywords[] = {
+    "name", "uses", "refs", "flags", "major_type", "minor_type", "type", "size", NULL
+};
+static const struct bu_cmd_option stat_schema_options[] = {
+    BU_CMD_FLAG("h", "help", struct stat_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_COUNTING_LONG_FLAG("v", "verbosity", struct stat_args, verbosity,
+	"Increase output verbosity"),
+    BU_CMD_COUNTING_LONG_FLAG("q", "quiet", struct stat_args, quiet,
+	"Decrease output verbosity"),
+    BU_CMD_FLAG("r", "raw", struct stat_args, raw, "Print raw values"),
+    {"F", "filter", "filter", "expression", "Filter using a search expression",
+	BU_CMD_VALUE_VLS, offsetof(struct stat_args, search_filter), NULL, NULL,
+	"ged.search", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, &stat_filter_shape, NULL, NULL},
+    {"C", "columns", "columns", "columns", "Comma-separated output columns",
+	BU_CMD_VALUE_VLS, offsetof(struct stat_args, keys_str), NULL, NULL, NULL,
+	NULL, 0, 0, stat_column_keywords, BU_CMD_ARG_REQUIRED, &stat_columns_shape, NULL, NULL},
+    {"S", "sort-order", "sort-order", "columns", "Comma-separated sort columns",
+	BU_CMD_VALUE_VLS, offsetof(struct stat_args, sort_str), NULL, NULL, NULL,
+	NULL, 0, 0, stat_column_keywords, BU_CMD_ARG_REQUIRED, &stat_columns_shape, NULL, NULL},
+    BU_CMD_FILE("o", "output-file", struct stat_args, output_file, "file",
+	"Write output to a new file"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand stat_schema_operands[] = {
+    BU_CMD_OPERAND_SHAPED("patterns", BU_CMD_VALUE_DB_PATH, 1,
+	BU_CMD_COUNT_UNLIMITED, NULL, "Database names, paths, or glob patterns",
+	"ged.db_path", &stat_pattern_shape),
+    BU_CMD_OPERAND_NULL
+};
+
+
+static int
+stat_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+    if (!bu_cmd_schema_option_present(schema, argc, argv, "help"))
+	return 0;
+
+    bu_cmd_validate_result_clear(result);
+    result->state = BU_CMD_VALIDATE_VALID;
+    result->token_start = cursor_arg < argc ? cursor_arg : argc;
+    result->token_end = result->token_start;
+    result->expected = BU_CMD_EXPECT_NONE;
+    result->completion_type = BU_CMD_VALUE_FLAG;
+    result->hint = "command help";
+    return 0;
+}
+
+
+static const struct bu_cmd_schema stat_cmd_schema = {
+    "stat", "Report tabular database object statistics", stat_schema_options,
+    stat_schema_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(stat_schema_validate, NULL)
+};
+
+
 static void
-stat_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
-    char *option_help = bu_opt_describe(d, NULL);
+stat_usage(struct bu_vls *str, const char *cmd) {
+    char *option_help = bu_cmd_schema_describe(&stat_cmd_schema);
     bu_vls_sprintf(str, "Usage: %s [options] pattern\n", cmd);
     if (option_help) {
 	bu_vls_printf(str, "Options:\n%s\n", option_help);
@@ -456,97 +538,72 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     if (!gedp || !argc || !argv)
 	return BRLCAD_ERROR;
 
-    int print_help = 0;;
-    long verbosity = 1;
-    long quiet = 0;
-    int raw = 0;
+    struct stat_args args = {0, 1, 0, 0, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO,
+	BU_VLS_INIT_ZERO, NULL};
+    int operand_count;
+    const char **operands;
     struct bu_ptbl sobjs = BU_PTBL_INIT_ZERO;
-    struct bu_vls search_filter = BU_VLS_INIT_ZERO;
-    struct bu_vls sort_str = BU_VLS_INIT_ZERO;
-    struct bu_vls keys_str = BU_VLS_INIT_ZERO;
-    struct bu_vls ofile = BU_VLS_INIT_ZERO;
     FILE *fp = NULL;
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct db_i *dbip = gedp->dbip;
     const char *pname = argv[0];
-
-    // Stashed command name, increment and continue
-    argc--;argv++;
 
     // Clear result string
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bu_opt_desc d[9];
-    BU_OPT(d[0], "h", "help",       "",            NULL,              &print_help,    "Print help and exit");
-    BU_OPT(d[1], "?", "",           "",            NULL,              &print_help,    "");
-    BU_OPT(d[2], "v", "verbosity",  "",            &bu_opt_incr_long, &verbosity,     "Increase output verbosity (multiple specifications of -v increase verbosity more)");
-    BU_OPT(d[3], "q", "quiet",      "",            &bu_opt_incr_long, &quiet,         "Decrease output verbosity (multiple specifications of -q decrease verbosity more)");
-    BU_OPT(d[3], "r", "raw",       "",             NULL ,             &raw,           "Print raw values instead of human friendly values");
-    BU_OPT(d[4], "F", "filter",     "\"string\"",  &bu_opt_vls,       &search_filter, "Filter objects being reported (uses search style filter specifications)");
-    BU_OPT(d[5], "C", "columns",       "\"type1[,type2]...\"",  &bu_opt_vls,       &keys_str,      "Comma separated list of data columns to print");
-    BU_OPT(d[6], "S", "sort-order",       "\"type1[,type2]...\"",  &bu_opt_vls,       &sort_str,      "Comma separated list of cols to sort by (priority is left to right).  To reverse sorting order for an individual column, prefix the specifier with a '!' character.");
-    BU_OPT(d[7], "o", "output-file",    "filename",  &bu_opt_vls,       &ofile,      "Write output to file");
-    BU_OPT_NULL(d[8]);
-
-    int ret_ac = bu_opt_parse(&msg, argc, argv, d);
-    if (ret_ac < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&msg));
-	bu_vls_free(&msg);
-	bu_vls_free(&search_filter);
-	bu_vls_free(&sort_str);
-	bu_vls_free(&keys_str);
-	bu_vls_free(&ofile);
+    int operand_index = bu_cmd_schema_parse_complete(&stat_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_vls_free(&args.search_filter);
+	bu_vls_free(&args.sort_str);
+	bu_vls_free(&args.keys_str);
 	return BRLCAD_ERROR;
     }
-    bu_vls_free(&msg);
+    operand_count = argc - 1 - operand_index;
+    operands = argv + operand_index + 1;
 
-    if (print_help) {
-	stat_usage(gedp->ged_result_str, pname, d);
-	bu_vls_free(&search_filter);
-	bu_vls_free(&sort_str);
-	bu_vls_free(&keys_str);
-	bu_vls_free(&ofile);
+    if (args.print_help) {
+	stat_usage(gedp->ged_result_str, pname);
+	bu_vls_free(&args.search_filter);
+	bu_vls_free(&args.sort_str);
+	bu_vls_free(&args.keys_str);
 	return GED_HELP;
     }
 
     // If we have one or a series of patterns, process
     // them - otherwise, report usage.
-    argc = ret_ac;
-    if (!argc) {
-	stat_usage(gedp->ged_result_str, pname, d);
-	bu_vls_free(&search_filter);
-	bu_vls_free(&sort_str);
-	bu_vls_free(&keys_str);
-	bu_vls_free(&ofile);
+    if (!operand_count) {
+	stat_usage(gedp->ged_result_str, pname);
+	bu_vls_free(&args.search_filter);
+	bu_vls_free(&args.sort_str);
+	bu_vls_free(&args.keys_str);
 	return BRLCAD_ERROR;
     }
 
     // If we have an output file specified, make sure it's not already there
-    if (bu_vls_strlen(&ofile)) {
+    if (args.output_file) {
 	int oret = 0;
-	if (bu_file_exists(bu_vls_cstr(&ofile), NULL)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s already exists, not overwriting", bu_vls_cstr(&ofile));
+	if (bu_file_exists(args.output_file, NULL)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s already exists, not overwriting", args.output_file);
 	    oret = 1;
 	}
 	if (!oret) {
-	    fp = fopen(bu_vls_cstr(&ofile), "wb");
+	    fp = fopen(args.output_file, "wb");
 	    if (!fp) {
-		bu_vls_printf(gedp->ged_result_str, "failed to open %s", bu_vls_cstr(&ofile));
+		bu_vls_printf(gedp->ged_result_str, "failed to open %s", args.output_file);
 		oret = 1;
 	    }
 	}
 	if (oret) {
-	    bu_vls_free(&search_filter);
-	    bu_vls_free(&sort_str);
-	    bu_vls_free(&keys_str);
-	    bu_vls_free(&ofile);
+	    bu_vls_free(&args.search_filter);
+	    bu_vls_free(&args.sort_str);
+	    bu_vls_free(&args.keys_str);
 	    return BRLCAD_ERROR;
 	}
     }
 
-    if (!bu_vls_strlen(&keys_str)) {
+    if (!bu_vls_strlen(&args.keys_str)) {
 	// No key set supplied - set defaults based on verbosity
-	bu_vls_sprintf(&keys_str, "name,uses,refs,flags,type,size");
+	bu_vls_sprintf(&args.keys_str, "name,uses,refs,flags,type,size");
     }
 
     // Make sure our info is current
@@ -559,10 +616,10 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     db_update_nref(dbip);
 
     // Combine verbosity and quiet flags
-    verbosity = verbosity - quiet;
+    args.verbosity = args.verbosity - args.quiet;
 
     /* Split the key string up into individual keys */
-    std::vector<std::string> keys = _stat_keys_split(std::string(bu_vls_cstr(&keys_str)));
+    std::vector<std::string> keys = _stat_keys_split(std::string(bu_vls_cstr(&args.keys_str)));
 
     // Create table
     struct bu_tbl *table = bu_tbl_create();
@@ -577,10 +634,10 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     bu_tbl_style(table, BU_TBL_ROW_SEPARATOR);
 
     // If we're going to filter, build the set of "allowed" objects
-    if (bu_vls_strlen(&search_filter)) {
+    if (bu_vls_strlen(&args.search_filter)) {
 	int s_flags = 0;
 	s_flags |= DB_SEARCH_RETURN_UNIQ_DP;
-	(void)db_search(&sobjs, s_flags, bu_vls_cstr(&search_filter), 0, NULL, dbip, NULL, NULL, NULL);
+	(void)db_search(&sobjs, s_flags, bu_vls_cstr(&args.search_filter), 0, NULL, dbip, NULL, NULL, NULL);
 
 	// If we're not allowed *any* objects according to the filters, there's no point in
 	// doing any more work - just print the header and exit.
@@ -591,23 +648,22 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(&tstr);
 	    bu_tbl_destroy(table);
 	    bu_ptbl_free(&sobjs);
-	    bu_vls_free(&keys_str);
-	    bu_vls_free(&ofile);
-	    bu_vls_free(&search_filter);
-	    bu_vls_free(&sort_str);
+	    bu_vls_free(&args.keys_str);
+	    bu_vls_free(&args.search_filter);
+	    bu_vls_free(&args.sort_str);
 	    return BRLCAD_OK;
 	}
     }
 
     std::set<struct directory *> udp;
 
-    for (int i = 0; i < argc; i++) {
+    for (int i = 0; i < operand_count; i++) {
 
 	struct directory **paths = NULL;
-	int path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, argv[i], &paths);
+	int path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, operands[i], &paths);
 
 	if (!paths) {
-	    bu_log("WARNING:  path specifier %s does not match any geometry - skipping", argv[i]);
+	    bu_log("WARNING:  path specifier %s does not match any geometry - skipping", operands[i]);
 	    continue;
 	}
 
@@ -633,12 +689,12 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp = *o_it;
 	bu_ptbl_ins(&objs,  (long *)dp);
     }
-    dpath_sort((void *)objs.buffer, BU_PTBL_LEN(&objs), bu_vls_cstr(&sort_str), gedp);
+    dpath_sort((void *)objs.buffer, BU_PTBL_LEN(&objs), bu_vls_cstr(&args.sort_str), gedp);
 
     for (size_t j = 0; j < BU_PTBL_LEN(&objs); j++) {
 	struct directory *dp = (struct directory *)BU_PTBL_GET(&objs, j);
 	for (size_t k = 0; k < keys.size(); k++) {
-	    stat_output(table, gedp, dp, keys[k].c_str(), raw);
+	    stat_output(table, gedp, dp, keys[k].c_str(), args.raw);
 	}
 	bu_tbl_style(table, BU_TBL_ROW_END);
     }
@@ -655,10 +711,9 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&tstr);
     bu_tbl_destroy(table);
     bu_ptbl_free(&sobjs);
-    bu_vls_free(&keys_str);
-    bu_vls_free(&ofile);
-    bu_vls_free(&search_filter);
-    bu_vls_free(&sort_str);
+    bu_vls_free(&args.keys_str);
+    bu_vls_free(&args.search_filter);
+    bu_vls_free(&args.sort_str);
 
     return BRLCAD_OK;
 }
@@ -666,10 +721,10 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_STAT_COMMANDS(X, XID) \
-    XID(statcmd, "stat", ged_stat_core,  GED_CMD_DEFAULT)
+    XID(statcmd, "stat", ged_stat_core, GED_CMD_DEFAULT, &stat_cmd_schema)
 
-GED_DECLARE_COMMAND_SET(GED_STAT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_stat", 1, GED_STAT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_STAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_stat", 1, GED_STAT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

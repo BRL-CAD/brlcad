@@ -28,9 +28,11 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
+#include "ged_arb.h"
 
 
 static const short int arb_vertices[5][24] = {
@@ -39,6 +41,93 @@ static const short int arb_vertices[5][24] = {
     { 1, 2, 3, 4, 2, 3, 6, 5, 1, 5, 6, 4, 1, 2, 5, 0, 3, 4, 6, 0, 0, 0, 0, 0 },	/* arb6 */
     { 1, 2, 3, 4, 5, 6, 7, 0, 1, 4, 5, 0, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 5 },	/* arb7 */
     { 1, 2, 3, 4, 5, 6, 7, 8, 1, 5, 8, 4, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 8 }	/* arb8 */
+};
+
+
+static int
+rotate_arb_face_count(int arb_type)
+{
+    switch (arb_type) {
+	case ARB4: return 4;
+	case ARB5:
+	case ARB6: return 5;
+	case ARB7:
+	case ARB8: return 6;
+	default: return 0;
+    }
+}
+
+
+static int
+rotate_arb_face_index_validate(struct bu_vls *msg, const char *arg)
+{
+    int value;
+
+    if (bu_cmd_integer_from_str(&value, arg) && value >= 1 && value <= 6)
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "ARB face must be an integer from 1 through 6: %s\n", arg ? arg : "");
+    return -1;
+}
+
+
+static int
+rotate_arb_vertex_index_validate(struct bu_vls *msg, const char *arg)
+{
+    int value;
+
+    if (bu_cmd_integer_from_str(&value, arg) && value >= 1 && value <= 8)
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "ARB vertex must be an integer from 1 through 8: %s\n", arg ? arg : "");
+    return -1;
+}
+
+
+static int
+rotate_arb_face_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    fastf_t rotation[3] = {0.0, 0.0, 0.0};
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc < 4)
+	return ret;
+    if (bu_cmd_vector3_from_argv(rotation, 1, (const char * const *)argv + 3) != 1) {
+	bu_cmd_validate_result_clear(result);
+	result->state = BU_CMD_VALIDATE_INVALID;
+	result->token_start = 3;
+	result->token_end = 3;
+	result->expected = BU_CMD_EXPECT_OPERAND;
+	result->completion_type = BU_CMD_VALUE_VECTOR;
+	result->semantic_provider = "ged.vector_group";
+	result->hint = "packed finite XYZ rotation required";
+    } else {
+	/* The schema owns this packed vector as a whole. */
+	result->semantic_provider = "ged.vector_group";
+    }
+    return 0;
+}
+
+
+static const struct bu_cmd_operand rotate_arb_face_operands[] = {
+    BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"ARB object or path", "ged.db_path"),
+    BU_CMD_OPERAND_VALIDATE("face", BU_CMD_VALUE_INTEGER, 1, 1,
+	rotate_arb_face_index_validate, "Face number (1 through 6)", NULL),
+    BU_CMD_OPERAND_VALIDATE("vertex", BU_CMD_VALUE_INTEGER, 1, 1,
+	rotate_arb_vertex_index_validate, "Vertex number (1 through 8)", NULL),
+    BU_CMD_OPERAND("rotation", BU_CMD_VALUE_VECTOR, 1, 1,
+	"Packed XYZ rotation angles", "ged.vector_group"),
+    BU_CMD_OPERAND_NULL
+};
+extern const struct bu_cmd_schema ged_rotate_arb_face_schema = {
+    "rotate_arb_face", "Rotate an ARB face about a vertex", NULL,
+    rotate_arb_face_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(rotate_arb_face_schema_validate, NULL)
 };
 
 
@@ -57,8 +146,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     int pnt5;		/* special arb7 case */
     char *last;
 
-    /* intentionally double for scan */
-    double pt[3];
+    fastf_t pt[3];
 
     static const char *usage = "arb face pt rvec";
 
@@ -75,8 +163,10 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 5) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (bu_cmd_schema_parse_complete(&ged_rotate_arb_face_schema, NULL,
+	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
+	if (!bu_vls_strlen(gedp->ged_result_str))
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
@@ -105,17 +195,16 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Object not an ARB");
 	rt_db_free_internal(&intern);
 
-	return BRLCAD_OK;
+	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%d", &face) != 1) {
+    if (!bu_cmd_integer_from_str(&face, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
     }
 
-    /*XXX need better checking of the face */
     face -= 1;
     if (face < 0 || 5 < face) {
 	bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]);
@@ -124,15 +213,14 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%d", &vi) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "bad vertex index - %s", argv[2]);
+    if (!bu_cmd_integer_from_str(&vi, argv[3])) {
+	bu_vls_printf(gedp->ged_result_str, "bad vertex index - %s", argv[3]);
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
     }
 
 
-    /*XXX need better checking of the vertex index */
     vi -= 1;
     if (vi < 0 || 7 < vi) {
 	bu_vls_printf(gedp->ged_result_str, "bad vertex - %s", argv[2]);
@@ -141,8 +229,8 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "bad point - %s", argv[3]);
+    if (bu_cmd_vector3_from_argv(pt, 1, (const char * const *)argv + 4) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "bad rotation vector - %s", argv[4]);
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -152,6 +240,13 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     RT_ARB_CK_MAGIC(arb);
 
     arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
+
+    if (face >= rotate_arb_face_count(arb_type)) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "bad face - %s is not valid for this ARB type", argv[2]);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
 
     if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);

@@ -28,23 +28,32 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
 
 
-static int pathListNoLeaf = 0;
+struct pathlist_args {
+    int no_leaf;
+};
+
+struct pathlist_walk_state {
+    struct ged *gedp;
+    int no_leaf;
+};
 
 
 static union tree *
 pathlist_leaf_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
-    struct ged *gedp = (struct ged *)client_data;
+    struct pathlist_walk_state *state = (struct pathlist_walk_state *)client_data;
+    struct ged *gedp = state->gedp;
     char *str;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_DB_INTERNAL(ip);
 
-    if (pathListNoLeaf) {
+    if (state->no_leaf) {
 	struct db_full_path pp;
 	db_full_path_init(&pp);
 	db_dup_full_path(&pp, pathp);
@@ -62,10 +71,31 @@ pathlist_leaf_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path 
 }
 
 
+static const struct bu_cmd_option pathlist_schema_options[] = {
+    BU_CMD_FLAG("n", "noleaf", struct pathlist_args, no_leaf,
+	"Omit leaf names from reported paths"),
+    BU_CMD_ALIAS_SHORT("noleaf", "noleaf", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand pathlist_schema_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Database tree root", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema pathlist_cmd_schema = {
+    "pathlist", "List leaf paths below a database object",
+    pathlist_schema_options, pathlist_schema_operands,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+
+
 int
 ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "name";
+    int operand_index;
+    struct pathlist_args args = {0};
+    struct pathlist_walk_state state = {gedp, 0};
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -79,25 +109,21 @@ ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (3 < argc) {
+    operand_index = bu_cmd_schema_parse_complete(&pathlist_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-
-    pathListNoLeaf = 0;
-
-    if (argc == 3) {
-	if (BU_STR_EQUAL(argv[1], "-noleaf"))
-	    pathListNoLeaf = 1;
-
-	++argv;
-	--argc;
-    }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
+    state.no_leaf = args.no_leaf;
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (db_walk_tree(gedp->dbip, argc-1, (const char **)argv+1, 1,
+
+    if (db_walk_tree(gedp->dbip, argc, (const char **)argv, 1,
 		     &wdbp->wdb_initial_tree_state,
-		     0, 0, pathlist_leaf_func, (void *)gedp) < 0) {
+		     0, 0, pathlist_leaf_func, (void *)&state) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ged_pathlist_core: db_walk_tree() error");
 	return BRLCAD_ERROR;
     }
@@ -109,10 +135,10 @@ ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PATHLIST_COMMANDS(X, XID) \
-    X(pathlist, ged_pathlist_core, GED_CMD_DEFAULT) \
+    X(pathlist, ged_pathlist_core, GED_CMD_DEFAULT, &pathlist_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PATHLIST_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_pathlist", 1, GED_PATHLIST_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PATHLIST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_pathlist", 1, GED_PATHLIST_COMMANDS)
 
 /*
  * Local Variables:

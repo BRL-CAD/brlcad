@@ -17,7 +17,7 @@ mv from to
 [[description]]
 == DESCRIPTION
 
-The *move* command (also available as *mv*) renames an existing database object from `from` to `to`. It is a pure rename operation — the object's geometry is unchanged; only its name in the database directory is updated.
+The *move* command (also available as *mv*) renames an existing database object from `from` to `to`. It is a pure rename operation — the object's geometry is unchanged; only its name in the database directory is updated. The destination is a database object name, not a path, and may not contain a slash.
 
 The command performs the following steps:
 

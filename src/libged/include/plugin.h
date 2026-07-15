@@ -26,6 +26,7 @@
 
 #include "../ged_private.h"
 #include "brlcad_version.h"
+#include "bu/cmdschema.h"
 
 #define BU_PLUGIN_NAME ged
 #define BU_PLUGIN_CMD_RET int
@@ -46,11 +47,70 @@ struct ged_cmd_impl {
     const char *cname;
     ged_func_ptr cmd;
     unsigned long long opts;
+    const struct bu_cmd_schema *native_schema;
+    const struct ged_cmd_grammar *grammar;
 };
 
 struct ged_cmd_process_impl {
     ged_process_ptr func;
 };
+
+struct ged_cmd_schema {
+    const char *cname;
+    const struct bu_cmd_schema *native_schema;
+    const struct ged_cmd_grammar *grammar;
+};
+
+#define GED_PLUGIN_SCHEMA_ABI_VERSION 3
+
+struct ged_plugin_schema_manifest {
+    const char *plugin_name;
+    unsigned int version;
+    unsigned int schema_count;
+    const struct ged_cmd_schema *schemas;
+    unsigned int abi_version;
+    size_t struct_size;
+};
+
+/* Compact declaration for commands whose syntax is one repeated typed
+ * positional role and no options.  This emits the native schema directly;
+ * callers supply BU_CMD_VALUE_* and BU_CMD_COUNT_UNLIMITED values rather
+ * than retired descriptor-metadata types. */
+#define GED_DEFINE_TYPED_OPERAND_SCHEMA(id, cmdstr, helpstr, role, valtype, mincnt, maxcnt, rolehelp) \
+    static const struct bu_cmd_operand id##_schema_operands[] = { \
+	BU_CMD_OPERAND(role, valtype, mincnt, maxcnt, rolehelp, NULL), \
+	BU_CMD_OPERAND_NULL \
+    }; \
+    static const struct bu_cmd_schema id##_cmd_schema = { \
+	cmdstr, helpstr, NULL, id##_schema_operands, \
+	BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL} \
+    }
+
+/* Validator helper for parsers accepting a small set of exact positional
+ * counts (for example, query with one object or set with object + XYZ). */
+#define GED_SCHEMA_COUNT_NONE ((size_t)-2)
+#define GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(id, count1, count2, count3) \
+    static int id##_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, \
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result) \
+    { \
+	struct bu_cmd_schema flat = *cmd; \
+	flat.parse_policy = BU_CMD_PARSE_STOP_AT_FIRST_OPERAND; \
+	flat.validation.custom_validate = NULL; \
+	int ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result); \
+	if (ret || result->state == BU_CMD_VALIDATE_INVALID || cursor_arg < argc) \
+	    return ret; \
+	if (argc != (size_t)(count1) && argc != (size_t)(count2) && argc != (size_t)(count3)) { \
+	    bu_cmd_value_t ctype = result->completion_type; \
+	    bu_cmd_validate_result_clear(result); \
+	    result->state = BU_CMD_VALIDATE_INCOMPLETE; \
+	    result->token_start = argc; \
+	    result->token_end = argc; \
+	    result->expected = BU_CMD_EXPECT_OPERAND; \
+	    result->completion_type = ctype; \
+	    result->hint = "additional operands required"; \
+	} \
+	return 0; \
+    }
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,6 +122,8 @@ extern "C" {
     size_t ged_registered_count(void);
     void ged_list_command_names(struct bu_vls *out_csv);
     void ged_list_command_array(const char * const **cl, size_t *cnt);
+    int ged_register_command_native_schema(const char *name, const struct bu_cmd_schema *schema);
+    int ged_register_command_grammar(const char *name, const struct ged_cmd_grammar *grammar);
     void ged_ensure_initialized(void);
     void libged_shutdown(void);
 
@@ -174,7 +236,7 @@ extern "C" {
  *          X(bot, ged_bot_core, GED_CMD_DEFAULT)
  *
  *    Expands (conceptually) to:
- *      struct ged_cmd_impl bot_cmd_impl = { "bot", ged_bot_core, GED_CMD_DEFAULT };
+ *      struct ged_cmd_impl bot_cmd_impl = { "bot", ged_bot_core, GED_CMD_DEFAULT, NULL, NULL };
  *      REGISTER_GED_COMMAND(bot_cmd);   // static-core only
  *
  * 2) XID(symbol, "cmdname", fn, opts)
@@ -186,7 +248,7 @@ extern "C" {
  *          XID(questionmark_cmd, "?", ged_help_core, GED_CMD_DEFAULT)
  *
  *    Expands (conceptually) to:
- *      struct ged_cmd_impl questionmark_cmd_impl = { "?", ged_help_core, GED_CMD_DEFAULT };
+ *      struct ged_cmd_impl questionmark_cmd_impl = { "?", ged_help_core, GED_CMD_DEFAULT, NULL, NULL };
  *      REGISTER_GED_COMMAND(questionmark_cmd);  // static-core only
  *
  *
@@ -236,13 +298,42 @@ extern "C" {
  * stable and reusable across different build modes.
  * --------------------------------------------------------------------------------------- */
 #define GED__DECL_META_X(token, fn, opts)                                            \
-    struct ged_cmd_impl GED_CAT2(GED_CMD_SYM(token), _impl) = { GED_STR(token), fn, opts };
+    struct ged_cmd_impl GED_CAT2(GED_CMD_SYM(token), _impl) = { GED_STR(token), fn, opts, NULL, NULL };
 
 #define GED__DECL_META_XID(sym, cmdstr, fn, opts)                                    \
-    struct ged_cmd_impl GED_CAT2(sym, _impl) = { cmdstr, fn, opts };
+    struct ged_cmd_impl GED_CAT2(sym, _impl) = { cmdstr, fn, opts, NULL, NULL };
+
+#define GED__IGNORE_SCHEMA_X(token, fn, opts, schema)
+#define GED__IGNORE_SCHEMA_XID(sym, cmdstr, fn, opts, schema)
+
+#define GED__DECL_META_NATIVE_SCHEMA_X(token, fn, opts, schema)                      \
+    struct ged_cmd_impl GED_CAT2(GED_CMD_SYM(token), _impl) = { GED_STR(token), fn, opts, schema, NULL };
+
+#define GED__DECL_META_NATIVE_SCHEMA_XID(sym, cmdstr, fn, opts, schema)              \
+    struct ged_cmd_impl GED_CAT2(sym, _impl) = { cmdstr, fn, opts, schema, NULL };
+
+#define GED__DECL_META_GRAMMAR_X(token, fn, opts, grammar)                            \
+    struct ged_cmd_impl GED_CAT2(GED_CMD_SYM(token), _impl) = { GED_STR(token), fn, opts, NULL, grammar };
+
+#define GED__DECL_META_GRAMMAR_XID(sym, cmdstr, fn, opts, grammar)                    \
+    struct ged_cmd_impl GED_CAT2(sym, _impl) = { cmdstr, fn, opts, NULL, grammar };
 
 #define GED_DECLARE_COMMAND_METADATA(LIST_MACRO)                                     \
     LIST_MACRO(GED__DECL_META_X, GED__DECL_META_XID)
+
+#define GED_DECLARE_COMMAND_METADATA_WITH_NATIVE_SCHEMA(LIST_MACRO)                  \
+    LIST_MACRO(GED__DECL_META_NATIVE_SCHEMA_X, GED__DECL_META_NATIVE_SCHEMA_XID)
+
+#define GED_DECLARE_COMMAND_METADATA_WITH_GRAMMAR(LIST_MACRO)                        \
+    LIST_MACRO(GED__DECL_META_GRAMMAR_X, GED__DECL_META_GRAMMAR_XID)
+
+/* A mixed list takes six macro parameters.  Its first pair is retained only
+ * for list source compatibility and must be unused; native-schema and grammar
+ * entries use the second and third pairs respectively. */
+#define GED_DECLARE_COMMAND_METADATA_WITH_MIXED_SCHEMA(LIST_MACRO)                   \
+	LIST_MACRO(GED__IGNORE_SCHEMA_X, GED__IGNORE_SCHEMA_XID,                         \
+	GED__DECL_META_NATIVE_SCHEMA_X, GED__DECL_META_NATIVE_SCHEMA_XID,             \
+	GED__DECL_META_GRAMMAR_X, GED__DECL_META_GRAMMAR_XID)
 
 /* ---------------------------------------------------------------------------------------
  * 2) Static registration anchors (only when using LIBGED static-core)
@@ -262,12 +353,38 @@ extern "C" {
 #define GED__DECL_STATIC_ANCHOR_XID(sym, cmdstr, fn, opts)                           \
     GED_REGISTER_SYM(sym);
 
+#define GED__DECL_STATIC_ANCHOR_NATIVE_SCHEMA_X(token, fn, opts, schema)             \
+    GED_REGISTER_SYM(GED_CMD_SYM(token));
+
+#define GED__DECL_STATIC_ANCHOR_NATIVE_SCHEMA_XID(sym, cmdstr, fn, opts, schema)     \
+    GED_REGISTER_SYM(sym);
+
+#define GED__DECL_STATIC_ANCHOR_GRAMMAR_X(token, fn, opts, grammar)                   \
+    GED_REGISTER_SYM(GED_CMD_SYM(token));
+
+#define GED__DECL_STATIC_ANCHOR_GRAMMAR_XID(sym, cmdstr, fn, opts, grammar)           \
+    GED_REGISTER_SYM(sym);
+
 #if defined(LIBGED_STATIC_CORE) && !defined(GED_PLUGIN_ONLY)
 #  define GED_DECLARE_STATIC_REGISTRATION(LIST_MACRO)                                \
       LIST_MACRO(GED__DECL_STATIC_ANCHOR_X, GED__DECL_STATIC_ANCHOR_XID)
+#  define GED_DECLARE_STATIC_REGISTRATION_WITH_NATIVE_SCHEMA(LIST_MACRO)             \
+      LIST_MACRO(GED__DECL_STATIC_ANCHOR_NATIVE_SCHEMA_X, GED__DECL_STATIC_ANCHOR_NATIVE_SCHEMA_XID)
+#  define GED_DECLARE_STATIC_REGISTRATION_WITH_GRAMMAR(LIST_MACRO)                   \
+      LIST_MACRO(GED__DECL_STATIC_ANCHOR_GRAMMAR_X, GED__DECL_STATIC_ANCHOR_GRAMMAR_XID)
+#  define GED_DECLARE_STATIC_REGISTRATION_WITH_MIXED_SCHEMA(LIST_MACRO)              \
+	  LIST_MACRO(GED__IGNORE_SCHEMA_X, GED__IGNORE_SCHEMA_XID,                      \
+	  GED__DECL_STATIC_ANCHOR_NATIVE_SCHEMA_X, GED__DECL_STATIC_ANCHOR_NATIVE_SCHEMA_XID, \
+	  GED__DECL_STATIC_ANCHOR_GRAMMAR_X, GED__DECL_STATIC_ANCHOR_GRAMMAR_XID)
 #else
 /* File-scope safe no-op */
 #  define GED_DECLARE_STATIC_REGISTRATION(LIST_MACRO)                                \
+      /* static registration disabled */
+#  define GED_DECLARE_STATIC_REGISTRATION_WITH_NATIVE_SCHEMA(LIST_MACRO)             \
+      /* static registration disabled */
+#  define GED_DECLARE_STATIC_REGISTRATION_WITH_GRAMMAR(LIST_MACRO)                   \
+      /* static registration disabled */
+#  define GED_DECLARE_STATIC_REGISTRATION_WITH_MIXED_SCHEMA(LIST_MACRO)              \
       /* static registration disabled */
 #endif
 
@@ -278,11 +395,39 @@ extern "C" {
     GED_DECLARE_COMMAND_METADATA(LIST_MACRO)                                         \
     GED_DECLARE_STATIC_REGISTRATION(LIST_MACRO)
 
+#define GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(LIST_MACRO)                       \
+    GED_DECLARE_COMMAND_METADATA_WITH_NATIVE_SCHEMA(LIST_MACRO)                      \
+    GED_DECLARE_STATIC_REGISTRATION_WITH_NATIVE_SCHEMA(LIST_MACRO)
+
+#define GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(LIST_MACRO)                             \
+    GED_DECLARE_COMMAND_METADATA_WITH_GRAMMAR(LIST_MACRO)                            \
+    GED_DECLARE_STATIC_REGISTRATION_WITH_GRAMMAR(LIST_MACRO)
+
+#define GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(LIST_MACRO)                        \
+    GED_DECLARE_COMMAND_METADATA_WITH_MIXED_SCHEMA(LIST_MACRO)                       \
+    GED_DECLARE_STATIC_REGISTRATION_WITH_MIXED_SCHEMA(LIST_MACRO)
+
 /* ---------------------------------------------------------------------------------------
  * 4) Plugin manifest export (only when building a plugin)
  * --------------------------------------------------------------------------------------- */
 #define GED__DECL_PCMD_X(token, fn, opts) { GED_STR(token), fn },
 #define GED__DECL_PCMD_XID(sym, cmdstr, fn, opts) { cmdstr, fn },
+#define GED__IGNORE_PCMD_SCHEMA_X(token, fn, opts, schema)
+#define GED__IGNORE_PCMD_SCHEMA_XID(sym, cmdstr, fn, opts, schema)
+#define GED__DECL_PCMD_NATIVE_SCHEMA_X(token, fn, opts, schema) { GED_STR(token), fn },
+#define GED__DECL_PCMD_NATIVE_SCHEMA_XID(sym, cmdstr, fn, opts, schema) { cmdstr, fn },
+#define GED__DECL_NATIVE_SCHEMA_X(token, fn, opts, schema) { GED_STR(token), schema, NULL },
+#define GED__DECL_NATIVE_SCHEMA_XID(sym, cmdstr, fn, opts, schema) { cmdstr, schema, NULL },
+#define GED__DECL_PCMD_GRAMMAR_X(token, fn, opts, grammar) { GED_STR(token), fn },
+#define GED__DECL_PCMD_GRAMMAR_XID(sym, cmdstr, fn, opts, grammar) { cmdstr, fn },
+#define GED__DECL_GRAMMAR_X(token, fn, opts, grammar) { GED_STR(token), NULL, grammar },
+#define GED__DECL_GRAMMAR_XID(sym, cmdstr, fn, opts, grammar) { cmdstr, NULL, grammar },
+
+#ifdef __cplusplus
+#  define GED_SCHEMA_EXTERN_C extern "C"
+#else
+#  define GED_SCHEMA_EXTERN_C
+#endif
 
 #ifdef GED_PLUGIN
 #  define GED_DECLARE_PLUGIN_MANIFEST(plugin_name_str, plugin_version_u32, LIST_MACRO) \
@@ -298,9 +443,100 @@ extern "C" {
         sizeof(bu_plugin_manifest)                                                     \
     };                                                                                 \
     BU_PLUGIN_DECLARE_MANIFEST(pinfo)
+#  define GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA(plugin_name_str, plugin_version_u32, LIST_MACRO) \
+    static bu_plugin_cmd pcommands[] = {                                               \
+        LIST_MACRO(GED__DECL_PCMD_NATIVE_SCHEMA_X, GED__DECL_PCMD_NATIVE_SCHEMA_XID)   \
+    };                                                                                 \
+    static const struct ged_cmd_schema pschemas[] = {                                  \
+        LIST_MACRO(GED__DECL_NATIVE_SCHEMA_X, GED__DECL_NATIVE_SCHEMA_XID)             \
+    };                                                                                 \
+    static bu_plugin_manifest pinfo = {                                                \
+        plugin_name_str,                                                               \
+        (unsigned int)(plugin_version_u32),                                            \
+        (unsigned int)(sizeof(pcommands)/sizeof(pcommands[0])),                        \
+        pcommands,                                                                     \
+        BU_PLUGIN_ABI_VERSION,                                                         \
+        sizeof(bu_plugin_manifest)                                                     \
+    };                                                                                 \
+    static const struct ged_plugin_schema_manifest pschema_info = {                    \
+        plugin_name_str,                                                               \
+        (unsigned int)(plugin_version_u32),                                            \
+        (unsigned int)(sizeof(pschemas)/sizeof(pschemas[0])),                          \
+        pschemas,                                                                      \
+        GED_PLUGIN_SCHEMA_ABI_VERSION,                                                 \
+        sizeof(struct ged_plugin_schema_manifest)                                      \
+    };                                                                                 \
+    BU_PLUGIN_DECLARE_MANIFEST(pinfo)                                                  \
+    GED_SCHEMA_EXTERN_C BU_PLUGIN_EXPORT const struct ged_plugin_schema_manifest *ged_plugin_schema_info(void) { \
+        return &pschema_info;                                                          \
+    }
+#  define GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR(plugin_name_str, plugin_version_u32, LIST_MACRO) \
+    static bu_plugin_cmd pcommands[] = {                                               \
+        LIST_MACRO(GED__DECL_PCMD_GRAMMAR_X, GED__DECL_PCMD_GRAMMAR_XID)               \
+    };                                                                                 \
+    static const struct ged_cmd_schema pschemas[] = {                                  \
+        LIST_MACRO(GED__DECL_GRAMMAR_X, GED__DECL_GRAMMAR_XID)                         \
+    };                                                                                 \
+    static bu_plugin_manifest pinfo = {                                                \
+        plugin_name_str,                                                               \
+        (unsigned int)(plugin_version_u32),                                            \
+        (unsigned int)(sizeof(pcommands)/sizeof(pcommands[0])),                        \
+        pcommands,                                                                     \
+        BU_PLUGIN_ABI_VERSION,                                                         \
+        sizeof(bu_plugin_manifest)                                                     \
+    };                                                                                 \
+    static const struct ged_plugin_schema_manifest pschema_info = {                    \
+        plugin_name_str,                                                               \
+        (unsigned int)(plugin_version_u32),                                            \
+        (unsigned int)(sizeof(pschemas)/sizeof(pschemas[0])),                          \
+        pschemas,                                                                      \
+        GED_PLUGIN_SCHEMA_ABI_VERSION,                                                 \
+        sizeof(struct ged_plugin_schema_manifest)                                      \
+    };                                                                                 \
+    BU_PLUGIN_DECLARE_MANIFEST(pinfo)                                                  \
+    GED_SCHEMA_EXTERN_C BU_PLUGIN_EXPORT const struct ged_plugin_schema_manifest *ged_plugin_schema_info(void) { \
+        return &pschema_info;                                                          \
+    }
+#  define GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA(plugin_name_str, plugin_version_u32, LIST_MACRO) \
+    static bu_plugin_cmd pcommands[] = {                                               \
+	LIST_MACRO(GED__IGNORE_PCMD_SCHEMA_X, GED__IGNORE_PCMD_SCHEMA_XID,             \
+	    GED__DECL_PCMD_NATIVE_SCHEMA_X, GED__DECL_PCMD_NATIVE_SCHEMA_XID,         \
+	    GED__DECL_PCMD_GRAMMAR_X, GED__DECL_PCMD_GRAMMAR_XID)                       \
+    };                                                                                 \
+    static const struct ged_cmd_schema pschemas[] = {                                  \
+	LIST_MACRO(GED__IGNORE_SCHEMA_X, GED__IGNORE_SCHEMA_XID,                        \
+	    GED__DECL_NATIVE_SCHEMA_X, GED__DECL_NATIVE_SCHEMA_XID,                     \
+	    GED__DECL_GRAMMAR_X, GED__DECL_GRAMMAR_XID)                                 \
+    };                                                                                 \
+    static bu_plugin_manifest pinfo = {                                                \
+        plugin_name_str,                                                               \
+        (unsigned int)(plugin_version_u32),                                            \
+        (unsigned int)(sizeof(pcommands)/sizeof(pcommands[0])),                        \
+        pcommands,                                                                     \
+        BU_PLUGIN_ABI_VERSION,                                                         \
+        sizeof(bu_plugin_manifest)                                                     \
+    };                                                                                 \
+    static const struct ged_plugin_schema_manifest pschema_info = {                    \
+        plugin_name_str,                                                               \
+        (unsigned int)(plugin_version_u32),                                            \
+        (unsigned int)(sizeof(pschemas)/sizeof(pschemas[0])),                          \
+        pschemas,                                                                      \
+        GED_PLUGIN_SCHEMA_ABI_VERSION,                                                 \
+        sizeof(struct ged_plugin_schema_manifest)                                      \
+    };                                                                                 \
+    BU_PLUGIN_DECLARE_MANIFEST(pinfo)                                                  \
+    GED_SCHEMA_EXTERN_C BU_PLUGIN_EXPORT const struct ged_plugin_schema_manifest *ged_plugin_schema_info(void) { \
+        return &pschema_info;                                                          \
+    }
 #else
 /* File-scope safe no-op (no variables, no statements) */
 #  define GED_DECLARE_PLUGIN_MANIFEST(plugin_name_str, plugin_version_u32, LIST_MACRO) \
+      /* not building plugin */
+#  define GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA(plugin_name_str, plugin_version_u32, LIST_MACRO) \
+      /* not building plugin */
+#  define GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR(plugin_name_str, plugin_version_u32, LIST_MACRO) \
+      /* not building plugin */
+#  define GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA(plugin_name_str, plugin_version_u32, LIST_MACRO) \
       /* not building plugin */
 #endif
 
@@ -315,4 +551,3 @@ extern "C" {
  * End:
  * ex: shiftwidth=4 tabstop=8 cino=N-s
  */
-

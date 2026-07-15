@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
+/* This aggregate deliberately exercises the deprecated compatibility API. */
+#define BU_OPT_COMPATIBILITY_BUILD 1
 #include "bu.h"
 
 

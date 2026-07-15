@@ -28,12 +28,55 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/str.h"
-#include "bu/getopt.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
+
+
+struct move_all_args {
+    int no_change;
+    const char *mapping_file;
+};
+
+
+#include "../include/plugin.h"
+
+static const struct bu_cmd_option move_all_schema_options[] = {
+    BU_CMD_FLAG("n", NULL, struct move_all_args, no_change,
+	"Report changes without modifying the database"),
+    BU_CMD_FILE("f", NULL, struct move_all_args, mapping_file, "file",
+	"Read old/new name mappings from a file"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand move_all_schema_operands[] = {
+    BU_CMD_OPERAND("source_object", BU_CMD_VALUE_DB_OBJECT, 0, 1,
+	"Existing object to rename", "ged.db_object"),
+    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 0, 1,
+	"New object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const char *move_all_schema_file_option[] = {"f", NULL};
+static const struct bu_cmd_constraint move_all_schema_constraints[] = {
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+	move_all_schema_file_option, 0, 0,
+	"-f cannot be combined with old/new operands"),
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT,
+	move_all_schema_file_option, 2, 2,
+	"source and destination object names are required without -f"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_schema move_all_cmd_schema = {
+    "move_all", "Rename an object and all references", move_all_schema_options,
+    move_all_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, move_all_schema_constraints)
+};
+static const struct bu_cmd_schema mvall_cmd_schema = {
+    "mvall", "Rename an object and all references", move_all_schema_options,
+    move_all_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, move_all_schema_constraints)
+};
 
 static int
 move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new_name)
@@ -272,9 +315,11 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
 int
 ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int c;
-    int fflag = 0;
-    int nflag = 0;
+    const struct bu_cmd_schema *schema = NULL;
+    struct move_all_args args = {0, NULL};
+    int operand_index = 0;
+    int object_count = 0;
+    const char **objects = NULL;
     static const char *usage = "[-n] {-f <mapping_file>|<from> <to>}";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -290,60 +335,38 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3 || 4 < argc) {
+    schema = BU_STR_EQUAL(argv[0], "mvall") ? &mvall_cmd_schema : &move_all_cmd_schema;
+    operand_index = bu_cmd_schema_parse_complete(schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    if (db_version(gedp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: name length limited to %zu characters in v4 databases\n", strlen(argv[2]));
-	return BRLCAD_ERROR;
-    }
+    object_count = argc - 1 - operand_index;
+    objects = argv + 1 + operand_index;
+    if (args.mapping_file)
+	return move_all_file(gedp, args.no_change, args.mapping_file);
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "fn")) != -1) {
-	switch (c) {
-	    case 'f':
-		fflag = 1;
-		break;
-	    case 'n':
-		nflag = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	}
-    }
-
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    if (fflag) {
-	if (argc != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
-
-	return move_all_file(gedp, nflag, argv[0]);
-    }
-
-    if (argc != 2) {
+    if (object_count != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    if (db_version(gedp->dbip) < 5 && (int)strlen(objects[1]) > NAMESIZE) {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: name length limited to %zu characters in v4 databases\n", strlen(objects[1]));
+	return BRLCAD_ERROR;
+    }
 
-    return move_all_func(gedp, nflag, argv[0], argv[1]);
+    return move_all_func(gedp, args.no_change, objects[0], objects[1]);
 }
 
 
-#include "../include/plugin.h"
-
 #define GED_MOVE_ALL_COMMANDS(X, XID) \
-    X(move_all, ged_move_all_core, GED_CMD_DEFAULT) \
-    X(mvall, ged_move_all_core, GED_CMD_DEFAULT) \
+    X(move_all, ged_move_all_core, GED_CMD_DEFAULT, &move_all_cmd_schema) \
+    X(mvall, ged_move_all_core, GED_CMD_DEFAULT, &mvall_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_MOVE_ALL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_move_all", 1, GED_MOVE_ALL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_MOVE_ALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_move_all", 1, GED_MOVE_ALL_COMMANDS)
 
 /*
  * Local Variables:

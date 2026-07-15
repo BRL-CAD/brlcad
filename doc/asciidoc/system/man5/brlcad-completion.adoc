@@ -1,0 +1,240 @@
+= BRLCAD-COMPLETION(5)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Configuration
+
+== NAME
+brlcad-completion - configure BRL-CAD command prompt completion behavior
+
+== SYNOPSIS
+
+[source,sh]
+----
+BRLCAD_COMPLETION_MODE=filter|cycle|prefix|legacy|off
+BRLCAD_GSH_COMPLETION_MODE=mode
+BRLCAD_MGED_COMPLETION_MODE=mode
+BRLCAD_QGED_COMPLETION_MODE=mode
+----
+
+== DESCRIPTION
+
+The interactive command prompts in *gsh*(1), *mged*(1), and QGED obtain
+context-sensitive completion candidates from LIBGED.  Candidate generation is
+independent of presentation: the command schema determines which candidates
+are valid, while the command prompt's completion mode determines how pressing
+Tab previews and accepts those candidates.
+
+The default mode is *filter*.  Mode names are case-insensitive.
+
+== MODES
+
+*filter*::
+  Tab previews the first matching candidate and subsequent Tab presses cycle
+  through the remaining matches.  The preview does not replace the user's
+  original seed until it is accepted.  Typing a printable non-space character
+  discards the preview, applies the character to the original seed, and starts
+  the next completion cycle from that refined seed.  If the refined seed has
+  no matches but appending the character to the displayed candidate does, the
+  candidate is accepted and edited instead.  When both interpretations have
+  matches, refining the original seed takes precedence.  Space accepts the
+  preview and begins the next command argument.  Slash accepts a completed
+  database path component and begins the next component.  This is the default.
+
+*cycle*::
+  Tab previews and cycles through candidates.  Editing input accepts the
+  displayed candidate and continues from it.  This resembles Readline menu
+  completion and PowerShell's TabCompleteNext behavior.
+
+*prefix*::
+  Tab inserts the longest prefix shared by all matching candidates.  A later
+  Tab request operates on that more-specific seed.  This resembles traditional
+  shell completion.
+
+*legacy*::
+  Preserve the historical completion interaction of the selected frontend.
+  The exact presentation may differ between GSH, MGED, and QGED.
+
+*off*::
+  Disable context-sensitive command completion.  This does not disable command
+  parsing, validation, or execution.
+
+== KEYS
+
+In *filter* and *cycle* modes, Tab selects the next candidate and Shift-Tab
+selects the previous candidate when the frontend and terminal can distinguish
+Shift-Tab.  Selection wraps at either end of the candidate list.  Space accepts
+the displayed candidate and inserts an argument separator.  Escape cancels an
+active filtering preview and restores the original seed.  Backspace in
+filtering mode removes one visible character from the candidate and confirms
+the text that remains.  This matches ordinary editable-buffer behavior; use
+Escape to discard the whole candidate and restore the original seed.
+
+Characters supplied by the selected candidate but not yet confirmed by the
+user are drawn with a dimmer foreground than the typed seed.  The dim suffix is
+presentation only: it is removed when the candidate is accepted, cancelled, or
+refined, and it is never added to command text sent to LIBGED.  Terminal GSH
+honors *NO_COLOR* and terminal color capability detection, so its dim rendering
+is suppressed when styled output is disabled.
+
+QGED displays the candidate set in a popup in addition to the inline preview.
+This visual difference does not change the mode semantics.
+
+== LINE-EDITOR COLORS
+
+GSH, MGED, and QGED share an optional semantic line-editor palette.  It
+controls command-line feedback only; it does not replace QGED's application
+theme or MGED's display and color-scheme settings.  Roles omitted from the
+file inherit each frontend's accessible dark- or light-theme defaults.
+
+By default, BRL-CAD reads
+_$XDG_CONFIG_HOME/brlcad/lineedit.json_ when *XDG_CONFIG_HOME* is set, or
+_.config/brlcad/lineedit.json_ beneath the BRL-CAD user configuration
+directory otherwise.  Set *BRLCAD_LINEEDIT_COLORS* to an explicit file to use
+another palette.  Set it to *off* or *none* to suppress user palette loading.
+The palette is read as each frontend starts; restart a frontend after editing
+the file.
+
+The file is a JSON object with version 1 and a *colors* object.  The available
+roles are *command*, *option*, *valid*, *invalid*, *incomplete*, and
+*completion-preview*.  The underscore spelling *completion_preview* is also
+accepted.  A role can be a three- or six-digit RGB hexadecimal value, or an
+object with *color* and *style* members.  *style* is *dim* or *normal*;
+*dim* may also be a Boolean.  A completion preview is dim by default.
+
+[source,json]
+----
+{
+  "version": 1,
+  "colors": {
+    "command": "#75b7ff",
+    "option": "#e9ca4e",
+    "valid": "#48d7d7",
+    "invalid": "#ff6969",
+    "incomplete": "#e178e1",
+    "completion-preview": { "color": "#a0a0a0", "style": "dim" }
+  }
+}
+----
+
+Use *"default"* or *"inherit"* as a role's color to return that role to the
+frontend default.  Unknown role names are ignored for forward compatibility.
+An invalid value for a recognized role rejects the file as a whole, leaves the
+defaults in effect, and produces one startup warning.  GSH maps configured
+colors to ANSI terminal styling and continues to honor *NO_COLOR*; exact
+terminal color fidelity depends on the terminal's color support.  MGED applies
+the same palette to its Tk command prompt, including a blended dim preview,
+and QGED applies it to its console editor.
+
+== SEMANTIC FEEDBACK
+
+GSH, MGED, and QGED use the same LIBGED command schemas that supply completion
+candidates to color command names, options, and semantically checked arguments.
+Invalid and incomplete tokens are distinguished from recognized syntax.  This
+feedback is advisory; command execution remains authoritative.
+
+Within a *search -exec* expression, the prompts treat the words following
+*-exec* as an embedded GED command.  The embedded command name, its
+command-specific options and arguments, `{}` result substitutions, and the
+required standalone `;` terminator are checked independently.  Parsing resumes
+as a search expression after the terminator, allowing subsequent search
+operators to be checked normally.  Tab completion likewise follows the
+embedded command's schema.
+
+Quoted forms such as `"{}"` and `";"` are interpreted with GSH's argv quoting
+rules before semantic checking, matching what GSH and QGED pass to *search*.
+MGED instead parses Tcl syntax before consulting LIBGED: quoted `"{}"` is a
+literal result substitution, braced `{}` is an empty Tcl word, and a bare `;`
+ends the outer Tcl command.  Words containing Tcl variable or command
+substitutions are left unclassified until runtime.  When MGED object-name
+globbing may rewrite a word, that word and subsequent arguments are shown as
+pending rather than being given potentially incorrect validation.
+
+== CONSISTENCY CHECKS
+
+BRL-CAD's automated tests audit completion as a contract rather than checking
+only a hand-written set of command lines.  The registry-wide audit walks every
+discoverable command and subcommand schema in both legacy and new-command
+modes.  Each offered option is inserted using its reported replacement range
+and analyzed again.  Static option-argument candidates are checked in both
+the _--option value_ and _--option=value_ forms.
+
+A second audit mines command examples from the AsciiDoc manual pages.  It
+checks every prefix and replacement range it can construct, then reparses each
+completed command fragment.  A candidate that becomes an unknown or invalid
+token is a test failure.  These checks are intentionally complementary: the
+registry audit covers schemas that are absent from examples, while the manual
+corpus exercises realistic argument order and database paths.
+
+Canonical aliases are suggested only when the schema can parse the canonical
+spelling.  Commands with context-dependent syntax also revalidate each option
+candidate before it is returned, preventing a frontend or compatibility mode
+from advertising an option that its active validator rejects.
+
+== CONFIGURATION
+
+*BRLCAD_COMPLETION_MODE* sets the default for all supporting BRL-CAD command
+prompts.  The frontend-specific environment variables override the global
+variable for one application:
+
+* *BRLCAD_GSH_COMPLETION_MODE*
+* *BRLCAD_MGED_COMPLETION_MODE*
+* *BRLCAD_QGED_COMPLETION_MODE*
+
+GSH also accepts *--completion-mode=mode*.  Its command-line option has highest
+precedence, followed by the GSH-specific environment variable, the global
+environment variable, and finally the *filter* default.
+
+MGED users may set the following in _.mgedrc_.  The _.mgedrc_ value has
+precedence over environment variables and is preserved by MGED's Save Settings
+operation:
+
+[source,tcl]
+----
+set mged_default(completion_mode) filter
+----
+
+QGED provides an exclusive Completion menu.  A choice made there is stored in
+QGED's user settings and has precedence over environment variables on later
+runs.  Delete or change the saved setting to return control to the environment.
+
+Invalid environment or saved-setting values are ignored.  An invalid explicit
+GSH *--completion-mode* argument is reported as an error.
+
+== EXAMPLES
+
+.Use filtering completion in every BRL-CAD prompt
+====
+[source,sh]
+----
+export BRLCAD_COMPLETION_MODE=filter
+----
+====
+
+.Use cycling completion only in MGED
+====
+[source,sh]
+----
+export BRLCAD_COMPLETION_MODE=filter
+export BRLCAD_MGED_COMPLETION_MODE=cycle
+----
+====
+
+.Temporarily start GSH with common-prefix completion
+====
+[source,sh]
+----
+gsh --completion-mode=prefix model.g
+----
+====
+
+== SEE ALSO
+
+*gsh*(1), *mged*(1)
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.

@@ -325,24 +325,31 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 }
 
 
-static void
-stl_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+static const struct bu_cmd_option stl_write_schema_options[] = {
+    BU_CMD_FLAG(NULL, "binary", struct stl_write_options, binary,
+        "Write binary STL output."),
+    BU_CMD_FLAG(NULL, "output-dir", struct stl_write_options, output_directory,
+        "Specify that the output path is a directory."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema stl_write_schema = {
+    "stl-write", "STL writer options.", stl_write_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+extern "C" void
+stl_write_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct stl_write_options *options_data;
 
     BU_ALLOC(options_data, struct stl_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
-
-    BU_OPT((*options_desc)[0], NULL, "binary", NULL,
-	    NULL, &options_data->binary,
-	    "specify that the input is in binary STL format");
-
-    BU_OPT((*options_desc)[1], NULL, "output-dir", NULL,
-	    NULL, &options_data->output_directory,
-	    "specify that the output path should be a directory");
-
-    BU_OPT_NULL((*options_desc)[2]);
+    options_data->binary = 0;
+    options_data->output_directory = 0;
+    *schema = &stl_write_schema;
 }
 
 
@@ -472,7 +479,7 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
 extern "C" const struct gcv_filter gcv_conv_stl_write = {
     "STL Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_STL, NULL,
-    stl_write_create_opts, stl_write_free_opts, stl_write
+    NULL, stl_write_free_opts, stl_write
 };
 
 
@@ -484,4 +491,3 @@ extern "C" const struct gcv_filter gcv_conv_stl_write = {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

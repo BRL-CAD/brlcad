@@ -2847,24 +2847,37 @@ fastgen4_read_options
 };
 
 
+static const struct bu_cmd_option fastgen4_read_schema_options[] = {
+    BU_CMD_STRING(NULL, "colors", struct fastgen4_read_options, colors_path, "path",
+	"Path to a file specifying component colors."),
+    BU_CMD_STRING(NULL, "muves", struct fastgen4_read_options, muves_path, "path",
+	"Create a MUVES input file containing CHGCOMP and CBACKING components."),
+    BU_CMD_STRING(NULL, "plot", struct fastgen4_read_options, plot_path, "path",
+	"Create a libplot3 file of processed CTRI and CQUAD elements."),
+    BU_CMD_STRING(NULL, "sections", struct fastgen4_read_options, section_list_str, "list",
+	"Process only a list or range of SECTION IDs."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema fastgen4_read_schema = {
+    "fastgen4-read", "FASTGEN4 reader options.", fastgen4_read_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
 static void
-fastgen4_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+fastgen4_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct fastgen4_read_options *options_data;
 
     BU_ALLOC(options_data, struct fastgen4_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(5 * sizeof(struct bu_opt_desc), "options_desc");
-
-    BU_OPT((*options_desc)[0], NULL, "colors", "path", bu_opt_str, &options_data->colors_path,
-	    "path to file specifying component colors");
-    BU_OPT((*options_desc)[1], NULL, "muves", "path", bu_opt_str, &options_data->muves_path,
-	    "create a MUVES input file containing any CHGCOMP and CBACKING components");
-    BU_OPT((*options_desc)[2], NULL, "plot", "path", bu_opt_str, &options_data->plot_path,
-	    "create a libplot3 file of all CTRI and CQUAD elements processed");
-    BU_OPT((*options_desc)[3], NULL, "sections", "list", bu_opt_str, &options_data->section_list_str,
-	    "process only a list (3001, 4082, 5347) or a range (2315-3527) of SECTION IDs");
-    BU_OPT_NULL((*options_desc)[4]);
+    options_data->colors_path = NULL;
+    options_data->muves_path = NULL;
+    options_data->plot_path = NULL;
+    options_data->section_list_str = NULL;
+    *schema = &fastgen4_read_schema;
 }
 
 
@@ -2970,17 +2983,26 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 
 static const struct gcv_filter gcv_conv_fastgen4_read = {
     "FASTGEN4 Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_FASTGEN, NULL,
-    fastgen4_create_opts, fastgen4_free_opts, fastgen4_read
+    NULL, fastgen4_free_opts, fastgen4_read
 };
 
 
 extern const struct gcv_filter gcv_conv_fastgen4_write;
 static const struct gcv_filter * const filters[] = {&gcv_conv_fastgen4_read, &gcv_conv_fastgen4_write, NULL};
+static const struct gcv_filter_schema filter_schemas[] = {
+    {&gcv_conv_fastgen4_read, fastgen4_create_schema_opts},
+    {NULL, NULL}
+};
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
+static const struct gcv_native_plugin gcv_plugin_native_info_s = { filter_schemas };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(void){ return &gcv_plugin_info_s; }
+
+
+COMPILER_DLLEXPORT const struct gcv_native_plugin *
+gcv_plugin_native_info(void){ return &gcv_plugin_native_info_s; }
 
 /*
  * Local Variables:

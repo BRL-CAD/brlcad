@@ -31,10 +31,80 @@
 #include <limits.h>
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bu/sort.h"
 
 #include "../ged_private.h"
+
+
+struct tree_args {
+    int include_attributes;
+    int combinations_only;
+    int indent_size;
+    int display_depth;
+    int verbosity;
+    const char *output_file;
+};
+
+
+static int
+tree_nonnegative_integer(struct bu_vls *msg, const char *arg)
+{
+    char *end = NULL;
+    long value;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno || !arg[0] || (end && *end) || value < 0) {
+	if (msg)
+	    bu_vls_printf(msg, "Depth must be a non-negative integer");
+	return -1;
+    }
+
+    return 0;
+}
+
+
+static const struct bu_cmd_option tree_schema_options[] = {
+    BU_CMD_FLAG("a", NULL, struct tree_args, include_attributes,
+	"Include object attributes"),
+    BU_CMD_FLAG("c", NULL, struct tree_args, combinations_only,
+	"Print combinations only"),
+    BU_CMD_FILE("o", NULL, struct tree_args, output_file, "file",
+	"Write output to a file"),
+    BU_CMD_INTEGER("i", NULL, struct tree_args, indent_size, "spaces",
+	"Set indentation size"),
+    BU_CMD_INTEGER_VALIDATE("d", NULL, struct tree_args, display_depth,
+	tree_nonnegative_integer, "depth", "Set maximum display depth"),
+    BU_CMD_COUNTING_FLAG("v", NULL, struct tree_args, verbosity,
+	"Increase output verbosity"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand tree_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 0, BU_CMD_COUNT_UNLIMITED,
+	"Database objects whose trees should be printed", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema tree_cmd_schema = {
+    "tree", "Print database combination trees", tree_schema_options,
+    tree_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+
+
+static void
+tree_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&tree_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: %s [-a] [-c] [-v ...] [-d depth] [-i spaces] [-o file] [object ...]",
+	command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "tree native option help");
+    }
+}
+
 
 static int
 _tree_cmp_attr(const void *p1, const void *p2, void *UNUSED(arg))
@@ -236,7 +306,7 @@ _tree_print_node(struct ged *gedp,
  * Return the object hierarchy for all object(s) specified or for all currently displayed
  *
  * Usage:
- * tree [-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
+ * tree [-a] [-c] [-v ...] [-d depth] [-i spaces] [-o file] [object ...]
  *
  */
 int
@@ -245,15 +315,12 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     int j;
     unsigned flags = 0;
-    int indentSize = -1;
-    int displayDepth = INT_MAX;
-    int c;
-    int verbosity = 0;
+    int operand_index;
+    struct tree_args args = {0, 0, -1, INT_MAX, 0, NULL};
     FILE *fdout = NULL;
     char *buffer = NULL;
 #define WHOARGVMAX 256
     char *whoargv[WHOARGVMAX+1] = {0};
-    static const char *usage = "[-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -262,74 +329,52 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* Parse options */
-    bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "d:i:o:cav")) != -1) {
-	switch (c) {
-	    case 'i':
-		indentSize = atoi(bu_optarg);
-		break;
-	    case 'a':
-		flags |= _GED_TREE_AFLAG;
-		break;
-	    case 'c':
-		flags |= _GED_TREE_CFLAG;
-		break;
-	    case 'o':
-		if (fdout)
-		    fclose(fdout);
-		fdout = fopen(bu_optarg, "w+b");
-		if (fdout == NULL) {
-		    bu_vls_printf(gedp->ged_result_str, "Failed to open output file, %d", errno);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case 'd':
-		displayDepth = atoi(bu_optarg);
-		if (displayDepth < 0) {
-		    bu_vls_printf(gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
-		    if (fdout != NULL)
-		      fclose(fdout);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case 'v':
-		verbosity++;
-		break;
-	    case '?':
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		if (fdout != NULL)
-		  fclose(fdout);
-		return BRLCAD_ERROR;
+    operand_index = bu_cmd_schema_parse_complete(&tree_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	tree_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
+
+    if (args.include_attributes)
+	flags |= _GED_TREE_AFLAG;
+    if (args.combinations_only)
+	flags |= _GED_TREE_CFLAG;
+
+    if (args.output_file) {
+	fdout = fopen(args.output_file, "w+b");
+	if (fdout == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to open output file, %d", errno);
+	    return BRLCAD_ERROR;
 	}
     }
 
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
-
     /* tree of all displayed objects */
-    if (argc == 1) {
+    if (argc == 0) {
 	const char *whocmd[1] = {"who"};
 	if (ged_exec_who(gedp, 1, (const char **)whocmd) == BRLCAD_OK) {
 	    buffer = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 
-	    argc += (int)bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
+	    argc = (int)bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
 	}
     }
 
-    for (j = 1; j < argc; j++) {
+    for (j = 0; j < argc; j++) {
 	const char *next = argv[j];
 	if (buffer) {
-	    next = whoargv[j-1];
+	    next = whoargv[j];
 	}
 
-	if (j > 1)
+	if (j > 0)
 	    bu_vls_printf(gedp->ged_result_str, "\n");
 	if ((dp = db_lookup(gedp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
-	_tree_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0, verbosity, 0);
+	_tree_print_node(gedp, dp, 0, args.indent_size, 0, flags,
+		args.display_depth, 0, args.verbosity, 0);
     }
 
     if (buffer) {
@@ -349,10 +394,10 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_TREE_COMMANDS(X, XID) \
-    X(tree, ged_tree_core, GED_CMD_DEFAULT) \
+    X(tree, ged_tree_core, GED_CMD_DEFAULT, &tree_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_TREE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_tree", 1, GED_TREE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_TREE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_tree", 1, GED_TREE_COMMANDS)
 
 /*
  * Local Variables:

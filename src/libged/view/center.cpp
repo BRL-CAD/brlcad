@@ -34,6 +34,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
 #include "./ged_view.h"
 
@@ -107,13 +109,13 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
 	    const char *xstrptr = bu_vls_cstr(&xvalstr);
 	    const char *ystrptr = bu_vls_cstr(&yvalstr);
 	    const char *zstrptr = bu_vls_cstr(&zvalstr);
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)&xstrptr, (void *)&xval) < 0) {
+	    if (!bu_cmd_number_from_str(&xval, xstrptr)) {
 		success = 0;
 	    }
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)&ystrptr, (void *)&yval) < 0) {
+	    if (!bu_cmd_number_from_str(&yval, ystrptr)) {
 		success = 0;
 	    }
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)&zstrptr, (void *)&zval) < 0) {
+	    if (!bu_cmd_number_from_str(&zval, zstrptr)) {
 		success = 0;
 	    }
 	    VSET(center, xval, yval, zval);
@@ -161,4 +163,3 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

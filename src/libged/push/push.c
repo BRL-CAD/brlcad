@@ -29,8 +29,7 @@
 #include <string.h>
 
 
-#include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
 
@@ -52,6 +51,29 @@ struct push_data {
     struct ged *gedp;
     struct push_id pi_head;
     int push_error;
+};
+
+
+struct push_args {
+    int processors;
+    int debug;
+};
+
+static const struct bu_cmd_option push_options[] = {
+    BU_CMD_INTEGER("P", NULL, struct push_args, processors,
+	"processors", "Number of processors"),
+    BU_CMD_FLAG("d", NULL, struct push_args, debug,
+	"Enable tree-walk debugging"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand push_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+	"Root objects to push", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema push_cmd_schema = {
+    "push", "Push transformations down object trees", push_options,
+    push_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
 };
 
 
@@ -186,9 +208,12 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal es_int;
     int i;
     int ncpu;
-    int c;
     int old_debug;
     int push_error;
+    struct push_args args = {1, 0};
+    int operand_index = 0;
+    int object_argc = 0;
+    const char **object_argv = NULL;
     static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -213,29 +238,17 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 
     old_debug = RT_G_DEBUG;
 
-    /* Initial values for options, must be reset each time */
-    ncpu = 1;
-
-    /* Parse options */
-    bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "P:d")) != -1) {
-	switch (c) {
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		if (ncpu<1) ncpu = 1;
-		break;
-	    case 'd':
-		rt_debug |= RT_DEBUG_TREEWALK;
-		break;
-	    case '?':
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "ged_push_core: usage push [-P processors] [-d] root [root2 ...]\n");
-		break;
-	}
+	operand_index = bu_cmd_schema_parse_complete(&push_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s [-P processors] [-d] root [root2 ...]", argv[0]);
+	return BRLCAD_ERROR;
     }
-
-    argc -= bu_optind;
-    argv += bu_optind;
+    object_argc = argc - 1 - operand_index;
+    object_argv = argv + 1 + operand_index;
+    ncpu = args.processors < 1 ? 1 : args.processors;
+    if (args.debug)
+	rt_debug |= RT_DEBUG_TREEWALK;
 
     /*
      * build a linked list of solids with the correct
@@ -244,7 +257,7 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
      * different directions at the same time.
      */
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
+	i = db_walk_tree(gedp->dbip, object_argc, object_argv,
 		     ncpu,
 		     &wdbp->wdb_initial_tree_state,
 		     0,				/* take all regions */
@@ -295,12 +308,12 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
      * seems that this is a better method.
      */
 
-    while (argc > 0) {
+	while (object_argc > 0) {
 	struct directory *db;
-	db = db_lookup(gedp->dbip, *argv++, 0);
+	db = db_lookup(gedp->dbip, *object_argv++, 0);
 	if (db)
 	    identitize(db, gedp->dbip, gedp->ged_result_str);
-	--argc;
+	--object_argc;
     }
 
     /*
@@ -344,10 +357,10 @@ do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 #include "../include/plugin.h"
 
 #define GED_PUSH_COMMANDS(X, XID) \
-    X(push, ged_push_core, GED_CMD_DEFAULT) \
+    X(push, ged_push_core, GED_CMD_DEFAULT, &push_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PUSH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_push", 1, GED_PUSH_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PUSH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_push", 1, GED_PUSH_COMMANDS)
 
 /*
  * Local Variables:

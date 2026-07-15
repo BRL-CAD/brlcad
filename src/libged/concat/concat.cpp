@@ -32,8 +32,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "../../librt/librt_private.h"
 
@@ -57,6 +56,59 @@ struct ged_concat_data {
     int use_units = 0;
     std::unordered_map<std::string, std::string> name_map;
     std::unordered_set<std::string> used_names;
+};
+
+struct concat_args {
+    int print_help;
+    int overwrite;
+    int use_ctbl;
+    int prefix;
+    int suffix;
+    int lazy_affix;
+    int use_title;
+    int use_units;
+};
+
+static const struct bu_cmd_option concat_options[] = {
+    BU_CMD_FLAG("h", "help", struct concat_args, print_help, "Print help and exit"),
+    BU_CMD_FLAG("O", "overwrite", struct concat_args, overwrite,
+	"Overwrite existing objects if names conflict"),
+    BU_CMD_FLAG("c", NULL, struct concat_args, use_ctbl,
+	"Use the incoming region color table"),
+    BU_CMD_FLAG("p", "prefix", struct concat_args, prefix,
+	"Apply the affix to the beginning of each object name"),
+    BU_CMD_FLAG("s", "suffix", struct concat_args, suffix,
+	"Apply the affix to the end of each object name"),
+    BU_CMD_FLAG("L", "lazy-affix", struct concat_args, lazy_affix,
+	"Apply the affix only when resolving name conflicts"),
+    BU_CMD_FLAG("t", NULL, struct concat_args, use_title,
+	"Use the incoming database title"),
+    BU_CMD_FLAG("u", NULL, struct concat_args, use_units,
+	"Use the incoming database units"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand concat_operands[] = {
+    BU_CMD_OPERAND("database_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Incoming geometry database", "ged.file_path"),
+    BU_CMD_OPERAND("affix", BU_CMD_VALUE_STRING, 0, 1,
+	"Object-name prefix or suffix", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const char *concat_affix_position_options[] = {"prefix", "suffix", NULL};
+static const struct bu_cmd_constraint concat_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(concat_affix_position_options, 0, 1,
+	"-p and -s are mutually exclusive"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_schema concat_cmd_schema = {
+    "concat", "Merge another geometry database", concat_options, concat_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, concat_constraints)
+};
+static const struct bu_cmd_schema dbconcat_cmd_schema = {
+    "dbconcat", "Merge another geometry database", concat_options, concat_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, concat_constraints)
 };
 
 static int
@@ -339,32 +391,38 @@ copy_object(struct ged *gedp,
 }
 
 
+static void
+concat_show_help(struct ged *gedp, const char *command, const char *usage,
+	const struct bu_cmd_schema *schema)
+{
+    char *option_help = bu_cmd_schema_describe(schema);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", command, usage);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s", option_help);
+	bu_free(option_help, "concat native option help");
+    }
+}
+
+
 extern "C" int
 ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help = 0;
     struct directory *dp;
     struct ged_concat_data cc_data;
+    struct concat_args options = {};
     const char *commandName = argv[0];
+    const struct bu_cmd_schema *schema = BU_STR_EQUAL(commandName, "dbconcat") ?
+	&dbconcat_cmd_schema : &concat_cmd_schema;
+    int operand_index = 0;
+    int operand_count = 0;
+    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
 
     static const char *usage = "[options] file.g [affix]";
-    struct bu_opt_desc d[9];
-    BU_OPT(d[0], "h",       "help", "", NULL,           &print_help, "Print help and exit");
-    BU_OPT(d[1], "O",  "overwrite", "", NULL,  &(cc_data.overwrite), "Overwrite existing objects if names conflict.");
-    BU_OPT(d[2], "c",           "", "", NULL,   &(cc_data.use_ctbl), "Use incoming region colortable");
-    BU_OPT(d[3], "p",     "prefix", "", NULL,     &(cc_data.prefix), "Apply naming adjustments to the beginning of the object name");
-    BU_OPT(d[4], "s",     "suffix", "", NULL,     &(cc_data.suffix), "Apply naming adjustments to the end of the object name");
-    BU_OPT(d[5], "L", "lazy-affix", "", NULL, &(cc_data.lazy_affix), "Lazily affix to objects - only use when needed to avoid name conflicts.");
-    BU_OPT(d[6], "t",           "", "", NULL,  &(cc_data.use_title), "Use incoming database title");
-    BU_OPT(d[7], "u",           "", "", NULL,  &(cc_data.use_units), "Use incoming units");
-    BU_OPT_NULL(d[8]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* skip command name argv[0] */
-    argc-=(argc>0); argv+=(argc>0);
 
     /* Make sure we're v5 */
     if (db_version(gedp->dbip) < 5) {
@@ -375,20 +433,39 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* parse standard options */
-    struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    argc = bu_opt_parse(&omsg, argc, argv, d);
-    if (argc < 0) {
-	bu_vls_printf(gedp->ged_result_str, "option parsing failed: %s\n", bu_vls_cstr(&omsg));
-	bu_vls_free(&omsg);
+
+    operand_index = bu_cmd_schema_parse(schema, &options, gedp->ged_result_str,
+	argc - 1, argv + 1);
+    if (operand_index < 0) {
+	concat_show_help(gedp, commandName, usage, schema);
 	return BRLCAD_ERROR;
     }
-    bu_vls_free(&omsg);
+    operand_count = argc - 1 - operand_index;
 
-    if (print_help || argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
-	return (print_help) ? BRLCAD_OK : BRLCAD_ERROR;
+    if (options.print_help) {
+	concat_show_help(gedp, commandName, usage, schema);
+	return BRLCAD_OK;
     }
+
+    if (bu_cmd_schema_validate(schema, (size_t)(argc - 1), argv + 1,
+	    (size_t)(argc - 1), &validation) != 0 ||
+	validation.state != BU_CMD_VALIDATE_VALID) {
+	if (validation.hint && validation.hint[0])
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", validation.hint);
+	bu_cmd_validate_result_clear(&validation);
+	concat_show_help(gedp, commandName, usage, schema);
+	return BRLCAD_ERROR;
+    }
+    bu_cmd_validate_result_clear(&validation);
+    argv += operand_index + 1;
+    argc = operand_count;
+    cc_data.overwrite = options.overwrite;
+    cc_data.use_ctbl = options.use_ctbl;
+    cc_data.prefix = options.prefix;
+    cc_data.suffix = options.suffix;
+    cc_data.lazy_affix = options.lazy_affix;
+    cc_data.use_title = options.use_title;
+    cc_data.use_units = options.use_units;
 
     /* Current database is the target */
     cc_data.target_dbip = gedp->dbip;
@@ -412,7 +489,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     // For compatibility (and because '/' isn't a sane character to use for obj
     // names in any case) clear if such a character was supplied.
-    if (BU_STR_EQUAL(argv[1], "/"))
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "/"))
 	cc_data.affix = std::string("");
 
     // For all incoming objects, compare their names against the current
@@ -503,11 +580,11 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_CONCAT_COMMANDS(X, XID) \
-    X(concat, ged_concat_core, GED_CMD_DEFAULT) \
-    X(dbconcat, ged_concat_core, GED_CMD_DEFAULT) \
+    X(concat, ged_concat_core, GED_CMD_DEFAULT, &concat_cmd_schema) \
+    X(dbconcat, ged_concat_core, GED_CMD_DEFAULT, &dbconcat_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_CONCAT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_concat", 1, GED_CONCAT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_CONCAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_concat", 1, GED_CONCAT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

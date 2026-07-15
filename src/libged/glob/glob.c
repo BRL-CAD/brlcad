@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/cmdschema.h"
 #include "bu/glob.h"
 #include "bu/path.h"
 #include "bu/vls.h"
@@ -40,6 +41,32 @@
 #define _GED_GLOB_HIDDEN       0x1    /**< @brief include hidden objects in results */
 #define _GED_GLOB_NON_GEOM     0x2    /**< @brief include non-geometry objects in results */
 #define _GED_GLOB_SKIP_FIRST   0x4    /**< @brief do not expand the first item */
+
+
+static const struct bu_cmd_arg_shape glob_command_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_CUSTOM, 1, 1,
+	"Quoted command string containing database glob patterns");
+static const struct bu_cmd_operand glob_schema_operands[] = {
+    BU_CMD_OPERAND_SHAPED("command_string", BU_CMD_VALUE_STRING, 1, 1, NULL,
+	"Command string whose arguments may contain database glob patterns", NULL,
+	&glob_command_shape),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema glob_cmd_schema = {
+    "glob", "Expand a database glob expression", NULL, glob_schema_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+static const struct bu_cmd_schema db_glob_cmd_schema = {
+    "db_glob", "Expand a database glob expression", NULL, glob_schema_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
+
+static void
+glob_show_help(struct ged *gedp, const char *command)
+{
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s command_string", command);
+}
 
 /**
  * unescapes various special characters
@@ -200,8 +227,11 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
 int
 ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "expression";
     int flags = 0;
+    int operand_index = 0;
+    int parse_dummy = 0;
+    const struct bu_cmd_schema *schema = NULL;
+    const char *expression = NULL;
     flags |= _GED_GLOB_HIDDEN;
     flags |= _GED_GLOB_NON_GEOM;
     flags |= _GED_GLOB_SKIP_FIRST;
@@ -209,6 +239,11 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
     /* Silently return */
     if (gedp == GED_NULL)
 	return BRLCAD_ERROR;
+
+    if (argc < 1)
+	return BRLCAD_ERROR;
+
+    schema = BU_STR_EQUAL(argv[0], "db_glob") ? &db_glob_cmd_schema : &glob_cmd_schema;
 
     /* Initialize result. This behavior is depended upon by mged - apparently
      * the interpretation is that if no database is open, all expressions match
@@ -221,17 +256,19 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	glob_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	operand_index = bu_cmd_schema_parse_complete(schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index != 1) {
+	glob_show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
+    expression = argv[operand_index + 1];
 
-
-    (void)_ged_expand_str_glob(gedp->ged_result_str, argv[1], gedp->dbip, flags);
+    (void)_ged_expand_str_glob(gedp->ged_result_str, expression, gedp->dbip, flags);
 
 
     return BRLCAD_OK;
@@ -240,11 +277,11 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GLOB_COMMANDS(X, XID) \
-    X(db_glob, ged_glob_core, GED_CMD_DEFAULT) \
-    X(glob, ged_glob_core, GED_CMD_DEFAULT)
+    X(db_glob, ged_glob_core, GED_CMD_DEFAULT, &db_glob_cmd_schema) \
+    X(glob, ged_glob_core, GED_CMD_DEFAULT, &glob_cmd_schema)
 
-GED_DECLARE_COMMAND_SET(GED_GLOB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_glob", 1, GED_GLOB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GLOB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_glob", 1, GED_GLOB_COMMANDS)
 
 /*
  * Local Variables:

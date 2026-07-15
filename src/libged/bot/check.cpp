@@ -33,7 +33,6 @@
 #include "manifold/manifold.h"
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
 #include "bu/sort.h"
 #include "bg/chull.h"
 #include "bg/trimesh.h"
@@ -314,6 +313,172 @@ _bot_check_msgs(void *bs, int argc, const char **argv, const char *us, const cha
     }
     return 0;
 }
+
+
+struct bot_check_args {
+    int print_help;
+};
+
+static const char * const bot_check_kinds[] = {
+    "degen_faces", "extra_edges", "flipped_edges", "manifold",
+    "open_edges", "solid", NULL
+};
+
+
+static void
+bot_check_validation_result(struct bu_cmd_validate_result *result,
+	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t value_type,
+	const char *hint, const char *semantic_provider)
+{
+    bu_cmd_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->completion_type = value_type;
+    result->hint = hint;
+    result->semantic_provider = semantic_provider;
+}
+
+
+static int
+bot_check_kind_known(const char *kind)
+{
+    if (!kind)
+	return 0;
+    for (size_t i = 0; bot_check_kinds[i]; i++)
+	if (BU_STR_EQUAL(kind, bot_check_kinds[i]))
+	    return 1;
+    return 0;
+}
+
+
+static void
+bot_check_kind_result(struct bu_cmd_validate_result *result, const char *kind,
+	size_t token)
+{
+    size_t kind_len = kind ? strlen(kind) : 0;
+    int exact = bot_check_kind_known(kind);
+    int prefix = 0;
+
+    for (size_t i = 0; bot_check_kinds[i]; i++)
+	if (kind_len <= strlen(bot_check_kinds[i]) && kind &&
+	    strncmp(bot_check_kinds[i], kind, kind_len) == 0)
+	    prefix = 1;
+    bot_check_validation_result(result, exact ? BU_CMD_VALIDATE_VALID :
+	(prefix ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID), token,
+	BU_CMD_VALUE_KEYWORD, "BoT check kind", NULL);
+    bu_cmd_keyword_candidates(result, bot_check_kinds, kind ? kind : "");
+}
+
+
+static int
+bot_check_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+    const char *operands[3] = {NULL, NULL, NULL};
+    size_t count = 0;
+    size_t i = 0;
+    int option_phase = 1;
+
+    flat.validation.custom_validate = NULL;
+    if (bu_cmd_schema_option_present(schema, argc, argv, "help"))
+	flat.operands = NULL;
+    if (bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result) != 0 ||
+	result->state == BU_CMD_VALIDATE_INVALID)
+	return 0;
+    if (bu_cmd_schema_option_present(schema, argc, argv, "help") ||
+	(result->expected & BU_CMD_EXPECT_OPTION_ARG) ||
+	(cursor_arg < argc && (result->expected & BU_CMD_EXPECT_OPTION)))
+	return 0;
+
+    while (i < cursor_arg) {
+	int span = 0;
+	if (option_phase && BU_STR_EQUAL(argv[i], "--")) {
+	    option_phase = 0;
+	    i++;
+	    continue;
+	}
+	if (option_phase)
+	    span = bu_cmd_schema_option_span(schema, argc - i, argv + i);
+	if (span > 0) {
+	    i += (size_t)span;
+	    continue;
+	}
+	if (count < 3)
+	    operands[count] = argv[i];
+	count++;
+	option_phase = 0;
+	i++;
+    }
+
+    if (cursor_arg < argc) {
+	const char *current = argv[cursor_arg];
+	if (!count) {
+	    size_t current_len = current ? strlen(current) : 0;
+	    int kind_prefix = 0;
+	    for (size_t ki = 0; bot_check_kinds[ki]; ki++)
+		if (current && current_len <= strlen(bot_check_kinds[ki]) &&
+		    strncmp(bot_check_kinds[ki], current, current_len) == 0)
+		    kind_prefix = 1;
+	    if (kind_prefix) {
+		bot_check_kind_result(result, current, cursor_arg);
+	    } else {
+		bot_check_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+		    BU_CMD_VALUE_DB_OBJECT, "BoT object (or check kind)", "ged.db_object");
+	    }
+	    return 0;
+	}
+	if (count == 1 && bot_check_kind_known(operands[0])) {
+	    bot_check_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+		BU_CMD_VALUE_DB_OBJECT, "BoT object", "ged.db_object");
+	    return 0;
+	}
+	bot_check_validation_result(result, BU_CMD_VALIDATE_INVALID, cursor_arg,
+	    BU_CMD_VALUE_STRING, "check accepts a BoT or check_kind followed by a BoT", NULL);
+	return 0;
+    }
+
+    if (!count) {
+	bot_check_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
+	    BU_CMD_VALUE_KEYWORD, "BoT object or check kind required", NULL);
+	bu_cmd_keyword_candidates(result, bot_check_kinds, "");
+	return 0;
+    }
+	if (count == 1) {
+	/* A single word is always the historical default-solid BoT form, even
+	 * when that object happens to have the same name as a check kind. */
+	bot_check_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	    BU_CMD_VALUE_DB_OBJECT, "BoT object (default solid check)", "ged.db_object");
+	return 0;
+    }
+	if (count == 2 && bot_check_kind_known(operands[0])) {
+	bot_check_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	    BU_CMD_VALUE_DB_OBJECT, "BoT object", "ged.db_object");
+	return 0;
+    }
+	bot_check_validation_result(result, BU_CMD_VALIDATE_INVALID, cursor_arg,
+	    BU_CMD_VALUE_STRING, "check accepts a BoT or check_kind followed by a BoT", NULL);
+	return 0;
+}
+
+
+static const struct bu_cmd_option bot_check_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_check_args, print_help,
+	"Print command help"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_check_operands[] = {
+    BU_CMD_OPERAND("check_or_bot", BU_CMD_VALUE_RAW, 0, 2,
+	"BoT, or check kind followed by a BoT", "bot.check"),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_bot_check_subcommand_schema = {
+    "check", "Check BoT topology and geometry", bot_check_options,
+    bot_check_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(bot_check_schema_validate, NULL)
+};
 
 
 extern "C" int
@@ -752,6 +917,11 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 {
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
     struct _ged_bot_icheck gib;
+    struct bot_check_args args = {0};
+    const char *usage_string = "bot check [check_kind] <objname>";
+    int operand_index;
+    int operand_count;
+    const char **operands;
     gib.gb = gb;
     gib.vls = gb->gedp->ged_result_str;
     gib.cmds = _bot_check_cmds;
@@ -782,25 +952,36 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    if (_bot_obj_setup(gb, argv[argc-1]) & BRLCAD_ERROR) {
+
+    operand_index = bu_cmd_schema_parse_complete(&ged_bot_check_subcommand_schema,
+	&args, gib.vls, argc, argv);
+    if (operand_index < 0) {
+	bu_vls_printf(gib.vls, "%s", usage_string);
 	return BRLCAD_ERROR;
     }
-    argc--;
+    if (args.print_help) {
+	_bot_check_help(&gib, 0, NULL);
+	return BRLCAD_OK;
+    }
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    if (operand_count < 1 || operand_count > 2) {
+	bu_vls_printf(gib.vls, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
 
-    if (!argc) {
+    if (_bot_obj_setup(gb, operands[operand_count - 1]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
+
+
+    if (operand_count == 1) {
 	// No subcommand - do the solid check
 	return _bot_cmd_solid((void *)&gib, 0, NULL);
     }
 
-    // Have subcommand - must have valid subcommand to process
-    if (bu_cmd_valid(_bot_check_cmds, argv[0]) != BRLCAD_OK) {
-	bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
-	_bot_check_help(&gib, 0, NULL);
-	return BRLCAD_ERROR;
-    }
-
     int ret;
-    if (bu_cmd(_bot_check_cmds, argc, argv, 0, (void *)&gib, &ret) == BRLCAD_OK) {
+	if (bu_cmd(_bot_check_cmds, 1, operands, 0, (void *)&gib, &ret) == BRLCAD_OK) {
 	return ret;
     }
     return BRLCAD_ERROR;

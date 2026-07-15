@@ -34,9 +34,9 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/debug.h"
 #include "bu/file.h"
-#include "bu/opt.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -75,6 +75,30 @@ const char	*iname = "-";
 
 static char *tclified_name=NULL;
 static size_t tclified_name_buffer_len=0;
+
+struct g2asc_args {
+    int help;
+};
+
+static const struct bu_cmd_option g2asc_options[] = {
+    BU_CMD_FLAG("h", "help", struct g2asc_args, help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand g2asc_operands[] = {
+    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Input BRL-CAD database or - for standard input", NULL),
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+	"ASCII output file or - for standard output", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema g2asc_schema = {
+    "g2asc", "Convert a BRL-CAD database to machine-independent ASCII",
+    g2asc_options, g2asc_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 /*	This routine escapes the '{' and '}' characters in any string and returns a static buffer containing the
@@ -116,29 +140,31 @@ int
 main(int argc, char **argv)
 {
     unsigned i;
-    int need_help = 0;
+    struct g2asc_args args = {0};
 
     bu_setprogname(argv[0]);
     Tcl_FindExecutable(argv[0]);
 
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help   and exit");
-    BU_OPT(d[1], "?", "",            "",         NULL,        &need_help, "");
-    BU_OPT_NULL(d[2]);
-
     /* Skip first arg */
     argv++; argc--;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    int uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+    int help_requested = bu_cmd_schema_option_present(&g2asc_schema,
+	(size_t)argc, (const char **)argv, "help");
+    int uac = help_requested ?
+	bu_cmd_schema_parse(&g2asc_schema, &args, &optparse_msg, argc,
+	    (const char **)argv) :
+	bu_cmd_schema_parse_complete(&g2asc_schema, &args, &optparse_msg, argc,
+	    (const char **)argv);
 
     if (uac == -1) {
-	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
+	bu_exit(EXIT_FAILURE, "%s%s", bu_vls_addr(&optparse_msg), usage);
     }
     bu_vls_free(&optparse_msg);
 
-    argc = uac;
+    argc -= uac;
+    argv += uac;
 
-    if (need_help) {
+    if (args.help) {
 	bu_exit(EXIT_SUCCESS, "%s", usage);
     }
 

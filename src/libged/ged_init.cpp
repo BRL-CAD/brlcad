@@ -52,6 +52,8 @@
 static struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
 /* Optional: thread safety (add bu_mutex if needed in future) */
+static std::map<std::string, const struct bu_cmd_schema *> native_schema_registry;
+static std::map<std::string, const struct ged_cmd_grammar *> grammar_registry;
 
 /* -------------------------------------------------------------------------- */
 /* Public Registry API                                                        */
@@ -74,6 +76,51 @@ ged_register_command(const struct ged_cmd *cmd)
     std::string mged_key = std::string("_mged_") + key;
     (void)bu_plugin_cmd_register(mged_key.c_str(), cmd->i->cmd);
 
+    if (cmd->i->native_schema)
+	(void)ged_register_command_native_schema(key.c_str(), cmd->i->native_schema);
+    if (cmd->i->grammar)
+	(void)ged_register_command_grammar(key.c_str(), cmd->i->grammar);
+
+    return 0;
+}
+
+extern "C" int
+ged_register_command_native_schema(const char *name, const struct bu_cmd_schema *schema)
+{
+    if (!name || !schema)
+	return -1;
+
+    std::string key(name);
+    if (key.empty())
+	return -1;
+
+    if (key.compare(0, 6, "_mged_") == 0)
+	key.erase(0, 6);
+
+    if (native_schema_registry.find(key) != native_schema_registry.end())
+	return 1;
+
+    native_schema_registry[key] = schema;
+    return 0;
+}
+
+extern "C" int
+ged_register_command_grammar(const char *name, const struct ged_cmd_grammar *grammar)
+{
+    if (!name || !grammar)
+	return -1;
+
+    std::string key(name);
+    if (key.empty())
+	return -1;
+
+    if (key.compare(0, 6, "_mged_") == 0)
+	key.erase(0, 6);
+
+    if (grammar_registry.find(key) != grammar_registry.end())
+	return 1;
+
+    grammar_registry[key] = grammar;
     return 0;
 }
 
@@ -165,6 +212,30 @@ scan_plugins(void)
 
 	/* Phase 4: load plugins exclusively via generalized loader */
 	(void)bu_plugin_load(pfile);
+
+	void *handle = bu_dlopen(pfile, BU_RTLD_LAZY);
+	if (handle) {
+	    void *info_val = bu_dlsym(handle, "ged_plugin_schema_info");
+	    if (info_val) {
+		typedef const struct ged_plugin_schema_manifest *(*schema_info_fn)(void);
+		schema_info_fn schema_info = (schema_info_fn)(intptr_t)info_val;
+		const struct ged_plugin_schema_manifest *manifest = schema_info();
+		if (manifest &&
+			manifest->struct_size >= sizeof(struct ged_plugin_schema_manifest) &&
+			manifest->schema_count < 8192U && manifest->schemas) {
+		    if (manifest->abi_version == GED_PLUGIN_SCHEMA_ABI_VERSION) {
+			for (unsigned int si = 0; si < manifest->schema_count; si++) {
+			    const struct ged_cmd_schema *schema = &manifest->schemas[si];
+			    if (schema->cname && schema->native_schema)
+				(void)ged_register_command_native_schema(schema->cname, schema->native_schema);
+			    if (schema->cname && schema->grammar)
+				(void)ged_register_command_grammar(schema->cname, schema->grammar);
+			}
+		    }
+		}
+	    }
+	    (void)bu_dlclose(handle);
+	}
     }
 
     bu_vls_free(&pattern);
@@ -217,6 +288,8 @@ libged_shutdown(void)
     /* Generalized registry teardown */
     bu_plugin_shutdown();
 
+    native_schema_registry.clear();
+    grammar_registry.clear();
     bu_vls_free(&init_msgs);
 }
 
@@ -235,6 +308,374 @@ ged_cmd_exists(const char *cmd)
 {
     ged_ensure_initialized();
     return bu_plugin_cmd_exists(cmd);
+}
+
+extern "C" int
+ged_cmd_schema_exists(const char *cmd)
+{
+    if (!cmd)
+	return 0;
+
+    ged_ensure_initialized();
+    return (_ged_cmd_native_schema(cmd) != NULL || _ged_cmd_grammar(cmd) != NULL) ? 1 : 0;
+}
+
+extern "C" char *
+ged_cmd_schema_json(const char *cmd)
+{
+    if (!cmd)
+	return NULL;
+
+    ged_ensure_initialized();
+    const struct ged_cmd_grammar *grammar = _ged_cmd_grammar(cmd);
+    if (grammar && grammar->describe_json)
+	return grammar->describe_json();
+    const struct bu_cmd_schema *native_schema = _ged_cmd_native_schema(cmd);
+    if (native_schema)
+	return bu_cmd_schema_describe_json(native_schema);
+    return NULL;
+}
+
+extern "C" const struct bu_cmd_schema *
+_ged_cmd_native_schema(const char *cmd)
+{
+    if (!cmd)
+	return NULL;
+
+    const char *lookup = cmd;
+    if (bu_strncmp(lookup, "_mged_", 6) == 0)
+	lookup += 6;
+
+    auto it = native_schema_registry.find(std::string(lookup));
+    if (it == native_schema_registry.end())
+	return NULL;
+
+    return it->second;
+}
+
+extern "C" const struct ged_cmd_grammar *
+_ged_cmd_grammar(const char *cmd)
+{
+    if (!cmd)
+	return NULL;
+
+    const char *lookup = cmd;
+    if (bu_strncmp(lookup, "_mged_", 6) == 0)
+	lookup += 6;
+
+    auto it = grammar_registry.find(std::string(lookup));
+    if (it == grammar_registry.end())
+	return NULL;
+
+    return it->second;
+}
+
+static int
+ged_schema_lint_provider(const char *path, const char *role, const char *provider, struct bu_vls *msgs)
+{
+    if (BU_STR_EMPTY(provider))
+	return 0;
+    if (ged_cmd_semantic_provider_exists(provider))
+	return 0;
+    if (msgs)
+	bu_vls_printf(msgs, "%s: unresolved %s semantic provider \"%s\"\n", path, role, provider);
+    return 1;
+}
+
+
+static int
+ged_native_schema_lint_keyword_values(const char *path, const char *role, const char *name,
+	const char * const *keywords, const struct bu_cmd_value_keyword *keyword_values,
+	struct bu_vls *msgs)
+{
+    int failures = 0;
+    std::set<std::string> spellings;
+
+    if (keywords && keyword_values) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: native %s \"%s\" declares both simple and rich keyword values\n",
+		path, role, name);
+	return 1;
+    }
+    if (keywords) {
+	for (size_t i = 0; keywords[i]; i++) {
+	    if (BU_STR_EMPTY(keywords[i]) || !spellings.insert(std::string(keywords[i])).second) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native %s \"%s\" has an empty or duplicate keyword \"%s\"\n",
+			path, role, name, keywords[i] ? keywords[i] : "");
+		failures++;
+	    }
+	}
+	return failures;
+    }
+    if (!keyword_values)
+	return 0;
+
+    for (size_t i = 0; keyword_values[i].canonical; i++) {
+	const struct bu_cmd_value_keyword *keyword = &keyword_values[i];
+	if (BU_STR_EMPTY(keyword->canonical) ||
+		!spellings.insert(std::string(keyword->canonical)).second) {
+	    if (msgs)
+		bu_vls_printf(msgs, "%s: native %s \"%s\" has an empty or duplicate canonical keyword \"%s\"\n",
+			path, role, name, keyword->canonical ? keyword->canonical : "");
+	    failures++;
+	}
+	if (!keyword->aliases)
+	    continue;
+	for (size_t ai = 0; keyword->aliases[ai]; ai++) {
+	    const char *alias = keyword->aliases[ai];
+	    if (BU_STR_EMPTY(alias) || !spellings.insert(std::string(alias)).second) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native %s \"%s\" has an empty or duplicate keyword alias \"%s\"\n",
+			path, role, name, alias ? alias : "");
+		failures++;
+	    }
+	}
+    }
+
+    return failures;
+}
+
+
+static int
+ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema, struct bu_vls *msgs)
+{
+    int failures = 0;
+    std::set<std::string> short_opts;
+    std::set<std::string> long_opts;
+
+    if (!schema) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: null native schema\n", path ? path : "(null)");
+	return 1;
+    }
+    if (BU_STR_EMPTY(schema->name)) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: native schema has no name\n", path ? path : "(null)");
+	failures++;
+    }
+    if (schema->parse_policy < BU_CMD_PARSE_INTERSPERSED ||
+	schema->parse_policy > BU_CMD_PARSE_STOP_AT_FIRST_OPERAND) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: invalid native parse policy enum %d\n", path, (int)schema->parse_policy);
+	failures++;
+    }
+    if (schema->options) {
+	for (size_t i = 0; schema->options[i].canonical; i++) {
+	    const struct bu_cmd_option *option = &schema->options[i];
+	    if (BU_STR_EMPTY(option->canonical)) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native option %lu has no canonical name\n", path, (unsigned long)i);
+		failures++;
+	    }
+	    if (option->shortopt && option->shortopt[0]) {
+		std::string spelling(option->shortopt);
+		if (!short_opts.insert(spelling).second) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: duplicate native short option \"%s\"\n", path, option->shortopt);
+		    failures++;
+		}
+	    }
+	    if (option->longopt && option->longopt[0]) {
+		std::string spelling(option->longopt);
+		if (!long_opts.insert(spelling).second) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: duplicate native long option \"%s\"\n", path, option->longopt);
+		    failures++;
+		}
+	    }
+	    if (option->alias_of && !option->alias_of[0]) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native alias has no target\n", path);
+		failures++;
+	    }
+	    if (option->alias_of && option->alias_of[0]) {
+		int target_found = 0;
+		for (size_t ci = 0; schema->options[ci].canonical; ci++) {
+		    const struct bu_cmd_option *target = &schema->options[ci];
+		    if (!target->alias_of && BU_STR_EQUAL(target->canonical, option->alias_of)) {
+			target_found = 1;
+			break;
+		    }
+		}
+		if (!target_found) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: native alias \"%s\" targets unknown option \"%s\"\n",
+			    path, option->canonical, option->alias_of);
+		    failures++;
+		}
+	    }
+	    if (option->value_type < BU_CMD_VALUE_FLAG || option->value_type > BU_CMD_VALUE_CUSTOM) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native option \"%s\" has invalid value type %d\n",
+			path, option->canonical, (int)option->value_type);
+		failures++;
+	    }
+	    if (option->arg_requirement < BU_CMD_ARG_REQUIRED || option->arg_requirement > BU_CMD_ARG_NONE) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native option \"%s\" has invalid argument requirement %d\n",
+			path, option->canonical, (int)option->arg_requirement);
+		failures++;
+	    }
+	/* Most typed values consume an argument.  The repeatable no-argument
+	 * counter helpers are the intentional exception: their storage type is
+	 * long (rather than int) even though selecting the option supplies the
+	 * value. */
+	if ((option->value_type == BU_CMD_VALUE_FLAG && option->arg_requirement != BU_CMD_ARG_NONE) ||
+		(option->value_type != BU_CMD_VALUE_FLAG && option->value_type != BU_CMD_VALUE_CUSTOM &&
+		 option->arg_requirement == BU_CMD_ARG_NONE && !option->alias_of && !option->repeat)) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native option \"%s\" has incompatible value and argument requirements\n",
+			path, option->canonical);
+		failures++;
+	    }
+	    if (option->arg_shape) {
+		if (option->arg_shape->kind < BU_CMD_ARG_SHAPE_SCALAR ||
+		    option->arg_shape->kind > BU_CMD_ARG_SHAPE_CUSTOM) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: native option \"%s\" has invalid argument shape %d\n",
+			    path, option->canonical, (int)option->arg_shape->kind);
+		    failures++;
+		}
+		if (option->arg_shape->max_tokens != BU_CMD_COUNT_UNLIMITED &&
+		    option->arg_shape->min_tokens > option->arg_shape->max_tokens) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: native option \"%s\" has invalid argument token range %lu > %lu\n",
+			    path, option->canonical, (unsigned long)option->arg_shape->min_tokens,
+			    (unsigned long)option->arg_shape->max_tokens);
+		    failures++;
+		}
+		if (option->arg_requirement == BU_CMD_ARG_NONE && option->arg_shape->max_tokens) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: native flag \"%s\" declares an argument shape\n",
+			    path, option->canonical);
+		    failures++;
+		}
+		if (option->arg_shape->max_tokens != 1 && !option->consume) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: native option \"%s\" needs an argument-shape consumer\n",
+			    path, option->canonical);
+		    failures++;
+		}
+	    }
+    if (option->value_type == BU_CMD_VALUE_CUSTOM && !option->custom_parse &&
+	!option->consume && !option->alias_of) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: native custom option \"%s\" has no parser or consumer\n",
+		path, option->canonical);
+		failures++;
+	    }
+	    failures += ged_schema_lint_provider(path, "native option", option->semantic_provider, msgs);
+	    failures += ged_native_schema_lint_keyword_values(path, "option", option->canonical,
+		option->value_keywords, option->keyword_values, msgs);
+	}
+    }
+    if (schema->operands) {
+	for (size_t i = 0; schema->operands[i].name; i++) {
+	    const struct bu_cmd_operand *operand = &schema->operands[i];
+	    if (operand->max_count != BU_CMD_COUNT_UNLIMITED && operand->min_count > operand->max_count) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native operand \"%s\" has invalid count range %lu > %lu\n",
+			path, operand->name, (unsigned long)operand->min_count, (unsigned long)operand->max_count);
+		failures++;
+	    }
+	    if (operand->value_type < BU_CMD_VALUE_FLAG || operand->value_type > BU_CMD_VALUE_CUSTOM) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native operand \"%s\" has invalid value type %d\n",
+			path, operand->name, (int)operand->value_type);
+		failures++;
+	    }
+	    if (operand->value_type == BU_CMD_VALUE_CUSTOM) {
+		if (msgs)
+		    bu_vls_printf(msgs, "%s: native operand \"%s\" cannot use an unbound custom parser\n",
+			path, operand->name);
+		failures++;
+	    }
+	    if (operand->shape) {
+		if (operand->shape->kind < BU_CMD_ARG_SHAPE_SCALAR ||
+		    operand->shape->kind > BU_CMD_ARG_SHAPE_CUSTOM) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: native operand \"%s\" has invalid shape %d\n",
+			    path, operand->name, (int)operand->shape->kind);
+		    failures++;
+		}
+		if (operand->shape->min_tokens != 1 || operand->shape->max_tokens != 1) {
+		    if (msgs)
+			bu_vls_printf(msgs, "%s: native operand \"%s\" shape must describe one token\n",
+			    path, operand->name);
+		    failures++;
+		}
+	    }
+	    failures += ged_schema_lint_provider(path, "native operand", operand->semantic_provider, msgs);
+	    failures += ged_native_schema_lint_keyword_values(path, "operand", operand->name,
+		operand->value_keywords, operand->keyword_values, msgs);
+	}
+    }
+
+    return failures;
+}
+
+static int
+ged_grammar_lint_node(const char *path, const struct ged_cmd_grammar *grammar, struct bu_vls *msgs)
+{
+    int failures = 0;
+
+    if (!grammar) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: null grammar adapter\n", path ? path : "(null)");
+	return 1;
+    }
+    if (BU_STR_EMPTY(grammar->name)) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: grammar adapter has no name\n", path);
+	failures++;
+    }
+    if (BU_STR_EMPTY(grammar->help)) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: grammar adapter has no help text\n", path);
+	failures++;
+    }
+    if (!grammar->validate || !grammar->analyze || !grammar->describe_json) {
+	if (msgs)
+	    bu_vls_printf(msgs, "%s: grammar adapter is missing required analysis or JSON hooks\n", path);
+	failures++;
+    }
+    if (grammar->lint)
+	failures += grammar->lint(msgs);
+
+    return failures;
+}
+
+extern "C" int
+ged_cmd_schema_lint(const char *cmd, struct bu_vls *msgs)
+{
+    int failures = 0;
+
+    ged_ensure_initialized();
+
+    if (cmd) {
+	const struct bu_cmd_schema *native_schema = _ged_cmd_native_schema(cmd);
+	const struct ged_cmd_grammar *grammar = _ged_cmd_grammar(cmd);
+	if (!native_schema && !grammar) {
+	    if (msgs)
+		bu_vls_printf(msgs, "%s: schema metadata unavailable\n", cmd);
+	    return 1;
+	}
+	if (native_schema)
+	    failures += ged_native_schema_lint_node(cmd, native_schema, msgs);
+	if (grammar)
+	    failures += ged_grammar_lint_node(cmd, grammar, msgs);
+	return failures;
+    }
+
+    for (std::map<std::string, const struct bu_cmd_schema *>::iterator it = native_schema_registry.begin(); it != native_schema_registry.end(); ++it) {
+	failures += ged_native_schema_lint_node(it->first.c_str(), it->second, msgs);
+    }
+    for (std::map<std::string, const struct ged_cmd_grammar *>::iterator it = grammar_registry.begin(); it != grammar_registry.end(); ++it) {
+	failures += ged_grammar_lint_node(it->first.c_str(), it->second, msgs);
+    }
+
+    return failures;
 }
 
 extern "C" int

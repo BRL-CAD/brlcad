@@ -55,12 +55,12 @@
 #endif
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/exit.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mapped_file.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -77,7 +77,69 @@
 #  define MAN_CMDLINE 1
 #endif
 
-/* Supported man sections */
+static const char brlman_man_sections[] = "135n";
+
+struct brlman_args {
+    int help;
+    int enable_gui;
+    int disable_gui;
+    struct bu_vls language;
+    struct bu_vls keyword;
+    struct bu_vls full_text;
+    char section;
+};
+
+static const char * const brlman_language_option[] = {"language", NULL};
+static const char * const brlman_search_options[] = {"keyword", "full-text", NULL};
+static const struct bu_cmd_constraint brlman_schema_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(brlman_language_option, 0, 1,
+	"--language may be specified only once"),
+    BU_CMD_CONSTRAINT_OPTIONS(brlman_search_options, 0, 1,
+	"specify only one of --keyword or --full-text"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_option brlman_schema_options[] = {
+    BU_CMD_FLAG("h", "help", struct brlman_args, help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("H", "help", 1),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("g", "gui", struct brlman_args, enable_gui,
+	"Force use of the graphical manual-page viewer"),
+    BU_CMD_FLAG(NULL, "no-gui", struct brlman_args, disable_gui,
+	"Force use of the command-line manual-page viewer"),
+    BU_CMD_ISO639_1("L", "language", struct brlman_args, language, "code",
+	"Select a lower-case ISO 639-1 manual language"),
+    BU_CMD_MAN_SECTION("S", "section", struct brlman_args, section, "section",
+	"Select manual section 1, 3, 5, or n"),
+    BU_CMD_VLS_APPEND("k", "keyword", struct brlman_args, keyword, "words",
+	"Search manual names, synopses, and brief descriptions"),
+    BU_CMD_VLS_APPEND("K", "full-text", struct brlman_args, full_text, "words",
+	"Search complete manual-page text"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand brlman_schema_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+	"Manual page and optional section, or additional search words", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema brlman_cmd_schema = {
+    "brlman", "Open a BRL-CAD manual page", brlman_schema_options,
+    brlman_schema_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, brlman_schema_constraints)
+};
+
+
+static void
+brlman_show_help(void)
+{
+    char *option_help = bu_cmd_schema_describe(&brlman_cmd_schema);
+
+    bu_log("Usage: brlman [--gui|--no-gui] [-L language] [-S section] [-k words|-K words] [manual_page [section]]\n");
+    if (option_help) {
+	bu_log("Options:\n%s\n", option_help);
+	bu_free(option_help, "brlman native option help");
+    }
+}
+
 
 struct man_page {
     std::string name;
@@ -537,7 +599,7 @@ man_section_dir(struct bu_vls *mdir, const char *lang, char section, int gui)
 static size_t
 collect_man_pages(std::vector<man_page> &pages, const char *lang, char wanted_section, int gui, int include_full_text)
 {
-    const char sections[] = BRLCAD_MAN_SECTIONS;
+    const char *sections = brlman_man_sections;
     size_t total = 0;
 
     for (size_t si = 0; sections[si] != '\0'; si++) {
@@ -1056,23 +1118,23 @@ BRLMAN_MAIN(
     int status = BRLCAD_ERROR;
     int uac = 0;
 #ifndef MAN_CMDLINE
-    int enable_gui = 1;
+    int default_enable_gui = 1;
 #else
-    int enable_gui = 0;
+    int default_enable_gui = 0;
 #endif
-    int disable_gui = 0;
-    int print_help = 0;
     int search_mode = 0;
     const char *short_search = NULL;
     const char *full_search = NULL;
     const char *man_cmd = NULL;
     const char *man_name = NULL;
     const char *man_file = NULL;
-    char man_section = '\0';
     struct bu_vls search_query = BU_VLS_INIT_ZERO;
-    struct bu_vls lang = BU_VLS_INIT_ZERO;
-    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[8];
+    struct brlman_args args = {0, default_enable_gui, 0, BU_VLS_INIT_ZERO,
+	BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, '\0'};
+    int &enable_gui = args.enable_gui;
+    int &disable_gui = args.disable_gui;
+    char &man_section = args.section;
+    struct bu_vls &lang = args.language;
 
 #ifdef HAVE_WINDOWS_H
     const char **argv;
@@ -1086,32 +1148,22 @@ BRLMAN_MAIN(
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
 
-    /* Handle options in C */
-    BU_OPT(d[0], "h", "help",        "",                NULL, &print_help,  "Print help and exit");
-    BU_OPT(d[1], "g", "gui",         "",                NULL, &enable_gui,  "Enable GUI");
-    BU_OPT(d[2], "",  "no-gui",      "",                NULL, &disable_gui, "Disable GUI");
-    BU_OPT(d[3], "L", "language",  "lg",        &bu_opt_lang, &lang,        "Set language");
-    BU_OPT(d[4], "S", "section",    "#", &bu_opt_man_section, &man_section, "Set section");
-    BU_OPT(d[5], "k", "keyword",    "kw",          &bu_opt_str, &short_search, "Search names, synopses, and brief descriptions");
-    BU_OPT(d[6], "K", "full-text",  "kw",          &bu_opt_str, &full_search,  "Search full manual page text");
-    BU_OPT_NULL(d[7]);
-
-    /* Skip first arg */
+    /* Skip the program name and parse the native interspersed option form. */
     argv++; argc--;
-    uac = bu_opt_parse(&optparse_msg, argc, argv, d);
-    if (uac == -1) {
-	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
-    }
-    bu_vls_free(&optparse_msg);
+    struct bu_vls parse_msg = BU_VLS_INIT_ZERO;
+    int operand_index = bu_cmd_schema_parse_complete(&brlman_cmd_schema, &args,
+	&parse_msg, argc, argv);
+    if (operand_index < 0)
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_cstr(&parse_msg));
+    bu_vls_free(&parse_msg);
+    uac = argc - operand_index;
+    const char **operands = argv + operand_index;
+    short_search = bu_vls_strlen(&args.keyword) ? bu_vls_cstr(&args.keyword) : NULL;
+    full_search = bu_vls_strlen(&args.full_text) ? bu_vls_cstr(&args.full_text) : NULL;
 
     /* If we want help, print help */
-    if (print_help) {
-	char *option_help = bu_opt_describe(d, NULL);
-	bu_log("Usage: brlman [options] [man_page]\n");
-	if (option_help) {
-	    bu_log("Options:\n%s\n", option_help);
-	}
-	bu_free(option_help, "help str");
+	if (args.help) {
+	brlman_show_help();
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
@@ -1129,48 +1181,28 @@ BRLMAN_MAIN(
 
     if (search_mode && uac > 0) {
 	for (i = 0; i < uac; i++) {
-	    bu_vls_printf(&search_query, " %s", argv[i]);
+	    bu_vls_printf(&search_query, " %s", operands[i]);
 	}
 	uac = 0;
     }
 
     /* If we only have one non-option arg, assume it's the man name */
     if (uac == 1) {
-	man_name = argv[0];
-    } else {
-	/* If we've got more, check for a section number. */
+	man_name = operands[0];
+    } else if (uac == 2) {
+	int section_index = -1;
 	for (i = 0; i < uac; i++) {
-	    if (strlen(argv[i]) == 1 && (isdigit(argv[i][0]) || argv[i][0] == 'n')) {
-
-		/* Record the section */
-		man_section = argv[i][0];
-
-		/* If we have a section identifier and it's not already the last
-		 * element in argv, adjust the array */
-		if (i < uac - 1) {
-		    const char *tmp = argv[uac-1];
-		    argv[uac-1] = argv[i];
-		    argv[i] = tmp;
-		}
-
-		/* Found a number and processed - one less argv entry. */
-		uac--;
-
-		/* First number wins. */
+	    if (bu_cmd_man_section_validate(NULL, operands[i]) == 0) {
+		section_index = i;
+		man_section = operands[i][0];
 		break;
 	    }
 	}
-
-	/* For now, only support specifying one man page at a time */
-	if (uac > 1) {
-	    bu_exit(EXIT_FAILURE, "Error - need a single man page name");
-	}
-
-	/* If we have one, use it.  Zero is allowed if we're in graphical
-	 * mode, so uac == at this point isn't necessarily a failure */
-	if (uac == 1) {
-	    man_name = argv[0];
-	}
+	if (section_index < 0)
+	    bu_exit(EXIT_FAILURE, "Error - need a single manual page name and an optional section");
+	man_name = operands[section_index ? 0 : 1];
+    } else if (uac > 2) {
+	bu_exit(EXIT_FAILURE, "Error - need a single manual page name and an optional section");
     }
 
     if (enable_gui && disable_gui) {
@@ -1235,7 +1267,7 @@ BRLMAN_MAIN(
     if (man_section != '\0') {
 	man_file = find_man_file(man_name, bu_vls_addr(&lang), man_section, enable_gui);
     } else {
-	const char sections[] = BRLCAD_MAN_SECTIONS;
+	const char *sections = brlman_man_sections;
 	i = 0;
 	while(sections[i] != '\0') {
 	    man_file = find_man_file(man_name, bu_vls_addr(&lang), sections[i], enable_gui);

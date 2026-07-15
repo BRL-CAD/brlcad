@@ -32,8 +32,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "bu/cmdschema.h"
 #include "bu/debug.h"
-#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -46,6 +46,30 @@
 /* #define debug 1 */
 
 static union E_tree *e_build_etree(union tree *tp, struct _ged_client_data *dgcdp);
+
+
+struct bigE_args {
+    int polysolids;
+    struct bu_color color;
+};
+
+
+static const struct bu_cmd_option bigE_schema_options[] = {
+    BU_CMD_RGB("C", NULL, struct bigE_args, color, "r/g/b",
+	"Override object colors"),
+    BU_CMD_FLAG("s", NULL, struct bigE_args, polysolids, "Draw polysolids"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bigE_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+	"Database objects or paths to evaluate", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+const struct bu_cmd_schema ged_bigE_native_schema = {
+    "E", "Draw evaluated database objects", bigE_schema_options,
+    bigE_schema_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 /* segment types (stored in the "seg_stp" field of the (struct seg) */
 #define ON_SURF	(struct soltab *)0x1
@@ -1983,11 +2007,13 @@ int
 ged_E_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
-    int c;
     int ac = 1;
     char *av[2];
     struct _ged_client_data *dgcdp;
-    static const char *usage = "[-C#/#/# -s] objects(s)";
+    struct bigE_args args = {0, BU_COLOR_INIT_ZERO};
+    int operand_index;
+    int color_override;
+    static const char *usage = "[-C r/g/b] [-s] object [object ...]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -2002,55 +2028,29 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    operand_index = bu_cmd_schema_parse_complete(&ged_bigE_native_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+    color_override = bu_cmd_schema_option_present(&ged_bigE_native_schema,
+	(size_t)(argc - 1), argv + 1, "C");
+
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
+
     /* XXX: where is this released? */
     BU_ALLOC(dgcdp, struct _ged_client_data);
     dgcdp->gedp = gedp;
     dgcdp->v = gedp->ged_gvp;
     dgcdp->wdbp = wdb_dbopen(dgcdp->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    dgcdp->do_polysolids = 0;
-    dgcdp->vs.color_override = 0;
+    dgcdp->do_polysolids = args.polysolids;
+    dgcdp->vs.color_override = color_override;
+    if (color_override)
+	bu_color_to_rgb_chars(&args.color, dgcdp->vs.color);
     dgcdp->vs.transparency = 0;
     dgcdp->vs.s_dmode = _GED_BOOL_EVAL;
-
-    /* Parse options. */
-    bu_optind = 1;          /* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "sC:")) != -1) {
-	switch (c) {
-	    case 'C':
-		{
-		    int r, g, b;
-		    char *cp = bu_optarg;
-
-		    r = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    g = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    b = atoi(cp);
-
-		    if (r < 0 || r > 255) r = 255;
-		    if (g < 0 || g > 255) g = 255;
-		    if (b < 0 || b > 255) b = 255;
-
-		    dgcdp->vs.color_override = 1;
-		    dgcdp->vs.color[0] = r;
-		    dgcdp->vs.color[1] = g;
-		    dgcdp->vs.color[2] = b;
-		}
-		break;
-	    case 's':
-		dgcdp->do_polysolids = 1;
-		break;
-	    default:
-		{
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
-		}
-	}
-    }
-    argc -= bu_optind;
-    argv += bu_optind;
 
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {

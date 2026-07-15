@@ -32,6 +32,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "raytrace.h"
 #include "gcv/api.h"
@@ -123,7 +124,7 @@ obj_get_path_color(struct db_i *dbip, const struct db_full_path *pathp, unsigned
 	    const struct mater *mp;
 
 	    if (region_id_val) {
-		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+		(void)bu_cmd_integer_from_str(&region_id, region_id_val);
 	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
 		region_id = 0;
 	    }
@@ -756,21 +757,37 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
-static void
-obj_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+static const struct bu_cmd_option obj_write_schema_options[] = {
+    BU_CMD_FLAG(NULL, "vertex-normals", struct obj_write_options, do_normals,
+	"Output vertex normals."),
+    BU_CMD_FLAG(NULL, "usemtl", struct obj_write_options, usemtl,
+	"Place usemtl statements in the output file. When BRL-CAD colors are present, "
+	"a companion .mtl file is generated with matching RGB values. Material names "
+	"also preserve the BRL-CAD air/LOS/material codes."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema obj_write_schema = {
+    "obj-write",
+    "OBJ writer options.",
+    obj_write_schema_options,
+    NULL,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+void
+obj_write_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct obj_write_options *options_data;
 
     BU_ALLOC(options_data, struct obj_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
-
-    BU_OPT((*options_desc)[0], NULL, "vertex-normals", NULL, NULL, &options_data->do_normals, "Output vertex normals.");
-    BU_OPT((*options_desc)[1], NULL, "usemtl", NULL, NULL, &options_data->usemtl,
-	    "Place usemtl statements in the output file. When BRL-CAD colors are present, "
-	    "a companion .mtl file is generated with matching RGB values. Material names "
-	    "also preserve the BRL-CAD air/LOS/material codes.");
-    BU_OPT_NULL((*options_desc)[2]);
+    options_data->do_normals = 0;
+    options_data->usemtl = 0;
+    *schema = &obj_write_schema;
 }
 
 
@@ -856,7 +873,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
 const struct gcv_filter gcv_conv_obj_write = {
     "OBJ Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_OBJ, NULL,
-    obj_write_create_opts, obj_write_free_opts, obj_write
+    NULL, obj_write_free_opts, obj_write
 };
 
 

@@ -25,14 +25,50 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"
 #include "raytrace.h"
 
 #include "../ged_private.h"
+#include "../move_arb.h"
+
+struct move_arb_edge_args {
+    int relative;
+};
+
+static const struct bu_cmd_option move_arb_edge_schema_options[] = {
+    BU_CMD_FLAG("r", NULL, struct move_arb_edge_args, relative,
+	"Interpret point relative to current edge"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand move_arb_edge_schema_operands[] = {
+    BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
+    BU_CMD_OPERAND_VALIDATE("edge", BU_CMD_VALUE_INTEGER, 1, 1,
+	ged_arb_positive_integer_validate, "One-based edge index", NULL),
+    BU_CMD_OPERAND_VALIDATE("point", BU_CMD_VALUE_VECTOR, 1, 1,
+	ged_arb_vector3_validate, "Packed XYZ point", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema move_arb_edge_cmd_schema = {
+    "move_arb_edge", "Move an ARB edge", move_arb_edge_schema_options,
+    move_arb_edge_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+static const struct bu_cmd_operand find_arb_edge_schema_operands[] = {
+    BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
+    BU_CMD_OPERAND_VALIDATE("view_point", BU_CMD_VALUE_VECTOR, 1, 1,
+	ged_arb_vector3_validate, "Packed view XYZ point", NULL),
+    BU_CMD_OPERAND("tolerance", BU_CMD_VALUE_NUMBER, 1, 1, "Point tolerance", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema find_arb_edge_cmd_schema = {
+    "find_arb_edge", "Find the ARB edge nearest a view point", NULL,
+    find_arb_edge_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 int
@@ -45,7 +81,11 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
     int arb_pt_index;
     int edge;
     int bad_edge_id = 0;
-    int rflag = 0;
+    struct move_arb_edge_args args = {0};
+    int operand_index;
+    const char *arb_path;
+    const char *edge_arg;
+    const char *point_arg;
     point_t pt;
     double scan[3];
     mat_t mat;
@@ -71,39 +111,33 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 4 || 5 < argc) {
+    operand_index = bu_cmd_schema_parse_complete(&move_arb_edge_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    arb_path = argv[operand_index + 1];
+    edge_arg = argv[operand_index + 2];
+    point_arg = argv[operand_index + 3];
 
-    if (argc == 5) {
-	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
-
-	rflag = 1;
-	--argc;
-	++argv;
-    }
-
-    if ((last = strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
+    if ((last = strrchr(arb_path, '/')) == NULL)
+	last = (char *)arb_path;
     else
 	++last;
 
     if (last[0] == '\0') {
-	bu_vls_printf(gedp->ged_result_str, "illegal input - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "illegal input - %s", arb_path);
 	return BRLCAD_ERROR;
     }
 
     if ((dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s not found", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s not found", arb_path);
 	return BRLCAD_ERROR;
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, arb_path, wdbp, mat) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
@@ -115,20 +149,10 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%d", &edge) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "bad edge - %s", argv[2]);
-	rt_db_free_internal(&intern);
-
-	return BRLCAD_ERROR;
-    }
+    edge = (int)strtol(edge_arg, NULL, 0);
     edge -= 1;
 
-    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "bad point - %s", argv[3]);
-	rt_db_free_internal(&intern);
-
-	return BRLCAD_ERROR;
-    }
+    (void)ged_arb_vector3_parse(point_arg, scan);
     /* convert from double to fastf_t */
     VMOVE(pt, scan);
 
@@ -190,7 +214,7 @@ bad_edge:
 
     /* check the edge id */
     if (bad_edge_id) {
-	bu_vls_printf(gedp->ged_result_str, "bad edge - %s", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "bad edge - %s", edge_arg);
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -204,7 +228,7 @@ bad_edge:
 
     VSCALE(pt, pt, gedp->dbip->dbi_local2base);
 
-    if (rflag) {
+    if (args.relative) {
 	VADD2(pt, pt, arb->pt[arb_pt_index]);
     }
 
@@ -243,10 +267,12 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
     int edge, vi1, vi2;
     vect_t view;
     fastf_t ptol;
+    int operand_index;
+    const char *arb_path;
+    const char *view_point;
+    const char *tolerance;
 
-    /* must be double for scanf */
     double scan[ELEMENTS_PER_VECT];
-    double ptol_scan;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -261,26 +287,24 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 	return GED_HELP;
     }
 
-    if (argc != 4) {
+    operand_index = bu_cmd_schema_parse_complete(&find_arb_edge_cmd_schema, NULL,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    arb_path = argv[operand_index + 1];
+    view_point = argv[operand_index + 2];
+    tolerance = argv[operand_index + 3];
 
-    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
-	return BRLCAD_ERROR;
-    }
+    (void)ged_arb_vector3_parse(view_point, scan);
     VMOVE(view, scan); /* convert double to fastf_t */
 
-    if (bu_sscanf(argv[3], "%lf", &ptol_scan) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad ptol - %s", argv[0], argv[3]);
-	return BRLCAD_ERROR;
-    }
-    ptol = ptol_scan;
+    ptol = (fastf_t)strtod(tolerance, NULL);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, arb_path, wdbp, mat) == BRLCAD_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], arb_path);
 	return BRLCAD_ERROR;
     }
 
@@ -303,11 +327,11 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 #include "../include/plugin.h"
 
 #define GED_MOVE_ARB_EDGE_COMMANDS(X, XID) \
-    X(move_arb_edge, ged_move_arb_edge_core, GED_CMD_DEFAULT) \
-    X(find_arb_edge, ged_find_arb_edge_nearest_pnt_core, GED_CMD_DEFAULT) \
+    X(move_arb_edge, ged_move_arb_edge_core, GED_CMD_DEFAULT, &move_arb_edge_cmd_schema) \
+    X(find_arb_edge, ged_find_arb_edge_nearest_pnt_core, GED_CMD_DEFAULT, &find_arb_edge_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_MOVE_ARB_EDGE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_move_arb_edge", 1, GED_MOVE_ARB_EDGE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_MOVE_ARB_EDGE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_move_arb_edge", 1, GED_MOVE_ARB_EDGE_COMMANDS)
 
 /*
  * Local Variables:

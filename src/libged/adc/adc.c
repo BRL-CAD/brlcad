@@ -29,7 +29,19 @@
 
 
 #include "vmath.h"
+#include "bu/cmdschema.h"
 #include "ged.h"
+
+#include "../ged_private.h"
+
+
+struct adc_native_args {
+    int increment;
+};
+
+static void adc_usage(struct bu_vls *vp, const char *name);
+static int adc_native_preflight(struct ged *gedp, int argc, const char *argv[],
+	struct adc_native_args *args, int *parameter_index);
 
 void ged_calc_adc_pos(struct bview *gvp);
 void ged_calc_adc_a1(struct bview *gvp);
@@ -72,38 +84,6 @@ adc_vls_print(struct bview *gvp, fastf_t base2local, struct bu_vls *out_vp)
 }
 
 
-static void
-adc_usage(struct bu_vls *vp, const char *name)
-{
-    bu_vls_printf(vp, "Usage: %s \n", name);
-    bu_vls_printf(vp, "%s", " adc vars                      print a list of all variables (i.e. var = val)\n");
-    bu_vls_printf(vp, "%s", " adc draw [0|1]                set or get the draw parameter\n");
-    bu_vls_printf(vp, "%s", " adc a1   [#]                  set or get angle1\n");
-    bu_vls_printf(vp, "%s", " adc a2   [#]                  set or get angle2\n");
-    bu_vls_printf(vp, "%s", " adc dst  [#]                  set or get radius (distance) of tick\n");
-    bu_vls_printf(vp, "%s", " adc odst [#]                  set or get radius (distance) of tick (+-2047)\n");
-    bu_vls_printf(vp, "%s", " adc hv   [# #]                set or get position (grid coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc xyz  [# # #]              set or get position (model coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc x [#]                     set or get horizontal position (+-2047)\n");
-    bu_vls_printf(vp, "%s", " adc y [#]                     set or get vertical position (+-2047)\n");
-    bu_vls_printf(vp, "%s", " adc dh #                      add to horizontal position (grid coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc dv #                      add to vertical position (grid coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc dx #                      add to X position (model coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc dy #                      add to Y position (model coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc dz #                      add to Z position (model coordinates)\n");
-    bu_vls_printf(vp, "%s", " adc anchor_pos [0|1]          anchor ADC to current position in model coordinates\n");
-    bu_vls_printf(vp, "%s", " adc anchor_a1  [0|1]          anchor angle1 to go through anchorpoint_a1\n");
-    bu_vls_printf(vp, "%s", " adc anchor_a2  [0|1]          anchor angle2 to go through anchorpoint_a2\n");
-    bu_vls_printf(vp, "%s", " adc anchor_dst [0|1]          anchor tick distance to go through anchorpoint_dst\n");
-    bu_vls_printf(vp, "%s", " adc anchorpoint_a1  [# # #]   set or get anchor point for angle1\n");
-    bu_vls_printf(vp, "%s", " adc anchorpoint_a2  [# # #]   set or get anchor point for angle2\n");
-    bu_vls_printf(vp, "%s", " adc anchorpoint_dst [# # #]   set or get anchor point for tick distance\n");
-    bu_vls_printf(vp, "%s", " adc -i                        any of the above appropriate commands will interpret parameters as increments\n");
-    bu_vls_printf(vp, "%s", " adc reset                     reset angles, location, and tick distance\n");
-    bu_vls_printf(vp, "%s", " adc help                      prints this help message\n");
-}
-
-
 /*
  * Note - this needs to be rewritten to accept keyword/value pairs so
  * that multiple attributes can be set with a single command call.
@@ -116,9 +96,10 @@ ged_adc_core(struct ged *gedp,
     char *command;
     char *parameter;
     char **argp = (char **)argv;
-    double scanval;
     point_t user_pt;		/* Value(s) provided by user */
     point_t scaled_pos;
+    struct adc_native_args native_args = {0};
+    int parameter_index;
     int incr_flag;
     int i;
 
@@ -132,36 +113,24 @@ ged_adc_core(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc < 2 || 6 < argc) {
+
+    if (adc_native_preflight(gedp, argc, argv, &native_args, &parameter_index) != BRLCAD_OK) {
 	adc_usage(gedp->ged_result_str, argv[0]);
 	return BRLCAD_ERROR;
     }
 
     command = (char *)argv[0];
 
-    if (BU_STR_EQUAL(argv[1], "-i")) {
-	if (argc < 5) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: -i option specified without an op-val pair", command);
-	    return BRLCAD_ERROR;
-	}
-
-	incr_flag = 1;
-	parameter = (char *)argv[2];
-	argc -= 3;
-	argp += 3;
-    } else {
-	incr_flag = 0;
-	parameter = (char *)argv[1];
-	argc -= 2;
-	argp += 2;
-    }
+    incr_flag = native_args.increment;
+    parameter = (char *)argv[parameter_index];
+    argc -= parameter_index + 1;
+    argp += parameter_index + 1;
 
     for (i = 0; i < argc; ++i) {
-	if (sscanf(argp[i], "%lf", &scanval) != 1) {
+	if (!bu_cmd_number_from_str(&user_pt[i], argp[i])) {
 	    adc_usage(gedp->ged_result_str, command);
 	    return BRLCAD_ERROR;
 	}
-	user_pt[i] = scanval;
     }
 
     if (BU_STR_EQUAL(parameter, "draw")) {
@@ -710,12 +679,315 @@ ged_calc_adc_dst(struct bview *gvp)
 
 
 #include "../include/plugin.h"
+static const char * const adc_binary_values[] = {"0", "1", NULL};
+static const char * const adc_anchor_position_values[] = {"0", "1", "2", NULL};
 
-#define GED_ADC_COMMANDS(X, XID) \
-    X(adc, ged_adc_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand adc_optional_number_operands[] = {
+    BU_CMD_OPERAND("value", BU_CMD_VALUE_NUMBER, 0, 1, "New value", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand adc_required_number_operands[] = {
+    BU_CMD_OPERAND("delta", BU_CMD_VALUE_NUMBER, 1, 1, "Increment value", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand adc_optional_binary_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("enabled", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"0 (off) or 1 (on)", NULL, adc_binary_values),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand adc_optional_anchor_position_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("mode", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"0 (free), 1 (model), or 2 (grid)", NULL, adc_anchor_position_values),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand adc_optional_pair_operands[] = {
+    BU_CMD_OPERAND("position", BU_CMD_VALUE_NUMBER, 0, 2,
+	"Horizontal and vertical grid position", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand adc_optional_point_operands[] = {
+    BU_CMD_OPERAND("point", BU_CMD_VALUE_NUMBER, 0, 3,
+	"Model-coordinate XYZ point", NULL),
+    BU_CMD_OPERAND_NULL
+};
 
-GED_DECLARE_COMMAND_SET(GED_ADC_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_adc", 1, GED_ADC_COMMANDS)
+
+static int
+adc_optional_count_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result,
+	size_t required_count, const char *hint)
+{
+    struct bu_cmd_schema flat = *schema;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID || !argc || argc == required_count)
+	return ret;
+    bu_cmd_validate_result_clear(result);
+    result->state = argc < required_count ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID;
+    result->token_start = cursor_arg < argc ? cursor_arg : argc;
+    result->token_end = result->token_start;
+    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->completion_type = BU_CMD_VALUE_NUMBER;
+    result->hint = hint;
+    return 0;
+}
+
+
+static int
+adc_optional_pair_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    return adc_optional_count_validate(schema, argc, argv, cursor_arg, result, 2,
+	"zero or two numeric coordinates required");
+}
+
+
+static int
+adc_optional_point_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    return adc_optional_count_validate(schema, argc, argv, cursor_arg, result, 3,
+	"zero or three numeric coordinates required");
+}
+
+
+static const struct bu_cmd_option adc_root_options[] = {
+    BU_CMD_FLAG("i", NULL, struct adc_native_args, increment,
+	"Interpret applicable values as increments"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema adc_root_schema = {
+    "adc", "Inspect and configure the angle-distance cursor", adc_root_options,
+    NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_vars_schema = {
+    "vars", "Print all ADC variables", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_draw_schema = {
+    "draw", "Query or set ADC drawing", NULL, adc_optional_binary_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_a1_schema = {
+    "a1", "Query or set angle 1", NULL, adc_optional_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_a2_schema = {
+    "a2", "Query or set angle 2", NULL, adc_optional_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_dst_schema = {
+    "dst", "Query or set tick distance", NULL, adc_optional_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_odst_schema = {
+    "odst", "Query or set view tick distance", NULL, adc_optional_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_hv_schema = {
+    "hv", "Query or set grid position", NULL, adc_optional_pair_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(adc_optional_pair_validate, NULL)
+};
+static const struct bu_cmd_schema adc_xyz_schema = {
+    "xyz", "Query or set model position", NULL, adc_optional_point_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(adc_optional_point_validate, NULL)
+};
+static const struct bu_cmd_schema adc_x_schema = {
+    "x", "Query or set horizontal position", NULL, adc_optional_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_y_schema = {
+    "y", "Query or set vertical position", NULL, adc_optional_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_dh_schema = {
+    "dh", "Increment horizontal grid position", NULL, adc_required_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_dv_schema = {
+    "dv", "Increment vertical grid position", NULL, adc_required_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_dx_schema = {
+    "dx", "Increment model X position", NULL, adc_required_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_dy_schema = {
+    "dy", "Increment model Y position", NULL, adc_required_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_dz_schema = {
+    "dz", "Increment model Z position", NULL, adc_required_number_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_anchor_pos_schema = {
+    "anchor_pos", "Query or set position anchoring", NULL,
+    adc_optional_anchor_position_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_anchor_a1_schema = {
+    "anchor_a1", "Query or set angle 1 anchoring", NULL, adc_optional_binary_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_anchor_a2_schema = {
+    "anchor_a2", "Query or set angle 2 anchoring", NULL, adc_optional_binary_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_anchor_dst_schema = {
+    "anchor_dst", "Query or set distance anchoring", NULL, adc_optional_binary_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_anchorpoint_a1_schema = {
+    "anchorpoint_a1", "Query or set angle 1 anchor point", NULL, adc_optional_point_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(adc_optional_point_validate, NULL)
+};
+static const struct bu_cmd_schema adc_anchorpoint_a2_schema = {
+    "anchorpoint_a2", "Query or set angle 2 anchor point", NULL, adc_optional_point_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(adc_optional_point_validate, NULL)
+};
+static const struct bu_cmd_schema adc_anchorpoint_dst_schema = {
+    "anchorpoint_dst", "Query or set distance anchor point", NULL, adc_optional_point_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(adc_optional_point_validate, NULL)
+};
+static const struct bu_cmd_schema adc_reset_schema = {
+    "reset", "Reset ADC state", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_schema adc_help_schema = {
+    "help", "Print ADC help", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_tree_node adc_subcommands[] = {
+    BU_CMD_TREE_NODE(&adc_vars_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_draw_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_a1_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_a2_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_dst_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_odst_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_hv_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_xyz_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_x_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_y_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_dh_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_dv_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_dx_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_dy_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_dz_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_anchor_pos_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_anchor_a1_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_anchor_a2_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_anchor_dst_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_anchorpoint_a1_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_anchorpoint_a2_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_anchorpoint_dst_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_reset_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&adc_help_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree adc_tree = {
+    &adc_root_schema, adc_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+
+static void
+adc_usage(struct bu_vls *vp, const char *name)
+{
+    char *help = bu_cmd_tree_describe(&adc_tree);
+
+    if (help) {
+	bu_vls_strcat(vp, help);
+	bu_free(help, "ADC native schema help");
+	return;
+    }
+    bu_vls_printf(vp, "Usage: %s [-i] <subcommand>\n", name);
+}
+
+
+static int
+adc_native_preflight(struct ged *gedp, int argc, const char *argv[],
+	struct adc_native_args *args, int *parameter_index)
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    const struct bu_cmd_tree_node *node;
+    int child_offset;
+    int ret = BRLCAD_ERROR;
+
+    if (!gedp || !argv || !args || !parameter_index || argc < 1)
+	return BRLCAD_ERROR;
+    child_offset = bu_cmd_schema_parse(&adc_root_schema, args, &msg,
+	argc - 1, argv + 1);
+    if (child_offset < 0) {
+	if (bu_vls_strlen(&msg))
+	    bu_vls_vlscat(gedp->ged_result_str, &msg);
+	goto done;
+    }
+    if (child_offset >= argc - 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s: subcommand required\n", argv[0]);
+	goto done;
+    }
+    node = bu_cmd_tree_find_subcommand(&adc_tree, argv[child_offset + 1]);
+    if (!node) {
+	bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n",
+	    argv[0], argv[child_offset + 1]);
+	goto done;
+    }
+    if (bu_cmd_schema_parse_complete(node->schema, NULL, &msg,
+	argc - child_offset - 2, argv + child_offset + 2) < 0) {
+	if (bu_vls_strlen(&msg))
+	    bu_vls_vlscat(gedp->ged_result_str, &msg);
+	goto done;
+    }
+    *parameter_index = child_offset + 1;
+    ret = BRLCAD_OK;
+
+done:
+    bu_vls_free(&msg);
+    return ret;
+}
+
+
+static int
+adc_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &adc_tree, input, cursor_pos, result);
+}
+
+
+static int
+adc_grammar_analyze(struct ged *gedp, const char *input, struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &adc_tree, input, analysis);
+}
+
+
+static char *
+adc_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&adc_tree);
+}
+
+
+static int
+adc_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&adc_tree, msgs);
+}
+
+
+static const struct ged_cmd_grammar adc_grammar = {
+    "adc", "Inspect and configure the angle-distance cursor", adc_grammar_validate,
+    adc_grammar_analyze, adc_grammar_json, adc_grammar_lint
+};
+
+#define GED_ADC_COMMANDS(LX, LXID, NX, NXID, GX, GXID) \
+    GX(adc, ged_adc_core, GED_CMD_DEFAULT, &adc_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_ADC_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_adc", 1, GED_ADC_COMMANDS)
 
 /*
  * Local Variables:

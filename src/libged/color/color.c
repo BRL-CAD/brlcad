@@ -30,8 +30,9 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
+#include "bu/color.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
 #include "ged.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -112,34 +113,16 @@ color_zaprec(struct ged *gedp, struct mater *mp)
  * used by the 'color' command when provided the -e option
  */
 static int
-_edcolor(struct ged *gedp, int argc, const char *argv[])
+_edcolor(struct ged *gedp, const char *command, const char *editstring)
 {
     struct mater *mp;
     struct mater *zot;
     FILE *fp;
-    int c;
     char line[128];
     static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
     char tmpfil[MAXPATHLEN];
-    char *editstring = NULL;
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    bu_optind = 1;
-    /* First, grab the editstring (if present) off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
-	switch (c) {
-	    case 'E' :
-		editstring = bu_optarg;
-		break;
-	    default :
-		break;
-	}
-    }
-
-    argv += bu_optind - 1;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -149,7 +132,7 @@ _edcolor(struct ged *gedp, int argc, const char *argv[])
 
     fp = fopen(tmpfil, "w+");
     if (fp == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create tmp file", command);
 	return BRLCAD_ERROR;
     }
 
@@ -163,7 +146,7 @@ _edcolor(struct ged *gedp, int argc, const char *argv[])
     (void)fclose(fp);
 
     if (!_ged_editit(gedp, editstring, (const char *)tmpfil)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", command);
 	return BRLCAD_ERROR;
     }
 
@@ -176,7 +159,7 @@ _edcolor(struct ged *gedp, int argc, const char *argv[])
 
     if (bu_fgets(line, sizeof (line), fp) == NULL ||
 	line[0] != hdr[0]) {
-	bu_vls_printf(gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Header line damaged, aborting\n", command);
 	(void)fclose(fp);
 	return BRLCAD_ERROR;
     }
@@ -198,7 +181,7 @@ _edcolor(struct ged *gedp, int argc, const char *argv[])
 	    cnt = sscanf(line, "%d%*c%d%*c%d%*c%d%*c%d",
 			 &low, &hi, &r, &g, &b);
 	    if (cnt != 9) {
-		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
+		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", command, line);
 		continue;
 	    }
 	    BU_ALLOC(mp, struct mater);
@@ -227,7 +210,7 @@ _edcolor(struct ged *gedp, int argc, const char *argv[])
 
 	    /* check to see if line is reasonable */
 	    if (cnt != 5) {
-		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
+		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", command, line);
 		continue;
 	    }
 	    bu_vls_printf(&vls, "{%d %d %d %d %d} ", low, hi, r, g, b);
@@ -248,59 +231,136 @@ _edcolor(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+struct color_args {
+    int edit;
+};
+
+struct edcolor_args {
+    const char *editor;
+    int help;
+};
+
+static const char *color_edit_option[] = {"e", NULL};
+static const struct bu_cmd_constraint color_constraints[] = {
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+	color_edit_option, 0, 0, "-e cannot be combined with a color record"),
+    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT,
+	color_edit_option, 5, 5, "low high red green blue are required"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_option color_schema_options[] = {
+    BU_CMD_FLAG("e", NULL, struct color_args, edit, "Edit the color table interactively"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand color_schema_operands[] = {
+    BU_CMD_OPERAND("low", BU_CMD_VALUE_INTEGER, 0, 1, "Lowest region ID", NULL),
+    BU_CMD_OPERAND("high", BU_CMD_VALUE_INTEGER, 0, 1, "Highest region ID", NULL),
+    BU_CMD_OPERAND_VALIDATE("red", BU_CMD_VALUE_INTEGER, 0, 1, bu_rgb_channel_validate,
+	"Red channel (0 through 255)", NULL),
+    BU_CMD_OPERAND_VALIDATE("green", BU_CMD_VALUE_INTEGER, 0, 1, bu_rgb_channel_validate,
+	"Green channel (0 through 255)", NULL),
+    BU_CMD_OPERAND_VALIDATE("blue", BU_CMD_VALUE_INTEGER, 0, 1, bu_rgb_channel_validate,
+	"Blue channel (0 through 255)", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema color_cmd_schema = {
+    "color", "Set or edit region color records", color_schema_options,
+    color_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, color_constraints)
+};
+static const struct bu_cmd_option edcolor_schema_options[] = {
+    BU_CMD_STRING("E", NULL, struct edcolor_args, editor, "editor", "Editor command"),
+    BU_CMD_FLAG("h", "help", struct edcolor_args, help, "Print command help"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema edcolor_cmd_schema = {
+    "edcolor", "Edit the region color table", edcolor_schema_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
+
+static void
+color_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&color_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [-e] | low high red green blue", command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "color native option help");
+    }
+}
+
+static void
+edcolor_show_help(struct ged *gedp, const char *command)
+{
+    char *option_help = bu_cmd_schema_describe(&edcolor_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s [-E editor]", command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "edcolor native option help");
+    }
+}
+
+
 int
 ged_edcolor_core(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    struct edcolor_args args = {NULL, 0};
+
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+    if (bu_cmd_schema_parse_complete(&edcolor_cmd_schema, &args, gedp->ged_result_str,
+	argc - 1, argv + 1) < 0) {
+	edcolor_show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
-
-    return _edcolor(gedp, argc, argv);
+    if (args.help) {
+	edcolor_show_help(gedp, argv[0]);
+	return GED_HELP;
+    }
+    return _edcolor(gedp, argv[0], args.editor);
 }
 
 
 int
 ged_color_core(struct ged *gedp, int argc, const char *argv[])
 {
+    struct color_args args = {0};
     struct mater *newp;
     struct mater *mp;
     struct mater *next_mater;
-    static const char *usage = "[-e] [low high r g b]";
+    unsigned char rgb[3] = {0, 0, 0};
+    int low = 0;
+    int high = 0;
+    int operand_index;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	color_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    if (argc != 6 && argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    operand_index = bu_cmd_schema_parse_complete(&color_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	color_show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
+    if (args.edit)
+	return _edcolor(gedp, argv[0], NULL);
 
-    /* edcolor */
-    if (argc == 2) {
-	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
-	    return _edcolor(gedp, argc, argv);
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
+    if (!bu_cmd_integer_from_str(&low, argv[operand_index + 1]) ||
+	!bu_cmd_integer_from_str(&high, argv[operand_index + 2]) ||
+	!bu_rgb_from_argv(rgb, 3, argv + operand_index + 3)) {
+	color_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
     }
 
     if (db_version(gedp->dbip) < 5) {
@@ -312,19 +372,16 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	    mp = next_mater;
 	}
 
-	/* construct the new color record */
 	BU_ALLOC(newp, struct mater);
-	newp->mt_low = atoi(argv[1]);
-	newp->mt_high = atoi(argv[2]);
-	newp->mt_r = atoi(argv[3]);
-	newp->mt_g = atoi(argv[4]);
-	newp->mt_b = atoi(argv[5]);
-	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
+	newp->mt_low = low;
+	newp->mt_high = high;
+	newp->mt_r = rgb[RED];
+	newp->mt_g = rgb[GRN];
+	newp->mt_b = rgb[BLU];
+	newp->mt_daddr = MATER_NO_ADDR;
 
-	/* Insert new color record in the in-memory list */
 	db_mater_insert(gedp->dbip, newp);
 
-	/* Write new color records for all colors in the list */
 	mp = db_mater_head(gedp->dbip);
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
@@ -334,24 +391,16 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     } else {
 	struct bu_vls colors = BU_VLS_INIT_ZERO;
 
-	/* construct the new color record */
 	BU_ALLOC(newp, struct mater);
-	newp->mt_low = atoi(argv[1]);
-	newp->mt_high = atoi(argv[2]);
-	newp->mt_r = atoi(argv[3]);
-	newp->mt_g = atoi(argv[4]);
-	newp->mt_b = atoi(argv[5]);
-	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
+	newp->mt_low = low;
+	newp->mt_high = high;
+	newp->mt_r = rgb[RED];
+	newp->mt_g = rgb[GRN];
+	newp->mt_b = rgb[BLU];
+	newp->mt_daddr = MATER_NO_ADDR;
 
-	/* Insert new color record in the in-memory list */
 	db_mater_insert(gedp->dbip, newp);
-
-	/*
-	 * Gather color records from the in-memory list to build
-	 * the _GLOBAL objects regionid_colortable attribute.
-	 */
 	db_mater_to_vls(&colors, gedp->dbip);
-
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->dbip);
 	bu_vls_free(&colors);
     }
@@ -362,11 +411,11 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_COLOR_COMMANDS(X, XID) \
-    X(color, ged_color_core, GED_CMD_DEFAULT) \
-    X(edcolor, ged_edcolor_core, GED_CMD_DEFAULT) \
+    X(color, ged_color_core, GED_CMD_DEFAULT, &color_cmd_schema) \
+    X(edcolor, ged_edcolor_core, GED_CMD_DEFAULT, &edcolor_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_COLOR_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_color", 1, GED_COLOR_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COLOR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_color", 1, GED_COLOR_COMMANDS)
 
 /*
  * Local Variables:

@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "bu/env.h"
+#include "bu/cmdschema.h"
 #include "bu/path.h"
 #include "../ged_private.h"
 
@@ -40,7 +41,6 @@
 
 
 extern int env_cmd(struct bu_vls *s_out, int argc, const char **argv);
-
 
 /**
  * Reports on and manipulates environment variables relevant to BRL-CAD.
@@ -68,10 +68,10 @@ ged_env_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_ENV_COMMANDS(X, XID) \
-    X(env,              ged_env_core,                      GED_CMD_DEFAULT)
+    X(env,              ged_env_core,                      GED_CMD_DEFAULT, &env_cmd_native_schema)
 
-GED_DECLARE_COMMAND_SET(GED_ENV_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_env", 1, GED_ENV_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_ENV_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_env", 1, GED_ENV_COMMANDS)
 
 /*
  * Local Variables:

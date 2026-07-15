@@ -29,7 +29,41 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
+
+
+static int
+copymat_arc_validate(struct bu_vls *msg, const char *arg)
+{
+    const char *separator;
+
+    if (!arg || !arg[0])
+	goto invalid;
+    separator = strchr(arg, '/');
+    if (!separator || separator == arg || !separator[1] || strchr(separator + 1, '/'))
+	goto invalid;
+    return 0;
+
+invalid:
+    if (msg)
+	bu_vls_printf(msg, "arc must have exactly one non-empty parent/member separator");
+    return -1;
+}
+
+
+static const struct bu_cmd_operand copymat_schema_operands[] = {
+    BU_CMD_OPERAND_VALIDATE("source_arc", BU_CMD_VALUE_DB_PATH, 1, 1,
+	copymat_arc_validate, "Source parent/child arc", "ged.db_path"),
+    BU_CMD_OPERAND_VALIDATE("destination_arc", BU_CMD_VALUE_DB_PATH, 1, 1,
+	copymat_arc_validate, "Destination parent/child arc", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema copymat_cmd_schema = {
+    "copymat", "Copy a matrix between combination arcs", NULL,
+    copymat_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 int
@@ -38,7 +72,6 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     char *child = NULL;
     char *parent = NULL;
     struct bu_vls pvls = BU_VLS_INIT_ZERO;
-    int i;
     int sep;
     int status;
     struct db_tree_state ts;
@@ -48,6 +81,9 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     struct animate anp;
     union tree *tp;
     static const char *usage = "a/b c/d";
+    const char *command;
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -55,6 +91,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+    command = argv[0];
 
     /* must be wanting help */
     if (argc == 1) {
@@ -62,22 +99,16 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 3) {
+
+    operand_index = bu_cmd_schema_parse_complete(&copymat_cmd_schema,
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index + 1;
 
-    /*
-     * Ensure that each argument contains exactly one slash
-     */
-    for (i = 1; i <= 2; ++i) {
-	if (((child = strchr(argv[i], '/')) == NULL)
-	    || (strchr(++child, '/') != NULL))
-	{
-	    bu_vls_printf(gedp->ged_result_str, "%s: bad arc: '%s'\n", argv[0], argv[i]);
-	    return BRLCAD_ERROR;
-	}
-    }
+    child = strchr(argv[1], '/') + 1;
 
     memset(&anp, 0, sizeof(struct animate));
     anp.magic = ANIMATE_MAGIC;
@@ -88,14 +119,13 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     ts.ts_dbip = gedp->dbip;
     MAT_IDN(ts.ts_mat);
     db_full_path_init(&anp.an_path);
-    if (child == NULL
-	|| db_follow_path_for_state(&ts, &(anp.an_path), argv[1], LOOKUP_NOISY) < 0)
+    if (db_follow_path_for_state(&ts, &(anp.an_path), argv[0], LOOKUP_NOISY) < 0)
     {
-	bu_vls_printf(gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", command, argv[0]);
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_strcat(&pvls, argv[2]);
+    bu_vls_strcat(&pvls, argv[1]);
     parent = bu_vls_addr(&pvls);
     sep = strchr(parent, '/') - parent;
     bu_vls_trunc(&pvls, sep);
@@ -106,11 +136,11 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		bu_vls_printf(gedp->ged_result_str,
 			      "%s: Non-combination directory <%p> '%s' for combination rt_db_internal <%p>\nThis should not happen\n",
-			      argv[0], (void *)dp, dp->d_namep, (void *)&intern);
+			      command, (void *)dp, dp->d_namep, (void *)&intern);
 	    }
 	    /* fall through */
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "%s: Object '%s' is not a combination\n", argv[0], parent);
+	bu_vls_printf(gedp->ged_result_str, "%s: Object '%s' is not a combination\n", command, parent);
 	    /* fall through */
 	case ID_NULL:
 	    bu_vls_free(&pvls);
@@ -122,7 +152,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     tp = db_find_named_leaf(comb->tree, child);
     if (tp == TREE_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: unable to find instance of '%s' in combination '%s'\n",
-		      argv[0], child, dp->d_namep);
+		      command, child, dp->d_namep);
 	status = BRLCAD_ERROR;
 	goto wrapup;
     }
@@ -141,7 +171,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", command);
 	status = BRLCAD_ERROR;
 	goto wrapup;
     }
@@ -160,10 +190,10 @@ wrapup:
 #include "../include/plugin.h"
 
 #define GED_COPYMAT_COMMANDS(X, XID) \
-    X(copymat, ged_copymat_core, GED_CMD_DEFAULT) \
+    X(copymat, ged_copymat_core, GED_CMD_DEFAULT, &copymat_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_COPYMAT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_copymat", 1, GED_COPYMAT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COPYMAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_copymat", 1, GED_COPYMAT_COMMANDS)
 
 /*
  * Local Variables:

@@ -29,7 +29,29 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
 #include "ged.h"
+
+
+static const struct bu_cmd_operand get_schema_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1,
+	"Database object or path to query", "ged.db_path"),
+    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 0, 1,
+	"Optional primitive property name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema get_cmd_schema = {
+    "get", "Query a database object's primitive properties", NULL,
+    get_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
+
+static void
+get_show_help(struct ged *gedp, const char *command)
+{
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s object [attribute]", command);
+}
 
 
 int
@@ -37,7 +59,10 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
     struct rt_db_internal intern;
-    static const char *usage = "object ?attr?";
+    int operand_index = 0;
+    int parse_dummy = 0;
+    const char *object = NULL;
+    const char *attribute = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -47,14 +72,21 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	get_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    if (argc > 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	operand_index = bu_cmd_schema_parse_complete(&get_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0 || argc - 1 - operand_index < 1 ||
+	argc - 1 - operand_index > 2) {
+	get_show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index + 1;
+    argc -= operand_index + 1;
+    object = argv[0];
+    attribute = argc > 1 ? argv[1] : NULL;
 
     /* Verify that this wdb supports lookup operations
        (non-null dbip) */
@@ -64,7 +96,7 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], wdbp) & BRLCAD_ERROR) {
+	if (wdb_import_from_path(gedp->ged_result_str, &intern, object, wdbp) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
@@ -72,7 +104,7 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    status = intern.idb_meth->ft_get(gedp->ged_result_str, &intern, argv[2]);
+    status = intern.idb_meth->ft_get(gedp->ged_result_str, &intern, attribute);
     rt_db_free_internal(&intern);
 
     return status;
@@ -82,10 +114,10 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GET_COMMANDS(X, XID) \
-    X(get, ged_get_core, GED_CMD_DEFAULT) \
+    X(get, ged_get_core, GED_CMD_DEFAULT, &get_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_GET_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_get", 1, GED_GET_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GET_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_get", 1, GED_GET_COMMANDS)
 
 /*
  * Local Variables:

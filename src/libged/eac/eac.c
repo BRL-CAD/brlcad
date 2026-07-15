@@ -109,11 +109,13 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_EAC_COMMANDS(X, XID) \
-    X(eac, ged_eac_core, GED_CMD_DEFAULT) \
+GED_DEFINE_TYPED_OPERAND_SCHEMA(eac, "eac", "Air codes to erase", "air_codes", BU_CMD_VALUE_INTEGER, 1, BU_CMD_COUNT_UNLIMITED, "Air codes to erase");
 
-GED_DECLARE_COMMAND_SET(GED_EAC_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_eac", 1, GED_EAC_COMMANDS)
+#define GED_EAC_COMMANDS(X, XID) \
+    X(eac, ged_eac_core, GED_CMD_DEFAULT, &eac_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_EAC_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_eac", 1, GED_EAC_COMMANDS)
 
 /*
  * Local Variables:

@@ -53,6 +53,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/malloc.h"
 #include "rt/calc.h"
 #include "rt/db5.h"
@@ -60,6 +61,8 @@
 #include "rt/directory.h"
 
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema *exists_schema(void);
 
 #ifndef __arraycount
 #  define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))
@@ -627,6 +630,7 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
     struct bu_vls message = BU_VLS_INIT_ZERO;
     int result;
     char **argv;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -639,6 +643,10 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
 	return GED_HELP;
     }
+
+    if (bu_cmd_schema_parse_complete(exists_schema(), &parse_dummy,
+		gedp->ged_result_str, argc - 1, argv_orig + 1) < 0)
+	return BRLCAD_ERROR;
 
     argv = bu_argv_dup(argc, argv_orig);
 
@@ -671,11 +679,98 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 #include "../include/plugin.h"
 
-#define GED_EXISTS_COMMANDS(X, XID) \
-    X(exists, ged_exists_core, GED_CMD_DEFAULT) \
+static int
+exists_schema_operator(const char *s)
+{
+    static const char * const ops[] = {
+	"!", "(", ")", "<", "=", ">", "!=", "-a", "-o",
+	"-c", "-e", "-n", "-N", "-p", "-v",
+	"-beq", "-bne", "-bge", "-bgt", "-ble", "-blt", NULL
+    };
+    for (size_t i = 0; ops[i]; i++)
+	if (BU_STR_EQUAL(s, ops[i]))
+	    return 1;
+    return 0;
+}
 
-GED_DECLARE_COMMAND_SET(GED_EXISTS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_exists", 1, GED_EXISTS_COMMANDS)
+static void
+exists_schema_operator_candidates(struct bu_cmd_validate_result *result, const char *prefix)
+{
+    static const char * const ops[] = {
+	"!", "(", ")", "<", "=", ">", "!=", "-a", "-o",
+	"-c", "-e", "-n", "-N", "-p", "-v",
+	"-beq", "-bne", "-bge", "-bgt", "-ble", "-blt", NULL
+    };
+    size_t count = 0;
+
+    for (size_t i = 0; ops[i]; i++)
+	if (!prefix || !prefix[0] || bu_strncmp(ops[i], prefix, strlen(prefix)) == 0)
+	    count++;
+    if (!count)
+	return;
+    result->completion_candidates = (const char **)bu_calloc(count + 1,
+	sizeof(char *), "exists expression operator candidates");
+    for (size_t i = 0, oi = 0; ops[i]; i++)
+	if (!prefix || !prefix[0] || bu_strncmp(ops[i], prefix, strlen(prefix)) == 0)
+	    result->completion_candidates[oi++] = bu_strdup(ops[i]);
+    result->completion_count = count;
+}
+
+static int
+exists_schema_validate(const struct bu_cmd_schema *UNUSED(cmd), size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    bu_cmd_validate_result_clear(result);
+    if (cursor_arg >= argc) {
+	result->state = argc ? BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INCOMPLETE;
+	result->token_start = argc;
+	result->token_end = argc;
+	result->expected = BU_CMD_EXPECT_OPERAND;
+	result->completion_type = BU_CMD_VALUE_DB_OBJECT;
+	result->hint = argc ? "expression may continue" : "object or expression operator expected";
+	if (!argc)
+	    exists_schema_operator_candidates(result, "");
+	return 0;
+    }
+
+    result->state = BU_CMD_VALIDATE_VALID;
+    result->token_start = cursor_arg;
+    result->token_end = cursor_arg;
+	result->expected = BU_CMD_EXPECT_OPERAND;
+    if (exists_schema_operator(argv[cursor_arg])) {
+	result->completion_type = BU_CMD_VALUE_KEYWORD;
+	result->hint = "expression operator";
+	exists_schema_operator_candidates(result, argv[cursor_arg]);
+    } else {
+	result->completion_type = BU_CMD_VALUE_DB_OBJECT;
+	result->hint = "database object";
+	result->semantic_provider = "ged.db_object";
+    }
+    return 0;
+}
+
+static const struct bu_cmd_operand exists_schema_operands[] = {
+    BU_CMD_OPERAND("expression", BU_CMD_VALUE_RAW, 1, BU_CMD_COUNT_UNLIMITED,
+	"Object-existence expression", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema exists_cmd_schema = {
+    "exists", "Evaluate an object-existence expression", NULL,
+    exists_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    {exists_schema_validate}
+};
+
+static const struct bu_cmd_schema *
+exists_schema(void)
+{
+    return &exists_cmd_schema;
+}
+
+#define GED_EXISTS_COMMANDS(X, XID) \
+    X(exists, ged_exists_core, GED_CMD_DEFAULT, &exists_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_EXISTS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_exists", 1, GED_EXISTS_COMMANDS)
 
 /*
  * Local Variables:

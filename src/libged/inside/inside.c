@@ -37,8 +37,11 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/db4.h"
+#include "bu/cmdschema.h"
 
 #include "../ged_private.h"
+
+static const struct bu_cmd_schema *inside_schema(void);
 
 int
 ged_inside_core(struct ged *gedp, int argc, const char *argv[])
@@ -60,6 +63,11 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Enter name of outside solid: ");
 	return GED_MORE;
     }
+
+    if (bu_cmd_schema_parse_complete(inside_schema(), NULL,
+	gedp->ged_result_str, argc - 1, argv + 1) < 0)
+	return BRLCAD_ERROR;
+
     if ((outdp = db_lookup(gedp->dbip,  argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
 	return BRLCAD_ERROR;
@@ -76,11 +84,29 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_INSIDE_COMMANDS(X, XID) \
-    X(inside, ged_inside_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand inside_schema_operands[] = {
+    BU_CMD_OPERAND("outside_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Primitive to hollow", "ged.db_object"),
+    BU_CMD_OPERAND("inside_arguments", BU_CMD_VALUE_RAW, 0,
+	BU_CMD_COUNT_UNLIMITED, "Primitive-specific inside object arguments", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema inside_cmd_schema = {
+    "inside", "Create an inside primitive", NULL, inside_schema_operands,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
-GED_DECLARE_COMMAND_SET(GED_INSIDE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_inside", 1, GED_INSIDE_COMMANDS)
+static const struct bu_cmd_schema *
+inside_schema(void)
+{
+    return &inside_cmd_schema;
+}
+
+#define GED_INSIDE_COMMANDS(X, XID) \
+    X(inside, ged_inside_core, GED_CMD_DEFAULT, &inside_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_INSIDE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_inside", 1, GED_INSIDE_COMMANDS)
 
 /*
  * Local Variables:

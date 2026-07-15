@@ -120,11 +120,26 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_KILLREFS_COMMANDS(X, XID) \
-    X(killrefs, ged_killrefs_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_option killrefs_schema_options[] = {
+    BU_CMD_FLAG_UNBOUND("n", NULL, "n", "Report references without removing them"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand killrefs_schema_operands[] = {
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_STRING, 1, BU_CMD_COUNT_UNLIMITED,
+	"Object references to remove or report", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema killrefs_cmd_schema = {
+    "killrefs", "Remove references to database objects", killrefs_schema_options,
+    killrefs_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    {NULL}
+};
 
-GED_DECLARE_COMMAND_SET(GED_KILLREFS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_killrefs", 1, GED_KILLREFS_COMMANDS)
+#define GED_KILLREFS_COMMANDS(X, XID) \
+    X(killrefs, ged_killrefs_core, GED_CMD_DEFAULT, &killrefs_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_KILLREFS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_killrefs", 1, GED_KILLREFS_COMMANDS)
 
 /*
  * Local Variables:

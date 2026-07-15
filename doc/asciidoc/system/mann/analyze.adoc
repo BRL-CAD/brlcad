@@ -16,25 +16,25 @@ analyze [options] [subcommand] [subcmd_options]...
 
 [source]
 ----
-summarize {obj1 [...]}
+analyze [options] summarize obj1 [obj2 ...]
 ----
 
 
 [source]
 ----
-intersect [-o output_obj] [-h] {obj1 obj2 [...]}
+analyze [options] intersect [-o output_obj] obj1 obj2 [obj3 ...]
 ----
 
 
 [source]
 ----
-subtract [-o output_obj] [-h] {obj1 obj2 [...]}
+analyze [options] subtract [-o output_obj] obj1 obj2 [obj3 ...]
 ----
 
 
 [source]
 ----
-inside {obj1} {x} {y} {z}
+analyze [options] inside obj x y z
 ----
 
 
@@ -46,14 +46,19 @@ generation capabilities. The classic behavior (and the behavior users
 will see if calling without specifying a subcommand) is a report
 summarizing geometric information about the specified solid(s). This
 behavior may also be explicitly invoked by the *summarize* subcommand.
+Thus, *analyze obj1 [obj2 ...]* is equivalent to
+*analyze summarize obj1 [obj2 ...]*.  The top-level options precede either
+the explicit subcommand or the first object in this shorthand form.
 
 The *inside* subcommand will take an object and the x y z coordinates
 of a point, and report whether the point is inside or outside the
-object in question (returning 1 if inside and 0 otherwise.)
+object in question (returning 1 if inside and 0 otherwise.)  The point may
+be supplied as three coordinate arguments or as one packed XYZ value using
+the standard BRL-CAD slash, comma, or semicolon separators.
 
 The *intersect* subcommand will take the first object specified and
 intersect it with any subsequently specified objects - in effect,
-building up a new object with the geoemtry common to all objects
+building up a new object with the geometry common to all objects
 specified.
 
 The *subtract* subcommand will take the first object specified and
@@ -68,6 +73,11 @@ Print help.
 
 *-v*, *--verbose*::
 Increase reporting verbosity for the top-level analyze reporting mode.
+
+The *-h*/*--help* option is also accepted by each explicit subcommand.  The
+*-o*/*--output* option of *intersect* and *subtract* names the object to
+receive the Boolean result; it may appear before, between, or after object
+operands.
 
 
 [[examples]]
@@ -254,7 +264,7 @@ point#, (point)
       
 ....
 
-mged>**analyze subtract -o outside.s pnts.s sph**
+mged>**analyze subtract -o outside.s pnts.s sph.s**
 
 
 ....

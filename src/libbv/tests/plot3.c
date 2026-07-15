@@ -26,44 +26,82 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "vmath.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
-#include "bu/opt.h"
 #include "bv/plot3.h"
+
+struct plot3_args {
+    int help;
+    int binary_mode;
+    int text_mode;
+    int expect_invalid;
+};
+
+static const struct bu_cmd_option plot3_options[] = {
+    BU_CMD_FLAG("h", "help", struct plot3_args, help, "Print help and exit"),
+    BU_CMD_FLAG("b", "binary", struct plot3_args, binary_mode,
+	"Process binary plot data (the default)"),
+    BU_CMD_FLAG("t", "text", struct plot3_args, text_mode,
+	"Process text plot data"),
+    BU_CMD_FLAG("i", "invalid", struct plot3_args, expect_invalid,
+	"Expect to detect an invalid file"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand plot3_operands[] = {
+    BU_CMD_OPERAND("file", BU_CMD_VALUE_FILE, 1, 1, "Plot file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const char *plot3_mode_options[] = {"binary", "text", NULL};
+static const struct bu_cmd_constraint plot3_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(plot3_mode_options, 0, 1,
+	"specify either --binary or --text"),
+    BU_CMD_CONSTRAINT_NULL
+};
+
+static const struct bu_cmd_schema plot3_schema = {
+    "bview_plot3", "Check a binary or text plot file for invalid records",
+    plot3_options, plot3_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, plot3_constraints)
+};
 
 int
 main(int argc, const char *argv[])
 {
     int ret = 0;
-    int print_help = 0;
-    int binary_mode = 0;
-    int text_mode = 0;
-    int expect_invalid = 0;
-    int mode = -1;
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "h", "help",    "",  NULL, &print_help,     "Print help and exit");
-    BU_OPT(d[1], "b", "binary",  "",  NULL, &binary_mode,    "Process plot file as binary plot data (default)");
-    BU_OPT(d[2], "t", "text",    "",  NULL, &text_mode,      "Process plot file as text plot data");
-    BU_OPT(d[3], "i", "invalid", "",  NULL, &expect_invalid, "Expect to detect an invalid file");
-    BU_OPT_NULL(d[4]);
+    struct plot3_args args = {0, 0, 0, 0};
+    int mode = PL_OUTPUT_MODE_BINARY;
 
     bu_setprogname(argv[0]);
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
 
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    int help_requested = bu_cmd_schema_option_present(&plot3_schema,
+	(size_t)argc, argv, "help");
+    int operand_index = help_requested ?
+	bu_cmd_schema_parse(&plot3_schema, &args, NULL, argc, argv) :
+	bu_cmd_schema_parse_complete(&plot3_schema, &args, NULL, argc, argv);
 
-    if (!opt_ret)
-	bu_exit(1, "Usage: %s [opts] file\n", argv[0]);
+    if (args.help) {
+	char *help = bu_cmd_schema_describe(&plot3_schema);
+	bu_log("Usage: bview_plot3 [options] file\n%s", help ? help : "");
+	if (help)
+	    bu_free(help, "plot3 native help");
+	return 0;
+    }
+    if (operand_index < 0)
+	bu_exit(1, "Usage: bview_plot3 [options] file\n");
 
-    if (binary_mode && text_mode)
-	bu_exit(1, "Error - specify either binary mode or text mode\n");
+    argc -= operand_index;
+    argv += operand_index;
 
 
-    if (binary_mode)
+    if (args.binary_mode)
 	mode = PL_OUTPUT_MODE_BINARY;
 
-    if (text_mode)
-	mode = PL_OUTPUT_MODE_BINARY;
+    if (args.text_mode)
+	mode = PL_OUTPUT_MODE_TEXT;
 
     if (!bu_file_exists(argv[0], NULL)) {
 	bu_exit(1, "file %s not found\n", argv[0]);
@@ -77,7 +115,7 @@ main(int argc, const char *argv[])
 
     ret = plot3_invalid(fp, mode);
 
-    if (expect_invalid) {
+    if (args.expect_invalid) {
 	if (ret) {
 	    bu_log("INVALID (expected): %s\n", argv[0]);
 	} else {

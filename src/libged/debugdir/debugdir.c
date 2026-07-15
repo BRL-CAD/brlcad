@@ -52,12 +52,17 @@ ged_debugdir_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 #include "../include/plugin.h"
+static const struct bu_cmd_schema debugdir_cmd_schema = {
+    "debugdir", "Print the database directory", NULL, NULL,
+    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    {NULL}
+};
 
 #define GED_DEBUGDIR_COMMANDS(X, XID) \
-    X(debugdir, ged_debugdir_core, GED_CMD_DEFAULT) \
+    X(debugdir, ged_debugdir_core, GED_CMD_DEFAULT, &debugdir_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_DEBUGDIR_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_debugdir", 1, GED_DEBUGDIR_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DEBUGDIR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_debugdir", 1, GED_DEBUGDIR_COMMANDS)
 
 /*
  * Local Variables:

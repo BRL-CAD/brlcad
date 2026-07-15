@@ -29,13 +29,27 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/cmdschema.h"
+
 #include "../ged_private.h"
+
+static const char * const rot_about_keywords[] = {"e", "k", "m", "v", NULL};
+static const struct bu_cmd_operand rot_about_schema_operands[] = {
+    BU_CMD_OPERAND_KEYWORDS("pivot", BU_CMD_VALUE_KEYWORD, 0, 1,
+	"Eye, keypoint, model origin, or view center", NULL, rot_about_keywords),
+    BU_CMD_OPERAND_NULL
+};
+GED_EXPORT const struct bu_cmd_schema ged_rot_about_cmd_schema = {
+    "rot_about", "Query or set the rotation pivot", NULL,
+    rot_about_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 
 int
 ged_rotate_about_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[e|k|m|v]";
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -49,6 +63,12 @@ ged_rotate_about_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%c", gedp->ged_gvp->gv_rotate_about);
 	return BRLCAD_OK;
     }
+
+    if (bu_cmd_schema_parse_complete(&ged_rot_about_cmd_schema, &parse_dummy,
+	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+	}
 
     /* Set rotate_about */
     if (argc == 2 && argv[1][1] == '\0') {

@@ -28,6 +28,8 @@
 #include <vector>
 
 #include "vmath.h"
+#include "bu/cmdschema.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 
 #include "rt/db5.h"
@@ -106,9 +108,72 @@ bot_smooth(struct ged *gedp, struct rt_bot_internal *input_bot,
     return obot;
 }
 
+struct bot_smooth_args {
+    int print_help;
+    int continuity;
+    int direction;
+    double max_lerror;
+    double max_aerror;
+    int iterations;
+};
+
+static int
+bot_smooth_mode_validate(struct bu_vls *msg, const char *arg)
+{
+    int value;
+
+    if (bu_cmd_integer_from_str(&value, arg) && value >= 0 && value <= 2)
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "smoothing mode must be 0, 1, or 2: %s\n", arg ? arg : "");
+    return -1;
+}
+
+static int
+bot_smooth_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg,
+	struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+
+    flat.validation.custom_validate = NULL;
+    if (bu_cmd_schema_option_present(schema, argc, argv, "help"))
+	flat.operands = NULL;
+    return bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+}
+
+static const struct bu_cmd_option bot_smooth_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_smooth_args, print_help,
+	"Print command help"),
+    BU_CMD_INTEGER_VALIDATE("c", "continuity", struct bot_smooth_args,
+	continuity, bot_smooth_mode_validate, "mode", "Continuity mode (0, 1, or 2)"),
+    BU_CMD_INTEGER_VALIDATE("d", "direction", struct bot_smooth_args,
+	direction, bot_smooth_mode_validate, "mode", "Smoothing direction (0, 1, or 2)"),
+    BU_CMD_NUMBER("e", "max-local-error", struct bot_smooth_args,
+	max_lerror, "error", "Maximum local error"),
+    BU_CMD_NUMBER("E", "max-abs-error", struct bot_smooth_args,
+	max_aerror, "error", "Maximum absolute error"),
+    BU_CMD_POSITIVE_INTEGER("I", "iterations", struct bot_smooth_args,
+	iterations, "count", "Number of smoothing iterations"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_smooth_operands[] = {
+    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Input BoT object", "ged.db_object"),
+    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+	"Optional output BoT name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+extern "C" const struct bu_cmd_schema ged_bot_smooth_subcommand_schema = {
+    "smooth", "Smooth a BoT", bot_smooth_options, bot_smooth_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(bot_smooth_schema_validate, NULL)
+};
+
 static void
-smooth_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
-    char *option_help = bu_opt_describe(d, NULL);
+smooth_usage(struct bu_vls *str, const char *cmd)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_bot_smooth_subcommand_schema);
     bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
     if (option_help) {
 	bu_vls_printf(str, "Options:\n%s\n", option_help);
@@ -138,43 +203,40 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
 	return BRLCAD_OK;
     }
 
-    int print_help = 0;
-    int continuity = 1;
-    int direction = 0;
-    double max_lerror = 0;
-    double max_aerror = 0;
-    int iterations = 3;
-
-    struct bu_opt_desc d[7];
-    BU_OPT(d[0], "h", "help",              "",         NULL,      &print_help, "Print help");
-    BU_OPT(d[1], "c", "continuity",       "#",  &bu_opt_int,      &continuity, "C0 (0) or C1 (1) continuity (default C1)");
-    BU_OPT(d[2], "d", "direction",        "#",  &bu_opt_int,      &direction,  "Tangential (0), Normal (1) or both (2)");
-    BU_OPT(d[3], "e", "max-local-error",  "#",  &bu_opt_fastf_t,  &max_lerror, "Maximum local error");
-    BU_OPT(d[4], "E", "max-abs-error",    "#",  &bu_opt_fastf_t,  &max_aerror, "Maximum absolute error");
-    BU_OPT(d[5], "I", "iterations",       "#",  &bu_opt_int,      &iterations, "Number of times to apply smoothing");
-    BU_OPT_NULL(d[6]);
+    struct bot_smooth_args args = {0, 1, 0, 0.0, 0.0, 3};
+    int operand_count;
+    int operand_index;
+    const char **operands;
 
     // We know we're the smooth command - start processing args
     argc--; argv++;
 
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
-
-    if (print_help || !argc) {
-	smooth_usage(gedp->ged_result_str, "bot smooth", d);
+	if (!argc) {
+	smooth_usage(gedp->ged_result_str, "bot smooth");
 	return GED_HELP;
     }
 
+    operand_index = bu_cmd_schema_parse_complete(&ged_bot_smooth_subcommand_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0)
+	return BRLCAD_ERROR;
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
+    if (args.print_help) {
+	smooth_usage(gedp->ged_result_str, "bot smooth");
+	return GED_HELP;
+	}
+
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
-    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+    if (_bot_obj_setup(gb, operands[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
     const char* input_bot_name = gb->dp->d_namep;
     struct bu_vls output_bot_name = BU_VLS_INIT_ZERO;
-    if (argc > 1) {
-	bu_vls_sprintf(&output_bot_name, "%s", argv[1]);
+    if (operand_count > 1) {
+	bu_vls_sprintf(&output_bot_name, "%s", operands[1]);
     } else {
 	bu_vls_sprintf(&output_bot_name, "%s-out_smooth.bot", input_bot_name);
     }
@@ -186,7 +248,9 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
 
     bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
 
-    struct rt_bot_internal *output_bot = bot_smooth(gedp, input_bot, direction, continuity, max_lerror, max_aerror, iterations);
+    struct rt_bot_internal *output_bot = bot_smooth(gedp, input_bot,
+	args.direction, args.continuity, args.max_lerror, args.max_aerror,
+	args.iterations);
     if (!output_bot) {
 	bu_vls_free(&output_bot_name);
 	return BRLCAD_ERROR;
@@ -226,4 +290,3 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

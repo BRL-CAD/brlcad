@@ -10,7 +10,7 @@ tree - Lists the contents of the specified _objects_ in a tree-like format that 
 
 [source]
 ----
-tree {objects(s)} [-a] [-c] [-d#] [-i#] [-ooutfile]
+tree [-a] [-c] [-v ...] [-d depth] [-i spaces] [-o file] [object ...]
 ----
 
 
@@ -38,6 +38,10 @@ The _-i #_ option allows the user to set the number of spaces to indent.
 
 *-o filename*::
 The _-o_ option prints results to the specified _filename_.
+
+
+*-v*::
+The _-v_ option increases output verbosity.  It may be specified more than once.
 
 
 

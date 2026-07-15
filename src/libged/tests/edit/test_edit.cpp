@@ -31,6 +31,7 @@
 #include <string>
 
 #include "bu.h"
+#include "bu/cmdschema.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/db_fullpath.h"
@@ -3071,18 +3072,24 @@ test_p6_all_prim_ops_has_brep(struct ged *gedp)
 int
 main(int ac, char *av[])
 {
-    int need_help = 0;
+    struct test_edit_args { int need_help; } args = {};
 
     bu_setprogname(av[0]);
 
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h", "help", "", NULL, &need_help, "Print help and exit");
-    BU_OPT_NULL(d[1]);
+    static const struct bu_cmd_option options[] = {
+	BU_CMD_FLAG("h", "help", struct test_edit_args, need_help, "Print help and exit"),
+	BU_CMD_OPTION_NULL
+    };
+    static const struct bu_cmd_schema schema = {
+	"test_edit", "Run edit command regression tests", options, NULL,
+	BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    };
 
-    int opt_ret = bu_opt_parse(NULL, ac, (const char **)av, d);
-    if (need_help || opt_ret < 0) {
+    int opt_index = bu_cmd_schema_parse(&schema, &args, NULL, ac - 1,
+	(const char **)(av + 1));
+    if (args.need_help || opt_index < 0 || opt_index != ac - 1) {
         bu_log("Usage: %s [-h]\n", av[0]);
-        return (need_help) ? 0 : 1;
+        return args.need_help ? 0 : 1;
     }
 
     /* ---------------------------------------------------------------- *

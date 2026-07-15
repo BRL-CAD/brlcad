@@ -32,9 +32,9 @@
 #include "../libbu/json.hpp"
 
 extern "C" {
-#include "bu/opt.h"
 #include "wdb.h"
 }
+#include "bu/cmdschema.h"
 #include "./ged_lint.h"
 
 lint_data::lint_data()
@@ -306,6 +306,11 @@ static
 int invalid_opt_read(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
 {
     struct invalid_shape_methods *m = (struct invalid_shape_methods *)set_var;
+
+    /* Schema validation deliberately calls consumers with NULL storage. */
+    if (!m)
+	return 0;
+
     m->do_invalid = 1;
 
     if (argc) {
@@ -319,26 +324,102 @@ int invalid_opt_read(struct bu_vls *UNUSED(msg), size_t argc, const char **argv,
 }
 
 
+/* Preserve lint's long-standing optional-argument rule: a selector is only
+ * consumed when it has the primitive:technique form.  A following object name
+ * remains a positional operand, as in `lint -I all.g`. */
+static size_t
+invalid_opt_token_count(size_t available, const char **argv)
+{
+    if (!available || !argv || !argv[0] || !strchr(argv[0], ':'))
+	return 0;
+    return 1;
+}
+
+static const struct bu_cmd_arg_shape invalid_opt_shape = {
+    BU_CMD_ARG_SHAPE_CUSTOM, 0, 1,
+    "optional primitive:technique selector", invalid_opt_token_count
+};
+
+
+struct lint_args {
+    int print_help;
+    long verbosity;
+    int cyclic_check;
+    int missing_check;
+    struct invalid_shape_methods invalid;
+    struct bu_vls filter;
+    struct bu_vls ofile;
+    int visualize;
+    fastf_t ftol;
+    struct bu_vls gname;
+    fastf_t min_tri_area;
+    int do_raytrace;
+    fastf_t rt_tol_pct;
+    int do_rt_perturb;
+};
+
+static const struct bu_cmd_option lint_schema_options[] = {
+    BU_CMD_FLAG("h", "help", lint_args, print_help, "Print help and exit"),
+    BU_CMD_COUNTING_LONG_FLAG("v", "verbose", lint_args, verbosity,
+	"Increase reporting verbosity"),
+    BU_CMD_FLAG("C", "cyclic", lint_args, cyclic_check, "Check cyclic paths"),
+    BU_CMD_FLAG("M", "missing", lint_args, missing_check, "Check missing references"),
+    BU_CMD_OPTION_SHAPED("I", "invalid-shape", "invalid-shape", lint_args, invalid,
+	BU_CMD_VALUE_CUSTOM, "check", "Check invalid shapes, optionally selecting techniques",
+	BU_CMD_ARG_OPTIONAL, &invalid_opt_shape, invalid_opt_read),
+    BU_CMD_VLS_APPEND("F", "filter", lint_args, filter, "pattern",
+	"Apply search-style object filters"),
+    BU_CMD_VLS_APPEND("j", "json-file", lint_args, ofile, "file",
+	"Write full results as JSON"),
+    BU_CMD_FLAG("V", "visualize", lint_args, visualize,
+	"Visualize reported problems"),
+    BU_CMD_NUMBER("t", "tol", lint_args, ftol, "number", "Numerical tolerance"),
+    BU_CMD_VLS_APPEND("g", "group", lint_args, gname, "name",
+	"Group problematic shapes"),
+    BU_CMD_NUMBER(NULL, "min-tri-area", lint_args, min_tri_area, "number",
+	"Minimum triangle area to report"),
+    BU_CMD_FLAG(NULL, "raytrace", lint_args, do_raytrace,
+	"Use raytrace validation mode"),
+    BU_CMD_NUMBER(NULL, "raytrace-tol", lint_args, rt_tol_pct, "fraction",
+	"Raytrace comparison tolerance"),
+    BU_CMD_FLAG(NULL, "perturb", lint_args, do_rt_perturb,
+	"Use perturbation during raytrace facetization"),
+    BU_CMD_OPTION_NULL
+};
+
+static const struct bu_cmd_operand lint_schema_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+	"Objects to inspect (defaults to all objects)", "ged.db_path"),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema lint_cmd_schema = {
+    "lint", "Check database structure and geometry validity", lint_schema_options,
+    lint_schema_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static void
+lint_help(struct ged *gedp, const char *usage)
+{
+    char *option_help = bu_cmd_schema_describe(&lint_cmd_schema);
+
+    bu_vls_printf(gedp->ged_result_str, "%s", usage);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
+	bu_free(option_help, "lint native option help");
+    }
+}
+
+
 extern "C" int
 ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = BRLCAD_OK;
     static const char *usage = "Usage: lint [-h] [-v[v...]] [ -CMS ] [-F <filter>] [--raytrace [--perturb]] [obj1] [obj2] [...]\n";
-    int print_help = 0;
-    long verbosity = 0;
-    int cyclic_check = 0;
-    int missing_check = 0;
-    int visualize = 0;
-    int do_raytrace = 0;
-    int do_rt_perturb = 0;
     struct bn_tol lint_default_tol = BN_TOL_INIT_TOL;
-    fastf_t ftol = lint_default_tol.dist;
-    fastf_t min_tri_area = 0.0;
-    fastf_t rt_tol_pct = 0.10;
     struct directory **dpa = NULL;
-    struct bu_vls filter = BU_VLS_INIT_ZERO;
-    struct bu_vls ofile = BU_VLS_INIT_ZERO;
-    struct bu_vls gname = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -347,25 +428,13 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     lint_data ldata;
     ldata.gedp = gedp;
 
-    struct invalid_shape_methods imethods;
-    imethods.im_techniques = &ldata.im_techniques;
-
-    struct bu_opt_desc d[15];
-    BU_OPT(d[ 0],  "h", "help",                              "",  NULL,              &print_help,           "Print help and exit");
-    BU_OPT(d[ 1],  "v", "verbose",                           "",  &bu_opt_incr_long, &verbosity,            "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[ 2],  "C", "cyclic",                            "",  NULL,              &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
-    BU_OPT(d[ 3],  "M", "missing",                           "",  NULL,              &missing_check,        "Check for objects referenced by other objects that are not in the database");
-    BU_OPT(d[ 4],  "I", "invalid-shape",  "[check [check ...]]",  &invalid_opt_read, &imethods,             "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
-    BU_OPT(d[ 5],  "F", "filter",                     "pattern",  &bu_opt_vls,       &filter,               "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. Note that these filters do NOT impact cyclic and missing geometry checks.");
-    BU_OPT(d[ 6],  "j", "json-file",                    "fname",  &bu_opt_vls,       &ofile,                "Write out the full lint data to a json file");
-    BU_OPT(d[ 7],  "V", "visualize",                         "",  NULL,              &visualize,            "When problems can be visually represented, do so");
-    BU_OPT(d[ 8],  "t", "tol",                              "#",  &bu_opt_fastf_t,   &ftol,                 "Numerical value to use when testing involves tolerances (defaults to VUNITIZE_TOL)");
-    BU_OPT(d[ 9],  "g", "group",                         "name",  &bu_opt_vls,       &gname,                "Name of comb object in which to group all shape objects that report issues (will not contain cyclic paths or missing references).");
-    BU_OPT(d[10],   "", "min-tri-area",                     "#",  &bu_opt_fastf_t,   &min_tri_area,         "Units are mm^2.  If specified, lint will not report any sampling problems where the seed triangle has < min-tri-area surface area (default is to report all problems).  Note that a miss of a problematically small triangle elsewhere in the shotline may still result in a shotlining error report - this filters only based on the first hit triangles.");
-    BU_OPT(d[11],   "", "raytrace",                          "",  NULL,              &do_raytrace,          "Raytrace validation mode: compare Crofton ray-sampling SA/volume estimates against analytic formulas (leaf primitives) and facetized BoT meshes (combs).  Disables all other lint checks.");
-    BU_OPT(d[12],   "", "raytrace-tol",                     "#",  &bu_opt_fastf_t,   &rt_tol_pct,           "Fractional tolerance for raytrace validation comparisons (default 0.10 = 10%).  Values closer to 0 are stricter.");
-    BU_OPT(d[13],   "", "perturb",                           "",  NULL,              &do_rt_perturb,        "When used with --raytrace, facetize combs using the default perturbation pass instead of --no-perturb.  Mismatches that clear under --perturb are coplanar-face artifacts; persistent mismatches indicate modeling topology issues requiring geometry correction.");
-    BU_OPT_NULL(d[14]);
+    struct lint_args args = {};
+    args.ftol = lint_default_tol.dist;
+    args.rt_tol_pct = 0.10;
+    args.invalid.im_techniques = &ldata.im_techniques;
+    bu_vls_init(&args.filter);
+    bu_vls_init(&args.ofile);
+    bu_vls_init(&args.gname);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -373,11 +442,16 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* parse standard options */
-    argc = bu_opt_parse(NULL, argc, argv, d);
+    /* Parse the same native schema completion and validation use. */
+    int operand_index = bu_cmd_schema_parse(&lint_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index >= 0) {
+	argc -= operand_index;
+	argv += operand_index;
+    }
 
-    if (print_help || argc < 0) {
-	_ged_cmd_help(gedp, usage, d);
+    if (args.print_help || operand_index < 0) {
+	lint_help(gedp, usage);
 	// TODO - autogenerate this list rather than hard coding...
 	bu_vls_printf(gedp->ged_result_str, "\nInvalidity checks:\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbot:close_face\n");
@@ -391,34 +465,34 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tarb:non_standard_ordering\n");
 	bu_vls_printf(gedp->ged_result_str, "\tarb:twisted\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbrep:opennurbs\n");
-	bu_vls_free(&filter);
-	bu_vls_free(&ofile);
-	bu_vls_free(&gname);
+	bu_vls_free(&args.filter);
+	bu_vls_free(&args.ofile);
+	bu_vls_free(&args.gname);
 	return BRLCAD_OK;
     }
 
-    if (bu_vls_strlen(&gname)) {
+    if (bu_vls_strlen(&args.gname)) {
 	if (gedp->dbip->dbi_read_only) {
-	    bu_vls_printf(gedp->ged_result_str, "Database is read only, cannot write output comb %s\n", bu_vls_cstr(&gname));
-	    bu_vls_free(&filter);
-	    bu_vls_free(&ofile);
-	    bu_vls_free(&gname);
+	    bu_vls_printf(gedp->ged_result_str, "Database is read only, cannot write output comb %s\n", bu_vls_cstr(&args.gname));
+	    bu_vls_free(&args.filter);
+	    bu_vls_free(&args.ofile);
+	    bu_vls_free(&args.gname);
 	    return BRLCAD_ERROR;
 	}
-	if (db_lookup(gedp->dbip, bu_vls_cstr(&gname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Output comb %s already exists in the database\n", bu_vls_cstr(&gname));
-	    bu_vls_free(&filter);
-	    bu_vls_free(&ofile);
-	    bu_vls_free(&gname);
+	if (db_lookup(gedp->dbip, bu_vls_cstr(&args.gname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Output comb %s already exists in the database\n", bu_vls_cstr(&args.gname));
+	    bu_vls_free(&args.filter);
+	    bu_vls_free(&args.ofile);
+	    bu_vls_free(&args.gname);
 	    return BRLCAD_ERROR;
 	}
     }
 
-    if (bu_vls_strlen(&filter))
-	ldata.filter = std::string(bu_vls_cstr(&filter));
-    bu_vls_free(&filter);
+    if (bu_vls_strlen(&args.filter))
+	ldata.filter = std::string(bu_vls_cstr(&args.filter));
+    bu_vls_free(&args.filter);
 
-    ldata.do_plot = (visualize) ? true : false;
+    ldata.do_plot = (args.visualize) ? true : false;
 
     if (argc) {
 	dpa = (struct directory **)bu_calloc(argc+1, sizeof(struct directory *), "dp array");
@@ -430,22 +504,22 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, " %s\n", argv[i]);
 	    }
 	    bu_free(dpa, "dpa");
-	    bu_vls_free(&gname);
-	    bu_vls_free(&ofile);
+	    bu_vls_free(&args.gname);
+	    bu_vls_free(&args.ofile);
 	    return BRLCAD_ERROR;
 	}
     }
 
     ldata.argc = argc;
     ldata.dpa = dpa;
-    ldata.verbosity = (int)verbosity;
-    ldata.ftol = ftol;
-    ldata.min_tri_area = min_tri_area;
-    ldata.do_raytrace = (do_raytrace != 0);
-    ldata.rt_do_perturb = (do_rt_perturb != 0);
-    ldata.rt_tol_pct = (double)rt_tol_pct;
+    ldata.verbosity = (int)args.verbosity;
+    ldata.ftol = args.ftol;
+    ldata.min_tri_area = args.min_tri_area;
+    ldata.do_raytrace = (args.do_raytrace != 0);
+    ldata.rt_do_perturb = (args.do_rt_perturb != 0);
+    ldata.rt_tol_pct = (double)args.rt_tol_pct;
 
-    int have_specific_test = cyclic_check+missing_check+imethods.do_invalid;
+    int have_specific_test = args.cyclic_check + args.missing_check + args.invalid.do_invalid;
 
     /* --raytrace disables all other checks */
     if (ldata.do_raytrace) {
@@ -453,19 +527,19 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	if (_ged_raytrace_check(&ldata) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
     } else {
-	if (!have_specific_test || cyclic_check) {
+	if (!have_specific_test || args.cyclic_check) {
 	    bu_log("Checking for cyclic paths...\n");
 	    if (_ged_cyclic_check(&ldata) != BRLCAD_OK)
 		ret = BRLCAD_ERROR;
 	}
 
-	if (!have_specific_test || missing_check) {
+	if (!have_specific_test || args.missing_check) {
 	    bu_log("Checking for references to non-extant objects...\n");
 	    if (_ged_missing_check(&ldata) != BRLCAD_OK)
 		ret = BRLCAD_ERROR;
 	}
 
-	if (!have_specific_test || imethods.do_invalid) {
+	if (!have_specific_test || args.invalid.do_invalid) {
 	    bu_log("Checking for invalid objects...\n");
 
 	    // bu_log wipes out MGED when doing this - stash hooks
@@ -482,7 +556,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (visualize) {
+    if (args.visualize) {
 	struct bview *view = gedp->ged_gvp;
 	if (gedp->new_cmd_forms) {
 	    bv_vlblock_obj(ldata.vbp, view, "lint_visual");
@@ -497,13 +571,13 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     std::string report = ldata.summary();
     bu_vls_printf(gedp->ged_result_str, "%s", report.c_str());
 
-    if (bu_vls_strlen(&ofile)) {
-	std::ofstream jfile(bu_vls_cstr(&ofile));
+    if (bu_vls_strlen(&args.ofile)) {
+	std::ofstream jfile(bu_vls_cstr(&args.ofile));
 	jfile << std::setw(2) << ldata.j << "\n";
 	jfile.close();
     }
 
-    if (bu_vls_strlen(&gname)) {
+    if (bu_vls_strlen(&args.gname)) {
 	std::set<std::string> onames;
 	for(nlohmann::json::const_iterator it = ldata.j.begin(); it != ldata.j.end(); ++it) {
 	    const nlohmann::json &pdata = *it;
@@ -535,22 +609,22 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	    std::set<std::string>::iterator o_it;
 	    for (o_it = onames.begin(); o_it != onames.end(); o_it++)
 		(void)mk_addmember(o_it->c_str(), &(wcomb.l), NULL, DB_OP_UNION);
-	    mk_lcomb(wdbp, bu_vls_cstr(&gname), &wcomb, 1, NULL, NULL, NULL, 0);
+	    mk_lcomb(wdbp, bu_vls_cstr(&args.gname), &wcomb, 1, NULL, NULL, NULL, 0);
 	}
     }
 
-    bu_vls_free(&gname);
-    bu_vls_free(&ofile);
+    bu_vls_free(&args.gname);
+    bu_vls_free(&args.ofile);
     return ret;
 }
 
 #include "../include/plugin.h"
 
 #define GED_LINT_COMMANDS(X, XID) \
-    X(lint, ged_lint_core, GED_CMD_DEFAULT) \
+    X(lint, ged_lint_core, GED_CMD_DEFAULT, &lint_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_LINT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_lint", 1, GED_LINT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_LINT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_lint", 1, GED_LINT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

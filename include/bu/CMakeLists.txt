@@ -6,6 +6,7 @@ set(
   bitv.h
   cache.h
   cmd.h
+  cmdschema.h
   color.h
   cv.h
   debug.h
@@ -22,6 +23,7 @@ set(
   hook.h
   interrupt.h
   list.h
+  lineedit.h
   log.h
   magic.h
   malloc.h

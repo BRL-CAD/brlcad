@@ -31,6 +31,7 @@
 #include <QTextStream>
 #include "bu/malloc.h"
 #include "bu/file.h"
+#include "bu/log.h"
 #include "qtcad/QgGeomImport.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdApp.h"
@@ -252,6 +253,12 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
     ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
     ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "search", BU_CLBK_DURING, &qg_ged_search_exec_callback, (void *)w->console);
+
+    // Keep diagnostics visible in the GUI without disturbing an in-progress
+    // command.  The hook's signal is queued automatically when a worker
+    // thread produces the log message.
+    bu_log_add_hook(&qg_console_log_hook, (void *)w->console);
 
     // Assign QGED specific I/O handlers to the gedp
     mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
@@ -312,6 +319,8 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 QgEdApp::~QgEdApp() {
     if (mdl && mdl->gedp)
 	ged_subprocesses_terminate(mdl->gedp);
+    if (w && w->console)
+	bu_log_delete_hook(&qg_console_log_hook, (void *)w->console);
     delete mdl;
     // TODO - free rt_vlfree?
 }

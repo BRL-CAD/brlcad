@@ -33,6 +33,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/assert.h"
+#include "bu/vls.h"
 
 
 #define COMMA ','
@@ -288,10 +289,124 @@ bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
 }
 
 
+static const char *
+bu_rgb_skip_space(const char *str)
+{
+    while (str && *str && isspace((unsigned char)*str))
+	str++;
+    return str;
+}
+
+
+static int
+bu_rgb_parse_channel(const char **str, unsigned char *channel)
+{
+    char *end = NULL;
+    long value;
+    const char *start;
+
+    if (!str || !*str || !channel)
+	return 0;
+    start = bu_rgb_skip_space(*str);
+    if (!start || !*start)
+	return 0;
+    errno = 0;
+    value = strtol(start, &end, 10);
+    if (end == start || errno == ERANGE || value < 0 || value > 255)
+	return 0;
+    *channel = (unsigned char)value;
+    *str = end;
+    return 1;
+}
+
+
+static int
+bu_rgb_parse_packed(unsigned char *rgb, const char *arg)
+{
+    const char *str = arg;
+    const char *after_red = NULL;
+    unsigned char parsed[3] = {0, 0, 0};
+    char separator = '\0';
+
+    if (!rgb || !arg || !bu_rgb_parse_channel(&str, &parsed[RED]))
+	return 0;
+    after_red = str;
+    str = bu_rgb_skip_space(str);
+
+    if (*str == '/' || *str == ',' || *str == ';') {
+	separator = *str++;
+	if (!bu_rgb_parse_channel(&str, &parsed[GRN]))
+	    return 0;
+	str = bu_rgb_skip_space(str);
+	if (*str != separator)
+	    return 0;
+	str++;
+	if (!bu_rgb_parse_channel(&str, &parsed[BLU]))
+	    return 0;
+    } else {
+	/* The whitespace-only form needs a real separator after each channel. */
+	if (after_red == str)
+	    return 0;
+	if (!bu_rgb_parse_channel(&str, &parsed[GRN]))
+	    return 0;
+	after_red = str;
+	str = bu_rgb_skip_space(str);
+	if (after_red == str)
+	    return 0;
+	if (!bu_rgb_parse_channel(&str, &parsed[BLU]))
+	    return 0;
+    }
+
+    if (*bu_rgb_skip_space(str) != '\0')
+	return 0;
+    VMOVE(rgb, parsed);
+    return 1;
+}
+
+
+int
+bu_rgb_channel_validate(struct bu_vls *msg, const char *arg)
+{
+    const char *str = arg;
+    unsigned char channel = 0;
+
+    if (bu_rgb_parse_channel(&str, &channel) && *bu_rgb_skip_space(str) == '\0')
+	return 0;
+    if (msg)
+	bu_vls_printf(msg, "RGB channel must be a base-ten integer from 0 through 255");
+    return -1;
+}
+
+
+int
+bu_rgb_from_argv(unsigned char *rgb, size_t argc, const char * const *argv)
+{
+    unsigned char parsed[3] = {0, 0, 0};
+
+    if (!rgb || !argv || !argc || !argv[0])
+	return 0;
+    if (bu_rgb_parse_packed(parsed, argv[0])) {
+	VMOVE(rgb, parsed);
+	return 1;
+    }
+    if (argc < 3 || !argv[1] || !argv[2])
+	return 0;
+    for (size_t i = 0; i < 3; i++) {
+	const char *str = argv[i];
+	if (!bu_rgb_parse_channel(&str, &parsed[i]) || *bu_rgb_skip_space(str) != '\0')
+	    return 0;
+    }
+    VMOVE(rgb, parsed);
+    return 3;
+}
+
+
 int
 bu_color_from_str(struct bu_color *color, const char *str)
 {
     struct bu_color newcolor = BU_COLOR_INIT_ZERO;
+    const char *argv[1] = {str};
+    unsigned char rgb[3] = {0, 0, 0};
     size_t i;
     int mode = 0;
 
@@ -307,36 +422,41 @@ bu_color_from_str(struct bu_color *color, const char *str)
     if (*str == '#') {
 	int ret = 0;
 	size_t len;
-	unsigned int rgb[3] = {0, 0, 0};
+	unsigned int hex_rgb[3] = {0, 0, 0};
 
 	str++;
 
 	len = strlen(str);
 	if (len == 3) {
-	    ret = sscanf(str, "%01x%01x%01x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
-	    rgb[RED] += rgb[RED] * 16;
-	    rgb[GRN] += rgb[GRN] * 16;
-	    rgb[BLU] += rgb[BLU] * 16;
+	    ret = sscanf(str, "%01x%01x%01x", &hex_rgb[RED], &hex_rgb[GRN], &hex_rgb[BLU]);
+	    hex_rgb[RED] += hex_rgb[RED] * 16;
+	    hex_rgb[GRN] += hex_rgb[GRN] * 16;
+	    hex_rgb[BLU] += hex_rgb[BLU] * 16;
 	} else if (len == 6) {
-	    ret = sscanf(str, "%02x%02x%02x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
+	    ret = sscanf(str, "%02x%02x%02x", &hex_rgb[RED], &hex_rgb[GRN], &hex_rgb[BLU]);
 	}
 	if (ret != 3) {
 	    return 0;
 	}
-	if (rgb[RED] > 255 || rgb[GRN] > 255 || rgb[BLU] > 255)	{
+	if (hex_rgb[RED] > 255 || hex_rgb[GRN] > 255 || hex_rgb[BLU] > 255)	{
 	    return 0;
 	}
 
-	color->buc_rgb[RED] = (fastf_t)rgb[RED] / 255.0;
-	color->buc_rgb[GRN] = (fastf_t)rgb[GRN] / 255.0;
-	color->buc_rgb[BLU] = (fastf_t)rgb[BLU] / 255.0;
+	color->buc_rgb[RED] = (fastf_t)hex_rgb[RED] / 255.0;
+	color->buc_rgb[GRN] = (fastf_t)hex_rgb[GRN] / 255.0;
+	color->buc_rgb[BLU] = (fastf_t)hex_rgb[BLU] / 255.0;
 
 	return 1;
     }
 
+    /* Integer RGB triples have one strict, shared grammar.  Keep the
+     * historical floating-point form below for callers that need it. */
+    if (bu_rgb_from_argv(rgb, 1, argv))
+	return bu_color_from_rgb_chars(color, rgb);
+
     /* determine the format - 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
     for (mode = 0; mode < 3; ++mode) {
-	const char * const allowed_separators = "/, ";
+	const char * const allowed_separators = "/,; ";
 	const char *endptr;
 	long lr = -1;
 	double dr = -1.0;
@@ -366,6 +486,11 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	}
     }
 
+    /* Integer triples are handled exclusively by bu_rgb_from_argv above,
+     * which enforces one delimiter grammar and complete consumption. */
+    if (mode == 0)
+	return 0;
+
     /* iterate over RGB */
     for (i = 0; i < 3; ++i) {
 	const char *endptr;
@@ -389,6 +514,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	if ((NEAR_ZERO(newcolor.buc_rgb[i], 0.0) && errno)
 	    || endptr == str
 	    || (i != 2 && *endptr == '\0')
+	    || (i == 2 && *bu_rgb_skip_space(endptr) != '\0')
 	    || !(newcolor.buc_rgb[i] >= 0.0 && newcolor.buc_rgb[i] <= 1.0))
 	{
 	    return 0;

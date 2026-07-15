@@ -29,17 +29,16 @@
 #include <stdlib.h>
 
 #include "bio.h"
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "dm.h"
 #include "ged.h"
 
 struct png2fb_state {
-    double def_screen_gamma;	/* Don't add more gamma, default = 1.0*/
+    fastf_t def_screen_gamma;	/* Don't add more gamma, default = 1.0*/
     /* Particularly because on SGI, the system provides gamma correction,
      * so programs like this one don't have to.
      */
-    char *file_name;
-    FILE *fp_in;
+    const char *file_name;
     int multiple_lines;	/* Streamlined operation */
     int file_xoff;
     int file_yoff;
@@ -51,90 +50,50 @@ struct png2fb_state {
     int one_line_only;	/* insist on 1-line writes */
     int verbose;
     int header_only;
+    int help;
 };
 
-#define PNG2FB_STATE_INIT_ZERO {1.0, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+static const struct bu_cmd_option png2fb_schema_options[] = {
+    BU_CMD_FLAG("1", NULL, struct png2fb_state, one_line_only, "Use one-line writes"),
+    BU_CMD_INTEGER("m", NULL, struct png2fb_state, multiple_lines, "lines",
+	"Draw multiple lines per write"),
+    BU_CMD_POSITIVE_NUMBER("g", NULL, struct png2fb_state, def_screen_gamma, "gamma",
+	"Set screen gamma"),
+    BU_CMD_FLAG("H", NULL, struct png2fb_state, header_only, "Read the PNG header only"),
+    BU_CMD_FLAG("i", NULL, struct png2fb_state, inverse, "Draw upside-down"),
+    BU_CMD_FLAG("c", NULL, struct png2fb_state, clear, "Clear the framebuffer"),
+    BU_CMD_FLAG("v", NULL, struct png2fb_state, verbose, "Print verbose reporting"),
+    BU_CMD_FLAG("z", NULL, struct png2fb_state, zoom, "Zoom to fill the screen"),
+    BU_CMD_INTEGER("x", NULL, struct png2fb_state, file_xoff, "pixels", "Set input X offset"),
+    BU_CMD_INTEGER("y", NULL, struct png2fb_state, file_yoff, "pixels", "Set input Y offset"),
+    BU_CMD_INTEGER("X", NULL, struct png2fb_state, scr_xoff, "pixels", "Set framebuffer X offset"),
+    BU_CMD_INTEGER("Y", NULL, struct png2fb_state, scr_yoff, "pixels", "Set framebuffer Y offset"),
+    BU_CMD_FLAG("h", "help", struct png2fb_state, help, "Print command help"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand png2fb_schema_operands[] = {
+    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 0, 1,
+	"Optional PNG input file", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema png2fb_cmd_schema = {
+    "png2fb", "Display a PNG image in the framebuffer", png2fb_schema_options,
+    png2fb_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {NULL}
+};
 
-static char png2fb_usage[] = "\
-Usage: png2fb [-H -i -c -v -z -1] [-m #lines]\n\
-	[-g screen_gamma]\n\
-	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-S squarescrsize] [file.png]\n";
-
-static int
-png2fb_get_args(struct png2fb_state *s, int argc, char **argv)
+static void
+png2fb_show_help(struct ged *gedp, const char *command)
 {
-    int c;
+    char *option_help = bu_cmd_schema_describe(&png2fb_cmd_schema);
 
-    if (!s)
-	return 0;
-
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "1m:g:HicvzF:x:y:X:Y:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case '1':
-		s->one_line_only = 1;
-		break;
-	    case 'm':
-		s->multiple_lines = atoi(bu_optarg);
-		break;
-	    case 'g':
-		s->def_screen_gamma = atof(bu_optarg);
-		break;
-	    case 'H':
-		s->header_only = 1;
-		break;
-	    case 'i':
-		s->inverse = 1;
-		break;
-	    case 'c':
-		s->clear = 1;
-		break;
-	    case 'v':
-		s->verbose = 1;
-		break;
-	    case 'z':
-		s->zoom = 1;
-		break;
-	    case 'x':
-		s->file_xoff = atoi(bu_optarg);
-		break;
-	    case 'y':
-		s->file_yoff = atoi(bu_optarg);
-		break;
-	    case 'X':
-		s->scr_xoff = atoi(bu_optarg);
-		break;
-	    case 'Y':
-		s->scr_yoff = atoi(bu_optarg);
-		break;
-	    default:		/* '?''h' */
-		return 0;
-	}
+    bu_vls_printf(gedp->ged_result_str,
+	"Usage: %s [-H] [-i] [-c] [-v] [-z] [-1] [-m lines] [-g gamma] "
+	"[-x pixels] [-y pixels] [-X pixels] [-Y pixels] [file.png]", command);
+    if (option_help) {
+	bu_vls_printf(gedp->ged_result_str, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "png2fb native option help");
     }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	s->file_name = "-";
-	s->fp_in = stdin;
-	setmode(fileno(s->fp_in), O_BINARY);
-    } else {
-	s->file_name = argv[bu_optind];
-	s->fp_in = fopen(s->file_name, "rb");
-	if (s->fp_in == NULL) {
-	    perror(s->file_name);
-	    fprintf(stderr,
-		    "png-fb: cannot open \"%s\" for reading\n",
-		    s->file_name);
-	    return 0;
-	}
-    }
-
-    if (argc > ++bu_optind)
-	fprintf(stderr, "png-fb: excess argument(s) ignored\n");
-
-    return 1;		/* OK */
 }
 
 
@@ -142,10 +101,32 @@ int
 ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
+    int operand_index;
+    FILE *fp_in = NULL;
+    struct png2fb_state p2fbs = {1.0, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    struct png2fb_state p2fbs = PNG2FB_STATE_INIT_ZERO;
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc == 1) {
+	png2fb_show_help(gedp, argv[0]);
+	return GED_HELP;
+    }
+
+    operand_index = bu_cmd_schema_parse_complete(&png2fb_cmd_schema, &p2fbs,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+	png2fb_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
+    }
+    if (p2fbs.help) {
+	png2fb_show_help(gedp, argv[0]);
+	return GED_HELP;
+    }
+    if (operand_index < argc - 1)
+	p2fbs.file_name = argv[operand_index + 1];
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, "no current view set\n");
@@ -164,22 +145,24 @@ ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
 	return BRLCAD_ERROR;
     }
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png2fb_usage);
-	return GED_HELP;
+    if (!p2fbs.file_name) {
+	if (isatty(fileno(stdin))) {
+	png2fb_show_help(gedp, argv[0]);
+	return BRLCAD_ERROR;
+	}
+	p2fbs.file_name = "-";
+	fp_in = stdin;
+	setmode(fileno(fp_in), O_BINARY);
+    } else {
+	fp_in = fopen(p2fbs.file_name, "rb");
+	if (!fp_in) {
+	    bu_vls_printf(gedp->ged_result_str, "cannot open \"%s\" for reading\n",
+		p2fbs.file_name);
+	    return BRLCAD_ERROR;
+	}
     }
 
-    if (!png2fb_get_args(&p2fbs, argc, (char **)argv)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png2fb_usage);
-	return GED_HELP;
-    }
-
-    ret = fb_read_png(fbp, p2fbs.fp_in,
+    ret = fb_read_png(fbp, fp_in,
 		      p2fbs.file_xoff, p2fbs.file_yoff,
 		      p2fbs.scr_xoff, p2fbs.scr_yoff,
 		      p2fbs.clear, p2fbs.zoom, p2fbs.inverse,
@@ -188,8 +171,8 @@ ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 		      p2fbs.def_screen_gamma,
 		      gedp->ged_result_str);
 
-    if (p2fbs.fp_in != stdin)
-	fclose(p2fbs.fp_in);
+    if (fp_in != stdin)
+	fclose(fp_in);
 
     (void)dm_draw_begin(dmp);
     fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
@@ -205,10 +188,10 @@ ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PNG2FB_COMMANDS(X, XID) \
-    X(png2fb, ged_png2fb_core, GED_CMD_DEFAULT) \
+    X(png2fb, ged_png2fb_core, GED_CMD_DEFAULT, &png2fb_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PNG2FB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_png2fb", 1, GED_PNG2FB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PNG2FB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_png2fb", 1, GED_PNG2FB_COMMANDS)
 
 /*
  * Local Variables:

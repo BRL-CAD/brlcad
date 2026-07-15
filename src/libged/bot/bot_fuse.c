@@ -29,12 +29,72 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "bu/parallel.h"
 #include "rt/geom.h"
 #include "bv/plot3.h"
 
 #include "../ged_private.h"
+
+
+struct bot_fuse_args {
+    int print_help;
+    int show_open_edges;
+    int plot_open_edges;
+};
+
+static int
+bot_fuse_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg,
+	struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *schema;
+
+    flat.validation.custom_validate = NULL;
+    if (bu_cmd_schema_option_present(schema, argc, argv, "help"))
+	flat.operands = NULL;
+    return bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+}
+
+static const struct bu_cmd_option bot_fuse_schema_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_fuse_args, print_help,
+	"Print command help"),
+    BU_CMD_FLAG("s", NULL, struct bot_fuse_args, show_open_edges,
+	"Show open edges in the display"),
+    BU_CMD_FLAG("p", NULL, struct bot_fuse_args, plot_open_edges,
+	"Plot open edges to a temporary file"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand bot_fuse_schema_operands[] = {
+    BU_CMD_OPERAND("new_bot", BU_CMD_VALUE_STRING, 1, 1,
+	"Name for the fused BOT", NULL),
+    BU_CMD_OPERAND("old_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Source BOT object", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const char * const bot_fuse_output_options[] = {"s", "p", NULL};
+static const struct bu_cmd_constraint bot_fuse_schema_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(bot_fuse_output_options, 0, 1,
+	"-s and -p are mutually exclusive"),
+    BU_CMD_CONSTRAINT_NULL
+};
+const struct bu_cmd_schema ged_bot_fuse_schema = {
+    "bot_fuse", "Fuse BOT vertices and faces", bot_fuse_schema_options,
+    bot_fuse_schema_operands, BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(bot_fuse_schema_validate, bot_fuse_schema_constraints)
+};
+
+static void
+bot_fuse_usage(struct bu_vls *result, const char *cmd)
+{
+    char *option_help = bu_cmd_schema_describe(&ged_bot_fuse_schema);
+
+    bu_vls_sprintf(result, "Usage: %s [--help] [-s | -p] new_bot old_bot\n", cmd);
+    if (option_help) {
+	bu_vls_printf(result, "\nOptions:\n%s", option_help);
+	bu_free(option_help, "help str");
+    }
+}
 
 
 static size_t
@@ -158,70 +218,58 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     struct rt_db_internal intern, intern2;
     struct rt_bot_internal *bot;
     int count=0;
-    static const char *usage = "new_bot old_bot";
     struct bu_list *vlfree = &rt_vlfree;
 
     struct model *m;
     struct nmgregion *r;
-    int ret, c, i;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct bn_tol *tol = &wdbp->wdb_tol;
+    int ret;
+    struct rt_wdb *wdbp;
+    struct bn_tol *tol;
     int total = 0;
     volatile int out_type = 0; /* open edge output type: 0 = none, 1 = show, 2 = plot */
     size_t open_cnt;
     struct bu_vls name_prefix = BU_VLS_INIT_ZERO;
-
-    /* bu_getopt() options */
-    static const char *bot_fuse_options = "sp";
-    static const char *bot_fuse_options_str = "[-s|-p]";
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    struct bot_fuse_args args = {0};
+    const char *cmdname;
+    int operand_index;
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc != 3 && argc != 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], bot_fuse_options_str, usage);
+    cmdname = argv[0];
+    argc--; argv++;
+    if (!argc) {
+	bot_fuse_usage(gedp->ged_result_str, cmdname);
 	return GED_HELP;
     }
 
-    /* Turn off getopt's error messages */
-    bu_opterr = 0;
-    bu_optind = 1;
-
-    /* get all the option flags from the command line */
-    while ((c=bu_getopt(argc, (char **)argv, bot_fuse_options)) != -1) {
-	switch (c) {
-	    case 's':
-		{
-		    out_type = 1; /* show open edges */
-		    break;
-		}
-	    case 'p':
-		{
-		    out_type = 2; /* plot open edges */
-		    break;
-		}
-	    default :
-		{
-		    bu_vls_printf(gedp->ged_result_str, "Unknown option: '%c'", c);
-		    return GED_HELP;
-		}
-	}
+    operand_index = bu_cmd_schema_parse_complete(&ged_bot_fuse_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	bot_fuse_usage(gedp->ged_result_str, cmdname);
+	return BRLCAD_ERROR;
     }
+    if (args.print_help) {
+	bot_fuse_usage(gedp->ged_result_str, cmdname);
+	return GED_HELP;
+    }
+    argc -= operand_index;
+    argv += operand_index;
+    out_type = args.show_open_edges ? 1 : (args.plot_open_edges ? 2 : 0);
 
-    i = argc - 2;
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    tol = &wdbp->wdb_tol;
 
-    bu_log("%s: start\n", argv[0]);
+    bu_log("%s: start\n", cmdname);
 
-    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+    GED_DB_LOOKUP(gedp, old_dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERN(gedp, &intern, old_dp, bn_mat_identity, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i+1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", cmdname, argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -229,14 +277,14 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     m = nmg_mm();
 
     /* place bot in nmg structure */
-    bu_log("%s: running rt_bot_tess\n", argv[0]);
+    bu_log("%s: running rt_bot_tess\n", cmdname);
     ret = rt_bot_tess(&r, m, &intern, &wdbp->wdb_ttol, tol);
 
     /* free internal representation of original bot */
     rt_db_free_internal(&intern);
 
     if (ret != 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (1).\n", argv[0], argv[i+1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (1).\n", cmdname, argv[1]);
 	nmg_km(m);
 	return BRLCAD_ERROR;
     }
@@ -244,22 +292,22 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     total = 0;
 
     /* Step 1 -- the vertices. */
-    bu_log("%s: running nmg_vertex_fuse\n", argv[0]);
+    bu_log("%s: running nmg_vertex_fuse\n", cmdname);
     count = nmg_vertex_fuse(&m->magic, vlfree, tol);
     total += count;
-    bu_log("%s: %s, %d vertex fused\n", argv[0], argv[i+1], count);
+    bu_log("%s: %s, %d vertex fused\n", cmdname, argv[1], count);
 
     /* Step 1.5 -- break edges on vertices, before fusing edges */
-    bu_log("%s: running nmg_break_e_on_v\n", argv[0]);
+    bu_log("%s: running nmg_break_e_on_v\n", cmdname);
     count = nmg_break_e_on_v(&m->magic, vlfree, tol);
     total += count;
-    bu_log("%s: %s, %d broke 'e' on 'v'\n", argv[0], argv[i+1], count);
+    bu_log("%s: %s, %d broke 'e' on 'v'\n", cmdname, argv[1], count);
 
     if (total) {
 	struct nmgregion *r2;
 	struct shell *s;
 
-	bu_log("%s: running nmg_make_faces_within_tol\n", argv[0]);
+	bu_log("%s: running nmg_make_faces_within_tol\n", cmdname);
 
 	/* vertices and/or edges have been moved,
 	 * may have created out-of-tolerance faces
@@ -272,19 +320,19 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     }
 
     /* Step 2 -- the face geometry */
-    bu_log("%s: running nmg_model_face_fuse\n", argv[0]);
+    bu_log("%s: running nmg_model_face_fuse\n", cmdname);
     count = nmg_model_face_fuse(m, vlfree, tol);
     total += count;
-    bu_log("%s: %s, %d faces fused\n", argv[0], argv[i+1], count);
+    bu_log("%s: %s, %d faces fused\n", cmdname, argv[1], count);
 
     /* Step 3 -- edges */
-    bu_log("%s: running nmg_edge_fuse\n", argv[0]);
+    bu_log("%s: running nmg_edge_fuse\n", cmdname);
     count = nmg_edge_fuse(&m->magic, vlfree, tol);
     total += count;
 
-    bu_log("%s: %s, %d edges fused\n", argv[0], argv[i+1], count);
+    bu_log("%s: %s, %d edges fused\n", cmdname, argv[1], count);
 
-    bu_log("%s: %s, %d total fused\n", argv[0], argv[i+1], total);
+    bu_log("%s: %s, %d total fused\n", cmdname, argv[1], total);
 
     if (!BU_SETJUMP) {
 	/* try */
@@ -292,8 +340,8 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	/* convert the nmg model back into a bot */
 	bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), vlfree, tol);
 
-	bu_vls_sprintf(&name_prefix, "open_edges.%s", argv[i]);
-	bu_log("%s: running show_dangling_edges\n", argv[0]);
+	bu_vls_sprintf(&name_prefix, "open_edges.%s", argv[0]);
+	bu_log("%s: running show_dangling_edges\n", cmdname);
 	open_cnt = show_dangling_edges(gedp, &m->magic, bu_vls_addr(&name_prefix), out_type, vlfree);
 	bu_log("%s: WARNING %zu open edges, new BOT may be invalid!!!\n", argv[0], open_cnt);
 	bu_vls_free(&name_prefix);
@@ -303,7 +351,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (2).\n", argv[0], argv[i+1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (2).\n", cmdname, argv[1]);
 	return BRLCAD_ERROR;
     } BU_UNSETJUMP;
 
@@ -313,11 +361,11 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     intern2.idb_meth = &OBJ[ID_BOT];
     intern2.idb_ptr = (void *)bot;
 
-    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, BRLCAD_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[0], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERN(gedp, new_dp, &intern2, BRLCAD_ERROR);
 
-    bu_log("%s: Created new BOT (%s)\n", argv[0], argv[i]);
-    bu_log("%s: Done.\n", argv[0]);
+    bu_log("%s: Created new BOT (%s)\n", cmdname, argv[0]);
+    bu_log("%s: Done.\n", cmdname);
 
     return BRLCAD_OK;
 }

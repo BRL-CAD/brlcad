@@ -610,15 +610,12 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
     }
     if (wn.length() > 0) {
 	// Width check
-	struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
 	int w = 0;
 	const char *wn_cstr = wn.c_str();
-	if (bu_opt_int(&optparse_msg, 1, (const char **)&wn_cstr, (void *)&w) == -1) {
-	    nerr(nss, "Error: bu_opt value read failure reading format specifier width from substring \"%s\" of specifier \"%s\": %s\n", wn.c_str(), fmt_sp.c_str(), bu_vls_cstr(&optparse_msg));
-	    bu_vls_free(&optparse_msg);
+	if (!bu_cmd_integer_from_str(&w, wn_cstr)) {
+	    nerr(nss, "Error: invalid format specifier width substring \"%s\" in specifier \"%s\"\n", wn.c_str(), fmt_sp.c_str());
 	    return -1;
 	}
-	bu_vls_free(&optparse_msg);
 	if (w > NIRT_PRINTF_MAXWIDTH) {
 	    nerr(nss, "Error: width specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed max width (%d)\n", wn.c_str(), fmt_sp.c_str(), NIRT_PRINTF_MAXWIDTH);
 	    return -1;
@@ -626,15 +623,12 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
     }
     if (pn.length() > 0) {
 	// Precision check
-	struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
 	int p_num = 0;
 	const char *pn_cstr = pn.c_str();
-	if (bu_opt_int(&optparse_msg, 1, (const char **)&pn_cstr, (void *)&p_num) == -1) {
-	    nerr(nss, "Error: bu_opt value read failure reading format specifier precision from substring \"%s\" of specifier \"%s\": %s\n", pn.c_str(), fmt_sp.c_str(), bu_vls_cstr(&optparse_msg));
-	    bu_vls_free(&optparse_msg);
+	if (!bu_cmd_integer_from_str(&p_num, pn_cstr)) {
+	    nerr(nss, "Error: invalid format specifier precision substring \"%s\" in specifier \"%s\"\n", pn.c_str(), fmt_sp.c_str());
 	    return -1;
 	}
-	bu_vls_free(&optparse_msg);
 
 	switch (fmt_sp.c_str()[fmt_sp.length()-1]) {
 	    case 'd':
@@ -1572,47 +1566,70 @@ _nirt_get_desc_args(const char *key)
 }
 
 
+struct nirt_attr_args {
+    int print_help;
+    int attr_print;
+    int attr_flush;
+    int val_attrs;
+};
+
+
+static const struct bu_cmd_option nirt_attr_options[] = {
+    BU_CMD_FLAG("h", "help", nirt_attr_args, print_help, "Print help and exit."),
+    BU_CMD_FLAG("p", "print", nirt_attr_args, attr_print, "Print active attributes."),
+    BU_CMD_FLAG("f", "flush", nirt_attr_args, attr_flush, "Clear active attributes."),
+    BU_CMD_FLAG("v", NULL, nirt_attr_args, val_attrs,
+	"Validate attributes against the active database."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_operand nirt_attr_operands[] = {
+    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+	"Attribute name to activate.", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+
+static const struct bu_cmd_schema nirt_attr_schema = {
+    "attr", "Manage NIRT active attributes.", nirt_attr_options, nirt_attr_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
 extern "C" int
 _nirt_cmd_attr(void *ns, int argc, const char *argv[])
 {
     if (!ns) return -1;
     struct nirt_state *nss = (struct nirt_state *)ns;
     int i = 0;
-    int ac = 0;
-    int print_help = 0;
-    int attr_print = 0;
-    int attr_flush = 0;
-    int val_attrs = 0;
+    int operand_start = 0;
+    struct nirt_attr_args args = {0, 0, 0, 0};
     size_t orig_size = nss->i->attrs.size();
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0],  "h", "help",  "",  NULL,   &print_help, "print help and exit");
-    BU_OPT(d[1],  "p", "print", "",  NULL,   &attr_print, "print active attributes");
-    BU_OPT(d[2],  "f", "flush", "",  NULL,   &attr_flush, "clear attribute list");
-    BU_OPT(d[3],  "v", "",      "",  NULL,   &val_attrs,  "validate attributes - only accept attributes used by one or more objects in the active database");
-    BU_OPT_NULL(d[4]);
     const char *ustr = "Usage: attr <opts> <attribute_name_1> <attribute_name_2> ...\nNote: attr with no options and no attributes to add will print the list of active attributes.\nOptions:";
 
     argv++; argc--;
 
-    if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
-	char *help = bu_opt_describe(d, NULL);
-	nerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_cstr(&optparse_msg), ustr, help);
+    operand_start = bu_cmd_schema_parse(&nirt_attr_schema, &args, &optparse_msg, argc, argv);
+    if (operand_start < 0) {
+	char *help = bu_cmd_schema_describe(&nirt_attr_schema);
+	nerr(nss, "Error: option parsing failed: %s\n\n%s\n%s\n", bu_vls_cstr(&optparse_msg), ustr, help);
 	if (help) bu_free(help, "help str");
 	bu_vls_free(&optparse_msg);
 	return -1;
     }
     bu_vls_free(&optparse_msg);
 
-    if (attr_flush) nss->i->attrs.clear();
+    if (args.attr_flush) nss->i->attrs.clear();
 
-    if (print_help || (attr_print && ac > 0)) {
-	char *help = bu_opt_describe(d, NULL);
+    if (args.print_help || (args.attr_print && operand_start < argc)) {
+	char *help = bu_cmd_schema_describe(&nirt_attr_schema);
 	nerr(nss, "%s\n%s", ustr, help);
 	if (help) bu_free(help, "help str");
 	return -1;
     }
-    if (attr_print || ac == 0) {
+    if (args.attr_print || operand_start == argc) {
 	std::set<std::string>::iterator a_it;
 	for (a_it = nss->i->attrs.begin(); a_it != nss->i->attrs.end(); a_it++) {
 	    nout(nss, "\"%s\"\n", (*a_it).c_str());
@@ -1620,9 +1637,9 @@ _nirt_cmd_attr(void *ns, int argc, const char *argv[])
 	return 0;
     }
 
-    for (i = 0; i < ac; i++) {
+    for (i = operand_start; i < argc; i++) {
 	const char *sattr = db5_standard_attribute(db5_standardize_attribute(argv[i]));
-	if (val_attrs) {
+	if (args.val_attrs) {
 	    //TODO - check against the .g for any usage of the attribute
 	}
 	/* If there is a standardized version of this attribute that is
@@ -1647,7 +1664,6 @@ _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
     double az = 0.0;
     double el = 0.0;
     int ret = 0;
-    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
@@ -1663,8 +1679,9 @@ _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
 	return -1;
     }
 
-    if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&az)) == -1) {
-	nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_cstr(&opt_msg));
+    if (!bu_cmd_number_from_str(&az, argv[0])) {
+	nerr(nss, "Error: invalid azimuth: %s\n", argv[0]);
+	ret = -1;
 	goto azel_done;
     }
 
@@ -1675,8 +1692,9 @@ _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&el)) == -1) {
-	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
+    if (!bu_cmd_number_from_str(&el, argv[0])) {
+	nerr(nss, "Error: invalid elevation: %s\n", argv[0]);
+	ret = -1;
 	goto azel_done;
     }
 
@@ -1692,7 +1710,6 @@ _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
     ret = 0;
 
 azel_done:
-    bu_vls_free(&opt_msg);
     return ret;
 }
 
@@ -1701,7 +1718,6 @@ extern "C" int
 _nirt_cmd_dir_vect(void *ns, int argc, const char *argv[])
 {
     vect_t dir = VINIT_ZERO;
-    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
@@ -1716,9 +1732,8 @@ _nirt_cmd_dir_vect(void *ns, int argc, const char *argv[])
 	return -1;
     }
 
-    if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&dir) == -1) {
-	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
-	bu_vls_free(&opt_msg);
+    if (bu_cmd_vector3_from_argv(dir, 3, argv) != 3) {
+	nerr(nss, "Error: invalid direction vector\n");
 	return -1;
     }
 
@@ -1733,7 +1748,6 @@ extern "C" int
 _nirt_cmd_grid_coor(void *ns, int argc, const char *argv[])
 {
     vect_t grid = VINIT_ZERO;
-    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
@@ -1749,22 +1763,19 @@ _nirt_cmd_grid_coor(void *ns, int argc, const char *argv[])
 	nerr(nss, "Usage:  hv %s\n", _nirt_get_desc_args("hv"));
 	return -1;
     }
-    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[0]) == -1) {
-	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
-	bu_vls_free(&opt_msg);
+    if (!bu_cmd_number_from_str(&grid[0], argv[0])) {
+	nerr(nss, "Error: invalid horizontal grid coordinate\n");
 	return -1;
     }
     argc--; argv++;
-    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[1]) == -1) {
-	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
-	bu_vls_free(&opt_msg);
+    if (!bu_cmd_number_from_str(&grid[1], argv[0])) {
+	nerr(nss, "Error: invalid vertical grid coordinate\n");
 	return -1;
     }
     argc--; argv++;
     if (argc) {
-	if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[2]) == -1) {
-	    nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
-	    bu_vls_free(&opt_msg);
+	if (!bu_cmd_number_from_str(&grid[2], argv[0])) {
+	    nerr(nss, "Error: invalid depth grid coordinate\n");
 	    return -1;
 	}
     } else {
@@ -1785,7 +1796,6 @@ extern "C" int
 _nirt_cmd_target_coor(void *ns, int argc, const char *argv[])
 {
     vect_t target = VINIT_ZERO;
-    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
@@ -1802,9 +1812,8 @@ _nirt_cmd_target_coor(void *ns, int argc, const char *argv[])
 	return -1;
     }
 
-    if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&target) == -1) {
-	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
-	bu_vls_free(&opt_msg);
+    if (bu_cmd_vector3_from_argv(target, 3, argv) != 3) {
+	nerr(nss, "Error: invalid target vector\n");
 	return -1;
     }
 
@@ -1922,12 +1931,17 @@ _nirt_cmd_color_plot(void *ns, int argc, const char *argv[])
     if (BU_STR_EQUIV(argv[0], "ovlp") || BU_STR_EQUIV(argv[0], "overlap"))
 	c = &nss->color_ovlp;
 
+    if (!c) {
+	nerr(nss, "Usage:  color %s\n", _nirt_get_desc_args("color"));
+	return -1;
+    }
+
     argv++; argc--;
 
     if (argc) {
 	// More args - reading a color in
-	int ret_c = bu_opt_color(NULL, argc, argv, c);
-	if (ret_c != 1 && ret_c != 3) {
+	int ret_c = bu_cmd_color_from_argv(c, argc, argv);
+	if (ret_c != argc) {
 	    nerr(nss, "Usage:  color %s\n", _nirt_get_desc_args("color"));
 	    return -1;
 	}
@@ -1947,7 +1961,6 @@ extern "C" int
 _nirt_cmd_use_air(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
-    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     if (!ns) return -1;
     if (argc == 1) {
 	nout(nss, "use_air = %d\n", nss->i->use_air);
@@ -1957,8 +1970,8 @@ _nirt_cmd_use_air(void *ns, int argc, const char *argv[])
 	nerr(nss, "Usage:  useair %s\n", _nirt_get_desc_args("useair"));
 	return -1;
     }
-    if (bu_opt_int(&optparse_msg, 1, (const char **)&(argv[1]), (void *)&nss->i->use_air) == -1) {
-	nerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useair %s\n", bu_vls_cstr(&optparse_msg), _nirt_get_desc_args("useair"));
+    if (!bu_cmd_integer_from_str(&nss->i->use_air, argv[1])) {
+	nerr(nss, "Error: invalid use_air value: %s\n\nUsage:  useair %s\n", argv[1], _nirt_get_desc_args("useair"));
 	return -1;
     }
     return 0;
@@ -2405,7 +2418,6 @@ extern "C" int
 _nirt_cmd_state(void *ns, int argc, const char *argv[])
 {
     int rgb[3] = {0, 0, 0};
-    struct bu_vls optmsg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
     if (argc == 1) {
@@ -2420,11 +2432,10 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_odd) == -1) {
-	    nerr(nss, "Error: bu_opt color read failure reading parsing");
-	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
-	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
-	    bu_vls_free(&optmsg);
+	if (bu_cmd_color_from_argv(&nss->color_odd, argc - 1, argv + 1) != argc - 1) {
+	    nerr(nss, "Error: invalid color value");
+	    for (int i = 1; i < argc; i++) {nerr(nss, " %s", argv[i]);}
+	    nerr(nss, "\n");
 	    return -1;
 	}
     }
@@ -2435,11 +2446,10 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_even) == -1) {
-	    nerr(nss, "Error: bu_opt color read failure reading parsing");
-	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
-	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
-	    bu_vls_free(&optmsg);
+	if (bu_cmd_color_from_argv(&nss->color_even, argc - 1, argv + 1) != argc - 1) {
+	    nerr(nss, "Error: invalid color value");
+	    for (int i = 1; i < argc; i++) {nerr(nss, " %s", argv[i]);}
+	    nerr(nss, "\n");
 	    return -1;
 	}
 
@@ -2450,11 +2460,10 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_gap) == -1) {
-	    nerr(nss, "Error: bu_opt color read failure reading parsing");
-	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
-	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
-	    bu_vls_free(&optmsg);
+	if (bu_cmd_color_from_argv(&nss->color_gap, argc - 1, argv + 1) != argc - 1) {
+	    nerr(nss, "Error: invalid color value");
+	    for (int i = 1; i < argc; i++) {nerr(nss, " %s", argv[i]);}
+	    nerr(nss, "\n");
 	    return -1;
 	}
 
@@ -2465,11 +2474,10 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_ovlp) == -1) {
-	    nerr(nss, "Error: bu_opt color read failure reading parsing");
-	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
-	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
-	    bu_vls_free(&optmsg);
+	if (bu_cmd_color_from_argv(&nss->color_ovlp, argc - 1, argv + 1) != argc - 1) {
+	    nerr(nss, "Error: invalid color value");
+	    for (int i = 1; i < argc; i++) {nerr(nss, " %s", argv[i]);}
+	    nerr(nss, "\n");
 	    return -1;
 	}
     }
@@ -2498,7 +2506,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	    nout(nss, "%d\n", nss->i->out_accumulate);
 	    return 0;
 	}
-	(void)bu_opt_int(NULL, 1, (const char **)&(argv[2]), (void *)&setting);
+	(void)bu_cmd_integer_from_str(&setting, argv[2]);
 	nss->i->out_accumulate = setting;
 	return 0;
     }
@@ -2508,7 +2516,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	    nout(nss, "%d\n", nss->i->err_accumulate);
 	    return 0;
 	}
-	(void)bu_opt_int(NULL, 1, (const char **)&(argv[2]), (void *)&setting);
+	(void)bu_cmd_integer_from_str(&setting, argv[2]);
 	nss->i->err_accumulate = setting;
 	return 0;
     }

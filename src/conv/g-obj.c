@@ -35,8 +35,7 @@
 
 /* interface headers */
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
 #include "vmath.h"
@@ -48,17 +47,6 @@
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
-static char usage[] =
-    "[-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n"
-    "[-e error_file_name ][-D dist_calc_tol][-o output_file_name ] brlcad_db.g object(s)\n";
-
-static void
-print_usage(const char *progname)
-{
-    bu_exit(1, "Usage: %s %s", progname, usage);
-}
-
 
 static b_off_t vert_offset=0;
 static b_off_t norm_offset=0;
@@ -144,7 +132,7 @@ obj_get_path_color(struct db_i *idbip, const struct db_full_path *pathp, unsigne
 	    const struct mater *mp;
 
 	    if (region_id_val) {
-		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+		(void)bu_cmd_integer_from_str(&region_id, region_id_val);
 	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
 		region_id = 0;
 	    }
@@ -368,81 +356,148 @@ obj_write_region_material(const struct db_full_path *pathp, const struct db_tree
 	fprintf(fp, "usemtl mat_%d_%d_%d\n", tsp->ts_gmater, tsp->ts_los, tsp->ts_aircode);
 }
 
-static int
-parse_tol_abs(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
-{
-    int ret;
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "absolute tolerance");
+struct gobj_tolerance_args {
+    fastf_t absolute;
+    fastf_t normal;
+    fastf_t distance;
+    fastf_t relative;
+    unsigned long sequence;
+    unsigned long absolute_sequence;
+    unsigned long normal_sequence;
+    unsigned long relative_sequence;
+    int absolute_set;
+    int normal_set;
+    int distance_set;
+    int relative_set;
+};
 
-    if (set_var) {
-	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.abs));
-	ttol.rel = 0.0;
-	return ret;
-    } else {
+
+struct gobj_args {
+    int print_help;
+    int inches;
+    int use_materials;
+    int normals;
+    int verbose;
+    struct gobj_tolerance_args tolerances;
+    unsigned int rt_debug;
+    unsigned int nmg_debug;
+    const char *error_file;
+    const char *output_file;
+    int ncpu;
+};
+
+
+static int
+gobj_tolerance_parse(struct bu_vls *msg, const char *arg, void *storage, int which)
+{
+    fastf_t value;
+    struct gobj_tolerance_args *tolerances = (struct gobj_tolerance_args *)storage;
+
+    if (!bu_cmd_number_from_str(&value, arg)) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid tolerance value: %s\n", arg ? arg : "");
 	return -1;
     }
+    if (!tolerances)
+	return 0;
+
+    tolerances->sequence++;
+    switch (which) {
+	case 0:
+	    tolerances->absolute = value;
+	    tolerances->absolute_set = 1;
+	    tolerances->absolute_sequence = tolerances->sequence;
+	    break;
+	case 1:
+	    tolerances->normal = value;
+	    tolerances->normal_set = 1;
+	    tolerances->normal_sequence = tolerances->sequence;
+	    break;
+	case 2:
+	    tolerances->distance = value;
+	    tolerances->distance_set = 1;
+	    break;
+	default:
+	    tolerances->relative = value;
+	    tolerances->relative_set = 1;
+	    tolerances->relative_sequence = tolerances->sequence;
+	    break;
+    }
+    return 0;
 }
 
 
 static int
-parse_tol_norm(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+gobj_absolute_tolerance_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int ret;
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "normal tolerance");
-
-    if (set_var) {
-	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.norm));
-	ttol.rel = 0.0;
-	return ret;
-    } else {
-	return -1;
-    }
+    return gobj_tolerance_parse(msg, arg, storage, 0);
 }
 
 
 static int
-parse_tol_dist(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+gobj_normal_tolerance_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int ret;
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "distance tolerance");
-
-    if (set_var) {
-	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(tol.dist));
-	tol.dist_sq = tol.dist * tol.dist;
-	rt_pr_tol(&tol);
-	return ret;
-    } else {
-	return -1;
-    }
+    return gobj_tolerance_parse(msg, arg, storage, 1);
 }
 
 
 static int
-parse_debug_rt(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+gobj_distance_tolerance_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug rt");
-
-    if (set_var) {
-	sscanf(argv[0], "%x", (unsigned int *)&rt_debug);
-	return 1;
-    } else {
-	return -1;
-    }
+    return gobj_tolerance_parse(msg, arg, storage, 2);
 }
 
 
 static int
-parse_debug_nmg(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+gobj_relative_tolerance_parse(struct bu_vls *msg, const char *arg, void *storage)
 {
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug nmg");
+    return gobj_tolerance_parse(msg, arg, storage, 3);
+}
 
-    if (set_var) {
-	sscanf(argv[0], "%x", (unsigned int *)&nmg_debug);
-	NMG_debug = nmg_debug;
-	return 1;
-    } else {
-	return -1;
-    }
+
+static const struct bu_cmd_option gobj_options[] = {
+    BU_CMD_FLAG("h", "help", struct gobj_args, print_help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("i", "inches", struct gobj_args, inches, "Change output units from millimeters to inches"),
+    BU_CMD_FLAG("m", "materials", struct gobj_args, use_materials, "Output usemtl statements"),
+    BU_CMD_FLAG("u", "normals", struct gobj_args, normals, "Output vertex normals"),
+    BU_CMD_FLAG("v", "verbose", struct gobj_args, verbose, "Enable verbose output"),
+    BU_CMD_CUSTOM("a", "absolute-tolerance", struct gobj_args, tolerances, gobj_absolute_tolerance_parse, "distance", "Set absolute tessellation tolerance"),
+    BU_CMD_CUSTOM("n", "normal-tolerance", struct gobj_args, tolerances, gobj_normal_tolerance_parse, "distance", "Set surface normal tolerance"),
+    BU_CMD_CUSTOM("D", "distance-tolerance", struct gobj_args, tolerances, gobj_distance_tolerance_parse, "distance", "Set distance calculation tolerance"),
+    BU_CMD_HEX_INTEGER("x", "rt-debug", struct gobj_args, rt_debug, "hex", "Set RT debug flags"),
+    BU_CMD_HEX_INTEGER("X", "nmg-debug", struct gobj_args, nmg_debug, "hex", "Set NMG debug flags"),
+    BU_CMD_STRING("e", "error-file", struct gobj_args, error_file, "file", "Write errors to this file"),
+    BU_CMD_STRING("o", "output", struct gobj_args, output_file, "output.obj", "Write geometry to this OBJ file"),
+    BU_CMD_INTEGER("P", "processors", struct gobj_args, ncpu, "count", "Set the number of CPUs"),
+    BU_CMD_CUSTOM("r", "relative-tolerance", struct gobj_args, tolerances, gobj_relative_tolerance_parse, "fraction", "Set relative tessellation tolerance"),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_operand gobj_operands[] = {
+    BU_CMD_OPERAND("input", BU_CMD_VALUE_FILE, 0, BU_CMD_COUNT_UNLIMITED,
+	"BRL-CAD database followed by one or more objects", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+
+static const struct bu_cmd_schema gobj_schema = {
+    "g-obj",
+    "Convert selected BRL-CAD geometry to a Wavefront OBJ file.",
+    gobj_options,
+    gobj_operands,
+    BU_CMD_PARSE_INTERSPERSED,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static void
+print_usage(const char *progname)
+{
+    char *option_help = bu_cmd_schema_describe(&gobj_schema);
+    bu_exit(1, "Usage: %s [options] brlcad_db.g object(s)\nOptions:\n%s", progname,
+	option_help ? option_help : "");
 }
 
 int
@@ -452,23 +507,8 @@ main(int argc, const char **argv)
     double percent;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     const char *prog_name = argv[0];
-    struct bu_opt_desc options[16];
-    BU_OPT(options[0], "?", "", NULL,          NULL,            &print_help,  "print help and exit");
-    BU_OPT(options[1], "h", "", NULL,          NULL,            &print_help,  "print help and exit");
-    BU_OPT(options[2], "i", "", NULL,          NULL,            &inches,      "change output units from mm to inches");
-    BU_OPT(options[3], "m", "", NULL,          NULL,            &usemtl,      "output usemtl statements");
-    BU_OPT(options[4], "u", "", NULL,          NULL,            &do_normals,  "output vertex normals");
-    BU_OPT(options[5], "v", "", NULL,          NULL,            &verbose,     "verbose output");
-    BU_OPT(options[6], "a", "", "#",           parse_tol_abs,   &ttol,        "absolute tolerance");
-    BU_OPT(options[7], "n", "", "#",           parse_tol_norm,  &ttol,        "surface normal tolerance");
-    BU_OPT(options[8], "D", "", "#",           parse_tol_dist,  &tol,         "distance tolerance");
-    BU_OPT(options[9], "x", "", "level",       parse_debug_rt,  &rt_debug,   "set RT debug flag");
-    BU_OPT(options[10], "X", "", "level",      parse_debug_nmg, &nmg_debug,   "set NMG debug flag");
-    BU_OPT(options[11], "e", "", "error_file", bu_opt_str,      &error_file,  "error file name");
-    BU_OPT(options[12], "o", "", "output.obj", bu_opt_str,      &output_file, "output file name");
-    BU_OPT(options[13], "P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs");
-    BU_OPT(options[14], "r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance");
-    BU_OPT_NULL(options[15]);
+    struct gobj_args args = {0};
+    int parsed = 0;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -498,11 +538,49 @@ main(int argc, const char **argv)
     /* Get command line arguments. */
     ++argv; --argc;
 
-    argc = bu_opt_parse(&parse_msgs, argc, argv, options);
+    args.ncpu = ncpu;
+    parsed = bu_cmd_schema_parse(&gobj_schema, &args, &parse_msgs, argc, argv);
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
 	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
     }
+    if (parsed < 0) {
+	return BRLCAD_ERROR;
+    }
+
+    argc -= parsed;
+    argv += parsed;
+    print_help = args.print_help;
+    inches = args.inches;
+    usemtl = args.use_materials;
+    do_normals = args.normals;
+    verbose = args.verbose;
+    output_file = (char *)args.output_file;
+    error_file = (char *)args.error_file;
+    ncpu = args.ncpu;
+    rt_debug = args.rt_debug;
+    nmg_debug = args.nmg_debug;
+    NMG_debug = nmg_debug;
+    if (args.tolerances.absolute_set)
+	ttol.abs = args.tolerances.absolute;
+    if (args.tolerances.normal_set)
+	ttol.norm = args.tolerances.normal;
+    if (args.tolerances.distance_set) {
+	tol.dist = args.tolerances.distance;
+	tol.dist_sq = tol.dist * tol.dist;
+	rt_pr_tol(&tol);
+    }
+    if (args.tolerances.relative_set)
+	ttol.rel = args.tolerances.relative;
+    if (args.tolerances.absolute_set || args.tolerances.normal_set) {
+	unsigned long last_absolute_or_normal = args.tolerances.absolute_sequence;
+	if (args.tolerances.normal_sequence > last_absolute_or_normal)
+	    last_absolute_or_normal = args.tolerances.normal_sequence;
+	if (!args.tolerances.relative_set ||
+		args.tolerances.relative_sequence < last_absolute_or_normal)
+	    ttol.rel = 0.0;
+    }
+
     if (argc < 2 || print_help) {
 	print_usage(prog_name);
     }

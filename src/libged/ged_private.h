@@ -32,7 +32,6 @@
 
 #include "bu/avs.h"
 #include "bu/cmd.h"
-#include "bu/opt.h"
 #include "bg/spsr.h"
 #include "bg/trimesh.h"
 #include "rt/db4.h"
@@ -94,6 +93,19 @@ struct ged_drawable {
     struct ged_qray_color       gd_qray_void_color;
     struct ged_qray_color       gd_qray_overlap_color;
     int                         gd_shaded_mode;         /**< @brief  1 - draw bots shaded by default */
+};
+
+
+/* Native erase option storage shared by its schemas and executors. */
+struct ged_erase_legacy_args {
+    int recursive;
+    int attributes;
+    int match_any;
+};
+
+struct ged_erase_new_args {
+    const char *view;
+    int mode;
 };
 
 
@@ -424,11 +436,6 @@ _ged_characterize_path_spec(struct bu_vls *normalized,
 	);
 #endif
 
-/**
- * Routine for generic command help printing.
- */
-GED_EXPORT extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d);
-
 /* Function to read in density information, either from a file or from the
  * database itself. Implements the following priority order:
  *
@@ -462,37 +469,84 @@ GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char
 
 GED_EXPORT extern void ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp);
 GED_EXPORT extern struct bv_scene_obj *ged_pop_scene_obj(struct ged *gedp);
+GED_EXPORT extern const struct bu_cmd_schema *_ged_cmd_native_schema(const char *cmd);
+GED_EXPORT extern const struct ged_cmd_grammar *_ged_cmd_grammar(const char *cmd);
+GED_EXPORT extern const struct ged_cmd_grammar ged_search_grammar;
+GED_EXPORT extern const struct ged_cmd_grammar ged_erase_grammar;
+GED_EXPORT extern const struct ged_cmd_grammar ged_select_grammar;
+GED_EXPORT extern const struct ged_cmd_grammar ged_rselect_grammar;
+GED_EXPORT extern const struct ged_cmd_grammar ged_view_grammar;
+GED_EXPORT extern const struct ged_cmd_grammar ged_view2_grammar;
+GED_EXPORT extern const struct bu_cmd_schema ged_select_legacy_schema;
+GED_EXPORT extern const struct bu_cmd_schema ged_rselect_legacy_schema;
+GED_EXPORT extern const struct bu_cmd_schema ged_select_new_schema;
+GED_EXPORT extern const struct bu_cmd_tree ged_select_new_tree;
+GED_EXPORT extern const struct bu_cmd_schema ged_view_native_schema;
+GED_EXPORT extern const struct bu_cmd_schema ged_view2_native_schema;
+GED_EXPORT extern const struct bu_cmd_schema ged_view_knob_schema;
+GED_EXPORT extern const struct bu_cmd_schema ged_view_lod_schema;
+GED_EXPORT extern char *ged_view_lod_grammar_json(void);
+GED_EXPORT extern int ged_view_lod_core(struct ged *gedp, struct bview *view,
+	int argc, const char **argv);
+GED_EXPORT extern const struct bu_cmd_tree ged_view_tree;
+GED_EXPORT extern const struct bu_cmd_tree ged_view2_tree;
+GED_EXPORT extern const struct bu_cmd_schema ged_erase_legacy_schema;
+GED_EXPORT extern const struct bu_cmd_schema ged_erase_new_schema;
 
-GED_EXPORT extern int
-_ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds,
-	const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv);
+/* A command may retain two or more real native forms while a documented
+ * transition is in progress (for example, a deprecated positional shorthand
+ * beside a newer command tree).  These helpers let a grammar adapter select
+ * one complete native schema or native tree without reviving descriptor metadata
+ * or duplicating the editor's lexer and token analysis in every command. */
+struct ged_cmd_native_form {
+    const char *name;
+    const struct bu_cmd_schema *schema;
+    const struct bu_cmd_tree *tree;
+};
+typedef const struct ged_cmd_native_form *(*ged_cmd_native_form_select_t)(
+	const struct ged *gedp, size_t argc, const char * const *argv);
 
-GED_EXPORT extern int
-_ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds,
-	const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv,
-       	int help, int cmd_pos);
+GED_EXPORT extern int ged_cmd_native_forms_validate(struct ged *gedp,
+	const struct ged_cmd_native_form *forms, ged_cmd_native_form_select_t select,
+	const char *input, size_t cursor_pos, struct ged_cmd_validate_result *result);
+GED_EXPORT extern int ged_cmd_native_forms_analyze(struct ged *gedp,
+	const struct ged_cmd_native_form *forms, ged_cmd_native_form_select_t select,
+	const char *input, struct ged_cmd_analysis *analysis);
+GED_EXPORT extern char *ged_cmd_native_forms_describe_json(const char *command,
+	const char *help, const struct ged_cmd_native_form *forms);
+GED_EXPORT extern int ged_cmd_native_forms_lint(const char *command,
+	const struct ged_cmd_native_form *forms, struct bu_vls *msgs);
 
+/* The GED search command owns these leading options.  The expression grammar
+ * itself is published by librt/search.h; keeping this small command prefix in
+ * one shared vocabulary prevents the executor and grammar adapter from
+ * maintaining divergent spellings. */
+enum ged_search_top_option_kind {
+    GED_SEARCH_TOP_OPTION_UNKNOWN = 0,
+    GED_SEARCH_TOP_OPTION_HIDDEN,
+    GED_SEARCH_TOP_OPTION_QUIET,
+    GED_SEARCH_TOP_OPTION_HELP,
+    GED_SEARCH_TOP_OPTION_VERBOSE
+};
 
-// TODO:  alternative approach to the command structure supported by
-// _ged_subcmd_help - if we successfully migrate all the uses of the above
-// functions, rename this from subcmd2 to subcmd...
-//
-// Prototyping with edit/edit2.cpp
+struct ged_search_top_option {
+    const char *name;
+    enum ged_search_top_option_kind kind;
+};
+
+GED_EXPORT extern const struct ged_search_top_option *ged_search_top_options(size_t *count);
+GED_EXPORT extern int ged_search_top_option_parse(const char *word,
+	enum ged_search_top_option_kind *kind, size_t *occurrences);
+
 #ifdef __cplusplus
-
-#include <string>
-#include <map>
-
+/* Parser-owned edit subcommands use this small execution/help interface.
+ * It is deliberately independent of command-schema representation. */
 class ged_subcmd {
     public:
 	virtual std::string usage()   { return std::string(""); }
 	virtual std::string purpose() { return std::string(""); }
 	virtual int exec(struct ged *, void *, int, const char **) { return BRLCAD_ERROR; }
 };
-
-GED_EXPORT extern int
-_ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::string, ged_subcmd *> &subcmds, const char *cmdname, const char *cmdargs, int argc, const char **argv);
-
 #endif
 
 /* Temporary edit buffer API (defined in edit_buf.cpp).

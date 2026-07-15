@@ -21,7 +21,8 @@ Writes the current GED display to the specified PNG _file_.
 
 The implementation supports the following options:
 
-* *-c r/g/b* - Set the background color using RGB values separated by non-numeric delimiters.
+* *-c r/g/b* - Set the background color.  Accepts packed `r/g/b`, `r,g,b`,
+  or `r;g;b` channels, or three separate 0--255 channel values.
 * *-s size* - Set the output image size in pixels. The implementation requires a size of at least 50.
 
 Without options, the command writes a 512x512 PNG image with a white background.

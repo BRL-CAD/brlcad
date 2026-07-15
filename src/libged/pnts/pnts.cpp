@@ -39,8 +39,7 @@ extern "C" {
 
 extern "C" {
 #include "bu/color.h"
-#include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "bg/ballpivot.h"
@@ -148,6 +147,218 @@ _pnts_collect_arrays(struct ged *gedp, struct rt_pnts_internal *pnts, point_t **
     return BRLCAD_OK;
 }
 
+/* Point-cloud operation schemas are bound directly to the execution records
+ * below.  The same definitions also form the nested pnts/tri command tree,
+ * so help, validation, completion, and dispatch cannot drift apart. */
+struct pnts_root_args { int help; };
+struct pnts_tri_unit_args { int help; fastf_t scale; };
+struct pnts_tri_ballpivot_args { int help; std::vector<double> radii; };
+struct pnts_tri_spsr_args { int help; struct bg_3d_spsr_opts opts; };
+struct pnts_gen_args {
+    int help;
+    fastf_t tolerance;
+    int surface;
+    int grid;
+    int rand;
+    int sobol;
+    int max_pnts;
+    int max_time;
+};
+struct pnts_read_args {
+    int help;
+    struct bu_vls format;
+    struct bu_vls units;
+    fastf_t size;
+};
+struct pnts_write_args { int help; int precision; int ply; };
+
+static int _pnts_opt_radius(struct bu_vls *, const char *, void *);
+static int _pnts_opt_radii(struct bu_vls *, const char *, void *);
+static int _pnts_opt_size_t(struct bu_vls *, const char *, void *);
+static int _ged_pnts_tri_cmd_unit(void *, int, const char *[]);
+static int _ged_pnts_tri_cmd_ballpivot(void *, int, const char *[]);
+static int _ged_pnts_tri_cmd_spsr(void *, int, const char *[]);
+static int _ged_pnts_cmd_tri(void *, int, const char *[]);
+static int _ged_pnts_cmd_gen(void *, int, const char *[]);
+static int _ged_pnts_cmd_read(void *, int, const char *[]);
+static int _ged_pnts_cmd_write(void *, int, const char *[]);
+static void _pnts_show_help(struct ged *);
+
+static const struct bu_cmd_operand pnts_pair_operands[] = {
+    BU_CMD_OPERAND("input_pnts", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Input point-cloud object", "ged.db_object"),
+    BU_CMD_OPERAND("output_bot", BU_CMD_VALUE_STRING, 1, 1,
+	"New BOT object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_option pnts_tri_unit_options[] = {
+    BU_CMD_FLAG("h", "help", pnts_tri_unit_args, help, "Print help"),
+    BU_CMD_NUMBER("s", "scale", pnts_tri_unit_args, scale, "scale",
+	"Triangle scale factor"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema pnts_tri_unit_schema = {
+    "unit", "Generate a triangle for each oriented point", pnts_tri_unit_options,
+    pnts_pair_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+/* The optional historical spelling `pnts tri <pnts> <bot>` is the unit
+ * operation.  It has its own node name but deliberately reuses the same
+ * rows, instead of retaining a second legacy option description. */
+static const struct bu_cmd_schema pnts_tri_legacy_schema = {
+    "tri", "Generate a triangle for each oriented point", pnts_tri_unit_options,
+    pnts_pair_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_option pnts_tri_ballpivot_options[] = {
+    BU_CMD_FLAG("h", "help", pnts_tri_ballpivot_args, help, "Print help"),
+    BU_CMD_CUSTOM("r", "radius", pnts_tri_ballpivot_args, radii, _pnts_opt_radius,
+	"radius", "Ball radius (repeatable)"),
+    BU_CMD_CUSTOM(NULL, "radii", pnts_tri_ballpivot_args, radii, _pnts_opt_radii,
+	"r1,r2,...", "Comma-separated ball radii"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema pnts_tri_ballpivot_schema = {
+    "ballpivot", "Reconstruct a surface using ball pivoting", pnts_tri_ballpivot_options,
+    pnts_pair_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_option pnts_tri_spsr_options[] = {
+    BU_CMD_FLAG("h", "help", pnts_tri_spsr_args, help, "Print help"),
+    BU_CMD_INTEGER(NULL, "degree", pnts_tri_spsr_args, opts.degree, "number", "Finite element degree"),
+    BU_CMD_INTEGER(NULL, "btype", pnts_tri_spsr_args, opts.btype, "number", "Boundary type"),
+    BU_CMD_INTEGER(NULL, "depth", pnts_tri_spsr_args, opts.depth, "number", "Maximum reconstruction depth"),
+    BU_CMD_INTEGER(NULL, "kerneldepth", pnts_tri_spsr_args, opts.kerneldepth, "number", "Kernel depth"),
+    BU_CMD_INTEGER(NULL, "iterations", pnts_tri_spsr_args, opts.iterations, "number", "Solver iterations"),
+    BU_CMD_INTEGER(NULL, "full-depth", pnts_tri_spsr_args, opts.full_depth, "number", "Full depth"),
+    BU_CMD_INTEGER(NULL, "base-depth", pnts_tri_spsr_args, opts.base_depth, "number", "Coarse multigrid depth"),
+    BU_CMD_INTEGER(NULL, "base-vcycles", pnts_tri_spsr_args, opts.baseVcycles, "number", "Coarse multigrid cycles"),
+    BU_CMD_INTEGER(NULL, "max-mem", pnts_tri_spsr_args, opts.max_memory_GB, "number", "Maximum memory in GB"),
+    BU_CMD_CUSTOM(NULL, "threads", pnts_tri_spsr_args, opts.threads, _pnts_opt_size_t, "number", "Thread count"),
+    BU_CMD_NUMBER(NULL, "samples-per-node", pnts_tri_spsr_args, opts.samples_per_node, "number", "Minimum samples per node"),
+    BU_CMD_NUMBER(NULL, "scale", pnts_tri_spsr_args, opts.scale, "number", "Scale factor"),
+    BU_CMD_NUMBER(NULL, "width", pnts_tri_spsr_args, opts.width, "number", "Voxel width"),
+    BU_CMD_NUMBER(NULL, "confidence", pnts_tri_spsr_args, opts.confidence, "number", "Normal confidence exponent"),
+    BU_CMD_NUMBER(NULL, "confidence-bias", pnts_tri_spsr_args, opts.confidence_bias, "number", "Normal confidence bias exponent"),
+    BU_CMD_NUMBER(NULL, "cg-accuracy", pnts_tri_spsr_args, opts.cgsolver_accuracy, "number", "CG solver accuracy"),
+    BU_CMD_NUMBER(NULL, "point-weight", pnts_tri_spsr_args, opts.point_weight, "number", "Interpolation weight"),
+    BU_CMD_INTEGER(NULL, "nonmanifold", pnts_tri_spsr_args, opts.nonManifold, "number", "Permit non-manifold output"),
+    BU_CMD_INTEGER(NULL, "linearfit", pnts_tri_spsr_args, opts.linearFit, "number", "Use linear fitting"),
+    BU_CMD_INTEGER(NULL, "exact", pnts_tri_spsr_args, opts.exact, "number", "Use exact interpolation"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema pnts_tri_spsr_schema = {
+    "spsr", "Reconstruct a surface using screened Poisson reconstruction", pnts_tri_spsr_options,
+    pnts_pair_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_option pnts_tri_options[] = {
+    BU_CMD_FLAG("h", "help", pnts_root_args, help, "Print help"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema pnts_tri_schema = {
+    "tri", "Generate BOT geometry from a point cloud", pnts_tri_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_tree_node pnts_tri_subcommands[] = {
+    BU_CMD_TREE_NODE(&pnts_tri_unit_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_unit),
+    BU_CMD_TREE_NODE(&pnts_tri_ballpivot_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_ballpivot),
+    BU_CMD_TREE_NODE(&pnts_tri_spsr_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_spsr),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree pnts_tri_tree = {
+    &pnts_tri_schema, pnts_tri_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+static const struct bu_cmd_option pnts_gen_options[] = {
+    BU_CMD_FLAG("h", "help", pnts_gen_args, help, "Print help"),
+    BU_CMD_NUMBER("t", "tolerance", pnts_gen_args, tolerance, "distance", "Sampling grid spacing"),
+    BU_CMD_FLAG(NULL, "surface", pnts_gen_args, surface, "Save only first and last ray points"),
+    BU_CMD_FLAG(NULL, "grid", pnts_gen_args, grid, "Use gridded sampling"),
+    BU_CMD_FLAG(NULL, "rand", pnts_gen_args, rand, "Use random sampling"),
+    BU_CMD_FLAG(NULL, "sobol", pnts_gen_args, sobol, "Use Sobol sampling"),
+    BU_CMD_INTEGER(NULL, "max-pnts", pnts_gen_args, max_pnts, "number", "Maximum points"),
+    BU_CMD_INTEGER(NULL, "max-time", pnts_gen_args, max_time, "seconds", "Maximum sampling time"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand pnts_gen_operands[] = {
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1, "Object to sample", "ged.db_path"),
+    BU_CMD_OPERAND("output_pnts", BU_CMD_VALUE_STRING, 1, 1, "New point-cloud object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema pnts_gen_schema = {
+    "gen", "Generate a point cloud from geometry", pnts_gen_options, pnts_gen_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_option pnts_read_options[] = {
+    BU_CMD_FLAG("h", "help", pnts_read_args, help, "Print help"),
+    BU_CMD_VLS_APPEND("f", "format", pnts_read_args, format, "format", "Input column format"),
+    BU_CMD_VLS_APPEND("u", "units", pnts_read_args, units, "unit", "Input units"),
+    BU_CMD_NUMBER(NULL, "size", pnts_read_args, size, "size", "Default point size"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand pnts_read_operands[] = {
+    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 1, 1, "Point data file", "ged.file_path"),
+    BU_CMD_OPERAND("output_pnts", BU_CMD_VALUE_STRING, 1, 1, "New point-cloud object name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema pnts_read_schema = {
+    "read", "Read point data from a file", pnts_read_options, pnts_read_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_option pnts_write_options[] = {
+    BU_CMD_FLAG("h", "help", pnts_write_args, help, "Print help"),
+    BU_CMD_INTEGER("p", "precision", pnts_write_args, precision, "digits", "Digits after the decimal point"),
+    BU_CMD_FLAG(NULL, "ply", pnts_write_args, ply, "Write ASCII PLY format"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand pnts_write_operands[] = {
+    BU_CMD_OPERAND("input_pnts", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Point-cloud object", "ged.db_object"),
+    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1, "New output file", "ged.file_path"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema pnts_write_schema = {
+    "write", "Write point data to a file", pnts_write_options, pnts_write_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_option pnts_root_options[] = {
+    BU_CMD_FLAG("h", "help", pnts_root_args, help, "Print help"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema pnts_root_schema = {
+    "pnts", "Read, write, generate, and triangulate point clouds", pnts_root_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_tree_node pnts_subcommands[] = {
+    BU_CMD_TREE_NODE(&pnts_gen_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_gen),
+    BU_CMD_TREE_NODE(&pnts_read_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_read),
+    /* tri keeps an executor to preserve the documented implicit-unit form;
+     * its nested children are still exposed to grammar consumers. */
+    BU_CMD_TREE_NODE(&pnts_tri_schema, NULL, pnts_tri_subcommands,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_tri),
+    BU_CMD_TREE_NODE(&pnts_write_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_write),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree ged_pnts_tree = {
+    &pnts_root_schema, pnts_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
+
+static void
+pnts_show_schema_help(struct ged *gedp, const char *usage,
+	const struct bu_cmd_schema *schema)
+{
+    char *help = bu_cmd_schema_describe(schema);
+
+    if (usage)
+	bu_vls_strcat(gedp->ged_result_str, usage);
+    if (help) {
+	bu_vls_putc(gedp->ged_result_str, '\n');
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "pnts native schema help");
+    }
+}
+
 static int
 _pnts_write_bot_mesh(struct ged *gedp, const char *bot_name, int *faces, int nfaces, point_t *verts, int nverts)
 {
@@ -196,38 +407,35 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
     struct rt_db_internal intern, internal;
     struct rt_bot_internal *bot_ip;
     struct directory *pnt_dp;
-    int print_help = 0;
-    int opt_ret = 0;
-    fastf_t scale;
+    struct pnts_tri_unit_args args = {0, 0.0};
     struct rt_pnts_internal *pnts = NULL;
     const char *pnt_prim= NULL;
     const char *bot_name = NULL;
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
-    BU_OPT(d[1], "s", "scale",     "#", &bu_opt_fastf_t, &scale,        "Specify scale factor to apply to unit triangle - will scale the triangle size, with the triangle centered on the original point.");
-    BU_OPT_NULL(d[2]);
-
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
     /* must be wanting help */
     if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_tri_unit_schema);
 	return BRLCAD_OK;
     }
 
-    /* parse standard options */
-    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    int opt_ret = bu_cmd_schema_parse(&pnts_tri_unit_schema, &args,
+	gedp->ged_result_str, argc, argv);
 
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
+	if (args.help) {
+	pnts_show_schema_help(gedp, usage, &pnts_tri_unit_schema);
 	return BRLCAD_OK;
     }
+	if (opt_ret < 0) {
+	pnts_show_schema_help(gedp, usage, &pnts_tri_unit_schema);
+	return BRLCAD_ERROR;
+    }
 
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
+    argc -= opt_ret;
+    argv += opt_ret;
 
     if (argc != 2) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_tri_unit_schema);
 	return BRLCAD_ERROR;
     }
 
@@ -265,12 +473,12 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
     }
 
     // Set default scale if not specified
-    if (NEAR_ZERO(scale, SMALL_FASTF)) {
+    if (NEAR_ZERO(args.scale, SMALL_FASTF)) {
 	switch (pnts->type) {
 	    case RT_PNT_TYPE_SCA_NRM:
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		scale = pnts->scale; break;
-	    default: scale = 1.0; break;
+		args.scale = pnts->scale; break;
+	    default: args.scale = 1.0; break;
 	}
     }
 
@@ -329,7 +537,7 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
     };
 
     for (int i = 0; i < ncnt; i++) {
-	pnt_to_tri(&ipts[i], &inrms[i], bot_ip, scale, (unsigned long)i);
+	pnt_to_tri(&ipts[i], &inrms[i], bot_ip, args.scale, (unsigned long)i);
     }
 
     struct directory *dp = NULL;
@@ -348,36 +556,40 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-/* custom bu_opt handlers for ballpivot radii */
+/* Native option consumers for ballpivot radii. */
 static int
-_pnts_opt_radius(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
+_pnts_opt_radius(struct bu_vls *msg, const char *arg, void *set_c)
 {
     std::vector<double> *rset = (std::vector<double> *)set_c;
-    double rv = 0.0;
-    const char *a = argv[0];
-    if (bu_opt_fastf_t(NULL, 1, &a, (void *)&rv) < 0) return -1;
+    fastf_t rv = 0.0;
+    if (!arg || !bu_cmd_number_from_str(&rv, arg)) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid ball radius: %s\n", arg ? arg : "");
+	return -1;
+    }
     rset->push_back(rv);
-    return 1;
+    return 0;
 }
 static int
-_pnts_opt_radii(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
+_pnts_opt_radii(struct bu_vls *msg, const char *arg, void *set_c)
 {
     std::vector<double> *rset = (std::vector<double> *)set_c;
-    std::string s(argv[0]);
+    if (!arg)
+	return -1;
+    std::string s(arg);
     std::stringstream ss(s);
     std::string item;
     while (std::getline(ss, item, ',')) {
 	if (item.empty()) continue;
-	char *istr = bu_strdup(item.c_str());
-	double rv = 0.0;
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&istr, (void *)&rv) < 0) {
-	    bu_free(istr, "istr");
+	fastf_t rv = 0.0;
+	if (!bu_cmd_number_from_str(&rv, item.c_str())) {
+	    if (msg)
+		bu_vls_printf(msg, "invalid ball radius: %s\n", item.c_str());
 	    return -1;
 	}
 	rset->push_back(rv);
-	bu_free(istr, "istr");
     }
-    return 1;
+    return 0;
 }
 
 /* tri ballpivot */
@@ -389,27 +601,27 @@ _ged_pnts_tri_cmd_ballpivot(void *bs, int argc, const char **argv)
     struct ged *gedp = (struct ged *)bs;
     if (_ged_pnts_cmd_msgs(gedp, argc, argv, usage, purpose)) return BRLCAD_OK;
 
-    std::vector<double> radii;
-    int print_help = 0;
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",   "",              NULL,             &print_help,  "Print help and exit");
-    BU_OPT(d[1], "r", "radius", "#",             _pnts_opt_radius, &radii,       "Ball radius to try (can be specified multiple times)");
-    BU_OPT(d[2], "",  "radii",  "r1,r2,r3,...",  _pnts_opt_radii,  &radii,       "Comma-separated list of radii to try");
-    BU_OPT_NULL(d[3]);
+    struct pnts_tri_ballpivot_args args = {0, {}};
 
     argc -= (argc>0); argv += (argc>0); // skip "ballpivot"
     if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_tri_ballpivot_schema);
 	return BRLCAD_OK;
     }
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
+    int opt_ret = bu_cmd_schema_parse(&pnts_tri_ballpivot_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (args.help) {
+	pnts_show_schema_help(gedp, usage, &pnts_tri_ballpivot_schema);
 	return BRLCAD_OK;
     }
-    argc = opt_ret;
+    if (opt_ret < 0) {
+	pnts_show_schema_help(gedp, usage, &pnts_tri_ballpivot_schema);
+	return BRLCAD_ERROR;
+    }
+    argc -= opt_ret;
+    argv += opt_ret;
     if (argc != 2) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_tri_ballpivot_schema);
 	return BRLCAD_ERROR;
     }
 
@@ -442,10 +654,10 @@ _ged_pnts_tri_cmd_ballpivot(void *bs, int argc, const char **argv)
 
     // radii array (optional)
     double *rptr = NULL;
-    int rcnt = (int)radii.size();
+    int rcnt = (int)args.radii.size();
     if (rcnt > 0) {
 	rptr = (double *)bu_calloc((size_t)rcnt, sizeof(double), "bp radii");
-	for (int i = 0; i < rcnt; i++) rptr[i] = radii[(size_t)i];
+	for (int i = 0; i < rcnt; i++) rptr[i] = args.radii[(size_t)i];
     }
 
     // run ballpivot
@@ -483,17 +695,19 @@ _ged_pnts_tri_cmd_ballpivot(void *bs, int argc, const char **argv)
     return wret;
 }
 
-/* custom bu_opt for size_t threads in spsr */
+/* Native parser for the unsigned thread-count option. */
 static int
-_pnts_opt_size_t(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
+_pnts_opt_size_t(struct bu_vls *msg, const char *arg, void *set_c)
 {
     size_t *t = (size_t *)set_c;
     int tmp = 0;
-    const char *a = argv[0];
-    if (bu_opt_int(NULL, 1, &a, &tmp) < 0) return -1;
-    if (tmp < 0) return -1;
+    if (!arg || !bu_cmd_integer_from_str(&tmp, arg) || tmp < 0) {
+	if (msg)
+	    bu_vls_printf(msg, "non-negative thread count required: %s\n", arg ? arg : "");
+	return -1;
+    }
     *t = (size_t)tmp;
-    return 1;
+    return 0;
 }
 
 /* tri spsr */
@@ -505,46 +719,27 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
     const char *purpose = "Screened Poisson Surface Reconstruction from oriented points";
     if (_ged_pnts_cmd_msgs(gedp, argc, argv, usage, purpose)) return BRLCAD_OK;
 
-    struct bg_3d_spsr_opts opts = BG_3D_SPSR_OPTS_DEFAULT;
-
-    int print_help = 0;
-    struct bu_opt_desc d[23];
-    BU_OPT(d[0],  "h", "help",             "",  NULL,              &print_help,           "Print help and exit");
-    BU_OPT(d[1],  "",  "degree",           "#", &bu_opt_int,       &opts.degree,          "Finite element degree");
-    BU_OPT(d[2],  "",  "btype",            "#", &bu_opt_int,       &opts.btype,           "Boundary type (1:FREE, 2:NEUMANN, 3:DIRICHLET)");
-    BU_OPT(d[3],  "",  "depth",            "#", &bu_opt_int,       &opts.depth,           "Max reconstruction depth");
-    BU_OPT(d[4],  "",  "kerneldepth",      "#", &bu_opt_int,       &opts.kerneldepth,     "Kernel depth");
-    BU_OPT(d[5],  "",  "iterations",       "#", &bu_opt_int,       &opts.iterations,      "Solver iterations");
-    BU_OPT(d[6],  "",  "full-depth",       "#", &bu_opt_int,       &opts.full_depth,      "Full depth");
-    BU_OPT(d[7],  "",  "base-depth",       "#", &bu_opt_int,       &opts.base_depth,      "Coarse MG depth");
-    BU_OPT(d[8],  "",  "base-vcycles",     "#", &bu_opt_int,       &opts.baseVcycles,     "Coarse MG v-cycles");
-    BU_OPT(d[9],  "",  "max-mem",          "#", &bu_opt_int,       &opts.max_memory_GB,   "Max memory (GB)");
-    BU_OPT(d[10], "",  "threads",          "#", _pnts_opt_size_t,  &opts.threads,         "Threads to use");
-    BU_OPT(d[11], "",  "samples-per-node", "#", &bu_opt_fastf_t,   &opts.samples_per_node,"Min samples per node");
-    BU_OPT(d[12], "",  "scale",            "#", &bu_opt_fastf_t,   &opts.scale,           "Scale factor");
-    BU_OPT(d[13], "",  "width",            "#", &bu_opt_fastf_t,   &opts.width,           "Voxel width");
-    BU_OPT(d[14], "",  "confidence",       "#", &bu_opt_fastf_t,   &opts.confidence,      "Normal confidence exponent");
-    BU_OPT(d[15], "",  "confidence-bias",  "#", &bu_opt_fastf_t,   &opts.confidence_bias, "Normal confidence bias exponent");
-    BU_OPT(d[16], "",  "cg-accuracy",      "#", &bu_opt_fastf_t,   &opts.cgsolver_accuracy,"CG solver accuracy");
-    BU_OPT(d[17], "",  "point-weight",     "#", &bu_opt_fastf_t,   &opts.point_weight,     "Interpolation weight");
-    BU_OPT(d[18], "",  "nonmanifold",      "#", &bu_opt_int,       &opts.nonManifold,      "NonManifold (0/1)");
-    BU_OPT(d[19], "",  "linearfit",        "#", &bu_opt_int,       &opts.linearFit,        "Linear Fit (0/1)");
-    BU_OPT(d[20], "",  "exact",            "#", &bu_opt_int,       &opts.exact,            "Exact interpolation (0/1)");
-    BU_OPT_NULL(d[21]);
+    struct pnts_tri_spsr_args args = {0, BG_3D_SPSR_OPTS_DEFAULT};
 
     argc -= (argc>0); argv += (argc>0); // skip "spsr"
     if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_tri_spsr_schema);
 	return BRLCAD_OK;
     }
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
+    int opt_ret = bu_cmd_schema_parse(&pnts_tri_spsr_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (args.help) {
+	pnts_show_schema_help(gedp, usage, &pnts_tri_spsr_schema);
 	return BRLCAD_OK;
     }
-    argc = opt_ret;
+    if (opt_ret < 0) {
+	pnts_show_schema_help(gedp, usage, &pnts_tri_spsr_schema);
+	return BRLCAD_ERROR;
+    }
+    argc -= opt_ret;
+    argv += opt_ret;
     if (argc != 2) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_tri_spsr_schema);
 	return BRLCAD_ERROR;
     }
 
@@ -581,7 +776,7 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
     point_t *overts = NULL;
     int nverts = 0;
 
-    int sret = bg_3d_spsr(&faces, &nfaces, &overts, &nverts, (const point_t *)ipts, (const vect_t *)inrms, pcnt, &opts);
+    int sret = bg_3d_spsr(&faces, &nfaces, &overts, &nverts, (const point_t *)ipts, (const vect_t *)inrms, pcnt, &args.opts);
 
     // free inputs
     if (ipts)
@@ -610,24 +805,20 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
 }
 
 
-static const struct bu_cmdtab _pnts_tri_cmds[] = {
-    { "unit",      _ged_pnts_tri_cmd_unit },
-    { "ballpivot", _ged_pnts_tri_cmd_ballpivot },
-    { "spsr",      _ged_pnts_tri_cmd_spsr },
-    { (char *)NULL, NULL }
-};
-
 // NOTE - for the moment, we're deliberately not documenting the ballpivot
 // option - in its current form it is primarily useful for algorithm
 // experimentation and not real-world use.
 static void
 _pnts_tri_show_help(struct ged *gedp)
 {
-    bu_vls_printf(gedp->ged_result_str,
-	    "Usage: pnts tri <subcommand> [options] <pnts> <output_bot>\n"
-	    "Subcommands:\n"
-	    "  unit       - Generate per-point oriented triangles (original tri behavior)\n"
-	    "  spsr       - Screened Poisson Surface Reconstruction\n");
+    char *help = bu_cmd_tree_describe(&pnts_tri_tree);
+
+    bu_vls_strcat(gedp->ged_result_str,
+	"Usage: pnts tri <subcommand> [options] <pnts> <output_bot>\n");
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "pnts tri native tree help");
+    }
 }
 
 static int
@@ -635,11 +826,7 @@ _ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
 {
     struct ged *gedp = (struct ged *)bs;
 
-    // tri [-h] <subcmd> ...
-    int help = 0;
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help");
-    BU_OPT_NULL(d[1]);
+    struct pnts_root_args args = {0};
 
     argc--; argv++; // skip "tri"
 
@@ -648,50 +835,34 @@ _ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    // Find subcommand (unit/spsr)
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_pnts_tri_cmds, argv[i]) == BRLCAD_OK) { cmd_pos = i; break; }
-    }
+    int opt_ret = bu_cmd_schema_parse(&pnts_tri_schema, &args,
+	gedp->ged_result_str, argc, argv);
 
-    // Parse any tri-level options before subcommand (currently only -h)
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
-
-    if (help) {
+    if (args.help) {
 	_pnts_tri_show_help(gedp);
 	return BRLCAD_OK;
     }
-
-    // If we didn't find a subcommand, assume legacy usage -> default to "unit"
-    if (cmd_pos == -1) {
-	// Build argv: ["unit", <original args...>]
-	std::vector<const char *> nargv;
-	nargv.push_back("unit");
-	for (int i = 0; i < argc; i++) nargv.push_back(argv[i]);
-	int ret = BRLCAD_ERROR;
-	if (bu_cmd(_pnts_tri_cmds, (int)nargv.size(), nargv.data(), 0, bs, &ret) == BRLCAD_OK) {
-	    return BRLCAD_OK;
-	}
-	_pnts_tri_show_help(gedp);
-	return BRLCAD_ERROR;
-    }
-
     if (opt_ret < 0) {
 	_pnts_tri_show_help(gedp);
 	return BRLCAD_ERROR;
     }
+    argc -= opt_ret;
+    argv += opt_ret;
 
-    // Shift argv to start from the subcommand
-    for (int i = cmd_pos; i < argc; i++) argv[i - cmd_pos] = argv[i];
-    argc = argc - cmd_pos;
-
-    int ret = BRLCAD_ERROR;
-    if (bu_cmd(_pnts_tri_cmds, argc, argv, 0, bs, &ret) == BRLCAD_OK) {
-	return BRLCAD_OK;
+	const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(&pnts_tri_tree,
+	argc ? argv[0] : NULL);
+    if (!node) {
+	/* The historical spelling defaults to unit when the first word is not
+	 * one of the explicit tri operations. */
+	std::vector<const char *> nargv;
+	nargv.push_back("unit");
+	for (int i = 0; i < argc; i++) nargv.push_back(argv[i]);
+	return _ged_pnts_tri_cmd_unit(bs, (int)nargv.size(), nargv.data());
     }
 
-    bu_vls_printf(gedp->ged_result_str, "pnts tri: subcommand %s not defined\n", argv[0]);
+    int ret = BRLCAD_ERROR;
+    if (bu_cmd_tree_dispatch(&pnts_tri_tree, bs, argc, argv, &ret) == 0)
+	return ret;
     _pnts_tri_show_help(gedp);
     return BRLCAD_ERROR;
 }
@@ -702,15 +873,7 @@ _ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
 {
     struct ged *gedp = (struct ged *)bs;
     struct directory *dp;
-    int print_help = 0;
-    int opt_ret = 0;
-    fastf_t len_tol = 0.0;
-    int pnt_surf_mode = 0;
-    int pnt_grid_mode= 0;
-    int pnt_rand_mode = 0;
-    int pnt_sobol_mode = 0;
-    int max_pnts = 0;
-    int max_time = 0;
+    struct pnts_gen_args args = {0, 0.0, 0, 0, 0, 0, 0, 0};
     int flags = 0;
     double avg_thickness = 0.0;
     struct rt_db_internal internal;
@@ -719,41 +882,32 @@ _ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
     const char *pnt_prim= NULL;
     const char *obj_name = NULL;
     const char *usage = "Usage: pnts gen [options] <obj> <output_pnts>\n\n";
-    struct bu_opt_desc d[9];
-    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,     "Print help and exit");
-    BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,        "Specify sampling grid spacing (in mm).");
-    /* TODO - this isn't actually what we probably want here - what we want is to treat the object as
-     * one huge region and report only *those* points.  The current behavior is more correctly named
-     * something like "visible".  Need to fix... */
-    BU_OPT(d[2], "",  "surface",   "",  NULL,            &pnt_surf_mode,  "Save only first and last points along ray.");
-    BU_OPT(d[3], "",  "grid",      "",  NULL,            &pnt_grid_mode,  "Sample using a gridded ray pattern (default).");
-    BU_OPT(d[4], "",  "rand",      "",  NULL,            &pnt_rand_mode,  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(d[5], "",  "sobol",     "",  NULL,            &pnt_sobol_mode, "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(d[6], "",  "max-pnts",  "",  &bu_opt_int,     &max_pnts,       "Maximum number of pnts to return per non-grid sampling method.");
-    BU_OPT(d[7], "",  "max-time",  "",  &bu_opt_int,     &max_time,       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
-    BU_OPT_NULL(d[8]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
     /* must be wanting help */
     if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_gen_schema);
 	return BRLCAD_OK;
     }
 
-    /* parse standard options */
-    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    int opt_ret = bu_cmd_schema_parse(&pnts_gen_schema, &args,
+	gedp->ged_result_str, argc, argv);
 
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
+	if (args.help) {
+	pnts_show_schema_help(gedp, usage, &pnts_gen_schema);
 	return BRLCAD_OK;
     }
+	if (opt_ret < 0) {
+	pnts_show_schema_help(gedp, usage, &pnts_gen_schema);
+	return BRLCAD_ERROR;
+	}
 
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
+    argc -= opt_ret;
+    argv += opt_ret;
 
     if (argc != 2) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_gen_schema);
 	return BRLCAD_ERROR;
     }
 
@@ -768,21 +922,21 @@ _ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
     GED_CHECK_EXISTS(gedp, pnt_prim, LOOKUP_QUIET, BRLCAD_ERROR);
 
 
-    if (pnt_surf_mode) {
+    if (args.surface) {
 	flags |= RT_GEN_OBJ_PNTS_SURF;
     }
 
     /* Pick our mode(s) */
-    if (!pnt_grid_mode && !pnt_rand_mode && !pnt_sobol_mode) {
+    if (!args.grid && !args.rand && !args.sobol) {
 	flags |= RT_GEN_OBJ_PNTS_GRID;
     } else {
-	if (pnt_grid_mode)  flags |= RT_GEN_OBJ_PNTS_GRID;
-	if (pnt_rand_mode)  flags |= RT_GEN_OBJ_PNTS_RAND;
-	if (pnt_sobol_mode) flags |= RT_GEN_OBJ_PNTS_SOBOL;
+	if (args.grid)  flags |= RT_GEN_OBJ_PNTS_GRID;
+	if (args.rand)  flags |= RT_GEN_OBJ_PNTS_RAND;
+	if (args.sobol) flags |= RT_GEN_OBJ_PNTS_SOBOL;
     }
 
     /* If we don't have a tolerance, try to guess something sane from the bbox */
-    if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
+    if (NEAR_ZERO(args.tolerance, RT_LEN_TOL)) {
 	point_t rpp_min, rpp_max;
 	point_t obj_min, obj_max;
 	VSETALL(rpp_min, INFINITY);
@@ -790,10 +944,10 @@ _ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
 	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&obj_name, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-	len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
-	bu_log("Note - no tolerance specified, using %f\n", len_tol);
+	args.tolerance = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
+	bu_log("Note - no tolerance specified, using %f\n", args.tolerance);
     }
-    btol.dist = len_tol;
+    btol.dist = args.tolerance;
 
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -805,7 +959,8 @@ _ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
     pnts->scale = 0.0;
     pnts->type = RT_PNT_TYPE_NRM;
 
-    if (rt_gen_obj_pnts(pnts, &avg_thickness, gedp->dbip, obj_name, &btol, flags, max_pnts, max_time, 2)) {
+    if (rt_gen_obj_pnts(pnts, &avg_thickness, gedp->dbip, obj_name, &btol, flags,
+	args.max_pnts, args.max_time, 2)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 	return BRLCAD_ERROR;
     }
@@ -840,7 +995,7 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 	    }
 	}
 
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&num, (void *)&val) == -1) {
+	if (!bu_cmd_number_from_str(&val, num)) {
 	    bu_log("Error - failed to read number %s\n", nums[i]);
 	    return BRLCAD_ERROR;
 	}
@@ -872,8 +1027,6 @@ static int
 _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 {
     struct ged *gedp = (struct ged *)bs;
-    int print_help = 0;
-    int opt_ret = 0;
     FILE *fp;
     struct rt_db_internal internal;
     struct rt_pnts_internal *pnts = NULL;
@@ -881,56 +1034,58 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
     const char *pnt_prim = NULL;
     const char *filename = NULL;
     const char *usage = "Usage: pnts read [options] <input_file> <pnts_obj> \n\nReads in point data.\n\n";
-    struct bu_vls fmt = BU_VLS_INIT_ZERO;
     struct bu_vls fl  = BU_VLS_INIT_ZERO;
-    struct bu_vls unit = BU_VLS_INIT_ZERO;
+    struct pnts_read_args args = {0, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 0.0};
     char **nums = NULL;
     int numcnt = 0;
     int pnts_cnt = 0;
     int array_size = 0;
     fastf_t conv_factor = 1.0;
-    fastf_t psize = 0.0;
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "h", "help",      "",              NULL,            &print_help,  "Print help and exit");
-    BU_OPT(d[1], "f", "format",    "[xyzijksrgb]",  &bu_opt_vls,     &fmt,         "Format of input data");
-    BU_OPT(d[2], "u", "units",     "unit",          &bu_opt_vls,     &unit,        "Either a named unit (e.g. in), number (implicit unit is mm) or a unit expression (.15m)");
-    BU_OPT(d[3], "",  "size",      "#",             &bu_opt_fastf_t, &psize,       "Default size to use for points");
-    BU_OPT_NULL(d[4]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
     /* must be wanting help */
     if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_read_schema);
 	return BRLCAD_OK;
     }
 
-    /* parse standard options */
-    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    int opt_ret = bu_cmd_schema_parse(&pnts_read_schema, &args,
+	gedp->ged_result_str, argc, argv);
 
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
+	if (args.help) {
+	pnts_show_schema_help(gedp, usage, &pnts_read_schema);
+	bu_vls_free(&args.format);
+	bu_vls_free(&args.units);
 	return BRLCAD_OK;
     }
+	if (opt_ret < 0) {
+	pnts_show_schema_help(gedp, usage, &pnts_read_schema);
+	bu_vls_free(&args.format);
+	bu_vls_free(&args.units);
+	return BRLCAD_ERROR;
+	}
 
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
+    argc -= opt_ret;
+    argv += opt_ret;
 
     if (argc != 2) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_read_schema);
+	bu_vls_free(&args.format);
+	bu_vls_free(&args.units);
 	return BRLCAD_ERROR;
     }
 
     /* got a unit, see if we can do something with it */
-    if (bu_vls_strlen(&unit)) {
-	const char *cunit = bu_vls_addr(&unit);
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&cunit, (void *)&conv_factor) == -1) {
-	    conv_factor = bu_mm_value(bu_vls_addr(&unit));
+	if (bu_vls_strlen(&args.units)) {
+	const char *cunit = bu_vls_addr(&args.units);
+	if (!bu_cmd_number_from_str(&conv_factor, cunit)) {
+	    conv_factor = bu_mm_value(bu_vls_addr(&args.units));
 	}
 	if (conv_factor < 0) {
-	    bu_vls_sprintf(gedp->ged_result_str, "invalid unit specification: %s\n", bu_vls_addr(&unit));
-	    bu_vls_free(&unit);
-	    bu_vls_free(&fmt);
+	    bu_vls_sprintf(gedp->ged_result_str, "invalid unit specification: %s\n", bu_vls_addr(&args.units));
+	    bu_vls_free(&args.units);
+	    bu_vls_free(&args.format);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -940,23 +1095,23 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 
     if (!bu_file_exists(filename, NULL)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: file %s does not exist\n", filename);
-	bu_vls_free(&unit);
-	bu_vls_free(&fmt);
+	bu_vls_free(&args.units);
+	bu_vls_free(&args.format);
 	return BRLCAD_ERROR;
     }
 
     if (db_lookup(gedp->dbip, pnt_prim, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s already exists\n", pnt_prim);
-	bu_vls_free(&unit);
-	bu_vls_free(&fmt);
+	bu_vls_free(&args.units);
+	bu_vls_free(&args.format);
 	return BRLCAD_ERROR;
     }
 
     fp = fopen(filename, "rb");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Could not open file '%s'.\n", filename);
-	bu_vls_free(&unit);
-	bu_vls_free(&fmt);
+	bu_vls_free(&args.units);
+	bu_vls_free(&args.format);
 	return BRLCAD_ERROR;
     }
 
@@ -967,8 +1122,8 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
     BU_ALLOC(internal.idb_ptr, struct rt_pnts_internal);
     pnts = (struct rt_pnts_internal *) internal.idb_ptr;
     pnts->magic = RT_PNTS_INTERNAL_MAGIC;
-    pnts->scale = psize;
-    pnts->type = _ged_pnts_fmt_type(bu_vls_addr(&fmt));
+    pnts->scale = args.size;
+    pnts->type = _ged_pnts_fmt_type(bu_vls_addr(&args.format));
     if (pnts->type != RT_PNT_UNKNOWN) {
 	pnts->point = _ged_pnts_new_pnt(pnts->type);
 	_ged_pnts_init_head_pnt(pnts);
@@ -1000,8 +1155,8 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 	    if (pnts->type != RT_PNT_UNKNOWN) {
 		pnts->point = _ged_pnts_new_pnt(pnts->type);
 		_ged_pnts_init_head_pnt(pnts);
-		bu_vls_sprintf(&fmt, "%s", _ged_pnt_default_fmt_str(pnts->type));
-		bu_log("Assuming format %s\n", bu_vls_addr(&fmt));
+		bu_vls_sprintf(&args.format, "%s", _ged_pnt_default_fmt_str(pnts->type));
+		bu_log("Assuming format %s\n", bu_vls_addr(&args.format));
 	    }
 	}
 
@@ -1013,15 +1168,15 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 		bu_vls_sprintf(gedp->ged_result_str, "found invalid number count %d for point type, aborting:\n%s\n", numcnt, bu_vls_addr(&fl));
 	    }
 	    rt_db_free_internal(&internal);
-	    bu_vls_free(&fmt);
-	    bu_vls_free(&unit);
+	    bu_vls_free(&args.format);
+	    bu_vls_free(&args.units);
 	    bu_free(input, "input cpy");
 	    bu_free(nums, "nums array");
 	    fclose(fp);
 	    return BRLCAD_ERROR;
 	}
 
-	_pnt_read(pnts, numcnt, (const char **)nums, bu_vls_addr(&fmt), conv_factor);
+	_pnt_read(pnts, numcnt, (const char **)nums, bu_vls_addr(&args.format), conv_factor);
 	pnts_cnt++;
 	bu_vls_trunc(&fl, 0);
 	bu_free(input, "input cpy");
@@ -1035,7 +1190,8 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
     GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
-    bu_vls_free(&fmt);
+    bu_vls_free(&args.format);
+    bu_vls_free(&args.units);
     if (nums) bu_free(nums, "free old nums array");
     return BRLCAD_OK;
 }
@@ -1044,9 +1200,7 @@ static int
 _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 {
     struct ged *gedp = (struct ged *)bs;
-    int print_help = 0;
-    int ply_out = 0;
-    int opt_ret = 0;
+    struct pnts_write_args args = {0, 0, 0};
     FILE *fp;
     struct rt_db_internal intern;
     struct rt_pnts_internal *pnts = NULL;
@@ -1055,34 +1209,31 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
     const char *pnt_prim = NULL;
     const char *filename = NULL;
     const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\nWrites out data based on the point type, one row per point, using a format of x y z [i j k] [scale] [R G B] (bracketed groups may or may not be present depending on point type.)\n\n";
-    struct bu_opt_desc d[4];
-    int precis = 0;
-    BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,   "Print help and exit");
-    BU_OPT(d[1], "p", "precision", "#",  &bu_opt_int,  &precis,       "Number of digits after decimal to use when printing out numbers (default 17)");
-    BU_OPT(d[2], "",  "ply",       "",   NULL,         &ply_out,      "Write output using PLY format instead of x y z [i j k] [scale] [R G B] text file");
-    BU_OPT_NULL(d[3]);
-
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
     /* must be wanting help */
     if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_write_schema);
 	return BRLCAD_OK;
     }
 
-    /* parse standard options */
-    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    int opt_ret = bu_cmd_schema_parse(&pnts_write_schema, &args,
+	gedp->ged_result_str, argc, argv);
 
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
+	if (args.help) {
+	pnts_show_schema_help(gedp, usage, &pnts_write_schema);
 	return BRLCAD_OK;
     }
+	if (opt_ret < 0) {
+	pnts_show_schema_help(gedp, usage, &pnts_write_schema);
+	return BRLCAD_ERROR;
+	}
 
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
+    argc -= opt_ret;
+    argv += opt_ret;
 
     if (argc != 2) {
-	_ged_cmd_help(gedp, usage, d);
+	pnts_show_schema_help(gedp, usage, &pnts_write_schema);
 	return BRLCAD_ERROR;
     }
 
@@ -1120,7 +1271,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (ply_out) {
+    if (args.ply) {
 	fprintf(fp, "ply\nformat ascii 1.0\ncomment %s\n", pnt_dp->d_namep);
 	fprintf(fp, "element vertex %ld\n", pnts->count);
 	fprintf(fp, "property double x\n");
@@ -1148,7 +1299,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	for (BU_LIST_FOR(pn, pnt, &(pl->l))) {
 	    int i = 0;
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		if (i != 2) {
 		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 		} else {
@@ -1169,7 +1320,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	for (BU_LIST_FOR(pn, pnt_color, &(pl->l))) {
 	    int i = 0;
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
@@ -1191,9 +1342,9 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	for (BU_LIST_FOR(pn, pnt_scale, &(pl->l))) {
 	    int i = 0;
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
-		if (i != 2 || (i == 2 && !ply_out)) {
+		if (i != 2 || (i == 2 && !args.ply)) {
 		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 		} else {
 		    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
@@ -1201,8 +1352,8 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	    }
 
 	    /* TODO - not sure how to handle scale with PLY */
-	    if (!ply_out) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+	    if (!args.ply) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->s, args.precision);
 		fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
 	    }
 	}
@@ -1217,11 +1368,11 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
 	    int i = 0;
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], args.precision);
 		if (i != 2) {
 		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 		} else {
@@ -1241,12 +1392,12 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	for (BU_LIST_FOR(pn, pnt_color_scale, &(pl->l))) {
 	    int i = 0;
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    /* TODO - not sure how to handle scale with PLY */
-	    if (!ply_out) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+	    if (!args.ply) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->s, args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
@@ -1269,11 +1420,11 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	for (BU_LIST_FOR(pn, pnt_color_normal, &(pl->l))) {
 	    int i = 0;
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
@@ -1295,20 +1446,20 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	for (BU_LIST_FOR(pn, pnt_scale_normal, &(pl->l))) {
 	    int i = 0;
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
-		if (i != 2 || (i == 2 && !ply_out)) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], args.precision);
+		if (i != 2 || (i == 2 && !args.ply)) {
 		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 		} else {
 		    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
 		}
 	    }
 	    /* TODO - not sure how to handle scale with PLY */
-	    if (!ply_out) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+	    if (!args.ply) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->s, args.precision);
 		fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
 	    }
 	}
@@ -1324,16 +1475,16 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	for (BU_LIST_FOR(pn, pnt_color_scale_normal, &(pl->l))) {
 	    int i = 0;
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
+		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    /* TODO - not sure how to handle scale with PLY */
-	    if (!ply_out) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+	    if (!args.ply) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->s, args.precision);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
@@ -1356,43 +1507,22 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 }
 
 static void
-_pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
+_pnts_show_help(struct ged *gedp)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *option_help;
+    char *help = bu_cmd_tree_describe(&ged_pnts_tree);
 
-    bu_vls_sprintf(&str, "Usage: pnts [options] [subcommand] [subcommand arguments]\n\n");
-
-    if ((option_help = bu_opt_describe(d, NULL))) {
-	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	bu_free(option_help, "help str");
+    bu_vls_strcat(gedp->ged_result_str,
+	"Usage: pnts [options] <subcommand> [subcommand arguments]\n");
+    if (help) {
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "pnts native tree help");
     }
-    bu_vls_printf(&str, "Subcommands:\n\n");
-    bu_vls_printf(&str, "  read  - Read data from an input file into a pnts object\n\n");
-    bu_vls_printf(&str, "  write - Write data from a point set into a file\n\n");
-    bu_vls_printf(&str, "  gen   - Generate a point set from the object and store the set in a points object.\n\n");
-    bu_vls_printf(&str, "  tri   - Generate unit or scaled triangles for each pnt in a point set. If no normal\n");
-    bu_vls_printf(&str, "          information is present, use origin at avg of all set points to make normals.\n\n");
-    bu_vls_vlscat(gedp->ged_result_str, &str);
-    bu_vls_free(&str);
 }
-
-static const struct bu_cmdtab _pnts_cmds[] = {
-    { "gen",    _ged_pnts_cmd_gen },
-    { "read",   _ged_pnts_cmd_read },
-    { "tri",    _ged_pnts_cmd_tri },
-    { "write",  _ged_pnts_cmd_write },
-    { (char *)NULL, NULL }
-};
 
 extern "C" int
 ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help = 0;
-    struct bu_opt_desc d[2];
-
-    BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
-    BU_OPT_NULL(d[1]);
+    struct pnts_root_args args = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -1405,47 +1535,33 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc < 1) {
-	_pnts_show_help(gedp, d);
+	_pnts_show_help(gedp);
 	return BRLCAD_OK;
     }
 
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_pnts_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
-    }
-    int opt_argc = (cmd_pos >= 0) ? cmd_pos : argc;
-    int opt_ret = bu_opt_parse(NULL, opt_argc, argv, d);
+    int opt_ret = bu_cmd_schema_parse(&pnts_root_schema, &args,
+	gedp->ged_result_str, argc, argv);
 
-    if (print_help) {
-	_pnts_show_help(gedp, d);
+	if (args.help) {
+	_pnts_show_help(gedp);
 	return BRLCAD_OK;
-    }
-
-    if (cmd_pos == -1) {
-	bu_vls_printf(gedp->ged_result_str, "pnts: no valid subcommand specified\n");
-	_pnts_show_help(gedp, d);
-	return BRLCAD_ERROR;
     }
     if (opt_ret < 0) {
-	_pnts_show_help(gedp, d);
+	_pnts_show_help(gedp);
 	return BRLCAD_ERROR;
     }
 
-    for (int i = cmd_pos; i < argc; i++) {
-	argv[i - cmd_pos] = argv[i];
-    }
-    argc = argc - cmd_pos;
+    argc -= opt_ret;
+    argv += opt_ret;
 
     int ret = BRLCAD_ERROR;
-    if (bu_cmd(_pnts_cmds, argc, argv, 0, (void *)gedp, &ret) == BRLCAD_OK) {
+    if (bu_cmd_tree_dispatch(&ged_pnts_tree, gedp, argc, argv, &ret) == 0) {
 	return ret;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "pnts: subcommand %s not defined\n", argv[0]);
-    _pnts_show_help(gedp, d);
+    bu_vls_printf(gedp->ged_result_str, "pnts: subcommand %s not defined\n",
+	argc && argv[0] ? argv[0] : "");
+	_pnts_show_help(gedp);
     return BRLCAD_ERROR;
 }
 
@@ -1519,7 +1635,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Validate unit */
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[4], (void *)&conv_factor) == -1) {
+	if (!bu_cmd_number_from_str(&conv_factor, argv[4])) {
 	conv_factor = bu_mm_value(argv[4]);
     }
     if (conv_factor < 0) {
@@ -1561,12 +1677,102 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_PNTS_COMMANDS(X, XID) \
-    X(make_pnts, ged_make_pnts_core, GED_CMD_DEFAULT) \
-    X(pnts, ged_pnts_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_operand make_pnts_operands[] = {
+    BU_CMD_OPERAND("point_cloud_name", BU_CMD_VALUE_STRING, 1, 1,
+	"New point-cloud object name", NULL),
+    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 1, 1,
+	"Point data file", "ged.file_path"),
+    BU_CMD_OPERAND("format", BU_CMD_VALUE_STRING, 1, 1,
+	"Point data column format", NULL),
+    BU_CMD_OPERAND("units", BU_CMD_VALUE_STRING, 1, 1,
+	"Point data units", NULL),
+    BU_CMD_OPERAND("default_size", BU_CMD_VALUE_NUMBER, 1, 1,
+	"Default point size", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema make_pnts_schema = {
+    "make_pnts", "Read point data using the legacy argument order", NULL,
+    make_pnts_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+static const struct bu_cmd_tree_node pnts_legacy_subcommands[] = {
+    BU_CMD_TREE_NODE(&pnts_gen_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&pnts_read_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&pnts_tri_legacy_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&pnts_write_schema, NULL, NULL,
+	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree pnts_legacy_tree = {
+    &pnts_root_schema, pnts_legacy_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+};
 
-GED_DECLARE_COMMAND_SET(GED_PNTS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_pnts", 1, GED_PNTS_COMMANDS)
+static int
+ged_pnts_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
+	struct ged_cmd_validate_result *result)
+{
+    int ret = ged_cmd_tree_validate(gedp, &ged_pnts_tree, input, cursor_pos, result);
+
+    /* The long-standing implicit-unit form takes effect only when the word
+     * after `tri` is not a recognized tri subcommand or its prefix. */
+    if (ret == 0 && result->state == BU_CMD_VALIDATE_INVALID && result->hint &&
+	BU_STR_EQUAL(result->hint, "unknown subcommand")) {
+	struct ged_cmd_validate_result legacy = GED_CMD_VALIDATE_RESULT_NULL;
+	if (ged_cmd_tree_validate(gedp, &pnts_legacy_tree, input, cursor_pos, &legacy) == 0 &&
+	    legacy.state != BU_CMD_VALIDATE_INVALID) {
+	    ged_cmd_validate_result_clear(result);
+	    *result = legacy;
+	    return 0;
+	}
+	ged_cmd_validate_result_clear(&legacy);
+    }
+    return ret;
+}
+
+static int
+ged_pnts_grammar_analyze(struct ged *gedp, const char *input,
+	struct ged_cmd_analysis *analysis)
+{
+    int ret = ged_cmd_tree_analyze(gedp, &ged_pnts_tree, input, analysis);
+
+    if (ret == 0 && analysis->token_count > 2 &&
+	analysis->tokens[1].role == GED_CMD_TOKEN_SUBCOMMAND &&
+	analysis->tokens[1].char_end - analysis->tokens[1].char_start == 3 &&
+	strncmp(input + analysis->tokens[1].char_start, "tri", 3) == 0 &&
+	analysis->tokens[2].role == GED_CMD_TOKEN_SUBCOMMAND &&
+	analysis->tokens[2].semantic_state == GED_CMD_SEMANTIC_INVALID)
+	return ged_cmd_tree_analyze(gedp, &pnts_legacy_tree, input, analysis);
+    return ret;
+}
+
+static char *
+ged_pnts_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&ged_pnts_tree);
+}
+
+static int
+ged_pnts_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&ged_pnts_tree, msgs) +
+	bu_cmd_tree_lint(&pnts_legacy_tree, msgs);
+}
+
+static const struct ged_cmd_grammar ged_pnts_grammar = {
+    "pnts", "Read, write, generate, and triangulate point clouds",
+    ged_pnts_grammar_validate, ged_pnts_grammar_analyze,
+    ged_pnts_grammar_json, ged_pnts_grammar_lint
+};
+
+#define GED_PNTS_COMMANDS(X, XID, N, NID, G, GID) \
+    N(make_pnts, ged_make_pnts_core, GED_CMD_DEFAULT, &make_pnts_schema) \
+    G(pnts, ged_pnts_core, GED_CMD_DEFAULT, &ged_pnts_grammar) \
+
+GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_PNTS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_pnts", 1, GED_PNTS_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="asciiquack 0.1.0">
+<title>WHICHID(nged)</title>
+<style>
+/* asciiquack default stylesheet (minimal) */
+body{font-family:sans-serif;max-width:900px;margin:0 auto;padding:1em 2em;line-height:1.6;color:#333}
+h1,h2,h3,h4,h5,h6{color:#2c5282;line-height:1.2;margin-top:1.4em}
+h1{font-size:2em;border-bottom:2px solid #2c5282;padding-bottom:.25em}
+h2{font-size:1.6em;border-bottom:1px solid #ccc}
+code,pre{font-family:monospace;background:#f5f5f5;border-radius:3px}
+pre{padding:1em;overflow:auto;border-left:4px solid #ccc}
+code{padding:.1em .3em}
+.listingblock pre{background:#282c34;color:#abb2bf;border:none}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #ddd;padding:.5em .75em;text-align:left}
+th{background:#f0f0f0;font-weight:bold}
+.admonitionblock table{border:none;width:100%}
+.admonitionblock td.icon{width:80px;font-weight:bold;text-transform:uppercase}
+.admonitionblock td.content{padding:.5em 1em}
+.admonitionblock.note td.icon{color:#31708f}
+.admonitionblock.tip td.icon{color:#3c763d}
+.admonitionblock.warning td.icon{color:#8a6d3b}
+.admonitionblock.important td.icon{color:#a94442}
+.admonitionblock.caution td.icon{color:#a94442}
+blockquote{border-left:4px solid #ccc;padding:.5em 1em;margin:1em 0;color:#555;font-style:italic}
+.sidebarblock{background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:1em;margin:1em 0}
+#header,#content,#footer{margin-bottom:1em}
+#footer{border-top:1px solid #ccc;padding-top:.5em;color:#666;font-size:.9em}
+#header .details{font-size:.9em;color:#666}
+mark{background:#ff9}
+.exampleblock{border:1px solid #ddd;border-radius:4px;padding:1em;margin:1em 0}
+img{max-width:100%;height:auto}
+.imageblock{text-align:center;margin:1em 0}
+.imageblock .title{font-style:italic;color:#666;margin-top:.5em}
+video,audio{max-width:100%}
+.videoblock,.audioblock{margin:1em 0}
+.sectnum{margin-right:.25em}
+#toc{background:#f8f8f8;border:1px solid #ddd;border-radius:4px;padding:1em 1.5em;margin:1em 0;display:inline-block;min-width:200px}
+#toctitle{font-weight:bold;margin-bottom:.5em}
+#toc ul{list-style:none;padding-left:0;margin:0}
+#toc ul ul{padding-left:1.5em}
+#toc a{text-decoration:none;color:#2c5282}
+#toc a:hover{text-decoration:underline}
+#toc li{margin:.25em 0}
+#footnotes{border-top:1px solid #ccc;margin-top:1em;padding-top:.5em}
+.footnote{font-size:.9em;color:#666;margin:.25em 0}
+sup.footnote{font-size:.75em;vertical-align:super;line-height:0}
+sup.footnote a{color:#2c5282;text-decoration:none}
+kbd{font-family:monospace;border:1px solid #ccc;border-radius:3px;padding:.1em .35em;font-size:.9em;background:#f5f5f5}
+.keyseq{font-family:monospace;font-size:.9em}
+b.button{border:1px solid #aaa;border-radius:3px;padding:.1em .35em;font-size:.9em;background:#f0f0f0;font-weight:normal}
+.menuseq,.menu,.menuitem{font-style:italic}
+.caret{font-style:normal;font-weight:bold}
+b.conum,span.conum{display:inline-block;background:#555;color:#fff;border-radius:50%;width:1.2em;height:1.2em;text-align:center;line-height:1.2em;font-size:.8em;font-weight:bold;font-style:normal;margin:0 .1em}
+.colist{margin:.5em 0}
+.colist ol{list-style:none;padding-left:0}
+.stemblock{margin:1em 0}
+</style>
+</head>
+<body class="manpage">
+<div id="header">
+<h1>WHICHID(nged) Manual Page</h1>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_name">NAME</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>whichid - Reports information relating to usage of the region_id property on regions.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_synopsis">SYNOPSIS</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre>whichid [options ...] {ident[-ident]}...</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="description">DESCRIPTION</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Reports information about the usage of the <em>region_id</em> property by regions in a .g file. Its default mode is to report which regions in a .g file are using one or a range of region_id values. Inclusive ranges may use either <code>start-end</code> or <code>start:end</code>. If a root object is specified, it will report that result only for the regions in the tree of the root object. If the <strong>U</strong> is specified, the reporting is inverted and the command will report the ranges of <em>unused</em> ids rather than the regions using various ids.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="search_options">OPTIONS</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>-?</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Print help and exit.</p>
+</dd>
+<dt class="hdlist1"><strong>-s</strong>, <strong>--script</strong></dt>
+<dd>
+<p>Use script-oriented output formatting.</p>
+</dd>
+<dt class="hdlist1"><strong>-V</strong></dt>
+<dd>
+<p>List all active ids even when no associated regions are found.</p>
+</dd>
+<dt class="hdlist1"><strong>-U</strong>, <strong>--unused</strong></dt>
+<dd>
+<p>Report unused id ranges.</p>
+</dd>
+<dt class="hdlist1"><strong>--root objname</strong></dt>
+<dd>
+<p>Limit reporting to regions in the CSG tree below <em>objname</em>.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="examples">EXAMPLES</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For these examples the geometry file used is the standard <em>ktank.g</em> included with BRL-CAD.</p>
+</div>
+<div class="exampleblock">
+<div class="title">Example 1. Report all regions using region ids between 4000 and 7000.</div>
+<div class="content">
+<div class="paragraph">
+<p>mged&gt;<strong>whichid 4000-7000</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>
+Region[s] with ident 4001:
+   r23
+   r25
+Region[s] with ident 4050:
+   r24
+   r26
+Region[s] with ident 6001:
+   r210
+Region[s] with ident 6002:
+   r212
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="exampleblock">
+<div class="title">Example 2. Report all regions using region ids between 1000-2000 and 4000-5000.</div>
+<div class="content">
+<div class="paragraph">
+<p>mged&gt;<strong>whichid 1000-2000 4000-5000</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>
+Region[s] with ident 1010:
+   r213
+Region[s] with ident 1011:
+   r214
+Region[s] with ident 4001:
+   r23
+   r25
+Region[s] with ident 4050:
+   r24
+   r26
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="exampleblock">
+<div class="title">Example 3. Report all regions using region ids between 1000-2000 and 4000-5000, limiting results to regions in the <em>tank</em> geomtry tree.</div>
+<div class="content">
+<div class="paragraph">
+<p>mged&gt;<strong>whichid --root tank 1000-2000 4000-5000</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>
+Region[s] with ident 4001:
+   r23
+   r25
+Region[s] with ident 4050:
+   r24
+   r26
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="exampleblock">
+<div class="title">Example 4. Report all unused region_id ranges in the database between 1 and 1000.</div>
+<div class="content">
+<div class="paragraph">
+<p>mged&gt;<strong>whichid -U 1-1000</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>
+Unused idents:
+   1
+   4
+   6-99
+   105-109
+   112-114
+   116-119
+   122-159
+   161-164
+   166-204
+   210-224
+   226-504
+   519-609
+   620-719
+   730-829
+   840-939
+   950-1000
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="author">AUTHOR</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>BRL-CAD Team</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="bug_reports">BUG REPORTS</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

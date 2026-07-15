@@ -25,6 +25,25 @@
 
 #include "ged.h"
 
+#include <stdlib.h>
+
+#include "bu/cmdschema.h"
+
+
+static const struct bu_cmd_operand edcomb_schema_operands[] = {
+    BU_CMD_OPERAND("combination", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	"Combination to update", "ged.db_object"),
+    BU_CMD_OPERAND("region_flag", BU_CMD_VALUE_STRING, 1, 1,
+	"Region flag", NULL),
+    BU_CMD_OPERAND("region_fields", BU_CMD_VALUE_INTEGER, 4, 4,
+	"Region ID, air, LOS, and material ID", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema edcomb_cmd_schema = {
+    "edcomb", "Set combination region fields", NULL,
+    edcomb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
+
 
 int
 ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
@@ -34,6 +53,8 @@ ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     static const char *usage = "combname region_flag region_id air los material_id";
+    int operand_index;
+    int parse_dummy = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -48,36 +69,28 @@ ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 7) {
+
+    operand_index = bu_cmd_schema_parse_complete(&edcomb_cmd_schema,
+	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index + 1;
 
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[0], LOOKUP_NOISY, BRLCAD_ERROR);
     GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
 
-    if (sscanf(argv[3], "%d", &regionid) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Bad region identifier");
-	return BRLCAD_ERROR;
-    }
-    if (sscanf(argv[4], "%d", &air) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Bad air code");
-	return BRLCAD_ERROR;
-    }
-    if (sscanf(argv[5], "%d", &los) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Bad los line-of-sight equivalence factor");
-	return BRLCAD_ERROR;
-    }
-    if (sscanf(argv[6], "%d", &mat) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Bad material identifier");
-	return BRLCAD_ERROR;
-    }
+    regionid = (int)strtol(argv[2], NULL, 0);
+    air = (int)strtol(argv[3], NULL, 0);
+    los = (int)strtol(argv[4], NULL, 0);
+    mat = (int)strtol(argv[5], NULL, 0);
 
     GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    if (argv[2][0] == 'R' || atoi(argv[2]))
+    if (argv[1][0] == 'R' || strtol(argv[1], NULL, 0))
 	comb->region_flag = 1;
     else
 	comb->region_flag = 0;
@@ -94,10 +107,10 @@ ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_EDCOMB_COMMANDS(X, XID) \
-    X(edcomb, ged_edcomb_core, GED_CMD_DEFAULT) \
+    X(edcomb, ged_edcomb_core, GED_CMD_DEFAULT, &edcomb_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_EDCOMB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_edcomb", 1, GED_EDCOMB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_EDCOMB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_edcomb", 1, GED_EDCOMB_COMMANDS)
 
 /*
  * Local Variables:

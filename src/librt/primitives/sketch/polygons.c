@@ -32,7 +32,7 @@
 #include "bu/avs.h"
 #include "bu/cmd.h"
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/cmdschema.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bv.h"
@@ -224,13 +224,13 @@ end:
 	val = bu_avs_get(&lavs, "POLYGON_EDGE_COLOR");
 	if (val) {
 	    struct bu_color bc;
-	    if (bu_opt_color(NULL, 1, (const char **)&val, (void *)&bc) == 1) {
+	    if (bu_cmd_color_from_argv(&bc, 1, &val) == 1) {
 		bu_color_to_rgb_chars(&bc, s->s_color);
 	    }
 	}
 	val = bu_avs_get(&lavs, "POLYGON_FILL_COLOR");
 	if (val) {
-	    bu_opt_color(NULL, 1, (const char **)&val, (void *)&p->fill_color);
+	    (void)bu_cmd_color_from_argv(&p->fill_color, 1, &val);
 	}
 	val = bu_avs_get(&lavs, "POLYGON_FILL");
 	if (val && BU_STR_EQUAL(val, "1")) {
@@ -238,15 +238,15 @@ end:
 	}
 	val = bu_avs_get(&lavs, "POLYGON_FILL_SLOPE_X");
 	if (val) {
-	    bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->fill_dir[0]);
+	    (void)bu_cmd_number_from_str(&p->fill_dir[0], val);
 	}
 	val = bu_avs_get(&lavs, "POLYGON_FILL_SLOPE_Y");
 	if (val) {
-	    bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->fill_dir[1]);
+	    (void)bu_cmd_number_from_str(&p->fill_dir[1], val);
 	}
 	val = bu_avs_get(&lavs, "POLYGON_FILL_DELTA");
 	if (val) {
-	    bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->fill_delta);
+	    (void)bu_cmd_number_from_str(&p->fill_delta, val);
 	}
 	val = bu_avs_get(&lavs, "POLYGON_TYPE");
 	if (BU_STR_EQUAL(val, "CIRCLE")) {
@@ -269,7 +269,7 @@ end:
 	if (have_view) {
 	    val = bu_avs_get(&lavs, "VIEWSCALE");
 	    if (val) {
-		bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&sv->gv_scale);
+		(void)bu_cmd_number_from_str(&sv->gv_scale, val);
 	    } else {
 		have_view = 0;
 	    }
@@ -283,10 +283,10 @@ end:
 		if (bu_argv_from_string(av, 4, lp) != 4) {
 		    have_view = 0;
 		} else {
-		    bu_opt_fastf_t(NULL, 1, (const char **)&av[0], (void *)&quat[0]);
-		    bu_opt_fastf_t(NULL, 1, (const char **)&av[1], (void *)&quat[1]);
-		    bu_opt_fastf_t(NULL, 1, (const char **)&av[2], (void *)&quat[2]);
-		    bu_opt_fastf_t(NULL, 1, (const char **)&av[3], (void *)&quat[3]);
+		    (void)bu_cmd_number_from_str(&quat[0], av[0]);
+		    (void)bu_cmd_number_from_str(&quat[1], av[1]);
+		    (void)bu_cmd_number_from_str(&quat[2], av[2]);
+		    (void)bu_cmd_number_from_str(&quat[3], av[3]);
 		    quat_quat2mat(sv->gv_rotation, quat);
 		}
 		bu_free(lp, "val cpy");
@@ -303,10 +303,10 @@ end:
 		if (bu_argv_from_string(av, 4, lp) != 4) {
 		    have_view = 0;
 		} else {
-		    bu_opt_fastf_t(NULL, 1, (const char **)&av[0], (void *)&quat[0]);
-		    bu_opt_fastf_t(NULL, 1, (const char **)&av[1], (void *)&quat[1]);
-		    bu_opt_fastf_t(NULL, 1, (const char **)&av[2], (void *)&quat[2]);
-		    bu_opt_fastf_t(NULL, 1, (const char **)&av[3], (void *)&quat[3]);
+		    (void)bu_cmd_number_from_str(&quat[0], av[0]);
+		    (void)bu_cmd_number_from_str(&quat[1], av[1]);
+		    (void)bu_cmd_number_from_str(&quat[2], av[2]);
+		    (void)bu_cmd_number_from_str(&quat[3], av[3]);
 		    quat_quat2mat(sv->gv_center, quat);
 		}
 		bu_free(lp, "val cpy");

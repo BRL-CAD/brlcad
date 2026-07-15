@@ -12,7 +12,7 @@ png2fb - load a PNG image into the current display framebuffer
 ----
 png2fb [-H -i -c -v -z -1] [-m lines] [-g screen_gamma]
        [-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]
-       [-S squarescrsize] [file.png]
+       [file.png]
 ----
 
 
@@ -28,7 +28,7 @@ This command requires the current display manager to have an associated framebuf
 === Options
 
 *-H*::
-Use the framebuffer's hardware size rather than the PNG image's size for display dimensions.
+Read the PNG header only; do not load image pixels into the framebuffer.
 
 *-i*::
 Invert the image (flip vertically when reading from file).
@@ -49,7 +49,7 @@ Use a single line at a time for I/O (slower but uses less memory).
 Read `lines` lines at a time from the PNG file (default: vary).
 
 *-g screen_gamma*::
-Apply the specified gamma correction value to the display.
+Apply the specified positive gamma correction value to the display.
 
 *-x file_xoff*::
 Horizontal offset (in pixels) into the PNG file to start reading.
@@ -62,9 +62,6 @@ Horizontal offset on the framebuffer screen to begin writing.
 
 *-Y scr_yoff*::
 Vertical offset on the framebuffer screen to begin writing.
-
-*-S squarescrsize*::
-Set both the screen width and height to `squarescrsize` pixels.
 
 [[examples]]
 == EXAMPLES

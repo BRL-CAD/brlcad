@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "bn.h"
+#include "bu/cmdschema.h"
 #include "bv/plot3.h"
 #include "bg/clip.h"
 
@@ -191,6 +192,44 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
 }
 
 
+struct plot_args {
+    int two_d;
+    int three_d;
+    int floating;
+    int grid;
+    int z_clip;
+};
+
+static const struct bu_cmd_option plot_schema_options[] = {
+    BU_CMD_FLAG("2", NULL, struct plot_args, two_d, "Write a 2D plot"),
+    BU_CMD_FLAG("3", NULL, struct plot_args, three_d, "Write a 3D plot"),
+    BU_CMD_FLAG("f", NULL, struct plot_args, floating,
+	"Use floating-point plot output"),
+    BU_CMD_FLAG("g", NULL, struct plot_args, grid, "Include a grid"),
+    BU_CMD_FLAG("z", NULL, struct plot_args, z_clip, "Enable Z clipping"),
+    BU_CMD_ALIAS_SHORT("Z", "z", 1),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand plot_schema_operands[] = {
+    BU_CMD_OPERAND("output", BU_CMD_VALUE_FILE, 1, 1,
+	"Output file or |filter command", "ged.file_path"),
+    BU_CMD_OPERAND("filter_arguments", BU_CMD_VALUE_RAW, 0,
+	BU_CMD_COUNT_UNLIMITED, "Arguments to a pipe filter", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const char *plot_dimension_options[] = {"2", "3", NULL};
+static const struct bu_cmd_constraint plot_schema_constraints[] = {
+    BU_CMD_CONSTRAINT_OPTIONS(plot_dimension_options, 0, 1,
+	"-2 and -3 are mutually exclusive"),
+    BU_CMD_CONSTRAINT_NULL
+};
+static const struct bu_cmd_schema plot_cmd_schema = {
+    "plot", "Write the current display as a UNIX plot", plot_schema_options,
+    plot_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
+    BU_CMD_SCHEMA_CONSTRAINTS(NULL, plot_schema_constraints)
+};
+
+
 /*
  * plot file [opts]
  * potential options might include:
@@ -200,6 +239,10 @@ int
 ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
+    struct plot_args args = {0};
+    int operand_index;
+    int operand_count;
+    const char **operands;
     int Three_D;			/* 0=2-D -vs- 1=3-D */
     int Z_clip;			/* Z clipping */
     int floating;			/* 3-D floating point plot */
@@ -219,47 +262,32 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    /* Process any options */
-    Three_D = 1;				/* 3-D w/color, by default */
-    Z_clip = 0;				/* NO Z clipping, by default*/
-    floating = 0;
-    while (argv[1] != (char *)0 && argv[1][0] == '-') {
-	switch (argv[1][1]) {
-	    case 'f':
-		floating = 1;
-		break;
-	    case '3':
-		Three_D = 1;
-		break;
-	    case '2':
-		Three_D = 0;		/* 2-D, for portability */
-		break;
-	    case 'g':
-		/* do grid */
-		bu_vls_printf(gedp->ged_result_str, "%s: grid unimplemented\n", argv[0]);
-		break;
-	    case 'z':
-	    case 'Z':
-		/* Enable Z clipping */
-		bu_vls_printf(gedp->ged_result_str, "%s: Clipped in Z to viewing cube\n", argv[0]);
-		Z_clip = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "%s: bad PLOT option %s\n", argv[0], argv[1]);
-		break;
-	}
-	argv++;
-    }
-    if (argv[1] == (char *)0) {
+
+    operand_index = bu_cmd_schema_parse_complete(&plot_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0)
+	return BRLCAD_ERROR;
+    operand_count = argc - 1 - operand_index;
+    operands = argv + 1 + operand_index;
+    if (operand_count < 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: no filename or filter specified\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (argv[1][0] == '|') {
+
+    Three_D = args.two_d ? 0 : 1;
+    Z_clip = args.z_clip;
+    floating = args.floating;
+    if (args.grid)
+	bu_vls_printf(gedp->ged_result_str, "%s: grid unimplemented\n", argv[0]);
+    if (Z_clip)
+	bu_vls_printf(gedp->ged_result_str, "%s: Clipped in Z to viewing cube\n", argv[0]);
+
+    if (operands[0][0] == '|') {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_vls_strcpy(&str, &argv[1][1]);
-	while ((++argv)[1] != (char *)0) {
+	bu_vls_strcpy(&str, &operands[0][1]);
+	for (int oi = 1; oi < operand_count; oi++) {
 	    bu_vls_strcat(&str, " ");
-	    bu_vls_strcat(&str, argv[1]);
+	    bu_vls_strcat(&str, operands[oi]);
 	}
 	fp = popen(bu_vls_addr(&str), "wb");
 	if (fp == NULL) {
@@ -271,13 +299,13 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&str);
 	is_pipe = 1;
     } else {
-	fp = fopen(argv[1], "wb");
+	fp = fopen(operands[0], "wb");
 	if (fp == NULL) {
-	    perror(argv[1]);
+	    perror(operands[0]);
 	    return BRLCAD_ERROR;
 	}
 
-	bu_vls_printf(gedp->ged_result_str, "plot stored in %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "plot stored in %s\n", operands[0]);
 	is_pipe = 0;
     }
 
@@ -295,10 +323,10 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PLOT_COMMANDS(X, XID) \
-    X(plot, ged_plot_core, GED_CMD_DEFAULT) \
+    X(plot, ged_plot_core, GED_CMD_DEFAULT, &plot_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_PLOT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_plot", 1, GED_PLOT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PLOT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_plot", 1, GED_PLOT_COMMANDS)
 
 /*
  * Local Variables:

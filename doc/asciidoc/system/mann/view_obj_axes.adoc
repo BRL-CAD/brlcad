@@ -1,0 +1,92 @@
+= VIEW_OBJ_AXES(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+
+view obj axes - create and edit a data-axes view object
+
+== SYNOPSIS
+
+[source]
+----
+view obj _name_ axes create _x y z_
+view obj _name_ axes pos [_x y z_]
+view obj _name_ axes size [_size_]
+view obj _name_ axes line_width [_width_]
+view obj _name_ axes axes_color [_color_]
+----
+
+== DESCRIPTION
+
+The `view obj name axes` command family creates and edits an axes indicator
+stored as data in the current view.  It is separate from the faceplate axes:
+the indicator has a model-space position and is drawn with the current view's
+scene objects.  The _name_ identifies the view object; it is not a database
+object name.
+
+The `axes` options, if used, precede the subcommand.  `-h` or `--help` prints
+native command help.  `-s` is accepted for historical script compatibility;
+it currently has no behavior distinct from the ordinary axes form.
+
+All coordinate and size values must be finite numbers.  The setting forms are
+validated before a view object is changed, so a partial coordinate triple or
+an invalid line width leaves the existing value unchanged.
+
+== SUBCOMMANDS
+
+*create* _x y z_::
+Create an axes object at the specified model-space point.  The name must not
+already identify a view object.
+
+*pos* [_x y z_]::
+Without coordinates, report the current model-space position.  With
+coordinates, replace the position.  Exactly three finite components are
+required for a setting operation.
+
+*size* [_size_]::
+Without an argument, report the current axes size.  With one finite number,
+set the size.
+
+*line_width* [_width_]::
+Without an argument, report the current line width.  With an argument, set a
+positive base-zero integer width; zero and negative values are rejected.
+
+*axes_color* [_color_]::
+Without an argument, report the current RGB color.  With an argument, set the
+color using any normal BRL-CAD packed color spelling, such as `255/255/0`,
+`255,255,0`, `255;255;0`, or `#ffff00`.  Three separate RGB component words
+are also accepted, including the normalized floating component forms accepted
+by BRL-CAD's color parser.
+
+== EXAMPLES
+
+.Create a yellow axes indicator and change it to blue.
+[example]
+====
+mged> *view obj datum_axes axes create 0 0 0*
+mged> *view obj datum_axes axes axes_color 0/0/255*
+
+The first command creates axes at the model origin.  The second command sets
+their color to blue.
+====
+
+.Query the axes position and line width.
+[example]
+====
+mged> *view obj datum_axes axes pos*
+mged> *view obj datum_axes axes line_width*
+====
+
+== SEE ALSO
+
+*view*(nged), *data_lines*(nged), *sdata_lines*(nged)
+
+== AUTHOR
+
+BRL-CAD Team
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

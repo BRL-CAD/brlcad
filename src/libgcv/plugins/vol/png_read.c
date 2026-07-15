@@ -34,21 +34,29 @@ struct png_read_opts{
 };
 
 
-static void create_opts(struct bu_opt_desc **opts_desc, void **dest_options_data)
+static const struct bu_cmd_option png_read_schema_options[] = {
+    BU_CMD_BOOL("c", "colored", struct png_read_opts, coloured, "bool",
+	"Specify whether the image is coloured."),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_schema png_read_schema = {
+    "png-read", "PNG volume reader options.", png_read_schema_options, NULL,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+
+static void
+png_read_create_schema_opts(const struct bu_cmd_schema **schema, void **dest_options_data)
 {
     struct png_read_opts *opts_data;
 
-    bu_log("VOL_PLUGIN: entered create_opts()\n");
-
     BU_ALLOC(opts_data, struct png_read_opts);
     *dest_options_data = opts_data;
-    *opts_desc = (struct bu_opt_desc *)bu_calloc(3, sizeof(struct bu_opt_desc), "options_desc");
 
     opts_data->coloured = 0;
-
-    BU_OPT((*opts_desc)[0], "c", "colored", NULL, bu_opt_bool,
-	   &opts_data->coloured, "Check if it is coloured");
-    BU_OPT_NULL((*opts_desc)[1]);
+    *schema = &png_read_schema;
 }
 
 
@@ -91,17 +99,29 @@ static int png_can_read(const char * data)
 
 const struct gcv_filter gcv_conv_png_read = {
     "PNG Reader", GCV_FILTER_READ, BU_MIME_MODEL_UNKNOWN, png_can_read,
-    create_opts, free_opts, png_read
+    NULL, free_opts, png_read
 };
 
 
 static const struct gcv_filter * const filters[] = {&gcv_conv_png_read, NULL};
+static const struct gcv_filter_schema filter_schemas[] = {
+    {&gcv_conv_png_read, png_read_create_schema_opts},
+    {NULL, NULL}
+};
 
 const struct gcv_plugin gcv_plugin_info_s = {filters};
+static const struct gcv_native_plugin gcv_plugin_native_info_s = {filter_schemas};
 
 COMPILER_DLLEXPORT const struct gcv_plugin *gcv_plugin_info(void)
 {
     return &gcv_plugin_info_s;
+}
+
+
+COMPILER_DLLEXPORT const struct gcv_native_plugin *
+gcv_plugin_native_info(void)
+{
+    return &gcv_plugin_native_info_s;
 }
 
 

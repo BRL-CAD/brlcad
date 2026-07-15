@@ -28,10 +28,17 @@
 
 #include <string.h>
 
-#include "bu/getopt.h"
+#include "bu/cmdschema.h"
 #include "vmath.h"
 #include "rt/geom.h"
 #include "ged.h"
+
+static const struct bu_cmd_schema *comb_std_schema_for_command(const char *command);
+
+struct comb_std_args {
+    int region_flag;
+    int help;
+};
 
 
 struct tokens {
@@ -433,8 +440,7 @@ int
 ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *comb_name;
-    int ch;
-    int region_flag = -1;
+    struct comb_std_args args = {-1, 0};
     struct directory *dp = RT_DIR_NULL;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
@@ -443,6 +449,8 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
     int i;
     union tree *final_tree;
     static const char *usage = "[-cr] comb_name <boolean_expr>";
+    const char *command;
+    int operand_index;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -450,6 +458,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+    command = argv[0];
 
     /* must be wanting help */
     if (argc == 1) {
@@ -457,39 +466,25 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3) {
+    operand_index = bu_cmd_schema_parse_complete(comb_std_schema_for_command(argv[0]), &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
-    /* Parse options */
-    bu_optind = 1;	/* re-init bu_getopt() */
-    while ((ch = bu_getopt(argc, (char * const *)argv, "cgr?")) != -1) {
-	switch (ch) {
-	    case 'c':
-	    case 'g':
-		region_flag = 0;
-		break;
-	    case 'r':
-		region_flag = 1;
-		break;
-		/* XXX How about -p and -v for FASTGEN? */
-	    case '?':
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_OK;
-	}
-    }
-    argc -= (bu_optind + 1);
-    argv += bu_optind;
-
-    comb_name = (char *)*argv++;
-    if (argc == -1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (args.help) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", command, usage);
 	return BRLCAD_OK;
     }
 
-    if ((region_flag != -1) && (argc == 0)) {
+    comb_name = (char *)argv[0];
+    argc--;
+    argv++;
+
+    if ((args.region_flag != -1) && (argc == 0)) {
 	/*
 	 * Set/Reset the REGION flag of an existing combination
 	 */
@@ -504,7 +499,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	if (region_flag) {
+	if (args.region_flag) {
 	    if (!comb->region_flag) {
 		/* assign values from the defaults */
 		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -619,10 +614,10 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	comb->tree = final_tree;
 
 	comb->region_id = -1;
-	if (region_flag == (-1))
+	if (args.region_flag == (-1))
 	    comb->region_flag = 0;
 	else
-	    comb->region_flag = region_flag;
+	    comb->region_flag = args.region_flag;
 
 	if (comb->region_flag) {
 	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -657,12 +652,191 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_COMB_STD_COMMANDS(X, XID) \
-    X(c, ged_comb_std_core, GED_CMD_DEFAULT) \
-    X(comb_std, ged_comb_std_core, GED_CMD_DEFAULT) \
+static const char * const comb_std_expr_keywords[] = {"u", "+", "-", "(", ")", NULL};
 
-GED_DECLARE_COMMAND_SET(GED_COMB_STD_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_comb_std", 1, GED_COMB_STD_COMMANDS)
+static int
+comb_std_set_non_region(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage)
+{
+    if (storage)
+	*((int *)storage) = 0;
+    return 0;
+}
+
+static int
+comb_std_set_region(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage)
+{
+    if (storage)
+	*((int *)storage) = 1;
+    return 0;
+}
+
+static int
+comb_std_expr_keyword(const char *s)
+{
+    if (!s)
+	return 0;
+    for (size_t i = 0; comb_std_expr_keywords[i]; i++)
+	if (BU_STR_EQUAL(s, comb_std_expr_keywords[i]))
+	    return 1;
+    return 0;
+}
+
+static void
+comb_std_expr_candidates(struct bu_cmd_validate_result *result, const char *prefix)
+{
+    size_t count = 0;
+
+    for (size_t i = 0; comb_std_expr_keywords[i]; i++)
+	if (!prefix || !prefix[0] || bu_strncmp(comb_std_expr_keywords[i], prefix, strlen(prefix)) == 0)
+	    count++;
+    if (!count)
+	return;
+    result->completion_candidates = (const char **)bu_calloc(count + 1,
+	sizeof(char *), "comb_std expression candidates");
+    for (size_t i = 0, oi = 0; comb_std_expr_keywords[i]; i++)
+	if (!prefix || !prefix[0] || bu_strncmp(comb_std_expr_keywords[i], prefix, strlen(prefix)) == 0)
+	    result->completion_candidates[oi++] = bu_strdup(comb_std_expr_keywords[i]);
+    result->completion_count = count;
+}
+
+static int
+comb_std_validation_result(struct bu_cmd_validate_result *result,
+	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+	const char *hint, const char *provider)
+{
+    bu_cmd_validate_result_clear(result);
+    result->state = state;
+    result->token_start = token;
+    result->token_end = token;
+    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->completion_type = type;
+    result->hint = hint;
+    result->semantic_provider = provider;
+    return 0;
+}
+
+static int
+comb_std_option_token(const char *arg)
+{
+    if (!arg || arg[0] != '-' || !arg[1])
+	return 0;
+    for (size_t i = 1; arg[i]; i++)
+	if (arg[i] != 'c' && arg[i] != 'g' && arg[i] != 'r' && arg[i] != '?')
+	    return 0;
+    return 1;
+}
+
+static size_t
+comb_std_first_operand(size_t argc, const char **argv)
+{
+    size_t i = 0;
+
+    while (i < argc && comb_std_option_token(argv[i]))
+	i++;
+    if (i < argc && BU_STR_EQUAL(argv[i], "--"))
+	i++;
+    return i;
+}
+
+static int
+comb_std_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const char **argv,
+	size_t cursor_arg, struct bu_cmd_validate_result *result)
+{
+    struct bu_cmd_schema flat = *cmd;
+    size_t operands;
+    size_t first;
+    int set_comb;
+    int set_region;
+    int help;
+    int ret;
+
+    flat.validation.custom_validate = NULL;
+    ret = bu_cmd_schema_validate(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+	return ret;
+
+
+    set_comb = bu_cmd_schema_option_present(cmd, argc, argv, "c");
+    set_region = bu_cmd_schema_option_present(cmd, argc, argv, "r");
+    help = bu_cmd_schema_option_present(cmd, argc, argv, "?");
+    if (cursor_arg < argc && argv[cursor_arg] && argv[cursor_arg][0] == '-' &&
+	argv[cursor_arg][1] && (result->expected & BU_CMD_EXPECT_OPTION))
+	return 0;
+
+    operands = bu_cmd_schema_operand_count(cmd, argc, argv);
+    first = comb_std_first_operand(argc, argv);
+    if (help) {
+	if (operands)
+	    return comb_std_validation_result(result, BU_CMD_VALIDATE_INVALID,
+		cursor_arg < argc ? cursor_arg : argc, BU_CMD_VALUE_STRING,
+		"-? does not accept operands", NULL);
+	return comb_std_validation_result(result, BU_CMD_VALIDATE_VALID, argc,
+	    BU_CMD_VALUE_FLAG, "command help", NULL);
+    }
+
+    if (!operands)
+	return 0;
+
+    if (operands == 1) {
+	if (!set_comb && !set_region && cursor_arg >= argc) {
+	    comb_std_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc,
+		BU_CMD_VALUE_RAW, "boolean expression expected", NULL);
+	    comb_std_expr_candidates(result, "");
+	}
+	return 0;
+    }
+
+    if (cursor_arg <= first || cursor_arg >= argc)
+	return 0;
+
+    if (comb_std_expr_keyword(argv[cursor_arg])) {
+	comb_std_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	    BU_CMD_VALUE_KEYWORD, "boolean operator or parenthesis", NULL);
+	comb_std_expr_candidates(result, argv[cursor_arg]);
+    } else {
+	comb_std_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	    BU_CMD_VALUE_DB_OBJECT, "boolean expression object", "ged.db_object");
+    }
+    return 0;
+}
+
+static const struct bu_cmd_option comb_std_schema_options[] = {
+    BU_CMD_CUSTOM_FLAG("c", NULL, "c", struct comb_std_args, region_flag,
+	comb_std_set_non_region, "Create or mark a non-region combination"),
+    BU_CMD_ALIAS_SHORT("g", "c", 1),
+    BU_CMD_CUSTOM_FLAG("r", NULL, "r", struct comb_std_args, region_flag,
+	comb_std_set_region, "Create or mark a region"),
+    BU_CMD_FLAG("?", NULL, struct comb_std_args, help, "Print command usage"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand comb_std_schema_operands[] = {
+    BU_CMD_OPERAND("combination", BU_CMD_VALUE_STRING, 1, 1,
+	"Combination to create or modify", NULL),
+    BU_CMD_OPERAND("boolean_expression", BU_CMD_VALUE_RAW, 0,
+	BU_CMD_COUNT_UNLIMITED, "Parenthesized object boolean expression", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema comb_std_cmd_schema = {
+    "comb_std", "Create a combination from a boolean expression", comb_std_schema_options,
+    comb_std_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {comb_std_schema_validate}
+};
+static const struct bu_cmd_schema c_cmd_schema = {
+    "c", "Create a combination from a boolean expression", comb_std_schema_options,
+    comb_std_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, {comb_std_schema_validate}
+};
+
+static const struct bu_cmd_schema *
+comb_std_schema_for_command(const char *command)
+{
+    return BU_STR_EQUAL(command, "c") ? &c_cmd_schema : &comb_std_cmd_schema;
+}
+
+#define GED_COMB_STD_COMMANDS(X, XID) \
+    X(c, ged_comb_std_core, GED_CMD_DEFAULT, &c_cmd_schema) \
+    X(comb_std, ged_comb_std_core, GED_CMD_DEFAULT, &comb_std_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COMB_STD_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_comb_std", 1, GED_COMB_STD_COMMANDS)
 
 /*
  * Local Variables:

@@ -41,6 +41,7 @@
 #include "bu/hook.h"
 #include "bu/interrupt.h"
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/time.h"
 #include "bn/tol.h"
 #include "bg/spsr.h"
@@ -68,6 +69,51 @@
 #define FACETIZE_SUCCESS 0
 #define FACETIZE_FAILURE 1
 #define FACETIZE_FAILURE_PNTGEN 2
+
+
+struct old_facetize_parse_args {
+    int print_help = 0;
+    long verbosity = 0;
+    int quiet = 0;
+    int nmgbool = 0;
+    int continuation = 0;
+    int screened_poisson = 0;
+    int make_nmg = 0;
+    int nmg_use_tnurbs = 0;
+    int triangulate = 0;
+    int regions = 0;
+    int resume = 0;
+    int retry = 0;
+    int in_place = 0;
+    fastf_t feature_scale = 0.15;
+    fastf_t feature_size = 0.0;
+    fastf_t d_feature_size = 0.0;
+    int max_time = 30;
+    int max_pnts = 0;
+    int nonovlp_brep = 0;
+    fastf_t nonovlp_threshold = 0.0;
+    int manifold = 0;
+    int spsr_depth = 8;
+    fastf_t spsr_interpolate = 2.0;
+    fastf_t spsr_samples_per_node = 1.5;
+};
+
+static const struct bu_cmd_schema *old_facetize_schema(void);
+
+
+static void
+old_facetize_show_schema_help(struct ged *gedp, const char *usage)
+{
+    char *help = bu_cmd_schema_describe(old_facetize_schema());
+
+    if (usage)
+	bu_vls_strcat(gedp->ged_result_str, usage);
+    if (help) {
+	bu_vls_putc(gedp->ged_result_str, '\n');
+	bu_vls_strcat(gedp->ged_result_str, help);
+	bu_free(help, "facetize_old native schema help");
+    }
+}
 #define FACETIZE_FAILURE_PNTBBOX 3
 #define FACETIZE_FAILURE_BOTBBOX 4
 #define FACETIZE_FAILURE_BOTINVALID 5
@@ -3312,43 +3358,20 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "Usage: facetize [ -nmhT | [--NMG] [--CM] [--SPSR] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --SPSR [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
     static const char *busage = "Usage: facetize -B -t # [--max-time #] old_obj new_obj\n";
-    int print_help = 0;
     int need_help = 0;
-    int nonovlp_brep = 0;
-    long verbosity = 0;
     struct bu_list *vlfree = &rt_vlfree;
     struct _old_ged_facetize_opts *opts = _old_ged_facetize_opts_create();
-    struct bu_opt_desc d[22];
-    struct bu_opt_desc pd[4];
+    struct old_facetize_parse_args args;
 
-    BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
-    BU_OPT(d[1],  "v", "verbose",       "",  &bu_opt_incr_long,  &verbosity,  "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[2],  "q", "quiet",         "",  NULL,  &(opts->quiet),            "Suppress all output (overrides verbose flag)");
-    BU_OPT(d[3],  "",  "NMG",           "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
-    BU_OPT(d[4],  "",  "CM",            "",  NULL,  &(opts->continuation),     "Use the Continuation Method to sample the object and create output");
-    BU_OPT(d[5],  "",  "SPSR",          "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --SPSR to see more options for this mode");
-    BU_OPT(d[6],  "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
-    BU_OPT(d[7],  "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
-    BU_OPT(d[8],  "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
-    BU_OPT(d[9],  "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
-    BU_OPT(d[10], "",  "resume",        "",  NULL,  &(opts->resume),           "Resume an interrupted conversion (region mode only)");
-    BU_OPT(d[11], "",  "retry",         "",  NULL,  &(opts->retry),            "When resuming an interrupted conversion, re-try operations that previously failed (default is to not repeat previous attempts with already-attempted methods.)");
-    BU_OPT(d[12], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT(d[13], "F", "feature-scale", "#", &bu_opt_fastf_t, &(opts->feature_scale),  "Percentage of the average thickness observed by the raytracer to use for a targeted feature size.  Defaults to 0.15, overridden by --feature-size option");
-    BU_OPT(d[14], "",  "feature-size",  "#", &bu_opt_fastf_t, &(opts->feature_size),  "Explicit feature length to try for sampling based methods - overrides feature-scale.");
-    BU_OPT(d[15], "", "decimation-feature-size",  "#", &bu_opt_fastf_t, &(opts->d_feature_size),  "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
-    BU_OPT(d[16], "",  "max-time",      "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
-    BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT(d[18], "B",  "",             "",  NULL,  &nonovlp_brep,              "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &(opts->nonovlp_threshold),  "EXPERIMENTAL: max ovlp threshold length.");
-    BU_OPT(d[20],  "",  "MANIFOLD",           "",  NULL,  &(opts->manifold),          "Use the experimental MANIFOLD boolean evaluation");
-    BU_OPT_NULL(d[21]);
-
-    /* Poisson specific options */
-    BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
-    BU_OPT(pd[1], "w", "interpolate",      "#", &bu_opt_fastf_t, &(opts->s_opts.point_weight),     "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
-    BU_OPT(pd[2], "",  "samples-per-node", "#", &bu_opt_fastf_t, &(opts->s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
-    BU_OPT_NULL(pd[3]);
+    args.feature_scale = opts->feature_scale;
+    args.feature_size = opts->feature_size;
+    args.d_feature_size = opts->d_feature_size;
+    args.max_time = opts->max_time;
+    args.max_pnts = opts->max_pnts;
+    args.nonovlp_threshold = opts->nonovlp_threshold;
+    args.spsr_depth = opts->s_opts.depth;
+    args.spsr_interpolate = opts->s_opts.point_weight;
+    args.spsr_samples_per_node = opts->s_opts.samples_per_node;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -3360,18 +3383,41 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* parse standard options */
+    /* Parse the complete native option grammar, including SPSR controls. */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    argc = bu_opt_parse(&omsg, argc, argv, d);
-    if (argc < 0) {
+    int operand_start = bu_cmd_schema_parse(old_facetize_schema(), &args, &omsg, argc, argv);
+    if (operand_start < 0) {
 	bu_vls_printf(gedp->ged_result_str, "option parsing failed: %s\n", bu_vls_cstr(&omsg));
 	ret = BRLCAD_ERROR;
 	bu_vls_free(&omsg);
 	goto ged_facetize_memfree;
     }
     bu_vls_free(&omsg);
+    argc -= operand_start;
+    argv += operand_start;
 
-    opts->verbosity = (int)verbosity;
+    opts->quiet = args.quiet;
+    opts->verbosity = (int)args.verbosity;
+    opts->nmgbool = args.nmgbool;
+    opts->continuation = args.continuation;
+    opts->screened_poisson = args.screened_poisson;
+    opts->make_nmg = args.make_nmg;
+    opts->nmg_use_tnurbs = args.nmg_use_tnurbs;
+    opts->triangulate = args.triangulate;
+    opts->regions = args.regions;
+    opts->resume = args.resume;
+    opts->retry = args.retry;
+    opts->in_place = args.in_place;
+    opts->feature_scale = args.feature_scale;
+    opts->feature_size = args.feature_size;
+    opts->d_feature_size = args.d_feature_size;
+    opts->max_time = args.max_time;
+    opts->max_pnts = args.max_pnts;
+    opts->nonovlp_threshold = args.nonovlp_threshold;
+    opts->manifold = args.manifold;
+    opts->s_opts.depth = args.spsr_depth;
+    opts->s_opts.point_weight = args.spsr_interpolate;
+    opts->s_opts.samples_per_node = args.spsr_samples_per_node;
 
     /* It is known that libnmg will (as of 2018 anyway) throw a lot of
      * bu_bomb calls during operation. Because we need facetize to run
@@ -3408,17 +3454,6 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
 	if (opts->continuation) opts->method_flags |= FACETIZE_CONTINUATION;
     }
 
-    if (opts->method_flags & FACETIZE_SPSR) {
-	/* Parse Poisson specific options, if we might be using that method */
-	argc = bu_opt_parse(NULL, argc, argv, pd);
-
-	if (argc < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
-	    ret = BRLCAD_ERROR;
-	    goto ged_facetize_memfree;
-	}
-    }
-
     /* Check for a couple of non-valid combinations */
     if ((opts->method_flags == FACETIZE_SPSR || opts->method_flags == FACETIZE_CONTINUATION || opts->method_flags == FACETIZE_MANIFOLD) && opts->nmg_use_tnurbs) {
 	bu_vls_printf(gedp->ged_result_str, "Note: Specified reconstruction method(s) do not all support TNURBS output\n");
@@ -3440,24 +3475,17 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Check if we want/need help */
     need_help += (argc < 1);
-    need_help += (argc < 2 && !opts->in_place && !opts->resume && !nonovlp_brep);
-    if (print_help || need_help || argc < 1) {
-	if (nonovlp_brep) {
-	    _ged_cmd_help(gedp, busage, d);
-	    ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;
-	    goto ged_facetize_memfree;
-	}
-
-	_ged_cmd_help(gedp, usage, d);
-	if (opts->method_flags & FACETIZE_SPSR) {
-	    _ged_cmd_help(gedp, pusage, pd);
-	}
-	ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;
+    need_help += (argc < 2 && !opts->in_place && !opts->resume && !args.nonovlp_brep);
+    if (args.print_help || need_help || argc < 1) {
+	old_facetize_show_schema_help(gedp, args.nonovlp_brep ? busage : usage);
+	if (opts->method_flags & FACETIZE_SPSR)
+	    bu_vls_printf(gedp->ged_result_str, "%s", pusage);
+	ret = args.print_help ? BRLCAD_OK : (need_help ? BRLCAD_ERROR : BRLCAD_OK);
 	goto ged_facetize_memfree;
     }
 
     /* If we're doing the experimental brep-only logic, it's a separate process */
-    if (nonovlp_brep) {
+    if (args.nonovlp_brep) {
 	if (NEAR_ZERO(opts->nonovlp_threshold, SMALL_FASTF)) {
 	    bu_vls_printf(gedp->ged_result_str, "-B option requires a specified length threshold\n");
 	    return BRLCAD_ERROR;
@@ -3485,11 +3513,56 @@ ged_facetize_memfree:
 
 #include "../include/plugin.h"
 
-#define GED_OLD_FACETIZE_COMMANDS(X, XID) \
-    X(facetize_old, ged_facetize_old_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_option old_facetize_options[] = {
+    BU_CMD_FLAG("h", "help", old_facetize_parse_args, print_help, "Print help and exit"),
+    BU_CMD_COUNTING_LONG_FLAG("v", "verbose", old_facetize_parse_args, verbosity, "Verbose output"),
+    BU_CMD_FLAG("q", "quiet", old_facetize_parse_args, quiet, "Suppress output"),
+    BU_CMD_FLAG(NULL, "NMG", old_facetize_parse_args, nmgbool, "Use standard libnmg Boolean evaluation"),
+    BU_CMD_FLAG(NULL, "CM", old_facetize_parse_args, continuation, "Use Continuation Method sampling"),
+    BU_CMD_FLAG(NULL, "SPSR", old_facetize_parse_args, screened_poisson, "Use SPSR ray-sampled output"),
+    BU_CMD_FLAG("n", NULL, old_facetize_parse_args, make_nmg, "Create NMG output"),
+    BU_CMD_FLAG(NULL, "TNURB", old_facetize_parse_args, nmg_use_tnurbs, "Create TNURB faces"),
+    BU_CMD_FLAG("T", "triangles", old_facetize_parse_args, triangulate, "Use only triangles for NMG output"),
+    BU_CMD_FLAG("r", "regions", old_facetize_parse_args, regions, "Facetize regions separately"),
+    BU_CMD_FLAG(NULL, "resume", old_facetize_parse_args, resume, "Resume region conversion"),
+    BU_CMD_FLAG(NULL, "retry", old_facetize_parse_args, retry, "Retry failed resumed operations"),
+    BU_CMD_FLAG(NULL, "in-place", old_facetize_parse_args, in_place, "Replace the input object"),
+    BU_CMD_NUMBER("F", "feature-scale", old_facetize_parse_args, feature_scale, "scale", "Sampling feature scale"),
+    BU_CMD_NUMBER(NULL, "feature-size", old_facetize_parse_args, feature_size, "length", "Explicit sampling feature size"),
+    BU_CMD_NUMBER(NULL, "decimation-feature-size", old_facetize_parse_args, d_feature_size, "length", "Decimation feature size"),
+    BU_CMD_INTEGER(NULL, "max-time", old_facetize_parse_args, max_time, "seconds", "Maximum processing time"),
+    BU_CMD_INTEGER(NULL, "max-pnts", old_facetize_parse_args, max_pnts, "count", "Maximum sampling points"),
+    BU_CMD_FLAG("B", NULL, old_facetize_parse_args, nonovlp_brep, "Use non-overlapping BREP mode"),
+    BU_CMD_NUMBER("t", "threshold", old_facetize_parse_args, nonovlp_threshold, "length", "Non-overlap threshold"),
+    BU_CMD_FLAG(NULL, "MANIFOLD", old_facetize_parse_args, manifold, "Use Manifold Boolean evaluation"),
+    BU_CMD_INTEGER("d", "depth", old_facetize_parse_args, spsr_depth, "levels", "SPSR reconstruction depth"),
+    BU_CMD_NUMBER("w", "interpolate", old_facetize_parse_args, spsr_interpolate, "weight", "SPSR interpolation weight"),
+    BU_CMD_NUMBER(NULL, "samples-per-node", old_facetize_parse_args, spsr_samples_per_node, "count", "SPSR samples per node"),
+    BU_CMD_OPTION_NULL
+};
 
-GED_DECLARE_COMMAND_SET(GED_OLD_FACETIZE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_facetize_old", 1, GED_OLD_FACETIZE_COMMANDS)
+static const struct bu_cmd_operand old_facetize_operands[] = {
+    BU_CMD_OPERAND("input_or_output_object", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Legacy facetization objects and output name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+static const struct bu_cmd_schema old_facetize_cmd_schema = {
+    "facetize_old", "Legacy geometry facetization", old_facetize_options, old_facetize_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static const struct bu_cmd_schema *
+old_facetize_schema(void)
+{
+    return &old_facetize_cmd_schema;
+}
+
+#define GED_OLD_FACETIZE_COMMANDS(X, XID) \
+    X(facetize_old, ged_facetize_old_core, GED_CMD_DEFAULT, &old_facetize_cmd_schema) \
+
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_OLD_FACETIZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_facetize_old", 1, GED_OLD_FACETIZE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

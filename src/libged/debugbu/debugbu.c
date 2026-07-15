@@ -67,12 +67,13 @@ ged_debugbu_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 #include "../include/plugin.h"
+GED_DEFINE_TYPED_OPERAND_SCHEMA(debugbu, "debugbu", "Query or set libbu debug flags", "mask", BU_CMD_VALUE_INTEGER, 0, 1, "Optional hexadecimal debug mask");
 
 #define GED_DEBUGBU_COMMANDS(X, XID) \
-    X(debugbu, ged_debugbu_core, GED_CMD_DEFAULT) \
+    X(debugbu, ged_debugbu_core, GED_CMD_DEFAULT, &debugbu_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_DEBUGBU_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_debugbu", 1, GED_DEBUGBU_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_DEBUGBU_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_debugbu", 1, GED_DEBUGBU_COMMANDS)
 
 /*
  * Local Variables:

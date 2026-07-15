@@ -113,6 +113,12 @@ Conflicts with *-w* and *-f*.
 Use *comb combination lift* for the command form.
 
 
+*-d*::
+Decimates the BoT members below an existing combination. This action accepts
+only the combination name and cannot be combined with the other *comb* action
+or region-setting options.
+
+
 *-S*::
 Stop if the combination object already exists.
 

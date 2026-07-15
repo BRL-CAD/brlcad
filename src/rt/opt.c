@@ -32,10 +32,10 @@
 #include <string.h>
 
 #include "bu/debug.h"
+#include "bu/cmdschema.h"
 #include "bu/file.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/units.h"
 #include "bn/str.h"
@@ -218,22 +218,94 @@ increase_level(unsigned int bits)
 static int want_help = 0;
 
 
+#define RT_OPT_REQUIRE_ARG(_msg, _argc, _argv, _name) do { \
+    if ((_argc) < 1 || !(_argv) || !(_argv)[0] || (_argv)[0][0] == '\0') { \
+	if ((_msg)) \
+	    bu_vls_printf((_msg), "ERROR: missing required argument: %s\\n", (_name)); \
+	return -1; \
+    } \
+} while (0)
+
+
+typedef int (*rt_option_process_t)(struct bu_vls *msg, size_t argc,
+	const char **argv, void *set_var);
+
+
+struct rt_option_adapter {
+    rt_option_process_t process;
+    void *set_var;
+};
+
+
+enum rt_option_id {
+    RT_OPT_OUTPUT = 0,
+    RT_OPT_OUTPUT_DOUBLE,
+    RT_OPT_FRAMEBUFFER,
+    RT_OPT_SIZE,
+    RT_OPT_WIDTH,
+    RT_OPT_HEIGHT,
+    RT_OPT_BACKGROUND,
+    RT_OPT_WHITE_BACKGROUND,
+    RT_OPT_REPORT_OVERLAPS,
+    RT_OPT_NO_OVERLAP_REPORT,
+    RT_OPT_AZIMUTH,
+    RT_OPT_ELEVATION,
+    RT_OPT_PERSPECTIVE,
+    RT_OPT_EYE_BACKOFF,
+    RT_OPT_VIEW_ASPECT,
+    RT_OPT_READ_MATRIX,
+    RT_OPT_CELL_WIDTH,
+    RT_OPT_CELL_HEIGHT,
+    RT_OPT_SUBGRID,
+    RT_OPT_CUT_PLANE,
+    RT_OPT_AMBIENT,
+    RT_OPT_LIGHT_MODEL,
+    RT_OPT_HAZE,
+    RT_OPT_INCREMENTAL,
+    RT_OPT_TOP_DOWN,
+    RT_OPT_STEREO,
+    RT_OPT_HYPERSAMPLE,
+    RT_OPT_JITTER,
+    RT_OPT_UNITS,
+    RT_OPT_USE_AIR,
+    RT_OPT_TOLERANCE,
+    RT_OPT_OPENCL,
+    RT_OPT_COMMAND,
+    RT_OPT_DENSITY_FILE,
+    RT_OPT_START_FRAME,
+    RT_OPT_END_FRAME,
+    RT_OPT_SINGLE_PIXEL,
+    RT_OPT_QUERY_PIXEL,
+    RT_OPT_OBJECTS_FILE,
+    RT_OPT_TEXT_OUTPUT,
+    RT_OPT_RAND_TABLE,
+    RT_OPT_VERBOSE,
+    RT_OPT_RT_DEBUG,
+    RT_OPT_OPTICAL_DEBUG,
+    RT_OPT_NMG_DEBUG,
+    RT_OPT_BU_DEBUG,
+    RT_OPT_CPUS,
+    RT_OPT_BENCHMARK,
+    RT_OPT_SPACE_PARTITION,
+    RT_OPT_HELP,
+    RT_OPT_COUNT
+};
+
+
+struct rt_parse_args {
+    struct rt_option_adapter handlers[RT_OPT_COUNT];
+};
+
+
 /* =======================================================================
- * bu_opt argument-process callbacks
+ * Native-schema option handlers
  *
- * Each callback follows the bu_opt_arg_process_t contract:
- *   returns -1  on error
- *   returns  0  if no argv entry was consumed (flag-style option)
- *   returns  N  (>0) for the number of argv entries consumed
+ * Each handler returns -1 for an error, zero for a flag, or the number of
+ * consumed words for the native adapter.
  *
- * IMPORTANT: several callbacks below have cumulative side-effects (they
- * modify global counters).  bu_opt_parse() calls a callback speculatively
- * via opt_is_flag() – with msg==NULL – to decide whether a combined
- * single-dash string (e.g. "-vvv") should be treated as grouped flags or
- * as one flag with an embedded argument.  To prevent double-counting, all
- * non-idempotent callbacks guard their side-effects behind a (msg != NULL)
- * check.  Idempotent callbacks (those that simply assign a value) need no
- * such guard.
+ * The grammar adapter invokes each handler exactly once.  A few historical
+ * handlers retain their msg!=NULL guard so the same code remains safe for
+ * direct validation callers.
  * ======================================================================= */
 
 
@@ -242,7 +314,7 @@ static int
 rt_opt_rand_table(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     int i;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "rand-table-size");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "rand-table-size");
     i = atoi(argv[0]);
     if (i <= 0)
 	bu_exit(EXIT_FAILURE, "-q %d is < 0\n", i);
@@ -258,7 +330,7 @@ static int
 rt_opt_haze(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     int n;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "haze");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "haze");
     n = sscanf(argv[0], "%lg,%lg,%lg,%lg",
 	       &airdensity, &haze[RED], &haze[GRN], &haze[BLU]);
     if (n != 4) {
@@ -277,7 +349,7 @@ static int
 rt_opt_subgrid(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     char *cp;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "subgrid");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "subgrid");
     cp = (char *)argv[0];
     sub_xmin = atoi(cp);
     while (*cp >= '0' && *cp <= '9') cp++;
@@ -314,7 +386,7 @@ rt_opt_cut_plane(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSE
     double scan[6];
     int n;
     size_t i, j, len;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "cut-plane");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "cut-plane");
     do_kut_plane = 1;
 
     len = strlen(arg);
@@ -374,8 +446,8 @@ static int
 rt_opt_comma_disabled(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *UNUSED(set_var))
 {
     /* Use bu_exit so that this path is safe even when called from
-     * bu_opt_parse's opt_is_flag() probe (msg == NULL) or from
-     * the main processing pass.  We never want to silently continue. */
+     * a direct validation call (msg == NULL) or the normal parsing pass.  We
+     * never want to silently continue. */
     bu_exit(EXIT_FAILURE,
 	    "ERROR: the -,N space-partition option is temporarily disabled.\n"
 	    "       Long-option support (--space-partition) will be enabled in a future update.\n");
@@ -387,7 +459,7 @@ rt_opt_comma_disabled(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const cha
 static int
 rt_opt_command(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "command");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "command");
     (void)rt_do_cmd((struct rt_i *)0, argv[0], rt_do_tab);
     return 1;
 }
@@ -399,7 +471,7 @@ rt_opt_bgcolor(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(
 {
     struct bu_color color = BU_COLOR_INIT_ZERO;
     char buf[128] = {0};
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "background");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "background");
     if (!bu_color_from_str(&color, argv[0]))
 	bu_exit(EXIT_FAILURE, "ERROR: invalid color string: '%s'\n", argv[0]);
     snprintf(buf, sizeof(buf), "set background=%f/%f/%f",
@@ -415,7 +487,7 @@ rt_opt_tolerance(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSE
 {
     double f = 0;
     const char *cp;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "tolerance");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "tolerance");
     if (sscanf(argv[0], "%lf", &f) == 1) {
 	if (f > 0)
 	    rt_dist_tol = f;
@@ -440,7 +512,7 @@ rt_opt_objects_file(struct bu_vls *msg, size_t argc, const char **argv, void *UN
     FILE *objsfile = NULL;
     struct bu_vls oline = BU_VLS_INIT_ZERO;
     int oid;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "objects-file");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "objects-file");
     if (!bu_file_exists(argv[0], NULL))
 	bu_exit(1, "Object list file %s not found, aborting\n", argv[0]);
     if ((objsfile = fopen(argv[0], "r")) == NULL)
@@ -472,7 +544,7 @@ rt_opt_objects_file(struct bu_vls *msg, size_t argc, const char **argv, void *UN
 static int
 rt_opt_jitter(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "jitter");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "jitter");
     sscanf(argv[0], "%x", &jitter);
     return 1;
 }
@@ -482,7 +554,7 @@ rt_opt_jitter(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(s
 static int
 rt_opt_hypersample(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "hypersample");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "hypersample");
     hypersample = atoi(argv[0]);
     if (hypersample > 0)
 	jitter = 1;
@@ -490,11 +562,11 @@ rt_opt_hypersample(struct bu_vls *msg, size_t argc, const char **argv, void *UNU
 }
 
 
-/* -F / --framebuffer  fb  (framebuffer is char*, so can't use bu_opt_str directly) */
+/* -F / --framebuffer  fb */
 static int
 rt_opt_framebuffer(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "framebuffer");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "framebuffer");
     framebuffer = (char *)argv[0];
     return 1;
 }
@@ -504,7 +576,7 @@ rt_opt_framebuffer(struct bu_vls *msg, size_t argc, const char **argv, void *UNU
 static int
 rt_opt_nmg_debug(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "nmg-debug");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "nmg-debug");
     sscanf(argv[0], "%x", (unsigned int *)&nmg_debug);
     bu_log("NMG_debug=0x%x\n", nmg_debug);
     return 1;
@@ -515,7 +587,7 @@ rt_opt_nmg_debug(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSE
 static int
 rt_opt_rt_debug(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "rt-debug");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "rt-debug");
     sscanf(argv[0], "%x", (unsigned int *)&rt_debug);
     return 1;
 }
@@ -525,7 +597,7 @@ rt_opt_rt_debug(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED
 static int
 rt_opt_optical_debug(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "optical-debug");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "optical-debug");
     sscanf(argv[0], "%x", (unsigned int *)&optical_debug);
     return 1;
 }
@@ -535,7 +607,7 @@ rt_opt_optical_debug(struct bu_vls *msg, size_t argc, const char **argv, void *U
 static int
 rt_opt_bu_debug_cb(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu-debug");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "bu-debug");
     sscanf(argv[0], "%x", (unsigned int *)&bu_debug);
     return 1;
 }
@@ -546,7 +618,7 @@ static int
 rt_opt_size(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     int i;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "size");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "size");
     i = atoi(argv[0]);
     if (i < 1 || i > MAX_WIDTH)
 	fprintf(stderr, "squaresize=%d out of range\n", i);
@@ -561,7 +633,7 @@ static int
 rt_opt_height(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     int i;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "height");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "height");
     i = atoi(argv[0]);
     if (i < 1 || i > MAX_WIDTH)
 	fprintf(stderr, "height=%d out of range\n", i);
@@ -588,11 +660,15 @@ static int
 rt_opt_ambient(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     fastf_t tmp = (fastf_t)0.0;
-    int ret;
-    ret = bu_opt_fastf_t(msg, argc, argv, &tmp);
-    if (ret > 0)
-	AmbientIntensity = tmp;
-    return ret;
+
+    if (argc < 1 || !argv || !argv[0] || !bu_cmd_number_from_str(&tmp, argv[0])) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid ambient intensity: %s\n",
+		(argc && argv && argv[0]) ? argv[0] : "");
+	return -1;
+    }
+    AmbientIntensity = tmp;
+    return 1;
 }
 
 
@@ -601,7 +677,7 @@ static int
 rt_opt_width(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     int i;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "width");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "width");
     i = atoi(argv[0]);
     if (i < 1 || i > MAX_WIDTH)
 	fprintf(stderr, "width=%d out of range\n", i);
@@ -615,7 +691,7 @@ rt_opt_width(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(se
 static int
 rt_opt_cell_width(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "cell-width");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "cell-width");
     cell_width = atof(argv[0]);
     cell_newsize = 1;
     return 1;
@@ -626,7 +702,7 @@ rt_opt_cell_width(struct bu_vls *msg, size_t argc, const char **argv, void *UNUS
 static int
 rt_opt_cell_height(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "cell-height");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "cell-height");
     cell_height = atof(argv[0]);
     cell_newsize = 1;
     return 1;
@@ -637,7 +713,7 @@ rt_opt_cell_height(struct bu_vls *msg, size_t argc, const char **argv, void *UNU
 static int
 rt_opt_azimuth(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "azimuth");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "azimuth");
     if (bn_decode_angle(&azimuth, argv[0]) == 0)
 	fprintf(stderr, "WARNING: Unexpected units for azimuth angle, using default value\n");
     matflag = 0;
@@ -649,7 +725,7 @@ rt_opt_azimuth(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(
 static int
 rt_opt_elevation(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "elevation");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "elevation");
     if (bn_decode_angle(&elevation, argv[0]) == 0)
 	fprintf(stderr, "WARNING: Unexpected units for elevation angle, using default value\n");
     matflag = 0;
@@ -661,7 +737,7 @@ rt_opt_elevation(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSE
 static int
 rt_opt_light_model(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "light-model");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "light-model");
     /* Get the lighting model number first; only strdup for photon-mapping args */
     lightmodel = atoi(argv[0]);
     if (lightmodel == 7) {
@@ -702,7 +778,7 @@ rt_opt_light_model(struct bu_vls *msg, size_t argc, const char **argv, void *UNU
 static int
 rt_opt_output_double(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "output-double");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "output-double");
     outputfile = (char *)argv[0];
     doubles_out = 1;
     return 1;
@@ -713,7 +789,7 @@ rt_opt_output_double(struct bu_vls *msg, size_t argc, const char **argv, void *U
 static int
 rt_opt_output(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "output");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "output");
     outputfile = (char *)argv[0];
     doubles_out = 0;
     return 1;
@@ -724,7 +800,7 @@ rt_opt_output(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(s
 static int
 rt_opt_perspective(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "perspective");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "perspective");
     rt_perspective = atof(argv[0]);
     if (rt_perspective < 0 || rt_perspective > 179) {
 	fprintf(stderr, "persp=%g out of range\n", rt_perspective);
@@ -738,7 +814,7 @@ rt_opt_perspective(struct bu_vls *msg, size_t argc, const char **argv, void *UNU
 static int
 rt_opt_units(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "units");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "units");
     if (BU_STR_EQUAL(argv[0], "model")) {
 	model_units = 1;
 	default_units = 0;
@@ -764,9 +840,8 @@ rt_opt_units(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(se
  *   -vvvv       -> embedded string "vvv" after the first 'v' char
  *   -v 0xfff    -> separate next argument "0xfff"
  *
- * SIDE-EFFECT GUARD: bu_opt_parse() probes callbacks speculatively via
- * opt_is_flag() with msg==NULL.  Non-idempotent operations are guarded by
- * (msg != NULL) to prevent double-counting on those probe calls.
+ * The native grammar adapter invokes this once.  The msg guard also keeps it
+ * suitable for side-effect-free validation callers.
  */
 static int
 rt_opt_verbose(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
@@ -820,7 +895,7 @@ rt_opt_verbose(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(
 static int
 rt_opt_cpus(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "cpus");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "cpus");
     npsw = (ssize_t)atoi(argv[0]);
     return 1;
 }
@@ -830,7 +905,7 @@ rt_opt_cpus(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set
 static int
 rt_opt_query_pixel(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "query-pixel");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "query-pixel");
     Query_one_pixel = !Query_one_pixel;
     sscanf(argv[0], "%d,%d", &query_x, &query_y);
     return 1;
@@ -851,7 +926,7 @@ rt_opt_benchmark(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **U
 static int
 rt_opt_single_pixel(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "single-pixel");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "single-pixel");
     string_pix_start = (char *)argv[0];
     npsw = 1; /* cancel running in parallel */
     return 1;
@@ -864,7 +939,7 @@ rt_opt_view_aspect(struct bu_vls *msg, size_t argc, const char **argv, void *UNU
 {
     fastf_t xx, yy;
     char *cp;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "view-aspect");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "view-aspect");
     cp = (char *)argv[0];
     xx = atof(cp);
     while ((*cp >= '0' && *cp <= '9') || *cp == '.') cp++;
@@ -895,7 +970,7 @@ rt_opt_no_overlap(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **
 static int
 rt_opt_plus(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "+");
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "+");
     switch (argv[0][0]) {
 	case 't':
 	    output_is_binary = 0;
@@ -907,155 +982,268 @@ rt_opt_plus(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set
 }
 
 
-/* =======================================================================
- * Option descriptor table
- *
- * Each row is:  { shortopt, longopt, arg_helpstr, callback, set_var, help }
- * ======================================================================= */
+static int
+rt_opt_flag_set(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	const char **UNUSED(argv), void *set_var)
+{
+    if (!set_var)
+	return -1;
+    *((int *)set_var) = 1;
+    return 0;
+}
 
-static struct bu_opt_desc opt_defs[] = {
-    /* --- Output -------------------------------------------------------- */
-    {"o",  "output",          "file",    rt_opt_output,        NULL,
-     "Output image file (e.g. image.pix or image.png)"},
-    {"O",  "output-double",   "file",    rt_opt_output_double, NULL,
-     "Output double-precision .dpix file"},
-    {"F",  "framebuffer",     "fb",      rt_opt_framebuffer,   NULL,
-     "Render to named framebuffer (see FB_FILE)"},
 
-    /* --- Image dimensions ---------------------------------------------- */
-    {"s",  "size",            "#",       rt_opt_size,          NULL,
-     "Square image size in pixels (default 512)"},
-    {"w",  "width",           "#",       rt_opt_width,         NULL,
-     "Image width in pixels"},
-    {"n",  "height",          "#",       rt_opt_height,        NULL,
-     "Image height in scanlines"},
+static int
+rt_opt_integer_set(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    int value;
 
-    /* --- Background / overlaps ----------------------------------------- */
-    {"C",  "background",      "#/#/#",   rt_opt_bgcolor,       NULL,
-     "Background color R/G/B (0-255 or 0.0-1.0)"},
-    {"W",  "white-background","",        rt_opt_white_bg,      NULL,
-     "White background (255/255/254)"},
-    {"r",  "report-overlaps", "",        NULL,       &rpt_overlap,
-     "Report overlapping region names (on by default)"},
-    {"R",  "no-overlap-report","",       rt_opt_no_overlap,    NULL,
-     "Suppress overlap region name reports"},
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "integer");
+    if (!set_var || !bu_cmd_integer_from_str(&value, argv[0])) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid integer: %s\n", argv[0]);
+	return -1;
+    }
+    *((int *)set_var) = value;
+    return 1;
+}
 
-    /* --- View / camera ------------------------------------------------- */
-    {"a",  "azimuth",         "deg",     rt_opt_azimuth,       NULL,
-     "Auto-size: view azimuth in degrees (conflicts with -M)"},
-    {"e",  "elevation",       "deg",     rt_opt_elevation,     NULL,
-     "Auto-size: view elevation in degrees (conflicts with -M)"},
-    {"p",  "perspective",     "deg",     rt_opt_perspective,   NULL,
-     "Perspective angle in degrees (0 <= deg < 180; 0 = ortho)"},
-    {"E",  "eye-backoff",     "#",       bu_opt_fastf_t,       &eye_backoff,
-     "Distance from eye to model center (default sqrt(2))"},
-    {"V",  "view-aspect",     "#[:#]",   rt_opt_view_aspect,   NULL,
-     "View aspect ratio width/height (e.g. 1.33 or 4:3)"},
-    {"M",  "read-matrix",     "",        NULL,       &matflag,
-     "Read model2view matrix (+ animation script) from stdin"},
 
-    /* --- Grid / cells -------------------------------------------------- */
-    {"g",  "cell-width",      "mm",      rt_opt_cell_width,    NULL,
-     "Grid cell width in mm"},
-    {"G",  "cell-height",     "mm",      rt_opt_cell_height,   NULL,
-     "Grid cell height in mm"},
-    {"j",  "subgrid",         "xmin,ymin,xmax,ymax", rt_opt_subgrid, NULL,
-     "Raytrace only a sub-rectangle of the view"},
-    {"k",  "cut-plane",       "xdir,ydir,zdir,dist | x,y,z,nx,ny,nz | x,y,z", rt_opt_cut_plane, NULL,
-     "Apply a cutting plane (equivalent to subtracting a halfspace)"},
+static int
+rt_opt_number_set(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    fastf_t value;
 
-    /* --- Rendering parameters ------------------------------------------ */
-    {"A",  "ambient",         "#",       rt_opt_ambient,   NULL,
-     "Ambient light intensity as a fraction 0.0-1.0"},
-    {"l",  "light-model",     "#[,args]",rt_opt_light_model,   NULL,
-     "Select lighting model (default 0; use -l7,... for photon mapping)"},
-    {"m",  "haze",            "d,r,g,b", rt_opt_haze,          NULL,
-     "Atmospheric haze: density and RGB color (e.g. 2.5e-8,.75,.95,.99)"},
-    {"i",  "incremental",     "",        NULL,       &incr_mode,
-     "Incremental (progressive) rendering"},
-    {"t",  "top-down",        "",        NULL,       &top_down,
-     "Render top-to-bottom (default is bottom-up)"},
-    {"S",  "stereo",          "",        NULL,       &stereo,
-     "Stereo viewing (left eye = red, right eye = blue)"},
-    {"H",  "hypersample",     "#",       rt_opt_hypersample,   NULL,
-     "Number of extra rays per pixel (also enables -J 1)"},
-    {"J",  "jitter",          "#",       rt_opt_jitter,        NULL,
-     "Ray jitter bit vector (1=cell jitter, 2=frame shift, 3=both)"},
-    {"u",  "units",           "units",   rt_opt_units,         NULL,
-     "Display units (\"model\" uses model-space units)"},
-    {"U",  "use-air",         "#",       bu_opt_int, &use_air,
-     "Whether librt retains air-coded regions (0=off default, 1=on)"},
-    {"T",  "tolerance",       "#[/#]",   rt_opt_tolerance,     NULL,
-     "Geometry tolerances: dist[/perp] (default 0.005/1e-6)"},
-    {"z",  "opencl",          "#",       bu_opt_int, &opencl_mode,
-     "Enable OpenCL-accelerated raytracing (must be compiled in)"},
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "number");
+    if (!set_var || !bu_cmd_number_from_str(&value, argv[0])) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid number: %s\n", argv[0]);
+	return -1;
+    }
+    *((fastf_t *)set_var) = value;
+    return 1;
+}
 
-    /* --- Animation / scripting ----------------------------------------- */
-    {"c",  "command",         "cmd",     rt_opt_command,       NULL,
-     "Execute an rt script command before raytracing"},
-    {"d",  "density-file",    "file",    bu_opt_str, &densityfile,
-     "Density definitions file"},
-    {"D",  "start-frame",     "#",       bu_opt_int, &desiredframe,
-     "Starting frame number for animation"},
-    {"K",  "end-frame",       "#",       bu_opt_int, &finalframe,
-     "Ending (kill-after) frame number for animation"},
 
-    /* --- Single-pixel / sub-image ------------------------------------- */
-    {"b",  "single-pixel",    "\"x y\"", rt_opt_single_pixel,  NULL,
-     "Shoot one debug ray at pixel (x, y); forces serial execution"},
-    {"Q",  "query-pixel",     "x,y",     rt_opt_query_pixel,   NULL,
-     "Compute full image but enable debug for pixel (x,y)"},
+static int
+rt_opt_string_set(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    RT_OPT_REQUIRE_ARG(msg, argc, argv, "string");
+    if (!set_var)
+	return -1;
+    *((const char **)set_var) = argv[0];
+    return 1;
+}
 
-    /* --- Object input -------------------------------------------------- */
-    {"I",  "objects-file",    "file",    rt_opt_objects_file,  NULL,
-     "Load object names from a text file (one per line)"},
 
-    /* --- Output format ------------------------------------------------- */
-    {"+",  "text-output",     "t",       rt_opt_plus,          NULL,
-     "Output mode modifier: 't' selects non-binary (text) output"},
+static int
+rt_option_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
+{
+    struct rt_option_adapter *adapter = (struct rt_option_adapter *)storage;
+    int ret;
 
-    /* --- Random-table size (DEPRECATED SHORT FORM: -q commonly means --quiet) */
-    {"q",  "rand-table-size", "#",       rt_opt_rand_table,    NULL,
-     "Size of random-number half-table (default BN_RANDHALFTABSIZE)"},
+    if (!adapter || !adapter->process)
+	return -1;
+    ret = adapter->process(msg, argc, argv, adapter->set_var);
+    return ret < 0 ? -1 : 0;
+}
 
-    /* --- Developer / debugging ----------------------------------------- */
-    {"v",  "verbose",         "[#]",     rt_opt_verbose,       NULL,
-     "Verbosity level; repeat (-vvvv) or give hex value (-v 0xff010030)"},
-    {"x",  "rt-debug",        "#",       rt_opt_rt_debug,      NULL,
-     "librt debug flags (hexadecimal bit vector, see raytrace.h)"},
-    {"X",  "optical-debug",   "#",       rt_opt_optical_debug, NULL,
-     "rt optical/program debug flags (hexadecimal)"},
-    {"N",  "nmg-debug",       "#",       rt_opt_nmg_debug,     NULL,
-     "libnmg debug flags (hexadecimal, see nmg.h)"},
-    {"!",  "bu-debug",        "#",       rt_opt_bu_debug_cb,   NULL,
-     "libbu debug flags (hexadecimal, see bu.h); -!1 causes bu_bomb core dump"},
-    {"P",  "cpus",            "#",       rt_opt_cpus,          NULL,
-     "Max processor cores to use (negative = all but N)"},
-    {"B",  "benchmark",       "",        rt_opt_benchmark,     NULL,
-     "Benchmark mode: disable all intentional randomness (dither, etc.)"},
 
-    /* --- Space partition (temporarily disabled) ------------------------ */
-    {",",  "",                "",        rt_opt_comma_disabled,NULL,
-     "Space partition algorithm selector (temporarily disabled)"},
+static int
+rt_option_flag(struct bu_vls *msg, const char *UNUSED(arg), void *storage)
+{
+    return rt_option_consume(msg, 0, NULL, storage);
+}
 
-    /* --- Help ---------------------------------------------------------- */
-    {"h",  "help",            "",        NULL, &want_help,
-     "Print help and exit"},
-    {"?",  "",                "",        NULL, &want_help,
-     "Print help and exit"},
 
-    BU_OPT_DESC_NULL
+static size_t
+rt_verbose_argument_tokens(size_t available, const char **argv)
+{
+    const char *arg;
+
+    if (!available || !argv || !argv[0])
+	return 0;
+    arg = argv[0];
+    return (arg[0] == 'v' || isxdigit((unsigned char)arg[0])) ? 1 : 0;
+}
+
+
+static const struct bu_cmd_arg_shape rt_verbose_argument_shape = {
+    BU_CMD_ARG_SHAPE_CUSTOM, 0, 1, "optional verbosity level", rt_verbose_argument_tokens
 };
+
+
+#define RT_OPTION(_short, _long, _id, _arg, _help) \
+    BU_CMD_OPTION_SHAPED(_short, _long, _long, struct rt_parse_args, handlers[_id], \
+	BU_CMD_VALUE_CUSTOM, _arg, _help, BU_CMD_ARG_REQUIRED, NULL, rt_option_consume)
+#define RT_FLAG(_short, _long, _id, _help) \
+    BU_CMD_CUSTOM_FLAG(_short, _long, _long, struct rt_parse_args, handlers[_id], rt_option_flag, _help)
+
+
+static const struct bu_cmd_option rt_options[] = {
+    RT_OPTION("o", "output", RT_OPT_OUTPUT, "file", "Output image file (for example image.pix or image.png)."),
+    RT_OPTION("O", "output-double", RT_OPT_OUTPUT_DOUBLE, "file", "Output double-precision .dpix file."),
+    RT_OPTION("F", "framebuffer", RT_OPT_FRAMEBUFFER, "fb", "Render to named framebuffer."),
+    RT_OPTION("s", "size", RT_OPT_SIZE, "pixels", "Square image size in pixels."),
+    RT_OPTION("w", "width", RT_OPT_WIDTH, "pixels", "Image width in pixels."),
+    RT_OPTION("n", "height", RT_OPT_HEIGHT, "pixels", "Image height in scanlines."),
+    RT_OPTION("C", "background", RT_OPT_BACKGROUND, "color", "Background color."),
+    RT_FLAG("W", "white-background", RT_OPT_WHITE_BACKGROUND, "White background."),
+    RT_FLAG("r", "report-overlaps", RT_OPT_REPORT_OVERLAPS, "Report overlapping region names."),
+    RT_FLAG("R", "no-overlap-report", RT_OPT_NO_OVERLAP_REPORT, "Suppress overlap region name reports."),
+    RT_OPTION("a", "azimuth", RT_OPT_AZIMUTH, "degrees", "Auto-size view azimuth in degrees."),
+    RT_OPTION("e", "elevation", RT_OPT_ELEVATION, "degrees", "Auto-size view elevation in degrees."),
+    RT_OPTION("p", "perspective", RT_OPT_PERSPECTIVE, "degrees", "Perspective angle."),
+    RT_OPTION("E", "eye-backoff", RT_OPT_EYE_BACKOFF, "number", "Distance from eye to model center."),
+    RT_OPTION("V", "view-aspect", RT_OPT_VIEW_ASPECT, "ratio", "View aspect ratio."),
+    RT_FLAG("M", "read-matrix", RT_OPT_READ_MATRIX, "Read model2view matrix from standard input."),
+    RT_OPTION("g", "cell-width", RT_OPT_CELL_WIDTH, "mm", "Grid cell width in mm."),
+    RT_OPTION("G", "cell-height", RT_OPT_CELL_HEIGHT, "mm", "Grid cell height in mm."),
+    RT_OPTION("j", "subgrid", RT_OPT_SUBGRID, "xmin,ymin,xmax,ymax", "Raytrace a sub-rectangle of the view."),
+    RT_OPTION("k", "cut-plane", RT_OPT_CUT_PLANE, "plane", "Apply a cutting plane."),
+    RT_OPTION("A", "ambient", RT_OPT_AMBIENT, "number", "Ambient light intensity."),
+    RT_OPTION("l", "light-model", RT_OPT_LIGHT_MODEL, "model[,args]", "Select lighting model."),
+    RT_OPTION("m", "haze", RT_OPT_HAZE, "density,r,g,b", "Atmospheric haze."),
+    RT_FLAG("i", "incremental", RT_OPT_INCREMENTAL, "Incremental rendering."),
+    RT_FLAG("t", "top-down", RT_OPT_TOP_DOWN, "Render top-to-bottom."),
+    RT_FLAG("S", "stereo", RT_OPT_STEREO, "Stereo viewing."),
+    RT_OPTION("H", "hypersample", RT_OPT_HYPERSAMPLE, "count", "Number of extra rays per pixel."),
+    RT_OPTION("J", "jitter", RT_OPT_JITTER, "mask", "Ray jitter bit vector."),
+    RT_OPTION("u", "units", RT_OPT_UNITS, "units", "Display units."),
+    RT_OPTION("U", "use-air", RT_OPT_USE_AIR, "0|1", "Whether librt retains air-coded regions."),
+    RT_OPTION("T", "tolerance", RT_OPT_TOLERANCE, "dist[/perp]", "Geometry tolerances."),
+    RT_OPTION("z", "opencl", RT_OPT_OPENCL, "0|1", "Enable OpenCL-accelerated raytracing."),
+    RT_OPTION("c", "command", RT_OPT_COMMAND, "command", "Execute an rt script command."),
+    RT_OPTION("d", "density-file", RT_OPT_DENSITY_FILE, "file", "Density definitions file."),
+    RT_OPTION("D", "start-frame", RT_OPT_START_FRAME, "frame", "Starting frame number."),
+    RT_OPTION("K", "end-frame", RT_OPT_END_FRAME, "frame", "Ending frame number."),
+    RT_OPTION("b", "single-pixel", RT_OPT_SINGLE_PIXEL, "x y", "Shoot one debug ray at a pixel."),
+    RT_OPTION("Q", "query-pixel", RT_OPT_QUERY_PIXEL, "x,y", "Enable debug for one pixel."),
+    RT_OPTION("I", "objects-file", RT_OPT_OBJECTS_FILE, "file", "Load object names from a text file."),
+    RT_OPTION("+", "text-output", RT_OPT_TEXT_OUTPUT, "t", "Select non-binary output."),
+    RT_OPTION("q", "rand-table-size", RT_OPT_RAND_TABLE, "count", "Size of random-number half-table."),
+    {"v", "verbose", "verbose", "level", "Verbosity level; repeat -vvvv or give a hexadecimal value.",
+	BU_CMD_VALUE_CUSTOM, offsetof(struct rt_parse_args, handlers[RT_OPT_VERBOSE]), NULL, NULL, NULL, NULL,
+	0, 0, NULL, BU_CMD_ARG_OPTIONAL, &rt_verbose_argument_shape, rt_option_consume, NULL},
+    RT_OPTION("x", "rt-debug", RT_OPT_RT_DEBUG, "mask", "librt debug flags."),
+    RT_OPTION("X", "optical-debug", RT_OPT_OPTICAL_DEBUG, "mask", "Optical debug flags."),
+    RT_OPTION("N", "nmg-debug", RT_OPT_NMG_DEBUG, "mask", "NMG debug flags."),
+    RT_OPTION("!", "bu-debug", RT_OPT_BU_DEBUG, "mask", "libbu debug flags."),
+    RT_OPTION("P", "cpus", RT_OPT_CPUS, "count", "Maximum processor cores to use."),
+    RT_FLAG("B", "benchmark", RT_OPT_BENCHMARK, "Benchmark mode."),
+    BU_CMD_CUSTOM_FLAG(",", NULL, "space-partition", struct rt_parse_args,
+	handlers[RT_OPT_SPACE_PARTITION], rt_option_flag, "Space partition algorithm selector (temporarily disabled)."),
+    RT_FLAG("h", "help", RT_OPT_HELP, "Print help and exit."),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_OPTION_NULL
+};
+
+
+static const struct bu_cmd_operand rt_operands[] = {
+    BU_CMD_OPERAND("argument", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Database, object, or other positional argument.", NULL),
+    BU_CMD_OPERAND_NULL
+};
+
+
+static const struct bu_cmd_schema rt_schema = {
+    "rt", "Ray tracing renderer options.", rt_options, rt_operands,
+    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+#undef RT_OPTION
+#undef RT_FLAG
+
+
+static void
+rt_parse_args_init(struct rt_parse_args *args)
+{
+    if (!args)
+	return;
+    memset(args, 0, sizeof(*args));
+#define RT_HANDLER(_id, _process, _data) do { \
+    args->handlers[_id].process = _process; \
+    args->handlers[_id].set_var = _data; \
+} while (0)
+    RT_HANDLER(RT_OPT_OUTPUT, rt_opt_output, NULL);
+    RT_HANDLER(RT_OPT_OUTPUT_DOUBLE, rt_opt_output_double, NULL);
+    RT_HANDLER(RT_OPT_FRAMEBUFFER, rt_opt_framebuffer, NULL);
+    RT_HANDLER(RT_OPT_SIZE, rt_opt_size, NULL);
+    RT_HANDLER(RT_OPT_WIDTH, rt_opt_width, NULL);
+    RT_HANDLER(RT_OPT_HEIGHT, rt_opt_height, NULL);
+    RT_HANDLER(RT_OPT_BACKGROUND, rt_opt_bgcolor, NULL);
+    RT_HANDLER(RT_OPT_WHITE_BACKGROUND, rt_opt_white_bg, NULL);
+    RT_HANDLER(RT_OPT_REPORT_OVERLAPS, rt_opt_flag_set, &rpt_overlap);
+    RT_HANDLER(RT_OPT_NO_OVERLAP_REPORT, rt_opt_no_overlap, NULL);
+    RT_HANDLER(RT_OPT_AZIMUTH, rt_opt_azimuth, NULL);
+    RT_HANDLER(RT_OPT_ELEVATION, rt_opt_elevation, NULL);
+    RT_HANDLER(RT_OPT_PERSPECTIVE, rt_opt_perspective, NULL);
+    RT_HANDLER(RT_OPT_EYE_BACKOFF, rt_opt_number_set, &eye_backoff);
+    RT_HANDLER(RT_OPT_VIEW_ASPECT, rt_opt_view_aspect, NULL);
+    RT_HANDLER(RT_OPT_READ_MATRIX, rt_opt_flag_set, &matflag);
+    RT_HANDLER(RT_OPT_CELL_WIDTH, rt_opt_cell_width, NULL);
+    RT_HANDLER(RT_OPT_CELL_HEIGHT, rt_opt_cell_height, NULL);
+    RT_HANDLER(RT_OPT_SUBGRID, rt_opt_subgrid, NULL);
+    RT_HANDLER(RT_OPT_CUT_PLANE, rt_opt_cut_plane, NULL);
+    RT_HANDLER(RT_OPT_AMBIENT, rt_opt_ambient, NULL);
+    RT_HANDLER(RT_OPT_LIGHT_MODEL, rt_opt_light_model, NULL);
+    RT_HANDLER(RT_OPT_HAZE, rt_opt_haze, NULL);
+    RT_HANDLER(RT_OPT_INCREMENTAL, rt_opt_flag_set, &incr_mode);
+    RT_HANDLER(RT_OPT_TOP_DOWN, rt_opt_flag_set, &top_down);
+    RT_HANDLER(RT_OPT_STEREO, rt_opt_flag_set, &stereo);
+    RT_HANDLER(RT_OPT_HYPERSAMPLE, rt_opt_hypersample, NULL);
+    RT_HANDLER(RT_OPT_JITTER, rt_opt_jitter, NULL);
+    RT_HANDLER(RT_OPT_UNITS, rt_opt_units, NULL);
+    RT_HANDLER(RT_OPT_USE_AIR, rt_opt_integer_set, &use_air);
+    RT_HANDLER(RT_OPT_TOLERANCE, rt_opt_tolerance, NULL);
+    RT_HANDLER(RT_OPT_OPENCL, rt_opt_integer_set, &opencl_mode);
+    RT_HANDLER(RT_OPT_COMMAND, rt_opt_command, NULL);
+    RT_HANDLER(RT_OPT_DENSITY_FILE, rt_opt_string_set, &densityfile);
+    RT_HANDLER(RT_OPT_START_FRAME, rt_opt_integer_set, &desiredframe);
+    RT_HANDLER(RT_OPT_END_FRAME, rt_opt_integer_set, &finalframe);
+    RT_HANDLER(RT_OPT_SINGLE_PIXEL, rt_opt_single_pixel, NULL);
+    RT_HANDLER(RT_OPT_QUERY_PIXEL, rt_opt_query_pixel, NULL);
+    RT_HANDLER(RT_OPT_OBJECTS_FILE, rt_opt_objects_file, NULL);
+    RT_HANDLER(RT_OPT_TEXT_OUTPUT, rt_opt_plus, NULL);
+    RT_HANDLER(RT_OPT_RAND_TABLE, rt_opt_rand_table, NULL);
+    RT_HANDLER(RT_OPT_VERBOSE, rt_opt_verbose, NULL);
+    RT_HANDLER(RT_OPT_RT_DEBUG, rt_opt_rt_debug, NULL);
+    RT_HANDLER(RT_OPT_OPTICAL_DEBUG, rt_opt_optical_debug, NULL);
+    RT_HANDLER(RT_OPT_NMG_DEBUG, rt_opt_nmg_debug, NULL);
+    RT_HANDLER(RT_OPT_BU_DEBUG, rt_opt_bu_debug_cb, NULL);
+    RT_HANDLER(RT_OPT_CPUS, rt_opt_cpus, NULL);
+    RT_HANDLER(RT_OPT_BENCHMARK, rt_opt_benchmark, NULL);
+    RT_HANDLER(RT_OPT_SPACE_PARTITION, rt_opt_comma_disabled, NULL);
+    RT_HANDLER(RT_OPT_HELP, rt_opt_flag_set, &want_help);
+#undef RT_HANDLER
+}
+
+
+static const struct bu_cmd_option *
+rt_short_option(char shortopt)
+{
+    size_t i;
+
+    for (i = 0; rt_options[i].canonical; i++) {
+	if (rt_options[i].shortopt && rt_options[i].shortopt[0] == shortopt &&
+	    rt_options[i].shortopt[1] == '\0')
+	    return &rt_options[i];
+    }
+    return NULL;
+}
 
 
 int
 get_args(int argc, const char *argv[])
 {
     char *env_str;
-    int n_unknown;
     int i;
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
     const char **opt_argv = NULL;
+    int operand_index;
+    int operand_count;
+    int parsed_argc = 0;
+    struct rt_parse_args parse_args;
 
     /* Reset per-call state (supports re-entrant calls from cm_opt in do.c) */
     want_help = 0;
@@ -1067,34 +1255,23 @@ get_args(int argc, const char *argv[])
 	return 1;
     }
 
-    /* Make a working copy of argv[1..argc-1] to pass to bu_opt_parse.
-     * bu_opt_parse reorders its argv array to place unknowns at the front;
-     * we must not shuffle the caller's original argv because main.c
-     * accesses it by index (using bu_optind) after we return.
-     *
-     * Pre-processing: split any "-XVALUE" token (where X is a single-char
-     * short option that takes an argument) into two separate tokens "-X"
-     * and "VALUE".  This is necessary for the common shell idiom
-     * -c"set foo=1 bar=2" which the shell delivers as a single argv token
-     * "-cset foo=1 bar=2".  Without splitting, bu_opt_parse's can_be_opt()
-     * would reject the string (it contains spaces) and the option would
-     * never be recognized.  It also avoids a double-execution of the
-     * arg_process callback that would otherwise occur via opt_is_flag(). */
+    /* The public rt command has historically accepted -XVALUE spellings for
+     * single-letter options that take values (notably -c"set ...").  Keep
+     * that grammar as a small native adapter before invoking the one schema.
+     * The caller's argv remains untouched because main.c relies on bu_optind
+     * to identify the first database/object operand afterward. */
     {
 	int n_extra = 0;
-	int di;
 	for (i = 0; i < argc - 1; i++) {
 	    const char *tok = argv[i + 1];
-	    if (!tok || tok[0] != '-' || tok[1] == '-' || tok[1] == '\0' || tok[2] == '\0')
+	    const struct bu_cmd_option *option;
+	    if (!tok)
 		continue;
-	    /* tok is "-XREST" with len > 2: check if X is a short opt with arg */
-	    for (di = 0; opt_defs[di].shortopt != NULL || opt_defs[di].longopt != NULL; di++) {
-		if (opt_defs[di].shortopt && opt_defs[di].shortopt[0] == tok[1] &&
-		    opt_defs[di].arg_process) {
-		    n_extra++;
-		    break;
-		}
-	    }
+	    if (tok[0] != '-' || tok[1] == '-' || tok[1] == '\0' || tok[2] == '\0')
+		continue;
+	    option = rt_short_option(tok[1]);
+	    if (option && option->arg_requirement != BU_CMD_ARG_NONE)
+		n_extra++;
 	}
 	opt_argv = (const char **)bu_malloc(
 	    (size_t)(argc - 1 + n_extra) * sizeof(const char *), "rt opt_argv");
@@ -1108,36 +1285,29 @@ get_args(int argc, const char *argv[])
 		const char *tok = argv[i + 1];
 		int split = 0;
 		if (tok && tok[0] == '-' && tok[1] != '-' && tok[1] != '\0' && tok[2] != '\0') {
-		    for (di = 0; opt_defs[di].shortopt != NULL || opt_defs[di].longopt != NULL; di++) {
-			if (opt_defs[di].shortopt && opt_defs[di].shortopt[0] == tok[1] &&
-			    opt_defs[di].arg_process) {
-			    /* Emit "-X" as a fresh string and VALUE as a pointer into tok */
-			    char *flag = (char *)bu_malloc(3, "rt short opt split");
-			    flag[0] = '-'; flag[1] = tok[1]; flag[2] = '\0';
-			    if (!split_flags)
-				bu_bomb("rt short option split bookkeeping missing");
-			    split_flags[n_split_used++] = flag;
-			    opt_argv[out++] = flag;
-			    opt_argv[out++] = tok + 2;
-			    split = 1;
-			    break;
-			}
+		    const struct bu_cmd_option *option = rt_short_option(tok[1]);
+		    if (option && option->arg_requirement != BU_CMD_ARG_NONE) {
+			/* Emit "-X" as a fresh string and VALUE as a pointer into tok. */
+			char *flag = (char *)bu_malloc(3, "rt short opt split");
+			flag[0] = '-'; flag[1] = tok[1]; flag[2] = '\0';
+			if (!split_flags)
+			    bu_bomb("rt short option split bookkeeping missing");
+			split_flags[n_split_used++] = flag;
+			opt_argv[out++] = flag;
+			opt_argv[out++] = tok + 2;
+			split = 1;
 		    }
 		}
 		if (!split)
 		    opt_argv[out++] = tok;
 	    }
-	    n_unknown = bu_opt_parse(&msgs, (size_t)out, opt_argv, opt_defs);
+	    rt_parse_args_init(&parse_args);
+	    parsed_argc = out;
+	    operand_index = bu_cmd_schema_parse(&rt_schema, &parse_args, &msgs,
+		out, opt_argv);
 
-	    /* Emit any diagnostic messages produced by the parser */
-	    if (bu_vls_strlen(&msgs) > 0)
-		bu_log("%s", bu_vls_cstr(&msgs));
-	    bu_vls_free(&msgs);
-
-	    /* Free the split flag strings ("-X") that we allocated.
-	     * Their pointers appear in opt_argv[known_args] which we
-	     * never access again; the unknown (positional) entries at
-	     * opt_argv[0..n_unknown-1] are all original argv pointers. */
+	    /* The parser has copied recognized split flags into its internal
+	     * compacted prefix, so they are no longer needed. */
 	    for (i = 0; i < n_split_used; i++)
 		bu_free(split_flags[i], "rt short opt split");
 	    if (split_flags)
@@ -1145,26 +1315,17 @@ get_args(int argc, const char *argv[])
 	}
     }
 
-    if (n_unknown < 0) {
-	/* Fatal parse error */
+	if (operand_index < 0) {
+	if (bu_vls_strlen(&msgs) > 0)
+	    bu_log("%s", bu_vls_cstr(&msgs));
+	bu_vls_free(&msgs);
 	bu_free(opt_argv, "rt opt_argv");
 	return -1;
     }
 
-    /* Reject any remaining token that starts with '-' (unrecognised option) */
-    {
-	int bad = 0;
-	for (i = 0; i < n_unknown; i++) {
-	    if (opt_argv[i] && opt_argv[i][0] == '-') {
-		fprintf(stderr, "ERROR: unrecognized option: %s\n", opt_argv[i]);
-		bad++;
-	    }
-	}
-	if (bad) {
-	    bu_free(opt_argv, "rt opt_argv");
-	    return -1;
-	}
-    }
+    if (bu_vls_strlen(&msgs) > 0)
+	bu_log("%s", bu_vls_cstr(&msgs));
+    bu_vls_free(&msgs);
 
     /* Help requested */
     if (want_help) {
@@ -1172,14 +1333,12 @@ get_args(int argc, const char *argv[])
 	return 0;
     }
 
-    /* Restore bu_optind to the position of model.g in the original argv.
-     *
-     * bu_opt_parse does not copy strings; the pointers in opt_argv[] are
-     * the same pointers as in the original argv[].  We find the first
-     * positional (unknown) arg in the original argv by pointer identity. */
-    if (n_unknown > 0) {
+    /* Restore bu_optind to the first original positional argument.  The native
+     * parser only reordered the temporary pointer array, never argv strings. */
+    operand_count = parsed_argc - operand_index;
+    if (operand_count > 0) {
 	for (bu_optind = 1; bu_optind < argc; bu_optind++) {
-	    if (argv[bu_optind] == opt_argv[0])
+	    if (argv[bu_optind] == opt_argv[operand_index])
 		break;
 	}
     } else {

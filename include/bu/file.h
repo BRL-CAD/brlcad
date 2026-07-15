@@ -160,6 +160,27 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  */
 BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char ***files);
 
+/** Include dot-prefixed entries in bu_file_complete results. */
+#define BU_FILE_COMPLETE_HIDDEN      0x1
+/** Return directories only. */
+#define BU_FILE_COMPLETE_DIRS_ONLY   0x2
+/** Append the input path separator to directory candidates. */
+#define BU_FILE_COMPLETE_APPEND_SLASH 0x4
+
+/**
+ * Complete a partially typed filesystem path.
+ *
+ * Results preserve the directory prefix spelling supplied in seed.  Hidden
+ * entries are omitted unless seed's basename begins with '.' or
+ * BU_FILE_COMPLETE_HIDDEN is set.  If extensions is non-NULL, regular files
+ * must end in one of the NULL-terminated suffix strings (with or without a
+ * leading '.'); directories are retained for continued traversal.
+ *
+ * The returned argv-style array is sorted and must be released with
+ * bu_argv_free().
+ */
+BU_EXPORT extern size_t bu_file_complete(const char *seed, int flags, const char * const *extensions, char ***matches);
+
 
 /**
  * This routine expands a path to a resolved canonical full path.

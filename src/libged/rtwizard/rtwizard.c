@@ -33,6 +33,7 @@
 #endif
 
 #include "bu/app.h"
+#include "bu/cmdschema.h"
 #include "bu/process.h"
 
 
@@ -173,12 +174,21 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 
 
 #include "../include/plugin.h"
+static const struct bu_cmd_operand rtwizard_schema_operands[] = {
+    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+	"Arguments passed to rtwizard", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_schema rtwizard_cmd_schema = {
+    "rtwizard", "Launch rtwizard for the current view", NULL,
+    rtwizard_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, {NULL}
+};
 
 #define GED_RTWIZARD_COMMANDS(X, XID) \
-    X(rtwizard, ged_rtwizard_core, GED_CMD_DEFAULT) \
+    X(rtwizard, ged_rtwizard_core, GED_CMD_DEFAULT, &rtwizard_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET(GED_RTWIZARD_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_rtwizard", 1, GED_RTWIZARD_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_RTWIZARD_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_rtwizard", 1, GED_RTWIZARD_COMMANDS)
 
 /*
  * Local Variables:

@@ -27,16 +27,19 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #include "linenoise.hpp"
 
 #include "brlcad_ident.h"
 #include "bu.h"
+#include "bu/cmdschema.h"
 #include "bv.h"
 
 #define USE_DM 1
@@ -50,6 +53,120 @@
 #include "../../libged/dbi.h"
 
 #define DEFAULT_GSH_PROMPT "g> "
+
+struct gsh_args {
+    int help;
+    int version;
+    int new_cmd_forms;
+    const char *completion_mode;
+};
+
+static const struct bu_cmd_value_keyword gsh_completion_modes[] = {
+    {"filter", NULL, "Filter candidate lists as input changes"},
+    {"cycle", NULL, "Cycle through complete candidates"},
+    {"prefix", NULL, "Complete the common prefix before listing candidates"},
+    {"legacy", NULL, "Use the historical completion behavior"},
+    {"off", NULL, "Disable command completion"},
+    {NULL, NULL, NULL}
+};
+static const struct bu_cmd_option gsh_options[] = {
+    BU_CMD_FLAG("h", "help", struct gsh_args, help, "Print help and exit"),
+    BU_CMD_ALIAS_SHORT("?", "help", 1),
+    BU_CMD_FLAG("v", "version", struct gsh_args, version,
+	"Report BRL-CAD and library versions, then exit"),
+    BU_CMD_FLAG(NULL, "new-cmds", struct gsh_args, new_cmd_forms,
+	"Use the new QGED-style command forms"),
+    BU_CMD_KEYWORD_VALUES(NULL, "completion-mode", struct gsh_args, completion_mode,
+	"mode", "Interactive completion mode", gsh_completion_modes),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_schema gsh_schema = {
+    "gsh", "BRL-CAD geometry shell", gsh_options, NULL,
+    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static void
+gsh_usage(void)
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    char *help = bu_cmd_schema_describe(&gsh_schema);
+
+    bu_vls_sprintf(&msg, "Usage: 'gsh [options] model.g' [args] \n\nOptions:\n%s\n",
+	help ? help : "");
+    if (help)
+	bu_free(help, "gsh native option help");
+    fputs(bu_vls_cstr(&msg), stderr);
+    bu_vls_free(&msg);
+}
+
+static bool
+gsh_color_debug()
+{
+    const char *gsh_debug = getenv("BRLCAD_GSH_COLOR_DEBUG");
+    const char *ln_debug = getenv("LINENOISE_COLOR_DIAGNOSTICS");
+    return (gsh_debug && gsh_debug[0]) || (ln_debug && ln_debug[0]);
+}
+
+
+static std::string
+gsh_lineedit_style_sequence(const struct bu_lineedit_style &style, bool default_dim)
+{
+    bool dim = default_dim;
+    if (style.flags & BU_LINEEDIT_STYLE_DIM_SET)
+	dim = (style.flags & BU_LINEEDIT_STYLE_DIM) != 0;
+
+    std::string sequence("\x1b[");
+    bool has_component = false;
+    if (dim) {
+	sequence += "2";
+	has_component = true;
+    }
+    if (style.flags & BU_LINEEDIT_STYLE_COLOR) {
+	if (has_component)
+	    sequence += ";";
+	sequence += "38;2;";
+	sequence += std::to_string((unsigned int)style.rgb[0]);
+	sequence += ";";
+	sequence += std::to_string((unsigned int)style.rgb[1]);
+	sequence += ";";
+	sequence += std::to_string((unsigned int)style.rgb[2]);
+	has_component = true;
+    }
+    sequence += has_component ? "m" : "0m";
+    return sequence;
+}
+
+
+static void
+gsh_apply_lineedit_palette(linenoise::linenoiseState *editor)
+{
+    if (!editor)
+	return;
+
+    struct bu_lineedit_palette palette = BU_LINEEDIT_PALETTE_INIT_ZERO;
+    (void)bu_lineedit_palette_load_user(&palette);
+
+    const struct {
+	bu_lineedit_role_t role;
+	linenoise::HighlightStyle highlight;
+	bool dim_by_default;
+    } styles[] = {
+	{BU_LINEEDIT_ROLE_COMMAND, linenoise::HIGHLIGHT_COMMAND, false},
+	{BU_LINEEDIT_ROLE_OPTION, linenoise::HIGHLIGHT_OPTION, false},
+	{BU_LINEEDIT_ROLE_VALID, linenoise::HIGHLIGHT_VALID, false},
+	{BU_LINEEDIT_ROLE_INVALID, linenoise::HIGHLIGHT_INVALID, false},
+	{BU_LINEEDIT_ROLE_INCOMPLETE, linenoise::HIGHLIGHT_INCOMPLETE, false},
+	{BU_LINEEDIT_ROLE_COMPLETION_PREVIEW, linenoise::HIGHLIGHT_DIM, true}
+    };
+
+    for (size_t i = 0; i < sizeof(styles) / sizeof(styles[0]); i++) {
+	const struct bu_lineedit_style &style = palette.roles[styles[i].role];
+	if (!style.flags)
+	    continue;
+	editor->SetHighlightStyleSequence(styles[i].highlight,
+		gsh_lineedit_style_sequence(style, styles[i].dim_by_default));
+    }
+}
 
 
 /* BRL-CAD's libged will launch commands that potentially need to be terminated
@@ -237,6 +354,7 @@ class GshState {
 	std::atomic<bool> linenoise_done = false;
 	std::atomic<bool> io_working = false;
 	std::mutex print_mutex;
+	std::mutex ged_mutex;
 
 	// Create a listener for a subprocess
 	void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
@@ -425,6 +543,8 @@ GshState::~GshState()
 int
 GshState::eval(int argc, const char **argv)
 {
+    std::lock_guard<std::mutex> ged_guard(ged_mutex);
+
     if (!ged_cmd_exists(argv[0])) {
 	const char *ccmd = NULL;
 	int edist = ged_cmd_lookup(&ccmd, argv[0]);
@@ -757,39 +877,59 @@ main(int argc, const char **argv)
     /* Done with program name */
     argv++; argc--;
 
-    /* Options */
-    int print_help = 0;
-    int report_versions = 0;
-    int new_cmd_forms = 0;
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "h", "help",      "",  NULL, &print_help,        "print help and exit");
-    BU_OPT(d[1], "?", "",          "",  NULL, &print_help,        "");
-    BU_OPT(d[2], "v", "version",   "",  NULL, &report_versions,   "Report BRL-CAD and library versions, then exit");
-    BU_OPT(d[3], "",  "new-cmds",  "",  NULL, &new_cmd_forms,     "use new (qged style) commands");
-    BU_OPT_NULL(d[4]);
-
-    /* Parse options, fail if anything goes wrong */
+    /* Preserve non-option words, including unknown dash-leading GED command
+     * arguments, while recognizing GSH's own options anywhere before a --
+     * marker.  The native schema still owns option spelling, argument shape,
+     * validation, storage, and help; this small adapter preserves GSH's
+     * historical pass-through command-line behavior. */
+    struct gsh_args args = {0, 0, 0, NULL};
+    bu_cmd_completion_mode_t completion_mode = BU_CMD_COMPLETE_FILTER;
+    std::vector<const char *> option_argv;
+    std::vector<const char *> command_argv;
     struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
-    if ((argc = bu_opt_parse(&opt_msg, argc, argv, d)) == -1) {
+
+    for (int i = 0; i < argc;) {
+	int span = bu_cmd_schema_option_span(&gsh_schema, (size_t)(argc - i), argv + i);
+	if (span > 0) {
+	    if (BU_STR_EQUAL(argv[i], "--")) {
+		for (i++; i < argc; i++)
+		    command_argv.push_back(argv[i]);
+		break;
+	    }
+	    for (int si = 0; si < span; si++)
+		option_argv.push_back(argv[i + si]);
+	    i += span;
+	    continue;
+	}
+	if (span < 0 || (argv[i][0] == '-' && argv[i][1] &&
+	    bu_cmd_schema_option_span(&gsh_schema, 1, argv + i) < 0)) {
+	    (void)bu_cmd_schema_parse(&gsh_schema, &args, &opt_msg, argc - i, argv + i);
+	    fputs(bu_vls_addr(&opt_msg), stderr);
+	    bu_vls_free(&opt_msg);
+	    bu_exit(EXIT_FAILURE, NULL);
+	}
+	command_argv.push_back(argv[i]);
+	i++;
+    }
+
+    if (bu_cmd_schema_parse(&gsh_schema, &args, &opt_msg,
+	(int)option_argv.size(), option_argv.data()) < 0) {
 	fputs(bu_vls_addr(&opt_msg), stderr);
 	bu_vls_free(&opt_msg);
 	bu_exit(EXIT_FAILURE, NULL);
     }
     bu_vls_free(&opt_msg);
+    argc = (int)command_argv.size();
+    argv = command_argv.empty() ? NULL : command_argv.data();
 
     /* If we're just printing help, do that now */
-    if (print_help) {
-	struct bu_vls msg = BU_VLS_INIT_ZERO;
-	const char *help = bu_opt_describe(d, NULL);
-	bu_vls_sprintf(&msg, "Usage: 'gsh [options] model.g' [args] \n\nOptions:\n%s\n", help);
-	bu_free((char *)help, "done with help string");
-	fputs(bu_vls_cstr(&msg), stderr);
-	bu_vls_free(&msg);
+    if (args.help) {
+	gsh_usage();
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
     /* If we're just reporting BRL-CAD and lib versions, do that */
-    if (report_versions) {
+    if (args.version) {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&msg, "%s%s%s%s%s",
 		brlcad_ident("Geometry Shell (gsh)"),
@@ -806,6 +946,14 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
+    completion_mode = bu_cmd_completion_mode_from_env("BRLCAD_GSH_COMPLETION_MODE", BU_CMD_COMPLETE_FILTER);
+    if (args.completion_mode &&
+	bu_cmd_completion_mode_parse(args.completion_mode, &completion_mode) != BRLCAD_OK) {
+	fprintf(stderr, "gsh: invalid completion mode '%s' (expected filter, cycle, prefix, legacy, or off)\n",
+		args.completion_mode);
+	return EXIT_FAILURE;
+    }
+
     /* If anything went wrong during LIBGED initialization, let the user know */
     const char *ged_init_str = ged_init_msgs();
     if (strlen(ged_init_str)) {
@@ -818,7 +966,7 @@ main(int argc, const char **argv)
     // If we're using the new command forms, there's a little bit
     // of setup to do at the moment (eventually, once this cmd
     // behavior is the default, ged setup will do this automatically)
-    gs->new_cmd_forms = (new_cmd_forms) ? true : false;
+    gs->new_cmd_forms = args.new_cmd_forms ? true : false;
     if (gs->new_cmd_forms) {
 	gs->gedp->dbi_state = new DbiState(gs->gedp);
 	gs->gedp->new_cmd_forms = 1;
@@ -868,6 +1016,25 @@ main(int argc, const char **argv)
 
     gs.get()->l = std::make_shared<linenoise::linenoiseState>();
     gs.get()->l->SetHistoryMaxLen(INT_MAX);
+    gsh_apply_lineedit_palette(gs.get()->l.get());
+
+    switch (completion_mode) {
+	case BU_CMD_COMPLETE_FILTER:
+	    gs.get()->l->SetCompletionMode(linenoise::COMPLETION_FILTER);
+	    break;
+	case BU_CMD_COMPLETE_CYCLE:
+	    gs.get()->l->SetCompletionMode(linenoise::COMPLETION_CYCLE);
+	    break;
+	case BU_CMD_COMPLETE_PREFIX:
+	    gs.get()->l->SetCompletionMode(linenoise::COMPLETION_PREFIX);
+	    break;
+	case BU_CMD_COMPLETE_LEGACY:
+	    gs.get()->l->SetCompletionMode(linenoise::COMPLETION_LEGACY);
+	    break;
+	case BU_CMD_COMPLETE_OFF:
+	    gs.get()->l->SetCompletionMode(linenoise::COMPLETION_DISABLED);
+	    break;
+    }
 
     // TODO - should we enable multi-line mode?
     //gs.get()->l->EnableMultiLine();
@@ -875,6 +1042,117 @@ main(int argc, const char **argv)
     // If we're handling commands from stdin, we want an empty prompt
     std::string p = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
     gs.get()->l->SetPrompt(p);
+
+    if (gsh_color_debug()) {
+	const char *term = getenv("TERM");
+	const char *colorterm = getenv("COLORTERM");
+	const char *no_color = getenv("NO_COLOR");
+	fprintf(stderr,
+		"gsh color diagnostics: interactive=%d TERM=%s COLORTERM=%s NO_COLOR=%s semantic_callbacks=%s\n",
+		bu_interactive() ? 1 : 0,
+		(term && term[0]) ? term : "(unset)",
+		(colorterm && colorterm[0]) ? colorterm : "(unset)",
+		(no_color && no_color[0]) ? no_color : "(unset)",
+		bu_interactive() ? "enabled" : "disabled");
+    }
+
+    if (bu_interactive()) {
+	GshState *gsp = gs.get();
+	gs.get()->l->SetCompletionCallback([gsp](const char *line, size_t cursor_pos, linenoise::CompletionResult &result) {
+	    struct ged_cmd_completion_result ged_result = GED_CMD_COMPLETION_RESULT_NULL;
+	    int completion_count = 0;
+
+	    if (!line)
+		return;
+
+	    {
+		std::lock_guard<std::mutex> ged_guard(gsp->ged_mutex);
+		completion_count = ged_cmd_complete_result(gsp->gedp, line, cursor_pos, &ged_result);
+	    }
+
+	    if (completion_count > 0) {
+		result.replacement_start = ged_result.replacement_start;
+		result.replacement_end = ged_result.replacement_end;
+		for (int i = 0; i < completion_count; i++) {
+		    if (ged_result.completion_candidates[i])
+			result.candidates.push_back(std::string(ged_result.completion_candidates[i]));
+		}
+	    }
+
+	    ged_cmd_completion_result_clear(&ged_result);
+	});
+
+	gs.get()->l->SetHighlightCallback([gsp](const char *line, std::vector<linenoise::HighlightSpan> &spans) {
+	    struct ged_cmd_analysis analysis = {0, NULL};
+	    bool debug = gsh_color_debug();
+
+	    if (!line || !line[0])
+		return;
+
+	    {
+		std::lock_guard<std::mutex> ged_guard(gsp->ged_mutex);
+		if (ged_cmd_analyze(gsp->gedp, line, &analysis) != 0) {
+		    if (debug)
+			fprintf(stderr, "gsh highlight diagnostics: line=\"%s\" analyze=failed\n", line);
+		    ged_cmd_analysis_clear(&analysis);
+		    return;
+		}
+	    }
+
+	    for (size_t i = 0; i < analysis.token_count; i++) {
+		struct ged_cmd_analysis_token *token = &analysis.tokens[i];
+		linenoise::HighlightSpan span;
+
+		if (token->char_end <= token->char_start)
+		    continue;
+
+		span.start = token->char_start;
+		span.end = token->char_end;
+		span.style = linenoise::HIGHLIGHT_NORMAL;
+
+		if (token->semantic_state == GED_CMD_SEMANTIC_INVALID) {
+		    span.style = linenoise::HIGHLIGHT_INVALID;
+		} else if (token->semantic_state == GED_CMD_SEMANTIC_INCOMPLETE ||
+			token->semantic_state == GED_CMD_SEMANTIC_PENDING) {
+		    span.style = linenoise::HIGHLIGHT_INCOMPLETE;
+		} else if (token->role == GED_CMD_TOKEN_COMMAND || token->role == GED_CMD_TOKEN_SUBCOMMAND) {
+		    span.style = linenoise::HIGHLIGHT_COMMAND;
+		} else if (token->role == GED_CMD_TOKEN_OPTION) {
+		    span.style = linenoise::HIGHLIGHT_OPTION;
+		} else if (token->semantic_state == GED_CMD_SEMANTIC_VALID &&
+			(token->value_type == BU_CMD_VALUE_DB_OBJECT || token->value_type == BU_CMD_VALUE_DB_PATH)) {
+		    span.style = linenoise::HIGHLIGHT_VALID;
+		}
+
+		if (span.style != linenoise::HIGHLIGHT_NORMAL)
+		    spans.push_back(span);
+	    }
+
+	    if (debug) {
+		fprintf(stderr,
+			"gsh highlight diagnostics: line=\"%s\" tokens=%zu spans=%zu\n",
+			line,
+			analysis.token_count,
+			spans.size());
+		for (size_t i = 0; i < analysis.token_count; i++) {
+		    struct ged_cmd_analysis_token *token = &analysis.tokens[i];
+		    fprintf(stderr,
+			    "  token[%zu]: token=%zu-%zu chars=%zu-%zu role=%d state=%d type=%d validator=%s\n",
+			    i,
+			    token->token_start,
+			    token->token_end,
+			    token->char_start,
+			    token->char_end,
+			    (int)token->role,
+			    (int)token->semantic_state,
+			    (int)token->value_type,
+			    token->validator ? token->validator : "(null)");
+		}
+	    }
+
+	    ged_cmd_analysis_clear(&analysis);
+	});
+    }
 
     // Launch blocking linenoise input gathering in a separate thread, to allow
     // us to integrate input from async commands into terminal output while
@@ -913,4 +1191,3 @@ main(int argc, const char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
