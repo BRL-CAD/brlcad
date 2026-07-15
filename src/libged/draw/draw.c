@@ -1704,11 +1704,17 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	int i, found_path;
-	struct db_full_path obj_path, dl_path;
+	struct db_full_path obj_path = DB_FULL_PATH_INIT_ZERO;
+	struct db_full_path dl_path = DB_FULL_PATH_INIT_ZERO;
 
 	/* redraw the specified paths */
 	for (i = 1; i < argc; ++i) {
-	    ret = db_string_to_path(&obj_path, gedp->dbip, argv[i]);
+	    ret = db_full_path_decode(&obj_path, gedp->dbip, argv[i]);
+	    if (ret != DB_FULL_PATH_OK) {
+		db_free_full_path(&obj_path);
+		db_full_path_init(&obj_path);
+		ret = db_string_to_path(&obj_path, gedp->dbip, argv[i]);
+	    }
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s: %s is not a valid path\n", argv[0], argv[i]);
@@ -1718,8 +1724,14 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	    found_path = 0;
 	    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay))
 	    {
-		ret = db_string_to_path(&dl_path, gedp->dbip,
+		ret = db_full_path_decode(&dl_path, gedp->dbip,
 			bu_vls_addr(&gdlp->dl_path));
+		if (ret != DB_FULL_PATH_OK) {
+		    db_free_full_path(&dl_path);
+		    db_full_path_init(&dl_path);
+		    ret = db_string_to_path(&dl_path, gedp->dbip,
+			    bu_vls_addr(&gdlp->dl_path));
+		}
 		if (ret < 0) {
 		    bu_vls_printf(gedp->ged_result_str,
 			    "%s: %s is not a valid path\n", argv[0],

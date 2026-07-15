@@ -79,6 +79,34 @@ is suppressed when styled output is disabled.
 QGED displays the candidate set in a popup in addition to the inline preview.
 This visual difference does not change the mode semantics.
 
+== DATABASE PATH SPELLING
+
+Completion and semantic validation use LIBRT's unambiguous database-path
+spelling.  A slash separates hierarchy components.  A literal slash,
+backslash, or at-sign in an object name is written `\/`, `\\`, or `\@`.
+A nonzero repeated-member instance is written as `@N` after a component.
+
+[source,text]
+----
+/assembly/bolt.s       hierarchy: assembly contains bolt.s
+/all.g\/                one object whose name is all.g/
+/assembly/member\@name object name containing @
+/repeat.c/bolt.s@1     second instance of bolt.s in repeat.c
+----
+
+This distinction matters when both a combination named `all.g` and an object
+named `all.g/` exist: `/all.g/child.s` addresses the child of the combination,
+while `/all.g\/` addresses the object with the trailing slash in its name.
+An unescaped trailing slash is not a complete path.
+
+The examples above show the string received by LIBGED.  The command prompt
+may consume a backslash while forming an argument.  In GSH and QGED, type a
+double backslash for each database-path escape, for example
+`draw /all.g\\/`.  In MGED, use a braced Tcl word to preserve the database
+escape, for example `draw {/all.g\/}`; in a Tcl double-quoted word, double the
+backslash instead.  Programmatic callers of `db_full_path_decode()` supply the
+single-backslash spelling shown in the examples.
+
 == LINE-EDITOR COLORS
 
 GSH, MGED, and QGED share an optional semantic line-editor palette.  It

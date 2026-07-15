@@ -43,8 +43,38 @@
 #include "ged.h"
 #include "rt/functab.h"
 #include "rt/search.h"
+#include "./tab_complete_private.h"
 
-static int ged_search_is_type_keyword(const char *token);
+static std::vector<std::string>
+ged_search_type_keywords(int include_aliases)
+{
+    std::set<std::string> keywords;
+    const char *abstract_types[] = {
+	"arb4", "arb5", "arb6", "arb7", "arb8",
+	"combination", "plate", "region", "shape", "sphere", "volume",
+	NULL
+    };
+    const char *aliases[] = {"c", "comb", "r", "reg", "sph", NULL};
+    for (size_t i = 0; abstract_types[i]; i++) keywords.insert(abstract_types[i]);
+    for (int i = 1; i <= ID_MAX_SOLID; i++) {
+	if (i != ID_UNUSED1 && i != ID_UNUSED2 && OBJ[i].ft_label[0] &&
+	    !BU_STR_EQUAL(OBJ[i].ft_label, "ID_NULL") && OBJ[i].ft_label[0] != '>')
+	    keywords.insert(OBJ[i].ft_label);
+    }
+    if (include_aliases)
+	for (size_t i = 0; aliases[i]; i++) keywords.insert(aliases[i]);
+    return std::vector<std::string>(keywords.begin(), keywords.end());
+}
+
+static int
+ged_search_is_type_keyword(const char *token)
+{
+    if (!token) return 0;
+    std::vector<std::string> keywords = ged_search_type_keywords(1);
+    for (size_t i = 0; i < keywords.size(); i++)
+	if (BU_STR_EQUAL(token, keywords[i].c_str())) return 1;
+    return 0;
+}
 
 static const char *
 ged_native_semantic_provider(bu_cmd_value_t value_type, const char *semantic_provider)
@@ -194,113 +224,142 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
 }
 
 static int
+ged_completion_prefix_match(const std::string &candidate, const std::string &prefix)
+{
+    return prefix.empty() || (candidate.size() >= prefix.size() &&
+	!candidate.compare(0, prefix.size(), prefix));
+}
+
+static void
+ged_completion_add_candidate(std::vector<std::string> &candidates, const char *candidate,
+	const std::string &prefix)
+{
+    if (!candidate) return;
+    std::string value(candidate);
+    if (ged_completion_prefix_match(value, prefix) &&
+	std::find(candidates.begin(), candidates.end(), value) == candidates.end())
+	candidates.push_back(value);
+}
+
+static void
+ged_completion_set_candidates(struct ged_cmd_validate_result *result,
+	std::vector<std::string> &candidates, bu_cmd_value_t type)
+{
+    if (!result || candidates.empty()) return;
+    std::sort(candidates.begin(), candidates.end(), [](const std::string &a, const std::string &b) {
+	return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
+    });
+    result->completion_count = candidates.size();
+    result->completion_candidates = (const char **)bu_calloc(candidates.size() + 1,
+	    sizeof(char *), "completion candidates");
+    for (size_t i = 0; i < candidates.size(); i++)
+	result->completion_candidates[i] = bu_strdup(candidates[i].c_str());
+    result->completion_type = type;
+}
+
+
+/* Encode a single directory-entry name for the database-path grammar. */
+static std::string
+ged_db_path_component_encode(const char *name)
+{
+    std::string encoded;
+    if (!name)
+	return encoded;
+    for (const char *c = name; *c; c++) {
+	if (*c == '\\' || *c == '/' || *c == '@')
+	    encoded.push_back('\\');
+	encoded.push_back(*c);
+    }
+    return encoded;
+}
+
+
+static size_t
+ged_last_unescaped_path_separator(const std::string &path)
+{
+    size_t separator = std::string::npos;
+    bool escaped = false;
+    for (size_t i = 0; i < path.size(); i++) {
+	if (escaped) {
+	    escaped = false;
+	    continue;
+	}
+	if (path[i] == '\\') {
+	    escaped = true;
+	    continue;
+	}
+	if (path[i] == '/')
+	    separator = i;
+    }
+    return separator;
+}
+
+
+static int
 path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, const char *iseed)
 {
-    // If we've gotten this far, we either have a hierarchy or an error
-    std::string lstr(iseed);
-    if (lstr.find_first_of("/", 0) == std::string::npos)
+    std::string path(iseed ? iseed : "");
+    size_t separator = ged_last_unescaped_path_separator(path);
+    if (separator == std::string::npos)
 	return 0;
 
-    // Split the seed into substrings.  We can't use the db fullpath
-    // routines for this, because the final obj name is likely incomplete
-    // and therefore invalid.
-    std::vector<std::string> objs;
-    size_t pos = 0;
-    while ((pos = lstr.find_first_of("/", 0)) != std::string::npos) {
-	std::string ss = lstr.substr(0, pos);
-	objs.push_back(ss);
-	lstr.erase(0, pos + 1);
-    }
-    objs.push_back(lstr);
-    if (objs.size() < 2)
-	return 0;
-
-    // If the last char in lstr is a slash, then we are looking to do
-    // completions in the comb tree of the parent (if a comb or if we are
-    // starting with a slash - i.e. the implicit tops comb) or there is no
-    // completion to make (if not a comb).  If the last string is a partial,
-    // then we're looking in the parent comb's tree for something that matches
-    // the partial.
-    std::string seed;
-    std::string context;
-    struct directory *dp = db_lookup(dbip, objs[objs.size()-1].c_str(), LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL && (!lstr.length() || lstr[lstr.length() - 1] != '/')) {
-	seed = objs[objs.size() - 1];
-	context = objs[objs.size() - 2];
-    } else {
-	if (lstr.length() && lstr[lstr.length() - 1] != '/') {
-	    seed = objs[objs.size() - 1];
-	    context = objs[objs.size() - 2];
-	} else {
-	    context = objs[objs.size() - 1];
-	}
+    /* The final component may be incomplete, but its parent must be a real,
+     * fully escaped path. */
+    std::string seed = path.substr(separator + 1);
+    std::string parent_text = path.substr(0, separator);
+    struct directory *cdp = RT_DIR_NULL;
+    if (!parent_text.empty() && parent_text != "/") {
+	struct db_full_path parent = DB_FULL_PATH_INIT_ZERO;
+	if (db_full_path_decode(&parent, dbip, parent_text.c_str()) != DB_FULL_PATH_OK)
+	    return BRLCAD_ERROR;
+	cdp = DB_FULL_PATH_CUR_DIR(&parent);
+	db_free_full_path(&parent);
+	if (!cdp || !(cdp->d_flags & RT_DIR_COMB))
+	    return BRLCAD_ERROR;
     }
 
-    if (!context.length()) {
-	if (!seed.length()) {
-	    bu_vls_trunc(prefix, 0);
-	} else {
-	    bu_vls_sprintf(prefix, "%s", seed.c_str());
-	}
-	// Empty context - we need the tops list
+    std::vector<struct directory *> matches;
+    if (!cdp) {
+	/* No parent denotes the implicit tops collection. */
 	db_update_nref(dbip);
-	struct directory **all_paths;
+	struct directory **all_paths = NULL;
 	int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &all_paths);
-	bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
-	std::vector<struct directory *> matches;
+	if (tops_cnt > 1)
+	    bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
 	for (int i = 0; i < tops_cnt; i++) {
-	    if (seed.empty() || (strlen(all_paths[i]->d_namep) >= seed.length() &&
-		    !bu_strncmp(seed.c_str(), all_paths[i]->d_namep, seed.length())))
+	    std::string candidate = ged_db_path_component_encode(all_paths[i]->d_namep);
+	    if (candidate.compare(0, seed.size(), seed) == 0)
 		matches.push_back(all_paths[i]);
 	}
-	*completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
-	for (size_t i = 0; i < matches.size(); i++)
-	    (*completions)[i] = bu_strdup(matches[i]->d_namep);
-	bu_free(all_paths, "free db_ls output");
-	return (int)matches.size();
-    }
-
-    struct directory *cdp = db_lookup(dbip, context.c_str(), LOOKUP_QUIET);
-    if (cdp == RT_DIR_NULL || !(cdp->d_flags & RT_DIR_COMB))
-	return BRLCAD_ERROR;
-
-    struct rt_db_internal in;
-    if (rt_db_get_internal(&in, cdp, dbip, NULL) < 0)
-	return BRLCAD_ERROR;
-    struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
-    if (!comb) {
+	if (all_paths)
+	    bu_free(all_paths, "free db_ls output");
+    } else {
+	struct rt_db_internal in;
+	if (rt_db_get_internal(&in, cdp, dbip, NULL) < 0)
+	    return BRLCAD_ERROR;
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
+	if (!comb) {
+	    rt_db_free_internal(&in);
+	    return BRLCAD_ERROR;
+	}
+	struct directory **children = NULL;
+	int child_cnt = db_comb_children(dbip, comb, &children, NULL, NULL);
 	rt_db_free_internal(&in);
-	return BRLCAD_ERROR;
-    }
-    struct directory **children = NULL;
-    int child_cnt = db_comb_children(dbip, comb, &children, NULL, NULL);
-    rt_db_free_internal(&in);
-    if (child_cnt > 1)
-	bu_sort(children, child_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
-
-    // If we don't have a seed or a prev entry, grab all the children
-    if (!seed.length()) {
-	bu_vls_trunc(prefix, 0);
-	*completions = (const char **)bu_calloc(child_cnt + 1, sizeof(const char *), "av array");
-	for (int i = 0; i < child_cnt; i++)
-	    (*completions)[i] = bu_strdup(children[i]->d_namep);
-	bu_free(children, "dp array");
-	return child_cnt;
+	if (child_cnt > 1)
+	    bu_sort(children, child_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
+	for (int i = 0; i < child_cnt; i++) {
+	    std::string candidate = ged_db_path_component_encode(children[i]->d_namep);
+	    if (candidate.compare(0, seed.size(), seed) == 0)
+		matches.push_back(children[i]);
+	}
+	if (children)
+	    bu_free(children, "dp array");
     }
 
-    // Have seed - grab the matches
     bu_vls_sprintf(prefix, "%s", seed.c_str());
-    std::vector<struct directory *> matches;
-    for (int i = 0; i < child_cnt; i++) {
-	if (strlen(children[i]->d_namep) < seed.length())
-	    continue;
-	if (!bu_strncmp(seed.c_str(), children[i]->d_namep, seed.length()))
-	    matches.push_back(children[i]);
-    }
     *completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
     for (size_t i = 0; i < matches.size(); i++)
-	(*completions)[i] = bu_strdup(matches[i]->d_namep);
-    bu_free(children, "dp array");
+	(*completions)[i] = bu_strdup(ged_db_path_component_encode(matches[i]->d_namep).c_str());
     return (int)matches.size();
 }
 
@@ -331,9 +390,8 @@ obj_match(const char ***completions, struct db_i *dbip, const char *seed)
     // Have the possibilities organized - find seed matches
     std::vector<struct directory *> matches;
     for (size_t i = 0; i < dps.size(); i++) {
-	if (strlen(dps[i]->d_namep) < strlen(seed))
-	    continue;
-	if (!bu_strncmp(seed, dps[i]->d_namep, strlen(seed))) {
+	std::string candidate = ged_db_path_component_encode(dps[i]->d_namep);
+	if (candidate.compare(0, strlen(seed), seed) == 0) {
 	    matches.push_back(dps[i]);
 	}
     }
@@ -341,21 +399,11 @@ obj_match(const char ***completions, struct db_i *dbip, const char *seed)
     // Make an argv array for client use
     *completions = (const char **)bu_calloc(matches.size() + 1, sizeof(const char *), "av array");
     for (size_t i = 0; i < matches.size(); i++)
-	(*completions)[i] = bu_strdup(matches[i]->d_namep);
+	(*completions)[i] = bu_strdup(ged_db_path_component_encode(matches[i]->d_namep).c_str());
     return (int)matches.size();
 }
 
-struct ged_input_parse {
-    char *copy = NULL;
-    char **argv = NULL;
-    size_t argc = 0;
-    size_t cursor_arg = 0;
-    size_t input_len = 0;
-    std::vector<size_t> char_starts;
-    std::vector<size_t> char_ends;
-};
-
-static void
+void
 ged_input_parse_free(struct ged_input_parse *parsed)
 {
     if (!parsed)
@@ -375,7 +423,7 @@ ged_input_parse_free(struct ged_input_parse *parsed)
     parsed->char_ends.clear();
 }
 
-static int
+int
 ged_input_parse_line(struct ged_input_parse *parsed, const char *input, size_t cursor_pos)
 {
     std::vector<size_t> raw_starts;
@@ -554,7 +602,7 @@ ged_fill_geometry_candidates(struct ged *gedp,
     if (cnt > 0) {
 	bu_cmd_value_t ctype = result->completion_type;
 	if (ctype != BU_CMD_VALUE_DB_OBJECT && ctype != BU_CMD_VALUE_DB_PATH)
-	    ctype = (seed.find('/') != std::string::npos) ? BU_CMD_VALUE_DB_PATH : BU_CMD_VALUE_DB_OBJECT;
+	    ctype = (ged_last_unescaped_path_separator(seed) != std::string::npos) ? BU_CMD_VALUE_DB_PATH : BU_CMD_VALUE_DB_OBJECT;
 	ged_replace_candidates(result, &completions, cnt,
 		ctype);
     }
@@ -568,7 +616,7 @@ ged_lookup_exact_quiet(struct db_i *dbip, const char *name)
     if (!dbip || BU_STR_EMPTY(name))
 	return RT_DIR_NULL;
 
-    if (!strchr(name, '/'))
+    if (!strchr(name, '/') && !strchr(name, '\\'))
 	return db_lookup(dbip, name, LOOKUP_QUIET);
 
     struct directory *dp;
@@ -576,6 +624,17 @@ ged_lookup_exact_quiet(struct db_i *dbip, const char *name)
 	if (BU_STR_EQUAL(dp->d_namep, name))
 	    return dp;
     FOR_ALL_DIRECTORY_END;
+
+    /* The escaped full-path spelling also names a root-level object. */
+    struct db_full_path path = DB_FULL_PATH_INIT_ZERO;
+    if (db_full_path_decode(&path, dbip, name) == DB_FULL_PATH_OK) {
+	if (path.fp_len == 1)
+	    dp = DB_FULL_PATH_CUR_DIR(&path);
+	else
+	    dp = RT_DIR_NULL;
+	db_free_full_path(&path);
+	return dp;
+    }
 
     return RT_DIR_NULL;
 }
@@ -586,75 +645,11 @@ ged_quiet_db_path_validate(struct ged *gedp, const char *token)
     if (!gedp || !gedp->dbip || BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INVALID;
 
-    size_t tlen = strlen(token);
-    if (token[tlen - 1] == '/')
-	return GED_CMD_SEMANTIC_INVALID;
-
-    if (ged_lookup_exact_quiet(gedp->dbip, token) != RT_DIR_NULL)
-	return GED_CMD_SEMANTIC_VALID;
-
-    std::string path(token);
-    while (!path.empty() && path[0] == '/')
-	path.erase(0, 1);
-    if (path.empty())
-	return GED_CMD_SEMANTIC_VALID;
-
-    std::vector<std::string> elems;
-    size_t start = 0;
-    while (start <= path.size()) {
-	size_t slash = path.find('/', start);
-	size_t end = (slash == std::string::npos) ? path.size() : slash;
-	if (end == start)
-	    return GED_CMD_SEMANTIC_INVALID;
-	elems.push_back(path.substr(start, end - start));
-	if (slash == std::string::npos)
-	    break;
-	start = slash + 1;
-    }
-
-    if (elems.empty())
-	return GED_CMD_SEMANTIC_INVALID;
-
-    struct directory *parent = db_lookup(gedp->dbip, elems[0].c_str(), LOOKUP_QUIET);
-    if (parent == RT_DIR_NULL)
-	return GED_CMD_SEMANTIC_INVALID;
-
-    for (size_t i = 1; i < elems.size(); i++) {
-	if (!(parent->d_flags & RT_DIR_COMB))
-	    return GED_CMD_SEMANTIC_INVALID;
-
-	struct rt_db_internal in;
-	if (rt_db_get_internal(&in, parent, gedp->dbip, NULL) < 0)
-	    return GED_CMD_SEMANTIC_INVALID;
-
-	struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
-	if (!comb) {
-	    rt_db_free_internal(&in);
-	    return GED_CMD_SEMANTIC_INVALID;
-	}
-
-	struct directory **children = NULL;
-	int child_cnt = db_comb_children(gedp->dbip, comb, &children, NULL, NULL);
-	rt_db_free_internal(&in);
-
-	struct directory *child = RT_DIR_NULL;
-	for (int j = 0; j < child_cnt; j++) {
-	    if (BU_STR_EQUAL(children[j]->d_namep, elems[i].c_str())) {
-		child = children[j];
-		break;
-	    }
-	}
-
-	if (children)
-	    bu_free(children, "dp array");
-
-	if (child == RT_DIR_NULL)
-	    return GED_CMD_SEMANTIC_INVALID;
-
-	parent = child;
-    }
-
-    return GED_CMD_SEMANTIC_VALID;
+    struct db_full_path path = DB_FULL_PATH_INIT_ZERO;
+    int ret = db_full_path_decode(&path, gedp->dbip, token);
+    if (ret == DB_FULL_PATH_OK)
+	db_free_full_path(&path);
+    return (ret == DB_FULL_PATH_OK) ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 }
 
 static ged_cmd_semantic_state_t
@@ -1072,669 +1067,6 @@ ged_analysis_set_span(struct ged_cmd_analysis_token *token, const struct ged_inp
     token->char_end = parsed.char_ends[idx];
 }
 
-static int
-ged_search_is_plan_start(const char *arg)
-{
-    return db_search_syntax_plan_start(arg);
-}
-
-static int
-ged_search_is_top_option(const char *arg)
-{
-    return ged_search_top_option_parse(arg, NULL, NULL);
-}
-
-static const struct db_search_syntax_term *
-ged_search_find_plan_op(const char *arg)
-{
-    size_t count = 0;
-    const struct db_search_syntax_term *terms = db_search_syntax_terms(&count);
-
-    if (!arg)
-	return NULL;
-    for (size_t i = 0; i < count; i++) {
-	if (BU_STR_EQUAL(arg, terms[i].name))
-	    return &terms[i];
-    }
-    return NULL;
-}
-
-static int
-ged_search_plan_op_takes_arg(const struct db_search_syntax_term *term)
-{
-    return term && term->argument != DB_SEARCH_SYNTAX_NO_ARGUMENT;
-}
-
-static bu_cmd_value_t
-ged_search_plan_arg_type(const struct db_search_syntax_term *term)
-{
-    if (!term)
-	return BU_CMD_VALUE_UNKNOWN;
-    switch (term->argument) {
-	case DB_SEARCH_SYNTAX_INTEGER_ARGUMENT: return BU_CMD_VALUE_INTEGER;
-	case DB_SEARCH_SYNTAX_TYPE_ARGUMENT: return BU_CMD_VALUE_KEYWORD;
-	case DB_SEARCH_SYNTAX_EXEC_ARGUMENTS: return BU_CMD_VALUE_RAW;
-	case DB_SEARCH_SYNTAX_STRING_ARGUMENT: return BU_CMD_VALUE_STRING;
-	case DB_SEARCH_SYNTAX_NO_ARGUMENT:
-	default: return BU_CMD_VALUE_UNKNOWN;
-    }
-}
-
-static const char *
-ged_search_plan_validator(const struct db_search_syntax_term *term)
-{
-    return (term && term->argument == DB_SEARCH_SYNTAX_TYPE_ARGUMENT) ? "ged.search.type" : NULL;
-}
-
-static int
-ged_search_prefix_match(const std::string &candidate, const std::string &prefix)
-{
-    if (prefix.empty())
-	return 1;
-    if (candidate.size() < prefix.size())
-	return 0;
-    return (candidate.compare(0, prefix.size(), prefix) == 0);
-}
-
-static void
-ged_search_add_candidate(std::vector<std::string> &candidates, const char *candidate, const std::string &prefix)
-{
-    if (!candidate)
-	return;
-    std::string c(candidate);
-    if (!ged_search_prefix_match(c, prefix))
-	return;
-    if (std::find(candidates.begin(), candidates.end(), c) == candidates.end())
-	candidates.push_back(c);
-}
-
-static void
-ged_search_set_candidates(struct ged_cmd_validate_result *result,
-			  std::vector<std::string> &candidates,
-			  bu_cmd_value_t completion_type)
-{
-    if (!result || candidates.empty())
-	return;
-
-    std::sort(candidates.begin(), candidates.end(), [](const std::string &a, const std::string &b) {
-	return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
-    });
-
-    result->completion_count = candidates.size();
-    result->completion_candidates = (const char **)bu_calloc(result->completion_count + 1, sizeof(char *), "search completion candidates");
-    for (size_t i = 0; i < candidates.size(); i++)
-	result->completion_candidates[i] = bu_strdup(candidates[i].c_str());
-    result->completion_type = completion_type;
-}
-
-static void
-ged_search_collect_top_options(std::vector<std::string> &candidates, const std::string &prefix)
-{
-    size_t count = 0;
-    const struct ged_search_top_option *options = ged_search_top_options(&count);
-
-    for (size_t i = 0; i < count; i++)
-	ged_search_add_candidate(candidates, options[i].name, prefix);
-}
-
-static void
-ged_search_collect_plan_ops(std::vector<std::string> &candidates, const std::string &prefix)
-{
-    size_t count = 0;
-    const struct db_search_syntax_term *terms = db_search_syntax_terms(&count);
-
-    for (size_t i = 0; i < count; i++)
-	ged_search_add_candidate(candidates, terms[i].name, prefix);
-}
-
-static std::vector<std::string>
-ged_search_type_keywords(int include_aliases)
-{
-    std::set<std::string> keywords;
-    const char *abstract_types[] = {
-	"arb4", "arb5", "arb6", "arb7", "arb8",
-	"combination", "plate", "region", "shape", "sphere", "volume",
-	NULL
-    };
-    const char *aliases[] = {
-	"c", "comb", "r", "reg", "sph",
-	NULL
-    };
-
-    for (size_t i = 0; abstract_types[i]; i++)
-	keywords.insert(abstract_types[i]);
-
-    for (int i = 1; i <= ID_MAX_SOLID; i++) {
-	if (OBJ[i].ft_label[0] && !BU_STR_EQUAL(OBJ[i].ft_label, "ID_NULL"))
-	    keywords.insert(OBJ[i].ft_label);
-    }
-
-    if (include_aliases) {
-	for (size_t i = 0; aliases[i]; i++)
-	    keywords.insert(aliases[i]);
-    }
-
-    return std::vector<std::string>(keywords.begin(), keywords.end());
-}
-
-static int
-ged_search_is_type_keyword(const char *token)
-{
-    std::vector<std::string> keywords = ged_search_type_keywords(1);
-
-    if (!token)
-	return 0;
-    for (size_t i = 0; i < keywords.size(); i++) {
-	if (BU_STR_EQUAL(token, keywords[i].c_str()))
-	    return 1;
-    }
-    return 0;
-}
-
-static int
-ged_search_type_has_prefix(const char *token)
-{
-    std::vector<std::string> keywords = ged_search_type_keywords(1);
-    std::string prefix = token ? token : "";
-
-    if (prefix.empty())
-	return 1;
-    for (size_t i = 0; i < keywords.size(); i++) {
-	if (ged_search_prefix_match(keywords[i], prefix))
-	    return 1;
-    }
-    return 0;
-}
-
-static void
-ged_search_collect_type_candidates(std::vector<std::string> &candidates, const std::string &prefix)
-{
-    std::vector<std::string> keywords = ged_search_type_keywords(0);
-
-    for (size_t i = 0; i < keywords.size(); i++)
-	ged_search_add_candidate(candidates, keywords[i].c_str(), prefix);
-}
-
-static ged_cmd_semantic_state_t
-ged_search_path_state(struct ged *gedp, const char *token)
-{
-    if (!token || BU_STR_EMPTY(token))
-	return GED_CMD_SEMANTIC_INCOMPLETE;
-    if (BU_STR_EQUAL(token, "/") || BU_STR_EQUAL(token, ".") || BU_STR_EQUAL(token, "|"))
-	return GED_CMD_SEMANTIC_VALID;
-    if (token[0] == '|') {
-	if (!token[1])
-	    return GED_CMD_SEMANTIC_VALID;
-	return ged_quiet_db_path_validate(gedp, token + 1);
-    }
-    return ged_quiet_db_path_validate(gedp, token);
-}
-
-struct ged_search_parse_state {
-    int in_plan = 0;
-    int path_seen = 0;
-    int in_exec = 0;
-    size_t exec_start = (size_t)-1;
-    const struct db_search_syntax_term *pending_arg = NULL;
-};
-
-static void
-ged_search_state_consume(struct ged_search_parse_state *state, const char *arg, size_t arg_index)
-{
-    const struct db_search_syntax_term *op = NULL;
-
-    if (!state || !arg)
-	return;
-
-    if (state->in_exec) {
-	if (BU_STR_EQUAL(arg, ";")) {
-	    state->in_exec = 0;
-	    state->exec_start = (size_t)-1;
-	}
-	return;
-    }
-
-    if (state->pending_arg) {
-	if (BU_STR_EQUAL(state->pending_arg->name, "-exec") && !BU_STR_EQUAL(arg, ";")) {
-	    state->in_exec = 1;
-	    state->exec_start = arg_index;
-	}
-	state->pending_arg = NULL;
-	return;
-    }
-
-    if (!state->in_plan) {
-	if (!state->path_seen && ged_search_is_top_option(arg))
-	    return;
-	if (!ged_search_is_plan_start(arg)) {
-	    state->path_seen = 1;
-	    return;
-	}
-	state->in_plan = 1;
-    }
-
-    op = ged_search_find_plan_op(arg);
-	if (ged_search_plan_op_takes_arg(op))
-	state->pending_arg = op;
-}
-
-static std::string
-ged_argv_range_line(const struct ged_input_parse &parsed, size_t start, size_t end, int trailing_space = 0)
-{
-    std::string line;
-
-    if (end > parsed.argc)
-	end = parsed.argc;
-    for (size_t i = start; i < end; i++) {
-	if (!line.empty())
-	    line.push_back(' ');
-	line.push_back('"');
-	for (const char *cp = parsed.argv[i]; cp && *cp; cp++) {
-	    if (*cp == '\\' || *cp == '"')
-		line.push_back('\\');
-	    line.push_back(*cp);
-	}
-	line.push_back('"');
-    }
-    if (trailing_space && !line.empty())
-	line.push_back(' ');
-    return line;
-}
-
-static int
-ged_search_validate(struct ged *gedp, const struct ged_input_parse &parsed, const std::string &seed, struct ged_cmd_validate_result *result)
-{
-    struct ged_search_parse_state state;
-    const struct db_search_syntax_term *current_op = NULL;
-    std::vector<std::string> candidates;
-    size_t token_index = (parsed.cursor_arg < parsed.argc) ? parsed.cursor_arg : parsed.argc;
-    const char *arg = (parsed.cursor_arg < parsed.argc) ? parsed.argv[parsed.cursor_arg] : NULL;
-
-    for (size_t i = 1; i < parsed.cursor_arg && i < parsed.argc; i++)
-	ged_search_state_consume(&state, parsed.argv[i], i);
-
-    if (state.pending_arg) {
-	ged_set_validate_result(result, BU_CMD_VALIDATE_INCOMPLETE, token_index, token_index,
-		BU_CMD_EXPECT_OPTION_ARG, "search expression argument expected");
-	result->completion_type = ged_search_plan_arg_type(state.pending_arg);
-	if (BU_STR_EQUAL(state.pending_arg->name, "-exec")) {
-	    ged_fill_command_candidates(result, seed);
-	    result->expected = BU_CMD_EXPECT_SUBCOMMAND;
-	    result->hint = "search -exec GED command expected";
-	    if (arg && ged_cmd_exists(arg))
-		result->state = BU_CMD_VALIDATE_VALID;
-	    else if (arg && !result->completion_count)
-		result->state = BU_CMD_VALIDATE_INVALID;
-	    ged_set_result_chars(result, parsed, token_index, token_index);
-	    return 1;
-	}
-	if (ged_search_plan_validator(state.pending_arg))
-	    result->hint = ged_search_plan_validator(state.pending_arg);
-	if (BU_STR_EQUAL(state.pending_arg->name, "-type")) {
-	    ged_search_collect_type_candidates(candidates, seed);
-	    ged_search_set_candidates(result, candidates, BU_CMD_VALUE_KEYWORD);
-	    if (arg && ged_search_is_type_keyword(arg))
-		result->state = BU_CMD_VALIDATE_VALID;
-	    else if (arg && !ged_search_type_has_prefix(arg))
-		result->state = BU_CMD_VALIDATE_INVALID;
-	}
-	ged_set_result_chars(result, parsed, token_index, token_index);
-	return 1;
-    }
-
-    if (state.in_exec) {
-	if (arg && BU_STR_EQUAL(arg, ";")) {
-	    ged_set_validate_result(result, BU_CMD_VALIDATE_VALID, token_index, token_index,
-		    BU_CMD_EXPECT_OPTION, "search -exec terminator");
-	    result->completion_type = BU_CMD_VALUE_RAW;
-	    ged_set_result_chars(result, parsed, token_index, token_index);
-	    return 1;
-	}
-
-	struct ged_cmd_validate_result nested = GED_CMD_VALIDATE_RESULT_NULL;
-	size_t nested_end = (parsed.cursor_arg < parsed.argc) ? parsed.cursor_arg + 1 : parsed.argc;
-	int trailing_space = (parsed.cursor_arg >= parsed.argc && seed.empty()) ? 1 : 0;
-	std::string nested_line = ged_argv_range_line(parsed, state.exec_start, nested_end, trailing_space);
-	(void)ged_cmd_validate(gedp, nested_line.c_str(), nested_line.size(), &nested);
-
-	ged_set_validate_result(result, nested.state, token_index, token_index,
-		nested.expected, nested.hint ? nested.hint : "search -exec command argument");
-	result->completion_type = nested.completion_type;
-	result->completion_count = nested.completion_count;
-	result->completion_candidates = nested.completion_candidates;
-	nested.completion_count = 0;
-	nested.completion_candidates = NULL;
-	if (arg && db_search_syntax_exec_substitution(arg) &&
-		(result->completion_type == BU_CMD_VALUE_DB_OBJECT || result->completion_type == BU_CMD_VALUE_DB_PATH))
-	    result->state = BU_CMD_VALIDATE_VALID;
-	if (trailing_space && result->state == BU_CMD_VALIDATE_VALID) {
-	    result->state = BU_CMD_VALIDATE_INCOMPLETE;
-	    result->expected = BU_CMD_EXPECT_OPERAND;
-	    result->hint = "search -exec requires a standalone ; terminator";
-	}
-	ged_set_result_chars(result, parsed, token_index, token_index);
-	ged_cmd_validate_result_clear(&nested);
-	return 1;
-    }
-
-    if (!state.in_plan) {
-	if (seed.empty() || ged_search_is_plan_start(seed.c_str())) {
-	    ged_set_validate_result(result, BU_CMD_VALIDATE_VALID, token_index, token_index,
-		    BU_CMD_EXPECT_OPTION | BU_CMD_EXPECT_OPERAND, "search path or expression expected");
-	    if (!state.path_seen)
-		ged_search_collect_top_options(candidates, seed);
-	    ged_search_collect_plan_ops(candidates, seed);
-	    if (!seed.empty() && candidates.empty()) {
-		result->state = BU_CMD_VALIDATE_INVALID;
-		result->hint = "unknown search expression operator";
-	    }
-	    ged_search_set_candidates(result, candidates, BU_CMD_VALUE_UNKNOWN);
-	    ged_set_result_chars(result, parsed, token_index, token_index);
-	    return 1;
-	}
-
-	ged_set_validate_result(result, BU_CMD_VALIDATE_VALID, token_index, token_index,
-		BU_CMD_EXPECT_OPERAND, "search path expected");
-	result->completion_type = BU_CMD_VALUE_DB_PATH;
-	ged_fill_geometry_candidates(gedp, seed, result);
-	if (arg && ged_search_path_state(gedp, arg) == GED_CMD_SEMANTIC_INVALID)
-	    result->state = BU_CMD_VALIDATE_INVALID;
-	ged_set_result_chars(result, parsed, token_index, token_index);
-	return 1;
-    }
-
-    current_op = arg ? ged_search_find_plan_op(arg) : NULL;
-    if (arg && ged_search_is_plan_start(arg) && !current_op && !candidates.size()) {
-	ged_set_validate_result(result, BU_CMD_VALIDATE_INVALID, token_index, token_index,
-		BU_CMD_EXPECT_OPTION, "unknown search expression operator");
-	ged_search_collect_plan_ops(candidates, seed);
-	ged_search_set_candidates(result, candidates, BU_CMD_VALUE_UNKNOWN);
-	ged_set_result_chars(result, parsed, token_index, token_index);
-	return 1;
-    }
-
-    ged_set_validate_result(result, current_op ? BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INCOMPLETE,
-	    token_index, token_index, BU_CMD_EXPECT_OPTION, "search expression operator expected");
-    ged_search_collect_plan_ops(candidates, seed);
-    ged_search_set_candidates(result, candidates, BU_CMD_VALUE_UNKNOWN);
-    ged_set_result_chars(result, parsed, token_index, token_index);
-    return 1;
-}
-
-static int
-ged_search_analyze(struct ged *gedp, const struct ged_input_parse &parsed, struct ged_cmd_analysis *analysis)
-{
-    struct ged_search_parse_state state;
-
-    if (!analysis || !analysis->tokens)
-	return 0;
-
-    for (size_t i = 1; i < parsed.argc; i++) {
-	const char *arg = parsed.argv[i];
-	struct ged_cmd_analysis_token *token = &analysis->tokens[i];
-
-	if (state.pending_arg) {
-	    if (BU_STR_EQUAL(state.pending_arg->name, "-exec")) {
-		size_t exec_end = i;
-		while (exec_end < parsed.argc && !BU_STR_EQUAL(parsed.argv[exec_end], ";"))
-		    exec_end++;
-
-		if (exec_end > i) {
-		    struct ged_cmd_analysis nested = {0, NULL};
-		    std::string nested_line = ged_argv_range_line(parsed, i, exec_end);
-		    (void)ged_cmd_analyze(gedp, nested_line.c_str(), &nested);
-		    size_t nested_count = std::min(nested.token_count, exec_end - i);
-		    for (size_t ni = 0; ni < nested_count; ni++) {
-			struct ged_cmd_analysis_token *outer = &analysis->tokens[i + ni];
-			outer->role = nested.tokens[ni].role;
-			outer->value_type = nested.tokens[ni].value_type;
-			outer->semantic_state = nested.tokens[ni].semantic_state;
-			outer->validator = nested.tokens[ni].validator;
-			outer->hint = nested.tokens[ni].hint;
-			if (db_search_syntax_exec_substitution(parsed.argv[i + ni]) &&
-				(outer->role == GED_CMD_TOKEN_OPERAND || outer->role == GED_CMD_TOKEN_OPTION_ARG)) {
-			    outer->semantic_state = GED_CMD_SEMANTIC_VALID;
-			    outer->hint = "search -exec substitution argument";
-			}
-		    }
-		    if (exec_end < parsed.argc && nested_count > 0) {
-			struct ged_cmd_validate_result nested_validation = GED_CMD_VALIDATE_RESULT_NULL;
-			std::string completed_line = nested_line + " ";
-			(void)ged_cmd_validate(gedp, completed_line.c_str(), completed_line.size(), &nested_validation);
-			if (nested_validation.state == BU_CMD_VALIDATE_INCOMPLETE) {
-			    struct ged_cmd_analysis_token *last = &analysis->tokens[exec_end - 1];
-			    if (last->semantic_state != GED_CMD_SEMANTIC_INVALID) {
-				last->semantic_state = GED_CMD_SEMANTIC_INCOMPLETE;
-				last->hint = "incomplete search -exec GED command";
-			    }
-			}
-			ged_cmd_validate_result_clear(&nested_validation);
-		    }
-		    ged_cmd_analysis_clear(&nested);
-		    if (exec_end == parsed.argc &&
-			    analysis->tokens[exec_end - 1].semantic_state != GED_CMD_SEMANTIC_INVALID) {
-			analysis->tokens[exec_end - 1].semantic_state = GED_CMD_SEMANTIC_INCOMPLETE;
-			analysis->tokens[exec_end - 1].hint = "search -exec requires a standalone ; terminator";
-		    }
-		}
-
-		if (exec_end < parsed.argc) {
-		    struct ged_cmd_analysis_token *terminator = &analysis->tokens[exec_end];
-		    terminator->role = GED_CMD_TOKEN_OPERAND;
-		    terminator->value_type = BU_CMD_VALUE_RAW;
-		    terminator->semantic_state = (exec_end == i) ? GED_CMD_SEMANTIC_INCOMPLETE : GED_CMD_SEMANTIC_VALID;
-		    terminator->hint = (exec_end == i) ? "search -exec GED command expected" : "search -exec terminator";
-		}
-		state.pending_arg = NULL;
-		i = exec_end;
-		continue;
-	    }
-
-	    token->role = GED_CMD_TOKEN_OPTION_ARG;
-	    token->value_type = ged_search_plan_arg_type(state.pending_arg);
-	    token->validator = ged_search_plan_validator(state.pending_arg);
-	    token->hint = "search expression argument";
-	    if (BU_STR_EQUAL(state.pending_arg->name, "-type")) {
-		token->semantic_state = ged_search_is_type_keyword(arg) ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
-	    } else {
-		token->semantic_state = GED_CMD_SEMANTIC_UNKNOWN;
-	    }
-	    state.pending_arg = NULL;
-	    continue;
-	}
-
-	if (!state.in_plan) {
-	    if (!state.path_seen && ged_search_is_top_option(arg)) {
-		token->role = GED_CMD_TOKEN_OPTION;
-		token->value_type = BU_CMD_VALUE_BOOL;
-		token->semantic_state = GED_CMD_SEMANTIC_VALID;
-		token->hint = "search option";
-		continue;
-	    }
-	    if (!ged_search_is_plan_start(arg)) {
-		token->role = GED_CMD_TOKEN_OPERAND;
-		token->value_type = BU_CMD_VALUE_DB_PATH;
-		token->validator = "ged.search.path";
-		token->semantic_state = ged_search_path_state(gedp, arg);
-		token->hint = "search path";
-		state.path_seen = 1;
-		continue;
-	    }
-	    state.in_plan = 1;
-	}
-
-	const struct db_search_syntax_term *op = ged_search_find_plan_op(arg);
-	token->role = GED_CMD_TOKEN_OPTION;
-	token->value_type = BU_CMD_VALUE_UNKNOWN;
-	token->semantic_state = op ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
-	token->hint = op ? "search expression operator" : "unknown search expression operator";
-	if (ged_search_plan_op_takes_arg(op))
-	    state.pending_arg = op;
-    }
-
-    return 1;
-}
-
-static int
-ged_search_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
-	struct ged_cmd_validate_result *result)
-{
-    struct ged_input_parse parsed;
-    std::string seed;
-    int ret = 0;
-
-    if (!input || !result)
-	return -1;
-    if (cursor_pos > strlen(input))
-	cursor_pos = strlen(input);
-    if (ged_input_parse_line(&parsed, input, cursor_pos) != 0)
-	return -1;
-    seed = ged_cursor_seed(parsed);
-    ret = ged_search_validate(gedp, parsed, seed, result);
-    ged_input_parse_free(&parsed);
-    return ret < 0 ? ret : 0;
-}
-
-static int
-ged_search_grammar_analyze(struct ged *gedp, const char *input, struct ged_cmd_analysis *analysis)
-{
-    struct ged_input_parse parsed;
-    int ret = 0;
-
-    if (!input || !analysis)
-	return -1;
-    ged_cmd_analysis_clear(analysis);
-    if (ged_input_parse_line(&parsed, input, strlen(input)) != 0)
-	return -1;
-    if (!parsed.argc) {
-	ged_input_parse_free(&parsed);
-	return 0;
-    }
-
-    analysis->tokens = (struct ged_cmd_analysis_token *)bu_calloc(parsed.argc,
-	sizeof(struct ged_cmd_analysis_token), "search grammar analysis tokens");
-    analysis->token_count = parsed.argc;
-    for (size_t i = 0; i < parsed.argc; i++) {
-	ged_analysis_set_span(&analysis->tokens[i], parsed, i);
-	analysis->tokens[i].role = GED_CMD_TOKEN_UNKNOWN;
-	analysis->tokens[i].value_type = BU_CMD_VALUE_UNKNOWN;
-	analysis->tokens[i].semantic_state = GED_CMD_SEMANTIC_UNKNOWN;
-	analysis->tokens[i].validator = NULL;
-	analysis->tokens[i].hint = NULL;
-    }
-    analysis->tokens[0].role = GED_CMD_TOKEN_COMMAND;
-    analysis->tokens[0].semantic_state = ged_cmd_exists(parsed.argv[0]) ?
-	GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
-    analysis->tokens[0].hint = analysis->tokens[0].semantic_state == GED_CMD_SEMANTIC_VALID ?
-	"valid command" : "unknown command";
-
-    ret = ged_search_analyze(gedp, parsed, analysis);
-    ged_input_parse_free(&parsed);
-    return ret < 0 ? ret : 0;
-}
-
-static const char *
-ged_search_syntax_argument_name(db_search_syntax_arg_t argument)
-{
-    switch (argument) {
-	case DB_SEARCH_SYNTAX_STRING_ARGUMENT: return "string";
-	case DB_SEARCH_SYNTAX_INTEGER_ARGUMENT: return "integer";
-	case DB_SEARCH_SYNTAX_TYPE_ARGUMENT: return "type";
-	case DB_SEARCH_SYNTAX_EXEC_ARGUMENTS: return "exec";
-	case DB_SEARCH_SYNTAX_NO_ARGUMENT:
-	default: return "none";
-    }
-}
-
-static char *
-ged_search_grammar_json(void)
-{
-    struct bu_vls out = BU_VLS_INIT_ZERO;
-    size_t count = 0;
-    size_t option_count = 0;
-    const struct db_search_syntax_term *terms = db_search_syntax_terms(&count);
-    const struct ged_search_top_option *options = ged_search_top_options(&option_count);
-
-    bu_vls_strcat(&out, "{\"name\":\"search\",\"kind\":\"grammar_adapter\",");
-    bu_vls_strcat(&out, "\"parse_policy\":\"grammar_adapter\",");
-    bu_vls_strcat(&out, "\"help\":\"Search database objects\",\"options\":[");
-    for (size_t i = 0; i < option_count; i++) {
-	if (i)
-	    bu_vls_putc(&out, ',');
-	bu_vls_printf(&out, "{\"name\":\"%s\",\"argument\":\"none\",\"repeatable\":%s}",
-		options[i].name, options[i].kind == GED_SEARCH_TOP_OPTION_VERBOSE ? "true" : "false");
-    }
-    bu_vls_strcat(&out, "],\"terms\":[");
-    for (size_t i = 0; i < count; i++) {
-	if (i)
-	    bu_vls_putc(&out, ',');
-	bu_vls_printf(&out, "{\"name\":\"%s\",\"argument\":\"%s\"}",
-		terms[i].name, ged_search_syntax_argument_name(terms[i].argument));
-    }
-    bu_vls_strcat(&out, "]}");
-    return bu_vls_strdup(&out);
-}
-
-static int
-ged_search_grammar_lint(struct bu_vls *msgs)
-{
-    int failures = 0;
-    int has_exec = 0;
-    int has_type = 0;
-    size_t count = 0;
-    size_t option_count = 0;
-    const struct db_search_syntax_term *terms = db_search_syntax_terms(&count);
-    const struct ged_search_top_option *options = ged_search_top_options(&option_count);
-    std::set<std::string> names;
-
-    if (!terms || !count) {
-	if (msgs)
-	    bu_vls_strcat(msgs, "search: parser-owned syntax vocabulary is empty\n");
-	return 1;
-    }
-    for (size_t i = 0; i < count; i++) {
-	if (BU_STR_EMPTY(terms[i].name) || !names.insert(std::string(terms[i].name)).second) {
-	    if (msgs)
-		bu_vls_printf(msgs, "search: empty or duplicate parser-owned term \"%s\"\n",
-		    terms[i].name ? terms[i].name : "");
-	    failures++;
-	}
-	if (BU_STR_EQUAL(terms[i].name, "-exec"))
-	    has_exec = terms[i].argument == DB_SEARCH_SYNTAX_EXEC_ARGUMENTS;
-	if (BU_STR_EQUAL(terms[i].name, "-type"))
-	    has_type = terms[i].argument == DB_SEARCH_SYNTAX_TYPE_ARGUMENT;
-    }
-    if (!has_exec || !has_type) {
-	if (msgs)
-	    bu_vls_strcat(msgs, "search: parser-owned syntax vocabulary lacks typed -exec or -type\n");
-	failures++;
-    }
-
-    names.clear();
-    if (!options || !option_count) {
-	if (msgs)
-	    bu_vls_strcat(msgs, "search: command-owned prefix vocabulary is empty\n");
-	return failures + 1;
-    }
-    for (size_t i = 0; i < option_count; i++) {
-	enum ged_search_top_option_kind kind = GED_SEARCH_TOP_OPTION_UNKNOWN;
-	size_t occurrences = 0;
-	if (BU_STR_EMPTY(options[i].name) || !names.insert(std::string(options[i].name)).second ||
-		!ged_search_top_option_parse(options[i].name, &kind, &occurrences) ||
-		kind != options[i].kind || occurrences != 1) {
-	    if (msgs)
-		bu_vls_printf(msgs, "search: malformed or duplicate command-owned option \"%s\"\n",
-			options[i].name ? options[i].name : "");
-	    failures++;
-	}
-    }
-    return failures;
-}
-
-extern "C" GED_EXPORT const struct ged_cmd_grammar ged_search_grammar = {
-    "search", "Search database objects", ged_search_grammar_validate,
-    ged_search_grammar_analyze, ged_search_grammar_json, ged_search_grammar_lint
-};
 
 int
 ged_cmd_completions(const char ***completions, const char *seed)
@@ -2144,127 +1476,6 @@ ged_cmd_validate(struct ged *gedp, const char *input, size_t cursor_pos, struct 
 }
 
 
-/* Erase selects a deliberately different native form according to the GED
- * command-form setting.  Registering it as a grammar adapter lets the editor
- * make that context-sensitive selection without advertising one form's
- * options in the other form. */
-static const struct bu_cmd_schema *
-ged_erase_active_schema(const struct ged *gedp)
-{
-    return gedp && gedp->new_cmd_forms ? &ged_erase_new_schema :
-	&ged_erase_legacy_schema;
-}
-
-
-static int
-ged_erase_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
-	struct ged_cmd_validate_result *result)
-{
-    struct ged_input_parse parsed;
-    std::string seed;
-    int ret = 0;
-
-    if (!input || !result)
-	return -1;
-    if (cursor_pos > strlen(input))
-	cursor_pos = strlen(input);
-    if (ged_input_parse_line(&parsed, input, cursor_pos) != 0)
-	return -1;
-    if (!parsed.argc) {
-	ged_input_parse_free(&parsed);
-	return -1;
-    }
-    seed = ged_cursor_seed(parsed);
-    ret = ged_native_validate(gedp, ged_erase_active_schema(gedp), parsed,
-	input, cursor_pos, seed, result);
-    ged_input_parse_free(&parsed);
-    return ret;
-}
-
-
-static int
-ged_erase_grammar_analyze(struct ged *gedp, const char *input,
-	struct ged_cmd_analysis *analysis)
-{
-    struct ged_input_parse parsed;
-
-    if (!input || !analysis)
-	return -1;
-    ged_cmd_analysis_clear(analysis);
-    if (ged_input_parse_line(&parsed, input, strlen(input)) != 0)
-	return -1;
-    if (!parsed.argc) {
-	ged_input_parse_free(&parsed);
-	return 0;
-    }
-
-    analysis->tokens = (struct ged_cmd_analysis_token *)bu_calloc(parsed.argc,
-	sizeof(struct ged_cmd_analysis_token), "erase grammar analysis tokens");
-    analysis->token_count = parsed.argc;
-    for (size_t i = 0; i < parsed.argc; i++) {
-	ged_analysis_set_span(&analysis->tokens[i], parsed, i);
-	analysis->tokens[i].role = GED_CMD_TOKEN_UNKNOWN;
-	analysis->tokens[i].value_type = BU_CMD_VALUE_UNKNOWN;
-	analysis->tokens[i].semantic_state = GED_CMD_SEMANTIC_UNKNOWN;
-	analysis->tokens[i].validator = NULL;
-	analysis->tokens[i].hint = NULL;
-    }
-    analysis->tokens[0].role = GED_CMD_TOKEN_COMMAND;
-    analysis->tokens[0].semantic_state = ged_cmd_exists(parsed.argv[0]) ?
-	GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
-    analysis->tokens[0].hint = analysis->tokens[0].semantic_state == GED_CMD_SEMANTIC_VALID ?
-	"valid command" : "unknown command";
-    ged_native_analyze(gedp, ged_erase_active_schema(gedp), parsed, analysis);
-    ged_input_parse_free(&parsed);
-    return 0;
-}
-
-
-static char *
-ged_erase_grammar_json(void)
-{
-    struct bu_vls out = BU_VLS_INIT_ZERO;
-    char *legacy = bu_cmd_schema_describe_json(&ged_erase_legacy_schema);
-    char *new_form = bu_cmd_schema_describe_json(&ged_erase_new_schema);
-
-    bu_vls_strcat(&out, "{\"name\":\"erase\",\"kind\":\"grammar_adapter\",");
-    bu_vls_strcat(&out, "\"parse_policy\":\"context_selected_form\",");
-    bu_vls_strcat(&out, "\"help\":\"Erase database paths from the display\",");
-    bu_vls_printf(&out, "\"forms\":{\"legacy\":%s,\"new\":%s}}",
-	legacy ? legacy : "{}", new_form ? new_form : "{}");
-    if (legacy)
-	bu_free(legacy, "erase legacy schema JSON");
-    if (new_form)
-	bu_free(new_form, "erase new schema JSON");
-    return bu_vls_strdup(&out);
-}
-
-
-static int
-ged_erase_grammar_lint(struct bu_vls *msgs)
-{
-    int failures = 0;
-
-    if (!ged_erase_legacy_schema.options || !ged_erase_legacy_schema.operands ||
-	!ged_erase_legacy_schema.validation.custom_validate) {
-	if (msgs)
-	    bu_vls_strcat(msgs, "erase: legacy native form is incomplete\n");
-	failures++;
-    }
-    if (!ged_erase_new_schema.options || !ged_erase_new_schema.operands ||
-	ged_erase_new_schema.parse_policy != BU_CMD_PARSE_INTERSPERSED) {
-	if (msgs)
-	    bu_vls_strcat(msgs, "erase: new native form is incomplete\n");
-	failures++;
-    }
-    return failures;
-}
-
-
-extern "C" GED_EXPORT const struct ged_cmd_grammar ged_erase_grammar = {
-    "erase", "Erase database paths from the display", ged_erase_grammar_validate,
-    ged_erase_grammar_analyze, ged_erase_grammar_json, ged_erase_grammar_lint
-};
 
 
 /* A native tree has a flat root option phase and parser-owned subcommands.
@@ -2337,10 +1548,11 @@ ged_native_tree_subcommand_candidates(const struct bu_cmd_tree *tree,
 {
 	std::vector<std::string> candidates;
 
-    for (size_t i = 0; tree && tree->subcommands && tree->subcommands[i].schema; i++)
-	ged_search_add_candidate(candidates,
+	for (size_t i = 0; tree && tree->subcommands && tree->subcommands[i].schema; i++) {
+	ged_completion_add_candidate(candidates,
 	    tree->subcommands[i].schema->name, seed);
-    ged_search_set_candidates(result, candidates, BU_CMD_VALUE_KEYWORD);
+	}
+	ged_completion_set_candidates(result, candidates, BU_CMD_VALUE_KEYWORD);
 }
 
 
@@ -2497,32 +1709,6 @@ ged_cmd_tree_validate(struct ged *gedp, const struct bu_cmd_tree *tree,
 }
 
 
-static int
-ged_select_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
-	struct ged_cmd_validate_result *result)
-{
-    struct ged_input_parse parsed;
-    std::string seed;
-    int ret;
-
-    if (gedp && gedp->new_cmd_forms)
-	return ged_cmd_tree_validate(gedp, &ged_select_new_tree, input, cursor_pos, result);
-    if (!input || !result)
-	return -1;
-    if (cursor_pos > strlen(input))
-	cursor_pos = strlen(input);
-    if (ged_input_parse_line(&parsed, input, cursor_pos) != 0)
-	return -1;
-    if (!parsed.argc) {
-	ged_input_parse_free(&parsed);
-	return -1;
-    }
-    seed = ged_cursor_seed(parsed);
-    ret = ged_native_validate(gedp, &ged_select_legacy_schema, parsed, input,
-	cursor_pos, seed, result);
-    ged_input_parse_free(&parsed);
-    return ret;
-}
 
 
 static void
@@ -2763,215 +1949,6 @@ ged_cmd_native_forms_lint(const char *command, const struct ged_cmd_native_form 
     return failures;
 }
 
-
-static int
-ged_select_grammar_analyze(struct ged *gedp, const char *input,
-	struct ged_cmd_analysis *analysis)
-{
-    struct ged_input_parse parsed;
-
-    if (gedp && gedp->new_cmd_forms)
-	return ged_cmd_tree_analyze(gedp, &ged_select_new_tree, input, analysis);
-    if (!input || !analysis)
-	return -1;
-    ged_cmd_analysis_clear(analysis);
-    if (ged_input_parse_line(&parsed, input, strlen(input)) != 0)
-	return -1;
-    if (!parsed.argc) {
-	ged_input_parse_free(&parsed);
-	return 0;
-    }
-    ged_native_tree_analysis_initialize(analysis, parsed);
-    ged_native_analyze(gedp, &ged_select_legacy_schema, parsed, analysis);
-    ged_input_parse_free(&parsed);
-    return 0;
-}
-
-
-static char *
-ged_select_grammar_json(void)
-{
-    struct bu_vls out = BU_VLS_INIT_ZERO;
-    char *legacy = bu_cmd_schema_describe_json(&ged_select_legacy_schema);
-    char *new_form = bu_cmd_tree_describe_json(&ged_select_new_tree);
-
-    bu_vls_strcat(&out, "{\"name\":\"select\",\"kind\":\"grammar_adapter\",");
-    bu_vls_strcat(&out, "\"parse_policy\":\"context_selected_form\",");
-    bu_vls_strcat(&out, "\"help\":\"Manage display selection and selection sets\",");
-    bu_vls_printf(&out, "\"forms\":{\"legacy\":%s,\"new\":%s}",
-	legacy ? legacy : "{}", new_form ? new_form : "{}");
-    bu_vls_putc(&out, '}');
-    if (legacy)
-	bu_free(legacy, "select legacy schema JSON");
-    if (new_form)
-	bu_free(new_form, "select new schema JSON");
-    return bu_vls_strdup(&out);
-}
-
-
-static int
-ged_select_grammar_lint(struct bu_vls *msgs)
-{
-    int failures = 0;
-
-    if (!ged_select_legacy_schema.options || !ged_select_legacy_schema.operands ||
-	!ged_select_new_schema.options) {
-	if (msgs)
-	    bu_vls_strcat(msgs, "select: native command forms are incomplete\n");
-	failures++;
-    }
-    failures += bu_cmd_tree_lint(&ged_select_new_tree, msgs);
-    return failures;
-}
-
-
-static int
-ged_view_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
-	struct ged_cmd_validate_result *result)
-{
-    return ged_cmd_tree_validate(gedp, &ged_view_tree, input, cursor_pos, result);
-}
-
-
-static int
-ged_view2_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
-	struct ged_cmd_validate_result *result)
-{
-    return ged_cmd_tree_validate(gedp, &ged_view2_tree, input, cursor_pos, result);
-}
-
-
-static int
-ged_view_grammar_analyze(struct ged *gedp, const char *input,
-	struct ged_cmd_analysis *analysis)
-{
-    return ged_cmd_tree_analyze(gedp, &ged_view_tree, input, analysis);
-}
-
-
-static int
-ged_view2_grammar_analyze(struct ged *gedp, const char *input,
-	struct ged_cmd_analysis *analysis)
-{
-    return ged_cmd_tree_analyze(gedp, &ged_view2_tree, input, analysis);
-}
-
-
-static char *
-ged_view_grammar_json(void)
-{
-    return bu_cmd_tree_describe_json(&ged_view_tree);
-}
-
-
-static char *
-ged_view2_grammar_json(void)
-{
-    return bu_cmd_tree_describe_json(&ged_view2_tree);
-}
-
-
-static int
-ged_view_grammar_lint(struct bu_vls *msgs)
-{
-    return bu_cmd_tree_lint(&ged_view_tree, msgs);
-}
-
-
-static int
-ged_view2_grammar_lint(struct bu_vls *msgs)
-{
-    return bu_cmd_tree_lint(&ged_view2_tree, msgs);
-}
-
-
-static int
-ged_rselect_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
-	struct ged_cmd_validate_result *result)
-{
-    struct ged_input_parse parsed;
-    std::string seed;
-    int ret;
-
-    if (!input || !result)
-	return -1;
-    if (cursor_pos > strlen(input))
-	cursor_pos = strlen(input);
-    if (ged_input_parse_line(&parsed, input, cursor_pos) != 0)
-	return -1;
-    if (!parsed.argc) {
-	ged_input_parse_free(&parsed);
-	return -1;
-    }
-    seed = ged_cursor_seed(parsed);
-    ret = ged_native_validate(gedp, &ged_rselect_legacy_schema, parsed, input,
-	cursor_pos, seed, result);
-    ged_input_parse_free(&parsed);
-    return ret;
-}
-
-
-static int
-ged_rselect_grammar_analyze(struct ged *gedp, const char *input,
-	struct ged_cmd_analysis *analysis)
-{
-    struct ged_input_parse parsed;
-
-    if (!input || !analysis)
-	return -1;
-    ged_cmd_analysis_clear(analysis);
-    if (ged_input_parse_line(&parsed, input, strlen(input)) != 0)
-	return -1;
-    if (!parsed.argc) {
-	ged_input_parse_free(&parsed);
-	return 0;
-    }
-    ged_native_tree_analysis_initialize(analysis, parsed);
-    ged_native_analyze(gedp, &ged_rselect_legacy_schema, parsed, analysis);
-    ged_input_parse_free(&parsed);
-    return 0;
-}
-
-
-static char *
-ged_rselect_grammar_json(void)
-{
-    return bu_cmd_schema_describe_json(&ged_rselect_legacy_schema);
-}
-
-
-static int
-ged_rselect_grammar_lint(struct bu_vls *msgs)
-{
-    if (ged_rselect_legacy_schema.options)
-	return 0;
-    if (msgs)
-	bu_vls_strcat(msgs, "rselect: native schema is incomplete\n");
-    return 1;
-}
-
-
-extern "C" GED_EXPORT const struct ged_cmd_grammar ged_select_grammar = {
-    "select", "Manage display selection and selection sets", ged_select_grammar_validate,
-    ged_select_grammar_analyze, ged_select_grammar_json, ged_select_grammar_lint
-};
-
-extern "C" GED_EXPORT const struct ged_cmd_grammar ged_view_grammar = {
-    "view", "Inspect and manipulate named views", ged_view_grammar_validate,
-    ged_view_grammar_analyze, ged_view_grammar_json, ged_view_grammar_lint
-};
-
-extern "C" GED_EXPORT const struct ged_cmd_grammar ged_view2_grammar = {
-    "view2", "Inspect and manipulate named views", ged_view2_grammar_validate,
-    ged_view2_grammar_analyze, ged_view2_grammar_json, ged_view2_grammar_lint
-};
-
-extern "C" GED_EXPORT const struct ged_cmd_grammar ged_rselect_grammar = {
-    "rselect", "Select using the current rubber-band region", ged_rselect_grammar_validate,
-    ged_rselect_grammar_analyze, ged_rselect_grammar_json, ged_rselect_grammar_lint
-};
-
-
 extern "C" int
 ged_cmd_complete_result(struct ged *gedp, const char *input, size_t cursor_pos, struct ged_cmd_completion_result *result)
 {
@@ -3031,6 +2008,7 @@ ged_cmd_complete_result(struct ged *gedp, const char *input, size_t cursor_pos, 
     if (parsed.cursor_arg < parsed.argc && cursor_pos == parsed.char_ends[parsed.cursor_arg] &&
 	    cursor_pos > parsed.char_starts[parsed.cursor_arg] && !seed.empty() &&
 	    seed[0] == '-' && (vr.expected & BU_CMD_EXPECT_OPTION_ARG) &&
+	    (parsed.cursor_arg == 0 || parsed.argv[parsed.cursor_arg - 1][0] != '-') &&
 	    vr.char_start == parsed.char_starts[parsed.cursor_arg] &&
 	    vr.char_end == parsed.char_ends[parsed.cursor_arg]) {
 	ged_cmd_validate_result_clear(&vr);
@@ -3193,12 +2171,10 @@ ged_geom_completions(const char ***completions, struct bu_vls *prefix, struct db
     if (!dbip || !prefix || !completions || !seed)
 	return 0;
 
-    /* A slash denotes an interactive hierarchy path unless that path cannot
-     * be resolved.  Checking literal directory names first loses the prefix
-     * before the final slash, so a completed path cannot be extended with
-     * another component.  Retain literal slash-containing object names as a
-     * fallback for databases that use them. */
-    if (strchr(seed, '/')) {
+    /* Only an unescaped slash denotes an interactive hierarchy separator.
+     * Literal slash-containing names remain root-level candidates and are
+     * represented with '\\/' by the database-path grammar. */
+    if (ged_last_unescaped_path_separator(std::string(seed)) != std::string::npos) {
 	ret = path_match(completions, prefix, dbip, seed);
 	if (ret > 0)
 	    return ret;
