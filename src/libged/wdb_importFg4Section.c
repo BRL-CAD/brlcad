@@ -137,10 +137,12 @@ rt_mk_bot_w_normals(
     botip->faces = (int *)bu_calloc(num_faces * 3, sizeof(int), "botip->faces");
     for (i = 0; i < num_faces * 3; i++)
 	botip->faces[i] = faces[i];
-    if (botmode == RT_BOT_PLATE) {
+    if (botmode == RT_BOT_PLATE || botmode == RT_BOT_PLATE_NOCOS) {
 	botip->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "botip->thickness");
-	for (i = 0; i < num_faces; i++)
-	    botip->thickness[i] = thickness[i];
+	if (thickness != NULL) {
+	    for (i = 0; i < num_faces; i++)
+		botip->thickness[i] = thickness[i];
+	}
 	botip->face_mode = bu_bitv_dup(face_mode);
     } else {
 	botip->thickness = (fastf_t *)NULL;
