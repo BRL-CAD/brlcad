@@ -515,10 +515,8 @@ mged_search_pre_clbk(int UNUSED(argc), const char **UNUSED(argv),
 
     /* Clean up any leftover interp from a previous search that did not finish
      * cleanly (i.e. where the POST callback was not reached). */
-    if (s->search_interp) {
-	Tcl_DeleteInterp(s->search_interp);
-	s->search_interp = NULL;
-    }
+    if (s->search_interp != NULL)
+	bu_bomb("ERROR - stale search interp, state is corrupted\n");
 
     s->search_interp = _create_search_interp(s);
     return BRLCAD_OK;
@@ -532,6 +530,10 @@ mged_search_pre_clbk(int UNUSED(argc), const char **UNUSED(argv),
  * The interpreter must not be persisted beyond a single search invocation
  * because the user environment (procs, variables) may change before the next
  * search is run.
+ *
+ * We deliberately run this after every search, succeed or fail,
+ * to make sure we get rid of the thread-owned Tcl interp - it must be
+ * destroyed from this thread.
  */
 int
 mged_search_post_clbk(int UNUSED(argc), const char **UNUSED(argv),
@@ -540,10 +542,11 @@ mged_search_post_clbk(int UNUSED(argc), const char **UNUSED(argv),
     struct mged_state *s = (struct mged_state *)u2;
     MGED_CK_STATE(s);
 
-    if (s->search_interp) {
-	Tcl_DeleteInterp(s->search_interp);
-	s->search_interp = NULL;
-    }
+    if (s->search_interp == NULL)
+	bu_bomb("ERROR - search Tcl interp missing, state is corrupted.\n");
+
+    Tcl_DeleteInterp(s->search_interp);
+    s->search_interp = NULL;
     return BRLCAD_OK;
 }
 

@@ -315,6 +315,12 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 // them directly. LINGER is a special case involving commands utilizing long
 // running subprocesses.
 //
+// ged_exec will run post execution callbacks whether or not the command
+// reports success - if callers want to avoid actions on failed commands, they
+// should use ged_results_ret(gedp->ged_results) to get the command return code
+// (which will match what ged_exec will ultimately return) to decide their
+// course of action.
+//
 // Only one function can be registered for each pre/post command slot - an
 // assignment to a command slot that already has an assigned function will
 // result in the previous function pointer being cleared and replaced.  If an
@@ -366,6 +372,7 @@ GED_EXPORT extern void *ged_dm_ctx_get(struct ged *gedp, const char *dm_type);
  * internals of ged_results, which are not guaranteed
  * to stay the same.
  * defined in ged_util.c */
+GED_EXPORT extern int ged_results_ret(struct ged_results *results);
 GED_EXPORT extern size_t ged_results_count(struct ged_results *results);
 GED_EXPORT extern const char *ged_results_get(struct ged_results *results, size_t index);
 GED_EXPORT extern void ged_results_clear(struct ged_results *results);

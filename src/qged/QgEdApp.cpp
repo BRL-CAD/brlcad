@@ -49,6 +49,12 @@ int
 qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
 {
     QgEdApp *a = (QgEdApp *)ctx;
+
+    // If the command didn't succeed, don't do anything.  Return OK for our execution
+    // so the ged_exec return code is the command's ret, not ours.
+    if (ged_results_ret(a->mdl->gedp->ged_results) != BRLCAD_OK)
+	return BRLCAD_OK;
+
     emit a->dbi_update(a->mdl->gedp->dbip);
     if (!a->w)
 	return BRLCAD_OK;

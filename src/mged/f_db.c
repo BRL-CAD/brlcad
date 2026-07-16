@@ -168,6 +168,11 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
     struct ged *gedp = (struct ged *)vgedp; // TODO - just use s->gedp here?
     struct mged_state *s = mctx->s;
 
+    // If the command didn't succeed, don't do anything.  Return OK for our execution
+    // so the ged_exec return code is the command's ret, not ours.
+    if (ged_results_ret(gedp->ged_results) != BRLCAD_OK)
+	return BRLCAD_OK;
+
     /* Sync global to GED results */
     s->dbip = gedp->dbip;
 
@@ -305,10 +310,17 @@ mged_pre_closedb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *UNUSED(ge
 }
 
 int
-mged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
+mged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
     struct mged_state *s = mctx->s;
+    struct ged *gedp = (struct ged *)vgedp; // TODO - just use s->gedp here?
+
+    // If the command didn't succeed, don't do anything.  Return OK for our execution
+    // so the ged_exec return code is the command's ret, not ours.
+    if (ged_results_ret(gedp->ged_results) != BRLCAD_OK)
+	return BRLCAD_OK;
+
     mctx->old_dbip = NULL;
     s->wdbp = RT_WDB_NULL;
     s->dbip = DBI_NULL;
