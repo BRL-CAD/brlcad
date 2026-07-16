@@ -29,7 +29,6 @@
 #include "common.h"
 
 #include <QObject>
-#include <QThread>
 #include <iostream>
 
 #ifdef Q_OS_WIN
@@ -80,8 +79,6 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 #else
 	QSocketNotifier *m_notifier;
 #endif
-    private:
-	QThread m_thread;
 };
 
 // Local Variables:
@@ -92,4 +89,3 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

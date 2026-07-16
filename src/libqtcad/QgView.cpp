@@ -216,8 +216,8 @@ QgView::set_view(struct bview *nv)
 	    canvas_gl->v->dmp = canvas_gl->dmp;
 	    struct dm *dmp = (struct dm *)canvas_gl->dmp;
 	    dm_configure_win(dmp, 0);
-	    canvas_gl->v->gv_width = dm_get_width(dmp);
-	    canvas_gl->v->gv_height = dm_get_height(dmp);
+	    canvas_gl->v->gv_width = canvas_gl->width();
+	    canvas_gl->v->gv_height = canvas_gl->height();
 	}
     }
 #endif

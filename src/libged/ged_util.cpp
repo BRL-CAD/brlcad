@@ -1744,7 +1744,7 @@ _ged_rt_output_handler2(void *clientData, int type)
 	read_failed_stdout = 1;
     }
 
-    if (read_failed_stderr || read_failed_stdout) {
+    if (read_failed_stderr || read_failed_stdout || type == -1) {
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (type != -1 && gedp->ged_delete_io_handler) {
 
@@ -1850,6 +1850,14 @@ _ged_rt_output_handler(void *clientData, int mask)
 
     struct ged *gedp = rrtp->gedp;
     if (gedp->new_cmd_forms) {
+	_ged_rt_output_handler2(clientData, mask);
+	return;
+    }
+
+    /* Event-loop integrations use -1 after all individual stream handlers
+     * have been detached.  Use the common finalization path to wait for and
+     * release the subprocess. */
+    if (mask == -1) {
 	_ged_rt_output_handler2(clientData, mask);
 	return;
     }

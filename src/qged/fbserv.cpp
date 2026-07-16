@@ -259,28 +259,18 @@ QFBIPCSocket::ipc_handler()
     QTCAD_SLOT("QFBIPCSocket::ipc_handler", 1);
 
     struct fbserv_client *fbsc = &fbsp->fbs_clients[ind];
-    struct pkg_conn *pkc = fbsc->fbsc_pkg;
-    if (!pkc)
+    if (!fbsc->fbsc_pkg)
 	return;
 
-    pkc->pkc_server_data = (void *)fbsc;
-
-    if (pkg_suckin(pkc) <= 0) {
-	/* EOF or error — request deferred drop */
-	fbsc->fbsc_pending_drop = 1;
-	return;
-    }
-
-    if (pkg_process(pkc) < 0)
-	bu_log("QFBIPCSocket::ipc_handler: pkg_process error\n");
+    /* Use libdm's client handler so EOF and deferred-drop requests close the
+     * pkg connection and unregister this notifier.  Merely setting
+     * fbsc_pending_drop here leaves an EOF descriptor permanently readable,
+     * producing an event storm and preventing other process cleanup events
+     * from running. */
+    fbs_existing_client_handler((void *)fbsc, 0);
 
     /* Notify the display widget that pixels may have changed */
     emit updated();
-
-    if (fbsp->fbs_callback != (void (*)(void *))FBS_CALLBACK_NULL) {
-	void (*cfp)(void *) = (void (*)(void *))fbsp->fbs_callback;
-	cfp(fbsp->fbs_clientData);
-    }
 }
 
 
@@ -335,8 +325,16 @@ qdm_close_ipc_client_handler(struct fbserv_obj *fbsp, int i)
 {
     bu_log("close_ipc_client_handler\n");
     QFBIPCSocket *s = (QFBIPCSocket *)fbsp->fbs_clients[i].fbsc_chan;
-    delete s;
     fbsp->fbs_clients[i].fbsc_chan = NULL;
+    if (!s)
+	return;
+
+    /* drop_client may reach us from QFBIPCSocket::ipc_handler.  Disable the
+     * notifier immediately, but defer object destruction until that slot has
+     * returned. */
+    if (s->notifier)
+	s->notifier->setEnabled(false);
+    s->deleteLater();
 }
 
 
@@ -348,4 +346,3 @@ qdm_close_ipc_client_handler(struct fbserv_obj *fbsp, int i)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

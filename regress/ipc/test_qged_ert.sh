@@ -6,7 +6,7 @@
 #   - A geometry object is drawn
 #   - The "ert" GED command is issued via xdotool
 #   - We confirm that rt was spawned and the IPC path was taken
-#     (no TCP port binding, BU_IPC_ADDR_ENVVAR visible in rt's /proc/environ)
+#     (no TCP port binding, PKG_ADDR visible in rt's /proc/environ)
 #
 # Environment variables consumed:
 #   QGED_BIN      path to the qged binary (required)
@@ -115,6 +115,12 @@ QGED_LOG="$TMPDIR_TEST/qged.log"
 QGED_ERRLOG="$TMPDIR_TEST/qged_err.log"
 
 export LD_LIBRARY_PATH="${BDIR}/lib:${LD_LIBRARY_PATH:-}"
+# Do not inherit a developer's saved window size and position.  A geometry
+# larger than the Xvfb screen can put the console completely off-screen and
+# make the input-driving portion of this test a no-op.
+XDG_CONFIG_HOME="$TMPDIR_TEST/config"
+export XDG_CONFIG_HOME
+mkdir -p "$XDG_CONFIG_HOME"
 
 "$QGED_BIN" -s "$TEST_DB" >"$QGED_LOG" 2>"$QGED_ERRLOG" &
 QGED_PID=$!
@@ -174,35 +180,38 @@ if [ "$HAVE_XDOTOOL" -eq 1 ]; then
     xdotool key Return 2>/dev/null || true
     sleep 2
 
-    # Run ert
-    xdotool type --clearmodifiers "ert" 2>/dev/null || true
+    # Use one worker and modest hypersampling so the small test model remains
+    # alive long enough for the /proc environment check below to observe it.
+    xdotool type --clearmodifiers "ert -P 1 -H 4" 2>/dev/null || true
     sleep 0.2
     xdotool key Return 2>/dev/null || true
 
     # Wait for rt to start (up to 30 s)
     rt_appeared=0
     for i in $(seq 1 300); do
-        if pgrep -x rt >/dev/null 2>&1; then
+        if pgrep -P "$QGED_PID" -x rt >/dev/null 2>&1; then
             rt_appeared=1; break
         fi
         sleep 0.1
     done
     check "rt process was spawned by ert" "$rt_appeared -eq 1"
 
-    # Check that BU_IPC_ADDR_ENVVAR was passed to rt (IPC path taken)
+    # Check that PKG_ADDR_ENVVAR was passed to rt (IPC path taken).  Limit
+    # the search to this qged's child so unrelated rt jobs cannot produce a
+    # false result.
     ipc_used=0
-    for pid in $(pgrep -x rt 2>/dev/null); do
-        if cat /proc/"$pid"/environ 2>/dev/null | tr '\0' '\n' | grep -q "BU_IPC_ADDR="; then
+    for pid in $(pgrep -P "$QGED_PID" -x rt 2>/dev/null); do
+        if cat /proc/"$pid"/environ 2>/dev/null | tr '\0' '\n' | grep -q "PKG_ADDR="; then
             ipc_used=1; break
         fi
     done
-    check "rt received BU_IPC_ADDR_ENVVAR (IPC path taken)" "$ipc_used -eq 1"
+    check "rt received PKG_ADDR_ENVVAR (IPC path taken)" "$ipc_used -eq 1"
 
     # Wait for rt to finish (up to 60 s); treat zombie as completed
     rt_done=0
     for i in $(seq 1 600); do
         RT_ALIVE=0
-        for pid in $(pgrep -x rt 2>/dev/null); do
+        for pid in $(pgrep -P "$QGED_PID" -x rt 2>/dev/null); do
             state=$(awk '/^State/{print $2}' /proc/"$pid"/status 2>/dev/null)
             if [ "$state" != "Z" ]; then
                 RT_ALIVE=1; break

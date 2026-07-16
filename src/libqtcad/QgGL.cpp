@@ -128,9 +128,9 @@ void QgGL::paintGL()
 	    // Let the view know it now has an associated display manager
 	    v->dmp = dmp;
 
-	    // Set the view width and height to match the dm
-	    v->gv_width = dm_get_width(dmp);
-	    v->gv_height = dm_get_height(dmp);
+	    // View interaction coordinates use Qt's device-independent pixels.
+	    v->gv_width = width();
+	    v->gv_height = height();
 	}
 
 	// If we have a ptbl defining the current dm set and/or an unset
@@ -165,29 +165,10 @@ void QgGL::resizeGL(int, int)
     if (!dmp || !v)
 	return;
     dm_configure_win(dmp, 0);
-    v->gv_width = dm_get_width(dmp);
-    v->gv_height = dm_get_height(dmp);
-    if (ifp) {
-	fb_configure_window(ifp, v->gv_width, v->gv_height);
-    }
-    if (dmp)
-	dm_set_dirty(dmp, 1);
-    emit changed();
-}
-
-void QgGL::resizeEvent(QResizeEvent *e)
-{
-    QOpenGLWidget::resizeEvent(e);
-    if (!dmp || !v)
-
-               return;
-    dm_set_width(dmp, width());
-    dm_set_height(dmp, height());
     v->gv_width = width();
     v->gv_height = height();
-    dm_configure_win(dmp, 0);
     if (ifp) {
-	fb_configure_window(ifp, v->gv_width, v->gv_height);
+	fb_configure_window(ifp, dm_get_width(dmp), dm_get_height(dmp));
     }
     if (dmp)
 	dm_set_dirty(dmp, 1);

@@ -46,15 +46,14 @@ QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p, bu_process_
 	    );
 #ifdef Q_OS_WIN
     HANDLE h = (fd < 0) ? GetStdHandle(STD_INPUT_HANDLE) : (HANDLE)_get_osfhandle(fd);
-    m_notifier = new QWinEventNotifier(h);
+    m_notifier = new QWinEventNotifier(h, this);
 #else
     int lfd = (fd < 0) ? fileno(stdin) : fd;
-    m_notifier = new QSocketNotifier(lfd, QSocketNotifier::Read);
+    m_notifier = new QSocketNotifier(lfd, QSocketNotifier::Read, this);
 #endif
-    // NOTE : move to thread to avoid blocking, then sync with
-    // main thread using a QueuedConnection with finishedGetLine
-    m_notifier->moveToThread(&m_thread);
-    QObject::connect(&m_thread , &QThread::finished, m_notifier, &QObject::deleteLater);
+    /* Socket/event notifiers are asynchronous and do not need a worker
+     * thread.  Keep the notifier and its GED callback in this object's
+     * thread so all Qt and GED state is accessed by its owning GUI thread. */
 #ifdef Q_OS_WIN
     QObject::connect(m_notifier, &QWinEventNotifier::activated, m_notifier,
 #else
@@ -74,14 +73,11 @@ QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p, bu_process_
 	  }
 	}
 	});
-    m_thread.start();
 }
 
 QConsoleListener::~QConsoleListener()
 {
     m_notifier->disconnect();
-    m_thread.quit();
-    m_thread.wait();
 }
 
 void QConsoleListener::on_finishedGetLine(const QString &strNewLine)
@@ -102,4 +98,3 @@ void QConsoleListener::on_finished()
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

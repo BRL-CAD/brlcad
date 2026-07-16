@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include <QEvent>
+#include <QtMath>
 
 #undef VMIN		/* is used in vmath.h, too */
 
@@ -109,7 +110,12 @@ qtgl_configureWin(struct dm *dmp, int UNUSED(force))
 	return BRLCAD_ERROR;
     }
 
-    gl_reshape(dmp, privars->qw->width(), privars->qw->height());
+    /* QWidget geometry is expressed in device-independent pixels, while
+     * OpenGL viewport and framebuffer dimensions are device pixels. */
+    qreal dpr = privars->qw->devicePixelRatioF();
+    int width = qRound(privars->qw->width() * dpr);
+    int height = qRound(privars->qw->height() * dpr);
+    gl_reshape(dmp, width, height);
 
     /* this is where font information is set up, if not already done */
     if (!privars->fs) {
@@ -362,7 +368,9 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int U
 	glRasterPos2f(x, y);
 
 	/* Next, we set up for fontstash */
-	fastf_t font_size = dm_get_fontsize(dmp);
+	/* Fontstash sizes are OpenGL/device pixels.  Keep the public dm font
+	 * size in Qt's device-independent pixel units. */
+	fastf_t font_size = dm_get_fontsize(dmp) * privars->qw->devicePixelRatioF();
 	int blend_state = glIsEnabled(GL_BLEND);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -464,7 +472,7 @@ qtgl_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *st
 	glRasterPos2f(x, y);
 
 	/* Next, we set up for fontstash */
-	fastf_t font_size = dm_get_fontsize(dmp);
+	fastf_t font_size = dm_get_fontsize(dmp) * privars->qw->devicePixelRatioF();
 
 	// Fontstash does not work in OpenGL raster coordinates,
 	// so we need the view and the coordinates in window
@@ -708,4 +716,3 @@ COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -87,7 +87,6 @@ class QTCAD_EXPORT QgGL : public QOpenGLWidget, protected QOpenGLFunctions
     protected:
 	void paintGL() override;
 	void resizeGL(int w, int h) override;
-	void resizeEvent(QResizeEvent *e) override;
 
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
@@ -122,4 +121,3 @@ class QTCAD_EXPORT QgGL : public QOpenGLWidget, protected QOpenGLFunctions
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
