@@ -76,8 +76,38 @@ refined, and it is never added to command text sent to LIBGED.  Terminal GSH
 honors *NO_COLOR* and terminal color capability detection, so its dim rendering
 is suppressed when styled output is disabled.
 
-QGED displays the candidate set in a popup in addition to the inline preview.
-This visual difference does not change the mode semantics.
+== CANDIDATE DISPLAY
+
+GSH, MGED, and QGED show the candidate set without inserting it into the
+command or command-history text.  The display remains available while Tab and
+Shift-Tab cycle through inline previews, then is removed when completion is
+accepted, cancelled, or refined.  No frontend asks for confirmation before
+displaying a large set.
+
+When every candidate fits within five terminal-width rows, the complete set is
+arranged in columns.  A larger set is summarized using the most specific
+complete prefix frontier that fits within five rows, for example:
+
+[source,text]
+----
+aab (3)  aac (20)  d5m (300)
+----
+
+The parenthesized number in this compact multi-row form is the number of
+matching candidates in that prefix bin.  A long unique candidate may initially
+use its shortest branch prefix, such as `B (1)`, when spelling out its full
+name would prevent the complete frontier from fitting.
+
+If even one bin for every broad prefix cannot fit within those rows, the
+display falls back to one row containing the most informative non-overlapping
+bins and ends with `... (N more)` so the omitted candidate count remains
+explicit.
+
+The binning is presentation only.  Tab still visits the individual candidates
+in their original order.  QGED uses its normal completion popup for a short
+set and a transient label for a summarized set; MGED uses a transient Tk label
+and terminal GSH temporarily draws the rows below its input line.  These
+visual differences do not change the mode semantics.
 
 == DATABASE PATH SPELLING
 

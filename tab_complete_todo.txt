@@ -1,0 +1,20 @@
+1.  We like the zsh behavior for tab complete, with one minor exception, and want to explore
+whether gsh, MGED and QGED can use it.  The one thing I don't care for is zsh's interactive
+prompting about whether to display a long list - rather than do that, I would like it to bin
+the possible completions, doing something like:
+
+aab (3 matches)  aac (20 matches) d5m (300 matches) ...
+
+The idea would be to optimize for terminal width for how many bins could be
+shown, solve the constraint problems, and print the best avaiable info that can
+be fit onto one line.  Other than that the zsh tab complete behavior - show
+shorter lists (tab iterating after it's first tab shows its candiate list, less
+than x lines needed to list everthing, clear away the list rather than dumping
+it into the history and starting over - the latter takes more sophisticed
+terminal management but is really nice and we want it if we can get it) - let's see if we
+can achieve the more sophisticated behaviors across our interfaces
+
+2.  We want to be able to publish grammars usable by external tools like antlr to allow other
+text highlighting systems to understand our command structure.  Content aware highlighting
+obviously won't be supportable, but if there are static subsets we could define and support
+we want to.

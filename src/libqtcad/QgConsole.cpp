@@ -44,12 +44,16 @@
 
 #include "qtcad/QgConsole.h"
 
+#include <algorithm>
+
 #include <QAbstractItemView>
 #include <QApplication>
 #include <QByteArray>
 #include <QClipboard>
 #include <QCompleter>
+#include <QFontMetrics>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QMimeData>
 #include <QPointer>
 #include <QStringListModel>
@@ -292,8 +296,76 @@ class QgConsole::pqImplementation :
 	    CompletionIndex = -1;
 	    if (hide_popup && this->Completer && this->Completer->popup())
 		this->Completer->popup()->hide();
+	    if (CompletionDisplay)
+		CompletionDisplay->hide();
 	    CompletionSelections.clear();
 	    applyExtraSelections();
+	}
+
+	void updateCompletionDisplay()
+	{
+	    if (CompletionDisplay)
+		CompletionDisplay->hide();
+	    if (!Completer || !Completer->completionModel() || Completer->completionCount() < 2)
+		return;
+
+	    std::vector<QByteArray> encoded;
+	    std::vector<const char *> candidates;
+	    encoded.reserve((size_t)Completer->completionCount());
+	    candidates.reserve((size_t)Completer->completionCount());
+	    for (int i = 0; i < Completer->completionCount(); i++) {
+		encoded.push_back(completionAt(i).toLocal8Bit());
+		candidates.push_back(encoded.back().constData());
+	    }
+
+	    QFontMetrics metrics(font());
+	    int cell_width = metrics.horizontalAdvance(QLatin1Char('0'));
+	    size_t columns = (cell_width > 0) ?
+		(size_t)std::max(20, viewport()->width() / cell_width) : 80;
+	    struct bu_cmd_completion_layout layout = BU_CMD_COMPLETION_LAYOUT_INIT_ZERO;
+	    if (bu_cmd_completion_layout_create(&layout, candidates.data(), candidates.size(),
+		    columns, 5) != BRLCAD_OK || !layout.summarized || !layout.line_count) {
+		bu_cmd_completion_layout_clear(&layout);
+		return;
+	    }
+
+	    QStringList lines;
+	    for (size_t i = 0; i < layout.line_count; i++)
+		lines.append(QString::fromLocal8Bit(layout.lines[i]));
+	    bu_cmd_completion_layout_clear(&layout);
+	    if (!CompletionDisplay) {
+		CompletionDisplay = new QLabel(viewport());
+		CompletionDisplay->setObjectName(QStringLiteral("completionCandidateDisplay"));
+		CompletionDisplay->setTextFormat(Qt::PlainText);
+		CompletionDisplay->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+		CompletionDisplay->setFrameStyle(QFrame::Box | QFrame::Plain);
+		CompletionDisplay->setMargin(3);
+		CompletionDisplay->setAutoFillBackground(true);
+	    }
+	    QPalette display_palette = CompletionDisplay->palette();
+	    display_palette.setColor(QPalette::Window, palette().color(QPalette::Base));
+	    const struct bu_lineedit_style &configured =
+		LineeditPalette.roles[BU_LINEEDIT_ROLE_COMPLETION_PREVIEW];
+	    QColor display_color = (configured.flags & BU_LINEEDIT_STYLE_COLOR) ?
+		QColor(configured.rgb[0], configured.rgb[1], configured.rgb[2]) :
+		palette().color(QPalette::Text);
+	    display_palette.setColor(QPalette::WindowText, display_color);
+	    CompletionDisplay->setPalette(display_palette);
+	    CompletionDisplay->setText(lines.join(QLatin1Char('\n')));
+	    CompletionDisplay->adjustSize();
+
+	    QRect cursor_box = cursorRect();
+	    int x = cursor_box.left();
+	    int y = cursor_box.bottom() + 4;
+	    if (x + CompletionDisplay->width() > viewport()->width())
+		x = viewport()->width() - CompletionDisplay->width();
+	    if (y + CompletionDisplay->height() > viewport()->height())
+		y = cursor_box.top() - CompletionDisplay->height() - 4;
+	    CompletionDisplay->move(std::max(0, x), std::max(0, y));
+	    CompletionDisplay->show();
+	    CompletionDisplay->raise();
+	    if (Completer->popup())
+		Completer->popup()->hide();
 	}
 
 	void showCompletionPreview(int start, int end)
@@ -408,6 +480,7 @@ class QgConsole::pqImplementation :
 	    }
 	    if (this->Completer->popup())
 		this->Completer->popup()->setCurrentIndex(this->Completer->completionModel()->index(CompletionIndex, 0));
+	    updateCompletionDisplay();
 	}
 
 	void prefixCompletion()
@@ -473,6 +546,8 @@ class QgConsole::pqImplementation :
 	{
 	    this->setMaximumBlockCount(2*this->height());
 	    QPlainTextEdit::resizeEvent(e);
+	    if (CompletionDisplay && CompletionDisplay->isVisible())
+		updateCompletionDisplay();
 	}
 
 	void insertFromMimeData(const QMimeData * s)
@@ -828,6 +903,7 @@ class QgConsole::pqImplementation :
 
 	/// A custom completer
 	QPointer<QgConsoleWidgetCompleter> Completer;
+	QPointer<QLabel> CompletionDisplay;
 	struct bu_lineedit_palette LineeditPalette;
 	bu_cmd_completion_mode_t CompletionMode = BU_CMD_COMPLETE_FILTER;
 	bool CompletionActive = false;

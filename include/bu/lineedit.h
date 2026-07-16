@@ -66,6 +66,24 @@ struct bu_lineedit_palette {
 /** Global override path for the user line-editor palette. */
 #define BU_LINEEDIT_COLORS_ENV "BRLCAD_LINEEDIT_COLORS"
 
+/**
+ * A terminal-width-aware presentation of a completion candidate set.
+ *
+ * Short candidate sets are arranged in columns using no more than the
+ * requested number of lines.  Larger sets use a complete multi-line frontier
+ * of compact prefix bins such as "aab (3)  aac (20)" when possible, with a
+ * one-line partial frontier as a last resort.  Candidate insertion and
+ * cycling continue to use the original, unmodified candidate set; this
+ * structure is presentation only.
+ */
+struct bu_cmd_completion_layout {
+    size_t line_count;
+    char **lines;
+    int summarized;
+};
+
+#define BU_CMD_COMPLETION_LAYOUT_INIT_ZERO {0, NULL, 0}
+
 /** Parse a stable, case-insensitive completion mode name. */
 BU_EXPORT extern int bu_cmd_completion_mode_parse(const char *name, bu_cmd_completion_mode_t *mode);
 
@@ -105,6 +123,26 @@ BU_EXPORT extern int bu_lineedit_palette_load_user(struct bu_lineedit_palette *p
 
 /** Return a stable lower-case name for @p role, or NULL for an invalid role. */
 BU_EXPORT extern const char *bu_lineedit_role_name(bu_lineedit_role_t role);
+
+/**
+ * Lay out completion candidates for a transient frontend display.
+ *
+ * @p width is the available number of character cells.  Zero selects 80.
+ * @p max_lines is the maximum number of lines used for a full candidate list
+ * or complete prefix-bin frontier; zero selects five.  Complete multi-line
+ * frontiers use compact "prefix (count)" labels.  If neither can fit, the best
+ * partial prefix frontier that fits on one line is returned with an explicit
+ * omitted-candidate count.  Empty and duplicate candidates are ignored.
+ * Returns BRLCAD_OK on success, including an empty result.
+ */
+BU_EXPORT extern int bu_cmd_completion_layout_create(
+	struct bu_cmd_completion_layout *layout,
+	const char * const *candidates, size_t candidate_count,
+	size_t width, size_t max_lines);
+
+/** Release all strings owned by @p layout and reset it to empty. */
+BU_EXPORT extern void bu_cmd_completion_layout_clear(
+	struct bu_cmd_completion_layout *layout);
 
 __END_DECLS
 

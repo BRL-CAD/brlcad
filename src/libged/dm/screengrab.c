@@ -112,6 +112,7 @@ int
 ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct dm *dmp = NULL;
+    struct dm *cdmp = NULL;
     int i;
     int operand_index;
     int ret = BRLCAD_ERROR;
@@ -153,7 +154,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	goto done;
     }
 
-    struct dm *cdmp = (gedp->ged_gvp) ? (struct dm *)gedp->ged_gvp->dmp : NULL;
+    cdmp = (gedp->ged_gvp) ? (struct dm *)gedp->ged_gvp->dmp : NULL;
 
 
     if (bu_vls_strlen(&args.dm_name) && gedp->ged_gvp) {

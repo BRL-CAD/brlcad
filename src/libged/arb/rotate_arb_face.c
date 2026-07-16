@@ -124,7 +124,7 @@ static const struct bu_cmd_operand rotate_arb_face_operands[] = {
 	"Packed XYZ rotation angles", "ged.vector_group"),
     BU_CMD_OPERAND_NULL
 };
-extern const struct bu_cmd_schema ged_rotate_arb_face_schema = {
+const struct bu_cmd_schema ged_rotate_arb_face_schema = {
     "rotate_arb_face", "Rotate an ARB face about a vertex", NULL,
     rotate_arb_face_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
     BU_CMD_SCHEMA_CONSTRAINTS(rotate_arb_face_schema_validate, NULL)

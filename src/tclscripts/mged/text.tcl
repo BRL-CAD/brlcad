@@ -1767,6 +1767,65 @@ proc mged_completion_mode {} {
     return filter
 }
 
+proc mged_completion_display_clear {w} {
+    set popup ${w}.completion_candidates
+    if {[winfo exists $popup]} {
+	destroy $popup
+    }
+}
+
+# Show a transient zsh-style candidate list without inserting it into the Text
+# widget's command/history buffer.  The shared libbu layout chooses columns for
+# short sets and a one-line prefix-bin summary for long sets.
+proc mged_completion_display {w candidates} {
+    mged_completion_display_clear $w
+    if {[llength $candidates] < 2 ||
+	![llength [info commands _mged_cmd_complete_layout]]} {
+	return
+    }
+
+    set columns [$w cget -width]
+    if {[catch {
+	set char_width [font measure [$w cget -font] 0]
+	if {$char_width > 0 && [winfo width $w] > 1} {
+	    set columns [expr {int([winfo width $w] / $char_width)}]
+	}
+    }]} {
+	set columns [$w cget -width]
+    }
+    if {$columns < 20} {
+	set columns 20
+    }
+    if {[catch {_mged_cmd_complete_layout $candidates $columns 5} layout] ||
+	[llength [lindex $layout 1]] == 0} {
+	return
+    }
+
+    set popup ${w}.completion_candidates
+    label $popup -text [join [lindex $layout 1] "\n"] -justify left -anchor nw \
+	-background [$w cget -background] -foreground [mged_completion_dim_color $w] \
+	-relief solid -borderwidth 1 -padx 3 -pady 2
+    update idletasks
+    set box [$w bbox insert]
+    if {[llength $box] == 4} {
+	set x [lindex $box 0]
+	set y [expr {[lindex $box 1] + [lindex $box 3] + 2}]
+    } else {
+	set x 0
+	set y 0
+    }
+    if {$y + [winfo reqheight $popup] > [winfo height $w]} {
+	set y [expr {$y - [winfo reqheight $popup] - 4}]
+    }
+    if {$x + [winfo reqwidth $popup] > [winfo width $w]} {
+	set x [expr {[winfo width $w] - [winfo reqwidth $popup]}]
+    }
+    if {$x < 0} {set x 0}
+    if {$y < 0} {set y 0}
+    place $popup -x $x -y $y
+    raise $popup
+}
+
 proc mged_completion_state_clear {w} {
     global mged_tab_completion_state
     set completion_key [list $w tab]
@@ -1774,6 +1833,7 @@ proc mged_completion_state_clear {w} {
 	catch {unset mged_tab_completion_state($completion_key,$field)}
     }
     catch {$w tag remove completion_preview promptEnd end}
+    mged_completion_display_clear $w
 }
 
 proc mged_lineedit_overrides {} {
@@ -2320,6 +2380,7 @@ proc set_text_key_bindings { id } {
 
     bind $w <Tab> {
 	global mged_tab_completion_state
+	mged_completion_display_clear %W
 	set completion_mode [mged_completion_mode]
 	if {$completion_mode == "off"} {
 	    break
@@ -2386,6 +2447,9 @@ proc set_text_key_bindings { id } {
 	    mged_completion_state_clear %W
 	}
 	mged_semantic_refresh %W
+	if {$completion_count > 1} {
+	    mged_completion_display %W $expansions
+	}
 
 	break
     }
@@ -2407,8 +2471,8 @@ proc set_text_key_bindings { id } {
 	    %W insert insert $base_line
 	    %W mark set insert "promptEnd + ${base_cursor}c"
 	    %W see insert
-	    mged_completion_state_clear %W
 	}
+	mged_completion_state_clear %W
 	mged_semantic_refresh %W
     }
 

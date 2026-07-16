@@ -2039,8 +2039,11 @@ cmd_cmd_complete(ClientData clientData, Tcl_Interp *interpreter, int argc, const
 	    replacement_start + common.size();
     }
 
-    if (cycle_index < 0 && result.completion_count == 1 && result.completion_candidates[0])
-	Tcl_ListObjAppendElement(interpreter, matches, Tcl_NewStringObj(result.completion_candidates[0], -1));
+    for (size_t i = 0; i < result.completion_count; i++) {
+	if (result.completion_candidates[i])
+	    Tcl_ListObjAppendElement(interpreter, matches,
+		    Tcl_NewStringObj(result.completion_candidates[i], -1));
+    }
 
     Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewIntObj(1));
     Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewStringObj(line.c_str(), -1));
@@ -2050,6 +2053,53 @@ cmd_cmd_complete(ClientData clientData, Tcl_Interp *interpreter, int argc, const
     Tcl_SetObjResult(interpreter, outer);
 
     ged_cmd_completion_result_clear(&result);
+    return TCL_OK;
+}
+
+
+int
+cmd_cmd_complete_layout(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    const char **candidates = NULL;
+    int candidate_count = 0;
+    int width = 0;
+    int max_lines = 0;
+
+    if (argc != 4) {
+	Tcl_AppendResult(interpreter,
+		"Usage: _mged_cmd_complete_layout candidates width max_lines", (char *)NULL);
+	return TCL_ERROR;
+    }
+    if (Tcl_GetInt(interpreter, argv[2], &width) != TCL_OK ||
+	    Tcl_GetInt(interpreter, argv[3], &max_lines) != TCL_OK)
+	return TCL_ERROR;
+    if (width < 1)
+	width = 80;
+    if (max_lines < 1)
+	max_lines = 4;
+    if (Tcl_SplitList(interpreter, argv[1], &candidate_count, &candidates) != TCL_OK)
+	return TCL_ERROR;
+
+    struct bu_cmd_completion_layout layout = BU_CMD_COMPLETION_LAYOUT_INIT_ZERO;
+    int ret = bu_cmd_completion_layout_create(&layout, candidates,
+	    (size_t)candidate_count, (size_t)width, (size_t)max_lines);
+    Tcl_Free((char *)candidates);
+    if (ret != BRLCAD_OK) {
+	bu_cmd_completion_layout_clear(&layout);
+	Tcl_AppendResult(interpreter, "unable to lay out completion candidates", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    Tcl_Obj *outer = Tcl_NewListObj(0, NULL);
+    Tcl_Obj *lines = Tcl_NewListObj(0, NULL);
+    Tcl_ListObjAppendElement(interpreter, outer, Tcl_NewIntObj(layout.summarized));
+    for (size_t i = 0; i < layout.line_count; i++)
+	Tcl_ListObjAppendElement(interpreter, lines, Tcl_NewStringObj(layout.lines[i], -1));
+    Tcl_ListObjAppendElement(interpreter, outer, lines);
+    Tcl_SetObjResult(interpreter, outer);
+    bu_cmd_completion_layout_clear(&layout);
     return TCL_OK;
 }
 

@@ -107,7 +107,7 @@ ged_view_knob_validate(const struct bu_cmd_schema *schema, size_t argc,
     if (bu_cmd_schema_option_present(schema, argc, argv, "help"))
 	return 0;
     /* The ordinary schema owns option prefixes and option arguments. */
-	if ((result->expected & BU_CMD_EXPECT_OPTION_ARG) ||
+    if ((result->expected & BU_CMD_EXPECT_OPTION_ARG) ||
 	(cursor_arg < argc && (result->expected & BU_CMD_EXPECT_OPTION)))
 	return 0;
 

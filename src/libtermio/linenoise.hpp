@@ -238,8 +238,10 @@ enum CompletionMode {
 
 struct CompletionResult {
     std::vector<std::string> candidates;
+    std::vector<std::string> display_lines;
     size_t replacement_start = 0;
     size_t replacement_end = 0;
+    size_t display_columns = 80;
 };
 
 struct HighlightSpan {
@@ -340,6 +342,8 @@ private:
     int completeLine(char *cbuf, int *c);
     int completeStructuredLine(char *cbuf, int *c);
     void setLineBuffer(const std::string &line, size_t cursor_pos);
+    void showCompletionDisplay(const std::vector<std::string> &lines);
+    void clearCompletionDisplay();
     bool colorEnabled();
     void appendHighlightedBuffer(std::string &ab);
     const char *highlightStyleSequence(HighlightStyle style) const;
@@ -368,6 +372,9 @@ private:
     bool completionPreview_ = false;
     size_t completionPreviewStart_ = 0;
     size_t completionPreviewEnd_ = 0;
+    size_t completionDisplayRows_ = 0;
+    int screenCursorColumn_ = 0;
+    int screenCursorRowsToEnd_ = 0;
     std::mutex mutex_;
     std::string prompt_ = std::string("> "); /* Prompt to display. */
 
@@ -2173,6 +2180,70 @@ linenoiseState::setLineBuffer(const std::string &line, size_t cursor_pos)
     pos_ = (cursor_pos > copy_len) ? (int)copy_len : (int)cursor_pos;
 }
 
+inline void
+linenoiseState::showCompletionDisplay(const std::vector<std::string> &lines)
+{
+    if (lines.empty())
+	return;
+
+    /* The display is allocated only once.  In particular, do not erase and
+     * append it again between Tab presses: at the terminal's bottom margin
+     * that would scroll one row into scrollback on every cycle. */
+    if (completionDisplayRows_)
+	return;
+
+    std::string output;
+    char seq[64];
+    if (screenCursorRowsToEnd_ > 0) {
+	snprintf(seq, sizeof(seq), "\x1b[%dB", screenCursorRowsToEnd_);
+	output += seq;
+    }
+    for (size_t i = 0; i < lines.size(); i++) {
+	output += "\r\n\x1b[2K";
+	output += lines[i];
+    }
+
+    int rows_up = screenCursorRowsToEnd_ + static_cast<int>(lines.size());
+    snprintf(seq, sizeof(seq), "\x1b[%dA\r", rows_up);
+    output += seq;
+    if (screenCursorColumn_ > 0) {
+	snprintf(seq, sizeof(seq), "\x1b[%dC", screenCursorColumn_);
+	output += seq;
+    }
+    std::lock_guard<std::mutex> guard(mutex_);
+    if (write(ofd_, output.c_str(), static_cast<int>(output.size())) == -1) {}
+    completionDisplayRows_ = lines.size();
+}
+
+inline void
+linenoiseState::clearCompletionDisplay()
+{
+    if (!completionDisplayRows_)
+	return;
+
+    std::string output;
+    char seq[64];
+    int first_row = screenCursorRowsToEnd_ + 1;
+    snprintf(seq, sizeof(seq), "\x1b[%dB\r", first_row);
+    output += seq;
+    for (size_t i = 0; i < completionDisplayRows_; i++) {
+	output += "\x1b[2K";
+	if (i + 1 < completionDisplayRows_)
+	    output += "\x1b[1B\r";
+    }
+
+    int rows_up = screenCursorRowsToEnd_ + static_cast<int>(completionDisplayRows_);
+    snprintf(seq, sizeof(seq), "\x1b[%dA\r", rows_up);
+    output += seq;
+    if (screenCursorColumn_ > 0) {
+	snprintf(seq, sizeof(seq), "\x1b[%dC", screenCursorColumn_);
+	output += seq;
+    }
+    std::lock_guard<std::mutex> guard(mutex_);
+    if (write(ofd_, output.c_str(), static_cast<int>(output.size())) == -1) {}
+    completionDisplayRows_ = 0;
+}
+
 inline int
 linenoiseState::completeStructuredLine(char *cbuf, int *c)
 {
@@ -2180,6 +2251,9 @@ linenoiseState::completeStructuredLine(char *cbuf, int *c)
     int nread = 0;
     *c = 0;
 
+    if (cols_ <= 0)
+	cols_ = getColumns(ifd_, ofd_);
+    result.display_columns = (cols_ > 0) ? (size_t)cols_ : 80;
     result.replacement_start = (size_t)pos_;
     result.replacement_end = (size_t)pos_;
     structuredCompletionCallback(buf_, (size_t)pos_, result);
@@ -2266,6 +2340,7 @@ linenoiseState::completeStructuredLine(char *cbuf, int *c)
 	    completionPreview_ = false;
 	    RefreshLine();
 	}
+	showCompletionDisplay(result.display_lines);
 
 #ifdef _WIN32
 	nread = win32read(cbuf, c);
@@ -2273,6 +2348,7 @@ linenoiseState::completeStructuredLine(char *cbuf, int *c)
 	nread = unicodeReadUTF8Char(ifd_,cbuf,c);
 #endif
 	if (nread <= 0) {
+	    clearCompletionDisplay();
 	    *c = -1;
 	    return nread;
 	}
@@ -2296,6 +2372,7 @@ linenoiseState::completeStructuredLine(char *cbuf, int *c)
 			break;
 		    }
 
+		    clearCompletionDisplay();
 		    setLineBuffer(current, current_cursor);
 		    if (have_sequence && seq[0] == '[') {
 			if (seq[1] == '3') {
@@ -2323,6 +2400,7 @@ linenoiseState::completeStructuredLine(char *cbuf, int *c)
 		    break;
 		}
 		#else
+		clearCompletionDisplay();
 		setLineBuffer(current, current_cursor);
 		RefreshLine();
 		*c = 0;
@@ -2330,6 +2408,7 @@ linenoiseState::completeStructuredLine(char *cbuf, int *c)
 		#endif
 		break;
 	    default:
+		clearCompletionDisplay();
 		if (completionMode_ == COMPLETION_FILTER && *c != ' ' && *c != '/' &&
 			*c != 127 && *c != 8 &&
 			*c != '\r' && *c != '\n') {
@@ -2368,6 +2447,10 @@ linenoiseState::completeStructuredLine(char *cbuf, int *c)
 		} else if (i < static_cast<int>(lines.size())) {
 		    setLineBuffer(lines[i], cursor_positions[i]);
 		}
+		/* The preview was drawn from temporary state.  Restore the newly
+		 * selected editing buffer before Edit() handles this key; otherwise
+		 * its fast single-character path can leave preview text on screen. */
+		RefreshLine();
 		stop = 1;
 		break;
 	}
@@ -2605,6 +2688,8 @@ inline void linenoiseState::refreshSingleLine()
     /* Move cursor to original position. */
     snprintf(seq,64,"\r\x1b[%dC", (int)(unicodeColumnPos(buf_, pos_)+pcolwid));
     ab += seq;
+    screenCursorColumn_ = unicodeColumnPos(buf_, pos_) + pcolwid;
+    screenCursorRowsToEnd_ = 0;
     if (write(fd,ab.c_str(), static_cast<int>(ab.length())) == -1) {} /* Can't recover from write error. */
 }
 
@@ -2686,6 +2771,8 @@ inline void linenoiseState::refreshMultiLine()
     ab += seq;
 
     oldcolpos_ = colpos2;
+    screenCursorColumn_ = col;
+    screenCursorRowsToEnd_ = rows - rpos2;
 
     if (write(fd,ab.c_str(), static_cast<int>(ab.length())) == -1) {} /* Can't recover from write error. */
 }

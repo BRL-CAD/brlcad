@@ -1,69 +1,103 @@
 # Libged command schemas
 
-Libged commands publish a versioned `bu_opt_cmd_desc` alongside their plugin
-entry.  The schema is the machine-readable contract used by command-line and
-GUI front ends; command implementations and their existing help text remain
-authoritative while the schema migration is in progress.
+Libged commands publish one native command description alongside their plugin
+entry.  A command description is a flat `bu_cmd_schema`, a nested
+`bu_cmd_tree`, a set of context-selected native forms, or a
+`ged_cmd_grammar` adapter for a parser-owned language such as `search`.
+Execution, help, validation, completion, linting, and machine-readable grammar
+publication are projections of that description rather than independently
+maintained option tables.
 
-Each schema can describe:
+The native descriptions can express:
 
-- ordinary options and canonical aliases;
-- required, optional, repeated, conflicting, and dependent options;
-- scalar, multi-token, comma-list, key/value, axis-keyed, range, and custom
-  argument shapes;
-- typed positional operands, including database objects and paths, filesystem
-  paths, views, colors, vectors, matrices, keywords, and raw pass-through data;
-- nested subcommands and phase-specific parsing policies;
+- ordinary options, aliases, required or optional arguments, and conflicts;
+- scalar and multi-token argument shapes, bounded repetitions, and keywords;
+- typed positional operands such as database paths, files, colors, vectors,
+  matrices, views, and command names;
+- nested subcommands and phase-specific option policies;
 - named semantic providers for database- or runtime-aware validation and
   completion; and
-- a custom incremental validator for grammars that cannot be expressed by the
-  declarative fields alone.
+- a command-owned, side-effect-free validator when a grammar cannot be
+  represented declaratively.
 
-Plugins register schemas with `GED_DECLARE_COMMAND_SET_WITH_SCHEMA` and
-`GED_DECLARE_PLUGIN_MANIFEST_WITH_SCHEMA`.  Aliases normally point at a shared
-schema; use an alias-specific descriptor when argument order or behavior
-differs.  Schema version 1 is independent of the plugin ABI version.
+Commands register a schema with `GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA`
+or a grammar adapter with `GED_DECLARE_COMMAND_SET_WITH_GRAMMAR`.  Aliases
+normally share their canonical command's description.  An alias needs a
+distinct description only when its accepted syntax differs.
 
 ## Consumer API
 
 `ged_cmd_validate` incrementally validates a command line and reports the
-expected token class, typed completion role, token/character range, semantic
-state, and candidates.  `ged_cmd_analyze` reports those roles for every token.
-`ged_cmd_complete_result` is the preferred completion entry point: it also
-returns the exact replacement range and prefix needed by an editor widget,
-the active command/subcommand path and role, whether options remain legal,
-and whether the next token enters a new subcommand phase.
-Callers release results with `bu_opt_validate_result_clear`,
-`ged_cmd_analysis_clear`, or `ged_cmd_completion_result_clear` respectively.
+expected token class, typed completion role, replacement span, semantic state,
+and candidates.  `ged_cmd_analyze` reports those roles and states for every
+token.  `ged_cmd_complete_result` is the editor-facing completion entry point;
+it returns candidates together with the exact input range to replace and the
+active command or subcommand context.
 
-GSH, the MGED bridge, and QGED's `GEDShellCompleter` consume the common result
-API.  Front ends should preserve the supplied candidate order and replacement
-range rather than reparsing slash-separated paths or dumping command output to
-discover possible values.
+Callers release results with `ged_cmd_validate_result_clear`,
+`ged_cmd_analysis_clear`, or `ged_cmd_completion_result_clear`, respectively.
+GSH, MGED, and QGED all consume these common libged results.  Frontends choose
+how candidates are displayed and accepted, but should preserve the candidate
+order and replacement range supplied by libged.
+
+## Machine-readable publication
+
+`ged_cmd_schema_json(command)` returns the complete static grammar known for a
+registered GED command.  The caller owns the returned string and releases it
+with `bu_free`.  `ged_cmd_schema_exists(command)` reports whether a description
+is available, and `ged_cmd_list` supplies the command names to enumerate.
+
+Flat schemas identify themselves as `kind: "native"`; nested descriptions use
+`kind: "native_tree"`; form selectors and parser-owned adapters identify their
+own grammar kind.  The JSON includes canonical option spellings, aliases,
+argument requirements and shapes, typed operands, cardinalities, parse policy,
+static keyword vocabularies, semantic-provider names, and subcommand
+structure.  This is the publication boundary intended for syntax highlighters,
+documentation generators, and adapters that generate an ANTLR or comparable
+static grammar.
+
+The JSON deliberately distinguishes static syntax from runtime semantics.
+External tools can recognize command structure and fixed vocabularies, but a
+provider such as `ged.db_path` is published by name because its accepted values
+depend on an open database.  Parser-owned adapters publish the static subset
+they can describe without executing a command.
+
+Applications that already own a native schema or tree can publish it directly
+with `bu_cmd_schema_describe_json` or `bu_cmd_tree_describe_json`.
+
+The installed geometry shell provides a command-line publication interface:
+
+```sh
+gsh --command-schema draw
+gsh --command-schema all
+```
+
+The first command writes one JSON grammar object.  The second writes a JSON
+array containing every discoverable registered grammar, so an external tool
+does not need to link libged merely to import the static command language.
 
 ## Semantic and filesystem providers
 
 Provider names are stable strings.  Built-in providers cover database objects
-and paths, search paths/types, views, command names, primitive types, and the
-combined database-object/primitive role used by descriptor-driven editing.
-Schema lint rejects unresolved provider names.
+and paths, search paths and types, views, command names, primitive types,
+attributes, units, colors, vectors, matrices, and files.  Schema lint rejects
+an unresolved provider.
 
-`BU_OPT_VAL_FILE_PATH` requests common filesystem completion.  Libged delegates
-to `bu_file_complete`, whose flags control hidden entries, directory-only
-results, and trailing separators; callers may also supply an extension filter.
-This keeps CLI filtering, sorting, prefix preservation, and platform path
-handling consistent while allowing a GUI to substitute a native file dialog.
+`BU_CMD_VALUE_FILE` requests common filesystem completion.  Libged delegates
+to `bu_file_complete`, keeping filtering, sorting, prefix preservation, and
+platform path handling consistent while allowing a GUI to substitute a native
+file dialog.
 
-## Migration and linting
+## Linting and consistency
 
-Every registered libged command has a schema-bearing manifest entry.  External
-engine commands model libged-owned boundaries conservatively and leave unknown
-downstream arguments as raw pass-through tokens.  Rich command families use
-nested trees or descriptor-backed completion rather than flattened option
-lists.
+`ged_cmd_schema_lint(command, messages)` checks one registered description;
+passing `NULL` as the command audits the full registry.  Native schema and tree
+linting detect malformed rows, duplicate names, invalid shapes and policies,
+unresolved providers, and inconsistent alias metadata.
 
-`ged_cmd_schema_lint` checks registered schemas for duplicate option names,
-invalid shapes/policies, unresolved providers, and malformed canonical alias
-metadata.  The libged command-analysis tests load both `moss.g` and `m35.g` to
-exercise schema publication, semantic states, candidate ordering, nested
-completion, and known migration risks.
+The libged command-analysis and completion-corpus tests audit published JSON,
+completion replacement ranges, candidate ordering, round-trip parsing, nested
+commands, parser-owned grammars, and semantic states against representative
+databases and manual examples.  The static no-legacy check ensures internal
+commands use `bu_cmd_schema` rather than the deprecated `bu_opt` compatibility
+API.

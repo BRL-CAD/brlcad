@@ -9,6 +9,7 @@
 
 #include <QApplication>
 #include <QAbstractItemView>
+#include <QLabel>
 #include <QPlainTextEdit>
 #include <QStringListModel>
 #include <QSignalSpy>
@@ -97,6 +98,38 @@ private:
     bool include_original = false;
     int replace_start = 4;
     int replace_end = 5;
+};
+
+
+class LongCompleter : public QgConsoleWidgetCompleter
+{
+public:
+    LongCompleter(QWidget *parent) : QgConsoleWidgetCompleter()
+    {
+	setParent(parent);
+    }
+
+    void updateCompletionModel(const QString &line) override
+    {
+	QStringList matches;
+	for (int i = 0; i < 3; i++)
+	    matches.append(QString("aab%1").arg(i));
+	for (int i = 0; i < 20; i++)
+	    matches.append(QString("aac%1").arg(i, 2, 10, QLatin1Char('0')));
+	for (int i = 0; i < 300; i++)
+	    matches.append(QString("d5m%1").arg(i, 3, 10, QLatin1Char('0')));
+	setModel(new QStringListModel(matches, this));
+	setCompletionPrefix(line.mid(4));
+	replace_start = 4;
+	replace_end = line.size();
+    }
+
+    int completionReplacementStart() const override { return replace_start; }
+    int completionReplacementEnd() const override { return replace_end; }
+
+private:
+    int replace_start = 4;
+    int replace_end = 4;
 };
 
 
@@ -222,6 +255,42 @@ run_refinement_fallback_test(bool ambiguous, const QString &expected)
     QTest::keyClicks(edit, "3");
     QApplication::processEvents();
     return command_text(edit) == expected && edit->extraSelections().isEmpty();
+}
+
+static bool
+run_long_completion_display_test()
+{
+    QgConsole console(NULL);
+    LongCompleter *completer = new LongCompleter(&console);
+    console.setCompleter(completer);
+    console.setCompletionMode(BU_CMD_COMPLETE_FILTER);
+    console.resize(430, 260);
+    console.show();
+    console.prompt("$ ");
+    console.printCommand("cmd ");
+    QPlainTextEdit *edit = console.findChild<QPlainTextEdit *>();
+    if (!edit)
+	return false;
+    edit->setFocus();
+
+    QTest::keyClick(edit, Qt::Key_Tab);
+    QApplication::processEvents();
+    QLabel *display = edit->findChild<QLabel *>(QStringLiteral("completionCandidateDisplay"));
+
+    /* The exact smaller bins depend on the font's measured cell width. */
+    if (!display || !display->isVisible() ||
+	(!display->text().contains(" (") &&
+	 !display->text().contains("matches)") &&
+	 !display->text().contains("more)"))) {
+	qWarning("long completion display failed: visible=%d text=[%s]",
+		display ? (int)display->isVisible() : 0,
+		display ? display->text().toLocal8Bit().constData() : "missing");
+	return false;
+	}
+
+    QTest::keyClick(edit, Qt::Key_Escape);
+    QApplication::processEvents();
+    return !display->isVisible() && command_text(edit) == "cmd ";
 }
 
 static bool
@@ -460,6 +529,8 @@ main(int argc, char **argv)
 	return 10;
     if (!run_refinement_fallback_test(true, "cmd a3"))
 	return 11;
+    if (!run_long_completion_display_test())
+	return 12;
 
     return 0;
 }
