@@ -78,6 +78,9 @@
 #include <stdio.h>
 #ifdef _WIN32
 #  include <malloc.h>	/* _heapchk for ARTDBG */
+#  ifdef _DEBUG
+#    include <crtdbg.h>	/* debug-CRT heap validation for ARTDBG */
+#  endif
 #endif
 
 #include <cstddef>
@@ -1428,6 +1431,26 @@ main(int argc, char **argv)
 {
     bu_setlinebuf(stdout);
     bu_setlinebuf(stderr);
+
+#if defined(_WIN32) && defined(_DEBUG)
+    /* ARTDBG (Debug builds only): make the debug CRT our diagnostic tool for
+     * the appleseed.dll render() heap corruption.  Route all CRT reports
+     * (asserts, heap-damage) to stderr instead of a modal dialog, and -- unless
+     * ART_NO_HEAPCHECK is set -- validate the entire heap on every alloc/free so
+     * corruption is caught at the operation immediately after the bad write,
+     * with the damaged block identified.  With a Debug appleseed.dll its own
+     * assert()s also fire (file/line), which may pinpoint the bug directly.
+     * CHECK_ALWAYS is slow; set ART_NO_HEAPCHECK=1 or ART_HEAPCHECK_16=1 to ease. */
+    _CrtSetReportMode(_CRT_WARN,   _CRTDBG_MODE_FILE); _CrtSetReportFile(_CRT_WARN,   _CRTDBG_FILE_STDERR);
+    _CrtSetReportMode(_CRT_ERROR,  _CRTDBG_MODE_FILE); _CrtSetReportFile(_CRT_ERROR,  _CRTDBG_FILE_STDERR);
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE); _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+    if (!getenv("ART_NO_HEAPCHECK")) {
+	int dbgflags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF;
+	dbgflags |= getenv("ART_HEAPCHECK_16") ? _CRTDBG_CHECK_EVERY_16_DF : _CRTDBG_CHECK_ALWAYS_DF;
+	_CrtSetDbgFlag(dbgflags);
+	bu_log("ARTDBG: debug-CRT heap validation enabled\n");
+    }
+#endif
 
     bu_log("%s%s%s%s\n",
 	   brlcad_ident("BRL-CAD Appleseed Ray Tracing (ART)"),
