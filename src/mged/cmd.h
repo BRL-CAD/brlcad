@@ -56,6 +56,7 @@ extern int cmd_blast(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_center(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_cmd_win(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_cmd_complete(ClientData, Tcl_Interp *, int, const char *[]);
+extern int cmd_cmd_complete_layout(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_cmd_analyze(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_lineedit_colors(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_draw(ClientData, Tcl_Interp *, int, const char *[]);

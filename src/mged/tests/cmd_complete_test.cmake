@@ -31,7 +31,7 @@ if(common_pos EQUAL -1)
   message(FATAL_ERROR "missing common completion result [${expected_common}]\nstdout:\n${mged_output}\nstderr:\n${mged_error}")
 endif()
 
-set(expected_cycle "1 {draw all.g/tor.r rest} {} 1 16")
+set(expected_cycle "1 {draw all.g/tor.r rest} tor.r 1 16")
 string(FIND "${mged_combined_output}" "${expected_cycle}" cycle_pos)
 if(cycle_pos EQUAL -1)
   message(FATAL_ERROR "missing cycle completion result [${expected_cycle}]\nstdout:\n${mged_output}\nstderr:\n${mged_error}")
@@ -50,6 +50,16 @@ foreach(expected_tcl_completion
   string(FIND "${mged_combined_output}" "${expected_tcl_completion}" tcl_completion_pos)
   if(tcl_completion_pos EQUAL -1)
     message(FATAL_ERROR "missing Tcl-aware completion result [${expected_tcl_completion}]\nstdout:\n${mged_output}\nstderr:\n${mged_error}")
+  endif()
+endforeach()
+
+foreach(expected_layout
+    "layout-summary:1"
+    "layout-lines:aab (3 matches)  aac (20 matches)  d5m (300 matches)"
+    "layout-multiline:1")
+  string(FIND "${mged_combined_output}" "${expected_layout}" layout_pos)
+  if(layout_pos EQUAL -1)
+    message(FATAL_ERROR "missing MGED completion layout result [${expected_layout}]\nstdout:\n${mged_output}\nstderr:\n${mged_error}")
   endif()
 endforeach()
 

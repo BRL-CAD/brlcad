@@ -715,6 +715,10 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     struct dm_attach_args args = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
     struct bview *target_view = NULL;
+    struct bu_ptbl *views = NULL;
+    struct dm *dmp = NULL;
+    void *ctx = NULL;
+    const char *acmd = "attach";
     const char *dm_type = NULL;
     const char **operands = NULL;
     int operand_index;
@@ -740,7 +744,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	bu_vls_strcpy(&args.dm_name, operands[1]);
     }
 
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    views = bv_set_views(&gedp->ged_views);
     if (!bu_vls_strlen(&args.dm_name)) {
 	int tries = 0;
 	bu_vls_sprintf(&args.dm_name, "%s-0", dm_type);
@@ -748,8 +752,8 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	    int exists = 0;
 	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 		struct bview *view = (struct bview *)BU_PTBL_GET(views, i);
-		struct dm *dmp = view ? (struct dm *)view->dmp : NULL;
-		if (dmp && BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(dmp)),
+		struct dm *view_dmp = view ? (struct dm *)view->dmp : NULL;
+		if (view_dmp && BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(view_dmp)),
 			bu_vls_cstr(&args.dm_name))) {
 		    exists = 1;
 		    break;
@@ -766,8 +770,8 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     } else {
 	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	    struct bview *view = (struct bview *)BU_PTBL_GET(views, i);
-	    struct dm *dmp = view ? (struct dm *)view->dmp : NULL;
-	    if (dmp && BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(dmp)),
+	    struct dm *view_dmp = view ? (struct dm *)view->dmp : NULL;
+	    if (view_dmp && BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(view_dmp)),
 		    bu_vls_cstr(&args.dm_name))) {
 		bu_vls_printf(gedp->ged_result_str, "DM %s already exists",
 		    bu_vls_cstr(&args.dm_name));
@@ -812,12 +816,11 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     if (!target_view->gv_height)
 	target_view->gv_height = 512;
 
-    void *ctx = ged_dm_ctx_get(gedp, dm_type);
+    ctx = ged_dm_ctx_get(gedp, dm_type);
     if (!ctx)
 	ctx = (void *)target_view;
 
-    const char *acmd = "attach";
-    struct dm *dmp = dm_open(ctx, gedp->ged_interp, dm_type, 1, &acmd);
+    dmp = dm_open(ctx, gedp->ged_interp, dm_type, 1, &acmd);
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, "failed to create DM %s",
 	    bu_vls_cstr(&args.dm_name));

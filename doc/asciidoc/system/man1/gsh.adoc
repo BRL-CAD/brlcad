@@ -60,6 +60,13 @@ display window of its own.
   Select the interactive completion policy.  Supported values are *filter*,
   *cycle*, *prefix*, *legacy*, and *off*.  See *brlcad-completion*(5).
 
+*--command-schema=command|all*::
+  Print the registered static command grammar as JSON and exit.  A command
+  name prints one grammar; *all* prints a JSON array for the full discoverable
+  LIBGED registry.  Runtime-dependent semantic providers are identified by
+  name, allowing external syntax highlighters and ANTLR grammar adapters to
+  consume the static command structure without opening a database.
+
 [[environment]]
 == ENVIRONMENT
 
@@ -93,6 +100,18 @@ printf 'title\nls\nsummary\n' | gsh moss.g
 Feeds several LIBGED commands into *gsh* on standard input. Because stdin is
 not a terminal, *gsh* executes each line in turn with no prompt, reporting the
 database title, an object listing, and a summary of the contents of `moss.g`.
+====
+
+.Publish command grammars for an external tool
+====
+[source,bash]
+----
+gsh --command-schema draw > draw-schema.json
+gsh --command-schema all > ged-schemas.json
+----
+The first form emits one flat command schema.  The second emits every flat,
+nested, context-selected, and parser-owned static grammar registered by
+LIBGED.
 ====
 
 .Inspect and modify geometry interactively

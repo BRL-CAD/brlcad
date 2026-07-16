@@ -118,6 +118,8 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
     const char *man_name = NULL;
     const char *brlman = NULL;
     char brlmancmd[MAXPATHLEN] = {0};
+    const char *brlman_exec_cmd[8];
+    struct bu_vls man_sect = BU_VLS_INIT_ZERO;
     struct man_args args = {0, 0, 0, BU_VLS_INIT_ZERO, 'n'};
 
     /* initialize result */
@@ -199,8 +201,6 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
 	goto cleanup;
     }
 
-    const char *brlman_exec_cmd[8];
-    struct bu_vls man_sect = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&man_sect, "%c", args.section);
     brlman_exec_cmd[0] = (const char *)brlmancmd;
     brlman_exec_cmd[1] = "-L";
@@ -230,9 +230,8 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
 	ret = BRLCAD_ERROR;
     }
-    bu_vls_free(&man_sect);
-
 cleanup:
+    bu_vls_free(&man_sect);
     bu_vls_free(&args.language);
     return ret;
 }

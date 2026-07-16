@@ -129,6 +129,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "clone", cmd_ged_edit_wrapper, ged_exec_clone, NULL},
     {MGED_CMD_MAGIC, "closedb", f_closedb, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "cmd_complete", cmd_cmd_complete, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "cmd_complete_layout", cmd_cmd_complete_layout, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "cmd_analyze", cmd_cmd_analyze, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "coil", cmd_ged_plain_wrapper, ged_exec_coil, NULL},

@@ -123,6 +123,15 @@ The validation result owns its candidate array.  Initialize it with
 `BU_CMD_VALIDATE_RESULT_NULL` and release it with
 `bu_cmd_validate_result_clear` after each use.
 
+For presentation, `bu_cmd_completion_layout_create` arranges a candidate set
+for a known terminal width.  It emits the complete sorted set, or a complete
+optimized prefix-bin frontier, in no more than the requested number of rows
+when that fits.  Otherwise it emits one partial summary row ending in an
+explicit omitted-candidate count, without changing the original candidate
+array used for insertion and cycling.  Initialize its result with
+`BU_CMD_COMPLETION_LAYOUT_INIT_ZERO` and release it with
+`bu_cmd_completion_layout_clear`.
+
 === Declaring a simple schema
 
 Define an argument structure with the command defaults, then declare options

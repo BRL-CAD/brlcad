@@ -29,4 +29,20 @@ proc test_glob_analysis {} {
     return [lindex [lindex $result 2] 6]
 }
 puts "analysis-glob-style:[test_glob_analysis]"
+set layout_candidates {}
+for {set i 0} {$i < 3} {incr i} {lappend layout_candidates [format "aab%d" $i]}
+for {set i 0} {$i < 20} {incr i} {lappend layout_candidates [format "aac%02d" $i]}
+for {set i 0} {$i < 300} {incr i} {lappend layout_candidates [format "d5m%03d" $i]}
+set completion_layout [cmd_complete_layout $layout_candidates 52 1]
+puts "layout-summary:[lindex $completion_layout 0]"
+puts "layout-lines:[join [lindex $completion_layout 1] |]"
+set completion_multiline [cmd_complete_layout $layout_candidates 52 5]
+set multiline_ok [expr {[llength [lindex $completion_multiline 1]] > 1 &&
+    [llength [lindex $completion_multiline 1]] <= 5}]
+foreach layout_line [lindex $completion_multiline 1] {
+    if {[string length $layout_line] > 52 || [string first "more)" $layout_line] >= 0} {
+	set multiline_ok 0
+    }
+}
+puts "layout-multiline:$multiline_ok"
 quit

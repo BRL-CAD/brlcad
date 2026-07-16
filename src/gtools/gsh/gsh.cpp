@@ -59,6 +59,7 @@ struct gsh_args {
     int version;
     int new_cmd_forms;
     const char *completion_mode;
+    const char *command_schema;
 };
 
 static const struct bu_cmd_value_keyword gsh_completion_modes[] = {
@@ -78,6 +79,8 @@ static const struct bu_cmd_option gsh_options[] = {
 	"Use the new QGED-style command forms"),
     BU_CMD_KEYWORD_VALUES(NULL, "completion-mode", struct gsh_args, completion_mode,
 	"mode", "Interactive completion mode", gsh_completion_modes),
+    BU_CMD_STRING(NULL, "command-schema", struct gsh_args, command_schema,
+	"command|all", "Print static command grammar JSON and exit"),
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_schema gsh_schema = {
@@ -882,7 +885,7 @@ main(int argc, const char **argv)
      * marker.  The native schema still owns option spelling, argument shape,
      * validation, storage, and help; this small adapter preserves GSH's
      * historical pass-through command-line behavior. */
-    struct gsh_args args = {0, 0, 0, NULL};
+    struct gsh_args args = {0, 0, 0, NULL, NULL};
     bu_cmd_completion_mode_t completion_mode = BU_CMD_COMPLETE_FILTER;
     std::vector<const char *> option_argv;
     std::vector<const char *> command_argv;
@@ -958,6 +961,36 @@ main(int argc, const char **argv)
     const char *ged_init_str = ged_init_msgs();
     if (strlen(ged_init_str)) {
 	fprintf(stderr, "%s", ged_init_str);
+    }
+
+    if (args.command_schema) {
+	if (BU_STR_EQUAL(args.command_schema, "all")) {
+	    const char * const *commands = NULL;
+	    size_t command_count = ged_cmd_list(&commands);
+	    bool first = true;
+	    fputs("[", stdout);
+	    for (size_t i = 0; i < command_count; i++) {
+		char *schema_json = ged_cmd_schema_json(commands[i]);
+		if (!schema_json)
+		    continue;
+		if (!first)
+		    fputs(",", stdout);
+		fputs(schema_json, stdout);
+		first = false;
+		bu_free(schema_json, "GSH command schema JSON");
+	    }
+	    fputs("]\n", stdout);
+	    return EXIT_SUCCESS;
+	}
+	char *schema_json = ged_cmd_schema_json(args.command_schema);
+	if (!schema_json) {
+	    fprintf(stderr, "gsh: no static command grammar is registered for '%s'\n",
+		    args.command_schema);
+	    return EXIT_FAILURE;
+	}
+	fprintf(stdout, "%s\n", schema_json);
+	bu_free(schema_json, "GSH command schema JSON");
+	return EXIT_SUCCESS;
     }
 
     // Use a C++ class to manage info we will need
@@ -1076,6 +1109,18 @@ main(int argc, const char **argv)
 		for (int i = 0; i < completion_count; i++) {
 		    if (ged_result.completion_candidates[i])
 			result.candidates.push_back(std::string(ged_result.completion_candidates[i]));
+		}
+		if (result.candidates.size() > 1) {
+		    std::vector<const char *> display_candidates;
+		    struct bu_cmd_completion_layout layout = BU_CMD_COMPLETION_LAYOUT_INIT_ZERO;
+		    for (const std::string &candidate : result.candidates)
+			display_candidates.push_back(candidate.c_str());
+		    if (bu_cmd_completion_layout_create(&layout, display_candidates.data(),
+			    display_candidates.size(), result.display_columns, 5) == BRLCAD_OK) {
+			for (size_t i = 0; i < layout.line_count; i++)
+			    result.display_lines.push_back(std::string(layout.lines[i]));
+		    }
+		    bu_cmd_completion_layout_clear(&layout);
 		}
 	    }
 

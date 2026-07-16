@@ -79,6 +79,7 @@ set(
   lex.c
   linebuf.c
   lineedit.c
+  lineedit_completion.cpp
   lineedit_color.cpp
   list.c
   log.c
