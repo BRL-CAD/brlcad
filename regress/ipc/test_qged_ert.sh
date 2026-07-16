@@ -235,6 +235,35 @@ if [ "$HAVE_XDOTOOL" -eq 1 ]; then
             pass "qged did not crash during ert"
         fi
     fi
+
+    # Verify that the Qt event loop is still responsive after the framebuffer
+    # client finishes.  A stale queued QSocketNotifier activation used to run
+    # after the first activation had drained the IPC descriptor, blocking the
+    # main thread in pkg_suckin() and leaving a living but unresponsive qged.
+    # Select File -> Exit.  qged does not exit through the generic
+    # WM_DELETE_WINDOW path, so xdotool windowclose is not an appropriate
+    # responsiveness check for this application.
+    xdotool mousemove --window "$WIN" 18 11 2>/dev/null || true
+    xdotool click 1 2>/dev/null || true
+    sleep 0.2
+    xdotool mousemove --window "$WIN" 40 153 2>/dev/null || true
+    xdotool click 1 2>/dev/null || true
+    qged_exited=0
+    for i in $(seq 1 100); do
+        if [ ! -d "/proc/$QGED_PID" ]; then
+            qged_exited=1; break
+        fi
+        state=$(awk '/^State/{print $2}' "/proc/$QGED_PID/status" 2>/dev/null)
+        if [ "$state" = "Z" ]; then
+            qged_exited=1; break
+        fi
+        sleep 0.1
+    done
+    check "qged handled File -> Exit after ert" "$qged_exited -eq 1"
+    if [ "$qged_exited" -eq 1 ]; then
+        wait "$QGED_PID" 2>/dev/null || true
+        QGED_PID=""
+    fi
 else
     echo "SKIP: xdotool not available; skipping interactive ert test"
 fi

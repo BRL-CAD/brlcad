@@ -259,8 +259,16 @@ QFBIPCSocket::ipc_handler()
     QTCAD_SLOT("QFBIPCSocket::ipc_handler", 1);
 
     struct fbserv_client *fbsc = &fbsp->fbs_clients[ind];
-    if (!fbsc->fbsc_pkg)
+    if (!fbsc->fbsc_pkg || !notifier)
 	return;
+
+    /* Handle readiness inline and keep the notifier disabled while libpkg
+     * drains the descriptor.  A queued connection leaves the descriptor
+     * readable until this slot eventually runs, allowing Qt to queue the
+     * slot more than once.  The first invocation drains the descriptor and
+     * a later invocation then blocks in pkg_suckin(), freezing the GUI event
+     * loop. */
+    notifier->setEnabled(false);
 
     /* Use libdm's client handler so EOF and deferred-drop requests close the
      * pkg connection and unregister this notifier.  Merely setting
@@ -271,6 +279,12 @@ QFBIPCSocket::ipc_handler()
 
     /* Notify the display widget that pixels may have changed */
     emit updated();
+
+    /* Processing may have dropped the client and scheduled this object for
+     * deletion.  Only resume notifications if this is still the live channel
+     * for the connection. */
+    if (fbsc->fbsc_pkg && fbsc->fbsc_chan == (void *)this)
+	notifier->setEnabled(true);
 }
 
 
@@ -288,7 +302,7 @@ qdm_open_ipc_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
     fbsp->fbs_clients[i].fbsc_chan = (void *)s;
 
     QObject::connect(s->notifier, &QSocketNotifier::activated,
-		     s, &QFBIPCSocket::ipc_handler, Qt::QueuedConnection);
+		     s, &QFBIPCSocket::ipc_handler, Qt::DirectConnection);
 
     QgGL *ctx = (QgGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
@@ -311,7 +325,7 @@ qdm_open_ipc_sw_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data
     fbsp->fbs_clients[i].fbsc_chan = (void *)s;
 
     QObject::connect(s->notifier, &QSocketNotifier::activated,
-		     s, &QFBIPCSocket::ipc_handler, Qt::QueuedConnection);
+		     s, &QFBIPCSocket::ipc_handler, Qt::DirectConnection);
 
     QgSW *ctx = (QgSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
