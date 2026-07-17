@@ -259,9 +259,9 @@ bu_putchar(int c)
     buf[1] = '\0';
 
     if (!log_call_hooks(buf)) {
-	if (UNLIKELY(log_output(buf, 1, 0) != 1)) {
-	    bu_bomb("bu_putchar: write error");
-	}
+	/* As with bu_log(), do not abort merely because the character could
+	 * not be written (no console / stream during teardown) - drop it. */
+	(void)log_output(buf, 1, 0);
     }
 
     if (log_indent_level > 0 && c == '\n') {
@@ -306,12 +306,16 @@ bu_log(const char *fmt, ...)
 	    return len;
 	}
 
-	if (UNLIKELY(log_output(bu_vls_addr(&output), len, 1) != 1)) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    perror("write failed");
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    bu_bomb("bu_log: write error");
-	}
+	/* No hook consumed the message, so fall back to the standard streams.
+	 *
+	 * A logging call must never terminate the program: being unable to emit
+	 * a diagnostic is a property of the environment (a GUI application with
+	 * no console, a closed stream, process teardown), not a failure of the
+	 * caller's real work.  Aborting here also risks recursion, since bu_bomb()
+	 * itself logs.  So if the message cannot be delivered we simply drop it
+	 * and continue; the formatted length is still returned below for callers
+	 * that want to detect non-delivery. */
+	(void)log_output(bu_vls_addr(&output), len, 1);
     }
 
     bu_vls_free(&output);
@@ -344,13 +348,11 @@ bu_flog(FILE *fp, const char *fmt, ...)
 
     if (!log_call_hooks(bu_vls_addr(&output))) {
 	if (LIKELY(len)) {
-	    size_t ret;
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fwrite(bu_vls_addr(&output), len, 1, fp);
+	    /* A failed write to the caller's stream must not abort the program
+	     * (see bu_log() above); drop the message and continue. */
+	    (void)fwrite(bu_vls_addr(&output), len, 1, fp);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-
-	    if (UNLIKELY(ret != 1))
-		bu_bomb("bu_flog: write error");
 	}
     }
 
