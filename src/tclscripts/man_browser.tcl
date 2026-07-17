@@ -38,7 +38,11 @@ package require hv3
 package require cadwidgets::Accordion 1.0
 
 if {[llength [info commands manpage_search_terms]] == 0} {
-    source [file join [bu_dir data] "tclscripts" "helpcomm.tcl"]
+    set helpcomm_path [file join [bu_dir data] "tclscripts" "helpcomm.tcl"]
+    if {[file exists $helpcomm_path]} {
+	source $helpcomm_path
+    }
+    unset helpcomm_path
 }
 
 ::itcl::class ::ManBrowser {
