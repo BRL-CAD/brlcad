@@ -75,7 +75,6 @@ static fastf_t **ars_curves = NULL;
 static const char *slave_name = "safe_interp";
 static const char *db_name = "_db";
 
-static int linecnt = 0;
 static char usage[] = "\
 Usage: asc2g file.asc file.g\n\
  Convert an ASCII BRL-CAD database to binary form\n\
@@ -1436,85 +1435,6 @@ arbnbld(void)
 }
 
 
-/**
- * This routine checks the last character in the string to see if it matches the
- * specified character. Used by gettclblock() to check for an escaped return.
- *
- */
-int
-endswith(char *line, char ch)
-{
-    if (*(line+strlen(line)-1) == ch) {
-	return 1;
-    }
-    return 0;
-}
-/**
- * This routine counts the number of open braces and is used to determine whether a Tcl
- * command is complete.
- *
- */
-int
-bracecnt(char *line)
-{
-    char *start;
-    int cnt = 0;
-
-    start = line;
-    while (*start != '\0') {
-	if (*start == '{') {
-	    cnt++;
-	} else if (*start == '}') {
-	    cnt--;
-	}
-	start++;
-    }
-    return cnt;
-}
-/**
- * This routine reads the next block of Tcl commands. This block is expected to be a Tcl
- * command script and will be fed to an interpreter using Tcl_Eval(). Any escaped returns
- * or open braces are parsed through and concatenated ensuring Tcl commands are complete.
- *
- * SIZE is used as the approximate blocking size allowing to grow past this to close the
- * command line.
- */
-int
-gettclblock(struct bu_vls *line, FILE *fp)
-{
-    int ret = 0;
-    struct bu_vls tmp = BU_VLS_INIT_ZERO;
-
-    if ((ret=bu_vls_gets(line, fp)) >= 0) {
-	int bcnt = 0;
-	int escapedcr = 0;
-
-	linecnt++;
-	escapedcr = endswith(bu_vls_addr(line), '\\');
-	bcnt = bracecnt(bu_vls_addr(line));
-	while ((ret >= 0) && ((bu_vls_strlen(line) < SIZE) || (escapedcr) || (bcnt != 0))) {
-	    linecnt++;
-	    if (escapedcr) {
-		bu_vls_trunc(line, (int)bu_vls_strlen(line)-1);
-	    }
-	    if ((ret=bu_vls_gets(&tmp, fp)) > 0) {
-		escapedcr = endswith(bu_vls_addr(&tmp), '\\');
-		bcnt = bcnt + bracecnt(bu_vls_addr(&tmp));
-		bu_vls_putc(line, '\n');
-		bu_vls_strcat(line, bu_vls_addr(&tmp));
-		bu_vls_trunc(&tmp, 0);
-	    } else {
-		escapedcr = 0;
-	    }
-	}
-	ret = (int)bu_vls_strlen(line);
-    }
-    bu_vls_free(&tmp);
-
-    return ret;
-}
-
-
 int
 main(int argc, char *argv[])
 {
@@ -1637,14 +1557,27 @@ main(int argc, char *argv[])
 	    Tcl_CreateAlias(safe_interp, "find", interp, db_name, ac, av);
 	}
 
-	while ((gettclblock(&line, ifp)) >= 0) {
-	    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
-		fclose(ifp);
-		bu_log("Failed to process input file (%s)!\n", argv[1]);
-		bu_log("%s\n", Tcl_GetStringResult(safe_interp));
-		Tcl_Exit(1);
+	/* Slurp the entire script into memory using block I/O, then hand it
+	 * to Tcl in one shot.  Reading a byte at a time (the previous
+	 * bu_vls_gets()/gettclblock() approach) can be pathologically slow for
+	 * databases containing very large single-line objects - e.g. a BoT
+	 * with millions of vertices serialized onto one 'put' line.  Tcl
+	 * splits the buffer into complete commands itself, so there is no
+	 * need to track brace/line continuations here. */
+	{
+	    char rbuf[BUFSIZ + 1];
+	    size_t nread;
+	    while ((nread = fread(rbuf, 1, sizeof(rbuf) - 1, ifp)) > 0) {
+		rbuf[nread] = '\0';
+		bu_vls_strncat(&line, rbuf, nread);
 	    }
-	    bu_vls_trunc(&line, 0);
+	}
+
+	if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
+	    fclose(ifp);
+	    bu_log("Failed to process input file (%s)!\n", argv[1]);
+	    bu_log("%s\n", Tcl_GetStringResult(safe_interp));
+	    Tcl_Exit(1);
 	}
 
 	/* free up our resources */
