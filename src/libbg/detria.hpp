@@ -1,6 +1,6 @@
 // detria - a delaunay triangulation library
 //
-// Copyright (c) 2024 Kimbatt (https://github.com/Kimbatt)
+// Copyright (c) 2025 Kimbatt (https://github.com/Kimbatt)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -71,6 +71,14 @@ if (success)
 #ifndef DETRIA_HPP_INCLUDED
 #define DETRIA_HPP_INCLUDED
 
+#ifdef DETRIA_CXXMODULE
+
+// Using C++20 modules - headers are included by the module file
+// Also define the export macro
+#define DETRIA_EXPORT export
+
+#else
+
 #include <vector>
 #include <array>
 #include <cmath>
@@ -96,6 +104,11 @@ if (success)
 
 #endif
 
+// Not using C++20 modules - define an empty export macro
+#define DETRIA_EXPORT
+
+#endif
+
 namespace detria
 {
     template <typename T>
@@ -105,10 +118,10 @@ namespace detria
         T y;
     };
 
-    using PointF = Vec2<float>;
-    using PointD = Vec2<double>;
+    DETRIA_EXPORT using PointF = Vec2<float>;
+    DETRIA_EXPORT using PointD = Vec2<double>;
 
-    template <typename Idx>
+    DETRIA_EXPORT template <typename Idx>
     struct Triangle
     {
         Idx x;
@@ -345,12 +358,20 @@ namespace detria
                     if ((fnow > enow) == (fnow > -enow))
                     {
                         DETRIA_Two_Sum(Q, enow, Qnew, hh);
-                        enow = e[++eindex];
+
+                        if (++eindex < elen)
+                        {
+                            enow = e[eindex];
+                        }
                     }
                     else
                     {
                         DETRIA_Two_Sum(Q, fnow, Qnew, hh);
-                        fnow = f[++findex];
+
+                        if (++findex < flen)
+                        {
+                            fnow = f[findex];
+                        }
                     }
                     Q = Qnew;
                     if (hh != Scalar(0))
@@ -362,7 +383,12 @@ namespace detria
             while (eindex < elen)
             {
                 DETRIA_Two_Sum(Q, enow, Qnew, hh);
-                enow = e[++eindex];
+
+                if (++eindex < elen)
+                {
+                    enow = e[eindex];
+                }
+
                 Q = Qnew;
                 if (hh != Scalar(0))
                 {
@@ -372,7 +398,12 @@ namespace detria
             while (findex < flen)
             {
                 DETRIA_Two_Sum(Q, fnow, Qnew, hh);
-                fnow = f[++findex];
+
+                if (++findex < flen)
+                {
+                    fnow = f[findex];
+                }
+
                 Q = Qnew;
                 if (hh != Scalar(0))
                 {
@@ -1444,8 +1475,8 @@ namespace detria
             {
             }
 
-            template <template <typename, typename> typename Collection, typename Allocator>
-            ReadonlySpan(const Collection<T, Allocator>& collection) : _ptr(collection.data()), _count(collection.size())
+            template <typename Collection>
+            ReadonlySpan(const Collection& collection) : _ptr(collection.data()), _count(collection.size())
             {
             }
 
@@ -2002,17 +2033,6 @@ namespace detria
                 return newEdgeIndexA;
             }
 
-            inline HalfEdgeIndex createOrGetEdge(VertexIndex a, VertexIndex b, HalfEdgeIndex afterEdgeA, HalfEdgeIndex afterEdgeB)
-            {
-                HalfEdgeIndex existingEdge = getEdgeBetween(a, b);
-                if (existingEdge.isValid())
-                {
-                    return *existingEdge;
-                }
-
-                return createNewEdge(a, b, afterEdgeA, afterEdgeB);
-            }
-
             template <typename Callback>
             inline void forEachEdgeOfVertex(VertexIndex idx, Callback callback) const
             {
@@ -2053,8 +2073,8 @@ namespace detria
                 // Assuming the vertices of this edge have at least one other edge
                 // The first edge of the vertices will not be set correctly otherwise
 
-                HalfEdge& edge = getEdge(edgeIndex);
-                HalfEdge& opposite = getEdge(getOpposite(edgeIndex));
+                const HalfEdge& edge = getEdge(edgeIndex);
+                const HalfEdge& opposite = getEdge(getOpposite(edgeIndex));
 
                 Vertex& v0 = getVertex(edge.vertex);
                 Vertex& v1 = getVertex(opposite.vertex);
@@ -2138,7 +2158,7 @@ namespace detria
         };
     }
 
-    enum class TriangleLocation : uint8_t
+    DETRIA_EXPORT enum class TriangleLocation : uint8_t
     {
         // Inside an outline
         Interior = 0,
@@ -2150,7 +2170,7 @@ namespace detria
         ConvexHull = 2,
     };
 
-    enum class TriangleLocationMask : uint8_t
+    DETRIA_EXPORT enum class TriangleLocationMask : uint8_t
     {
         Interior = 1 << uint8_t(TriangleLocation::Interior),
         Hole = 1 << uint8_t(TriangleLocation::Hole),
@@ -2158,7 +2178,7 @@ namespace detria
         All = Interior | Hole | ConvexHull
     };
 
-    enum class TriangulationError
+    DETRIA_EXPORT enum class TriangulationError
     {
         // Triangulation was successful
         NoError,
@@ -2227,7 +2247,7 @@ namespace detria
 
 #define DETRIA_CHECK(cond) do { if (!(cond)) DETRIA_UNLIKELY { return false; } } while (0)
 
-    template <typename Point, typename Idx>
+    DETRIA_EXPORT template <typename Point, typename Idx>
     struct DefaultTriangulationConfig
     {
         // Default configuration for a triangulation.
@@ -2284,7 +2304,7 @@ namespace detria
         constexpr static bool NaNChecks = true;
     };
 
-    template <
+    DETRIA_EXPORT template <
         typename Point = PointD,
         typename Idx = uint32_t,
         typename Config = DefaultTriangulationConfig<Point, Idx>
@@ -2340,7 +2360,7 @@ namespace detria
             {
                 None = 0,
                 Delaunay = 1,
-                Boundary = 2
+                Boundary = 2,
             };
 
             inline bool isConstrained() const
@@ -2725,7 +2745,7 @@ namespace detria
 
             std::string getErrorMessage() const
             {
-                return "Internal error, this is a bug in the code";
+                return "Internal error, this indicates a bug in detria's code";
             }
         };
 
@@ -2875,9 +2895,9 @@ namespace detria
         }
 
         // Set a single constrained edge, which will be part of the final triangulation
-        void setConstrainedEdge(const Idx& idxA, const Idx& idxB)
+        void setConstrainedEdge(const Idx& vertexIndexA, const Idx& vertexIndexB)
         {
-            _manuallyConstrainedEdges.push_back({ idxA, idxB });
+            _manuallyConstrainedEdges.push_back({ vertexIndexA, vertexIndexB });
         }
 
         // Perform the triangulation
@@ -3163,34 +3183,13 @@ namespace detria
                 _resultTriangles.reserve(numTriangles);
             }
 
-            // Only create the vertices for now
-            for (size_t i = 0; i < _numPoints; ++i)
-            {
-                _topology.createVertex();
-            }
-
-            // Initial triangulation, will add the edges
-            DETRIA_CHECK(createInitialTriangulation(delaunay));
-
-            // Add constrained edges, which ensures that all required vertices have edges between them
-            DETRIA_CHECK(createConstrainedEdges(delaunay));
-
-            // Go through all triangles, and decide if they are inside or outside
-            DETRIA_CHECK(classifyTriangles());
-            
-            return true;
-        }
-
-        bool createInitialTriangulation(bool delaunay)
-        {
-            // Initial triangulation - just a valid triangulation that includes all points
-
             // Initialize point data
             CollectionWithAllocator<Idx>& sortedPoints = _initialTriangulation_SortedPoints;
             sortedPoints.resize(_numPoints);
             for (size_t i = 0; i < _numPoints; ++i)
             {
                 sortedPoints[i] = Idx(i);
+                _topology.createVertex();
             }
 
             // Sort all points by x coordinates; for points with the same x coordinate, sort by y
@@ -3229,154 +3228,70 @@ namespace detria
             // Set initial convex hull vertex - the first sorted point is guaranteed to be part of the convex hull
             _convexHullInitialVertex = TVertex(sortedPoints[0]);
 
-            // Find an initial triangle
-            // Since we have no duplicate points, we can always use the first two points as the triangle's points
-            // For the third point, we need to find one so that the first three points are not collinear
+            bool allPointsAreCollinear = true;
 
-            const Idx& p0Idx = sortedPoints[0];
-            const Idx& p1Idx = sortedPoints[1];
-            Vector2 p0Position = getPoint(p0Idx);
-            Vector2 p1Position = getPoint(p1Idx);
+            // Initial triangulation, will add the edges
+            DETRIA_CHECK(createInitialTriangulation(delaunay, sortedPoints, 0, sortedPoints.size(), allPointsAreCollinear));
 
-            size_t firstNonCollinearIndex = 0; // Index to the list of sorted points, not the original points
-            math::Orientation triangleOrientation = math::Orientation::Collinear;
-            for (size_t i = 2; i < sortedPoints.size(); ++i)
+            if (allPointsAreCollinear)
             {
-                const Idx& currentIdx = sortedPoints[i];
-                Vector2 currentPosition = getPoint(currentIdx);
-
-                triangleOrientation = orient2d(p0Position, p1Position, currentPosition);
-                if (triangleOrientation != math::Orientation::Collinear)
-                {
-                    firstNonCollinearIndex = i;
-                    break;
-                }
-            }
-
-            if (triangleOrientation == math::Orientation::Collinear)
-            {
-                // All points are collinear, and cannot be triangulated
                 return fail(TE_AllPointsAreCollinear{ });
             }
 
-            const Idx& p2Idx = sortedPoints[firstNonCollinearIndex];
+            // Add constrained edges, which ensures that all required vertices have edges between them
+            DETRIA_CHECK(createConstrainedEdges(delaunay));
 
-            // We have a triangle now, so start adding the remaining points to the triangulation
+            // Go through all triangles, and decide if they are inside or outside
+            DETRIA_CHECK(classifyTriangles());
+            
+            return true;
+        }
 
-            // Make sure that the triangles are clockwise
+        bool createInitialTriangulation(bool delaunay, const CollectionWithAllocator<Idx>& sortedPoints, size_t startIndex, size_t endIndex, bool& allCollinear)
+        {
+            // Initial triangulation - just a valid triangulation that includes all points
 
-            TVertex v0{ };
-            TVertex v1{ };
-            TVertex v2(p2Idx);
+            // Find an initial edge
+            // Since we have no duplicate points, we can always use the first two points
 
-            if (triangleOrientation == math::Orientation::CW)
-            {
-                v0 = TVertex(p0Idx);
-                v1 = TVertex(p1Idx);
-            }
-            else
-            {
-                v0 = TVertex(p1Idx);
-                v1 = TVertex(p0Idx);
-            }
+            const Idx& p0Idx = sortedPoints[startIndex];
+            const Idx& p1Idx = sortedPoints[startIndex + 1];
+
+            TVertex v0 = TVertex(p0Idx);
+            TVertex v1 = TVertex(p1Idx);
 
             THalfEdge lastEdge{ };
 
-            // Create initial half-edges
+            auto markInitialBoundaryEdge = [&](THalfEdge edge)
             {
-                //        v0
-                //        *
-                //
-                //
-                //
-                // v2 *       * v1
+                THalfEdge opposite = _topology.getOpposite(edge);
 
-                THalfEdge e01 = _topology.createNewEdge(v0, v1, { }, { });
-                THalfEdge e10 = _topology.getOpposite(e01);
+                EdgeData& edgeData = _topology.getEdgeData(edge);
+                EdgeData& oppositeData = _topology.getEdgeData(opposite);
 
-                //        v0
-                //        *
-                //         \ e01
-                // 
-                //           \ e10
-                // v2 *       * v1
-
-                THalfEdge e02 = _topology.createNewEdge(v0, v2, e01, { });
-                THalfEdge e20 = _topology.getOpposite(e02);
-
-                //        v0
-                //        *
-                //   e02 / \ e01
-                // 
-                // e20 /     \ e10
-                // v2 *       * v1
-
-                THalfEdge e12 = _topology.createNewEdge(v1, v2, e10, e20);
-                THalfEdge e21 = _topology.getOpposite(e12);
-
-                //        v0
-                //        *
-                //   e02 / \ e01
-                // 
-                // e20 /     \ e10
-                // v2 *--- ---* v1
-                //     e21 e12
+                edgeData.setBoundary(true);
+                oppositeData.setBoundary(true);
 
                 if (delaunay)
                 {
-                    // Mark initial edges as delaunay
-                    // Mark outer part of half-edges as boundary
-
-                    auto markEdge = [&](THalfEdge edge, bool isBoundary)
-                    {
-                        EdgeData& edgeData = _topology.getEdgeData(edge);
-                        edgeData.setDelaunay(true);
-                        edgeData.setBoundary(isBoundary);
-                    };
-
-                    markEdge(e01, false);
-                    markEdge(e10, true);
-                    markEdge(e02, true);
-                    markEdge(e20, false);
-                    markEdge(e12, false);
-                    markEdge(e21, true);
+                    edgeData.setDelaunay(true);
+                    oppositeData.setDelaunay(true);
                 }
+            };
 
-                lastEdge = e20;
-            }
-
-            bool addNextEdgeForFirstCollinearPoints{ };
-            if (firstNonCollinearIndex != 2)
+            // Create initial edge
             {
-                // In case there are multiple collinear points at the start, we need to store a different edge after adding a vertex
-                // Depending on the orientation of an edge of the initial triangle and the first (or any other) collinear point,
-                // we need to get the next/previous edge after adding the point
-                // All of those collinear points will be on the same side of the edge, so this only needs to be calculated once
-
-                TVertex firstNonCollinearVertexAtStart = v2;
-                Vector2 firstNonCollinearVertexPositionAtStart = getPoint(firstNonCollinearVertexAtStart.index);
-
-                Vector2 collinearPoint = getPoint(sortedPoints[2]);
-
-                math::Orientation orientation = orient2d(
-                    getPoint(v0.index),
-                    firstNonCollinearVertexPositionAtStart,
-                    collinearPoint
-                );
-
-                addNextEdgeForFirstCollinearPoints = orientation == detria::math::Orientation::CCW;
+                THalfEdge e10 = _topology.createNewEdge(v1, v0, { }, { });
+                markInitialBoundaryEdge(e10);
+                lastEdge = e10;
             }
 
             // Add points
-            for (size_t i = 2; i < _numPoints; ++i)
+            for (size_t i = startIndex + 2; i < endIndex; ++i)
             {
-                if (i == firstNonCollinearIndex) DETRIA_UNLIKELY
-                {
-                    // Vertex is part of first triangle, which was already added at the start
-                    continue;
-                }
-
                 const Idx& originalIndex = sortedPoints[i];
+                TVertex vertex(originalIndex);
+
                 Vector2 position = getPoint(originalIndex);
 
                 auto isEdgeVisible = [&](const THalfEdge& edge)
@@ -3396,23 +3311,12 @@ namespace detria
                     return orientation == math::Orientation::CCW;
                 };
 
-                auto getNextEdgeAlongConvexHull = [&](THalfEdge halfEdge)
-                {
-                    const HalfEdge& opposite = _topology.getEdge(_topology.getOpposite(halfEdge));
-                    return opposite.nextEdge;
-                };
-
-                auto getPrevEdgeAlongConvexHull = [&](THalfEdge halfEdge)
-                {
-                    THalfEdge prevEdge = _topology.getEdge(halfEdge).prevEdge;
-                    return _topology.getOpposite(prevEdge);
-                };
-
                 // Start checking edges, and find the first and last one that is visible from the current point
                 // The vertex of `lastEdge` is guaranteed to be visible, so it's a good starting point
 
                 THalfEdge lastVisibleForwards = lastEdge;
                 THalfEdge lastVisibleBackwards = getPrevEdgeAlongConvexHull(lastEdge);
+                THalfEdge prevVisibleBackwards = lastEdge;
 
                 // Check forwards
                 while (true)
@@ -3432,22 +3336,30 @@ namespace detria
                 {
                     if (isEdgeVisible(lastVisibleBackwards))
                     {
+                        prevVisibleBackwards = lastVisibleBackwards;
                         lastVisibleBackwards = getPrevEdgeAlongConvexHull(lastVisibleBackwards);
                     }
                     else
                     {
-                        lastVisibleBackwards = getNextEdgeAlongConvexHull(lastVisibleBackwards);
                         break;
                     }
                 }
 
-                DETRIA_ASSERT_MSG(lastVisibleForwards != lastVisibleBackwards, "No visible edges found");
+                if (lastVisibleForwards == prevVisibleBackwards) DETRIA_UNLIKELY
+                {
+                    // All points are collinear so far, so only add an edge
 
-                TVertex pVertex(originalIndex);
+                    TVertex prevVertex(sortedPoints[i - 1]);
+                    lastEdge = _topology.createNewEdge(vertex, prevVertex, { }, lastEdge);
+                    markInitialBoundaryEdge(lastEdge);
+                    continue;
+                }
+
+                allCollinear = false;
 
                 // Add new edges
                 // If delaunay, then add edges that we are about to remove to the list of edges to check
-                THalfEdge current = lastVisibleBackwards;
+                THalfEdge current = prevVisibleBackwards;
                 THalfEdge lastAddedEdge{ };
 
                 while (current != lastVisibleForwards)
@@ -3461,11 +3373,11 @@ namespace detria
 
                     THalfEdge edge1i = lastAddedEdge.isValid()
                         ? lastAddedEdge
-                        : _topology.createNewEdge(pVertex, currentVertex, { }, edge0.prevEdge);
+                        : _topology.createNewEdge(vertex, currentVertex, { }, edge0.prevEdge);
                     HalfEdge& edge1 = _topology.getEdge(edge1i);
 
                     THalfEdge oppositeEdge0i = _topology.getOpposite(current);
-                    THalfEdge edge2i = _topology.createNewEdge(pVertex, nextVertex, edge1.prevEdge, oppositeEdge0i);
+                    THalfEdge edge2i = _topology.createNewEdge(vertex, nextVertex, edge1.prevEdge, oppositeEdge0i);
 
                     // Update boundary status
                     _topology.getEdgeData(oppositeEdge0i).setBoundary(false); // Previously boundary edge, but it became interior now
@@ -3481,55 +3393,67 @@ namespace detria
                     if (delaunay)
                     {
                         // Make sure the newly added triangle meets the delaunay criteria
-                        DETRIA_CHECK(delaunayEdgeFlip(pVertex, edge0i));
+                        addEdgeToFlipCheck(edge0i, vertex);
                     }
 
                     current = nextEdge;
                 }
 
                 // Finally, mark lastAddedEdge as boundary
-                {
-                    _topology.getEdgeData(_topology.getOpposite(lastAddedEdge)).setBoundary(true);
-                }
+                _topology.getEdgeData(_topology.getOpposite(lastAddedEdge)).setBoundary(true);
 
-                if (i < firstNonCollinearIndex)
+                lastEdge = lastAddedEdge;
+
+                if (delaunay)
                 {
-                    lastEdge = addNextEdgeForFirstCollinearPoints
-                        ? getNextEdgeAlongConvexHull(lastAddedEdge)
-                        : getPrevEdgeAlongConvexHull(lastAddedEdge);
-                }
-                else
-                {
-                    lastEdge = lastAddedEdge;
+                    delaunayEdgeFlip();
                 }
             }
 
             return true;
         }
 
-        // Use `_delaunayCheckStack` in this function
-        // It will always be empty when this function returns
+        inline THalfEdge getNextEdgeAlongConvexHull(THalfEdge halfEdge) const
+        {
+            const HalfEdge& opposite = _topology.getEdge(_topology.getOpposite(halfEdge));
+            return opposite.nextEdge;
+        }
+
+        inline THalfEdge getPrevEdgeAlongConvexHull(THalfEdge halfEdge) const
+        {
+            THalfEdge prevEdge = _topology.getEdge(halfEdge).prevEdge;
+            return _topology.getOpposite(prevEdge);
+        }
+
+        // Add an edge which should be checked for delaunay edge flip
+        void addEdgeToFlipCheck(THalfEdge e, TVertex oppositeVertex)
+        {
+            HalfEdge& edge = _topology.getEdge(e);
+            HalfEdge& oppositeEdge = _topology.getEdge(_topology.getOpposite(e));
+
+            edge.data.setDelaunay(false);
+            oppositeEdge.data.setDelaunay(false);
+
+            _delaunayCheckStack.emplace_back(TopologyEdgeWithVertices
+            {
+                edge.vertex,
+                oppositeEdge.vertex,
+                e,
+                oppositeVertex
+            });
+        }
+
         bool delaunayEdgeFlip(const TVertex& justAddedVertex, const THalfEdge& oppositeEdge)
         {
-            auto addEdgeToCheck = [&](THalfEdge e)
-            {
-                HalfEdge& edge = _topology.getEdge(e);
-                HalfEdge& opposite = _topology.getEdge(_topology.getOpposite(e));
+            addEdgeToFlipCheck(oppositeEdge, justAddedVertex);
+            return delaunayEdgeFlip();
+        }
 
-                edge.data.setDelaunay(false);
-                opposite.data.setDelaunay(false);
-
-                _delaunayCheckStack.emplace_back(TopologyEdgeWithVertices
-                {
-                    edge.vertex,
-                    opposite.vertex,
-                    e
-                });
-            };
-
-            addEdgeToCheck(oppositeEdge);
-
-            // Flip edges
+        // Use `_delaunayCheckStack` in this function
+        // It will always be empty when this function returns
+        bool delaunayEdgeFlip()
+        {
+            // Flip edges if needed
             while (!_delaunayCheckStack.empty())
             {
                 TopologyEdgeWithVertices edgeWithVertices = _delaunayCheckStack.back();
@@ -3605,20 +3529,21 @@ namespace detria
                     // Flip edge
                     // The edge is always flippable if we get here, no need to do orientation checks
 
+                    TVertex oppositeVertex = edgeWithVertices.oppositeVertex;
                     _topology.flipEdge(e01);
 
                     // Flipping an edge might require other edges to be flipped too
                     // Only check edges which can be non-delaunay
-                    if (justAddedVertex.index == otherVertex0.index)
+                    if (oppositeVertex.index == otherVertex0.index)
                     {
-                        addEdgeToCheck(edge01.prevEdge);
-                        addEdgeToCheck(edge01.nextEdge);
+                        addEdgeToFlipCheck(edge01.prevEdge, oppositeVertex);
+                        addEdgeToFlipCheck(edge01.nextEdge, oppositeVertex);
                     }
                     else
                     {
-                        DETRIA_DEBUG_ASSERT(justAddedVertex.index == otherVertex1.index);
-                        addEdgeToCheck(edge10.nextEdge);
-                        addEdgeToCheck(edge10.prevEdge);
+                        DETRIA_DEBUG_ASSERT(oppositeVertex.index == otherVertex1.index);
+                        addEdgeToFlipCheck(edge10.nextEdge, oppositeVertex);
+                        addEdgeToFlipCheck(edge10.prevEdge, oppositeVertex);
                     }
                 }
 
@@ -4309,6 +4234,7 @@ namespace detria
             checkedTriangles[size_t(startingTriangle.index)] = true;
 
             CollectionWithAllocator<TriangleIndex>& trianglesToCheck = _classifyTriangles_TrianglesToCheck;
+            trianglesToCheck.clear();
             trianglesToCheck.push_back(startingTriangle);
 
             if (startingEdgeType == EdgeType::AutoDetect)
@@ -4424,7 +4350,8 @@ namespace detria
                         else
                         {
                             // We are outside and crossing a hole, or we are inside and crossing an outline
-                            if (currentTriangleLocationData->parentPolylineIndex == *polylineIndex) DETRIA_LIKELY
+                            if (currentTriangleLocationData->parentPolylineIndex.has_value() &&
+                                *currentTriangleLocationData->parentPolylineIndex == *polylineIndex) DETRIA_LIKELY
                             {
                                 // Valid case, the neighbor triangle is the opposite location
                                 // Set its polyline index to the current polyline's parent
@@ -4592,6 +4519,7 @@ namespace detria
             TVertex v0;
             TVertex v1;
             THalfEdge edge;
+            TVertex oppositeVertex;
         };
 
         CollectionWithAllocator<TopologyEdgeWithVertices> _delaunayCheckStack;
@@ -4607,6 +4535,7 @@ namespace detria
 
 #undef DETRIA_LIKELY
 #undef DETRIA_UNLIKELY
+#undef DETRIA_EXPORT
 }
 
 #endif // DETRIA_HPP_INCLUDED
