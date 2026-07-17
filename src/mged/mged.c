@@ -2075,6 +2075,10 @@ mged_finish(struct mged_state *s, int exitcode)
 
     mged_quiesce_tcl(s);
 
+    /* No Tcl trace may retain or access a display resource after this point. */
+    mged_variable_teardown(s);
+    mged_global_variable_teardown(s);
+
     (void)sprintf(place, "exit_status=%d", exitcode);
     size_t active_dm_cnt;
 
@@ -2108,24 +2112,36 @@ mged_finish(struct mged_state *s, int exitcode)
 
 	bu_ptbl_rm(&active_dm_set, (long *)p);
 
-	if (p && p->dm_dmp) {
-	    dm_close(p->dm_dmp);
+	if (p) {
+	    if (p->dm_dmp)
+		dm_close(p->dm_dmp);
 	    BV_FREE_VLIST(s->vlfree, &p->dm_p_vlist);
 	    mged_slider_free_vls(p);
+	    free_all_resources(p);
+	    if (p->dm_dlist_state && !--p->dm_dlist_state->dl_rc)
+		bu_free(p->dm_dlist_state, "mged_finish: dlist_state");
 	    bu_free(p, "release: mged_curr_dm");
 	}
 
 	set_curr_dm(s, MGED_DM_NULL);
     }
     bu_ptbl_free(&active_dm_set);
+    mged_dm_init_state = MGED_DM_NULL;
 
-    for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
+    history_cleanup();
+    while (BU_LIST_NON_EMPTY(&head_cmd_list.l)) {
+	c = BU_LIST_FIRST(cmd_list, &head_cmd_list.l);
+	BU_LIST_DEQUEUE(&c->l);
 	bu_vls_free(&c->cl_name);
 	bu_vls_free(&c->cl_more_default);
+	bu_free(c, "mged_finish: cmd_list");
     }
+    bu_vls_free(&head_cmd_list.cl_name);
+    bu_vls_free(&head_cmd_list.cl_more_default);
 
     /* no longer send bu_log() output to Tcl */
     bu_log_delete_hook(gui_output, (void *)s);
+    mged_output_cleanup();
 
 #ifdef HAVE_PIPE
     /* restore stdout/stderr just in case anyone tries to write before
@@ -2147,6 +2163,11 @@ mged_finish(struct mged_state *s, int exitcode)
 	mged_rename_tcl_cmd(s->interp, MGED_DB_NAME);
 	mged_rename_tcl_cmd(s->interp, ".inmem");
 	Tcl_Release((ClientData)s->interp);
+	Tcl_DeleteInterp(s->interp);
+	s->interp = NULL;
+	/* Tcl_Finalize() is process-wide and is unnecessary immediately before
+	 * exit.  Tcl builds without TCL_FINALIZE_ON_EXIT discard allocator roots
+	 * without returning their arenas, which obscures leak diagnostics. */
     }
 
     if (s->gedp) {
@@ -2163,11 +2184,6 @@ mged_finish(struct mged_state *s, int exitcode)
 
     /* XXX should deallocate libbu semaphores */
 
-    /* Remove structparse traces before unlinking Tcl_LinkVar variables so
-     * no MGED trace callback can run after backing C storage is released. */
-    mged_variable_teardown(s);
-    mged_global_variable_teardown(s);
-
     s->shutdown_state = MGED_SHUTDOWN_FINALIZED;
     /* Make sure anything trying to use this after free gets a magic failure. */
     s->magic = 0;
@@ -2179,9 +2195,6 @@ mged_finish(struct mged_state *s, int exitcode)
     BU_PUT(s->s_edit, struct mged_edit_state);
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL;
-
-    /* 8.5 seems to have some bugs in their reference counting */
-    /* Tcl_DeleteInterp(INTERP); */
 
 #ifndef HAVE_WINDOWS_H
     if (cbreak_mode > 0) {
@@ -3077,6 +3090,11 @@ main(int argc, char *argv[])
 	}
 
     } /* interactive */
+
+    /* All entries point into argv and are non-owning; only the tables need
+     * releasing once the deferred overrides have been applied. */
+    bu_ptbl_free(&cl.set_pairs);
+    bu_ptbl_free(&cl.rset_pairs);
 
     /* XXX total hack that fixes a dm init issue on Mac OS X where the
      * dm first opens filled with garbage.

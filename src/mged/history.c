@@ -401,6 +401,26 @@ history_setup(void)
 }
 
 
+void
+history_cleanup(void)
+{
+    struct mged_hist *hp;
+
+    if (journalfp) {
+	fclose(journalfp);
+	journalfp = NULL;
+    }
+
+    while (BU_LIST_NON_EMPTY(&mged_hist_head.l)) {
+	hp = BU_LIST_FIRST(mged_hist, &mged_hist_head.l);
+	BU_LIST_DEQUEUE(&hp->l);
+	bu_vls_free(&hp->mh_command);
+	bu_free(hp, "history_cleanup: hp");
+    }
+    bu_vls_free(&mged_hist_head.mh_command);
+}
+
+
 /*
  * Local Variables:
  * mode: C

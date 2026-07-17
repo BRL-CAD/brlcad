@@ -329,6 +329,7 @@ extern int invoke_db_wrapper(Tcl_Interp *interpreter, int argc, const char *argv
 /* history.c */
 void history_record(struct bu_vls *cmdp, int64_t start, int64_t finish, int status); /* Either CMD_OK or CMD_BAD */
 void history_setup(void);
+void history_cleanup(void);
 
 /* defined in usepen.c */
 #define RARROW   001
@@ -451,6 +452,7 @@ void mged_pr_output(Tcl_Interp *interp);
 void mged_sem_log_init(void);
 void mged_start_log_drain_timer(struct mged_state *s);
 void mged_stop_log_drain_timer(struct mged_state *s);
+void mged_output_cleanup(void);
 int mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[]);
 
 /* columns.c */
@@ -575,6 +577,7 @@ void init_sedit(struct mged_state *s);
 
 /* share.c */
 void usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2);
+void free_all_resources(struct mged_dm *dlp);
 
 /* set.c */
 extern void set_absolute_tran(struct mged_state *);

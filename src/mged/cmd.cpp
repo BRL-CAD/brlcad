@@ -224,6 +224,21 @@ mged_stop_log_drain_timer(struct mged_state *s)
 
 
 /**
+ * Release process-lifetime output buffers once no log hook or worker can use
+ * them.  This is separate from mged_stop_log_drain_timer() because shutdown
+ * must first remove the bu_log hook.
+ */
+void
+mged_output_cleanup(void)
+{
+    bu_semaphore_acquire(MGED_SEM_LOG);
+    bu_vls_free(&tcl_log_str);
+    bu_vls_free(&tcl_output_cmd);
+    bu_semaphore_release(MGED_SEM_LOG);
+}
+
+
+/**
  * bu_log hook: accumulates output from any thread into tcl_log_str under
  * MGED_SEM_LOG protection.  Never calls into the Tcl interpreter — that is
  * safe to do only from the main thread, and is done by mged_pr_output().

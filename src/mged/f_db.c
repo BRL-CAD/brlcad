@@ -431,6 +431,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	Tcl_Eval(interpreter, "help opendb");
     }
 
+    bu_free((void *)av, "f_opendb: av");
     return ctx.ret;
 }
 
