@@ -128,7 +128,7 @@ extern struct _rubber_band default_rubber_band;
  * still work).
  */
 // FIXME: Global
-static int stdfd[2] = {1, 2};
+static int stdfd[2] = {-1, -1};
 #endif
 
 /* Container for passing I/O data through Tcl callbacks */
@@ -188,6 +188,16 @@ mged_quiesce_tcl(struct mged_state *s)
 
     mged_stop_log_drain_timer(s);
 
+#ifdef HAVE_TK
+    /* This handler is process-global in Tk and retains s as ClientData.  It
+     * must be removed explicitly: destroying individual Tk windows removes
+     * their window handlers, but not a generic handler. */
+    if (s->tk_generic_handler_active) {
+	Tk_DeleteGenericHandler(doEvent, (ClientData)s);
+	s->tk_generic_handler_active = 0;
+    }
+#endif
+
     if (s->stdin_chan && s->stdin_data) {
 	Tcl_DeleteChannelHandler(s->stdin_chan, stdin_input, (ClientData)s->stdin_data);
 	BU_PUT(s->stdin_data, struct stdio_data);
@@ -203,6 +213,102 @@ mged_quiesce_tcl(struct mged_state *s)
 	s->stderr_chan = NULL;
     }
 }
+
+
+#ifdef HAVE_PIPE
+/*
+ * Make a Tcl channel which owns a duplicate of fd.  In particular, do not
+ * give Tcl the HANDLE owned by a Windows CRT descriptor: closing that channel
+ * would leave the CRT descriptor referring to an invalid native handle.
+ */
+static Tcl_Channel
+mged_dup_file_channel(int fd, int mode)
+{
+#ifdef HAVE_WINDOWS_H
+    HANDLE source = (HANDLE)_get_osfhandle(fd);
+    HANDLE duplicate = INVALID_HANDLE_VALUE;
+
+    if (source == INVALID_HANDLE_VALUE ||
+	!DuplicateHandle(GetCurrentProcess(), source, GetCurrentProcess(),
+		&duplicate, 0, FALSE, DUPLICATE_SAME_ACCESS))
+	return NULL;
+
+    Tcl_Channel channel = Tcl_MakeFileChannel((ClientData)duplicate, mode);
+    if (!channel)
+	CloseHandle(duplicate);
+    return channel;
+#else
+    int duplicate = dup(fd);
+    if (duplicate == -1)
+	return NULL;
+
+    Tcl_Channel channel = Tcl_MakeFileChannel((ClientData)(size_t)duplicate, mode);
+    if (!channel)
+	(void)close(duplicate);
+    return channel;
+#endif
+}
+
+
+/*
+ * Move Tcl's standard channel to its own duplicate of the saved descriptor.
+ * This lets dup2 restore the C runtime descriptor without invalidating a
+ * channel which Tcl_Finalize will subsequently flush and close.
+ */
+static int
+mged_rebind_std_channel(struct mged_state *s, int fd, int type)
+{
+    Tcl_Channel old_channel;
+    Tcl_Channel new_channel;
+
+    if (!s || !s->interp || fd < 0)
+	return 0;
+
+    old_channel = Tcl_GetStdChannel(type);
+    new_channel = mged_dup_file_channel(fd, TCL_WRITABLE);
+    if (!new_channel)
+	return 0;
+
+    (void)Tcl_SetChannelOption(s->interp, new_channel, "-buffering", "line");
+    Tcl_RegisterChannel(s->interp, new_channel);
+    Tcl_SetStdChannel(new_channel, type);
+
+    if (old_channel && old_channel != new_channel &&
+	Tcl_IsChannelRegistered(s->interp, old_channel))
+	(void)Tcl_UnregisterChannel(s->interp, old_channel);
+
+    return 1;
+}
+
+
+/*
+ * Restore stdout and stderr without leaving Tcl holding channels backed by
+ * descriptors/handles which dup2 has replaced.  A failed rebind is deferred
+ * until after Tcl_Finalize, when no Tcl channel can refer to the descriptor.
+ */
+static void
+mged_restore_stdio(struct mged_state *s, int force_restore)
+{
+    static const int types[2] = {TCL_STDOUT, TCL_STDERR};
+    FILE *streams[2] = {stdout, stderr};
+
+    for (size_t i = 0; i < 2; i++) {
+	int can_restore = force_restore;
+	if (stdfd[i] < 0)
+	    continue;
+
+	if (!can_restore)
+	    can_restore = mged_rebind_std_channel(s, stdfd[i], types[i]);
+	if (!can_restore)
+	    continue;
+
+	if (dup2(stdfd[i], fileno(streams[i])) == -1)
+	    perror("dup2");
+	(void)close(stdfd[i]);
+	stdfd[i] = -1;
+    }
+}
+#endif
 
 
 static void
@@ -2065,13 +2171,13 @@ mged_finish(struct mged_state *s, int exitcode)
 {
     char place[64];
     struct cmd_list *c;
-    int ret;
+    int finalize_tcl = (getenv("TCL_FINALIZE_ON_EXIT") != NULL);
 
     if (!s)
-	Tcl_Exit(exitcode);
+	exit(exitcode);
 
     if (s->shutdown_state == MGED_SHUTDOWN_FINALIZED)
-	Tcl_Exit(exitcode);
+	exit(exitcode);
 
     mged_quiesce_tcl(s);
 
@@ -2081,26 +2187,6 @@ mged_finish(struct mged_state *s, int exitcode)
 
     (void)sprintf(place, "exit_status=%d", exitcode);
     size_t active_dm_cnt;
-
-    /* If we're in script mode, wait for subprocesses to finish before we
-     * wrap up */
-    if (s->gedp && !s->interactive) {
-	struct bu_ptbl rmp = BU_PTBL_INIT_ZERO;
-	while (BU_PTBL_LEN(&s->gedp->ged_subp)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&s->gedp->ged_subp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->gedp->ged_subp, i);
-		if (!bu_process_wait_n(&rrp->p, 1)) {
-		    bu_ptbl_ins(&rmp, (long *)rrp);
-		}
-	    }
-	    for (size_t i = 0; i < BU_PTBL_LEN(&rmp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->gedp->ged_subp, i);
-		bu_ptbl_rm(&s->gedp->ged_subp, (long *)rrp);
-		BU_PUT(rrp, struct ged_subprocess);
-	    }
-	    bu_ptbl_reset(&rmp);
-	}
-    }
 
     /* Release all displays. */
     active_dm_cnt = BU_PTBL_LEN(&active_dm_set);
@@ -2143,19 +2229,9 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_log_delete_hook(gui_output, (void *)s);
     mged_output_cleanup();
 
-#ifdef HAVE_PIPE
-    /* restore stdout/stderr just in case anyone tries to write before
-     * we finally exit (e.g., an atexit() callback).
-     */
-    ret = dup2(stdfd[0], fileno(stdout));
-    if (ret == -1)
-	perror("dup2");
-    ret = dup2(stdfd[1], fileno(stderr));
-    if (ret == -1)
-	perror("dup2");
-#endif
-
-    /* Be certain to close the database cleanly before exiting */
+    /* Delete Tcl database commands while their C backing objects are still
+     * valid.  Their command delete callbacks participate in closing cloned
+     * database references. */
     if (s->interp) {
 	Tcl_Preserve((ClientData)s->interp);
 	/* Rename only commands that still exist, and log unexpected failures
@@ -2163,13 +2239,10 @@ mged_finish(struct mged_state *s, int exitcode)
 	mged_rename_tcl_cmd(s->interp, MGED_DB_NAME);
 	mged_rename_tcl_cmd(s->interp, ".inmem");
 	Tcl_Release((ClientData)s->interp);
-	Tcl_DeleteInterp(s->interp);
-	s->interp = NULL;
-	/* Tcl_Finalize() is process-wide and is unnecessary immediately before
-	 * exit.  Tcl builds without TCL_FINALIZE_ON_EXIT discard allocator roots
-	 * without returning their arenas, which obscures leak diagnostics. */
     }
 
+    /* ged_close may invoke the application's Tcl file/channel deletion
+     * callbacks.  It must therefore run before Tcl_DeleteInterp. */
     if (s->gedp) {
 	struct tclcad_io_data *giod = (struct tclcad_io_data *)s->gedp->ged_io_data;
 	ged_close(s->gedp);
@@ -2181,6 +2254,33 @@ mged_finish(struct mged_state *s, int exitcode)
 
     s->wdbp = RT_WDB_NULL;
     s->dbip = DBI_NULL;
+
+#ifdef HAVE_PIPE
+    /* Rebind Tcl's standard channels before restoring the CRT descriptors.
+     * This is the critical ordering that prevents Tcl finalization from
+     * touching handles already invalidated by dup2. */
+    mged_restore_stdio(s, 0);
+#endif
+
+    if (s->interp) {
+	Tcl_DeleteInterp(s->interp);
+	s->interp = NULL;
+    }
+
+    /* This is the final Tcl/Tk operation.  Tcl normally reserves its
+     * process-wide allocations for fast exit; honor Tcl's documented opt-in
+     * environment variable only after all application callbacks and
+     * interpreters are gone.  MGED_STATE and its backing allocation remain
+     * valid until Tcl's process/thread exit handlers have completed. */
+    if (finalize_tcl)
+	Tcl_Finalize();
+
+#ifdef HAVE_PIPE
+    /* If a Tcl standard-channel rebind failed, it is safe to restore the raw
+     * descriptor after finalization.  Without finalization this is still the
+     * last action before process exit and no Tcl code will run again. */
+    mged_restore_stdio(NULL, 1);
+#endif
 
     /* XXX should deallocate libbu semaphores */
 
@@ -2202,9 +2302,7 @@ mged_finish(struct mged_state *s, int exitcode)
     }
 #endif
 
-    /* Avoid calling Tcl_Exit here as it may touch channels and OS handles
-     * that were already torn down, leading to crash-on-exit.
-     */
+    /* Tcl has been finalized in a controlled order when explicitly requested. */
     exit(exitcode);
 }
 
@@ -2444,6 +2542,9 @@ main(int argc, char *argv[])
     s->stdout_chan = NULL;
     s->stderr_chan = NULL;
     s->stdin_data = NULL;
+#ifdef HAVE_TK
+    s->tk_generic_handler_active = 0;
+#endif
     s->pipe_mode = 0;
 
     /* Set up linked lists */

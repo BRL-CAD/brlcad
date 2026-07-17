@@ -263,6 +263,9 @@ struct mged_state {
     Tcl_Channel stdout_chan;
     Tcl_Channel stderr_chan;
     struct stdio_data *stdin_data;
+#ifdef HAVE_TK
+    int tk_generic_handler_active;
+#endif
 
     /* When non-zero, a machine-readable "MGED_CMD_DONE <status>" sentinel
      * line is written to stdout after every command completes in the

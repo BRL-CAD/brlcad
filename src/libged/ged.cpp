@@ -73,18 +73,24 @@ ged_close(struct ged *gedp)
     if (gedp->ged_lod)
 	bv_mesh_lod_context_destroy(gedp->ged_lod);
 
-    /* Terminate any ged subprocesses */
-    if (gedp != GED_NULL) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
-	    struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
-	    if (!rrp->aborted) {
-		bu_pid_terminate(bu_process_pid(rrp->p));
-		rrp->aborted = 1;
-	    }
-	    bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
-	    BU_PUT(rrp, struct ged_subprocess);
+    /* Detach application event-loop handlers before freeing their ClientData,
+     * then terminate every subprocess.  Removing from the end avoids skipping
+     * entries as the table shrinks. */
+    while (BU_PTBL_LEN(&gedp->ged_subp)) {
+	size_t i = BU_PTBL_LEN(&gedp->ged_subp) - 1;
+	struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
+	if (gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDIN);
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDOUT);
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDERR);
 	}
-	bu_ptbl_reset(&gedp->ged_subp);
+	if (!rrp->aborted) {
+	    bu_pid_terminate(bu_process_pid(rrp->p));
+	    rrp->aborted = 1;
+	}
+	(void)bu_process_wait_n(&rrp->p, 0);
+	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
+	BU_PUT(rrp, struct ged_subprocess);
     }
 
     ged_destroy(gedp);
@@ -586,4 +592,3 @@ ged_dm_ctx_get(struct ged *gedp, const char *dm_type)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

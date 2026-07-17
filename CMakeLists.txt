@@ -1252,21 +1252,6 @@ if(NOT MSVC)
     check_cxx_flag(qstackprotect)
   endif(${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
 
-  # Similarly, enable the AddressSanitizer memory address sanitizer.
-  # See https://code.google.com/p/address-sanitizer/ for more info.
-  # This typically is reported to cause a 2x slowdown.
-  if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
-    set(CMAKE_REQUIRED_LINK_OPTIONS "${CMAKE_REQUIRED_LINK_OPTIONS};-lasan")
-    check_c_flag(fsanitize=address)
-    check_c_flag(fsanitize-address-use-after-return=always)
-    check_c_flag(fsanitize-address-use-after-scope)
-    check_c_flag(fno-omit-frame-pointer)
-    check_cxx_flag(fsanitize=address)
-    check_cxx_flag(fsanitize-address-use-after-return=always)
-    check_cxx_flag(fsanitize-address-use-after-scope)
-    check_cxx_flag(fno-omit-frame-pointer)
-  endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
-
   # Differently, enable the ThreadSanitizer race condition detector
   # only as requested since it can incur a 5x-15x slowdown.  See
   # https://code.google.com/p/thread-sanitizer/ for more info.
@@ -2229,6 +2214,62 @@ if(MSVC)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
 endif(MSVC)
+
+# Enable AddressSanitizer only after the configure-time platform tests have
+# run.  Instrumenting try_run executables can make otherwise valid feature
+# checks fail when configuring under a debugger, tracer, or restricted runtime
+# where LeakSanitizer cannot inspect the process.
+if(BRLCAD_ENABLE_ADDRESS_SANITIZER)
+  if(MSVC)
+    message(FATAL_ERROR "BRLCAD_ENABLE_ADDRESS_SANITIZER is not yet supported with MSVC")
+  endif()
+  if(BRLCAD_OPTIMIZED OR NOT BRLCAD_DEBUGGING)
+    message(FATAL_ERROR "BRLCAD_ENABLE_ADDRESS_SANITIZER requires BRLCAD_OPTIMIZED=OFF and BRLCAD_DEBUGGING=ON")
+  endif()
+
+  # The compiler driver flag must also be present during the probe link:
+  # putting -lasan directly in CMAKE_REQUIRED_LINK_OPTIONS places the library
+  # before the try-compile object and makes a working toolchain appear broken.
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "-fsanitize=address")
+  list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=address")
+  check_c_compiler_flag("-fsanitize=address" BRLCAD_ASAN_C_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize=address" BRLCAD_ASAN_CXX_SUPPORTED)
+  check_c_compiler_flag("-fsanitize-address-use-after-return=always" BRLCAD_ASAN_C_USE_AFTER_RETURN_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize-address-use-after-return=always" BRLCAD_ASAN_CXX_USE_AFTER_RETURN_SUPPORTED)
+  check_c_compiler_flag("-fsanitize-address-use-after-scope" BRLCAD_ASAN_C_USE_AFTER_SCOPE_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize-address-use-after-scope" BRLCAD_ASAN_CXX_USE_AFTER_SCOPE_SUPPORTED)
+  check_c_compiler_flag("-fno-omit-frame-pointer" BRLCAD_ASAN_C_FRAME_POINTER_SUPPORTED)
+  check_cxx_compiler_flag("-fno-omit-frame-pointer" BRLCAD_ASAN_CXX_FRAME_POINTER_SUPPORTED)
+  cmake_pop_check_state()
+
+  if(NOT BRLCAD_ASAN_C_SUPPORTED OR NOT BRLCAD_ASAN_CXX_SUPPORTED)
+    message(FATAL_ERROR "BRLCAD_ENABLE_ADDRESS_SANITIZER was requested, but the C/C++ compiler and linker do not support -fsanitize=address")
+  endif()
+
+  # Directory options instrument build targets without contaminating any
+  # try_compile/try_run checks performed by nested CMake logic.
+  add_compile_options(-fsanitize=address)
+  add_link_options(-fsanitize=address)
+  if(BRLCAD_ASAN_C_USE_AFTER_RETURN_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fsanitize-address-use-after-return=always>)
+  endif()
+  if(BRLCAD_ASAN_CXX_USE_AFTER_RETURN_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fsanitize-address-use-after-return=always>)
+  endif()
+  if(BRLCAD_ASAN_C_USE_AFTER_SCOPE_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fsanitize-address-use-after-scope>)
+  endif()
+  if(BRLCAD_ASAN_CXX_USE_AFTER_SCOPE_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fsanitize-address-use-after-scope>)
+  endif()
+  if(BRLCAD_ASAN_C_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>)
+  endif()
+  if(BRLCAD_ASAN_CXX_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  endif()
+endif()
 
 #-----------------------------------------------------------------------------
 # Add misc/tools for tools that are used in BRL-CAD's build process or for

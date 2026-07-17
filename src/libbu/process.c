@@ -152,27 +152,36 @@ bu_process_file_close(struct bu_process *pinfo, bu_process_io_t d)
     if (!pinfo)
 	return;
 
+    FILE *fp = NULL;
     if (d == BU_PROCESS_STDIN) {
-	if (!pinfo->fp_in)
-	    return;
-	(void)fclose(pinfo->fp_in);
-	pinfo->fp_in = NULL;
-	return;
+	fp = pinfo->fp_in;
     }
     if (d == BU_PROCESS_STDOUT) {
-	if (!pinfo->fp_out)
-	    return;
-	(void)fclose(pinfo->fp_out);
-	pinfo->fp_out = NULL;
-	return;
+	fp = pinfo->fp_out;
     }
     if (d == BU_PROCESS_STDERR) {
-	if (!pinfo->fp_err)
-	    return;
-	(void)fclose(pinfo->fp_err);
-	pinfo->fp_err = NULL;
-	return;
+	fp = pinfo->fp_err;
     }
+    if (!fp)
+	return;
+
+    int fd = fileno(fp);
+    if (pinfo->fp_in == fp)
+	pinfo->fp_in = NULL;
+    if (pinfo->fp_out == fp)
+	pinfo->fp_out = NULL;
+    if (pinfo->fp_err == fp)
+	pinfo->fp_err = NULL;
+    (void)fclose(fp);
+
+    /* OUT_EQ_ERR aliases stdout and stderr.  Invalidate every matching
+     * descriptor so neither wait nor another stream wrapper closes it twice. */
+    if (pinfo->fd_in == fd)
+	pinfo->fd_in = -1;
+    if (pinfo->fd_out == fd)
+	pinfo->fd_out = -1;
+    if (pinfo->fd_err == fd)
+	pinfo->fd_err = -1;
 }
 
 void
@@ -187,17 +196,29 @@ bu_process_file_open(struct bu_process *pinfo, bu_process_io_t d)
     if (!pinfo)
 	return NULL;
 
-    bu_process_file_close(pinfo, d);
-
     if (d == BU_PROCESS_STDIN) {
+	if (pinfo->fp_in)
+	    return pinfo->fp_in;
 	pinfo->fp_in = fdopen(pinfo->fd_in, "wb");
 	return pinfo->fp_in;
     }
     if (d == BU_PROCESS_STDOUT) {
+	if (pinfo->fp_out)
+	    return pinfo->fp_out;
+	if (pinfo->fd_out == pinfo->fd_err && pinfo->fp_err) {
+	    pinfo->fp_out = pinfo->fp_err;
+	    return pinfo->fp_out;
+	}
 	pinfo->fp_out = fdopen(pinfo->fd_out, "rb");
 	return pinfo->fp_out;
     }
     if (d == BU_PROCESS_STDERR) {
+	if (pinfo->fp_err)
+	    return pinfo->fp_err;
+	if (pinfo->fd_err == pinfo->fd_out && pinfo->fp_out) {
+	    pinfo->fp_err = pinfo->fp_out;
+	    return pinfo->fp_err;
+	}
 	pinfo->fp_err = fdopen(pinfo->fd_err, "rb");
 	return pinfo->fp_err;
     }
@@ -739,16 +760,31 @@ process_func_fail:
 int
 bu_process_wait_n(struct bu_process **pinfo, int wtime)
 {
-    if (!pinfo)
+    if (!pinfo || !*pinfo)
 	return -1;
 
+    struct bu_process *process = *pinfo;
     int rc = 0;
+
+    /* A FILE owns its descriptor, so close streams first.  Close any
+     * remaining raw descriptors exactly once and invalidate all aliases. */
+    bu_process_file_close(process, BU_PROCESS_STDIN);
+    bu_process_file_close(process, BU_PROCESS_STDOUT);
+    bu_process_file_close(process, BU_PROCESS_STDERR);
+    int *fds[3] = {&process->fd_in, &process->fd_out, &process->fd_err};
+    for (size_t i = 0; i < 3; i++) {
+	int fd = *fds[i];
+	if (fd < 0)
+	    continue;
+	(void)close(fd);
+	for (size_t j = i; j < 3; j++) {
+	    if (*fds[j] == fd)
+		*fds[j] = -1;
+	}
+    }
+
 #ifndef _WIN32
     int retcode = 0;
-
-    close((*pinfo)->fd_in);
-    close((*pinfo)->fd_out);
-    close((*pinfo)->fd_err);
 
     if (kill((pid_t)(*pinfo)->pid, 0) == 0) {      // make sure the process exists
 	/* wait for process to end, or timeout */
@@ -804,10 +840,6 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 
     CloseHandle((*pinfo)->hProcess);
 #endif
-    /* Clean up */
-    bu_process_file_close((*pinfo), BU_PROCESS_STDOUT);
-    bu_process_file_close((*pinfo), BU_PROCESS_STDERR);
-
     /* Free copy of exec args */
     bu_free((void *)(*pinfo)->cmd, "pinfo cmd copy");
 
@@ -818,6 +850,7 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 	bu_free((void *)(*pinfo)->argv, "pinfo argv array");
     }
     BU_PUT(*pinfo, struct bu_process);
+    *pinfo = NULL;
 
     return rc;
 }

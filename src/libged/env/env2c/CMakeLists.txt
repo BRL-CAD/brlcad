@@ -45,10 +45,13 @@ find_package(Threads)
 
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
-if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUG)
-  set(CMAKE_REQUIRED_LINK_OPTIONS "${CMAKE_REQUIRED_LINK_OPTIONS};-lasan")
+if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
+  include(CMakePushCheckState)
+  cmake_push_check_state()
+  list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=address")
   check_cxx_compiler_flag(-fsanitize=address SANITIZE_ADDRESS_FLAG)
-endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUG)
+  cmake_pop_check_state()
+endif()
 
 add_executable(env2c env2c.cpp)
 target_link_libraries(env2c Threads::Threads)
@@ -66,17 +69,17 @@ if(HAVE_STACK_SIZE_FLAG)
   target_link_options(env2c PRIVATE "${STACK_SIZE_FLAGS}")
 endif(HAVE_STACK_SIZE_FLAG)
 
-if(O3_COMPILER_FLAG)
+if(BRLCAD_OPTIMIZED AND O3_COMPILER_FLAG)
   # If we have the O3 flag, use it
   target_compile_options(env2c PRIVATE "-O3")
-endif(O3_COMPILER_FLAG)
+endif()
 if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND SANITIZE_ADDRESS_FLAG)
   # With clang, if we are using the address sanitizer it changes
   # the results of the -lpthread check - using the parent build's
   # find package results, we need to also match its use of this
   # compiler flag or the threading linkage will fail
   target_compile_options(env2c PRIVATE "-fsanitize=address")
-  target_link_libraries(env2c -lasan)
+  target_link_options(env2c PRIVATE "-fsanitize=address")
 endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND SANITIZE_ADDRESS_FLAG)
 
 if(COMMAND CMAKEFILES)

@@ -123,8 +123,10 @@ mged_dm_init(
 
 #ifdef HAVE_TK
     if (dm_graphical(DMP) && !BU_STR_EQUAL(dm_get_dm_name(DMP), "swrast")) {
-	Tk_DeleteGenericHandler(doEvent, (ClientData)s);
+	if (s->tk_generic_handler_active)
+	    Tk_DeleteGenericHandler(doEvent, (ClientData)s);
 	Tk_CreateGenericHandler(doEvent, (ClientData)s);
+	s->tk_generic_handler_active = 1;
     }
 #endif
     (void)dm_configure_win(DMP, 0);
@@ -412,6 +414,7 @@ gui_setup(struct mged_state *s, const char *dstr)
 
     /* create the event handler */
     Tk_CreateGenericHandler(handler, (ClientData)s);
+    s->tk_generic_handler_active = 1;
 
     Tcl_Eval(s->interp, "wm withdraw .");
     Tcl_Eval(s->interp, "tk appname mged");

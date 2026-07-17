@@ -305,6 +305,14 @@ brlcad_option(BRLCAD_DEBUGGING ON
   ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS BRLCAD_FLAGS_DEBUG
 )
 
+# Instrument C and C++ code with AddressSanitizer.  The compiler/linker setup
+# is performed after the normal debug and optimization flags are selected.
+brlcad_option(BRLCAD_ENABLE_ADDRESS_SANITIZER OFF
+  TYPE BOOL
+  ALIASES ENABLE_ADDRESS_SANITIZER ENABLE_ASAN BRLCAD_ENABLE_ASAN
+)
+mark_as_advanced(BRLCAD_ENABLE_ADDRESS_SANITIZER)
+
 # A variety of debugging messages in the code key off of the DEBUG definition -
 # set it according to whether we're using debug flags.
 if(BRLCAD_DEBUGGING)
