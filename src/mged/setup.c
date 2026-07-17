@@ -134,7 +134,6 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "comb_color", cmd_ged_plain_wrapper, ged_exec_comb_color, NULL},
     {MGED_CMD_MAGIC, "comb_std", cmd_ged_plain_wrapper, ged_exec_comb_std, NULL},
     {MGED_CMD_MAGIC, "combmem", cmd_ged_plain_wrapper, ged_exec_combmem, NULL},
-    {MGED_CMD_MAGIC, "concat", cmd_ged_plain_wrapper, ged_exec_concat, NULL},
     {MGED_CMD_MAGIC, "constraint", cmd_ged_plain_wrapper, ged_exec_constraint, NULL},
     {MGED_CMD_MAGIC, "copy", cmd_ged_plain_wrapper, ged_exec_copy, NULL},
     {MGED_CMD_MAGIC, "copyeval", cmd_ged_plain_wrapper, ged_exec_copyeval, NULL},
@@ -206,7 +205,6 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "garbage_collect", cmd_ged_plain_wrapper, ged_exec_garbage_collect, NULL},
     {MGED_CMD_MAGIC, "get", cmd_ged_plain_wrapper, ged_exec_get, NULL},
     {MGED_CMD_MAGIC, "get_type", cmd_ged_plain_wrapper, ged_exec_get_type, NULL},
-    {MGED_CMD_MAGIC, "glob", cmd_ged_plain_wrapper, ged_exec_glob, NULL},
     {MGED_CMD_MAGIC, "get_autoview", cmd_ged_plain_wrapper, ged_exec_get_autoview, NULL},
     {MGED_CMD_MAGIC, "get_comb", cmd_ged_plain_wrapper, ged_exec_get_comb, NULL},
     {MGED_CMD_MAGIC, "get_dbip", cmd_ged_plain_wrapper, ged_exec_get_dbip, NULL}, // TODO - this needs to go away
@@ -252,7 +250,6 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "lc", cmd_ged_plain_wrapper, ged_exec_lc, NULL},
     {MGED_CMD_MAGIC, "left", f_bv_left, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "lint", cmd_ged_plain_wrapper, ged_exec_lint, NULL},
-    {MGED_CMD_MAGIC, "list", cmd_ged_info_wrapper, ged_exec_list, NULL},
     {MGED_CMD_MAGIC, "listeval", cmd_ged_plain_wrapper, ged_exec_listeval, NULL},
     {MGED_CMD_MAGIC, "loadtk", cmd_tk, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "loadview", cmd_ged_view_wrapper, ged_exec_loadview, NULL},

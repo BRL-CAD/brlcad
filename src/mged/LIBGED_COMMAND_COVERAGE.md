@@ -22,18 +22,19 @@ Counts: **352** libged command names, **401** mann pages, **327** documented-and
 Before this change MGED exposed **334** command names, leaving **90 candidates**.
 
 Each candidate was then inspected (core function's gedp usage, existing MGED equivalent,
-and name collisions against `mged_cmdtab[]` and the `src/tclscripts` procs) and classified.
+and name collisions against `mged_cmdtab[]`, Tcl built-ins, and the `src/tclscripts`
+procs) and classified.
 
 ## Result summary
 
 | Class | Count | Action |
 |-------|-------|--------|
 | Genuinely missing, trivially addable | 53 | **Added** to `mged_cmdtab[]` |
-| Documented alias of an existing MGED command (safe) | 21 | **Added** as alias |
-| Documented alias needing a custom wrapper / with a conflict | 6 | Not added (see below) |
+| Documented alias of an existing MGED command (safe) | 18 | **Added** as alias |
+| Documented alias needing a custom wrapper / with a conflict | 9 | Not added (see below) |
 | Non-trivial (stub, no-op, dispatcher, or name conflict) | 10 | Not added (see below) |
 
-After the change MGED exposes **408** command names; **16 candidates remain** (documented below).
+After the change MGED exposes **405** command names; **19 candidates remain** (documented below).
 
 ---
 
@@ -71,14 +72,11 @@ comment in `setup.c` that all plain libged commands should be reachable from MGE
 |------------|---------|------------------------------|
 | `aet` | `cmd_ged_view_wrapper` | `ae` |
 | `comb_std` | `cmd_ged_plain_wrapper` | `c` |
-| `concat` | `cmd_ged_plain_wrapper` | `dbconcat` |
 | `copy` | `cmd_ged_plain_wrapper` | `cp` |
 | `eye` | `cmd_ged_view_wrapper` | `eye_pt` |
 | `find` | `cmd_ged_info_wrapper` | `dbfind` |
-| `glob` | `cmd_ged_plain_wrapper` | `db_glob` |
 | `group` | `cmd_ged_plain_wrapper` | `g` |
 | `instance` | `cmd_ged_plain_wrapper` | `i` |
-| `list` | `cmd_ged_info_wrapper` | `l` |
 | `move` | `cmd_ged_plain_wrapper` | `mv` |
 | `move_all` | `cmd_ged_plain_wrapper` | `mvall` |
 | `nmg_cmface` | `cmd_ged_plain_wrapper` | `nmg cmface` |
@@ -97,6 +95,34 @@ comment in `setup.c` that all plain libged commands should be reachable from MGE
 
 The functionality is already reachable in MGED under the listed name; exposing the
 documented spelling is possible but is **not** a standard one-line add.
+
+### `concat`  (already available as `dbconcat`)
+
+**Name conflict:** Tcl's built-in `concat` command concatenates lists and is used by
+MGED's Tcl scripts. Registering `ged_exec_concat` as a top-level command replaces that
+built-in with the database concatenation command, breaking normal Tcl evaluation.
+
+**To expose the documented name:** it cannot safely be exposed unqualified in MGED's
+Tcl interpreter. Continue using `dbconcat`, or provide the GED spelling in a namespace.
+
+### `glob`  (already available as `db_glob`)
+
+**Name conflict:** Tcl's built-in `glob` command performs filesystem pathname matching.
+The libged command instead matches database objects. Registering `ged_exec_glob` as a
+top-level command replaces Tcl's filesystem command and breaks scripts that use it.
+
+**To expose the documented name:** it cannot safely be exposed unqualified in MGED's
+Tcl interpreter. Continue using `db_glob`, or provide the GED spelling in a namespace.
+
+### `list`  (already available as `l`)
+
+**Name conflict:** Tcl's built-in `list` command constructs lists and is fundamental to
+MGED's Tcl command and callback handling. Registering `ged_exec_list` as a top-level
+command replaces the Tcl built-in, causing ordinary list elements to be interpreted as
+database object names and breaking MGED startup and regression scripts.
+
+**To expose the documented name:** it cannot safely be exposed unqualified in MGED's
+Tcl interpreter. Continue using `l`, or provide the GED spelling in a namespace.
 
 ### `blast`  (already available as `B`)
 
@@ -218,10 +244,10 @@ ged_view_func_core (src/libged/view/view.c:795) is a legacy multiplexer/dispatch
 
 ## Verification status
 
-- All 74 added entries reference a `ged_exec_<name>` symbol confirmed present in the generated
+- All 71 added entries reference a `ged_exec_<name>` symbol confirmed present in the generated
   `ged/ged_cmds.h`, and a wrapper (`cmd_ged_plain_wrapper` / `_view_` / `_dm_` / `_info_`)
   declared in `src/mged/cmd.h` (already included by `setup.c`).
-- The `mged_cmdtab[]` array structure (sentinel, special entries) is intact; the change is
-  purely additive (`git diff` shows 74 insertions).
-- **A compile/link build was NOT run** in this environment (no MSVC toolchain on PATH). Please
-  build the `mged` target in your configured VS/Ninja environment to confirm.
+- The `mged_cmdtab[]` array structure (sentinel, special entries) is intact; the resulting
+  command-table delta from the pre-audit baseline is 71 insertions.
+- The Ninja `mged` target builds successfully, and the `regress-bots`, `regress-mged`, and
+  `regress-shaders` targets pass with the Tcl-conflicting aliases omitted.
