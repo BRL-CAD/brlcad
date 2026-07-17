@@ -1,0 +1,324 @@
+bu_parallel recursive scheduling upgrade
+========================================
+
+Status
+------
+
+This document proposes a replacement for the recursive scheduling and thread
+ID bookkeeping in src/libbu/parallel.c.  It records the constraints behind the
+current implementation, the recommended C++17 design, and an incremental plan
+for implementing and validating it.
+
+
+Confirmed source of the Valgrind warnings
+-----------------------------------------
+
+The following declaration is the source of both observed Valgrind messages:
+
+    static struct parallel_info mapping[MAX_PSW*MAX_PSW];
+
+MAX_PSW is currently 4096 and struct parallel_info is 32 bytes on this LP64
+build.  The array therefore contributes exactly 512 MiB to libbu's BSS.  The
+complete libbu BSS is 563,028,096 bytes in the observed build.
+
+Preloading only libbu.so.20 into /bin/true under Valgrind reproduces both
+"set address range perms: large range" warnings while reporting zero bytes in
+use at exit.  The dynamic loader emits the warnings while establishing memory
+permissions on libbu's unusually large RW ELF segment.  They are not reports
+of heap leaks.
+
+
+Why the array is squared
+------------------------
+
+Commit 145c80ce922fae38105c01aacae1da690e0955c1 deliberately changed the
+mapping from MAX_PSW entries to MAX_PSW*MAX_PSW entries.  It was an explicitly
+temporary attempt to accommodate recursive bu_parallel() calls.
+
+The present algorithm uses a parallel_info record both as a live thread record
+and as the concurrency scope for a nested invocation.  If an outer invocation
+starts N callbacks, each callback can call bu_parallel(..., 0) and inherit an
+independent limit of N.  The implementation can consequently create about N*N
+simultaneous parent and child records rather than sharing one limit of N.
+
+There are two additional historical constraints:
+
+* A parent ID cannot be released when a nested bu_parallel() returns if the
+  parent callback is still alive.  It may retain per-ID state and may invoke
+  bu_parallel() again.  Commit 988887e815 documents this case.
+
+* bu_parallel_id() values are used throughout BRL-CAD to index MAX_PSW-sized
+  lock-free resource arrays.  The value may be arbitrary, but it must remain in
+  the range [0, MAX_PSW).  Commit af04ca7bb4 documents this requirement.
+
+The squared mapping postpones exhaustion for one level of recursion, but it
+does not solve arbitrary nesting and it permits IDs that violate the public
+MAX_PSW array contract.  Increasing MAX_PSW from 1024 to 4096 in commit
+9aa03acf836 made the 48/64-core recursive test fit, but also increased the
+squared mapping from about 32 MiB to 512 MiB.
+
+Reducing the mapping to MAX_PSW without changing the scheduling model is not a
+valid fix.  It restores the failure that the 2016 change was trying to avoid.
+
+
+Required invariants
+-------------------
+
+The replacement must maintain the following invariants:
+
+1. Inside a callback, func_cpu_id and bu_parallel_id() identify the same
+   logical resource slot.
+
+2. Every live logical callback context has an ID in [0, MAX_PSW), and no two
+   simultaneously live contexts share an ID.
+
+3. A callback retains its logical ID across a nested bu_parallel() call and
+   until the callback itself returns.  Nested callbacks receive other IDs.
+
+4. bu_parallel() remains synchronous: it does not return until all callbacks
+   requested by that invocation have completed.
+
+5. ncpu == 0 inherits the enclosing executor's concurrency width instead of
+   multiplying it at every recursive level.
+
+6. Recursive fork/join cannot deadlock merely because all physical workers are
+   currently executing parent callbacks.
+
+7. Explicit requests are bounded by MAX_PSW.  Exhaustion must produce a clear,
+   deterministic failure before any out-of-range ID is exposed.
+
+8. Bookkeeping memory is proportional to actual workers, active calls, and
+   nesting depth.  It must not be proportional to MAX_PSW squared.
+
+9. Existing C callers and the exported C ABI remain compatible.
+
+
+Recommended design: a C++17 fork/join executor
+----------------------------------------------
+
+C++17 makes it practical to replace the platform-specific recursive thread
+creation and manual counters with a small fork/join executor using std::thread,
+std::mutex, std::condition_variable, atomics, and RAII.
+
+The preferred organization is to put the scheduler in a C++ implementation
+file and retain C-callable entry points.  It should not be necessary to convert
+all of parallel.c immediately.  CPU discovery and platform helpers can remain
+in C while the current parallel_cpp11thread.cpp is replaced or superseded by a
+new parallel_executor.cpp.  If moving bu_parallel() cleanly requires renaming
+parallel.c to parallel.cpp, its exported functions must retain C linkage.
+
+Do not enable the existing CPP11THREAD implementation as-is.  It does not
+implement BRL-CAD logical IDs, affinity behavior, recursive limits, nested
+fork/join progress, or the MAX_PSW resource contract.
+
+The executor should contain these conceptual components:
+
+1. Physical executor
+
+   An outermost bu_parallel() creates an executor with a bounded number of
+   physical workers.  An explicit ncpu selects the requested width, clamped to
+   MAX_PSW.  A zero value uses bu_avail_cpus().  A nested invocation reuses the
+   executor already recorded in thread-local state and never creates N more OS
+   threads for each parent callback.
+
+   Starting with an executor owned by each outermost call avoids introducing a
+   process-lifetime thread pool, complicated fork behavior, and new shutdown
+   ordering.  A persistent process-wide executor can be considered later if
+   measurements justify it.
+
+2. Logical ID pool
+
+   Maintain a process-wide pool of exactly MAX_PSW logical resource IDs.  IDs
+   are acquired immediately before a callback begins and released immediately
+   after that callback returns.  A free list or bitmap avoids scanning a large
+   mapping table.
+
+   A nested callback running on the same physical std::thread as its suspended
+   parent must acquire a different logical ID.  An RAII guard saves the
+   physical thread's previous thread-local ID, installs the child's ID, and
+   restores the parent ID when the child returns.  The parent ID remains
+   reserved for the lifetime of the suspended parent stack.
+
+   If nesting consumes all MAX_PSW logical IDs, bu_parallel() must fail with a
+   diagnostic rather than wait forever or index beyond a caller's resource
+   array.  The API currently returns void, so the existing bu_bomb-style hard
+   failure is the compatible behavior unless a future API adds error returns.
+
+3. Parallel call state
+
+   Each invocation has dynamically allocated call state containing at least:
+
+       callback and data
+       requested callback count
+       next unclaimed callback
+       number of incomplete callbacks
+       parent/root executor association
+       completion mutex/condition
+       failure state
+
+   Callback work should be claimed lazily.  Do not allocate or enqueue N*N job
+   objects for a recursive N-by-N call.  A bounded number of runnable tokens
+   can refer to one call state while workers atomically claim its remaining
+   callback invocations.  Memory then remains proportional to executor width
+   and the number of active calls.
+
+4. Helping wait
+
+   A non-worker caller may sleep on the call's completion condition.  A worker
+   making a nested bu_parallel() call must not simply block, since all workers
+   could otherwise block waiting for children that have no thread on which to
+   run.
+
+   Instead, a waiting worker repeatedly executes available work until its
+   nested call completes.  This is the standard fork/join "help while waiting"
+   rule.  It keeps the fixed worker set making progress at arbitrary nesting
+   depth and replaces the current one-second polling loop.
+
+   Every re-entered callback gets its own logical ID guard, even when it runs
+   on the same physical std::thread as a suspended parent.
+
+5. Affinity
+
+   Affinity belongs to physical workers, not logical callback IDs.  Set it once
+   when a worker starts, using a physical worker ordinal.  Logical IDs may be
+   larger than the available CPU count and may change as one worker helps
+   nested calls.
+
+6. Callback ID semantics
+
+   The callback's func_cpu_id remains a logical resource ID and must match
+   bu_parallel_id().  It is not a stable callback ordinal and is not guaranteed
+   to start at zero or be contiguous.  Documentation that promises increasing
+   callback numbers starting at zero should be corrected.  Code needing a work
+   ordinal should claim work from its shared data, as existing self-dispatching
+   callbacks generally do.
+
+
+Why this fixes the recursive case
+---------------------------------
+
+For an N-way outer call in which every callback makes an N-way nested call:
+
+* The executor still has N physical workers, not N*N workers.
+* All N*N nested callback invocations are performed, but workers claim them
+  incrementally while waiting for their own nested joins.
+* Each suspended outer callback retains its logical ID.
+* Each currently executing nested callback obtains another logical ID.
+* The usual two-level case needs on the order of 2*N live logical IDs rather
+  than N*N mapping entries.
+* Deeper nesting consumes logical IDs according to live stack depth.  The hard
+  MAX_PSW bound remains explicit and safe instead of silently corrupting a
+  per-ID array.
+
+
+Optional short-term containment
+-------------------------------
+
+If the loader warnings must be removed before the executor is ready, replace
+the monolithic squared array with stable, lazily allocated blocks while
+preserving its current logical capacity.  For example, a static top-level
+array of block pointers can address blocks of 1024 parallel_info records,
+allocating a block only when an ID in that block is first needed.  Individual
+blocks must never move because thread_context currently retains pointers to
+parallel_info records.
+
+A free list or high-water hint should accompany the blocks so ID allocation
+does not scan the entire MAX_PSW*MAX_PSW address space.  This would reduce
+libbu's initial BSS and eliminate the two Valgrind loader warnings without
+reintroducing the immediate recursive-capacity regression.
+
+This is containment only.  It retains the possibility of returning an ID
+greater than or equal to MAX_PSW and does not bound recursive thread creation.
+It must not be presented as the correctness fix or allowed to delay the ID and
+scheduler work above.
+
+
+Implementation plan
+-------------------
+
+Phase 1: characterize and strengthen tests
+
+* Add instrumentation available in test builds to report the maximum logical
+  ID, number of simultaneously live logical contexts, physical worker count,
+  and nesting depth.
+* Extend test_parallel with two- and three-level recursion.
+* Test repeated nested calls from one parent, preserving the case described by
+  commit 988887e815.
+* Exercise ncpu values 1, 2, the available CPU count, 48, and 64 where the host
+  permits them without making every test host create thousands of threads.
+* Add concurrent independent outermost bu_parallel() calls from ordinary
+  application threads.
+* Assert that every observed callback ID is less than MAX_PSW and that
+  func_cpu_id equals bu_parallel_id().
+
+Phase 2: implement the executor behind an internal switch
+
+* Add the C++17 executor and logical ID pool without deleting the legacy path.
+* Keep both implementations selectable at build time or by a test-only switch
+  so identical workloads can be compared.
+* Use RAII for logical IDs, TLS restoration, mutex ownership, worker joining,
+  and cleanup after thread creation failures.
+* Catch std::system_error from worker creation, stop accepting work, join all
+  workers already created, and issue the normal libbu fatal diagnostic.
+
+Phase 3: implement recursive helping and lazy work claims
+
+* Make nested calls reuse their current executor.
+* Implement help-while-waiting and completion notification.
+* Generate callback work lazily so recursive fan-out does not allocate a job
+  object per callback.
+* Confirm that nested explicit ncpu requests control the number of callback
+  invocations but do not create a second unbounded set of OS threads.
+
+Phase 4: switch the default and remove legacy mapping
+
+* Run the complete libbu, librt, MGED, and ray-tracing regression suites using
+  the new executor.
+* Stress under ThreadSanitizer and run the recursive tests repeatedly to expose
+  bookkeeping races.
+* Compare representative ray-tracing and BREP-preparation performance against
+  the legacy implementation.
+* Make the executor the default, then remove parallel_mapping(),
+  parallel_wait_for_slot(), the squared mapping, and obsolete platform thread
+  creation branches.
+* Remove the Valgrind warning FIXME once libbu's BSS no longer contains the
+  squared array, and verify by preloading libbu into /bin/true under Valgrind.
+
+Phase 5: documentation and cleanup
+
+* Update bu/parallel.h to describe arbitrary bounded logical IDs, executor
+  reuse during recursion, and explicit failure at MAX_PSW exhaustion.
+* Update the TODO item concerning recursive bu_parallel limits and known races.
+* Decide whether the old parallel_cpp11thread.cpp should be replaced, renamed,
+  or removed to avoid two competing implementations.
+* Consider a persistent executor only as a separate performance project after
+  fork behavior, library teardown, and application concurrency are specified.
+
+
+Validation checklist
+--------------------
+
+The upgrade is ready to replace the legacy path only when all of the following
+are true:
+
+* No callback observes an ID outside [0, MAX_PSW).
+* No simultaneously live callback contexts share an ID.
+* A parent retains its ID before and after every nested call.
+* Two- and three-level recursive tests complete without deadlock.
+* Recursive ncpu == 0 never increases the physical worker count.
+* Multiple independent outer calls complete without ID collisions.
+* Thread creation and logical ID exhaustion fail cleanly.
+* ThreadSanitizer reports no scheduler bookkeeping races.
+* Existing libbu and application regression tests pass.
+* Representative performance is not materially worse than the legacy path.
+* libbu no longer contains the 512 MiB mapping BSS.
+* Preloading libbu under Valgrind produces neither large-range warning.
+
+
+Non-goals
+---------
+
+This upgrade should not initially attempt to remove MAX_PSW-sized resource
+arrays throughout BRL-CAD, change the public callback signature, introduce a
+permanent global thread pool, or guarantee a callback ordinal through
+func_cpu_id.  Those are separate API and architecture projects.
