@@ -1,0 +1,543 @@
+BRL-CAD B-Rep Tessellation Improvement Plan
+===========================================
+
+Date: 2026-07-17
+
+
+1. Objective
+------------
+
+Produce deterministic, watertight, orientable manifold meshes from valid closed
+NURBS B-Reps, with explicit and measurable geometric quality guarantees.  The
+conversion-quality path must either return a certified mesh or fail with a
+specific diagnostic.  It must never silently emit a mesh marked solid when the
+result has not passed all required checks.
+
+The existing fast tessellator should remain available for shaded display.  It
+should not be evolved into, or presented as, a conversion-quality tessellator:
+its face-local vertex indexing means coincident samples on adjacent faces are
+not topologically shared.
+
+
+2. Central Design Decision
+--------------------------
+
+Do not triangulate every face directly in its native rectangular NURBS UV
+domain.
+
+Instead, introduce an explicit chart layer:
+
+    B-Rep topology
+        -> one or more topology-correct charts per face
+        -> constrained triangulation in chart coordinates
+        -> evaluation through chart -> native UV -> 3D surface
+        -> global assembly using explicit topology IDs
+        -> manifold and geometric certification
+
+The chart domain must have the topology of the represented surface region.
+Periodic seams and singularities are chart topology, not floating-point
+coincidences to repair after triangulation.
+
+For a cone, the first prototype should use a triangular or wedge chart.  The
+base is one chart boundary, the two sides are periodic copies of the seam, and
+the apex is one chart vertex.  Chart interior points map back to the original
+rectangular native UV domain for surface evaluation.  No boundary edge handed
+to detria should collapse to one 3D point.
+
+A triangle is not a universal replacement for a quad:
+
+* Cone: triangular/wedge chart, or several angular wedges.
+* Sphere: triangular pole caps plus one or more regular middle charts.
+* Cylinder: regular periodic chart with explicit seam identification.
+* Torus: a multi-chart atlas or explicit identifications in both periodic
+  directions.
+* General trimmed faces: decomposition into certified disk-like charts, with
+  trims split where they cross chart boundaries.
+
+Do not change the underlying NURBS representation merely to tessellate it.
+Charts are adapters to native UV.
+
+
+3. Findings Driving This Plan
+-----------------------------
+
+3.1 Current singularity handling has the wrong topology
+
+The quality path subdivides singular trim segments in 2D even when all samples
+map to the same 3D pole.  Detria triangulates the resulting 2D strip, after
+which BRL-CAD merges vertices by ON_3dPoint pointer identity and discards
+degenerate triangles.  Holes, duplicate triangles, and bad edge incidence are
+then repaired heuristically.  A valid manifold cannot be made reliable with
+this ordering.
+
+Relevant implementation:
+
+* src/libbrep/cdt/cdt.cpp, especially singular-trim splitting around line 487.
+* src/libbrep/cdt/edge.cpp, shared B-Rep edge discretization around line 1022.
+* src/libbrep/cdt/mesh.cpp, face triangulation and repair.
+
+3.2 Projection repair is handling invalid charts, not only difficult geometry
+
+On failing NIST cases, local LSCM/mean-value and best-fit-plane projections
+produce mixed triangle orientations or self-intersecting constrained polygons.
+Detria then correctly rejects intersecting constraints.  Retrying a different
+projection does not address the source topology problem.
+
+The implementation called LSCM is a positive-weight spring/mean-value-style
+parameterization with circular or elliptical boundary placement.  It does not
+validate all conditions needed for injectivity, it does not adequately check
+solver convergence, and its current result checks do not prove the absence of
+fold-overs.
+
+3.3 UV aspect normalization changes Delaunay decisions
+
+The quality path anisotropically scales high-aspect UV domains toward a square.
+Nonuniform scaling does not preserve Delaunay triangulations.  It changes
+incircle tests and selected diagonals and is therefore a metric choice, not
+numerical conditioning.
+
+Use translation and uniform, preferably power-of-two, scaling only to condition
+coordinate range.  Obtain good 3D triangles using the surface metric, adaptive
+sampling, and constrained local optimization.
+
+3.4 Several sources of nondeterminism and platform sensitivity exist
+
+* Surface jitter is assigned while iterating pointer-ordered containers, so
+  allocation order changes which patch receives which perturbation.
+* Other work queues and sets use pointer values as ordering keys.
+* The detria translation unit is not currently compiled with all strict
+  floating-point options required by its robust predicates.
+* An experimental facetize caller does not fully initialize its tolerance
+  structure.
+* The vendored detria predates upstream changes to collinear-prefix handling
+  and expansion arithmetic.
+
+3.5 Present final validation is necessary but not sufficient
+
+bg_trimesh_solid2 verifies indexed degeneracy and two oppositely directed uses
+of every edge.  It does not establish geometric nondegeneracy, valid vertex
+links, lack of self-intersections, surface error, normal error, connectedness,
+outward orientation, or acceptable triangle quality.
+
+
+4. Target Data Model
+--------------------
+
+Replace implicit topology based on ON_3dPoint pointers with explicit stable
+identifiers.  At minimum, distinguish:
+
+* TopoVertexID: a vertex in global B-Rep/output topology.
+* BrepEdgeID: a B-Rep edge.
+* EdgeSampleID: one sample in the canonical ordered discretization of a B-Rep
+  edge.
+* FaceChartID: one chart associated with a B-Rep face.
+* ChartVertexID: a vertex in a chart; several chart vertices may intentionally
+  map to the same TopoVertexID at a seam or singularity.
+* MeshVertexID, HalfedgeID, and TriangleID in the assembled output mesh.
+
+Coordinates are attributes of these entities, not their identity.
+
+Each B-Rep edge must be sampled once through a global edge manager.  Both
+adjacent face charts reference exactly the same EdgeSampleID sequence, with
+opposite traversal direction.  If refinement inserts an edge sample, both
+adjacent charts must be invalidated or updated together.
+
+The assembled output should use a halfedge structure or an equivalent data
+structure that makes edge incidence and vertex-link validation explicit.
+
+
+5. Work Plan
+------------
+
+Phase 0: Establish a reproducible baseline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+0.1 Build an end-to-end test driver around ON_Brep_CDT_Tessellate and
+ON_Brep_CDT_Mesh.  It must be able to:
+
+* select individual solids and faces;
+* set all tessellation tolerances explicitly;
+* write the chart constraints, sampled points, and output mesh on failure;
+* run validation independently of frontends such as facetize;
+* produce stable textual summaries suitable for CTest comparison.
+
+0.2 Register the ten cone fixtures and the primary solids in all NIST database
+files as regression tests.  Add smaller extracted regressions for every failure
+so normal testing does not depend only on large databases.
+
+0.3 Record, for every test:
+
+* result status and failure stage;
+* vertex, edge, and triangle counts;
+* open, overused, and misoriented edge counts;
+* invalid vertex-link count;
+* degenerate and intersecting triangle counts;
+* maximum surface and edge approximation errors;
+* minimum angle and relevant aspect measures;
+* runtime and refinement counts.
+
+Exit criterion:
+
+* Every baseline case has a repeatable result and a deterministic diagnostic
+  artifact when it fails.
+
+
+Phase 1: Correctness, determinism, and fail-closed behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1.1 Fix known local defects before changing the architecture:
+
+* In edge.cpp, correct the condition that tests trim1 twice rather than testing
+  trim1 and trim2.
+* In mesh.cpp duplicate-triangle handling, compute the second direction from
+  the second triangle rather than calling tnorm(orig) twice.
+* In cdt.cpp mesh export, index fmeshes using active_faces[fi].
+* Update the closest-distance accumulator in the closest-point helper.
+* Preserve orientation when comparing normals; do not erase it with an
+  unconditional absolute dot product.
+* Make status initialization, update, and reuse semantics explicit.
+* Invalidate and rebuild all tolerance-dependent data when tolerances change.
+* Fully initialize bg_tess_tol in every caller.
+* Require every frontend to accept only the defined success status.
+* Never mark a BoT solid after a non-solid or failed return.
+* Fail before tessellation when required closed-manifold B-Rep topology is
+  invalid.
+* Destroy all state-owned diagnostic allocations.
+
+1.2 Eliminate pointer-address ordering from all algorithms.  Sort and queue by
+stable B-Rep, chart, edge, sample, and triangle IDs.
+
+1.3 Remove random UV jitter.  Robust predicates must handle collinearity.
+Where a geometric policy is needed for exactly coincident or on-constraint
+points, resolve it topologically and report the decision.
+
+1.4 Introduce explicit result codes and structured diagnostics.  Suggested
+categories:
+
+* invalid input B-Rep topology;
+* invalid tolerance configuration;
+* chart construction failure;
+* invalid planar straight-line graph;
+* detria failure;
+* adaptive refinement limit;
+* manifold assembly failure;
+* geometric validation failure;
+* success.
+
+Exit criteria:
+
+* Repeated runs produce identical constraints and topology.
+* Frontends never export or label failed results as solids.
+* Known local defects have focused regression tests.
+
+
+Phase 2: Harden detria and the libbg wrapper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Detria should remain the constrained Delaunay triangulation engine.  Its role
+should be tightly bounded: triangulate an already valid planar straight-line
+graph in a topology-correct chart.
+
+2.1 src/libbg/detria.hpp has been udpated to the current reviewed upstream version.
+Important changes:
+
+* long collinear and nearly collinear initial point sequences;
+* guarded expansion-array advancement in robust arithmetic.
+
+Upstream references:
+
+* https://github.com/Kimbatt/detria
+* https://github.com/Kimbatt/detria/blob/master/DOCS.md
+* https://github.com/Kimbatt/detria/commit/610840e27320199fa4d9de40d8565ddafadceb8d
+* https://github.com/Kimbatt/detria/commit/2eaf7f8
+
+2.2 Compile the translation unit instantiating detria with strict
+floating-point semantics:
+
+* GCC/Clang: no fast-math, -ffp-contract=off, -frounding-math, and initially no
+  LTO for that translation unit.
+* MSVC: /fp:strict, or at minimum never /fp:fast.
+
+Test LTO separately on each supported compiler before allowing it for this
+translation unit.
+
+2.3 Add wrapper preflight:
+
+* validate all indices before dereferencing them;
+* reject nonfinite coordinates;
+* remove zero-length constraint segments;
+* detect exact coordinate duplicates;
+* coalesce duplicates only when they have the same semantic topology;
+* promote a Steiner point lying on a constraint into the constraint sequence,
+  or discard it according to a documented policy;
+* detect nonincident crossing constraints and return an invalid-chart error;
+* condition coordinate range only with translation and uniform power-of-two
+  scaling;
+* preserve semantic IDs through index compaction.
+
+2.4 Add wrapper postconditions:
+
+* every required constraint appears exactly as required in the output;
+* every output index is valid;
+* triangle orientations follow the requested convention;
+* no indexed or geometric zero-area triangle is present;
+* coverage and area agree with the chart polygon within a defined tolerance;
+* no unexpected boundary or nonmanifold edge is present.
+
+2.5 Add adversarial detria tests covering:
+
+* short and very long collinear prefixes;
+* nearly collinear points across a range of ULP separations;
+* cocircular and nearly cocircular points;
+* duplicate coordinate identities;
+* Steiner points exactly and nearly on constraints;
+* crossing constraints;
+* holes and nested invalid loops;
+* huge and tiny coordinate exponents;
+* input-order permutations;
+* translations, rotations, and uniform power-of-two scaling.
+
+Do not require a particular diagonal for cocircular polygons unless BRL-CAD
+defines a deterministic tie-break.  Validate Delaunay, constraint, and manifold
+properties instead.
+
+Exit criteria:
+
+* Detria tests pass under Debug, optimized Release, supported sanitizers, and
+  all primary compilers.
+* Invalid inputs are classified before or at the wrapper boundary and never
+  enter higher-level mesh repair as mysterious missing triangles.
+
+
+Phase 3: Introduce topology-correct charts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+3.1 Add a FaceChart abstraction containing:
+
+* a chart domain and its boundary loops;
+* mappings from chart vertices and edges to global topology IDs;
+* chart -> native UV evaluation;
+* native UV -> chart mapping where available;
+* singular and periodic boundary metadata;
+* trim fragments assigned to the chart;
+* validity checks for simple boundaries and a nonfolded interior.
+
+3.2 Implement classification of each face and surface:
+
+* regular nonperiodic;
+* periodic in U or V;
+* periodic in both directions;
+* one collapsed boundary;
+* two collapsed boundaries;
+* irregular trim topology requiring decomposition.
+
+Use B-Rep topology and surface properties, not only coordinate equality, to
+identify seams and singularities.
+
+3.3 Implement the cone prototype:
+
+* construct one triangular/wedge chart for the lateral face;
+* represent the apex once in the chart;
+* represent the two periodic seam sides separately in chart space but map them
+  to the same ordered global topology IDs;
+* map chart points to native cone UV for exact surface evaluation;
+* remove singular-trim oversplitting for this chart type;
+* ensure detria never receives a collapsed boundary segment;
+* assemble and certify all cone fixtures across scale and orientation changes.
+
+3.4 Expand to:
+
+* spherical pole caps;
+* cylinders and other single-periodic regular surfaces;
+* tori and doubly periodic surfaces;
+* trimmed singular surfaces;
+* faces requiring multiple charts.
+
+3.5 Split trim curves at chart boundaries.  Each trim fragment must be
+represented by one ordered chart constraint sequence with explicit global IDs.
+Do not merge chart seam copies by coordinate comparison.
+
+Exit criteria:
+
+* No chart supplied to detria has a collapsed constraint edge.
+* Cone and sphere poles are represented by explicit topology rather than
+  post-triangulation vertex collapse.
+* Adjacent faces share the exact same boundary sample IDs.
+* The cone fixture suite passes full manifold and geometry certification.
+
+
+Phase 4: Geometric adaptive refinement and triangle quality
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+4.1 Use detria for the initial constrained triangulation of a valid chart.
+
+4.2 Measure error against the original B-Rep geometry, including:
+
+* curve chord error for constrained edge segments;
+* surface chord error at triangle edge midpoints and centroids;
+* normal deviation;
+* variation of the first fundamental form/Jacobian over a triangle;
+* minimum 3D angle;
+* 3D aspect and size relative to local feature scale.
+
+4.3 Refine face interiors by inserting chart-space Steiner points selected from
+the worst geometric error.  Re-run constrained triangulation or perform a
+locally certified insertion.
+
+4.4 Refine shared B-Rep edges only through the global edge manager.  A new
+sample must be inserted into the ordered edge sequence used by both adjacent
+charts before either face can be finalized.
+
+4.5 Replace anisotropic global UV normalization.  If a quality objective is
+anisotropic, derive it from the surface metric and use local sampling or edge
+flips.  Numerical conditioning remains a uniform transformation only.
+
+4.6 After the required geometric tolerance is met, improve quality with
+constraint-preserving operations such as:
+
+* metric-aware edge flips;
+* additional Steiner points;
+* surface-constrained vertex relocation where topology permits it.
+
+Every operation must be transactional and retain the error and manifold
+guarantees.
+
+Exit criteria:
+
+* Results meet explicit chord and normal tolerances.
+* Quality is stable under different native UV aspect ratios for equivalent 3D
+  geometry.
+* Shared-edge refinement cannot create a T-junction.
+
+
+Phase 5: Replace heuristic repair with certified assembly
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+5.1 Assemble all chart triangles using explicit global topology IDs into a
+halfedge mesh.
+
+5.2 Make patch replacement transactional.  A replacement is committed only if:
+
+* its boundary exactly matches the removed patch boundary IDs;
+* every new triangle is valid and correctly oriented;
+* its vertex links and edge incidence are valid;
+* it introduces no geometric intersections;
+* it meets surface and quality tolerances.
+
+5.3 Retire projection repair paths once the corresponding chart types are
+implemented.  Retain a parameterization fallback only for a patch already
+proved to be a topological disk.  Require positive orientation for every mapped
+triangle, a solver residual check, and a simple nonintersecting boundary before
+calling detria.
+
+5.4 Eliminate arbitrary orientation tie-breaks and repair loops whose progress
+is based only on a changed triangle set.  Bound every refinement and repair
+operation with a clear failure code and diagnostic artifact.
+
+Exit criteria:
+
+* Standard successful tessellations do not rely on post-hoc hole or orientation
+  repair.
+* Any remaining repair operation preserves its boundary and is locally
+  certified before commit.
+
+
+Phase 6: Full certification and conversion gate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before returning conversion-quality success, verify:
+
+Topology:
+
+* every mesh edge has exactly two oppositely oriented incident faces;
+* every vertex link is one cycle for a closed manifold component;
+* no T-junctions or duplicate directed halfedges exist;
+* component count and Euler characteristic agree with the intended B-Rep;
+* all required B-Rep edge sample sequences appear in the output.
+
+Geometry:
+
+* every triangle has scale-aware nonzero area;
+* nonadjacent triangles do not intersect;
+* edge and surface approximation errors meet the requested tolerances;
+* normal deviations meet the requested tolerance;
+* orientation is consistent and outward where the B-Rep supplies enough
+  information to determine it.
+
+Quality:
+
+* report minimum angle and aspect statistics;
+* enforce defined minimum quality requirements, or return a distinct result
+  stating that topology and tolerance passed but quality did not;
+* prevent unbounded refinement by reporting the limiting feature or tolerance.
+
+Only after these checks may a caller mark the result as BOT_SOLID.
+
+
+6. Test Matrix
+-------------
+
+Run the complete regression set under:
+
+* GCC and Clang on Linux;
+* MSVC on Windows;
+* x86-64 and ARM64 where available;
+* Debug and optimized Release;
+* LTO enabled and disabled;
+* ASan and UBSan, plus MSan for detria and parameterization tests where
+  practical;
+* repeated executions with allocator perturbation.
+
+Apply geometric transformations and topology-preserving reorderings:
+
+* model scales from approximately 1e-12 through 1e12 where OpenNURBS and
+  BRL-CAD tolerances permit meaningful representation;
+* large translations;
+* arbitrary rotations;
+* uniform power-of-two scale changes;
+* reversed or permuted face, loop, edge, and input point ordering;
+* small ULP perturbations around collinear, cocircular, seam, and pole cases.
+
+The property result should be invariant even where the exact valid Delaunay
+diagonal is not unique.
+
+
+7. Initial Acceptance Targets
+-----------------------------
+
+The first useful architecture milestone is complete when:
+
+1. All ten existing cone fixtures tessellate using the new cone chart, without
+   singular-boundary oversplitting or post-CDT pole collapse.
+2. All ten outputs pass full topology, vertex-link, self-intersection, and
+   geometric error validation.
+3. Results are invariant under input reordering, repeated execution, supported
+   compilers, and representative scale/rotation transforms.
+4. The same global edge sample sequence is demonstrably used by both faces
+   adjacent to every nonsingular B-Rep edge.
+5. Detria receives only preflighted simple constraints and runs with strict
+   floating-point semantics.
+6. Failure produces a bounded, classified result and a reproducible chart
+   artifact rather than entering an open-ended repair loop.
+
+After the cone milestone, require the same gates for spheres, periodic regular
+surfaces, and then the complete NIST set.
+
+
+8. Priority Order
+-----------------
+
+1. Reproducible end-to-end tests and diagnostic artifacts.
+2. Local correctness bugs, initialized state, deterministic ordering, and
+   fail-closed frontends.
+3. Detria update, strict compilation, wrapper preflight, and adversarial tests.
+4. Explicit topology IDs and the cone triangular-chart prototype.
+5. Sphere and periodic-surface chart support.
+6. Metric-driven adaptive refinement and triangle-quality improvement.
+7. Certified halfedge assembly and removal of heuristic projection repairs.
+8. Full NIST and cross-platform certification.
+
+Do not spend substantial effort tuning best-fit projection, UV jitter, or
+post-triangulation singularity repair before the chart and explicit-topology
+layers exist.  Those mechanisms operate after the information needed for a
+reliable solution has already been lost.
