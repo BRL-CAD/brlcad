@@ -641,6 +641,63 @@ _view_cmd_print(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+typedef int (*view_core_func_t)(struct ged *, int, const char **);
+
+static int
+_view_cmd_core(void *bs, int argc, const char **argv, view_core_func_t func)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = func(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
+}
+
+static int
+_view_cmd_auto(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] auto [options] [object ...]";
+    const char *purpose_string = "size and center the view to frame geometry";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+
+    return _view_cmd_core(bs, argc, argv, ged_autoview_core);
+}
+
+static int
+_view_cmd_lookat(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] lookat x y z";
+    const char *purpose_string = "point the view at model coordinates";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+
+    return _view_cmd_core(bs, argc, argv, ged_lookat_core);
+}
+
+static int
+_view_cmd_print_subcmd(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] print";
+    const char *purpose_string = "print the current view parameters";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+
+    return _view_cmd_core(bs, argc, argv, _view_cmd_print);
+}
+
+static int
+_view_cmd_save(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] save [-e command] [-i input] [-l log] [-o output] file [args]";
+    const char *purpose_string = "save the current view as a raytrace script";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+
+    return _view_cmd_core(bs, argc, argv, ged_saveview_core);
+}
+
 int
 _view_cmd_knob(void *bs, int argc, const char **argv)
 {
@@ -661,6 +718,8 @@ _view_cmd_knob(void *bs, int argc, const char **argv)
 const struct bu_cmdtab _view_cmds[] = {
     { "ae",         _view_cmd_aet},
     { "aet",        _view_cmd_aet},
+    { "auto",       _view_cmd_auto},
+    { "autoview",   _view_cmd_auto},
     { "center",     _view_cmd_center},
     { "dir",        _view_cmd_dir},
     { "eye",        _view_cmd_eye},
@@ -671,9 +730,13 @@ const struct bu_cmdtab _view_cmds[] = {
     { "knob",       _view_cmd_knob},
     { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},
+    { "lookat",     _view_cmd_lookat},
     { "obj",        _view_cmd_objs},
     { "objs",       _view_cmd_objs},
+    { "print",      _view_cmd_print_subcmd},
     { "quat",       _view_cmd_quat},
+    { "save",       _view_cmd_save},
+    { "saveview",   _view_cmd_save},
     { "selections", _view_cmd_selections},
     { "size",       _view_cmd_size},
     { "snap",       _view_cmd_snap},

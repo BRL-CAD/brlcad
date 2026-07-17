@@ -37,8 +37,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * DEFFERED design comb command, need -o
 
-* restore/check view subcommands - dir, print, auto, lookat, and save
-
 * jepr is 2-20x slower, check search command
 
 
