@@ -288,6 +288,102 @@ run_both(struct db_i *dbip, int flags, const char *filter,
 }
 
 
+struct mutation_callback_data {
+    struct db_i *dbip;
+    const char *object;
+    const char *attribute;
+    int calls;
+    int callback_result;
+};
+
+
+static int
+mutation_callback(int UNUSED(argc), const char **UNUSED(argv), void *u1, void *UNUSED(u2))
+{
+    struct mutation_callback_data *data = (struct mutation_callback_data *)u1;
+    data->calls++;
+    if (data->object && data->attribute &&
+        db5_update_attribute(data->object, data->attribute, "yes", data->dbip) < 0)
+        return 0;
+    return data->callback_result;
+}
+
+
+/* Regression tests for traversal pruning and callback/cache ordering. */
+static int
+test_plan_semantics(struct db_i *dbip)
+{
+    int failures = 0;
+    int cnt;
+    struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+    struct mutation_callback_data data;
+
+    cnt = db_search(&results, DB_SEARCH_TREE,
+                    "-maxdepth 0 -or -name prim_target.s",
+                    0, NULL, dbip, NULL, NULL, NULL);
+    CHECK(cnt == 3, "-maxdepth under -or must not globally prune traversal");
+    CHECK(ptbl_has_path(&results, "/top1/upper_a/mid_a/leaf_t/prim_target.s"),
+          "-maxdepth/-or reaches the upper_a target path");
+    CHECK(ptbl_has_path(&results, "/top1/upper_b/mid_c/leaf_ts/prim_target.s"),
+          "-maxdepth/-or reaches the upper_b target path");
+    db_search_free(&results);
+
+    cnt = db_search(&results, DB_SEARCH_TREE, "! -maxdepth 0",
+                    0, NULL, dbip, NULL, NULL, NULL);
+    CHECK(cnt == 23, "negated -maxdepth must not globally prune traversal");
+    db_search_free(&results);
+
+    {
+        struct directory *hidden_dp = db_lookup(dbip, "mid_a", LOOKUP_QUIET);
+        struct directory *root_dp = db_lookup(dbip, "upper_a", LOOKUP_QUIET);
+        int saved_flags = hidden_dp->d_flags;
+        hidden_dp->d_flags |= RT_DIR_HIDDEN;
+        cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-above -name prim_special.s",
+                        1, &root_dp, dbip, NULL, NULL, NULL);
+        CHECK(ptbl_has_path(&results, "/upper_a"),
+              "a hidden first child must not corrupt a visible sibling path");
+        db_search_free(&results);
+        hidden_dp->d_flags = saved_flags;
+    }
+
+    data.dbip = dbip;
+    data.object = "prim_target.s";
+    data.attribute = "search_above_callback_mutation";
+    data.calls = 0;
+    data.callback_result = 1;
+    cnt = db_search(&results, DB_SEARCH_TREE,
+                    "-maxdepth 0 -exec mutate ; -above -attr search_above_callback_mutation=yes",
+                    0, NULL, dbip, mutation_callback, &data, NULL);
+    CHECK(cnt == 1, "-above observes mutations from an earlier -exec");
+    CHECK(data.calls == 1, "root-limited -above mutation callback runs once");
+    db_search_free(&results);
+
+    data.object = "top1";
+    data.attribute = "search_below_callback_mutation";
+    data.calls = 0;
+    cnt = db_search(&results, DB_SEARCH_TREE,
+                    "-name prim_target.s -exec mutate ; -below -attr search_below_callback_mutation=yes",
+                    0, NULL, dbip, mutation_callback, &data, NULL);
+    CHECK(cnt == 2, "-below observes mutations from an earlier -exec");
+    CHECK(data.calls == 2, "-below mutation callback runs for both target paths");
+    db_search_free(&results);
+
+    data.object = NULL;
+    data.attribute = NULL;
+    data.calls = 0;
+    data.callback_result = 0;
+    cnt = db_search(&results, DB_SEARCH_TREE,
+                    "-maxdepth 0 -exec false_callback ;",
+                    0, NULL, dbip, mutation_callback, &data, NULL);
+    CHECK(cnt == 0, "a false -exec result is not counted as a match");
+    CHECK(data.calls == 1, "false callback runs once");
+    db_search_free(&results);
+
+    return failures;
+}
+
+
 /* ------------------------------------------------------------------ */
 /*  Build the correctness-test tree                                    */
 /* ------------------------------------------------------------------ */
@@ -876,8 +972,6 @@ test_cross_validation(struct db_i *dbip)
         "-above<=2 -name prim_target.s",
         "-below -name mid_a",
         "-below -name upper_a",
-        "-below>2 -name top1",
-        "-below=3 -name top1",
         "-type shape",
         "-type comb",
         "-type region",
@@ -933,26 +1027,9 @@ test_cross_validation(struct db_i *dbip)
  *   top1/upper_a/mid_b/leaf_s/prim_special.s
  *   ...
  *
- * Ground truth for -below depth constraints (applying to top1 subtree):
- *
- *   -below>2 -name top1:
- *     Nodes where an ancestor named top1 is at distance >= 3 (min_depth=3)
- *     Using old-code distance convention: distance starts at 1, incremented
- *     before first check, so distance 3 = 2 actual hops (grandparent).
- *     Nodes at depth >= 2 from top1: mid_a, mid_b, mid_c, leaf_t, leaf_p,
- *     leaf_s, leaf_ts (via upper_a/b), and all primitives = 17 paths
- *     Actually: all paths at depth >= 3 from top1 (depth 0).
- *     top1=depth0, upper_a/b=depth1, mid_*=depth2, leaf_*=depth3, prim.*=depth4
- *     distance convention: depth1 nodes have distance 2 to top1 (1 hop)
- *     depth2 nodes have distance 3 to top1 (2 hops) -> passes -below>2
- *     depth3+ also pass.
- *     Paths at depth >= 2: mid_a, mid_b (x2), mid_c, leaf_t, leaf_p (x4),
- *     leaf_s (x2), leaf_ts, prim_target.s (x2), prim_plain.s (x4),
- *     prim_special.s (x3) = 7 mid+leaf + 9 prim = varies...
- *     Let's just cross-validate against old code for this.
- *
- * For simplicity, this test cross-validates all depth-constrained below
- * variants against old code rather than hardcoding counts.
+ * Relative depth is the actual number of parent-child hops, matching the
+ * documented -above convention.  These tests intentionally do not compare
+ * against search_old, whose -below walker counted the immediate parent as 2.
  */
 static int
 test_interactions(struct db_i *dbip)
@@ -965,24 +1042,32 @@ test_interactions(struct db_i *dbip)
 
     /* -below>2: min_depth=3, max_depth=INT_MAX
      * Requires the ancestor-walk fallback to reach depth 3. */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below>2 -name top1", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below>2 -name top1");
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below>2 -name top1", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 17, "-below>2 -name top1 uses actual hop distance");
+    db_search_free(&results);
 
     /* -below>3: min_depth=4, even deeper */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below>3 -name top1", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below>3 -name top1");
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below>3 -name top1", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 9, "-below>3 -name top1 uses actual hop distance");
+    db_search_free(&results);
 
     /* -below=3: exact distance */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below=3 -name top1", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below=3 -name top1");
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below=3 -name top1", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 8, "-below=3 -name top1 exact-hop count");
+    db_search_free(&results);
 
     /* -below>2 with a deeper named target */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below>2 -name mid_a", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below>2 -name mid_a");
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below>2 -name mid_a", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 0, "-below>2 -name mid_a exact-hop count");
+    db_search_free(&results);
 
     /* ---- 2: -above and -below in same plan ---- */
 
@@ -1004,15 +1089,23 @@ test_interactions(struct db_i *dbip)
         CROSS_CHECK(new_cnt, old_cnt, "( -below -name mid_a ) -or ( -below -name upper_b )");
 
     /* Nested -below uses the containing path's inherited state. */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below -below -name top1", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below -below -name top1");
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below -below -name top1", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 21, "nested -below is accepted and evaluated");
+    db_search_free(&results);
 
     /* Both in the same expression */
     if (!run_both(dbip, DB_SEARCH_TREE,
                   "-above -name prim_special.s -above -name prim_plain.s",
                   &new_cnt, &old_cnt))
         CROSS_CHECK(new_cnt, old_cnt, "-above -name prim_special.s -above -name prim_plain.s");
+
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-above -above -name prim_target.s",
+                        0, NULL, dbip, NULL, NULL, NULL);
+    CHECK(new_cnt == 5, "nested -above is accepted and evaluated");
+    db_search_free(&results);
 
     /* ---- 3: negated -above and -below ---- */
 
@@ -2187,6 +2280,9 @@ main(int argc, char *argv[])
 
     bu_log("Running -above/-below interaction and -below depth-constraint tests...\n");
     failures += test_interactions(dbip);
+
+    bu_log("Running plan-pruning and callback/cache semantic tests...\n");
+    failures += test_plan_semantics(dbip);
 
     bu_log("Running cross-validation (new vs old)...\n");
     failures += test_cross_validation(dbip);

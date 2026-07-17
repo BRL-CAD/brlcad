@@ -74,6 +74,10 @@ proc search_exec_alias_query {path} {
 }
 
 proc search_exec_verify {} {
+    if {$::search_exec_precheck_error ne ""} {
+	error "FAIL $::search_exec_precheck_error"
+    }
+
     foreach {obj key expected} {
 	r1 search_exec_global {global default {with braces} \path}
 	r2 search_exec_namespace {namespace default {with braces} \path}
@@ -87,6 +91,16 @@ proc search_exec_verify {} {
 	    error "FAIL $obj $key: expected '$expected', got '$actual'"
 	}
     }
+
+    # The successful -exec lifecycle must also be fully torn down before an
+    # ordinary search takes the no-interpreter path.  Keep this check inside
+    # the verifier so PASS cannot be emitted if Tcl reports an error.
+    if {[catch {
+	search /all.g/component/power.train/r1 -maxdepth 0
+    } plain_search_error]} {
+	error "FAIL plain search after successful -exec: $plain_search_error"
+    }
+
     puts "PASS search -exec sourced Tcl state"
 }
 

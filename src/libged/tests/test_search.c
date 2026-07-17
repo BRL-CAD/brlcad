@@ -33,32 +33,30 @@
 #define MAX_PARTS 12 // note: known max number of \n separated results for test file 'search_tests.g'
 
 typedef struct {
-    char** arr;
+    char* arr[MAX_PARTS + 1];
     int count;
 } split_data;
 
 split_data split_newline(char* input) {
-    char* parts[MAX_PARTS];
-    int count = 0;
+    split_data ret = {{NULL}, 0};
 
-    parts[count++] = input;
+    ret.arr[ret.count++] = input;
     char* ptr = input;
-    while (*ptr && count < MAX_PARTS) {
+    while (*ptr && ret.count < MAX_PARTS) {
 	if (*ptr == '\n') {
 	    *ptr = 0;
-	    parts[count++] = ptr + 1;
+	    ret.arr[ret.count++] = ptr + 1;
 	}
 	ptr++;
     }
 
     // make sure we're null terminated
-    if (!*parts[count - 1]) {
-	parts[--count] = 0;
+    if (!*ret.arr[ret.count - 1]) {
+	ret.arr[--ret.count] = 0;
     } else {
-	parts[count] = 0;
+	ret.arr[ret.count] = 0;
     }
 
-    split_data ret = {parts, count};
     return ret;
 }
 
@@ -167,6 +165,31 @@ main(int ac, char *av[]) {
 		    }
 		    break;
 		}
+	    case 4:
+		/* Quiet mode suppresses invalid-plan diagnostics, not valid
+		 * search results.  Non-quiet parse failures must propagate. */
+		ret_code += run_search_check_count(dbp, 8, 2, "-Q", "|");
+		{
+		    const char *bad_cmd[] = {"search", ".", "-exec", "expr", "1", NULL};
+		    const char *quiet_bad_cmd[] = {"search", "-Q", ".", "-exec", "expr", "1", NULL};
+		    if (ged_exec_search(dbp, 5, bad_cmd) != BRLCAD_ERROR) {
+			printf("ERROR: malformed search plan did not return BRLCAD_ERROR\n");
+			ret_code = 1;
+		    }
+		    if (ged_exec_search(dbp, 6, quiet_bad_cmd) != BRLCAD_OK) {
+			printf("ERROR: quiet malformed search plan did not return BRLCAD_OK\n");
+			ret_code = 1;
+		    }
+		}
+		break;
+	    case 5:
+		/* Plan argv elements must survive reconstruction before librt
+		 * parses them, including whitespace, quotes, and backslashes. */
+		ret_code += run_search_check_count(dbp, 0, 3, "|", "-name", "not a name");
+		ret_code += run_search_check_count(dbp, 0, 3, "|", "-name", "not\"a\"name");
+		ret_code += run_search_check_count(dbp, 0, 3, "|", "-name", "not\\a\\name");
+		ret_code += run_search_check_count(dbp, 0, 3, "|", "-name", "");
+		break;
 	    default:
 		goto finish_tests;
 		break;
@@ -180,7 +203,7 @@ main(int ac, char *av[]) {
 finish_tests:
     ged_close(dbp);
 
-    return 0;
+    return ret_code;
 }
 
 /*

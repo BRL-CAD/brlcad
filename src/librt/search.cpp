@@ -201,6 +201,7 @@ struct traversal_ctx_t {
     struct db_plan_t *plan;
     struct bu_ptbl *results;
     std::vector<struct db_plan_t *> *below_nodes;
+    void *unique_dps;
     int flags;
     int result_cnt;
     int has_maxdepth;
@@ -212,6 +213,7 @@ struct path_node_t {
     struct db_full_path *path;
     uint64_t below_passes;
     int depth;
+    int cyclic;
 };
 
 struct below_path_state_t {
@@ -295,12 +297,15 @@ namespace std {
  * parent_hash == BELOW_PATH_HASH_ROOT is the sentinel for a root-level node.
  */
 static inline bu_h128_t
-below_path_hash_extend(bu_h128_t parent_hash, struct directory *child_dp)
+below_path_hash_extend(bu_h128_t parent_hash, struct directory *child_dp,
+		       int bool_op, int comb_inst)
 {
-    uint64_t s[3];
+    uint64_t s[5];
     s[0] = parent_hash.w[0];
     s[1] = parent_hash.w[1];
     s[2] = (uint64_t)(uintptr_t)child_dp;
+    s[3] = (uint64_t)(uint32_t)bool_op;
+    s[4] = (uint64_t)(uint32_t)comb_inst;
     return bu_data_hash128(s, sizeof(s));
 }
 
@@ -341,9 +346,9 @@ plan_analysis_update(const struct db_plan_t *plan, struct plan_analysis_t *pa)
 		    plan_analysis_update(p->p_un._bl_data[0], pa);
 		break;
 	    case N_MAXDEPTH:
-		pa->has_maxdepth = 1;
-		if (p->p_un._max_data < pa->maxdepth)
-		    pa->maxdepth = p->p_un._max_data;
+		/* Traversal pruning is computed separately.  Merely finding a
+		 * -maxdepth is not sufficient: it may be under -or, !, or
+		 * -below and therefore impose no bound on matching paths. */
 		break;
 	    case N_EXPR:
 	    case N_NOT:
@@ -405,6 +410,172 @@ plan_has_side_effects(const struct db_plan_t *plan)
     }
 
     return 0;
+}
+
+
+/*
+ * Return true when evaluation of a plan may invoke a caller supplied
+ * callback.  Unlike -print, -exec may change the database and invalidate any
+ * predicate values computed before normal left-to-right plan evaluation.
+ */
+static int
+plan_has_exec(const struct db_plan_t *plan)
+{
+    const struct db_plan_t *p = NULL;
+
+    for (p = plan; p; p = p->next) {
+	switch (p->type) {
+	    case N_EXEC:
+		return 1;
+	    case N_ABOVE:
+		if (p->p_un._ab_data[0] && plan_has_exec(p->p_un._ab_data[0]))
+		    return 1;
+		break;
+	    case N_BELOW:
+		if (p->p_un._bl_data[0] && plan_has_exec(p->p_un._bl_data[0]))
+		    return 1;
+		break;
+	    case N_EXPR:
+	    case N_NOT:
+		if (p->p_un._p_data[0] && plan_has_exec(p->p_un._p_data[0]))
+		    return 1;
+		break;
+	    case N_OR:
+		if (p->p_un._p_data[0] && plan_has_exec(p->p_un._p_data[0]))
+		    return 1;
+		if (p->p_un._p_data[1] && plan_has_exec(p->p_un._p_data[1]))
+		    return 1;
+		break;
+	    default:
+		break;
+	}
+    }
+
+    return 0;
+}
+
+
+/* Return the maximum depth guaranteed by one predicate node, if any. */
+static int
+plan_node_maxdepth(const struct db_plan_t *p, int *maxdepth);
+
+
+/*
+ * A plan list is an implicit AND.  Any bounded conjunct bounds the complete
+ * list.  An OR is bounded only when both alternatives are bounded; its bound
+ * is the less restrictive (larger) of the two.
+ */
+static int
+plan_guaranteed_maxdepth(const struct db_plan_t *plan, int *maxdepth)
+{
+    const struct db_plan_t *p = NULL;
+    int found = 0;
+    int bound = INT_MAX;
+
+    for (p = plan; p; p = p->next) {
+	int node_bound = INT_MAX;
+	if (plan_node_maxdepth(p, &node_bound)) {
+	    if (!found || node_bound < bound)
+		bound = node_bound;
+	    found = 1;
+	}
+    }
+
+    if (found && maxdepth)
+	*maxdepth = bound;
+    return found;
+}
+
+
+static int
+plan_node_maxdepth(const struct db_plan_t *p, int *maxdepth)
+{
+    int left_bound = INT_MAX;
+    int right_bound = INT_MAX;
+
+    if (!p)
+	return 0;
+
+    switch (p->type) {
+	case N_MAXDEPTH:
+	    if (maxdepth)
+		*maxdepth = p->p_un._max_data;
+	    return 1;
+	case N_EXPR:
+	    return plan_guaranteed_maxdepth(p->p_un._p_data[0], maxdepth);
+	case N_OR:
+	    if (!plan_guaranteed_maxdepth(p->p_un._p_data[0], &left_bound) ||
+		!plan_guaranteed_maxdepth(p->p_un._p_data[1], &right_bound))
+		return 0;
+	    if (maxdepth)
+		*maxdepth = (left_bound > right_bound) ? left_bound : right_bound;
+	    return 1;
+	/* A bound inside these operators does not bound the path currently
+	 * being evaluated.  NOT may invert it, ABOVE applies it to descendants,
+	 * and BELOW applies it to ancestors. */
+	case N_NOT:
+	case N_ABOVE:
+	case N_BELOW:
+	default:
+	    return 0;
+    }
+}
+
+
+/* Return true if evaluating this node (excluding p->next) may have actions. */
+static int
+plan_node_has_side_effects(const struct db_plan_t *p)
+{
+    if (!p)
+	return 0;
+
+    switch (p->type) {
+	case N_EXEC:
+	case N_PRINT:
+	    return 1;
+	case N_ABOVE:
+	    return plan_has_side_effects(p->p_un._ab_data[0]);
+	case N_BELOW:
+	    return plan_has_side_effects(p->p_un._bl_data[0]);
+	case N_EXPR:
+	case N_NOT:
+	    return plan_has_side_effects(p->p_un._p_data[0]);
+	case N_OR:
+	    return plan_has_side_effects(p->p_un._p_data[0]) ||
+		plan_has_side_effects(p->p_un._p_data[1]);
+	default:
+	    return 0;
+    }
+}
+
+
+/*
+ * Find a traversal bound that is both logically mandatory and evaluated
+ * before any observable action.  Stopping at the first action preserves
+ * normal left-to-right -print/-exec semantics while retaining the common
+ * implicit "( filters ) -print" maxdepth optimization.
+ */
+static int
+plan_prune_maxdepth(const struct db_plan_t *plan, int *maxdepth)
+{
+    const struct db_plan_t *p = NULL;
+    int found = 0;
+    int bound = INT_MAX;
+
+    for (p = plan; p; p = p->next) {
+	int node_bound = INT_MAX;
+	if (plan_node_has_side_effects(p))
+	    break;
+	if (plan_node_maxdepth(p, &node_bound)) {
+	    if (!found || node_bound < bound)
+		bound = node_bound;
+	    found = 1;
+	}
+    }
+
+    if (found && maxdepth)
+	*maxdepth = bound;
+    return found;
 }
 
 
@@ -518,6 +689,7 @@ below_child_passes(struct db_i *dbip,
 
     parent_node.path = parent_path;
     parent_node.full_paths = full_paths;
+    parent_node.unique_dps = NULL;
     parent_node.above_passes_map = NULL;
     parent_node.above_path_hash = BELOW_PATH_HASH_ROOT;
     parent_node.below_passes = parent_passes;
@@ -604,6 +776,7 @@ evaluate_path(struct traversal_ctx_t *ctx, struct db_full_path *path, uint64_t b
     curr_node.flags = ctx->flags;
     curr_node.matched_filters = 1;
     curr_node.full_paths = NULL;
+    curr_node.unique_dps = ctx->unique_dps;
     curr_node.above_passes_map = NULL;
     curr_node.above_path_hash = BELOW_PATH_HASH_ROOT;
     curr_node.below_passes = below_passes;
@@ -624,7 +797,10 @@ traverse_paths(struct traversal_ctx_t *ctx, struct directory **paths, int path_c
 	return;
 
     for (i = 0; i < path_cnt; i++) {
-	struct directory *curr_dp = paths[i];
+	/* Tree traversal uses a LIFO work list.  Push roots in reverse so
+	 * callback and traversal order follows the caller's input order. */
+	int path_i = (ctx->flags & DB_SEARCH_FLAT) ? i : path_cnt - i - 1;
+	struct directory *curr_dp = paths[path_i];
 	struct db_full_path *start_path = NULL;
 	struct path_node_t node;
 
@@ -645,6 +821,7 @@ traverse_paths(struct traversal_ctx_t *ctx, struct directory **paths, int path_c
 		node.path = start_path;
 		node.below_passes = 0;
 		node.depth = 0;
+		node.cyclic = 0;
 		work.push_back(node);
 	    }
 	}
@@ -664,6 +841,14 @@ traverse_paths(struct traversal_ctx_t *ctx, struct directory **paths, int path_c
 	}
 
 	evaluate_path(ctx, path, node.below_passes);
+
+	/* A cyclic edge is a valid finite search occurrence, but its subtree
+	 * must not be expanded.  This matches the full-path walker. */
+	if (node.cyclic) {
+	    db_free_full_path(path);
+	    BU_PUT(path, struct db_full_path);
+	    continue;
+	}
 
 	if (ctx->has_maxdepth && node.depth >= ctx->maxdepth) {
 	    db_free_full_path(path);
@@ -693,16 +878,25 @@ traverse_paths(struct traversal_ctx_t *ctx, struct directory **paths, int path_c
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb && comb->tree) {
 		std::vector<leaf_info_t> leaves;
-		std::unordered_map<std::string, int> c_inst_map;
+		std::vector<int> c_inst;
 		uint64_t child_below_passes = below_child_passes(ctx->dbip,
 			ctx->below_nodes, path, node.below_passes, ctx->flags, NULL);
 
 		collect_tree_leaves(comb->tree, OP_UNION, leaves);
+		if (UNLIKELY(ctx->dbip->i->dbi_use_comb_instance_ids)) {
+		    std::unordered_map<std::string, int> c_inst_map;
+		    c_inst.resize(leaves.size());
+		    for (size_t li = 0; li < leaves.size(); li++)
+			c_inst[li] = c_inst_map[std::string(leaves[li].name)]++;
+		}
 
-		for (size_t li = 0; li < leaves.size(); li++) {
+		/* Push in reverse tree order so the LIFO work list evaluates the
+		 * leftmost child first, matching the recursive walker. */
+		for (size_t li = leaves.size(); li-- > 0;) {
 		    struct directory *child_dp = NULL;
 		    struct db_full_path *child_path = NULL;
 		    const char *lname = leaves[li].name;
+		    int cyclic = 0;
 
 		    child_dp = db_lookup(ctx->dbip, lname, LOOKUP_QUIET);
 		    if (!child_dp)
@@ -718,20 +912,21 @@ traverse_paths(struct traversal_ctx_t *ctx, struct directory **paths, int path_c
 		    DB_FULL_PATH_SET_CUR_BOOL(child_path, leaves[li].bool_op);
 
 		    if (UNLIKELY(ctx->dbip->i->dbi_use_comb_instance_ids)) {
-			c_inst_map[std::string(lname)]++;
-			DB_FULL_PATH_SET_CUR_COMB_INST(child_path, c_inst_map[std::string(lname)] - 1);
+			DB_FULL_PATH_SET_CUR_COMB_INST(child_path, c_inst[li]);
 		    }
 
 		    if (db_full_path_cyclic(child_path, NULL, 0)) {
-			db_free_full_path(child_path);
-			BU_PUT(child_path, struct db_full_path);
-			continue;
+			char *path_string = db_path_to_string(child_path);
+			bu_log("WARNING: not traversing cyclic path %s\n", path_string);
+			bu_free(path_string, "free path str");
+			cyclic = 1;
 		    }
 
 		    path_node_t child_node;
 		    child_node.path = child_path;
 		    child_node.below_passes = child_below_passes;
 		    child_node.depth = node.depth + 1;
+		    child_node.cyclic = cyclic;
 		    work.push_back(child_node);
 		}
 	    }
@@ -814,8 +1009,8 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 			bu_log("WARNING: not traversing cyclic path %s\n", path_string);
 			bu_free(path_string, "free path str");
 		    }
+		    DB_FULL_PATH_POP(path);
 		}
-		DB_FULL_PATH_POP(path);
 		break;
 	    }
 	    break;
@@ -869,6 +1064,7 @@ palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_node_t *, 
     newplan->eval = f;
     newplan->plans = p;
     newplan->below_cache_index = -1;
+    newplan->compiled_regex = NULL;
     if (p)
 	bu_ptbl_ins_unique(p, (long *)newplan);
     return newplan;
@@ -930,8 +1126,7 @@ f_not(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, stru
     for (p = plan->p_un._p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
-    if (!state && db_node->matched_filters == 0)
-	db_node->matched_filters = 1;
+    db_node->matched_filters = state ? 0 : 1;
     return !state;
 }
 
@@ -998,6 +1193,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     curr_node.path = &parent_path;
     curr_node.flags = db_node->flags;
     curr_node.full_paths = NULL;
+    curr_node.unique_dps = db_node->unique_dps;
     curr_node.above_passes_map = NULL;
     curr_node.above_path_hash = BELOW_PATH_HASH_ROOT;
     curr_node.below_passes = 0;
@@ -1006,12 +1202,13 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
     distance = (int)db_node->path->fp_len - (int)parent_path.fp_len;
     while ((parent_path.fp_len > 0) && (state == 0) && !(db_node->flags & DB_SEARCH_FLAT)) {
-	distance++;
 	if ((distance <= plan->max_depth) && (distance >= plan->min_depth)) {
+	    curr_node.matched_filters = 1;
 	    state += find_execute_nested_plans(dbip, results, &curr_node,
 					     plan->p_un._bl_data[0]);
 	}
 	DB_FULL_PATH_POP(&parent_path);
+	distance++;
     }
     db_free_full_path(&parent_path);
 
@@ -1086,10 +1283,12 @@ f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 		    curr_node.path = this_path;
 		    curr_node.flags = db_node->flags;
 		    curr_node.full_paths = full_paths;
+		    curr_node.unique_dps = NULL;
 		    curr_node.above_passes_map = NULL;
 		    curr_node.above_path_hash = BELOW_PATH_HASH_ROOT;
 		    curr_node.below_passes = 0;
 		    curr_node.below_cache_active = 0;
+		    curr_node.matched_filters = 1;
 
 		    state = find_execute_nested_plans(dbip, NULL, &curr_node, plan->p_un._ab_data[0]);
 		    if (state)
@@ -1232,19 +1431,18 @@ c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
 static int
 f_regex(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    regex_t reg;
+    regex_t *reg = (regex_t *)plan->compiled_regex;
     int ret = 0;
     char *path_string = NULL;
-    if (plan->type == N_IREGEX) {
-	(void)regcomp(&reg, plan->p_un._regex_pattern, REG_NOSUB|REG_EXTENDED|REG_ICASE);
-    } else {
-	(void)regcomp(&reg, plan->p_un._regex_pattern, REG_NOSUB|REG_EXTENDED);
+
+    if (!reg) {
+	db_node->matched_filters = 0;
+	return 0;
     }
     path_string = db_path_to_string(db_node->path);
-    ret = !(regexec(&reg, path_string, 0, NULL, 0));
+    ret = !(regexec(reg, path_string, 0, NULL, 0));
     if (!ret)
 	db_node->matched_filters = 0;
-    regfree(&reg);
     bu_free(path_string, "free path str");
     return ret;
 }
@@ -1253,24 +1451,26 @@ f_regex(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
 static int
 c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_plan_t **resultplan, struct bu_ptbl *tbl)
 {
-    regex_t reg;
+    regex_t *reg = NULL;
     struct db_plan_t *newplan;
     int rv;
 
+    reg = (regex_t *)bu_malloc(sizeof(regex_t), "compiled search regex");
     if (icase == 1) {
-	rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED|REG_ICASE);
+	rv = regcomp(reg, regexp, REG_NOSUB|REG_EXTENDED|REG_ICASE);
     } else {
-	rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED);
+	rv = regcomp(reg, regexp, REG_NOSUB|REG_EXTENDED);
     }
-    regfree(&reg);
 
     if (rv != 0) {
 	bu_log("ERROR: regular expression failed to compile: %s\n", regexp);
+	bu_free(reg, "compiled search regex");
 	return BRLCAD_ERROR;
     }
 
     newplan = palloc(type, f_regex, tbl);
     newplan->p_un._regex_pattern = regexp;
+    newplan->compiled_regex = (void *)reg;
     (*resultplan) = newplan;
 
     return BRLCAD_OK;
@@ -1485,6 +1685,8 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp) {
+	bu_vls_free(&paramname);
+	bu_vls_free(&value);
 	db_node->matched_filters = 0;
 	return 0;
     }
@@ -1492,6 +1694,8 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
     RT_DB_INTERNAL_INIT(&in);
     if (rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL) < 0) {
 	rt_db_free_internal(&in);
+	bu_vls_free(&paramname);
+	bu_vls_free(&value);
 	db_node->matched_filters = 0;
 	return 0;
     }
@@ -1499,6 +1703,9 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
 
     if ((&in)->idb_meth->ft_get(&s_tcl, &in, NULL) == BRLCAD_ERROR) {
 	rt_db_free_internal(&in);
+	bu_vls_free(&paramname);
+	bu_vls_free(&value);
+	bu_vls_free(&s_tcl);
 	db_node->matched_filters = 0;
 	return 0;
     }
@@ -1508,12 +1715,15 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
     if (tcl_list_to_avs(bu_vls_addr(&s_tcl), &avs, 1)) {
 	bu_avs_free(&avs);
 	bu_vls_free(&s_tcl);
+	bu_vls_free(&paramname);
+	bu_vls_free(&value);
 	db_node->matched_filters = 0;
 	return 0;
     }
 
     ret = avs_check(bu_vls_addr(&paramname), bu_vls_addr(&value), checkval, strcomparison, &avs);
     bu_avs_free(&avs);
+    bu_vls_free(&s_tcl);
     bu_vls_free(&paramname);
     bu_vls_free(&value);
     if (!ret)
@@ -1580,6 +1790,8 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp) {
+	bu_vls_free(&attribname);
+	bu_vls_free(&value);
 	db_node->matched_filters = 0;
 	return 0;
     }
@@ -1587,6 +1799,8 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(dbip, &avs, dp) < 0) {
 	bu_avs_free(&avs);
+	bu_vls_free(&attribname);
+	bu_vls_free(&value);
 	db_node->matched_filters = 0;
 	return 0;
     }
@@ -1706,10 +1920,14 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
+    if (!dp) {
+	db_node->matched_filters = 0;
 	return 0;
-    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
+    }
+    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
 
     /* We can handle combs without needing to perform the rt_db_internal unpacking - do so
      * to help performance. */
@@ -1730,8 +1948,11 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 
     }
 
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0)
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
 	db_node->matched_filters = 0;
@@ -1878,8 +2099,10 @@ f_size(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     struct bu_vls value = BU_VLS_INIT_ZERO;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
+    if (!dp) {
+	db_node->matched_filters = 0;
 	return 0;
+    }
 
     /* Check for unescaped >, < or = characters.  If present, the
      * attribute must not only be present but the value assigned to
@@ -2117,29 +2340,27 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     int ret, hole_i, char_i, plain_begin, plain_len;
     char **filleds = NULL;
     char **originals = NULL;
-    char *name;
+    char *name = NULL;
     size_t filled_len = 0;
     size_t name_len = 0;
     size_t old_filled_len = 0;
 
+    if (!db_node || !db_node->path || !DB_FULL_PATH_CUR_DIR(db_node->path))
+	return 0;
+
     if (0 < plan->p_un.ex._e_nholes) {
 	originals = (char **)bu_calloc(plan->p_un.ex._e_nholes, sizeof(char *), "f_exec originals");
 	filleds = (char **)bu_calloc(plan->p_un.ex._e_nholes, sizeof(char *), "f_exec filleds");
-    }
 
-    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
-	originals[hole_i] = plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]];
-    }
+	for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++)
+	    originals[hole_i] = plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]];
 
-    if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP || db_node->flags & DB_SEARCH_FLAT) {
-	if (!db_node || !db_node->path || !DB_FULL_PATH_CUR_DIR(db_node->path))
-	    return 1;
-	name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
-    } else {
-	name = db_path_to_string(db_node->path);
-    }
-    if (name)
+	if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP || db_node->flags & DB_SEARCH_FLAT)
+	    name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
+	else
+	    name = db_path_to_string(db_node->path);
 	name_len = strlen(name);
+    }
 
     for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
 	plain_begin = 0;
@@ -2150,7 +2371,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 		old_filled_len = filled_len;
 		filled_len += plain_len + name_len;
 		filleds[hole_i] = (char *)bu_realloc(filleds[hole_i],
-						     sizeof(char *) * filled_len,
+						     filled_len,
 						     "f_exec filleds[hole_i]");
 		memcpy(filleds[hole_i] + old_filled_len, originals[hole_i] + plain_begin, plain_len);
 		if (name) {
@@ -2166,7 +2387,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	old_filled_len = filled_len;
 	filled_len += plain_len + 1 /* for the null byte */;
 	filleds[hole_i] = (char *)bu_realloc(filleds[hole_i],
-					     sizeof(char *) * filled_len,
+					     filled_len,
 					     "f_exec filleds[hole_i]");
 	memcpy(filleds[hole_i] + old_filled_len, originals[hole_i] + plain_begin, plain_len);
 	filleds[hole_i][filled_len-1] = '\0';
@@ -2183,17 +2404,21 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	ret = 1;
     }
 
-    if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP || db_node->flags & DB_SEARCH_FLAT)) {
+    if (name && !(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP || db_node->flags & DB_SEARCH_FLAT)) {
 	bu_free(name, "f_exec string");
     }
 
     for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
 	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]] = originals[hole_i];
+	bu_free(filleds[hole_i], "f_exec filled string");
     }
     if (originals)
 	bu_free(originals, "f_exec originals");
     if (filleds)
 	bu_free(filleds, "f_exec filleds");
+
+    if (!ret)
+	db_node->matched_filters = 0;
 
     return ret;
 }
@@ -2283,30 +2508,40 @@ c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
  * identity matrix.
  */
 
-static void
-child_matrix(union tree *tp, const char *n, mat_t *m)
+static int
+child_matrix(union tree *tp, const char *n, int target_inst, int *curr_inst, mat_t *m)
 {
-    if (!tp) return;
+    if (!tp)
+	return 0;
     RT_CK_TREE(tp);
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
 	    if (BU_STR_EQUAL(n, tp->tr_l.tl_name)) {
-		if (tp->tr_l.tl_mat)
-		    MAT_COPY(*m, tp->tr_l.tl_mat);
+		if (*curr_inst == target_inst) {
+		    MAT_IDN(*m);
+		    if (tp->tr_l.tl_mat)
+			MAT_COPY(*m, tp->tr_l.tl_mat);
+		    return 1;
+		}
+		(*curr_inst)++;
 	    }
-	    return;
+	    return 0;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    return child_matrix(tp->tr_b.tb_left, n, target_inst, curr_inst, m);
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
+	case OP_XOR:
 	    /* This node is known to be a binary op */
-	    child_matrix(tp->tr_b.tb_left, n, m);
-	    child_matrix(tp->tr_b.tb_right, n, m);
-	    return;
+	    if (child_matrix(tp->tr_b.tb_left, n, target_inst, curr_inst, m))
+		return 1;
+	    return child_matrix(tp->tr_b.tb_right, n, target_inst, curr_inst, m);
 	default:
 	    bu_log("child_matrix: bad op %d\n", tp->tr_op);
-	    bu_bomb("child_matrix\n");
+	    return 0;
     }
-    return;
 }
 
 
@@ -2315,32 +2550,44 @@ f_matrix(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
 {
     const struct bn_tol mtol = BN_TOL_INIT_TOL;
     mat_t mat;
+    int matrix_found = 1;
     MAT_IDN(mat);
 
     // Top level objects are always IDN included.  For anything else, see what
     // the comb says.  Note that this filter uses the immediate parent/child
     // matrix, not the accumulated matrix along the path.
     if (DB_FULL_PATH_LEN(db_node->path) > 1) {
+	matrix_found = 0;
 
 	struct directory *cdp = DB_FULL_PATH_CUR_DIR(db_node->path);
 	struct directory *dp = DB_FULL_PATH_GET(db_node->path, DB_FULL_PATH_LEN(db_node->path) - 2);
 
 	if (dp->d_flags & RT_DIR_COMB) {
 	    struct rt_db_internal intern;
+	    RT_DB_INTERNAL_INIT(&intern);
 	    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) > 0) {
 		struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if (comb->tree != NULL) {
-		    child_matrix(comb->tree, cdp->d_namep, &mat);
+		    int curr_inst = 0;
+		    int target_inst = DB_FULL_PATH_CUR_COMB_INST(db_node->path);
+		    matrix_found = child_matrix(comb->tree, cdp->d_namep,
+			    target_inst, &curr_inst, &mat);
 		}
 		rt_db_free_internal(&intern);
 	    }
 	}
     }
 
+    if (!matrix_found) {
+	db_node->matched_filters = 0;
+	return 0;
+    }
+
     if (bn_mat_is_equal(mat, plan->m, &mtol)) {
 	return 1;
     }
 
+    db_node->matched_filters = 0;
     return 0;
 }
 
@@ -2394,6 +2641,7 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
 	if (plan->p_un._node_data[0] == '<') dolessthan = 1;
 	if (plan->p_un._node_data[0] == '=') doequal = 1;
 	if (plan->p_un._node_data[0] != '>' && plan->p_un._node_data[0] != '<' && plan->p_un._node_data[0] != '=') {
+	    db_node->matched_filters = 0;
 	    return 0;
 	}
 	if (plan->p_un._node_data[1] == '=') {
@@ -2401,12 +2649,14 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
 	    if (isdigit((int)plan->p_un._node_data[2])) {
 		node_count_target = (size_t)atoi((plan->p_un._node_data)+2);
 	    } else {
+		db_node->matched_filters = 0;
 		return 0;
 	    }
 	} else {
 	    if (isdigit((int)plan->p_un._node_data[1])) {
 		node_count_target = (size_t)atoi((plan->p_un._node_data)+1);
 	    } else {
+		db_node->matched_filters = 0;
 		return 0;
 	    }
 	}
@@ -2424,7 +2674,11 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
     }
 
     if (dp->d_flags & RT_DIR_COMB) {
-	rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL);
+	RT_DB_INTERNAL_INIT(&in);
+	if (rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL) < 0) {
+	    db_node->matched_filters = 0;
+	    return 0;
+	}
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (comb->tree == NULL) {
 	    node_count = 0;
@@ -2521,8 +2775,16 @@ f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *
 
     if (db_node->flags & DB_SEARCH_FLAT || db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
 	long *dbfp = (long *)DB_FULL_PATH_CUR_DIR(db_node->path);
-	if (dbfp)
-	    bu_ptbl_ins_unique(results, dbfp);
+	if (dbfp) {
+	    if (db_node->unique_dps) {
+		typedef std::unordered_set<struct directory *> UniqueDpSet;
+		UniqueDpSet *unique_dps = static_cast<UniqueDpSet *>(db_node->unique_dps);
+		if (unique_dps->insert((struct directory *)dbfp).second)
+		    bu_ptbl_ins(results, dbfp);
+	    } else {
+		bu_ptbl_ins_unique(results, dbfp);
+	    }
+	}
     } else {
 	struct db_full_path *new_entry;
 	BU_ALLOC(new_entry, struct db_full_path);
@@ -2598,6 +2860,8 @@ find_create(char ***argvp,
 	if (!quiet) {
 	    bu_log("%s: unknown option passed to find_create\n", *argv);
 	}
+	bu_vls_free(&name);
+	bu_vls_free(&value);
 	return BRLCAD_ERROR;
     }
 
@@ -2606,6 +2870,8 @@ find_create(char ***argvp,
 	if (!quiet) {
 	    bu_log("%s: requires additional arguments\n", *--argv);
 	}
+	bu_vls_free(&name);
+	bu_vls_free(&value);
 	return BRLCAD_ERROR;
     }
 
@@ -2622,11 +2888,16 @@ find_create(char ***argvp,
 	    create_result = (p->create)(NULL, &argv, p->token == N_OK, &newplan, db_search_isoutput, tbl, ctx);
 	    break;
 	default:
+	    bu_vls_free(&name);
+	    bu_vls_free(&value);
 	    return BRLCAD_OK;
     }
 
-    if (create_result != BRLCAD_OK)
+    if (create_result != BRLCAD_OK) {
+	bu_vls_free(&name);
+	bu_vls_free(&value);
 	return BRLCAD_ERROR;
+    }
 
     if (newplan) {
 	if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
@@ -2902,10 +3173,6 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 	if (next->type == N_ABOVE) {
 
 	    node = yanknode(&plan);
-	    if (node != NULL && node->type == N_ABOVE) {
-		bu_log("Error - repeated -above node in plan.\n");
-		return BRLCAD_ERROR;
-	    }
 	    if (node == NULL) {
 		bu_log("-above: no following expression");
 		return BRLCAD_ERROR;
@@ -2914,10 +3181,24 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 		bu_log("-above: nothing between -above and -o");
 		return BRLCAD_ERROR;
 	    }
-	    if (node->type == N_EXPR) {
-		if (above_squish(node, &node) != BRLCAD_OK) {
-		    return BRLCAD_ERROR;
+	    {
+		struct db_plan_t *above_node = node;
+		while (above_node->type == N_ABOVE) {
+		    struct db_plan_t *operand = yanknode(&plan);
+		    if (!operand) {
+			bu_log("-above: no following expression");
+			return BRLCAD_ERROR;
+		    }
+		    if (operand->type == N_OR) {
+			bu_log("-above: nothing between -above and -o");
+			return BRLCAD_ERROR;
+		    }
+		    above_node->p_un._ab_data[0] = operand;
+		    above_node = operand;
 		}
+		if (above_node->type == N_EXPR &&
+		    above_squish(above_node, &above_node) != BRLCAD_OK)
+		    return BRLCAD_ERROR;
 	    }
 	    /*Made it*/
 	    next->p_un._ab_data[0] = node;
@@ -2968,10 +3249,6 @@ below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 	if (next->type == N_BELOW) {
 
 	    node = yanknode(&plan);
-	    if (node != NULL && node->type == N_BELOW) {
-		bu_log("Error - repeated -below node in plan.\n");
-		return BRLCAD_ERROR;
-	    }
 	    if (node == NULL) {
 		bu_log("-below: no following expression");
 		return BRLCAD_ERROR;
@@ -2980,10 +3257,24 @@ below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 		bu_log("-below: nothing between -below and -o");
 		return BRLCAD_ERROR;
 	    }
-	    if (node->type == N_EXPR) {
-		if (below_squish(node, &node) != BRLCAD_OK) {
-		    return BRLCAD_ERROR;
+	    {
+		struct db_plan_t *below_node = node;
+		while (below_node->type == N_BELOW) {
+		    struct db_plan_t *operand = yanknode(&plan);
+		    if (!operand) {
+			bu_log("-below: no following expression");
+			return BRLCAD_ERROR;
+		    }
+		    if (operand->type == N_OR) {
+			bu_log("-below: nothing between -below and -o");
+			return BRLCAD_ERROR;
+		    }
+		    below_node->p_un._bl_data[0] = operand;
+		    below_node = operand;
 		}
+		if (below_node->type == N_EXPR &&
+		    below_squish(below_node, &below_node) != BRLCAD_OK)
+		    return BRLCAD_ERROR;
 	    }
 
 	    /* Made it */
@@ -3212,6 +3503,11 @@ db_search_free_plan(struct db_plan_t *splan)
 	    if (N_EXEC == p->type) {
 		free_exec_plan(p);
 	    }
+	    if ((N_REGEX == p->type || N_IREGEX == p->type) && p->compiled_regex) {
+		regfree((regex_t *)p->compiled_regex);
+		bu_free(p->compiled_regex, "compiled search regex");
+		p->compiled_regex = NULL;
+	    }
 	    BU_PUT(p, struct db_plan_t);
 	}
     } else {
@@ -3220,6 +3516,11 @@ db_search_free_plan(struct db_plan_t *splan)
 	    plan = p->next;
 	    if (N_EXEC == p->type) {
 		free_exec_plan(p);
+	    }
+	    if ((N_REGEX == p->type || N_IREGEX == p->type) && p->compiled_regex) {
+		regfree((regex_t *)p->compiled_regex);
+		bu_free(p->compiled_regex, "compiled search regex");
+		p->compiled_regex = NULL;
 	    }
 	    BU_PUT(p, struct db_plan_t);
 	    p = plan;
@@ -3256,8 +3557,10 @@ collect_above_nodes(struct db_plan_t *plan,
     for (struct db_plan_t *p = plan; p; p = p->next) {
 	switch (p->type) {
 	    case N_ABOVE:
-		/* Exclude depth-constrained variants; they need the slow path. */
-		if (p->min_depth == 0 && p->max_depth == INT_MAX)
+		/* Exclude depth-constrained and observable variants; they need
+		 * the semantics-preserving slow path. */
+		if (p->min_depth == 0 && p->max_depth == INT_MAX &&
+		    !plan_has_side_effects(p->p_un._ab_data[0]))
 		    above_nodes.push_back(p);
 		break;
 	    case N_EXPR:
@@ -3280,7 +3583,9 @@ collect_above_nodes(struct db_plan_t *plan,
 
 /*
  * Compute the 128-bit path fingerprint for a complete db_full_path by
- * applying below_path_hash_extend incrementally over every directory entry.
+ * applying below_path_hash_extend incrementally over every path entry.  The
+ * local boolean operation and combination instance number are part of the
+ * identity: repeated references to one object may have different predicates.
  * Also returns the parent hash (all but the last element) via *parent_hash_out
  * when parent_hash_out is non-NULL.
  */
@@ -3291,7 +3596,9 @@ above_path_hash_compute(struct db_full_path *path, bu_h128_t *parent_hash_out)
     for (size_t k = 0; k < path->fp_len; k++) {
 	if (parent_hash_out && k + 1 == path->fp_len)
 	    *parent_hash_out = h;
-	h = below_path_hash_extend(h, path->fp_names[k]);
+	h = below_path_hash_extend(h, path->fp_names[k],
+		DB_FULL_PATH_GET_BOOL(path, k),
+		DB_FULL_PATH_GET_COMB_INST(path, k));
     }
     return h;
 }
@@ -3335,6 +3642,7 @@ db_search(struct bu_ptbl *search_results,
     int path_cnt = input_path_cnt;
     struct _db_search_ctx ctx;
     struct plan_analysis_t plan_analysis;
+    int has_exec = 0;
     ctx.clbk = clbk;
     ctx.u1 = u1;
     ctx.u2 = u2;
@@ -3357,6 +3665,12 @@ db_search(struct bu_ptbl *search_results,
     }
     /* No plan, no search */
     if (!dbplan) {
+	if (BU_PTBL_LEN(&dbplans) > 0) {
+	    struct db_plan_t *allocated_plan =
+		(struct db_plan_t *)BU_PTBL_GET(&dbplans, 0);
+	    db_search_free_plan(allocated_plan);
+	}
+	bu_ptbl_free(&dbplans);
 	bu_free(mutable_plan_str, "free strdup");
 	bu_free((char *)plan_argv, "free plan argv");
 	return -1;
@@ -3372,20 +3686,22 @@ db_search(struct bu_ptbl *search_results,
     }
 
     if (!paths) {
-	if (search_flags & DB_SEARCH_HIDDEN) {
+	if (search_flags & DB_SEARCH_FLAT) {
+	    path_cnt = db_ls(dbip,
+		    (search_flags & DB_SEARCH_HIDDEN) ? DB_LS_HIDDEN : 0,
+		    NULL, &top_level_objects);
+	} else if (search_flags & DB_SEARCH_HIDDEN) {
 	    path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &top_level_objects);
 	} else {
-	    if (!(search_flags & DB_SEARCH_FLAT)) {
-		path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &top_level_objects);
-	    } else {
-		path_cnt = db_ls(dbip, 0, NULL, &top_level_objects);
-	    }
+	    path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &top_level_objects);
 	}
 	paths = top_level_objects;
     }
 
     plan_analysis_init(&plan_analysis);
     plan_analysis_update(dbplan, &plan_analysis);
+    plan_analysis.has_maxdepth = plan_prune_maxdepth(dbplan, &plan_analysis.maxdepth);
+    has_exec = plan_has_exec(dbplan);
 
     /* execute the plan */
     {
@@ -3393,8 +3709,15 @@ db_search(struct bu_ptbl *search_results,
 	struct list_client_data_t lcd;
 	struct traversal_ctx_t tctx;
 	std::vector<struct db_plan_t *> below_nodes;
+	typedef std::unordered_set<struct directory *> UniqueDpSet;
+	UniqueDpSet unique_dps;
+	void *unique_dps_ptr = NULL;
 
-	if (plan_analysis.has_below)
+	if (search_results &&
+	    (search_flags & (DB_SEARCH_FLAT | DB_SEARCH_RETURN_UNIQ_DP)))
+	    unique_dps_ptr = (void *)&unique_dps;
+
+	if (plan_analysis.has_below && !has_exec)
 	    collect_below_nodes(dbplan, below_nodes);
 
 	/* First, check if search_results is initialized - don't trust the caller to do it,
@@ -3402,6 +3725,12 @@ db_search(struct bu_ptbl *search_results,
 	if (search_results && search_results != BU_PTBL_NULL) {
 	    if (!BU_PTBL_IS_INITIALIZED(search_results)) {
 		BU_PTBL_INIT(search_results);
+	    }
+	    if (unique_dps_ptr) {
+		unique_dps.reserve((size_t)BU_PTBL_LEN(search_results) +
+			(path_cnt > 0 ? (size_t)path_cnt : 0));
+		for (size_t ri = 0; ri < (size_t)BU_PTBL_LEN(search_results); ri++)
+		    unique_dps.insert((struct directory *)BU_PTBL_GET(search_results, (int)ri));
 	    }
 	}
 
@@ -3455,25 +3784,23 @@ db_search(struct bu_ptbl *search_results,
 	    AboveCacheMap above_cache_map;
 	    {
 		std::vector<struct db_plan_t *> above_nodes;
-		collect_above_nodes(dbplan, above_nodes);
+		if (!has_exec)
+		    collect_above_nodes(dbplan, above_nodes);
 
 		if (!above_nodes.empty()) {
-		    /* Sort paths deepest-first for bottom-up traversal. */
+		    /* db_fullpath_list produces preorder.  Reverse iteration is
+		     * therefore already descendants-before-parents and avoids an
+		     * unnecessary O(N log N) depth sort. */
 		    size_t nfp = (size_t)BU_PTBL_LEN(full_paths);
-		    std::vector<struct db_full_path *> sorted_paths(nfp);
-		    for (size_t k = 0; k < nfp; k++)
-			sorted_paths[k] = (struct db_full_path *)BU_PTBL_GET(full_paths, (int)k);
-		    std::sort(sorted_paths.begin(), sorted_paths.end(),
-			      [](struct db_full_path *a, struct db_full_path *b) {
-				  return a->fp_len > b->fp_len;
-			      });
 
 		    /* Initialise per-node cache entries. */
 		    for (auto *an : above_nodes)
 			above_cache_map.emplace(an, std::unordered_set<bu_h128_t>{});
 
 		    /* Bottom-up pass. */
-		    for (struct db_full_path *fp : sorted_paths) {
+		    for (size_t k = nfp; k-- > 0;) {
+			struct db_full_path *fp =
+			    (struct db_full_path *)BU_PTBL_GET(full_paths, (int)k);
 			if (fp->fp_len == 0) continue;
 
 			bu_h128_t parent_hash = BELOW_PATH_HASH_ROOT;
@@ -3494,6 +3821,7 @@ db_search(struct bu_ptbl *search_results,
 			 * to the slow path, which needs a valid full_paths ptr.
 			 */
 			eval_node.full_paths = full_paths;
+			eval_node.unique_dps = NULL;
 			eval_node.above_passes_map = NULL;
 			eval_node.above_path_hash = path_hash;
 			auto bsit = below_state_map.find(fp);
@@ -3517,6 +3845,7 @@ db_search(struct bu_ptbl *search_results,
 			    }
 
 			    /* Test whether this path satisfies the inner plan. */
+			    eval_node.matched_filters = 1;
 			    int state = find_execute_nested_plans(
 				dbip, NULL, &eval_node, an->p_un._ab_data[0]);
 			    if (state && has_parent)
@@ -3532,6 +3861,7 @@ db_search(struct bu_ptbl *search_results,
 		    (struct db_full_path *)BU_PTBL_GET(full_paths, i);
 		curr_node.path = curr_path;
 		curr_node.full_paths = full_paths;
+		curr_node.unique_dps = unique_dps_ptr;
 		curr_node.flags = search_flags;
 		auto bsit = below_state_map.find(curr_path);
 		if (bsit != below_state_map.end()) {
@@ -3563,6 +3893,7 @@ db_search(struct bu_ptbl *search_results,
 	    tctx.plan = dbplan;
 	    tctx.results = search_results;
 	    tctx.below_nodes = &below_nodes;
+	    tctx.unique_dps = unique_dps_ptr;
 	    tctx.flags = search_flags;
 	    tctx.result_cnt = 0;
 	    tctx.has_maxdepth = plan_analysis.has_maxdepth;

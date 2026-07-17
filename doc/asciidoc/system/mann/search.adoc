@@ -55,7 +55,7 @@ Print help and exit.
 
 
 *-a*::
-Overrides the hidden flag when assembling path lists, if a generic toplevel path has been specified.
+Include hidden objects when assembling implicit, top-level, or flat input lists and when walking search hierarchies.
 
 
 *-Q*::
@@ -84,7 +84,7 @@ By default, only the "top level" objects in any search are used as starting poin
 |/
 |Search using top level objects in database as starting points, return list of matching full paths.
 |.
-|Search using top level objects in database as starting points, return list of all matching objects (defualt).
+|Search using top level objects in database as starting points, return list of all matching objects (default).
 ||
 |Iterate over all objects in the database without doing a tree walk, return list of all matching objects.
 ||/
@@ -125,7 +125,7 @@ True if the depth of the object in the tree is within the range specified.
 
 
 *-exec* _expression arg1 arg2 ... ";"_::
-True if the Tcl expression returns true. Any pair of curly braces ('{}') in an arguemt is replaced by the name or full path of the object. The semicolon terminates the argument list and must not be omitted. Remember to quote the parameters properly. The semicolon must stand on its own and must be quoted.
+Pass _expression_ and its arguments to the host application's search execution handler. The filter is true if the handler reports success and false if it reports an error; a textual command result is not interpreted as a boolean. The commands available to *-exec* depend on the host application. Any pair of curly braces ('{}') in an argument is replaced by the name or full path of the object. The semicolon terminates the argument list and must not be omitted. Remember to quote the parameters properly. The semicolon must stand on its own and must be quoted.
 +
 When using multiple -exec filters, keep in mind that filters are evaluated lazily, so if you have two -execs and the first one returns false for one node, the second one will not run at all.
 
@@ -139,7 +139,7 @@ Like *regex* except the match is case insensitive.
 
 
 *-matrix* _IDN|{#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#}_::
-True if the object in question is being combined into the local hierarchy with an with the specified matrix. This is useful in combination with the *!* operator, for finding objects in a hierarchy with matricies over them. "IDN" is a shorthand that allows users to specify an identity matrix more succinctly.
+True if the object in question is being combined into the local hierarchy with the specified matrix. This is useful in combination with the *!* operator for finding objects in a hierarchy with matrices over them. "IDN" is a shorthand that allows users to specify an identity matrix more succinctly.
 
 
 *-maxdepth* _n_::
@@ -353,9 +353,11 @@ Evaluates to true if the expression inside the parentheses evaluates to true. Us
 
 
 *-below[>/</=val]* _expression_::
-The below operator applies the expression to every object below the matching object in the tree hierarchy. E.g. searching with -below -name start\* on /component/region.r/start_comb.c/prim1.s would return prim1.s, as the object below start_comb.c
+True if an ancestor of the current path satisfies _expression_. The current object itself is not tested by _expression_. For example, *-below -name start_comb.c* is true for both _/component/region.r/start_comb.c/prim1.s_ and any deeper descendants of _start_comb.c_, but is false for _start_comb.c_ itself.
 +
-Optionally, inequality and equality constraints on depth can be appended to the operator to limit what relative depths are accepted as matches.
+An optional comparison constrains the number of hierarchy edges between the current object and the ancestor being tested. The immediate parent is at relative depth 1, its parent is at relative depth 2, and so on. Thus, *-below=1 -type region* selects objects whose immediate parent is a region, while *-below>1 -type region* requires a matching region at least two levels above the current object. The unqualified form tests all ancestors.
++
+Nested forms such as **-below -below -name X** are valid. They test whether the current object has an ancestor which is itself below an ancestor matching _X_. See <<hierarchy_performance,Hierarchy Operator Performance>> before using constrained or action-bearing forms on large hierarchies.
 
 
 _expression_ *-and* _expression_ (a.k.a. -a)::
@@ -363,11 +365,11 @@ The and operator operates like the logical AND operator - TRUE only if both expr
 
 
 *-above[>/</=val]* _expression_::
-The above operator applies the expression to every object below the current path in the tree hierarchy, and returns TRUE if one or more of them satisfies the expression. An object passes -above when it is above (has in its subtree) at least one object that matches. E.g., searching with -above -name s\* on /component/region.r/start_comb.c/prim1.s would return TRUE for /component and /component/region.r as start_comb.c is below both of them, but would return FALSE for any deeper objects (i.e., prim1.s in this example).
+True if a descendant of the current path satisfies _expression_. The current object itself is not tested by _expression_. For example, *-above -name prim1.s* is true for _/component_, _/component/region.r_, and _/component/region.r/start_comb.c_ when _prim1.s_ is below them, but is false for _prim1.s_ itself.
 +
-Optionally, inequality and equality constraints on depth can be appended to the operator to limit what relative depths are accepted as matches.
+An optional comparison constrains the number of hierarchy edges between the current object and the descendant being tested. An immediate child is at relative depth 1. Thus, *-above=1 -name prim1.s* matches only direct parents of _prim1.s_; the unqualified form tests descendants at every depth.
 +
-Note: using _-above_ as the expression within another _-above_ (e.g., **-above -above -name X**) is valid but will be slower than the normal case because the internal optimization for -above cannot be applied to the inner -above expression. Such constructs are rare in practice and will still produce correct results.
+Using *-above* as the expression within another *-above* (for example, **-above -above -name X**) is valid, but may be dramatically slower than an ordinary *-above*. See <<hierarchy_performance,Hierarchy Operator Performance>>.
 
 
 *-not* _expression_ (a.k.a. !)::
@@ -376,6 +378,28 @@ The logical NOT operator - returns the opposite of the evaluation result of expr
 
 _expression_ *-or* _expression_ (a.k.a. -o)::
 The logical OR operator - true if either expression is true.
+
+
+[[hierarchy_performance]]
+=== Hierarchy Operator Performance
+
+Ordinary, unconstrained, side-effect-free *-above* and *-below* expressions use cached propagation and are intended for large searches. Pure boolean composition with *-and*, *-or*, parentheses, or *!* does not by itself disable these hierarchy caches. The following cases automatically require exhaustive evaluation instead:
+
+* Any *-exec* anywhere in a plan containing *-above* or *-below* disables all hierarchy-result caching for that plan. This is necessary because the callback may change the database, and later filters must observe those changes even when *-exec* is in a different *-and* or *-or* branch.
+* A *-below* with a relative-depth comparison, or whose expression contains an explicit action such as *-exec* or *-print*, may inspect the ancestor chain separately for every candidate. Its cost is proportional to the number of paths times their depth and can become quadratic on a deep chain. Unconstrained nested *-below* expressions remain cached when they contain no actions; in the unusual case of more than 64 cached *-below* operators, additional operators use exhaustive evaluation.
+* A depth-constrained *-above*, an *-above* whose expression contains an explicit action, or an *-above* directly nested inside another *-above* may compare candidates against the collected path set repeatedly. These forms can be quadratic in the number of paths.
+* Nesting hierarchy operators that require these exhaustive forms can compound the cost beyond quadratic.
++
+The implicit final *-print* added by *search* does not disable caching. Only an explicit *-print* inside the hierarchy expression does so.
+
+Traversal pruning by *-maxdepth* is also conservative. An *-or* permits pruning only when every branch has a *-maxdepth* bound; for example, **-maxdepth 2 -or -name *.s** cannot prune, while **-maxdepth 2 -or -maxdepth 4** can prune below depth 4. A *-maxdepth* under *!*, *-above*, or *-below* does not bound the outer traversal. Actions are evaluated from left to right, so **-exec ... ";" -and -maxdepth 2** cannot prune before running the action, whereas placing *-maxdepth 2* first permits pruning and prevents the later action from running below that depth.
+
+[WARNING]
+====
+On large, deep, or heavily shared models, the number of full paths can be much larger than the number of database objects. The exhaustive forms above can therefore take an untenably long time and may appear to have hung.
+
+When possible, start from the narrowest applicable path, put inexpensive selective filters such as *-name*, *-type*, or *-depth* before a costly hierarchy operator, and avoid relative-depth constraints or nested hierarchy operators when an equivalent simpler plan is available. Test unavoidable exhaustive plans on a representative subtree before applying them to the complete database.
+====
 
 
 
@@ -562,7 +586,7 @@ A more nuanced variation on finding nested regions that adds a check to make sur
 .Finding all Non-Identity Matrix Instances
 [example]
 ====
-**search / ! -matrix IDN -**
+**search / ! -matrix IDN**
 
 Reports all comb instances included in their parent comb with a non-identity positioning matrix.
 
@@ -816,4 +840,3 @@ Bugs resulting from incorrect parsing of shell pattern expressions are the resul
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
-
