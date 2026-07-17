@@ -3,7 +3,6 @@ puts "*** Testing search -exec with sourced Tcl state ***"
 source @CMAKE_CURRENT_SOURCE_DIR@/search_exec_procs.tcl
 
 # A rejected output-hook replacement must leave the active hook installed.
-# The following search drains the marker queued by echo into this callback.
 set search_exec_output ""
 proc search_exec_output_capture {text} {
     append ::search_exec_output $text
@@ -12,8 +11,31 @@ output_hook search_exec_output_capture
 if {![catch {output_hook __search_exec_missing_output_command__}]} {
     error "FAIL output_hook accepted a missing command"
 }
-echo SEARCH_EXEC_OUTPUT_HOOK_ALIVE
 
+# A parse failure still has to run the POST callback on the worker thread.  A
+# following plain search verifies that no worker-owned interpreter was left in
+# MGED state (particularly important on Windows, where cross-thread Tcl interp
+# deletion is fatal).
+if {![catch {
+    search /all.g/component/power.train/r1 -maxdepth 0 -exec expr 1
+}]} {
+    error "FAIL malformed search -exec unexpectedly succeeded"
+}
+
+# Verify that the optimized plain-search path still drains threaded output to
+# the main Tcl interpreter without creating a secondary interpreter.
+echo SEARCH_PLAIN_OUTPUT_HOOK_ALIVE
+if {[catch {
+    search /all.g/component/power.train/r1 -maxdepth 0
+} plain_search_error]} {
+    error "FAIL plain search after malformed -exec: $plain_search_error"
+}
+if {[string first SEARCH_PLAIN_OUTPUT_HOOK_ALIVE $search_exec_output] < 0} {
+    error "FAIL plain search did not preserve the active output hook"
+}
+
+set search_exec_output ""
+echo SEARCH_EXEC_OUTPUT_HOOK_ALIVE
 search /all.g/component/power.train/r1 -maxdepth 0 -exec search_exec_global "{}" ";"
 if {[string first SEARCH_EXEC_OUTPUT_HOOK_ALIVE $search_exec_output] < 0} {
     error "FAIL invalid output_hook replacement removed the active hook"
@@ -27,5 +49,13 @@ search /all.g/component/power.train/r8 -maxdepth 0 -exec search_exec_alias_query
 search /all.g/component/power.train/r5 -maxdepth 0 -exec search_exec_alias ";"
 
 search_exec_verify
+
+# The successful -exec lifecycle must also be fully torn down before an
+# ordinary search takes the no-interpreter path.
+if {[catch {
+    search /all.g/component/power.train/r1 -maxdepth 0
+} plain_search_error]} {
+    error "FAIL plain search after successful -exec: $plain_search_error"
+}
 
 puts "*** search -exec sourced Tcl state testing completed ***"

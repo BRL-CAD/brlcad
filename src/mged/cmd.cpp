@@ -441,6 +441,28 @@ _clear_search_snapshot(struct mged_state *s)
 }
 
 
+/* Return true if a search might contain an -exec expression.  Search rebuilds
+ * its expression from argv before parsing it, so inspect every argument for
+ * the option spelling rather than requiring an exact argv match.  This is
+ * deliberately conservative: a false positive only retains the existing Tcl
+ * setup cost, while an actual -exec must never run without the worker-owned
+ * interpreter on platforms with strict Tcl thread ownership (notably
+ * Windows). */
+static int
+_search_may_exec(int argc, const char *argv[])
+{
+    if (!argv)
+	return 0;
+
+    for (int i = 1; i < argc; i++) {
+	if (argv[i] && strstr(argv[i], "-exec"))
+	    return 1;
+    }
+
+    return 0;
+}
+
+
 /* Capture on the main Tcl thread.  Tcl objects are not transferred between
  * threads; only the snapshot's canonical list string crosses to the worker. */
 static int
@@ -497,17 +519,19 @@ _exec_in_search_interp(Tcl_Interp *search_interp, int argc, const char *argv[])
 /**
  * PRE-execution callback for the "search" command.
  *
- * Creates a fresh, lifecycle-scoped secondary Tcl interpreter and stores it
- * in s->search_interp.  This interpreter replays the main-interp snapshot
- * captured by cmd_search and is then reused for every -exec invocation fired
- * by mged_db_search_callback during this search run.  Creating the interpreter
- * here rather than inside each DURING callback avoids repeated snapshot replay.
+ * For searches which might contain -exec, creates a fresh, lifecycle-scoped
+ * secondary Tcl interpreter and stores it in s->search_interp.  This
+ * interpreter replays the main-interp snapshot captured by cmd_search and is
+ * then reused for every -exec invocation fired by mged_db_search_callback
+ * during this search run.  Creating the interpreter here rather than inside
+ * each DURING callback avoids repeated snapshot replay.  Searches which
+ * cannot contain -exec need neither the snapshot nor this interpreter.
  *
- * If a leftover interpreter from a previously interrupted search is found it is
- * cleaned up first, so we never accumulate dangling interpreters.
+ * A leftover interpreter from a previous search is a thread-ownership error:
+ * it cannot safely be deleted by an arbitrary later thread, so fail loudly.
  */
 int
-mged_search_pre_clbk(int UNUSED(argc), const char **UNUSED(argv),
+mged_search_pre_clbk(int argc, const char **argv,
 		     void *UNUSED(u1), void *u2)
 {
     struct mged_state *s = (struct mged_state *)u2;
@@ -518,6 +542,9 @@ mged_search_pre_clbk(int UNUSED(argc), const char **UNUSED(argv),
     if (s->search_interp != NULL)
 	bu_bomb("ERROR - stale search interp, state is corrupted\n");
 
+    if (!_search_may_exec(argc, argv))
+	return BRLCAD_OK;
+
     s->search_interp = _create_search_interp(s);
     return BRLCAD_OK;
 }
@@ -526,21 +553,28 @@ mged_search_pre_clbk(int UNUSED(argc), const char **UNUSED(argv),
 /**
  * POST-execution callback for the "search" command.
  *
- * Destroys the lifecycle-scoped interpreter created by mged_search_pre_clbk.
- * The interpreter must not be persisted beyond a single search invocation
- * because the user environment (procs, variables) may change before the next
- * search is run.
+ * For a search which might contain -exec, destroys the lifecycle-scoped
+ * interpreter created by mged_search_pre_clbk.  The interpreter must not be
+ * persisted beyond a single search invocation because the user environment
+ * (procs, variables) may change before the next search is run.  Other searches
+ * deliberately have no search interpreter to destroy.
  *
  * We deliberately run this after every search, succeed or fail,
  * to make sure we get rid of the thread-owned Tcl interp - it must be
  * destroyed from this thread.
  */
 int
-mged_search_post_clbk(int UNUSED(argc), const char **UNUSED(argv),
+mged_search_post_clbk(int argc, const char **argv,
 		      void *UNUSED(u1), void *u2)
 {
     struct mged_state *s = (struct mged_state *)u2;
     MGED_CK_STATE(s);
+
+    if (!_search_may_exec(argc, argv)) {
+	if (s->search_interp != NULL)
+	    bu_bomb("ERROR - unexpected search Tcl interp, state is corrupted.\n");
+	return BRLCAD_OK;
+    }
 
     if (s->search_interp == NULL)
 	bu_bomb("ERROR - search Tcl interp missing, state is corrupted.\n");
@@ -561,11 +595,12 @@ mged_search_post_clbk(int UNUSED(argc), const char **UNUSED(argv),
  *
  * This callback uses s->search_interp — a secondary, fully independent Tcl
  * interpreter whose lifetime is scoped to the enclosing search command.  It is
- * created by mged_search_pre_clbk (fired before search begins), reused across
- * all -exec invocations, and destroyed by mged_search_post_clbk (fired after
- * search completes).  The main thread never touches search_interp while a
- * search is running, so there is no concurrent interpreter access and Tcl's
- * single-thread-per-interp requirement is satisfied.
+ * created by mged_search_pre_clbk (fired before a search which might contain
+ * -exec begins), reused across all -exec invocations, and destroyed by
+ * mged_search_post_clbk (fired after search completes).  The main thread never
+ * touches search_interp while a search is running, so there is no concurrent
+ * interpreter access and Tcl's single-thread-per-interp requirement is
+ * satisfied.
  *
  * A custom 'unknown' proc inside search_interp bridges any command that Tcl
  * does not recognise to ged_exec via _mged_ged_exec, so all GED commands
@@ -2434,7 +2469,7 @@ cmd_search(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
     if (s->gedp == GED_NULL)
 	return TCL_OK;
 
-    if (_capture_search_snapshot(s) != TCL_OK)
+    if (_search_may_exec(argc, argv) && _capture_search_snapshot(s) != TCL_OK)
 	bu_log("search interp: failed to capture the main Tcl interpreter state\n");
 
     ret = run_ged_async(s, [&]() -> int { return ged_exec(s->gedp, argc, (const char **)argv); });
