@@ -375,7 +375,21 @@ bu_avail_cpus(void)
 static struct parallel_info *
 parallel_mapping(parallel_action_t action, int id, size_t max)
 {
-    /* container for keeping track of recursive invocation data, limits, current values */
+    /* Container for recursive invocation data, limits, and current values.
+     *
+     * FIXME: With MAX_PSW at 4096 this array contributes 512 MiB to
+     * libbu's BSS.  Loading libbu under Valgrind consequently emits two
+     * "set address range perms: large range" warnings while the dynamic
+     * loader establishes permissions on libbu's large RW segment.  Both
+     * warnings reproduce by preloading libbu into an otherwise empty
+     * process; they are not heap leaks.
+     *
+     * Do not simply reduce this to MAX_PSW.  The squared capacity was added
+     * for recursive bu_parallel() calls, whose live parent and child thread
+     * records can exceed MAX_PSW.  This should instead become sparse/dynamic
+     * bookkeeping as part of a fix that also keeps public parallel IDs safe
+     * for callers' MAX_PSW-sized per-thread arrays.
+     */
     static struct parallel_info mapping[MAX_PSW*MAX_PSW] = {{0, 0, 0, 0, 0}};
     int got_cpu;
 
