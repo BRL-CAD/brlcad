@@ -1022,6 +1022,7 @@ pkg_mux_is_ready_listener(const pkg_mux_t *m, const pkg_listener_t *L)
 
 struct pkg_mux_entry {
     int    fd;
+    int    is_socket;
     HANDLE pipe_h;
 };
 
@@ -1051,6 +1052,7 @@ pkg_mux_add_fd(pkg_mux_t *m, int fd, int is_socket)
         if (e.fd == fd) return 0;
     pkg_mux_entry ent;
     ent.fd = fd;
+    ent.is_socket = is_socket ? 1 : 0;
     if (is_socket) {
         ent.pipe_h = INVALID_HANDLE_VALUE;
     } else {
@@ -1092,7 +1094,7 @@ pkg_mux_wait(pkg_mux_t *m, int timeout_ms)
     if (!m || m->entries.empty()) return 0;
     m->ready.clear();
 
-    HANDLE   all_handles[MAXIMUM_WAIT_OBJECTS];
+    HANDLE   wait_handles[MAXIMUM_WAIT_OBJECTS];
     int      entry_idx[MAXIMUM_WAIT_OBJECTS];
     WSAEVENT wsa_evs[MAXIMUM_WAIT_OBJECTS];
     int      sock_hidx[MAXIMUM_WAIT_OBJECTS];
@@ -1100,40 +1102,89 @@ pkg_mux_wait(pkg_mux_t *m, int timeout_ms)
 
     for (int i = 0; i < (int)m->entries.size() && n_handles < MAXIMUM_WAIT_OBJECTS; ++i) {
         auto &e = m->entries[i];
-        if (e.pipe_h != INVALID_HANDLE_VALUE) {
-            all_handles[n_handles] = e.pipe_h;
-            entry_idx[n_handles]   = i;
-            ++n_handles;
-        } else {
+        if (e.is_socket) {
             WSAEVENT ev = WSACreateEvent();
             if (ev == WSA_INVALID_EVENT) continue;
             WSAEventSelect((SOCKET)(uintptr_t)e.fd, ev, FD_READ | FD_ACCEPT | FD_CLOSE);
-            all_handles[n_handles]   = ev;
+            wait_handles[n_handles]  = ev;
             entry_idx[n_handles]     = i;
             sock_hidx[n_wsa]         = n_handles;
             wsa_evs[n_wsa]           = ev;
             ++n_handles; ++n_wsa;
+        } else if (e.pipe_h != INVALID_HANDLE_VALUE &&
+                   GetFileType(e.pipe_h) != FILE_TYPE_PIPE) {
+            /* Console and other genuinely waitable handles may use the native
+             * wait set.  Anonymous pipes are polled with PeekNamedPipe below:
+             * their handles do not provide a reliable readability signal to
+             * WaitForMultipleObjects. */
+            wait_handles[n_handles] = e.pipe_h;
+            entry_idx[n_handles] = i;
+            ++n_handles;
         }
     }
 
-    if (n_handles == 0) {
-        if (timeout_ms > 0) Sleep((DWORD)timeout_ms);
-        return 0;
-    }
-
-    DWORD timeout_dw = (timeout_ms < 0) ? INFINITE
-                     : (timeout_ms == 0) ? 0
-                     : (DWORD)timeout_ms;
-    DWORD ret = WaitForMultipleObjects((DWORD)n_handles, all_handles, FALSE, timeout_dw);
-
     int n_ready = 0;
-    if (ret >= WAIT_OBJECT_0 && ret < WAIT_OBJECT_0 + (DWORD)n_handles) {
-        for (int i = 0; i < n_handles; ++i) {
-            if (WaitForSingleObject(all_handles[i], 0) == WAIT_OBJECT_0) {
-                m->ready.push_back(m->entries[entry_idx[i]].fd);
+    int wait_error = 0;
+    const ULONGLONG start = GetTickCount64();
+    for (;;) {
+        /* Anonymous pipes must be tested for bytes, not waited on as kernel
+         * objects.  Treat a broken pipe as readable so the caller can consume
+         * EOF and retire the connection. */
+        for (int i = 0; i < (int)m->entries.size(); ++i) {
+            auto &e = m->entries[i];
+            if (e.is_socket || e.pipe_h == INVALID_HANDLE_VALUE ||
+                GetFileType(e.pipe_h) != FILE_TYPE_PIPE)
+                continue;
+            DWORD available = 0;
+            const BOOL peek_ok = PeekNamedPipe(e.pipe_h, NULL, 0, NULL,
+                &available, NULL);
+            if ((peek_ok && available > 0) ||
+                (!peek_ok && GetLastError() == ERROR_BROKEN_PIPE)) {
+                m->ready.push_back(e.fd);
                 ++n_ready;
             }
         }
+        if (n_ready > 0)
+            break;
+
+        DWORD slice = 10;
+        if (timeout_ms > 0) {
+            const ULONGLONG elapsed = GetTickCount64() - start;
+            if (elapsed >= (ULONGLONG)timeout_ms)
+                break;
+            const ULONGLONG remaining = (ULONGLONG)timeout_ms - elapsed;
+            if (remaining < slice)
+                slice = (DWORD)remaining;
+        } else if (timeout_ms == 0) {
+            /* Perform one nonblocking wait for sockets as well as pipes. */
+            slice = 0;
+        }
+
+        if (n_handles > 0) {
+            DWORD ret = WaitForMultipleObjects((DWORD)n_handles, wait_handles,
+                FALSE, slice);
+            if (ret == WAIT_FAILED) {
+                wait_error = 1;
+                break;
+            }
+            if (ret >= WAIT_OBJECT_0 &&
+                ret < WAIT_OBJECT_0 + (DWORD)n_handles) {
+                for (int i = 0; i < n_handles; ++i) {
+                    if (WaitForSingleObject(wait_handles[i], 0) ==
+                        WAIT_OBJECT_0) {
+                        m->ready.push_back(m->entries[entry_idx[i]].fd);
+                        ++n_ready;
+                    }
+                }
+                if (n_ready > 0)
+                    break;
+            }
+        } else if (slice > 0) {
+            Sleep(slice);
+        }
+
+        if (timeout_ms == 0)
+            break;
     }
 
     for (int j = 0; j < n_wsa; ++j) {
@@ -1145,7 +1196,7 @@ pkg_mux_wait(pkg_mux_t *m, int timeout_ms)
         WSACloseEvent(wsa_evs[j]);
     }
 
-    return (ret == WAIT_TIMEOUT) ? 0 : (n_ready > 0 ? n_ready : -1);
+    return wait_error ? -1 : n_ready;
 }
 
 int
