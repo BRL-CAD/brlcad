@@ -33,6 +33,8 @@ class SDAI_Application_instance;
 
 /* must come after nist step headers */
 #include "brep.h"
+
+#include <map>
 #include "nmg.h"
 
 #include "STEPEntity.h"
@@ -104,6 +106,820 @@ class SDAI_Application_instance;
 extern void print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoints);
 #endif
 
+namespace {
+
+/* Dense validation is the final proof that a repaired or reused pcurve lifts
+ * to its exact STEP edge within the file uncertainty.  1024 uniform segments
+ * were selected as a bounded empirical budget: they resolve the short seam
+ * reversals in the Mark V acceptance model while keeping validation linear and
+ * deterministic.  This is a validation budget, not a geometric tolerance or
+ * a request to approximate the edge with 1024 segments. */
+constexpr int kDenseLiftValidationSegments = 1024;
+
+/* Keep numerical solver floors comfortably above floating-point zero without
+ * replacing the model-derived tolerance used for acceptance. */
+constexpr double kNumericalToleranceScale = 1024.0;
+
+} // namespace
+
+
+static double
+distance_to_curve(const ON_Curve *curve, const ON_3dPoint &point)
+{
+    if (!curve)
+	return DBL_MAX;
+
+    ON_NurbsCurve nurbs;
+    if (!curve->GetNurbForm(nurbs))
+	return DBL_MAX;
+    double parameter = 0.0;
+    if (!ON_NurbsCurve_GetClosestPoint(&parameter, &nurbs, point))
+	return DBL_MAX;
+    return point.DistanceTo(nurbs.PointAt(parameter));
+}
+
+
+static void
+destroy_pullback_data(PBCData *data)
+{
+    if (!data)
+	return;
+    if (data->segments) {
+	while (!data->segments->empty()) {
+	    delete data->segments->front();
+	    data->segments->pop_front();
+	}
+	delete data->segments;
+    }
+    delete data;
+}
+
+
+static int
+pullback_sample_count(const PBCData *data)
+{
+    int count = 0;
+    if (!data || !data->segments)
+	return count;
+    for (std::list<ON_2dPointArray *>::const_iterator segment =
+	    data->segments->begin(); segment != data->segments->end(); ++segment) {
+	if (*segment)
+	    count += (*segment)->Count();
+    }
+    return count;
+}
+
+
+static double
+short_curve_pullback_resolution(const ON_Curve *curve, double model_tolerance)
+{
+    const double numerical_floor = ON_ZERO_TOLERANCE * kNumericalToleranceScale;
+    if (!curve || !(model_tolerance > numerical_floor))
+	return std::max(numerical_floor, model_tolerance * 0.1);
+
+    ON_BoundingBox bbox;
+    double feature_size = 0.0;
+    if (curve->GetTightBoundingBox(bbox, false, NULL) && bbox.IsValid())
+	feature_size = bbox.Diagonal().Length();
+    const ON_Interval domain = curve->Domain();
+    feature_size = std::max(feature_size,
+	curve->PointAt(domain.Min()).DistanceTo(curve->PointAt(domain.Max())));
+    if (!(feature_size > numerical_floor))
+	return std::max(numerical_floor, model_tolerance * 0.1);
+
+    /* The file uncertainty remains the validation and topology tolerance.
+     * This smaller value only prevents the numerical closest-point solver
+     * from treating every point of a sub-tolerance feature as the same UV. */
+    return std::max(numerical_floor,
+	std::min(model_tolerance * 0.1, feature_size * 0.01));
+}
+
+
+static bool
+refine_surface_point_seeded(const ON_Surface *surface, const ON_3dPoint &target,
+	double tolerance, ON_3dPoint &uv, double *final_distance)
+{
+    if (final_distance)
+	*final_distance = DBL_MAX;
+    if (!surface || !target.IsValid() || !uv.IsValid() || !(tolerance > 0.0))
+	return false;
+
+    double best_distance = DBL_MAX;
+    for (int iteration = 0; iteration < 32; ++iteration) {
+	ON_3dPoint point;
+	ON_3dVector du, dv;
+	if (!surface->Ev1Der(uv.x, uv.y, point, du, dv))
+	    break;
+	const ON_3dVector residual = target - point;
+	best_distance = residual.Length();
+	if (best_distance <= tolerance)
+	    break;
+	const double a = du * du;
+	const double b = du * dv;
+	const double c = dv * dv;
+	const double r0 = du * residual;
+	const double r1 = dv * residual;
+	const double metric_scale = std::max(1.0, std::max(a, c));
+	const double damping = DBL_EPSILON * metric_scale * 64.0;
+	const double aa = a + damping;
+	const double cc = c + damping;
+	const double determinant = aa * cc - b * b;
+	if (fabs(determinant) <= DBL_EPSILON * metric_scale * metric_scale)
+	    break;
+	double delta[2] = {(cc * r0 - b * r1) / determinant,
+	    (aa * r1 - b * r0) / determinant};
+	double trust_scale = 1.0;
+	for (int direction = 0; direction < 2; ++direction) {
+	    const double maximum_step = 0.125 * surface->Domain(direction).Length();
+	    if (maximum_step > ON_ZERO_TOLERANCE && fabs(delta[direction]) > maximum_step)
+		trust_scale = std::min(trust_scale, maximum_step / fabs(delta[direction]));
+	}
+
+	bool improved = false;
+	for (int reduction = 0; reduction < 12; ++reduction) {
+	    const double scale = trust_scale * std::ldexp(1.0, -reduction);
+	    ON_3dPoint candidate(uv.x + scale * delta[0],
+		uv.y + scale * delta[1], 0.0);
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (surface->IsClosed(direction))
+		    continue;
+		const ON_Interval domain = surface->Domain(direction);
+		candidate[direction] = std::max(domain.Min(),
+		    std::min(domain.Max(), candidate[direction]));
+	    }
+	    const ON_3dPoint candidate_lift = surface->PointAt(candidate.x, candidate.y);
+	    if (!candidate_lift.IsValid())
+		continue;
+	    const double candidate_distance = candidate_lift.DistanceTo(target);
+	    if (candidate_distance < best_distance) {
+		uv = candidate;
+		best_distance = candidate_distance;
+		improved = true;
+		break;
+	    }
+	}
+	if (!improved)
+	    break;
+    }
+    if (final_distance)
+	*final_distance = best_distance;
+    return best_distance <= tolerance;
+}
+
+
+static bool
+seam_boundary_score(PBCData *data, int direction, double value, double tolerance, double *score)
+{
+    if (!data || !data->surf || !data->curve || !data->segments || !score || tolerance <= 0.0)
+	return false;
+
+    const ON_Interval domain = data->surf->Domain(direction);
+    if (!domain.IsIncreasing())
+	return false;
+
+    *score = 0.0;
+    for (std::list<ON_2dPointArray *>::const_iterator segment = data->segments->begin();
+	 segment != data->segments->end(); ++segment) {
+	if (!*segment)
+	    continue;
+	for (int i = 0; i < (*segment)->Count(); ++i) {
+	    const ON_2dPoint original = (**segment)[i];
+	    ON_2dPoint snapped = original;
+	    snapped[direction] = value;
+	    const ON_3dPoint lifted = data->surf->PointAt(snapped.x, snapped.y);
+	    if (!lifted.IsValid() || distance_to_curve(data->curve, lifted) > tolerance)
+		return false;
+	    *score += fabs(original[direction] - value) / domain.Length();
+	}
+    }
+    return true;
+}
+
+
+static void
+pullback_loop_metrics(const std::list<PBCData *> &pullbacks, PBCData *first, double first_value,
+	PBCData *second, double second_value, int direction, double period, double *area, double *gap)
+{
+    ON_2dPoint initial;
+    ON_2dPoint previous;
+    bool have_previous = false;
+    double twice_area = 0.0;
+    *gap = 0.0;
+    for (std::list<PBCData *>::const_iterator data = pullbacks.begin(); data != pullbacks.end(); ++data) {
+	if (!*data || !(*data)->segments)
+	    continue;
+	for (std::list<ON_2dPointArray *>::const_iterator segment = (*data)->segments->begin();
+	     segment != (*data)->segments->end(); ++segment) {
+	    if (!*segment)
+		continue;
+	    for (int i = 0; i < (*segment)->Count(); ++i) {
+		ON_2dPoint point = (**segment)[i];
+		if (*data == first)
+		    point[direction] = first_value;
+		else if (*data == second)
+		    point[direction] = second_value;
+		else if (have_previous)
+		    point[direction] += round((previous[direction] - point[direction]) / period) * period;
+		if (!have_previous) {
+		    initial = point;
+		    have_previous = true;
+		} else {
+		    if (i == 0) {
+			const double join_gap = previous.DistanceTo(point);
+			if (join_gap > *gap)
+			    *gap = join_gap;
+		    }
+		    twice_area += previous.x * point.y - point.x * previous.y;
+		}
+		previous = point;
+	    }
+	}
+    }
+    if (have_previous) {
+	twice_area += previous.x * initial.y - initial.x * previous.y;
+	const double closure_gap = previous.DistanceTo(initial);
+	if (closure_gap > *gap)
+	    *gap = closure_gap;
+    }
+    *area = 0.5 * twice_area;
+}
+
+
+static bool
+align_nurbs_surface_seam(std::list<PBCData *> &pullbacks, const ON_Surface *surface,
+	double tolerance)
+{
+    ON_NurbsSurface *nurbs = ON_NurbsSurface::Cast(const_cast<ON_Surface *>(surface));
+    ON_RevSurface *revolution = ON_RevSurface::Cast(const_cast<ON_Surface *>(surface));
+    if ((!nurbs && !revolution) || !(tolerance > 0.0))
+	return false;
+
+    for (std::list<PBCData *>::iterator first = pullbacks.begin(); first != pullbacks.end(); ++first) {
+	if (!*first || !(*first)->edge || !(*first)->segments)
+	    continue;
+	std::list<PBCData *>::iterator second = first;
+	++second;
+	for (; second != pullbacks.end(); ++second) {
+	    if (!*second || (*second)->edge != (*first)->edge || !(*second)->segments)
+		continue;
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (!surface->IsClosed(direction))
+		    continue;
+		const ON_Interval domain = surface->Domain(direction);
+		const double period = domain.Length();
+		if (!(period > 0.0))
+		    continue;
+		double values[2] = {0.0, 0.0};
+		bool constant[2] = {true, true};
+		PBCData *pair[2] = {*first, *second};
+		for (int member = 0; member < 2; ++member) {
+		    bool have_value = false;
+		    for (std::list<ON_2dPointArray *>::const_iterator segment =
+			    pair[member]->segments->begin();
+			 segment != pair[member]->segments->end(); ++segment) {
+			if (!*segment)
+			    continue;
+			for (int point = 0; point < (*segment)->Count(); ++point) {
+			    const double value = (**segment)[point][direction];
+			    if (!have_value) {
+				values[member] = value;
+				have_value = true;
+			    } else if (fabs(value - values[member]) >
+				    1.0e-8 * std::max(1.0, period)) {
+				constant[member] = false;
+			    }
+			}
+		    }
+		    if (!have_value)
+			constant[member] = false;
+		}
+		if (!constant[0] || !constant[1] ||
+			fabs(fabs(values[0] - values[1]) - period) >
+			    1.0e-7 * std::max(1.0, period))
+		    continue;
+
+		const double lower = std::min(values[0], values[1]);
+		double seam = std::max(values[0], values[1]);
+		while (seam < domain.Min()) seam += period;
+		while (seam > domain.Max()) seam -= period;
+		if (seam <= domain.Min() + ON_ZERO_TOLERANCE ||
+			seam >= domain.Max() - ON_ZERO_TOLERANCE)
+		    continue;
+		const double shift = seam - lower;
+		ON_NurbsSurface nurbs_candidate;
+		ON_RevSurface revolution_candidate;
+		const ON_Surface *candidate = NULL;
+		if (nurbs) {
+		    nurbs_candidate = *nurbs;
+		    if (!nurbs_candidate.ChangeSurfaceSeam(direction, seam))
+			continue;
+		    candidate = &nurbs_candidate;
+		} else {
+		    const int angle_direction = revolution->m_bTransposed ? 1 : 0;
+		    if (direction != angle_direction ||
+			fabs(revolution->m_angle.Length() - ON_2PI) > ON_ZERO_TOLERANCE)
+			continue;
+		    revolution_candidate = *revolution;
+		    const double angle = revolution->m_angle.ParameterAt(
+			domain.NormalizedParameterAt(seam));
+		    revolution_candidate.m_angle.Set(angle, angle + ON_2PI);
+		    revolution_candidate.m_t.Set(seam, seam + period);
+		    candidate = &revolution_candidate;
+		}
+
+		bool valid = true;
+		for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
+		     valid && data != pullbacks.end(); ++data) {
+		    if (!*data || !(*data)->segments)
+			continue;
+		    for (std::list<ON_2dPointArray *>::const_iterator segment =
+			    (*data)->segments->begin();
+			 valid && segment != (*data)->segments->end(); ++segment) {
+			if (!*segment)
+			    continue;
+			for (int point = 0; point < (*segment)->Count(); ++point) {
+			    const ON_2dPoint original = (**segment)[point];
+			    ON_2dPoint shifted = original;
+			    shifted[direction] += shift;
+			    const ON_3dPoint original_lift = surface->PointAt(
+				original.x, original.y);
+			    const ON_3dPoint shifted_lift = candidate->PointAt(
+				shifted.x, shifted.y);
+			    if (!original_lift.IsValid() || !shifted_lift.IsValid() ||
+				    original_lift.DistanceTo(shifted_lift) > tolerance) {
+				valid = false;
+				break;
+			    }
+			}
+		    }
+		}
+		if (!valid)
+		    continue;
+
+		if (nurbs)
+		    *nurbs = nurbs_candidate;
+		else
+		    *revolution = revolution_candidate;
+		for (std::list<PBCData *>::iterator data = pullbacks.begin();
+		     data != pullbacks.end(); ++data) {
+		    if (!*data || !(*data)->segments)
+			continue;
+		    for (std::list<ON_2dPointArray *>::iterator segment =
+			    (*data)->segments->begin();
+			 segment != (*data)->segments->end(); ++segment) {
+			if (!*segment)
+			    continue;
+			for (int point = 0; point < (*segment)->Count(); ++point)
+			    (**segment)[point][direction] += shift;
+		    }
+		}
+		return true;
+	    }
+	}
+    }
+    return false;
+}
+
+
+static bool
+snap_seam_pullback_pair(std::list<PBCData *> &pullbacks, PBCData *first, PBCData *second,
+	ON_BrepLoop::TYPE expected_loop_type, double tolerance)
+{
+    if (!first || !second || first->surf != second->surf)
+	return false;
+
+    struct PairCandidate {
+	int direction;
+	double first_value;
+	double second_value;
+	double score;
+	double area;
+	double gap;
+    };
+    std::vector<PairCandidate> candidates;
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!first->surf->IsClosed(direction))
+	    continue;
+	const ON_Interval domain = first->surf->Domain(direction);
+	if (!domain.IsIncreasing())
+	    continue;
+	for (int reverse = 0; reverse < 2; ++reverse) {
+	    const double first_value = reverse ? domain.Max() : domain.Min();
+	    const double second_value = reverse ? domain.Min() : domain.Max();
+	    double first_score = 0.0;
+	    double second_score = 0.0;
+	    if (!seam_boundary_score(first, direction, first_value, tolerance, &first_score) ||
+		!seam_boundary_score(second, direction, second_value, tolerance, &second_score))
+		continue;
+	    double area = 0.0;
+	    double gap = 0.0;
+	    pullback_loop_metrics(pullbacks, first, first_value, second, second_value,
+		direction, domain.Length(), &area, &gap);
+	    candidates.push_back({direction, first_value, second_value,
+		first_score + second_score, area, gap});
+	}
+    }
+    if (candidates.empty())
+	return false;
+
+    PairCandidate *best = NULL;
+    for (std::vector<PairCandidate>::iterator candidate = candidates.begin(); candidate != candidates.end(); ++candidate) {
+	const bool expected_orientation =
+	    (expected_loop_type == ON_BrepLoop::outer && candidate->area > 0.0) ||
+	    (expected_loop_type == ON_BrepLoop::inner && candidate->area < 0.0);
+	const bool best_orientation = best &&
+	    ((expected_loop_type == ON_BrepLoop::outer && best->area > 0.0) ||
+	     (expected_loop_type == ON_BrepLoop::inner && best->area < 0.0));
+	if (!best || (expected_orientation && !best_orientation) ||
+	    (expected_orientation == best_orientation && candidate->gap < best->gap) ||
+	    (expected_orientation == best_orientation &&
+	     fabs(candidate->gap - best->gap) <= ON_ZERO_TOLERANCE && candidate->score < best->score))
+	    best = &*candidate;
+    }
+    if (!best)
+	return false;
+
+    bool changed = false;
+
+    const double period = first->surf->Domain(best->direction).Length();
+    ON_2dPoint previous;
+    bool have_previous = false;
+    for (std::list<PBCData *>::iterator data = pullbacks.begin(); data != pullbacks.end(); ++data) {
+	if (!*data || !(*data)->segments)
+	    continue;
+	for (std::list<ON_2dPointArray *>::iterator segment = (*data)->segments->begin();
+	     segment != (*data)->segments->end(); ++segment) {
+	    if (!*segment)
+		continue;
+	    for (int i = 0; i < (*segment)->Count(); ++i) {
+		ON_2dPoint *point = (*segment)->At(i);
+		double value = (*point)[best->direction];
+		if (*data == first)
+		    value = best->first_value;
+		else if (*data == second)
+		    value = best->second_value;
+		else if (have_previous)
+		    value += round((previous[best->direction] - value) / period) * period;
+		if (fabs((*point)[best->direction] - value) > ON_ZERO_TOLERANCE) {
+		    (*point)[best->direction] = value;
+		    changed = true;
+		}
+		previous = *point;
+		have_previous = true;
+	    }
+        }
+    }
+    return changed;
+}
+
+
+static size_t
+snap_pullback_loop_endpoints(std::list<PBCData *> &pullbacks, const ON_Brep *brep,
+    double tolerance)
+{
+    struct SegmentRef {
+	PBCData *data;
+	ON_2dPointArray *samples;
+    };
+    std::vector<SegmentRef> segments;
+    if (!brep || tolerance <= 0.0) return 0;
+    for (std::list<PBCData *>::iterator data = pullbacks.begin();
+	 data != pullbacks.end(); ++data) {
+	if (!*data || !(*data)->segments || !(*data)->surf || !(*data)->edge) continue;
+	for (std::list<ON_2dPointArray *>::iterator segment = (*data)->segments->begin();
+	     segment != (*data)->segments->end(); ++segment) {
+	    if (*segment && (*segment)->Count() >= 2)
+		segments.push_back({*data, *segment});
+	}
+    }
+    if (segments.empty()) return 0;
+
+    /* A repeated edge that has already been placed exactly on the two sides
+     * of a closed surface is a proven seam bridge.  Its boundary coordinate
+     * is authoritative: moving one of its endpoints to an equivalent,
+     * off-boundary periodic image makes openNURBS classify the trim as a seam
+     * with not_iso geometry. */
+    const auto is_pinned_seam_endpoint = [&pullbacks](PBCData *candidate,
+	const ON_2dPoint &endpoint) {
+	if (!candidate || !candidate->edge || !candidate->surf || !candidate->segments)
+	    return false;
+	size_t edge_uses = 0;
+	for (std::list<PBCData *>::const_iterator data = pullbacks.begin();
+	     data != pullbacks.end(); ++data) {
+	    if (*data && (*data)->edge == candidate->edge)
+		++edge_uses;
+	}
+	if (edge_uses != 2)
+	    return false;
+	for (int direction = 0; direction < 2; ++direction) {
+	    if (!candidate->surf->IsClosed(direction))
+		continue;
+	    const ON_Interval domain = candidate->surf->Domain(direction);
+	    for (int side = 0; side < 2; ++side) {
+		const double boundary = domain[side];
+		if (fabs(endpoint[direction] - boundary) > ON_ZERO_TOLERANCE)
+		    continue;
+		bool on_boundary = true;
+		for (std::list<ON_2dPointArray *>::const_iterator segment =
+			candidate->segments->begin();
+		     on_boundary && segment != candidate->segments->end(); ++segment) {
+		    if (!*segment) {
+			on_boundary = false;
+			break;
+		    }
+		    for (int point = 0; point < (*segment)->Count(); ++point) {
+			if (fabs((**segment)[point][direction] - boundary) >
+				ON_ZERO_TOLERANCE) {
+			    on_boundary = false;
+			    break;
+			}
+		    }
+		}
+		if (on_boundary)
+		    return true;
+	    }
+	}
+	return false;
+    };
+
+    size_t changed = 0;
+    for (size_t i = 0; i < segments.size(); ++i) {
+	SegmentRef &current = segments[i];
+	SegmentRef &next = segments[(i + 1) % segments.size()];
+	ON_2dPoint *end = current.samples->At(current.samples->Count() - 1);
+	ON_2dPoint *start = next.samples->At(0);
+	if (!end || !start || end->DistanceTo(*start) <= ON_ZERO_TOLERANCE ||
+	    current.data->surf != next.data->surf)
+	    continue;
+
+	int shared_vertex = -1;
+	if (current.data != next.data) {
+	    for (int current_vertex = 0; current_vertex < 2; ++current_vertex) {
+		for (int next_vertex = 0; next_vertex < 2; ++next_vertex) {
+		    if (current.data->edge->m_vi[current_vertex] ==
+			next.data->edge->m_vi[next_vertex]) {
+			if (shared_vertex >= 0 && shared_vertex !=
+				current.data->edge->m_vi[current_vertex]) {
+			    shared_vertex = -2;
+			    break;
+			}
+			shared_vertex = current.data->edge->m_vi[current_vertex];
+		    }
+		}
+		if (shared_vertex == -2) break;
+	    }
+	    if (shared_vertex < 0 || shared_vertex >= brep->m_V.Count())
+		continue;
+	}
+
+	const ON_3dPoint lifted_end = current.data->surf->PointAt(end->x, end->y);
+	const ON_3dPoint lifted_start = next.data->surf->PointAt(start->x, start->y);
+	if (!lifted_end.IsValid() || !lifted_start.IsValid())
+	    continue;
+	ON_2dPoint common = *end;
+	const bool end_is_pinned_seam = is_pinned_seam_endpoint(current.data, *end);
+	const bool start_is_pinned_seam = is_pinned_seam_endpoint(next.data, *start);
+	if (end_is_pinned_seam != start_is_pinned_seam) {
+	    common = end_is_pinned_seam ? *end : *start;
+	    if (shared_vertex >= 0 && common.IsValid()) {
+		const ON_3dPoint vertex = brep->m_V[shared_vertex].point;
+		const ON_3dPoint lifted_common = current.data->surf->PointAt(common.x, common.y);
+		if (!lifted_common.IsValid() || lifted_common.DistanceTo(vertex) > tolerance) {
+		    const ON_2dPoint alternate = end_is_pinned_seam ? *start : *end;
+		    const ON_3dPoint lifted_alternate = current.data->surf->PointAt(
+			alternate.x, alternate.y);
+		    bool preserves_boundary = lifted_alternate.IsValid() &&
+			lifted_alternate.DistanceTo(vertex) <= tolerance;
+		    const ON_2dPoint pinned = end_is_pinned_seam ? *end : *start;
+		    PBCData *pinned_data = end_is_pinned_seam ? current.data : next.data;
+		    for (int direction = 0; direction < 2 && preserves_boundary; ++direction) {
+			if (!current.data->surf->IsClosed(direction))
+			    continue;
+			const ON_Interval domain = current.data->surf->Domain(direction);
+			for (int side = 0; side < 2; ++side) {
+			    if (fabs(pinned[direction] - domain[side]) > ON_ZERO_TOLERANCE)
+				continue;
+			    bool curve_on_boundary = true;
+			    for (std::list<ON_2dPointArray *>::const_iterator segment =
+				    pinned_data->segments->begin(); curve_on_boundary &&
+				    segment != pinned_data->segments->end(); ++segment) {
+				if (!*segment) {
+				    curve_on_boundary = false;
+				    break;
+				}
+				for (int point = 0; point < (*segment)->Count(); ++point) {
+				    if (fabs((**segment)[point][direction] - domain[side]) >
+					    ON_ZERO_TOLERANCE) {
+					curve_on_boundary = false;
+					break;
+				    }
+				}
+			    }
+			    if (curve_on_boundary && fabs(alternate[direction] -
+				    domain[side]) > ON_ZERO_TOLERANCE) {
+				preserves_boundary = false;
+				break;
+			    }
+			}
+		    }
+		    if (!preserves_boundary)
+			continue;
+		    common = alternate;
+		}
+	    }
+	} else if (shared_vertex >= 0) {
+	    const ON_3dPoint vertex = brep->m_V[shared_vertex].point;
+	    const bool end_valid = lifted_end.DistanceTo(vertex) <= tolerance;
+	    const bool start_valid = lifted_start.DistanceTo(vertex) <= tolerance;
+	    if (!end_valid || !start_valid) {
+		if (end_valid) {
+		    common = *end;
+		} else if (start_valid) {
+		    common = *start;
+		} else {
+		    if (!current.data->context)
+			current.data->context = std::make_shared<brlcad::PullbackContext>();
+		    ON_3dPoint projected;
+		    double distance = DBL_MAX;
+		    if (!current.data->context->SurfaceClosestPoint(current.data->surf,
+			    vertex, common, projected, distance, 0, tolerance, tolerance) ||
+			distance > tolerance)
+			continue;
+		    /* Select the periodic image nearest the existing loop endpoint. */
+		    for (int direction = 0; direction < 2; ++direction) {
+			if (!current.data->surf->IsClosed(direction)) continue;
+			const double period = current.data->surf->Domain(direction).Length();
+			if (period > ON_ZERO_TOLERANCE)
+			    common[direction] += round(((*end)[direction] - common[direction]) /
+				period) * period;
+		    }
+		}
+	    }
+	} else if (lifted_end.DistanceTo(lifted_start) > tolerance) {
+	    continue;
+	}
+
+	/* The two UVs are proven to represent the same topological 3-D point
+	 * within the model uncertainty.  Use the preceding trim's endpoint so
+	 * openNURBS sees an exactly closed parameter-space loop. */
+	*end = common;
+	*start = common;
+	++changed;
+    }
+    return changed;
+}
+
+
+static ON_Curve *
+closed_edge_iso_line(PBCData *data, const ON_2dPointArray &samples, double tolerance)
+{
+    if (!data || !data->edge || !data->surf || !data->curve || samples.Count() < 2 ||
+	data->edge->m_vi[0] != data->edge->m_vi[1] || tolerance <= 0.0)
+	return NULL;
+
+    struct IsoCandidate {
+	int direction;
+	double value;
+	double score;
+	ON_2dPoint start;
+	ON_2dPoint end;
+    };
+    std::vector<IsoCandidate> candidates;
+    for (int direction = 0; direction < 2; ++direction) {
+	const ON_Interval domain = data->surf->Domain(direction);
+	if (!domain.IsIncreasing())
+	    continue;
+	for (int side = 0; side < 2; ++side) {
+	    const double value = domain[side];
+	    ON_2dPoint start = samples[0];
+	    ON_2dPoint end = samples[samples.Count() - 1];
+	    start[direction] = value;
+	    end[direction] = value;
+	    if (fabs(end[1 - direction] - start[1 - direction]) <= ON_ZERO_TOLERANCE)
+		continue;
+
+	    bool forward_valid = true;
+	    bool reverse_valid = true;
+	    const ON_Interval curve_domain = data->curve->Domain();
+	    for (int i = 0; i <= 64; ++i) {
+		const double parameter = static_cast<double>(i) / 64.0;
+		const ON_2dPoint uv = (1.0 - parameter) * start + parameter * end;
+		const ON_3dPoint lifted = data->surf->PointAt(uv.x, uv.y);
+		if (!lifted.IsValid()) {
+		    forward_valid = false;
+		    reverse_valid = false;
+		    break;
+		}
+		if (lifted.DistanceTo(data->curve->PointAt(curve_domain.ParameterAt(parameter))) > tolerance)
+		    forward_valid = false;
+		if (lifted.DistanceTo(data->curve->PointAt(curve_domain.ParameterAt(1.0 - parameter))) > tolerance)
+		    reverse_valid = false;
+	    }
+	    if (!forward_valid && !reverse_valid)
+		continue;
+
+	    double score = 0.0;
+	    for (int i = 0; i < samples.Count(); ++i)
+		score += fabs(samples[i][direction] - value) / domain.Length();
+	    candidates.push_back({direction, value, score, start, end});
+	}
+    }
+
+    IsoCandidate *best = NULL;
+    for (std::vector<IsoCandidate>::iterator candidate = candidates.begin(); candidate != candidates.end(); ++candidate) {
+	if (!best || candidate->score < best->score)
+	    best = &*candidate;
+    }
+    return best ? new ON_LineCurve(best->start, best->end) : NULL;
+}
+
+
+/* A plane has an exact affine inverse, so do not send planar edge curves
+ * through the iterative closest-point pullback.  Besides being faster, this
+ * handles high-degree closed and half-closed curves whose coincident end
+ * points can make an unseeded numerical search ambiguous.  The lift check is
+ * deliberately retained: if an exporter supplied inconsistent topology, the
+ * caller falls back to the bounded general pullback instead of accepting it. */
+static PBCData *
+exact_planar_pullback(const ON_Surface *surface, const ON_Curve *curve,
+    double tolerance, ON_Curve **exact_curve)
+{
+    if (exact_curve) *exact_curve = NULL;
+    const ON_PlaneSurface *plane_surface = ON_PlaneSurface::Cast(surface);
+    if (!plane_surface || !curve || !exact_curve || tolerance <= 0.0)
+	return NULL;
+
+    const ON_Plane &plane = plane_surface->m_plane;
+    ON_Xform world_to_plane(ON_Xform::IdentityTransformation);
+    if (!world_to_plane.ChangeBasis(ON_Plane::World_xy, plane))
+	return NULL;
+
+    ON_Curve *pcurve = curve->DuplicateCurve();
+    if (!pcurve || !pcurve->Transform(world_to_plane)) {
+	delete pcurve;
+	return NULL;
+    }
+
+    ON_Xform plane_to_parameter(ON_Xform::IdentityTransformation);
+    for (int direction = 0; direction < 2; ++direction) {
+	const ON_Interval extents = plane_surface->Extents(direction);
+	const ON_Interval domain = plane_surface->Domain(direction);
+	if (!extents.IsIncreasing() || !domain.IsIncreasing()) {
+	    delete pcurve;
+	    return NULL;
+	}
+	const double scale = domain.Length() / extents.Length();
+	plane_to_parameter.m_xform[direction][direction] = scale;
+	plane_to_parameter.m_xform[direction][3] = domain.Min() - scale * extents.Min();
+    }
+    if (!pcurve->Transform(plane_to_parameter) || !pcurve->ChangeDimension(2)) {
+	delete pcurve;
+	return NULL;
+    }
+
+    const ON_Interval curve_domain = curve->Domain();
+    const ON_Interval pcurve_domain = pcurve->Domain();
+    bool forward = true;
+    bool reverse = true;
+    for (int sample = 0; sample <= 64; ++sample) {
+	const double normalized = static_cast<double>(sample) / 64.0;
+	const ON_3dPoint point = curve->PointAt(curve_domain.ParameterAt(normalized));
+	const ON_3dPoint forward_uv = pcurve->PointAt(pcurve_domain.ParameterAt(normalized));
+	const ON_3dPoint reverse_uv = pcurve->PointAt(pcurve_domain.ParameterAt(1.0 - normalized));
+	forward = forward && point.DistanceTo(surface->PointAt(forward_uv.x, forward_uv.y)) <= tolerance;
+	reverse = reverse && point.DistanceTo(surface->PointAt(reverse_uv.x, reverse_uv.y)) <= tolerance;
+    }
+    if (!forward && !reverse) {
+	delete pcurve;
+	return NULL;
+    }
+    if (!forward && !pcurve->Reverse()) {
+	delete pcurve;
+	return NULL;
+    }
+
+    ON_2dPointArray *samples = new ON_2dPointArray();
+    const ON_Interval validated_domain = pcurve->Domain();
+    for (int sample = 0; sample <= 64; ++sample) {
+	const double normalized = static_cast<double>(sample) / 64.0;
+	const ON_3dPoint uv = pcurve->PointAt(validated_domain.ParameterAt(normalized));
+	samples->Append(ON_2dPoint(uv.x, uv.y));
+    }
+
+    PBCData *data = new PBCData();
+    data->tolerance = tolerance;
+    data->flatness = tolerance;
+    data->curve = curve;
+    data->surf = surface;
+    data->surftree = NULL;
+    data->segments = new std::list<ON_2dPointArray *>();
+    data->segments->push_back(samples);
+    data->edge = NULL;
+    data->order_reversed = false;
+    *exact_curve = pcurve;
+    return data;
+}
+
 ON_Brep *
 AdvancedBrepShapeRepresentation::GetONBrep()
 {
@@ -171,7 +987,7 @@ ShellBasedSurfaceModel::LoadONBrep(ON_Brep *brep)
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
-    LIST_OF_OPEN_SHELLS::iterator i;
+    LIST_OF_SHELL_BOUNDARIES::iterator i;
     for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
@@ -1096,7 +1912,7 @@ CartesianPoint::AddVertex(ON_Brep *brep)
 	ON_3dPoint p(coordinates[0] * LocalUnits::length, coordinates[1] * LocalUnits::length, coordinates[2] * LocalUnits::length);
 	ON_BrepVertex &v = brep->NewVertex(p);
 	vertex_index = v.m_vertex_index;
-	v.m_tolerance = 1e-3;
+	v.m_tolerance = LocalUnits::tolerance;
 	ON_id = v.m_vertex_index;
     }
 }
@@ -1283,7 +2099,8 @@ EdgeCurve::LoadONBrep(ON_Brep *brep)
     }
 
     ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start->GetONId()], brep->m_V[end->GetONId()], edge_geometry->GetONId());
-    edge.m_tolerance = 1e-3; //TODO: - need tolerance definition or constant
+    edge.m_tolerance = LocalUnits::tolerance;
+    edge.m_edge_user.i = id;
     ON_id = edge.m_edge_index;
     if (same_sense != 1) {
 	edge.Reverse();
@@ -1453,18 +2270,20 @@ bool _debug_print_ = false;
 bool
 Path::LoadONTrimmingCurves(ON_Brep *brep)
 {
-    ON_TextLog tl;
     LIST_OF_ORIENTED_EDGES::iterator i;
     list<PBCData *> curve_pullback_samples;
+    std::map<PBCData *, ON_Curve *> exact_pullbacks;
 
     if (!brep) {
 	/* nothing to do */
 	return false;
     }
 
-    const ON_BrepLoop *loop = &brep->m_L[ON_path_index];
+    ON_BrepLoop *loop = &brep->m_L[ON_path_index];
+    loop->m_loop_user.i = id;
     ON_BrepFace *face = loop->Face();
     const ON_Surface *surface = face->SurfaceOf();
+    const int initial_trim_count = loop->TrimCount();
 
 #if 0
     if (surface) {
@@ -1515,13 +2334,49 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	if ((false) && (id == 34193)) {
 	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
 	}
-	data = pullback_samples(surface, curve);
+	ON_Curve *exact_curve = NULL;
+	data = exact_planar_pullback(surface, curve, LocalUnits::tolerance, &exact_curve);
+	if (data)
+	    exact_pullbacks[data] = exact_curve;
+	else {
+	    if (step && step->Verbose() && ON_PlaneSurface::Cast(surface))
+		std::cerr << "EDGE_LOOP #" << id << ": exact planar trim rejected for edge #"
+		    << (*i)->STEPid() << "; using bounded pullback" << std::endl;
+	    data = pullback_samples(surface, curve, LocalUnits::tolerance,
+		LocalUnits::tolerance, LocalUnits::tolerance, LocalUnits::tolerance);
+	    if (data && pullback_sample_count(data) < 2 &&
+		    !surface->IsClosed(0) && !surface->IsClosed(1)) {
+		const double resolution = short_curve_pullback_resolution(curve,
+		    LocalUnits::tolerance);
+		PBCData *refined = pullback_samples(surface, curve,
+		    LocalUnits::tolerance, LocalUnits::tolerance,
+		    resolution, resolution);
+		if (refined && pullback_sample_count(refined) >= 2) {
+		    destroy_pullback_data(data);
+		    data = refined;
+		    if (step && step->ImportOptions().repair ==
+			    brlcad::step::RepairMode::Safe)
+			step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+			    "refined pullback resolution for a feature below model tolerance");
+		} else {
+		    destroy_pullback_data(refined);
+		}
+	    }
+	}
 	if (data == NULL) {
+	    if (step && step->Verbose())
+		std::cerr << "EDGE_LOOP #" << id << ": could not construct a validated trim for edge #"
+		    << (*i)->STEPid() << std::endl;
 	    continue;
 	}
 
 	if (!orientWithCurve) {
 	    data->order_reversed = true;
+	    std::map<PBCData *, ON_Curve *>::iterator exact = exact_pullbacks.find(data);
+	    if (exact != exact_pullbacks.end() && exact->second && !exact->second->Reverse()) {
+		delete exact->second;
+		exact_pullbacks.erase(exact);
+	    }
 	} else {
 	    data->order_reversed = false;
 	}
@@ -1547,6 +2402,22 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    rsegs.clear();
 	}
     }
+    if (curve_pullback_samples.size() != edge_list.size()) {
+	for (std::map<PBCData *, ON_Curve *>::iterator exact = exact_pullbacks.begin();
+	     exact != exact_pullbacks.end(); ++exact)
+	    delete exact->second;
+	while (!curve_pullback_samples.empty()) {
+	    data = curve_pullback_samples.front();
+	    while (data->segments && !data->segments->empty()) {
+		delete data->segments->front();
+		data->segments->pop_front();
+	    }
+	    delete data->segments;
+	    delete data;
+	    curve_pullback_samples.pop_front();
+	}
+	return false;
+    }
 #ifdef _DEBUG_TESTING_
     //TODO: remove debugging
     if (_debug_print_) {
@@ -1554,9 +2425,119 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	print_pullback_data("Before check_pullback_data", curve_pullback_samples, false);
     }
 #endif
+    // Exact affine planar pullbacks cannot cross a parametric seam or end at
+    // a surface singularity.  Preserve those curves verbatim; the general
+    // seam resolver is intentionally limited to periodic/non-planar results.
+    const bool exact_open_surface = exact_pullbacks.size() == curve_pullback_samples.size() &&
+	!surface->IsClosed(0) && !surface->IsClosed(1);
     // check for seams and singularities
-    if (!check_pullback_data(curve_pullback_samples)) {
+    if (!exact_open_surface && !check_pullback_data(curve_pullback_samples)) {
 	std::cerr << "Error: Can not resolve seam or singularity issues." << std::endl;
+    }
+
+    if (step && step->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
+	    align_nurbs_surface_seam(curve_pullback_samples, surface, LocalUnits::tolerance)) {
+	step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+	    "aligned a periodic NURBS surface seam with its closed edge");
+    }
+
+    if (step && step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+	for (std::list<PBCData *>::iterator current = curve_pullback_samples.begin();
+	     current != curve_pullback_samples.end(); ++current) {
+	    PBCData *current_data = *current;
+	    if (!current_data || !current_data->edge)
+		continue;
+	    size_t edge_uses = 0;
+	    PBCData *paired_data = NULL;
+	    for (std::list<PBCData *>::const_iterator other = curve_pullback_samples.begin();
+		 other != curve_pullback_samples.end(); ++other) {
+		if (*other && (*other)->edge == current_data->edge) {
+		    ++edge_uses;
+		    if (*other != current_data && paired_data == NULL)
+			paired_data = *other;
+		}
+	    }
+	    /* Process the pair only from its first occurrence in loop order. */
+	    bool current_is_first = true;
+	    for (std::list<PBCData *>::const_iterator prior = curve_pullback_samples.begin();
+		 prior != current && prior != curve_pullback_samples.end(); ++prior) {
+		if (*prior && (*prior)->edge == current_data->edge) {
+		    current_is_first = false;
+		    break;
+		}
+	    }
+	if (edge_uses == 2 && current_is_first && snap_seam_pullback_pair(
+		curve_pullback_samples, current_data, paired_data, loop->m_type, LocalUnits::tolerance)) {
+		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+		    "normalized seam pcurve within model tolerance");
+	    }
+	}
+	/* Normalize proven closed boundary edges before closing adjacent samples.
+	 * Doing this during trim emission is too late: a boundary line can move an
+	 * endpoint after its neighboring seam curve has already been constructed. */
+	for (std::list<PBCData *>::iterator current = curve_pullback_samples.begin();
+	     current != curve_pullback_samples.end(); ++current) {
+	    PBCData *current_data = *current;
+	    if (!current_data || !current_data->segments)
+		continue;
+	    for (std::list<ON_2dPointArray *>::iterator segment = current_data->segments->begin();
+		 segment != current_data->segments->end(); ++segment) {
+		if (!*segment || (*segment)->Count() < 2)
+		    continue;
+		ON_Curve *boundary = closed_edge_iso_line(current_data, **segment,
+		    LocalUnits::tolerance);
+		if (!boundary)
+		    continue;
+		const ON_3dPoint start = boundary->PointAtStart();
+		const ON_3dPoint end = boundary->PointAtEnd();
+		(*segment)->At(0)->Set(start.x, start.y);
+		(*segment)->At((*segment)->Count() - 1)->Set(end.x, end.y);
+		delete boundary;
+	    }
+	}
+	const size_t endpoint_repairs = snap_pullback_loop_endpoints(
+	    curve_pullback_samples, brep, LocalUnits::tolerance);
+	if (endpoint_repairs) {
+	    for (size_t repair = 0; repair < endpoint_repairs; ++repair)
+		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+		    "snapped adjacent pcurve endpoint within model tolerance");
+	}
+	if (endpoint_repairs) {
+	    bool seam_changed = false;
+	    for (std::list<PBCData *>::iterator current = curve_pullback_samples.begin();
+		 current != curve_pullback_samples.end(); ++current) {
+		PBCData *current_data = *current;
+		if (!current_data || !current_data->edge)
+		    continue;
+		PBCData *paired_data = NULL;
+		size_t edge_uses = 0;
+		bool current_is_first = true;
+		bool reached_current = false;
+		for (std::list<PBCData *>::iterator other = curve_pullback_samples.begin();
+		     other != curve_pullback_samples.end(); ++other) {
+		    if (other == current) reached_current = true;
+		    if (*other && (*other)->edge == current_data->edge) {
+			++edge_uses;
+			if (other != current && !paired_data) paired_data = *other;
+			if (other != current && !reached_current) current_is_first = false;
+		    }
+		}
+		if (edge_uses == 2 && current_is_first && snap_seam_pullback_pair(
+			curve_pullback_samples, current_data, paired_data, loop->m_type,
+			LocalUnits::tolerance)) {
+		    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+			"normalized seam pcurve within model tolerance");
+		    seam_changed = true;
+		}
+	    }
+	    if (seam_changed) {
+		const size_t final_endpoint_repairs = snap_pullback_loop_endpoints(
+		    curve_pullback_samples, brep, LocalUnits::tolerance);
+		for (size_t repair = 0; repair < final_endpoint_repairs; ++repair)
+		    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+			"snapped adjacent pcurve endpoint within model tolerance");
+	    }
+	}
     }
 #ifdef _DEBUG_TESTING_
     //TODO: remove debugging
@@ -1567,6 +2548,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 #endif
     list<PBCData *>::iterator cs = curve_pullback_samples.begin();
     list<PBCData *>::iterator next_cs;
+    bool trim_construction_failed = false;
 
     cs = curve_pullback_samples.begin();
     while (cs != curve_pullback_samples.end()) {
@@ -1593,42 +2575,437 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    ON_2dPointArray *samples = (*si);
 	    nsamples = (*nsi);
 
-	    //TODO:Fix this shouldn't have sample counts less than 2
-	    if (samples->Count() < 2) {
-		si++;
-		continue;
-	    }
 	    int trimCurve = brep->m_C2.Count();
 	    //TODO: remove debugging code
 	    if ((false) && (trimCurve == 68)) {
 		std::cerr << "Debug:LoadONTrimmingCurves for Path:" << trimCurve << std::endl;
 	    }
-	    ON_Curve *c2d = interpolateCurve(*samples);
-	    brep->m_C2.Append(c2d);
-
-	    ON_BrepTrim &trim = brep->NewTrim((ON_BrepEdge &) * data->edge, data->order_reversed, (ON_BrepLoop &) * loop, trimCurve);
-	    trim.m_tolerance[0] = 1e-3; // FIXME: tolerance?
-	    trim.m_tolerance[1] = 1e-3;
-	    ON_Interval PD = trim.ProxyCurveDomain();
-	    trim.m_iso = surface->IsIsoparametric(*c2d, &PD);
-
-	    if (!trim.IsValid(&tl)) {
-		//TODO: remove debugging code
-		if (false) {
-		    ON_NurbsCurve nurbs_curve;
-		    c2d->GetNurbForm(nurbs_curve);
-		    std::cerr << "Num_knots - " << nurbs_curve.KnotCount() << std::endl;
-		    std::cerr << "CV count - " << nurbs_curve.CVCount() << std::endl;
-		    for (int knot_index = 0; knot_index < nurbs_curve.KnotCount(); knot_index++) {
-			std::cerr << "Knot[" << knot_index << "] - " << nurbs_curve.Knot(knot_index) << std::endl;
+	    ON_Curve *c2d = NULL;
+	    /* A short exact boundary can collapse to one pullback sample when its
+	     * length is below the asserted model uncertainty.  Do not silently
+	     * omit that topology edge.  Leave c2d unset so the bounded adjacent-
+	     * endpoint reconstruction below can prove and restore the pcurve. */
+	    if (samples && samples->Count() >= 2) {
+	    std::map<PBCData *, ON_Curve *>::iterator exact = exact_pullbacks.find(data);
+	    if (exact != exact_pullbacks.end() && data->segments->size() == 1 &&
+		exact->second) {
+		const ON_Interval exact_domain = exact->second->Domain();
+	const ON_3dPoint exact_start = exact->second->PointAt(exact_domain.Min());
+	const ON_3dPoint exact_end = exact->second->PointAt(exact_domain.Max());
+	if (ON_2dPoint(exact_start.x, exact_start.y).DistanceTo((*samples)[0]) <=
+			ON_ZERO_TOLERANCE &&
+		    ON_2dPoint(exact_end.x, exact_end.y).DistanceTo(
+			(*samples)[samples->Count() - 1]) <= ON_ZERO_TOLERANCE) {
+		    c2d = exact->second;
+		    exact->second = NULL;
+		}
+	    }
+	    bool regenerated = false;
+	    bool used_polyline_fallback = false;
+	    if (!c2d && step && step->ImportOptions().repair == brlcad::step::RepairMode::Safe) {
+		c2d = closed_edge_iso_line(data, *samples, LocalUnits::tolerance);
+		if (c2d && (c2d->PointAtStart().DistanceTo((*samples)[0]) >
+			ON_ZERO_TOLERANCE ||
+		    c2d->PointAtEnd().DistanceTo((*samples)[samples->Count() - 1]) >
+			ON_ZERO_TOLERANCE)) {
+		    delete c2d;
+		    c2d = NULL;
+		}
+		regenerated = c2d != NULL;
+	    }
+	    if (regenerated) {
+		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+		    "regenerated closed-edge boundary pcurve within model tolerance");
+	    } else if (!c2d) {
+		const bool closed_edge = data->edge &&
+		    data->edge->m_vi[0] == data->edge->m_vi[1];
+		if (closed_edge) {
+		    /* The local cubic fitter extrapolates open-curve endpoint
+		     * tangents.  On a closed 3-D edge whose UV endpoints lie on
+		     * different sides of a periodic domain, that fit can overshoot
+		     * the already validated pullback samples and reverse one endpoint
+		     * tangent.  Preserve the adaptive, lift-bounded UV path directly. */
+		    ON_3dPointArray points;
+		    points.Reserve(samples->Count());
+		    for (int sample = 0; sample < samples->Count(); ++sample)
+			points.Append(ON_3dPoint((*samples)[sample].x,
+			    (*samples)[sample].y, 0.0));
+		    ON_PolylineCurve *polyline = new ON_PolylineCurve(points);
+		    if (polyline->ChangeDimension(2) && polyline->IsValid())
+			c2d = polyline;
+		    else
+			delete polyline;
+		} else {
+		    ON_2dPointArray interpolation_samples(*samples);
+		    c2d = interpolateCurve(interpolation_samples);
+		}
+		if (!c2d) {
+		    ON_3dPointArray points;
+		    points.Reserve(samples->Count());
+		    for (int sample = 0; sample < samples->Count(); ++sample) {
+			const ON_3dPoint point((*samples)[sample].x,
+			    (*samples)[sample].y, 0.0);
+			if (points.Count() > 0 && point.DistanceTo(
+				points[points.Count() - 1]) <= ON_ZERO_TOLERANCE) {
+			    points[points.Count() - 1] = point;
+			    continue;
+			}
+			points.Append(point);
 		    }
-		    for (int cv_index = 0; cv_index < nurbs_curve.CVCount(); cv_index++) {
-			ON_3dPoint p;
-			nurbs_curve.GetCV(cv_index, p);
-			std::cerr << "CV[" << cv_index << "] - " << p.x << ", " << p.y << std::endl;
+		    ON_PolylineCurve *polyline = points.Count() >= 2 ?
+			new ON_PolylineCurve(points) : NULL;
+		    if (polyline && polyline->ChangeDimension(2) && polyline->IsValid()) {
+			c2d = polyline;
+			used_polyline_fallback = true;
+		    } else {
+			delete polyline;
 		    }
 		}
 	    }
+	    if (used_polyline_fallback && step)
+		step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+		    "preserved validated pullback samples after curve fitting failed");
+	    }
+	    if (!c2d && samples && samples->Count() < 2 && step &&
+		step->ImportOptions().repair == brlcad::step::RepairMode::Safe &&
+		data->edge && data->curve) {
+		/* The second use of a collapsed seam is the same exact STEP edge in
+		 * reverse.  Reuse the first validated pcurve instead of asking a
+		 * closest-point solver to distinguish endpoints whose separation is
+		 * smaller than the model uncertainty. */
+		for (int lti = 0; lti < loop->TrimCount() && !c2d; ++lti) {
+		    const ON_BrepTrim *paired_trim = loop->Trim(lti);
+		    if (!paired_trim || paired_trim->m_ei != data->edge->m_edge_index ||
+			!paired_trim->TrimCurveOf())
+			continue;
+		    ON_Curve *candidate = paired_trim->DuplicateCurve();
+		    if (!candidate)
+			continue;
+		    if (paired_trim->m_bRev3d != data->order_reversed &&
+			!candidate->Reverse()) {
+			delete candidate;
+			continue;
+		    }
+		    const ON_Interval candidate_domain = candidate->Domain();
+		    const ON_Interval edge_domain = data->curve->Domain();
+		    bool candidate_valid = candidate->ChangeDimension(2) &&
+			candidate->IsValid();
+		    for (int sample = 0; candidate_valid &&
+			    sample <= kDenseLiftValidationSegments; ++sample) {
+			const double fraction = static_cast<double>(sample) /
+			    kDenseLiftValidationSegments;
+			const ON_3dPoint uv = candidate->PointAt(
+			    candidate_domain.ParameterAt(fraction));
+			const ON_3dPoint lifted = data->surf->PointAt(uv.x, uv.y);
+			const ON_3dPoint target = data->curve->PointAt(
+			    edge_domain.ParameterAt(data->order_reversed ?
+				1.0 - fraction : fraction));
+			if (!lifted.IsValid() || !target.IsValid() ||
+				lifted.DistanceTo(target) > LocalUnits::tolerance)
+			    candidate_valid = false;
+		    }
+		    if (!candidate_valid) {
+			delete candidate;
+			continue;
+		    }
+		    c2d = candidate;
+		    step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+			"reused an exact paired collapsed seam pcurve");
+		}
+	    }
+	    if (!c2d && step && step->ImportOptions().repair ==
+		    brlcad::step::RepairMode::Safe && loop->TrimCount() >
+		    initial_trim_count && nsamples && nsamples->Count() > 0 &&
+		    data->curve && data->surf) {
+		const ON_BrepTrim *previous_trim = loop->Trim(loop->TrimCount() - 1);
+		ON_3dPoint start = previous_trim ? previous_trim->PointAtEnd() :
+		    ON_3dPoint::UnsetPoint;
+		const ON_3dPoint adjacent_start = start;
+		ON_3dPoint end((*nsamples)[0].x, (*nsamples)[0].y, 0.0);
+		const ON_Interval edge_domain = data->curve->Domain();
+		if (!data->context)
+		    data->context = std::make_shared<brlcad::PullbackContext>();
+		const double pullback_tolerance = short_curve_pullback_resolution(
+		    data->curve, LocalUnits::tolerance);
+		const bool periodic_recovery = data->surf->IsClosed(0) ||
+		    data->surf->IsClosed(1);
+		ON_3dPoint target_start = data->curve->PointAt(edge_domain[
+		    data->order_reversed ? 1 : 0]);
+		ON_3dPoint target_end = data->curve->PointAt(edge_domain[
+		    data->order_reversed ? 0 : 1]);
+		/* Edge geometry can retain a wider proxy domain than a sub-tolerance
+		 * topological use.  Its declared STEP vertices are authoritative for
+		 * recovery of the lost pullback endpoint. */
+		const int start_vertex = data->edge->m_vi[data->order_reversed ? 1 : 0];
+		const int end_vertex = data->edge->m_vi[data->order_reversed ? 0 : 1];
+		if (periodic_recovery && start_vertex >= 0 &&
+			start_vertex < brep->m_V.Count())
+		    target_start = brep->m_V[start_vertex].point;
+		if (periodic_recovery && end_vertex >= 0 &&
+			end_vertex < brep->m_V.Count())
+		    target_end = brep->m_V[end_vertex].point;
+		ON_2dPoint pulled_start, pulled_end;
+		ON_3dPoint pulled_lift;
+		double pulled_distance = DBL_MAX;
+		/* Preserve an adjacent endpoint when its lift already represents the
+		 * declared STEP vertex within model uncertainty.  This keeps the loop
+		 * exactly closed in parameter space.  A periodic adjacent edge may begin
+		 * at an arbitrary parameter on its 3-D circle, so solve the declared
+		 * vertex when that bounded adjacency proof fails. */
+		const ON_3dPoint adjacent_lift = data->surf->PointAt(
+		    adjacent_start.x, adjacent_start.y);
+		const bool adjacent_start_valid = adjacent_lift.IsValid() &&
+		    adjacent_lift.DistanceTo(target_start) <= (periodic_recovery ?
+			pullback_tolerance : LocalUnits::tolerance);
+		if (!adjacent_start_valid &&
+		    data->context->SurfaceClosestPoint(data->surf, target_start,
+			pulled_start, pulled_lift, pulled_distance, 0,
+			pullback_tolerance, pullback_tolerance) &&
+			pulled_distance <= pullback_tolerance) {
+		    start.Set(pulled_start.x, pulled_start.y, 0.0);
+		    for (int direction = 0; direction < 2; ++direction) {
+			if (!data->surf->IsClosed(direction))
+			    continue;
+			const double period = data->surf->Domain(direction).Length();
+			if (period > ON_ZERO_TOLERANCE)
+			    start[direction] += round((adjacent_start[direction] -
+				start[direction]) / period) * period;
+		    }
+		}
+		ON_3dPoint seeded_end = start;
+		if (refine_surface_point_seeded(data->surf, target_end,
+			pullback_tolerance, seeded_end, &pulled_distance)) {
+		    end = seeded_end;
+		} else if (data->context->SurfaceClosestPoint(data->surf, target_end,
+			pulled_end, pulled_lift, pulled_distance, 0,
+			pullback_tolerance, pullback_tolerance) &&
+			pulled_distance <= pullback_tolerance) {
+		    end.Set(pulled_end.x, pulled_end.y, 0.0);
+		}
+
+		/* Try each closed parameter direction as the constant seam coordinate.
+		 * The one-sample pullback has lost its varying endpoint, so recover that
+		 * endpoint from the exact 3-D edge and accept a candidate only after a
+		 * dense lift comparison with the complete edge. */
+		int boundary_direction = -1;
+		ON_LineCurve *boundary = NULL;
+		bool exact_boundary = false;
+		double maximum_boundary_error = 0.0;
+		double rejected_boundary_fraction = 0.0;
+		const auto validate_boundary = [data, &edge_domain, &target_start,
+			&target_end, pullback_tolerance, periodic_recovery](
+			ON_LineCurve *candidate, double *maximum_error,
+			double *rejected_fraction) {
+		    bool candidate_valid = candidate && candidate->ChangeDimension(2) &&
+			candidate->IsValid();
+		    const ON_Interval candidate_domain = candidate_valid ?
+			candidate->Domain() : ON_Interval::EmptyInterval;
+		    if (candidate_valid) {
+			const ON_3dPoint start_uv = candidate->PointAt(candidate_domain.Min());
+			const ON_3dPoint end_uv = candidate->PointAt(candidate_domain.Max());
+			const ON_3dPoint start_lift = data->surf->PointAt(
+			    start_uv.x, start_uv.y);
+			const ON_3dPoint end_lift = data->surf->PointAt(end_uv.x, end_uv.y);
+			const double endpoint_tolerance = periodic_recovery ?
+			    pullback_tolerance : LocalUnits::tolerance;
+			candidate_valid = start_lift.IsValid() && end_lift.IsValid() &&
+			    start_lift.DistanceTo(target_start) <= endpoint_tolerance &&
+			    end_lift.DistanceTo(target_end) <= endpoint_tolerance;
+		    }
+		    *maximum_error = 0.0;
+		    *rejected_fraction = 0.0;
+		    for (int sample = 0; candidate_valid &&
+			    sample <= kDenseLiftValidationSegments; ++sample) {
+			const double fraction = static_cast<double>(sample) /
+			    kDenseLiftValidationSegments;
+			const ON_3dPoint uv = candidate->PointAt(
+			    candidate_domain.ParameterAt(fraction));
+			const ON_3dPoint lifted = data->surf->PointAt(uv.x, uv.y);
+			const double edge_fraction = data->order_reversed ?
+			    1.0 - fraction : fraction;
+			const ON_3dPoint target = data->curve->PointAt(
+			    edge_domain.ParameterAt(edge_fraction));
+			const double error = lifted.IsValid() && target.IsValid() ?
+			    lifted.DistanceTo(target) : DBL_MAX;
+			*maximum_error = std::max(*maximum_error, error);
+			if (error > LocalUnits::tolerance) {
+			    *rejected_fraction = fraction;
+			    candidate_valid = false;
+			}
+		    }
+		    return candidate_valid;
+		};
+		if (!data->surf->IsClosed(0) && !data->surf->IsClosed(1)) {
+		    ON_LineCurve *candidate = new ON_LineCurve(start, end);
+		    double candidate_maximum_error = 0.0;
+		    double candidate_rejected_fraction = 0.0;
+		    if (validate_boundary(candidate, &candidate_maximum_error,
+			    &candidate_rejected_fraction)) {
+			boundary = candidate;
+			exact_boundary = true;
+			maximum_boundary_error = candidate_maximum_error;
+		    } else {
+			maximum_boundary_error = candidate_maximum_error;
+			rejected_boundary_fraction = candidate_rejected_fraction;
+			delete candidate;
+		    }
+		}
+		for (int fixed_direction = 0; fixed_direction < 2 && !exact_boundary;
+		     ++fixed_direction) {
+		    if (!data->surf->IsClosed(fixed_direction))
+			continue;
+		    ON_3dPoint candidate_end = end;
+		    for (int direction = 0; direction < 2; ++direction) {
+			if (!data->surf->IsClosed(direction))
+			    continue;
+			const double period = data->surf->Domain(direction).Length();
+			if (period > ON_ZERO_TOLERANCE)
+			    candidate_end[direction] += round((start[direction] -
+				candidate_end[direction]) / period) * period;
+		    }
+		    candidate_end[fixed_direction] = start[fixed_direction];
+		    ON_LineCurve *candidate = new ON_LineCurve(start, candidate_end);
+		    double candidate_maximum_error = 0.0;
+		    double candidate_rejected_fraction = 0.0;
+		    const bool candidate_valid = validate_boundary(candidate,
+			&candidate_maximum_error, &candidate_rejected_fraction);
+		    if (candidate_valid) {
+			boundary_direction = fixed_direction;
+			boundary = candidate;
+			end = candidate_end;
+			exact_boundary = true;
+			maximum_boundary_error = candidate_maximum_error;
+		    } else {
+			maximum_boundary_error = std::max(maximum_boundary_error,
+			    candidate_maximum_error);
+			rejected_boundary_fraction = candidate_rejected_fraction;
+			delete candidate;
+		    }
+		}
+		if (exact_boundary) {
+		    const ON_2dPoint original_next_start = (*nsamples)[0];
+		    (*nsamples)[0].Set(end.x, end.y);
+		    bool next_curve_valid = true;
+		    if (next_cs == curve_pullback_samples.begin()) {
+			const bool can_rebuild_next = initial_trim_count == 0 &&
+			    loop->TrimCount() > 0 &&
+			    ndata && ndata->curve && ndata->surf;
+			ON_2dPointArray next_interpolation(*nsamples);
+			ON_Curve *next_curve = can_rebuild_next ?
+			    interpolateCurve(next_interpolation) : NULL;
+			const auto make_next_polyline = [nsamples]() -> ON_Curve * {
+			    ON_3dPointArray points;
+			    for (int point = 0; point < nsamples->Count(); ++point) {
+				const ON_3dPoint candidate((*nsamples)[point].x,
+				    (*nsamples)[point].y, 0.0);
+				if (points.Count() == 0 || candidate.DistanceTo(
+					points[points.Count() - 1]) > ON_ZERO_TOLERANCE)
+				    points.Append(candidate);
+			    }
+			    ON_PolylineCurve *polyline = points.Count() >= 2 ?
+				new ON_PolylineCurve(points) : NULL;
+			    if (polyline && polyline->ChangeDimension(2) && polyline->IsValid())
+				return polyline;
+			    delete polyline;
+			    return NULL;
+			};
+			const auto validates_next = [ndata](ON_Curve *candidate) {
+			    if (!candidate || !candidate->ChangeDimension(2) ||
+				    !candidate->IsValid())
+				return false;
+			    const ON_Interval candidate_domain = candidate->Domain();
+			    const ON_Interval next_edge_domain = ndata->curve->Domain();
+			    for (int sample = 0;
+				    sample <= kDenseLiftValidationSegments; ++sample) {
+				const double fraction = static_cast<double>(sample) /
+				    kDenseLiftValidationSegments;
+				const ON_3dPoint uv = candidate->PointAt(
+				    candidate_domain.ParameterAt(fraction));
+				const ON_3dPoint lifted = ndata->surf->PointAt(uv.x, uv.y);
+				const ON_3dPoint target = ndata->curve->PointAt(
+				    next_edge_domain.ParameterAt(ndata->order_reversed ?
+					1.0 - fraction : fraction));
+				if (!lifted.IsValid() || lifted.DistanceTo(target) >
+					LocalUnits::tolerance)
+				    return false;
+			    }
+			    return true;
+			};
+			next_curve_valid = can_rebuild_next && validates_next(next_curve);
+			if (!next_curve_valid && can_rebuild_next) {
+			    delete next_curve;
+			    next_curve = make_next_polyline();
+			    next_curve_valid = validates_next(next_curve);
+			}
+			if (next_curve_valid) {
+			    ON_BrepTrim *first_trim = loop->Trim(0);
+			    const int next_c2 = brep->AddTrimCurve(next_curve);
+			    if (!first_trim || next_c2 < 0 ||
+				    !brep->SetTrimCurve(*first_trim, next_c2)) {
+				if (next_c2 < 0)
+				    delete next_curve;
+				next_curve_valid = false;
+			    } else {
+				brep->SetTrimIsoFlags(*first_trim);
+			    }
+			} else {
+			    delete next_curve;
+			}
+		    }
+		    if (next_curve_valid) {
+			c2d = boundary;
+			const bool periodic_surface = data->surf->IsClosed(0) ||
+			    data->surf->IsClosed(1);
+			step->RecordRepair(id, "EDGE_LOOP", "edge_list",
+			    periodic_surface ?
+			    "regenerated a collapsed seam from exact adjacent endpoints" :
+			    "regenerated a collapsed boundary pcurve within model tolerance");
+		    } else {
+			(*nsamples)[0] = original_next_start;
+			delete boundary;
+		    }
+		} else {
+		    if (step->Verbose())
+			std::cerr << "EDGE_LOOP #" << id
+			    << ": collapsed pcurve proof rejected for STEP edge "
+			    << (data->edge ? data->edge->m_edge_user.i : -1)
+			    << " boundary direction " << boundary_direction
+			    << " uv " << start.x << ':' << start.y << " -> "
+			    << end.x << ':' << end.y << " at normalized "
+			    << rejected_boundary_fraction << " max error "
+			    << maximum_boundary_error << " tolerance "
+			    << LocalUnits::tolerance << " target length "
+			    << target_start.DistanceTo(target_end) << " endpoint errors "
+			    << data->surf->PointAt(start.x, start.y).DistanceTo(target_start)
+			    << '/' << data->surf->PointAt(end.x, end.y).DistanceTo(target_end)
+			    << " surface closed "
+			    << (data->surf->IsClosed(0) ? '1' : '0')
+			    << (data->surf->IsClosed(1) ? '1' : '0') << " domains "
+			    << data->surf->Domain(0).Min() << ':'
+			    << data->surf->Domain(0).Max() << ','
+			    << data->surf->Domain(1).Min() << ':'
+			    << data->surf->Domain(1).Max() << std::endl;
+		    delete boundary;
+		}
+	    }
+	    if (!c2d) {
+		if (step && step->Verbose())
+		    std::cerr << "EDGE_LOOP #" << id
+			<< ": could not construct trim for STEP edge "
+			<< (data->edge ? data->edge->m_edge_user.i : -1)
+			<< " from " << samples->Count() << " pullback samples"
+			<< std::endl;
+		trim_construction_failed = true;
+		break;
+	    }
+	    trimCurve = brep->m_C2.Count();
+	    brep->m_C2.Append(c2d);
+
+	    ON_BrepTrim &trim = brep->NewTrim((ON_BrepEdge &) * data->edge, data->order_reversed, (ON_BrepLoop &) * loop, trimCurve);
+	    trim.m_tolerance[0] = LocalUnits::tolerance;
+	    trim.m_tolerance[1] = LocalUnits::tolerance;
+	    ON_Interval PD = trim.ProxyCurveDomain();
+	    trim.m_iso = surface->IsIsoparametric(*c2d, &PD);
 
 	    // check for bridging trim, trims along singularities
 	    // are implicitly expected
@@ -1636,7 +3013,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    end_current = (*samples)[samples->Count() - 1];
 	    start_next = (*nsamples)[0];
 
-	    if (end_current.DistanceTo(start_next) > PBC_TOL) {
+	    if (end_current.DistanceTo(start_next) > LocalUnits::tolerance) {
 		// endpoints don't connect
 		int is;
 		const ON_Surface *surf = data->surf;
@@ -1676,13 +3053,12 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 
 		    ON_BrepTrim &sing_trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop &) * loop, iso, trimCurve);
 
-		    sing_trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-		    sing_trim.m_tolerance[1] = 1e-3;
+		    sing_trim.m_tolerance[0] = LocalUnits::tolerance;
+		    sing_trim.m_tolerance[1] = LocalUnits::tolerance;
 		    ON_Interval sing_PD = sing_trim.ProxyCurveDomain();
 		    sing_trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &sing_PD);
 		    sing_trim.m_iso = iso;
 		    //trim.Reverse();
-		    sing_trim.IsValid(&tl);
 		} /*else if ((is = check_pullback_seam_bridge(surf, end_current, start_next)) >= 0) {
 		  // insert trim
 		  // insert singular trim along
@@ -1724,13 +3100,13 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		  ON_BrepTrim& trim = brep->NewTrim(e, false, (ON_BrepLoop&) *loop, trimCurve);
 
 		  trim.m_type = ON_BrepTrim::boundary;
-		  trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-		  trim.m_tolerance[1] = 1e-3;
+		  trim.m_tolerance[0] = LocalUnits::tolerance;
+		  trim.m_tolerance[1] = LocalUnits::tolerance;
 		  #else
 		  ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop&) *loop, iso, trimCurve);
 
-		  trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-		  trim.m_tolerance[1] = 1e-3;
+		  trim.m_tolerance[0] = LocalUnits::tolerance;
+		  trim.m_tolerance[1] = LocalUnits::tolerance;
 		  ON_Interval PD = trim.ProxyCurveDomain();
 		  trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &PD);
 		  trim.m_iso = iso;
@@ -1740,7 +3116,31 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    }
 	    si++;
 	}
+    if (trim_construction_failed)
+	    break;
 	cs++;
+    }
+
+    if (step && step->Verbose() && loop->TrimCount() > 1) {
+	for (int trim_offset = 0; trim_offset < loop->TrimCount(); ++trim_offset) {
+	    const ON_BrepTrim *current_trim = loop->Trim(trim_offset);
+	    const ON_BrepTrim *next_trim = loop->Trim((trim_offset + 1) % loop->TrimCount());
+	    if (!current_trim || !next_trim)
+		continue;
+	    const ON_3dPoint current_end = current_trim->PointAtEnd();
+	    const ON_3dPoint next_start = next_trim->PointAtStart();
+	    if (current_end.DistanceTo(next_start) <= ON_ZERO_TOLERANCE)
+		continue;
+	    std::cerr << "EDGE_LOOP #" << id << ": trim " << current_trim->m_trim_index
+		<< " (edge " << current_trim->m_ei << ", type "
+		<< static_cast<int>(current_trim->m_type) << ", iso "
+		<< static_cast<int>(current_trim->m_iso) << ") ends at ("
+		<< current_end.x << ',' << current_end.y << ") but trim "
+		<< next_trim->m_trim_index << " (edge " << next_trim->m_ei
+		<< ", type " << static_cast<int>(next_trim->m_type) << ", iso "
+		<< static_cast<int>(next_trim->m_iso) << ") starts at ("
+		<< next_start.x << ',' << next_start.y << ')' << std::endl;
+	}
     }
 
     while (!curve_pullback_samples.empty()) {
@@ -1753,8 +3153,14 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	delete data;
 	curve_pullback_samples.pop_front();
     }
+    for (std::map<PBCData *, ON_Curve *>::iterator exact = exact_pullbacks.begin();
+	 exact != exact_pullbacks.end(); ++exact)
+	delete exact->second;
 
-    return true;
+    if (loop->TrimCount() == initial_trim_count && step && step->Verbose())
+	std::cerr << "EDGE_LOOP #" << id << ": trim construction produced no edge uses" << std::endl;
+
+    return !trim_construction_failed;
 }
 
 
@@ -1769,7 +3175,7 @@ Plane::LoadONBrep(ON_Brep *brep)
     if (ON_id >= 0) {
 	ON_PlaneSurface *s = dynamic_cast<ON_PlaneSurface *>(brep->m_S[ON_id]);
 
-	if (s) {
+	if (s && trim_curve_3d_bbox) {
 	    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
 
 	    // origin may not lie within face so include in extent
@@ -1798,6 +3204,10 @@ Plane::LoadONBrep(ON_Brep *brep)
 
     ON_PlaneSurface *s = new ON_PlaneSurface(p);
 
+    if (!trim_curve_3d_bbox) {
+	delete s;
+	return false;
+    }
     double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
     // origin may not lie within face so include in extent
     double maxdist = origin.DistanceTo(trim_curve_3d_bbox->m_max);
@@ -2909,10 +4319,17 @@ SphericalSurface::LoadONBrep(ON_Brep *brep)
 
     // get sphere center
     ON_3dPoint center(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
     center = center * LocalUnits::length;
+    if (!xaxis.Unitize() || !yaxis.Unitize())
+	return false;
 
     // Creates a sphere with given center and radius.
     ON_Sphere sphere(center, radius * LocalUnits::length);
+    sphere.plane = ON_Plane(center, xaxis, yaxis);
+    if (!sphere.IsValid())
+	return false;
 
     ON_RevSurface *s = sphere.RevSurfaceForm(false, nullptr);
     if (s) {
@@ -3000,27 +4417,27 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
 
     ON_2dPoint start, end;
     ON_Surface::ISO iso = ON_Surface::N_iso;
-    if (VNEAR_EQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
+    if (VNEAR_EQUAL(vertex, corner[0], LocalUnits::tolerance)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[0]);
-	if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[1], LocalUnits::tolerance)) {
 	    //south;
 	    end = ON_2dPoint(U.m_t[1], V.m_t[0]);
 	    iso = ON_Surface::S_iso;
-	} else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
+	} else if (VNEAR_EQUAL(vertex, corner[2], LocalUnits::tolerance)) {
 	    //west
 	    end = ON_2dPoint(U.m_t[0], V.m_t[1]);
 	    iso = ON_Surface::W_iso;
 	}
-    } else if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
+    } else if (VNEAR_EQUAL(vertex, corner[1], LocalUnits::tolerance)) {
 	start = ON_2dPoint(U.m_t[1], V.m_t[0]);
-	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[3], LocalUnits::tolerance)) {
 	    //east
 	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
 	    iso = ON_Surface::E_iso;
 	}
-    } else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
+    } else if (VNEAR_EQUAL(vertex, corner[2], LocalUnits::tolerance)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[1]);
-	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[3], LocalUnits::tolerance)) {
 	    //north
 	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
 	    iso = ON_Surface::N_iso;

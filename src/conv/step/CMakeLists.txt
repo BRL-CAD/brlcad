@@ -22,44 +22,43 @@ check_cxx_flag("wd4800") # implicit conversions to bool
 # Also quell a GCC warning for similar reasons.
 check_cxx_flag("Wno-ignored-qualifiers")
 
-macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
+function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   if(BRLCAD_ENABLE_STEP)
     # This Schema determines which version of STEP the command will support
     # TODO - see if there is some way to automatically support multiple versions
     # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
     file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
     string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT})
-    string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #exp2cxx always uses upper case for file names
+    string(TOUPPER ${SCHEMA_N} _schema_name) # exp2cxx always uses upper case for file names
 
     # Because SCHEMA_OUT_DIR is the working directory for exp2cxx, it must be
     # created at configure time and be present when exp2cxx is run
-    set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME}_${TARGET_SUFFIX})
-    set(${TARGET_SUFFIX}_SCHEMA_OUT_DIR ${SCHEMA_OUT_DIR})
-    file(MAKE_DIRECTORY ${SCHEMA_OUT_DIR})
-    distclean(${SCHEMA_OUT_DIR})
+    set(_schema_out_dir ${CMAKE_CURRENT_BINARY_DIR}/${_schema_name}_${TARGET_SUFFIX})
+    file(MAKE_DIRECTORY ${_schema_out_dir})
+    distclean(${_schema_out_dir})
 
     # These files are the standard exp2cxx outputs that need to be compiled.
     set(
-      express_srcs
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_entities.cc
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_types.cc
-      ${SCHEMA_OUT_DIR}/SdaiAll.cc
-      ${SCHEMA_OUT_DIR}/compstructs.cc
-      ${SCHEMA_OUT_DIR}/schema.cc
+      _express_srcs
+      ${_schema_out_dir}/Sdai${_schema_name}.cc
+      ${_schema_out_dir}/Sdai${_schema_name}.init.cc
+      ${_schema_out_dir}/Sdai${_schema_name}_unity_entities.cc
+      ${_schema_out_dir}/Sdai${_schema_name}_unity_types.cc
+      ${_schema_out_dir}/SdaiAll.cc
+      ${_schema_out_dir}/compstructs.cc
+      ${_schema_out_dir}/schema.cc
     )
 
     # For the subdirectory add_custom_command definitions, need the generated
     # headers as well.
     set(
-      express_hdrs
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Names.h
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_entities.h
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_types.h
-      ${SCHEMA_OUT_DIR}/Sdaiclasses.h
-      ${SCHEMA_OUT_DIR}/schema.h
+      _express_hdrs
+      ${_schema_out_dir}/Sdai${_schema_name}.h
+      ${_schema_out_dir}/Sdai${_schema_name}Names.h
+      ${_schema_out_dir}/Sdai${_schema_name}_unity_entities.h
+      ${_schema_out_dir}/Sdai${_schema_name}_unity_types.h
+      ${_schema_out_dir}/Sdaiclasses.h
+      ${_schema_out_dir}/schema.h
     )
 
     # We want to precompile the generated headers, since they will be reused a
@@ -68,48 +67,58 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     # target.  Keep that header outside the exp2cxx output directory: the
     # generator can clear or overwrite files in SCHEMA_OUT_DIR, which leaves
     # the later PCH compile trying to include a header that no longer exists.
-    set(PRECOMPILE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/precompile_${SCHEMA_NAME}_${TARGET_SUFFIX}.h)
-    file(WRITE "${PRECOMPILE_HEADER}" "// Precompiled header for STEPcode generated files\n")
-    distclean("${PRECOMPILE_HEADER}")
-    foreach(header ${express_hdrs})
+    set(_precompile_header ${CMAKE_CURRENT_BINARY_DIR}/precompile_${_schema_name}_${TARGET_SUFFIX}.h)
+    file(WRITE "${_precompile_header}" "// Precompiled header for STEPcode generated files\n")
+    distclean("${_precompile_header}")
+    foreach(header ${_express_hdrs})
       # Use relative include for portability
       get_filename_component(header_name "${header}" NAME)
-      file(APPEND "${PRECOMPILE_HEADER}" "#include \"${header_name}\"\n")
+      file(APPEND "${_precompile_header}" "#include \"${header_name}\"\n")
     endforeach()
 
     set(
-      EXPRESS_OUTPUT
-      ${express_srcs}
-      ${express_hdrs}
+      _express_output
+      ${_express_srcs}
+      ${_express_hdrs}
     )
 
     add_custom_command(
-      OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+      OUTPUT ${_express_output} ${_schema_out_dir}/step_express_${_schema_name}.done
       COMMAND ${EXP2CXX_EXECUTABLE}
-      ARGS ${SCHEMA_FILE} > ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log 2>&1
-      COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+      ARGS ${SCHEMA_FILE} > ${_schema_out_dir}/step_express_${_schema_name}.log 2>&1
+      COMMAND ${CMAKE_COMMAND} -E touch ${_schema_out_dir}/step_express_${_schema_name}.done
       DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
-      WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
-      COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
+      WORKING_DIRECTORY ${_schema_out_dir}
+      COMMENT "Generating C++ code to express ${_schema_name}..."
       VERBATIM
     )
 
     add_custom_target(
-      step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
-      DEPENDS ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+      step-express-${_schema_name}-${TARGET_SUFFIX}
+      DEPENDS ${_schema_out_dir}/step_express_${_schema_name}.done
     )
-    set_target_properties(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX} PROPERTIES FOLDER "Compilation Utilities")
+    set_target_properties(step-express-${_schema_name}-${TARGET_SUFFIX} PROPERTIES FOLDER "Compilation Utilities")
 
     set(
       clean_files
-      ${EXPRESS_OUTPUT}
-      ${PRECOMPILE_HEADER}
-      ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
-      ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log
+      ${_express_output}
+      ${_precompile_header}
+      ${_schema_out_dir}/step_express_${_schema_name}.done
+      ${_schema_out_dir}/step_express_${_schema_name}.log
     )
     set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
+
+    # Export only names scoped to this schema consumer.  In particular, do not
+    # leak SCHEMA_NAME or express_srcs into sibling converter directories.
+    set(${TARGET_SUFFIX}_express_srcs "${_express_srcs}" PARENT_SCOPE)
+    set(${TARGET_SUFFIX}_express_hdrs "${_express_hdrs}" PARENT_SCOPE)
+    set(${TARGET_SUFFIX}_EXPRESS_OUTPUT "${_express_output}" PARENT_SCOPE)
+    set(${TARGET_SUFFIX}_PRECOMPILE_HEADER "${_precompile_header}" PARENT_SCOPE)
+    set(${TARGET_SUFFIX}_SCHEMA_NAME "${_schema_name}" PARENT_SCOPE)
+    set(${TARGET_SUFFIX}_SCHEMA_OUT_DIR "${_schema_out_dir}" PARENT_SCOPE)
+    set(${TARGET_SUFFIX}_SCHEMA_TARGET "step-express-${_schema_name}-${TARGET_SUFFIX}" PARENT_SCOPE)
   endif(BRLCAD_ENABLE_STEP)
-endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
+endfunction(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
 
 # AP203
 add_subdirectory(step-g)
@@ -138,14 +147,15 @@ cmakefiles(
   AP_Common.h
   BRLCADWrapper.h
   CMakeLists.txt
+  STEPDocument.h
+  STEPString.cpp
+  STEPString.h
   STEPWrapper.h
   ap203_elements.txt
   ap203e2_elements.txt
   ap214e3_elements.txt
   ap_schema.h
 )
-
-distclean(${SCHEMA_OUT_DIR}/make_schema)
 
 # Local Variables:
 # tab-width: 8

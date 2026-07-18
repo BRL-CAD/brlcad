@@ -27,6 +27,7 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 #include "CartesianPoint.h"
+#include "LocalUnits.h"
 
 #include "Polyline.h"
 
@@ -143,6 +144,33 @@ STEPEntity *
 Polyline::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
+}
+
+bool
+Polyline::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep || points.size() < 2)
+	return false;
+    if (ON_id >= 0)
+	return true;
+
+    ON_3dPointArray vertices;
+    vertices.Reserve((int)points.size());
+    for (LIST_OF_POINTS::const_iterator point = points.begin(); point != points.end(); ++point) {
+	const double *coordinates = *point ? (*point)->Point3d() : NULL;
+	if (!coordinates)
+	    return false;
+	vertices.Append(ON_3dPoint(coordinates[0] * LocalUnits::length,
+	    coordinates[1] * LocalUnits::length, coordinates[2] * LocalUnits::length));
+    }
+
+    ON_PolylineCurve *curve = new ON_PolylineCurve(vertices);
+    if (!curve->IsValid()) {
+	delete curve;
+	return false;
+    }
+    ON_id = brep->AddEdgeCurve(curve);
+    return ON_id >= 0;
 }
 
 // Local Variables:

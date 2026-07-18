@@ -30,6 +30,7 @@
 #include "MeasureValue.h"
 #include "Unit.h"
 #include "LengthSiUnit.h"
+#include "ConversionBasedUnit.h"
 
 #include "MeasureWithUnit.h"
 
@@ -66,6 +67,10 @@ MeasureWithUnit::GetLengthConversionFactor()
     if (si != NULL) {
 	//found SI length unit
 	sifactor = si->GetLengthConversionFactor();
+    } else {
+	ConversionBasedUnit *conversion = dynamic_cast<ConversionBasedUnit *>(unit_component);
+	if (conversion != NULL)
+	    sifactor = conversion->GetLengthConversionFactor();
     }
     mfactor = value_component.GetLengthMeasure();
 
@@ -132,7 +137,7 @@ MeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    if (u->IsNamed_unit()) {
 		SdaiNamed_unit *nu = *u;
 		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)nu));
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
 	    } else if (u->IsDerived_unit()) {
 		SdaiDerived_unit *du = *u;
 		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)du));

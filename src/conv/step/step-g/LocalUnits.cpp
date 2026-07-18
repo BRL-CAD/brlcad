@@ -25,9 +25,10 @@
 
 #include "LocalUnits.h"
 
-double LocalUnits::length = 1.0;
-double LocalUnits::planeangle = 1.0;
-double LocalUnits::solidangle = 1.0;
+thread_local double LocalUnits::length = 1.0;
+thread_local double LocalUnits::planeangle = 1.0;
+thread_local double LocalUnits::solidangle = 1.0;
+thread_local double LocalUnits::tolerance = 1.0e-6;
 
 LocalUnits::LocalUnits()
 {

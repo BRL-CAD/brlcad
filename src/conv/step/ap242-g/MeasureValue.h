@@ -55,7 +55,7 @@ public:
 	THERMODYNAMIC_TEMPERATURE_MEASURE,
 	TIME_MEASURE,
 	VOLUME_MEASURE,
-	UNKNOWN
+	MEASURE_VALUE_UNKNOWN
     };
 
 private:
@@ -75,6 +75,7 @@ public:
     double GetLengthMeasure();
     double GetPlaneAngleMeasure();
     double GetSolidAngleMeasure();
+    using STEPEntity::Load;
     bool Load(STEPWrapper *sw, SDAI_Select *sse);
     virtual void Print(int level);
 

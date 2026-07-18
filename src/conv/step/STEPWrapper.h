@@ -37,7 +37,10 @@
 
 /* system headers */
 #include <list>
+#include <functional>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <vector>
 
 /* interface headers */
@@ -50,6 +53,7 @@
 #include <BRLCADWrapper.h>
 
 #include "ap_schema.h"
+#include "STEPDocument.h"
 
 /*
 class SDAI_Application_instance;
@@ -58,6 +62,36 @@ class STEPcomplex;
 */
 class CartesianPoint;
 class SurfacePatch;
+class STEPEntity;
+
+/** Owns a fully materialized conversion graph after its SDAI batch is gone. */
+class STEPDetachedEntityArena
+{
+private:
+    std::map<int, STEPEntity *> objects;
+    std::list<STEPEntity *> unmapped_objects;
+
+    friend class STEPWrapper;
+
+public:
+    STEPDetachedEntityArena();
+    ~STEPDetachedEntityArena();
+    STEPDetachedEntityArena(const STEPDetachedEntityArena &) = delete;
+    STEPDetachedEntityArena &operator=(const STEPDetachedEntityArena &) = delete;
+
+    STEPEntity *FindObject(int id) const;
+    void ResetOpenNURBSState();
+};
+
+#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+namespace brlcad {
+namespace step {
+struct AP214LazyDiagnostic;
+class AP214LazyBatch;
+class AP214LazySession;
+}
+}
+#endif
 
 typedef std::list<CartesianPoint *> LIST_OF_POINTS;
 typedef std::list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
@@ -88,16 +122,80 @@ private:
     STEPfile  *sfile;
     BRLCADWrapper *dotg;
     bool verbose;
+    std::map<int, STEPEntity *> entity_objects;
+    std::list<STEPEntity *> unmapped_objects;
+    brlcad::step::ImportOptions import_options;
+    brlcad::step::Document document;
+    brlcad::step::ImportStatistics statistics;
+    std::vector<brlcad::step::Diagnostic> diagnostics;
+    mutable std::mutex diagnostic_mutex;
+    std::function<bool()> cancellation_callback;
+#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+    std::unique_ptr<brlcad::step::AP214LazySession> lazy_session;
+    std::unique_ptr<brlcad::step::AP214LazyBatch> lazy_batch;
+    std::vector<std::unique_ptr<brlcad::step::AP214LazyBatch> > lazy_supplemental_batches;
+    std::vector<uint64_t> lazy_instance_ids;
+    std::vector<uint64_t> lazy_iteration_ids;
+    bool lazy_filter_active = false;
+#endif
 
     void printEntity(SDAI_Application_instance *se, int level);
     void printEntityAggregate(STEPaggregate *sa, int level);
     const char *getBaseType(int type);
+    double deriveTolerance();
+    void collectEntityCounts();
+    InstMgrBase *referenceManager() const;
+#if defined(AP214e3) && defined(HAVE_STEPCODE_LAZY)
+    SDAI_Application_instance *activateLazyRoot(uint64_t id);
+    void releaseLazyBatches();
+    void recordLazyDiagnostic(const brlcad::step::AP214LazyDiagnostic &source);
+    void synchronizeLazyDiagnostics();
+#endif
 
 public:
     STEPWrapper();
     virtual ~STEPWrapper();
 
     bool convert(BRLCADWrapper *dotg);
+
+    void SetImportOptions(const brlcad::step::ImportOptions &options) { import_options = options; }
+    const brlcad::step::ImportOptions &ImportOptions() const { return import_options; }
+    const brlcad::step::Document &Document() const { return document; }
+    brlcad::step::Document &Document() { return document; }
+    const brlcad::step::ImportStatistics &Statistics() const { return statistics; }
+    brlcad::step::ImportStatistics &Statistics() { return statistics; }
+    const std::vector<brlcad::step::Diagnostic> &Diagnostics() const { return diagnostics; }
+    void RecordDiagnostic(brlcad::step::DiagnosticSeverity severity, int64_t entity_id,
+	const std::string &entity_type, const std::string &attribute, const std::string &message);
+    void RecordRepair(int64_t entity_id, const std::string &entity_type,
+	const std::string &attribute, const std::string &message);
+    void SetCancellationCallback(const std::function<bool()> &callback) { cancellation_callback = callback; }
+    bool CancellationRequested() const { return cancellation_callback && cancellation_callback(); }
+    /** Return true for an unfiltered entity or a requested representation
+     * item root, recording requested roots encountered during conversion. */
+    bool ShouldConvertEntity(int64_t entity_id);
+
+    STEPEntity *FindObject(int id) const;
+    void AddObject(STEPEntity *object);
+    void ClearEntityCache();
+    std::unique_ptr<STEPDetachedEntityArena> DetachEntityCache();
+    /** Release materialized STEP entities after conversion data is detached. */
+    void ReleaseSourceData();
+    void ResetOpenNURBSState();
+    int InstanceCount() const;
+    SDAI_Application_instance *InstanceAt(int index);
+    void SetInstanceTypes(const std::vector<std::string> &types,
+	const std::vector<uint64_t> &excluded_ids = std::vector<uint64_t>());
+    void ResetInstanceTypes();
+
+    /** Read-only access to the lazy Part 21 index.  These calls never
+     * materialize an SDAI instance and return empty results for eager
+     * sessions and schemas without lazy support. */
+    bool HasLazyIndex() const;
+    std::vector<uint64_t> LazyInstancesByType(const std::string &type) const;
+    std::string LazyTypeName(uint64_t id) const;
+    std::vector<uint64_t> LazyForwardReferences(uint64_t id) const;
+    std::vector<uint64_t> LazyReverseReferences(uint64_t id) const;
 
     std::map<int,int> entity_status;
     char *summary_log_file;

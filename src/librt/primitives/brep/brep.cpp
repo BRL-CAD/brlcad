@@ -2316,6 +2316,7 @@ RT_MemoryArchive::Flush()
 }
 
 #define ON_opennurbs4_id { 0x17b3ecda, 0x17ba, 0x4e45,{ 0x9e, 0x67, 0xa2, 0xb8, 0xd9, 0xbe, 0x52, 0xd } }
+#define ON_brlcad_default_layer_id { 0xc4b29a7d, 0x766e, 0x478f,{ 0xa4, 0xe2, 0x5b, 0x61, 0xd4, 0xaf, 0x23, 0x91 } }
 
 static void
 brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
@@ -2331,7 +2332,21 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     model.m_layer_table.Reserve(1);
     model.m_layer_table.Append(default_layer);
 #endif
-    model.AddDefaultLayer(L"Default", ON_Color::UnsetColor);
+    /* ONX_Model::AddDefaultLayer assigns a random component UUID.  A BREP
+     * primitive serializes a self-contained model, so that otherwise makes
+     * identical BRL-CAD databases differ on every write. */
+    const ON_UUID default_layer_id = ON_brlcad_default_layer_id;
+    ON_Layer default_layer;
+    default_layer.SetId(default_layer_id);
+    default_layer.SetIndex(0);
+    default_layer.SetName(L"Default");
+    default_layer.SetColor(ON_Color::UnsetColor);
+    model.AddModelComponent(default_layer, true);
+    /* Keep both forms coherent: SetCurrentLayerId() clears the legacy index,
+     * while SetV5CurrentLayerIndex() preserves the UUID.  BREP primitives are
+     * currently serialized as version 4 archives, which use the index. */
+    model.m_settings.SetCurrentLayerId(default_layer_id);
+    model.m_settings.SetV5CurrentLayerIndex(0);
 
 #if 0
     ON_DimStyle default_style;
@@ -2350,7 +2365,16 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     delete gc;
     model.AddModelComponent(ngc);
 
-    model.m_properties.m_RevisionHistory.NewRevision();
+    /* ONX_Model::Write creates a current-time revision when the count is
+     * zero.  BREP primitives do not need an edit history; use a fixed valid
+     * epoch so serialization is reproducible. */
+    ON_3dmRevisionHistory &revision = model.m_properties.m_RevisionHistory;
+    revision = ON_3dmRevisionHistory::Empty;
+    revision.m_revision_count = 1;
+    revision.m_create_time.tm_year = 100;
+    revision.m_create_time.tm_mon = 0;
+    revision.m_create_time.tm_mday = 1;
+    revision.m_last_edit_time = revision.m_create_time;
     model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
     //model.Polish();
 }
@@ -2551,6 +2575,8 @@ rt_brep_ifree(struct rt_db_internal *ip)
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
+    delete bi->brep;
+    bi->brep = NULL;
     bu_free(bi, "rt_brep_internal free");
     ip->idb_ptr = ((void *)0);
 }

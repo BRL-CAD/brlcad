@@ -27,6 +27,7 @@
 #include "Factory.h"
 
 #include "CartesianTransformationOperator3D.h"
+#include "LocalUnits.h"
 
 #include "SurfaceReplica.h"
 
@@ -135,8 +136,33 @@ SurfaceReplica::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 SurfaceReplica::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    if (!brep || !parent_surface || !transformation)
+	return false;
+    if (ON_id >= 0)
+	return true;
+
+    ON_Xform xform;
+    if (!transformation->GetONTransform(xform, LocalUnits::length))
+	return false;
+    if (trim_curve_3d_bbox) {
+	ON_Xform inverse(xform);
+	ON_BoundingBox parent_bounds(*trim_curve_3d_bbox);
+	if (!inverse.Invert() || !parent_bounds.Transform(inverse))
+	    return false;
+	parent_surface->SetCurveBounds(&parent_bounds);
+    }
+    if (!parent_surface->LoadONBrep(brep))
+	return false;
+    const int parent_id = parent_surface->GetONId();
+    if (parent_id < 0 || parent_id >= brep->m_S.Count() || !brep->m_S[parent_id])
+	return false;
+    ON_Surface *copy = brep->m_S[parent_id]->DuplicateSurface();
+    if (!copy || !copy->Transform(xform)) {
+	delete copy;
+	return false;
+    }
+    ON_id = brep->AddSurface(copy);
+    return ON_id >= 0;
 }
 
 

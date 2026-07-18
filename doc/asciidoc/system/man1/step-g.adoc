@@ -10,7 +10,8 @@ step-g - convert a STEP (ISO 10303 AP203) file to a BRL-CAD geometry database
 
 [source]
 ----
-step-g [-v] [-D] [-S _summary_file_] (-o _outfile.g_ | -O _outfile.g_) _infile.stp_
+step-g [-v] [-D] [-S _summary_file_] [-e _ids_]
+       (-o _outfile.g_ | -O _outfile.g_) _infile.stp_
 ----
 
 
@@ -52,6 +53,13 @@ along with a brief translation summary are written to standard error.
   Perform a dry run: load and parse the STEP file and exercise the conversion
   steps, but do not write the output _.g_ database. Useful for validating a
   STEP file or timing the parsing phase.
+
+*-e*, *--entity* _IDS_::
+  Convert only the listed STEP representation-item roots while retaining their
+  product and assembly context. _IDS_ is a comma-separated list of positive
+  Part 21 instance identifiers, each optionally prefixed by *#*. The option
+  may be repeated. Dependencies required by a selected root are still loaded;
+  leaf faces, edges, and points are not independently convertible roots.
 
 [[examples]]
 == EXAMPLES

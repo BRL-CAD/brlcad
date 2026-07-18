@@ -264,7 +264,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
 		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
 		    methodname = "Time_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
@@ -338,7 +338,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
 		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
 		    methodname = "Ratio_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
@@ -369,7 +369,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
 		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
 		    methodname = "Time_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
@@ -443,7 +443,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
 		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
 		    methodname = "Ratio_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
@@ -474,7 +474,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
 		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
 		    methodname = "Time_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
@@ -548,7 +548,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
 		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
 		    methodname = "Ratio_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;

@@ -37,9 +37,15 @@
 
 #ifdef __cplusplus
 
+#  include <memory>
+
 __BEGIN_DECLS
 
 extern "C++" {
+
+namespace brlcad {
+class PullbackContext;
+}
 
 typedef struct pbc_data {
     double tolerance;
@@ -50,6 +56,8 @@ typedef struct pbc_data {
     std::list<ON_2dPointArray *> *segments;
     const ON_BrepEdge *edge;
     bool order_reversed;
+    /** Job-local closest-point cache.  It never owns STEP or geometry data. */
+    std::shared_ptr<brlcad::PullbackContext> context;
 } PBCData;
 
 extern BREP_EXPORT int IsAtSingularity(const ON_Surface *surf, double u, double v, double tol = 1e-6);
@@ -76,6 +84,44 @@ extern BREP_EXPORT int
 check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
 
 namespace brlcad {
+
+    /**
+     * Mutable state used by one pullback job.  Keeping span and bounding-box
+     * caches here makes independent conversion jobs safe to run concurrently
+     * and bounds the cache lifetime to the job that owns it.
+     */
+    class BREP_EXPORT PullbackContext {
+    public:
+        PullbackContext();
+        ~PullbackContext();
+
+        PullbackContext(const PullbackContext &) = delete;
+        PullbackContext &operator=(const PullbackContext &) = delete;
+
+        bool SurfaceClosestPoint(const ON_Surface *surf,
+                                 const ON_3dPoint& point,
+                                 ON_2dPoint& surface_point,
+                                 ON_3dPoint& lifted_point,
+                                 double& distance,
+                                 int quadrant = 0,
+                                 double same_point_tol = BREP_SAME_POINT_TOLERANCE,
+                                 double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
+
+    private:
+        struct Impl;
+        std::unique_ptr<Impl> m_impl;
+    };
+
+    extern BREP_EXPORT bool surface_GetClosestPoint3dFirstOrder(
+        PullbackContext &context,
+        const ON_Surface *surf,
+        const ON_3dPoint& point,
+        ON_2dPoint& surface_point,
+        ON_3dPoint& lifted_point,
+        double& distance,
+        int quadrant = 0,
+        double same_point_tol = BREP_SAME_POINT_TOLERANCE,
+        double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 
     /**
      * approach:
@@ -131,10 +177,9 @@ namespace brlcad {
 } /* end namespace brlcad */
 
 
-bool
+extern BREP_EXPORT bool
 ON_NurbsCurve_GetClosestPoint(
 	double *t,
-	ON_3dPoint *cp,
 	const ON_NurbsCurve *nc,
 	const ON_3dPoint &p,
 	double maximum_distance = 0.0,

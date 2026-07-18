@@ -48,7 +48,8 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
     void SetCurveBounds(const ON_BoundingBox *tcbb) {
-	trim_curve_3d_bbox = new ON_BoundingBox(*tcbb);
+	delete trim_curve_3d_bbox;
+	trim_curve_3d_bbox = tcbb ? new ON_BoundingBox(*tcbb) : NULL;
     };
 
     //static methods

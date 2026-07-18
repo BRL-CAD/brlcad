@@ -71,6 +71,9 @@ public:
     void SetONId(int on_id) {
 	ON_id = on_id;
     }
+    virtual void ResetONState() {
+	ON_id = -1;
+    }
     int STEPid();
     STEPWrapper *Step();
     virtual bool Load(STEPWrapper *UNUSED(sw), SDAI_Application_instance *UNUSED(sse)) {

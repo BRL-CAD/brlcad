@@ -101,15 +101,19 @@ CompositeCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 const double *
 CompositeCurve::PointAtEnd()
 {
-    std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
-    return NULL;
+    if (segments.empty() || !segments.back() || !segments.back()->ParentCurve())
+	return NULL;
+    return segments.back()->SameSense() == BTrue ?
+	segments.back()->ParentCurve()->PointAtEnd() : segments.back()->ParentCurve()->PointAtStart();
 }
 
 const double *
 CompositeCurve::PointAtStart()
 {
-    std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
-    return NULL;
+    if (segments.empty() || !segments.front() || !segments.front()->ParentCurve())
+	return NULL;
+    return segments.front()->SameSense() == BTrue ?
+	segments.front()->ParentCurve()->PointAtStart() : segments.front()->ParentCurve()->PointAtEnd();
 }
 
 void
@@ -145,6 +149,44 @@ STEPEntity *
 CompositeCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
+}
+
+bool
+CompositeCurve::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep || segments.empty())
+	return false;
+    if (ON_id >= 0)
+	return true;
+
+    ON_PolyCurve *curve = new ON_PolyCurve();
+    curve->Reserve((int)segments.size());
+    for (LIST_OF_SEGMENTS::const_iterator segment = segments.begin(); segment != segments.end(); ++segment) {
+	Curve *parent = *segment ? (*segment)->ParentCurve() : NULL;
+	const Boolean same_sense = *segment ? (*segment)->SameSense() : BUnset;
+	if (!parent || same_sense == BUnset || !parent->LoadONBrep(brep)) {
+	    delete curve;
+	    return false;
+	}
+	const int parent_id = parent->GetONId();
+	if (parent_id < 0 || parent_id >= brep->m_C3.Count() || !brep->m_C3[parent_id]) {
+	    delete curve;
+	    return false;
+	}
+	ON_Curve *copy = brep->m_C3[parent_id]->DuplicateCurve();
+	if (!copy || (same_sense == BFalse && !copy->Reverse()) || !curve->Append(copy)) {
+	    delete copy;
+	    delete curve;
+	    return false;
+	}
+    }
+
+    if (!curve->IsValid()) {
+	delete curve;
+	return false;
+    }
+    ON_id = brep->AddEdgeCurve(curve);
+    return ON_id >= 0;
 }
 
 // Local Variables:

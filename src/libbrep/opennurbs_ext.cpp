@@ -220,8 +220,8 @@ ON_NurbsCurve_GetClosestPoint(
 	double *t,
 	const ON_NurbsCurve *nc,
 	const ON_3dPoint &p,
-	double maximum_distance = 0.0,
-	const ON_Interval *sub_domain = NULL
+	double maximum_distance,
+	const ON_Interval *sub_domain
 	)
 {
     if (!t || !nc) return false;

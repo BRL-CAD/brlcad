@@ -167,7 +167,7 @@ MeasureValue::Load(STEPWrapper *sw, SDAI_Select *sse)
     } else if (v->IsCount_measure()) {
 	type = COUNT_MEASURE;
 	ivalue = (int)*v;
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
     } else if (v->IsAmount_of_substance_measure()) {
 	type = AMOUNT_OF_SUBSTANCE_MEASURE;
 	rvalue = (double)*v;

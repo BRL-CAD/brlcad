@@ -29,9 +29,10 @@
 class LocalUnits
 {
 public:
-    static double length;
-    static double planeangle;
-    static double solidangle;
+    static thread_local double length;
+    static thread_local double planeangle;
+    static thread_local double solidangle;
+    static thread_local double tolerance;
     LocalUnits();
     virtual ~LocalUnits();
 };

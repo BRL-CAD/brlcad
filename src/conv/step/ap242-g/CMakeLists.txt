@@ -1,5 +1,4 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap242e1.exp)
-add_definitions(-DAP242)
 
 if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   generate_schema_inputs(${STEP_SCHEMA_FILE} ap242g)
@@ -7,8 +6,9 @@ endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 set(
   ap242g_SOURCES
-  ${express_srcs}
+  ${ap242g_express_srcs}
   ../BRLCADWrapper.cpp
+  ../STEPString.cpp
   ../STEPWrapper.cpp
   ../step-g/AdvancedBrepShapeRepresentation.cpp
   ../step-g/AdvancedFace.cpp
@@ -49,6 +49,7 @@ set(
   ../step-g/CompositeCurve.cpp
   ../step-g/CompositeCurveOnSurface.cpp
   ../step-g/CompositeCurveSegment.cpp
+  ../step-g/CompoundRepresentationItem.cpp
   ../step-g/Conic.cpp
   ../step-g/ConicalSurface.cpp
   ../step-g/ConnectedFaceSet.cpp
@@ -58,6 +59,8 @@ set(
   ../step-g/Curve.cpp
   ../step-g/CurveBoundedSurface.cpp
   ../step-g/CurveReplica.cpp
+  ../step-g/CsgShapeRepresentation.cpp
+  ../step-g/CsgSolid.cpp
   ../step-g/CylindricalSurface.cpp
   ../step-g/DefinitionalRepresentation.cpp
   ../step-g/DerivedUnit.cpp
@@ -74,17 +77,24 @@ set(
   ../step-g/ElectricCurrentUnit.cpp
   ../step-g/ElementarySurface.cpp
   ../step-g/Ellipse.cpp
+  ../step-g/ExtrudedAreaSolid.cpp
   ../step-g/Face.cpp
   ../step-g/FaceBound.cpp
   ../step-g/FaceOuterBound.cpp
   ../step-g/FaceSurface.cpp
+  ../step-g/FacetedBrep.cpp
+  ../step-g/FacetedBrepShapeRepresentation.cpp
   Factory.cpp
   ../step-g/FoundedItem.cpp
   ../step-g/FunctionallyDefinedTransformation.cpp
+  ../step-g/GeometricSet.cpp
+  ../step-g/GeometricSetSelect.cpp
+  ../step-g/GeometricallyBoundedSurfaceShapeRepresentation.cpp
+  ../step-g/GeometricallyBoundedWireframeShapeRepresentation.cpp
   ../step-g/GeometricRepresentationContext.cpp
   ../step-g/GeometricRepresentationItem.cpp
   ../step-g/GlobalUncertaintyAssignedContext.cpp
-  GlobalUnitAssignedContext.cpp
+  ../step-g/GlobalUnitAssignedContext.cpp
   ../step-g/Hyperbola.cpp
   ../step-g/IntersectionCurve.cpp
   ../step-g/ItemDefinedTransformation.cpp
@@ -101,20 +111,24 @@ set(
   ../step-g/LuminousIntensitySiUnit.cpp
   ../step-g/LuminousIntensityUnit.cpp
   ../step-g/ManifoldSolidBrep.cpp
+  ../step-g/ManifoldSurfaceShapeRepresentation.cpp
+  ../step-g/MappedItem.cpp
   ../step-g/MassContextDependentUnit.cpp
   ../step-g/MassConversionBasedUnit.cpp
   ../step-g/MassSiUnit.cpp
   ../step-g/MassUnit.cpp
-  MeasureValue.cpp
-  MeasureWithUnit.cpp
+  ../step-g/MeasureValue.cpp
+  ../step-g/MeasureWithUnit.cpp
   ../step-g/MechanicalContext.cpp
   ../step-g/NamedUnit.cpp
   ../step-g/OffsetCurve2D.cpp
   ../step-g/OffsetCurve3D.cpp
   ../step-g/OffsetSurface.cpp
   ../step-g/OpenNurbsInterfaces.cpp
+  ../step-g/OpenShell.cpp
   ../step-g/OrientedEdge.cpp
   ../step-g/OrientedClosedShell.cpp
+  ../step-g/OrientedFace.cpp
   ../step-g/PCurve.cpp
   ../step-g/PCurveOrSurface.cpp
   ../step-g/Parabola.cpp
@@ -142,7 +156,7 @@ set(
   ../step-g/ProductDefinitionShape.cpp
   ../step-g/ProductRelatedProductCategory.cpp
   ../step-g/PropertyDefinition.cpp
-  PropertyDefinitionRepresentation.cpp
+  ../step-g/PropertyDefinitionRepresentation.cpp
   ../step-g/QuasiUniformCurve.cpp
   ../step-g/QuasiUniformSurface.cpp
   ../step-g/RatioContextDependentUnit.cpp
@@ -164,9 +178,10 @@ set(
   ../step-g/Representation.cpp
   ../step-g/RepresentationContext.cpp
   ../step-g/RepresentationItem.cpp
+  ../step-g/RepresentationMap.cpp
   ../step-g/RepresentationRelationship.cpp
   ../step-g/RepresentationRelationshipWithTransformation.cpp
-  RepresentedDefinition.cpp
+  ../step-g/RevolvedAreaSolid.cpp
   ../step-g/STEPEntity.cpp
   ../step-g/SeamCurve.cpp
   ../step-g/ShapeAspect.cpp
@@ -175,12 +190,14 @@ set(
   ../step-g/ShapeDefinitionRepresentation.cpp
   ../step-g/ShapeRepresentation.cpp
   ../step-g/ShapeRepresentationRelationship.cpp
+  ../step-g/ShellBasedSurfaceModel.cpp
   ../step-g/SiUnit.cpp
   ../step-g/SolidAngleContextDependentUnit.cpp
   ../step-g/SolidAngleConversionBasedUnit.cpp
   ../step-g/SolidAngleSiUnit.cpp
   ../step-g/SolidAngleUnit.cpp
   ../step-g/SolidModel.cpp
+  ../step-g/SolidReplica.cpp
   ../step-g/SphericalSurface.cpp
   ../step-g/Surface.cpp
   ../step-g/SurfaceCurve.cpp
@@ -188,6 +205,7 @@ set(
   ../step-g/SurfaceOfRevolution.cpp
   ../step-g/SurfacePatch.cpp
   ../step-g/SurfaceReplica.cpp
+  ../step-g/SweptAreaSolid.cpp
   ../step-g/SweptSurface.cpp
   ../step-g/ThermodynamicTemperatureContextDependentUnit.cpp
   ../step-g/ThermodynamicTemperatureConversionBasedUnit.cpp
@@ -233,6 +251,7 @@ set(
 set(
   AP242_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${ap242g_SCHEMA_OUT_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
@@ -241,9 +260,12 @@ set(
 )
 
 if(DEFINED ENABLE_STEP_EXPERIMENTAL)
-  brlcad_addexec(ap242-g "${ap242g_SOURCES}" "${ap242g_LIBS}" NO_STRICT FOLDER Conv)
+  brlcad_addexec(ap242-g "${ap242g_SOURCES}" "${ap242g_LIBS}" NO_STRICT FOLDER Conv
+    UNITY_BUILD_CODE_BEFORE_INCLUDE "#undef CLASSNAME\n#undef ENTITYNAME"
+  )
   target_include_directories(ap242-g BEFORE PRIVATE ${AP242_INCLUDE_DIRS})
-  add_dependencies(ap242-g step-express-${SCHEMA_NAME}-ap242g)
+  target_compile_definitions(ap242-g PRIVATE AP242)
+  add_dependencies(ap242-g ${ap242g_SCHEMA_TARGET})
 endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 cmakefiles(

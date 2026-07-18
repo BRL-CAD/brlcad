@@ -29,8 +29,11 @@
 
 #include "Direction.h"
 #include "CartesianPoint.h"
+#include "CartesianTransformationOperator3D.h"
 
 #include "CartesianTransformationOperator.h"
+
+#include <cmath>
 
 #define CLASSNAME "CartesianTransformationOperator"
 #define ENTITYNAME "Cartesian_Transformation_Operator"
@@ -110,6 +113,75 @@ CartesianTransformationOperator::Load(STEPWrapper *sw, SDAI_Application_instance
 
     sw->entity_status[id] = STEP_LOADED;
 
+    return true;
+}
+
+bool
+CartesianTransformationOperator::GetONTransform(ON_Xform &xform,
+    double length_factor) const
+{
+    if (!local_origin || !std::isfinite(scale) || scale <= 0.0 ||
+	!std::isfinite(length_factor) || length_factor <= 0.0)
+	return false;
+
+    ON_3dVector xaxis(1.0, 0.0, 0.0);
+    ON_3dVector yaxis(0.0, 1.0, 0.0);
+    ON_3dVector zaxis(0.0, 0.0, 1.0);
+    const CartesianTransformationOperator3D *operator_3d =
+	dynamic_cast<const CartesianTransformationOperator3D *>(this);
+    Direction *axis3 = operator_3d ? operator_3d->Axis3() : NULL;
+    if (axis1) {
+	const double *ratios = axis1->DirectionRatios();
+	xaxis.Set(ratios[0], ratios[1], ratios[2]);
+    }
+    if (!xaxis.Unitize())
+	return false;
+    if (axis2) {
+	const double *ratios = axis2->DirectionRatios();
+	yaxis.Set(ratios[0], ratios[1], ratios[2]);
+    }
+    if (axis3 && !axis2) {
+	const double *ratios = axis3->DirectionRatios();
+	zaxis.Set(ratios[0], ratios[1], ratios[2]);
+	if (!zaxis.Unitize())
+	    return false;
+	yaxis = ON_CrossProduct(zaxis, xaxis);
+	if (!yaxis.Unitize())
+	    return false;
+	zaxis = ON_CrossProduct(xaxis, yaxis);
+	if (!zaxis.Unitize())
+	    return false;
+    } else {
+	yaxis -= (yaxis * xaxis) * xaxis;
+	if (!yaxis.Unitize())
+	    return false;
+	zaxis = ON_CrossProduct(xaxis, yaxis);
+	if (!zaxis.Unitize())
+	    return false;
+	if (axis3) {
+	    const double *ratios = axis3->DirectionRatios();
+	    const ON_3dVector asserted_z(ratios[0], ratios[1], ratios[2]);
+	    if (zaxis * asserted_z < 0.0) {
+		yaxis.Reverse();
+		zaxis.Reverse();
+	    }
+	}
+    }
+
+    const double *origin = local_origin->Point3d();
+    xform.Identity();
+    xform[0][0] = scale * xaxis.x;
+    xform[0][1] = scale * yaxis.x;
+    xform[0][2] = scale * zaxis.x;
+    xform[0][3] = length_factor * origin[0];
+    xform[1][0] = scale * xaxis.y;
+    xform[1][1] = scale * yaxis.y;
+    xform[1][2] = scale * zaxis.y;
+    xform[1][3] = length_factor * origin[1];
+    xform[2][0] = scale * xaxis.z;
+    xform[2][1] = scale * yaxis.z;
+    xform[2][2] = scale * zaxis.z;
+    xform[2][3] = length_factor * origin[2];
     return true;
 }
 

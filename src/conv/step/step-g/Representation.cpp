@@ -27,6 +27,9 @@
 /* interface header */
 #include "./Representation.h"
 
+#include <algorithm>
+#include <cctype>
+
 /* implementation headers */
 #include "STEPWrapper.h"
 #include "Factory.h"
@@ -43,6 +46,34 @@
 #define ENTITYNAME "Representation"
 
 string Representation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Representation::Create);
+
+
+static bool
+is_non_geometric_presentation_item(SDAI_Application_instance *entity)
+{
+    if (!entity || !entity->EntityName())
+	return false;
+
+    std::string type(entity->EntityName());
+    std::transform(type.begin(), type.end(), type.begin(), [](unsigned char c) {
+	return static_cast<char>(std::toupper(c));
+    });
+
+    /* AP214 permits draughting and presentation representation items to sit
+     * beside the product geometry in a SHAPE_REPRESENTATION.  These concepts
+     * are extracted separately as metadata; failure to materialize one must
+     * not discard a valid exact solid.  Keep this list deliberately narrow so
+     * an unsupported geometric representation item remains a hard failure. */
+    static const char *presentation_types[] = {
+	"ANNOTATION", "CALLOUT", "CAMERA", "DRAUGHTING", "LIGHT_SOURCE",
+	"STYLED_ITEM", "SYMBOL"
+    };
+    for (size_t i = 0; i < sizeof(presentation_types) / sizeof(presentation_types[0]); ++i) {
+	if (type.find(presentation_types[i]) != std::string::npos)
+	    return true;
+    }
+    return type == "COMPOSITE_TEXT" || type.compare(0, 5, "TEXT_") == 0;
+}
 
 
 Representation::Representation()
@@ -168,6 +199,8 @@ bool Representation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
+		if (is_non_geometric_presentation_item(entity))
+		    continue;
 		RepresentationItem *aRI = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw, entity));
 		if (aRI != NULL) {
 		    items.push_back(aRI);

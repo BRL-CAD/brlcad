@@ -10,7 +10,9 @@ ap214-g - convert a STEP AP214 file to a BRL-CAD geometry database
 
 [source]
 ----
-ap214-g [-v] [-D] [-S _summary_file_] {-o _outfile.g_ | -O _outfile.g_} _infile.stp_
+ap214-g [-v] [-D] [-S _summary_file_] [-e _ids_] [-j _jobs_] [--abs-tol _mm_]
+        [--repair _none|safe_] [--strict] [--report _report.json_]
+        [{-o _outfile.g_ | -O _outfile.g_}] _infile.stp_
 ----
 
 
@@ -19,7 +21,23 @@ ap214-g [-v] [-D] [-S _summary_file_] {-o _outfile.g_ | -O _outfile.g_} _infile.
 
 *ap214-g* reads an ISO 10303 STEP (Standard for the Exchange of Product model data) file in the AP214 (Core data for automotive mechanical design processes, third edition) application protocol and translates its boundary representation (B-rep) geometry and assembly structure into a BRL-CAD *.g* geometry database.
 
-STEP manifold solids and bounded surfaces are converted to BRL-CAD Boundary Representation (BREP) objects, and the assembly/part hierarchy is preserved using BRL-CAD combinations. The input file may be named *-* to read the STEP data from standard input.
+STEP manifold solids and bounded surfaces, including exact affine solid and surface replicas, are converted to BRL-CAD Boundary Representation (BREP) objects, while authoritative *FACETED_BREP* solids are mapped directly to solid BRL-CAD BoTs. The latter is an exact representation-family mapping, not fallback geometry. A solid replica is supported when its parent can be materialized as an exact BREP; unsupported parent families are skipped and reported. Open and closed shell-based surface models are imported as non-region BREP objects. Geometrically bounded 3D wireframe curves, including polylines, sense-aware composite curves, and exact affine curve replicas, are retained as valid non-region wire BREPs with no invented thickness.
+
+Planar *EXTRUDED_AREA_SOLID* profiles, including inner boundary loops, and planar *EXTRUDED_FACE_SOLID* faces are converted to exact capped BREP solids. Profile closure and planarity are checked against the model tolerance; safe repair may snap only endpoint gaps within that tolerance.
+
+Planar *REVOLVED_AREA_SOLID* profiles and planar *REVOLVED_FACE_SOLID* faces with one explicit outer loop are converted to analytic revolution BREPs. Full turns retain their periodic seam topology; partial turns receive exact planar end caps whose coincident edges are merged and validated as an oriented manifold. Exact linear *SWEPT_DISK_SOLID* items are emitted as native cylinders, with an optional inner radius represented by a subtractive coaxial cylinder. Nonlinear swept-disk directrices and revolved profiles with inner loops are currently skipped and reported rather than approximated.
+
+Exact AP214 CSG trees composed of spheres, blocks, right-angular wedges, cylinders, finite cones/frusta, tori, unbounded plane half-spaces, and Boolean union/intersection/difference nodes are emitted as native BRL-CAD primitives and combinations. CSG roots are regions; intermediate Boolean nodes are not. The complete tree is validated before any of its objects are emitted. *COMPOUND_REPRESENTATION_ITEM* list and set containers are traversed recursively and pass their contained exact geometry and inherited presentation style to the normal conversion paths.
+
+The assembly/part hierarchy is preserved using BRL-CAD combinations. Product combinations reference separately addressable item regions, allowing a shared product definition to be instantiated by multiple assembly matrices. Mapped representations are converted once and reused with the transformation matrix of each mapped item. Closed solids are structurally and topologically validated before they are written. An individual exact item which remains invalid after safe repair is skipped and reported; no approximate fallback geometry is substituted.
+
+AP214 styled-item surface and fill colors, common predefined colors, transparency, and presentation-layer membership are applied to item regions when BRL-CAD has a corresponding display property. Original style and layer relationships and their source entity identifiers are retained as *step:* attributes.
+
+Product identifiers, revisions, descriptions, make-from material assignments, density with its derived units, and scalar/point validation properties such as area, volume, and centroid are retained as namespaced *step:* attributes. They are also recorded structurally in the JSON report.
+
+The converter accepts edition-qualified *AUTOMOTIVE_DESIGN* AP214 edition 1, 2, or 3 schema identifiers. The legacy *AUTOMOTIVE_DESIGN_CC2* identifier is accepted with a warning. Other schemas are rejected with a suggestion for the appropriate converter. The input file may be named *-* to read the STEP data from standard input.
+
+The output is first written beside the destination under a temporary name. It replaces the requested database atomically only after at least one usable item has completed and validation permits the selected partial/strict result.
 
 Elapsed load and convert times along with translation progress are written to standard error.
 
@@ -38,10 +56,45 @@ For the closely related AP203/AP214 translator see *step-g*(1); for the reverse 
   Write a detailed summary log of the translation (parsed entities, skipped unsupported types, and conversion statistics) to _summary_file_.
 
 *-v*::
-  Enable verbose output, printing detailed diagnostics to standard error during parsing and conversion.
+  Enable verbose output, printing detailed diagnostics to standard error during parsing and conversion. When *--report* is also used, retain entity-level diagnostic records and their source locations instead of the default bounded aggregation.
 
 *-D*::
-  Perform a dry run: load and parse the STEP file and simulate the conversion, but do not write any output database. Useful for validating a STEP file or timing the parse phase.
+  Perform a dry run: load and parse the STEP file and simulate the conversion, but do not write any output database. An *-o* or *-O* option is not required. Useful for validating a STEP file or timing the parse phase.
+
+*-e*, *--entity* _IDS_::
+  Convert only the listed STEP representation-item roots. _IDS_ is a
+  comma-separated list of positive Part 21 instance identifiers; an optional
+  leading *#* is accepted, and the option may be repeated. For example,
+  *--entity #3273,3577 --entity 3707* selects three geometry roots. The
+  converter still imports product and assembly context and loads the complete
+  dependency closure required by each selected root. Leaf topology and
+  geometry entities such as faces, edges, and points are not independently
+  convertible roots. An ID which is absent or is not a supported root is
+  reported as skipped geometry.
+
+*-j*, *--jobs* _N_::
+  Use at most _N_ geometry workers. STEPcode scanning and materialization remain
+  single-threaded. Exact advanced-BREP solids are materialized into independent
+  conversion arenas, released from STEPcode, converted in bounded worker
+  batches, and written serially in STEP entity order. Representation families
+  that have not yet been detached continue to convert serially.
+
+*--abs-tol* _MM_::
+  Override the model uncertainty with an absolute output-space tolerance in millimetres. By default the converter derives this value from *GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT* and applies a numerical floor.
+
+*--repair* _none|safe_::
+  Select the repair policy. *safe*, the default, permits only bounded operations within the asserted model tolerance. *none* disables optional repairs. Neither mode bridges larger gaps or creates approximate fallback geometry.
+
+*--strict*::
+  Reject the conversion and leave the destination unchanged if any required geometry item is skipped.
+
+*--report* _FILE_::
+  Write a JSON report containing schemas, entity and coverage counts, unsupported concepts, validation and repair results, diagnostics, timings, cache statistics, tolerance, and peak resident memory. By default, repeated diagnostics are aggregated by severity, entity type, attribute, and message while preserving their exact occurrence counts; use *-v* when entity IDs and source locations are required in the report. The cache byte counters measure the indexed source records represented by currently materialized STEP instances and their high-water mark; process memory is reported separately as peak resident memory.
+
+[[exit_status]]
+== EXIT STATUS
+
+*0* means all required imported items are valid. *1* means a usable partial database was produced with one or more skipped items. *2* reports an option, input, parse, or schema failure. *3* means there was no usable geometry or strict mode rejected a partial result. *4* reports a database or requested report output failure. An interrupted import returns *128 + signal number* (for example, *130* for *SIGINT*); its temporary database is removed and the destination is left untouched.
 
 [[examples]]
 == EXAMPLES
@@ -60,7 +113,7 @@ Converts the AP214 STEP file _bracket.stp_ into _bracket.g_ (refusing to clobber
 ====
 [source,bash]
 ----
-ap214-g -v -D -O /dev/null model.stp
+ap214-g -v -D model.stp
 ----
 Loads and parses _model.stp_ with verbose diagnostics enabled to check for unsupported or malformed entities, reporting load and convert timing while producing no geometry database.
 ====

@@ -95,6 +95,19 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instanc
     return true;
 }
 
+
+double
+GlobalUncertaintyAssignedContext::GetLengthUncertainty() const
+{
+    double result = 0.0;
+    for (LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT::const_iterator i = uncertainty.begin(); i != uncertainty.end(); ++i) {
+	if (!*i) continue;
+	double value = (*i)->GetLengthConversionFactor();
+	if (value > 0.0 && (result <= 0.0 || value < result)) result = value;
+    }
+    return result;
+}
+
 void
 GlobalUncertaintyAssignedContext::Print(int level)
 {

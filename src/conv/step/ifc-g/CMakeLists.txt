@@ -4,7 +4,7 @@ if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   generate_schema_inputs(${IFC_SCHEMA_FILE} ifcg)
 endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-set(ifcg_SOURCES ${express_srcs} IFCWrapper.cpp ifc-g.cpp)
+set(ifcg_SOURCES ${ifcg_express_srcs} IFCWrapper.cpp ifc-g.cpp)
 
 set(
   ifcg_LIBS
@@ -30,7 +30,8 @@ set(
 
 if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   brlcad_addexec(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT FOLDER Conv)
-  add_dependencies(ifc-g ifc-express-${SCHEMA_NAME}-ifcg)
+  add_dependencies(ifc-g ${ifcg_SCHEMA_TARGET})
+  set_property(TARGET ifc-g APPEND PROPERTY INCLUDE_DIRECTORIES "${ifcg_SCHEMA_OUT_DIR}")
   target_include_directories(ifc-g SYSTEM BEFORE PRIVATE ${IFC_INCLUDE_DIRS})
 endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 

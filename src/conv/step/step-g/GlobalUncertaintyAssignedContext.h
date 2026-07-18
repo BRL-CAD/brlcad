@@ -46,6 +46,7 @@ public:
     virtual ~GlobalUncertaintyAssignedContext();
     GlobalUncertaintyAssignedContext(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    double GetLengthUncertainty() const;
     virtual void Print(int level);
 
     //static methods

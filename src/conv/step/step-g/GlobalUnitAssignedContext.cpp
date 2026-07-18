@@ -180,7 +180,7 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		SdaiNamed_unit *snu = *unit;
 		NamedUnit *nu = dynamic_cast<NamedUnit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)snu));
 		units.push_back(nu);
-#ifdef AP203e2
+#if defined(AP203e2) || defined(AP242)
 	    } else if (unit->IsDerived_unit()) { 		//TODO: derived_unit
 		SdaiDerived_unit *sdu = *unit;
 		//NamedUnit *nu = (NamedUnit *);

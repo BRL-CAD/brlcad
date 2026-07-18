@@ -27,6 +27,7 @@
 #include "Factory.h"
 
 #include "ShellBasedSurfaceModel.h"
+#include "ClosedShell.h"
 #include "OpenShell.h"
 
 #define CLASSNAME "ShellBasedSurfaceModel"
@@ -75,17 +76,20 @@ ShellBasedSurfaceModel::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    SDAI_Select *stype;
 	    while (sn != NULL) {
 		stype = static_cast<SDAI_Select *>(sn->node);
+		SdaiShell *shell = static_cast<SdaiShell *>(stype);
 		const TypeDescriptor *underlying_type = stype->CurrentUnderlyingType();
-		if (underlying_type == SCHEMA_NAMESPACE::e_open_shell) {
-		    SdaiShell *shell = (SdaiShell *)stype;
+		ConnectedFaceSet *boundary = NULL;
+		if (underlying_type == SCHEMA_NAMESPACE::e_open_shell || shell->IsOpen_shell()) {
 		    if (shell->IsOpen_shell()) {
 			SdaiOpen_shell *oshell = *shell;
-			OpenShell *os = dynamic_cast<OpenShell *>(Factory::CreateObject(sw, (SDAI_Application_instance *)oshell));
-			if (os) {
-			    sbsm_boundary.push_back(os);
-			}
+			boundary = dynamic_cast<OpenShell *>(Factory::CreateObject(sw, (SDAI_Application_instance *)oshell));
 		    }
+		} else if (underlying_type == SCHEMA_NAMESPACE::e_closed_shell || shell->IsClosed_shell()) {
+		    SdaiClosed_shell *cshell = *shell;
+		    boundary = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw, (SDAI_Application_instance *)cshell));
 		}
+		if (boundary)
+		    sbsm_boundary.push_back(boundary);
 		sn = (SelectNode *)sn->NextNode();
 	    }
 	}
@@ -107,7 +111,7 @@ ShellBasedSurfaceModel::Print(int level)
 
     TAB(level + 1);
     std::cout << "sbsm_boundary:" << std::endl;
-    LIST_OF_OPEN_SHELLS::iterator i;
+    LIST_OF_SHELL_BOUNDARIES::iterator i;
     for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
 	(*i)->Print(level + 1);
     }

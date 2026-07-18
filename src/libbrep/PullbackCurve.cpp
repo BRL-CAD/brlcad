@@ -29,6 +29,7 @@
 #include "bn/dvec.h"
 
 #include <assert.h>
+#include <cmath>
 #include <vector>
 #include <list>
 #include <limits>
@@ -236,13 +237,39 @@ surface_EvNormal(// returns false if unable to evaluate
 }
 
 
-static bool locals_initialized[MAX_PSW] = {false};
-static ON_RevSurface *rev_surface[MAX_PSW] = {NULL};
-static ON_NurbsSurface *nurbs_surface[MAX_PSW] = {NULL};
-static ON_Extrusion *extr_surface[MAX_PSW] = {NULL};
-static ON_PlaneSurface *plane_surface[MAX_PSW] = {NULL};
-static ON_SumSurface *sum_surface[MAX_PSW] = {NULL};
-static ON_SurfaceProxy *proxy_surface[MAX_PSW] = {NULL};
+struct PullbackSurfaceScratch {
+    ON_RevSurface *rev_surface;
+    ON_NurbsSurface *nurbs_surface;
+    ON_Extrusion *extr_surface;
+    ON_PlaneSurface *plane_surface;
+    ON_SumSurface *sum_surface;
+    ON_SurfaceProxy *proxy_surface;
+
+    PullbackSurfaceScratch()
+	: rev_surface(ON_RevSurface::New()),
+	  nurbs_surface(ON_NurbsSurface::New()),
+	  extr_surface(new ON_Extrusion()),
+	  plane_surface(new ON_PlaneSurface()),
+	  sum_surface(ON_SumSurface::New()),
+	  proxy_surface(new ON_SurfaceProxy())
+    {
+    }
+
+    ~PullbackSurfaceScratch()
+    {
+	delete rev_surface;
+	delete nurbs_surface;
+	delete extr_surface;
+	delete plane_surface;
+	delete sum_surface;
+	delete proxy_surface;
+    }
+
+    PullbackSurfaceScratch(const PullbackSurfaceScratch &) = delete;
+    PullbackSurfaceScratch &operator=(const PullbackSurfaceScratch &) = delete;
+};
+
+static thread_local PullbackSurfaceScratch pullback_surface_scratch;
 
 bool
 surface_GetBoundingBox(
@@ -253,20 +280,7 @@ surface_GetBoundingBox(
     bool bGrowBox
     )
 {
-    int p = bu_parallel_id();
-
-    if (!locals_initialized[p]) {
-	static int sem_pullback_init = bu_semaphore_register("SEM_PULLBACK_INIT");
-	bu_semaphore_acquire(sem_pullback_init);
-	rev_surface[p] = ON_RevSurface::New();
-	nurbs_surface[p] = ON_NurbsSurface::New();
-	extr_surface[p] = new ON_Extrusion();
-	plane_surface[p] = new ON_PlaneSurface();
-	sum_surface[p] = ON_SumSurface::New();
-	proxy_surface[p] = new ON_SurfaceProxy();
-	locals_initialized[p] = true;
-	bu_semaphore_release(sem_pullback_init);
-    }
+    PullbackSurfaceScratch &scratch = pullback_surface_scratch;
 
     ON_Interval domSplits[2][2] = { { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }, { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }};
     if (!GetDomainSplits(surf, u_interval, v_interval, domSplits)) {
@@ -281,49 +295,49 @@ surface_GetBoundingBox(
 	for (int j=0; j<2; j++) {
 	    if (domSplits[1][j] != ON_Interval::EmptyInterval) {
 		if (dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *rev_surface[p] = *dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf));
-		    if (rev_surface[p]->Trim(0, domSplits[0][i]) && rev_surface[p]->Trim(1, domSplits[1][j])) {
-			if (!rev_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+		    *scratch.rev_surface = *dynamic_cast<ON_RevSurface * >(const_cast<ON_Surface *>(surf));
+		    if (scratch.rev_surface->Trim(0, domSplits[0][i]) && scratch.rev_surface->Trim(1, domSplits[1][j])) {
+			if (!scratch.rev_surface->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 			growcurrent = true;
 		    }
 		} else if (dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *nurbs_surface[p] = *dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf));
-		    if (nurbs_surface[p]->Trim(0, domSplits[0][i]) && nurbs_surface[p]->Trim(1, domSplits[1][j])) {
-			if (!nurbs_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+		    *scratch.nurbs_surface = *dynamic_cast<ON_NurbsSurface * >(const_cast<ON_Surface *>(surf));
+		    if (scratch.nurbs_surface->Trim(0, domSplits[0][i]) && scratch.nurbs_surface->Trim(1, domSplits[1][j])) {
+			if (!scratch.nurbs_surface->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *extr_surface[p] = *dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf));
-		    if (extr_surface[p]->Trim(0, domSplits[0][i]) && extr_surface[p]->Trim(1, domSplits[1][j])) {
-			if (!extr_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+		    *scratch.extr_surface = *dynamic_cast<ON_Extrusion * >(const_cast<ON_Surface *>(surf));
+		    if (scratch.extr_surface->Trim(0, domSplits[0][i]) && scratch.extr_surface->Trim(1, domSplits[1][j])) {
+			if (!scratch.extr_surface->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *(plane_surface[p]) = *dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf));
-		    if (plane_surface[p]->Trim(0, domSplits[0][i]) && plane_surface[p]->Trim(1, domSplits[1][j])) {
-			if (!plane_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+		    *scratch.plane_surface = *dynamic_cast<ON_PlaneSurface * >(const_cast<ON_Surface *>(surf));
+		    if (scratch.plane_surface->Trim(0, domSplits[0][i]) && scratch.plane_surface->Trim(1, domSplits[1][j])) {
+			if (!scratch.plane_surface->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *sum_surface[p] = *dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf));
-		    if (sum_surface[p]->Trim(0, domSplits[0][i]) && sum_surface[p]->Trim(1, domSplits[1][j])) {
-			if (!sum_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+		    *scratch.sum_surface = *dynamic_cast<ON_SumSurface * >(const_cast<ON_Surface *>(surf));
+		    if (scratch.sum_surface->Trim(0, domSplits[0][i]) && scratch.sum_surface->Trim(1, domSplits[1][j])) {
+			if (!scratch.sum_surface->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
 		    growcurrent = true;
 		} else if (dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf)) != NULL) {
-		    *proxy_surface[p] = *dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf));
-		    if (proxy_surface[p]->Trim(0, domSplits[0][i]) && proxy_surface[p]->Trim(1, domSplits[1][j])) {
-			if (!proxy_surface[p]->GetBoundingBox(bbox, growcurrent)) {
+		    *scratch.proxy_surface = *dynamic_cast<ON_SurfaceProxy * >(const_cast<ON_Surface *>(surf));
+		    if (scratch.proxy_surface->Trim(0, domSplits[0][i]) && scratch.proxy_surface->Trim(1, domSplits[1][j])) {
+			if (!scratch.proxy_surface->GetBoundingBox(bbox, growcurrent)) {
 			    return false;
 			}
 		    }
@@ -376,7 +390,7 @@ face_GetBoundingBox(
 bool
 surface_GetIntervalMinMaxDistance(
     const ON_3dPoint& p,
-    ON_BoundingBox &bbox,
+    const ON_BoundingBox &bbox,
     double &min_distance,
     double &max_distance
     )
@@ -679,7 +693,116 @@ surface_GetClosestPoint3dFirstOrderByRange(
 }
 
 
-bool surface_GetClosestPoint3dFirstOrder(
+struct brlcad::PullbackContext::Impl {
+    const ON_Surface *surface = NULL;
+    double same_point_tolerance = ON_DBL_QNAN;
+    int u_span_count = 0;
+    int v_span_count = 0;
+    int u_mid_index = 0;
+    int v_mid_index = 0;
+    std::vector<double> u_spans;
+    std::vector<double> v_spans;
+    std::vector<std::vector<ON_BoundingBox> > boxes;
+
+    bool Prepare(const ON_Surface *candidate, double same_point_tol)
+    {
+	if (candidate == surface &&
+	    NEAR_EQUAL(same_point_tol, same_point_tolerance, DBL_EPSILON))
+	    return true;
+
+	surface = NULL;
+	u_spans.clear();
+	v_spans.clear();
+	boxes.clear();
+	if (!candidate)
+	    return false;
+
+	const int original_u_span_count = candidate->SpanCount(0);
+	const int original_v_span_count = candidate->SpanCount(1);
+	if (original_u_span_count < 1 || original_v_span_count < 1)
+	    return false;
+
+	u_span_count = original_u_span_count;
+	v_span_count = original_v_span_count;
+	u_spans.resize(static_cast<size_t>(original_u_span_count) + 2);
+	v_spans.resize(static_cast<size_t>(original_v_span_count) + 2);
+	if (!candidate->GetSpanVector(0, u_spans.data()) ||
+	    !candidate->GetSpanVector(1, v_spans.data()))
+	    return false;
+
+	const double u_mid = candidate->Domain(0).Mid();
+	u_mid_index = u_span_count / 2;
+	for (int span = 0; span < u_span_count + 1; ++span) {
+	    if (NEAR_EQUAL(u_spans[span], u_mid, same_point_tol)) {
+		u_mid_index = span;
+		break;
+	    }
+	    if (u_spans[span] > u_mid) {
+		for (span = u_span_count + 1; span > 0; --span) {
+		    if (u_spans[span - 1] < u_mid) {
+			u_spans[span] = u_mid;
+			u_mid_index = span;
+			++u_span_count;
+			break;
+		    }
+		    u_spans[span] = u_spans[span - 1];
+		}
+		break;
+	    }
+	}
+
+	const double v_mid = candidate->Domain(1).Mid();
+	v_mid_index = v_span_count / 2;
+	for (int span = 0; span < v_span_count + 1; ++span) {
+	    if (NEAR_EQUAL(v_spans[span], v_mid, same_point_tol)) {
+		v_mid_index = span;
+		break;
+	    }
+	    if (v_spans[span] > v_mid) {
+		for (span = v_span_count + 1; span > 0; --span) {
+		    if (v_spans[span - 1] < v_mid) {
+			v_spans[span] = v_mid;
+			v_mid_index = span;
+			++v_span_count;
+			break;
+		    }
+		    v_spans[span] = v_spans[span - 1];
+		}
+		break;
+	    }
+	}
+
+	boxes.resize(static_cast<size_t>(u_span_count));
+	for (int u = 0; u < u_span_count; ++u)
+	    boxes[u].resize(static_cast<size_t>(v_span_count));
+	for (int u = 1; u < u_span_count + 1; ++u) {
+	    for (int v = 1; v < v_span_count + 1; ++v) {
+		const ON_Interval u_interval(u_spans[u - 1], u_spans[u]);
+		const ON_Interval v_interval(v_spans[v - 1], v_spans[v]);
+		if (!surface_GetBoundingBox(candidate, u_interval, v_interval,
+			boxes[u - 1][v - 1], false))
+		    return false;
+	    }
+	}
+
+	surface = candidate;
+	same_point_tolerance = same_point_tol;
+	return true;
+    }
+};
+
+
+brlcad::PullbackContext::PullbackContext()
+    : m_impl(new Impl())
+{
+}
+
+
+brlcad::PullbackContext::~PullbackContext() = default;
+
+
+bool
+brlcad::PullbackContext::SurfaceClosestPoint(
     const ON_Surface *surf,
     const ON_3dPoint& p,
     ON_2dPoint& p2d,
@@ -697,107 +820,20 @@ bool surface_GetClosestPoint3dFirstOrder(
 {
     bool rc = false;
 
-    static const ON_Surface *prev_surface = NULL;
-    static int prev_u_spancnt = 0;
-    static int u_spancnt = 0;
-    static int v_spancnt = 0;
-    static double *uspan = NULL;
-    static double *vspan = NULL;
-    static ON_BoundingBox **bbox = NULL;
-    static double umid = 0.0;
-    static int umid_index = 0;
-    static double vmid = 0.0;
-    static int vmid_index = 0;
-
     current_distance = DBL_MAX;
 
-    if (!surf)
+    if (!surf || !m_impl->Prepare(surf, same_point_tol))
 	return rc;
 
-    int prec = std::cerr.precision();
-    std::cerr.precision(15);
+    const int u_spancnt = m_impl->u_span_count;
+    const int v_spancnt = m_impl->v_span_count;
+    const int umid_index = m_impl->u_mid_index;
+    const int vmid_index = m_impl->v_mid_index;
+    const std::vector<double> &uspan = m_impl->u_spans;
+    const std::vector<double> &vspan = m_impl->v_spans;
+    const std::vector<std::vector<ON_BoundingBox> > &bbox = m_impl->boxes;
 
-
-    if (prev_surface != surf) {
-	if (uspan)
-	    delete [] uspan;
-	if (vspan)
-	    delete [] vspan;
-	if (bbox) {
-	    for(int i = 0 ; i < (prev_u_spancnt + 2) ; i++)
-		delete [] bbox[i] ;
-	    delete [] bbox;
-	}
-	u_spancnt = prev_u_spancnt = surf->SpanCount(0);
-	v_spancnt = surf->SpanCount(1);
-	// adding 2 here because going to divide at midpoint
-	uspan = new double[u_spancnt + 2];
-	vspan = new double[v_spancnt + 2];
-	bbox = new ON_BoundingBox *[(u_spancnt + 2)];
-	for(int i = 0 ; i < (u_spancnt + 2) ; i++)
-	    bbox[i] = new ON_BoundingBox [v_spancnt + 2];
-
-	if (surf->GetSpanVector(0, uspan) && surf->GetSpanVector(1, vspan)) {
-	    prev_surface = surf;
-	    umid = surf->Domain(0).Mid();
-	    umid_index = u_spancnt/2;
-	    for (int u_span_index = 0; u_span_index < u_spancnt + 1;u_span_index++) {
-		if (NEAR_EQUAL(uspan[u_span_index], umid, same_point_tol)) {
-		    umid_index = u_span_index;
-		    break;
-		} else if (uspan[u_span_index] > umid) {
-		    for (u_span_index = u_spancnt + 1; u_span_index > 0;u_span_index--) {
-			if (uspan[u_span_index-1] < umid) {
-			    uspan[u_span_index] = umid;
-			    umid_index = u_span_index;
-			    u_spancnt++;
-			    u_span_index = u_spancnt+1;
-			    break;
-			} else {
-			    uspan[u_span_index] = uspan[u_span_index-1];
-			}
-		    }
-		}
-	    }
-	    vmid = surf->Domain(1).Mid();
-	    vmid_index = v_spancnt/2;
-	    for (int v_span_index = 0; v_span_index < v_spancnt + 1;v_span_index++) {
-		if (NEAR_EQUAL(vspan[v_span_index], vmid, same_point_tol)) {
-		    vmid_index = v_span_index;
-		    break;
-		} else if (vspan[v_span_index] > vmid) {
-		    for (v_span_index = v_spancnt + 1; v_span_index > 0;v_span_index--) {
-			if (vspan[v_span_index-1] < vmid) {
-			    vspan[v_span_index] = vmid;
-			    vmid_index = v_span_index;
-			    v_spancnt++;
-			    v_span_index = v_spancnt+1;
-			    break;
-			} else {
-			    vspan[v_span_index] = vspan[v_span_index-1];
-			}
-		    }
-		}
-	    }
-	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
-		 u_span_index++) {
-		for (int v_span_index = 1; v_span_index < v_spancnt + 1;
-		     v_span_index++) {
-		    ON_Interval u_interval(uspan[u_span_index - 1],
-					   uspan[u_span_index]);
-		    ON_Interval v_interval(vspan[v_span_index - 1],
-					   vspan[v_span_index]);
-
-		    if (!surface_GetBoundingBox(surf, u_interval, v_interval, bbox[u_span_index-1][v_span_index-1], false)) {
-			std::cerr << "Error computing bounding box for surface interval" << std::endl;
-		    }
-		}
-	    }
-	} else {
-	    prev_surface = NULL;
-	}
-    }
-    if (prev_surface == surf) {
+    {
 	if (quadrant == 0) {
 	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
 		 u_span_index++) {
@@ -1730,8 +1766,55 @@ bool surface_GetClosestPoint3dFirstOrder(
 	}
     }
 cleanup:
-    std::cerr.precision(prec);
     return rc;
+}
+
+
+bool
+brlcad::surface_GetClosestPoint3dFirstOrder(
+    PullbackContext &context,
+    const ON_Surface *surf,
+    const ON_3dPoint& point,
+    ON_2dPoint& surface_point,
+    ON_3dPoint& lifted_point,
+    double &distance,
+    int quadrant,
+    double same_point_tol,
+    double within_distance_tol)
+{
+    return context.SurfaceClosestPoint(surf, point, surface_point, lifted_point,
+	distance, quadrant, same_point_tol, within_distance_tol);
+}
+
+
+bool
+surface_GetClosestPoint3dFirstOrder(
+    const ON_Surface *surf,
+    const ON_3dPoint& point,
+    ON_2dPoint& surface_point,
+    ON_3dPoint& lifted_point,
+    double &distance,
+    int quadrant,
+    double same_point_tol,
+    double within_distance_tol)
+{
+    brlcad::PullbackContext context;
+    return brlcad::surface_GetClosestPoint3dFirstOrder(context, surf, point,
+	surface_point, lifted_point, distance, quadrant, same_point_tol,
+	within_distance_tol);
+}
+
+
+static bool
+pullback_closest_point(PBCData &data, const ON_3dPoint &point,
+    ON_2dPoint &surface_point, ON_3dPoint &lifted_point, double &distance,
+    int quadrant, double same_point_tol, double within_distance_tol)
+{
+    if (!data.context)
+	data.context = std::make_shared<brlcad::PullbackContext>();
+    return brlcad::surface_GetClosestPoint3dFirstOrder(*data.context,
+	data.surf, point, surface_point, lifted_point, distance, quadrant,
+	same_point_tol, within_distance_tol);
 }
 
 
@@ -1752,10 +1835,8 @@ bool trim_GetClosestPoint3dFirstOrder(
     double t0;
     ON_3dPoint p3d;
     ON_3dVector T, K;
-    int prec = std::cerr.precision();
     ON_BoundingBox tight_bbox;
     std::vector<ON_BoundingBox> bbox;
-    std::cerr.precision(15);
 
     ON_Curve *c = trim.Brep()->m_C2[trim.m_c2i];
     ON_NurbsCurve N;
@@ -1937,8 +2018,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 	delete [] skip;
 
     }
-    std::cerr.precision(prec);
-
     return rc;
 }
 
@@ -2164,7 +2243,11 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
-	u[k + 1] = u[k] + 3.0 * (P[k][1] - P[k][0]).Length();
+	/* Chord length is strictly positive after duplicate samples have been
+	 * removed.  Parameterizing from a tangent handle can produce a zero
+	 * interval at a stationary endpoint and an invalid repeated interior
+	 * openNURBS knot. */
+	u[k + 1] = u[k] + (Q[k + 1] - Q[k]).Length();
     }
     int degree = 3;
     int n = control_points.Count();
@@ -2260,7 +2343,7 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q)
     std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
-	u[k + 1] = u[k] + 3.0 * (P[k][1] - P[k][0]).Length();
+	u[k + 1] = u[k] + (Q[k + 1] - Q[k]).Length();
     }
     int degree = 3;
     int n = control_points.Count();
@@ -2314,16 +2397,55 @@ newNURBSCurve(BSpline& spline, int dimension = 3)
 ON_Curve*
 interpolateCurve(ON_2dPointArray &samples)
 {
-    ON_NurbsCurve* nurbs;
-
+    ON_2dPointArray clean;
+    for (int i = 0; i < samples.Count(); ++i) {
+	const ON_2dPoint &point = samples[i];
+	if (!std::isfinite(point.x) || !std::isfinite(point.y))
+	    continue;
+	if (!clean.Count() || clean[clean.Count() - 1].DistanceTo(point) >
+		ON_ZERO_TOLERANCE)
+	    clean.Append(point);
+    }
+    samples = clean;
+    if (samples.Count() < 2)
+	return NULL;
     if (samples.Count() == 2)
-	// build a line
 	return new ON_LineCurve(samples[0], samples[1]);
 
-    // local vs. global interpolation for large point sampled curves
-    nurbs = interpolateLocalCubicCurve(samples);
+    ON_NurbsCurve *nurbs = interpolateLocalCubicCurve(samples);
+    if (nurbs && nurbs->IsValid()) {
+	/* interpolateLocalCubicCurve extrapolates the two end tangents as if
+	 * every input were open.  For a closed sample ring that can produce a
+	 * geometrically closed curve whose end derivatives point in opposite
+	 * directions.  Such a pcurve is structurally invalid for a closed BREP
+	 * edge even though its interior samples are correct.  Retain the cubic
+	 * only when its closure direction is consistent; otherwise use the
+	 * already lift-bounded degree-one path through the adaptive samples. */
+	const bool closed = samples[0].DistanceTo(samples[samples.Count() - 1]) <=
+	    ON_ZERO_TOLERANCE;
+	if (!closed)
+	    return nurbs;
+	ON_3dVector start_tangent = nurbs->TangentAt(nurbs->Domain().Min());
+	ON_3dVector end_tangent = nurbs->TangentAt(nurbs->Domain().Max());
+	if (start_tangent.Unitize() && end_tangent.Unitize() &&
+		start_tangent * end_tangent >= 0.0)
+	    return nurbs;
+    }
+    delete nurbs;
 
-    return nurbs;
+    /* The adaptive samples have already passed the surface-lift error
+     * budget.  A degree-one UV curve through those samples is therefore the
+     * bounded, topology-preserving fallback when cubic interpolation is
+     * singular; it does not invent 3-D geometry. */
+    ON_3dPointArray polyline_points;
+    polyline_points.Reserve(samples.Count());
+    for (int i = 0; i < samples.Count(); ++i)
+	polyline_points.Append(ON_3dPoint(samples[i].x, samples[i].y, 0.0));
+    ON_PolylineCurve *polyline = new ON_PolylineCurve(polyline_points);
+    if (polyline->ChangeDimension(2) && polyline->IsValid())
+	return polyline;
+    delete polyline;
+    return NULL;
 }
 
 
@@ -2433,7 +2555,6 @@ pullback_samples(PBCData* data,
 	return NULL;
 
     const ON_Curve* curve = data->curve;
-    const ON_Surface* surf = data->surf;
     ON_2dPointArray *samples = new ON_2dPointArray();
     int numKnots = curve->SpanCount();
     double *knots = new double[numKnots + 1];
@@ -2476,14 +2597,16 @@ pullback_samples(PBCData* data,
 		for (int j = 1; j < samplesperknotinterval; j++) {
 		    p = curve->PointAt(knots[i - 1] + j * delta);
 		    p3d = ON_3dPoint::UnsetPoint;
-		    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
+		    if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
+			    same_point_tol, within_distance_tol)) {
 			samples->Append(pt);
 		    }
 		}
 	    }
 	    p = curve->PointAt(knots[i]);
 	    p3d = ON_3dPoint::UnsetPoint;
-	    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
+	    if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
+		    same_point_tol, within_distance_tol)) {
 		samples->Append(pt);
 	    }
 	} else {
@@ -2492,13 +2615,15 @@ pullback_samples(PBCData* data,
 		for (int j = 1; j < samplesperknotinterval; j++) {
 		    p = curve->PointAt(knots[i - 1] + j * delta);
 		    p3d = ON_3dPoint::UnsetPoint;
-		    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
+		    if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
+			    same_point_tol, within_distance_tol)) {
 			samples->Append(pt);
 		    }
 		}
 		p = curve->PointAt(knots[i]);
 		p3d = ON_3dPoint::UnsetPoint;
-		if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
+		if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
+			same_point_tol, within_distance_tol)) {
 		    samples->Append(pt);
 		}
 	    }
@@ -2782,8 +2907,10 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 	ON_3dPoint check_pt_3d = ON_3dPoint::UnsetPoint;
 	int udir=0;
 	int vdir=0;
-	if (surface_GetClosestPoint3dFirstOrder(surf, p0_3d, p0_2d, check_pt_3d, p0_distance, 0, same_point_tol, within_distance_tol) &&
-	    surface_GetClosestPoint3dFirstOrder(surf, p1_3d, p1_2d, check_pt_3d, p1_distance, 0, same_point_tol, within_distance_tol)) {
+	if (pullback_closest_point(data, p0_3d, p0_2d, check_pt_3d,
+		p0_distance, 0, same_point_tol, within_distance_tol) &&
+	    pullback_closest_point(data, p1_3d, p1_2d, check_pt_3d,
+		p1_distance, 0, same_point_tol, within_distance_tol)) {
 	    if (ConsecutivePointsCrossClosedSeam(surf, p0_2d, p1_2d, udir, vdir, tol)) {
 		ON_2dPoint p_2d;
 		//lets check to see if p0 || p1 are already on a seam
@@ -2818,7 +2945,9 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 			    ON_3dPoint p_3d = data.curve->PointAt(t);
 			    double distance;
 
-			    if (surface_GetClosestPoint3dFirstOrder(surf, p_3d, p_2d, check_pt_3d, distance, 0, same_point_tol, within_distance_tol)) {
+			    if (pullback_closest_point(data, p_3d, p_2d,
+				    check_pt_3d, distance, 0, same_point_tol,
+				    within_distance_tol)) {
 				seam = IsAtSeam(surf, p_2d, tol);
 				if (seam > 0) {
 				    ForceToClosestSeam(surf, p_2d, tol);
@@ -3024,7 +3153,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 	    ON_3dPoint p = curve->PointAt(curr_t);
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
 	    double distance;
-	    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
+	    if (pullback_closest_point(*data, p, pt, p3d, distance, 0,
+		    same_point_tol, within_distance_tol)) {
 		if (IsAtSeam(surf, pt, PBC_SEAM_TOL) > 0) {
 		    ForceToClosestSeam(surf, pt, PBC_SEAM_TOL);
 		}
@@ -3154,7 +3284,8 @@ pullback_samples(const ON_Surface* surf,
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
 	    double distance;
 	    int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
-	    if (surface_GetClosestPoint3dFirstOrder(surf, p, uv, p3d, distance, quadrant, same_point_tol, within_distance_tol)) {
+	    if (pullback_closest_point(*data, p, uv, p3d, distance, quadrant,
+		    same_point_tol, within_distance_tol)) {
 		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
 		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0, same_point_tol, within_distance_tol);
 		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax, same_point_tol, within_distance_tol);
@@ -4041,7 +4172,6 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 	}
 
 	if (curve == next_curve) {
-	    std::cerr << "Consecutive seam usage" << std::endl;
 	    //find which direction we need to extend
 	    if (surf->IsClosed(0) && !surf->IsClosed(1)) {
 		double length = surf->Domain(0).Length();
@@ -4064,7 +4194,8 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 		    seg++;
 		}
 	    } else {
-		std::cerr << "both directions" << std::endl;
+		/* A surface closed in both directions is left unchanged here; the
+		 * bounded seam resolver selects its periodic image later. */
 	    }
 	}
 	next_curve = NULL;

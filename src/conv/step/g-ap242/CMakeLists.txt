@@ -1,5 +1,4 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap242e1.exp)
-add_definitions(-DAP242)
 
 if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   generate_schema_inputs(${STEP_SCHEMA_FILE} gap242)
@@ -7,8 +6,9 @@ endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 set(
   gap242_SOURCES
-  ${express_srcs}
+  ${gap242_express_srcs}
   ../BRLCADWrapper.cpp
+  ../STEPString.cpp
   ../g-step/AP203.cpp
   ../g-step/Default_Geometric_Context.cpp
   ../g-step/ON_Brep.cpp
@@ -37,6 +37,7 @@ set(
 set(
   AP242_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${gap242_SCHEMA_OUT_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_CURRENT_SOURCE_DIR}/../g-step
@@ -47,10 +48,11 @@ set(
 if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   brlcad_addexec(g-ap242 "${gap242_SOURCES}" "${gap242_LIBS}" NO_STRICT FOLDER Conv)
   target_include_directories(g-ap242 BEFORE PRIVATE ${AP242_INCLUDE_DIRS})
-  add_dependencies(g-ap242 step-express-${SCHEMA_NAME}-gap242)
+  target_compile_definitions(g-ap242 PRIVATE AP242)
+  add_dependencies(g-ap242 ${gap242_SCHEMA_TARGET})
   set_property(
     SOURCE
-      ${CMAKE_CURRENT_BINARY_DIR}/AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF/SdaiAP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF.cc
+      ${gap242_SCHEMA_OUT_DIR}/SdaiAP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF.cc
     APPEND
     PROPERTY COMPILE_FLAGS "/bigobj"
   )

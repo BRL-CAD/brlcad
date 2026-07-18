@@ -29,12 +29,15 @@
 #include "common.h"
 
 #include <string>
+#include <cstdint>
 #include <map>
 
 /* brlcad headers */
 #include <bu/list.h>
 #include <wdb.h>
 #include <raytrace.h>
+
+#include "STEPDocument.h"
 
 
 class ON_Brep;
@@ -44,10 +47,21 @@ typedef std::map<std::string, struct bu_list *> MAP_OF_BU_LIST_HEADS;
 class BRLCADWrapper
 {
 private:
+    struct CombinationProperties {
+	bool is_region = false;
+	int64_t step_id = 0;
+	std::string original_name;
+	bool has_style = false;
+	brlcad::step::Style style;
+    };
+
     std::string filename;
     struct rt_wdb *outfp;
     struct db_i *dbip;
-    static int sol_reg_cnt;
+    MAP_OF_BU_LIST_HEADS heads;
+    std::map<std::string, CombinationProperties> combination_properties;
+    std::map<std::string, int64_t> allocated_names;
+    uint64_t anonymous_name_counter;
 
 public:
     int dry_run;
@@ -56,13 +70,38 @@ public:
     bool load(std::string &filename);
     bool OpenFile(std::string &filename);
     bool WriteHeader();
-    bool WriteSphere(double *center, double radius);
-    bool WriteBrep(std::string name, ON_Brep *brep, mat_t &mat);
+    bool WriteSphere(const std::string &name, const double *center, double radius,
+	int64_t step_id = 0, const std::string &original_name = std::string());
+    bool WriteRcc(const std::string &name, const double *base, const double *height,
+	double radius, int64_t step_id = 0, const std::string &original_name = std::string());
+    bool WriteTgc(const std::string &name, const double *base, const double *height,
+	const double *a, const double *b, const double *c, const double *d,
+	int64_t step_id = 0, const std::string &original_name = std::string());
+    bool WriteTorus(const std::string &name, const double *center, const double *normal,
+	double major_radius, double minor_radius, int64_t step_id = 0,
+	const std::string &original_name = std::string());
+    bool WriteHalf(const std::string &name, const double *normal, double distance,
+	int64_t step_id = 0, const std::string &original_name = std::string());
+    bool WriteArb8(const std::string &name, const double *points, int64_t step_id = 0,
+	const std::string &original_name = std::string());
+    bool WriteBrep(std::string name, ON_Brep *brep, mat_t &mat, bool is_region = true,
+	int64_t step_id = 0, const std::string &original_name = std::string(),
+	const brlcad::step::Style *style = NULL);
+    bool WriteBot(std::string name, size_t num_vertices, size_t num_faces,
+	fastf_t *vertices, int *faces, mat_t &mat, int64_t step_id = 0,
+	const std::string &original_name = std::string(),
+	const brlcad::step::Style *style = NULL);
     bool WriteCombs();
-    bool AddMember(const std::string &combname,const std::string &member,mat_t mat);
+    bool AddMember(const std::string &combname, const std::string &member, mat_t mat,
+	int operation = WMOP_UNION);
+    bool SetCombinationProperties(const std::string &combname, bool is_region,
+	int64_t step_id = 0, const std::string &original_name = std::string(),
+	const brlcad::step::Style *style = NULL);
     std::string ReplaceAccented( std::string &str );
     std::string CleanBRLCADName(std::string &name);
     std::string GetBRLCADName(std::string &name);
+    std::string StableBRLCADName(const std::string &name, int64_t step_id);
+    bool SetAttribute(const std::string &object, const std::string &key, const std::string &value);
     static void getRandomColor(unsigned char *rgb);
     struct db_i * GetDBIP();
     bool Close();

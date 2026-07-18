@@ -1,5 +1,4 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap214e3.exp)
-add_definitions(-DAP214e3)
 
 if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   generate_schema_inputs(${STEP_SCHEMA_FILE} gap214)
@@ -7,8 +6,9 @@ endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
 set(
   gap214_SOURCES
-  ${express_srcs}
+  ${gap214_express_srcs}
   ../BRLCADWrapper.cpp
+  ../STEPString.cpp
   ../g-step/AP203.cpp
   ../g-step/Assembly_Product.cpp
   ../g-step/Default_Geometric_Context.cpp
@@ -41,6 +41,7 @@ set(
 set(
   AP214_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${gap214_SCHEMA_OUT_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_CURRENT_SOURCE_DIR}/../g-step
@@ -51,9 +52,10 @@ set(
 if(DEFINED ENABLE_STEP_EXPERIMENTAL)
   brlcad_addexec(g-ap214 "${gap214_SOURCES}" "${gap214_LIBS}" NO_STRICT FOLDER Conv)
   target_include_directories(g-ap214 BEFORE PRIVATE ${AP214_INCLUDE_DIRS})
-  add_dependencies(g-ap214 step-express-${SCHEMA_NAME}-gap214)
+  target_compile_definitions(g-ap214 PRIVATE AP214e3)
+  add_dependencies(g-ap214 ${gap214_SCHEMA_TARGET})
   set_property(
-    SOURCE ${CMAKE_CURRENT_BINARY_DIR}/AUTOMOTIVE_DESIGN/SdaiAUTOMOTIVE_DESIGN.cc
+    SOURCE ${gap214_SCHEMA_OUT_DIR}/SdaiAUTOMOTIVE_DESIGN.cc
     APPEND
     PROPERTY COMPILE_FLAGS "/bigobj"
   )

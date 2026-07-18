@@ -141,6 +141,22 @@ bool PropertyDefinitionRepresentation::Load(STEPWrapper *sw, SDAI_Application_in
 	    goto step_error;
 	}
     }
+#elif defined(AP214e3) || defined(AP242)
+    if (definition == NULL) {
+	SDAI_Select *select = step->getSelectAttribute(sse, "definition");
+	SdaiRepresented_definition *represented = static_cast<SdaiRepresented_definition *>(select);
+	if (represented && represented->IsProperty_definition()) {
+	    SdaiProperty_definition *property = *represented;
+	    definition = dynamic_cast<PropertyDefinition *>(Factory::CreateObject(
+		sw, static_cast<SDAI_Application_instance *>(property)));
+	}
+	if (!definition) {
+	    sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning, id,
+		"PROPERTY_DEFINITION_REPRESENTATION", "definition",
+		"unsupported or invalid represented_definition select");
+	    goto step_error;
+	}
+    }
 #else
     if (definition == NULL) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "definition");

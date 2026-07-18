@@ -61,9 +61,8 @@ STEPEntity::CreateEntity(
     EntityInstanceFunc Instance,
     const char *classname)
 {
-    Factory::OBJECTS::iterator i;
-
-    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+    STEPEntity *cached = sw->FindObject(sse->STEPfile_id);
+    if (!cached) {
 	STEPEntity *object = Instance(sw, sse->STEPfile_id);
 
 	if (!object->Load(sw, sse)) {
@@ -72,11 +71,11 @@ STEPEntity::CreateEntity(
 	    return NULL;
 	}
 
-	Factory::AddObject(object);
+	sw->AddObject(object);
 
 	return static_cast<STEPEntity *>(object);
     } else {
-	return (*i).second;
+	return cached;
     }
 }
 

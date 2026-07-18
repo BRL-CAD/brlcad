@@ -28,17 +28,15 @@
 
 /* interface header */
 #include "./BRLCADWrapper.h"
+#include "STEPString.h"
 
 /* system headers */
 #include <sstream>
 #include <iostream>
 
 
-int BRLCADWrapper::sol_reg_cnt = 0;
-
-
 BRLCADWrapper::BRLCADWrapper()
-    : outfp(NULL), dbip(NULL), dry_run(false)
+    : outfp(NULL), dbip(NULL), anonymous_name_counter(0), dry_run(false)
 {
 }
 
@@ -106,17 +104,102 @@ BRLCADWrapper::WriteHeader()
 
 
 bool
-BRLCADWrapper::WriteSphere(double *center, double radius)
+BRLCADWrapper::WriteSphere(const std::string &name, const double *center, double radius,
+	int64_t step_id, const std::string &original_name)
 {
     if (dry_run)
 	return true;
+    if (!outfp || !center || radius <= 0.0)
+	return false;
+    point_t pnt = {center[0], center[1], center[2]};
+    if (mk_sph(outfp, name.c_str(), pnt, radius) < 0)
+	return false;
+    if (step_id > 0) SetAttribute(name, "step:source_id", std::to_string(step_id));
+    if (!original_name.empty()) SetAttribute(name, "step:original_name",
+	brlcad::step::decode_string(original_name));
+    return true;
+}
 
-    point_t pnt;
-    center[X] = 0.0;
-    center[Y] = 0.0;
-    center[Z] = 0.0;
-    VMOVE(pnt, center);
-    mk_sph(outfp, "s1", pnt, radius);
+bool
+BRLCADWrapper::WriteRcc(const std::string &name, const double *base, const double *height,
+	double radius, int64_t step_id, const std::string &original_name)
+{
+    if (dry_run) return true;
+    if (!outfp || !base || !height || radius <= 0.0) return false;
+    point_t b = {base[0], base[1], base[2]};
+    vect_t h = {height[0], height[1], height[2]};
+    if (mk_rcc(outfp, name.c_str(), b, h, radius) < 0) return false;
+    if (step_id > 0) SetAttribute(name, "step:source_id", std::to_string(step_id));
+    if (!original_name.empty()) SetAttribute(name, "step:original_name",
+	brlcad::step::decode_string(original_name));
+    return true;
+}
+
+bool
+BRLCADWrapper::WriteTgc(const std::string &name, const double *base, const double *height,
+	const double *a, const double *b, const double *c, const double *d,
+	int64_t step_id, const std::string &original_name)
+{
+    if (dry_run) return true;
+    if (!outfp || !base || !height || !a || !b || !c || !d) return false;
+    point_t bp = {base[0], base[1], base[2]};
+    vect_t hv = {height[0], height[1], height[2]};
+    vect_t av = {a[0], a[1], a[2]};
+    vect_t bv = {b[0], b[1], b[2]};
+    vect_t cv = {c[0], c[1], c[2]};
+    vect_t dv = {d[0], d[1], d[2]};
+    if (mk_tgc(outfp, name.c_str(), bp, hv, av, bv, cv, dv) < 0) return false;
+    if (step_id > 0) SetAttribute(name, "step:source_id", std::to_string(step_id));
+    if (!original_name.empty()) SetAttribute(name, "step:original_name",
+	brlcad::step::decode_string(original_name));
+    return true;
+}
+
+bool
+BRLCADWrapper::WriteTorus(const std::string &name, const double *center, const double *normal,
+	double major_radius, double minor_radius, int64_t step_id,
+	const std::string &original_name)
+{
+    if (dry_run) return true;
+    if (!outfp || !center || !normal || major_radius <= 0.0 || minor_radius <= 0.0 ||
+	minor_radius >= major_radius) return false;
+    point_t c = {center[0], center[1], center[2]};
+    vect_t n = {normal[0], normal[1], normal[2]};
+    if (mk_tor(outfp, name.c_str(), c, n, major_radius, minor_radius) < 0) return false;
+    if (step_id > 0) SetAttribute(name, "step:source_id", std::to_string(step_id));
+    if (!original_name.empty()) SetAttribute(name, "step:original_name",
+	brlcad::step::decode_string(original_name));
+    return true;
+}
+
+bool
+BRLCADWrapper::WriteHalf(const std::string &name, const double *normal, double distance,
+	int64_t step_id, const std::string &original_name)
+{
+    if (dry_run) return true;
+    if (!outfp || !normal) return false;
+    vect_t outward = {normal[0], normal[1], normal[2]};
+    if (MAGNITUDE(outward) <= SMALL_FASTF) return false;
+    VUNITIZE(outward);
+    if (mk_half(outfp, name.c_str(), outward, distance) < 0) return false;
+    if (step_id > 0) SetAttribute(name, "step:source_id", std::to_string(step_id));
+    if (!original_name.empty()) SetAttribute(name, "step:original_name",
+	brlcad::step::decode_string(original_name));
+    return true;
+}
+
+bool
+BRLCADWrapper::WriteArb8(const std::string &name, const double *points, int64_t step_id,
+	const std::string &original_name)
+{
+    if (dry_run) return true;
+    if (!outfp || !points) return false;
+    fastf_t vertices[24];
+    for (size_t i = 0; i < 24; ++i) vertices[i] = points[i];
+    if (mk_arb8(outfp, name.c_str(), vertices) < 0) return false;
+    if (step_id > 0) SetAttribute(name, "step:source_id", std::to_string(step_id));
+    if (!original_name.empty()) SetAttribute(name, "step:original_name",
+	brlcad::step::decode_string(original_name));
     return true;
 }
 
@@ -155,29 +238,26 @@ BRLCADWrapper::ReplaceAccented( std::string &str ) {
 std::string
 BRLCADWrapper::CleanBRLCADName(std::string &inname)
 {
-    std::string retStr = "";
-    std::string name = ReplaceAccented(inname);
-    unsigned char *cp;
+    return brlcad::step::sanitize_name(inname);
+}
 
-    for (cp = (unsigned char *)name.c_str(); *cp != '\0'; ++cp) {
-	if (*cp == '\'') {
-	    // remove non-printable
-	    continue;
-	}
-	if (*cp == ' ') {
-	    // replace spaces with underscores
-	    retStr += '_';
-	} else {
-	    if (!isalpha(*cp) && !isdigit(*cp)) {
-		// replace non-alphanumeric characters with underscore
-		retStr += '_';
-	    } else {
-		retStr += *cp;
-	    }
-	}
+
+std::string
+BRLCADWrapper::StableBRLCADName(const std::string &inname, int64_t step_id)
+{
+    std::string base = brlcad::step::sanitize_name(inname);
+    std::map<std::string, int64_t>::const_iterator found = allocated_names.find(base);
+    if (found == allocated_names.end() || found->second == step_id) {
+	allocated_names[base] = step_id;
+	return base;
     }
 
-    return retStr;
+    const std::string stem = base + "_step" + std::to_string(step_id);
+    std::string result = stem;
+    while (allocated_names.find(result) != allocated_names.end() && allocated_names[result] != step_id)
+	result = stem + "_" + std::to_string(++anonymous_name_counter);
+    allocated_names[result] = step_id;
+    return result;
 }
 
 
@@ -187,7 +267,7 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
     struct bu_vls obj_name = BU_VLS_INIT_ZERO;
     int len = 0;
     char *cp,*tp;
-    static int start = 1;
+    int start = static_cast<int>(++anonymous_name_counter);
 
     for (cp = (char *)name.c_str(), len = 0; *cp != '\0'; ++cp, ++len) {
 	if (*cp == '@') {
@@ -213,7 +293,9 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
 
     /* TODO - We don't have db_lookup in a dry run */
     if (dry_run) {
-	return bu_vls_addr(&obj_name);
+	std::string result = bu_vls_cstr(&obj_name);
+	bu_vls_free(&obj_name);
+	return result;
     }
 
     do {
@@ -228,14 +310,14 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
     return rstr;
 }
 
-static MAP_OF_BU_LIST_HEADS heads;
 bool
-BRLCADWrapper::AddMember(const std::string &combname,const std::string &member,mat_t mat)
+BRLCADWrapper::AddMember(const std::string &combname, const std::string &member, mat_t mat,
+	int operation)
 {
     MAP_OF_BU_LIST_HEADS::iterator i = heads.find(combname);
     if (i != heads.end()) {
 	struct bu_list *head = (*i).second;
-	if (mk_addmember(member.c_str(), head, mat, WMOP_UNION) == WMEMBER_NULL)
+	if (mk_addmember(member.c_str(), head, mat, operation) == WMEMBER_NULL)
 	    return false;
     } else {
 	struct bu_list *head = NULL;
@@ -243,7 +325,7 @@ BRLCADWrapper::AddMember(const std::string &combname,const std::string &member,m
 	BU_ALLOC(head, struct bu_list);
 
 	BU_LIST_INIT(head);
-	if (mk_addmember(member.c_str(), head, mat, WMOP_UNION) == WMEMBER_NULL)
+	if (mk_addmember(member.c_str(), head, mat, operation) == WMEMBER_NULL)
 	    return false;
 	heads[combname] = head;
     }
@@ -252,27 +334,117 @@ BRLCADWrapper::AddMember(const std::string &combname,const std::string &member,m
 }
 
 bool
+BRLCADWrapper::SetCombinationProperties(const std::string &combname, bool is_region,
+	int64_t step_id, const std::string &original_name,
+	const brlcad::step::Style *style)
+{
+    if (combname.empty())
+	return false;
+    CombinationProperties &properties = combination_properties[combname];
+    properties.is_region = is_region;
+    properties.step_id = step_id;
+    properties.original_name = original_name;
+    properties.has_style = style != NULL;
+    if (style)
+	properties.style = *style;
+    return true;
+}
+
+bool
 BRLCADWrapper::WriteCombs()
 {
     MAP_OF_BU_LIST_HEADS::iterator i = heads.begin();
+    bool success = true;
 
-    if (dry_run)
+    if (dry_run) {
+	while (i != heads.end()) {
+	    struct bu_list *head = (i++)->second;
+	    mk_freemembers(head);
+	    BU_FREE(head, struct bu_list);
+	}
+	heads.clear();
+	combination_properties.clear();
 	return true;
+    }
 
     while (i != heads.end()) {
 	std::string combname = (*i).first;
 	struct bu_list *head = (*i++).second;
-	unsigned char rgb[] = {200, 180, 180};
 
-	(void)mk_comb(outfp, combname.c_str(), head, 0, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0);
+	std::map<std::string, CombinationProperties>::const_iterator property =
+	    combination_properties.find(combname);
+	const CombinationProperties *properties = property == combination_properties.end() ?
+	    NULL : &property->second;
+	unsigned char rgb[3] = {200, 180, 180};
+	std::string shader_args;
+	const char *shader = NULL;
+	unsigned char *colour = NULL;
+	if (properties && properties->is_region) {
+	    shader = "plastic";
+	    colour = rgb;
+	    if (properties->has_style && properties->style.has_rgb) {
+		for (size_t component = 0; component < 3; ++component) {
+		    double value = properties->style.rgb[component];
+		    if (value < 0.0) value = 0.0;
+		    if (value > 1.0) value = 1.0;
+		    rgb[component] = static_cast<unsigned char>(value * 255.0 + 0.5);
+		}
+	    } else {
+		getRandomColor(rgb);
+	    }
+	    if (properties->has_style && properties->style.has_transparency) {
+		std::ostringstream args;
+		args << "tr " << properties->style.transparency;
+		shader_args = args.str();
+	    }
+	}
 
-	mk_freemembers(head);
+	/* Product, assembly, and intermediate Boolean combinations remain
+	 * non-regions.  Exact CSG roots explicitly opt into region semantics. */
+	if (mk_comb(outfp, combname.c_str(), head,
+	    properties && properties->is_region ? 1 : 0, shader,
+	    shader_args.empty() ? NULL : shader_args.c_str(), colour,
+	    0, 0, 0, 0, 0, 0, 0) < 0) {
+	    success = false;
+	} else if (properties) {
+	    if (properties->step_id > 0)
+		SetAttribute(combname, "step:source_id", std::to_string(properties->step_id));
+	    if (!properties->original_name.empty())
+		SetAttribute(combname, "step:original_name",
+		    brlcad::step::decode_string(properties->original_name));
+	    if (properties->has_style) {
+		const brlcad::step::Style &style = properties->style;
+		if (!style.name.empty()) SetAttribute(combname, "step:style_name", style.name);
+		if (style.has_rgb) {
+		    std::ostringstream value;
+		    value << style.rgb[0] << ' ' << style.rgb[1] << ' ' << style.rgb[2];
+		    SetAttribute(combname, "step:color_rgb", value.str());
+		}
+		if (!style.layers.empty()) {
+		    std::ostringstream value;
+		    for (size_t layer = 0; layer < style.layers.size(); ++layer) {
+			if (layer) value << ';';
+			value << style.layers[layer];
+		    }
+		    SetAttribute(combname, "step:layers", value.str());
+		}
+		if (!style.source_entity_ids.empty()) {
+		    std::ostringstream value;
+		    for (size_t source = 0; source < style.source_entity_ids.size(); ++source) {
+			if (source) value << ' ';
+			value << style.source_entity_ids[source];
+		    }
+		    SetAttribute(combname, "step:style_source_ids", value.str());
+		}
+	    }
+	}
 
 	BU_FREE(head, struct bu_list);
 
     }
     heads.clear();
-    return true;
+    combination_properties.clear();
+    return success;
 }
 
 
@@ -291,27 +463,189 @@ BRLCADWrapper::getRandomColor(unsigned char *rgb)
 
 
 bool
-BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
+BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat, bool is_region,
+	int64_t step_id, const std::string &original_name, const brlcad::step::Style *style)
 {
     std::string sol = name + ".s";
     std::string reg = name;
     if (dry_run)
 	return true;
+    if (!outfp || !brep)
+	return false;
 
-    mk_brep(outfp, sol.c_str(), (void *)brep);
+    if (mk_brep(outfp, sol.c_str(), (void *)brep) < 0)
+	return false;
     unsigned char rgb[] = {200, 180, 180};
 
-    BRLCADWrapper::getRandomColor(rgb);
+    if (style && style->has_rgb) {
+	for (size_t i = 0; i < 3; ++i) {
+	    double component = style->rgb[i];
+	    if (component < 0.0) component = 0.0;
+	    if (component > 1.0) component = 1.0;
+	    rgb[i] = static_cast<unsigned char>(component * 255.0 + 0.5);
+	}
+    } else {
+	BRLCADWrapper::getRandomColor(rgb);
+    }
+
+    std::string shader_args;
+    if (style && style->has_transparency) {
+	std::ostringstream args;
+	args << "tr " << style->transparency;
+	shader_args = args.str();
+    }
 
     struct bu_list head;
     BU_LIST_INIT(&head);
     if (mk_addmember(sol.c_str(), &head, mat, WMOP_UNION) == WMEMBER_NULL)
 	return false;
 
-    if (mk_comb(outfp, reg.c_str(), &head, 1, "plastic", "", rgb, 0, 0, 0, 0, 0, 0, 0) > 0)
-	return true;
+    if (mk_comb(outfp, reg.c_str(), &head, is_region ? 1 : 0, "plastic",
+	shader_args.c_str(), rgb, 0, 0, 0, 0, 0, 0, 0) < 0)
+	return false;
 
-    return false;
+    if (step_id > 0) {
+	const std::string id = std::to_string(step_id);
+	SetAttribute(sol, "step:source_id", id);
+	SetAttribute(reg, "step:source_id", id);
+    }
+    if (!original_name.empty()) {
+	const std::string decoded = brlcad::step::decode_string(original_name);
+	SetAttribute(sol, "step:original_name", decoded);
+	SetAttribute(reg, "step:original_name", decoded);
+    }
+    if (style) {
+	if (!style->name.empty()) {
+	    SetAttribute(sol, "step:style_name", style->name);
+	    SetAttribute(reg, "step:style_name", style->name);
+	}
+	if (style->has_rgb) {
+	    std::ostringstream value;
+	    value << style->rgb[0] << ' ' << style->rgb[1] << ' ' << style->rgb[2];
+	    SetAttribute(sol, "step:color_rgb", value.str());
+	    SetAttribute(reg, "step:color_rgb", value.str());
+	}
+	if (!style->layers.empty()) {
+	    std::ostringstream value;
+	    for (size_t i = 0; i < style->layers.size(); ++i) {
+		if (i) value << ';';
+		value << style->layers[i];
+	    }
+	    SetAttribute(sol, "step:layers", value.str());
+	    SetAttribute(reg, "step:layers", value.str());
+	}
+	if (!style->source_entity_ids.empty()) {
+	    std::ostringstream value;
+	    for (size_t i = 0; i < style->source_entity_ids.size(); ++i) {
+		if (i) value << ' ';
+		value << style->source_entity_ids[i];
+	    }
+	    SetAttribute(sol, "step:style_source_ids", value.str());
+	    SetAttribute(reg, "step:style_source_ids", value.str());
+	}
+    }
+    return true;
+}
+
+
+bool
+BRLCADWrapper::WriteBot(std::string name, size_t num_vertices, size_t num_faces,
+	fastf_t *vertices, int *faces, mat_t &mat, int64_t step_id,
+	const std::string &original_name, const brlcad::step::Style *style)
+{
+    if (dry_run)
+	return true;
+    if (!outfp || !vertices || !faces || num_vertices < 4 || num_faces < 4)
+	return false;
+
+    const std::string sol = name + ".s";
+    if (mk_bot(outfp, sol.c_str(), RT_BOT_SOLID, RT_BOT_CCW, 0,
+	num_vertices, num_faces, vertices, faces, NULL, NULL) < 0)
+	return false;
+
+    unsigned char rgb[] = {200, 180, 180};
+    if (style && style->has_rgb) {
+	for (size_t i = 0; i < 3; ++i) {
+	    double component = style->rgb[i];
+	    if (component < 0.0) component = 0.0;
+	    if (component > 1.0) component = 1.0;
+	    rgb[i] = static_cast<unsigned char>(component * 255.0 + 0.5);
+	}
+    } else {
+	BRLCADWrapper::getRandomColor(rgb);
+    }
+
+    std::string shader_args;
+    if (style && style->has_transparency) {
+	std::ostringstream args;
+	args << "tr " << style->transparency;
+	shader_args = args.str();
+    }
+
+    struct bu_list head;
+    BU_LIST_INIT(&head);
+    if (mk_addmember(sol.c_str(), &head, mat, WMOP_UNION) == WMEMBER_NULL)
+	return false;
+    if (mk_comb(outfp, name.c_str(), &head, 1, "plastic", shader_args.c_str(),
+	rgb, 0, 0, 0, 0, 0, 0, 0) < 0)
+	return false;
+
+    if (step_id > 0) {
+	const std::string id = std::to_string(step_id);
+	SetAttribute(sol, "step:source_id", id);
+	SetAttribute(name, "step:source_id", id);
+    }
+    if (!original_name.empty()) {
+	const std::string decoded = brlcad::step::decode_string(original_name);
+	SetAttribute(sol, "step:original_name", decoded);
+	SetAttribute(name, "step:original_name", decoded);
+    }
+    if (style) {
+	if (!style->name.empty()) {
+	    SetAttribute(sol, "step:style_name", style->name);
+	    SetAttribute(name, "step:style_name", style->name);
+	}
+	if (style->has_rgb) {
+	    std::ostringstream value;
+	    value << style->rgb[0] << ' ' << style->rgb[1] << ' ' << style->rgb[2];
+	    SetAttribute(sol, "step:color_rgb", value.str());
+	    SetAttribute(name, "step:color_rgb", value.str());
+	}
+	if (!style->layers.empty()) {
+	    std::ostringstream value;
+	    for (size_t i = 0; i < style->layers.size(); ++i) {
+		if (i) value << ';';
+		value << style->layers[i];
+	    }
+	    SetAttribute(sol, "step:layers", value.str());
+	    SetAttribute(name, "step:layers", value.str());
+	}
+	if (!style->source_entity_ids.empty()) {
+	    std::ostringstream value;
+	    for (size_t i = 0; i < style->source_entity_ids.size(); ++i) {
+		if (i) value << ' ';
+		value << style->source_entity_ids[i];
+	    }
+	    SetAttribute(sol, "step:style_source_ids", value.str());
+	    SetAttribute(name, "step:style_source_ids", value.str());
+	}
+    }
+    SetAttribute(sol, "step:representation", "FACETED_BREP");
+    SetAttribute(name, "step:representation", "FACETED_BREP");
+    return true;
+}
+
+
+bool
+BRLCADWrapper::SetAttribute(const std::string &object, const std::string &key, const std::string &value)
+{
+    if (dry_run)
+	return true;
+    if (!outfp)
+	return false;
+    if (db_lookup(outfp->dbip, object.c_str(), LOOKUP_QUIET) == RT_DIR_NULL)
+	return false;
+    return db5_update_attribute(object.c_str(), key.c_str(), value.c_str(), outfp->dbip) == 0;
 }
 
 struct db_i *

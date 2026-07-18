@@ -47,6 +47,8 @@ public:
     virtual ~CompositeCurveSegment();
     CompositeCurveSegment(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    Curve *ParentCurve() const { return parent_curve; }
+    Boolean SameSense() const { return same_sense; }
     virtual void Print(int level);
 
     //static methods

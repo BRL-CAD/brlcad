@@ -26,6 +26,8 @@
 #include "common.h"
 
 #include <iostream>
+#include <set>
+#include <string>
 
 #include "bu/app.h"
 #include "bu/time.h"
@@ -38,6 +40,7 @@
 // step-g related headers
 //
 #include <BRLCADWrapper.h>
+#include <STEPString.h>
 #include <STEPWrapper.h>
 
 //
@@ -51,7 +54,9 @@
 void
 usage()
 {
-    std::cerr << "Usage: step-g [-v] -o outfile.g infile.stp \n" << std::endl;
+    std::cerr << "Usage: step-g [-v] [-e ID[,ID...]] -o outfile.g infile.stp\n"
+	<< "  -e, --entity IDS  convert only listed representation-item IDs (repeatable)\n"
+	<< std::endl;
 }
 
 struct OutputFile {
@@ -74,6 +79,20 @@ parse_opt_O(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_
     } else {
 	return -1;
     }
+}
+
+static int
+parse_entity_ids(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+{
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "entity ID list");
+    std::set<int64_t> *entity_ids = static_cast<std::set<int64_t> *>(set_var);
+    if (!entity_ids) return -1;
+    std::string error;
+    if (!brlcad::step::parse_entity_id_list(argv[0], *entity_ids, &error)) {
+	bu_vls_printf(error_msg, "%s\n", error.c_str());
+	return -1;
+    }
+    return 1;
 }
 
 int
@@ -104,6 +123,7 @@ main(int argc, const char *argv[])
     static bool verbose = false;
     static int dry_run = 0;
     static char *summary_log_file = (char *)NULL;
+    static std::set<int64_t> selected_entity_ids;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     struct bu_opt_desc options[] = {
 	{"D", "", "",         NULL,        &dry_run,          "dry run (output file not written)"},
@@ -111,6 +131,8 @@ main(int argc, const char *argv[])
 	{"O", "", "filename", parse_opt_O, &ofile,            "output file (overwrite)"},
 	{"o", "", "filename", bu_opt_str,  &ofile.filename,   "output file"},
 	{"S", "", "filename", bu_opt_str,  &summary_log_file, "summary file"},
+	{"e", "entity", "ID[,ID...]", parse_entity_ids, &selected_entity_ids,
+	    "representation-item entity IDs"},
 	BU_OPT_DESC_NULL
     };
 
@@ -146,6 +168,11 @@ main(int argc, const char *argv[])
     step->summary_log_file= summary_log_file;
 
     step->Verbose(verbose);
+    brlcad::step::ImportOptions import_options;
+    import_options.dry_run = dry_run != 0;
+    import_options.verbose = verbose;
+    import_options.selected_entity_ids = selected_entity_ids;
+    step->SetImportOptions(import_options);
 
     /* load STEP file */
     if (step->load(iflnm)) {
@@ -189,7 +216,6 @@ main(int argc, const char *argv[])
 	}
     }
     delete step;
-    Factory::DeleteObjects();
 
     elapsedtime = bu_gettime() - elapsedtime;
     {

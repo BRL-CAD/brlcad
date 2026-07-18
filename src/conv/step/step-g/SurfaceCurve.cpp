@@ -159,15 +159,51 @@ step_error:
     return false;
 }
 
+bool
+SurfaceCurve::LoadONBrep(ON_Brep *brep)
+{
+    if (!curve_3d)
+	return false;
+
+    /* EDGE_CURVE applies its endpoints to the SURFACE_CURVE wrapper.  The
+     * actual openNURBS curve is built by curve_3d, so forward the complete
+     * trimming state before conversion.  This retains the exact 3D curve;
+     * associated pcurves remain available for trim construction on the face. */
+    if (trimmed) {
+	if (parameter_trim)
+	    curve_3d->SetParameterTrim(t, s);
+	else
+	    curve_3d->SetPointTrim(trim_startpoint, trim_endpoint);
+    } else {
+	curve_3d->Start(start);
+	curve_3d->End(end);
+    }
+
+    if (!curve_3d->LoadONBrep(brep))
+	return false;
+
+    /* EdgeCurve consumes the wrapper's openNURBS index. */
+    ON_id = curve_3d->GetONId();
+    return ON_id >= 0;
+}
+
 const double *
 SurfaceCurve::PointAtEnd()
 {
+    if (trimmed)
+	return Curve::PointAtEnd();
+    if (end)
+	return Curve::PointAtEnd();
     return curve_3d->PointAtEnd();
 }
 
 const double *
 SurfaceCurve::PointAtStart()
 {
+    if (trimmed)
+	return Curve::PointAtStart();
+    if (start)
+	return Curve::PointAtStart();
     return curve_3d->PointAtStart();
 }
 

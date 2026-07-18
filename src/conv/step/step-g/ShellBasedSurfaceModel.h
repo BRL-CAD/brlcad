@@ -29,11 +29,11 @@
 #include "GeometricRepresentationItem.h"
 
 // forward declaration of class
-class OpenShell;
+class ConnectedFaceSet;
 class STEPWrapper;
 class ON_Brep;
 
-typedef std::list<OpenShell *> LIST_OF_OPEN_SHELLS;
+typedef std::list<ConnectedFaceSet *> LIST_OF_SHELL_BOUNDARIES;
 
 class ShellBasedSurfaceModel: public GeometricRepresentationItem
 {
@@ -42,7 +42,7 @@ private:
     static EntityInstanceFunc GetInstance;
 
 protected:
-    LIST_OF_OPEN_SHELLS sbsm_boundary;
+    LIST_OF_SHELL_BOUNDARIES sbsm_boundary;
 
 public:
     ShellBasedSurfaceModel();

@@ -54,6 +54,7 @@ public:
     RepresentedDefinition();
     virtual ~RepresentedDefinition();
     RepresentedDefinition(STEPWrapper *sw, int step_id);
+    using STEPEntity::Load;
     bool Load(STEPWrapper *sw, SDAI_Select *sse);
     virtual void Print(int level);
 

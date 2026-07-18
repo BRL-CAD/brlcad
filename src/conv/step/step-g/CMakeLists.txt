@@ -1,14 +1,14 @@
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203.exp)
-add_definitions(-DAP203)
 
 generate_schema_inputs(${STEP_SCHEMA_FILE} stepg)
 
 set(
   stepg_SOURCES
-  ${express_srcs}
+  ${stepg_express_srcs}
   ../BRLCADWrapper.cpp
+  ../STEPString.cpp
   ../STEPWrapper.cpp
   AdvancedBrepShapeRepresentation.cpp
   AdvancedFace.cpp
@@ -50,6 +50,7 @@ set(
   CompositeCurve.cpp
   CompositeCurveOnSurface.cpp
   CompositeCurveSegment.cpp
+  CompoundRepresentationItem.cpp
   Conic.cpp
   ConicalSurface.cpp
   ConnectedFaceSet.cpp
@@ -59,6 +60,8 @@ set(
   Curve.cpp
   CurveBoundedSurface.cpp
   CurveReplica.cpp
+  CsgShapeRepresentation.cpp
+  CsgSolid.cpp
   CylindricalSurface.cpp
   DefinitionalRepresentation.cpp
   DerivedUnit.cpp
@@ -75,14 +78,18 @@ set(
   ElectricCurrentUnit.cpp
   ElementarySurface.cpp
   Ellipse.cpp
+  ExtrudedAreaSolid.cpp
   Face.cpp
   FaceBound.cpp
   FaceOuterBound.cpp
   FaceSurface.cpp
+  FacetedBrep.cpp
+  FacetedBrepShapeRepresentation.cpp
   Factory.cpp
   FoundedItem.cpp
   FunctionallyDefinedTransformation.cpp
   GeometricallyBoundedSurfaceShapeRepresentation.cpp
+  GeometricallyBoundedWireframeShapeRepresentation.cpp
   GeometricRepresentationContext.cpp
   GeometricRepresentationItem.cpp
   GeometricSet.cpp
@@ -106,6 +113,7 @@ set(
   LuminousIntensityUnit.cpp
   ManifoldSolidBrep.cpp
   ManifoldSurfaceShapeRepresentation.cpp
+  MappedItem.cpp
   MassContextDependentUnit.cpp
   MassConversionBasedUnit.cpp
   MassSiUnit.cpp
@@ -174,9 +182,11 @@ set(
   Representation.cpp
   RepresentationContext.cpp
   RepresentationItem.cpp
+  RepresentationMap.cpp
   RepresentationRelationship.cpp
   RepresentationRelationshipWithTransformation.cpp
   RepresentedDefinition.cpp
+  RevolvedAreaSolid.cpp
   STEPEntity.cpp
   SeamCurve.cpp
   ShapeAspect.cpp
@@ -192,6 +202,7 @@ set(
   SolidAngleSiUnit.cpp
   SolidAngleUnit.cpp
   SolidModel.cpp
+  SolidReplica.cpp
   SphericalSurface.cpp
   Surface.cpp
   SurfaceCurve.cpp
@@ -199,6 +210,7 @@ set(
   SurfaceOfRevolution.cpp
   SurfacePatch.cpp
   SurfaceReplica.cpp
+  SweptAreaSolid.cpp
   SweptSurface.cpp
   ThermodynamicTemperatureContextDependentUnit.cpp
   ThermodynamicTemperatureConversionBasedUnit.cpp
@@ -271,6 +283,7 @@ set(
   CompositeCurve.h
   CompositeCurveOnSurface.h
   CompositeCurveSegment.h
+  CompoundRepresentationItem.h
   Conic.h
   ConicalSurface.h
   ConnectedFaceSet.h
@@ -296,14 +309,18 @@ set(
   ElectricCurrentUnit.h
   ElementarySurface.h
   Ellipse.h
+  ExtrudedAreaSolid.h
   Face.h
   FaceBound.h
   FaceOuterBound.h
   FaceSurface.h
+  FacetedBrep.h
+  FacetedBrepShapeRepresentation.h
   Factory.h
   FoundedItem.h
   FunctionallyDefinedTransformation.h
   GeometricallyBoundedSurfaceShapeRepresentation.h
+  GeometricallyBoundedWireframeShapeRepresentation.h
   GeometricRepresentationContext.h
   GeometricRepresentationItem.h
   GeometricSet.h
@@ -327,6 +344,7 @@ set(
   LuminousIntensityUnit.h
   ManifoldSolidBrep.h
   ManifoldSurfaceShapeRepresentation.h
+  MappedItem.h
   MassContextDependentUnit.h
   MassConversionBasedUnit.h
   MassSiUnit.h
@@ -394,9 +412,11 @@ set(
   Representation.h
   RepresentationContext.h
   RepresentationItem.h
+  RepresentationMap.h
   RepresentationRelationship.h
   RepresentationRelationshipWithTransformation.h
   RepresentedDefinition.h
+  RevolvedAreaSolid.h
   STEPEntity.h
   SeamCurve.h
   ShapeAspect.h
@@ -412,6 +432,7 @@ set(
   SolidAngleSiUnit.h
   SolidAngleUnit.h
   SolidModel.h
+  SolidReplica.h
   SphericalSurface.h
   Surface.h
   SurfaceCurve.h
@@ -419,6 +440,7 @@ set(
   SurfaceOfRevolution.h
   SurfacePatch.h
   SurfaceReplica.h
+  SweptAreaSolid.h
   SweptSurface.h
   ThermodynamicTemperatureContextDependentUnit.h
   ThermodynamicTemperatureConversionBasedUnit.h
@@ -476,7 +498,7 @@ if(BRLCAD_ENABLE_STEP)
   foreach(header ${stepg_HDRS})
     # Use relative include for portability
     get_filename_component(header_name "${header}" NAME)
-    file(APPEND "${PRECOMPILE_HEADER}" "#include \"${header_name}\"\n")
+    file(APPEND "${stepg_PRECOMPILE_HEADER}" "#include \"${header_name}\"\n")
   endforeach()
 
   brlcad_addexec(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT FOLDER Conv
@@ -489,12 +511,12 @@ if(BRLCAD_ENABLE_STEP)
   if(ENABLE_ALL_CXX_COMPILE)
     target_compile_definitions(step-g PRIVATE register=)
   endif()
-  target_precompile_headers(step-g PRIVATE "${PRECOMPILE_HEADER}")
+  target_precompile_headers(step-g PRIVATE "${stepg_PRECOMPILE_HEADER}")
 
   target_include_directories(step-g BEFORE PRIVATE ${AP203_INCLUDE_DIRS})
-  add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
+  add_dependencies(step-g ${stepg_SCHEMA_TARGET})
   set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
-  target_compile_definitions(step-g PRIVATE SC_SCHEMA_DLL_EXPORTS)
+  target_compile_definitions(step-g PRIVATE AP203 SC_SCHEMA_DLL_EXPORTS)
 
   if(HIDE_INTERNAL_SYMBOLS)
     set(
