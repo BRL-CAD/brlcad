@@ -389,6 +389,14 @@ GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 // Note that ged_close frees all memory and deletes the gedp
 GED_EXPORT extern void ged_close(struct ged *gedp);
 
+/**
+ * Stop and reap every subprocess owned by a GED instance while application
+ * event-loop callbacks and display resources are still valid.  Applications
+ * with staged shutdown must call this before tearing down their UI/display
+ * objects; ged_close() also calls it as a final safeguard.
+ */
+GED_EXPORT extern void ged_subprocesses_terminate(struct ged *gedp);
+
 
 /**
  * make sure there is a command name given

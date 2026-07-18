@@ -405,6 +405,9 @@ GshState::GshState()
 
 GshState::~GshState()
 {
+    if (gedp)
+	ged_subprocesses_terminate(gedp);
+
 #ifdef USE_DM
     struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {

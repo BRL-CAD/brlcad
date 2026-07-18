@@ -2181,6 +2181,12 @@ mged_finish(struct mged_state *s, int exitcode)
 
     mged_quiesce_tcl(s);
 
+    /* Subprocess completion callbacks may reference the active display.
+     * Stop and reap them before releasing any display manager; ged_close()
+     * repeats this operation as an idempotent final safeguard. */
+    if (s->gedp)
+	ged_subprocesses_terminate(s->gedp);
+
     /* No Tcl trace may retain or access a display resource after this point. */
     mged_variable_teardown(s);
     mged_global_variable_teardown(s);

@@ -60,18 +60,10 @@ extern "C" {
 
 
 void
-ged_close(struct ged *gedp)
+ged_subprocesses_terminate(struct ged *gedp)
 {
     if (gedp == GED_NULL)
 	return;
-
-    if (gedp->dbip) {
-	db_close(gedp->dbip);
-	gedp->dbip = NULL;
-    }
-
-    if (gedp->ged_lod)
-	bv_mesh_lod_context_destroy(gedp->ged_lod);
 
     /* Detach application event-loop handlers before freeing their ClientData,
      * then terminate every subprocess.  Removing from the end avoids skipping
@@ -92,6 +84,27 @@ ged_close(struct ged *gedp)
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
 	BU_PUT(rrp, struct ged_subprocess);
     }
+    bu_ptbl_reset(&gedp->ged_subp);
+}
+
+
+void
+ged_close(struct ged *gedp)
+{
+    if (gedp == GED_NULL)
+	return;
+
+    /* Children and their callbacks must quiesce before either displayed
+     * resources or the database they reference are dismantled. */
+    ged_subprocesses_terminate(gedp);
+
+    if (gedp->dbip) {
+	db_close(gedp->dbip);
+	gedp->dbip = NULL;
+    }
+
+    if (gedp->ged_lod)
+	bv_mesh_lod_context_destroy(gedp->ged_lod);
 
     ged_destroy(gedp);
     gedp = NULL;

@@ -310,6 +310,8 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 }
 
 QgEdApp::~QgEdApp() {
+    if (mdl && mdl->gedp)
+	ged_subprocesses_terminate(mdl->gedp);
     delete mdl;
     // TODO - free rt_vlfree?
 }
