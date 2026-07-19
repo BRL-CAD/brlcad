@@ -109,6 +109,9 @@ public:
     std::vector<uint64_t> AllInstances() const;
     std::vector<uint64_t> InstancesByType(const std::string &type) const;
     std::string TypeName(uint64_t id) const;
+    /** Copy one exact indexed Part 21 instance record without materializing
+     * its SDAI dependency closure. */
+    std::string SourceRecord(uint64_t id) const;
     std::vector<uint64_t> ForwardReferences(uint64_t id) const;
     std::vector<uint64_t> ReverseReferences(uint64_t id) const;
     STEPLazyBatch LoadBatch(uint64_t root);

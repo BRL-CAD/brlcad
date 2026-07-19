@@ -31,6 +31,7 @@
 #include <climits>
 #include <condition_variable>
 #include <deque>
+#include <exception>
 
 #include "brep/cdt.h"
 #include "brep/pullback.h"
@@ -61,6 +62,7 @@
 #include "CartesianTransformationOperator3D.h"
 #include "CartesianPoint.h"
 #include "CompoundRepresentationItem.h"
+#include "ConnectedFaceSet.h"
 #include "Curve.h"
 #include "Direction.h"
 #include "SurfacePatch.h"
@@ -208,13 +210,15 @@ public:
  * ceilings, not acceptance tolerances. */
 constexpr uint64_t kMaximumExactPullbackMilliseconds = 30000;
 /* Large STEP solids may intentionally contain hundreds of faces under one
- * representation item.  Once topology is detached and countable, allow 125
+ * representation item.  Once topology is detached and countable, allow 250
  * ms per face up to two minutes.  This accounts for source files where most
  * edge uses provably exceed the declared uncertainty and therefore require a
  * second projection plus dense validation.  Items at or below 300 faces
- * retain the strict 30-second investigation budget. */
+ * retain the strict 30-second investigation budget; crossing one minute is
+ * therefore reserved for solids whose measured topology clearly justifies
+ * the exception and is explicitly reported. */
 constexpr uint64_t kMaximumComplexExactPullbackMilliseconds = 120000;
-constexpr uint64_t kExactPullbackMillisecondsPerFace = 125;
+constexpr uint64_t kExactPullbackMillisecondsPerFace = 250;
 constexpr size_t kComplexExactSolidFaceThreshold = 300;
 constexpr uint64_t kMaximumSurfaceModelPullbackMilliseconds = 120000;
 
@@ -240,6 +244,203 @@ private:
 
 }
 
+struct STEPWrapper::GeometryExecutor {
+    struct Group {
+	Group(const std::function<void(size_t)> &caller,
+	    const std::function<void(size_t)> &helper, size_t task_count)
+	    : caller_task(caller), helper_task(helper), count(task_count)
+	{
+	}
+
+	bool Claim(size_t &index)
+	{
+	    std::lock_guard<std::mutex> guard(lock);
+	    if (next >= count) return false;
+	    index = next++;
+	    ++running;
+	    return true;
+	}
+
+	bool HasUnclaimed()
+	{
+	    std::lock_guard<std::mutex> guard(lock);
+	    return next < count;
+	}
+
+	void Finish(std::exception_ptr failure = std::exception_ptr())
+	{
+	    {
+		std::lock_guard<std::mutex> guard(lock);
+		if (failure && !exception) exception = failure;
+		if (running) --running;
+	    }
+	    finished.notify_all();
+	}
+
+	void Wait()
+	{
+	    std::unique_lock<std::mutex> guard(lock);
+	    finished.wait(guard, [this]() { return next >= count && running == 0; });
+	    if (exception) std::rethrow_exception(exception);
+	}
+
+	std::function<void(size_t)> caller_task;
+	std::function<void(size_t)> helper_task;
+	size_t count = 0;
+	size_t next = 0;
+	size_t running = 0;
+	std::exception_ptr exception;
+	std::mutex lock;
+	std::condition_variable finished;
+    };
+
+    GeometryExecutor(STEPWrapper *source, unsigned int maximum_concurrency)
+	: wrapper(source), capacity(std::max(1U, maximum_concurrency))
+    {
+	for (unsigned int i = 1; i < capacity; ++i)
+	    helpers.emplace_back(&GeometryExecutor::RunHelper, this);
+    }
+
+    ~GeometryExecutor()
+    {
+	Shutdown();
+    }
+
+    void Shutdown()
+    {
+	{
+	    std::lock_guard<std::mutex> guard(lock);
+	    stopping = true;
+	}
+	changed.notify_all();
+	for (std::thread &helper : helpers) {
+	    if (helper.joinable()) helper.join();
+	}
+	helpers.clear();
+	if (wrapper) wrapper->SetGeometryHelpersActive(0);
+    }
+
+    void WorkerStarted()
+    {
+	std::unique_lock<std::mutex> guard(lock);
+	/* A helper may have borrowed a slot while the materializer was still
+	 * filling the top-level queue.  Wait for that bounded helper task to
+	 * return the slot before admitting another solid worker, keeping total
+	 * geometry CPU occupancy at or below -j even during ramp-up. */
+	changed.wait(guard, [this]() {
+	    return stopping || top_level_workers + active_helpers < capacity;
+	});
+	if (!stopping) ++top_level_workers;
+	guard.unlock();
+	changed.notify_all();
+    }
+
+    void WorkerFinished()
+    {
+	{
+	    std::lock_guard<std::mutex> guard(lock);
+	    if (top_level_workers) --top_level_workers;
+	}
+	changed.notify_all();
+    }
+
+    void ParallelFor(size_t count, const std::function<void(size_t)> &caller_task,
+	const std::function<void(size_t)> &helper_task)
+    {
+	if (count < 2 || capacity < 2) {
+	    for (size_t index = 0; index < count; ++index) caller_task(index);
+	    return;
+	}
+	std::shared_ptr<Group> group(new Group(caller_task, helper_task, count));
+	{
+	    std::lock_guard<std::mutex> guard(lock);
+	    groups.push_back(group);
+	}
+	changed.notify_all();
+	size_t index = 0;
+	while (group->Claim(index)) {
+	    try {
+		group->caller_task(index);
+		group->Finish();
+	    } catch (...) {
+		group->Finish(std::current_exception());
+	    }
+	}
+	group->Wait();
+    }
+
+private:
+    void RemoveCompletedGroupsLocked()
+    {
+	for (std::deque<std::shared_ptr<Group> >::iterator group = groups.begin();
+		group != groups.end();) {
+	    if (!*group || !(*group)->HasUnclaimed())
+		group = groups.erase(group);
+	    else
+		++group;
+	}
+    }
+
+    void RunHelper()
+    {
+	for (;;) {
+	    std::shared_ptr<Group> group;
+	    size_t index = 0;
+	    uint64_t active_snapshot = 0;
+	    {
+		std::unique_lock<std::mutex> guard(lock);
+		for (;;) {
+		    RemoveCompletedGroupsLocked();
+		    if (stopping) return;
+		    if (!groups.empty() &&
+			    top_level_workers + active_helpers < capacity)
+			break;
+		    changed.wait(guard);
+		}
+		group = groups.front();
+		groups.pop_front();
+		if (!group || !group->Claim(index)) continue;
+		if (group->HasUnclaimed()) groups.push_back(group);
+		++active_helpers;
+		active_snapshot = active_helpers;
+	    }
+	    if (wrapper) wrapper->SetGeometryHelpersActive(active_snapshot);
+	    std::exception_ptr failure;
+	    try {
+		group->helper_task(index);
+	    } catch (...) {
+		failure = std::current_exception();
+	    }
+	    group->Finish(failure);
+	    {
+		std::lock_guard<std::mutex> guard(lock);
+		if (active_helpers) --active_helpers;
+		active_snapshot = active_helpers;
+	    }
+	    if (wrapper) wrapper->SetGeometryHelpersActive(active_snapshot);
+	    changed.notify_all();
+	}
+    }
+
+    STEPWrapper *wrapper = NULL;
+    unsigned int capacity = 1;
+    std::mutex lock;
+    std::condition_variable changed;
+    std::deque<std::shared_ptr<Group> > groups;
+    std::vector<std::thread> helpers;
+    unsigned int top_level_workers = 0;
+    unsigned int active_helpers = 0;
+    bool stopping = false;
+};
+
+
+static bool
+geometry_helper_cancelled(void *context)
+{
+    STEPWrapper *wrapper = static_cast<STEPWrapper *>(context);
+    return wrapper && wrapper->CancellationRequested();
+}
+
 STEPWrapper::STEPWrapper()
     : registry(NULL), sfile(NULL), dotg(NULL), verbose(false)
 {
@@ -250,6 +451,7 @@ STEPWrapper::STEPWrapper()
 
 STEPWrapper::~STEPWrapper()
 {
+    StopGeometryExecutor();
     ClearEntityCache();
 #ifdef HAVE_STEPCODE_LAZY
     releaseLazyBatches();
@@ -259,6 +461,73 @@ STEPWrapper::~STEPWrapper()
     delete instance_list;
     delete registry;
     dotg = NULL;
+}
+
+
+void
+STEPWrapper::ConfigureGeometryExecutor(unsigned int concurrency)
+{
+    StopGeometryExecutor();
+    if (concurrency > 1)
+	geometry_executor.reset(new GeometryExecutor(this, concurrency));
+}
+
+
+void
+STEPWrapper::StopGeometryExecutor()
+{
+    if (!geometry_executor) return;
+    geometry_executor->Shutdown();
+    geometry_executor.reset();
+}
+
+
+void
+STEPWrapper::GeometryWorkerStarted()
+{
+    if (geometry_executor) geometry_executor->WorkerStarted();
+}
+
+
+void
+STEPWrapper::GeometryWorkerFinished()
+{
+    if (geometry_executor) geometry_executor->WorkerFinished();
+}
+
+
+void
+STEPWrapper::ParallelForGeometry(size_t count,
+    const std::function<void(size_t)> &task)
+{
+    if (!geometry_executor || count < 2) {
+	for (size_t index = 0; index < count; ++index) task(index);
+	return;
+    }
+    const uint64_t remaining = brlcad::PullbackWorkRemainingMilliseconds();
+    const double length = LocalUnits::length;
+    const double planeangle = LocalUnits::planeangle;
+    const double solidangle = LocalUnits::solidangle;
+    const double tolerance = LocalUnits::tolerance;
+    const std::function<void(size_t)> helper_task = [this, task, remaining,
+	length, planeangle, solidangle, tolerance](size_t index) {
+	LocalUnits::length = length;
+	LocalUnits::planeangle = planeangle;
+	LocalUnits::solidangle = solidangle;
+	LocalUnits::tolerance = tolerance;
+	const uint64_t helper_budget = remaining == UINT64_MAX ? 0 :
+	    std::max<uint64_t>(1, remaining);
+	brlcad::SetPullbackWorkLimit(geometry_helper_cancelled, this,
+	    helper_budget);
+	try {
+	    task(index);
+	} catch (...) {
+	    brlcad::ClearPullbackWorkLimit();
+	    throw;
+	}
+	brlcad::ClearPullbackWorkLimit();
+    };
+    geometry_executor->ParallelFor(count, task, helper_task);
 }
 
 
@@ -414,6 +683,18 @@ STEPWrapper::LazyTypeName(uint64_t id) const
 {
 #ifdef HAVE_STEPCODE_LAZY
     return lazy_session ? lazy_session->TypeName(id) : std::string();
+#else
+    (void)id;
+    return std::string();
+#endif
+}
+
+
+std::string
+STEPWrapper::LazySourceRecord(uint64_t id) const
+{
+#ifdef HAVE_STEPCODE_LAZY
+    return lazy_session ? lazy_session->SourceRecord(id) : std::string();
 #else
     (void)id;
     return std::string();
@@ -681,7 +962,8 @@ STEPWrapper::SetProgressDetail(const std::string &phase,
 
 void
 STEPWrapper::SetGeometrySchedulerProgress(uint64_t queued, uint64_t active,
-    uint64_t ready, uint64_t materializing, uint64_t in_flight,
+    uint64_t ready, uint64_t spooled, uint64_t finished,
+    uint64_t materializing, uint64_t in_flight,
     uint64_t runnable_capacity, uint64_t ready_bytes,
     uint64_t ready_byte_budget)
 {
@@ -689,11 +971,21 @@ STEPWrapper::SetGeometrySchedulerProgress(uint64_t queued, uint64_t active,
     progress_state.geometry_jobs_queued = queued;
     progress_state.geometry_workers_active = active;
     progress_state.geometry_jobs_ready = ready;
+    progress_state.geometry_jobs_spooled = spooled;
+    progress_state.geometry_jobs_finished = finished;
     progress_state.geometry_jobs_materializing = materializing;
     progress_state.geometry_jobs_in_flight = in_flight;
     progress_state.geometry_runnable_capacity = runnable_capacity;
     progress_state.geometry_ready_bytes = ready_bytes;
     progress_state.geometry_ready_byte_budget = ready_byte_budget;
+}
+
+
+void
+STEPWrapper::SetGeometryHelpersActive(uint64_t active)
+{
+    std::lock_guard<std::mutex> guard(progress_mutex);
+    progress_state.geometry_helpers_active = active;
 }
 
 
@@ -6472,12 +6764,18 @@ regenerate_periodic_loop_chains(ON_Brep *brep, STEPWrapper *wrapper,
 	    bool large_periodic_gap = false;
 	    for (int direction = 0; direction < 2; ++direction) {
 		const double period = surface->Domain(direction).Length();
-		/* One period is the ordinary min/max discontinuity at an explicit
-		 * seam.  More than one and a half periods cannot be a native seam
-		 * choice and identifies accumulated branch propagation. */
+		/* One period is an ordinary min/max discontinuity only at an explicit
+		 * seam.  Two ordinary boundary trims one period apart leave an invalid
+		 * p-space loop and require coherent whole-loop regeneration.  Retain the
+		 * wider threshold for actual seam/singular topology. */
+		const bool ordinary_join = previous->m_type != ON_BrepTrim::seam &&
+		    next->m_type != ON_BrepTrim::seam &&
+		    previous->m_type != ON_BrepTrim::singular &&
+		    next->m_type != ON_BrepTrim::singular;
+		const double gap_threshold = ordinary_join ? 0.5 : 1.5;
 		if (surface->IsClosed(direction) && period > ON_ZERO_TOLERANCE &&
 			fabs(previous_uv[direction] - next_uv[direction]) >
-			    1.5 * period) {
+			    gap_threshold * period) {
 		    large_periodic_gap = true;
 		    break;
 		}
@@ -6622,7 +6920,8 @@ regenerate_periodic_loop_chains(ON_Brep *brep, STEPWrapper *wrapper,
 
 static void
 repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
-	int entity_id, const std::string &entity_type)
+	int entity_id, const std::string &entity_type,
+	std::map<int, std::vector<double> > *processed_loop_states = NULL)
 {
     if (!brep || !wrapper || !(LocalUnits::tolerance > 0.0))
 	return;
@@ -6635,16 +6934,54 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
     };
     std::set<int> attempted_edge_regeneration;
 
+    const auto loop_endpoint_state = [](const ON_BrepLoop &loop) {
+	std::vector<double> state;
+	state.reserve(static_cast<size_t>(loop.TrimCount()) * 8);
+	for (int lti = 0; lti < loop.TrimCount(); ++lti) {
+	    const ON_BrepTrim *trim = loop.Trim(lti);
+	    if (!trim) {
+		state.push_back(ON_UNSET_VALUE);
+		continue;
+	    }
+	    const ON_3dPoint start = trim->PointAtStart();
+	    const ON_3dPoint end = trim->PointAtEnd();
+	    state.push_back(start.x);
+	    state.push_back(start.y);
+	    state.push_back(end.x);
+	    state.push_back(end.y);
+	    state.push_back(static_cast<double>(trim->m_type));
+	    state.push_back(static_cast<double>(trim->m_iso));
+	    state.push_back(static_cast<double>(trim->m_vi[0]));
+	    state.push_back(static_cast<double>(trim->m_vi[1]));
+	}
+	return state;
+    };
+
+    std::vector<bool> dirty(static_cast<size_t>(brep->m_L.Count()), true);
+    if (processed_loop_states) {
+	for (int li = 0; li < brep->m_L.Count(); ++li) {
+	    const std::vector<double> state = loop_endpoint_state(brep->m_L[li]);
+	    std::map<int, std::vector<double> >::const_iterator previous =
+		processed_loop_states->find(li);
+	    dirty[static_cast<size_t>(li)] = previous == processed_loop_states->end() ||
+		previous->second != state;
+	}
+    }
+
     for (int sweep = 0; sweep < kMaximumEndpointRepairSweeps; ++sweep) {
 	if (brlcad::PullbackWorkCancelled())
 	    return;
 	wrapper->SetProgressDetail("repairing adjacent exact BREP trim endpoints",
 	    entity_id, sweep, kMaximumEndpointRepairSweeps, "sweeps", entity_type);
 	bool changed = false;
+	std::vector<bool> next_dirty(static_cast<size_t>(brep->m_L.Count()), false);
 	for (int li = 0; li < brep->m_L.Count(); ++li) {
+	    if (!dirty[static_cast<size_t>(li)])
+		continue;
 	    if (brlcad::PullbackWorkCancelled())
 		return;
 	    ON_BrepLoop &loop = brep->m_L[li];
+	    bool loop_changed = false;
 	    const ON_BrepFace *face = loop.Face();
 	    const ON_Surface *surface = face ? face->SurfaceOf() : NULL;
 	    if (!surface || loop.TrimCount() < 2)
@@ -6756,6 +7093,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 				"trim_pcurve",
 				"translated an exact pcurve onto its adjacent periodic branch");
 			    changed = true;
+			    loop_changed = true;
 			    continue;
 			}
 			if (c2_index < 0)
@@ -6821,6 +7159,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
 				"shifted an exact non-seam pcurve onto an adjacent periodic branch");
 			    changed = true;
+			    loop_changed = true;
 			    continue;
 			}
 			if (c2_index < 0)
@@ -6886,6 +7225,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			wrapper->RecordRepair(entity_id, entity_type, "trim_pcurve",
 			    "regenerated a non-seam pcurve from an exact periodic seam endpoint");
 			changed = true;
+			loop_changed = true;
 			continue;
 		    }
 		}
@@ -7050,17 +7390,25 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    return false;
 			}
 			if (edge) {
-			    double edge_parameter = 0.0;
-			    const bool closest = ON_NurbsCurve_GetClosestPoint(&edge_parameter,
-				&edge_nurbs, candidate_lift);
 			    const ON_3dPoint corresponding_edge_point = edge->PointAt(
 				edge->Domain().ParameterAt(original.m_bRev3d ?
 				    1.0 - fraction : fraction));
 			    double edge_distance = corresponding_edge_point.IsValid() ?
 				candidate_lift.DistanceTo(corresponding_edge_point) : DBL_MAX;
-			    if (closest)
-				edge_distance = std::min(edge_distance,
-				    candidate_lift.DistanceTo(edge_nurbs.PointAt(edge_parameter)));
+			    /* Endpoint candidates preserve the trim's parameterization in
+			     * the overwhelmingly common case.  The corresponding exact edge
+			     * point is therefore a sufficient, stronger validation and avoids
+			     * thousands of expensive global NURBS closest-point searches on
+			     * large solids.  Fall back to the locus query only when that direct
+			     * correspondence does not already prove the candidate. */
+			    if (edge_distance > join_tolerance) {
+				double edge_parameter = 0.0;
+				if (ON_NurbsCurve_GetClosestPoint(&edge_parameter,
+					&edge_nurbs, candidate_lift))
+				    edge_distance = std::min(edge_distance,
+					candidate_lift.DistanceTo(
+					    edge_nurbs.PointAt(edge_parameter)));
+			    }
 			    if (edge_distance > join_tolerance) {
 				if (failure)
 				    *failure = "edge distance at sample " +
@@ -7285,6 +7633,7 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			    delete previous_candidate;
 			    delete next_candidate;
 			    changed = true;
+			    loop_changed = true;
 			    continue;
 			}
 			if (wrapper->Verbose())
@@ -7345,11 +7694,19 @@ repair_adjacent_trim_endpoints(ON_Brep *brep, STEPWrapper *wrapper,
 			<< next->m_trim_index << " within tolerance "
 			<< join_tolerance << std::endl;
 		changed = true;
+		loop_changed = true;
 		continue;
 	    }
+	    next_dirty[static_cast<size_t>(li)] = loop_changed;
 	}
 	if (!changed)
 	    break;
+	dirty.swap(next_dirty);
+    }
+    if (processed_loop_states) {
+	processed_loop_states->clear();
+	for (int li = 0; li < brep->m_L.Count(); ++li)
+	    (*processed_loop_states)[li] = loop_endpoint_state(brep->m_L[li]);
     }
 }
 
@@ -7668,6 +8025,11 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
     expected_loop_types.reserve(brep->m_L.Count());
     for (int li = 0; li < brep->m_L.Count(); ++li)
 	expected_loop_types.push_back(brep->m_L[li].m_type);
+    /* Specialized repairs below may expose new joins, but most loops remain
+     * untouched between passes.  Preserve exact endpoint state so the
+     * propagation repair revisits only loops whose relevant pcurve state
+     * changed. */
+    std::map<int, std::vector<double> > endpoint_repair_states;
 
     std::vector<int> aligned_surface_loops;
     repair_bounded_seam_isos(brep, wrapper, entity_id, entity_type,
@@ -7678,12 +8040,14 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	&aligned_surface_loops);
     repair_missing_singular_trims(brep, wrapper, entity_id, entity_type);
     regenerate_periodic_loop_chains(brep, wrapper, entity_id, entity_type);
-    repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type);
+    repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type,
+	&endpoint_repair_states);
     repair_zero_length_boundary_edges(brep, wrapper, entity_id, entity_type);
     if (!aligned_surface_loops.empty()) {
 	repair_aligned_surface_loop_branches(brep, wrapper, entity_id, entity_type,
 	    aligned_surface_loops);
-	repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type);
+	repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type,
+	    &endpoint_repair_states);
     }
 
     for (int ti = 0; ti < brep->m_T.Count(); ++ti) {
@@ -7845,7 +8209,8 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
      * endpoint pass.  Reclose only the newly exposed, model-space exact joins
      * before recomputing derived topology state. */
     repair_missing_singular_trims(brep, wrapper, entity_id, entity_type);
-    repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type);
+    repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type,
+	&endpoint_repair_states);
 
     /* Surface-seam alignment and whole-period loop unwrapping can expose a
      * seam pair that was valid when first installed but no longer agrees with
@@ -7856,7 +8221,8 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
     repair_invalid_open_pcurves(brep, wrapper, entity_id, entity_type);
     repair_paired_seam_boundaries(brep, wrapper, entity_id, entity_type, NULL);
     regenerate_periodic_loop_chains(brep, wrapper, entity_id, entity_type);
-    repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type);
+    repair_adjacent_trim_endpoints(brep, wrapper, entity_id, entity_type,
+	&endpoint_repair_states);
 
 	/* Curve replacement and orientation repair invalidate derived p-space
 	 * state.  Refresh it once, after all bounded repairs, using the same
@@ -7905,6 +8271,49 @@ repair_closed_trim_orientations(ON_Brep *brep, STEPWrapper *wrapper,
 	    ON_wString validation_messages;
 	    ON_TextLog validation_log(validation_messages);
 	    if (!brep->IsValid(&validation_log)) {
+		bool unresolved_open_surface_join = false;
+		for (int li = 0; li < brep->m_L.Count() &&
+			!unresolved_open_surface_join; ++li) {
+		    const ON_BrepLoop &loop = brep->m_L[li];
+		    const ON_Surface *surface = loop.Face() ?
+			loop.Face()->SurfaceOf() : NULL;
+		    if (!surface)
+			continue;
+		    for (int lti = 0; lti < loop.TrimCount(); ++lti) {
+			const ON_BrepTrim *current = loop.Trim(lti);
+			const ON_BrepTrim *next = loop.Trim(
+			    (lti + 1) % loop.TrimCount());
+			if (!current || !next) continue;
+			const ON_3dPoint current_end = current->PointAtEnd();
+			const ON_3dPoint next_start = next->PointAtStart();
+			for (int direction = 0; direction < 2; ++direction) {
+			    if (fabs(current_end[direction] - next_start[direction]) >
+				    ON_ZERO_TOLERANCE && !surface->IsClosed(direction)) {
+				unresolved_open_surface_join = true;
+				break;
+			    }
+			}
+			if (unresolved_open_surface_join) break;
+		    }
+		}
+		if (wrapper->Verbose()) {
+		    ON_String validation_text(validation_messages);
+		    std::cerr << entity_type << " #" << entity_id
+			<< ": bounded repair pass remained structurally invalid before "
+			   "periodic surface alignment retry:\n"
+			<< validation_text.Array();
+		}
+		/* A periodic surface seam move cannot alter an unresolved join on an
+		 * open surface.  Repeating every repair on a full BREP in that case is
+		 * both deterministic wasted work and can consume the entire item
+		 * budget before the actionable open-surface diagnostic is emitted. */
+		if (unresolved_open_surface_join) {
+		    if (wrapper->Verbose())
+			std::cerr << entity_type << " #" << entity_id
+			    << ": skipping periodic surface alignment retry because an "
+			       "open-surface p-space join remains unresolved" << std::endl;
+		    return;
+		}
 		std::unique_ptr<ON_Brep> bounded_repairs(new ON_Brep(*brep));
 		*brep = *retry_source;
 		repair_closed_trim_orientations(brep, wrapper, entity_id,
@@ -8683,6 +9092,7 @@ struct DetachedBrepMember {
 
 struct DetachedBrepJob {
     int entity_id = 0;
+    int output_source_id = 0;
     int product_id = 0;
     std::string entity_type;
     std::string original_name;
@@ -8702,6 +9112,7 @@ struct DetachedBrepJob {
     brlcad::step::Style style;
     SolidModel *solid = NULL;
     ShellBasedSurfaceModel *surface_model = NULL;
+    ConnectedFaceSet *face_set = NULL;
     std::unique_ptr<STEPDetachedEntityArena> entity_arena;
     std::unique_ptr<ON_Brep> brep;
     std::vector<fastf_t> bot_vertices;
@@ -8729,6 +9140,7 @@ detach_brep_job_data(int entity_id, const std::string &entity_type,
 {
     std::unique_ptr<DetachedBrepJob> job(new DetachedBrepJob());
     job->entity_id = entity_id;
+    job->output_source_id = entity_id;
     job->product_id = product_id;
     job->entity_type = entity_type;
     job->original_name = original_name;
@@ -8777,6 +9189,7 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     job.ready = false;
     job.solid = NULL;
     job.surface_model = NULL;
+    job.face_set = NULL;
     job.entity_arena.reset();
     if (!wrapper || job.entity_id <= 0)
 	return;
@@ -8794,10 +9207,11 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
     if (source) {
 	wrapper->SetProgressDetail("detaching exact STEP topology",
 	    job.entity_id, 0, 0, std::string(), job.entity_type);
-	RepresentationItem *item = dynamic_cast<RepresentationItem *>(
-	    Factory::CreateObject(wrapper, source));
+	STEPEntity *object = Factory::CreateObject(wrapper, source);
+	RepresentationItem *item = dynamic_cast<RepresentationItem *>(object);
 	job.solid = exact_brep_solid(item);
 	job.surface_model = dynamic_cast<ShellBasedSurfaceModel *>(item);
+	job.face_set = dynamic_cast<ConnectedFaceSet *>(object);
 	if (job.solid) {
 	    if (job.original_name.empty()) job.original_name = job.solid->Name();
 	    if (job.entity_type.empty()) job.entity_type = exact_brep_solid_type(job.solid);
@@ -8826,6 +9240,17 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    job.entity_type = "SHELL_BASED_SURFACE_MODEL";
 	    job.work_budget_milliseconds =
 		kMaximumSurfaceModelPullbackMilliseconds;
+	} else if (job.face_set) {
+	    job.topology_face_count = job.face_set->FaceCount();
+	    if (job.entity_type.empty())
+		job.entity_type = wrapper->LazyTypeName(job.entity_id);
+	    if (job.topology_face_count > kComplexExactSolidFaceThreshold) {
+		job.work_budget_milliseconds = std::min(
+		    kMaximumComplexExactPullbackMilliseconds,
+		    std::max(kMaximumExactPullbackMilliseconds,
+			static_cast<uint64_t>(job.topology_face_count) *
+			kExactPullbackMillisecondsPerFace));
+	    }
 	}
     }
     brlcad::PullbackWorkCancelled();
@@ -8836,13 +9261,15 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	    job.entity_id, job.entity_type, "dependency_closure", job.validation_message);
 	job.solid = NULL;
 	job.surface_model = NULL;
+	job.face_set = NULL;
 	wrapper->ReleaseSourceData();
 	job.status = BREP_CONVERSION_FAILED;
 	return;
     }
     job.entity_arena = wrapper->DetachEntityCache();
     wrapper->ReleaseSourceData();
-    job.ready = (job.solid != NULL || job.surface_model != NULL) &&
+    job.ready = (job.solid != NULL || job.surface_model != NULL ||
+	job.face_set != NULL) &&
 	job.entity_arena != NULL;
     const uint64_t elapsed = static_cast<uint64_t>(
 	std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -8855,7 +9282,7 @@ materialize_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 static void
 convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 {
-    if (!job.ready || (!job.solid && !job.surface_model) ||
+    if (!job.ready || (!job.solid && !job.surface_model && !job.face_set) ||
 	!job.entity_arena || !wrapper) {
 	job.status = BREP_CONVERSION_FAILED;
 	return;
@@ -8892,7 +9319,8 @@ convert_detached_brep_job(DetachedBrepJob &job, STEPWrapper *wrapper)
 	loaded = job.brep.get() != NULL;
     } else {
 	job.brep.reset(new ON_Brep());
-	loaded = job.solid->LoadONBrep(job.brep.get());
+	loaded = job.face_set ? job.face_set->LoadONBrep(job.brep.get()) :
+	    job.solid->LoadONBrep(job.brep.get());
     }
     if (work_expired("BREP construction"))
 	return;
@@ -9331,10 +9759,10 @@ write_detached_brep_geometry(DetachedBrepJob &job, BRLCADWrapper *database,
 	return database->WriteBot(job.output_name,
 	    job.bot_vertices.size() / 3, job.bot_faces.size() / 3,
 	    job.bot_vertices.data(), job.bot_faces.data(), job.write_matrix,
-	    job.entity_id, job.original_name, style);
+	    job.output_source_id, job.original_name, style);
     }
     return database->WriteBrep(job.output_name, job.brep.get(),
-	job.write_matrix, job.is_region, job.entity_id, job.original_name, style);
+	job.write_matrix, job.is_region, job.output_source_id, job.original_name, style);
 }
 
 
@@ -9384,10 +9812,12 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	static_cast<uint64_t>(jobs.size()), jobs.empty() ? 0 : jobs.front()->entity_id,
 	wrapper->Statistics().geometry_written, "written");
 
+    const unsigned int concurrency = std::max(1U,
+	wrapper->ImportOptions().effective_jobs);
     const unsigned int worker_count = std::max(1U, std::min(
-	wrapper->ImportOptions().effective_jobs,
+	concurrency,
 	static_cast<unsigned int>(jobs.size())));
-    if (worker_count == 1) {
+    if (concurrency == 1) {
 	for (size_t index = 0; index < jobs.size() &&
 		!wrapper->CancellationRequested(); ++index) {
 	    materialize_detached_brep_job(*jobs[index], wrapper);
@@ -9398,6 +9828,7 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	    jobs[index]->entity_arena.reset();
 	    jobs[index]->solid = NULL;
 	    jobs[index]->surface_model = NULL;
+	    jobs[index]->face_set = NULL;
 	    wrapper->SetProgress("converting exact geometry",
 		static_cast<uint64_t>(index + 1),
 		static_cast<uint64_t>(jobs.size()), 0,
@@ -9431,6 +9862,7 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
     size_t active_workers = 0;
     size_t completed_waiting = 0;
     size_t spooled_waiting = 0;
+    size_t finished_jobs = 0;
     uint64_t ready_bytes = 0;
     bool materializing = false;
     bool stop_workers = false;
@@ -9442,7 +9874,9 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 	wrapper->SetGeometrySchedulerProgress(
 	    static_cast<uint64_t>(pending.size()),
 	    static_cast<uint64_t>(active_workers),
-	    static_cast<uint64_t>(completed_waiting), materializing ? 1 : 0,
+	    static_cast<uint64_t>(completed_waiting),
+	    static_cast<uint64_t>(spooled_waiting),
+	    static_cast<uint64_t>(finished_jobs), materializing ? 1 : 0,
 	    static_cast<uint64_t>(observed_in_flight),
 	    static_cast<uint64_t>(runnable_capacity), ready_bytes,
 	    kMaximumReadyGeometryBytes);
@@ -9462,6 +9896,7 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 		++active_workers;
 		publish_scheduler_locked();
 	    }
+	    wrapper->GeometryWorkerStarted();
 	    try {
 		convert_detached_brep_job(*jobs[index], wrapper);
 	    } catch (...) {
@@ -9469,11 +9904,13 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 		jobs[index]->validation_message =
 		    "exception while validating detached OpenNURBS geometry";
 	    }
+	    wrapper->GeometryWorkerFinished();
 	    /* Conversion has copied all accepted curves, surfaces, topology, and
 	     * metadata into the job result.  Do not retain a STEP dependency arena
 	     * merely because a lower-ID result has not reached the database yet. */
 	    jobs[index]->solid = NULL;
 	    jobs[index]->surface_model = NULL;
+	    jobs[index]->face_set = NULL;
 	    jobs[index]->entity_arena.reset();
 	    uint64_t bytes = sizeof(DetachedBrepJob);
 	    if (jobs[index]->brep)
@@ -9489,6 +9926,7 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
 		result_bytes[index] = bytes;
 		ready_bytes += bytes;
 		++completed_waiting;
+		++finished_jobs;
 		publish_scheduler_locked();
 	    }
 	    queue_changed.notify_all();
@@ -9496,6 +9934,7 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
     };
 
     std::vector<std::thread> workers;
+    wrapper->ConfigureGeometryExecutor(concurrency);
     workers.reserve(worker_count);
     for (unsigned int worker_index = 0; worker_index < worker_count;
 	    ++worker_index)
@@ -9617,8 +10056,9 @@ write_detached_brep_jobs(std::vector<std::unique_ptr<DetachedBrepJob> > &jobs,
     queue_changed.notify_all();
     for (std::thread &thread : workers)
 	thread.join();
+    wrapper->StopGeometryExecutor();
     spool.Close();
-    wrapper->SetGeometrySchedulerProgress(0, 0, 0, 0, 0, 0, 0, 0);
+    wrapper->SetGeometrySchedulerProgress(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 
@@ -9929,6 +10369,26 @@ lazy_selection_contains_only_exact_roots(STEPWrapper *wrapper)
 }
 
 
+static bool
+lazy_selection_contains_only_face_set_roots(STEPWrapper *wrapper)
+{
+    if (!wrapper || !wrapper->HasLazyIndex() ||
+	wrapper->ImportOptions().selected_entity_ids.empty())
+	return false;
+    for (std::set<int64_t>::const_iterator id =
+	    wrapper->ImportOptions().selected_entity_ids.begin();
+	 id != wrapper->ImportOptions().selected_entity_ids.end(); ++id) {
+	if (*id <= 0)
+	    return false;
+	const std::string type = wrapper->LazyTypeName(
+	    static_cast<uint64_t>(*id));
+	if (type != "CLOSED_SHELL" && type != "OPEN_SHELL")
+	    return false;
+    }
+    return true;
+}
+
+
 static void
 convert_lazy_selected_exact_roots(const LazySTEPExactGraph &graph,
     STEPWrapper *wrapper, BRLCADWrapper *database, int dry_run,
@@ -9969,6 +10429,80 @@ convert_lazy_selected_exact_roots(const LazySTEPExactGraph &graph,
 	    source_type, std::string(),
 	    database->StableBRLCADName("step_item", entity_id), product_id,
 	    units.length, units.planeangle, units.solidangle, identity, style);
+	wrapper->ShouldConvertEntity(entity_id);
+	jobs.push_back(std::move(job));
+    }
+    wrapper->ReleaseSourceData();
+    write_detached_brep_jobs(jobs, wrapper, database, dry_run, process_map);
+}
+
+
+static void
+convert_lazy_selected_face_set_roots(const LazySTEPExactGraph &graph,
+    STEPWrapper *wrapper, BRLCADWrapper *database, int dry_run,
+    MAP_OF_ENTITY_ID_TO_PRODUCT_ID &process_map)
+{
+    std::vector<std::unique_ptr<DetachedBrepJob> > jobs;
+    for (std::set<int64_t>::const_iterator selected =
+	    wrapper->ImportOptions().selected_entity_ids.begin();
+	 selected != wrapper->ImportOptions().selected_entity_ids.end(); ++selected) {
+	if (*selected <= 0 || *selected > INT_MAX) continue;
+	const uint64_t source_id = static_cast<uint64_t>(*selected);
+	const std::string source_type = wrapper->LazyTypeName(source_id);
+
+	/* A shell is normally referenced by a SHELL_BASED_SURFACE_MODEL, which is
+	 * in turn referenced by its shape representation.  Follow only these
+	 * indexed reverse edges so a focused shell request can recover units and
+	 * style without materializing the surrounding product and every sibling
+	 * shell. */
+	uint64_t surface_model_id = 0;
+	uint64_t representation_id = 0;
+	const std::vector<uint64_t> shell_parents =
+	    wrapper->LazyReverseReferences(source_id);
+	for (std::vector<uint64_t>::const_iterator parent = shell_parents.begin();
+	     parent != shell_parents.end(); ++parent) {
+	    if (wrapper->LazyTypeName(*parent) != "SHELL_BASED_SURFACE_MODEL")
+		continue;
+	    surface_model_id = *parent;
+	    const std::vector<uint64_t> model_parents =
+		wrapper->LazyReverseReferences(*parent);
+	    for (std::vector<uint64_t>::const_iterator representation =
+		    model_parents.begin(); representation != model_parents.end();
+		 representation++) {
+		if (graph.representation_context.find(*representation) !=
+			graph.representation_context.end() ||
+		    graph.representation_product.find(*representation) !=
+			graph.representation_product.end()) {
+		    representation_id = *representation;
+		    break;
+		}
+	    }
+	    if (representation_id) break;
+	}
+
+	const LazyRepresentationUnits units = lazy_representation_units(wrapper,
+	    graph, representation_id);
+	int product_id = 0;
+	std::map<uint64_t, uint64_t>::const_iterator product =
+	    graph.representation_product.find(representation_id);
+	if (product != graph.representation_product.end() &&
+		product->second <= static_cast<uint64_t>(INT_MAX))
+	    product_id = static_cast<int>(product->second);
+
+	const int entity_id = static_cast<int>(*selected);
+	const brlcad::step::Style *style = style_for_item(wrapper, entity_id);
+	if (!style && surface_model_id <= static_cast<uint64_t>(INT_MAX))
+	    style = style_for_item(wrapper, static_cast<int>(surface_model_id));
+	if (!style && representation_id <= static_cast<uint64_t>(INT_MAX))
+	    style = style_for_item(wrapper, static_cast<int>(representation_id));
+	mat_t identity;
+	MAT_IDN(identity);
+	std::unique_ptr<DetachedBrepJob> job = detach_brep_job_data(entity_id,
+	    source_type, std::string(), database->StableBRLCADName(
+		(source_type == "CLOSED_SHELL" ? "closed_shell" : "open_shell"),
+		entity_id), product_id, units.length, units.planeangle,
+	    units.solidangle, identity, style);
+	job->is_region = source_type == "CLOSED_SHELL";
 	wrapper->ShouldConvertEntity(entity_id);
 	jobs.push_back(std::move(job));
     }
@@ -10370,6 +10904,14 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	return statistics.output_failures == 0 &&
 	    (!import_options.strict || statistics.geometry_skipped == 0);
     }
+    if (lazy_selection_contains_only_face_set_roots(this)) {
+	convert_lazy_selected_face_set_roots(lazy_exact_graph, this, dotg, dry_run,
+	    process_map);
+	statistics.products = static_cast<uint64_t>(document.products.size());
+	statistics.occurrences = static_cast<uint64_t>(document.occurrences.size());
+	return statistics.output_failures == 0 &&
+	    (!import_options.strict || statistics.geometry_skipped == 0);
+    }
 #else
     const std::vector<uint64_t> lazy_handled_sdrs;
     const std::vector<uint64_t> lazy_handled_relationships;
@@ -10738,9 +11280,31 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	}
     }
 
-    SetInstanceTypes({"SHELL_BASED_SURFACE_MODEL", "SHAPE_REPRESENTATION_RELATIONSHIP",
-	"REPRESENTATION_RELATIONSHIP", "REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION"},
-	lazy_handled_relationships);
+    /* The lazy index already supplies shell-model identity.  Materializing a
+     * model here follows every boundary shell and can load an entire plate
+     * assembly just to choose a name. */
+#ifdef HAVE_STEPCODE_LAZY
+    if (HasLazyIndex()) {
+	const std::vector<uint64_t> shell_models =
+	    LazyInstancesByType("SHELL_BASED_SURFACE_MODEL");
+	for (std::vector<uint64_t>::const_iterator id = shell_models.begin();
+	     id != shell_models.end(); ++id) {
+	    if (*id > static_cast<uint64_t>(INT_MAX) ||
+		!ShouldConvertEntity(static_cast<int64_t>(*id))) continue;
+	    const int model_id = static_cast<int>(*id);
+	    if (id2name_map[model_id].empty())
+		id2name_map[model_id] = dotg->StableBRLCADName(
+		    std::string("SurfaceModel_step") + std::to_string(model_id), model_id);
+	}
+    }
+#endif
+    std::vector<std::string> surface_relationship_types = {
+	"SHAPE_REPRESENTATION_RELATIONSHIP", "REPRESENTATION_RELATIONSHIP",
+	"REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION"};
+    if (!HasLazyIndex())
+	surface_relationship_types.insert(surface_relationship_types.begin(),
+	    "SHELL_BASED_SURFACE_MODEL");
+    SetInstanceTypes(surface_relationship_types, lazy_handled_relationships);
     num_ents = InstanceCount();
     SetProgress("indexing surface-model relationships", 0,
 	static_cast<uint64_t>(num_ents));
@@ -11075,7 +11639,101 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     SetProgress("converting shell-based surface models", 0,
 	static_cast<uint64_t>(num_ents), 0, statistics.geometry_written, "written");
     std::vector<std::unique_ptr<DetachedBrepJob> > surface_jobs;
-    for (int i = 0; i < num_ents; ++i) {
+    if (HasLazyIndex()) {
+	const std::vector<uint64_t> surface_ids =
+	    LazyInstancesByType("SHELL_BASED_SURFACE_MODEL");
+	SetProgress("indexing shell boundaries", 0, surface_ids.size(), 0,
+	    statistics.geometry_written, "written");
+	for (size_t i = 0; i < surface_ids.size(); ++i) {
+	    if (CancellationRequested()) return false;
+	    if (surface_ids[i] > static_cast<uint64_t>(INT_MAX)) continue;
+	    const int surface_id = static_cast<int>(surface_ids[i]);
+	    SetProgress("indexing shell boundaries", i, surface_ids.size(),
+		surface_id, statistics.geometry_written, "written");
+	    const std::set<int64_t> &selected = ImportOptions().selected_entity_ids;
+	    const bool selected_model = selected.empty() ||
+		selected.find(surface_id) != selected.end();
+	    const std::vector<uint64_t> boundaries = LazyForwardReferences(surface_id);
+	    bool selected_boundary = false;
+	    if (!selected_model) {
+		for (std::vector<uint64_t>::const_iterator boundary = boundaries.begin();
+		     boundary != boundaries.end(); ++boundary) {
+		    if (*boundary <= static_cast<uint64_t>(INT64_MAX) &&
+			selected.find(static_cast<int64_t>(*boundary)) != selected.end()) {
+			selected_boundary = true;
+			break;
+		    }
+		}
+	    }
+	    if (!selected_model && !selected_boundary) continue;
+	    if (selected.find(surface_id) != selected.end())
+		ShouldConvertEntity(surface_id);
+
+	    std::string surface_name = id2name_map[surface_id];
+	    if (surface_name.empty())
+		surface_name = dotg->StableBRLCADName(
+		    std::string("SurfaceModel_step") + std::to_string(surface_id),
+		    surface_id);
+	    id2name_map[surface_id] = surface_name;
+	    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::const_iterator product =
+		id2productid_map.find(surface_id);
+	    const int product_id = product == id2productid_map.end() ? 0 :
+		product->second;
+	    const brlcad::step::Style *style = style_for_item(this, surface_id);
+
+	    std::vector<std::pair<uint64_t, std::string> > shells;
+	    size_t model_shell_count = 0;
+	    for (std::vector<uint64_t>::const_iterator boundary = boundaries.begin();
+		 boundary != boundaries.end(); ++boundary) {
+		const std::string type = LazyTypeName(*boundary);
+		if (type == "CLOSED_SHELL" || type == "OPEN_SHELL")
+		    ++model_shell_count;
+		if (*boundary <= static_cast<uint64_t>(INT_MAX) &&
+		    (type == "CLOSED_SHELL" || type == "OPEN_SHELL") &&
+		    (selected_model || selected.find(static_cast<int64_t>(*boundary)) !=
+			selected.end())) {
+		    shells.push_back(std::make_pair(*boundary, type));
+		    if (!selected.empty())
+			ShouldConvertEntity(static_cast<int64_t>(*boundary));
+		}
+	    }
+	    for (size_t shell_number = 0; shell_number < shells.size(); ++shell_number) {
+		const int shell_id = static_cast<int>(shells[shell_number].first);
+		const std::string &type = shells[shell_number].second;
+		std::string shell_name = model_shell_count == 1 ? surface_name :
+		    dotg->StableBRLCADName(surface_name + "_shell" +
+			std::to_string(shell_number + 1), shell_id);
+		id2name_map[shell_id] = shell_name;
+		id2productid_map[shell_id] = product_id;
+		mat_t identity;
+		MAT_IDN(identity);
+		std::unique_ptr<DetachedBrepJob> job = detach_brep_job_data(
+		    shell_id, type, std::string(), shell_name, product_id,
+		    LocalUnits::length, LocalUnits::planeangle, LocalUnits::solidangle,
+		    identity, style);
+		if (model_shell_count == 1) job->output_source_id = surface_id;
+		job->is_region = type == "CLOSED_SHELL";
+		if (product_id > 0) {
+		    DetachedBrepMember member;
+		    member.combination = id2name_map[product_id];
+		    MAT_COPY(member.matrix, identity);
+		    job->members.push_back(member);
+		}
+		surface_jobs.push_back(std::move(job));
+	    }
+	    if (shells.empty()) {
+		RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, surface_id,
+		    "SHELL_BASED_SURFACE_MODEL", "sbsm_boundary",
+		    "lazy index found no OPEN_SHELL or CLOSED_SHELL boundary references");
+		RecordSkippedItem(surface_id, "SHELL_BASED_SURFACE_MODEL",
+		    "surface model has no indexed shell boundaries");
+		++statistics.geometry_attempted;
+		++statistics.geometry_skipped;
+	    }
+	}
+	SetProgress("shell boundaries indexed", surface_ids.size(),
+	    surface_ids.size(), 0, surface_jobs.size(), "jobs");
+    } else for (int i = 0; i < num_ents; ++i) {
 	if (CancellationRequested()) return false;
 	SDAI_Application_instance *sse = InstanceAt(i);
 	if (!sse || sse->STEPfile_id <= 0 ||

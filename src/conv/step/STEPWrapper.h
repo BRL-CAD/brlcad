@@ -115,6 +115,7 @@ typedef std::list<LIST_OF_REALS *> LIST_OF_LIST_OF_REALS;
 class STEPWrapper
 {
 private:
+    struct GeometryExecutor;
     std::string stepfile;
     std::string dotgfile;
     InstMgr *instance_list;
@@ -132,6 +133,7 @@ private:
     brlcad::step::ImportProgress progress_state;
     mutable std::mutex progress_mutex;
     std::function<bool()> cancellation_callback;
+    std::unique_ptr<GeometryExecutor> geometry_executor;
 #ifdef HAVE_STEPCODE_LAZY
     std::unique_ptr<brlcad::step::STEPLazySession> lazy_session;
     std::unique_ptr<brlcad::step::STEPLazyBatch> lazy_batch;
@@ -191,9 +193,20 @@ public:
     /** Publish a consistent snapshot of the bounded detached-geometry
      * scheduler.  A zero capacity clears scheduler-specific telemetry. */
     void SetGeometrySchedulerProgress(uint64_t queued, uint64_t active,
-	uint64_t ready, uint64_t materializing, uint64_t in_flight,
+	uint64_t ready, uint64_t spooled, uint64_t finished,
+	uint64_t materializing, uint64_t in_flight,
 	uint64_t runnable_capacity, uint64_t ready_bytes,
 	uint64_t ready_byte_budget);
+    /** Configure a persistent helper pool shared by all exact-geometry jobs.
+     * Top-level solid jobs count against the same capacity, so nested edge
+     * work can only occupy otherwise-idle -j slots. */
+    void ConfigureGeometryExecutor(unsigned int concurrency);
+    void StopGeometryExecutor();
+    void GeometryWorkerStarted();
+    void GeometryWorkerFinished();
+    void ParallelForGeometry(size_t count,
+	const std::function<void(size_t)> &task);
+    void SetGeometryHelpersActive(uint64_t active);
     brlcad::step::ImportProgress Progress() const;
     /** Return true for an unfiltered entity or a requested representation
      * item root, recording requested roots encountered during conversion. */
@@ -221,6 +234,7 @@ public:
     bool HasLazyIndex() const;
     std::vector<uint64_t> LazyInstancesByType(const std::string &type) const;
     std::string LazyTypeName(uint64_t id) const;
+    std::string LazySourceRecord(uint64_t id) const;
     std::vector<uint64_t> LazyForwardReferences(uint64_t id) const;
     std::vector<uint64_t> LazyReverseReferences(uint64_t id) const;
 

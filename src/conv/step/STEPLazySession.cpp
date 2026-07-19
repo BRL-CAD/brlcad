@@ -194,6 +194,13 @@ STEPLazySession::TypeName(uint64_t id) const
     return name ? name : std::string();
 }
 
+std::string
+STEPLazySession::SourceRecord(uint64_t id) const
+{
+    return impl ? impl->manager->sourceRecord(static_cast<instanceID>(id)) :
+	std::string();
+}
+
 std::vector<uint64_t>
 STEPLazySession::ForwardReferences(uint64_t id) const
 {

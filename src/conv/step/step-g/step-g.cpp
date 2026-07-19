@@ -30,6 +30,7 @@
 #include <csignal>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <set>
@@ -160,6 +161,90 @@ print_skipped_items(const STEPWrapper &step, bool verbose)
 	    << item.reason << std::endl;
 }
 
+void
+write_count_map(std::ostream &out, const std::map<std::string, uint64_t> &values)
+{
+    out << '{';
+    bool first = true;
+    for (const auto &entry : values) {
+	if (!first) out << ',';
+	first = false;
+	out << '"' << brlcad::step::json_escape(entry.first) << "\":" << entry.second;
+    }
+    out << '}';
+}
+
+bool
+write_report(const std::string &path, const std::string &input,
+    const std::string &output, const STEPWrapper &step, int exit_status)
+{
+    if (path.empty()) return true;
+    std::ofstream out(path.c_str(), std::ios::binary | std::ios::trunc);
+    if (!out) return false;
+    const brlcad::step::Document &document = step.Document();
+    const brlcad::step::ImportStatistics &stats = step.Statistics();
+    const brlcad::step::ImportOptions &options = step.ImportOptions();
+    out << "{\n  \"format\":\"brlcad-step-import-report-v1\","
+	<< "\n  \"input\":\"" << brlcad::step::json_escape(input) << "\","
+	<< "\n  \"output\":\"" << brlcad::step::json_escape(output) << "\","
+	<< "\n  \"exit_status\":" << exit_status
+	<< ",\n  \"options\":{\"requested_jobs\":" << options.requested_jobs
+	<< ",\"effective_jobs\":" << options.effective_jobs
+	<< ",\"repair\":\"" << (options.repair == brlcad::step::RepairMode::Safe ?
+	    "safe" : "none") << "\",\"exact\":" << (options.exact ? "true" : "false")
+	<< ",\"strict\":" << (options.strict ? "true" : "false")
+	<< ",\"dry_run\":" << (options.dry_run ? "true" : "false") << '}'
+	<< ",\n  \"coverage\":{\"entity_counts\":";
+    write_count_map(out, document.entity_counts);
+    out << ",\"unsupported_counts\":";
+    write_count_map(out, document.unsupported_counts);
+    out << ",\"products\":" << stats.products
+	<< ",\"occurrences\":" << stats.occurrences
+	<< ",\"geometry_attempted\":" << stats.geometry_attempted
+	<< ",\"geometry_written\":" << stats.geometry_written
+	<< ",\"geometry_skipped\":" << stats.geometry_skipped << '}'
+	<< ",\n  \"skipped_items\":[";
+    for (size_t i = 0; i < stats.skipped_items.size(); ++i) {
+	if (i) out << ',';
+	const brlcad::step::SkippedItem &item = stats.skipped_items[i];
+	out << "{\"entity_id\":" << item.entity_id << ",\"entity_type\":\""
+	    << brlcad::step::json_escape(item.entity_type) << "\",\"reason\":\""
+	    << brlcad::step::json_escape(item.reason) << "\"}";
+    }
+    out << "]"
+	<< ",\n  \"skipped_items_omitted\":" << stats.skipped_items_omitted
+	<< ",\n  \"validation\":{\"invalid_breps\":" << stats.invalid_breps
+	<< ",\"output_failures\":" << stats.output_failures
+	<< ",\"repairs\":" << stats.repairs
+	<< ",\"tolerance_mm\":" << stats.tolerance_mm << '}'
+	<< ",\n  \"timings_us\":{\"load\":" << stats.load_time_us
+	<< ",\"convert\":" << stats.convert_time_us << '}'
+	<< ",\n  \"stepcode_cache\":{\"indexed_instances\":"
+	<< stats.lazy_indexed_instances << ",\"high_water_instances\":"
+	<< stats.lazy_loaded_instances << ",\"current_loaded_instances\":"
+	<< stats.lazy_current_loaded_instances << ",\"pinned_instances\":"
+	<< stats.lazy_pinned_instances << ",\"materializations\":"
+	<< stats.lazy_materializations << ",\"evictions\":" << stats.lazy_evictions
+	<< ",\"high_water_bytes\":";
+    if (stats.lazy_cache_bytes_available) out << stats.lazy_cache_byte_high_water;
+    else out << "null";
+    out << '}' << ",\n  \"peak_rss_bytes\":" << stats.peak_rss_bytes
+	<< ",\n  \"diagnostics\":[";
+    bool first_diagnostic = true;
+    for (const brlcad::step::Diagnostic &diagnostic : step.Diagnostics()) {
+	if (!first_diagnostic) out << ',';
+	first_diagnostic = false;
+	out << "{\"severity\":\"" << severity_name(diagnostic.severity)
+	    << "\",\"entity_id\":" << diagnostic.entity_id
+	    << ",\"entity_type\":\"" << brlcad::step::json_escape(diagnostic.entity_type)
+	    << "\",\"attribute\":\"" << brlcad::step::json_escape(diagnostic.attribute)
+	    << "\",\"message\":\"" << brlcad::step::json_escape(diagnostic.message)
+	    << "\",\"count\":" << diagnostic.repeat_count << '}';
+    }
+    out << "]\n}\n";
+    return static_cast<bool>(out);
+}
+
 }
 
 void
@@ -261,8 +346,12 @@ main(int argc, const char *argv[])
     static bool verbose = false;
     static int dry_run = 0;
     static int exact = 0;
+    static int strict = 0;
     static int help = 0;
     static int jobs = 1;
+    static fastf_t absolute_tolerance = 0.0;
+    static char *repair_name = NULL;
+    static char *report_name = NULL;
     static char *summary_log_file = (char *)NULL;
     static std::set<int64_t> selected_entity_ids;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
@@ -272,6 +361,10 @@ main(int argc, const char *argv[])
 	{"D", "dry-run", "",    NULL,        &dry_run,          "validate without writing a database"},
 	{"v", "verbose", "",    NULL,        &verbose,          "report entity-level diagnostics"},
 	{"", "exact", "",       NULL,        &exact,            "strictly enforce the declared model tolerance"},
+	{"", "strict", "",      NULL,        &strict,           "reject partial output"},
+	{"", "abs-tol", "MM",   bu_opt_fastf_t, &absolute_tolerance, "absolute output tolerance"},
+	{"", "repair", "MODE",  bu_opt_str,  &repair_name,      "none or safe"},
+	{"", "report", "FILE",  bu_opt_str,  &report_name,      "structured JSON report"},
 	{"f", "force", "",      NULL,        &ofile.overwrite,  "overwrite a positional or -o output"},
 	{"O", "output-overwrite", "FILE", parse_opt_O, &ofile, "output file (overwrite)"},
 	{"o", "output", "FILE", bu_opt_str,  &ofile.filename,   "output file"},
@@ -293,7 +386,17 @@ main(int argc, const char *argv[])
 	bu_vls_free(&parse_msgs);
 	return 0;
     }
-    if (bu_vls_strlen(&parse_msgs) > 0 || jobs < 1) {
+    if (bu_vls_strlen(&parse_msgs) > 0 || jobs < 1 || absolute_tolerance < 0.0) {
+	usage(options);
+	bu_vls_free(&parse_msgs);
+	return 2;
+    }
+
+    brlcad::step::RepairMode repair = brlcad::step::RepairMode::Safe;
+    if (repair_name && BU_STR_EQUAL(repair_name, "none"))
+	repair = brlcad::step::RepairMode::None;
+    else if (repair_name && !BU_STR_EQUAL(repair_name, "safe")) {
+	bu_log("ERROR: --repair must be 'none' or 'safe'\n");
 	usage(options);
 	bu_vls_free(&parse_msgs);
 	return 2;
@@ -342,7 +445,10 @@ main(int argc, const char *argv[])
     step->SetCancellationCallback([]() { return caught_signal != 0; });
     brlcad::step::ImportOptions import_options;
     import_options.dry_run = dry_run != 0;
+    import_options.absolute_tolerance_mm = absolute_tolerance;
+    import_options.repair = repair;
     import_options.exact = exact != 0;
+    import_options.strict = strict != 0;
     import_options.verbose = verbose;
     import_options.requested_jobs = static_cast<unsigned int>(jobs);
     import_options.effective_jobs = static_cast<unsigned int>(jobs);
@@ -386,7 +492,8 @@ main(int argc, const char *argv[])
 		    ret = signal_exit_status();
 		} else if (stats.output_failures || (!converted && stats.geometry_written > 0)) {
 		    ret = 4;
-		} else if (stats.geometry_written == 0) {
+		} else if (stats.geometry_written == 0 ||
+			(strict && stats.geometry_skipped)) {
 		    ret = 3;
 		} else if (stats.geometry_skipped) {
 		    ret = 1;
@@ -422,6 +529,12 @@ main(int argc, const char *argv[])
 	ret = signal_exit_status() ? signal_exit_status() : 2;
     }
     progress_reporter.reset();
+    const std::string report_path = report_name ? report_name : "";
+    if (!write_report(report_path, iflnm, oflnm, *step, ret)) {
+	std::cerr << "ERROR: unable to write report [" << report_path << "]"
+	    << std::endl;
+	ret = 4;
+    }
     delete step;
 
     elapsedtime = bu_gettime() - elapsedtime;

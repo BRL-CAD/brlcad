@@ -118,6 +118,11 @@ namespace brlcad {
     extern BREP_EXPORT void ClearPullbackWorkLimit();
     extern BREP_EXPORT bool PullbackWorkCancelled();
     extern BREP_EXPORT bool PullbackWorkDeadlineExpired();
+    /** Milliseconds remaining on the calling thread's elapsed-work budget.
+     * UINT64_MAX means no deadline is installed.  This permits a bounded
+     * parent conversion job to propagate its original deadline to helper
+     * threads without restarting the per-item budget. */
+    extern BREP_EXPORT uint64_t PullbackWorkRemainingMilliseconds();
 
     /**
      * Mutable state used by one pullback job.  Keeping span and bounding-box

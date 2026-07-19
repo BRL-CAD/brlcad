@@ -29,6 +29,7 @@
 #include "bn/dvec.h"
 
 #include <assert.h>
+#include <algorithm>
 #include <cmath>
 #include <vector>
 #include <list>
@@ -60,6 +61,14 @@ namespace {
  * check. */
 constexpr size_t kMaximumClosestPointSubdivisionNodes = 4096;
 constexpr int kMaximumClosestPointSubdivisionDepth = 32;
+/* The legacy span-box closest-point search can legitimately reject every
+ * span when trimming a numerically narrow NURBS domain does not produce a
+ * usable conservative bounding box.  On that failure path, sample the knot
+ * spans and refine only the best bounded set of seeds.  This is a search
+ * budget, not an acceptance tolerance: every result must still lift to the
+ * source point within the caller's model tolerance. */
+constexpr size_t kMaximumClosestPointFallbackSeeds = 32;
+constexpr int kClosestPointFallbackSamplesPerSpan = 3;
 /* A collapsed periodic pullback is retried only after the ordinary adaptive
  * path has failed.  1024 bounded parameter intervals make each Newton seed
  * local even on the large analytic cylinders seen in assembly-scale files;
@@ -666,6 +675,201 @@ brlcad::PullbackWorkDeadlineExpired()
 }
 
 
+uint64_t
+brlcad::PullbackWorkRemainingMilliseconds()
+{
+    if (pullback_deadline == std::chrono::steady_clock::time_point::max())
+	return UINT64_MAX;
+    const std::chrono::steady_clock::time_point now =
+	std::chrono::steady_clock::now();
+    if (now >= pullback_deadline)
+	return 0;
+    const uint64_t remaining = static_cast<uint64_t>(
+	std::chrono::duration_cast<std::chrono::milliseconds>(
+	    pullback_deadline - now).count());
+    /* A positive sub-millisecond remainder must not be mistaken for the
+     * zero value which SetPullbackWorkLimit uses to disable a deadline. */
+    return std::max<uint64_t>(1, remaining);
+}
+
+
+/* Bounded damped Gauss-Newton refinement from a known UV seed.  Parameter
+ * steps are limited relative to each surface domain, which is important for
+ * STEP NURBS surfaces whose legal U interval may be only a few 1e-5 wide.
+ * The routine reports its best finite candidate even when it does not meet
+ * tolerance, allowing callers to compare several independent seeds. */
+static bool
+surface_closest_point_seeded(const ON_Surface *surf, const ON_3dPoint &point,
+    const ON_2dPoint &seed, ON_2dPoint &surface_point,
+    ON_3dPoint &lifted_point, double &distance, double tolerance)
+{
+    if (!surf || !point.IsValid() || !seed.IsValid() || !(tolerance > 0.0))
+	return false;
+
+    ON_2dPoint uv(seed);
+    double best_distance = DBL_MAX;
+    for (int iteration = 0; iteration < 48; ++iteration) {
+	if (brlcad::PullbackWorkCancelled()) break;
+	ON_3dPoint lift;
+	ON_3dVector du, dv;
+	if (!surf->Ev1Der(uv.x, uv.y, lift, du, dv) || !lift.IsValid())
+	    break;
+	const ON_3dVector residual = point - lift;
+	const double current_distance = residual.Length();
+	if (std::isfinite(current_distance) && current_distance < best_distance) {
+	    best_distance = current_distance;
+	    surface_point = uv;
+	    lifted_point = lift;
+	}
+	if (current_distance <= tolerance) {
+	    distance = current_distance;
+	    return true;
+	}
+
+	const double a = du * du;
+	const double b = du * dv;
+	const double c = dv * dv;
+	const double r0 = du * residual;
+	const double r1 = dv * residual;
+	const double metric_scale = std::max(1.0, std::max(a, c));
+	const double damping = DBL_EPSILON * metric_scale * 64.0;
+	const double aa = a + damping;
+	const double cc = c + damping;
+	const double determinant = aa * cc - b * b;
+	if (!std::isfinite(determinant) ||
+		fabs(determinant) <= DBL_EPSILON * metric_scale * metric_scale)
+	    break;
+	double delta[2] = {(cc * r0 - b * r1) / determinant,
+	    (aa * r1 - b * r0) / determinant};
+	double trust_scale = 1.0;
+	for (int direction = 0; direction < 2; ++direction) {
+	    const double maximum_step = 0.125 * surf->Domain(direction).Length();
+	    if (maximum_step > ON_ZERO_TOLERANCE &&
+		    fabs(delta[direction]) > maximum_step)
+		trust_scale = std::min(trust_scale,
+		    maximum_step / fabs(delta[direction]));
+	}
+
+	bool improved = false;
+	for (int reduction = 0; reduction < 12; ++reduction) {
+	    const double scale = trust_scale * std::ldexp(1.0, -reduction);
+	    ON_2dPoint candidate(uv.x + scale * delta[0],
+		uv.y + scale * delta[1]);
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (surf->IsClosed(direction)) continue;
+		const ON_Interval domain = surf->Domain(direction);
+		candidate[direction] = std::max(domain.Min(),
+		    std::min(domain.Max(), candidate[direction]));
+	    }
+	    const ON_3dPoint candidate_lift = surf->PointAt(
+		candidate.x, candidate.y);
+	    if (!candidate_lift.IsValid() ||
+		    candidate_lift.DistanceTo(point) >= current_distance)
+		continue;
+	    uv = candidate;
+	    improved = true;
+	    break;
+	}
+	if (!improved) break;
+    }
+    distance = best_distance;
+    return best_distance <= tolerance;
+}
+
+
+/* Robust exact fallback for cases where span bounding boxes yielded no
+ * candidate.  Three samples per knot span establish Newton basins without a
+ * compiler- or model-size-dependent unbounded grid; only the nearest fixed
+ * number of seeds are refined. */
+static bool
+surface_closest_point_multiseed(const ON_Surface *surf,
+    const ON_3dPoint &point, ON_2dPoint &surface_point,
+    ON_3dPoint &lifted_point, double &distance, double tolerance)
+{
+    struct Candidate {
+	double distance;
+	ON_2dPoint uv;
+    };
+
+    if (!surf || !point.IsValid() || !(tolerance > 0.0))
+	return false;
+
+    std::vector<double> spans[2];
+    for (int direction = 0; direction < 2; ++direction) {
+	const int count = surf->SpanCount(direction);
+	if (count > 0) {
+	    spans[direction].resize(static_cast<size_t>(count) + 1);
+	    if (!surf->GetSpanVector(direction, spans[direction].data()))
+		spans[direction].clear();
+	}
+	if (spans[direction].size() < 2) {
+	    const ON_Interval domain = surf->Domain(direction);
+	    if (!domain.IsIncreasing()) return false;
+	    spans[direction].push_back(domain.Min());
+	    spans[direction].push_back(domain.Max());
+	}
+    }
+
+    std::vector<Candidate> candidates;
+    const size_t u_count = spans[0].size() - 1;
+    const size_t v_count = spans[1].size() - 1;
+    candidates.reserve(u_count * v_count *
+	static_cast<size_t>(kClosestPointFallbackSamplesPerSpan) *
+	static_cast<size_t>(kClosestPointFallbackSamplesPerSpan));
+    for (size_t u = 0; u < u_count; ++u) {
+	for (size_t v = 0; v < v_count; ++v) {
+	    for (int ui = 0; ui < kClosestPointFallbackSamplesPerSpan; ++ui) {
+		const double uf = static_cast<double>(ui) /
+		    (kClosestPointFallbackSamplesPerSpan - 1);
+		const double up = (1.0 - uf) * spans[0][u] +
+		    uf * spans[0][u + 1];
+		for (int vi = 0; vi < kClosestPointFallbackSamplesPerSpan; ++vi) {
+		    if (brlcad::PullbackWorkCancelled()) return false;
+		    const double vf = static_cast<double>(vi) /
+			(kClosestPointFallbackSamplesPerSpan - 1);
+		    const double vp = (1.0 - vf) * spans[1][v] +
+			vf * spans[1][v + 1];
+		    const ON_3dPoint lift = surf->PointAt(up, vp);
+		    if (!lift.IsValid()) continue;
+		    const double candidate_distance = lift.DistanceTo(point);
+		    if (!std::isfinite(candidate_distance)) continue;
+		    if (candidate_distance < distance) {
+			distance = candidate_distance;
+			surface_point = ON_2dPoint(up, vp);
+			lifted_point = lift;
+		    }
+		    if (candidate_distance <= tolerance) return true;
+		    candidates.push_back({candidate_distance,
+			ON_2dPoint(up, vp)});
+		}
+	    }
+	}
+    }
+
+    std::sort(candidates.begin(), candidates.end(),
+	[](const Candidate &left, const Candidate &right) {
+	    return left.distance < right.distance;
+	});
+    const size_t seed_count = std::min(candidates.size(),
+	kMaximumClosestPointFallbackSeeds);
+    for (size_t seed = 0; seed < seed_count; ++seed) {
+	ON_2dPoint candidate_uv = ON_2dPoint::UnsetPoint;
+	ON_3dPoint candidate_lift = ON_3dPoint::UnsetPoint;
+	double candidate_distance = DBL_MAX;
+	const bool accepted = surface_closest_point_seeded(surf, point,
+	    candidates[seed].uv, candidate_uv, candidate_lift,
+	    candidate_distance, tolerance);
+	if (candidate_distance < distance) {
+	    distance = candidate_distance;
+	    surface_point = candidate_uv;
+	    lifted_point = candidate_lift;
+	}
+	if (accepted) return true;
+    }
+    return distance <= tolerance;
+}
+
+
 double
 surface_GetClosestPoint3dFirstOrderByRange(
     const ON_Surface *surf,
@@ -916,8 +1120,11 @@ brlcad::PullbackContext::SurfaceClosestPoint(
     if (PullbackWorkCancelled())
 	return false;
 
-    if (!surf || !m_impl->Prepare(surf, same_point_tol))
-	return rc;
+    if (!surf)
+	return false;
+    if (!m_impl->Prepare(surf, same_point_tol))
+	return surface_closest_point_multiseed(surf, p, p2d, p3d,
+	    current_distance, within_distance_tol);
 
     const int u_spancnt = m_impl->u_span_count;
     const int v_spancnt = m_impl->v_span_count;
@@ -1861,6 +2068,9 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 	}
     }
 cleanup:
+    if (!rc && !PullbackWorkCancelled())
+	rc = surface_closest_point_multiseed(surf, p, p2d, p3d,
+	    current_distance, within_distance_tol);
     return rc;
 }
 
@@ -1923,74 +2133,8 @@ pullback_closest_point_seeded(PBCData &data, const ON_3dPoint &point,
     const ON_2dPoint &seed, ON_2dPoint &surface_point,
     ON_3dPoint &lifted_point, double &distance, double tolerance)
 {
-    if (!data.surf || !point.IsValid() || !seed.IsValid() ||
-	!(tolerance > 0.0))
-	return false;
-
-    ON_2dPoint uv(seed);
-    distance = DBL_MAX;
-    for (int iteration = 0; iteration < 32; ++iteration) {
-	if (brlcad::PullbackWorkCancelled()) return false;
-	ON_3dPoint lift;
-	ON_3dVector du, dv;
-	if (!data.surf->Ev1Der(uv.x, uv.y, lift, du, dv))
-	    break;
-	const ON_3dVector residual = point - lift;
-	const double current_distance = residual.Length();
-	if (current_distance < distance) {
-	    distance = current_distance;
-	    surface_point = uv;
-	    lifted_point = lift;
-	}
-	if (current_distance <= tolerance)
-	    return true;
-
-	const double a = du * du;
-	const double b = du * dv;
-	const double c = dv * dv;
-	const double r0 = du * residual;
-	const double r1 = dv * residual;
-	const double metric_scale = std::max(1.0, std::max(a, c));
-	const double damping = DBL_EPSILON * metric_scale * 64.0;
-	const double aa = a + damping;
-	const double cc = c + damping;
-	const double determinant = aa * cc - b * b;
-	if (fabs(determinant) <= DBL_EPSILON * metric_scale * metric_scale)
-	    break;
-	double delta[2] = {(cc * r0 - b * r1) / determinant,
-	    (aa * r1 - b * r0) / determinant};
-	double trust_scale = 1.0;
-	for (int direction = 0; direction < 2; ++direction) {
-	    const double maximum_step = 0.125 * data.surf->Domain(direction).Length();
-	    if (maximum_step > ON_ZERO_TOLERANCE &&
-		    fabs(delta[direction]) > maximum_step)
-		trust_scale = std::min(trust_scale,
-		    maximum_step / fabs(delta[direction]));
-	}
-
-	bool improved = false;
-	for (int reduction = 0; reduction < 12; ++reduction) {
-	    const double scale = trust_scale * std::ldexp(1.0, -reduction);
-	    ON_2dPoint candidate(uv.x + scale * delta[0],
-		uv.y + scale * delta[1]);
-	    for (int direction = 0; direction < 2; ++direction) {
-		if (data.surf->IsClosed(direction)) continue;
-		const ON_Interval domain = data.surf->Domain(direction);
-		candidate[direction] = std::max(domain.Min(),
-		    std::min(domain.Max(), candidate[direction]));
-	    }
-	    const ON_3dPoint candidate_lift = data.surf->PointAt(
-		candidate.x, candidate.y);
-	    if (!candidate_lift.IsValid() ||
-		    candidate_lift.DistanceTo(point) >= current_distance)
-		continue;
-	    uv = candidate;
-	    improved = true;
-	    break;
-	}
-	if (!improved) break;
-    }
-    return distance <= tolerance;
+    return surface_closest_point_seeded(data.surf, point, seed,
+	surface_point, lifted_point, distance, tolerance);
 }
 
 

@@ -112,8 +112,11 @@ private:
 			progress.geometry_jobs_materializing;
 		    message << " scheduler={active="
 			<< progress.geometry_workers_active
+			<< ",helpers=" << progress.geometry_helpers_active
 			<< ",queued=" << progress.geometry_jobs_queued
 			<< ",ready=" << progress.geometry_jobs_ready
+			<< ",spooled=" << progress.geometry_jobs_spooled
+			<< ",finished=" << progress.geometry_jobs_finished
 			<< ",materializing=" << progress.geometry_jobs_materializing
 			<< ",runnable=" << runnable << '/'
 			<< progress.geometry_runnable_capacity

@@ -52,7 +52,10 @@ struct ImportProgress {
     uint64_t geometry_jobs_queued = 0;
     uint64_t geometry_workers_active = 0;
     uint64_t geometry_jobs_ready = 0;
+    uint64_t geometry_jobs_spooled = 0;
+    uint64_t geometry_jobs_finished = 0;
     uint64_t geometry_jobs_materializing = 0;
+    uint64_t geometry_helpers_active = 0;
     uint64_t geometry_jobs_in_flight = 0;
     uint64_t geometry_runnable_capacity = 0;
     uint64_t geometry_ready_bytes = 0;
